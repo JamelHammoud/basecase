@@ -5,7 +5,7 @@ import { panelOnDesktopOnly, type PanelSpec } from './panelKinds';
 export const DEFAULT_CONSOLE: CaseConsole = {
   input: STUDIO_INPUTS,
   panels: [
-    { id: 'cameras', kind: 'camera', title: 'Cameras', signal: 'camera.*' },
+    { id: 'cameras', kind: 'camera', signal: 'camera.*' },
     { id: 'brief', kind: 'text', of: 'brief' },
     { id: 'failures', kind: 'list', of: 'failures' },
     { id: 'servos', kind: 'table', of: 'servos' },

@@ -1,7 +1,7 @@
 import { RECORD_HZ } from '../sim/recorder';
-import { evaluateContract, type ContractResult } from '../skills/contract';
+import type { ContractResult } from '../skills/contract';
+import type { GoalJudge, TraceDelta } from './goalJudge';
 import type { ProbeReader } from './probes';
-import type { Contract } from './contract';
 
 const DT = 1 / RECORD_HZ;
 const MAX_SAMPLES = 600 * RECORD_HZ;
@@ -12,10 +12,22 @@ export interface LiveGoal {
   judge: () => Promise<ContractResult | null>;
 }
 
-export function liveGoal(contract: Contract, reader: ProbeReader): LiveGoal {
+export function liveGoal(reader: ProbeReader, judge: GoalJudge): LiveGoal {
   const signals: Record<string, number[]> = {};
+  const sent: Record<string, number> = {};
   let start: number | null = null;
   let samples = 0;
+
+  const unsent = (): TraceDelta =>
+    Object.fromEntries(
+      Object.entries(signals).map(([name, trace]) => {
+        const from = sent[name] ?? 0;
+
+        sent[name] = trace.length;
+
+        return [name, trace.slice(from)];
+      }),
+    );
 
   return {
     add(time, poses) {
@@ -30,7 +42,7 @@ export function liveGoal(contract: Contract, reader: ProbeReader): LiveGoal {
     async judge() {
       if (samples < 2) return null;
 
-      return evaluateContract(contract, { dt: DT, signals }).catch(() => null);
+      return judge.judge(DT, unsent());
     },
   };
 }

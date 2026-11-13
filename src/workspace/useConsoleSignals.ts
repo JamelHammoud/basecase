@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import type { CaseConsole } from '../cases/console/format';
 import { createSignalBus, type SignalBus, type SignalSample } from '../cases/console/signalBus';
+import { workerJudge, type GoalJudge } from '../cases/goalJudge';
 import { liveGoal, type LiveGoal } from '../cases/liveGoal';
 import { endPoint } from '../cases/probes';
 import { boundEffector, robotFacts } from '../cases/robotFit';
@@ -66,15 +67,31 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
 
     const { contract, reader, world } = caseWorld({ kase: theCase, model, rig: input.rig, parts: input.parts });
     let goal: LiveGoal | null = null;
+    let judge: GoalJudge | null = null;
+    let judging = false;
     let judged: SignalSample['goal'] = null;
     let lastPush = -Infinity;
+
+    const endGoal = () => {
+      judge?.dispose();
+      judge = null;
+      goal = null;
+      judging = false;
+    };
+
+    const startGoal = () => {
+      judge = workerJudge(contract);
+      goal = liveGoal(reader, judge);
+      judged = null;
+    };
 
     const stop = sim.subscribePoses((poses, frame) => {
       const now = live();
 
-      if (now.running && !goal) judged = null;
+      if (now.running && !goal) startGoal();
 
-      goal = now.running ? (goal ?? liveGoal(contract, reader)) : null;
+      if (!now.running && goal) endGoal();
+
       goal?.add(now.time, poses);
 
       if (now.time - lastPush < PUSH_EVERY_S && now.time >= lastPush) return;
@@ -104,7 +121,15 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
       });
     });
     const timer = setInterval(() => {
-      void goal?.judge().then((result) => {
+      const asked = goal;
+
+      if (!asked || judging) return;
+
+      judging = true;
+      void asked.judge().then((result) => {
+        if (goal !== asked) return;
+
+        judging = false;
         judged = result && { passed: result.passed, margin: result.margin, failed: result.failed };
       });
     }, JUDGE_EVERY_MS);
@@ -112,6 +137,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
     return () => {
       stop();
       clearInterval(timer);
+      endGoal();
     };
   });
 

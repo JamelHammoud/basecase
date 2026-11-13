@@ -18,7 +18,7 @@ export const PlotPanel: React.FC<PanelViewProps<'plot'>> = ({ panel, ctx }) => {
   const y = scaler(extent(lines.flatMap((l) => l.s.v)), [H, 0]);
 
   return (
-    <Titled title={panel.title ?? panel.signals.join(', ')}>
+    <Titled title={panel.title}>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[120px] block" data-testid="plot" data-lines={lines.length}>
         {lines.map((l, i) => (
           <polyline

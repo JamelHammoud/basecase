@@ -14,7 +14,7 @@ Open a Case, then click the expand button in the Brief's header in the Simulate 
 
 ## Built from the Case
 
-A Case can carry a console that says how it runs. It lists its input sources (keys and a gamepad today), any signals of its own, its panels, and a layout of columns with widths, one of which is the canvas. A block game Case can put Time and Score on the left and Try It, Reset and the tries on the right; a rover Case, a big front camera on one side and a map on the other.
+A Case can carry a console that says how it runs. For now it comes with the Case file: you add it to the `.basecase` file by hand, since New Case, the templates and the agent make Cases without one. It lists its input sources (keys and a gamepad today), any signals of its own, its panels, and a layout of columns with widths, one of which is the canvas. A block game Case can put Time and Score on the left and Try It, Reset and the tries on the right; a rover Case, a big front camera on one side and a map on the other.
 
 ![A block game console during a try: Time counting down and Score left of the arm, and Try It, Reset and the running try on the right](/changelog/command-center/console.png)
 

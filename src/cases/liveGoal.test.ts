@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Contract } from './contract';
+import { traceJudge } from './goalJudge';
 import { liveGoal, type LiveGoal } from './liveGoal';
 import type { ProbeReader } from './probes';
 
@@ -30,7 +31,7 @@ const failed = async (goal: LiveGoal) => (await goal.judge())?.failed ?? [];
 
 describe('the live goal', () => {
   it('lists nothing before a try has two samples', async () => {
-    const goal = liveGoal(contract, reader());
+    const goal = liveGoal(reader(), traceJudge(contract));
 
     expect(await failed(goal)).toEqual([]);
     goal.add(3, Float64Array.of(70));
@@ -39,7 +40,7 @@ describe('the live goal', () => {
 
   it('samples at the record rate from the first frame, repeating the newest pose across gaps', () => {
     const probes = reader();
-    const goal = liveGoal(contract, probes);
+    const goal = liveGoal(probes, traceJudge(contract));
 
     goal.add(10, Float64Array.of(1));
     goal.add(10.05, Float64Array.of(2));
@@ -51,7 +52,7 @@ describe('the live goal', () => {
   });
 
   it('names each failure as soon as it happens, so far into the try', async () => {
-    const goal = liveGoal(contract, reader());
+    const goal = liveGoal(reader(), traceJudge(contract));
 
     goal.add(0, Float64Array.of(10));
     goal.add(0.5, Float64Array.of(20));

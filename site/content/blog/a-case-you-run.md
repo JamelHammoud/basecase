@@ -9,4 +9,4 @@ Now a Case opens as a Command Center, and the Case decides what it looks like. I
 
 Everything a panel shows is a named signal: each joint's target, position and effort, the robot's speed and tilt, the Case's probes, the inputs, the contract's verdict so far, and timers, counters and scores the Case defines. Panel kinds live in one registry, so a new kind is one entry and one view.
 
-That's the shape arc #184 needs: one sentence, one Case app. Five consoles from that list, a G1 teleop, a rover, a sorting cell, a block game and a MIDI hexapod, already parse and render; the ones that need the camera, a policy or MIDI are refused until those inputs exist. Every Case file you already have still opens: format 1, unchanged.
+For now a console comes with the Case file: you write it into the `.basecase` file by hand, and New Case, the templates and the agent still make Cases without one. Five consoles, a G1 teleop, a rover, a sorting cell, a block game and a MIDI hexapod, already parse and render; the ones that need the Mac's camera, a policy or MIDI are refused until those inputs exist. Every Case file you already have still opens: format 1, unchanged.

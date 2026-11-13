@@ -1,4 +1,4 @@
-import { useState, type RefObject } from 'react';
+import { useEffect, useState, type RefObject } from 'react';
 import { consoleLayout, DEFAULT_CONSOLE } from '../cases/console/layout';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
@@ -14,6 +14,7 @@ interface CommandCenterInput {
 }
 
 interface Return {
+  caseId: string;
   view: ViewShot | null;
   selection: string[];
 }
@@ -21,27 +22,37 @@ interface Return {
 export function useCommandCenter({ viewportRef, selectedIds, setSelectedIds, simTraining }: CommandCenterInput) {
   const { sim, cases } = simTraining;
   const [back, setBack] = useState<Return | null>(null);
-  const open = back !== null && cases.active !== null;
+  const activeId = cases.active?.id ?? null;
+  const open = back !== null && back.caseId === activeId;
   const caseConsole = cases.active?.console ?? DEFAULT_CONSOLE;
 
   const enter = () => {
     if (open || !cases.active) return;
 
-    setBack({ view: viewportRef.current?.currentView() ?? null, selection: selectedIds });
-    sim.drive.setInputs(caseConsole.input);
+    setBack({ caseId: cases.active.id, view: viewportRef.current?.currentView() ?? null, selection: selectedIds });
   };
 
   const leave = () => {
-    if (!back) return;
+    if (!open || !back) return;
 
     if (sim.drive.active) sim.drive.stop();
 
-    sim.drive.setInputs(null);
     setBack(null);
     setSelectedIds(back.selection);
 
     if (back.view) viewportRef.current?.lookThrough(back.view);
   };
+
+  const inputs = open ? caseConsole.input : null;
+  const { setInputs } = sim.drive;
+
+  useEffect(() => {
+    if (!inputs) return;
+
+    setInputs(inputs);
+
+    return () => setInputs(null);
+  }, [inputs, setInputs]);
 
   const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO });
 

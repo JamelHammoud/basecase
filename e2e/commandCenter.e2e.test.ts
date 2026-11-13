@@ -11,7 +11,8 @@ let app: App;
 interface SimState {
   drive: string;
   activeCase: string | null;
-  tries: Array<{ passed: boolean }>;
+  caseSeconds: number | null;
+  tries: Array<{ passed: boolean; seconds: number }>;
 }
 
 type Studio = {
@@ -118,10 +119,13 @@ describe('Command Center', () => {
 
     await inPanel('tries', 'Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-    await inPanel('tries', 'End Try')
-      .click({ timeout: 2000 })
-      .catch(() => undefined);
+    await inPanel('tries', 'End Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+
+    const ended = await simState();
+
+    expect(ended.tries[0].seconds).toBeLessThan(ended.caseSeconds! - 1);
+
     await expect.poll(() => panel('tries').getByTestId('try-row').count()).toBe(1);
     await expect.poll(async () => (await simState()).drive).toBe('off');
 
@@ -176,10 +180,12 @@ describe('Command Center', () => {
       Number.parseFloat((await panel('score').locator('[data-signal="score"]').textContent()) ?? ''),
     ).toBeGreaterThan(0);
 
-    await inPanel('tries', 'End Try')
-      .click({ timeout: 2000 })
-      .catch(() => undefined);
+    await inPanel('tries', 'End Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+
+    const ended = await simState();
+
+    expect(ended.tries[0].seconds).toBeLessThan(ended.caseSeconds! - 1);
 
     await inPanel('reset', 'Reset').click();
     await expect.poll(() => clock.textContent()).toBe('60.0 s');

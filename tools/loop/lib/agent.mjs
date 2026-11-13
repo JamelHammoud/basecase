@@ -4,10 +4,13 @@ import path from 'node:path';
 import { BRIEFS } from './paths.mjs';
 import { run } from './sh.mjs';
 
+const TELLING = new Set(['build', 'refine']);
+
 export const brief = (name) =>
   [
     fs.readFileSync(path.join(BRIEFS, 'shared.md'), 'utf8'),
     fs.readFileSync(path.join(BRIEFS, `${name}.md`), 'utf8'),
+    ...(TELLING.has(name) ? [fs.readFileSync(path.join(BRIEFS, 'telling.md'), 'utf8')] : []),
   ].join('\n\n');
 
 const lastResult = (out) => {
@@ -82,7 +85,7 @@ export const CHANGE_SCHEMA = {
     why: text('One or two sentences: the reason, from the arc, the bug or the failure'),
     cause: text('For fix and repair: the root cause and how it was reproduced; else empty'),
     checked: text('How it was checked: tests added, commands run, rates measured'),
-    changelog: text('One changelog line if users can see the change, else empty'),
+    changelog: text('One changelog line only if the change is worth announcing (see telling.md), else empty'),
     screenshots: { type: 'array', items: text('Repo path of a committed screenshot on this branch') },
     copy: {
       type: 'array',

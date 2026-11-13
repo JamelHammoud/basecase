@@ -8,6 +8,12 @@ const withBase64Files = (got) => ({
   files: Object.fromEntries(Object.entries(got.files).map(([k, v]) => [k, Buffer.from(v).toString('base64')])),
 });
 
+async function openCadFile(backend, { name, data }) {
+  const opened = await backend.openCadFile({ name, bytes: new Uint8Array(Buffer.from(String(data), 'base64')) });
+
+  return { ...opened, data: Buffer.from(opened.data).toString('base64') };
+}
+
 const searchParam = (url, name) => new URL(url, 'http://x').searchParams.get(name);
 
 function getRoutes(backend) {
@@ -49,6 +55,7 @@ function postRoutes(backend) {
     ['/sourced-save', (p) => backend.saveSourced(p)],
     ['/sourced-remove', (p) => backend.removeSourced(p.id)],
     ['/sourced-import-cad', (p) => backend.importMakerCad(p)],
+    ['/cad-open', (p) => openCadFile(backend, p)],
     ['/chat-save', (p) => backend.saveConversation(p)],
     ['/chat-delete', (p) => backend.deleteConversation(p.id)],
     ['/acp-cancel', (p) => backend.cancelAcpPrompt(p.workspaceId)],

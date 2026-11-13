@@ -13,6 +13,20 @@ import {
 } from '../../types/robotics';
 import type { ConvertedFiles, ConvertedModel } from '../robotImport/simready';
 
+export interface CadBody {
+  name: string;
+  color: string;
+  center: [number, number, number];
+  size: [number, number, number];
+  vertices: number;
+  triangles: number;
+}
+
+export interface OpenedCad {
+  bodies: CadBody[];
+  data: Uint8Array;
+}
+
 export interface AcpPromptPayload {
   action: 'image-to-3d' | 'generate-part' | 'build';
   workspaceId?: string;
@@ -149,6 +163,7 @@ declare global {
       removeSourced: (id: string) => Promise<SourcedItem[]>;
       sourcedMesh: (id: string) => Promise<Uint8Array | null>;
       importMakerCad: (payload: unknown) => Promise<{ item: SourcedItem; members: string[]; mismatch: string | null }>;
+      openCadFile: (payload: { name: string; bytes: Uint8Array }) => Promise<OpenedCad>;
       savePurchase: (payload: {
         key: string;
         record: PurchaseRecord | null;

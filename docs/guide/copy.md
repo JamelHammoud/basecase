@@ -98,6 +98,8 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 
 Run it locally with `node tools/check-copy-budget.mjs origin/main..HEAD` (`PR_BODY` holds the body). Check runs on pushes, not on body edits, so a `copy:` line added to the body afterwards counts only once another commit is pushed; a reason belongs in the answer's `copy` field from the start.
 
+**The count.** `node tools/copy-diff.mjs [base] [head]` lists the strings a change adds, changes and removes, and its net (`Copy: 2 added, 1 changed, 1 removed, net +1`), from the same extractor (`tools/copy/extract.mjs`). A removed string and an added one in the same file and position (both JSX text, both a `title`, both a `showToast` argument…) count as one changed string. With no arguments it compares your working tree, uncommitted work included, to where it forked from `origin/main`, so run it before you finish. The review lane runs it on every pull request and puts the list in its prompt and comment (Loop, §0l).
+
 ### 3e. Reference examples
 
 Celebrated product copy and what it teaches:

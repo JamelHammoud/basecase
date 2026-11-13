@@ -58,12 +58,12 @@ describe('extractStrings', () => {
     expect(texts(source, 'src/workspace/sceneCommands.tsx')).toEqual(['Reopen Closed Scene']);
   });
 
-  it('reports the line of each string', () => {
+  it('reports the line and kind of each string', () => {
     const source = `const C = () => (\n  <div>\n    <p>First</p>\n    <p title="Second" />\n  </div>\n);`;
 
     expect(extractStrings(source, 'src/C.tsx')).toEqual([
-      { text: 'First', line: 3 },
-      { text: 'Second', line: 4 },
+      { text: 'First', kind: 'text', line: 3 },
+      { text: 'Second', kind: 'title', line: 4 },
     ]);
   });
 });

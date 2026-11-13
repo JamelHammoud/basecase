@@ -1,5 +1,4 @@
 import React from 'react';
-import { Kbd } from '../design-system';
 
 export const SettingsGroup: React.FC<{ title?: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="mb-[24px] last:mb-0">
@@ -11,20 +10,16 @@ export const SettingsGroup: React.FC<{ title?: string; children: React.ReactNode
 export const SettingsRow: React.FC<{
   label: React.ReactNode;
   hint?: React.ReactNode;
-  shortcut?: string;
   stacked?: boolean;
   children?: React.ReactNode;
-}> = ({ label, hint, shortcut, stacked = false, children }) => (
+}> = ({ label, hint, stacked = false, children }) => (
   <div
     className={`px-[16px] py-[10px] min-h-[52px] ${
       stacked ? 'flex flex-col gap-[10px]' : 'flex items-center justify-between gap-[24px]'
     }`}
   >
     <div className="min-w-0">
-      <div className="flex items-center gap-[8px] text-[13.5px] text-white/90">
-        {label}
-        {shortcut && <Kbd>{shortcut}</Kbd>}
-      </div>
+      <div className="flex items-center gap-[8px] text-[13.5px] text-white/90">{label}</div>
       {hint && !stacked && <Hint>{hint}</Hint>}
     </div>
     {children && <div className={stacked ? 'min-w-0' : 'shrink-0 flex items-center'}>{children}</div>}

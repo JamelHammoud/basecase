@@ -163,7 +163,7 @@ function displayCommands({ core, ui, actions }: CommandInputs): Command[] {
       label: 'Currency Settings',
       icon: <SettingsIcon className={ic} />,
       keywords: 'currency money price budget euro pound yen dollar region',
-      run: () => studio.openSettings('region'),
+      run: () => studio.openSettings('build'),
     },
     {
       id: 'shortcuts',

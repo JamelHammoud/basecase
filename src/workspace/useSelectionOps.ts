@@ -1,14 +1,14 @@
-import { buildPartGroup } from '../three/buildPartMesh';
-import { runSceneBooleanCSG } from '../three/sculptAndBooleanEngine';
-import type { ScenePart } from '../types/robotics';
+import { evaluateBoolean } from '../booleans/evaluate';
+import { booleanHash } from '../booleans/hash';
+import { booleanPart, findPartDeep, freshOperandIds, withResult } from '../booleans/parts';
+import type { BooleanOp, ScenePart } from '../types/robotics';
 import { hardwareCutoutParts } from '../utils/hardwareCutouts';
 import { boundsOverlap } from '../utils/selection';
-import { booleanRecipe } from './stepSolids';
 import { newId, partLabel } from './helpers';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-export type BooleanOp = 'subtract' | 'union' | 'intersect';
+export type { BooleanOp } from '../types/robotics';
 
 const BOOLEAN_DONE: Record<BooleanOp, string> = { subtract: 'Subtracted', union: 'Merged', intersect: 'Intersected' };
 
@@ -25,7 +25,7 @@ export function duplicateParts(parts: ScenePart[]): ScenePart[] {
   };
 
   return parts.map((p) => ({
-    ...p,
+    ...freshOperandIds(p, () => newId()),
     id: newId(),
     name: parts.length === 1 ? `${p.name} Copy` : p.name,
     group: copyGroup(p.group),
@@ -45,6 +45,8 @@ export function clearanceCutouts(sources: ScenePart[]): ScenePart[] {
   });
 }
 
+const unchangedSince = (parts: ScenePart[], used: ScenePart[]) => used.every((p) => findPartDeep(parts, p.id) === p);
+
 function booleanOperands(base: ScenePart, solids: ScenePart[], op: BooleanOp, parts: ScenePart[]) {
   const operands = solids.slice(1);
 
@@ -57,21 +59,6 @@ function booleanOperands(base: ScenePart, solids: ScenePart[], op: BooleanOp, pa
   return cutouts.length
     ? { operands: cutouts }
     : { error: 'Nothing to subtract. Overlap a Cutout or Shift-click a part.' };
-}
-
-export function combinedPart(base: ScenePart, operands: ScenePart[], op: BooleanOp): ScenePart | null {
-  const res = runSceneBooleanCSG(base, operands, op, (p) => buildPartGroup(p, false));
-
-  if (!res) return null;
-
-  const recipe = booleanRecipe(op, [base, ...operands], res);
-
-  return {
-    ...res,
-    name: op === 'subtract' ? base.name : `${base.name} ${op === 'union' ? 'Union' : 'Intersect'}`,
-    group: operands.every((o) => o.group?.id === base.group?.id) ? base.group : undefined,
-    ...(recipe ? { csg: recipe } : {}),
-  };
 }
 
 export function useSelectionOps({ docs, parts, selection, setSelectedIds, showToast, undo }: WorkspaceCore) {
@@ -113,7 +100,7 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
     removeSelected('Deleted');
   };
 
-  const runBoolean = (op: BooleanOp) => {
+  const combine = async (op: BooleanOp) => {
     const solids = selectedParts.filter((p) => p.kind !== 'image_plane');
     const base = solids[0];
 
@@ -123,27 +110,35 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
       return;
     }
 
-    const { operands, error } = booleanOperands(base, solids, op, parts);
+    const { operands: tools, error } = booleanOperands(base, solids, op, parts);
 
-    if (!operands) {
+    if (!tools) {
       showToast(error, { tone: 'error' });
 
       return;
     }
 
-    const result = combinedPart(base, operands, op);
+    const draft = booleanPart({ id: base.id, base: { ...base, id: newId() }, tools, op });
+    const evaluated = await evaluateBoolean(draft);
 
-    if (!result) {
+    if (!evaluated) {
       showToast('Those parts don’t overlap', { tone: 'error' });
 
       return;
     }
 
-    const operandIds = new Set(operands.map((o) => o.id));
+    if (!unchangedSince(docs.partsRef.current, [base, ...tools])) return;
 
-    commitParts((prev) => prev.filter((p) => !operandIds.has(p.id)).map((p) => (p.id === base.id ? result : p)));
+    const result = withResult(draft, booleanHash(draft), evaluated);
+    const toolIds = new Set(tools.map((o) => o.id));
+
+    commitParts((prev) => prev.filter((p) => !toolIds.has(p.id)).map((p) => (p.id === base.id ? result : p)));
     setSelectedIds([result.id]);
     showToast(BOOLEAN_DONE[op], { action: undoAction });
+  };
+
+  const runBoolean = (op: BooleanOp) => {
+    void combine(op);
   };
 
   const addClearanceHole = () => {

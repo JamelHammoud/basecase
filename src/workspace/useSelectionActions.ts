@@ -1,3 +1,4 @@
+import { findPartDeep } from '../booleans/parts';
 import type { ScenePart, TransformMode } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { expandToGroups } from '../utils/selection';
@@ -35,7 +36,7 @@ export function useSelectionActions({
       return;
     }
 
-    const part = parts.find((p) => p.id === id);
+    const part = findPartDeep(parts, id);
     const unit = part?.group ? expandToGroups(parts, [id]) : [id];
 
     setSelectedIds((prev) => clickSelection(prev, id, unit, { additive, drill }));
@@ -54,9 +55,9 @@ export function useSelectionActions({
     setSelectedIds((prev) => addIds(prev, withGroups));
   };
 
-  const selectedParts = selectedIds.map((id) => parts.find((p) => p.id === id)).filter((p): p is ScenePart => !!p);
+  const selectedParts = selectedIds.map((id) => findPartDeep(parts, id)).filter((p): p is ScenePart => !!p);
   const selectedPartId = selectedIds.length === 1 ? selectedIds[0] : null;
-  const selectedPart = parts.find((p) => p.id === selectedPartId) || null;
+  const selectedPart = (selectedPartId && findPartDeep(parts, selectedPartId)) || null;
 
   return { select, selectAll, selectIds, marqueeSelect, selectedParts, selectedPartId, selectedPart };
 }

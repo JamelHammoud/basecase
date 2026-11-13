@@ -7,6 +7,7 @@ import type { SkillRow } from '../skills/skillRows';
 import type { Training } from '../sim/useTraining';
 import type { Rig } from '../utils/kinematics';
 import type { Cases } from '../workspace/useCases';
+import type { ShareRobot } from '../workspace/useShareRobot';
 import type { SceneSkills } from '../workspace/useSkills';
 import { CaseSection, TrySection } from './simulate/CaseSections';
 import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
@@ -18,6 +19,7 @@ interface SimulatePanelProps {
   sim: Simulation;
   training: Training;
   cases: Cases;
+  share: ShareRobot;
   rig: Rig;
   parts: ScenePart[];
   animations: RobotAnimation[];
@@ -39,7 +41,7 @@ function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTea
 
 export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy, onNewCase } = props;
-  const { skills, onTeach } = props;
+  const { skills, onTeach, share } = props;
   const walk = useWalkTeaching(skills, onTeach);
   const skillActions = {
     onTrain: (row: SkillRow) =>
@@ -97,10 +99,16 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         />
         <ResultsSection
           cases={cases}
+          rig={rig}
+          share={share}
           model={sim.model}
           parts={parts}
           world={sim.worldParts}
-          run={on && sim.stats && sim.model ? { stats: sim.stats, model: sim.model, rig, onSelectParts } : null}
+          run={
+            on && sim.stats && sim.model
+              ? { stats: sim.stats, model: sim.model, rig, onSelectParts, onFault: sim.setFault }
+              : null
+          }
         />
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}

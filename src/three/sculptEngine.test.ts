@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import type { SculptSettings } from '../types/robotics';
-import { applyDeformersToBufferGeometry, sculptStroke, tessellateGeometryForSculpting } from './sculptAndBooleanEngine';
+import { applyDeformersToBufferGeometry, sculptStroke, tessellateGeometryForSculpting } from './sculptEngine';
 
 const box = () => tessellateGeometryForSculpting(new THREE.BoxGeometry(20, 30, 10, 4, 4, 4), 1);
 const positions = (g: THREE.BufferGeometry) => Array.from(g.getAttribute('position').array as Float32Array);

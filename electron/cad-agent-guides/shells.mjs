@@ -25,6 +25,9 @@ ${indent(EGG_HEAD)}
 - Seams: split a shell along its removal direction (check_assembly suggests the plane), show the
   split as a 0.3–0.6 mm reveal or a lip, and put bosses for the seam screws on the inside
   (find_recipes "shell seam").
+- A character mesh the user imported (an owl, a droid body) over a jointed robot: wrap_robot
+  turns it into one hollow shell per link that clears every joint's range, instead of modelling
+  the shells by hand.
 Check each shell with compare at the photo's angle and check the returned bounding box; a big
 drop in hull volume or a rising body count means a boolean went wrong.`,
 };

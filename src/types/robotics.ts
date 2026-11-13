@@ -8,8 +8,10 @@ import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
 import type { CalibrationHistory } from '../reality/history';
-import type { BooleanRecipe } from './step';
+import type { BooleanFields } from './booleans';
 import type { SculptMeshData } from './sculpt';
+
+export type { BooleanData, BooleanFrame, BooleanOp } from './booleans';
 
 export type PartCategory =
   | 'custom_models'
@@ -42,6 +44,7 @@ export type PartKind =
   | 'cad_part'
   | 'component'
   | 'mesh'
+  | 'boolean'
   | 'servo'
   | 'stepper_motor'
   | 'hinge_joint'
@@ -122,7 +125,7 @@ export interface CustomModelDefinition {
   nodes: CustomModelSubNode[];
 }
 
-export interface ScenePart extends PartRelations {
+export interface ScenePart extends PartRelations, BooleanFields {
   id: string;
   name: string;
   kind: PartKind;
@@ -171,7 +174,6 @@ export interface ScenePart extends PartRelations {
   simready?: { url: string; name: string; maker: string; license: string };
   physics?: { dynamic: boolean; friction?: number };
   group?: PartGroup;
-  csg?: BooleanRecipe;
   printMaterial?: PrintMaterial;
   print?: PartPrint;
   jointId?: string;

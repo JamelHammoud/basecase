@@ -1,6 +1,7 @@
 import type { AcpStatusInfo, CustomModelDefinition, PurchaseRecord } from '../../../types/robotics';
 import type { TrainerStatus } from '../types';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
+import { trainedPolicy, trainedSkill } from './webTrained';
 import { deleteScene, getScene, listScenes, saveScene, saveScenePreview } from './webScenes';
 
 type Body = Record<string, unknown>;
@@ -91,9 +92,9 @@ const ROUTES: Record<string, Route> = {
   'save-scene-preview': (b) => saveScenePreview(b as { id: string }),
   'delete-scene': (b) => deleteScene(String(b.sceneId)),
   'train-status': () => TRAINER,
-  policy: () => null,
+  policy: (_, params) => trainedPolicy(params.get('id') ?? ''),
   'policy-delete': () => false,
-  skill: () => null,
+  skill: (_, params) => trainedSkill(params.get('hash') ?? ''),
   'simready-status': () => ({ uv: false, ready: false }),
   'simready-file': () => ({ data: null }),
   'print-status': () => ({ slicers: [], downloads: {}, bambuConnect: false }),

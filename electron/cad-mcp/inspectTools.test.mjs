@@ -96,12 +96,13 @@ describe('check_scene', () => {
     expect(text).toContain('No issues found.');
   });
 
-  it("doesn't call batteries, sculpts or custom models block-outs, but does a plain box", async () => {
+  it("doesn't call batteries, sculpts, custom models or booleans block-outs, but does a plain box", async () => {
     const text = await check([
       box('battery', [0, 0, 0], [10, 10, 10], { kind: 'box', supply: 'supply:lipo-3s-2200' }),
       box('sculpted', [10, 0, 0], [20, 10, 10], { kind: 'sculpt_mesh' }),
       box('logo', [20, 0, 0], [30, 10, 10], { kind: 'custom_model' }),
       box('stand-in', [30, 0, 0], [40, 10, 10], { kind: 'box' }),
+      box('bracket', [40, 0, 0], [50, 10, 10], { kind: 'boolean (subtract)' }),
     ]);
 
     expect(text).toContain(

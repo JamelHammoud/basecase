@@ -1,15 +1,22 @@
 import { useEffectEvent, useLayoutEffect, useRef } from 'react';
+import { findPartDeep, parentBoolean } from '../../booleans/parts';
 import type { ScenePart } from '../../types/robotics';
 
 const findRow = (scroller: HTMLElement, key: string) =>
   scroller.querySelector<HTMLElement>(`[data-layer-row="${CSS.escape(key)}"]`);
 
-const rowFor = (scroller: HTMLElement, part: ScenePart) => {
-  const row = findRow(scroller, `part:${part.id}`);
+const rowFor = (scroller: HTMLElement, parts: ScenePart[], id: string): HTMLElement | null => {
+  const row = findRow(scroller, `part:${id}`);
 
-  if (row || !part.group) return row;
+  if (row) return row;
 
-  return findRow(scroller, `group:${part.group.id}`);
+  const parent = parentBoolean(parts, id);
+
+  if (parent) return rowFor(scroller, parts, parent.id);
+
+  const group = parts.find((p) => p.id === id)?.group;
+
+  return group ? findRow(scroller, `group:${group.id}`) : null;
 };
 
 const centerRow = (scroller: HTMLElement, row: HTMLElement) => {
@@ -25,11 +32,10 @@ export const useRevealSelection = (parts: ScenePart[], primaryId: string | undef
   const scrollerRef = useRef<HTMLDivElement>(null);
   const reveal = useEffectEvent(() => {
     const scroller = scrollerRef.current;
-    const part = parts.find((p) => p.id === primaryId);
 
-    if (!scroller || !part) return;
+    if (!scroller || !primaryId || !findPartDeep(parts, primaryId)) return;
 
-    const row = rowFor(scroller, part);
+    const row = rowFor(scroller, parts, primaryId);
 
     if (row) centerRow(scroller, row);
   });

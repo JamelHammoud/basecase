@@ -30,6 +30,7 @@ export interface WorkspaceSeed {
   chat?: LaneChat;
   blank?: boolean;
   unsaved?: boolean;
+  playCase?: string;
 }
 
 export interface WorkspaceMeta {

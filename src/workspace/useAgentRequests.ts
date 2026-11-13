@@ -15,6 +15,7 @@ import type { AgentCursors } from './useAgentCursors';
 import type { AgentLanes } from './useAgentLanes';
 import type { LaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
+import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 type Payload = Record<string, unknown>;
@@ -28,6 +29,7 @@ interface AgentRequestOptions {
   actors: ActorIndex;
   cursors: AgentCursors;
   robots: RobotInsert;
+  wrap: WrapRobot;
 }
 
 interface Author {
@@ -53,7 +55,7 @@ function firstDelivery(requestId: string) {
   return true;
 }
 
-export function useAgentRequests({ core, lanes, controls, actors, cursors, robots }: AgentRequestOptions) {
+export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
   const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
@@ -70,6 +72,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       selectedIds,
       setAction,
       importRobot: robots.importRobotFrom,
+      wrap: wrap.wrap,
     });
 
   const simTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>

@@ -76,6 +76,7 @@ const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'posedFloor',
   'meshGaps',
   'restBounds',
+  'restShapes',
   'silhouetteShots',
   'measureParts',
   'visibleShares',
@@ -340,6 +341,7 @@ export class ViewportEngine {
       posedFloor: (ids) => floorIn(snapshotShapes(measure.floorObjects(ctx, ids))),
       meshGaps: (pairs, withinMm) => gapsIn(restShapes([...new Set(pairs.flat())]), pairs, withinMm),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
+      restShapes: (ids) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids))),
       silhouetteShots: (specs, opts) =>
         unbatched(() => silhouetteShots(ctx, { specs, ...opts, helper: this.gizmo.controls.getHelper() })),
       measureParts: (ids) => measuresIn(restShapes(ids)),

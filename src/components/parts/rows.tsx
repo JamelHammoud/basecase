@@ -87,7 +87,7 @@ export const ResultRow: React.FC<{
       </button>
       <AddButton
         onAdd={onAdd}
-        className={`absolute right-2 top-1/2 -translate-y-1/2 transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+        className={`absolute right-2 top-1/2 -translate-y-1/2 transition-opacity ${active ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto'}`}
       />
     </div>
   );

@@ -25,7 +25,7 @@ const FIT_TONE: Record<FitRow['state'], string> = {
 interface BriefProps {
   cases: Cases;
   onOpenCommandCenter?: () => void;
-  failed?: string[];
+  inCenter?: boolean;
 }
 
 const BriefActions: React.FC<{ cases: Cases; onOpenCommandCenter?: () => void }> = ({ cases, onOpenCommandCenter }) => (
@@ -47,9 +47,8 @@ const BriefActions: React.FC<{ cases: Cases; onOpenCommandCenter?: () => void }>
   </>
 );
 
-export const BriefSection: React.FC<BriefProps> = ({ cases, onOpenCommandCenter, failed }) => {
+export const BriefSection: React.FC<BriefProps> = ({ cases, onOpenCommandCenter, inCenter = false }) => {
   const kase = cases.active!;
-  const inCenter = failed !== undefined;
 
   return (
     <Section
@@ -59,13 +58,6 @@ export const BriefSection: React.FC<BriefProps> = ({ cases, onOpenCommandCenter,
       <div className="flex flex-col gap-1" data-testid="case-brief">
         {!inCenter && <div className="text-[14px] font-medium text-white/90">{kase.name}</div>}
         <p className="text-[13px] leading-snug text-white/70">{kase.brief}</p>
-        {!!failed?.length && (
-          <ul className="flex flex-col gap-1 text-[13px] text-[#f87171]" aria-live="polite" data-testid="goal-failed">
-            {failed.map((label) => (
-              <li key={label}>{label}</li>
-            ))}
-          </ul>
-        )}
       </div>
     </Section>
   );

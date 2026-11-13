@@ -52,7 +52,7 @@ export function commandFromPad(pad: PadState, cls: DriveClass): DriveCommand {
   return { v: [forward, side, right] };
 }
 
-const isIdle = (c: DriveCommand) => c.v.every((x) => x === 0) && (c.aux ?? []).every((x) => x === 0);
+export const isIdle = (c: DriveCommand) => c.v.every((x) => x === 0) && (c.aux ?? []).every((x) => x === 0);
 
 export const mergeCommands = (keys: DriveCommand, pad: DriveCommand | null): DriveCommand =>
   pad && !isIdle(pad) ? pad : keys;

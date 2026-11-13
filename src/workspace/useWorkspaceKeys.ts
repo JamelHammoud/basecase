@@ -112,9 +112,8 @@ function useKeyMaps({ core, actions, ui }: Omit<KeyOptions, 'active'>) {
   };
 
   const center: KeyMap = { escape: core.commandCenter.leave };
-  const centerWithMod: KeyMap = { b: withMod.b, i: withMod.i };
 
-  return { global, withMod, plain, center, centerWithMod };
+  return { global, withMod, plain, center };
 }
 
 export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
@@ -147,9 +146,11 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
   };
 
   const runScoped = (e: KeyboardEvent, key: string, mod: boolean) => {
-    if (core.commandCenter.open) runKey(mod ? maps.centerWithMod : maps.center, key, e, true);
-    else if (mod) runKey(maps.withMod, key, e, true);
-    else if (!e.altKey && !core.printing.mode) runPlain(e, key);
+    const center = core.commandCenter.open;
+
+    if (center && !mod) runKey(maps.center, key, e, true);
+    else if (!center && mod) runKey(maps.withMod, key, e, true);
+    else if (!center && !e.altKey && !core.printing.mode) runPlain(e, key);
   };
 
   const onKeyDown = useEffectEvent((e: KeyboardEvent) => {

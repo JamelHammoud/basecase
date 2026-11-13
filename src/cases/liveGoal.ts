@@ -1,5 +1,5 @@
 import { RECORD_HZ } from '../sim/recorder';
-import { evaluateContract } from '../skills/contract';
+import { evaluateContract, type ContractResult } from '../skills/contract';
 import type { ProbeReader } from './probes';
 import type { Contract } from './contract';
 
@@ -8,7 +8,8 @@ const MAX_SAMPLES = 600 * RECORD_HZ;
 
 export interface LiveGoal {
   add: (time: number, poses: Float64Array) => void;
-  failed: () => Promise<string[]>;
+  probes: () => Record<string, number>;
+  judge: () => Promise<ContractResult | null>;
 }
 
 export function liveGoal(contract: Contract, reader: ProbeReader): LiveGoal {
@@ -25,12 +26,11 @@ export function liveGoal(contract: Contract, reader: ProbeReader): LiveGoal {
         samples++;
       }
     },
-    async failed() {
-      if (samples < 2) return [];
+    probes: () => Object.fromEntries(Object.entries(signals).map(([name, trace]) => [name, trace.at(-1) ?? 0])),
+    async judge() {
+      if (samples < 2) return null;
 
-      const result = await evaluateContract(contract, { dt: DT, signals }).catch(() => null);
-
-      return result?.failed ?? [];
+      return evaluateContract(contract, { dt: DT, signals }).catch(() => null);
     },
   };
 }

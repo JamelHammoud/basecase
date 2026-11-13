@@ -17,6 +17,10 @@ import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
 
 export { simDeltas } from './mjcf';
 
+export interface SimFrame {
+  joints: Float64Array;
+}
+
 export type SimStatus = 'off' | 'loading' | 'ready' | 'error';
 
 export interface SimRun {
@@ -53,7 +57,7 @@ export interface Simulation {
   stopRecording: () => Promise<Recording | null>;
   replay: (r: Recording) => void;
   worldParts: ScenePart[];
-  subscribePoses: (listen: (poses: Float64Array) => void) => () => void;
+  subscribePoses: (listen: (poses: Float64Array, frame: SimFrame) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
   setWorld: (items: WorldItem[]) => void;
   buildModel: () => Promise<SimModel>;

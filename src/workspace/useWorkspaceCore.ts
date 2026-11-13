@@ -130,7 +130,7 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     showReferenceImages: studio.showReferenceImages,
   });
 
-  const commandCenter = useCommandCenter({ viewportRef, selectedIds, setSelectedIds, studio, simTraining });
+  const commandCenter = useCommandCenter({ viewportRef, selectedIds, setSelectedIds, simTraining });
 
   const { travel } = docs;
   const { restorePose } = posing;

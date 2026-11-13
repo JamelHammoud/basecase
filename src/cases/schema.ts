@@ -1,7 +1,7 @@
 import type { PartKind, ScenePart } from '../types/robotics';
 import type { WorldBehavior, WorldItem } from '../sim/mjcfTypes';
 import type { V3 } from '../utils/kinematics';
-import { readConsole, type CaseConsole } from './console';
+import { consoleReader, type CaseConsole } from './console/format';
 import { readContract, type Contract } from './contract';
 import {
   asId,
@@ -209,7 +209,9 @@ export function parseCase(input: unknown): Case {
   const world = asRecord(v.world, 'world');
   const reference = asRecord(v.reference, 'reference');
   const objects = readWorldObjects(world.objects);
-  const caseConsole = optional(readConsole, v.console, 'console');
+
+  const task = readTask(v.task, 'task');
+  const caseConsole = optional(consoleReader(task.probes.map((p) => p.signal)), v.console, 'console');
 
   return {
     formatVersion: CASE_FORMAT_VERSION,
@@ -220,7 +222,7 @@ export function parseCase(input: unknown): Case {
     world: { objects },
     controls: listOf(readControl, 16)(v.controls, 'controls'),
     reference: { timeline: listOf(readCommand, MAX_COMMANDS)(reference.timeline, 'reference.timeline') },
-    task: readTask(v.task, 'task'),
+    task,
     ...(caseConsole ? { console: caseConsole } : {}),
   };
 }

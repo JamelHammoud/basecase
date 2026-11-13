@@ -1,0 +1,36 @@
+import React from 'react';
+import { ResultsSection } from '../../simulate/ResultsSection';
+import { TrySection } from '../../simulate/CaseSections';
+import { useBus, type PanelViewProps } from '../panelContext';
+import { Titled } from './PanelTitle';
+
+const Failures: React.FC<PanelViewProps<'list'>> = ({ panel, ctx }) => {
+  useBus(ctx.bus);
+
+  const failed = ctx.bus.read('goal.failed');
+
+  if (!Array.isArray(failed) || !failed.length) return null;
+
+  return (
+    <Titled title={panel.title}>
+      <ul className="flex flex-col gap-1 text-[13px] text-[#f87171]" aria-live="polite" data-testid="goal-failed">
+        {failed.map((label) => (
+          <li key={label}>{label}</li>
+        ))}
+      </ul>
+    </Titled>
+  );
+};
+
+export const ListPanel: React.FC<PanelViewProps<'list'>> = (props) => {
+  const { panel, ctx } = props;
+
+  if (panel.of === 'failures') return <Failures {...props} />;
+
+  return (
+    <>
+      <TrySection cases={ctx.cases} teachWalk={null} cls={ctx.sim.drive.cls} />
+      <ResultsSection cases={ctx.cases} model={ctx.sim.model} parts={ctx.parts} world={ctx.sim.worldParts} />
+    </>
+  );
+};

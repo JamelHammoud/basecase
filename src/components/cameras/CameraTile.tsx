@@ -3,7 +3,7 @@ import { lensLabel } from '../../cameras/lens';
 import type { CameraView } from '../../cameras/views';
 import { RenameField } from '../pose/RenameField';
 
-interface CameraTileProps {
+export interface CameraTileProps {
   view: CameraView;
   large: boolean;
   fill?: boolean;

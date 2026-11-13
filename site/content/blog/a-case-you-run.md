@@ -5,8 +5,8 @@ date: 2026-11-13
 
 A Case in Basecase is a world and a goal a robot tries in simulation. Until now, running one with a robot connected meant three places at once: the Case and its tries in the Simulate tab, the emulated robot in Operate, and the camera views floating over the canvas.
 
-Now a Case opens as a Command Center. Click the expand button in its Brief, or choose Open Command Center in ⌘K, and the window becomes the Case's app: the robot on the canvas, its cameras in a card on the left, and on the right the brief, the emulated servos with their rung and Stop, and Try It with every try under it. While you drive, anything the Case counts as a failure shows up in red as it happens. Done or Esc puts the studio back exactly as it was.
+Now a Case opens as a Command Center, and the Case decides what it looks like. Its console names the inputs that drive it, the panels it shows and where they sit around the canvas. A teleop Case can show its cameras and a table of joint angles; a game can show a countdown, a score and a Reset button; a rover can show its front camera and a map with its trail. A Case without a console opens with its cameras, brief, servos and tries, the way a teleop session needs them.
 
-Nothing in it is new code drawing the same thing twice. The tiles are the camera strip's, fed by the same worker; the servos are Operate's rows; the tries are Results. There's still one canvas and one scene.
+Everything a panel shows is a named signal: each joint's target, position and effort, the robot's speed and tilt, the Case's probes, the inputs, the contract's verdict so far, and timers, counters and scores the Case defines. Panel kinds live in one registry, so a new kind is one entry and one view.
 
-A Case file can now say how it runs: its input, keys or gamepad, and which panels it opens with. That's the start of asking the agent for a whole Case app in one sentence. The Command Center keeps every Case file you already have working: format 1, unchanged.
+That's the shape arc #184 needs: one sentence, one Case app. Five consoles from that list, a G1 teleop, a rover, a sorting cell, a block game and a MIDI hexapod, already parse and render; the ones that need the camera, a policy or MIDI are refused until those inputs exist. Every Case file you already have still opens: format 1, unchanged.

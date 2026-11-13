@@ -19,7 +19,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Tools: V/E/R/C/M, D measure, N annotate, A shapes. P opens the Pose tab.
   - Placement and view: F floor, S stack, Z zoom, 1–4 views, ⇧I reference images, ⇧V camera views.
   - Edit: ⌘Z / ⇧⌘Z, ⌘C / ⌘X / ⌘V, ⌘D, ⌫, ⌘A select all, ⌘G / ⇧⌘G group, Esc (closes draft → thread → comment mode → measurement → Measure tool → selection).
-  - Command Center (§8h): Esc leaves (the first Esc stops driving), ⌘B / ⌘I collapse its cards, ⌘K and ⌘, work; no editing key runs. In ⌘K there, every command but Drive, Stop Driving, Start Over, Try ⟨Case⟩, Export Dataset and Publish to Hugging Face leaves the Center first.
+  - Command Center (§8h): Esc leaves (the first Esc stops driving), ⌘K and ⌘, work; no editing or panel key runs. In ⌘K there, every command but Drive, Stop Driving, Start Over, Try ⟨Case⟩, Export Dataset and Publish to Hugging Face leaves the Center first.
   - Routines view (while it has focus, §8j): ⌘Z / ⇧⌘Z undo and redo Routine edits (the view owns its edits through `data-own-edits`, so the scene's history is untouched), ⌫ deletes the selected step, Esc clears the selection, ↑ ↓ Home End move through the step menu. ⌘↩ runs the open Routine whenever the Routines view is open.
   - App: ⌘S Save Scene, ⌘F Find Parts, ⌘P Print (Lay Out Plates), ⌘, Settings, ⌘B / ⌘I panels, ? Settings → Shortcuts.
   - Scenes: ⌘T new, ⌘W close, ⇧⌘T reopen, ⌃Tab / ⇧⌘] next, ⌃⇧Tab / ⇧⌘[ previous, ⌘1–⌘9 (§5a).

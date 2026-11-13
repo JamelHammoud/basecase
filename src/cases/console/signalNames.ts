@@ -1,0 +1,77 @@
+import { refuse, type Reader } from '../validate';
+
+export const JOINT_FIELDS = ['target', 'position', 'effort'] as const;
+export const ROBOT_FIELDS = ['height', 'tilt', 'speed', 'travelled', 'x', 'z'] as const;
+export const INPUT_AXES = ['forward', 'left', 'turn', 'lift', 'grip'] as const;
+export const GOAL_FIELDS = ['passed', 'margin', 'failed'] as const;
+export const NAMESPACES = ['time', 'joint', 'robot', 'probe', 'input', 'goal', 'camera'] as const;
+
+export type JointField = (typeof JOINT_FIELDS)[number];
+export type RobotField = (typeof ROBOT_FIELDS)[number];
+export type InputAxis = (typeof INPUT_AXES)[number];
+export type SignalShape = 'number' | 'labels' | 'camera';
+
+export interface SignalScope {
+  declared: ReadonlySet<string>;
+  probes: ReadonlySet<string>;
+  inputs: ReadonlySet<string>;
+}
+
+type Shaper = (parts: string[], scope: SignalScope) => SignalShape | string;
+
+const has = (list: readonly string[], value: string | undefined) => value !== undefined && list.includes(value);
+
+const SHAPERS: Record<string, Shaper> = {
+  joint: ([id, field]) =>
+    id && has(JOINT_FIELDS, field) ? 'number' : `must be joint.<id or *>.${JOINT_FIELDS.join(' or ')}`,
+  robot: ([field]) => (has(ROBOT_FIELDS, field) ? 'number' : `must be robot.${ROBOT_FIELDS.join(' or ')}`),
+  probe: ([name], scope) => (name && scope.probes.has(name) ? 'number' : 'names no probe of this Case'),
+  goal: ([field]) => {
+    if (field === 'failed') return 'labels';
+
+    return has(GOAL_FIELDS, field) ? 'number' : `must be goal.${GOAL_FIELDS.join(' or ')}`;
+  },
+  input: ([source, axis], scope) => {
+    if (!source || !scope.inputs.has(source)) return 'names an input this console doesn’t list';
+
+    return has(INPUT_AXES, axis) ? 'number' : `must be input.${source}.${INPUT_AXES.join(' or ')}`;
+  },
+  camera: ([key], scope) => {
+    if (key === 'operator' && !scope.inputs.has('camera')) return 'needs the camera input';
+
+    return key ? 'camera' : 'must be camera.<name or *>';
+  },
+};
+
+export function signalShape(id: string, scope: SignalScope): SignalShape | string {
+  if (id === 'time' || scope.declared.has(id)) return 'number';
+
+  const [space, ...rest] = id.split('.');
+  const shaper = SHAPERS[space];
+
+  if (!shaper || rest.length === 0) return 'names no signal';
+
+  return shaper(rest, scope);
+}
+
+export const signalRef =
+  (scope: SignalScope, shapes: readonly SignalShape[]): Reader<string> =>
+  (value, where) => {
+    if (typeof value !== 'string' || !/^[\w.*-]{1,120}$/.test(value)) return refuse(where, 'must be a signal name');
+
+    const shape = signalShape(value, scope);
+
+    if (!['number', 'labels', 'camera'].includes(shape)) return refuse(where, `${value} ${shape}`);
+
+    return shapes.includes(shape as SignalShape) ? value : refuse(where, `${value} can’t be shown here`);
+  };
+
+export const matches = (pattern: string, id: string) => {
+  if (!pattern.includes('*')) return pattern === id;
+
+  const [before, after] = pattern.split('*');
+
+  return (
+    id.startsWith(before) && id.endsWith(after) && !id.slice(before.length, id.length - after.length).includes('.')
+  );
+};

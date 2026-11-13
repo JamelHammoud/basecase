@@ -17,7 +17,7 @@ export interface ProbeReader {
   sample(poses: Float64Array, out: Record<string, number[]>): void;
 }
 
-function endPoint(end: ProbeEnd, world: ProbeWorld, poses: Float64Array): THREE.Vector3 {
+export function endPoint(end: ProbeEnd, world: ProbeWorld, poses: Float64Array): THREE.Vector3 {
   if (end === 'end-effector') {
     const { effector, model } = world;
     const delta = effector && simDeltas(model, poses).get(effector.part);

@@ -38,7 +38,6 @@ export const LAYOUT = {
   leftPanelMax: 480,
   rightPanelMin: 290,
   rightPanelMax: 620,
-  commandCenterCameras: 400,
   titleBarHeight: 44,
   titleBarCenter: 22,
   railWidth: 52,

@@ -4,7 +4,7 @@ date: 2026-11-13
 image: /changelog/command-center/cover.png
 ---
 
-Open Command Center runs a Case in one window: the robot on the canvas, its cameras beside it, the emulated servos and your tries, with the things that have gone wrong so far listed as you drive.
+Open Command Center runs a Case as its own app in one window: the robot on the canvas, and around it whatever that Case needs to show, from camera feeds and live joint plots to a timer, a score and a Reset button.
 
 ## Where it is
 
@@ -12,24 +12,24 @@ Open a Case, then click the expand button in the Brief's header in the Simulate 
 
 ![The Simulate tab with the Brief and its Open Command Center button](/changelog/command-center/brief.png)
 
-## What's in it
+## Built from the Case
 
-The canvas stays in the middle and follows a robot that drives around. The left card holds the Case's cameras, the same live tiles as the strip on the canvas, now as wide as the card: the Scene view or your stationary views, then each camera on the robot. The right card is headed by the Case's name and holds three panels:
+A Case can carry a console that says how it runs. It lists its input sources (keys and a gamepad today), any signals of its own, its panels, and a layout of columns with widths, one of which is the canvas. A block game Case can put Time and Score on the left and Try It, Reset and the tries on the right; a rover Case, a big front camera on one side and a map on the other.
 
-- The brief, and while a try runs, each failure the Case's contract has seen so far, in red, checked twice a second against the same contract that scores the try.
-- The emulated robot, in the desktop app: Connect Emulated Robot, then the rung you're on, Stop while the motors run, the newest message from the daemon and each servo's angle and temperature.
-- Try and Results: Try It, the clock and End Try, then every try with Replay, Export Dataset and Publish to Hugging Face.
+![A block game console during a try: Time counting down and Score left of the arm, and Try It, Reset and the running try on the right](/changelog/command-center/console.png)
 
-![The Command Center with the arm, its Scene and Wrist Camera tiles, Connect Emulated Robot and Try It](/changelog/command-center/center.png)
+Panels come in eight kinds: a camera, a value, a plot over time, a table, a button that runs an action (Try It, End Try, Drive, Stop Driving, Start Over or Reset), a list of tries or failures, text, and a top-down map with the robot's trail.
 
-## What it replaces
+## What a panel can show
 
-Before, a teleop session sat in three places: the Case and its tries in Simulate, the connected robot in Operate, and camera views floating on the canvas. The Simulate tab also repeated the connected robot's status in an Emulated robot section. That section is gone; the robot's status lives in Operate and the Command Center.
+Every panel reads named live signals. Each joint has its target, position and effort. The robot has its height, tilt, speed, distance travelled and place on the floor, every probe of the Case reads live, every camera is there, and so is each input's stick and keys. While a try runs, the contract's verdict so far and its failures are signals too. A Case adds its own: a timer that counts down, a counter that ticks when a signal crosses a line, and a score that adds them up.
 
-## Cases that say how they run
+## Without a console
 
-A Case file can carry a console: the input (keys or gamepad) and the panels it opens with, in order. A Case without one opens every panel with keys, so every Case you already have works as it is.
+A Case without one opens with its cameras on the left, and the brief, the failures so far, the emulated robot's servos with the rung and Stop, and the tries on the right. Every Case you already have opens that way, and the Simulate tab no longer repeats the emulated robot's status.
+
+![The Command Center with the arm, its Scene and Wrist Camera tiles, the brief, Connect Emulated Robot and Try It](/changelog/command-center/center.png)
 
 ## Not yet
 
-Driving with the Mac's camera, and showing that camera as a tile, come next.
+A console can name the Mac's camera, a phone, MIDI, a leader arm, voice or a policy as its input, and this version refuses it with that reason.

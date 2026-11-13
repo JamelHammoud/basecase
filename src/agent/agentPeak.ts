@@ -1,4 +1,3 @@
-import { isStalePolicy } from '../sim/policyFreshness';
 import { walkPolicy } from '../sim/walkPolicy';
 import type { SimModel } from '../sim/mjcf';
 import type { Simulation } from '../sim/useSimulation';
@@ -62,7 +61,7 @@ export async function walkSim(deps: PeakDeps, { joints: loads, massG, parts }: W
 
   if (!record) return 'Needs a trained walk policy: landing loads come from walking, not standing';
 
-  if (isStalePolicy(record)) return `${record.name} was trained on an older sim. Train it again.`;
+  if (deps.training.isStale(record)) return `${record.name} was trained on an older sim. Train it again.`;
 
   const policy = await deps.training.loadPolicy(record.id);
 

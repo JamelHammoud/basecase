@@ -21,7 +21,7 @@ const subscribe = (notify: () => void) => {
   };
 };
 
-export const cameraViewsExpanded = () => state.expanded;
+export const cameraViewsToggleLabel = () => (state.expanded ? 'Collapse Camera Views' : 'Expand Camera Views');
 
 export const toggleCameraViews = () => set({ expanded: !state.expanded });
 

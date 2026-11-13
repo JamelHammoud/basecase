@@ -6,7 +6,7 @@ import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import type { Printing } from '../../workspace/usePrinting';
 import { hm } from '../build/format';
-import { PlateRow, plateNumbers } from '../build/PlateRow';
+import { plateNumbers, plateStateText } from '../build/PlateRow';
 import { slicerName } from '../build/PlatesSection';
 import { PrintSettings } from '../build/PrintSettings';
 import { PrinterLive } from './PrinterLive';
@@ -98,6 +98,7 @@ const PlateDetail: React.FC<{
 }> = ({ printing, plate, tools, onSend }) => {
   const sliced = printing.freshSlice(plate);
   const { hours, grams, exact } = plateNumbers(plate, sliced);
+  const status = plateStatus(plate, printing.records);
 
   return (
     <Section title={`Plate ${plate.number}`}>
@@ -111,6 +112,7 @@ const PlateDetail: React.FC<{
           `${exact ? '' : '≈ '}${hm(hours)}`,
           `${Math.round(grams)} g`,
           sliced?.support && 'Supports',
+          plateStateText(status, printing.status),
         ]}
       />
       <SliceNotes printing={printing} warnings={sliced?.warnings ?? []} />
@@ -211,8 +213,7 @@ function usePlateSend(printing: Printing) {
 export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
   const { printing, parts, onDone } = props;
   const { ref, style } = useScrollFade();
-  const plan = printing.report?.plan;
-  const plates = plan?.plates ?? [];
+  const plates = printing.report?.plan.plates ?? [];
   const plate = plates.find((p) => p.number === printing.mode?.plate) ?? plates[0];
   const selected = parts.find((p) => p.id === printing.mode?.selected);
   const sending = usePlateSend(printing);
@@ -221,7 +222,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
     <div className="flex-1 min-h-0 flex flex-col">
       <div className="h-[44px] shrink-0 pl-[12px] pr-[8px] flex items-center justify-between">
         <h2 className="text-[15px] font-semibold text-white/90">Print</h2>
-        <Button variant="primary" size="sm" onClick={onDone}>
+        <Button variant="primary" size="sm" title="Done" shortcut="Esc" onClick={onDone}>
           Done
         </Button>
       </div>
@@ -240,22 +241,6 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
         {plate && (
           <PlateDetail printing={printing} plate={plate} tools={props.tools} onSend={() => sending.send(plate)} />
         )}
-        <Section title="Plates">
-          <ul className="-mx-[7px]">
-            {plan?.plates.map((p) => (
-              <PlateRow
-                key={p.number}
-                plate={p}
-                bed={plan.bed}
-                sliced={printing.freshSlice(p)}
-                status={plateStatus(p, printing.records)}
-                live={printing.status}
-                selected={p.number === plate?.number}
-                onClick={() => printing.setModePlate(p.number)}
-              />
-            ))}
-          </ul>
-        </Section>
       </div>
       <StartPrintSheet
         plate={sending.confirming}

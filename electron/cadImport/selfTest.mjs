@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { convertFile } from './convertClient.mjs';
+import { openCadFile } from './openCadFile.mjs';
 import { decodeReply } from './reply.mjs';
 
 const REACH_MS = 300_000;
@@ -20,6 +21,17 @@ async function importFixture(converter, { spec, fixture, work }) {
     const result = await convertFile(converter, { id: spec.partId, url: spec.url, file, out, ext: fixture.ext });
 
     return { sha256: sha256(fs.readFileSync(out)), result };
+  } catch (err) {
+    return { error: String(err?.message ?? err) };
+  }
+}
+
+async function openFixture(converter, fixture) {
+  try {
+    const bytes = new Uint8Array(fs.readFileSync(fixture.file));
+    const { bodies } = await openCadFile(converter, { name: fixture.name, bytes });
+
+    return { bodies };
   } catch (err) {
     return { error: String(err?.message ?? err) };
   }
@@ -44,15 +56,18 @@ async function recovery(converter, { spec, kind, timeoutMs, work }) {
 export async function runCadImportSelfTest(converter, spec) {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-cadimport-'));
   const imports = {};
+  const opens = {};
 
   try {
     for (const fixture of spec.imports) imports[fixture.name] = await importFixture(converter, { spec, fixture, work });
+
+    for (const fixture of spec.opens ?? []) opens[fixture.name] = await openFixture(converter, fixture);
 
     const reach = await probe(converter, { kind: 'reach', targets: spec.targets, timeoutMs: REACH_MS });
     const hang = await recovery(converter, { spec, kind: 'hang', timeoutMs: spec.hangMs, work });
     const memory = await recovery(converter, { spec, kind: 'eatMemory', timeoutMs: spec.memoryMs, work });
 
-    return { imports, reach, hang, memory };
+    return { imports, opens, reach, hang, memory };
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }

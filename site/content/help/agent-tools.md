@@ -101,6 +101,8 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `animate` | Makes keyframes or a walking gait |
 | `retarget_motion` | Turns BVH motion capture into an animation |
 | `import_robot` | Inserts a published URDF or MJCF robot |
+| `make_leader` | Makes a leader arm you move by hand, in a new scene tab |
+| `wrap_robot` | Wraps a robot in an imported mesh, cut into printed shells |
 
 ## Simulation, Cases, Routines and skills
 

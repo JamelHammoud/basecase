@@ -45,7 +45,7 @@ The installer needs no administrator rights. It installs Basecase for your Windo
 
 ## The first launch
 
-Basecase opens on a blank scene named Untitled. The agent connects as the app starts.
+Basecase opens on a two-wheel rover in the simulator, as [Drive your first robot](/help/drive-your-first-robot) shows. The agent connects as the app starts.
 
 The first time, Basecase downloads Claude Code, a 263 MB download, and the Agent tab shows its progress. Picking Codex or Gemini CLI in Settings downloads that one instead: 340 MB and 95 MB.
 

@@ -1,6 +1,7 @@
 ---
 title: Run a Case
 date: 2026-11-13
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 order: 5
@@ -37,9 +38,9 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![The Case running with the cameras on the left, the arm in the middle and the brief, Connect Emulated Robot and Try It on the right](/help/run-a-case/center.png)
 
-4. In the desktop app, click **Connect Emulated Robot**. You see the Ladder's current rung, Stop while the motors run, the newest message from the daemon, and each servo's angle and temperature.
+4. In the desktop app, click **Connect Emulated Robot**. You see the servo count and whether the motors run, with Stop while they do. Below are the newest message from the daemon and each servo's angle and temperature.
 
-![Emulated servos connected, with the rung Look and three servos reading their angles](/help/run-a-case/connected.png)
+![Three emulated servos connected, motors off, each reading its angle](/help/run-a-case/connected.png)
 
 5. Click **Try It** and drive with W A S D and Q E, or a gamepad. While the try runs, anything the Case counts as a failure shows in red under the brief as it happens.
 

@@ -1,6 +1,7 @@
 ---
 title: Number a robot's servos
 date: 2026-11-13
+updated: 2026-11-13
 collection: operate
 type: task
 covers:
@@ -15,7 +16,7 @@ Give each servo the ID its joint has in the scene, one servo at a time, so the r
 New servos all answer at ID 1. Basecase numbers the movable joints 1, 2, 3 and so on, and Set Up Servos writes those numbers onto the servos. Real motors stay locked in this build, so it runs on emulated servos, which start as a bag of new ones.
 
 1. Open a scene with a robot and open Operate in the Play view.
-2. Click Set Up Servos, or choose Set Up Servos in ⌘K. The robot connects with its servos still at ID 1 and goes to Set up, with the motors off.
+2. Click Set Up Servos, or choose Set Up Servos in ⌘K. The robot connects with its servos still at ID 1 and goes to Set Up, with the motors off.
 3. Look at the highlighted row under Motors off: it shows the joint and the ID it gets, starting with the highest ID. The canvas selects that joint's moving parts.
 4. Plug in that joint's servo next to the ones already done. With emulated servos, Basecase plugs it in for you. Once it answers at its new ID, the next joint lights up.
 5. When the last joint, ID 1, is done, every servo answers under Emulated servos. Click Test on the Ladder to go on.

@@ -57,7 +57,7 @@ export function createMoonraker(printer, secret) {
         const info = (await http.call('/server/info'))?.result ?? {};
 
         if (info.klippy_state && info.klippy_state !== 'ready') {
-          throw new Error('Moonraker answered, but Klipper isn’t ready. Check the printer, then try again.');
+          throw new Error('Moonraker answered, but Klipper isn’t ready. Check the printer.');
         }
 
         return `Connected to ${displayName(printer, 'Klipper')}`;

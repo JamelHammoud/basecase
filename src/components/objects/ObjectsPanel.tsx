@@ -38,7 +38,7 @@ const Results: React.FC<{
         title={search.error}
         action={
           <Button variant="secondary" size="sm" onClick={search.retry}>
-            Try Again
+            Search Again
           </Button>
         }
       />

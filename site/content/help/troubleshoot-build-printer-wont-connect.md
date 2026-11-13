@@ -40,7 +40,7 @@ The printer is off, asleep or on another network, or its address changed.
 
 It worked when the row reads “Connected to” and the printer's name. A printer that drops off later shows “Can’t reach the printer” in Print mode.
 
-## “The printer refused the connection. Turn on LAN Only and Developer Mode on the printer, then try again.”
+## “The printer refused the connection. Turn on LAN Only and Developer Mode on the printer.”
 
 Bambu LAN needs both modes on, from the printer's own screen. Bambu doesn't support Developer Mode.
 
@@ -82,8 +82,8 @@ Paste the new key in **API key**, press Enter, then click **Test Connection**.
 
 ## The printer is busy, or out of storage
 
-“The printer is busy. Wait for it to finish, then try again.” means a print is running. “The printer is out of storage. Delete some files on it, then try again.” means its storage is full. With Klipper, “Moonraker answered, but Klipper isn’t ready.” means the printer itself needs attention.
+“The printer is busy. Wait for it to finish.” means a print is running. “The printer is out of storage. Delete some files on it.” means its storage is full. With Klipper, “Moonraker answered, but Klipper isn’t ready.” means the printer itself needs attention.
 
-## “Install Bambu Studio to send prints” or “Install Bambu Connect from bambulab.com, then try again.”
+## “Install Bambu Studio to send prints” or “Install Bambu Connect from bambulab.com.”
 
 The app the connection hands plates to isn't installed. Install it, or pick another option in **Send prints with**.

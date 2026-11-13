@@ -38,4 +38,5 @@ export interface CadExtras {
   ports?: CadPort[];
   audit?: CadAudit;
   expect?: CadExpect;
+  pending?: boolean;
 }

@@ -27,7 +27,7 @@ module servo_cradle(s = STS3215, wall = 3, clr = 0.25, part = "frame", m = 3) {
   x1 = b[1];
   hy = b[2];
   inner_y = sz.y / 2 + clr;
-  bridge_x = SERVO_CRADLE_CLEAR_X;
+  bridge_x = max(SERVO_CRADLE_CLEAR_X, x0 + wall + 3);
   strap_x = (x0 + bridge_x) / 2;
   pad_y = hy + 2.2;
   if (part != "strap") {
@@ -201,13 +201,14 @@ module pi5_tray(standoff = 6, plate = 2.5, margin = 4, ears = 10, m = 2.5, mount
 // along -Y or +Y). The beam stays beyond both joints' sweeps, so each turns +-110 degrees, and the
 // input horn screws stay reachable from outside. length >= reach + web + 39.
 // Ports: in_* (the U-link) and out_* (the cradle; out_output is the next joint's output).
-module servo_link(length = 100, twist = 0, s = STS3215, wall = 3, reach = 28, web = 8) {
+// m is the horn and strap screw size (2 for the XL330).
+module servo_link(length = 100, twist = 0, s = STS3215, wall = 3, reach = 28, web = 8, m = 3) {
   sz = servo_case(s);
   b = _rcp_cradle_box(s, wall, 0.25);
   w = max(sz.y + 6, servo_horn_d(s) + 6);
   assert(length + b[0] >= reach + web + 0.5, str("servo_link: length must be at least ", reach + web + 0.5 - b[0]));
-  placed(prefix = "in_") servo_u_link(s, wall, reach, web, part = "link", mount = false);
-  placed([length, 0, 0], [twist, 0, 0], "out_") servo_cradle(s, wall, part = "frame");
+  placed(prefix = "in_") servo_u_link(s, wall, reach, web, part = "link", mount = false, m = m);
+  placed([length, 0, 0], [twist, 0, 0], "out_") servo_cradle(s, wall, part = "frame", m = m);
   hull() {
     translate([reach + web - 0.4, -w / 2, -sz.z]) cube([0.4, w, sz.z]);
     translate([length, 0, 0]) rotate([twist, 0, 0]) translate([b[0], -b[2], -sz.z]) cube([0.4, 2 * b[2], sz.z]);
@@ -216,11 +217,11 @@ module servo_link(length = 100, twist = 0, s = STS3215, wall = 3, reach = 28, we
 
 // The base of a servo chain: the first joint's cradle on a pedestal under its far end, standing on
 // a plate (4 x M3 counterbored into a table or a body) below the U-link's sweep.
-module servo_base(s = STS3215, wall = 3, plate = [120, 90, 6]) {
+module servo_base(s = STS3215, wall = 3, plate = [120, 90, 6], m = 3) {
   sz = servo_case(s);
   b = _rcp_cradle_box(s, wall, 0.25);
   floor_z = -sz.z - servo_idler_face(s) - wall - 2 - plate.z;
-  placed(prefix = "") servo_cradle(s, wall, part = "frame");
+  placed(prefix = "") servo_cradle(s, wall, part = "frame", m = m);
   translate([b[0], -b[2], floor_z + plate.z - 0.2]) cube([SERVO_CRADLE_CLEAR_X - b[0], 2 * b[2], -sz.z - wall - floor_z - plate.z + 0.4]);
   difference() {
     translate([b[0] + plate.x / 2 - 6, 0, floor_z]) printed_block(plate, r = 6, $ports = false);

@@ -289,3 +289,21 @@ export const importRobot = {
     }
   },
 };
+
+export const makeLeader = {
+  name: 'make_leader',
+  config: {
+    title: 'Make a leader arm',
+    description:
+      'Makes a leader for a fixed-base arm in the scene and opens it in a new scene tab: the same movable joints in the same order with the same axes and limits, about half the reach (each link at least 56 mm), a Dynamixel XL330-M288 per joint read as an angle sensor, printed brackets from the robotics library (servo_base, servo_link, servo_u_link), and a handle on the last joint with a trigger as the gripper joint when the arm has one. ' +
+      "The leader's scene records this scene and the joint ids it leads. Use it when the user wants to teleoperate or record demonstrations by moving a copy of the arm by hand (GELLO, SO-101 leader). The arm's movable joints must form one chain.",
+    inputSchema: { robot: ROBOT },
+  },
+  handler: async ({ robot }) => {
+    try {
+      return text((await bridge('make_leader', { robot }))?.text || 'ok');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};

@@ -25,7 +25,9 @@ export const motion = {
   crouch. Oscillators swing the arms. Check with preview (side view).
 - Gestures: 3–8 keyframes, the first and last the same for a loop.
 - Motion capture: retarget_motion with the .bvh; pass bones / joints to fix a bad match.
-- import_robot inserts a published robot with its real joints.`,
+- import_robot inserts a published robot with its real joints.
+- make_leader turns a fixed-base arm into a hand-held leader in a new scene tab, for teleoperation
+  and recording demonstrations.`,
 };
 
 export const simulation = {

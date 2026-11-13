@@ -70,6 +70,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       selectedIds,
       setAction,
       importRobot: robots.importRobotFrom,
+      makeLeader: robots.makeLeader,
     });
 
   const simTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>

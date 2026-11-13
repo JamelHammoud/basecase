@@ -199,7 +199,7 @@ async function expectPublished(repo: string) {
     'videos/chunk-000/observation.images.scene/episode_000000.mp4',
   ]);
   expect(info.total_frames).toBe(rows.length);
-  expect(published.tags.get('v2.1')).toBe(published.commits.length);
+  await expect.poll(() => published.tags.get('v2.1')).toBe(published.commits.length);
   expect(hub.requests.filter((r) => r.method === 'PUT').every((r) => r.auth === undefined)).toBe(true);
 }
 

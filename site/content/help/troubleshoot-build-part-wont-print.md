@@ -35,7 +35,7 @@ The part is larger than your printer's bed in every way it could lie, the diagon
 
 1. Press ⌘P to open Print mode.
 2. Under **Printer**, check that **Printer** names the printer you'll use. A larger bed may fit the part.
-3. Open **Printed parts** and read the part's row. It says how many pieces to split the part into.
+3. Open **Parts** and read the part's row. It says how many pieces to split the part into.
 4. Click **Fix** on the problem in the Build tab to have the agent split it, joined with dowels or screws.
 
 It worked when the part sits on a plate and **Printing** in Checks shows no red mark.

@@ -41,11 +41,11 @@ Neither slicer is where Basecase looks. On a Mac that's Applications, in your ho
 
 PrusaSlicer shows under **Slicers** too, but Basecase doesn't slice with it. It worked when the plate shows a thumbnail and its time loses the ≈.
 
-## The plate's button reads Add Printer to Send
+## The plate's button reads Add Printer
 
-No printer is saved, so there's nowhere to send the plate. Clicking it says “Add your printer in Settings → Printers to send plates”.
+No printer is saved, so there's nowhere to send the plate. Clicking it opens Settings ▸ Printers.
 
-1. Follow [Add a printer](/help/add-a-printer).
+1. Follow [Add a printer](/help/add-a-printer) from step 2.
 2. Pick the printer under **Printer** in Print mode.
 
 ## The send button is greyed out

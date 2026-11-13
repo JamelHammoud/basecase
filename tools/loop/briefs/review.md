@@ -19,4 +19,6 @@ Fail it, with a finding for each, when it:
 
 Pass it when none of those hold. Style preferences that no guide states are not failures. Mention them as `minor` findings at most.
 
+Size is never a failure. A large pull request that carries one idea everywhere it applies is what the loop wants; a pull request that mixes unrelated ideas is a `minor` finding, never a blocker.
+
 Answer with your verdict, a two-sentence summary, and each finding with its file, line, severity (`blocker` or `minor`), what's wrong and what would fix it. Only `blocker` findings fail a pull request.

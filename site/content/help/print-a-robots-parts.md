@@ -40,7 +40,11 @@ Lay the printed parts out on your printer's plates, slice them with Bambu Studio
 5. In the bar under the plate, click the plate to print, such as **1 PLA**.
 6. Click **Send Plate 1**, or **Print Plate 1** when Basecase starts the print itself. A plate that isn't sliced is sliced first.
 
-![Print mode with the printer, quality, material and infill, and Plate 1](/help/get-a-robot-ready-to-build/print-mode.png)
+![Print mode with the printer settings, Plate 1 with Add Printer, and Parts](/help/get-a-robot-ready-to-build/print-mode.png)
+
+If you haven't saved a printer, the plate's button reads **Add Printer** and opens Settings ▸ Printers. [Add a printer](/help/add-a-printer) covers the rest.
+
+![Settings open at Printers after clicking Add Printer](/help/get-a-robot-ready-to-build/add-printer.png)
 
 > [!WARNING]
 > Do not start a print with anything on the bed. Clear the bed before the next step.
@@ -58,7 +62,7 @@ Print mode also opens from **File** ▸ **Print**, from **Lay Out Plates** in th
 - Press ← or → to go to the previous or next plate.
 - **Copies** prints more than one of the selected part. **Don't print** leaves it off the plates.
 - **Auto Arrange** in the bottom bar packs the plates of that material again.
-- **Printed parts** lists every part with its size, time and plate. Parts with problems come first.
+- **Parts** lists every part with its size, time and plate. Parts with problems come first.
 
 After a print, a switch under **Printer**, such as Skip 3 printed parts, leaves the parts you printed off the plates. It starts on. Edit one bracket, and the next plate holds only that bracket.
 

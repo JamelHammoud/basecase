@@ -46,6 +46,6 @@ Plates are packed per material, around the bed's clear areas. Until a plate is s
 
 ## What Basecase won't print
 
-A part meant to be clear, such as one named “Front Glass”, blocks the build. A printer can't make clear parts. A part bigger than the plate blocks it too. **Printed parts** in Print mode says how many pieces to split it into.
+A part meant to be clear, such as one named “Front Glass”, blocks the build. A printer can't make clear parts. A part bigger than the plate blocks it too. **Parts** in Print mode says how many pieces to split it into.
 
 When a part is flagged, [A part is too big to print or has thin walls](/help/troubleshoot-build-part-wont-print) has the fixes.

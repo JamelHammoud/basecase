@@ -197,12 +197,12 @@ function partFlagItems(part: ScenePart, setFlag: (patch: Partial<ScenePart>) => 
   ];
 }
 
-function referencePart({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
+function quotePart({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
   if (IS_WEB_DEMO) return [];
 
   return [
     {
-      label: 'Reference Part',
+      label: 'Quote Part',
       icon: <SparklesIcon className={ic} />,
       onSelect: () => core.tool.requestQuote(partQuote(part)),
     },
@@ -236,7 +236,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.duplicate,
     shared.selectAll,
     shared.saveToLibrary,
-    ...referencePart(inputs, part),
+    ...quotePart(inputs, part),
     ...leaderMenuItems(actions, part.id),
     ...commentHere,
     { divider: true },

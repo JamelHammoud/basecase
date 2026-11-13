@@ -5,6 +5,7 @@ import type { TrainedEntry } from './kitEnvironment';
 import { kitEntries } from './motorKit';
 import { moveAnimations } from './moveEnvironment';
 import { arenaLine, recordFreshness, type SkillRecord } from './skillRecords';
+import type { SnapshotRef } from './snapshots';
 
 export type SkillTarget = `kit:${TrainedEntry}` | `move:${string}` | `goal:${string}`;
 
@@ -14,10 +15,11 @@ export interface SkillJob {
   share: number | null;
   message: string;
   background: boolean;
+  snapshot?: SnapshotRef | null;
 }
 
 export type SkillState =
-  | { kind: 'training'; share: number | null; message: string; background: boolean }
+  | { kind: 'training'; share: number | null; message: string; background: boolean; snapshot: SnapshotRef | null }
   | { kind: 'ready'; arena: string }
   | { kind: 'recheck' }
   | { kind: 'untrained' };
@@ -64,7 +66,14 @@ const readyEvidence = (found: ReturnType<typeof best> | null) =>
   found?.freshness === 'fresh' ? (found.record.evidence ?? null) : null;
 
 function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefined): SkillState {
-  if (job) return { kind: 'training', share: job.share, message: job.message, background: job.background };
+  if (job)
+    return {
+      kind: 'training',
+      share: job.share,
+      message: job.message,
+      background: job.background,
+      snapshot: job.snapshot ?? null,
+    };
 
   const evidence = readyEvidence(found);
 

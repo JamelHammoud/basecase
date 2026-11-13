@@ -89,7 +89,7 @@ describe('the skills list', () => {
     };
     const walk = skillRows({ model, design: DESIGN, records: [], jobs: [job] }).find((r) => r.drives)!;
 
-    expect(walk.state).toEqual({ kind: 'training', share: 0.4, message: 'Training', background: true });
+    expect(walk.state).toEqual({ kind: 'training', share: 0.4, message: 'Training', background: true, snapshot: null });
   });
 
   it('asks for a recheck after a mass edit and training after a joint edit', () => {

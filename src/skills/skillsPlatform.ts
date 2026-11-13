@@ -3,6 +3,7 @@ import type { TabForgeOptions } from '../forge/tabForge';
 import type { Skill } from './artifacts';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
 import type { ForgeFactory } from './skillsRuntime';
+import { bridgeSnapshots, NO_SNAPSHOT_STORE, type SnapshotRef, type Snapshots } from './snapshots';
 import { trainerForge, trainingProgress, type ForgeProgress } from './trainerForge';
 
 export type TabEngine = (options: TabForgeOptions) => ForgeRunner;
@@ -10,12 +11,15 @@ export type TabEngine = (options: TabForgeOptions) => ForgeRunner;
 export interface SkillStore {
   saveSkill: (payload: { hash: string; text: string }) => Promise<unknown>;
   getSkill: (hash: string) => Promise<unknown>;
+  getSnapshot?: (ref: { run: string; iteration: number; skill?: string }) => Promise<unknown>;
+  keepSnapshots?: (payload: { hash: string; snapshots: SnapshotRef[] }) => Promise<unknown>;
 }
 
 export interface SkillsPlatform {
   forge: ForgeFactory;
   save: SkillSave;
   loadSkill: (hash: string) => Promise<Skill | null>;
+  snapshots: Snapshots;
   background: boolean;
 }
 
@@ -62,6 +66,14 @@ function tabForgeFactory(load: () => Promise<TabEngine>, tee?: (event: ForgeEven
   };
 }
 
+function snapshotStore(web: boolean, store: SkillStore): Snapshots {
+  const { getSnapshot, keepSnapshots } = store;
+
+  if (web || !getSnapshot || !keepSnapshots) return NO_SNAPSHOT_STORE;
+
+  return bridgeSnapshots({ getSnapshot, keepSnapshots });
+}
+
 export function skillsPlatform(options: PlatformOptions): SkillsPlatform {
   const { web, workspaceId, store } = options;
 
@@ -81,6 +93,7 @@ export function skillsPlatform(options: PlatformOptions): SkillsPlatform {
 
       return isSkill(found) ? found : null;
     },
+    snapshots: snapshotStore(web, store),
     background: !web,
   };
 }

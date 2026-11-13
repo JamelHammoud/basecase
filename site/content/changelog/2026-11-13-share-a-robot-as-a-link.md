@@ -26,6 +26,10 @@ Basecase saves the robot's parts and joints, the Case and the newest policy or s
 
 The link opens a page with the robot in its Case's world, the Case's name and brief, Drive and Open Scene. Drive runs the simulation in the tab with the keyboard, the same as the example Cases on app.basecase.so. Open Scene opens the robot in the browser studio, with the Case and the trained policy or skill.
 
+A Case with its own console opens as that Case's app, the way Run Case shows it in the studio. Its panels sit around the robot and its code panels work, so a shared joystick drives the rover. Camera panels, the servos table and the tries list stay in the studio. Steps are in [Run a Case](/help/run-a-case).
+
+![A shared rover Case in the browser, with speed and tilt over the robot and a joystick on the right](/changelog/share-a-robot-as-a-link/app.png)
+
 A legged robot's link also shows Train in Chrome and Edge. It trains Stand on the visitor's GPU, and Open Scene then opens the robot with Stand ready. Steps are in [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 
 ![The shared rover in the browser with Drive and Open Scene](/changelog/share-a-robot-as-a-link/browser.png)

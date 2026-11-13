@@ -8,19 +8,24 @@ import type { RobotJoint, ScenePart } from '../../types/robotics';
 import type { Cases } from '../../workspace/useCases';
 import type { CameraTiles } from '../cameras/useCameraTiles';
 
+export interface StudioPanelContext {
+  cases: Cases;
+  cameras: CameraTiles;
+  onBrowseRobots: () => void;
+}
+
 export interface PanelContext {
   bus: SignalBus;
   signals: readonly ConsoleSignal[];
   scope: SignalScope;
   inputs: readonly string[];
-  cases: Cases;
+  brief: string;
   sim: Simulation;
   parts: ScenePart[];
   joints: RobotJoint[];
-  cameras: CameraTiles;
   fire: (action: CaseAction) => void;
   can: (action: CaseAction) => boolean;
-  onBrowseRobots: () => void;
+  studio: StudioPanelContext | null;
 }
 
 export interface PanelViewProps<K extends PanelKind> {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { presetCase } from '../cases/caseBuilder';
 import { GALLERY_BUNDLE_MAX_BYTES, galleryBundleBytes, readGalleryBundleBytes } from '../gallery/galleryBundle';
 import { sharedRobotLink, sharedRobotPath } from '../gallery/galleryLinks';
@@ -10,7 +10,12 @@ import type { SkillRow } from '../skills/skillRows';
 import { fixtureModel, fixtureRobot } from '../skills/fixtureModels';
 import { DEFAULT_PROJECT, type PolicyRecord, type ScenePart } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
-import { sharedRobotBundle, type ShareSource } from './shareRobot';
+import { hubBridge } from '../hub/hubBridge';
+import { publishSharedRobot, sharedRobotBundle, type ShareSource } from './shareRobot';
+
+vi.mock('../hub/hubBridge', () => ({
+  hubBridge: { publish: vi.fn(async ({ name }: { name: string }) => ({ repo: `tester/${name}`, url: '' })) },
+}));
 
 const rover = fixtureRobot('rover-diff');
 const kase = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
@@ -169,5 +174,16 @@ describe('Share Robot', () => {
 
     expect(readGalleryBundleBytes(galleryBundleBytes(withSkill)).trained?.kind).toBe('skill');
     expect((await sharedRobotBundle(scene())).trained).toBeUndefined();
+  });
+
+  it('publishes the bundle beside a card that tags the repo basecase-case', async () => {
+    const bundle = await sharedRobotBundle(scene());
+
+    expect(await publishSharedRobot(bundle)).toBe(`https://app.basecase.so/r/tester/${bundle.slug}`);
+
+    const { files } = vi.mocked(hubBridge.publish).mock.calls[0][0];
+
+    expect(Object.keys(files)).toEqual(['basecase-robot.json', 'README.md']);
+    expect(new TextDecoder().decode(files['README.md'])).toBe('---\ntags:\n- basecase-case\n---\n');
   });
 });

@@ -89,6 +89,18 @@ export interface LiveRun {
   entries: LiveRunEntry[];
 }
 
+export interface SnapshotRef {
+  run: string;
+  iteration: number;
+  skill?: string;
+}
+
+export interface KeptSnapshot {
+  run: string;
+  iteration: number;
+  steps: number;
+}
+
 export interface TrainerStatus {
   uv: boolean;
   uvInstall?: string;
@@ -186,6 +198,8 @@ declare global {
       getSkill: (hash: string) => Promise<unknown>;
       getPolicy: (id: string) => Promise<unknown>;
       deletePolicy: (id: string) => Promise<boolean>;
+      getSnapshot: (ref: SnapshotRef) => Promise<unknown>;
+      keepSnapshots: (payload: { hash: string; snapshots: KeptSnapshot[] }) => Promise<KeptSnapshot[]>;
       listSourced: () => Promise<SourcedItem[]>;
       saveSourced: (payload: unknown) => Promise<SourcedItem>;
       removeSourced: (id: string) => Promise<SourcedItem[]>;

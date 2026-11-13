@@ -54,7 +54,8 @@ interface RobotBuild {
 interface BodySpec {
   name: string;
   origin: V3;
-  parentOrigin: V3;
+  parent: { name?: string; origin: V3 };
+  joint?: string;
   ids: string[];
   inner: string[];
   indent: string;
@@ -128,10 +129,17 @@ function solidPart(st: BuildState, id: string): boolean {
 
 function bodyXml(rb: RobotBuild, b: BodySpec): string[] {
   const { st } = rb;
-  const { origin, parentOrigin, indent } = b;
-  const pos = toMj([origin[0] - parentOrigin[0], origin[1] - parentOrigin[1], origin[2] - parentOrigin[2]]);
+  const { origin, parent, indent } = b;
+  const pos = toMj([origin[0] - parent.origin[0], origin[1] - parent.origin[1], origin[2] - parent.origin[2]]);
 
-  st.bodies.push({ name: b.name, parts: b.ids, origin });
+  st.bodies.push({
+    name: b.name,
+    parts: b.ids,
+    origin,
+    robot: rb.robot.key,
+    ...(parent.name ? { parent: parent.name } : {}),
+    ...(b.joint ? { joint: b.joint } : {}),
+  });
 
   const lines = [`${indent}<body name="${esc(b.name)}" pos="${vec(pos)}">`];
 
@@ -215,20 +223,14 @@ function jointParts(st: BuildState, jointId: string): string[] {
     .map(([pid]) => pid);
 }
 
-function emitJoint(rb: RobotBuild, j: RobotJoint, parentOrigin: V3, indent: string): string[] {
+function emitJoint(rb: RobotBuild, j: RobotJoint, parent: BodySpec['parent'], indent: string): string[] {
   const { st } = rb;
   const name = `j${st.simJoints.length}_${safeId(j.id)}`;
   const inner = isMovable(j) ? [movableJointXml(rb, j, name)] : [];
-  const lines = bodyXml(rb, {
-    name: `b_${name}`,
-    origin: j.origin,
-    parentOrigin,
-    ids: jointParts(st, j.id),
-    inner,
-    indent,
-  });
+  const body = { name: `b_${name}`, origin: j.origin };
+  const lines = bodyXml(rb, { ...body, parent, joint: j.id, ids: jointParts(st, j.id), inner, indent });
 
-  for (const c of rb.children.get(j.id) ?? []) lines.push(...emitJoint(rb, c, j.origin, indent + '  '));
+  for (const c of rb.children.get(j.id) ?? []) lines.push(...emitJoint(rb, c, body, indent + '  '));
 
   lines.push(`${indent}</body>`);
 
@@ -278,13 +280,15 @@ function emitRobot(st: BuildState, robot: Rig['robots'][number]) {
   const rootLines = bodyXml(rb, {
     name: rootName,
     origin: rootOrigin,
-    parentOrigin: [0, 0, 0],
+    parent: { origin: [0, 0, 0] },
     ids: base,
     inner: floating ? ['<freejoint name="' + rootName + '"/>'] : [],
     indent: '    ',
   });
 
-  for (const c of rb.children.get('') ?? []) rootLines.push(...emitJoint(rb, c, rootOrigin, '      '));
+  const rootBody = { name: rootName, origin: rootOrigin };
+
+  for (const c of rb.children.get('') ?? []) rootLines.push(...emitJoint(rb, c, rootBody, '      '));
 
   rootLines.push('    </body>');
   st.worldXml.push(...rootLines);

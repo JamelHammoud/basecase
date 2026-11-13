@@ -30,7 +30,7 @@ describe('breaches', () => {
   it('reports a red main, a stalled merge queue and a backed-up CI', () => {
     const found = breaches(
       {
-        mainRedSince: hoursAgo(3),
+        mainRedSince: hoursAgo(13),
         lastMergeAt: hoursAgo(2.5),
         readyCount: 12,
         oldestReadyAt: hoursAgo(2.2),

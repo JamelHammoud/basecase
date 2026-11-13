@@ -32,7 +32,7 @@ export const CheckItem: React.FC<{
   }, [open, check.hasDots, check.name, showDots]);
 
   return (
-    <li>
+    <li data-check={check.name} data-status={check.status}>
       <button
         type="button"
         aria-expanded={hasBody ? open : undefined}

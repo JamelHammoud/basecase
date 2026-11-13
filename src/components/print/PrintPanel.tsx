@@ -6,7 +6,7 @@ import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import type { Printing } from '../../workspace/usePrinting';
 import { hm, plural } from '../build/format';
-import { plateNumbers, plateStateText } from '../build/PlateRow';
+import { plateNumbers, plateStateText } from './plateFacts';
 import { PrintedSection } from './PrintedSection';
 import { PrinterLive } from './PrinterLive';
 import { PrintSettings } from './PrintSettings';
@@ -69,7 +69,14 @@ const SliceNotes: React.FC<{ printing: Printing; warnings: string[] }> = ({ prin
       </div>
     ))}
     {printing.job.error && <div className="text-[12.5px] text-red-400">{printing.job.error}</div>}
-    {printing.job.slicing && <div className="text-[12.5px] text-white/60">{printing.job.progress ?? 'Slicing'}…</div>}
+    {printing.job.slicing && (
+      <div className="flex items-center justify-between gap-3">
+        <span className="min-w-0 truncate text-[12.5px] text-white/60">{printing.job.progress ?? 'Slicing'}…</span>
+        <Button size="sm" variant="ghost" onClick={printing.job.stopSlice}>
+          Stop
+        </Button>
+      </div>
+    )}
   </>
 );
 

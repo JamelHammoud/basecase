@@ -4,7 +4,7 @@ import type { Plate } from '../../print/plan';
 import type { SlicedPlate } from '../../print/printBridge';
 import type { Printing } from '../../workspace/usePrinting';
 import { hm, plural } from './format';
-import { plateNumbers } from './PlateRow';
+import { plateNumbers } from '../print/plateFacts';
 
 interface PlateTotals {
   hours: number;

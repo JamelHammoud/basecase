@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sameTitle, verdictOf } from './github.mjs';
+import { sameTitle, stuckRuns, verdictOf } from './github.mjs';
 
 describe('sameTitle', () => {
   it.each([
@@ -38,5 +38,18 @@ describe('verdictOf', () => {
 
     expect(verdictOf(runs, (r) => r.databaseId === 5)).toMatchObject({ databaseId: 5, conclusion: 'failure' });
     expect(verdictOf(runs, () => false)?.databaseId).toBe(4);
+  });
+});
+
+describe('stuckRuns', () => {
+  it('picks unfinished runs over an hour old', () => {
+    const now = Date.parse('2026-11-13T08:00:00Z');
+    const runs = [
+      { databaseId: 1, status: 'queued', createdAt: '2026-11-13T06:24:00Z' },
+      { databaseId: 2, status: 'in_progress', createdAt: '2026-11-13T07:30:00Z' },
+      { databaseId: 3, status: 'completed', createdAt: '2026-11-13T05:00:00Z' },
+    ];
+
+    expect(stuckRuns(runs, now).map((r) => r.databaseId)).toEqual([1]);
   });
 });

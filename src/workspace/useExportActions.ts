@@ -19,7 +19,7 @@ export function useExportActions(core: WorkspaceCore) {
 
   const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing } = core;
   const sharingRef = useRef(false);
-  const exportStep = useStepExport({ parts, scene, showToast });
+  const exportStep = useStepExport({ parts, scene, showToast, toasts });
   const exportRobotPackage = useRobotPackageExport(core);
 
   const exportStl = () => {

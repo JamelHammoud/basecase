@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { STEP_EXPORT_MS } from '../stepPolicy.mjs';
+import { STEP_EXPORT_MS, STEP_MESSAGES } from '../stepPolicy.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const kernelDir = path.resolve(here, '..');
@@ -90,7 +90,7 @@ export function createNodeKernel({ permissionModel = true } = {}) {
 
       if (i >= 0) kernels.splice(i, 1);
 
-      if (k.job) finish(k, { id: k.job.id, ok: false, error: STOPPED_ERROR }, true);
+      if (k.job) finish(k, { id: k.job.id, ok: false, error: k.job.messages?.stopped ?? STOPPED_ERROR }, true);
     });
     proc.stderr.on('data', () => {});
     kernels.push(k);
@@ -114,7 +114,7 @@ export function createNodeKernel({ permissionModel = true } = {}) {
   function assign(k, job) {
     k.job = job;
     job.timer = setTimeout(() => {
-      finish(k, { id: job.id, ok: false, error: timeoutError(job.timeoutMs) }, true);
+      finish(k, { id: job.id, ok: false, error: job.messages?.timeout ?? timeoutError(job.timeoutMs) }, true);
       k.proc.kill();
     }, job.timeoutMs);
     k.proc.send({
@@ -159,7 +159,7 @@ export function createNodeKernel({ permissionModel = true } = {}) {
     },
     auditPart: (mesh, timeoutMs = 60000) => submit({ mesh, timeoutMs }),
     exportStep: (job, timeoutMs = STEP_EXPORT_MS) =>
-      submit({ step: plainStepJob(job), language: 'replicad', timeoutMs }),
+      submit({ step: plainStepJob(job), language: 'replicad', timeoutMs, messages: STEP_MESSAGES }),
     warmUp() {
       if (kernels.length === 0) spawnKernel();
     },

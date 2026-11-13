@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
 import type { FoundAxis } from '../joints/axisFinder';
+import { confirmAction } from '../design-system/confirmStore';
 import { handJoint, withJoints, withoutJoint, withRange, type HandJointType } from '../joints/declare';
 import type { AxisPickHit } from '../three/viewport/types';
 import type { ScenePart } from '../types/robotics';
+import { prettyJointName } from '../utils/kinematics';
 import { useLatestRef } from '../utils/useLatestRef';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -44,7 +46,7 @@ function useHoverQueue(ask: (hit: AxisPickHit) => Promise<boolean>, setReady: (r
 }
 
 export function useHandJoints(core: WorkspaceCore) {
-  const { docs, parts, selectedIds, setSelectedIds, viewportRef, posing, tool, showToast, undo } = core;
+  const { docs, parts, selectedIds, setSelectedIds, viewportRef, posing, tool } = core;
   const [pick, setPick] = useState<Pick | null>(null);
   const selectedRef = useLatestRef(selectedIds);
   const [parent, child] = selectedIds.map((id) => parts.find((p) => p.id === id));
@@ -113,12 +115,14 @@ export function useHandJoints(core: WorkspaceCore) {
 
     if (!joint) return;
 
-    docs.commitJoints((p) => ({ ...p, joints: withoutJoint(p.joints ?? [], id) }));
-    showToast(`Deleted ${joint.name}`, { tone: 'neutral', action: { label: 'Undo', onClick: undo } });
+    confirmAction({
+      title: `Delete ${prettyJointName(joint.name)}?`,
+      onConfirm: () => docs.commitJoints((p) => ({ ...p, joints: withoutJoint(p.joints ?? [], id) })),
+    });
   };
 
   const setRange = (id: string, range: [number, number], live?: boolean) =>
-    docs.commitJoints((p) => ({ ...p, joints: withRange(p.joints ?? [], id, range) }), live);
+    docs.commitJoints((p) => ({ ...p, joints: withRange(p.joints ?? [], id, range) }), { key: id, live: !!live });
 
   return {
     canJoin,

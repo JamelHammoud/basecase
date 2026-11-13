@@ -22,4 +22,4 @@ The joint takes the moving part's name. A hinge starts at ±90°; a slider start
 
 ![The new hinge turned to 40° in the Pose tab](/changelog/hinges-and-sliders/cover.png)
 
-Until now only the agent could declare joints, through define_joints. It now builds them through the same code, so a joint you add by hand and one the agent adds come out the same.
+A joint you add by hand works like one the agent adds: it poses, checks and simulates the same way.

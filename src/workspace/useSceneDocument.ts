@@ -39,7 +39,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   const docRef = useRef(doc);
   const partsRef = useRef(doc.parts);
   const lastPoseEditRef = useRef(0);
-  const liveJointsRef = useRef<{ joints: RobotJoint[] | undefined } | null>(null);
+  const liveJointsRef = useRef<{ key: string; joints: RobotJoint[] | undefined } | null>(null);
 
   useEffect(() => {
     partsRef.current = doc.parts;
@@ -53,7 +53,22 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
 
   const restoreJoints = (joints: RobotJoint[] | undefined) => updateProjectNow((p) => ({ ...p, joints }));
 
+  const settleLiveJoints = (key?: string) => {
+    const pending = liveJointsRef.current;
+
+    if (!pending || pending.key === key) return pending;
+
+    const { pose, marks } = projectRef.current;
+
+    liveJointsRef.current = null;
+    writeDoc(pushHistory(docRef.current, docRef.current.parts, { pose, joints: pending.joints, marks }));
+
+    return null;
+  };
+
   const commitParts: CommitParts = (updater, live = false) => {
+    if (!live) settleLiveJoints();
+
     const { pose, joints, marks } = projectRef.current;
     const d = docRef.current;
 
@@ -75,6 +90,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   };
 
   const recordPoseEdit = (before: RobotPoseState | undefined) => {
+    settleLiveJoints();
+
     const now = performance.now();
     const folds = now - lastPoseEditRef.current < POSE_FOLD_MS;
 
@@ -90,6 +107,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   };
 
   const commitMarks = (next: SceneMark[]) => {
+    settleLiveJoints();
+
     const { pose, joints, marks } = projectRef.current;
     const d = docRef.current;
 
@@ -98,13 +117,14 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     lastPoseEditRef.current = 0;
   };
 
-  const commitJoints = (update: (p: ProjectSettings) => ProjectSettings, live = false) => {
+  const commitJoints = (update: (p: ProjectSettings) => ProjectSettings, edit?: { key: string; live: boolean }) => {
+    const pending = settleLiveJoints(edit?.key);
     const { pose, joints, marks } = projectRef.current;
-    const before = liveJointsRef.current ?? { joints };
+    const before = pending ?? { key: edit?.key ?? '', joints };
 
     updateProjectNow(update);
 
-    if (live) {
+    if (edit?.live) {
       liveJointsRef.current = before;
 
       return;
@@ -116,6 +136,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
   };
 
   const travel = (direction: HistoryDirection, restorePose: (pose: RobotPoseState | undefined) => void) => {
+    settleLiveJoints();
+
     const d = docRef.current;
     const { pose, joints, marks } = projectRef.current;
     const here: Snapshot = { parts: d.parts, pose, joints, marks };

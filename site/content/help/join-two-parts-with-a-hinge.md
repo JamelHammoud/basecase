@@ -24,4 +24,4 @@ A hinge turns ±90° to start with. A slider travels as far as it can while the 
 
 ![Range in a joint row's right-click menu, with the lowest and highest angle](/help/join-two-parts-with-a-hinge/range.png)
 
-⌘Z removes a joint you just added. To remove one later, right-click its row in the Pose tab and choose Delete; Undo in the toast brings it back.
+⌘Z removes a joint you just added. To remove one later, right-click its row in the Pose tab, choose Delete and confirm; ⌘Z brings it back.

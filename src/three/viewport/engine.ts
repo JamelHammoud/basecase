@@ -365,7 +365,9 @@ export class ViewportEngine {
       jointAxis: (query) =>
         jointAxisIn(
           withRest(() => snapshotShapes(measure.partObjects(ctx, [query.parent, query.child]))),
-          query,
+          query.pick
+            ? { ...query, pick: { ...query.pick, point: ctx.layer.pointAtRest(query.pick.part, query.pick.point) } }
+            : query,
         ),
       meshesReady: () => componentMeshesReady(this.props.parts.flatMap((p) => p.componentId ?? [])),
       sweepClashes: (sweeps) =>

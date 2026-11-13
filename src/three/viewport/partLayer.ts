@@ -4,6 +4,7 @@ import { applyPartTransform, buildPartGroup, releasePartGroup } from '../buildPa
 import { getComponentMesh } from '../componentMeshes';
 import { preparePart } from '../partMesh/prepare';
 import type { PartBatches } from './partBatches';
+import type { Vec3 } from './types';
 
 interface Entry {
   part: ScenePart;
@@ -176,6 +177,12 @@ export class PartLayer {
       .decompose(restPosition, restQuaternion, new THREE.Vector3());
 
     return { position: restPosition, quaternion: restQuaternion };
+  }
+
+  pointAtRest(id: string, point: Vec3): Vec3 {
+    const delta = this.pose.get(id);
+
+    return delta ? (new THREE.Vector3(...point).applyMatrix4(delta.clone().invert()).toArray() as Vec3) : point;
   }
 
   withRest<T>(run: () => T, reapply: () => void): T {

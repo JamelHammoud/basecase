@@ -16,8 +16,8 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 
 - **Link:** https://www.autodesk.com/products/fusion-360/overview
 - **Checked:** 2026-11-13
-- **Better than Basecase:** an established CAD tool whose free personal-use licence still exports STEP, STL, OBJ and FBX ([personal use](https://www-pt.autodesk.com/uk/products/fusion-360/personal)). The community fusion2urdf script turns a Fusion design's Rigid, Slider and Revolute joints into a ROS description package with STL meshes ([fusion2urdf](https://github.com/syuntoku14/fusion2urdf)).
-- **Worse than Basecase:** personal use allows "10 active and editable" documents and is for non-commercial users who make under $1,000 a year ([personal use](https://www-pt.autodesk.com/uk/products/fusion-360/personal)). fusion2urdf writes xacro instead of plain URDF, and its last dated change is from 2021 ([fusion2urdf](https://github.com/syuntoku14/fusion2urdf)). Basecase simulates, trains and prints the robot in the same app ([Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
+- **Better than Basecase:** an established CAD tool whose free personal-use licence still exports STEP, STL, OBJ and FBX ([personal use](https://www-pt.autodesk.com/uk/products/fusion-360/personal)).
+- **Worse than Basecase:** personal use allows "10 active and editable" documents and is for non-commercial users who make under $1,000 a year ([personal use](https://www-pt.autodesk.com/uk/products/fusion-360/personal)). Basecase simulates, trains and prints the robot in the same app ([Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
 - **Basecase should:** integrate. See [integrations](integrations.md#fusion).
 
 ### Shapr3D

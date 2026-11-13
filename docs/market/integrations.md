@@ -54,7 +54,7 @@ Sending to Bambu (Studio, Connect and LAN), Moonraker, PrusaLink and OctoPrint p
 - **Basecase today:** sends G-code to PrusaLink on the local network ([Printing](../guide/printing.md)).
 - **Better than Basecase:** Prusa Connect is a cloud service, free for Prusa owners with 1 GB of storage, that works "from anywhere" and tracks every printer in a farm; PrusaLink works only on the local network. CORE One, MK4/S, MK3.9/S, MK3.5/S and XL have both built in ([Prusa](https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608)).
 - **Worse than Basecase:** the page says PrusaSlicer reaches Connect but doesn't describe an upload API for other apps ([Prusa](https://help.prusa3d.com/article/prusa-connect-and-prusalink-explained_302608)).
-- **Basecase should:** wait. PrusaLink already covers a printer on the same network; look again once Prusa documents uploads to Connect.
+- **Basecase should:** integrate once Prusa documents uploads to Connect, so a print reaches a printer that isn't on the same network; until then, PrusaLink covers one that is.
 
 ### To check
 

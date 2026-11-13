@@ -166,6 +166,18 @@ describe('expandXacro fails closed', () => {
     ).rejects.toThrow(REFUSED);
   });
 
+  it('stops a document that repeats one large property many times', async () => {
+    const props = Array.from({ length: 18 }, (_, i) => `<xacro:property name="p${i + 1}" value="\${p${i}}\${p${i}}"/>`);
+    const doubling = Array.from(
+      { length: 9 },
+      (_, i) => `<xacro:macro name="m${i + 1}"><xacro:m${i}/><xacro:m${i}/></xacro:macro>`,
+    ).join('');
+    const big = `<xacro:property name="p0" value="ab"/>${props.join('')}`;
+    const links = `<xacro:macro name="m0"><link name="\${p18}"/></xacro:macro>${doubling}<xacro:m9/>`;
+
+    await expect(expand(big + links)).rejects.toThrow(REFUSED);
+  });
+
   it('refuses expressions that call functions, and what it can’t evaluate', async () => {
     await expect(expand(`<link name="\${__import__('os').system('ls')}"/>`)).rejects.toThrow(REFUSED);
     await expect(expand(`<link name="\${constructor.constructor('return process')()}"/>`)).rejects.toThrow(REFUSED);

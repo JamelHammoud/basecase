@@ -7,4 +7,4 @@ Import Robot now takes a GitHub or Hugging Face repo or folder link and a zip li
 
 ## Xacro packages
 
-Import Robot also opens xacro, so a robot exported from Fusion 360 with fusion2urdf, or a ROS description package like the UR arms, comes in with its joints and limits. Choose the package folder or paste the repo link. Includes, properties, macros, `xacro:if` and `xacro:arg` defaults are expanded in the app; a plain `.urdf` beside the xacro still wins.
+Import Robot also opens xacro, so a robot exported from Fusion 360 with fusion2urdf, or a ROS description package built from xacro macros, comes in with its joints and limits. Choose the package folder or paste the repo link. Includes, properties, macros, `xacro:if` and `xacro:arg` defaults are expanded in the app; a plain `.urdf` beside the xacro still wins.

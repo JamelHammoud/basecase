@@ -17,12 +17,13 @@ const MAX_INCLUDE_DEPTH = 8;
 const MAX_INCLUDES = 200;
 const MAX_MACRO_DEPTH = 40;
 const MAX_NODES = 200_000;
+const MAX_OUTPUT = 16_000_000;
 const PARAM = /(?:[^\s'"]+|'[^']*'|"[^"]*")+/g;
 const OUTSIDE_SOURCE = /^(?!package:\/\/)[a-z][\w+.-]*:/i;
 
 interface Ctx extends TextContext {
   read: Resolver['read'];
-  spent: { nodes: number; includes: number };
+  spent: { nodes: number; includes: number; chars: number };
   includeDepth: number;
   macroDepth: number;
 }
@@ -53,13 +54,23 @@ function spend(ctx: Ctx) {
   if (++ctx.spent.nodes > MAX_NODES) throw new XacroError('Expands to too many elements');
 }
 
+function emit(text: string, ctx: Ctx) {
+  ctx.spent.chars += text.length;
+
+  if (ctx.spent.chars > MAX_OUTPUT) throw new XacroError('Expands to too much text');
+
+  return text;
+}
+
+const outputText = (raw: string, scope: Scope, ctx: Ctx) => emit(evalString(raw, scope, ctx), ctx);
+
 async function expandNodes(nodes: XmlChild[], scope: Scope, ctx: Ctx): Promise<XmlChild[]> {
   const out: XmlChild[] = [];
 
   for (const node of nodes) {
     spend(ctx);
 
-    if (typeof node === 'string') out.push(evalString(node, scope, ctx));
+    if (typeof node === 'string') out.push(outputText(node, scope, ctx));
     else if (node.tag.startsWith('xacro:')) out.push(...(await directive(node, scope, ctx)));
     else out.push(await plainElement(node, node.tag, scope, ctx));
   }
@@ -70,9 +81,9 @@ async function expandNodes(nodes: XmlChild[], scope: Scope, ctx: Ctx): Promise<X
 async function plainElement(el: XmlElement, tag: string, scope: Scope, ctx: Ctx): Promise<XmlElement> {
   const attrs = el.attrs
     .filter(([k]) => !k.startsWith('xacro:'))
-    .map(([k, v]): [string, string] => [k, evalString(v, scope, ctx)]);
+    .map(([k, v]): [string, string] => [emit(k, ctx), outputText(v, scope, ctx)]);
 
-  return { tag, attrs, children: await expandNodes(el.children, scope, ctx) };
+  return { tag: emit(tag, ctx), attrs, children: await expandNodes(el.children, scope, ctx) };
 }
 
 function scopeFor(scope: Scope, where: string | undefined): Scope {
@@ -258,7 +269,7 @@ export async function expandXacro(text: string, { read, from }: { read: Resolver
     read,
     file: from,
     args: new Map(),
-    spent: { nodes: 0, includes: 0 },
+    spent: { nodes: 0, includes: 0, chars: 0 },
     includeDepth: 0,
     macroDepth: 0,
   };

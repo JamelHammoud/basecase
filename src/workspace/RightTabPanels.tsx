@@ -46,7 +46,7 @@ function useVisitedTabs(tab: RightTab) {
 }
 
 function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) {
-  const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool } = core;
+  const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool, simTraining } = core;
   const { setProject } = docs;
 
   return (
@@ -65,6 +65,10 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
             }
       }
       onQuoteFinding={IS_WEB_DEMO ? undefined : (finding) => tool.requestQuote(findingQuote(finding, parts))}
+      onOpenCase={(id) => {
+        simTraining.cases.open(id);
+        tool.setRightTab('sim');
+      }}
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
       onToast={(m) => showToast(m)}

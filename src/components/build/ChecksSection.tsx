@@ -3,6 +3,7 @@ import { Section } from '../../design-system';
 import type { CheckStatus, CheckSummary, Readiness } from '../../readiness/types';
 import { READINESS_CHECKS } from '../../readiness/wording';
 import { ENGINEERING_CHECKS } from '../../utils/engineering';
+import { CaseCheckItem } from './CaseCheckItem';
 import { CheckIcon } from './CheckIcon';
 import { CheckItem } from './CheckItem';
 import type { FindingContext } from './FindingRow';
@@ -36,6 +37,22 @@ const Checking: React.FC<{ name: string }> = ({ name }) => (
   </li>
 );
 
+const entryKey = (check: CheckSummary) => (check.caseId ? `case:${check.caseId}` : check.name);
+
+const Entry: React.FC<{ check: CheckSummary; readiness: Readiness; context: FindingContext }> = ({
+  check,
+  readiness,
+  context,
+}) => {
+  const notes = readiness.notes.filter((f) => f.check === check.name);
+
+  if (check.caseId) return <CaseCheckItem check={{ ...check, caseId: check.caseId }} notes={notes} context={context} />;
+
+  const blockers = readiness.blockers.filter((f) => f.check === check.name);
+
+  return <CheckItem check={check} blockers={blockers} notes={notes} context={context} />;
+};
+
 export const ChecksSection: React.FC<ChecksSectionProps> = ({ readiness, checking, context, restore }) => {
   if (!context.parts.length || readiness?.status === 'empty') return null;
 
@@ -47,13 +64,7 @@ export const ChecksSection: React.FC<ChecksSectionProps> = ({ readiness, checkin
         {!readiness && FIRST_RUN.map((name) => <Checking key={name} name={name} />)}
         {readiness &&
           bySeverity(readiness.checks).map((check) => (
-            <CheckItem
-              key={check.name}
-              check={check}
-              blockers={readiness.blockers.filter((f) => f.check === check.name)}
-              notes={readiness.notes.filter((f) => f.check === check.name)}
-              context={context}
-            />
+            <Entry key={entryKey(check)} check={check} readiness={readiness} context={context} />
           ))}
       </ul>
       {readiness && <IgnoredChecks readiness={readiness} context={context} restore={restore} />}

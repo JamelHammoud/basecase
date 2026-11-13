@@ -111,6 +111,12 @@ function checkStatus(name: string, open: Finding[], fallback: CheckStatus = 'pas
   return fallback === 'not run' ? 'not run' : 'pass';
 }
 
+function rowStatus(row: CheckRow, open: Finding[]): CheckStatus {
+  const status = checkStatus(row.check, open, row.status);
+
+  return row.caseId && row.status === 'fail' && status === 'warn' ? 'fail' : status;
+}
+
 function checkSummaries(open: Finding[], rows: CheckRow[]): CheckSummary[] {
   const idsOf = (name: string) => [...new Set(open.filter((f) => f.check === name).flatMap((f) => f.ids))];
   const seen = new Set(rows.map((r) => r.check));
@@ -127,9 +133,10 @@ function checkSummaries(open: Finding[], rows: CheckRow[]): CheckSummary[] {
     })),
     ...rows.map((row) => ({
       name: row.check,
-      status: checkStatus(row.check, open, row.status),
+      status: rowStatus(row, open),
       detail: row.detail,
       ids: idsOf(row.check),
+      ...(row.caseId ? { caseId: row.caseId } : {}),
     })),
   ];
 }

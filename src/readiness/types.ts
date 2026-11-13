@@ -43,6 +43,7 @@ export interface CheckSummary {
   status: CheckStatus;
   detail: string;
   ids: string[];
+  caseId?: string;
 }
 
 export interface ReadinessFinding extends Finding {

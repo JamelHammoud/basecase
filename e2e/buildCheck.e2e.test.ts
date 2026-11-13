@@ -1,9 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openApp, type App } from './harness';
+import { caseTemplates } from '../src/cases/templates';
+import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { buildRig } from '../src/utils/kinematics';
+import { openApp, partCount, type App } from './harness';
 
 interface StudioHook {
   load: (record: { parts: unknown[]; project: unknown }) => void;
-  sceneRecord: () => { project: unknown };
+  sceneRecord: () => { project: Record<string, unknown> };
+  simState: () => { activeCase: string | null };
 }
 
 let app: App;
@@ -204,4 +208,39 @@ describe('Build tab fields', () => {
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
+});
+
+describe('Cases in Checks', () => {
+  const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+  const flag = caseTemplates(buildRig(rover.joints, rover.parts), rover.parts)
+    .find((t) => t.id === 'reach-the-flag')!
+    .build();
+  const activeCase = () =>
+    app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.simState().activeCase);
+
+  it('judge each Case as a row with its count, and open it in Simulate', async () => {
+    await app.page.evaluate(
+      ({ parts, joints, kase }) => {
+        const studio = (window as unknown as { __studio: StudioHook }).__studio;
+
+        studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
+      },
+      { parts: rover.parts, joints: rover.joints, kase: flag },
+    );
+    await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks().getByRole('button', { name: /^Reach the Flag/ });
+
+    await expect.poll(() => row.count(), { timeout: 90000 }).toBe(1);
+    await expect.poll(async () => (await row.textContent()) ?? '', { timeout: 90000 }).toMatch(/\d+ of 20$/);
+    expect(await activeCase()).toBeNull();
+
+    await row.click();
+    await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-the-flag');
+    await expect
+      .poll(() => app.page.locator(visible('[data-testid="case-brief"]')).innerText(), { timeout: 10000 })
+      .toContain('Reach the Flag');
+    expect(app.errors).toEqual([]);
+  }, 150000);
 });

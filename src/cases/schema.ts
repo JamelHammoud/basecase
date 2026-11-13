@@ -221,6 +221,16 @@ export function parseCase(input: unknown): Case {
   };
 }
 
+export function readCases(raw: unknown[] | undefined): Case[] {
+  return (raw ?? []).flatMap((c) => {
+    try {
+      return [parseCase(c)];
+    } catch {
+      return [];
+    }
+  });
+}
+
 export function worldItem(o: WorldObject): WorldItem {
   const part: ScenePart = {
     id: o.id,

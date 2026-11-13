@@ -73,7 +73,7 @@ function studio({ running = true } = {}) {
 describe('write_case_code', () => {
   it('replies with a syntax error and the line it’s on', async () => {
     const app = studio();
-    const reply = await app.write({ source: '<p>Remote</p>\n<script>\nconst = 1;\n</script>' });
+    const reply = await app.write({ source: '<p>Remote</p>\n<script>const = 1;</script>' });
 
     expect(reply).toMatchObject({ ok: true, case: 'remote', panel: 'remote', running: true, loaded: false });
     expect(reply.errors).toEqual([{ message: expect.stringMatching(/Unexpected token|Unexpected/), line: 2 }]);

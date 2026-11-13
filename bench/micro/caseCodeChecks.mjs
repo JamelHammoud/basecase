@@ -1,3 +1,4 @@
+import { plural } from '../../electron/plural.mjs';
 import { check } from './checks.mjs';
 
 export const START_CASE = 'app';
@@ -34,7 +35,7 @@ export const noUncaughtErrors = () =>
       r ? r.errors.map((e) => `${id}${e.line ? `:${e.line}` : ''} ${e.message}`) : [`${id} never loaded`],
     );
 
-    return listed(errors, `${Object.keys(run.reports).length} panels ran`);
+    return listed(errors, `${plural(Object.keys(run.reports).length, 'panel')} ran`);
   });
 
 export const noRefusedCalls = () =>

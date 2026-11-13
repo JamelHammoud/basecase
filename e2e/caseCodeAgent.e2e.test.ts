@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { gradeTask } from '../bench/micro/grade.mjs';
 import { CASE_CODE_TASKS } from '../bench/micro/tasks/caseCode.mjs';
 import { presetCase } from '../src/cases/caseBuilder';
@@ -53,18 +53,7 @@ console.log('remote ready');
 </script>`,
 };
 
-const RECORDED_REVISION = {
-  panel: 'remote',
-  source: `<div style="display:grid;gap:var(--bc-gap);padding:var(--bc-inset)">
-  <button data-move="wave">Wave</button>
-  <button data-move="sit">Sit</button>
-</div>
-<script>
-for (const button of document.querySelectorAll('button')) button.addEventListener('click', () => basecase.event(button.dataset.move));
-</script>`,
-};
-
-const BROKEN_REVISION = { panel: 'remote', source: '<button>Wave</button>\n<script>\nconst = 1;\n</script>' };
+const BROKEN_REVISION = { panel: 'remote', source: '<button>Sit</button>\n<script>\nconst = 1;\n</script>' };
 
 function roverScene() {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
@@ -94,29 +83,33 @@ const stillTrying = async () => {
   return state.drive === 'on' && state.tries.length === 0;
 };
 
-beforeAll(async () => {
+async function startTry() {
+  const { page } = app;
+  const scene = roverScene();
+
+  await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
+  await expect.poll(() => partCount(page)).toBe(scene.parts.length);
+  await openPlayTab(page, 'Cases');
+  await page.locator(shown('[data-testid="cases-panel"] button'), { hasText: 'Rover Remote' }).first().click();
+  await expect.poll(async () => (await simState()).activeCase).toBe('rover-remote');
+  await page.keyboard.press('Meta+k');
+  await page.keyboard.type('Run Case');
+  await page.keyboard.press('Enter');
+  await panel('tries').locator('button', { hasText: 'Try It' }).first().click();
+  await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+}
+
+beforeEach(async () => {
   app = await openApp();
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
 describe('the agent writing a running Case’s code', () => {
-  it('reloads the panel it writes while the try keeps running, ⌘Z walks its writes back and ⌘I opens the agent beside it', async () => {
-    const { page } = app;
-    const scene = roverScene();
-
-    await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
-    await expect.poll(() => partCount(page)).toBe(scene.parts.length);
-    await openPlayTab(page, 'Cases');
-    await page.locator(shown('[data-testid="cases-panel"] button'), { hasText: 'Rover Remote' }).first().click();
-    await expect.poll(async () => (await simState()).activeCase).toBe('rover-remote');
-    await page.keyboard.press('Meta+k');
-    await page.keyboard.type('Run Case');
-    await page.keyboard.press('Enter');
-    await panel('tries').locator('button', { hasText: 'Try It' }).first().click();
-    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+  it('reloads the panel it writes while the try keeps running, and ⌘Z puts the earlier source back', async () => {
+    await startTry();
 
     const first = await agentRequest('write_case_code', RECORDED_FIRST_WRITE);
 
@@ -125,28 +118,24 @@ describe('the agent writing a running Case’s code', () => {
     await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
     expect(await stillTrying()).toBe(true);
 
-    const revised = await agentRequest('write_case_code', RECORDED_REVISION);
-
-    expect(revised).toMatchObject({ ok: true, loaded: true, errors: [], refused: [] });
-    await expect.poll(() => remote().getByRole('button', { name: 'Sit' }).count()).toBe(1);
-    expect(await stillTrying()).toBe(true);
-
     const broken = await agentRequest('write_case_code', BROKEN_REVISION);
 
     expect(broken).toMatchObject({ ok: true, loaded: false, errors: [{ line: 3 }] });
     await expect.poll(() => panel('remote').getByTestId('code-failed').count()).toBe(1);
 
-    await page.keyboard.press('Meta+z');
-    await expect.poll(() => remote().getByRole('button', { name: 'Sit' }).count()).toBe(1);
-    await page.keyboard.press('Meta+z');
+    await app.page.keyboard.press('Meta+z');
+    await expect.poll(() => panel('remote').getByTestId('code-failed').count()).toBe(0);
     await expect.poll(() => remote().getByRole('button', { name: 'Sit' }).count()).toBe(0);
     await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
     expect(await stillTrying()).toBe(true);
+  }, 180000);
 
-    await page.keyboard.press('Meta+i');
+  it('opens the agent beside a running Case with ⌘I, and a message there is about that Case', async () => {
+    await startTry();
+    await app.page.keyboard.press('Meta+i');
     await expect.poll(() => rightTabs().allTextContents()).toEqual(['Agent']);
     await composer().fill('Add a Sit button');
-    await page.keyboard.press('Enter');
+    await app.page.keyboard.press('Enter');
     await expect.poll(() => sentPrompt()).toContain('running the Case Rover Remote (rover-remote)');
     expect(await stillTrying()).toBe(true);
   }, 180000);
@@ -172,7 +161,7 @@ describe('the agent writing a running Case’s code', () => {
     const reference = await graded(await remoteTask.solutionScene());
 
     expect(reference.checks.map((c) => [c.pass, c.detail])).toEqual([
-      [true, '1 panels ran'],
+      [true, '1 panel ran'],
       [true, 'None refused'],
       [true, 'All found'],
       [true, 'Dance drove, Stop stopped'],

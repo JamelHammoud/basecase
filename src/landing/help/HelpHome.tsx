@@ -10,11 +10,8 @@ export const HelpHome: React.FC<{ center: HelpCenter }> = ({ center }) => (
   <>
     <PageTitle>Help</PageTitle>
     <HelpSearch className="mt-[28px]" />
-    <section className="mt-[56px]">
-      <SectionTitle>Collections</SectionTitle>
-      <div className="mt-[16px]">
-        <CollectionGrid collections={center.collections} />
-      </div>
+    <section className="mt-[40px]">
+      <CollectionGrid collections={center.collections} />
     </section>
     {center.popular.length > 0 && (
       <section className="mt-[56px]">

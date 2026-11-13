@@ -1,6 +1,9 @@
 ---
 title: Try a robot on a Case
 date: 2026-11-12
+collection: simulate-and-train
+type: task
+order: 4
 covers:
   - src/components/SimulatePanel.tsx
   - src/components/simulate/CaseSections.tsx

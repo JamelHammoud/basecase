@@ -32,10 +32,11 @@ describe('help search', () => {
     expect(paths('send')).toEqual(['/help/fix-a-crash', '/help/share-a-scene', '/help/slice-plates']);
   });
 
-  it('matches as you type, and needs every word', () => {
+  it('matches every word by prefix as you type, and needs every word', () => {
     expect(paths('imp')).toEqual(['/help/import-a-mesh']);
     expect(paths('scene printer')).toEqual([]);
     expect(paths('send prin')).toEqual(['/help/slice-plates']);
+    expect(paths('imp mes')).toEqual(['/help/import-a-mesh']);
   });
 
   it('finds articles by synonyms, plurals, keywords and key glyphs', () => {

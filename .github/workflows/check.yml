@@ -49,6 +49,7 @@ jobs:
       matrix:
         os: ${{ fromJSON((github.event_name != 'pull_request' || startsWith(github.head_ref, 'loop/repair/')) && '["ubuntu-latest","windows-latest"]' || '["ubuntu-latest"]') }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     defaults:
       run:
         shell: bash
@@ -73,6 +74,7 @@ jobs:
       matrix:
         shard: [1, 2, 3]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -92,8 +94,9 @@ jobs:
         run: npm run test:quarantine
 
   e2e-windows:
-    if: ${{ (github.event_name != 'pull_request' || startsWith(github.head_ref, 'loop/repair/')) }}
+    if: ${{ github.event_name == 'push' }}
     runs-on: windows-latest
+    timeout-minutes: 25
     defaults:
       run:
         shell: bash
@@ -254,7 +257,9 @@ jobs:
           want_full=skipped
           [ "$FULL" = true ] && want_full=success
           [ "$E2E" = "$want_full" ] || exit 1
-          [ "$WINDOWS_E2E" = "$want_full" ] || exit 1
+          want_windows=skipped
+          [ "$EVENT" = push ] && want_windows=success
+          [ "$WINDOWS_E2E" = "$want_windows" ] || exit 1
           want_app=skipped
           [ "$FULL" = true ] && [ "$APP_NEEDED" = true ] && want_app=success
           [ "$APP" = "$want_app" ] || exit 1

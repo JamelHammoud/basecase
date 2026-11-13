@@ -271,21 +271,25 @@ describe('the bridge’s guards', () => {
     expect(hung.log.drives).toEqual([null]);
   });
 
-  it('unloads a hung panel on the first tick after it froze the page, and keeps one that answered', async () => {
+  it('pings again after the page stalls, and unloads only a panel that misses that ping too', async () => {
     const clock = fakeClock();
     const healthy = open('', { bus: busFor(robot('rover-diff')), scope: scope(), clock });
     const hung = open(JOYSTICK, { bus: busFor(robot('rover-diff')), scope: scope(), clock });
 
-    clock.tick(500);
     await settle();
     hung.hang();
     clock.tick(500);
-    await settle();
     clock.freeze(5000);
     await settle();
 
-    expect(hung.log.failed).toEqual([SILENT_ERROR]);
     expect(healthy.log.failed).toEqual([]);
+    expect(hung.log.failed).toEqual([]);
+
+    clock.freeze(5000);
+    await settle();
+
+    expect(healthy.log.failed).toEqual([]);
+    expect(hung.log.failed).toEqual([SILENT_ERROR]);
   });
 
   it('gives the frame 10 s to say hello before it unloads it', () => {

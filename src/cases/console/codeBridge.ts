@@ -54,6 +54,7 @@ type PortTarget = {
 export const SILENT_ERROR = 'It didn’t answer.';
 
 const MAX_ERRORS = 50;
+const STALL_MS = 2 * PING_MS;
 
 const isAction = (name: string): name is CaseAction => (CASE_ACTIONS as readonly string[]).includes(name);
 
@@ -92,6 +93,8 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   let closed = false;
   const opened = clock.now();
   let pingedAt: number | null = null;
+  let lastTick = opened;
+  let repinged = false;
 
   const post = (message: StudioMessage) => port?.postMessage(message);
   const feed = signalFeed({ bus: o.bus, scope: o.scope, post, clock });
@@ -144,6 +147,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
 
   const onPortMessage = (e: MessageEvent) => {
     pingedAt = null;
+    repinged = false;
 
     const over = spend();
 
@@ -157,19 +161,33 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     else (handlers[m.type] as (message: FrameMessage) => void)(m);
   };
 
-  const stopPing = clock.every(PING_MS, () => {
-    if (!port && clock.now() - opened >= HELLO_MS) fail(SILENT_ERROR);
+  const ping = (now: number, late: boolean) => {
+    const silent = pingedAt !== null && now - pingedAt >= SILENT_MS;
 
-    if (!port) return;
-
-    if (pingedAt !== null && clock.now() - pingedAt >= SILENT_MS) {
+    if (silent && (!late || repinged)) {
       fail(SILENT_ERROR);
 
       return;
     }
 
-    pingedAt ??= clock.now();
+    if (silent) {
+      pingedAt = now;
+      repinged = true;
+    }
+
+    pingedAt ??= now;
     post({ type: 'ping' });
+  };
+
+  const stopPing = clock.every(PING_MS, () => {
+    const now = clock.now();
+    const late = now - lastTick > STALL_MS;
+
+    lastTick = now;
+
+    if (!port && now - opened >= HELLO_MS) fail(SILENT_ERROR);
+
+    if (port) ping(now, late);
   });
 
   return {

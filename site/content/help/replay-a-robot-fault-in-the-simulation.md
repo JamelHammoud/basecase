@@ -29,14 +29,15 @@ Turn the 20 seconds before a servo fault into a Case, and see in the simulation 
 Replay in Sim is offered only for a robot with an arm. It plays back the commands the robot's joints got.
 
 1. Connect the emulated robot and climb the **Ladder** to **Test**, as in [Connect an emulated robot](/help/connect-an-emulated-robot).
-2. In **Simulate**, click **Drive** and move the arm. The robot follows the simulation.
-3. When a fault stops a motor, find its message in **Operate** under **Stopped by a fault**.
-4. Click **Replay in Sim** under the message.
+2. In **Simulate**, click **Drive**.
+3. Move the arm. The robot follows the simulation.
+4. When a fault stops a motor, find its message in **Operate** under **Stopped by a fault**.
+5. Under the message, click **Replay in Sim**.
 
    ![Operate showing a stall on servo 2, with Replay in Sim under the message](/help/replay-a-robot-fault-in-the-simulation/fault.png)
 
-5. Watch the replay. A Case named after the fault's time opens in **Simulate**, with the faulting joint's link selected, and plays once as a try.
-6. Read **Results**. **Peak torque** shows each joint's highest torque as a share of its stall torque, and the try shows **Passed** or **Missed**.
+6. Watch the replay. A Case named after the fault's time opens in **Simulate**, with the faulting joint's link selected, and plays once as a try.
+7. Read **Results**. **Peak torque** shows each joint's highest torque as a share of its stall torque, and the try shows **Passed** or **Missed**.
 
    ![Results after the replay, with both joints at 100% and the try missed](/help/replay-a-robot-fault-in-the-simulation/results.png)
 

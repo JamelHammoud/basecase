@@ -39,7 +39,7 @@ function armWith(shoulder: string) {
 }
 
 function built() {
-  const made = replayCase({ run: stalledShoulder(), name: 'Fault at 14:32' });
+  const made = replayCase({ run: stalledShoulder(), name: 'Fault at 2:32 PM' });
 
   if (!made.ok) throw new Error(made.problem);
 
@@ -75,7 +75,11 @@ describe('a robot run as a Case', () => {
     const kase = built();
 
     expect(parseCase(JSON.parse(JSON.stringify(kase)))).toEqual(kase);
-    expect(kase).toMatchObject({ id: 'fault-at-14-32', name: 'Fault at 14:32', brief: 'The Shoulder joint is stuck.' });
+    expect(kase).toMatchObject({
+      id: 'fault-at-2-32-pm',
+      name: 'Fault at 2:32 PM',
+      brief: 'The Shoulder joint is stuck.',
+    });
     expect(() => parseCase({ ...kase, reference: { timeline: [{ at: 0, joints: { '../x': 1 } }] } })).toThrow(
       /plain id/,
     );

@@ -183,13 +183,16 @@ export function setRobotPolicy(refs: RobotPolicyRef[]) {
 export const disconnectRobot = async () => (await api?.robotDisconnect?.()) ?? unavailable;
 
 export async function sendRobotCommand(command: Record<string, unknown>): Promise<ConnectReply> {
-  if (command.cmd === 'intent' && Array.isArray(command.joints))
+  const sentAt = performance.now();
+  const reply = (await api?.robotCommand?.(command)) ?? unavailable;
+
+  if (reply.ok && command.cmd === 'intent' && Array.isArray(command.joints) && state.status?.run === 'running')
     run.intent(
-      performance.now(),
+      sentAt,
       command.joints.map((v) => (typeof v === 'number' ? v : NaN)),
     );
 
-  return (await api?.robotCommand?.(command)) ?? unavailable;
+  return reply;
 }
 
 export async function enterRung(mode: RobotMode) {

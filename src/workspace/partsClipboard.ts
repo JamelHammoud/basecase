@@ -1,3 +1,4 @@
+import { freshOperandIds } from '../booleans/parts';
 import type { ScenePart } from '../types/robotics';
 import { newId } from './helpers';
 import type { Vec3 } from './types';
@@ -38,7 +39,7 @@ export function takePaste(workspaceId: string): ScenePart[] | null {
   };
 
   return clip.parts.map(({ jointId: _joint, ...p }) => ({
-    ...p,
+    ...freshOperandIds(p, () => newId()),
     id: newId(),
     group: copyGroup(p.group),
     position: [p.position[0] + step, p.position[1], p.position[2] + step] as Vec3,

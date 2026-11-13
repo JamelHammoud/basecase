@@ -33,7 +33,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 - **Selection is an ordered list** (`selectedIds` in `App.tsx`). The first id is the primary, and Subtract keeps that part.
 - **Canvas:**
   - Click a part to select it, or its whole group. Clicking again keeps the group selected.
-  - Double-click or ⌘-click a grouped part to drill into just that part. Once inside a group (some but not all of its members selected), a single click selects another member.
+  - Double-click or ⌘-click a grouped part to drill into just that part, or a boolean to drill into the operand under the pointer. Once inside a group (some but not all of its members selected), a single click selects another member.
   - Shift-click works like Figma (`clickSelection` in `workspace/selection.ts`): it toggles what a plain click would pick. From outside a group it adds or removes the whole group; inside one it adds or removes just that member, so members of one group and other groups mix freely. ⇧⌘-click toggles exactly the part under the pointer. Clicking empty space clears the selection.
   - Shift-drag draws a blue selection box and adds every unlocked, visible part it touches, plus their groups. Hit testing uses each part’s real silhouette (projected vertices + a 7×7 ray grid), not its bounding box. It runs in the capture phase and turns OrbitControls off for that drag, so Shift-drag never pans. Shift-scroll still pans.
   - Only primary clicks change selection; right-click never does.
@@ -43,9 +43,15 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - Group rows are collapsible, double-click to rename, and select every member.
 - **Moving several parts:** the gizmo attaches to a pivot at the selection’s center. Move, rotate and scale apply to every unlocked part and commit as one undo step.
 - **Groups:** stored on each part as `group: { id, name }`, so they’re undoable and saved with the scene. Groups are flat (no nesting). ⌘G groups, ⇧⌘G ungroups.
-- **Booleans:**
-  - With 2+ parts, Union, Subtract (from the primary) and Intersect replace them with one mesh.
-  - With one part, Subtract uses every visible Cutout that overlaps it.
+- **Booleans** (`src/booleans/`) stay editable:
+  - With 2+ parts, Union, Subtract (from the primary) and Intersect replace them with one `boolean` part. With one part, Subtract uses every visible Cutout that overlaps it, and makes the same kind of part.
+  - The result keeps the base part's id and name (joints, marks and comments on it stay attached). `boolean: { op, operands }` holds the parts it was made from, base first, each a whole `ScenePart` in world coordinates with its own id; the base takes a fresh id. They're not in the top-level parts list, so Checks, the BOM, printing, plates, STL and the MJCF see only the result.
+  - The result's mesh is derived: it lives in `mesh` like an imported mesh (drawn by the same builder, measured the same way) with `boolean.hash`, the operands' hash it was cut from (`hash.ts`), and `boolean.frame`, the result's position, rotation and size at that moment. Scenes save it, so loading never cuts again; a part whose hash no longer matches is cut again on load.
+  - The cut runs in the geometry worker (`csg.ts`, op `boolean`) with `manifold-3d`; when Manifold refuses an operand's mesh (open component pieces), the whole cut falls back to three-bvh-csg in the same worker. The main thread never runs CSG. Results are cached by hash (`evaluate.ts`, last 64).
+  - `commitParts` lifts every operand into the list the updater sees and folds the edits back (`editWithOperands` in `operands.ts`), so every edit by id (gizmo, Inspector, agent ops, ⌫) reaches an operand. Deleting the base, or all tools but one, dissolves the boolean into what's left. Moving, turning or resizing the result carries its operands with it (`syncFrames` in `frames.ts`); a move alone keeps the hash, since operand positions are hashed relative to the base.
+  - After a commit, `useBooleanResults` cuts every stale boolean (innermost first) and writes the result into the present and every undo and redo state whose hash matches (`patchEveryState`), so an operand edit is one undo step and undo shows the old cut at once. An edit that empties the result leaves an empty mesh until the next edit; making a boolean from parts that don't overlap changes nothing and says “Those parts don’t overlap”.
+  - Drilling in works like a group (`drillTarget` in `picking.ts`): double-click or ⌘-click the result to select the operand whose surface is under the pointer (the closest of each operand's hits to the result's hit); once inside, a plain click picks another operand. A selected operand draws as a ghost over the result (cutouts in their own red, solids in translucent blue, `drilledOperands`), which the gizmo moves like any part. Layers lists operands under the result (§5).
+  - Duplicate and paste give operands fresh ids (`freshOperandIds`). Old scenes keep their `sculpt_mesh` booleans, which render and export as before.
 - **Selection bar:** with 2+ parts selected, a glass pill above the toolbar shows the count, Union, Subtract, Intersect and Group/Ungroup.
 - **Align (`AlignBar`):**
   - One icon strip per axis: X Left·Center·Right, Y Bottom·Middle·Top, Z Back·Center·Front, with Spread beside each (disabled under 3 parts). The right-click Align submenu and the multi-selection Inspector show the same strip; a click in the submenu closes the menu.

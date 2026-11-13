@@ -6,6 +6,7 @@ import { SculptInput } from './sculptInput';
 import type { Vec3 } from './types';
 import type { ViewportContext } from './viewportContext';
 import { hasPrimaryModifier } from '../../utils/os';
+import { drillTarget } from '../../booleans/picking';
 
 const CLICK_SLOP = 5;
 
@@ -161,16 +162,31 @@ export class PointerInput {
     if (floor) place?.([floor.x, 0, floor.z], null);
   }
 
+  private pickedId(e: MouseEvent, hit: THREE.Intersection | null, drill: boolean): string | null {
+    const partId = hitPartId(hit);
+    const part = partId ? this.ctx.layer.part(partId) : undefined;
+
+    if (!hit || !part) return partId;
+
+    return drillTarget({
+      part,
+      raycaster: rayAt(this.ctx.stage, e.clientX, e.clientY),
+      distance: hit.distance,
+      selected: new Set(this.ctx.props().selectedPartIds),
+      drill,
+    });
+  }
+
   private select(e: PointerEvent): void {
     const { onSelectPart } = this.ctx.props();
     const deep = hasPrimaryModifier(e);
     const hit = deep
       ? raycastParts(this.ctx.stage, e.clientX, e.clientY)
       : raycastUnlocked(this.ctx, e.clientX, e.clientY);
-    const partId = hitPartId(hit);
+    const partId = this.pickedId(e, hit, deep);
 
     if (partId) {
-      onSelectPart(partId, e.shiftKey, deep);
+      onSelectPart(partId, e.shiftKey, deep || partId !== hitPartId(hit));
 
       return;
     }
@@ -186,7 +202,7 @@ export class PointerInput {
       return;
     }
 
-    const partId = hitPartId(raycastUnlocked(this.ctx, e.clientX, e.clientY));
+    const partId = this.pickedId(e, raycastUnlocked(this.ctx, e.clientX, e.clientY), true);
 
     if (partId) onSelectPart(partId, false, true);
   }

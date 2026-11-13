@@ -1,28 +1,14 @@
 import React from 'react';
 import { Kbd } from '../design-system';
-import { IS_MAC } from '../utils/os';
 import { SettingsGroup } from './SettingsRows';
 
-type Row = [string, string | string[]];
-
-const TRACKPAD_ROWS: Row[] = [
-  ['Orbit or pan', 'Two-finger scroll'],
-  ['Zoom', 'Pinch'],
-];
-
-const MOUSE_ROWS: Row[] = [
-  ['Orbit', 'Drag'],
-  ['Zoom', 'Scroll'],
-  ['Pan', 'Right-drag or middle-drag'],
-];
+type Row = [string, string[]];
 
 const GROUPS: Array<{ title: string; rows: Row[] }> = [
   {
     title: 'Navigate',
     rows: [
-      ...(IS_MAC ? TRACKPAD_ROWS : MOUSE_ROWS),
       ['Pan', ['Space', 'drag']],
-      ['Pan while orbiting', ['⇧', 'scroll']],
       ['Zoom to selection', ['Z']],
       ['Isometric view', ['1']],
       ['Top view', ['2']],
@@ -38,11 +24,13 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
       ['Scale', ['R']],
       ['Sculpt', ['C']],
       ['Pose', ['P']],
+      ['Comment', ['M']],
       ['Measure', ['D']],
       ['Measure without snapping', ['⇧', 'click']],
       ['Annotate', ['N']],
       ['Marker while annotating', ['P']],
       ['Eraser while annotating', ['E']],
+      ['Shapes', ['A']],
       ['Drop to floor', ['F']],
       ['Stack on part below', ['S']],
       ['Move or rotate without snapping', ['⇧', 'drag']],
@@ -56,6 +44,9 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
       ['Add to selection', ['⇧', 'click']],
       ['Box select', ['⇧', 'drag']],
       ['Select all', ['⌘A']],
+      ['Copy', ['⌘C']],
+      ['Cut', ['⌘X']],
+      ['Paste', ['⌘V']],
       ['Group', ['⌘G']],
       ['Ungroup', ['⇧⌘G']],
       ['Duplicate', ['⌘D']],
@@ -67,6 +58,7 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
     title: 'Scenes',
     rows: [
       ['New scene', ['⌘T']],
+      ['Open scene', ['⌘O']],
       ['Close scene', ['⌘W']],
       ['Reopen closed scene', ['⇧⌘T']],
       ['Next scene', ['⌃Tab']],
@@ -84,6 +76,9 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
       ['Show or hide sidebar', ['⌘B']],
       ['Show or hide inspector', ['⌘I']],
       ['Show or hide reference images', ['⇧I']],
+      ['Show or hide camera views', ['⇧V']],
+      ['Print', ['⌘P']],
+      ['Run routine', ['⌘↩']],
       ['Settings', ['⌘,']],
       ['Shortcuts', ['?']],
     ],
@@ -101,18 +96,14 @@ export const ShortcutsList: React.FC<{ sculptEnabled: boolean }> = ({ sculptEnab
           >
             <span className="min-w-0 truncate">{label}</span>
             <span className="shrink-0 flex items-center gap-[4px]">
-              {typeof keys === 'string' ? (
-                <span className="text-[12.5px] text-white/50">{keys}</span>
-              ) : (
-                keys.map((k, i) =>
-                  /^[a-z]+$/.test(k) ? (
-                    <span key={i} className="text-[12.5px] text-white/50">
-                      {k}
-                    </span>
-                  ) : (
-                    <Kbd key={i}>{k}</Kbd>
-                  ),
-                )
+              {keys.map((k, i) =>
+                /^[a-z]+$/.test(k) ? (
+                  <span key={i} className="text-[12.5px] text-white/50">
+                    {k}
+                  </span>
+                ) : (
+                  <Kbd key={i}>{k}</Kbd>
+                ),
               )}
             </span>
           </div>

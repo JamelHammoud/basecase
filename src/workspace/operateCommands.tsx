@@ -1,8 +1,10 @@
 import type { Command } from '../components/CommandPalette';
 import { OperateIcon } from '../design-system';
+import { canCalibrate } from '../robot/calibrationSession';
 import { connectRobot, robotSnapshot } from '../robot/robotStore';
 import { sceneRobot } from '../robot/sceneRobot';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { calibrateConnectedRobot } from './calibrationActions';
 import type { CommandInputs } from './sceneCommands';
 
 const ic = 'w-4 h-4';
@@ -14,7 +16,8 @@ export function operateCommands({ core }: CommandInputs): Command[] {
     core.tool.setLeftTab('operate');
     core.studio.setIsLeftOpen(true);
   };
-  const robot = sceneRobot(core.project.joints ?? []);
+  const joints = core.project.joints ?? [];
+  const robot = sceneRobot(joints);
 
   return [
     {
@@ -37,6 +40,18 @@ export function operateCommands({ core }: CommandInputs): Command[] {
               showOperate();
 
               if (robotSnapshot().link !== 'connected') void connectRobot(robot.spec, robot.joints);
+            },
+          },
+          {
+            id: 'calibrate-robot',
+            group: 'Operate',
+            label: 'Calibrate Servos',
+            icon: <OperateIcon className={ic} />,
+            keywords: 'calibration fit servos emulated robot sim twin',
+            run: () => {
+              showOperate();
+
+              if (canCalibrate(joints)) void calibrateConnectedRobot(core.docs.updateProjectNow, joints);
             },
           },
         ]

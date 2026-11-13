@@ -23,6 +23,7 @@ import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 
 export const schedule = {
+  agent: true,
   slots: 4,
   everySeconds: 60,
   labels: ['loop:revising'],
@@ -125,10 +126,10 @@ function revisePull(pull, { reason, comments, jamelAt }, log) {
       return;
     }
 
-    recordAttempt(pull.number, { head: pull.headRefOid, jamelAt });
-
     const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${evidence(pull, reason, comments)}`;
     const result = runAgent({ cwd: worktree.dir, name: 'revise', prompt, schema: SCHEMA, hours: 4 });
+
+    recordAttempt(pull.number, { head: pull.headRefOid, jamelAt });
 
     if (!result.ok || !result.output.changed) {
       log(`#${pull.number}: nothing to change: ${String(result.error ?? result.output.notes).slice(0, 400)}`);

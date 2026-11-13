@@ -3,9 +3,8 @@ import type { Contract } from './contract';
 import type { Formula as ContractFormula, State as ContractState } from '../skills/contract';
 import type { RobotFacts } from './robotFit';
 import type { WorldKind } from './caseWorlds';
-import { REACH, ROLL } from './caseControls';
 import type { RoutePoint } from './groundRoute';
-import { pickDefaults, pickGoal } from './pickGoal';
+import { pickDefaults, pickGoalWith } from './pickGoal';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 
@@ -83,6 +82,16 @@ const GROUND_HOLD_SECONDS = 0.3;
 const SPOT_HOLD_SECONDS = 0.2;
 const STAND_SHARE = 0.5;
 const MIN_WALK_MM = 100;
+
+const ROLL: CaseControl[] = [
+  { id: 'move', label: 'Move', input: 'move' },
+  { id: 'turn', label: 'Turn', input: 'turn' },
+];
+
+const REACH: CaseControl[] = [
+  { id: 'move', label: 'Move', input: 'move' },
+  { id: 'lift', label: 'Raise and Lower', input: 'lift' },
+];
 
 const WALK_PAST_SHARE = 1.25;
 
@@ -339,6 +348,8 @@ export function fallGuard(robot: BuilderRobot): { probe: CaseProbe; failure: Con
     },
   };
 }
+
+const pickGoal = pickGoalWith([...REACH, { id: 'grip', label: 'Grip', input: 'grip' }]);
 
 export const CASE_GOALS: CaseGoal[] = [reachGoal, pushGoal, pathGoal, walkGoal, touchGoal, pickGoal];
 

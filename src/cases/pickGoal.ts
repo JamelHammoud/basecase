@@ -1,9 +1,8 @@
 import { REACH_PER_SECOND } from '../sim/drive';
 import type { V3 } from '../utils/kinematics';
 import type { BuilderRobot, CaseGoal, GoalValues } from './caseGoals';
-import { REACH_AND_GRIP } from './caseControls';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
-import type { CaseProbe, ReferenceCommand, WorldObject } from './schema';
+import type { CaseControl, CaseProbe, ReferenceCommand, WorldObject } from './schema';
 import type { Formula } from '../skills/contract';
 
 export const BLOCK_SHARE_OF_OPENING = 0.7;
@@ -157,7 +156,7 @@ export function pickDefaults(robot: BuilderRobot): Partial<GoalValues> {
   return { ...values, seconds: pickSeconds(robot, values) };
 }
 
-export const pickGoal: CaseGoal = {
+export const pickGoalWith = (controls: CaseControl[]): CaseGoal => ({
   kind: 'pick',
   name: 'Pick Up a Block',
   needs: ['gripper'],
@@ -184,8 +183,8 @@ export const pickGoal: CaseGoal = {
       probes,
       success: success(layout, v.radiusMm),
       timeline: timeline(robot, layout),
-      controls: REACH_AND_GRIP,
+      controls,
       route: { from: [x, 0, facts.anchor[2]], to: [x, 0, layout.spot[2]], halfWidth: v.radiusMm },
     };
   },
-};
+});

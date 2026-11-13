@@ -145,6 +145,8 @@ export function candidates(ref: string, entryPath: string): string[] {
   return [joinPath(entryPath, r)];
 }
 
+const inRoot = (path: string, root: string) => path.startsWith(root) && !/\/\.\.?(\/|$)/.test(path);
+
 export async function urlResolver(url: string): Promise<Resolver> {
   const entryUrl = rawUrl(url);
   const text = new TextDecoder().decode(
@@ -156,7 +158,15 @@ export async function urlResolver(url: string): Promise<Resolver> {
   const origin = u.origin;
   const entryPath = decodeURIComponent(u.pathname);
   const root = u.host === new URL(RAW).host ? `/${entryPath.split('/').slice(1, 4).join('/')}/` : '/';
-  const inside = (path: string) => /^https?:/.test(path) || (path.startsWith(root) && !/\/\.\.?(\/|$)/.test(path));
+  const inside = (path: string) => {
+    if (!/^https?:/.test(path)) return inRoot(path, root);
+
+    if (root === '/') return true;
+
+    const target = URL.parse(path);
+
+    return target?.origin === origin && inRoot(decodeURIComponent(target.pathname), root);
+  };
   let winning: number | null = null;
 
   return {

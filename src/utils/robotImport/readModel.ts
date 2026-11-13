@@ -89,7 +89,7 @@ async function sourceResolver(source: Exclude<Source, { kind: 'converted' }>) {
   if (!located && source.kind === 'url') {
     const resolver = await urlResolver(source.url);
 
-    return { resolver, from: new URL(rawUrl(source.url)).pathname, origin: source.url };
+    return { resolver, from: decodeURIComponent(new URL(rawUrl(source.url)).pathname), origin: source.url };
   }
 
   if (!located) throw new Error(NO_ROBOT);

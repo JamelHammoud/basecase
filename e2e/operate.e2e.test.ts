@@ -90,7 +90,7 @@ describe('Operate calibration', () => {
     await page.locator(visible('[data-robot-rung="test"]')).first().click();
 
     const calibrate = page
-      .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate' })
+      .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
       .first();
 
     await expect.poll(() => calibrate.isEnabled()).toBe(true);

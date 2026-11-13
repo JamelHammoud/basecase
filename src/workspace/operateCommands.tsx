@@ -16,7 +16,8 @@ export function operateCommands({ core }: CommandInputs): Command[] {
     core.tool.setLeftTab('operate');
     core.studio.setIsLeftOpen(true);
   };
-  const robot = sceneRobot(core.project.joints ?? []);
+  const joints = core.project.joints ?? [];
+  const robot = sceneRobot(joints);
 
   return [
     {
@@ -44,13 +45,13 @@ export function operateCommands({ core }: CommandInputs): Command[] {
           {
             id: 'calibrate-robot',
             group: 'Operate',
-            label: 'Calibrate',
+            label: 'Calibrate Servos',
             icon: <OperateIcon className={ic} />,
             keywords: 'calibration fit servos emulated robot sim twin',
             run: () => {
               showOperate();
 
-              if (canCalibrate()) void calibrateConnectedRobot(core.docs.updateProjectNow);
+              if (canCalibrate(joints)) void calibrateConnectedRobot(core.docs.updateProjectNow, joints);
             },
           },
         ]

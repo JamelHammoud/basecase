@@ -46,7 +46,7 @@
 }
 
 /* Layers rows fade their fill, and the row actions' gradient follows it */
-@property --row-fill {
+@property --layer-row-fill {
   syntax: '<color>';
   inherits: true;
   initial-value: transparent;

@@ -17,7 +17,7 @@ const PULL_FIELDS =
 
 export const openPulls = ({ fresh = false } = {}) =>
   cached('open-pulls', { ttlMs: 20_000, refresh: fresh }, () =>
-    (json('gh', ['pr', 'list', '--state', 'open', '--limit', '100', '--json', PULL_FIELDS]) ?? [])
+    (json('gh', ['pr', 'list', '--state', 'open', '--limit', '200', '--json', PULL_FIELDS]) ?? [])
       .filter((pull) => !pull.isDraft && !pull.isCrossRepository)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
   );

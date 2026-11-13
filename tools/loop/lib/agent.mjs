@@ -5,7 +5,7 @@ import { BRIEFS } from './paths.mjs';
 import { run } from './sh.mjs';
 import { limitIn, pause, resume, startPause, UsageLimit } from './usage.mjs';
 
-const TELLING = new Set(['build', 'refine']);
+const TELLING = new Set(['build', 'refine', 'revise', 'rebuild']);
 
 export const brief = (name) =>
   [
@@ -106,7 +106,9 @@ export const CHANGE_SCHEMA = {
     why: text('One or two sentences: the reason, from the arc, the bug or the failure'),
     cause: text('For fix and repair: the root cause and how it was reproduced; else empty'),
     checked: text('How it was checked: tests added, commands run, rates measured'),
-    changelog: text('One changelog line only if the change is worth announcing (see telling.md), else empty'),
+    changelog: text(
+      'For feature and integration: the title and first sentence of the entry this change adds in site/content/changelog/; else empty',
+    ),
     screenshots: { type: 'array', items: text('Repo path of a committed screenshot on this branch') },
     copy: {
       type: 'array',

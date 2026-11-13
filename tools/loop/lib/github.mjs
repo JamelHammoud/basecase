@@ -156,7 +156,7 @@ export const issues = (label) =>
         '--limit',
         '100',
         '--json',
-        'number,title,body,author,labels,createdAt',
+        'number,title,body,author,labels,createdAt,updatedAt',
       ]) ?? [],
   );
 
@@ -185,7 +185,9 @@ export const createIssue = ({ title, body, labels }) => {
 };
 
 export const closeIssue = (number, comment) =>
-  run('gh', ['issue', 'close', String(number), '--reason', 'completed', '--comment', comment], { allowFail: true });
+  run('gh', ['issue', 'close', String(number), '--reason', 'completed', '--comment', withMark(comment)], {
+    allowFail: true,
+  });
 
 export const ownerComments = (number, owner) =>
   json('gh', [
@@ -223,8 +225,11 @@ export const editPullLabels = (number, { add = [], remove = [] }) =>
     { allowFail: true },
   );
 
-export const editPullBody = (number, body) =>
-  run('gh', ['pr', 'edit', String(number), '--body-file', '-'], { input: body, allowFail: true });
+export const editPull = (number, { title, body }) =>
+  run('gh', ['pr', 'edit', String(number), ...(title ? ['--title', title] : []), '--body-file', '-'], {
+    input: body,
+    allowFail: true,
+  });
 
 export const pullComments = (number) =>
   json('gh', [
@@ -263,3 +268,7 @@ export function appendToIssue(number, text) {
 
   run('gh', ['issue', 'edit', String(number), '--body-file', '-'], { input: `${body}\n\n${text}`, allowFail: true });
 }
+
+export const issueIsOpen = (number) =>
+  run('gh', ['issue', 'view', String(number), '--json', 'state', '--jq', '.state'], { allowFail: true }).out.trim() ===
+  'OPEN';

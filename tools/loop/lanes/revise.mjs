@@ -1,11 +1,11 @@
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
 import { conflictsWithMain, fetchAll } from '../lib/branches.mjs';
-import { runAgent } from '../lib/agent.mjs';
+import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
   checkRunFor,
-  editPullBody,
+  editPull,
   editPullLabels,
   failedLog,
   isLoopComment,
@@ -17,6 +17,7 @@ import {
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
 import { protectedIn, protectedList } from '../lib/protected.mjs';
+import { kindOf, pullTitle, REVISED_FIELDS, revisedBody } from '../lib/pull.mjs';
 import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
@@ -34,6 +35,8 @@ const MAX_ATTEMPTS = 4;
 const REVISING = 'loop:revising';
 const MAX_LOG = 60_000;
 
+const RESTATED = ['title', ...REVISED_FIELDS];
+
 const SCHEMA = {
   type: 'object',
   properties: {
@@ -44,9 +47,10 @@ const SCHEMA = {
       description:
         'One line for the pull request body: what this revision changed, and why for any protected path it touched',
     },
+    ...Object.fromEntries(RESTATED.map((field) => [field, CHANGE_SCHEMA.properties[field]])),
     notes: { type: 'string' },
   },
-  required: ['changed', 'commitMessage', 'revision', 'notes'],
+  required: ['changed', 'commitMessage', 'revision', ...RESTATED, 'notes'],
 };
 
 const git = (args, cwd, opts = {}) => run('git', args, { cwd, ...opts });
@@ -107,12 +111,17 @@ function publishRevision(pull, { dir, output }) {
   run('node', [path.join(HOME_CHECKOUT, 'tools', 'check-credit.mjs'), 'origin/main..HEAD'], { cwd: dir });
   git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
 
-  const heading = pull.body.includes('\n## Revisions\n') ? '' : '\n\n## Revisions\n';
+  const kind = kindOf(pull.title);
+  const restated = kind ? revisedBody(pull.body, { ...output, kind }, { branch: pull.headRefName }) : pull.body;
+  const heading = restated.includes('\n## Revisions\n') ? '' : '\n\n## Revisions\n';
   const touched = protectedIn('HEAD~1..HEAD', dir);
   const line =
     touched.length === 0 ? output.revision : `${output.revision} Protected paths: ${protectedList(touched)}.`;
 
-  editPullBody(pull.number, `${pull.body}${heading}\n- ${line}`);
+  editPull(pull.number, {
+    title: kind ? pullTitle({ kind, title: output.title }) : pull.title,
+    body: `${restated}${heading}\n- ${line}`,
+  });
 }
 
 function revisePull(pull, { reason, comments, jamelAt }, log) {

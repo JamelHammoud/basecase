@@ -1,18 +1,16 @@
 import { pressedButtons, type PhoneButton, type PhoneReading } from './phoneDrive';
-import type { PairReply, PhoneEvent, PhoneLinkApi } from './phoneTypes';
+import type { PairReply, PhoneEvent, PhoneLinkApi, PhoneState } from './phoneTypes';
+
+export type { PhoneState } from './phoneTypes';
 
 export const STALE_MS = 500;
-
-export type PhoneState =
-  | { status: 'off' }
-  | { status: 'pairing'; url: string; token: string; cert: string }
-  | { status: 'connected'; name: string };
 
 const OFF: PhoneState = { status: 'off' };
 
 let state: PhoneState = OFF;
 let link: PhoneLinkApi | null = null;
 let stopEvents: (() => void) | null = null;
+let pairing = false;
 let latest: { reading: PhoneReading; at: number } | null = null;
 const listeners = new Set<() => void>();
 const pressListeners = new Set<(button: PhoneButton) => void>();
@@ -46,7 +44,18 @@ function receive(event: PhoneEvent) {
   if (event.type === 'phone-input') return void readInput(event);
 
   if (event.state === 'connected') set({ status: 'connected', name: event.name });
-  else closed();
+  else if (!pairing) closed();
+}
+
+function listen() {
+  if (link && !stopEvents) stopEvents = link.onPhoneEvent(receive);
+}
+
+function adopt(held: PhoneState) {
+  if (held.status === 'off' || pairing || state.status !== 'off') return;
+
+  listen();
+  set(held);
 }
 
 export const phoneSnapshot = () => state;
@@ -74,7 +83,12 @@ export function phoneReading(now = performance.now()): PhoneReading | null {
 }
 
 export function setPhoneLink(next: PhoneLinkApi | null) {
+  stopEvents?.();
+  stopEvents = null;
+  latest = null;
+  state = OFF;
   link = next;
+  void next?.phoneState().then(adopt);
 }
 
 export const canPairPhone = () => !!link;
@@ -82,10 +96,12 @@ export const canPairPhone = () => !!link;
 export async function pairPhone(): Promise<PairReply | null> {
   if (!link) return null;
 
-  stopEvents?.();
-  stopEvents = link.onPhoneEvent(receive);
+  pairing = true;
+  listen();
 
-  const reply = await link.phonePair();
+  const reply = await link.phonePair().finally(() => {
+    pairing = false;
+  });
 
   if (reply.ok) set({ status: 'pairing', url: reply.url, token: reply.token, cert: reply.cert });
   else closed();

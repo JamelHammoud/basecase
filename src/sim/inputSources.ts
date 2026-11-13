@@ -1,14 +1,11 @@
 import { phoneCommand } from '../phone/phoneDrive';
 import { phoneReading } from '../phone/phoneStore';
-import { leaderDrive } from '../robot/leaderStore';
-import type { JointValues } from '../types/robotics';
 import { commandFromPad, isIdle, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 
 export interface InputMoment {
   cls: DriveClass;
   keys: DriveCommand;
-  rest?: JointValues;
 }
 
 export interface InputSource {
@@ -17,10 +14,9 @@ export interface InputSource {
 }
 
 export const NAMED_INPUTS = ['camera', 'phone', 'midi', 'leader-arm', 'voice', 'policy', 'script'] as const;
-export const STUDIO_INPUTS = ['leader-arm', 'phone', 'gamepad', 'keys'];
+export const STUDIO_INPUTS = ['phone', 'gamepad', 'keys'];
 
 const IDLE: DriveCommand = { v: [0, 0, 0] };
-const NO_REST: JointValues = {};
 const sources = new Map<string, InputSource>();
 
 export const registerInputSource = (source: InputSource) => {
@@ -38,10 +34,6 @@ function firstPad(): Gamepad | null {
 }
 
 registerInputSource({ id: 'keys', read: ({ keys }) => keys });
-registerInputSource({
-  id: 'leader-arm',
-  read: ({ cls, rest }) => (cls === 'arm' ? leaderDrive(rest ?? NO_REST) : null),
-});
 registerInputSource({
   id: 'phone',
   read: ({ cls }) => {

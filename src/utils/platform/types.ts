@@ -1,5 +1,5 @@
 import type { SourcedItem } from '../../data/sourcedItems';
-import type { PairReply, PhoneEvent } from '../../phone/phoneTypes';
+import type { PairReply, PhoneEvent, PhoneState } from '../../phone/phoneTypes';
 import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState } from '../../robot/robotState';
 import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
@@ -240,12 +240,9 @@ declare global {
       robotDisconnect?: () => Promise<ConnectReply>;
       robotState?: () => Promise<RobotLinkState>;
       onRobotEvent?: (callback: (event: RobotEvent) => void) => () => void;
-      leaderConnect?: (spec: ConnectSpec) => Promise<ConnectReply>;
-      leaderDisconnect?: () => Promise<ConnectReply>;
-      leaderState?: () => Promise<RobotLinkState>;
-      onLeaderEvent?: (callback: (event: RobotEvent) => void) => () => void;
       phonePair?: () => Promise<PairReply>;
       phoneUnpair?: () => Promise<{ ok: boolean }>;
+      phoneState?: () => Promise<PhoneState>;
       onPhoneEvent?: (callback: (event: PhoneEvent) => void) => () => void;
       setMenuState: (state: Partial<AppMenuState>) => void;
       onMenuCommand: (callback: (id: string) => void) => () => void;

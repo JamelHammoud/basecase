@@ -6,7 +6,6 @@ export interface DriveCommand {
   v: V3;
   target?: V3;
   aux?: number[];
-  joints?: JointValues;
 }
 
 export interface DriveOutput {

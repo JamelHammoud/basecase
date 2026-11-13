@@ -12,7 +12,6 @@ import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
 import { degrees } from '../robot/robotGhost';
 import { phoneSnapshot } from '../phone/phoneStore';
-import { startLeaderStore, type LeaderLinkApi } from '../robot/leaderStore';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
@@ -232,7 +231,6 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown) => devRef.current.stubTrainer(policy),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
-    attachLeader: (link: LeaderLinkApi) => startLeaderStore(link),
     phone: () => phoneSnapshot(),
     stubTabEngine,
     pickFiles: (files: { name: string; base64: string }[]) =>

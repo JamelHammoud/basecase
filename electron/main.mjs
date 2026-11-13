@@ -15,7 +15,7 @@ import { registerHubHandlers } from './hub/routes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
-import { registerLeaderHandlers, registerRobotHandlers } from './robot/robotRoutes.mjs';
+import { registerRobotHandlers } from './robot/robotRoutes.mjs';
 import { PhonePairing } from './phone/phonePairing.mjs';
 import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
 import { registerShareHandlers } from './shareFile.mjs';
@@ -232,10 +232,8 @@ const sendTo = (channel) => (event) => {
 };
 
 const robot = new RobotLink({ binary: robotBinary, emit: sendTo('robot:event') });
-const leader = new RobotLink({ binary: robotBinary, emit: sendTo('leader:event') });
 
 registerRobotHandlers(ipcMain, robot);
-registerLeaderHandlers(ipcMain, leader);
 
 const phone = new PhonePairing({ emit: sendTo('phone:event') });
 
@@ -302,7 +300,6 @@ app.whenReady().then(async () => {
 
 app.on('before-quit', () => {
   robot.dispose();
-  leader.dispose();
   phone.dispose();
   kernel.stop();
   updates.dispose();

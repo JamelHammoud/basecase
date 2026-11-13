@@ -115,7 +115,7 @@ export function startRobotStore(link: RobotLinkApi) {
   void link.robotState?.().then(adopt);
 }
 
-export const unavailable: ConnectReply = { ok: false, message: 'Emulated robots run in the desktop app.' };
+const unavailable: ConnectReply = { ok: false, message: 'Emulated robots run in the desktop app.' };
 
 export async function connectRobot(spec: ConnectSpec, joints: string[]): Promise<ConnectReply> {
   const reply = (await api?.robotConnect?.(spec)) ?? unavailable;

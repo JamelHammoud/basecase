@@ -20,7 +20,7 @@ const isLanIPv4 = (entry) =>
   (entry?.family === 'IPv4' || entry?.family === 4) && !entry.internal && !entry.address.startsWith('169.254.');
 
 export function lanAddress() {
-  return Object.values(os.networkInterfaces()).flat().find(isLanIPv4)?.address ?? '127.0.0.1';
+  return Object.values(os.networkInterfaces()).flat().find(isLanIPv4)?.address ?? null;
 }
 
 function listen(server, ip) {
@@ -40,6 +40,8 @@ function requestUrl(req, origin) {
     return null;
   }
 }
+
+const pairingOf = (run) => ({ url: `${run.origin}/?t=${run.token}`, token: run.token, cert: run.cert });
 
 export class PhonePairing {
   #emit;
@@ -63,9 +65,12 @@ export class PhonePairing {
     this.unpair();
 
     const generation = ++this.#generation;
+    const ip = this.#address();
+
+    if (!ip) return { ok: false, message: 'Connect to a network to pair a phone' };
 
     try {
-      const run = await this.#start();
+      const run = await this.#start(ip);
 
       if (generation !== this.#generation) {
         run.server.close();
@@ -76,9 +81,9 @@ export class PhonePairing {
       this.#run = run;
       run.timer = setTimeout(() => this.#end(CLOSE.normal), PAIRING_TIMEOUT_MS).unref();
 
-      return { ok: true, url: `${run.origin}/?t=${run.token}`, token: run.token, cert: run.cert };
-    } catch (err) {
-      return { ok: false, message: `Couldn't start pairing: ${err instanceof Error ? err.message : String(err)}` };
+      return { ok: true, ...pairingOf(run) };
+    } catch {
+      return { ok: false, message: "Couldn't start pairing" };
     }
   }
 
@@ -92,7 +97,11 @@ export class PhonePairing {
   state() {
     const run = this.#run;
 
-    return { pairing: run !== null, connected: Boolean(run?.phone), name: run?.name ?? null };
+    if (!run) return { status: 'off' };
+
+    if (run.phone) return { status: 'connected', name: run.name };
+
+    return { status: 'pairing', ...pairingOf(run) };
   }
 
   dispose() {
@@ -106,8 +115,7 @@ export class PhonePairing {
     for (const listener of this.#listeners) listener(event);
   }
 
-  async #start() {
-    const ip = this.#address();
+  async #start(ip) {
     const { key, cert } = selfSignedCert(ip);
     const server = https.createServer({ key, cert });
     const token = crypto.randomBytes(32).toString('base64url');

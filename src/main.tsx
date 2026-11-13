@@ -7,7 +7,6 @@ import { OverlayScrollbars } from './design-system/OverlayScrollbars';
 import { PairPhoneHost } from './components/phone/PairPhoneHost';
 import { platformPhoneLink } from './phone/phoneLink';
 import { setPhoneLink } from './phone/phoneStore';
-import { electronLeaderLink, startLeaderStore } from './robot/leaderStore';
 import { startRobotStore } from './robot/robotStore';
 import { refreshRates } from './utils/currencyStore';
 
@@ -19,7 +18,6 @@ if (electronAPI?.isElectron) {
   electronAPI.isFullScreen().then(setFullScreen);
   electronAPI.onFullScreenChange(setFullScreen);
   startRobotStore(electronAPI);
-  startLeaderStore(electronLeaderLink(electronAPI));
 }
 
 setPhoneLink(platformPhoneLink());

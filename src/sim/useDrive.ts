@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
-import type { JointValues, RobotPoseState, ScenePart } from '../types/robotics';
+import type { RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import {
   driveAccess,
@@ -136,7 +136,6 @@ function useDriveCommand(send: DriveInputs['send']) {
   const topSpeed = useRef<number | null>(null);
   const inputIds = useRef<readonly string[]>(STUDIO_INPUTS);
   const readings = useRef<Record<string, DriveCommand | null>>({});
-  const rest = useRef<JointValues>({});
   const autopilot = useRef<Autopilot | null>(null);
 
   const push = useCallback(
@@ -145,7 +144,7 @@ function useDriveCommand(send: DriveInputs['send']) {
 
       if (!current) return;
 
-      const read = readInputs(inputIds.current, { cls: current, keys: keysCommand.current, rest: rest.current });
+      const read = readInputs(inputIds.current, { cls: current, keys: keysCommand.current });
       const merged = steered(autopilot, read.command, frame);
 
       readings.current = read.readings;
@@ -158,9 +157,8 @@ function useDriveCommand(send: DriveInputs['send']) {
     [send],
   );
 
-  const reset = useCallback((cls: DriveClass | null, speed: number | null, restPose?: JointValues) => {
+  const reset = useCallback((cls: DriveClass | null, speed: number | null) => {
     clsRef.current = cls;
-    rest.current = { ...restPose };
     topSpeed.current = speed;
     autopilot.current = null;
     keysCommand.current = IDLE;
@@ -229,7 +227,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     (access: Extract<DriveAccess, { kind: 'ready' | 'policy' }>, team?: DriveTeam) => {
       const controller = controllerFor(access, team);
 
-      reset(access.cls, access.kind === 'policy' ? access.velocity.topSpeed : null, latest.current.pose?.values);
+      reset(access.cls, access.kind === 'policy' ? access.velocity.topSpeed : null);
       setCls(access.cls);
       latest.current.setController(controller);
       latest.current.send({ type: 'respawn', robot: robotKey });

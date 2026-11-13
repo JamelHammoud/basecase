@@ -1,16 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { leaderRecording, so101Sized } from '../src/leader/fixtures';
 import type { FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
-import { DEFAULT_PROJECT, type ProjectSettings } from '../src/types/robotics';
-import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
 import { connectPhone, type PhoneSocket } from './phoneClient';
 
 interface SimState {
   drive: string;
-  driveClass: string | null;
-  positions: Record<string, number>;
   stats: { robots: Array<{ forward: number }> } | null;
 }
 
@@ -20,22 +16,15 @@ interface StudioWindow {
   __studio: {
     load: (record: unknown) => void;
     simState: () => SimState;
-    sceneRecord: () => { project: ProjectSettings };
-    attachLeader: (link: unknown) => void;
     phone: () => Phone;
   };
-  __studioTabs: { list: () => { ids: string[]; activeId: string }; select: (id: string) => void };
-  __fakeLeaderLink: { replay: (frames: unknown) => void };
 }
 
-const DEG = 180 / Math.PI;
 const TILT_HZ = 30;
 
 let app: App;
 
 const studio = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.simState());
-
-const project = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.sceneRecord().project);
 
 const phoneState = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.phone());
 
@@ -72,7 +61,6 @@ async function stopDriving() {
 
 beforeAll(async () => {
   app = await openApp({}, ['phone-']);
-  await app.page.addScriptTag({ content: FAKE_DAEMON_SCRIPT });
 }, 120000);
 
 afterAll(async () => {
@@ -80,43 +68,6 @@ afterAll(async () => {
 });
 
 describe('live inputs', () => {
-  it('drives the follower from a leader arm the fake daemon replays in Look', async () => {
-    const follower = so101Sized();
-
-    await load(follower);
-    await command('Make a Leader');
-    await expect.poll(async () => (await project()).leads?.robot ?? null).not.toBeNull();
-
-    const tabs = await app.page.evaluate(() => (window as unknown as StudioWindow).__studioTabs.list());
-    const leader = await project();
-    const servos = (leader.joints ?? []).filter((j) => j.type !== 'fixed').map((j) => j.id);
-    const recording = leaderRecording(servos.length, servos.indexOf('gripper'));
-    const shoulder = servos.indexOf('shoulder_lift');
-    const shoulderDeg = (i: number) => ((recording[i].positions[shoulder] - 2048) * 360) / 4096;
-    const expected = (shoulderDeg(recording.length - 1) - shoulderDeg(0)) / DEG;
-
-    await app.page.evaluate((id) => (window as unknown as StudioWindow).__studioTabs.select(id), tabs.ids[0]);
-    await app.page.evaluate(() => {
-      const w = window as unknown as StudioWindow;
-
-      w.__studio.attachLeader(w.__fakeLeaderLink);
-    });
-    await command('Connect Leader');
-    await app.page.evaluate(
-      (first) => (window as unknown as StudioWindow).__fakeLeaderLink.replay([first]),
-      recording[0],
-    );
-    await startDriving();
-    expect((await studio()).driveClass).toBe('arm');
-    await app.page.evaluate((frames) => (window as unknown as StudioWindow).__fakeLeaderLink.replay(frames), recording);
-    await expect
-      .poll(async () => Math.abs((await studio()).positions.shoulder_lift - expected) * DEG, { timeout: 30000 })
-      .toBeLessThan(2);
-    expect(Math.abs(expected * DEG)).toBeGreaterThan(5);
-    await stopDriving();
-    await command('Disconnect Leader');
-  });
-
   it('pairs a phone from ⌘K and drives a rover by its tilt, and refuses the phone after Unpair Phone', async () => {
     await load(fixtureRobots().find((r) => r.id === 'rover-diff')!);
     await command('Pair Phone');

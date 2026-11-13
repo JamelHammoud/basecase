@@ -61,7 +61,10 @@ describe('PhonePairing', () => {
         "img-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     );
     expect(page.body).toContain('Tilt to drive');
-    expect(session.pairing.state()).toEqual({ pairing: true, connected: false, name: null });
+
+    const { url, token, cert } = session.paired;
+
+    expect(session.pairing.state()).toEqual({ status: 'pairing', url, token, cert });
   });
 
   it('connects one phone, names it and emits only checked input', async () => {
@@ -77,11 +80,22 @@ describe('PhonePairing', () => {
       pad: [0.25, -1],
       buttons: [true, false],
     });
-    expect(session.pairing.state()).toEqual({ pairing: true, connected: true, name: 'iPhone' });
+    expect(session.pairing.state()).toEqual({ status: 'connected', name: 'iPhone' });
   });
 });
 
 describe('PhonePairing refuses', () => {
+  it('to pair without a LAN address, so no code points at loopback', async () => {
+    const events = [];
+    const pairing = new PhonePairing({ emit: (event) => events.push(event), address: () => null });
+
+    pairings.push(pairing);
+
+    expect(await pairing.pair()).toEqual({ ok: false, message: 'Connect to a network to pair a phone' });
+    expect(pairing.state()).toEqual({ status: 'off' });
+    expect(events).toEqual([]);
+  });
+
   it('the page and the socket without a token', async () => {
     const session = await startPairing();
 
@@ -129,7 +143,7 @@ describe('PhonePairing refuses', () => {
       status: 403,
     });
     expect(await fetchPage(session.paired.url, { ca: session.ca, headers: origin })).toBe(403);
-    expect(session.pairing.state().connected).toBe(false);
+    expect(session.pairing.state().status).not.toBe('connected');
   });
 
   it('any other path with 404', async () => {
@@ -221,7 +235,7 @@ describe('PhonePairing lifecycle', () => {
     expect(phone.closeCode()).toBe(CLOSE.normal);
     expect(session.closed()).toBe(true);
     await expect(fetchPage(session.paired.url, { ca: session.ca })).rejects.toMatchObject({ code: 'ECONNREFUSED' });
-    expect(session.pairing.state()).toEqual({ pairing: false, connected: false, name: null });
+    expect(session.pairing.state()).toEqual({ status: 'off' });
     expect(session.pairing.unpair()).toEqual({ ok: true });
     expect(session.events.filter((event) => event.state === 'closed')).toHaveLength(1);
   });
@@ -235,7 +249,7 @@ describe('PhonePairing lifecycle', () => {
     await expect(connectPhone(session.socketUrl, { ca: session.ca })).rejects.toMatchObject({
       code: 'ECONNREFUSED',
     });
-    expect(session.pairing.state().pairing).toBe(false);
+    expect(session.pairing.state().status).toBe('off');
   });
 
   it('ends a pairing no phone joined after five minutes', async () => {
@@ -246,7 +260,7 @@ describe('PhonePairing lifecycle', () => {
 
       vi.advanceTimersByTime(5 * 60 * 1000);
       expect(session.closed()).toBe(true);
-      expect(session.pairing.state().pairing).toBe(false);
+      expect(session.pairing.state().status).toBe('off');
     } finally {
       vi.useRealTimers();
     }

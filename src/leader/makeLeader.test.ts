@@ -2,16 +2,84 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { sourcingFindings } from '../readiness/buildChecks';
 import { bomFindings } from '../readiness/findings';
-import type { FixtureRobot } from '../sim/fixtures/parts';
+import { box, joint, type FixtureRobot, type P3 } from '../sim/fixtures/parts';
 import { fixtureRobots, withoutGripper } from '../sim/fixtures/robots';
 import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../types/robotics';
 import { buildBom } from '../utils/bom';
 import { buildRig, forwardKinematics, isMovable, resolveJoints } from '../utils/kinematics';
-import { deskArm, so101Sized, urArm } from './fixtures';
 import { followerArm, followerArms } from './leaderArm';
 import { stepMatrix } from './leaderCode';
 import { chainReach, frameMatrix, leaderFrames, MIN_LINK_MM } from './leaderFrames';
 import { LEADER_SERVO, makeLeader, type Leader } from './makeLeader';
+
+const X: P3 = [1, 0, 0];
+const Y: P3 = [0, 1, 0];
+const Z: P3 = [0, 0, 1];
+
+interface Link {
+  id: string;
+  axis: P3;
+  origin: P3;
+  type?: RobotJoint['type'];
+  range?: [number, number];
+}
+
+function serialArm(id: string, links: Link[]): FixtureRobot {
+  const parts = [box('base', [0, 20, 0], [120, 40, 120], 600)];
+  const joints: RobotJoint[] = [];
+
+  links.forEach((l, i) => {
+    const end = links[i + 1]?.origin ?? [l.origin[0], l.origin[1] + 40, l.origin[2]];
+    const mid: P3 = [(l.origin[0] + end[0]) / 2, (l.origin[1] + end[1]) / 2, (l.origin[2] + end[2]) / 2];
+
+    parts.push(box(`${l.id}_link`, mid, [30, 30, 30], 120));
+    joints.push({
+      ...joint({
+        id: l.id,
+        link: [i ? `${links[i - 1].id}_link` : 'base', `${l.id}_link`],
+        origin: l.origin,
+        axis: l.axis,
+        effortNm: 5,
+        parentJoint: i ? links[i - 1].id : undefined,
+        range: l.range ?? [-120, 120],
+        limb: 'arm',
+      }),
+      type: l.type ?? 'revolute',
+    });
+  });
+
+  return { id, parts, joints, expect: { morphology: 'fixed', stand: 'n/a', walk: 'n/a' } };
+}
+
+const deskArm = () =>
+  serialArm('desk-arm', [
+    { id: 'base_yaw', axis: Y, origin: [0, 60, 0], range: [-110, 110] },
+    { id: 'shoulder_pitch', axis: X, origin: [0, 140, 0], range: [-100, 100] },
+    { id: 'elbow_pitch', axis: X, origin: [0, 256, 0], range: [-110, 110] },
+    { id: 'wrist_pitch', axis: X, origin: [0, 372, 0], range: [-110, 110] },
+    { id: 'gripper', axis: Z, origin: [0, 410, 0], range: [0, 90] },
+  ]);
+
+const urArm = () =>
+  serialArm('ur-arm', [
+    { id: 'shoulder_pan', axis: Y, origin: [0, 90, 0] },
+    { id: 'shoulder_lift', axis: X, origin: [0, 180, 0] },
+    { id: 'elbow', axis: X, origin: [0, 605, 0] },
+    { id: 'wrist_1', axis: X, origin: [0, 997, 0] },
+    { id: 'wrist_2', axis: Y, origin: [0, 997, 110] },
+    { id: 'wrist_3', axis: Z, origin: [0, 1092, 110], range: [-180, 180] },
+    { id: 'finger', axis: X, origin: [0, 1092, 200], type: 'prismatic', range: [0, 40] },
+  ]);
+
+const so101Sized = () =>
+  serialArm('so101-sized', [
+    { id: 'shoulder_pan', axis: Y, origin: [0, 60, 0] },
+    { id: 'shoulder_lift', axis: X, origin: [0, 110, 20] },
+    { id: 'elbow_flex', axis: X, origin: [0, 220, 40] },
+    { id: 'wrist_flex', axis: X, origin: [0, 220, 175] },
+    { id: 'wrist_roll', axis: Z, origin: [0, 220, 235] },
+    { id: 'gripper', axis: X, origin: [10, 220, 270] },
+  ]);
 
 const arm6 = () => withoutGripper(fixtureRobots().find((r) => r.id === 'arm-6dof')!);
 const ARMS = [arm6(), deskArm(), urArm(), so101Sized()];

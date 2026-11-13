@@ -19,7 +19,7 @@ const CommentItem: React.FC<{
   createdAt: string;
   edited: boolean;
   onSave: (text: string) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
 }> = ({ text, createdAt, edited, onSave, onDelete }) => {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(text);
@@ -34,16 +34,10 @@ const CommentItem: React.FC<{
 
   return (
     <div className="group relative px-4 py-2.5">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#3aa8ff] to-[#0b6fd6] text-white text-[12px] font-semibold flex items-center justify-center shrink-0">
-          Y
-        </span>
-        <span className="text-[13px] font-semibold text-white/90">You</span>
-        <MetaLine className="text-[12px] text-white/50" items={[timeAgo(createdAt), edited && 'Edited']} />
-      </div>
+      <MetaLine className="h-6 mb-0.5 text-[12px] text-white/50" items={[timeAgo(createdAt), edited && 'Edited']} />
 
       {editing ? (
-        <div className="pl-8 space-y-2">
+        <div className="space-y-2">
           <AutoTextarea
             autoFocus
             value={value}
@@ -78,13 +72,13 @@ const CommentItem: React.FC<{
           </div>
         </div>
       ) : (
-        <p className="pl-8 text-[13.5px] leading-relaxed text-white/85 whitespace-pre-wrap break-words select-text">
+        <p className="text-[13.5px] leading-relaxed text-white/85 whitespace-pre-wrap break-words select-text">
           {text}
         </p>
       )}
 
       {!editing && (
-        <div className="absolute top-2 right-2 flex opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 flex pl-8 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto transition-opacity bg-gradient-to-r from-transparent to-[#282828] to-[32px]">
           <IconButton
             icon={<EditIcon className="w-3.5 h-3.5" />}
             title="Edit"
@@ -95,14 +89,16 @@ const CommentItem: React.FC<{
               setEditing(true);
             }}
           />
-          <IconButton
-            icon={<DeleteIcon className="w-3.5 h-3.5" />}
-            title="Delete"
-            size="xs"
-            variant="danger"
-            tooltipSide="top"
-            onClick={onDelete}
-          />
+          {onDelete && (
+            <IconButton
+              icon={<DeleteIcon className="w-3.5 h-3.5" />}
+              title="Delete"
+              size="xs"
+              variant="danger"
+              tooltipSide="top"
+              onClick={onDelete}
+            />
+          )}
         </div>
       )}
     </div>
@@ -164,7 +160,7 @@ export const Thread: React.FC<ThreadActions & { annotation: SceneAnnotation; num
             createdAt={c.createdAt}
             edited={!!c.editedAt}
             onSave={(text) => onEditComment(a.id, c.id, text)}
-            onDelete={() => setPending({ kind: 'comment', commentId: c.id })}
+            onDelete={a.comments.length > 1 ? () => setPending({ kind: 'comment', commentId: c.id }) : undefined}
           />
         ))}
       </div>

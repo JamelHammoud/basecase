@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { blankSeed } from './tabModel';
 import type { useTabs } from './useTabs';
@@ -9,7 +10,7 @@ export function useDevTabsHook(core: Tabs) {
   const coreRef = useLatestRef(core);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!exposesTestHooks()) return;
 
     (window as unknown as { __studioTabs?: unknown }).__studioTabs = {
       list: () => ({

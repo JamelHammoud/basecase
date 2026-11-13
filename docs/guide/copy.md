@@ -61,6 +61,8 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 
 ### 3c. Words and patterns to avoid
 
+One list holds the banned words and separators: `BANNED_COPY` in [`verify/rehearsal/uiRules.ts`](../../verify/rehearsal/uiRules.ts), which the copy budget below, the Stage 7 rehearsal's screen scan and the lint all read. `basecase/copy` (`tools/eslint/copy.mjs`) lints the entries that [`tools/copy/banned.mjs`](../../tools/copy/banned.mjs) gives a fix, in JSX text, toasts and confirms in `src/` and the app menu, and in the props and properties listed in [`tools/copy/surfaces.mjs`](../../tools/copy/surfaces.mjs) (`label`, `title`, `placeholder`, `aria-label`, `alt`, `heading`, `message`…). The list is under `verify/`, so a new word needs a maintainer's OK (§0k); give it a fix in `tools/copy/banned.mjs` to lint it too. “just”, “We”, “Your”, “!” and the rest of the table still need a reader.
+
 | Avoid | Why | Use instead |
 |---|---|---|
 | “yet” (“No parts yet”) | Filler; the person knows they can add more | “No parts” |
@@ -88,8 +90,16 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 - [ ] If it asks for work, does it start with the verb, and does clicking it help do the work?
 - [ ] Is the most important word first?
 - [ ] Same word as everywhere else for this thing? Right casing for this element?
-- [ ] No banned words (§3c)?
-- [ ] No `·` (or a stand-in glyph) between items? Use layout instead (§3b-16).
+- [ ] No banned words (“yet”, “please”, “Oops”, “Invalid…”; §3c) and no `·` or stand-in glyph between items (§3b-16)? `basecase/copy` lints both; the rest of §3c is yours to catch.
+
+**The copy budget.** On every pull request, Check's `copy` job (`tools/check-copy-budget.mjs`, logic in `tools/copy/`) collects the user-facing strings in each changed `src/` file before and after: JSX text, the props and properties in `tools/copy/surfaces.mjs` (`aria-label`, `title`, `label`, `alt`, `hint`, and the `label`, `text`, `detail` and `message` properties of any object…), and `showToast` / `toastInFront` / `notify` / `confirmAction` arguments. Tests, `src/data/` and strings that are only symbols, numbers, units, ids or paths are skipped. It prints `Copy: +N −M` and fails when:
+
+- the change adds more strings than it removes and a new one has no line `copy: "<string>" — <why the screen needs it>` in the body's Copy section (the loop fills it from its answer's `copy` field, for every kind of pull request; a template without a Copy section gets one appended). Removing strings never needs a reason, and repeating a string the file already has doesn't either;
+- an added string uses a word §3c bans (the whole `BANNED_COPY` list, “we” and “Your” included), whatever the net.
+
+Run it locally with `node tools/check-copy-budget.mjs origin/main..HEAD` (`PR_BODY` holds the body). Check runs on pushes, not on body edits, so a `copy:` line added to the body afterwards counts only once another commit is pushed; a reason belongs in the answer's `copy` field from the start.
+
+**The count.** `node tools/copy-diff.mjs [base] [head]` lists the strings a change adds, changes and removes, and its net (`Copy: 2 added, 1 changed, 1 removed, net +1`), from the same extractor (`tools/copy/extract.mjs`). A removed string and an added one in the same file and position (both JSX text, both a `title`, both a `showToast` argument…) count as one changed string. With no arguments it compares your working tree, uncommitted work included, to where it forked from `origin/main`, so run it before you finish. The review lane runs it on every pull request and puts the list in its prompt and comment (Loop, §0l).
 
 ### 3e. Reference examples
 

@@ -6,7 +6,7 @@ import { DEFAULT_PROJECT, type ProjectSettings, type RobotJoint, type ScenePart 
 import { runEngineering } from '../../utils/engineering';
 import { buildRig } from '../../utils/kinematics';
 import { importRobot } from '../../utils/robotImport';
-import { parseXml, TinyDomParser } from '../../utils/robotImport/fixtures/tinyDom';
+import { localFile, parseXml, TinyDomParser } from '../../utils/robotImport/robotImport.fixtures';
 import { parseUrdf } from '../../utils/robotImport/urdf';
 import { SimEngine } from '../engine';
 import { fixtureMeasures, fixtureTriangles } from '../fixtures/parts';
@@ -180,11 +180,7 @@ describe('robot package', () => {
   it('exports an imported URDF robot back with its joint, axis, limits and mass', async () => {
     vi.stubGlobal('DOMParser', TinyDomParser);
 
-    const file = new File([TWO_LINK_ARM], 'arm.urdf');
-
-    Object.defineProperty(file, 'webkitRelativePath', { value: 'arm/arm.urdf' });
-
-    const imported = await importRobot({ kind: 'files', files: [file] });
+    const imported = await importRobot({ kind: 'files', files: [localFile('arm/arm.urdf', TWO_LINK_ARM)] });
     const { job } = packageJob({ id: 'arm', ...imported });
     const urdf = parseUrdf(parseXml(text(robotPackageFiles(job)['robot.urdf'])));
     const [shoulder] = urdf.joints;

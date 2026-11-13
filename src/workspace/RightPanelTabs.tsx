@@ -1,6 +1,6 @@
 import type { Readiness } from '../readiness/types';
 import { ChatHistory } from '../components/ChatHistory';
-import { AgentSpinner, PanelTabs, type PanelTab } from '../design-system';
+import { AGENT_WORKING, PanelTabs, Spinner, type PanelTab } from '../design-system';
 import { runningChats } from './agentLanes';
 import type { RightTab } from './types';
 import type { AgentSession } from './useAgentSession';
@@ -29,7 +29,7 @@ export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
     {
       value: 'acp',
       label: 'Agent',
-      indicator: agent.busy ? <AgentSpinner /> : undefined,
+      indicator: agent.busy ? <Spinner label={AGENT_WORKING} /> : undefined,
       menu: hasChats
         ? {
             title: 'History',

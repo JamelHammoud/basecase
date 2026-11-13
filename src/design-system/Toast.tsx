@@ -1,5 +1,6 @@
 import React from 'react';
-import { AlertIcon, SpinnerIcon, TickIcon } from './glyphs';
+import { AlertIcon, TickIcon } from './glyphs';
+import { Spinner } from './Spinner';
 
 export interface ToastData {
   id: number;
@@ -20,7 +21,7 @@ export const Toast: React.FC<{ toast: ToastData; onDismiss: () => void }> = ({ t
     >
       {tone === 'success' && <TickIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" strokeWidth={2.5} />}
       {tone === 'error' && <AlertIcon className="w-3.5 h-3.5 text-red-400 shrink-0" />}
-      {tone === 'progress' && <SpinnerIcon className="w-3.5 h-3.5 text-white/60 animate-spin shrink-0" />}
+      {tone === 'progress' && <Spinner className="w-3.5 h-3.5 text-white/60" />}
       <span className={`truncate max-w-md ${toast.action ? '' : 'pr-1.5'}`}>{toast.message}</span>
       {toast.action && (
         <button

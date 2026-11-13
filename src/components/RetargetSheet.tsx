@@ -37,33 +37,31 @@ const MappingGrid: React.FC<{
   onBone: (k: Keypoint, value: string) => void;
   onJoint: (k: Keypoint, value: string) => void;
 }> = ({ boneOptions, jointOptions, bones, autoBones, joints, autoJoints, onBone, onJoint }) => (
-  <div>
-    <div className="grid grid-cols-[110px_1fr_1fr] gap-x-3 gap-y-1.5 items-center">
-      <span />
-      <span className="text-[12px] font-medium text-white/50">Motion</span>
-      <span className="text-[12px] font-medium text-white/50">Robot</span>
-      {SHOWN.map((k) => (
-        <React.Fragment key={k}>
-          <span className="text-[13px] text-white/70">{KEYPOINT_LABELS[k]}</span>
+  <div className="grid grid-cols-[110px_1fr_1fr] gap-x-3 gap-y-1.5 items-center">
+    <span />
+    <span className="text-[12px] font-medium text-white/50">Motion</span>
+    <span className="text-[12px] font-medium text-white/50">Robot</span>
+    {SHOWN.map((k) => (
+      <React.Fragment key={k}>
+        <span className="text-[13px] text-white/70">{KEYPOINT_LABELS[k]}</span>
+        <Select
+          aria-label={`${KEYPOINT_LABELS[k]} bone`}
+          options={boneOptions}
+          value={bones[k] ?? autoBones[k] ?? ''}
+          onChange={(e) => onBone(k, e.target.value)}
+        />
+        {k === 'head' ? (
+          <span className="text-[12.5px] text-white/50">Neck joints</span>
+        ) : (
           <Select
-            aria-label={`${KEYPOINT_LABELS[k]} bone`}
-            options={boneOptions}
-            value={bones[k] ?? autoBones[k] ?? ''}
-            onChange={(e) => onBone(k, e.target.value)}
+            aria-label={`${KEYPOINT_LABELS[k]} joint`}
+            options={jointOptions}
+            value={joints[k] ?? autoJoints[k] ?? ''}
+            onChange={(e) => onJoint(k, e.target.value)}
           />
-          {k === 'head' ? (
-            <span className="text-[12.5px] text-white/50">Neck joints</span>
-          ) : (
-            <Select
-              aria-label={`${KEYPOINT_LABELS[k]} joint`}
-              options={jointOptions}
-              value={joints[k] ?? autoJoints[k] ?? ''}
-              onChange={(e) => onJoint(k, e.target.value)}
-            />
-          )}
-        </React.Fragment>
-      ))}
-    </div>
+        )}
+      </React.Fragment>
+    ))}
   </div>
 );
 
@@ -88,7 +86,6 @@ export const RetargetSheet: React.FC<{
   const [bones, setBones] = useState<KeypointMap>({});
   const [joints, setJoints] = useState<KeypointMap>({});
   const [inPlace, setInPlace] = useState(false);
-  const [loop, setLoop] = useState(false);
   const [fps, setFps] = useState('30');
   const [error, setError] = useState<string | null>(null);
 
@@ -110,7 +107,6 @@ export const RetargetSheet: React.FC<{
       joints: { ...autoJoints, ...joints },
       fps: Number(fps),
       inPlace,
-      loop,
       name: mocap.name,
     });
 
@@ -161,22 +157,19 @@ export const RetargetSheet: React.FC<{
             onBone={(k, value) => setBones((b) => ({ ...b, [k]: value || undefined }))}
             onJoint={(k, value) => setJoints((j) => ({ ...j, [k]: value || undefined }))}
           />
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-            <Switch label="In place" checked={inPlace} onChange={setInPlace} />
-            <Switch label="Loop" checked={loop} onChange={setLoop} />
-            <div className="col-span-2 grid grid-cols-[110px_1fr] items-center gap-3 pt-1">
-              <span className="text-[13px] text-white/70">Frame rate</span>
-              <Select
-                aria-label="Frame rate"
-                options={[
-                  { value: '24', label: '24 fps' },
-                  { value: '30', label: '30 fps' },
-                  { value: '60', label: '60 fps' },
-                ]}
-                value={fps}
-                onChange={(e) => setFps(e.target.value)}
-              />
-            </div>
+          <Switch label="In place" checked={inPlace} onChange={setInPlace} />
+          <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+            <span className="text-[13px] text-white/70">Frame rate</span>
+            <Select
+              aria-label="Frame rate"
+              options={[
+                { value: '24', label: '24 fps' },
+                { value: '30', label: '30 fps' },
+                { value: '60', label: '60 fps' },
+              ]}
+              value={fps}
+              onChange={(e) => setFps(e.target.value)}
+            />
           </div>
           {error && <p className="text-[13px] text-red-400">{error}</p>}
         </div>

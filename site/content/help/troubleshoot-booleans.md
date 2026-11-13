@@ -65,4 +65,4 @@ The tooltip on **Subtract** names the part it keeps, so you can check before you
 
 ## How to tell it worked
 
-A toast says **Merged**, **Subtracted** or **Intersected** with Undo, and the result is selected as one part.
+A toast with Undo names the parts, as in **Subtracted Hole from Cube**, and the result is selected as one part.

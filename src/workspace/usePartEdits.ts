@@ -46,17 +46,22 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
   };
 
   const ungroup = () => {
-    const groupIds = new Set(selection.selectedParts.map((p) => p.group?.id).filter(Boolean));
+    const groups = new Map(
+      selection.selectedParts.flatMap((p) => (p.group ? [[p.group.id, p.group.name] as const] : [])),
+    );
 
-    if (groupIds.size === 0) return;
+    if (groups.size === 0) return;
 
     commitParts(
       patchWhere(
-        (p) => !!p.group && groupIds.has(p.group.id),
+        (p) => !!p.group && groups.has(p.group.id),
         () => ({ group: undefined }),
       ),
     );
-    showToast('Ungrouped');
+
+    const named = groups.size === 1 ? [...groups.values()][0] : `${groups.size} groups`;
+
+    showToast(`Ungrouped ${named}`);
   };
 
   const renameGroup = (groupId: string, name: string) =>

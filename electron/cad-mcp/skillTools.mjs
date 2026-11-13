@@ -120,6 +120,7 @@ export const trainSkill = {
     description:
       'Trains a skill in the background and returns at once. Pass draft (an id from draft_skill the user approved) to run the solver race on it: the router’s method first, then each later one, every result judged by Arena (96 randomized tries, 29 of 32 to pass) and saved as a skill card only if it passes. ' +
       'Or pass kit to train one of the Motor Kit entries a legged robot gets: stand, walk (velocity tracking, which Drive steers), get-up or settle. ' +
+      'Or pass move, the name of one of the robot’s Pose-tab animations, to train it as a move the legged robot performs under physics (Forge tracks the animation, Arena judges it). ' +
       'Follow it with list_skills. When the race comes back not found, tell the user what was tried and offer the design change it reports. Only train when the user asks: it takes the CPU for minutes to an hour.',
     inputSchema: {
       draft: z
@@ -127,6 +128,7 @@ export const trainSkill = {
         .regex(/^[0-9a-f]{64}$/)
         .optional(),
       kit: z.enum(['stand', 'walk', 'get-up', 'settle']).optional(),
+      move: z.string().min(1).max(80).optional().describe('The name of a Pose-tab animation'),
       budget_minutes: z.number().min(1).max(120).optional().describe('Race only: a cap on training time'),
     },
   },
@@ -138,7 +140,7 @@ export const listSkills = {
   config: {
     title: 'List skills',
     description:
-      'The robot’s skills: its Motor Kit entries and the skills the user taught, each ready (with its Arena result), training (with progress) or needing training; then the last race’s outcome: the method that won, or what was tried and why each failed.',
+      'The robot’s skills: its Motor Kit entries, its moves (one per Pose-tab animation of a legged robot) and the skills the user taught, each ready (with its Arena result), training (with progress) or needing training; then the last race’s outcome: the method that won, or what was tried and why each failed.',
     inputSchema: {},
   },
   handler: () => ask('skill_list', {}, 30000),

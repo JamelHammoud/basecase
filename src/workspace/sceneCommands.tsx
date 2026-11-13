@@ -8,7 +8,6 @@ import {
   DeleteIcon,
   DuplicateIcon,
   EraserIcon,
-  FileImportIcon,
   FolderOpenIcon,
   HistoryIcon,
   MarkerIcon,
@@ -31,10 +30,15 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { caseCommands } from './caseCommands';
+import { skeletonCommands } from './skeletonCommands';
+import { fitTestCommands } from './fitTestCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
 import { exchangeCommands } from './exchangeCommands';
 import { operateCommands } from './operateCommands';
+import { buildCommands } from './buildCommands';
+import { leaderCommands } from './leaderCommands';
+import { onshapeCommands } from './onshapeCommands';
 
 export interface CommandInputs {
   core: WorkspaceCore;
@@ -114,16 +118,17 @@ function fileCommands({ core }: CommandInputs): Command[] {
 
 function printCommands({ core, actions }: CommandInputs): Command[] {
   const { exports } = actions;
+  const export3mf: Command = {
+    id: 'export-3mf',
+    group: 'Scene',
+    label: 'Export 3MF Plates',
+    icon: <PrinterIcon className={ic} />,
+    keywords: 'print plates slicer bambu prusa orca download',
+    run: () => void exports.export3mf(),
+  };
 
   return [
-    {
-      id: 'export-3mf',
-      group: 'Scene',
-      label: 'Export 3MF Plates',
-      icon: <PrinterIcon className={ic} />,
-      keywords: 'print plates slicer bambu prusa orca download',
-      run: () => void exports.export3mf(),
-    },
+    ...(exports.canExportParts ? [export3mf] : []),
     {
       id: 'lay-out-plates',
       group: 'Scene',
@@ -144,6 +149,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
         void core.readiness.checkNow();
       },
     },
+    ...fitTestCommands({ core }),
     {
       id: 'slice-plates',
       group: 'Scene',
@@ -177,19 +183,12 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       run: () => actions.creation.pickReferenceImage(),
     },
     {
-      id: 'import-svg',
-      group: 'Scene',
-      label: 'Import SVG',
-      icon: <FileImportIcon className={ic} />,
-      run: () => tool.openCreator('svg'),
-    },
-    {
       id: 'sketch',
       group: 'Scene',
       label: 'Sketch',
       icon: <PenIcon className={ic} />,
-      keywords: 'draw extrude revolve outline',
-      run: () => tool.openCreator('draw2d'),
+      keywords: 'draw extrude revolve outline face dimension constraint',
+      run: core.sketching.open,
     },
     {
       id: 'image',
@@ -292,14 +291,6 @@ function poseCommands({ core, actions }: CommandInputs): Command[] {
       run: () => posing.setRobotPose({ values: {} }),
     },
     ...walk,
-    {
-      id: 'import-bvh',
-      group: 'Pose',
-      label: 'Import BVH',
-      icon: <FileImportIcon className={ic} />,
-      keywords: 'mocap motion capture retarget animation',
-      run: pose.importMotion,
-    },
     ...posing.animations.map((a) => ({
       id: `play-${a.id}`,
       group: 'Pose',
@@ -400,10 +391,14 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...fileCommands(inputs),
   ...exchangeCommands(inputs),
   ...printCommands(inputs),
+  ...buildCommands(inputs),
   ...createCommands(inputs),
   ...toolCommands(inputs),
   ...poseCommands(inputs),
+  ...skeletonCommands(inputs),
   ...robotCommands(inputs),
+  ...leaderCommands(inputs),
+  ...onshapeCommands(inputs),
   ...caseCommands(inputs),
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),

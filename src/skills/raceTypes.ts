@@ -1,5 +1,6 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimModel } from '../sim/mjcfTypes';
+import type { RobotAnimation } from '../types/robotics';
 import type { Skill } from './artifacts';
 import type { Environment, RewardRef } from './environment';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
@@ -8,7 +9,10 @@ import type { Waypoint } from './raceIk';
 import type { Method, Route, TaskAnalysis } from './router';
 
 export type RaceGoal =
-  { kind: 'reach'; part: string; waypoints: Waypoint[] } | { kind: 'velocity'; command: V3 } | { kind: 'open' };
+  | { kind: 'reach'; part: string; waypoints: Waypoint[] }
+  | { kind: 'velocity'; command: V3 }
+  | { kind: 'track'; animation: RobotAnimation }
+  | { kind: 'open' };
 
 export interface RaceTask {
   id: string;

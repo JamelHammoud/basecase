@@ -43,6 +43,12 @@ export function engineeringText(r: EngineeringReport, toAgent: (v: V3) => V3): s
     ...(row.items ?? []).map((i) => `    - ${i.text} [${(i.ids ?? []).join(', ')}]`),
   ]);
 
+  if (r.rows.some((row) => row.check === 'Strength'))
+    lines.push(
+      '',
+      'Strength: each printed part between a servo horn and the next joint, solved as a voxel model (about 1.5 mm) clamped at the horn screws and loaded at the screws that carry the next link with the joint torque (crouch or hold, or the walk p99 after the peak test), with PLA/PETG strength along and across the layers of its print orientation, infill and walls. The number is the safety factor: PASS ≥ 2, WARN ≥ 1.3, FAIL below. Checks Fix sets the print face with the best factor; otherwise thicken the part across the bend, add a rib, or shorten the lever.',
+    );
+
   if (r.joints.length) {
     lines.push(
       '',

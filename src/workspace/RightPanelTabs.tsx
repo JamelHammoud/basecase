@@ -25,13 +25,13 @@ const ReadinessDot = ({ readiness }: { readiness: Readiness | null }) => {
 };
 
 export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
-  const { studio, tool, onRobot, posing } = core;
+  const { studio, tool, posable, posing } = core;
   const { chat, current, lanes } = agent;
   const running = runningChats(lanes.lanes, new Date());
   const hasChats = studio.chatList.length > 0 || running.length > 0;
   const tabs: PanelTab<RightTab>[] = [
     { value: 'inspector', label: 'Inspect' },
-    ...(onRobot ? [{ value: 'pose' as const, label: 'Pose' }] : []),
+    ...(posable ? [{ value: 'pose' as const, label: 'Pose' }] : []),
     ...(posing.hasRig ? [{ value: 'sim' as const, label: 'Simulate' }] : []),
     { value: 'build', label: 'Build', indicator: <ReadinessDot readiness={core.readiness.current} /> },
     {

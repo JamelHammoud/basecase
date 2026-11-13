@@ -206,3 +206,27 @@ fn a_half_sent_instruction_is_forgotten_after_a_pause() {
     bench.wait_ms(100);
     assert_eq!(bench.send(&ping).len(), 1);
 }
+
+#[test]
+fn a_factory_bus_starts_empty_and_new_servos_arrive_at_id_1() {
+    let mut bench = Bench {
+        bus: ServoBus::factory(Family::Feetech, BusOptions::default()),
+        now: 0,
+    };
+
+    assert!(bench.bus.servo_ids().is_empty());
+    bench.bus.plug_in_new_servo();
+    assert_eq!(bench.bus.servo_ids(), vec![servo_emu::FACTORY_ID]);
+    assert_eq!(bench.read(1, 3, 2).data, 777u16.to_le_bytes().to_vec());
+
+    bench.write(1, 55, &[0]);
+    bench.write(1, 5, &[3]);
+    bench.write(3, 55, &[1]);
+    bench.bus.plug_in_new_servo();
+    bench.bus.servo_mut(3).unwrap().power_cycle(bench.now);
+    assert_eq!(
+        bench.bus.servo_ids(),
+        vec![3, 1],
+        "a renumbered servo keeps its ID through a power cycle"
+    );
+}

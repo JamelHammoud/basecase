@@ -41,6 +41,8 @@ export interface BodyControl {
   command: Command | null;
 }
 
+export const NO_BODY = 'Only a robot that walks on legs runs a Routine in physics.';
+
 export const SCRIPTED_FULL = { linear: 0.2, angular: 0.6 };
 
 const KIT_NAMES = new Set<string>(Object.values(KIT_SKILL_NAMES));

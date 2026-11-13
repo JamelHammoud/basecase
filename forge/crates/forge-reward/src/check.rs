@@ -19,6 +19,7 @@ pub struct Program {
     pub(crate) entry: usize,
     pub terms: Vec<String>,
     pub schema: Schema,
+    pub reference: bool,
 }
 
 pub(crate) struct Scope {
@@ -50,6 +51,7 @@ impl Scope {
 
 pub(crate) struct Compiler<'a> {
     pub schema: Schema,
+    pub reference: bool,
     pub sources: &'a [Function],
     pub compiled: Vec<CompiledFunction>,
     pub signatures: Vec<(usize, Vec<Type>, usize, Type)>,
@@ -158,6 +160,10 @@ fn check_duplicates(functions: &[Function]) -> Result<(), String> {
 }
 
 pub fn compile(source: &str, schema: Schema) -> Result<Program, String> {
+    compile_for(source, schema, false)
+}
+
+pub fn compile_for(source: &str, schema: Schema, reference: bool) -> Result<Program, String> {
     let functions = parse(source)?;
 
     check_duplicates(&functions)?;
@@ -173,6 +179,7 @@ pub fn compile(source: &str, schema: Schema) -> Result<Program, String> {
 
     let mut compiler = Compiler {
         schema,
+        reference,
         sources: &functions,
         compiled: Vec::new(),
         signatures: Vec::new(),
@@ -189,5 +196,6 @@ pub fn compile(source: &str, schema: Schema) -> Result<Program, String> {
         entry: index,
         terms: compiler.terms,
         schema,
+        reference,
     })
 }

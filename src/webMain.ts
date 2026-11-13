@@ -1,12 +1,12 @@
-import { gallerySlug } from './gallery/galleryBundle';
+import { galleryBundleSource } from './gallery/galleryLinks';
 import { showsLanding } from './landing/showsLanding';
 
-const slug = gallerySlug(location.pathname);
+const source = galleryBundleSource(location.pathname);
 
 if (showsLanding()) {
   import('./landing/mountLanding');
-} else if (slug) {
-  import('./gallery/mountGallery').then((m) => m.mountGallery(slug));
+} else if (source) {
+  import('./gallery/mountGallery').then((m) => m.mountGallery(source));
 } else {
   import('./main');
 }

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { MODEL_DRAG_TYPE } from '../../data/dnd';
+import { MODEL_DRAG_TYPE, setSceneDrag } from '../../data/dnd';
 import { HoverCard } from '../../design-system';
 
 const TileThumb: React.FC<{ thumb: string | undefined }> = ({ thumb }) => {
@@ -67,7 +67,7 @@ export const Tile: React.FC<{
         onContextMenu={onMenu}
         draggable
         onDragStart={(e) => {
-          e.dataTransfer.setData(MODEL_DRAG_TYPE, modelId);
+          setSceneDrag(e.dataTransfer, MODEL_DRAG_TYPE, modelId);
           e.dataTransfer.effectAllowed = 'copy';
 
           const img = e.currentTarget.querySelector('img');

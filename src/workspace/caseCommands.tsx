@@ -9,6 +9,7 @@ import {
   ShareIcon,
   StopIcon,
 } from '../design-system';
+import type { Room } from '../cases/roomPlan';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -32,6 +33,11 @@ export const STAYS_IN_RUN = new Set([
   'case-export-dataset',
   'case-publish-dataset',
 ]);
+
+export const showRoomCase = (core: WorkspaceCore, room: Room) => {
+  showCases(core);
+  core.simTraining.cases.builder.startInRoom(room);
+};
 
 const runCaseCommand = (core: WorkspaceCore): Command => ({
   id: 'case-run',
@@ -63,6 +69,21 @@ function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Co
   };
 
   return [...(dataset.canExport ? [exportDataset] : []), ...(dataset.canPublish ? [publishDataset] : [])];
+}
+
+function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
+  if (!share.canShare || share.sharing) return [];
+
+  return [
+    {
+      id: 'share-robot',
+      group: 'Simulate',
+      label: 'Share Robot',
+      icon: <ShareIcon className={ic} />,
+      keywords: 'link url web browser gallery hub hugging face publish drive',
+      run: share.share,
+    },
+  ];
 }
 
 export function caseCommands({ core }: CommandInputs): Command[] {
@@ -150,5 +171,6 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...tryIt,
     ...caseRun,
     ...datasetCommands(cases),
+    ...shareCommands(simTraining),
   ];
 }

@@ -1,8 +1,11 @@
+import { drilledOperands } from '../booleans/picking';
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
+import { BuildAlongBar } from '../components/build/BuildAlongBar';
 import { CameraStrip } from '../components/cameras/CameraStrip';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D } from '../components/Viewport3D';
+import { SkeletonServoMenu } from '../components/pose/SkeletonServoMenu';
 import { MarkLabelField } from './MarkLabelField';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -15,6 +18,23 @@ interface SceneViewportProps {
   core: WorkspaceCore;
   actions: WorkspaceActions;
   agent: AgentSession;
+}
+
+function markFieldFor(marks: WorkspaceCore['marks']) {
+  const editingMark = marks.selected;
+
+  if (!editingMark) return null;
+
+  return (
+    <MarkLabelField
+      key={editingMark.id}
+      label={editingMark.label ?? ''}
+      color={marks.color}
+      autoFocus={marks.freshId === editingMark.id}
+      onCommit={(label) => marks.setLabel(editingMark.id, label)}
+      onClose={() => marks.select(null)}
+    />
+  );
 }
 
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
@@ -31,14 +51,12 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
     marks,
     measure,
     posing,
-    simTraining,
+    simTraining: { sim },
   } = core;
   const { edits } = actions;
-  const { sim } = simTraining;
   const { cursors, lanes } = agent;
-  const { setDraft } = annotations;
-  const editingMark = marks.selected;
-  const shownParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
+  const topParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
+  const shownParts = [...topParts, ...drilledOperands(parts, selectedIds)];
 
   return (
     <>
@@ -55,8 +73,11 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         showGrid={studio.showGrid}
         blueprintDataUrl={null}
         onSelectPart={selection.select}
+        onPickPoint={core.sketching.notePick}
+        onOpenPart={core.sketching.edit}
         onUpdatePartTransform={edits.updatePartTransform}
         onUpdatePartsTransform={edits.updatePartsTransform}
+        onPlacePart={edits.placePart}
         onMarqueeSelect={selection.marqueeSelect}
         onCommitSculptMesh={edits.commitSculptMesh}
         annotateMode={annotations.commentMode}
@@ -76,23 +97,13 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         onSelectMark={marks.select}
         onEraseMarks={marks.erase}
         onMoveMark={marks.move}
-        markField={
-          editingMark && (
-            <MarkLabelField
-              key={editingMark.id}
-              label={editingMark.label ?? ''}
-              color={marks.color}
-              autoFocus={marks.freshId === editingMark.id}
-              onCommit={(label) => marks.setLabel(editingMark.id, label)}
-              onClose={() => marks.select(null)}
-            />
-          )
-        }
+        markField={markFieldFor(marks)}
         agentFrames={agent.frames}
         fixedCameras={project.cameras}
+        checkDots={core.readiness.dots}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
-        worldParts={sim.worldParts}
+        worldParts={sim.guestParts.length ? [...sim.worldParts, ...sim.guestParts] : sim.worldParts}
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}
@@ -103,8 +114,14 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
           }
         }
         onAxisPick={actions.joints.onAxisPick}
+        buildStep={core.buildAlong.view}
+        skeleton={core.skeleton.view}
+        onSkeletonDrag={core.skeleton.onViewportDrag}
+        onSkeletonPick={core.skeleton.openMenu}
       />
+      <SkeletonServoMenu skeleton={core.skeleton} />
       <DriveOverlay sim={sim} />
+      <BuildAlongBar buildAlong={core.buildAlong} active={active} />
       {!core.caseRun.open && (
         <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
       )}
@@ -115,7 +132,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         activeId={annotations.activeId}
         draft={annotations.draft}
         onOpen={annotations.setActiveId}
-        onCancelDraft={() => setDraft(null)}
+        onCancelDraft={() => annotations.setDraft(null)}
         onCreate={annotations.create}
         onReply={annotations.reply}
         onEditComment={annotations.editComment}

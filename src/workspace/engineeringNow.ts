@@ -8,6 +8,10 @@ import { SERVO_TOUCH_MM, servoTouchPairs } from '../utils/engineeringHeat';
 import type { EngineeringInputs, ServoLine, WalkSim } from '../utils/engineeringTypes';
 import { jointsWithChains } from '../assembly/rigJoints';
 import { platformBridge } from '../utils/platformBridge';
+import { payloadMapsIn } from '../three/analysis/analysisPool';
+import type { ArmModel } from '../utils/payload';
+import { rememberStress } from '../strength/fields';
+import type { StrengthJob } from '../strength/types';
 
 const isServo = (p: ScenePart) =>
   p.kind === 'component' && !!p.componentId && COMPONENT_BY_ID[p.componentId]?.group === 'Servos';
@@ -43,30 +47,52 @@ export interface EngineeringNowInput {
   withSweep: boolean;
   walk?: WalkSim | string;
   supportG?: EngineeringInputs['supportG'];
+  printDowns?: EngineeringInputs['printDowns'];
 }
 
 const sweepKey = (spec: SweepSpec) =>
   JSON.stringify([spec.moving, spec.origin, spec.axis, spec.anglesDeg, spec.actuators ?? []]);
 
-async function withSweeps(viewport: Viewport3DHandle, input: EngineeringInputs) {
-  const requests = new Map<string, SweepSpec>();
+async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs) {
+  const sweeps = new Map<string, SweepSpec>();
+  const jobs = new Map<string, StrengthJob>();
+  const arms = new Map<string, ArmModel>();
 
   runEngineering({
     ...input,
     sweep: (spec) => {
-      requests.set(sweepKey(spec), spec);
+      sweeps.set(sweepKey(spec), spec);
 
       return [];
     },
+    strength: (asked) => {
+      asked.forEach((job) => jobs.set(job.key, job));
+
+      return asked.map(() => null);
+    },
+    payload: (arm) => {
+      arms.set(JSON.stringify(arm), arm);
+
+      return null;
+    },
   });
 
-  const keys = [...requests.keys()];
-  const results = await viewport.sweepClashes([...requests.values()]);
-  const byKey = new Map(keys.map((k, i) => [k, results[i] ?? []]));
+  const [clashes, readings, maps] = await Promise.all([
+    viewport.sweepClashes([...sweeps.values()]),
+    viewport.strength([...jobs.values()]),
+    payloadMapsIn([...arms.values()]),
+  ]);
+  const clashOf = new Map([...sweeps.keys()].map((k, i) => [k, clashes[i] ?? []]));
+  const readingOf = new Map([...jobs.keys()].map((k, i) => [k, readings[i] ?? null]));
+  const mapByArm = new Map([...arms.keys()].map((k, i) => [k, maps[i] ?? null]));
+
+  rememberStress(readings);
 
   return runEngineering({
     ...input,
-    sweep: (spec) => byKey.get(sweepKey(spec)) ?? [],
+    sweep: (spec) => clashOf.get(sweepKey(spec)) ?? [],
+    strength: (asked) => asked.map((job) => readingOf.get(job.key) ?? null),
+    payload: (arm) => mapByArm.get(JSON.stringify(arm)) ?? null,
   });
 }
 
@@ -91,6 +117,7 @@ export async function engineeringInputs(
 
   return {
     parts,
+    chains,
     project: { ...project, joints: jointsWithChains(project.joints ?? [], parts, chains) },
     measures,
     servoOutputs,
@@ -99,8 +126,14 @@ export async function engineeringInputs(
   };
 }
 
-export async function runEngineeringNow({ viewport, parts, project, withSweep, walk, supportG }: EngineeringNowInput) {
-  const input: EngineeringInputs = { ...(await engineeringInputs(viewport, parts, project)), walk, supportG };
+export async function runEngineeringNow(options: EngineeringNowInput) {
+  const { viewport, parts, project, withSweep, walk, supportG, printDowns } = options;
+  const input: EngineeringInputs = {
+    ...(await engineeringInputs(viewport, parts, project)),
+    walk,
+    supportG,
+    printDowns,
+  };
 
-  return withSweep && viewport ? withSweeps(viewport, input) : runEngineering(input);
+  return withSweep && viewport ? withWorkers(viewport, input) : runEngineering(input);
 }

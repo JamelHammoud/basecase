@@ -12,4 +12,4 @@ Right-click the canvas and choose Import Mesh, or drop the files on it. Each fil
 
 STL, 3MF, PLY and OBJ are read in millimeters, GLB, glTF and DAE in meters, and FBX in its own units. A model under 1 mm across is read as meters. Meshes are welded but never simplified, so a print keeps every triangle.
 
-Steps are in [Import a mesh](/help/import-a-mesh).
+Steps are in [Import a file](/help/import-a-file).

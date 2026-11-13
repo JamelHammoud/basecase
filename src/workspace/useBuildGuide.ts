@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react';
 import { generateGuide, type GeneratedGuide, type GuideProgress } from '../guide/generateGuide';
 import { guideFingerprint } from '../guide/guideFingerprint';
 import { isBuilt } from '../guide/guidePlan';
+import type { GuidePlan } from '../guide/guideTypes';
 import { guidePagesKey, loadGuidePages, seedGuidePages, type GuidePages } from '../guide/viewer/guidePages';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
@@ -50,6 +51,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
   const [viewing, setViewing] = useState<GuidePages | null>(null);
   const runRef = useRef<Promise<GeneratedGuide | null> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const planRef = useRef<{ fingerprint: string; plan: GuidePlan } | null>(null);
   const record = project.buildGuide;
   const fingerprint = guideFingerprint(sceneName, parts, project);
   const stale = !!record && record.fingerprint !== fingerprint;
@@ -93,6 +95,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
     if (!result) return result;
 
     seedGuidePages(guidePagesKey(result.record.id, result.record.generatedAt), result.html);
+    planRef.current = { fingerprint: result.record.fingerprint, plan: result.plan };
     updateProjectNow((p) => ({ ...p, buildGuide: result.record }));
 
     if (!quiet) showToast(`Made ${sceneName} build guide`, { action: { label: 'Open', onClick: () => void open() } });
@@ -139,6 +142,14 @@ export function useBuildGuide(options: BuildGuideOptions) {
 
   const cancel = () => abortRef.current?.abort();
 
+  const currentPlan = async (): Promise<GuidePlan | null> => {
+    const known = planRef.current;
+
+    if (known?.fingerprint === guideFingerprint(sceneName, partsRef.current, projectRef.current)) return known.plan;
+
+    return (await generate({ quiet: true }))?.plan ?? null;
+  };
+
   return {
     record,
     fingerprint,
@@ -149,6 +160,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
     viewing,
     generate,
     cancel,
+    currentPlan,
     open,
     openPdf,
     closeViewer,

@@ -19,7 +19,7 @@ keywords:
   - manufacturer cad
   - b-rep
 related:
-  - import-a-mesh
+  - import-a-file
   - troubleshoot-file-import
 covers:
   - src/workspace/cadImport.ts
@@ -36,12 +36,12 @@ Bring a part or assembly from SolidWorks, Fusion, Onshape or a maker's website i
 Opening STEP and IGES works in the desktop app.
 
 1. Right-click an empty spot on the canvas.
-2. Choose **Import Mesh**.
+2. Choose **Import**.
 3. Pick a `.step`, `.stp`, `.iges` or `.igs` file.
 
 Each body in the file becomes its own part, named from the file's product names and colored with its main face color. A file with more than one body arrives as a group named after the file. The whole file stands on the spot you right-clicked.
 
-You can also drop the file on the canvas, choose **File** ▸ **Import Mesh**, or press [[⌘K]] and choose **Import Mesh**.
+You can also drop the file on the canvas, choose **File** ▸ **Import**, or press [[⌘K]] and choose **Import**.
 
 ## How the file is read
 

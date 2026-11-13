@@ -5,9 +5,9 @@ export const NewModelMenu: React.FC<{
   canSaveSelection: boolean;
   canSaveScene: boolean;
   onSaveModel: (mode: 'selected' | 'all') => void;
-  onImportSvg: () => void;
+  onImport: () => void;
   onImageToModel: () => void;
-}> = ({ canSaveSelection, canSaveScene, onSaveModel, onImportSvg, onImageToModel }) => {
+}> = ({ canSaveSelection, canSaveScene, onSaveModel, onImport, onImageToModel }) => {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const run = (fn: () => void) => () => {
@@ -47,7 +47,7 @@ export const NewModelMenu: React.FC<{
           onSelect={run(() => onSaveModel('all'))}
         />
         <MenuDivider />
-        <MenuItem icon={<FileImportIcon className="w-3.5 h-3.5" />} label="Import SVG" onSelect={run(onImportSvg)} />
+        <MenuItem icon={<FileImportIcon className="w-3.5 h-3.5" />} label="Import" onSelect={run(onImport)} />
         <MenuItem icon={<PhotoAddIcon className="w-3.5 h-3.5" />} label="From Image" onSelect={run(onImageToModel)} />
       </PopoverMenu>
     </div>

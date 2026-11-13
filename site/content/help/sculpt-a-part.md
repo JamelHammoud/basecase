@@ -24,7 +24,7 @@ covers:
   - src/workspace/usePartCreation.ts
   - src/workspace/useToolMode.ts
   - src/three/viewport/sculptInput.ts
-  - src/three/sculptAndBooleanEngine.ts
+  - src/three/sculptEngine.ts
   - src/components/SettingsWindow.tsx
 ---
 

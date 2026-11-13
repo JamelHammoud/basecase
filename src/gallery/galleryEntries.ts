@@ -1,12 +1,13 @@
-import { caseTemplates } from '../cases/templates';
+import { presetCase, type PresetId } from '../cases/caseBuilder';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import { buildRig } from '../utils/kinematics';
-import { GALLERY_FORMAT_VERSION, type GalleryBundle } from './galleryBundle';
+import { galleryBundleOf } from './buildBundle';
+import type { GalleryBundle } from './galleryBundle';
 
-const ENTRIES = [
-  { slug: 'arm-touch-the-dots', robot: 'arm-6dof', name: 'Six-joint arm', template: 'touch-the-dots' },
-  { slug: 'rover-reach-the-flag', robot: 'rover-diff', name: 'Two-wheel rover', template: 'reach-the-flag' },
-  { slug: 'hexapod-reach-the-flag', robot: 'hexapod', name: 'Hexapod', template: 'reach-the-flag' },
+const ENTRIES: Array<{ slug: string; robot: string; name: string; preset: PresetId }> = [
+  { slug: 'arm-touch-the-dots', robot: 'arm-6dof', name: 'Six-joint arm', preset: 'touch-the-dots' },
+  { slug: 'rover-reach-the-flag', robot: 'rover-diff', name: 'Two-wheel rover', preset: 'reach-the-flag' },
+  { slug: 'hexapod-reach-the-flag', robot: 'hexapod', name: 'Hexapod', preset: 'reach-the-flag' },
 ];
 
 export function galleryBundles(): GalleryBundle[] {
@@ -14,17 +15,16 @@ export function galleryBundles(): GalleryBundle[] {
 
   return ENTRIES.map((e) => {
     const robot = robots.find((r) => r.id === e.robot)!;
-    const kase = caseTemplates(buildRig(robot.joints, robot.parts), robot.parts)
-      .find((t) => t.id === e.template)!
-      .build();
+    const kase = presetCase(e.preset, buildRig(robot.joints, robot.parts), robot.parts);
 
-    return {
-      formatVersion: GALLERY_FORMAT_VERSION,
+    return galleryBundleOf({
       slug: e.slug,
       title: `${kase.name}: ${e.name}`,
-      robot: { name: e.name, parts: robot.parts, joints: robot.joints },
-      case: kase,
-    };
+      robotName: e.name,
+      parts: robot.parts,
+      joints: robot.joints,
+      kase,
+    });
   });
 }
 

@@ -207,7 +207,7 @@
 
 @layer components {
   /*
- * Floating surfaces over the canvas (toolbar, selection bar, toasts, comment cards) and
+ * Floating surfaces over the canvas (toolbar, toasts, comment cards) and
  * menus/popovers/tooltips. Matte, like the rest of the app: a solid neutral fill and a soft
  * shadow; no translucency, specular highlight or outline.
  */

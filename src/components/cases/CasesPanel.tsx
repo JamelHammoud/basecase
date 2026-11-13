@@ -20,7 +20,7 @@ function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseR
 
   return (
     <div className="mb-3 flex flex-col gap-1">
-      {builder.open && <NewCaseCard builder={builder} onCreated={onOpen} />}
+      {builder.open && <NewCaseCard key={builder.roomKey} builder={builder} onCreated={onOpen} />}
       {!builder.open && builder.goals.length > 0 && (
         <Button
           variant="primary"
@@ -49,9 +49,6 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen, onDescrib
     cases.open(id);
     onOpen();
   };
-  const startFrom = (id: string) => {
-    if (cases.addTemplate(id)) onOpen();
-  };
   const caseMenu = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     setMenu({
@@ -78,20 +75,6 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, onOpen, onDescrib
             />
           ))}
         </div>
-      )}
-      {cases.examples.length > 0 && (
-        <>
-          <Heading>Examples</Heading>
-          {cases.examples.map((t) => (
-            <CaseRow
-              key={t.id}
-              name={t.name}
-              brief={t.brief}
-              icon={<PlusIcon className="w-4 h-4" />}
-              onClick={() => startFrom(t.id)}
-            />
-          ))}
-        </>
       )}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </div>

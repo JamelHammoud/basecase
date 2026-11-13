@@ -5,6 +5,7 @@ import {
   CameraIcon,
   AlignCenterXIcon,
   BookmarkAddIcon,
+  BotIcon,
   CommentIcon,
   CopyIcon,
   CrosshairIcon,
@@ -22,6 +23,7 @@ import {
   PenIcon,
   PhotoIcon,
   PlusIcon,
+  RefreshIcon,
   RotateLeftIcon,
   RulerIcon,
   SparklesIcon,
@@ -33,12 +35,15 @@ import {
   UnlockIcon,
 } from '../design-system';
 import { partQuote } from '../agent/partQuote';
+import { faultSubmenu } from '../components/simulate/faultMenu';
 import { CAMERA_VIEWS } from '../data/cameraViews';
+import { partTarget, selectedTarget, type OnshapeTarget } from '../onshape/onshapeTarget';
 import type { ContextMenuEntry } from '../design-system';
 import type { PartRole, ScenePart } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CanvasMenuState } from './useCanvasMenu';
 import { handJointMenuItems } from './jointCommands';
+import { leaderMenuItems } from './leaderCommands';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -108,6 +113,27 @@ function sharedEntries({ core, actions }: ContextInputs) {
   };
 }
 
+function wrapItems({ actions }: ContextInputs): ContextMenuEntry[] {
+  if (!actions.wrap.canWrap()) return [];
+
+  return [
+    { label: 'Wrap Robot', icon: <BotIcon className={ic} />, onSelect: actions.wrap.wrapSelected },
+    { divider: true },
+  ];
+}
+
+function onshapeItems({ actions }: ContextInputs, target: OnshapeTarget | null): ContextMenuEntry[] {
+  if (IS_WEB_DEMO || !target) return [];
+
+  return [
+    {
+      label: 'Update from Onshape',
+      icon: <RefreshIcon className={ic} />,
+      onSelect: () => void actions.onshape.update(target.group.id),
+    },
+  ];
+}
+
 function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
   const { core, actions } = inputs;
   const { ops, edits } = actions;
@@ -117,6 +143,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
 
   return [
     { heading: `${core.selectedIds.length} parts` },
+    ...wrapItems(inputs),
     { label: 'Union', icon: <UnionIcon className={ic} />, onSelect: () => ops.runBoolean('union') },
     {
       label: `Subtract from ${selectedParts[0]?.name ?? 'First'}`,
@@ -142,6 +169,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     ...(selectedParts.some((p) => p.group)
       ? [{ label: 'Ungroup', shortcut: '⇧⌘G', icon: <UngroupIcon className={ic} />, onSelect: edits.ungroup }]
       : []),
+    ...onshapeItems(inputs, selectedTarget(core.parts, core.selectedIds)),
     shared.duplicate,
     shared.selectAll,
     shared.saveToLibrary,
@@ -181,6 +209,18 @@ function referencePart({ core }: ContextInputs, part: ScenePart): ContextMenuEnt
   ];
 }
 
+function faultItems({ core }: ContextInputs, part: ScenePart): ContextMenuEntry[] {
+  const { sim } = core.simTraining;
+  const jointId = core.posing.rig.ownerOf.get(part.id);
+  const driven = sim.model?.joints.some((j) => j.id === jointId && j.actuator >= 0);
+
+  if (sim.status === 'off' || !jointId || !driven) return [];
+
+  const current = sim.stats?.joints.find((j) => j.id === jointId)?.fault;
+
+  return [faultSubmenu(current, (kind) => sim.setFault(jointId, kind)), { divider: true }];
+}
+
 function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextMenuEntry[]): ContextMenuEntry[] {
   const { actions, ui } = inputs;
   const { ops, edits } = actions;
@@ -189,6 +229,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
 
   return [
     { heading: part.name, onSelect: () => copyPartName(inputs, part.name) },
+    ...faultItems(inputs, part),
     ...(part.hardware
       ? [{ label: 'Add Clearance Hole', icon: <SubtractIcon className={ic} />, onSelect: ops.addClearanceHole }]
       : []),
@@ -196,6 +237,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.selectAll,
     shared.saveToLibrary,
     ...referencePart(inputs, part),
+    ...leaderMenuItems(actions, part.id),
     ...commentHere,
     { divider: true },
     shared.align,
@@ -230,6 +272,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
           },
         ]
       : []),
+    ...onshapeItems(inputs, partTarget(inputs.core.parts, part)),
     { divider: true },
     ...partFlagItems(part, setFlag),
     shared.remove,
@@ -248,7 +291,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       icon: <PhotoIcon className={ic} />,
       onSelect: () => actions.creation.pickReferenceImage(menu.point),
     },
-    { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: () => tool.openCreator('draw2d') },
+    { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: core.sketching.open },
     {
       label: 'Annotate',
       shortcut: 'N',
@@ -259,11 +302,10 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       ? [{ label: 'Delete Marks', icon: <DeleteIcon className={ic} />, onSelect: core.marks.deleteAll }]
       : []),
     {
-      label: 'Import Mesh',
+      label: 'Import',
       icon: <FileImportIcon className={ic} />,
-      onSelect: () => void actions.creation.pickMeshes(menu.point),
+      onSelect: () => void actions.files.pickImports(menu.point),
     },
-    { label: 'Import SVG', icon: <FileImportIcon className={ic} />, onSelect: () => tool.openCreator('svg') },
     { divider: true },
     shared.selectAll,
     { divider: true },

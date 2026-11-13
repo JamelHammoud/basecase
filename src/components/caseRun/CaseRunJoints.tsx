@@ -1,4 +1,6 @@
 import React from 'react';
+import { jointRows } from '../../robot/jointRows';
+import { robotConnection } from '../../robot/robotStore';
 import { useRobot } from '../../robot/useRobot';
 import type { RobotJoint } from '../../types/robotics';
 import { ConnectRobotButton } from '../operate/ConnectRobotButton';
@@ -14,6 +16,7 @@ interface CaseRunJointsProps {
 export const CaseRunJoints: React.FC<CaseRunJointsProps> = ({ joints, onBrowseRobots }) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
+  const rows = jointRows({ joints, calibrations: undefined, connection: robotConnection(robot) });
 
   return (
     <div className="px-[8px] pt-3 pb-1">
@@ -23,7 +26,7 @@ export const CaseRunJoints: React.FC<CaseRunJointsProps> = ({ joints, onBrowseRo
         <ConnectRobotButton joints={joints} onBrowseRobots={onBrowseRobots} />
       )}
       <RobotMessages messages={robot.messages.slice(0, 1)} />
-      {connected && <RobotJoints ids={robot.spec?.ids ?? []} joints={robot.status?.joints ?? []} />}
+      {connected && <RobotJoints rows={rows} live />}
     </div>
   );
 };

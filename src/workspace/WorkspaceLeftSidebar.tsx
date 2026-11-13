@@ -1,6 +1,7 @@
 import { LeftSidebar } from '../components/LeftSidebar';
 import { LAYOUT, PanelResizer } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { setUpServos } from '../robot/servoSetup';
 import { calibrateConnectedRobot, rollBackCalibration } from './calibrationActions';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -15,9 +16,8 @@ interface WorkspaceLeftSidebarProps {
 
 export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: WorkspaceLeftSidebarProps) {
   const { studio, tool, parts, selectedIds, selection } = core;
-  const { library, creation, edits, robots } = actions;
+  const { library, creation, edits, robots, files } = actions;
   const { panelWidths } = studio;
-  const { openCreator } = tool;
   const browseRobots = () => tool.setLeftTab('robots');
   const libraryProps = {
     customModels: studio.customModels,
@@ -26,7 +26,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
     onDuplicateModel: library.duplicateModel,
     onDeleteModel: library.deleteModel,
     onSaveModel: library.saveAsModel,
-    onImportSvg: () => openCreator('svg'),
+    onImport: () => void files.pickImports(),
     onImageToModel: tool.requestAttach,
   };
 
@@ -64,8 +64,11 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         calibration: {
           calibrations: core.project.servoCalibrations,
           onCalibrate: () => void calibrateConnectedRobot(core.docs.updateProjectNow, core.project.joints ?? []),
+          onCalibrateJoint: (jointId) =>
+            void calibrateConnectedRobot(core.docs.updateProjectNow, core.project.joints ?? [], jointId),
           onRollBack: (jointId) => rollBackCalibration(core.docs.updateProjectNow, jointId),
         },
+        onSetUpServos: () => void setUpServos({ joints: core.project.joints ?? [], select: core.setSelectedIds }),
       }}
       tab={tool.leftTab}
       onTabChange={tool.setLeftTab}

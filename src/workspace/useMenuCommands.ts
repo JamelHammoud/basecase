@@ -19,8 +19,8 @@ const OWN_EDIT_COMMANDS = new Set([...EDIT_COMMANDS, 'delete', 'duplicate']);
 function useMenuMap({ core, actions, ui }: Omit<MenuOptions, 'active'>): Record<string, () => unknown> {
   'use memo';
 
-  const { studio, tool, posing, showToast, undo, redo, selection } = core;
-  const { exports, creation, robots, pose, ops } = actions;
+  const { studio, undo, redo, selection } = core;
+  const { exports, creation, robots, files, ops } = actions;
 
   return {
     settings: () => studio.openSettings(),
@@ -31,10 +31,8 @@ function useMenuMap({ core, actions, ui }: Omit<MenuOptions, 'active'>): Record<
     airdrop: () => void exports.airDrop(),
     print: () => core.printing.openMode(1),
     'add-reference-image': () => creation.pickReferenceImage(),
-    'import-mesh': () => void creation.pickMeshes(),
-    'import-svg': () => tool.openCreator('svg'),
+    import: () => void files.pickImports(),
     'import-robot': robots.openImportRobot,
-    'import-bvh': () => (posing.hasRig ? pose.importMotion() : showToast('Add joints to retarget motion onto')),
     undo,
     redo,
     'select-all': selection.selectAll,

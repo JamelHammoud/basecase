@@ -42,9 +42,18 @@ impl Rig {
     }
 
     pub fn with_latency(family: Family, schedule: Schedule, latency_us: u64) -> Self {
+        Self::on_bus(ServoBus::new(family, &IDS, BusOptions::default()), schedule, latency_us)
+    }
+
+    pub fn factory(family: Family, schedule: Schedule) -> Self {
+        Self::on_bus(ServoBus::factory(family, BusOptions::default()), schedule, 0)
+    }
+
+    fn on_bus(servos: ServoBus, schedule: Schedule, latency_us: u64) -> Self {
+        let family = servos.family();
         let clock = VirtualClock::new();
         let shared_clock: Arc<dyn Clock> = Arc::new(clock.clone());
-        let bus = ServoBus::new(family, &IDS, BusOptions::default()).shared();
+        let bus = servos.shared();
         let inner = InProcessBus::new(bus.clone(), shared_clock.clone(), latency_us);
         let faulty = FaultyBus::new(inner, schedule, 7);
         let tap = faulty.tap();
@@ -202,6 +211,20 @@ impl Rig {
             DaemonEvent::Stopped { at_us, .. } => Some(*at_us),
             _ => None,
         })
+    }
+
+    pub fn plug_in(&self) {
+        self.bus.lock().unwrap().plug_in_new_servo();
+    }
+
+    pub fn servo_ids(&self) -> Vec<u8> {
+        self.bus.lock().unwrap().servo_ids()
+    }
+
+    pub fn assign(&mut self, id: u8) -> Result<(), String> {
+        let model = robot_daemon::control::expected_model(self.family);
+
+        self.command(Command::AssignId { id, model })
     }
 
     pub fn writes(&self) -> Vec<WriteRecord> {

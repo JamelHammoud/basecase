@@ -20,8 +20,8 @@ describe('sameTitle', () => {
 describe('similarTitle', () => {
   it.each([
     [
-      'Open a Case as a Command Center with the robot, its cameras, joints and tries',
-      'Open the Case in a Command Center with its robot, cameras, tries and joints',
+      'Open a Case as a Live Console with the robot, its cameras, joints and tries',
+      'Open the Case in a Live Console with its robot, cameras, tries and joints',
     ],
     [
       'Feature: Number each servo as you plug it in, with the canvas lighting its joint',
@@ -34,8 +34,8 @@ describe('similarTitle', () => {
   it.each([
     ['Feature: Import from Onshape', 'Feature: Import from Fusion'],
     [
-      'Open a Case as a Command Center with the robot, its cameras, the operator camera, joints and tries in one window',
-      'Open a Case in a Command Center showing the robot, its cameras, joints and tries',
+      'Open a Case as a Live Console with the robot, its cameras, the operator camera, joints and tries in one window',
+      'Open a Case in a Live Console showing the robot, its cameras, joints and tries',
     ],
     ['Simulate the hexapod walking in MuJoCo', 'Train the hexapod walking in MuJoCo'],
     ['Train a walking policy for the hexapod in a Case', 'Simulate a walking policy for the hexapod in a Case'],
@@ -56,11 +56,11 @@ describe('openMatch', () => {
   const open = (title, label) => [{ number: 7, title, labels: [label] }];
 
   it('finds the open step a new step rewords', () => {
-    const step = open('Open the Case in a Command Center with its robot, cameras, tries and joints', 'loop:building');
+    const step = open('Open the Case in a Live Console with its robot, cameras, tries and joints', 'loop:building');
 
-    expect(
-      openMatch('Open a Case as a Command Center with the robot, its cameras, joints and tries', step, steps),
-    ).toBe(step[0]);
+    expect(openMatch('Open a Case as a Live Console with the robot, its cameras, joints and tries', step, steps)).toBe(
+      step[0],
+    );
   });
 
   it('files the Train step while the Simulate step for the same robot is open', () => {
@@ -76,9 +76,9 @@ describe('openMatch', () => {
   });
 
   it('files a step under an arc with the same words', () => {
-    const arc = open('Operate a robot from a Case Command Center', 'loop:arc');
+    const arc = open('Operate a robot from a Case Live Console', 'loop:arc');
 
-    expect(openMatch('Operate the robot from the Case Command Center', arc, steps)).toBeNull();
+    expect(openMatch('Operate the robot from the Case Live Console', arc, steps)).toBeNull();
   });
 
   it('files the next digest while the last one is open', () => {

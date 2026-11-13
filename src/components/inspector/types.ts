@@ -42,4 +42,5 @@ export interface InspectorProps {
   onRotateSelection: (axis: Axis) => void;
   onChangeHardware: (spec: HardwareSpec, live?: Phase) => void;
   onAddClearanceHole: () => void;
+  onTuneDimensions: (id: string, values: Record<string, number>) => Promise<void>;
 }

@@ -6,7 +6,7 @@ import { liveGoal, type LiveGoal } from '../cases/liveGoal';
 import { endPoint } from '../cases/probes';
 import { boundEffector, robotFacts } from '../cases/robotFit';
 import { scaledToReach } from '../cases/scale';
-import type { Case } from '../cases/schema';
+import { caseSlots, type Case } from '../cases/schema';
 import { caseProbeReader, caseProbeWorld } from '../cases/tries';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { SimFrame, Simulation } from '../sim/useSimulation';
@@ -38,7 +38,7 @@ const jointsOf = (model: SimModel, { joints }: SimFrame): SignalSample['joints']
 function caseWorld({ kase, model, rig, parts }: { kase: Case; model: SimModel; rig: Rig; parts: ScenePart[] }) {
   const facts = robotFacts(rig, parts);
   const scaled = scaledToReach(kase, facts.reachMm, facts.anchor);
-  const scoring = { kase: scaled, model, effector: boundEffector(scaled.slot.binding, facts, rig), rig };
+  const scoring = { kase: scaled, model, effector: boundEffector(caseSlots(scaled)[0].binding, facts, rig), rig };
 
   return { contract: scaled.task.contract, reader: caseProbeReader(scoring), world: caseProbeWorld(scoring) };
 }

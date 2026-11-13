@@ -5,6 +5,7 @@ pub mod calibration;
 pub mod caps;
 pub mod control;
 pub mod fault;
+pub mod g1;
 pub mod intent;
 pub mod ladder;
 pub mod monitor;

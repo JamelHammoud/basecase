@@ -21,6 +21,9 @@ export interface ArmOptions {
   gripper?: boolean;
   brace?: boolean;
   limits?: [string, string] | null;
+  armMm?: number;
+  wrist?: boolean;
+  elbow?: boolean;
 }
 
 interface Box {
@@ -80,39 +83,60 @@ const limitFeature = (featureId: string, mateType: string, [lo, hi]: [string, st
   };
 };
 
-export function fakeArm({
-  mate = 'REVOLUTE',
-  angleDeg = 0,
-  gripper = false,
-  brace = false,
-  limits = ['-90 deg', '45 deg'],
-}: ArmOptions = {}) {
-  const base: Box = { id: 'IBase', partId: 'JHD', name: 'Base', size: [60, 60, 40], at: [0, 0, 0], massKg: 0.5 };
-  const arm: Box = { id: 'IArm', partId: 'JID', name: 'Arm', size: [20, 20, 120], at: [0, 0, 0.04], turnDeg: angleDeg };
-  const grip: Box = { id: 'IGrip', partId: 'JJD', name: 'Gripper', size: [30, 10, 10], at: [0, 0, 0.16] };
-  const boxes = gripper ? [base, arm, grip] : [base, arm];
-  const features = [
+const when = <T>(on: boolean, make: () => T): T[] => (on ? [make()] : []);
+
+const armMates = ({ mate, gripper, brace, wrist, elbow }: Required<ArmOptions>) => [
+  ...when(elbow, () =>
     mateFeature('Melbow', 'Elbow', mate, [
       { path: ['IBase'], origin: [0, 0, 0.04] },
       { path: ['IArm'], origin: [0, 0, 0] },
     ]),
-    ...(gripper
-      ? [
-          mateFeature('Mgrip', 'Fastened 1', 'FASTENED', [
-            { path: ['IArm'], origin: [0, 0, 0.12] },
-            { path: ['IGrip'], origin: [0, 0, 0] },
-          ]),
-        ]
-      : []),
-    ...(brace
-      ? [
-          mateFeature('Mbrace', 'Brace', 'REVOLUTE', [
-            { path: ['IBase'], origin: [0.02, 0, 0.04] },
-            { path: ['IArm'], origin: [0.02, 0, 0] },
-          ]),
-        ]
-      : []),
-  ];
+  ),
+  ...when(gripper, () =>
+    mateFeature('Mgrip', 'Fastened 1', 'FASTENED', [
+      { path: ['IArm'], origin: [0, 0, 0.12] },
+      { path: ['IGrip'], origin: [0, 0, 0] },
+    ]),
+  ),
+  ...when(brace, () =>
+    mateFeature('Mbrace', 'Brace', 'REVOLUTE', [
+      { path: ['IBase'], origin: [0.02, 0, 0.04] },
+      { path: ['IArm'], origin: [0.02, 0, 0] },
+    ]),
+  ),
+  ...when(wrist, () =>
+    mateFeature('Mwrist', 'Wrist', 'REVOLUTE', [
+      { path: ['IArm'], origin: [0, 0, 0.12] },
+      { path: ['IWrist'], origin: [0, 0, 0] },
+    ]),
+  ),
+];
+
+const ARM_DEFAULTS: Required<ArmOptions> = {
+  mate: 'REVOLUTE',
+  angleDeg: 0,
+  gripper: false,
+  brace: false,
+  limits: ['-90 deg', '45 deg'],
+  armMm: 120,
+  wrist: false,
+  elbow: true,
+};
+
+export function fakeArm(options: ArmOptions = {}) {
+  const o = { ...ARM_DEFAULTS, ...options };
+  const base: Box = { id: 'IBase', partId: 'JHD', name: 'Base', size: [60, 60, 40], at: [0, 0, 0], massKg: 0.5 };
+  const arm: Box = {
+    id: 'IArm',
+    partId: 'JID',
+    name: 'Arm',
+    size: [20, 20, o.armMm],
+    at: [0, 0, 0.04],
+    turnDeg: o.angleDeg,
+  };
+  const grip: Box = { id: 'IGrip', partId: 'JJD', name: 'Gripper', size: [30, 10, 10], at: [0, 0, 0.16] };
+  const hand: Box = { id: 'IWrist', partId: 'JKD', name: 'Wrist', size: [16, 16, 30], at: [0, 0, 0.16] };
+  const boxes = [base, arm, ...when(o.gripper, () => grip), ...when(o.wrist, () => hand)];
 
   return {
     boxes,
@@ -120,11 +144,11 @@ export function fakeArm({
       rootAssembly: {
         instances: boxes.map(instance),
         occurrences: boxes.map((b) => ({ path: [b.id], transform: rowMajor(b), fixed: b === base, hidden: false })),
-        features,
+        features: armMates(o),
       },
       subAssemblies: [],
     },
-    features: { features: limits ? [limitFeature('Melbow', mate, limits)] : [] },
+    features: { features: o.limits && o.elbow ? [limitFeature('Melbow', o.mate, o.limits)] : [] },
   };
 }
 

@@ -3,8 +3,8 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
 import { FRAME_HEIGHT, FRAME_WIDTH, type DatasetCamera } from './cameras';
-import { episodeData, robotJoints } from './episodes';
-import { lerobotFiles, type DatasetEpisode } from './lerobot';
+import { datasetJoints, episodeData, type DatasetSlot } from './episodes';
+import { lerobotFiles, type DatasetEpisode, type ScanSensor } from './lerobot';
 import { codecName, createRenderStage, disposeRenderStage, renderEpisode, videoCodec } from './renderVideos';
 
 export interface DatasetJobEpisode {
@@ -22,10 +22,21 @@ export interface DatasetJob {
   model: SimModel;
   cameras: DatasetCamera[];
   episodes: DatasetJobEpisode[];
+  slots?: DatasetSlot[];
   source: Record<string, unknown>;
 }
 
 export type DatasetFiles = Record<string, Uint8Array>;
+
+export const scanSensors = (model: SimModel, parts: ScenePart[]): ScanSensor[] =>
+  (model.scans ?? []).map((eye) => ({
+    part: eye.part,
+    name: parts.find((p) => p.id === eye.part)?.name ?? eye.part,
+    rays: eye.cols,
+    rangeM: eye.rangeM,
+    rateHz: eye.scan?.rateHz ?? 0,
+    fovDeg: eye.scan?.fovDeg ?? 0,
+  }));
 
 export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
   const codec = await videoCodec();
@@ -34,7 +45,7 @@ export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
 
   try {
     for (const e of job.episodes) {
-      const data = episodeData(e.recording, job.model, e.task);
+      const data = episodeData(e.recording, job.model, e.task, job.slots);
       const rendered = await renderEpisode(stage, {
         model: job.model,
         recording: e.recording,
@@ -49,11 +60,15 @@ export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
     disposeRenderStage(stage);
   }
 
+  const { names, groups } = datasetJoints(job.model, job.slots);
+
   return lerobotFiles({
     robotType: job.robotType,
-    jointNames: robotJoints(job.model).map((j) => j.name),
+    jointNames: names,
+    jointGroups: groups,
     videos: job.cameras.map((c) => ({ key: c.key, width: FRAME_WIDTH, height: FRAME_HEIGHT, codec: codecName(codec) })),
     episodes,
     source: job.source,
+    scans: scanSensors(job.model, job.parts),
   });
 }

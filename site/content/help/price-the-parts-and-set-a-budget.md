@@ -23,7 +23,7 @@ covers:
   - src/components/build/BuyTotal.tsx
   - src/components/build/CheckSheet.tsx
   - src/components/build/budget.ts
-  - src/components/settings/RegionPane.tsx
+  - src/components/settings/BuildPane.tsx
   - src/utils/bom.ts
   - src/utils/currencyStore.ts
   - electron/backend/purchases.mjs
@@ -54,6 +54,6 @@ To keep the store page with a price, open **Listing** in the same sheet and past
 
 ## Show prices in your currency
 
-Press ⌘, (Ctrl+, on Windows), choose **Region** and pick one of 30 currencies in **Currency**. Basecase converts at European Central Bank rates, updated once a day when the app starts. A price you type in your currency reads back exactly as you typed it.
+Press ⌘, (Ctrl+, on Windows), choose **Build** and pick one of 30 currencies in **Currency** under **Prices**. Basecase converts at European Central Bank rates, updated once a day when the app starts. A price you type in your currency reads back exactly as you typed it.
 
 Next, [buy the parts for a robot](/help/buy-the-parts-for-a-robot).

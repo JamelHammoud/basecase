@@ -72,6 +72,8 @@ export class RenderLoop {
 
   private readonly spawnWaits = new Map<string, number>();
 
+  readonly animators = new Set<() => boolean>();
+
   readonly beforeRender = new Set<() => void>();
 
   readonly afterRender = new Set<() => void>();
@@ -153,7 +155,8 @@ export class RenderLoop {
     }
 
     const framing = this.stepFrameAnimation();
-    const spawning = this.stepSpawns();
+    const animated = this.stepAnimators();
+    const spawning = this.stepSpawns() || animated;
     const moved = this.stage.orbit.update();
     const stale = performance.now() - this.lastRender > IDLE_REFRESH_MS;
     const cameraMoved = !this.lastView.equals(this.stage.camera.matrixWorld);
@@ -165,6 +168,14 @@ export class RenderLoop {
     const settled = this.lightStale && !this.interacting;
 
     if (this.dirty || framing || spawning || moved || stale || cameraMoved || settled) this.renderNow();
+  }
+
+  private stepAnimators(): boolean {
+    let animated = false;
+
+    for (const step of this.animators) animated = step() || animated;
+
+    return animated;
   }
 
   private stepFrameAnimation(): boolean {

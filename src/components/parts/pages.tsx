@@ -113,17 +113,19 @@ export const HardwarePage: React.FC<{ spec: HardwareSpec; onChange: (s: Hardware
   );
 };
 
-const AddBar: React.FC<{ label: string; onAdd: () => void; children?: React.ReactNode }> = ({
-  label,
-  onAdd,
-  children,
-}) => (
+const AddBar: React.FC<{ onAdd: () => void; children?: React.ReactNode }> = ({ onAdd, children }) => (
   <div className="shrink-0 px-[12px] py-3 border-t border-white/[0.06] flex items-center gap-2">
-    <div className="min-w-0 flex-1 text-[13px] text-white/60 truncate">{label}</div>
-    {children}
-    <Button variant="primary" size="sm" icon={<PlusIcon className="w-3.5 h-3.5" />} onClick={onAdd}>
+    <Button
+      variant="primary"
+      size="sm"
+      fullWidth
+      className="flex-1 min-w-0"
+      icon={<PlusIcon className="w-3.5 h-3.5" />}
+      onClick={onAdd}
+    >
       Add
     </Button>
+    {children}
   </div>
 );
 
@@ -136,7 +138,7 @@ const ItemFooter: React.FC<{ ref_: string; onAdd: (i: CatalogItem) => void }> = 
   const label = amazon?.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon';
 
   return (
-    <AddBar label={item.name} onAdd={() => onAdd(item)}>
+    <AddBar onAdd={() => onAdd(item)}>
       {amazon && (
         <Tooltip label={label}>
           <LinkButton href={amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} label={label} />
@@ -150,7 +152,7 @@ const HardwareFooter: React.FC<{ spec: HardwareSpec; onAdd: (i: CatalogItem) => 
   const item = hardwareItem(spec);
 
   return (
-    <AddBar label={hardwareName(spec)} onAdd={() => onAdd(item)}>
+    <AddBar onAdd={() => onAdd(item)}>
       <Tooltip label="Find on Amazon">
         <LinkButton href={hardwareShopUrl(spec)} icon={<CartIcon className="w-3.5 h-3.5" />} label="Find on Amazon" />
       </Tooltip>

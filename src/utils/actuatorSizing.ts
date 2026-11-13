@@ -1,4 +1,4 @@
-import type { ActuatorBus } from '../data/components';
+import type { ActuatorBus, ActuatorSpec } from '../data/components';
 import {
   BUS_ADAPTERS,
   actuatorOptions,
@@ -16,6 +16,7 @@ import {
   ratingAt,
   stanceVerdict,
   suitsVolts,
+  type LoadVerdict,
 } from './actuatorRules';
 
 const ITERATIONS = 3;
@@ -100,19 +101,28 @@ export function rails(power = powerOptions()): Rail[] {
 
 const RANK = { pass: 0, warn: 1, fail: 2 };
 
-export function ratingFor(j: SizingJoint, option: ActuatorOption, volts: number) {
-  const rating = ratingAt(option.act, volts);
+export function ratingFor(j: Pick<SizingJoint, 'servos'>, act: ActuatorSpec, volts?: number) {
+  const rating = ratingAt(act, volts);
 
   return { ...rating, stallNm: rating.stallNm * j.servos, ratedNm: rating.ratedNm * j.servos };
 }
 
-function fitOf(j: SizingJoint, loads: JointLoads, option: ActuatorOption, volts: number): Fit & { ok: boolean } {
-  const rating = ratingFor(j, option, volts);
+export interface JointVerdict extends LoadVerdict {
+  kind: 'stance' | 'hold';
+}
+
+export function jointVerdict(j: SizingJoint, loads: JointLoads, act: ActuatorSpec, volts?: number): JointVerdict {
+  const rating = ratingFor(j, act, volts);
   const hold = { kind: 'hold' as const, ...holdVerdict(loads.holdNm, rating) };
   const stance =
     loads.stanceNm === undefined ? hold : { kind: 'stance' as const, ...stanceVerdict(loads.stanceNm, rating) };
   const holdWorse = RANK[hold.status] - RANK[stance.status] || hold.stallShare - stance.stallShare;
-  const worst = holdWorse > 0 ? hold : stance;
+
+  return holdWorse > 0 ? hold : stance;
+}
+
+function fitOf(j: SizingJoint, loads: JointLoads, option: ActuatorOption, volts: number): Fit & { ok: boolean } {
+  const worst = jointVerdict(j, loads, option.act, volts);
 
   return {
     option,
@@ -211,7 +221,7 @@ export interface LoadCut {
 export function loadCut(p: JointPick, volts: number, totalG: number): LoadCut | undefined {
   if (!p.strongest) return undefined;
 
-  const { stallNm, ratedNm } = ratingFor(p.joint, p.strongest.option, volts);
+  const { stallNm, ratedNm } = ratingFor(p.joint, p.strongest.option.act, volts);
   const stance = p.strongest.kind === 'stance';
   const loadNm = stance ? p.loads.stanceNm! : p.loads.holdNm;
   const allowed = stance

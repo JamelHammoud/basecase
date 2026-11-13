@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { frameOf, JOINT_TYPES, jointFrame, mateGroupsOf, matesOf } from './mates.mjs';
-import { partKey } from './occurrences.mjs';
+import { partKey, pathKey } from './occurrences.mjs';
 
 const MM_TO_M = new THREE.Matrix4().makeScale(0.001, 0.001, 0.001);
 const IDENTITY = new THREE.Matrix4().toArray();
@@ -88,6 +88,7 @@ function linkOf(name, members, look) {
     mesh: null,
     color: visuals[0]?.color ?? null,
     visuals,
+    occurrences: members.map((p) => pathKey(p.path)),
     ...(kg > 0 ? { mass: kg, com: com.toArray() } : {}),
   };
 }
@@ -121,7 +122,16 @@ function mateJoint(b, mate, parentGroup) {
 
   const frame = jointFrame({ type: mate.type, frames, childIsSecond, limit });
 
-  return { name: mate.name, type: JOINT_TYPES[mate.type], parent, child, ...frame, effort: null, velocity: null };
+  return {
+    name: mate.name,
+    type: JOINT_TYPES[mate.type],
+    parent,
+    child,
+    ...frame,
+    effort: null,
+    velocity: null,
+    mate: mate.id,
+  };
 }
 
 function treeJoints(b, root) {

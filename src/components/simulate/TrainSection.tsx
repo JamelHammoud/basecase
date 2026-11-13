@@ -51,7 +51,9 @@ export const TrainSection: React.FC<{
   training: Training;
   policyActions: PolicyActions;
 }> = ({ skills, actions, onTeach, policies, training, policyActions }) => {
-  if (!skills.available && !policies.length) return null;
+  const showsSkills = skills.available && (onTeach !== null || skills.rows.length > 0);
+
+  if (!showsSkills && !policies.length) return null;
 
   return (
     <Section title="Train">

@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { AgentBridge } from './backend/agentBridge.mjs';
 import { EventHub } from './backend/eventHub.mjs';
+import { tuneCadPart } from './backend/cadTune.mjs';
 import { serveKernel } from './backend/kernelRoutes.mjs';
 import { renderPart } from './cad-kernel/client.mjs';
 import { bundleFile, cspFor, isKernelUrl, KERNEL_ORIGIN, PAGE_CSP, WORKER_CSP } from './cad-kernel/sandbox/policy.mjs';
@@ -327,6 +328,54 @@ describe('CAD import sandbox', () => {
   it('runs the converter under the worker policy: no network, no nested workers', () => {
     expect(cspFor('/convert.js')).toBe(WORKER_CSP);
     expect(cspFor('/host.js')).toBe(PAGE_CSP);
+  });
+});
+
+describe('tuning a part’s dimensions', () => {
+  const CODE = 'wall = 2; // [1:6]\ncube([20, 10, wall]);';
+  const tune = async (payload) => {
+    const kernel = { render: vi.fn(async () => ({ ok: true })) };
+    const source = vi.fn(async () => ({ language: 'openscad', code: CODE, expect: null }));
+
+    try {
+      return { ...(await tuneCadPart({ kernel, source }, payload)), kernel };
+    } catch (err) {
+      return { refused: String(err.message), kernel };
+    }
+  };
+
+  it('takes a part id and numbers, and writes only digits into the stored code', async () => {
+    const { code, kernel } = await tune({ id: 'bracket', values: { wall: 3 } });
+
+    expect(code).toBe(CODE.replace('wall = 2;', 'wall = 3;'));
+    expect(kernel.render).toHaveBeenCalledWith({ language: 'openscad', code, expect: undefined });
+  });
+
+  it('refuses a value or a name that tries to inject OpenSCAD, and compiles nothing', async () => {
+    const asks = [
+      { id: 'bracket', values: { wall: '3; import("/etc/passwd");' } },
+      { id: 'bracket', values: { wall: [3] } },
+      { id: 'bracket', values: { wall: Number.NaN } },
+      { id: 'bracket', values: { wall: Infinity } },
+      { id: 'bracket', values: { wall: 1e300 } },
+      { id: 'bracket', values: { 'wall = 3; import("x"); y': 3 } },
+      { id: 'bracket', values: { $fn: 3 } },
+      { id: 'bracket', values: { cube: 3 } },
+      { id: 'bracket', values: JSON.parse('{"__proto__": 3}') },
+      { id: 'bracket', values: {} },
+      { id: 'bracket', code: 'import("/etc/passwd");', values: { wall: 3 } },
+      { id: '../scenes/x', values: { wall: 3 } },
+      { id: 'bracket', workspaceId: 'tab/../../x', values: { wall: 3 } },
+      { id: 'bracket', values: Object.assign(Object.create({ wall: 3 }), {}) },
+      null,
+    ];
+
+    for (const ask of asks) {
+      const { refused, kernel } = await tune(ask);
+
+      expect(refused, JSON.stringify(ask)).toBeTruthy();
+      expect(kernel.render, JSON.stringify(ask)).not.toHaveBeenCalled();
+    }
   });
 });
 

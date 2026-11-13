@@ -1,4 +1,4 @@
-import { partLine } from './sceneText.mjs';
+import { partLines } from './sceneText.mjs';
 
 const MAX_MATCHES = 40;
 
@@ -58,7 +58,7 @@ export function findInScene(snap, { query, group, kind, region, near }) {
 
   return [
     `${found.length} of ${snap.parts.length} parts match${more ? `; the first ${shown.length}` : ''}:`,
-    ...shown.map((p) => partLine(p, false)),
+    ...shown.flatMap((p) => partLines(p, false)),
     ...(more ? [`${more} more. Narrow the query to see them.`] : []),
   ].join('\n');
 }

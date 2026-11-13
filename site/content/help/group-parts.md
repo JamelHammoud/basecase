@@ -21,7 +21,6 @@ covers:
   - src/components/inspector/MultiInspector.tsx
   - src/components/inspector/GroupName.tsx
   - src/components/layers/LayerItems.tsx
-  - src/workspace/SelectionBar.tsx
 ---
 
 Keep parts that belong together, such as a leg or a servo bracket, selecting and moving as one.
@@ -30,7 +29,7 @@ Keep parts that belong together, such as a leg or a servo bracket, selecting and
 2. Press [[⌘G]].
 3. To name the group, click its title at the top of the Inspector, type the name and press [[↩]].
 
-A toast says how many parts were grouped, and the group is called “Group 1” until you rename it. **Group** is also in the bar above the toolbar and in the right-click menu.
+A toast says how many parts were grouped, and the group is called “Group 1” until you rename it. **Group** is also in the Inspector and in the right-click menu.
 
 ## Work inside a group
 

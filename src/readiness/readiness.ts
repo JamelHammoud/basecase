@@ -101,8 +101,15 @@ export function restoreRule(decisions: ReadinessDecisions | undefined, rule: str
 
 const STAND_IN_RULE = 'stand-in';
 
-function checkStatus(name: string, open: Finding[], fallback: CheckStatus = 'pass'): CheckStatus {
-  const own = open.filter((f) => f.check === name);
+type CheckOwner = Pick<CheckSummary, 'name' | 'caseId'>;
+
+export const ownedBy =
+  (owner: CheckOwner) =>
+  (f: Pick<Finding, 'check' | 'caseId'>): boolean =>
+    owner.caseId ? f.caseId === owner.caseId : !f.caseId && f.check === owner.name;
+
+function checkStatus(owner: CheckOwner, open: Finding[], fallback: CheckStatus = 'pass'): CheckStatus {
+  const own = open.filter(ownedBy(owner));
 
   if (own.some((f) => f.level === 'blocker')) return 'fail';
 
@@ -111,25 +118,35 @@ function checkStatus(name: string, open: Finding[], fallback: CheckStatus = 'pas
   return fallback === 'not run' ? 'not run' : 'pass';
 }
 
+const ownerOf = (row: CheckRow): CheckOwner => ({ name: row.check, caseId: row.caseId });
+
+function rowStatus(row: CheckRow, open: Finding[]): CheckStatus {
+  const status = checkStatus(ownerOf(row), open, row.status);
+
+  return row.caseId && row.status === 'fail' && status === 'warn' ? 'fail' : status;
+}
+
 function checkSummaries(open: Finding[], rows: CheckRow[]): CheckSummary[] {
-  const idsOf = (name: string) => [...new Set(open.filter((f) => f.check === name).flatMap((f) => f.ids))];
-  const seen = new Set(rows.map((r) => r.check));
-  const extra = [...new Set(open.map((f) => f.check))].filter(
+  const idsOf = (owner: CheckOwner) => [...new Set(open.filter(ownedBy(owner)).flatMap((f) => f.ids))];
+  const seen = new Set(rows.filter((r) => !r.caseId).map((r) => r.check));
+  const extra = [...new Set(open.filter((f) => !f.caseId).map((f) => f.check))].filter(
     (name) => !READINESS_CHECKS.includes(name) && !seen.has(name),
   );
 
   return [
     ...[...READINESS_CHECKS, ...extra].map((name) => ({
       name,
-      status: checkStatus(name, open),
+      status: checkStatus({ name }, open),
       detail: '',
-      ids: idsOf(name),
+      ids: idsOf({ name }),
     })),
     ...rows.map((row) => ({
       name: row.check,
-      status: checkStatus(row.check, open, row.status),
+      status: rowStatus(row, open),
       detail: row.detail,
-      ids: idsOf(row.check),
+      ids: idsOf(ownerOf(row)),
+      ...(row.caseId ? { caseId: row.caseId } : {}),
+      ...(row.dots?.length ? { hasDots: true } : {}),
     })),
   ];
 }

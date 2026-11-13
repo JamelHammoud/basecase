@@ -183,7 +183,7 @@ const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; 
         onSend={onSend}
         onAddPrinter={onAddPrinter}
       />
-      <PlateMarks printing={printing} plate={plate} />
+      {!printing.fitTest && <PlateMarks printing={printing} plate={plate} />}
     </Section>
   );
 };
@@ -280,7 +280,23 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <ModeHeader title="Print" onDone={onDone} />
+      <ModeHeader
+        title={printing.fitTest ? 'Print Fit Test' : 'Print'}
+        onDone={onDone}
+        actions={
+          !printing.fitTest &&
+          printing.canFitTest && (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={printing.fitCutting}
+              onClick={() => void printing.startFitTest()}
+            >
+              Print Fit Test
+            </Button>
+          )
+        }
+      />
       <div ref={ref} style={style} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <Section title="Printer">
           <PrintSettings
@@ -290,7 +306,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             onChangeProject={props.onChangeProject}
             onAddPrinter={props.onAddPrinter}
           />
-          {printing.printedCount > 0 && <SkipPrinted printing={printing} />}
+          {printing.printedCount > 0 && !printing.fitTest && <SkipPrinted printing={printing} />}
           <PrinterLive printing={printing} />
         </Section>
         {selected && <PartControls printing={printing} part={selected} plates={plates} />}

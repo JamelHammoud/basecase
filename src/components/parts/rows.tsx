@@ -3,7 +3,7 @@ import { catalogRef } from '../../data/catalog';
 import { COMPONENT_BY_ID } from '../../data/components';
 import { HARDWARE_BY_TYPE } from '../../data/hardware';
 import { isSourcedId } from '../../data/sourcedItems';
-import { PART_DRAG_TYPE } from '../../data/dnd';
+import { PART_DRAG_TYPE, setSceneDrag } from '../../data/dnd';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
 import { BrowseRow, RowActions, Tooltip, PlusIcon } from '../../design-system';
@@ -32,7 +32,7 @@ export function metaLine(item: CatalogItem): string {
 export const dragProps = (item: CatalogItem) => ({
   draggable: true,
   onDragStart: (e: React.DragEvent) => {
-    e.dataTransfer.setData(PART_DRAG_TYPE, catalogRef(item));
+    setSceneDrag(e.dataTransfer, PART_DRAG_TYPE, catalogRef(item));
     e.dataTransfer.effectAllowed = 'copy';
 
     const img = (e.currentTarget as HTMLElement).querySelector('img');

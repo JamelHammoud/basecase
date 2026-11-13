@@ -18,7 +18,7 @@ The loop is a team that never stops. `node tools/loop/install.mjs install` creat
 
 Each lane is one file in `tools/loop/lanes/`. It exports `schedule` (its `slots`, `everySeconds`, any `labels` it needs, and a one-line `does`) and a default function that does one run; its brief, when it runs an agent, is `tools/loop/briefs/<lane>.md`. `run.mjs` and `install.mjs` discover lanes from that folder, so adding or changing a lane touches only its own files. `node tools/loop/install.mjs list` prints every lane with its slots, cadence and what it does.
 
-Steps and pull requests are claimed with a lock file before a slot works on them, so two slots never take the same one. What's being worked on shows on GitHub: a step being built carries `loop:building`, and a pull request being revised carries `loop:revising`. No pull request or issue is opened when one with the same title is open, and a step whose pull request already exists gets a comment linking it. The lead's new steps also skip when an open step (`loop:next` or `loop:building`) has the same title reworded: the same words and numbers in any order, ignoring filler, plurals and tense, and kind prefixes such as `Feature:` (`tools/loop/lib/titles.mjs`). A title with one word changed, such as Simulate for Train, is different work. A skipped step's request is marked planned as the open step and its idea promoted to it, so the request doesn't start a new plan every run. New arcs skip the same way against open arcs. Nothing else is compared that loosely, so a step can reword the idea it promotes or the arc it sits under, and each week's digest still opens. The update lane waits while an `Update:` pull request is open. The home checkout follows `BASECASE_LOOP_REF` (default `main`) and falls back to `main` when that branch is gone. A lane clears a worktree path left behind by a crashed run before reusing it. A step left at `loop:building` with no open pull request and no live builder for 30 minutes (its builder died) goes back to the builders. The runner puts `Closes #<step>` after the template, so it survives every kind of pull request, and when the merge lane lands a `loop/build/<step>-…` branch it closes that step if it's still open.
+Steps and pull requests are claimed with a lock file before a slot works on them, so two slots never take the same one. What's being worked on shows on GitHub: a step being built carries `loop:building`, and a pull request being revised carries `loop:revising`. No pull request or issue is opened when one with the same title is open, and a step whose pull request already exists gets a comment linking it. The lead's new steps also skip when an open step (`loop:next` or `loop:building`) has the same title reworded: the same words and numbers in any order, ignoring filler, plurals and tense, and kind prefixes such as `Feature:` (`tools/loop/lib/titles.mjs`). A title with one word changed, such as Simulate for Train, is different work. A skipped step's request is marked planned as the open step and its idea promoted to it, so the request doesn't start a new plan every run. New arcs skip the same way against open arcs. Nothing else is compared that loosely, so a step can reword the idea it promotes or the arc it sits under, and each week's digest still opens. The update lane waits while an `Update:` pull request is open. The home checkout follows `BASECASE_LOOP_REF` (default `main`) and falls back to `main` when that branch is gone. A lane clears a worktree path left behind by a crashed run before reusing it. A step left at `loop:building` for 30 minutes with no pull request goes back to the builders (its builder died). Before anything is built, every pull request the repo has ever had is checked for the step, by `Closes #` and by its `loop/build/<step>-` branch, open or merged, with no list limit (`tools/loop/lib/stepPulls.mjs`). A merged one closes the step, an open one keeps it, and a failed lookup builds nothing. A builder checks again before it publishes, so two builders never open pull requests for one step. Checking only the newest 100 open pull requests, or only open ones, rebuilt steps whose pull requests were open or had just merged. The runner puts `Closes #<step>` after the template, so it survives every kind of pull request, and when the merge lane lands a `loop/build/<step>-…` branch it closes that step if it's still open.
 
 **Where ideas come from.** The ideas lane takes one part of the loop per run (the first robot end to end, then Design, Engineer, Simulate, Train, Build and Operate, then new directions beyond them) and files up to three `loop:idea` issues. At least one is a big bet, at the scale of Amp's Chronicle: a new sub-product, surface, way of working, business model or big removal, labelled `loop:big-bet`. The rest are features. Each idea is for someone designing their first robot, someone building their thousandth, or both, and names the best tool today and its first steps. The lead keeps at least one big-bet arc open. The market lane adds ideas from `docs/market/` once a day. The ideas lane stops at 12 waiting. The lead plans when three or more new ones arrive: it promotes the strongest into steps and closes the rest as not planned, with a reason. A `loop:` label a lane needs is created the first time it's used.
 
@@ -57,6 +57,8 @@ Jamel steers; nothing waits for Jamel.
 - **General direction:** comment on the pinned Direction issue; the lead reads it before every plan.
 - **Feedback on a pull request:** comment on it. The learn lane turns Jamel's comments into lessons.
 - **Stop something:** close its pull request or issue, or set `LOOP_PAUSED` to `true` to stop merges and releases.
+
+**How arcs are kept.** The lead keeps 3 to 6 open `loop:arc` issues; an arc opened from a big bet also carries `loop:big-bet`. Its plan can retire arcs (`retireArcs`: number, reason, and optionally `into`, the arc that carries on). The runner (`lib/leadPlan.mjs`, rules in `lib/arcs.mjs`) closes each with the reason; with `into` it rewrites the `Arc:` line of each open step to the other arc, adds them to that arc's task list and comments on it, so both issues link. It keeps an arc instead when retiring it would leave fewer than 3 open or no big bet, and after retirements it refuses new arcs beyond 6, logging why and filing the plan's other steps. A step names its arc as `Arc: #N`, and each arc's body ends with a `## Steps` task list of its steps, so GitHub shows its progress. A step that still names its arc by title is matched once by title and rewritten to the number. In the lead's prompt each arc lists its open steps and the steps that merged in the last 14 days (closed as completed, read through `lib/cache.mjs`).
 
 ### Pull request kinds
 
@@ -119,6 +121,18 @@ A flake that can't be fixed in a day goes on `tools/quarantine.json` with an iss
 
 **Linux e2e on a Mac:** CI runs e2e on x86-64 Linux with Google Chrome. `node tools/loop/linux-e2e.mjs e2e/<file>.e2e.test.ts --runs 10 --cpus 3` runs it there: a detached worktree of `--ref` (default `origin/main`) under the system temp folder, the `node:26.13.0-bookworm` image under OrbStack's emulation (`--platform linux/amd64`), `npm ci --ignore-scripts` into a container volume, Google Chrome in the container, and the app and web bundles built with `CI` set, as Check builds them, then the file `--runs` times. e2e serves those bundles; a dev server would hide what only a production build shows, such as effects StrictMode runs twice in dev. `node_modules` stays off the bind mount: Vite reading it through the mount missed the 30 s page load. It prints the failing tests of each run and `passed X of N`, and removes the container and the worktree even when it fails. Setup takes several minutes; `--cpus 2` to 3 gives CI-like load. It runs quarantined tests too (`BASECASE_QUARANTINE=off`), so it can measure a flake on the list.
 
+### Digest
+
+Once a week the digest lane (`tools/loop/lanes/digest.mjs`, numbers in `tools/loop/lib/stats.mjs` and `laneStats.mjs`) opens a `loop:digest` issue. It starts with the week's totals: merges by kind, reviews, reverts, hours `main` was red and the median hours to merge. Then a table scores each lane, grouped by the lane that opened each merged pull request (the `loop/<lane>/` branch prefix, else its `loop:` label; batches are left out, since they only carry other lanes' pull requests):
+
+- **Median hours from step opened to merged:** from the step issue the pull request closes, or from the pull request itself when it has no step.
+- **Review rounds before pass, per pull request:** the loop's failed reviews before its first pass, averaged over the lane's merges.
+- **Repairs per merge:** a repair branch names the `main` commit whose Check failed (`loop/repair/main-<sha>`); that commit's message names the pull request it merged, and a batch shares the repair evenly among its members.
+- **Copy net:** the sum of the `Copy: …, net N` lines the review lane records on each merged pull request; None when none was counted.
+- **Steps closed per step opened:** on the `lead` row, since the lead opens every step; steps closed as not planned don't count.
+
+The table shows this week, last week and the change. Last week comes from the previous digest's fenced `json digest` block, which every digest ends with, so nothing is recomputed from old pages; the first digest, or one after a digest without the block, shows this week alone. The digest then names the worst change: the number that got worst against its last value (the change divided by the last value, or by 1 when that's smaller), lowest-is-better for all but steps, with a tie going to the lane earlier in the table (build, refine, rebuild, repair, learn, market, update, lead), then the measure listed first. Learn and the lead read it from the latest digest: learn proposes one lesson aimed at it, and the lead plans a step that moves it back ahead of a new one.
+
 ### Releases
 
 `.github/workflows/nightly.yml` runs at 09:17 UTC. It takes the newest push to `main` whose full Check passed, and when that's newer than the last release, dispatches `release.yml` to build that commit (its `ref` input) with the next patch version, so one red run at 09:17 doesn't skip the night. GitHub sometimes drops a scheduled run, so the Mac's `nightly` lane starts the workflow itself when it hasn't run by 09:45 UTC (`tools/loop/lib/nightly.mjs`) ([Releases](releases.md), §0i). basecase.so and app.basecase.so need no release: Cloudflare Workers Builds deploys them on every push to `main` ([Running and testing](running-and-testing.md), §0d).
@@ -135,18 +149,18 @@ basecase.so's `/changelog`, `/blog` and `/help` are built from markdown in `site
 
 ```md
 ---
-title: Import a mesh
+title: Import a file
 date: 2026-11-12
 collection: design
 type: task
 covers:
-  - src/workspace/meshImport.ts
+  - src/workspace/importRoute.ts
 ---
 
-Bring a model from another app into the scene as a printable part.
+Bring a file from another app into the scene.
 
 1. Right-click an empty spot on the canvas.
-2. Choose **Import Mesh**.
+2. Choose **Import**.
 ```
 
 - **Titles are in sentence case**, in every folder: capitals only for proper nouns. Menu labels quoted in the body keep theirs.

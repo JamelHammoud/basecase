@@ -3,6 +3,72 @@ import { openApp, partCount, type App } from './harness';
 
 let app: App;
 
+interface Studio {
+  load: (record: { parts: unknown[]; project: unknown }) => void;
+  sceneRecord: () => {
+    parts: Array<{ id: string; kind: string; position: number[]; rotation: number[]; print?: unknown }>;
+    project: unknown;
+  };
+  printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
+}
+
+const printed = (id: string, position: number[], dimensions: Record<string, number>) => ({
+  id,
+  name: id,
+  kind: 'box',
+  category: 'primitives',
+  role: 'solid',
+  position,
+  rotation: [0, 0, 0],
+  dimensions,
+  color: '#e4e4e7',
+  note: '',
+  mechanicalTag: '3D Printed PLA/PETG',
+  visible: true,
+  locked: false,
+});
+
+const bought = (id: string, position: number[], extra: Record<string, unknown>) => ({
+  ...printed(id, position, { width: 5, height: 4, depth: 5 }),
+  mechanicalTag: undefined,
+  ...extra,
+});
+
+const FIT_FIXTURE = [
+  printed('servo-bracket', [0, 30, 0], { width: 120, height: 60, depth: 80 }),
+  printed('insert-plate', [200, 4, 0], { width: 100, height: 8, depth: 60 }),
+  bought('servo', [0, 30, 0], {
+    name: 'Feetech STS3215',
+    kind: 'component',
+    category: 'actuators',
+    componentId: 'feetech-sts3215',
+    componentVariant: 'c001',
+    dimensions: { width: 45.2, height: 35, depth: 24.7 },
+  }),
+  ...[
+    [170, -20],
+    [170, 20],
+    [230, -20],
+    [230, 20],
+  ].map(([x, z], i) =>
+    bought(`insert-${i}`, [x, 6, z], {
+      name: 'M3 Heat Insert',
+      kind: 'hardware',
+      category: 'hardware',
+      hardware: { type: 'heat_insert', size: 'M3', length: 4 },
+    }),
+  ),
+];
+
+const printPlates = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.printPlates());
+
+const sceneParts = () =>
+  app.page.evaluate(() =>
+    (window as unknown as { __studio: Studio }).__studio
+      .sceneRecord()
+      .parts.map(({ id, kind, position, rotation, print }) => ({ id, kind, position, rotation, print: print ?? null })),
+  );
+
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
 beforeAll(async () => {
@@ -67,6 +133,35 @@ describe('print layout', () => {
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);
     expect(app.errors).toEqual([]);
   });
+
+  it('plates one coupon per fit with Print Fit Test from ⌘K, and leaves the scene as it was', async () => {
+    await app.page.evaluate((parts) => {
+      const studio = (window as unknown as { __studio: Studio }).__studio;
+
+      studio.load({ parts, project: studio.sceneRecord().project });
+    }, FIT_FIXTURE);
+    await expect.poll(() => partCount(app.page)).toBe(FIT_FIXTURE.length);
+
+    const before = await sceneParts();
+
+    await app.page
+      .locator('main')
+      .first()
+      .click({ position: { x: 20, y: 20 } });
+    await app.page.keyboard.press('Meta+k');
+    await app.page.keyboard.type('Print Fit Test');
+    await app.page.keyboard.press('Enter');
+    await expect
+      .poll(printPlates, { timeout: 60000 })
+      .toEqual({ open: true, fitTest: true, plates: [['fit-test-1', 'fit-test-2']] });
+    expect(await app.page.locator(visible('h2'), { hasText: /^Print Fit Test$/ }).count()).toBe(1);
+
+    await app.page.getByRole('button', { name: 'Done' }).click();
+    await expect.poll(async () => (await printPlates()).fitTest).toBe(false);
+    expect((await printPlates()).open).toBe(true);
+    expect(await sceneParts()).toEqual(before);
+    expect(app.errors).toEqual([]);
+  }, 120000);
 
   it('asks the backend for nothing it cannot answer', () => {
     expect(

@@ -6,6 +6,8 @@ import { useClipboard } from './useClipboard';
 import { useDevStudioHook } from './useDevStudioHook';
 import { useGuideAutoUpdate } from './useGuideAutoUpdate';
 import { useMenuCommands } from './useMenuCommands';
+import { useRobotGhost } from './useRobotGhost';
+import { useOpeningCase } from './useOpeningCase';
 import { useWorkspaceActions } from './useWorkspaceActions';
 import { useWorkspaceCore } from './useWorkspaceCore';
 import { useWorkspaceHost } from './useWorkspaceHost';
@@ -28,6 +30,7 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
     seed,
     active,
     robots: actions.robots,
+    wrap: actions.wrap,
     placeCustomModel: actions.creation.placeCustomModel,
   });
   const canvasMenu = useCanvasMenu(core, agent.controls.stopFollowing);
@@ -36,7 +39,14 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
   useGuideAutoUpdate({ guide: core.guide, enabled: studio.autoGuide, agentBusy: agent.busy });
   useWorkspaceKeys({ active, core, actions, ui });
   useMenuCommands({ active, core, actions, ui });
-  useDevStudioHook({ active, core, actions, agent });
+  useDevStudioHook({ active, core, actions, agent, routeFiles: drop.routeFiles });
+  useOpeningCase({ seed, core, active });
+  useRobotGhost({
+    rig: core.posing.rig,
+    parts: core.parts,
+    joints: core.project.joints,
+    viewportRef: core.viewportRef,
+  });
 
   const rightIslandRef = useWorkspaceHost({ active, seed, core, agent });
 

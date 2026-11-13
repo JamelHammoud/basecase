@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { actuatorOf } from '../data/components';
+import { BAM_STS3215_7V4 } from '../data/servoFits';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { ratingAt } from './actuatorRules';
+import type { WalkSim } from './engineeringTypes';
+import { TorqueRecorder } from './peakTorque';
+import { ampsAt, jointAmpModel, walkAmpModels, walkPower } from './servoAmps';
 import { runEngineering } from './engineering';
 import { biped, box, component, joint, part, project, row, run, XM430, type Measures } from './engineering.fixtures';
 
@@ -244,5 +248,109 @@ describe('Budget', () => {
     expect(without.detail).toMatch(/support filament not counted$/);
     expect(withSupport.detail).not.toMatch(/support filament/);
     expect(withSupport.status).toBe('fail');
+  });
+});
+
+describe('Current and runtime from the simulated walk', () => {
+  const STS = BAM_STS3215_7V4;
+  const DT = 0.005;
+  const scene = (pack = 'ovonic-2s-2200-50c') => ({
+    parts: [
+      component('a', 'feetech-sts3215', { componentVariant: 'c001', massG: 55 }),
+      component('b', 'feetech-sts3215', { componentVariant: 'c001', massG: 55 }),
+      component('pack', pack),
+      component('rail', 'pololu-d36v50f6'),
+    ],
+    measures: {
+      a: box([0, 100, 0], [40, 140, 20]),
+      b: box([60, 100, 0], [100, 140, 20]),
+      pack: box([0, 0, 0], [50, 20, 100]),
+      rail: box([100, 0, 0], [120, 10, 20]),
+    },
+    joints: [
+      joint('ja', { name: 'Left knee', limb: 'leg', actuators: ['a'] }),
+      joint('jb', { name: 'Right knee', limb: 'leg', actuators: ['b'] }),
+    ],
+  });
+  const walkAt = (s: ReturnType<typeof scene>, torques: [number, number]): WalkSim => {
+    const loads = run(s).joints;
+    const models = walkAmpModels(loads, s.parts);
+    const recorder = new TorqueRecorder(2, DT, { amps: [models.ja, models.jb] });
+
+    for (let t = 0; t < 4 / DT; t++) recorder.add(torques, torques);
+
+    return {
+      policy: 'Walk',
+      seconds: 4,
+      fellAt: null,
+      joints: {},
+      power: walkPower(recorder.series(), ['ja', 'jb'], { settleS: 1 }),
+    };
+  };
+  const numbers = (detail: string) => {
+    const [, peak, avg, minutes] = /^About ([\d.]+) A peak and ([\d.]+) A average walking .* about (\d+) min/.exec(
+      detail,
+    )!;
+
+    return { peak: Number(peak), avg: Number(avg), minutes: Number(minutes) };
+  };
+  const ESTIMATE =
+    'About 1.8 A peak and 0.8 A standing from the pack (estimate); Ovonic 2S 2200 mAh 50C LiPo gives about 128 min. Fuse the pack near 3 A.';
+
+  it('reads τ ÷ kt plus idle per servo, and runtime from the pack’s capacity over that', () => {
+    const s = scene();
+    const walk = walkAt(s, [0.6, 0.3]);
+    const knee = 0.6 / STS.kt + 0.15;
+    const other = 0.3 / STS.kt + 0.15;
+
+    expect(walk.power!.joints.ja.avgA).toBeCloseTo(knee, 9);
+    expect(walk.power!.avgA).toBeCloseTo(knee + other, 9);
+    expect(walk.power!.peakA).toBeCloseTo(knee + other, 9);
+
+    const current = row(run(s, {}, { walk }), 'Current and runtime')!;
+    const toPack = 6 / (7.4 * 0.9);
+    const packAvg = (knee + other) * toPack + 2 / (7.4 * 0.9);
+    const read = numbers(current.detail);
+
+    expect(read.avg).toBeCloseTo(packAvg, 1);
+    expect(read.minutes).toBe(Math.round(((0.8 * 2.2) / packAvg) * 60));
+    expect(current.detail).not.toContain('estimate');
+    expect(current.detail).toContain(`Left knee: ${knee.toFixed(1)} A average`);
+    expect(current.items).toEqual([{ text: expect.stringMatching(/^Left knee: /), ids: ['a'] }]);
+    expect(current).toMatchObject({ status: 'pass', itemsAreContext: true, ids: [] });
+  });
+
+  it('interpolates an unmeasured servo between idle and stall at its supply voltage', () => {
+    const spec = { ...actuatorOf('feetech-sts3215', 'c001')!, fit: undefined };
+    const model = jointAmpModel([spec], { volts: 6, stallNm: 1 });
+    const stall = ratingAt(spec, 6).stallNm;
+
+    expect(ampsAt(model, 0)).toBeCloseTo(0.15, 9);
+    expect(ampsAt(model, -stall)).toBeCloseTo(2.5, 9);
+    expect(ampsAt(jointAmpModel([spec, spec], { volts: 6, stallNm: 1 }), 2 * stall)).toBeCloseTo(5, 9);
+  });
+
+  it('keeps today’s estimate without a walk, or when the walk fell', () => {
+    const s = scene();
+    const fell = { ...walkAt(s, [0.6, 0.3]), fellAt: 2.1 };
+
+    expect(row(run(s), 'Current and runtime')).toEqual({
+      check: 'Current and runtime',
+      status: 'pass',
+      detail: ESTIMATE,
+      items: [],
+      ids: [],
+    });
+    expect(row(run(s, {}, { walk: 'Needs a trained walk policy' }), 'Current and runtime')?.detail).toBe(ESTIMATE);
+    expect(row(run(s, {}, { walk: fell }), 'Current and runtime')?.detail).toBe(ESTIMATE);
+  });
+
+  it('gives more minutes on a bigger pack for the same walk', () => {
+    const small = scene();
+    const big = scene('ovonic-6s-5000-120c');
+    const minutes = (s: ReturnType<typeof scene>) =>
+      numbers(row(run(s, {}, { walk: walkAt(s, [0.6, 0.3]) }), 'Current and runtime')!.detail).minutes;
+
+    expect(minutes(big)).toBeGreaterThan(minutes(small));
   });
 });

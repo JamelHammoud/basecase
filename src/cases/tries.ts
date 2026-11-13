@@ -1,8 +1,10 @@
+import type { RecordedFault } from '../sim/faults';
 import type { Recording } from '../sim/recorder';
 import { framePoses } from '../sim/recorder';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Rig, V3 } from '../utils/kinematics';
 import { evaluateContract } from '../skills/contract';
+import { caseFactReader, caseSignalNames, sampleSignals } from './caseFacts';
 import { probeReader, type ProbeWorld } from './probes';
 import type { EndEffector } from './robotFit';
 import { CASE_FORMAT_VERSION, type Case } from './schema';
@@ -14,6 +16,7 @@ export interface TryManifest {
   seed: number;
   frames: number;
   dt: number;
+  faults?: RecordedFault[];
 }
 
 export interface TryRecord {
@@ -39,12 +42,20 @@ export interface TryScoring {
   model: SimModel;
   recording: Recording;
   effector: EndEffector | null;
+  effectors?: Record<string, EndEffector | null>;
   rig: Rig;
 }
 
-export const caseProbeWorld = ({ kase, model, effector, rig }: Omit<TryScoring, 'recording'>): ProbeWorld => ({
+export const caseProbeWorld = ({
+  kase,
   model,
   effector,
+  effectors,
+  rig,
+}: Omit<TryScoring, 'recording'>): ProbeWorld => ({
+  model,
+  effector,
+  effectors,
   basePart: [...(rig.robots[0]?.parts ?? [])].find((id) => !rig.ownerOf.has(id)) ?? null,
   basePoint: rig.robots[0]?.pivot ?? ([0, 0, 0] as V3),
   objectAt: new Map(kase.world.objects.map((o) => [o.id, o.position])),
@@ -57,7 +68,15 @@ export async function scoreTry({ recording, ...scoring }: TryScoring) {
   const signals: Record<string, number[]> = {};
   const reader = caseProbeReader(scoring);
 
-  for (let i = 0; i < recording.frames; i++) reader.sample(framePoses(recording, i), signals);
+  const facts = caseFactReader(scoring.kase, scoring.model);
+  const names = caseSignalNames(scoring.kase);
+
+  for (let i = 0; i < recording.frames; i++) {
+    const poses = framePoses(recording, i);
+
+    reader.sample(poses, signals);
+    sampleSignals(facts.read(poses, i * recording.dt), names, signals);
+  }
 
   return evaluateContract(scoring.kase.task.contract, { dt: recording.dt, signals });
 }
@@ -70,6 +89,7 @@ export async function tryManifest(kase: Case, model: SimModel, recording: Record
     seed: 0,
     frames: recording.frames,
     dt: recording.dt,
+    faults: recording.faults ?? [],
   };
 }
 

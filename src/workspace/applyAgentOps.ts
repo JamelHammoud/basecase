@@ -1,4 +1,5 @@
 import { applySpec, describeOp, mirrorParts, opTarget, specToPart, type AgentOp } from '../agent/agentScene';
+import { findPartDeep } from '../booleans/parts';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { followedText, followMates } from '../agent/mateFollow';
 import { alignToSkeleton } from '../agent/skeletonMirror';
@@ -103,7 +104,7 @@ function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
 }
 
 function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
-  if (!current.some((p) => p.id === op.part.id)) {
+  if (!findPartDeep(current, op.part.id)) {
     log.problems.push(`${op.part.id} not found`);
 
     return true;
@@ -118,7 +119,7 @@ function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
 }
 
 function applyDelete({ op, current, live, ctx, log }: OpStep<'delete'>) {
-  if (!current.some((p) => p.id === op.id)) log.problems.push(`${op.id} not found`);
+  if (!findPartDeep(current, op.id)) log.problems.push(`${op.id} not found`);
 
   if (!claim(ctx, log, op.id)) return false;
 

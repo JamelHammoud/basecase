@@ -65,3 +65,9 @@ export function partRecord(parts: ScenePart[], id: string) {
 
   return { exists: true, volume: p.cad.volume ?? null, audit: p.cad.audit ?? null, expect: p.cad.expect ?? null };
 }
+
+export function partSource(parts: ScenePart[], id: string) {
+  const cad = parts.find((p) => p.id === id)?.cad;
+
+  return cad ? { language: cad.language, code: cad.code, expect: cad.expect ?? null } : { language: null };
+}

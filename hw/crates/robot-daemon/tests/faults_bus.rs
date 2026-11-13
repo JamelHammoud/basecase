@@ -146,3 +146,33 @@ fn fault_duplicate_id() {
         assert_eq!(running.writes_after(verdict.fault_at), Vec::new());
     }
 }
+
+#[test]
+fn fault_numbering_interrupted() {
+    for family in [Family::Feetech, Family::Dynamixel] {
+        let mut unplugged = Rig::factory(family, Schedule::new().at(500_000, Fault::AdapterGone));
+
+        unplugged.command(Command::Enter(Mode::SetUp)).unwrap();
+        unplugged.plug_in();
+        unplugged.tick_until(30, |rig| rig.now() >= 500_000);
+
+        let message = unplugged.assign(3).unwrap_err();
+
+        assert!(message.contains("unplugged"), "{message}");
+        common::assert_beginner_message(&message);
+        assert_eq!(unplugged.writes_after(500_000), Vec::new());
+        assert_eq!(unplugged.servo_ids(), vec![1]);
+
+        let mut doubled = Rig::factory(family, Schedule::new().at(500_000, Fault::DuplicateId { id: 1 }));
+
+        doubled.command(Command::Enter(Mode::SetUp)).unwrap();
+        doubled.plug_in();
+        doubled.tick_until(30, |rig| rig.now() >= 500_000);
+
+        let message = doubled.assign(3).unwrap_err();
+
+        assert!(message.contains("More than one new servo"), "{message}");
+        assert_eq!(doubled.writes_after(500_000), Vec::new());
+        assert_eq!(doubled.servo_ids(), vec![1, 1]);
+    }
+}

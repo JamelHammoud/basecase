@@ -14,6 +14,15 @@ import {
 } from './drawings.mjs';
 import { SKETCH } from './sketch.mjs';
 
+const mirrorHalf = (edge, tip) =>
+  rounded(
+    [
+      [edge, 4.5],
+      [edge, 19.5],
+      [tip, 19.5],
+    ],
+    1.5,
+  );
 const PHOTO_FRAME = rr([2.5, 3.5, 19, 17], 2.5);
 const PHOTO_RIDGE = 'M2.5 15L8 9.5L13.5 15L16 12.5L21.5 16';
 const EYE = 'M2.25 12C4.5 7.25 8 5 12 5S19.5 7.25 21.75 12C19.5 16.75 16 19 12 19S4.5 16.75 2.25 12Z';
@@ -181,6 +190,7 @@ const DRAWN = {
       d: rr([9, 9, 6, 6], 1),
       dash: 'M15 6.5V5.5A2.5 2.5 0 0 0 12.5 3H5.5A2.5 2.5 0 0 0 3 5.5V12.5A2.5 2.5 0 0 0 5.5 15H6.5M17.5 9H18.5A2.5 2.5 0 0 1 21 11.5V18.5A2.5 2.5 0 0 1 18.5 21H11.5A2.5 2.5 0 0 1 9 18.5V17.5',
     },
+    MirrorIcon: { d: mirrorHalf(8.5, 2.25) + mirrorHalf(15.5, 21.75), dash: 'M12 2.5V21.5' },
     AlignLeftIcon: alignX(3.5, [
       [7, 20.5, 5],
       [7, 15, 14],

@@ -75,6 +75,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       snapStepMm={studio.snapStepMm}
       onUpdate={edits.updateSelectedPart}
       onDuplicate={ops.duplicateSelected}
+      onMirror={actions.mirror.mirrorSelected}
       onSaveAsModel={() => void saveAsModel('selected')}
       onDelete={ops.deleteSelected}
       onDropToFloor={edits.dropToGround}

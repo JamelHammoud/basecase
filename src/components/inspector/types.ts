@@ -1,6 +1,7 @@
 import type { SceneAnnotation, ScenePart } from '../../types/robotics';
 import type { HardwareSpec } from '../../data/hardware';
 import type { AlignMode, Axis } from '../../utils/selection';
+import type { PlaneView } from '../../mirror/plane';
 
 export type Phase = boolean | undefined;
 
@@ -22,6 +23,7 @@ export interface InspectorProps {
   snapStepMm: number;
   onUpdate: (patch: Partial<ScenePart>, live?: Phase) => void;
   onDuplicate: () => void;
+  onMirror: (view: PlaneView) => void;
   onSaveAsModel: () => void;
   onDelete: () => void;
   onDropToFloor: () => void;

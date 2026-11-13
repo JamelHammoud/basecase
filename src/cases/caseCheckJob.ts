@@ -2,10 +2,10 @@ import type { MainModule } from '@mujoco/mujoco';
 import type { VelocityDrive } from '../sim/driveAccess';
 import { buildMjcf } from '../sim/mjcf';
 import type { MeshMeasure } from '../three/meshMeasure';
-import type { PolicySpec } from '../sim/policy';
 import { modelHashes } from '../skills/artifacts';
 import { kitTopSpeed } from '../skills/kitModel';
-import { recordFreshness, type SkillRecord } from '../skills/skillRecords';
+import type { SkillRecord } from '../skills/skillRecords';
+import { readyWalkRecord } from '../skills/skillRows';
 import { designOf } from '../skills/skillsRuntime';
 import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
@@ -21,9 +21,9 @@ export interface WireRobot {
   triangles: Record<string, Float32Array>;
 }
 
-export interface WalkOffer {
-  record: SkillRecord;
-  policy: PolicySpec;
+export interface WalkPick {
+  hash: string;
+  topSpeed: number;
 }
 
 export interface RunsJob {
@@ -35,10 +35,10 @@ export interface RunsJob {
   walk: VelocityDrive | null;
 }
 
-export type CaseCheckJob = { type: 'model'; robot: WireRobot; walk: WalkOffer | null } | RunsJob;
+export type CaseCheckJob = { type: 'model'; robot: WireRobot; walks: SkillRecord[] } | RunsJob;
 
 export type CaseCheckReply =
-  { type: 'model'; modelHash: string; walk: VelocityDrive | null } | { type: 'runs'; result: SeedRuns };
+  { type: 'model'; modelHash: string; walk: WalkPick | null } | { type: 'runs'; result: SeedRuns };
 
 export const caseRobotOf = (robot: WireRobot): CaseRobot => ({
   id: robot.id,
@@ -54,12 +54,12 @@ function robotModel(robot: WireRobot) {
   return buildMjcf({ ...caseRobotOf(robot), rig, project: DEFAULT_PROJECT });
 }
 
-function readyWalk(offer: WalkOffer | null, model: ReturnType<typeof robotModel>): VelocityDrive | null {
-  if (!offer || !model.robots[0]?.floating) return null;
+function walkPick(records: SkillRecord[], model: ReturnType<typeof robotModel>): WalkPick | null {
+  if (!model.robots[0]?.floating) return null;
 
-  const fresh = recordFreshness(offer.record, { design: designOf(model), model }) === 'fresh';
+  const record = readyWalkRecord({ model, design: designOf(model), records });
 
-  return fresh && offer.record.evidence ? { policy: offer.policy, topSpeed: kitTopSpeed(model) } : null;
+  return record ? { hash: record.hash, topSpeed: kitTopSpeed(model) } : null;
 }
 
 export class CaseCheckSession {
@@ -73,7 +73,7 @@ export class CaseCheckSession {
 
       this.held = { hash: modelHash, robot: job.robot };
 
-      return { type: 'model', modelHash, walk: readyWalk(job.walk, model) };
+      return { type: 'model', modelHash, walk: walkPick(job.walks, model) };
     }
 
     if (job.robot) this.held = { hash: job.modelHash, robot: job.robot };

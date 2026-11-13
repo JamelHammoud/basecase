@@ -69,7 +69,7 @@ describe('the Case checks pool', () => {
     const running = p.run(0, runs([1]), { tag: 'old', robot: () => robot });
     const stale = p.run(0, runs([2]), { tag: 'old', robot: () => robot });
     const wanted = p.run(0, runs([3]), { tag: 'new', robot: () => robot });
-    const model = p.run(0, { type: 'model', robot, walk: null }, { first: true });
+    const model = p.run(0, { type: 'model', robot, walks: [] }, { first: true });
 
     p.keepOnly(new Set(['new']));
     await expect(stale).rejects.toThrow();

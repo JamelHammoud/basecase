@@ -113,12 +113,33 @@ describe('Case rows in Checks', () => {
     const scene = sceneWith('hexapod', 'reach-the-flag');
     const project = { ...scene.project, skills: [walk] } as unknown as ProjectSettings;
 
-    run.mockResolvedValue(modelReply);
+    run.mockResolvedValue({ ...modelReply, walk: { hash: 'walk', topSpeed: 0.3 } });
     getSkill.mockRejectedValueOnce(new Error('The bridge is down.')).mockResolvedValue(null);
 
     await caseCheckRows({ ...scene, project, turn: nextCaseTurn() });
     await caseCheckRows({ ...scene, project, turn: nextCaseTurn() });
 
     expect(getSkill).toHaveBeenCalledTimes(2);
+    expect(getSkill).toHaveBeenCalledWith('walk');
+  });
+
+  it('send every Walk to the model job and drop queued runs before rebuilding the model', async () => {
+    const walks = [
+      { hash: 'older', kit: 'velocity-tracking', createdAt: '2026-11-01' },
+      { hash: 'newer', kit: 'velocity-tracking', createdAt: '2026-11-12' },
+      { hash: 'stand', kit: 'stand', createdAt: '2026-11-12' },
+    ];
+    const scene = sceneWith('hexapod', 'reach-the-flag');
+    const project = { ...scene.project, skills: walks } as unknown as ProjectSettings;
+
+    run.mockResolvedValue(modelReply);
+
+    await caseCheckRows({ ...scene, project, turn: nextCaseTurn() });
+
+    const [, job] = run.mock.calls[0];
+
+    expect(job).toMatchObject({ type: 'model', walks: walks.slice(0, 2) });
+    expect(keepOnly.mock.calls[0]).toEqual([new Set()]);
+    expect(keepOnly.mock.invocationCallOrder[0]).toBeLessThan(run.mock.invocationCallOrder[0]);
   });
 });

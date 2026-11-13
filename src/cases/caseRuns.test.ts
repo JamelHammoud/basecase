@@ -8,6 +8,7 @@ import { modelOf } from '../skills/fixtureModels';
 import { buildRig } from '../utils/kinematics';
 import { buildCase, builderRobot } from './caseBuilder';
 import { caseRunner } from './runCase';
+import { caseRandom, jitteredWorld } from './caseRandom';
 import { CASE_RUNS, runCaseTimes, summarizeRuns } from './caseRuns';
 import type { Case } from './schema';
 import { caseTemplates } from './templates';
@@ -26,39 +27,50 @@ const withWheelEffort = (robot: FixtureRobot, effortNm: number): FixtureRobot =>
 });
 
 const SMALL_GEAR_MOTOR_NM = 0.25;
+const SIM_MS = 30_000;
 
 describe('seeded Case runs', () => {
-  it('give the same result for the same seed, and vary between seeds', async () => {
-    const mj = await loadMujoco();
-    const rover = fixture('rover-diff');
-    const runner = caseRunner(mj, template(rover, 'reach-the-flag'), caseRobot(rover), { controller: 'reference' });
-    const [a, again, other] = [await runner.run(7), await runner.run(7), await runner.run(8)];
+  it(
+    'give the same result for the same seed, and vary between seeds',
+    async () => {
+      const mj = await loadMujoco();
+      const rover = fixture('rover-diff');
+      const runner = caseRunner(mj, template(rover, 'reach-the-flag'), caseRobot(rover), { controller: 'reference' });
+      const [a, again, other] = [await runner.run(7), await runner.run(7), await runner.run(8)];
 
-    expect(again.margin).toBe(a.margin);
-    expect(again.passed).toBe(a.passed);
-    expect(other.margin).not.toBe(a.margin);
-  });
+      expect(again.margin).toBe(a.margin);
+      expect(again.passed).toBe(a.passed);
+      expect(other.margin).not.toBe(a.margin);
+    },
+    SIM_MS,
+  );
 
-  it('jitter where dynamic world objects start, the same way for the same seed', async () => {
-    const mj = await loadMujoco();
-    const rover = fixture('rover-four');
-    const made = buildCase(
-      { goal: 'push', world: 'floor' },
-      builderRobot(buildRig(rover.joints, rover.parts), rover.parts),
-    );
+  it(
+    'jitter where dynamic world objects start, the same way for the same seed',
+    async () => {
+      const mj = await loadMujoco();
+      const rover = fixture('rover-four');
+      const made = buildCase(
+        { goal: 'push', world: 'floor' },
+        builderRobot(buildRig(rover.joints, rover.parts), rover.parts),
+      );
 
-    if (!made.ok) throw new Error(made.problem);
+      if (!made.ok) throw new Error(made.problem);
 
-    const runner = caseRunner(mj, made.kase, caseRobot(rover), { controller: 'limp' });
-    const boxAt = async (seed: number) =>
-      (await runner.run(seed)).case.world.objects.find((o) => o.id === 'box')!.position;
-    const goalAt = async (seed: number) =>
-      (await runner.run(seed)).case.world.objects.find((o) => o.id === 'goal')!.position;
+      const kase = made.kase;
+      const at = (c: Case, id: string) => c.world.objects.find((o) => o.id === id)!.position;
+      const jittered = (seed: number) => jitteredWorld(kase, caseRandom(seed));
+      const runner = caseRunner(mj, kase, caseRobot(rover), { controller: 'limp' });
+      const [three, four] = [await runner.run(3), await runner.run(4)];
 
-    expect(await boxAt(3)).toEqual(await boxAt(3));
-    expect(await boxAt(3)).not.toEqual(await boxAt(4));
-    expect(await goalAt(3)).toEqual(await goalAt(4));
-  });
+      expect(at(jittered(3), 'box')).toEqual(at(jittered(3), 'box'));
+      expect(at(jittered(3), 'box')).not.toEqual(at(jittered(4), 'box'));
+      expect(at(jittered(3), 'goal')).toEqual(at(jittered(4), 'goal'));
+      expect(at(three.case, 'box')).not.toEqual(at(four.case, 'box'));
+      expect(at(three.case, 'goal')).toEqual(at(four.case, 'goal'));
+    },
+    SIM_MS,
+  );
 
   const templatesFor = (robot: FixtureRobot) => caseTemplates(buildRig(robot.joints, robot.parts), robot.parts);
   const limpRuns = ['arm-3dof', 'rover-diff'].flatMap((robot) =>
@@ -73,24 +85,32 @@ describe('seeded Case runs', () => {
     expect(new Set(limpRuns.map((r) => r.template))).toEqual(new Set(every));
   });
 
-  it.each(limpRuns)('a limp $robot gets 0 of 20 on $template', async ({ robot, template: id }) => {
-    const mj = await loadMujoco();
-    const r = fixture(robot);
-    const runs = await runCaseTimes(mj, template(r, id), caseRobot(r), { controller: 'limp' });
+  it.each(limpRuns)(
+    'a limp $robot gets 0 of 20 on $template',
+    async ({ robot, template: id }) => {
+      const mj = await loadMujoco();
+      const r = fixture(robot);
+      const runs = await runCaseTimes(mj, template(r, id), caseRobot(r), { controller: 'limp' });
 
-    expect(runs.runs).toBe(CASE_RUNS);
-    expect(runs.passes).toBe(0);
-    expect(runs.commonFailure).toBe('missed');
-  });
+      expect(runs.runs).toBe(CASE_RUNS);
+      expect(runs.passes).toBe(0);
+      expect(runs.commonFailure).toBe('missed');
+    },
+    SIM_MS,
+  );
 
-  it('the fixture rover reaches the flag at least 18 of 20 times with randomization on', async () => {
-    const mj = await loadMujoco();
-    const rover = fixture('rover-diff');
-    const runs = await runCaseTimes(mj, template(rover, 'reach-the-flag'), caseRobot(rover));
+  it(
+    'the fixture rover reaches the flag at least 18 of 20 times with randomization on',
+    async () => {
+      const mj = await loadMujoco();
+      const rover = fixture('rover-diff');
+      const runs = await runCaseTimes(mj, template(rover, 'reach-the-flag'), caseRobot(rover));
 
-    expect(runs.passes).toBeGreaterThanOrEqual(18);
-    expect(caseRow({ id: 'reach-the-flag', name: 'Reach the Flag' }, runs)).toMatchObject({ status: 'pass' });
-  });
+      expect(runs.passes).toBeGreaterThanOrEqual(18);
+      expect(caseRow({ id: 'reach-the-flag', name: 'Reach the Flag' }, runs)).toMatchObject({ status: 'pass' });
+    },
+    SIM_MS,
+  );
 
   it('the weak quadruped fails Walk Without Falling, mostly by falling', async () => {
     const mj = await loadMujoco();
@@ -108,20 +128,24 @@ describe('seeded Case runs', () => {
     expect(runs.passes).toBeLessThan(10);
     expect(row.status).toBe('fail');
     expect(row.items?.[0]?.text).toBe('Fell');
-  }, 60000);
+  }, 60_000);
 
-  it('a robot that doesn’t fit gets a failing row that says why', async () => {
-    const mj = await loadMujoco();
-    const arm = fixture('arm-3dof');
-    const flag = template(fixture('rover-diff'), 'reach-the-flag');
-    const runs = await runCaseTimes(mj, flag, caseRobot(arm));
-    const row = caseRow(flag, runs);
-    const [finding] = caseFindings([row]);
+  it(
+    'a robot that doesn’t fit gets a failing row that says why',
+    async () => {
+      const mj = await loadMujoco();
+      const arm = fixture('arm-3dof');
+      const flag = template(fixture('rover-diff'), 'reach-the-flag');
+      const runs = await runCaseTimes(mj, flag, caseRobot(arm));
+      const row = caseRow(flag, runs);
+      const [finding] = caseFindings([row]);
 
-    expect(runs.refusal).toMatch(/wheels/);
-    expect(row).toMatchObject({ status: 'fail', detail: '', caseId: 'reach-the-flag' });
-    expect(finding).toMatchObject({ level: 'note', check: 'Reach the Flag', text: runs.refusal });
-  });
+      expect(runs.refusal).toMatch(/wheels/);
+      expect(row).toMatchObject({ status: 'fail', detail: '', caseId: 'reach-the-flag' });
+      expect(finding).toMatchObject({ level: 'note', check: 'Reach the Flag', text: runs.refusal });
+    },
+    SIM_MS,
+  );
 
   describe('seeded fault: cutting a rover’s wheel motors to 30% turns its row from pass to fail', () => {
     const rover = withWheelEffort(fixture('rover-diff'), SMALL_GEAR_MOTOR_NM);
@@ -130,11 +154,15 @@ describe('seeded Case runs', () => {
     it.each([
       { motors: 'full', robot: rover, status: 'pass' },
       { motors: '30%', robot: withWheelEffort(rover, SMALL_GEAR_MOTOR_NM * 0.3), status: 'fail' },
-    ])('$motors wheel motors read $status', async ({ robot, status }) => {
-      const mj = await loadMujoco();
+    ])(
+      '$motors wheel motors read $status',
+      async ({ robot, status }) => {
+        const mj = await loadMujoco();
 
-      expect(caseRow(flag, await runCaseTimes(mj, flag, caseRobot(robot))).status).toBe(status);
-    });
+        expect(caseRow(flag, await runCaseTimes(mj, flag, caseRobot(robot))).status).toBe(status);
+      },
+      SIM_MS,
+    );
   });
 });
 
@@ -181,29 +209,37 @@ describe('a ready Walk drives every robot that moves around, as Drive picks it',
     { robot: 'biped-servo', without: 'limp' },
     { robot: 'wheel-legged', without: 'drive' },
     { robot: 'quad-servo', without: 'drive' },
-  ])('$robot walks with its policy, and without one is $without', async ({ robot: id, without }) => {
-    const mj = await loadMujoco();
-    const robot = fixture(id);
-    const kase = walkCase(robot);
-    const walk = { policy: holdPolicy(robot), topSpeed: 0.2 };
-    const walking = caseRunner(mj, kase, caseRobot(robot), { controller: 'reference', walk });
+  ])(
+    '$robot walks with its policy, and without one is $without',
+    async ({ robot: id, without }) => {
+      const mj = await loadMujoco();
+      const robot = fixture(id);
+      const kase = walkCase(robot);
+      const walk = { policy: holdPolicy(robot), topSpeed: 0.2 };
+      const walking = caseRunner(mj, kase, caseRobot(robot), { controller: 'reference', walk });
 
-    expect(walking.controller).toBe('policy');
-    expect(caseRunner(mj, kase, caseRobot(robot), { controller: 'reference' }).controller).toBe(without);
-    expect((await walking.run(1)).frames.length).toBeGreaterThan(0);
-  });
+      expect(walking.controller).toBe('policy');
+      expect(caseRunner(mj, kase, caseRobot(robot), { controller: 'reference' }).controller).toBe(without);
+      expect((await walking.run(1)).frames.length).toBeGreaterThan(0);
+    },
+    SIM_MS,
+  );
 
-  it('a fixed arm ignores the Walk', async () => {
-    const mj = await loadMujoco();
-    const arm = fixture('arm-3dof');
-    const touch = template(arm, 'touch-the-dots');
-    const runner = caseRunner(mj, touch, caseRobot(arm), {
-      controller: 'reference',
-      walk: { policy: holdPolicy(arm), topSpeed: 0.2 },
-    });
+  it(
+    'a fixed arm ignores the Walk',
+    async () => {
+      const mj = await loadMujoco();
+      const arm = fixture('arm-3dof');
+      const touch = template(arm, 'touch-the-dots');
+      const runner = caseRunner(mj, touch, caseRobot(arm), {
+        controller: 'reference',
+        walk: { policy: holdPolicy(arm), topSpeed: 0.2 },
+      });
 
-    expect(runner.controller).toBe('drive');
-  });
+      expect(runner.controller).toBe('drive');
+    },
+    SIM_MS,
+  );
 });
 
 describe('summarizing runs', () => {

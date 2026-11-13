@@ -1,4 +1,4 @@
-import type { WalkOffer, WireRobot } from '../cases/caseCheckJob';
+import type { WalkPick, WireRobot } from '../cases/caseCheckJob';
 import { caseCheckPool } from '../cases/caseChecksClient';
 import { CASE_RUNS, seedBatches, summarizeRuns, type CaseRuns } from '../cases/caseRuns';
 import { readCases, type Case } from '../cases/schema';
@@ -6,7 +6,7 @@ import { readinessFingerprint } from '../readiness/readiness';
 import { caseRow, replacedRow, stoppedRow } from '../readiness/caseChecks';
 import type { VelocityDrive } from '../sim/driveAccess';
 import type { Skill } from '../skills/artifacts';
-import type { SkillRecord } from '../skills/skillRecords';
+import type { PolicySpec } from '../sim/policy';
 import { hashOf } from '../skills/hash';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
@@ -21,17 +21,24 @@ export interface CaseChecksInput {
   turn: number;
 }
 
-interface RobotReading {
+interface ModelReading {
   geometry: string;
-  offer: string;
+  walks: string;
+  modelHash: string;
+  walk: WalkPick | null;
+}
+
+interface RobotReading {
   modelHash: string;
   walk: VelocityDrive | null;
+  walkHash: string;
 }
 
 const KEPT_VERDICTS = 64;
 const verdicts = new Map<string, CaseRuns>();
 const inFlight = new Map<string, Promise<CaseRuns>>();
-let lastRobot: RobotReading | null = null;
+const policies = new Map<string, Promise<PolicySpec | null>>();
+let lastModel: ModelReading | null = null;
 let turns = 0;
 
 export const nextCaseTurn = () => ++turns;
@@ -39,32 +46,19 @@ export const nextCaseTurn = () => ++turns;
 const isSkill = (value: unknown): value is Skill =>
   typeof value === 'object' && value !== null && (value as { format?: unknown }).format === 'basecase-skill';
 
-const offers = new Map<string, Promise<WalkOffer | null>>();
+const walkRecords = (project: ProjectSettings) => (project.skills ?? []).filter((r) => r.kit === 'velocity-tracking');
 
-async function loadOffer(record: SkillRecord): Promise<WalkOffer | null> {
-  const skill = await platformBridge.getSkill(record.hash);
-
-  return isSkill(skill) && skill.controller.kind === 'policy' ? { record, policy: skill.controller.policy } : null;
-}
-
-function walkOffer(project: ProjectSettings): Promise<WalkOffer | null> {
-  const record = (project.skills ?? [])
-    .filter((r) => r.kit === 'velocity-tracking' && r.evidence?.passed)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
-
-  if (!record) return Promise.resolve(null);
-
-  const known = offers.get(record.hash);
+function policyOf(hash: string): Promise<PolicySpec | null> {
+  const known = policies.get(hash);
 
   if (known) return known;
 
-  const loading = loadOffer(record).catch(() => {
-    offers.delete(record.hash);
+  const loading = platformBridge
+    .getSkill(hash)
+    .then((skill) => (isSkill(skill) && skill.controller.kind === 'policy' ? skill.controller.policy : null));
 
-    return null;
-  });
-
-  offers.set(record.hash, loading);
+  loading.catch(() => policies.delete(hash));
+  policies.set(hash, loading);
 
   return loading;
 }
@@ -81,18 +75,29 @@ function wireRobot(input: CaseChecksInput): WireRobot {
   return { id: 'scene', parts: input.parts, joints: input.project.joints ?? [], measures: input.measures, triangles };
 }
 
-async function readRobot(input: CaseChecksInput, robot: () => WireRobot): Promise<RobotReading> {
-  const offer = await walkOffer(input.project);
+async function readModel(input: CaseChecksInput, robot: () => WireRobot): Promise<ModelReading> {
+  const records = walkRecords(input.project);
   const geometry = readinessFingerprint(input.parts, { joints: input.project.joints });
-  const offerKey = offer?.record.hash ?? '';
+  const walks = hashOf(records);
 
-  if (lastRobot?.geometry === geometry && lastRobot.offer === offerKey) return lastRobot;
+  if (lastModel?.geometry === geometry && lastModel.walks === walks) return lastModel;
 
-  const reply = await caseCheckPool.run(0, { type: 'model', robot: robot(), walk: offer }, { first: true });
+  if (isNewest(input.turn)) caseCheckPool.keepOnly(new Set());
 
-  lastRobot = { geometry, offer: offerKey, modelHash: reply.modelHash, walk: reply.walk };
+  const reply = await caseCheckPool.run(0, { type: 'model', robot: robot(), walks: records }, { first: true });
 
-  return lastRobot;
+  lastModel = { geometry, walks, modelHash: reply.modelHash, walk: reply.walk };
+
+  return lastModel;
+}
+
+async function readRobot(input: CaseChecksInput, robot: () => WireRobot): Promise<RobotReading> {
+  const { modelHash, walk: pick } = await readModel(input, robot);
+  const policy = pick ? await policyOf(pick.hash).catch(() => null) : null;
+
+  if (!pick || !policy) return { modelHash, walk: null, walkHash: '' };
+
+  return { modelHash, walk: { policy, topSpeed: pick.topSpeed }, walkHash: pick.hash };
 }
 
 async function judge(kase: Case, key: string, reading: RobotReading, robot: () => WireRobot): Promise<CaseRuns> {
@@ -141,8 +146,7 @@ function verdictOf(kase: Case, key: string, reading: RobotReading, robot: () => 
   return running;
 }
 
-const verdictKey = (kase: Case, reading: RobotReading) =>
-  `${hashOf(kase)}|${reading.modelHash}|${reading.walk ? reading.offer : ''}`;
+const verdictKey = (kase: Case, reading: RobotReading) => `${hashOf(kase)}|${reading.modelHash}|${reading.walkHash}`;
 
 const isNewest = (turn: number) => turn === turns;
 

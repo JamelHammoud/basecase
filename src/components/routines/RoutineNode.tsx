@@ -46,12 +46,11 @@ function TrainButton({ skill }: { skill: string }) {
       size="sm"
       variant="secondary"
       fullWidth
-      className="mt-1 h-auto! py-1.5 justify-start! nodrag"
+      className="mt-1 justify-start! nodrag"
       icon={<TrainIcon className="w-4 h-4" />}
       onClick={() => onTrain(skill)}
     >
-      <span className="block text-[12px] font-normal text-white/50">Needs Training</span>
-      <span className="block">Train {label}</span>
+      Train {label}
     </Button>
   );
 }

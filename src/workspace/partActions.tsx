@@ -157,6 +157,7 @@ export function onePartActions({ core, actions }: Omit<PartActionInputs, 'ui'>, 
       id: 'toggle-hide',
       label: part.visible ? 'Hide' : 'Show',
       icon: part.visible ? HiddenIcon : LookIcon,
+      keywords: 'unhide visible part',
       run: () => setFlag({ visible: !part.visible }),
     },
     quote: IS_WEB_DEMO

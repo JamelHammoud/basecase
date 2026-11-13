@@ -4,6 +4,8 @@ import { SettingsGroup } from './SettingsRows';
 
 type Row = [string, string[]];
 
+const SCULPT_ROWS = new Set(['Sculpt', 'Sculpt inverted']);
+
 const GROUPS: Array<{ title: string; rows: Row[] }> = [
   {
     title: 'Navigate',
@@ -23,6 +25,7 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
       ['Rotate', ['E']],
       ['Scale', ['R']],
       ['Sculpt', ['C']],
+      ['Sculpt inverted', ['⌥', 'drag']],
       ['Pose', ['P']],
       ['Comment', ['M']],
       ['Measure', ['D']],
@@ -87,7 +90,7 @@ const GROUPS: Array<{ title: string; rows: Row[] }> = [
 
 export const ShortcutsList: React.FC<{ sculptEnabled: boolean }> = ({ sculptEnabled }) => (
   <>
-    {GROUPS.map((g) => ({ ...g, rows: g.rows.filter(([label]) => sculptEnabled || label !== 'Sculpt') })).map((g) => (
+    {GROUPS.map((g) => ({ ...g, rows: g.rows.filter(([l]) => sculptEnabled || !SCULPT_ROWS.has(l)) })).map((g) => (
       <SettingsGroup key={g.title} title={g.title}>
         {g.rows.map(([label, keys]) => (
           <div

@@ -55,7 +55,7 @@ const CustomBed: React.FC<{ printer: SavedPrinter; onChange: (next: MyPrinter) =
         step={5}
         precision={0}
         unit="mm"
-        title={label}
+        aria-label={label}
         onChange={(v, live) => !live && onChange({ ...printer, custom: { ...size, [key]: v } })}
       />
     </div>

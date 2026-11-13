@@ -68,13 +68,15 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
           <div className="flex items-center gap-[4px] shrink-0">
             {headerActions}
-            <IconButton
-              icon={<CloseIcon className="w-4 h-4" />}
-              title="Close"
-              shortcut="Esc"
-              onClick={onClose}
-              size="sm"
-            />
+            {!footer && (
+              <IconButton
+                icon={<CloseIcon className="w-4 h-4" />}
+                title="Close"
+                shortcut="Esc"
+                onClick={onClose}
+                size="sm"
+              />
+            )}
           </div>
         </div>
 

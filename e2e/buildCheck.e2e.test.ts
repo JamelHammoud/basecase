@@ -64,8 +64,19 @@ describe('Checks', () => {
     expect(leads).toBe(true);
   }, 90000);
 
-  it('let you ignore a blocker for the whole project, and restore it', async () => {
+  const quotes = () => app.page.locator(visible('[role=group][aria-label=Quotes]'));
+  const quoteProblem = async () => {
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    await checks().getByRole('button', { name: 'More' }).first().click();
+    await app.page.getByRole('menuitem', { name: 'Quote' }).click();
+    await expect.poll(() => quotes().count(), { timeout: 10000 }).toBe(1);
+  };
+  const promptContaining = (text: string) =>
+    JSON.stringify(app.posts.find((p) => JSON.stringify(p.body).includes(text))?.body ?? '');
+
+  it('let you ignore a blocker for the whole project, restore it, and send it to the agent with Fix', async () => {
     await loadStandIns();
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     await expect.poll(headerText, { timeout: 45000 }).toMatch(/[1-9]\d* to fix/);
     expect(await checks().getByRole('button', { name: 'Fix' }).count()).toBe(0);
     await checks()
@@ -89,27 +100,13 @@ describe('Checks', () => {
       .click();
     await checks().getByRole('button', { name: 'Restore' }).first().click();
     await expect.poll(() => checks().getByRole('button', { name: 'Fix' }).count(), { timeout: 45000 }).toBe(fixes);
-  }, 120000);
-
-  const quotes = () => app.page.locator(visible('[role=group][aria-label=Quotes]'));
-  const quoteProblem = async () => {
-    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-    await checks().getByRole('button', { name: 'More' }).first().click();
-    await app.page.getByRole('menuitem', { name: 'Quote' }).click();
-    await expect.poll(() => quotes().count(), { timeout: 10000 }).toBe(1);
-  };
-  const promptContaining = (text: string) =>
-    JSON.stringify(app.posts.find((p) => JSON.stringify(p.body).includes(text))?.body ?? '');
-
-  it('send a problem to the agent with Fix', async () => {
-    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     await checks().getByRole('button', { name: 'Fix' }).first().click();
 
     const prompt = () => promptContaining('Fix this problem from Checks');
 
     await expect.poll(prompt, { timeout: 15000 }).toContain('Fix this problem from Checks');
     expect(prompt()).toContain('dispute_finding');
-  }, 30000);
+  }, 120000);
 
   it('send a quote with the message and show it above the text in the chat', async () => {
     await quoteProblem();

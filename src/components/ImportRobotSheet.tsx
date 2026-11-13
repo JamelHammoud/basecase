@@ -62,24 +62,13 @@ export const ImportRobotSheet: React.FC<{
       title="Import Robot"
       icon={<FolderImportIcon className="w-4 h-4" />}
       maxWidth="max-w-[520px]"
-      footer={
-        <div className="flex items-center justify-between w-full">
-          {choice ? (
-            <span />
-          ) : (
-            <Button variant="secondary" size="sm" onClick={() => folderRef.current?.click()}>
-              Choose Folder
-            </Button>
-          )}
-          <div className="flex gap-[8px]">
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" disabled={!ready} autoFocus={!!loaded} onClick={submit}>
-              Import
-            </Button>
-          </div>
-        </div>
+      action={{ label: 'Import', disabled: !ready, autoFocus: !!loaded, onClick: submit }}
+      footerStart={
+        !choice && (
+          <Button variant="secondary" onClick={() => folderRef.current?.click()}>
+            Choose Folder
+          </Button>
+        )
       }
     >
       {choice && (

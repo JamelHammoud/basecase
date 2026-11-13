@@ -15,6 +15,7 @@ import { copyToClipboard, takePaste } from './partsClipboard';
 import { dropToFloor, stackedPosition } from './partTransforms';
 import { clickSelection } from './selection';
 import type { Snapshot } from './types';
+import { duplicateParts } from './useSelectionOps';
 
 const part = (id: string, position: [number, number, number], extra: Partial<ScenePart> = {}): ScenePart => ({
   id,
@@ -116,9 +117,26 @@ describe('workspace helpers', () => {
   it('names copies, lists and file names the way the UI shows them', () => {
     expect(copyName('Sprout', ['Sprout copy'])).toBe('Sprout copy 2');
     expect(copyName('Sprout copy 2', [])).toBe('Sprout copy');
+    expect(copyName('Bracket Copy', ['Bracket copy'])).toBe('Bracket copy 2');
     expect(listNames(['G1', 'Go2', 'Spot'])).toBe('G1, Go2 and Spot');
     expect(fileSafe('Robot Arm #2')).toBe('robot-arm-2');
     expect(fileSafe('!!!')).toBe('robotics-mechanism');
+  });
+
+  it('names a duplicated part or group the way a duplicated scene is named', () => {
+    const group = { id: 'g', name: 'Leg' };
+    const bracket = part('Bracket', [0, 0, 0]);
+    const legs = [part('a', [0, 0, 0], { group }), part('b', [0, 0, 0], { group })];
+    const scene = [bracket, part('Bracket copy', [0, 0, 0]), ...legs];
+    const [copy] = duplicateParts([bracket], scene);
+    const groupCopies = duplicateParts(legs, scene);
+
+    expect(copy.name).toBe('Bracket copy 2');
+    expect(duplicateParts([copy], [...scene, copy])[0].name).toBe('Bracket copy 3');
+    expect(groupCopies.map((p) => [p.name, p.group?.name])).toEqual([
+      ['a', 'Leg copy'],
+      ['b', 'Leg copy'],
+    ]);
   });
 
   it('selects whole groups, then drills in on the next click', () => {

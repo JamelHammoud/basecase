@@ -38,6 +38,6 @@ The **Scenes** menu is also the button next to the sidebar button in the title b
 1. In the **Scenes** menu, right-click the scene.
 2. Choose **Rename**, **Duplicate** or **Delete**.
 
-Delete asks first, and you can't undo it. Duplicate makes a copy with “copy” after the name.
+Delete asks first, and you can't undo it. Duplicate adds “copy” to the name, and “copy 2” to the next one.
 
 To keep several scenes open at once, see [Open, rename and close scene tabs](/help/open-rename-and-close-tabs).

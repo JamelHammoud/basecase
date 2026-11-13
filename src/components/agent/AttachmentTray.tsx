@@ -26,7 +26,7 @@ function folderMeta(f: FolderChip): string[] {
 const FolderTile: React.FC<{ folder: FolderChip; onRemove: () => void }> = ({ folder: f, onRemove }) => (
   <div className="relative animate-pop-up min-w-0 max-w-full">
     <div className="h-14 max-w-[220px] pl-2.5 pr-3.5 rounded-xl bg-white/[0.06] ring-1 ring-white/10 flex items-center gap-2.5">
-      <span className="w-8 h-8 rounded-lg bg-white/[0.07] flex items-center justify-center shrink-0">
+      <span className="w-[28px] h-[28px] rounded-lg bg-white/[0.07] flex items-center justify-center shrink-0">
         {f.ready ? <FolderIcon className="w-4 h-4 text-white/75" /> : <Spinner className="w-4 h-4 text-white/50" />}
       </span>
       <span className="min-w-0">

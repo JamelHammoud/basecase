@@ -1,5 +1,5 @@
 import type { ContextMenuEntry } from '../../design-system';
-import { DeleteIcon, DuplicateIcon, EditIcon, ExternalLinkIcon } from '../../design-system';
+import { ExternalLinkIcon, deleteEntry, duplicateEntry, renameEntry } from '../../design-system';
 
 const icon = 'w-3.5 h-3.5';
 
@@ -16,11 +16,5 @@ export function sceneMenu(o: SceneMenuOptions): ContextMenuEntry[] {
     ? []
     : [{ label: 'Open', icon: <ExternalLinkIcon className={icon} />, onSelect: o.onOpen }];
 
-  return [
-    ...open,
-    { label: 'Rename', icon: <EditIcon className={icon} />, onSelect: o.onRename },
-    { label: 'Duplicate', icon: <DuplicateIcon className={icon} />, onSelect: o.onDuplicate },
-    { divider: true },
-    { label: 'Delete', icon: <DeleteIcon className={icon} />, tone: 'danger', onSelect: o.onDelete },
-  ];
+  return [...open, renameEntry(o.onRename), duplicateEntry(o.onDuplicate), { divider: true }, deleteEntry(o.onDelete)];
 }

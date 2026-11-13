@@ -48,7 +48,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     fault_latched: false,
     joints: robot.ids.map((id, k) =>
       holds(id)
-        ? { id, position: counts(robot.position[k]), temp_c: robot.servos ? 30 : null, volts: robot.servos ? 7.4 : null, torque_on: robot.run === 'running' && robot.writable.includes(k), reply: 'ok' }
+        ? { id, position: counts(robot.position[k]), temp_c: robot.servos ? 30 : null, volts: robot.servos ? 7.4 : null, torque_on: robot.run === 'running' && robot.writable.includes(k) && id !== robot.stalled, reply: 'ok' }
         : { id, position: null, temp_c: null, volts: null, torque_on: null, reply: 'missing' },
     ),
   });
@@ -93,7 +93,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     if (robot.run === 'running') {
       const held = goalAt(robot.atUs);
       robot.goal = robot.goal.map((g, k) => g + Math.max(-REACH, Math.min(REACH, held[k] - g)));
-      robot.position = mix(robot.position, robot.goal, LAG);
+      robot.position = mix(robot.position, robot.goal, LAG).map((p, k) => (robot.ids[k] === robot.stalled ? robot.position[k] : p));
     }
     if (robot.ticks % STATUS_TICKS === 0) emit(status());
   };
@@ -120,6 +120,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
   const intent = (joints) => {
     if (!Array.isArray(joints) || joints.length !== robot.writable.length) return { ok: false, message: 'The robot only takes the documented commands.' };
     if (robot.run !== 'running') return { ok: true };
+    link.intents.push([...joints]);
     const full = [...(robot.queue.at(-1) ?? robot.held).joints];
     robot.writable.forEach((k, i) => {
       if (typeof joints[i] !== 'number') return;
@@ -128,6 +129,12 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     });
     intend(full);
     return { ok: true };
+  };
+
+  const plantStall = (id) => {
+    robot.stalled = id;
+    emit({ event: 'fault', at_us: robot.atUs, code: 'stall', id, message: 'The joint on servo ' + id + ' is stuck: its motor is pushing but nothing moves. Its motor was switched off.' });
+    return true;
   };
 
   const enter = (mode) => {
@@ -151,8 +158,10 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     factory: false,
     policy: [],
     lastAsk: null,
+    intents: [],
     asked: () => link.lastAsk,
     plugIn,
+    plantStall: (id) => (robot ? plantStall(id) : false),
     onRobotEvent: (callback) => {
       listeners.add(callback);
       return () => listeners.delete(callback);
@@ -164,7 +173,8 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     },
     robotConnect: async (ask) => {
       const { spec, ids, start, writable, lastRung } = layout(ask);
-      robot = { ids, writable, lastRung, servos: spec.family !== 'ros2', mode: 'look', run: 'idle', startedAt: performance.now(), atUs: 0, ticks: 0 };
+      robot = { ids, writable, lastRung, servos: spec.family !== 'ros2', mode: 'look', run: 'idle', startedAt: performance.now(), atUs: 0, ticks: 0, stalled: null };
+      link.intents = [];
       link.lastAsk = JSON.parse(JSON.stringify(ask));
       const factory = ask.factory === true || link.factory === true;
       robot.bus = factory ? [] : ids.map((id) => ({ id }));

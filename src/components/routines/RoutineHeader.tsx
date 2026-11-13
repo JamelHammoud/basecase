@@ -3,14 +3,14 @@ import {
   Button,
   ChevronDownIcon,
   confirmAction,
-  DeleteIcon,
-  EditIcon,
+  deleteEntry,
   IconButton,
   MenuDivider,
   MenuItem,
   PlusIcon,
   PopoverMenu,
   RenameField,
+  renameEntry,
   RunIcon,
 } from '../../design-system';
 import type { Routines } from '../../workspace/useRoutines';
@@ -54,7 +54,7 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
             name={routine.name}
             label="Routine name"
             onDone={rename}
-            className="w-full h-8! text-[14px]! font-medium"
+            className="w-full h-[32px]! text-[14px]! font-medium"
           />
         ) : (
           <Button
@@ -79,13 +79,9 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
             />
           ))}
           <MenuDivider />
-          <MenuItem icon={<PlusIcon className="w-4 h-4" />} label="New Routine" onSelect={closing(store.create)} />
-          <MenuItem
-            icon={<EditIcon className="w-4 h-4" />}
-            label="Rename"
-            onSelect={closing(() => setRenaming(true))}
-          />
-          <MenuItem icon={<DeleteIcon className="w-4 h-4" />} label="Delete" tone="danger" onSelect={closing(remove)} />
+          <MenuItem icon={<PlusIcon className="w-3.5 h-3.5" />} label="New Routine" onSelect={closing(store.create)} />
+          <MenuItem {...renameEntry(closing(() => setRenaming(true)))} />
+          <MenuItem {...deleteEntry(closing(remove))} />
         </PopoverMenu>
       </div>
       <IconButton size="sm" icon={<PlusIcon className="w-4 h-4" />} title="Add step" onClick={editor.addHere} />

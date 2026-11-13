@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 set -eo pipefail
+trap 'chown -R "${HOST_UID:-0}:${HOST_GID:-0}" /ws' EXIT
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq --no-install-recommends liburdfdom-tools libxml2-utils curl >/dev/null
-curl -fsSL -o /tmp/package_format3.xsd http://download.ros.org/schema/package_format3.xsd
+rep=https://raw.githubusercontent.com/ros-infrastructure/rep/11ca24a41f31480dfb9562ba99f2a5b93d3ebda5/xsd
+mkdir -p /tmp/xsd
+for xsd in package_format3.xsd package_common.xsd; do curl -fsSL -o "/tmp/xsd/$xsd" "$rep/$xsd"; done
 
 source "/opt/ros/$ROS_DISTRO/setup.bash"
 cd /ws
 
 for xml in src/*/package.xml; do
-  xmllint --noout --schema /tmp/package_format3.xsd "$xml"
+  xmllint --noout --schema /tmp/xsd/package_format3.xsd "$xml"
 done
 
 colcon build --event-handlers console_cohesion+

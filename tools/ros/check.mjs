@@ -8,7 +8,8 @@ import { createServer } from 'vite';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
-const IMAGE = process.env.ROS_IMAGE ?? 'ros:jazzy';
+const IMAGE =
+  process.env.ROS_IMAGE ?? 'ros:jazzy@sha256:00b8d47a6e6384a2834e3d01fa87ae767876543baa574f2d64a75c04ea33c698';
 
 async function loadModules() {
   const server = await createServer({
@@ -52,12 +53,17 @@ async function main() {
   for (const robot of robots) writeZip(buildRobotPackage(fixturePackageJob(robot).job), path.join(ws, 'src'));
 
   console.log(`Exported ${robots.length} robot packages to ${ws}`);
-  execFileSync(
-    'docker',
-    ['run', '--rm', '-v', `${ws}:/ws`, '-v', `${here}:/check:ro`, IMAGE, 'bash', '/check/check.sh'],
-    { stdio: 'inherit' },
-  );
-  fs.rmSync(ws, { recursive: true, force: true });
+
+  const owner = ['-e', `HOST_UID=${process.getuid?.() ?? 0}`, '-e', `HOST_GID=${process.getgid?.() ?? 0}`];
+  const mounts = ['-v', `${ws}:/ws`, '-v', `${here}:/check:ro`];
+
+  try {
+    execFileSync('docker', ['run', '--rm', ...owner, ...mounts, IMAGE, 'bash', '/check/check.sh'], {
+      stdio: 'inherit',
+    });
+  } finally {
+    fs.rmSync(ws, { recursive: true, force: true });
+  }
 }
 
 await main();

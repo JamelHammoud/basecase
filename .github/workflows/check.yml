@@ -34,7 +34,7 @@ jobs:
           files=$(git diff --name-only "$BASE...$HEAD")
           pattern='^(electron/|forge/|hw/|build/|tools/forge/|tools/native/|e2e/app/|\.github/workflows/|package\.json$|package-lock\.json$|vitest\.app\.config\.ts$)'
           if grep -qE "$pattern" <<< "$files"; then echo "app=true"; else echo "app=false"; fi >> "$GITHUB_OUTPUT"
-          ros='^(src/sim/|src/utils/robotImport/|tools/ros/|\.github/workflows/check\.yml$|package-lock\.json$)'
+          ros='^(src/sim/|src/utils/robotImport/|src/utils/(kinematics|engineering|stlBytes|zipFolder)|src/types/robotics\.ts$|src/three/meshMeasure\.ts$|src/workspace/robotPackageExport\.ts$|tools/ros/|\.github/workflows/check\.yml$|package-lock\.json$)'
           if grep -qE "$ros" <<< "$files"; then echo "ros=true"; else echo "ros=false"; fi >> "$GITHUB_OUTPUT"
 
   unit:

@@ -27,9 +27,11 @@ const block = (id: string, y: number, extra: Partial<ScenePart> = {}): ScenePart
 const servo = (id: string, y: number) =>
   block(id, y, { componentId: 'feetech-sts3215', componentVariant: 'c001', massG: 55 });
 
+const JOINT_NAMES: Record<string, string> = { shoulder: 'Shoulder', elbow: 'Elbow', wrist: 'Wrist' };
+
 const joint = (id: string, parent: string[], child: string[], y: number): RobotJoint => ({
   id,
-  name: id === 'shoulder' ? 'Shoulder' : 'Elbow',
+  name: JOINT_NAMES[id],
   type: 'revolute',
   parent,
   child,
@@ -56,6 +58,35 @@ const ARM = {
   },
 };
 
+const THREE_JOINT_ARM = {
+  name: 'three-joint arm',
+  parts: [
+    block('base', 20),
+    servo('shoulder-servo', 70),
+    block('upper', 130),
+    servo('elbow-servo', 190),
+    block('fore', 250),
+    servo('wrist-servo', 310),
+    block('hand', 370),
+  ],
+  project: {
+    ...DEFAULT_PROJECT,
+    joints: [
+      joint('shoulder', ['base', 'shoulder-servo'], ['upper', 'elbow-servo'], 70),
+      joint('elbow', ['upper', 'elbow-servo'], ['fore', 'wrist-servo'], 190),
+      joint('wrist', ['fore', 'wrist-servo'], ['hand'], 310),
+    ],
+  },
+};
+
+interface FakeLink {
+  factory: boolean;
+  plugIn: () => boolean;
+  robotDisconnect: () => Promise<unknown>;
+}
+
+type StudioWindow = { __studio: { load: (r: unknown) => void; selection: () => string[] }; __fakeRobotLink: FakeLink };
+
 const row = (id: string) => app.page.locator(visible(`[data-calibration-joint="${id}"]`)).first();
 
 beforeAll(async () => {
@@ -66,12 +97,16 @@ beforeAll(async () => {
 
     w.__studio.attachRobot(w.__fakeRobotLink);
   });
-  await app.page.evaluate(
-    (record) => (window as unknown as { __studio: { load: (r: unknown) => void } }).__studio.load(record),
-    ARM,
-  );
-  await vi.waitFor(async () => expect(await partCount(app.page)).toBe(ARM.parts.length), { timeout: 10000 });
+  await loadRecord(ARM);
 }, 120000);
+
+async function loadRecord(record: typeof ARM) {
+  await app.page.evaluate(
+    (r) => (window as unknown as { __studio: { load: (r: unknown) => void } }).__studio.load(r),
+    record,
+  );
+  await vi.waitFor(async () => expect(await partCount(app.page)).toBe(record.parts.length), { timeout: 10000 });
+}
 
 afterAll(async () => {
   await app?.close();
@@ -117,5 +152,61 @@ describe('Operate calibration', () => {
       expect(app.errors).toEqual([]);
     },
     150000,
+  );
+});
+
+describe('Operate servo setup', () => {
+  const walk = [
+    { id: 3, name: 'Wrist', link: ['hand'] },
+    { id: 2, name: 'Elbow', link: ['fore', 'wrist-servo'] },
+    { id: 1, name: 'Shoulder', link: ['upper', 'elbow-servo'] },
+  ];
+
+  it.skipIf(process.platform === 'win32')(
+    'numbers a bag of factory servos one at a time, lighting each joint, then climbs to Test',
+    async () => {
+      const { page } = app;
+      const selection = () => page.evaluate(() => [...(window as unknown as StudioWindow).__studio.selection()].sort());
+      const plugIn = () => page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.plugIn());
+      const step = page.locator(visible('[data-testid="servo-setup"] [data-servo-setup-step]')).first();
+
+      await page.evaluate(async () => {
+        const link = (window as unknown as StudioWindow).__fakeRobotLink;
+
+        await link.robotDisconnect();
+        link.factory = true;
+      });
+      await loadRecord(THREE_JOINT_ARM);
+      await openPlayTab(page, 'Operate');
+      await page.locator(visible('button'), { hasText: 'Connect Emulated Robot' }).first().click();
+      await expect.poll(() => page.locator(visible('[data-robot-joint]')).count()).toBe(3);
+      await page.keyboard.press('Meta+k');
+      await page.keyboard.type('Set Up Servos');
+      await page.keyboard.press('Enter');
+
+      for (const { id, name, link } of walk) {
+        await expect.poll(() => step.getAttribute('data-servo-setup-step'), { timeout: 10000 }).toBe(String(id));
+        expect(await step.innerText()).toMatch(new RegExp(`^${name}\\s+${id}$`));
+        await expect.poll(selection).toEqual([...link].sort());
+        await expect.poll(plugIn, { timeout: 10000 }).toBe(true);
+      }
+
+      await expect.poll(() => page.locator(visible('[data-servo-setup-step]')).count(), { timeout: 10000 }).toBe(0);
+      await expect.poll(selection).toEqual([]);
+      await expect.poll(() => page.locator(visible('[data-robot-joint][data-position=""]')).count()).toBe(0);
+      expect(await page.locator(visible('[data-robot-joint]')).count()).toBe(3);
+      await page.locator(visible('[data-robot-rung="test"]')).first().click();
+      await expect
+        .poll(() => page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode'))
+        .toBe('test');
+      expect(app.errors).toEqual([]);
+      await page.evaluate(async () => {
+        const link = (window as unknown as StudioWindow).__fakeRobotLink;
+
+        link.factory = false;
+        await link.robotDisconnect();
+      });
+    },
+    60000,
   );
 });

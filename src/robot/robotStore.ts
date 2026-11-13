@@ -47,6 +47,7 @@ export type RobotLinkApi = Pick<
 let api: RobotLinkApi | null = null;
 let benchDriving = false;
 const listeners = new Set<() => void>();
+const eventListeners = new Set<(event: RobotEvent) => void>();
 
 function set(next: RobotState) {
   if (next === state) return;
@@ -74,10 +75,20 @@ export function subscribeRobot(listener: () => void) {
   };
 }
 
+export function subscribeRobotEvents(listener: (event: RobotEvent) => void) {
+  eventListeners.add(listener);
+
+  return () => {
+    eventListeners.delete(listener);
+  };
+}
+
 export function receiveRobotEvent(event: RobotEvent) {
   if (event.event === 'link' && event.state !== 'connected') setSceneJoints(null);
 
   set(applyRobotEvent(state, event));
+
+  for (const listener of eventListeners) listener(event);
 }
 
 function adopt(link: RobotLinkState) {

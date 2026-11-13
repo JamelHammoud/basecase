@@ -77,13 +77,20 @@ impl ServoBus {
         }
 
         replies.sort_by_key(|(id, _, _)| *id);
-        replies
-            .into_iter()
-            .map(|(id, delay, bytes)| Timed {
+
+        let mut out: Vec<Timed> = Vec::new();
+
+        for (id, chunk) in replies.chunk_by(|a, b| a.0 == b.0).map(|chunk| (chunk[0].0, chunk)) {
+            let delay = chunk.iter().map(|(_, delay, _)| *delay).max().unwrap_or(0);
+            let answers = chunk.iter().map(|(_, _, bytes)| bytes.clone()).collect();
+
+            out.extend(collide(answers).map(|bytes| Timed {
                 at_us: now_us + delay + u64::from(id) * PING_SLOT_US,
                 bytes,
-            })
-            .collect()
+            }));
+        }
+
+        out
     }
 
     fn handle_sync_read(&mut self, frame: &Frame, now_us: u64) -> Vec<Timed> {

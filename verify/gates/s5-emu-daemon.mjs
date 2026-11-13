@@ -14,6 +14,7 @@ const FAULTS = [
   'latency_spike',
   'wrong_direction',
   'duplicate_id',
+  'numbering_interrupted',
   'daemon_host_death',
   'policy_nan',
   'policy_hang',

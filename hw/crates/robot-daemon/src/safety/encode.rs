@@ -11,6 +11,8 @@ pub(super) enum Register {
     Goal(SafeGoal),
     Speed(f32),
     BusWatchdog(u8),
+    EepromLock(bool),
+    Id(u8),
 }
 
 struct Layout {
@@ -25,11 +27,15 @@ fn layout(family: Family, register: Register) -> Layout {
         (Family::Feetech, Register::Goal(_)) => (42, 2),
         (Family::Feetech, Register::Speed(_)) => (46, 2),
         (Family::Feetech, Register::BusWatchdog(_)) => (0, 0),
+        (Family::Feetech, Register::EepromLock(_)) => (55, 1),
+        (Family::Feetech, Register::Id(_)) => (5, 1),
         (Family::Dynamixel, Register::Torque(_)) => (64, 1),
         (Family::Dynamixel, Register::TorqueLimit(_)) => (100, 2),
         (Family::Dynamixel, Register::Goal(_)) => (116, 4),
         (Family::Dynamixel, Register::Speed(_)) => (112, 4),
         (Family::Dynamixel, Register::BusWatchdog(_)) => (98, 1),
+        (Family::Dynamixel, Register::EepromLock(_)) => (0, 0),
+        (Family::Dynamixel, Register::Id(_)) => (7, 1),
     };
 
     Layout { address, width }
@@ -44,6 +50,8 @@ fn raw_value(family: Family, register: Register) -> u32 {
         (Family::Feetech, Register::Speed(rad_s)) => ((rad_s.max(0.0) * 4096.0 / TAU).floor() as u32).max(1),
         (Family::Dynamixel, Register::Speed(rad_s)) => ((rad_s.max(0.0) / (0.229 * TAU / 60.0)).floor() as u32).max(1),
         (_, Register::BusWatchdog(units)) => u32::from(units.min(127)),
+        (_, Register::EepromLock(locked)) => u32::from(locked),
+        (_, Register::Id(id)) => u32::from(id.min(253)),
     }
 }
 
@@ -156,6 +164,30 @@ mod tests {
         let frame = decoded(Family::Feetech, &bytes);
 
         assert_eq!(u16::from_le_bytes([frame.params[3], frame.params[4]]), 1000);
+    }
+
+    #[test]
+    fn feetech_id_writes_go_to_address_5_and_the_lock_to_55() {
+        let unlock = sync_write(Family::Feetech, &[(1, Register::EepromLock(false))]).unwrap();
+        let id = sync_write(Family::Feetech, &[(1, Register::Id(3))]).unwrap();
+        let lock = sync_write(Family::Feetech, &[(3, Register::EepromLock(true))]).unwrap();
+
+        assert_eq!(decoded(Family::Feetech, &unlock).params, vec![55, 1, 1, 0]);
+        assert_eq!(decoded(Family::Feetech, &id).params, vec![5, 1, 1, 3]);
+        assert_eq!(decoded(Family::Feetech, &lock).params, vec![55, 1, 3, 1]);
+    }
+
+    #[test]
+    fn dynamixel_has_no_eeprom_lock_and_keeps_its_id_at_7() {
+        assert!(!is_supported(Family::Dynamixel, Register::EepromLock(false)));
+        assert_eq!(
+            decoded(
+                Family::Dynamixel,
+                &sync_write(Family::Dynamixel, &[(1, Register::Id(4))]).unwrap()
+            )
+            .params,
+            vec![7, 0, 1, 0, 1, 4]
+        );
     }
 
     #[test]

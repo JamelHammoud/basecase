@@ -17,6 +17,7 @@ import type { LaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
 import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { errorMessage } from '../utils/errorMessage';
 
 type Payload = Record<string, unknown>;
 
@@ -182,7 +183,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     try {
       await respond(await runRequest(event));
     } catch (err) {
-      await respond(undefined, String((err as Error).message ?? err));
+      await respond(undefined, errorMessage(err));
     }
   };
 

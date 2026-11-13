@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { downloadBytes } from '../utils/downloadBytes';
 import { robotPackageZip } from './robotPackageExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { errorMessage } from '../utils/errorMessage';
 
 export function useRobotPackageExport(core: WorkspaceCore) {
   'use memo';
@@ -27,7 +28,7 @@ export function useRobotPackageExport(core: WorkspaceCore) {
       downloadBytes(made.zip, `${made.name}.zip`, 'application/zip');
       showToast(`Exported ${made.name}`);
     } catch (err) {
-      showToast(`Couldn’t export the robot package. ${String(err)}`, { tone: 'error' });
+      showToast(`Couldn’t export the robot package. ${errorMessage(err)}`, { tone: 'error' });
     } finally {
       packingRef.current = false;
     }

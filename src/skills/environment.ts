@@ -3,6 +3,7 @@ import type { RobotPoseState } from '../types/robotics';
 import { contractSignals, type Contract } from './contract';
 import { hashOf, isHash } from './hash';
 import { eyeProblems, eyeRays, type Eye } from '../sim/eyes';
+import { errorMessage } from '../utils/errorMessage';
 
 export const ENVIRONMENT_VERSION = 1;
 
@@ -262,7 +263,7 @@ async function contractProblems(env: Environment): Promise<string[]> {
 
     return needed.filter((s) => !(s in env.signals)).map((s) => `The contract reads ${s}, which no signal provides.`);
   } catch (error) {
-    return [`The contract is refused: ${(error as Error).message}`];
+    return [`The contract is refused: ${errorMessage(error)}`];
   }
 }
 

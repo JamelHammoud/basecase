@@ -5,6 +5,7 @@ import type { WorldKind } from '../cases/caseWorlds';
 import type { WorldObject } from '../cases/schema';
 import type { CompileResult } from '../routines/compile';
 import type { Cases } from './useCases';
+import { errorMessage } from '../utils/errorMessage';
 
 type Payload = Record<string, unknown>;
 
@@ -44,7 +45,7 @@ function extraObjects(payload: Payload): WorldObject[] | string {
   try {
     return sceneObjects(Array.isArray(payload.objects) ? (payload.objects as AgentObject[]) : []);
   } catch (e) {
-    return e instanceof Error ? e.message : String(e);
+    return errorMessage(e);
   }
 }
 

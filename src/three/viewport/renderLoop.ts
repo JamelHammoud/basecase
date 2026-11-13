@@ -124,6 +124,10 @@ export class RenderLoop {
     this.shadowsStale = true;
   };
 
+  redraw = (): void => {
+    this.dirty = true;
+  };
+
   noteInteraction = (): void => {
     this.dirty = true;
     this.lastInteraction = performance.now();

@@ -19,7 +19,8 @@ export const createCase = {
       'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch. ' +
       'objects adds world objects as in set_world (agent frame). A legged robot that falls fails any Case. ' +
       'logic is a Routine (as in make_routine) the Case runs; score counts dynamic objects in or out of a marker spot. ' +
-      'Returns { ok, id, name, brief, seconds, objects } or { ok: false, problem } saying what to change, e.g. the goals this robot can try.',
+      'console makes the Case an app the person runs: with one, the app opens the new Case running, laid out by it. ' +
+      'Returns { ok, id, name, brief, seconds, objects, running? } or { ok: false, problem } saying what to change, e.g. the goals this robot can try or the console path it refused.',
     inputSchema: {
       goal: z.enum(['reach', 'push', 'path', 'walk', 'touch', 'pick', 'handoff']),
       world: z.enum(['floor', 'corridor', 'block', 'shelf']).optional().describe('floor when left out'),
@@ -56,6 +57,16 @@ export const createCase = {
         .object({ spot: z.string(), counts: z.enum(['in', 'out']) })
         .optional()
         .describe('in: objects inside the spot; out: objects that started in it and left'),
+      console: z
+        .record(z.string(), z.unknown())
+        .optional()
+        .describe(
+          'What the running Case shows and reads. input: 1–4 input source ids (keys, gamepad, phone; a source this version lacks is refused, so leave it out and say so). ' +
+            'panels: [{ id, kind, title?, ... }] with kind camera (signal: camera.<name> or camera.*), value (signal), plot (signals, seconds), table (of: servos, joints or signals), button (action: try, end-try, drive, stop, start-over, reset), list (of: tries or failures), text (of: brief, or text), map (trail). ' +
+            'Signals: joint.<id>.target/position/effort (joint.*.position in plots), robot.height/tilt/speed/travelled/x/z, probe.<name>, input.<source>.forward/left/turn/lift/grip, goal.passed/margin, time, and the Case’s own. ' +
+            'signals (optional): [{ id, kind: timer (seconds), counter (when: { signal, above|below }), score (sum: [{ signal, times }]) }]. ' +
+            'layout: { areas: [{ size: 200–720, panels: [ids] }, { canvas: true }, …] }, the canvas once, every panel placed once.',
+        ),
     },
   },
   handler: async (args) => {

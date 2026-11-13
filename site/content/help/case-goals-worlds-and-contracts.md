@@ -78,6 +78,8 @@ The builder starts each number at a default sized to the robot. Its limits:
 | **Shelf** | Touch a Point | A box under the point |
 | A room you imported | Reach a Spot, Push a Box, Follow a Path; Touch a Point when a table is in reach | The room's largest walls and furniture, at true size |
 
+In a room, the robot starts where the scan marked it, turned to the nearest quarter turn of the marked heading. With no mark, or one where the robot doesn't fit, it starts on the open floor nearest the room's middle. The steps are in [Import a scanned room as a Case world](/help/import-a-scanned-room).
+
 A Case's name defaults to its goal and world, such as "Push a Box in a Corridor". A world that would put a solid object where the robot stands is refused, with what to change.
 
 ## How a try is judged

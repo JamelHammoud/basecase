@@ -12,7 +12,7 @@ const HEADER = `# Lessons playbook
 What the bench and the micro-evals taught us about the agent, one lesson per entry. Entries are only ever appended (\`node bench/playbook.mjs add\`), never rewritten: a lesson that turns out wrong gets a new entry that supersedes it. Every entry names the runs that show it.
 `;
 
-const ENTRY = /^## (L-\d+): (.*)$/;
+const ENTRY = /^## ([A-Z]-\d+): (.*)$/;
 const FIELD = /^- (\w[\w ]*): (.*)$/;
 
 function addField(entry, line) {
@@ -51,10 +51,10 @@ export function activeLessons(entries) {
   return entries.filter((e) => !superseded.has(e.id));
 }
 
-export function nextId(entries) {
+export function nextId(entries, prefix = 'L') {
   const max = Math.max(0, ...entries.map((e) => Number(e.id.slice(2))));
 
-  return `L-${String(max + 1).padStart(3, '0')}`;
+  return `${prefix}-${String(max + 1).padStart(3, '0')}`;
 }
 
 export function formatEntry({ id, title, lesson, evidence, tags = [], supersedes = [], date }) {
@@ -76,14 +76,14 @@ export function formatEntry({ id, title, lesson, evidence, tags = [], supersedes
     .join('\n');
 }
 
-export function appendLesson(file, fields) {
-  const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : HEADER;
+export function appendLesson(file, fields, { prefix = 'L', header = HEADER } = {}) {
+  const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : header;
   const entries = parsePlaybook(text);
   const unknown = (fields.supersedes ?? []).filter((id) => !entries.some((e) => e.id === id));
 
   if (unknown.length) throw new Error(`No lesson ${unknown.join(', ')} to supersede.`);
 
-  const id = nextId(entries);
+  const id = nextId(entries, prefix);
   const entry = formatEntry({ ...fields, id, date: fields.date ?? new Date().toISOString().slice(0, 10) });
 
   fs.writeFileSync(file, `${text.replace(/\n*$/, '\n')}\n${entry}`);

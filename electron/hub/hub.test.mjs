@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { startFakeHub } from '../../e2e/fakeHub.ts';
-import { HubClient } from './hubClient.mjs';
+import { HubClient, TOKEN_REFUSED } from './hubClient.mjs';
 import { HUB_CALLS } from './routes.mjs';
 import { HubAccount, hubEndpoint } from './index.mjs';
 
@@ -84,7 +84,7 @@ describe('Hugging Face account', () => {
 
   it('refuses a token the Hub rejects or one that can only read, and stores nothing', async () => {
     hub = await startFakeHub({ token: TOKEN });
-    await expect(account().signIn('hf_wrong')).rejects.toThrow(/401/);
+    await expect(account().signIn('hf_wrong')).rejects.toThrow(TOKEN_REFUSED);
     await hub.close();
 
     hub = await startFakeHub({ token: TOKEN, role: 'read' });
@@ -201,7 +201,7 @@ describe('publishing to the Hub', () => {
 
     const failure = await hubAccount.publish({ name: 'echo', files: dataset(1) }).catch((e) => e);
 
-    expect(failure.message).toMatch(/500/);
+    expect(failure.message).toMatch(/^Hugging Face refused the request: /);
     expect(failure.message).not.toContain(TOKEN);
     expect(logged.join('\n')).not.toContain(TOKEN);
   });

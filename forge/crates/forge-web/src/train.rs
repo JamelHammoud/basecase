@@ -95,7 +95,8 @@ fn train_loop(robot: &Robot, algo: &mut dyn Algorithm) -> Result<u64, String> {
 fn outcome(robot: &Robot, algo: &dyn Algorithm, steps: u64) -> Result<Value, String> {
     let policy = algo.deployed();
     let run = Trained {
-        robot,
+        job: &robot.job,
+        mujoco: &robot.mujoco,
         policy: &policy,
         norm: algo.norm(),
     };

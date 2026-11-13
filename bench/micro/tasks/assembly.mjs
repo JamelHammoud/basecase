@@ -1,4 +1,4 @@
-import { boltedPair } from '../bolted.mjs';
+import { boltedPair, LAYOUT_NAMES } from '../bolted.mjs';
 import {
   allOf,
   driverAccess,
@@ -46,7 +46,6 @@ const LAYOUT_TASKS = [
   { ids: ['A9', 'A10', 'A11', 'A12'], layouts: ['arm', 'arm', 'arm', 'arm'] },
 ];
 
-const LAYOUT_NAMES = { visor: 'visor', torso: 'torso-to-pelvis', arm: 'upper arm to shoulder' };
 const SOLUTION = (layout) => () => boltedPair({ layout });
 
 function faultTasks() {

@@ -42,6 +42,8 @@ Drive the robot through an open Case while Basecase records it, then see whether
 
 **Try ⟨Case⟩** is also in [[⌘K]]. Pressing [[Esc]] stops driving, which ends the try too.
 
+To drive a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive With Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+
 ## Whether the robot can do it
 
 The icon beside the Case's name is its row in **Build ▸ Checks**. Hover it for how many of 20 runs passed. Click it to open the row.
@@ -67,4 +69,4 @@ While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), th
 
 When the robot can't drive, **Teach It to Move** shows under **Try It**. It trains a **Walk** skill; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 
-Tries are kept on this computer, not in shared `.basecase` files. Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset).
+Tries are kept on this computer, not in shared `.basecase` files. Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset). Once five pass, you can train a policy from them; see [Train a policy from your tries](/help/train-a-policy-from-your-tries).

@@ -7,6 +7,7 @@ export interface BuildGuideRecord {
   steps: number;
   generatedAt: string;
   fingerprint: string;
+  orderTimedOut?: boolean;
   coverDataUrl?: string;
 }
 

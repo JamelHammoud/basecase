@@ -38,6 +38,7 @@ A robot that stands in the simulation tells you little about whether it can reac
 - **Controls.** What you steer while trying it, such as Move and Turn, or Move and Raise and Lower for an arm.
 - **A contract.** The rules that judge a try: what must happen to pass, and what makes it fail, such as a fall.
 - **A time limit.** How long a try may take.
+- **A console**, if it has one. The inputs that drive it and the panels around the canvas when you [run it](/help/run-a-case).
 
 Every Case also carries a reference: a route that proves the Case can be passed. [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts) lists each goal and exactly how it's judged.
 
@@ -59,3 +60,4 @@ Cases measure. Skills you train in the **Train** section are judged by the same 
 
 - **New Case** builds one from a goal and a world. Steps are in [Make a Case](/help/make-a-case).
 - **Ask the Agent** lets you describe one in words, with `/case` in the agent's box.
+- **The agent** also builds one when you tell it what to do with a robot, such as a block game, and opens it running.

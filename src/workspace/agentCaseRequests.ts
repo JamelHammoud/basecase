@@ -9,6 +9,7 @@ import type { Case } from '../cases/schema';
 import { caseNamed, runCase, type RunCaseContext } from './agentCaseRun';
 import type { Cases } from './useCases';
 import type { CaseCompare } from './useCaseCompare';
+import type { CaseRun } from './useCaseRun';
 import { errorMessage } from '../utils/errorMessage';
 
 type Payload = Record<string, unknown>;
@@ -16,6 +17,7 @@ type Payload = Record<string, unknown>;
 interface CaseContext extends RunCaseContext {
   cases: Cases;
   caseCompare: Pick<CaseCompare, 'choicesFor' | 'compareNow' | 'start'>;
+  caseRun: Pick<CaseRun, 'enterCase'>;
   routines: { checkLogic: (logic: unknown) => Promise<CompileResult> };
 }
 
@@ -80,6 +82,7 @@ async function createCase(payload: Payload, ctx: CaseContext) {
     objects,
     logic: payload.logic,
     score: payload.score,
+    console: payload.console,
   };
   const refused = await logicProblem(spec, ctx);
 
@@ -90,8 +93,13 @@ async function createCase(payload: Payload, ctx: CaseContext) {
   if (!built.ok) return built;
 
   const { id, name, brief, task, world } = built.kase;
+  const reply = { ok: true, id, name, brief, seconds: task.seconds, objects: world.objects.length };
 
-  return { ok: true, id, name, brief, seconds: task.seconds, objects: world.objects.length };
+  if (!built.kase.console) return reply;
+
+  ctx.caseRun.enterCase(id);
+
+  return { ...reply, running: true };
 }
 
 function caseToCompare(payload: Payload, cases: Cases): Case | string {

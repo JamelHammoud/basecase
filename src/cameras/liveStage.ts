@@ -6,6 +6,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import { releasePartGroup } from '../three/buildPartMesh';
 import { provideMeshFiles, type MeshFiles } from '../three/componentMeshes';
 import { loadPartMeshes } from '../three/thumbnailRender';
+import { softwareGl } from '../three/softwareGl';
 import { createStudioScene } from '../three/thumbnailStage';
 import type { ScenePart } from '../types/robotics';
 import { LensRenderer } from './lensRender';
@@ -91,7 +92,7 @@ export class LiveStage {
   constructor([width, height]: [number, number] = LARGE_SIZE) {
     this.renderer = new THREE.WebGLRenderer({
       canvas: new OffscreenCanvas(width, height),
-      antialias: true,
+      antialias: !softwareGl(),
       preserveDrawingBuffer: true,
       powerPreference: 'low-power',
     });

@@ -144,6 +144,7 @@
       "extendInfo": {
         "CFBundleIconName": "Basecase",
         "NSLocalNetworkUsageDescription": "So Basecase can find your printers and send them prints.",
+        "NSCameraUsageDescription": "So Basecase can follow your arms and drive a robot with them.",
         "NSBonjourServices": [
           "_octoprint._tcp",
           "_moonraker._tcp"
@@ -202,6 +203,7 @@
     "@agentclientprotocol/codex-acp": "^2.6.0",
     "@agentclientprotocol/sdk": "^1.8.0",
     "@google/gemini-cli": "^0.68.0",
+    "@mediapipe/tasks-vision": "1.2.2",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "electron-updater": "^6.8.10",
     "hyparquet-writer": "^0.18.0",

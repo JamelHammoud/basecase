@@ -41,6 +41,10 @@ Real constraints change the design more than adjectives do. Compare “a gripper
 
 After the first design, short follow-ups work best: “Longer legs”, “Thicker brackets”, “Round the edges”, “Use M3 screws”. Point at the part you mean with **Reference Part** or a mark, since the agent doesn't see your selection. [Point the agent at a part](/help/point-the-agent-at-a-part) has the steps.
 
+## Say how you want to drive it
+
+To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad and a phone for now.
+
 ## Ask about Checks instead of hiding them
 
 When a Check fails, ask the agent to fix it, or why it matters. It won't narrow a range or hide a part to pass a check, and it tells you when a check looks wrong. When the scene has Cases, it runs them before it calls a design done. It never edits a Case to pass one.

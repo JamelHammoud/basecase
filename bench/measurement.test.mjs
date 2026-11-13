@@ -7,6 +7,7 @@ import { appendIndex, archiveRun, indexEntry, readIndex } from './archive.mjs';
 import { indexReport } from './report.mjs';
 import { messageAt, stepsFromConversation, stepsFromEvents, userMessages } from './replaySteps.mjs';
 import { activeLessons, appendLesson, parsePlaybook } from './playbook.mjs';
+import { appendExperiment, readExperiments } from './experiments.mjs';
 
 const update = (t, u) => ({ t, type: 'acp-session-update', workspaceId: 'main', update: u });
 const subagent = { claudeCode: { parentToolUseId: 'toolu_agent' } };
@@ -202,5 +203,20 @@ describe('lessons playbook', () => {
     });
     expect(activeLessons(entries).map((e) => e.id)).toEqual(['L-002']);
     expect(() => appendLesson(file, { title: 'x', lesson: 'y', evidence: [] })).toThrow(/evidence/);
+  });
+});
+
+describe('harness experiments', () => {
+  it('appends every measured change in the same append-only format, numbered on its own', () => {
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'experiments-')), 'experiments.md');
+    const fields = { lesson: 'Not kept: no gain.', evidence: ['harness-1-tune'], tags: ['service', 'not kept'] };
+
+    expect(appendExperiment(file, { ...fields, title: 'Ask for a service path' })).toBe('E-001');
+    expect(appendExperiment(file, { ...fields, title: 'Show screw engagement' })).toBe('E-002');
+    expect(fs.readFileSync(file, 'utf8')).toMatch(/^# Harness experiments\n/);
+    expect(readExperiments(file).map((e) => [e.id, e.title, e.tags])).toEqual([
+      ['E-001', 'Ask for a service path', ['service', 'not kept']],
+      ['E-002', 'Show screw engagement', ['service', 'not kept']],
+    ]);
   });
 });

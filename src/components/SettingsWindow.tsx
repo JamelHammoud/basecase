@@ -27,22 +27,16 @@ import { BuildPane, type BuildPrefs } from './settings/BuildPane';
 import { PrintersPane } from './settings/PrintersPane';
 import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
-import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { SETTINGS_PANES, type SettingsPane } from '../app/settingsPanes';
 
-export type SettingsPane = 'canvas' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
-
-const PANES: Array<{ id: SettingsPane; label: string; icon: React.ReactNode }> = [
-  { id: 'canvas', label: 'Canvas', icon: <GridIcon className="w-4 h-4" /> },
-  { id: 'agent', label: 'Agent', icon: <BotIcon className="w-4 h-4" /> },
-  { id: 'build', label: 'Build', icon: <PackageIcon className="w-4 h-4" /> },
-  { id: 'printers', label: 'Printers', icon: <PrinterIcon className="w-4 h-4" /> },
-  { id: 'accounts', label: 'Accounts', icon: <HumanIcon className="w-4 h-4" /> },
-  { id: 'shortcuts', label: 'Shortcuts', icon: <KeyboardIcon className="w-4 h-4" /> },
-];
-
-const DESKTOP_PANES: SettingsPane[] = ['agent', 'printers', 'accounts'];
-
-const VISIBLE_PANES = IS_WEB_DEMO ? PANES.filter((p) => !DESKTOP_PANES.includes(p.id)) : PANES;
+const PANE_ICONS: Record<SettingsPane, React.ReactNode> = {
+  canvas: <GridIcon className="w-4 h-4" />,
+  agent: <BotIcon className="w-4 h-4" />,
+  build: <PackageIcon className="w-4 h-4" />,
+  printers: <PrinterIcon className="w-4 h-4" />,
+  accounts: <HumanIcon className="w-4 h-4" />,
+  shortcuts: <KeyboardIcon className="w-4 h-4" />,
+};
 
 const MOVE_SNAP_STEPS = ['0', '1', '2', '5', '10'];
 const ROTATE_SNAP_STEPS = ['0', '5', '15', '45', '90'];
@@ -96,7 +90,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
 
   if (!open) return null;
 
-  const current = VISIBLE_PANES.find((p) => p.id === pane) ?? VISIBLE_PANES[0];
+  const current = SETTINGS_PANES.find((p) => p.id === pane) ?? SETTINGS_PANES[0];
 
   return createPortal(
     <div
@@ -116,7 +110,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
           <h2 className="px-[10px] h-[40px] flex items-center text-[15px] font-semibold text-white/90 mb-[4px]">
             Settings
           </h2>
-          {VISIBLE_PANES.map((p) => {
+          {SETTINGS_PANES.map((p) => {
             const isCurrent = p.id === current.id;
 
             return (
@@ -136,7 +130,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
                     isCurrent ? 'text-white/90' : 'text-white/50 group-hover:text-white/70'
                   }`}
                 >
-                  {p.icon}
+                  {PANE_ICONS[p.id]}
                 </span>
                 {p.label}
               </button>

@@ -7,25 +7,33 @@ import { buildCase, builderRobot } from '../../src/cases/caseBuilder';
 import { buildRig } from '../../src/utils/kinematics';
 import { parseBomTotal, parseCheckRows } from './adapters.mjs';
 import { bomChange } from './caseChecks.mjs';
+import { robotsIn } from './caseAppChecks.mjs';
 import { gradeTask, startFacts } from './grade.mjs';
 import { keepStartCases, recordFromFixture } from './materialize.mjs';
 import { passHatK, suiteStats, statsMarkdown } from './stats.mjs';
-import { SEED_TASKS, selectTasks, stubTasks } from './tasks/index.mjs';
+import { ALL_TASKS, HARVESTED_TASKS, SEED_TASKS, selectTasks, stubTasks } from './tasks/index.mjs';
 
 const build = (fixture) => recordFromFixture(fixture, specToPart, { buildCase, builderRobot, buildRig });
-const APP_GRADED = new Set(['D1']);
+const APP_GRADED = new Set(['D1', ...SEED_TASKS.filter((t) => t.category === 'case-apps').map((t) => t.id)]);
 const task = (id) => SEED_TASKS.find((t) => t.id === id);
 
 describe('seed tasks', () => {
-  it('covers the 31 seed tasks with a held-out third', () => {
-    expect(SEED_TASKS).toHaveLength(31);
-    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(31);
-    expect(selectTasks({ split: 'heldout' })).toHaveLength(10);
+  it('covers the 43 seed tasks with a held-out third', () => {
+    expect(SEED_TASKS).toHaveLength(43);
+    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(43);
+    expect(selectTasks({ split: 'heldout' })).toHaveLength(14);
     expect(selectTasks({ split: 'tune' }).some((t) => t.heldOut)).toBe(false);
   });
 
+  it('keeps harvested tasks valid: unique ids, numbered H1 to Hn, each a planted fault', () => {
+    expect(new Set(ALL_TASKS.map((t) => t.id)).size).toBe(ALL_TASKS.length);
+    expect(selectTasks()).toHaveLength(ALL_TASKS.length);
+    expect(HARVESTED_TASKS.map((t) => t.id)).toEqual(HARVESTED_TASKS.map((_, i) => `H${i + 1}`));
+    expect(HARVESTED_TASKS.every((t) => t.fixture && t.solution && t.harvested)).toBe(true);
+  });
+
   it('never passes a broken start scene, and passes every known fix', async () => {
-    for (const t of SEED_TASKS.filter((x) => x.fixture)) {
+    for (const t of ALL_TASKS.filter((x) => x.fixture)) {
       const start = await build(t.fixture());
       const atStart = await gradeTask(t, { before: start, after: start });
 
@@ -189,6 +197,63 @@ describe('the Case task', () => {
     expect(bomChange(50, 60)).toBeCloseTo(0.2);
     expect(bomChange(0, 60)).toBeNull();
     expect(bomChange(50, null)).toBeNull();
+  });
+});
+
+describe('the Case app tasks', () => {
+  const ran = (data) => ({ call: async (kind) => (kind === 'run_case' ? { data } : { error: kind }) });
+  const RAN = { id: 'reach-a-spot', runs: 20, passes: 3, status: 'fail', failures: [], refusal: null };
+  const rover = async () => build(task('E3').solution());
+  const withConsole = (scene, patch) => ({
+    ...scene,
+    project: {
+      ...scene.project,
+      cases: scene.project.cases.map((c) => ({ ...c, console: { ...c.console, ...patch } })),
+    },
+  });
+
+  it('scores the robot, the console, the fit and the run apart', async () => {
+    const after = await rover();
+    const grade = await gradeTask(task('E3'), { before: after, after, app: ran(RAN) });
+
+    expect(grade.status).toBe('pass');
+    expect(grade.checks.map((c) => c.pass)).toEqual([true, true, true, true]);
+  });
+
+  it('fails a console without the panel the sentence names, and a robot the Case refuses', async () => {
+    const after = await rover();
+    const blind = withConsole(after, {
+      panels: [{ id: 'tries', kind: 'list', of: 'tries' }],
+      layout: { areas: [{ canvas: true }, { size: 300, panels: ['tries'] }] },
+    });
+    const grade = await gradeTask(task('E3'), {
+      before: after,
+      after: blind,
+      app: ran({ ...RAN, refusal: 'No wheels' }),
+    });
+
+    expect(grade.checks.map((c) => c.pass)).toEqual([true, false, false, false]);
+    expect(grade.checks[1].detail).toBe('Lacks camera panel (has list)');
+  });
+
+  it('scores an input the app lacks as named, not built, instead of a pass or a fail', async () => {
+    const after = withConsole(await rover(), { input: ['keys'] });
+    const graded = (built) =>
+      gradeTask({ ...task('E3'), grade: task('E1').grade }, { before: after, after, app: ran(RAN), adapters: built });
+
+    expect((await graded({ inputBuilt: () => false })).checks[1]).toMatchObject({
+      pass: null,
+      detail: 'camera named, not built',
+    });
+    expect((await graded({ inputBuilt: () => true })).checks[1]).toMatchObject({ pass: false });
+  });
+
+  it('counts each joint chain as one robot', async () => {
+    const one = await rover();
+    const [a, b] = [one.project.joints, one.project.joints.map((j) => ({ ...j, parent: ['x'], child: ['y'] }))];
+
+    expect(robotsIn(one)).toEqual([{ joints: 2, spinning: 2, names: ['Rover'], camera: false }]);
+    expect(robotsIn({ ...one, project: { joints: [...a, b[0]] } })).toHaveLength(2);
   });
 });
 

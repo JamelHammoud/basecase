@@ -95,6 +95,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_interfaces` | Sets what each part designer must connect to |
 | `check_interfaces` | Checks a subassembly against those connections |
 | `define_joints` | Declares the robot's joints |
+| `find_joint_axes` | Finds the hinges in imported parts: each shaft or pin in a bore |
 | `get_rig` | Lists joints, poses and animations |
 | `pose` | Poses the robot without changing parts |
 | `animate` | Makes keyframes or a walking gait |

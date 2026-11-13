@@ -25,6 +25,7 @@ import {
   type DefineJointsPayload,
 } from './agentBuildRequests';
 import { craftScene, partMeshes, visibleShare } from './agentCraftRequests';
+import { findJointAxes } from './agentJointAxes';
 import { PORT_HANDLERS } from './agentPortRequests';
 import { PLAN_HANDLERS, prepareOps } from './agentPlanRequests';
 import { costByClass } from '../utils/budget';
@@ -278,6 +279,12 @@ const HANDLERS: Record<string, Handler> = {
   printability,
   slice: slicePlates,
   define_joints: defineJoints,
+  find_joint_axes: (payload, ctx) =>
+    findJointAxes(payload, {
+      parts: ctx.parts,
+      joints: () => ctx.project().joints ?? [],
+      jointAxes: async (ids) => (await ctx.viewport()?.jointAxes(ids)) ?? { candidates: [], fastened: [], faces: [] },
+    }),
   verify: async (payload, ctx) => {
     ctx.setAction('Checking the design');
 

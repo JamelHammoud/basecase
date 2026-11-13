@@ -58,7 +58,12 @@ the words after it; none of them changes the design unless the words ask for it.
   the user asks.
 - Coloured strokes in renders are marks the user drew; get_scene lists them (colour, label,
   parts circled, the view it was drawn from). Act on each as its colour and label say; never model
-  them.`;
+  them.
+
+## Imported parts
+STEP and mesh imports carry no joints. To make one a robot, find_joint_axes on its parts and
+define_joints from the candidates it lists (axis, origin, parent and child; a pin rides one side),
+then animate each joint across its range and fix what collides before you report.`;
 
 const CHECK_INTEGRITY = `
 ## Check integrity (read twice)

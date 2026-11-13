@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { findJointAxis, type FoundAxis } from '../../joints/axisFinder';
+import { jointCandidates, type JointAxes } from '../../joints/jointCandidates';
 import { MeshIndex, type V3 } from '../../joints/meshIndex';
 
 export interface JointAxisQuery {
@@ -69,4 +70,20 @@ export function jointAxisOf(
   };
 
   return findJointAxis(parent, child, pick);
+}
+
+export function jointAxesOf(
+  query: { ids: string[]; instances: Placed[] },
+  positionsOf: (key: string) => Float32Array,
+): JointAxes {
+  const bodies = query.ids.flatMap((id) => {
+    const index = indexOf(
+      query.instances.find((i) => i.id === id),
+      positionsOf,
+    );
+
+    return index ? [{ id, index }] : [];
+  });
+
+  return jointCandidates(bodies);
 }

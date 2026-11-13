@@ -1,6 +1,6 @@
 use servo_emu::g1::{serve_loopback, G1Options};
 use servo_emu::ros2::{serve_ros2_loopback, Ros2Options};
-use servo_emu::{BusOptions, InProcessBus, ServoBus, SharedBus};
+use servo_emu::{parts_by_id, BusOptions, InProcessBus, PartModel, ServoBus, SharedBus};
 use servo_wire::ros2::ControllerKind;
 use servo_wire::{ByteTransport, Clock, Endpoints, Family, TopicTransport};
 use std::sync::Arc;
@@ -57,7 +57,26 @@ pub struct Opened {
     pub new_servos: Option<NewServos>,
 }
 
-pub fn open(target: &Target, family: Family, ids: &[u8], clock: Arc<dyn Clock>) -> Result<Opened, String> {
+#[derive(Debug, Clone, Copy)]
+pub struct ServoRobot<'a> {
+    pub family: Family,
+    pub ids: &'a [u8],
+    pub units: &'a [Option<PartModel>],
+}
+
+impl<'a> ServoRobot<'a> {
+    pub fn plain(family: Family, ids: &'a [u8]) -> Self {
+        Self {
+            family,
+            ids,
+            units: &[],
+        }
+    }
+}
+
+pub fn open(target: &Target, robot: ServoRobot, clock: Arc<dyn Clock>) -> Result<Opened, String> {
+    let ServoRobot { family, ids, units } = robot;
+
     match target {
         Target::Emulated {
             latency_us,
@@ -68,10 +87,11 @@ pub fn open(target: &Target, family: Family, ids: &[u8], clock: Arc<dyn Clock>) 
                 seed: *seed,
                 ..BusOptions::default()
             };
+            let parts = parts_by_id(ids, units);
             let bus = if *factory {
-                ServoBus::factory(family, options)
+                ServoBus::factory_with_parts(family, options, parts)
             } else {
-                ServoBus::new(family, ids, options)
+                ServoBus::with_parts(family, ids, options, parts)
             }
             .shared();
             let new_servos = factory.then(|| NewServos {
@@ -159,8 +179,7 @@ mod tests {
                 path: "/dev/null".into(),
                 baud: 1_000_000,
             },
-            Family::Feetech,
-            &[1],
+            ServoRobot::plain(Family::Feetech, &[1]),
             Arc::new(VirtualClock::new()),
         );
 
@@ -259,10 +278,14 @@ mod tests {
             seed: 1,
             factory: true,
         };
-        let mut new_servos = open(&target, Family::Feetech, &[1, 2], Arc::new(VirtualClock::new()))
-            .unwrap()
-            .new_servos
-            .unwrap();
+        let mut new_servos = open(
+            &target,
+            ServoRobot::plain(Family::Feetech, &[1, 2]),
+            Arc::new(VirtualClock::new()),
+        )
+        .unwrap()
+        .new_servos
+        .unwrap();
 
         assert!(new_servos.plug_in().is_ok());
         assert!(new_servos.plug_in().is_ok());
@@ -276,7 +299,12 @@ mod tests {
             seed: 1,
             factory: false,
         };
-        let opened = open(&target, Family::Dynamixel, &[1], Arc::new(VirtualClock::new())).unwrap();
+        let opened = open(
+            &target,
+            ServoRobot::plain(Family::Dynamixel, &[1]),
+            Arc::new(VirtualClock::new()),
+        )
+        .unwrap();
 
         assert!(opened.new_servos.is_none());
     }

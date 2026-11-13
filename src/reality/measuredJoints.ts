@@ -1,27 +1,17 @@
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { activeCalibrations, type CalibrationHistory } from './history';
-import type { ServoCalibration, ServoFamily } from './types';
+import { jointServo, sameServo, servoPartOf } from './servoPart';
+import type { ServoCalibration } from './types';
 
-export const BENCH_SERVOS: Record<ServoFamily, { componentId: string; variant?: string }> = {
-  sts3215: { componentId: 'feetech-sts3215', variant: 'c001' },
-  xl330: { componentId: 'dynamixel-xl330-m288' },
-};
-
-export function servoFamilyOf(joint: RobotJoint | undefined, parts: readonly ScenePart[]): ServoFamily | null {
-  const servo = joint?.actuators?.map((id) => parts.find((p) => p.id === id)).find((p) => p?.componentId);
-  const match = Object.entries(BENCH_SERVOS).find(
-    ([, s]) => s.componentId === servo?.componentId && (!s.variant || s.variant === servo.componentVariant),
-  );
-
-  return (match?.[0] as ServoFamily | undefined) ?? null;
-}
-
-export const calibrationApplies = (
+export function calibrationApplies(
   calibration: ServoCalibration | undefined,
   joint: RobotJoint | undefined,
   parts: readonly ScenePart[],
-): calibration is ServoCalibration =>
-  calibration?.verdict === 'measured' && servoFamilyOf(joint, parts) === calibration.family;
+): calibration is ServoCalibration {
+  const servo = jointServo(joint, parts);
+
+  return calibration?.verdict === 'measured' && servo !== null && sameServo(servoPartOf(calibration), servo);
+}
 
 export interface MeasuredJointsInput {
   joints: readonly RobotJoint[];

@@ -14,6 +14,7 @@ keywords:
   - roll back
   - replay
   - sts3215
+  - dynamixel
 related:
   - connect-an-emulated-robot
   - simulation-in-basecase
@@ -31,13 +32,18 @@ covers:
   - src/reality/history.ts
   - src/reality/calibratedInput.ts
   - src/reality/measuredJoints.ts
+  - src/reality/servoPart.ts
+  - src/reality/servoEstimate.ts
+  - src/robot/emulatedUnits.ts
   - src/components/pose/JointRow.tsx
   - src/utils/engineeringSimModel.ts
 ---
 
 Fit each emulated servo's model from an 18-second bench run, so the simulation, Cases and training move the way the servos do.
 
-Calibration works on the emulated robot; no real servo has been logged with it. The fit is used on joints driven by an STS3215, the servo the emulator runs.
+Calibration works on the emulated robot; no real servo has been logged with it. Each joint is fitted against its own servo and variant, and each emulated servo stands in for that part.
+
+The STS3215 C001 and XL330 start from a measured catalog model. Every other Feetech and Dynamixel servo starts from an estimate scaled from its stall torque, speed and volts. PWM servos such as the DS3218 can't answer on the bus, so Calibrate skips them and their rows read **No reply**.
 
 1. Connect the emulated robot from the scene you want to calibrate. Steps are in [Connect an emulated robot](/help/connect-an-emulated-robot).
 2. Under **Ladder**, click **Set Up**.
@@ -83,7 +89,7 @@ A joint with no version in use shows **Preset**. **Roll Back** steps back one me
 
 The bench sequence ramps every joint 0.25 rad each way at 0.12 rad/s, holding 0.6 s at each end, for 9 seconds. Then it swings each joint through a 0.15 rad wave at 0.12 Hz for 9 more. It's slow because Test caps each joint at 0.5 rad/s, and a move the servo couldn't follow would read **Can’t tell**.
 
-Basecase fits the first half of each recording and checks the fit against the second half. It fits the servo's gain, delay, damping, inertia, friction and torque limit. Each stays within a quarter to 4 times the catalog value, or up to 8 times for the delay. On three emulated STS3215 servos, all three read **Measured**, 7 to 10% closer than the catalog model.
+Basecase fits the first half of each recording and checks the fit against the second half. It fits the servo's gain, delay, damping, inertia, friction and torque limit. Each stays within a quarter to 4 times its starting value, or up to 8 times for the delay. On three emulated STS3215 servos, all three read **Measured**, 7 to 10% closer than the catalog model.
 
 If the robot leaves **Test** or faults during the run, nothing is recorded, and a message under the servo count says why.
 

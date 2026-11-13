@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { RobotJoint } from '../types/robotics';
+import type { RobotJoint, ScenePart } from '../types/robotics';
 import { connectedFrom } from './calibrationSession';
 import { isServoAsk, servoFamily, type RobotEvent, type RobotState, type RobotStatus } from './robotState';
 import {
@@ -11,6 +11,7 @@ import {
   subscribeRobot,
   subscribeRobotEvents,
 } from './robotStore';
+import { emulatedUnits } from './emulatedUnits';
 import { sceneRobot } from './sceneRobot';
 import { FACTORY_ID, SERVO_MODEL, servoAnswers, servoStepsToDo, servoWalk, type ServoWalkStep } from './servoWalk';
 
@@ -22,6 +23,7 @@ export interface ServoSetup {
 
 export interface ServoSetupOptions {
   joints: readonly RobotJoint[];
+  parts?: readonly ScenePart[];
   select: SelectParts;
 }
 
@@ -167,14 +169,15 @@ function onEvent(event: RobotEvent) {
   showStep(current, current.steps?.slice(1) ?? []);
 }
 
-async function connectFactory(joints: readonly RobotJoint[]): Promise<boolean> {
+async function connectFactory({ joints, parts = [] }: Pick<ServoSetupOptions, 'joints' | 'parts'>): Promise<boolean> {
   const robot = sceneRobot(joints);
 
   if (!robot.ok || !isServoAsk(robot.spec)) return false;
 
   if (robotSnapshot().link === 'connected') return true;
 
-  const reply = await connectRobot({ ...robot.spec, factory: true }, robot.joints);
+  const units = emulatedUnits({ choice: robot, joints, parts });
+  const reply = await connectRobot({ ...robot.spec, ...units, factory: true }, robot.joints);
 
   if (!reply.ok) receiveRobotEvent({ event: 'refused', message: reply.message });
 
@@ -198,7 +201,7 @@ function follow(current: Walk) {
   else onState();
 }
 
-export async function setUpServos({ joints, select }: ServoSetupOptions): Promise<void> {
+export async function setUpServos({ joints, parts, select }: ServoSetupOptions): Promise<void> {
   if (walk || !canSetUpServos(joints, robotSnapshot())) return;
 
   const current: Walk = {
@@ -215,7 +218,7 @@ export async function setUpServos({ joints, select }: ServoSetupOptions): Promis
   walk = current;
   publish();
 
-  const connected = await connectFactory(joints);
+  const connected = await connectFactory({ joints, parts });
 
   if (walk !== current) return;
 

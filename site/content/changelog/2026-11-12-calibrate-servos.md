@@ -22,7 +22,9 @@ Then each servo is fitted, one joint at a time, off the main thread, in about 2 
 
 ## Reading the result
 
-Each joint gets a row with one of three verdicts. Measured means the fit beat the catalog's preset, and it's now in use, shown by its version, like v1. Consistent with preset means the preset already matched. Can't tell means the recording couldn't settle it, and the joint keeps what it had. The Simulate tab, Cases, Skills and training use the fit on joints driven by a catalog STS3215 or XL330.
+Each joint gets a row with one of three verdicts. Measured means the fit beat the catalog's preset, and it's now in use, shown by its version, like v1. Consistent with preset means the preset already matched. Can't tell means the recording couldn't settle it, and the joint keeps what it had. The Simulate tab, Cases, Skills and training use each fit on the joint whose servo it was measured on.
+
+Every Feetech and Dynamixel servo in the catalog can be calibrated, each against its own variant. The STS3215 C001 and XL330 start from a published model; the rest start from an estimate scaled from their stall torque, speed and volts. PWM servos such as the DS3218 can't answer on the bus, so Calibrate skips them.
 
 ## The replay
 

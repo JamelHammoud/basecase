@@ -1,11 +1,19 @@
 import { type MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from '../sim/loadMujoco';
-import { presetServo } from './bench';
 import { fitScales, segmentErrors, wholeLogErrors, windowOf, type FitContext } from './fitServo';
 import { climbLadder, combinedError, RUNGS, type RungResult } from './ladder';
 import { spread } from './replay';
+import { presetServo } from './servoEstimate';
 import { multipliers } from './servoParams';
-import type { CalibrationEvidence, CalibrationVerdict, ServoCalibration, ServoFamily, ServoLog } from './types';
+import { servoPartOf } from './servoPart';
+import type {
+  CalibrationEvidence,
+  CalibrationVerdict,
+  FamilyName,
+  ServoCalibration,
+  ServoLog,
+  ServoPart,
+} from './types';
 import { conditionsOf, ENCODER_RAD, EVIDENCE, explainedShare, preflight } from './verdict';
 
 let mujoco: Promise<MainModule> | null = null;
@@ -13,9 +21,26 @@ let mujoco: Promise<MainModule> | null = null;
 export const loadedMujoco = () => (mujoco ??= loadMujoco());
 
 export interface CalibrateRequest {
-  family: ServoFamily;
+  servo: ServoPart;
   logs: ServoLog[];
   mj?: MainModule;
+}
+
+type FamilyLog = Omit<ServoLog, 'servo'> & { family: FamilyName };
+
+export interface FamilyCalibrateRequest {
+  family: FamilyName;
+  logs: FamilyLog[];
+  mj?: MainModule;
+}
+
+const asServoLog = (log: ServoLog | FamilyLog): ServoLog =>
+  'servo' in log ? log : { ...log, servo: servoPartOf(log) };
+
+function servoRequest(request: CalibrateRequest | FamilyCalibrateRequest): CalibrateRequest {
+  if ('servo' in request) return request;
+
+  return { servo: servoPartOf(request), logs: request.logs.map(asServoLog), mj: request.mj };
 }
 
 interface Outcome {
@@ -31,7 +56,7 @@ function calibration(ctx: FitContext, logs: ServoLog[], outcome: Outcome): Servo
 
   return {
     verdict,
-    family: ctx.family,
+    servo: ctx.servo,
     version: 0,
     rung: measured ? best.rung : 'preset',
     fit: measured ? best.fit : ctx.preset.fit,
@@ -51,11 +76,11 @@ function calibration(ctx: FitContext, logs: ServoLog[], outcome: Outcome): Servo
 }
 
 function judge(ctx: FitContext, logs: ServoLog[]): Outcome {
-  const problem = preflight(logs, ctx.family);
+  const problem = preflight(logs, ctx.servo);
 
   if (problem) return { verdict: 'cant-tell', reason: problem };
 
-  const presetErrors = wholeLogErrors(ctx, ctx.preset.fit, logs);
+  const presetErrors = wholeLogErrors(ctx, null, logs);
   const presetExplained = explainedShare(
     presetErrors,
     logs.map((l) => spread(l.positionRad)),
@@ -79,7 +104,7 @@ const checkSpreads = (logs: ServoLog[]) =>
   });
 
 function climb(ctx: FitContext, logs: ServoLog[], base: Partial<CalibrationEvidence>): Outcome {
-  const presetCheck = segmentErrors(ctx, ctx.preset.fit, logs, 'check');
+  const presetCheck = segmentErrors(ctx, null, logs, 'check');
   const best = climbLadder(ctx, logs, presetCheck);
   const presetExplained = explainedShare(presetCheck, checkSpreads(logs));
 
@@ -106,11 +131,12 @@ function climb(ctx: FitContext, logs: ServoLog[], base: Partial<CalibrationEvide
   };
 }
 
-export async function calibrateServo(request: CalibrateRequest): Promise<ServoCalibration> {
+export async function calibrateServo(asked: CalibrateRequest | FamilyCalibrateRequest): Promise<ServoCalibration> {
+  const request = servoRequest(asked);
   const ctx: FitContext = {
     mj: request.mj ?? (await loadedMujoco()),
-    family: request.family,
-    preset: presetServo(request.family),
+    servo: request.servo,
+    preset: presetServo(request.servo),
   };
 
   return calibration(ctx, request.logs, judge(ctx, request.logs));

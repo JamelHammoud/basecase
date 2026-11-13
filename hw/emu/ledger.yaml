@@ -156,6 +156,21 @@ plant:
   - behaviour: Two servos answering at once pull the bus low, so their bytes AND together.
     source: assumed
     note: Models half-duplex TTL collisions for the duplicate-ID fault.
+  - behaviour: With --units, each emulated servo's nominal model is the catalog part on its joint, sent by the app per id, when the part has a measured BAM fit.
+    source: community
+    note: The fits in src/data/servoFits.ts, copied from Rhoban/bam. A null entry keeps the protocol's own STS3215 7.4 V or XL330 fit.
+  - behaviour: A part with no measured fit runs on the app's estimate from its catalog stall torque, no-load speed and rated volts.
+    source: assumed
+    note: Scaled from the nearest published fit; unchecked against any real unit of that part.
+  - behaviour: The P-gain register keeps the protocol's factory value (Feetech 32, Dynamixel 400), and a part's error gain is firmwareKp times errorGain over that value.
+    source: assumed
+    note: Makes register times error gain equal the part's own model at factory settings. Whether every part ships with the protocol's default P gain is unchecked.
+  - behaviour: A part rated at other volts than the bus drives its motor at the sagged bus supply times its rated volts over the protocol's (7.4 or 5.0 V), while present voltage and the voltage limits read the bus supply.
+    source: assumed
+    note: Stands in for each part on its own rated supply without a second supply model; keeps the daemon's per-family voltage window meaningful.
+  - behaviour: A new servo on a factory bus takes the part of the ID it holds, so it becomes its joint's part once its ID is rewritten.
+    source: assumed
+    note: Real servos don't change; this lets the Set Up walk number servos in any order and still put each part on its joint.
 
 unitree-g1:
   - behaviour: The robot publishes unitree_hg LowState on rt/lowstate and takes unitree_hg LowCmd on rt/arm_sdk, with 35 motor slots, the 29 G1 joints first in unitree_sdk2 order (legs 0 to 11, waist 12 to 14, left arm 15 to 21, right arm 22 to 28).

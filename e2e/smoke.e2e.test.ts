@@ -146,9 +146,9 @@ describe('studio commands', () => {
   it('aligns a part from the context menu and closes it', async () => {
     const xs = () =>
       app.page.evaluate(() =>
-        (window as unknown as { __studio: { parts: () => Array<{ position: number[] }> } }).__studio
-          .parts()
-          .map((p) => p.position[0]),
+        (window as unknown as { __studio: { sceneRecord: () => { parts: Array<{ position: number[] }> } } }).__studio
+          .sceneRecord()
+          .parts.map((p) => p.position[0]),
       );
     const before = await xs();
 

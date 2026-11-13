@@ -1,10 +1,10 @@
 import React from 'react';
 import {
   Button,
+  ChoiceGrid,
   Section,
   Slider,
   Switch,
-  Tooltip,
   CapsuleIcon,
   CircleDotIcon,
   CylinderIcon,
@@ -29,6 +29,8 @@ const BRUSH_OPTIONS: Array<{
   { id: 'pinch', label: 'Pinch', desc: 'Sharpen a crease' },
 ];
 
+const BRUSH_CHOICES = BRUSH_OPTIONS.map((b) => ({ value: b.id, label: b.label, title: b.desc }));
+
 const CLAY_PRESETS = [
   { id: 'clay_sphere', label: 'Sphere', icon: <CircleDotIcon className="w-4 h-4" /> },
   { id: 'clay_box', label: 'Block', icon: <ShapeIcon className="w-4 h-4" /> },
@@ -48,23 +50,13 @@ export const SculptPanel: React.FC<{
 }> = ({ sculptSettings, hasSelection, onUpdateSculptSettings, onAddClayPreset, onSubdivideSelectedClay }) => (
   <>
     <Section title="Brush">
-      <div className="grid grid-cols-3 gap-1.5">
-        {BRUSH_OPTIONS.map((b) => (
-          <Tooltip key={b.id} label={b.desc} className="w-full">
-            <button
-              type="button"
-              onClick={() => onUpdateSculptSettings({ brush: b.id })}
-              className={`w-full h-9 rounded-lg text-[13px] font-medium cursor-default transition-colors ${
-                sculptSettings.brush === b.id
-                  ? 'bg-figma-blue-fill text-white'
-                  : 'bg-white/[0.05] text-white/70 hover:bg-white/[0.09] hover:text-white'
-              }`}
-            >
-              {b.label}
-            </button>
-          </Tooltip>
-        ))}
-      </div>
+      <ChoiceGrid
+        label="Brush"
+        columns={3}
+        options={BRUSH_CHOICES}
+        value={sculptSettings.brush}
+        onChange={(brush) => onUpdateSculptSettings({ brush })}
+      />
       <Slider
         label="Size"
         min={3}

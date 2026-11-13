@@ -6,6 +6,7 @@ import {
   IconButton,
   RunIcon,
   Section,
+  ShareIcon,
   type ContextMenuEntry,
 } from '../../design-system';
 import type { TryRecord } from '../../cases/tries';
@@ -88,6 +89,18 @@ export const ResultsSection: React.FC<ResultsProps> = ({ cases, model, parts, wo
           onClick={cases.dataset.exportDataset}
         >
           Export Dataset
+        </Button>
+      )}
+      {cases.dataset.canPublish && (
+        <Button
+          size="sm"
+          fullWidth
+          className="mt-1.5"
+          disabled={cases.dataset.exporting}
+          icon={<ShareIcon className="w-4 h-4" />}
+          onClick={cases.dataset.publishDataset}
+        >
+          Publish to Hugging Face
         </Button>
       )}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}

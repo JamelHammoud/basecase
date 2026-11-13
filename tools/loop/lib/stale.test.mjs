@@ -78,3 +78,17 @@ describe('staleWorktrees', () => {
     ]);
   });
 });
+
+describe('orphan branches', () => {
+  it('deletes a pushed branch with no open pull request after an hour, and keeps open ones', () => {
+    const branches = [
+      { name: 'loop/market/research-20261113065500', committedAt: NOW - 2 * HOUR },
+      { name: 'loop/market/research-20261113115000', committedAt: NOW - HOUR / 6 },
+      { name: 'loop/build/open-step', committedAt: NOW - 5 * HOUR },
+    ];
+
+    expect(staleBranches({ branches, keep: ['loop/build/open-step'], now: NOW, maxAgeMs: HOUR })).toEqual([
+      'loop/market/research-20261113065500',
+    ]);
+  });
+});

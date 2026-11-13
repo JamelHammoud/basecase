@@ -1,5 +1,14 @@
 import { byRank, isRepair } from '../lib/rank.mjs';
-import { isPaused, lastFinishedMainCheck, mergePull, openPulls, pullCheck, pullReview } from '../lib/github.mjs';
+import {
+  closeIssue,
+  isPaused,
+  issueIsOpen,
+  lastFinishedMainCheck,
+  mergePull,
+  openPulls,
+  pullCheck,
+  pullReview,
+} from '../lib/github.mjs';
 
 export const schedule = {
   slots: 1,
@@ -9,6 +18,17 @@ export const schedule = {
 
 const ready = (pull) =>
   pull.mergeable !== 'CONFLICTING' && pullCheck(pull) === 'success' && pullReview(pull) === 'success';
+
+const builtStep = (pull) => Number(/^loop\/build\/(\d+)-/.exec(pull.headRefName)?.[1]) || null;
+
+function closeBuiltStep(pull, log) {
+  const step = builtStep(pull);
+
+  if (!step || !issueIsOpen(step)) return;
+
+  closeIssue(step, `Built in #${pull.number}.`);
+  log(`closed step #${step}, built in #${pull.number}`);
+}
 
 export default function merge({ log }) {
   if (isPaused()) {
@@ -32,4 +52,6 @@ export default function merge({ log }) {
   const result = mergePull(pull.number);
 
   log(result.ok ? `merged #${pull.number}: ${pull.title}` : `merge of #${pull.number} failed: ${result.err}`);
+
+  if (result.ok) closeBuiltStep(pull, log);
 }

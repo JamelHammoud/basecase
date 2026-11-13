@@ -6,6 +6,8 @@ import { robotSnapshot, sendRobotCommand, setBenchDriving, subscribeRobot } from
 
 export const BENCH_INTENT_MS = 25;
 
+const BENCH_END_GRACE_S = 1;
+
 export const canRunBench = (state: RobotState) =>
   state.link === 'connected' && state.mode === 'test' && state.status?.run === 'running';
 
@@ -14,6 +16,11 @@ const radians = (position: number | null | undefined) =>
 
 function measuredStarts(state: RobotState): number[] {
   return (state.spec?.ids ?? []).map((id) => radians(state.status?.joints.find((j) => j.id === id)?.position) ?? 0);
+}
+
+export interface HeardStatus {
+  status: RobotStatus;
+  heardS: number;
 }
 
 function sampleOf(status: RobotStatus, ids: number[], seconds: number): BenchSample {
@@ -31,21 +38,22 @@ function sampleOf(status: RobotStatus, ids: number[], seconds: number): BenchSam
   };
 }
 
-class BenchClock {
-  private readonly startedAt = performance.now();
-  private offset: number | null = null;
+const daemonSeconds = (status: RobotStatus) => (typeof status.at_us === 'number' ? status.at_us / 1e6 : null);
 
-  elapsed() {
-    return (performance.now() - this.startedAt) / 1000;
-  }
+const leadOf = ({ status, heardS }: HeardStatus) => heardS - (daemonSeconds(status) ?? Number.NEGATIVE_INFINITY);
 
-  secondsOf(status: RobotStatus) {
-    if (typeof status.at_us !== 'number') return this.elapsed();
+const secondsOf = ({ status, heardS }: HeardStatus, lead: number) => {
+  const at = daemonSeconds(status);
 
-    this.offset ??= this.elapsed() - status.at_us / 1e6;
+  return at === null ? heardS : at + lead;
+};
 
-    return status.at_us / 1e6 + this.offset;
-  }
+const earliestLead = (heard: HeardStatus[]) => Math.min(...heard.map(leadOf));
+
+export function benchSeconds(heard: HeardStatus[]): number[] {
+  const lead = earliestLead(heard);
+
+  return heard.map((h) => secondsOf(h, lead));
 }
 
 export function playBench(): Promise<BenchRecording | null> {
@@ -55,10 +63,17 @@ export function playBench(): Promise<BenchRecording | null> {
 
   const { ids, family } = begun.spec;
   const starts = measuredStarts(begun);
-  const samples: BenchSample[] = [];
-  const clock = new BenchClock();
+  const heard: HeardStatus[] = [];
+  const startedAt = performance.now();
+  const elapsed = () => (performance.now() - startedAt) / 1000;
   const intent = (offset: number) => void sendRobotCommand({ cmd: 'intent', joints: starts.map((s) => s + offset) });
+  const recording = (): BenchRecording => {
+    const seconds = benchSeconds(heard);
+
+    return { family: familyOfRobot(family), starts, samples: heard.map((h, i) => sampleOf(h.status, ids, seconds[i])) };
+  };
   let last = begun.status;
+  let lead = Number.POSITIVE_INFINITY;
 
   return new Promise((resolve) => {
     let done = false;
@@ -72,12 +87,12 @@ export function playBench(): Promise<BenchRecording | null> {
       intent(0);
       setBenchDriving(false);
 
-      resolve(finished ? { family: familyOfRobot(family), starts, samples } : null);
+      resolve(finished ? recording() : null);
     };
     const tick = () => {
-      const seconds = clock.elapsed();
+      const seconds = elapsed();
 
-      if (seconds >= BENCH_SECONDS) finish(true);
+      if (seconds >= BENCH_SECONDS + BENCH_END_GRACE_S) finish(true);
       else intent(benchOffset(seconds));
     };
     const onState = () => {
@@ -91,8 +106,13 @@ export function playBench(): Promise<BenchRecording | null> {
 
       if (!state.status || state.status === last) return;
 
+      const status: HeardStatus = { status: state.status, heardS: elapsed() };
+
       last = state.status;
-      samples.push(sampleOf(state.status, ids, clock.secondsOf(state.status)));
+      heard.push(status);
+      lead = Math.min(lead, leadOf(status));
+
+      if (secondsOf(status, lead) >= BENCH_SECONDS) finish(true);
     };
 
     setBenchDriving(true);

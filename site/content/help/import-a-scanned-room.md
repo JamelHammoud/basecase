@@ -23,7 +23,7 @@ Basecase Scan, the iPhone app, scans the room with Apple's RoomPlan and marks wh
 
 ![The plan of a scanned room, with the robot placed beside the table and its arrow pointing along the wall](/help/import-a-scanned-room/plan.png)
 
-4. Tap **Share**, and AirDrop `Room.json` to your Mac or save it to Files.
+4. Tap **Share**, and AirDrop the file to your Mac or save it to Files. It's named after the room the robot stands in, like `Living Room.json`.
 5. On the Mac, open a scene with a robot in it.
 6. Drop the `.json` file on the canvas. New Case opens in the Cases tab with the room picked as the World, named after the file.
 

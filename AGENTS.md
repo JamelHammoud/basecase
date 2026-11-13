@@ -41,8 +41,8 @@
 | 8i | [Skills](docs/guide/skills.md) | `src/skills/`, task contracts, the solver race, Arena, Motor Kit |
 | 8j | [Routines](docs/guide/routines.md) | `src/routines/`, the coordinator, ML nodes, scenario tests |
 | 8l | [Cameras](docs/guide/cameras.md) | `src/cameras/`, camera parts and lenses, stationary camera views, live views, fisheye, the agent's `operate`, the depth eye |
-| 8m | [Scan app](docs/guide/scan-app.md) | `ios/`, Basecase Scan for iPhone, the room file it shares |
 | 8k | [Robot runtime](docs/guide/robot-runtime.md) | `hw/`, the daemon, servo emulators, the motor lock, calibration (`src/reality/`) |
+| 8m | [Scan app](docs/guide/scan-app.md) | `ios/`, Basecase Scan for iPhone, the room file it shares |
 | 0k | [Proof](docs/guide/proof.md) | `verify/`, Gatekeeper, gates, the hidden twin, the Stage 8 session |
 | 0l | [Loop](docs/guide/loop.md) | `tools/loop/`, how agents open, review and merge pull requests, CI repair, nightly releases |
 | 9 | [Agent](docs/guide/agent.md) | the ACP agent, its profiles, lanes, CAD tools and kernel, the agent panel and composer |

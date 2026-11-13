@@ -6,6 +6,7 @@ struct StandView: View {
     let rescan: () -> Void
     @State private var start: RobotStart?
     @State private var heading: Float
+    @State private var asking = false
 
     init(room: CapturedRoom, start: RobotStart? = nil, rescan: @escaping () -> Void) {
         self.room = room
@@ -34,10 +35,13 @@ struct StandView: View {
                     )
             }
             HStack(spacing: 12) {
-                Button("Scan", action: rescan)
+                Button("Scan") { asking = true }
                     .buttonStyle(.bordered)
+                    .confirmationDialog("Delete \(name)?", isPresented: $asking, titleVisibility: .visible) {
+                        Button("Delete", role: .destructive, action: rescan)
+                    }
                 if let start {
-                    ShareLink(item: SharedRoom(room: room, start: start), preview: SharePreview("Room")) {
+                    ShareLink(item: SharedRoom(room: room, start: start), preview: SharePreview(name)) {
                         Text("Share")
                     }
                     .buttonStyle(.borderedProminent)
@@ -51,6 +55,10 @@ struct StandView: View {
             .padding(.bottom, 16)
         }
         .background(Color.studioCanvas)
+    }
+
+    private var name: String {
+        RoomFile.name(room, at: start?.spot)
     }
 
     private func place(plan: FloorPlan, at spot: SIMD2<Float>, dragged: CGSize) {

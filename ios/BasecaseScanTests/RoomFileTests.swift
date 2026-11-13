@@ -51,6 +51,18 @@ final class RoomFileTests: XCTestCase {
         XCTAssertEqual(try object(shared()) as NSDictionary, committed as NSDictionary)
     }
 
+    func testTheFileIsNamedAfterTheRoomTheRobotStandsIn() throws {
+        XCTAssertEqual(RoomFile.name(try room(), at: Self.tap), "Living Room")
+    }
+
+    func testARoomWithNoNamedSectionIsNamedRoom() throws {
+        var file = try object(recorded())
+        file["sections"] = [[String: Any]]()
+        let unnamed = try JSONDecoder().decode(CapturedRoom.self, from: JSONSerialization.data(withJSONObject: file))
+
+        XCTAssertEqual(RoomFile.name(unnamed, at: Self.tap), RoomFile.fallbackName)
+    }
+
     func testATapInsideFurnitureSetsNothing() throws {
         let plan = FloorPlan(try room())
 

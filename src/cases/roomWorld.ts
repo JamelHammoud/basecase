@@ -70,18 +70,19 @@ function turnedAbout(o: WorldObject, about: V3, quarters: number): WorldObject {
   return { ...o, position: [about[0] + x * cos + z * sin, o.position[1], about[2] - x * sin + z * cos], size };
 }
 
-function facingStart(room: Room, clearanceMm: number): { spot: V3; objects: WorldObject[] } {
+function facingStart(room: Room, robot: BuilderRobot): { spot: V3; objects: WorldObject[] } {
+  const clearanceMm = routeClearance(robot);
   const tapped = tappedStart(room, clearanceMm);
 
   if (!tapped) return { spot: openSpot(room, clearanceMm), objects: room.objects };
 
-  const quarters = quarterTurns(tapped.heading);
+  const quarters = quarterTurns(tapped.heading - Math.atan2(robot.forward[0], robot.forward[2]));
 
   return { spot: tapped.at, objects: room.objects.map((o) => turnedAbout(o, tapped.at, quarters)) };
 }
 
 export function placedRoom(room: Room, robot: BuilderRobot): WorldObject[] {
-  const { spot, objects } = facingStart(room, routeClearance(robot));
+  const { spot, objects } = facingStart(room, robot);
   const dx = robot.pivot[0] - spot[0];
   const dz = robot.pivot[2] - spot[2];
 

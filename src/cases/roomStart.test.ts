@@ -13,10 +13,26 @@ const SCANNED = import.meta.glob<string>('../../e2e/fixtures/scanned-room.json',
   import: 'default',
 });
 
+const roverDiff = () => fixtureRobots().find((f) => f.id === 'rover-diff')!;
+
 const rover = () => {
-  const r = fixtureRobots().find((f) => f.id === 'rover-diff')!;
+  const r = roverDiff();
 
   return builderRobot(buildRig(r.joints, r.parts), r.parts);
+};
+
+const quarterLeft = ([x, y, z]: V3): V3 => [z, y, -x];
+
+const sidewaysRover = () => {
+  const r = roverDiff();
+  const parts = r.parts.map((p) => ({
+    ...p,
+    position: quarterLeft(p.position),
+    dimensions: { ...p.dimensions, width: p.dimensions.depth, depth: p.dimensions.width },
+  }));
+  const joints = r.joints.map((j) => ({ ...j, origin: quarterLeft(j.origin), axis: quarterLeft(j.axis) }));
+
+  return builderRobot(buildRig(joints, parts), parts);
 };
 
 const read = (basecase?: unknown, turnDeg = 0) =>
@@ -24,8 +40,7 @@ const read = (basecase?: unknown, turnDeg = 0) =>
 
 const tableIn = (objects: WorldObject[]) => objects.find((o) => o.id === 'table-1')!;
 
-const tableFromRobot = (basecase?: unknown, turnDeg = 0) => {
-  const robot = rover();
+const tableFromRobot = (basecase?: unknown, turnDeg = 0, robot = rover()) => {
   const table = tableIn(placedRoom(read(basecase, turnDeg), robot));
 
   return { at: [0, 2].map((i) => table.position[i] - robot.pivot[i]), size: table.size.map(Math.round) };
@@ -49,6 +64,17 @@ describe('a room file with a tapped start', () => {
     expect(at[0]).toBeCloseTo(-away[1], 3);
     expect(at[1]).toBeCloseTo(away[0], 3);
     expect(size).toEqual([800, 750, 1200]);
+  });
+
+  it('faces the heading with a rover that drives along x', () => {
+    const robot = sidewaysRover();
+    const ahead = tableFromRobot(FIXTURE_TAP);
+    const sideways = tableFromRobot(FIXTURE_TAP, 0, robot);
+
+    robot.forward.forEach((v, i) => expect(v).toBeCloseTo([1, 0, 0][i], 6));
+    expect(sideways.at[0]).toBeCloseTo(ahead.at[1], 3);
+    expect(sideways.at[1]).toBeCloseTo(-ahead.at[0], 3);
+    expect(sideways.size).toEqual([ahead.size[2], ahead.size[1], ahead.size[0]]);
   });
 
   it('places a room scanned at an angle the same way', () => {

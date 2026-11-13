@@ -1,5 +1,5 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
-import { failedLog, lastFinishedMainCheck, openPulls, repo } from '../lib/github.mjs';
+import { failedLog, lastFinishedMainCheck, openPulls, repo, unstickMainChecks } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
 import { json } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
@@ -25,6 +25,8 @@ const beingRepaired = () =>
   );
 
 export default function repair({ log }) {
+  unstickMainChecks(log);
+
   const latest = lastFinishedMainCheck();
 
   if (!latest) {

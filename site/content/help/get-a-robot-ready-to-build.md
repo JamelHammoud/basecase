@@ -5,6 +5,7 @@ covers:
   - src/components/BuildPanel.tsx
   - src/components/build/ChecksSection.tsx
   - src/components/build/CheckItem.tsx
+  - src/components/build/FindingRow.tsx
   - src/components/build/TetherFields.tsx
   - src/components/build/BuyList.tsx
   - src/components/build/BuyTotal.tsx
@@ -16,7 +17,7 @@ The Build tab tells you whether a design can be built, what to buy for it and ho
 
 1. Click Build at the top of the right panel.
 2. Read Checks first. Its header says Ready to build, or how many problems are left to fix.
-3. Click a check with a red or amber mark to see what's wrong and which parts it means. Click Fix to hand it to the agent.
+3. Click a check with a red or amber mark to see what's wrong and which parts it means. Click Fix to hand it to the agent; on Strength, Fix prints the part on its strongest face instead.
 4. If the robot runs on a cable instead of a battery, open Servo voltage or Supply current and set the supply's volts (V) and amps (A).
 5. Type your budget in the field beside the total under Bill of materials. The bar under it shows how much is left.
 6. Click Lay Out Plates under Printing, or press ⌘P, to open Print mode.

@@ -9,6 +9,7 @@ import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
 import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
 import type { MeshMeasure } from '../meshMeasure';
+import type { StrengthJob, StrengthReading } from '../../strength/types';
 import type {
   CameraPreset,
   MeasureUnit,
@@ -158,6 +159,7 @@ export interface Viewport3DHandle {
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
   meshesReady: () => Promise<string[]>;
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
+  strength: (jobs: StrengthJob[]) => Promise<Array<StrengthReading | null>>;
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;

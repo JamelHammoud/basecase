@@ -91,7 +91,14 @@ export async function runReadiness({
 
   const printing = printReportOf(parts, { project, printer }, viewport.printShapes);
   const engineeringRun = printing.then((report) =>
-    runEngineeringNow({ viewport, parts, project, withSweep: true, supportG: supportOf(report) }),
+    runEngineeringNow({
+      viewport,
+      parts,
+      project,
+      withSweep: true,
+      supportG: supportOf(report),
+      printDowns: Object.fromEntries(report.parts.map((r) => [r.id, r.check.pose.down])),
+    }),
   );
   const [engineering, geometry, print, purchases, measures] = await Promise.all([
     engineeringRun,

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import { openApp, type App } from './harness';
 
 interface StudioHook {
@@ -204,4 +205,30 @@ describe('Build tab fields', () => {
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
+});
+
+describe('Strength', () => {
+  it('fails an L-bracket printed with its layers across the bend, and Fix turns it on its side', async () => {
+    const scene = lBracketScene();
+
+    await app.page.evaluate((record) => {
+      const studio = (window as unknown as { __studio: StudioHook }).__studio;
+
+      studio.load({ parts: record.parts, project: { ...(studio.sceneRecord().project as object), ...record.project } });
+    }, scene);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Strength/ }) })
+      .first();
+
+    await expect.poll(() => row.locator('svg.text-red-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
+    await row.getByRole('button', { name: /^Strength/ }).click();
+    expect(await row.textContent()).toContain(L_BRACKET_NAME);
+
+    await row.getByRole('button', { name: 'Fix' }).first().click();
+    await expect.poll(() => row.locator('svg.text-emerald-400').count(), { timeout: 90000 }).toBeGreaterThan(0);
+    expect(await row.locator('svg.text-red-400').count()).toBe(0);
+  }, 200000);
 });

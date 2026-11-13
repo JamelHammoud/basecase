@@ -37,6 +37,7 @@ const DETACHED: Viewport3DHandle = {
   servoOutput: () => null,
   meshesReady: async () => [],
   sweepClashes: async () => [],
+  strength: async () => [],
   frameAll: () => {},
   animateSpawn: () => {},
   setPose: () => {},

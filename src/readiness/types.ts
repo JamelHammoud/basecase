@@ -1,4 +1,6 @@
-import type { CheckRow } from '../utils/engineeringTypes';
+import type { CheckRow, FindingFix } from '../utils/engineeringTypes';
+
+export type { FindingFix } from '../utils/engineeringTypes';
 
 export type FindingLevel = 'blocker' | 'note';
 
@@ -15,6 +17,7 @@ export interface Finding {
   agentText: string;
   detail?: string;
   ids: string[];
+  fix?: FindingFix;
 }
 
 export interface FindingDispute {

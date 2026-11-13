@@ -23,7 +23,11 @@ export function engineeringFindings(report: EngineeringReport): Finding[] {
 
     if (row.items?.length && !row.itemsAreContext)
       return row.items.map((item) =>
-        engineeringFinding(row.check, levelOf(item.status ?? row.status), { detail: item.text, ids: item.ids }),
+        engineeringFinding(row.check, levelOf(item.status ?? row.status), {
+          detail: item.text,
+          ids: item.ids,
+          fix: item.fix,
+        }),
       );
 
     return [engineeringFinding(row.check, levelOf(row.status), { detail: row.detail, ids: row.ids })];

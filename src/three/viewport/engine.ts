@@ -10,6 +10,7 @@ import {
   visibilityIn,
   printMeshesIn,
   printReportsIn,
+  strengthIn,
   sweepsIn,
   threeMfIn,
 } from '../analysis/analysisPool';
@@ -38,6 +39,7 @@ import { PointerInput } from './pointerInput';
 import { RenderLoop } from './renderLoop';
 import { ScaleFigures } from './scaleFigures';
 import { SelectionOutline } from './selectionOutline';
+import { StressOverlay } from './stressOverlay';
 import { warmShaders } from './shaderWarmup';
 import { createStage, disposeStage } from './stage';
 import type { Viewport3DHandle, ViewportProps } from './types';
@@ -82,6 +84,7 @@ const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'partTriangles',
   'servoOutput',
   'sweepClashes',
+  'strength',
   'pickAt',
   'focusSelected',
   'measureFrom',
@@ -129,6 +132,8 @@ export class ViewportEngine {
 
   private readonly cameraGlyphs: CameraGlyphs;
 
+  private readonly stress: StressOverlay;
+
   private readonly follow: FollowCamera;
 
   private readonly cleanups: Array<() => void>;
@@ -172,10 +177,12 @@ export class ViewportEngine {
     this.cameraGlyphs = new CameraGlyphs(stage.overlays);
     this.cameraGlyphs.sync(options.props.fixedCameras);
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
+    this.stress = new StressOverlay(this.ctx);
 
     const outline = new SelectionOutline(stage);
 
     loop.beforeRender.add(() => this.follow.update());
+    loop.beforeRender.add(() => this.stress.place());
     loop.beforeRender.add(() => outline.prepare(this.props.selectedPartIds.flatMap((id) => layer.get(id) ?? [])));
     loop.afterRender.add(() => this.measureTool.updateLabel());
     loop.afterRender.add(() => this.markField.place());
@@ -271,6 +278,7 @@ export class ViewportEngine {
     this.markLayer.dispose();
     this.agentFrames.dispose();
     this.cameraGlyphs.dispose();
+    this.stress.dispose();
     this.ctx.layer.dispose();
     this.ctx.world.dispose();
     this.ctx.batches.dispose();
@@ -364,6 +372,11 @@ export class ViewportEngine {
         sweepsIn(
           withRest(() => solidShapes(false)),
           sweeps,
+        ),
+      strength: (jobs) =>
+        strengthIn(
+          withRest(() => snapshotShapes(measure.partObjects(ctx, [...new Set(jobs.map((j) => j.part))]))),
+          jobs,
         ),
       pickAt: (x, y) => measure.pickAt(ctx, x, y),
       projectPoints: (points) => measure.projectPoints(ctx, points),

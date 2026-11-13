@@ -18,11 +18,14 @@ import { findObjects, insertObject } from './agentSimReadyTools';
 import { newId } from './helpers';
 import { robotHeightMm } from './robotPlacement';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
+import { wrapRobotRequest } from './agentWrapRequest';
+import type { WrapRobot } from './useWrapRobot';
 
 type Payload = Record<string, unknown>;
 
 export interface PoseToolContext extends PoseContext {
   setAction: (action: string) => void;
+  wrap: WrapRobot['wrap'];
   importRobot: (
     source: RobotSource,
     at?: [number, number, number],
@@ -83,6 +86,11 @@ const POSE_TOOLS: Record<string, (ctx: PoseToolContext, payload: Payload) => Pos
   },
   find_objects: findObjects,
   insert_object: insertObject,
+  wrap_robot: (ctx, payload) =>
+    wrapRobotRequest(payload as { mesh?: string; robot?: string }, {
+      ...ctx,
+      joints: ctx.project.joints ?? [],
+    }),
 };
 
 export const POSE_TOOL_KINDS = [
@@ -91,6 +99,7 @@ export const POSE_TOOL_KINDS = [
   'animate',
   'retarget',
   'import_robot',
+  'wrap_robot',
   'find_objects',
   'insert_object',
 ];

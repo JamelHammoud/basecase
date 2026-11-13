@@ -18,6 +18,7 @@ import { useAdoptedRuns } from './useAdoptedRuns';
 import { useAgentRun } from './useAgentRun';
 import { useLaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
+import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 type WorkspaceEvent = Record<string, unknown>;
@@ -29,6 +30,7 @@ interface AgentSessionOptions {
   seed?: WorkspaceSeed;
   active: boolean;
   robots: RobotInsert;
+  wrap: WrapRobot;
   placeCustomModel: (model: CustomModelDefinition) => void;
 }
 
@@ -49,7 +51,7 @@ function useAlive() {
 const laneOfEvent = (event: WorkspaceEvent) =>
   typeof event.workspaceId === 'string' ? splitLaneKey(event.workspaceId).laneId : MAIN_LANE;
 
-export function useAgentSession({ core, seed, active, robots, placeCustomModel }: AgentSessionOptions) {
+export function useAgentSession({ core, seed, active, robots, wrap, placeCustomModel }: AgentSessionOptions) {
   const { workspaceId, studio, showToast } = core;
   const [actors] = useState(() => new ActorIndex());
   const alive = useAlive();
@@ -70,7 +72,7 @@ export function useAgentSession({ core, seed, active, robots, placeCustomModel }
   const persistLane = lanePersister(lanes, studio.setChatList);
   const controls = useLaneControls({ core, lanes, active, alive, persistLane });
   const chat = useAgentChat({ core, lanes, stop: controls.stop, persistLane });
-  const requests = useAgentRequests({ core, lanes, controls, actors, cursors, robots });
+  const requests = useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap });
   const { handleAgentRequest } = requests;
   const { setUploadedImages } = studio;
   const { current } = lanes;

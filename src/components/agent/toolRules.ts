@@ -323,6 +323,7 @@ const ROBOT_RULES: ToolRule[] = [
       detail: optional(String(input.preset ?? '')) ?? fileName(input.url),
     }),
   },
+  plainRule(['wrap_robot'], RobotsIcon, ['Wrapping the robot', 'Wrapped the robot']),
   {
     keys: ['find_objects'],
     icon: SearchIcon,

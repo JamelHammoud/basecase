@@ -89,21 +89,7 @@ describe('studio smoke test', () => {
   });
 });
 
-describe('studio commands', () => {
-  it('opens and closes the command palette', async () => {
-    await app.page.keyboard.press('Meta+k');
-    await expect.poll(() => app.page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => app.page.evaluate(() => document.activeElement?.tagName)).not.toBe('INPUT');
-  });
-
-  it('opens the part context menu from Layers and closes it', async () => {
-    await clickRail('Layers');
-    await app.page.locator(visible('li'), { hasText: 'Cube' }).first().click({ button: 'right' });
-    await expect.poll(() => app.page.getByRole('menuitem', { name: /Duplicate/ }).count()).toBeGreaterThan(0);
-    await app.page.keyboard.press('Escape');
-  });
-
+describe('Layers rows', () => {
   it('runs a Layers name under its row toggles and keeps Show while the part is hidden', async () => {
     await clickRail('Layers');
 
@@ -127,8 +113,27 @@ describe('studio commands', () => {
 
     await row.hover();
     await show.click();
-    await expect.poll(() => row.getByRole('button', { name: 'Hide' }).count()).toBe(1);
-    await app.page.evaluate(blurFocus);
+    await app.page.mouse.move(0, 0);
+
+    const hide = row.getByRole('button', { name: 'Hide' });
+
+    await expect.poll(() => hide.evaluate((el) => el.checkVisibility({ opacityProperty: true }))).toBe(false);
+  });
+});
+
+describe('studio commands', () => {
+  it('opens and closes the command palette', async () => {
+    await app.page.keyboard.press('Meta+k');
+    await expect.poll(() => app.page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => app.page.evaluate(() => document.activeElement?.tagName)).not.toBe('INPUT');
+  });
+
+  it('opens the part context menu from Layers and closes it', async () => {
+    await clickRail('Layers');
+    await app.page.locator(visible('li'), { hasText: 'Cube' }).first().click({ button: 'right' });
+    await expect.poll(() => app.page.getByRole('menuitem', { name: /Duplicate/ }).count()).toBeGreaterThan(0);
+    await app.page.keyboard.press('Escape');
   });
 
   it('toggles comment mode', async () => {

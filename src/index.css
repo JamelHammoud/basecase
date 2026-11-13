@@ -45,6 +45,13 @@
   --animate-push-in: push-in 220ms var(--ease-out-expo);
 }
 
+/* Layers rows fade their fill, and the row actions' gradient follows it */
+@property --row-fill {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
 /* A new scene tab grows into the strip */
 @keyframes tab-in {
   from {

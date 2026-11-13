@@ -12,15 +12,15 @@ import type { ScenePart } from '../../types/robotics';
 import { hasPrimaryModifier } from '../../utils/os';
 
 const ROW =
-  'group relative h-8 rounded-lg flex items-center text-[13px] cursor-default transition-colors bg-[var(--row-fill)]';
+  'group relative h-8 rounded-lg flex items-center text-[13px] cursor-default [transition-property:color,--row-fill] duration-150 ease-in-out bg-[var(--row-fill)]';
 const SELECTED = '[--row-fill:color-mix(in_srgb,#0d99ff_18%,var(--color-panel-bg))] text-white';
 const RESTING =
   '[--row-fill:var(--color-panel-bg)] hover:[--row-fill:color-mix(in_srgb,white_5%,var(--color-panel-bg))]';
 const ACTIONS_FADE = 'linear-gradient(to right, transparent, var(--row-fill) 32px)';
-const REVEAL = 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100';
+const REVEAL = 'opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100';
 const CLICKABLE_ON_REVEAL =
-  'pointer-events-none group-hover:pointer-events-auto group-focus-within:pointer-events-auto';
-const COLLAPSED_UNTIL_REVEAL = 'hidden group-hover:flex group-focus-within:flex';
+  'pointer-events-none group-hover:pointer-events-auto group-has-[:focus-visible]:pointer-events-auto';
+const COLLAPSED_UNTIL_REVEAL = 'hidden group-hover:flex group-has-[:focus-visible]:flex';
 
 const rowTone = (selected: boolean, rest: string) => (selected ? SELECTED : `${RESTING} ${rest}`);
 
@@ -167,7 +167,7 @@ export const PartRow: React.FC<PartRowProps> = ({ part, inGroup, selected, dimme
     ) : (
       <span className="flex-1 truncate">{part.name}</span>
     )}
-    <RowActions part={part} onToggle={on.onToggle} />
+    {!editing && <RowActions part={part} onToggle={on.onToggle} />}
   </li>
 );
 

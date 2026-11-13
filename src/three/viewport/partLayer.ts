@@ -181,13 +181,17 @@ export class PartLayer {
   }
 
   withRest<T>(run: () => T, reapply: () => void): T {
-    if (!this.pose.size) {
+    return this.withPose(new Map(), run, reapply);
+  }
+
+  withPose<T>(pose: Map<string, THREE.Matrix4>, run: () => T, reapply: () => void): T {
+    if (pose === this.pose || (!pose.size && !this.pose.size)) {
       return run();
     }
 
     const saved = this.pose;
 
-    this.pose = new Map();
+    this.pose = pose;
     reapply();
 
     try {

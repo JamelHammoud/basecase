@@ -24,10 +24,29 @@ export const openPulls = ({ fresh = false } = {}) =>
 
 const rollup = (pull) => pull.statusCheckRollup ?? [];
 
-export const pullCheck = (pull) => {
-  const check = rollup(pull).find((entry) => entry.__typename === 'CheckRun' && entry.name === 'check');
+const checkNamed = (pull, name) => {
+  const runs = rollup(pull)
+    .filter((entry) => entry.__typename === 'CheckRun' && entry.name === name)
+    .sort((a, b) => String(b.startedAt ?? '').localeCompare(String(a.startedAt ?? '')));
+  const latest = runs[0];
 
-  return check?.status === 'COMPLETED' ? check.conclusion.toLowerCase() : null;
+  if (!latest) return null;
+
+  return latest.status === 'COMPLETED' ? latest.conclusion.toLowerCase() : 'pending';
+};
+
+export const quickCheck = (pull) => checkNamed(pull, 'check');
+
+export const fullCheck = (pull) => checkNamed(pull, 'check (full)');
+
+export const pullCheck = (pull) => {
+  const full = fullCheck(pull);
+
+  if (full && full !== 'pending') return full;
+
+  const quick = quickCheck(pull);
+
+  return quick === 'pending' ? null : quick;
 };
 
 export const pullReview = (pull) => {

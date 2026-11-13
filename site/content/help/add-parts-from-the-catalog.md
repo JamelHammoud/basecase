@@ -52,6 +52,8 @@ The part lands on the floor at the origin, selected. You can also click **+** on
 
 **Search parts** finds a part by name, maker or part number from anywhere in Parts, and [[⌘F]] opens it ready to type.
 
+![Parts searched for servo, with the matching servos listed under the field and the + showing on the highlighted DSServo DS3218](/help/add-parts-from-the-catalog/search.png)
+
 A component keeps the maker's exact size, so its Inspector has no **Size** section. [Parts, assemblies and mounting ports](/help/parts-assemblies-and-mounting-ports) explains where the meshes come from.
 
 ## Add a screw, nut or other hardware

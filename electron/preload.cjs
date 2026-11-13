@@ -102,6 +102,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     return () => ipcRenderer.removeListener('robot:event', handler);
   },
+  phonePair: () => ipcRenderer.invoke('phone:pair'),
+  phoneUnpair: () => ipcRenderer.invoke('phone:unpair'),
+  phoneState: () => ipcRenderer.invoke('phone:state'),
+  onPhoneEvent: (callback) => {
+    const handler = (_event, data) => callback(data);
+
+    ipcRenderer.on('phone:event', handler);
+
+    return () => ipcRenderer.removeListener('phone:event', handler);
+  },
   setMenuState: (state) => ipcRenderer.send('menu:state', state),
   popupAppMenu: (at) => ipcRenderer.invoke('menu:popup', at),
   onMenuCommand: (callback) => {

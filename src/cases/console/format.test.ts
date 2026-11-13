@@ -43,9 +43,12 @@ describe('a Case console', () => {
   it('refuses inputs no source registers, naming the ones arc #184 plans apart from unknown ones', () => {
     const base = DEFAULT_CONSOLE;
 
-    expect(withConsole({ ...base, input: ['camera', 'keys'] })().console?.input).toEqual(['camera', 'keys']);
-    expect(withConsole({ ...base, input: ['phone'] })).toThrow(/console.input\[0\] phone can’t drive a Case/);
-    expect(withConsole({ ...base, input: ['midi'] })).toThrow(/console.input\[0\] midi can’t drive/);
+    expect(withConsole({ ...base, input: ['camera', 'phone', 'keys'] })().console?.input).toEqual([
+      'camera',
+      'phone',
+      'keys',
+    ]);
+    expect(withConsole({ ...base, input: ['midi'] })).toThrow(/console.input\[0\] midi can’t drive a Case/);
     expect(withConsole({ ...base, input: ['mind'] })).toThrow(/console.input\[0\] mind is no input source/);
     expect(withConsole({ ...base, input: ['keys', 'keys'] })).toThrow(/console.input\[1\] repeats keys/);
     expect(withConsole({ ...base, input: [] })).toThrow(/console.input must name an input source/);

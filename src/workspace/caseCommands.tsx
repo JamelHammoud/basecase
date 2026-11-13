@@ -12,6 +12,7 @@ import {
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
 import { CAMERA_INPUTS } from '../sim/inputSources';
+import { INPUT_COMMANDS } from './inputCommands';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -34,6 +35,7 @@ export const STAYS_IN_RUN = new Set([
   'case-try',
   'case-export-dataset',
   'case-publish-dataset',
+  ...INPUT_COMMANDS,
 ]);
 
 export const showRoomCase = (core: WorkspaceCore, room: Room) => {

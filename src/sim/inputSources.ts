@@ -1,4 +1,6 @@
 import { cameraInput } from '../cameras/operator/cameraInput';
+import { phoneCommand } from '../phone/phoneDrive';
+import { phoneReading } from '../phone/phoneStore';
 import type { PointOf } from '../utils/animationGoals';
 import type { Rig } from '../utils/kinematics';
 import type { RobotDrive } from './drive';
@@ -26,8 +28,8 @@ export interface InputSource {
   close?: () => void;
 }
 
-export const NAMED_INPUTS = ['phone', 'midi', 'leader-arm', 'voice', 'policy', 'script'] as const;
-export const STUDIO_INPUTS = ['gamepad', 'keys'];
+export const NAMED_INPUTS = ['camera', 'phone', 'midi', 'leader-arm', 'voice', 'policy', 'script'] as const;
+export const STUDIO_INPUTS = ['phone', 'gamepad', 'keys'];
 export const CAMERA_INPUTS = ['camera', 'keys'];
 
 const IDLE: DriveCommand = { v: [0, 0, 0] };
@@ -50,6 +52,14 @@ function firstPad(): Gamepad | null {
 }
 
 registerInputSource({ id: 'keys', read: ({ keys }) => keys });
+registerInputSource({
+  id: 'phone',
+  read: ({ cls }) => {
+    const reading = phoneReading();
+
+    return reading ? phoneCommand(reading, cls) : null;
+  },
+});
 registerInputSource({
   id: 'gamepad',
   read: ({ cls }) => {

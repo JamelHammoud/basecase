@@ -99,8 +99,7 @@ export const SearchResults: React.FC<{
       }
     />
   ) : (
-    <div className="px-[8px] pb-4">
-      <SectionHeader title={`${results.length} ${results.length === 1 ? 'result' : 'results'}`} />
+    <div className="px-[8px] pt-1 pb-4">
       {results.map((item, i) => (
         <ResultRow
           key={catalogRef(item)}

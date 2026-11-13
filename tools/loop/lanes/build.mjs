@@ -1,8 +1,9 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
-import { commentOnIssue, editIssueLabels, hasLabel, issues } from '../lib/github.mjs';
+import { commentOnIssue, editIssueLabels, hasLabel, issues, openPulls } from '../lib/github.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { publish } from '../lib/pull.mjs';
+import { recordDecline, stepEntry, stepWaiting } from '../lib/stepState.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
@@ -18,10 +19,30 @@ const PRIORITY = 'loop:priority';
 const byPriorityThenAge = (a, b) =>
   Number(hasLabel(b, PRIORITY)) - Number(hasLabel(a, PRIORITY)) || a.createdAt.localeCompare(b.createdAt);
 
-const waitingSteps = () =>
-  issues(NEXT)
+const openPullNumbers = () => new Set(openPulls().map((pull) => pull.number));
+
+const waitingSteps = () => {
+  const now = Date.now();
+  const openNumbers = openPullNumbers();
+
+  return issues(NEXT)
     .filter((issue) => issue.author?.login === OWNER_LOGIN && !hasLabel(issue, BUILDING))
+    .filter((issue) => !stepWaiting(stepEntry(issue.number), { now, openNumbers }))
     .sort(byPriorityThenAge);
+};
+
+function decline(step, reason) {
+  const openNumbers = openPullNumbers();
+  const waitFor = [...reason.matchAll(/#(\d+)/g)].map((m) => Number(m[1])).filter((n) => openNumbers.has(n));
+  const entry = recordDecline(step.number, { now: Date.now(), waitFor });
+  const until = waitFor.length > 0 ? `until ${waitFor.map((n) => `#${n}`).join(', ')} close` : '';
+  const retry = new Date(entry.until).toISOString().slice(0, 16).replace('T', ' ');
+
+  commentOnIssue(
+    step.number,
+    `Not built this time: ${reason}\n\nA builder picks it up again ${until ? `${until}, and ` : ''}after ${retry} UTC at the earliest.`,
+  );
+}
 
 function claimNextStep() {
   for (const step of waitingSteps()) {
@@ -37,14 +58,18 @@ function buildStep(step, { log, slot }) {
   editIssueLabels(step.number, { add: [BUILDING], remove: [NEXT] });
 
   const worktree = openBranch('build', `${step.number}-${slot}-${step.title}`);
-  const giveBack = () => editIssueLabels(step.number, { add: [NEXT], remove: [BUILDING] });
+  const giveBack = (result) => {
+    editIssueLabels(step.number, { add: [NEXT], remove: [BUILDING] });
+
+    if (result?.ok) decline(step, result.output.notes);
+  };
 
   try {
     const prompt = `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`;
     const result = runAgent({ cwd: worktree.dir, name: 'build', prompt, schema: CHANGE_SCHEMA, hours: 12 });
 
     if (!result.ok || !result.output.changed) {
-      giveBack();
+      giveBack(result);
       log(`#${step.number} not built: ${String(result.error ?? result.output.notes).slice(0, 500)}`);
 
       return;

@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronLeftIcon, TickIcon } from './glyphs';
 import { createPortal } from 'react-dom';
+import { behindModal } from './behindModal';
 import { Kbd } from './Kbd';
 import { Divider } from './Divider';
 
@@ -94,6 +95,7 @@ export const PopoverMenu: React.FC<PopoverMenuProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
+    const underModal = () => !!anchorRef.current && behindModal(anchorRef.current);
     const handlePointerDownOutside = (e: PointerEvent) => {
       const target = e.target as Node;
 
@@ -101,13 +103,13 @@ export const PopoverMenu: React.FC<PopoverMenuProps> = ({
 
       if (ignoreRef?.current?.contains(target)) return;
 
-      onClose('outside');
+      if (!underModal()) onClose('outside');
     };
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose('escape');
-      }
+      if (e.key !== 'Escape' || underModal()) return;
+
+      e.stopPropagation();
+      onClose('escape');
     };
 
     window.addEventListener('pointerdown', handlePointerDownOutside, true);

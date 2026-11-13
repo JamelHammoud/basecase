@@ -39,7 +39,7 @@ Turn the scene into a MuJoCo model and run it on the canvas.
   - hinge and slide joints with their ranges
   - position actuators with force limits from the servo's stall torque (`actuatorOf`), or the published `effortNm`
   - a floor and a free joint at the base
-- **Export ▸ MuJoCo Model:** the MJCF and its meshes, ready for any MuJoCo tool.
+- **Export ▸ Robot Package** (done, with T4): the MJCF the sim runs, a URDF with its STL meshes, the joint map and the scene's policies in one zip ([Simulate](guide/simulate.md) §8d).
 - **Done when:** every `ROBOT_PRESET` and the `build-humanoid` bench scene load with no errors, and the model's total mass matches the Weight check.
 
 ### S2. Live sim on the canvas
@@ -85,6 +85,7 @@ New rows in Build → Checks, with the same Pass / Warn / Fail rows that select 
 
 ### T4. Handoff to Operate
 - Export the policy, the MJCF and a joint map (servo ids, zero offsets, directions): everything stage 6 needs to run it on the real robot.
+- **Status:** done as Export ▸ Robot Package: `joint_map.json` gives servo ids as Operate assigns them, Operate's zero (2048 counts) and direction (1), limits and the active calibration, in the daemon's `calibration.json` keys. Not yet: zero offsets and directions measured on a real robot (calibration capture, §8k) and `policy.onnx` in the zip.
 
 **Done when:** a preset quadruped (Go2) trains to walk, and the policy walks in the live sim with randomization on.
 

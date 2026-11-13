@@ -5,7 +5,7 @@ import type { ScenePart } from '../types/robotics';
 import { FRAME_HEIGHT, FRAME_WIDTH, type DatasetCamera } from './cameras';
 import { episodeData, robotJoints } from './episodes';
 import { lerobotFiles, type DatasetEpisode } from './lerobot';
-import { zipDataset } from './zipDataset';
+import { zipFolder } from '../utils/zipFolder';
 import { codecName, createRenderStage, disposeRenderStage, renderEpisode, videoCodec } from './renderVideos';
 
 export interface DatasetJobEpisode {
@@ -56,5 +56,5 @@ export async function buildDataset(job: DatasetJob): Promise<Uint8Array> {
     source: job.source,
   });
 
-  return zipDataset(job.name, files);
+  return zipFolder(job.name, files);
 }

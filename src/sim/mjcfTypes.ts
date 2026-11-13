@@ -13,6 +13,9 @@ export interface SimBody {
   parts: string[];
   world?: string[];
   origin: V3;
+  robot?: string;
+  parent?: string;
+  joint?: string;
 }
 
 export type WorldBehavior = 'static' | 'dynamic' | 'marker';

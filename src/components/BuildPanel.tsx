@@ -29,6 +29,7 @@ interface BuildPanelProps {
   onToast: (message: string) => void;
   onFixFinding?: (finding: ReadinessFinding) => void;
   onQuoteFinding?: (finding: ReadinessFinding) => void;
+  onOpenCase?: (id: string) => void;
   panScroll: boolean;
   guide: BuildGuide;
   readiness: ReadinessHandle;
@@ -54,6 +55,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   onToast,
   onFixFinding,
   onQuoteFinding,
+  onOpenCase,
   panScroll,
   guide,
   readiness,
@@ -100,6 +102,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
               onSelectParts,
             },
             tether: tether && { tether, onChange: (next) => onChangeProject({ tether: next }) },
+            onOpenCase,
           }}
           restore={{
             onRestore: (finding) => onChangeProject({ readiness: restoreFinding(project.readiness, finding) }),

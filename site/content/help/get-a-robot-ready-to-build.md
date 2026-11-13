@@ -23,6 +23,8 @@ covers:
   - src/components/build/CheckItem.tsx
   - src/components/build/FindingRow.tsx
   - src/components/build/IgnoredChecks.tsx
+  - src/components/build/CaseCheckItem.tsx
+  - src/workspace/caseChecks.ts
   - src/components/build/TetherFields.tsx
   - src/workspace/RightPanelTabs.tsx
   - src/workspace/viewCommands.tsx
@@ -39,7 +41,8 @@ Clear every problem the Build tab finds, so the design can be printed, bought an
 5. Click **Fix** to hand the problem to the agent, or change the part yourself.
 6. If the robot runs on a cable instead of a battery, open **Servo voltage** and type the supply's volts in **V**.
 7. Open **Supply current** and type the supply's amps in **A**.
-8. Wait for the header to read **Ready to build**. The checks run again on their own after every change.
+8. If the scene has Cases, find each one in **Checks** under its own name, with how many of 20 runs it passed. Click it to open the Case in Simulate.
+9. Wait for the header to read **Ready to build**. The checks run again on their own after every change.
 
 ![The Build tab with every check passed and a $150 budget beside the total](/help/get-a-robot-ready-to-build/build-tab.png)
 
@@ -50,5 +53,17 @@ Settings ▸ Build (⌘,) holds the settings for this tab: whether the agent fix
 ![Settings ▸ Build with Checks, Prices and Build guide](/help/get-a-robot-ready-to-build/build-settings.png)
 
 To set a problem aside, click ⋯ on its row and choose **Ignore**. The **Ignore All** item below it, named after the kind of problem, sets aside every problem of that kind. Ignored problems stay under **Ignored**, where **Restore** brings each one back.
+
+## Cases in Checks
+
+Each Case runs 20 times, with friction, weight, servo strength and servo delay changed a little every time. A box or anything else that moves starts up to 15 mm from where it was placed. A Case is green at 18 of 20 or better, amber from 10 to 17 and red below 10. Its most common failure shows under it, such as Fell or Missed.
+
+A robot that can't enter a Case gets a red row that says why. Cases never count toward Ready to build, and you can ignore one from its ⋯ menu like any other note. They run again only when the robot or the Case changes.
+
+![Checks with Reach the Flag and Follow a Path past a Block, each passing 20 of 20](/help/get-a-robot-ready-to-build/cases-in-checks.png)
+
+![Checks with Reach the Flag at 0 of 20 and Missed under it, on a rover with weak wheel motors](/help/get-a-robot-ready-to-build/case-row-failing.png)
+
+![Reach the Flag open in Simulate after clicking its row](/help/get-a-robot-ready-to-build/case-in-simulate.png)
 
 Why each check exists is in [The path from design to build](/help/from-design-to-build). Next, [price the parts and set a budget](/help/price-the-parts-and-set-a-budget).

@@ -27,6 +27,7 @@ export interface CheckRow {
   ids?: string[];
   items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail' }>;
   itemsAreContext?: boolean;
+  caseId?: string;
 }
 
 export interface JointLoad {

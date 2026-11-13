@@ -23,6 +23,8 @@ import { designedFits } from '../utils/designedFits';
 import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
+import { caseFindings } from '../readiness/caseChecks';
+import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
 
 const BUDGET_MS = 30000;
@@ -65,6 +67,8 @@ export const projectFingerprint = (
     infill: project.infillPct,
     printProcess: project.printProcess,
     animations: jsonHash(project.animations),
+    cases: jsonHash(project.cases),
+    walks: (project.skills ?? []).map((s) => s.hash),
     firstRanges: project.firstRanges,
     printerId,
     purchases: jsonHash(world.purchases ?? {}),
@@ -86,6 +90,8 @@ export async function runReadiness({
   printer,
   fingerprint,
 }: ReadinessInput): Promise<Readiness> {
+  const turn = nextCaseTurn();
+
   await loadSourced();
   registerSourced(project.sourced ?? []);
   await viewport.meshesReady();
@@ -94,12 +100,17 @@ export async function runReadiness({
   const engineeringRun = printing.then((report) =>
     runEngineeringNow({ viewport, parts, project, withSweep: true, supportG: supportOf(report) }),
   );
-  const [engineering, geometry, print, purchases, measures] = await Promise.all([
+  const measuring = viewport.measureParts();
+  const casesRun = measuring.then((measures) =>
+    caseCheckRows({ parts, project, measures, partTriangles: viewport.partTriangles, turn }),
+  );
+  const [engineering, geometry, print, purchases, measures, cases] = await Promise.all([
     engineeringRun,
     viewport.assembly({ serviceable: serviceableIds(parts), budgetMs: BUDGET_MS, batteries: batteriesIn(parts) }),
     printing,
     platformBridge.listPurchases(),
-    viewport.measureParts(),
+    measuring,
+    casesRun,
   ]);
 
   rememberClamps(parts, clampsOf(geometry.chains));
@@ -120,12 +131,13 @@ export async function runReadiness({
       ...threadFindings(geometry, parts),
       ...hiddenFindings(parts),
       ...fixedMateFindings(parts),
+      ...caseFindings(cases),
     ],
     {
       parts,
       decisions: project.readiness,
       fingerprint: geometry.timedOut ? UNSETTLED_FINGERPRINT : fingerprint,
-      rows: engineering.rows,
+      rows: [...engineering.rows, ...cases],
     },
   );
 }

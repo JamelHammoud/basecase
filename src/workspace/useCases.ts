@@ -3,7 +3,7 @@ import { fittingTemplates } from '../cases/caseBuilder';
 import { checkFit, type FitRow } from '../cases/fitCheck';
 import { robotFacts } from '../cases/robotFit';
 import { scaledToReach } from '../cases/scale';
-import { parseCase, worldItem, type Case } from '../cases/schema';
+import { readCases, worldItem, type Case } from '../cases/schema';
 import { caseTemplates, uniqueCaseId } from '../cases/templates';
 import { worstFirst, type TryRecord } from '../cases/tries';
 import { deleteRecording, loadRecording } from '../cases/tryStore';
@@ -25,16 +25,6 @@ interface CasesOptions {
   showToast: ShowToast;
   openAccounts: () => void;
   sceneId: string;
-}
-
-function readCases(raw: unknown[] | undefined): Case[] {
-  return (raw ?? []).flatMap((c) => {
-    try {
-      return [parseCase(c)];
-    } catch {
-      return [];
-    }
-  });
 }
 
 export function useCases(options: CasesOptions) {

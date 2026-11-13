@@ -15,6 +15,7 @@ export interface Finding {
   agentText: string;
   detail?: string;
   ids: string[];
+  caseId?: string;
 }
 
 export interface FindingDispute {
@@ -43,6 +44,7 @@ export interface CheckSummary {
   status: CheckStatus;
   detail: string;
   ids: string[];
+  caseId?: string;
 }
 
 export interface ReadinessFinding extends Finding {

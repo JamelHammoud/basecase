@@ -27,7 +27,9 @@ Give your robot a task in a simulated world, drive it through, and keep the trie
 ![A try running, with the clock, End Try and the keys](/help/try-a-robot-on-a-case/trying.png)
 
 6. Click **End Try**, or let the time run out.
-7. Read **Results** at the bottom of the tab: how the latest run went, then every try with Passed or Missed and a filmstrip. Click **Replay** on a try to watch it again, or right-click it to delete it.
+7. Read **Results** at the bottom of the tab: how the latest run went, then every try you drove with Passed or Missed and a filmstrip. Click **Replay** on a try to watch it again, or right-click it to delete it.
+
+Right-click a passed try and choose **Multiply** to add varied passing copies to the dataset. They show as a count on the try's row; see [Multiply a try into varied demonstrations](/help/multiply-a-try-into-varied-demonstrations).
 8. Once a try passes, click **Export Dataset** under the tries, or choose it in ⌘K.
 
 ![Results with the latest run and one try](/help/try-a-robot-on-a-case/results.png)

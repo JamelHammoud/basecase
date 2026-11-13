@@ -190,7 +190,7 @@ async function handAt(c: ReferenceCommand) {
 async function multiplyFromPalette(count: number) {
   await app.page.evaluate((n) => (window as unknown as { __studio: Studio }).__studio.multiplyCount(n), count);
   await app.page.keyboard.press('Meta+k');
-  await app.page.keyboard.type('Multiply');
+  await app.page.keyboard.type('Multiply Try');
   await app.page.keyboard.press('Enter');
   await app.page
     .getByRole('status')

@@ -84,7 +84,7 @@ function multiplyCommands({ multiply }: WorkspaceCore['simTraining']['cases']): 
     {
       id: 'case-multiply',
       group: 'Simulate',
-      label: 'Multiply',
+      label: 'Multiply Try',
       icon: <DuplicateIcon className={ic} />,
       keywords: 'try variations demonstrations dataset augment mimicgen generate',
       run: () => multiply.multiply(latest),

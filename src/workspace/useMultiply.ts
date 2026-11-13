@@ -41,6 +41,7 @@ export function useMultiply(options: MultiplyOptions): Multiply {
   const addTries = (records: TryRecord[]) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), ...records] }));
   const [running, setRunning] = useState<string | null>(null);
   const run = useRef<MultiplyRun | null>(null);
+  const busy = useRef(false);
   const count = useRef(MULTIPLY_COUNT);
 
   const stop = () => run.current?.stop();
@@ -57,10 +58,8 @@ export function useMultiply(options: MultiplyOptions): Multiply {
     return { model, kase: staged.kase, source, rig: rigForWorker(rig), ...stagedEffectors(staged, { rig, parts }) };
   };
 
-  const multiply = async (record: TryRecord) => {
-    if (run.current || !active || !canMultiply(record)) return;
-
-    const job = await jobFor(active, record);
+  const runFrom = async (kase: Case, record: TryRecord) => {
+    const job = await jobFor(kase, record);
 
     if (!job) return showToast(EARLIER_DESIGN, { tone: 'error' });
 
@@ -83,17 +82,25 @@ export function useMultiply(options: MultiplyOptions): Multiply {
     run.current = startMultiply(job, multiplySeeds(used, count.current), {
       onKept: (kept) => (saving = saving.then(() => keep(kept))),
     });
-    setRunning(record.id);
     progress();
+    await run.current.done;
+    run.current = null;
+    await saving;
+    showToast(generatedText(made));
+  };
+
+  const multiply = async (record: TryRecord) => {
+    if (busy.current || !active || !canMultiply(record)) return;
+
+    busy.current = true;
+    setRunning(record.id);
 
     try {
-      await run.current.done;
-      run.current = null;
-      await saving;
-      showToast(generatedText(made));
+      await runFrom(active, record);
     } catch (err) {
       showToast(err instanceof Error ? err.message : String(err), { tone: 'error' });
     } finally {
+      busy.current = false;
       run.current = null;
       setRunning(null);
     }

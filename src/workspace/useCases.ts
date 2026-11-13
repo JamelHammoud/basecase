@@ -106,11 +106,14 @@ export function useCases(options: CasesOptions) {
 
   const timeline = useTryTimeline({ sim, rig, parts, active, partners });
 
-  const removeTry = (record: TryRecord) =>
+  const removeTry = (record: TryRecord) => {
+    const generated = generatedFrom(project.tries ?? [], record.id);
+
     confirmAction({
       title: `Delete this try?`,
+      body: generated.length ? `Its ${generated.length} generated tries go with it.` : undefined,
       onConfirm: () => {
-        const gone = new Set([record.id, ...generatedFrom(project.tries ?? [], record.id).map((t) => t.id)]);
+        const gone = new Set([record.id, ...generated.map((t) => t.id)]);
 
         if (timeline.record && gone.has(timeline.record.id)) timeline.close();
 
@@ -118,6 +121,7 @@ export function useCases(options: CasesOptions) {
         setProject((p) => ({ ...p, tries: (p.tries ?? []).filter((t) => !gone.has(t.id)) }));
       },
     });
+  };
 
   const runFit = async () => {
     setFit({ caseId: activeId, rows: [], checking: true });

@@ -157,7 +157,7 @@ export const ControlSection: React.FC<
           </Button>
         </div>
         {showDrive && <DriveControl sim={sim} walk={walk} onToast={onToast} />}
-        {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up</p>}
+        {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up…</p>}
         {showDrive && drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
       </div>
     </Section>

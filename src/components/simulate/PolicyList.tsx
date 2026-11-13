@@ -15,7 +15,8 @@ const Retraining: React.FC<{ training: Training }> = ({ training }) => {
   if (training.status === 'error') return <div className="text-[12px] text-white/50">{training.error}</div>;
 
   const done = share(training);
-  const line = [training.message, done === null ? null : pct(done)].filter(Boolean).join(' ');
+  const progress = done === null ? '…' : ` ${pct(done)}`;
+  const line = training.message ? `${training.message}${progress}` : done !== null && pct(done);
 
   return (
     <>

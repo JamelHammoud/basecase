@@ -18,7 +18,7 @@ function stateLine(row: SkillRow): string | null {
 
   if (state.kind !== 'training') return null;
 
-  return state.share === null ? state.message : `${state.message} ${pct(state.share)}`;
+  return state.share === null ? `${state.message}…` : `${state.message} ${pct(state.share)}`;
 }
 
 const RowAction: React.FC<{ row: SkillRow; actions: SkillActions }> = ({ row, actions }) => {

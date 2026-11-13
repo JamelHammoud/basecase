@@ -26,6 +26,7 @@ import { printReportOf } from '../utils/printReport';
 import { caseFindings } from '../readiness/caseChecks';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
+import { freshWalk } from './storedWalk';
 
 const BUDGET_MS = 30000;
 
@@ -69,6 +70,7 @@ export const projectFingerprint = (
     animations: jsonHash(project.animations),
     cases: jsonHash(project.cases),
     walks: (project.skills ?? []).map((s) => s.hash),
+    walk: jsonHash(project.walk),
     firstRanges: project.firstRanges,
     printerId,
     purchases: jsonHash(world.purchases ?? {}),
@@ -98,7 +100,14 @@ export async function runReadiness({
 
   const printing = printReportOf(parts, { project, printer }, viewport.printShapes);
   const engineeringRun = printing.then((report) =>
-    runEngineeringNow({ viewport, parts, project, withSweep: true, supportG: supportOf(report) }),
+    runEngineeringNow({
+      viewport,
+      parts,
+      project,
+      withSweep: true,
+      walk: freshWalk(parts, project),
+      supportG: supportOf(report),
+    }),
   );
   const measuring = viewport.measureParts();
   const casesRun = measuring.then((measures) =>

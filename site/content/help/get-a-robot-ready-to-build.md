@@ -30,6 +30,7 @@ covers:
   - src/workspace/viewCommands.tsx
   - src/workspace/sceneCommands.tsx
   - src/components/settings/BuildPane.tsx
+  - src/utils/engineeringPower.ts
 ---
 
 Clear every problem the Build tab finds, so the design can be printed, bought and put together.
@@ -41,8 +42,9 @@ Clear every problem the Build tab finds, so the design can be printed, bought an
 5. Click **Fix** to hand the problem to the agent, or change the part yourself.
 6. If the robot runs on a cable instead of a battery, open **Servo voltage** and type the supply's volts in **V**.
 7. Open **Supply current** and type the supply's amps in **A**.
-8. If the scene has Cases, find each one in **Checks** under its own name, with how many of 20 runs it passed. Click it to open the Case in Simulate.
-9. Wait for the header to read **Ready to build**. The checks run again on their own after every change.
+8. Open **Current and runtime** to see how many minutes the battery lasts. Once the agent has walked the trained walk policy in the simulator, it shows the average and peak amps from that walk and the joint that draws the most. Until then, and after you change the design, it says **(estimate)**.
+9. If the scene has Cases, find each one in **Checks** under its own name, with how many of 20 runs it passed. Click it to open the Case in Simulate.
+10. Wait for the header to read **Ready to build**. The checks run again on their own after every change.
 
 ![The Build tab with every check passed and a $150 budget beside the total](/help/get-a-robot-ready-to-build/build-tab.png)
 

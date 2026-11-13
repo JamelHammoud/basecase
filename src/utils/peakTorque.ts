@@ -1,3 +1,5 @@
+import { ampsAt, type AmpModel } from './servoAmps';
+
 export const PEAK_WINDOW_S = 0.025;
 export const PEAK_LIMITS = { pass: 0.8, warn: 1, overS: 0.05 };
 
@@ -5,6 +7,12 @@ export interface TorqueSeries {
   windowS: number;
   absDemand: number[][];
   sqForce: number[][];
+  amps?: number[][];
+}
+
+export interface RecorderOptions {
+  windowS?: number;
+  amps?: Array<AmpModel | null>;
 }
 
 export interface PeakSpan {
@@ -25,24 +33,33 @@ export class TorqueRecorder {
   private readonly perWindow: number;
   private readonly abs: Float64Array;
   private readonly sq: Float64Array;
+  private readonly current: Float64Array;
+  private readonly models: Array<AmpModel | null>;
   private steps = 0;
   private readonly windowS: number;
   readonly absDemand: number[][];
   readonly sqForce: number[][];
+  readonly amps: number[][];
 
-  constructor(joints: number, dt: number, windowS = PEAK_WINDOW_S) {
+  constructor(joints: number, dt: number, { windowS = PEAK_WINDOW_S, amps = [] }: RecorderOptions = {}) {
     this.perWindow = Math.max(1, Math.round(windowS / dt));
     this.windowS = this.perWindow * dt;
     this.abs = new Float64Array(joints);
     this.sq = new Float64Array(joints);
+    this.current = new Float64Array(joints);
+    this.models = Array.from({ length: joints }, (_, i) => amps[i] ?? null);
     this.absDemand = Array.from({ length: joints }, () => []);
     this.sqForce = Array.from({ length: joints }, () => []);
+    this.amps = Array.from({ length: joints }, () => []);
   }
 
   add(demand: ArrayLike<number>, force: ArrayLike<number>) {
     for (let i = 0; i < this.abs.length; i++) {
+      const model = this.models[i];
+
       this.abs[i] += Math.abs(demand[i]);
       this.sq[i] += force[i] * force[i];
+      this.current[i] += model ? ampsAt(model, force[i]) : 0;
     }
 
     this.steps++;
@@ -54,14 +71,17 @@ export class TorqueRecorder {
     for (let i = 0; i < this.abs.length; i++) {
       this.absDemand[i].push(this.abs[i] / this.perWindow);
       this.sqForce[i].push(this.sq[i] / this.perWindow);
+
+      if (this.models[i]) this.amps[i].push(this.current[i] / this.perWindow);
     }
 
     this.abs.fill(0);
     this.sq.fill(0);
+    this.current.fill(0);
   }
 
   series(): TorqueSeries {
-    return { windowS: this.windowS, absDemand: this.absDemand, sqForce: this.sqForce };
+    return { windowS: this.windowS, absDemand: this.absDemand, sqForce: this.sqForce, amps: this.amps };
   }
 }
 

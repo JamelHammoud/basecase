@@ -17,6 +17,7 @@ import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
+import type { AmpModel } from '../utils/servoAmps';
 
 export { simDeltas } from './mjcf';
 
@@ -77,6 +78,7 @@ export interface Simulation {
     frames?: number[];
     forceLimits?: (model: SimModel) => Record<string, number>;
     trace?: boolean;
+    currents?: Record<string, AmpModel>;
     commands?: Array<{ at: number; command: DriveCommand }>;
   }) => Promise<SimRun>;
 }
@@ -127,7 +129,7 @@ type Ran = Extract<SimResponse, { type: 'ran' }>;
 
 async function runModel(
   m: SimModel,
-  { seconds, controller: c, pushes, frames, forceLimits, trace, commands }: RunOptions,
+  { seconds, controller: c, pushes, frames, forceLimits, trace, currents, commands }: RunOptions,
   id: number,
 ): Promise<SimRun> {
   const w = newSimWorker();
@@ -148,6 +150,7 @@ async function runModel(
             pushes: pushes?.map((p) => ({ at: p.at, robot: p.robot ?? key, force: p.force })),
             forceLimits: forceLimits?.(m),
             trace,
+            currents,
             commands,
           } satisfies SimRequest);
         } else if (msg.type === 'error') reject(new Error(msg.message));

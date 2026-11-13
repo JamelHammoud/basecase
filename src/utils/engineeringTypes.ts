@@ -56,11 +56,25 @@ export interface WalkJoint {
   overS: number;
 }
 
+export interface WalkAmps {
+  avgA: number;
+  peakA: number;
+}
+
+export interface WalkPower extends WalkAmps {
+  joints: Record<string, WalkAmps>;
+}
+
 export interface WalkSim {
   policy: string;
   seconds: number;
   fellAt: number | null;
   joints: Record<string, WalkJoint>;
+  power?: WalkPower;
+}
+
+export interface StoredWalk extends WalkSim {
+  key: string;
 }
 
 export interface EngineeringInputs {

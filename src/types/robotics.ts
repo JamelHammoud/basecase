@@ -9,6 +9,7 @@ import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
 import type { CalibrationHistory } from '../reality/history';
 import type { BooleanRecipe } from './step';
+import type { StoredWalk } from '../utils/engineeringTypes';
 
 export type PartCategory =
   | 'custom_models'
@@ -238,6 +239,7 @@ export interface ProjectSettings extends ProjectRecords {
   poses?: RobotPose[];
   animations?: RobotAnimation[];
   policies?: PolicyRecord[];
+  walk?: StoredWalk;
   marks?: SceneMark[];
   cases?: Case[];
   tries?: TryRecord[];

@@ -1,8 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { ContextMenu, IconButton, PopoverMenu, type ContextMenuEntry, MenuIcon } from '../design-system';
+import { ContextMenu, IconButton, PopoverMenu, confirmAction, type ContextMenuEntry, MenuIcon } from '../design-system';
 import type { SavedSceneSummary } from '../types/robotics';
 import { useSavedScenes } from '../utils/sceneStore';
-import { DeleteSceneDialog } from './scenes/DeleteSceneDialog';
 import { SceneList } from './scenes/SceneList';
 import { sceneMenu } from './scenes/sceneMenu';
 
@@ -25,7 +24,6 @@ export const ScenesMenu: React.FC<ScenesMenuProps> = (props) => {
   const [query, setQuery] = useState('');
   const [renaming, setRenaming] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
-  const [confirming, setConfirming] = useState<SavedSceneSummary | null>(null);
 
   const close = () => {
     onOpenChange(false);
@@ -39,18 +37,20 @@ export const ScenesMenu: React.FC<ScenesMenuProps> = (props) => {
   };
 
   const dismiss = (reason: 'outside' | 'escape') => {
-    const escape = reason === 'escape';
+    if (menu) return;
 
-    const layered = !!(confirming || menu);
-
-    if (layered && escape) setConfirming(null);
-
-    if (layered) return;
-
-    if (escape && renaming) setRenaming(null);
-    else if (escape && query) setQuery('');
+    if (reason === 'outside') close();
+    else if (renaming) setRenaming(null);
+    else if (query) setQuery('');
     else close();
   };
+
+  const confirmDelete = (scene: SavedSceneSummary) =>
+    confirmAction({
+      title: `Delete ${scene.name}?`,
+      body: 'You can’t undo this.',
+      onConfirm: () => props.onDeleteScene(scene),
+    });
 
   const showMenu = (scene: SavedSceneSummary, e: React.MouseEvent) => {
     e.preventDefault();
@@ -62,7 +62,7 @@ export const ScenesMenu: React.FC<ScenesMenuProps> = (props) => {
         onOpen: () => openScene(scene),
         onRename: () => setRenaming(scene.id),
         onDuplicate: () => props.onDuplicateScene(scene),
-        onDelete: () => setConfirming(scene),
+        onDelete: () => confirmDelete(scene),
       }),
     });
   };
@@ -102,14 +102,6 @@ export const ScenesMenu: React.FC<ScenesMenuProps> = (props) => {
         />
       </PopoverMenu>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.entries} onClose={() => setMenu(null)} />}
-      <DeleteSceneDialog
-        scene={confirming}
-        onCancel={() => setConfirming(null)}
-        onDelete={(scene) => {
-          setConfirming(null);
-          props.onDeleteScene(scene);
-        }}
-      />
     </div>
   );
 };

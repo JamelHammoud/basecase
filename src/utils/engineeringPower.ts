@@ -2,7 +2,7 @@ import { ActuatorSpec, BatterySpec, COMPONENT_BY_ID, actuatorOf } from '../data/
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { isLegJoint } from './engineeringBody';
 import { jointLabel } from './engineeringFormat';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 import type { CheckContext, CheckRow } from './engineeringTypes';
 import { PowerSource, drivesJoint, findPowerSources, sceneRegulators, tetherSource } from './powerSources';
 import { IDLE_A, STALL_A } from './servoAmps';

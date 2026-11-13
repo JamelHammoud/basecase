@@ -3,7 +3,7 @@ import type { ScenePart } from '../types/robotics';
 import type { ChainProblem, FastenerChain, SleeveHost } from './assemblyTypes';
 import type { HeldBy } from './heldBy';
 import { grouped, listIds, mm, type ReportLine } from './reportText';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 
 export const RANK = {
   air: 1,

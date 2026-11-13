@@ -1,5 +1,5 @@
 import React from 'react';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { collectionPath, type HelpCollection } from './helpCenter';
 
 export const CollectionGrid: React.FC<{ collections: HelpCollection[] }> = ({ collections }) => (

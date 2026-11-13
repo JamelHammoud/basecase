@@ -1,5 +1,5 @@
 import { BOM_CATEGORIES, type Bom, type BomCategory, type BomLine } from '../../utils/bomTypes';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 
 export interface BomGroup {
   category: BomCategory;

@@ -24,6 +24,7 @@ import {
   toScene,
   type V3,
 } from './agentFrame';
+import { plural } from '../../electron/plural.mjs';
 
 export { agentCatalog } from './agentCatalog';
 export type { AgentCadPayload } from './cadMesh';
@@ -469,6 +470,6 @@ export function describeOp(op: AgentOp, parts: ScenePart[]): string {
     case 'delete':
       return parts.find((p) => p.id === op.id)?.name ?? op.id;
     case 'mirror':
-      return `${op.ids.length} parts`;
+      return plural(op.ids.length, 'part');
   }
 }

@@ -4,7 +4,7 @@ import type { ScenePart } from '../types/robotics';
 import { isPrinted, printMaterialOf } from './bom';
 import { servoParts } from './engineeringPower';
 import type { CheckContext, CheckRow } from './engineeringTypes';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 
 const SERVO_CASE_C = 65;
 

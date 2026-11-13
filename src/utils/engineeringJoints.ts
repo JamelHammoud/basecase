@@ -1,7 +1,7 @@
 import { actuatorOf } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { deg, jointLabel, partLabel } from './engineeringFormat';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 import { isLegJoint } from './engineeringBody';
 import { V3, boxCorners, dot, lineDistance, norm, rotateEuler, sub } from './engineeringMath';
 import { downstreamOf } from './engineeringMass';

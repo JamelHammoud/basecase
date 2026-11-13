@@ -3,7 +3,7 @@ import { Button, MetaLine, Section } from '../../design-system';
 import type { Plate } from '../../print/plan';
 import type { SlicedPlate } from '../../print/printBridge';
 import type { Printing } from '../../workspace/usePrinting';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { hm } from './format';
 import { plateNumbers } from '../print/plateFacts';
 

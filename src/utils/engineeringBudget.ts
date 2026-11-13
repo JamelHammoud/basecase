@@ -3,7 +3,7 @@ import { buildBom, isPrinted } from './bom';
 import type { BomLine } from './bomTypes';
 import { formatWhole } from './currencyStore';
 import type { CheckContext, CheckRow } from './engineeringTypes';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 
 const WARN_SHARE = 0.9;
 

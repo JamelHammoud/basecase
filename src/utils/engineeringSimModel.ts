@@ -5,7 +5,7 @@ import { measuredJoints, servoFamilyOf } from '../reality/measuredJoints';
 import { jointServos } from '../sim/mjcfEffort';
 import { isWheelJoint } from '../sim/morphology';
 import { jointLabel } from './engineeringFormat';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 import { isMovable } from './kinematics';
 import { buildRig } from './kinematicsRig';
 import type { CheckContext, CheckRow, FindingFix } from './engineeringTypes';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FolderIcon } from '../../../design-system';
-import { plural } from '../../../utils/plural';
+import { plural } from '../../../../electron/plural.mjs';
 import { QueuedDraft } from '../types';
 
 function summaryOf(params: QueuedDraft) {

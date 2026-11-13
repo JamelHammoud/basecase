@@ -6,7 +6,7 @@ import { SAMPLE_ROBOTICS_SVGS } from './samples';
 import type { SketchParams as CreateFrom2DDrawingParams } from '../../workspace/partFactories';
 import type { StudioDraft } from './useStudioDraft';
 import { errorMessage } from '../../utils/errorMessage';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 
 const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
   const svgFileInputRef = useRef<HTMLInputElement | null>(null);

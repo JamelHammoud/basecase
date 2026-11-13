@@ -9,7 +9,7 @@ import {
   DeleteIcon,
   GripIcon,
 } from '../../../design-system';
-import { plural } from '../../../utils/plural';
+import { plural } from '../../../../electron/plural.mjs';
 import { QueueControls, QueuedItem } from '../types';
 import { lineTop, QUEUE_ROW_PX } from './queueDrag';
 import { QueuedRowBody } from './QueuedRowBody';

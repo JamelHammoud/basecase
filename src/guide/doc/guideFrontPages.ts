@@ -1,6 +1,6 @@
 import type { GuideItem } from '../guideTypes';
 import { toolIcon } from './guideIcons';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { CONTENT_BOTTOM, CONTENT_TOP, esc, imageTag, mm, type GuideDoc } from './guideHtml';
 
 export function coverBody({ plan, drawings, meta }: GuideDoc): string {

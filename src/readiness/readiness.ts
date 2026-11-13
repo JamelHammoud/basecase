@@ -5,7 +5,7 @@ import type { CheckRow } from '../utils/engineeringTypes';
 import type { CheckStatus, CheckSummary, Finding, Readiness, ReadinessDecisions, ReadinessFinding } from './types';
 import { READINESS_CHECKS, ruleFinding } from './wording';
 import { errorMessage } from '../utils/errorMessage';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 
 const round = (v: number) => Math.round(v * 10) / 10;
 

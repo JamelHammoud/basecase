@@ -1,7 +1,7 @@
 import { BOM_CATEGORIES, Bom, BomLine, FILAMENT_MARGIN, PriceStatus, STALE_DAYS, localDate } from './bomTypes';
 import { currencyNote, type Money, scaledEntry } from './currency';
 import { currentMoney } from './currencyStore';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 
 const STATUS_LABEL: Record<PriceStatus, string> = { checked: 'Checked', stale: 'Stale', unchecked: 'Not checked' };
 const LINK_TYPE: Record<BomLine['urlKind'], string> = { product: 'Listing', search: 'Search', none: '' };

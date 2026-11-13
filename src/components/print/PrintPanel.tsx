@@ -7,7 +7,7 @@ import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import type { Printing } from '../../workspace/usePrinting';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { hm } from '../build/format';
 import { plateNumbers, plateStateText } from './plateFacts';
 import { PrintedSection } from './PrintedSection';

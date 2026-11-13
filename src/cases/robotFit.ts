@@ -4,6 +4,7 @@ import type { RobotJoint, ScenePart } from '../types/robotics';
 import { isMovable, type Rig, type V3 } from '../utils/kinematics';
 import { findGripper, type Gripper } from './gripper';
 import type { Capability, RobotSlot, SlotBinding } from './schema';
+import { plural } from '../../electron/plural.mjs';
 
 export interface EndEffector {
   part: string;
@@ -183,7 +184,7 @@ export function slotRefusal(slot: RobotSlot, facts: RobotFacts): string | null {
     return `This Case needs ${missing.map((n) => NEED_WORDS[n]).join(' and ')}. This robot has ${HAS_WORDS[facts.morphology]}.`;
 
   if (slot.minJoints && facts.movableJoints < slot.minJoints)
-    return `This Case needs ${slot.minJoints} joints. This robot has ${facts.movableJoints}.`;
+    return `This Case needs ${plural(slot.minJoints, 'joint')}. This robot has ${facts.movableJoints}.`;
 
   return null;
 }

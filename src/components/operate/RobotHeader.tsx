@@ -3,7 +3,7 @@ import { Button } from '../../design-system';
 import { disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
 import { FAMILY_NAMES } from '../../robot/robotFamilies';
 import type { RobotState } from '../../robot/robotState';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 
 const RUN: Record<string, string> = {
   idle: 'Motors off',

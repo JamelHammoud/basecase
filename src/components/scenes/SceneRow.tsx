@@ -1,7 +1,7 @@
 import React from 'react';
 import type { SavedSceneSummary } from '../../types/robotics';
 import { PreviewImage } from '../../design-system';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { timeAgo } from '../../utils/timeAgo';
 import { RenameField } from '../library/Tile';
 import { useScenePreview } from './useScenePreview';

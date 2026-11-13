@@ -1,5 +1,5 @@
 import { jointLabel, nm } from './engineeringFormat';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 import type { CheckRow, JointLoad } from './engineeringTypes';
 
 const share = (v: number | undefined) => (v === undefined ? '?' : v.toFixed(2));

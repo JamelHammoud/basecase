@@ -8,7 +8,7 @@ import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotic
 import { hashText } from '../guide/guideItems';
 import { filamentGrams, isPrinted, printMaterialOf } from './bom';
 import { jsonHash, numbersHash } from './geometryHash';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 
 const SUPPORT_FILL = 0.2;
 const SHELL_MM = 0.9;

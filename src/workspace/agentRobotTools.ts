@@ -22,6 +22,7 @@ import type { Leader } from '../leader/makeLeader';
 import { scopeOf } from '../agent/agentPoseShared';
 import { wrapRobotRequest } from './agentWrapRequest';
 import type { WrapRobot } from './useWrapRobot';
+import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
 
@@ -50,7 +51,7 @@ function importedText(got: ImportRobotResult) {
   if (typeof got === 'string') return got;
 
   return (
-    `Inserted ${got.name}: ${got.parts.length} parts (group "${got.name}"), ${got.joints.length} joints, ${robotHeightMm(got.parts)} mm tall.` +
+    `Inserted ${got.name}: ${plural(got.parts.length, 'part')} (group "${got.name}"), ${plural(got.joints.length, 'joint')}, ${robotHeightMm(got.parts)} mm tall.` +
     (got.notes.length ? `\nMissing files: ${got.notes.slice(0, 8).join('; ')}` : '') +
     `\nCall get_rig for the joints.`
   );
@@ -74,8 +75,8 @@ function leaderText(leader: Leader) {
   const printed = leader.parts.filter((p) => p.cad).map((p) => p.name);
 
   return (
-    `Opened "${leader.name}" in a new scene tab: ${leader.joints.length} joints in the follower's order (${leader.joints.map((j) => j.id).join(', ')}), ` +
-    `one Dynamixel XL330-M288 per joint, and ${printed.length} printed parts (${printed.join(', ')}). Its scene records this scene and the joints it leads.`
+    `Opened "${leader.name}" in a new scene tab: ${plural(leader.joints.length, 'joint')} in the follower's order (${leader.joints.map((j) => j.id).join(', ')}), ` +
+    `one Dynamixel XL330-M288 per joint, and ${plural(printed.length, 'printed part')} (${printed.join(', ')}). Its scene records this scene and the joints it leads.`
   );
 }
 

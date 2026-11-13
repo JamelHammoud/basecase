@@ -46,7 +46,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 15. **Numbers:**
     - Tabular figures, units in a muted suffix (`mm`, `°`, `%`).
     - Use `×` for sizes: `40 × 36 × 20`.
-    - Use numerals, not words (“3 parts”), and pluralize correctly (“1 part”, “2 parts”). Every count goes through `plural` (`src/utils/plural.ts`: `plural(n, 'part')`, `plural(n, 'mesh', 'meshes')`), never a hand-written `n === 1` ternary or a bare `${n} parts`. Word a count so no verb has to agree with it: “No price on 2 lines”, not “2 lines have no price”.
+    - Use numerals, not words (“3 parts”), and pluralize correctly (“1 part”, “2 parts”). Every count in the app and the agent's text goes through `plural` (`electron/plural.mjs`, shared by the renderer, the main process and the MCP server: `plural(n, 'part')`, `plural(n, 'mesh', 'meshes')`), never a hand-written `n === 1` ternary or a bare `${n} parts`. The CAD kernel reads only its own folder, so its counts use drawing notation (“4× through hole”). Word a count so no verb has to agree with it: “No price on 2 lines”, not “2 lines have no price”.
 16. **No middle dots (`·`) between items, and no other separator glyph in their place** (a pipe, `•`, `—`). Separate facts with layout instead:
     - a meta line of facts: `MetaLine` (items 12px apart; `SectionHeader` and the part page and hover card subtitles take a list and use it);
     - a spec value with several facts: a list (`SpecValue`), rendered one per line by `SpecText`;

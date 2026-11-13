@@ -150,13 +150,13 @@ describe('robot skeleton', () => {
     ];
 
     expect(checkAgainstSkeleton(sk, parts)).toMatchInlineSnapshot(`
-      "1 joints and frames checked; the lowest joint fits best 10 mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.
+      "1 joint and their frames checked; the lowest joint fits best 10 mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.
       Every joint sits inside the model.
       Joint span X 20…20, Y -100…-100, Z 10…10; model span X -40…40, Y -120…40, Z 0…80.
       Model top is 70 mm above the highest joint; check that against the photo (shells above the top joint, e.g. a head or cap)."
     `);
     expect(checkAgainstSkeleton(sk, parts, 5)).toMatchInlineSnapshot(`
-      "1 joints and frames checked; the lowest joint fits best 5 mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.
+      "1 joint and their frames checked; the lowest joint fits best 5 mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.
       Joints outside the model. Each one means that link is in the wrong place or too small: move or resize it until no joint is listed (residuals of 5–10 mm still put a whole leg or arm in the wrong place):
       - shoulder at (20, -100, 5) is 5 mm outside the model (nearest: arm)
       Joint span X 20…20, Y -100…-100, Z 5…5; model span X -40…40, Y -120…40, Z 0…80.

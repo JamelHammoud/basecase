@@ -1,7 +1,7 @@
 import type { ActuatorBus } from '../data/components';
 import { formatMoney as money, formatWhole as whole } from './currencyStore';
 import { loadCut, type Family, type Fit, type JointLoads, type JointPick } from './actuatorSizing';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 
 const BUS_NAMES: Record<ActuatorBus, string> = {
   feetech: 'Feetech serial bus',
@@ -29,7 +29,7 @@ function supplyText(f: Family): string {
 
 function familyHeader(f: Family): string {
   const what = f.failures.length
-    ? `Cheapest set, but nothing in it passes ${plural(f.failures.length, 'joint')}`
+    ? `Cheapest set, but nothing in it passes on ${plural(f.failures.length, 'joint')}`
     : 'Cheapest set where every joint passes Stance and Heat';
 
   return (

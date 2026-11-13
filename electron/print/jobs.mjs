@@ -4,6 +4,7 @@ import path from 'node:path';
 import { safeFileId } from '../backend/constants.mjs';
 import { flattenPresets, readSliced, runSlicer } from './slice.mjs';
 import { SLICERS, slicerFor, slicerOrder } from './slicers.mjs';
+import { plural } from '../plural.mjs';
 
 export const fileStem = (name) =>
   String(name ?? 'robot')
@@ -182,7 +183,7 @@ export async function sliceJob({ dir, job }, { signal, progress, wanted }) {
   for (const group of job.groups) {
     const count = group.plates.length;
 
-    progress(`Slicing ${count} ${group.material} ${count === 1 ? 'plate' : 'plates'} in ${slicer.name}`);
+    progress(`Slicing ${plural(count, `${group.material} plate`)} in ${slicer.name}`);
     records.push(await sliceGroup({ dir, job, group, slicer, signal }));
   }
 

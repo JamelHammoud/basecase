@@ -16,7 +16,7 @@ import {
 import { rememberImportedRobot, robotPreviewImage } from '../utils/robotPreview';
 import { useLatestRef } from '../utils/useLatestRef';
 import { whenIdle } from '../utils/whenIdle';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 import { attempt } from './helpers';
 import { articulatedShift, importOffset, palmOf, placeRobot } from './robotPlacement';
 import type { Vec3 } from './types';

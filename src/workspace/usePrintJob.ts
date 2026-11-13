@@ -8,7 +8,7 @@ import { platformBridge } from '../utils/platformBridge';
 import type { PrintReport } from '../utils/printReport';
 import type { ShowToast } from './types';
 import { errorMessage } from '../utils/errorMessage';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 
 interface PrintJobOptions {
   jobId: string;

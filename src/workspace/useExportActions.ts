@@ -13,7 +13,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
 import { useRobotPackageExport } from './useRobotPackageExport';
 import { errorMessage } from '../utils/errorMessage';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 

@@ -1,6 +1,6 @@
 import type { SceneMark, ScenePart } from '../types/robotics';
 import { markColorName, markColorOf } from '../utils/markColors';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 import { toCad } from './agentFrame';
 
 const MAX_LISTED = 8;

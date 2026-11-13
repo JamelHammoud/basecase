@@ -1,5 +1,5 @@
 import { AcpToolCallEvent } from '../../types/robotics';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { isToolRunning, toolKey, toolLabel } from './toolLabel';
 
 const HANDBACK_TOOL = 'SubagentHandback';

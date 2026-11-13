@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { downloadBytes } from '../utils/downloadBytes';
 import { platformBridge } from '../utils/platformBridge';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 import { fileSafe } from './helpers';
 import { isStepBody, stepJob } from './stepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';

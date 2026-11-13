@@ -6,7 +6,7 @@ import { isSourcedId } from '../../data/sourcedItems';
 import { PART_DRAG_TYPE, setSceneDrag } from '../../data/dnd';
 import type { CatalogItem } from '../../types/robotics';
 import { usePartThumbnail } from '../../three/partThumbnails';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { BrowseRow, PreviewImage, RowActions, Tooltip, PlusIcon } from '../../design-system';
 import type { Category } from './partsViews';
 

@@ -1,6 +1,6 @@
 import type { RobotJoint } from '../types/robotics';
 import { fmtG } from './engineeringFormat';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 import { isLegJoint, robotBodies, type RobotBody } from './engineeringBody';
 import { servoMountRows, rangeOfMotionRows } from './engineeringJoints';
 import { downstreamOf, massOf, partMasses } from './engineeringMass';

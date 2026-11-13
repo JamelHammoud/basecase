@@ -5,7 +5,7 @@ import type { OnshapeUpdate } from '../onshape/onshapeUpdate';
 import { prepareParts } from '../three/partMesh/prepare';
 import { errorMessage } from '../utils/errorMessage';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 import { attempt } from './helpers';
 import type { WorkspaceCore } from './useWorkspaceCore';
 

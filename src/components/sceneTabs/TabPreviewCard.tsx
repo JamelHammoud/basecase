@@ -2,7 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { AgentSpinner } from '../../design-system';
 import type { SceneTabInfo } from '../SceneTabs';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { PREVIEW_WIDTH, TabPreviewSpot } from './useTabPreview';
 
 function caption(tab: SceneTabInfo) {

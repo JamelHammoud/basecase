@@ -10,7 +10,7 @@ import { BuyGroup } from './BuyGroup';
 import { bomGroups } from './buyLine';
 import type { BuyContext } from './BuyRow';
 import { CheckIcon } from './CheckIcon';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 
 interface BuyListProps {
   bom: Bom;

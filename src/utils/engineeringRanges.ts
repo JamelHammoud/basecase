@@ -1,6 +1,6 @@
 import type { RobotJoint } from '../types/robotics';
 import { jointLabel } from './engineeringFormat';
-import { plural } from './plural';
+import { plural } from '../../electron/plural.mjs';
 import type { CheckContext, CheckRow } from './engineeringTypes';
 
 const SLACK_DEG = 0.5;

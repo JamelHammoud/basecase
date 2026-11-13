@@ -6,7 +6,7 @@ import { platformBridge } from '../../utils/platformBridge';
 import { timeAgo } from '../../utils/timeAgo';
 import { REVEAL_LABEL } from '../../utils/os';
 import type { BuildGuide, GuideRunProgress } from '../../workspace/useBuildGuide';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { GuideCoverPage } from './GuideCoverPage';
 import { useGuidePages } from './useGuidePages';
 

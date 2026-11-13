@@ -7,7 +7,7 @@ import type { MeshGeometry, Model, ModelJoint } from './model';
 import { catalogFrame, limbOf, publishedData, round, S, type PublishedData } from './published';
 import { readModel } from './readModel';
 import type { Resolver, Source } from './sources';
-import { plural } from '../plural';
+import { plural } from '../../../electron/plural.mjs';
 
 export interface ImportOptions {
   onProgress?: (message: string) => void;

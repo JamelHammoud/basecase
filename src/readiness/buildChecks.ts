@@ -8,7 +8,7 @@ import type { Bom } from '../utils/bomTypes';
 import { isPrinted } from '../utils/bom';
 import type { Finding } from './types';
 import { ruleFinding } from './wording';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 
 const MIN_INSERT_WALL_MM = 0.8;
 const MIN_LEAD_ROOM_MM = 10;

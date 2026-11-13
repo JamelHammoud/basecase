@@ -1,6 +1,6 @@
 import type { PrintReport } from '../utils/printReport';
 import type { SliceRecord } from './printBridge';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 
 const minutes = (s: number) => {
   const m = Math.round(s / 60);

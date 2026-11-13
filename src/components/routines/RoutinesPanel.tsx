@@ -12,7 +12,7 @@ import { RoutineFlow } from './RoutineFlow';
 import { RoutineHeader } from './RoutineHeader';
 import { StepPanel } from './StepPanel';
 import { useRoutineKeys } from './useRoutineKeys';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 
 export interface RoutinesPanelProps {
   routines: Routines;

@@ -3,7 +3,7 @@ import type { HardwareSpec } from '../data/hardware';
 import type { PartPlacement, PartTransformUpdate } from '../three/viewport/types';
 import type { PartRole, ScenePart, SculptMeshData } from '../types/robotics';
 import { alignParts, distributeParts, type AlignMode, type Axis } from '../utils/selection';
-import { plural } from '../utils/plural';
+import { plural } from '../../electron/plural.mjs';
 import { newId } from './helpers';
 import { dropToFloor, moveSelectionTo, rotateQuarterTurn, stackedPosition, withHardware } from './partTransforms';
 import type { CommitParts, Vec3 } from './types';
@@ -43,7 +43,7 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
         () => ({ group: next }),
       ),
     );
-    showToast(`Grouped ${ids.size} parts`);
+    showToast(`Grouped ${plural(ids.size, 'part')}`);
   };
 
   const ungroup = () => {

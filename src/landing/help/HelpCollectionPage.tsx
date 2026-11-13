@@ -1,5 +1,5 @@
 import React from 'react';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { PageTitle } from '../pages/PageTitle';
 import { ArticleRows } from './ArticleRows';
 import { ARTICLE_TYPES } from './helpArticle';

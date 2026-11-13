@@ -18,7 +18,7 @@ import {
   ToolIcon as ToolPromptIcon,
   WebIcon,
 } from '../../design-system';
-import { plural } from '../../utils/plural';
+import { plural } from '../../../electron/plural.mjs';
 import { SIM_RULES } from './simToolRules';
 import { plainRule, type ToolIcon, type ToolRule } from './toolRule';
 

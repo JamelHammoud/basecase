@@ -2,6 +2,7 @@ import { toCad } from '../agent/agentScene';
 import type { JointAxes, JointCandidate, LoneFace } from '../joints/jointCandidates';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import type { Vec3 } from './types';
+import { plural } from '../../electron/plural.mjs';
 
 export interface JointAxesContext {
   parts: () => ScenePart[];
@@ -41,10 +42,10 @@ const faceLine = (f: LoneFace) =>
 export function jointAxesText(found: JointAxes, { count, joints }: { count: number; joints: RobotJoint[] }) {
   const lines = found.candidates.length
     ? [
-        `${found.candidates.length} joint axes among ${count} parts (mm, z up); parent is the side nearer the base:`,
+        `${plural(found.candidates.length, 'joint axis', 'joint axes')} among ${plural(count, 'part')} (mm, z up); parent is the side nearer the base:`,
         ...found.candidates.map((c) => candidateLine(c, joints)),
       ]
-    : [`No shaft turns in a bore among ${count} parts.`];
+    : [`No shaft turns in a bore among ${plural(count, 'part')}.`];
 
   if (found.fastened.length)
     lines.push(`Held by two or more pins, so fixed: ${found.fastened.map((p) => p.join(' + ')).join('; ')}.`);

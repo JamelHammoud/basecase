@@ -35,7 +35,7 @@ Line parts up on their edges or centers, or space three or more evenly, without 
 
 ![Align in the Inspector with three parts selected](/help/align-and-spread-parts/inspector.png)
 
-The same strip is under **Align** in the right-click menu. [[⌘K]] has each one by name: **Align Left**, **Align Top**, **Spread Along X** and the rest.
+The same strip is under **Align** in the right-click menu. While parts are selected, [[⌘K]] has each one by name: **Align Left**, **Align Top**, **Spread Along X** and the rest.
 
 ![The Align strip in a part's right-click menu](/help/align-and-spread-parts/menu.png)
 

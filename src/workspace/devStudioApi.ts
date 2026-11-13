@@ -28,6 +28,7 @@ export interface DevActions {
   simState: () => unknown;
   routineState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
+  robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
 }
 
 export interface DevStudioDeps {
@@ -151,6 +152,16 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
       const files = await devRef.current.datasetFiles();
 
       return files && Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, base64Of(bytes)]));
+    },
+    robotPackage: async () => {
+      const made = await devRef.current.robotPackage();
+
+      return (
+        made && {
+          files: Object.fromEntries(Object.entries(made.files).map(([path, bytes]) => [path, base64Of(bytes)])),
+          simXml: made.simXml,
+        }
+      );
     },
   };
 }

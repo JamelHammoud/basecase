@@ -3,3 +3,7 @@ export { ROBOT_CATEGORIES, ROBOT_PRESETS, type RobotCategory, type RobotPreset }
 export { ROBOT_DATA_VERSION } from './robotImport/published';
 export { rawUrl } from './robotImport/sources';
 export { needsRobotUpgrade, upgradeRobots, type RobotSourceRef, type RobotUpgrade } from './robotImport/upgrade';
+export { RobotChoiceError } from './robotImport/entry';
+export { isRobotLink } from './robotImport/readModel';
+export type { LocalFile } from './robotImport/sources';
+export { pickedFiles } from './robotImport/tree';

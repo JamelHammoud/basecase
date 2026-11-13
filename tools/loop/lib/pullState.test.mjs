@@ -7,7 +7,8 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'revise-state-'));
 
 vi.stubEnv('BASECASE_LOOP_DIR', dir);
 
-const { entryFor, markLooked, markRebuilt, recordAttempt } = await import('./pullState.mjs');
+const { entryFor, markLooked, markRebuilt, markRefreshed, recordAttempt, recordConflictFail } =
+  await import('./pullState.mjs');
 
 afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
 
@@ -19,6 +20,7 @@ describe('pull state', () => {
       lastJamel: '',
       lastLook: '',
       conflictFails: 0,
+      refreshed: [],
       rebuilt: false,
     });
   });
@@ -38,5 +40,13 @@ describe('pull state', () => {
 
     expect(entryFor(3)).toMatchObject({ attempts: 1, lastLook: '2026-11-12T11:00:00Z', rebuilt: true });
     expect(entryFor(2).rebuilt).toBe(false);
+  });
+
+  it('remembers refreshed heads and counts conflict failures', () => {
+    markRefreshed(4, 'ddd');
+
+    expect(recordConflictFail(4)).toBe(1);
+    expect(recordConflictFail(4)).toBe(2);
+    expect(entryFor(4)).toMatchObject({ refreshed: ['ddd'], conflictFails: 2 });
   });
 });

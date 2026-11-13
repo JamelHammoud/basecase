@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import type { CustomModelDefinition, ScenePart } from '../../types/robotics';
 import { modelToParts } from '../../utils/libraryParts';
 import { timeAgo } from '../../utils/timeAgo';
-import { Button } from '../../design-system';
 import { Header, SizeLine, Stat } from '../PartDetails';
 
 function savedAgo(iso: string | undefined): string {
@@ -45,11 +44,7 @@ const MODEL_SOURCE: Record<CustomModelDefinition['sourceType'], string> = {
   'sculpt-draw': 'Sketch or sculpt',
 };
 
-export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: string | undefined; onInsert: () => void }> = ({
-  model,
-  thumb,
-  onInsert,
-}) => {
+export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: string | undefined }> = ({ model, thumb }) => {
   const parts = useMemo(() => modelParts(model), [model]);
   const d = model.defaultDimensions;
 
@@ -63,17 +58,12 @@ export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: strin
           model.description && !/^Saved from \d+ parts?\.?$/.test(model.description) ? model.description : undefined
         }
       />
-      <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
+      <div className="px-4 mt-3 pb-4 grid grid-cols-2 gap-1.5">
         <Stat label="Size" wide>
           <SizeLine w={d.width} h={d.height} d={d.depth} />
         </Stat>
         <Stat label="Parts">{parts.length}</Stat>
         {fromCatalog(parts) > 0 && <Stat label="From catalog">{fromCatalog(parts)}</Stat>}
-      </div>
-      <div className="mt-3 border-t border-white/[0.07] p-3">
-        <Button variant="primary" size="sm" fullWidth onClick={onInsert}>
-          Insert
-        </Button>
       </div>
     </div>
   );

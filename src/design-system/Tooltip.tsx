@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import { behindModal } from './behindModal';
 import { currentConfirm, subscribeConfirm } from './confirmStore';
 import { Kbd } from './Kbd';
 
@@ -34,12 +35,6 @@ const controlsOpenPopover = (child: React.ReactElement) => {
   const expanded = (child.props as { 'aria-expanded'?: boolean | 'true' | 'false' })['aria-expanded'];
 
   return expanded === true || expanded === 'true';
-};
-
-const behindModal = (anchor: Element) => {
-  const modals = [...document.querySelectorAll('[aria-modal="true"]')];
-
-  return modals.length > 0 && !modals.some((m) => m.contains(anchor));
 };
 
 export const Tooltip: React.FC<TooltipProps> = ({

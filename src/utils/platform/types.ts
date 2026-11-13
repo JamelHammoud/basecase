@@ -27,6 +27,17 @@ export interface OpenedCad {
   data: Uint8Array;
 }
 
+export interface CadTuneRequest {
+  workspaceId: string;
+  id: string;
+  values: Record<string, number>;
+}
+
+export interface CadTuneAnswer {
+  code: string;
+  result: Uint8Array | Record<string, unknown>;
+}
+
 export interface AcpPromptPayload {
   action: 'image-to-3d' | 'generate-part' | 'build';
   workspaceId?: string;
@@ -164,6 +175,7 @@ declare global {
       sourcedMesh: (id: string) => Promise<Uint8Array | null>;
       importMakerCad: (payload: unknown) => Promise<{ item: SourcedItem; members: string[]; mismatch: string | null }>;
       openCadFile: (payload: { name: string; bytes: Uint8Array }) => Promise<OpenedCad>;
+      tuneCadPart: (payload: CadTuneRequest) => Promise<CadTuneAnswer>;
       savePurchase: (payload: {
         key: string;
         record: PurchaseRecord | null;

@@ -14,6 +14,8 @@ import { electron, get, post, postJson, postOrThrow, query, quietly } from './pl
 import type {
   AcpPromptPayload,
   AppMenuState,
+  CadTuneAnswer,
+  CadTuneRequest,
   EvidenceFilePayload,
   LiveRun,
   OpenedCad,
@@ -163,6 +165,10 @@ const libraryBridge = {
 
     return { bodies: opened.bodies, data: base64ToBytes(opened.data) };
   },
+
+  tuneCadPart: (payload: CadTuneRequest): Promise<CadTuneAnswer> =>
+    electron()?.tuneCadPart(payload) ??
+    postOrThrow('/cad-tune', payload, (body, res) => (res.ok ? null : String(body.error ?? res.statusText))),
 
   uploadImage: (payload: ImageUpload): Promise<ReferenceImageRecord> =>
     electron()?.uploadImage(payload) ?? post('/upload-image', payload),

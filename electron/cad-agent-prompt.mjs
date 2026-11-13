@@ -165,7 +165,9 @@ const KERNEL = `
   rounded cuboids. It compiles fastest and fails least.
 - replicad only for lofts through several sections, fillets on edges a boolean created, and
   true B-rep shells. After two replicad failures on one part, rebuild it in OpenSCAD.
-- If a compile fails, read the error, fix it and retry. Never fall back to a primitive.`;
+- If a compile fails, read the error, fix it and retry. Never fall back to a primitive.
+- In OpenSCAD, name the dimensions a person would tune at the top level as plain numbers, with a
+  Customizer range: \`wall = 2; // [1.2:0.4:4]\`. The Inspector edits them and recompiles the part.`;
 
 const ASSEMBLY = `
 ## Assembly and service

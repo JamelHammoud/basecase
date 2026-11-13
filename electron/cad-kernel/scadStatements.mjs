@@ -1,12 +1,8 @@
 const OPEN = '([{';
 const CLOSE = ')]}';
+const TRAILING_COMMENT = /^[ \t]*\/\/[^\n]*/;
 
-interface Scan {
-  code: string;
-  i: number;
-}
-
-function skipString({ code, i }: Scan): number {
+function skipString(code, i) {
   let j = i + 1;
 
   while (j < code.length && code[j] !== '"') j += code[j] === '\\' ? 2 : 1;
@@ -14,7 +10,7 @@ function skipString({ code, i }: Scan): number {
   return j + 1;
 }
 
-function skipComment({ code, i }: Scan): number {
+function skipComment(code, i) {
   if (code.startsWith('//', i)) {
     const end = code.indexOf('\n', i);
 
@@ -30,13 +26,13 @@ function skipComment({ code, i }: Scan): number {
   return i;
 }
 
-function skipBlank(code: string, from: number): number {
+export function skipBlank(code, from) {
   let i = from;
 
   for (;;) {
     while (i < code.length && /\s/.test(code[i])) i++;
 
-    const next = skipComment({ code, i });
+    const next = skipComment(code, i);
 
     if (next === i) return i;
 
@@ -44,12 +40,13 @@ function skipBlank(code: string, from: number): number {
   }
 }
 
-const startsInclude = (text: string) => /^(include|use)\s*</.test(text);
+const startsInclude = (text) => /^(include|use)\s*</.test(text);
 
-const closes = (code: string, ch: string, next: number) =>
-  ch === ';' || (ch === '}' && !code.startsWith('else', skipBlank(code, next)));
+const closes = (code, ch, next) => ch === ';' || (ch === '}' && !code.startsWith('else', skipBlank(code, next)));
 
-function endOfStatement(code: string, start: number): number {
+const withTrailingComment = (code, end) => end + (TRAILING_COMMENT.exec(code.slice(end))?.[0].length ?? 0);
+
+function endOfStatement(code, start) {
   const head = skipBlank(code, start);
 
   if (startsInclude(code.slice(head, head + 12))) {
@@ -63,7 +60,7 @@ function endOfStatement(code: string, start: number): number {
 
   while (i < code.length) {
     const ch = code[i];
-    const skipped = ch === '"' ? skipString({ code, i }) : skipComment({ code, i });
+    const skipped = ch === '"' ? skipString(code, i) : skipComment(code, i);
 
     if (skipped !== i) {
       i = skipped;
@@ -77,33 +74,33 @@ function endOfStatement(code: string, start: number): number {
 
     i++;
 
-    if (depth === 0 && closes(code, ch, i)) return i;
+    if (depth === 0 && closes(code, ch, i)) return withTrailingComment(code, i);
   }
 
   return code.length;
 }
 
-export function scadStatements(code: string): string[] {
-  const out: string[] = [];
+export function scadStatementSpans(code) {
+  const out = [];
   let at = 0;
 
   while (skipBlank(code, at) < code.length) {
     const end = endOfStatement(code, at);
 
-    out.push(code.slice(at, end));
+    out.push({ start: at, end });
     at = end;
   }
 
-  const tail = code.slice(at);
-
-  if (tail.trim()) out.push(tail);
+  if (code.slice(at).trim()) out.push({ start: at, end: code.length });
 
   return out;
 }
 
+export const scadStatements = (code) => scadStatementSpans(code).map(({ start, end }) => code.slice(start, end));
+
 const DEFINITION = /^(module|function)\b|^(include|use)\s*<|^\$?[A-Za-z_]\w*\s*=(?!=)/;
 
-export function isScadDefinition(statement: string): boolean {
+export function isScadDefinition(statement) {
   const body = statement.slice(skipBlank(statement, 0));
 
   return DEFINITION.test(body);

@@ -1,3 +1,4 @@
+import { useCadTune } from './useCadTune';
 import { useExportActions } from './useExportActions';
 import { useFixedCameras } from './useFixedCameras';
 import { useLibraryActions } from './useLibraryActions';
@@ -14,6 +15,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const creation = usePartCreation(core, robots);
   const edits = usePartEdits(core);
   const ops = useSelectionOps(core);
+  const tuning = useCadTune(core);
   const library = useLibraryActions(core);
   const exports = useExportActions(core);
   const cameras = useFixedCameras({
@@ -23,7 +25,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     showToast: core.showToast,
   });
 
-  return { pose, robots, creation, edits, ops, library, exports, cameras };
+  return { pose, robots, creation, edits, ops, tuning, library, exports, cameras };
 }
 
 export type WorkspaceActions = ReturnType<typeof useWorkspaceActions>;

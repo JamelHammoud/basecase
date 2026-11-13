@@ -109,7 +109,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         value={draft ?? format(value)}
         onFocus={(e) => {
           setDraft(format(value));
-          requestAnimationFrame(() => e.target.select());
+          requestAnimationFrame(() => document.activeElement === e.target && e.target.select());
         }}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commitDraft}

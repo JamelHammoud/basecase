@@ -1,41 +1,80 @@
 import React, { useEffect, useState } from 'react';
+import { hubBridge, type HubAccountState } from '../../hub/hubBridge';
 import { onshapeBridge, type OnshapeAccountState, type OnshapeKey } from '../../onshape/onshapeBridge';
 import { SettingsGroup as Group } from '../SettingsRows';
 import { SecretField } from './SecretField';
 
-const SIGNED_OUT: OnshapeAccountState = { access: false, secret: false, name: null };
+const HUB_SIGNED_OUT: HubAccountState = { signedIn: false, name: null };
+const ONSHAPE_SIGNED_OUT: OnshapeAccountState = { access: false, secret: false, name: null };
+
+const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export const AccountsPane: React.FC = () => {
-  const [account, setAccount] = useState<OnshapeAccountState>(SIGNED_OUT);
-  const [errors, setErrors] = useState<Partial<Record<OnshapeKey, string>>>({});
+  const [hub, setHub] = useState<HubAccountState>(HUB_SIGNED_OUT);
+  const [hubError, setHubError] = useState<string | null>(null);
+  const [onshape, setOnshape] = useState<OnshapeAccountState>(ONSHAPE_SIGNED_OUT);
+  const [onshapeErrors, setOnshapeErrors] = useState<Partial<Record<OnshapeKey, string>>>({});
 
   useEffect(() => {
+    hubBridge
+      .account()
+      .then(setHub)
+      .catch(() => {});
     onshapeBridge
       .account()
-      .then(setAccount)
+      .then(setOnshape)
       .catch(() => {});
   }, []);
 
-  const save = (kind: OnshapeKey) => async (value: string) => {
+  const signIn = async (token: string) => {
     try {
-      setAccount(await onshapeBridge.setKey(kind, value));
-      setErrors({});
+      setHub(await hubBridge.signIn(token));
+      setHubError(null);
     } catch (e) {
-      setErrors({ [kind]: e instanceof Error ? e.message : String(e) });
-      setAccount(await onshapeBridge.account().catch(() => account));
+      setHubError(errorText(e));
+
+      throw e;
+    }
+  };
+
+  const saveOnshape = (kind: OnshapeKey) => async (value: string) => {
+    try {
+      setOnshape(await onshapeBridge.setKey(kind, value));
+      setOnshapeErrors({});
+    } catch (e) {
+      setOnshapeErrors({ [kind]: errorText(e) });
+      setOnshape(await onshapeBridge.account().catch(() => onshape));
+
+      throw e;
     }
   };
 
   return (
-    <Group title="Onshape">
-      <SecretField label="Access key" saved={account.access} error={errors.access} onSecret={save('access')} />
-      <SecretField
-        label="Secret key"
-        saved={account.secret}
-        savedHint={account.name ?? undefined}
-        error={errors.secret}
-        onSecret={save('secret')}
-      />
-    </Group>
+    <>
+      <Group title="Hugging Face">
+        <SecretField
+          label="Access token"
+          saved={hub.signedIn}
+          savedHint={hub.name}
+          error={hubError}
+          onSecret={signIn}
+        />
+      </Group>
+      <Group title="Onshape">
+        <SecretField
+          label="Access key"
+          saved={onshape.access}
+          error={onshapeErrors.access}
+          onSecret={saveOnshape('access')}
+        />
+        <SecretField
+          label="Secret key"
+          saved={onshape.secret}
+          savedHint={onshape.name ?? undefined}
+          error={onshapeErrors.secret}
+          onSecret={saveOnshape('secret')}
+        />
+      </Group>
+    </>
   );
 };

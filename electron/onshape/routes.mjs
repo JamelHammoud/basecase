@@ -1,3 +1,5 @@
+import { postRoutesOf, registerCalls } from '../callRoutes.mjs';
+
 export const ONSHAPE_CALLS = {
   'onshape:account': (onshape) => onshape.account(),
   'onshape:set-key': (onshape, payload) => onshape.setKey(payload),
@@ -11,13 +13,6 @@ const base64Files = (got) => ({
 
 const OVER_HTTP = { 'onshape:import': base64Files };
 
-export function registerOnshapeHandlers(ipcMain, onshape) {
-  for (const [channel, call] of Object.entries(ONSHAPE_CALLS))
-    ipcMain.handle(channel, (_e, payload) => call(onshape, payload));
-}
+export const registerOnshapeHandlers = (ipcMain, onshape) => registerCalls(ipcMain, ONSHAPE_CALLS, onshape);
 
-export const onshapePostRoutes = (onshape) =>
-  Object.entries(ONSHAPE_CALLS).map(([channel, call]) => [
-    `/${channel.replace(':', '-')}`,
-    async (body) => (OVER_HTTP[channel] ?? ((v) => v))(await call(onshape, body?.arg)),
-  ]);
+export const onshapePostRoutes = (onshape) => postRoutesOf(ONSHAPE_CALLS, onshape, OVER_HTTP);

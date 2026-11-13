@@ -23,7 +23,11 @@ export const SecretField: React.FC<SecretFieldProps> = ({ label, saved, onSecret
           placeholder={saved ? '••••••••' : ''}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={() => {
-            if (draft) void onSecret(draft).then(() => setDraft(''));
+            if (draft)
+              onSecret(draft).then(
+                () => setDraft(''),
+                () => {},
+              );
           }}
           onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
           aria-label={label}

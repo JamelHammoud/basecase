@@ -79,6 +79,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     String(channel).startsWith('print:')
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown print call')),
+  hubCall: (channel, payload) =>
+    String(channel).startsWith('hub:')
+      ? ipcRenderer.invoke(channel, payload)
+      : Promise.reject(new Error('Unknown Hugging Face call')),
   onshapeCall: (channel, payload) =>
     String(channel).startsWith('onshape:')
       ? ipcRenderer.invoke(channel, payload)

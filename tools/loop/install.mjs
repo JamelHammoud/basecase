@@ -1,32 +1,19 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { laneModule, laneNames } from './lib/lanes.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 
-const MINUTE = 60;
-const HOUR = 60 * MINUTE;
+const LANES = await Promise.all(laneNames().map(async (name) => ({ name, ...(await laneModule(name)).schedule })));
 
-const JOBS = [
-  { lane: 'review', every: 2 * MINUTE },
-  { lane: 'merge', every: 5 * MINUTE },
-  { lane: 'rebase', every: 10 * MINUTE },
-  { lane: 'repair', every: 15 * MINUTE },
-  { lane: 'build', slot: '1', every: 5 * MINUTE },
-  { lane: 'build', slot: '2', every: 5 * MINUTE },
-  { lane: 'build', slot: '3', every: 5 * MINUTE },
-  { lane: 'refine', every: 6 * HOUR },
-  { lane: 'lead', every: 4 * HOUR },
-  { lane: 'update', every: 24 * HOUR },
-  { lane: 'market', every: 24 * HOUR },
-  { lane: 'learn', every: 24 * HOUR },
-  { lane: 'digest', every: 24 * HOUR },
-  { lane: 'tidy', every: HOUR },
-];
+const JOBS = LANES.flatMap(({ name, slots, everySeconds }) =>
+  Array.from({ length: slots }, (_, i) => ({ lane: name, slot: String(i + 1), every: everySeconds })),
+);
 
 const AGENTS_DIR = path.join(os.homedir(), 'Library', 'LaunchAgents');
 const DOMAIN = `gui/${os.userInfo().uid}`;
-const label = ({ lane, slot }) => `so.basecase.loop.${lane}${slot ? `-${slot}` : ''}`;
+const label = ({ lane, slot }) => `so.basecase.loop.${lane}-${slot}`;
 const KEEP_AWAKE = 'so.basecase.loop.awake';
 
 const where = (tool) => path.dirname(run('which', [tool]).out);
@@ -71,7 +58,7 @@ const plist = (dict) =>
 
 const laneDict = (job, env) => ({
   Label: label(job),
-  ProgramArguments: [process.execPath, path.join(HOME_CHECKOUT, 'tools', 'loop', 'run.mjs'), job.lane, job.slot ?? '1'],
+  ProgramArguments: [process.execPath, path.join(HOME_CHECKOUT, 'tools', 'loop', 'run.mjs'), job.lane, job.slot],
   WorkingDirectory: HOME_CHECKOUT,
   StartInterval: job.every,
   RunAtLoad: true,
@@ -92,7 +79,14 @@ const load = (name, dict) => {
 
   fs.writeFileSync(file, plist(dict));
   run('launchctl', ['bootout', `${DOMAIN}/${name}`], { allowFail: true });
-  run('launchctl', ['bootstrap', DOMAIN, file]);
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    if (run('launchctl', ['bootstrap', DOMAIN, file], { allowFail: true }).ok) return;
+
+    run('sleep', [String(attempt)]);
+  }
+
+  throw new Error(`launchctl couldn't load ${name}`);
 };
 
 const LABELS = {
@@ -104,17 +98,18 @@ const LABELS = {
   'loop:lesson': '8250df',
   'loop:loop': '6e7781',
   'loop:update': '6e7781',
-  'loop:market': '6e7781',
-  'loop:idea': 'bf8700',
-  'loop:digest': '6e7781',
+  'loop:priority': 'd1242f',
+  'loop:request': '000000',
   'loop:arc': 'bf8700',
   'loop:next': 'bf8700',
   'loop:building': 'bf8700',
   'loop:direction': '000000',
 };
 
+const LANE_LABELS = Object.fromEntries(LANES.flatMap(({ labels = [] }) => labels.map((name) => [name, '6e7781'])));
+
 function ensureLabels() {
-  for (const [name, color] of Object.entries(LABELS)) {
+  for (const [name, color] of Object.entries({ ...LANE_LABELS, ...LABELS })) {
     run('gh', ['label', 'create', name, '--color', color, '--force'], { allowFail: true });
   }
 }
@@ -135,6 +130,7 @@ function install() {
   ensureHome();
   ensureLabels();
   fs.mkdirSync(AGENTS_DIR, { recursive: true });
+  removeAll();
   fs.mkdirSync(LOGS, { recursive: true });
 
   const env = {
@@ -150,11 +146,23 @@ function install() {
   console.log(`Loaded ${JOBS.length} lanes and the keep-awake job. Logs: ${LOGS}`);
 }
 
-function uninstall() {
-  for (const name of [...JOBS.map(label), KEEP_AWAKE]) {
+const installedNames = () =>
+  fs.existsSync(AGENTS_DIR)
+    ? fs
+        .readdirSync(AGENTS_DIR)
+        .filter((file) => file.startsWith('so.basecase.loop.') && file.endsWith('.plist'))
+        .map((file) => file.slice(0, -'.plist'.length))
+    : [];
+
+function removeAll() {
+  for (const name of installedNames()) {
     run('launchctl', ['bootout', `${DOMAIN}/${name}`], { allowFail: true });
     fs.rmSync(path.join(AGENTS_DIR, `${name}.plist`), { force: true });
   }
+}
+
+function uninstall() {
+  removeAll();
 
   console.log('Removed every loop job.');
 }
@@ -163,4 +171,12 @@ const command = process.argv[2];
 
 if (command === 'install') install();
 else if (command === 'uninstall') uninstall();
-else console.log('Usage: node tools/loop/install.mjs <install|uninstall>');
+else if (command === 'list') {
+  for (const { name, slots, everySeconds, does } of LANES) {
+    const cadence = everySeconds <= 60 ? 'always on' : `every ${everySeconds / 3600} h`;
+
+    console.log(
+      `${name.padEnd(8)} ${String(slots).padStart(2)} slot${slots > 1 ? 's' : ' '}  ${cadence.padEnd(11)} ${does}`,
+    );
+  }
+} else console.log('Usage: node tools/loop/install.mjs <install|uninstall|list>');

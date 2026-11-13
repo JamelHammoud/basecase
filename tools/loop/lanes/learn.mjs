@@ -5,6 +5,12 @@ import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { publish } from '../lib/pull.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
+export const schedule = {
+  slots: 1,
+  everySeconds: 24 * 60 * 60,
+  does: 'Turns mistakes seen twice, or once by Jamel, into a lint, test, guide rule or playbook entry',
+};
+
 const MAX_EVIDENCE = 300_000;
 
 const openLessons = (pulls) =>

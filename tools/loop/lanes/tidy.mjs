@@ -6,6 +6,12 @@ import { HOME_CHECKOUT, HOME_REF, WORKTREES } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
 import { isLoopBranch, parseRefs, parseWorktrees, staleBranches, staleWorktrees } from '../lib/stale.mjs';
 
+export const schedule = {
+  slots: 1,
+  everySeconds: 60 * 60,
+  does: 'Deletes loop/ branches and loop worktrees idle for over 24 hours',
+};
+
 const git = (args, opts = {}) => run('git', args, { cwd: HOME_CHECKOUT, ...opts });
 
 const REF_FORMAT = '--format=%(refname:lstrip=3) %(committerdate:unix)';

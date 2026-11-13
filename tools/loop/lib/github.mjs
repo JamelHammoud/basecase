@@ -10,7 +10,18 @@ export const repo = () => {
   return slug;
 };
 
-const PULL_FIELDS = 'number,title,body,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable';
+const PULL_FIELDS = 'number,title,body,url,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable,labels';
+
+export const sameTitle = (a, b) => {
+  const norm = (t) =>
+    t
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .replace(/[.\s]+$/, '')
+      .trim();
+
+  return norm(a) === norm(b);
+};
 
 export const openPulls = () =>
   (json('gh', ['pr', 'list', '--state', 'open', '--limit', '100', '--json', PULL_FIELDS]) ?? [])
@@ -31,21 +42,13 @@ export const checkConclusion = (sha) => {
   return latest.conclusion;
 };
 
-export const failingJobs = (sha) =>
-  json('gh', [
-    'api',
-    `repos/${repo()}/commits/${sha}/check-runs?per_page=100`,
-    '--jq',
-    '[.check_runs[] | select(.conclusion == "failure" and .name != "check") | .name] | unique',
-  ]) ?? [];
-
 export const reviewState = (sha) =>
   json('gh', [
     'api',
     `repos/${repo()}/commits/${sha}/statuses`,
     '--jq',
-    `[.[] | select(.context == "${REVIEW_CONTEXT}") | .state][0]`,
-  ]);
+    `[.[] | select(.context == "${REVIEW_CONTEXT}") | .state][0:1]`,
+  ])?.[0] ?? null;
 
 export const setReview = (sha, state, description) =>
   run('gh', [
@@ -90,6 +93,26 @@ export const latestMainCheck = () =>
     'databaseId,conclusion,status,headSha,createdAt',
   ]) ?? [])[0] ?? null;
 
+export const lastFinishedMainCheck = () =>
+  (
+    json('gh', [
+      'run',
+      'list',
+      '--workflow',
+      'check.yml',
+      '--branch',
+      'main',
+      '--event',
+      'push',
+      '--status',
+      'completed',
+      '--limit',
+      '10',
+      '--json',
+      'databaseId,conclusion,status,headSha,createdAt',
+    ]) ?? []
+  ).find((run) => run.conclusion !== 'cancelled' && run.conclusion !== 'skipped') ?? null;
+
 export const failedLog = (runId) => run('gh', ['run', 'view', String(runId), '--log-failed'], { allowFail: true }).out;
 
 export const isPaused = () =>
@@ -118,10 +141,20 @@ export const editIssueLabels = (number, { add = [], remove = [] }) =>
     ...remove.flatMap((label) => ['--remove-label', label]),
   ]);
 
-export const createIssue = ({ title, body, labels }) =>
-  run('gh', ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])], {
-    input: body,
-  }).out;
+const openIssueTitles = () =>
+  json('gh', ['issue', 'list', '--state', 'open', '--limit', '500', '--json', 'title', '--jq', '[.[].title]']) ?? [];
+
+export const createIssue = ({ title, body, labels }) => {
+  if (openIssueTitles().some((open) => sameTitle(open, title))) return null;
+
+  return run(
+    'gh',
+    ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])],
+    {
+      input: body,
+    },
+  ).out;
+};
 
 export const closeIssue = (number, comment) =>
   run('gh', ['issue', 'close', String(number), '--reason', 'completed', '--comment', comment], { allowFail: true });
@@ -133,3 +166,53 @@ export const ownerComments = (number, owner) =>
     '--jq',
     `[.[] | select(.user.login == "${owner}" and .performed_via_github_app == null) | {created_at, body}]`,
   ]) ?? [];
+
+export const commentOnIssue = (number, body) =>
+  run('gh', ['issue', 'comment', String(number), '--body-file', '-'], { input: body });
+
+export const openIssues = () =>
+  json('gh', [
+    'issue',
+    'list',
+    '--state',
+    'open',
+    '--limit',
+    '300',
+    '--json',
+    'number,title,body,author,labels,createdAt,updatedAt',
+  ]) ?? [];
+
+export const editPullLabels = (number, { add = [], remove = [] }) =>
+  run(
+    'gh',
+    [
+      'pr',
+      'edit',
+      String(number),
+      ...add.flatMap((label) => ['--add-label', label]),
+      ...remove.flatMap((label) => ['--remove-label', label]),
+    ],
+    { allowFail: true },
+  );
+
+export const editPullBody = (number, body) =>
+  run('gh', ['pr', 'edit', String(number), '--body-file', '-'], { input: body, allowFail: true });
+
+export const pullComments = (number) =>
+  json('gh', ['pr', 'view', String(number), '--json', 'comments', '--jq', '[.comments[].body]']) ?? [];
+
+export const checkRunFor = (sha) =>
+  (json('gh', [
+    'run',
+    'list',
+    '--commit',
+    sha,
+    '--workflow',
+    'check.yml',
+    '--limit',
+    '1',
+    '--json',
+    'databaseId,conclusion,status',
+  ]) ?? [])[0] ?? null;
+
+export const hasLabel = (item, name) => (item.labels ?? []).some((label) => label.name === name);

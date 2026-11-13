@@ -68,7 +68,7 @@ describe('robot package export', () => {
     ]);
     expect(paths.filter((p) => p.endsWith('.stl'))).toHaveLength(arm.parts.length);
     expect(text(at('robot.xml'))).toBe(made.simXml);
-    expect(jointMap.joints).toHaveLength(6);
+    expect(jointMap.joints).toHaveLength(arm.joints.length);
     expect(text(at('package.xml'))).toContain('<package format="3">');
     expect(text(at('launch/display.launch.py'))).toContain('robot_state_publisher');
 
@@ -76,7 +76,8 @@ describe('robot package export', () => {
     const packageName = /<name>([^<]+)<\/name>/.exec(text(at('package.xml')))![1];
 
     expect(urdf.match(/<joint name="[^"]+" type="revolute">/g)).toHaveLength(6);
-    expect(urdf.match(/<command_interface name="position">/g)).toHaveLength(6);
+    expect(urdf.match(/<joint name="[^"]+" type="prismatic">/g)).toHaveLength(2);
+    expect(urdf.match(/<command_interface name="position">/g)).toHaveLength(arm.joints.length);
 
     for (const [, mesh] of urdf.matchAll(/filename="package:\/\/[^/]+\/([^"]+)"/g)) {
       expect(made.files[`arm-robot/${mesh}`], mesh).toBeDefined();

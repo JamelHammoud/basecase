@@ -9,7 +9,7 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
   const authored = kase.slot.reachMm;
   const from = kase.slot.anchor ?? anchor;
   const s = authored && reachMm > 0 ? reachMm / authored : 1;
-  const fromFloor = kase.world.objects.some((o) => o.behavior === 'dynamic');
+  const fromFloor = kase.slot.needs.includes('gripper');
   const pinned = (i: number) => fromFloor && i === UP;
   const place = (p: V3): V3 => p.map((x, i) => (pinned(i) ? x * s : anchor[i] + (x - from[i]) * s)) as V3;
   const sameScale = Math.abs(s - 1) < SAME_SCALE;

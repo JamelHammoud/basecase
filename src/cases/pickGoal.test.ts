@@ -109,6 +109,19 @@ describe('Pick Up a Block', () => {
     }
   });
 
+  it('scales a Touch Case about the shoulder even when it holds a loose object', () => {
+    const touch = buildCase({ goal: 'touch', world: 'floor' }, robotOf('arm-6dof'));
+
+    if (!touch.ok) throw new Error(touch.problem);
+
+    const ball = { ...objectOf(pickCase(), 'block'), id: 'ball' };
+    const kase = { ...touch.kase, world: { objects: [...touch.kase.world.objects, ball] } };
+    const anchor = kase.slot.anchor!;
+    const scaled = scaledToReach(kase, kase.slot.reachMm! * 2, anchor);
+
+    expect(objectOf(scaled, 'ball').position[1]).toBeCloseTo(anchor[1] + (ball.position[1] - anchor[1]) * 2);
+  });
+
   it('keeps Spacing down to 50 mm, while Follow a Path keeps 200 mm', () => {
     const tight = buildCase({ goal: 'pick', world: 'floor', values: { spacingMm: 50 } }, robotOf('arm-6dof'));
 

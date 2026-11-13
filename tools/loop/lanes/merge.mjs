@@ -1,4 +1,5 @@
 import { byRank, isRepair } from '../lib/rank.mjs';
+import { isBatch } from './batch.mjs';
 import {
   closeIssue,
   isPaused,
@@ -13,7 +14,7 @@ import {
 export const schedule = {
   slots: 1,
   everySeconds: 60,
-  does: "Squash-merges green, reviewed pull requests: repairs first, then the loop's own, then loop:priority, then the oldest; only repairs while main is red",
+  does: 'Lands what the full Check passed: repairs first, squashed, then batches with a merge commit so every pull request in them is marked merged; only repairs while main is red',
 };
 
 const ready = (pull) =>
@@ -39,7 +40,7 @@ export default function merge({ log }) {
 
   const mainRed = lastFinishedMainCheck()?.conclusion === 'failure';
   const candidates = openPulls({ fresh: true })
-    .filter((pull) => !mainRed || isRepair(pull))
+    .filter((pull) => isRepair(pull) || (!mainRed && isBatch(pull)))
     .sort(byRank);
   const pull = candidates.find(ready);
 
@@ -49,7 +50,7 @@ export default function merge({ log }) {
     return;
   }
 
-  const result = mergePull(pull.number);
+  const result = mergePull(pull.number, isBatch(pull) ? 'merge' : 'squash');
 
   log(result.ok ? `merged #${pull.number}: ${pull.title}` : `merge of #${pull.number} failed: ${result.err}`);
 

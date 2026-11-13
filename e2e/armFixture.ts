@@ -17,7 +17,7 @@ const block = (id: string, y: number, extra: Partial<ScenePart> = {}): ScenePart
   ...extra,
 });
 
-const servo = (id: string, y: number, componentId = 'feetech-sts3215', componentVariant: string | undefined = 'c001') =>
+const servo = (id: string, y: number, componentId = 'feetech-sts3215', componentVariant: string | null = 'c001') =>
   block(id, y, { componentId, ...(componentVariant ? { componentVariant } : {}), massG: 55 });
 
 export const JOINT_NAMES: Record<string, string> = { shoulder: 'Shoulder', elbow: 'Elbow', wrist: 'Wrist' };
@@ -58,7 +58,7 @@ export const MIXED_ARM = {
     block('base', 20),
     servo('shoulder-servo', 70, 'feetech-sts3215', 'c046'),
     block('upper', 130),
-    servo('elbow-servo', 190, 'dynamixel-xl430-w250', undefined),
+    servo('elbow-servo', 190, 'dynamixel-xl430-w250', null),
     block('fore', 250),
   ],
   project: ARM.project,

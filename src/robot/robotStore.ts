@@ -1,4 +1,5 @@
 import type { ElectronApi } from '../utils/platform/types';
+import type { RobotConnection } from './jointRows';
 import {
   applyRobotEvent,
   INITIAL_ROBOT,
@@ -59,6 +60,12 @@ function set(next: RobotState) {
 export const robotSnapshot = () => state;
 
 export const robotSceneJoints = () => sceneJoints;
+
+export function robotConnection(robot: RobotState): RobotConnection | null {
+  if (robot.link !== 'connected') return null;
+
+  return { ids: robot.spec?.ids ?? [], jointIds: sceneJoints, readings: robot.status?.joints ?? [] };
+}
 
 export const robotBenchDriving = () => benchDriving;
 

@@ -19,9 +19,11 @@ related:
   - simulation-in-basecase
 covers:
   - src/components/operate/RobotCalibration.tsx
-  - src/components/operate/CalibrationRow.tsx
+  - src/components/operate/JointRow.tsx
+  - src/components/operate/JointRowMenu.tsx
   - src/components/operate/JointReplayPlot.tsx
   - src/workspace/operateCommands.tsx
+  - src/robot/jointRows.ts
   - src/reality/jointReplay.ts
   - src/robot/calibrationSession.ts
   - src/robot/benchRun.ts
@@ -39,13 +41,13 @@ Calibration works on the emulated robot; no real servo has been logged with it. 
 3. Click **Test**, and wait for "Motors running".
 4. Click **Calibrate Servos**.
 
-![Operate in Test, with Calibrate Servos above the servos](/help/calibrate-an-emulated-robot/test.png)
+![Operate in Test, with Calibrate Servos above the emulated servos](/help/calibrate-an-emulated-robot/test.png)
 
 Every joint moves slowly through a bench sequence at once, for about 18 seconds. Then each servo is fitted, one joint at a time.
 
-5. Read each joint's row: its verdict, and the version now in use.
+5. Read each joint's row under **Emulated servos**: its name and bus ID, its position and temperature, and under the name its verdict and the version now in use.
 
-![Each joint's verdict and version after calibrating](/help/calibrate-an-emulated-robot/verdicts.png)
+![Shoulder 1 and Elbow 2, each Measured at v1 under its name, beside its position and temperature](/help/calibrate-an-emulated-robot/verdicts.png)
 
 6. Click a joint's row to open its replay.
 
@@ -60,7 +62,7 @@ The light line is what the servo did. The grey line is the simulation on the cat
 
 To see what an older version would do before rolling back, choose it in the same menu; the blue line redraws against it.
 
-**Calibrate Servos** is also in [[⌘K]]. It shows only in **Test** with the motors running, and only in the scene the robot was connected from.
+**Calibrate Servos** is also in [[⌘K]]. It shows only in **Test** with the motors running, and only in the scene the robot was connected from. Once a scene has calibrations, Operate lists its joints with their verdicts before you connect.
 
 ## Verdicts
 
@@ -78,7 +80,7 @@ The bench sequence ramps every joint 0.25 rad each way at 0.12 rad/s, holding 0.
 
 Basecase fits the first half of each recording and checks the fit against the second half. It fits the servo's gain, delay, damping, inertia, friction and torque limit. Each stays within a quarter to 4 times the catalog value, or up to 8 times for the delay. On three emulated STS3215 servos, all three read **Measured**, 7 to 10% closer than the catalog model.
 
-If the robot leaves **Test** or faults during the run, nothing is recorded, and the message under **From the daemon** says why.
+If the robot leaves **Test** or faults during the run, nothing is recorded, and a message under the servo count says why.
 
 Replays use the latest bench run, which Basecase keeps until it reloads. After a reload the verdicts and versions stay, and the replays come back with the next **Calibrate Servos**.
 

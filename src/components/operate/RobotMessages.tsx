@@ -1,5 +1,4 @@
 import React from 'react';
-import { SectionHeader } from '../../design-system';
 import type { RobotMessage } from '../../robot/robotState';
 
 const KIND: Record<RobotMessage['kind'], string> = {
@@ -12,7 +11,6 @@ const KIND: Record<RobotMessage['kind'], string> = {
 export const RobotMessages: React.FC<{ messages: RobotMessage[] }> = ({ messages }) =>
   messages.length > 0 && (
     <div className="mb-3" aria-live="polite">
-      <SectionHeader title="From the daemon" />
       {messages.map((m) => (
         <div key={m.id} className="px-1 py-1.5">
           <div className="text-[12px] text-white/50">{KIND[m.kind]}</div>

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Button, MetaLine } from '../../design-system';
+import { Button } from '../../design-system';
 import { useRobot } from '../../robot/useRobot';
 import { sceneRobot } from '../../robot/sceneRobot';
-import { connectRobot, disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
+import { jointRows } from '../../robot/jointRows';
+import { connectRobot, disconnectRobot, robotConnection, sendRobotCommand } from '../../robot/robotStore';
 import type { RobotState } from '../../robot/robotState';
 import type { RobotJoint } from '../../types/robotics';
 import { RobotCalibration, type CalibrationProps } from './RobotCalibration';
 import { RobotJoints } from './RobotJoints';
-import { RobotLadder, rungLabel } from './RobotLadder';
+import { RobotLadder } from './RobotLadder';
 import { RobotMessages } from './RobotMessages';
 import { PlayNoRobot } from '../PlayNoRobot';
 
@@ -83,20 +84,17 @@ function RobotHeader({ robot }: { robot: RobotState }) {
   const run = robot.status?.run ?? 'idle';
 
   return (
-    <div className="mb-3">
-      <div className="flex items-center justify-between gap-2 h-8 px-1">
-        <MetaLine className="text-[12.5px] text-white/50" items={[servoCount(robot)]} />
+    <div className="flex items-center justify-between gap-2 min-h-8 px-1 py-1 mb-1">
+      <span className="min-w-0 flex flex-wrap gap-x-[12px] text-[12.5px] text-white/50">
+        <span>{servoCount(robot)}</span>
+        <span>{RUN[run] ?? run}</span>
+      </span>
+      <span className="shrink-0 flex items-center gap-1">
+        <RobotAction robot={robot} />
         <Button size="xs" variant="ghost" onClick={() => void disconnectRobot()}>
           Disconnect
         </Button>
-      </div>
-      <div className="flex items-center justify-between gap-2 px-1">
-        <div data-testid="robot-mode" data-mode={robot.mode} className="text-[17px] font-semibold text-white/90">
-          {rungLabel(robot.mode)}
-        </div>
-        <RobotAction robot={robot} />
-      </div>
-      <div className="px-1 text-[12.5px] text-white/50">{RUN[run] ?? run}</div>
+      </span>
     </div>
   );
 }
@@ -104,14 +102,15 @@ function RobotHeader({ robot }: { robot: RobotState }) {
 export const OperatePanel: React.FC<OperatePanelProps> = ({ joints, onBrowseRobots, calibration }) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
+  const rows = jointRows({ joints, calibrations: calibration.calibrations, connection: robotConnection(robot) });
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-[8px] pb-3" data-testid="operate-panel">
       {connected ? <RobotHeader robot={robot} /> : <ConnectButton joints={joints} onBrowseRobots={onBrowseRobots} />}
       <RobotMessages messages={robot.messages} />
       {connected && <RobotLadder robot={robot} />}
-      <RobotCalibration robot={robot} joints={joints} {...calibration} />
-      {connected && <RobotJoints ids={robot.spec?.ids ?? []} joints={robot.status?.joints ?? []} />}
+      <RobotCalibration robot={robot} joints={joints} onCalibrate={calibration.onCalibrate} />
+      <RobotJoints rows={rows} live={connected} onRollBack={calibration.onRollBack} />
     </div>
   );
 };

@@ -150,7 +150,6 @@ export const ControlSection: React.FC<
             size="sm"
             icon={<HandIcon className="w-4 h-4" />}
             disabled={!sim.playing}
-            title="Push the robot sideways"
             onClick={() => sim.push()}
           >
             Push

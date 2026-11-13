@@ -128,21 +128,43 @@ describe('basecase.so', () => {
     await page.close();
   });
 
-  it('goes from the landing to a help article', async () => {
+  it('goes from the landing to a help article through a collection', async () => {
     const { page, errors } = await open('/');
 
     await page.getByRole('link', { name: 'Help', exact: true }).click();
     await page.waitForURL(`${base}/help`);
 
-    const article = page.locator('main ul h2 a').first();
-    const title = await article.innerText();
+    const collection = page.locator('main section').first().locator('a').first();
+    const collectionPath = await collection.getAttribute('href');
 
-    await article.click();
+    await collection.click();
+    await page.waitForURL(`${base}${collectionPath}`);
+    await page.locator('main section a').first().click();
     await page.waitForURL(/\/help\/[a-z-]+$/);
 
-    expect(await page.locator('article h1').innerText()).toBe(title);
+    expect(await page.locator('nav[aria-label="Breadcrumb"] a').last().getAttribute('href')).toBe(collectionPath);
     expect(await page.locator('article ol > li').count()).toBeGreaterThan(0);
     expect(await fontWeight(page, 'article h1')).toBe('600');
+    expect(errors).toEqual([]);
+    await page.close();
+  });
+
+  it('searches help as you type, from any help page', async () => {
+    const { page, errors } = await open('/help/share-a-scene');
+
+    await page.keyboard.press('/');
+    await page.keyboard.type('bench sequence');
+    await expect
+      .poll(() => page.getByRole('option').first().getAttribute('href'))
+      .toBe('/help/calibrate-an-emulated-robot');
+    await page.keyboard.press('Enter');
+    await page.waitForURL(`${base}/help/calibrate-an-emulated-robot`);
+
+    await page.locator('#help-search').fill('zzzz');
+    await expect.poll(() => page.locator('#help-search-results').innerText()).toContain('No matches for');
+    expect(await page.getByRole('option').first().getAttribute('href')).toMatch(/^\/help\/[a-z-]+$/);
+    await page.keyboard.press('Escape');
+    expect(await page.locator('#help-search-results').isHidden()).toBe(true);
     expect(errors).toEqual([]);
     await page.close();
   });

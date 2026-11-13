@@ -81,7 +81,8 @@ The review lane sees the diff, the pull request body, AGENTS.md, the guides of t
 - adds user-facing copy that the §3d checklist would cut. Its default for a new string is "delete it";
 - adds copy without a reason Check's `copy` job accepts (`tools/check-copy-budget.mjs`): when a pull request adds more strings than it removes, each new string needs a `copy: "<string>" — <why>` line in the body. The review lane counts the strings with `tools/copy-diff.mjs` (§3d), puts the list and the net in its prompt and its comment, and fails a reason that doesn't hold up; the lead lane reads the week's net summed across merged pull requests;
 - ships a feature with no entry point and no e2e test of it;
-- changes what a person does without a new or updated help article (`site/content/help/`) with screenshots (`site/public/help/`), or gets the changelog wrong either way: a capability worth announcing without an entry, or an entry for a fix, polish or a small option. Builders and refiners write these from `tools/loop/briefs/telling.md`, and an arc's big step also gets a short blog post;
+- changes what a person does without a new or updated help article (`site/content/help/`) with screenshots (`site/public/help/`), or gets the changelog wrong either way: a capability worth announcing without an entry, or an entry for a fix, polish, a rename or a small option. Builders and refiners write these from `tools/loop/briefs/telling.md`, and an arc's big step with a story to tell also gets a blog post;
+- writes a changelog entry, blog post or help article that breaks the long-form rules (Copy, §3f), whether or not `npm run check:site` catches it;
 - weakens a test: a skip, `.only`, a deleted test, a raised timeout or a loosened assertion;
 - changes a protected path (`.github/`, release and updater code, `guardBridge`, `trustedIpc`, `checkedFileId` and `publicFetch` callers, `verify/`, the CAD kernel sandbox, `hw/`) without saying why in the body. The runner lists every protected file a pull request touches under **Protected paths** in its body, and each revision's line names the ones it touched (`tools/loop/lib/protected.mjs`);
 - says in a guide, brief, prompt or the body that something exists which only another pull request adds.
@@ -105,18 +106,20 @@ A flake that can't be fixed in a day goes on `tools/quarantine.json` with an iss
 
 ### Writing posts and help
 
-basecase.so's `/changelog`, `/blog` and `/help` are built from markdown in `site/content/` by `npm run build:site` ([Running and testing](running-and-testing.md), §0d). To add one, write a file; nothing else needs registering.
+basecase.so's `/changelog`, `/blog` and `/help` are built from markdown in `site/content/` by `npm run build:site` ([Running and testing](running-and-testing.md), §0d). To add one, write a file; nothing else needs registering. How to write each one, from the first sentence to the help link, is [Copy](copy.md), §3f; `npm run check:site` (`tools/check-site.mjs`, part of `npm run check` and of `check:changed` for files under `site/`) fails the rules a script can check.
 
 | Folder | File name | Front matter |
 |---|---|---|
 | `site/content/changelog/` | `YYYY-MM-DD-title-in-words.md` | `title`, `date`, `image` for a cover screenshot, `version` when it shipped in a release |
 | `site/content/blog/` | `title-in-words.md` | `title`, `date`; `draft: true` only to hold a post back |
-| `site/content/help/` | `task-in-words.md`, which is its URL | `title`, `date`, `covers:` (a list of the code paths it documents) |
+| `site/content/help/` | `task-in-words.md`, which is its URL | `title`, `date`, `collection`, `type`, `covers:` (a list of the code paths it documents); optional `updated`, `related:`, `keywords:`, `popular`, `order`, `image` (below) |
 
 ```md
 ---
 title: Import a mesh
 date: 2026-11-12
+collection: design
+type: task
 covers:
   - src/workspace/meshImport.ts
 ---
@@ -128,13 +131,25 @@ Bring a model from another app into the scene as a printable part.
 ```
 
 - **Titles are in sentence case**, in every folder: capitals only for proper nouns. Menu labels quoted in the body keep theirs.
-- **A changelog entry** is a short article in the manner of Amp's Chronicle, and only for a change worth announcing: a new capability, a new way of working, or a real change in how the product behaves. Fixes and polish reach people through the release notes, which list every merged pull request. Each entry has its own page at `/changelog/<file name>`, with a link back, the date, its cover and the body with screenshots (in `site/public/changelog/<slug>/`). `/changelog` lists them newest first with the cover, date, title and first paragraph, each linking to its page (old `/changelog#<file name>` links still land on the list), and the feeds (`/changelog/rss.xml`, `/changelog.json`) carry the full entry with absolute image URLs. The entry's cover is its `og:image`. The brief that says how to write one is `tools/loop/briefs/telling.md`.
-- **A help article** has an imperative title, one sentence on what it's for and numbered steps. Write only steps you've checked in the code; the `covers` paths are what to recheck when that code changes.
+- **A changelog entry** is a short article, 60 to 250 words, and only for a change worth announcing: a new capability, a new way of working, or a real change in how the product behaves (§3f). Fixes, polish and renames reach people through the release notes, which list every merged pull request. From 2026-11-12 every entry links its help article. Each entry has its own page at `/changelog/<file name>`, with a link back, the date, its cover and the body with screenshots (in `site/public/changelog/<slug>/`). `/changelog` lists them newest first with the cover, date, title and first paragraph, each linking to its page (old `/changelog#<file name>` links still land on the list), and the feeds (`/changelog/rss.xml`, `/changelog.json`) carry the full entry with absolute image URLs. The entry's cover is its `og:image`. The brief that says how to write one is `tools/loop/briefs/telling.md`.
+- **A help article** is one type (task, tutorial, concept, reference or troubleshooting, §3f). A task has a verb-first title, one sentence on what it's for and numbered steps with bold UI labels. Write only steps you've checked in the code; the `covers` paths are what to recheck when that code changes.
 - **Drafts and future dates stay out.** The build skips `draft: true` and any date after the day it runs, in every folder. Nothing rebuilds the site on a schedule, so a future-dated file publishes with the first deploy on or after its date.
 - **The blog appears with its first post.** Until then the build writes no `/blog` page, and the nav and sitemap leave it out. The landing's footer links Changelog and Help (`SECTIONS` in `src/landing/pages/sections.ts`).
 - Front matter is `key: value` lines and `- item` lists, indented or not; `true` and `false` are booleans with or without quotes. A missing title or date, a date not written `YYYY-MM-DD`, or a file name that isn't lowercase words joined by dashes fails the build with the file's path.
 - Raw HTML in the markdown is dropped. `http` and `https` links open in a new tab.
-- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog, into an entry and back, and to a help article, and the nav's Blog link to a post and back. It builds the real `site/content`, so it expects a published post.
+- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog, into an entry and back, and through a help collection to an article, the nav's Blog link to a post and back, and types into help search on an article to open another by a word from its body. It builds the real `site/content`, so it expects a published post.
+
+#### The help center
+
+`/help` is a home page with search, the collections as cards with their article counts, and Popular articles. Each collection has its own page at `/help/<collection>`, its articles grouped by type; each article is at `/help/<file name>` with a breadcrumb (Help, then its collection), its type and updated date, an On this page list once it has enough `##` headings (3 for task and concept, 2 for reference and troubleshooting), related articles, and previous and next within the collection. The code is `src/landing/help/`.
+
+- **Collections** follow the robotics loop, in this order: `get-started`, `design`, `engineer`, `simulate-and-train`, `build-and-print`, `operate`, `agent`, `files-and-sharing`, `troubleshooting`. Their titles and one-line descriptions live in `src/landing/help/collections.ts`; edit them there. A collection with no published article has no page and stays off the home page, the way the blog waits for its first post.
+- **`type:`** is `task` (how-to, numbered steps), `concept` (what something is and why), `reference` (tables and lists to look things up) or `troubleshooting` (a problem per `##` heading, with its fix), after Diátaxis. It shows as How-to, Concept, Reference or Troubleshooting under the title. Ordered lists in task and troubleshooting articles render as numbered steps; in the others, as plain numbered lists.
+- **Optional fields:** `updated: YYYY-MM-DD` when you rewrite an article (it shows as Updated, and defaults to `date`); `related:` a list of other help file names to link at the end (without it, the article links others from its collection); `keywords:` a list of extra words people search for that the article doesn't say (`slicer`, `cmd k`); `popular: true` to feature it on the home page (up to 6; with none marked, the newest show); `order: 1` and up to place it within its type in the collection (then by title); `image` for an `og:image` and cover.
+- **The build fails with the file's path** on an unknown field (a typo like `colection:`), a missing or unknown `collection` or `type`, an `updated` before `date` or not `YYYY-MM-DD`, a non-numeric `order`, a `popular` that isn't true or false, a `related:` that names a file that doesn't exist or the article itself, and a file name that's also a collection's (`design.md`). Drafts count for `related:`, so a link to one doesn't fail; it just doesn't show until it's published.
+- **In the body:** screenshots go in `site/public/help/<file name>/` and in the markdown as `![What it shows](/help/<file name>/shot.png)`. Write a shortcut as `[[⌘K]]` or `[[⇧⌘Z]]`, with Mac glyphs; it renders as key caps. A note or warning is a GitHub alert: a quote whose first line is `[!NOTE]` or `[!WARNING]`. Tables are GitHub tables.
+- **Search** is a small custom index, not Pagefind: the build writes `/help/search.json` (title, `##` headings, keywords, collection, first paragraph and the body as plain text for every published article) and `src/landing/help/search/helpSearchMain.ts` (about 3 KB gzipped, loaded only by help pages) searches it as you type. Title matches outrank headings, then keywords, the first paragraph and the body; every word must match, the last one by prefix; plurals and accents fold; `src/landing/help/search/synonyms.ts` maps the app's terms to the words people type (STL and mesh, MuJoCo and sim, 3MF and print). With no match it offers the collections. `/` or ⌘K focuses the box, the arrows move, Enter opens, Esc closes. `/help?q=word` opens with a search. Pagefind indexes the built HTML with a native binary and a WebAssembly runtime, and has no synonym list of its own; at a few hundred articles the whole index is still smaller than one screenshot, and building it from the content model keeps ranking testable in Vitest.
+- `src/landing/help/helpCenter.test.ts` checks collections, ordering, related links, front matter failures and unique URLs; `helpPages.test.ts` checks the pages, the search index and that search finds committed articles by words from their bodies; `search/search.test.ts` checks ranking, synonyms and snippets.
 
 ### Keeping the flow
 

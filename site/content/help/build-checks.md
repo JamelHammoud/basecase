@@ -1,0 +1,73 @@
+---
+title: Checks in the Build tab
+date: 2026-11-13
+updated: 2026-11-13
+collection: build-and-print
+type: reference
+order: 1
+keywords:
+  - blockers
+  - notes
+  - readiness
+  - torque
+  - stability
+  - thin walls
+  - screws
+related:
+  - get-a-robot-ready-to-build
+  - from-design-to-build
+  - troubleshoot-build-check-blocks-ready-to-build
+  - printability-estimates
+covers:
+  - src/readiness/wording.ts
+  - src/readiness/findings.ts
+  - src/utils/engineering.ts
+  - src/utils/engineeringPower.ts
+  - src/utils/engineeringBudget.ts
+  - src/components/build/ChecksSection.tsx
+---
+
+Every check the Build tab runs, with the problems each one reports in the words the app uses.
+
+Checks list the worst first: red, then amber, then green, then grey for Not run. A red row holds at least one blocker, which stops Ready to build. An amber row holds only notes.
+
+## Build checks
+
+| Check | What it looks at | Problems it can report |
+|---|---|---|
+| Parts attached | Whether each part is held by something | “These parts aren’t attached to anything, so they’d fall loose.” |
+| Screws | Every screw, insert and the hole it goes into | Screws ending in air, with no hole, too long, too short, off their holes or too deep; empty inserts; holes too small for an insert; thin walls around an insert |
+| Assembly | Whether a build order exists | “A screwdriver can’t reach these screws, in any build order.” and “These parts can’t be put in place, in any build order.” |
+| Fit | Parts that overlap, and room for battery leads | “These parts overlap by … mm.” and “There isn’t enough room for the battery’s wires and connector.” |
+| Printing | Each printed part against your printer | Parts too big for the plate, walls too thin to print, and parts meant to be clear |
+| Real parts | Where every part comes from | Placeholders, parts with nothing saying where to get them, and parts whose link and numbers aren't checked |
+| Repairs | How much comes apart to replace a part | “Replacing these means taking a lot apart.” as a note |
+
+## Engineering checks
+
+| Check | What it measures | When it fails |
+|---|---|---|
+| Weight | Total mass and centre of mass | Never; it reports the numbers |
+| Servo torque | Each servo's load against its stall and rated torque | Over 0.60 of stall torque, or running too hot; amber from 0.40 of stall |
+| Peak torque | Torque while a trained policy walks for 14 seconds | Over stall for more than 50 ms, or a fall. Not run without a walking policy |
+| Servo alignment | Each servo's output against its joint axis | A servo that doesn't line up with its joint |
+| Joint support | What holds each joint on both sides | A note when a joint is held on one side only |
+| Range of motion | Each joint swept every 15° through its range | A part hit before the end of the range |
+| Range changes | Joints narrower than when first defined | A note with the old range |
+| Servo voltage | The supply's voltage against each servo's range | A voltage outside the servos' range |
+| Current and runtime | The battery's current against the servos' draw | A battery that can't supply enough current |
+| Supply current | A cable supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
+| Regulator input | The battery against each regulator's input range | A battery outside the regulator's range |
+| Standing stability | The centre of mass over the feet | “The robot would tip over standing still.” |
+| Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
+| Budget | The estimated total against your budget | Over budget; amber above 90%. Not run until you set a budget |
+
+## Problems every check can show
+
+| Message | What it means |
+|---|---|
+| “Some checks didn’t finish, so this answer isn’t complete.” | A check stopped at its time limit or with an error. It counts as a blocker until a run finishes |
+| “The agent disagrees: …” | The agent thinks the problem is wrong, and says why. The blocker stays until you act on it |
+| “These hidden parts weren’t checked.” | Parts you hid are left out of the checks that measure the scene |
+
+To work through the list, follow [Get a robot ready to build](/help/get-a-robot-ready-to-build).

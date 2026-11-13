@@ -1,6 +1,18 @@
 ---
 title: Retrain an out-of-date policy
 date: 2026-11-12
+updated: 2026-11-13
+collection: simulate-and-train
+type: task
+order: 8
+keywords:
+  - retrain
+  - out of date
+  - stale policy
+  - recalibrate
+related:
+  - teach-a-robot-a-skill
+  - run-a-trained-skill-on-the-emulated-robot
 covers:
   - src/components/simulate/PoliciesSection.tsx
   - src/components/SimulatePanel.tsx

@@ -73,6 +73,17 @@ describe('startMultiply', () => {
     expect(workers.every((w) => w.terminated)).toBe(true);
   });
 
+  it('names the seeds each batch ran, kept or not', async () => {
+    const { workers, spawn } = pool();
+    const ran: number[][] = [];
+    const run = startMultiply(JOB, [[1, 2], [4]], { onKept: (_, seeds) => ran.push(seeds), spawn });
+
+    for (let w = pending(workers); w; w = pending(workers)) w.answer(w.sent.at(-1)!.seeds);
+
+    await run.done;
+    expect(ran.sort()).toEqual([[1, 2], [4]]);
+  });
+
   it('fails the run with the worker’s message', async () => {
     const { workers, spawn } = pool();
     const run = startMultiply(JOB, [[1]], { onKept: () => {}, spawn });

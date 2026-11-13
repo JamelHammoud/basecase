@@ -26,13 +26,12 @@ Turn one passed try into dozens of passing ones, each with the block and spot mo
 
 A robot model needs hundreds of demonstrations to learn a task. Driving each one by hand is the slow part. Multiply runs your try 50 more times in simulation, each in a slightly different world, and keeps the runs that pass.
 
-1. Open a Case and click **Try It**.
-2. Drive the try until it passes. Steps are in [Try a Case](/help/try-a-case).
-3. Under **Results**, right-click the passed try and choose **Multiply**.
+1. Drive a try on a Case until it passes. Steps are in [Try a Case](/help/try-a-case).
+2. Under **Results**, right-click the passed try and choose **Multiply**.
 
 ![The try menu in Results with Multiply above Delete](/help/multiply-a-try-into-varied-demonstrations/menu.png)
 
-4. Wait while the toast counts the passing runs.
+3. Wait while the toast counts the passing runs.
 
 ![The toast counting generated tries, with Stop](/help/multiply-a-try-into-varied-demonstrations/progress.png)
 
@@ -50,4 +49,4 @@ A run that misses is dropped. Multiply again to add 50 more runs with new seeds.
 
 The try must have passed, and you must have driven it in this version of Basecase. Tries recorded earlier, and tries driven by a trained walk, don't keep the commands Multiply replays. A wheeled robot replays its speeds as they were, without following the moved objects.
 
-Generated tries go into [Export a LeRobot dataset](/help/export-a-lerobot-dataset) beside the try they came from. Deleting that try deletes them too.
+Generated tries go into [Export a LeRobot dataset](/help/export-a-lerobot-dataset) beside the try they came from. Deleting that try deletes them too, and stops a Multiply still running from it.

@@ -7,7 +7,7 @@ import { buildCase, builderRobot } from './caseBuilder';
 import { multiplyBatch, multiplySeeds, replayTry, MULTIPLY_COUNT } from './multiply';
 import type { Case } from './schema';
 import { drivenTry } from './testing';
-import { canMultiply, drivenTries, generatedFrom, generatedTry, type TryRecord } from './tries';
+import { canMultiply, drivenTries, generatedFrom, generatedTry, lastSeed, withSources, type TryRecord } from './tries';
 import { FOLLOW_FAR, shiftedCommand, variedWorld } from './variedWorld';
 
 const ARM = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
@@ -141,6 +141,25 @@ describe('generated tries', () => {
     expect(canMultiply({ ...source, manifest: { ...source.manifest, commands: undefined } })).toBe(false);
     expect(drivenTries([source, made])).toEqual([source]);
     expect(generatedFrom([source, made], 'try-a')).toEqual([made]);
+  });
+
+  it('count on from the highest seed run, kept or not', () => {
+    const made = (seed: number) => ({
+      ...source,
+      id: `try-${seed}`,
+      manifest: { ...source.manifest, seed, source: 'try-a' },
+    });
+
+    expect(lastSeed([source], source)).toBe(0);
+    expect(lastSeed([source, made(48)], source)).toBe(48);
+    expect(lastSeed([source, made(48)], { ...source, multiplied: 50 })).toBe(50);
+  });
+
+  it('drop generated tries whose source try is gone', () => {
+    const made = { ...source, id: 'try-b', manifest: { ...source.manifest, source: 'try-a' } };
+
+    expect(withSources([source], [made])).toEqual([made]);
+    expect(withSources([], [made])).toEqual([]);
   });
 
   it('take seeds after the ones already used, in batches', () => {

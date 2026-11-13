@@ -15,7 +15,7 @@ export interface MultiplyRun {
   stop: () => void;
 }
 
-type OnKept = (kept: Variation[]) => void;
+type OnKept = (kept: Variation[], seeds: number[]) => void;
 
 const spawnWorker = (): MultiplyWorker | null =>
   typeof Worker === 'undefined'
@@ -31,7 +31,7 @@ function inPage(job: MultiplyJob, batches: number[][], onKept: OnKept): Multiply
     for (const seeds of batches) {
       if (stopped) return;
 
-      onKept(await multiplyBatch(mj, job, seeds));
+      onKept(await multiplyBatch(mj, job, seeds), seeds);
     }
   };
 
@@ -50,6 +50,7 @@ export function startMultiply(
 
   const queue = [...batches];
   const workers: MultiplyWorker[] = [];
+  const asked = new Map<MultiplyWorker, number[]>();
   let busy = 0;
   let stopped = false;
   let settle: { resolve: () => void; reject: (e: Error) => void } = { resolve: () => {}, reject: () => {} };
@@ -69,6 +70,7 @@ export function startMultiply(
     if (!seeds) return busy ? undefined : end();
 
     busy++;
+    asked.set(worker, seeds);
     worker.postMessage(withJob ? { job, seeds } : { seeds });
   };
 
@@ -79,7 +81,7 @@ export function startMultiply(
 
     if ('error' in reply) return end(new Error(reply.error));
 
-    options.onKept(reply.kept);
+    options.onKept(reply.kept, asked.get(worker) ?? []);
     feed(worker, false);
   };
 

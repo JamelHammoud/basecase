@@ -30,6 +30,7 @@ export interface TryRecord {
   margin: number;
   seconds: number;
   manifest: TryManifest;
+  multiplied?: number;
 }
 
 export async function sha256(text: string): Promise<string> {
@@ -133,5 +134,14 @@ export const canMultiply = (record: TryRecord) =>
 export const drivenTries = (tries: TryRecord[]) => tries.filter((t) => !t.manifest.source);
 
 export const generatedFrom = (tries: TryRecord[], source: string) => tries.filter((t) => t.manifest.source === source);
+
+export const lastSeed = (tries: TryRecord[], source: TryRecord) =>
+  Math.max(source.multiplied ?? 0, ...generatedFrom(tries, source.id).map((t) => t.manifest.seed));
+
+export const withSources = (tries: TryRecord[], records: TryRecord[]) => {
+  const ids = new Set(tries.map((t) => t.id));
+
+  return records.filter((r) => !r.manifest.source || ids.has(r.manifest.source));
+};
 
 export const worstFirst = (tries: TryRecord[]) => [...tries].sort((a, b) => a.margin - b.margin);

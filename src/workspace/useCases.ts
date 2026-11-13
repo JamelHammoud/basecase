@@ -87,6 +87,9 @@ export function useCases(options: CasesOptions) {
     return named;
   };
 
+  const timeline = useTryTimeline({ sim, rig, parts, active, partners });
+  const multiply = useMultiply({ sim, rig, parts, active, partners, tries, setProject, showToast });
+
   const remove = (id: string) => {
     const kase = cases.find((c) => c.id === id);
 
@@ -98,6 +101,7 @@ export function useCases(options: CasesOptions) {
       onConfirm: () => {
         const gone = (project.tries ?? []).filter((t) => t.caseId === id);
 
+        multiply.drop((t) => t.caseId === id);
         gone.forEach((t) => void deleteRecording(t.id));
         setProject((p) => ({
           ...p,
@@ -110,8 +114,6 @@ export function useCases(options: CasesOptions) {
     });
   };
 
-  const timeline = useTryTimeline({ sim, rig, parts, active, partners });
-
   const removeTry = (record: TryRecord) => {
     const generated = generatedFrom(project.tries ?? [], record.id);
 
@@ -120,11 +122,14 @@ export function useCases(options: CasesOptions) {
       body: generatedBody(generated.length),
       onConfirm: () => {
         const gone = new Set([record.id, ...generated.map((t) => t.id)]);
+        const kept = (t: TryRecord) => t.id !== record.id && t.manifest.source !== record.id;
 
-        if (timeline.record && gone.has(timeline.record.id)) timeline.close();
+        multiply.drop((t) => t.id === record.id);
+
+        if (timeline.record && !kept(timeline.record)) timeline.close();
 
         gone.forEach((id) => void deleteRecording(id));
-        setProject((p) => ({ ...p, tries: (p.tries ?? []).filter((t) => !gone.has(t.id)) }));
+        setProject((p) => ({ ...p, tries: (p.tries ?? []).filter(kept) }));
       },
     });
   };
@@ -147,7 +152,6 @@ export function useCases(options: CasesOptions) {
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
-  const multiply = useMultiply({ sim, rig, parts, active, partners, tries, setProject, showToast });
   const attempt = useCaseTry({
     sim,
     rig,

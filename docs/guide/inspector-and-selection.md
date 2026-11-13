@@ -47,7 +47,6 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 - **Booleans:**
   - With 2+ parts, Union, Subtract (from the primary) and Intersect replace them with one mesh (`combinedPart`). When every operand can be built exactly (`exactSolid`), the result keeps its recipe in `csg` (the operation, the operands as they were placed, its position and size then), which STEP export rebuilds. Sculpting it drops the recipe; resizing it makes export use the mesh.
   - With one part, Subtract uses every visible Cutout that overlaps it.
-- **Selection bar:** with 2+ parts selected, a glass pill above the toolbar shows the count, Union, Subtract, Intersect and Group/Ungroup.
 - **Align (`AlignBar`):**
   - One icon strip per axis: X Left·Center·Right, Y Bottom·Middle·Top, Z Back·Center·Front, with Spread beside each (disabled under 3 parts). The right-click Align submenu and the multi-selection Inspector show the same strip; a click in the submenu closes the menu.
   - Several parts align to their shared bounds; one part aligns to the origin (Bottom = floor).
@@ -88,4 +87,4 @@ There's no Shape tab. These panels appear in place of the Inspector only while t
 - **Import SVG:** opened from Shapes ▾, ⌘K, right-click or the Library. Drop zone, samples, Paste Code, then Output: the preview with its shape count (and hole count when there are holes), then the Output fields. The name lives only in the Name field, which starts as the file's name, so the preview row doesn't repeat it. “Edit in Sketch”, beside the preview, hands the outline to Sketch.
 - Adding a part from Sketch or SVG closes the panel and shows the new part in the Inspector.
 - Both end in one Add button. To keep the result, use Save to Library on the new part (the bookmark in its Inspector header, or right-click); the model it saves inserts that same part again.
-- Combine lives in the selection bar, the right-click menu and the multi-selection Inspector.
+- Combine lives in the multi-selection Inspector, the right-click menu and ⌘K; nothing floats over the canvas for a multi-selection.

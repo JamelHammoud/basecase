@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, CloseIcon, FloatingIsland, IconButton, IslandDivider } from '../../design-system';
+import { Button, FloatingIsland, IslandDivider } from '../../design-system';
 import type { Plate } from '../../print/plan';
 import type { Printing } from '../../workspace/usePrinting';
 
@@ -36,15 +36,6 @@ export const PlateBar: React.FC<{ printing: Printing; plates: Plate[] }> = ({ pr
       <Button size="sm" variant="ghost" onClick={arrange} disabled={!plate}>
         Auto Arrange
       </Button>
-      <IslandDivider />
-      <IconButton
-        icon={<CloseIcon className="w-5 h-5" />}
-        title="Close plates"
-        shortcut="Esc"
-        tooltipSide="top"
-        size="lg"
-        onClick={printing.closeMode}
-      />
     </FloatingIsland>
   );
 };

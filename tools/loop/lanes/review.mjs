@@ -1,10 +1,17 @@
 import { runAgent } from '../lib/agent.mjs';
-import { commentOnPull, openPulls, reviewState, setReview } from '../lib/github.mjs';
+import { claim } from '../lib/claim.mjs';
+import { copyReport, copyReviewNote } from '../lib/copy.mjs';
+import { commentOnPull, openPulls, pullReview, setReview } from '../lib/github.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
+export const schedule = {
+  slots: 4,
+  everySeconds: 60,
+  does: 'Reviews each pull request whose head has no agent-review status',
+};
+
 const MAX_DIFF = 400_000;
-const PER_RUN = 3;
 
 const SCHEMA = {
   type: 'object',
@@ -31,11 +38,15 @@ const SCHEMA = {
 
 const findingLine = (f) => `- **${f.severity}** \`${f.file}${f.line ? `:${f.line}` : ''}\`: ${f.problem} Fix: ${f.fix}`;
 
-const reviewComment = ({ verdict, summary, findings }, sha) =>
+const fenced = (text) => ['```', text, '```'].join('\n');
+
+const reviewComment = ({ verdict, summary, findings }, { sha, copy }) =>
   [
     `### Review: ${verdict === 'pass' ? 'pass' : 'changes needed'} (${sha.slice(0, 7)})`,
     summary,
     ...(findings.length > 0 ? ['', ...findings.map(findingLine)] : []),
+    '',
+    fenced(copy.text),
   ].join('\n');
 
 function reviewPull(pull, log) {
@@ -47,6 +58,7 @@ function reviewPull(pull, log) {
 
   try {
     const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: worktree.dir }).out.slice(0, MAX_DIFF);
+    const copy = copyReport(worktree.dir);
     const onMain = run('git', ['merge', '-q', '--no-edit', 'origin/main'], { cwd: worktree.dir, allowFail: true }).ok;
 
     if (!onMain) run('git', ['merge', '--abort'], { cwd: worktree.dir, allowFail: true });
@@ -54,7 +66,8 @@ function reviewPull(pull, log) {
     const where = onMain
       ? 'The worktree is the pull request merged onto current main, so judge it as it would land.'
       : 'It conflicts with current main, so the worktree is its own head; the rebase lane will bring it up to date.';
-    const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\nIts diff against main:\n\n${diff}`;
+    const counted = `Its user-facing strings (\`tools/copy-diff.mjs\`):\n\n${fenced(copy.text)}\n\n${copyReviewNote(copy)}`;
+    const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\n${counted}\n\nIts diff against main:\n\n${diff}`;
     const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, hours: 2 });
 
     if (!result.ok) {
@@ -67,7 +80,7 @@ function reviewPull(pull, log) {
     const blockers = result.output.findings.filter((f) => f.severity === 'blocker');
     const verdict = result.output.verdict === 'pass' && blockers.length === 0 ? 'pass' : 'fail';
 
-    commentOnPull(pull.number, reviewComment({ ...result.output, verdict }, sha));
+    commentOnPull(pull.number, reviewComment({ ...result.output, verdict }, { sha, copy }));
     setReview(sha, verdict === 'pass' ? 'success' : 'failure', result.output.summary);
     log(`#${pull.number}: ${verdict}, ${blockers.length} blockers`);
   } finally {
@@ -77,12 +90,24 @@ function reviewPull(pull, log) {
 
 export default function review({ log }) {
   const waiting = openPulls().filter((pull) => {
-    const state = reviewState(pull.headRefOid);
+    const state = pullReview(pull);
 
     return state === null || state === 'error';
   });
 
-  for (const pull of waiting.slice(0, PER_RUN)) reviewPull(pull, log);
+  for (const pull of waiting) {
+    const release = claim(`review-${pull.number}`);
+
+    if (!release) continue;
+
+    try {
+      reviewPull(pull, log);
+    } finally {
+      release();
+    }
+
+    return;
+  }
 
   if (waiting.length === 0) log('nothing to review');
 }

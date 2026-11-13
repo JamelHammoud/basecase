@@ -1,10 +1,18 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
-import { failedLog, latestMainCheck, openPulls, repo } from '../lib/github.mjs';
+import { failedLog, lastFinishedMainCheck, openPulls, repo } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
+import { json } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
+
+export const schedule = { slots: 1, everySeconds: 60, does: "Opens a repair when main's last finished Check failed" };
 
 const MAX_LOG = 80_000;
 const HANDLED_FOR_MS = 6 * 60 * 60 * 1000;
+
+const repairMergedSince = (when) =>
+  (json('gh', ['pr', 'list', '--state', 'merged', '--limit', '30', '--json', 'headRefName,mergedAt']) ?? []).some(
+    (pull) => pull.headRefName.startsWith('loop/repair/') && pull.mergedAt > when,
+  );
 
 const beingRepaired = () =>
   openPulls().some(
@@ -12,10 +20,16 @@ const beingRepaired = () =>
   );
 
 export default function repair({ log }) {
-  const latest = latestMainCheck();
+  const latest = lastFinishedMainCheck();
 
-  if (!latest || latest.status !== 'completed' || latest.conclusion !== 'failure') {
-    log('main is green, or Check is still running');
+  if (!latest || latest.conclusion !== 'failure') {
+    log('main is green');
+
+    return;
+  }
+
+  if (repairMergedSince(latest.createdAt)) {
+    log('a repair merged after the last failed Check; waiting for Check on the newer main');
 
     return;
   }

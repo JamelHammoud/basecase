@@ -51,7 +51,7 @@ describe('a Case console', () => {
   it('refuses inputs no source registers, naming the ones arc #184 plans apart from unknown ones', () => {
     const base = DEFAULT_CONSOLE;
 
-    expect(withConsole({ ...base, input: ['camera'] })).toThrow(/console.input\[0\] camera can’t drive a Case/);
+    expect(withConsole({ ...base, input: ['leader-arm'] })).toThrow(/console.input\[0\] leader-arm can’t drive a Case/);
     expect(withConsole({ ...base, input: ['midi'] })).toThrow(/console.input\[0\] midi can’t drive/);
     expect(withConsole({ ...base, input: ['mind'] })).toThrow(/console.input\[0\] mind is no input source/);
     expect(withConsole({ ...base, input: ['keys', 'keys'] })).toThrow(/console.input\[1\] repeats keys/);
@@ -139,7 +139,6 @@ describe('five consoles from arc #184', () => {
     });
 
     expect(refused).toEqual([
-      ['G1 arm teleop', 'console.input[0] camera can’t drive a Case in this version'],
       ['Sorting cell', 'console.input[0] policy can’t drive a Case in this version'],
       ['MIDI hexapod', 'console.input[0] midi can’t drive a Case in this version'],
     ]);

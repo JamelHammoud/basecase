@@ -5,7 +5,7 @@ import {
   DeleteIcon,
   EmptyState,
   PlusIcon,
-  RobotsIcon,
+  PreviewImage,
   SearchField,
   SectionHeader,
   useScrollFade,
@@ -229,17 +229,11 @@ const RobotTile: React.FC<{
       className="group w-full text-left cursor-default active:scale-[0.98] transition-transform duration-150"
     >
       <div className="preview aspect-[4/3] flex items-center justify-center">
-        {src ? (
-          <img
-            src={src}
-            alt=""
-            draggable={false}
-            onError={() => setFailed((n) => n + 1)}
-            className="w-full h-full object-contain p-1.5 transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
-          />
-        ) : (
-          <RobotsIcon className="w-7 h-7 text-white/25" />
-        )}
+        <PreviewImage
+          src={src ?? ''}
+          onError={() => setFailed((n) => n + 1)}
+          className="p-1.5 transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
+        />
       </div>
       <div className="px-0.5 pt-2">
         <div className="text-[13px] font-medium text-white/90 truncate">{name}</div>

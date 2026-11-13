@@ -159,7 +159,7 @@ describe('Servo models over a calibration history', () => {
   });
 
   it('passes when every joint has a Measured calibration', () => {
-    expect(models(calibrated(LEGS))).toMatchObject({ status: 'pass', detail: 'Every servo has a measured model' });
+    expect(models(calibrated(LEGS))).toMatchObject({ status: 'pass', detail: '' });
   });
 
   it('returns with the joint rolled back to its preset selected (seeded fault)', () => {

@@ -2,7 +2,7 @@ import type { Case } from '../cases/schema';
 import { sha256 } from '../cases/tries';
 import { galleryBundleOf, requireCase } from '../gallery/buildBundle';
 import { galleryBundleBytes, parseGalleryBundle, type GalleryBundle } from '../gallery/galleryBundle';
-import { SHARED_ROBOT_FILE, sharedRobotLink } from '../gallery/galleryLinks';
+import { SHARED_CASE_TAG, SHARED_ROBOT_FILE, sharedRobotLink } from '../gallery/galleryLinks';
 import type { GalleryTrained } from '../gallery/galleryTrained';
 import { hubBridge } from '../hub/hubBridge';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -105,12 +105,17 @@ export async function sharedRobotBundle(source: ShareSource): Promise<GalleryBun
   });
 }
 
+const SHARED_REPO_CARD = new TextEncoder().encode(`---\ntags:\n- ${SHARED_CASE_TAG}\n---\n`);
+
 export async function publishSharedRobot(bundle: GalleryBundle): Promise<string> {
   const bytes = galleryBundleBytes(bundle);
 
   parseGalleryBundle(JSON.parse(new TextDecoder().decode(bytes)));
 
-  const published = await hubBridge.publish({ name: bundle.slug, files: { [SHARED_ROBOT_FILE]: bytes } });
+  const published = await hubBridge.publish({
+    name: bundle.slug,
+    files: { [SHARED_ROBOT_FILE]: bytes, 'README.md': SHARED_REPO_CARD },
+  });
 
   return sharedRobotLink(published.repo);
 }

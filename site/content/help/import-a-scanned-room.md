@@ -30,7 +30,7 @@ Basecase Scan, the iPhone app, scans the room with Apple's RoomPlan and marks wh
 ![New Case with the scanned room picked as the World](/help/import-a-scanned-room/new-case.png)
 
 7. Pick a goal (Reach a Spot, Push a Box or Follow a Path) and set its numbers. The robot starts where you tapped, facing the way the arrow pointed, and the goal is measured from there.
-8. Click **Create**. The room appears around the robot.
+8. Click **Make Case**. The room appears around the robot.
 
 ![The room on the canvas: two rooms joined by a doorway, with a sofa, a table and a chair](/help/import-a-scanned-room/room.png)
 

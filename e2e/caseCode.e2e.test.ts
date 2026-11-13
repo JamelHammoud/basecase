@@ -5,6 +5,7 @@ import { presetCase } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
+import { COCKPIT, pushStick } from './codePanels';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
 
 let app: App;
@@ -69,40 +70,6 @@ const framesUntil = (selector: string) =>
       }),
     selector,
   );
-
-const JOYSTICK = `<canvas width="200" height="200" style="display:block;margin:auto;touch-action:none"></canvas>
-<script>
-const pad = document.querySelector('canvas');
-const g = pad.getContext('2d');
-const draw = (x, y) => {
-  g.clearRect(0, 0, 200, 200);
-  g.fillStyle = getComputedStyle(document.body).getPropertyValue('--bc-surface');
-  g.beginPath(); g.arc(100, 100, 90, 0, 6.29); g.fill();
-  g.fillStyle = getComputedStyle(document.body).getPropertyValue('--bc-accent');
-  g.beginPath(); g.arc(100 + x * 70, 100 + y * 70, 26, 0, 6.29); g.fill();
-};
-const clamp = (n) => Math.max(-1, Math.min(1, n));
-const move = (e) => {
-  const x = clamp((e.offsetX - 100) / 70);
-  const y = clamp((e.offsetY - 100) / 70);
-  draw(x, y);
-  basecase.drive({ v: [-y, 0, -x] });
-};
-pad.addEventListener('pointerdown', (e) => { pad.setPointerCapture(e.pointerId); basecase.action('drive'); move(e); });
-pad.addEventListener('pointermove', (e) => { if (pad.hasPointerCapture(e.pointerId)) move(e); });
-pad.addEventListener('pointerup', () => { draw(0, 0); basecase.drive(null); });
-draw(0, 0);
-</script>`;
-
-const HUD = `<div style="padding:8px 12px;font-size:var(--bc-text);color:var(--bc-ink)">
-  <b data-speed>0.00</b> m/s, tilt <b data-tilt>0</b>°
-</div>
-<script>
-basecase.signals(['robot.speed', 'robot.tilt'], (v) => {
-  document.querySelector('[data-speed]').textContent = (v['robot.speed'] ?? 0).toFixed(2);
-  document.querySelector('[data-tilt]').textContent = (v['robot.tilt'] ?? 0).toFixed(0);
-});
-</script>`;
 
 const PROBES = (base: string) => `<div id="out"></div>
 <script>
@@ -198,19 +165,7 @@ describe('Case code panels', () => {
   it('drives the rover from a code joystick, shows its speed in a HUD overlay, and leaves on Esc pressed inside', async () => {
     const { page } = app;
 
-    await openCase({
-      input: ['code', 'keys'],
-      panels: [
-        { id: 'stick', kind: 'code', title: 'Stick', height: 240, source: JOYSTICK },
-        { id: 'hud', kind: 'code', source: HUD },
-      ],
-      layout: {
-        areas: [
-          { canvas: true, overlays: [{ panel: 'hud', anchor: 'top-left', width: 240, height: 48 }] },
-          { size: 320, panels: ['stick'] },
-        ],
-      },
-    });
+    await openCase(COCKPIT);
 
     const hud = await page.locator('[data-testid="case-run-overlay"][data-panel="hud"]').boundingBox();
     const under = await page.evaluate(
@@ -220,20 +175,7 @@ describe('Case code panels', () => {
 
     expect(under).toBe('CANVAS');
 
-    const pad = frameOf('stick').locator('canvas');
-    const box = await pad.boundingBox();
-    const [cx, cy] = [box!.x + box!.width / 2, box!.y + box!.height / 2];
-    let nudge = 0;
-
-    await expect
-      .poll(async () => {
-        await page.mouse.move(cx + (nudge++ % 2), cy);
-
-        return pad.evaluate((el) => el.matches(':hover'));
-      })
-      .toBe(true);
-    await page.mouse.down();
-    await page.mouse.move(cx, cy - 70, { steps: 4 });
+    await pushStick(page, frameOf('stick').locator('canvas'));
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
     await expect.poll(async () => (await simState()).stats?.robots[0].forward ?? 0).toBeGreaterThan(0.1);
     await expect

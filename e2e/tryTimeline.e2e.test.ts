@@ -59,7 +59,7 @@ async function openTouchTheDots() {
 
   await dots.fill('3');
   await dots.press('Enter');
-  await card.locator('button', { hasText: 'Create' }).click();
+  await card.locator('button', { hasText: 'Make Case' }).click();
   await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
 }
 

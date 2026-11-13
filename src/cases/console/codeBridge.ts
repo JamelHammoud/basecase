@@ -61,6 +61,7 @@ type PortTarget = {
 export const SILENT_ERROR = 'It didn’t answer.';
 
 const MAX_ERRORS = 50;
+const STALL_MS = 2 * PING_MS;
 
 const isAction = (name: string): name is CaseAction => (CASE_ACTIONS as readonly string[]).includes(name);
 
@@ -90,17 +91,33 @@ function budget(clock: BridgeClock, perSecond: number) {
   };
 }
 
+function worldGate({ clock, studio, note }: { clock: BridgeClock; studio: BridgeStudio; note: (e: string) => void }) {
+  const spend = budget(clock, WORLD_CALLS_PER_SECOND);
+
+  return (change: WorldChange) => {
+    const over = spend();
+
+    if (over === 1) note(`world refused: more than ${WORLD_CALLS_PER_SECOND} calls a second`);
+
+    if (over > 0) return;
+
+    const refusal = studio.world(change);
+
+    if (refusal) note(`world refused: ${refusal}`);
+  };
+}
+
 export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   const clock = o.clock ?? REAL_CLOCK;
   const errors: string[] = [];
   const spend = budget(clock, MESSAGES_PER_SECOND);
-  const spendWorld = budget(clock, WORLD_CALLS_PER_SECOND);
   let port: MessagePort | null = null;
   let loaded = false;
   let closed = false;
   const opened = clock.now();
-  let heard = opened;
-  let unanswered = 0;
+  let pingedAt: number | null = null;
+  let lastTick = opened;
+  let repinged = false;
 
   const post = (message: StudioMessage) => port?.postMessage(message);
   const feed = signalFeed({ bus: o.bus, scope: o.scope, post, clock });
@@ -117,17 +134,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   const streams = frameStreams({ source: o.studio.frames, clock, post: postFrame, note });
   const store = coalescedStore(o.studio.store, clock);
 
-  const world = (change: WorldChange) => {
-    const over = spendWorld();
-
-    if (over === 1) note(`world refused: more than ${WORLD_CALLS_PER_SECOND} calls a second`);
-
-    if (over > 0) return;
-
-    const refusal = o.studio.world(change);
-
-    if (refusal) note(`world refused: ${refusal}`);
-  };
+  const world = worldGate({ clock, studio: o.studio, note });
 
   const storeSet = (m: { id: number; value: unknown }) => {
     const reply = storeSetReply(m, store);
@@ -187,8 +194,8 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   };
 
   const onPortMessage = (e: MessageEvent) => {
-    heard = clock.now();
-    unanswered = 0;
+    pingedAt = null;
+    repinged = false;
 
     const over = spend();
 
@@ -202,15 +209,33 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     else (handlers[m.type] as (message: FrameMessage) => void)(m);
   };
 
+  const ping = (now: number, late: boolean) => {
+    const silent = pingedAt !== null && now - pingedAt >= SILENT_MS;
+
+    if (silent && (!late || repinged)) {
+      fail(SILENT_ERROR);
+
+      return;
+    }
+
+    if (silent) {
+      pingedAt = now;
+      repinged = true;
+    }
+
+    pingedAt ??= now;
+    post({ type: 'ping' });
+  };
+
   const stopPing = clock.every(PING_MS, () => {
-    if (!port && clock.now() - opened >= HELLO_MS) fail(SILENT_ERROR);
+    const now = clock.now();
+    const late = now - lastTick > STALL_MS;
 
-    if (!port) return;
+    lastTick = now;
 
-    unanswered++;
+    if (!port && now - opened >= HELLO_MS) fail(SILENT_ERROR);
 
-    if (unanswered >= SILENT_MS / PING_MS && clock.now() - heard >= SILENT_MS) fail(SILENT_ERROR);
-    else post({ type: 'ping' });
+    if (port) ping(now, late);
   });
 
   return {
@@ -221,8 +246,6 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
 
       port = channel.port1;
       port.onmessage = onPortMessage;
-      heard = clock.now();
-      unanswered = 0;
       (e.source as PortTarget).postMessage(
         { bc: BRIDGE_VERSION, type: 'port' },
         { targetOrigin: '*', transfer: [channel.port2] },

@@ -11,13 +11,14 @@ import {
   pageLinks,
   paragraphLength,
   sentenceLength,
+  spelling,
   summaryLength,
   title,
 } from './rules.mjs';
 
 const CONTENT_PATH = /(?:^|\/)site\/content\/(changelog|blog|help)\/([^/]+)\.md$/;
 
-const EVERY_PAGE = [bannedWords, linkText, pageLinks, images, title];
+const EVERY_PAGE = [bannedWords, spelling, linkText, pageLinks, images, title];
 
 export const RULES = {
   changelog: [...EVERY_PAGE, sentenceLength, paragraphLength, summaryLength, helpLink],

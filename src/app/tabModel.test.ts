@@ -13,7 +13,8 @@ import {
   type Metas,
   type TabEntry,
 } from './tabModel';
-import { tabCommandForKey, type TabKey } from './tabShortcuts';
+import type { ShortcutKey } from './shortcuts';
+import { tabCommandForKey } from './tabShortcuts';
 import { tabsFromSeeds } from './openScenes';
 
 const meta = (name: string, sceneId = name): WorkspaceMeta => ({
@@ -88,7 +89,7 @@ describe('scene tabs', () => {
 
 describe('tab shortcuts', () => {
   const ids = ['a', 'b', 'c'];
-  const key = (k: Partial<TabKey>): TabKey => ({
+  const key = (k: Partial<ShortcutKey>): ShortcutKey => ({
     key: '',
     code: '',
     metaKey: false,

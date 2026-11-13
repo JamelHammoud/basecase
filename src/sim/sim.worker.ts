@@ -15,6 +15,7 @@ import { demandedTorques, jointForces, jointSpeeds, limitForces } from './simFor
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
+import { LiveWatch, type WatchInput } from '../skills/liveWatch';
 import { errorMessage } from '../utils/errorMessage';
 import { PoseGate } from './poseGate';
 import { WorldMoves } from './worldMoves';
@@ -52,6 +53,7 @@ export type SimRequest =
   | ({ type: 'routine' } & LiveRoutineInput)
   | ({ type: 'case' } & LiveCaseInput)
   | { type: 'caseEnd' }
+  | { type: 'watch'; watch: WatchInput | null }
   | { type: 'input'; name: string; value: FactValue }
   | { type: 'world'; change: WorldChange }
   | { type: 'cameras'; port: MessagePort | null }
@@ -65,6 +67,7 @@ export type SimResponse =
   | { type: 'scrubbed'; efforts: Float32Array[] | null }
   | { type: 'sought'; frame: number; qpos: Float64Array }
   | { type: 'world'; looks: WorldLooks }
+  | { type: 'watched'; id: number; margin: number }
   | {
       type: 'frame';
       poses: Float64Array;
@@ -96,6 +99,7 @@ let recorder: Recorder | null = null;
 let scrubbed: Recording | null = null;
 let live: LiveRoutine | null = null;
 let liveCase: LiveCase | null = null;
+let watching: LiveWatch | null = null;
 let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
 let script: { start: number; commands: Array<{ at: number; command: DriveCommand }> } | null = null;
@@ -157,6 +161,7 @@ function loop() {
 
   if (live) advanceRoutine(live, wall * speed);
   else if (liveCase) liveCase.advance(wall * speed);
+  else if (watching) watching.advance(wall * speed);
   else engine.step(wall * speed);
 
   const cost = (performance.now() - t0) / 1000;
@@ -209,11 +214,24 @@ function errorText(e: unknown): string {
 
 type Msg<K extends SimRequest['type']> = Extract<SimRequest, { type: K }>;
 
+async function watch(msg: Msg<'watch'>) {
+  mj ??= await loadMujoco();
+  watching = null;
+
+  if (!engine || !msg.watch) return;
+
+  const onMargin = (id: number, margin: number) => post({ type: 'watched', id, margin });
+
+  watching = new LiveWatch({ mj, engine, input: msg.watch, onMargin });
+  frame();
+}
+
 async function load(msg: Msg<'load'>) {
   mj ??= await loadMujoco();
   engine?.dispose();
   engine = null;
   live = null;
+  watching = null;
   scrubbed = null;
   liveCase = null;
   script = null;
@@ -404,6 +422,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   caseEnd: () => {
     liveCase = null;
   },
+  watch,
   input: (msg) => liveCase?.input(msg.name, msg.value),
   world: (msg) => changeWorld(msg.change),
   cameras: (msg) => {
@@ -414,6 +433,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   dispose: () => {
     playing = false;
     live = null;
+    watching = null;
     liveCase = null;
     recorder = null;
     scrubbed = null;

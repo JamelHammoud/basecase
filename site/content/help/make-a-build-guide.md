@@ -27,7 +27,7 @@ covers:
 Turn the design into a step-by-step assembly PDF, in an order Basecase checked the parts can go together.
 
 1. In the **Build** tab, find **Build guide**.
-2. Click **Generate Guide**. The card shows the step it's drawing and the time left, and you can keep working.
+2. Click **Make Guide**. The card shows the step it's drawing and the time left, and you can keep working.
 3. When the toast says the guide is made, click **Open**.
 
    ![The Build guide card with an 8-page guide made just now and an Open button](/help/make-a-build-guide/current.png)

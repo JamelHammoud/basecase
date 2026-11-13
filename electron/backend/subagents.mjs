@@ -8,7 +8,7 @@ references, posted the reference sheet and design language, and blocked out the 
 Your brief names the subassembly you own, its part ids, the reference rows and photos for it,
 the interfaces you must keep and the sizes you are designing to.
 
-- Call get_scene first and read your block-outs and the neighbours they touch.
+- Call get_scene first and read your block-outs and the neighbors they touch.
 - Edit only the part ids in your brief, plus new parts you create. Give new parts ids that start
   with your subassembly's name (e.g. left_leg_knee_cap). Never update, delete or mirror anyone
   else's parts. A tool error saying a part belongs to another task means: leave it alone and

@@ -3,24 +3,31 @@ import type { ConsoleSignal } from '../../cases/console/format';
 import type { CaseAction, PanelKind, PanelOf } from '../../cases/console/panelKinds';
 import type { SignalBus } from '../../cases/console/signalBus';
 import type { SignalScope } from '../../cases/console/signalNames';
+import type { MovableObject } from '../../cases/worldSet';
 import type { Simulation } from '../../sim/useSimulation';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
 import type { Cases } from '../../workspace/useCases';
 import type { CameraTiles } from '../cameras/useCameraTiles';
+
+export interface StudioPanelContext {
+  cases: Cases;
+  cameras: CameraTiles;
+  onBrowseRobots: () => void;
+}
 
 export interface PanelContext {
   bus: SignalBus;
   signals: readonly ConsoleSignal[];
   scope: SignalScope;
   inputs: readonly string[];
-  cases: Cases;
+  brief: string;
+  world: readonly MovableObject[];
   sim: Simulation;
   parts: ScenePart[];
   joints: RobotJoint[];
-  cameras: CameraTiles;
   fire: (action: CaseAction) => void;
   can: (action: CaseAction) => boolean;
-  onBrowseRobots: () => void;
+  studio: StudioPanelContext | null;
 }
 
 export interface PanelViewProps<K extends PanelKind> {

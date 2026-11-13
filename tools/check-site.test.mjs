@@ -96,6 +96,19 @@ describe('lintSite', () => {
     ]);
   });
 
+  it('fails British spellings in prose, titles and alt text, but not in code or front-matter keywords', () => {
+    const help = page(
+      'title: Find the centre of mass\ndate: 2026-11-12\nkeywords:\n  - colour',
+      'Each part is `coloured` by its grey level.\n\n![Dots labelled by joint](/help/import-a-mesh/dots.png)',
+    );
+
+    expect(lint({ 'site/content/help/import-a-mesh.md': help }, ['/help/import-a-mesh/dots.png'])).toEqual([
+      'site/content/help/import-a-mesh.md:1: “centre” is British; spell it “center” (§3b-20)',
+      'site/content/help/import-a-mesh.md:8: “grey” is British; spell it “gray” (§3b-20)',
+      'site/content/help/import-a-mesh.md:10: “labelled” is British; spell it “labeled” (§3b-20)',
+    ]);
+  });
+
   it('fails a blog sentence copied from a changelog entry', () => {
     const sentence = 'The token stays in the main process, encrypted on disk.';
     const entry = page('title: Hub\ndate: 2026-11-01', `You can publish.\n\n${sentence}`);

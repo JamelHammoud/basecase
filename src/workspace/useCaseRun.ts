@@ -75,7 +75,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
     return () => setInputs(null);
   }, [inputs, setInputs]);
 
-  const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO });
+  const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO, studio: true });
 
   return { open, caseConsole, layout, enter, enterCase, leave };
 }

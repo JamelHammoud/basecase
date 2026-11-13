@@ -25,7 +25,7 @@ See where a connected emulated robot and the simulation part ways, joint by join
 4. Read the gaps. Each joint's row in Operate shows its gap in blue after its position: the measured angle minus the simulation's angle at the same moment, in degrees. The canvas labels the largest gap at its joint.
 5. When a joint's gap stays over 4° for 2 seconds while it moves, its row shows Calibrate where the temperature was. Click it to run the 18-second bench on that joint alone. The other joints hold still, and the simulation uses the new fit from the next run.
 
-![The measured robot in blue beside the simulated arm, with the largest gap labelled at the joint](/help/compare-the-robot-with-the-simulation/moving.png)
+![The measured robot in blue beside the simulated arm, with the largest gap labeled at the joint](/help/compare-the-robot-with-the-simulation/moving.png)
 
 ![Operate offering Calibrate on both joint rows after they lagged](/help/compare-the-robot-with-the-simulation/calibrate.png)
 

@@ -15,6 +15,8 @@ interface BridgeInput {
   onFail: (error: string) => void;
 }
 
+const stopNothing = () => undefined;
+
 export const pressStudioKey = ({ key, meta, ctrl, shift }: FrameKey) =>
   window.dispatchEvent(
     new KeyboardEvent('keydown', {
@@ -34,17 +36,17 @@ export function useCodeBridge({ frameRef, ctx, onFail }: BridgeInput) {
   const event = useEffectEvent((name: string, value: FactValue) => ctx.sim.input(name, value));
   const failed = useEffectEvent((error: string) => onFail(error));
   const world = useEffectEvent((change: WorldChange) => {
-    const refusal = worldRefusal(ctx.cases.active?.world.objects ?? [], change.id);
+    const refusal = worldRefusal(ctx.world, change.id);
 
     if (!refusal) ctx.sim.world(change);
 
     return refusal;
   });
   const frames = useEffectEvent((camera: string, size: FrameSize, onFrame: (bitmap: ImageBitmap) => void) =>
-    ctx.cameras.stream(camera, size, onFrame),
+    ctx.studio ? ctx.studio.cameras.stream(camera, size, onFrame) : stopNothing,
   );
-  const storeGet = useEffectEvent(() => ctx.cases.store.get());
-  const storeSet = useEffectEvent((value: StoreValue) => ctx.cases.store.set(value));
+  const storeGet = useEffectEvent(() => ctx.studio?.cases.store.get() ?? null);
+  const storeSet = useEffectEvent((value: StoreValue) => ctx.studio?.cases.store.set(value));
 
   useLayoutEffect(() => {
     const owner = {};

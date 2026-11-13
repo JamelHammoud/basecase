@@ -24,7 +24,7 @@ Every link's weight counts against it. A stronger shoulder servo or a higher sup
 
 ## The map
 
-While the row is open, each sampled pose is a dot where the hand ends up. Dots are grey where it can barely hold anything, and blue where it lifts the most. Collapse the row or switch to another tab and the dots go away. They never show in the captures the agent takes.
+While the row is open, each sampled pose is a dot where the hand ends up. Dots are gray where it can barely hold anything, and blue where it lifts the most. Collapse the row or switch to another tab and the dots go away. They never show in the captures the agent takes.
 
 ![The SO-101 inside a cloud of dots, with Payload open beside it](/changelog/see-how-much-an-arm-lifts/cover.png)
 

@@ -6,7 +6,7 @@ import type { Rig } from '../utils/kinematics';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
 import type { FaultKind } from './faults';
-import { buildMjcf, quatToMj, toMj, simDeltas, type SimModel, type WorldItem } from './mjcf';
+import { buildMjcf, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
@@ -16,7 +16,10 @@ import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import type { WorldChange } from '../cases/worldSet';
 import { withLooks } from './worldLooks';
 import type { LiveCaseInput } from '../cases/liveCase';
+import type { WatchPlan } from '../skills/liveWatch';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
+import { useWatch } from './useWatch';
+import { useSimTouches } from './useSimTouches';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
 import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
@@ -77,6 +80,8 @@ export interface Simulation {
   buildModel: (options?: { alone?: boolean }) => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
   runCase: (input: LiveCaseInput | null) => void;
+  watch: (plan: WatchPlan | null) => void;
+  watchMargin: number | null;
   input: (name: string, value: FactValue) => void;
   world: (change: WorldChange) => void;
   latestFacts: () => CaseFacts | null;
@@ -104,36 +109,6 @@ interface Inputs {
 }
 
 export type RunOptions = Parameters<Simulation['run']>[0];
-
-type GrabHand = Parameters<Simulation['grab']>[1];
-
-function grabRequest(
-  m: SimModel,
-  partIds: string[],
-  hand: GrabHand,
-  phase: 'start' | 'move' | 'end',
-): SimRequest | null {
-  if (phase === 'end' || !hand) return { type: 'grab', phase: 'end' };
-
-  if (phase === 'start') {
-    const body = m.bodies.findIndex((b) => b.parts.some((id) => partIds.includes(id)));
-
-    return body >= 0 ? { type: 'grab', phase: 'start', body, point: toMj(hand.position) } : null;
-  }
-
-  return { type: 'grab', phase: 'move', point: toMj(hand.position), turn: hand.turn ? quatToMj(hand.turn) : null };
-}
-
-function pushRequest(m: SimModel | null, robot: string | undefined): SimRequest | null {
-  const key = robot ?? m?.robots.find((r) => r.floating)?.key ?? m?.robots[0]?.key;
-
-  if (!m || !key) return null;
-
-  const n = (m.massKg[key] || 1) * 9.81 * 0.5;
-  const a = Math.random() * Math.PI * 2;
-
-  return { type: 'push', robot: key, force: [Math.cos(a) * n, 0, Math.sin(a) * n] };
-}
 
 type Ran = Extract<SimResponse, { type: 'ran' }>;
 
@@ -276,27 +251,6 @@ function useController(send: (msg: SimRequest) => void) {
   return [controller, setController] as const;
 }
 
-function useSimTouches(
-  modelRef: React.RefObject<SimModel | null>,
-  send: (msg: SimRequest) => void,
-): Pick<Simulation, 'grab' | 'push'> {
-  'use memo';
-
-  return {
-    grab: (partIds, hand, phase) => {
-      const m = modelRef.current;
-      const msg = m && grabRequest(m, partIds, hand, phase);
-
-      if (msg) send(msg);
-    },
-    push: (robot) => {
-      const msg = pushRequest(modelRef.current, robot);
-
-      if (msg) send(msg);
-    },
-  };
-}
-
 interface SimStartInputs {
   sw: ReturnType<typeof useSimWorker>;
   buildModel: (options?: SceneModelOptions) => Promise<SimModel>;
@@ -367,6 +321,7 @@ export function useSimulation(props: Inputs): Simulation {
   const { status, setStatus, playing, setPlaying, stats, setStats, error, send, frameHookRef } = sw;
   const [controller, setController] = useController(send);
   const touch = useSimTouches(modelRef, send);
+  const watching = useWatch(send, sw.watched);
 
   const { start, startPinned, pinned } = useSimStart({ sw, buildModel, modelRef, setModel, controller, speed });
 
@@ -453,6 +408,7 @@ export function useSimulation(props: Inputs): Simulation {
       return sw.startRoutine(input, onUpdate);
     },
     runCase: (input) => send(input ? { type: 'case', ...input } : { type: 'caseEnd' }),
+    ...watching,
     input: (name, value) => send({ type: 'input', name, value }),
     world: (change) => send({ type: 'world', change }),
     latestFacts: sw.latestFacts,

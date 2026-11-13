@@ -14,6 +14,7 @@ import {
   RunIcon,
 } from '../../design-system';
 import type { Routines } from '../../workspace/useRoutines';
+import { keyFor } from '../../app/shortcuts';
 
 export function RoutineHeader({ routines }: { routines: Routines }) {
   const { store, editor, view, showToast } = routines;
@@ -94,7 +95,7 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
           variant="primary"
           icon={<RunIcon className="w-4 h-4" />}
           title="Run Routine"
-          shortcut="⌘↩"
+          shortcut={keyFor('run-routine')}
           onClick={() => void routines.run()}
         >
           Run

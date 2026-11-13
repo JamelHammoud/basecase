@@ -20,7 +20,7 @@ The canvas shows only what's built so far and what this step adds. The new parts
 
 A step that adds a servo labels it with the joint it drives and its bus ID, like Shoulder lift, ID 2. The numbers come from the same place as the robot package's joint map and Operate's Connect. So a servo set to that ID and fitted where the label says is the one the sim and Operate expect. A hand-made kit guide keeps the ID script and the assembly video apart; here they're one step.
 
-![Three servos labelled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/changelog/build-along/cover.png)
+![Three servos labeled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/changelog/build-along/cover.png)
 
 ## The guide it follows
 

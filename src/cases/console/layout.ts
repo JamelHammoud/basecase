@@ -1,6 +1,6 @@
 import { STUDIO_INPUTS } from '../../sim/inputSources';
 import type { CanvasOverlay, CaseConsole } from './format';
-import { panelOnDesktopOnly, type PanelOf, type PanelSpec } from './panelKinds';
+import { panelShows, type PanelOf, type PanelSpec, type PanelSurface } from './panelKinds';
 
 export const DEFAULT_CONSOLE: CaseConsole = {
   input: STUDIO_INPUTS,
@@ -37,7 +37,7 @@ export interface ConsoleLayout {
   overlays: PlacedOverlay[];
 }
 
-export function consoleLayout(caseConsole: CaseConsole | undefined, { desktop }: { desktop: boolean }): ConsoleLayout {
+export function consoleLayout(caseConsole: CaseConsole | undefined, surface: PanelSurface): ConsoleLayout {
   const { panels, layout } = caseConsole ?? DEFAULT_CONSOLE;
   const byId = new Map(panels.map((p) => [p.id, p]));
   const canvasAt = layout.areas.findIndex((a) => 'canvas' in a);
@@ -49,7 +49,7 @@ export function consoleLayout(caseConsole: CaseConsole | undefined, { desktop }:
   const placed = layout.areas.flatMap((area, i) => {
     if (!('panels' in area)) return [];
 
-    const shown = area.panels.map((id) => byId.get(id)!).filter((p) => desktop || !panelOnDesktopOnly(p));
+    const shown = area.panels.map((id) => byId.get(id)!).filter((p) => panelShows(p, surface));
 
     return shown.length ? [{ key: `area-${i}`, at: i, size: area.size, panels: shown }] : [];
   });

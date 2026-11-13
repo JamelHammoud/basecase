@@ -184,7 +184,7 @@ async function openTouchTheDots() {
     .poll(() => card.getByTestId('new-case-brief').innerText())
     .toBe('Touch each dot in order with the end effector.');
   expect(await card.getByLabel('Distance').count()).toBe(0);
-  await card.locator('button', { hasText: 'Create' }).click();
+  await card.locator('button', { hasText: 'Make Case' }).click();
   await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
 }
 
@@ -328,7 +328,7 @@ describe('Cases', () => {
     await card.locator('[role=radio]', { hasText: 'Push a Box' }).click();
     await card.locator('[role=radio]', { hasText: 'Corridor' }).click();
     expect(await card.getByTestId('new-case-brief').innerText()).toBe('Push the box 500 mm onto the spot.');
-    await card.locator('button', { hasText: 'Create' }).click();
+    await card.locator('button', { hasText: 'Make Case' }).click();
 
     await expect.poll(async () => (await simState()).activeCase).toBe('push-a-box-in-a-corridor');
     await expect.poll(async () => (await simHeadings())[0]).toBe('Push a Box in a Corridor');
@@ -397,7 +397,7 @@ describe('a gripper', () => {
     await card.locator('[role=radio]', { hasText: 'Pick Up a Block' }).click();
     await card.locator('label', { hasText: 'Time' }).locator('input').fill('40');
     await card.locator('label', { hasText: 'Time' }).locator('input').press('Tab');
-    await card.locator('button', { hasText: 'Create' }).click();
+    await card.locator('button', { hasText: 'Make Case' }).click();
     await expect.poll(async () => (await simState()).activeCase).toBe('pick-up-a-block');
     await button('Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
@@ -442,7 +442,7 @@ describe('LiDAR', () => {
 
       await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
       await card.locator('[role=radio]', { hasText: 'Corridor' }).click();
-      await card.locator('button', { hasText: 'Create' }).click();
+      await card.locator('button', { hasText: 'Make Case' }).click();
       await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-a-corridor');
 
       await button('Try It').click();

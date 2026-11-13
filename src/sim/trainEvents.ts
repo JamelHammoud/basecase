@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { PolicyRecord } from '../types/robotics';
+import type { SnapshotRef } from '../skills/snapshots';
 import type { TrainerStatus } from '../utils/platformBridge';
 import type { TrainTask } from './policy';
 import type { TrainProgress, Training } from './useTraining';
@@ -19,6 +20,7 @@ export interface TrainEventContext {
   setCurve: Dispatch<SetStateAction<number[]>>;
   setError: Dispatch<SetStateAction<string | null>>;
   setTrainer: Dispatch<SetStateAction<TrainerStatus | null>>;
+  onSnapshot: (ref: SnapshotRef) => void;
 }
 
 export const NEEDS_LEGS = 'Training needs a robot that stands on its own legs.';
@@ -78,11 +80,20 @@ function onError(ctx: TrainEventContext, message: string) {
   ctx.job.current = null;
 }
 
+function onSnapshot(ctx: TrainEventContext, ev: Record<string, unknown>) {
+  const { iteration, steps } = ev;
+
+  if (!Number.isSafeInteger(iteration) || !Number.isSafeInteger(steps)) return;
+
+  ctx.onSnapshot({ run: String(ev.jobId), iteration: iteration as number, steps: steps as number });
+}
+
 const HANDLERS: Record<string, (ctx: TrainEventContext, ev: Record<string, unknown>) => void> = {
   status: (ctx, ev) => onStatusMessage(ctx, String(ev.message)),
   progress: (ctx, ev) => onProgress(ctx, ev.progress as TrainProgress),
   done: (ctx, ev) => onDone(ctx, ev.record as PolicyRecord),
   error: (ctx, ev) => onError(ctx, String(ev.message)),
+  snapshot: onSnapshot,
 };
 
 export function handleTrainEvent(ctx: TrainEventContext, workspaceId: string, ev: Record<string, unknown>) {

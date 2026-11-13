@@ -26,13 +26,13 @@ const servoParts = (ctx: CheckContext, j: RobotJoint) =>
 function torqueEstimateRow(ctx: CheckContext, movable: RobotJoint[]): CheckRow {
   const estimated = movable.filter((j) => !hasTorque(ctx, j));
 
-  if (!estimated.length)
-    return { check: 'Torque estimates', status: 'pass', detail: 'Every joint has a servo or a published limit' };
+  if (!estimated.length) return { check: 'Torque estimates', status: 'pass', detail: '' };
 
   return {
     check: 'Torque estimates',
     status: 'warn',
     detail: `${plural(estimated.length, 'joint')} without a servo`,
+    detailInItems: true,
     items: [{ text: `No servo on ${labels(estimated)}`, ids: estimated.flatMap((j) => j.child), status: 'warn' }],
   };
 }
@@ -56,7 +56,7 @@ function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
   const measured = measuredJoints({ joints: modelled, parts: ctx.parts, calibrations: ctx.project.servoCalibrations });
   const guessed = modelled.filter((j) => !measured.has(j.id));
 
-  if (!guessed.length) return [{ check: 'Servo models', status: 'pass', detail: 'Every servo has a measured model' }];
+  if (!guessed.length) return [{ check: 'Servo models', status: 'pass', detail: '' }];
 
   const servos = guessed.flatMap((j) => servoParts(ctx, j));
   const names = listIds([...new Set(servos.map((p) => p.name))], NAMED);
@@ -67,6 +67,7 @@ function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
       check: 'Servo models',
       status: 'warn',
       detail: `${plural(guessed.length, 'joint')} without a measured model`,
+      detailInItems: true,
       items: [
         {
           text: `${names} on ${labels(guessed)}`,

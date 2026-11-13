@@ -7,7 +7,7 @@ export const servos = {
   horn). find_recipes "servo joint" has proven brackets with ports.
 - The case sits in servo_pocket(model, clearance = 0.25), closed by a screwed clamp or cover,
   with room for the screws, the horn screws' driver and the cable.
-- Joint axes come from the servo's real output (its port), never from the case centre.
+- Joint axes come from the servo's real output (its port), never from the case center.
 - Size before you model: size_actuators gives, per joint, the cheapest servo that passes and one
   tier up. verify_design reports leg joints as Stance (single-stance load at the walking crouch ÷
   stall: Pass ≤ 0.4, Fail above 0.6), Heat (RMS ÷ rated: Pass ≤ 1.0, Fail above 1.6) and Peak

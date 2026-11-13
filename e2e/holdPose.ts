@@ -10,6 +10,31 @@ export const stubTabGpu = () =>
     get: () => ({ requestAdapter: () => Promise.resolve({}) }),
   });
 
+export function holdPolicy(job: Record<string, unknown>, trainedSteps = 1) {
+  const spec = job as { joints: Array<{ id: string }>; robotName: string; defaultPose: number[] };
+  const joints = spec.joints.map((j) => j.id);
+  const inputs = 12 + 3 * joints.length;
+
+  return {
+    format: 'basecase-policy',
+    version: 1,
+    task: 'stand',
+    robot: spec.robotName,
+    joints,
+    defaultPose: spec.defaultPose,
+    actionScale: job.actionScale,
+    controlDt: job.controlDt,
+    command: job.command,
+    obsMean: new Array(inputs).fill(0),
+    obsStd: new Array(inputs).fill(1),
+    layers: [{ in: inputs, out: joints.length, w: new Array(inputs * joints.length).fill(0), b: joints.map(() => 0) }],
+    activation: 'elu',
+    trainedSteps,
+    mujoco: 'stub',
+    createdAt: '2026-11-13T00:00:00',
+  };
+}
+
 export function stubHoldPose(hook: StubbedHook) {
   const holdPose = () => (job: ForgeJob) => {
     const spec = job.job as { joints: Array<{ id: string }>; robotName: string; defaultPose: number[] };

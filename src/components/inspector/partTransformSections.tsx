@@ -16,6 +16,7 @@ import { wrapDegrees } from './partMath';
 import { QuarterTurns } from './QuarterTurns';
 import type { PartSectionProps } from './partSections';
 import { MATERIALS, type InspectorProps, type Phase } from './types';
+import { keyFor } from '../../app/shortcuts';
 
 export const PositionSection: React.FC<
   PartSectionProps & Pick<InspectorProps, 'snapStepMm' | 'onDropToFloor' | 'onStack'>
@@ -35,14 +36,14 @@ export const PositionSection: React.FC<
           <IconButton
             icon={<FloorIcon className="w-3.5 h-3.5" />}
             title="Drop to floor"
-            shortcut="F"
+            shortcut={keyFor('drop-to-floor')}
             size="xs"
             onClick={onDropToFloor}
           />
           <IconButton
             icon={<LayersIcon className="w-3.5 h-3.5" />}
             title="Stack on part below"
-            shortcut="S"
+            shortcut={keyFor('stack')}
             size="xs"
             onClick={onStack}
           />

@@ -145,7 +145,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '55 g'],
     ],
     mounting:
-      'Case 45.2 × 24.7 × 35 mm. Output spline 25T, Ø5.9 mm, 3.4 mm proud, axis 12.5 mm from the case center; horn screw M3 × 6. Rear idler boss Ø6 mm, 4.1 mm proud. Aluminium horns on both faces: Ø19.95, 4 × M3 threaded on a Ø14 circle, faces 1.4 mm beyond the case, so a U-bracket bolts to both. 4× M2 on the top and bottom faces, 20.5 mm apart across the width (Feetech STS3215 drawing).',
+      'Case 45.2 × 24.7 × 35 mm. Output spline 25T, Ø5.9 mm, 3.4 mm proud, axis 12.5 mm from the case center; horn screw M3 × 6. Rear idler boss Ø6 mm, 4.1 mm proud. Aluminum horns on both faces: Ø19.95, 4 × M3 threaded on a Ø14 circle, faces 1.4 mm beyond the case, so a U-bracket bolts to both. 4× M2 on the top and bottom faces, 20.5 mm apart across the width (Feetech STS3215 drawing).',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0G39SM9HZ', kind: 'product' },
       product:
@@ -436,7 +436,7 @@ export const COMPONENTS: ComponentInfo[] = [
     mpn: 'ST-3250-C001',
     group: 'Servos',
     description:
-      '12 V, 50 kg·cm serial bus servo with a magnetic encoder, aluminium case and steel gears, in the STS3215 outline.',
+      '12 V, 50 kg·cm serial bus servo with a magnetic encoder, aluminum case and steel gears, in the STS3215 outline.',
     specs: [
       ['Stall torque', '50 kg·cm (4.9 N·m) at 12 V'],
       ['Speed', '0.133 s/60° (75 rpm) at 12 V'],
@@ -491,7 +491,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Encoder', 'Magnetic, 4096 steps per turn'],
     ],
     mounting:
-      'Case 45.2 × 24.7 × 35 mm. Output axis 10.1 mm from the output end. Output face: 4 holes in two columns 20.7 mm apart, rows 20.5 mm apart (M2 on Feetech’s drawing). Ø19.2 aluminium horns on both faces, 4 holes on a 14 mm circle.',
+      'Case 45.2 × 24.7 × 35 mm. Output axis 10.1 mm from the output end. Output face: 4 holes in two columns 20.7 mm apart, rows 20.5 mm apart (M2 on Feetech’s drawing). Ø19.2 aluminum horns on both faces, 4 holes on a 14 mm circle.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0CDC587BQ', kind: 'product' },
       product: 'https://www.waveshare.com/st3215-hs-servo-motor.htm',
@@ -4504,7 +4504,7 @@ export const COMPONENTS: ComponentInfo[] = [
     mpn: 'PA-14-4-50',
     group: 'Linear Actuators',
     description:
-      '12 V rod actuator with an aluminium housing, an ACME lead screw and internal end-of-stroke limit switches.',
+      '12 V rod actuator with an aluminum housing, an ACME lead screw and internal end-of-stroke limit switches.',
     specs: [
       ['Stroke', '102 mm (4 in)'],
       ['Force', ['Up to 222 N (50 lb)', '156 N (35 lb version)']],
@@ -5298,7 +5298,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Connectors', ['2× STEMMA QT', '7-pin header']],
     ],
     mounting:
-      'PCB 25.40 × 17.78 mm. 4× Ø2.5 mm holes (M2.5), 2.54 mm in from each edge, on a 20.32 × 12.70 mm pattern. Magnet centred over the chip, axis vertical.',
+      'PCB 25.40 × 17.78 mm. 4× Ø2.5 mm holes (M2.5), 2.54 mm in from each edge, on a 20.32 × 12.70 mm pattern. Magnet centered over the chip, axis vertical.',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Adafruit+AS5600+magnetic+angle+sensor+6357', kind: 'search' },
       product: 'https://www.adafruit.com/product/6357',
@@ -5456,7 +5456,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Rated output', '1 mV/V'],
       ['Accuracy', '2.5 g non-linearity, ±2.5 g repeatability'],
       ['Excitation', '5 V DC max'],
-      ['Material', 'Aluminium alloy, IP65'],
+      ['Material', 'Aluminum alloy, IP65'],
       ['Cable', '550 mm, 30 AWG'],
     ],
     mounting:
@@ -5724,7 +5724,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Power', '5 V, 170–180 mA'],
     ],
     mounting:
-      'Ø70 mm round PCB. 3× Ø2.2 mm holes (M2): two 39.8 mm apart, 11.5 mm to one side of the centre; the third 27.1 mm from the centre on the other side, 7.7 mm off the axis.',
+      'Ø70 mm round PCB. 3× Ø2.2 mm holes (M2): two 39.8 mm apart, 11.5 mm to one side of the center; the third 27.1 mm from the center on the other side, 7.7 mm off the axis.',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=ReSpeaker+Mic+Array+v2.0', kind: 'search' },
       product: 'https://www.seeedstudio.com/ReSpeaker-Mic-Array-v2-0.html',

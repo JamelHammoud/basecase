@@ -12,6 +12,7 @@ import { fixtureRobots } from '../../sim/fixtures/robots';
 import type { Simulation } from '../../sim/useSimulation';
 import type { Cases } from '../../workspace/useCases';
 import type { CameraTiles } from '../cameras/useCameraTiles';
+import { ModeHeader } from '../../design-system';
 import { CaseRunArea } from './CaseRunArea';
 import { CodeOverlays } from './code/CodeOverlays';
 import type { PanelContext } from './panelContext';
@@ -50,12 +51,8 @@ function context(caseConsole: CaseConsole): PanelContext {
     signals: caseConsole.signals ?? [],
     scope: { declared: new Set(), probes: new Set(), inputs: new Set(caseConsole.input) },
     inputs: caseConsole.input,
-    cases: {
-      active: kase,
-      attempt: { phase: 'idle', elapsed: 0, start: async () => undefined, end: () => undefined },
-      tries: [],
-      dataset: { canExport: false, canPublish: false, exporting: false },
-    } as unknown as Cases,
+    brief: kase.brief,
+    world: kase.world.objects,
     sim: {
       drive: { cls: null },
       model: null,
@@ -63,34 +60,47 @@ function context(caseConsole: CaseConsole): PanelContext {
     } as unknown as Simulation,
     parts: arm.parts,
     joints: arm.joints,
-    cameras: {
-      views,
-      tile: (view) => ({
-        view,
-        large: false,
-        renaming: false,
-        onRename: () => undefined,
-        canvasRef: () => undefined,
-        onToggleSize: () => undefined,
-        onMenu: () => undefined,
-      }),
-      menu: null,
-      stream: () => () => undefined,
-    } satisfies CameraTiles,
     fire: () => undefined,
     can: () => true,
-    onBrowseRobots: () => undefined,
+    studio: {
+      cases: {
+        active: kase,
+        attempt: { phase: 'idle', elapsed: 0, start: async () => undefined, end: () => undefined },
+        tries: [],
+        dataset: { canExport: false, canPublish: false, exporting: false },
+      } as unknown as Cases,
+      cameras: {
+        views,
+        tile: (view) => ({
+          view,
+          large: false,
+          renaming: false,
+          onRename: () => undefined,
+          canvasRef: () => undefined,
+          onToggleSize: () => undefined,
+          onMenu: () => undefined,
+        }),
+        menu: null,
+        stream: () => () => undefined,
+      } satisfies CameraTiles,
+      onBrowseRobots: () => undefined,
+    },
   };
 }
 
 function render(caseConsole: CaseConsole) {
   const ctx = context(caseConsole);
-  const layout = consoleLayout(caseConsole, { desktop: true });
+  const layout = consoleLayout(caseConsole, { desktop: true, studio: true });
   const html = (side: 'before' | 'after') =>
     layout[side]
       .map((area) =>
         renderToStaticMarkup(
-          createElement(CaseRunArea, { area, side, ctx, title: kase.name, onDone: () => undefined }),
+          createElement(CaseRunArea, {
+            area,
+            side,
+            ctx,
+            header: createElement(ModeHeader, { title: kase.name, onDone: () => undefined }),
+          }),
         ),
       )
       .join('');
@@ -168,7 +178,7 @@ describe('a running Case renders code panels', () => {
     const { after } = render(coded);
     const overlays = renderToStaticMarkup(
       createElement(CodeOverlays, {
-        overlays: consoleLayout(coded, { desktop: true }).overlays,
+        overlays: consoleLayout(coded, { desktop: true, studio: true }).overlays,
         ctx: context(coded),
       }),
     );

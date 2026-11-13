@@ -194,6 +194,7 @@ export function strengthRows(ctx: CheckContext, loads: JointLoad[]): CheckRow[] 
       check: STRENGTH_CHECK,
       status: statusOf(verdicts[0].reading.factor),
       detail: `${fmtFactor(verdicts[0].reading.factor)}×`,
+      detailInItems: true,
       items: flagged.map((v) => itemOf(ctx, v)),
       ids: verdicts.map((v) => v.plan.job.part),
     },

@@ -90,6 +90,29 @@ describe('vite bridge middleware', () => {
     expect((await request(bridge, { method: 'GET', url: '/nope' })).result).toBe('next');
   });
 
+  it('reads snapshot refs from the query, keeping only plain counts', async () => {
+    const get = async (url) => (await request(bridge, { method: 'GET', url })).calls;
+
+    expect(await get('/snapshot?run=policy-a&iteration=40')).toEqual([
+      ['getSnapshot', { run: 'policy-a', iteration: 40, skill: undefined }],
+    ]);
+    expect(await get(`/snapshot?run=policy-a&iteration=40&skill=${'a'.repeat(64)}`)).toEqual([
+      ['getSnapshot', { run: 'policy-a', iteration: 40, skill: 'a'.repeat(64) }],
+    ]);
+
+    for (const iteration of ['', '-1', '4.5', '1e3', '..%2F40']) {
+      expect(await get(`/snapshot?run=policy-a&iteration=${iteration}`)).toEqual([
+        ['getSnapshot', { run: 'policy-a', iteration: null, skill: undefined }],
+      ]);
+    }
+
+    const keep = { hash: 'a'.repeat(64), snapshots: [{ run: 'policy-a', iteration: 40, steps: 9 }] };
+
+    expect(
+      (await request(bridge, { method: 'POST', url: '/snapshot-keep', body: JSON.stringify(keep) })).calls,
+    ).toEqual([['keepSnapshots', keep]]);
+  });
+
   it('serves POST routes', async () => {
     const post = (url, payload) => request(bridge, { method: 'POST', url, body: JSON.stringify(payload) });
 

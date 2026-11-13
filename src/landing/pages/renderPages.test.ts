@@ -17,7 +17,7 @@ const FIXTURES: Record<string, string> = {
   '/site/content/blog/tomorrow.md': post('title: Tomorrow\ndate: 2026-11-13'),
   '/site/content/help/import-a-mesh.md': post(
     'title: Import a mesh\ndate: 2026-11-12\ncovers:\n  - src/workspace/meshImport.ts\n  - src/workspace/usePartCreation.ts',
-    'Bring a model in.\n\n1. Right-click the canvas.\n2. Choose **Import Mesh**.\n\n<script>alert(1)</script>',
+    'Bring a model in.\n\n1. Right-click the canvas.\n2. Choose **Import Mesh**.\n\n<script>alert(1)</script>\n\n[Mail](mailto:hi@example.com) [Source](https://github.com)',
   ),
 };
 
@@ -76,12 +76,19 @@ describe('site pages', () => {
     expect(article).toContain('<strong class="font-semibold text-white/90">Import Mesh</strong>');
     expect(article).not.toContain('<script');
     expect(article).not.toContain('alert(1)');
+    expect(article).toContain('<a href="mailto:hi@example.com" class=');
+    expect(article).toContain('<a href="https://github.com" target="_blank"');
   });
 
-  it('shows the empty blog state', () => {
-    const empty = render({ '/site/content/changelog/a.md': FIXTURES['/site/content/changelog/2026-11-01-older.md'] });
+  it('leaves the blog out until a post is published', () => {
+    const withoutPosts = render({
+      '/site/content/changelog/a.md': FIXTURES['/site/content/changelog/2026-11-01-older.md'],
+    });
 
-    expect(empty.get('blog.html')).toContain('No posts');
+    expect(withoutPosts.has('blog.html')).toBe(false);
+    expect(withoutPosts.get('sitemap.xml')).not.toContain('/blog');
+    expect(withoutPosts.get('changelog.html')).not.toContain('href="/blog"');
+    expect(files.get('help.html')).toContain('href="/blog"');
   });
 
   it('reads lists in front matter and rejects files without a title', () => {

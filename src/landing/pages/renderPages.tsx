@@ -6,7 +6,8 @@ import { ArticlePage } from './ArticlePage';
 import { ChangelogPage } from './ChangelogPage';
 import { EntryList } from './EntryList';
 import { changelogJson, changelogRss, sitemap } from './feeds';
-import { entryPath, type ContentKind, type Entry, type SiteContent } from './siteContent';
+import { sectionsWithBlog, type ContentKind, type Section } from './sections';
+import { entryPath, type Entry, type SiteContent } from './siteContent';
 import { SitePage, type PageHead } from './SitePage';
 
 export interface SiteFile {
@@ -33,6 +34,13 @@ const articleSpec = (entry: Entry): PageSpec => ({
   body: <ArticlePage entry={entry} />,
 });
 
+const blogSpec = (posts: Entry[]): PageSpec => ({
+  fileName: 'blog.html',
+  head: { title: 'Basecase Blog', description: 'Posts about building Basecase.', path: '/blog' },
+  section: 'blog',
+  body: <EntryList title="Blog" entries={posts} dated />,
+});
+
 function pageSpecs(content: SiteContent): PageSpec[] {
   return [
     {
@@ -47,26 +55,21 @@ function pageSpecs(content: SiteContent): PageSpec[] {
       body: <ChangelogPage entries={content.changelog} />,
     },
     {
-      fileName: 'blog.html',
-      head: { title: 'Basecase Blog', description: 'Posts about building Basecase.', path: '/blog' },
-      section: 'blog',
-      body: <EntryList title="Blog" entries={content.blog} empty="No posts" dated />,
-    },
-    {
       fileName: 'help.html',
       head: { title: 'Basecase Help', description: 'How to do things in Basecase.', path: '/help' },
       section: 'help',
-      body: <EntryList title="Help" entries={content.help} empty="No articles" />,
+      body: <EntryList title="Help" entries={content.help} />,
     },
+    ...(content.blog.length > 0 ? [blogSpec(content.blog)] : []),
     ...content.blog.map(articleSpec),
     ...content.help.map(articleSpec),
   ];
 }
 
-const renderSpec = (spec: PageSpec, stylesheets: string[]): SiteFile => ({
+const renderSpec = (spec: PageSpec, sections: Section[], stylesheets: string[]): SiteFile => ({
   fileName: spec.fileName,
   source: `<!doctype html>\n${renderToStaticMarkup(
-    <SitePage head={spec.head} section={spec.section} stylesheets={stylesheets}>
+    <SitePage head={spec.head} section={spec.section} sections={sections} stylesheets={stylesheets}>
       {spec.body}
     </SitePage>,
   )}\n`,
@@ -74,6 +77,7 @@ const renderSpec = (spec: PageSpec, stylesheets: string[]): SiteFile => ({
 
 export function renderPages(content: SiteContent, stylesheets: string[]): SiteFile[] {
   const specs = pageSpecs(content);
+  const sections = sectionsWithBlog(content.blog.length > 0);
   const items = content.changelog.map((entry) => ({
     entry,
     html: renderToStaticMarkup(
@@ -84,7 +88,7 @@ export function renderPages(content: SiteContent, stylesheets: string[]): SiteFi
   }));
 
   return [
-    ...specs.map((spec) => renderSpec(spec, stylesheets)),
+    ...specs.map((spec) => renderSpec(spec, sections, stylesheets)),
     { fileName: 'changelog/rss.xml', source: changelogRss(items) },
     { fileName: 'changelog.json', source: changelogJson(items) },
     { fileName: 'sitemap.xml', source: sitemap(['/', ...specs.map((spec) => spec.head.path)]) },

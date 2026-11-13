@@ -1,6 +1,5 @@
 import { parseFrontMatter, type FrontMatterValue } from './frontMatter';
-
-export type ContentKind = 'blog' | 'help' | 'changelog';
+import type { ContentKind } from './sections';
 
 export interface Entry {
   kind: ContentKind;
@@ -96,12 +95,6 @@ export function readContent(files: Record<string, string>, now: Date): SiteConte
 }
 
 export const SITE_URL = 'https://basecase.so';
-
-export const SECTIONS: { kind: ContentKind; label: string; path: string }[] = [
-  { kind: 'changelog', label: 'Changelog', path: '/changelog' },
-  { kind: 'blog', label: 'Blog', path: '/blog' },
-  { kind: 'help', label: 'Help', path: '/help' },
-];
 
 export const entryPath = (entry: Entry) =>
   entry.kind === 'changelog' ? `/changelog#${entry.slug}` : `/${entry.kind}/${entry.slug}`;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { SITE_URL, type ContentKind } from './siteContent';
+import type { ContentKind, Section } from './sections';
+import { SITE_URL } from './siteContent';
 import { SiteNav } from './SiteNav';
 
 export interface PageHead {
@@ -12,11 +13,12 @@ export interface PageHead {
 interface SitePageProps {
   head: PageHead;
   section: ContentKind;
+  sections: Section[];
   stylesheets: string[];
   children: React.ReactNode;
 }
 
-export const SitePage: React.FC<SitePageProps> = ({ head, section, stylesheets, children }) => (
+export const SitePage: React.FC<SitePageProps> = ({ head, section, sections, stylesheets, children }) => (
   <html lang="en">
     <head>
       <meta charSet="UTF-8" />
@@ -44,7 +46,7 @@ export const SitePage: React.FC<SitePageProps> = ({ head, section, stylesheets, 
     <body>
       <main className="min-h-dvh px-[24px] pt-[max(40px,env(safe-area-inset-top))] pb-[max(56px,env(safe-area-inset-bottom))] sm:pt-[56px] sm:pb-[96px]">
         <div className="w-full max-w-[640px] mx-auto">
-          <SiteNav current={section} />
+          <SiteNav sections={sections} current={section} />
           {children}
         </div>
       </main>

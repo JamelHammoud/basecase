@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 
 const LINK_CLASS = 'text-[#5cb8ff] underline-offset-2 hover:underline';
 
-const isExternal = (href: string | undefined) => /^[a-z]+:/i.test(href ?? '');
+const isExternal = (href: string | undefined) => /^https?:/i.test(href ?? '');
 
 const components: Components = {
   h1: ({ children }) => <h2 className="mt-[32px] text-[20px] leading-[1.3] font-semibold text-white/90">{children}</h2>,

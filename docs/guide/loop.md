@@ -119,7 +119,8 @@ Bring a model from another app into the scene as a printable part.
 
 - **A changelog entry** is a title and two sentences, Chronicle-style. The page lists entries newest first and feeds them to `/changelog/rss.xml` and `/changelog.json`.
 - **A help article** has an imperative title, one sentence on what it's for and numbered steps. Write only steps you've checked in the code; the `covers` paths are what to recheck when that code changes.
-- **Drafts and future dates stay out.** The build skips `draft: true` and any date after the day it runs, in every folder.
+- **Drafts and future dates stay out.** The build skips `draft: true` and any date after the day it runs, in every folder. Nothing rebuilds the site on a schedule, so a future-dated file publishes with the first deploy on or after its date.
+- **The blog appears with its first post.** Until then the build writes no `/blog` page, and the nav and sitemap leave it out. The landing's footer links Changelog and Help (`SECTIONS` in `src/landing/pages/sections.ts`).
 - Front matter is `key: value` lines and `- item` lists. A missing title or date, a date not written `YYYY-MM-DD`, or a file name that isn't lowercase words joined by dashes fails the build with the file's path.
-- Raw HTML in the markdown is dropped. Links that start with a scheme open in a new tab.
-- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`.
+- Raw HTML in the markdown is dropped. `http` and `https` links open in a new tab.
+- `src/landing/pages/renderPages.test.ts` checks the routes, the feeds and that drafts stay out; run it with `npm run check:changed -- <your files>`. `e2e/site.e2e.test.ts` builds the site, serves it the way Workers does (`/changelog` → `changelog.html`) and follows the landing's links to the changelog and a help article.

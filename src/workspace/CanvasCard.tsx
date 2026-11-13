@@ -53,7 +53,7 @@ function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'ac
         humanHeightMm={measure.humanHeightMm}
         onHumanHeight={measure.setHumanHeightMm}
         unit={studio.measureUnit}
-        onExit={() => tool.toggleMeasure(false)}
+        onDone={() => tool.toggleMeasure(false)}
       />
     );
 

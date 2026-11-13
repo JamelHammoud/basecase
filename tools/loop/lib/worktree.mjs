@@ -5,7 +5,7 @@ import { run } from './sh.mjs';
 
 const git = (args, opts = {}) => run('git', args, { cwd: HOME_CHECKOUT, ...opts });
 
-const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+const stamp = () => `${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')}-${process.pid}`;
 
 const safeSlug = (text) =>
   text

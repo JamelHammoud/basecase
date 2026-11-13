@@ -12,10 +12,21 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 - **Worse than Basecase:** on the free plan "All Onshape Documents are accessible to the public", and private data and commercial use need Standard at $1,500 or Professional at $2,500 per user per year ([pricing](https://www.onshape.com/en/pricing)). Basecase simulates, trains and lays out print plates in the same app ([Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
 - **Basecase should:** integrate. Import Onshape documents, so a robot drawn there can be simulated, trained and printed in Basecase.
 
-### To check
+### Fusion
 
-- Fusion
-- Shapr3D
+- **Link:** https://www.autodesk.com/products/fusion-360/overview
+- **Checked:** 2026-11-13
+- **Better than Basecase:** an established CAD tool whose free personal-use licence still exports STEP, STL, OBJ and FBX ([personal use](https://www-pt.autodesk.com/uk/products/fusion-360/personal)).
+- **Worse than Basecase:** personal use allows "10 active and editable" documents and is for non-commercial users who make under $1,000 a year ([personal use](https://www-pt.autodesk.com/uk/products/fusion-360/personal)). Basecase simulates, trains and prints the robot in the same app ([Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
+- **Basecase should:** integrate. See [integrations](integrations.md#fusion).
+
+### Shapr3D
+
+- **Link:** https://www.shapr3d.com
+- **Checked:** 2026-11-13
+- **Better than Basecase:** Parasolid-based CAD on Mac, iPad, iPhone and Windows, with Apple Pencil and SpaceMouse input. It imports and exports PRT, SLDPRT, CATPART, XT and STEP, and shares models through review links in the browser ([home](https://www.shapr3d.com/)).
+- **Worse than Basecase:** its home page names no assemblies, joints or motion ([home](https://www.shapr3d.com/)). The free Basic plan holds two projects and exports only "Basic resolution" STL and 3MF; Pro is $299 per seat per year ([pricing](https://www.shapr3d.com/pricing)). Basecase imports STL and 3MF as parts and STEP files as one part per body ([Inspector](../guide/inspector-and-selection.md)).
+- **Basecase should:** beat it on the robot. Its free plan's STL and 3MF already import into Basecase, where the robot gets joints and a simulation ([Inspector](../guide/inspector-and-selection.md), [Simulate](../guide/simulate.md)).
 
 ## Simulation and training
 
@@ -73,7 +84,18 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 
 ## Printing
 
-### To check
+### Bambu Studio
 
-- Bambu Studio
-- OrcaSlicer
+- **Link:** https://github.com/bambulab/BambuStudio
+- **Checked:** 2026-11-13
+- **Better than Basecase:** Bambu's own slicer. 2.9.1, released 3 November, slices one model with different nozzle diameters per region, starting with the H3C. It also merges Color Split into Color Matching, adds conformal infill and shows how a 3MF's settings differ from the connected printer's ([2.9.1](https://github.com/bambulab/BambuStudio/releases/tag/v02.09.01.70)).
+- **Worse than Basecase:** it slices the parts it's given. Basecase picks each part's flat face, lays out plates per material and leaves parts that are already printed off the plates ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate, as it does: Basecase slices through Bambu Studio's command line and builds its printer catalog from Bambu Studio's machine profiles ([Printing](../guide/printing.md)). That catalog comes from Bambu Studio 2.8.4.61 (`src/data/printerCatalog.ts`) and has no H3C, so regenerate it from 2.9.1.
+
+### OrcaSlicer
+
+- **Link:** https://github.com/OrcaSlicer/OrcaSlicer
+- **Checked:** 2026-11-13
+- **Better than Basecase:** an AGPL-3.0 slicer for Bambu Lab, Prusa, Creality, Voron and more printers, with calibration prints and sending to Klipper, PrusaLink and OctoPrint ([repository](https://github.com/OrcaSlicer/OrcaSlicer)). 2.5.0, released 7 November, adds Python plugins, belt printers, colour mixing, an experimental Design tab for parametric parts, and the Bambu Lab H2C and A2L ([2.5.0](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.0)).
+- **Worse than Basecase:** its plugins "aren't a sandbox" ([2.5.0](https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.5.0)). It starts from finished parts; Basecase lays out the robot's printed parts and tracks which are printed ([Printing](../guide/printing.md)).
+- **Basecase should:** integrate, as it does: Basecase slices with OrcaSlicer first for printers from other makers, and as the fallback for Bambu printers, and sends to Moonraker, PrusaLink and OctoPrint itself ([Printing](../guide/printing.md), `electron/print/jobs.mjs`).

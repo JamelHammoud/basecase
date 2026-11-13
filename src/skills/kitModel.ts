@@ -17,6 +17,7 @@ export const KIT_ACTION_SCALE = 0.5;
 const STRUCTURE = /<body\b[^>]*?\bname="([^"]*)"[^>]*?(\/?)>|<\/body>/g;
 const LEGGED_SPEED = 0.2;
 const TWO_LEGGED_SPEED = 0.15;
+const BACK_SHARE = 0.5;
 
 export function kitRobot(model: SimModel): KitRobot {
   const robot = model.robots[0];
@@ -67,6 +68,8 @@ export function footCount(model: SimModel): number {
 }
 
 export const kitTopSpeed = (model: SimModel) => (footCount(model) >= 4 ? LEGGED_SPEED : TWO_LEGGED_SPEED);
+
+export const kitBackSpeed = (model: SimModel) => -BACK_SHARE * kitTopSpeed(model);
 
 export const neutralRad = (model: SimModel, id: string) => (model.initial.values[id] ?? 0) * D2R;
 

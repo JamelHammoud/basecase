@@ -58,6 +58,15 @@ describe('Routines by hand', () => {
     await page.locator(visible('button'), { hasText: 'New Routine' }).first().click();
     await expect.poll(async () => (await routineState()).routine?.requires).toEqual(['wheels']);
 
+    await inFlow('button[aria-haspopup="menu"]:not([data-insert])').click();
+    await page.getByRole('menuitem', { name: 'Rename' }).click();
+
+    const name = page.getByLabel('Routine name');
+
+    await name.fill('Patrol');
+    await name.press('Enter');
+    await expect.poll(async () => (await routineState()).routine?.name).toBe('Patrol');
+
     await inFlow('[data-insert]').click();
     await page.getByRole('menuitem', { name: 'Drive' }).click();
     await expect.poll(mainSteps).toEqual(['drive']);

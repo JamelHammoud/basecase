@@ -80,7 +80,6 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
             aria-expanded={open}
             aria-haspopup="menu"
             onClick={() => setOpen(!open)}
-            onDoubleClick={() => setRenaming(true)}
           >
             {routine.name}
           </Button>

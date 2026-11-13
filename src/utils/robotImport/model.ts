@@ -6,7 +6,8 @@ export type Geometry =
   | { type: 'cylinder'; radius: number; length: number }
   | { type: 'capsule'; radius: number; length: number }
   | { type: 'sphere'; radius: number }
-  | { type: 'ellipsoid'; radii: THREE.Vector3 };
+  | { type: 'ellipsoid'; radii: THREE.Vector3 }
+  | { type: 'hull'; points: number[] };
 
 export type MeshGeometry = Extract<Geometry, { type: 'mesh' }>;
 

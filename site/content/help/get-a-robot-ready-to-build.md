@@ -27,6 +27,8 @@ The Build tab tells you whether a design can be built, what to buy for it and ho
 
 ![Settings ▸ Build with Checks, Prices and Build guide](/help/get-a-robot-ready-to-build/build-settings.png)
 
-In Print mode you choose the printer, quality, material and infill, move parts around the plate and send each plate to your printer. Printed parts lists every part with its plate and print time. To slice every plate at once, open ⌘K and choose Slice Plates; a toast shows the progress, with Stop.
+In Print mode you choose the printer, quality, material and infill, move parts around the plate and send each plate to your printer. If you haven't saved a printer, the plate's button is Add Printer, which opens Settings ▸ Printers. Parts lists every part with its plate and print time. To slice every plate at once, open ⌘K and choose Slice Plates; a toast shows the progress, with Stop.
 
-![Print mode with the printer settings and Plate 1](/help/get-a-robot-ready-to-build/print-mode.png)
+![Print mode with the printer settings, Plate 1 with Add Printer, and Parts](/help/get-a-robot-ready-to-build/print-mode.png)
+
+![Settings open at Printers after clicking Add Printer](/help/get-a-robot-ready-to-build/add-printer.png)

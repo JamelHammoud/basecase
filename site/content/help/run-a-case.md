@@ -19,6 +19,7 @@ keywords:
 related:
   - try-a-case
   - make-a-case
+  - share-a-robot-as-a-link
 covers:
   - src/cases/console/
   - src/sim/inputSources.ts
@@ -69,5 +70,7 @@ A console can also hold the Case's own code: up to 4 panels, each a small web pa
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
 
 A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
+
+A link made with **Share Robot** opens the same console in the browser, as in [Share a robot as a link](/help/share-a-robot-as-a-link). Camera panels, the servos table and the tries stay in the studio.
 
 Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Multiply** and the dataset ones.

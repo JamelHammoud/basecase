@@ -140,6 +140,11 @@ describe('Run Case', () => {
     expect(ended.tries[0].seconds).toBeLessThan(ended.caseSeconds! - 1);
 
     await expect.poll(() => panel('tries').getByTestId('try-row').count()).toBe(1);
+
+    const strip = panel('tries').getByTestId('try-row').locator('img');
+
+    await expect.poll(() => strip.count()).toBe(1);
+    await expect.poll(() => strip.evaluate((img: HTMLImageElement) => (img.complete ? img.naturalWidth : 0))).toBe(288);
     await expect.poll(async () => (await simState()).drive).toBe('off');
 
     await page.keyboard.press('Escape');

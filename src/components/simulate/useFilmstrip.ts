@@ -10,20 +10,37 @@ const FRAME_W = 72;
 const FRAME_H = 56;
 const FRAMES = 4;
 
-async function render(record: TryRecord, model: SimModel, boxes: FilmBox[]): Promise<string | null> {
+async function render(record: TryRecord, model: SimModel, boxes: FilmBox[]): Promise<Blob | null> {
   const recording = await loadRecording(record.id);
 
   if (!recording || recording.nbody !== model.bodies.length) return null;
 
-  const bitmap = await drawFilmstrip({ model, recording, boxes, frames: FRAMES, width: FRAME_W, height: FRAME_H });
+  return drawFilmstrip(
+    { model, recording, boxes, frames: FRAMES, width: FRAME_W, height: FRAME_H },
+    { type: 'image/webp', quality: 0.8 },
+  );
+}
 
-  if (!bitmap) return null;
+const strips = new WeakMap<SimModel, Map<string, Promise<Blob | null>>>();
 
-  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+function stripOf(record: TryRecord, model: SimModel, boxes: FilmBox[]): Promise<Blob | null> {
+  const key = `${record.id} ${JSON.stringify(boxes)}`;
+  const forModel = strips.get(model) ?? new Map<string, Promise<Blob | null>>();
+  const cached = forModel.get(key);
 
-  canvas.getContext('bitmaprenderer')!.transferFromImageBitmap(bitmap);
+  if (cached) return cached;
 
-  return URL.createObjectURL(await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 }));
+  const forget = () => {
+    forModel.delete(key);
+
+    return null;
+  };
+  const strip = render(record, model, boxes).then((blob) => blob ?? forget(), forget);
+
+  forModel.set(key, strip);
+  strips.set(model, forModel);
+
+  return strip;
 }
 
 export function useFilmstrip(record: TryRecord, model: SimModel | null, parts: ScenePart[], world: ScenePart[]) {
@@ -35,9 +52,8 @@ export function useFilmstrip(record: TryRecord, model: SimModel | null, parts: S
     let live = true;
     const boxes = filmBoxes(parts, world);
 
-    void render(record, model, boxes).then((made) => {
-      if (live) setUrl(made);
-      else if (made) URL.revokeObjectURL(made);
+    void stripOf(record, model, boxes).then((blob) => {
+      if (live) setUrl(blob && URL.createObjectURL(blob));
     });
 
     return () => {

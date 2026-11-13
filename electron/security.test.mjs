@@ -381,6 +381,12 @@ describe('tuning a part’s dimensions', () => {
 
 describe('robot daemon', () => {
   const ARM = { family: 'feetech', ids: [1, 2], class: 'arm', emulated: true };
+  const ROS2_ARM = {
+    family: 'ros2',
+    emulated: true,
+    controller: { kind: 'forward_position', topic: '/forward_position_controller/commands' },
+    joints: ['shoulder', 'elbow'],
+  };
 
   it('refuses any port, real robot or smuggled argument, and starts nothing', () => {
     const spawnFn = vi.fn();
@@ -397,6 +403,12 @@ describe('robot daemon', () => {
       { ...ARM, ids: ['1 --port /dev/null'] },
       { ...ARM, ids: Array.from({ length: 33 }, (_, i) => i + 1) },
       Object.assign(Object.create({ port: '/dev/ttyUSB0' }), ARM),
+      { ...ROS2_ARM, controller: { kind: 'forward_position', topic: '/x/../commands' } },
+      { ...ROS2_ARM, controller: { kind: 'forward_position', topic: '/x;rm -rf/commands' } },
+      { ...ROS2_ARM, joints: ['--port', '/dev/ttyUSB0'] },
+      { ...ROS2_ARM, joints: ['a,b'] },
+      { ...ROS2_ARM, interface: 'en0' },
+      { ...ROS2_ARM, emulated: false },
       null,
       '--port /dev/ttyUSB0',
     ];

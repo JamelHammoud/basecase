@@ -18,6 +18,7 @@ keywords:
 related:
   - the-motor-lock-and-safety-ladder
   - calibrate-an-emulated-robot
+  - connect-an-emulated-ros-2-robot
 covers:
   - src/components/operate/OperatePanel.tsx
   - src/components/operate/RobotLadder.tsx

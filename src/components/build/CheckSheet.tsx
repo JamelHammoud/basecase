@@ -10,6 +10,7 @@ import {
   ExternalLinkIcon,
 } from '../../design-system';
 import { confirmAction } from '../../design-system/confirmStore';
+import { openLink } from '../../utils/openLink';
 import type { PurchaseRecord } from '../../types/robotics';
 import type { BomLine } from '../../utils/bom';
 import { useMoney } from '../../utils/useMoney';
@@ -41,7 +42,7 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line }) => {
       icon={<ExternalLinkIcon className="w-4 h-4" />}
       title={linkLabel(line)}
       size="sm"
-      onClick={() => window.open(url, '_blank', 'noopener')}
+      onClick={() => openLink(url)}
     />
   );
 };

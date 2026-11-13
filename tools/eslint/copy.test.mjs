@@ -60,6 +60,10 @@ const GLOSSARY_SAMPLES = [
   ['Insert Part', 'Insert Part', 'Add'],
   ['Add Robot', 'Add Robot', 'Insert'],
   ['Add a model', 'Add a model', 'Insert'],
+  ['Create', 'Create', 'Make'],
+  ['Created a Case', 'Created', 'Make'],
+  ['Generate Guide', 'Generate', 'Make'],
+  ['Auto-generated guide', 'Auto-generated', 'Make'],
   ['Regenerate', 'Regenerate', 'Update'],
 ];
 
@@ -139,6 +143,9 @@ describe('glossary', () => {
       'Add Part',
       'Add Price',
       'Send to Printer',
+      'Make Guide',
+      'Made 3 Cases',
+      '2 generated',
       'The run ended',
     ])
       expect(findBannedCopy(text)).toBeNull();

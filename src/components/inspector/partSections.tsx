@@ -16,6 +16,7 @@ import {
 } from '../../design-system';
 import { imageStance, resizedDimensions, type DimensionKey, type ImageStance } from './partMath';
 import type { InspectorProps, Phase } from './types';
+import { keyFor } from '../../app/shortcuts';
 
 export interface PartSectionProps {
   part: ScenePart;
@@ -40,7 +41,7 @@ export const PartHeader: React.FC<
     <IconButton
       icon={<CopyIcon className="w-3.5 h-3.5" />}
       title="Duplicate"
-      shortcut="⌘D"
+      shortcut={keyFor('duplicate')}
       size="xs"
       onClick={onDuplicate}
     />
@@ -53,7 +54,7 @@ export const PartHeader: React.FC<
     <IconButton
       icon={<DeleteIcon className="w-3.5 h-3.5" />}
       title="Delete"
-      shortcut="⌫"
+      shortcut={keyFor('delete')}
       size="xs"
       variant="danger"
       onClick={onDelete}

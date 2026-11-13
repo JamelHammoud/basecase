@@ -73,6 +73,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
       | Start a Case, Routine, Checks or a policy | Run | Launch, Execute |
       | Put a part in the scene | Add | Insert Part |
       | Put a model or robot in the scene | Insert | Add Model, Add Robot |
+      | Bring a new build guide, Case or Routine into being | Make | Create, Generate |
       | Make an out-of-date build guide again | Update | Regenerate |
       | Describe a new skill for the agent to train; Train runs training on a skill row | Teach | — |
 18. **Icon-first.** Our own icons (`src/design-system`, §14) with custom tooltips (the `Tooltip` primitive), never native `title` on buttons. There's no third-party icon set.

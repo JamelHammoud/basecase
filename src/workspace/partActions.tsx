@@ -23,6 +23,7 @@ import {
   type ContextMenuEntry,
 } from '../design-system';
 import { partQuote } from '../agent/partQuote';
+import { keyFor } from '../app/shortcuts';
 import type { ScenePart } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -73,11 +74,17 @@ export function selectionActions({ core, actions, ui }: PartActionInputs) {
     selectAll: {
       id: 'select-all',
       label: 'Select All',
-      shortcut: '⌘A',
+      shortcut: keyFor('select-all'),
       icon: SelectAllIcon,
       run: core.selection.selectAll,
     },
-    duplicate: { id: 'duplicate', label: 'Duplicate', shortcut: '⌘D', icon: CopyIcon, run: ops.duplicateSelected },
+    duplicate: {
+      id: 'duplicate',
+      label: 'Duplicate',
+      shortcut: keyFor('duplicate'),
+      icon: CopyIcon,
+      run: ops.duplicateSelected,
+    },
     saveToLibrary: {
       id: 'save-to-library',
       label: 'Save to Library',
@@ -88,23 +95,35 @@ export function selectionActions({ core, actions, ui }: PartActionInputs) {
     remove: {
       id: 'delete',
       label: 'Delete',
-      shortcut: '⌫',
+      shortcut: keyFor('delete'),
       icon: DeleteIcon,
       keywords: 'remove',
       danger: true,
       run: ops.deleteSelected,
     },
-    floor: { id: 'floor', label: 'Drop to Floor', shortcut: 'F', icon: FloorIcon, run: edits.dropToGround },
-    stack: { id: 'stack', label: 'Stack on Part Below', shortcut: 'S', icon: LayersIcon, run: edits.stackOnBelow },
+    floor: {
+      id: 'floor',
+      label: 'Drop to Floor',
+      shortcut: keyFor('drop-to-floor'),
+      icon: FloorIcon,
+      run: edits.dropToGround,
+    },
+    stack: {
+      id: 'stack',
+      label: 'Stack on Part Below',
+      shortcut: keyFor('stack'),
+      icon: LayersIcon,
+      run: edits.stackOnBelow,
+    },
     zoom: {
       id: 'zoom-selection',
       label: 'Zoom to Selection',
-      shortcut: 'Z',
+      shortcut: keyFor('zoom-selection'),
       icon: CrosshairIcon,
       run: ui.focusSelected,
     },
-    group: { id: 'group', label: 'Group', shortcut: '⌘G', icon: GroupIcon, run: edits.group },
-    ungroup: { id: 'ungroup', label: 'Ungroup', shortcut: '⇧⌘G', icon: UngroupIcon, run: edits.ungroup },
+    group: { id: 'group', label: 'Group', shortcut: keyFor('group'), icon: GroupIcon, run: edits.group },
+    ungroup: { id: 'ungroup', label: 'Ungroup', shortcut: keyFor('ungroup'), icon: UngroupIcon, run: edits.ungroup },
     union: {
       id: 'union',
       label: 'Union',

@@ -19,7 +19,7 @@ Make a Case where an arm lifts a block off the floor and sets it on a spot, then
 
 ![New Case with Pick Up a Block chosen, and its Distance, Spacing, Radius and Time](/help/pick-up-a-block-with-a-gripper/new-case.png)
 
-4. Set **Distance** (how far ahead of the arm the block sits), **Spacing** (from the block to the spot), **Radius** (how close to the spot counts) and **Time**, then click **Create**. The block is sized to fit between the open fingers.
+4. Set **Distance** (how far ahead of the arm the block sits), **Spacing** (from the block to the spot), **Radius** (how close to the spot counts) and **Time**, then click **Make Case**. The block is sized to fit between the open fingers.
 5. In the Simulate tab, click **Try It**.
 6. Move the hand over the block with W A S D and lower it with E. The gripper points down with its fingers either side of the block while you drive.
 7. Hold Space to close the gripper, raise the block with Q, carry it over the spot, lower it and let go of Space. A gamepad's first button grips too.

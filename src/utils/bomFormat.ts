@@ -131,7 +131,7 @@ export function bomToMarkdown(bom: Bom, sceneName: string, money: Money = curren
   const out: string[] = [
     `# ${sceneName}: bill of materials`,
     '',
-    `Generated ${localDate(today)} from the scene. Prices are what was seen on each listing on its check date; Amazon prices change, so recheck before ordering.`,
+    `Made ${localDate(today)} from the scene. Prices are what was seen on each listing on its check date; Amazon prices change, so recheck before ordering.`,
     '',
     ...markdownTotals(bom.totals, money),
     '',

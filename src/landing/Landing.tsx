@@ -14,9 +14,9 @@ const FEATURES = [
   { Icon: PartsIcon, title: 'Real parts', text: 'Use real purchasable parts in your build' },
   { Icon: CheckIcon, title: 'Checks', text: 'Check servo torque, stability and more' },
   { Icon: WalkIcon, title: 'Simulation', text: 'Test your robot in sim, and train it to do new tasks' },
-  { Icon: CartIcon, title: 'Cost', text: 'Create a budget and track costs as you design' },
+  { Icon: CartIcon, title: 'Cost', text: 'Set a budget and track costs as you design' },
   { Icon: PrinterIcon, title: 'Printing', text: 'Slice parts and send them directly to the printer' },
-  { Icon: FileIcon, title: 'Build guide', text: 'Auto-generate printable build instructions' },
+  { Icon: FileIcon, title: 'Build guide', text: 'Make printable build instructions' },
 ];
 
 export interface LandingProps {

@@ -97,7 +97,7 @@ describe('Run Case', () => {
 
     await openPlayTab(page, 'Cases');
     await page.locator(shown('button'), { hasText: 'New Case' }).first().click();
-    await page.locator(shown('[data-testid="new-case"] button'), { hasText: 'Create' }).click();
+    await page.locator(shown('[data-testid="new-case"] button'), { hasText: 'Make Case' }).click();
     await expect.poll(async () => (await simState()).activeCase).toMatch(/^touch-a-point/);
 
     const partsBefore = await sceneParts();

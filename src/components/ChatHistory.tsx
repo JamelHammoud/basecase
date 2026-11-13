@@ -72,7 +72,6 @@ const ChatRow: React.FC<{
             onClick={() =>
               confirmAction({
                 title: `Delete ${c.title}?`,
-                body: 'You can’t undo this.',
                 onConfirm: () => onDeleteChat(c.id),
               })
             }
@@ -96,14 +95,6 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
 
   const runningIds = new Set(running.map((c) => c.id));
   const saved = chats.filter((c) => !runningIds.has(c.id));
-
-  if (saved.length === 0 && running.length === 0) {
-    return (
-      <div style={{ width }} className="px-4 py-5 text-center text-[13px] text-white/50">
-        No chats
-      </div>
-    );
-  }
 
   const groups = [...(running.length ? [{ label: 'Running', items: running }] : []), ...groupByDate(saved, new Date())];
 

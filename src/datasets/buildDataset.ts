@@ -5,7 +5,6 @@ import type { ScenePart } from '../types/robotics';
 import { FRAME_HEIGHT, FRAME_WIDTH, type DatasetCamera } from './cameras';
 import { episodeData, robotJoints } from './episodes';
 import { lerobotFiles, type DatasetEpisode } from './lerobot';
-import { zipFolder } from '../utils/zipFolder';
 import { codecName, createRenderStage, disposeRenderStage, renderEpisode, videoCodec } from './renderVideos';
 
 export interface DatasetJobEpisode {
@@ -26,7 +25,9 @@ export interface DatasetJob {
   source: Record<string, unknown>;
 }
 
-export async function buildDataset(job: DatasetJob): Promise<Uint8Array> {
+export type DatasetFiles = Record<string, Uint8Array>;
+
+export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
   const codec = await videoCodec();
   const stage = await createRenderStage(job.parts, job.world, job.meshes);
   const episodes: DatasetEpisode[] = [];
@@ -48,13 +49,11 @@ export async function buildDataset(job: DatasetJob): Promise<Uint8Array> {
     disposeRenderStage(stage);
   }
 
-  const files = lerobotFiles({
+  return lerobotFiles({
     robotType: job.robotType,
     jointNames: robotJoints(job.model).map((j) => j.name),
     videos: job.cameras.map((c) => ({ key: c.key, width: FRAME_WIDTH, height: FRAME_HEIGHT, codec: codecName(codec) })),
     episodes,
     source: job.source,
   });
-
-  return zipFolder(job.name, files);
 }

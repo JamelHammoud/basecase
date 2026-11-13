@@ -15,6 +15,51 @@ export const showNewCase = (core: WorkspaceCore) => {
   core.simTraining.cases.builder.start();
 };
 
+function sharingCommands({ cases, share }: WorkspaceCore['simTraining']): Command[] {
+  const exportDataset: Command[] =
+    cases.dataset.canExport && !cases.dataset.exporting
+      ? [
+          {
+            id: 'case-export-dataset',
+            group: 'Simulate',
+            label: 'Export Dataset',
+            icon: <DownloadIcon className={ic} />,
+            keywords: 'lerobot gr00t groot demonstrations training data video parquet',
+            run: cases.dataset.exportDataset,
+          },
+        ]
+      : [];
+  const publishDataset: Command[] =
+    cases.dataset.canPublish && !cases.dataset.exporting
+      ? [
+          {
+            id: 'case-publish-dataset',
+            group: 'Simulate',
+            label: 'Publish to Hugging Face',
+            icon: <ShareIcon className={ic} />,
+            keywords: 'hub upload share dataset lerobot gr00t groot hf',
+            run: cases.dataset.publishDataset,
+          },
+        ]
+      : [];
+
+  const shareRobot: Command[] =
+    share.canShare && !share.sharing
+      ? [
+          {
+            id: 'share-robot',
+            group: 'Simulate',
+            label: 'Share Robot',
+            icon: <ShareIcon className={ic} />,
+            keywords: 'link url web browser gallery hub hugging face publish drive',
+            run: share.share,
+          },
+        ]
+      : [];
+
+  return [...exportDataset, ...publishDataset, ...shareRobot];
+}
+
 export function caseCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
   const { sim, cases } = simTraining;
@@ -70,33 +115,6 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       ]
     : [];
 
-  const exportDataset: Command[] =
-    cases.dataset.canExport && !cases.dataset.exporting
-      ? [
-          {
-            id: 'case-export-dataset',
-            group: 'Simulate',
-            label: 'Export Dataset',
-            icon: <DownloadIcon className={ic} />,
-            keywords: 'lerobot gr00t groot demonstrations training data video parquet',
-            run: cases.dataset.exportDataset,
-          },
-        ]
-      : [];
-  const publishDataset: Command[] =
-    cases.dataset.canPublish && !cases.dataset.exporting
-      ? [
-          {
-            id: 'case-publish-dataset',
-            group: 'Simulate',
-            label: 'Publish to Hugging Face',
-            icon: <ShareIcon className={ic} />,
-            keywords: 'hub upload share dataset lerobot gr00t groot hf',
-            run: cases.dataset.publishDataset,
-          },
-        ]
-      : [];
-
   const newCase: Command[] = cases.builder.goals.length
     ? [
         {
@@ -123,7 +141,6 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     drive,
     ...respawn,
     ...tryIt,
-    ...exportDataset,
-    ...publishDataset,
+    ...sharingCommands(simTraining),
   ];
 }

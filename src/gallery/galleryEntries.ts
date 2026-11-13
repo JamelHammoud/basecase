@@ -1,7 +1,8 @@
 import { caseTemplates } from '../cases/templates';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import { buildRig } from '../utils/kinematics';
-import { GALLERY_FORMAT_VERSION, type GalleryBundle } from './galleryBundle';
+import { galleryBundleOf } from './buildBundle';
+import type { GalleryBundle } from './galleryBundle';
 
 const ENTRIES = [
   { slug: 'arm-touch-the-dots', robot: 'arm-6dof', name: 'Six-joint arm', template: 'touch-the-dots' },
@@ -18,13 +19,14 @@ export function galleryBundles(): GalleryBundle[] {
       .find((t) => t.id === e.template)!
       .build();
 
-    return {
-      formatVersion: GALLERY_FORMAT_VERSION,
+    return galleryBundleOf({
       slug: e.slug,
       title: `${kase.name}: ${e.name}`,
-      robot: { name: e.name, parts: robot.parts, joints: robot.joints },
-      case: kase,
-    };
+      robotName: e.name,
+      parts: robot.parts,
+      joints: robot.joints,
+      kase,
+    });
   });
 }
 

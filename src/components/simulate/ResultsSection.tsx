@@ -18,6 +18,7 @@ import type { Simulation } from '../../sim/useSimulation';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
 import type { Cases } from '../../workspace/useCases';
 import { FAULT_LABEL } from './faultMenu';
+import type { ShareRobot } from '../../workspace/useShareRobot';
 import { fmtTime } from './format';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
@@ -73,6 +74,7 @@ export interface LatestRun {
 interface ResultsProps {
   cases: Cases;
   rig: Rig;
+  share: ShareRobot;
   model: SimModel | null;
   parts: ScenePart[];
   world: ScenePart[];
@@ -107,12 +109,12 @@ const DatasetActions: React.FC<{ cases: Cases }> = ({ cases }) => (
   </>
 );
 
-export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, model, parts, world, run }) => {
+export const ResultsSection: React.FC<ResultsProps> = ({ cases, rig, share, model, parts, world, run }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const tries = cases.active ? cases.tries : [];
   const showRun = !!run && hasRunResult(run.stats, run.model);
 
-  if (!tries.length && !showRun) return null;
+  if (!tries.length && !showRun && !share.canShare) return null;
 
   const openMenu = (e: React.MouseEvent, record: TryRecord) => {
     e.preventDefault();

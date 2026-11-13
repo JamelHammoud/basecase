@@ -23,8 +23,8 @@ const PrinterRow: React.FC<{
   open: boolean;
   onToggle: () => void;
   onDefault: () => void;
-  onRemove: () => void;
-}> = ({ printer, open, onToggle, onDefault, onRemove }) => (
+  onDelete: () => void;
+}> = ({ printer, open, onToggle, onDefault, onDelete }) => (
   <Row
     label={
       <button type="button" onClick={onToggle} className="flex items-center gap-[6px] cursor-default text-left">
@@ -46,7 +46,7 @@ const PrinterRow: React.FC<{
           Make Default
         </Button>
       )}
-      <IconButton icon={<DeleteIcon className="w-4 h-4" />} title="Remove printer" size="sm" onClick={onRemove} />
+      <IconButton icon={<DeleteIcon className="w-4 h-4" />} title="Delete" size="sm" onClick={onDelete} />
     </div>
   </Row>
 );
@@ -130,7 +130,7 @@ export const PrintersPane: React.FC<{ state: PrintersState }> = ({ state }) => {
 
   return (
     <>
-      <Group title="My printers">
+      <Group>
         {list.map((p) => (
           <React.Fragment key={p.id}>
             <PrinterRow
@@ -138,10 +138,9 @@ export const PrintersPane: React.FC<{ state: PrintersState }> = ({ state }) => {
               open={openId === p.id}
               onToggle={() => setOpenId(openId === p.id ? null : p.id)}
               onDefault={() => commit(list.map((q) => ({ ...q, isDefault: q.id === p.id })))}
-              onRemove={() =>
+              onDelete={() =>
                 confirmAction({
-                  title: `Remove ${p.nickname}?`,
-                  confirmLabel: 'Remove',
+                  title: `Delete ${p.nickname}?`,
                   onConfirm: () => commit(list.filter((q) => q.id !== p.id)),
                 })
               }
@@ -161,7 +160,7 @@ export const PrintersPane: React.FC<{ state: PrintersState }> = ({ state }) => {
             )}
           </React.Fragment>
         ))}
-        <Row label={list.length ? 'Add another printer' : 'No printers'}>
+        <Row label={list.length ? null : 'No printers'}>
           <div className="flex gap-[8px]">
             <Button
               size="sm"

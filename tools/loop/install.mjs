@@ -88,7 +88,14 @@ const load = (name, dict) => {
 
   fs.writeFileSync(file, plist(dict));
   run('launchctl', ['bootout', `${DOMAIN}/${name}`], { allowFail: true });
-  run('launchctl', ['bootstrap', DOMAIN, file]);
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    if (run('launchctl', ['bootstrap', DOMAIN, file], { allowFail: true }).ok) return;
+
+    run('sleep', [String(attempt)]);
+  }
+
+  throw new Error(`launchctl couldn't load ${name}`);
 };
 
 const LABELS = {

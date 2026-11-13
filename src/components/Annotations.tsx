@@ -78,7 +78,8 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = (props) => {
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
 
-      if (isModalOpen() || ownsTarget(t) || (t as HTMLElement).closest?.('[data-annotation-list]')) return;
+      if (isModalOpen() || ownsTarget(t) || (t as HTMLElement).closest?.('[data-annotation-list], [role="status"]'))
+        return;
 
       if (draft) onCancelDraft();
       else onOpen(null);

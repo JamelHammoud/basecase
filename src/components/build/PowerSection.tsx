@@ -43,7 +43,6 @@ export const PowerSection: React.FC<PowerSectionProps> = ({ parts, project, onCh
 
   return (
     <Section title="Tether">
-      <p className="-mt-1 mb-3 text-[12.5px] text-white/50">Runs on a cable until you add a battery.</p>
       <TetherFields tether={tether} onChange={(next) => onChangeProject({ tether: next })} />
     </Section>
   );

@@ -28,8 +28,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 - Opens from the app menu → **Settings** (⌘,), ⌘K, or Help ▸ Keyboard Shortcuts / `?` (opens the Shortcuts pane). It remembers the last pane.
 - A sheet with a sidebar of panes, like macOS System Settings:
-  - **Canvas:** Display (Show grid, Show reference images), Snapping (Move Off/1/2/5/10 mm, Rotate Off/5/15/45/90°), Measure (Units Metric / Imperial), Experimental → Sculpt tool (off by default).
-  - **Navigation:** Two-finger scroll (Scroll on Windows) Orbit / Pan / Zoom, plus pan and camera key reminders. Zoom makes the wheel zoom (`zoomScroll` in `wheel.ts`, about 16% a notch) for mouse users; it's the default on Windows, Orbit on macOS. Middle-drag pans in every mode.
+  - **Canvas:** Display (Show grid, Show reference images), Trackpad (Mouse and touchpad on Windows: Two-finger scroll, or Scroll, Orbit / Pan / Zoom), Snapping (Move Off/1/2/5/10 mm, Rotate Off/5/15/45/90°), Measure (Units Metric / Imperial), Experimental → Sculpt tool (off by default). Zoom makes the wheel zoom (`zoomScroll` in `wheel.ts`, about 16% a notch) for mouse users; it's the default on Windows, Orbit on macOS. Middle-drag pans in every mode. Pan and camera keys are listed once, under Shortcuts, never repeated beside a setting.
   - **Layout:** Show sidebar / inspector, reset panel widths.
   - **Region** (`components/settings/RegionPane.tsx`): Prices → Currency (US Dollar by default; ⌘K → “Currency Settings”).
   - **Agent:** Run with Claude / Codex / Gemini / Offline, the command (status under it, or where to sign in), target height.

@@ -39,10 +39,14 @@ export const busKey = (bus: SignalBus) => {
   return busKeys.get(bus);
 };
 
-export const codeFrameKey = (bus: SignalBus, source: string) => {
+const scopeText = ({ scope, inputs }: PanelContext) =>
+  [inputs, [...scope.declared], [...scope.probes]].map((list) => [...list].sort().join(',')).join('|');
+
+export const codeFrameKey = (ctx: PanelContext, source: string) => {
+  const text = `${scopeText(ctx)}\n${source}`;
   let hash = 0x811c9dc5;
 
-  for (let i = 0; i < source.length; i++) hash = Math.imul(hash ^ source.charCodeAt(i), 0x01000193);
+  for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193);
 
-  return `${busKey(bus)}:${source.length}:${(hash >>> 0).toString(36)}`;
+  return `${busKey(ctx.bus)}:${text.length}:${(hash >>> 0).toString(36)}`;
 };

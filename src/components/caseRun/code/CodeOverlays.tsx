@@ -36,7 +36,7 @@ export const CodeOverlays: React.FC<{ overlays: PlacedOverlay[]; ctx: PanelConte
       style={placement(o)}
     >
       <CodeFrame
-        key={codeFrameKey(ctx.bus, o.spec.source)}
+        key={codeFrameKey(ctx, o.spec.source)}
         panel={o.spec}
         ctx={ctx}
         pointer={o.pointer === true}

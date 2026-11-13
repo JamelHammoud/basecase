@@ -8,7 +8,7 @@ const DEFAULT_HEIGHT = 320;
 export const CodePanel: React.FC<PanelViewProps<'code'>> = ({ panel, ctx }) => (
   <Titled title={panel.title}>
     <CodeFrame
-      key={codeFrameKey(ctx.bus, panel.source)}
+      key={codeFrameKey(ctx, panel.source)}
       panel={panel}
       ctx={ctx}
       pointer

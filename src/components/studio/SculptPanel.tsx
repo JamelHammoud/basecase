@@ -43,11 +43,11 @@ const PRESET_TILE =
 
 export const SculptPanel: React.FC<{
   sculptSettings: SculptSettings;
-  hasSelection: boolean;
+  canSubdivide: boolean;
   onUpdateSculptSettings: (patch: Partial<SculptSettings>) => void;
   onAddClayPreset: (preset: ClayPreset) => void;
   onSubdivideSelectedClay: () => void;
-}> = ({ sculptSettings, hasSelection, onUpdateSculptSettings, onAddClayPreset, onSubdivideSelectedClay }) => (
+}> = ({ sculptSettings, canSubdivide, onUpdateSculptSettings, onAddClayPreset, onSubdivideSelectedClay }) => (
   <>
     <Section title="Brush">
       <ChoiceGrid
@@ -85,7 +85,7 @@ export const SculptPanel: React.FC<{
         onChange={(v) => onUpdateSculptSettings({ symmetryZ: v })}
       />
       <p className="text-[12.5px] text-white/50">{`Drag on a part to sculpt. Hold ${modifierName('⌥')} to invert.`}</p>
-      {hasSelection && (
+      {canSubdivide && (
         <Button size="md" fullWidth icon={<SparklesIcon className="w-4 h-4" />} onClick={onSubdivideSelectedClay}>
           Subdivide
         </Button>

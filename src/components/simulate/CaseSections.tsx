@@ -116,7 +116,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
               {fmtTime(attempt.elapsed)} of {fmtTime(active?.task.seconds ?? 0)}
             </span>
             <Button variant="secondary" size="sm" icon={<StopIcon className="w-4 h-4" />} onClick={attempt.end}>
-              End Try
+              Stop Try
             </Button>
           </div>
         ) : (

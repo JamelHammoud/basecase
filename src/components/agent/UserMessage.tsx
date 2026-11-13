@@ -20,7 +20,7 @@ const ImageGrid: React.FC<{ images: string[]; onOpenImages: OpenImages }> = ({ i
         <button
           key={i}
           type="button"
-          aria-label={`View image ${i + 1}`}
+          aria-label={`Open image ${i + 1}`}
           onClick={() =>
             onOpenImages(
               images.map((s, n) => ({ src: s, name: `Image ${n + 1}` })),

@@ -55,4 +55,4 @@ Open comments are part of the scene's brief, which **Export** ▸ **Copy as Mark
 
 Each mark records the parts it circles or crosses and the view you drew it from. The next message you send the agent lists every mark with its color, label and parts, so “yellow is right, orange is wrong” is enough.
 
-Drag a mark to move it. To remove marks, pick **Eraser** ([[E]]) and click or drag across them, or select one and press [[⌫]]. **Delete marks** removes them all after asking. Marks are saved with the scene.
+Drag a mark to move it. To delete marks, pick **Eraser** ([[E]]) and click or drag across them, or select one and press [[⌫]]. A toast offers **Undo**. **Delete marks** deletes them all after asking. Marks are saved with the scene.

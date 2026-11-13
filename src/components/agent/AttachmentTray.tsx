@@ -58,7 +58,7 @@ export const AttachmentTray: React.FC<{ attachments: Attachments; onOpenImages: 
           <Tooltip label={img.name} side="top">
             <button
               type="button"
-              aria-label={`View ${img.name}`}
+              aria-label={`Open ${img.name}`}
               onClick={() =>
                 onOpenImages(
                   images.map((a) => ({ src: a.dataUrl, name: a.name })),

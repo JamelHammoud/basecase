@@ -1,4 +1,4 @@
-import { isBatch } from '../lanes/batch.mjs';
+import { isBatch } from './landing.mjs';
 import { cached } from './cache.mjs';
 import { openPulls } from './github.mjs';
 import { isRepair } from './rank.mjs';

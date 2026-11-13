@@ -23,7 +23,7 @@ export function fitDynamics(fit: ServoFit, volts: number, holdingNm: number): Se
   };
 }
 
-export const measuredServos = (specs: ActuatorSpec[]): specs is Array<ActuatorSpec & { fit: ServoFit }> =>
+const measuredServos = (specs: ActuatorSpec[]): specs is Array<ActuatorSpec & { fit: ServoFit }> =>
   specs.length > 0 && specs.every((s) => !!s.fit);
 
 export function servoDynamics(specs: ActuatorSpec[], holdingNm: number): ServoDynamics | null {

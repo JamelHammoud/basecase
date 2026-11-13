@@ -7,7 +7,7 @@ type UpdateProject = (patch: (project: ProjectSettings) => ProjectSettings) => v
 export const calibrateConnectedRobot = (
   updateProjectNow: UpdateProject,
   joints: readonly RobotJoint[],
-  only?: string,
+  only?: readonly string[],
 ) =>
   calibrateRobot(
     joints,

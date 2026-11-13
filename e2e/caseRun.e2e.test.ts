@@ -32,18 +32,18 @@ const panel = (id: string) => app.page.locator(shown(`[data-panel="${id}"]`));
 
 const panelIds = () =>
   app.page
-    .locator(shown('[data-testid="command-center-panel"]'))
+    .locator(shown('[data-testid="case-run-panel"]'))
     .evaluateAll((els) => els.map((el) => (el as HTMLElement).dataset.panel));
 
-const areaCount = () => app.page.locator(shown('[data-testid="command-center-area"]')).count();
+const areaCount = () => app.page.locator(shown('[data-testid="case-run-area"]')).count();
 
 const canvas = () => app.page.locator(shown('main:has(canvas)')).first();
 const menuCount = () => app.page.locator(shown('[role=menu]')).count();
 const nextFrame = () => app.page.evaluate(() => new Promise((done) => requestAnimationFrame(() => done(null))));
 
-async function openCenter() {
+async function runCase() {
   await app.page.keyboard.press('Meta+k');
-  await app.page.keyboard.type('Open Command Center');
+  await app.page.keyboard.type('Run Case');
   await app.page.keyboard.press('Enter');
 }
 
@@ -87,7 +87,7 @@ afterAll(async () => {
   await app?.close();
 });
 
-describe('Command Center', () => {
+describe('Run Case', () => {
   it('runs a Case without a console in the default layout: cameras, brief, servos and tries, then Esc returns', async () => {
     const { page } = app;
     const scene = armWithCamera();
@@ -107,7 +107,7 @@ describe('Command Center', () => {
     await page.keyboard.press('Escape');
     await expect.poll(menuCount).toBe(0);
 
-    await openCenter();
+    await runCase();
 
     await expect.poll(panelIds).toEqual(['cameras', 'brief', 'servos', 'tries']);
     expect(await areaCount()).toBe(2);
@@ -178,7 +178,7 @@ describe('Command Center', () => {
     await page.locator(shown('[data-testid="cases-panel"] button'), { hasText: 'Knock the Dots' }).first().click();
     await expect.poll(async () => (await simState()).activeCase).toBe('block-game');
 
-    await openCenter();
+    await runCase();
     await expect.poll(panelIds).toEqual(['clock', 'score', 'go', 'reset', 'tries']);
     expect(await areaCount()).toBe(2);
 

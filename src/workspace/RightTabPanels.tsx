@@ -189,7 +189,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           onNewCase={() => showNewCase(core)}
           skills={simTraining.skills}
           onTeach={onTeach}
-          onOpenCommandCenter={core.commandCenter.enter}
+          onRunCase={core.caseRun.enter}
         />
       </TabActivity>
       <TabActivity tab="inspector" current={current} visited={visited}>

@@ -49,55 +49,37 @@ const FitRows: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onN
   );
 };
 
-const CaseActions: React.FC<{ cases: Cases; onOpenCommandCenter?: () => void }> = ({ cases, onOpenCommandCenter }) => (
-  <>
-    <Button variant="ghost" size="sm" disabled={cases.fit?.checking} onClick={() => void cases.runFit()}>
-      Check Fit
-    </Button>
-    {onOpenCommandCenter && (
-      <IconButton
-        icon={<ExpandIcon className="w-4 h-4" />}
-        title="Open Command Center"
-        size="xs"
-        onClick={onOpenCommandCenter}
-      />
-    )}
-    <IconButton
-      icon={<CloseIcon className="w-4 h-4" />}
-      title="Close Case"
-      size="xs"
-      onClick={() => cases.open(null)}
-    />
-  </>
-);
-
 interface CaseSectionProps {
   cases: Cases;
   onNewCase: () => void;
-  onOpenCommandCenter?: () => void;
+  onRun: () => void;
 }
 
-export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onOpenCommandCenter }) => {
+export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onRun }) => {
   const kase = cases.active!;
 
   return (
-    <Section title={kase.name} actions={<CaseActions cases={cases} onOpenCommandCenter={onOpenCommandCenter} />}>
+    <Section
+      title={kase.name}
+      actions={
+        <>
+          <Button variant="ghost" size="sm" disabled={cases.fit?.checking} onClick={() => void cases.runFit()}>
+            Check Fit
+          </Button>
+          <IconButton icon={<ExpandIcon className="w-4 h-4" />} title="Run Case" size="xs" onClick={onRun} />
+          <IconButton
+            icon={<CloseIcon className="w-4 h-4" />}
+            title="Close Case"
+            size="xs"
+            onClick={() => cases.open(null)}
+          />
+        </>
+      }
+    >
       <p className="text-[13px] leading-snug text-white/70" data-testid="case-brief">
         {kase.brief}
       </p>
       <FitRows cases={cases} onNewCase={onNewCase} />
-    </Section>
-  );
-};
-
-export const BriefSection: React.FC<{ cases: Cases }> = ({ cases }) => {
-  const kase = cases.active!;
-
-  return (
-    <Section title="Brief">
-      <p className="text-[13px] leading-snug text-white/70" data-testid="case-brief">
-        {kase.brief}
-      </p>
     </Section>
   );
 };

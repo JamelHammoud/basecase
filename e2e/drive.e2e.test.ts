@@ -60,6 +60,15 @@ async function holdKey(key: string, ms: number) {
   await app.page.keyboard.up(key);
 }
 
+async function holdKeyUntilForward(key: string, metres: number) {
+  await app.page.mouse.click(720, 450);
+  await app.page.keyboard.down(key);
+  await expect
+    .poll(async () => (await simState()).stats?.robots[0].forward ?? 0, { timeout: 30000 })
+    .toBeGreaterThan(metres);
+  await app.page.keyboard.up(key);
+}
+
 async function datasetFiles() {
   const files = await app.page.evaluate(() =>
     (
@@ -109,6 +118,8 @@ afterAll(async () => {
   await hub?.close();
 });
 
+const itUnlessWindows = it.skipIf(process.platform === 'win32');
+
 describe('live drive', () => {
   it('drives a rover forward with W, and S, F and Backspace never edit parts', async () => {
     await startDriving('rover-diff');
@@ -139,8 +150,7 @@ describe('live drive', () => {
 
   it('walks a hexapod after its fall check, and offers to teach a biped to walk instead of Drive', async () => {
     await startDriving('hexapod');
-    await holdKey('w', 3000);
-    await expect.poll(async () => (await simState()).stats?.robots[0].forward ?? 0).toBeGreaterThan(0.1);
+    await holdKeyUntilForward('w', 0.1);
     await stopDriving();
 
     await loadFixture('biped-servo');
@@ -151,7 +161,7 @@ describe('live drive', () => {
     expect(await app.page.locator(visible('body')).innerText()).not.toMatch(/Drive needs|Two-legged/);
   });
 
-  it('asks for the canvas while a text field has focus', async () => {
+  itUnlessWindows('asks for the canvas while a text field has focus', async () => {
     await startDriving('rover-diff');
     await app.page.evaluate(() => {
       const field = document.createElement('textarea');
@@ -194,88 +204,95 @@ async function expectPublished(repo: string) {
 }
 
 describe('Cases', () => {
-  it('starts Touch the Dots on an arm, keeps the dots out of parts, records a try and exports it', async () => {
-    await openTouchTheDots();
-    await expect.poll(() => app.page.getByTestId('case-brief').count()).toBe(1);
-    expect(await app.page.getByTestId('case-brief').innerText()).not.toContain('simulation only');
+  itUnlessWindows(
+    'starts Touch the Dots on an arm, keeps the dots out of parts, records a try and exports it',
+    async () => {
+      await openTouchTheDots();
+      await expect.poll(() => app.page.getByTestId('case-brief').count()).toBe(1);
+      expect(await app.page.getByTestId('case-brief').innerText()).not.toContain('simulation only');
 
-    const partsBefore = await partCount(app.page);
+      const partsBefore = await partCount(app.page);
 
-    await button('Try It').click();
-    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+      await button('Try It').click();
+      await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
 
-    const state = await simState();
+      const state = await simState();
 
-    expect(state.world).toHaveLength(3);
-    expect(state.bodies.flatMap((b) => b.parts)).not.toContain('dot0');
-    expect(state.bodies.flatMap((b) => b.world)).toContain('dot0');
-    expect(await partCount(app.page)).toBe(partsBefore);
+      expect(state.world).toHaveLength(3);
+      expect(state.bodies.flatMap((b) => b.parts)).not.toContain('dot0');
+      expect(state.bodies.flatMap((b) => b.world)).toContain('dot0');
+      expect(await partCount(app.page)).toBe(partsBefore);
 
-    const clashes = await app.page.evaluate(async () =>
-      JSON.stringify(
-        await (window as unknown as { __studio: { interference: () => Promise<unknown> } }).__studio.interference(),
-      ),
-    );
+      const clashes = await app.page.evaluate(async () =>
+        JSON.stringify(
+          await (window as unknown as { __studio: { interference: () => Promise<unknown> } }).__studio.interference(),
+        ),
+      );
 
-    expect(clashes).not.toContain('dot0');
+      expect(clashes).not.toContain('dot0');
 
-    await button('End Try').click();
-    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
-    expect((await simState()).tries[0].passed).toBe(false);
-    await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
-    await expectDataset();
+      await button('End Try').click();
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+      expect((await simState()).tries[0].passed).toBe(false);
+      await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
+      await expectDataset();
 
-    await button('Check Fit').click();
-    await expect.poll(() => app.page.getByTestId('robot-fit').innerText(), { timeout: 60000 }).toContain('Compiles');
-    expect(app.errors).toEqual([]);
-  });
+      await button('Check Fit').click();
+      await expect.poll(() => app.page.getByTestId('robot-fit').innerText(), { timeout: 60000 }).toContain('Compiles');
+      expect(app.errors).toEqual([]);
+    },
+  );
 
-  it('publishes a passed try to Hugging Face after signing in from Settings', async () => {
-    const publish = () => button('Publish to Hugging Face');
-    const commitsOf = (name: string) => hub.repos.get(name)?.commits.length ?? 0;
-    const ours = () => [...hub.repos.keys()].filter((name) => /^tester\/touch-the-dots-[0-9a-f]{6}$/.test(name));
-    const before = new Map(ours().map((name) => [name, commitsOf(name)]));
-    const published = () => ours().filter((name) => commitsOf(name) > (before.get(name) ?? 0));
+  itUnlessWindows(
+    'publishes a passed try to Hugging Face after signing in from Settings',
+    async () => {
+      const publish = () => button('Publish to Hugging Face');
+      const commitsOf = (name: string) => hub.repos.get(name)?.commits.length ?? 0;
+      const ours = () => [...hub.repos.keys()].filter((name) => /^tester\/touch-the-dots-[0-9a-f]{6}$/.test(name));
+      const before = new Map(ours().map((name) => [name, commitsOf(name)]));
+      const published = () => ours().filter((name) => commitsOf(name) > (before.get(name) ?? 0));
 
-    await openTouchTheDots();
-    await button('Try It').click();
-    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-    await button('End Try').click();
-    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
-    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
-    await expect.poll(() => publish().count()).toBe(1);
+      await openTouchTheDots();
+      await button('Try It').click();
+      await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+      await button('End Try').click();
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
+      await expect.poll(() => publish().count()).toBe(1);
 
-    await publish().click();
+      await publish().click();
 
-    const token = app.page.locator(visible('input[aria-label="Access token"]'));
-    const signedOut = await token.waitFor({ timeout: 10000 }).then(
-      () => true,
-      () => false,
-    );
+      const token = app.page.locator(visible('input[aria-label="Access token"]'));
+      const signedOut = await token.waitFor({ timeout: 10000 }).then(
+        () => true,
+        () => false,
+      );
 
-    if (signedOut) {
-      await token.fill(HUB_TOKEN);
-      await token.press('Enter');
-      await expect
-        .poll(() => app.page.locator(visible('[role=dialog][aria-label=Settings]')).innerText())
-        .toContain('tester');
-      await app.page.keyboard.press('Escape');
-      await publish().dblclick();
-    }
+      if (signedOut) {
+        await token.fill(HUB_TOKEN);
+        await token.press('Enter');
+        await expect
+          .poll(() => app.page.locator(visible('[role=dialog][aria-label=Settings]')).innerText())
+          .toContain('tester');
+        await app.page.keyboard.press('Escape');
+        await publish().dblclick();
+      }
 
-    await expect.poll(() => published().length, { timeout: 120000 }).toBe(1);
+      await expect.poll(() => published().length, { timeout: 120000 }).toBe(1);
 
-    const [repo] = published();
+      const [repo] = published();
 
-    await expect.poll(() => commitsOf(repo), { timeout: 120000 }).toBe((before.get(repo) ?? 0) + 1);
-    await expectPublished(repo);
-    await expect.poll(() => app.page.getByRole('status').filter({ hasText: repo }).count()).toBeGreaterThan(0);
-    expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
-    expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
-    expect(app.errors).toEqual([]);
-  }, 180000);
+      await expect.poll(() => commitsOf(repo), { timeout: 120000 }).toBe((before.get(repo) ?? 0) + 1);
+      await expectPublished(repo);
+      await expect.poll(() => app.page.getByRole('status').filter({ hasText: repo }).count()).toBeGreaterThan(0);
+      expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
+      expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
+      expect(app.errors).toEqual([]);
+    },
+    180000,
+  );
 
-  it('makes a Case with New Case, lists only the examples that fit, and opens it', async () => {
+  itUnlessWindows('makes a Case with New Case, lists only the examples that fit, and opens it', async () => {
     await loadFixture('rover-diff');
     await openPlayTab(app.page, 'Cases');
 

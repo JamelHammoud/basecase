@@ -247,7 +247,7 @@ describe('Build tab fields', () => {
       )
       .toBe(true);
 
-    const note = row.locator('li', { has: plot('ja') });
+    const note = row.locator('li', { has: app.page.locator('[data-joint="ja"]') });
 
     expect(await note.textContent()).toMatch(/Left knee: .*% of the walk past its torque–speed line/);
 

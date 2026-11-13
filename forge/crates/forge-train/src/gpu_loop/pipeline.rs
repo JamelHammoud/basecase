@@ -44,14 +44,16 @@ impl GpuPpo {
     }
 
     pub(super) fn step(&mut self) -> Result<(), String> {
-        self.collect()?;
         self.shuffle_rows();
 
-        let list = encoder!(self).learn(&self.buffers.rollout, &self.settings);
+        let encoder = encoder!(self);
+        let rollout = encoder.rollout(&self.buffers.rollout);
+        let learn = encoder.learn(&self.buffers.rollout, &self.settings);
+        let timings = self.gpu.run_chain(&[&rollout, &learn])?;
 
-        let timing = self.gpu.run(&list)?;
-
-        self.phases.gradient += timing.gpu_seconds;
+        self.phases.physics += timings[0].gpu_seconds;
+        self.phases.gradient += timings[1].gpu_seconds;
+        self.collected();
 
         Ok(())
     }

@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
-import { createIssue, issues } from '../lib/github.mjs';
+import { createIssue } from '../lib/github.mjs';
+import { IDEA, takenTitles, titleKey } from '../lib/ideas.mjs';
 import { publish } from '../lib/pull.mjs';
 import { run } from '../lib/sh.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
@@ -9,13 +10,11 @@ import { close, openBranch } from '../lib/worktree.mjs';
 export const schedule = {
   agent: true,
   slots: 1,
-  everySeconds: 60,
+  everySeconds: 24 * 60 * 60,
   labels: ['loop:market', 'loop:idea'],
   does: 'Researches competitors, partners and integrations into docs/market/ and files loop:idea issues for the lead',
 };
 
-const IDEA = 'loop:idea';
-const TAKEN_LABELS = [IDEA, 'loop:next', 'loop:building'];
 const MARKET = 'docs/market/';
 const ENTRY = /^docs\/market\/[a-z-]+\.md#[a-z0-9-]+$/;
 
@@ -39,10 +38,6 @@ const SCHEMA = {
   properties: { ...CHANGE_SCHEMA.properties, ideas: { type: 'array', items: idea, maxItems: 5 } },
   required: [...CHANGE_SCHEMA.required, 'ideas'],
 };
-
-const titleKey = (title) => title.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\.$/, '');
-
-const takenTitles = () => TAKEN_LABELS.flatMap((label) => issues(label)).map((issue) => issue.title);
 
 export const freshIdeas = (ideas, taken, known) => {
   const seen = new Set(taken.map(titleKey));

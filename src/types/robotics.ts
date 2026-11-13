@@ -178,7 +178,14 @@ export interface ScenePart extends PartRelations {
   imageDataUrl?: string;
   massG?: number;
   com?: [number, number, number];
-  robotLink?: { robot: string; link: string; url?: string; rotate?: Array<[string, number]>; version: number };
+  robotLink?: {
+    robot: string;
+    link: string;
+    url?: string;
+    rotate?: Array<[string, number]>;
+    version: number;
+    fixedMates?: string[];
+  };
   simready?: { url: string; name: string; maker: string; license: string };
   physics?: { dynamic: boolean; friction?: number };
   group?: { id: string; name: string };

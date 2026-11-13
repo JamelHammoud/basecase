@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
-import loadMujoco, { type MainModule } from '@mujoco/mujoco';
+import { type MainModule } from '@mujoco/mujoco';
+import { loadMujoco } from './loadMujoco';
 import type { DriveCommand } from './driveTypes';
 import { Recorder, recordingTransfer, type Recording } from './recorder';
 import { SimEngine, type Controller } from './engine';

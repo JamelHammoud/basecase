@@ -8,7 +8,7 @@ import { evaluateContract, type Contract } from './contract';
 import type { Environment, Range } from './environment';
 import { sha256Hex } from './hash';
 import { KIT_BARS, kitCommand, kitSpeedContract, type TrainedEntry } from './kitEnvironment';
-import { kitRobot, kitTopSpeed, type V3 } from './kitModel';
+import { kitBackSpeed, kitRobot, kitTopSpeed, type V3 } from './kitModel';
 
 const DRAWS = 12;
 const HOLD_DRAWS = 60;
@@ -25,6 +25,7 @@ export interface ValidationInput {
   policy: PolicySpec;
   salt?: string;
   draws?: number;
+  reverse?: boolean;
 }
 
 interface Check {
@@ -61,9 +62,10 @@ function rangesFor(env: Environment): ArenaRanges {
   };
 }
 
-function speedChecks(model: SimModel): Check[] {
+function speedChecks(model: SimModel, reverse: boolean): Check[] {
   const top = kitTopSpeed(model);
-  const speeds = [top, top / 2, 0].map((s): Check => ({
+  const back = reverse ? [kitBackSpeed(model)] : [];
+  const speeds = [top, top / 2, 0, ...back].map((s): Check => ({
     command: [s, 0, 0],
     contract: kitSpeedContract(model, s),
     draws: DRAWS,
@@ -73,10 +75,15 @@ function speedChecks(model: SimModel): Check[] {
   return [...speeds, ...turns];
 }
 
-export function validationChecks(options: { model: SimModel; entry: TrainedEntry; environment: Environment }): Check[] {
+export function validationChecks(options: {
+  model: SimModel;
+  entry: TrainedEntry;
+  environment: Environment;
+  reverse?: boolean;
+}): Check[] {
   const { model, entry, environment } = options;
 
-  if (entry === 'velocity-tracking') return speedChecks(model);
+  if (entry === 'velocity-tracking') return speedChecks(model, !!options.reverse);
 
   return [{ command: kitCommand(model, entry), contract: environment.contract, draws: HOLD_DRAWS }];
 }
@@ -178,12 +185,16 @@ function summary(command: V3, trials: Trial[]): CheckResult {
 
 const mean = (values: number[]) => values.reduce((sum, v) => sum + v, 0) / Math.max(values.length, 1);
 
-function scored(checks: CheckResult[]): number {
-  const speeds = checks.filter((c) => c.command[2] === 0);
+export function scoreChecks(checks: CheckResult[]): number {
+  const speeds = checks.filter((c) => c.command[2] === 0 && c.command[0] >= 0);
+  const backward = checks.filter((c) => c.command[0] < 0);
   const turns = checks.filter((c) => c.command[2] !== 0);
   const weakest = Math.min(...speeds.map((c) => c.passed));
+  const both = backward.length ? Math.min(weakest, ...backward.map((c) => c.passed)) : 0;
 
-  return weakest + TURN_WEIGHT * mean(turns.map((c) => c.passed)) + MARGIN_WEIGHT * mean(checks.map((c) => c.margin));
+  return (
+    weakest + both + TURN_WEIGHT * mean(turns.map((c) => c.passed)) + MARGIN_WEIGHT * mean(checks.map((c) => c.margin))
+  );
 }
 
 export async function validationReport(input: ValidationInput): Promise<ValidationReport> {
@@ -207,7 +218,7 @@ export async function validationReport(input: ValidationInput): Promise<Validati
     worlds.forEach((w) => w.dispose());
   }
 
-  return { checks, score: scored(checks) };
+  return { checks, score: scoreChecks(checks) };
 }
 
 export const validationScore = async (input: ValidationInput) => (await validationReport(input)).score;

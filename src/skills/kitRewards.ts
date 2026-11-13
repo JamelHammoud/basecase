@@ -51,7 +51,14 @@ interface Steering {
 const MANY_LEGS: Steering = { turn: 0.8, turnSigma2: 0.1, veer: 0.5, stillness: 0.01, hold: 1 };
 const TWO_LEGS: Steering = { turn: 2, turnSigma2: 0.05, veer: 0, stillness: 0.002, hold: 0 };
 
-const velocity = (top: number, steer: Steering) => `
+const LAG = 0.5;
+const REVERSE_LAG = 1.5;
+
+export interface KitRewardOptions {
+  reverse?: boolean;
+}
+
+const velocity = (top: number, steer: Steering, lag: number) => `
 def still(state):
     return 1.0 if abs(state.command[0]) + abs(state.command[1]) + abs(state.command[2]) < 0.01 else 0.0
 
@@ -65,7 +72,7 @@ def reward(state):
     return (
         term("track", 1.5 * exp(-speed_error / ${num((0.5 * top) ** 2)}) * scale)
         + term("track_fine", 0.5 * exp(-speed_error / ${num((0.2 * top) ** 2)}) * scale)
-        - term("lag", 0.5 * sqrt(speed_error) / ${num(top)} * scale)
+        - term("lag", ${lag} * sqrt(speed_error) / ${num(top)} * scale)
         + term("turn", ${num(steer.turn)} * exp(-turn_error / ${num(steer.turnSigma2)}) * scale)
         - term("veer", ${num(steer.veer)} * sqrt(turn_error) * scale)
         + term("upright", 0.5 * upright(state) * scale)
@@ -109,11 +116,13 @@ def reward(state):
     )
 `;
 
-const PROGRAMS: Record<TrainedEntry, (model: SimModel) => string> = {
+const PROGRAMS: Record<TrainedEntry, (model: SimModel, options: KitRewardOptions) => string> = {
   stand: () => STAND,
-  'velocity-tracking': (model) => velocity(kitTopSpeed(model), footCount(model) >= 4 ? MANY_LEGS : TWO_LEGS),
+  'velocity-tracking': (model, options) =>
+    velocity(kitTopSpeed(model), footCount(model) >= 4 ? MANY_LEGS : TWO_LEGS, options.reverse ? REVERSE_LAG : LAG),
   'get-up': () => GET_UP,
   'settle-to-neutral': () => SETTLE,
 };
 
-export const kitReward = (model: SimModel, entry: TrainedEntry) => `${SHARED}${PROGRAMS[entry](model)}`;
+export const kitReward = (model: SimModel, entry: TrainedEntry, options: KitRewardOptions = {}) =>
+  `${SHARED}${PROGRAMS[entry](model, options)}`;

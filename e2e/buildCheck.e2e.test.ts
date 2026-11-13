@@ -32,15 +32,22 @@ const standIn = (id: string, x: number) => ({
   locked: false,
 });
 
-const loadStandIns = () =>
-  app.page.evaluate(
-    (parts) => {
-      const studio = (window as unknown as { __studio: StudioHook }).__studio;
+const loadParts = (parts: unknown[]) =>
+  app.page.evaluate((list) => {
+    const studio = (window as unknown as { __studio: StudioHook }).__studio;
 
-      studio.load({ parts, project: studio.sceneRecord().project });
-    },
-    [standIn('one', -60), standIn('two', 60)],
-  );
+    studio.load({ parts: list, project: studio.sceneRecord().project });
+  }, parts);
+
+const loadStandIns = () => loadParts([standIn('one', -60), standIn('two', 60)]);
+
+const servo = {
+  ...standIn('servo', 0),
+  name: 'Feetech STS3215',
+  kind: 'component',
+  componentId: 'feetech-sts3215',
+  componentVariant: 'c001',
+};
 
 const armWithEstimates = () => {
   const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
@@ -56,6 +63,8 @@ const armWithEstimates = () => {
 
 const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
 
+const section = (title: RegExp) => app.page.locator(visible('section'), { hasText: title }).first();
+
 const headerText = async () => (await checks().locator('header').first().textContent()) ?? '';
 
 beforeAll(async () => {
@@ -67,20 +76,18 @@ afterAll(async () => {
 });
 
 describe('Checks', () => {
-  it('run on their own and show a live verdict in the Build tab', async () => {
+  it('run on their own and lead the Build tab with a live verdict', async () => {
     await addCube();
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     await expect.poll(() => checks().isVisible(), { timeout: 20000 }).toBe(true);
     await expect.poll(headerText, { timeout: 45000 }).toMatch(/Ready to build|\d+ to fix/);
     expect(await checks().textContent()).toContain('Parts attached');
 
-    const belowGuide = await checks().evaluate((section) => {
-      const guide = document.getElementById('build-guide');
+    const leads = await checks().evaluate(
+      (section) => section.parentElement?.querySelector(':scope > section') === section,
+    );
 
-      return !!guide && !!(guide.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING);
-    });
-
-    expect(belowGuide).toBe(true);
+    expect(leads).toBe(true);
   }, 90000);
 
   it('let you ignore a blocker for the whole project, and restore it', async () => {
@@ -207,4 +214,35 @@ describe('Checks', () => {
     expect(await checks().innerText()).toContain('MG996R on Arm1');
     expect(app.errors).toEqual([]);
   }, 90000);
+});
+
+describe('Build tab fields', () => {
+  it('set the tether in the power check that reads it', async () => {
+    await loadParts([servo]);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checks()
+      .locator('li')
+      .filter({ has: app.page.getByRole('button', { name: /^Servo voltage/ }) })
+      .first();
+
+    await expect.poll(() => row.isVisible(), { timeout: 45000 }).toBe(true);
+    await row.getByRole('button', { name: /^Servo voltage/ }).click();
+
+    const volts = row.getByRole('textbox', { name: 'Supply voltage' });
+
+    await volts.fill('24');
+    await volts.press('Enter');
+    await expect.poll(async () => (await row.textContent()) ?? '', { timeout: 45000 }).toMatch(/24 V.*maximum/);
+    expect(await row.locator('svg.text-red-400').count()).toBeGreaterThan(0);
+  }, 90000);
+
+  it('set a budget beside the bill of materials total', async () => {
+    const bom = section(/^Bill of materials/);
+    const budget = bom.getByRole('textbox', { name: /^Budget in / });
+
+    await budget.fill('100000');
+    await budget.press('Enter');
+    await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
+  }, 30000);
 });

@@ -14,27 +14,30 @@ afterAll(async () => {
 });
 
 describe('print layout', () => {
-  it('lists the part on a plate in the Build tab', async () => {
+  it('counts the plates in the Build tab and lays them out in Print mode', async () => {
     await app.page.keyboard.press('a');
     await app.page.getByRole('button', { name: /^Cube/ }).first().click();
     expect(await partCount(app.page)).toBe(1);
 
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
 
-    const printing = app.page.locator(visible('button[aria-expanded]'), { hasText: /^Printing/ }).first();
+    const printing = app.page.locator(visible('section'), { hasText: /^Printing/ }).first();
 
-    await expect.poll(() => printing.textContent(), { timeout: 20000 }).toMatch(/^Printing≈ .*min$/);
+    await expect
+      .poll(() => printing.textContent(), { timeout: 20000 })
+      .toMatch(/^Printing1 plate≈ .*minLay Out Plates$/);
     expect(await app.page.locator(visible('select[aria-label="Printer"]')).count()).toBe(0);
-    expect(await app.page.locator(visible('button'), { hasText: 'Plate 1' }).count()).toBe(0);
 
-    await printing.click();
-    expect(await printing.textContent()).toBe('Printing');
-    expect(await app.page.locator(visible('button'), { hasText: 'Plate 1' }).count()).toBeGreaterThan(0);
+    await printing.getByRole('button', { name: 'Lay Out Plates' }).click();
+    await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(1);
     expect(await app.page.locator(visible('select[aria-label="Printer"]')).count()).toBe(1);
-    expect(await app.page.locator(visible('section section button[aria-expanded="false"]')).first().textContent()).toBe(
-      'Printed parts1',
-    );
-    expect(await app.page.getByText('Estimate for a').count()).toBe(0);
+    expect(await app.page.locator(visible('h3'), { hasText: /^Plate 1$/ }).count()).toBe(1);
+    expect(
+      await app.page.locator(visible('button[aria-expanded="false"]'), { hasText: /^Printed parts/ }).textContent(),
+    ).toBe('Printed parts1');
+
+    await app.page.getByRole('button', { name: 'Done' }).click();
+    await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);
   });
 
   it('opens the plates with ⌘P, shows the Print panel, and closes with Esc', async () => {

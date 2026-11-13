@@ -88,7 +88,7 @@ describe('Torque estimates', () => {
       row(r, 'Servo torque')!
         .items!.map((i) => i.text)
         .join('\n'),
-    ).not.toMatch(/Knee L|No torque data/);
+    ).not.toMatch(/Knee l|No torque data/);
   });
 
   it('reads Servo torque as not run when no joint has a servo', () => {

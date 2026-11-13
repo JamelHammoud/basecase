@@ -80,7 +80,7 @@ Every pull request has one kind, shown three ways: a title prefix, a `loop:` lab
 
 1. The lane makes a worktree from `origin/main` under `~/.basecase-loop/worktrees/` and a branch `loop/<lane>/<slug>`. The shared checkout is never touched.
 2. An agent session does the work there, following AGENTS.md and the area's guide, and runs `npm run check:changed -- <files>`.
-3. The lane commits, pushes and opens the pull request. Its body says what changed and why; a `Feature:` or `Integration:` body also names the changelog entry the change adds, and every other kind's Changelog section reads None (`tools/loop/lib/pull.mjs`).
+3. The lane commits, pushes and opens the pull request. Its body says what changed and why (`tools/loop/lib/pull.mjs`), and its Changelog and Screenshots come from the diff, whatever the kind (see Pull request kinds).
 4. The review lane reviews it in a fresh session (below) and sets the `agent-review` status.
 5. The merge lane squash-merges it the moment review and its Check pass, repairs first. Nothing about `main` holds a merge.
 

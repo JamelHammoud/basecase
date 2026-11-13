@@ -26,7 +26,7 @@ export function landedFrom(files, { read, exists }) {
 }
 
 export function landedIn(range, dir) {
-  const files = run('git', ['diff', '--name-only', '-z', '--diff-filter=AM', range], { cwd: dir }).out.split('\0');
+  const files = run('git', ['diff', '--name-only', '-z', '--diff-filter=AMR', range], { cwd: dir }).out.split('\0');
 
   return landedFrom(files.filter(Boolean), {
     read: (file) => fs.readFileSync(path.join(dir, file), 'utf8'),

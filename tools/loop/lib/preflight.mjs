@@ -41,8 +41,30 @@ export function changelogProblems({ kind, changes }) {
     );
 }
 
+const touchesEntry = (change) => change.to.startsWith(CHANGELOG) && change.status !== 'D';
+
+const frontMatterOf = (source) => /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? '';
+
+const coverLine = (file) =>
+  `${file} has no \`image:\` cover. Capture the feature in use into site/public/changelog/${path.basename(file, '.md').replace(/^\d{4}-\d{2}-\d{2}-/, '')}/ and set \`image:\` to it (telling.md). If the change has nothing on screen, leave it and say why in \`notes\`.`;
+
+export function announcedProblems({ kind, changes, sourceOf }) {
+  if (!ANNOUNCED.has(kind)) return [];
+
+  if (!changes.some(touchesEntry)) {
+    return [
+      `This \`${kind}\` change adds no changelog entry and updates none. Write one, or add to the arc's existing entry, from telling.md. If the change isn't worth announcing, leave it and say why in \`notes\`.`,
+    ];
+  }
+
+  return changes
+    .filter(addsEntry)
+    .filter((change) => !/^image:\s*\S/m.test(frontMatterOf(sourceOf(change.to) ?? '')))
+    .map((change) => coverLine(change.to));
+}
+
 export function coversOf(source) {
-  const lines = (/^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? '').split(/\r?\n/);
+  const lines = frontMatterOf(source).split(/\r?\n/);
   const start = lines.findIndex((line) => /^covers:\s*$/.test(line));
 
   if (start < 0) return [];
@@ -87,6 +109,12 @@ export function helpProblems({ changes, articles }) {
   return articles.flatMap((article) => articleProblems(article, { changes, touched }));
 }
 
+const readSource = (cwd, file) => {
+  const full = path.join(cwd, file);
+
+  return fs.existsSync(full) ? fs.readFileSync(full, 'utf8') : null;
+};
+
 function helpArticles(cwd) {
   const dir = path.join(cwd, HELP);
 
@@ -115,6 +143,7 @@ export function preflight(cwd, { kind, copy }) {
   return [
     ...copyProblems({ ...addedAndRemoved(cwd), copy }),
     ...changelogProblems({ kind, changes }),
+    ...announcedProblems({ kind, changes, sourceOf: (file) => readSource(cwd, file) }),
     ...helpProblems({ changes, articles: helpArticles(cwd) }),
   ];
 }

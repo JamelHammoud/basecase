@@ -1,5 +1,6 @@
 import type { Recording } from '../../sim/recorder';
 import { indexedDbStore } from '../../utils/keyValueStore';
+import { encodeRecording } from '../recordingFile';
 import { readStoredTry, summaryOf, type StoredTry } from '../tryFile';
 import { TRIES_LABEL, type TryBackend } from './types';
 
@@ -14,6 +15,10 @@ const recordings = indexedDbStore<Recording>({
   label: TRIES_LABEL,
 });
 const strips = indexedDbStore<Blob>({ database: 'basecase-try-strips', store: 'strips', label: TRIES_LABEL });
+
+const indexes = indexedDbStore<Uint8Array>({ database: 'basecase-try-index', store: 'index', label: TRIES_LABEL });
+
+const SEARCH_INDEX = 'search';
 
 export const webTries: TryBackend = {
   list: async () => {
@@ -32,12 +37,33 @@ export const webTries: TryBackend = {
 
     await manifests.put(stored.id, stored);
   },
+  update: async (stored) => {
+    if (!(await manifests.get(stored.id))) return false;
+
+    await manifests.put(stored.id, stored);
+
+    return true;
+  },
   recording: async (id) => (await recordings.get(id)) ?? null,
+  recordingBytes: async (id) => {
+    const recording = await recordings.get(id);
+
+    return recording ? encodeRecording(recording) : null;
+  },
   strip: async (id) => (await strips.get(id)) ?? null,
   saveStrip: async (id, strip) => {
     if (await manifests.get(id)) await strips.put(id, strip);
   },
   delete: async (ids) => {
     await Promise.all(ids.flatMap((id) => [manifests.delete(id), recordings.delete(id), strips.delete(id)]));
+  },
+  manifests: async (ids) => {
+    const found = await Promise.all(ids.map((id) => manifests.get(id)));
+
+    return found.flatMap((raw) => readStoredTry(raw) ?? []);
+  },
+  index: async () => (await indexes.get(SEARCH_INDEX)) ?? null,
+  saveIndex: async (bytes) => {
+    await indexes.put(SEARCH_INDEX, bytes);
   },
 };

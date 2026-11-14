@@ -23,7 +23,7 @@ import {
   operatorTrackState,
 } from '../cameras/operator/operatorCamera';
 import type { PoseSample } from '../cameras/operator/poseFollow';
-import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
+import { robotLinkState, startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
 import { twinSnapshot } from '../robot/robotTwin';
@@ -295,6 +295,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
     plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    robotCalibration: async () => (await robotLinkState())?.calibration ?? null,
     phone: () => phoneSnapshot(),
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
     inputEvents: () => inputEvents().map(({ name, value }) => ({ name, value })),

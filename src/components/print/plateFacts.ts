@@ -11,6 +11,16 @@ const STATE_TEXT: Record<PlateStatus['state'], string> = {
   failed: 'Failed',
 };
 
+export const PRINTER_STATE_TEXT: Record<PrinterStatus['state'], string> = {
+  idle: 'Ready',
+  preparing: 'Preparing…',
+  printing: 'Printing',
+  paused: 'Paused',
+  finished: 'Finished',
+  failed: 'Failed',
+  offline: 'Can’t reach the printer',
+};
+
 export function plateStateText(status: PlateStatus, live?: PrinterStatus | null) {
   if (status.state === 'printing' && live?.progress !== undefined) return `Printing ${percent(live.progress)}`;
 

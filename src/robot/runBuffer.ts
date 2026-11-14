@@ -1,4 +1,4 @@
-import { radiansFromCounts, type RobotStatus } from './robotState';
+import { statusRadians, type RobotMount, type RobotStatus } from './robotState';
 
 export const RUN_SECONDS = 20;
 
@@ -21,13 +21,11 @@ export interface RobotRun {
   message: string;
 }
 
-export function statusPositions(status: RobotStatus, ids: readonly number[]): Array<number | null> {
-  return ids.map((id) => {
-    const position = status.joints.find((j) => j.id === id)?.position;
-
-    return typeof position === 'number' ? radiansFromCounts(position) : null;
-  });
-}
+export const statusPositions = (
+  status: RobotStatus,
+  ids: readonly number[],
+  calibration?: readonly RobotMount[],
+): Array<number | null> => ids.map((id) => statusRadians(status, calibration, id));
 
 function trimmed<T extends { at: number }>(entries: T[], newest: number): T[] {
   const from = newest - RUN_SECONDS * 1000;

@@ -1,6 +1,7 @@
 ---
 title: Print a fit test
 date: 2026-11-13
+updated: 2026-11-13
 collection: build-and-print
 type: task
 covers:
@@ -20,6 +21,8 @@ Print small pieces of your design around each servo pocket, insert hole, bearing
 4. Click Send Plate 1, or Open in Bambu Studio, as for any plate.
 5. When it's printed, press the real servo, insert or bearing into each piece. If one is too tight or too loose, fix the hole in the design before the full print.
 6. Click Done or press [[Esc]] to go back to the design's plates. The pieces aren't added to your scene.
+
+The pieces carry no guide letters, so **Label parts** is hidden while the fit test plate is open.
 
 ![Print mode with Print Fit Test beside Done](/help/print-a-fit-test/print-mode.png)
 

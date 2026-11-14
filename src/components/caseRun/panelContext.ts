@@ -12,7 +12,7 @@ import type { CameraTiles } from '../cameras/useCameraTiles';
 export interface StudioPanelContext {
   cases: Cases;
   cameras: CameraTiles;
-  onBrowseRobots: () => void;
+  onShowRobots: () => void;
 }
 
 export interface PanelContext {

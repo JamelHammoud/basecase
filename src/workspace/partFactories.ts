@@ -26,8 +26,6 @@ const IMAGE_SIDE = 120;
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
-export const catalogItemLabel = (item: CatalogItem) => (item.hardware ? hardwareName(item.hardware) : item.name);
-
 function catalogPartName(item: CatalogItem, prev: ScenePart[]) {
   if (item.hardware) return hardwareName(item.hardware);
 

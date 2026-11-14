@@ -1,7 +1,7 @@
 import type { SourcedItem } from '../../data/sourcedItems';
 import type { PairReply, PhoneEvent, PhoneState } from '../../phone/phoneTypes';
 import type { RobotPolicyRef } from '../../robot/robotPolicy';
-import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState } from '../../robot/robotState';
+import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState, RobotMount } from '../../robot/robotState';
 import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
   AcpChatMessage,
@@ -9,7 +9,8 @@ import {
   AgentConversation,
   AgentConversationSummary,
   CustomModelDefinition,
-  PurchaseRecord,
+  Purchases,
+  StoredPurchase,
   ReferenceImageRecord,
   SavedSceneRecord,
   SavedSceneSummary,
@@ -184,7 +185,7 @@ declare global {
       saveEvidenceFile: (payload: EvidenceFilePayload) => Promise<{ ok: boolean; path: string }>;
       resumeAcp: (sessionId: string, workspaceId?: string) => Promise<AcpStatusInfo>;
       listChats: () => Promise<AgentConversationSummary[]>;
-      listPurchases: () => Promise<Record<string, PurchaseRecord>>;
+      listPurchases: () => Promise<Purchases>;
       trainStatus: () => Promise<TrainerStatus>;
       simreadyStatus: () => Promise<SimReadyStatus>;
       simreadyFetch: (payload: { url: string; requestId: string }) => Promise<SimReadyFetched>;
@@ -208,10 +209,7 @@ declare global {
       exportStep: (job: StepJob) => Promise<ExportedStep>;
       tuneCadPart: (payload: CadTuneRequest) => Promise<CadTuneAnswer>;
       renderCad: (payload: { language: CadLanguage; code: string }) => Promise<Uint8Array>;
-      savePurchase: (payload: {
-        key: string;
-        record: PurchaseRecord | null;
-      }) => Promise<Record<string, PurchaseRecord>>;
+      savePurchase: (payload: { key: string; record: StoredPurchase | null }) => Promise<Purchases>;
       getChat: (id: string) => Promise<AgentConversation | null>;
       saveChat: (conv: AgentConversation) => Promise<AgentConversationSummary[]>;
       deleteChat: (id: string) => Promise<AgentConversationSummary[]>;
@@ -253,6 +251,7 @@ declare global {
       robotCommand?: (command: Record<string, unknown>) => Promise<ConnectReply>;
       robotDisconnect?: () => Promise<ConnectReply>;
       robotPolicy?: (refs: RobotPolicyRef[]) => Promise<ConnectReply>;
+      robotCalibrate?: (joints: RobotMount[]) => Promise<ConnectReply>;
       robotState?: () => Promise<RobotLinkState>;
       onRobotEvent?: (callback: (event: RobotEvent) => void) => () => void;
       phonePair?: () => Promise<PairReply>;

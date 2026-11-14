@@ -1,9 +1,12 @@
 import { agentCatalog, type CatalogContext } from '../agent/agentCatalog';
+import { COMPONENT_BY_ID } from '../data/components';
 import type { AgentOp } from '../agent/agentScene';
 import { sizeActuators } from '../utils/actuatorSizing';
 import { sizingJoints } from '../utils/actuatorSizingInput';
 import { sizingText } from '../utils/actuatorSizingText';
-import { buildBom } from '../utils/bom';
+import { storePurchase } from '../components/build/usePurchases';
+import { buildBom, describeKey, hardwareKey, specFromHardwareKey } from '../utils/bom';
+import { type OnHandCount, onHandRefusals, withOnHand } from '../utils/onHand';
 import type { Bom } from '../utils/bomTypes';
 import { budgetLine, budgetPlanText } from '../utils/budget';
 import type { EngineeringReport, JointLoad } from '../utils/engineeringTypes';
@@ -48,14 +51,57 @@ function hardest(report: EngineeringReport): Pick<CatalogContext, 'stance' | 'ho
   };
 }
 
+const usedCounts = (bom: Bom) => Object.fromEntries(bom.lines.map((l) => [l.key, l.qty]));
+
 export async function catalogRequest(payload: Payload, ctx: RequestContext) {
   const project = ctx.project();
   const purchases = await platformBridge.listPurchases();
-  const bom = project.budgetUsd === undefined ? undefined : await sceneBom(ctx);
+  const bom = await sceneBom(ctx);
   const needs = project.joints?.length ? hardest(await loadReport(ctx)) : {};
-  const budget = bom && { budgetUsd: project.budgetUsd!, estimatedUsd: bom.totals.estimatedUsd };
+  const budget =
+    project.budgetUsd === undefined
+      ? undefined
+      : { budgetUsd: project.budgetUsd, estimatedUsd: bom.totals.estimatedUsd };
 
-  return { text: agentCatalog(String(payload.query ?? ''), { purchases, budget, ...needs }) };
+  return { text: agentCatalog(String(payload.query ?? ''), { purchases, used: usedCounts(bom), budget, ...needs }) };
+}
+
+function versionedKeys(key: string): string[] {
+  if (!key.startsWith('component:') || key.includes('|')) return [];
+
+  const id = key.slice('component:'.length);
+
+  return (COMPONENT_BY_ID[id]?.variants ?? []).map((v) => `${key}|${v.id}`);
+}
+
+function keyRefusal(key: unknown): string | undefined {
+  if (typeof key !== 'string' || !describeKey(key)) return `${String(key)} isn’t a catalog key`;
+
+  const versions = versionedKeys(key);
+
+  return versions.length ? `${key} needs its version: ${versions.join(', ')}` : undefined;
+}
+
+function lineKey(key: string): string {
+  const spec = specFromHardwareKey(key);
+
+  return spec ? hardwareKey(spec) : key;
+}
+
+export async function recordOnHandRequest(payload: Payload) {
+  const given: unknown[] = Array.isArray(payload.counts) ? payload.counts : [];
+  const asked = given.map((c) => ({ key: (c as OnHandCount)?.key, count: (c as OnHandCount)?.count }));
+  const refusals = asked.length ? onHandRefusals(asked, keyRefusal) : ['no counts given'];
+
+  if (refusals.length)
+    return { text: `Nothing recorded: ${refusals.join('; ')}. Use keys from find_parts or get_bom.` };
+
+  const counts = asked.map(({ key, count }) => ({ key: lineKey(key), count }));
+  let purchases = await platformBridge.listPurchases();
+
+  for (const { key, count } of counts) purchases = await storePurchase(key, withOnHand(purchases[key], count));
+
+  return { text: `On hand: ${counts.map(({ key, count }) => `${count}× ${key}`).join(', ')}.` };
 }
 
 function sizedReply(families: ReturnType<typeof sizeActuators>, totalG: number, lead = '') {

@@ -53,6 +53,8 @@ Every servo is emulated: no released build of Basecase can drive real motors. Op
 
 Basecase starts its robot daemon, the program that owns every motor command, on this computer. It talks to the app directly, with no network port. The daemon runs emulated servos on the Feetech bus, numbered 1 upward in the order of the scene's moving joints. Each Feetech or Dynamixel servo behaves like the servo from Parts on its joint. Any other joint gets an STS3215. A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply.
 
+Each emulated servo sits on its joint with its own hidden offset of up to 12°, and about one in four is reversed. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) finds both from a camera.
+
 A robot with a leg joint connects as legged, anything else as an arm. That decides what **Stop** does: an arm holds where it is, and a legged robot walks to its standing pose first.
 
 Up to 32 servos can connect. A robot with more shows no **Connect Emulated Robot**.

@@ -11,10 +11,10 @@ import { RobotMessages } from '../operate/RobotMessages';
 interface CaseRunJointsProps {
   joints: RobotJoint[];
   parts: readonly ScenePart[];
-  onBrowseRobots: () => void;
+  onShowRobots: () => void;
 }
 
-export const CaseRunJoints: React.FC<CaseRunJointsProps> = ({ joints, parts, onBrowseRobots }) => {
+export const CaseRunJoints: React.FC<CaseRunJointsProps> = ({ joints, parts, onShowRobots }) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
   const rows = jointRows({ joints, parts, calibrations: undefined, connection: robotConnection(robot) });
@@ -24,7 +24,7 @@ export const CaseRunJoints: React.FC<CaseRunJointsProps> = ({ joints, parts, onB
       {connected ? (
         <RobotHeader robot={robot} />
       ) : (
-        <ConnectRobotButton joints={joints} parts={parts} onBrowseRobots={onBrowseRobots} />
+        <ConnectRobotButton joints={joints} parts={parts} onShowRobots={onShowRobots} />
       )}
       <RobotMessages messages={robot.messages.slice(0, 1)} />
       {connected && <RobotJoints rows={rows} live />}

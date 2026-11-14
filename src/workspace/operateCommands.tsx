@@ -23,7 +23,12 @@ export function calibrateJoints(core: WorkspaceCore, only?: readonly string[]) {
   showOperateOf(core)();
 
   if (canCalibrate(joints))
-    void calibrateConnectedRobot(core.docs.updateProjectNow, { joints, parts: core.parts, only });
+    void calibrateConnectedRobot(core.docs.updateProjectNow, {
+      joints,
+      parts: core.parts,
+      project: core.project,
+      only,
+    });
 }
 
 function setUpServosCommands({ core }: CommandInputs, showOperate: () => void): Command[] {

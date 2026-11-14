@@ -33,11 +33,11 @@ Multiply turns one passed try into as many as 50 varied tries that also pass, so
 
 ![A passed try's menu in Results, with Multiply and Tag above Delete](/help/multiply-a-try-into-demonstrations/menu.png)
 
-3. While the toast shows "Multiplying…", you can keep working. To stop early and keep the variations made so far, click **Stop** in the toast.
+3. You can keep working while the toast shows "Multiplying…". To stop early and keep the variations made so far, click **Stop** in the toast.
 
 ![The toast shows Multiplying… with Stop, and a progress bar runs under the try](/help/multiply-a-try-into-demonstrations/multiplying.png)
 
-When Multiply is done, the toast shows how many variations it kept, for example "Kept 50 of 50". The try's row shows the count, such as **50 variations**.
+When Multiply is done, the toast shows how many variations it kept, for example "Kept 50 of 50". The try's row also shows the count, such as **50 variations**.
 
 ![The passed try's row reads 50 variations, above Export Dataset](/help/multiply-a-try-into-demonstrations/results.png)
 
@@ -49,9 +49,9 @@ You can also run **Multiply** from [[⌘K]]. It multiplies the newest passed try
 - In a [scanned room](/help/import-a-scanned-room), each fixed piece of furniture moves up to 50 mm and turns up to 5°. Where RoomPlan was less sure, it moves up to 100 mm and turns up to 10°.
 - Friction, masses, servo strength and servo delay change the same way they do in Checks.
 
-Then the variation replays the commands you drove the try with. Each arm target moves with the object or spot it was nearest to at that moment, so the hand still reaches it.
+The variation then replays the commands you drove the try with. Each arm target moves with the object or spot it was nearest to at that moment, so the hand still reaches it.
 
-The Case's contract judges every variation, and Multiply keeps only the ones that pass. If you want 50 more, multiply again. Each round uses new variations.
+The Case's contract judges every variation, and Multiply keeps only the ones that pass. To get 50 more, multiply the try again. Each round uses new variations.
 
 ## Limits
 
@@ -59,12 +59,12 @@ The Case's contract judges every variation, and Multiply keeps only the ones tha
 
 An object the Case marks movable never shifts. It stays where the Case's code put it, and any arm target nearest to it stays where it was.
 
-Only arm targets move with the objects. If you drove a try with the keys alone, each variation replays the same key presses, and it passes only if the moved spot still lies where the hand went.
+Only arm targets move with the objects. If you drove a try with the keys alone, each variation replays the same key presses. It passes only if the moved spot still lies where the hand went.
 
-You can't multiply a try from an earlier design of the robot. If you do, the toast says "These tries are from an earlier design. Try It again to record new ones."
+You can't multiply a try from an earlier design of the robot. If you try one, the toast says "These tries are from an earlier design. Try It again to record new ones."
 
-Deleting a try also deletes its variations, and the confirmation shows how many.
+Deleting a try also deletes its variations. The confirmation shows how many.
 
 ## In the dataset
 
-[Export Dataset](/help/export-a-lerobot-dataset) writes each variation as its own episode. In `meta/basecase.json`, each episode lists its `seed` and its `source` (the try it was made from). For a try you drove, `source` is null.
+[Export Dataset](/help/export-a-lerobot-dataset) writes each variation as its own episode. In `meta/basecase.json`, each episode lists its `seed` and its `source`, the try it was made from. For a try you drove, `source` is null.

@@ -244,20 +244,23 @@ export class TryStore {
   relabel(changes) {
     if (!Array.isArray(changes) || changes.length > MAX_RELABELS) throw new Error('Expected a list of label changes');
 
-    const relabelled = [];
-
     for (const change of changes) {
       if (!isPlain(change) || !isPlain(change.patch)) throw new Error('A label change needs its labels');
 
-      const manifest = this.manifest(change.id);
-
-      if (!manifest) continue;
-
-      this.save({ manifest: { ...manifest, labels: patchedLabels(manifest.labels, change.patch) }, recording: null });
-      relabelled.push(change.id);
+      this.dirOf(change.id);
     }
 
-    return { relabelled };
+    const patched = changes.flatMap(({ id, patch }) => {
+      const manifest = this.manifest(id);
+
+      return manifest ? [{ ...manifest, labels: patchedLabels(manifest.labels, patch) }] : [];
+    });
+
+    for (const manifest of patched) checkedManifest(manifest);
+
+    for (const manifest of patched) this.save({ manifest, recording: null });
+
+    return { relabelled: patched.map((manifest) => manifest.id) };
   }
 
   recording(id) {

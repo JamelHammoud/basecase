@@ -16,9 +16,7 @@ Take Pick Up a Block on the six-joint arm. Its reference try splits into reach, 
 
 ## Fix and Tag
 
-Split, merge, move and rename segments on the timeline. You can undo any edit.
-
-To tag a try, right-click it and choose Tag. Select several tries and right-click any of them, and Tag applies to all of them at once.
+You can split, merge, move and rename segments on the timeline, and undo any edit. You can tag one try or many at once, and tag a single segment. Tags stay in Basecase and aren't exported.
 
 ## Export
 

@@ -187,3 +187,17 @@ describe('TryStore', () => {
     expect(fs.existsSync(triesDir) ? fs.readdirSync(triesDir) : []).toEqual([]);
   });
 });
+
+describe('TryStore relabel', () => {
+  it('writes none of a list when any change in it is bad', () => {
+    store.save({ manifest: manifest('try-1', { labels: { tags: ['good'] } }) });
+
+    const kept = { id: 'try-1', patch: { tags: ['bad'] } };
+    const huge = { id: 'try-1', patch: { instruction: 'x'.repeat(300_000) } };
+
+    expect(() => store.relabel([kept, { id: 'try-1' }])).toThrow('A label change needs its labels');
+    expect(() => store.relabel([kept, { id: '../auth', patch: {} }])).toThrow('Not a valid id');
+    expect(() => store.relabel([kept, huge])).toThrow('too large');
+    expect(store.manifest('try-1').labels).toEqual({ tags: ['good'] });
+  });
+});

@@ -36,11 +36,11 @@ You can save a part or a group of parts to the Library, then add it to any scene
 
 ![The New Model menu open at the top right of the Library](/help/save-a-model-to-the-library/new-model-menu.png)
 
-When you save one part, the model gets that part's name and its **Notes**. When you save several parts, the model gets the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
+If you save one part, the model takes that part's name and its **Notes**. If you save several parts, the model takes the name of the scene. To save every visible part in the scene instead, choose **Save Whole Scene**.
 
 You can also choose **Save to Library** from a part's right-click menu, or from [[⌘K]].
 
-To bring in a file, choose **Import** from the **+** menu. An SVG file opens in Import SVG. Click **Add** there to [turn it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). To save an SVG part to the Library, click **Save to Library** (the bookmark) in the part's Inspector header.
+To bring in a file, choose **Import** from the **+** menu. SVG files open in Import SVG. Click **Add** there to [turn it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). To save an SVG part to the Library, click **Save to Library** (the bookmark) in the part's Inspector header.
 
 ![The Import SVG panel with a drawing loaded and one Add button under Output](/help/save-a-model-to-the-library/import-svg.png)
 
@@ -54,6 +54,6 @@ Hold your pointer over a model to see where it came from, its size, how many par
 
 ![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)
 
-**Search library** finds models by name or notes. It also finds tries by Case or task, robot, label, or the file or repo they came from.
+**Search library** finds models by name or notes, and tries by Case or task, robot, label, or the file or repo they came from.
 
-To rename, duplicate, or delete a model, right-click it. Basecase asks before it deletes a model.
+To rename, duplicate, or delete a model, right-click it. Basecase asks you to confirm before it deletes a model.

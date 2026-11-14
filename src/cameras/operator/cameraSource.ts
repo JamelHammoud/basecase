@@ -6,6 +6,7 @@ import {
   latestFollow,
   latestHandFollow,
   leaveOperatorCamera,
+  operatorPoints,
   type LandmarkKind,
 } from './operatorCamera';
 
@@ -14,9 +15,12 @@ const lifecycle = (kind: LandmarkKind): Pick<InputSource, 'open' | 'close'> => (
   close: () => leaveOperatorCamera(kind),
 });
 
+const landmarks = () => operatorPoints()?.flatMap(([x, y, seen]) => [x, y, seen ? 1 : 0]) ?? null;
+
 export const cameraInputSource: InputSource = {
   id: 'camera',
   pose: true,
+  raw: landmarks,
   read: ({ keys }) => {
     const follow = latestFollow();
 

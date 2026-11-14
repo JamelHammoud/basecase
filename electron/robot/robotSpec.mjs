@@ -1,11 +1,13 @@
+import { LADDER } from './ladder.mjs';
 import { ROS2, ros2JointsProblem, ros2TopicProblem } from './ros2.mjs';
 import { copiedUnits, unitsArgs, unitsProblem } from './servoUnits.mjs';
 import { G1_WRITABLE_IDS, g1JointName, UNITREE_G1 } from './unitreeG1.mjs';
 
 export const FAMILIES = ['feetech', 'dynamixel'];
 export const CLASSES = ['arm', 'legged'];
-export const LADDER = ['look', 'set_up', 'test', 'rehearse', 'first_run', 'policy', 'longer_runs'];
 export const MAX_SERVOS = 32;
+
+export { LADDER };
 
 const SPEC_KEYS = ['class', 'emulated', 'family', 'ids'];
 const G1_KEYS = ['emulated', 'family'];

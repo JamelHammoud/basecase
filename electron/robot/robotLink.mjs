@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,11 +12,13 @@ import {
   daemonArgs,
   emulatedCalibration,
   isServoFamily,
+  jointRadians,
   LADDER,
   mountedCalibration,
 } from './robotSpec.mjs';
 import { emulatedHorn, statusWithLinkAngles } from './emulatedHorns.mjs';
 import { IntentPacer } from './intentPacer.mjs';
+import { OperateRecorder } from './operateRecorder.mjs';
 import { checkedPolicyRefs } from './robotPolicy.mjs';
 import { UNITS_FILE, unitsJson } from './servoUnits.mjs';
 
@@ -59,6 +62,22 @@ const parseLine = (line) => {
 
 const motorsRun = (mode) => LADDER.indexOf(mode) >= LADDER.indexOf('test');
 
+const CENTERED = { zero_counts: 2048, direction: 1 };
+
+function statusRadians(status, session) {
+  const joints = Array.isArray(status.joints) ? status.joints : [];
+  const mounts = isServoFamily(session.spec) ? session.calibration.joints : [];
+
+  return session.spec.ids.map((id) => {
+    const position = joints.find((j) => j?.id === id)?.position;
+    const mount = mounts.find((m) => m.id === id) ?? CENTERED;
+
+    return typeof position === 'number' ? jointRadians(position, mount) : null;
+  });
+}
+
+const hashOf = (bytes) => (bytes ? createHash('sha256').update(bytes).digest('hex') : null);
+
 function written(bytes, target) {
   const staged = `${target}.part`;
 
@@ -90,7 +109,11 @@ export class RobotLink {
     tmpDir = os.tmpdir(),
     policyBytes = () => null,
     hornFor = emulatedHorn,
+    tries = null,
+    clock = () => Date.now(),
   }) {
+    this.tries = tries;
+    this.clock = clock;
     this.binary = binary;
     this.hornFor = hornFor;
     this.emit = emit;
@@ -129,12 +152,29 @@ export class RobotLink {
     return { ok: true };
   }
 
+  recorderFor(session, policy) {
+    if (!this.tries) return null;
+
+    const recorder = new OperateRecorder({
+      spec: session.spec,
+      sink: this.tries,
+      radians: (status) => statusRadians(status, session),
+      clock: this.clock,
+      onClosed: (closed) => this.emit({ event: 'recorded', ...closed }),
+    });
+
+    recorder.setPolicy(hashOf(policy));
+
+    return recorder;
+  }
+
   start(spec) {
     const artefacts = fs.mkdtempSync(path.join(this.tmpDir, 'basecase-robot-'));
     const calibration = emulatedCalibration(spec);
+    const policy = this.currentPolicy();
 
     fs.writeFileSync(path.join(artefacts, CALIBRATION_FILE), JSON.stringify(calibration));
-    placePolicy(artefacts, this.currentPolicy());
+    placePolicy(artefacts, policy);
 
     if (spec.units) fs.writeFileSync(path.join(artefacts, UNITS_FILE), unitsJson(spec.units));
 
@@ -157,6 +197,7 @@ export class RobotLink {
       measured: () => session.status,
       calibration: () => session.calibration.joints,
     });
+    session.recorder = this.recorderFor(session, policy);
     this.session = session;
     child.stdin.on('error', () => {});
     readline.createInterface({ input: child.stdout }).on('line', (line) => this.onLine(session, line));
@@ -184,6 +225,7 @@ export class RobotLink {
     if (typeof event.mode === 'string' && event.event !== 'completed') this.onMode(session, event);
 
     this.emit(event);
+    session.recorder?.event(event);
   }
 
   withTruth(session, event) {
@@ -210,10 +252,27 @@ export class RobotLink {
 
     if (!command) return UNDOCUMENTED;
 
-    if (command.cmd === 'intent') session.pacer.hold(command.joints);
+    if (command.cmd === 'intent') this.intend(session, command.joints);
     else this.write(session, command);
 
     return { ok: true };
+  }
+
+  intend(session, joints) {
+    session.pacer.hold(joints);
+
+    if (session.pacer.driving && session.status?.run === 'running') session.recorder?.intent(joints);
+  }
+
+  record(ask) {
+    const recorder = this.session?.recorder;
+
+    if (!recorder) return this.session ? { ok: true } : NOT_CONNECTED;
+
+    const scene = ask && typeof ask === 'object' && 'scene' in ask;
+    const taken = scene ? recorder.setContext(ask.scene) : recorder.sample(ask);
+
+    return taken ? { ok: true } : UNDOCUMENTED;
   }
 
   bytesOf(ref) {
@@ -245,7 +304,10 @@ export class RobotLink {
 
     if (!session) return { ok: true };
 
-    placePolicy(session.artefacts, this.currentPolicy());
+    const policy = this.currentPolicy();
+
+    placePolicy(session.artefacts, policy);
+    session.recorder?.setPolicy(hashOf(policy));
     this.write(session, { cmd: 'recheck' });
 
     return { ok: true };
@@ -289,6 +351,7 @@ export class RobotLink {
 
     this.session = null;
     session.pacer.stop();
+    session.recorder?.close('disconnect');
     clearTimeout(session.killTimer);
     fs.rmSync(session.artefacts, { recursive: true, force: true });
 

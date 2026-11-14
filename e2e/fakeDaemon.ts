@@ -107,7 +107,13 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
       robot.goal = robot.goal.map((g, k) => g + Math.max(-REACH, Math.min(REACH, held[k] - g)));
       robot.position = mix(robot.position, robot.goal, LAG).map((p, k) => (robot.ids[k] === robot.stalled ? robot.position[k] : p));
     }
-    if (robot.ticks % STATUS_TICKS === 0) emit(status());
+    if (robot.ticks % STATUS_TICKS === 0) report(status());
+  };
+
+  const report = (event) => {
+    link.statuses.push(event.joints.map((j) => j.position));
+    if (link.statuses.length > 3000) link.statuses.shift();
+    emit(event);
   };
 
   const step = () => {
@@ -188,6 +194,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     policy: [],
     lastAsk: null,
     intents: [],
+    statuses: [],
     asked: () => link.lastAsk,
     plugIn,
     plantStall: (id) => (robot ? plantStall(id) : false),
@@ -207,6 +214,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
       robot.calibration = ids.map(() => ({ zero_counts: 2048, direction: 1 }));
       link.written = robot.mounted ? mountsEvent().joints : null;
       link.intents = [];
+      link.statuses = [];
       link.lastAsk = JSON.parse(JSON.stringify(ask));
       const factory = ask.factory === true || link.factory === true;
       robot.bus = factory ? [] : ids.map((id) => ({ id }));

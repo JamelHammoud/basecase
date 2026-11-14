@@ -93,6 +93,24 @@ export async function deleteTries(ids: string[]) {
 
 export const loadRecording = (id: string) => backend.recording(id);
 
+export const loadSession = (id: string) => backend.session(id);
+
+export const saveTryVideo = (id: string, bytes: Uint8Array) => backend.saveVideo(id, bytes);
+
+export async function keepSession(stored: StoredTry, session: string) {
+  await backend.saveSession(stored, session);
+  await update((tries) => [
+    ...tries.filter((t) => t.id !== stored.id),
+    summaryOf(stored, { recording: false, strip: false }),
+  ]);
+}
+
+export async function noteStoredTry(stored: StoredTry) {
+  await update((tries) =>
+    tries.some((t) => t.id === stored.id) ? tries : [...tries, summaryOf(stored, { recording: false, strip: false })],
+  );
+}
+
 export const loadStrip = (id: string) => backend.strip(id);
 
 export async function saveStrip(id: string, strip: Blob) {

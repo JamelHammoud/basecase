@@ -1,6 +1,6 @@
 import { loadMujoco } from '../../sim/loadMujoco';
 import type { SimModel } from '../../sim/mjcfTypes';
-import { importedTries, type BuiltTries, type ImportTarget } from './importedTries';
+import { importedTries, replayedRecording, type BuiltTries, type ImportTarget, type ReplayJob } from './importedTries';
 import type { ReplayPlan } from './kinematicRecording';
 import { readSource, type ImportSource } from './readSource';
 import { DataImportError, type SourceData, type SourceFormat } from './types';
@@ -48,5 +48,6 @@ export function importHandlers() {
 
       return importedTries(await loadMujoco(), { model: job.model, data, plan: job.plan, target: job.target });
     },
+    replay: async (job: ReplayJob) => replayedRecording(await loadMujoco(), job),
   };
 }

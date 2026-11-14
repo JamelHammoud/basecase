@@ -112,7 +112,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
 
-  useRobotSync({ active, project, training: simTraining });
+  useRobotSync({ active, sceneId: scene.sceneId, project, training: simTraining, showToast });
 
   const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });
   const selection = useSelectionActions({

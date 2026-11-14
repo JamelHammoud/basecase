@@ -106,6 +106,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   robotPolicy: (id) => ipcRenderer.invoke('robot:policy', id),
   robotCalibrate: (joints) => ipcRenderer.invoke('robot:calibration', joints),
   robotState: () => ipcRenderer.invoke('robot:state'),
+  robotRecord: (sample) => ipcRenderer.invoke('robot:record', sample),
   onRobotEvent: (callback) => {
     const handler = (_event, data) => callback(data);
 

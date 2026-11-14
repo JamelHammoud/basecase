@@ -59,7 +59,7 @@ You can also run a wheeled or legged robot through a Case in the real world, on 
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results shows the count on that try's row.
 
-Teleop data from another source can come in as tries too (see [Import robot data as tries](/help/import-robot-data-as-tries)). An imported try has no Case, so nothing scores it.
+Teleop data from another source can come in as tries too (see [Import robot data as tries](/help/import-robot-data-as-tries)). Every session on a connected robot becomes a try marked **Operate** (see [Keep a robot session as a try](/help/keep-a-robot-session-as-a-try)). Imported and Operate tries have no Case, so nothing scores them.
 
 Basecase keeps your tries on this computer, along with any value the Case's code saves, such as a high score. When you share a `.basecase` file, you share the Case without its tries or those values. The Library lists tries from all of your scenes. Learn more in [Open a try from any scene](/help/open-a-try-from-any-scene).
 

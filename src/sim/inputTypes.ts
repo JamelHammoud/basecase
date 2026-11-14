@@ -24,6 +24,7 @@ export interface InputMoment {
 export interface InputSource {
   id: string;
   read: (at: InputMoment) => DriveCommand | null;
+  raw?: () => number[] | null;
   pose?: boolean;
   open?: (robot: InputRobot | null) => Promise<string | null>;
   close?: () => void;

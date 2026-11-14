@@ -8,7 +8,7 @@ import type { TryBackend } from './types';
 
 type Bytes = Uint8Array | { data?: string | null } | null | undefined;
 
-const BYTE_FIELDS = ['recording', 'bytes'];
+const BYTE_FIELDS = ['recording', 'bytes', 'session'];
 
 function forHttp(payload: unknown) {
   if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) return payload;
@@ -53,5 +53,16 @@ export const desktopTries: TryBackend = {
   },
   delete: async (ids) => {
     await call('tries:delete', ids);
+  },
+  session: async (id) => {
+    const bytes = bytesOf(await call<Bytes>('tries:session', id));
+
+    return bytes && new TextDecoder().decode(bytes);
+  },
+  saveSession: async (stored, session) => {
+    await call('tries:save', { manifest: stored, session: new TextEncoder().encode(session) });
+  },
+  saveVideo: async (id, bytes) => {
+    await call('tries:keep-video', { id, bytes });
   },
 };

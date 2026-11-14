@@ -40,4 +40,9 @@ export const webTries: TryBackend = {
   delete: async (ids) => {
     await Promise.all(ids.flatMap((id) => [manifests.delete(id), recordings.delete(id), strips.delete(id)]));
   },
+  session: async () => null,
+  saveSession: async (stored) => {
+    await manifests.put(stored.id, stored);
+  },
+  saveVideo: async () => {},
 };

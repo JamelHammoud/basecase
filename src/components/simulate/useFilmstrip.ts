@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { filmBoxes, type FilmBox } from '../../cases/filmstrip';
 import { drawFilmstrip } from '../../cases/filmstripClient';
 import type { TryRecord } from '../../cases/tries';
-import { loadRecording } from '../../cases/tryStore';
+import { loadRecording, saveTryFilm } from '../../cases/tryStore';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 
@@ -15,10 +15,14 @@ async function render(record: TryRecord, model: SimModel, boxes: FilmBox[]): Pro
 
   if (!recording || recording.nbody !== model.bodies.length) return null;
 
-  return drawFilmstrip(
+  const film = await drawFilmstrip(
     { model, recording, boxes, frames: FRAMES, width: FRAME_W, height: FRAME_H },
     { type: 'image/webp', quality: 0.8 },
   );
+
+  if (film) void saveTryFilm(record.id, film).catch(() => undefined);
+
+  return film;
 }
 
 const strips = new WeakMap<SimModel, Map<string, Promise<Blob | null>>>();

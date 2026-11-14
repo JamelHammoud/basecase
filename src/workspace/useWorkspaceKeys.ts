@@ -180,7 +180,7 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
 
     if (heldBack(e, id)) return;
 
-    if (!id || (!mod && core.printing.mode)) return;
+    if (!id || (!mod && (core.printing.mode || core.triesMode.open))) return;
 
     if (mod || SHIFTED.has(id)) e.preventDefault();
 

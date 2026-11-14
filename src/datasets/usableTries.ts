@@ -1,4 +1,4 @@
-import { sha256, type TryRecord } from '../cases/tries';
+import { passedTry, sha256, type TryRecord } from '../cases/tries';
 import { loadRecording } from '../cases/tryStore';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
@@ -20,7 +20,7 @@ export async function usableTries(tries: TryRecord[], model: SimModel, options: 
   const usable: UsableTry[] = [];
 
   for (const record of tries) {
-    const fits = record.passed && record.manifest.modelHash === modelHash;
+    const fits = passedTry(record) && record.robot.modelHash === modelHash;
     const recording = fits ? await load(record.id) : null;
 
     if (recording && accepts(recording, model)) usable.push({ record, recording });

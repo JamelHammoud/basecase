@@ -1,3 +1,4 @@
+import type { TryRecord } from '../../cases/tries';
 import type { Controller } from '../../sim/engine';
 
 export const fmtMargin = (m: number) => `${m < 0 ? '−' : '+'}${Math.abs(m).toFixed(2)}`;
@@ -23,3 +24,7 @@ export const controllerValue = (controller: Controller, policyKey: string | null
 
   return controller.kind === 'animation' ? `anim:${controller.animation.id}` : controller.kind;
 };
+
+const OUTCOME: Record<TryRecord['outcome']['result'], string> = { passed: 'Passed', failed: 'Missed', unjudged: '' };
+
+export const tryOutcome = (r: TryRecord) => OUTCOME[r.outcome.result];

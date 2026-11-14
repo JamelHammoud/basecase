@@ -1,38 +1,71 @@
 import type { RecordedFault } from '../sim/faults';
 import type { Recording } from '../sim/recorder';
 import { framePoses } from '../sim/recorder';
-import type { SimModel } from '../sim/mjcfTypes';
+import type { SimJoint, SimModel } from '../sim/mjcfTypes';
 import type { Rig, V3 } from '../utils/kinematics';
 import { evaluateContract, type Trace } from '../skills/contract';
 import { caseFactReader, caseSignalNames, sampleSignals } from './caseFacts';
 import { probeReader, type ProbeWorld } from './probes';
 import type { EndEffector } from './robotFit';
-import { CASE_FORMAT_VERSION, type Case } from './schema';
+import type { Case } from './schema';
 
-export interface TryManifest {
-  formatVersion: typeof CASE_FORMAT_VERSION;
-  caseHash: string;
+export const TRY_VERSION = 1;
+
+export type TrySource = 'case' | 'generated';
+
+export type TryResult = 'passed' | 'failed' | 'unjudged';
+
+export type TryJoint = Pick<SimJoint, 'id' | 'name' | 'type' | 'actuator' | 'drive' | 'effort'>;
+
+export interface TryRobot {
+  name: string;
   modelHash: string;
-  seed: number;
-  frames: number;
-  dt: number;
-  faults?: RecordedFault[];
-  commands?: number;
-  world?: number;
-  source?: string;
+  joints?: TryJoint[];
+}
+
+export interface TryCase {
+  id: string;
+  name: string;
+  hash: string;
+  contractHash: string;
 }
 
 export interface TryRecord {
+  version: typeof TRY_VERSION;
   id: string;
-  caseId: string;
-  robot: string;
+  sceneId: string;
+  robot: TryRobot;
+  case: TryCase | null;
+  source: TrySource;
+  input: string | null;
   at: string;
-  passed: boolean;
-  margin: number;
   seconds: number;
-  manifest: TryManifest;
-  generated?: true;
+  rate: number;
+  outcome: { result: TryResult; margin: number };
+  seed: number;
+  sourceTry: string | null;
+  frames: number;
+  faults: RecordedFault[];
+  commands?: number;
+  world?: number;
 }
+
+export interface TryRef {
+  id: string;
+}
+
+export const passedTry = (t: TryRecord) => t.outcome.result === 'passed';
+
+export const isGenerated = (t: TryRecord) => t.source === 'generated';
+
+export const tryRefs = (tries: Array<{ id: string }>): TryRef[] => tries.map(({ id }) => ({ id }));
+
+export const trySummary = (t: TryRecord): TryRecord => ({
+  ...t,
+  robot: { name: t.robot.name, modelHash: t.robot.modelHash },
+});
+
+export const newestFirst = (tries: TryRecord[]) => [...tries].sort((a, b) => b.at.localeCompare(a.at));
 
 export async function sha256(text: string): Promise<string> {
   const bytes = new TextEncoder().encode(text);
@@ -87,53 +120,91 @@ export function trySignals({ recording, ...scoring }: TryScoring): Trace {
 
 export const scoreTry = (scoring: TryScoring) => evaluateContract(scoring.kase.task.contract, trySignals(scoring));
 
-export async function tryManifest(kase: Case, model: SimModel, recording: Recording): Promise<TryManifest> {
+export type JointNames = (id: string) => string | undefined;
+
+export const tryJoints = (model: SimModel, names: JointNames = () => undefined): TryJoint[] =>
+  model.joints.map(({ id, name, type, actuator, drive, effort }) => ({
+    id,
+    name: names(id) ?? name,
+    type,
+    actuator,
+    drive,
+    effort,
+  }));
+
+export interface NewTry {
+  id: string;
+  sceneId: string;
+  robot: string;
+  kase: Case;
+  model: SimModel;
+  recording: Recording;
+  verdict: { passed: boolean; margin: number };
+  names?: JointNames;
+}
+
+export async function newTry(options: NewTry): Promise<TryRecord> {
+  const { id, sceneId, robot, kase, model, recording, verdict } = options;
+
   return {
-    formatVersion: CASE_FORMAT_VERSION,
-    caseHash: await sha256(JSON.stringify(kase)),
-    modelHash: await sha256(model.xml),
+    version: TRY_VERSION,
+    id,
+    sceneId,
+    robot: { name: robot, modelHash: await sha256(model.xml), joints: tryJoints(model, options.names) },
+    case: {
+      id: kase.id,
+      name: kase.name,
+      hash: await sha256(JSON.stringify(kase)),
+      contractHash: await sha256(JSON.stringify(kase.task.contract)),
+    },
+    source: 'case',
+    input: null,
+    at: new Date().toISOString(),
+    seconds: recording.frames * recording.dt,
+    rate: Math.round(1 / recording.dt),
+    outcome: { result: verdict.passed ? 'passed' : 'failed', margin: verdict.margin },
     seed: 0,
+    sourceTry: null,
     frames: recording.frames,
-    dt: recording.dt,
     faults: recording.faults ?? [],
     ...(recording.commands && recording.controller ? { commands: recording.commands.length } : {}),
     ...(recording.world?.length ? { world: recording.world.length } : {}),
   };
 }
 
-export const multipliable = (t: TryRecord) => t.passed && !t.generated && !!t.manifest.commands;
+export const multipliable = (t: TryRecord) => passedTry(t) && t.source === 'case' && !!t.commands;
 
 export const generatedFrom = (tries: TryRecord[], source: TryRecord) =>
-  tries.filter((t) => t.generated && t.manifest.source === source.id);
+  tries.filter((t) => isGenerated(t) && t.sourceTry === source.id);
+
+export const withGenerated = (tries: TryRecord[], ids: Iterable<string>) => {
+  const gone = new Set(ids);
+
+  return new Set([...gone, ...tries.filter((t) => isGenerated(t) && gone.has(t.sourceTry ?? '')).map((t) => t.id)]);
+};
 
 export interface Generated {
   source: TryRecord;
-  manifest: TryManifest;
   seed: number;
   margin: number;
   recording: Recording;
 }
 
-export function generatedTry({ source, manifest, seed, margin, recording }: Generated): TryRecord {
+export function generatedTry({ source, seed, margin, recording }: Generated): TryRecord {
   return {
+    ...source,
     id: `${source.id}-${seed}`,
-    caseId: source.caseId,
-    robot: source.robot,
+    source: 'generated',
     at: new Date().toISOString(),
-    passed: true,
-    margin,
     seconds: recording.frames * recording.dt,
-    generated: true,
-    manifest: {
-      ...manifest,
-      seed,
-      source: source.id,
-      frames: recording.frames,
-      dt: recording.dt,
-      faults: recording.faults ?? [],
-      commands: recording.commands?.length ?? 0,
-    },
+    rate: Math.round(1 / recording.dt),
+    outcome: { result: 'passed', margin },
+    seed,
+    sourceTry: source.id,
+    frames: recording.frames,
+    faults: recording.faults ?? [],
+    commands: recording.commands?.length ?? 0,
   };
 }
 
-export const worstFirst = (tries: TryRecord[]) => [...tries].sort((a, b) => a.margin - b.margin);
+export const worstFirst = (tries: TryRecord[]) => [...tries].sort((a, b) => a.outcome.margin - b.outcome.margin);

@@ -66,6 +66,8 @@ const GLOSSARY_SAMPLES = [
   ['Generate Guide', 'Generate', 'Make'],
   ['Auto-generated guide', 'Auto-generated', 'Make'],
   ['Regenerate', 'Regenerate', 'Update'],
+  ['Recordings', 'Recordings', 'Try'],
+  ['Episode 4', 'Episode', 'Try'],
 ];
 
 const SPELLING_SAMPLES = Object.keys(SPELLING).map((british) => [`The ${british} one`, british]);

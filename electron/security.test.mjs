@@ -3,7 +3,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { AgentBridge } from './backend/agentBridge.mjs';
 import { EventHub } from './backend/eventHub.mjs';
@@ -17,6 +17,7 @@ import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { openCadFile } from './cadImport/openCadFile.mjs';
 import { encodeReply, decodeReply } from './cadImport/reply.mjs';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
+import { TryLibrary } from './library/tryLibrary.mjs';
 import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
 import { assertPublicUrl, isPublicAddress, publicFetch, readCapped } from './publicFetch.mjs';
 import { RobotLink } from './robot/robotLink.mjs';
@@ -107,6 +108,23 @@ describe('scene library ids', () => {
     library.delete('../auth');
 
     expect(fs.readFileSync(secret, 'utf-8')).toBe('{"token":"x"}');
+  });
+});
+
+describe('try library ids', () => {
+  it('never reads, writes or deletes outside the tries folder', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tries-'));
+    const library = new TryLibrary({ triesDir: path.join(dir, 'tries'), cacheFile: path.join(dir, 'cache.json') });
+
+    onTestFinished(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+    for (const id of ['../scenes/evil', '..', 'a/b', '', 'CON', '../../x']) {
+      expect(() => library.save({ record: { version: 1, id }, recording: Buffer.from('x') })).toThrow('Not a valid id');
+      expect(() => library.saveFilm({ id, film: Buffer.from('x') })).toThrow('Not a valid id');
+      expect([library.open(id), library.film(id), library.delete([id]).deleted]).toEqual([null, null, []]);
+    }
+
+    expect([fs.readdirSync(dir), fs.readdirSync(path.join(dir, 'tries'))]).toEqual([['tries'], []]);
   });
 });
 

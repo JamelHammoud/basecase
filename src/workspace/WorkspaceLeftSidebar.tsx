@@ -30,6 +30,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
     onSaveModel: library.saveAsModel,
     onImport: () => void files.pickImports(),
     onImageToModel: tool.requestAttach,
+    onOpenTries: core.triesMode.show,
   };
 
   return (

@@ -5,7 +5,8 @@ import { worldDeltas } from '../sim/mjcf';
 import { codePanelsOf } from '../cases/console/codeEdits';
 import { codePanelKey, codeReport } from '../cases/console/codeReports';
 import { parseCase } from '../cases/schema';
-import { loadRecording } from '../cases/tryStore';
+import { loadRecording, updateTry } from '../cases/tryStore';
+import type { TryRecord } from '../cases/tries';
 import { withCalibration } from '../reality/projectCalibrations';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
@@ -24,6 +25,9 @@ interface DevHookOptions {
   agent: AgentSession;
   routeFiles: (files: File[]) => void;
 }
+
+const passAll = (tries: TryRecord[]) =>
+  Promise.all(tries.map((t) => updateTry(t.id, (r) => ({ ...r, outcome: { ...r.outcome, result: 'passed' } }))));
 
 export function useDevStudioHook({ active, core, actions, agent, routeFiles }: DevHookOptions) {
   const { docs, viewportRef, setSelectedIds, posing, loadSeed } = core;
@@ -103,7 +107,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
       );
     },
     referenceTry: () => core.simTraining.cases.attempt.reference(),
-    passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
+    passTries: () => passAll(core.simTraining.cases.tries),
     multiplyRuns: (runs) => core.simTraining.cases.multiply.setRuns(runs),
     sharedLink: () => core.simTraining.share.link,
     stubTrainer: (policy, snapshots) => {

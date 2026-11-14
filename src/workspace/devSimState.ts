@@ -1,3 +1,4 @@
+import { isGenerated, passedTry } from '../cases/tries';
 import type { Controller } from '../sim/engine';
 import { modelFingerprints } from '../sim/policyFreshness';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -19,12 +20,13 @@ function caseState({ cases }: WorkspaceCore['simTraining']) {
     caseSeconds: cases.active?.task.seconds ?? null,
     multiplying: !!cases.multiply.running,
     tries: cases.tries.map((t) => ({
-      world: t.manifest.world ?? 0,
-      generated: !!t.generated,
-      passed: t.passed,
-      margin: t.margin,
+      id: t.id,
+      world: t.world ?? 0,
+      generated: isGenerated(t),
+      passed: passedTry(t),
+      margin: t.outcome.margin,
       seconds: t.seconds,
-      faults: t.manifest.faults ?? [],
+      faults: t.faults,
     })),
   };
 }

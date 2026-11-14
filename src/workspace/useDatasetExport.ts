@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { caseSlots, type Case } from '../cases/schema';
-import { sha256, type TryRecord } from '../cases/tries';
+import { passedTry, sha256, type TryRecord } from '../cases/tries';
 import type { DatasetJobEpisode } from '../datasets/buildDataset';
 import { datasetCameras, snakeKey } from '../datasets/cameras';
 import { exportDatasetFiles, exportDatasetZip, type DatasetSpec } from '../datasets/datasetClient';
@@ -47,10 +47,10 @@ async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) 
     source: {
       try: record.id,
       at: record.at,
-      margin: record.margin,
-      case_hash: record.manifest.caseHash,
-      seed: record.manifest.seed,
-      source: record.manifest.source ?? null,
+      margin: record.outcome.margin,
+      case_hash: record.case?.hash ?? null,
+      seed: record.seed,
+      source: record.sourceTry,
     },
   }));
 
@@ -148,7 +148,7 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
   const { sim, rig, parts, active, tries, showToast, openAccounts, sceneId } = options;
   const [exporting, setExporting] = useState(false);
   const busy = useRef(false);
-  const passed = tries.filter((t) => t.passed);
+  const passed = tries.filter(passedTry);
   const ready = !!active && passed.length > 0;
   const prepare = (kase: Case, from: TryRecord[]) => prepareDataset({ sim, rig, parts, sceneId, kase, tries: from });
 

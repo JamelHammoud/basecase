@@ -3,8 +3,8 @@ import { castOf, stageCase, stagedEffectors, type StagedCase } from '../cases/ca
 import { driveFor, slotIndexOf, toCommand } from '../cases/caseDrives';
 import { worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
-import { saveRecording } from '../cases/tryStore';
+import { newTry, scoreTry, type TryRecord } from '../cases/tries';
+import { saveTry } from '../cases/tryStore';
 import type { RobotDrive } from '../sim/drive';
 import type { DriveTeam } from '../sim/useDrive';
 import type { Simulation } from '../sim/useSimulation';
@@ -20,6 +20,7 @@ interface TryOptions {
   rig: Rig;
   parts: ScenePart[];
   joints: RobotJoint[];
+  sceneId: string;
   active: Case | null;
   partners: () => SlotRobot[];
   onTry: (record: TryRecord) => void;
@@ -59,7 +60,7 @@ function refuseDrive(refusal: string | null | false, onRefuse: (message: string)
 }
 
 export function useCaseTry(options: TryOptions): CaseTry {
-  const { sim, rig, parts, joints, active, partners, onTry, onRefuse } = options;
+  const { sim, rig, parts, joints, sceneId, active, partners, onTry, onRefuse } = options;
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [startedAt, setStartedAt] = useState(0);
   const finishing = useRef(false);
@@ -93,19 +94,19 @@ export function useCaseTry(options: TryOptions): CaseTry {
       rig,
       ...stagedEffectors(staged, { rig, parts }),
     });
-    const id = newTryId();
-
-    await saveRecording(id, recording);
-    onTry({
-      id,
-      caseId: kase.id,
+    const record = await newTry({
+      id: newTryId(),
+      sceneId,
       robot: rig.robots[0]?.name ?? 'Robot',
-      at: new Date().toISOString(),
-      passed: verdict.passed,
-      margin: verdict.margin,
-      seconds: recording.frames * recording.dt,
-      manifest: await tryManifest(staged.kase, model, recording),
+      kase: { ...staged.kase, id: kase.id, name: kase.name },
+      model,
+      recording,
+      verdict,
+      names: (jointId) => rig.byId.get(jointId)?.name,
     });
+
+    await saveTry(record, recording);
+    onTry(record);
     sim.drive.stop();
     setPhase('idle');
     finishing.current = false;

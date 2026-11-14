@@ -32,14 +32,21 @@ async function scriptedTry(seed: number) {
 }
 
 const tryRecord = (id: string, modelHash: string): TryRecord => ({
+  version: 1,
   id,
-  caseId: 'touch',
-  robot: 'arm',
+  sceneId: 'scene',
+  robot: { name: 'arm', modelHash },
+  case: { id: 'touch', name: 'Touch', hash: 'c', contractHash: 'k' },
+  source: 'case',
+  input: null,
   at: '2026-11-13T00:00:00Z',
-  passed: true,
-  margin: 0.4,
   seconds: 4,
-  manifest: { formatVersion: 1, caseHash: 'c', modelHash, seed: 0, frames: 2, dt: 0.02 },
+  rate: 50,
+  outcome: { result: 'passed', margin: 0.4 },
+  seed: 0,
+  sourceTry: null,
+  frames: 2,
+  faults: [],
 });
 
 describe('demonstration rows from a try', () => {

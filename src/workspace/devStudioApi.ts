@@ -70,7 +70,7 @@ export interface DevActions {
   routineState: () => unknown;
   printState: () => unknown;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
-  passTries: () => void;
+  passTries: () => Promise<unknown>;
   multiplyRuns: (runs: number) => void;
   addCase: (raw: unknown) => string;
   runCase: (id: string) => void;

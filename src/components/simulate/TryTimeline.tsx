@@ -1,20 +1,19 @@
 import React from 'react';
 import { CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
-import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
-import type { TryTimeline as Timeline } from '../../workspace/useTryTimeline';
+import type { TimelineView } from '../../workspace/useTryTimeline';
 import { runClock } from '../../utils/duration';
 import { TimelineLane } from './TimelineLane';
 import { useTimelineKeys } from './useTimelineKeys';
 
 interface TryTimelineProps {
-  timeline: Timeline;
-  rig: Rig;
-  onSelectParts: (ids: string[]) => void;
+  timeline: TimelineView;
+  nameOf: (jointId: string) => string;
+  onSelectLane?: (jointId: string) => void;
 }
 
 const ic = 'w-4 h-4';
 
-export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelectParts }) => {
+export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, nameOf, onSelectLane }) => {
   useTimelineKeys(timeline);
 
   if (!timeline.open) return null;
@@ -33,11 +32,11 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
           <TimelineLane
             key={lane.jointId}
             lane={lane}
-            name={prettyJointName(rig.byId.get(lane.jointId)?.name ?? lane.jointId)}
+            name={nameOf(lane.jointId)}
             frame={frame}
             markers={markers}
             onSeek={timeline.seek}
-            onSelect={() => onSelectParts(linkParts(rig, lane.jointId))}
+            onSelect={() => onSelectLane?.(lane.jointId)}
           />
         ))}
       </div>

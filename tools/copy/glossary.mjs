@@ -49,6 +49,11 @@ export const GLOSSARY = [
     synonyms: ['creat(?:e|es|ed|ing)', '(?:auto-)?generat(?:e|es|ed|ing)'],
   },
   { word: 'Update', action: 'Make an out-of-date build guide again', synonyms: ['regenerate'] },
+  {
+    word: 'Try',
+    action: 'Name a recording of a robot run, whatever made it',
+    synonyms: ['recordings?', 'episodes?'],
+  },
 ];
 
 export const GLOSSARY_COPY = GLOSSARY.flatMap(({ word, action, synonyms }) =>

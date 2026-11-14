@@ -12,7 +12,7 @@ import { filmFrames } from './filmstrip';
 import { robotFacts } from './robotFit';
 import { worldItem } from './schema';
 import { caseRobot, presetCase, runCase, touchTheDots } from './testing';
-import { scoreTry, tryManifest, worstFirst, type TryRecord } from './tries';
+import { newTry, scoreTry, tryRefs, worstFirst, type TryRecord } from './tries';
 
 const robot = (id: string) => fixtureRobots().find((r) => r.id === id)!;
 
@@ -63,10 +63,21 @@ describe('recording a try', () => {
 
     stored.forEach((v, i) => expect(again[i]).toBeCloseTo(v, 4));
 
-    const manifest = await tryManifest(kase, model, recording);
+    const record = await newTry({
+      id: 'try-1',
+      sceneId: 'scene-1',
+      robot: r.id,
+      kase,
+      model,
+      recording,
+      verdict: { passed: true, margin: 0.1 },
+    });
 
-    expect(manifest.caseHash).toMatch(/^[0-9a-f]{64}$/);
-    expect(manifest.frames).toBe(recording.frames);
+    expect(record.case?.hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(record.case?.contractHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(record.frames).toBe(recording.frames);
+    expect(record.rate).toBe(RECORD_HZ);
+    expect(record.robot.joints?.map((j) => j.id)).toEqual(model.joints.map((j) => j.id));
     engine.dispose();
     replay.dispose();
   });
@@ -122,15 +133,15 @@ describe('recording a try', () => {
   });
 
   it('sorts tries worst first, and tries never travel in a .basecase file', () => {
-    const t = (margin: number) => ({ margin }) as TryRecord;
+    const t = (margin: number) => ({ id: `t${margin}`, outcome: { result: 'passed', margin } }) as TryRecord;
 
-    expect(worstFirst([t(0.4), t(-0.2), t(0.1)]).map((x) => x.margin)).toEqual([-0.2, 0.1, 0.4]);
+    expect(worstFirst([t(0.4), t(-0.2), t(0.1)]).map((x) => x.outcome.margin)).toEqual([-0.2, 0.1, 0.4]);
 
     const scene = sharedScene({
       name: 'S',
       globalGoal: '',
       parts: [],
-      project: { ...DEFAULT_PROJECT, cases: [touchTheDots(robot('arm-3dof'))], tries: [t(1)] },
+      project: { ...DEFAULT_PROJECT, cases: [touchTheDots(robot('arm-3dof'))], tries: tryRefs([t(1)]) },
     });
 
     expect(scene.project).not.toHaveProperty('tries');

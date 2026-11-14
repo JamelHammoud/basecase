@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { ContextMenu, NoMatches, SearchField, useScrollFade, type ContextMenuEntry } from '../design-system';
 import type { CustomModelDefinition, ScenePart } from '../types/robotics';
 import { ModelsSection, type SectionState } from './library/sections';
+import { TriesSection } from './tries/TriesSection';
+import { matchTries, robotGroups } from './tries/triesLibrary';
+import { useStoredTries } from '../workspace/useStoredTries';
 
 export interface LibraryPanelProps {
   customModels: CustomModelDefinition[];
@@ -14,6 +17,7 @@ export interface LibraryPanelProps {
   onSaveModel: (mode: 'selected' | 'all') => void;
   onImport: () => void;
   onImageToModel: () => void;
+  onOpenTries: (robot: string, query: string) => void;
 }
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
@@ -32,6 +36,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
   const searching = query.trim() !== '';
   const matches = matcher(query);
   const models = props.customModels.filter((m) => matches(m.name, m.description));
+  const tries = robotGroups(useStoredTries().filter(matchTries(query)));
   const state: SectionState = {
     renaming,
     setRenaming,
@@ -61,11 +66,12 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
       </div>
 
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={fadeStyle}>
-        {searching && models.length === 0 ? (
+        {searching && models.length === 0 && tries.length === 0 ? (
           <NoMatches query={query} />
         ) : (
           <div className="px-[8px] pb-4">
-            <ModelsSection props={props} models={models} state={state} />
+            {(!searching || models.length > 0) && <ModelsSection props={props} models={models} state={state} />}
+            {tries.length > 0 && <TriesSection groups={tries} onOpen={(robot) => props.onOpenTries(robot, query)} />}
           </div>
         )}
       </div>

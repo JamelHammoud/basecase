@@ -65,7 +65,7 @@ export function useTryTimeline(options: TimelineOptions) {
   const opening = useRef(0);
   const frames = opened?.recording.frames ?? 0;
   const playback = useTimelinePlayback({ frames, dt: opened?.recording.dt ?? 1, seek: sim.seek });
-  const lanes = opened && sim.model ? timelineLanes(sim.model, opened.recording, opened.efforts) : [];
+  const lanes = opened && sim.model ? timelineLanes(sim.model.joints, opened.recording, opened.efforts) : [];
 
   const show = async (record: TryRecord) => {
     const ticket = ++opening.current;
@@ -129,3 +129,8 @@ export function useTryTimeline(options: TimelineOptions) {
 }
 
 export type TryTimeline = ReturnType<typeof useTryTimeline>;
+
+export type TimelineView = Pick<
+  TryTimeline,
+  'open' | 'frames' | 'dt' | 'lanes' | 'trips' | 'frame' | 'playing' | 'close' | 'seek' | 'step' | 'toggle'
+>;

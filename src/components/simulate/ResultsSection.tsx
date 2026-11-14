@@ -12,7 +12,7 @@ import {
   deleteEntry,
   type ContextMenuEntry,
 } from '../../design-system';
-import { generatedFrom, type TryRecord } from '../../cases/tries';
+import { generatedFrom, isGenerated, passedTry, type TryRecord } from '../../cases/tries';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import type { Simulation } from '../../sim/useSimulation';
@@ -29,6 +29,7 @@ import { runClock } from '../../utils/duration';
 import { ProgressBar } from './ProgressBar';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
+import { tryOutcome } from './format';
 import { plural } from '../../../electron/plural.mjs';
 
 interface TryRowProps {
@@ -43,10 +44,8 @@ interface TryRowProps {
   onMenu: (e: React.MouseEvent) => void;
 }
 
-const outcome = (r: TryRecord) => (r.passed ? 'Passed' : 'Missed');
-
 const Faults: React.FC<{ record: TryRecord; rig: Rig }> = ({ record, rig }) =>
-  record.manifest.faults?.map((f) => (
+  record.faults.map((f) => (
     <Tooltip
       key={`${f.joint}-${f.at}`}
       label={`${prettyJointName(rig.byId.get(f.joint)?.name ?? f.joint)} at ${runClock(f.at)}`}
@@ -64,7 +63,7 @@ const TryRow: React.FC<TryRowProps> = (props) => {
   return (
     <div className="py-1.5 flex flex-col gap-1.5" onContextMenu={onMenu} data-testid="try-row">
       <div className="flex items-center gap-2 text-[13px]">
-        <span className={record.passed ? 'text-white/85' : 'text-[#f87171]'}>{outcome(record)}</span>
+        <span className={passedTry(record) ? 'text-white/85' : 'text-[#f87171]'}>{tryOutcome(record)}</span>
         <span className="text-white/50 tabular">{runClock(record.seconds)}</span>
         <span className="flex-1 text-white/50 tabular" data-testid="try-generated">
           {generated > 0 && plural(generated, 'variation')}
@@ -140,7 +139,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
   const { cases, rig, share, model, parts, world, run, compare, explore } = props;
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const all = cases.active ? cases.tries : [];
-  const tries = all.filter((t) => !t.generated);
+  const tries = all.filter((t) => !isGenerated(t));
   const { multiply } = cases;
   const progressOf = (t: TryRecord) =>
     multiply.running?.source === t.id ? multiply.running.done / multiply.running.total : null;

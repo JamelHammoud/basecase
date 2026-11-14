@@ -4,7 +4,7 @@ import { caseCheckPool } from '../cases/caseChecksClient';
 import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import { generatedFrom, generatedTry, multipliable, sha256, type TryRecord, type TryScoring } from '../cases/tries';
-import { deleteRecording, loadRecording, saveRecording } from '../cases/tryStore';
+import { deleteTries, loadRecording, saveTries } from '../cases/tryStore';
 import type { Variation } from '../cases/tryReplay';
 import { rigForWorker } from '../sim/drive';
 import type { Simulation } from '../sim/useSimulation';
@@ -49,7 +49,7 @@ const batchesOf = (seeds: number[]) =>
   Array.from({ length: Math.ceil(seeds.length / BATCH) }, (_, i) => seeds.slice(i * BATCH, (i + 1) * BATCH));
 
 const nextSeed = (tries: TryRecord[], source: TryRecord) =>
-  Math.max(0, ...generatedFrom(tries, source).map((t) => t.manifest.seed)) + 1;
+  Math.max(0, ...generatedFrom(tries, source).map((t) => t.seed)) + 1;
 
 const keptText = (kept: number, tried: number) => `Kept ${kept} of ${tried}`;
 
@@ -64,7 +64,7 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
 
   const sourceOf = async (record: TryRecord, kase: Case): Promise<TryScoring | null> => {
     const model = sim.model ?? (await sim.buildModel());
-    const recording = (await sha256(model.xml)) === record.manifest.modelHash ? await loadRecording(record.id) : null;
+    const recording = (await sha256(model.xml)) === record.robot.modelHash ? await loadRecording(record.id) : null;
 
     if (!recording?.commands) return null;
 
@@ -81,19 +81,13 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
 
   const keep = async (record: TryRecord, kept: Variation[], live: () => boolean) => {
     const made = kept.map((v) =>
-      generatedTry({
-        source: record,
-        manifest: record.manifest,
-        seed: v.seed ?? 0,
-        margin: v.margin,
-        recording: v.recording,
-      }),
+      generatedTry({ source: record, seed: v.seed ?? 0, margin: v.margin, recording: v.recording }),
     );
 
-    await Promise.all(made.map((t, i) => saveRecording(t.id, kept[i].recording)));
+    await saveTries(made.map((t, i) => ({ record: t, recording: kept[i].recording })));
 
     if (!live()) {
-      made.forEach((t) => void deleteRecording(t.id));
+      void deleteTries(made.map((t) => t.id));
 
       return;
     }

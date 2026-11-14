@@ -122,7 +122,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
       <SkeletonServoMenu skeleton={core.skeleton} />
       <DriveOverlay sim={sim} />
       <BuildAlongBar buildAlong={core.buildAlong} active={active} />
-      {!core.caseRun.open && (
+      {!core.caseRun.open && !core.triesMode.open && (
         <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
       )}
       <AnnotationLayer

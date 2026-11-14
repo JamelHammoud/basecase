@@ -40,11 +40,11 @@ Undo keeps your last 50 steps in each scene.
 
 Every saved scene is in the **Scenes** menu in the title bar ([[⌘O]]), newest first. Up to 8 scenes stay open as tabs, and Basecase reopens them the next time it starts.
 
-On disk, each scene is a JSON file in `library/scenes`, inside `~/Library/Application Support/Basecase` on a Mac or `%APPDATA%\Basecase` on Windows. The web studio keeps them in the browser instead.
+On disk, each scene is a JSON file in `library/scenes`, inside `~/Library/Application Support/Basecase` on a Mac or `%APPDATA%\Basecase` on Windows. Each try is a folder in `library/tries` beside them. The web studio keeps both in the browser instead.
 
 ## Scenes and Library models
 
-The Library holds models, not scenes. A model is a part or a group of parts you saved to drop into any scene: a servo bracket, a wheel hub, a gripper.
+The Library holds models and tries, not scenes. A model is a part or a group of parts you saved to drop into any scene: a servo bracket, a wheel hub, a gripper. Its **Tries** section lists the tries from every scene by robot, as in [Browse tries in the Library](/help/browse-tries-in-the-library).
 
 Use a scene for a whole robot, and the Library for pieces you reuse across robots. Steps are in [Save a model to the Library](/help/save-a-model-to-the-library).
 

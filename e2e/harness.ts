@@ -1,5 +1,10 @@
-import { chromium, type Browser, type Page } from 'playwright-core';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { chromium, type Browser, type Page, type Route } from 'playwright-core';
 import { inject } from 'vitest';
+import { TryLibrary } from '../electron/library/tryLibrary.mjs';
+import { tryPostRoutes } from '../electron/library/tryRoutes.mjs';
 import { TEST_HOOKS_FLAG } from '../src/utils/platform/testHooksFlag';
 
 const EFFORT_LEVELS = [
@@ -53,13 +58,40 @@ export interface App {
   close: () => Promise<void>;
 }
 
+type TryRoutes = ReturnType<typeof tryPostRoutes>;
+
 interface Backend {
   posts: App['posts'];
   lists: Record<string, unknown>;
   live: string[];
+  tries: TryRoutes;
 }
 
-async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise<void> {
+function tryStore() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-tries-'));
+  const library = new TryLibrary({
+    triesDir: path.join(dir, 'tries'),
+    cacheFile: path.join(dir, '.try-summaries.json'),
+  });
+
+  return { routes: tryPostRoutes(library), remove: () => fs.rmSync(dir, { recursive: true, force: true }) };
+}
+
+async function answerTry(route: Route, handler: TryRoutes[number][1]) {
+  const body = route.request().postDataJSON() as { arg?: unknown } | null;
+
+  try {
+    const reply = await handler({ arg: body?.arg });
+
+    return await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(reply) });
+  } catch (e) {
+    const error = e instanceof Error ? e.message : String(e);
+
+    return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error }) });
+  }
+}
+
+async function stubBackend(page: Page, { posts, lists, live, tries }: Backend): Promise<void> {
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }),
   );
@@ -69,6 +101,10 @@ async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise
     if (live.some((prefix) => name.startsWith(prefix))) return route.continue();
 
     if (route.request().method() === 'POST') posts.push({ route: name, body: route.request().postDataJSON() });
+
+    const tryRoute = route.request().method() === 'POST' && tries.find(([prefix]) => prefix === `/${name}`);
+
+    if (tryRoute) return answerTry(route, tryRoute[1]);
 
     return route.fulfill({
       status: 200,
@@ -98,6 +134,7 @@ export async function openApp(
   const errors: string[] = [];
   const posts: App['posts'] = [];
   const requests: string[] = [];
+  const tries = tryStore();
 
   page.on('request', (request) => requests.push(request.url()));
   page.on('pageerror', (e) => errors.push(e.message));
@@ -109,7 +146,7 @@ export async function openApp(
     errors.push(where ? `${m.text()} (${where})` : m.text());
   });
   await exposeTestHooks(page);
-  await stubBackend(page, { posts, lists, live });
+  await stubBackend(page, { posts, lists, live, tries: tries.routes });
   await page.goto(inject('appUrl'));
   await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
     timeout: 60000,
@@ -121,7 +158,10 @@ export async function openApp(
     errors,
     posts,
     requests,
-    close: () => browser.close(),
+    close: async () => {
+      await browser.close();
+      tries.remove();
+    },
   };
 }
 

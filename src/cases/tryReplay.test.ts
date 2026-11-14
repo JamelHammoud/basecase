@@ -54,7 +54,7 @@ describe('a driven try', () => {
     expect(recording.commands?.map((c) => c.command.target)).toEqual(
       touch.source.kase.reference.timeline.map((c) => c.target),
     );
-    expect(touch.record.manifest.commands).toBe(recording.commands?.length);
+    expect(touch.record.commands).toBe(recording.commands?.length);
     expect(multipliable(touch.record)).toBe(true);
   });
 
@@ -128,15 +128,20 @@ describe('generated tries', () => {
     const replayed = await replayTry(mj, touch.source, 7);
     const generated = generatedTry({
       source: touch.record,
-      manifest: touch.record.manifest,
       seed: 7,
       margin: replayed.margin,
       recording: replayed.recording,
     });
 
-    expect(generated).toMatchObject({ generated: true, passed: true, caseId: touch.record.caseId });
-    expect(generated.manifest).toMatchObject({ seed: 7, source: touch.record.id });
-    expect(generated.manifest.modelHash).toBe(touch.record.manifest.modelHash);
+    expect(generated).toMatchObject({
+      id: `${touch.record.id}-7`,
+      source: 'generated',
+      outcome: { result: 'passed' },
+      case: touch.record.case,
+      seed: 7,
+      sourceTry: touch.record.id,
+    });
+    expect(generated.robot.modelHash).toBe(touch.record.robot.modelHash);
     expect(multipliable(generated)).toBe(false);
     expect(generatedFrom([touch.record, generated], touch.record)).toEqual([generated]);
   });

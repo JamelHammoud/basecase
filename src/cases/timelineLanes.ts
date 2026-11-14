@@ -1,4 +1,4 @@
-import type { SimModel } from '../sim/mjcfTypes';
+import type { SimJoint } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 
 export interface TimelineLane {
@@ -10,7 +10,9 @@ export interface TimelineLane {
   limit: number;
 }
 
-const toUnit = (type: SimModel['joints'][number]['type']) => (type === 'prismatic' ? 1000 : 180 / Math.PI);
+export type LaneJoint = Pick<SimJoint, 'id' | 'type' | 'actuator' | 'drive' | 'effort'>;
+
+const toUnit = (type: LaneJoint['type']) => (type === 'prismatic' ? 1000 : 180 / Math.PI);
 
 function column(r: Recording, read: (frame: number) => number): Float32Array {
   const out = new Float32Array(r.frames);
@@ -20,9 +22,9 @@ function column(r: Recording, read: (frame: number) => number): Float32Array {
   return out;
 }
 
-export function timelineLanes(model: SimModel, r: Recording, efforts: Float32Array[]): TimelineLane[] {
-  return model.joints.flatMap((j, i) => {
-    const effort = efforts[i];
+export function timelineLanes(joints: LaneJoint[], r: Recording, efforts: Float32Array[] | null): TimelineLane[] {
+  return joints.flatMap((j, i) => {
+    const effort = efforts ? efforts[i] : new Float32Array(r.frames).fill(Number.NaN);
 
     if (j.actuator < 0 || !effort?.length) return [];
 

@@ -1,8 +1,10 @@
 import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
 import { TryTimeline } from '../components/simulate/TryTimeline';
+import { TriesCanvas } from '../components/tries/TriesCanvas';
 import { ViewportToolbar } from '../components/ViewportToolbar';
 import { FileImportIcon, PhotoIcon, Toast } from '../design-system';
+import { linkParts, prettyJointName } from '../utils/kinematics';
 import { CaseRunOverlays } from './CaseRunProvider';
 import { MarkBar } from './MarkBar';
 import { PlateCanvas } from './PlateCanvas';
@@ -81,21 +83,23 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
   const { tool, marks, toasts } = core;
 
   return (
-    <div className="absolute bottom-5 inset-x-0 z-20 flex flex-col items-center gap-[8px] pointer-events-none">
+    <div
+      className={`absolute bottom-5 inset-x-0 ${core.triesMode.open ? 'z-40' : 'z-20'} flex flex-col items-center gap-[8px] pointer-events-none`}
+    >
       {toasts.toast && (
         <div className="pointer-events-auto" key={toasts.toast.id}>
           <Toast toast={toasts.toast} onDismiss={toasts.dismissToast} />
         </div>
       )}
-      {active && !core.printing.mode && (
+      {active && !core.printing.mode && !core.triesMode.open && (
         <TryTimeline
           timeline={core.simTraining.cases.timeline}
-          rig={core.posing.rig}
-          onSelectParts={core.setSelectedIds}
+          nameOf={(id) => prettyJointName(core.posing.rig.byId.get(id)?.name ?? id)}
+          onSelectLane={(id) => core.setSelectedIds(linkParts(core.posing.rig, id))}
         />
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
-      {!core.caseRun.open && (
+      {!core.caseRun.open && !core.triesMode.open && (
         <div className="pointer-events-auto">
           <CanvasToolbar core={core} actions={actions} ui={ui} />
         </div>
@@ -133,6 +137,9 @@ export function CanvasCard(props: CanvasCardProps) {
       )}
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
       <CaseRunOverlays />
+      {core.triesMode.open && (
+        <TriesCanvas active={active} mode={core.triesMode} onDelete={core.simTraining.cases.deleteTries} />
+      )}
       <div
         aria-hidden
         className="absolute inset-0 z-10 rounded-[12px] pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"

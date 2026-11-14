@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { filmImage } from '../cases/filmImage';
 import type { Case } from '../cases/schema';
-import type { TryRecord } from '../cases/tries';
+import { passedTry, type TryRecord } from '../cases/tries';
 import { canTrain } from '../datasets/demos';
 import { usableTries } from '../datasets/usableTries';
 import type { Simulation } from '../sim/useSimulation';
@@ -52,7 +52,7 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
   const { runtime, busy } = options.skills;
   const [training, setTraining] = useState<string | null>(null);
   const [result, setResult] = useState<TriesResult | null>(null);
-  const passed = tries.filter((t) => t.passed);
+  const passed = tries.filter(passedTry);
   const shown = !IS_WEB_DEMO && !!active && passed.length >= TRIES_TO_TRAIN;
 
   const finish = async (kase: Case, outcome: TriesOutcome, verdict: CaseVerdict | null) => {

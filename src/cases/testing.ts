@@ -12,7 +12,7 @@ import { stageCase, stagedEffectors } from './caseCast';
 import { toCommand } from './caseDrives';
 import { runCase as runCaseOn, type CaseRobot, type RunOptions } from './runCase';
 import { parseCase as parseCaseFile, worldItem, type Case } from './schema';
-import { scoreTry, tryManifest, type TryRecord, type TryScoring } from './tries';
+import { newTry, scoreTry, type TryScoring } from './tries';
 
 export const parseCase = parseCaseFile;
 
@@ -93,16 +93,15 @@ export async function referenceTry(mj: MainModule, kase: Case, robot: FixtureRob
     ...stagedEffectors(staged, { rig, parts: robot.parts }),
   };
   const verdict = await scoreTry(source);
-  const record: TryRecord = {
+  const record = await newTry({
     id: 'try-driven',
-    caseId: kase.id,
+    sceneId: 'scene-test',
     robot: robot.id,
-    at: '2026-11-13T00:00:00.000Z',
-    passed: verdict.passed,
-    margin: verdict.margin,
-    seconds: recording.frames * recording.dt,
-    manifest: await tryManifest(staged.kase, model, recording),
-  };
+    kase: { ...staged.kase, id: kase.id },
+    model,
+    recording,
+    verdict,
+  });
 
   return { source, verdict, record };
 }

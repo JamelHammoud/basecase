@@ -54,7 +54,7 @@ You take a try by driving the robot through the Case yourself. Basecase records 
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results count them on that try's row.
 
-Tries stay on this computer. A `.basecase` file you share carries the Case but not its tries.
+Tries stay on this computer. A `.basecase` file you share carries the Case but not its tries. The Library lists the tries from every scene together, as in [Browse tries in the Library](/help/browse-tries-in-the-library).
 
 ## A Case is the test, a skill is the answer
 

@@ -1,4 +1,5 @@
 import { useScenePrinting } from './usePrinting';
+import { useTriesMode } from './useTriesMode';
 import { useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { newSceneId } from '../utils/sceneIds';
@@ -129,9 +130,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
 
-  const { travel } = docs;
-  const { restorePose } = posing;
-  const undo = () => travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
+  const undo = () => docs.travel({ direction: 'undo', codeOnly: caseRun.open }, posing.restorePose);
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo });
@@ -157,6 +156,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     workspaceId,
     studio,
     printer,
+    triesMode: useTriesMode(),
     readiness,
     caseCompare,
     caseExplore,
@@ -185,7 +185,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     guide,
     buildAlong,
     undo,
-    redo: () => travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
+    redo: () => docs.travel({ direction: 'redo', codeOnly: caseRun.open }, posing.restorePose),
     loadSeed,
   };
 }

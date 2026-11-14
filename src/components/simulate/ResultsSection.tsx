@@ -65,6 +65,11 @@ const TryRow: React.FC<TryRowProps> = (props) => {
     <div className="py-1.5 flex flex-col gap-1.5" onContextMenu={onMenu} data-testid="try-row">
       <div className="flex items-center gap-2 text-[13px]">
         <span className={record.passed ? 'text-white/85' : 'text-[#f87171]'}>{outcome(record)}</span>
+        {record.real && (
+          <span data-testid="try-real">
+            <Badge>Real</Badge>
+          </span>
+        )}
         <span className="text-white/50 tabular">{runClock(record.seconds)}</span>
         <span className="flex-1 text-white/50 tabular" data-testid="try-generated">
           {generated > 0 && plural(generated, 'variation')}
@@ -181,7 +186,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
               world={world}
               generated={generatedFrom(all, t).length}
               progress={progressOf(t)}
-              onReplay={() => void cases.timeline.show(t)}
+              onReplay={() => void cases.replay(t)}
               onMenu={(e) => openMenu(e, t)}
             />
           ))}

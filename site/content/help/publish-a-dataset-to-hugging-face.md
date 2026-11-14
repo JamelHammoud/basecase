@@ -50,7 +50,7 @@ The files are the ones **Export Dataset** makes; [LeRobot dataset contents](/hel
 
 ## Publishing again
 
-Publishing the same Case from the same scene replaces the dataset with the tries that pass now. Basecase rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files alone. Tries recorded before the robot last changed are left out, and the toast says how many.
+Publishing the same Case from the same scene replaces the dataset with the tries that pass now. Basecase rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files alone. Tries recorded before the robot last changed are left out, and the toast says how many. Tries from your real robot are left out too.
 
 ## Where the token lives
 

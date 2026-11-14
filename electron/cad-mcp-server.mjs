@@ -19,7 +19,7 @@ import { fitView } from './cad-mcp/fitViewTool.mjs';
 import { photoScale } from './cad-mcp/photoScaleTool.mjs';
 import { scoreFit } from './cad-mcp/scoreFitTool.mjs';
 import { traceOutline } from './cad-mcp/traceTool.mjs';
-import { sizeActuators, sweepDesign } from './cad-mcp/costTools.mjs';
+import { sizeActuators, sizeArm, sweepDesign } from './cad-mcp/costTools.mjs';
 import { listEvidence, readEvidence } from './cad-mcp/evidenceTools.mjs';
 import { createGuidePusher, getGuide } from './cad-mcp/guideTools.mjs';
 import { checkScene, look } from './cad-mcp/inspectTools.mjs';
@@ -136,6 +136,7 @@ const TOOLS = [
   getBom,
   recordOnHand,
   sizeActuators,
+  sizeArm,
   sweepDesign,
   checkPrintability,
   slicePlates,

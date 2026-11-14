@@ -32,6 +32,7 @@ export interface TryRecord {
   seconds: number;
   manifest: TryManifest;
   generated?: true;
+  real?: true;
 }
 
 export async function sha256(text: string): Promise<string> {
@@ -101,7 +102,9 @@ export async function tryManifest(kase: Case, model: SimModel, recording: Record
   };
 }
 
-export const multipliable = (t: TryRecord) => t.passed && !t.generated && !!t.manifest.commands;
+export const multipliable = (t: TryRecord) => t.passed && !t.generated && !t.real && !!t.manifest.commands;
+
+export const simTries = (tries: TryRecord[]) => tries.filter((t) => !t.real);
 
 export const generatedFrom = (tries: TryRecord[], source: TryRecord) =>
   tries.filter((t) => t.generated && t.manifest.source === source.id);

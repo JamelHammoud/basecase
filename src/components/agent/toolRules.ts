@@ -232,6 +232,7 @@ const REVIEW_RULES: ToolRule[] = [
   plainRule(['get_bom'], FileIcon, ['Reading the parts list', 'Read the parts list']),
   plainRule(['record_on_hand'], FileIcon, ['Recording parts on hand', 'Recorded parts on hand']),
   plainRule(['size_actuators'], JointsIcon, ['Sizing the actuators', 'Sized the actuators']),
+  plainRule(['size_arm'], JointsIcon, ['Sizing an arm', 'Sized an arm']),
   plainRule(['synthesize_linkage'], JointsIcon, ['Fitting a four-bar', 'Fitted a four-bar']),
   plainRule(['sweep_design'], RunIcon, ['Comparing design options', 'Compared design options']),
   plainRule(['set_build'], FileIcon, ['Updating the build', 'Updated the build']),

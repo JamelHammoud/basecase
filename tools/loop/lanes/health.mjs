@@ -1,4 +1,4 @@
-import { breaches, expired, lastMergeAt, LIMITS, readySince, redSince } from '../lib/flow.mjs';
+import { breaches, expired, idle, lastMergeAt, LIMITS, readySince, redSince } from '../lib/flow.mjs';
 import { queuedRuns } from '../lib/flowCounts.mjs';
 import { closePull, editPullLabels, hasLabel, isPaused, openPulls, pullCheck, pullReview } from '../lib/github.mjs';
 import { held } from '../lib/claim.mjs';
@@ -51,12 +51,13 @@ const recentlyMerged = () =>
 const readyToLand = (pull) =>
   pull.mergeable !== 'CONFLICTING' && pullCheck(pull) === 'success' && pullReview(pull) === 'success';
 
+const busy = (pull) => held(`pull-${pull.number}`);
+
 const oldest = (times) => times.filter(Boolean).sort()[0] ?? null;
 
 export function measure() {
   const open = openPulls({ fresh: true });
   const ready = open.filter(readyToLand);
-  const idleSince = Date.now() - LIMITS.idlePullMinutes * 60_000;
   const queued = queuedRuns({ fresh: true });
 
   return {
@@ -65,7 +66,7 @@ export function measure() {
     readyCount: ready.length,
     oldestReadyAt: oldest(ready.map(readySince)),
     queuedRuns: queued.length,
-    idlePulls: open.filter((pull) => Date.parse(pull.updatedAt) < idleSince).map((pull) => pull.number),
+    idlePulls: idle({ pulls: open, busy }).map((pull) => pull.number),
     oldestQueuedAt: oldest(queued.map((item) => item.createdAt)),
   };
 }
@@ -104,7 +105,7 @@ function expire(log) {
   const pulls = openPulls({ fresh: true });
   const inBatch = pulls.filter(isBatch).flatMap((batch) => membersOf(batch.body));
 
-  for (const pull of expired({ pulls, inBatch }).filter((p) => !held(`pull-${p.number}`))) {
+  for (const pull of expired({ pulls, inBatch, busy })) {
     closePull(
       pull.number,
       `Open over ${LIMITS.maxOpenHours} hours without landing, so it closes. Its step goes back to the builders and is rebuilt from current main, which costs less than keeping it up to date.`,
@@ -116,13 +117,10 @@ function expire(log) {
 function nudgeIdle(log) {
   if (isPaused()) return;
 
-  const idleSince = Date.now() - LIMITS.idlePullMinutes * 60_000;
-
-  for (const pull of openPulls({ fresh: true }).filter((p) => Date.parse(p.updatedAt) < idleSince)) {
+  for (const pull of idle({ pulls: openPulls({ fresh: true }), busy })) {
     nudge(pull.number, pull.headRefOid);
 
-    if (hasLabel(pull, 'loop:revising') && !held(`pull-${pull.number}`))
-      editPullLabels(pull.number, { remove: ['loop:revising'] });
+    if (hasLabel(pull, 'loop:revising')) editPullLabels(pull.number, { remove: ['loop:revising'] });
 
     log(`#${pull.number}: untouched for ${LIMITS.idlePullMinutes} min; nudged revise and rebase to look again`);
   }

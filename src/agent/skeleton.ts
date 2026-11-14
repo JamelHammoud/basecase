@@ -17,6 +17,7 @@ export interface SkeletonJointInput {
   actuator?: string;
   tip?: ZUpVec;
   link_mass_g?: number;
+  payload_g?: number;
 }
 
 export interface SkeletonPayload {
@@ -53,6 +54,7 @@ function jointOf(j: SkeletonJointInput): SkeletonJoint {
     ...(j.actuator ? { actuator: j.actuator } : {}),
     ...(j.tip ? { tip: j.tip } : {}),
     ...(j.link_mass_g ? { linkMassG: j.link_mass_g } : {}),
+    ...(j.payload_g ? { payloadG: j.payload_g } : {}),
   };
 }
 
@@ -194,6 +196,7 @@ function jointLine(skeleton: RobotSkeleton, j: SkeletonJoint): string {
     `- ${j.id}${j.limb ? ` (${j.limb})` : ''}: at ${fmt(j.origin)} axis ${fmt(j.axis)}`,
     link ? `link ${r1(link)} mm${to.length ? ` to ${to.join(', ')}` : ' to its tip'}` : '',
     j.actuator ?? '',
+    j.payloadG ? `carries ${j.payloadG} g at its tip` : '',
   ];
 
   return bits.filter(Boolean).join(', ');

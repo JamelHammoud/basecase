@@ -11,7 +11,7 @@ export interface SimState {
   activeCase: string | null;
   effector: number[] | null;
   scanPoints: number;
-  tries: Array<{ passed: boolean; margin: number; generated: boolean }>;
+  tries: Array<{ passed: boolean; margin: number; generated: boolean; real: boolean }>;
   multiplying: boolean;
 }
 
@@ -23,4 +23,7 @@ export type Studio = {
   multiplyRuns: (runs: number) => void;
   drive: (c: DriveCommand) => void;
   worldAt: () => Record<string, number[]>;
+  lastDownload: () => { name: string; base64: string } | null;
+  caseMat: () => { sheets: number; tags: number } | null;
+  feedMatFrames: (options?: { seconds?: number; hide?: [number, number] }) => boolean;
 };

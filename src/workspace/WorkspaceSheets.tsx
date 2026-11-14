@@ -1,7 +1,9 @@
+import { ArmSizingSheet } from '../components/ArmSizingSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
+import { TeachGestureHost } from './TeachGestureHost';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -14,7 +16,7 @@ interface WorkspaceSheetsProps {
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
   const { posing, guide } = core;
   const desktop = platformBridge.isElectron();
-  const { robots, pose } = actions;
+  const { robots, pose, arm } = actions;
   const { motionInputRef } = pose;
   const { importRobotFrom } = robots;
 
@@ -38,6 +40,15 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         onClose={robots.closeImportRobot}
         onImport={(src, at) => void importRobotFrom(src, at)}
       />
+      {arm.targets && (
+        <ArmSizingSheet
+          targets={arm.targets}
+          busy={arm.busy}
+          problem={arm.problem}
+          onClose={arm.close}
+          onSize={arm.size}
+        />
+      )}
       {pose.motion && (
         <RetargetSheet
           motion={pose.motion}
@@ -47,6 +58,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           onCreate={pose.createAnimation}
         />
       )}
+      <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input
         ref={motionInputRef}
         type="file"

@@ -1,4 +1,5 @@
 import { hasInputSource, NAMED_INPUTS } from '../../sim/inputSources';
+import { gestureNames, type CaseGesture } from '../gestures';
 import { asId, asNumber, asRecord, asString, listOf, oneOf, optional, refuse, type Reader } from '../validate';
 import { PANEL_KIND_NAMES, readPanelConfig, type PanelSpec } from './panelKinds';
 import { NAMESPACES, signalRef, type SignalScope } from './signalNames';
@@ -223,15 +224,37 @@ function readLayout(value: unknown, where: string, panels: PanelSpec[]) {
   return { areas };
 }
 
+interface ScopedCase {
+  task: { probes: ReadonlyArray<{ signal: string }> };
+  gestures?: readonly CaseGesture[];
+}
+
+export const consoleScope = (caseConsole: CaseConsole, kase: ScopedCase | null): SignalScope => ({
+  declared: new Set(caseConsole.signals?.map((s) => s.id)),
+  probes: new Set(kase?.task.probes.map((p) => p.signal)),
+  inputs: new Set(caseConsole.input),
+  gestures: new Set(gestureNames(kase?.gestures)),
+});
+
+export interface ConsoleNames {
+  probes: readonly string[];
+  gestures?: readonly string[];
+}
+
 export const consoleReader =
-  (probes: readonly string[]): Reader<CaseConsole> =>
+  ({ probes, gestures }: ConsoleNames): Reader<CaseConsole> =>
   (value, where) => {
     const v = asRecord(value, where);
     const input = unique(listOf(readInput, 4)(v.input, `${where}.input`), (id) => id, `${where}.input`);
 
     if (!input.length) refuse(`${where}.input`, 'must name an input source');
 
-    const base: SignalScope = { declared: new Set(), probes: new Set(probes), inputs: new Set(input) };
+    const base: SignalScope = {
+      declared: new Set(),
+      probes: new Set(probes),
+      inputs: new Set(input),
+      ...(gestures ? { gestures: new Set(gestures) } : {}),
+    };
     const signals = v.signals === undefined ? undefined : readSignals(v.signals, `${where}.signals`, base);
     const scope = { ...base, declared: new Set(signals?.map((s) => s.id)) };
     const panels = unique(

@@ -1,5 +1,9 @@
 import { useSyncExternalStore } from 'react';
+import { GESTURE_EVENT } from '../../cases/gestures';
+import { emitInputEvent } from '../../sim/inputEvents';
 import type { InputRobot } from '../../sim/inputTypes';
+import type { GestureExample } from '../gestures/gestureMatch';
+import type { TaughtGesture } from '../gestures/gestureRecognizer';
 import { createLatencyLog, type LatencyStats } from './latencyLog';
 import { frameSource, type FrameSource } from './operatorFrames';
 import type { PoseFollow, PoseSample } from './poseFollow';
@@ -28,6 +32,9 @@ let fresh: { follow: PoseFollow; seenAt: number; read: boolean } | null = null;
 let points: SkeletonPoint[] | null = null;
 let standIn: Extract<PoseRequest, { type: 'feed' }> | null = null;
 let settleOpen: ((refusal: string | null) => void) | null = null;
+let taught: TaughtGesture[] = [];
+let feeding = false;
+let settleExample: ((example: GestureExample | null) => void) | null = null;
 const listeners = new Set<() => void>();
 const pointListeners = new Set<(next: SkeletonPoint[] | null) => void>();
 const latency = createLatencyLog(LATENCY_SAMPLES);
@@ -54,8 +61,25 @@ function fail(message: string) {
   set({ error: message });
 }
 
+function example(next: GestureExample | null) {
+  const resolve = settleExample;
+
+  settleExample = null;
+  resolve?.(next);
+}
+
 function receive(event: PoseEvent) {
   if (event.type === 'error') return fail(event.message);
+
+  if (event.type === 'gesture') return emitInputEvent(GESTURE_EVENT, event.name);
+
+  if (event.type === 'example') return example(event.example);
+
+  if (event.type === 'fed') {
+    feeding = false;
+
+    return;
+  }
 
   if (event.type === 'ready') {
     settle(null);
@@ -67,15 +91,17 @@ function receive(event: PoseEvent) {
   setPoints(event.image);
 }
 
-const stopTracks = (stream: MediaStream) => stream.getTracks().forEach((track) => track.stop());
+const OPERATOR_SIZE = { width: 640, height: 480 };
 
-async function requestStream(): Promise<MediaStream | null> {
+export async function requestCameraStream(size = OPERATOR_SIZE): Promise<MediaStream | null> {
   const devices = typeof navigator === 'undefined' ? undefined : navigator.mediaDevices;
 
   if (!devices?.getUserMedia) return null;
 
-  return devices.getUserMedia({ video: { width: 640, height: 480 }, audio: false }).catch(() => null);
+  return devices.getUserMedia({ video: size, audio: false }).catch(() => null);
 }
+
+export const stopCameraStream = (stream: MediaStream) => stream.getTracks().forEach((track) => track.stop());
 
 function start(stream: MediaStream, robot: InputRobot) {
   const [track] = stream.getVideoTracks();
@@ -88,6 +114,7 @@ function start(stream: MediaStream, robot: InputRobot) {
   const open: PoseRequest = { type: 'open', robot, frames: frames.frames, standIn: !!standIn };
 
   worker.postMessage(open, frames.frames ? [frames.frames] : []);
+  worker.postMessage({ type: 'gestures', taught } satisfies PoseRequest);
 
   if (standIn) worker.postMessage(standIn);
 
@@ -102,8 +129,11 @@ export function closeOperatorCamera() {
   generation++;
   fresh = null;
   settle(null);
+  example(null);
 
   if (!session) return;
+
+  feeding = false;
 
   const { worker, frames, stream } = session;
 
@@ -111,7 +141,7 @@ export function closeOperatorCamera() {
   frames.stop();
   worker.postMessage({ type: 'close' } satisfies PoseRequest);
   worker.terminate();
-  stopTracks(stream);
+  stopCameraStream(stream);
   setPoints(null);
   set(CLOSED);
 }
@@ -120,12 +150,12 @@ export async function openOperatorCamera(robot: InputRobot): Promise<string | nu
   closeOperatorCamera();
 
   const opening = generation;
-  const stream = await requestStream();
+  const stream = await requestCameraStream();
 
   if (!stream) return CAMERA_REFUSAL;
 
   if (opening !== generation) {
-    stopTracks(stream);
+    stopCameraStream(stream);
 
     return null;
   }
@@ -159,6 +189,8 @@ export function latestFollow(): PoseFollow | null {
 export function feedOperatorPose(samples: PoseSample[], fps?: number) {
   const feed: PoseRequest = { type: 'feed', samples, fps };
 
+  feeding = true;
+
   if (!session) {
     standIn = feed;
 
@@ -169,9 +201,30 @@ export function feedOperatorPose(samples: PoseSample[], fps?: number) {
   settle(null);
 }
 
+export function teachGestures(next: TaughtGesture[]) {
+  taught = next;
+  session?.worker.postMessage({ type: 'gestures', taught } satisfies PoseRequest);
+}
+
+export function recordGestureExample(ms: number): Promise<GestureExample | null> {
+  example(null);
+
+  if (!session) return Promise.resolve(null);
+
+  const recorded = new Promise<GestureExample | null>((resolve) => {
+    settleExample = resolve;
+  });
+
+  session.worker.postMessage({ type: 'record', ms } satisfies PoseRequest);
+
+  return recorded;
+}
+
 export const operatorLatency = (): LatencyStats | null => latency.stats();
 
 export const operatorPoints = () => points;
+
+export const operatorFeeding = () => feeding;
 
 export const operatorTrackState = () => lastTrack?.readyState ?? null;
 

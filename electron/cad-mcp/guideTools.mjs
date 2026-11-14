@@ -24,6 +24,7 @@ const TOOL_GUIDES = {
   check_printability: ['build'],
   slice_plates: ['build'],
   size_actuators: ['servos'],
+  size_arm: ['servos'],
   define_joints: ['joints'],
   find_joint_axes: ['joints'],
   get_rig: ['motion'],

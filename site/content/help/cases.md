@@ -34,7 +34,7 @@ A robot that stands in the simulation tells you little about whether it can reac
 ## What a Case holds
 
 - **A slot.** What the robot needs to enter: an arm, wheels or legs.
-- **A world.** Objects placed around the robot. Some are solid, some can be pushed, and markers show a spot without getting in the way.
+- **A world.** Objects placed around the robot. Some are solid, some can be pushed, and markers show a spot without getting in the way. Ones marked movable can be moved, lit or hidden by the Case's code while it runs.
 - **Controls.** What you steer while trying it, such as Move and Turn, or Move and Raise and Lower for an arm.
 - **A contract.** The rules that judge a try: what must happen to pass, and what makes it fail, such as a fall.
 - **A time limit.** How long a try may take.
@@ -48,7 +48,7 @@ A Case is written once and runs on any robot that fits its slot. For an arm, Bas
 
 ## Tries
 
-You take a try by driving the robot through the Case yourself. Basecase records it 50 times a second, then scores the recording with the contract: **Passed** or **Missed**. Results list your tries worst first, each with four frames and a replay.
+You take a try by driving the robot through the Case yourself. Basecase records it 50 times a second, along with each change the Case's code makes to the world, then scores the recording with the contract: **Passed** or **Missed**. Results list your tries worst first, each with four frames and a replay.
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results count them on that try's row.
 

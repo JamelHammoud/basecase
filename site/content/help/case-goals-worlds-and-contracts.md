@@ -113,4 +113,4 @@ The contract never passes by default. A reading that isn't a number counts again
 
 ## Scaling to another arm
 
-A Case written on one arm runs on another by scaling its world to the new arm's reach, measured from its shoulder. Every distance in the contract scales with it; angles don't. Skills are judged by the same contract code, in [Arena](/help/arena).
+A Case written on one arm runs on another by scaling its world to the new arm's reach, measured from its shoulder. Every distance in the contract scales with it; angles don't. A position the Case's code gives a movable object scales the same way, so a lit spot lands on the scaled spot. Skills are judged by the same contract code, in [Arena](/help/arena).

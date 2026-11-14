@@ -3,6 +3,8 @@ import type { CaseConsole } from '../cases/console/format';
 import { consoleLayout, type PlacedArea } from '../cases/console/layout';
 import type { CaseAction } from '../cases/console/panelKinds';
 import type { SignalBus } from '../cases/console/signalBus';
+import { robotFacts } from '../cases/robotFit';
+import { movableWorld } from '../cases/scale';
 import type { Case } from '../cases/schema';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
 import { CodeOverlays } from '../components/caseRun/code/CodeOverlays';
@@ -77,6 +79,7 @@ export const GalleryConsole: GalleryConsoleView = ({ kase, caseConsole, sim, rig
     },
     inputs: caseConsole.input,
     brief: kase.brief,
+    world: movableWorld(kase, robotFacts(rig, parts)),
     sim,
     parts,
     joints,

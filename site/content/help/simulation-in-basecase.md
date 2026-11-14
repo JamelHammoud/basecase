@@ -20,6 +20,7 @@ covers:
   - src/sim/servoModel.ts
   - src/sim/mjcfServo.ts
   - src/sim/sim.worker.ts
+  - src/sim/worldMoves.ts
   - src/utils/engineeringSimModel.ts
   - src/reality/measuredJoints.ts
 ---
@@ -56,7 +57,7 @@ Simulating never changes your parts. The canvas shows the simulated pose, and en
 ## Where the same physics runs
 
 - **Drive** steers the robot live with the keyboard, a gamepad, a phone or your arms in front of the camera. A humanoid driven by the camera has its base held in place, unless it has a ready Walk skill.
-- **Cases** record tries and judge each one pass or miss.
+- **Cases** record tries and judge each one pass or miss. A Case's code can move, recolor or hide the Case's movable objects while it runs, and the try records each change.
 - **Training** teaches skills on Forge, Basecase's own trainer, built on the same MuJoCo formulation. While it trains, the canvas runs its newest snapshot. A trained skill counts only after Arena replays it on MuJoCo itself.
 - **Routines** run step by step on the live simulation.
 - **The emulated robot** follows the simulation once it reaches Test.

@@ -13,6 +13,8 @@ import type { Recording } from './recorder';
 import type { Scan } from './scanner';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
+import type { WorldChange } from '../cases/worldSet';
+import { withLooks } from './worldLooks';
 import type { LiveCaseInput } from '../cases/liveCase';
 import type { WatchPlan } from '../skills/liveWatch';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
@@ -25,8 +27,6 @@ import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
 import type { AmpModel } from '../utils/servoAmps';
 import { errorMessage } from '../utils/errorMessage';
-
-export { simDeltas } from './mjcf';
 
 export interface SimFrame {
   joints: Float64Array;
@@ -83,6 +83,7 @@ export interface Simulation {
   watch: (plan: WatchPlan | null) => void;
   watchMargin: number | null;
   input: (name: string, value: FactValue) => void;
+  world: (change: WorldChange) => void;
   latestFacts: () => CaseFacts | null;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
   run: (opts: {
@@ -396,7 +397,7 @@ export function useSimulation(props: Inputs): Simulation {
     },
     seek: sw.seek,
     sought: sw.sought,
-    worldParts,
+    worldParts: withLooks(worldParts, sw.worldLooks),
     guestParts,
     subscribePoses: sw.subscribePoses,
     connectCameras: sw.connectCameras,
@@ -409,6 +410,7 @@ export function useSimulation(props: Inputs): Simulation {
     runCase: (input) => send(input ? { type: 'case', ...input } : { type: 'caseEnd' }),
     ...watching,
     input: (name, value) => send({ type: 'input', name, value }),
+    world: (change) => send({ type: 'world', change }),
     latestFacts: sw.latestFacts,
     runOn,
     run: async (opts) => {

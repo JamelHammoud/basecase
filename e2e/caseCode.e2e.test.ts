@@ -14,9 +14,37 @@ interface SimState {
   drive: string;
   activeCase: string | null;
   stats: { time: number; robots: Array<{ forward: number }> } | null;
+  worldLooks: Record<string, { color: string; visible: boolean }>;
+  tries: Array<{ world: number }>;
 }
 
-type Studio = { simState: () => SimState; load: (r: unknown) => void };
+interface WorldEvent {
+  at: number;
+  id: string;
+  pose?: { position?: number[] };
+  color?: string;
+}
+
+type Studio = {
+  simState: () => SimState;
+  load: (r: unknown) => void;
+  worldAt: () => Record<string, number[]>;
+  tryWorld: () => Promise<WorldEvent[]>;
+  cameraStreams: () => { frames: number; ms: number };
+};
+
+const WATCH = `<p data-frames style="margin:8px">0</p>
+<script>
+let n = 0;
+basecase.frames('scene', { width: 320, fps: 15 }, (bitmap) => {
+  n += 1;
+  document.querySelector('[data-frames]').textContent = String(n);
+  document.body.dataset.size = bitmap.width + 'x' + bitmap.height;
+  bitmap.close();
+});
+</script>`;
+
+const studio = () => app.page.evaluateHandle(() => (window as unknown as { __studio: Studio }).__studio);
 
 const simState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
 
@@ -67,10 +95,31 @@ const SPIN = '<p>Spinning</p><script>while (true) {}</script>';
 
 const AWAY = (base: string) => `<script>location.href = '${base}/self';</script>`;
 
-function roverScene(console: unknown) {
+const LAMP = {
+  id: 'lamp',
+  name: 'Lamp',
+  kind: 'cylinder',
+  position: [0, 1, 300],
+  rotation: [0, 0, 0],
+  size: [120, 2, 120],
+  color: '#555555',
+  behavior: 'marker',
+  movable: true,
+};
+
+const LIGHT = `<button data-light style="margin:8px">Light</button>
+<script>
+document.querySelector('[data-light]').addEventListener('click', () => {
+  basecase.world.set('lamp', { pose: { position: [240, 1, 420] }, color: '#ff3b30' });
+});
+</script>`;
+
+function roverScene(console: unknown, extra: unknown[] = []) {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+  const preset = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
   const kase = {
-    ...presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts),
+    ...preset,
+    world: { objects: [...preset.world.objects, ...extra] },
     id: 'rover-code',
     name: 'Rover Cockpit',
     console,
@@ -83,9 +132,9 @@ function roverScene(console: unknown) {
   };
 }
 
-async function openCase(console: unknown) {
+async function openCase(console: unknown, extra: unknown[] = []) {
   const { page } = app;
-  const scene = roverScene(console);
+  const scene = roverScene(console, extra);
 
   await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
   await expect.poll(() => partCount(page)).toBe(scene.parts.length);
@@ -199,5 +248,91 @@ describe('Case code panels', () => {
 
     await page.keyboard.press('Escape');
     await expect.poll(areaCount).toBe(0);
+  });
+});
+
+describe('Case code that shapes its world', () => {
+  it('lights a movable target from code during a try and records the change', async () => {
+    const { page } = app;
+    const tries = (name: string) => page.locator(shown('[data-panel="tries"] button'), { hasText: name }).first();
+
+    await openCase(
+      {
+        input: ['keys'],
+        panels: [
+          { id: 'light', kind: 'code', title: 'Light', height: 80, source: LIGHT },
+          { id: 'tries', kind: 'list', of: 'tries' },
+        ],
+        layout: { areas: [{ canvas: true }, { size: 320, panels: ['light', 'tries'] }] },
+      },
+      [LAMP],
+    );
+
+    await tries('Try It').click();
+    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    await expect.poll(() => tries('Stop Try').isVisible()).toBe(true);
+    await expect
+      .poll(async () => {
+        await frameOf('light').locator('[data-light]').click();
+
+        return (await simState()).worldLooks.lamp?.color;
+      })
+      .toBe('#ff3b30');
+
+    const lamp = await (await studio()).evaluate((s) => s.worldAt().lamp);
+
+    expect(Math.hypot(lamp[0] - 240, lamp[2] - 420)).toBeLessThan(1);
+
+    await tries('Stop Try').click();
+    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+    expect((await simState()).tries[0].world).toBeGreaterThan(0);
+
+    const recorded = await (await studio()).evaluate((s) => s.tryWorld());
+
+    expect(recorded).toContainEqual(
+      expect.objectContaining({ id: 'lamp', color: '#ff3b30', pose: { position: [240, 1, 420] } }),
+    );
+    expect(app.errors).toEqual([]);
+  });
+
+  it('streams a camera to code at the asked size and rate, cheaply on the main thread, and stops with the Case', async () => {
+    const { page } = app;
+    const streams = async () => (await studio()).evaluate((s) => s.cameraStreams());
+    const shown = () => frameOf('watch').locator('[data-frames]').textContent().then(Number);
+
+    await openCase({
+      input: ['keys'],
+      panels: [{ id: 'watch', kind: 'code', title: 'Watch', height: 80, source: WATCH }],
+      layout: { areas: [{ canvas: true }, { size: 320, panels: ['watch'] }] },
+    });
+
+    await expect.poll(shown, { timeout: 60000 }).toBeGreaterThan(5);
+    expect(await frameOf('watch').locator('body').getAttribute('data-size')).toBe('320x240');
+
+    const [before, from] = [await shown(), Date.now()];
+
+    await expect.poll(shown, { timeout: 60000 }).toBeGreaterThanOrEqual(before + 30);
+
+    const rate = ((await shown()) - before) / ((Date.now() - from) / 1000);
+    const cost = await streams();
+
+    expect(rate).toBeLessThanOrEqual(16);
+    expect(cost.ms / cost.frames).toBeLessThan(2);
+
+    await page.keyboard.press('Escape');
+    await expect.poll(areaCount).toBe(0);
+
+    const stopped = (await streams()).frames;
+
+    await page.evaluate(
+      () =>
+        new Promise<void>((done) => {
+          let left = 60;
+          const tick = () => (--left ? requestAnimationFrame(tick) : done());
+
+          requestAnimationFrame(tick);
+        }),
+    );
+    expect((await streams()).frames).toBe(stopped);
   });
 });

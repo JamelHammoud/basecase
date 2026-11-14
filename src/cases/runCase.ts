@@ -27,6 +27,8 @@ import { bodyFor, factSampler, logicPlan, startLogic, type LogicOptions, type Si
 import { scaledToReach } from './scale';
 import { caseSlots, worldItem, type Case, type ReferenceCommand } from './schema';
 import { slotRefusals } from './slots';
+import { WorldMoves } from '../sim/worldMoves';
+import type { WorldEvent } from './worldSet';
 
 export type { CaseRobot } from './caseCast';
 
@@ -66,6 +68,7 @@ export interface RunOptions extends LogicOptions {
   walk?: VelocityDrive | null;
   partners?: CaseRobot[];
   limp?: string[];
+  world?: WorldEvent[];
 }
 
 const JUDGE_EVERY_TICKS = 12;
@@ -125,6 +128,7 @@ interface Rollout {
   sample: (poses: Float64Array, t: number, torque?: number) => CaseFacts;
   logic: CaseLogicRun | null;
   judge: () => Promise<CaseFacts>;
+  changes: { world: WorldMoves; events: WorldEvent[]; record: (e: WorldEvent) => void };
 }
 
 function follow({ engine, steer, send }: Rollout, c: ReferenceCommand, slot: number) {
@@ -138,9 +142,18 @@ function follow({ engine, steer, send }: Rollout, c: ReferenceCommand, slot: num
   send(toCommand(c));
 }
 
+function changeWorld(changes: Rollout['changes'], events: WorldEvent[], t: number) {
+  while (events.length && events[0].at <= t + 1e-9) {
+    const e = events.shift()!;
+
+    if (!changes.world.apply(e)) changes.record(e);
+  }
+}
+
 async function roll(rollout: Rollout): Promise<CaseFrame[]> {
-  const { engine, kase, steer, send, sample, logic, judge } = rollout;
+  const { engine, kase, steer, send, sample, logic, judge, changes } = rollout;
   const timeline = [...kase.reference.timeline].sort((a, b) => a.at - b.at);
+  const events = [...changes.events].sort((a, b) => a.at - b.at);
   const frames: CaseFrame[] = [];
   const ticks = Math.round(kase.task.seconds / RECORD_DT);
 
@@ -152,6 +165,8 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
 
       follow(rollout, c, slotIndexOf(kase, c));
     }
+
+    changeWorld(changes, events, t);
 
     const poses = engine.poses();
     const driving = logic?.driving ?? true;
@@ -334,6 +349,11 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
     jointNoiseDeg: options.jointNoiseDeg,
   });
   const recorder = options.record ? new Recorder(engine) : null;
+  const changes = {
+    world: new WorldMoves(mj, engine),
+    events: options.world ?? [],
+    record: (e: WorldEvent) => recorder?.worldChange(e),
+  };
   const send = (c: DriveCommand) => engine.command(walk ? policyCommand(c, walk.topSpeed) : c);
   const limp = new Set(fit.cast.flatMap((c) => (c.key && options.limp?.includes(c.id) ? [c.key] : [])));
 
@@ -347,7 +367,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
     const sample = factSampler(kase, caseFactReader(kase, model), reader, signals);
     const judge = () => judgeSoFar(kase.task.contract, { dt: RECORD_DT, signals });
     const driven = controller.kind === 'policy' ? withoutReference(kase) : kase;
-    const frames = await roll({ engine, kase: driven, steer, send, sample, logic, judge });
+    const frames = await roll({ engine, kase: driven, steer, send, sample, logic, judge, changes });
     const trace = { dt: RECORD_DT, signals };
     const verdict = await evaluateContract(kase.task.contract, trace);
 

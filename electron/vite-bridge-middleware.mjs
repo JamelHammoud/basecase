@@ -1,5 +1,6 @@
 import { BasecaseBackendService } from './backend-service.mjs';
 import { guardBridge } from './bridgeGuard.mjs';
+import { earthPostRoutes } from './earth/routes.mjs';
 import { nodeKernelService } from './cad-kernel/nodeHost/client.mjs';
 import { hubPostRoutes } from './hub/routes.mjs';
 import { onshapePostRoutes } from './onshape/routes.mjs';
@@ -106,6 +107,7 @@ function postRoutes(backend) {
     ...printPostRoutes(backend.printing),
     ...hubPostRoutes(backend.hub),
     ...onshapePostRoutes(backend.onshape),
+    ...earthPostRoutes(backend.earth),
   ];
 }
 

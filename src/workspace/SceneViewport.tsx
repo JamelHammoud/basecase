@@ -71,7 +71,6 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         snapAngleDeg={studio.snapAngleDeg}
         trackpadMode={studio.trackpadMode}
         showGrid={studio.showGrid}
-        blueprintDataUrl={null}
         onSelectPart={selection.select}
         onPickPoint={core.sketching.notePick}
         onOpenPart={core.sketching.edit}
@@ -100,6 +99,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         markField={markFieldFor(marks)}
         agentFrames={agent.frames}
         fixedCameras={project.cameras}
+        earth={actions.earth.view}
         checkDots={core.readiness.dots}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}

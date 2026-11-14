@@ -2,10 +2,12 @@ import { ArmSizingSheet } from '../components/ArmSizingSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { InstallSkillSheet } from '../components/InstallSkillSheet';
+import { PlaceOnMapSheet } from '../components/PlaceOnMapSheet';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
 import { ErrorBoundary } from '../design-system';
 import { TeachGestureHost } from './TeachGestureHost';
+import type { EarthPlace } from './useEarthPlace';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -13,6 +15,16 @@ interface WorkspaceSheetsProps {
   active: boolean;
   core: WorkspaceCore;
   actions: WorkspaceActions;
+}
+
+function PlaceOnMapHost({ active, earth }: { active: boolean; earth: EarthPlace }) {
+  if (!active || !earth.sheetOpen) return null;
+
+  return (
+    <ErrorBoundary region="Place on Map" onClose={earth.close}>
+      <PlaceOnMapSheet origin={earth.origin} onClose={earth.close} onPlace={earth.place} />
+    </ErrorBoundary>
+  );
 }
 
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
@@ -54,6 +66,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           onInstall={skillHub.install}
         />
       </ErrorBoundary>
+      <PlaceOnMapHost active={active} earth={actions.earth} />
       {arm.targets && (
         <ErrorBoundary region="Arm sizing" onClose={arm.close}>
           <ArmSizingSheet

@@ -142,6 +142,7 @@ const HitRow: React.FC<{ hit: Hit; index: number; active: boolean; onHover: () =
         <BrowseRow
           title={hit.category.title}
           meta={hit.category.examples}
+          active={active}
           onOpen={() => actions.onOpenObjects(hit.category)}
         />
       </div>

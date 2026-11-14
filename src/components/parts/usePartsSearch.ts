@@ -75,7 +75,8 @@ export function usePartsSearch({ onAdd, onInsertRobot, reveal, onRevealed, bodyR
     return scope ? all.filter(scope.has) : all;
   }, [query, scope, sourced, robots]);
   const objects = useSimReadySearch(objectsView ? `${objectsView.query} ${query}` : '', 'objects', !!objectsView);
-  const net = useSimReadySearch(netQuery, 'all', !!netQuery && !objectsView && !scope);
+  const netScope = !objectsView && (!scope || view.kind === 'robots');
+  const net = useSimReadySearch(netQuery, 'all', !!netQuery && netScope, true);
 
   const search = (q: string) => {
     setQuery(q);
@@ -121,7 +122,10 @@ export function usePartsSearch({ onAdd, onInsertRobot, reveal, onRevealed, bodyR
     actions,
     clear: () => search(''),
     back: stack.length > 1 ? back : null,
-    searchNetwork: objectsView ? objects.searchNow : () => setNetQuery(query.trim()),
+    searchNetwork: () => {
+      if (objectsView) objects.searchNow();
+      else if (netScope) setNetQuery(query.trim());
+    },
   });
 
   return {

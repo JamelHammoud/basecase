@@ -66,6 +66,7 @@ describe('one search for everything a scene holds', () => {
     const hit = searchInsertables('desk arm', { sourced: [], robots })[0];
 
     expect(hit.kind === 'robot' && hit.robot.group).toBe('Imported');
+    expect(label(searchInsertables('github.com/me', { sourced: [], robots })[0])).toBe('Desk Arm');
     expect(searchInsertables('   ', { sourced: [], robots })).toEqual([]);
   });
 });

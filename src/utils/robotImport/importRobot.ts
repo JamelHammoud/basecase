@@ -48,7 +48,7 @@ async function loadMeshFiles(model: Model, resolver: Resolver, say: Say, notes: 
       const got = await resolver.read(file).catch(() => null);
       const geo = got ? await parseMeshFile(got.data, got.path).catch(() => null) : null;
 
-      if (!geo) notes.push(`Couldn't read ${file.split('/').pop()}`);
+      if (!geo) notes.push(`Couldn’t read ${file.split('/').pop()}`);
 
       files.set(file, geo);
       done++;

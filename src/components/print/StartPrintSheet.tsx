@@ -24,7 +24,7 @@ function trayNote(plate: Plate, live: PrinterStatus | null) {
 
   return match
     ? `Prints with ${plate.material} from slot ${match.slot + 1}.`
-    : `Load ${plate.material} in the AMS or change the plate's material. Loaded: ${[...new Set(trays.map((t) => t.type))].join(', ')}.`;
+    : `Load ${plate.material} in the AMS or change the plate’s material. Loaded: ${[...new Set(trays.map((t) => t.type))].join(', ')}.`;
 }
 
 export const StartPrintSheet: React.FC<StartPrintSheetProps> = ({ plate, sliced, printer, live, onStart, onClose }) => {

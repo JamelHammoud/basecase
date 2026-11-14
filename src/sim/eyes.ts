@@ -66,9 +66,9 @@ export function buildEye(model: SimModel, parts: ScenePart[], req: EyeRequest): 
 
   if (problems.length) return problems.join(' ');
 
-  if (!part || !view) return `${req.part} isn't a camera with a lens.`;
+  if (!part || !view) return `${req.part} isn’t a camera with a lens.`;
 
-  if (!body) return `${part.name} isn't on the robot, so it can't be an eye.`;
+  if (!body) return `${part.name} isn’t on the robot, so it can’t be an eye.`;
 
   const cols = req.cols ?? DEFAULT_COLS;
   const rows = req.rows ?? DEFAULT_ROWS;
@@ -193,7 +193,7 @@ export function eyeCaster(mj: MainModule, model: MjModel, data: MjData, eyes: Ey
   const bodies = eyes.map((e) => mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY.value, e.body));
   const missing = eyes.find((_, i) => bodies[i] < 0);
 
-  if (missing) return `The eye's body ${missing.body} isn't in this model.`;
+  if (missing) return `The eye’s body ${missing.body} isn’t in this model.`;
 
   const compacts = eyes.map((e, i) => compactEye(e, bodies[i]));
   const run = rayCast(mj, model, data, Math.max(...compacts.map((c) => c.index.length)));

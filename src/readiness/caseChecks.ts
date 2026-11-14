@@ -48,12 +48,12 @@ export const replacedRow = (kase: { id: string; name: string }): CheckRow => ({
 
 function agentTextOf(row: CheckRow, failure: string): string {
   if (row.status === 'not run')
-    return `Case ${row.check}: a newer check replaced this one before its runs finished, so it isn't judged here. Run get_readiness again.`;
+    return `Case ${row.check}: a newer check replaced this one before its runs finished, so it isn’t judged here. Run get_readiness again.`;
 
   if (failure === CASE_STOPPED)
-    return `Case ${row.check}: its runs stopped with an error, so it isn't judged. Run get_readiness again.`;
+    return `Case ${row.check}: its runs stopped with an error, so it isn’t judged. Run get_readiness again.`;
 
-  if (!row.detail) return `Case ${row.check}: the robot can't run it. ${failure}`;
+  if (!row.detail) return `Case ${row.check}: the robot can’t run it. ${failure}`;
 
   return `Case ${row.check}: passed ${row.detail} randomized runs (friction, mass, servo strength and delay varied). Most common failure: ${failure}. Change the design so it passes at least 18 of 20.`;
 }

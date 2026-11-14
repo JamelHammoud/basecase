@@ -22,7 +22,7 @@ export function greetingRoutine(): Routine {
       skill: 'walk',
       holds: ['body'],
       timeoutMs: 300_000,
-      onTimeout: [say('doneWalking', "I'm done walking")],
+      onTimeout: [say('doneWalking', 'I’m done walking')],
       onFail: [],
     },
     watchers: [
@@ -45,7 +45,7 @@ export function greetingRoutine(): Routine {
             holds: ['body'],
             timeoutMs: 6000,
             onTimeout: [],
-            onFail: [say('stuck', "I'm stuck")],
+            onFail: [say('stuck', 'I’m stuck')],
           },
         ],
       },

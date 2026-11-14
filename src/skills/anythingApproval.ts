@@ -117,7 +117,7 @@ export async function selfProblems(spec: TaskSpec, poser: Poser, known: Labelled
   ];
   const problems: string[] =
     miss > 0.005
-      ? [`Your intent asks for a part position the robot can't reach (off by ${(miss * 1000).toFixed(0)} mm).`]
+      ? [`Your intent asks for a part position the robot can’t reach (off by ${(miss * 1000).toFixed(0)} mm).`]
       : [];
 
   for (const rollout of [...own, ...known]) {
@@ -170,7 +170,7 @@ async function proposalRounds(run: ApprovalRun, first: TaskSpec, mem: Memory): P
     }
 
     if (!answer.rollout || round === MAX_ROUNDS || run.session.signal?.aborted)
-      return { kind: 'rejected', reason: `The contract wasn't approved: ${answer.note}` };
+      return { kind: 'rejected', reason: `The contract wasn’t approved: ${answer.note}` };
 
     const rollout = { ...answer.rollout, pass: answer.shouldPass === true, name: `Example ${mem.known.length + 1}` };
 

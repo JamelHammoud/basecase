@@ -95,7 +95,7 @@ export class AcpAgent {
       if (msg) this.emit({ type: 'acp-stderr', text: msg });
     });
     child.on('error', (err) => {
-      this.error = `Couldn't start the agent: ${err.message}`;
+      this.error = `Couldn’t start the agent: ${err.message}`;
     });
     child.on('exit', (code) => {
       if (this.childProcess !== child) return;

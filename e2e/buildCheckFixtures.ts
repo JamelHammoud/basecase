@@ -1,4 +1,5 @@
-import type { Page } from 'playwright-core';
+import { expect } from 'vitest';
+import type { Locator, Page } from 'playwright-core';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
 import type { WalkSim } from '../src/utils/engineeringTypes';
@@ -66,6 +67,63 @@ export async function loadKnees(page: Page) {
     parts: [knee('a', -60), knee('b', 60), pack, rail],
     project: { ...(await sceneRecord(page)).project, joints },
   });
+}
+
+export const visible = (selector: string) => `${selector}:not([inert] *):visible`;
+
+export function buildCheckPage(page: () => Page) {
+  const checks = () =>
+    page()
+      .locator(visible('section'), { hasText: /^Checks/ })
+      .first();
+  const checkRow = (name: string) =>
+    checks()
+      .locator('li')
+      .filter({ has: page().getByRole('button', { name: new RegExp(`^${name}`) }) })
+      .first();
+
+  const loadParts = async (parts: unknown[]) =>
+    studioLoad(page(), { parts, project: (await sceneRecord(page())).project });
+
+  return {
+    checks,
+    checkRow,
+    loadParts,
+    loadStandIns: () => loadParts([standIn('one', -60), standIn('two', 60)]),
+    addCube: async () => {
+      await page().keyboard.press('a');
+      await page().getByRole('button', { name: /^Cube/ }).first().click();
+    },
+    expand: async (row: Locator, name: string) => {
+      const button = row.getByRole('button', { name: new RegExp(`^${name}`) }).first();
+
+      if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+    },
+    section: (title: RegExp) => page().locator(visible('section'), { hasText: title }).first(),
+    headerText: async () => (await checks().locator('header').first().textContent()) ?? '',
+    buildTabDot: () => page().locator(visible('[role=tab]'), { hasText: 'Build' }).first().getByRole('img'),
+  };
+}
+
+export async function bomRow(
+  page: Page,
+  scene: { parts: unknown[]; project: Pick<ProjectSettings, 'joints'> },
+  name: string,
+) {
+  await studioLoad(page, {
+    parts: scene.parts,
+    project: { ...(await sceneRecord(page)).project, joints: scene.project.joints },
+  });
+  await page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+  const bom = page.locator(visible('section'), { hasText: /^Bill of materials/ }).first();
+  const supplies = bom.getByRole('button', { name: /^Supplies/ }).first();
+
+  await expect.poll(() => supplies.isVisible(), { timeout: 45000 }).toBe(true);
+
+  if ((await supplies.getAttribute('aria-expanded')) === 'false') await supplies.click();
+
+  return bom.locator('li ul > li').filter({ hasText: name });
 }
 
 export async function storeWalk(page: Page, walk: WalkSim) {

@@ -1,4 +1,5 @@
 import type { Port, PortVec } from '../types/ports';
+import { POWER_AND_BUS_PORTS, STS_BUS, dynamixelBus } from './connectorPorts';
 
 type Hole = Pick<Port, 'thread' | 'diameterMm' | 'depthMm'> & { kind?: 'screw' | 'bore' };
 
@@ -177,6 +178,8 @@ function dynamixelBody(d: Dynamixel): Port[] {
   ];
 }
 
+const withBus = (end: number, y: number, d: Dynamixel): Port[] => [...dynamixelBody(d), ...dynamixelBus(end, y)];
+
 const board = (name: string, at: { center: PortVec; span: [number, number]; faces: [number, number] }, spec: Hole) => [
   ...grid(`${name}-bottom`, { center: [at.center[0], at.faces[0], at.center[2]], axis: DOWN, span: at.span }, spec),
   ...grid(`${name}-top`, { center: [at.center[0], at.faces[1], at.center[2]], axis: UP, span: at.span }, spec),
@@ -185,7 +188,7 @@ const board = (name: string, at: { center: PortVec; span: [number, number]; face
 const M25_BOARD: Hole = { kind: 'bore', thread: 'M2.5', diameterMm: 2.7 };
 const M2_CAMERA: Hole = { kind: 'bore', thread: 'M2', diameterMm: 2.2 };
 
-const STS3215 = stsBody(18.35, -18.9, 16.3, -15.7);
+const STS3215 = [...stsBody(18.35, -18.9, 16.3, -15.7), ...STS_BUS];
 
 export const COMPONENT_PORTS: Record<string, Port[]> = {
   'feetech-sts3215': STS3215,
@@ -194,7 +197,7 @@ export const COMPONENT_PORTS: Record<string, Port[]> = {
   'hiwonder-lx-16a': stsBody(18.15, -18.05, 16.05, -15.95).map((p) =>
     p.name.startsWith('horn') || p.name.startsWith('idler-horn') ? { ...p, thread: 'M2' } : p,
   ),
-  'dynamixel-xl430-w250': dynamixelBody({
+  'dynamixel-xl430-w250': withBus(23.25, -12, {
     axisZ: -12,
     top: 18.55,
     bottom: -19.45,
@@ -203,7 +206,7 @@ export const COMPONENT_PORTS: Record<string, Port[]> = {
     end: { z: 23.25, x: 8, y: [-6.45, 5.55] },
     caseThread: { thread: 'M2', diameterMm: 2.1, depthMm: 4 },
   }),
-  'dynamixel-xm430-w350': dynamixelBody({
+  'dynamixel-xm430-w350': withBus(23.25, -14, {
     axisZ: -12,
     top: 16.65,
     bottom: -21.35,
@@ -212,7 +215,7 @@ export const COMPONENT_PORTS: Record<string, Port[]> = {
     end: { z: 23.25, x: 8, y: [-8.35, 3.65] },
     caseThread: { thread: 'M2.5', depthMm: 3 },
   }),
-  'dynamixel-xm540-w270': dynamixelBody({
+  'dynamixel-xm540-w270': withBus(29.25, -18, {
     axisZ: -15.5,
     top: 21.85,
     bottom: -27.15,
@@ -298,6 +301,7 @@ export const COMPONENT_PORTS: Record<string, Port[]> = {
   'realsense-d435': realsense({ back: -12.52, span: 45, depth: 3, tripod: [0, -12.5, 0], tripodDepth: 5.5 }),
   'realsense-d435i': realsense({ back: -12.52, span: 45, depth: 3, tripod: [0, -12.5, 0], tripodDepth: 5.5 }),
   'realsense-d405': realsense({ back: -11.5, span: 20, depth: 4, tripod: [0.05, -21, -3.15], tripodDepth: 5 }),
+  ...POWER_AND_BUS_PORTS,
 };
 
 function xl330(): Port[] {
@@ -309,6 +313,7 @@ function xl330(): Port[] {
     ...circle('horn', { center: [0, 14.5, -7.5], axis: UP, pcd: 12, count: 4, ref: PX }, tap),
     ...grid('case-top', { center: [0, 11.5, 0], axis: UP, span: [16, 30] }, through),
     ...grid('case-bottom', { center: [0, -11.5, 0], axis: DOWN, span: [16, 30] }, through),
+    ...dynamixelBus(17, -6),
   ];
 }
 

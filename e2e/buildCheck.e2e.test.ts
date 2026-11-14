@@ -6,47 +6,25 @@ import { caseSlots } from '../src/cases/schema';
 import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket';
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { buildRig } from '../src/utils/kinematics';
-import { armWithEstimates, loadKnees, servo, standIn, storeWalk, type StudioHook } from './buildCheckFixtures';
+import { so101 } from '../src/wiring/fixtures';
+import {
+  armWithEstimates,
+  bomRow,
+  buildCheckPage,
+  loadKnees,
+  servo,
+  storeWalk,
+  visible,
+  type StudioHook,
+} from './buildCheckFixtures';
 import { agentRequest, kneeLink, loadFallBiped, openedItem, selection } from './fallsFixtures';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
 
-const visible = (selector: string) => `${selector}:not([inert] *):visible`;
-
-const addCube = async () => {
-  await app.page.keyboard.press('a');
-  await app.page.getByRole('button', { name: /^Cube/ }).first().click();
-};
-
-const loadParts = (parts: unknown[]) =>
-  app.page.evaluate((list) => {
-    const studio = (window as unknown as { __studio: StudioHook }).__studio;
-
-    studio.load({ parts: list, project: studio.sceneRecord().project });
-  }, parts);
-
-const loadStandIns = () => loadParts([standIn('one', -60), standIn('two', 60)]);
-
-const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
-
-const section = (title: RegExp) => app.page.locator(visible('section'), { hasText: title }).first();
-
-const checkRow = (name: string) =>
-  checks()
-    .locator('li')
-    .filter({ has: app.page.getByRole('button', { name: new RegExp(`^${name}`) }) })
-    .first();
-
-const expand = async (row: ReturnType<typeof checkRow>, name: string) => {
-  const button = row.getByRole('button', { name: new RegExp(`^${name}`) }).first();
-
-  if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
-};
-
-const headerText = async () => (await checks().locator('header').first().textContent()) ?? '';
-
-const buildTabDot = () => app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().getByRole('img');
+const { checks, checkRow, section, headerText, buildTabDot, expand, addCube, loadParts, loadStandIns } = buildCheckPage(
+  () => app.page,
+);
 
 beforeAll(async () => {
   app = await openApp();
@@ -283,10 +261,22 @@ describe('Build tab fields', () => {
     const bom = section(/^Bill of materials/);
     const budget = bom.getByRole('textbox', { name: /^Budget in / });
 
+    await loadKnees(app.page);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    await expect.poll(() => budget.isVisible(), { timeout: 15000 }).toBe(true);
     await budget.fill('100000');
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
+});
+
+describe('Cables', () => {
+  it('list one 5264 cable per hop of an SO-101 arm, with no generic pack', async () => {
+    const cables = await bomRow(app.page, so101(), 'Bus Servo Cable');
+
+    await expect.poll(() => cables.count(), { timeout: 20000 }).toBe(1);
+    expect(await cables.first().innerText()).toMatch(/^6×/);
+  }, 90000);
 });
 
 describe('Cases in Checks', () => {

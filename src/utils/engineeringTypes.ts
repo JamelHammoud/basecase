@@ -6,6 +6,7 @@ import type { V3 } from './engineeringMath';
 import type { ArmModel, PayloadMap } from './payload';
 import type { ChainResult } from '../assembly/assemblyTypes';
 import type { StrengthJob, StrengthReading } from '../strength/types';
+import type { Netlist } from '../wiring/netlist';
 
 export interface PartMass {
   id: string;
@@ -166,6 +167,7 @@ export interface EngineeringReport {
   com: V3;
   masses: PartMass[];
   stability?: Stability;
+  wiring?: Netlist;
 }
 
 export interface CheckContext {

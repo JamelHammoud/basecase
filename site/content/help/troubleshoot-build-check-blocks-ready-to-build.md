@@ -26,6 +26,7 @@ covers:
   - src/readiness/readiness.ts
   - src/utils/engineeringBudget.ts
   - src/utils/engineeringFalls.ts
+  - src/wiring/wiringChecks.ts
   - src/components/settings/BuildPane.tsx
 ---
 
@@ -72,6 +73,15 @@ In a fall, this leg joint asks for more than 5 times its servo's rated torque, o
 3. Ask the agent to verify the design with falls again.
 
 It worked when **Falls** in Checks has no red mark.
+
+## Servo bus is red
+
+The build has a bus adapter, but none takes these servos' connector. DYNAMIXEL X servos on a Waveshare Bus Servo Adapter (A) are one case.
+
+1. Open **Servo bus** in Checks. It names the adapter to add, such as **Add a JST EH 3-pin bus adapter for 2 servos.**
+2. Open **Parts** and place that adapter in the robot. For JST EH 3-pin, that's the **ROBOTIS U2D2** or **ROBOTIS OpenRB-150**. For 5264 3-pin, it's the **Waveshare Bus Servo Adapter (A)**.
+
+It worked when **Servo bus** leaves the list.
 
 ## You know a blocker is wrong
 

@@ -232,7 +232,7 @@ export function checkInterfaces(input: InterfaceCheckInput): InterfaceCheck | st
 export function interfaceText(owner: string, check: InterfaceCheck): string {
   const head = check.pass
     ? `Interfaces for ${owner}: pass. You can hand back.`
-    : `Interfaces for ${owner}: ${check.problems.length} problems. Fix them before you hand back.`;
+    : `Interfaces for ${owner}: ${plural(check.problems.length, 'problem')}. Fix them before you hand back.`;
 
   return [
     head,

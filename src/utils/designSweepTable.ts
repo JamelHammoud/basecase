@@ -3,6 +3,7 @@ import { formatWhole } from './currencyStore';
 import { prettyJointName } from './kinematics';
 import { runClock } from './duration';
 import { weight } from './weight';
+import { angle } from './angle';
 
 export interface SweepSim {
   fellAt: number | null;
@@ -59,7 +60,7 @@ function withDelta(v: number | undefined, base: number | undefined, fmt: Fmt): s
 
 const share: Fmt = (v) => v.toFixed(2);
 const usd: Fmt = (v) => formatWhole(v);
-const tip: Fmt = (v) => `${v.toFixed(1)}°`;
+const tip: Fmt = angle;
 
 function simCell(sim: SweepMetrics['sim'], base: SweepMetrics['sim']): string {
   if (sim === undefined) return '—';

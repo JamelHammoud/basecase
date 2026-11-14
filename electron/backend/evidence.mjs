@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { plural } from '../plural.mjs';
 
 const MAX_LISTED_FILES = 400;
 
@@ -103,7 +104,7 @@ function kindSummary(files) {
   for (const f of files) counts[evidenceKind(f.path)] = (counts[evidenceKind(f.path)] || 0) + 1;
 
   return Object.entries(counts)
-    .map(([k, n]) => `${n} ${KIND_LABELS[k][n > 1 ? 1 : 0]}`)
+    .map(([k, n]) => plural(n, ...KIND_LABELS[k]))
     .join(', ');
 }
 

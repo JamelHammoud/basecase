@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { robotFacts } from '../cases/robotFit';
+import { angle } from '../utils/angle';
 import { readWorldObjects, worldItem, type WorldObject } from '../cases/schema';
 import { kitEntries } from '../skills/motorKit';
 import {
@@ -105,7 +106,7 @@ function liveDrive(ctx: DriveToolContext, commands: AgentCommand[]) {
   });
 
   return {
-    text: `Driving on the canvas: ${commands.length} commands over ${duration(Math.max(...commands.map((c) => c.at)))}.`,
+    text: `Driving on the canvas: ${plural(commands.length, 'command')} over ${duration(Math.max(...commands.map((c) => c.at)))}.`,
   };
 }
 
@@ -194,7 +195,7 @@ function driveReport({ ctx, run, cls, seconds }: ReportInput): string {
 
   if (r && cls !== 'arm') {
     lines.push(
-      `Moved ${lengthLabel(r.travelled * 1000)}, ${signedLengthLabel(r.forward * 1000)} of it forward; tilt ${r.tilt.toFixed(0)}°.`,
+      `Moved ${lengthLabel(r.travelled * 1000)}, ${signedLengthLabel(r.forward * 1000)} of it forward; tilt ${angle(r.tilt)}.`,
     );
     lines.push(r.fellAt === null ? 'Stayed up.' : `Fell at ${runClock(r.fellAt)}.`);
   }

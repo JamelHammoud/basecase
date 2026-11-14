@@ -144,7 +144,7 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 const jobConclusions = (run) =>
   cached(
-    `jobs-${run.databaseId}`,
+    `jobs-${run.databaseId}-${run.status}`,
     { ttlMs: run.status === 'completed' ? WEEK_MS : 60_000 },
     () =>
       json('gh', ['api', `repos/${repo()}/actions/runs/${run.databaseId}/jobs`, '--jq', '[.jobs[].conclusion]']) ?? [],

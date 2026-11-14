@@ -26,7 +26,7 @@ describe('the nightly full suite', () => {
     expect(suiteDue(at('2026-11-13T07:10:00Z'), '2026-11-13T06:20:00Z')).toBe(false);
   });
 
-  it('runs again after a failure once main moves on, at most hourly, never over a running one', () => {
+  it('runs again after a failure or a cancelled run once main moves on, at most hourly, never over a running one', () => {
     const now = Date.parse('2026-11-13T09:00:00Z');
     const last = { conclusion: 'failure', headSha: 'aaa', createdAt: '2026-11-13T07:30:00Z' };
 
@@ -35,6 +35,7 @@ describe('the nightly full suite', () => {
     expect(rerunSuite({ now, last, mainHead: 'bbb', running: true })).toBe(false);
     expect(rerunSuite({ now, last: { ...last, createdAt: '2026-11-13T08:30:00Z' }, mainHead: 'bbb' })).toBe(false);
     expect(rerunSuite({ now, last: { ...last, conclusion: 'success' }, mainHead: 'bbb' })).toBe(false);
+    expect(rerunSuite({ now, last: { ...last, conclusion: 'cancelled' }, mainHead: 'bbb', running: false })).toBe(true);
   });
 
   it('tries the release again every two hours until one goes out that day', () => {

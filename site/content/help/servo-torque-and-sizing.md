@@ -41,7 +41,7 @@ Pick servos that won't stall or overheat: Servo torque compares what each joint 
 
 Every servo in **Parts** carries its datasheet's stall torque and rated torque. Stall is the most it can hold before it stops; rated is what it can hold all day without overheating.
 
-Both are read at the voltage the servo actually gets: a regulator's output, else the battery's nominal voltage, else the tether's. Between the datasheet's voltage points the torque is interpolated, and it's never rated above what the supply reaches. When a datasheet gives no rated torque, a quarter of stall stands in, and the row says so.
+Both are read at the voltage the servo actually gets: a regulator's output, else the battery's nominal voltage, else the power supply's. Between the datasheet's voltage points the torque is interpolated, and it's never rated above what the supply reaches. When a datasheet gives no rated torque, a quarter of stall stands in, and the row says so.
 
 A servo's page in **Parts** gives its stall torque as a load: the Feetech STS3215 holds “Up to 1.95 kg at 10 cm”.
 

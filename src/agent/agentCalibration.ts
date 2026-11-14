@@ -1,7 +1,6 @@
 import { replayErrors } from '../reality/jointReplay';
 import type { ProjectSettings } from '../types/robotics';
-
-const degrees = (rad: number) => `${((rad * 180) / Math.PI).toFixed(2)}°`;
+import { angleFromRadians as degrees } from '../utils/angle';
 
 export async function calibrationErrorsText(project: ProjectSettings): Promise<string> {
   const rows = await Promise.all(

@@ -7,12 +7,11 @@ import type { DriveCommand } from '../sim/driveTypes';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { buildPartGroup } from '../three/buildPartMesh';
 import type { ProjectSettings, RobotPoseState, SceneAnnotation, ScenePart } from '../types/robotics';
-import { sceneToStl } from '../utils/aiHandoff';
 import { lastDownload } from '../utils/downloadBytes';
 import { replayErrors } from '../reality/jointReplay';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
-import { degrees } from '../robot/robotGhost';
+import { radiansToDegrees as degrees } from '../utils/angle';
 import { phoneSnapshot } from '../phone/phoneStore';
 import { inputEvents } from '../sim/inputEvents';
 import {
@@ -105,10 +104,8 @@ export interface DevStudioDeps {
   devRef: RefObject<DevActions>;
 }
 
-function stlBase64(parts: ScenePart[]) {
-  const view = sceneToStl(parts);
-
-  return bytesToBase64(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+async function stlBase64(viewport: Viewport3DHandle | null) {
+  return bytesToBase64((await viewport?.exportStl()) ?? new Uint8Array());
 }
 
 function addMeshTriangles(groups: Record<string, number[]>, obj: THREE.Object3D) {
@@ -246,7 +243,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     interference: () => viewportRef.current?.interference() ?? { interferences: [], coplanar: [] },
     checkDots: () => viewportRef.current?.checkDotCount() ?? 0,
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
-    stlBase64: () => stlBase64(partsRef.current),
+    stlBase64: () => stlBase64(viewportRef.current),
     lastDownload: () => lastDownloadFile(),
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],
     projectPoints: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],

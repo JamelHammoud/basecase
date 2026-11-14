@@ -2,6 +2,7 @@ import { COMPONENT_BY_ID, componentVariant } from '../data/components';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { Purchases } from '../types/robotics';
 import { robotTotals } from './caseCompare';
+import { volts } from '../utils/electric';
 import type { CaseRuns } from './caseRuns';
 import {
   designKey,
@@ -93,9 +94,9 @@ export function designLabel(space: ExploreSpace, design: Design): string {
   const servos = designChanges(space, design).map(({ joints, variant }) =>
     all && joints.length === space.groups.length ? `All ${variant}` : `${joints.join(', ')} ${variant}`,
   );
-  const volts = design.volts === space.current.volts ? [] : [`${design.volts} V`];
+  const supply = design.volts === space.current.volts ? [] : [volts(design.volts)];
 
-  return [...servos, ...volts].join('; ');
+  return [...servos, ...supply].join('; ');
 }
 
 export async function exploreCase(base: ExploreBase, options: ExploreOptions): Promise<ExploredDesign[]> {

@@ -56,7 +56,7 @@ export function scopeOf(ctx: PoseContext, wanted?: string): Scope | string {
 
     return w
       ? `No robot "${wanted}". Robots: ${list}.`
-      : `${full.robots.length} robots in the scene: ${list}. Pass robot to say which.`;
+      : `${plural(full.robots.length, 'robot')} in the scene: ${list}. Pass robot to say which.`;
   }
 
   return {

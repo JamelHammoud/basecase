@@ -2,6 +2,7 @@ import type * as THREE from 'three';
 import type { RobotPoseState } from '../types/robotics';
 import { forwardKinematics, poseDeltas, posedAxis, type Rig, type V3 } from '../utils/kinematics';
 import type { RobotTwin } from './robotTwin';
+import { radiansToDegrees as degrees, signedAngleReading } from '../utils/angle';
 
 export interface GhostLabel {
   text: string;
@@ -14,14 +15,6 @@ export interface RobotGhost {
   values: Record<string, number>;
   label: GhostLabel | null;
 }
-
-export const degrees = (radians: number) => (radians * 180) / Math.PI;
-
-export const signedDegrees = (radians: number) => {
-  const text = Math.abs(degrees(radians)).toFixed(1);
-
-  return `${radians < 0 && text !== '0.0' ? '-' : '+'}${text}°`;
-};
 
 function measuredPose(rig: Rig, twin: Pick<RobotTwin, 'joints' | 'measured'>): RobotPoseState {
   const values: Record<string, number> = {};
@@ -48,7 +41,7 @@ function labelOf(rig: Rig, pose: RobotPoseState, largest: RobotTwin['largest']):
 
   const { origin } = posedAxis(rig, forwardKinematics(rig, pose), joint);
 
-  return { text: signedDegrees(largest.gap), at: [origin.x, origin.y, origin.z] };
+  return { text: signedAngleReading(degrees(largest.gap)), at: [origin.x, origin.y, origin.z] };
 }
 
 export function robotGhost(

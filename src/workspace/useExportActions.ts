@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { jobSpec } from '../print/job';
-import { buildAIHandoffPayload, exportSceneToSTL } from '../utils/aiHandoff';
+import { buildAIHandoffPayload } from '../utils/aiHandoff';
 import { downloadBytes as download } from '../utils/downloadBytes';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
@@ -25,11 +25,17 @@ export function useExportActions(core: WorkspaceCore) {
   const exportStep = useStepExport({ parts, scene, showToast, toasts });
   const exportRobotPackage = useRobotPackageExport(core);
 
-  const exportStl = () => {
-    if (parts.length === 0) return;
+  const exportStl = async () => {
+    const viewport = viewportRef.current;
 
-    exportSceneToSTL(parts, `${fileSafe(scene.sceneName)}.stl`);
-    showToast('Exported STL');
+    if (!viewport || parts.length === 0) return;
+
+    try {
+      download(await viewport.exportStl(), `${fileSafe(scene.sceneName)}.stl`, 'model/stl');
+      showToast('Exported STL');
+    } catch (err) {
+      showToast(errorMessage(err), { tone: 'error' });
+    }
   };
 
   const exportImage = () => {

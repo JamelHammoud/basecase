@@ -106,6 +106,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       onRenamePart={edits.renamePart}
       renamingLayer={ui.renamingLayer}
       onRenamingLayer={ui.setRenamingLayer}
+      dataLayers={core.dataLayers}
       onPartContextMenu={onPartContextMenu}
       onAddCatalogItem={creation.addCatalogItem}
       library={libraryProps}

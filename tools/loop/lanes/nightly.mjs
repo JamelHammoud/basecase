@@ -1,11 +1,12 @@
 import { isPaused } from '../lib/github.mjs';
 import { nextVersion, releaseDue, rerunSuite, suiteDue } from '../lib/nightly.mjs';
 import { json, run } from '../lib/sh.mjs';
+import { store } from '../lib/store.mjs';
 
 export const schedule = {
   slots: 1,
   everySeconds: 900,
-  does: "Starts the full suite when GitHub's schedule skips it, reruns a failed suite once fixes land, and releases the newest commit it passed once a day, as Jamel",
+  does: "Starts the full suite when GitHub's schedule skips it, reruns a failed suite once fixes land, and releases once a day, as Jamel, right after the suite passes on a commit it hasn't tried",
 };
 
 const runs = (workflow, extra = []) =>
@@ -53,25 +54,41 @@ const lastTag = () =>
     'tagName',
   ])?.[0]?.tagName ?? null;
 
-const newestGreen = () => runs('check.yml', ['--branch', 'main', '--status', 'success'])[0]?.headSha ?? null;
+const newestSuitePass = () =>
+  (
+    json('gh', [
+      'run',
+      'list',
+      '--workflow',
+      'check.yml',
+      '--branch',
+      'main',
+      '--status',
+      'success',
+      '--limit',
+      '20',
+      '--json',
+      'headSha,event',
+    ]) ?? []
+  ).find((r) => r.event === 'schedule' || r.event === 'workflow_dispatch')?.headSha ?? null;
 
 const ahead = (from, to) =>
   run('gh', ['api', `repos/{owner}/{repo}/compare/${from}...${to}`, '--jq', '.status'], {
     allowFail: true,
   }).out.trim() === 'ahead';
 
-function release(log, now) {
-  const attempts = runs('release.yml');
-  const running = attempts.some((r) => r.status !== 'completed');
+const releases = store('release', { tried: [] });
 
-  if (!releaseDue({ now, lastReleaseAt: lastRelease(), lastAttemptAt: attempts[0]?.createdAt ?? null, running }))
-    return;
+function release(log, now) {
+  const state = releases.get('state');
+  const green = newestSuitePass();
+  const running = runs('release.yml').some((r) => r.status !== 'completed');
+
+  if (!releaseDue({ now, green, tried: state.tried, lastReleaseAt: lastRelease(), running })) return;
 
   const tag = lastTag();
-  const green = newestGreen();
 
-  if (!tag || !green || !ahead(tag, green))
-    return log('nothing that passed the full suite is newer than the last release');
+  if (!tag || !ahead(tag, green)) return;
 
   const version = nextVersion(tag);
   const args = [
@@ -88,8 +105,11 @@ function release(log, now) {
     'release=true',
   ];
 
+  state.tried = [...state.tried, green].slice(-50);
+  releases.save('state', state);
+
   if (run('gh', args, { allowFail: true }).ok)
-    log(`releasing ${version} from ${green.slice(0, 7)}, the newest commit the full suite passed`);
+    log(`the full suite passed on ${green.slice(0, 7)}; releasing ${version}`);
 }
 
 export default function nightly({ log }) {

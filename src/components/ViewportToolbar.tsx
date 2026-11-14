@@ -125,7 +125,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           />
           <MenuDivider />
           <MenuItem
-            icon={<PenIcon className="w-4 h-4" />}
+            icon={<PenIcon />}
             label="Sketch"
             onSelect={() => {
               onShapesOpenChange(false);
@@ -133,7 +133,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
             }}
           />
           <MenuItem
-            icon={<RulerIcon className="w-4 h-4" />}
+            icon={<RulerIcon />}
             label="Measure"
             shortcut={keyFor('measure')}
             onSelect={() => {
@@ -142,7 +142,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
             }}
           />
           <MenuItem
-            icon={<MarkerIcon className="w-4 h-4" />}
+            icon={<MarkerIcon />}
             label="Annotate"
             shortcut={keyFor('annotate')}
             onSelect={() => {
@@ -151,7 +151,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
             }}
           />
           <MenuItem
-            icon={<FileImportIcon className="w-4 h-4" />}
+            icon={<FileImportIcon />}
             label="Import SVG"
             onSelect={() => {
               onShapesOpenChange(false);

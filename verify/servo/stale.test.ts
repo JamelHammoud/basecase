@@ -38,6 +38,7 @@ const training = {
   start: unreachable,
   stop: unreachable,
   loadPolicy: unreachable,
+  isStale: (record: PolicyRecord) => isStalePolicy(record),
 } as unknown as Training;
 
 const sim = new Proxy({}, { get: unreachable }) as SimContext['sim'];

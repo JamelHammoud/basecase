@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fail, pass, ROOT, sh } from './gate.mjs';
+import { fail, pass, ROOT, sh, vitestConfig } from './gate.mjs';
 
 const OUT = path.join(ROOT, 'verify', 'out', 'canary-reports');
 
@@ -56,7 +56,7 @@ export function vitestCanary(name, file, title) {
         'vitest',
         'run',
         '--config',
-        'verify/vitest.config.ts',
+        vitestConfig([file]),
         file,
         '-t',
         escaped(title),

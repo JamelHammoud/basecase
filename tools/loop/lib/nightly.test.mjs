@@ -38,6 +38,21 @@ describe('the nightly full suite', () => {
     expect(rerunSuite({ now, last: { ...last, conclusion: 'cancelled' }, mainHead: 'bbb', running: false })).toBe(true);
   });
 
+  it('retests a merged repair before the hourly fallback without repeating the same commit or overlapping a run', () => {
+    const now = Date.parse('2026-11-14T13:10:00Z');
+    const last = { conclusion: 'failure', headSha: 'aaa', createdAt: '2026-11-14T12:40:11Z' };
+    const base = { now, last, mainHead: 'bbb', running: false, repairMerged: () => true };
+
+    expect(rerunSuite(base)).toBe(true);
+    expect(rerunSuite({ ...base, repairMerged: () => false })).toBe(false);
+    expect(rerunSuite({ ...base, mainHead: 'aaa' })).toBe(false);
+    expect(rerunSuite({ ...base, running: true })).toBe(false);
+    expect(rerunSuite({ ...base, last: null })).toBe(false);
+    expect(rerunSuite({ ...base, last: { ...last, conclusion: 'success' } })).toBe(false);
+    expect(rerunSuite({ ...base, last: { ...last, conclusion: 'cancelled' } })).toBe(true);
+    expect(rerunSuite({ ...base, last: { ...last, headSha: 'bbb' } })).toBe(false);
+  });
+
   it('releases right after the suite passes on a commit it has not tried, once a day, never over a running release', () => {
     const now = Date.parse('2026-11-14T13:00:00Z');
     const base = { now, green: 'bbb', tried: ['aaa'], lastReleaseAt: '2026-11-13T09:40:00Z', running: false };

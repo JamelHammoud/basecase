@@ -1,4 +1,5 @@
 import type { SavedSceneRecord, SavedSceneSummary } from '../types/robotics';
+import { CASE_STORES } from '../cases/console/codeStore';
 import { pickFiles } from '../utils/pickFiles';
 import { platformBridge } from '../utils/platformBridge';
 import { errorMessage } from '../utils/errorMessage';
@@ -64,7 +65,6 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
     );
 
     sceneStore.upsert({ ...scene, id, name, updatedAt: new Date().toISOString() });
-    toastInFront(`Duplicated ${scene.name}`);
 
     queueSceneWrite(id, async () => {
       if (tab) await handles.current.get(tab.id)?.flush();
@@ -80,6 +80,7 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
 
     setClosed((prev) => prev.filter((c) => c.seed.sceneId !== scene.id));
     sceneStore.remove(scene.id);
+    CASE_STORES.deleteScene(scene.id);
     queueSceneWrite(scene.id, () => platformBridge.deleteScene(scene.id)).catch(reloadScenes);
     window.setTimeout(() => toastInFront(`Deleted ${scene.name}`), 0);
   };

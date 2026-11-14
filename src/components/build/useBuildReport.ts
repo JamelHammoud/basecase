@@ -48,7 +48,7 @@ export function useBuildReport(input: BuildReportInput) {
 
       setMeasures(nextMeasures);
 
-      const report = await printReportOf(printParts, { project, printer }, printShapes);
+      const report = await printReportOf(printParts, { project, printer, scene: parts }, printShapes);
 
       if (!stopped) setPrint(report);
     }, SETTLE_MS);

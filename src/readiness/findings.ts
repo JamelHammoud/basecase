@@ -99,7 +99,7 @@ export function bomFindings(bom: Bom): Finding[] {
   const standIns = bom.standIns.map((m) =>
     ruleFinding('stand-in', 'blocker', { agentText: `${m.name} is a stand-in, not a real part.`, ids: [m.id] }),
   );
-  const unpriced = bom.lines.filter((l) => l.status === 'unchecked' && l.estUsd === undefined);
+  const unpriced = bom.lines.filter((l) => l.status === 'unchecked' && l.toBuy > 0 && l.estUsd === undefined);
 
   return [
     ...elsewhere,

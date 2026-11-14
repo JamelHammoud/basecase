@@ -1,4 +1,4 @@
-import { radiansFromCounts, type RobotState } from './robotState';
+import { measuredRadians, type RobotState } from './robotState';
 
 export const GAP_LIMIT_RAD = (4 * Math.PI) / 180;
 export const LAG_HOLD_MS = 2000;
@@ -66,11 +66,7 @@ export class DaemonClock {
 }
 
 export function measuredAngles(state: RobotState): Angles {
-  return (state.spec?.ids ?? []).map((id) => {
-    const position = state.status?.joints.find((j) => j.id === id)?.position;
-
-    return typeof position === 'number' ? radiansFromCounts(position) : null;
-  });
+  return (state.spec?.ids ?? []).map((id) => measuredRadians(state, id));
 }
 
 export function simAngles(

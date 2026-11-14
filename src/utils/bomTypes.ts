@@ -25,6 +25,8 @@ export interface BomLine {
   name: string;
   detail: string;
   qty: number;
+  owned: number;
+  toBuy: number;
   unit: 'pcs' | 'g';
   partIds: string[];
   url?: string;

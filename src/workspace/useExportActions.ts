@@ -22,7 +22,7 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve))
 export function useExportActions(core: WorkspaceCore) {
   'use memo';
 
-  const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing } = core;
+  const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing, printing } = core;
   const sharingRef = useRef(false);
   const exportStep = useStepExport({ parts, scene, showToast, toasts });
   const exportRobotPackage = useRobotPackageExport(core);
@@ -73,7 +73,7 @@ export function useExportActions(core: WorkspaceCore) {
       return;
     }
 
-    const files = await viewport.printThreeMf(spec.files, spec.plateSize);
+    const { files } = await printing.plates.write(spec);
     const single = spec.files.length === 1;
 
     for (const file of spec.files) {

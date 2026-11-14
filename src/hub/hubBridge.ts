@@ -10,6 +10,18 @@ export interface HubAccountState {
 export interface HubPublish {
   name: string;
   files: Record<string, Uint8Array>;
+  kind?: 'dataset' | 'model';
+}
+
+export interface HubRepoRef {
+  owner: string;
+  repo: string;
+  rev: string;
+}
+
+export interface HubSkillFiles {
+  repo: string;
+  files: Record<string, string>;
 }
 
 export interface HubPublished {
@@ -44,4 +56,5 @@ export const hubBridge = {
     ),
   signIn: async (token: string) => asAccount(await call('hub:sign-in', token)),
   publish: (payload: HubPublish) => call<HubPublished>('hub:publish', payload),
+  skillFiles: (ref: HubRepoRef) => call<HubSkillFiles>('hub:skill-files', ref),
 };

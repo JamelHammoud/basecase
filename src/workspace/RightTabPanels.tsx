@@ -78,7 +78,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
       onReplayFall={(deg) => void replayFall(core, deg)}
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
-      onToast={(m) => showToast(m)}
+      onToast={showToast}
       guide={guide}
       readiness={core.readiness}
     />
@@ -216,6 +216,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           explore={core.caseExplore}
           sceneName={core.scene.sceneName}
           onToast={core.showToast}
+          onPublishSkill={simTraining.skillHub.publishable.length ? simTraining.skillHub.publish : null}
         />
       </TabActivity>
       <TabActivity tab="inspector" current={current} visited={visited}>

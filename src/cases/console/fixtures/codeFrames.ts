@@ -5,6 +5,7 @@ import { openCodeBridge, type BridgeStudio, type CodeBridge } from '../codeBridg
 import { codeClientScript } from '../codeDocument';
 import type { FrameKey } from '../codeProtocol';
 import type { BridgeClock } from '../codeSignals';
+import type { CaseStore } from '../codeStore';
 import type { FrameSize, FrameSource } from '../codeStreams';
 import type { CaseAction } from '../panelKinds';
 import type { SignalBus } from '../signalBus';
@@ -72,6 +73,7 @@ export interface FrameOptions {
   clock?: BridgeClock;
   world?: (change: WorldChange) => string | null;
   frames?: FrameSource;
+  store?: CaseStore | null;
   globals?: Record<string, unknown>;
   drive?: (command: DriveCommand | null) => void;
   event?: (name: string, value: FactValue) => void;
@@ -188,6 +190,7 @@ export function openTestFrame(html: string, o: FrameOptions): TestFrame {
 
         return () => undefined;
       }),
+    store: o.store ?? null,
   };
 
   bridge = openCodeBridge({

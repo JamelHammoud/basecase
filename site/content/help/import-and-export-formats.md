@@ -62,7 +62,7 @@ Every export is in the **Export** menu at the top right of the window.
 |---|---|---|
 | **Image** | `<scene>.png` | The canvas as you see it, without the grid, gizmos and other helpers |
 | **STL** | `<scene>.stl` | Every visible solid part as one binary mesh, in millimeters, Z up |
-| **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates |
+| **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates, each with its [guide letter](/help/label-printed-parts) while **Label parts** is on |
 | **STEP**, in the desktop app | `<scene>.step` | Every visible part as its own body in one assembly, in millimeters, Z up |
 | **Cut Files** | `<scene>-cut-files.zip` | One DXF per part cut from sheet, in millimeters |
 | **Scene** | `<scene>.basecase` | The scene, to open in Basecase |

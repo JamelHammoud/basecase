@@ -36,7 +36,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `update_parts` | Moves, resizes, recolors, renames, regroups or re-notes parts, rounds or bevels their edges, and sets them to cut from sheet |
 | `delete_parts` | Removes parts |
 | `mirror_parts` | Makes mirrored copies for left and right sides |
-| `find_parts` | Searches the catalog of real parts, with sizes and prices |
+| `find_parts` | Searches the catalog of real parts, with sizes, prices and how many you own |
 | `model_part` | Models one part as code and places it in the scene |
 | `set_status` | Shows a short status line in the app |
 
@@ -133,6 +133,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | Tool | What it does |
 |---|---|
 | `get_bom` | Reads the bill of materials |
+| `record_on_hand` | Saves how many of a part you own |
 | `check_printability` | Checks each part against your printer |
 | `slice_plates` | Slices plates for print time and grams, without printing |
 | `merge_parts` | Merges printed parts that `check_assembly` lists into one, when you ask |

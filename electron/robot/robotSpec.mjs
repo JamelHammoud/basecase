@@ -211,4 +211,43 @@ export const emulatedCalibration = (spec) => ({
   class: spec.class,
 });
 
-export const radiansFromCounts = (counts) => ((counts - ZERO_COUNTS) * 2 * Math.PI) / 4096;
+export const jointRadians = (counts, joint) => (joint.direction * (counts - joint.zero_counts) * 2 * Math.PI) / 4096;
+
+export const isServoFamily = (spec) => FAMILIES.includes(spec?.family);
+
+const MOUNT_KEYS = ['direction', 'id', 'zero_counts'];
+const MAX_COUNTS = 4095;
+
+const isCounts = (value) => Number.isInteger(value) && value >= 0 && value <= MAX_COUNTS;
+
+const isMount = (mount, ids) =>
+  isPlainObject(mount) &&
+  sameKeys(mount, MOUNT_KEYS) &&
+  ids.includes(mount.id) &&
+  isCounts(mount.zero_counts) &&
+  (mount.direction === 1 || mount.direction === -1);
+
+const isPlainArray = (value) => Array.isArray(value) && Object.getPrototypeOf(value) === Array.prototype;
+
+export function checkedMounts(ask, spec) {
+  if (!isPlainArray(ask) || ask.length === 0 || ask.length > spec.ids.length) return null;
+
+  const mounts = Array.from(ask);
+  const fits = mounts.every((mount) => isMount(mount, spec.ids));
+
+  if (!fits || new Set(mounts.map((mount) => mount.id)).size !== mounts.length) return null;
+
+  return mounts.map(({ id, zero_counts, direction }) => ({ id, zero_counts, direction }));
+}
+
+export const calibrationMounts = (calibration) =>
+  calibration.joints.map(({ id, zero_counts, direction }) => ({ id, zero_counts, direction }));
+
+export function mountedCalibration(calibration, mounts) {
+  const byId = new Map(mounts.map((mount) => [mount.id, mount]));
+
+  return {
+    ...calibration,
+    joints: calibration.joints.map((joint) => ({ ...joint, ...byId.get(joint.id) })),
+  };
+}

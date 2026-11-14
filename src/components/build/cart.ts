@@ -55,7 +55,7 @@ function packOf(line: BomLine, asin: string): number {
   return line.unit === 'g' ? GRAMS_PER_SPOOL : 1;
 }
 
-const packsOf = (line: BomLine, asin: string) => Math.max(1, Math.ceil(line.qty / Math.max(1, packOf(line, asin))));
+const packsOf = (line: BomLine, asin: string) => Math.max(1, Math.ceil(line.toBuy / Math.max(1, packOf(line, asin))));
 
 function storeUrlOf(line: BomLine): URL | null {
   const listing = line.urlKind === 'product' ? httpsUrl(line.url) : null;
@@ -96,7 +96,7 @@ export function bomCart(lines: BomLine[]): Cart {
   const stores: StoreCart[] = [];
   const unlinked: BomLine[] = [];
 
-  for (const line of lines) {
+  for (const line of lines.filter((l) => l.toBuy > 0)) {
     const asin = asinOf(line);
     const storeUrl = asin ? null : storeUrlOf(line);
 

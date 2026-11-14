@@ -3,7 +3,18 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
-import { checkedCommand, checkedRobotSpec, daemonArgs, emulatedCalibration, LADDER } from './robotSpec.mjs';
+import {
+  calibrationMounts,
+  checkedCommand,
+  checkedMounts,
+  checkedRobotSpec,
+  daemonArgs,
+  emulatedCalibration,
+  isServoFamily,
+  LADDER,
+  mountedCalibration,
+} from './robotSpec.mjs';
+import { emulatedHorn, statusWithLinkAngles } from './emulatedHorns.mjs';
 import { IntentPacer } from './intentPacer.mjs';
 import { checkedPolicyRefs } from './robotPolicy.mjs';
 import { UNITS_FILE, unitsJson } from './servoUnits.mjs';
@@ -12,6 +23,9 @@ export const DAEMON_ENV = 'BASECASE_ROBOT_DAEMON';
 export const DAEMON_FILE = process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon';
 
 const NEVER_STARTED = 'The robot daemon stopped before it started.';
+const NOT_CONNECTED = { ok: false, message: 'Connect an emulated robot first.' };
+const UNSAVED = { ok: false, message: "Couldn't save the calibration." };
+const CALIBRATION_FILE = 'calibration.json';
 const UNDOCUMENTED = { ok: false, message: 'The robot only takes the documented commands.' };
 const POLICY_FILE = 'policy.onnx';
 const MAX_LINE = 64 * 1024;
@@ -69,8 +83,16 @@ function placePolicy(artefacts, bytes) {
 }
 
 export class RobotLink {
-  constructor({ binary, emit, spawnFn = spawnDaemon, tmpDir = os.tmpdir(), policyBytes = () => null }) {
+  constructor({
+    binary,
+    emit,
+    spawnFn = spawnDaemon,
+    tmpDir = os.tmpdir(),
+    policyBytes = () => null,
+    hornFor = emulatedHorn,
+  }) {
     this.binary = binary;
+    this.hornFor = hornFor;
     this.emit = emit;
     this.spawnFn = spawnFn;
     this.tmpDir = tmpDir;
@@ -82,9 +104,11 @@ export class RobotLink {
   state() {
     const s = this.session;
 
-    return s
-      ? { connected: true, spec: s.spec, hello: s.hello, status: s.status, mode: s.mode }
-      : { connected: false, spec: null, hello: null, status: null, mode: null };
+    if (!s) return { connected: false, spec: null, hello: null, status: null, mode: null, calibration: null };
+
+    const calibration = isServoFamily(s.spec) ? calibrationMounts(s.calibration) : null;
+
+    return { connected: true, spec: s.spec, hello: s.hello, status: s.status, mode: s.mode, calibration };
   }
 
   connect(ask) {
@@ -103,19 +127,31 @@ export class RobotLink {
 
   start(spec) {
     const artefacts = fs.mkdtempSync(path.join(this.tmpDir, 'basecase-robot-'));
+    const calibration = emulatedCalibration(spec);
 
-    fs.writeFileSync(path.join(artefacts, 'calibration.json'), JSON.stringify(emulatedCalibration(spec)));
+    fs.writeFileSync(path.join(artefacts, CALIBRATION_FILE), JSON.stringify(calibration));
     placePolicy(artefacts, this.currentPolicy());
 
     if (spec.units) fs.writeFileSync(path.join(artefacts, UNITS_FILE), unitsJson(spec.units));
 
     const child = this.spawnFn(this.binary, daemonArgs(spec, artefacts));
-    const session = { spec, child, artefacts, hello: null, status: null, mode: 'look', asked: false, stderr: '' };
+    const session = {
+      spec,
+      child,
+      artefacts,
+      calibration,
+      hello: null,
+      status: null,
+      mode: 'look',
+      asked: false,
+      stderr: '',
+    };
 
     session.pacer = new IntentPacer({
       ids: spec.ids,
       write: (cmd) => this.write(session, cmd),
       measured: () => session.status,
+      calibration: () => session.calibration.joints,
     });
     this.session = session;
     child.stdin.on('error', () => {});
@@ -126,12 +162,16 @@ export class RobotLink {
     child.on('error', (err) => this.onExit(session, err.message));
     child.on('exit', () => this.onExit(session, null));
     this.emit({ event: 'link', state: 'connected', spec });
+
+    if (isServoFamily(spec)) this.emit({ event: 'calibration', joints: calibrationMounts(calibration) });
   }
 
   onLine(session, line) {
-    const event = parseLine(line);
+    const parsed = parseLine(line);
 
-    if (!event || this.session !== session) return;
+    if (!parsed || this.session !== session) return;
+
+    const event = this.withTruth(session, parsed);
 
     if (event.event === 'hello') session.hello = event;
 
@@ -140,6 +180,10 @@ export class RobotLink {
     if (typeof event.mode === 'string' && event.event !== 'completed') this.onMode(session, event);
 
     this.emit(event);
+  }
+
+  withTruth(session, event) {
+    return event.event === 'status' && isServoFamily(session.spec) ? statusWithLinkAngles(event, this.hornFor) : event;
   }
 
   onMode(session, event) {
@@ -156,7 +200,7 @@ export class RobotLink {
   command(ask) {
     const session = this.session;
 
-    if (!session) return { ok: false, message: 'Connect an emulated robot first.' };
+    if (!session) return NOT_CONNECTED;
 
     const command = checkedCommand(ask, session.spec.ids.length);
 
@@ -198,6 +242,26 @@ export class RobotLink {
     if (!session) return { ok: true };
 
     placePolicy(session.artefacts, this.currentPolicy());
+    this.write(session, { cmd: 'recheck' });
+
+    return { ok: true };
+  }
+
+  calibrate(ask) {
+    const session = this.session;
+
+    if (!session) return NOT_CONNECTED;
+
+    const mounts = isServoFamily(session.spec) ? checkedMounts(ask, session.spec) : null;
+
+    if (!mounts) return UNDOCUMENTED;
+
+    const calibration = mountedCalibration(session.calibration, mounts);
+
+    if (!written(JSON.stringify(calibration), path.join(session.artefacts, CALIBRATION_FILE))) return UNSAVED;
+
+    session.calibration = calibration;
+    this.emit({ event: 'calibration', joints: calibrationMounts(calibration) });
     this.write(session, { cmd: 'recheck' });
 
     return { ok: true };

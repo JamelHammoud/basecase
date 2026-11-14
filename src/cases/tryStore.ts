@@ -1,35 +1,10 @@
 import type { Recording } from '../sim/recorder';
+import { indexedDbStore } from '../utils/keyValueStore';
 
-const DB = 'basecase-tries';
-const STORE = 'recordings';
+const recordings = indexedDbStore<Recording>({ database: 'basecase-tries', store: 'recordings', label: 'tries' });
 
-function open(): Promise<IDBDatabase> | null {
-  if (typeof indexedDB === 'undefined') return null;
+export const saveRecording = (id: string, recording: Recording) => recordings.put(id, recording);
 
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB, 1);
+export const loadRecording = (id: string) => recordings.get(id);
 
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('The tries store didn’t open.'));
-  });
-}
-
-async function run<T>(mode: IDBTransactionMode, act: (store: IDBObjectStore) => IDBRequest<T>): Promise<T | null> {
-  const db = await open();
-
-  if (!db) return null;
-
-  return new Promise((resolve, reject) => {
-    const request = act(db.transaction(STORE, mode).objectStore(STORE));
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('The tries store failed.'));
-  });
-}
-
-export const saveRecording = (id: string, recording: Recording) => run('readwrite', (s) => s.put(recording, id));
-
-export const loadRecording = (id: string) => run<Recording | undefined>('readonly', (s) => s.get(id));
-
-export const deleteRecording = (id: string) => run('readwrite', (s) => s.delete(id));
+export const deleteRecording = (id: string) => recordings.delete(id);

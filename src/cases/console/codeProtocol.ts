@@ -31,7 +31,9 @@ export type FrameMessage =
   | ({ type: 'key' } & FrameKey)
   | { type: 'world'; change: WorldChange }
   | { type: 'frames'; id: number; camera: string; width?: number; fps?: number }
-  | { type: 'unframes'; id: number };
+  | { type: 'unframes'; id: number }
+  | { type: 'store-get'; id: number }
+  | { type: 'store-set'; id: number; json: string | null };
 
 export type SignalValues = Record<string, number | string[]>;
 
@@ -39,7 +41,8 @@ export type StudioMessage =
   | { type: 'ping' }
   | { type: 'signals'; id: number; time: number; values: SignalValues }
   | { type: 'action'; id: number; ok: boolean; problem?: string }
-  | { type: 'frame'; id: number; bitmap: ImageBitmap };
+  | { type: 'frame'; id: number; bitmap: ImageBitmap }
+  | { type: 'store'; id: number; ok: boolean; json?: string | null; problem?: string };
 
 type Data = Record<string, unknown>;
 
@@ -149,6 +152,11 @@ const READERS: Record<string, (m: Data) => FrameMessage | undefined> = {
   },
   frames: readFrames,
   unframes: (m) => (isId(m.id) ? { type: 'unframes', id: m.id } : undefined),
+  'store-get': (m) => (isId(m.id) ? { type: 'store-get', id: m.id } : undefined),
+  'store-set': (m) =>
+    isId(m.id) && (m.json === null || typeof m.json === 'string')
+      ? { type: 'store-set', id: m.id, json: m.json }
+      : undefined,
 };
 
 export function readFrameMessage(value: unknown): FrameMessage | string {

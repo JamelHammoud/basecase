@@ -8,7 +8,7 @@ import {
   ReferenceImageRecord,
 } from '../types/robotics';
 import { AnalyzedImageFeatures } from '../utils/imageTo3DAnalyzer';
-import { ImageViewer, ImageViewerItem, Tooltip, ChevronDownIcon, PhotoIcon } from '../design-system';
+import { DropOverlay, ImageViewer, ImageViewerItem, Tooltip, ChevronDownIcon, PlusIcon } from '../design-system';
 import { agentKindOf, agentProfileOf } from '../agent/agentKinds';
 import { Composer } from './agent/Composer';
 import { ConnectionBanner } from './agent/ConnectionBanner';
@@ -61,13 +61,6 @@ const JumpToBottom: React.FC<{ onClick: () => void }> = ({ onClick }) => (
         <ChevronDownIcon className="w-4 h-4 translate-y-[1px]" />
       </button>
     </Tooltip>
-  </div>
-);
-
-const DropOverlay: React.FC = () => (
-  <div className="absolute inset-2 rounded-2xl border-2 border-dashed border-[#0d99ff]/70 bg-[#0d99ff]/[0.06] flex flex-col items-center justify-center gap-2 pointer-events-none animate-fade-in">
-    <PhotoIcon className="w-6 h-6 text-[#5cb8ff]" />
-    <span className="text-[14px] text-white/80">Drop images, files or folders to attach</span>
   </div>
 );
 
@@ -173,7 +166,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
         above={<QueuedMessages queue={queue} onEdit={draft.edit} />}
       />
 
-      {isDragOver && <DropOverlay />}
+      {isDragOver && <DropOverlay icon={<PlusIcon className="w-5 h-5" />} label="Drop to attach" />}
 
       <OpenedSubagent messages={messages} onOpenImages={openImages} />
 

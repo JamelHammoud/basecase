@@ -7,6 +7,7 @@ export interface PackItem {
   diagonalYaw?: number;
   fixed?: { plate: number; x: number; y: number; turned: boolean };
   startPlate?: number;
+  step?: number;
 }
 
 export interface Placement extends Rect {
@@ -114,6 +115,8 @@ function placeFixed(spaces: PlateSpace[], item: PackItem, gap: number, bed: Bed)
   return { plate: fixed.plate, ...rect, yaw: fixed.turned ? 90 : 0 };
 }
 
+const stepRank = (item: PackItem) => item.step ?? Number.MAX_SAFE_INTEGER;
+
 export function packPlates(
   items: PackItem[],
   bed: Bed,
@@ -133,11 +136,18 @@ export function packPlates(
   const rest = [...loose, ...items.filter((i) => !i.fixed && i.diagonalYaw === undefined)].sort(
     (a, b) =>
       (a.startPlate ? 0 : 1) - (b.startPlate ? 0 : 1) ||
+      stepRank(a) - stepRank(b) ||
       b.w * b.d - a.w * a.d ||
       Math.max(b.w, b.d) - Math.max(a.w, a.d),
   );
+  const stepped = rest.some((i) => i.step !== undefined);
+  let tail: number | undefined;
 
-  for (const item of rest) placements[item.id] = placeLoose(spaces, item, gap, bed);
+  for (const item of rest) {
+    if (stepped && item.step === undefined && !item.startPlate) tail ??= Math.max(1, spaces.length);
+
+    placements[item.id] = placeLoose(spaces, tail ? { ...item, startPlate: tail } : item, gap, bed);
+  }
 
   let plates = spaces.length;
 

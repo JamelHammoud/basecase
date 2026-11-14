@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { runAgent } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
+import { conflictLog, recordConflict } from '../lib/conflicts.mjs';
 import { behindMain, conflictsWithMain, fetchAll } from '../lib/branches.mjs';
 import { openPulls, pullCheck, pullComments, pullReview } from '../lib/github.mjs';
 import { HOME_CHECKOUT, WORKTREES } from '../lib/paths.mjs';
@@ -41,6 +42,9 @@ function mainSide(dir, files) {
 
 function resolveConflicts(pull, dir) {
   const files = conflictedFiles(dir);
+
+  recordConflict(conflictLog, { pull: pull.number, files });
+
   const prompt = `Merging main into pull request #${pull.number} (${pull.title}) left conflicts in:\n${files.join('\n')}\n\nThe pull request:\n\n${pull.body}\n\nWhat main changed in those files since the branch split:\n${mainSide(dir, files)}`;
   const result = runAgent({ cwd: dir, name: 'rebase', prompt, schema: SCHEMA, hours: 2 });
   const clean = git(['diff', '--check'], dir, { allowFail: true }).ok && conflictedFiles(dir).length === 0;

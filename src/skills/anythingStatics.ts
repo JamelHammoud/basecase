@@ -136,7 +136,8 @@ export class Statics {
     return { ...aim, ...(base ? { base } : {}), parts, joints };
   }
 
-  solve(want: IntentPose, start: number[]): { values: JointValues; q: number[]; error: number } {
+  solve(key: IntentPose, start: number[]): { values: JointValues; q: number[]; error: number } {
+    const want: IntentPose = { ...key, parts: this.poser.movedParts(key.parts) };
     let aim: IntentPose = { ...want, base: want.base ? { ...want.base } : undefined };
     let best = { values: this.restValues, q: start, error: Infinity };
 

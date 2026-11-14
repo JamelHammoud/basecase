@@ -1,9 +1,12 @@
-import { TRY_SOURCE_BADGE, type StoredTry, type TrySource } from '../tryFile';
+import { originLabel, TRY_SOURCE_BADGE, type StoredTry, type TrySource } from '../tryFile';
 import { motionKey, motionSignature } from './motion';
 import { termsOf, weightedTerms } from './searchTerms';
 import type { IndexedTry } from './types';
 
 const CASE_BOOST = 2;
+
+const labelOf = (stored: StoredTry) =>
+  stored.case?.name ?? stored.task ?? originLabel(stored.origin) ?? stored.robot.name;
 
 const sourceText = (source: TrySource) => [TRY_SOURCE_BADGE[source], source].filter(Boolean).join(' ');
 
@@ -22,7 +25,7 @@ export function indexedTryOf(stored: StoredTry, stamp: number): IndexedTry {
 
   return {
     id: stored.id,
-    label: stored.case?.name ?? stored.robot.name,
+    label: labelOf(stored),
     robot: stored.robot.name,
     sceneId: stored.sceneId,
     input: stored.input,
@@ -37,6 +40,7 @@ export function indexedTryOf(stored: StoredTry, stamp: number): IndexedTry {
       { text: stored.task ?? '', boost: 1 },
       { text: stored.robot.name, boost: 1 },
       { text: sourceText(stored.source), boost: 1 },
+      { text: originLabel(stored.origin) ?? '', boost: 1 },
       { text: stored.input ?? '', boost: 1 },
     ]),
     named: [...new Set(termsOf(`${stored.case?.name ?? ''} ${stored.task ?? ''}`))],

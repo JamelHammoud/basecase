@@ -43,7 +43,7 @@ You can also type in the search at the top of Tries.
 
 ## What your words match
 
-Your words match a try's Case, task, robot, source, and input. To narrow the list, add any of these words:
+Your words match a try's Case, task, robot, source, and input, and the file or repo an [imported try](/help/import-robot-data-as-tries) came from. To narrow the list, add any of these words:
 
 - **Outcome:** passed, failed (or missed), and unjudged.
 - **Source and input:** variation, real, keys, gamepad, phone, camera, leader-arm, or any other input.

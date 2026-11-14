@@ -7,7 +7,7 @@ import type { MotionTrace } from './trySearch/types';
 
 export const TRY_FILE_VERSION = 1;
 
-export const TRY_SOURCES = ['case', 'generated', 'real'] as const;
+export const TRY_SOURCES = ['case', 'generated', 'real', 'import'] as const;
 
 export type TrySource = (typeof TRY_SOURCES)[number];
 
@@ -15,6 +15,7 @@ export const TRY_SOURCE_BADGE: Record<TrySource, string | null> = {
   case: null,
   generated: 'Variation',
   real: 'Real',
+  import: null,
 };
 
 export type TryVerdict = 'passed' | 'failed' | 'unjudged';
@@ -23,6 +24,21 @@ export interface TryOutcome {
   verdict: TryVerdict;
   margin: number | null;
 }
+
+export type TryOrigin = { kind: 'hub'; repo: string; revision: string } | { kind: 'file'; name: string; hash: string };
+
+export interface TryVideo {
+  camera: string;
+  path: string;
+  from: number;
+  to: number;
+}
+
+export const originLabel = (origin: TryOrigin | undefined) => {
+  if (!origin) return null;
+
+  return origin.kind === 'hub' ? origin.repo : origin.name;
+};
 
 export interface StoredTry {
   version: typeof TRY_FILE_VERSION;
@@ -42,7 +58,10 @@ export interface StoredTry {
   faults: RecordedFault[];
   commands?: number;
   world?: number;
-  task?: string;
+  origin?: TryOrigin;
+  task?: string | null;
+  videos?: TryVideo[];
+  outOfRange?: number;
   motion?: MotionTrace;
 }
 
@@ -61,6 +80,8 @@ export interface TrySummary {
   outcome: TryOutcome;
   seed: number;
   sourceTry: string | null;
+  origin: string | null;
+  task: string | null;
   recording: boolean;
   strip: boolean;
   stamp?: number;
@@ -225,12 +246,39 @@ const hasNumbers = (v: Raw) =>
   optionalCount(v.world);
 
 const MAX_TASK = 4096;
+const MAX_VIDEOS = 32;
+const HASH = /^[0-9a-f]{64}$/;
+
+function readOrigin(v: unknown): TryOrigin | null | undefined {
+  if (v === undefined) return undefined;
+
+  if (!isObject(v)) return null;
+
+  if (v.kind === 'hub' && isText(v.repo, 256) && isText(v.revision, 128)) {
+    return { kind: 'hub', repo: v.repo, revision: v.revision };
+  }
+
+  const isFile = v.kind === 'file' && isText(v.name, 256) && typeof v.hash === 'string' && HASH.test(v.hash);
+
+  return isFile ? { kind: 'file', name: v.name as string, hash: v.hash as string } : null;
+}
+
+const isVideo = (v: unknown): v is TryVideo =>
+  isObject(v) && isText(v.camera, 256) && isText(v.path, 512) && isNum(v.from) && isNum(v.to);
+
+const hasImportFields = (v: Raw) =>
+  (v.videos === undefined || (Array.isArray(v.videos) && v.videos.length <= MAX_VIDEOS && v.videos.every(isVideo))) &&
+  optionalCount(v.outOfRange) &&
+  readOrigin(v.origin) !== null;
 
 const hasSearchFields = (v: Raw) =>
-  (v.task === undefined || isText(v.task, MAX_TASK)) && (v.motion === undefined || readMotion(v.motion) !== null);
+  (v.task === undefined || v.task === null || isText(v.task, MAX_TASK)) &&
+  (v.motion === undefined || readMotion(v.motion) !== null);
 
 export function readStoredTry(value: unknown): StoredTry | null {
-  if (!isObject(value) || !hasIds(value) || !hasNumbers(value) || !hasSearchFields(value)) return null;
+  const valid = isObject(value) && hasIds(value) && hasNumbers(value) && hasImportFields(value);
+
+  if (!valid || !hasSearchFields(value)) return null;
 
   const robot = readRobot(value.robot);
   const kase = readCase(value.case);
@@ -263,5 +311,7 @@ export const summaryOf = (stored: StoredTry, held: { recording: boolean; strip: 
   outcome: stored.outcome,
   seed: stored.seed,
   sourceTry: stored.sourceTry,
+  origin: originLabel(stored.origin),
+  task: stored.task ?? null,
   ...held,
 });

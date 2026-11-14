@@ -1,4 +1,4 @@
-import type { StoredTry, TrySource, TryVerdict } from '../../tryFile';
+import type { StoredTry, TryOrigin, TrySource, TryVerdict } from '../../tryFile';
 import { MOTION_SAMPLES, type BodyClass, type MotionTrace } from '../types';
 
 type Curve = (t: number) => [number, number, number];
@@ -49,6 +49,7 @@ export interface TrySpec {
   seconds?: number;
   verdict?: TryVerdict;
   task?: string;
+  origin?: TryOrigin;
   motion?: MotionTrace;
   faulted?: boolean;
 }
@@ -71,6 +72,7 @@ export function storedTry(spec: TrySpec): StoredTry {
     sourceTry: null,
     faults: spec.faulted ? [{ joint: 'elbow', kind: 'stuck', at: 1 }] : [],
     ...(spec.task ? { task: spec.task } : {}),
+    ...(spec.origin ? { origin: spec.origin } : {}),
     ...(spec.motion ? { motion: spec.motion } : {}),
   };
 }

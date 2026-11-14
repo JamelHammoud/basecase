@@ -29,6 +29,7 @@ export interface FakeHubOptions {
   uploadHost?: string;
   failCommit?: string;
   port?: number;
+  treePage?: number;
 }
 
 export const filesAtTag = (repo: FakeRepo, tag: string) => repo.revisions[(repo.tags.get(tag) ?? 0) - 1];
@@ -37,6 +38,7 @@ export interface FakeHub {
   url: string;
   repos: Map<string, FakeRepo>;
   requests: FakeHubRequest[];
+  seed: (id: string, files: Record<string, Uint8Array>) => void;
   close: () => Promise<void>;
 }
 
@@ -53,7 +55,7 @@ interface Route {
   method: string;
   pattern: RegExp;
   handle: Handler;
-  auth: boolean;
+  auth: boolean | 'if-sent';
 }
 
 const LFS_FILE = /\.(parquet|mp4|bin|safetensors|onnx)$/;
@@ -65,6 +67,11 @@ const send = (res: http.ServerResponse, status: number, body: unknown, headers: 
 };
 
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
+
+export const commitSha = (id: string, count: number) =>
+  createHash('sha256').update(`${id}#${count}`).digest('hex').slice(0, 40);
+
+const asBuffer = (bytes: Uint8Array) => Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 
 const json = (body: Buffer) => JSON.parse(body.toString('utf-8') || '{}');
 
@@ -105,8 +112,20 @@ class FakeHubServer {
       { method: 'GET', pattern: /^\/api\/whoami-v2$/, handle: (c) => this.whoami(c), auth: true },
       { method: 'POST', pattern: /^\/api\/repos\/create$/, handle: (c) => this.create(c), auth: true },
       {
+        method: 'GET',
+        pattern: /^\/api\/(datasets|models)\/([^/]+)\/([^/]+)\/revision\/([^/]+)$/,
+        handle: (c) => this.revision(c),
+        auth: 'if-sent',
+      },
+      {
+        method: 'GET',
+        pattern: /^\/api\/(datasets|models)\/([^/]+)\/([^/]+)\/tree\/([^/]+)$/,
+        handle: (c) => this.tree(c),
+        auth: 'if-sent',
+      },
+      {
         method: '*',
-        pattern: /^\/api\/(datasets|models)\/([^/]+)\/([^/]+)\/(tree|preupload|commit|tag)\/(.+)$/,
+        pattern: /^\/api\/(datasets|models)\/([^/]+)\/([^/]+)\/(preupload|commit|tag)\/(.+)$/,
         handle: (c) => this.repoApi(c),
         auth: true,
       },
@@ -118,7 +137,7 @@ class FakeHubServer {
       },
       {
         method: 'GET',
-        pattern: /^\/(datasets\/)?([^/]+)\/([^/]+)\/resolve\/main\/(.+)$/,
+        pattern: /^\/(datasets\/)?([^/]+)\/([^/]+)\/resolve\/([^/]+)\/(.+)$/,
         handle: (c) => this.resolve(c),
         auth: false,
       },
@@ -145,7 +164,7 @@ class FakeHubServer {
 
       if (!match || (route.method !== '*' && route.method !== req.method)) continue;
 
-      if (route.auth && req.headers.authorization !== `Bearer ${this.options.token}`) {
+      if (!this.allowed(route, req.headers.authorization)) {
         return send(res, 401, { error: 'Invalid credentials in Authorization header' });
       }
 
@@ -153,6 +172,71 @@ class FakeHubServer {
     }
 
     send(res, 404, { error: 'Not found' });
+  }
+
+  private allowed(route: Route, auth: string | undefined) {
+    const bearer = `Bearer ${this.options.token}`;
+
+    if (route.auth === 'if-sent') return auth === undefined || auth === bearer;
+
+    return !route.auth || auth === bearer;
+  }
+
+  seed(id: string, files: Record<string, Uint8Array>) {
+    const map = new Map(Object.entries(files).map(([path, bytes]) => [path, asBuffer(bytes)]));
+
+    this.repos.set(id, { kind: 'dataset', files: map, tags: new Map(), commits: [[]], revisions: [new Map(map)] });
+  }
+
+  private commitAt(id: string, repo: FakeRepo, rev: string) {
+    if (rev === 'main') return repo.commits.length;
+
+    if (repo.tags.has(rev)) return repo.tags.get(rev);
+
+    return Array.from({ length: repo.commits.length + 1 }, (_, n) => n).find((n) => commitSha(id, n) === rev);
+  }
+
+  private filesAt(id: string, repo: FakeRepo, rev: string) {
+    const count = this.commitAt(id, repo, rev);
+
+    if (count === undefined) return undefined;
+
+    return count === repo.commits.length ? repo.files : (repo.revisions[count - 1] ?? new Map<string, Buffer>());
+  }
+
+  private repoOf(ctx: Ctx) {
+    const repo = this.repos.get(`${ctx.match[2]}/${ctx.match[3]}`);
+
+    return repo && (repo.kind === 'dataset') === (ctx.match[1] === 'datasets') ? repo : undefined;
+  }
+
+  private revision(ctx: Ctx) {
+    const id = `${ctx.match[2]}/${ctx.match[3]}`;
+    const repo = this.repoOf(ctx);
+    const count = repo && this.commitAt(id, repo, decodeURIComponent(ctx.match[4]));
+
+    if (count === undefined) return send(ctx.res, 404, { error: 'Revision not found' });
+
+    send(ctx.res, 200, { id, sha: commitSha(id, count) });
+  }
+
+  private tree(ctx: Ctx) {
+    const repo = this.repoOf(ctx);
+    const files = repo && this.filesAt(`${ctx.match[2]}/${ctx.match[3]}`, repo, decodeURIComponent(ctx.match[4]));
+
+    if (!files) return send(ctx.res, 404, { error: repo ? 'Revision not found' : 'Repository not found' });
+
+    const entries = [...files].map(([path, b]) => ({ type: 'file', path, size: b.length }));
+    const size = this.options.treePage;
+
+    if (!size) return send(ctx.res, 200, entries);
+
+    const url = new URL(ctx.req.url ?? '/', this.url);
+    const cursor = Number(url.searchParams.get('cursor') ?? 0);
+    const more = cursor + size < entries.length;
+    const link = `<${this.url}${url.pathname}?recursive=true&cursor=${cursor + size}>; rel="next"`;
+
+    send(ctx.res, 200, entries.slice(cursor, cursor + size), more ? { Link: link } : {});
   }
 
   private whoami(ctx: Ctx) {
@@ -185,12 +269,6 @@ class FakeHubServer {
     if (!repo) return send(ctx.res, 404, { error: 'Repository not found' });
 
     const handlers: Record<string, (repo: FakeRepo) => void> = {
-      tree: (r) =>
-        send(
-          ctx.res,
-          200,
-          [...r.files].map(([path, b]) => ({ type: 'file', path, size: b.length })),
-        ),
       preupload: () => this.preupload(ctx),
       commit: (r) => this.commit(ctx, r),
       tag: (r) => this.tag(ctx, r),
@@ -200,9 +278,13 @@ class FakeHubServer {
   }
 
   private resolve(ctx: Ctx) {
-    const [, datasets, owner, name, path] = ctx.match;
+    const [, datasets, owner, name, rev, path] = ctx.match;
     const repo = this.repos.get(`${owner}/${name}`);
-    const bytes = repo && (repo.kind === 'dataset') === !!datasets ? repo.files.get(decodeURIComponent(path)) : null;
+    const files =
+      repo && (repo.kind === 'dataset') === !!datasets
+        ? this.filesAt(`${owner}/${name}`, repo, decodeURIComponent(rev))
+        : null;
+    const bytes = files?.get(decodeURIComponent(path));
 
     if (!bytes) return send(ctx.res, 404, { error: 'Entry not found' });
 
@@ -339,6 +421,7 @@ export async function startFakeHub(options: FakeHubOptions): Promise<FakeHub> {
     url: hub.url,
     repos: hub.repos,
     requests: hub.requests,
+    seed: (id, files) => hub.seed(id, files),
     close: () =>
       new Promise<void>((resolve) => {
         server.closeAllConnections();

@@ -27,6 +27,15 @@ const SPECS: TrySpec[] = [
   { id: 'old-2', caseName: 'Stack Cups', startedAt: '2026-11-08T21:00:00.000Z', input: null },
   { id: 'older', caseName: 'Stack Cups', startedAt: '2026-10-20T10:00:00.000Z', input: null },
   { id: 'tidy', caseName: 'Tidy Desk', input: 'script', task: 'Put the yellow duck in the blue bin' },
+  {
+    id: 'imported',
+    caseName: null,
+    source: 'import',
+    input: null,
+    verdict: 'unjudged',
+    task: 'Fold the towel',
+    origin: { kind: 'hub', repo: 'lab/drawer-runs', revision: 'abc' },
+  },
   { id: 'mat-keys', robot: 'Hexapod', caseName: 'Walk the Mat', input: 'keys' },
   { id: 'mat-input', robot: 'Hexapod', caseName: 'Walk the Ramp', input: 'mat' },
   { id: 'like-a1', sceneId: 'scene-a', caseName: 'Pick Cube', motion: graspMotion(1.2, 0.01) },
@@ -82,6 +91,13 @@ describe('searching tries by words and facts', () => {
 
   it('finds words from the Case’s task', () => {
     expect(ids(find(build(), 'yellow bin'))).toEqual(['tidy']);
+  });
+
+  it('finds an imported try by its origin and titles it by its task', () => {
+    const hits = find(build(), 'drawer runs');
+
+    expect(ids(hits)).toEqual(['imported']);
+    expect(hits[0].label).toBe('Fold the towel');
   });
 
   it('narrows by a robot name, an input and a fault', () => {

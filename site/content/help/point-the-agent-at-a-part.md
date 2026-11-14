@@ -1,7 +1,7 @@
 ---
 title: Point the agent at a part
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: task
 order: 6
@@ -35,14 +35,16 @@ The agent doesn't see what you've selected. To show it which part, area or messa
 
 1. Right-click the part on the canvas.
 2. Choose **Quote Part**.
-3. Type what to change, such as “Move this 10 mm forward”, and press [[↩]].
+3. Type what you want to change, for example “Move this 10 mm forward”, then press [[↩]].
 
-The quote goes to the agent with your message and includes the part's name, id and position. You can also find **Quote Part** in [[⌘K]] when the part is selected.
+Your message goes to the agent with the quote, which includes the part's name, id and position.
+
+You can also find **Quote Part** in [[⌘K]] after you select the part.
 
 ## Draw on the canvas
 
 1. Press [[N]] to start **Annotate**.
-2. Draw around the area you mean. To tell marks apart, pick another color from the bar.
+2. Draw around the area you mean. To tell your marks apart, pick another color from the bar.
 3. Click **Done**, then send your message.
 
 The agent reads the color of each mark and the parts it circles. Marks aren't parts, so they never show up in the bill of materials or in a print.
@@ -52,4 +54,4 @@ The agent reads the color of each mark and the parts it circles. Marks aren't pa
 1. Right-click a message in the chat.
 2. Choose **Quote Message**, then type your reply.
 
-Each Check in the **Build** tab has a **Fix** button that sends the agent a request to fix that problem. To ask the agent about the problem first, choose **Quote** from the button's menu.
+Each Check in the **Build** tab has a **Fix** button. Click it to ask the agent to fix that problem. To ask the agent about the problem before it fixes anything, right-click the problem's row and choose **Quote**.

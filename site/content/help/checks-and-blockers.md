@@ -52,7 +52,7 @@ The agent sees the same problems you do, and it hears about new blockers after e
 
 ## Only you can set a blocker aside
 
-To drop a single problem, open its **⋯** menu and choose **Ignore**. To drop every problem of that kind, choose **Ignore All ⟨kind⟩**, named after the kind of problem. This also covers problems on parts you haven't made yet.
+To drop a single problem, right-click its row and choose **Ignore**. To drop every problem of that kind, choose **Ignore All ⟨kind⟩**, named after the kind of problem. This also covers problems on parts you haven't made yet.
 
 An ignored problem stays ignored when the parts change, because the decision was yours. The agent sees what you ignored and leaves it alone. Everything you've set aside is listed in **Ignored**, under the list, and you can put any of it back from there.
 

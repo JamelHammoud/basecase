@@ -26,17 +26,17 @@ covers:
   - electron/backend/agentKeys.mjs
 ---
 
-You can design with Claude Code, Codex or Gemini CLI using your own login. Or choose Offline to trace outlines without AI.
+You can design with Claude Code, Codex or Gemini CLI using your own login. Or choose Offline, which traces outlines without AI.
 
 1. Press [[⌘,]] to open Settings, then choose **Agent**.
 2. Under **Run with**, click **Claude**, **Codex**, **Gemini** or **Offline**.
-3. Wait for the line under **Command** to read “Connected to” followed by the agent's name.
+3. Wait until the line under **Command** reads “Connected to” followed by the agent's name.
 
 ![The Agent pane in Settings](/help/choose-the-agent/agent-pane.png)
 
-You can also press [[⌘K]] and choose **Agent Settings** to open the same pane.
+To open the same pane from [[⌘K]], choose **Agent Settings**.
 
-The first time you choose an agent, Basecase downloads it. Claude Code is 263 MB, Codex is 340 MB, and Gemini CLI is 95 MB. To follow the download progress, open the Agent tab.
+The first time you pick an agent, Basecase downloads it. Claude Code is 263 MB, Codex is 340 MB and Gemini CLI is 95 MB. You can follow the download progress in the Agent tab.
 
 ## Sign in
 
@@ -49,8 +49,8 @@ Each agent signs in with a different account:
 To sign in:
 
 1. If Settings tells you to sign in, open the **Agent** tab.
-2. Click the sign-in button in the banner at the top, then finish signing in with your browser.
+2. Click the sign-in button in the banner at the top, then finish signing in in your browser.
 
 **Note:** Google no longer lets personal accounts sign in to Gemini CLI. If you have a personal account, click **Add API Key** in the banner, paste a Gemini API key, then press [[↩]]. Basecase keeps the key encrypted on your computer.
 
-To choose the model the agent uses, see [Choose a model and effort](/help/choose-a-model).
+To pick a model within the agent, see [Choose a model and effort](/help/choose-a-model).

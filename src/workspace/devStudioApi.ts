@@ -26,7 +26,7 @@ import {
 } from '../cameras/operator/operatorCamera';
 import type { PoseSample } from '../cameras/operator/poseFollow';
 import { recentInputEvents } from '../sim/inputEvents';
-import { feedVoice, setVoiceWords } from '../voice/voiceSession';
+import { feedVoice } from '../voice/voiceSession';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
@@ -276,10 +276,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simState: () => devRef.current.simState(),
     drive: (command: DriveCommand) => devRef.current.drive(command),
     driveWith: (inputs: string[]) => devRef.current.driveWith(inputs),
-    feedVoice: (samples: number[], sampleRate: number, words: string[]) => {
-      setVoiceWords(words);
-      feedVoice(samples, sampleRate);
-    },
+    feedVoice: (samples: number[], sampleRate: number) => feedVoice(samples, sampleRate),
     inputEvents: () => recentInputEvents().map(({ name, value }) => ({ name, value })),
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),

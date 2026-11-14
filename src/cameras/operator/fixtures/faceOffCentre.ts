@@ -1,6 +1,6 @@
 import { FACE, FACE_LANDMARK_COUNT, type FaceSample } from '../faceFollow';
 import type { PoseLandmark } from '../poseLandmarks';
-import { seeded } from './seeded';
+import { seeded } from '../../../utils/seeded';
 
 export const FACE_FPS = 30;
 export const FACE_FRAMES = 60;

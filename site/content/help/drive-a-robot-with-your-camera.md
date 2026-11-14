@@ -27,7 +27,7 @@ covers:
 
 Move your arms in front of the computer's camera, and a humanoid or a robot arm in the simulation moves its arms the same way.
 
-It works on humanoids and fixed arms. The camera's picture stays on your computer and is never saved.
+It works on humanoids and fixed arms. A rover or a robot with legs and no arms drives as it does with **Drive**, and the camera stays off. The camera's picture stays on your computer and is never saved.
 
 1. Click **Simulate** at the top of the right panel.
 2. In **Control**, click **Drive with Camera**.

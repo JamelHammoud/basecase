@@ -2,7 +2,7 @@ import type { V3 } from '../../../utils/kinematics';
 import type { HandSample } from '../handFollow';
 import { LAPTOP_ASPECT, LAPTOP_FOCAL } from '../laptopLens';
 import type { PoseLandmark } from '../poseLandmarks';
-import { seeded } from './seeded';
+import { seeded } from '../../../utils/seeded';
 
 export const HAND_FPS = 30;
 export const HAND_MOVE_M = 0.1;

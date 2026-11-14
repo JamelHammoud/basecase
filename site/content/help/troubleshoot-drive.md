@@ -75,7 +75,7 @@ On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **
 
 The same message shows when pose estimation can't start, even with the camera allowed. The camera's tile shows for a moment, then closes. Quit and reopen Basecase, then click **Drive with Camera** again.
 
-## “Couldn’t open the microphone.”
+## “Couldn’t open the microphone. Allow Basecase to use it in Privacy & Security.”
 
 A Case that listens for words got no sound when you clicked **Try It**. Basecase isn't allowed to use the microphone, no microphone is connected, or the voice model didn't load.
 
@@ -84,7 +84,7 @@ A Case that listens for words got no sound when you clicked **Try It**. Basecase
 3. Quit and reopen Basecase.
 4. Click **Try It** again.
 
-On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **Microphone**. The web studio has no voice model, so a Case with voice always shows this there; open it in the desktop app.
+On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **Microphone**. The web studio has no voice model, so a Case with voice shows “Voice works only in the desktop app.” there.
 
 ## Drive is grayed out
 

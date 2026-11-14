@@ -1,7 +1,7 @@
 import type { V3 } from '../../../utils/kinematics';
 import type { PoseSample } from '../poseFollow';
 import { POSE, POSE_LANDMARK_COUNT, toHuman, type PoseLandmark } from '../poseLandmarks';
-import { seeded } from './seeded';
+import { seeded } from '../../../utils/seeded';
 
 export const RAISE_FPS = 30;
 export const UPPER_ARM_M = 0.29;

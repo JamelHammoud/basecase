@@ -32,18 +32,19 @@ Puppet an arm with your hand, aim a camera head at your face, or send a Case's l
 
 These inputs drive a running Case, not the studio on its own. Voice works in the desktop app only.
 
-1. Ask the agent for the Case and name the input, such as “/case a pan-tilt camera that keeps my face centered”. It opens the Case running.
+1. In the **Agent** tab, ask for the Case and name its input, such as “/case a pan-tilt camera that keeps my face centered”. It opens the Case running.
 
 ![The Puppet the Arm Case open, with You on the left, the arm in the middle and Try It on the right](/help/drive-a-case-with-your-hand-face-midi-or-voice/console.png)
 
-2. For MIDI, plug in your keyboard or controller, or drop a `.mid` file on the canvas.
-3. Click **Try It**.
-4. The first time, allow Basecase to use the camera or the microphone.
-5. Hold your hand still for a moment, then move it, turn toward the camera, play, or speak.
+2. Click **Try It**.
+3. The first time, allow Basecase to use the camera or the microphone.
+4. Use the input the Case names, as in the table below.
 
 ![A try 6.8 seconds in, with the computer's camera under You and the arm bent to the right](/help/drive-a-case-with-your-hand-face-midi-or-voice/hand.png)
 
 Press [[Esc]] to stop. The camera and the microphone turn off.
+
+For MIDI, plug in a keyboard or controller, or drop a `.mid` file on the canvas.
 
 You can also add the input to the Case's console in your `.basecase` file, as in [Run a Case](/help/run-a-case).
 

@@ -7,11 +7,13 @@ import type { FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { bytesToBase64 } from '../src/utils/base64';
-import { FAKE_CAMERA, openApp, partCount, shown, type App } from './harness';
+import { FAKE_CAMERA, openApp, openPlayTab, partCount, shown, type App } from './harness';
+import { HEARD_WORD, puppetScene, sitScene } from './inputCases';
 import { connectPhone, type PhoneSocket } from './phoneClient';
 
 interface SimState {
   drive: string;
+  activeCase: string | null;
   stats: { robots: Array<{ forward: number }> } | null;
   effector: number[] | null;
   joints: Record<string, { target: number; position: number }>;
@@ -34,7 +36,7 @@ interface StudioWindow {
     feedFace: (samples: unknown[]) => void;
     dropFiles: (files: Array<{ name: string; base64: string }>) => void;
     inputEvents: () => InputEvent[];
-    feedVoice: (samples: number[], sampleRate: number, words: string[]) => void;
+    feedVoice: (samples: number[], sampleRate: number) => void;
   };
 }
 
@@ -51,7 +53,7 @@ const { readWav } = (await importModule(new URL('../src/voice/voskNodeHost.mjs',
 interface Scene {
   name: string;
   parts: unknown[];
-  project: unknown;
+  project: { joints?: unknown[]; cases?: Array<{ id: string; name: string }> };
 }
 
 const TILT_HZ = 30;
@@ -81,6 +83,32 @@ const sceneOf = (robot: FixtureRobot): Scene => ({
 async function load(scene: Scene) {
   await app.page.evaluate((record) => (window as unknown as StudioWindow).__studio.load(record), scene);
   await expect.poll(() => partCount(app.page)).toBe(scene.parts.length);
+}
+
+const panel = (id: string) => app.page.locator(shown(`[data-panel="${id}"]`));
+
+const areaCount = () => app.page.locator(shown('[data-testid="case-run-area"]')).count();
+
+async function runCase(scene: Scene) {
+  const kase = scene.project.cases![0];
+
+  await load(scene);
+  await openPlayTab(app.page, 'Cases');
+  await app.page.locator(shown('[data-testid="cases-panel"] button'), { hasText: kase.name }).first().click();
+  await expect.poll(async () => (await studio()).activeCase).toBe(kase.id);
+  await command('Run Case');
+  await expect.poll(areaCount).toBe(2);
+}
+
+async function tryIt() {
+  await panel('go').locator('button', { hasText: 'Try It' }).first().click();
+  await expect.poll(async () => (await studio()).drive, { timeout: 60000 }).toBe('on');
+}
+
+async function leaveCase() {
+  await stopDriving();
+  await app.page.keyboard.press('Escape');
+  await expect.poll(areaCount).toBe(0);
 }
 
 async function command(label: string) {
@@ -156,13 +184,14 @@ describe('live inputs', () => {
     expect(app.errors).toEqual([]);
   });
 
-  it('moves a fixed arm’s hand right with a recorded hand from the camera', async () => {
-    await load(sceneOf(fixture('arm-6dof')));
+  it('moves a fixed arm’s hand right with a recorded hand once a Case naming hand starts a try', async () => {
+    await runCase(puppetScene(fixture('arm-6dof')));
     await app.page.evaluate(
       (samples) => (window as unknown as StudioWindow).__studio.feedHand(samples),
       handMovesRight(),
     );
-    expect(await driveWith(['hand'])).toBe(true);
+    await tryIt();
+    await expect.poll(() => panel('operator').locator('[data-camera="operator"]').count()).toBe(1);
 
     let leftmost = Infinity;
     const movedRight = async () => {
@@ -176,6 +205,7 @@ describe('live inputs', () => {
     };
 
     await expect.poll(movedRight, { timeout: 30000 }).toBeGreaterThan(HAND_MOVED_MM);
+    await leaveCase();
     expect(app.errors).toEqual([]);
   });
 
@@ -219,20 +249,21 @@ describe('live inputs', () => {
     expect(app.errors).toEqual([]);
   });
 
-  it('hears a recorded “sit” as the voice event', async () => {
+  it('hears a recorded “sit” in a Case whose logic listens for it', async () => {
     const { samples, sampleRate } = readWav(new URL('../src/voice/fixtures/sit.wav', import.meta.url));
 
-    await load(sceneOf(fixture('rover-diff')));
+    await runCase(sitScene(fixture('rover-diff')));
     await app.page.evaluate(
-      (clip) => (window as unknown as StudioWindow).__studio.feedVoice(clip.samples, clip.sampleRate, ['sit']),
+      (clip) => (window as unknown as StudioWindow).__studio.feedVoice(clip.samples, clip.sampleRate),
       { samples: Array.from(samples), sampleRate },
     );
-    expect(await driveWith(['voice', 'keys'])).toBe(true);
+    await tryIt();
     await expect
       .poll(async () => (await inputEvents()).filter((e) => e.name === 'voice').map((e) => e.value), {
         timeout: 30000,
       })
-      .toEqual(['sit']);
+      .toEqual([HEARD_WORD]);
+    await leaveCase();
     expect(app.errors).toEqual([]);
   });
 });

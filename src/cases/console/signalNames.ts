@@ -38,7 +38,8 @@ const SHAPERS: Record<string, Shaper> = {
     return has(INPUT_AXES, axis) ? 'number' : `must be input.${source}.${INPUT_AXES.join(' or ')}`;
   },
   camera: ([key], scope) => {
-    if (key === 'operator' && !OPERATOR_INPUTS.some((id) => scope.inputs.has(id))) return 'needs the camera input';
+    if (key === 'operator' && !OPERATOR_INPUTS.some((id) => scope.inputs.has(id)))
+      return 'needs the camera, hand or face input';
 
     return key ? 'camera' : 'must be camera.<name or *>';
   },

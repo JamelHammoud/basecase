@@ -6,7 +6,7 @@ image: /changelog/drive-a-case-with-your-hand-face-midi-or-voice/cover.png
 
 You can now puppet an arm with your hand and aim a camera head at your face. A Case's logic can also hear MIDI notes and, in the desktop app, spoken words.
 
-A Case's console lists the inputs that drive it. Four join keys, a gamepad, a phone and the body camera: `hand`, `face`, `midi` and `voice`. Ask the agent for a Case and name one.
+A Case's console lists the inputs that drive it. Four join keys, a gamepad, a phone and the body camera: `hand`, `face`, `midi` and `voice`.
 
 The case that started it was a robot dog that should sit when you say “sit”. Nothing in Basecase could hear a word or read a MIDI note.
 

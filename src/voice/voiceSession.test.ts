@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { onInputEvent } from '../sim/inputEvents';
+import { seeded } from '../utils/seeded';
 import { acceptSamples, endVoiceModel, listen, loadVoiceModel, VOICE_MODEL_PATH, type VoiceModel } from './voiceModel';
 import { closeVoice, feedVoice, openVoice, setVoiceWords, voiceState } from './voiceSession';
 import { spotWords, type VoskResult } from './voiceSpotter';
@@ -20,20 +21,6 @@ const vosk = host.installVoskWorker(new URL(`../../public/${VOICE_MODEL_PATH}`, 
 const sit = host.readWav(new URL('./fixtures/sit.wav', import.meta.url));
 
 const RATE = 16000;
-
-function seeded(seed: number) {
-  let state = seed >>> 0;
-
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-
-    let t = Math.imul(state ^ (state >>> 15), state | 1);
-
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 function whiteNoise(seconds: number, level: number, seed: number) {
   const next = seeded(seed);

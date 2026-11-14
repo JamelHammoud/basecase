@@ -88,7 +88,7 @@ describe('a Case console', () => {
       /joint.\*.position can’t be shown here/,
     );
     expect(one({ id: 'a', kind: 'plot', signals: ['joint.*.position'] })).not.toThrow();
-    expect(one({ id: 'a', kind: 'camera', signal: 'camera.operator' })).toThrow(/needs the camera input/);
+    expect(one({ id: 'a', kind: 'camera', signal: 'camera.operator' })).toThrow(/needs the camera, hand or face input/);
 
     for (const input of ['camera', 'hand', 'face']) {
       const operator = { id: 'you', kind: 'camera', signal: 'camera.operator' };

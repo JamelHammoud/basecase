@@ -12,7 +12,7 @@ import {
 import { spotWords, type VoskResult } from './voiceSpotter';
 import { uniqueWords, VOICE_FACT } from './voiceWords';
 
-export const MICROPHONE_REFUSAL = 'Couldn’t open the microphone.';
+export const MICROPHONE_REFUSAL = 'Couldn’t open the microphone. Allow Basecase to use it in Privacy & Security.';
 
 interface Feed {
   samples: Float32Array;
@@ -38,7 +38,8 @@ let session: Session | null = null;
 let generation = 0;
 let queued: Feed[] = [];
 
-const modelUrl = () => new URL(`/${VOICE_MODEL_PATH}`, globalThis.location?.origin ?? 'http://localhost').href;
+const modelUrl = () =>
+  new URL(`${import.meta.env.BASE_URL}${VOICE_MODEL_PATH}`, globalThis.location?.origin ?? 'http://localhost').href;
 
 const sameWords = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((word, i) => word === b[i]);

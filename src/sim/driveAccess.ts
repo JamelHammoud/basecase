@@ -96,25 +96,27 @@ function armAccess(input: DriveInput, robot: string): DriveAccess {
   return { kind: 'ready', cls: 'arm', setup, needsFallCheck: false, followPart: null };
 }
 
-function armlessAccess(input: DriveInput, robot: SimModel['robots'][number]): DriveAccess {
+function fixedArmlessAccess(input: DriveInput, robot: string): DriveAccess {
   const { rig, parts, start } = input;
-  const facts = robotFacts(rig, parts, robot.key);
-  const look = lookJoints(rig, parts, robot.key);
+  const facts = robotFacts(rig, parts, robot);
+  const look = lookJoints(rig, parts, robot);
   const aimsCamera = !!look && facts.armJoints.every((id) => id === look.pan || id === look.tilt);
-  const isArm = robot.morphology === 'fixed' && !!facts.endEffector && !aimsCamera;
 
-  if (isArm || !look) return robot.morphology === 'fixed' ? armAccess(input, robot.key) : { kind: 'none' };
+  if (!aimsCamera && (facts.endEffector || !look)) return armAccess(input, robot);
 
-  const setup = poseSetup(rig, { robot: robot.key, start });
-  const pin = robot.floating ? { pin: robot.key } : {};
-
-  return { kind: 'ready', cls: 'pose', setup, needsFallCheck: false, followPart: null, ...pin };
+  return {
+    kind: 'ready',
+    cls: 'pose',
+    setup: poseSetup(rig, { robot, start }),
+    needsFallCheck: false,
+    followPart: null,
+  };
 }
 
 function poseAccess(input: DriveInput, robot: SimModel['robots'][number], followPart: string | null): DriveAccess {
   const { rig, velocity, start } = input;
 
-  if (!hasArms(rig)) return armlessAccess(input, robot);
+  if (!hasArms(rig)) return fixedArmlessAccess(input, robot.key);
 
   const pose = poseSetup(rig, { robot: robot.key, start });
 
@@ -133,7 +135,9 @@ export function driveAccess(input: DriveInput): DriveAccess {
 
   const followPart = robot.floating ? basePart(rig, parts, robot.key) : null;
 
-  if (input.pose) return poseAccess(input, robot, followPart);
+  const posable = hasArms(rig) || robot.morphology === 'fixed';
+
+  if (input.pose && posable) return poseAccess(input, robot, followPart);
 
   if (velocity && robot.floating) return { kind: 'policy', cls: 'legs', velocity, robot: robot.key, followPart };
 

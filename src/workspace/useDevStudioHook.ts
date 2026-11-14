@@ -12,7 +12,6 @@ import { useLatestRef } from '../utils/useLatestRef';
 import { printDevActions } from './devPrintState';
 import { devSimState } from './devSimState';
 import { matDevActions } from './devMatFeed';
-import { printDevActions } from './devPrintActions';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import { robotPackageZip } from './robotPackageExport';
 import { trainerStub } from './trainerStub';

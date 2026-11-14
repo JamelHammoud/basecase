@@ -23,7 +23,7 @@ covers:
 
 Print each part with its build guide letter cut into a hidden face, so a left and a right bracket can't be mixed up on the bench.
 
-1. Press ⌘P (Ctrl+P on Windows) to open Print mode.
+1. Press [[⌘P]] to open Print mode.
 2. Under **Printer**, check that **Label parts** is on. It starts on.
 3. To leave one part plain, select it and turn on **Don't label**.
 4. Send, slice or export the plates as usual. The letters are cut in as each plate is written.

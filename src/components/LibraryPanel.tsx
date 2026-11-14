@@ -7,7 +7,6 @@ import { tryGroups } from '../workspace/useTriesView';
 import { useTrySearch } from '../workspace/useTrySearch';
 import { ModelsSection, type SectionState } from './library/sections';
 import { TriesSection, TryHitsSection } from './library/TriesSection';
-import { TRY_SEARCH_EXAMPLE } from './tries/trySearchExample';
 
 export interface LibraryPanelProps {
   customModels: CustomModelDefinition[];
@@ -65,7 +64,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
           value={query}
           onChange={setQuery}
           onKeyDown={onSearchKey}
-          placeholder={allTries.length > 0 ? TRY_SEARCH_EXAMPLE : 'Search library'}
+          placeholder="Search library"
           aria-label="Search library"
         />
       </div>

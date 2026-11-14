@@ -22,14 +22,14 @@ covers:
   - src/cases/trySearch/
 ---
 
-You can search the tries in all of your scenes at once. Search by words, by details like failed or last week, or by tries with a similar motion.
+You can search the tries in all your scenes at once: by words, by details such as failed or last week, or for tries with a similar motion.
 
 1. Click **Library** in the view rail on the left.
-2. Type your search in the field at the top. For example: `failed grasp red block leader-arm`.
+2. Type your search in the field at the top, such as `failed grasp red block leader-arm`.
 
 ![The Library listing two Grasp the Red Block tries for that search](/help/search-tries/library.png)
 
-3. Click a result. Tries opens with the results. If the try fits the robot in the open scene, it plays through its Case's console first.
+3. Click a result to open Tries with the results. If the try fits the robot in the open scene, it plays through its Case's console first.
 
 ![Tries showing the two missed Grasp the Red Block tries](/help/search-tries/results.png)
 
@@ -39,11 +39,11 @@ You can search the tries in all of your scenes at once. Search by words, by deta
 
 ![Three Lift tries ranked first and a Wave after them, with no walks](/help/search-tries/like.png)
 
-To return to the results after you open a try, click **Close** or press [[Esc]]. You can also search from the field at the top of Tries. Tries shows the best 200 matches, and the Library shows the first 20.
+After you open a try, click **Close** or press [[Esc]] to go back to the results. You can also search from the field at the top of Tries. Tries shows the best 200 matches, and the Library shows the first 20.
 
 ## What your words match
 
-Search matches your words against a try's Case, task, robot, source and input, and against the file or repo an [imported try](/help/import-robot-data-as-tries) came from. To narrow the list, add any of these words:
+Search looks for your words in a try's Case, task, robot, source and input, and in the file or repo an [imported try](/help/import-robot-data-as-tries) came from. Add any of these words to narrow the list:
 
 - **Outcome:** passed, failed (or missed), and unjudged.
 - **Source and input:** variation, real, keys, gamepad, phone, camera, leader-arm, or any other input.
@@ -54,6 +54,6 @@ Search matches your words against a try's Case, task, robot, source and input, a
 
 ## How More Like This compares tries
 
-More Like This compares two things: the path of the part that moves the farthest, and the speeds of the joints. It skips robots of a different kind or with a different number of joints. For example, an arm's grasp won't match a hexapod's walk.
+More Like This compares the path of the part that moves the farthest and the speeds of the joints. It skips robots of a different kind or with a different number of joints, so an arm's grasp won't match a hexapod's walk.
 
 To browse a robot's tries without searching, see [Open a try from any scene](/help/open-a-try-from-any-scene).

@@ -10,7 +10,6 @@ import {
   type ContextMenuEntry,
 } from '../../design-system';
 import type { TriesView } from '../../workspace/useTriesView';
-import { TRY_SEARCH_EXAMPLE } from './trySearchExample';
 import { TRIES_GRID, TryResults } from './TryResults';
 import { TryTile, type TileScene } from './TryTile';
 import { useTriesKeys } from './useTriesKeys';
@@ -81,7 +80,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
             value={view.query}
             onChange={view.setQuery}
             onKeyDown={onSearchKey}
-            placeholder={TRY_SEARCH_EXAMPLE}
+            placeholder="e.g. failed grasp red block last week"
             aria-label="Search tries"
             className="w-[300px]"
           />

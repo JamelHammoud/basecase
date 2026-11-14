@@ -55,6 +55,7 @@ describe('a dataset made from a Case’s passed tries', () => {
       task: dataset.task,
       records: dataset.members.map((id) => byId.get(id)!),
       load,
+      labels: () => Promise.resolve(new Map()),
     });
     const visible = arm.parts.filter((p) => p.visible && p.role === 'solid');
 

@@ -93,6 +93,24 @@ describe('searching tries by words and facts', () => {
     expect(ids(find(build(), 'yellow bin'))).toEqual(['tidy']);
   });
 
+  it('finds a try by its tags, segment labels and instructions', () => {
+    const labelled = {
+      ...storedTry({ id: 'labelled', caseName: 'Sort Parts', input: null }),
+      labels: {
+        segments: [{ from: 0, to: 40, label: 'grasp bolt', instruction: 'grab the silver bolt' }],
+        by: 'agent' as const,
+        tags: ['night shift'],
+        flags: [],
+      },
+    };
+    const index = new TrySearchIndex();
+
+    index.put([...SPECS.map(storedTry), labelled]);
+
+    expect(ids(find(index, 'night shift'))).toEqual(['labelled']);
+    expect(ids(find(index, 'silver bolt'))).toEqual(['labelled']);
+  });
+
   it('finds an imported try by its origin and titles it by its task', () => {
     const hits = find(build(), 'drawer runs');
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { summaryRecord, type TrySummary } from '../cases/tryFile';
 import { goingWith } from '../cases/tries';
+import { canMark } from '../cases/tryLabels';
 import { deleteTries, useTries } from '../cases/tryStore';
 import type { Dataset } from '../datasets/datasetFile';
 import { useDatasets } from '../datasets/datasetStore';
@@ -11,6 +12,7 @@ import type { ShowToast } from './types';
 import type { TryTimeline } from './useTryTimeline';
 import type { TryHit } from '../cases/trySearch/types';
 import { likeQuery, useTrySearch } from './useTrySearch';
+import { markTries } from './tagTries';
 
 export interface TryGroup {
   robot: string;
@@ -135,6 +137,9 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
     });
   };
 
+  const targets = (id: string) => (selected.includes(id) ? selected : [id]);
+  const fail = (e: unknown) => showToast(errorMessage(e), { tone: 'error' });
+
   return {
     open,
     robot,
@@ -174,6 +179,10 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
     },
     like: (tryId: string) => setQuery(likeQuery(tryId)),
     remove: (id?: string) => remove(id && !selected.includes(id) ? [id] : selected),
+    targets,
+    fail,
+    markable: (id: string) => targets(id).every((t) => all.some((s) => s.id === t && canMark(s))),
+    mark: (id: string, verdict: 'passed' | 'failed') => void markTries(targets(id), verdict).catch(fail),
   };
 }
 

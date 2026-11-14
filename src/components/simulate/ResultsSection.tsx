@@ -8,6 +8,7 @@ import {
   SpreadsheetIcon,
   Tooltip,
   deleteEntry,
+  tagEntry,
   type ContextMenuEntry,
 } from '../../design-system';
 import { generatedFrom, type TryRecord } from '../../cases/tries';
@@ -25,6 +26,8 @@ import type { ShareRobot } from '../../workspace/useShareRobot';
 import { runClock } from '../../utils/duration';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
+import { TagTriesField } from '../tries/TagTriesField';
+import { useTagTries } from '../tries/useTagTries';
 import { plural } from '../../../electron/plural.mjs';
 
 interface TryRowProps {
@@ -123,6 +126,7 @@ const comparesCase = (cases: Cases, compare: CaseCompare | undefined) =>
 export const ResultsSection: React.FC<ResultsProps> = (props) => {
   const { cases, rig, share, model, parts, world, run, compare, explore } = props;
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
+  const tagging = useTagTries(cases.showError);
   const all = cases.active ? cases.tries : [];
   const tries = all.filter((t) => !t.generated);
   const { multiply } = cases;
@@ -142,6 +146,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
       x: e.clientX,
       y: e.clientY,
       items: [
+        tagEntry(() => tagging.open([record.id], { x: e.clientX, y: e.clientY })),
         ...(multiply.can(record) ? [{ label: 'Multiply', onSelect: () => multiply.multiply(record) }] : []),
         deleteEntry(() => cases.removeTry(record)),
       ],
@@ -173,6 +178,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
       )}
       {cases.active && <MakeDataset cases={cases} />}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
+      <TagTriesField target={tagging.target} onDone={tagging.done} />
     </Section>
   );
 };

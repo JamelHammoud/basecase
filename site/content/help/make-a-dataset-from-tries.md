@@ -71,9 +71,9 @@ Above its tries, the dataset shows their total running time and its newest versi
 
 **Note:** Publish to Hugging Face and Train from Tries are available in the desktop app.
 
-Missed tries stay in the dataset, but export, publishing and training leave them out. An [imported try](/help/import-robot-data-as-tries) has no outcome, so it counts as a demonstration. Export, publishing and training also leave out the tries listed under [Tries that export leaves out](#tries-that-export-leaves-out).
+Missed tries stay in the dataset, but export, publishing and training leave them out. A try with no verdict, such as an [imported try](/help/import-robot-data-as-tries) that no Case judged, counts as a demonstration. To leave one out, mark it failed, as in [Label a try](/help/label-a-try). Export, publishing and training also leave out the tries listed under [Tries that export leaves out](#tries-that-export-leaves-out).
 
-A dataset holds whole tries, with no segments, labels or tags. To step through one try, see [Open a try from any scene](/help/open-a-try-from-any-scene).
+Each try keeps its segments and tags, and export writes the segments as subtasks. To step through one try, see [Open a try from any scene](/help/open-a-try-from-any-scene).
 
 The Library lists each dataset under **Datasets** with its number of tries. Click one to open it.
 

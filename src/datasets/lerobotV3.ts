@@ -15,11 +15,12 @@ import {
   widthsOf,
   type DatasetSpec,
   type EpisodeStats,
+  type FrameLayout,
   type Placed,
   type SchemaElement,
-  type Widths,
 } from './lerobotRows';
 import { aggregateStats } from './lerobotStats';
+import { languageColumns } from './segmentRows';
 
 export const V3_VERSION = 'v3.0';
 
@@ -51,7 +52,7 @@ interface DataFile {
   episodes: number[];
 }
 
-function dataFiles(placed: Placed[], widths: Widths, limitBytes: number): DataFile[] {
+function dataFiles(placed: Placed[], widths: FrameLayout, limitBytes: number): DataFile[] {
   const groups: Placed[][] = [];
   let size = 0;
 
@@ -200,10 +201,15 @@ function tasksParquet(tasks: string[]): Uint8Array {
   );
 }
 
+const UNTIMED = new Set(['video', 'language']);
+
 function info(spec: DatasetSpec, limits: FileLimits) {
   const frames = spec.episodes.reduce((n, e) => n + e.frames.length, 0);
   const withFps = Object.fromEntries(
-    Object.entries(features(spec)).map(([key, f]) => [key, f.dtype === 'video' ? f : { ...f, fps: DATASET_FPS }]),
+    Object.entries(features(spec, languageColumns(spec))).map(([key, f]) => [
+      key,
+      UNTIMED.has(f.dtype as string) ? f : { ...f, fps: DATASET_FPS },
+    ]),
   );
 
   return {
@@ -230,7 +236,7 @@ export function lerobotV3Files(
 ): Record<string, Uint8Array> {
   const widths = widthsOf(spec);
   const placed = placedEpisodes(spec);
-  const data = dataFiles(placed, widths, limits.dataMb * MEGABYTE);
+  const data = dataFiles(placed, { ...widths, columns: languageColumns(spec) }, limits.dataMb * MEGABYTE);
   const stats = placed.map((p) => episodeStats(spec.episodes[p.at.episode], widths, p.at));
   const files: Record<string, Uint8Array> = {};
 

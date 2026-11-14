@@ -18,6 +18,8 @@ const MAX_INDEX = 512 * 1024 * 1024;
 const MAX_MANIFEST_BATCH = 500;
 const SOURCES = new Set(['case', 'generated', 'real', 'import', 'operate']);
 const VERDICTS = new Set(['passed', 'failed', 'unjudged']);
+const BY = new Set(['contract', 'person']);
+const MAX_TAGS = 32;
 
 const text = (value, fallback = '') => (typeof value === 'string' ? value.slice(0, 512) : fallback);
 const number = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
@@ -36,7 +38,14 @@ function outcomeOf(value) {
   return {
     verdict: VERDICTS.has(outcome.verdict) ? outcome.verdict : 'unjudged',
     margin: typeof outcome.margin === 'number' && Number.isFinite(outcome.margin) ? outcome.margin : null,
+    ...(BY.has(outcome.by) ? { by: outcome.by } : {}),
   };
+}
+
+function tagsOf(labels) {
+  const tags = isPlain(labels) && Array.isArray(labels.tags) ? labels.tags : [];
+
+  return tags.filter((tag) => typeof tag === 'string').slice(0, MAX_TAGS).map((tag) => tag.slice(0, 64));
 }
 
 export function summarizeTry(manifest, { recording, strip, stamp }) {
@@ -60,6 +69,8 @@ export function summarizeTry(manifest, { recording, strip, stamp }) {
     sourceTry: idOrNull(manifest.sourceTry),
     origin: originOf(manifest.origin),
     task: typeof manifest.task === 'string' ? text(manifest.task) : null,
+    tags: tagsOf(manifest.labels),
+    flagged: isPlain(manifest.labels) && Array.isArray(manifest.labels.flags) && manifest.labels.flags.length > 0,
     recording,
     strip,
     ...(typeof stamp === 'number' ? { stamp } : {}),

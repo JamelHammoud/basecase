@@ -158,6 +158,19 @@ describe('a try’s recording on disk', () => {
     expect(bytes.byteLength).toBeLessThan(r.qpos.byteLength + r.poses.byteLength + r.ctrl.byteLength + 8192);
   });
 
+  it('keeps the named input events it was played with, and drops malformed ones', () => {
+    const inputs = [
+      { at: 0.5, name: 'wave', value: true },
+      { at: 1.25, name: 'beat', value: 96 },
+      { at: 2, name: 'mode', value: 'dance' },
+    ];
+    const r = { ...recording(150), inputs: [...inputs, { at: -1, name: 'x', value: true }, { at: 1, value: 2 }] };
+    const back = decodeRecording(encodeRecording(r as Recording))!;
+
+    expect(back.inputs).toEqual(inputs);
+    expect(decodeRecording(encodeRecording(recording(10)))!.inputs).toBeUndefined();
+  });
+
   it('keeps typed arrays inside the controller', () => {
     const r = {
       ...recording(2),

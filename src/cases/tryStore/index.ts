@@ -117,6 +117,28 @@ export async function updateManifests(given: StoredTry[]) {
 
 export const loadManifests = (ids: string[]) => backend.manifests(ids);
 
+const relabelled = (t: TrySummary, stored: StoredTry): TrySummary => ({
+  ...t,
+  outcome: stored.outcome,
+  tags: stored.labels?.tags ?? [],
+  flagged: !!stored.labels?.flags.length,
+});
+
+export async function saveLabels(given: StoredTry[]) {
+  const updated = await updateManifests(given);
+  const byId = new Map(updated.map((s) => [s.id, s]));
+
+  if (byId.size) await update((tries) => tries.map((t) => (byId.has(t.id) ? relabelled(t, byId.get(t.id)!) : t)));
+
+  return updated;
+}
+
+export async function editTries(ids: string[], edit: (stored: StoredTry) => StoredTry | null) {
+  const changed = (await loadManifests(ids)).flatMap((stored) => edit(stored) ?? []);
+
+  return saveLabels(changed);
+}
+
 export const loadSearchIndex = () => backend.index();
 
 export const saveSearchIndex = (bytes: Uint8Array) => backend.saveIndex(bytes);

@@ -43,7 +43,7 @@ After you open a try, click **Close** or press [[Esc]] to go back to the results
 
 Tries shows the best 200 matches, and the Library shows the first 20.
 
-Your words must all match a try's Case, task, robot, source or input, or the file or repo an [imported try](/help/import-robot-data-as-tries) came from. Some words narrow the list instead. Passed, failed and unjudged pick an outcome. A source or input such as real or leader-arm, or a robot's name, picks where a try came from. Dates such as today or last week, lengths such as over 30 s, and faulted narrow it further.
+Your words must all match a try's Case, task, robot, source, input, tags, segment labels or instructions, or the file or repo an [imported try](/help/import-robot-data-as-tries) came from. Some words narrow the list instead. Passed, failed and unjudged pick an outcome. A source or input such as real or leader-arm, or a robot's name, picks where a try came from. Dates such as today or last week, lengths such as over 30 s, and faulted narrow it further.
 
 More Like This compares the path of the part that moves farthest and the speeds of the joints. It skips robots of another kind or with a different number of joints, so an arm's grasp won't match a hexapod's walk.
 

@@ -1,4 +1,4 @@
-import type { Recording } from '../sim/recorder';
+import type { RecordedInput, Recording } from '../sim/recorder';
 
 const MAGIC = 0x52544342;
 const VERSION = 1;
@@ -186,6 +186,32 @@ function sliceArrays(bytes: Uint8Array, header: Header): Partial<Record<ArrayKey
   return out;
 }
 
+const MAX_INPUT_NAME = 128;
+
+const isInputValue = (v: unknown) =>
+  typeof v === 'boolean' || typeof v === 'string' || (typeof v === 'number' && Number.isFinite(v));
+
+const isInput = (v: unknown): v is RecordedInput => {
+  const input = v as Partial<RecordedInput> | null;
+
+  return (
+    typeof input === 'object' &&
+    input !== null &&
+    typeof input.at === 'number' &&
+    Number.isFinite(input.at) &&
+    input.at >= 0 &&
+    typeof input.name === 'string' &&
+    input.name.length <= MAX_INPUT_NAME &&
+    isInputValue(input.value)
+  );
+};
+
+const readInputs = (v: unknown): RecordedInput[] | undefined => {
+  const kept = Array.isArray(v) ? v.filter(isInput).map(({ at, name, value }) => ({ at, name, value })) : [];
+
+  return kept.length ? kept : undefined;
+};
+
 export function decodeRecording(bytes: Uint8Array): Recording | null {
   const header = readHeader(bytes);
 
@@ -199,5 +225,9 @@ export function decodeRecording(bytes: Uint8Array): Recording | null {
 
   delete rest.arrays;
 
-  return { ...rest, ...arrays } as Recording;
+  const inputs = readInputs(rest.inputs);
+
+  delete rest.inputs;
+
+  return { ...rest, ...arrays, ...(inputs ? { inputs } : {}) } as Recording;
 }

@@ -50,6 +50,7 @@ function context(tries: TryRecord[], listed: TrySummary[] = [], simOn = false) {
       model: () => (simOn ? ({} as SimModel) : null),
       rig: () => ({}) as Rig,
       sought: () => null,
+      partners: () => [],
     },
     listTries: async () => listed,
   };

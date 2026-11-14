@@ -52,6 +52,8 @@
   "timeline:ends": { "scope": "timeline", "keys": ["Home", "End"] },
   "timeline:speed": { "scope": "timeline", "keys": ["[", "]"] },
   "timeline:close": { "scope": "timeline", "keys": ["Esc"] },
+  "timeline:split": { "scope": "timeline", "keys": ["S"] },
+  "timeline:merge": { "scope": "timeline", "keys": ["⌫"] },
   "send": { "scope": "composer", "keys": ["↩"] },
   "queue": { "scope": "composer", "keys": ["⌘↩"] },
   "stop": { "scope": "composer", "keys": ["Esc"] }

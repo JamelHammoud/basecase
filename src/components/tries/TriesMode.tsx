@@ -4,6 +4,7 @@ import {
   ModeHeader,
   SearchField,
   SectionHeader,
+  tagEntry,
   useScrollFade,
   type ContextMenuEntry,
 } from '../../design-system';
@@ -12,8 +13,10 @@ import type { DatasetMode } from '../../workspace/useDatasetMode';
 import { EARLIER_TRIES, OTHER_TRIES } from '../../workspace/useDatasetExport';
 import { tryGroups, type TriesView } from '../../workspace/useTriesView';
 import { DatasetPane } from './DatasetPane';
+import { TagTriesField } from './TagTriesField';
 import { TRIES_GRID, TryResults } from './TryResults';
 import { TryTile, type TileScene } from './TryTile';
+import { useTagTries } from './useTagTries';
 import { useTriesKeys } from './useTriesKeys';
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
@@ -67,6 +70,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, mode, timeli
   const [menu, setMenu] = useState<Menu | null>(null);
   const { ref: fadeRef, style: fadeStyle } = useScrollFade();
   const body = useRef<HTMLDivElement | null>(null);
+  const tagging = useTagTries(view.fail);
   const groups = mode.dataset ? tryGroups(mode.fitting) : view.groups;
   const order = [...groups.flatMap((g) => idsOf(g.tries)), ...idsOf(mode.earlier), ...idsOf(mode.elsewhere)];
 
@@ -83,7 +87,21 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, mode, timeli
   const showMenu = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setMenu({ x: e.clientX, y: e.clientY, entries: mode.menu(id) });
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      entries: [
+        tagEntry(() => tagging.open(view.targets(id), { x: e.clientX, y: e.clientY })),
+        ...(view.markable(id)
+          ? [
+              { label: 'Mark Passed', onSelect: () => view.mark(id, 'passed') },
+              { label: 'Mark Failed', onSelect: () => view.mark(id, 'failed') },
+            ]
+          : []),
+        { divider: true },
+        ...mode.menu(id),
+      ],
+    });
   };
 
   const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -156,6 +174,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, mode, timeli
         </div>
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.entries} onClose={() => setMenu(null)} />}
+      <TagTriesField target={tagging.target} onDone={tagging.done} />
     </div>
   );
 };

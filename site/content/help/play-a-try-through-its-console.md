@@ -35,16 +35,16 @@ You can play a recorded try in its Case's own cards. The cameras, numbers, plots
 
 ![A running Case with its cameras on the left, and Base, Joints, Map and a passed try under Results on the right](/help/play-a-try-through-its-console/tries.png)
 
-4. Click the try's row. The cards show the try at the playhead, and the timeline opens under the canvas.
+4. Click the try's row. The cards show the try at the playhead, and the timeline opens under the canvas. Its top lane names each step of the try, as in [Label a try](/help/label-a-try).
 5. To move the playhead, click or drag on a plot. The robot, the cameras, the numbers and the timeline follow it.
 
 ![Touch the Dots playing a try at 2.1 s, with the wrist camera, the Base value and the arm at that moment, and the playhead on the Joints plot and the timeline](/help/play-a-try-through-its-console/console.png)
 
 6. To play or pause, press [[Space]].
 7. To play slower or faster, press [ or ]. The speed goes from 0.25× to 4×, and the speed button beside the slider shows the current speed.
-8. To loop part of the try, hold [[⇧]] and drag across a lane of the timeline. Playing repeats that part until you hold [[⇧]] and click a lane.
+8. To loop part of the try, hold [[⇧]] and drag across a joint's lane on the timeline. Playing repeats that part until you hold [[⇧]] and click a joint's lane.
 
-![A loop band across the timeline's lanes, with the playhead inside it](/help/play-a-try-through-its-console/loop.png)
+![A loop band across the timeline's joint lanes, with the playhead inside it](/help/play-a-try-through-its-console/loop.png)
 
 9. To stop playing, click **Done** or press [[Esc]]. You're back in the running Case.
 

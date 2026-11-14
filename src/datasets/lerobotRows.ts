@@ -41,6 +41,17 @@ export interface Widths {
   scan: number;
 }
 
+export interface FrameColumn {
+  name: string;
+  schema: SchemaElement[];
+  feature: Record<string, unknown>;
+  data: (placed: Placed[]) => unknown[];
+}
+
+export interface FrameLayout extends Widths {
+  columns?: FrameColumn[];
+}
+
 export interface EpisodeAt {
   episode: number;
   task: number;
@@ -95,8 +106,8 @@ const floatList = (name: string) => listOf(name, { type: 'FLOAT', repetition_typ
 
 const INT_COLUMNS = ['frame_index', 'episode_index', 'index', 'task_index', TASK_ANNOTATION];
 
-const schemaOf = (scan: boolean): SchemaElement[] => [
-  { name: 'root', num_children: scan ? 11 : 10 },
+const schemaOf = (scan: boolean, columns: FrameColumn[]): SchemaElement[] => [
+  { name: 'root', num_children: (scan ? 11 : 10) + columns.length },
   ...floatList('observation.state'),
   ...(scan ? floatList(SCAN_KEY) : []),
   ...floatList('action'),
@@ -104,6 +115,7 @@ const schemaOf = (scan: boolean): SchemaElement[] => [
   ...INT_COLUMNS.map((name) => scalar(name, 'INT64')),
   scalar('next.reward', 'FLOAT'),
   scalar('next.done', 'BOOLEAN'),
+  ...columns.flatMap((c) => c.schema),
 ];
 
 function rowsOf(values: Float32Array, width: number): number[][] {
@@ -112,7 +124,7 @@ function rowsOf(values: Float32Array, width: number): number[][] {
   );
 }
 
-const perFrame = <T>(placed: Placed[], value: (p: Placed, i: number, length: number) => T): T[] =>
+export const perFrame = <T>(placed: Placed[], value: (p: Placed, i: number, length: number) => T): T[] =>
   placed.flatMap((p) => Array.from({ length: p.data.frames.length }, (_, i) => value(p, i, p.data.frames.length)));
 
 function intColumns(placed: Placed[]): Record<string, bigint[]> {
@@ -128,12 +140,13 @@ function intColumns(placed: Placed[]): Record<string, bigint[]> {
   };
 }
 
-export function framesParquet(placed: Placed[], widths: Widths): Uint8Array {
+export function framesParquet(placed: Placed[], widths: FrameLayout): Uint8Array {
+  const columns = widths.columns ?? [];
   const intData = intColumns(placed);
   const withScan = widths.scan > 0 && placed.every((p) => p.data.scan);
   const scan = withScan ? [{ name: SCAN_KEY, data: placed.flatMap((p) => rowsOf(p.data.scan!, widths.scan)) }] : [];
   const buffer = parquetWriteBuffer({
-    schema: schemaOf(withScan) as never,
+    schema: schemaOf(withScan, columns) as never,
     columnData: [
       { name: 'observation.state', data: placed.flatMap((p) => rowsOf(p.data.state, widths.joints)) },
       ...scan,
@@ -142,13 +155,14 @@ export function framesParquet(placed: Placed[], widths: Widths): Uint8Array {
       ...INT_COLUMNS.map((name) => ({ name, data: intData[name] })),
       { name: 'next.reward', data: Float32Array.from(perFrame(placed, (_, i, n) => (i === n - 1 ? 1 : 0))) },
       { name: 'next.done', data: perFrame(placed, (_, i, n) => i === n - 1) },
+      ...columns.map((c) => ({ name: c.name, data: c.data(placed) })),
     ],
   });
 
   return new Uint8Array(buffer);
 }
 
-const scalarFeature = (dtype: string) => ({ dtype, shape: [1], names: null });
+export const scalarFeature = (dtype: string) => ({ dtype, shape: [1], names: null });
 
 function videoFeatures(spec: DatasetSpec) {
   return Object.fromEntries(
@@ -173,7 +187,7 @@ function videoFeatures(spec: DatasetSpec) {
   );
 }
 
-export function features(spec: DatasetSpec) {
+export function features(spec: DatasetSpec, columns: FrameColumn[] = []) {
   const joints = { shape: [spec.jointNames.length], names: spec.jointNames };
   const scan = scanWidthOf(spec);
 
@@ -186,6 +200,7 @@ export function features(spec: DatasetSpec) {
     ...Object.fromEntries(INT_COLUMNS.map((name) => [name, scalarFeature('int64')])),
     'next.reward': scalarFeature('float32'),
     'next.done': scalarFeature('bool'),
+    ...Object.fromEntries(columns.map((c) => [c.name, c.feature])),
   };
 }
 

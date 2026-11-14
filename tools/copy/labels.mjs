@@ -133,7 +133,7 @@ const isLabelLike = (text) =>
   text.length <= 40 && text.split(' ').length <= MAX_LABEL_WORDS && /^[\p{Lu}\d+⌘]/u.test(text);
 
 export function labelIndex({ strings, keys = [], exceptions = [] }) {
-  const unique = [...new Set(strings.map(fold))];
+  const unique = [...new Set(strings.flatMap((text) => [fold(text), fold(text).replace(/(?:\.\.\.|…)+$/, '')]))];
 
   return {
     labels: new Set(unique),

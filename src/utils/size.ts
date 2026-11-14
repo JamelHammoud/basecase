@@ -1,3 +1,5 @@
+import { negative } from '../../electron/minus.mjs';
+
 const tenths = (mm: number) => Math.round(mm * 10) / 10;
 
 export function lengthFigure(mm: number): string {
@@ -20,7 +22,7 @@ export function lengthLabel(mm: number): string {
   return Math.round(v) < 1000 ? `${lengthFigure(v)} mm` : metres(Math.round(v) / 1000);
 }
 
-export const signedLengthLabel = (mm: number): string => (mm < 0 ? `-${lengthLabel(-mm)}` : lengthLabel(mm));
+export const signedLengthLabel = (mm: number): string => negative(mm, lengthLabel);
 
 export const sizeFigures = (mm: readonly number[]): string => mm.map(lengthFigure).join(' × ');
 

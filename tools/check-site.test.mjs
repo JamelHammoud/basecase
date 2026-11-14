@@ -117,8 +117,8 @@ describe('lintSite', () => {
     );
 
     expect(lint({ 'site/content/help/import-a-mesh.md': help })).toEqual([
-      'site/content/help/import-a-mesh.md:1: write “does not” as “doesn’t” (§3b-22)',
-      'site/content/help/import-a-mesh.md:8: write “Do not” as “Don’t” (§3b-22)',
+      'site/content/help/import-a-mesh.md:1: write “does not” as “doesn’t” (§3b-23)',
+      'site/content/help/import-a-mesh.md:8: write “Do not” as “Don’t” (§3b-23)',
     ]);
   });
 

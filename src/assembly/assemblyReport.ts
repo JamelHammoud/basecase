@@ -37,7 +37,7 @@ function summary(g: AssemblyGeometry, plan: RemovalPlan): string {
   const sleeves = g.chains.sleeves.filter((s) => s.kind !== 'washer').length;
   const head = `Checked ${plural(screws, 'screw')}, ${plural(sleeves, 'insert or nut', 'inserts and nuts')}, and ${plural(majors, 'part')} in ${duration(g.ms / 1000)}.`;
   const order = majors
-    ? ` Taking it apart: ${majors - plan.stuckParts.length} of ${plural(majors, 'part')} and ${out} of ${plural(screws, 'screw')} come out.`
+    ? ` Taking it apart frees ${majors - plan.stuckParts.length} of ${plural(majors, 'part')} and ${out} of ${plural(screws, 'screw')}.`
     : '';
   const late = g.timedOut ? ' Stopped at the time limit, so the order and service rows are partial.' : '';
 

@@ -10,6 +10,8 @@ covers:
   - src/data/lidarScan.ts
   - src/three/viewport/dataLayers.ts
   - src/datasets/lerobot.ts
+  - src/datasets/lerobotRows.ts
+  - src/datasets/lerobotV3.ts
 ---
 
 See what a LiDAR on your robot would see before you buy it. A catalog LiDAR scans in the simulator with the range, rate and sample count from its datasheet, and its scans go into the datasets you export.

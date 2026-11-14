@@ -32,6 +32,6 @@ export const CONTRACTION_COPY = [
   {
     pattern: new RegExp(LONG_FORM.source, 'i'),
     fix: 'Write the negative as a contraction: “isn’t”, “can’t”, “couldn’t”.',
-    section: '§3b-22',
+    section: '§3b-23',
   },
 ];

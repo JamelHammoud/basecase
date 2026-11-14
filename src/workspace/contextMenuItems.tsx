@@ -21,6 +21,7 @@ import {
 import { faultSubmenu } from '../components/simulate/faultMenu';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import { partTarget, selectedTarget, type OnshapeTarget } from '../onshape/onshapeTarget';
+import { earthMenuItems, mapShownItem } from './earthCommands';
 import type { ContextMenuEntry } from '../design-system';
 import type { PartRole, ScenePart } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -266,6 +267,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     })),
     menuEntry(selectionActions(inputs).resetView),
     { label: 'Add Camera View', icon: <CameraAddIcon />, onSelect: actions.cameras.add },
+    ...earthMenuItems(actions.earth),
     ...(sceneHasCameraViews(inputs)
       ? [
           {
@@ -278,6 +280,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       : []),
     { divider: true },
     { label: 'Show Grid', checked: studio.showGrid, onSelect: ui.toggleGrid },
+    ...mapShownItem(actions.earth),
     { divider: true },
     {
       label: 'Export STL',

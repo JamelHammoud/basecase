@@ -72,7 +72,7 @@ export function contractions(page) {
   const lines = [{ line: 1, text: String(page.data.title ?? '') }, ...page.blocks];
 
   return lines.flatMap(({ line, text }) =>
-    findLongForms(readText(text)).map(({ word, use }) => problem(line, `write “${word}” as “${use}” (§3b-22)`)),
+    findLongForms(readText(text)).map(({ word, use }) => problem(line, `write “${word}” as “${use}” (§3b-23)`)),
   );
 }
 

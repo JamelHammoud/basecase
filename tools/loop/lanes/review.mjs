@@ -19,6 +19,7 @@ import {
 import { budgetFrom, PULL_BUDGET, skipReason } from '../lib/harnessVerdict.mjs';
 import { duplicateTarget, inFlight, inFlightText } from '../lib/inFlight.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
+import { judgedAt, markJudged } from '../lib/pullState.mjs';
 import { judgedPass, measurePull, needsMeasure, withMeasure } from '../lib/pullMeasure.mjs';
 import { byRank } from '../lib/rank.mjs';
 import { run } from '../lib/sh.mjs';
@@ -142,54 +143,77 @@ function measureOnce({ pull, paths, log, worktree, onMain }) {
 const changedFiles = (dir) =>
   git(dir, ['diff', '--name-only', '--no-renames', '-z', 'origin/main...HEAD']).split('\0').filter(Boolean);
 
+function ontoMain(dir) {
+  const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: dir }).out.slice(0, MAX_DIFF);
+  const copy = copyReport(dir);
+  const onMain = run('git', ['merge', '-q', '--no-edit', 'origin/main'], { cwd: dir, allowFail: true }).ok;
+
+  if (!onMain) run('git', ['merge', '--abort'], { cwd: dir, allowFail: true });
+
+  return { diff, copy, onMain };
+}
+
+function judge({ pull, worktree, diff, copy, onMain, log }) {
+  const where = onMain
+    ? 'The worktree is the pull request merged onto current main, so judge it as it would land.'
+    : 'It conflicts with current main, so the worktree is its own head; the rebase lane will bring it up to date.';
+  const counted = `Its user-facing strings (\`tools/copy-diff.mjs\`):\n\n${fenced(copy.text)}\n\n${copyReviewNote(copy)}`;
+  const others = inFlight();
+  const duplicates = `Other pull requests, open or merged in the last day:\n\n${inFlightText({ ...others, except: pull.number })}\n\nIf one of them makes this same change (the same strings or the same behaviour, not merely the same area), set duplicateOf to its number.`;
+  const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\n${counted}\n\n${duplicates}\n\nIts diff against main:\n\n${diff}`;
+  const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, hours: 2 });
+
+  if (!result.ok) {
+    setReview(pull.headRefOid, 'error', 'The review session failed; it will run again');
+    log(`#${pull.number}: review session failed: ${String(result.error).slice(0, 500)}`);
+
+    return null;
+  }
+
+  const original = duplicateTarget({ duplicateOf: result.output.duplicateOf, pull, ...others });
+
+  if (!original) return result.output;
+
+  closePull(pull.number, `Closing as a duplicate of #${original}, which makes the same change.`);
+  log(`#${pull.number}: duplicate of #${original}; closed`);
+
+  return null;
+}
+
 function reviewPull(pull, log) {
   const sha = pull.headRefOid;
   const worktree = openPullHead(pull.number, sha);
 
   try {
     const paths = changedFiles(worktree.dir);
+    const measure = needsMeasure(pull, paths);
+    const earlier = measure ? judgedAt(pull.number, sha) : null;
 
-    if (needsMeasure(pull, paths) && held('pull-bench')) {
-      log(`#${pull.number}: the micro-evals bench is busy; reviewing it on a later tick`);
+    if (earlier && held('pull-bench')) {
+      log(`#${pull.number}: passed review; the micro-evals bench is busy, so it measures on a later tick`);
 
       return false;
     }
 
-    setReview(sha, 'pending', 'Reviewing');
+    if (!earlier) setReview(sha, 'pending', 'Reviewing');
 
-    const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: worktree.dir }).out.slice(0, MAX_DIFF);
-    const copy = copyReport(worktree.dir);
-    const onMain = run('git', ['merge', '-q', '--no-edit', 'origin/main'], { cwd: worktree.dir, allowFail: true }).ok;
+    const { diff, copy, onMain } = ontoMain(worktree.dir);
+    const judged = earlier ?? judge({ pull, worktree, diff, copy, onMain, log });
 
-    if (!onMain) run('git', ['merge', '--abort'], { cwd: worktree.dir, allowFail: true });
+    if (!judged) return;
 
-    const where = onMain
-      ? 'The worktree is the pull request merged onto current main, so judge it as it would land.'
-      : 'It conflicts with current main, so the worktree is its own head; the rebase lane will bring it up to date.';
-    const counted = `Its user-facing strings (\`tools/copy-diff.mjs\`):\n\n${fenced(copy.text)}\n\n${copyReviewNote(copy)}`;
-    const others = inFlight();
-    const duplicates = `Other pull requests, open or merged in the last day:\n\n${inFlightText({ ...others, except: pull.number })}\n\nIf one of them makes this same change (the same strings or the same behaviour, not merely the same area), set duplicateOf to its number.`;
-    const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\n${counted}\n\n${duplicates}\n\nIts diff against main:\n\n${diff}`;
-    const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, hours: 2 });
+    const passed = judgedPass(judged);
 
-    if (!result.ok) {
-      setReview(sha, 'error', 'The review session failed; it will run again');
-      log(`#${pull.number}: review session failed: ${String(result.error).slice(0, 500)}`);
+    if (passed && measure) markJudged(pull.number, sha, judged);
+
+    if (passed && measure && held('pull-bench')) {
+      setReview(sha, 'error', 'Passed review; the micro-evals run once the bench is free');
+      log(`#${pull.number}: passed review; the micro-evals bench is busy, so it measures on a later tick`);
 
       return;
     }
 
-    const original = duplicateTarget({ duplicateOf: result.output.duplicateOf, pull, ...others });
-
-    if (original) {
-      closePull(pull.number, `Closing as a duplicate of #${original}, which makes the same change.`);
-      log(`#${pull.number}: duplicate of #${original}; closed`);
-
-      return;
-    }
-
-    const judged = judgedPass(result.output);
-    const measured = judged ? measureOnce({ pull, paths, log, worktree, onMain }) : null;
+    const measured = passed ? measureOnce({ pull, paths, log, worktree, onMain }) : null;
 
     if (measured?.verdict === 'busy') {
       setReview(sha, 'error', measured.description);
@@ -198,7 +222,7 @@ function reviewPull(pull, log) {
       return;
     }
 
-    const { output, verdict, state, description } = withMeasure(result.output, measured);
+    const { output, verdict, state, description } = withMeasure(judged, measured);
     const blockers = output.findings.filter((f) => f.severity === 'blocker');
 
     commentOnPull(pull.number, reviewComment({ ...output, verdict }, { sha, copy }));

@@ -7,6 +7,7 @@ import {
   CameraIcon,
   GridIcon,
   HandIcon,
+  HistoryIcon,
   KeyboardIcon,
   LayersIcon,
   LibraryIcon,
@@ -33,6 +34,7 @@ import type { CommandInputs } from './sceneCommands';
 import { paletteCommand, selectionActions } from './partActions';
 import { showLeftTab, showPartsSection } from './showView';
 import { keyFor } from '../app/shortcuts';
+import { earthCommands } from './earthCommands';
 
 const PARTS_SECTIONS = [
   {
@@ -51,6 +53,21 @@ const SIDEBAR_VIEWS = [
 
 export const sceneHasCameraViews = ({ core, actions }: Pick<CommandInputs, 'core' | 'actions'>) =>
   hasCameraViews(core.parts, actions.cameras.cameras, core.simTraining.sim.status !== 'off');
+
+function showTriesCommands({ triesView }: CommandInputs['core']): Command[] {
+  if (!triesView.groups.length || triesView.open) return [];
+
+  return [
+    {
+      id: 'show-tries',
+      group: 'Panels',
+      label: 'Show Tries',
+      icon: <HistoryIcon />,
+      keywords: 'recordings episodes demonstrations all scenes library',
+      run: () => triesView.openFor(null),
+    },
+  ];
+}
 
 function panelCommands({ core, ui }: CommandInputs): Command[] {
   const { studio, tool } = core;
@@ -106,6 +123,7 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       keywords: v.keywords,
       run: () => showLeftTab(core, v.tab),
     })),
+    ...showTriesCommands(core),
     ...(core.posing.hasRig
       ? [
           {
@@ -255,5 +273,6 @@ function catalogCommands({ core, actions }: CommandInputs): Command[] {
 export const viewCommands = (inputs: CommandInputs): Command[] => [
   ...panelCommands(inputs),
   ...displayCommands(inputs),
+  ...earthCommands(inputs.actions.earth),
   ...catalogCommands(inputs),
 ];

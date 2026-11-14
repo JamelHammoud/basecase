@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backpressure, expired, laneOf, breaches, lastMergeAt, readySince, redSince, syncPlan } from './flow.mjs';
+import { backpressure, expired, idle, laneOf, breaches, lastMergeAt, readySince, redSince, syncPlan } from './flow.mjs';
 
 const now = Date.parse('2026-11-13T12:00:00Z');
 const hoursAgo = (h) => new Date(now - h * 3_600_000).toISOString();
@@ -175,5 +175,18 @@ describe('pull requests open too long', () => {
     ];
 
     expect(expired({ pulls, inBatch: [5], now: at }).map((p) => p.number)).toEqual([1]);
+  });
+
+  it('spares a pull request a lane holds, such as one under micro-evals, from closing and from the idle count', () => {
+    const pulls = [
+      { ...pull(1, 'loop/build/a', '2026-11-13T09:00:00Z'), updatedAt: '2026-11-13T15:00:00Z' },
+      { ...pull(2, 'loop/build/b', '2026-11-13T09:00:00Z'), updatedAt: '2026-11-13T15:00:00Z' },
+      { ...pull(3, 'loop/build/c', '2026-11-13T15:00:00Z'), updatedAt: '2026-11-13T15:50:00Z' },
+    ];
+    const busy = (p) => p.number === 2;
+
+    expect(expired({ pulls, inBatch: [], now: at, busy }).map((p) => p.number)).toEqual([1]);
+    expect(idle({ pulls, now: at, busy }).map((p) => p.number)).toEqual([1]);
+    expect(idle({ pulls, now: at }).map((p) => p.number)).toEqual([1, 2]);
   });
 });

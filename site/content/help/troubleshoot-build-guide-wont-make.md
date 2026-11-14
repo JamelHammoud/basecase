@@ -1,7 +1,7 @@
 ---
 title: Build guide won't make or open
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 6
@@ -46,6 +46,10 @@ A guide also shows Out of date if its order check hit the 20-second limit. The n
 
 1. Click **Update** in **Build guide**.
 2. To have Basecase update the guide for you, press [[⌘,]], choose **Build**, then turn on **Update automatically**.
+
+## The cover won't open the guide
+
+The guide opens from its cover once a run ends. While Basecase makes or updates the guide, the cover doesn't open it. To open the guide you had before, click **Stop**.
 
 ## Show in Finder and Open PDF are missing
 

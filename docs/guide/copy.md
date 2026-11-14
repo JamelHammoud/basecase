@@ -84,6 +84,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
       | Put a model or robot in the scene | Insert | Add Model, Add Robot |
       | Bring a new build guide, Case or Routine into being | Make | Create, Generate |
       | Make an out-of-date build guide again | Update | Regenerate |
+      | Name a recording of a robot, whatever made it (a driven try, a variation, a real try) | Try | Recording, Episode, Demo, Demonstration |
       | Describe a new skill for the agent to train; Train runs training on a skill row | Teach | — |
     - An action offered in several places has its ⌘K name in each: a button's tooltip, a menu item, an empty state's button and an icon's `aria-label` (Save to Library in the Library's + menu, Comment on the Inspector's Comments +, Open Build Guide on the guide's cover), never a second name for the same thing (Save Selection, Add comment).
     - A duplicate is named the way Finder names one: “Bracket copy”, then “Bracket copy 2”, skipping names already taken, through `copyName` (`src/workspace/helpers.ts`). That holds for a part, a group, a scene or tab, and a Library model; a pasted part keeps its name, and several duplicated parts keep theirs while their group is renamed.

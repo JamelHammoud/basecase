@@ -43,6 +43,7 @@ It saves scenes and Library models in your browser's storage, on that computer o
 | **Play** ▸ **Operate** | Not shown |
 | STEP and IGES import | Meshes only: STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE |
 | Publishing a dataset to Hugging Face | Export only |
+| **Place on Map** | Not shown |
 
 Settings has no **Agent**, **Printers** or **Accounts** pane in the web studio. There's no menu bar either; [[⌘K]] runs every command the menus would.
 

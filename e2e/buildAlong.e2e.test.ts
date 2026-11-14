@@ -137,7 +137,7 @@ describe('Build Along', () => {
     await app.page.keyboard.press('ArrowRight');
     expect(await stepShown()).toBe(String(steps.length));
 
-    await app.page.keyboard.press('Escape');
+    await toolbar().getByRole('button', { name: /^Done/ }).click();
     await expect.poll(() => toolbar().count()).toBe(0);
     expect(await sceneParts()).toEqual(before);
     await expect.poll(shownParts).toEqual(sorted(parts.map((p) => p.id)));
@@ -170,7 +170,7 @@ describe('Build Along', () => {
     await expect.poll(stepShown, { timeout: 180000 }).toBe('1');
     await expect.poll(() => toolbar().getAttribute('data-ready')).toBe('true');
 
-    await toolbar().getByRole('button', { name: /^Done/ }).click();
+    await app.page.keyboard.press('Escape');
     await expect.poll(() => toolbar().count()).toBe(0);
     expect(app.errors).toEqual([]);
   }, 240000);

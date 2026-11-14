@@ -3,8 +3,15 @@ import { stageCase, stagedEffectors } from '../cases/caseCast';
 import { caseCheckPool } from '../cases/caseChecksClient';
 import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import { generatedFrom, generatedTry, multipliable, sha256, type TryRecord, type TryScoring } from '../cases/tries';
-import { deleteTries, loadRecording, saveTries } from '../cases/tryStore';
+import {
+  generatedFrom,
+  generatedTry,
+  multipliable,
+  multiplySource,
+  type TryRecord,
+  type TryScoring,
+} from '../cases/tries';
+import { deleteTries, openTry, saveTries } from '../cases/tryStore';
 import type { Variation } from '../cases/tryReplay';
 import { rigForWorker } from '../sim/drive';
 import type { Simulation } from '../sim/useSimulation';
@@ -51,6 +58,11 @@ const batchesOf = (seeds: number[]) =>
 const nextSeed = (tries: TryRecord[], source: TryRecord) =>
   Math.max(0, ...generatedFrom(tries, source).map((t) => t.seed)) + 1;
 
+interface Source {
+  full: TryRecord;
+  scoring: TryScoring;
+}
+
 const keptText = (kept: number, tried: number) => `Kept ${kept} of ${tried}`;
 
 export function useTryMultiply(options: MultiplyOptions): TryMultiply {
@@ -62,20 +74,23 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
   const sources = tries.filter(multipliable);
   const latest = running ? null : ([...sources].sort((a, b) => b.at.localeCompare(a.at))[0] ?? null);
 
-  const sourceOf = async (record: TryRecord, kase: Case): Promise<TryScoring | null> => {
+  const sourceOf = async (record: TryRecord, kase: Case): Promise<Source | null> => {
     const model = sim.model ?? (await sim.buildModel());
-    const recording = (await sha256(model.xml)) === record.robot.modelHash ? await loadRecording(record.id) : null;
+    const opened = await multiplySource(record, model.xml, openTry);
 
-    if (!recording?.commands) return null;
+    if (!opened) return null;
 
     const staged = stageCase(kase, { rig, parts }, partners());
 
     return {
-      kase: staged.kase,
-      model,
-      recording,
-      rig: rigForWorker(rig),
-      ...stagedEffectors(staged, { rig, parts }),
+      full: opened.record,
+      scoring: {
+        kase: staged.kase,
+        model,
+        recording: opened.recording,
+        rig: rigForWorker(rig),
+        ...stagedEffectors(staged, { rig, parts }),
+      },
     };
   };
 
@@ -128,12 +143,12 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
     try {
       await Promise.all(
         batchesOf(seeds).map(async (batch, i) => {
-          const job = { type: 'multiply' as const, source, seeds: batch };
+          const job = { type: 'multiply' as const, source: source.scoring, seeds: batch };
           const reply = await caseCheckPool.run(i, job, { tag: GROUP, group: GROUP });
 
           if (!live()) return;
 
-          await keep(record, reply.result.kept, live);
+          await keep(source.full, reply.result.kept, live);
 
           if (!live()) return;
 

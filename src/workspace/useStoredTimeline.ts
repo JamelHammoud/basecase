@@ -34,11 +34,13 @@ export function useStoredTimeline(id: string | null, onClose: () => void) {
     };
   }, [id]);
 
+  const lanes = recording && joints.length ? timelineLanes(joints, recording, null) : [];
+
   const view: TimelineView = {
-    open: !!current,
+    open: lanes.length > 0,
     frames,
     dt: recording?.dt ?? 0,
-    lanes: recording ? timelineLanes(joints, recording, null) : [],
+    lanes,
     trips: [],
     frame: playback.frame,
     playing: playback.playing,

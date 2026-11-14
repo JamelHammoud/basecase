@@ -217,3 +217,18 @@ export function generatedTry({ source, seed, margin, recording }: Generated): Tr
 }
 
 export const worstFirst = (tries: TryRecord[]) => [...tries].sort((a, b) => a.outcome.margin - b.outcome.margin);
+
+export interface MultiplySource {
+  record: TryRecord;
+  recording: Recording;
+}
+
+type OpenSource = (id: string) => Promise<{ record: TryRecord; recording: Recording | null } | null>;
+
+export async function multiplySource(listed: TryRecord, modelXml: string, open: OpenSource) {
+  if ((await sha256(modelXml)) !== listed.robot.modelHash) return null;
+
+  const opened = await open(listed.id);
+
+  return opened?.recording?.commands ? { record: opened.record, recording: opened.recording } : null;
+}

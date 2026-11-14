@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lengthFigure, sizeFigures, sizeLabel } from './size';
+import { lengthFigure, lengthLabel, sizeFigures, sizeLabel } from './size';
 
 describe('size', () => {
   it('shows tenths of a millimeter under 100 mm, without a trailing zero', () => {
@@ -26,5 +26,16 @@ describe('size', () => {
   it('joins a size with × and puts mm after the last figure', () => {
     expect(sizeFigures([48, 18, 14.9])).toBe('48 × 18 × 14.9');
     expect(sizeLabel([256, 256, 256])).toBe('256 × 256 × 256 mm');
+  });
+
+  it('shows a length in millimeters under a meter, then meters to three figures', () => {
+    expect(lengthLabel(0.43)).toBe('0.4 mm');
+    expect(lengthLabel(12.34)).toBe('12.3 mm');
+    expect(lengthLabel(845.2)).toBe('845 mm');
+    expect(lengthLabel(999.6)).toBe('1.00 m');
+    expect(lengthLabel(1234)).toBe('1.23 m');
+    expect(lengthLabel(12_345)).toBe('12.3 m');
+    expect(lengthLabel(123_456)).toBe('123 m');
+    expect(lengthLabel(-3)).toBe('0 mm');
   });
 });

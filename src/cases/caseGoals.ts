@@ -8,6 +8,7 @@ import { DOT_COUNT } from './dotSpots';
 import type { GoalParam, GoalValues, ParamKey } from './goalParams';
 import { pickGoalWith } from './pickGoal';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
+import { lengthLabel } from '../utils/size';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 
 export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff';
@@ -195,7 +196,7 @@ export function pointProblem(arm: Pick<RobotFacts, 'anchor' | 'reachMm'>, at: V3
   const { anchor, reachMm } = arm;
   const far = Math.hypot(at[0] - anchor[0], at[1] - anchor[1], at[2] - anchor[2]);
 
-  if (far > reachMm) return `Bring the point within ${mm(reachMm)} of the arm.`;
+  if (far > reachMm) return `Bring the point within ${lengthLabel(reachMm)} of the arm.`;
 
   return v.heightMm < v.radiusMm ? 'Raise the point off the floor.' : null;
 }

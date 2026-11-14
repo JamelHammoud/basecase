@@ -150,6 +150,8 @@ The probe prints exactly what `board` needs: hole centres (→ `center` and `spa
 npx vitest run src/data/componentPorts.test.ts -t <id>
 ```
 
+A bus servo, bus adapter, battery or regulator also gets connector ports in `src/data/connectorPorts.ts` (type and role, on the face where the socket or lead is; see Parts catalog §8a). The same test fails a connector over 1 mm off the mesh. The wiring netlist and the BOM's cables read them.
+
 A part with no holes or datums (a cell, a pin-mounted dev board) gets no ports; say so in `mounting`.
 
 ## 6. List price

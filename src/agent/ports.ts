@@ -88,6 +88,7 @@ function holeText(p: Port): string {
     p.diameterMm ? `Ø${p.diameterMm}` : '',
     p.depthMm ? `${p.depthMm} deep` : '',
     p.count ? `${p.count}× on Ø${p.pitchDiameterMm}` : '',
+    p.connector ? `${p.connector} ${p.role}` : '',
   ].filter(Boolean);
 
   return bits.length ? ` ${bits.join(' ')}` : '';

@@ -4,6 +4,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { BANNED_COPY } from '../../verify/rehearsal/uiRules.ts';
 import { FIXES, LINTED_COPY, findBannedCopy } from '../copy/banned.mjs';
 import { GLOSSARY } from '../copy/glossary.mjs';
+import { PLACEHOLDER_FIX } from '../copy/placeholder.mjs';
 import { SPELLING } from '../copy/spelling.mjs';
 import rule from './copy.mjs';
 
@@ -69,7 +70,9 @@ const GLOSSARY_SAMPLES = [
 
 const SPELLING_SAMPLES = Object.keys(SPELLING).map((british) => [`The ${british} one`, british]);
 
-const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES, ...SPELLING_SAMPLES];
+const APOSTROPHE_SAMPLES = [["Couldn't load the model", "n't"]];
+
+const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES, ...SPELLING_SAMPLES, ...APOSTROPHE_SAMPLES];
 
 const errors = (text) => [{ messageId: 'banned', data: findBannedCopy(text) }];
 
@@ -181,6 +184,23 @@ describe('spelling', () => {
   });
 });
 
+describe('apostrophes', () => {
+  it('flags a straight apostrophe between letters', () => {
+    for (const [text, word] of APOSTROPHE_SAMPLES) {
+      const hit = findBannedCopy(text);
+
+      expect(hit?.word).toBe(word);
+      expect(hit?.fix).toContain('“can’t”');
+      expect(hit?.section).toBe('§3b-21');
+    }
+  });
+
+  it('allows ’ and quotes around a word', () => {
+    for (const text of ['Couldn’t load the model', "Name it 'Arm'", "The robots' joints"])
+      expect(findBannedCopy(text)).toBeNull();
+  });
+});
+
 tester.run('basecase/copy', rule, {
   valid: [
     'const yet = 1;',
@@ -199,6 +219,14 @@ tester.run('basecase/copy', rule, {
     'const el = <Row testId="view-on-github" />;',
     'const el = <button>Stop Try</button>;',
     "const command = { id: 'end-try', label: 'Stop Try' };",
+    'const el = <input placeholder="e.g. Servo bracket" />;',
+    'const el = <input placeholder="Search parts" />;',
+    'const el = <input placeholder={scope ? `Search ${scope.label}` : "Search parts"} />;',
+    'const el = <input placeholder={`e.g. ${price}`} />;',
+    'const el = <input placeholder="AIza…" />;',
+    'const el = <input placeholder={saved ? "••••••••" : ""} />;',
+    'const el = <input placeholder={hint} />;',
+    "const field = { placeholder: 'e.g. Jump' };",
   ],
   invalid: [
     ...SAMPLES.map(([text]) => ({ code: `const el = <p>${text}</p>;`, errors: errors(text) })),
@@ -223,5 +251,17 @@ tester.run('basecase/copy', rule, {
     { code: '<IconButton title="Remove Price" />;', errors: errors('Remove Price') },
     { code: '<a aria-label={`View ${name}`} />;', errors: errors('View ') },
     { code: 'const el = <p>Centre of mass</p>;', errors: errors('Centre of mass') },
+    ...['Add a comment', 'Reply', 'Name', 'Type a label', 'What’s next'].map((text) => ({
+      code: `const el = <input placeholder="${text}" />;`,
+      errors: [{ messageId: 'placeholder', data: { text, fix: PLACEHOLDER_FIX } }],
+    })),
+    {
+      code: "const field = { placeholder: 'Enter an address' };",
+      errors: [{ messageId: 'placeholder', data: { text: 'Enter an address', fix: PLACEHOLDER_FIX } }],
+    },
+    {
+      code: 'const el = <input placeholder={`Name ${n}`} />;',
+      errors: [{ messageId: 'placeholder', data: { text: 'Name', fix: PLACEHOLDER_FIX } }],
+    },
   ],
 });

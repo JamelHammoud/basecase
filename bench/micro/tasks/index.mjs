@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { ASSEMBLY_TASKS } from './assembly.mjs';
 import { CASE_TASKS } from './cases.mjs';
 import { CASE_APP_TASKS } from './caseApps.mjs';
+import { CASE_CODE_TASKS } from './caseCode.mjs';
 import { COST_TASKS, SERVICE_TASKS } from './serviceCost.mjs';
 import { CRAFT_TASKS, INTEGRITY_TASKS, MIRROR_TASKS } from './quality.mjs';
 import { RIG_TASKS } from './rigging.mjs';
@@ -27,6 +28,7 @@ export const SEED_TASKS = [
   ...RIG_TASKS,
   ...CASE_TASKS,
   ...CASE_APP_TASKS,
+  ...CASE_CODE_TASKS,
 ];
 
 export function realScenePath(name, dataDir = MICRO_DATA) {
@@ -72,7 +74,7 @@ export function startSceneFile(task, dataDir = MICRO_DATA) {
 }
 
 export function runnable(task, dataDir = MICRO_DATA) {
-  return !task.disabled && !!(task.fixture || startSceneFile(task, dataDir));
+  return !task.disabled && !!(task.fixture || task.startScene || startSceneFile(task, dataDir));
 }
 
 export function selectTasks({ ids, split = 'all', withStubs = false, dataDir = MICRO_DATA } = {}) {

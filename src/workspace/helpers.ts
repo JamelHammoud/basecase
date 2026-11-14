@@ -11,7 +11,7 @@ export const projectFromSeed = (project?: ProjectSettings): ProjectSettings =>
   normalizeProject({ ...DEFAULT_PROJECT, ...project });
 
 export function copyName(name: string, taken: string[]): string {
-  const stem = `${name.replace(/ copy( \d+)?$/, '')} copy`;
+  const stem = `${name.replace(/ copy( \d+)?$/i, '')} copy`;
   let n = 1;
   let next = stem;
 

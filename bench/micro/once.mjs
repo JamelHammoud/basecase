@@ -11,8 +11,9 @@ import { startSceneFile } from './tasks/index.mjs';
 
 async function startScene(slot, task) {
   const file = startSceneFile(task);
+  const record = (file && readJson(file)) || (task.startScene && (await task.startScene())) || null;
 
-  return loadFixtureInApp({ slot, fixture: file ? null : task.fixture(), record: file ? readJson(file) : null });
+  return loadFixtureInApp({ slot, fixture: record ? null : task.fixture(), record });
 }
 
 async function promptAgent({ slot, task, dir, model, effort }) {
@@ -70,7 +71,13 @@ export async function runMicroOnce({ slot, task, seed, out, model, effort, harne
         checks: [],
         detail: `${unreachable} tool calls couldn't reach the app, so the run says nothing about the model.`,
       }
-    : await gradeTask(task, { before, after, answer, app: { call: slot.call }, ...facts });
+    : await gradeTask(task, {
+        before,
+        after,
+        answer,
+        app: { call: slot.call, page: slot.studio.page, studio: slot.api },
+        ...facts,
+      });
   const summary = {
     task: task.id,
     seed,

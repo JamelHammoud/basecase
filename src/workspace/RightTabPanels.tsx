@@ -143,7 +143,6 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
           sketchRequest={tool.sketchRequest}
           quote={{ request: tool.quoteRequest, onRequest: tool.requestQuote, onDone: tool.clearQuote }}
           compose={{ request: tool.composeRequest, onDone: tool.clearCompose }}
-          targetHeightMm={studio.agentTargetHeightMm}
           choice={studio.agentChoice}
           onChoiceChange={studio.setAgentChoice}
           onReconnectAcp={studio.reconnectAcp}

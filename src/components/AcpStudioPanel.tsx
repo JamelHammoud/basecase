@@ -33,7 +33,6 @@ interface AcpStudioPanelProps {
   sketchRequest?: number;
   quote: { request: MessageQuote | null; onRequest: (quote: MessageQuote) => void; onDone: () => void };
   compose?: ComposeRequest;
-  targetHeightMm?: number;
   choice: AgentChoice;
   onChoiceChange: (choice: AgentChoice) => void;
   onReconnectAcp: (command?: string) => Promise<void>;
@@ -42,7 +41,7 @@ interface AcpStudioPanelProps {
   onUploadImage: (file: File) => Promise<{ record: ReferenceImageRecord; features: AnalyzedImageFeatures }>;
   queue: QueueControls;
   onSend: SendToAgent;
-  onRetry: (options: { targetHeightMm?: number; model?: string; effort?: string }) => Promise<void>;
+  onRetry: (options: { model?: string; effort?: string }) => Promise<void>;
   onStop: () => void;
   onNewChat: () => void;
   onRevert: () => void;
@@ -57,7 +56,7 @@ const JumpToBottom: React.FC<{ onClick: () => void }> = ({ onClick }) => (
         type="button"
         aria-label="Scroll to bottom"
         onClick={onClick}
-        className="w-8 h-8 rounded-full glass text-white/80 hover:text-white hover:bg-[#2e2e2e] flex items-center justify-center cursor-default transition-[transform,background-color] duration-150 active:scale-[0.94]"
+        className="w-[28px] h-[28px] rounded-full glass text-white/80 hover:text-white hover:bg-[#2e2e2e] flex items-center justify-center cursor-default transition-[transform,background-color] duration-150 active:scale-[0.94]"
       >
         <ChevronDownIcon className="w-4 h-4 translate-y-[1px]" />
       </button>
@@ -83,7 +82,6 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   sketchRequest = 0,
   quote,
   compose,
-  targetHeightMm = 0,
   choice,
   onChoiceChange,
   onReconnectAcp,
@@ -115,13 +113,13 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
     queue,
     isBusy,
     onSend,
-    extras: { targetHeightMm, choice },
+    choice,
     scrollToBottom,
   });
 
   const retry = async () => {
     scrollToBottom();
-    await onRetry({ targetHeightMm: targetHeightMm || undefined, ...choice });
+    await onRetry(choice);
   };
 
   return (

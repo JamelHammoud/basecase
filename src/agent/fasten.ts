@@ -124,7 +124,7 @@ function cutHoles(stack: Stack) {
     if (!cad) {
       notes.push(
         layer.throughHole
-          ? `through ${layer.part.id}'s own mounting hole`
+          ? `through ${layer.part.id}’s own mounting hole`
           : `${layer.part.id} is a catalog part with no hole on this axis: use one of its mounting holes`,
       );
 
@@ -274,7 +274,7 @@ export function planFasten(parts: ScenePart[], args: FastenArgs, mesh?: PartMesh
   const size = metricSize(args.size);
   const into = intoKind(args.into);
 
-  if (!size) return `${args.size} isn't a metric thread size. Use M2, M2.5, M3, M4, M5 or M6.`;
+  if (!size) return `${args.size} isn’t a metric thread size. Use M2, M2.5, M3, M4, M5 or M6.`;
 
   if (!into) return `into must be "insert", "nut" or "<part id>:<port name>".`;
 
@@ -316,7 +316,7 @@ function buildPlan(parts: ScenePart[], b: Build): FastenPlan | string {
       describe(b, { L, grip: need.grip, engage: need.engage, tip }),
       notes.length ? `Holes: ${notes.join('; ')}.` : '',
       blocked
-        ? `Driver access: ${blocked.id} is ${r2(blocked.t)} mm above the head, in the driver's way.`
+        ? `Driver access: ${blocked.id} is ${r2(blocked.t)} mm above the head, in the driver’s way.`
         : `Driver access: clear for ${DRIVER_REACH} mm.`,
     ]
       .filter(Boolean)

@@ -103,7 +103,7 @@ export function checkMask(mask: Mask): MaskCheck {
   if (share < MIN_SUBJECT_SHARE) return { share, refused: 'the subject is too small in the photo to measure' };
 
   if (contact.border > MAX_BORDER_SHARE) {
-    return { share, refused: `the mask touches ${Math.round(contact.border * 100)}% of the photo's edge` };
+    return { share, refused: `the mask touches ${Math.round(contact.border * 100)}% of the photo’s edge` };
   }
 
   return { share, cut: cutEdges(contact) };

@@ -21,7 +21,7 @@ export interface BuyContext {
 }
 
 const PRICE_CLASS =
-  'h-7 px-1.5 rounded-md text-right text-[13px] tabular-nums cursor-default transition-colors duration-150 hover:bg-white/[0.07]';
+  'h-[32px] px-1.5 rounded-md text-right text-[13px] tabular-nums cursor-default transition-colors duration-150 hover:bg-white/[0.07]';
 
 const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
   if (!l.url) return null;
@@ -36,7 +36,7 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
         target="_blank"
         rel="noreferrer"
         aria-label={linkLabel(l)}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-white/50 hover:text-white/90 hover:bg-white/[0.07] transition-colors duration-150 cursor-default"
+        className="w-[28px] h-[28px] rounded-lg flex items-center justify-center text-white/50 hover:text-white/90 hover:bg-white/[0.07] transition-colors duration-150 cursor-default"
       >
         <ExternalLinkIcon className="w-3.5 h-3.5" />
       </a>

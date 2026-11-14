@@ -35,7 +35,7 @@ describe('buildPromptBlocks', () => {
     saveEvidenceFile(dir, { folderId: 'f1', relPath: '../notes.md', text: 'n' });
 
     const blocks = buildPromptBlocks(
-      { imageDataUrls: [png, 'not-an-image', png], targetHeightMm: 400, evidenceFolders: [{ id: 'f1' }] },
+      { imageDataUrls: [png, 'not-an-image', png], evidenceFolders: [{ id: 'f1' }] },
       promptDeps(),
     );
 
@@ -45,7 +45,6 @@ describe('buildPromptBlocks', () => {
       'Build a part-based CAD model of what is in these references.',
       '(2 reference images of the same object, from different angles or details.)',
       '(Saved as ref-5, ref-6, in the order shown. compare puts one beside a render of your model.)',
-      'Target overall height: about 400 mm.',
       '',
       'The user attached evidence files. Study ALL of them with read_evidence before you plan: every image, every text file and every mesh summary.',
       'Evidence folder "Robot" (1 mesh summary, 1 text file, 1 image):',

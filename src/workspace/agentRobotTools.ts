@@ -75,7 +75,7 @@ function leaderText(leader: Leader) {
   const printed = leader.parts.filter((p) => p.cad).map((p) => p.name);
 
   return (
-    `Opened "${leader.name}" in a new scene tab: ${plural(leader.joints.length, 'joint')} in the follower's order (${leader.joints.map((j) => j.id).join(', ')}), ` +
+    `Opened "${leader.name}" in a new scene tab: ${plural(leader.joints.length, 'joint')} in the follower’s order (${leader.joints.map((j) => j.id).join(', ')}), ` +
     `one Dynamixel XL330-M288 per joint, and ${plural(printed.length, 'printed part')} (${printed.join(', ')}). Its scene records this scene and the joints it leads.`
   );
 }

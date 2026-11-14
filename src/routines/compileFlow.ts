@@ -103,7 +103,7 @@ export class FlowChecker {
     const proof = this.ctx.options.provenTransitions ? null : this.proof(from, to);
     const message = proof
       ? `${from} to ${to} fell in ${proof.falls} of ${proof.seeds} tries in simulation.`
-      : `${from} to ${to} isn't proven in simulation. Prove it, or stop first.`;
+      : `${from} to ${to} isn’t proven in simulation. Prove it, or stop first.`;
 
     this.ctx.fail('unproven-transition', message, node, { from, to, falls: proof?.falls ?? null });
   }
@@ -143,7 +143,7 @@ export class FlowChecker {
       const source = this.ctx.facts.get(leaf.fact)?.source;
 
       if (source && source !== 'watcher' && !flow.defined.has(leaf.fact)) {
-        this.ctx.fail('use-before-set', `${node} reads ${leaf.fact} before it's checked.`, node);
+        this.ctx.fail('use-before-set', `${node} reads ${leaf.fact} before it’s checked.`, node);
       }
     }
   }
@@ -225,13 +225,13 @@ export class FlowChecker {
     const info = this.ctx.facts.get(fact);
 
     if (!info || !['name', 'score', 'value'].includes(field)) {
-      this.ctx.fail('unknown-slot', `${node} can't fill {${raw}}.`, node);
+      this.ctx.fail('unknown-slot', `${node} can’t fill {${raw}}.`, node);
 
       return null;
     }
 
     if (info.source !== 'watcher' && !flow.defined.has(fact)) {
-      this.ctx.fail('use-before-set', `${node} says ${fact} before it's checked.`, node);
+      this.ctx.fail('use-before-set', `${node} says ${fact} before it’s checked.`, node);
     }
 
     if (field === 'name' && !flow.guards.has(fact)) {

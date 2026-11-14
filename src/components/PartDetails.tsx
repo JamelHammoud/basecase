@@ -27,7 +27,7 @@ export const LinkButton: React.FC<{
     target="_blank"
     rel="noreferrer"
     aria-label={label}
-    className={`inline-flex items-center justify-center gap-1.5 h-8 ${children ? 'px-3' : 'w-8'} rounded-lg text-[13px] font-medium whitespace-nowrap cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
+    className={`inline-flex items-center justify-center gap-1.5 h-[32px] ${children ? 'px-3' : 'w-[32px]'} rounded-lg text-[13px] font-medium whitespace-nowrap cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
       primary
         ? 'bg-figma-blue-fill hover:bg-figma-blue-fill-hover text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
         : 'bg-white/[0.07] hover:bg-white/[0.11] text-white/90'
@@ -79,7 +79,7 @@ export const DetailBlock: React.FC<{ label: string; children: React.ReactNode }>
 );
 
 const modelOrigin = (c: ComponentInfo): string => {
-  if (c.model.source === 'manufacturer') return `From ${c.model.by}'s CAD files`;
+  if (c.model.source === 'manufacturer') return `From ${c.model.by}’s CAD files`;
 
   if (c.model.source === 'checked') return `By ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`;
 

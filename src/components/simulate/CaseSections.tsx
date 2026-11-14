@@ -16,7 +16,7 @@ import type { DriveClass } from '../../sim/driveKeys';
 import type { Cases } from '../../workspace/useCases';
 import type { CaseExplore } from '../../workspace/useCaseExplore';
 import { CheckIcon } from '../build/CheckIcon';
-import { fmtTime } from './format';
+import { runClock } from '../../utils/duration';
 
 interface CaseSectionProps {
   cases: Cases;
@@ -87,7 +87,7 @@ const KEYS: Record<DriveClass, Array<[string, string]>> = {
 export const DriveKeys: React.FC<{ cls: DriveClass }> = ({ cls }) => (
   <div className="flex flex-col">
     {[...KEYS[cls], ['Start over', 'R'] as [string, string]].map(([label, keys]) => (
-      <div key={label} className="h-8 flex items-center justify-between text-[13px] text-white/70">
+      <div key={label} className="h-[28px] flex items-center justify-between text-[13px] text-white/70">
         <span>{label}</span>
         <span className="flex gap-1">
           {keys.split(' ').map((k) => (
@@ -113,7 +113,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
         {running ? (
           <div className="flex items-center gap-2">
             <span className="flex-1 text-[13px] tabular text-white/80" data-testid="try-clock">
-              {fmtTime(attempt.elapsed)} of {fmtTime(active?.task.seconds ?? 0)}
+              {runClock(attempt.elapsed)} of {runClock(active?.task.seconds ?? 0)}
             </span>
             <Button variant="secondary" size="sm" icon={<StopIcon className="w-4 h-4" />} onClick={attempt.end}>
               Stop Try

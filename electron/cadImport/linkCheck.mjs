@@ -45,7 +45,7 @@ export async function checkProductLink({ url, mpn, name }, fetcher = publicFetch
 
     return pageNamesPart(page, { mpn, name })
       ? { status: 'confirmed', checkedAt }
-      : { status: 'unconfirmed', checkedAt, note: `the page doesn't mention ${mpn || name}` };
+      : { status: 'unconfirmed', checkedAt, note: `the page doesn’t mention ${mpn || name}` };
   } catch (err) {
     return { status: 'unconfirmed', checkedAt, note: String(err?.message ?? err).slice(0, 120) };
   }

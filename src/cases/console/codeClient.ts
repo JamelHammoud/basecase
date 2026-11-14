@@ -2,9 +2,12 @@ type Values = Record<string, number | string[]>;
 
 type Reply = { ok: boolean; problem?: string };
 
+type ConsoleLike = Record<string, unknown>;
+
 interface ClientWindow {
   parent: { postMessage: (message: unknown, targetOrigin: string) => void };
   addEventListener: (type: string, listener: (e: never) => void, capture?: boolean) => void;
+  console?: ConsoleLike;
 }
 
 interface PortMessage {
@@ -61,9 +64,41 @@ export function installCodeClient(win: ClientWindow) {
     send({ type: 'key', key: k === 'k' ? 'k' : 'Escape', meta: e.metaKey, ctrl: e.ctrlKey, shift: e.shiftKey });
   };
 
+  const lineText = (value: unknown) => {
+    if (typeof value === 'string') return value;
+
+    if (value instanceof Error) return value.message;
+
+    try {
+      return JSON.stringify(value) ?? String(value);
+    } catch {
+      return String(value);
+    }
+  };
+
+  let logged = 0;
+
+  const forwardConsole = (level: string) => {
+    const original = win.console?.[level];
+
+    if (!win.console || typeof original !== 'function') return;
+
+    win.console[level] = (...args: unknown[]) => {
+      if (logged++ < 20)
+        send({ type: 'log', text: `${level === 'log' ? '' : `${level}: `}${args.map(lineText).join(' ')}` });
+
+      (original as (...a: unknown[]) => void).apply(win.console, args);
+    };
+  };
+
+  ['log', 'info', 'warn', 'error', 'debug'].forEach(forwardConsole);
   win.addEventListener('message', adopt);
   win.addEventListener('error', (e: ErrorEvent) =>
-    send({ type: 'error', message: errorText(e.error) || errorText(e.message) }),
+    send({
+      type: 'error',
+      message: errorText(e.error) || errorText(e.message),
+      ...(e.lineno > 0 ? { line: e.lineno } : {}),
+    }),
   );
   win.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) =>
     send({ type: 'error', message: errorText(e.reason) }),

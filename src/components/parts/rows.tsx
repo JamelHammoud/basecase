@@ -50,7 +50,7 @@ export const AddButton: React.FC<{ onAdd: () => void; className?: string }> = ({
         e.stopPropagation();
         onAdd();
       }}
-      className="w-7 h-7 rounded-full bg-[#0d99ff] text-white flex items-center justify-center cursor-default shadow-[0_2px_6px_rgba(0,0,0,0.4)] hover:bg-[#2ba5ff] active:scale-[0.94] transition-[background-color,transform] duration-150"
+      className="w-[28px] h-[28px] rounded-full bg-[#0d99ff] text-white flex items-center justify-center cursor-default shadow-[0_2px_6px_rgba(0,0,0,0.4)] hover:bg-[#2ba5ff] active:scale-[0.94] transition-[background-color,transform] duration-150"
     >
       <PlusIcon className="w-3.5 h-3.5" strokeWidth={3} />
     </button>
@@ -83,7 +83,7 @@ export const ResultRow: React.FC<{
         onClick={onOpen}
         className="w-full flex items-center gap-3 h-[52px] px-1.5 text-left cursor-default"
       >
-        <Thumb url={thumb} className="w-12 h-9 shrink-0" />
+        <Thumb url={thumb} className="w-12 h-[32px] shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="text-[13.5px] font-medium text-white/90 truncate">{item.name}</div>
           <div className="text-[12px] text-white/50 truncate">{metaLine(item)}</div>
@@ -104,7 +104,7 @@ export const CategoryRow: React.FC<{ category: Category; onOpen: () => void }> =
     <BrowseRow
       title={category.title}
       meta={meta}
-      thumb={<Thumb url={thumb} empty={!category.items.length} className="w-12 h-9 shrink-0" />}
+      thumb={<Thumb url={thumb} empty={!category.items.length} className="w-12 h-[32px] shrink-0" />}
       onOpen={onOpen}
     />
   );

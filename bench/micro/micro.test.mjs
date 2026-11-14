@@ -14,14 +14,23 @@ import { passHatK, suiteStats, statsMarkdown } from './stats.mjs';
 import { ALL_TASKS, HARVESTED_TASKS, SEED_TASKS, selectTasks, stubTasks } from './tasks/index.mjs';
 
 const build = (fixture) => recordFromFixture(fixture, specToPart, { buildCase, builderRobot, buildRig });
-const APP_GRADED = new Set(['D1', ...SEED_TASKS.filter((t) => t.category === 'case-apps').map((t) => t.id)]);
+const APP_GRADED = new Set([
+  'D1',
+  ...SEED_TASKS.filter((t) => ['case-apps', 'case-code'].includes(t.category)).map((t) => t.id),
+]);
 const task = (id) => SEED_TASKS.find((t) => t.id === id);
 
+async function solved(t, start) {
+  if (t.solutionScene) return t.solutionScene();
+
+  return t.solution ? keepStartCases(await build(t.solution()), start) : start;
+}
+
 describe('seed tasks', () => {
-  it('covers the 43 seed tasks with a held-out third', () => {
-    expect(SEED_TASKS).toHaveLength(43);
-    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(43);
-    expect(selectTasks({ split: 'heldout' })).toHaveLength(14);
+  it('covers the 56 seed tasks with a held-out third', () => {
+    expect(SEED_TASKS).toHaveLength(56);
+    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(56);
+    expect(selectTasks({ split: 'heldout' })).toHaveLength(18);
     expect(selectTasks({ split: 'tune' }).some((t) => t.heldOut)).toBe(false);
   });
 
@@ -33,16 +42,16 @@ describe('seed tasks', () => {
   });
 
   it('never passes a broken start scene, and passes every known fix', async () => {
-    for (const t of ALL_TASKS.filter((x) => x.fixture)) {
-      const start = await build(t.fixture());
+    for (const t of ALL_TASKS.filter((x) => x.fixture || x.startScene)) {
+      const start = t.startScene ? await t.startScene() : await build(t.fixture());
       const atStart = await gradeTask(t, { before: start, after: start });
 
       expect([t.id, atStart.status]).not.toEqual([t.id, 'pass']);
       expect([t.id, atStart.status]).not.toEqual([t.id, 'error']);
 
-      if (!t.solution && !t.solutionAnswer) continue;
+      if (!t.solution && !t.solutionAnswer && !t.solutionScene) continue;
 
-      const fixed = t.solution ? keepStartCases(await build(t.solution()), start) : start;
+      const fixed = await solved(t, start);
       const graded = await gradeTask(t, { before: start, after: fixed, answer: t.solutionAnswer });
 
       expect([t.id, graded.status]).toEqual([t.id, APP_GRADED.has(t.id) ? 'unavailable' : 'pass']);

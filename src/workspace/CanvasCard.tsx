@@ -128,6 +128,7 @@ export function CanvasCard(props: CanvasCardProps) {
       <CaseRunOverlays />
       {core.triesView.open && (
         <TriesMode
+          active={active}
           view={core.triesView}
           timelineOpen={core.simTraining.cases.timeline.open}
           sceneId={core.scene.sceneId}

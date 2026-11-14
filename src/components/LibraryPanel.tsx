@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ContextMenu, NoMatches, SearchField, useScrollFade, type ContextMenuEntry } from '../design-system';
 import type { CustomModelDefinition, ScenePart } from '../types/robotics';
 import { modelNote } from '../utils/libraryParts';
+import { TRY_SOURCE_BADGE } from '../cases/tryFile';
 import { useTries } from '../cases/tryStore';
 import { tryGroups } from '../workspace/useTriesView';
 import { ModelsSection, type SectionState } from './library/sections';
@@ -36,7 +37,9 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
   const searching = query.trim() !== '';
   const matches = matcher(query);
   const models = props.customModels.filter((m) => matches(m.name, modelNote(m)));
-  const tries = tryGroups((useTries() ?? []).filter((t) => matches(t.caseName ?? '', t.robot, t.source)));
+  const tries = tryGroups(
+    (useTries() ?? []).filter((t) => matches(t.caseName ?? '', t.robot, TRY_SOURCE_BADGE[t.source] ?? undefined)),
+  );
   const state: SectionState = {
     renaming,
     setRenaming,

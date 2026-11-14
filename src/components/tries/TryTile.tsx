@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '../../design-system';
-import { summaryRecord, type TrySummary } from '../../cases/tryFile';
+import { TRY_SOURCE_BADGE, summaryRecord, type TrySummary } from '../../cases/tryFile';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import { runClock } from '../../utils/duration';
@@ -12,12 +12,6 @@ const OUTCOME: Record<TrySummary['outcome']['verdict'], string | null> = {
   passed: 'Passed',
   failed: 'Missed',
   unjudged: null,
-};
-
-const SOURCE_BADGE: Record<TrySummary['source'], string | null> = {
-  case: null,
-  generated: 'Variation',
-  real: 'Real',
 };
 
 export interface TileScene {
@@ -45,7 +39,7 @@ export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPi
   );
   const film = useStoredStrip(summary.id, summary.strip) ?? drawn;
   const outcome = OUTCOME[summary.outcome.verdict];
-  const badge = SOURCE_BADGE[summary.source];
+  const badge = TRY_SOURCE_BADGE[summary.source];
 
   return (
     <button

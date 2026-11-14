@@ -9,6 +9,12 @@ export const TRY_SOURCES = ['case', 'generated', 'real'] as const;
 
 export type TrySource = (typeof TRY_SOURCES)[number];
 
+export const TRY_SOURCE_BADGE: Record<TrySource, string | null> = {
+  case: null,
+  generated: 'Variation',
+  real: 'Real',
+};
+
 export type TryVerdict = 'passed' | 'failed' | 'unjudged';
 
 export interface TryOutcome {

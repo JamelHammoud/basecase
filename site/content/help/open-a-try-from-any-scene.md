@@ -42,6 +42,6 @@ Find a try you recorded in any scene, grouped by robot, and step through it on t
 
 To delete tries, hold [[⌘]] or [[⇧]] while you click to select more, then press [[⌫]] and click **Delete**. Variations go with the try they came from.
 
-A try opens on the timeline only when it fits the robot in the open scene. The search at the top of the Library matches a try's Case, robot and source.
+A try opens on the timeline only when it fits the robot in the open scene. The search at the top of the Library matches a try's Case, its robot, and the Variation or Real label on its tile.
 
 Tries recorded before the Library held them move in the first time you open their scene. On a Mac they live in `library/tries` inside `~/Library/Application Support/Basecase`, one folder per try.

@@ -16,18 +16,19 @@ type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
 const GRID = 'grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2';
 
 interface TriesModeProps {
+  active: boolean;
   view: TriesView;
   timelineOpen: boolean;
   sceneId: string;
   scene: TileScene;
 }
 
-export const TriesMode: React.FC<TriesModeProps> = ({ view, timelineOpen, sceneId, scene }) => {
+export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen, sceneId, scene }) => {
   const [menu, setMenu] = useState<Menu | null>(null);
   const { ref: fadeRef, style: fadeStyle } = useScrollFade();
   const body = useRef<HTMLDivElement | null>(null);
 
-  useTriesKeys(view, timelineOpen);
+  useTriesKeys(view, timelineOpen, active);
 
   useEffect(() => {
     if (!view.robot) return;

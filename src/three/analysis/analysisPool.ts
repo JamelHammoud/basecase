@@ -139,8 +139,12 @@ export function threeMfIn(scene: SceneShapes, plates: PlateFilesInput): Promise<
   return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, ...plates });
 }
 
-export function stlIn(scene: SceneShapes, items: StlItem[]): Promise<Record<string, Uint8Array>> {
-  return analyze(leastBusy(), scene, { kind: 'stl', instances: scene.instances, items });
+export function partStlsIn(scene: SceneShapes, items: StlItem[]): Promise<Record<string, Uint8Array>> {
+  return analyze(leastBusy(), scene, { kind: 'partStls', instances: scene.instances, items });
+}
+
+export function stlIn(scene: SceneShapes): Promise<Uint8Array> {
+  return analyze(leastBusy(), scene, { kind: 'stl', instances: scene.instances });
 }
 
 export function visibilityIn(scene: SceneShapes): Promise<Record<string, number>> {

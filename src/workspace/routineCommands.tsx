@@ -16,7 +16,7 @@ export function routineCommands({ core }: CommandInputs): Command[] {
           id: 'add-routine-step',
           group: 'Routines',
           label: 'Add Step',
-          icon: <PlusIcon className="w-4 h-4" />,
+          icon: <PlusIcon />,
           keywords: `${KEYWORDS} step drive turn say wait if`,
           run: () => {
             show();
@@ -31,7 +31,7 @@ export function routineCommands({ core }: CommandInputs): Command[] {
           id: 'run-routine',
           group: 'Routines',
           label: 'Run Routine',
-          icon: <RunIcon className="w-4 h-4" />,
+          icon: <RunIcon />,
           shortcut: keyFor('run-routine'),
           keywords: `${KEYWORDS} play simulate`,
           run: () => {
@@ -47,7 +47,7 @@ export function routineCommands({ core }: CommandInputs): Command[] {
       id: 'show-routines',
       group: 'Panels',
       label: 'Show Routines',
-      icon: <RoutinesIcon className="w-4 h-4" />,
+      icon: <RoutinesIcon />,
       keywords: KEYWORDS,
       run: show,
     },
@@ -55,7 +55,7 @@ export function routineCommands({ core }: CommandInputs): Command[] {
       id: 'new-routine',
       group: 'Routines',
       label: 'New Routine',
-      icon: <PlusIcon className="w-4 h-4" />,
+      icon: <PlusIcon />,
       keywords: KEYWORDS,
       run: () => {
         show();

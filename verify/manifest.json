@@ -105,7 +105,7 @@
   "verify/rehearsal/canaries.test.ts": "a7b5ee45155649aae26487f1ad00ffd411aa7a08dcf7bda6186b561a31737ea6",
   "verify/rehearsal/cleanRerun.mjs": "a6f9fa77b94439a7c7e1fef6c62b5b451b1510377306c7ef4cc51ca63c928f6d",
   "verify/rehearsal/faults.test.ts": "2adea4df5aa6b2fafdee7b81e77e63d12761dcdca85931cf7e886e65718011b3",
-  "verify/rehearsal/faults.ts": "fcf0748f90d4153f7e2cac6e18850a52abc3adfbb3f3a525078174735602fd8a",
+  "verify/rehearsal/faults.ts": "8dc22074367386723cf86fe83c7f5bb495de79b67349c1b213e83148f436154c",
   "verify/rehearsal/persona.test.ts": "46b012f413c4a6388d28f818cc8e6ac45b6227252a7a101378655b832ef427fc",
   "verify/rehearsal/personaScore.test.ts": "bcad22ca23d2350f78a256aeb0c57a0d07a26bb8a0ae45539ed2cb7d174666d9",
   "verify/rehearsal/personaScore.ts": "084c301fba6937df724400fddf237943a25aeb02bc0b8528512f01925f9cef9c",

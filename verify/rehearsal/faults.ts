@@ -61,16 +61,26 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
       const places: Record<string, Held[]> = {};
       const sameRect = (a: Rect, b: Rect) =>
         Math.abs(a.x - b.x) < 4 && Math.abs(a.y - b.y) < 4 && Math.abs(a.width - b.width) < 4;
-      const remember = (name: string, rect: DOMRect) => {
+      const open = new Set<string>();
+      const remember = (name: string, rect: DOMRect | undefined) => {
         const timeline = (places[name] ??= []);
         const last = timeline.at(-1);
         const now = Date.now();
 
-        if (rect.width <= 0) return;
+        if (!rect || rect.width <= 0) return void open.delete(name);
 
-        if (last && sameRect(last, rect)) last.to = now;
-        else if (timeline.length < limits.max)
-          timeline.push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height, from: now, to: now });
+        const stays = !!last && open.has(name) && sameRect(last, rect);
+
+        if (last && stays) last.to = now;
+
+        if (stays) return;
+
+        open.delete(name);
+
+        if (timeline.length >= limits.max) return;
+
+        timeline.push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height, from: now, to: now });
+        open.add(name);
       };
       const swallow = (el: HTMLElement) =>
         el.addEventListener('click', (e) => (e.stopImmediatePropagation(), e.preventDefault()), true);
@@ -157,9 +167,9 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
         for (const spec of list) {
           const el = locate(spec.name);
 
-          if (!el) continue;
+          remember(spec.name, el?.getBoundingClientRect());
 
-          remember(spec.name, el.getBoundingClientRect());
+          if (!el) continue;
 
           if (done.has(el) && RELABELLED.has(spec.kind)) apply[spec.kind](el);
 

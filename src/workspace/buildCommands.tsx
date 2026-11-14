@@ -1,7 +1,8 @@
+import type { ReactNode } from 'react';
 import { bomCart } from '../components/build/cart';
 import { knownPurchases } from '../components/build/usePurchases';
 import type { Command } from '../components/CommandPalette';
-import { ExternalLinkIcon, PackageIcon } from '../design-system';
+import { ExternalLinkIcon, PackageIcon, RefreshIcon } from '../design-system';
 import { isBuilt } from '../guide/guidePlan';
 import { buildBom } from '../utils/bom';
 import { openLink } from '../utils/openLink';
@@ -43,7 +44,41 @@ function buildAlongCommand({ core }: CommandInputs): Command[] {
   ];
 }
 
+const GUIDE_KEYWORDS = 'build guide assembly instructions pdf manual steps';
+
+function guideCommands({ core }: CommandInputs): Command[] {
+  const { guide, parts, tool } = core;
+  const make = (id: string, label: string, icon: ReactNode): Command => ({
+    id,
+    group: 'Scene',
+    label,
+    icon,
+    keywords: GUIDE_KEYWORDS,
+    run: () => {
+      tool.openRightTab('build');
+      void guide.generate();
+    },
+  });
+
+  if (guide.progress) return [];
+
+  if (!guide.record)
+    return parts.some(isBuilt) ? [make('guide-make', 'Make Build Guide', <PackageIcon className={ic} />)] : [];
+
+  const open: Command = {
+    id: 'guide-open',
+    group: 'Scene',
+    label: 'Open Build Guide',
+    icon: <PackageIcon className={ic} />,
+    keywords: GUIDE_KEYWORDS,
+    run: () => void guide.open(),
+  };
+
+  return guide.stale ? [open, make('guide-update', 'Update Build Guide', <RefreshIcon className={ic} />)] : [open];
+}
+
 export const buildCommands = (inputs: CommandInputs): Command[] => [
+  ...guideCommands(inputs),
   ...buildAlongCommand(inputs),
   ...buyAllCommand(inputs),
 ];

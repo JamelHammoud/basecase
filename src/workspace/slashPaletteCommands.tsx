@@ -1,7 +1,7 @@
 import { SLASH_COMMANDS, slashText } from '../agent/slashCommands';
 import type { Command } from '../components/CommandPalette';
 import { SLASH_ICONS } from '../components/agent/slashIcons';
-import { CasesIcon, PenIcon, PhotoAddIcon } from '../design-system';
+import { CasesIcon, ComposeIcon, PenIcon, PhotoAddIcon } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
 
@@ -27,7 +27,18 @@ function makeItPass({ core }: CommandInputs): Command[] {
   ];
 }
 
-const attachCommands = ({ core }: CommandInputs): Command[] => [
+const composerCommands = ({ core, agent }: CommandInputs): Command[] => [
+  {
+    id: 'agent-new-chat',
+    group: 'Agent',
+    label: 'New Chat',
+    icon: <ComposeIcon className={ic} />,
+    keywords: 'conversation fresh start clear context agent composer',
+    run: () => {
+      core.tool.openRightTab('acp');
+      void agent.chat.newChat();
+    },
+  },
   {
     id: 'agent-attach-images',
     group: 'Agent',
@@ -51,7 +62,7 @@ export function slashPaletteCommands(inputs: CommandInputs): Command[] {
 
   return [
     ...makeItPass(inputs),
-    ...attachCommands(inputs),
+    ...composerCommands(inputs),
     ...SLASH_COMMANDS.map((command) => ({
       id: `agent-slash-${command.name}`,
       group: 'Agent',

@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { saluteMotion, wave } from '../src/cameras/gestures/fixtures/gestures';
 import { faceOffCentre } from '../src/cameras/operator/fixtures/faceOffCentre';
 import { handMovesRight } from '../src/cameras/operator/fixtures/handMovesRight';
@@ -185,8 +185,17 @@ beforeAll(async () => {
   app = await openApp({}, ['phone-'], { args: FAKE_CAMERA });
 }, 120000);
 
+beforeEach(() => {
+  app.errors.length = 0;
+});
+
 afterEach(async () => {
   await stopDriving();
+
+  if ((await areaCount()) === 0) return;
+
+  await app.page.keyboard.press('Escape');
+  await expect.poll(areaCount).toBe(0);
 });
 
 afterAll(async () => {

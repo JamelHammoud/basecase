@@ -26,8 +26,10 @@ import {
   type V3,
 } from './agentFrame';
 import { plural } from '../../electron/plural.mjs';
+import { isResizable, sheetEntry, sheetFields, type AgentSheet } from './agentSheet';
 
 export { agentCatalog } from './agentCatalog';
+export type { AgentSheet } from './agentSheet';
 export type { AgentCadPayload } from './cadMesh';
 export { groupFor, rotToCad, rotToScene, toCad, toScene } from './agentFrame';
 export { mirrorParts } from './agentMirror';
@@ -44,6 +46,7 @@ export interface AgentPartSpec {
   role?: PartRole;
   group?: string;
   material?: AgentMaterial;
+  sheet?: AgentSheet | null;
   supply?: string;
   thickness?: number;
   note?: string;
@@ -66,7 +69,7 @@ export type AgentOp =
       skeleton?: RobotSkeleton;
     };
 
-export type AgentMaterial = 'printed' | 'pla' | 'petg' | 'asa' | 'tpu' | 'cots' | 'aluminum' | 'laser_cut';
+export type AgentMaterial = 'printed' | 'pla' | 'petg' | 'asa' | 'tpu' | 'cots';
 
 const PRINT_MATERIAL: Partial<Record<AgentMaterial, PrintMaterial>> = {
   pla: 'PLA',
@@ -82,8 +85,6 @@ const MATERIAL_TAGS: Record<AgentMaterial, string> = {
   asa: '3D Printed PLA/PETG',
   tpu: 'TPU Flexible',
   cots: 'Off-the-shelf COTS',
-  aluminum: 'CNC Aluminum',
-  laser_cut: 'Laser-Cut Acrylic/Carbon',
 };
 const TAG_TO_MATERIAL = Object.fromEntries(
   Object.entries(MATERIAL_TAGS)
@@ -239,6 +240,12 @@ function primitivePart(spec: AgentPartSpec, base: PartBase): ScenePart {
 }
 
 export function specToPart(spec: AgentPartSpec): ScenePart {
+  const part = newPart(spec);
+
+  return spec.sheet ? { ...part, ...sheetFields(part, spec.sheet) } : part;
+}
+
+function newPart(spec: AgentPartSpec): ScenePart {
   const base: PartBase = {
     id: spec.id,
     name: spec.name || spec.id,
@@ -272,12 +279,7 @@ function applyLooks(next: ScenePart, spec: AgentPartSpec) {
 
   if (spec.group !== undefined) next.group = groupFor(spec.group);
 
-  if (spec.material) {
-    const m = materialFields(spec.material);
-
-    next.mechanicalTag = m.mechanicalTag;
-    next.printMaterial = m.printMaterial;
-  }
+  if (spec.material) Object.assign(next, materialFields(spec.material), next.sheet ? { sheet: undefined } : {});
 
   if (spec.supply !== undefined)
     Object.assign(next, supplyFields(spec.supply), spec.supply ? {} : { supplyId: undefined });
@@ -288,9 +290,6 @@ function applyLooks(next: ScenePart, spec: AgentPartSpec) {
 
   if (spec.frame !== undefined) next.frame = spec.frame || undefined;
 }
-
-const isResizable = (part: ScenePart) =>
-  part.kind !== 'cad_part' && part.kind !== 'component' && part.kind !== 'hardware';
 
 function applyPlacement(next: ScenePart, part: ScenePart, spec: AgentPartSpec) {
   const placement = spec.position ? toScene(spec.position) : placementPoint(part);
@@ -344,6 +343,8 @@ export function applySpec(part: ScenePart, spec: AgentPartSpec): ScenePart {
 
   if (spec.cad && part.cad) next.cad = recompiled(part.cad, spec.cad);
 
+  if (spec.sheet !== undefined) Object.assign(next, sheetFields(next, spec.sheet));
+
   if (spec.rotation || spec.position || spec.cad) applyPlacement(next, part, spec);
 
   return next;
@@ -388,6 +389,7 @@ function partEntry(p: ScenePart, measured?: PartBoxes) {
     role: p.role,
     group: p.group?.name,
     material: materialOf(p),
+    ...sheetEntry(p),
     ...(p.componentId
       ? { catalog: `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}` }
       : {}),

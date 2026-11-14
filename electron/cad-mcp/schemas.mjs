@@ -58,10 +58,20 @@ export const common = {
       `Subassembly, at most ${TEXT_LIMITS.group} characters, e.g. "Left Front Leg". Parts sharing it are grouped.`,
     ),
   material: z
-    .enum(['printed', 'pla', 'petg', 'asa', 'tpu', 'cots', 'aluminum', 'laser_cut'])
+    .enum(['printed', 'pla', 'petg', 'asa', 'tpu', 'cots'])
     .optional()
     .describe(
-      'printed (the project filament, default), pla, petg or asa (a specific filament: parts that hold or touch a servo need petg or asa, since servos run at 60–70 °C and PLA softens at 54 °C), tpu (soles, bumpers), cots (bought part), aluminum, laser_cut',
+      'printed (the project filament, default), pla, petg or asa (a specific filament: parts that hold or touch a servo need petg or asa, since servos run at 60–70 °C and PLA softens at 54 °C), tpu (soles, bumpers), cots (bought part). For metal or plate, use sheet',
+    ),
+  sheet: z
+    .object({
+      material: z.enum(['aluminum', 'carbon', 'acrylic']),
+      thickness: z.number().positive().max(13).optional(),
+    })
+    .nullable()
+    .optional()
+    .describe(
+      'Cut this flat part from sheet instead of printing it: aluminum (6061), carbon (carbon fiber plate) or acrylic. thickness (mm) snaps to the nearest stock size, default the part’s thinnest side, and that side is resized to it. The part leaves the print plates, weighs its volume at the sheet’s density, is listed under Sheet in the BOM, and Export ▸ Cut Files writes its DXF. Only a flat part with through holes cuts to a DXF. null prints it again',
     ),
   supply: z
     .string()

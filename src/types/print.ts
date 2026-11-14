@@ -1,5 +1,11 @@
 import type { PrintMaterial } from './robotics';
 
+export interface PartMaking {
+  printMaterial?: PrintMaterial;
+  print?: PartPrint;
+  sheet?: PartSheet;
+}
+
 export interface PartPrint {
   down?: [number, number, number];
   plate?: number;
@@ -35,4 +41,11 @@ export interface PrintQuote {
 export interface PrintService {
   madeBy?: 'service';
   quotes?: PrintQuote[];
+}
+
+export type SheetMaterial = 'aluminum' | 'carbon' | 'acrylic';
+
+export interface PartSheet {
+  material: SheetMaterial;
+  thicknessMm: number;
 }

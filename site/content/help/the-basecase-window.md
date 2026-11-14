@@ -30,26 +30,26 @@ covers:
   - src/app/WindowBoundary.tsx
 ---
 
-The Basecase window has views on the left, the canvas in the middle, and a panel on the right for whatever you've selected.
+The Basecase window has three areas: views on the left, your scene on the canvas in the middle, and a panel on the right for whatever you've selected.
 
 ![The Basecase window: the view rail with Parts, Play, Layers and Library, Parts open beside it, the canvas in the middle and the right panel](/help/the-basecase-window/window.png)
 
 ## The title bar
 
-From left to right, the title bar holds:
+From left to right, the title bar has:
 
-- The sidebar button, which shows or hides the left panel ([[⌘B]]).
-- The **Scenes** menu, which lists every scene you've saved ([[⌘O]]).
-- A tab for each open scene. Click **+** to start a new one ([[⌘T]]).
+- The sidebar button. Click it to show or hide the left panel ([[⌘B]]).
+- The **Scenes** menu, with every scene you've saved ([[⌘O]]).
+- A tab for each open scene. Click **+** to start a new scene ([[⌘T]]).
 - **Undo** and **Redo** ([[⌘Z]] and [[⇧⌘Z]]).
-- **Export**, for STL, 3MF, scene files and robot packages.
-- The inspector button, which shows or hides the right panel ([[⌘I]]).
+- **Export**, for STL, 3MF, cut files, scene files and robot packages.
+- The inspector button. Click it to show or hide the right panel ([[⌘I]]).
 
-On Windows, click the **Menu** button at the far left to open the File, Edit, View, Window and Help menus. On a Mac, these menus are in the menu bar.
+On Windows, the File, Edit, View, Window and Help menus are under the **Menu** button at the far left. On a Mac, they're in the menu bar.
 
 ## The view rail and the sidebar
 
-The column of icons on the left is the view rail. Click an icon to open its view in the sidebar beside it. To hide the sidebar, click the open view again.
+The column of icons on the left is the view rail. Click an icon to open that view in the sidebar next to it. To hide the sidebar, click the open view's icon again.
 
 | View | What it holds |
 |---|---|
@@ -58,30 +58,30 @@ The column of icons on the left is the view rail. Click an icon to open its view
 | **Layers** | Every part in the scene, as a tree |
 | **Library** | Models you've saved to use in any scene |
 
-To open Settings, click the gear at the bottom ([[⌘,]]). When an update has downloaded, a blue arrow appears above the gear.
+Click the gear at the bottom to open Settings ([[⌘,]]). After an update downloads, a blue arrow appears above the gear.
 
 ## The canvas and the toolbar
 
-The canvas shows your scene in 3D. To see the commands that apply to a part or an empty spot, right-click it.
+The canvas shows your scene in 3D. Right-click a part or an empty spot to see the commands that apply to it.
 
-The toolbar at the bottom holds **Move** (V), **Rotate** (E), **Scale** (R) and **Comment** (M). Click **Shapes** (A) to open basic shapes, **Sketch**, **Measure**, **Annotate** and **Import SVG**.
+The toolbar at the bottom has **Move** (V), **Rotate** (E), **Scale** (R) and **Comment** (M). Click **Shapes** (A) for basic shapes, **Sketch**, **Measure**, **Annotate** and **Import SVG**.
 
 ## The right panel
 
-The right panel has a tab for each job:
+The right panel has a tab for each kind of work:
 
-- **Inspect** edits the selected part's size, position, rotation and look.
-- **Pose** moves a robot's joints. It appears while a robot is selected.
-- **Simulate** runs the scene under physics. It appears once the scene has movable joints.
-- **Build** holds the Checks, the bill of materials, the build guide and printing. A red dot on the tab means something is left to fix, and the tab's tooltip tells you how many.
-- **Agent** is where you talk to the agent. While a Case runs, it's the only tab.
+- **Inspect** changes the selected part's size, position, rotation and look.
+- **Pose** moves a robot's joints. It appears while you have a robot selected.
+- **Simulate** runs the scene with physics. It appears once the scene has movable joints.
+- **Build** holds the Checks, the bill of materials, the build guide and printing. A red dot on the tab means something needs fixing. To see how many things are left, hold the pointer over the tab.
+- **Agent** is where you talk to the agent. While a Case runs, Agent is the only tab.
 
-To resize the sidebar or the right panel, drag its edge. To put it back to its default width, double-click the edge.
+Drag the edge of the sidebar or the right panel to resize it. Double-click the edge to return it to its default width.
 
 ## When part of the window fails
 
-A view, panel or sheet that fails shows its name and “stopped working”, such as “Parts stopped working”, with **Reload**. The rest of the window keeps working. If the whole window fails, **Reload Window** opens it again.
+If a view, panel or sheet fails, it shows its name and “stopped working” (for example, “Parts stopped working”) with a **Reload** button. The rest of the window keeps working. If the whole window fails, click **Reload Window** to open it again.
 
 ## The command menu
 
-Press [[⌘K]] to search every command, part and saved model by name. For steps, see [Run any command from the keyboard](/help/run-a-command).
+Press [[⌘K]] to search for any command, part or saved model by name. For instructions, see [Run any command from the keyboard](/help/run-a-command).

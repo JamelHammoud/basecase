@@ -4,6 +4,7 @@ import {
   BrushIcon,
   CheckIcon,
   CommentIcon,
+  CutIcon,
   DeleteIcon,
   EraserIcon,
   MarkerIcon,
@@ -60,8 +61,18 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
     run: () => void exports.export3mf(),
   };
 
+  const exportCutFiles: Command = {
+    id: 'export-cut-files',
+    group: 'Scene',
+    label: 'Export Cut Files',
+    icon: <CutIcon />,
+    keywords: 'dxf sheet laser waterjet aluminum carbon acrylic sendcutsend download',
+    run: exports.exportCutFiles,
+  };
+
   return [
     ...(exports.canExportParts ? [export3mf] : []),
+    ...(exports.canExportCutFiles ? [exportCutFiles] : []),
     {
       id: 'lay-out-plates',
       group: 'Scene',

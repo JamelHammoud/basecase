@@ -60,7 +60,6 @@ export function cameraMenu(view: CameraView, actions: CameraMenuActions): Contex
       rename,
       lensSubmenu((lens) => actions.setLens(fixed, lens ?? view.lens), view),
       { label: 'Use Current View', onSelect: () => actions.reframe(fixed) },
-      { divider: true },
       deleteEntry(() => actions.remove(fixed)),
     ];
   }

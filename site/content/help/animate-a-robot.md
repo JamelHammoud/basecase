@@ -30,7 +30,7 @@ covers:
   - src/utils/mocapRetarget.ts
 ---
 
-You can make a legged robot walk in place, or take a person's movement from a BVH motion capture file and copy it onto your robot's joints.
+You can make a legged robot walk in place, or copy a person's movement from a BVH motion capture file onto your robot's joints.
 
 ## Make a walk cycle
 
@@ -38,9 +38,9 @@ You can make a legged robot walk in place, or take a person's movement from a BV
 2. Click **+** beside **Animations**.
 3. Choose **Walk Cycle**.
 
-Basecase names the new animation “Walk”, sets its stride, foot lift and timing from the robot's leg length, and starts playing it right away. Feet on the ground stay planted while the other feet swing.
+The new animation is named “Walk” and starts playing right away. Basecase sets its stride, foot lift and timing from the robot's leg length. Feet that touch the ground stay planted while the other feet swing.
 
-Or choose **New Walk Cycle** in [[⌘K]].
+You can also choose **New Walk Cycle** in [[⌘K]].
 
 **Note:** A walk cycle needs leg joints. If the robot doesn't have any, **+** offers only **Import BVH**.
 
@@ -48,7 +48,7 @@ Or choose **New Walk Cycle** in [[⌘K]].
 
 1. In the **Pose** tab, click **+** beside **Animations** and choose **Import BVH**. If the robot has no legs, there's no menu, and you go straight to choosing a file.
 2. Pick a `.bvh` file.
-3. A sheet opens. Check which bone drives each joint, and change any that are wrong. To keep a joint still, set its row to **None**.
+3. In the sheet that opens, check which bone drives each joint, and change any that are wrong. To keep a joint still, set its row to **None**.
 4. To keep the robot where it stands, turn on **In place**. Then pick the **Frame rate**.
 5. Click **Import**. The new animation appears under **Animations** and starts playing.
 6. To play it on repeat, right-click the animation and choose **Loop**.
@@ -57,18 +57,18 @@ Or choose **New Walk Cycle** in [[⌘K]].
 
 ![The Import walk sheet for a 2 s recording, matching its arm and leg bones to the robot's joints](/help/animate-a-robot/retarget.png)
 
-Basecase matches bones by name, so files from Mixamo, CMU, Daz and Unreal work without changes. It points each of the robot's limbs in the same direction as the performer's matching limb, so your robot doesn't need the performer's proportions.
+Basecase matches bones by name, so files from Mixamo, CMU, Daz and Unreal work as they are. It points each of the robot's limbs the same way as the performer's, so your robot doesn't need the person's proportions.
 
-If the robot can't follow the performer to within 25 mm, a toast names the point that misses by the most, such as “Left knee off by 40 mm”.
+If the robot can't follow the performer to within 25 mm, a toast names the point that misses the most, for example “Left knee off by 40 mm.”
 
-Or choose **Import** from the **File** menu or from [[⌘K]], then pick the `.bvh` file.
+You can also choose **Import** from the **File** menu or from [[⌘K]], then pick the `.bvh` file.
 
 ## Play and edit an animation
 
 - To play an animation, click play on its row. To scrub, drag its timeline.
 - When you pause, the robot holds the pose from the current frame.
-- To turn **Loop** on or off, **Rename** an animation or **Delete** it, right-click its row.
+- Right-click an animation's row to turn **Loop** on or off, **Rename** the animation or **Delete** it.
 
-![The right-click menu on an animation, with Play, Loop, Rename and Delete](/help/animate-a-robot/loop.png)
+![The right-click menu on a playing animation, with Pause, Loop, Rename and Delete](/help/animate-a-robot/loop.png)
 
-Each animation has its own command in [[⌘K]]: **Play** followed by the animation's name.
+Each animation has its own command in [[⌘K]]. Type **Play** followed by the animation's name.

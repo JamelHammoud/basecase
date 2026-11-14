@@ -1,5 +1,5 @@
 import { parquetReadObjects } from 'hyparquet';
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it } from 'vitest';
 import { inDataset, loadFixtureRobot, passedDatasetFiles } from './driveChecks';
 import { openApp, openPlayTab, shown, type App } from './harness';
 
@@ -16,20 +16,20 @@ type Studio = {
 
 const simState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
 
-const segmentLabels = () =>
-  app.page.evaluate(() =>
-    (window as unknown as { __studio: Studio }).__studio.tryLabels().segments.map((s) => s.label),
-  );
+const segments = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.tryLabels().segments);
+
+const segmentLabels = async () => (await segments()).map((s) => s.label);
 
 const button = (name: string) => app.page.locator(shown('button'), { hasText: name }).first();
 
 const parquetRows = (bytes: Buffer) => parquetReadObjects({ file: new Uint8Array(bytes).buffer });
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
@@ -75,10 +75,19 @@ itUnlessWindows(
     expect((await segmentLabels()).find((label) => label.startsWith('grasp'))).toMatch(/^grasp \S/);
 
     const before = (await segmentLabels()).length;
-    const first = app.page.getByTestId('segment').first();
-    const box = (await first.boundingBox())!;
+    const segment = (await segments()).find((s) => s.to - s.from > 1)!;
+    const timeline = app.page.getByTestId('try-timeline');
 
-    await app.page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    expect(segment).toBeDefined();
+    await timeline.focus();
+    await app.page.keyboard.press('Home');
+    await expect.poll(() => timeline.getAttribute('data-frame')).toBe('0');
+
+    for (let frame = 1; frame <= segment.from + 1; frame++) {
+      await app.page.keyboard.press('ArrowRight');
+      await expect.poll(() => timeline.getAttribute('data-frame')).toBe(String(frame));
+    }
+
     await app.page.keyboard.press('s');
     await expect.poll(async () => (await segmentLabels()).length).toBe(before + 1);
     await expect.poll(async () => (await stored())?.labels?.segments.length).toBe(before + 1);

@@ -22,6 +22,14 @@ export default {
       ['electron-builder', '--dir', '--publish', 'never', '-c.mac.forceCodeSigning=false'],
       UNSIGNED,
     ),
+    vitestCheck(
+      'planted label faults relabel a control React redraws without unmounting the app',
+      'verify/rehearsal/faults.test.ts',
+    ),
+    vitestCheck(
+      'PersonaLab scoring matches a moved control and a name read with spaces, and nothing else',
+      'verify/rehearsal/personaScore.test.ts',
+    ),
     {
       ...vitestCheck(
         'PersonaLab, with only the screen and accessibility tree, finds 80% of 30 planted usability faults, half its findings on target',

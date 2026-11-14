@@ -139,12 +139,50 @@ describe('PersonaLab offline parts', () => {
     const tools = personaTools({});
 
     expect(toolNames(tools)).toEqual(
-      ['look', 'tree', 'click', 'type', 'press', 'scroll', 'wait', 'report', 'withdraw', 'finish'].map(
+      ['look', 'tree', 'zoom', 'click', 'type', 'press', 'scroll', 'wait', 'report', 'withdraw', 'finish'].map(
         (n) => `mcp__persona__${n}`,
       ),
     );
     expect(Object.keys(cleanEnv({ HOME: '/home/me', CLAUDE_CODE_SESSION_ID: 'x', ANTHROPIC_BASE_URL: 'y' }))).toEqual([
       'HOME',
     ]);
+  });
+});
+
+describe('PersonaLab screen tools', () => {
+  it('zooms into a region at full resolution and keeps clicks on the full screenshot', async () => {
+    const { screen, calls } = fakeScreen(2960, 1840);
+    const session = createSession({ screen, minutes: 1 });
+
+    await session.handlers.look();
+
+    const close = await session.handlers.zoom({ x: 100, y: 100, width: 200, height: 100 });
+
+    await session.handlers.click({ x: 100, y: 200 });
+    expect(close.text).toMatch(/^Close-up of 200 × 100 at 2\.00×/);
+    expect(calls).toEqual([['click', 100, 200]]);
+  });
+
+  it('keeps the on-screen point of a finding reported after a scroll', () => {
+    const findings = [];
+
+    addFinding(findings, { where: 'Bearings', problem: 'Faint.', at: [195, 1400], view: [195, 700] });
+    addFinding(findings, { where: 'Export', problem: 'Dead.', at: [10, 10], view: [10, 10] });
+
+    expect(findings).toEqual([
+      { where: 'Bearings', problem: 'Faint.', at: [195, 1400], view: [195, 700] },
+      { where: 'Export', problem: 'Dead.', at: [10, 10] },
+    ]);
+  });
+
+  it('refuses to finish before the last minute, so a session uses its time', () => {
+    let t = 0;
+    const session = createSession({ screen: fakeScreen(100, 100).screen, minutes: 3, now: () => t });
+
+    expect(session.handlers.finish().text).toMatch(/Not finished yet/);
+    expect(session.state.done).toBe(false);
+    t = 125000;
+    expect(session.handlers.finish().text).toBe('Session finished.');
+    expect(session.state.done).toBe(true);
   });
 });

@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import type { Page } from 'playwright-core';
 import { describe, expect, it } from 'vitest';
@@ -12,6 +13,27 @@ import { PERSONA_BARS, personaScore, type PlantedFault, type SessionFindings } f
 const RAIL = 'nav[aria-label="Sidebar views"] button';
 const SESSION_MINUTES = 10;
 const PER_SESSION = PERSONA_BARS.faults / PERSONA_BARS.sessions;
+const SESSION_CAP_MS = (SESSION_MINUTES + 5) * 60 * 1000;
+const CLOSE_MS = 30 * 1000;
+const PROGRESS = repoPath('verify', 'out', 'rehearsal', 'persona-progress.log');
+
+const progress = (line: string) => {
+  fs.mkdirSync(path.dirname(PROGRESS), { recursive: true });
+  fs.appendFileSync(PROGRESS, `${new Date().toISOString()} ${line}\n`);
+};
+
+function within<T>(work: Promise<T>, ms: number, what: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const late = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${what} took over ${Math.round(ms / 1000)} s`)), ms);
+  });
+
+  return Promise.race([work, late]).finally(() => clearTimeout(timer));
+}
+
+async function closeApp(run: Awaited<ReturnType<typeof launchPackaged>>) {
+  await within(run.close(), CLOSE_MS, 'closing the app').catch(() => run.app.process().kill('SIGKILL'));
+}
 
 async function openView(page: Page, rng: Rng): Promise<string> {
   const rail = page.locator(RAIL);
@@ -43,17 +65,40 @@ async function session(lab: PersonaLab, options: { index: number; rng: Rng; kind
     await plantFaults(run.page, specs);
     await sleep(500);
 
-    const rects = await faultRects(run.page);
     const { findings } = await lab.runPersona({
       screen: screenOf(run.page),
       goals: goalsFor(view),
       minutes: SESSION_MINUTES,
     });
-    const planted: PlantedFault[] = specs.map((s) => ({ session: options.index, ...s, rect: rects[s.name] ?? null }));
+    const rects = await faultRects(run.page);
+    const planted: PlantedFault[] = specs.map((s) => ({
+      session: options.index,
+      ...s,
+      rect: rects[s.name]?.[0] ?? null,
+      seen: rects[s.name] ?? [],
+    }));
 
     return { planted, found: { session: options.index, findings } as SessionFindings };
   } finally {
-    await run.close();
+    await closeApp(run);
+  }
+}
+
+async function guardedSession(lab: PersonaLab, options: { index: number; rng: Rng; kinds: FaultSpec['kind'][] }) {
+  for (let attempt = 1; ; attempt++) {
+    progress(`session ${options.index} attempt ${attempt}: ${options.kinds.join(', ')}`);
+
+    try {
+      const result = await within(session(lab, options), SESSION_CAP_MS, `session ${options.index}`);
+
+      progress(`session ${options.index}: ${result.found.findings.length} findings`);
+
+      return result;
+    } catch (error) {
+      progress(`session ${options.index} attempt ${attempt} failed: ${(error as Error).message}`);
+
+      if (attempt >= 2) throw error;
+    }
   }
 }
 
@@ -70,7 +115,7 @@ describe('PersonaLab against 30 planted usability faults', () => {
 
       for (let index = 0; index < PERSONA_BARS.sessions; index++) {
         const own = kinds.slice(index * PER_SESSION, (index + 1) * PER_SESSION);
-        const result = await session(lab, { index, rng, kinds: own });
+        const result = await guardedSession(lab, { index, rng, kinds: own });
 
         planted.push(...result.planted);
         found.push(result.found);

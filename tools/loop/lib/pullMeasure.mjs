@@ -109,26 +109,30 @@ const money = (value) => `$${value.toFixed(2)}`;
 function skipCause({ paths, keys, spent }, deps) {
   const paused = deps.paused();
 
-  if (paused) return paused;
+  if (paused) return { skip: 'pause', text: paused };
 
   const shared = paths.filter((file) => isShared(file) && counted(file));
 
-  if (shared.length > 0) return `it changes ${shared.join(', ')}, which both sides must share to be compared`;
+  if (shared.length > 0)
+    return { skip: 'shared', text: `it changes ${shared.join(', ')}, which both sides must share to be compared` };
 
   const total = deps.budget();
   const need = deps.estimate(keys);
 
   if (total - spent <= 0 || need > total - spent)
-    return `settling needs about ${money(need)}, and ${money(Math.max(0, total - spent))} of this pull request's ${money(total)} is left`;
+    return {
+      skip: 'budget',
+      text: `settling needs about ${money(need)}, and ${money(Math.max(0, total - spent))} of this pull request's ${money(total)} is left`,
+    };
 
   return null;
 }
 
 function measured({ pull, sha, keys, paths, spent }, deps) {
   const base = { sha, branch: keys.branch, main: keys.main, spent };
-  const skip = skipCause({ paths, keys, spent }, deps);
+  const cause = skipCause({ paths, keys, spent }, deps);
 
-  if (skip) return { data: { ...base, verdict: 'skipped', reason: `not measured: ${skip}` } };
+  if (cause) return { data: { ...base, verdict: 'skipped', skip: cause.skip, reason: `not measured: ${cause.text}` } };
 
   const result = deps.compare({
     against: keys.mainCommit,
@@ -138,7 +142,9 @@ function measured({ pull, sha, keys, paths, spent }, deps) {
   const after = { ...base, spent: spent + (result?.spent ?? 0) };
 
   if (!result)
-    return { data: { ...after, verdict: 'skipped', reason: 'not measured: the compare ended without results' } };
+    return {
+      data: { ...after, verdict: 'skipped', skip: 'empty', reason: 'not measured: the compare ended without results' },
+    };
 
   const decision = pullVerdict(result.stats);
   const data = {
@@ -159,13 +165,17 @@ const reusable = (last, keys) =>
   last.data.branch === keys.branch &&
   last.data.main === keys.main;
 
+const LASTING_SKIPS = ['shared', 'budget'];
+
+const settled = (data) => data.verdict !== 'skipped' || LASTING_SKIPS.includes(data.skip);
+
 export function measurePull({ pull, paths, log }, deps) {
   if (!needsMeasure(pull, paths)) return null;
 
   const sha = pull.headRefOid;
   const last = lastMeasure(deps.pullComments(pull.number), deps.owner);
 
-  if (last?.data.sha === sha) return outcomeOf(last.data);
+  if (last?.data.sha === sha && settled(last.data)) return outcomeOf(last.data);
 
   const keys = deps.keys();
 

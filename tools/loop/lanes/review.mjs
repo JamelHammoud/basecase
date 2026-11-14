@@ -96,23 +96,45 @@ function benchDeps({ dir, onMain, log }) {
 
 const BENCH_WAIT_MS = 2 * 60 * 60 * 1000;
 
-const BENCH_BUSY = { verdict: 'busy' };
+const BENCH_BUSY = {
+  verdict: 'busy',
+  description: "Another review's micro-evals held the bench; it will run again",
+  log: 'waited two hours for the micro-evals bench; will run again',
+};
 
-function measureOnce({ pull, paths, log, worktree, onMain }) {
-  if (!needsMeasure(pull, paths)) return null;
+const PULL_BUSY = {
+  verdict: 'busy',
+  description: 'Another lane held this pull request; the micro-evals will run again',
+  log: 'another lane held the pull request; micro-evals will run again',
+};
 
-  setReview(pull.headRefOid, 'pending', 'Waiting for the micro-evals');
+function onBench(sha, measure) {
+  setReview(sha, 'pending', 'Waiting for the micro-evals');
 
   const release = claimWithin('pull-bench', { ms: BENCH_WAIT_MS });
 
   if (!release) return BENCH_BUSY;
 
   try {
-    setReview(pull.headRefOid, 'pending', 'Measuring on the micro-evals');
+    setReview(sha, 'pending', 'Measuring on the micro-evals');
 
-    return measurePull({ pull, paths, log }, benchDeps({ ...worktree, onMain, log }));
+    return measure();
   } finally {
     release();
+  }
+}
+
+function measureOnce({ pull, paths, log, worktree, onMain }) {
+  if (!needsMeasure(pull, paths)) return null;
+
+  const hold = claim(`pull-${pull.number}`);
+
+  if (!hold) return PULL_BUSY;
+
+  try {
+    return onBench(pull.headRefOid, () => measurePull({ pull, paths, log }, benchDeps({ ...worktree, onMain, log })));
+  } finally {
+    hold();
   }
 }
 
@@ -158,9 +180,9 @@ function reviewPull(pull, { paths, log }) {
     const judged = judgedPass(result.output);
     const measured = judged ? measureOnce({ pull, paths, log, worktree, onMain }) : null;
 
-    if (measured === BENCH_BUSY) {
-      setReview(sha, 'error', "Another review's micro-evals held the bench; it will run again");
-      log(`#${pull.number}: waited two hours for the micro-evals bench; will run again`);
+    if (measured?.verdict === 'busy') {
+      setReview(sha, 'error', measured.description);
+      log(`#${pull.number}: ${measured.log}`);
 
       return;
     }

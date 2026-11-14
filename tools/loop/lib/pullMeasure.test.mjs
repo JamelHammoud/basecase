@@ -161,6 +161,24 @@ describe('micro-evals in review: limits', () => {
     expect(b.thread[0].body).toContain('Not measured: usage is paused.');
   });
 
+  it('measures a head skipped under the pause once it lifts, but keeps a budget or shared-path skip', () => {
+    const b = bench({ paused: 'usage is paused' });
+
+    measure(b);
+    b.state.paused = null;
+
+    expect(measure(b).verdict).toBe('pass');
+    expect(b.calls).toEqual(['comment', ['compare', 15], 'edit']);
+    expect(b.thread).toHaveLength(1);
+
+    const shared = bench();
+
+    measure(shared, { paths: [...PROMPT, 'package-lock.json'] });
+    measure(shared, { paths: [...PROMPT, 'package-lock.json'] });
+
+    expect(shared.calls).toEqual(['comment']);
+  });
+
   it("skips when the pull request's budget can't settle a result, counting what earlier heads spent", () => {
     const b = bench({ result: compared({ branch: TWO_IN_THREE, spent: 10 }) });
 

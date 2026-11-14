@@ -89,6 +89,13 @@ describe('weekStats', () => {
       ),
       number: 2,
     },
+    {
+      ...review(
+        '### Micro-evals: not measured (bbbbbbb)\n\nNot measured: usage is paused.\n\n<!-- micro-evals {"sha":"bbbbbbb","verdict":"skipped","skip":"pause"} -->',
+        '2026-11-07T00:00:00Z',
+      ),
+      number: 3,
+    },
   ];
   const stats = weekStats({
     pulls,
@@ -123,7 +130,7 @@ describe('weekStats', () => {
     expect(table).toContain('| Median hours from opened to merged | 4.0 |');
   });
 
-  it('lists the merged pull requests the review measured on the micro-evals, with their delta', () => {
+  it('lists the merged pull requests the review measured on the micro-evals, with their delta, and not the skipped', () => {
     expect(stats.harness).toEqual([
       { number: 2, title: 'Pull 2', delta: 'no worse: +3 points (95% interval −2 to +8), cost per pass +5%' },
     ]);

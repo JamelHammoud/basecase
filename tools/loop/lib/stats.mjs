@@ -66,7 +66,9 @@ export function measuredPulls(merged, comments, owner) {
       owner,
     );
 
-    return found ? [{ number: pull.number, title: pull.title, delta: deltaText(found.data) }] : [];
+    return found && found.data.verdict !== 'skipped'
+      ? [{ number: pull.number, title: pull.title, delta: deltaText(found.data) }]
+      : [];
   });
 }
 

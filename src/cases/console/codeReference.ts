@@ -1,7 +1,9 @@
 import { CODE_PANEL_TOKENS } from '../../design-system/codeTokens';
+import { WORLD_CALLS_PER_SECOND } from '../worldSet';
 import { REPORT_LIMITS } from './codeBridge';
 import { HELLO_MS, MAX_NAMES, MESSAGES_PER_SECOND, SIGNAL_INTERVAL_MS, SILENT_MS } from './codeProtocol';
 import { MAX_SUBSCRIPTIONS } from './codeSignals';
+import { FRAME_FPS, FRAME_WIDTH, MAX_STREAMS } from './codeStreams';
 import { MAX_CODE_PANELS } from './format';
 import { CASE_ACTIONS, CODE_SOURCE_MAX_BYTES } from './panelKinds';
 import { GOAL_FIELDS, INPUT_AXES, JOINT_FIELDS, ROBOT_FIELDS } from './signalNames';
@@ -19,6 +21,8 @@ export function codeBridgeReference(): string {
     '- basecase.drive({ v: [forward, left, turn], aux?: [lift, grip], target?: [x, y, z] }) drives the robot: v and aux each −1 to 1; target is a point for an arm’s hand in scene mm, y up. drive(null) lets go. Needs code in the console’s input.',
     '- basecase.event(name, value = true) sends a named event to the Case’s logic: name a plain word, value a boolean, a number or up to 200 characters.',
     `- basecase.action(name) → Promise<{ ok, problem? }>. name: ${or(CASE_ACTIONS)}; refused when it can’t run now.`,
+    `- basecase.world.set(name, { pose?: { position?: [x, y, z], rotation?: [x, y, z] }, visible?, color? }) moves, shows, hides or recolors a world object the Case marks movable: position in the Case’s scene mm, y up, as drive’s target, not create_case’s z-up frame; rotation in degrees, color #rrggbb. At most ${WORLD_CALLS_PER_SECOND} calls a second; the try records each change.`,
+    `- basecase.frames(camera, { width?, fps? }, (bitmap) => …) → stop. Sends a camera view as ImageBitmaps: width ${FRAME_WIDTH.min} to ${FRAME_WIDTH.max} px (default ${FRAME_WIDTH.initial}), height three quarters of it, fps ${FRAME_FPS.min} to ${FRAME_FPS.max} (default ${FRAME_FPS.initial}), at most ${MAX_STREAMS} streams.`,
     `- CSS variables: ${Object.keys(CODE_PANEL_TOKENS).join(', ')}. The body starts transparent in the studio’s font, size and ink.`,
     `- The studio keeps the first ${REPORT_LIMITS.errors} uncaught errors with their lines, the first ${REPORT_LIMITS.logs} console lines and the calls it refused. More than ${MESSAGES_PER_SECOND} messages a second are dropped. A panel that throws while it loads, says nothing for ${HELLO_MS / 1000} s or stops answering for ${SILENT_MS / 1000} s is unloaded.`,
     '- Esc and ⌘K reach the studio; every other key stays in the panel while it has focus.',

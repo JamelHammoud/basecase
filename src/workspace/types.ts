@@ -133,6 +133,7 @@ export interface StudioShared {
   importSceneFile: (file: File) => Promise<void>;
   selectTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
+  startRenameTab: (id: string) => void;
   closeTab: (id: string) => void;
   duplicateTab: (id: string) => void;
   reopenTab: () => void;

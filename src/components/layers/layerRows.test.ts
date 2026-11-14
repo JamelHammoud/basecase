@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ScenePart } from '../../types/robotics';
-import { layerRows, layersTitle, overallSize } from './layerRows';
+import { layerRows, layersTitle, openFor, overallSize, renameTarget } from './layerRows';
 
 const part = (id: string, extra: Partial<ScenePart> = {}): ScenePart => ({
   id,
@@ -111,5 +111,33 @@ describe('layerRows', () => {
     expect(layersTitle(parts)).toEqual(['4 parts', '1 cutout']);
     expect(overallSize([part('a')])).toEqual([10, 20, 30]);
     expect(overallSize([])).toBeNull();
+  });
+});
+
+describe('renameTarget', () => {
+  const arm = { id: 'g1', name: 'Arm' };
+  const parts = [part('a'), part('b', { group: arm }), part('c', { group: arm })];
+
+  it('renames one selected part, even inside a group', () => {
+    expect(renameTarget(parts, ['a'])).toBe('a');
+    expect(renameTarget(parts, ['b'])).toBe('b');
+  });
+
+  it('renames a group when the selection is the whole group', () => {
+    expect(renameTarget(parts, ['b', 'c'])).toBe('g1');
+  });
+
+  it('has nothing to rename for none, loose parts or part of a group with another part', () => {
+    expect(renameTarget(parts, [])).toBeNull();
+    expect(renameTarget(parts, ['a', 'b'])).toBeNull();
+    expect(renameTarget(parts, ['missing'])).toBeNull();
+  });
+
+  it('opens the collapsed group of the part being renamed, and only that one', () => {
+    const collapsed = new Set(['g1', 'g2']);
+
+    expect([...openFor(collapsed, parts, 'b')]).toEqual(['g2']);
+    expect(openFor(collapsed, parts, 'a')).toBe(collapsed);
+    expect(openFor(collapsed, parts, null)).toBe(collapsed);
   });
 });

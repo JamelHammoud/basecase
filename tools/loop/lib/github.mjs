@@ -311,8 +311,15 @@ export const pullComments = (number) =>
     '--json',
     'comments',
     '--jq',
-    '[.comments[] | {body, createdAt, author: .author.login}]',
+    '[.comments[] | {body, createdAt, author: .author.login, url}]',
   ]) ?? [];
+
+const COMMENT_ID = /#issuecomment-(\d+)$/;
+
+export const editComment = (url, body) =>
+  run('gh', ['api', '-X', 'PATCH', `repos/${repo()}/issues/comments/${COMMENT_ID.exec(url)[1]}`, '--input', '-'], {
+    input: JSON.stringify({ body: withMark(body) }),
+  });
 
 export const isLoopComment = (comment) => comment.body.includes(LOOP_MARK) || comment.body.startsWith('### Review:');
 

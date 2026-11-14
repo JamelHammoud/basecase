@@ -1,5 +1,5 @@
 import { asNumber, asString, listOf, oneOf, optional, refuse, type Reader } from '../validate';
-import { JOINT_FIELDS, signalRef, type JointField, type SignalScope } from './signalNames';
+import { JOINT_FIELDS, signalRef, signalShape, type JointField, type SignalScope } from './signalNames';
 
 export const CASE_ACTIONS = ['try', 'end-try', 'drive', 'stop', 'start-over', 'reset'] as const;
 
@@ -54,6 +54,17 @@ const readCode = (v: Config, where: string) => {
   return height === undefined ? { source } : { source, height };
 };
 
+const readButton = (v: Config, where: string, scope: SignalScope): { action: CaseAction; gesture?: string } => {
+  const action = oneOf(CASE_ACTIONS)(v.action, `${where}.action`);
+
+  if (v.gesture === undefined) return { action };
+
+  const gesture = asString(v.gesture, `${where}.gesture`);
+  const shape = signalShape(`gesture.${gesture}`, scope);
+
+  return shape === 'number' ? { action, gesture } : refuse(`${where}.gesture`, `${gesture} ${shape}`);
+};
+
 const readText = (v: Config, where: string) =>
   v.of === undefined
     ? { text: asString(v.text, `${where}.text`) }
@@ -76,7 +87,7 @@ export const PANEL_KINDS = {
     },
   }),
   table: kind({ read: readTable, desktopOnly: (c) => c.of === 'servos' }),
-  button: kind({ read: (v, where) => ({ action: oneOf(CASE_ACTIONS)(v.action, `${where}.action`) }) }),
+  button: kind({ read: readButton }),
   list: kind({
     read: (v, where) => ({ of: oneOf(['tries', 'failures'] as const)(v.of, `${where}.of`) }),
     studioOnly: (c) => c.of === 'tries',
@@ -116,3 +127,6 @@ export function panelShows(panel: PanelSpec, { desktop, studio }: PanelSurface) 
 
   return (desktop || !spec.desktopOnly?.(config)) && (studio || !spec.studioOnly?.(config));
 }
+
+export const gestureActions = (panels: readonly PanelSpec[], gesture: string): CaseAction[] =>
+  panels.flatMap((p) => (p.kind === 'button' && p.gesture === gesture ? [p.action] : []));

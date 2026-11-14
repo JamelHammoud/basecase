@@ -51,6 +51,10 @@ import type { Routines } from './useRoutines';
 import type { SceneSkills } from './useSkills';
 import { synthesizeLinkageRequest, type LinkagePayload } from '../linkage/agentLinkage';
 import { synthesizeInWorker } from '../linkage/linkageClient';
+import { sizeArmRequest, type ArmPayload } from '../arm/agentArm';
+import { sizeArmInWorker } from '../arm/armSizingClient';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import type { RobotSkeleton } from '../types/skeleton';
 import { newId } from './helpers';
 import { plural } from '../../electron/plural.mjs';
 
@@ -65,6 +69,7 @@ export interface RequestContext {
   setProjectNow: (next: ProjectSettings) => void;
   commitConsole: (caseId: string, console: CaseConsole | undefined) => void;
   insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
+  commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton) => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
@@ -330,6 +335,17 @@ const HANDLERS: Record<string, Handler> = {
   build_guide: buildGuide,
   catalog: catalogRequest,
   size_actuators: sizeActuatorsRequest,
+  size_arm: (payload, ctx) => {
+    ctx.setAction('Sizing an arm');
+
+    return sizeArmRequest(payload as ArmPayload, {
+      solve: sizeArmInWorker,
+      parts: ctx.parts,
+      skeleton: () => ctx.project().skeleton,
+      place: ctx.commitSkeleton,
+      links: !IS_WEB_DEMO,
+    });
+  },
   sweep_design: (payload, ctx) => {
     ctx.setAction('Comparing design options');
 

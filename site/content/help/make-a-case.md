@@ -56,12 +56,12 @@ The Case opens in the **Simulate** tab, and its world appears on the canvas. Nex
 
 **Ask the Agent**, under **New Case**, puts `/case` in the agent's box. Write the goal after it, such as "push the box to the wall in under 10 seconds", and send it. The agent builds the Case through the same builder and opens it. **Ask the Agent** is in the desktop app only.
 
-You can also tell the agent what you want to do with a robot, such as "drive this rover with a gamepad while I watch its front camera". It imports the robot you name when the scene has none. It makes a Case with the input and camera panels you asked for, and opens it running, as in [Run a Case](/help/run-a-case). Inputs are keys, a gamepad, a phone and the computer's camera. When you name another, such as MIDI, the agent says so and uses keys. A control the panels don't have, such as a joystick or a piano, the agent draws as a code panel. While the Case runs, ask for a change in the **Agent** tab, and the agent rewrites that panel in place. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
+You can also tell the agent what you want to do with a robot, such as "drive this rover with a gamepad while I watch its front camera". It imports the robot you name when the scene has none. It makes a Case with the input and camera panels you asked for, and opens it running, as in [Run a Case](/help/run-a-case). Inputs are keys, a gamepad, a phone and the computer's camera. When you name another, such as MIDI, the agent says so and uses keys. A movement you name, such as a wave, becomes a gesture the Case reacts to at the camera. When it isn't built in, the agent asks you to teach it, as in [Teach a robot a gesture](/help/teach-a-robot-a-gesture). A control the panels don't have, such as a joystick or a piano, the agent draws as a code panel. While the Case runs, ask for a change in the **Agent** tab, and the agent rewrites that panel in place. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
 
 ## Name or delete a Case
 
 The **Name** field sets the name before you click **Make Case**. To delete a Case, right-click it in the **Cases** tab and choose **Delete**. Its tries go with it, so Basecase asks first.
 
-The open Case's menu also has **Compare With**, which runs it on another open scene's robot. See [Compare two robots on a Case](/help/compare-two-robots-on-a-case).
+The open Case's menu also has **Compare With**, which runs it on another open scene's robot. See [Compare two robots on a Case](/help/compare-two-robots-on-a-case). A wheeled or legged robot's Case also has **Export Case Mat**, which saves it as a floor mat to print; see [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
 Every goal, world and number is listed in [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).

@@ -114,7 +114,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |
-| `create_case` | Adds a Case, with the inputs and panels it runs with, and marks which objects its code can move. In a scanned room, it aims at a door or furniture by name |
+| `create_case` | Adds a Case, with the inputs, panels and gestures it runs with, and marks which objects its code can move. In a scanned room, it aims at a door or furniture by name |
 | `write_case_code` | Writes or replaces one of a Case's code panels, and replies with its errors, its console lines, its refused calls and a picture of the window |
 | `read_case_code` | Reads a code panel's source, or lists a Case's code panels |
 | `delete_case_code` | Takes a code panel out of a Case |
@@ -139,6 +139,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_build` | Sets extras, budget and filament |
 | `build_guide` | Writes the printable assembly guide |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
+| `size_arm` | Sizes and places an arm from the points it must reach and the grams it carries |
 | `sweep_design` | Tries a value on copies, without changing the scene |
 
 With Claude Code, the agent can also start part designers, which are smaller agents that each model one subassembly. Every agent can also search the web, and Claude Code and Gemini CLI keep a to-do list.

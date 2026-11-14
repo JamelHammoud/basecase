@@ -30,6 +30,7 @@ export * from './BrowseRow';
 export * from './DisclosureRow';
 export * from './Toast';
 export * from './Spinner';
+export * from './ProgressBar';
 export * from './EmptyState';
 export * from './ErrorBoundary';
 export * from './DropOverlay';

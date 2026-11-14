@@ -1,5 +1,5 @@
 import React from 'react';
-import { NumberInput, Tooltip } from '../../design-system';
+import { NumberInput, ProgressBar, Tooltip } from '../../design-system';
 import type { ProjectSettings } from '../../types/robotics';
 import type { Bom } from '../../utils/bom';
 import { useMoney } from '../../utils/useMoney';
@@ -33,16 +33,12 @@ const BudgetBar: React.FC<{ t: Totals; budget: number }> = ({ t, budget }) => {
 
   return (
     <>
-      <div className="relative h-1.5 rounded-full bg-white/[0.07] overflow-hidden" aria-label="Spent of budget">
-        <div
-          className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${over ? 'bg-red-500/40' : 'bg-[#0d99ff]/35'}`}
-          style={{ width: `${estimatedShare * 100}%` }}
-        />
-        <div
-          className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-200 ${over ? 'bg-red-500' : 'bg-[#0d99ff]'}`}
-          style={{ width: `${pricedShare * 100}%` }}
-        />
-      </div>
+      <ProgressBar
+        share={pricedShare}
+        behind={estimatedShare}
+        tone={over ? 'danger' : 'accent'}
+        label="Spent of budget"
+      />
       <div className={`text-[12.5px] tabular-nums ${over ? 'text-red-400' : 'text-white/50'}`}>
         {money.format(differenceUsd)} {over ? 'over budget' : 'left'}
       </div>

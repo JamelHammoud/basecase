@@ -101,7 +101,7 @@ function servoVariants(parts: ScenePart[], joints: RobotJoint[], p: Extract<Swee
 function batteryVariants(parts: ScenePart[], values: V3[]) {
   const batteries = parts.filter(isBattery);
 
-  if (!batteries.length) return 'No battery in the scene to move. Add one from Parts → Power.';
+  if (!batteries.length) return 'No battery in the scene to move. Add one from Parts ▸ Power.';
 
   return values.map((move) => {
     const edits = new Map(batteries.map((b): [string, PartEdit] => [b.id, { move }]));

@@ -122,11 +122,11 @@ describe.skipIf(!credentials)('Bambu LAN', () => {
 
     expect(await connector.test()).toEqual({
       ok: false,
-      message: 'Check the access code on the printer: Settings → LAN Only.',
+      message: 'Check the access code on the printer: Settings ▸ LAN Only.',
     });
     expect(await connector.status()).toMatchObject({ state: 'offline' });
     await expect(connector.send({ file, name: 'arm.gcode.3mf', start: false })).rejects.toThrow(
-      'Check the access code on the printer: Settings → LAN Only.',
+      'Check the access code on the printer: Settings ▸ LAN Only.',
     );
   });
 });

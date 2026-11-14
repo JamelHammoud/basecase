@@ -29,7 +29,7 @@ Save the canvas's current framing as a camera that stays put, so you watch every
 2. Right-click an empty spot on the canvas.
 3. Choose **Add Camera View**.
 
-A toast says "Added Camera 1", and the new view appears under **Cameras** at the top left of the canvas. On the canvas, the camera shows as a small frustum.
+The new view, Camera 1, appears under **Cameras** at the top left of the canvas. On the canvas, the camera shows as a small frustum.
 
 **Add Camera View** is also in [[⌘K]].
 

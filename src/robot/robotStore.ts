@@ -10,6 +10,7 @@ import {
   type RobotEvent,
   type RobotLinkState,
   type RobotMode,
+  type RobotMount,
   type RobotState,
 } from './robotState';
 
@@ -44,7 +45,7 @@ function setSceneJoints(joints: string[] | null) {
 
 export type RobotLinkApi = Pick<
   ElectronApi,
-  'robotConnect' | 'robotCommand' | 'robotDisconnect' | 'robotState' | 'onRobotEvent' | 'robotPolicy'
+  'robotConnect' | 'robotCommand' | 'robotDisconnect' | 'robotState' | 'onRobotEvent' | 'robotPolicy' | 'robotCalibrate'
 >;
 
 let api: RobotLinkApi | null = null;
@@ -71,7 +72,12 @@ export const robotSceneJoints = () => sceneJoints;
 export function robotConnection(robot: RobotState): RobotConnection | null {
   if (robot.link !== 'connected') return null;
 
-  return { ids: robot.spec?.ids ?? [], jointIds: sceneJoints, readings: robot.status?.joints ?? [] };
+  return {
+    ids: robot.spec?.ids ?? [],
+    jointIds: sceneJoints,
+    readings: robot.status?.joints ?? [],
+    calibration: robot.calibration,
+  };
 }
 
 export const robotBenchDriving = () => benchDriving;
@@ -113,7 +119,7 @@ function noteRun(next: RobotState, event: RobotEvent) {
   if (event.event === 'link' && event.state === 'connected') run.clear();
 
   if (event.event === 'status' && next.status && next.spec)
-    run.status(performance.now(), statusPositions(next.status, next.spec.ids));
+    run.status(performance.now(), statusPositions(next.status, next.spec.ids, next.calibration));
 
   keepFaultRun(next, event);
 }
@@ -148,7 +154,12 @@ export function receiveRobotEvent(event: RobotEvent) {
 function adopt(link: RobotLinkState) {
   if (!link.connected || state.link === 'connected') return;
 
-  const events = [{ event: 'link', state: 'connected', spec: link.spec }, link.hello, link.status];
+  const events = [
+    { event: 'link', state: 'connected', spec: link.spec },
+    link.hello,
+    link.status,
+    link.calibration ? { event: 'calibration', joints: link.calibration } : null,
+  ];
 
   sceneJoints = recalledSceneJoints();
   set(events.reduce<RobotState>((s, e) => (e ? applyRobotEvent(s, e) : s), INITIAL_ROBOT));
@@ -194,6 +205,10 @@ export async function sendRobotCommand(command: Record<string, unknown>): Promis
 
   return reply;
 }
+
+export const robotLinkState = async () => (await api?.robotState?.()) ?? null;
+
+export const setRobotMounts = async (joints: RobotMount[]) => (await api?.robotCalibrate?.(joints)) ?? unavailable;
 
 export async function enterRung(mode: RobotMode) {
   set({ ...state, pending: mode });

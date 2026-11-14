@@ -91,8 +91,6 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const savePrice = async (line: BomLine, record: PurchaseRecord | null) => {
     await savePurchase(line.key, withPrice(purchases[line.key], record));
     setChecking(null);
-
-    if (record) onToast(`Saved price for ${line.name}`);
   };
   const saveOnHand = async (line: BomLine, count: number) => {
     const before = purchases[line.key];

@@ -4,9 +4,8 @@ import { hasPrimaryModifier } from '../../utils/os';
 import { SendIntent } from './types';
 import { keyFor } from '../../app/shortcuts';
 
-const TEXT_PRESENTATION = '\uFE0E';
-const SEND_KEY = `${keyFor('send')}${TEXT_PRESENTATION}`;
-const QUEUE_KEY = `${keyFor('queue')}${TEXT_PRESENTATION}`;
+const SEND_KEY = keyFor('send');
+const QUEUE_KEY = keyFor('queue');
 
 interface SendMenuOptions {
   isBusy: boolean;

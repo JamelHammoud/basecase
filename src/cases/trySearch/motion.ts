@@ -122,12 +122,12 @@ export function motionSignature(trace: MotionTrace): Float32Array {
   return out.map((v) => v / norm);
 }
 
-export function signatureDistance(a: Float32Array, b: Float32Array): number {
+export function signatureDistance(a: ArrayLike<number>, b: ArrayLike<number>, scale = 1): number {
   let sum = 0;
 
   for (let i = 0; i < a.length; i++) sum += (a[i] - b[i]) ** 2;
 
-  return Math.sqrt(sum);
+  return Math.sqrt(sum) / scale;
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);

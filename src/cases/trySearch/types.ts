@@ -4,6 +4,8 @@ export type BodyClass = 'fixed' | 'mobile';
 
 export const MOTION_SAMPLES = 128;
 
+export const SIGNATURE_SCALE = 127;
+
 export interface MotionTrace {
   body: BodyClass;
   joints: number;

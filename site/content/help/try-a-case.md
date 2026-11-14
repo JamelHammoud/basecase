@@ -32,39 +32,39 @@ covers:
   - src/cases/tryStore/
 ---
 
-You can drive your robot through an open Case while Basecase records the try. When you stop, Basecase shows whether the try passed, and you can replay it.
+You can drive your robot through an open Case while Basecase records the try. When you stop, Basecase tells you whether the try passed, and you can replay it.
 
 1. Click **Play** in the view rail, then click **Cases**.
-2. Click a Case under **New Case**. Basecase opens it at the top of the **Simulate** tab, along with its brief. If you don't see a Case there, [make a Case](/help/make-a-case) first.
-3. Under **Try**, click **Try It**. A clock shows how much of the Case's time limit you've used, and the keys for your kind of robot appear below it.
-4. Click the canvas so that your key presses go to it.
-5. Drive the robot to the goal using the keys shown under **Try**, or use a gamepad. To start over, press [[R]].
+2. Click a Case under **New Case**. Basecase opens it at the top of the **Simulate** tab with its brief. If there's no Case there, [make a Case](/help/make-a-case) first.
+3. Under **Try**, click **Try It**. A clock shows how much of the Case's time limit you've used. The keys for your kind of robot appear below it.
+4. Click the canvas so your key presses go to it.
+5. Drive the robot to the goal with the keys shown under **Try**, or with a gamepad. To start over, press [[R]].
 
 ![A try running, with the clock, Stop Try and the keys](/help/try-a-case/trying.png)
 
-6. To end the try, click **Stop Try** or press [[Esc]]. The try also ends when you choose another controller in **Control** or when the clock runs out.
-7. Find the new try under **Results**. It's marked **Passed** or **Missed**, and shows how long it took and four frames from it.
-8. To watch a try again, click **Replay** (▷) on it. Basecase plays it through the Case's cards, as in [Play a try through its console](/help/play-a-try-through-its-console).
+6. To end the try, click **Stop Try** or press [[Esc]]. The try ends too when the clock runs out, or if you choose another controller in **Control**.
+7. Find the new try under **Results**. It's marked **Passed** or **Missed**, with how long it took and four frames from it.
+8. To watch a try again, click **Replay** (▷) on it. Basecase plays it through the Case's cards, the same way as in [Play a try through its console](/help/play-a-try-through-its-console).
 
 ![Results with the latest run and one try](/help/try-a-case/results.png)
 
-You can also start a try by pressing [[⌘K]] and choosing **Try ⟨Case⟩**.
+Or start a try from [[⌘K]]. Press it and choose **Try ⟨Case⟩**.
 
 To steer a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
-To judge your real wheeled or legged robot on a printed mat, click **Try on Real Robot** instead of **Try It**. See [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
+**Try on Real Robot** judges your real wheeled or legged robot on a printed mat. Click it instead of **Try It**. See [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
-If the robot can't drive, **Teach It to Move** appears under **Try It**. It trains a **Walk** skill, as described in [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
+If the robot can't drive, you'll see **Teach It to Move** under **Try It**. It trains a **Walk** skill. Learn more in [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 
-Instead of driving the robot, you can teach it the Case's task. Go to **Train**, between **Control** and **Results**, and type a goal after **Teach it to**. See [Teach a robot a skill](/help/teach-a-robot-a-skill).
+Instead of driving the robot yourself, you can teach it the Case's task. Go to **Train**, between **Control** and **Results**, and type a goal after **Teach it to**. See [Teach a robot a skill](/help/teach-a-robot-a-skill).
 
 ## Whether the robot can do it
 
-The icon next to the Case's name shows the Case's row in **Build** ▸ **Checks**. Hold your pointer over the icon to see how many of 20 runs passed, or click it to open the row.
+The icon next to the Case's name shows the Case's row in **Build** ▸ **Checks**. Hold your pointer over the icon to see how many of 20 runs passed. Click it to open the row.
 
 ![The Simulate tab with Touch the Dots open and its Checks icon beside the name](/help/try-a-case/case.png)
 
-Before the robot runs the Case, Basecase tests it. The row names the first thing that stops it:
+Basecase tests the robot before it runs the Case, and the row names the first thing that stops it:
 
 | Problem | The row shows |
 |---|---|
@@ -75,24 +75,24 @@ Before the robot runs the Case, Basecase tests it. The row names the first thing
 
 ![A Checks row saying the arm needs driven wheels for Reach a Spot, with New Case on its note](/help/try-a-case/misfit.png)
 
-If the robot lacks what the Case needs, hold your pointer over the row's note and click **New Case**. Basecase builds a Case that the robot can do.
+If the robot lacks what the Case needs, hold your pointer over the row's note and click **New Case**. Basecase builds a Case the robot can do.
 
 ## Results
 
-After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that, the tries are listed worst first, so misses appear at the top. A replay includes anything the Case's code moved, lit or hid during the try.
+After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that are the tries, worst first, so misses are at the top. A replay includes anything the Case's code moved, lit or hid during the try.
 
-To delete a try, right-click it, choose **Delete**, then confirm.
+To delete a try, right-click it and choose **Delete**, then confirm.
 
-Tries from your real robot are marked **Real**. When you click **Replay** on one of them, Basecase draws its path over the path of the best sim try.
+Tries from your real robot are marked **Real**. When you click **Replay** on one, Basecase draws its path over the path of the best sim try.
 
-The menu for a passed try also has **Multiply**. It makes up to 50 varied passing tries from that try, and the try's row then shows the count, such as **50 variations**. Deleting the try deletes its variations with it. See [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
+A passed try has **Multiply** in its menu, which makes up to 50 varied passing tries from it. The try's row then shows the count, such as **50 variations**. Deleting the try deletes its variations too. See [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 
-If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their rows appear above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) adds its rows in the same place, below any comparison.
+If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their rows appear above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) puts its rows in the same place, below any comparison.
 
 ## Where tries go
 
-- Tries are saved on this computer and left out of shared `.basecase` files.
+- Basecase saves tries on this computer. Shared `.basecase` files don't include them.
 - The Library lists tries from every scene. See [Open a try from any scene](/help/open-a-try-from-any-scene).
-- [Search tries](/help/search-tries) finds tries by words, facts or motion.
+- To find tries by words, facts or motion, use [Search tries](/help/search-tries).
 - Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset).
-- When you have five passed tries, you can train a policy from them. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+- With five passed tries, you can train a policy from them. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).

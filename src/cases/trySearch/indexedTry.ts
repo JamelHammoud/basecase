@@ -1,7 +1,7 @@
 import { originLabel, TRY_SOURCE_BADGE, type StoredTry, type TrySource } from '../tryFile';
 import { motionKey, motionSignature } from './motion';
 import { termsOf, weightedTerms } from './searchTerms';
-import type { IndexedTry } from './types';
+import { SIGNATURE_SCALE, type IndexedTry } from './types';
 
 const CASE_BOOST = 2;
 
@@ -15,7 +15,7 @@ function quantized(vector: ArrayLike<number>): number[] {
 
   for (let i = 0; i < vector.length; i++) norm += vector[i] * vector[i];
 
-  const scale = norm > 0 ? 127 / Math.sqrt(norm) : 0;
+  const scale = norm > 0 ? SIGNATURE_SCALE / Math.sqrt(norm) : 0;
 
   return Array.from(vector, (v) => Math.round(v * scale));
 }

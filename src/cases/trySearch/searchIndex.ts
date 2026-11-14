@@ -2,8 +2,17 @@ import type { StoredTry } from '../tryFile';
 import { indexedTryOf } from './indexedTry';
 import { hasFacts } from './queryParser';
 import { stem, wordWeight } from './searchTerms';
-import { factFilter, signatureDistance } from './tryFilter';
-import type { HitMatch, IndexedTry, ParsedQuery, QueryFilters, QueryVocab, TryHit } from './types';
+import { signatureDistance } from './motion';
+import { factFilter } from './tryFilter';
+import {
+  SIGNATURE_SCALE,
+  type HitMatch,
+  type IndexedTry,
+  type ParsedQuery,
+  type QueryFilters,
+  type QueryVocab,
+  type TryHit,
+} from './types';
 
 const FORMAT = 'basecase-try-index';
 
@@ -179,7 +188,7 @@ export class TrySearchIndex {
       if (!e.signature || e === target || e.motionKey !== target.motionKey || !ok(e)) continue;
 
       if (!allowed || allowed.has(e.id))
-        hits.push(hitOf(e, 1 - signatureDistance(e.signature, signature) / 2, 'motion'));
+        hits.push(hitOf(e, 1 - signatureDistance(e.signature, signature, SIGNATURE_SCALE) / 2, 'motion'));
     }
 
     return hits.sort(byScore).slice(0, limit);

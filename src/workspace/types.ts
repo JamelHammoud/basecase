@@ -115,7 +115,6 @@ export interface StudioShared {
   reconnectAcp: (command?: string) => Promise<void>;
   signInAcp: (methodId: string) => Promise<void>;
   saveAgentApiKey: (key: string) => Promise<void>;
-  agentTargetHeightMm: number;
   agentChoice: AgentChoice;
   setAgentChoice: (choice: AgentChoice) => void;
   settingsOpen: boolean;

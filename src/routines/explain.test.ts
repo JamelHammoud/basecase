@@ -34,7 +34,7 @@ describe('explanations come from the trace, never from a model', () => {
       'Said Hello at 5.2 s because Check Face scored 0.31 (needs 0.60)',
     );
     expect(await explained({}, [{ node: 'recognize', at: 0, kind: 'hang' }])).toContain(
-      'Said Hello at 8.0 s because Check Face ran out of time after 3.0 s',
+      'Said Hello at 8.0 s because Check Face ran out of time after 3 s',
     );
   });
 

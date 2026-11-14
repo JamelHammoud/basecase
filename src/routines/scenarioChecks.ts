@@ -1,5 +1,6 @@
 import { CONTROL_PERIOD_MS, GALLERY_NAMES } from './scenarioMocks';
 import type { EventMatch, Expectation, Scenario, TraceEvent, Window } from './scenarioTypes';
+import { runClock } from '../utils/duration';
 
 const END_KINDS = new Set(['opDone', 'opTimeout', 'opFail', 'opCancel']);
 const MATCH_KEYS = ['node', 'reaction', 'fact', 'why'] as const;
@@ -12,7 +13,7 @@ export interface RunRecord {
   maxControlGapMs: number;
 }
 
-const seconds = (ms: number) => `${(ms / 1000).toFixed(2)} s`;
+const seconds = (ms: number) => runClock(ms / 1000);
 const inWindow = (t: number, w: Window, endMs: number) =>
   t >= (w.from ?? 0) * 1000 && t <= (w.until === undefined ? endMs : w.until * 1000);
 

@@ -1,18 +1,13 @@
 import type { PrintReport } from '../utils/printReport';
 import type { SliceRecord } from './printBridge';
+import { duration } from '../utils/duration';
 import { plural } from '../../electron/plural.mjs';
-
-const minutes = (s: number) => {
-  const m = Math.round(s / 60);
-
-  return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`;
-};
 
 export function sliceText(report: PrintReport, record: SliceRecord): string {
   const byNumber = new Map(report.plan.plates.map((p) => [p.number, p]));
   const total = record.plates.reduce((t, p) => ({ s: t.s + p.seconds, g: t.g + p.grams }), { s: 0, g: 0 });
   const lines = [
-    `Sliced ${plural(record.plates.length, 'plate')} for a ${report.printer.model.name} in ${record.slicer.name} ${record.slicer.version ?? ''}: ${minutes(total.s)} of printing, ${Math.round(total.g)} g of filament.`.replace(
+    `Sliced ${plural(record.plates.length, 'plate')} for a ${report.printer.model.name} in ${record.slicer.name} ${record.slicer.version ?? ''}: ${duration(total.s, 'min')} of printing, ${Math.round(total.g)} g of filament.`.replace(
       ' :',
       ':',
     ),
@@ -24,7 +19,7 @@ export function sliceText(report: PrintReport, record: SliceRecord): string {
     const notes = [p.support && 'needs supports', ...p.warnings].filter(Boolean).join('; ');
 
     lines.push(
-      `- Plate ${p.number} (${p.material}, ${minutes(p.seconds)}, ${Math.round(p.grams)} g): ${names}${notes ? `. ${notes}` : ''}`,
+      `- Plate ${p.number} (${p.material}, ${duration(p.seconds, 'min')}, ${Math.round(p.grams)} g): ${names}${notes ? `. ${notes}` : ''}`,
     );
   }
 

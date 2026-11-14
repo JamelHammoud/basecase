@@ -8,18 +8,14 @@ interface SubmitOptions {
   queue: QueueControls;
   isBusy: boolean;
   onSend: SendToAgent;
-  extras: { targetHeightMm: number; choice: AgentChoice };
+  choice: AgentChoice;
   scrollToBottom: () => void;
 }
 
-export function useSubmit({ draft, queue, isBusy, onSend, extras, scrollToBottom }: SubmitOptions) {
+export function useSubmit({ draft, queue, isBusy, onSend, choice, scrollToBottom }: SubmitOptions) {
   'use memo';
 
-  const paramsOf = (content: ComposerSubmit) => ({
-    ...content,
-    targetHeightMm: extras.targetHeightMm || undefined,
-    ...extras.choice,
-  });
+  const paramsOf = (content: ComposerSubmit) => ({ ...content, ...choice });
 
   const sendNow = async (content: ComposerSubmit) => {
     scrollToBottom();

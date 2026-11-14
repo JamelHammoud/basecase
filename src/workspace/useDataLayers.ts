@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DataLayerStore } from '../dataLayers/store';
-import { liveScanPoints, liveScanTrack, recordedScanTrack, scanSources } from '../dataLayers/simTracks';
+import { LiveScans } from '../dataLayers/liveScans';
+import { liveScanPoints, recordedScanTrack, scanSources } from '../dataLayers/simTracks';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
@@ -53,16 +54,12 @@ function useLiveScans(
 ) {
   useEffect(() => {
     const sources = sourcesOf({ model, parts });
-    let version = 0;
+    const live = new LiveScans(store);
 
     return subscribePoses((_, frame) => {
       if (!frame.scan || store.playhead() !== null) return;
 
-      version++;
-
-      for (const { source, points } of liveScanPoints(sources, frame.scan.points, frame.scan.counts)) {
-        store.setTrack(liveScanTrack(source, points, version));
-      }
+      live.set(liveScanPoints(sources, frame.scan.points, frame.scan.counts));
     });
   }, [store, subscribePoses, model, parts]);
 }

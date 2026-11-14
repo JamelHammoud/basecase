@@ -16,6 +16,7 @@ export interface ScanSource {
   eye: Eye;
   body: number;
   offset: number;
+  slot: number;
 }
 
 export const scanLayerId = (part: string) => `scan:${part}`;
@@ -23,7 +24,7 @@ export const scanLayerId = (part: string) => `scan:${part}`;
 export function scanSources(model: SimModel, parts: ScenePart[]): ScanSource[] {
   let offset = 0;
 
-  return (model.scans ?? []).flatMap((eye) => {
+  return (model.scans ?? []).flatMap((eye, slot) => {
     const part = parts.find((p) => p.id === eye.part);
     const body = model.bodies.findIndex((b) => b.name === eye.body);
     const at = offset;
@@ -40,21 +41,32 @@ export function scanSources(model: SimModel, parts: ScenePart[]): ScanSource[] {
         eye,
         body,
         offset: at,
+        slot,
       },
     ];
   });
 }
 
-export function liveScanPoints(sources: ScanSource[], points: Float32Array, counts: number[] | undefined) {
+function slotStarts(counts: number[]): number[] {
   let at = 0;
 
-  return sources.map((source, i) => {
-    const n = counts?.[i] ?? (i === 0 ? points.length / 3 : 0);
-    const slice = points.slice(at * 3, (at + n) * 3);
+  return counts.map((n) => {
+    const start = at;
 
     at += n;
 
-    return { source, points: slice };
+    return start;
+  });
+}
+
+export function liveScanPoints(sources: ScanSource[], points: Float32Array, counts: number[] | undefined) {
+  const starts = slotStarts(counts ?? []);
+
+  return sources.map((source) => {
+    const n = counts?.[source.slot] ?? (source.slot === 0 ? points.length / 3 : 0);
+    const at = starts[source.slot] ?? 0;
+
+    return { source, points: points.slice(at * 3, (at + n) * 3) };
   });
 }
 

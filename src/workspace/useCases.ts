@@ -26,7 +26,8 @@ import { useTryTimeline, type TryTimeline } from './useTryTimeline';
 import { useTriesTraining, type TriesTraining } from './useTriesTraining';
 import { plural } from '../../electron/plural.mjs';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
-import type { CaseRobotInput } from './caseChecks';
+import { caseRecording, type CaseRobotInput } from './caseChecks';
+import { errorMessage } from '../utils/errorMessage';
 
 interface CasesOptions {
   parts: ScenePart[];
@@ -82,6 +83,27 @@ function saveGesture(setProject: Setter<ProjectSettings>, { id, gesture }: { id:
     cases: (p.cases ?? []).map((c) => (c.id === id ? { ...c, gestures: withGesture(c.gestures, gesture) } : c)),
   }));
 }
+
+interface SeedReplay {
+  active: Case | null;
+  caseRobot: () => Promise<CaseRobotInput | null>;
+  timeline: TryTimeline;
+  showToast: ShowToast;
+}
+
+const seedReplay =
+  ({ active, caseRobot, timeline, showToast }: SeedReplay) =>
+  (seed: number) => {
+    if (!active) return;
+
+    const load = async () => {
+      const robot = await caseRobot();
+
+      return robot && caseRecording(robot, active, seed);
+    };
+
+    timeline.showSeed(load).catch((e: unknown) => showToast(errorMessage(e)));
+  };
 
 export function useCases(options: CasesOptions) {
   const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
@@ -162,6 +184,8 @@ export function useCases(options: CasesOptions) {
 
   const timeline = useTryTimeline({ sim, rig, parts, active, partners });
 
+  const replaySeed = seedReplay({ active, caseRobot, timeline, showToast });
+
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const naming = useCaseNames(setProject);
   const dataset = useDatasetExport({ sim, rig, parts, active, tries: fromSim, showToast, openAccounts, sceneId });
@@ -215,6 +239,7 @@ export function useCases(options: CasesOptions) {
     removeTry,
     saveGesture: (gesture: CaseGesture) => active && saveGesture(setProject, { id: active.id, gesture }),
     timeline,
+    replaySeed,
     attempt,
     multiply,
     ...real,

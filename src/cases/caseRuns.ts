@@ -1,6 +1,8 @@
 import type { MainModule } from '@mujoco/mujoco';
-import { caseRunner, type CaseRobot, type RunOptions } from './runCase';
+import type { RunTrail } from '../utils/engineeringTypes';
+import { caseRunner, type CaseResult, type CaseRobot, type RunOptions } from './runCase';
 import type { Case } from './schema';
+import { tripFrames, type Trip } from './tripFrames';
 
 export const CASE_RUNS = 20;
 
@@ -11,6 +13,8 @@ export interface RunOutcome {
   passed: boolean;
   margin: number;
   failed: string[];
+  path: Float32Array;
+  trip: Trip | null;
 }
 
 export interface FailureCount {
@@ -28,6 +32,7 @@ export interface CaseRuns {
   worstSeed: number | null;
   refusal: string | null;
   misfit: boolean;
+  trails: RunTrail[];
 }
 
 export type Refusal = { refusal: string; misfit: boolean };
@@ -72,6 +77,7 @@ export const noRuns = (refusal: string, misfit = false): CaseRuns => ({
   worstSeed: null,
   refusal,
   misfit,
+  trails: [],
 });
 
 export const seedsUpTo = (runs: number) => Array.from({ length: runs }, (_, i) => i + 1);
@@ -82,6 +88,22 @@ export function seedBatches(runs: number, workers: number): number[][] {
 
   return Array.from({ length: Math.ceil(seeds.length / size) }, (_, i) => seeds.slice(i * size, (i + 1) * size));
 }
+
+async function firstTrip(result: CaseResult): Promise<Trip | null> {
+  if (result.passed) return null;
+
+  const trips = await tripFrames(result.case.task.contract, result.trace);
+
+  return trips.reduce<Trip | null>((first, trip) => (first && first.frame <= trip.frame ? first : trip), null);
+}
+
+export async function seedOutcome(result: CaseResult, seed: number): Promise<RunOutcome> {
+  const { passed, margin, failed, path } = result;
+
+  return { seed, passed, margin, failed, path, trip: await firstTrip(result) };
+}
+
+const trailOf = ({ seed, passed, path, trip }: RunOutcome): RunTrail => ({ seed, passed, path, trip });
 
 export async function runSeeds(
   mj: MainModule,
@@ -97,11 +119,7 @@ export async function runSeeds(
 
   const outcomes: RunOutcome[] = [];
 
-  for (const seed of options.seeds) {
-    const { passed, margin, failed } = await runner.run(seed);
-
-    outcomes.push({ seed, passed, margin, failed });
-  }
+  for (const seed of options.seeds) outcomes.push(await seedOutcome(await runner.run(seed), seed));
 
   return { outcomes };
 }
@@ -126,6 +144,7 @@ export function summarizeRuns(batches: SeedRuns[]): CaseRuns {
     worstSeed: worstOf(missed.length ? missed : outcomes)?.seed ?? null,
     refusal: null,
     misfit: false,
+    trails: [...outcomes].sort((a, b) => a.seed - b.seed).map(trailOf),
   };
 }
 

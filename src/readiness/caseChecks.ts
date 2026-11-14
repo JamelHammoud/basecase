@@ -35,8 +35,9 @@ export function caseRow(kase: { id: string; name: string }, runs: CaseRuns): Che
 
   const detail = `${runs.passes} of ${runs.runs}`;
   const failure = status === 'pass' || !runs.commonFailure ? [] : [{ text: failureText(runs.commonFailure) }];
+  const trails = runs.trails.length ? { trails: runs.trails } : {};
 
-  return { ...base, detail, items: failure };
+  return { ...base, detail, items: failure, ...trails };
 }
 
 export const stoppedRow = (kase: { id: string; name: string }): CheckRow => caseRow(kase, noRuns(CASE_STOPPED));

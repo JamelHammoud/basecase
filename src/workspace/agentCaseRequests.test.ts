@@ -307,6 +307,7 @@ describe('compare_case', () => {
     worstSeed: null,
     refusal: null,
     misfit: false,
+    trails: [],
   });
   const started: string[] = [];
   const ctxWith = (choices: Array<{ tabId: string; name: string }>, active: Case | null = kase) => ({
@@ -373,6 +374,7 @@ describe('explore_case', () => {
     worstSeed: null,
     refusal: null,
     misfit: false,
+    trails: [],
   });
   const row = (design: Design, passes: number, costUsd: number) => ({
     key: designKey(design),

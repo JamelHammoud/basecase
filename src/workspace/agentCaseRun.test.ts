@@ -45,6 +45,8 @@ function answer(modelHash: string, outcome: (seed: number) => { passed: boolean;
 
     if (job.type === 'replay') return { type: 'replay', film } as never;
 
+    if (job.type !== 'runs') throw new Error(`No ${job.type} job here.`);
+
     return { type: 'runs', result: { outcomes: job.seeds.map((seed) => ({ seed, ...outcome(seed) })) } } as never;
   });
 }
@@ -79,6 +81,48 @@ describe('run_case', () => {
     expect('text' in reply && reply.text).toContain('Failed most: fell (15 of 20 runs).');
     expect('text' in reply && reply.text).toContain('It needs 18 of 20.');
     expect(jobsOf('replay')[0][1]).toMatchObject({ seed: 15 });
+  });
+
+  it('names each failing seed with the frame its first failure fired at', async () => {
+    run.mockImplementation(async (_index, job: CaseCheckJob) => {
+      if (job.type === 'model') return { type: 'model', modelHash: 'trips', walk: null, stop: null } as never;
+
+      if (job.type === 'replay') return { type: 'replay', film } as never;
+
+      if (job.type !== 'runs') throw new Error(`No ${job.type} job here.`);
+
+      const outcomes = job.seeds.map((seed) => {
+        const passed = ![4, 9, 12].includes(seed);
+        const trip = seed === 12 || passed ? null : { label: 'fell', frame: seed * 10 };
+
+        return {
+          seed,
+          passed,
+          margin: passed ? 0.2 : -0.3,
+          failed: trip ? ['fell'] : [],
+          path: new Float32Array(3),
+          trip,
+        };
+      });
+
+      return { type: 'runs', result: { outcomes } } as never;
+    });
+
+    const reply = await runCase({}, scene('quad-servo', presetOn('quad-servo', 'reach-the-flag')));
+
+    expect(reply).toMatchObject({
+      data: {
+        passes: 17,
+        failedRuns: [
+          { seed: 4, trip: { label: 'fell', frame: 40 } },
+          { seed: 9, trip: { label: 'fell', frame: 90 } },
+          { seed: 12, trip: null },
+        ],
+      },
+    });
+    expect('text' in reply && reply.text).toContain(
+      'Each failed run first failed at: seed 4 (fell at frame 40, 0.8 s), seed 9 (fell at frame 90, 1.8 s), seed 12 (missed).',
+    );
   });
 
   it('says why the robot can’t enter a refused Case, without runs or a filmstrip', async () => {

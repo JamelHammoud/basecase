@@ -29,6 +29,18 @@ export interface CheckDot {
   shade: number;
 }
 
+export interface Trip {
+  label: string;
+  frame: number;
+}
+
+export interface RunTrail {
+  seed: number;
+  passed: boolean;
+  path: Float32Array;
+  trip: Trip | null;
+}
+
 export type FindingFix =
   | { kind: 'print-face'; part: string; down: V3 }
   | { kind: 'calibrate'; joints: string[] }
@@ -45,6 +57,7 @@ export interface CheckRow {
   detailInItems?: boolean;
   caseId?: string;
   dots?: CheckDot[];
+  trails?: RunTrail[];
   envelopes?: JointEnvelope[];
 }
 

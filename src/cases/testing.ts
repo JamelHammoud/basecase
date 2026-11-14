@@ -52,7 +52,7 @@ export function liveController(
   return { kind: 'drive', setup: access.setup };
 }
 
-export async function referenceTry(mj: MainModule, kase: Case, robot: FixtureRobot) {
+export function stagedModel(kase: Case, robot: FixtureRobot) {
   const rig = buildRig(robot.joints, robot.parts);
   const staged = stageCase(kase, { rig, parts: robot.parts }, []);
   const model = buildMjcf({
@@ -63,6 +63,12 @@ export async function referenceTry(mj: MainModule, kase: Case, robot: FixtureRob
     partTriangles: fixtureTriangles(robot.parts),
     world: staged.kase.world.objects.map(worldItem),
   });
+
+  return { rig, staged, model };
+}
+
+export async function referenceTry(mj: MainModule, kase: Case, robot: FixtureRobot) {
+  const { rig, staged, model } = stagedModel(kase, robot);
   const controller = liveController(robot, rig, model);
   const engine = new SimEngine(mj, model);
   const script = [...staged.kase.reference.timeline].sort((a, b) => a.at - b.at);

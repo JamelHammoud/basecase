@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { RecordedSeed } from '../cases/caseCheckJob';
 import { stageCase, stagedEffectors } from '../cases/caseCast';
 import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
@@ -21,11 +22,19 @@ interface TimelineOptions {
 }
 
 interface Opened {
-  record: TryRecord;
+  record: TryRecord | null;
+  seed: number | null;
   recording: Recording;
   efforts: Float32Array[];
   trips: Trip[];
   before: 'off' | 'paused' | 'playing';
+}
+
+interface Shown {
+  record: TryRecord | null;
+  seed: number | null;
+  recording: Recording;
+  trips?: Trip[];
 }
 
 async function tripsOf(options: TimelineOptions, recording: Recording): Promise<Trip[]> {
@@ -59,6 +68,13 @@ function useSimGone(opened: Opened | null, sim: Simulation, drop: () => void) {
   }, [gone]);
 }
 
+type ShownParts = Pick<Shown, 'record' | 'seed'> & { recording: Recording | null; trips: Trip[] };
+
+const NOTHING_SHOWN: ShownParts = { record: null, seed: null, recording: null, trips: [] };
+
+const shownParts = (o: Opened | null): ShownParts =>
+  o ? { record: o.record, seed: o.seed, recording: o.recording, trips: o.trips } : NOTHING_SHOWN;
+
 export function useTryTimeline(options: TimelineOptions) {
   const { sim } = options;
   const [opened, setOpened] = useState<Opened | null>(null);
@@ -67,12 +83,9 @@ export function useTryTimeline(options: TimelineOptions) {
   const playback = useTimelinePlayback({ frames, dt: opened?.recording.dt ?? 1, seek: sim.seek });
   const lanes = opened && sim.model ? timelineLanes(sim.model, opened.recording, opened.efforts) : [];
 
-  const show = async (record: TryRecord) => {
-    const ticket = ++opening.current;
-    const recording = await loadRecording(record.id);
+  const openRecording = async (shown: Shown, ticket: number) => {
+    const { recording } = shown;
     const before = simBefore(sim);
-
-    if (!recording || ticket !== opening.current) return;
 
     if (sim.drive.active) sim.drive.stop();
 
@@ -82,12 +95,26 @@ export function useTryTimeline(options: TimelineOptions) {
 
     if (!efforts || ticket !== opening.current) return;
 
-    const trips = await tripsOf(options, recording);
+    const trips = shown.trips ?? (await tripsOf(options, recording));
 
     if (ticket !== opening.current) return;
 
-    setOpened({ record, recording, efforts, trips, before: opened?.before ?? before });
+    setOpened({ record: shown.record, seed: shown.seed, recording, efforts, trips, before: opened?.before ?? before });
     playback.jump(trips[0]?.frame ?? 0, recording.frames);
+  };
+
+  const show = async (record: TryRecord) => {
+    const ticket = ++opening.current;
+    const recording = await loadRecording(record.id);
+
+    if (recording && ticket === opening.current) await openRecording({ record, seed: null, recording }, ticket);
+  };
+
+  const showSeed = async (load: () => Promise<RecordedSeed | null>) => {
+    const ticket = ++opening.current;
+    const run = await load();
+
+    if (run && ticket === opening.current) await openRecording({ record: null, ...run }, ticket);
   };
 
   const close = () => {
@@ -112,15 +139,14 @@ export function useTryTimeline(options: TimelineOptions) {
 
   return {
     open: !!opened,
-    record: opened?.record ?? null,
-    recording: opened?.recording ?? null,
+    ...shownParts(opened),
     frames,
     dt: opened?.recording.dt ?? 0,
     lanes,
-    trips: opened?.trips ?? [],
     frame: playback.frame,
     playing: playback.playing,
     show,
+    showSeed,
     close,
     seek: (frame: number) => playback.jump(frame),
     step: playback.step,

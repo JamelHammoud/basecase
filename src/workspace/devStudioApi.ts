@@ -242,6 +242,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     parts: () => partSummaries(partsRef.current),
     interference: () => viewportRef.current?.interference() ?? { interferences: [], coplanar: [] },
     checkDots: () => viewportRef.current?.checkDotCount() ?? 0,
+    caseTrails: () => viewportRef.current?.caseTrailEnds() ?? [],
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(viewportRef.current),
     lastDownload: () => lastDownloadFile(),

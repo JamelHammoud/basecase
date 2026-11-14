@@ -14,6 +14,7 @@ const runs = (passes: number, extra: Partial<CaseRuns> = {}): CaseRuns => ({
   worstSeed: passes < 20 ? 1 : null,
   refusal: null,
   misfit: false,
+  trails: [],
   ...extra,
 });
 

@@ -1,4 +1,4 @@
-import type { WalkPick, WireRobot } from '../cases/caseCheckJob';
+import type { RecordedSeed, WalkPick, WireRobot } from '../cases/caseCheckJob';
 import type { FilmShot } from '../cases/filmstrip';
 import { caseCheckPool } from '../cases/caseChecksClient';
 import { CASE_RUNS, seedBatches, summarizeRuns, type CaseRuns } from '../cases/caseRuns';
@@ -278,6 +278,20 @@ export async function caseCheckRows(input: CaseChecksInput): Promise<CheckRow[]>
   );
 }
 
+interface Seeded {
+  kase: Case;
+  reading: RobotReading;
+  control: CaseControl | null;
+}
+
+const seedJob = ({ kase, reading, control }: Seeded, seed: number) => ({
+  kase,
+  modelHash: reading.modelHash,
+  seed,
+  walk: reading.walk,
+  ...control,
+});
+
 export interface CaseVerdict {
   runs: CaseRuns;
   cached: boolean;
@@ -299,13 +313,20 @@ export async function caseVerdict(
   const key = runs === CASE_RUNS ? base : `${base}|${runs}`;
   const cached = verdicts.has(key) || inFlight.has(key);
   const judged = await verdictOf({ kase, key, reading, robot, runs, tag: '', control });
-  const film = async (seed: number) => {
-    const job = { type: 'replay' as const, kase, modelHash: reading.modelHash, seed, walk: reading.walk, ...control };
-
-    return (await caseCheckPool.run(0, job, { robot })).film;
-  };
+  const film = async (seed: number) =>
+    (await caseCheckPool.run(0, { type: 'replay', ...seedJob({ kase, reading, control }, seed) }, { robot })).film;
 
   return { runs: judged, cached, modelHash: reading.modelHash, film };
+}
+
+export async function caseRecording(input: CaseRobotInput, kase: Case, seed: number): Promise<RecordedSeed> {
+  let wired: WireRobot | null = null;
+  const robot = () => (wired ??= wireRobot(input));
+  const reading = await readRobot(input, robot, null);
+  const control = await caseSkillControl(input.project, kase, reading);
+  const job = { type: 'record' as const, ...seedJob({ kase, reading, control }, seed) };
+
+  return (await caseCheckPool.run(0, job, { robot, first: true })).result;
 }
 
 export async function exploreVerdict(input: CaseRobotInput, kase: Case, runs: number): Promise<CaseRuns> {

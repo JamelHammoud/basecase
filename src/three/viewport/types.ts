@@ -21,7 +21,8 @@ import type { MeshMeasure } from '../meshMeasure';
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxes } from '../../joints/jointCandidates';
 import type { JointAxisQuery } from '../analysis/jointAxis';
-import type { CheckDot } from '../../utils/engineeringTypes';
+import type { CheckDot, RunTrail } from '../../utils/engineeringTypes';
+import type { TrailEnd } from './caseTrails';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
 import type {
   CameraPreset,
@@ -134,6 +135,8 @@ export interface ViewportProps {
   agentFrames?: AgentFrame[];
   fixedCameras?: FixedCamera[];
   checkDots?: CheckDot[] | null;
+  caseTrails?: RunTrail[] | null;
+  onPickTrail?: (seed: number) => void;
   onAddMark?: (mark: NewMark) => void;
   onSelectMark?: (id: string | null) => void;
   onEraseMarks?: (ids: string[]) => void;
@@ -236,6 +239,7 @@ export interface Viewport3DHandle {
   cancelMeasure: () => boolean;
   shownPartIds: () => string[];
   checkDotCount: () => number;
+  caseTrailEnds: () => TrailEnd[];
 }
 
 export const MIN_DIST = 25;

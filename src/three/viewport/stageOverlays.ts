@@ -1,5 +1,6 @@
 import { AgentFrames } from './agentFrames';
 import { CameraGlyphs } from './cameraGlyphs';
+import { CaseTrails } from './caseTrails';
 import { CheckDots } from './checkDots';
 import type { ViewportContext } from './viewportContext';
 import { GhostLayer } from './ghostLayer';
@@ -10,7 +11,14 @@ import type { Viewport3DHandle, ViewportProps } from './types';
 
 type OverlayHandle = Pick<
   Viewport3DHandle,
-  'setDataLayers' | 'dataLayerState' | 'scanPointCount' | 'setMatTrack' | 'setGhost' | 'ghostState' | 'checkDotCount'
+  | 'setDataLayers'
+  | 'dataLayerState'
+  | 'scanPointCount'
+  | 'setMatTrack'
+  | 'setGhost'
+  | 'ghostState'
+  | 'checkDotCount'
+  | 'caseTrailEnds'
 >;
 
 export interface OverlayLabels {
@@ -33,6 +41,8 @@ export class StageOverlays {
 
   private readonly checkDots: CheckDots;
 
+  readonly caseTrails: CaseTrails;
+
   constructor(ctx: ViewportContext, props: ViewportProps, labels: OverlayLabels) {
     const { overlays } = ctx.stage;
 
@@ -43,6 +53,8 @@ export class StageOverlays {
     this.matTrack = new MatTrack(overlays);
     this.checkDots = new CheckDots(overlays);
     this.checkDots.sync(props.checkDots);
+    this.caseTrails = new CaseTrails(ctx.stage);
+    this.caseTrails.sync(props.caseTrails);
     this.ghost = new GhostLayer(ctx, labels.ghost);
     this.agentFrames = new AgentFrames(ctx);
     this.agentFrames.sync(props.agentFrames ?? []);
@@ -54,6 +66,8 @@ export class StageOverlays {
     if (previous.fixedCameras !== props.fixedCameras) this.cameraGlyphs.sync(props.fixedCameras);
 
     if (previous.checkDots !== props.checkDots) this.checkDots.sync(props.checkDots);
+
+    if (previous.caseTrails !== props.caseTrails) this.caseTrails.sync(props.caseTrails);
   }
 
   handle(redraw: () => void): OverlayHandle {
@@ -75,6 +89,7 @@ export class StageOverlays {
       setGhost: (ghost) => this.ghost.set(ghost),
       ghostState: () => this.ghost.state(),
       checkDotCount: () => this.checkDots.count,
+      caseTrailEnds: () => this.caseTrails.ends(),
     };
   }
 
@@ -84,6 +99,7 @@ export class StageOverlays {
     this.frameLabel.dispose();
     this.matTrack.dispose();
     this.checkDots.dispose();
+    this.caseTrails.dispose();
     this.ghost.dispose();
     this.agentFrames.dispose();
   }

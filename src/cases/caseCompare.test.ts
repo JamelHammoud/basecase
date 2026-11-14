@@ -43,6 +43,7 @@ const runs = (passes: number): CaseRuns => ({
   worstSeed: null,
   refusal: null,
   misfit: false,
+  trails: [],
 });
 
 describe('comparing two robots on one Case', () => {

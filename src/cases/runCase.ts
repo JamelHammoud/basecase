@@ -19,7 +19,8 @@ import { caseCommand } from './caseTarget';
 import { judgeSoFar, usesBodySkills, type CaseLogicResult, type CaseLogicRun } from './caseLogic';
 import { CASE_RANDOMIZATION, caseInstance, caseRandom, jitteredWorld, worldRandom } from './caseRandom';
 import { GroundSteer } from './groundSteer';
-import { probeReader } from './probes';
+import { probeReader, type ProbeWorld } from './probes';
+import { NO_PATH, runPath } from './runPath';
 import { castRobot, castSlots, guestsOf, type CaseRobot, type CastSlot } from './caseCast';
 import { driveFor, slotIndexOf, teamDrive, toCommand } from './caseDrives';
 import { robotFacts, type EndEffector, type RobotFacts } from './robotFit';
@@ -52,6 +53,7 @@ export interface CaseResult {
   case: Case;
   logic?: CaseLogicResult;
   recording?: Recording;
+  path: Float32Array;
 }
 
 interface ProbeBase {
@@ -168,6 +170,7 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
     }
 
     changeWorld(changes, events, t);
+    engine.refreshKinematics();
 
     const poses = engine.poses();
     const driving = logic?.driving ?? true;
@@ -252,6 +255,7 @@ function refused(authored: Case, refusal: string, model: SimModel): CaseResult {
     frames: [],
     objectIds: [],
     case: authored,
+    path: NO_PATH,
   };
 }
 
@@ -333,14 +337,15 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   const signals: Signals = {};
   const objectAt = new Map(kase.world.objects.map((o) => [o.id, o.position]));
   const { probeBase, walk } = fit;
-  const reader = probeReader(kase.task.probes, {
+  const probeWorld: ProbeWorld = {
     model,
     effector: fit.effector,
     effectors: Object.fromEntries(fit.cast.map((c) => [c.id, c.effector])),
     basePart: probeBase.part,
     basePoint: probeBase.point,
     objectAt,
-  });
+  };
+  const reader = probeReader(kase.task.probes, probeWorld);
   const steer = steerFor({ fit, model, objectAt });
   const controller = runController(fit, kase, options);
   const { engine, dispose } = startEngine(mj, model, {
@@ -381,6 +386,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
       frames,
       objectIds: kase.world.objects.map((o) => o.id),
       case: kase,
+      path: runPath(frames, { dt: RECORD_DT, world: probeWorld, fixed: fit.facts.morphology === 'fixed' }),
       ...(logic ? { logic: logic.result() } : {}),
       ...(recorder ? { recording: recorder.finish() } : {}),
     };

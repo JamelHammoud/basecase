@@ -1,4 +1,5 @@
-import { CASE_RUNS, type CaseRuns } from '../cases/caseRuns';
+import { CASE_RUNS, MISSED, type CaseRuns } from '../cases/caseRuns';
+import { RECORD_DT } from '../cases/runCase';
 import { filmImage } from '../cases/filmImage';
 import { readCases, type Case } from '../cases/schema';
 import { caseStatus, passesNeeded } from '../readiness/caseChecks';
@@ -56,6 +57,19 @@ function failureLine(runs: CaseRuns): string {
   return named.length ? ` Failed most: ${named.join(', ')}.` : '';
 }
 
+const failedRuns = (runs: CaseRuns) => runs.trails.filter((t) => !t.passed).map(({ seed, trip }) => ({ seed, trip }));
+
+const failedRun = ({ seed, trip }: ReturnType<typeof failedRuns>[number]) =>
+  trip
+    ? `seed ${seed} (${trip.label} at frame ${trip.frame}, ${margin(trip.frame * RECORD_DT)} s)`
+    : `seed ${seed} (${MISSED})`;
+
+function failedRunsLine(runs: CaseRuns): string {
+  const failed = failedRuns(runs);
+
+  return failed.length ? ` Each failed run first failed at: ${failed.map(failedRun).join(', ')}.` : '';
+}
+
 export function runCaseText(kase: Pick<Case, 'name'>, runs: CaseRuns, cached: boolean): string {
   if (runs.refusal) {
     const why = runs.misfit ? 'can’t enter it' : 'can’t run it';
@@ -71,7 +85,7 @@ export function runCaseText(kase: Pick<Case, 'name'>, runs: CaseRuns, cached: bo
       ? ' It passes.'
       : ` It needs ${needed} of ${runs.runs}. Change the design for the failures above, then run_case again.`;
 
-  return `${head}${failureLine(runs)}${verdict}${reuse}`;
+  return `${head}${failureLine(runs)}${failedRunsLine(runs)}${verdict}${reuse}`;
 }
 
 async function worstFilm(verdict: CaseVerdict) {
@@ -118,6 +132,7 @@ export async function runCase(payload: Payload, ctx: RunCaseContext) {
     status: caseStatus(verdict.runs),
     medianMargin,
     failures: failures.slice(0, NAMED_FAILURES),
+    failedRuns: failedRuns(verdict.runs),
     refusal,
     cached: verdict.cached,
   };

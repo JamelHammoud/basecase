@@ -33,4 +33,6 @@ Step through a Case try frame by frame to see what each joint was asked to do, w
 
 6. Press [[Esc]] to close it.
 
+A failed run from a Case's row in **Checks** opens here too, at the frame where it first failed. [Replay a failed run of a Case](/help/replay-a-failed-run-of-a-case) has the steps.
+
 The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open.

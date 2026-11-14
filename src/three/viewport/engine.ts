@@ -166,6 +166,7 @@ export class ViewportEngine {
       dragging: () => this.ctx.runtime.draggingGizmo,
       hoveringAxis: () => Boolean(this.gizmo.controls.axis),
     };
+    const pointerInputs = { measure: this.measureTool, figures: this.figures, trails: this.overlays.caseTrails };
 
     this.sizer = new CanvasSizer(stage, () => !loop.paused && loop.renderNow());
     this.blueprint = new BlueprintUnderlay(stage.scene, loop.invalidate);
@@ -175,7 +176,7 @@ export class ViewportEngine {
       installWheel(stage, this.ctx.props),
       new Marquee(this.ctx, { element: options.marquee, hoveringAxis: gizmoState.hoveringAxis }).install(),
       this.markInput.install(),
-      new PointerInput(this.ctx, gizmoState, { measure: this.measureTool, figures: this.figures }).install(),
+      new PointerInput(this.ctx, gizmoState, pointerInputs).install(),
       installKeys(this.ctx, () => {
         this.gizmo.applySnaps();
         this.gizmo.resnap();

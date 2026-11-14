@@ -108,7 +108,7 @@ export const runCase = {
     title: 'Run a Case',
     description:
       'Runs a Case in this scene on the current design, over seeded randomized runs (friction, mass, servo strength and delay varied), the same runs as its Checks row; when nothing changed since that row ran it returns its result at once. ' +
-      'Returns the pass count, the median margin (above 0 passes), the failed labels most runs share, the reason when the robot can’t enter the Case, and a filmstrip of the worst run (start, middle, end). ' +
+      'Returns the pass count, the median margin (above 0 passes), the failed labels most runs share, each failed run’s seed with the label and frame (50 a second) it first failed at, the reason when the robot can’t enter the Case, and a filmstrip of the worst run (start, middle, end). ' +
       'Use it to check a design against the user’s Cases, and after each design change while making one pass.',
     inputSchema: {
       id: z.string().min(1).max(120).optional().describe('The Case’s id or name; the open Case when left out'),

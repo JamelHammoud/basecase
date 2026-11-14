@@ -1,5 +1,6 @@
 import type * as THREE from 'three';
 import type { MeasureTool } from './measureTool';
+import type { CaseTrails } from './caseTrails';
 import type { ScaleFigures } from './scaleFigures';
 import { floorPoint, hitPartId, rayAt, raycastParts, raycastUnlocked } from './picking';
 import { SculptInput } from './sculptInput';
@@ -13,6 +14,7 @@ const CLICK_SLOP = 5;
 export interface MeasureInputs {
   measure: MeasureTool;
   figures: ScaleFigures;
+  trails: Pick<CaseTrails, 'pickAt'>;
 }
 
 export interface GizmoState {
@@ -37,11 +39,14 @@ export class PointerInput {
 
   private readonly figures: ScaleFigures;
 
-  constructor(ctx: ViewportContext, gizmo: GizmoState, { measure, figures }: MeasureInputs) {
+  private readonly trails: MeasureInputs['trails'];
+
+  constructor(ctx: ViewportContext, gizmo: GizmoState, { measure, figures, trails }: MeasureInputs) {
     this.ctx = ctx;
     this.gizmo = gizmo;
     this.measure = measure;
     this.figures = figures;
+    this.trails = trails;
     this.sculpt = new SculptInput(ctx);
   }
 
@@ -158,7 +163,20 @@ export class PointerInput {
       return;
     }
 
+    if (this.pickTrail(e)) return;
+
     this.select(e);
+  }
+
+  private pickTrail(e: PointerEvent): boolean {
+    const { onPickTrail } = this.ctx.props();
+    const seed = onPickTrail && !additive(e) ? this.trails.pickAt(e.clientX, e.clientY) : null;
+
+    if (seed === null) return false;
+
+    onPickTrail?.(seed);
+
+    return true;
   }
 
   private measureClick(e: PointerEvent): void {

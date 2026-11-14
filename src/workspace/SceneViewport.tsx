@@ -37,6 +37,13 @@ function markFieldFor(marks: WorkspaceCore['marks']) {
   );
 }
 
+function checkOverlays({ readiness, simTraining, caseRun }: WorkspaceCore) {
+  const shown = readiness.trails;
+  const trails = shown && !caseRun.open && simTraining.cases.active?.id === shown.caseId ? shown.trails : null;
+
+  return { checkDots: readiness.dots, caseTrails: trails, onPickTrail: simTraining.cases.replaySeed };
+}
+
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
   const {
     viewportRef,
@@ -100,7 +107,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         markField={markFieldFor(marks)}
         agentFrames={agent.frames}
         fixedCameras={project.cameras}
-        checkDots={core.readiness.dots}
+        {...checkOverlays(core)}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
         worldParts={sim.guestParts.length ? [...sim.worldParts, ...sim.guestParts] : sim.worldParts}

@@ -40,6 +40,7 @@ function timelineState(timeline: TryTimeline, sim: Simulation, rig: Rig) {
   const sought = sim.sought();
 
   return {
+    seed: timeline.seed,
     frame: timeline.frame,
     frames: timeline.frames,
     qpos: sought ? Array.from(sought.qpos) : null,

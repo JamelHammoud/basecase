@@ -1,9 +1,7 @@
 import { evaluateContract, type Contract, type Trace } from '../skills/contract';
+import type { Trip } from '../utils/engineeringTypes';
 
-export interface Trip {
-  label: string;
-  frame: number;
-}
+export type { Trip };
 
 const ticksOf = (trace: Trace) => Object.values(trace.signals).reduce((n, s) => Math.max(n, s.length), 0);
 

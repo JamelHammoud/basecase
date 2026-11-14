@@ -159,15 +159,16 @@ describe('editable booleans', () => {
     expect(app.errors).toEqual([]);
   });
 
-  it('resizes a union from the Inspector and keeps the new width', async () => {
+  it('resizes a plate with a tube boss inside it to the width typed', async () => {
     await unite([
       shape('plate', 'box', { width: 60, height: 20, depth: 40 }),
-      { ...shape('pin', 'cylinder', { width: 10, height: 40, depth: 10 }), position: [30, 10, 0] },
+      shape('pin', 'tube', { width: 10, height: 40, depth: 10, thickness: 2 }),
     ]);
 
     const width = app.page.locator(shown('input[aria-label="Width (X)"]')).first();
 
-    await expect.poll(() => width.inputValue()).toBe('65');
+    await expect.poll(() => width.inputValue()).toBe('60');
+    expect(await width.isDisabled()).toBe(false);
     await width.fill('130');
     await width.press('Enter');
 
@@ -192,7 +193,7 @@ describe('editable booleans', () => {
 
     await expect.poll(() => width.isDisabled()).toBe(true);
     expect(await app.page.locator(shown('[data-testid="size-fixed"]')).innerText()).toBe(
-      'M3 Screw keeps its shape. Resize the parts in Layers.',
+      'M3 Screw keeps its shape. Select it in Layers to change it.',
     );
     expect(app.errors).toEqual([]);
   });

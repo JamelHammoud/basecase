@@ -67,7 +67,7 @@ describe('stretching a boolean', () => {
     expect(edited.dimensions.width).toBe(cut.dimensions.width);
     expect(cut.dimensions.width).toBe(was);
     expect(stretchOf(result)).toEqual({ fixed: [true, true, true], by: expect.objectContaining({ id: 'screw' }) });
-    expect(resizeReason(stretchOf(result))).toBe('M3 Screw keeps its shape. Resize the parts in Layers.');
+    expect(resizeReason(stretchOf(result))).toBe('M3 Screw keeps its shape. Select it in Layers to change it.');
   });
 
   it('stretches a plate with a screw subtracted, keeping the hole the screw’s size', async () => {
@@ -80,12 +80,12 @@ describe('stretching a boolean', () => {
     expect(cut.boolean.operands[1].dimensions).toEqual(screw.dimensions);
   });
 
-  it('holds only the round sides of a tube, turned with it', async () => {
+  it('holds only the round sides of a tube that sets the edge, turned with it', async () => {
     const tube = part({
       id: 'tube',
       kind: 'tube',
       position: [0, 20, 0],
-      dimensions: { width: 30, height: 40, depth: 30, thickness: 4 },
+      dimensions: { width: 50, height: 40, depth: 50, thickness: 4 },
     });
     const upright = await made({ id: 't', base: { ...plate, id: 'p1' }, tools: [tube], op: 'union' });
     const lying = await made({
@@ -110,5 +110,30 @@ describe('stretching a boolean', () => {
 
     expect(stretchOf(result)).toEqual({ fixed: [false, false, false], by: null });
     expect(cut.dimensions.width).toBeCloseTo(120, 3);
+  });
+
+  it('stretches a plate with a tube boss and a screw inside it to the width typed', async () => {
+    const slab = part({
+      id: 'slab',
+      kind: 'box',
+      position: [0, 20, 0],
+      dimensions: { width: 100, height: 30, depth: 60 },
+    });
+    const boss = part({
+      id: 'boss',
+      kind: 'tube',
+      position: [20, 30, 0],
+      dimensions: { width: 20, height: 40, depth: 20, thickness: 3 },
+    });
+    const result = await made({
+      id: 'm',
+      base: slab,
+      tools: [boss, { ...screw, position: [-20, 20, 0] }],
+      op: 'union',
+    });
+    const { cut } = await resized(result, 200);
+
+    expect(stretchOf(result)).toEqual({ fixed: [false, false, false], by: null });
+    expect(cut.dimensions.width).toBeCloseTo(200, 3);
   });
 });

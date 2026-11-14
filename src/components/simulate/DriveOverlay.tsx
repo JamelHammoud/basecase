@@ -8,7 +8,7 @@ const Banner: React.FC<{ children: React.ReactNode; tone?: 'danger' }> = ({ chil
     role="status"
     data-testid="drive-banner"
     className={`glass rounded-[10px] px-3 h-[32px] flex items-center gap-2 text-[13px] font-medium ${
-      tone === 'danger' ? 'text-[#f87171]' : 'text-white/85'
+      tone === 'danger' ? 'text-red-400' : 'text-white/85'
     }`}
   >
     {children}

@@ -11,7 +11,7 @@ import { useElapsed } from './useElapsed';
 const DETAIL_TONE: Record<DesignerDetail['tone'], string> = {
   live: SHIMMER_TEXT,
   quiet: 'text-white/50',
-  failed: 'text-red-400/80',
+  failed: 'text-red-400',
 };
 
 export const DesignerRow: React.FC<{ call: AcpToolCallEvent }> = ({ call }) => {

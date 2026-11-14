@@ -3,11 +3,11 @@ import { isModalOpen } from '../../design-system';
 import { isTextEntry } from '../../workspace/helpers';
 import type { TriesView } from '../../workspace/useTriesView';
 
-export function useTriesKeys(view: TriesView, timelineOpen: boolean, active: boolean) {
+export function useTriesKeys(view: TriesView, active: boolean) {
   const onKey = useEffectEvent((e: KeyboardEvent) => {
     if (e.metaKey || e.ctrlKey || e.altKey || isModalOpen() || isTextEntry(document.activeElement)) return;
 
-    if (e.key === 'Escape' && !timelineOpen) {
+    if (e.key === 'Escape') {
       e.preventDefault();
       view.close();
     }

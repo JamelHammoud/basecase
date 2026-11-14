@@ -1,7 +1,9 @@
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
-import { failedLog, lastFinishedMainCheck, openPulls, repo, unstickMainChecks } from '../lib/github.mjs';
+import { failedJobs, failedLog, lastFinishedMainCheck, openPulls, repo, unstickMainChecks } from '../lib/github.mjs';
 import { publish } from '../lib/pull.mjs';
+import { repairPlan } from '../lib/repairPlan.mjs';
 import { json } from '../lib/sh.mjs';
+import { store } from '../lib/store.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
@@ -13,6 +15,7 @@ export const schedule = {
 
 const MAX_LOG = 80_000;
 const HANDLED_FOR_MS = 6 * 60 * 60 * 1000;
+const repaired = store('repair', { jobs: [] });
 
 const repairMergedSince = (when) =>
   (json('gh', ['pr', 'list', '--state', 'merged', '--limit', '30', '--json', 'headRefName,mergedAt']) ?? []).some(
@@ -41,14 +44,17 @@ export default function repair({ log }) {
     return;
   }
 
-  if (repairMergedSince(latest.createdAt)) {
-    log('a repair merged after the last failed Check; waiting for Check on the newer main');
+  const taken = repaired.get(latest.databaseId).jobs;
+  const plan = repairPlan({
+    run: latest,
+    failed: failedJobs(latest).map(({ name }) => name),
+    taken,
+    repairMerged: () => repairMergedSince(latest.createdAt),
+    repairOpen: beingRepaired,
+  });
 
-    return;
-  }
-
-  if (beingRepaired()) {
-    log('a repair pull request is already open');
+  if (plan.wait) {
+    log(plan.wait);
 
     return;
   }
@@ -59,9 +65,12 @@ export default function repair({ log }) {
   try {
     const prompt = [
       `Check failed on main at ${latest.headSha} (${runUrl}).`,
-      'The failed steps’ log, last part:',
-      failedLog(latest.databaseId).slice(-MAX_LOG),
-    ].join('\n\n');
+      taken.length > 0 ? `An earlier repair already took ${taken.join(', ')}; leave those jobs to it.` : '',
+      'Every failed job, with the end of its log:',
+      failedLog(latest.databaseId, MAX_LOG, plan.jobs),
+    ]
+      .filter(Boolean)
+      .join('\n\n');
     const result = runAgent({ cwd: worktree.dir, name: 'repair', prompt, schema: CHANGE_SCHEMA });
 
     if (!result.ok) {
@@ -69,6 +78,8 @@ export default function repair({ log }) {
 
       return;
     }
+
+    repaired.save(latest.databaseId, { jobs: [...taken, ...plan.jobs] });
 
     const url = publish(
       { ...result.output, kind: 'repair' },

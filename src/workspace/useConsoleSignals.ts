@@ -2,16 +2,16 @@ import { useEffect, useEffectEvent, useState } from 'react';
 import type { CaseConsole } from '../cases/console/format';
 import { GESTURE_EVENT, gestureNames } from '../cases/gestures';
 import { lastInputEvent } from '../sim/inputEvents';
+import { liveSample } from '../cases/console/liveSample';
 import { createSignalBus, type SignalBus, type SignalSample } from '../cases/console/signalBus';
 import { workerJudge, type GoalJudge } from '../cases/goalJudge';
 import { liveGoal, type LiveGoal } from '../cases/liveGoal';
-import { endPoint } from '../cases/probes';
 import { boundEffector, robotFacts } from '../cases/robotFit';
 import { scaledToReach } from '../cases/scale';
 import { caseSlots, type Case } from '../cases/schema';
 import { caseProbeReader, caseProbeWorld } from '../cases/tries';
 import type { SimModel } from '../sim/mjcfTypes';
-import type { SimFrame, Simulation } from '../sim/useSimulation';
+import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 
@@ -27,7 +27,6 @@ const gesturePulses = (names: string[], now = performance.now()) =>
     }),
   );
 const JUDGE_EVERY_MS = 500;
-const D2R = Math.PI / 180;
 
 interface ConsoleSignalsInput {
   open: boolean;
@@ -39,13 +38,6 @@ interface ConsoleSignalsInput {
   parts: ScenePart[];
   cameras: string[];
 }
-
-const jointsOf = (model: SimModel, { joints }: SimFrame): SignalSample['joints'] =>
-  model.joints.map((j, i) => {
-    const unit = j.type === 'revolute' ? D2R : 0.001;
-
-    return { id: j.id, target: joints[i * 3] / unit, position: joints[i * 3 + 1] / unit, effort: joints[i * 3 + 2] };
-  });
 
 function caseWorld({ kase, model, rig, parts }: { kase: Case; model: SimModel; rig: Rig; parts: ScenePart[] }) {
   const facts = robotFacts(rig, parts);
@@ -69,8 +61,6 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
     cameras: input.cameras,
     gestures: caseConsole.input.includes('camera') ? gesturePulses(gestureNames(input.kase?.gestures)) : undefined,
     inputs: Object.fromEntries(caseConsole.input.map((id) => [id, sim.drive.inputs()[id] ?? null])),
-    robot: sim.latestStats()?.robots[0],
-    time: sim.latestStats()?.time ?? 0,
   }));
 
   const follow = useEffectEvent((target: SignalBus, model: SimModel) => {
@@ -99,7 +89,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
     };
 
     const stop = sim.subscribePoses((poses, frame) => {
-      const now = live();
+      const now = { ...live(), time: frame.stats.time };
 
       if (now.running && !goal) startGoal();
 
@@ -111,28 +101,18 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
 
       lastPush = now.time;
 
-      const probes: Record<string, number[]> = {};
-
-      reader.sample(poses, probes);
-
-      const base = endPoint('base', world, poses);
-      const { robot } = now;
-
-      target.push({
-        time: now.time,
-        running: now.running,
-        joints: jointsOf(model, frame),
-        robot: {
-          ...(robot && { height: robot.height, tilt: robot.tilt, speed: robot.speed, travelled: robot.travelled }),
-          x: base.x,
-          z: base.z,
-        },
-        probes: Object.fromEntries(Object.entries(probes).map(([k, v]) => [k, v.at(-1) ?? 0])),
-        inputs: now.inputs,
-        goal: now.running ? judged : null,
-        cameras: now.cameras,
-        gestures: now.gestures,
-      });
+      target.push(
+        liveSample({
+          ...now,
+          model,
+          joints: frame.joints,
+          poses,
+          robot: frame.stats.robots[0],
+          world,
+          reader,
+          goal: now.running ? judged : null,
+        }),
+      );
     });
     const timer = setInterval(() => {
       const asked = goal;

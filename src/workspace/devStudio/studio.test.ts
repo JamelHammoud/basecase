@@ -16,6 +16,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'cameraStreams',
   'capture',
   'caseMat',
+  'caseRunState',
   'checkDots',
   'clear',
   'codeReports',

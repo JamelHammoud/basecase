@@ -19,6 +19,9 @@ import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { SceneDocument } from './useSceneDocument';
 import { errorMessage } from '../utils/errorMessage';
+import { useLatestRef } from '../utils/useLatestRef';
+import type { TryReadSources } from './agentTryRequests';
+import type { TryTimeline } from './useTryTimeline';
 
 type Payload = Record<string, unknown>;
 
@@ -64,10 +67,18 @@ const partInserter =
     updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));
   };
 
+const tryReadOf = ({ simTraining, posing }: WorkspaceCore, timeline: () => TryTimeline): TryReadSources => ({
+  timeline,
+  model: simTraining.sim.modelNow,
+  rig: () => posing.rig,
+  sought: simTraining.sim.sought,
+});
+
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
   const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole, commitSkeleton } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
+  const timelineRef = useLatestRef(simTraining.cases.timeline);
 
   const poseTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
     runPoseTool(kind, payload, {
@@ -173,6 +184,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     caseExplore: core.caseExplore,
     caseRun: core.caseRun,
     skills: core.simTraining.skills,
+    tryRead: tryReadOf(core, () => timelineRef.current),
   });
 
   const runRequest = async (event: Pick<AgentRequestEvent, 'kind' | 'payload'>, author: Author) => {

@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import type { RecordedEfforts } from './recordedFrames';
 import type { Recording } from './recorder';
 import type { SimRequest, SimResponse } from './sim.worker';
 
@@ -11,7 +12,7 @@ export interface Sought {
 
 export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
   const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
-  const waiter = useRef<((efforts: Float32Array[] | null) => void) | null>(null);
+  const waiter = useRef<((efforts: RecordedEfforts | null) => void) | null>(null);
   const sought = useRef<Sought | null>(null);
 
   const reply = useCallback((msg: RecordingReply) => {
@@ -34,7 +35,7 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
 
   const scrub = useCallback(
     (recording: Recording | null) =>
-      new Promise<Float32Array[] | null>((resolve) => {
+      new Promise<RecordedEfforts | null>((resolve) => {
         const w = workerRef.current;
 
         sought.current = null;

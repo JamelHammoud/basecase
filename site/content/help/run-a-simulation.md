@@ -43,6 +43,8 @@ The bar at the top of the tab also has **Pause**, **Reset** and three speeds: ¼
 
 After **Drive with Camera** on a humanoid with no ready Walk, its base stays held in place, so **Push** can't move it. **Reset** keeps it held; click **Stop simulation**, then **Simulate**, to free it.
 
+After you replay a finding from **Stress**, **Reset** keeps that finding's friction, weight, servo strength and latency. Click **Stop simulation** to go back to normal physics. Steps are in [Find where a skill breaks](/help/find-where-a-skill-breaks).
+
 ## Reading Peak torque
 
 Each joint shows the most torque it needed as a share of its servo's limit. A share of 98% or more turns red. When a joint spent time at its limit, the row says how long, such as "0.4 s at limit".

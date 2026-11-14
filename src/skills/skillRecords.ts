@@ -10,7 +10,7 @@ import {
   type SkillBinding,
   type SkillOrigin,
 } from './artifacts';
-import type { Environment } from './environment';
+import type { Environment, Randomization } from './environment';
 import { hashOf } from './hash';
 import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
@@ -51,6 +51,7 @@ export interface SkillRecord {
   evidence: ArenaEvidence | null;
   origin: SkillOrigin | null;
   environment: Environment | null;
+  randomization?: Randomization;
   snapshots?: SnapshotRef[];
   stress?: StressRecord;
   createdAt: string;
@@ -83,12 +84,15 @@ export function skillRecord(
   };
 }
 
+export const withRecordRanges = (environment: Environment, record: SkillRecord | null | undefined): Environment =>
+  record?.randomization ? { ...environment, randomization: record.randomization } : environment;
+
 function rebuiltEnvironment(record: SkillRecord, model: SimModel, animations: readonly RobotAnimation[]) {
-  if (record.kit) return kitEnvironment(model, record.kit);
+  if (record.kit) return withRecordRanges(kitEnvironment(model, record.kit), record);
 
   const animation = animations.find((a) => a.id === record.move?.animation);
 
-  return animation ? moveEnvironment(model, animation) : null;
+  return animation ? withRecordRanges(moveEnvironment(model, animation), record) : null;
 }
 
 export function recordEnvironment(

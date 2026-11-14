@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fixtureModel } from './fixtureModels';
 import type { ForgeOutcome } from './forgeRunner';
+import type { Range } from './environment';
 import { moveEnvironment } from './moveEnvironment';
 import { fixtureMoveSkill, quadSit } from './moveFixtures';
 import { NOMINAL_PHYSICS } from '../sim/physicsScales';
-import { skillRecord, type SkillRecord } from './skillRecords';
+import { recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
 import type { SkillJob } from './skillRows';
 import type { SnapshotRef } from './snapshots';
 import type { SkillRunner } from './skillsClient';
@@ -187,9 +188,10 @@ describe('stressing a skill in the skills runtime', () => {
       record: { ...record, stress: { seed: 's', budget: 40, rollouts: 40, findings: [finding] } },
     };
     const better = { ...skill, name: 'Stand again' };
+    const widened = { ...environment, randomization: { ...environment.randomization, mass: [0.9, 1.8] as Range } };
     const { runtime, records, jobs } = stubbed(() => ({
       type: 'stress-train',
-      result: { skill: better, evidence: null, environment, reason: 'Passed.' },
+      result: { skill: better, evidence: null, environment: widened, reason: 'Passed.' },
     }));
 
     expect(await runtime.trainOnStress(model, stressed, { kit: 'stand' })).toEqual(better);
@@ -197,6 +199,7 @@ describe('stressing a skill in the skills runtime', () => {
     expect(records).toHaveLength(1);
     expect(records[0]).toMatchObject({ name: 'Stand again', kit: 'stand' });
     expect(records[0].stress).toBeUndefined();
+    expect(recordEnvironment(records[0], model)?.randomization.mass).toEqual([0.9, 1.8]);
   });
 
   it('answers with Arena’s reason and keeps the old record when the retrained skill fails', async () => {

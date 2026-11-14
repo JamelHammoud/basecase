@@ -4,7 +4,7 @@ import type { Skill } from './artifacts';
 import type { Environment } from './environment';
 import { kitEnvironment } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
-import { moveTag, recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
+import { moveTag, recordEnvironment, skillRecord, withRecordRanges, type SkillRecord } from './skillRecords';
 import type { SkillRow, SkillTarget } from './skillRows';
 import type { StressResult } from './stress';
 import type { StressTarget } from './stressTraining';
@@ -26,9 +26,9 @@ export interface RowScene {
 function environmentOf(row: SkillRow, scene: RowScene): Environment | null {
   const { model, animations } = scene;
 
-  if (row.kit) return kitEnvironment(model, row.kit);
+  if (row.kit) return withRecordRanges(kitEnvironment(model, row.kit), row.record);
 
-  if (row.move) return moveEnvironment(model, row.move);
+  if (row.move) return withRecordRanges(moveEnvironment(model, row.move), row.record);
 
   return scene.drafted(row.target) ?? (row.record ? recordEnvironment(row.record, model, animations) : null);
 }
@@ -52,8 +52,13 @@ export const stressedRecord = (record: SkillRecord, result: StressResult): Skill
   stress: { seed: result.seed, budget: result.budget, rollouts: result.rollouts, findings: result.findings },
 });
 
-export function retrainedRecord(skill: Skill, kind: StressTarget, environment: Environment): SkillRecord {
+function retrainedTag(skill: Skill, kind: StressTarget, environment: Environment): SkillRecord {
   if ('kit' in kind) return skillRecord(skill, { kit: kind.kit });
 
   return skillRecord(skill, { kit: null, move: moveTag(kind.move, environment) });
 }
+
+export const retrainedRecord = (skill: Skill, kind: StressTarget, widened: Environment): SkillRecord => ({
+  ...retrainedTag(skill, kind, widened),
+  randomization: widened.randomization,
+});

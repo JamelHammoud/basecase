@@ -23,6 +23,7 @@ covers:
   - src/skills/stressBench.ts
   - src/skills/stressTraining.ts
   - src/components/simulate/SkillsList.tsx
+  - src/workspace/useSkillStress.ts
 ---
 
 Find the friction, weight, servo strength and latency where a ready skill fails, past what Arena tried, and train it on them.
@@ -32,7 +33,7 @@ Train on These needs the desktop app, and only retrains Motor Kit skills and mov
 1. In **Simulate**, find a ready skill in the **Train** section. Its row shows its Arena result.
 2. Click **Stress** on the row. The search runs up to 160 tries and takes about 15 seconds for Stand on a quadruped.
 3. Read the findings under the row. Each gives the value where the skill starts failing, such as **Weight > ×1.94**, or a combination that fails, and the margin of its worst try.
-4. Click a finding to replay its worst try in the live sim, under that friction, weight, strength and latency.
+4. Click a finding to replay its worst try in the live sim, under that friction, weight, strength and latency. The sim keeps them through **Reset** until you click **Stop simulation** or **Try**.
 5. Click **Train on These** to retrain the skill with those values added to its training ranges.
 6. Wait for Arena to judge the new skill on the wider ranges. It replaces the old one only if it passes; otherwise the old skill stays and a message gives Arena's count.
 

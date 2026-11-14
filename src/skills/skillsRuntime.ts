@@ -179,7 +179,8 @@ export class SkillsRuntime {
     const result = await this.awaited(row, async (ports) => {
       const reply = await this.deps.runner(job, ports);
 
-      if (reply.result.skill) await this.keep(row.target, retrainedRecord(reply.result.skill, kind, environment));
+      if (reply.result.skill)
+        await this.keep(row.target, retrainedRecord(reply.result.skill, kind, reply.result.environment));
 
       return reply.result;
     });

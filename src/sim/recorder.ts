@@ -2,6 +2,8 @@ import type { DriveCommand } from './driveTypes';
 import type { Controller, SimEngine } from './engine';
 import type { FaultKind, RecordedFault } from './faults';
 import { torqueShare } from './torqueShare';
+import type { WorldChange, WorldEvent } from '../cases/worldSet';
+import type { WorldMoves } from './worldMoves';
 
 export const RECORD_HZ = 50;
 
@@ -33,6 +35,7 @@ export interface Recording {
   faults?: RecordedFault[];
   commands?: RecordedCommand[];
   controller?: Controller;
+  world?: WorldEvent[];
 }
 
 class Growing<T extends Float32Array | Float64Array> {
@@ -99,9 +102,10 @@ export class Recorder {
   private readonly scan: Growing<Float32Array> | null;
   private readonly faults: RecordedFault[] = [];
   private readonly commands: RecordedCommand[] = [];
+  private readonly world: WorldEvent[] = [];
   private readonly controller: Controller | null;
 
-  constructor(engine: SimEngine, controller: Controller | null = null) {
+  constructor(engine: SimEngine, controller: Controller | null = null, world: WorldMoves | null = null) {
     const { model } = engine;
 
     this.engine = engine;
@@ -121,6 +125,8 @@ export class Recorder {
 
     for (const j of engine.stats().joints) if (j.fault) this.faults.push({ joint: j.id, kind: j.fault, at: 0 });
 
+    for (const change of world?.state() ?? []) this.world.push({ ...structuredClone(change), at: 0 });
+
     this.sample();
   }
 
@@ -135,6 +141,10 @@ export class Recorder {
 
   readonly command = (c: DriveCommand) => {
     this.commands.push({ at: this.engine.data.time - this.started, command: structuredClone(c) });
+  };
+
+  readonly worldChange = (change: WorldChange) => {
+    this.world.push({ ...structuredClone(change), at: this.engine.data.time - this.started });
   };
 
   get length() {
@@ -192,6 +202,7 @@ export class Recorder {
         : {}),
       faults: this.faults,
       ...(this.controller ? { commands: this.commands, controller: this.controller } : {}),
+      ...(this.world.length ? { world: this.world } : {}),
     };
   }
 }

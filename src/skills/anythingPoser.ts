@@ -129,7 +129,7 @@ export class Poser {
     return !!rest && GOAL_AXES.every((a) => goal[a] === undefined || Math.abs(goal[a] - rest[a]) <= REST_SLACK_MM);
   }
 
-  private movedParts(parts: Record<string, PartGoal> | undefined): Record<string, PartGoal> | undefined {
+  movedParts(parts: Record<string, PartGoal> | undefined): Record<string, PartGoal> | undefined {
     if (!parts) return parts;
 
     return Object.fromEntries(Object.entries(parts).filter(([part, goal]) => !this.restsFoot(part, goal)));

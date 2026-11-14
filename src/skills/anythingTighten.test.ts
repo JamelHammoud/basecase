@@ -79,4 +79,15 @@ describe('claimSpec', () => {
     expect(await claimPasses(leaning, 0.48)).toBe(true);
     expect(await claimPasses(CROUCH, 0.48, false)).toBe(true);
   });
+
+  it('leaves a hold that reads no height unbounded', () => {
+    const reach: TaskSpec = {
+      ...CROUCH,
+      success: {
+        hold_for: { seconds: 2, state: { within: { sig: 'l_sole.forward', center: 30, tol: 5 } }, within: 'whole' },
+      },
+    };
+
+    expect(claimSpec(reach, { level: true })).toEqual(claimSpec(reach, { level: false }));
+  });
 });

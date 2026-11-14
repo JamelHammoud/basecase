@@ -63,14 +63,16 @@ const levelState = (s: SpecState, bound: number): SpecState => ({
   all: [s, { atom: { sig: 'tilt', cmp: '<', value: bound } }],
 });
 
+function levelHeld<T extends { state: SpecState }>(held: T, bound: number): T {
+  const posture = stateSignals(held.state).includes('height');
+
+  return posture ? { ...held, state: levelState(held.state, bound) } : held;
+}
+
 function levelled(f: SpecFormula, bound: number): SpecFormula {
-  if ('hold_for' in f) return { hold_for: { ...f.hold_for, state: levelState(f.hold_for.state, bound) } };
+  if ('hold_for' in f) return { hold_for: levelHeld(f.hold_for, bound) };
 
-  if ('always' in f) {
-    const posture = stateSignals(f.always.state).includes('height');
-
-    return posture ? { always: { ...f.always, state: levelState(f.always.state, bound) } } : f;
-  }
+  if ('always' in f) return { always: levelHeld(f.always, bound) };
 
   if ('eventually' in f) return f;
 

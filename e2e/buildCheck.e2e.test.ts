@@ -195,7 +195,7 @@ describe('Build tab fields', () => {
 
     await storeWalk(app.page, walk);
     await expect.poll(detail, { timeout: 45000 }).not.toBe(estimate);
-    expect(await detail()).toMatch(/A average walking .*Left knee: 1\.0 A average/);
+    expect(await detail()).toMatch(/A average walking .*Left knee: 1 A average/);
   }, 120000);
 
   it('plot each knee’s walk on its servo’s torque–speed line under Peak torque', async () => {

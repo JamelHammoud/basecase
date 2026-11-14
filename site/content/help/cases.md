@@ -22,7 +22,8 @@ covers:
   - src/cases/scale.ts
   - src/cases/robotFit.ts
   - src/cases/tries.ts
-  - src/cases/tryStore.ts
+  - src/cases/tryStore/
+  - src/cases/tryFile.ts
   - src/cases/caseBuilder.ts
   - src/cases/gestures.ts
   - src/cases/terrain.ts
@@ -58,7 +59,7 @@ A wheeled or legged robot can also try a Case for real, on the Case printed as a
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results count them on that try's row.
 
-Tries stay on this computer, and so does a value the Case's code keeps, such as a high score. A `.basecase` file you share carries the Case but neither of these.
+Tries stay on this computer, and so does a value the Case's code keeps, such as a high score. A `.basecase` file you share carries the Case but neither of these. The Library lists the tries from every scene, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows.
 
 ## A Case is the test, a skill is the answer
 

@@ -1,4 +1,5 @@
-import { ProjectSummaryForAI, SceneAnnotation, ScenePart } from '../types/robotics';
+import type { ProjectSummaryForAI } from '../types/projectSummary';
+import { SceneAnnotation, ScenePart } from '../types/robotics';
 import { hardwareName } from '../data/hardware';
 import { COMPONENT_BY_ID } from '../data/components';
 

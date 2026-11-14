@@ -28,11 +28,11 @@ interface Opened {
   before: 'off' | 'paused' | 'playing';
 }
 
-async function tripsOf(options: TimelineOptions, recording: Recording): Promise<Trip[]> {
+async function tripsOf(options: TimelineOptions, record: TryRecord, recording: Recording): Promise<Trip[]> {
   const { sim, rig, parts, active, partners } = options;
   const model = sim.modelNow();
 
-  if (!active || !model) return [];
+  if (active?.id !== record.caseId || !model) return [];
 
   const staged = stageCase(active, { rig, parts }, partners());
   const scoring = { kase: staged.kase, model, recording, rig, ...stagedEffectors(staged, { rig, parts }) };
@@ -82,7 +82,7 @@ export function useTryTimeline(options: TimelineOptions) {
 
     if (!efforts || ticket !== opening.current) return;
 
-    const trips = await tripsOf(options, recording);
+    const trips = await tripsOf(options, record, recording);
 
     if (ticket !== opening.current) return;
 

@@ -1,5 +1,10 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { inject } from 'vitest';
+import { tryPostRoutes } from '../electron/library/tryRoutes.mjs';
+import { TryStore } from '../electron/library/tryStore.mjs';
 import { TEST_HOOKS_FLAG } from '../src/utils/platform/testHooksFlag';
 
 const EFFORT_LEVELS = [
@@ -56,6 +61,17 @@ interface Backend {
   posts: App['posts'];
   lists: Record<string, unknown>;
   live: string[];
+  triesDir: string;
+}
+
+type Reply = (body: unknown) => unknown;
+
+function triesReplies(triesDir: string): Record<string, Reply> {
+  const store = new TryStore({ triesDir, cacheFile: path.join(triesDir, '.try-summaries.json') });
+
+  return Object.fromEntries(
+    tryPostRoutes(store).map(([route, reply]) => [route.slice(1), (body: unknown) => reply(body as { arg?: unknown })]),
+  );
 }
 
 type SavedPurchases = Record<string, unknown>;
@@ -69,9 +85,10 @@ function purchasesReply(saved: SavedPurchases, body: { key?: string; record?: un
   return saved;
 }
 
-async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise<void> {
+async function stubBackend(page: Page, { posts, lists, live, triesDir }: Backend): Promise<void> {
   const purchases: SavedPurchases = { ...((lists.purchases as SavedPurchases | undefined) ?? {}) };
-  const replies: Record<string, (body: unknown) => unknown> = {
+  const replies: Record<string, Reply> = {
+    ...triesReplies(triesDir),
     purchases: () => purchases,
     'purchase-save': (body) => purchasesReply(purchases, body as { key?: string; record?: unknown }),
   };
@@ -79,7 +96,7 @@ async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }),
   );
-  await page.route('**/api/bridge/**', (route) => {
+  await page.route('**/api/bridge/**', async (route) => {
     const name = new URL(route.request().url()).pathname.split('/').pop() ?? '';
 
     if (live.some((prefix) => name.startsWith(prefix))) return route.continue();
@@ -91,7 +108,7 @@ async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(replies[name]?.(body) ?? lists[name] ?? LISTS[name] ?? {}),
+      body: JSON.stringify((await replies[name]?.(body)) ?? lists[name] ?? LISTS[name] ?? {}),
     });
   });
 }
@@ -116,6 +133,7 @@ export async function openApp(
   const errors: string[] = [];
   const posts: App['posts'] = [];
   const requests: string[] = [];
+  const triesDir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-e2e-tries-'));
 
   page.on('request', (request) => requests.push(request.url()));
   page.on('pageerror', (e) => errors.push(e.message));
@@ -127,7 +145,7 @@ export async function openApp(
     errors.push(where ? `${m.text()} (${where})` : m.text());
   });
   await exposeTestHooks(page);
-  await stubBackend(page, { posts, lists, live });
+  await stubBackend(page, { posts, lists, live, triesDir });
   await page.goto(inject('appUrl'));
   await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
     timeout: 60000,
@@ -139,7 +157,10 @@ export async function openApp(
     errors,
     posts,
     requests,
-    close: () => browser.close(),
+    close: async () => {
+      await browser.close();
+      fs.rmSync(triesDir, { recursive: true, force: true });
+    },
   };
 }
 

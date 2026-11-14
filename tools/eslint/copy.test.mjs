@@ -67,6 +67,10 @@ const GLOSSARY_SAMPLES = [
   ['Generate Guide', 'Generate', 'Make'],
   ['Auto-generated guide', 'Auto-generated', 'Make'],
   ['Regenerate', 'Regenerate', 'Update'],
+  ['Recordings', 'Recordings', 'Try'],
+  ['Episode 3', 'Episode', 'Try'],
+  ['Demos', 'Demos', 'Try'],
+  ['Demonstration from the leader arm', 'Demonstration', 'Try'],
 ];
 
 const SPELLING_SAMPLES = Object.keys(SPELLING).map((british) => [`The ${british} one`, british]);
@@ -133,6 +137,8 @@ describe('glossary', () => {
       'Clear sketch?',
       'Clear Fault',
       'Eraser',
+      'Recording parts on hand',
+      'Recorded 3 tries',
       'View',
       'Viewer',
       'Endless',

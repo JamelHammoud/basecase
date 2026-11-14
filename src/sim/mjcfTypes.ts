@@ -59,6 +59,13 @@ export interface SimModel {
   initial: RobotPoseState;
   massKg: Record<string, number>;
   scans?: Eye[];
+  servoSpreads?: ServoSpread[];
+}
+
+export interface ServoSpread {
+  servo: string;
+  joints: string[];
+  covariance: number[][];
 }
 
 export interface MjcfInput {
@@ -75,9 +82,11 @@ export interface MjcfInput {
   worldTriangles?: (id: string) => Float32Array | null;
   servoFits?: Record<string, JointServoFit>;
   servoVolts?: number;
+  servoSpreads?: ServoSpread[];
 }
 
 export interface JointServoFit {
   fit: ServoFit;
   volts: number;
+  historyS?: number;
 }

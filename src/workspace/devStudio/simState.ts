@@ -1,11 +1,11 @@
-import type { Controller } from '../sim/engine';
-import { modelFingerprints } from '../sim/policyFreshness';
-import type { SimModel } from '../sim/mjcfTypes';
-import type { Recording } from '../sim/recorder';
-import type { Simulation } from '../sim/useSimulation';
-import { linkParts, type Rig } from '../utils/kinematics';
-import type { TryTimeline } from './useTryTimeline';
-import type { WorkspaceCore } from './useWorkspaceCore';
+import type { Controller } from '../../sim/engine';
+import { modelFingerprints } from '../../sim/policyFreshness';
+import type { SimModel } from '../../sim/mjcfTypes';
+import type { Recording } from '../../sim/recorder';
+import type { Simulation } from '../../sim/useSimulation';
+import { linkParts, type Rig } from '../../utils/kinematics';
+import type { TryTimeline } from '../useTryTimeline';
+import type { WorkspaceCore } from '../useWorkspaceCore';
 
 const controllerState = (c: Controller) => ({
   kind: c.kind,
@@ -19,6 +19,7 @@ function caseState({ cases }: WorkspaceCore['simTraining']) {
     caseSeconds: cases.active?.task.seconds ?? null,
     multiplying: !!cases.multiply.running,
     tries: cases.tries.map((t) => ({
+      id: t.id,
       world: t.manifest.world ?? 0,
       generated: !!t.generated,
       real: !!t.real,

@@ -13,6 +13,7 @@ import {
   expectCaseCheckOpensRow,
   expectDataset,
   expectGenerated,
+  inDataset,
   expectPublished,
   loadFixtureRobot,
   passedDatasetFiles,
@@ -278,7 +279,7 @@ describe('Cases', () => {
       expect(said).toMatch(/^Published to /);
       expect(published()).toHaveLength(1);
       expect(said).toContain(repo);
-      expect(commitsOf(repo)).toBe((before.get(repo) ?? 0) + 1);
+      expect(commitsOf(repo)).toBe((before.get(repo) ?? 0) + 2);
       await expectPublished(hub, repo);
       expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
       expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
@@ -473,16 +474,15 @@ describe('LiDAR', () => {
       await endTryAt(app.page, SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
-      const files = await passedDatasetFiles(app.page);
-      const at = (end: string) => files[Object.keys(files).find((p) => p.endsWith(end))!];
+      const files = inDataset(await passedDatasetFiles(app.page));
       const rows = await parquetReadObjects({
-        file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer,
+        file: new Uint8Array(files['data/chunk-000/file-000.parquet']).buffer,
       });
-      const info = JSON.parse(at('meta/info.json').toString());
+      const info = JSON.parse(files['meta/info.json'].toString());
 
       expect(info.features['observation.scan'].shape).toEqual([720]);
       expect(rows[0]['observation.scan']).toHaveLength(720);
-      expect(JSON.parse(at('meta/modality.json').toString()).state.scan.original_key).toBe('observation.scan');
+      expect(JSON.parse(files['v2.1/meta/modality.json'].toString()).state.scan.original_key).toBe('observation.scan');
       expect(app.errors).toEqual([]);
     },
   );

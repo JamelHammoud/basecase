@@ -37,7 +37,11 @@ It works in the desktop app, with a Google Map Tiles API key of your own.
 
 ![The Place on Map sheet with a Google Maps link pasted and Height offset at 0 m](/help/place-a-robot-on-a-map/sheet.png)
 
-The tiles stream in around the spot, with Google's attribution in the canvas corner. East runs along the red X axis and north away from the blue Z axis. The floor sits on the tiles' surface under the spot; **Height offset** raises or lowers the robot from it. A third number after the coordinates sets the height above the WGS84 ellipsoid instead.
+The tiles stream in around the spot, with Google's attribution in the canvas corner.
+
+![A rover on the placed tiles, with the tiles' attribution in the canvas corner](/help/place-a-robot-on-a-map/placed.png)
+
+East runs along the red X axis and north away from the blue Z axis. The floor sits on the tiles' surface under the spot; **Height offset** raises or lowers the robot from it. A third number after the coordinates sets the height above the WGS84 ellipsoid instead.
 
 **Place on Map** is also in [[⌘K]], and without a saved key it opens **Accounts** at the key. **Hide Map** in [[⌘K]], or **Show Map** in the canvas menu, hides the tiles and keeps the place with the scene.
 

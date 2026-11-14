@@ -70,6 +70,8 @@ export class EarthLayer {
 
   private surfaceM: number | null = null;
 
+  private generation = 0;
+
   private readonly probe = new THREE.PerspectiveCamera(PROBE_FOV, 1, 1, PROBE_FAR);
 
   private readonly credits = new Map<string, number>();
@@ -87,6 +89,8 @@ export class EarthLayer {
   async set(view: EarthView | null): Promise<void> {
     if (view?.fetchTile === this.fetchTile && sameOrigin(view?.origin ?? null, this.origin)) return;
 
+    const generation = ++this.generation;
+
     if (!view || view.origin.hidden) {
       this.origin = view?.origin ?? null;
       this.show(false);
@@ -100,7 +104,7 @@ export class EarthLayer {
 
     this.origin = view.origin;
 
-    if (view.fetchTile !== this.fetchTile) await this.start(view.fetchTile);
+    if (view.fetchTile !== this.fetchTile && !(await this.start(view.fetchTile, generation))) return;
 
     this.place();
   }
@@ -152,12 +156,14 @@ export class EarthLayer {
     this.tiles = null;
   }
 
-  private async start(fetchTile: FetchTile): Promise<void> {
+  private async start(fetchTile: FetchTile, generation: number): Promise<boolean> {
     const [{ TilesRenderer }, { GLTFExtensionsPlugin }, { dracoLoader }] = await Promise.all([
       import('3d-tiles-renderer/three'),
       import('3d-tiles-renderer/plugins'),
       import('../../earth/draco'),
     ]);
+
+    if (generation !== this.generation) return false;
 
     this.stop();
     this.camera = null;
@@ -176,6 +182,8 @@ export class EarthLayer {
     tiles.addEventListener('tile-visibility-change', (event) => this.credit(event as unknown as TileEvent));
     this.group.add(tiles.group);
     this.tiles = tiles;
+
+    return true;
   }
 
   private aimProbe(): void {

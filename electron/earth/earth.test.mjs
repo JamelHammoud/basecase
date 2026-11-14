@@ -57,7 +57,7 @@ describe('Map Tiles key', () => {
 
     await expect(account.setKey('another-map-tiles-key-google-refuses')).rejects.toThrow(KEY_REFUSED);
     expect(account.account()).toEqual({ saved: false });
-    await expect(account.setKey('not a key')).rejects.toThrow('That isn’t a Map Tiles key.');
+    await expect(account.setKey('not a key')).rejects.toThrow('Paste a Map Tiles API key from Google Cloud.');
     expect(await account.setKey(` ${KEY} `)).toEqual({ saved: true });
     expect(tiles.requests.at(-1)).toMatchObject({ path: ROOT_PATH, key: KEY });
 

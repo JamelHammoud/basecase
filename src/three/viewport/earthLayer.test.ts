@@ -135,4 +135,19 @@ describe('EarthLayer', () => {
     expect(layer.state()).toBeNull();
     expect(attributions.at(-1)).toBe('');
   });
+
+  it('stays hidden when Hide Map lands while the renderer is still loading', async () => {
+    const layer = new EarthLayer(new THREE.Group(), { redraw: () => {}, attribution: () => {} });
+    const origin = { ...FIXTURE_SPOT, altitudeM: 16, offsetM: 0 };
+
+    layers.push(layer);
+
+    const first = layer.set({ origin, fetchTile });
+
+    await layer.set({ origin: { ...origin, hidden: true }, fetchTile });
+    await first;
+
+    expect(layer.group.visible).toBe(false);
+    expect(layer.state()).toBeNull();
+  });
 });

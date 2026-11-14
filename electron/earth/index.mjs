@@ -60,7 +60,7 @@ export class EarthTiles {
   async setKey(key) {
     const value = String(key ?? '').trim();
 
-    if (!KEY_SHAPE.test(value)) throw new Error('That isn’t a Map Tiles key.');
+    if (!KEY_SHAPE.test(value)) throw new Error('Paste a Map Tiles API key from Google Cloud.');
 
     await this.request(ROOT_PATH, value, 'Save the key again');
     this.keys.set(KEY, value);

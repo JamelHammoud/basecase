@@ -36,7 +36,7 @@ If you see “Couldn’t import” after choosing a file, or the file comes in a
 If you see a toast that reads “Couldn’t import ⟨file⟩”, the file is too large or too complex for the built-in converter.
 
 1. Make sure the file is under 200 MB.
-2. In your CAD app, export just the part or subassembly you need, so the file has fewer than 1,000 bodies.
+2. In your CAD app, export only the part or subassembly you need, so the file has fewer than 1,000 bodies.
 3. Import the smaller file again.
 4. If it still doesn't import, export it from your CAD app as STL or 3MF, then import that file instead.
 

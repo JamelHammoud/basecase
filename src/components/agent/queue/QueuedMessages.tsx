@@ -32,6 +32,7 @@ const QueuedActions: React.FC<{ item: QueuedItem; queue: QueueControls }> = ({ i
     />
     <IconButton
       icon={<DeleteIcon className="w-4 h-4" />}
+      variant="danger"
       title="Delete"
       tooltipSide="top"
       size="xs"

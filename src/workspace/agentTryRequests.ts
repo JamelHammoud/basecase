@@ -53,6 +53,7 @@ const POLL_MS = 50;
 const WAIT_MS = 10_000;
 const SETTLE_MS = 100;
 const LISTED_TRIES = 5;
+const SIM_ON = 'The simulation is running, and reading a try would reset it. Ask the user to stop it first.';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -90,7 +91,7 @@ const wantedId = (payload: Payload, ctx: TryReadContext, own: TryRecord[]) =>
   text(payload.id) ?? ctx.tryRead.timeline().record?.id ?? latestFirst(own)[0]?.id;
 
 function refusal(record: TryRecord, summary: TrySummary | undefined) {
-  if (record.real) return `${record.id} ran on the real robot; read_try reads tries run in simulation.`;
+  if (record.real) return `${record.id} ran on the real robot. read_try reads only tries run in simulation.`;
 
   return summary && !summary.recording ? `${record.id} kept no recording.` : null;
 }
@@ -211,9 +212,11 @@ export async function readTry(payload: Payload, ctx: TryReadContext) {
 
   if (typeof found === 'string') return { ok: false, problem: found };
 
-  ctx.setAction('Reading a try');
-
   const before = heldOf(ctx.tryRead.timeline());
+
+  if (!before.open && ctx.tryRead.model()) return { ok: false, problem: SIM_ON };
+
+  ctx.setAction('Reading a try');
 
   try {
     return await readOpened(found, payload, ctx);

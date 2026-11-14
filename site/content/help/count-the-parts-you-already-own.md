@@ -29,7 +29,7 @@ covers:
   - electron/backend/purchases.mjs
 ---
 
-If you already have some of the parts for a robot, tell Basecase how many you own. The bill of materials and the budget then count only the parts you still need to buy.
+Tell Basecase which parts you already have, and the bill of materials and the budget will count only the parts you still need to buy.
 
 1. In the **Build** tab, find **Bill of materials**.
 2. Click a section, such as **Components**, to open it.
@@ -38,7 +38,7 @@ If you already have some of the parts for a robot, tell Basecase how many you ow
 
 ![On hand set to 6 under the 6× Feetech STS3215 line of an SO-101](/help/count-the-parts-you-already-own/on-hand.png)
 
-The quantity drops to the number you still need to buy, and the line shows how many come from your own parts. The line's price and the total drop too. For example, an SO-101 uses six STS3215s. If you enter 6 on hand, the servo line goes from ≈ $120.00 to $0.00, and the total goes from ≈ $127.48 to ≈ $7.48.
+The quantity drops to the number you still need to buy, and the line shows how many come from your own parts. The line's price and the total also drop. For example, on an SO-101 with six STS3215s, entering 6 on hand takes the servo line from ≈ $120.00 to $0.00, and the total from ≈ $127.48 to ≈ $7.48.
 
 ![The SO-101 bill of materials with 0× Feetech STS3215, 6 on hand and $0.00](/help/count-the-parts-you-already-own/owned.png)
 
@@ -46,11 +46,11 @@ To put the old count back, click **Undo** in the toast. To clear a count, type 0
 
 ## How counts work
 
-- Count single pieces, even if you bought them in packs. For example, if you have 100 M3 screws on hand and a robot uses 13, Basecase lists none of them to buy.
-- Count filament in grams.
+- Count single pieces, even if you bought them in packs. If you have 100 M3 screws on hand and a robot uses 13, none are listed to buy.
+- Filament is counted in grams.
 - Printed parts from a print service have no **On hand**. Their quoted price covers every copy.
-- A count belongs to the part, so every scene that uses the part subtracts your count from what's left to buy.
-- Basecase doesn't take parts off your count when you build a robot. After a build, update the count yourself.
+- A count belongs to the part, so every scene that uses the part takes your count off what's left to buy.
+- Basecase doesn't take parts off your count when you build a robot, so update the count yourself after a build.
 - The Budget check and **Buy All** leave out the parts you own.
 
 ## Tell the agent what you own

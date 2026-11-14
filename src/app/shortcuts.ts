@@ -38,6 +38,8 @@ export const scopeOfShortcut = (id: ShortcutId) => scopeOf(id) as ShortcutScope;
 
 export const keyFor = (id: ShortcutId) => keysOf(id)[0];
 
+export const allKeysFor = (id: ShortcutId) => keysOf(id).join(' ');
+
 export const paneKeys = (id: ShortcutId) => keysOf(id).flatMap((key, i) => (i === 0 ? [key] : ['or', key]));
 
 function keyMatches(chord: Chord, e: ShortcutKey) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
-import { keyFor } from '../../app/shortcuts';
+import { allKeysFor, keyFor } from '../../app/shortcuts';
 import { speedText } from '../../workspace/timelinePlayback';
 import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
 import type { TryTimeline as Timeline } from '../../workspace/useTryTimeline';
@@ -69,7 +69,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
           size="xs"
           className="tabular min-w-[48px] justify-center"
           title="Speed"
-          shortcut="[ ]"
+          shortcut={allKeysFor('timeline:speed')}
           data-testid="timeline-speed"
           onClick={() => timeline.faster(1, true)}
         >

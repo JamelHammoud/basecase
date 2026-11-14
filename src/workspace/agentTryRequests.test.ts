@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { TryRecord } from '../cases/tries';
 import type { TrySummary } from '../cases/tryFile';
+import type { SimModel } from '../sim/mjcfTypes';
 import type { ProjectSettings } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { readTry, type TryReadContext } from './agentTryRequests';
@@ -18,7 +19,7 @@ const record = (id: string, extra: Partial<TryRecord> = {}): TryRecord => ({
   ...extra,
 });
 
-function context(tries: TryRecord[], listed: TrySummary[] = []) {
+function context(tries: TryRecord[], listed: TrySummary[] = [], simOn = false) {
   const timeline = { open: false, record: null, frame: 0, show: vi.fn(async () => false), close: vi.fn() };
   const ctx: TryReadContext = {
     project: () => ({ tries }) as unknown as ProjectSettings,
@@ -27,7 +28,7 @@ function context(tries: TryRecord[], listed: TrySummary[] = []) {
     cases: { cases: [] },
     tryRead: {
       timeline: () => timeline as unknown as TryTimeline,
-      model: () => null,
+      model: () => (simOn ? ({} as SimModel) : null),
       rig: () => ({}) as Rig,
       sought: () => null,
     },
@@ -43,6 +44,17 @@ describe('read_try', () => {
 
     expect(await readTry({ id: 't1' }, ctx)).toMatchObject({ ok: false, problem: expect.stringMatching(/real robot/) });
     expect(timeline.show).not.toHaveBeenCalled();
+  });
+
+  it('refuses while the simulation runs outside the timeline, leaving the sim and timeline alone', async () => {
+    const { ctx, timeline } = context([record('t1')], [], true);
+
+    expect(await readTry({ id: 't1' }, ctx)).toMatchObject({
+      ok: false,
+      problem: expect.stringMatching(/^The simulation is running/),
+    });
+    expect(timeline.show).not.toHaveBeenCalled();
+    expect(timeline.close).not.toHaveBeenCalled();
   });
 
   it('lists this scene’s latest tries for an unknown id', async () => {

@@ -135,7 +135,8 @@ export const readTry = {
   config: {
     title: 'Read a try',
     description:
-      'Reads a try (one recorded run of a Case in simulation) from its recording, changing nothing: its signals over a time window, the Case’s failure labels at the time each first tripped, and a capture of the canvas at one moment. ' +
+      'Reads a try (one recorded run of a Case in simulation) from its recording: its signals over a time window, the Case’s failure labels at the time each first tripped, and a capture of the canvas at one moment. ' +
+      'It opens the try on the user’s timeline while it reads, then puts the timeline back as it was. While the simulation runs outside the timeline it refuses, since opening a try would reset it. ' +
       'signals takes console signal names, with * for one name part: joint.*.position, joint.<id>.target or effort, robot.height, robot.tilt (degrees), robot.speed, robot.travelled, robot.x, robot.z, probe.<name>, input.<source>.<axis>, goal.passed, goal.margin and the Case’s own; every number signal when left out. ' +
       'Returns { ok, try, case, seconds, from, to, step, t, signals: { <id>: { v, min: [value, time], max: [value, time] } }, failures: [{ label, at, values }], unknown, captured } and the capture, or { ok: false, problem }. ' +
       't is the sample times and v the values at them (null where unknown), at most 200 per signal; min and max cover every frame in the window; values are the signals at each failure; unknown lists the names that matched nothing. Times are seconds from the try’s start. ' +

@@ -153,12 +153,14 @@ describe('Playing a try through its console', () => {
         .toBeCloseTo((await timeline())!.sought! * dt, 1);
       await expect
         .poll(async () => {
-          const shownValue = Number.parseFloat((await panel('angle').locator('[data-signal]').textContent()) ?? '');
+          const shown = (await panel('angle').locator('[data-signal]').textContent()) ?? '';
+          const shownValue = Number.parseFloat(shown.replace('\u2212', '-'));
           const position = (await simState()).joints[joint]?.position ?? Number.NaN;
+          const rounding = Math.abs(position) >= 100 ? 0.5 : 0.005;
 
-          return Math.abs(shownValue - position);
+          return Math.abs(shownValue - position) <= rounding + 0.01;
         })
-        .toBeLessThan(0.02);
+        .toBe(true);
       expect(Number(await panel('map').getByTestId('map').getAttribute('data-path'))).toBeGreaterThan(10);
 
       const at = (await timeline())!.frame;

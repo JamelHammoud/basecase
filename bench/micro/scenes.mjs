@@ -50,10 +50,14 @@ export async function startRecord(task, ctx = {}) {
 
   if (file) return readJson(file);
 
+  if (task.startScene) return task.startScene();
+
   return fixtureRecord(task.fixture(), ctx);
 }
 
 export async function solutionRecord(task, ctx = {}, start = null) {
+  if (task.solutionScene) return task.solutionScene();
+
   if (!task.solution) return null;
 
   return keepStartCases(await fixtureRecord(task.solution(), ctx), start);

@@ -27,13 +27,13 @@ Take back one step of the agent's work, or everything it changed in its last run
 
 1. Press [[⌘Z]].
 
-Each change the agent makes, such as adding parts or reshaping one, is one undo step. Press [[⌘Z]] again to go further back, up to 50 steps.
+Each change the agent makes, such as adding parts, reshaping one or writing a Case's code panel, is one undo step. Press [[⌘Z]] again to go further back, up to 50 steps. While a Case runs, [[⌘Z]] steps back through code panel changes only and stops at any other change.
 
 ## Revert a whole run
 
 1. Under the agent's last reply, click **Revert Changes**.
 
-Only the parts that run changed go back; your own edits stay. A toast reads “Reverted agent changes”, with **Undo** if you change your mind.
+Only the parts that run changed go back; your own edits stay. Code panels it wrote stay too; undo those step by step. A toast reads “Reverted agent changes”, with **Undo** if you change your mind.
 
 **Revert Changes** shows under the last reply only, and doesn't survive a reload. Earlier runs can still be undone step by step.
 

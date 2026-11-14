@@ -19,6 +19,7 @@ interface KeyOptions {
 export type WorkspaceKeyDeps = Omit<KeyOptions, 'active'>;
 
 const ANYWHERE = new Set<ShortcutId>(['palette', 'settings']);
+const WHILE_RUNNING = new Set<ShortcutId>(['undo', 'redo', 'toggle-inspector']);
 const SHIFTED = new Set<ShortcutId>(['toggle-reference-images', 'toggle-camera-views', 'shortcuts']);
 
 const isFormFocus = (el: Element | null) => isTextEntry(el) || el instanceof HTMLSelectElement;
@@ -143,7 +144,9 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
   const runsAnywhere = (id: ShortcutId | null) =>
     !!id && (ANYWHERE.has(id) || (id === 'find-parts' && !blocked && !core.caseRun.open));
 
-  const keysOff = () => keysGoElsewhere() || blocked || core.simTraining.sim.drive.active || core.buildAlong.active;
+  const keysOff = () => keysGoElsewhere() || blocked;
+  const busy = () => core.simTraining.sim.drive.active || core.buildAlong.active;
+  const runsWhileRunning = (id: ShortcutId | null) => !!id && core.caseRun.open && WHILE_RUNNING.has(id);
 
   const onRunningKey = (e: KeyboardEvent, id: ShortcutId | null) => {
     if (id !== 'deselect') return;
@@ -152,17 +155,25 @@ export function useWorkspaceKeys({ active, core, actions, ui }: KeyOptions) {
     core.caseRun.leave();
   };
 
+  const heldBack = (e: KeyboardEvent, id: ShortcutId | null) => {
+    if (runsAnywhere(id)) return false;
+
+    if (keysOff()) return true;
+
+    if (runsWhileRunning(id)) return false;
+
+    if (busy()) return true;
+
+    if (core.caseRun.open) onRunningKey(e, id);
+
+    return core.caseRun.open;
+  };
+
   const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
     const id = commandFor(e);
     const mod = e.metaKey || e.ctrlKey;
 
-    if (!runsAnywhere(id) && keysOff()) return;
-
-    if (!runsAnywhere(id) && core.caseRun.open) {
-      onRunningKey(e, id);
-
-      return;
-    }
+    if (heldBack(e, id)) return;
 
     if (!id || (!mod && core.printing.mode)) return;
 

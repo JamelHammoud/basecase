@@ -69,7 +69,7 @@ const studio = withApp
   : null;
 const ctx = { studio, specToPart: await specToPartFn() };
 const mode = scenesDir || regrade ? graded : (task, c) => sanity(task, c, saveDir);
-const tasks = selectTasks({ ids, split }).filter((t) => t.fixture || scenesDir || regrade);
+const tasks = selectTasks({ ids, split }).filter((t) => t.fixture || t.startScene || scenesDir || regrade);
 let bad = 0;
 
 for (const task of tasks) {

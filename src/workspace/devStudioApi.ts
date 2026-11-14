@@ -38,6 +38,7 @@ import type { Vec2 } from '../utils/linkage';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { JointDragStep } from './useSkeletonEdit';
+import type { CodeReport } from '../cases/console/codeBridge';
 import { limitExplore } from './useCaseExplore';
 
 type Payload = Record<string, unknown>;
@@ -69,6 +70,8 @@ export interface DevActions {
   passTries: () => void;
   multiplyRuns: (runs: number) => void;
   addCase: (raw: unknown) => string;
+  runCase: (id: string) => void;
+  codeReports: () => Record<string, CodeReport | null>;
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
   stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
@@ -273,6 +276,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     passTries: () => devRef.current.passTries(),
     multiplyRuns: (runs: number) => devRef.current.multiplyRuns(runs),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
+    runCase: (id: string) => devRef.current.runCase(id),
+    codeReports: () => devRef.current.codeReports(),
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown, snapshots?: unknown[]) => devRef.current.stubTrainer(policy, snapshots),

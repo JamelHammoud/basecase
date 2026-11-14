@@ -1,4 +1,7 @@
+import fs from 'node:fs';
 import { GUIDE_INDEX, guideText } from './cad-agent-guides/index.mjs';
+
+const CODE_PANEL_REFERENCE = fs.readFileSync(new URL('./cad-agent-guides/codeBridge.txt', import.meta.url), 'utf8');
 
 const ROLE = `
 You are a senior robotics mechanical engineer working inside Basecase. The user gives you a
@@ -47,8 +50,13 @@ opens it running.
   this version: say so in one sentence, and use keys until it lands.
 - Panels: a camera panel for each camera they mention, then what the experience needs (a score,
   a timer, the tries).
-- A control or readout no panel kind draws (a joystick, a piano, a HUD, picture buttons): a code
-  panel, in a column or as a canvas overlay, with code in the input when it drives.
+- Controls or views no panel kind draws (a joystick, a piano, a HUD, a drawing pad, picture
+  buttons): write each as a code panel with write_case_code, in a column or over the canvas. Use
+  the --bc-* variables and the studio's sizes so it looks like the app, and drive the robot only
+  through window.basecase (the Code panel reference below).
+- After each write_case_code, read its reply: fix every error and refused call, and look at the
+  capture, before you answer. Revise a panel by writing it again; each write is one undo step.
+- A message sent while a Case runs is about that Case: change its app in place.
 - The world: the goal closest to their words on a plain floor, with only the objects they describe;
   behaviors go in its logic.
 - Hardware the app can't connect to yet (a robot over ethernet, a MIDI keyboard): say so in one
@@ -266,6 +274,7 @@ export const cadAgentInstructions = ({ subagents = true } = {}) =>
     COST,
     FRONT,
     GUIDES,
+    CODE_PANEL_REFERENCE,
   ]);
 
 export const PART_DESIGNER_INSTRUCTIONS = join([

@@ -112,6 +112,8 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Settings | [[⌘,]] |
 | Keyboard shortcuts | [[?]] |
 
+While a Case runs, [[⌘Z]], [[⇧⌘Z]] and [[⌘Y]] undo and redo only changes to its code panels. [[⌘I]] shows or hides the **Agent** tab beside it.
+
 ## Agent
 
 These keys work in the message field of the **Agent** tab.

@@ -1,6 +1,8 @@
 import {
   CasesIcon,
   CheckIcon,
+  CodeIcon,
+  DeleteIcon,
   EditIcon,
   LookIcon,
   RoutinesIcon,
@@ -13,6 +15,9 @@ import { plainRule, type ToolRule } from './toolRule';
 export const SIM_RULES: ToolRule[] = [
   plainRule(['create_case'], CasesIcon, ['Making a Case', 'Made a Case']),
   plainRule(['run_case'], RunIcon, ['Running the Case', 'Ran the Case']),
+  plainRule(['write_case_code'], CodeIcon, ['Writing the Case’s code', 'Wrote the Case’s code']),
+  plainRule(['read_case_code'], LookIcon, ['Reading the Case’s code', 'Read the Case’s code']),
+  plainRule(['delete_case_code'], DeleteIcon, ['Deleting a code panel', 'Deleted a code panel']),
   plainRule(['explore_case'], SwapIcon, ['Exploring servos', 'Explored servos']),
   plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
   plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),

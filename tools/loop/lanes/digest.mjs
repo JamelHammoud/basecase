@@ -1,3 +1,4 @@
+import { conflictLog, conflictsByFile } from '../lib/conflicts.mjs';
 import { createIssue, issues } from '../lib/github.mjs';
 import {
   DAY_MS,
@@ -47,6 +48,7 @@ export default function digest({ log }) {
     from,
     to,
     previous: parseDigest(last?.body),
+    conflicts: conflictsByFile(conflictLog.all(), { from, to }),
   });
   const url = createIssue({ title: digestTitle(from), body: digestBody(stats), labels: [DIGEST] });
 

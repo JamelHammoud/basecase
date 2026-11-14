@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +8,7 @@ const bin = (relative) => path.join(root, 'node_modules', relative);
 const SCRIPT = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/;
 const TYPED = /\.(ts|tsx|mts|cts)$/;
 const TESTED_ROOTS = ['src/', 'electron/', 'tools/', 'bench/', 'verify/lib/'];
+const TEST_FILE = /\.test\.(ts|tsx|mts|js|mjs)$/;
 const SITE_INPUTS = /^(?:site\/|tools\/(?:site|copy)\/|src\/.+\.tsx?$|electron\/[^/]+\.(?:mjs|json)$)/;
 
 function git(args) {
@@ -45,10 +46,29 @@ function nodeTool(label, script, args) {
   return run(label, process.execPath, [bin(script), ...args]);
 }
 
+function nearestTests(file) {
+  for (let dir = path.posix.dirname(file); TESTED_ROOTS.some((prefix) => `${dir}/`.startsWith(prefix));) {
+    const tests = readdirSync(path.join(root, dir)).filter((name) => TEST_FILE.test(name));
+
+    if (tests.length > 0) return tests.map((name) => `${dir}/${name}`);
+
+    dir = path.posix.dirname(dir);
+  }
+
+  return [];
+}
+
+function testedFiles(files) {
+  const underRoots = files.filter((file) => TESTED_ROOTS.some((prefix) => file.startsWith(prefix)));
+  const data = underRoots.filter((file) => !SCRIPT.test(file) && !file.endsWith('.md') && !file.endsWith('.py'));
+
+  return [...new Set([...underRoots.filter((file) => SCRIPT.test(file)), ...data, ...data.flatMap(nearestTests)])];
+}
+
 function steps(files) {
   const scripts = files.filter((file) => SCRIPT.test(file));
   const python = files.filter((file) => file.endsWith('.py'));
-  const tested = scripts.filter((file) => TESTED_ROOTS.some((prefix) => file.startsWith(prefix)));
+  const tested = testedFiles(files);
 
   return [
     () => nodeTool('Prettier', 'prettier/bin/prettier.cjs', ['--check', '--ignore-unknown', ...files]),

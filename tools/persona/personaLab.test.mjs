@@ -62,6 +62,31 @@ describe('PersonaLab offline parts', () => {
     expect(session.findings).toEqual([{ where: 'Export', problem: 'Nothing happens on click.', at: [100, 200] }]);
   });
 
+  it('zooms into a region at full resolution and keeps clicks on the full screenshot', async () => {
+    const { screen, calls } = fakeScreen(2960, 1840);
+    const session = createSession({ screen, minutes: 1 });
+
+    await session.handlers.look();
+
+    const close = await session.handlers.zoom({ x: 100, y: 100, width: 200, height: 100 });
+
+    await session.handlers.click({ x: 100, y: 200 });
+    expect(close.text).toMatch(/^Close-up of 200 × 100 at 2\.00×/);
+    expect(calls).toEqual([['click', 100, 200]]);
+  });
+
+  it('keeps the on-screen point of a finding reported after a scroll', () => {
+    const findings = [];
+
+    addFinding(findings, { where: 'Bearings', problem: 'Faint.', at: [195, 1400], view: [195, 700] });
+    addFinding(findings, { where: 'Export', problem: 'Dead.', at: [10, 10], view: [10, 10] });
+
+    expect(findings).toEqual([
+      { where: 'Bearings', problem: 'Faint.', at: [195, 1400], view: [195, 700] },
+      { where: 'Export', problem: 'Dead.', at: [10, 10] },
+    ]);
+  });
+
   it('keeps one finding per control and needs where and problem', () => {
     const findings = [];
 
@@ -139,7 +164,7 @@ describe('PersonaLab offline parts', () => {
     const tools = personaTools({});
 
     expect(toolNames(tools)).toEqual(
-      ['look', 'tree', 'click', 'type', 'press', 'scroll', 'wait', 'report', 'withdraw', 'finish'].map(
+      ['look', 'tree', 'zoom', 'click', 'type', 'press', 'scroll', 'wait', 'report', 'withdraw', 'finish'].map(
         (n) => `mcp__persona__${n}`,
       ),
     );

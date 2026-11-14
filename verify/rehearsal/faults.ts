@@ -15,6 +15,8 @@ export const FAULT_KINDS = Object.freeze([
 
 export type FaultKind = (typeof FAULT_KINDS)[number];
 
+export const MISLEADING_LABEL = 'Delete Everything';
+
 export interface FaultSpec {
   kind: FaultKind;
   name: string;
@@ -46,7 +48,7 @@ export function namedControls(page: Page): Promise<string[]> {
 
 export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
   return page.evaluate(
-    ({ list, selector }) => {
+    ({ list, selector, misleading }) => {
       const label = (el: Element) => (el.getAttribute('aria-label') ?? el.textContent ?? '').trim();
       const done = new WeakSet<Element>();
       const rects: Record<string, DOMRect[]> = {};
@@ -82,7 +84,7 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
         'label-removed': unlabel,
         tiny: (el) => Object.assign(el.style, { height: '14px', fontSize: '9px', minHeight: '0' }),
         'dead-click': swallow,
-        'misleading-label': (el) => retext(el, 'Delete Everything'),
+        'misleading-label': (el) => retext(el, misleading),
         'low-contrast': (el) => Object.assign(el.style, { color: '#262626', background: '#222222' }),
         'slow-response': (el) => {
           el.addEventListener(
@@ -160,7 +162,7 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
       tick();
       setInterval(tick, 250);
     },
-    { list: specs, selector: TARGETS },
+    { list: specs, selector: TARGETS, misleading: MISLEADING_LABEL },
   );
 }
 

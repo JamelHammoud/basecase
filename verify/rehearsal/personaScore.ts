@@ -1,10 +1,11 @@
-import type { FaultKind, Rect } from './faults';
+import { MISLEADING_LABEL, type FaultKind, type Rect } from './faults';
 
 export const PERSONA_BARS = Object.freeze({ faults: 30, sessions: 10, recall: 0.8, precision: 0.5, slackPx: 8 });
 
 export interface Finding {
   where: string;
   at?: [number, number];
+  view?: [number, number];
   problem: string;
 }
 
@@ -31,10 +32,14 @@ const inside = (at: [number, number] | undefined, r: Rect | null, slack: number)
 
 const squashed = (text: string) => text.toLowerCase().replace(/\s+/g, '');
 
-const names = (f: Finding, fault: PlantedFault) => squashed(f.where).includes(squashed(fault.name));
+const shownNames = (fault: PlantedFault) =>
+  fault.kind === 'misleading-label' ? [fault.name, MISLEADING_LABEL] : [fault.name];
+
+const names = (f: Finding, fault: PlantedFault) =>
+  shownNames(fault).some((name) => squashed(f.where).includes(squashed(name)));
 
 const placed = (f: Finding, fault: PlantedFault) =>
-  [fault.rect, ...(fault.seen ?? [])].some((r) => inside(f.at, r, PERSONA_BARS.slackPx));
+  [fault.rect, ...(fault.seen ?? [])].some((r) => [f.at, f.view].some((p) => inside(p, r, PERSONA_BARS.slackPx)));
 
 export const matches = (f: Finding, fault: PlantedFault) => names(f, fault) || placed(f, fault);
 

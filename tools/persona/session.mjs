@@ -1,5 +1,5 @@
 import { setTimeout as sleep } from 'node:timers/promises';
-import { frameOf } from './frame.mjs';
+import { closeUpOf, frameOf } from './frame.mjs';
 import { addScroll, scrollAt, scrolledBy } from './scrollShift.mjs';
 
 export const SESSION = Object.freeze({
@@ -23,13 +23,16 @@ function sameFinding(a, b) {
 export function addFinding(findings, raw) {
   const where = String(raw.where ?? '').trim();
   const problem = String(raw.problem ?? '').trim();
-  const at = raw.at && raw.at.every(finite) ? raw.at.map((v) => Math.round(Number(v))) : undefined;
+  const point = (p) => (p && p.every(finite) ? p.map((v) => Math.round(Number(v))) : undefined);
+  const at = point(raw.at);
+  const view = point(raw.view);
+  const scrolled = at && view && (view[0] !== at[0] || view[1] !== at[1]);
 
   if (!where || !problem) return 'A finding needs where and problem.';
 
   if (findings.length >= SESSION.maxFindings) return 'Finding limit reached. Report only the clearest problems.';
 
-  const finding = { where, problem, ...(at ? { at } : {}) };
+  const finding = { where, problem, ...(at ? { at } : {}), ...(scrolled ? { view } : {}) };
 
   if (findings.some((f) => sameFinding(f, finding))) return `Already reported ${where}.`;
 
@@ -105,6 +108,15 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
   const handlers = {
     look: () => look(),
     tree: async () => ({ text: (await screen.accessibilityTree()).slice(0, SESSION.treeChars) }),
+    zoom: async ({ x, y, width, height }) => {
+      const box = { x: css(x), y: css(y), width: css(width), height: css(height) };
+      const shot = await closeUpOf(await screen.screenshot(), box, devicePixelRatio);
+
+      return {
+        image: shot.data,
+        text: `Close-up of ${box.width} × ${box.height} at ${shot.scale}×. Coordinates still refer to the full screenshot.`,
+      };
+    },
     click: ({ x, y }) =>
       after(() => {
         state.pointer = [css(x), css(y)];
@@ -120,9 +132,10 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
       return look();
     },
     report: ({ where, x, y, problem }) => {
-      const at = finite(x) && finite(y) ? [css(x), css(y) + scrollAt(state.scrolls, css(x))] : undefined;
+      const view = finite(x) && finite(y) ? [css(x), css(y)] : undefined;
+      const at = view && [view[0], view[1] + scrollAt(state.scrolls, view[0])];
 
-      return { text: `${addFinding(findings, { where, problem, at })} ${clock()}` };
+      return { text: `${addFinding(findings, { where, problem, at, view })} ${clock()}` };
     },
     withdraw: ({ where }) => ({ text: withdrawFinding(findings, where) }),
     finish: () => {

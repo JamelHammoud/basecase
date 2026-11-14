@@ -1,7 +1,7 @@
 ---
 title: Drive a robot in the simulation
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 2
@@ -31,7 +31,7 @@ covers:
   - src/sim/drive.ts
 ---
 
-You can steer an arm, a rover or a walking robot live in MuJoCo with the keyboard or a gamepad, and try the robot out before you build it.
+Before you build a robot, you can drive it in MuJoCo to see how it moves. Steer an arm, a rover or a walking robot live with your keyboard or a gamepad.
 
 1. Click **Simulate** at the top of the right panel. Make sure no Case is open.
 2. In **Control**, click **Drive**. If the robot has legs and no **Walk** skill, Basecase first runs a 5-second fall check and shows "Checking it stays up…".
@@ -40,11 +40,9 @@ You can steer an arm, a rover or a walking robot live in MuJoCo with the keyboar
 5. To put the robot back where it started, press [[R]].
 6. To stop driving, press [[Esc]].
 
-To stop, you can also click **Stop Driving** under **Control**. You can find **Drive** in [[⌘K]] as well.
+While you drive, the controller under **Control** reads **Drive**. You can also stop by clicking **Stop Driving** or by choosing another controller, such as **Hold pose**. **Drive** is in [[⌘K]] as well. If a Case is open, **Try It** starts driving instead. See [Try a Case](/help/try-a-case).
 
-**Note:** If a Case is open, **Try It** starts driving instead. See [Try a Case](/help/try-a-case).
-
-A humanoid or an arm can also follow your own arms. Click **Drive with Camera** under **Control**, then follow the steps in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+A humanoid or an arm can follow your own arms. Click **Drive with Camera** under **Control**, then follow the steps in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 ## Keys
 
@@ -60,7 +58,7 @@ A humanoid or an arm can also follow your own arms. Click **Drive with Camera** 
 | Any | [[R]] | Start over |
 | Any | [[Esc]] | Stop driving |
 
-The arrow keys work the same way as [[W A S D]]. If a text field has focus, the keys do nothing, and the canvas shows "Click the canvas to drive".
+The arrow keys work the same as [[W A S D]]. If a text field has focus, the keys do nothing, and the canvas shows "Click the canvas to drive".
 
 ## Gamepad
 
@@ -75,9 +73,9 @@ Basecase reads the first gamepad that's connected. While a stick is inside its d
 
 ## What each robot does
 
-An arm moves its hand using inverse kinematics (IK): you steer the hand, and Basecase works out the joint angles 50 times a second. The hand moves at up to 0.9 times the arm's reach per second and never goes outside that reach. If you let go of the keys, the hand stays where it is.
+An arm moves its hand with inverse kinematics (IK). You steer the hand, and Basecase works out the joint angles 50 times a second. The hand moves at up to 0.9 times the arm's reach per second and never goes outside that reach. If you let go of the keys, the hand holds where it is.
 
-A robot with four or more legs walks with a built-in gait. Once any robot, including a two-legged one, has a ready **Walk** skill, Drive walks with that skill instead. The overlay shows the speed in m/s. If the robot falls, it shows "Fell. Press R."
+A robot with four or more legs walks with a built-in gait. Once a robot has a ready **Walk** skill, Drive uses that skill instead, even on a two-legged robot. The overlay shows the speed in m/s, or "Fell. Press R." if the robot falls.
 
 Some robots show **Teach It to Move** instead of **Drive**:
 

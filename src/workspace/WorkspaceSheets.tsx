@@ -51,7 +51,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           />
         </ErrorBoundary>
       )}
-      <ErrorBoundary region="Import robot" resetKey={robots.importRobotOpen} onClose={robots.closeImportRobot}>
+      <ErrorBoundary region="Import Robot" resetKey={robots.importRobotOpen} onClose={robots.closeImportRobot}>
         <ImportRobotSheet
           key={robots.robotChoice?.choices.join('\n') ?? 'link'}
           open={robots.importRobotOpen}
@@ -60,12 +60,12 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           onImport={(src, at) => void importRobotFrom(src, at)}
         />
       </ErrorBoundary>
-      <ErrorBoundary region="Install skill" resetKey={installing} onClose={skillHub.closeInstall}>
+      <ErrorBoundary region="Install Skill" resetKey={installing} onClose={skillHub.closeInstall}>
         <InstallSkillSheet open={installing} onClose={skillHub.closeInstall} onInstall={skillHub.install} />
       </ErrorBoundary>
       <PlaceOnMapHost active={active} earth={actions.earth} />
       {arm.targets && (
-        <ErrorBoundary region="Arm sizing" onClose={arm.close}>
+        <ErrorBoundary region="Size Arm to Targets" onClose={arm.close}>
           <ArmSizingSheet
             targets={arm.targets}
             busy={arm.busy}
@@ -76,7 +76,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         </ErrorBoundary>
       )}
       {pose.motion && (
-        <ErrorBoundary key={pose.motion.name} region="Motion import" onClose={pose.closeMotion}>
+        <ErrorBoundary key={pose.motion.name} region={`Import ${pose.motion.name}`} onClose={pose.closeMotion}>
           <RetargetSheet
             motion={pose.motion}
             rig={posing.robot?.rig ?? posing.rig}

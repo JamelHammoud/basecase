@@ -90,7 +90,7 @@
   "verify/lib/canary.test.mjs": "2b9d27f52a74688e3367a60670da85b3b2553d4101311218348e876a2e3ce184",
   "verify/lib/gate.mjs": "773a708f9c987f4c4a0f82bb5c5113843796e6d8e94ca867f180817ec78d9400",
   "verify/lib/isolation.mjs": "f2952b371588869a5428936475fb032dee3715d90db08a75750c4d39a6a46d31",
-  "verify/lib/lease.mjs": "dacc22925a62d63ca6213c1fe2c56aeb55a57fa056338cd5fb19e92ca8a60fcb",
+  "verify/lib/lease.mjs": "e9a405784899a9946c51c6c05793887b48fac468533eff297f33e77a34497dcb",
   "verify/lib/lease.test.mjs": "669371256a1b275cb37f1135417d080e33b4e6d93ef273b137fdeea916f144fd",
   "verify/lib/need.ts": "706fd82b6cf854da115f2e9109c77952bf6914cd2a79fca7e50958b62168923e",
   "verify/lib/python.mjs": "e7247266aa7aa0187d2e476a3b0a2ae1a255f083270e8e85d9fb6c51f1d77906",

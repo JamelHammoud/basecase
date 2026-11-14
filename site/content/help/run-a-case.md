@@ -1,7 +1,7 @@
 ---
 title: Run a Case
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 5
@@ -80,7 +80,7 @@ It can keep a value of up to 64 KB, such as a high score, on this computer. The 
 
 ![A rover Case running, with a code panel showing the Scene camera and the target its code moved and lit red](/help/run-a-case/world.png)
 
-A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
+A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead. Any other panel that fails shows its title and “stopped working”, with **Reload**, while the robot and the try keep going.
 
 The agent can write these panels and change them while the Case runs. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
 

@@ -110,7 +110,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
         />
       ))}
 
-      <ErrorBoundary region="Tabs" className={TITLE_BAR_FALLBACK}>
+      <ErrorBoundary region="Scene tabs" className={TITLE_BAR_FALLBACK}>
         <TitleBarTabs
           tabs={core.tabs}
           metas={core.metas}

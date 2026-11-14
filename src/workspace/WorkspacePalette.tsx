@@ -42,7 +42,7 @@ export function WorkspacePalette({ open, inputs, onClose }: WorkspacePaletteProp
   if (!open) return null;
 
   return (
-    <ErrorBoundary region="Commands" onClose={onClose}>
+    <ErrorBoundary region="Command Menu" onClose={onClose}>
       <OpenPalette inputs={inputs} onClose={onClose} />
     </ErrorBoundary>
   );

@@ -72,7 +72,7 @@ export function useStudio(sources: StudioSources) {
   const { customModels, setCustomModels, uploadedImages, setUploadedImages, chatList, setChatList } = libraries;
   const { acpStatus, reconnectAcp, signInAcp, saveAgentApiKey, agentChoice, setAgentChoice } = agent;
   const { register, reportMeta, newScene, selectTab, robotsBeside, handleOf } = core;
-  const { renameTab, closeTab, duplicateTab, reopenTab, cycleTab, focusChat, notify } = actions;
+  const { renameTab, setRenamingTab, closeTab, duplicateTab, reopenTab, cycleTab, focusChat, notify } = actions;
   const canReopenTab = core.closed.length > 0;
 
   return useMemo<StudioShared>(
@@ -114,6 +114,7 @@ export function useStudio(sources: StudioSources) {
       importSceneFile,
       selectTab,
       renameTab,
+      startRenameTab: setRenamingTab,
       closeTab,
       duplicateTab,
       reopenTab,
@@ -159,6 +160,7 @@ export function useStudio(sources: StudioSources) {
       importSceneFile,
       selectTab,
       renameTab,
+      setRenamingTab,
       closeTab,
       duplicateTab,
       reopenTab,

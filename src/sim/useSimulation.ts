@@ -27,6 +27,7 @@ import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
 import type { AmpModel } from '../utils/servoAmps';
 import { errorMessage } from '../utils/errorMessage';
+import type { FallPlan, FallRun } from './fallRuns';
 
 export interface SimFrame {
   joints: Float64Array;
@@ -64,7 +65,7 @@ export interface Simulation {
     hand: { position: THREE.Vector3; turn: THREE.Quaternion | null } | null,
     phase: 'start' | 'move' | 'end',
   ) => void;
-  push: (robot?: string) => void;
+  push: (robot?: string, fallDeg?: number) => void;
   setFault: (jointId: string, kind: FaultKind | null) => void;
   drive: SimDrive;
   record: () => void;
@@ -96,6 +97,7 @@ export interface Simulation {
     currents?: Record<string, AmpModel>;
     commands?: Array<{ at: number; command: DriveCommand }>;
   }) => Promise<SimRun>;
+  falls: (plan: (model: SimModel, robot: string) => FallPlan) => Promise<{ model: SimModel; runs: FallRun[] }>;
 }
 
 interface Inputs {
@@ -112,49 +114,68 @@ export type RunOptions = Parameters<Simulation['run']>[0];
 
 type Ran = Extract<SimResponse, { type: 'ran' }>;
 
-async function runModel(
-  m: SimModel,
-  { seconds, controller: c, pushes, frames, forceLimits, trace, currents, commands }: RunOptions,
-  id: number,
-): Promise<SimRun> {
+interface OneShot<T> {
+  controller: Controller;
+  ask: (robot: string) => SimRequest;
+  answer: (msg: SimResponse) => T | undefined;
+}
+
+async function oneShot<T>(m: SimModel, { controller, ask, answer }: OneShot<T>): Promise<T> {
   const w = newSimWorker();
 
   try {
-    const result = await new Promise<Ran>((resolve, reject) => {
+    return await new Promise<T>((resolve, reject) => {
       w.onmessage = (ev: MessageEvent<SimResponse>) => {
         const msg = ev.data;
+        const done = answer(msg);
 
-        if (msg.type === 'ready') {
-          const key = m.robots.find((r) => r.floating)?.key ?? m.robots[0]?.key ?? '';
-
-          w.postMessage({
-            type: 'run',
-            id,
-            seconds,
-            frames,
-            pushes: pushes?.map((p) => ({ at: p.at, robot: p.robot ?? key, force: p.force })),
-            forceLimits: forceLimits?.(m),
-            trace,
-            currents,
-            commands,
-          } satisfies SimRequest);
-        } else if (msg.type === 'error') reject(new Error(msg.message));
-        else if (msg.type === 'ran') resolve(msg);
+        if (msg.type === 'ready') w.postMessage(ask(m.robots.find((r) => r.floating)?.key ?? m.robots[0]?.key ?? ''));
+        else if (msg.type === 'error') reject(new Error(msg.message));
+        else if (done !== undefined) resolve(done);
       };
       w.onerror = (e) => reject(new Error(e.message || 'The simulator stopped.'));
-      w.postMessage({ type: 'load', model: m, controller: c } satisfies SimRequest);
+      w.postMessage({ type: 'load', model: m, controller } satisfies SimRequest);
     });
-
-    return {
-      stats: result.stats,
-      frames: result.frames.map((f) => ({ t: f.t, deltas: simDeltas(m, f.poses), poses: f.poses })),
-      model: m,
-      trace: result.trace,
-    };
   } finally {
     w.terminate();
   }
 }
+
+async function runModel(
+  m: SimModel,
+  { seconds, controller, pushes, frames, forceLimits, trace, currents, commands }: RunOptions,
+  id: number,
+): Promise<SimRun> {
+  const result = await oneShot<Ran>(m, {
+    controller,
+    ask: (key) => ({
+      type: 'run',
+      id,
+      seconds,
+      frames,
+      pushes: pushes?.map((p) => ({ at: p.at, robot: p.robot ?? key, force: p.force })),
+      forceLimits: forceLimits?.(m),
+      trace,
+      currents,
+      commands,
+    }),
+    answer: (msg) => (msg.type === 'ran' ? msg : undefined),
+  });
+
+  return {
+    stats: result.stats,
+    frames: result.frames.map((f) => ({ t: f.t, deltas: simDeltas(m, f.poses), poses: f.poses })),
+    model: m,
+    trace: result.trace,
+  };
+}
+
+export const fallsOn = (m: SimModel, plan: (model: SimModel, robot: string) => FallPlan, id: number) =>
+  oneShot<FallRun[]>(m, {
+    controller: { kind: 'hold' },
+    ask: (robot) => ({ type: 'falls', id, ...plan(m, robot) }),
+    answer: (msg) => (msg.type === 'fell' ? msg.runs : undefined),
+  });
 
 interface SceneModelOptions {
   alone?: boolean;
@@ -417,6 +438,11 @@ export function useSimulation(props: Inputs): Simulation {
       const m = await buildModel();
 
       return runModel(m, opts, ++runSeq.current);
+    },
+    falls: async (plan) => {
+      const m = await buildModel();
+
+      return { model: m, runs: await fallsOn(m, plan, ++runSeq.current) };
     },
   };
 }

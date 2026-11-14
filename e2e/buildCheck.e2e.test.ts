@@ -7,46 +7,24 @@ import { L_BRACKET_NAME, lBracketScene } from '../src/strength/fixtures/lBracket
 import type { WalkSim } from '../src/utils/engineeringTypes';
 import { buildRig } from '../src/utils/kinematics';
 import { so101 } from '../src/wiring/fixtures';
-import { armWithEstimates, bomRow, loadKnees, servo, standIn, storeWalk, type StudioHook } from './buildCheckFixtures';
+import {
+  armWithEstimates,
+  bomRow,
+  buildCheckPage,
+  loadKnees,
+  servo,
+  storeWalk,
+  visible,
+  type StudioHook,
+} from './buildCheckFixtures';
+import { agentRequest, kneeLink, loadFallBiped, openedItem, selection } from './fallsFixtures';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
 
-const visible = (selector: string) => `${selector}:not([inert] *):visible`;
-
-const addCube = async () => {
-  await app.page.keyboard.press('a');
-  await app.page.getByRole('button', { name: /^Cube/ }).first().click();
-};
-
-const loadParts = (parts: unknown[]) =>
-  app.page.evaluate((list) => {
-    const studio = (window as unknown as { __studio: StudioHook }).__studio;
-
-    studio.load({ parts: list, project: studio.sceneRecord().project });
-  }, parts);
-
-const loadStandIns = () => loadParts([standIn('one', -60), standIn('two', 60)]);
-
-const checks = () => app.page.locator(visible('section'), { hasText: /^Checks/ }).first();
-
-const section = (title: RegExp) => app.page.locator(visible('section'), { hasText: title }).first();
-
-const checkRow = (name: string) =>
-  checks()
-    .locator('li')
-    .filter({ has: app.page.getByRole('button', { name: new RegExp(`^${name}`) }) })
-    .first();
-
-const expand = async (row: ReturnType<typeof checkRow>, name: string) => {
-  const button = row.getByRole('button', { name: new RegExp(`^${name}`) }).first();
-
-  if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
-};
-
-const headerText = async () => (await checks().locator('header').first().textContent()) ?? '';
-
-const buildTabDot = () => app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().getByRole('img');
+const { checks, checkRow, section, headerText, buildTabDot, expand, addCube, loadParts, loadStandIns } = buildCheckPage(
+  () => app.page,
+);
 
 beforeAll(async () => {
   app = await openApp();
@@ -261,6 +239,22 @@ describe('Build tab fields', () => {
 
     await row.getByRole('button', { name: /^Right knee/ }).click();
     await expect.poll(() => plot('jb').isVisible()).toBe(true);
+  }, 120000);
+
+  it('fail Falls at the long-legged biped’s knee, and select the knee’s link from its item', async () => {
+    const row = checkRow('Falls');
+    const kneeItem = row.locator('li', { hasText: /knee: \d+\.\d× rated, falling / }).first();
+    const biped = await loadFallBiped(app.page);
+
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    await agentRequest(app.page, 'verify', { falls: true });
+    await expect.poll(() => openedItem(row, 'Falls', kneeItem), { timeout: 60000 }).toBe(true);
+
+    const text = (await kneeItem.textContent()) ?? '';
+
+    expect(text).toMatch(/strip its gears/);
+    await kneeItem.getByRole('button', { name: 'Replay in Sim' }).click();
+    await expect.poll(() => selection(app.page), { timeout: 10000 }).toEqual(kneeLink(biped, text));
   }, 120000);
 
   it('set a budget beside the bill of materials total', async () => {

@@ -69,7 +69,7 @@ export interface RequestContext {
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
-  verify: (opts?: { peak?: boolean }) => Promise<EngineeringReport>;
+  verify: (opts?: { peak?: boolean; falls?: boolean }) => Promise<EngineeringReport>;
   readiness: ReadinessHandle;
   sweep: (payload: SweepPayload) => Promise<{ text: string }>;
   applyOps: (ops: AgentOp[]) => Promise<string>;
@@ -313,7 +313,9 @@ const HANDLERS: Record<string, Handler> = {
   verify: async (payload, ctx) => {
     ctx.setAction('Checking the design');
 
-    return { text: engineeringText(await ctx.verify({ peak: payload.peak === true }), toCad) };
+    return {
+      text: engineeringText(await ctx.verify({ peak: payload.peak === true, falls: payload.falls === true }), toCad),
+    };
   },
   set_build: setBuild,
   readiness: (_payload, ctx) => readinessRequest(ctx),

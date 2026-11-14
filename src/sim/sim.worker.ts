@@ -20,6 +20,7 @@ import { errorMessage } from '../utils/errorMessage';
 import { PoseGate } from './poseGate';
 import { WorldMoves } from './worldMoves';
 import type { WorldChange, WorldLooks } from '../cases/worldSet';
+import { runFalls, type FallPlan, type FallRun } from './fallRuns';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -28,7 +29,7 @@ export type SimRequest =
   | { type: 'reset'; initial?: RobotPoseState }
   | { type: 'speed'; value: number }
   | { type: 'controller'; controller: Controller }
-  | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number }
+  | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number; releaseDeg?: number }
   | ({ type: 'command' } & DriveCommand)
   | { type: 'script'; commands: Array<{ at: number; command: DriveCommand }> }
   | { type: 'respawn'; robot?: string }
@@ -50,6 +51,7 @@ export type SimRequest =
       currents?: Record<string, AmpModel>;
       commands?: Array<{ at: number; command: DriveCommand }>;
     }
+  | ({ type: 'falls'; id: number } & FallPlan)
   | ({ type: 'routine' } & LiveRoutineInput)
   | ({ type: 'case' } & LiveCaseInput)
   | { type: 'caseEnd' }
@@ -77,6 +79,7 @@ export type SimResponse =
       facts?: CaseFacts;
       scan?: Scan;
     }
+  | { type: 'fell'; id: number; runs: FallRun[] }
   | {
       type: 'ran';
       id: number;
@@ -396,7 +399,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   grab,
   push: (msg) => {
-    engine?.pushRobot(msg.robot, msg.force, msg.seconds);
+    engine?.pushRobot(msg.robot, msg.force, { seconds: msg.seconds, releaseDeg: msg.releaseDeg });
   },
   command: ({ slot, v, target, aux, joints }) => {
     if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux, joints });
@@ -417,6 +420,11 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   scrub,
   seek,
   run,
+  falls: (msg) => {
+    if (!mj || !engine) throw new Error('Nothing loaded');
+
+    post({ type: 'fell', id: msg.id, runs: runFalls(mj, engine, msg) });
+  },
   routine: startRoutine,
   case: startCase,
   caseEnd: () => {
@@ -450,6 +458,6 @@ ctx.onmessage = async (ev: MessageEvent<SimRequest>) => {
   try {
     await (handlers[msg.type] as (m: SimRequest) => void | Promise<void>)(msg);
   } catch (e) {
-    post({ type: 'error', message: errorText(e), id: msg.type === 'run' ? msg.id : undefined });
+    post({ type: 'error', message: errorText(e), id: msg.type === 'run' || msg.type === 'falls' ? msg.id : undefined });
   }
 };

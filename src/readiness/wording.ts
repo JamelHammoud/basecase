@@ -120,6 +120,10 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
     blocker: 'This servo gets pushed past its limit while walking.',
     note: 'This servo has little to spare while walking.',
   },
+  Falls: {
+    blocker: 'This servo could strip its gears when the robot falls.',
+    note: 'This servo has little to spare when the robot falls.',
+  },
   'Torque estimates': { note: 'These joints have no servo, so the simulation guesses their torque from weight.' },
   'Servo models': { note: 'These servos aren’t calibrated on this robot.' },
   'Servo alignment': { blocker: 'These servos don’t line up with their joints.' },

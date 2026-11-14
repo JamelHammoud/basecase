@@ -5,6 +5,7 @@ collection: build-and-print
 type: task
 covers:
   - src/workspace/useBuildAlong.ts
+  - src/guide/viewer/readyMarks.ts
   - src/components/build/BuildAlongBar.tsx
   - src/guide/buildAlong.ts
   - src/three/viewport/buildStep.ts
@@ -24,3 +25,7 @@ Build Along plays your robot's build guide on the canvas, one step at a time, so
 If you changed the design since the guide was last made, Build Along makes it again first, and the bar shows its progress.
 
 ![Three servos labeled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/help/build-along/servos.png)
+
+When every printed part a step uses is marked printed, a green check appears beside the step count. The build guide shows a check beside the step number too. [Print plates on several printers](/help/print-plates-on-several-printers) prints them in this order.
+
+![Step 1 of 2 with a green check beside the count](/help/build-along/parts-ready.png)

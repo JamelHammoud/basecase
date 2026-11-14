@@ -35,6 +35,8 @@ Turn the design into a step-by-step assembly PDF, in an order Basecase checked t
 4. Press → or ← to turn the pages.
 5. Press Esc to close the guide.
 
+A check beside a step's number means every printed part in that step is marked printed in Print mode. The PDF doesn't show it.
+
 Pinch, or press + and −, to zoom. In the desktop app, **Open PDF** opens the file and **Show in Finder** shows where it's saved. If the PDF was moved or deleted, either one makes it again first.
 
 ## Keep it current

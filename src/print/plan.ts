@@ -29,6 +29,7 @@ export interface PlanInput {
   grams: number;
   supportG: number;
   hours: number;
+  firstStep?: number;
 }
 
 export interface PlanItem {
@@ -39,6 +40,7 @@ export interface PlanItem {
   y: number;
   w: number;
   d: number;
+  h: number;
   yaw: number;
   matrix: number[];
 }
@@ -51,6 +53,7 @@ export interface Plate {
   grams: number;
   hours: number;
   hash: string;
+  step?: number;
 }
 
 export interface PrintPlan {
@@ -154,10 +157,15 @@ function packItems(inputs: PlanInput[]): PackItem[] {
         diagonalYaw: diagonal ? input.check.yaw : undefined,
         fixed,
         startPlate: input.print?.plate,
+        step: input.firstStep,
       };
     }),
   );
 }
+
+const earliest = (a?: number, b?: number) => (a === undefined ? b : Math.min(a, b ?? a));
+
+const stepRank = (plate: Plate) => plate.step ?? Number.MAX_SAFE_INTEGER;
 
 interface MaterialPlan {
   material: PrintMaterial;
@@ -182,9 +190,17 @@ function materialPlates(group: MaterialPlan, bed: Bed, first: number, settings: 
     const input = byId.get(id)!;
     const plate = out[place.plate - 1];
 
-    plate.items.push({ id, copy, name: input.name, ...place, matrix: itemMatrix(input.check.pose, place, bed) });
+    plate.items.push({
+      id,
+      copy,
+      name: input.name,
+      ...place,
+      h: input.check.size[2],
+      matrix: itemMatrix(input.check.pose, place, bed),
+    });
     plate.grams += input.grams + input.supportG;
     plate.hours += input.hours;
+    plate.step = earliest(plate.step, input.firstStep);
   }
 
   for (const plate of out) {
@@ -212,6 +228,7 @@ export function buildPrintPlan(inputs: PlanInput[], setup: PrinterSetup, bed: Be
     plates.push(...materialPlates(group, bed, plates.length + 1, `${setup.model.id}|${setup.nozzle}|${settings}`));
   }
 
+  plates.sort((a, b) => stepRank(a) - stepRank(b) || a.number - b.number);
   plates.forEach((p, i) => (p.number = i + 1));
 
   const plateOf: Record<string, number> = {};

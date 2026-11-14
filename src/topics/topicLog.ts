@@ -1,4 +1,5 @@
-export type Decoded = number | string | boolean | Uint8Array | Float64Array | Decoded[] | DecodedMessage | null;
+export type Decoded =
+  bigint | number | string | boolean | Uint8Array | Float64Array | Decoded[] | DecodedMessage | null;
 
 export interface DecodedMessage {
   [field: string]: Decoded;
@@ -23,6 +24,7 @@ export interface RecordedTopic {
   lists: Map<string, Ragged>;
   blobs: Map<string, RaggedBytes>;
   clipped: boolean;
+  presence?: Map<string, Uint8Array>;
 }
 
 export interface TopicLog {

@@ -1,4 +1,5 @@
 import { lastAtOrBefore } from '../dataLayers/track';
+import { numberLabel } from './states';
 import type { RecordedTopic, TopicLog } from './topicLog';
 
 export const TOPIC_SPACE = 'topic';
@@ -47,6 +48,7 @@ export class TopicIndex {
   readonly topics: RecordedTopic[];
   readonly #byName: Map<string, RecordedTopic>;
   readonly #series = new Map<string, Timed<number>>();
+  readonly #labels = new Map<string, Timed<string>>();
   readonly #ids = new Map<string, string[]>();
 
   constructor(log: TopicLog) {
@@ -121,9 +123,22 @@ export class TopicIndex {
   }
 
   labels(id: string): Timed<string> | null {
-    const column = this.#column(id);
+    const known = this.#labels.get(id);
 
-    return column?.kind === 'label' ? { t: Array.from(column.topic.t), v: column.values } : null;
+    if (known) return known;
+
+    const resolved = this.resolve(id);
+    const values = resolved?.topic.labels.get(resolved.path);
+
+    if (!resolved || !values) return null;
+
+    const numbers = resolved.topic.numbers.get(resolved.path);
+    const v = numbers ? values.map((value, i) => value || numberLabel(numbers[i])) : values;
+    const labels = { t: Array.from(resolved.topic.t), v };
+
+    this.#labels.set(id, labels);
+
+    return labels;
   }
 
   valueAt(id: string, time: number): number | string[] | undefined {
@@ -136,7 +151,11 @@ export class TopicIndex {
 
     const value = column.kind === 'number' ? column.values[message] : this.#itemValue(column, message);
 
-    return Number.isNaN(value) ? undefined : value;
+    if (!Number.isNaN(value)) return value;
+
+    const label = column.topic.labels.get(this.resolve(id)!.path)?.[message];
+
+    return label ? [label] : undefined;
   }
 
   #topicIds(topic: RecordedTopic): string[] {
@@ -147,7 +166,9 @@ export class TopicIndex {
     const items = [...topic.lists.keys()].flatMap((path) =>
       Array.from({ length: longestList(topic, path) }, (_, i) => `${path}[${i}]`),
     );
-    const ids = [...topic.numbers.keys(), ...topic.labels.keys(), ...items].map((p) => topicRef(topic.topic, p));
+    const ids = [...new Set([...topic.numbers.keys(), ...topic.labels.keys(), ...items])].map((p) =>
+      topicRef(topic.topic, p),
+    );
 
     this.#ids.set(topic.topic, ids);
 
@@ -164,7 +185,7 @@ export class TopicIndex {
 
   listed(): string[] {
     return this.topics.flatMap((topic) => [
-      ...[...topic.numbers.keys(), ...topic.labels.keys()].map((p) => topicRef(topic.topic, p)),
+      ...[...new Set([...topic.numbers.keys(), ...topic.labels.keys()])].map((p) => topicRef(topic.topic, p)),
       ...[...topic.lists.keys()].map((p) => topicRef(topic.topic, `${p}[:]`)),
     ]);
   }

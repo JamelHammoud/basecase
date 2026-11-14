@@ -1,3 +1,4 @@
+import { flatDecoder } from './flatDecode';
 import { decodeJson } from './jsonDecode';
 import { DECODE_LIMITS, refused, tooLarge } from './limits';
 import { decodeProtobuf } from './protoDecode';
@@ -59,6 +60,12 @@ export function decoderFor(messageEncoding: string, schema: ChannelSchema | null
   if (ros && schema?.encoding === ros.schema) return rosDecoder(ros.dialect, schema);
 
   if (messageEncoding === 'protobuf' && schema?.encoding === 'protobuf') return protobufDecoder(schema);
+
+  if (messageEncoding === 'flatbuffer' && schema?.encoding === 'flatbuffer') {
+    sizeChecked(schema);
+
+    return guarded(flatDecoder(schema.name, schema.data));
+  }
 
   const jsonSchema = schema === null || JSON_SCHEMA_ENCODINGS.has(schema.encoding);
 

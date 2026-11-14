@@ -60,7 +60,7 @@ const TryRow: React.FC<TryRowProps> = (props) => {
   return (
     <button
       type="button"
-      className="w-full -mx-1.5 px-1.5 py-1.5 flex flex-col gap-1.5 rounded-[8px] text-left cursor-default hover:bg-white/[0.05] transition-colors"
+      className="-mx-1.5 px-1.5 py-1.5 flex flex-col gap-1.5 rounded-[8px] text-left cursor-default hover:bg-white/[0.05] transition-colors"
       onClick={onReplay}
       onContextMenu={onMenu}
       data-testid="try-row"

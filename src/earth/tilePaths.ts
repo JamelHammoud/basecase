@@ -1,3 +1,5 @@
+import { OFF_HOST } from '../../electron/earth/offHost.mjs';
+
 export const TILES_ORIGIN = 'https://tile.googleapis.com';
 export const TILES_ROOT_PATH = '/v1/3dtiles/root.json';
 export const TILES_ROOT_URL = `${TILES_ORIGIN}${TILES_ROOT_PATH}`;
@@ -12,7 +14,7 @@ export function tilePathOf(url: string, session: string | null): string {
   const path = parsed.pathname;
 
   if (parsed.origin !== TILES_ORIGIN || !path.startsWith(TILES_PREFIX) || !PATH_CHARS.test(path) || path.includes('..'))
-    throw new Error('A map tile request left tile.googleapis.com.');
+    throw new Error(OFF_HOST);
 
   parsed.searchParams.delete('key');
 

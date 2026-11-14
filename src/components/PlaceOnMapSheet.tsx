@@ -29,9 +29,6 @@ export const PlaceOnMapSheet: React.FC<{
           autoFocus
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') submit();
-          }}
           aria-label="Place"
           placeholder="e.g. 37.7793, -122.4193 or a Google Maps link"
         />

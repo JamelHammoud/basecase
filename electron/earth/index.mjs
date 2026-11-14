@@ -2,12 +2,12 @@ import path from 'node:path';
 import { AgentKeys } from '../backend/agentKeys.mjs';
 import { readCapped } from '../publicFetch.mjs';
 import { serviceRefusal } from '../refusal.mjs';
+import { OFF_HOST } from './offHost.mjs';
 
 export const TILES_ENDPOINT = 'https://tile.googleapis.com';
 export const ROOT_PATH = '/v1/3dtiles/root.json';
 export const KEY_REFUSED = 'Google didn’t accept the Map Tiles key in Settings ▸ Accounts.';
 export const NO_KEY = 'Add a Map Tiles key in Settings ▸ Accounts.';
-export const OFF_HOST = 'A map tile request left tile.googleapis.com.';
 
 const KEY = 'google-map-tiles';
 const KEY_SHAPE = /^[A-Za-z0-9_-]{20,128}$/;

@@ -5,7 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AWAY_PATH, startFakeTiles } from '../../e2e/fakeTiles.ts';
 import { FIXTURE_SESSION } from '../../src/earth/tileFixture.ts';
 import { EARTH_CALLS } from './routes.mjs';
-import { EarthTiles, KEY_REFUSED, NO_KEY, OFF_HOST, ROOT_PATH, tilesEndpoint, tileUrl } from './index.mjs';
+import { EarthTiles, KEY_REFUSED, NO_KEY, ROOT_PATH, tilesEndpoint, tileUrl } from './index.mjs';
+import { OFF_HOST } from './offHost.mjs';
 
 const KEY = 'test-map-tiles-key-that-must-never-leave';
 

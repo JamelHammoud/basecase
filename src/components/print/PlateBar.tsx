@@ -3,11 +3,11 @@ import { Button, FloatingIsland, IslandDivider, PackageIcon } from '../../design
 import type { Plate } from '../../print/plan';
 import type { Printing } from '../../workspace/usePrinting';
 
-const plateNote = (active: boolean) => (active ? 'text-white/80' : 'text-white/50');
+const plateNote = (active: boolean) => (active ? 'text-white/90' : 'text-white/50');
 
 const plateCell = (active: boolean) =>
   `h-[36px] px-3 rounded-[12px] text-[13px] tabular-nums cursor-default transition-colors duration-150 ${
-    active ? 'bg-figma-blue-fill text-white' : 'text-white/70 hover:bg-white/[0.06] hover:text-white/90'
+    active ? 'bg-figma-blue-fill text-white' : 'text-white/60 hover:bg-white/[0.06] hover:text-white/90'
   }`;
 
 export const PlateBar: React.FC<{ printing: Printing; plates: Plate[] }> = ({ printing, plates }) => {

@@ -25,7 +25,7 @@ const SortHeader: React.FC<{ sorting: Sorting; onSort: (key: SortKey) => void }>
         <button
           key={key}
           type="button"
-          className={`flex items-center justify-end gap-0.5 cursor-default hover:text-white/85 ${on ? 'text-white/85' : ''}`}
+          className={`flex items-center justify-end gap-0.5 cursor-default hover:text-white/90 ${on ? 'text-white/90' : ''}`}
           aria-pressed={on}
           onClick={() => onSort(key)}
         >
@@ -56,10 +56,10 @@ const ExploreRow: React.FC<RowProps> = ({ row, label, current, onApply }) => {
       data-current={current}
     >
       <Tooltip label={label} className="min-w-0">
-        <span className={`block truncate ${current ? 'text-[#0d99ff]' : 'text-white/85'}`}>{label}</span>
+        <span className={`block truncate ${current ? 'text-[#0d99ff]' : 'text-white/90'}`}>{label}</span>
       </Tooltip>
       <Tooltip label={runs.refusal} disabled={!runs.refusal} className="min-w-0">
-        <span className="block max-w-[96px] truncate tabular text-white/70" data-testid="explore-passes">
+        <span className="block max-w-[96px] truncate tabular text-white/60" data-testid="explore-passes">
           {passes}
         </span>
       </Tooltip>

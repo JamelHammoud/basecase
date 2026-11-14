@@ -83,7 +83,7 @@ const EnvelopeRow: React.FC<{ envelope: JointEnvelope }> = ({ envelope }) => {
   return (
     <li>
       <DisclosureRow open={open} onToggle={() => setOpen((v) => !v)} className="pl-[31px] pr-[7px]">
-        <span className="min-w-0 flex-1 text-[13px] leading-[18px] text-white/85">{envelope.label}</span>
+        <span className="min-w-0 flex-1 text-[13px] leading-[18px] text-white/90">{envelope.label}</span>
       </DisclosureRow>
       {open && (
         <div className="pl-[31px] pr-[7px] pb-1.5">

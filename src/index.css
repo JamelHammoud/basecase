@@ -24,7 +24,7 @@
   --color-border-strong: rgba(255, 255, 255, 0.18);
 
   /* Text tiers */
-  --color-ink: rgba(255, 255, 255, 0.92);
+  --color-ink: rgba(255, 255, 255, 0.9);
   --color-ink-2: rgba(255, 255, 255, 0.6);
   --color-ink-3: rgba(255, 255, 255, 0.5);
 
@@ -187,7 +187,7 @@
     height: 100%;
     overflow: hidden;
     background-color: #121212;
-    color: rgba(255, 255, 255, 0.92);
+    color: rgba(255, 255, 255, 0.9);
     font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.4;

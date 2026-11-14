@@ -81,7 +81,7 @@ const CommentItem: React.FC<{
           </div>
         </div>
       ) : (
-        <p className="text-[13.5px] leading-relaxed text-white/85 whitespace-pre-wrap break-words select-text">
+        <p className="text-[13.5px] leading-relaxed text-white/90 whitespace-pre-wrap break-words select-text">
           {text}
         </p>
       )}

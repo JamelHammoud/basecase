@@ -9,7 +9,7 @@ const RemoveChip: React.FC<{ label: string; onClick: () => void }> = ({ label, o
     type="button"
     aria-label={label}
     onClick={onClick}
-    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#3a3a3a] shadow-[0_1px_3px_rgba(0,0,0,0.35)] text-white/80 hover:text-white flex items-center justify-center cursor-default"
+    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#3a3a3a] shadow-[0_1px_3px_rgba(0,0,0,0.35)] text-white/90 hover:text-white flex items-center justify-center cursor-default"
   >
     <CloseIcon className="w-3 h-3" strokeWidth={3} />
   </button>
@@ -27,7 +27,7 @@ const FolderTile: React.FC<{ folder: FolderChip; onRemove: () => void }> = ({ fo
   <div className="relative animate-pop-up min-w-0 max-w-full">
     <div className="h-14 max-w-[220px] pl-2.5 pr-3.5 rounded-xl bg-white/[0.06] ring-1 ring-white/10 flex items-center gap-2.5">
       <span className="w-[28px] h-[28px] rounded-lg bg-white/[0.07] flex items-center justify-center shrink-0">
-        {f.ready ? <FolderIcon className="w-4 h-4 text-white/75" /> : <Spinner className="w-4 h-4 text-white/50" />}
+        {f.ready ? <FolderIcon className="w-4 h-4 text-white/60" /> : <Spinner className="w-4 h-4 text-white/50" />}
       </span>
       <span className="min-w-0">
         <span className="block text-[13px] text-white/90 truncate">{f.name}</span>

@@ -23,7 +23,7 @@ export const QueuedRowBody: React.FC<{ params: QueuedDraft }> = ({ params }) => 
     <>
       {image && <img src={image} alt="" draggable={false} className="w-6 h-6 rounded-md object-cover shrink-0" />}
       {!image && hasFolders && <FolderIcon className="w-4 h-4 shrink-0 text-white/50" />}
-      <span className="flex-1 min-w-0 truncate text-[13px] text-white/75">{summaryOf(params)}</span>
+      <span className="flex-1 min-w-0 truncate text-[13px] text-white/60">{summaryOf(params)}</span>
     </>
   );
 };

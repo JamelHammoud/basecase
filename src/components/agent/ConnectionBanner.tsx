@@ -44,7 +44,7 @@ const ApiKeyField: React.FC<{ onSave: (key: string) => Promise<void>; onCancel: 
 };
 
 const DownloadBanner: React.FC<{ download: NonNullable<AcpStatusInfo['download']> }> = ({ download }) => (
-  <div className="mx-[8px] px-3 py-2.5 rounded-xl bg-white/[0.04] text-[13px] text-white/70 flex flex-col gap-2">
+  <div className="mx-[8px] px-3 py-2.5 rounded-xl bg-white/[0.04] text-[13px] text-white/60 flex flex-col gap-2">
     <div className={ROW}>
       <span className="flex-1 min-w-0 truncate">Downloading {download.name}…</span>
       <span className="text-[12.5px] text-white/50 tabular-nums">{percent(download.percent / 100)}</span>

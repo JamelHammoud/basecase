@@ -65,7 +65,7 @@ export const StripButton: React.FC<{
       type="button"
       aria-label={title}
       onClick={onClick}
-      className={`flex-1 min-w-0 h-[32px] rounded-md flex items-center justify-center gap-1.5 text-[13px] text-white/65 hover:text-white hover:bg-white/[0.08] active:scale-[0.96] cursor-default transition-[background-color,color,transform] duration-150 ${className}`}
+      className={`flex-1 min-w-0 h-[32px] rounded-md flex items-center justify-center gap-1.5 text-[13px] text-white/60 hover:text-white hover:bg-white/[0.08] active:scale-[0.96] cursor-default transition-[background-color,color,transform] duration-150 ${className}`}
     >
       {children}
     </button>

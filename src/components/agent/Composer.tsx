@@ -190,7 +190,7 @@ export const Composer: React.FC<{
               onPaste={onPaste}
               onKeyDown={onKeyDown}
               aria-label={`Message ${agentName}`}
-              className="block w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[14px] leading-relaxed text-white/95 outline-none"
+              className="block w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[14px] leading-relaxed text-white/90 outline-none"
             />
             {!promptText && <CyclingPlaceholder key={exampleSet} examples={EXAMPLES[exampleSet]} />}
             <SlashMenu slash={slash} promptRef={promptRef} />

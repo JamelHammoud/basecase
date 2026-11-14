@@ -18,10 +18,10 @@ const CompareRow: React.FC<RowProps> = ({ robot, better, onShow }) => {
   const body = (
     <>
       <span className="flex items-center gap-2 text-[13px]">
-        <span className="flex-1 min-w-0 truncate text-white/85">{robot.name}</span>
+        <span className="flex-1 min-w-0 truncate text-white/90">{robot.name}</span>
         <Tooltip label={runs.refusal} disabled={!runs.refusal} className="min-w-0">
           <span
-            className={`min-w-0 truncate tabular ${better ? 'text-[#0d99ff]' : 'text-white/70'}`}
+            className={`min-w-0 truncate tabular ${better ? 'text-[#0d99ff]' : 'text-white/60'}`}
             data-testid="compare-passes"
           >
             {runs.refusal ?? `${runs.passes} of ${runs.runs}`}

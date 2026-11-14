@@ -55,18 +55,31 @@ export const joint = (s: JointSpec): RobotJoint => ({
   ...(s.limb ? { limb: s.limb } : {}),
 });
 
-const boxTriangles = (p: ScenePart) => {
+const CYLINDER_SEGMENTS = 32;
+
+export const cylinder = (id: string, position: P3, size: P3, massG: number): ScenePart => ({
+  ...box(id, position, size, massG),
+  kind: 'cylinder',
+});
+
+const partGeometry = (p: ScenePart): THREE.BufferGeometry => {
   const d = p.dimensions;
 
-  return new Float32Array(
-    new THREE.BoxGeometry(d.width, d.height, d.depth).toNonIndexed().getAttribute('position').array,
+  if (p.kind !== 'cylinder') return new THREE.BoxGeometry(d.width, d.height, d.depth);
+
+  return new THREE.CylinderGeometry(d.width / 2, d.width / 2, d.height, CYLINDER_SEGMENTS).scale(
+    1,
+    1,
+    d.depth / Math.max(d.width, 0.001),
   );
 };
+
+const partTriangles = (p: ScenePart) => new Float32Array(partGeometry(p).toNonIndexed().getAttribute('position').array);
 
 export function fixtureMeasures(parts: ScenePart[]): Record<string, MeshMeasure> {
   return Object.fromEntries(
     parts.map((p) => {
-      const m = measureTriangles(boxTriangles(p));
+      const m = measureTriangles(partTriangles(p));
 
       m.centroid = [p.position[0], p.position[1], p.position[2]];
 
@@ -81,7 +94,7 @@ export function fixtureTriangles(parts: ScenePart[]): (id: string) => Float32Arr
   return (id) => {
     const p = byId.get(id);
 
-    return p ? boxTriangles(p) : null;
+    return p ? partTriangles(p) : null;
   };
 }
 

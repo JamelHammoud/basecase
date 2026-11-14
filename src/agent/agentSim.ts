@@ -5,6 +5,7 @@ import type { SimRun, Simulation } from '../sim/useSimulation';
 import type { Training } from '../sim/useTraining';
 import { cameraShots } from '../cameras/cameraShots';
 import { angle } from '../utils/angle';
+import { bigCount, bigFigures } from '../../electron/bigCount.mjs';
 import type { FixedCamera } from '../cameras/fixed';
 import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
 import { prettyJointName, type Rig } from '../utils/kinematics';
@@ -234,7 +235,7 @@ function runningLines(t: Training): string[] {
 
   if (p)
     lines.push(
-      `${duration(p.elapsedS)} of ${duration(p.budgetS, 'min')}, ${(p.steps / 1e6).toFixed(1)}M steps (${Math.round(p.fps)}/s); reward ${p.reward.toFixed(2)}/s; episodes last ${duration(p.episodeS)} on average (falls end them early).`,
+      `${duration(p.elapsedS)} of ${duration(p.budgetS, 'min')}, ${bigCount(p.steps, 'step')} (${bigFigures(p.fps)}/s); reward ${p.reward.toFixed(2)}/s; episodes last ${duration(p.episodeS)} on average (falls end them early).`,
     );
 
   return lines;
@@ -260,7 +261,7 @@ export function trainingStatusText(ctx: SimContext): string {
       const stale = t.isStale(r) ? '; trained on an older sim, train it again' : '';
 
       lines.push(
-        `- ${r.name} (${r.task}${r.task === 'walk' ? ` at ${r.command[0]} m/s` : ''}, ${(r.trainedSteps / 1e6).toFixed(1)}M steps${evalSummary(r.eval)}${stale})`,
+        `- ${r.name} (${r.task}${r.task === 'walk' ? ` at ${r.command[0]} m/s` : ''}, ${bigCount(r.trainedSteps, 'step')}${evalSummary(r.eval)}${stale})`,
       );
     }
   }

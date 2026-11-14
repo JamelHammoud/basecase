@@ -25,19 +25,21 @@ covers:
   - src/print/job.ts
 ---
 
-Save your laid-out plates as 3MF files and slice them in any slicer. Basecase writes one file per material, with every part in its print orientation.
+You can save your laid-out plates as 3MF files and slice them in any slicer. Basecase writes one file per material, with every part in its print orientation.
 
 1. Click **Export** at the top right.
 2. Choose **3MF Plates**.
 
 ![The Export menu with 3MF Plates under STL](/help/export-a-robot-package/menu.png)
 
-The files save to your downloads. If the scene uses one material, you get `<scene>.3mf`. If it uses more than one, you get a file per material, for example `robot-arm-PLA.3mf` and `robot-arm-PETG.3mf`.
+You can also choose **Export 3MF Plates** from [[⌘K]].
 
-Basecase names the plates in each file Plate 1, Plate 2 and so on, and lays them out the way Bambu Studio does. Parts keep their names and the orientation you chose in Print mode.
+The files save to your downloads. If the scene uses one material, you get `<scene>.3mf`. If it uses more than one, you get a file for each material, for example `robot-arm-PLA.3mf` and `robot-arm-PETG.3mf`.
+
+In each file, the plates are named Plate 1, Plate 2, and so on, and they use the same layout as Bambu Studio. Parts keep their names and the orientation you chose in Print mode.
 
 If you turn on **Label parts** in Print mode, Basecase cuts each part's build guide letter into a hidden face. See [Label printed parts with their guide letters](/help/label-printed-parts).
 
-**3MF Plates** is available once the scene has a part to print. Parts set to **Don’t print** don't count. You can also choose **Export 3MF Plates** from [[⌘K]]. Export works in the web studio too, since it doesn't need a slicer.
+**3MF Plates** is available once the scene has a part to print, not counting parts set to **Don’t print**. If every part is too big for your printer's plate, Basecase tells you so and doesn't export. Export doesn't need a slicer, so it also works in the web studio.
 
-To slice and send from Basecase instead, see [Print a robot's parts](/help/print-a-robots-parts).
+If you'd rather slice and send from Basecase, see [Print a robot's parts](/help/print-a-robots-parts).

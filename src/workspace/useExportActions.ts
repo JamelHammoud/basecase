@@ -73,7 +73,11 @@ export function useExportActions(core: WorkspaceCore) {
     const report = await printReportOf(parts, { project, printer }, viewport.printShapes);
     const spec = jobSpec(report.plan, printer, project);
 
-    if (!spec.files.length) return;
+    if (!spec.files.length) {
+      showToast(`Every printed part is too big for the ${printer.label} plate`, { tone: 'error' });
+
+      return;
+    }
 
     const { files } = await printing.plates.write(spec);
     const single = spec.files.length === 1;

@@ -48,7 +48,7 @@ It worked when the header reads **Ready to build** and the red dot on the **Buil
 
 A check stopped at its time limit or with an error. Basecase counts that as a blocker, so a half-finished run never passes a design.
 
-1. Press ⌘K and choose **Run Checks**.
+1. Press [[⌘K]] and choose **Run Checks**.
 2. If the message comes back, quit Basecase and open it again.
 3. Run **Run Checks** once more.
 
@@ -97,7 +97,7 @@ The problem moves to **Ignored**, under the list, where **Restore** brings it ba
 
 Basecase sends new blockers to the agent after each message, up to 2 times.
 
-1. Press ⌘, (Ctrl+, on Windows) and choose **Build**.
+1. Press [[⌘,]] and choose **Build**.
 2. Turn off **Have the agent fix new blockers**.
 
 Every check and what it measures is in [Checks in the Build tab](/help/build-checks).

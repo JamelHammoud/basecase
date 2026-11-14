@@ -17,7 +17,7 @@ keywords:
   - explore_case
 related:
   - compare-two-robots-on-a-case
-  - try-a-robot-on-a-case
+  - try-a-case
 covers:
   - src/cases/explore.ts
   - src/cases/exploreDesigns.ts
@@ -55,7 +55,7 @@ Every design runs the Case 8 times. Each run changes friction, weight, servo str
 
 Explore tries the design as it is first, then each version on every joint at once, then one joint at a time, then two. It stops at 64 designs. A robot powered by a battery keeps the battery's voltage. Versions of one servo weigh the same in the catalog, so weight doesn't change between rows.
 
-**Apply** swaps the servos, and the tether's voltage when it changed. The bill of materials, Checks and plates update. Press ⌘Z to undo the whole swap in one step.
+**Apply** swaps the servos, and the tether's voltage when it changed. The bill of materials, Checks and plates update. Press [[⌘Z]] to undo the whole swap in one step.
 
 Nothing is saved. Change anything other than the servos' versions and the rows go away.
 

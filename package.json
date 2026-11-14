@@ -145,7 +145,8 @@
       "extendInfo": {
         "CFBundleIconName": "Basecase",
         "NSLocalNetworkUsageDescription": "So Basecase can find your printers and send them prints.",
-        "NSCameraUsageDescription": "So Basecase can follow your arms and drive a robot with them.",
+        "NSCameraUsageDescription": "So Basecase can follow your arms, hand or face and drive a robot with them.",
+        "NSMicrophoneUsageDescription": "So Basecase can hear the words a Case listens for.",
         "NSBonjourServices": [
           "_octoprint._tcp",
           "_moonraker._tcp"
@@ -217,6 +218,7 @@
     "three": "^0.187.0",
     "three-mesh-bvh": "^0.9.16",
     "uqr": "^0.1.3",
+    "vosk-browser": "0.0.8",
     "zod": "^4.6.7"
   },
   "devDependencies": {

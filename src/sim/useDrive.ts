@@ -17,10 +17,10 @@ import {
   type VelocityDrive,
 } from './driveAccess';
 import type { DriveSetup, RobotDrive } from './drive';
-import { onInputEvent } from './inputEvents';
 import { isIdle, sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
+import { onInputEvent } from './inputEvents';
 import { closeInputs, openInputs, posesInputs, readInputs, STUDIO_INPUTS } from './inputSources';
 import { inputRobot, pinFor } from './driveSession';
 import type { SimModel } from './mjcfTypes';
@@ -158,7 +158,8 @@ function useDriveCommand(send: DriveInputs['send'], session: React.RefObject<rea
 
       if (!current) return;
 
-      const read = readInputs(session.current ?? inputIds.current, { cls: current, keys: keysCommand.current });
+      const moment = { cls: current, keys: keysCommand.current, ...(frame ? { time: frame.time } : {}) };
+      const read = readInputs(session.current ?? inputIds.current, moment);
       const merged = steered(autopilot, read.command, frame);
 
       readings.current = read.readings;
@@ -294,11 +295,12 @@ export function useDrive(inputs: DriveInputs): SimDrive {
 
       closeSession(session);
 
-      const robot = inputRobot(access, { rig: latest.current.rig, viewport: viewportRef.current });
+      const { rig, parts } = latest.current;
+      const robot = inputRobot(access, { rig, parts, viewport: viewportRef.current });
 
       session.current = ids;
 
-      const refusal = robot && posesInputs(ids) ? await openInputs(ids, robot) : null;
+      const refusal = await openInputs(ids, robot);
 
       if (session.current !== ids) return false;
 

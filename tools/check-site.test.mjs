@@ -134,4 +134,23 @@ describe('lintSite', () => {
       'site/content/help/x.md:1: the title has 66 characters; keep it to 65',
     ]);
   });
+
+  it('fails a help key outside a key cap, and Windows keys written by hand', () => {
+    const help = (body) => ({ 'site/content/help/x.md': page('title: Open a scene\ndate: 2026-11-12', body) });
+
+    expect(lint(help('1. Press ⌘K, then press Enter.'))).toEqual([
+      'site/content/help/x.md:6: write “⌘K” as a key cap, [[⌘K]] (§3f)',
+    ]);
+    expect(lint(help('1. Type the name and press Enter.'))).toEqual([
+      'site/content/help/x.md:6: write Enter as a key cap, [[↩]] (§3f)',
+    ]);
+    expect(lint(help('1. Press [[⌘,]] (Ctrl+, on Windows).'))).toEqual([
+      'site/content/help/x.md:6: key caps show Windows keys on Windows; drop the Ctrl version (§3f)',
+    ]);
+    expect(
+      lint(help('1. Press [[⇧⌘Z]], then [[↩]], `⌘K` in code.\n\n![The ⌘K menu](/help/x/menu.png)'), [
+        '/help/x/menu.png',
+      ]),
+    ).toEqual([]);
+  });
 });

@@ -28,7 +28,7 @@ Correct the agent mid-run, or line up your next requests, without waiting for it
 ## Steer the agent
 
 1. While the agent works, type the correction, such as “Make the legs longer”.
-2. Press Enter.
+2. Press [[↩]].
 
 With Claude and Codex, the agent reads it right away and changes course. Gemini can't be steered, so the message waits at the front of the queue instead.
 
@@ -43,6 +43,6 @@ You can also right-click the send button and choose **Queue**. Queued messages s
 
 1. Click the round stop button in the composer.
 
-Pressing Esc in an empty composer stops it too. Stopping also pauses the queue. Queued messages are lost if Basecase reloads.
+Pressing [[Esc]] in an empty composer stops it too. Stopping also pauses the queue. Queued messages are lost if Basecase reloads.
 
 To take back what the agent changed, see [Undo what the agent changed](/help/undo-agent-changes).

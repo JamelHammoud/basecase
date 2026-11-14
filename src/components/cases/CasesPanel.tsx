@@ -7,6 +7,7 @@ import {
   MenuItem,
   PlusIcon,
   deleteEntry,
+  renameEntry,
   type ContextMenuEntry,
 } from '../../design-system';
 import type { Cases } from '../../workspace/useCases';
@@ -89,6 +90,8 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, 
       x: e.clientX,
       y: e.clientY,
       items: [
+        renameEntry(() => cases.naming.start(id)),
+        { divider: true },
         ...(cases.active?.id === id ? [...compareEntry(compare, onOpen), ...matEntry(cases)] : []),
         deleteEntry(() => cases.remove(id)),
       ],
@@ -106,7 +109,9 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, 
               name={c.name}
               brief={c.brief}
               selected={cases.active?.id === c.id}
+              renaming={cases.naming.renaming === c.id}
               onClick={() => open(c.id)}
+              onRename={(name) => cases.naming.finish(c.id, name)}
               onContextMenu={(e) => caseMenu(e, c.id)}
             />
           ))}

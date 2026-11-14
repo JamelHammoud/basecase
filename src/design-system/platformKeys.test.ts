@@ -10,6 +10,7 @@ describe('platformKeys', () => {
     expect(platformKeys(['⇧', '⌘', 'Z'], false)).toEqual(['Ctrl', 'Shift', 'Z']);
     expect(platformKeys(['⌘', '1', '–', '8'], false)).toEqual(['Ctrl', '1', '–', '8']);
     expect(platformKeys(['⌫'], false)).toEqual(['Del']);
+    expect(platformKeys(['⌘', '↩'], false)).toEqual(['Ctrl', 'Enter']);
     expect(modifierName('⌥', false)).toBe('Alt');
   });
 });

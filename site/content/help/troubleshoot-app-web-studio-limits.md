@@ -52,7 +52,7 @@ The web studio keeps scenes, Library models, prices and the parts you own in you
 
 1. Before you clear browser data, open each scene and click **Export** in the title bar.
 2. Choose **Scene** to download a `.basecase` file.
-3. Open the file later in the web studio or the desktop app with **Open Scene File** in ⌘K.
+3. Open the file later in the web studio or the desktop app with **Open Scene File** in [[⌘K]].
 
 A scene deleted with the browser's data can't be brought back.
 

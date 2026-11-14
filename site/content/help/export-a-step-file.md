@@ -21,7 +21,7 @@ Hand your design to Fusion, Onshape, SolidWorks or any CAD tool that opens STEP,
 
 ![The Export menu with STEP](/help/export-a-step-file/export-menu.png)
 
-You can also press ⌘K and choose **Export STEP**.
+You can also press [[⌘K]] and choose **Export STEP**.
 
 ![Export STEP in ⌘K](/help/export-a-step-file/command.png)
 

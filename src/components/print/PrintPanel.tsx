@@ -9,6 +9,7 @@ import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import type { Printing } from '../../workspace/usePrinting';
 import { plural } from '../../../electron/plural.mjs';
 import { duration } from '../../utils/duration';
+import { weight } from '../../utils/weight';
 import { plateNumbers, plateStateText } from './plateFacts';
 import { MergeSection } from './MergeSection';
 import { PrintedSection } from './PrintedSection';
@@ -170,7 +171,7 @@ const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; 
         items={[
           plate.material,
           `${exact ? '' : '≈ '}${duration(hours * 3600, 'min')}`,
-          `${Math.round(grams)} g`,
+          weight(grams),
           sliced?.support && 'Supports',
           plateStateText(status, printing.status),
         ]}

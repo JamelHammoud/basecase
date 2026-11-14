@@ -2,13 +2,8 @@ import React from 'react';
 import { SIMREADY_DRAG_TYPE } from '../../data/dnd';
 import { ArrowUpRightIcon, HoverCard, PreviewImage } from '../../design-system';
 import type { SimReadyAsset } from '../../simready/search';
+import { weight } from '../../utils/weight';
 import { Header, LinkButton, SizeLine, Stat } from '../PartDetails';
-
-function kg(v: number) {
-  if (v < 1) return `${Math.round(v * 1000)} g`;
-
-  return v >= 10 ? `${Math.round(v)} kg` : `${v.toFixed(1)} kg`;
-}
 
 export const dragAsset = (a: SimReadyAsset) =>
   JSON.stringify({ url: a.url, name: a.name, maker: a.maker, license: a.license });
@@ -25,7 +20,7 @@ const Details: React.FC<{ asset: SimReadyAsset }> = ({ asset }) => (
           <SizeLine w={asset.sizeMm[0]} h={asset.sizeMm[1]} d={asset.sizeMm[2]} />
         </Stat>
       )}
-      {asset.massKg !== null && <Stat label="Weight">{kg(asset.massKg)}</Stat>}
+      {asset.massKg !== null && <Stat label="Weight">{weight(asset.massKg * 1000)}</Stat>}
       {asset.bodies !== null && asset.bodies > 1 && <Stat label="Moving parts">{asset.bodies}</Stat>}
     </div>
     <div className="mt-3 border-t border-white/[0.07] p-3 [&>a]:w-full">

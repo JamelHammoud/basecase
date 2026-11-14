@@ -40,7 +40,7 @@ It can also pose and animate the robot, run it in the simulation, write and run 
 
 Told where an arm must reach and what it carries, it sizes the arm's links and servos first. Given the path a leg or finger should trace, it fits a four-bar linkage to it. Asked for fewer parts, it merges printed parts bolted together on one link into one print.
 
-Tell it what you want to do with a robot, such as play a game on a gamepad, and it builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). It draws a control the Case's panels lack, such as a joystick or a piano, as a code panel. After each write it reads the panel's errors and a capture of the window, and fixes what broke. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
+Tell it what you want to do with a robot, such as play a game on a gamepad, and it builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), it aims the Case at a door or a piece of furniture you name, such as under the table. It draws a control the Case's panels lack, such as a joystick or a piano, as a code panel. When that code moves an object, such as a target to whack, it marks the object movable. After each write it reads the panel's errors and a capture of the window, and fixes what broke. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
 
 ## What it cares about
 

@@ -73,7 +73,7 @@ function corridorRover() {
     route: { from: [0, 0, 0], to: [0, 0, 1500], halfWidth: origin.x + WALL_M * 1000 },
   } as unknown as GoalPlan;
   const corridor = CASE_WORLDS.find((w) => w.kind === 'corridor')!;
-  const world = corridor.objects(plan, {} as never).map(worldItem);
+  const world = corridor.objects(plan, {} as never, {} as never).map(worldItem);
   const rig = buildRig(robot.joints, robot.parts);
   const model = buildMjcf({ ...caseRobot(robot), rig, project: DEFAULT_PROJECT, world });
 

@@ -1,7 +1,7 @@
 import { strToU8 } from 'three/examples/jsm/libs/fflate.module.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ProjectSettings } from '../src/types/robotics';
-import { deskArmFiles, deskArmUrdf, deskArmZip } from '../src/utils/robotImport/robotImport.fixtures';
+import { deskArmFiles, deskArmZip } from '../src/utils/robotImport/robotImport.fixtures';
 import { openApp, partCount, shown, type App } from './harness';
 
 let app: App;
@@ -74,23 +74,13 @@ describe('Import', () => {
     await expect.poll(() => app.page.locator(shown('button'), { hasText: 'Edit in Sketch' }).count()).toBe(1);
   });
 
-  it('opens Import Robot with a URDF loaded', async () => {
-    await importFromPalette({ 'desk_arm.urdf': strToU8(deskArmUrdf()) });
-
-    await expect.poll(() => robotSheet().count()).toBe(1);
-    expect(await robotSheet().getByText('desk_arm.urdf').count()).toBe(1);
-    expect(await robotSheet().getByLabel('Robot link').count()).toBe(0);
-    await robotSheet().getByRole('button', { name: 'Cancel' }).click();
-    await expect.poll(() => robotSheet().count()).toBe(0);
-  });
-
-  it('imports a robot zip from the sheet it opens', async () => {
+  it('imports a robot zip at once, without a sheet', async () => {
     const before = await jointCount();
 
     await importFromPalette({ 'desk_arm.zip': deskArmZip() });
-    await robotSheet().getByRole('button', { name: 'Import', exact: true }).click();
 
     await expect.poll(jointCount, { timeout: 30000 }).toBe(before + 2);
+    expect(await robotSheet().count()).toBe(0);
   });
 
   it('names a file it can’t read in one toast', async () => {

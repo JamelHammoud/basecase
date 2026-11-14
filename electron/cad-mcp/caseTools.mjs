@@ -16,14 +16,23 @@ export const createCase = {
       'pick (pick up a block distance_mm ahead of the arm and set it on a spot spacing_mm farther out; arms with a gripper, open floor only). ' +
       'handoff (as touch, then a second arm from another open scene tab, facing the first, touches the same point while the first leaves it; needs an arm in another open tab). ' +
       'radius_mm is how close counts, seconds the time allowed; anything left out gets a default sized to the robot. ' +
-      'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch. ' +
-      'objects adds world objects as in set_world (agent frame). A legged robot that falls fails any Case. ' +
+      'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch; room, the scanned room the user dropped, for reach, push and path. ' +
+      'Terrain worlds for reach, path and walk, sized to the robot’s legs or wheels: rough (a grid of tiles up to rise_mm tall), steps (a platform rise_mm tall to cross) and slope (a ramp up and down at incline_deg); use them to test climbing, e.g. "make sure it can climb a step" is walk or reach over steps. ' +
+      'In the room, target names where reach stops (one name) or the spots path passes in order (2 to 8 names), from the room’s doors and furniture: "door", "table", "table 2", or "under table" for the floor beneath a table the robot fits under. A target picks the room world. ' +
+      'objects adds world objects as in set_world (agent frame); mark one movable: true when the Case’s code moves, recolors or hides it (basecase.world.set), as for a target to whack. A legged robot that falls fails any Case. ' +
       'logic is a Routine (as in make_routine) the Case runs; score counts dynamic objects in or out of a marker spot. ' +
       'console makes the Case an app the person runs: with one, the app opens the new Case running, laid out by it. ' +
       'Returns { ok, id, name, brief, seconds, objects, running? } or { ok: false, problem } saying what to change, e.g. the goals this robot can try or the console path it refused.',
     inputSchema: {
       goal: z.enum(['reach', 'push', 'path', 'walk', 'touch', 'pick', 'handoff']),
-      world: z.enum(['floor', 'corridor', 'block', 'shelf']).optional().describe('floor when left out'),
+      world: z
+        .enum(['floor', 'corridor', 'block', 'shelf', 'rough', 'steps', 'slope', 'room'])
+        .optional()
+        .describe('floor when left out, room when target is given'),
+      target: z
+        .union([z.string().min(1).max(80), z.array(z.string().min(1).max(80)).min(1).max(8)])
+        .optional()
+        .describe('reach and path in the room: object names, e.g. "under table" or ["sofa", "door", "table"]'),
       name: z
         .string()
         .min(1)
@@ -46,6 +55,8 @@ export const createCase = {
       stops: z.number().int().min(2).max(8).optional().describe('path: how many spots'),
       spacing_mm: mm('path: distance between spots; pick: from the block to the spot'),
       seconds: z.number().min(2).max(120).optional(),
+      rise_mm: mm('rough: the tallest tile; steps: the platform’s height'),
+      incline_deg: z.number().finite().optional().describe('slope: the ramp’s incline in degrees'),
       objects: z.array(worldObject).max(32).optional(),
       logic: z
         .record(z.string(), z.unknown())

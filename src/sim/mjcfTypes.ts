@@ -17,12 +17,14 @@ export interface SimBody {
   robot?: string;
   parent?: string;
   joint?: string;
+  moves?: { kind: 'mocap' | 'free'; rotation: V3 };
 }
 
 export type WorldBehavior = 'static' | 'dynamic' | 'marker';
 
 export interface WorldItem extends ScenePart {
   behavior: WorldBehavior;
+  movable?: boolean;
 }
 
 export interface SimJoint {

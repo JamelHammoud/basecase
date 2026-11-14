@@ -33,10 +33,9 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         />
       )}
       <ImportRobotSheet
-        key={robots.robotChoice?.choices.join('\n') ?? robots.robotFiles?.name ?? 'link'}
+        key={robots.robotChoice?.choices.join('\n') ?? 'link'}
         open={robots.importRobotOpen}
         choice={robots.robotChoice}
-        loaded={robots.robotFiles}
         onClose={robots.closeImportRobot}
         onImport={(src, at) => void importRobotFrom(src, at)}
       />

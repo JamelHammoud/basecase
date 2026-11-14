@@ -6,6 +6,7 @@ import type { MjcfInput } from '../sim/mjcfTypes';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import { calibratedInput } from './calibratedInput';
+import { EMPTY_HISTORY, recordCalibration, simCalibrations } from './history';
 import { populationFit, populationFor } from './population';
 import { presetServo } from './servoEstimate';
 import { scaledFit } from './servoParams';
@@ -56,6 +57,23 @@ describe('the population median in the sim', () => {
     expect(out.servoFits?.arm1).toEqual({ fit: own.fit, volts: own.volts });
     expect(out.servoSpreads?.flatMap((s) => s.joints)).not.toContain('arm1');
     expect(buildMjcf(out).servoSpreads?.flatMap((s) => s.joints)).toEqual(['arm0', 'arm2']);
+  });
+
+  it('keeps a joint whose bench read Consistent with preset on the catalog preset', () => {
+    const bench: ServoCalibration = {
+      ...measured(1),
+      verdict: 'consistent',
+      rung: 'preset',
+      fit: preset.fit,
+      scales: {},
+    };
+    const histories = { arm1: recordCalibration(EMPTY_HISTORY, bench) };
+    const out = calibratedInput(input, simCalibrations(histories), SERVO_POPULATIONS);
+
+    expect(histories.arm1.active).toBeNull();
+    expect(out.servoFits?.arm1).toBeUndefined();
+    expect(out.servoSpreads?.flatMap((s) => s.joints)).toEqual(['arm0', 'arm2']);
+    expect(kpOf(buildMjcf(out).xml, 'arm1')).toBeCloseTo(kpOf(buildMjcf(input).xml, 'arm1'), 6);
   });
 
   it('keeps the catalog preset when no population is given', () => {

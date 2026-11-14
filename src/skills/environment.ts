@@ -1,12 +1,11 @@
 import type { ServoSpread, SimModel } from '../sim/mjcfTypes';
 import type { RobotPoseState } from '../types/robotics';
 import { contractSignals, type Contract } from './contract';
-import { hashOf, isHash } from './hash';
+import { canonicalJson, hashOf, isHash } from './hash';
 import { eyeProblems, eyeRays, type Eye } from '../sim/eyes';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
-import { DYNAMICS_TERMS } from '../sim/servoModel';
-import { cholesky } from '../utils/gaussian';
+import { robotSpreads } from './servoDraws';
 
 export type { ServoSpread } from '../sim/mjcfTypes';
 
@@ -145,10 +144,7 @@ export function policyObservation(joints: string[]): ObservationTerm[] {
 export const environmentHash = (env: Environment) => hashOf(env);
 
 export function withServoSpreads(model: Pick<SimModel, 'servoSpreads'>, env: Environment): Environment {
-  const robot = new Set(env.action.joints);
-  const kept = (model.servoSpreads ?? [])
-    .map((s) => ({ ...s, joints: s.joints.filter((j) => robot.has(j)) }))
-    .filter((s) => s.joints.length);
+  const kept = robotSpreads(model.servoSpreads, env.action.joints);
 
   if (!kept.length) return env;
 
@@ -235,37 +231,17 @@ function randomizationProblems(r: Randomization): string[] {
   return out;
 }
 
-const MAX_LOG_VARIANCE = Math.log(4) ** 2;
-
-function covarianceFits(covariance: unknown): boolean {
-  const size = DYNAMICS_TERMS.length;
-
-  if (!Array.isArray(covariance) || covariance.length !== size) return false;
-
-  const c = covariance as number[][];
-  const rows = c.every((row, i) => finiteList(row, size) && finiteIn(row[i], 0, MAX_LOG_VARIANCE));
-
-  return rows && c.every((row, i) => row.every((v, j) => Math.abs(v - c[j][i]) < 1e-9)) && cholesky(c, 1e-9) !== null;
-}
-
-const spreadFits = (spread: ServoSpread) =>
-  typeof spread?.servo === 'string' &&
-  Array.isArray(spread.joints) &&
-  spread.joints.length > 0 &&
-  covarianceFits(spread.covariance);
-
-function servoProblems(env: Environment, index: ModelIndex): string[] {
+function servoProblems(env: Environment, model: SimModel): string[] {
   const spreads = env.randomization.servos;
 
   if (spreads === undefined) return [];
 
-  const fits = env.version === ENVIRONMENT_VERSION && Array.isArray(spreads) && spreads.every(spreadFits);
-  const joints = fits ? spreads.flatMap((s) => s.joints) : [];
-  const once = joints.every((j) => index.joints.has(j)) && new Set(joints).size === joints.length;
+  const own = robotSpreads(model.servoSpreads, env.action.joints);
+  const matches = own.length > 0 && canonicalJson(spreads) === canonicalJson(own);
 
-  return fits && joints.length && once
+  return env.version === ENVIRONMENT_VERSION && matches
     ? []
-    : ['Servo spreads need environment version 2, name each joint of this robot once and hold a 6 by 6 covariance.'];
+    : ['Servo spreads need environment version 2 and must match the robot’s servos.'];
 }
 
 export const MAX_START_M = 5;
@@ -401,7 +377,7 @@ export async function validateEnvironment(env: Environment, model: SimModel): Pr
     ...env.observation.flatMap((term) => termProblems(term, index)),
     ...actionProblems(env.action, index),
     ...randomizationProblems(env.randomization),
-    ...servoProblems(env, index),
+    ...servoProblems(env, model),
     ...resetProblems(env.reset, index),
     ...rewardProblems(env.reward),
     ...referenceProblems(env.reference, env.action.joints),

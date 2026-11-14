@@ -41,14 +41,19 @@ export function spreadReach(spread: Pick<ServoSpread, 'servo' | 'covariance'>, t
   return Math.exp(DRAW_CLIP * row.reduce((s, v) => s + Math.abs(v), 0));
 }
 
+export function robotSpreads(spreads: readonly ServoSpread[] | undefined, joints: readonly string[]): ServoSpread[] {
+  const robot = new Set(joints);
+
+  return (spreads ?? [])
+    .map((s) => ({ ...s, joints: s.joints.filter((j) => robot.has(j)) }))
+    .filter((s) => s.joints.length);
+}
+
 export const SERVO_GAIN_ROWS = 64;
 export const SERVO_GAIN_LIMITS = Object.freeze([0.25, 4] as const);
 
 export function servoGains(model: SimModel, options: { seed: number; joints: readonly string[] }) {
-  const robot = new Set(options.joints);
-  const spreads = (model.servoSpreads ?? [])
-    .map((s) => ({ ...s, joints: s.joints.filter((j) => robot.has(j)) }))
-    .filter((s) => s.joints.length);
+  const spreads = robotSpreads(model.servoSpreads, options.joints);
 
   if (!spreads.length) return {};
 

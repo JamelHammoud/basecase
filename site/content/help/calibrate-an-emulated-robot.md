@@ -93,7 +93,7 @@ To see what an older version would do before rolling back, choose it in the same
 | **Consistent with preset** | The catalog model already matches the servo; nothing changes |
 | **Can’t tell** | The recording couldn't settle it; the joint keeps what it had |
 
-A joint with no version in use shows **Preset**. On an STS3215 C001 or XL330, such a joint runs on the median of 24 emulated units of its servo, not the catalog model. **Roll Back** steps back one measured version at a time, then to the preset. A joint rolled back to the preset loses its **Measured** mark.
+A joint with no version in use shows **Preset**. On an STS3215 C001 or XL330, such a joint runs on the median of 24 emulated units of its servo, not the catalog model. One whose latest bench read **Consistent with preset** stays on the catalog model. **Roll Back** steps back one measured version at a time, then to the preset. A joint rolled back to the preset loses its **Measured** mark.
 
 ## Zero and direction
 
@@ -121,7 +121,7 @@ Replays use the latest bench run, which Basecase keeps until it reloads. After a
 
 ## Where the fit is used
 
-The **Simulate** tab, Cases, the Motor Kit and every skill you teach run on the fitted servos. Arena varies an STS3215 C001 or XL330 joint by how its units differ, until that joint is **Measured**; see [Arena](/help/arena).
+The **Simulate** tab, Cases, the Motor Kit and every skill you teach run on the fitted servos. Arena varies an STS3215 C001 or XL330 joint by how its units differ, until its bench reads **Measured** or **Consistent with preset**; see [Arena](/help/arena).
 
 **Build** ▸ **Checks** ▸ **Servo models** passes once every servo's joint is **Measured**. Until then, its note names the servos and joints that aren't **Measured**.
 

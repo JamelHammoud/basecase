@@ -37,7 +37,7 @@ Arena tries the skill 32 times in each of three variants, on MuJoCo, judged by t
 - **Half the timestep.** The physics steps twice as finely, so a skill that only works at one step size fails.
 - **Servo delays.** Each servo answers late by a random delay of up to 40 ms.
 
-A joint driven by an STS3215 C001 or XL330 draws its own servo instead, in every variant. Its gain, damping, inertia, friction, torque limit and delay come from how 24 emulated units of that servo differ. The servo strength and delay ranges above skip that joint. Once you calibrate the joint, it runs on its own fit and draws nothing.
+A joint driven by an STS3215 C001 or XL330 draws its own servo instead, in every variant. Its gain, damping, inertia, friction, torque limit and delay come from how 24 emulated units of that servo differ. The servo strength and delay ranges above still apply on top. Once you calibrate the joint, it runs on its own fit and draws nothing.
 
 Where a skill was trained on wider ranges, Arena uses those instead. It never uses narrower ones, so no training setup can make Arena easier.
 

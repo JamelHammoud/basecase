@@ -65,15 +65,6 @@ export function withTimestep(model: SimModel, factor: number): SimModel {
 interface Delay {
   steps: number;
   history: Float64Array[];
-  own: number[];
-}
-
-function ownDelays(late: Float64Array, now: ArrayLike<number>, own: number[]): Float64Array {
-  const mixed = Float64Array.from(late);
-
-  for (const a of own) mixed[a] = now[a];
-
-  return mixed;
 }
 
 function delayedModule(mj: MainModule, delay: Delay): MainModule {
@@ -83,7 +74,7 @@ function delayedModule(mj: MainModule, delay: Delay): MainModule {
 
       const late = delay.history.length > delay.steps ? delay.history.shift()! : delay.history[0];
 
-      data.ctrl.set(delay.own.length ? ownDelays(late, data.ctrl, delay.own) : late);
+      data.ctrl.set(late);
     }
 
     mj.mj_step(model, data);
@@ -116,7 +107,7 @@ const DIVERGENCE = ['mjWARN_BADQPOS', 'mjWARN_BADQVEL', 'mjWARN_BADQACC'] as con
 export class ArenaWorld {
   readonly engine: SimEngine;
   private mj: MainModule;
-  private delay: Delay = { steps: 0, history: [], own: [] };
+  private delay: Delay = { steps: 0, history: [] };
   private baseline: Record<(typeof SNAPSHOT)[number], Float64Array>;
   private slots: Map<string, ServoSlot>;
 
@@ -166,12 +157,11 @@ export class ArenaWorld {
     const { model } = this.engine;
     const { actuator: a, dof } = slot;
     const forcerange = model.actuator_forcerange as Float64Array;
-    const base = this.baseline.actuator_forcerange;
 
     (model.actuator_gainprm as Float64Array)[a * GAIN_WIDTH] *= draw.kp;
     (model.actuator_biasprm as Float64Array)[a * GAIN_WIDTH + 1] *= draw.kp;
-    forcerange[2 * a] = base[2 * a] * draw.forceNm;
-    forcerange[2 * a + 1] = base[2 * a + 1] * draw.forceNm;
+    forcerange[2 * a] *= draw.forceNm;
+    forcerange[2 * a + 1] *= draw.forceNm;
     (model.actuator_delay as Float64Array)[a] *= draw.delayS;
     (model.dof_damping as Float64Array)[dof] *= draw.damping;
     (model.dof_armature as Float64Array)[dof] *= draw.armature;
@@ -223,11 +213,6 @@ export class ArenaWorld {
     mj.mj_setConst(engine.model, engine.data);
     this.delay.steps = Math.round(instance.latencyMs / 1000 / engine.dt);
     this.delay.history = [];
-    this.delay.own = Object.keys(instance.servos ?? {}).flatMap((j) => {
-      const slot = this.slots.get(j);
-
-      return slot ? [slot.actuator] : [];
-    });
     engine.setController(controller);
     engine.reset(this.startPose(start, instance, robot));
     this.turn(robot, instance.yawDeg);

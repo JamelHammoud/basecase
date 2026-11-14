@@ -1,6 +1,6 @@
 import type { JointServoFit, MjcfInput, ServoSpread } from '../sim/mjcfTypes';
 import { spreadReach } from '../skills/servoDraws';
-import { calibrationApplies } from './measuredJoints';
+import { calibrationApplies, presetConfirmed } from './measuredJoints';
 import { populationFit, populationFor, populationKey, servoSpread, type ServoPopulation } from './population';
 import { presetServo } from './servoEstimate';
 import { jointServo } from './servoPart';
@@ -49,14 +49,12 @@ export function calibratedInput(
   calibrations: Record<string, ServoCalibration>,
   populations: readonly ServoPopulation[] = [],
 ): MjcfInput {
-  const applied = Object.entries(calibrations).filter(([jointId, c]) =>
-    calibrationApplies(
-      c,
-      input.project.joints?.find((j) => j.id === jointId),
-      input.parts,
-    ),
+  const jointOf = (id: string) => input.project.joints?.find((j) => j.id === id);
+  const applied = Object.entries(calibrations).filter(([id, c]) => calibrationApplies(c, jointOf(id), input.parts));
+  const confirmed = Object.keys(calibrations).filter((id) =>
+    presetConfirmed(calibrations[id], jointOf(id), input.parts),
   );
-  const skip = new Set([...applied.map(([id]) => id), ...Object.keys(input.servoFits ?? {})]);
+  const skip = new Set([...applied.map(([id]) => id), ...confirmed, ...Object.keys(input.servoFits ?? {})]);
   const drawn = drawnJoints(input, skip, populations);
 
   if (!applied.length && !drawn.length) return input;

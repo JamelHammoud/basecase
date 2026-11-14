@@ -97,6 +97,19 @@ describe('per-servo draws in environments', () => {
     expect(kitEnvironment(presetModel, 'stand').version).toBe(1);
   });
 
+  it('refuses servo spreads that differ from the robot’s own', async () => {
+    const env = kitEnvironment(medianModel, 'stand');
+    const narrow = env.randomization.servos!.map((s) => ({
+      ...s,
+      covariance: s.covariance.map((row) => row.map((v) => v / 100)),
+    }));
+
+    expect(
+      await validateEnvironment({ ...env, randomization: { ...env.randomization, servos: narrow } }, medianModel),
+    ).toHaveLength(1);
+    expect(await validateEnvironment(env, presetModel)).toHaveLength(1);
+  });
+
   it('marks a skill trained on the preset out of date once the population median runs', () => {
     const env = kitEnvironment(presetModel, 'stand');
     const before = currentDesign({ design: 'quad', model: presetModel, environment: env });
@@ -155,7 +168,7 @@ describe('the draw', () => {
     expect('servoGains' in kitJob(presetModel, 'stand', { minutes: 1, seed: 7 })).toBe(false);
   });
 
-  it('applies a drawn servo in Arena’s world and puts it back for the next try', async () => {
+  it('applies a drawn servo on top of Arena’s strength floor and puts it back for the next try', async () => {
     const mj = await loadMujoco();
     const world = new ArenaWorld(mj, medianModel);
     const nominal = drawInstance(seededRandom(SEED), {
@@ -186,12 +199,12 @@ describe('the draw', () => {
       const base = read();
 
       world.prepare({
-        instance: { ...nominal, strength: 1, servos: { [joints[0]]: draw } },
+        instance: { ...nominal, strength: 0.9, servos: { [joints[0]]: draw } },
         controller: { kind: 'hold' },
         start: medianModel.initial,
         robot: medianModel.robots[0].key,
       });
-      expect(read().map((v, i) => v / base[i])).toEqual([2, 0.8, 2, 3].map((x) => expect.closeTo(x, 9)));
+      expect(read().map((v, i) => v / base[i])).toEqual([2, 0.72, 2, 3].map((x) => expect.closeTo(x, 9)));
 
       world.prepare({
         instance: { ...nominal, strength: 1 },

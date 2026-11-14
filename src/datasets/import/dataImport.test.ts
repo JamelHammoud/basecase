@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { rosJointNames } from '../../robot/ros2';
 import type { SimModel } from '../../sim/mjcfTypes';
-import { bytesToBase64 } from '../../utils/base64';
 import { importHandlers } from './dataImportJobs';
 import { lerobotDataset, namedArm, sceneModel, SO101_JOINTS, sweepDeg } from './fixtures';
 import { hubDatasetRef, hubImportSource } from './hubSource';
 import type { ImportTarget } from './importedTries';
 import { importStep, matchInput } from './importPlan';
 import { armJointStates, armPose, ARM_JOINTS, writeMcap } from './mcapFixtures';
-import type { ImportSource } from './readSource';
+import { sourceTransfer, type ImportSource } from './readSource';
 import type { TryOrigin } from '../../cases/tryFile';
 
 const D2R = Math.PI / 180;
@@ -60,12 +59,14 @@ describe('importing LeRobot datasets', () => {
     const reply = {
       repo: 'lerobot/so101_pick',
       revision: 'b'.repeat(40),
-      files: Object.fromEntries(Object.entries(files).map(([p, b]) => [p, bytesToBase64(b)])),
+      files,
     };
     const origin: TryOrigin = { kind: 'hub', repo: reply.repo, revision: reply.revision };
-    const { read, built } = await importInto(model, hubImportSource(reply)!, origin);
+    const source = hubImportSource(reply)!;
+    const { read, built } = await importInto(model, source, origin);
 
     expect(ref).toEqual({ owner: 'lerobot', repo: 'so101_pick', rev: 'main' });
+    expect(sourceTransfer(source)).toHaveLength(new Set(Object.values(files).map((b) => b.buffer)).size);
     expect(read).toMatchObject({ format: 'lerobot-v3.0', robotType: 'so101_follower', episodes: 3 });
     expect(built.kept.map((k) => k.recording.frames)).toEqual([12, 9, 15]);
     expect(built.kept.map((k) => k.stored.task)).toEqual(['Pick up cube 1', 'Pick up cube 2', 'Pick up cube 3']);
@@ -140,6 +141,14 @@ describe('importing ROS 2 recordings', () => {
 
   it('says a folder with neither is not data', async () => {
     const read = await importHandlers().read(filesSource('robot', { 'robot.urdf': new Uint8Array([60]) }));
+
+    expect(read).toBeNull();
+  });
+
+  it('leaves a robot folder with its own metadata.yaml to robot import', async () => {
+    const yaml = new TextEncoder().encode('name: so101\nversion: 2\n');
+    const files = { 'so101/robot.urdf': new Uint8Array([60]), 'so101/config/metadata.yaml': yaml };
+    const read = await importHandlers().read(filesSource('so101', files));
 
     expect(read).toBeNull();
   });

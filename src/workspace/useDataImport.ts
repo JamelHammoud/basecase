@@ -29,6 +29,7 @@ const matches = indexedDbStore<JointPairs>({
 });
 
 const SAFE_ID = /^[\w-]{1,128}$/;
+const ORIGIN_NAME_CHARS = 256;
 
 const importing = (name: string) => `Importing ${name}…`;
 
@@ -49,9 +50,12 @@ interface SceneModel {
   started: boolean;
 }
 
+const originName = (name: string) =>
+  name.length > ORIGIN_NAME_CHARS ? `${name.slice(0, ORIGIN_NAME_CHARS - 1)}…` : name;
+
 const importedMessage = (built: BuiltTries, added: number) =>
   built.refused
-    ? `Imported ${plural(added, 'try', 'tries')}. Left out ${plural(built.refused, 'episode')} out of range.`
+    ? `Imported ${plural(added, 'try', 'tries')}. Skipped ${plural(built.refused, 'episode')} out of range.`
     : `Imported ${plural(added, 'try', 'tries')}`;
 
 export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
@@ -140,7 +144,7 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
       target: {
         sceneId: SAFE_ID.test(core.scene.sceneId) ? core.scene.sceneId : 'scene',
         modelHash: await sha256(model.xml),
-        origin: loaded.origin ?? { kind: 'file', name: loaded.source.name, hash: summary.hash },
+        origin: loaded.origin ?? { kind: 'file', name: originName(loaded.source.name), hash: summary.hash },
         startedAt: new Date().toISOString(),
       },
     });

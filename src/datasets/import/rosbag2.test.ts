@@ -50,7 +50,7 @@ describe('rosbag2 folders', () => {
     ['a block list', BLOCK_LIST],
     ['a flow list', " [arm_0.mcap, 'arm_1.mcap']"],
   ])('reads split files in order from %s', async (_, list) => {
-    const data = await readRosbag2(await armBag(metadata('mcap', list)));
+    const data = (await readRosbag2(await armBag(metadata('mcap', list))))!;
     const [episode] = data.episodes;
 
     expect(data.format).toBe('mcap');
@@ -84,7 +84,7 @@ describe('rosbag2 folders', () => {
     await expect(readRosbag2(await armBag(metadata('mcap', list)))).rejects.toThrow(BAG_METADATA);
   });
 
-  it('refuses metadata that isn’t a rosbag2 description', async () => {
-    await expect(readRosbag2(await armBag('storage_identifier: mcap\n'))).rejects.toThrow(BAG_METADATA);
+  it('leaves a metadata.yaml that isn’t a rosbag2 description to robot import', async () => {
+    expect(await readRosbag2(await armBag('storage_identifier: mcap\n'))).toBeNull();
   });
 });

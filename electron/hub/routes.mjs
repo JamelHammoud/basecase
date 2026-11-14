@@ -17,4 +17,11 @@ export const HUB_CALLS = {
 
 export const registerHubHandlers = (ipcMain, hub) => registerCalls(ipcMain, HUB_CALLS, hub);
 
-export const hubPostRoutes = (hub) => postRoutesOf(HUB_CALLS, hub);
+const base64Files = (reply) => ({
+  ...reply,
+  files: Object.fromEntries(
+    Object.entries(reply.files).map(([path, bytes]) => [path, Buffer.from(bytes).toString('base64')]),
+  ),
+});
+
+export const hubPostRoutes = (hub) => postRoutesOf(HUB_CALLS, hub, { 'hub:dataset-files': base64Files });

@@ -1,3 +1,4 @@
+import { base64ToBytes } from '../../utils/base64';
 import { MAX_UNPACKED_BYTES, unzipEntries, ZIP_TOO_LARGE } from '../../utils/robotImport/archive';
 import { isLeRobotFolder, readLeRobot } from './lerobotRead';
 import { readMcap } from './mcapRead';
@@ -10,7 +11,9 @@ export interface PickedFile {
 }
 
 export type ImportSource =
-  { kind: 'files'; name: string; files: PickedFile[] } | { kind: 'zip'; name: string; blob: Blob };
+  | { kind: 'files'; name: string; files: PickedFile[] }
+  | { kind: 'zip'; name: string; blob: Blob }
+  | { kind: 'bytes'; name: string; files: Record<string, Uint8Array | string> };
 
 export interface ReadSource {
   data: SourceData;
@@ -55,6 +58,14 @@ function blobFile({ path, blob }: PickedFile): SourceFile {
   return { path, size: blob.size, read: async () => new Uint8Array(await blob.arrayBuffer()) };
 }
 
+const base64Bytes = (text: string) => Math.floor((text.length * 3) / 4) - (text.match(/=*$/u)?.[0].length ?? 0);
+
+function bytesFile(path: string, bytes: Uint8Array | string): SourceFile {
+  if (typeof bytes !== 'string') return { path, size: bytes.byteLength, read: async () => bytes };
+
+  return { path, size: base64Bytes(bytes), read: async () => base64ToBytes(bytes) };
+}
+
 async function zipFiles(blob: Blob): Promise<SourceFile[]> {
   if (blob.size > MAX_UNPACKED_BYTES) throw new DataImportError(ZIP_TOO_LARGE);
 
@@ -78,8 +89,24 @@ async function readMcapFiles(files: SourceFile[]) {
   return readMcap(read);
 }
 
+function sourceFiles(source: ImportSource): Promise<SourceFile[]> | SourceFile[] {
+  if (source.kind === 'zip') return zipFiles(source.blob);
+
+  if (source.kind === 'bytes') return Object.entries(source.files).map(([path, bytes]) => bytesFile(path, bytes));
+
+  return source.files.map(blobFile);
+}
+
+export function sourceTransfer(source: ImportSource): Transferable[] {
+  if (source.kind !== 'bytes') return [];
+
+  const buffers = Object.values(source.files).flatMap((bytes) => (typeof bytes === 'string' ? [] : [bytes.buffer]));
+
+  return [...new Set(buffers)].filter((buffer): buffer is ArrayBuffer => buffer instanceof ArrayBuffer);
+}
+
 export async function readSource(source: ImportSource): Promise<ReadSource | null> {
-  const files = source.kind === 'zip' ? await zipFiles(source.blob) : source.files.map(blobFile);
+  const files = await sourceFiles(source);
   const kind = sourceKind(files.map((f) => f.path));
 
   if (!kind) return null;
@@ -92,5 +119,5 @@ export async function readSource(source: ImportSource): Promise<ReadSource | nul
   };
   const data = await readers[kind]();
 
-  return { data, hash: await hashed.hash() };
+  return data && { data, hash: await hashed.hash() };
 }

@@ -1,7 +1,7 @@
 import { reply, workerClient } from '../../utils/workerRpc';
 import type { BuiltTries } from './importedTries';
 import type { BuildJob, SourceSummary } from './dataImportJobs';
-import type { ImportSource } from './readSource';
+import { sourceTransfer, type ImportSource } from './readSource';
 
 type ImportHandlers = {
   read: (source: ImportSource) => Promise<{ result: SourceSummary | null }>;
@@ -26,7 +26,7 @@ export function openDataImport() {
   );
 
   return {
-    read: (source: ImportSource) => client.call('read', source),
+    read: (source: ImportSource) => client.call('read', source, sourceTransfer(source)),
     build: (job: BuildJob) => client.call('build', job),
     close: () => client.dispose(),
   };

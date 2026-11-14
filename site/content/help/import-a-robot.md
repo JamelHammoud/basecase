@@ -33,7 +33,7 @@ covers:
   - src/utils/robotImport/
 ---
 
-You can bring in a published robot, with its joints, limits and masses, from a GitHub or Hugging Face link, a zip, or files on your computer.
+You can bring a published robot into Basecase with its joints, limits and masses. Import it from a GitHub or Hugging Face link, a zip, or files on your computer.
 
 1. Press [[⌘K]] and choose **Import Robot**.
 2. Paste a link to a GitHub or Hugging Face repo or folder, a URDF or MJCF file, or a zip.
@@ -41,19 +41,21 @@ You can bring in a published robot, with its joints, limits and masses, from a G
 
 ![Import Robot with a GitHub repo link](/help/import-a-robot/link.png)
 
-Basecase looks for the robot's description in the repo or zip (it prefers MJCF), then inserts the robot with its joints ready to pose. If the repo holds several robots, the sheet lists them. Click the one you want, then click **Import**.
+Basecase looks for the robot's description in the repo or zip and prefers MJCF when it finds one. Then it inserts the robot with its joints ready to pose.
+
+If the repo holds several robots, the sheet lists them. Click the one you want, then click **Import**.
 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
-You can also find **Import Robot** in **File**.
+You can also find **Import Robot** in the **File** menu.
 
-To import from your computer, do any of these:
+To import a robot from your computer, do any of these:
 
 - Click **Choose Folder** in the sheet.
 - Drag a robot's folder, zip, URDF, xacro or MJCF file onto the canvas.
-- Pick the file with **Import** in the canvas menu.
+- Choose **Import** in the canvas menu, then pick the file.
 
-Basecase inserts the robot right away, where you dropped it or where you right-clicked.
+The robot goes in right away, where you dropped it or where you right-clicked.
 
 ## Insert a robot from the shelf
 
@@ -64,7 +66,7 @@ Parts lists ready-made robots under **Robots**, grouped by kind: **Humanoids**, 
 
 ![Parts on its Robots section, with Imported, Humanoids, Small bipeds, Quadrupeds and Arms](/help/import-a-robot/robots.png)
 
-Robots you've imported come first, under **Imported**, so you can insert them again with one click. To remove one from the list, right-click it and choose **Delete**. Scenes that already use the robot keep it.
+Robots you've imported appear first, under **Imported**, so you can insert them again with one click. To remove a robot from this list, right-click it and choose **Delete**. Scenes that already use the robot keep it.
 
 ![An imported robot's right-click menu with Insert and Delete](/help/import-a-robot/imported.png)
 
@@ -76,10 +78,10 @@ Robots you've imported come first, under **Imported**, so you can insert them ag
 
 Robots exported from Fusion 360 with fusion2urdf import the same way, and so do ROS description packages written in xacro. Choose the package folder, drop it on the canvas, or paste its repo link.
 
-For a xacro package, Basecase reads the top-level `.xacro` or `.urdf.xacro` file and follows its includes inside the package. It fills in the properties, macros and `xacro:arg` defaults. If the package also has a plain `.urdf`, Basecase uses that file instead. If a xacro needs something Basecase can't fill in, like a YAML file or an environment variable, the import stops and names the file.
+If a xacro package also has a plain `.urdf`, Basecase uses that file. Otherwise it reads the top-level `.xacro` or `.urdf.xacro` file, follows its includes inside the package, and fills in the properties, macros and `xacro:arg` defaults. If a xacro needs something Basecase can't fill in, like a YAML file or an environment variable, the import stops and tells you which file it is.
 
-A Hugging Face dataset link, or a folder or zip that holds a LeRobot dataset or a ROS 2 recording, comes in as tries on the robot in the scene instead. For steps, see [Import robot data as tries](/help/import-robot-data-as-tries).
+A Hugging Face dataset link, or a folder or zip that holds a LeRobot dataset or a ROS 2 recording, comes in as tries on the robot in the scene instead of a robot. For steps, see [Import robot data as tries](/help/import-robot-data-as-tries).
 
-Links must use https. A zip link downloads up to 200 MB, and a zip unpacks up to 600 MB and 20,000 files. If a link has no robot description, you see one toast that names the link.
+**Note:** Links must use https. A zip link downloads up to 200 MB, and a zip unpacks up to 600 MB and 20,000 files. If a link has no robot description, you see one toast that names the link.
 
 To learn how the joints work once the robot is in, see [Joints and kinematics](/help/joints-and-kinematics).

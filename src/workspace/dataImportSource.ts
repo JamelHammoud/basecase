@@ -1,27 +1,11 @@
-import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import type { LocalFile } from '../utils/robotImport';
+import { zipEntryNames } from '../utils/robotImport/zipDirectory';
 import type { ImportSource } from '../datasets/import/readSource';
 import type { RobotSource } from './useRobotInsert';
 
 const isZip = (path: string) => /\.zip$/i.test(path);
 
-async function zipNames(blob: Blob): Promise<string[]> {
-  const names: string[] = [];
-
-  try {
-    unzipSync(new Uint8Array(await blob.arrayBuffer()), {
-      filter: (file) => {
-        names.push(file.name);
-
-        return false;
-      },
-    });
-  } catch {
-    return [];
-  }
-
-  return names;
-}
+const zipNames = (blob: Blob) => zipEntryNames(blob).catch(() => []);
 
 const sourceKindOf = async (paths: string[]) => (await import('../datasets/import/readSource')).sourceKind(paths);
 

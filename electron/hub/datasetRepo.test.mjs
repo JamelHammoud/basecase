@@ -48,7 +48,7 @@ const account = () => {
   return new HubAccount({ libraryDir: dir, secrets: sealing, endpoint: () => hub.url });
 };
 
-const decoded = (files) => Object.fromEntries(Object.entries(files).map(([p, b]) => [p, Buffer.from(b, 'base64')]));
+const decoded = (files) => Object.fromEntries(Object.entries(files).map(([p, b]) => [p, Buffer.from(b)]));
 
 async function serve(reply) {
   const requests = [];

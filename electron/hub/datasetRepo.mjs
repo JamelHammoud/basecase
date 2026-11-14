@@ -1,6 +1,8 @@
+import { GB, MB } from '../fileSize.mjs';
+
 export const DATASET_INFO = 'meta/info.json';
-export const DATASET_FILE_BYTES = 256 * 1000 * 1000;
-export const DATASET_TOTAL_BYTES = 1000 * 1000 * 1000;
+export const DATASET_FILE_BYTES = 256 * MB;
+export const DATASET_TOTAL_BYTES = GB;
 export const DATASET_FILES_MAX = 2000;
 
 const SEGMENT = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/;
@@ -44,7 +46,7 @@ export async function downloadDataset(client, { id, rev }) {
 
     if (total > DATASET_TOTAL_BYTES) throw new Error(OVER_TOTAL);
 
-    files[path] = bytes.toString('base64');
+    files[path] = new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   }
 
   return { repo: id, revision, files };

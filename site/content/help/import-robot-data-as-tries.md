@@ -31,12 +31,12 @@ covers:
   - electron/hub/datasetRepo.mjs
 ---
 
-Bring teleop data recorded with LeRobot or ROS 2 into Basecase, one try per episode, on the robot in your scene.
+You can import teleop data recorded with LeRobot or ROS 2. Basecase turns each episode into a try on the robot in your scene.
 
 1. Open the scene with the robot the data was recorded on.
 2. Right-click an empty spot on the canvas and choose **Import**.
 3. Pick a `.mcap` file, or a LeRobot dataset as a zip.
-4. If the recorded joint names differ from your robot's, the Match Joints sheet opens with a guess for each. Change any that are wrong, then click **Import**.
+4. If the joint names in the data don't match your robot's, Basecase opens the Match Joints sheet with a guess for each joint. Fix any wrong guesses, then click **Import**.
 
 ![The Match Joints sheet pairing joint1 to joint6 from an MCAP file with the arm's joints](/help/import-robot-data-as-tries/match.png)
 
@@ -44,30 +44,32 @@ Bring teleop data recorded with LeRobot or ROS 2 into Basecase, one try per epis
 
 ![Tries with three episodes from a zip, one from an MCAP file and one from Hugging Face](/help/import-robot-data-as-tries/tries.png)
 
-6. Click a try to step through its joints on the timeline, as in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
+6. Click a try to step through its joints on the timeline. See [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
 
 ![An imported try open on the timeline with a lane for each of six joints](/help/import-robot-data-as-tries/timeline.png)
 
-To import from Hugging Face, press [[⌘K]], choose **Import Robot**, paste the dataset's link and press [[↩]]. This works in the desktop app only. To import a LeRobot or rosbag2 folder, drop it on the canvas, or click **Choose Folder** in the same sheet.
+In the desktop app, you can also import a dataset from Hugging Face. Press [[⌘K]], choose **Import Robot**, paste the dataset's link, then press [[↩]].
 
 ![The Import Robot sheet with a Hugging Face dataset link](/help/import-robot-data-as-tries/link.png)
 
+To import a LeRobot or rosbag2 folder, drop it on the canvas or click **Choose Folder** in the Import Robot sheet.
+
 ## What comes in
 
-- **LeRobot** datasets in v2.0, v2.1 and v3.0. Each episode becomes a try named by its task. A v3 file holding many episodes splits into one try each.
-- **ROS 2** recordings: a `.mcap` file, or a rosbag2 folder whose `metadata.yaml` says its storage is MCAP. Joint positions from `sensor_msgs/JointState` are resampled to 50 frames a second.
-- **Units** are told apart by their range: radians, degrees, or raw Feetech servo counts.
-- **Videos** aren't copied or re-encoded. A try keeps each camera's file and the time span of its episode. Camera images in an MCAP file aren't decoded.
+- **LeRobot** datasets in v2.0, v2.1 and v3.0. Basecase names each try after its episode's task. A v3 file that holds many episodes becomes one try per episode.
+- **ROS 2** recordings, either a `.mcap` file or a rosbag2 folder whose `metadata.yaml` lists its storage as MCAP. Basecase resamples joint positions from `sensor_msgs/JointState` to 50 frames per second.
+- **Units**: Basecase reads the range of the values to tell radians, degrees and raw Feetech servo counts apart.
+- **Videos**: A try holds each camera's file and the time span of its episode. Basecase doesn't copy or re-encode the videos, and doesn't decode camera images in an MCAP file.
 
-Joints match by name, so ALOHA's left and right arms land on two robots in the scene. A match you make in the Match Joints sheet is kept, and the same data matches the same way next time. Importing the same data again adds nothing.
+Basecase matches joints by name, so ALOHA's left and right arms go to two robots in the scene. Any match you make in the Match Joints sheet is saved, and Basecase uses it again the next time you import the same data. If you import the same data twice, Basecase doesn't add anything the second time.
 
-If no joint matches and the dataset names a robot your scene lacks, such as an SO-101 or a Unitree G1, a message offers **Import Robot**. Import the data again once the robot is in.
+If no joint matches and the dataset names a robot your scene doesn't have, such as an SO-101 or a Unitree G1, you'll see a message with **Import Robot**. Add the robot to your scene, then import the data again.
 
-An episode outside your robot's joint limits on every frame is left out. One outside them for part of the time is kept.
+If an episode goes outside your robot's joint limits on every frame, Basecase leaves it out. An episode that goes outside them for part of the time still comes in.
 
 ## Limits
 
-- A Hugging Face dataset can be up to 1 GB and 2,000 files. Download a larger one and import its folder.
-- Each file can be up to 512 MB, and each episode up to 10 minutes.
-- MCAP files compressed with LZ4 don't open. Uncompressed and zstd files do.
-- A file with a value that isn't a number doesn't import at all.
+- A Hugging Face dataset can be up to 1 GB and 2,000 files, and each file can be up to 256 MB. For a larger dataset, download it and import its folder.
+- Files on your computer can be up to 512 MB, and episodes up to 10 minutes.
+- Basecase opens uncompressed and zstd MCAP files, but not LZ4 ones.
+- If any value in a file isn't a number, Basecase rejects the whole file.

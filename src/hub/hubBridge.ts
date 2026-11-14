@@ -27,7 +27,7 @@ export interface HubSkillFiles {
 export interface HubDatasetFiles {
   repo: string;
   revision: string;
-  files: Record<string, string>;
+  files: Record<string, Uint8Array | string>;
 }
 
 export interface HubPublished {

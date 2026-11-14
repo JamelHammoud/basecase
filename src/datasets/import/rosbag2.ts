@@ -102,14 +102,13 @@ export function parseBagMetadata(text: string): string[] {
   return files;
 }
 
-async function readMetadata(file: SourceFile) {
-  if (file.size > IMPORT_LIMITS.metaBytes) throw refuseMetadata();
+async function bagMetadata(file: SourceFile) {
+  if (file.size > IMPORT_LIMITS.metaBytes) return null;
 
   const bytes = await file.read();
+  const text = bytes.byteLength > IMPORT_LIMITS.metaBytes ? '' : new TextDecoder().decode(bytes);
 
-  if (bytes.byteLength > IMPORT_LIMITS.metaBytes) throw refuseMetadata();
-
-  return new TextDecoder().decode(bytes);
+  return BAG_KEY.test(text) ? text : null;
 }
 
 function bagFile(folder: SourceFolder, prefix: string, name: string) {
@@ -122,13 +121,14 @@ function bagFile(folder: SourceFolder, prefix: string, name: string) {
   return file;
 }
 
-export async function readRosbag2(folder: SourceFolder): Promise<SourceData> {
+export async function readRosbag2(folder: SourceFolder): Promise<SourceData | null> {
   const prefix = isRosbag2Folder(folder.files.map((file) => file.path));
   const metadata = folder.files.find((file) => file.path === `${prefix}${METADATA}`);
+  const text = metadata && (await bagMetadata(metadata));
 
-  if (prefix === null || !metadata) throw refuseMetadata();
+  if (!text || prefix === null) return null;
 
-  const names = parseBagMetadata(await readMetadata(metadata));
+  const names = parseBagMetadata(text);
   const files = names.map((name) => bagFile(folder, prefix, name));
   const inputs = [];
 

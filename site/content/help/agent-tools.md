@@ -56,7 +56,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `check_scene` | Finds parts that overlap, float or sit below the floor |
 | `check_assembly` | Checks the robot can be put together and serviced, and lists printed parts that could print as one |
 | `craft_review` | Flags parts that look plain or unfinished |
-| `verify_design` | Runs the engineering checks: pass, warn or fail |
+| `verify_design` | Runs the engineering checks: pass, warn or fail. It ends with what plugs where |
 | `get_readiness` | Reads the Build tab's verdict |
 | `dispute_finding` | Records why a blocker might be wrong |
 | `get_guide` | Opens one of the agent's design guides |

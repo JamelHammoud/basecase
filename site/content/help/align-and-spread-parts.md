@@ -39,6 +39,8 @@ The same strip is under **Align** in the right-click menu. While parts are selec
 
 ![The Align strip in a part's right-click menu](/help/align-and-spread-parts/menu.png)
 
+**Center on Origin**, a little lower in the menu, moves the selection so its middle sits over the origin at the same height.
+
 ## What each row does
 
 | Row | Icons | With one part, from the right-click menu |

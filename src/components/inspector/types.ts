@@ -28,6 +28,7 @@ export interface InspectorProps {
   onDelete: () => void;
   onDropToFloor: () => void;
   onStack: () => void;
+  onCenter: () => void;
   annotations: SceneAnnotation[];
   activeAnnotationId: string | null;
   onOpenAnnotation: (id: string) => void;

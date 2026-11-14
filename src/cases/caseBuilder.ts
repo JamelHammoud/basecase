@@ -1,6 +1,7 @@
 import { roverForward } from '../sim/driveSetup';
 import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
+import { partBounds } from '../utils/selection';
 import {
   CASE_GOALS,
   fallGuard,
@@ -88,11 +89,11 @@ function footSpacing(rig: Rig): number {
 export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
   const robot = rig.robots[0];
   const facts = robotFacts(rig, parts);
-  const own = parts.filter((p) => robot?.parts.has(p.id));
-  const xs = own.flatMap((p) => [p.position[0] - p.dimensions.width / 2, p.position[0] + p.dimensions.width / 2]);
-  const zs = own.flatMap((p) => [p.position[2] - p.dimensions.depth / 2, p.position[2] + p.dimensions.depth / 2]);
+  const own = parts.filter((p) => robot?.parts.has(p.id)).map(partBounds);
+  const xs = own.flatMap((b) => [b.min[0], b.max[0]]);
+  const zs = own.flatMap((b) => [b.min[2], b.max[2]]);
   const span = (values: number[]) => (values.length ? Math.max(...values) - Math.min(...values) : 0);
-  const tops = own.map((p) => p.position[1] + p.dimensions.height / 2);
+  const tops = own.map((b) => b.max[1]);
 
   return {
     facts,

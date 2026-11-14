@@ -27,6 +27,7 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   check_printability: ['Running # checks', 'Ran # checks'],
   verify_design: ['Running # checks', 'Ran # checks'],
   get_bom: ['Reading the parts list # times', 'Read the parts list # times'],
+  record_on_hand: ['Recording parts on hand # times', 'Recorded parts on hand # times'],
   set_build: ['Updating the build # times', 'Updated the build # times'],
   size_actuators: ['Sizing the actuators # times', 'Sized the actuators # times'],
   sweep_design: ['Running # sweeps', 'Ran # sweeps'],

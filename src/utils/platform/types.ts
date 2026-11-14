@@ -9,7 +9,8 @@ import {
   AgentConversation,
   AgentConversationSummary,
   CustomModelDefinition,
-  PurchaseRecord,
+  Purchases,
+  StoredPurchase,
   ReferenceImageRecord,
   SavedSceneRecord,
   SavedSceneSummary,
@@ -184,7 +185,7 @@ declare global {
       saveEvidenceFile: (payload: EvidenceFilePayload) => Promise<{ ok: boolean; path: string }>;
       resumeAcp: (sessionId: string, workspaceId?: string) => Promise<AcpStatusInfo>;
       listChats: () => Promise<AgentConversationSummary[]>;
-      listPurchases: () => Promise<Record<string, PurchaseRecord>>;
+      listPurchases: () => Promise<Purchases>;
       trainStatus: () => Promise<TrainerStatus>;
       simreadyStatus: () => Promise<SimReadyStatus>;
       simreadyFetch: (payload: { url: string; requestId: string }) => Promise<SimReadyFetched>;
@@ -208,10 +209,7 @@ declare global {
       exportStep: (job: StepJob) => Promise<ExportedStep>;
       tuneCadPart: (payload: CadTuneRequest) => Promise<CadTuneAnswer>;
       renderCad: (payload: { language: CadLanguage; code: string }) => Promise<Uint8Array>;
-      savePurchase: (payload: {
-        key: string;
-        record: PurchaseRecord | null;
-      }) => Promise<Record<string, PurchaseRecord>>;
+      savePurchase: (payload: { key: string; record: StoredPurchase | null }) => Promise<Purchases>;
       getChat: (id: string) => Promise<AgentConversation | null>;
       saveChat: (conv: AgentConversation) => Promise<AgentConversationSummary[]>;
       deleteChat: (id: string) => Promise<AgentConversationSummary[]>;

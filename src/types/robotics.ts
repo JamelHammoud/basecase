@@ -323,7 +323,12 @@ export interface PurchaseRecord {
   entered?: EnteredPrice;
   checkedAt: string;
   note?: string;
+  onHand?: number;
 }
+
+export type StoredPurchase = PurchaseRecord | { onHand: number };
+
+export type Purchases = Record<string, StoredPurchase>;
 
 export interface ReferenceImageRecord {
   id: string;

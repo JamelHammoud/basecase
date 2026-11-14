@@ -95,7 +95,7 @@ export const getBom = {
   config: {
     title: 'Bill of materials',
     description:
-      'The build\'s bill of materials, computed from the scene: catalog components and exact hardware counted by part, printed parts as filament grams, plus purchase-only extras (set_build). Each line has its catalog key and its price: the one the user checked from a listing, with the date, else a dated list price from a maker or distributor store (an estimate, marked ~), else "no price known". ' +
+      'The build\'s bill of materials, computed from the scene: catalog components and exact hardware counted by part, printed parts as filament grams, plus purchase-only extras (set_build). Each line has its catalog key, how many the user owns and how many are left to buy (record_on_hand), and the price of what is left: the one the user checked from a listing, with the date, else a dated list price from a maker or distributor store (an estimate, marked ~), else "no price known". ' +
       "The estimate (checked prices plus list prices) is compared with the user's budget. Use it to keep the design inside the budget (fewer or cheaper actuators, one screw size), and report it at the end. Never state a price that is not in this output.",
     inputSchema: {},
   },
@@ -106,6 +106,31 @@ export const getBom = {
       const res = await bridge('bom', {}, 60000);
 
       return text(res?.text || 'Nothing to buy yet.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const recordOnHand = {
+  name: 'record_on_hand',
+  config: {
+    title: 'Record parts on hand',
+    description:
+      'Records how many of a part the user already owns, by catalog key from find_parts or get_bom (units, not packs; grams for filament). Owned units cost nothing in get_bom and the budget, and find_parts lists them first. ' +
+      'Use it when the user says what they own or pastes an order confirmation or a parts list. A count replaces the one saved; 0 clears it. Unknown keys and counts that are negative or not whole are refused, and then nothing is saved.',
+    inputSchema: {
+      counts: z
+        .array(z.object({ key: z.string().max(200), count: z.number().int().min(0).max(100000) }))
+        .min(1)
+        .max(100),
+    },
+  },
+  handler: async ({ counts }) => {
+    try {
+      const res = await bridge('record_on_hand', { counts });
+
+      return text(res?.text || 'Nothing recorded.');
     } catch (err) {
       return fail(err);
     }

@@ -5,7 +5,8 @@ import { isSourcedId, sourcedItem } from '../data/sourcedItems';
 import { FILAMENT_SUPPLY, MATERIAL_DENSITY, SUPPLY_BY_ID, type SupplyInfo } from '../data/supplies';
 import { listPriceFor } from '../data/listPrices';
 import type { MeshMeasure } from '../three/meshMeasure';
-import type { PrintMaterial, ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
+import type { PrintMaterial, ProjectSettings, PurchaseRecord, Purchases, ScenePart } from '../types/robotics';
+import { checkedPrice, onHandOf, ownedSplit } from './onHand';
 import {
   BOM_CATEGORIES,
   Bom,
@@ -293,14 +294,18 @@ function priceStatus(record: PurchaseRecord | undefined, ageDays: number | undef
 }
 
 interface LineContext {
-  purchases: Record<string, PurchaseRecord>;
+  purchases: Purchases;
   now: Date;
 }
 
-function linePricing(key: string, qty: number, record: PurchaseRecord | undefined, filament: boolean) {
+const OWNED_PRICING = { packs: 0, lineUsd: 0, estimate: undefined, estUsd: undefined };
+
+function linePricing(key: string, toBuy: number, record: PurchaseRecord | undefined, filament: boolean) {
+  if (toBuy === 0) return OWNED_PRICING;
+
   const estimate = record ? undefined : listPriceFor(key);
   const packQty = record?.packQty ?? estimate?.per ?? (filament ? 1000 : undefined);
-  const packs = packQty ? Math.max(1, Math.ceil(qty / packQty)) : undefined;
+  const packs = packQty ? Math.max(1, Math.ceil(toBuy / packQty)) : undefined;
 
   return {
     packs,
@@ -315,7 +320,9 @@ function bomLine(key: string, qty: number, partIds: string[], { purchases, now }
 
   if (!info) return null;
 
-  const record = purchases[key];
+  const stored = purchases[key];
+  const record = checkedPrice(stored);
+  const split = ownedSplit(qty, onHandOf(stored));
   const ageDays = record ? daysSince(record.checkedAt, now) : undefined;
   const filament = info.category === 'Filament';
 
@@ -323,6 +330,7 @@ function bomLine(key: string, qty: number, partIds: string[], { purchases, now }
     key,
     ...info,
     qty,
+    ...split,
     unit: filament ? 'g' : 'pcs',
     partIds,
     url: record?.url || info.url,
@@ -330,7 +338,7 @@ function bomLine(key: string, qty: number, partIds: string[], { purchases, now }
     record,
     status: priceStatus(record, ageDays),
     ageDays,
-    ...linePricing(key, qty, record, filament),
+    ...linePricing(key, split.toBuy, record, filament),
   };
 }
 
@@ -350,7 +358,7 @@ function bomTotals(allLines: BomLine[], project: ProjectSettings): Bom['totals']
     stale: withStatus('stale').length,
     unchecked: unchecked.length,
     estimatedUsd,
-    unpriced: unchecked.filter((l) => l.estUsd === undefined).length,
+    unpriced: unchecked.filter((l) => l.estUsd === undefined && l.lineUsd === undefined).length,
     budgetUsd: project.budgetUsd,
     budgetEntered: project.budgetEntered,
     overBudget: project.budgetUsd !== undefined && estimatedUsd > project.budgetUsd,
@@ -360,7 +368,7 @@ function bomTotals(allLines: BomLine[], project: ProjectSettings): Bom['totals']
 export interface BomInput {
   parts: ScenePart[];
   project: ProjectSettings;
-  purchases: Record<string, PurchaseRecord>;
+  purchases: Purchases;
   measures: Record<string, MeshMeasure | undefined>;
   now?: Date;
   supportG?: Partial<Record<PrintMaterial, number>>;

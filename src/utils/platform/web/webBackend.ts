@@ -1,4 +1,5 @@
-import type { AcpStatusInfo, CustomModelDefinition, PurchaseRecord } from '../../../types/robotics';
+import type { AcpStatusInfo, CustomModelDefinition, Purchases, StoredPurchase } from '../../../types/robotics';
+import { checkedPrice, isOnHandCount } from '../../onHand';
 import type { TrainerStatus } from '../types';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
 import { trainedPolicy, trainedSkill } from './webTrained';
@@ -42,12 +43,22 @@ async function deleteModel(id: string) {
   return OK;
 }
 
-const listPurchases = async () => (await idbGet<Record<string, PurchaseRecord>>('settings', 'purchases')) ?? {};
+const listPurchases = async () => (await idbGet<Purchases>('settings', 'purchases')) ?? {};
 
-async function savePurchase({ key, record }: { key: string; record: PurchaseRecord | null }) {
+function storedRecord(record: StoredPurchase): StoredPurchase {
+  if (record.onHand !== undefined && !isOnHandCount(record.onHand)) throw new Error('On hand must be a whole count');
+
+  const price = checkedPrice(record);
+
+  return price
+    ? { ...price, checkedAt: price.checkedAt || new Date().toLocaleDateString('en-CA') }
+    : { onHand: record.onHand ?? 0 };
+}
+
+async function savePurchase({ key, record }: { key: string; record: StoredPurchase | null }) {
   const all = await listPurchases();
 
-  if (record) all[key] = { ...record, checkedAt: record.checkedAt || new Date().toLocaleDateString('en-CA') };
+  if (record) all[key] = storedRecord(record);
   else delete all[key];
 
   await idbPut('settings', 'purchases', all);
@@ -86,7 +97,7 @@ const ROUTES: Record<string, Route> = {
   'save-model': (b) => saveModel(b as unknown as CustomModelDefinition),
   'delete-model': (b) => deleteModel(String(b.modelId)),
   purchases: listPurchases,
-  'purchase-save': (b) => savePurchase(b as { key: string; record: PurchaseRecord | null }),
+  'purchase-save': (b) => savePurchase(b as { key: string; record: StoredPurchase | null }),
   scenes: listScenes,
   scene: (_, params) => getScene(params.get('id') ?? ''),
   'save-scene': (b) => saveScene(b),

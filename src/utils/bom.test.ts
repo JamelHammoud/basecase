@@ -125,3 +125,52 @@ describe('buildBom', () => {
     expect(bomText(priced, {})).toContain('Budget $100.00. Checked prices total $26.49 (1 checked, 1 stale).');
   });
 });
+
+describe('parts on hand', () => {
+  const servoKey = 'component:feetech-sts3215|c001';
+  const servos = Array.from({ length: 8 }, (_, i) =>
+    part({ id: `servo${i}`, kind: 'component', componentId: 'feetech-sts3215', componentVariant: 'c001' }),
+  );
+  const screws = Array.from({ length: 13 }, (_, i) => part({ id: `screw${i}`, kind: 'hardware', hardware: screw }));
+  const checked = { packQty: 1, priceUsd: 17.5, checkedAt: '2026-11-01' };
+  const now = new Date('2026-11-13T12:00:00');
+  const bomWith = (purchases: Parameters<typeof buildBom>[0]['purchases']) =>
+    buildBom({ parts: [...servos, ...screws], project, purchases, measures: {}, now });
+  const lineOf = (bom: ReturnType<typeof buildBom>, key: string) => bom.lines.find((l) => l.key === key)!;
+
+  it('buys only the servos past the ones on hand, and adds only their cost', () => {
+    const none = bomWith({ [servoKey]: checked });
+    const six = bomWith({ [servoKey]: { ...checked, onHand: 6 } });
+
+    expect(lineOf(six, servoKey)).toMatchObject({ qty: 8, owned: 6, toBuy: 2, packs: 2, lineUsd: 35 });
+    expect(lineOf(none, servoKey)).toMatchObject({ owned: 0, toBuy: 8, lineUsd: 140 });
+    expect(none.totals.estimatedUsd - six.totals.estimatedUsd).toBeCloseTo(105, 2);
+  });
+
+  it('counts a part owned with no checked price, and its list price only for what is left to buy', () => {
+    const line = lineOf(bomWith({ [servoKey]: { onHand: 6 } }), servoKey);
+
+    expect(line).toMatchObject({ record: undefined, status: 'unchecked', owned: 6, toBuy: 2, estUsd: 40 });
+  });
+
+  it('costs nothing for 13 M3 screws with 100 on hand', () => {
+    const bom = bomWith({ [hardwareKey(screw)]: { onHand: 100 } });
+    const line = lineOf(bom, hardwareKey(screw));
+
+    expect(line).toMatchObject({ qty: 13, owned: 13, toBuy: 0, packs: 0, lineUsd: 0 });
+    expect(bom.totals.unpriced).toBe(bomWith({}).totals.unpriced);
+    expect(bom.totals.estimatedUsd).toBeLessThan(bomWith({}).totals.estimatedUsd);
+  });
+
+  it('tells the agent what is owned and what is left to buy', () => {
+    const text = bomText(bomWith({ [servoKey]: { ...checked, onHand: 6 } }), {});
+
+    expect(text).toContain(`8× Feetech STS3215 7.4 V (C001) [${servoKey}] · 6 owned, 2 to buy`);
+  });
+
+  it('reads an old record without a count as owning none', () => {
+    const old = { url: 'https://www.amazon.com/dp/B0ABCDEFGH', asin: 'B0ABCDEFGH', ...checked };
+
+    expect(lineOf(bomWith({ [servoKey]: old }), servoKey)).toMatchObject({ record: old, owned: 0, toBuy: 8 });
+  });
+});

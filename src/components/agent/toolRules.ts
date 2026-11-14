@@ -230,6 +230,7 @@ const REVIEW_RULES: ToolRule[] = [
   plainRule(['import_maker_cad'], ShapeIcon, ['Importing the maker’s CAD', 'Imported the maker’s CAD']),
   plainRule(['verify_design'], CheckIcon, ['Verifying the design', 'Verified the design']),
   plainRule(['get_bom'], FileIcon, ['Reading the parts list', 'Read the parts list']),
+  plainRule(['record_on_hand'], FileIcon, ['Recording parts on hand', 'Recorded parts on hand']),
   plainRule(['size_actuators'], JointsIcon, ['Sizing the actuators', 'Sized the actuators']),
   plainRule(['synthesize_linkage'], JointsIcon, ['Fitting a four-bar', 'Fitted a four-bar']),
   plainRule(['sweep_design'], RunIcon, ['Comparing design options', 'Compared design options']),

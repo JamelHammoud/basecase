@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useScrollFade } from '../design-system';
-import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
+import type { PrintMaterial, ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
+import { onHandOf, withOnHand, withPrice } from '../utils/onHand';
+import type { ShowToast } from '../workspace/types';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
 import type { PrintReport } from '../utils/printReport';
@@ -26,7 +28,7 @@ interface BuildPanelProps {
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   printing: Printing;
   onSelectParts: (ids: string[]) => void;
-  onToast: (message: string) => void;
+  onToast: ShowToast;
   onFixFinding?: (finding: ReadinessFinding) => void;
   onQuoteFinding?: (finding: ReadinessFinding) => void;
   onOpenCase?: (id: string) => void;
@@ -85,11 +87,19 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     download(`${file}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
     onToast('Exported bill of materials');
   };
-  const savePrice = async (line: BomLine, record: Parameters<typeof savePurchase>[1]) => {
-    await savePurchase(line.key, record);
+  const savePrice = async (line: BomLine, record: PurchaseRecord | null) => {
+    await savePurchase(line.key, withPrice(purchases[line.key], record));
     setChecking(null);
 
     if (record) onToast(`Saved price for ${line.name}`);
+  };
+  const saveOnHand = async (line: BomLine, count: number) => {
+    const before = purchases[line.key];
+
+    await savePurchase(line.key, withOnHand(before, count));
+    onToast(`Saved ${count} on hand for ${line.name}`, {
+      action: { label: 'Undo', onClick: () => void savePurchase(line.key, before ?? null) },
+    });
   };
 
   return (
@@ -144,6 +154,8 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           project={project}
           onChangeProject={onChangeProject}
           onCheck={setChecking}
+          onHandOf={(key) => onHandOf(purchases[key])}
+          onOnHand={saveOnHand}
           onSelectParts={onSelectParts}
           onExportCsv={exportCsv}
           onExportMarkdown={exportMarkdown}

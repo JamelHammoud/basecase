@@ -1,0 +1,39 @@
+import { describe, expect, it, vi } from 'vitest';
+import { platformBridge } from '../utils/platformBridge';
+import { recordOnHandRequest } from './agentCostRequests';
+
+describe('record_on_hand', () => {
+  it('saves counts by catalog key', async () => {
+    const saved: Record<string, unknown> = {};
+
+    vi.spyOn(platformBridge, 'listPurchases').mockResolvedValue({});
+    vi.spyOn(platformBridge, 'savePurchase').mockImplementation(async (key, record) => {
+      saved[key] = record;
+
+      return { ...saved } as Awaited<ReturnType<typeof platformBridge.savePurchase>>;
+    });
+
+    const reply = await recordOnHandRequest({ counts: [{ key: 'component:feetech-sts3215|c001', count: 6 }] });
+
+    expect(reply.text).toBe('On hand: 6× component:feetech-sts3215|c001.');
+    expect(saved).toEqual({ 'component:feetech-sts3215|c001': { onHand: 6 } });
+  });
+
+  it('refuses unknown keys and counts that are negative or not whole, and saves nothing', async () => {
+    const save = vi.spyOn(platformBridge, 'savePurchase');
+
+    save.mockClear();
+
+    for (const counts of [
+      [{ key: 'component:not-a-part', count: 1 }],
+      [{ key: 'component:feetech-sts3215|c001', count: -1 }],
+      [{ key: 'component:feetech-sts3215|c001', count: 2.5 }],
+      [{ key: '__proto__', count: 1 }],
+      [null],
+      [],
+    ])
+      expect((await recordOnHandRequest({ counts })).text).toMatch(/^Nothing recorded: /);
+
+    expect(save).not.toHaveBeenCalled();
+  });
+});

@@ -78,6 +78,7 @@ export class LabelRenderer {
 
   private replace(scene: THREE.Scene, byPart: Map<string, number>): Saved[] {
     const saved: Saved[] = [];
+    const used = new Set<string>();
 
     scene.traverse((object) => {
       const mesh = object as THREE.Mesh;
@@ -94,6 +95,7 @@ export class LabelRenderer {
         const key = labelMaterialKey(id, original);
         const material = this.materials.get(key) ?? labelMaterial(id, original);
 
+        used.add(key);
         this.materials.set(key, material);
 
         return material;
@@ -104,6 +106,13 @@ export class LabelRenderer {
         ? mesh.material.map(replaceMaterial)
         : replaceMaterial(mesh.material);
     });
+
+    for (const [key, material] of this.materials) {
+      if (used.has(key)) continue;
+
+      material.dispose();
+      this.materials.delete(key);
+    }
 
     return saved;
   }

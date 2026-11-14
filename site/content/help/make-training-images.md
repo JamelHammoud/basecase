@@ -44,7 +44,7 @@ The progress bar advances as frames are saved. The finished dataset opens with l
 
 7. Above the images, click **Export Dataset**.
 
-The zip contains COCO and YOLO detection, segmentation and pose layouts. Its metadata preserves masks with holes, named keypoints and millimeter depth.
+The zip contains COCO and YOLO detection and segmentation layouts. A YOLO pose layout is included when the selected classes have named keypoints. Its metadata preserves masks with holes, named keypoints and millimeter depth.
 
 You can also find **Make Training Images** in [[⌘K]] while a Case is open.
 

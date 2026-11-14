@@ -21,12 +21,12 @@ Make a flat part from aluminum, carbon fiber or acrylic instead of printing it, 
 Only a flat part offers it. It must have two flat parallel faces with nothing but through holes and cutouts between them, and be at most 13 mm thick.
 
 1. Select the part.
-2. In the Inspector, under **Appearance**, choose **Cut from Sheet** in the material menu.
+2. In the Inspector, under **Appearance**, choose **Cut from sheet** in the material menu.
 3. In the row below it, choose **6061 aluminum**, **Carbon fiber plate** or **Acrylic**.
 4. Check the thickness beside it, and choose another stock size if you need one.
 5. Click **Export** at the top right and choose **Cut Files**.
 
-![The Appearance section with Cut from Sheet, 6061 aluminum and 3.18 mm](/help/cut-a-part-from-sheet/material.png)
+![The Appearance section with Cut from sheet, 6061 aluminum and 3.18 mm](/help/cut-a-part-from-sheet/material.png)
 
 ![The Export menu with Cut Files](/help/cut-a-part-from-sheet/export.png)
 

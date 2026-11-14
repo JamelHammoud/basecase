@@ -3,6 +3,7 @@ import type { HardwareSpec } from '../../data/hardware';
 import type { AlignMode, Axis } from '../../utils/selection';
 import type { PlaneView } from '../../mirror/plane';
 import { sheetOf } from '../../sheet/sheetStock';
+import { madeElsewhereProcess } from '../../utils/bom';
 import type { SheetThicknessOf } from '../../sheet/sheetThickness';
 
 export type Phase = boolean | undefined;
@@ -13,12 +14,16 @@ export const MATERIALS: Array<{ value: string; label: string }> = [
   { value: 'Off-the-shelf COTS', label: 'Off-the-shelf' },
 ];
 
-export const SHEET_OPTION = { value: 'sheet', label: 'Cut from Sheet' };
+export const SHEET_OPTION = { value: 'sheet', label: 'Cut from sheet' };
 
 const PRINTED_TAG = MATERIALS[0].value;
+const OFF_THE_SHELF_TAG = MATERIALS[2].value;
 
-export const materialTag = (part: ScenePart): string =>
-  sheetOf(part) ? SHEET_OPTION.value : (MATERIALS.find((m) => m.value === part.mechanicalTag)?.value ?? PRINTED_TAG);
+const listedTag = (part: ScenePart): string =>
+  MATERIALS.find((m) => m.value === part.mechanicalTag)?.value ??
+  (madeElsewhereProcess(part) ? OFF_THE_SHELF_TAG : PRINTED_TAG);
+
+export const materialTag = (part: ScenePart): string => (sheetOf(part) ? SHEET_OPTION.value : listedTag(part));
 
 export const materialPatch = (tag: string): Partial<ScenePart> => ({ mechanicalTag: tag, sheet: undefined });
 

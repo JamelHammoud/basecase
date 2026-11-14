@@ -32,7 +32,9 @@ export function sheetOf(p: ScenePart): PartSheet | undefined {
 
   const legacy = p.mechanicalTag ? LEGACY_TAGS[p.mechanicalTag] : undefined;
 
-  return legacy ? { material: legacy, thickness: snapThickness(legacy, plateThickness(p)) } : undefined;
+  return legacy && plateThickness(p) <= MAX_SHEET_MM
+    ? { material: legacy, thickness: snapThickness(legacy, plateThickness(p)) }
+    : undefined;
 }
 
 export const sheetKey = (s: PartSheet) => `sheet:${s.material}|${s.thickness}`;

@@ -1,7 +1,6 @@
 import type { Command } from '../components/CommandPalette';
 import {
   ClipboardIcon,
-  CutIcon,
   DownloadIcon,
   FileIcon,
   FileImportIcon,
@@ -38,7 +37,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     id: 'export-cut-files',
     group: 'Scene',
     label: 'Export Cut Files',
-    icon: <CutIcon />,
+    icon: <DownloadIcon />,
     keywords: 'dxf sheet laser cnc aluminum carbon acrylic sendcutsend plate download',
     run: () => void exports.exportCutFiles(),
   };

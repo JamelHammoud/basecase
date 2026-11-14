@@ -136,6 +136,7 @@ describe('sheet stock', () => {
     expect(sheetOf(tagged('CNC Aluminum'))).toEqual({ material: 'aluminum', thickness: 3.18 });
     expect(sheetOf(tagged('Laser-Cut Acrylic/Carbon'))).toEqual({ material: 'acrylic', thickness: 3 });
     expect(sheetOf(tagged('3D Printed PLA/PETG'))).toBeUndefined();
+    expect(sheetOf({ ...tagged('CNC Aluminum'), dimensions: { width: 30, height: 30, depth: 30 } })).toBeUndefined();
   });
 });
 

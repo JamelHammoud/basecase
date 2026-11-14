@@ -65,7 +65,7 @@ This is a note. Faces close to flat hang over air and need support under them.
 The part's name ends in a word like Glass, or its note starts with clear acrylic, and it's set to print.
 
 1. Select the part.
-2. If the part is flat, set **Material** in the Inspector to **Cut from Sheet**, then choose **Acrylic**.
+2. If the part is flat, set **Material** in the Inspector to **Cut from sheet**, then choose **Acrylic**.
 3. Otherwise set **Material** to **Off-the-shelf**, and source it, since **Real parts** then asks where to get it. **Fix** hands that to the agent.
 
 ## “Letter ⟨letter⟩ left off: no flat face is hidden, free and big enough”

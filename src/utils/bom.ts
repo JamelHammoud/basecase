@@ -65,6 +65,8 @@ export function specFromHardwareKey(key: string): HardwareSpec | null {
 }
 
 const MADE_ELSEWHERE: Record<string, string> = {
+  'CNC Aluminum': 'CNC aluminum',
+  'Laser-Cut Acrylic/Carbon': 'Laser-cut sheet',
   'Off-the-shelf COTS': 'Bought part, not from the catalog',
 };
 
@@ -224,7 +226,7 @@ function boughtKey(p: ScenePart): string | null {
   return p.kind === 'hardware' && p.hardware ? hardwareKey(p.hardware) : null;
 }
 
-const madeElsewhereProcess = (p: ScenePart): string | undefined =>
+export const madeElsewhereProcess = (p: ScenePart): string | undefined =>
   p.mechanicalTag && !NOT_PRINTED.has(p.kind) ? MADE_ELSEWHERE[p.mechanicalTag] : undefined;
 
 function printedPart(p: ScenePart, m: MeshMeasure, project: ProjectSettings): PrintedPart {

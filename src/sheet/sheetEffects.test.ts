@@ -129,4 +129,22 @@ describe('a part cut from sheet', () => {
     expect(tagged.lines.find((l) => l.category === 'Sheet')?.key).toBe('sheet:aluminum|3.18');
     expect(bomFindings(tagged).filter((f) => f.rule === 'no-source')).toEqual([]);
   });
+
+  it('keeps an old CNC aluminum tag on a thick block needing a source', () => {
+    const block = part({
+      id: 'block',
+      mechanicalTag: 'CNC Aluminum',
+      dimensions: { width: 30, height: 30, depth: 30 },
+    });
+    const tagged = buildBom({
+      parts: [block],
+      project,
+      purchases: {},
+      measures: { block: box([-15, 0, -15], [15, 30, 15], 27000) },
+    });
+
+    expect(tagged.lines.some((l) => l.category === 'Sheet')).toBe(false);
+    expect(tagged.madeElsewhere).toEqual([{ id: 'block', name: 'block', process: 'CNC aluminum' }]);
+    expect(bomFindings(tagged).some((f) => f.rule === 'no-source')).toBe(true);
+  });
 });

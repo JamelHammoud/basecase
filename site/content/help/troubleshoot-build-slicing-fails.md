@@ -71,7 +71,7 @@ A message ending “Update the slicer or pick another printer.” names a profil
 
 ## “No plates to print. Add printed parts first.”
 
-No part in the scene prints. Components, screws and stand-ins are bought, not printed. So are parts whose **Material** in the Inspector is **CNC aluminum**, **Laser-cut sheet** or **Off-the-shelf**.
+No part in the scene prints. Components, screws and stand-ins are bought, not printed. So are parts whose **Material** in the Inspector is **Cut from sheet** or **Off-the-shelf**, as [Cut a part from sheet](/help/cut-a-part-from-sheet) shows.
 
 ## “The slicer returned no plates. Slice again.”
 

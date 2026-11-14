@@ -90,11 +90,24 @@ function currentIndex(sourced: SourcedItem[]): Indexed[] {
 
 const escapeRe = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const wordMatcher = (w: string) => {
+export type WordMatcher = (text: string) => boolean;
+
+export const wordMatcher = (w: string): WordMatcher => {
   const re = new RegExp(`(^|[^a-z0-9])${escapeRe(w)}`);
 
   return (text: string) => (w.length >= 3 ? text.includes(w) : re.test(text));
 };
+
+export interface Scorable {
+  name: string;
+  text: string;
+  group: string;
+}
+
+export const matchesAll = (e: Scorable, matchers: WordMatcher[]) => matchers.every((m) => m(e.text));
+
+export const scoreEntry = (e: Scorable, q: string, matchers: WordMatcher[]): number =>
+  (e.name.startsWith(q) ? 10 : 0) + matchers.reduce((n, m) => n + (m(e.name) ? 3 : 1) + (m(e.group) ? 4 : 0), 0);
 
 interface SizeQuery {
   size?: string;
@@ -141,31 +154,38 @@ const fitsSize = (e: Indexed, size: string, length: number | undefined): boolean
   return info.stockOnly ? !!info.lengths?.(size).includes(length) : !!info.lengths;
 };
 
-export function searchCatalog(query: string, sourced: SourcedItem[] = sourcedItems()): CatalogItem[] {
+export interface ScoredItem {
+  item: CatalogItem;
+  score: number;
+}
+
+export function scoreCatalog(
+  query: string,
+  sourced: SourcedItem[] = sourcedItems(),
+): { sized: boolean; hits: ScoredItem[] } {
   const entries = currentIndex(sourced);
   const { size, length, words } = parseSizeQuery(query.trim());
   const matchers = words.map(wordMatcher);
-  const matches = (e: Indexed) => matchers.every((m) => m(e.text));
 
   if (size) {
-    return entries
-      .filter((e) => fitsSize(e, size, length) && matches(e))
-      .map((e) => hardwareVariant(e.item, makeSpec(e.item.hardware!.type, { size, length })));
+    const hits = entries
+      .filter((e) => fitsSize(e, size, length) && matchesAll(e, matchers))
+      .map((e, i) => ({ item: hardwareVariant(e.item, makeSpec(e.item.hardware!.type, { size, length })), score: -i }));
+
+    return { sized: true, hits };
   }
 
-  if (words.length === 0) return [];
+  if (words.length === 0) return { sized: false, hits: [] };
 
   const q = words.join(' ');
+  const hits = entries
+    .filter((e) => matchesAll(e, matchers))
+    .map((e, i) => ({ item: e.item, score: scoreEntry(e, q, matchers) - i / 1000 }));
 
-  return entries
-    .filter(matches)
-    .map((e, i) => ({
-      e,
-      score:
-        (e.name.startsWith(q) ? 10 : 0) +
-        matchers.reduce((n, m) => n + (m(e.name) ? 3 : 1) + (m(e.group) ? 4 : 0), 0) -
-        i / 1000,
-    }))
-    .sort((a, b) => b.score - a.score)
-    .map(({ e }) => e.item);
+  return { sized: false, hits };
 }
+
+export const searchCatalog = (query: string, sourced: SourcedItem[] = sourcedItems()): CatalogItem[] =>
+  scoreCatalog(query, sourced)
+    .hits.sort((a, b) => b.score - a.score)
+    .map((h) => h.item);

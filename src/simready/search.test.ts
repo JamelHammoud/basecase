@@ -53,5 +53,9 @@ describe('SimReady search', () => {
       offset: 40,
       filter_url_regexp: expect.stringContaining('nvidia'),
     });
+
+    const both = new RegExp(searchBody({ query: 'gripper', shelf: 'all' }).filter_url_regexp);
+
+    expect(both.test(GRIPPER) && both.test(MUG)).toBe(true);
   });
 });

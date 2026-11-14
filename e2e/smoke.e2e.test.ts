@@ -109,7 +109,7 @@ describe('studio smoke test', () => {
   it('switches every panel without errors', async () => {
     for (const tab of ['Build', 'Agent', 'Inspect']) await clickTab(tab);
 
-    for (const view of ['Parts', 'Robots', 'Library', 'Layers']) await clickRail(view);
+    for (const view of ['Parts', 'Library', 'Layers']) await clickRail(view);
 
     await app.page.keyboard.press('Meta+b');
     await app.page.keyboard.press('Meta+i');

@@ -4,6 +4,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import { ArenaWorld } from './arenaWorld';
 import type { Environment } from './environment';
 import { nominal } from './rollout';
+import { lengthFigure } from '../utils/size';
 
 export const COACH_SIGNALS = ['foot_clearance', 'contact_impulse', 'joint_jerk', 'base_height', 'speed'] as const;
 
@@ -48,8 +49,11 @@ export const SIGNAL_SPECS: Record<CoachSignal, SignalSpec> = {
 export const isCoachSignal = (name: unknown): name is CoachSignal =>
   typeof name === 'string' && (COACH_SIGNALS as readonly string[]).includes(name);
 
+export const signalFigure = (signal: CoachSignal, value: number) =>
+  SIGNAL_SPECS[signal].unit === 'mm' ? lengthFigure(value) : String(Number(value.toFixed(SIGNAL_SPECS[signal].digits)));
+
 export const signalNumber = (signal: CoachSignal, value: number) =>
-  `${value.toFixed(SIGNAL_SPECS[signal].digits)} ${SIGNAL_SPECS[signal].unit}`;
+  `${signalFigure(signal, value)} ${SIGNAL_SPECS[signal].unit}`;
 
 export const minimumMove = (signal: CoachSignal, before: number) =>
   Math.max(SIGNAL_SPECS[signal].floor, SIGNAL_SPECS[signal].share * Math.abs(before));

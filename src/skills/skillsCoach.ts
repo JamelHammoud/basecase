@@ -61,7 +61,7 @@ export class SkillCoach {
   start(model: SimModel, job: CoachJob & { words: string }, row: { target: SkillTarget; label: string }) {
     const { words, ...rest } = job;
 
-    return this.host.startJob(row, async (ports) => {
+    const busy = this.host.startJob(row, async (ports) => {
       const { outcome } = await this.host.runner({ type: 'coach', model, ...rest }, ports);
 
       if (outcome.kind === 'kept') {
@@ -81,5 +81,9 @@ export class SkillCoach {
 
       this.last = { name: row.label, kept: outcome.kind === 'kept', lines: reportLines(outcome) };
     });
+
+    if (!busy) this.last = null;
+
+    return busy;
   }
 }

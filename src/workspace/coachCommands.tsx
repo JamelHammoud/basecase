@@ -1,5 +1,5 @@
 import type { Command } from '../components/CommandPalette';
-import { TrainIcon } from '../design-system';
+import { CoachIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 import { canCoach } from './useSkillCoach';
 
@@ -10,7 +10,7 @@ export function coachCommands({ core }: CommandInputs): Command[] {
     id: `coach-${row.target}`,
     group: 'Simulate',
     label: `Coach ${row.label}`,
-    icon: <TrainIcon className="w-4 h-4" />,
+    icon: <CoachIcon className="w-4 h-4" />,
     keywords: 'coach skill style reward teach train',
     run: () => {
       core.tool.openRightTab('sim');

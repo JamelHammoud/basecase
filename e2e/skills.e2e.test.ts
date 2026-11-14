@@ -365,7 +365,7 @@ describe('coaching a ready skill', () => {
     );
   const revised = (term: string) => `${kitReward(model, 'stand')}\n\ndef style(state):\n    return ${term}\n`;
 
-  it('coaches Stand from the row’s menu, keeps a crouch that passes, and keeps it when a slump fails Arena', async () => {
+  it('coaches Stand from the row’s menu, keeps a crouch that passes, keeps it when a slump fails Arena, and undoes it', async () => {
     const robot = fixtureRobots().find((r) => r.id === 'quad-servo')!;
 
     await loadScene({ name: 'quad', parts: robot.parts, project: { ...DEFAULT_PROJECT, joints: robot.joints } });
@@ -439,6 +439,11 @@ describe('coaching a ready skill', () => {
     await expect.poll(listed, { timeout: 150000 }).toContain('- Dropped; the old skill stays.');
     await expect.poll(() => row.innerText(), { timeout: 60000 }).toContain('of 32 tries');
     expect(await row.getAttribute('data-skill')).toBe(coached);
+    expect(await row.innerText()).toContain('→');
+    await row.click({ button: 'right' });
+    await expect.poll(() => app.page.getByRole('menuitem', { name: 'Compare' }).count()).toBe(1);
+    await app.page.getByRole('menuitem', { name: 'Undo Coach' }).click();
+    await expect.poll(() => row.getAttribute('data-skill'), { timeout: 60000 }).toBe(ready);
     expect(app.errors).toEqual([]);
   }, 400000);
 });

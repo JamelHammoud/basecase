@@ -18,7 +18,7 @@ covers:
   - src/skills/coachSignals.ts
   - src/skills/skillsCoach.ts
   - src/components/simulate/TrainSection.tsx
-  - src/components/simulate/skillMenu.ts
+  - src/components/simulate/skillMenu.tsx
   - src/workspace/useSkillCoach.ts
   - src/workspace/agentCoachRequests.ts
   - electron/cad-mcp/skillTools.mjs
@@ -38,10 +38,10 @@ Coaching works on Stand, Walk, Get up and Settle once they're ready, in the desk
 ![The Teach field scoped to Stand, with crouch lower typed in](/help/coach-a-skill/field.png)
 
 4. Wait for the agent to report back. It reads five measurements of one clean run, rewrites only the skill's reward and trains from the skill as it is.
-5. Open the **Simulate** tab again. The row shows its Arena result, and **Try** plays the version that's kept.
-6. Right-click the row and choose the two numbers, such as **130.0 mm → 118.7 mm**, to play the old skill and then the new one on the canvas.
+5. Open the **Simulate** tab again. The row shows its Arena result and the measurement before and after, such as 130 → 119 mm. **Try** plays the version that's kept.
+6. Right-click the row and choose **Compare** to play the old skill and then the new one on the canvas.
 
-![The menu of a coached Stand row with its base height before and after, and Undo Coach](/help/coach-a-skill/coached.png)
+![A coached Stand row with its base height before and after, and its menu with Compare and Undo Coach](/help/coach-a-skill/coached.png)
 
 The new version is kept only if Arena passes the same contract and the measurement the agent named moved by its minimum. Otherwise the old skill stays, and the agent says why.
 

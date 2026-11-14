@@ -396,7 +396,10 @@ export class SkillsRuntime {
 
     const move = task.move ? moveTag(task.move.id, environment) : undefined;
 
-    await this.keep(task.target, skillRecord(reply.skill, { kit: task.entry, move }));
+    await this.keep(
+      task.target,
+      skillRecord(reply.skill, { kit: task.entry, move, coach: task.record.coach ?? undefined }),
+    );
   }
 
   private setJob(target: SkillTarget, patch: Partial<SkillJob> | null) {

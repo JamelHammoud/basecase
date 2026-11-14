@@ -21,6 +21,7 @@ keywords:
 related:
   - teach-a-robot-a-skill
   - arena
+  - coach-a-skill
   - run-a-trained-skill-on-the-emulated-robot
 covers:
   - src/components/simulate/SkillsList.tsx
@@ -94,4 +95,4 @@ One training job runs at a time across the whole app, and others wait their turn
 
 In the desktop app, 1.5 seconds after an edit, Basecase checks each Motor Kit skill you've trained against the new design. A color or name change keeps it ready. A mass or size change runs Arena again in the background, with no training. A joint change trains it again. Skills you never trained don't start on their own.
 
-To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).
+To change how a ready skill moves, such as a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

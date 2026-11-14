@@ -43,7 +43,8 @@ async function readClip(bytes: Uint8Array): Promise<Clip> {
     const track = await input.getPrimaryVideoTrack();
     const config = await track?.getDecoderConfig();
 
-    if (!track?.codec || !config) throw new Error('A camera video has no video track.');
+    if (!track?.codec || !config)
+      throw new Error('A camera video has no video track. Export or publish the dataset again.');
 
     const packets: EncodedPacket[] = [];
 

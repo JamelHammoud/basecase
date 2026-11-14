@@ -49,19 +49,24 @@ export function hideHelpers(ctx: ViewportContext, hider: Hider, helper: THREE.Ob
   hider.hide(ctx.stage.overlays);
 }
 
-export function captureScreenshot(ctx: ViewportContext, helper: THREE.Object3D | undefined): string {
+export function captureScreenshot(
+  ctx: ViewportContext,
+  helper: THREE.Object3D | undefined,
+  maxSide?: number,
+): Promise<string> {
   const { renderer } = ctx.stage;
   const hider = new Hider();
 
   hideHelpers(ctx, hider, helper);
-  ctx.loop.renderNow();
 
-  const dataUrl = renderer.domElement.toDataURL('image/png');
+  try {
+    ctx.loop.renderNow();
 
-  hider.restore();
-  ctx.loop.renderNow();
-
-  return dataUrl;
+    return encodeBitmap({ bitmap: snapshot(renderer.domElement, maxSide), ...imageFormat({ maxSide }) });
+  } finally {
+    hider.restore();
+    ctx.loop.renderNow();
+  }
 }
 
 export function hideForViews(ctx: ViewportContext, hider: Hider, onlyIds?: string[]): void {
@@ -112,7 +117,7 @@ interface CaptureRequest {
 
 const VIEW_QUALITY = 0.86;
 
-const imageFormat = (request: CaptureRequest) =>
+const imageFormat = (request: Pick<CaptureRequest, 'silhouette' | 'maxSide'>) =>
   request.silhouette || !request.maxSide
     ? ({ type: 'image/png' } as const)
     : ({ type: 'image/jpeg', quality: VIEW_QUALITY, background: CANVAS_BACKGROUND } as const);

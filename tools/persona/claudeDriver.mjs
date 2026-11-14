@@ -29,6 +29,12 @@ export function personaTools(h) {
   return [
     tool('look', 'Take a screenshot of the app.', {}, run(h.look)),
     tool('tree', 'Read the accessibility tree of the app.', {}, run(h.tree)),
+    tool(
+      'zoom',
+      'A close-up of a region of the app at full resolution, to read small or faint text.',
+      { ...point, width: z.number().describe('Region width'), height: z.number().describe('Region height') },
+      run(h.zoom),
+    ),
     tool('click', 'Click at a point, then return a screenshot.', point, run(h.click)),
     tool('type', 'Type text into the focused field.', { text: z.string() }, run(h.type)),
     tool('press', 'Press a key such as Escape, Enter or Tab.', { key: z.string() }, run(h.press)),

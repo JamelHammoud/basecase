@@ -1,10 +1,12 @@
-import type { FaultKind, Rect } from './faults';
+import { HELD, MISLEADING_LABEL, type FaultKind, type Held, type Rect } from './faults';
 
 export const PERSONA_BARS = Object.freeze({ faults: 30, sessions: 10, recall: 0.8, precision: 0.5, slackPx: 8 });
 
 export interface Finding {
   where: string;
   at?: [number, number];
+  view?: [number, number];
+  t?: number;
   problem: string;
 }
 
@@ -13,6 +15,7 @@ export interface PlantedFault {
   kind: FaultKind;
   name: string;
   rect: Rect | null;
+  held?: Held[];
 }
 
 export interface SessionFindings {
@@ -28,10 +31,24 @@ const inside = (at: [number, number] | undefined, r: Rect | null, slack: number)
   at[1] >= r.y - slack &&
   at[1] <= r.y + r.height + slack;
 
-const names = (f: Finding, fault: PlantedFault) => f.where.toLowerCase().includes(fault.name.toLowerCase());
+const squashed = (text: string) => text.toLowerCase().replace(/\s+/g, '');
 
-export const matches = (f: Finding, fault: PlantedFault) =>
-  names(f, fault) || inside(f.at, fault.rect, PERSONA_BARS.slackPx);
+const shownNames = (fault: PlantedFault) =>
+  fault.kind === 'misleading-label' ? [fault.name, MISLEADING_LABEL] : [fault.name];
+
+const names = (f: Finding, fault: PlantedFault) =>
+  shownNames(fault).some((name) => squashed(f.where).includes(squashed(name)));
+
+const heldAt = (fault: PlantedFault, t: number) =>
+  (fault.held ?? []).filter((h) => t >= h.from - HELD.tickMs && t <= h.to + HELD.tickMs);
+
+const onScreen = (f: Finding, fault: PlantedFault) =>
+  f.t !== undefined && heldAt(fault, f.t).some((h) => inside(f.view ?? f.at, h, PERSONA_BARS.slackPx));
+
+const placed = (f: Finding, fault: PlantedFault) =>
+  inside(f.at, fault.rect, PERSONA_BARS.slackPx) || onScreen(f, fault);
+
+export const matches = (f: Finding, fault: PlantedFault) => names(f, fault) || placed(f, fault);
 
 export interface PersonaScore {
   recall: number;

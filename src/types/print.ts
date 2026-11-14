@@ -10,6 +10,13 @@ export interface PartPrint {
   noLabel?: boolean;
 }
 
+export type SheetMaterial = 'aluminum' | 'carbon' | 'acrylic';
+
+export interface PartSheet {
+  material: SheetMaterial;
+  thickness: number;
+}
+
 export interface PrintRecord {
   id: string;
   plate: number;

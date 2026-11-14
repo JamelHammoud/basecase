@@ -22,6 +22,7 @@ import { neededSupplyKeys } from './bomNeeds';
 import { wiringNetlist } from '../wiring/netlist';
 import { wiringSupplies } from '../wiring/wiringSupplies';
 import { sceneTether } from './powerSources';
+import { SHEET_STOCK, sheetFromKey, sheetKey, sheetOf } from '../sheet/sheetStock';
 
 export { FILAMENT_MARGIN, STALE_DAYS, localDate } from './bomTypes';
 export type { Bom, BomCategory, BomLine, PriceStatus, PrintedPart } from './bomTypes';
@@ -64,8 +65,6 @@ export function specFromHardwareKey(key: string): HardwareSpec | null {
 }
 
 const MADE_ELSEWHERE: Record<string, string> = {
-  'CNC Aluminum': 'CNC aluminum',
-  'Laser-Cut Acrylic/Carbon': 'Laser-cut sheet',
   'Off-the-shelf COTS': 'Bought part, not from the catalog',
 };
 
@@ -76,7 +75,8 @@ export function isPrinted(p: ScenePart): boolean {
     p.role === 'solid' &&
     (isImportedMesh(p) || !NOT_PRINTED.has(p.kind)) &&
     !BLOCKOUT_KINDS.has(p.kind) &&
-    !(p.mechanicalTag && MADE_ELSEWHERE[p.mechanicalTag])
+    !(p.mechanicalTag && MADE_ELSEWHERE[p.mechanicalTag]) &&
+    !sheetOf(p)
   );
 }
 
@@ -184,10 +184,19 @@ function describeSupply(key: string): LineInfo | null {
   };
 }
 
+function describeSheet(key: string): LineInfo | null {
+  const sheet = sheetFromKey(key);
+
+  return sheet
+    ? { category: 'Sheet', name: SHEET_STOCK[sheet.material].label, detail: `${sheet.thickness} mm`, urlKind: 'none' }
+    : null;
+}
+
 const DESCRIBERS: Array<[string, (key: string) => LineInfo | null]> = [
   ['component:', describeComponent],
   ['hardware:', describeHardware],
   ['supply:', describeSupply],
+  ['sheet:', describeSheet],
 ];
 
 export function describeKey(key: string): LineInfo | null {
@@ -240,6 +249,10 @@ function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: Mesh
   if (key) return addCount(t.counts, key, 1, [p.id].filter(Boolean));
 
   if (isStandIn(p)) return t.standIns.push({ id: p.id, name: p.name });
+
+  const sheet = sheetOf(p);
+
+  if (sheet) return addCount(t.counts, sheetKey(sheet), 1, [p.id]);
 
   const process = madeElsewhereProcess(p);
 

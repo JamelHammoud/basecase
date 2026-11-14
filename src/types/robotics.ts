@@ -175,6 +175,7 @@ export interface ScenePart extends PartRelations, BooleanFields {
   group?: PartGroup;
   printMaterial?: PrintMaterial;
   print?: PartPrint;
+  sheet?: PartSheet;
   jointId?: string;
   cameraLens?: Lens;
   sketch?: PartSketch;
@@ -187,7 +188,7 @@ import type { Lens } from '../cameras/lens';
 import type { OnshapeMate, PartGroup, RobotLinkRef } from './robotLink';
 import type { PartSketch } from '../utils/sketch/types';
 
-import type { PartPrint, PrintRecord } from './print';
+import type { PartPrint, PartSheet, PrintRecord } from './print';
 
 export type PrintMaterial = 'PLA' | 'PETG' | 'ABS' | 'ASA' | 'TPU';
 

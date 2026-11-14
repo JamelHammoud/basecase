@@ -33,6 +33,9 @@ describe('sceneText', () => {
     expect(sceneText({ ...scene(0), parts: [{ ...part(0), edges: { kind: 'fillet', mm: 3 } }] })).toMatch(
       / size=\[3,3,6\] edges=fillet:3 box=/,
     );
+    expect(sceneText({ ...scene(0), parts: [{ ...part(0), material: undefined, sheet: 'aluminum:3.18' }] })).toMatch(
+      / #c9a14a sheet=aluminum:3.18 note=/,
+    );
   });
 
   it('filters by group and ids, and names ids it can’t find', () => {

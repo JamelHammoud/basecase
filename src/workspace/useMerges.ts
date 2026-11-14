@@ -33,7 +33,7 @@ const planKey = (parts: ScenePart[], project: ProjectSettings, printer: PrinterS
   [
     guideFingerprint('', parts, project),
     printer.model.id,
-    ...parts.map((p) => `${p.printMaterial ?? ''}${p.print?.skip ? '!' : ''}`),
+    ...parts.map((p) => `${p.printMaterial ?? ''}${p.sheet ? '#' : ''}${p.print?.skip ? '!' : ''}`),
   ].join('|');
 
 const present = (parts: ScenePart[]) => {

@@ -23,6 +23,7 @@ function readingsLine(p: ScenePart): string {
     p.visible,
     p.printMaterial,
     p.mechanicalTag,
+    p.sheet && `${p.sheet.material}:${p.sheet.thickness}`,
     p.massG,
     p.group?.id,
     p.print?.skip,

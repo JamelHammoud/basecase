@@ -5,7 +5,7 @@ export const STALE_DAYS = 60;
 export const FILAMENT_MARGIN = 0.15;
 
 export type BomCategory =
-  'Components' | 'Hardware' | 'Added by Agent' | 'Supplies' | 'Materials' | 'Filament' | 'Equipment';
+  'Components' | 'Hardware' | 'Added by Agent' | 'Supplies' | 'Materials' | 'Sheet' | 'Filament' | 'Equipment';
 export type PriceStatus = 'checked' | 'stale' | 'unchecked';
 
 export const BOM_CATEGORIES: BomCategory[] = [
@@ -14,6 +14,7 @@ export const BOM_CATEGORIES: BomCategory[] = [
   'Added by Agent',
   'Supplies',
   'Materials',
+  'Sheet',
   'Filament',
   'Equipment',
 ];

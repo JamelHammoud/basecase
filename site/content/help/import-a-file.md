@@ -91,7 +91,7 @@ Opening STEP and IGES works in the desktop app. Each body in the file becomes it
 
 The file is converted in a sandbox, apart from the rest of the app. Units come from the file itself, so every body arrives in millimeters at its real size.
 
-Imported bodies count as printed parts, like any imported mesh. To mark a body as bought or machined, select it. Then change the material under **Appearance** from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Checks then list it among parts without a source until it has one.
+Imported bodies count as printed parts, like any imported mesh. To mark a body as bought, select it. Then change the material under **Appearance** from **Printed PLA / PETG** to **Off-the-shelf**. Checks then list it among parts without a source until it has one. A flat body can be cut from aluminum, carbon fiber or acrylic instead, as [Cut a part from sheet](/help/cut-a-part-from-sheet) shows.
 
 - Files up to 200 MB open.
 - A file with more than 1,000 bodies doesn't open.

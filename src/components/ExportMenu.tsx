@@ -5,6 +5,7 @@ import {
   MenuItem,
   PopoverMenu,
   ClipboardIcon,
+  CutIcon,
   DownloadIcon,
   FileIcon,
   PhotoIcon,
@@ -19,10 +20,12 @@ interface ExportMenuProps {
   canExportParts: boolean;
   canExportStep: boolean;
   canExportRobot: boolean;
+  canExportCutFiles: boolean;
   onExportImage: () => void;
   onExportStl: () => void;
   onExport3mf: () => void;
   onExportStep?: () => void;
+  onExportCutFiles: () => void;
   onExportScene: () => void;
   onExportRobot: () => void;
   onAirDrop: () => void;
@@ -33,10 +36,12 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
   canExportParts,
   canExportStep,
   canExportRobot,
+  canExportCutFiles,
   onExportImage,
   onExportStl,
   onExport3mf,
   onExportStep,
+  onExportCutFiles,
   onExportScene,
   onExportRobot,
   onAirDrop,
@@ -82,6 +87,9 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
             disabled={!canExportStep}
             onSelect={run(onExportStep)}
           />
+        )}
+        {canExportCutFiles && (
+          <MenuItem icon={<CutIcon className="w-4 h-4" />} label="Cut Files" onSelect={run(onExportCutFiles)} />
         )}
         <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Scene" onSelect={run(onExportScene)} />
         <MenuItem

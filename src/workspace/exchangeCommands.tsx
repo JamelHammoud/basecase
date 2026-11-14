@@ -1,6 +1,7 @@
 import type { Command } from '../components/CommandPalette';
 import {
   ClipboardIcon,
+  CutIcon,
   DownloadIcon,
   FileIcon,
   FileImportIcon,
@@ -34,6 +35,14 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     icon: <ShapeIcon className={ic} />,
     keywords: 'stp cad assembly fusion onshape solidworks freecad download',
     run: () => void exports.exportStep(),
+  };
+  const cutFiles: Command = {
+    id: 'export-cut-files',
+    group: 'Scene',
+    label: 'Export Cut Files',
+    icon: <CutIcon className={ic} />,
+    keywords: 'dxf sheet laser cnc aluminum carbon acrylic sendcutsend plate download',
+    run: () => void exports.exportCutFiles(),
   };
   const partExports: Command[] = [
     {
@@ -82,6 +91,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     },
     ...(exports.canExportParts ? partExports : []),
     ...(IS_WEB_DEMO || !exports.canExportStep ? [] : [stepExport]),
+    ...(exports.canExportCutFiles ? [cutFiles] : []),
     {
       id: 'export-image',
       group: 'Scene',

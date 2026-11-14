@@ -5,7 +5,6 @@ import {
   IconButton,
   NumberInput,
   Section,
-  Select,
   Slider,
   CrosshairIcon,
   FloorIcon,
@@ -17,7 +16,8 @@ import { EdgesField } from './EdgesField';
 import { wrapDegrees } from './partMath';
 import { QuarterTurns } from './QuarterTurns';
 import type { PartSectionProps } from './partSections';
-import { MATERIALS, materialTag, type InspectorProps, type Phase } from './types';
+import { MaterialField } from './MaterialField';
+import type { InspectorProps, Phase } from './types';
 import { keyFor } from '../../app/shortcuts';
 import { percent } from '../../../electron/percent.mjs';
 
@@ -200,13 +200,6 @@ export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[]
       suggestions={parts.map((p) => p.color)}
       onChange={(color, live) => onUpdate({ color }, live)}
     />
-    {part.role === 'solid' && (
-      <Select
-        aria-label="Material"
-        value={materialTag(part)}
-        onChange={(e) => onUpdate({ mechanicalTag: e.target.value })}
-        options={MATERIALS}
-      />
-    )}
+    {part.role === 'solid' && <MaterialField part={part} onUpdate={onUpdate} />}
   </Section>
 );

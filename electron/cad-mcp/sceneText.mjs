@@ -15,6 +15,8 @@ const links = (p) => [
   p.frame && `frame=${p.frame}`,
 ];
 
+const madeFrom = (p) => [p.material, p.sheet && `sheet=${p.sheet}`, p.catalog, p.supply];
+
 export function partLine(p, withNotes = true) {
   return [
     p.id,
@@ -28,9 +30,7 @@ export function partLine(p, withNotes = true) {
     p.bounds && `box=${vec(p.bounds.min, 1)}..${vec(p.bounds.max, 1)}`,
     p.color,
     p.role && p.role !== 'solid' && `role=${p.role}`,
-    p.material,
-    p.catalog,
-    p.supply,
+    ...madeFrom(p),
     ...links(p),
     p.ports && `ports=${p.ports}`,
     p.hidden && 'hidden',

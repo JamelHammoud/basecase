@@ -80,6 +80,28 @@ describe('specToPart and applySpec', () => {
     ]).toMatchSnapshot();
   });
 
+  it('cuts a plate from sheet at a stock thickness, reports it, and prints it again', () => {
+    const plate = specToPart({ id: 'chest', size: [120, 80, 3] });
+    const metal = applySpec(plate, { id: 'chest', sheet: { material: 'aluminum' } });
+
+    expect(metal.sheet).toEqual({ material: 'aluminum', thickness: 3.18 });
+    expect(snapshotScene([metal]).parts[0]).toMatchObject({ sheet: 'aluminum:3.18', material: undefined });
+    expect(applySpec(metal, { id: 'chest', sheet: { material: 'carbon', thickness: 2.2 } }).sheet).toEqual({
+      material: 'carbon',
+      thickness: 2,
+    });
+    expect(applySpec(metal, { id: 'chest', sheet: null }).sheet).toBeUndefined();
+    expect(specToPart({ id: 'hip', size: [60, 40, 4], sheet: { material: 'acrylic' } }).sheet).toEqual({
+      material: 'acrylic',
+      thickness: 4.5,
+    });
+
+    const legacy = { ...plate, mechanicalTag: 'CNC Aluminum' };
+
+    expect(snapshotScene([legacy]).parts[0].sheet).toBe('aluminum:3.18');
+    expect(applySpec(legacy, { id: 'chest', sheet: null }).mechanicalTag).toBe('3D Printed PLA/PETG');
+  });
+
   it('rounds a primitive’s edges, clamped to its size, reports them, and makes them sharp again', () => {
     const plate = specToPart({ id: 'plate', size: [40, 20, 10] });
     const rounded = applySpec(plate, { id: 'plate', edges: { kind: 'fillet', mm: 8 } });

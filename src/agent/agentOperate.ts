@@ -10,6 +10,7 @@ import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import { toCad, toScene } from './agentFrame';
+import { duration, runClock } from '../utils/duration';
 
 export interface OperateAction {
   forward?: number;
@@ -83,7 +84,7 @@ function stateLine(ctx: OperateContext, poses: Float64Array | null): string {
 
   if (robot)
     lines.push(
-      robot.fellAt !== null ? `Fell at ${robot.fellAt.toFixed(1)} s.` : `Upright, tilt ${robot.tilt.toFixed(0)}°.`,
+      robot.fellAt !== null ? `Fell at ${runClock(robot.fellAt)}.` : `Upright, tilt ${robot.tilt.toFixed(0)}°.`,
     );
 
   const facts = robotFacts(ctx.rig, ctx.parts);
@@ -157,9 +158,7 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
   const calibration = (await ctx.calibrationErrors?.().catch(() => '')) ?? '';
 
   return {
-    text: [`Ran ${seconds.toFixed(1)} s.`, stateLine(ctx, poses), missing.trim(), calibration]
-      .filter(Boolean)
-      .join(' '),
+    text: [`Ran ${duration(seconds)}.`, stateLine(ctx, poses), missing.trim(), calibration].filter(Boolean).join(' '),
     images: seen.shots,
   };
 }

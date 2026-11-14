@@ -4,6 +4,7 @@ import type { SnapshotRef } from '../skills/snapshots';
 import type { TrainerStatus } from '../utils/platformBridge';
 import type { TrainTask } from './policy';
 import type { TrainProgress, Training } from './useTraining';
+import { duration, runClock } from '../utils/duration';
 
 export interface TrainJob {
   id: string | null;
@@ -31,11 +32,12 @@ export function savedPolicyMessage(record: PolicyRecord, task: TrainTask): strin
   if (!e) return `Saved ${record.name}`;
 
   if (e.fellAt !== null)
-    return `Saved ${record.name}. Falls after ${e.fellAt.toFixed(1)} s. Train longer, or fix what the simulation shows.`;
+    return `Saved ${record.name}. Falls after ${runClock(e.fellAt)}. Train longer, or fix what the simulation shows.`;
 
-  if (task === 'walk') return `Saved ${record.name}. Walked ${Math.max(0, e.forward).toFixed(2)} m in ${e.seconds} s.`;
+  if (task === 'walk')
+    return `Saved ${record.name}. Walked ${Math.max(0, e.forward).toFixed(2)} m in ${duration(e.seconds)}.`;
 
-  return `Saved ${record.name}. Stood ${e.seconds} s without falling.`;
+  return `Saved ${record.name}. Stood ${duration(e.seconds)} without falling.`;
 }
 
 export function trainingBlocker(robotKey: string | null, trainer: TrainerStatus | null): string | null {

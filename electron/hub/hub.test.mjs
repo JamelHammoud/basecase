@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { startFakeHub } from '../../e2e/fakeHub.ts';
+import { filesAtTag, startFakeHub } from '../../e2e/fakeHub.ts';
 import { HubClient, TOKEN_REFUSED } from './hubClient.mjs';
 import { HUB_CALLS } from './routes.mjs';
 import { HubAccount, hubEndpoint } from './index.mjs';
@@ -33,6 +33,19 @@ const dataset = (episodes) => {
 
   return files;
 };
+
+const v3Dataset = (episodes) => ({
+  'meta/info.json': text(JSON.stringify({ codebase_version: 'v3.0', total_episodes: episodes })),
+  'meta/tasks.parquet': binary(400, 1),
+  'meta/episodes/chunk-000/file-000.parquet': binary(600, 2),
+  'data/chunk-000/file-000.parquet': binary(3000 * episodes, 3),
+  'videos/observation.images.scene/chunk-000/file-000.mp4': binary(5000 * episodes, 4),
+});
+
+const bothVersions = (episodes) => ({
+  ...v3Dataset(episodes),
+  ...Object.fromEntries(Object.entries(dataset(episodes)).map(([p, b]) => [`v2.1/${p}`, b])),
+});
 
 let hub;
 let dir;
@@ -150,6 +163,31 @@ describe('publishing to the Hub', () => {
     );
     expect(repo.tags.get('v2.1')).toBe(2);
     expect(hub.requests.filter((r) => r.method === 'PUT')).toHaveLength(6);
+  });
+
+  it('puts v3 on main tagged v3.0 and leaves the v2.1 folder at the v2.1 tag, again on every publish', async () => {
+    hub = await startFakeHub({ token: TOKEN });
+
+    const hubAccount = account();
+
+    await hubAccount.signIn(TOKEN);
+    await hubAccount.publish({ name: 'both', files: bothVersions(3) });
+    await hubAccount.publish({ name: 'both', files: bothVersions(2) });
+
+    const repo = hub.repos.get('tester/both');
+    const legacy = filesAtTag(repo, 'v2.1');
+
+    expect(repo.commits).toHaveLength(4);
+    expect(repo.tags).toEqual(
+      new Map([
+        ['v2.1', 3],
+        ['v3.0', 4],
+      ]),
+    );
+    expect([...repo.files.keys()].sort()).toEqual(['.gitattributes', ...Object.keys(v3Dataset(2))].sort());
+    expect([...legacy.keys()].sort()).toEqual(['.gitattributes', ...Object.keys(dataset(2))].sort());
+    expect(new Uint8Array(legacy.get('meta/modality.json'))).toEqual(text('{}'));
+    expect(JSON.parse(repo.files.get('meta/info.json').toString()).total_episodes).toBe(2);
   });
 
   it('uploads large files in parts and tags only a dataset with a codebase version', async () => {

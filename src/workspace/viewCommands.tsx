@@ -33,6 +33,7 @@ import type { CommandInputs } from './sceneCommands';
 import { paletteCommand, selectionActions } from './partActions';
 import { showLeftTab, showPartsSection } from './showView';
 import { keyFor } from '../app/shortcuts';
+import { earthCommands } from './earthCommands';
 
 const PARTS_SECTIONS = [
   {
@@ -255,5 +256,6 @@ function catalogCommands({ core, actions }: CommandInputs): Command[] {
 export const viewCommands = (inputs: CommandInputs): Command[] => [
   ...panelCommands(inputs),
   ...displayCommands(inputs),
+  ...earthCommands(inputs.actions.earth),
   ...catalogCommands(inputs),
 ];

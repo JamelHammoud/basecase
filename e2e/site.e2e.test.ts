@@ -60,6 +60,12 @@ async function open(urlPath: string) {
   return { page, errors };
 }
 
+function imagesNamedBy(entryUrl: string) {
+  const source = readFileSync(path.join('site/content', `${new URL(entryUrl).pathname}.md`), 'utf8');
+
+  return (source.match(/^image:/m) ? 1 : 0) + (source.match(/!\[/g)?.length ?? 0);
+}
+
 const fontWeight = (page: Page, selector: string) =>
   page
     .locator(selector)
@@ -100,7 +106,7 @@ describe('basecase.so', () => {
     await entry.click();
     await page.waitForURL(/\/changelog\/[a-z0-9-]+$/);
     expect(await page.locator('h1').innerText()).toBe(title);
-    await expect.poll(() => page.locator('article img').count()).toBeGreaterThan(1);
+    await expect.poll(() => page.locator('article img').count()).toBe(imagesNamedBy(page.url()));
     await expect
       .poll(() =>
         page

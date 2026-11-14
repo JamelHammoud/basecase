@@ -78,6 +78,7 @@ export interface DevActions {
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   printState: () => unknown;
+  chooseService: () => Promise<void>;
   datasetFiles: () => Promise<Record<string, Uint8Array> | null>;
   passTries: () => void;
   multiplyRuns: (runs: number) => void;
@@ -286,11 +287,12 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     printPlates: () => devRef.current.printPlates(),
     bomLines: () =>
       buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
-        ({ key, qty }) => ({ key, qty }),
+        ({ key, qty, category, lineUsd, estUsd }) => ({ key, qty, category, lineUsd, estUsd }),
       ),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
     printState: () => devRef.current.printState(),
+    chooseService: () => devRef.current.chooseService(),
     passTries: () => devRef.current.passTries(),
     multiplyRuns: (runs: number) => devRef.current.multiplyRuns(runs),
     addCase: (raw: unknown) => devRef.current.addCase(raw),

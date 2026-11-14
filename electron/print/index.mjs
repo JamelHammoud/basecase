@@ -6,6 +6,7 @@ import { AgentKeys } from '../backend/agentKeys.mjs';
 import { connectorFor, discoverPrinters } from './connectors/index.mjs';
 import { jobDir, openFile, openJob, readJson, slicedPlate, sliceJob, writeJob } from './jobs.mjs';
 import { PrinterStore } from './printers.mjs';
+import { PrintServices } from './services/index.mjs';
 import { extractPlateGcode } from './slice.mjs';
 import { detectSlicers, DOWNLOAD_PAGES, findSlicerApp, slicerFor } from './slicers.mjs';
 
@@ -33,8 +34,21 @@ export class Printing {
       libraryDir,
       new AgentKeys({ dir: path.join(libraryDir, 'agent-config'), secrets, file: 'printer-keys.json' }),
     );
+    this.services = new PrintServices({ libraryDir, secrets });
     this.running = new Map();
     this.connections = new Map();
+  }
+
+  serviceStatus() {
+    return this.services.status();
+  }
+
+  setServiceKey(key) {
+    return this.services.setKey(key);
+  }
+
+  quote(payload) {
+    return this.services.quote(payload);
   }
 
   status() {

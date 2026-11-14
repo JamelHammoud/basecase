@@ -3,6 +3,7 @@ import { hubBridge, type HubAccountState } from '../../hub/hubBridge';
 import { onshapeBridge, type OnshapeAccountState, type OnshapeKey } from '../../onshape/onshapeBridge';
 import { SettingsGroup as Group } from '../SettingsRows';
 import { SecretField } from './SecretField';
+import { PrintServiceAccount } from './PrintServiceAccount';
 import { errorMessage } from '../../utils/errorMessage';
 import { withoutSettingsPath } from '../../app/settingsPanes';
 
@@ -80,6 +81,7 @@ export const AccountsPane: React.FC = () => {
           onSecret={saveOnshape('secret')}
         />
       </Group>
+      <PrintServiceAccount />
     </>
   );
 };

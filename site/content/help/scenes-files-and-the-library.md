@@ -50,7 +50,7 @@ Use a scene for a whole robot, and the Library for pieces you reuse across robot
 
 ## Scene files
 
-A `.basecase` file is a copy of one scene that you can send to someone. It holds what the scene holds, with five things left out: print history, trained policies, Case tries, taught skills and the build guide. The chat with the agent stays on your computer too.
+A `.basecase` file is a copy of one scene that you can send to someone. It holds what the scene holds, with six things left out: print history, print service quotes, trained policies, Case tries, taught skills and the build guide. The chat with the agent stays on your computer too.
 
 Opening a scene file makes a new scene. Changes on either side don't reach the other.
 

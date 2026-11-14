@@ -306,6 +306,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             project={props.project}
             onChangeProject={props.onChangeProject}
             onAddPrinter={props.onAddPrinter}
+            onChooseService={() => void printing.service.choose()}
           />
           {printing.printedCount > 0 && !printing.fitTest && <SkipPrinted printing={printing} />}
           <PrinterLive printing={printing} />

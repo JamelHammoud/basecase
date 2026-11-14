@@ -1,11 +1,11 @@
 import type { ListPrice } from '../data/listPrices';
-import type { EnteredPrice, PrintMaterial, PurchaseRecord } from '../types/robotics';
+import type { EnteredPrice, PrintMaterial, PrintQuote, PurchaseRecord } from '../types/robotics';
 
 export const STALE_DAYS = 60;
 export const FILAMENT_MARGIN = 0.15;
 
 export type BomCategory =
-  'Components' | 'Hardware' | 'Added by Agent' | 'Supplies' | 'Materials' | 'Filament' | 'Equipment';
+  'Components' | 'Hardware' | 'Added by Agent' | 'Supplies' | 'Materials' | 'Filament' | 'Printed parts' | 'Equipment';
 export type PriceStatus = 'checked' | 'stale' | 'unchecked';
 
 export const BOM_CATEGORIES: BomCategory[] = [
@@ -15,6 +15,7 @@ export const BOM_CATEGORIES: BomCategory[] = [
   'Supplies',
   'Materials',
   'Filament',
+  'Printed parts',
   'Equipment',
 ];
 
@@ -29,6 +30,7 @@ export interface BomLine {
   url?: string;
   urlKind: 'product' | 'search' | 'none';
   record?: PurchaseRecord;
+  quote?: PrintQuote;
   status: PriceStatus;
   ageDays?: number;
   packs?: number;
@@ -71,3 +73,6 @@ export interface Bom {
 
 export const localDate = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+export const daysSince = (iso: string, now: Date) =>
+  Math.max(0, Math.floor((now.getTime() - new Date(`${iso}T00:00:00`).getTime()) / 86_400_000));

@@ -16,6 +16,7 @@ import {
   strengthIn,
   sweepsIn,
   threeMfIn,
+  stlIn,
 } from '../analysis/analysisPool';
 import { snapshotShapes } from '../analysis/sceneShapes';
 import { componentMeshesReady } from '../componentMeshes';
@@ -336,6 +337,16 @@ export class ViewportEngine {
       visibleShares: () => visibilityIn(restSolids(true)),
       printShapes: (ids, faces) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids)), faces),
       printMeshes: (ids) => printMeshesIn(snapshotShapes(measure.partObjects(ctx, ids))),
+      printStl: (items) =>
+        stlIn(
+          snapshotShapes(
+            measure.partObjects(
+              ctx,
+              items.map((i) => i.id),
+            ),
+          ),
+          items,
+        ),
       printThreeMf: (files, plateSize) =>
         threeMfIn(
           snapshotShapes(measure.partObjects(ctx, [...new Set(files.flatMap((f) => f.items.map((i) => i.id)))])),

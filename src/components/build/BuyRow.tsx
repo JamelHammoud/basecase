@@ -44,9 +44,27 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
   );
 };
 
+const QuotedPrice: React.FC<{ line: BomLine }> = ({ line: l }) => {
+  const money = useMoney();
+
+  if (!l.quote || l.lineUsd === undefined) return null;
+
+  return (
+    <Tooltip label={`Checked ${dayLabel(l.quote.checkedAt)}`} className="shrink-0 -my-[5px]">
+      <span
+        className={`${PRICE_CLASS} inline-flex items-center ${l.status === 'stale' ? 'text-amber-400' : 'text-white/90'}`}
+      >
+        {money.format(l.lineUsd)}
+      </span>
+    </Tooltip>
+  );
+};
+
 const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: l, onCheck }) => {
   const stale = l.status === 'stale';
   const money = useMoney();
+
+  if (l.category === 'Printed parts') return <QuotedPrice line={l} />;
 
   if (l.record)
     return (

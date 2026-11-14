@@ -180,14 +180,14 @@ export interface ScenePart extends PartRelations, BooleanFields {
   sketch?: PartSketch;
 }
 
-export type { PartPrint, PrintRecord } from './print';
+export type { PartPrint, PrintQuote, PrintRecord } from './print';
 
 import type { FixedCamera } from '../cameras/fixed';
 import type { Lens } from '../cameras/lens';
 import type { OnshapeMate, PartGroup, RobotLinkRef } from './robotLink';
 import type { PartSketch } from '../utils/sketch/types';
 
-import type { PartPrint, PrintRecord } from './print';
+import type { PartPrint, PrintQuote, PrintRecord } from './print';
 
 export type PrintMaterial = 'PLA' | 'PETG' | 'ABS' | 'ASA' | 'TPU';
 
@@ -219,6 +219,8 @@ export interface ProjectSettings extends ProjectRecords {
   infillPct: number;
   printProcess?: string;
   prints?: PrintRecord[];
+  madeBy?: 'service';
+  quotes?: PrintQuote[];
   budgetUsd?: number;
   budgetEntered?: EnteredPrice;
   tether?: Tether;

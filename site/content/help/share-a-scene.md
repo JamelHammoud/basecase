@@ -30,6 +30,6 @@ Send a whole design to someone as one .basecase file, which they can open in the
 
 ![The Export menu with Scene highlighted](/help/share-a-scene/menu.png)
 
-The file holds the parts, joints, poses, comments, Cases, Routines and the scene's goal. Print history, trained policies, Case tries, taught skills, the build guide and your chat with the agent stay on your computer. [Scenes, files and the Library](/help/scenes-files-and-the-library) explains why.
+The file holds the parts, joints, poses, comments, Cases, Routines and the scene's goal. Print history, print service quotes, trained policies, Case tries, taught skills, the build guide and your chat with the agent stay on your computer. [Scenes, files and the Library](/help/scenes-files-and-the-library) explains why.
 
 It's also **File** ▸ **Export Scene**, and **Export Scene** in [[⌘K]]. The person you send it to follows [Open a shared scene](/help/open-a-shared-scene).

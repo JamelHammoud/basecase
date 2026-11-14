@@ -29,7 +29,9 @@ export function budgetRow(ctx: CheckContext): CheckRow {
   else if (est > WARN_SHARE * budget) status = 'warn';
 
   const unpriced = bom.totals.unpriced ? `; no price on ${plural(bom.totals.unpriced, 'line')}` : '';
-  const noSupport = !ctx.input.supportG && ctx.parts.some(isPrinted) ? '; support filament not counted' : '';
+  const byService = ctx.project.madeBy === 'service';
+  const noSupport =
+    !byService && !ctx.input.supportG && ctx.parts.some(isPrinted) ? '; support filament not counted' : '';
   const biggest = [...bom.lines].sort((a, b) => lineUsd(b) - lineUsd(a)).slice(0, BIGGEST);
 
   return {

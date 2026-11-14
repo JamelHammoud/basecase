@@ -1,4 +1,4 @@
-import { hashText } from '../guide/guideItems';
+import { hashText } from '../utils/geometryHash';
 import type { ScenePart } from '../types/robotics';
 import { numbersHash } from '../utils/geometryHash';
 import { baseOf, isBooleanPart, type BooleanPart } from './parts';

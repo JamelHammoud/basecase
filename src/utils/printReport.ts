@@ -6,11 +6,10 @@ import { buildPrintPlan, choosePose, type PrintCheck, type PrintPlan } from '../
 import type { MeshMeasure } from '../three/meshMeasure';
 import { PRINT_RULES, printHours, type PrintShape, type Vec3 } from '../three/printability';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
-import { hashText } from '../guide/guideItems';
 import { filamentGrams, isPrinted, printMaterialOf } from './bom';
 import { duration } from './duration';
 import { weight } from './weight';
-import { jsonHash, numbersHash } from './geometryHash';
+import { shapeKey } from '../print/shapeKey';
 import { plural } from '../../electron/plural.mjs';
 
 const SUPPORT_FILL = 0.2;
@@ -47,23 +46,6 @@ export interface PartShape {
 
 const shapes = new Map<string, PartShape>();
 const MAX_CACHED = 4000;
-
-export function shapeKey(p: ScenePart): string {
-  const c = p.cad;
-
-  return [
-    p.id,
-    p.kind,
-    JSON.stringify(p.dimensions),
-    JSON.stringify(p.deformers ?? null),
-    JSON.stringify(p.edges ?? null),
-    c ? `${c.language}:${hashText(c.code)}:${numbersHash(c.positions)}` : '',
-    numbersHash(p.sculptMesh?.positions),
-    numbersHash(p.mesh?.positions),
-    jsonHash(p.customNodes),
-    p.hardware ? JSON.stringify(p.hardware) : '',
-  ].join('|');
-}
 
 const cacheKey = (p: ScenePart) => `${shapeKey(p)}|${p.print?.down?.join(',') ?? ''}`;
 

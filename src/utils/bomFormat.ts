@@ -41,7 +41,7 @@ const byCategory = (bom: Bom) =>
 const recordCells = (l: BomLine) => [
   l.record?.asin ?? '',
   l.record?.title ?? '',
-  l.record?.checkedAt ?? '',
+  l.record?.checkedAt ?? l.quote?.checkedAt ?? '',
   STATUS_LABEL[l.status],
 ];
 
@@ -107,13 +107,14 @@ function markdownRow(l: BomLine, money: Money): string {
   const qty = l.unit === 'g' ? `${l.qty} g` : String(l.qty);
   const link = l.url ? `[${l.urlKind === 'product' ? 'Listing' : 'Search'}](${l.url})` : '';
   const name = `${l.name}${l.detail ? ` <br>${l.detail}` : ''}${l.warning ? ` <br>⚠ ${l.warning}` : ''}`;
-  const checked = l.record ? `${l.record.checkedAt}${l.status === 'stale' ? ' (stale)' : ''}` : 'Not checked';
+  const checkedAt = l.record?.checkedAt ?? l.quote?.checkedAt;
+  const checked = checkedAt ? `${checkedAt}${l.status === 'stale' ? ' (stale)' : ''}` : 'Not checked';
 
   return `| ${name} | ${qty} | ${l.packs ?? ''} | ${markdownPrice(l, money)} | ${checked} | ${link} |`;
 }
 
 function markdownPrinted(bom: Bom): string[] {
-  if (!bom.printed.length) return [];
+  if (!bom.printed.length || bom.lines.some((l) => l.category === 'Printed parts')) return [];
 
   return [
     '## Printed parts',
@@ -173,7 +174,15 @@ function textSummary(t: Bom['totals'], money: Money): string {
   );
 }
 
+function quotedText(l: BomLine, money: Money): string {
+  if (l.lineUsd === undefined || !l.quote) return 'not quoted';
+
+  return `quoted ${money.format(l.lineUsd)} for ${l.qty} by the print service (checked ${l.quote.checkedAt}${l.status === 'stale' ? ', stale' : ''})`;
+}
+
 function textPrice(l: BomLine, money: Money): string {
+  if (l.category === 'Printed parts') return quotedText(l, money);
+
   if (l.record)
     return `${money.format(l.record.priceUsd, l.record.entered)} per ${l.record.packQty}${l.unit === 'g' ? ' g' : ''}, ${l.packs} to buy = ${money.format(l.lineUsd ?? 0, lineEntry(l))} (checked ${l.record.checkedAt}${l.status === 'stale' ? ', stale' : ''})`;
 

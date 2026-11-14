@@ -15,7 +15,9 @@ import {
   PrintedPart,
   PriceStatus,
   STALE_DAYS,
+  daysSince,
 } from './bomTypes';
+import { printedLine } from './bomPrinted';
 
 import { neededSupplyKeys } from './bomNeeds';
 import { wiringNetlist } from '../wiring/netlist';
@@ -100,9 +102,6 @@ export function parseAsin(url: string): string | null {
 
   return m ? m[1].toUpperCase() : null;
 }
-
-const daysSince = (iso: string, now: Date) =>
-  Math.max(0, Math.floor((now.getTime() - new Date(`${iso}T00:00:00`).getTime()) / 86_400_000));
 
 interface LineInfo {
   category: BomCategory;
@@ -214,6 +213,8 @@ function boughtKey(p: ScenePart): string | null {
   return p.kind === 'hardware' && p.hardware ? hardwareKey(p.hardware) : null;
 }
 
+export const isMadePart = (p: ScenePart): boolean => p.role === 'solid' && !boughtKey(p) && isPrinted(p);
+
 const madeElsewhereProcess = (p: ScenePart): string | undefined =>
   p.mechanicalTag && !NOT_PRINTED.has(p.kind) ? MADE_ELSEWHERE[p.mechanicalTag] : undefined;
 
@@ -231,7 +232,10 @@ function printedPart(p: ScenePart, m: MeshMeasure, project: ProjectSettings): Pr
   };
 }
 
-type PartTally = Pick<Bom, 'printed' | 'standIns' | 'unmeasured' | 'madeElsewhere' | 'filamentG'> & { counts: Counts };
+type PartTally = Pick<Bom, 'printed' | 'standIns' | 'unmeasured' | 'madeElsewhere' | 'filamentG'> & {
+  counts: Counts;
+  made: ScenePart[];
+};
 
 function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: MeshMeasure | undefined) {
   const key = boughtKey(p);
@@ -245,6 +249,8 @@ function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: Mesh
   if (process) return t.madeElsewhere.push({ id: p.id, name: p.name, process });
 
   if (!isPrinted(p)) return;
+
+  t.made.push(p);
 
   if (!m || m.volumeMm3 <= 0) return t.unmeasured.push(p.id);
 
@@ -261,6 +267,7 @@ function tallyParts(
 ): PartTally {
   const t: PartTally = {
     counts: new Map(),
+    made: [],
     printed: [],
     standIns: [],
     unmeasured: [],
@@ -378,8 +385,9 @@ function listedText(counts: Counts): string {
 
 export function buildBom({ parts, project, purchases, measures, now = new Date(), supportG = {} }: BomInput): Bom {
   const tally = tallyParts(parts, project, measures);
+  const byService = project.madeBy === 'service';
 
-  addFilament(tally, supportG);
+  if (!byService) addFilament(tally, supportG);
 
   for (const x of project.extras ?? []) if (x.qty > 0) addCount(tally.counts, x.key, x.qty);
 
@@ -395,9 +403,15 @@ export function buildBom({ parts, project, purchases, measures, now = new Date()
   for (const key of neededSupplyKeys(parts, listed, { tether: !!sceneTether({ parts, project }), netlist }))
     addCount(tally.counts, key, 1);
 
+  const printedLines = byService
+    ? tally.made.map((part) =>
+        printedLine({ part, material: printMaterialOf(part, project), quotes: project.quotes, now }),
+      )
+    : [];
   const lines = [...tally.counts]
     .map(([key, { qty, partIds }]) => bomLine(key, qty, partIds, { purchases, now }))
     .filter((l): l is BomLine => l !== null)
+    .concat(printedLines)
     .sort(
       (a, b) =>
         BOM_CATEGORIES.indexOf(a.category) - BOM_CATEGORIES.indexOf(b.category) ||

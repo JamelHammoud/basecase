@@ -30,6 +30,7 @@ covers:
   - src/utils/engineeringEnvelope.ts
   - src/components/build/EnvelopeRows.tsx
   - src/readiness/caseChecks.ts
+  - src/utils/engineeringFalls.ts
   - src/wiring/wiringChecks.ts
 ---
 
@@ -56,6 +57,7 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Weight | Total mass and center of mass | Never; it reports the numbers |
 | Servo torque | Each servo's load against its stall and rated torque | Over 0.60 of stall torque, or running too hot; amber from 0.40 of stall |
 | Peak torque | Torque and speed while a trained policy walks for 14 seconds | Over stall for more than 50 ms, or a fall. Amber when over 5% of a joint's walk is past its servo's torque–speed line. Not run without a walking policy |
+| Falls | Each leg servo's torque as the robot tips over from 12 directions, against its rated torque | Over 5× rated torque in a fall; amber over 3×. Not run until the agent checks falls |
 | Torque estimates | Joints with no servo or published torque | A note: the simulation guesses their torque from weight |
 | Servo models | Whether each servo runs on a measured calibration | A note naming the servos that aren't calibrated |
 | Payload | What an arm lifts at full reach and close in | Never; it reports the numbers |

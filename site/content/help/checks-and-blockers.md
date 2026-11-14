@@ -60,6 +60,6 @@ An ignored problem doesn't come back when the parts change, because it's your ca
 
 Checks measure the design as it's modeled. A strap or zip tie you'll add by hand isn't in the model, so its row is a note to check yourself.
 
-Range of motion samples each joint every 15°, so a clash thinner than one step can fall between samples. Peak torque waits for a trained walk policy. Prices stay estimates until you add the ones you see.
+Range of motion samples each joint every 15°, so a clash thinner than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits for the agent to tip the robot over. Prices stay estimates until you add the ones you see.
 
 Every check, with what makes it fail, is in [Build tab checks](/help/build-checks).

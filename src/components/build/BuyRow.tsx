@@ -77,7 +77,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
   if (l.category === 'Printed parts')
     return l.quote && l.lineUsd !== undefined ? (
-      <CheckedPrice checkedAt={l.quote.checkedAt} stale={stale} old={false}>
+      <CheckedPrice checkedAt={l.quote.checkedAt} stale={stale} old={(l.ageDays ?? 0) > STALE_DAYS}>
         {money.format(l.lineUsd)}
       </CheckedPrice>
     ) : null;

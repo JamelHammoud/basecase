@@ -5,8 +5,11 @@ export const SLANT_ORIGIN = 'https://slant3dapi.com';
 export const SERVICE_NAME = 'Slant 3D';
 export const KEY_REFUSED = 'Slant 3D didn’t accept the API key in Settings ▸ Accounts.';
 export const UNREADABLE = 'Basecase couldn’t read Slant 3D’s reply and asks again in a minute.';
-
-const AGAIN = 'Basecase asks again';
+export const RETRY = { again: 'Basecase asks again', unreadable: UNREADABLE };
+export const SAVE_KEY = {
+  again: 'Save the key again',
+  unreadable: 'Basecase couldn’t read Slant 3D’s reply. Save the key again in a minute.',
+};
 
 const API_PATH = '/v2/api';
 const API_TIMEOUT_MS = 60000;
@@ -32,39 +35,44 @@ function plainDetail(data) {
   return text && !text.startsWith('<') ? text.slice(0, DETAIL_MAX) : undefined;
 }
 
-function parsed(bytes) {
-  try {
-    return JSON.parse(bytes.toString('utf8'));
-  } catch {
-    throw new Error(UNREADABLE);
-  }
-}
-
-async function reached(send, url, init) {
-  try {
-    return await send(url, init);
-  } catch {
-    throw new Error(serviceRefusal(SERVICE_NAME, { again: AGAIN }));
-  }
-}
-
 export class Slant3dClient {
-  constructor({ key, origin = SLANT_ORIGIN, outbound = publicFetch }) {
+  constructor({ key, origin = SLANT_ORIGIN, outbound = publicFetch, retry = RETRY }) {
     this.key = key;
     this.origin = new URL(origin).origin;
     this.outbound = outbound;
+    this.retry = retry;
+  }
+
+  get unreadable() {
+    return this.retry.unreadable;
+  }
+
+  async reached(send, url, init) {
+    try {
+      return await send(url, init);
+    } catch {
+      throw new Error(serviceRefusal(SERVICE_NAME, { again: this.retry.again }));
+    }
+  }
+
+  async parsed(res) {
+    try {
+      return JSON.parse((await readCapped(res, REPLY_MAX)).toString('utf8'));
+    } catch {
+      throw new Error(this.unreadable);
+    }
   }
 
   url(route) {
     const url = new URL(`${API_PATH}${route}`, this.origin);
 
-    if (url.origin !== this.origin || !url.pathname.startsWith(`${API_PATH}/`)) throw new Error(UNREADABLE);
+    if (url.origin !== this.origin || !url.pathname.startsWith(`${API_PATH}/`)) throw new Error(this.unreadable);
 
     return url;
   }
 
   async call(route, { method = 'GET', json } = {}) {
-    const res = await reached(fetch, this.url(route), {
+    const res = await this.reached(fetch, this.url(route), {
       method,
       redirect: 'manual',
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
@@ -77,7 +85,7 @@ export class Slant3dClient {
 
     if (res.status === 401 || res.status === 403) throw new Error(KEY_REFUSED);
 
-    const data = parsed(await readCapped(res, REPLY_MAX, 'Slant 3D’s reply'));
+    const data = await this.parsed(res);
 
     if (res.ok && data?.success !== false) return data?.data;
 
@@ -85,7 +93,7 @@ export class Slant3dClient {
 
     if (res.status >= 400 && res.status < 500 && res.status !== 429 && detail) throw new Refusal(detail);
 
-    throw new Error(serviceRefusal(SERVICE_NAME, { status: res.status, detail, again: AGAIN }));
+    throw new Error(serviceRefusal(SERVICE_NAME, { status: res.status, detail, again: this.retry.again }));
   }
 
   async upload(href, bytes) {
@@ -97,13 +105,13 @@ export class Slant3dClient {
       signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
     };
 
-    if (url.origin !== this.origin && url.protocol !== 'https:') throw new Error(UNREADABLE);
+    if (url.origin !== this.origin && url.protocol !== 'https:') throw new Error(this.unreadable);
 
     const res =
       url.origin === this.origin
-        ? await reached(fetch, url, { ...init, redirect: 'manual' })
-        : await reached(this.outbound, url.href, init);
+        ? await this.reached(fetch, url, { ...init, redirect: 'manual' })
+        : await this.reached(this.outbound, url.href, init);
 
-    if (!res.ok) throw new Error(serviceRefusal(SERVICE_NAME, { status: res.status, again: AGAIN }));
+    if (!res.ok) throw new Error(serviceRefusal(SERVICE_NAME, { status: res.status, again: this.retry.again }));
   }
 }

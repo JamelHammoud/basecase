@@ -2,7 +2,7 @@ import path from 'node:path';
 import { AgentKeys } from '../../backend/agentKeys.mjs';
 import { publicFetch } from '../../publicFetch.mjs';
 import { Slant3dQuotes } from './slant3d.mjs';
-import { SERVICE_NAME, SLANT_ORIGIN } from './slant3dClient.mjs';
+import { SAVE_KEY, SERVICE_NAME, SLANT_ORIGIN } from './slant3dClient.mjs';
 
 const KEY = 'slant3d';
 const KEY_MAX = 512;
@@ -38,8 +38,8 @@ export class PrintServices {
     return this.quotes.client;
   }
 
-  connect(key) {
-    return new Slant3dQuotes({ key, origin: this.origin(), outbound: this.outbound });
+  connect(key, retry) {
+    return new Slant3dQuotes({ key, origin: this.origin(), outbound: this.outbound, retry });
   }
 
   async setKey(value) {
@@ -47,7 +47,7 @@ export class PrintServices {
 
     if (key.length > KEY_MAX || /\s/.test(key)) throw new Error('That isn’t a Slant 3D API key.');
 
-    if (key) await this.connect(key).platform();
+    if (key) await this.connect(key, SAVE_KEY).platform();
 
     this.keys.set(KEY, key);
     this.quotes = null;

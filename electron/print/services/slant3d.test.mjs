@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { NO_KEY, PrintServices, serviceOrigin } from './index.mjs';
-import { KEY_REFUSED } from './slant3dClient.mjs';
+import { KEY_REFUSED, UNREADABLE } from './slant3dClient.mjs';
 import { FAKE_FILAMENTS, fakeUnitUsd, startFakeSlant } from './testService.mjs';
 
 const KEY = 'sl-test-key';
@@ -164,6 +164,37 @@ describe('quoting printed parts from Slant 3D', () => {
     await s.setKey(KEY);
     expect(s.status()).toEqual({ name: 'Slant 3D', hasKey: true });
   });
+
+  it('ends a failed key save on saving it again, since nothing retries it', async () => {
+    const s = services();
+
+    for (const reply of [
+      [503, '{"success":false}'],
+      [200, '<html>'],
+    ]) {
+      override = (record) => (record.path.endsWith('/platforms') ? reply : undefined);
+
+      const error = await s.setKey(KEY).catch((e) => e);
+
+      expect(error.message).toMatch(/Save the key again in a minute\.$/);
+      expect(error.message).not.toMatch(/Basecase asks again/);
+    }
+
+    expect(s.status().hasKey).toBe(false);
+  });
+
+  it('asks again after an empty filament list instead of refusing the material', async () => {
+    const s = await keyed();
+
+    override = (record) => (record.path.includes('/filaments') ? [200, '{"success":true,"data":[]}'] : undefined);
+    await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(UNREADABLE);
+
+    override = undefined;
+
+    const { replies } = await s.quote({ shapes: [shape('lid', [20, 20, 2])] });
+
+    expect(replies).toEqual([{ part: 'lid', usd: fakeUnitUsd([20, 20, 2]) }]);
+  });
 });
 
 describe('exploits', () => {
@@ -245,7 +276,7 @@ describe('exploits', () => {
     const s = await keyed();
 
     override = (record) => (record.path.endsWith('/estimate') ? [200, 'x'.repeat(1_100_000)] : undefined);
-    await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(/larger than/);
+    await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(UNREADABLE);
 
     override = (record) => (record.path.endsWith('/estimate') ? [200, '<html>'] : undefined);
     await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(/couldn’t read/);

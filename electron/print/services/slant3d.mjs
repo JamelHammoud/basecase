@@ -35,14 +35,14 @@ const copiesOf = (shape) => {
 
 function pickFilament(filaments, profile) {
   const offered = filaments.filter((f) => f?.profile === profile && f.available !== false && isUuid(f.publicId));
-  const black = offered.find((f) => /black/.test(String(f.color)));
+  const black = offered.find((f) => /black/i.test(String(f.color)));
 
   return (black ?? offered[0])?.publicId;
 }
 
 export class Slant3dQuotes {
-  constructor({ key, origin, outbound }) {
-    this.client = new Slant3dClient({ key, origin, outbound });
+  constructor({ key, origin, outbound, retry }) {
+    this.client = new Slant3dClient({ key, origin, outbound, retry });
     this.platformId = null;
     this.filaments = null;
   }
@@ -54,23 +54,29 @@ export class Slant3dQuotes {
     const found = (Array.isArray(list) ? list : []).find((p) => isUuid(p?.id))?.id;
     const id = found ?? (await this.client.call('/platforms', { method: 'POST', json: PLATFORM }))?.id;
 
-    if (!isUuid(id)) throw new Error(UNREADABLE);
+    if (!isUuid(id)) throw new Error(this.client.unreadable);
 
     this.platformId = id;
 
     return id;
   }
 
+  async filamentList() {
+    this.filaments ??= await this.client.call(`/filaments?profile=${PROFILES.join(',')}`);
+
+    return Array.isArray(this.filaments) ? this.filaments : [];
+  }
+
   async filamentFor(material) {
     if (!PROFILES.includes(material)) return null;
 
-    if (!this.filaments) {
-      const list = await this.client.call(`/filaments?profile=${PROFILES.join(',')}`);
+    const id = pickFilament(await this.filamentList(), material);
 
-      this.filaments = Array.isArray(list) ? list : [];
-    }
+    if (id) return id;
 
-    return pickFilament(this.filaments, material) ?? null;
+    this.filaments = null;
+
+    throw new Error(UNREADABLE);
   }
 
   async uploaded(shape, { bytes, platformId }) {

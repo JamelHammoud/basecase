@@ -91,6 +91,7 @@ export interface DevActions {
   sharedLink: () => string | null;
   stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
   releaseTrainer: () => void;
+  plantStand: (policy: unknown) => Promise<string>;
   stubHandoffs: (stub: HandoffStub) => void;
   plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
@@ -217,6 +218,15 @@ function operatorCameraState() {
   };
 }
 
+const skillStudioApi = (devRef: RefObject<DevActions>) => ({
+  stubTrainer: (policy: unknown, snapshots?: unknown[]) => devRef.current.stubTrainer(policy, snapshots),
+  releaseTrainer: () => devRef.current.releaseTrainer(),
+  plantStand: (policy: unknown) => devRef.current.plantStand(policy),
+  stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
+  plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
+  stressBudget: (rollouts: number) => setStressBudget(rollouts),
+});
+
 export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevStudioDeps) {
   return {
     rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
@@ -303,10 +313,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     codeReports: () => devRef.current.codeReports(),
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
-    stubTrainer: (policy: unknown, snapshots?: unknown[]) => devRef.current.stubTrainer(policy, snapshots),
-    releaseTrainer: () => devRef.current.releaseTrainer(),
-    stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
-    plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
+    ...skillStudioApi(devRef),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     phone: () => phoneSnapshot(),
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
@@ -317,7 +324,6 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     cameraStreams: () => ({ ...streamCost }),
     stubTabEngine,
     exploreLimit: (designs: number) => limitExplore(designs),
-    stressBudget: (rollouts: number) => setStressBudget(rollouts),
     pickFiles: (files: { name: string; base64: string }[]) =>
       pickNextFiles(
         files.map(({ name, base64 }) => new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name)),

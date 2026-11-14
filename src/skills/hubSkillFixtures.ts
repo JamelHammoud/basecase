@@ -47,9 +47,12 @@ export function holdingPolicy(job: Record<string, unknown>, gain = 0): PolicySpe
 
 const VARIANTS: ArenaVariant[] = ['held-out', 'half-timestep', 'latency'];
 
-export function readyStand(model: SimModel, design: string): Skill {
+export function readyStand(
+  model: SimModel,
+  design: string,
+  policy: PolicySpec = holdingPolicy(kitJob(model, 'stand', { minutes: 1, seed: 1 })),
+): Skill {
   const environment = kitEnvironment(model, 'stand');
-  const policy = holdingPolicy(kitJob(model, 'stand', { minutes: 1, seed: 1 }));
   const current = currentDesign({ design, model, environment });
   const controller = { kind: 'policy' as const, policy, robot: kitRobot(model).key };
   const trained = skillFromTraining({ name: 'Stand', start: null, current, environment, controller });

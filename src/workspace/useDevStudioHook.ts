@@ -7,6 +7,10 @@ import { codePanelKey, codeReport } from '../cases/console/codeReports';
 import { parseCase } from '../cases/schema';
 import { loadRecording } from '../cases/tryStore';
 import { withCalibration } from '../reality/projectCalibrations';
+import { isPolicySpec } from '../sim/policy';
+import { readyStand } from '../skills/hubSkillFixtures';
+import { skillRecord, withRecord } from '../skills/skillRecords';
+import { designOf } from '../skills/skillsRuntime';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { printDevActions } from './devPrintState';
@@ -107,6 +111,16 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
       releaseTrainer.current = stub.release;
     },
     releaseTrainer: () => releaseTrainer.current(),
+    plantStand: async (policy) => {
+      if (!isPolicySpec(policy)) throw new Error('plantStand takes a policy.');
+
+      const model = await core.simTraining.skills.buildModel();
+      const skill = readyStand(model, designOf(model), policy);
+
+      docs.setProject((p) => ({ ...p, skills: withRecord(p.skills ?? [], skillRecord(skill, { kit: 'stand' })) }));
+
+      return JSON.stringify(skill);
+    },
     stubHandoffs: (stub) => core.simTraining.routines.handoffs.stub(stub),
     plantHandoff: (from, to, falls) => core.simTraining.routines.handoffs.plant({ from, to }, falls),
     robotPackage: async () => {

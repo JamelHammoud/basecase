@@ -6,7 +6,7 @@ image: /changelog/stress-a-skill-to-find-where-it-breaks/cover.png
 
 You can now stress a ready skill to find the friction, weight, servo strength and latency where it starts failing. Train on These then retrains it on those values and proves it again in Arena.
 
-Stress sits on every ready row in Simulate's Train section, and in ⌘K. Arena only says a skill passes 96 tries near the floor it trained on. A Stand can pass Arena and still fall the day the robot carries a heavier battery. On our test quadruped, a Stand holding a 28° crouch passes Arena. Stress found it falls at 1.94 times its weight.
+Stress sits on every ready row in Simulate's Train section, and in ⌘K. Arena only says a skill passes 96 tries near normal physics. A Stand can pass Arena and still fall the day the robot carries a heavier battery. On our test quadruped, a Stand holding a 28° crouch passes Arena. Stress found it falls at 1.94 times its weight.
 
 Stress searches past Arena's ranges up to fixed limits. Friction runs 0.2 to 1.5 times, weight 0.5 to 2 times, servo strength 40% to 120% and latency up to 150 ms. It judges every try with the skill's own contract. The default search runs 160 tries, about 15 seconds for a quadruped's Stand. The row lists up to three findings as numbers, and clicking one replays its worst try in the live sim.
 

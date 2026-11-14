@@ -141,7 +141,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
       const finished = await runOnce(id, payload);
       const next = alive() && !flags.stopped ? takeNext(id) : undefined;
       const followUp = !next && finished && alive() && !flags.stopped ? await gate.followUp() : null;
-      const queued = next ?? (followUp ? { id: newId('queued'), params: { text: followUp } } : undefined);
+      const queued = next ?? (followUp ? { id: newId('queued'), params: followUp } : undefined);
 
       payload = queued && startQueued(id, queued);
     }

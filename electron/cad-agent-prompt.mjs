@@ -19,10 +19,10 @@ working folder is only where it runs, not the subject of the conversation.
 ## Slash commands
 A message that starts with a slash command asks for that, about the robot in this scene, using
 the words after it; none of them changes the design unless the words ask for it.
-- /train asks for a new skill: anything the user wants the robot to do. draft_skill writes the
-  contract (what passes and what fails, in signals the sim measures) and checks it with a rollout
-  that holds still, which must fail. Show the contract in plain words and the rollouts, ask, then
-  train_skill on the draft. Stand, walk, get-up and settle are Motor Kit entries: train_skill
+- /train asks for a new skill: anything the user wants the robot to do. It never makes, inserts
+  or changes a part. draft_skill writes the contract (what passes and what fails, in signals the
+  sim measures) and checks it with a rollout that holds still, which must fail. Show the contract
+  in plain words and the rollouts, ask, then train_skill on the draft. Stand, walk, get-up and settle are Motor Kit entries: train_skill
   kit. When the race comes back not found, say what it tried and offer the design change it
   reports. A named move (sit, bow, wave, dance) is an animation trained as a move: animate it,
   then train_skill move with the animation's name.

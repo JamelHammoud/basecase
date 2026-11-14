@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { SettingsWindow } from '../components/SettingsWindow';
-import { SceneWorkspace } from '../SceneWorkspace';
+import { ErrorBoundary } from '../design-system';
+import { SceneWorkspace, type StudioShared } from '../SceneWorkspace';
 import { useScenePersistence, type InitialTabs } from './openScenes';
-import { tabListOf } from './tabModel';
+import { tabListOf, type TabEntry } from './tabModel';
 import { TitleBarTabs } from './TitleBarTabs';
 import { useAgentConnection } from './useAgentConnection';
 import { useAppMenu } from './useAppMenu';
@@ -19,6 +20,33 @@ import { useSettingsPane } from './useSettingsPane';
 import { useStudio } from './useStudio';
 import { useTabActions } from './useTabActions';
 import { useTabs } from './useTabs';
+
+const TITLE_BAR_FALLBACK =
+  'absolute top-[6px] inset-x-0 h-[32px] z-30 pointer-events-none [&>button]:pointer-events-auto [&>button]:[-webkit-app-region:no-drag]';
+
+interface TabWorkspaceProps {
+  tab: TabEntry;
+  name: string | undefined;
+  active: boolean;
+  mounted: boolean;
+  studio: StudioShared;
+}
+
+function TabWorkspace({ tab, name, active, mounted, studio }: TabWorkspaceProps) {
+  return (
+    <div
+      className={`absolute inset-0 ${active ? '' : 'invisible pointer-events-none'}`}
+      inert={!active}
+      aria-hidden={!active}
+    >
+      {mounted && (
+        <ErrorBoundary region={name || 'Scene'} className="absolute top-[44px] inset-x-0 bottom-0 flex-col">
+          <SceneWorkspace workspaceId={tab.id} active={active} seed={tab.seed} studio={studio} />
+        </ErrorBoundary>
+      )}
+    </div>
+  );
+}
 
 export function Studio({ initial }: { initial: InitialTabs }) {
   const core = useTabs(initial);
@@ -71,67 +99,65 @@ export function Studio({ initial }: { initial: InitialTabs }) {
 
   return (
     <div className="window-chrome relative w-full h-full overflow-hidden">
-      {core.tabs.map((tab) => {
-        const active = tab.id === core.activeId;
+      {core.tabs.map((tab) => (
+        <TabWorkspace
+          key={tab.id}
+          tab={tab}
+          name={core.metas[tab.id]?.name}
+          active={tab.id === core.activeId}
+          mounted={isMounted(tab.id)}
+          studio={studio}
+        />
+      ))}
 
-        return (
-          <div
-            key={tab.id}
-            className={`absolute inset-0 ${active ? '' : 'invisible pointer-events-none'}`}
-            inert={!active}
-            aria-hidden={!active}
-          >
-            {isMounted(tab.id) && (
-              <SceneWorkspace workspaceId={tab.id} active={active} seed={tab.seed} studio={studio} />
-            )}
-          </div>
-        );
-      })}
+      <ErrorBoundary region="Scene tabs" className={TITLE_BAR_FALLBACK}>
+        <TitleBarTabs
+          tabs={core.tabs}
+          metas={core.metas}
+          activeId={core.activeId}
+          previews={core.thumbs}
+          canReopen={canReopenTab}
+          isLeftOpen={layout.isLeftOpen}
+          leftWidth={layout.panelWidths.left}
+          onToggleLeft={() => layout.setIsLeftOpen((v) => !v)}
+          resizing={!!layout.resizingPanel}
+          rightIslandWidth={layout.rightIslandWidth}
+          actions={{ ...core, ...actions }}
+          scenes={{
+            open: scenesOpen,
+            onOpenChange: setScenesOpen,
+            currentSceneId: core.metas[core.activeId]?.sceneId ?? '',
+            onOpenScene: actions.openScene,
+            onRenameScene: sceneLibrary.renameScene,
+            onDuplicateScene: sceneLibrary.duplicateScene,
+            onDeleteScene: sceneLibrary.deleteScene,
+          }}
+        />
+      </ErrorBoundary>
 
-      <TitleBarTabs
-        tabs={core.tabs}
-        metas={core.metas}
-        activeId={core.activeId}
-        previews={core.thumbs}
-        canReopen={canReopenTab}
-        isLeftOpen={layout.isLeftOpen}
-        leftWidth={layout.panelWidths.left}
-        onToggleLeft={() => layout.setIsLeftOpen((v) => !v)}
-        resizing={!!layout.resizingPanel}
-        rightIslandWidth={layout.rightIslandWidth}
-        actions={{ ...core, ...actions }}
-        scenes={{
-          open: scenesOpen,
-          onOpenChange: setScenesOpen,
-          currentSceneId: core.metas[core.activeId]?.sceneId ?? '',
-          onOpenScene: actions.openScene,
-          onRenameScene: sceneLibrary.renameScene,
-          onDuplicateScene: sceneLibrary.duplicateScene,
-          onDeleteScene: sceneLibrary.deleteScene,
-        }}
-      />
-
-      <SettingsWindow
-        open={settings.settingsOpen}
-        sculptEnabled={prefs.sculptEnabled}
-        onSculptEnabled={prefs.setSculptEnabled}
-        buildPrefs={prefs}
-        pane={settings.pane}
-        focus={settings.focus}
-        onPaneChange={settings.changePane}
-        onClose={settings.closeSettings}
-        snapStepMm={prefs.snapStepMm}
-        onSnapStep={prefs.setSnapStepMm}
-        snapAngleDeg={prefs.snapAngleDeg}
-        onSnapAngle={prefs.setSnapAngleDeg}
-        measureUnit={prefs.measureUnit}
-        onMeasureUnit={prefs.setMeasureUnit}
-        trackpadMode={prefs.trackpadMode}
-        onTrackpadMode={prefs.setTrackpadMode}
-        acpStatus={agent.acpStatus}
-        onReconnectAcp={agent.reconnectAcp}
-        printers={printers}
-      />
+      <ErrorBoundary region="Settings" resetKey={settings.settingsOpen} onClose={settings.closeSettings}>
+        <SettingsWindow
+          open={settings.settingsOpen}
+          sculptEnabled={prefs.sculptEnabled}
+          onSculptEnabled={prefs.setSculptEnabled}
+          buildPrefs={prefs}
+          pane={settings.pane}
+          focus={settings.focus}
+          onPaneChange={settings.changePane}
+          onClose={settings.closeSettings}
+          snapStepMm={prefs.snapStepMm}
+          onSnapStep={prefs.setSnapStepMm}
+          snapAngleDeg={prefs.snapAngleDeg}
+          onSnapAngle={prefs.setSnapAngleDeg}
+          measureUnit={prefs.measureUnit}
+          onMeasureUnit={prefs.setMeasureUnit}
+          trackpadMode={prefs.trackpadMode}
+          onTrackpadMode={prefs.setTrackpadMode}
+          acpStatus={agent.acpStatus}
+          onReconnectAcp={agent.reconnectAcp}
+          printers={printers}
+        />
+      </ErrorBoundary>
     </div>
   );
 }

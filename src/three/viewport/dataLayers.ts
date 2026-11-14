@@ -30,7 +30,7 @@ interface Entry {
   axes: FrameAxes[];
 }
 
-const SCENE_FRAMED = new Set<DataTrack['schema']>(['scene/Points']);
+const SCENE_FRAMED = new Set<DataTrack['schema']>(['scene/Points', 'scene/Map']);
 
 function drawKey(track: DataTrack, input: DataLayerInput, hasTf: boolean): string {
   const span = spanAt(track, input.at);

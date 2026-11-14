@@ -46,6 +46,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'labelNotes',
   'lastDownload',
   'load',
+  'mapMatching',
   'markPlatePrinted',
   'matTrack',
   'mates',

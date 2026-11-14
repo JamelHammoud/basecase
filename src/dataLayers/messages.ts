@@ -1,3 +1,5 @@
+import type { MapBounds } from './voxels';
+
 export interface RosVector3 {
   x: number;
   y: number;
@@ -160,10 +162,19 @@ export type DataMessage =
   | { schema: 'nav_msgs/Odometry'; message: Odometry }
   | { schema: 'geometry_msgs/PoseStamped'; message: PoseStamped }
   | { schema: 'tf2_msgs/TFMessage'; message: TFMessage }
-  | { schema: 'scene/Points'; message: ScenePoints };
+  | { schema: 'scene/Points'; message: ScenePoints }
+  | { schema: 'scene/Map'; message: MapCloud };
 
 export interface ScenePoints {
   points: Float32Array;
+}
+
+export interface MapCloud {
+  frame: string | null;
+  points: Float32Array;
+  low: number;
+  high: number;
+  bounds?: MapBounds | null;
 }
 
 export type DataSchema = DataMessage['schema'];

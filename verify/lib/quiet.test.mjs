@@ -31,4 +31,14 @@ describe('Gatekeeper quiet requests', () => {
     expect(quietRequested(dir)).toBe(false);
     expect(fs.readdirSync(dir)).toEqual([]);
   });
+
+  it('drops a request whose process id now belongs to a later process', () => {
+    const dir = tempDir();
+
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, `${process.pid}-1`), 'Thu Jan  1 00:00:00 1970');
+
+    expect(quietRequested(dir)).toBe(false);
+    expect(fs.readdirSync(dir)).toEqual([]);
+  });
 });

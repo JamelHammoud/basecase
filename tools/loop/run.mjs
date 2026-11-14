@@ -10,7 +10,7 @@ import { commentOnIssue, createIssue, issues } from './lib/github.mjs';
 import { firstLine, isBad, LOAD_CHECK, markBad } from './lib/homeGuard.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS, LOOP_DIR } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
-import { quietRequested } from '../quiet/quiet.mjs';
+import { quietRequested } from '../../verify/lib/quiet.mjs';
 import { CODEX_EFFORT, CODEX_MODEL } from './lib/codex.mjs';
 import {
   codexPause,

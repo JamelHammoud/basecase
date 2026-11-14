@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ROOT, VERIFY_DIR } from './gate.mjs';
-import { requestQuiet } from '../../tools/quiet/quiet.mjs';
+import { requestQuiet } from './quiet.mjs';
 import { waitForQuiet } from './lease.mjs';
 
 export const STATUS_FILE = path.join(VERIFY_DIR, 'status.json');

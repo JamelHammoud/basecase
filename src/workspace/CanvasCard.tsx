@@ -99,6 +99,7 @@ export function CanvasCard(props: CanvasCardProps) {
 
   return (
     <main
+      data-canvas-card
       className="relative flex-1 min-w-0 h-full overflow-hidden bg-[#1b1b1b] rounded-[12px]"
       {...pointerHandlers}
       {...drop.dropHandlers}

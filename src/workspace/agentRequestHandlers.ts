@@ -5,6 +5,7 @@ import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
+import { caseConsoles } from '../cases/console/consoleForAgent';
 import type { CaseConsole } from '../cases/console/format';
 import { bomText, buildBom } from '../utils/bom';
 import { engineeringText, type EngineeringReport } from '../utils/engineering';
@@ -285,7 +286,13 @@ const HANDLERS: Record<string, Handler> = {
     const marks = describeMarks(ctx.project().marks, ctx.parts());
     const measured = await ctx.viewport()?.measureParts();
 
-    return { ...snapshotScene(ctx.parts(), measured), ...(marks.length ? { marks } : {}) };
+    const consoles = caseConsoles(ctx.cases.cases);
+
+    return {
+      ...snapshotScene(ctx.parts(), measured),
+      ...(marks.length ? { marks } : {}),
+      ...(consoles.length ? { consoles } : {}),
+    };
   },
   focus,
   part_code: (payload, ctx) => partCode(ctx.parts(), String(payload.id)),

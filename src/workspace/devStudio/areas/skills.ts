@@ -12,6 +12,7 @@ export default function skillsStudio(studio: Studio) {
       releaseTrainerRef.current = stub.release;
     },
     releaseTrainer: () => studio().releaseTrainerRef.current(),
+    stressBudget: (budget: number) => studio().core.simTraining.skills.stress.setBudget(budget),
     stubTabEngine,
   };
 }

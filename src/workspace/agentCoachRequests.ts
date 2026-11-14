@@ -39,6 +39,13 @@ async function subjectOf(row: SkillRow, model: SimModel, ctx: SkillToolContext) 
   return { skill, entry, environment: kitEnvironment(model, entry), reward: coachReward(model, row.record!, entry) };
 }
 
+export const noRowText = (rows: SkillRow[], asked: unknown, what: string) =>
+  rows.length
+    ? `No ready skill named "${String(asked)}". Ready: ${rows.map((r) => r.label).join(', ')}.`
+    : `${what}, and none is ready. Train one first.`;
+
+export const missingFileText = (row: SkillRow) => `${row.label}’s skill file is missing. Train it again.`;
+
 export async function coachRequest(payload: Payload, ctx: SkillToolContext) {
   ctx.setAction('Coaching a skill');
 
@@ -50,16 +57,11 @@ export async function coachRequest(payload: Payload, ctx: SkillToolContext) {
   const row = rows.find((r) => r.label.toLowerCase() === name);
   const words = String(payload.words ?? '');
 
-  if (!row)
-    return {
-      text: rows.length
-        ? `No ready skill named "${String(payload.skill)}". Ready: ${rows.map((r) => r.label).join(', ')}.`
-        : 'Coaching changes a ready Motor Kit skill, and none is ready. Train one first.',
-    };
+  if (!row) return { text: noRowText(rows, payload.skill, 'Coaching changes a ready Motor Kit skill') };
 
   const subject = await subjectOf(row, model, ctx);
 
-  if (!subject) return { text: `${row.label}’s skill file is missing. Train it again.` };
+  if (!subject) return { text: missingFileText(row) };
 
   const { coach } = ctx.skills.runtime;
 

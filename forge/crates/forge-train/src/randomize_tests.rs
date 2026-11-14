@@ -1,5 +1,7 @@
 use super::{randomize, SERVO_RANGE};
+use crate::options::TaskOptions;
 use crate::physics::{Engine, Physics};
+use crate::random_ranges::RandomRanges;
 use crate::rng::Rng;
 use forge_mujoco::Model;
 use forge_sim::rowmap::RowMap;
@@ -38,13 +40,46 @@ fn model() -> Model {
     Model::load(&folder.join("model.xml")).expect("model loads")
 }
 
-fn randomized(gains: &[Vec<Option<f64>>]) -> Result<Vec<[f64; 3]>, String> {
+fn streams() -> Vec<Rng> {
+    (0..ENVS).map(|i| Rng::new(9, i as u64)).collect()
+}
+
+fn batch() -> Result<Physics, String> {
     let model = model();
     let layout = RowMap::new(&model)?.offsets();
-    let mut physics = Physics::new(&model, &Engine::Mujoco { refusal: None }, &layout, (ENVS, 1))?;
-    let mut rngs: Vec<Rng> = (0..ENVS).map(|i| Rng::new(9, i as u64)).collect();
 
-    randomize(&mut physics, 2, gains, &mut rngs)?;
+    Physics::new(&model, &Engine::Mujoco { refusal: None }, &layout, (ENVS, 1))
+}
+
+fn field(physics: &mut Physics, name: &str) -> Result<Vec<Vec<f64>>, String> {
+    let (values, width) = physics.expand(name)?;
+
+    Ok(values.chunks_exact(width).map(<[f64]>::to_vec).collect())
+}
+
+fn bodies(options: &TaskOptions) -> Result<[Vec<Vec<f64>>; 4], String> {
+    let mut physics = batch()?;
+    let friction = field(&mut physics, "geom_friction")?;
+    let mass = field(&mut physics, "body_mass")?;
+
+    randomize(&mut physics, 2, options, &mut streams())?;
+
+    Ok([
+        friction,
+        mass,
+        field(&mut physics, "geom_friction")?,
+        field(&mut physics, "body_mass")?,
+    ])
+}
+
+fn randomized(gains: &[Vec<Option<f64>>]) -> Result<Vec<[f64; 3]>, String> {
+    let mut physics = batch()?;
+    let options = TaskOptions {
+        servo_gains: gains.to_vec(),
+        ..TaskOptions::default()
+    };
+
+    randomize(&mut physics, 2, &options, &mut streams())?;
 
     let gain = physics.expand("actuator_gainprm")?.0.to_vec();
     let bias = physics.expand("actuator_biasprm")?.0.to_vec();
@@ -85,4 +120,58 @@ fn no_servo_gains_keep_the_uniform_draw_and_a_short_row_is_refused() {
     assert!(randomized(&[vec![Some(1.0)]])
         .expect_err("one gain for two servos")
         .contains("servoGains[0] has 1 gains; each row needs 2"));
+}
+
+#[test]
+fn a_job_without_random_ranges_draws_friction_and_mass_as_before() {
+    let [friction, mass, drawn_friction, drawn_mass] = bodies(&TaskOptions::default()).expect("randomizes");
+    let mut rngs = streams();
+
+    for (sim, rng) in rngs.iter_mut().enumerate() {
+        let scale = rng.uniform(0.6, 1.3);
+        let geoms: Vec<f64> = friction[sim].iter().step_by(3).map(|f| f * scale).collect();
+        let links: Vec<f64> = mass[sim][1..].iter().map(|m| m * rng.uniform(0.85, 1.15)).collect();
+
+        assert_eq!(
+            drawn_friction[sim].iter().step_by(3).copied().collect::<Vec<_>>(),
+            geoms
+        );
+        assert_eq!(drawn_mass[sim][1..], links);
+        assert_eq!(drawn_mass[sim][0], mass[sim][0]);
+    }
+}
+
+fn within([low, high]: [f64; 2]) -> impl Fn(&f64) -> bool {
+    move |k| (low - 1e-12..=high + 1e-12).contains(k)
+}
+
+#[test]
+fn a_job_with_random_ranges_scales_every_robot_within_them() {
+    let options = TaskOptions {
+        random_ranges: RandomRanges {
+            friction: [0.3, 0.4],
+            mass: [2.0, 3.0],
+        },
+        ..TaskOptions::default()
+    };
+    let [friction, mass, drawn_friction, drawn_mass] = bodies(&options).expect("randomizes");
+
+    for sim in 0..ENVS {
+        let frictions: Vec<f64> = drawn_friction[sim]
+            .iter()
+            .zip(&friction[sim])
+            .step_by(3)
+            .map(|(after, before)| after / before)
+            .collect();
+        let masses: Vec<f64> = drawn_mass[sim][1..]
+            .iter()
+            .zip(&mass[sim][1..])
+            .map(|(after, before)| after / before)
+            .collect();
+
+        assert_eq!((frictions.len(), masses.len()), (3, 3));
+        assert!(frictions.iter().all(within([0.3, 0.4])));
+        assert!(frictions.iter().all(|k| (k - frictions[0]).abs() < 1e-12));
+        assert!(masses.iter().all(within([2.0, 3.0])));
+    }
 }

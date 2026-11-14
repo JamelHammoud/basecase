@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useEffectEvent, useRef } from 'react';
 import { CloseIcon } from './glyphs';
 import { createPortal } from 'react-dom';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
+import { runsSheetAction } from './sheetKeys';
 
 export interface ModalAction {
   label: string;
@@ -10,7 +11,6 @@ export interface ModalAction {
   disabled?: boolean;
   tone?: 'primary' | 'danger';
   autoFocus?: boolean;
-  form?: string;
 }
 
 export interface ModalProps {
@@ -38,17 +38,32 @@ export const Modal: React.FC<ModalProps> = ({
   headerActions,
   maxWidth = 'max-w-2xl',
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+    const dialog = dialogRef.current;
+
+    if (!dialog || [...document.querySelectorAll('[aria-modal="true"]')].at(-1) !== dialog) return;
+
+    if (e.key === 'Escape') {
+      onClose();
+
+      return;
+    }
+
+    if (!action || action.disabled || !runsSheetAction(e, dialog)) return;
+
+    e.preventDefault();
+    action.onClick?.();
+  });
+
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    window.addEventListener('keydown', onKeyDown);
 
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -61,6 +76,7 @@ export const Modal: React.FC<ModalProps> = ({
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -102,8 +118,8 @@ export const Modal: React.FC<ModalProps> = ({
             </Button>
             <Button
               variant={action.tone ?? 'primary'}
-              type={action.form ? 'submit' : 'button'}
-              form={action.form}
+              title={action.label}
+              shortcut="↩"
               disabled={action.disabled}
               autoFocus={action.autoFocus}
               onClick={action.onClick}

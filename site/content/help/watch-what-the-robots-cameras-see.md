@@ -38,7 +38,7 @@ Put a camera part on the robot and see its live view beside the canvas, through 
 4. Find its live view under **Cameras** at the top left of the canvas.
 5. Click **Simulate** in the **Simulate** tab to see the view move with the robot.
 6. Click the view to enlarge it to 640 × 480.
-7. To change the lens, right-click the view and choose **Lens** ▸ an angle, such as **Fisheye 180°**.
+7. To change the lens, right-click the view and choose **Lens**, then an angle such as **Fisheye 180°**.
 
 **Show Simulate**, **Collapse Camera Views** and **Expand Camera Views** are in [[⌘K]], and [[⇧V]] toggles the views. Collapsed, the views stop drawing.
 

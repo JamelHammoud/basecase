@@ -3,6 +3,7 @@ import { openApp, shown, type App } from './harness';
 
 interface SimState {
   drive: string;
+  playing: boolean;
   tries: Array<{ id: string; seconds: number }>;
 }
 
@@ -44,6 +45,22 @@ describe('stopping a try on the first launch rover', () => {
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
     expect((await simState()).tries[0].seconds).toBeLessThan(6);
     await expect.poll(() => button('Try It').isEnabled()).toBe(true);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('brings Try It back after Stop Try on a paused simulation', async () => {
+    await expect.poll(() => tryClock().count(), { timeout: 15000 }).toBe(0);
+
+    const before = (await simState()).tries.length;
+
+    await app.page.locator(shown('button[aria-label="Pause"]')).click();
+    await expect.poll(async () => (await simState()).playing).toBe(false);
+    await startTry();
+    await button('Stop Try').click();
+    await expect.poll(() => button('Try It').isEnabled()).toBe(true);
+    expect(await app.page.getByText('Play the simulation to record a try.').count()).toBe(1);
+    expect((await simState()).drive).toBe('off');
+    expect((await simState()).tries).toHaveLength(before);
     expect(app.errors).toEqual([]);
   });
 });

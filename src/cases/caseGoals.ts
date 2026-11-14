@@ -8,6 +8,7 @@ import { DOT_COUNT } from './dotSpots';
 import type { GoalParam, GoalValues, ParamKey } from './goalParams';
 import { pickGoalWith } from './pickGoal';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
+import { lengthLabel } from '../utils/size';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 import { plural } from '../../electron/plural.mjs';
 
@@ -165,7 +166,7 @@ export const routeClearance = (robot: BuilderRobot) =>
 const blockRunUp = (robot: BuilderRobot) =>
   2 * (BLOCK_DEPTH_MM + routeClearance(robot) * 1.2 + robot.footprint.depth + robot.footprint.width);
 
-export const mm = (x: number) => `${Math.round(x)} mm`;
+const setLength = (x: number) => `${Math.round(x)} mm`;
 
 const reachGoal: CaseGoal = {
   kind: 'reach',
@@ -174,7 +175,7 @@ const reachGoal: CaseGoal = {
   params: ['distanceMm', 'radiusMm', 'seconds'],
   plan: (robot, v, _world, [named] = []) => {
     const [x, z] = named ? [named.at[0], named.at[2]] : [robot.pivot[0], robot.pivot[2] + v.distanceMm];
-    const where = named ? named.phrase : `${mm(v.distanceMm)} ahead`;
+    const where = named ? named.phrase : `${setLength(v.distanceMm)} ahead`;
 
     return {
       brief: `Reach the spot ${where} and stop on it.`,
@@ -196,7 +197,7 @@ export function pointProblem(arm: Pick<RobotFacts, 'anchor' | 'reachMm'>, at: V3
   const { anchor, reachMm } = arm;
   const far = Math.hypot(at[0] - anchor[0], at[1] - anchor[1], at[2] - anchor[2]);
 
-  if (far > reachMm) return `Bring the point within ${mm(reachMm)} of the arm.`;
+  if (far > reachMm) return `Bring the point within ${lengthLabel(reachMm)} of the arm.`;
 
   return v.heightMm < v.radiusMm ? 'Raise the point off the floor.' : null;
 }
@@ -276,7 +277,7 @@ const pushGoal: CaseGoal = {
     const behind = half + robot.footprint.depth / 2;
 
     return {
-      brief: `Push the box ${mm(v.pushMm)} onto the spot.`,
+      brief: `Push the box ${setLength(v.pushMm)} onto the spot.`,
       slot: groundSlot(robot),
       objects: [
         {
@@ -348,7 +349,7 @@ const walkGoal: CaseGoal = {
   needs: ['legs'],
   params: ['distanceMm', 'seconds'],
   plan: (robot, v) => ({
-    brief: `Walk ${mm(v.distanceMm)} without falling.`,
+    brief: `Walk ${setLength(v.distanceMm)} without falling.`,
     slot: { needs: ['legs'], binding: {} },
     objects: [],
     probes: [{ signal: 'travel', from: 'base', to: { point: robot.pivot } }],
@@ -363,7 +364,7 @@ const walkGoal: CaseGoal = {
     route: routeAlong(robot, robot.pivot[2] + v.distanceMm),
     waypoints: [{ at: [robot.pivot[0], robot.pivot[1], robot.pivot[2] + v.distanceMm * WALK_PAST_SHARE] }],
   }),
-  problem: (_robot, v) => (v.distanceMm < MIN_WALK_MM ? `Walk at least ${mm(MIN_WALK_MM)}.` : null),
+  problem: (_robot, v) => (v.distanceMm < MIN_WALK_MM ? `Walk at least ${setLength(MIN_WALK_MM)}.` : null),
 };
 
 export function fallGuard(robot: BuilderRobot): { probe: CaseProbe; failure: Contract['failures'][number] } {

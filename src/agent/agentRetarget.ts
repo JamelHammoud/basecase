@@ -12,6 +12,7 @@ import {
 import { errorMessage } from '../utils/errorMessage';
 import { duration } from '../utils/duration';
 import { plural } from '../../electron/plural.mjs';
+import { lengthLabel } from '../utils/size';
 
 export interface RetargetPayload {
   robot?: string;
@@ -73,7 +74,7 @@ function retargetText(made: { name: string; duration: number; keyframes: unknown
     `${made.name}: ${duration(made.duration)} from ${duration(mocap.duration)} of motion (${plural(mocap.bones.length, 'bone')}), ${plural(made.keyframes.length, 'keyframe')}.` +
     `\nMatched: ${res.mapped.map((m) => `${KEYPOINT_LABELS[m.keypoint].toLowerCase()} ${m.bone} → ${m.joint}`).join('; ')}` +
     `\nMean miss per landmark: ${Object.entries(res.error)
-      .map(([k, v]) => `${KEYPOINT_LABELS[k as Keypoint].toLowerCase()} ${v} mm`)
+      .map(([k, v]) => `${KEYPOINT_LABELS[k as Keypoint].toLowerCase()} ${lengthLabel(v)}`)
       .join(', ')}` +
     notesText(res.notes)
   );

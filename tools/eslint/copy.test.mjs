@@ -256,6 +256,7 @@ tester.run('basecase/copy', rule, {
     'const el = <input placeholder={saved ? "••••••••" : ""} />;',
     'const el = <input placeholder={hint} />;',
     "const field = { placeholder: 'e.g. Jump' };",
+    'const el = <p>{`Pages ${lo}-5`}</p>;',
   ],
   invalid: [
     ...SAMPLES.map(([text]) => ({ code: `const el = <p>${text}</p>;`, errors: errors(text) })),
@@ -280,6 +281,8 @@ tester.run('basecase/copy', rule, {
     { code: '<IconButton title="Remove Price" />;', errors: errors('Remove Price') },
     { code: '<a aria-label={`View ${name}`} />;', errors: errors('View ') },
     { code: 'const el = <p>Centre of mass</p>;', errors: errors('Centre of mass') },
+    { code: 'const el = <p>{`-90° to ${hi}`}</p>;', errors: errors('-90° to ') },
+    { code: 'const el = <p>{`${lo} to -90°`}</p>;', errors: errors(' to -90°') },
     ...['Add a comment', 'Reply', 'Name', 'Type a label', 'What’s next'].map((text) => ({
       code: `const el = <input placeholder="${text}" />;`,
       errors: [{ messageId: 'placeholder', data: { text, fix: PLACEHOLDER_FIX } }],

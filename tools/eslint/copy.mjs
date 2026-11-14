@@ -20,7 +20,8 @@ const propertyName = (node) => {
 
 const TEXTS = {
   Literal: (node) => (typeof node.value === 'string' ? [{ node, text: node.value }] : []),
-  TemplateLiteral: (node) => node.quasis.map((q) => ({ node: q, text: q.value.cooked ?? '' })),
+  TemplateLiteral: (node) =>
+    node.quasis.map((q, index) => ({ node: q, text: q.value.cooked ?? '', afterValue: index > 0 })),
   ConditionalExpression: (node) => [...textsOf(node.consequent), ...textsOf(node.alternate)],
   LogicalExpression: (node) => [...textsOf(node.left), ...textsOf(node.right)],
   BinaryExpression: (node) => (node.operator === '+' ? [...textsOf(node.left), ...textsOf(node.right)] : []),
@@ -64,8 +65,8 @@ export default {
     const reported = new Set();
 
     const check = (entries) => {
-      for (const { node, text } of entries) {
-        const hit = !reported.has(node) && findBannedCopy(text);
+      for (const { node, text, afterValue } of entries) {
+        const hit = !reported.has(node) && findBannedCopy(text, { afterValue });
 
         if (!hit) continue;
 

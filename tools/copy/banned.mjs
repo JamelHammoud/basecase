@@ -36,11 +36,13 @@ export const LINTED_COPY = [
 
 const isId = (text) => /\p{L}{2,}/u.test(text) && !isUserFacing(text);
 
-export function findBannedCopy(text) {
+export function findBannedCopy(text, { afterValue = false } = {}) {
   if (isId(text)) return null;
 
-  for (const { pattern, fix, section } of LINTED_COPY) {
+  for (const entry of LINTED_COPY) {
+    const pattern = afterValue ? (entry.afterValue ?? entry.pattern) : entry.pattern;
     const match = pattern.exec(text) ?? pattern.exec(text.trim());
+    const { fix, section } = entry;
 
     if (match) return { word: match[0].trim(), fix, section };
   }

@@ -7,9 +7,9 @@ import { useBus, type PanelViewProps } from '../panelContext';
 import { Titled } from './PanelTitle';
 
 const Failures: React.FC<PanelViewProps<'list'>> = ({ panel, ctx }) => {
-  useBus(ctx.bus);
+  const bus = useBus(ctx.bus);
 
-  const failed = ctx.bus.read('goal.failed');
+  const failed = bus.read('goal.failed');
 
   if (!Array.isArray(failed) || !failed.length) return null;
 

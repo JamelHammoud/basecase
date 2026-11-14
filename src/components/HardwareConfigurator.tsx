@@ -22,6 +22,7 @@ import {
   screwHead,
   screwStandard,
   setScrewRecess,
+  sizeChoices,
   stockLengths,
 } from '../data/hardware';
 import { PART_CATALOG, hardwareVariant } from '../data/catalog';
@@ -54,7 +55,7 @@ export const HardwareConfigurator: React.FC<{
     onChange(makeSpec(s.type, { size: s.size, length: s.length, finish: s.finish, drive: s.drive }), live);
   };
   const recess = screwHead(spec)?.recess ?? setScrewRecess(spec)?.recess;
-  const motion = motionOf(spec.type);
+  const sizes = sizeChoices(spec.type);
 
   return (
     <>
@@ -102,10 +103,10 @@ export const HardwareConfigurator: React.FC<{
       <Section title="Size">
         <ChoiceGrid
           label="Size"
-          columns={motion?.sizeColumns ?? 5}
+          columns={sizes.columns}
           value={spec.size}
           onChange={(size) => set({ size })}
-          options={info.sizes.map((s) => ({ value: s, label: motion?.sizeLabel?.(s) ?? s }))}
+          options={sizes.options}
         />
       </Section>
 

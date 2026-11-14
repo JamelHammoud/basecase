@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Playhead } from '../../../cases/console/signalBus';
+import type { Playhead, SignalBus } from '../../../cases/console/signalBus';
 import { TracePlot, type Trace } from '../../../design-system';
 import { useBus, type PanelContext, type PanelViewProps } from '../panelContext';
 import { Titled } from './PanelTitle';
@@ -12,17 +12,18 @@ const TONES: Trace['tone'][] = ['accent', 'primary', 'muted'];
 
 interface WholeProps {
   ids: string[];
-  ctx: PanelContext;
+  bus: SignalBus;
+  seek: PanelContext['seek'];
   head: Playhead;
 }
 
-const WholeTry: React.FC<WholeProps> = ({ ids, ctx, head }) => {
+const WholeTry: React.FC<WholeProps> = ({ ids, bus, seek, head }) => {
   const traces: Trace[] = ids.map((id, i) => ({
     id,
-    values: ctx.bus.series(id).v,
+    values: bus.series(id).v,
     tone: TONES[Math.min(i, TONES.length - 1)],
   }));
-  const times = ctx.bus.series(ids[0] ?? '').t;
+  const times = bus.series(ids[0] ?? '').t;
 
   return (
     <div data-testid="plot" data-lines={ids.length} data-playhead={head.at.toFixed(2)}>
@@ -30,27 +31,27 @@ const WholeTry: React.FC<WholeProps> = ({ ids, ctx, head }) => {
         traces={traces}
         height={H}
         playhead={head.frame}
-        onSeek={ctx.seek && ((sample) => ctx.seek?.(times[sample] ?? 0))}
+        onSeek={seek && ((sample) => seek(times[sample] ?? 0))}
       />
     </div>
   );
 };
 
 export const PlotPanel: React.FC<PanelViewProps<'plot'>> = ({ panel, ctx }) => {
-  useBus(ctx.bus);
+  const bus = useBus(ctx.bus);
 
-  const ids = panel.signals.flatMap((s) => ctx.bus.expand(s));
-  const head = ctx.bus.playhead();
+  const ids = panel.signals.flatMap((s) => bus.expand(s));
+  const head = bus.playhead();
 
   if (head)
     return (
       <Titled title={panel.title}>
-        <WholeTry ids={ids} ctx={ctx} head={head} />
+        <WholeTry ids={ids} bus={bus} seek={ctx.seek} head={head} />
       </Titled>
     );
 
   const seconds = 'seconds' in panel && panel.seconds !== undefined ? panel.seconds : 20;
-  const lines = ids.map((id) => ({ id, s: recent(ctx.bus.series(id), seconds) }));
+  const lines = ids.map((id) => ({ id, s: recent(bus.series(id), seconds) }));
   const end = Math.max(0, ...lines.map((l) => l.s.t.at(-1) ?? 0));
   const x = scaler([end - seconds, end], [0, W]);
   const y = scaler(extent(lines.flatMap((l) => l.s.v)), [H, 0]);

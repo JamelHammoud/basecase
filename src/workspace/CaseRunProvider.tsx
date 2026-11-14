@@ -8,11 +8,14 @@ import { robotFacts } from '../cases/robotFit';
 import { movableWorld } from '../cases/scale';
 import { onInputEvent } from '../sim/inputEvents';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
+import { AddPanelPicker } from '../components/caseRun/AddPanelPicker';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
+import { busNames } from '../components/caseRun/panelChoices';
 import { CodeOverlays } from '../components/caseRun/code/CodeOverlays';
 import { startDriving } from '../components/simulate/driveWithCamera';
 import { ModeHeader } from '../design-system';
 import type { PanelContext } from '../components/caseRun/panelContext';
+import type { ConsoleEditing } from './useConsoleEditing';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useConsoleSignals } from './useConsoleSignals';
@@ -21,6 +24,7 @@ import { showPartsSection } from './showView';
 
 interface CenterValue {
   ctx: PanelContext;
+  editing: ConsoleEditing | null;
   areas: ConsoleLayout;
   title: string;
   onDone: () => void;
@@ -134,6 +138,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
             },
           },
         },
+        editing: core.consoleEditing,
         areas: layout,
         title: kase?.name ?? timeline.record?.robot ?? '',
         onDone: caseRun.done,
@@ -144,8 +149,17 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     <CaseRunContext value={value}>
       {children}
       {open && cameras.menu}
+      {value && <Adding value={value} />}
     </CaseRunContext>
   );
+}
+
+function Adding({ value }: { value: CenterValue }) {
+  const { editing, ctx } = value;
+
+  if (!editing?.adding) return null;
+
+  return <AddPanelPicker editing={editing} names={busNames(ctx.bus, ctx.inputs)} scope={ctx.scope} />;
 }
 
 export function CaseRunAreas({ side }: { side: 'before' | 'after' }) {
@@ -159,6 +173,7 @@ export function CaseRunAreas({ side }: { side: 'before' | 'after' }) {
       area={area}
       side={side}
       ctx={running.ctx}
+      editing={running.editing}
       header={<ModeHeader title={running.title} onDone={running.onDone} />}
     />
   ));

@@ -5,10 +5,12 @@ import { worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
 import type { RobotDrive } from '../sim/drive';
+import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import type { DriveTeam } from '../sim/useDrive';
 import type { Simulation } from '../sim/useSimulation';
 import type { RobotJoint, ScenePart } from '../types/robotics';
+import { errorMessage } from '../utils/errorMessage';
 import type { Rig } from '../utils/kinematics';
 import { caseLogicPlan } from './caseLogicPlan';
 import type { RoutineSkills } from './routineCheck';
@@ -34,6 +36,10 @@ export interface CaseTry {
   reference: () => Promise<void>;
   end: () => void;
 }
+
+const MIN_FRAMES = 2;
+
+const TOO_SHORT = 'Play the simulation to record a try.';
 
 const newTryId = () => `try-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
@@ -67,25 +73,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const time = sim.stats?.time ?? 0;
   const elapsed = phase === 'running' ? Math.max(0, time - startedAt) : 0;
 
-  const finish = async () => {
-    if (finishing.current) return;
-
-    finishing.current = true;
-
-    const kase = active;
-    const model = sim.model;
-    const recording = await sim.stopRecording();
-
-    sim.runCase(null);
-    setPhase('scoring');
-
-    if (!kase || !model || !recording) {
-      setPhase('idle');
-      finishing.current = false;
-
-      return;
-    }
-
+  const keep = async (kase: Case, model: SimModel, recording: Recording) => {
     const staged = stageCase(kase, { rig, parts }, partners());
     const verdict = await scoreTry({
       kase: staged.kase,
@@ -94,11 +82,10 @@ export function useCaseTry(options: TryOptions): CaseTry {
       rig,
       ...stagedEffectors(staged, { rig, parts }),
     });
-    const id = newTryId();
 
     await onTry(
       {
-        id,
+        id: newTryId(),
         caseId: kase.id,
         robot: rig.robots[0]?.name ?? 'Robot',
         at: new Date().toISOString(),
@@ -110,9 +97,37 @@ export function useCaseTry(options: TryOptions): CaseTry {
       recording,
       scripted.current ? 'script' : null,
     );
-    sim.drive.stop();
-    setPhase('idle');
-    finishing.current = false;
+  };
+
+  const score = async () => {
+    const kase = active;
+    const model = sim.model;
+    const recording = await sim.stopRecording();
+
+    sim.runCase(null);
+    setPhase('scoring');
+
+    if (!kase || !model || !recording) return;
+
+    if (recording.frames < MIN_FRAMES) return onRefuse(TOO_SHORT);
+
+    await keep(kase, model, recording);
+  };
+
+  const finish = async () => {
+    if (finishing.current) return;
+
+    finishing.current = true;
+
+    try {
+      await score();
+    } catch (e) {
+      onRefuse(errorMessage(e));
+    } finally {
+      sim.drive.stop();
+      setPhase('idle');
+      finishing.current = false;
+    }
   };
 
   const finishFromEffect = useEffectEvent(() => {

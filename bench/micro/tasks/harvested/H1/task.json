@@ -1,0 +1,16 @@
+{
+  "id": "H1",
+  "category": "assembly",
+  "heldOut": true,
+  "fault": {
+    "kind": "unseated",
+    "layout": "torso"
+  },
+  "grader": "Screw heads seated, not sunk into a part",
+  "source": {
+    "kind": "run",
+    "ref": "runs/harness-202611132102-main-tune/micro/C1/seed-2",
+    "parts": "sbc-screw-1-screw, sbc-screw-2-screw, sbc-screw-3-screw, sbc-screw-4-screw, reg-screw-1-screw, reg-screw-2-screw",
+    "text": "Last get_readiness: NOT READY: 12 blockers."
+  }
+}

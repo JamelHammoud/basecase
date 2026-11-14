@@ -76,6 +76,18 @@ describe('first launch', () => {
     expect(sceneWrites()).toEqual([]);
   });
 
+  it('says why Try on Real Robot didn’t start, and keeps saying it under the button', async () => {
+    const { page } = app;
+    const button = page.locator(shown('button'), { hasText: 'Try on Real Robot' }).first();
+    const status = page.locator(shown('[data-testid="real-try-status"]'));
+
+    await button.click();
+    await expect.poll(() => status.count(), { timeout: 15000 }).toBe(1);
+    await expect.poll(() => status.innerText(), { timeout: 15000 }).toBe('Couldn’t open the camera.');
+    expect(await button.isEnabled()).toBe(true);
+    expect(sceneWrites()).toEqual([]);
+  });
+
   it('opens the saved scene instead after a relaunch', async () => {
     const { page } = app;
 

@@ -36,7 +36,13 @@ export interface PanelViewProps<K extends PanelKind> {
   ctx: PanelContext;
 }
 
-export const useBus = (bus: SignalBus) => useSyncExternalStore(bus.subscribe, bus.version, bus.version);
+const busAt = (bus: SignalBus, version: number): SignalBus => ({ ...bus, version: () => version });
+
+export function useBus(bus: SignalBus): SignalBus {
+  const version = useSyncExternalStore(bus.subscribe, bus.version, bus.version);
+
+  return busAt(bus, version);
+}
 
 const busKeys = new WeakMap<SignalBus, number>();
 let busCount = 0;

@@ -11,11 +11,11 @@ const ALL_COLUMNS: JointField[] = ['target', 'position', 'effort'];
 const cell = 'w-[72px] shrink-0 text-right tabular-nums';
 
 const JointsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
-  useBus(ctx.bus);
+  const bus = useBus(ctx.bus);
 
   const columns = ('columns' in panel && panel.columns) || ALL_COLUMNS;
   const names = new Map(ctx.joints.map((j) => [j.id, j.name]));
-  const ids = ctx.bus.expand('joint.*.position').map((id) => id.split('.')[1]);
+  const ids = bus.expand('joint.*.position').map((id) => id.split('.')[1]);
 
   return (
     <Titled title={panel.title}>
@@ -33,7 +33,7 @@ const JointsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
             <span className="flex-1 min-w-0 truncate text-white/90">{names.get(id) ?? id}</span>
             {columns.map((c) => (
               <span key={c} className={`${cell} text-white/90`}>
-                {signalText(`joint.${id}.${c}`, ctx.bus.read(`joint.${id}.${c}`), ctx.signals)}
+                {signalText(`joint.${id}.${c}`, bus.read(`joint.${id}.${c}`), ctx.signals)}
               </span>
             ))}
           </div>
@@ -44,9 +44,9 @@ const JointsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
 };
 
 const SignalsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
-  useBus(ctx.bus);
+  const bus = useBus(ctx.bus);
 
-  const ids = ('signals' in panel ? (panel.signals ?? []) : []).flatMap((s) => ctx.bus.expand(s));
+  const ids = ('signals' in panel ? (panel.signals ?? []) : []).flatMap((s) => bus.expand(s));
 
   return (
     <Titled title={panel.title}>
@@ -54,7 +54,7 @@ const SignalsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
         {ids.map((id) => (
           <div key={id} className="h-[28px] flex items-center justify-between gap-3" data-signal={id}>
             <span className="min-w-0 truncate text-white/90">{id}</span>
-            <span className="tabular-nums text-white/90">{signalText(id, ctx.bus.read(id), ctx.signals)}</span>
+            <span className="tabular-nums text-white/90">{signalText(id, bus.read(id), ctx.signals)}</span>
           </div>
         ))}
       </div>

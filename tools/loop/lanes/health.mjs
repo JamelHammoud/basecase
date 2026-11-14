@@ -105,10 +105,10 @@ function expire(log) {
   const pulls = openPulls({ fresh: true });
   const inBatch = pulls.filter(isBatch).flatMap((batch) => membersOf(batch.body));
 
-  for (const pull of expired({ pulls, inBatch, busy })) {
+  for (const pull of expired({ pulls, inBatch })) {
     closePull(
       pull.number,
-      `Open over ${LIMITS.maxOpenHours} hours without landing, so it closes. Its step goes back to the builders and is rebuilt from current main, which costs less than keeping it up to date.`,
+      `Open over an hour without landing, so it closes. Its step goes back to the builders and is rebuilt from current main, which costs less than keeping it up to date.`,
     );
     log(`#${pull.number}: open over ${LIMITS.maxOpenHours} h; closed`);
   }

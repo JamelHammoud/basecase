@@ -20,6 +20,7 @@ import { useCaseExplore } from './useCaseExplore';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useDataLayers } from './useDataLayers';
+import { useConsoleEditing } from './useConsoleEditing';
 import { useCaseRun } from './useCaseRun';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
@@ -183,6 +184,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     simTraining,
     dataLayers,
     caseRun,
+    consoleEditing: useConsoleEditing({ caseRun, docs, showToast }),
     guide,
     buildAlong,
     undo,

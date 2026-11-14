@@ -27,12 +27,16 @@ related:
   - arena
 covers:
   - src/cases/caseGoals.ts
+  - src/cases/goalDefaults.ts
   - src/cases/caseWorlds.ts
   - src/cases/caseBuilder.ts
   - src/cases/dotSpots.ts
   - src/cases/pickGoal.ts
   - src/cases/handoffGoal.ts
   - src/cases/roomWorld.ts
+  - src/cases/roomTargets.ts
+  - src/cases/roomJitter.ts
+  - src/cases/namedSpots.ts
   - src/cases/terrain.ts
   - src/cases/contract.ts
   - src/cases/scale.ts
@@ -46,9 +50,9 @@ Every goal and world the Case builder offers, the numbers each goal takes, and e
 
 | Goal | Robots | Numbers | Passes when |
 |---|---|---|---|
-| **Reach a Spot** | Wheels or legs | **Distance**, **Radius**, **Time** | The base stays within **Radius** of the spot for 0.3 s |
+| **Reach a Spot** | Wheels or legs | **Distance** or, in a room, **Spot**; **Radius**, **Time** | The base stays within **Radius** of the spot for 0.3 s |
 | **Push a Box** | Wheels or legs | **Push**, **Box**, **Radius**, **Time** | The box stays within **Radius** of the spot for 0.3 s |
-| **Follow a Path** | Wheels or legs | **Spots**, **Spacing**, **Radius**, **Time** | The base reaches each spot in order, within **Radius** for 0.2 s |
+| **Follow a Path** | Wheels or legs | **Spots**, **Spacing**, **Radius**, **Time**; in a room, a **Spot** for each | The base reaches each spot in order, within **Radius** for 0.2 s |
 | **Walk Without Falling** | Legs | **Distance**, **Time** | The base gets more than **Distance** from where it started |
 | **Touch a Point** | An arm | **Dots**, **Distance**, **Height**, **Radius**, **Time** | The end effector stays within **Radius** of the point for 0.2 s |
 | **Pick Up a Block** | An arm with a gripper | **Distance**, **Spacing**, **Radius**, **Time** | The block lifts by half its size, then ends within **Radius** of the spot for 0.3 s |
@@ -89,7 +93,11 @@ The builder starts each number at a default sized to the robot. Its limits:
 
 Rough Ground, Steps and Slope start their number at a value sized to the robot's legs or wheels. The steps are in [Test a robot on rough ground, steps or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope).
 
-In a room, the robot starts where the scan marked it, turned to the nearest quarter turn of the marked heading. With no mark, or one where the robot doesn't fit, it starts on the open floor nearest the room's middle. The steps are in [Import a scanned room as a Case world](/help/import-a-scanned-room).
+In a room, the robot starts where the scan marked it, turned to the nearest quarter turn of the marked heading. With no mark, or one where the robot doesn't fit, it starts on the open floor nearest the room's middle.
+
+In a room, a spot can be a door or a piece of furniture, picked by name. A furniture spot sits on the open floor in front of it, and a door's sits in the doorway. **Under Table** is offered only to a robot shorter than the table's underside. With a named spot, **Time** grows with the trip: 100 mm a second on wheels, 60 on legs, up to 120 s.
+
+Each run in Checks moves the room's fixed furniture by up to 50 mm and turns it up to 5°, or 100 mm and 10° where RoomPlan was less sure. Walls and doors never move. The steps are in [Import a scanned room as a Case world](/help/import-a-scanned-room).
 
 A Case's name defaults to its goal and world, such as "Push a Box in a Corridor". A world that would put a solid object where the robot stands is refused, with what to change.
 

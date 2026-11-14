@@ -3,6 +3,7 @@ import { routeClearance, type BuilderRobot, type GoalKind } from './caseGoals';
 import type { CaseWorld } from './caseWorlds';
 import { occupied } from './groundRoute';
 import type { Room, RoomStart } from './roomPlan';
+import { clearOfStart, startBox } from './roomJitter';
 import { largest } from './roomWalls';
 import { MAX_OBJECTS, type WorldObject } from './schema';
 
@@ -70,24 +71,28 @@ function turnedAbout(o: WorldObject, about: V3, quarters: number): WorldObject {
   return { ...o, position: [about[0] + x * cos + z * sin, o.position[1], about[2] - x * sin + z * cos], size };
 }
 
-function facingStart(room: Room, robot: BuilderRobot): { spot: V3; objects: WorldObject[] } {
+function facingStart(room: Room, robot: BuilderRobot): { spot: V3; quarters: number } {
   const clearanceMm = routeClearance(robot);
   const tapped = tappedStart(room, clearanceMm);
 
-  if (!tapped) return { spot: openSpot(room, clearanceMm), objects: room.objects };
+  if (!tapped) return { spot: openSpot(room, clearanceMm), quarters: 0 };
 
-  const quarters = quarterTurns(tapped.heading - Math.atan2(robot.forward[0], robot.forward[2]));
-
-  return { spot: tapped.at, objects: room.objects.map((o) => turnedAbout(o, tapped.at, quarters)) };
+  return { spot: tapped.at, quarters: quarterTurns(tapped.heading - Math.atan2(robot.forward[0], robot.forward[2])) };
 }
 
-export function placedRoom(room: Room, robot: BuilderRobot): WorldObject[] {
-  const { spot, objects } = facingStart(room, robot);
+export function placedIn(room: Room, robot: BuilderRobot, objects: WorldObject[]): WorldObject[] {
+  const { spot, quarters } = facingStart(room, robot);
   const dx = robot.pivot[0] - spot[0];
   const dz = robot.pivot[2] - spot[2];
 
-  return objects.map((o) => ({ ...o, position: [o.position[0] + dx, o.position[1], o.position[2] + dz] }));
+  return objects.map((o) => {
+    const turned = quarters ? turnedAbout(o, spot, quarters) : o;
+
+    return { ...turned, position: [turned.position[0] + dx, turned.position[1], turned.position[2] + dz] };
+  });
 }
+
+export const placedRoom = (room: Room, robot: BuilderRobot): WorldObject[] => placedIn(room, robot, room.objects);
 
 function distanceToBox(p: V3, o: WorldObject): number {
   const gap = p.map((x, i) => Math.max(Math.abs(x - o.position[i]) - o.size[i] / 2, 0));
@@ -116,6 +121,7 @@ export function roomWorld(room: Room): CaseWorld {
     suffix: `in ${room.name}`,
     trueSize: true,
     fits: (goal, robot) => ROOM_GROUND_GOALS.has(goal) || (goal === 'touch' && !!robot && tableInReach(room, robot)),
-    objects: (plan, robot) => largest(placedRoom(room, robot), MAX_OBJECTS - plan.objects.length),
+    objects: (plan, robot) =>
+      clearOfStart(largest(placedRoom(room, robot), MAX_OBJECTS - plan.objects.length), startBox(robot)),
   };
 }

@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { caseFields, caseName, goalValues, worldsFor } from '../../cases/caseBuilder';
+import { caseFields, caseName, goalValues, specValues, worldsFor } from '../../cases/caseBuilder';
 import { goalParam, type GoalKind, type GoalValues } from '../../cases/caseGoals';
 import type { WorldKind } from '../../cases/caseWorlds';
 import { Button, ChoiceGrid, FieldRow, NumberInput, TextInput } from '../../design-system';
 import type { CaseBuilder } from '../../workspace/useCaseBuilder';
+import { RoomTargetPicker } from './RoomTargetPicker';
+import { useRoomTargetPick } from './useRoomTargetPick';
 
 const MAX_WORLD_COLUMNS = 3;
 
@@ -20,13 +22,23 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   const goal = builder.goals.find((g) => g.kind === goalKind) ?? builder.goals[0];
   const worlds = worldsFor(goal.kind, builder.robot, builder.room);
   const world = worlds.some((w) => w.kind === chosenWorld) ? chosenWorld : 'floor';
-  const values = goalValues(goal, builder.robot, given, world);
-  const spec = { goal: goal.kind, world, values: given, name: name ?? undefined };
+  const spots = useRoomTargetPick({
+    builder,
+    goal: goal.kind,
+    world,
+    values: goalValues(goal, builder.robot, given, world),
+  });
+  const chosen = spots.chosen;
+  const spec = { goal: goal.kind, world, values: given, name: name ?? undefined, targets: chosen };
+  const values =
+    specValues({ ...spec, room: builder.room }, builder.robot) ?? goalValues(goal, builder.robot, given, world);
   const preview = builder.preview(spec);
+  const fields = caseFields(goal, values, world).filter((key) => !(key === 'distanceMm' && chosen[0]));
 
   const pickGoal = (kind: GoalKind) => {
     setGoalKind(kind);
     setGiven({});
+    spots.clear();
   };
 
   const pickWorld = (kind: WorldKind) => {
@@ -65,7 +77,10 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         />
       )}
       <div className="flex flex-col gap-2">
-        {caseFields(goal, values, world).map((key) => {
+        {spots.targets.length > 0 && (
+          <RoomTargetPicker count={spots.count} targets={spots.targets} picked={chosen} onPick={spots.pick} />
+        )}
+        {fields.map((key) => {
           const param = goalParam(goal, key);
 
           return (

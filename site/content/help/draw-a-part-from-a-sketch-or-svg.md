@@ -1,7 +1,7 @@
 ---
 title: Draw a part from a sketch or SVG
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: task
 order: 6
@@ -65,7 +65,7 @@ Draw an outline with typed lengths, or load an SVG file, and turn it into a soli
 
 ![A rectangle being drawn with 40 and 20 typed in its fields](/help/draw-a-part-from-a-sketch-or-svg/typed.png)
 
-6. For an extrusion, set **T** under **Output** to the thickness in millimeters.
+6. For an extrusion, under **Output**, set **T** to the thickness in millimeters.
 7. Click **Add**. Basecase places the new part on the face at the size you typed and selects it.
 
 ![The 40 × 20 × 5 mm part on the box, with its size in the Inspector](/help/draw-a-part-from-a-sketch-or-svg/extruded.png)
@@ -96,7 +96,7 @@ You can hold two lines parallel, perpendicular or equal. Click the active tool t
 2. Click **Choose or drop an SVG**, then pick the file.
 3. Check the preview, which counts the shapes and holes it found.
 4. Under **Output**, type the width (**W**) and the thickness (**T**).
-5. Click **Add**. The part takes the file's name, and the Inspector renames it.
+5. Click **Add**. The part takes the file's name. Rename it and pick its color in the Inspector.
 
 Or drag the SVG onto **Choose or drop an SVG**, which turns blue while the file is over it.
 

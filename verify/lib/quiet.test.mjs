@@ -41,4 +41,14 @@ describe('Gatekeeper quiet requests', () => {
     expect(quietRequested(dir)).toBe(false);
     expect(fs.readdirSync(dir)).toEqual([]);
   });
+
+  it('skips a request still being written, so a reader never drops it half done', () => {
+    const dir = tempDir();
+
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, `.${process.pid}-1`), '');
+
+    expect(quietRequested(dir)).toBe(false);
+    expect(fs.readdirSync(dir)).toEqual([`.${process.pid}-1`]);
+  });
 });

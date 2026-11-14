@@ -20,7 +20,9 @@ const alive = (pid) => {
 const startedAt = (pid) => {
   if (process.platform === 'win32') return '';
 
-  return spawnSync('ps', ['-o', 'lstart=', '-p', String(pid)], { encoding: 'utf8' }).stdout?.trim() ?? '';
+  const env = { ...process.env, LC_ALL: 'C', TZ: 'UTC' };
+
+  return spawnSync('ps', ['-o', 'lstart=', '-p', String(pid)], { encoding: 'utf8', env }).stdout?.trim() ?? '';
 };
 
 const ownStart = startedAt(process.pid);
@@ -30,16 +32,23 @@ function holds(dir, name) {
 
   if (!alive(pid)) return false;
 
-  return fs.readFileSync(path.join(dir, name), 'utf8') === startedAt(pid);
+  try {
+    return fs.readFileSync(path.join(dir, name), 'utf8') === startedAt(pid);
+  } catch {
+    return false;
+  }
 }
 
 export function requestQuiet(dir = QUIET_DIR) {
   made += 1;
 
-  const file = path.join(dir, `${process.pid}-${made}`);
+  const name = `${process.pid}-${made}`;
+  const file = path.join(dir, name);
+  const draft = path.join(dir, `.${name}`);
 
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(file, ownStart);
+  fs.writeFileSync(draft, ownStart);
+  fs.renameSync(draft, file);
 
   return () => fs.rmSync(file, { force: true });
 }
@@ -47,7 +56,8 @@ export function requestQuiet(dir = QUIET_DIR) {
 export function quietRequested(dir = QUIET_DIR) {
   if (!fs.existsSync(dir)) return false;
 
-  const live = fs.readdirSync(dir).filter((name) => {
+  const requests = fs.readdirSync(dir).filter((name) => !name.startsWith('.'));
+  const live = requests.filter((name) => {
     if (holds(dir, name)) return true;
 
     fs.rmSync(path.join(dir, name), { force: true });

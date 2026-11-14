@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import type { Locator } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { builderRobot } from '../src/cases/caseBuilder';
-import { FIXTURE_TABLE, FIXTURE_TAP_MM, fixtureRoom } from '../src/cases/roomFixture';
+import { FIXTURE_FLOOR_M, FIXTURE_TABLE, FIXTURE_TAP_MM, fixtureRoom } from '../src/cases/roomFixture';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
@@ -24,6 +24,8 @@ type Studio = {
 };
 
 const DISTANCE_MM = 2000;
+const FACING_THE_TABLE = { start: [FIXTURE_TABLE.center[0], FIXTURE_FLOOR_M, -1.6], heading: 0 };
+const UNDER_TABLE_MM = (FIXTURE_TABLE.center[2] + 1.6) * 1000;
 
 let app: App;
 
@@ -113,6 +115,43 @@ describe('a scanned room', () => {
       await expect
         .poll(async () => (await simState()).stats?.robots[0].forward ?? 0, { timeout: 60000, interval: 50 })
         .toBeGreaterThan((DISTANCE_MM - 60) / 1000);
+      await app.page.keyboard.up('w');
+      await app.page.waitForTimeout(1500);
+      await button('Stop Try').click();
+
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+      expect((await simState()).tries[0].passed).toBe(true);
+      expect(app.errors).toEqual([]);
+    },
+    180000,
+  );
+
+  itUnlessWindows(
+    'makes Reach a Spot under the table from New Case, and a rover driven under it passes',
+    async () => {
+      await loadRover();
+      await dropFile('Fixture Flat.json', JSON.stringify(fixtureRoom({ basecase: FACING_THE_TABLE })));
+
+      const card = app.page.locator(visible('[data-testid="new-case"]'));
+
+      await expect.poll(() => card.count()).toBe(1);
+      await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
+      await card.locator('[role=radio]', { hasText: 'Under Table' }).click();
+      expect(await card.locator('label', { hasText: 'Distance' }).count()).toBe(0);
+      expect(await card.getByTestId('new-case-brief').innerText()).toBe(
+        'Reach the spot under the Table and stop on it.',
+      );
+      await fill(card, 'Time', 60);
+      await card.locator('button', { hasText: 'Make Case' }).click();
+      await expect.poll(async () => (await simState()).activeCase).toMatch(/^reach-a-spot-in-fixture-flat/);
+
+      await button('Try It').click();
+      await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+      await app.page.mouse.click(720, 450);
+      await app.page.keyboard.down('w');
+      await expect
+        .poll(async () => (await simState()).stats?.robots[0].forward ?? 0, { timeout: 60000, interval: 50 })
+        .toBeGreaterThan((UNDER_TABLE_MM - 60) / 1000);
       await app.page.keyboard.up('w');
       await app.page.waitForTimeout(1500);
       await button('Stop Try').click();

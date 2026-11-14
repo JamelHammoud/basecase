@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { applyEdit, applyEdits, insertPoints, newRoutine, type RoutineEdit, type StepAt, uniqueStepId } from './edit';
-import { commit, redo, startHistory, undo } from './editHistory';
 import { routineToFlow, flowToRoutine } from './flow';
 import { FIXTURE_SKILLS } from './fixtureSkills';
 import { withNeeds } from './routineNeeds';
@@ -90,22 +89,6 @@ describe('editing a Routine by hand', () => {
 
     expect(drive.move).toEqual({ distance: 2.5 });
     expect(applyEdit(r, { op: 'rename', name: '  Patrol ' }).name).toBe('Patrol');
-  });
-
-  it('undoes and redoes edits', () => {
-    const first = blank();
-    const second = add(first, 'drive', at(0));
-    const third = add(second, 'say', at(1));
-    let h = commit(commit(startHistory(first), second), third);
-
-    h = undo(h);
-    expect(h.present).toBe(second);
-    h = undo(undo(h));
-    expect(h.present).toBe(first);
-    h = redo(h);
-    expect(h.present).toBe(second);
-    expect(commit(h, h.present)).toBe(h);
-    expect(commit(h, third).future).toEqual([]);
   });
 
   it('repeats the step above with fresh ids', () => {

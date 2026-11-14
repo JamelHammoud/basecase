@@ -1,21 +1,18 @@
-import { type RefObject, useRef, useState } from 'react';
+import { type RefObject, useState } from 'react';
 import { newRoutine, type RoutineEdit } from '../routines/edit';
-import { commit, type History, redo, undo } from '../routines/editHistory';
 import { moverFor } from '../routines/routineNeeds';
 import { editInSet, putInSet } from '../routines/routineSet';
 import type { Capability, Routine, RoutineError } from '../routines/schema';
 import type { ProjectSettings } from '../types/robotics';
-import { routinesView, writeRoutines } from './caseLogicRoutines';
+import { routinesView } from './caseLogicRoutines';
 import { newId } from './helpers';
 
 interface StoreOptions {
   project: ProjectSettings;
   projectRef: RefObject<ProjectSettings>;
-  updateProjectNow: (patch: (p: ProjectSettings) => ProjectSettings) => void;
+  commitRoutines: (list: readonly Routine[]) => void;
   capabilities: () => Capability[];
 }
-
-type Stacks = Omit<History<Routine[]>, 'present'>;
 
 export interface EditResult {
   changed: boolean;
@@ -31,18 +28,12 @@ export function nextRoutineName(routines: readonly Routine[]): string {
   return `Routine ${n}`;
 }
 
-export function useRoutineStore({ project, projectRef, updateProjectNow, capabilities }: StoreOptions) {
+export function useRoutineStore({ project, projectRef, commitRoutines, capabilities }: StoreOptions) {
   const routines = routinesView(project);
   const [chosen, setChosen] = useState<string | null>(null);
-  const stacks = useRef<Stacks>({ past: [], future: [] });
   const active = routines.find((r) => r.id === chosen) ?? routines[0] ?? null;
 
   const current = () => routinesView(projectRef.current);
-
-  const write = (history: History<Routine[]>) => {
-    stacks.current = { past: history.past, future: history.future };
-    updateProjectNow((p) => writeRoutines(p, history.present));
-  };
 
   const change = (next: (routines: Routine[]) => Routine[]): boolean => {
     const before = current();
@@ -50,7 +41,7 @@ export function useRoutineStore({ project, projectRef, updateProjectNow, capabil
 
     if (after === before) return false;
 
-    write(commit({ ...stacks.current, present: before }, after));
+    commitRoutines(after);
 
     return true;
   };
@@ -90,16 +81,6 @@ export function useRoutineStore({ project, projectRef, updateProjectNow, capabil
 
   const remove = (id: string) => change((list) => list.filter((r) => r.id !== id));
 
-  const step = (move: typeof undo) => {
-    const history = move({ ...stacks.current, present: current() });
-
-    if (history.present === current()) return false;
-
-    write(history);
-
-    return true;
-  };
-
   return {
     routines,
     active,
@@ -109,8 +90,6 @@ export function useRoutineStore({ project, projectRef, updateProjectNow, capabil
     edit,
     rename: (id: string, name: string) => edit([{ op: 'rename', name }], id).changed,
     remove,
-    undo: () => step(undo),
-    redo: () => step(redo),
   };
 }
 

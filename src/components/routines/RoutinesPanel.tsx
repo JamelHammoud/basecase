@@ -68,7 +68,7 @@ export function RoutinesPanel({ routines, onTrain }: RoutinesPanelProps) {
       <div
         ref={rootRef}
         tabIndex={-1}
-        data-own-edits
+        data-own-edits="delete duplicate select-all"
         data-testid="routine-flow"
         onKeyDown={onKeyDown}
         className="flex-1 min-h-0 flex flex-col outline-none"

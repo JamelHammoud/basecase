@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { PanelPlace } from '../../cases/console/consoleEdits';
-import { dropMark, dropPlace, type AreaBox, type DropGeometry, type DropMark } from './panelDrop';
+import { dropMark, dropPlace, inFlow, type AreaBox, type DropGeometry, type DropMark } from './panelDrop';
 
 const START_PX = 4;
 
@@ -13,12 +13,13 @@ function boxOf(el: Element) {
 }
 
 function areaBox(el: HTMLElement): AreaBox {
+  const box = boxOf(el);
   const panels = [...el.querySelectorAll<HTMLElement>('[data-testid="case-run-panel"]')].map((p) => ({
     id: p.dataset.panel ?? '',
     ...boxOf(p),
   }));
 
-  return { at: Number(el.dataset.area), ...boxOf(el), panels };
+  return { at: Number(el.dataset.area), ...box, panels: inFlow(panels, box.top) };
 }
 
 function measure(root: Element, canvasAt: number): DropGeometry {

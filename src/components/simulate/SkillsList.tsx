@@ -4,6 +4,8 @@ import { signalFigure, signalNumber } from '../../skills/coachSignals';
 import type { CoachTag } from '../../skills/skillRecords';
 import type { SkillRow } from '../../skills/skillRows';
 import { snapshotRefs, type SnapshotRef } from '../../skills/snapshots';
+import type { StressAxisResult } from '../../skills/stress';
+import { findingLine } from '../../skills/stressWords';
 import { fmtMargin, trainingLine } from './format';
 
 export interface SkillActions {
@@ -13,7 +15,10 @@ export interface SkillActions {
   onStop: () => void;
   onSnapshot?: (row: SkillRow, ref: SnapshotRef) => void;
   onMenu?: (e: React.MouseEvent, row: SkillRow) => void;
+  onFinding?: (row: SkillRow, finding: StressAxisResult) => void;
 }
+
+const SHOWN_FINDINGS = 3;
 
 const coachedLine = (tag: CoachTag) =>
   `${signalFigure(tag.signal, tag.before)} → ${signalNumber(tag.signal, tag.after)}`;
@@ -98,6 +103,31 @@ const SnapshotList: React.FC<{ row: SkillRow; actions: SkillActions }> = ({ row,
   );
 };
 
+const StressFindings: React.FC<{ row: SkillRow; actions: SkillActions }> = ({ row, actions }) => {
+  const { stress } = row;
+  const findings = stress?.result.findings.slice(0, SHOWN_FINDINGS) ?? [];
+
+  if (!findings.length) return null;
+
+  return (
+    <div className="flex flex-col items-start pt-1" data-testid="stress-findings">
+      {findings.map((finding) => (
+        <Button
+          key={finding.axis}
+          variant="ghost"
+          size="xs"
+          className="tabular"
+          onClick={() => actions.onFinding?.(row, finding)}
+          data-testid="stress-finding"
+        >
+          {findingLine(finding)}
+        </Button>
+      ))}
+      {stress?.refused && <div className="text-[12px] text-white/50 tabular px-2">{stress.refused}</div>}
+    </div>
+  );
+};
+
 export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; margin?: number | null }> = ({
   rows,
   actions,
@@ -136,6 +166,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
             <RowAction row={row} actions={actions} />
           </div>
           <SnapshotList row={row} actions={actions} />
+          <StressFindings row={row} actions={actions} />
         </li>
       );
     })}

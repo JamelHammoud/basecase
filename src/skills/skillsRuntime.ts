@@ -1,18 +1,18 @@
 import type { HandoffResult } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
-import type { Skill } from './artifacts';
-import { lastError, type ForgeRunner, type SkillSave } from './forgeRunner';
+import { lastError, type ForgeRunner } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
 import type { KitWarm } from './motorKit';
 import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
 import type { RaceOutcome } from './race';
-import type { SkillRunner } from './skillsClient';
+import type { ForgeFactory, JobRow, KitInstall, RaceReport, Run, RuntimeDeps } from './skillsRuntimeTypes';
 import type { SkillPorts, SkillsJob } from './skillsJob';
 import { SkillCoach } from './skillsCoach';
+import { SkillStress } from './skillsStress';
 import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
-import { KIT_LABELS, refusalModel, type SkillJob, type SkillRefusal, type SkillTarget } from './skillRows';
+import { KIT_LABELS, refusalModel, type SkillJob, type SkillTarget } from './skillRows';
 import {
   NO_SNAPSHOT_STORE,
   NO_SNAPSHOTS,
@@ -24,49 +24,17 @@ import {
 } from './snapshots';
 import type { DraftInput, DraftReport, DraftResult } from './teach';
 import { raceSummary } from './teach';
-import type { ForgeProgress } from './trainerForge';
 import type { Environment } from './environment';
 import { runTries, type TriesPlan } from './triesRun';
 
-export interface ForgeFactoryOptions {
-  background: boolean;
-  onProgress: (p: ForgeProgress) => void;
-  onSnapshot?: (ref: SnapshotRef) => void;
-  signal: AbortSignal;
-}
-
-export type ForgeFactory = (options: ForgeFactoryOptions) => ForgeRunner;
-
-export interface RuntimeDeps {
-  runner: SkillRunner;
-  forge: ForgeFactory;
-  save: SkillSave;
-  loadSkill: (hash: string) => Promise<Skill | null>;
-  onRecord: (record: SkillRecord) => void;
-  onChange: (jobs: SkillJob[]) => void;
-  onRefused?: (target: SkillTarget, refusal: SkillRefusal | null) => void;
-  snapshots?: Snapshots;
-}
-
-export interface KitInstall {
-  entry: TrainedEntry;
-  warm: KitWarm;
-}
-
-export interface RaceReport {
-  name: string;
-  found: boolean;
-  lines: string[];
-  relaxation: string | null;
-}
-
-interface Run {
-  target: SkillTarget;
-  label: string;
-  background: boolean;
-  model?: SimModel;
-  work: (forge: ForgeRunner, signal: AbortSignal) => Promise<void>;
-}
+export type {
+  ForgeFactory,
+  ForgeFactoryOptions,
+  JobRow,
+  KitInstall,
+  RaceReport,
+  RuntimeDeps,
+} from './skillsRuntimeTypes';
 
 export const designOf = (model: SimModel) => model.robots[0]?.key ?? 'scene';
 
@@ -88,6 +56,7 @@ export class SkillsRuntime {
 
   private deps: RuntimeDeps;
   readonly coach: SkillCoach;
+  readonly stress: SkillStress;
 
   constructor(deps: RuntimeDeps) {
     this.deps = deps;
@@ -97,19 +66,27 @@ export class SkillsRuntime {
       startJob: (row, work) => this.startJob(row, work),
       keep: (target, record) => this.keep(target, record),
     });
+    this.stress = new SkillStress({
+      runner: deps.runner,
+      startJob: (row, work) => this.startJob(row, work),
+      keep: (target, record) => this.keep(target, record),
+      onStress: (target, report) => this.deps.onStress?.(target, report),
+    });
   }
 
   loadSkill(hash: string) {
     return this.deps.loadSkill(hash);
   }
 
-  startJob(row: { target: SkillTarget; label: string }, work: (ports: SkillPorts) => Promise<void>): string | null {
+  startJob(row: JobRow, work: (ports: SkillPorts) => Promise<void>): string | null {
     if (this.user) return BUSY;
+
+    const progress = (share: number) => this.setJob(row.target, { share });
 
     this.running = this.start({
       ...row,
       background: false,
-      work: (forge, signal) => work({ ...this.ports(), forge, signal }),
+      work: (forge, signal) => work({ ...this.ports(), forge, signal, progress }),
     });
 
     return null;
@@ -439,7 +416,13 @@ export class SkillsRuntime {
     this.userLabel = run.label;
     this.deps.onRefused?.(run.target, null);
     this.trails.set(run.target, NO_SNAPSHOTS);
-    this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting', snapshot: null });
+    this.setJob(run.target, {
+      label: run.label,
+      background: false,
+      share: null,
+      message: run.message ?? 'Starting',
+      snapshot: null,
+    });
 
     try {
       await run.work(this.forgeFor(run, controller.signal), controller.signal);

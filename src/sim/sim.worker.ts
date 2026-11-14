@@ -27,6 +27,7 @@ import { PoseGate } from './poseGate';
 import { WorldMoves } from './worldMoves';
 import type { WorldChange, WorldLooks } from '../cases/worldSet';
 import { runFalls, type FallPlan, type FallRun } from './fallRuns';
+import { LivePhysics, type SimPhysics } from './livePhysics';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -65,6 +66,7 @@ export type SimRequest =
   | { type: 'input'; name: string; value: FactValue }
   | { type: 'world'; change: WorldChange }
   | { type: 'cameras'; port: MessagePort | null }
+  | { type: 'physics'; physics: SimPhysics | null }
   | { type: 'dispose' };
 
 export type SimResponse =
@@ -84,6 +86,7 @@ export type SimResponse =
       playing: boolean;
       facts?: CaseFacts;
       scan?: Scan;
+      physics?: SimPhysics | null;
     }
   | { type: 'fell'; id: number; runs: FallRun[] }
   | {
@@ -114,6 +117,7 @@ let cameraPort: MessagePort | null = null;
 let script: { start: number; commands: Array<{ at: number; command: DriveCommand }> } | null = null;
 let scanShown = -1;
 const poseGate = new PoseGate();
+const livePhysics = new LivePhysics();
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
 const frame = (force = false) => {
@@ -134,7 +138,10 @@ const frame = (force = false) => {
   const scan = scanner && scanner.version !== scanShown ? scanner.latest() : undefined;
 
   scanShown = scanner?.version ?? -1;
-  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing, facts, ...(scan ? { scan } : {}) }, [
+
+  const physics = livePhysics.applied();
+
+  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing, facts, physics, ...(scan ? { scan } : {}) }, [
     poses.buffer,
     joints.buffer,
     ...(scan ? [scan.values.buffer, scan.points.buffer] : []),
@@ -245,7 +252,8 @@ async function load(msg: Msg<'load'>) {
   liveCase = null;
   script = null;
   playing = false;
-  engine = new SimEngine(mj, msg.model);
+  engine = new SimEngine(livePhysics.module(mj), msg.model);
+  livePhysics.attach(engine);
   world = new WorldMoves(mj, engine);
   looksShown = -1;
   post({ type: 'world', looks: {} });
@@ -439,6 +447,11 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   watch,
   input: (msg) => liveCase?.input(msg.name, msg.value),
   world: (msg) => changeWorld(msg.change),
+  physics: (msg) => {
+    if (mj) livePhysics.apply(mj, msg.physics);
+
+    frame(true);
+  },
   cameras: (msg) => {
     cameraPort?.close();
     cameraPort = msg.port;

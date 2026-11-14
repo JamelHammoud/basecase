@@ -103,6 +103,7 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     ...dataLayerState(core),
     fingerprints: modelFingerprints(skills.model),
     controller: controllerState(sim.controller),
+    physics: sim.latestPhysics(),
     joints: jointReadings(sim.model, joints),
   };
 }

@@ -57,7 +57,7 @@ export function exploreBase(parts: ScenePart[], project: ProjectSettings, space:
 export function exploreProblem(kase: Case | null, space: ExploreSpace | null): string | null {
   if (!kase) return 'No Case is open. Name one with case.';
 
-  if (!comparable(kase)) return `${kase.name} has more than one robot slot, so Explore can't run it.`;
+  if (!comparable(kase)) return `${kase.name} has more than one robot slot, so Explore can’t run it.`;
 
   return space ? null : 'No joint has a catalog servo that comes in more than one version.';
 }

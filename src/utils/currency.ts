@@ -75,6 +75,6 @@ export function currencyNote(money: Money): string[] {
   return money.code === 'USD'
     ? []
     : [
-        `Prices are in ${money.code}, the user's currency (US dollar prices converted at ${money.ratesDate} rates). Quote them in ${money.code}.`,
+        `Prices are in ${money.code}, the user’s currency (US dollar prices converted at ${money.ratesDate} rates). Quote them in ${money.code}.`,
       ];
 }

@@ -59,7 +59,6 @@ export interface RenderedCad {
 export interface AcpPromptPayload {
   action: 'image-to-3d' | 'generate-part' | 'build';
   workspaceId?: string;
-  targetHeightMm?: number;
   model?: string;
   effort?: string;
   imageDataUrls?: string[];

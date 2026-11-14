@@ -94,7 +94,7 @@ describe('run_case', () => {
       data: { status: 'fail', passes: 0, refusal: 'This Case needs wheels or legs.' },
       images: [],
     });
-    expect('text' in reply && reply.text).toContain("the robot can't enter it. This Case needs wheels or legs.");
+    expect('text' in reply && reply.text).toContain('the robot can’t enter it. This Case needs wheels or legs.');
     expect(jobsOf('replay')).toEqual([]);
   });
 

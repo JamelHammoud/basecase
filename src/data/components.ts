@@ -1393,7 +1393,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '400 g'],
     ],
     mounting:
-      "195 × 105 × 120 mm with fingers extended. Wrist interface made for Reachy2; the repo also has an SO-ARM interface. Pollen's simulation model has no palm or top shell, so those aren't shown.",
+      '195 × 105 × 120 mm with fingers extended. Wrist interface made for Reachy2; the repo also has an SO-ARM interface. Pollen’s simulation model has no palm or top shell, so those aren’t shown.',
     links: {
       product: 'https://github.com/pollen-robotics/AmazingHand',
       datasheet: 'https://github.com/pollen-robotics/AmazingHand/blob/main/docs/AmazingHand_Overview.pdf',
@@ -1768,7 +1768,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '800 g'],
     ],
     mounting:
-      "Ø75 mm flange. Bolts straight to the xArm tool flange with 2× M6 through Ø6.6 holes 63 mm apart, plus a Ø6 locating hole (from UFACTORY's 3D model; no dimensioned drawing is published).",
+      'Ø75 mm flange. Bolts straight to the xArm tool flange with 2× M6 through Ø6.6 holes 63 mm apart, plus a Ø6 locating hole (from UFACTORY’s 3D model; no dimensioned drawing is published).',
     links: {
       product: 'https://www.ufactory.cc/product-page/ufactory-xarm-gripper/',
       datasheet: 'https://www.ufactory.cc/wp-content/uploads/2025/07/Gripper-G2-User-Manual_V2.7.0.pdf',
@@ -1918,7 +1918,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'Dynamixel Protocol 2.0, ROS'],
     ],
     mounting:
-      "Taken from Trossen's whole-arm STEP (gripper bodies only). Bolts to the wrist servo; no separate hole pattern is published.",
+      'Taken from Trossen’s whole-arm STEP (gripper bodies only). Bolts to the wrist servo; no separate hole pattern is published.',
     links: {
       product: 'https://www.trossenrobotics.com/widowx-250',
       datasheet: 'https://docs.trossenrobotics.com/interbotix_xsarms_docs/specifications/wx250.html',
@@ -1937,7 +1937,7 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'AgileX Robotics',
     mpn: 'PiPER gripper (0–70 mm)',
     group: 'Grippers',
-    description: "Electric two-finger parallel gripper with an integrated controller on the PiPER arm's CAN bus.",
+    description: 'Electric two-finger parallel gripper with an integrated controller on the PiPER arm’s CAN bus.',
     specs: [
       ['Stroke', ['0–70 mm (this model)', '0–100 mm current version']],
       ['Accuracy', '±0.5 mm'],
@@ -1946,7 +1946,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '500 g'],
     ],
     mounting:
-      "Model is AgileX's published 0–70 mm gripper. A flange fixes to J6 with 6× M3 × 8 countersunk screws; the gripper fixes to the flange with M3 × 14.",
+      'Model is AgileX’s published 0–70 mm gripper. A flange fixes to J6 with 6× M3 × 8 countersunk screws; the gripper fixes to the flange with M3 × 14.',
     links: {
       product: 'https://global.agilex.ai/products/piper',
       datasheet:
@@ -2006,7 +2006,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'Dynamixel TTL, LeRobot'],
     ],
     mounting:
-      "Mounts to the XL330 horn with 4× M2 (Ø2.4 holes, Ø5 counterbore) on a Ø12 circle. Stroke and grip force aren't published.",
+      'Mounts to the XL330 horn with 4× M2 (Ø2.4 holes, Ø5 counterbore) on a Ø12 circle. Stroke and grip force aren’t published.',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Koch+v1.1+robot+arm+kit', kind: 'search' },
       product: 'https://github.com/jess-moss/koch-v1-1',
@@ -2069,7 +2069,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '550 g'],
     ],
     mounting:
-      "143 × 78 × 67 mm half-open; 120 mm wide fully open, 124.5 mm fully closed (side rails extended). Jaw length 80 mm. Unitree doesn't publish the wrist hole pattern. The model includes the cable outlet.",
+      '143 × 78 × 67 mm half-open; 120 mm wide fully open, 124.5 mm fully closed (side rails extended). Jaw length 80 mm. Unitree doesn’t publish the wrist hole pattern. The model includes the cable outlet.',
     links: {
       product: 'https://www.unitree.com/Dex1-1',
     },
@@ -2178,7 +2178,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '1 kg'],
     ],
     mounting:
-      "Published 184.6 × 162.3 × 67 mm. The fingers swing in an arc, so height changes with opening; the maker's model measures 187.6 mm at its zero pose. Flange pattern isn't published.",
+      'Published 184.6 × 162.3 × 67 mm. The fingers swing in an arc, so height changes with opening; the maker’s model measures 187.6 mm at its zero pose. Flange pattern isn’t published.',
     links: {
       product: 'https://en.dh-robotics.com/product/ag',
     },
@@ -2293,7 +2293,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Power', '5 V, 2.5 A via micro-USB'],
     ],
     mounting:
-      "PCB 65 × 30 mm. 4 holes on a 58 × 23 mm pattern, 3.5 mm in from each edge (Raspberry Pi doesn't state the hole diameter on the drawing). Ports on one long edge.",
+      'PCB 65 × 30 mm. 4 holes on a 58 × 23 mm pattern, 3.5 mm in from each edge (Raspberry Pi doesn’t state the hole diameter on the drawing). Ports on one long edge.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B09LH5SBPS', kind: 'product' },
       product: 'https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/',
@@ -2348,7 +2348,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Power', '7–25 W, DC barrel jack'],
     ],
     mounting:
-      "Kit 103 × 90.5 × 34.77 mm; carrier PCB 100 × 79 × 1.57 mm. 4× Ø2.75 mm holes on an 86 × 58 mm pattern at (4, 17) from the carrier corner at the port edge (from NVIDIA's 3D model; the spec gives no hole positions).",
+      'Kit 103 × 90.5 × 34.77 mm; carrier PCB 100 × 79 × 1.57 mm. 4× Ø2.75 mm holes on an 86 × 58 mm pattern at (4, 17) from the carrier corner at the port edge (from NVIDIA’s 3D model; the spec gives no hole positions).',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0BZJTQ5YP', kind: 'product' },
       product:
@@ -2919,7 +2919,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '185 g, IP65'],
     ],
     mounting:
-      "77 × 77 mm, 39.8 mm tall (datasheet v2.4; the older drawing says 38.85). 4× M3 threaded, 4 mm deep, on a 41.7 × 41.7 mm square in the bottom face. Optical center height isn't published.",
+      '77 × 77 mm, 39.8 mm tall (datasheet v2.4; the older drawing says 38.85). 4× M3 threaded, 4 mm deep, on a 41.7 × 41.7 mm square in the bottom face. Optical center height isn’t published.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0CQ4Q6WLB', kind: 'product' },
       product: 'https://www.slamtec.com/en/s2',
@@ -3051,7 +3051,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '190 g'],
     ],
     mounting:
-      "Ø76 × 41 mm, same housing and drawing as the A2M12: 4× M3, 4 mm deep, on a Ø59 circle; optical center 31 mm above the mounting face. Model from Slamtec's A2-family file, with cable.",
+      'Ø76 × 41 mm, same housing and drawing as the A2M12: 4× M3, 4 mm deep, on a Ø59 circle; optical center 31 mm above the mounting face. Model from Slamtec’s A2-family file, with cable.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B08ZDKQM9K', kind: 'product' },
       product: 'https://www.slamtec.com/en/lidar/a3',
@@ -3077,7 +3077,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '115 g'],
     ],
     mounting:
-      "55.6 × 55.6 × 41.3 mm. 4× M2.5, 4 mm deep, on a 43 × 43 mm square. Optical center height isn't published. Model includes the cable.",
+      '55.6 × 55.6 × 41.3 mm. 4× M2.5, 4 mm deep, on a 43 × 43 mm square. Optical center height isn’t published. Model includes the cable.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0CD82ZS31', kind: 'product' },
       product: 'https://www.slamtec.com/en/s3',
@@ -3128,7 +3128,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'UART 921600, transmit only'],
     ],
     mounting:
-      "3 ears with Ø2.5 mm holes: side holes 46.8 mm apart, rear hole 31.92 mm behind. Optical center 27 mm above the mounting face. Model is LDROBOT's LD19 file; the STL-27L drawing matches it dimension for dimension.",
+      '3 ears with Ø2.5 mm holes: side holes 46.8 mm apart, rear hole 31.92 mm behind. Optical center 27 mm above the mounting face. Model is LDROBOT’s LD19 file; the STL-27L drawing matches it dimension for dimension.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B0C74CRWYS', kind: 'product' },
       product: 'https://www.ldrobot.com/sensors',
@@ -3383,7 +3383,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '38 g, IPX7'],
     ],
     mounting:
-      "55 × 40.2 × 35 mm. 4 ear holes on a 36 × 32 mm rectangle (Garmin's legend suggests Ø4; confirm on a part). Optics 27.69 mm apart.",
+      '55 × 40.2 × 35 mm. 4 ear holes on a 36 × 32 mm rectangle (Garmin’s legend suggests Ø4; confirm on a part). Optics 27.69 mm apart.',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Garmin+LIDAR-Lite+v3HP', kind: 'search' },
       product: 'https://www.garmin.com/en-US/p/578152',
@@ -3979,7 +3979,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Interface', 'Micro-USB, microSD, Wi-Fi + BLE 5'],
     ],
     mounting:
-      "Main board 30 × 60 mm with an 18 × 6.4 mm notch at the camera end; LCD sub-board 30 × 31.9 mm stacked on headers. Camera position isn't dimensioned.",
+      'Main board 30 × 60 mm with an 18 × 6.4 mm notch at the camera end; LCD sub-board 30 × 31.9 mm stacked on headers. Camera position isn’t dimensioned.',
     links: {
       amazon: { url: 'https://www.amazon.com/dp/B09MS6PH7L', kind: 'product' },
       product: 'https://www.espressif.com/en/products/devkits/esp32-s3-eye',
@@ -5786,7 +5786,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Voltage', '5 V (USB or pad)'],
     ],
     mounting:
-      "PCB 82.1 × 34.0 mm (Seeed's CAD; the wiki lists 35 × 86 mm). Seeed doesn't dimension the mounting holes. The mics sit on the underside.",
+      'PCB 82.1 × 34.0 mm (Seeed’s CAD; the wiki lists 35 × 86 mm). Seeed doesn’t dimension the mounting holes. The mics sit on the underside.',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=ReSpeaker+Lite+2-mic+array', kind: 'search' },
       product: 'https://www.seeedstudio.com/ReSpeaker-Lite-p-5928.html',

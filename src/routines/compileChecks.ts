@@ -15,7 +15,7 @@ function checkDo(ctx: CompileContext, step: Extract<Step, { kind: 'do' }>) {
   const node = ctx.nodeOf(step);
   const skill = ctx.skills.get(step.skill);
 
-  if (!skill) return ctx.fail('unknown-skill', `There's no ${step.skill} skill for this robot.`, node);
+  if (!skill) return ctx.fail('unknown-skill', `There’s no ${step.skill} skill for this robot.`, node);
 
   if (skill.status === 'needsTraining') ctx.fail('needs-training', `${step.skill} needs training first.`, node);
 
@@ -31,16 +31,16 @@ function checkInfer(ctx: CompileContext, step: InferStep) {
   const missing = ctx.requiresCapability(step.input);
 
   if (!model || model.tier !== 'perception') {
-    return ctx.fail('unknown-model', `There's no ${step.model} model to check with.`, node);
+    return ctx.fail('unknown-model', `There’s no ${step.model} model to check with.`, node);
   }
 
   if (!model.outputs.includes(step.output.type)) {
-    ctx.fail('type-mismatch', `${model.label} doesn't return ${step.output.type}.`, node);
+    ctx.fail('type-mismatch', `${model.label} doesn’t return ${step.output.type}.`, node);
   }
 
   if (inputType === undefined) ctx.fail('unknown-fact', `Nothing in this Routine publishes ${step.input}.`, node);
   else if (!model.inputs.includes(inputType as never)) {
-    ctx.fail('type-mismatch', `${model.label} can't look at ${step.input}.`, node);
+    ctx.fail('type-mismatch', `${model.label} can’t look at ${step.input}.`, node);
   }
 
   if (missing) ctx.fail('missing-capability', `Add ${missing} to what this Routine needs.`, node);
@@ -102,9 +102,9 @@ function checkWatchers(ctx: CompileContext) {
   for (const w of ctx.routine.watchers) {
     const model = findNode(w.model);
 
-    if (!model || model.tier === 'remote') ctx.fail('unknown-model', `There's no ${w.model} model.`, w.id);
+    if (!model || model.tier === 'remote') ctx.fail('unknown-model', `There’s no ${w.model} model.`, w.id);
     else if (!model.outputs.includes(w.publishes.type)) {
-      ctx.fail('type-mismatch', `${model.label} doesn't publish ${w.publishes.type}.`, w.id);
+      ctx.fail('type-mismatch', `${model.label} doesn’t publish ${w.publishes.type}.`, w.id);
     }
 
     if (w.rateHz < PERCEPTION_HZ.min || w.rateHz > PERCEPTION_HZ.max) {
@@ -170,7 +170,7 @@ function checkReaction(ctx: CompileContext, r: Reaction) {
   const base = ctx.skills.get(ctx.routine.base.skill);
 
   if (r.body === 'stopFirst' && base?.interrupt === 'never') {
-    ctx.fail('uninterruptible', `${base.id} can't be stopped, so ${r.id} can't stop first.`, r.id);
+    ctx.fail('uninterruptible', `${base.id} can’t be stopped, so ${r.id} can’t stop first.`, r.id);
   }
 }
 
@@ -218,9 +218,9 @@ function checkBase(ctx: CompileContext) {
   const safe = ctx.skills.get(ctx.routine.safeStop);
 
   if (!safe || safe.status !== 'ready') {
-    ctx.fail('unknown-skill', `There's no ready ${ctx.routine.safeStop} skill to stop safely.`, 'safeStop');
+    ctx.fail('unknown-skill', `There’s no ready ${ctx.routine.safeStop} skill to stop safely.`, 'safeStop');
   } else if (safe.stopVia !== safe.id) {
-    ctx.fail('unsafe-safe-stop', `${safe.id} isn't a stop: it hands off to ${safe.stopVia}.`, 'safeStop');
+    ctx.fail('unsafe-safe-stop', `${safe.id} isn’t a stop: it hands off to ${safe.stopVia}.`, 'safeStop');
   }
 
   for (const skill of ctx.skills.values()) {

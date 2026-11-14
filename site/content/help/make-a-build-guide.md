@@ -1,7 +1,7 @@
 ---
 title: Make a build guide
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: build-and-print
 type: task
 order: 7
@@ -29,9 +29,9 @@ Basecase turns your design into a step-by-step assembly guide and saves it as a 
 
 1. In the **Build** tab, find **Build guide**.
 2. Click **Make Guide**. The card shows which step it's drawing and how much time is left. You can keep working while it runs.
-3. Once a toast says the guide is made, click **Open**.
+3. Once a toast says the guide is made, click **Open** in the toast, or click the guide's cover on the card.
 
-   ![The Build guide card with an 8-page guide made just now and an Open button](/help/make-a-build-guide/current.png)
+   ![The Build guide card with the cover of a 10-page guide made just now](/help/make-a-build-guide/current.png)
 
 4. To turn the pages, press [[→]] or [[←]].
 5. To close the guide, press [[Esc]].
@@ -44,9 +44,9 @@ To zoom, pinch or press + and −. In the desktop app, **Open PDF** opens the fi
 
 ## Keep it current
 
-If you change the design, or the infill in Print mode, the card reads **Out of date** in amber, with **Update** beside **Open**. **Update Build Guide** in [[⌘K]] does the same.
+If you change the design, or the infill in Print mode, the card reads **Out of date** in amber, with an **Update** button. **Update Build Guide** in [[⌘K]] does the same.
 
-![The Build guide card reading Out of date, with Open and Update buttons](/help/make-a-build-guide/out-of-date.png)
+![The Build guide card reading Out of date, with an Update button](/help/make-a-build-guide/out-of-date.png)
 
 Basecase updates the guide on its own 15 seconds after your last change, once the agent finishes. Each update redraws only the steps that show the parts you changed.
 

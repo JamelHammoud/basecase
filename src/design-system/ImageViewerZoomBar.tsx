@@ -1,7 +1,8 @@
 import React from 'react';
-import { CloseIcon, FitIcon, MinusIcon, PlusIcon } from './glyphs';
+import { CloseIcon, MinusIcon, PlusIcon } from './glyphs';
 import { IconButton } from './IconButton';
 import { IslandDivider } from './FloatingIsland';
+import { Tooltip } from './Tooltip';
 
 interface ImageViewerZoomBarProps {
   zoom: string;
@@ -28,14 +29,16 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
         tooltipSide="bottom"
         onClick={onZoomOut}
       />
-      <button
-        type="button"
-        onClick={onFit}
-        className="h-[32px] min-w-14 px-1.5 rounded-lg text-[13px] text-white/90 tabular hover:bg-white/[0.07] cursor-default"
-        aria-label="Zoom to fit"
-      >
-        {zoom}
-      </button>
+      <Tooltip label="Zoom to fit" shortcut="0" side="bottom">
+        <button
+          type="button"
+          onClick={onFit}
+          className="h-[32px] min-w-14 px-1.5 rounded-lg text-[13px] text-white/90 tabular hover:bg-white/[0.07] cursor-default"
+          aria-label="Zoom to fit"
+        >
+          {zoom}
+        </button>
+      </Tooltip>
       <IconButton
         icon={<PlusIcon className="w-4 h-4" />}
         title="Zoom in"
@@ -43,14 +46,6 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
         size="sm"
         tooltipSide="bottom"
         onClick={onZoomIn}
-      />
-      <IconButton
-        icon={<FitIcon className="w-4 h-4" />}
-        title="Zoom to fit"
-        shortcut="0"
-        size="sm"
-        tooltipSide="bottom"
-        onClick={onFit}
       />
       <IslandDivider />
       <IconButton

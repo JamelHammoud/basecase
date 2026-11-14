@@ -85,16 +85,13 @@ const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord }> = ({ guide
       <div className={`text-[12.5px] mt-0.5 ${guide.stale ? 'text-amber-400' : 'text-white/50'}`}>
         {guide.stale ? 'Out of date' : `Made ${agoPhrase(record.generatedAt)}`}
       </div>
-      <div className="flex gap-2 mt-2.5">
-        <Button size="sm" variant={guide.stale ? 'secondary' : 'primary'} onClick={() => void guide.open()}>
-          Open
-        </Button>
-        {guide.stale && (
+      {guide.stale && (
+        <div className="flex gap-2 mt-2.5">
           <Button size="sm" variant="primary" onClick={() => void guide.generate()}>
             Update
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 };

@@ -68,7 +68,7 @@ STL, 3MF and PLY are read with Z pointing up, the way most CAD and print apps sa
 
 ## How to tell it worked
 
-A toast says “Inserted” with the part's name, and the new part is selected on the canvas.
+The new part is selected on the canvas, and the “Importing” toast closes.
 
 ## “Couldn’t import” right after you drop a file
 

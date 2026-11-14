@@ -42,7 +42,7 @@ A single part is saved under its own name, with its **Notes**, and several parts
 
 1. Open the scene you want the model in.
 2. Click **Library** in the view rail.
-3. Click the model, or drag it onto the canvas where you want it.
+3. Click the model, or drag it onto the canvas where you want it. It lands selected.
 
 Hover a model to see where it came from, its size, how many parts it has and its notes. **Search library** finds a model by its name or notes. Right-click it to rename, duplicate or delete it; deleting asks first.
 

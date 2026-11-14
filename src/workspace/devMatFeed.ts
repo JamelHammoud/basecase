@@ -1,4 +1,4 @@
-import type { CaseMat } from '../cases/mat/matLayout';
+import { matBounds, type CaseMat } from '../cases/mat/matLayout';
 import { feedMatFrames, matTrackingSnapshot } from '../cameras/mat/matTracking';
 import { FEED_FPS, type FeedPose, type MatFeed } from '../cameras/mat/tagsProtocol';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -20,17 +20,6 @@ const CAMERA_BACK_MM = 300;
 const FEED_HFOV_DEG = 70;
 const FEED_SIZE = { width: 640, height: 360 };
 
-function matBounds(mat: CaseMat) {
-  const xs = mat.sheets.flatMap((s) => [s.x0, s.x0 + s.width]);
-  const zs = mat.sheets.flatMap((s) => [s.z0, s.z0 + s.height]);
-
-  return {
-    cx: (Math.min(...xs) + Math.max(...xs)) / 2,
-    cz: (Math.min(...zs) + Math.max(...zs)) / 2,
-    minZ: Math.min(...zs),
-  };
-}
-
 export function matFeedOf(mat: CaseMat, seconds: number, hide?: [number, number]): MatFeed {
   const [rx, , rz] = mat.base.center;
   const [px, pz] = mat.path[0];
@@ -44,7 +33,8 @@ export function matFeedOf(mat: CaseMat, seconds: number, hide?: [number, number]
 
     return { t, base: hidden(t) ? null : { x: rx + (to.x - rx) * k, z: rz + (to.z - rz) * k, yaw } };
   });
-  const { cx, cz, minZ } = matBounds(mat);
+  const { minX, maxX, minZ, maxZ } = matBounds(mat);
+  const [cx, cz] = [(minX + maxX) / 2, (minZ + maxZ) / 2];
 
   return {
     camera: {

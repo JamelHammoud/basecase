@@ -27,6 +27,8 @@ Give your robot a task in a simulated world, drive it through, and keep the trie
 
 A humanoid or an arm can follow your own arms instead of the keys: press ⌘K and choose **Drive with Camera** before step 4. Steps are in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
+A Case for a wheeled or legged robot also shows **Try on Real Robot** under **Try It**. It judges your real robot's run from the computer's camera, as in [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
+
 ![A try running, with the clock, Stop Try and the keys](/help/try-a-robot-on-a-case/trying.png)
 
 6. Click **Stop Try**, or let the time run out.

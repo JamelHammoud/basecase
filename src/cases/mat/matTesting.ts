@@ -8,7 +8,7 @@ import { simDeltas } from '../../sim/mjcfFrames';
 import type { SimModel } from '../../sim/mjcfTypes';
 import { framePoses, type Recording } from '../../sim/recorder';
 import type { Rig } from '../../utils/kinematics';
-import type { BaseTag, CaseMat } from './matLayout';
+import { matBounds, type BaseTag, type CaseMat } from './matLayout';
 import type { RealSample } from './realTry';
 
 export interface CameraSetup {
@@ -19,15 +19,6 @@ export interface CameraSetup {
 }
 
 const DEFAULT_LENS: Lens = { model: 'pinhole', hfovDeg: 70 };
-
-export function matBounds(mat: CaseMat) {
-  const minX = Math.min(...mat.sheets.map((s) => s.x0));
-  const maxX = Math.max(...mat.sheets.map((s) => s.x0 + s.width));
-  const minZ = Math.min(...mat.sheets.map((s) => s.z0));
-  const maxZ = Math.max(...mat.sheets.map((s) => s.z0 + s.height));
-
-  return { minX, maxX, minZ, maxZ };
-}
 
 export function matCamera(mat: CaseMat, setup: CameraSetup = {}): MatCamera {
   const { minX, maxX, minZ, maxZ } = matBounds(mat);

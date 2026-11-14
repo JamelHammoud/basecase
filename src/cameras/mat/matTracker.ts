@@ -63,9 +63,11 @@ export function createMatTracker(mat: TrackMat): MatTracker {
   };
 
   const trueToScale = (view: MatView) => {
-    const fits = Math.abs(view.scale - 1) <= SCALE_TOLERANCE && view.residualMm <= MAX_RESIDUAL_MM;
+    if (view.residualMm > MAX_RESIDUAL_MM) return false;
 
-    if (!fits) misfits++;
+    const fits = Math.abs(view.scale - 1) <= SCALE_TOLERANCE;
+
+    misfits = fits ? 0 : misfits + 1;
 
     if (misfits >= SCALE_FRAMES) refused = MAT_SCALE_REFUSAL;
 

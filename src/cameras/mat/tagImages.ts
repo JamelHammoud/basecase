@@ -1,3 +1,4 @@
+import { apply, fitHomography } from './homography';
 import { TAG_CELLS, tagCells } from './tag36h11';
 
 export type ImagePoint = [number, number];
@@ -30,51 +31,12 @@ const SQUARE_IN_CELLS: ImagePoint[] = [
   [1, 9],
 ];
 
-function pivotRow(m: number[][], col: number): number {
-  let pivot = col;
+function homography(from: ImagePoint[], to: ImagePoint[]): Mapper {
+  const fit = fitHomography(from.map((p, k) => ({ from: p, to: to[k] })));
 
-  for (let row = col + 1; row < m.length; row++) {
-    if (Math.abs(m[row][col]) > Math.abs(m[pivot][col])) pivot = row;
-  }
+  if (!fit) throw new Error('Tag corners are degenerate');
 
-  return pivot;
-}
-
-function eliminate(m: number[][], col: number): void {
-  for (let row = 0; row < m.length; row++) {
-    const f = row === col ? 0 : m[row][col] / m[col][col];
-
-    for (let k = col; k < m[row].length; k++) m[row][k] -= f * m[col][k];
-  }
-}
-
-function solve(m: number[][]): number[] {
-  for (let col = 0; col < m.length; col++) {
-    const pivot = pivotRow(m, col);
-
-    [m[col], m[pivot]] = [m[pivot], m[col]];
-    eliminate(m, col);
-  }
-
-  return m.map((row, i) => row[row.length - 1] / row[i]);
-}
-
-export function homography(from: ImagePoint[], to: ImagePoint[]): Mapper {
-  const rows = from.flatMap(([u, v], k) => {
-    const [x, y] = to[k];
-
-    return [
-      [u, v, 1, 0, 0, 0, -u * x, -v * x, x],
-      [0, 0, 0, u, v, 1, -u * y, -v * y, y],
-    ];
-  });
-  const h = solve(rows);
-
-  return (u, v) => {
-    const z = h[6] * u + h[7] * v + 1;
-
-    return [(h[0] * u + h[1] * v + h[2]) / z, (h[3] * u + h[4] * v + h[5]) / z];
-  };
+  return (u, v) => apply(fit, [u, v]);
 }
 
 function random(seed: number): () => number {

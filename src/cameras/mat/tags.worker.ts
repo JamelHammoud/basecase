@@ -7,13 +7,18 @@ import { FEED_FPS, type MatFeed, type TagsEvent, type TagsRequest } from './tags
 
 type Picture = VideoFrame | ImageBitmap;
 
+interface Shot {
+  picture: Picture;
+  t: number;
+}
+
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 
 let mat: CaseMat | null = null;
 let tracker: MatTracker | null = null;
 let detector: TagDetector | null = null;
 let reader: ReadableStreamDefaultReader<VideoFrame> | null = null;
-let latest: Picture | null = null;
+let latest: Shot | null = null;
 let scheduled = false;
 let fed = false;
 let pendingFeed: MatFeed | null = null;
@@ -27,6 +32,8 @@ const post = (event: TagsEvent) => scope.postMessage(event);
 const fail = (e: unknown) => post({ type: 'error', message: e instanceof Error ? e.message : String(e) });
 
 const nowSeconds = () => (performance.timeOrigin + performance.now()) / 1000;
+
+const shotTime = (picture: Picture) => ('timestamp' in picture ? picture.timestamp / 1e6 : nowSeconds());
 
 function track(gray: Uint8Array, size: { width: number; height: number }, t: number) {
   if (!detector || !tracker) return;
@@ -64,28 +71,28 @@ function grayOf(picture: Picture): { gray: Uint8Array; width: number; height: nu
 function trackLatest() {
   scheduled = false;
 
-  const picture = latest;
+  const shot = latest;
 
   latest = null;
 
-  if (!picture) return;
+  if (!shot) return;
 
   try {
-    const { gray, width, height } = grayOf(picture);
+    const { gray, width, height } = grayOf(shot.picture);
 
-    track(gray, { width, height }, nowSeconds());
+    track(gray, { width, height }, shot.t);
   } catch (e) {
     fail(e);
   } finally {
-    picture.close();
+    shot.picture.close();
   }
 }
 
 function take(picture: Picture) {
   if (fed || closed || !detector) return picture.close();
 
-  latest?.close();
-  latest = picture;
+  latest?.picture.close();
+  latest = { picture, t: shotTime(picture) };
 
   if (scheduled) return;
 
@@ -141,7 +148,7 @@ function runFeed(feed: MatFeed) {
 
 function feed(next: MatFeed) {
   fed = true;
-  latest?.close();
+  latest?.picture.close();
   latest = null;
 
   if (feedTimer !== null) clearTimeout(feedTimer);
@@ -181,7 +188,7 @@ function close() {
 
   if (feedTimer !== null) clearTimeout(feedTimer);
 
-  latest?.close();
+  latest?.picture.close();
   latest = null;
   void reader?.cancel().catch(() => undefined);
   detector?.dispose();

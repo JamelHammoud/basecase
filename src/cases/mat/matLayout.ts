@@ -158,3 +158,12 @@ export const matTagCorners = (mat: CaseMat): Array<{ id: number; corners: FloorP
     corners: tagCorners([mat.base.center[0], mat.base.center[2]], mat.base.size, mat.base.up),
   },
 ];
+
+export function matBounds(mat: CaseMat) {
+  const minX = Math.min(...mat.sheets.map((s) => s.x0));
+  const maxX = Math.max(...mat.sheets.map((s) => s.x0 + s.width));
+  const minZ = Math.min(...mat.sheets.map((s) => s.z0));
+  const maxZ = Math.max(...mat.sheets.map((s) => s.z0 + s.height));
+
+  return { minX, maxX, minZ, maxZ };
+}

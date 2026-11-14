@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { buildCase, builderRobot } from '../../cases/caseBuilder';
 import { stageCase } from '../../cases/caseCast';
 import { caseMat, type CaseMat } from '../../cases/mat/matLayout';
-import { matCamera, shoot, type CameraSetup } from '../../cases/mat/matTesting';
+import { matCamera, shoot, testDetector, type CameraSetup } from '../../cases/mat/matTesting';
 import { fixtureRobots } from '../../sim/fixtures/robots';
 import { buildRig } from '../../utils/kinematics';
-import type { BaseFix } from './matSolve';
-import { MAT_SCALE_REFUSAL, type MatSample } from './matTracker';
+import { renderMatFrame } from './matFrames';
+import type { BaseFix, SeenTag } from './matSolve';
+import { createMatTracker, MAT_SCALE_REFUSAL, trackMat, type MatSample } from './matTracker';
 
 const SECONDS = 1;
 
@@ -78,6 +79,29 @@ describe('tracking the base on a printed mat', { timeout: 30_000 }, () => {
     expect(refusal).toBe(MAT_SCALE_REFUSAL);
     expect(samples.filter((s) => s.base).length).toBeLessThan(samples.length / 2);
     expect(samples.at(-1)?.base).toBeNull();
+  });
+
+  it('keeps tracking through scattered off-scale and smeared frames', async () => {
+    const size = { width: 960, height: 540 };
+    const camera = matCamera(mat);
+    const tags = await testDetector();
+    const seenAt = (printScale: number) =>
+      tags.detect(renderMatFrame({ mat, camera, ...size, base: moving(0), printScale }), size.width, size.height);
+    const [good, misprinted] = [seenAt(1), seenAt(0.97)];
+    const smeared: SeenTag[] = good.map((tag, i) =>
+      i === 0 ? { ...tag, corners: tag.corners.map(([x, y], k) => [k ? x : x + 60, y]) } : tag,
+    );
+    const tracker = createMatTracker(trackMat(mat));
+    const frames = Array.from({ length: 900 }, (_, i) => {
+      if (i % 37 === 20) return misprinted;
+
+      return i % 53 === 30 ? smeared : good;
+    });
+    const samples = frames.map((seen, i) => tracker.push(seen, size, i / 30));
+
+    expect(tracker.refusal()).toBeNull();
+    expect(samples.filter((s, i) => frames[i] === good && !s.base).length).toBeLessThan(10);
+    expect(samples.filter((s, i) => frames[i] === smeared && s.base)).toHaveLength(0);
   });
 
   it('gives the same trace for the same frames', async () => {

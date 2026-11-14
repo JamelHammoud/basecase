@@ -6,13 +6,13 @@ import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
 import { saveRecording } from '../cases/tryStore';
 import {
   closeMatTracking,
+  MAT_TRACKING_STOPPED,
   matTrackingSnapshot,
   onMatSample,
   openMatTracking,
   useMatTracking,
 } from '../cameras/mat/matTracking';
 import type { FloorPoint } from '../cameras/mat/tag36h11';
-import { CAMERA_REFUSAL } from '../cameras/operator/operatorCamera';
 import type { MatSample } from '../cameras/mat/matTracker';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
@@ -57,7 +57,7 @@ const newTryId = () => `try-${Date.now().toString(36)}-${Math.random().toString(
 function lostTo(tracking: ReturnType<typeof useMatTracking>, running: boolean): string | null {
   if (!running) return null;
 
-  return tracking.refusal ?? (tracking.error ? CAMERA_REFUSAL : null);
+  return tracking.refusal ?? (tracking.error ? MAT_TRACKING_STOPPED : null);
 }
 
 export function useRealTry(options: RealTryOptions): RealTry {

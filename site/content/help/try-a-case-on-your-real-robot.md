@@ -65,6 +65,8 @@ The try appears in **Results** with a **Real** mark. Click its **Replay** button
 
 ![A passed try marked Real in Results](/help/try-a-case-on-your-real-robot/real-try.png)
 
+![The real try's path drawn over the best sim try's path on the canvas](/help/try-a-case-on-your-real-robot/replay.png)
+
 You can also start it from ⌘K: type the Case's name and choose **Try ⟨Case⟩ on Real Robot**.
 
 If the camera loses the robot's tag for more than 0.15 s, that stretch can't count toward a pass. A legged robot's Case then reads it as a fall. A camera looking straight down can't measure its own lens, so tilt it. Arms aren't tracked yet.

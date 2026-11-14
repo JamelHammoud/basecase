@@ -12,6 +12,8 @@ export interface MatTrackingState {
   error: string | null;
 }
 
+export const MAT_TRACKING_STOPPED = 'Mat tracking stopped. Try on Real Robot again.';
+
 const TRACK_SIZE = { width: 1280, height: 720 };
 const CLOSED: MatTrackingState = { open: false, latest: null, refusal: null, error: null };
 
@@ -39,7 +41,7 @@ function receive(event: TagsEvent) {
   if (event.type === 'ready') return settle(null);
 
   if (event.type === 'error') {
-    settle(CAMERA_REFUSAL);
+    settle(MAT_TRACKING_STOPPED);
 
     return set({ error: event.message });
   }
@@ -74,7 +76,7 @@ function start(mat: CaseMat, stream: MediaStream | null) {
   const open: TagsRequest = { type: 'open', mat, frames: frames?.frames, standIn: !!standIn };
 
   worker.onmessage = (ev: MessageEvent<TagsEvent>) => receive(ev.data);
-  worker.onerror = (ev) => receive({ type: 'error', message: ev.message || CAMERA_REFUSAL });
+  worker.onerror = (ev) => receive({ type: 'error', message: ev.message || MAT_TRACKING_STOPPED });
   worker.postMessage(open, frames?.frames ? [frames.frames] : []);
 
   if (standIn) worker.postMessage({ type: 'feed', feed: standIn } satisfies TagsRequest);

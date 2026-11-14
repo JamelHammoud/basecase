@@ -58,7 +58,7 @@ You can run a Case in the whole window, with the layout the Case asks for. The r
 
 ![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
-6. Click **Stop Try**, or let the clock run out. The try appears in Results. To play it back through the cards, click **Replay** on its row. See [Play a try through its console](/help/play-a-try-through-its-console). After a try passes, you can choose **Make Dataset** in Results, then export, publish and train from the dataset. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
+6. Click **Stop Try**, or let the clock run out. The try appears in Results. To play it back through the cards, click its row. See [Play a try through its console](/help/play-a-try-through-its-console). After a try passes, you can choose **Make Dataset** in Results, then export, publish and train from the dataset. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 

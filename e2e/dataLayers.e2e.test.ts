@@ -61,7 +61,7 @@ describe('Data layers', () => {
       await endTryAt(app.page, 0.4);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
-      await app.page.getByTestId('try-row').first().locator('button[aria-label="Replay"]').click();
+      await app.page.getByTestId('try-row').first().click();
       await expect.poll(async () => (await simState()).timeline?.sought, { timeout: 30000 }).toBe(0);
       await app.page.keyboard.press('End');
 

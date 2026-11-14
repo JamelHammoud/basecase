@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { servoLayout } from '../src/robot/sceneRobot';
 import type { RobotJoint } from '../src/types/robotics';
 import { so101 } from '../src/wiring/fixtures';
@@ -92,7 +92,7 @@ const openBuildAlong = async () => {
   await expect.poll(stepShown, { timeout: 180000 }).toBe('1');
 };
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
   await app.page.evaluate(
     ({ parts, joints }) => {
@@ -105,7 +105,7 @@ beforeAll(async () => {
   await vi.waitFor(async () => expect(await shownParts()).toHaveLength(parts.length), { timeout: 30000 });
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 

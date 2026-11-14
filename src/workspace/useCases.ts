@@ -170,7 +170,7 @@ export function useCases(options: CasesOptions) {
     });
   };
 
-  const timeline = useTryTimeline({ sim, rig, parts, active, partners });
+  const timeline = useTryTimeline({ sim, rig, parts, cases, partners });
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const naming = useCaseNames(setProject);

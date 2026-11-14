@@ -30,6 +30,8 @@ keywords:
   - svg
   - urdf
   - bvh
+  - mcap
+  - lerobot
   - import mesh
   - thingiverse
   - printables
@@ -53,7 +55,7 @@ covers:
   - electron/cadImport/convertPolicy.mjs
 ---
 
-Use Import to bring files from other apps into your scene. One command opens every kind of file Basecase reads, and what you get depends on the kind of file you pick.
+Import brings files from other apps into your scene. One command opens every kind of file Basecase reads, and what you get depends on the kind of file you pick.
 
 1. Right-click an empty spot on the canvas.
 2. Choose **Import**.
@@ -61,21 +63,27 @@ Use Import to bring files from other apps into your scene. One command opens eve
 
 ![The canvas menu with Import](/help/import-a-file/menu.png)
 
-Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. The new parts appear where you right-clicked, selected and ready to move.
+Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. New parts appear where you right-clicked and are selected, so you can move them.
 
-If you pick an SVG file, the Import SVG panel opens with the drawing loaded. Set the width and thickness, then click **Add** to extrude the drawing into a part.
+If you pick an SVG, the Import SVG panel opens with your drawing loaded. Set the width and thickness, then click **Add** to extrude the drawing into a part.
 
 ![The Import SVG panel with a drawing loaded](/help/import-a-file/svg.png)
 
-A URDF, MJCF or zip file (such as an exported Robot Package) comes in as a robot with its joints. A BVH motion file opens the retarget sheet for the selected robot. An image becomes a reference image, and a `.basecase` file opens in a new tab.
+Other files come in like this:
 
-You can also open Import from **File** ▸ **Import** or with [[⌘K]]. To import files at a specific spot, drop them on the canvas.
+- A URDF, MJCF or zip file (such as an exported Robot Package) comes in as a robot with its joints.
+- A BVH motion file opens the retarget sheet for the selected robot.
+- An image comes in as a reference image.
+- A `.basecase` file opens in a new tab.
+- A `.mcap` recording, or a zip that holds a LeRobot dataset, comes in as tries on the robot in the scene. See [Import robot data as tries](/help/import-robot-data-as-tries).
 
-If you drop a GLB or glTF file that's at least 2 m across, or a Gaussian splat, it opens as a Case world instead. See [Import a captured 3D world as a Case world](/help/import-a-captured-3d-world). If you drop a `.mid` file, it plays in a Case's tries. To learn how, see [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
+You can also choose **File** ▸ **Import**, or press [[⌘K]]. To import files at a specific spot, drop them on the canvas.
+
+If you drop a GLB or glTF file that's at least 2 m across, or a Gaussian splat, it opens as a Case world instead. See [Import a captured 3D world as a Case world](/help/import-a-captured-3d-world). If you drop a `.mid` file, it plays in a Case's tries. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
 ## Units and axes
 
-Basecase reads each format in these units, with this up axis:
+Basecase reads each format with these units and up axis:
 
 | Format | Read as | Up axis |
 |---|---|---|
@@ -85,19 +93,21 @@ Basecase reads each format in these units, with this up axis:
 | DAE | Meters | As set in the file |
 | FBX | Centimeters, times the file's unit scale | As set in the file |
 
-If a model measures less than 1 mm across, Basecase reads it as meters.
+If a model measures less than 1 mm across, Basecase reads it as meters instead.
 
-Basecase never simplifies meshes, so your print keeps every triangle. It doesn't import FBX textures.
+Basecase never simplifies a mesh, so your print keeps every triangle.
+
+**Note:** FBX textures don't come in with the model.
 
 ## STEP and IGES files
 
-The desktop app opens STEP and IGES files, and each body in the file becomes its own part. Basecase names the parts from the file's product names and colors each one with its body's main face color. If a file has more than one body, it comes in as a group of parts named after the file.
+You can open STEP and IGES files in the desktop app. Each body in the file becomes its own part, named from the file's product names and colored with the body's main face color. If the file has more than one body, the parts come in as a group named after the file.
 
-Conversion runs in a sandbox, separate from the rest of the app. Basecase takes the units from the file itself, so every body arrives in millimeters at its real size.
+Basecase converts the file in a sandbox, separate from the rest of the app. It reads the units from the file, so every body comes in at its real size in millimeters.
 
-An imported body counts as a printed part, like any imported mesh. To mark a body as bought or machined, select it. Then under **Appearance**, change the material from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Checks lists it among parts without a source until it has one.
+An imported body counts as a printed part, like any other imported mesh. To mark a body as bought or machined, select it. Then under **Appearance**, change the material from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Checks lists the body among parts without a source until you give it one.
 
-These limits apply to STEP and IGES files:
+STEP and IGES files have these limits:
 
 - A file can be up to 200 MB.
 - A file can have up to 1,000 bodies.

@@ -4,7 +4,7 @@ export const MESH_FILE_EXTENSIONS = ['stl', '3mf', 'obj', 'ply', 'fbx', 'glb', '
 
 export const CAD_FILE_EXTENSIONS = ['step', 'stp', 'iges', 'igs'];
 
-export type ImportKind = 'parts' | 'svg' | 'robot' | 'motion' | 'scene' | 'image';
+export type ImportKind = 'parts' | 'svg' | 'robot' | 'motion' | 'scene' | 'image' | 'data';
 
 const KIND_EXTENSIONS: Record<ImportKind, string[]> = {
   parts: [...MESH_FILE_EXTENSIONS, ...CAD_FILE_EXTENSIONS],
@@ -13,6 +13,7 @@ const KIND_EXTENSIONS: Record<ImportKind, string[]> = {
   motion: ['bvh'],
   scene: [SCENE_FILE_EXTENSION],
   image: ['png', 'jpg', 'jpeg', 'webp', 'gif'],
+  data: ['mcap'],
 };
 
 const KINDS = Object.keys(KIND_EXTENSIONS) as ImportKind[];
@@ -50,7 +51,16 @@ const fileKindOf = (file: NamedFile, options: ImportOptions) =>
 export type SortedImports<T> = Record<ImportKind | 'unknown', T[]>;
 
 export function sortImports<T extends NamedFile>(files: T[], options: ImportOptions): SortedImports<T> {
-  const sorted: SortedImports<T> = { parts: [], svg: [], robot: [], motion: [], scene: [], image: [], unknown: [] };
+  const sorted: SortedImports<T> = {
+    parts: [],
+    svg: [],
+    robot: [],
+    motion: [],
+    scene: [],
+    image: [],
+    data: [],
+    unknown: [],
+  };
 
   for (const file of files) sorted[fileKindOf(file, options) ?? 'unknown'].push(file);
 
@@ -66,6 +76,7 @@ export interface ImportHandlers<T> {
   motion: (file: T) => void;
   scene: (file: T) => void;
   image: (file: T, index: number) => void;
+  data: (files: T[]) => void;
   unknown: (files: T[]) => void;
 }
 
@@ -78,6 +89,8 @@ export function routeImports<T extends NamedFile>(files: T[], handlers: ImportHa
   if (sorted.parts.length) handlers.parts(sorted.parts);
 
   if (sorted.robot.length) handlers.robot(sorted.robot);
+
+  if (sorted.data.length) handlers.data(sorted.data);
 
   if (svg) handlers.svg(svg);
 

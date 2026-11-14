@@ -6,13 +6,12 @@ import { CameraStrip } from '../components/cameras/CameraStrip';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
 import { Viewport3D } from '../components/Viewport3D';
 import { SkeletonServoMenu } from '../components/pose/SkeletonServoMenu';
+import { canvasSelection } from './canvasSelection';
 import { MarkLabelField } from './MarkLabelField';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { Simulation } from '../sim/useSimulation';
-
-const NO_SELECTION: string[] = [];
 
 interface SceneViewportProps {
   active: boolean;
@@ -70,7 +69,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         ref={viewportRef}
         sceneKey={scene.sceneId}
         parts={shownParts}
-        selectedPartIds={core.caseRun.open ? NO_SELECTION : selectedIds}
+        selectedPartIds={canvasSelection(core.caseRun, selectedIds)}
         transformMode={tool.transformMode}
         sculptSettings={tool.sculptSettings}
         snapStepMm={studio.snapStepMm}

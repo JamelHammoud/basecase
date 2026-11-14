@@ -213,8 +213,7 @@ describe('Operate calibration', () => {
     );
 
     expect(errors?.calibrationErrorRad).toBeLessThan(errors?.presetErrorRad ?? 0);
-    await row(jointId).hover();
-    await row(jointId).getByRole('button', { name: 'More' }).click();
+    await row(jointId).click({ button: 'right' });
     await page.getByRole('menuitem', { name: 'Roll Back' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Roll Back' }).click();
     await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');

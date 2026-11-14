@@ -1,5 +1,6 @@
 import { useArmSizing } from './useArmSizing';
 import { useCadTune } from './useCadTune';
+import { useDataImport } from './useDataImport';
 import { useEarthPlace } from './useEarthPlace';
 import { useExportActions } from './useExportActions';
 import { useFileImport } from './useFileImport';
@@ -20,7 +21,8 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const pose = usePoseActions(core);
   const robots = useRobotInsert(core, pose.openPose);
   const creation = usePartCreation(core, robots);
-  const files = useFileImport(core, { creation, robots, pose });
+  const data = useDataImport(core, robots);
+  const files = useFileImport(core, { creation, pose, data });
   const edits = usePartEdits(core);
   const ops = useSelectionOps(core);
   const mirror = useMirror(core);
@@ -49,6 +51,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     robots,
     creation,
     files,
+    data,
     edits,
     ops,
     mirror,

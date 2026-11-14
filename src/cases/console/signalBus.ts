@@ -21,6 +21,14 @@ export interface Series {
   v: number[];
 }
 
+export const NO_SERIES: Series = { t: [], v: [] };
+
+export interface Playhead {
+  at: number;
+  end: number;
+  frame: number;
+}
+
 export interface SignalBus {
   push: (sample: SignalSample) => void;
   read: (id: string) => SignalValue | undefined;
@@ -29,6 +37,7 @@ export interface SignalBus {
   reset: () => void;
   subscribe: (listen: () => void) => () => void;
   version: () => number;
+  playhead: () => Playhead | null;
 }
 
 export const HISTORY_SECONDS = 120;
@@ -41,7 +50,7 @@ const AXES: Record<InputAxis, (c: DriveCommand) => number> = {
   grip: (c) => c.aux?.[1] ?? 0,
 };
 
-function baseValues(s: SignalSample): Map<string, SignalValue> {
+export function baseValues(s: SignalSample): Map<string, SignalValue> {
   const out = new Map<string, SignalValue>([['time', s.time]]);
 
   for (const j of s.joints) {
@@ -70,14 +79,14 @@ function baseValues(s: SignalSample): Map<string, SignalValue> {
   return out;
 }
 
-interface Clock {
+export interface Clock {
   elapsed: number;
   counts: Map<string, number>;
   was: Map<string, boolean>;
   last: number | null;
 }
 
-const fresh = (): Clock => ({ elapsed: 0, counts: new Map(), was: new Map(), last: null });
+export const freshClock = (): Clock => ({ elapsed: 0, counts: new Map(), was: new Map(), last: null });
 
 const numberOf = (values: Map<string, SignalValue>, id: string) => {
   const v = values.get(id);
@@ -106,7 +115,7 @@ function caseValue(def: ConsoleSignal, values: Map<string, SignalValue>, clock: 
   return clock.counts.get(def.id) ?? 0;
 }
 
-function withCaseValues(
+export function withCaseValues(
   defs: readonly ConsoleSignal[],
   base: Map<string, SignalValue>,
   clock: Clock,
@@ -121,9 +130,9 @@ const HZ = 20;
 const CAP = HISTORY_SECONDS * HZ;
 
 export function createSignalBus(defs: readonly ConsoleSignal[] = []): SignalBus {
-  let values = withCaseValues(defs, new Map(), fresh(), false);
+  let values = withCaseValues(defs, new Map(), freshClock(), false);
   let history = new Map<string, Series>();
-  let clock = fresh();
+  let clock = freshClock();
   let wasRunning = false;
   let version = 0;
   const listeners = new Set<() => void>();
@@ -143,7 +152,7 @@ export function createSignalBus(defs: readonly ConsoleSignal[] = []): SignalBus 
   };
 
   const clear = () => {
-    clock = fresh();
+    clock = freshClock();
     history = new Map();
     values = withCaseValues(defs, new Map([...values].filter(([id]) => !defs.some((d) => d.id === id))), clock, false);
   };
@@ -185,5 +194,6 @@ export function createSignalBus(defs: readonly ConsoleSignal[] = []): SignalBus 
       };
     },
     version: () => version,
+    playhead: () => null,
   };
 }

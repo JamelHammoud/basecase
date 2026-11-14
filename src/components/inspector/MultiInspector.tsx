@@ -25,7 +25,7 @@ import { SizeLine } from '../PartDetails';
 import { GroupName } from './GroupName';
 import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
-import { MATERIALS, materialTag, type InspectorProps } from './types';
+import { CUT_FROM_SHEET, MATERIALS, materialTag, type InspectorProps } from './types';
 import { keyFor } from '../../app/shortcuts';
 import { plural } from '../../../electron/plural.mjs';
 
@@ -214,14 +214,22 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
           <Select
             aria-label="Material"
             value={materials.size > 1 ? '' : [...materials][0]}
-            onChange={(e) => e.target.value && onUpdateMany({ mechanicalTag: e.target.value })}
-            options={materials.size > 1 ? [{ value: '', label: 'Mixed' }, ...MATERIALS] : MATERIALS}
+            onChange={(e) => isTag(e.target.value) && onUpdateMany({ mechanicalTag: e.target.value, sheet: undefined })}
+            options={materialOptions(materials)}
           />
         )}
       </Section>
     </>
   );
 };
+
+const isTag = (value: string) => MATERIALS.some((m) => m.value === value);
+
+function materialOptions(materials: Set<string>) {
+  if (materials.size > 1) return [{ value: '', label: 'Mixed' }, ...MATERIALS];
+
+  return materials.has(CUT_FROM_SHEET.value) ? [...MATERIALS, CUT_FROM_SHEET] : MATERIALS;
+}
 
 export const MultiInspector: React.FC<InspectorProps> = (props) => {
   const { selectedParts, parts } = props;

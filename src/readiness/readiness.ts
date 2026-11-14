@@ -23,6 +23,7 @@ function readingsLine(p: ScenePart): string {
     p.visible,
     p.printMaterial,
     p.mechanicalTag,
+    jsonHash(p.sheet),
     p.massG,
     p.group?.id,
     p.print?.skip,

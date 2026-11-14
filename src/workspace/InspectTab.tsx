@@ -5,6 +5,7 @@ import { GROUND_PLANE, sketchSolid, type SketchShape } from '../utils/sketch/pla
 import { EMPTY_SKETCH } from '../utils/sketch/types';
 import { solidSketchParams } from './partFactories';
 import type { WorkspaceActions } from './useWorkspaceActions';
+import { useSheetFit } from './useSheetFit';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 interface InspectTabProps {
@@ -66,6 +67,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
   const { edits, ops, library, tuning } = actions;
   const { saveAsModel } = library;
   const { toggleCommentMode } = annotations;
+  const sheetFit = useSheetFit(core);
 
   return (
     <Inspector
@@ -100,6 +102,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       onChangeHardware={edits.changeHardware}
       onAddClearanceHole={ops.addClearanceHole}
       onTuneDimensions={tuning.tune}
+      sheetFit={sheetFit}
     />
   );
 }

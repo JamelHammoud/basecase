@@ -33,6 +33,7 @@ describe('what makes checks run again', () => {
     ['role', { role: 'cutout' }],
     ['visibility', { visible: false }],
     ['tag', { mechanicalTag: 'CNC Aluminum' }],
+    ['sheet', { sheet: { material: 'aluminum', thicknessMm: 3 } }],
     ['note', { note: 'Clear acrylic disc' }],
     ['name', { name: 'Glass' }],
     ['weight', { massG: 900 }],

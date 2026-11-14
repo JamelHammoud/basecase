@@ -1,7 +1,7 @@
 ---
 title: Import and export formats
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: files-and-sharing
 type: reference
 order: 1
@@ -25,6 +25,7 @@ covers:
   - src/components/ExportMenu.tsx
   - src/workspace/useExportActions.ts
   - src/workspace/useStepExport.ts
+  - src/workspace/useCutFilesExport.ts
   - src/utils/robotImport/readModel.ts
   - src/utils/robotImport/archive.ts
   - electron/cadImport/convertPolicy.mjs
@@ -65,6 +66,7 @@ Every export is in the **Export** menu at the top right of the window.
 | **STL** | `<scene>.stl` | Every visible solid part as one binary mesh, in millimeters, Z up |
 | **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates, each with its [guide letter](/help/label-printed-parts) while **Label parts** is on |
 | **STEP**, in the desktop app only | `<scene>.step` | Every visible solid part as its own body, in millimeters, Z up, as [Export a STEP file](/help/export-a-step-file) explains |
+| **Cut Files** | `<scene>-cut-files.zip` | One DXF file in millimeters for each part [cut from sheet](/help/cut-a-part-from-sheet) |
 | **Scene** | `<scene>.basecase` | The scene, to open in Basecase |
 | **Robot Package** | `<scene>-robot.zip` | MJCF, URDF, meshes, joint map, policies and ROS 2 package files, listed in [Robot package contents](/help/robot-package-contents) |
 | **Copy as Markdown** | The clipboard | The scene as a Markdown spec: its goal and every part with its size |

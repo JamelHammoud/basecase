@@ -20,6 +20,7 @@ covers:
   - src/workspace/RightPanelTabs.tsx
   - src/components/SimulatePanel.tsx
   - src/components/simulate/SimControls.tsx
+  - src/workspace/simCommands.tsx
   - src/components/simulate/ControlSection.tsx
   - src/components/simulate/ResultsSection.tsx
   - src/components/simulate/RunResult.tsx
@@ -39,7 +40,7 @@ The **Simulate** tab appears in the right panel once the scene has a joint. [Sim
 7. Click a joint under **Peak torque** to select the parts it moves.
 8. Click **Stop simulation** to put the canvas back.
 
-The bar at the top of the tab also has **Pause**, **Reset** and three speeds: ¼×, ½× and 1×.
+**Simulate** and **Stop Simulation** are also in [[⌘K]]. The bar at the top of the tab also has **Pause**, **Reset** and three speeds: ¼×, ½× and 1×.
 
 After **Drive with Camera** on a humanoid with no ready Walk, its base stays held in place, so **Push** can't move it. **Reset** keeps it held; click **Stop simulation**, then **Simulate**, to free it.
 

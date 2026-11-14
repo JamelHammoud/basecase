@@ -10,7 +10,7 @@ interface StudioHook {
   addCase: (raw: unknown) => string;
   exploreLimit: (designs: number) => void;
   sceneRecord: () => { parts: ScenePart[]; project: ProjectSettings };
-  simState: () => { activeCase: string | null };
+  simState: () => { activeCase: string | null; status: string };
 }
 
 const EXPLORED = 2;
@@ -36,6 +36,18 @@ const variants = () =>
       .join(','),
   );
 
+const simStatus = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.simState().status);
+
+const runCommand = async (label: string) => {
+  await app.page.keyboard.press('Meta+k');
+  await app.page.getByLabel('Search commands').fill(label);
+  await app.page
+    .locator(shown('button[data-idx]'))
+    .filter({ hasText: new RegExp(`^${label}$`) })
+    .click();
+};
+
 const showTab = (name: string) => app.page.locator(shown('[role=tab]'), { hasText: name }).first().click();
 
 beforeAll(async () => {
@@ -44,6 +56,27 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await app?.close();
+});
+
+describe('Simulate from ⌘K', () => {
+  it('starts and stops the simulation', async () => {
+    const arm = servoArm();
+
+    await app.page.evaluate(
+      ({ parts, joints }) => {
+        const hook = (window as unknown as { __studio: StudioHook }).__studio;
+
+        hook.load({ name: 'Servo arm', parts, project: { ...hook.sceneRecord().project, joints } });
+      },
+      { parts: arm.parts, joints: arm.joints },
+    );
+    await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
+    await runCommand('Simulate');
+    await expect.poll(simStatus, { timeout: 60000 }).toBe('ready');
+    await runCommand('Stop Simulation');
+    await expect.poll(simStatus).toBe('off');
+    expect(app.errors).toEqual([]);
+  }, 120000);
 });
 
 describe('Explore', () => {

@@ -16,7 +16,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - **Empty canvas:** Add Part, Comment Here, Measure from Here, Add Reference Image, Sketch, Annotate, Import, Select All, camera views, Reset View, Add Camera View, Place on Map (desktop only, §12), Collapse / Expand Camera Views (while the scene has camera views), Show Grid, Show Map (checked while a placed map shows), Export STL, Delete Marks (with marks).
   - **Camera tile** (§8l): the camera's name heads the menu; Look Through, Rename, Lens ▸; stationary cameras add Use Current View and Delete.
   - **Case** (Cases view, §8h): Rename, then for the open Case Compare With ▸ (when another open scene's robot fits) and Export Case Mat (a ground Case, desktop only), then Delete.
-  - **Finding** (a blocker or note in the Build tab's Checks, §8b, Cases' rows included): Ignore, Ignore All ⟨kind⟩, Quote (desktop only).
+  - **Finding** (a blocker or note in the Build tab's Checks, §8b, a Case's note included): Ignore, Ignore All ⟨kind⟩, Quote (desktop only).
   - **Calibrated joint row** (Operate, §8k): the measured versions (`v1`, `v2`…, the drawn one checked), then Roll Back.
   - A row's own menu opens on right-click, never from a ⋯ button on the row, so every list reads the same. Buttons on a row are for its one main action (Fix, Restore, Calibrate).
   - Select All (⌘A) is in every menu. Like ⌘A and ⌘K, it skips hidden parts and hidden reference photos.

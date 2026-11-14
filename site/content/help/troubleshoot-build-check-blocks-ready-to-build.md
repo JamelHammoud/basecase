@@ -30,11 +30,11 @@ covers:
   - src/components/settings/BuildPane.tsx
 ---
 
-The Checks header shows Ready to build only when no check holds a blocker. Until then, it shows a count of what's left to fix.
+The Checks header shows Ready to build only when no check holds a blocker. Until then, it shows a count of what's left to fix. If your design isn't passing, find the case below that matches what you see.
 
 ## The header still shows a count after you edit
 
-At least one check still holds a blocker, often a check you haven't opened.
+At least one check still holds a blocker, often one you haven't opened.
 
 1. Click **Build** at the top of the right panel.
 2. Open the check at the top of **Checks**. Basecase lists the worst ones first.
@@ -46,7 +46,7 @@ You're done when the header reads **Ready to build** and the red dot on the **Bu
 
 ## “Some checks didn’t finish, so this answer isn’t complete.”
 
-A check hit its time limit or ran into an error and stopped. Basecase counts that as a blocker, so a design never passes on a run that didn't finish.
+A check stopped because it hit its time limit or ran into an error. Basecase counts that as a blocker, so a design never passes on a run that didn't finish.
 
 1. Press [[⌘K]] and choose **Run Checks**.
 2. If the message is still there, quit Basecase and open it again.
@@ -63,7 +63,7 @@ The estimated total is over your budget. Basecase counts lines marked ≈ at the
 3. Click a line's quantity, then type how many you already own in **On hand**. Parts you own cost nothing.
 4. Swap out expensive parts, or raise the budget in the field next to the total.
 
-Budget turns amber above 90% of the budget and red when the total goes over it. For the full steps, see [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget).
+Budget turns amber above 90% of the budget, and red when the total goes over it. For the full steps, see [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget).
 
 ## “This servo could strip its gears when the robot falls.”
 
@@ -77,7 +77,7 @@ You're done when **Falls** in Checks no longer shows a red mark.
 
 ## Servo bus is red
 
-Your build has at least one bus adapter, but none of them takes these servos' connector. You'd see this with DYNAMIXEL X servos on a Waveshare Bus Servo Adapter (A).
+Your build has at least one bus adapter, but none of them takes these servos' connector. For example, you'd see this with DYNAMIXEL X servos on a Waveshare Bus Servo Adapter (A).
 
 1. Open **Servo bus** in Checks. It names the adapter you need to add, for example **Add a JST EH 3-pin bus adapter for 2 servos.**
 2. Open **Parts** and place that adapter in the robot. For JST EH 3-pin, use the **ROBOTIS U2D2** or **ROBOTIS OpenRB-150**. For 5264 3-pin, use the **Waveshare Bus Servo Adapter (A)**.
@@ -86,18 +86,18 @@ You're done when **Servo bus** is no longer in the list.
 
 ## You know a blocker is wrong
 
-Checks see only what's modeled, so they miss things like a strap that holds a part. To ignore a blocker:
+Checks only see what's modeled, so they miss things like a strap that holds a part in place. To ignore a blocker:
 
 1. Right-click the problem's row.
 2. Choose **Ignore**.
 
 The problem moves to **Ignored**, below the list. To bring it back, click **Restore** there.
 
-Only you can ignore a blocker. The agent can tell you it disagrees, but it can't clear a blocker itself.
+**Note:** Only you can ignore a blocker. The agent can tell you it disagrees, but it can't clear a blocker itself.
 
 ## The agent keeps fixing new blockers on its own
 
-After each message, Basecase sends any new blockers to the agent, up to 2 times. In the chat, that reads "Fix what the last change added: 2 problems." over the problems. To turn this off:
+After each message, Basecase sends any new blockers to the agent, up to 2 times. In the chat, you'll see "Fix what the last change added: 2 problems." above the problems. To turn this off:
 
 1. Press [[⌘,]] and choose **Build**.
 2. Turn off **Have the agent fix new blockers**.

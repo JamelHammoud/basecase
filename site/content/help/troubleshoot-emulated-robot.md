@@ -27,11 +27,13 @@ covers:
   - hw/crates/robot-daemon/src/fault.rs
 ---
 
-Use the sections below if Connect is missing in Operate, the robot refuses a rung, a fault stops the motors, or Calibrate Servos doesn't show.
+Find the message or missing button you see in Operate below.
 
 ## Connect Emulated Robot is missing
 
-Operate shows "No robot" when the scene has no joint that moves. If the scene has more than 32 moving joints, Operate shows nothing to connect. Operate isn't available in the browser version of Basecase.
+If the scene has no joint that moves, Operate shows "No robot." If the scene has more than 32 moving joints, Operate shows nothing to connect.
+
+**Note:** Operate isn't available in the browser version of Basecase.
 
 To add a robot to the scene:
 
@@ -41,9 +43,9 @@ To add a robot to the scene:
 
 ## "Load a policy first"
 
-**Rehearse** and every rung above it need a trained policy. You see this message when the scene in front has no policy the robot can take.
+**Rehearse** and every rung above it need a trained policy. You'll see this message if the scene in front has no policy the robot can take.
 
-Basecase hands the robot the newest skill that's ready or the newest policy that's up to date. It skips:
+Basecase hands the robot the newest skill that's ready, or the newest policy that's up to date. It skips:
 
 - Policies marked **Out of date**. To fix one, see [Retrain an out-of-date policy](/help/retrain-an-out-of-date-policy).
 - Skills that replay an animation, because they have no policy to hand over.
@@ -56,7 +58,7 @@ To train a policy:
 
 ## "A fault is still active"
 
-The daemon shows "A fault is still active. Go back to Look and clear it first." when a fault has stopped the motors. The fault stays until you clear it.
+When a fault stops the motors, the daemon shows "A fault is still active. Go back to Look and clear it first." The fault stays until you clear it.
 
 1. Read the fault shown under the servo count, and fix the problem it names.
 2. Click **Look** under **Ladder**.
@@ -70,7 +72,7 @@ If the robot is an arm, you can click **Replay in Sim** under the fault to play 
 
 ## "The app stopped talking to the robot"
 
-The full message is "The app stopped talking to the robot, so the robot is holding still." It appears when the app misses its 100 ms check-in with the robot daemon, for example when the computer is under heavy load or goes to sleep.
+The full message is "The app stopped talking to the robot, so the robot is holding still." You'll see it when the app misses its 100 ms check-in with the robot daemon. This can happen when the computer is under heavy load or goes to sleep.
 
 1. Click **Look** under **Ladder**.
 2. If **Clear Fault** shows, click it.
@@ -79,7 +81,7 @@ The full message is "The app stopped talking to the robot, so the robot is holdi
 
 ## Calibrate Servos is missing
 
-**Calibrate Servos** appears in **Test** once "Motors running" shows. It appears only in the scene you connected the robot from.
+**Calibrate Servos** appears in **Test** once "Motors running" shows, and only in the scene you connected the robot from.
 
 1. Switch to the tab of the scene you connected from.
 2. Climb to **Test**, then wait for "Motors running".

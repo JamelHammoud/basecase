@@ -25,7 +25,7 @@ covers:
   - src/components/build/FindingRow.tsx
 ---
 
-The agent doesn't see what you've selected. To show it which part, area or message you mean, quote it or draw on it.
+The agent doesn't see what you've selected. To show it the part, area or message you mean, quote it or draw on it.
 
 - Quote a part
 - Draw on the canvas
@@ -35,11 +35,11 @@ The agent doesn't see what you've selected. To show it which part, area or messa
 
 1. Right-click the part on the canvas.
 2. Choose **Quote Part**.
-3. Type what you want to change, for example “Move this 10 mm forward”, then press [[↩]].
+3. Type what you want to change, for example “Move this 10 mm forward.” Then press [[↩]].
 
-Your message goes to the agent with the quote, which includes the part's name, id and position.
+The agent gets your message along with the quote, which includes the part's name, id and position.
 
-You can also find **Quote Part** in [[⌘K]] after you select the part.
+You can also select the part, then find **Quote Part** in [[⌘K]].
 
 ## Draw on the canvas
 
@@ -47,7 +47,7 @@ You can also find **Quote Part** in [[⌘K]] after you select the part.
 2. Draw around the area you mean. To tell your marks apart, pick another color from the bar.
 3. Click **Done**, then send your message.
 
-The agent reads the color of each mark and the parts it circles. Marks aren't parts, so they never show up in the bill of materials or in a print.
+The agent reads the color of each mark and the parts it circles. Marks aren't parts, so they never appear in the bill of materials or in a print.
 
 ## Quote a message
 

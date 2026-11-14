@@ -21,6 +21,8 @@ import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { replayFall } from './fallReplay';
+import { coachRequest, teachRequest, type TeachRequest } from './teachRequest';
+import { agentKindOf } from '../agent/agentKinds';
 
 interface RightTabPanelsProps {
   core: WorkspaceCore;
@@ -162,22 +164,28 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
   );
 }
 
+function sendTeaching(core: WorkspaceCore, agent: AgentSession, request: TeachRequest) {
+  if (request.kind === 'refused') {
+    core.showToast(request.message, { tone: 'error' });
+
+    return;
+  }
+
+  core.tool.openRightTab('acp');
+  void agent.send({ text: request.text, ...core.studio.agentChoice }, 'queue');
+}
+
 function useTeach(core: WorkspaceCore, agent: AgentSession) {
   if (IS_WEB_DEMO) return null;
 
-  return (goal: string) => {
-    core.tool.openRightTab('acp');
-    void agent.send({ text: `/train ${goal}`, ...core.studio.agentChoice }, 'queue');
-  };
+  return (goal: string) => sendTeaching(core, agent, teachRequest(goal, agentKindOf(core.studio.acpStatus)));
 }
 
 function useCoach(core: WorkspaceCore, agent: AgentSession): CoachSend | null {
   if (IS_WEB_DEMO) return null;
 
-  return (scope, words) => {
-    core.tool.openRightTab('acp');
-    void agent.send({ text: `/coach ${scope.label}: ${words}`, ...core.studio.agentChoice }, 'queue');
-  };
+  return (scope, words) =>
+    sendTeaching(core, agent, coachRequest(scope.label, words, agentKindOf(core.studio.acpStatus)));
 }
 
 export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {

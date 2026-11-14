@@ -35,7 +35,7 @@ You can play a recorded try in its Case's own cards. The cameras, numbers, plots
 
 ![A running Case with its cameras on the left, and Base, Joints, Map and a passed try under Results on the right](/help/play-a-try-through-its-console/tries.png)
 
-4. Click **Replay** on the try's row. The cards show the try at the playhead, and the timeline opens under the canvas.
+4. Click the try's row. The cards show the try at the playhead, and the timeline opens under the canvas.
 5. To move the playhead, click or drag on a plot. The robot, the cameras, the numbers and the timeline follow it.
 
 ![Touch the Dots playing a try at 2.1 s, with the wrist camera, the Base value and the arm at that moment, and the playhead on the Joints plot and the timeline](/help/play-a-try-through-its-console/console.png)
@@ -48,7 +48,7 @@ You can play a recorded try in its Case's own cards. The cameras, numbers, plots
 
 9. To stop playing, click **Done** or press [[Esc]]. You're back in the running Case.
 
-You can also play a try from the Simulate tab by clicking **Replay** in Results. Or click the try's tile in **Library** ▸ **Tries**. When you stop playing, you're back where you were.
+You can also play a try by clicking its row in the Simulate tab's Results, or its tile in **Library** ▸ **Tries**. When you stop playing, you're back where you were.
 
 Plots show the whole try, with a line at the playhead. The map draws the whole path the robot took, with a dot where the robot is at the playhead. If a try's Case isn't in this scene, the try plays through the default cards: the cameras, the brief, the failures, the servos and the tries.
 

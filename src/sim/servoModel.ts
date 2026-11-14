@@ -9,6 +9,15 @@ export interface ServoDynamics {
   delayS: number;
 }
 
+export const DYNAMICS_TERMS = [
+  'kp',
+  'damping',
+  'armature',
+  'frictionloss',
+  'forceNm',
+  'delayS',
+] as const satisfies Array<keyof ServoDynamics>;
+
 export function fitDynamics(fit: ServoFit, volts: number, holdingNm: number): ServoDynamics {
   const voltsPerRad = fit.firmwareKp * fit.errorGain * fit.errorGainRatio * volts;
   const torquePerVolt = fit.kt / fit.resistance;

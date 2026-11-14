@@ -59,6 +59,7 @@ function rangesFor(env: Environment): ArenaRanges {
     jointNoiseDeg: Math.max(reset.jointNoiseDeg, floor.jointNoiseDeg),
     baseYawDeg: reset.baseYawDeg,
     baseOffsetMm: reset.baseOffsetMm,
+    ...(r.servos ? { servos: r.servos } : {}),
   };
 }
 

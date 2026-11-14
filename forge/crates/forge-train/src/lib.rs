@@ -47,6 +47,7 @@ pub mod robot;
 #[cfg(feature = "native")]
 mod robot_load;
 pub mod sac;
+pub mod servo_gains;
 #[cfg(feature = "native")]
 pub mod shac;
 #[cfg(feature = "native")]

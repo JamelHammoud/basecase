@@ -64,7 +64,6 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
     );
 
     sceneStore.upsert({ ...scene, id, name, updatedAt: new Date().toISOString() });
-    toastInFront(`Duplicated ${scene.name}`);
 
     queueSceneWrite(id, async () => {
       if (tab) await handles.current.get(tab.id)?.flush();

@@ -85,7 +85,7 @@ function context(caseConsole: CaseConsole): PanelContext {
         menu: null,
         stream: () => () => undefined,
       } satisfies CameraTiles,
-      onBrowseRobots: () => undefined,
+      onShowRobots: () => undefined,
     },
   };
 }

@@ -9,6 +9,8 @@ const line = (o: Partial<BomLine> = {}): BomLine => ({
   name: 'Raspberry Pi 5',
   detail: '',
   qty: 1,
+  owned: 0,
+  toBuy: o.qty ?? 1,
   unit: 'pcs',
   partIds: [],
   urlKind: 'none',

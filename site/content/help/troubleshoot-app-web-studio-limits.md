@@ -48,7 +48,7 @@ The **Agent** tab in the web studio reads “Build with the agent in the desktop
 
 ## Your scenes are gone from the web studio
 
-The web studio keeps scenes, Library models and prices in your browser, not online. Clearing the site's data deletes them. Another browser or computer doesn't see them.
+The web studio keeps scenes, Library models, prices and the parts you own in your browser, not online. Clearing the site's data deletes them. Another browser or computer doesn't see them.
 
 1. Before you clear browser data, open each scene and click **Export** in the title bar.
 2. Choose **Scene** to download a `.basecase` file.

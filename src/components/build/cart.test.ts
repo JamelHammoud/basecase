@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeSpec } from '../../data/hardware';
 import type { MeshMeasure } from '../../three/meshMeasure';
-import type { ProjectSettings, PurchaseRecord, ScenePart } from '../../types/robotics';
+import type { ProjectSettings, PurchaseRecord, Purchases, ScenePart } from '../../types/robotics';
 import { buildBom, hardwareKey } from '../../utils/bom';
 import type { BomLine } from '../../utils/bomTypes';
 import { bomCart } from './cart';
@@ -50,7 +50,7 @@ const arm = [
   part({ id: 'base', name: 'Base', kind: 'cad_part' }),
   part({ id: 'upper', name: 'Upper arm', kind: 'cad_part' }),
 ];
-const armBom = (purchases: Record<string, PurchaseRecord>) =>
+const armBom = (purchases: Purchases) =>
   buildBom({
     parts: arm,
     project,
@@ -65,6 +65,8 @@ const line = (o: Partial<BomLine> & { key: string }): BomLine => ({
   name: o.key,
   detail: '',
   qty: 1,
+  owned: 0,
+  toBuy: o.qty ?? 1,
   unit: 'pcs',
   partIds: [],
   urlKind: 'none',
@@ -85,6 +87,19 @@ describe('bomCart', () => {
 
     expect(items.find((i) => i.key === servoKey)?.quantity).toBe(3);
     expect(items.find((i) => i.key === hardwareKey(screw))?.quantity).toBe(1);
+  });
+
+  it('buys only what is left past the parts on hand, and nothing of a line fully owned', () => {
+    const owning = (servos: number) =>
+      bomCart(
+        armBom({
+          [servoKey]: { ...record('B0SERVO002', 2), onHand: servos },
+          [hardwareKey(screw)]: { ...record('B0SCREW100', 100), onHand: 100 },
+        }).lines,
+      ).items;
+
+    expect(owning(4).find((i) => i.key === servoKey)?.quantity).toBe(1);
+    expect(owning(6).map((i) => i.key)).toEqual(['component:waveshare-bus-servo-adapter-a']);
   });
 
   it('keeps lines with no ASIN out of the Amazon cart', () => {

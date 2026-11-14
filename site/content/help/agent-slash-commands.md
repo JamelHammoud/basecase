@@ -42,8 +42,8 @@ Type / at the start of a message to list them, each with its name, then press [[
 
 None of them changes the design unless your words ask for it. For example, `/case reach the cup on the shelf` adds a Case and leaves the robot alone.
 
-`/pass` followed by a Case's name is the one that does change the design: the agent changes the robot until that Case passes. It isn't in the list; [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent) shows how to start it.
+`/pass` followed by a Case's name is the one that does change the design: the agent changes the robot until that Case passes. It isn't in the list. [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent) shows how to start it.
 
-`/coach` followed by a ready skill's name and your words changes how that skill moves. It isn't in the list either; [Coach how a ready skill moves](/help/coach-a-skill) shows how to start it.
+`/coach` followed by a ready skill's name and your words changes how that skill moves. It isn't in the list either. [Coach how a ready skill moves](/help/coach-a-skill) shows how to start it.
 
 **Ask the Agent** in **Play** ▸ **Cases** starts a message with `/case`, and **Teach** in the Simulate tab's **Train** section sends `/train` with your goal.

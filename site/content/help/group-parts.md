@@ -25,27 +25,27 @@ covers:
   - src/workspace/partActions.tsx
 ---
 
-Keep parts that belong together, such as a leg or a servo bracket, selecting and moving as one.
+Group parts that belong together, such as a leg or a servo bracket, so they select and move as one.
 
-1. Select the parts on the canvas. Shift-click adds each one after the first.
+1. Select the parts on the canvas. To add more parts after the first, Shift-click each one.
 2. Press [[⌘G]].
-3. To name the group, click its title at the top of the Inspector, type the name and press [[↩]].
+3. To name the group, click its title at the top of the Inspector, type a name, then press [[↩]].
 
-A toast says how many parts were grouped, and the group is called “Group 1” until you rename it. **Group** is also in the Inspector and in the right-click menu.
+A toast shows how many parts you grouped. The group is called “Group 1” until you rename it. You can also find **Group** in the Inspector and in the right-click menu.
 
 ## Work inside a group
 
-- Click any part of the group to select the whole group.
-- Double-click a part, or [[⌘]]-click it, to select that part alone.
-- Once you're inside a group, a click selects another of its parts.
-- Shift-click adds or removes a whole group from outside it, or one part from inside it.
+- To select the whole group, click any of its parts.
+- To select a single part, double-click it or [[⌘]]-click it.
+- Once you're inside a group, clicking another of its parts selects that part.
+- Shift-click adds or removes a whole group when you're outside it, or a single part when you're inside it.
 
-Press [[⌘D]] to duplicate a group. The copy of “Leg” is called “Leg copy”, and its parts keep their names.
+To duplicate a group, press [[⌘D]]. A copy of “Leg” is called “Leg copy”, and the parts inside it keep their names.
 
-In **Layers**, a group is one row you can collapse. Click the row to select every part in it, or double-click it to rename the group. **Rename** in the group's right-click menu and in [[⌘K]] opens the same field.
+In **Layers**, each group appears as one row that you can collapse. Click the row to select every part in the group, or double-click it to rename the group. You can also open the same field by choosing **Rename** from the group's right-click menu or from [[⌘K]].
 
 ## Ungroup
 
-Select the group and press [[⇧⌘G]]. Right-clicking a grouped part offers **Ungroup** followed by the group's name.
+Select the group, then press [[⇧⌘G]]. Or right-click a grouped part and choose **Ungroup** followed by the group's name.
 
-Groups don't nest. Grouping parts that already belong to a group moves them into the new one.
+You can't put a group inside another group. If you group parts that already belong to a group, they move into the new group.

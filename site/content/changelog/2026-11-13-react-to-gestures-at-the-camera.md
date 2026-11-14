@@ -4,14 +4,18 @@ date: 2026-11-13
 image: /changelog/react-to-gestures-at-the-camera/cover.png
 ---
 
-You can now make a Case react to a wave, a clap, a nod or a movement you teach it. Gestures work in the simulation, read from your computer's camera.
+You can now make a Case react to a wave, a clap, a nod or a movement you teach it. Basecase reads the gestures from your computer's camera, and they work in the simulation.
 
-Ten gestures are built in: Wave, Raise Hand, Raise Both Hands, Point Left, Point Right, Thumbs Up, Open Palm, Clap, Nod and Shake Head. Teach Gesture in ⌘K records any other movement three times and saves it in the Case.
+Basecase has ten gestures built in: Wave, Raise Hand, Raise Both Hands, Point Left, Point Right, Thumbs Up, Open Palm, Clap, Nod and Shake Head. For any other movement, use Teach Gesture in ⌘K. It records the movement three times and saves it in the Case.
 
-The camera already moved a humanoid's arms along with yours. A wave at it couldn't make the humanoid wave back.
+Until now, a humanoid could copy your arm movements through the camera, but it couldn't wave back when you waved at it.
 
-Each gesture becomes one event for the Case's logic. A wave held for 3 seconds fires once. Built-in gestures are measured in shoulder widths, so a child and an adult both fire them. A taught gesture matches within 1.8 times the gap between your own three recordings, made faster or slower. Recognition runs beside pose estimation, at 0.13 ms a frame on an M5 Pro.
+Your Case's logic gets one event per gesture, so a wave you hold for 3 seconds fires once. Basecase measures built-in gestures in shoulder widths, so a child's wave fires the same as an adult's. A taught gesture matches when you do it faster or slower, as long as it stays within 1.8 times the gap between your own three recordings.
 
-Gestures work while the camera drives a humanoid or a fixed arm. Thumbs Up and Open Palm read the pose model's three points per hand, so they need the hand clearly in front of you. Only the taught recordings are saved; the camera's picture never is.
+Recognition runs beside pose estimation and takes 0.13 ms a frame on an M5 Pro.
 
-Steps are in [Teach a robot a gesture](/help/teach-a-robot-a-gesture).
+You can use gestures while the camera drives a humanoid or a fixed arm. For Thumbs Up and Open Palm, Basecase reads the pose model's three points per hand, so hold your hand in clear view in front of you.
+
+Basecase saves your taught recordings and never saves the camera's picture.
+
+Read [Teach a robot a gesture](/help/teach-a-robot-a-gesture) in the help center for the steps.

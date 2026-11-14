@@ -27,29 +27,29 @@ covers:
   - src/workspace/slashPaletteCommands.tsx
 ---
 
-Give the agent photos, a folder of files or a quick drawing, so it builds what you mean instead of guessing.
+You can give the agent photos, a folder of files, or a quick drawing, so it can build what you mean.
 
 ## Attach photos
 
 1. In the **Agent** tab, click **+** at the left of the composer.
-2. Choose **Attach Images**, and pick up to 20 images.
-3. Type your message and press [[↩]].
+2. Choose **Attach Images**, then pick up to 20 images.
+3. Type your message, then press [[↩]].
 
-You can also paste an image into the composer, drop it on the Agent tab, or choose **Attach Images** in [[⌘K]]. Basecase shrinks each image to 1,568 pixels on its longest side before sending it.
+You can also paste an image into the composer or drop it on the Agent tab. Or choose **Attach Images** in [[⌘K]]. Basecase shrinks each image to 1,568 pixels on its longest side before sending it.
 
 ## Attach a folder
 
-1. Click **+** in the composer and choose **Attach Folder**.
+1. Click **+** in the composer, then choose **Attach Folder**.
 2. Pick the folder.
 
-The agent can read text files such as URDF, Markdown, CSV, JSON and code, and STL meshes as a summary. It reads up to 400 files from a folder and skips the rest, such as PDFs. The chip under the composer counts what it read and what it skipped.
+The agent can read text files, such as URDF, Markdown, CSV, JSON, and code, and it reads STL meshes as a summary. It reads up to 400 files from a folder and skips the rest, such as PDFs. The chip under the composer shows how many files it read and how many it skipped.
 
 ## Draw a sketch
 
-1. Click **+** in the composer and choose **Attach Sketch**.
-2. Draw on the canvas. Click **Color** to change the pen.
+1. Click **+** in the composer, then choose **Attach Sketch**.
+2. Draw on the canvas. To change the pen, click **Color**.
 3. Click **Done**.
 
-The drawing attaches as `Sketch.png`. Click **Back** to leave without attaching it; Basecase doesn't ask first. [[⌘K]] has **Attach Sketch** too.
+Your drawing attaches as `Sketch.png`. To leave without attaching it, click **Back**. Basecase closes the sketch without asking. You can also choose **Attach Sketch** in [[⌘K]].
 
-To point at something already in the scene instead, see [Point the agent at a part](/help/point-the-agent-at-a-part).
+To point the agent at something that's already in the scene, see [Point the agent at a part](/help/point-the-agent-at-a-part).

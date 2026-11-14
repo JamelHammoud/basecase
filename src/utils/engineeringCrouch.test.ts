@@ -160,7 +160,7 @@ describe('Servo torque on a walking leg', () => {
     });
     expect(peak(tight)).toMatchObject({ status: 'warn', ids: ['kneeServo'] });
     expect(peak(past).status).toBe('fail');
-    expect(peak(past).items![0].text).toMatch(/^Left knee: asks for 6\.00 N·m .*, above stall for 0\.1 s$/);
+    expect(peak(past).items![0].text).toMatch(/^Left knee: asks for 6\.00 N·m .*, above stall for 0\.08 s$/);
     expect(peak(fell)).toMatchObject({
       status: 'fail',
       detail: 'Fell at 2.4 s walking with servos limited to 0.7 × stall',

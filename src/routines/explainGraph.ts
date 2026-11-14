@@ -4,7 +4,7 @@ import type { Condition, Reaction, Routine, Step } from './schema';
 
 const quote = (text: string) => `“${text}”`;
 
-const span = (ms: number) => duration(ms / 1000);
+export const span = (ms: number) => (ms < 60_000 ? `${ms / 1000} s` : duration(ms / 1000));
 
 export function describeCondition(cond: Condition): string {
   if ('all' in cond) return cond.all.map(describeCondition).join(' and ');

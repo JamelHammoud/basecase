@@ -7,10 +7,19 @@ describe('duration', () => {
     expect(duration(45)).toBe('45 s');
   });
 
+  it('shows hundredths under a tenth, so a positive span never reads zero', () => {
+    expect(duration(0)).toBe('0 s');
+    expect(duration(0.025)).toBe('0.03 s');
+    expect(duration(0.04)).toBe('0.04 s');
+    expect(duration(0.001)).toBe('0.01 s');
+    expect(duration(0.096)).toBe('0.1 s');
+  });
+
   it('carries into minutes, then hours, with the smaller unit padded', () => {
     expect(duration(59.97)).toBe('1 min');
     expect(duration(65)).toBe('1 min 05 s');
     expect(duration(3725)).toBe('1 h 02 min');
+    expect(duration(3659)).toBe('1 h 01 min');
   });
 
   it('rounds estimates to the minute and never to zero', () => {

@@ -34,9 +34,9 @@ export class RoutineVision implements RoutinePerception {
   }
 
   read(model: string, type: DataType, atMs: number, selector?: PerceptionSelector): PerceptionReading | undefined {
-    const camera = selector?.camera;
+    const camera = selector?.camera ?? 'scene';
     const result = [...this.results.values()]
-      .filter((r) => r.modelId === model && (!camera || r.camera === camera))
+      .filter((r) => r.modelId === model && r.camera === camera)
       .sort((a, b) => b.timestamp - a.timestamp)[0];
 
     if (!result || result.timestamp > atMs || atMs - result.timestamp > (selector?.maxAgeMs ?? Infinity))

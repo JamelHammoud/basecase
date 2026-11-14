@@ -20,6 +20,7 @@ import type { SceneDocument } from './useSceneDocument';
 
 interface SimTrainingOptions {
   workspaceId: string;
+  active: boolean;
   scene: { sceneId: string; sceneName: string };
   docs: SceneDocument;
   posing: Posing;
@@ -42,6 +43,7 @@ export function useSimTraining(options: SimTrainingOptions) {
   const velocity = useRef<VelocitySource | null>(null);
   const triesPlaces = useTriesPlace();
   const sim = useSimulation({
+    active: options.active,
     parts,
     project,
     rig: posing.rig,

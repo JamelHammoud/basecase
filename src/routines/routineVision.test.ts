@@ -77,6 +77,16 @@ describe('Routine vision mailbox', () => {
     expect(vision.read('object-detection', 'boolean', 100, { camera: 'front', className: 'cup' })?.num).toBe(1);
   });
 
+  it('uses the scene camera by default even when another camera has newer detections', () => {
+    const vision = new RoutineVision();
+
+    vision.push(result({ camera: 'front', timestamp: 200 }));
+    expect(vision.read('person-detection', 'boolean', 200)).toBeUndefined();
+    vision.push(result({ timestamp: 100, detections: [] }));
+    expect(vision.read('person-detection', 'boolean', 200)).toEqual({ num: 0, at: 100 });
+    expect(vision.read('person-detection', 'boolean', 200, { camera: 'front' })).toEqual({ num: 1, at: 200 });
+  });
+
   it('ignores an old result and distinguishes an empty frame from missing inference', () => {
     const vision = new RoutineVision();
 

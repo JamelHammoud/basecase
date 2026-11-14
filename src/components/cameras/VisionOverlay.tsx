@@ -28,10 +28,7 @@ export const VisionOverlay: React.FC<VisionOverlayProps> = ({
   return (
     <div data-testid="vision-overlay" className="pointer-events-none absolute inset-0 overflow-hidden">
       {errors[camera] && (
-        <span
-          role="status"
-          className="absolute inset-0 flex items-center justify-center px-3 text-[13px] text-white/60"
-        >
+        <span role="status" className="absolute inset-0 flex items-center justify-center px-3 text-[13px] text-red-400">
           {errors[camera]}
         </span>
       )}
@@ -49,7 +46,7 @@ export const VisionOverlay: React.FC<VisionOverlayProps> = ({
             height: `${detection.box[3] * 100}%`,
           }}
         >
-          <span className="absolute left-0 top-0 max-w-full bg-[#181818] px-1 text-xs text-white whitespace-nowrap">
+          <span className="absolute left-0 top-0 max-w-full bg-[#181818] px-1 text-xs text-white/90 whitespace-nowrap">
             {detection.label} {percent(detection.score)}
           </span>
         </div>

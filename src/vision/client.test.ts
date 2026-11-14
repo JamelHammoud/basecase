@@ -25,7 +25,9 @@ class TestWorker {
 
     if (!('id' in message)) return;
 
-    queueMicrotask(() => this.emit({ id: message.id, ok: true, result: { backend: 'wasm' } }));
+    const result = message.type === 'infer' ? detection(message.timestamp) : { backend: 'wasm' as const };
+
+    queueMicrotask(() => this.emit({ id: message.id, ok: true, result }));
   }
 
   emit(reply: VisionReply): void {
@@ -61,6 +63,16 @@ const detection = (timestamp: number): VisionResult => ({
 });
 
 describe('vision subscriptions', () => {
+  it('returns one-off camera detections without publishing them into another scene’s live mailbox', async () => {
+    const client = await import('./client');
+    const store = await import('./resultStore');
+    const image = { close: vi.fn() } as unknown as ImageBitmap;
+    const result = await client.inferVision('wrist', 'object-detection', image);
+
+    expect(result.detections?.[0].label).toBe('cup');
+    expect(store.visionResults()).toEqual([]);
+  });
+
   it('shares a loaded model, closes a disconnected source, and clears late results after the last subscriber leaves', async () => {
     const client = await import('./client');
     const store = await import('./resultStore');

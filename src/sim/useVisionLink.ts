@@ -2,10 +2,15 @@ import { useCallback, useEffect, useRef } from 'react';
 import { compactDepth } from '../routines/visionDepth';
 import type { VisionResult } from '../vision/protocol';
 import { onVisionResults, visionResults } from '../vision/resultStore';
+import { errorMessage } from '../utils/errorMessage';
 import type { SimRequest } from './sim.worker';
 import { VisionLink } from './visionLink';
 
-export function useVisionLink(workerRef: React.RefObject<Worker | null>, setError: (message: string) => void) {
+export function useVisionLink(
+  workerRef: React.RefObject<Worker | null>,
+  setError: (message: string) => void,
+  active = true,
+) {
   const link = useRef(new VisionLink());
   const send = useCallback(
     (msg: SimRequest) => {
@@ -15,7 +20,7 @@ export function useVisionLink(workerRef: React.RefObject<Worker | null>, setErro
           .then((started) => {
             if (started) workerRef.current?.postMessage(msg);
           })
-          .catch((reason: unknown) => setError(String(reason)));
+          .catch((reason: unknown) => setError(errorMessage(reason)));
 
         return;
       }
@@ -28,6 +33,8 @@ export function useVisionLink(workerRef: React.RefObject<Worker | null>, setErro
   );
 
   useEffect(() => {
+    if (!active) return;
+
     const sent = new WeakSet<VisionResult>();
 
     return onVisionResults(() => {
@@ -44,7 +51,7 @@ export function useVisionLink(workerRef: React.RefObject<Worker | null>, setErro
         } satisfies SimRequest);
       }
     });
-  }, [workerRef]);
+  }, [workerRef, active]);
   useEffect(() => () => link.current.stop(), []);
 
   return { link, send };

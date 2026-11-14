@@ -106,6 +106,7 @@ export interface Simulation {
 }
 
 interface Inputs {
+  active?: boolean;
   parts: ScenePart[];
   project: ProjectSettings;
   rig: Rig;
@@ -344,7 +345,7 @@ export function useSimulation(props: Inputs): Simulation {
   const modelRef = useRef<SimModel | null>(null);
   const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
   const runSeq = useRef(0);
-  const sw = useSimWorker(viewportRef, modelRef);
+  const sw = useSimWorker(viewportRef, modelRef, props.active ?? true);
   const { status, setStatus, playing, setPlaying, stats, setStats, error, send, frameHookRef } = sw;
   const [controller, setController] = useController(send);
   const touch = useSimTouches(modelRef, send);
@@ -431,11 +432,7 @@ export function useSimulation(props: Inputs): Simulation {
     subscribePoses: sw.subscribePoses,
     connectCameras: sw.connectCameras,
     setWorld,
-    runRoutine: async (input, onUpdate) => {
-      await start();
-
-      return sw.startRoutine(input, onUpdate);
-    },
+    runRoutine: (input, onUpdate) => start().then(() => sw.startRoutine(input, onUpdate)),
     runCase: (input) => send(input ? { type: 'case', ...input } : { type: 'caseEnd' }),
     ...watching,
     input: (name, value) => send({ type: 'input', name, value }),

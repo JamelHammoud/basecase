@@ -264,8 +264,6 @@ export async function inferVision(camera: string, modelId: string, image: ImageB
     image,
   ])) as VisionResult;
 
-  keepVisionResult(result);
-
   return result;
 }
 

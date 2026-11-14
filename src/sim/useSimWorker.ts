@@ -42,6 +42,7 @@ export const newSimWorker = () => new Worker(new URL('./sim.worker.ts', import.m
 export function useSimWorker(
   viewportRef: React.RefObject<Viewport3DHandle | null>,
   modelRef: React.RefObject<SimModel | null>,
+  active = true,
 ) {
   const workerRef = useRef<Worker | null>(null);
   const [status, setStatus] = useState<SimStatus>('off');
@@ -54,7 +55,7 @@ export function useSimWorker(
   const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
-  const { link: visionLink, send } = useVisionLink(workerRef, setError);
+  const { link: visionLink, send } = useVisionLink(workerRef, setError, active);
   const routines = useRoutineLink(workerRef, modelRef, visionLink);
   const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
   const recordingLink = useRecordingLink(workerRef);

@@ -43,4 +43,37 @@ describe('real ONNX vision inference', () => {
     await expect(engine.load(TEST_VISION_MANIFEST, new Uint8Array([1, 2, 3]), { backend: 'wasm' })).rejects.toThrow();
     await engine.dispose();
   });
+
+  it('keeps a different model loading when the last subscriber to one model leaves', async () => {
+    const engine = new VisionEngine();
+
+    await engine.load(TEST_VISION_MANIFEST, testVisionModel(), { backend: 'wasm' });
+
+    const next = { ...TEST_VISION_MANIFEST, id: 'next-camera-model' };
+    const loading = engine.load(next, testVisionModel(), { backend: 'wasm' });
+
+    await engine.dispose(TEST_VISION_MANIFEST.id);
+    await expect(loading).resolves.toEqual({ backend: 'wasm' });
+
+    const seen = await engine.infer(next.id, frame(255), { camera: 'front', timestamp: 100 });
+
+    expect(seen.detections?.[0].label).toBe('person');
+    await expect(
+      engine.infer(TEST_VISION_MANIFEST.id, frame(255), { camera: 'front', timestamp: 100 }),
+    ).rejects.toThrow('Load');
+    await engine.dispose();
+  });
+
+  it('still cancels an in-flight load when its own model is released', async () => {
+    const engine = new VisionEngine();
+    const loading = engine.load(TEST_VISION_MANIFEST, testVisionModel(), { backend: 'wasm' });
+    const refused = expect(loading).rejects.toThrow('The camera is closed.');
+
+    await engine.dispose(TEST_VISION_MANIFEST.id);
+    await refused;
+    await expect(
+      engine.infer(TEST_VISION_MANIFEST.id, frame(255), { camera: 'front', timestamp: 100 }),
+    ).rejects.toThrow('Load');
+    await engine.dispose();
+  });
 });

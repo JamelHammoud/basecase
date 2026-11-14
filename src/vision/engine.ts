@@ -68,15 +68,17 @@ function releaseTensors(tensors: Record<string, Tensor>): void {
 export class VisionEngine {
   private models = new Map<string, LoadedModel>();
   private generation = 0;
+  private modelGenerations = new Map<string, number>();
 
   async load(manifest: VisionModelManifest, bytes: Uint8Array, options: { backend?: VisionBackend } = {}) {
     const generation = this.generation;
+    const modelGeneration = this.modelGenerations.get(manifest.id);
     const runtime = await visionRuntime();
     const preferred =
       options.backend ?? (typeof navigator !== 'undefined' && Reflect.get(navigator, 'gpu') ? 'webgpu' : 'wasm');
     const loaded = await createSession(runtime, bytes, preferred);
 
-    if (generation !== this.generation) {
+    if (generation !== this.generation || modelGeneration !== this.modelGenerations.get(manifest.id)) {
       await loaded.session.release();
 
       throw new Error('The camera is closed.');
@@ -139,7 +141,8 @@ export class VisionEngine {
   }
 
   async dispose(modelId?: string): Promise<void> {
-    this.generation++;
+    if (modelId) this.modelGenerations.set(modelId, (this.modelGenerations.get(modelId) ?? 0) + 1);
+    else this.generation++;
 
     const models = modelId
       ? [this.models.get(modelId)].filter((model) => model !== undefined)

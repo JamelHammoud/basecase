@@ -110,7 +110,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     panels: { tool, annotations, isRightOpen: studio.isRightOpen, sculptEnabled: studio.sculptEnabled },
   });
 
-  const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
+  const simTraining = useSimTraining({ workspaceId, active, scene, docs, posing, viewportRef, showToast, studio });
 
   useRobotSync({ active, sceneId: scene.sceneId, project, training: simTraining, showToast });
 

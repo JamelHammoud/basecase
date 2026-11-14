@@ -72,9 +72,7 @@ export const RecordedCameraTile: React.FC<RecordedCameraTileProps> = ({ id, vide
       <VisionOverlay camera={video.camera} after={after} mediaSource={id} />
       <span className={tileLabel}>{video.camera}</span>
       {error && (
-        <span className="absolute inset-0 flex items-center justify-center px-3 text-[13px] text-white/60">
-          {error}
-        </span>
+        <span className="absolute inset-0 flex items-center justify-center px-3 text-[13px] text-red-400">{error}</span>
       )}
     </div>
   );

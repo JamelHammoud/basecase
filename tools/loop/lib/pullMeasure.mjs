@@ -1,6 +1,7 @@
 import { AGENT_PATHS, HARNESS_EXCLUDES } from '../../../bench/compare/cache.mjs';
 import { SHARED_PATHS } from '../../../bench/compare/against.mjs';
 import { costRise, gapText, measuredMarkdown, pullVerdict } from './harnessVerdict.mjs';
+import { LOOP_MARK } from './mark.mjs';
 
 export const MEASURE_HEAD = '### Micro-evals:';
 
@@ -42,8 +43,9 @@ export function parseMeasure(body = '') {
   }
 }
 
-export function lastMeasure(comments) {
+export function lastMeasure(comments, owner) {
   const found = comments
+    .filter((comment) => comment.author === owner && comment.body.includes(LOOP_MARK))
     .map((comment) => ({ url: comment.url, body: comment.body, data: parseMeasure(comment.body) }))
     .filter((c) => c.data);
 
@@ -161,7 +163,7 @@ export function measurePull({ pull, paths, log }, deps) {
   if (!needsMeasure(pull, paths)) return null;
 
   const sha = pull.headRefOid;
-  const last = lastMeasure(deps.pullComments(pull.number));
+  const last = lastMeasure(deps.pullComments(pull.number), deps.owner);
 
   if (last?.data.sha === sha) return outcomeOf(last.data);
 

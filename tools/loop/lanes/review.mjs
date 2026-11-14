@@ -1,7 +1,7 @@
 import { harnessKey, harnessKeyAt } from '../../../bench/compare/cache.mjs';
 import { runAgent } from '../lib/agent.mjs';
 import { runCompare, SETTINGS, settleEstimate, unlinkRuns } from '../lib/benchRuns.mjs';
-import { claim } from '../lib/claim.mjs';
+import { claim, claimWithin } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
 import { fetchAll, ownFiles, ownPatchId, resolveSha } from '../lib/branches.mjs';
 import {
@@ -18,6 +18,7 @@ import {
 } from '../lib/github.mjs';
 import { budgetFrom, PULL_BUDGET, skipReason } from '../lib/harnessVerdict.mjs';
 import { duplicateTarget, inFlight, inFlightText } from '../lib/inFlight.mjs';
+import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { judgedPass, measurePull, needsMeasure, withMeasure } from '../lib/pullMeasure.mjs';
 import { byRank } from '../lib/rank.mjs';
 import { run } from '../lib/sh.mjs';
@@ -80,6 +81,7 @@ function benchDeps({ dir, onMain, log }) {
   git(dir, ['clean', '-fdq']);
 
   return {
+    owner: OWNER_LOGIN,
     pullComments,
     commentOnPull,
     editComment,
@@ -92,12 +94,26 @@ function benchDeps({ dir, onMain, log }) {
   };
 }
 
+const BENCH_WAIT_MS = 2 * 60 * 60 * 1000;
+
+const BENCH_BUSY = { verdict: 'busy' };
+
 function measureOnce({ pull, paths, log, worktree, onMain }) {
   if (!needsMeasure(pull, paths)) return null;
 
-  setReview(pull.headRefOid, 'pending', 'Measuring on the micro-evals');
+  setReview(pull.headRefOid, 'pending', 'Waiting for the micro-evals');
 
-  return measurePull({ pull, paths, log }, benchDeps({ ...worktree, onMain, log }));
+  const release = claimWithin('pull-bench', { ms: BENCH_WAIT_MS });
+
+  if (!release) return BENCH_BUSY;
+
+  try {
+    setReview(pull.headRefOid, 'pending', 'Measuring on the micro-evals');
+
+    return measurePull({ pull, paths, log }, benchDeps({ ...worktree, onMain, log }));
+  } finally {
+    release();
+  }
 }
 
 function reviewPull(pull, { paths, log }) {
@@ -141,6 +157,14 @@ function reviewPull(pull, { paths, log }) {
 
     const judged = judgedPass(result.output);
     const measured = judged ? measureOnce({ pull, paths, log, worktree, onMain }) : null;
+
+    if (measured === BENCH_BUSY) {
+      setReview(sha, 'error', "Another review's micro-evals held the bench; it will run again");
+      log(`#${pull.number}: waited two hours for the micro-evals bench; will run again`);
+
+      return;
+    }
+
     const { output, verdict, state, description } = withMeasure(result.output, measured);
     const blockers = output.findings.filter((f) => f.severity === 'blocker');
 
@@ -181,28 +205,6 @@ function carryOver(pull, log) {
   return true;
 }
 
-function claimReview(pull, { paths, log }) {
-  const bench = needsMeasure(pull, paths) ? claim('pull-bench') : () => {};
-
-  if (!bench) {
-    log(`#${pull.number}: waits for another review's micro-evals`);
-
-    return null;
-  }
-
-  const release = claim(`review-${pull.number}`);
-
-  if (!release) bench();
-
-  return (
-    release &&
-    (() => {
-      release();
-      bench();
-    })
-  );
-}
-
 export default function review({ log }) {
   fetchAll();
 
@@ -216,7 +218,7 @@ export default function review({ log }) {
 
   for (const pull of waiting) {
     const paths = ownFiles(pull.headRefOid);
-    const release = claimReview(pull, { paths, log });
+    const release = claim(`review-${pull.number}`);
 
     if (!release) continue;
 

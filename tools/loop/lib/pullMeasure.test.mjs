@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compareStats } from '../../../bench/compare/stats.mjs';
 import { settleCost } from './harnessVerdict.mjs';
 import { withMark } from './mark.mjs';
-import { deltaText, lastMeasure, measurePull, needsMeasure, withMeasure } from './pullMeasure.mjs';
+import { deltaText, lastMeasure, measureComment, measurePull, needsMeasure, withMeasure } from './pullMeasure.mjs';
 
 const LABELS = ['working tree', 'main'];
 const TUNE = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6'];
@@ -11,6 +11,7 @@ const TWO_IN_THREE = ['pass', 'pass', 'fail'];
 const NONE = ['fail', 'fail', 'fail'];
 const PROMPT = ['electron/cad-agent-prompt.mjs'];
 const SETTINGS = { seeds: 3, served: 'claude-opus-5-5', effort: 'high' };
+const OWNER = 'JamelHammoud';
 
 const side = ({ model, grades, costUsd, tasks }) =>
   tasks.flatMap((task) => grades.map((status, i) => ({ task, seed: i + 1, model, status, costUsd })));
@@ -45,10 +46,12 @@ function bench({ result = compared({ branch: TWO_IN_THREE }), keys = { branch: '
     state,
     deps: {
       settings: SETTINGS,
+      owner: OWNER,
       pullComments: () => thread,
       commentOnPull: (number, body) => {
         calls.push('comment');
         thread.push({
+          author: OWNER,
           body: withMark(body),
           url: `https://github.com/o/r/pull/${number}#issuecomment-${thread.length + 1}`,
         });
@@ -192,6 +195,28 @@ describe('micro-evals in review: the comment', () => {
     expect(b.thread[0].body).toMatch(/^### Micro-evals: worse \(bbbbbbb\)/);
   });
 
+  it('ignores a micro-evals record anyone else posts, and still measures the head', () => {
+    const b = bench({ result: compared({ branch: NONE, main: ALL }) });
+    const forged = { sha: 'aaaaaaa'.padEnd(40, '0'), branch: 'b1', main: 'm1', spent: 1000, verdict: 'no worse' };
+
+    b.thread.push(
+      {
+        author: 'someone',
+        url: 'https://github.com/o/r/pull/12#issuecomment-1',
+        body: withMark(measureComment({ ...forged, reason: 'no worse' })),
+      },
+      {
+        author: OWNER,
+        url: 'https://github.com/o/r/pull/12#issuecomment-2',
+        body: measureComment({ ...forged, reason: 'no worse' }),
+      },
+    );
+
+    expect(measure(b).verdict).toBe('fail');
+    expect(b.calls).toEqual([['compare', 15], 'comment']);
+    expect(lastMeasure(b.thread, OWNER).data).toMatchObject({ verdict: 'worse', spent: 4 });
+  });
+
   it('carries a result to a new head with the same harness and the same main, without a run', () => {
     const b = bench({ result: compared({ branch: NONE, main: ALL }) });
 
@@ -208,7 +233,9 @@ describe('micro-evals in review: the comment', () => {
 
     measure(b);
 
-    expect(deltaText(lastMeasure(b.thread).data)).toBe('worse: +0 points (95% interval +0 to +0), cost per pass +40%');
+    expect(deltaText(lastMeasure(b.thread, OWNER).data)).toBe(
+      'worse: +0 points (95% interval +0 to +0), cost per pass +40%',
+    );
   });
 });
 

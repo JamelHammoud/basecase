@@ -1,6 +1,5 @@
 import { isLoopReview, isRevert, kindOf, parseReview } from './evidence.mjs';
 import { laneNamesIn, laneStats, MEASURES, median, round, worstChange } from './laneStats.mjs';
-import { LOOP_MARK } from './mark.mjs';
 import { deltaText, lastMeasure } from './pullMeasure.mjs';
 
 export { median } from './laneStats.mjs';
@@ -61,10 +60,11 @@ export const hoursToMerge = (pulls) =>
   median(pulls.map((p) => (Date.parse(p.mergedAt) - Date.parse(p.createdAt)) / HOUR_MS));
 
 export function measuredPulls(merged, comments, owner) {
-  const own = comments.filter((c) => c.author === owner && c.body.includes(LOOP_MARK));
-
   return merged.flatMap((pull) => {
-    const found = lastMeasure(own.filter((c) => c.number === pull.number));
+    const found = lastMeasure(
+      comments.filter((c) => c.number === pull.number),
+      owner,
+    );
 
     return found ? [{ number: pull.number, title: pull.title, delta: deltaText(found.data) }] : [];
   });

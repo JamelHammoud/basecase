@@ -50,7 +50,7 @@ Basecase opens with a two-wheel rover in the simulator (see [Drive your first ro
 
 The first time you open Basecase, it downloads Claude Code (263 MB). You can follow its progress in the Agent tab. If you pick Codex (340 MB) or Gemini CLI (95 MB) in Settings, Basecase downloads that one instead.
 
-Basecase keeps your scenes, saved models and tries in these folders:
+Basecase keeps your scenes, saved models, tries and datasets in these folders:
 
 - On a Mac: `~/Library/Application Support/Basecase`
 - On Windows: `%APPDATA%\Basecase`

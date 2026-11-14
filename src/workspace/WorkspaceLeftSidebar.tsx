@@ -32,6 +32,9 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
     onImport: () => void files.pickImports(),
     onOpenTries: core.triesView.openFor,
     onOpenHit: core.triesView.openAt,
+    datasets: core.triesView.datasets,
+    onOpenDataset: core.datasets.open,
+    onDeleteDataset: core.datasets.remove,
   };
 
   return (

@@ -26,6 +26,7 @@ import {
 } from '../design-system';
 import { CAMERA_VIEWS } from '../data/cameraViews';
 import { SETTINGS_PANES } from '../app/settingsPanes';
+import { datasetCommands } from './datasetCommands';
 import { CATEGORY_LABELS, PART_CATALOG, catalogKey, hardwareVariant } from '../data/catalog';
 import { HARDWARE_BY_TYPE, hardwareName } from '../data/hardware';
 import type { TrackpadGestureMode } from '../types/robotics';
@@ -272,6 +273,7 @@ function catalogCommands({ core, actions }: CommandInputs): Command[] {
 
 export const viewCommands = (inputs: CommandInputs): Command[] => [
   ...panelCommands(inputs),
+  ...datasetCommands(inputs.core),
   ...displayCommands(inputs),
   ...earthCommands(inputs.actions.earth),
   ...catalogCommands(inputs),

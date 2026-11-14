@@ -11,6 +11,7 @@ import {
 } from '../data/hardware';
 import type { ScenePart } from '../types/robotics';
 import { describeKey, hardwareKey } from '../utils/bom';
+import { hashText } from '../utils/geometryHash';
 import type { GuideItem, GuideItemKind, GuideStep, GuideTool, ToolIcon } from './guideTypes';
 
 const FASTENER_TYPES = new Set<HardwareSpec['type']>([
@@ -36,17 +37,6 @@ export const isFastener = (p: ScenePart) =>
   p.kind === 'hardware' && !!p.hardware && FASTENER_TYPES.has(p.hardware.type);
 
 export const isMajor = (p: ScenePart) => !isFastener(p) && !isInsert(p);
-
-export function hashText(text: string): string {
-  let h = 0x811c9dc5;
-
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-
-  return (h >>> 0).toString(36);
-}
 
 const round = (v: number) => Math.round(v * 10) / 10;
 

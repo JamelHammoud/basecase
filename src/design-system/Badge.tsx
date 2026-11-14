@@ -9,7 +9,7 @@ export interface BadgeProps {
 }
 
 const badgeVariants: Record<BadgeVariant, string> = {
-  default: 'bg-white/[0.07] text-white/55',
+  default: 'bg-white/[0.07] text-white/60',
   blue: 'bg-[#0d99ff]/15 text-[#5cb8ff]',
   red: 'bg-red-500/15 text-red-400',
   green: 'bg-emerald-500/15 text-emerald-400',

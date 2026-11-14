@@ -50,6 +50,7 @@ The bar under the total shows how much of your budget is left, or how far over b
 - Parts you [already own](/help/count-the-parts-you-already-own) are left out of a line's price and the total.
 - A price you saved more than 60 days ago turns amber. Hover over it to see the date you saved it, then save the price you see now.
 - **Equipment**, such as tools, doesn't count toward the budget.
+- **Printed parts** quoted by Slant 3D count at the quoted price, and their lines have no **Add Price**. For the steps, see [Price printed parts from a print service](/help/price-printed-parts-from-a-print-service).
 
 To keep the store page with a price, open **Listing** in the same sheet and paste the link into **Listing link**.
 

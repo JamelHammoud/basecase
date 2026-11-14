@@ -70,6 +70,6 @@ Some checks have limits:
 - Range of motion samples each joint every 15°, so a clash thinner than one step can fall between samples.
 - Peak torque needs a trained walk policy.
 - Falls needs the agent to tip the robot over.
-- Prices stay estimates until you add the ones you see.
+- Prices stay estimates until you add the ones you see, or a print service quotes the printed parts.
 
 For every check and what makes it fail, see [Build tab checks](/help/build-checks).

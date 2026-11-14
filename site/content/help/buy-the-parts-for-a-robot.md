@@ -57,6 +57,7 @@ Basecase adds some lines for you:
 
 - If your design has a battery, you get a switch, fuse, wire and charger.
 - Basecase counts filament in grams from the printed parts, so it isn't in the **+** menu.
+- If you choose **Made by a Service**, **Printed parts** takes the filament's place, and Basecase doesn't order them.
 - Cables come from the wiring. You get one for each hop of each servo bus, starting at the adapter. An SO-101 with six STS3215s on a Waveshare adapter, for example, lists 6 **Bus Servo Cable**. DYNAMIXEL X servos get **ROBOTIS Robot Cable-X3P** instead. Any cable you add yourself counts toward that number.
 - You get a pigtail for each battery plug and barrel jack on the power path, such as the XT60 on a LiPo.
 

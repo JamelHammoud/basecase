@@ -48,7 +48,7 @@ Only you can set a blocker aside, using **Ignore**. The agent can say that it di
 
 ## What you buy
 
-Basecase builds the **Bill of materials** from the scene. It counts components by part, and screws and nuts by their exact size. It lists printed parts as grams of filament for each material, rounded up to whole spools with 15% to spare.
+Basecase builds the **Bill of materials** from the scene. It counts components by part, and screws and nuts by their exact size. It lists printed parts as grams of filament for each material, rounded up to whole spools with 15% to spare. If you don't have a printer, Slant 3D can quote each printed part instead.
 
 The list also includes things the build needs that the model doesn't show:
 
@@ -60,7 +60,7 @@ Prices you check in a store are exact. Other prices are list prices, and Basecas
 
 ## How it gets made
 
-Print mode lays out the printed parts on plates, in the order the build guide needs them. It slices them in Bambu Studio or OrcaSlicer, then sends each plate to one of your printers. Print mode also offers to print parts that are bolted together on one link as a single part, as long as the robot still goes together.
+Print mode lays out the printed parts on plates, in the order the build guide needs them. It slices them in Bambu Studio or OrcaSlicer, then sends each plate to one of your printers. If you don't have a printer, see [Price printed parts from a print service](/help/price-printed-parts-from-a-print-service). Print mode also offers to print parts that are bolted together on one link as a single part, as long as the robot still goes together.
 
 The build guide is a PDF of assembly steps, and Basecase checks that the parts can go together in that order. The guide names each printed part with a letter, and Print mode cuts that letter into a hidden face of the part.
 

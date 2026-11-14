@@ -45,7 +45,7 @@ export const JointRowMenu: React.FC<JointRowMenuProps> = ({ name, history, drawn
   };
 
   return (
-    <RowActions fill="#333333" shown={open} className="right-0 inset-y-0 pr-1 rounded-r-lg">
+    <RowActions fill="#333333" className="right-0 inset-y-0 pr-1 rounded-r-lg">
       <div ref={ref} className="flex items-center">
         <IconButton
           icon={<MoreIcon className="w-4 h-4" />}

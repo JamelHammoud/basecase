@@ -120,7 +120,7 @@ const Glyphs: React.FC<OverlayProps> = ({ sketch, view, selection }) =>
         onPointerDown={(e) => e.stopPropagation()}
         onClick={() => selection.setSelected([g.constraint])}
         className={`w-5 h-5 grid place-items-center rounded-md cursor-default ${
-          selection.selected.includes(g.constraint) ? 'bg-[#0d99ff] text-white' : 'bg-[#2c2c2c] text-white/70'
+          selection.selected.includes(g.constraint) ? 'bg-[#0d99ff] text-white' : 'bg-[#2c2c2c] text-white/60'
         }`}
       >
         <ConstraintIcon kind={g.kind} className="w-3.5 h-3.5" />

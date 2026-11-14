@@ -125,7 +125,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
               >
                 <span
                   className={`shrink-0 transition-colors duration-150 ${
-                    isCurrent ? 'text-white/90' : 'text-white/50 group-hover:text-white/70'
+                    isCurrent ? 'text-white/90' : 'text-white/50 group-hover:text-white/60'
                   }`}
                 >
                   {PANE_ICONS[p.id]}
@@ -277,7 +277,7 @@ const AgentPane: React.FC<PaneProps> = (p) => {
         label="Command"
         hint={
           <span
-            className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-200/80'}`}
+            className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-400'}`}
           >
             {agentStatusText(p.acpStatus)}
           </span>

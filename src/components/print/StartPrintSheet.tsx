@@ -46,7 +46,7 @@ export const StartPrintSheet: React.FC<StartPrintSheetProps> = ({ plate, sliced,
         {sliced?.thumbnail && (
           <img src={sliced.thumbnail} alt="" className="preview-sm w-[96px] h-[96px] object-contain shrink-0" />
         )}
-        <div className="min-w-0 flex flex-col gap-2 text-[13px] text-white/80">
+        <div className="min-w-0 flex flex-col gap-2 text-[13px] text-white/90">
           <MetaLine
             className="text-[12.5px] text-white/50 tabular-nums"
             items={[`${exact ? '' : '≈ '}${duration(hours * 3600, 'min')}`, weight(grams)]}

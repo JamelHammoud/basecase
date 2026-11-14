@@ -36,7 +36,7 @@ const PhotoGrid: React.FC<{ urls: string[]; onOpenImages: OpenImages }> = ({ url
 };
 
 export const FailureText: React.FC<{ text: string }> = ({ text }) => (
-  <p className="text-[13px] leading-[21px] text-red-300/80 whitespace-pre-wrap [overflow-wrap:anywhere] select-text">
+  <p className="text-[13px] leading-[21px] text-red-400 whitespace-pre-wrap [overflow-wrap:anywhere] select-text">
     {text}
   </p>
 );

@@ -40,7 +40,7 @@ export const RenameField: React.FC<RenameFieldProps> = ({ name, onDone, label = 
 
         if (e.key === 'Escape') finish(null);
       }}
-      className={`flex-1 min-w-0 h-6 px-1.5 rounded-md bg-black/30 ring-1 ring-[#0d99ff] outline-none text-[13px] text-white/95 ${className}`}
+      className={`flex-1 min-w-0 h-6 px-1.5 rounded-md bg-black/30 ring-1 ring-[#0d99ff] outline-none text-[13px] text-white/90 ${className}`}
     />
   );
 };

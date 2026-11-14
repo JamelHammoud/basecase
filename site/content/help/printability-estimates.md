@@ -17,6 +17,7 @@ related:
   - print-a-robots-parts
   - troubleshoot-build-part-wont-print
   - build-checks
+  - price-printed-parts-from-a-print-service
 covers:
   - src/three/printability.ts
   - src/utils/printReport.ts
@@ -36,7 +37,7 @@ For each printed part, Basecase tries the 6 ways its axes can point up, plus up 
 - **Support** goes under faces within 30° of flat, the same threshold the stock slicer profiles use.
 - **Thin walls** are walls thinner than 0.84 mm, which don't print. Basecase finds them by shooting rays inward through the part.
 - **Time** comes from the volume of plastic laid down.
-- **Filament** is counted in grams for each material, then rounded up to whole spools with 15% to spare.
+- **Filament** is counted in grams for each material, then rounded up to whole spools with 15% to spare. With **Made by a Service** chosen, the bill of materials lists each part's quote instead.
 
 A thin area of 100 mm² or more is a panel that would print with holes, so it blocks Ready to build. A smaller thin area is usually a thin edge left by a cut. The slicer drops those, so Basecase only shows a note.
 

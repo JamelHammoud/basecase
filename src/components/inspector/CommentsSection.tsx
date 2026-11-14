@@ -30,7 +30,7 @@ const CommentRow: React.FC<{ annotation: SceneAnnotation; n: number; active: boo
           {n}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] text-white/85 truncate">{first?.text}</span>
+          <span className="block text-[13px] text-white/90 truncate">{first?.text}</span>
           <span className="flex items-center gap-[12px] text-[12px] text-white/50">
             {a.resolved ? 'Resolved' : timeAgo(first?.createdAt ?? a.createdAt)}
             {a.comments.length > 1 && (

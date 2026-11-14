@@ -48,6 +48,6 @@
     }
   },
   "tetra.stl": {
-    "error": "OpenCascade could not read this file. It may be too big for the built-in reader."
+    "error": "OpenCascade couldn’t read this file. It may be too big for the built-in reader."
   }
 }

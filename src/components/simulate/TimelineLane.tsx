@@ -45,7 +45,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, o
       onPointerDown={onSelect}
     >
       <div className="w-[112px] shrink-0 flex flex-col gap-0.5 min-w-0">
-        <span className="text-[13px] text-white/85 truncate">{name}</span>
+        <span className="text-[13px] text-white/90 truncate">{name}</span>
         <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.position[frame], position)}</span>
         <span className="text-[12px] text-white/50 tabular truncate">{effortText(lane, lane.effort[frame])}</span>
       </div>

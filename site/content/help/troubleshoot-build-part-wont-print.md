@@ -30,6 +30,8 @@ covers:
 
 Basecase measures each part against the printer you chose in Print mode. If that printer can't make a part as drawn, the Printing check flags it.
 
+With **Made by a Service** chosen, parts are still measured against the printer you chose before it.
+
 ## “This part is too big for your printer’s plate.”
 
 The part is larger than your printer's bed in every way it could lie, including across the diagonal.

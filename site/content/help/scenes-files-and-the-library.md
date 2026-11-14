@@ -54,7 +54,7 @@ Basecase files every try you record in the Library, whichever scene you recorded
 
 ## Scene files
 
-A `.basecase` file is a copy of one scene that you can send to someone. It holds the whole scene except print history, trained policies, Case tries, taught skills and the build guide. Your chat with the agent also stays on your computer.
+A `.basecase` file is a copy of one scene that you can send to someone. It holds the whole scene except print history, the print service and its quotes, trained policies, Case tries, taught skills and the build guide. Your chat with the agent also stays on your computer.
 
 When you open a scene file, Basecase creates a new scene from it. The new scene and the file are separate, so changes to one don't affect the other.
 

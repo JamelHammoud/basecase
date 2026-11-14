@@ -70,7 +70,7 @@ export const SceneTab: React.FC<{
           className={`flex-1 min-w-0 truncate text-[13px] transition-colors duration-150 ${
             active
               ? 'text-white/90 font-medium'
-              : `text-white/50 font-medium group-hover:text-white/80 ${NAME_UNDER_CLOSE}`
+              : `text-white/50 font-medium group-hover:text-white/90 ${NAME_UNDER_CLOSE}`
           }`}
         >
           {tab.name || 'Untitled'}

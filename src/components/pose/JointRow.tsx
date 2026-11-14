@@ -37,7 +37,7 @@ export const JointRow: React.FC<{
         <button
           type="button"
           onClick={onSelect}
-          className={`min-w-0 text-left text-[13px] truncate cursor-default ${active ? 'text-white' : 'text-white/60 hover:text-white/85'}`}
+          className={`min-w-0 text-left text-[13px] truncate cursor-default ${active ? 'text-white' : 'text-white/60 hover:text-white/90'}`}
         >
           {label}
         </button>

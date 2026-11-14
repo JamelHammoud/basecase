@@ -26,7 +26,7 @@ Basecase on Windows 11 x64: what's done, what isn't verified yet, and how a rele
 | Vision photo masks | Flood-fill fallback (no Windows addon) | `cad-mcp/photoMask.mjs` |
 | NSIS installer, `Basecase-Setup.exe` link, updates | Done, first build pending | `package.json` `build.win` / `build.nsis`, `updates.mjs` |
 | Azure Artifact Signing | Wired, needs the account set up | `release.yml` |
-| Beta channel | Done | `channelOptions`, Help → Get Beta Updates |
+| Beta channel | Done | `channelOptions`, Help ▸ Get Beta Updates |
 | Packaged-app smoke test | Passes on macOS; Windows pending CI | `e2e/app/` |
 | Agent CLI downloads on first connect (`win32-x64`) | Wired, untested on Windows | `backend/agentRuntimes.mjs` |
 
@@ -44,7 +44,7 @@ Not done yet:
 3. **Real machines, for each beta:**
    - Daily: Parallels with Windows 11 ARM on a Mac (it runs the x64 build through emulation).
    - Before stable: one x64 PC with a real GPU (Intel, AMD or NVIDIA). WebGL there runs on Direct3D 11 through ANGLE, which is where rendering bugs hide, and it has a real touchpad.
-4. **Beta first:** release `0.x.0-beta.N`; testers turn on Help → Get Beta Updates. Once the QA list passes, release the same commit as `0.x.0`.
+4. **Beta first:** release `0.x.0-beta.N`; testers turn on Help ▸ Get Beta Updates. Once the QA list passes, release the same commit as `0.x.0`.
 
 Runners have no GPU, so CI proves the app works, not that it's fast or that it renders right. Steps 3 and 4 cover that.
 
@@ -52,15 +52,15 @@ Runners have no GPU, so CI proves the app works, not that it's fast or that it r
 
 - [ ] Download `Basecase-Setup.exe` from the release; SmartScreen shows the publisher (signed builds) and installs without admin.
 - [ ] First launch: the boot ring, then the app; the caption buttons sit in the title bar with nothing under them; the window drags by the title bar and snaps (Win+arrows, snap layouts on hover over maximize).
-- [ ] Menu button: every menu opens; Help → Check for Updates answers; About shows the version.
-- [ ] Tooltips and Settings → Shortcuts show `Ctrl`, `Shift`, `Alt`, never ⌘.
-- [ ] Mouse: drag orbits, wheel zooms, right-drag and middle-drag pan, right-click opens the menu without panning. Touchpad: pinch zooms; two-finger scroll follows Settings → Canvas.
+- [ ] Menu button: every menu opens; Help ▸ Check for Updates answers; About shows the version.
+- [ ] Tooltips and Settings ▸ Shortcuts show `Ctrl`, `Shift`, `Alt`, never ⌘.
+- [ ] Mouse: drag orbits, wheel zooms, right-drag and middle-drag pan, right-click opens the menu without panning. Touchpad: pinch zooms; two-finger scroll follows Settings ▸ Canvas.
 - [ ] Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z, Ctrl+D, Ctrl+click in Layers and on the canvas, Ctrl+T / Ctrl+W / Ctrl+Tab.
 - [ ] Sign in to Claude in the Agent tab (the CLI downloads first); a short build runs, with parts compiling.
 - [ ] Codex signs in from an existing `~/.codex` login.
 - [ ] Training: with uv installed, Stand trains, and Stop saves the policy.
-- [ ] Printing with Bambu Studio installed: Settings → Printers lists it; Slice works; Open in Bambu Studio opens it; Find on Network finds a printer (accept the firewall prompt once).
+- [ ] Printing with Bambu Studio installed: Settings ▸ Printers lists it; Slice works; Open in Bambu Studio opens it; Find on Network finds a printer (accept the firewall prompt once).
 - [ ] Export: STL, 3MF and USDZ Model save and show in Explorer.
 - [ ] Build guide: generate, open, Show in Explorer.
 - [ ] Update: install the previous beta, publish the next, and the update button appears and installs.
-- [ ] Uninstall from Settings → Apps; scenes in `%APPDATA%\Basecase` stay.
+- [ ] Uninstall from Settings ▸ Apps; scenes in `%APPDATA%\Basecase` stay.

@@ -1,4 +1,4 @@
-export const ACCESS_CODE_MESSAGE = 'Check the access code on the printer: Settings → LAN Only.';
+export const ACCESS_CODE_MESSAGE = 'Check the access code on the printer: Settings ▸ LAN Only.';
 
 export function unreachableMessage(host) {
   return `Couldn’t reach the printer at ${host}. Check it’s on and on the same network.`;

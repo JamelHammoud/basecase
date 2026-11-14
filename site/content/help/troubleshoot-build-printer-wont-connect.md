@@ -33,7 +33,7 @@ If Basecase can't reach a printer or can't send it a plate, you'll see a message
 
 ## “Couldn’t reach the printer at …”
 
-The printer is off, asleep or on a different network, or its address has changed.
+The printer is off, asleep, or on a different network, or its address has changed.
 
 1. Make sure the printer is on and connected to the same network as your computer.
 2. Find the printer's address on its screen. Compare it with **Address** in **Settings** ▸ **Printers**.
@@ -50,19 +50,19 @@ Bambu LAN needs both of these modes on, and you can turn them on only from the p
 
 **Note:** Bambu doesn't support Developer Mode. To leave both modes off, change **Send prints with** to **Bambu Studio**.
 
-## “Check the access code on the printer: Settings → LAN Only.”
+## “Check the access code on the printer: **Settings** ▸ **LAN Only**.”
 
 The access code you entered is wrong.
 
-1. On the printer, open **Settings** ▸ **LAN Only** and find the code.
-2. Type it in **Access code** and press [[↩]].
+1. On the printer, open **Settings** ▸ **LAN Only** to find the code.
+2. Type the code in **Access code**, then press [[↩]].
 3. Click **Test Connection**.
 
 ## “The printer didn’t answer as …”
 
 The serial number you entered doesn't match the printer at that address.
 
-1. On the printer, open **Settings** ▸ **Device** and find the serial number.
+1. On the printer, open **Settings** ▸ **Device** to find the serial number.
 2. Type it in **Serial number**, then click **Test Connection**.
 
 ## “The printer couldn’t save the file. Check its SD card is in and has space.”

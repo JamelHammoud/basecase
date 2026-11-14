@@ -194,7 +194,7 @@ function chosenMesh(parts: ScenePart[], id: string | undefined): ScenePart | str
 
   if (id && !mesh) return `${id} isn’t a visible imported mesh.`;
 
-  if (!mesh) return 'No imported mesh in the scene: the user imports one with File ▸ Import Mesh.';
+  if (!mesh) return 'No imported mesh in the scene: the user imports one with File ▸ Import.';
 
   return !id && meshes.length > 1 ? `Several meshes; pass mesh: ${meshes.map((m) => m.id).join(', ')}` : mesh;
 }

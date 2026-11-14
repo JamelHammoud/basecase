@@ -53,7 +53,7 @@ Turn the scene into a MuJoCo model and run it on the canvas.
 - **Done when:** a preset humanoid stands on the canvas at real time, and pushing it makes it fall believably.
 
 ### S3. Sim checks
-New rows in Build → Checks, with the same Pass / Warn / Fail rows that select their parts:
+New rows in Build ▸ Checks, with the same Pass / Warn / Fail rows that select their parts:
 - **Stands:** holds the modeled pose for 5 s (base tilt, height drop).
 - **Walks:** the walk cycle under physics (distance covered, falls).
 - **Torque in motion:** peak actuator force against stall over the run.

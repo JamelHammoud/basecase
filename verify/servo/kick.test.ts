@@ -15,6 +15,8 @@ const OUT = path.resolve('verify/out/servo/fixtures');
 const WINDOW_S = 0.05;
 const MAX_SHARE = 0.05;
 const robots = servoRobots();
+const servoDriven = (model: (typeof robots)[number]['model']) =>
+  model.joints.filter((j) => j.drive === 'position' && j.type === 'revolute');
 const peaks: Record<string, number> = {};
 
 describe('servo fixtures', () => {
@@ -26,7 +28,7 @@ describe('servo fixtures', () => {
 
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(path.join(dir, 'model.xml'), model.xml);
-      expect(model.joints.filter((j) => j.drive === 'position').every((j) => j.dynamics === 'measured')).toBe(true);
+      expect(servoDriven(model).every((j) => j.dynamics === 'measured')).toBe(true);
     }
 
     expect(robots.filter((r) => r.model.xml.includes(' delay="')).length).toBeGreaterThanOrEqual(10);

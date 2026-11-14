@@ -3,22 +3,15 @@ import { MetaLine, ProgressBar } from '../../design-system';
 import type { ContextUsage } from '../../types/robotics';
 import type { Money } from '../../utils/currency';
 import { useMoney } from '../../utils/useMoney';
+import { bigCount, bigFigures } from '../../../electron/bigCount.mjs';
 
 const NEARLY_FULL = 0.8;
-
-function formatTokens(n: number) {
-  if (n >= 1_000_000) return `${+(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
-
-  if (n >= 1000) return `${+(n / 1000).toFixed(n >= 100_000 ? 0 : 1)}K`;
-
-  return String(n);
-}
 
 const formatCost = (usd: number, money: Money) => (money.fromUsd(usd) >= 100 ? money.whole(usd) : money.format(usd));
 
 export const ContextStatus: React.FC<{ context: ContextUsage }> = ({ context }) => {
   const share = Math.min(1, context.used / context.size);
-  const tokens = `${formatTokens(context.used)} of ${formatTokens(context.size)} tokens`;
+  const tokens = `${bigFigures(context.used)} of ${bigCount(context.size, 'token')}`;
   const money = useMoney();
 
   return (

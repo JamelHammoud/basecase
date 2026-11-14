@@ -53,7 +53,7 @@ describe('Checks', () => {
   const quotes = () => app.page.locator(visible('[role=group][aria-label=Quotes]'));
   const quoteProblem = async () => {
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-    await checks().getByRole('button', { name: 'More' }).first().click();
+    await checks().locator('[data-finding]').first().click({ button: 'right' });
     await app.page.getByRole('menuitem', { name: 'Quote' }).click();
     await expect.poll(() => quotes().count(), { timeout: 10000 }).toBe(1);
   };
@@ -77,7 +77,7 @@ describe('Checks', () => {
 
     const fixes = await checks().getByRole('button', { name: 'Fix' }).count();
 
-    await checks().getByRole('button', { name: 'More' }).first().click();
+    await checks().locator('[data-finding]').first().click({ button: 'right' });
     await app.page.getByRole('menuitem', { name: /^Ignore All / }).click();
     await expect
       .poll(() => checks().getByRole('button', { name: 'Fix' }).count(), { timeout: 45000 })

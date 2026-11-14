@@ -71,7 +71,7 @@ function compareEntry(compare: CasesPanelProps['compare'], onOpen: () => void): 
 function matEntry({ mat }: Cases): ContextMenuEntry[] {
   if (!mat.available) return [];
 
-  return [{ label: 'Export Case Mat', icon: <DownloadIcon />, onSelect: mat.exportMat }, { divider: true }];
+  return [{ label: 'Export Case Mat', icon: <DownloadIcon />, onSelect: mat.exportMat }];
 }
 
 export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, onDescribe }) => {

@@ -8,6 +8,13 @@ import { openApp, partCount, type App } from './harness';
 
 let app: App;
 
+const CONNECTED_STATUS = {
+  connected: true,
+  sessionId: null,
+  agentName: 'Claude Code',
+  agentCommand: 'node node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js',
+};
+
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
 const clickTab = (name: string) => app.page.locator(visible('[role=tab]'), { hasText: name }).first().click();
@@ -376,6 +383,30 @@ function dropFile(page: App['page'], name: string, base64: string) {
     { name, base64 },
   );
 }
+
+describe('agent connection', () => {
+  it('shows Connecting… in Settings while Reconnect runs, then the result', async () => {
+    const replies: Array<() => void> = [];
+
+    await app.page.route('**/api/bridge/acp-connect', (route) => {
+      replies.push(() => route.fulfill({ contentType: 'application/json', body: JSON.stringify(CONNECTED_STATUS) }));
+    });
+    await app.page.keyboard.press('Meta+,');
+    await app.page.locator(visible('nav[aria-label="Settings panes"] button'), { hasText: 'Agent' }).click();
+
+    const status = app.page.locator(visible('[role=dialog] span'), { hasText: /Connect/ }).first();
+
+    await expect.poll(() => status.innerText()).toBe('Connected to Claude Code');
+    await app.page.locator(visible('button[aria-label="Reconnect"]')).click();
+    await expect.poll(() => status.innerText()).toBe('Connecting…');
+    await expect.poll(() => replies.length).toBe(1);
+    replies[0]();
+    await expect.poll(() => status.innerText()).toBe('Connected to Claude Code');
+    await app.page.unroute('**/api/bridge/acp-connect');
+    await app.page.keyboard.press('Escape');
+    expect(app.errors).toEqual([]);
+  });
+});
 
 describe('studio import', () => {
   it('opens a two-body STEP dropped on the canvas as two parts in one group', async () => {

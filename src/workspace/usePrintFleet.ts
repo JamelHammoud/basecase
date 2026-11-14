@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { resolvePrinter, type MyPrinter, type PrinterSetup } from '../data/printers';
 import { isIdle, nextPlate, sameMachine, type FleetPrinter } from '../print/fleet';
 import type { Plate } from '../print/plan';
-import { printBridge, type PrinterStatus, type SlicedPlate } from '../print/printBridge';
+import { printBridge, type PrinterStatus } from '../print/printBridge';
 import { printRecordFor, withRecord } from '../print/tracker';
 import type { PrintRecord, ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
@@ -19,7 +19,6 @@ interface FleetOptions {
   records: PrintRecord[];
   setRecords: (update: (prev: PrintRecord[]) => PrintRecord[]) => void;
   job: PrintJob;
-  freshSlice: (plate: Plate) => SlicedPlate | undefined;
   recording: boolean;
   active: boolean;
   showToast: ShowToast;
@@ -45,7 +44,7 @@ export function usePrintFleet(options: FleetOptions) {
   const slicedJob = async (plate: Plate, target: PrinterSetup) => {
     if (!sameMachine(target, printer)) return job.sliceOn(plate, target);
 
-    if (!options.freshSlice(plate) && !(await job.runSlice())) return null;
+    if (!job.freshSlice(plate) && !(await job.runSlice())) return null;
 
     return job.jobId;
   };

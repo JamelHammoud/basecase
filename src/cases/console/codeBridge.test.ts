@@ -309,6 +309,7 @@ describe('the bridge’s guards', () => {
         key: () => undefined,
         world: () => null,
         frames: () => () => undefined,
+        store: null,
       },
       onFail: (error) => failed.push(error),
       clock,

@@ -171,6 +171,12 @@ plant:
   - behaviour: A new servo on a factory bus takes the part of the ID it holds, so it becomes its joint's part once its ID is rewritten.
     source: assumed
     note: Real servos don't change; this lets the Set Up walk number servos in any order and still put each part on its joint.
+  - behaviour: Each emulated Feetech or Dynamixel servo's horn sits on its link offset uniformly within plus or minus 12 degrees, fixed per servo id by a hash of the id.
+    source: assumed
+    note: Emulated by the app's main process in electron/robot/emulatedHorns.mjs. A horn on a 25-tooth spline lands within half a tooth of where it's meant, plus a zero set by eye.
+  - behaviour: About one servo in four is mounted reversed, so positive counts turn its link the negative way.
+    source: assumed
+    note: Invented so the camera calibration has something to find; from the same hash in electron/robot/emulatedHorns.mjs.
 
 unitree-g1:
   - behaviour: The robot publishes unitree_hg LowState on rt/lowstate and takes unitree_hg LowCmd on rt/arm_sdk, with 35 motor slots, the 29 G1 joints first in unitree_sdk2 order (legs 0 to 11, waist 12 to 14, left arm 15 to 21, right arm 22 to 28).

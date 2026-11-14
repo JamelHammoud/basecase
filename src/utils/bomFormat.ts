@@ -4,6 +4,7 @@ import { currentMoney } from './currencyStore';
 import { plural } from '../../electron/plural.mjs';
 import { weight } from './weight';
 import { sizeFigures } from './size';
+import { percent } from '../../electron/percent.mjs';
 
 const STATUS_LABEL: Record<PriceStatus, string> = { checked: 'Checked', stale: 'Stale', unchecked: 'Not checked' };
 const LINK_TYPE: Record<BomLine['urlKind'], string> = { product: 'Listing', search: 'Search', none: '' };
@@ -125,7 +126,7 @@ function markdownPrinted(bom: Bom): string[] {
     '|---|---|---|---:|',
     ...bom.printed.map((p) => `| ${p.name} | ${p.material} | ${sizeFigures(p.size)} | ${weight(p.grams)} |`),
     '',
-    `Filament estimates assume 2 walls, 4 top/bottom layers and the project’s infill; spools include estimated supports and a ${Math.round(FILAMENT_MARGIN * 100)}% margin for brims and reprints.`,
+    `Filament estimates assume 2 walls, 4 top/bottom layers and the project’s infill; spools include estimated supports and a ${percent(FILAMENT_MARGIN)} margin for brims and reprints.`,
     '',
   ];
 }

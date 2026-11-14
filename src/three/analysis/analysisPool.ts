@@ -5,7 +5,14 @@ import type { MeshData } from '../../print/threeMf';
 import type { ShapeReport } from './shapeReports';
 import type { CollideOptions } from './collide';
 import type { OutputRiders } from './outputRiders';
-import { analysisHandlers, MISSING_SHAPE, type AnalysisTask, type Instance, type ThreeMfFileSpec } from './analysisOps';
+import {
+  analysisHandlers,
+  MISSING_SHAPE,
+  type AnalysisTask,
+  type Instance,
+  type PlateFilesInput,
+  type ThreeMfResult,
+} from './analysisOps';
 import { copyGeometries, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
 import type { PairIds } from './gaps';
@@ -127,12 +134,8 @@ export function printMeshesIn(scene: SceneShapes): Promise<Record<string, MeshDa
   return analyze(leastBusy(), scene, { kind: 'meshes', instances: scene.instances });
 }
 
-export function threeMfIn(
-  scene: SceneShapes,
-  files: ThreeMfFileSpec[],
-  plateSize: [number, number],
-): Promise<Record<string, Uint8Array>> {
-  return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, files, plateSize });
+export function threeMfIn(scene: SceneShapes, plates: PlateFilesInput): Promise<ThreeMfResult> {
+  return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, ...plates });
 }
 
 export function visibilityIn(scene: SceneShapes): Promise<Record<string, number>> {

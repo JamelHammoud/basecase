@@ -1,6 +1,6 @@
 import type { BenchRecording, BenchSample } from '../reality/benchLogs';
 import { BENCH_SECONDS, benchOffset } from '../reality/benchSequence';
-import { radiansFromCounts, servoFamily, type RobotState, type RobotStatus } from './robotState';
+import { servoFamily, statusRadians, type RobotMount, type RobotState, type RobotStatus } from './robotState';
 import { robotSnapshot, sendRobotCommand, setBenchDriving, subscribeRobot } from './robotStore';
 
 export const BENCH_INTENT_MS = 25;
@@ -13,26 +13,39 @@ export const canRunBench = (state: RobotState) =>
   state.mode === 'test' &&
   state.status?.run === 'running';
 
-const radians = (position: number | null | undefined) =>
-  typeof position === 'number' ? radiansFromCounts(position) : null;
-
 function measuredStarts(state: RobotState): number[] {
-  return (state.spec?.ids ?? []).map((id) => radians(state.status?.joints.find((j) => j.id === id)?.position) ?? 0);
+  return (state.spec?.ids ?? []).map((id) => statusRadians(state.status, state.calibration, id) ?? 0);
 }
+
+export interface BenchPlan {
+  seconds: number;
+  offset: (seconds: number) => number;
+}
+
+export const SERVO_BENCH: BenchPlan = { seconds: BENCH_SECONDS, offset: benchOffset };
+
+export type HearStatus = (status: RobotStatus) => void;
 
 export interface HeardStatus {
   status: RobotStatus;
   heardS: number;
 }
 
-function sampleOf(status: RobotStatus, ids: number[], seconds: number): BenchSample {
+interface SampleInput {
+  status: RobotStatus;
+  ids: number[];
+  calibration: readonly RobotMount[];
+  seconds: number;
+}
+
+function sampleOf({ status, ids, calibration, seconds }: SampleInput): BenchSample {
   return {
     seconds,
     joints: ids.map((id) => {
       const joint = status.joints.find((j) => j.id === id);
 
       return {
-        positionRad: radians(joint?.position),
+        positionRad: statusRadians(status, calibration, id),
         volts: joint?.volts ?? null,
         temperatureC: joint?.temp_c ?? null,
       };
@@ -58,7 +71,11 @@ export function benchSeconds(heard: HeardStatus[]): number[] {
   return heard.map((h) => secondsOf(h, lead));
 }
 
-export function playBench(moving?: readonly number[]): Promise<BenchRecording | null> {
+export function playBench(
+  moving?: readonly number[],
+  plan: BenchPlan = SERVO_BENCH,
+  hear?: HearStatus,
+): Promise<BenchRecording | null> {
   const begun = robotSnapshot();
 
   if (!canRunBench(begun) || !begun.spec) return Promise.resolve(null);
@@ -76,7 +93,12 @@ export function playBench(moving?: readonly number[]): Promise<BenchRecording | 
   const recording = (): BenchRecording => {
     const seconds = benchSeconds(heard);
 
-    return { starts, samples: heard.map((h, i) => sampleOf(h.status, ids, seconds[i])) };
+    return {
+      starts,
+      samples: heard.map((h, i) =>
+        sampleOf({ status: h.status, ids, calibration: begun.calibration, seconds: seconds[i] }),
+      ),
+    };
   };
   let last = begun.status;
   let lead = Number.POSITIVE_INFINITY;
@@ -98,8 +120,8 @@ export function playBench(moving?: readonly number[]): Promise<BenchRecording | 
     const tick = () => {
       const seconds = elapsed();
 
-      if (seconds >= BENCH_SECONDS + BENCH_END_GRACE_S) finish(true);
-      else intent(benchOffset(seconds));
+      if (seconds >= plan.seconds + BENCH_END_GRACE_S) finish(true);
+      else intent(plan.offset(seconds));
     };
     const onState = () => {
       const state = robotSnapshot();
@@ -117,8 +139,9 @@ export function playBench(moving?: readonly number[]): Promise<BenchRecording | 
       last = state.status;
       heard.push(status);
       lead = Math.min(lead, leadOf(status));
+      hear?.(state.status);
 
-      if (secondsOf(status, lead) >= BENCH_SECONDS) finish(true);
+      if (secondsOf(status, lead) >= plan.seconds) finish(true);
     };
 
     setBenchDriving(true);

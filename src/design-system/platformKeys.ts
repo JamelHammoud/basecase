@@ -8,6 +8,8 @@ const WINDOWS_NAMES: Record<string, string> = {
   '⌫': 'Del',
   '↩': 'Enter',
 };
+const TEXT_PRESENTATION = '\uFE0E';
+const MAC_CAPS: Record<string, string> = { '↩': `↩${TEXT_PRESENTATION}` };
 const MODIFIER_ORDER = ['Ctrl', 'Alt', 'Shift'];
 
 const rank = (key: string) => {
@@ -17,9 +19,11 @@ const rank = (key: string) => {
 };
 
 export function platformKeys(keys: string[], mac = IS_MAC): string[] {
-  if (mac) return keys;
+  const glyphs = keys.map((k) => k.replace(TEXT_PRESENTATION, ''));
 
-  return keys.map((k) => WINDOWS_NAMES[k] ?? k).sort((a, b) => rank(a) - rank(b));
+  if (mac) return glyphs.map((k) => MAC_CAPS[k] ?? k);
+
+  return glyphs.map((k) => WINDOWS_NAMES[k] ?? k).sort((a, b) => rank(a) - rank(b));
 }
 
 export const modifierName = (glyph: string, mac = IS_MAC) => (mac ? glyph : (WINDOWS_NAMES[glyph] ?? glyph));

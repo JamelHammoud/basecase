@@ -27,6 +27,7 @@ import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
 import { MATERIALS, materialTag, type InspectorProps } from './types';
 import { keyFor } from '../../app/shortcuts';
+import { plural } from '../../../electron/plural.mjs';
 
 const isWholeGroup = (selectedParts: ScenePart[], parts: ScenePart[]): boolean => {
   const base = selectedParts[0];
@@ -66,7 +67,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
             </div>
           ) : (
             <div className="text-[14px] font-semibold text-white/95 truncate h-[32px] flex items-center">
-              {selectedParts.length} parts
+              {plural(selectedParts.length, 'part')}
             </div>
           )}
         </div>
@@ -113,7 +114,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
       </div>
       <MetaLine
         className="text-[12.5px] text-white/50 tabular mt-0.5"
-        items={[wholeGroup && `${selectedParts.length} parts`, <SizeLine mm={size} />]}
+        items={[wholeGroup && plural(selectedParts.length, 'part'), <SizeLine mm={size} />]}
       />
     </div>
   );

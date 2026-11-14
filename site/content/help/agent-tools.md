@@ -128,6 +128,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `train_skill` | Trains a skill in the background |
 | `training_status` | Reports training progress |
 | `list_skills` | Lists the robot's skills |
+| `coach_skill` | Changes how a ready Motor Kit skill moves, and keeps the change only if Arena still passes it |
 
 ## Build and cost
 

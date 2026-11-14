@@ -110,7 +110,7 @@ const toolReply = ({ text, images }: PoseReply) => ({ text, images });
 function inspectLabel(ids: string[] | undefined, parts: ScenePart[]) {
   if (!ids?.length) return 'Looking';
 
-  if (ids.length > 1) return `Inspecting ${ids.length} parts`;
+  if (ids.length > 1) return `Inspecting ${plural(ids.length, 'part')}`;
 
   return `Inspecting ${parts.find((p) => p.id === ids[0])?.name ?? ids[0]}`;
 }

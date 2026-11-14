@@ -97,6 +97,11 @@ export default tseslint.config(
     rules: { 'basecase/copy': 'error' },
   },
   {
+    files: ['src/**/*.{ts,tsx}', 'electron/**/*.mjs'],
+    ignores: ['**/*.test.{ts,tsx,mjs}', 'electron/cad-kernel/**'],
+    rules: { 'basecase/plural': 'error' },
+  },
+  {
     files: ['**/*.cjs'],
     languageOptions: { sourceType: 'commonjs' },
     rules: { '@typescript-eslint/no-require-imports': 'off' },

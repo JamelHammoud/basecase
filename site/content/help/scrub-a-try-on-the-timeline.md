@@ -46,7 +46,7 @@ Play a recorded try through its Case's panels, and step through it frame by fram
 6. Hold [[⇧]] and drag across a lane of the timeline to play that range over and over. [[⇧]]-click a lane to stop.
 7. Click **Done** or press [[Esc]] to go back to the live robot. The Case keeps running.
 
-Each lane is one joint. Its top plot is the joint's position in blue over its target in gray, and its bottom one is its effort in N·m, with the servo's limit dashed. Red lines mark where the Case's failure checks tripped, and the timeline opens on the first one. Click in a lane to select the joint's link on the canvas, ready to change.
+Each lane is one joint. Its top plot is the joint's position in blue over its target in gray, and its bottom one is its effort, with the servo's limit dashed. Effort reads in N·m, or in N for a sliding joint. Red lines mark where the Case's failure checks tripped, and the timeline opens on the first one. Click in a lane to select the joint's link on the canvas, ready to change.
 
 In a running Case, the play button on a try in its tries panel does the same. [[⇧]] with [[→]] or [[←]] moves a second, and [[Home]] and [[End]] go to the start and the end.
 

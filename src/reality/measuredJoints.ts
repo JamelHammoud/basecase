@@ -10,7 +10,12 @@ export function calibrationApplies(
 ): calibration is ServoCalibration {
   const servo = jointServo(joint, parts);
 
-  return calibration?.verdict === 'measured' && servo !== null && sameServo(servoPartOf(calibration), servo);
+  return (
+    calibration?.verdict === 'measured' &&
+    calibration.rung !== 'preset' &&
+    servo !== null &&
+    sameServo(servoPartOf(calibration), servo)
+  );
 }
 
 export interface MeasuredJointsInput {

@@ -8,7 +8,7 @@ Arms with a gripper get a new Case goal, Pick Up a Block. Space closes the gripp
 
 ## Where it is
 
-Click New Case in Play ▸ Cases. Pick Up a Block is in the Goal list when the arm ends in two fingers on their own joints that close together. Steps are in [Pick up a block with a gripper](/help/pick-up-a-block-with-a-gripper). An arm without one doesn't see it, and a Pick Up a Block Case opened on such an arm says it needs a gripper.
+Click New Case in **Play** ▸ **Cases**. Pick Up a Block is in the Goal list when the arm ends in two fingers on their own joints that close together. Steps are in [Pick up a block with a gripper](/help/pick-up-a-block-with-a-gripper). An arm without one doesn't see it, and a Pick Up a Block Case opened on such an arm says it needs a gripper.
 
 ![New Case with Pick Up a Block chosen, and its Distance, Spacing, Radius and Time](/changelog/pick-up-a-block/new-case.png)
 

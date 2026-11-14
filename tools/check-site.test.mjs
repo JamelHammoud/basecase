@@ -170,3 +170,22 @@ describe('lintSite', () => {
     ]);
   });
 });
+
+describe('menu paths', () => {
+  it('fails a menu path with a plain segment or one bold span, but not a quoted message or alt text', () => {
+    const help = (body) => ({ 'site/content/help/x.md': page('title: Open a scene\ndate: 2026-11-12', body) });
+    const problem = 'site/content/help/x.md:6: write each label in a menu path in bold, **File** ▸ **Import** (§3f)';
+
+    expect(lint(help('1. Choose File ▸ **Import**.'))).toEqual([problem]);
+    expect(lint(help('1. Choose **File ▸ Import**.'))).toEqual([problem]);
+    expect(lint(help('| Mesh | Settings ▸ **Canvas** |'))).toEqual([problem]);
+    expect(
+      lint(
+        help(
+          '1. Choose **File** ▸ **Import**, then **View** ▸ **Camera** ▸ **Reset View**.\n\n## “Add it in Settings ▸ Printers.”\n\n![Settings ▸ Printers](/help/x/p.png)',
+        ),
+        ['/help/x/p.png'],
+      ),
+    ).toEqual([]);
+  });
+});

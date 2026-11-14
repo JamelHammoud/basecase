@@ -36,7 +36,7 @@ Each message below is what Basecase shows when it can't reach a printer or send 
 The printer is off, asleep or on another network, or its address changed.
 
 1. Check the printer is on and on the same network as your computer.
-2. Read the printer's address on its screen and compare it with **Address** in Settings ▸ **Printers**.
+2. Read the printer's address on its screen and compare it with **Address** in **Settings** ▸ **Printers**.
 3. Click **Test Connection**.
 
 It worked when the row reads “Connected to” and the printer's name. A printer that drops off later shows “Can’t reach the printer” in Print mode.
@@ -54,7 +54,7 @@ To keep both off, change **Send prints with** to **Bambu Studio** instead.
 
 The access code is wrong.
 
-1. On the printer, open Settings ▸ LAN Only and read the code.
+1. On the printer, open **Settings** ▸ **LAN Only** and read the code.
 2. Type it in **Access code** and press [[↩]].
 3. Click **Test Connection**.
 
@@ -62,7 +62,7 @@ The access code is wrong.
 
 The serial number doesn't match the printer at that address.
 
-1. On the printer, open Settings ▸ Device and read the serial number.
+1. On the printer, open **Settings** ▸ **Device** and read the serial number.
 2. Type it in **Serial number**, then click **Test Connection**.
 
 ## “The printer couldn’t save the file. Check its SD card is in and has space.”
@@ -75,9 +75,9 @@ The message says where to make a key, and differs by connection:
 
 | Connection | Where to find the key |
 |---|---|
-| Klipper (Moonraker) | Mainsail or Fluidd, under Settings ▸ Authorization |
-| PrusaLink | The printer, under Settings ▸ Network ▸ PrusaLink |
-| OctoPrint | OctoPrint, under Settings ▸ Application Keys |
+| Klipper (Moonraker) | Mainsail or Fluidd, under **Settings** ▸ **Authorization** |
+| PrusaLink | The printer, under **Settings** ▸ **Network** ▸ **PrusaLink** |
+| OctoPrint | OctoPrint, under **Settings** ▸ **Application Keys** |
 
 Paste the new key in **API key**, press [[↩]], then click **Test Connection**.
 
@@ -89,7 +89,7 @@ Paste the new key in **API key**, press [[↩]], then click **Test Connection**.
 
 The printer picked under **Printer** in Print mode is no longer saved. It was removed in Settings while Print mode was open.
 
-1. Click **Open** in the message to go to Settings ▸ **Printers**.
+1. Click **Open** in the message to go to **Settings** ▸ **Printers**.
 2. Add the printer again, as in [Add a printer](/help/add-a-printer).
 3. Back in Print mode, pick it under **Printer** and send the plate again.
 

@@ -6,6 +6,7 @@ const CONTROL = 'hw/crates/robot-daemon/src/network/server.rs';
 const CLI = 'hw/crates/robot-daemon/src/cli.rs';
 const LOOPBACK = 'hw/crates/servo-emu/src/loopback.rs';
 const FIXTURES = 'hw/crates/robot-daemon/tests/network_security.rs';
+const INTERFACES = 'hw/crates/robot-daemon/src/network/interfaces.rs';
 const sources = () => readNetworkSources(ROOT);
 const change = (files, file, rewrite) =>
   files.map((entry) => (entry.file === file ? { ...entry, text: rewrite(entry.text) } : entry));
@@ -44,8 +45,35 @@ describe('the motor transport source lock with an opt-in control listener', () =
     );
 
     expect(networkSourceProblems(files)).toContain(
-      'The control listener must be enabled only by an explicit --listen address.',
+      'The control listener must be enabled only by an explicit private address or selected interface.',
     );
+  });
+
+  it.each([
+    ['let listen = interface.resolve(listen)?;', 'let listen = Some(default_address);'],
+    ['"--listen-interface" => interface.name = Some(value()?),', '"--listen-interface" => ignore(value()?),'],
+  ])('refuses an implicit interface listener replacing %s', (from, to) => {
+    const files = change(sources(), CLI, (text) => {
+      expect(text).toContain(from);
+
+      return text.replace(from, to);
+    });
+
+    expect(networkSourceProblems(files).length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ['return Ok(numeric);', 'return Ok(Some(default_address));'],
+    ['address.name == name && ', ''],
+    ['&& private_address(address.ip)', ''],
+  ])('refuses an interface resolver changed from %s to %s', (from, to) => {
+    const files = change(sources(), INTERFACES, (text) => {
+      expect(text).toContain(from);
+
+      return text.replace(from, to);
+    });
+
+    expect(networkSourceProblems(files).length).toBeGreaterThan(0);
   });
 
   it('refuses a second source module or a test fixture that opens a socket', () => {

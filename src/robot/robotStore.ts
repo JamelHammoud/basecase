@@ -5,6 +5,7 @@ import type { RobotConnection } from './jointRows';
 import { readOperateLog } from './operateLog';
 import type { RobotPolicyRef } from './robotPolicy';
 import type { NetworkRobotAsk } from './networkTypes';
+import { NETWORK_ROBOT_MISMATCH, networkRobotMatches } from './networkRobot';
 import { recalledSceneJoints, rememberSceneJoints } from './sceneJointsMemory';
 import { runOf, type RobotRun, type RunFault } from './runBuffer';
 import {
@@ -308,7 +309,11 @@ function rememberConnectedJoints(name: string, joints: string[]) {
   notify();
 }
 
-export async function connectNetworkRobot(ask: NetworkRobotAsk, joints: string[]): Promise<ConnectReply> {
+export async function connectNetworkRobot(
+  ask: NetworkRobotAsk,
+  joints: string[],
+  spec: ConnectSpec,
+): Promise<ConnectReply> {
   const name = nextUnitName(takenUnits());
 
   if (state.link !== 'connected') {
@@ -319,6 +324,14 @@ export async function connectNetworkRobot(ask: NetworkRobotAsk, joints: string[]
   const reply = (await api?.robotNetworkConnect?.(ask, name)) ?? unavailable;
 
   if (!reply.ok) return reply;
+
+  const actual = api?.robotState ? (await api.robotState(name))?.spec : units.get(name)?.state.spec;
+
+  if (!networkRobotMatches(actual, { spec, joints })) {
+    await api?.robotDisconnect?.(name);
+
+    return { ok: false, message: NETWORK_ROBOT_MISMATCH };
+  }
 
   rememberConnectedJoints(name, joints);
 

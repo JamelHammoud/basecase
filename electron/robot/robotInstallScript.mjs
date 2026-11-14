@@ -5,16 +5,17 @@ const base64 = (value) => Buffer.from(value).toString('base64');
 const encodedLine = (name, value) => `printf '%s' '${base64(value)}' | base64 -d > "$stage/${name}"`;
 
 function service(config) {
-  const { spec, address, port, pairingCode } = config;
-  const listen = address.includes(':') ? `[${address}]:${port}` : `${address}:${port}`;
+  const { spec, address, port } = config;
   const name = JSON.stringify(config.name)
     .replaceAll('%', '%%')
     .replaceAll('$', () => '$$');
   const args = [
     ...daemonArgs(spec, '%h/.local/share/basecase-robot').map((arg) => arg.replaceAll('\\', '/')),
-    `--listen ${listen}`,
+    '--listen-interface ${BASECASE_LISTEN_INTERFACE}',
+    `--listen-port ${port}`,
+    ...(address.includes(':') ? ['--listen-ipv6'] : []),
     `--name ${name}`,
-    `--pairing-code ${pairingCode}`,
+    '--pairing-code-file %h/.local/share/basecase-robot/pairing-code.seed',
   ];
 
   return [
@@ -24,6 +25,7 @@ function service(config) {
     '',
     '[Service]',
     'Type=simple',
+    'EnvironmentFile="%h/.local/share/basecase-robot/network.env"',
     `ExecStart=%h/.local/share/basecase-robot/robot-daemon ${args.join(' ')}`,
     'Restart=on-failure',
     'RestartSec=2',
@@ -54,15 +56,23 @@ export function robotInstallScript(config) {
     encodedLine('robot-daemon', config.binary),
     encodedLine('joint_map.json', config.encodedMap),
     encodedLine('calibration.json', JSON.stringify(config.calibration)),
+    encodedLine('pairing-code.seed', config.pairingCode),
     ...(config.spec.units ? [encodedLine('units.json', unitsJson(config.spec.units))] : []),
     encodedLine('basecase-robot.service', service(config)),
     'chmod 700 "$stage/robot-daemon"',
     '"$stage/robot-daemon" --family feetech --ids 1 --port /dev/basecase-install-lock-probe 2>"$stage/motor-lock" && exit 1',
     'grep -q "Real motors are locked in this build" "$stage/motor-lock" || { echo "The daemon failed its motor lock check." >&2; exit 1; }',
+    `listen_address=$(printf '%s' '${base64(config.address)}' | base64 -d)`,
+    'interface=$("$stage/robot-daemon" --interface-for "$listen_address")',
+    'case "$interface" in \'\'|*[!A-Za-z0-9_.:-]*) echo "The robot computer’s network interface name is unsupported." >&2; exit 1 ;; esac',
+    '[ "${#interface}" -le 63 ] || { echo "The robot computer’s network interface name is too long." >&2; exit 1; }',
+    'printf "BASECASE_LISTEN_INTERFACE=%s\\n" "$interface" > "$stage/network.env"',
     'if systemctl --user cat basecase-robot.service >/dev/null 2>&1; then systemctl --user stop basecase-robot.service; fi',
     'mv "$stage/robot-daemon" "$root/robot-daemon"',
     'mv "$stage/joint_map.json" "$root/joint_map.json"',
     'mv "$stage/calibration.json" "$root/calibration.json"',
+    'mv "$stage/pairing-code.seed" "$root/pairing-code.seed"',
+    'mv "$stage/network.env" "$root/network.env"',
     ...(config.spec.units ? ['mv "$stage/units.json" "$root/units.json"'] : []),
     'mv "$stage/basecase-robot.service" "$units/basecase-robot.service"',
     'systemctl --user daemon-reload',

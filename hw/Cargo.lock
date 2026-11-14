@@ -1436,6 +1436,7 @@ dependencies = [
  "getrandom 0.4.3",
  "hkdf",
  "hmac",
+ "if-addrs",
  "loom",
  "mdns-sd",
  "ort",

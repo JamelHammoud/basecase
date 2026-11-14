@@ -121,6 +121,18 @@ describe('network robot link', () => {
     expect(link.activePolicy).toBeNull();
     expect(robot.commands.some((command) => command.cmd === 'put_artefact')).toBe(false);
   });
+
+  it('closes an authenticated socket when the local session folder cannot be created', async () => {
+    const { robot, link, directory } = await setup();
+
+    link.tmpDir = path.join(directory, 'missing');
+    expect((await link.connect({ ...robot.endpoint, code: '123456' })).ok).toBe(false);
+    await vi.waitFor(() => expect(robot.sessions[0].socket.destroyed).toBe(true));
+    expect(link.pending).toBeNull();
+    expect(link.state().connected).toBe(false);
+    link.tmpDir = directory;
+    expect(await link.connect(robot.endpoint)).toEqual({ ok: true });
+  });
 });
 
 describe('network robot identities', () => {

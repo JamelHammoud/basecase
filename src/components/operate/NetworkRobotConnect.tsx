@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button, Select, TextInput } from '../../design-system';
 import type { NetworkRobot } from '../../robot/networkTypes';
-import { networkRobotAsk } from '../../robot/networkRobot';
+import { NETWORK_ROBOT_MISMATCH, networkRobotAsk, networkRobotChoice } from '../../robot/networkRobot';
 import { connectNetworkRobot, discoverRobots } from '../../robot/robotStore';
 import type { ConnectChoice } from '../../robot/sceneRobot';
 import { errorMessage } from '../../utils/errorMessage';
@@ -15,7 +15,8 @@ export function NetworkRobotConnect({ choices }: { choices: ConnectChoice[] }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const robot = robots.find((item) => keyOf(item) === selected) ?? robots[0];
-  const choice = choices.find((item) => item.spec.family === robot?.family) ?? choices[0];
+  const choice = robot ? networkRobotChoice(robot, choices) : undefined;
+  const refusal = choice ? message : NETWORK_ROBOT_MISMATCH;
 
   useEffect(() => {
     let active = true;
@@ -36,12 +37,12 @@ export function NetworkRobotConnect({ choices }: { choices: ConnectChoice[] }) {
   }, []);
 
   const connect = async () => {
-    if (!robot || busy) return;
+    if (!robot || !choice || busy) return;
 
     setBusy(true);
 
     try {
-      const reply = await connectNetworkRobot(networkRobotAsk(robot, code), choice.joints);
+      const reply = await connectNetworkRobot(networkRobotAsk(robot, code), choice.joints, choice.spec);
 
       setMessage(reply.ok ? null : reply.message);
 
@@ -77,14 +78,14 @@ export function NetworkRobotConnect({ choices }: { choices: ConnectChoice[] }) {
       <Button
         variant="primary"
         fullWidth
-        disabled={busy || (code.length > 0 && code.length !== 6)}
+        disabled={!choice || busy || (code.length > 0 && code.length !== 6)}
         onClick={() => void connect()}
       >
         {busy ? 'Connecting…' : 'Connect Robot'}
       </Button>
-      {message && (
-        <p role="status" className="px-1 text-[12.5px] text-white/50">
-          {message}
+      {refusal && (
+        <p role="status" className="px-1 text-[12.5px] text-red-400">
+          {refusal}
         </p>
       )}
     </div>

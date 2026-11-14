@@ -8,6 +8,34 @@ use std::process::{Command, Stdio};
 use std::time::Duration;
 
 #[test]
+fn interface_helper_resolves_only_an_active_private_local_address() {
+    let output = Command::new(env!("CARGO_BIN_EXE_robot-daemon"))
+        .args(["--interface-for", "127.0.0.1"])
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let name = String::from_utf8(output.stdout).unwrap();
+    assert!(robot_daemon::network::interfaces::checked_name(name.trim()));
+
+    for address in ["8.8.8.8", "not-an-address"] {
+        let refused = Command::new(env!("CARGO_BIN_EXE_robot-daemon"))
+            .args(["--interface-for", address])
+            .output()
+            .unwrap();
+        assert!(!refused.status.success());
+        assert!(refused.stdout.is_empty());
+    }
+}
+
+#[test]
+fn an_explicit_interface_opens_the_authenticated_control_listener() {
+    let robot = Robot::start_on_interface("feetech", 2, "arm");
+    let key = robot.pair();
+    let mut link = robot.connect(key);
+    assert_eq!(link.event()["mode"], "look");
+}
+
+#[test]
 fn all_robot_families_watchdog_stop_after_socket_drop_and_reconnect_in_look() {
     for (family, count, class) in [
         ("feetech", 6, "arm"),

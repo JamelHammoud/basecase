@@ -44,6 +44,7 @@ async function installComputer(core: WorkspaceCore, fields: RobotComputerAsk): P
   const connected = await connectNetworkRobot(
     { host: reply.host, port: reply.port, ...(reply.pairingCode ? { code: reply.pairingCode } : {}) },
     choice.joints,
+    ask.spec,
   );
 
   return connected.ok ? reply : connected;

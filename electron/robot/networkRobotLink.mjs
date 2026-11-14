@@ -71,6 +71,9 @@ export class NetworkRobotLink extends RobotLink {
     try {
       return await this.openNetwork(endpoint);
     } catch (error) {
+      this.pending?.kill();
+      this.pending = null;
+
       return { ok: false, message: error.message };
     } finally {
       this.connecting = false;
@@ -103,8 +106,6 @@ export class NetworkRobotLink extends RobotLink {
 
     const hello = await ready;
 
-    this.pending = null;
-
     if (generation !== this.generation) {
       pipe.kill();
 
@@ -124,7 +125,13 @@ export class NetworkRobotLink extends RobotLink {
 
     const artefacts = fs.mkdtempSync(path.join(this.tmpDir, 'basecase-network-robot-'));
 
-    fs.writeFileSync(path.join(artefacts, 'calibration.json'), JSON.stringify(checked.calibration));
+    try {
+      fs.writeFileSync(path.join(artefacts, 'calibration.json'), JSON.stringify(checked.calibration));
+    } catch (error) {
+      fs.rmSync(artefacts, { recursive: true, force: true });
+
+      throw error;
+    }
 
     const session = {
       ...checked,
@@ -140,6 +147,7 @@ export class NetworkRobotLink extends RobotLink {
 
     session.recorder = this.recorderFor(session, null);
     this.session = session;
+    this.pending = null;
     session.aliveTimer = setInterval(() => pipe.alive(), 100);
     this.emit({ event: 'link', state: 'connected', spec: session.spec, endpoint: session.endpoint });
     this.onLine(session, JSON.stringify(hello));

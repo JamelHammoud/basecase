@@ -18,6 +18,14 @@ pub struct Robot {
 
 impl Robot {
     pub fn start(family: &str, count: usize, class: &str) -> Self {
+        Self::start_network(family, count, class, false)
+    }
+
+    pub fn start_on_interface(family: &str, count: usize, class: &str) -> Self {
+        Self::start_network(family, count, class, true)
+    }
+
+    fn start_network(family: &str, count: usize, class: &str, interface: bool) -> Self {
         let directory = std::env::temp_dir().join(format!(
             "robot-network-{}-{}",
             std::process::id(),
@@ -32,19 +40,28 @@ impl Robot {
         let joints: Vec<Value> = ids.iter().map(|id| json!({"id":id,"name":format!("joint_{id}"),"zero_counts":2048,"direction":1,"min_rad":-2.8,"max_rad":2.8})).collect();
         let calibration = json!({"joints":joints,"class":class,"stand_pose":vec![0.0;ids.len()]});
         std::fs::write(directory.join("calibration.json"), calibration.to_string()).unwrap();
+        std::fs::write(directory.join("pairing-code.seed"), "123456").unwrap();
         let mut args = vec![
             "--family".to_string(),
             family.into(),
             "--emulated".into(),
-            "--listen".into(),
-            "127.0.0.1:0".into(),
             "--name".into(),
             format!("Test {family} {count}"),
-            "--pairing-code".into(),
-            "123456".into(),
+            "--pairing-code-file".into(),
+            directory.join("pairing-code.seed").display().to_string(),
             "--artefacts".into(),
             directory.display().to_string(),
         ];
+
+        args.extend(match interface {
+            true => vec![
+                "--listen-interface".into(),
+                robot_daemon::network::interfaces::interface_for("127.0.0.1").unwrap(),
+                "--listen-port".into(),
+                "0".into(),
+            ],
+            false => vec!["--listen".into(), "127.0.0.1:0".into()],
+        });
 
         if family == "ros2" {
             args.extend([
@@ -89,6 +106,8 @@ impl Robot {
                 break event["address"].as_str().unwrap().parse().unwrap();
             }
         };
+
+        assert!(!directory.join("pairing-code.seed").exists());
 
         Self {
             child,

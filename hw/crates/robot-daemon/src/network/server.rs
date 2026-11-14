@@ -19,6 +19,7 @@ pub struct NetworkOptions {
     pub address: SocketAddr,
     pub name: String,
     pub pairing_code: Option<String>,
+    pub pairing_code_file: Option<PathBuf>,
     pub artefacts: PathBuf,
     pub spec: Value,
 }
@@ -45,9 +46,13 @@ pub fn serve<C: Controller + Send + 'static>(
         return Err("Choose a private network address for --listen.".into());
     }
 
-    let mut pairing = Pairing::load(&options.artefacts, options.pairing_code.as_deref())?;
+    let mut pairing = Pairing::load_seed(
+        &options.artefacts,
+        options.pairing_code.as_deref(),
+        options.pairing_code_file.as_deref(),
+    )?;
     let listener =
-        TcpListener::bind(options.address).map_err(|error| format!("The robot listener could not start: {error}"))?;
+        TcpListener::bind(options.address).map_err(|error| format!("The robot listener couldn't start: {error}"))?;
     let address = listener.local_addr().map_err(|error| error.to_string())?;
     let _advertisement = advertise(&options, address, &pairing)?;
     let (diagnostics, diagnostic_lines) = sync_channel::<String>(256);
@@ -226,7 +231,7 @@ impl Session<'_> {
         reset
             .recv_timeout(Duration::from_secs(5))
             .map_err(|_| "Wait for the robot to finish stopping before reconnecting.")?;
-        let mut hello: Value = serde_json::from_str(self.hello).map_err(|_| "The robot greeting could not be read.")?;
+        let mut hello: Value = serde_json::from_str(self.hello).map_err(|_| "The robot greeting couldn't be read.")?;
         hello["spec"] = self.options.spec.clone();
         hello["name"] = json!(self.options.name);
         hello["id"] = json!(self.pairing.robot_id()?);
@@ -301,14 +306,14 @@ impl Session<'_> {
             if envelope.seq != sequence
                 || !equal_secret(&session_mac(key, nonce, sequence, &envelope.body), &envelope.mac)
             {
-                return Err("The robot command could not be authenticated. Reconnect to continue.".into());
+                return Err("The robot command couldn't be authenticated. Reconnect to continue.".into());
             }
 
             sequence = sequence
                 .checked_add(1)
                 .ok_or("Reconnect to continue sending commands.")?;
             let value: Value =
-                serde_json::from_str(&envelope.body).map_err(|_| "The robot command could not be read.")?;
+                serde_json::from_str(&envelope.body).map_err(|_| "The robot command couldn't be read.")?;
 
             if value["cmd"] == "put_artefact" {
                 self.put_artefact(&value)?;

@@ -28,7 +28,7 @@ Run the daemon on a Linux computer and connect to it over your local network, wi
 This needs the desktop app and a 64-bit arm64 or x64 Linux computer with SSH and systemd user services. Real motors stay locked.
 
 The daemon runs emulated Feetech, Dynamixel, G1 or ROS 2 robots on that computer. It doesn't open motor hardware.
-Installation requires bounded rotary joints. Sliding joints and wheels without angular limits aren't accepted.
+Installation requires bounded rotary joints whose ranges stay within one servo turn after applying their zeros and directions. Sliding joints and wheels without angular limits aren't accepted.
 
 ## Install from your scene
 
@@ -62,8 +62,8 @@ The installer reports a failure if those prerequisites are missing.
 ![Kitchen Arm selected in Operate with its pairing code entered](/help/connect-a-robot-computer/connect.png)
 
 Enter the code once. Later connections use the key saved on both computers, so leave the code blank.
-The pairing follows the robot when its IP address changes.
-Discovery uses the local network and doesn't reach robots over the internet.
+The pairing follows the robot when its IP address changes. If DHCP changes its address while the service is running, restart the service over SSH with `systemctl --user restart basecase-robot`, then reconnect.
+Discovery uses the local network and doesn't reach robots over the internet. The connected robot must match the scene's joint order, IDs and robot class. ROS 2 connections must also match the scene's joint names and controller kind.
 
 5. Under **Ladder**, click **Set Up**.
 6. Click **Test**.

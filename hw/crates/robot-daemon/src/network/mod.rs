@@ -1,4 +1,5 @@
 pub mod enrollment;
+pub mod interfaces;
 pub mod pair_client;
 mod pairing;
 pub mod server;

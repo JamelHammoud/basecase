@@ -62,6 +62,17 @@ function copiedFile(script, name) {
 }
 
 describe('robot computer installation', () => {
+  it('keeps IPv6 service binding when installation uses a private IPv6 address', async () => {
+    const h = harness();
+    const address = ['fd00', '', '42'].join(':');
+    const result = await installRobot(request({ target: `robot@[${address}]` }), h.options);
+    const unit = copiedFile(h.calls[1].input, 'basecase-robot.service');
+
+    expect(result).toMatchObject({ ok: true, address });
+    expect(unit).toContain('--listen-interface ${BASECASE_LISTEN_INTERFACE} --listen-port 7447 --listen-ipv6');
+    expect(h.calls[0].args).toContain(`HostName=${address}`);
+  });
+
   it('keeps G1 writable motor IDs and original names when package order differs', async () => {
     const h = harness();
     const map = {
@@ -144,7 +155,9 @@ describe('robot computer installation', () => {
     const unit = Buffer.from(encoded, 'base64').toString();
 
     expect(unit).toContain('--emulated');
-    expect(unit).toContain(`--listen ${lan}:7447`);
+    expect(unit).toContain('--listen-interface ${BASECASE_LISTEN_INTERFACE} --listen-port 7447');
+    expect(unit).toContain('EnvironmentFile="%h/.local/share/basecase-robot/network.env"');
+    expect(unit).not.toContain('--listen-ipv6');
     expect(unit).not.toContain('--port');
     expect(h.calls[0].args).toContain('HostName=192.168.1.42');
     expect(h.calls[0].args).toContain('HostKeyAlias=robot.local');
@@ -153,6 +166,32 @@ describe('robot computer installation', () => {
 });
 
 describe('robot computer installation validation', () => {
+  it.each([
+    { zero_counts: 0, direction: 1, min_rad: -1, max_rad: 1 },
+    { zero_counts: 4095, direction: 1, min_rad: -1, max_rad: 1 },
+    { zero_counts: 0, direction: -1, min_rad: -1, max_rad: 1 },
+    { zero_counts: 4095, direction: -1, min_rad: -1, max_rad: 1 },
+    { zero_counts: 0, direction: 1, min_rad: -Math.PI / 4096, max_rad: 1 },
+  ])('refuses rotary limits outside the encoder turn before SSH: %j', async (limits) => {
+    const h = harness();
+    const map = { ...jointMap, joints: [{ ...jointMap.joints[0], ...limits }] };
+    const result = await installRobot(request({ jointMap: map }), h.options);
+
+    expect(result.ok).toBe(false);
+    expect(h.run).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { zero_counts: 0, direction: 1, min_rad: -0.0007, max_rad: 1 },
+    { zero_counts: 4095, direction: -1, min_rad: 0, max_rad: 1 },
+  ])('accepts rotary limits whose rounded encoder counts stay in the turn: %j', async (limits) => {
+    const h = harness();
+    const map = { ...jointMap, joints: [{ ...jointMap.joints[0], ...limits }] };
+
+    expect((await installRobot(request({ jointMap: map }), h.options)).ok).toBe(true);
+    expect(h.run).toHaveBeenCalledTimes(2);
+  });
+
   it('refuses public, loopback, metadata, mixed DNS answers and empty DNS before SSH', async () => {
     for (const addresses of [
       [publicAddress],
@@ -197,6 +236,7 @@ describe('robot computer installation validation', () => {
       { key: '-oProxyCommand=id' },
       { key: dir },
       { pairingCode: '123456\nExecStart=id' },
+      { pairingCode: 123456 },
       { emulated: false },
       { jointMap: { ...jointMap, class: 'arm\nExecStart=id' } },
       { jointMap: { ...jointMap, joints: [{ ...jointMap.joints[0], id: '1;id' }] } },

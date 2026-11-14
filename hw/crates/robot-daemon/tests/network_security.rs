@@ -135,3 +135,43 @@ fn robot_identity_hashes_the_decoded_permanent_key() {
     };
     assert_eq!(lower.robot_id().unwrap(), upper.robot_id().unwrap());
 }
+
+#[test]
+fn a_private_pairing_seed_is_consumed_after_creating_or_loading_credentials() {
+    use robot_daemon::network::Pairing;
+    let directory = std::env::temp_dir().join(format!("pairing-seed-{}", robot_daemon::network::random_hex().unwrap()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let seed = directory.join("pairing-code.seed");
+    std::fs::write(&seed, "123456\n").unwrap();
+    let first = Pairing::load_seed(&directory, None, Some(&seed)).unwrap();
+    assert_eq!(first.code.as_deref(), Some("123456"));
+    assert!(!seed.exists());
+    std::fs::write(&seed, "654321").unwrap();
+    let restarted = Pairing::load_seed(&directory, None, Some(&seed)).unwrap();
+    assert_eq!(restarted.key, first.key);
+    assert_eq!(restarted.code, first.code);
+    assert!(!seed.exists());
+    std::fs::remove_file(directory.join("pairing.json")).unwrap();
+    let reset = Pairing::load_seed(&directory, None, Some(&seed)).unwrap();
+    assert_ne!(reset.key, first.key);
+    assert_eq!(reset.code.as_ref().unwrap().len(), 6);
+    std::fs::remove_dir_all(directory).unwrap();
+}
+
+#[test]
+fn a_rejected_pairing_seed_stays_available_until_credentials_can_be_created() {
+    use robot_daemon::network::Pairing;
+    let directory = std::env::temp_dir().join(format!(
+        "pairing-seed-refused-{}",
+        robot_daemon::network::random_hex().unwrap()
+    ));
+    std::fs::create_dir_all(&directory).unwrap();
+    let seed = directory.join("pairing-code.seed");
+    std::fs::write(&seed, "bad-code").unwrap();
+    assert!(Pairing::load_seed(&directory, None, Some(&seed)).is_err());
+    assert!(seed.exists());
+    assert!(!directory.join("pairing.json").exists());
+    assert!(Pairing::load_seed(&directory, Some("123456"), Some(&seed)).is_err());
+    assert!(seed.exists());
+    std::fs::remove_dir_all(directory).unwrap();
+}

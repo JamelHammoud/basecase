@@ -55,11 +55,22 @@ function keyOf(key) {
 }
 
 const validId = (id) => Number.isInteger(id) && id >= 1 && id <= 253;
+const TAU = Math.fround(2 * Math.PI);
 const MAX_RANGE = Math.fround(Math.fround(2 * Math.PI) * Math.fround(0.95));
 
-function validCalibrationRange(minimum, maximum) {
+function encoderCount(angle, joint) {
+  const signed = Math.fround(joint.direction * angle);
+  const turns = Math.fround(Math.fround(signed * 4096) / TAU);
+  const counts = Math.fround(joint.zero_counts + turns);
+
+  return Math.sign(counts) * Math.floor(Math.abs(counts) + 0.5);
+}
+
+function validCalibrationRange(joint) {
+  const { min_rad: minimum, max_rad: maximum } = joint;
   const lo = Math.fround(minimum);
   const hi = Math.fround(maximum);
+  const counts = [encoderCount(lo, joint), encoderCount(hi, joint)];
 
   return (
     finite(minimum) &&
@@ -67,7 +78,8 @@ function validCalibrationRange(minimum, maximum) {
     Number.isFinite(lo) &&
     Number.isFinite(hi) &&
     lo < hi &&
-    Math.fround(hi - lo) <= MAX_RANGE
+    Math.fround(hi - lo) <= MAX_RANGE &&
+    counts.every((count) => count >= 0 && count <= 4095)
   );
 }
 
@@ -88,7 +100,7 @@ function calibrationJoint(joint) {
 
   const { id, name, zero_counts, direction, min_rad, max_rad } = joint;
   const counts = Number.isInteger(zero_counts) && zero_counts >= 0 && zero_counts <= 4095;
-  const range = validCalibrationRange(min_rad, max_rad);
+  const range = validCalibrationRange(joint);
 
   if (
     typeof name !== 'string' ||
@@ -131,7 +143,13 @@ export function checkedRobotInstall(request) {
   const port = request.port ?? 7447;
   const pairingCode = request.pairingCode ?? String(randomInt(100000, 1000000));
 
-  if (!Number.isInteger(port) || port < 1024 || port > 65535 || !/^\d{6}$/.test(pairingCode))
+  if (
+    !Number.isInteger(port) ||
+    port < 1024 ||
+    port > 65535 ||
+    typeof pairingCode !== 'string' ||
+    !/^\d{6}$/.test(pairingCode)
+  )
     return failure('Choose a port from 1024 to 65535 and a six-digit pairing code.');
 
   const encodedMap = JSON.stringify(request.jointMap);

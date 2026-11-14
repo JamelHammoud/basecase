@@ -6,6 +6,7 @@ import { isPairingKey } from './networkCredentials.mjs';
 export const NETWORK_MAX_LINE = 64 * 1024;
 
 const HANDSHAKE_MS = 5000;
+const RESPONSE_MS = 1000;
 const MAX_QUEUED = 24 * 1024 * 1024;
 const hmac = (key, text) => createHmac('sha256', Buffer.from(key, 'hex')).update(text).digest('hex');
 
@@ -55,6 +56,7 @@ class NetworkSocket {
 
     this.finished = true;
     clearTimeout(this.timer);
+    clearTimeout(this.responseTimer);
     this.pacer?.stop();
     this.socket?.destroy();
     this.options.on.exit(message);
@@ -78,6 +80,7 @@ class NetworkSocket {
 
     this.authenticated = true;
     clearTimeout(this.timer);
+    this.heard();
     this.pacer = new IntentPacer({ write: (command) => this.write(command) });
     this.options.on.ready(event);
   }
@@ -111,11 +114,21 @@ class NetworkSocket {
       return this.exit('The robot sent a damaged message.');
     }
 
-    if (this.authenticated) return this.options.on.line(JSON.stringify(event));
+    if (this.authenticated) {
+      this.heard();
+      this.options.on.line(JSON.stringify(event));
+
+      return;
+    }
 
     if (event?.event === 'hello') return this.hello(event);
 
     this.challenge(event);
+  }
+
+  heard() {
+    clearTimeout(this.responseTimer);
+    this.responseTimer = setTimeout(() => this.exit('The robot connection stopped responding.'), RESPONSE_MS);
   }
 
   challenge(event) {

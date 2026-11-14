@@ -218,6 +218,7 @@ describe('Operate a network robot', () => {
   it('sends the scene joint map from the robot computer form', async () => {
     let request: Record<string, unknown> | null = null;
 
+    await openPlayTab(app.page, 'Operate');
     await app.page.route('**/api/bridge/robot-install', async (route) => {
       request = route.request().postDataJSON() as Record<string, unknown>;
       await route.fulfill({

@@ -25,7 +25,7 @@ pub fn pair(address: SocketAddr, code: &str) -> Result<String, String> {
     let challenge: Value = serde_json::from_str(
         &socket_line(&mut reader, 4096, Duration::from_secs(5)).map_err(|error| error.to_string())?,
     )
-    .map_err(|_| "The robot pairing challenge could not be read.")?;
+    .map_err(|_| "The robot pairing challenge couldn't be read.")?;
     let nonce = challenge["nonce"]
         .as_str()
         .ok_or("The robot pairing challenge needs a nonce.")?;
@@ -42,7 +42,7 @@ pub fn pair(address: SocketAddr, code: &str) -> Result<String, String> {
         &socket_line(&mut reader, 4096, Duration::from_secs(5))
             .map_err(|_| "Pairing failed. Check the code shown on the robot computer.")?,
     )
-    .map_err(|_| "The robot pairing response could not be read.")?;
+    .map_err(|_| "The robot pairing response couldn't be read.")?;
     let key = decrypt(&key, &transcript, &response)?;
 
     Ok(key.iter().map(|byte| format!("{byte:02x}")).collect())
@@ -55,7 +55,7 @@ pub fn run(address: &str) -> Result<(), String> {
     let stdin = std::io::stdin();
     let line =
         bounded_line(&mut stdin.lock(), 128).map_err(|_| "Send the pairing code through stdin as one JSON line.")?;
-    let request: Value = serde_json::from_str(&line).map_err(|_| "The pairing code command could not be read.")?;
+    let request: Value = serde_json::from_str(&line).map_err(|_| "The pairing code command couldn't be read.")?;
     let code = request["code"].as_str().ok_or("Enter the robot pairing code.")?;
     let key = pair(address, code)?;
 

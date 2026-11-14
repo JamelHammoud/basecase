@@ -9,6 +9,7 @@ const ADDRESS_FIXTURES = new Map([
 const LOOPBACK = 'hw/crates/servo-emu/src/loopback.rs';
 const CLI = 'hw/crates/robot-daemon/src/cli.rs';
 const MAIN = 'hw/crates/robot-daemon/src/main.rs';
+const INTERFACES = 'hw/crates/robot-daemon/src/network/interfaces.rs';
 const NETWORK = /rustdds::|::bind\(|0\.0\.0\.0|UNSPECIFIED/;
 const CONTROL_BIND = 'TcpListener::bind(options.address)';
 const compact = (source) => source.replace(/\s+/g, ' ');
@@ -45,16 +46,34 @@ function sourceProblem({ file, text }) {
     : null;
 }
 
+function explicitListener(cli) {
+  return (
+    cli.includes('let mut listen: Option<SocketAddr> = None;') &&
+    /"--listen" => \{ listen = Some\(/.test(cli) &&
+    cli.includes('let mut interface = InterfaceListener::default();') &&
+    cli.includes('"--listen-interface" => interface.name = Some(value()?),') &&
+    cli.includes('let listen = interface.resolve(listen)?;') &&
+    cli.includes('let network = listen.map(')
+  );
+}
+
+function selectedInterface(interfaces) {
+  return (
+    interfaces.includes('#[derive(Default)] pub struct InterfaceListener { pub name: Option<String>,') &&
+    /let Some\(name\) = self\.name else \{[^}]+\} return Ok\(numeric\); \};/.test(interfaces) &&
+    interfaces.includes('address.name == name && address.ip.is_ipv6() == ipv6 && private_address(address.ip)')
+  );
+}
+
 function optInProblem(sources) {
   const cli = compact(sources.find(({ file }) => file === CLI)?.text ?? '');
   const main = compact(sources.find(({ file }) => file === MAIN)?.text ?? '');
-  const explicit =
-    cli.includes('let mut listen: Option<SocketAddr> = None;') &&
-    /"--listen" => \{ listen = Some\(/.test(cli) &&
-    cli.includes('let network = listen.map(');
+  const interfaces = compact(sources.find(({ file }) => file === INTERFACES)?.text ?? '');
   const dispatch = /if let Some\(options\) = network \{ robot_daemon::network::server::serve\(/.test(main);
 
-  return explicit && dispatch ? null : 'The control listener must be enabled only by an explicit --listen address.';
+  return explicitListener(cli) && dispatch && selectedInterface(interfaces)
+    ? null
+    : 'The control listener must be enabled only by an explicit private address or selected interface.';
 }
 
 export function networkSourceProblems(sources) {

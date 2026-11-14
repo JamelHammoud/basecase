@@ -17,6 +17,17 @@ use std::sync::Arc;
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|argument| argument == "--interface-for") {
+        let address = args
+            .get(1)
+            .filter(|_| args.len() == 2)
+            .unwrap_or_else(|| quit(2, "--interface-for needs the robot's private IP address."));
+        let name =
+            robot_daemon::network::interfaces::interface_for(address).unwrap_or_else(|message| quit(4, &message));
+        println!("{name}");
+        return;
+    }
+
     if args.first().is_some_and(|argument| argument == "--pair-client") {
         let address = args
             .get(1)

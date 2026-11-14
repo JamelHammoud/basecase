@@ -1,4 +1,5 @@
 use robot_daemon::calibration::RobotClass;
+use robot_daemon::network::interfaces::InterfaceListener;
 use robot_daemon::protocol::{G1_FAMILY, ROS2_FAMILY};
 use robot_daemon::ros2::Ros2Spec;
 use robot_daemon::transport::Target;
@@ -49,8 +50,10 @@ pub fn parse(args: &[String]) -> Result<Options, String> {
     let mut factory = false;
     let mut seed = None;
     let mut listen: Option<SocketAddr> = None;
+    let mut interface = InterfaceListener::default();
     let mut name = "Basecase Robot".to_string();
     let mut pairing_code = None;
+    let mut pairing_code_file = None;
     let mut rest = args.iter();
 
     while let Some(flag) = rest.next() {
@@ -65,7 +68,13 @@ pub fn parse(args: &[String]) -> Result<Options, String> {
                 )
             }
             "--name" => name = value()?,
+            "--listen-interface" => interface.name = Some(value()?),
+            "--listen-port" => {
+                interface.port = Some(value()?.parse().map_err(|_| "Choose a robot port from 0 to 65535.")?)
+            }
+            "--listen-ipv6" => interface.ipv6 = true,
             "--pairing-code" => pairing_code = Some(value()?),
+            "--pairing-code-file" => pairing_code_file = Some(PathBuf::from(value()?)),
             "--family" => flags.family = Some(value()?),
             "--ids" => flags.ids = parse_ids(&value()?)?,
             "--class" => flags.class = Some(parse_class(&value()?)?),
@@ -107,9 +116,14 @@ pub fn parse(args: &[String]) -> Result<Options, String> {
         real => real,
     };
     let units = flags.units.take();
+    let listen = interface.resolve(listen)?;
+
+    if pairing_code.is_some() && pairing_code_file.is_some() {
+        return Err("Choose either --pairing-code or --pairing-code-file.".into());
+    }
 
     if name.is_empty() || name.len() > 63 || name.chars().any(char::is_control) {
-        return Err("The robot name needs 1 to 63 characters.".into());
+        return Err("Give the robot a name under 64 bytes.".into());
     }
 
     if listen.is_some_and(|address| !robot_daemon::network::private_address(address.ip())) {
@@ -120,6 +134,7 @@ pub fn parse(args: &[String]) -> Result<Options, String> {
         address,
         name,
         pairing_code,
+        pairing_code_file,
         artefacts: artefacts.clone(),
         spec: Value::Null,
     });

@@ -44,12 +44,12 @@ impl Exchange {
         let shared = self
             .state
             .finish(&message)
-            .map_err(|_| "The pairing exchange could not be completed.")?;
+            .map_err(|_| "The pairing exchange couldn't be completed.")?;
         let salt = decode_hex(nonce)?;
         let mut key = [0u8; 32];
         Hkdf::<Sha256>::new(Some(&salt), &shared)
             .expand(b"basecase-robot-pair-v1", &mut key)
-            .map_err(|_| "The pairing key could not be derived.")?;
+            .map_err(|_| "The pairing key couldn't be derived.")?;
 
         Ok(key)
     }
@@ -81,7 +81,7 @@ pub fn encrypt(key: &[u8; 32], transcript: &str, bytes: &[u8]) -> Result<Value, 
                 aad: transcript.as_bytes(),
             },
         )
-        .map_err(|_| "The pairing key could not be encrypted.")?;
+        .map_err(|_| "The pairing key couldn't be encrypted.")?;
     let proof = super::hmac(key, &format!("{transcript}:server"));
 
     Ok(json!({"event":"paired","iv":STANDARD.encode(iv),"data":STANDARD.encode(data),"proof":proof}))
@@ -116,7 +116,7 @@ pub fn decrypt(key: &[u8; 32], transcript: &str, reply: &Value) -> Result<[u8; 3
                 aad: transcript.as_bytes(),
             },
         )
-        .map_err(|_| "The robot pairing response could not be authenticated.")?;
+        .map_err(|_| "The robot pairing response couldn't be authenticated.")?;
 
     bytes
         .try_into()

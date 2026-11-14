@@ -24,13 +24,39 @@ pub fn auth_mac(key: &[u8; 32], nonce: &str) -> String {
 }
 
 impl Pairing {
+    pub fn load_seed(directory: &Path, requested_code: Option<&str>, code_file: Option<&Path>) -> Result<Self, String> {
+        if requested_code.is_some() && code_file.is_some() {
+            return Err("Choose either --pairing-code or --pairing-code-file.".into());
+        }
+
+        let seed = match code_file.filter(|_| !directory.join("pairing.json").exists()) {
+            Some(path) => match std::fs::read_to_string(path) {
+                Ok(code) => Some(code.trim().to_string()),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+                Err(error) => return Err(format!("The pairing code file couldn't be read: {error}")),
+            },
+            None => None,
+        };
+        let pairing = Self::load(directory, seed.as_deref().or(requested_code))?;
+
+        if let Some(path) = code_file {
+            match std::fs::remove_file(path) {
+                Ok(()) => {}
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(format!("The pairing code file couldn't be removed: {error}")),
+            }
+        }
+
+        Ok(pairing)
+    }
+
     pub fn load(directory: &Path, requested_code: Option<&str>) -> Result<Self, String> {
         std::fs::create_dir_all(directory).map_err(|error| error.to_string())?;
         let path = directory.join("pairing.json");
 
         if path.exists() {
             let bytes = std::fs::read(&path).map_err(|error| error.to_string())?;
-            let pairing: Self = serde_json::from_slice(&bytes).map_err(|_| "The robot pairing file cannot be read.")?;
+            let pairing: Self = serde_json::from_slice(&bytes).map_err(|_| "The robot pairing file can't be read.")?;
             pairing.key_bytes()?;
 
             if pairing

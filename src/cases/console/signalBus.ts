@@ -1,4 +1,5 @@
 import type { DriveCommand } from '../../sim/driveTypes';
+import type { TopicIndex } from '../../topics/topicIndex';
 import type { ConsoleSignal } from './format';
 import { matches, type InputAxis, type JointField, type RobotField } from './signalNames';
 
@@ -38,6 +39,8 @@ export interface SignalBus {
   subscribe: (listen: () => void) => () => void;
   version: () => number;
   playhead: () => Playhead | null;
+  topics?: () => TopicIndex | null;
+  listed?: () => string[];
 }
 
 export const HISTORY_SECONDS = 120;

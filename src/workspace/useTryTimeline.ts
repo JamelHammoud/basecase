@@ -9,6 +9,7 @@ import { loadRecording } from '../cases/tryStore';
 import type { RecordedEfforts } from '../sim/recordedFrames';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
+import { withoutTopics } from '../topics/recordingTopics';
 import type { Trace } from '../skills/contract';
 import type { ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
@@ -112,7 +113,7 @@ export function useTryTimeline(options: TimelineOptions) {
 
     if (!sim.modelNow()) await sim.start();
 
-    const efforts = await sim.scrub(recording);
+    const efforts = await sim.scrub(withoutTopics(recording));
 
     if (!efforts || ticket !== opening.current) return false;
 

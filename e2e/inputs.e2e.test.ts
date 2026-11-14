@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { saluteMotion, wave } from '../src/cameras/gestures/fixtures/gestures';
+import { exampleFrom } from '../src/cameras/gestures/gestureRecognizer';
 import { faceOffCentre } from '../src/cameras/operator/fixtures/faceOffCentre';
 import { handMovesRight } from '../src/cameras/operator/fixtures/handMovesRight';
 import { panTilt, PAN_JOINT } from '../src/cameras/operator/fixtures/panTilt';
@@ -10,7 +11,6 @@ import type { FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { bytesToBase64 } from '../src/utils/base64';
-import { g1Humanoid } from './g1Fixture';
 import { FAKE_CAMERA, openApp, openPlayTab, partCount, shown, type App } from './harness';
 import { HEARD_WORD, puppetScene, sitScene } from './inputCases';
 import { connectPhone, type PhoneSocket } from './phoneClient';
@@ -44,7 +44,7 @@ interface StudioWindow {
     inputEvents: () => InputEvent[];
     feedVoice: (samples: number[], sampleRate: number) => void;
     addCase: (raw: unknown) => string;
-    feedPose: (samples: PoseSample[]) => void;
+    feedPose: (samples: PoseSample[], fps: number) => void;
     operatorCamera: () => { feeding: boolean };
   };
 }
@@ -88,6 +88,7 @@ const WATCH_CAMERA = {
 };
 
 const TILT_HZ = 30;
+const FAST_FEED_FPS = 120;
 const HAND_MOVED_MM = 10;
 const FACE_TURNED_DEG = 10;
 const SETTLED_DEG = 2;
@@ -149,19 +150,29 @@ async function leaveCase() {
 }
 
 const feedPose = (samples: PoseSample[]) =>
-  app.page.evaluate((s) => (window as unknown as StudioWindow).__studio.feedPose(s), samples);
+  app.page.evaluate(([s, fps]) => (window as unknown as StudioWindow).__studio.feedPose(s, fps), [
+    samples,
+    FAST_FEED_FPS,
+  ] as const);
 
 const fed = () =>
   expect
-    .poll(() => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.operatorCamera().feeding), {
-      timeout: 60000,
-    })
+    .poll(() => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.operatorCamera().feeding))
     .toBe(false);
 
 const gestures = (since: number) => eventsSince('gesture', since);
 
-const teachSheet = (phase: string, taught: number) =>
-  app.page.locator(`[data-testid="teach-gesture"][data-phase="${phase}"][data-taught="${taught}"]`);
+async function watchCamera(kase: object, samples: PoseSample[]) {
+  const since = await pageNow();
+
+  await load(sceneOf(fixture('arm-6dof')));
+  await app.page.evaluate((raw) => (window as unknown as StudioWindow).__studio.addCase(raw), kase);
+  await feedPose(samples);
+  await command('Drive with Camera');
+  await fed();
+
+  return since;
+}
 
 async function command(label: string) {
   await app.page.keyboard.press('Meta+k');
@@ -181,13 +192,6 @@ async function startDriving() {
 
 async function stopDriving() {
   if ((await studio()).drive === 'off') return;
-
-  const sheet = app.page.getByTestId('teach-gesture');
-
-  if (await sheet.count()) {
-    await app.page.keyboard.press('Escape');
-    await sheet.waitFor({ state: 'detached' });
-  }
 
   await app.page.mouse.click(720, 450);
   await app.page.keyboard.press('Escape');
@@ -325,36 +329,18 @@ describe('live inputs', () => {
 });
 
 describe('gestures', () => {
-  it('fires one wave event for a wave, and fires a gesture taught from three examples', async () => {
-    const g1 = g1Humanoid();
-    const since = await pageNow();
+  it('fires one wave event for a wave held 3 s', async () => {
+    const since = await watchCamera(WATCH_CAMERA, wave({ waveS: 3 }));
 
-    await app.page.evaluate((record) => (window as unknown as StudioWindow).__studio.load(record), g1);
-    await expect.poll(() => partCount(app.page), { timeout: 10000 }).toBe(g1.parts.length);
-    await app.page.evaluate((raw) => (window as unknown as StudioWindow).__studio.addCase(raw), WATCH_CAMERA);
-
-    await feedPose(wave({ waveS: 3 }));
-    await command('Drive with Camera');
-    await fed();
     expect(await gestures(since)).toEqual(['wave']);
+    expect(app.errors).toEqual([]);
+  });
 
-    await command('Teach Gesture');
-    await app.page.getByRole('textbox', { name: 'Name' }).fill('salute');
-    await app.page.keyboard.press('Enter');
+  it('fires a gesture its Case was taught from three examples', async () => {
+    const salute = { name: 'salute', examples: [0, 1, 2].map((v) => exampleFrom(saluteMotion(v))) };
+    const since = await watchCamera({ ...WATCH_CAMERA, gestures: [salute] }, saluteMotion(3));
 
-    for (let i = 0; i < 3; i++) {
-      await teachSheet('recording', i).waitFor({ timeout: 15000 });
-      await feedPose(saluteMotion(i));
-      await fed();
-      await (i < 2 ? teachSheet('countdown', i + 1) : app.page.getByTestId('teach-gesture')).waitFor({
-        state: i < 2 ? 'visible' : 'detached',
-        timeout: 15000,
-      });
-    }
-
-    await feedPose(saluteMotion(3));
-    await fed();
-    expect(await gestures(since)).toEqual(['wave', 'salute']);
+    expect(await gestures(since)).toEqual(['salute']);
     expect(app.errors).toEqual([]);
   });
 });

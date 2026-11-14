@@ -51,8 +51,22 @@ export function closeInputs(ids: readonly string[]) {
 
 export const posesInputs = (ids: readonly string[]) => ids.some((id) => !!sources.get(id)?.pose);
 
+const padsAtLoad = () =>
+  typeof navigator !== 'undefined' && navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean).length : 0;
+
+let padsConnected = padsAtLoad();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('gamepadconnected', () => {
+    padsConnected++;
+  });
+  window.addEventListener('gamepaddisconnected', () => {
+    padsConnected = Math.max(0, padsConnected - 1);
+  });
+}
+
 function firstPad(): Gamepad | null {
-  if (typeof navigator === 'undefined' || !navigator.getGamepads) return null;
+  if (!padsConnected || !navigator.getGamepads) return null;
 
   return [...navigator.getGamepads()].find((p) => p?.connected) ?? null;
 }

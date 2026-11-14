@@ -13,7 +13,7 @@ const KIND_EXTENSIONS: Record<ImportKind, string[]> = {
   motion: ['bvh'],
   scene: [SCENE_FILE_EXTENSION],
   image: ['png', 'jpg', 'jpeg', 'webp', 'gif'],
-  data: ['mcap'],
+  data: ['mcap', 'bag'],
 };
 
 const KINDS = Object.keys(KIND_EXTENSIONS) as ImportKind[];

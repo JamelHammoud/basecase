@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { whenIdle } from '../../utils/whenIdle';
 import { cadEdgeMaterial, createMaterial } from '../partMesh/materials';
+import { softwareGl } from '../softwareGl';
 import { batchedMaterialFrom } from './batchKey';
 import type { Stage } from './stage';
 
@@ -110,6 +111,8 @@ function finishPrograms(stage: Stage, { materials, group, onDone }: Finish): () 
 }
 
 export function warmShaders(stage: Stage, onDone: () => void): () => void {
+  if (softwareGl()) return () => {};
+
   const { renderer, scene, camera } = stage;
   const group = warmGroup();
   let stopFinishing = () => {};

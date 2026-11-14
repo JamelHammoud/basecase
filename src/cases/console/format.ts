@@ -40,7 +40,7 @@ export interface CaseConsole {
   layout: { areas: ConsoleArea[] };
 }
 
-const MAX_PANELS = 24;
+export const MAX_PANELS = 24;
 
 export const MAX_CODE_PANELS = 4;
 

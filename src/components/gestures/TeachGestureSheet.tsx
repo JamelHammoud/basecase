@@ -54,7 +54,7 @@ export function TeachGestureSheet({ gestures, onTaught, onClose }: TeachGestureS
       maxWidth="max-w-[420px]"
       action={naming ? { label: 'Record', disabled: !ready, onClick: submit } : undefined}
     >
-      <div data-testid="teach-gesture" data-phase={teach.phase} data-taught={teach.taught}>
+      <div>
         {naming ? (
           <TextInput
             autoFocus

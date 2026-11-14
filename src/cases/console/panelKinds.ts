@@ -1,7 +1,8 @@
 import { CODE_SOURCE_MAX_BYTES } from '../../../electron/caseCodeLimits.mjs';
 import { fileSize } from '../../../electron/fileSize.mjs';
+import { LOG_LEVELS } from '../../topics/logs';
 import { asNumber, asString, listOf, oneOf, optional, refuse, type Reader } from '../validate';
-import { JOINT_FIELDS, signalRef, signalShape, type JointField, type SignalScope } from './signalNames';
+import { JOINT_FIELDS, readTopicRef, signalRef, signalShape, type JointField, type SignalScope } from './signalNames';
 
 export { CODE_SOURCE_MAX_BYTES };
 
@@ -73,22 +74,36 @@ const readText = (v: Config, where: string) =>
     ? { text: asString(v.text, `${where}.text`) }
     : { of: oneOf(['brief'] as const)(v.of, `${where}.of`) };
 
+const readPlot = (v: Config, where: string, scope: SignalScope) => {
+  const seconds = optional(between(2, 120), v.seconds, `${where}.seconds`);
+  const signals = listOf(numbers(scope, true), 8)(v.signals, `${where}.signals`);
+  const x = optional(numbers(scope), v.x, `${where}.x`);
+
+  if (!signals.length) refuse(`${where}.signals`, 'must name a signal');
+
+  return { signals, ...(seconds === undefined ? {} : { seconds }), ...(x === undefined ? {} : { x }) };
+};
+
+const readLog = (v: Config, where: string) => {
+  const topics = optional(listOf(readTopicRef, 8), v.topics, `${where}.topics`);
+  const level = optional(oneOf(LOG_LEVELS), v.level, `${where}.level`);
+
+  return { ...(topics === undefined ? {} : { topics }), ...(level === undefined ? {} : { level }) };
+};
+
+const readDiagnostics = (v: Config, where: string) => {
+  const topic = optional(readTopicRef, v.topic, `${where}.topic`);
+
+  return { ...(topic === undefined ? {} : { topic }) };
+};
+
 export const PANEL_KINDS = {
   camera: kind({
     read: (v, where, scope) => ({ signal: signalRef(scope, ['camera'], true)(v.signal, `${where}.signal`) }),
     studioOnly: () => true,
   }),
   value: kind({ read: (v, where, scope) => ({ signal: numbers(scope)(v.signal, `${where}.signal`) }) }),
-  plot: kind({
-    read: (v, where, scope) => {
-      const seconds = optional(between(2, 120), v.seconds, `${where}.seconds`);
-      const signals = listOf(numbers(scope, true), 8)(v.signals, `${where}.signals`);
-
-      if (!signals.length) refuse(`${where}.signals`, 'must name a signal');
-
-      return seconds === undefined ? { signals } : { signals, seconds };
-    },
-  }),
+  plot: kind({ read: readPlot }),
   table: kind({ read: readTable, desktopOnly: (c) => c.of === 'servos' }),
   button: kind({ read: readButton }),
   list: kind({
@@ -104,6 +119,10 @@ export const PANEL_KINDS = {
     },
   }),
   code: kind({ read: readCode }),
+  log: kind({ read: readLog }),
+  diagnostics: kind({ read: readDiagnostics }),
+  message: kind({ read: (v, where) => ({ topic: readTopicRef(v.topic, `${where}.topic`) }) }),
+  states: kind({ read: (v, where, scope) => ({ signal: numbers(scope)(v.signal, `${where}.signal`) }) }),
 };
 
 export type PanelKind = keyof typeof PANEL_KINDS;

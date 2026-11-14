@@ -165,7 +165,7 @@ describe('pull requests open too long', () => {
   const at = Date.parse('2026-11-13T16:00:00Z');
   const pull = (number, headRefName, createdAt) => ({ number, headRefName, createdAt });
 
-  it('expires work open over six hours, except batches, repairs and pull requests riding in a batch', () => {
+  it('expires work open over an hour, except batches, repairs and pull requests riding in a batch', () => {
     const pulls = [
       pull(1, 'loop/refine/a', '2026-11-13T09:00:00Z'),
       pull(2, 'loop/refine/b', '2026-11-13T14:00:00Z'),
@@ -174,7 +174,7 @@ describe('pull requests open too long', () => {
       pull(5, 'loop/build/z', '2026-11-13T08:00:00Z'),
     ];
 
-    expect(expired({ pulls, inBatch: [5], now: at }).map((p) => p.number)).toEqual([1]);
+    expect(expired({ pulls, inBatch: [5], now: at }).map((p) => p.number)).toEqual([1, 2]);
   });
 
   it('spares a pull request a lane holds, such as one under micro-evals, from closing and from the idle count', () => {

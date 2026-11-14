@@ -6,6 +6,7 @@ import { HardwareConfigurator, HardwareSpecs } from '../HardwareConfigurator';
 import { IconButton, useScrollFade, PlusIcon } from '../../design-system';
 import { isTunable } from '../../agent/cadTune';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
+import { makesClearanceHole } from '../../utils/hardwareCutouts';
 import { CommentsSection } from './CommentsSection';
 import { DimensionsSection } from './DimensionsSection';
 import { NotesSection } from './NotesSection';
@@ -15,12 +16,16 @@ import type { InspectorProps } from './types';
 
 type PartInspectorProps = InspectorProps & { part: ScenePart };
 
-const HardwareHoles: React.FC<{ hw: HardwareSpec; onAddClearanceHole: () => void }> = ({ hw, onAddClearanceHole }) => (
+const HardwareHoles: React.FC<{ part: ScenePart; hw: HardwareSpec; onAddClearanceHole: () => void }> = ({
+  part,
+  hw,
+  onAddClearanceHole,
+}) => (
   <HardwareSpecs
     spec={hw}
     collapsible
     holeAction={
-      hw.type !== 'standoff_ff' && (
+      makesClearanceHole(part) && (
         <IconButton
           icon={<PlusIcon className="w-3.5 h-3.5" />}
           title="Add clearance hole"
@@ -71,7 +76,7 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
 
       {styled && <AppearanceSection part={part} onUpdate={onUpdate} parts={props.parts} />}
 
-      {hw && <HardwareHoles hw={hw} onAddClearanceHole={props.onAddClearanceHole} />}
+      {hw && <HardwareHoles part={part} hw={hw} onAddClearanceHole={props.onAddClearanceHole} />}
 
       {partComments.length > 0 && <CommentsSection {...props} list={partComments} />}
 

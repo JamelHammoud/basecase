@@ -110,7 +110,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
             {tab === 'library' && (
               <NewModelMenu
                 canSaveSelection={props.selectedIds.length > 0}
-                canSaveScene={props.parts.length > 0}
+                canSaveScene={props.parts.some((p) => p.visible)}
                 onSaveModel={props.library.onSaveModel}
                 onImport={props.library.onImport}
               />

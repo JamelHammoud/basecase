@@ -2,7 +2,7 @@ import { evaluateBoolean } from '../booleans/evaluate';
 import { booleanHash } from '../booleans/hash';
 import { booleanPart, findPartDeep, freshOperandIds, withResult } from '../booleans/parts';
 import type { BooleanOp, ScenePart } from '../types/robotics';
-import { hardwareCutoutParts } from '../utils/hardwareCutouts';
+import { hardwareCutoutParts, makesClearanceHole } from '../utils/hardwareCutouts';
 import { boundsOverlap } from '../utils/selection';
 import { copyName, newId, partLabel } from './helpers';
 import type { Vec3 } from './types';
@@ -150,17 +150,11 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
   };
 
   const addClearanceHole = () => {
-    const sources = selectedParts.filter((p) => p.hardware);
+    const sources = selectedParts.filter(makesClearanceHole);
 
     if (sources.length === 0) return;
 
     const created = clearanceCutouts(sources);
-
-    if (created.length === 0) {
-      showToast('No hole needed for this part', { tone: 'neutral' });
-
-      return;
-    }
 
     commitParts((prev) => [...prev, ...created]);
     setSelectedIds(created.map((c) => c.id));

@@ -60,11 +60,7 @@ export function useLibraryActions(core: WorkspaceCore) {
     const useSelection = mode === 'selected' && selectedParts.length > 0;
     const sourceParts = useSelection ? selectedParts : parts.filter((p) => p.visible);
 
-    if (sourceParts.length === 0) {
-      showToast('Add or select a part first', { tone: 'error' });
-
-      return;
-    }
+    if (sourceParts.length === 0) return;
 
     const single = mode === 'selected' && selectedParts.length === 1 ? selectedPart : null;
     const model = sceneModel({

@@ -139,7 +139,9 @@ export function declareJoints(
 export interface BuildSettingsPayload {
   extras?: Array<{ key: string; qty: number; note?: string }>;
   budget?: number;
+  budgetHours?: number;
   material?: ProjectSettings['material'];
+  infill?: number;
   tether?: Tether;
 }
 
@@ -175,7 +177,11 @@ export function applyBuildSettings(project: ProjectSettings, pl: BuildSettingsPa
 
   if (pl.budget !== undefined) withBudget(next, pl.budget, money);
 
+  if (pl.budgetHours !== undefined) next.budgetHours = pl.budgetHours > 0 ? pl.budgetHours : undefined;
+
   if (pl.material) next.material = pl.material;
+
+  if (pl.infill) next.infillPct = Math.round(pl.infill);
 
   if (pl.tether) next.tether = pl.tether.volts > 0 && pl.tether.amps > 0 ? pl.tether : undefined;
 

@@ -12,6 +12,7 @@ keywords:
   - blocker
   - checks didn't finish
   - over budget
+  - over time budget
   - ignore
 related:
   - get-a-robot-ready-to-build
@@ -25,6 +26,7 @@ covers:
   - src/readiness/wording.ts
   - src/readiness/readiness.ts
   - src/utils/engineeringBudget.ts
+  - src/utils/engineeringTime.ts
   - src/utils/engineeringFalls.ts
   - src/wiring/wiringChecks.ts
   - src/components/settings/BuildPane.tsx
@@ -64,6 +66,18 @@ The estimated total is over your budget. Lines marked ≈ count at their list pr
 4. Swap expensive parts, or raise the budget in the field beside the total.
 
 Budget turns amber above 90% of the budget and red over it. [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget) has the steps.
+
+## Time is red
+
+The estimated hours to print, assemble and set up the servos are over your time budget.
+
+1. Open **Time** in Checks to see the total and its three parts.
+2. Click **Fix** to have the agent cut print time or steps. It gets the longest plate, the step with the most fasteners and the servo count.
+3. Slice the plates with **Slice Plates** in [[⌘K]], so Time counts the slicer's hours in place of the estimate.
+4. Save a second printer in **Settings** ▸ **Printers**. Two printers halve the print time.
+5. Or raise the time budget in the field marked **h**, beside the money budget.
+
+Time turns amber above 90% of the time budget and red over it. [Set a time budget for a robot](/help/set-a-time-budget) has the steps.
 
 ## “This servo could strip its gears when the robot falls.”
 

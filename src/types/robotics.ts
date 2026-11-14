@@ -222,6 +222,7 @@ export interface ProjectSettings extends ProjectRecords {
   prints?: PrintRecord[];
   budgetUsd?: number;
   budgetEntered?: EnteredPrice;
+  budgetHours?: number;
   tether?: Tether;
   extras?: Array<{ key: string; qty: number; note?: string }>;
   sourced?: SourcedItem[];

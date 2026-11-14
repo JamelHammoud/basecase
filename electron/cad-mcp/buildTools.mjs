@@ -188,7 +188,7 @@ export const setBuild = {
     title: 'Build settings',
     description:
       'Adds things to buy that are not modeled parts (battery, charger, buck converter, power switch, cables, microSD) to the BOM, by catalog key: "supply:<id>" from find_parts, or "component:<id>" for a catalog part that isn\'t placed. For anything find_parts lacks, use add_sourced_item. ' +
-      'Merged by key; qty 0 removes one. Also sets the budget (only when the user gives one), the default print material, and the tether supply: a build with actuators and no battery runs on a cable from a wall or bench supply, by default one matched to the actuators at 10 A; set its volts and amps only when the user names a supply (volts 0 goes back to the default). A battery in the scene always wins. With a budget it returns the budget plan: actuators up to 60%, compute up to 15%, power about 10%, with what the scene spends on each so far.',
+      'Merged by key; qty 0 removes one. Also sets the budget and the time budget in hours (only when the user gives them; 0 clears), the default print material, the infill, and the tether supply: a build with actuators and no battery runs on a cable from a wall or bench supply, by default one matched to the actuators at 10 A; set its volts and amps only when the user names a supply (volts 0 goes back to the default). A battery in the scene always wins. With a budget it returns the budget plan: actuators up to 60%, compute up to 15%, power about 10%, with what the scene spends on each so far.',
     inputSchema: {
       extras: z
         .array(
@@ -206,16 +206,29 @@ export const setBuild = {
         .max(1e9)
         .optional()
         .describe("In the user's currency, the one get_bom and find_parts show prices in"),
+      budget_hours: z
+        .number()
+        .min(0)
+        .max(10000)
+        .optional()
+        .describe('Hours to print, assemble and set up the robot, which the Time row in Checks holds it to'),
       material: z.enum(['PLA', 'PETG', 'ABS', 'ASA']).optional(),
+      infill: z
+        .number()
+        .int()
+        .min(5)
+        .max(100)
+        .optional()
+        .describe('Infill percent for every printed part; lower it to cut print time only while Strength still passes'),
       tether: z
         .object({ volts: z.number().min(0).max(100), amps: z.number().min(0).max(200) })
         .optional()
         .describe('The supply the robot runs from on a cable: its output voltage and rated current'),
     },
   },
-  handler: async ({ extras, budget, material, tether }) => {
+  handler: async ({ extras, budget, budget_hours, material, infill, tether }) => {
     try {
-      const res = await bridge('set_build', { extras, budget, material, tether });
+      const res = await bridge('set_build', { extras, budget, budgetHours: budget_hours, material, infill, tether });
       const unknown = res?.unknown?.length
         ? ` Unknown keys (not added): ${res.unknown.join(', ')}. Use keys from find_parts.`
         : '';
@@ -223,9 +236,10 @@ export const setBuild = {
       const plan = res?.plan ? `\n\n${res.plan}` : '';
 
       const tethered = res?.tether ? ` Tether: ${res.tether.volts} V ${res.tether.amps} A.` : '';
+      const hours = res?.budgetHours ? ` Time budget: ${res.budgetHours} h.` : '';
 
       return text(
-        `Extras: ${(res?.extras ?? []).map((x) => `${x.qty}× ${x.key}`).join(', ') || 'none'}.${tethered}${unknown}${plan}`,
+        `Extras: ${(res?.extras ?? []).map((x) => `${x.qty}× ${x.key}`).join(', ') || 'none'}.${tethered}${hours}${unknown}${plan}`,
       );
     } catch (err) {
       return fail(err);

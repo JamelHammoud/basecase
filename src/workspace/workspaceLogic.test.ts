@@ -200,4 +200,12 @@ describe('workspace helpers', () => {
     expect(next.extras).toEqual([{ key: 'supply:lipo-3s-2200', qty: 2, note: undefined }]);
     expect(next.budgetUsd).toBeUndefined();
   });
+
+  it('sets the time budget and infill from set_build, and clears the time budget with 0', () => {
+    const set = applyBuildSettings(DEFAULT_PROJECT, { budgetHours: 12.5, infill: 10 }).next;
+
+    expect(set).toMatchObject({ budgetHours: 12.5, infillPct: 10 });
+    expect(applyBuildSettings(set, { budgetHours: 0 }).next.budgetHours).toBeUndefined();
+    expect(applyBuildSettings(set, { budget: 50 }).next.budgetHours).toBe(12.5);
+  });
 });

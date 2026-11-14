@@ -11,6 +11,7 @@ export interface StudioHook {
   simState: () => { activeCase: string | null };
   selection: () => string[];
   agentRequest: (kind: string, payload: object) => Promise<unknown>;
+  checkRows: () => Array<{ check: string; status: string; detail: string }>;
 }
 
 export const standIn = (id: string, x: number) => ({
@@ -133,4 +134,37 @@ export async function storeWalk(page: Page, walk: WalkSim) {
     parts: scene.parts,
     project: { ...scene.project, walk: { ...walk, key: walkKey(scene.parts, scene.project) } },
   });
+}
+
+export function timeBudget(page: Page) {
+  const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+  const field = page
+    .locator(visible('section'), { hasText: /^Bill of materials/ })
+    .first()
+    .getByRole('textbox', { name: 'Time budget' });
+
+  return {
+    loadRover: async (without?: string) => {
+      await studioLoad(page, {
+        parts: rover.parts.filter((p) => p.id !== without),
+        project: {
+          ...(await sceneRecord(page)).project,
+          joints: rover.joints.filter((j) => !j.child.includes(without ?? '')),
+        },
+      });
+      await page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    },
+    setHours: async (value: string) => {
+      await expect.poll(() => field.isVisible(), { timeout: 15000 }).toBe(true);
+      await field.fill(value);
+      await field.press('Enter');
+    },
+    status: () => page.locator(visible('li[data-check="Time"]')).first().getAttribute('data-status'),
+    hours: async () => {
+      const rows = await page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.checkRows());
+      const total = rows.find((r) => r.check === 'Time')?.detail.match(/^≈ (?:(\d+) h )?(\d+) min/);
+
+      return total ? Number(total[1] ?? 0) + Number(total[2]) / 60 : NaN;
+    },
+  };
 }

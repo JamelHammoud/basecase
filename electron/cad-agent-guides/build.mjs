@@ -6,6 +6,11 @@ When the user wants to build the robot (a printer, a budget, "buildable", "BOM")
 a build package, not a picture.
 1. Budget plan first: actuators ≤ 60%, compute ≤ 15%, power ~10% of the budget. set_build records
    the budget; size_actuators picks the actuators against it.
+   A time budget (set_build budget_hours, when the user gives a deadline) is held by the Time
+   row: print hours split across the user's printers, assembly minutes per part, fastener and
+   insert, and set-up per servo. To cut it, take the biggest contributor it names: merge_parts
+   to drop parts and screws, lower infill (set_build infill) while Strength still passes, or
+   swap a printed part for a catalog part.
 2. Every screw and insert is a hardware part (fasten places them): they're what the BOM counts.
 3. Materials: petg or asa anywhere near a servo; tpu soles and bumpers; pla only for covers away
    from heat.

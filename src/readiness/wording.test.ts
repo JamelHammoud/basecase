@@ -61,6 +61,27 @@ describe('engineering rows', () => {
     );
 
     expect(found.map((f) => f.text)).toEqual(['BOM ≈ $602 of $500']);
+    expect(found[0].agentText).toBe('Budget: BOM ≈ $602 of $500. Biggest: 6× servo; 1× Pi');
+  });
+
+  it('tells the agent what takes the most time when Time fails', () => {
+    const [found] = engineeringFindings(
+      report({
+        check: 'Time',
+        status: 'fail',
+        detail: '≈ 9 h 41 min of 2 h',
+        itemsAreContext: true,
+        items: [
+          { text: 'Plate 1: 9 h 18 min' },
+          { text: 'Step 3: 12 fasteners, 26 min' },
+          { text: '3 servos: 15 min' },
+        ],
+      }),
+    );
+
+    expect(found.text).toBe('This robot takes longer to build than your time budget.');
+    expect(found.detail).toBe('≈ 9 h 41 min of 2 h');
+    expect(found.agentText).toContain('Plate 1: 9 h 18 min; Step 3: 12 fasteners, 26 min; 3 servos: 15 min');
   });
 
   it('leaves a check that did not apply out of the findings', () => {

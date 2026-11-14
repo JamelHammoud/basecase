@@ -58,8 +58,9 @@ export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChange
     <>
       <div className="flex items-center justify-between gap-3">
         <Total t={t} />
-        <div className="w-[112px] shrink-0">
+        <div className="flex gap-2 shrink-0">
           <NumberInput
+            className="w-[104px]"
             label={money.symbol}
             value={budget === undefined ? 0 : Math.round(money.amountOf(budget, project.budgetEntered))}
             min={0}
@@ -69,6 +70,18 @@ export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChange
             title={`Budget in ${money.code}`}
             onChange={(v, live) => !live && onChangeProject(budgetPatch(v, money))}
           />
+          <Tooltip label="Time budget">
+            <NumberInput
+              className="w-[80px]"
+              value={project.budgetHours ?? 0}
+              min={0}
+              step={1}
+              precision={1}
+              unit="h"
+              title="Time budget"
+              onChange={(v, live) => !live && onChangeProject({ budgetHours: v > 0 ? v : undefined })}
+            />
+          </Tooltip>
         </div>
       </div>
       {budget !== undefined && <BudgetBar t={t} budget={budget} />}

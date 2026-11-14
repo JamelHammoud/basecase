@@ -53,6 +53,7 @@ describe('what makes checks run again', () => {
     ['gait', { animations: [{ id: 'a', name: 'walk' }] as ProjectSettings['animations'] }],
     ['first ranges', { firstRanges: { j: [-90, 90] } }],
     ['print quality', { printProcess: 'fine' }],
+    ['time budget', { budgetHours: 8 }],
     ['active calibration', { servoCalibrations: { j: { versions: [], active: 1 } } }],
   ])('the project’s %s', (_name, change) => {
     expect(print([part], { ...project, ...change })).not.toBe(print());
@@ -60,6 +61,10 @@ describe('what makes checks run again', () => {
 
   it('a saved price', () => {
     expect(print([part], project, { ...world, purchases: { key: { usd: 3 } } })).not.toBe(print());
+  });
+
+  it('a new slice or another printer', () => {
+    expect(print([part], project, { ...world, print: '2|2026-01-01T00:00:00Z|' })).not.toBe(print());
   });
 
   it('the currency or its rates', () => {

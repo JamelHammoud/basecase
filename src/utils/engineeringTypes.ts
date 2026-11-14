@@ -128,6 +128,23 @@ export interface StoredFalls extends FallSim {
   key: string;
 }
 
+export interface PlateTime {
+  number: number;
+  hours: number;
+  sliced: boolean;
+  ids: string[];
+}
+
+export interface PrintTime {
+  printers: number;
+  plates: PlateTime[];
+  unplatedHours: number;
+}
+
+export interface BuildTimeInput extends PrintTime {
+  steps: string[][];
+}
+
 export interface EngineeringInputs {
   parts: ScenePart[];
   project: ProjectSettings;
@@ -143,6 +160,7 @@ export interface EngineeringInputs {
   chains?: ChainResult | null;
   printDowns?: Record<string, V3>;
   strength?: (jobs: StrengthJob[]) => Array<StrengthReading | null>;
+  time?: BuildTimeInput;
 }
 
 export interface SweepRequest {

@@ -30,7 +30,9 @@ export function engineeringFindings(report: EngineeringReport): Finding[] {
         }),
       );
 
-    return [engineeringFinding(row.check, levelOf(row.status), { detail: row.detail, ids: row.ids })];
+    const context = row.itemsAreContext ? row.items?.map((item) => item.text) : undefined;
+
+    return [engineeringFinding(row.check, levelOf(row.status), { detail: row.detail, ids: row.ids, context })];
   });
 }
 

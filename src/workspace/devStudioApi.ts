@@ -50,6 +50,7 @@ import { streamCost } from '../cameras/liveFeed';
 import type { CodeReport } from '../cases/console/codeBridge';
 import { limitExplore } from './useCaseExplore';
 import { matStudioApi, type MatDevActions } from './devMatFeed';
+import type { CheckRow } from '../utils/engineeringTypes';
 
 type Payload = Record<string, unknown>;
 
@@ -96,6 +97,7 @@ export interface DevActions {
   plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
   mat: MatDevActions;
+  checkRows: () => CheckRow[];
 }
 
 export interface DevStudioDeps {
@@ -297,6 +299,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     agentRequest: (kind: string, payload: Payload) => devRef.current.agentRequest(kind, payload),
     guide: () => devRef.current.guide(),
     buildAlongSteps: () => devRef.current.buildAlongSteps(),
+    checkRows: () => devRef.current.checkRows(),
     shownParts: () => viewportRef.current?.shownPartIds() ?? [],
     simState: () => devRef.current.simState(),
     drive: (command: DriveCommand) => devRef.current.drive(command),

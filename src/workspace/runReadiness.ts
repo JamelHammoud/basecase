@@ -25,7 +25,11 @@ import { buildBom } from '../utils/bom';
 import { designedFits } from '../utils/designedFits';
 import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
-import { printReportOf } from '../utils/printReport';
+import { printReportOf, type PrintReport } from '../utils/printReport';
+import { printTimeOf } from '../utils/buildTime';
+import { guideStepParts } from '../guide/guideSteps';
+import type { Plate } from '../print/plan';
+import type { SlicedPlate } from '../print/printBridge';
 import { caseFindings } from '../readiness/caseChecks';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
@@ -33,17 +37,25 @@ import { freshFalls, freshWalk } from './storedWalk';
 
 const BUDGET_MS = 30000;
 
+export interface PrintTimeSource {
+  printers: number;
+  sliced: (plate: Plate) => SlicedPlate | undefined;
+  key: string;
+}
+
 export interface ReadinessInput {
   viewport: Viewport3DHandle;
   parts: ScenePart[];
   project: ProjectSettings;
   printer: PrinterSetup;
   fingerprint: string;
+  print?: PrintTimeSource;
 }
 
 export interface ReadinessWorld {
   purchases: object | null;
   money: { code: string; ratesDate: string };
+  print?: string;
 }
 
 export const batteriesIn = (parts: ScenePart[]) =>
@@ -64,6 +76,7 @@ export const projectFingerprint = (
   readinessFingerprint(parts, {
     joints: project.joints,
     budget: project.budgetUsd,
+    budgetHours: project.budgetHours,
     tether: project.tether,
     extras: project.extras,
     sourced: jsonHash(project.sourced),
@@ -81,6 +94,7 @@ export const projectFingerprint = (
     printerId,
     purchases: jsonHash(world.purchases ?? {}),
     money: [world.money.code, world.money.ratesDate],
+    print: world.print ?? '',
   });
 
 function supportOf(print: { parts: Array<{ material: PrintMaterial; supportG: number }> }) {
@@ -91,13 +105,13 @@ function supportOf(print: { parts: Array<{ material: PrintMaterial; supportG: nu
   return supportG;
 }
 
-export async function runReadiness({
-  viewport,
-  parts,
-  project,
-  printer,
-  fingerprint,
-}: ReadinessInput): Promise<Readiness> {
+const timeOf = (report: PrintReport, input: ReadinessInput) => ({
+  ...printTimeOf(report, { printers: input.print?.printers ?? 1, sliced: input.print?.sliced }),
+  steps: guideStepParts(input.parts, input.project),
+});
+
+export async function runReadiness(input: ReadinessInput): Promise<Readiness> {
+  const { viewport, parts, project, printer, fingerprint } = input;
   const turn = nextCaseTurn();
 
   await loadSourced();
@@ -115,6 +129,7 @@ export async function runReadiness({
       falls: freshFalls(parts, project),
       supportG: supportOf(report),
       printDowns: Object.fromEntries(report.parts.map((r) => [r.id, r.check.pose.down])),
+      time: timeOf(report, input),
     }),
   );
   const measuring = viewport.measureParts();

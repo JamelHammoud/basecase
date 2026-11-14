@@ -13,6 +13,7 @@ import { usePrintFleet } from './usePrintFleet';
 import { usePrintJob } from './usePrintJob';
 import { usePlateWriter } from './usePlateWriter';
 import type { GuidePlan } from '../guide/guideTypes';
+import type { PrintTimeSource } from './runReadiness';
 
 interface PrintingOptions {
   jobId: string;
@@ -171,6 +172,12 @@ export function usePrinting(options: PrintingOptions) {
 }
 
 export type Printing = ReturnType<typeof usePrinting>;
+
+export const printTimeSource = (printing: Printing, printers: number): PrintTimeSource => ({
+  printers,
+  sliced: printing.freshSlice,
+  key: `${printing.job.slice?.slicedAt ?? ''}|${printing.plates.key}`,
+});
 
 interface ScenePrintingOptions {
   scene: { sceneId: string; sceneName: string };

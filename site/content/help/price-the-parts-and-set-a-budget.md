@@ -37,11 +37,11 @@ Add the prices you see in a store to the bill of materials, and set the budget t
 4. Type the price you see in **Price**.
 5. Set **Pieces per listing** to how many come in one pack. For filament it's **Grams per spool**.
 6. Click **Save**.
-7. Type your budget in the field beside the total.
+7. Type your budget in the first field beside the total.
 
 ![The bill of materials with a $150 budget beside the ≈ $22.99 total](/help/get-a-robot-ready-to-build/build-tab.png)
 
-The bar under the total shows how much is left, or how far over budget you are. Type 0 in the field to clear the budget.
+The bar under the total shows how much is left, or how far over budget you are. Type 0 in the field to clear the budget. The field marked **h** holds a [time budget](/help/set-a-time-budget).
 
 ## What the prices mean
 

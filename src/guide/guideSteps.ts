@@ -16,18 +16,28 @@ export const stepPartsOf = (plan: GuidePlan, parts: ScenePart[], project: Projec
   ids: plan.steps.map((s) => s.partIds),
 });
 
-export function guideStepParts(parts: ScenePart[], project: ProjectSettings): string[][] {
-  const saved = project.buildGuide?.stepParts;
+let lastApproximate: StepParts | null = null;
 
-  if (saved && saved.fingerprint === stepsFingerprint(parts, project)) return saved.ids;
+function approximateSteps(parts: ScenePart[], project: ProjectSettings, fingerprint: string): string[][] {
+  if (lastApproximate?.fingerprint === fingerprint) return lastApproximate.ids;
 
   const built = parts.filter(isBuilt);
+  const ids = built.length
+    ? buildGuidePlan(approximateScene('', built, project.joints ?? []), project.material).steps.map((s) => s.partIds)
+    : [];
 
-  if (!built.length) return [];
+  lastApproximate = { fingerprint, ids };
 
-  return buildGuidePlan(approximateScene('', built, project.joints ?? []), project.material).steps.map(
-    (s) => s.partIds,
-  );
+  return ids;
+}
+
+export function guideStepParts(parts: ScenePart[], project: ProjectSettings): string[][] {
+  const saved = project.buildGuide?.stepParts;
+  const fingerprint = stepsFingerprint(parts, project);
+
+  if (saved && saved.fingerprint === fingerprint) return saved.ids;
+
+  return approximateSteps(parts, project, fingerprint);
 }
 
 export function firstSteps(steps: string[][]): Map<string, number> {

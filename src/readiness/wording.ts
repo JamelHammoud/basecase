@@ -137,6 +137,10 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
   'Supply current': { blocker: 'The tether can’t supply enough current for the servos.' },
   'Servo bus': { blocker: 'These servos need an adapter for their bus.' },
   'Heat near servos': { note: 'Some parts touching servos are PLA, which softens from servo heat.' },
+  Time: {
+    blocker: 'This robot takes longer to build than your time budget.',
+    note: 'This robot is close to your time budget.',
+  },
   'Standing stability': {
     blocker: 'The robot would tip over standing still.',
     note: 'The robot is close to tipping over.',
@@ -146,15 +150,16 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
 export function engineeringFinding(
   check: string,
   level: FindingLevel,
-  f: { detail: string; ids?: string[]; fix?: FindingFix; joint?: string },
+  f: { detail: string; ids?: string[]; fix?: FindingFix; joint?: string; context?: string[] },
 ): Finding {
   const code = slug(check);
   const plain = PLAIN_ENGINEERING[check]?.[level];
-  const agentText = `${check}: ${f.detail}`;
+  const said = `${check}: ${f.detail}`;
+  const agentText = f.context?.length ? `${said}. Biggest: ${f.context.join('; ')}` : said;
   const ids = f.ids ?? [];
 
   return {
-    key: keyOf(`design:${code}`, ids, agentText),
+    key: keyOf(`design:${code}`, ids, said),
     level,
     area: 'design',
     check,

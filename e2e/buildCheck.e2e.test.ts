@@ -14,6 +14,7 @@ import {
   loadKnees,
   servo,
   storeWalk,
+  timeBudget,
   visible,
   type StudioHook,
 } from './buildCheckFixtures';
@@ -268,6 +269,22 @@ describe('Build tab fields', () => {
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
+
+  it('hold the rover to a time budget beside it, dropping when a printed part goes', async () => {
+    const time = timeBudget(app.page);
+
+    await time.loadRover();
+    await time.setHours('1');
+    await expect.poll(time.status, { timeout: 90000 }).toBe('fail');
+
+    const before = await time.hours();
+
+    await time.loadRover('left_wheel_disc');
+    await expect.poll(time.hours, { timeout: 90000 }).toBeLessThan(before);
+    await time.setHours('1000');
+    await expect.poll(time.status, { timeout: 90000 }).toBe('pass');
+    expect(app.errors).toEqual([]);
+  }, 240000);
 });
 
 describe('Cables', () => {
@@ -282,18 +299,20 @@ describe('Cables', () => {
 describe('Cases in Checks', () => {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
   const flag = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
-  const activeCase = () =>
-    app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.simState().activeCase);
-
-  it('judge each Case as a row with its count, and open it in Simulate', async () => {
-    await app.page.evaluate(
+  const loadWithCase = (robot: { parts: unknown[]; joints: unknown[] }) =>
+    app.page.evaluate(
       ({ parts, joints, kase }) => {
         const studio = (window as unknown as { __studio: StudioHook }).__studio;
 
         studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
       },
-      { parts: rover.parts, joints: rover.joints, kase: flag },
+      { parts: robot.parts, joints: robot.joints, kase: flag },
     );
+  const activeCase = () =>
+    app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.simState().activeCase);
+
+  it('judge each Case as a row with its count, and open it in Simulate', async () => {
+    await loadWithCase(rover);
     await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
 
@@ -320,14 +339,7 @@ describe('Cases in Checks', () => {
         return el instanceof HTMLTextAreaElement ? el.value : el?.tagName;
       });
 
-    await app.page.evaluate(
-      ({ parts, joints, kase }) => {
-        const studio = (window as unknown as { __studio: StudioHook }).__studio;
-
-        studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
-      },
-      { parts: arm.parts, joints: arm.joints, kase: flag },
-    );
+    await loadWithCase(arm);
     await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
 
@@ -351,14 +363,7 @@ describe('Cases in Checks', () => {
     const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
     const reason = slotRefusal(caseSlots(flag)[0], robotFacts(buildRig(arm.joints, arm.parts), arm.parts))!;
 
-    await app.page.evaluate(
-      ({ parts, joints, kase }) => {
-        const studio = (window as unknown as { __studio: StudioHook }).__studio;
-
-        studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
-      },
-      { parts: arm.parts, joints: arm.joints, kase: flag },
-    );
+    await loadWithCase(arm);
     await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
 

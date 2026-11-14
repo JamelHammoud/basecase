@@ -11,6 +11,7 @@ export interface SignalSample {
   inputs: Record<string, DriveCommand | null>;
   goal: { passed: boolean; margin: number; failed: string[] } | null;
   cameras: string[];
+  gestures?: Record<string, number>;
 }
 
 export type SignalValue = number | string[];
@@ -63,6 +64,8 @@ function baseValues(s: SignalSample): Map<string, SignalValue> {
   }
 
   for (const key of s.cameras) out.set(`camera.${key}`, [key]);
+
+  for (const [name, value] of Object.entries(s.gestures ?? {})) out.set(`gesture.${name}`, value);
 
   return out;
 }

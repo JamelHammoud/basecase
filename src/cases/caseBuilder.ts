@@ -36,6 +36,7 @@ export interface CaseSpec {
   logic?: unknown;
   score?: unknown;
   console?: unknown;
+  gestures?: unknown;
   room?: Room;
   targets?: Array<string | null>;
 }
@@ -269,6 +270,7 @@ function caseJson(draft: Draft): unknown {
     },
     ...(spec.logic !== undefined ? { logic: spec.logic } : {}),
     ...(spec.console !== undefined ? { console: spec.console } : {}),
+    ...(spec.gestures !== undefined ? { gestures: spec.gestures } : {}),
   };
 }
 

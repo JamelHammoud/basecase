@@ -28,7 +28,7 @@ import type { CanvasMenuState } from './useCanvasMenu';
 import { handJointMenuItems } from './jointCommands';
 import { leaderMenuItems } from './leaderCommands';
 import { mirrorMenuEntry } from './mirrorCommands';
-import { isRotated, menuEntry, onePartActions, selectionActions } from './partActions';
+import { isRotated, menuEntry, onePartActions, renameAction, selectionActions } from './partActions';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
@@ -50,6 +50,12 @@ const ROLE_ENTRIES: Array<{ label: string; role: PartRole }> = [
   { label: 'Guide', role: 'reference' },
 ];
 
+function renameItems(inputs: ContextInputs): ContextMenuEntry[] {
+  const rename = renameAction(inputs);
+
+  return rename ? [menuEntry(rename)] : [];
+}
+
 function sharedEntries(inputs: ContextInputs) {
   const { core, actions } = inputs;
   const { edits } = actions;
@@ -70,6 +76,7 @@ function sharedEntries(inputs: ContextInputs) {
     } satisfies ContextMenuEntry,
     drop: menuEntry(act.floor),
     center: menuEntry(act.center),
+    rename: renameItems(inputs),
     duplicate: menuEntry(act.duplicate),
     mirror: mirrorMenuEntry(actions.mirror),
     selectAll: menuEntry(act.selectAll, { disabled: core.parts.length === 0 }),
@@ -135,6 +142,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     menuEntry(act.group),
     ...(selectedParts.some((p) => p.group) ? [menuEntry(act.ungroup)] : []),
     ...onshapeItems(inputs, selectedTarget(core.parts, core.selectedIds)),
+    ...shared.rename,
     shared.duplicate,
     shared.mirror,
     shared.selectAll,
@@ -171,6 +179,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     { heading: part.name, onSelect: () => copyPartName(inputs, part.name) },
     ...faultItems(inputs, part),
     ...(part.hardware ? [menuEntry(act.clearanceHole)] : []),
+    ...shared.rename,
     shared.duplicate,
     shared.mirror,
     shared.selectAll,

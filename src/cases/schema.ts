@@ -4,6 +4,7 @@ import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
 import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
+import { gestureNames, readGestures, type CaseGesture } from './gestures';
 import {
   asBoolean,
   asId,
@@ -128,6 +129,7 @@ export interface Case {
   task: CaseTask;
   console?: CaseConsole;
   logic?: Routine;
+  gestures?: CaseGesture[];
 }
 
 const v3 = vector(3) as unknown as Reader<V3>;
@@ -344,7 +346,9 @@ export function parseCase(input: unknown): Case {
 
   checkScore(task, objects);
 
-  const caseConsole = optional(consoleReader(task.probes.map((p) => p.signal)), v.console, 'console');
+  const gestures = optional(readGestures, v.gestures, 'gestures');
+  const signals = { probes: task.probes.map((p) => p.signal), gestures: gestureNames(gestures) };
+  const caseConsole = optional(consoleReader(signals), v.console, 'console');
 
   const kase: Case = {
     formatVersion: CASE_FORMAT_VERSION,
@@ -358,6 +362,7 @@ export function parseCase(input: unknown): Case {
     task,
     ...(caseConsole ? { console: caseConsole } : {}),
     ...(v.logic !== undefined ? { logic: readLogic(v.logic, 'logic') } : {}),
+    ...(gestures ? { gestures } : {}),
   };
 
   checkSlotNames(kase);

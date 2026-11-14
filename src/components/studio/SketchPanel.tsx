@@ -39,11 +39,6 @@ export interface SketchLinkage {
   insert: (solution: LinkageSolution) => void;
 }
 
-export interface SketchOutput {
-  name: string;
-  color: string;
-}
-
 const TOOLS: Array<{ tool: SketchTool; title: string; icon: React.ReactNode }> = [
   { tool: 'line', title: 'Line', icon: <SlashIcon className="w-4 h-4" /> },
   { tool: 'rect', title: 'Rectangle', icon: <RectangleIcon className="w-4 h-4" /> },
@@ -128,7 +123,7 @@ export const SketchPanel: React.FC<{
   draft: StudioDraft;
   bound: BoundSketch | null;
   linkage?: SketchLinkage;
-  onCreate: (shape: SketchShape, output: SketchOutput) => void;
+  onCreate: (shape: SketchShape, name: string) => void;
 }> = ({ draft, bound, linkage, onCreate }) => {
   const mode: SketchPanelMode = bound ? bound.record.mode : draft.drawMode;
   const pathing = mode === 'path' && linkage ? linkage : null;
@@ -140,10 +135,7 @@ export const SketchPanel: React.FC<{
 
   const build = () =>
     mode !== 'path' &&
-    onCreate(
-      { sketch: draft.sketch, mode, depth: draft.drawHeightMm },
-      { name: draft.drawName, color: draft.drawColor },
-    );
+    onCreate({ sketch: draft.sketch, mode, depth: draft.drawHeightMm }, draft.parsedSvg?.name ?? 'Sketch');
 
   const changeMode = (m: SketchPanelMode) => {
     if (!bound) draft.setDrawMode(m);

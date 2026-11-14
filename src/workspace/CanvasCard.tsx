@@ -131,7 +131,14 @@ export function CanvasCard(props: CanvasCardProps) {
         aria-hidden
         className="absolute inset-0 z-10 rounded-[12px] pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
       />
-      {core.tries.open && <TriesMode active={active} mode={core.tries} onForget={core.simTraining.cases.forget} />}
+      {core.tries.open && (
+        <TriesMode
+          active={active}
+          mode={core.tries}
+          onForget={core.simTraining.cases.forget}
+          showToast={core.showToast}
+        />
+      )}
       <CanvasBottomBar {...props} />
     </main>
   );

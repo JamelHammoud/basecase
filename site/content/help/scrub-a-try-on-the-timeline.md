@@ -34,3 +34,5 @@ Step through a Case try frame by frame to see what each joint was asked to do, w
 6. Press [[Esc]] to close it.
 
 The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open.
+
+A try opened from **Library** ▸ **Tries** shows only each joint's position and target, and the canvas doesn't follow it. See [Browse every try in the Library](/help/browse-every-try-in-the-library).

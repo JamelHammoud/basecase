@@ -7,9 +7,11 @@ import {
   useScrollFade,
   type ContextMenuEntry,
 } from '../../design-system';
+import { errorMessage } from '../../utils/errorMessage';
 import { hasPrimaryModifier } from '../../utils/os';
 import { useSavedScenes } from '../../utils/sceneStore';
 import { useStoredTries } from '../../workspace/useStoredTries';
+import type { ShowToast } from '../../workspace/types';
 import type { TriesMode as Mode } from '../../workspace/useTriesMode';
 import { confirmDeleteTries } from './confirmDeleteTries';
 import { TriesGrid } from './TriesGrid';
@@ -22,6 +24,7 @@ interface TriesModeProps {
   active: boolean;
   mode: Mode;
   onForget: (ids: readonly string[]) => void;
+  showToast: ShowToast;
 }
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
@@ -37,7 +40,7 @@ const keepMenuHere = (e: React.MouseEvent) => {
   e.stopPropagation();
 };
 
-export const TriesMode: React.FC<TriesModeProps> = ({ active, mode, onForget }) => {
+export const TriesMode: React.FC<TriesModeProps> = ({ active, mode, onForget, showToast }) => {
   const all = useStoredTries() ?? [];
   const scenes = useSavedScenes();
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -54,9 +57,14 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, mode, onForget }) 
   const focused = all.find((t) => t.id === focus) ?? null;
 
   const remove = (ids: readonly string[]) =>
-    confirmDeleteTries(ids, all, (gone) => {
-      onForget(gone);
-      mode.clear();
+    confirmDeleteTries({
+      ids,
+      all,
+      onDeleted: (gone) => {
+        onForget(gone);
+        mode.clear();
+      },
+      onFailed: (err) => showToast(errorMessage(err), { tone: 'error' }),
     });
 
   useTriesKeys({

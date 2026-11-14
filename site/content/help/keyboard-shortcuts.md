@@ -87,7 +87,7 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 
 [[Esc]] also leaves whichever mode is open, once anything smaller in it has cleared. Sketch and Import SVG stay open while they hold a drawing.
 
-In [Tries mode](/help/browse-every-try-in-the-library), [[⌫]] deletes the selected tries after asking. Keys without [[⌘]] do nothing else there.
+In [Tries mode](/help/browse-every-try-in-the-library), [[⌫]] deletes the selected tries after asking. The timeline keys work on the selected try: [[←]], [[→]], [[Home]], [[End]] and [[Space]]. [[Esc]] clears the selection first, then leaves.
 
 ## Scenes
 

@@ -9,16 +9,19 @@ export function variationsOf(ids: readonly string[], all: readonly StoredTry[]):
   return all.filter((t) => t.sourceTry !== null && picked.has(t.sourceTry) && !picked.has(t.id)).length;
 }
 
-export function confirmDeleteTries(
-  ids: readonly string[],
-  all: readonly StoredTry[],
-  onDeleted: (gone: string[]) => void,
-) {
+interface DeleteTries {
+  ids: readonly string[];
+  all: readonly StoredTry[];
+  onDeleted: (gone: string[]) => void;
+  onFailed: (err: unknown) => void;
+}
+
+export function confirmDeleteTries({ ids, all, onDeleted, onFailed }: DeleteTries) {
   const variations = variationsOf(ids, all);
 
   confirmAction({
     title: ids.length === 1 ? 'Delete this try?' : `Delete ${plural(ids.length, 'try', 'tries')}?`,
     ...(variations > 0 ? { body: `Deletes its ${plural(variations, 'variation')} too.` } : {}),
-    onConfirm: () => void deleteTries(ids).then(onDeleted),
+    onConfirm: () => void deleteTries(ids).then(onDeleted, onFailed),
   });
 }

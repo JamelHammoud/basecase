@@ -51,7 +51,7 @@ export const GLOSSARY = [
   { word: 'Update', action: 'Make an out-of-date build guide again', synonyms: ['regenerate'] },
   {
     word: 'Try',
-    action: 'A recording of a robot, whatever made it (a Case, a real robot, an import)',
+    action: 'A recording of a robot, whatever made it (a Case, a real robot, Multiply)',
     synonyms: ['recordings', 'episodes?', 'rollouts?', 'demonstrations?'],
   },
 ];

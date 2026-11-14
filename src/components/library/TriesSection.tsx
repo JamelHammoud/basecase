@@ -1,4 +1,5 @@
 import React from 'react';
+import { plural } from '../../../electron/plural.mjs';
 import { BrowseRow, SectionHeader } from '../../design-system';
 import type { RobotTries } from '../tries/triesSearch';
 
@@ -16,7 +17,7 @@ export const TriesSection: React.FC<{
         <div key={g.robot} data-testid="tries-robot">
           <BrowseRow
             title={g.robot}
-            meta={String(g.tries.length)}
+            meta={plural(g.tries.length, 'try', 'tries')}
             active={current === g.robot}
             onOpen={() => onOpen(g.robot)}
           />

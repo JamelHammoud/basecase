@@ -36,6 +36,6 @@ See every try you've recorded, from every scene, in one place, and open or delet
 6. To delete, right-click a selected tile and choose **Delete**, or press ⌫. Then click **Delete**. Deleting a try deletes its variations too.
 7. Press Esc to clear the selection, and Esc again or **Done** to leave.
 
-Type in **Search library** first to narrow the tries by robot, Case, or "variation". ⌘K's **Show Tries** opens the same view.
+Type in **Search library** first to narrow the tries by robot, Case, "variation" or "real". ⌘K's **Show Tries** opens the same view.
 
-A tile shows its filmstrip once the try has appeared in a Case's Results. Tries recorded before this update move into the Library the first time you open their scene. Tries stay on this computer.
+A tile shows its filmstrip once the try has appeared in a Case's Results. A try on your real robot has none. Tries recorded before this update move into the Library the first time you open their scene. Tries stay on this computer.

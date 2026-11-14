@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { changelogProblems, copyProblems, coversOf, followUpPrompt, helpProblems } from './preflight.mjs';
+import {
+  announcedProblems,
+  changelogProblems,
+  copyProblems,
+  coversOf,
+  followUpPrompt,
+  helpProblems,
+} from './preflight.mjs';
 
 const string = (text, line = 1) => ({ text, file: 'src/components/Row.tsx', line, repeat: false });
 
@@ -51,6 +58,38 @@ describe('changelogProblems', () => {
 
   it('says nothing when the kind is unknown', () => {
     expect(changelogProblems({ kind: null, changes: [entry] })).toEqual([]);
+  });
+});
+
+describe('announcedProblems', () => {
+  const file = 'site/content/changelog/2026-11-14-keep-every-robot-session-as-a-try.md';
+  const code = { status: 'M', from: 'src/robot/session.ts', to: 'src/robot/session.ts' };
+  const added = { status: 'A', from: file, to: file };
+  const sourceOf = (text) => (path) => (path === file ? text : null);
+
+  it('asks a feature with no changelog entry for one', () => {
+    const problems = announcedProblems({ kind: 'feature', changes: [code], sourceOf: sourceOf(null) });
+
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/`feature` change adds no changelog entry/);
+  });
+
+  it('asks for a cover when a new entry has none', () => {
+    const text = '---\ntitle: Keep every robot session as a try\ndate: 2026-11-14\n---\n\nYou can now keep sessions.\n';
+    const problems = announcedProblems({ kind: 'integration', changes: [code, added], sourceOf: sourceOf(text) });
+
+    expect(problems).toEqual([expect.stringContaining(`${file} has no \`image:\` cover`)]);
+    expect(problems[0]).toContain('site/public/changelog/keep-every-robot-session-as-a-try/');
+  });
+
+  it('is quiet for an entry with a cover, an update to the arc’s entry, or a kind that isn’t announced', () => {
+    const covered = '---\ntitle: Keep sessions\nimage: /changelog/keep/cover.png\n---\n\nYou can now keep sessions.\n';
+
+    expect(announcedProblems({ kind: 'feature', changes: [added], sourceOf: sourceOf(covered) })).toEqual([]);
+    expect(
+      announcedProblems({ kind: 'feature', changes: [{ ...added, status: 'M' }], sourceOf: sourceOf(null) }),
+    ).toEqual([]);
+    expect(announcedProblems({ kind: 'refine', changes: [code], sourceOf: sourceOf(null) })).toEqual([]);
   });
 });
 

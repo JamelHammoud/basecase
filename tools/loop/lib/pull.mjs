@@ -4,7 +4,7 @@ import { creditProblems } from '../credit.mjs';
 import { createPull, openPulls, repo } from './github.mjs';
 import { landedIn, NOTHING_LANDED } from './landed.mjs';
 import { sameTitle } from './titles.mjs';
-import { voiceChangedPosts, voiced } from './voiceHook.mjs';
+import { voiceNewPages, voiced } from './voiceHook.mjs';
 import { CODE_ROOT } from './paths.mjs';
 import { protectedIn, protectedList } from './protected.mjs';
 import { run } from './sh.mjs';
@@ -150,7 +150,7 @@ export function publish(change, { dir, branch, extra, onDuplicate }) {
 
   if (problems.length > 0) throw new Error(`Commit message credits a model or tool: ${problems.join('; ')}`);
 
-  voiceChangedPosts(dir);
+  voiceNewPages(dir);
   git(['add', '-A'], dir);
 
   if (git(['status', '--porcelain'], dir).out !== '') git(['commit', '-q', '-F', '-'], dir, { input: message });

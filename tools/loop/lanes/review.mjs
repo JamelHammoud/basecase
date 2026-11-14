@@ -26,7 +26,7 @@ import { byRank } from '../lib/rank.mjs';
 import { isSmall } from '../lib/smallChange.mjs';
 import { run } from '../lib/sh.mjs';
 import { pause } from '../lib/usage.mjs';
-import { voiceChangedPosts } from '../lib/voiceHook.mjs';
+import { voiceNewPages } from '../lib/voiceHook.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
 export const schedule = {
@@ -175,7 +175,7 @@ function pushFixes({ pull, worktree, judged, log }) {
   if (!hold || creditProblems(message).length > 0) return hold?.() ?? null;
 
   try {
-    voiceChangedPosts(dir);
+    voiceNewPages(dir);
     run('git', ['add', '-A'], { cwd: dir });
 
     const committed = run('git', ['commit', '-q', '-F', '-'], { cwd: dir, input: message, allowFail: true }).ok;

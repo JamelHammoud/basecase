@@ -34,7 +34,7 @@ Tell Basecase which parts you have, so the bill of materials and the budget coun
 1. In the **Build** tab, find **Bill of materials**.
 2. Click a section, such as **Components**, to open it.
 3. Click a line's quantity.
-4. Type how many you own in **On hand**, and press Enter.
+4. Type how many you own in **On hand**, and press [[↩]].
 
 ![On hand set to 6 under the 6× Feetech STS3215 line of an SO-101](/help/count-the-parts-you-already-own/on-hand.png)
 

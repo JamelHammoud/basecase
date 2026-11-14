@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { deleteEntry, MenuDivider, MenuItem, MenuLabel, NumberInput, PopoverMenu, Tooltip } from '../../design-system';
 import type { BomLine } from '../../utils/bomTypes';
 import { MAX_ON_HAND } from '../../utils/onHand';
@@ -13,30 +13,54 @@ interface ExtraControls {
   onDelete: () => void;
 }
 
-const CountField: React.FC<{ label: string; value: number; min: number; max?: number; unit: string; onChange: (v: number) => void }> = ({
-  label,
-  value,
-  min,
-  max,
-  unit,
-  onChange,
-}) => (
-  <>
-    <MenuLabel>{label}</MenuLabel>
-    <div className="px-1 pb-1">
-      <NumberInput
-        value={value}
-        min={min}
-        max={max}
-        step={1}
-        precision={0}
-        unit={unit}
-        aria-label={label}
-        onChange={(v, live) => !live && onChange(v)}
-      />
-    </div>
-  </>
-);
+interface CountFieldProps {
+  label: string;
+  value: number;
+  min: number;
+  max?: number;
+  unit: string;
+  onChange: (v: number) => void;
+}
+
+const CountField: React.FC<CountFieldProps> = ({ label, value, min, max, unit, onChange }) => {
+  const pending = useRef<number | null>(null);
+  const commit = () => {
+    const next = pending.current;
+
+    pending.current = null;
+
+    if (next !== null && next !== value) onChange(next);
+  };
+  const commitOnClose = useEffectEvent(commit);
+
+  useEffect(() => () => commitOnClose(), []);
+
+  return (
+    <>
+      <MenuLabel>{label}</MenuLabel>
+      <div
+        className="px-1 pb-1"
+        onBlur={commit}
+        onKeyDownCapture={(e) => {
+          if (e.key === 'Escape') pending.current = null;
+        }}
+      >
+        <NumberInput
+          value={value}
+          min={min}
+          max={max}
+          step={1}
+          precision={0}
+          unit={unit}
+          aria-label={label}
+          onChange={(v, live) => {
+            if (!live) pending.current = v;
+          }}
+        />
+      </div>
+    </>
+  );
+};
 
 export const QtyEditor: React.FC<{
   line: BomLine;

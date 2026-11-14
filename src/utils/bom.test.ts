@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { makeSpec } from '../data/hardware';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
-import { bomText, buildBom, hardwareKey } from './bom';
+import { bomText, bomToCsv, bomToMarkdown, buildBom, hardwareKey } from './bom';
 
 const part = (o: Partial<ScenePart> & { id: string }): ScenePart => ({
   name: o.id,
@@ -173,6 +173,15 @@ describe('parts on hand', () => {
     const text = bomText(bomWith({ [servoKey]: { ...checked, onHand: 6 } }), {});
 
     expect(text).toContain(`8× Feetech STS3215 7.4 V (C001) [${servoKey}] · 6 owned, 2 to buy`);
+  });
+
+  it('exports the owned count beside the quantity, so the packs and price add up', () => {
+    const bom = bomWith({ [servoKey]: { ...checked, onHand: 6 } });
+    const [head, row] = bomToCsv(bom, {}).split('\n');
+
+    expect(head).toContain('Qty Needed,On Hand,Unit,Pack Qty,Packs to Buy');
+    expect(row).toContain(',8,6,pcs,1,2,');
+    expect(bomToMarkdown(bom, 'Robot')).toContain('| 8 (6 on hand) | 2 |');
   });
 
   it('reads an old record without a count as owning none', () => {

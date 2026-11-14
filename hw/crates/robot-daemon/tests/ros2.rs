@@ -43,7 +43,13 @@ fn follows_an_elbow_intent(kind: ControllerKind) -> Ros2Rig {
     assert!(joints.iter().zip(1..).all(|(joint, id)| joint["id"] == id
         && joint["reply"] == "ok"
         && joint["torque_on"] == true
-        && joint["temp_c"].is_null()));
+        && joint["temp_c"].is_null()
+        && joint["velocity"].is_f64()
+        && joint["effort"].is_f64()));
+    assert!(
+        joints.iter().any(|joint| joint["effort"] != 0.0),
+        "the arm's effort should arrive from /joint_states: {joints:?}"
+    );
     rig
 }
 

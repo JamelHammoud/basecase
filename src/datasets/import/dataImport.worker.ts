@@ -2,6 +2,7 @@
 import { recordingTransfer } from '../../sim/recorder';
 import { reply, serve } from '../../utils/workerRpc';
 import { importHandlers, type BuildJob } from './dataImportJobs';
+import type { ReplayJob } from './importedTries';
 import type { ImportSource } from './readSource';
 
 const handlers = importHandlers();
@@ -15,5 +16,10 @@ serve({
       built,
       built.kept.flatMap((k) => recordingTransfer(k.recording)),
     );
+  },
+  replay: async (job: ReplayJob) => {
+    const recording = await handlers.replay(job);
+
+    return reply(recording, recordingTransfer(recording));
   },
 });

@@ -66,4 +66,9 @@ export const webTries: TryBackend = {
   saveIndex: async (bytes) => {
     await indexes.put(SEARCH_INDEX, bytes);
   },
+  session: async () => null,
+  saveSession: async (stored) => {
+    await manifests.put(stored.id, stored);
+  },
+  saveVideo: async () => {},
 };

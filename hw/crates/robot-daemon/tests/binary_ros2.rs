@@ -61,6 +61,14 @@ fn shoulder_counts(line: &str) -> Option<i64> {
         .flatten()
 }
 
+fn shoulder_effort(line: &str) -> Option<f64> {
+    let status: serde_json::Value = serde_json::from_str(line).ok()?;
+
+    (status["event"] == "status")
+        .then(|| status["joints"][0]["effort"].as_f64())
+        .flatten()
+}
+
 #[test]
 fn the_app_can_drive_an_emulated_ros2_arm_over_json_lines_and_loopback() {
     let dir = artefacts_dir();
@@ -128,6 +136,10 @@ fn the_app_can_drive_an_emulated_ros2_arm_over_json_lines_and_loopback() {
     assert!(all.contains(r#""mode":"test""#), "never reached Test: {all}");
     assert!(all.contains(r#""run":"running""#), "never ran: {all}");
     assert!(moved, "the shoulder never followed the intents: {shoulder:?}");
+    assert!(
+        seen.iter().any(|line| shoulder_effort(line).is_some()),
+        "status should carry the arm's effort from /joint_states: {all}"
+    );
     assert!(
         all.contains(r#""code":"client_lost""#) || all.contains(r#""code":"intent_stale""#),
         "closing the app should hold the robot: {all}"

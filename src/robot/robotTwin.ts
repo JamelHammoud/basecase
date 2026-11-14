@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { feedTwin } from './operateFeed';
 import {
   AngleTrace,
   DaemonClock,
@@ -86,7 +87,11 @@ export function noteSimAngles(ids: readonly string[], angles: ArrayLike<number>)
   if (!joints || robotSnapshot().link !== 'connected') return;
 
   start();
-  trace.record(performance.now(), simAngles(joints, { ids, angles }));
+
+  const sim = simAngles(joints, { ids, angles });
+
+  trace.record(performance.now(), sim);
+  feedTwin(sim);
 }
 
 export function forgetLag(joint: string) {

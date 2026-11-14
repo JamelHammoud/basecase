@@ -92,6 +92,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'stubTabEngine',
   'stubTrainer',
   'triangleCount',
+  'tryLanes',
   'tryWorld',
   'worldAt',
 ];

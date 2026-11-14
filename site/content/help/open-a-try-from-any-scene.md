@@ -15,6 +15,7 @@ keywords:
 related:
   - try-a-case
   - play-a-try-through-its-console
+  - keep-a-robot-session-as-a-try
 covers:
   - src/workspace/viewCommands.tsx
   - src/components/LibraryPanel.tsx
@@ -33,7 +34,7 @@ You can open any try you've recorded from any scene, then step through it on the
 
 ![The Library with a robot and its two tries under Tries](/help/open-a-try-from-any-scene/library.png)
 
-3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. An imported try shows its task and the file or repo it came from instead. Click a try to open it.
+3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. An imported try shows its task and the file or repo it came from instead, and a session on a connected robot shows the time it started. Click a try to open it.
 
 ![Tries over the canvas with a try from each of two scenes](/help/open-a-try-from-any-scene/tries.png)
 

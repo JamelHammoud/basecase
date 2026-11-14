@@ -1,6 +1,7 @@
 ---
 title: Drive a Case with your hand, face, MIDI or voice
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 keywords:
@@ -67,6 +68,6 @@ Basecase plays a dropped MIDI file from the start of each try, on the simulation
 
 Voice recognizes single English words that the Case's logic names. The logic gets each word about a second after you stop speaking. Voice can mix up words that sound alike, such as “sit” and “set”.
 
-The camera's picture and the microphone's sound stay on your computer, and Basecase never saves them.
+The camera's picture and the microphone's sound stay on your computer. Basecase never saves the sound, and saves the picture only as the video of a session on a connected robot. See [Keep a robot session as a try](/help/keep-a-robot-session-as-a-try).
 
 To drive a robot with your whole body, see [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).

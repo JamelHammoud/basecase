@@ -46,6 +46,12 @@
   "run-routine": { "scope": "canvas", "keys": ["⌘↩"] },
   "settings": { "scope": "canvas", "keys": ["⌘,"] },
   "shortcuts": { "scope": "canvas", "keys": ["?"] },
+  "timeline:play": { "scope": "timeline", "keys": ["Space"] },
+  "timeline:frame": { "scope": "timeline", "keys": ["←", "→"] },
+  "timeline:second": { "scope": "timeline", "keys": ["⇧←", "⇧→"] },
+  "timeline:ends": { "scope": "timeline", "keys": ["Home", "End"] },
+  "timeline:speed": { "scope": "timeline", "keys": ["[", "]"] },
+  "timeline:close": { "scope": "timeline", "keys": ["Esc"] },
   "send": { "scope": "composer", "keys": ["↩"] },
   "queue": { "scope": "composer", "keys": ["⌘↩"] },
   "stop": { "scope": "composer", "keys": ["Esc"] }

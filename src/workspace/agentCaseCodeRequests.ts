@@ -19,7 +19,7 @@ type Payload = Record<string, unknown>;
 
 export interface CaseCodeContext {
   cases: Pick<Cases, 'cases' | 'active' | 'open'>;
-  caseRun: Pick<CaseRun, 'open' | 'enterCase'>;
+  caseRun: Pick<CaseRun, 'live' | 'enterCase'>;
   commitConsole: (caseId: string, console: CaseConsole | undefined) => void;
   report?: (key: string, source: string, since: number) => Promise<CodeReport | null>;
 }
@@ -91,7 +91,7 @@ const checked = (kase: Case, edit: CodeEdit): Case | string =>
   edit.ok ? checkedConsole(kase, edit.console) : edit.problem;
 
 function runIt(kase: Case, ctx: CaseCodeContext) {
-  if (ctx.caseRun.open && ctx.cases.active?.id === kase.id) return;
+  if (ctx.caseRun.live && ctx.cases.active?.id === kase.id) return;
 
   if (ctx.cases.active?.id !== kase.id) ctx.cases.open(kase.id);
 

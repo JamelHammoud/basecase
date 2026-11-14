@@ -48,7 +48,7 @@ export const showRoomCase = (core: WorkspaceCore, room: Room) => {
 };
 
 function addPanelCommands(core: WorkspaceCore): Command[] {
-  if (!core.caseRun.open) return [];
+  if (!core.caseRun.editing) return [];
 
   return [
     {

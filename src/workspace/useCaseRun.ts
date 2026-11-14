@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useState, type RefObject } from 'react';
 import { consoleLayout, DEFAULT_CONSOLE } from '../cases/console/layout';
 import type { Viewport3DHandle } from '../components/Viewport3D';
+import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
 import type { ViewShot } from '../three/viewport/types';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -25,13 +26,19 @@ interface Return {
   selection: string[];
 }
 
+const consoleCase = (live: boolean, cases: Cases) => (live ? cases.active : (cases.timeline.scene?.kase ?? null));
+
 export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining }: CaseRunInput) {
   const { sim, cases } = simTraining;
   const [back, setBack] = useState<Return | null>(null);
   const [adding, setAdding] = useState<PanelAdd | null>(null);
   const activeId = cases.active?.id ?? null;
-  const open = back !== null && back.caseId === activeId;
-  const caseConsole = cases.active?.console ?? DEFAULT_CONSOLE;
+  const live = back !== null && back.caseId === activeId;
+  const { timeline } = cases;
+  const [dismissed, setDismissed] = useState<Recording | null>(null);
+  const playback = timeline.open && !!timeline.recording && dismissed !== timeline.recording;
+  const kase = consoleCase(live, cases);
+  const caseConsole = kase?.console ?? DEFAULT_CONSOLE;
 
   const enterCase = (caseId: string) => {
     const fresh = { caseId, view: viewportRef.current?.currentView() ?? null, selection: selectedIds };
@@ -40,7 +47,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   };
 
   const enter = () => {
-    if (open || !cases.active) return;
+    if (live || !cases.active) return;
 
     enterCase(cases.active.id);
   };
@@ -56,10 +63,14 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   };
 
   const leave = () => {
-    if (open && back) restore(back);
+    if (playback) setDismissed(timeline.recording);
+
+    if (live && back) restore(back);
   };
 
-  const stale = back !== null && !open;
+  const done = () => (playback ? timeline.close() : leave());
+
+  const stale = back !== null && !live;
   const leaveStale = useEffectEvent(() => {
     if (back) restore(back);
   });
@@ -72,7 +83,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
     return () => clearTimeout(soon);
   }, [stale]);
 
-  const inputs = open ? caseConsole.input : null;
+  const inputs = live ? caseConsole.input : null;
   const { setInputs } = sim.drive;
 
   useEffect(() => {
@@ -83,7 +94,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
     return () => setInputs(null);
   }, [inputs, setInputs]);
 
-  const logic = open ? cases.active?.logic : undefined;
+  const logic = live ? cases.active?.logic : undefined;
 
   useEffect(() => {
     if (!logic) return;
@@ -95,14 +106,21 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
 
   const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO, studio: true });
 
+  const editing = live && !playback;
+
   return {
-    open,
+    open: live || playback,
+    live,
+    playback,
+    editing,
+    kase,
     caseConsole,
     layout,
     enter,
     enterCase,
     leave,
-    adding: open ? adding : null,
+    done,
+    adding: editing ? adding : null,
     addPanel: (area?: number) => setAdding({ area }),
     closeAdd: () => setAdding(null),
   };

@@ -17,6 +17,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'capture',
   'caseConsole',
   'caseMat',
+  'caseRunState',
   'checkDots',
   'clear',
   'codeReports',

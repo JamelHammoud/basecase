@@ -170,6 +170,13 @@ export function selectionActions({ core, actions, ui }: PartActionInputs) {
       keywords: 'reach payload link lengths servos manipulator design points reference',
       run: actions.arm.open,
     },
+    makeActuator: {
+      id: 'make-actuator',
+      label: 'Make an Actuator',
+      icon: JointsIcon,
+      keywords: 'cycloidal reducer gearbox bldc brushless motor torque joint knee printed drive',
+      run: () => actions.actuator.jointId && actions.actuator.run(actions.actuator.jointId),
+    },
     resetView: { id: 'reset-view', label: 'Reset View', icon: RotateLeftIcon, run: ui.resetView },
   } satisfies Record<string, PartAction>;
 }

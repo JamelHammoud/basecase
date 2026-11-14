@@ -57,6 +57,25 @@ export const sizeArm = {
   },
 };
 
+export const makeActuator = {
+  name: 'make_actuator',
+  config: {
+    title: 'Make an actuator',
+    description:
+      "Replaces a revolute joint's servo with a printed cycloidal actuator around a catalog BLDC motor (the cycloidal_drive recipe): the ODrive D6374, a moteus driver, an AS5600 encoder, two 6804 and one 6806 bearings, M4 and M3 screws, M3 inserts, and six printed parts (housing, cover, two discs, output, input shaft) on the joint axis, as one undo step. " +
+      "It picks the lowest ratio (10, 12, 15 or 20:1) and the smaller driver that pass Servo torque with the joint's stance or holding load × 1.5 (for the actuator's own weight) and its walking peak, and only actuators that fit the printer's bed. Torque is Kt × the motor and driver current limits × ratio × 0.9, an estimate; the MJCF gets the ratio's force range and rotor inertia × ratio² as armature. " +
+      'Use it for a joint no catalog servo can drive. Returns the spec and part ids, or why no actuator fits. Desktop only.',
+    inputSchema: { joint: z.string().describe('Joint id or name from get_rig') },
+  },
+  handler: async ({ joint }) => {
+    try {
+      return text((await bridge('make_actuator', { joint }, 60000))?.text || 'ok');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
 export const sweepDesign = {
   name: 'sweep_design',
   config: {

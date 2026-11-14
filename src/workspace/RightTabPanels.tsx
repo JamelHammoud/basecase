@@ -49,7 +49,7 @@ function useVisitedTabs(tab: RightTab) {
   return visited;
 }
 
-function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) {
+function BuildTab({ core, agent, actions }: Pick<RightTabPanelsProps, 'core' | 'agent' | 'actions'>) {
   const { docs, parts, project, scene, setSelectedIds, showToast, guide, printing, studio, tool, simTraining } = core;
   const { setProject } = docs;
 
@@ -76,6 +76,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
       onNewCase={simTraining.cases.builder.goals.length ? () => showNewCase(core) : undefined}
       onCalibrate={IS_WEB_DEMO ? undefined : (jointIds) => calibrateJoints(core, jointIds)}
       onReplayFall={(deg) => void replayFall(core, deg)}
+      onMakeActuator={IS_WEB_DEMO ? undefined : (fix) => actions.actuator.run(fix.joint, fix)}
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
       onToast={(m) => showToast(m)}
@@ -222,7 +223,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
         <InspectTab core={core} actions={actions} />
       </TabActivity>
       <TabActivity tab="build" current={current} visited={visited}>
-        <BuildTab core={core} agent={agent} />
+        <BuildTab core={core} agent={agent} actions={actions} />
       </TabActivity>
       <TabActivity tab="acp" current={current} visited={visited}>
         <AgentTab core={core} agent={agent} />

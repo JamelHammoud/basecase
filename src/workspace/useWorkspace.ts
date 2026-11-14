@@ -31,6 +31,7 @@ export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspa
     active,
     robots: actions.robots,
     wrap: actions.wrap,
+    actuator: actions.actuator,
     placeCustomModel: actions.creation.placeCustomModel,
   });
   const canvasMenu = useCanvasMenu(core, agent.controls.stopFollowing);

@@ -26,6 +26,7 @@ import { designedFits } from '../utils/designedFits';
 import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
+import { bedOf } from '../print/bed';
 import { caseFindings } from '../readiness/caseChecks';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
@@ -115,6 +116,7 @@ export async function runReadiness({
       falls: freshFalls(parts, project),
       supportG: supportOf(report),
       printDowns: Object.fromEntries(report.parts.map((r) => [r.id, r.check.pose.down])),
+      bed: bedOf(printer.model),
     }),
   );
   const measuring = viewport.measureParts();

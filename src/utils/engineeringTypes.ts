@@ -1,3 +1,4 @@
+import type { Bed } from '../print/bed';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, PurchaseRecord, RobotJoint, ScenePart } from '../types/robotics';
 import type { BomInput } from './bom';
@@ -33,7 +34,8 @@ export type FindingFix =
   | { kind: 'print-face'; part: string; down: V3 }
   | { kind: 'calibrate'; joints: string[] }
   | { kind: 'new-case' }
-  | { kind: 'replay-fall'; deg: number };
+  | { kind: 'replay-fall'; deg: number }
+  | { kind: 'make-actuator'; joint: string; motor: string; driver: string; ratio: number };
 
 export interface CheckRow {
   check: string;
@@ -143,6 +145,7 @@ export interface EngineeringInputs {
   chains?: ChainResult | null;
   printDowns?: Record<string, V3>;
   strength?: (jobs: StrengthJob[]) => Array<StrengthReading | null>;
+  bed?: Bed;
 }
 
 export interface SweepRequest {

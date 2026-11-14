@@ -62,6 +62,7 @@ describe('recipe library', () => {
     expect(searchRecipes('head shell seam').map((r) => r.name)).toContain('split_shell');
     expect(searchRecipes('raspberry pi mount')[0].name).toBe('pi5_tray');
     expect(searchRecipes('gear')[0].name).toBe('gear_pair');
+    expect(searchRecipes('cycloidal reducer')[0].name).toBe('cycloidal_drive');
     expect(searchRecipes('teapot')).toEqual([]);
     expect(searchRecipes('so-101 arm')[0].name).toBe('arm_template');
     expect(searchRecipes('biped legs')[0].name).toBe('biped_template');

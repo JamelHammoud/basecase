@@ -5,6 +5,7 @@ import { useFileImport } from './useFileImport';
 import { useFixedCameras } from './useFixedCameras';
 import { useHandJoints } from './useHandJoints';
 import { useLibraryActions } from './useLibraryActions';
+import { useMakeActuator } from './useMakeActuator';
 import { useMirror } from './useMirror';
 import { useOnshapeUpdate } from './useOnshapeUpdate';
 import { usePartCreation } from './usePartCreation';
@@ -30,6 +31,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const wrap = useWrapRobot(core);
   const onshape = useOnshapeUpdate(core);
   const arm = useArmSizing(core);
+  const actuator = useMakeActuator(core);
   const cameras = useFixedCameras({
     project: core.project,
     updateProjectNow: core.docs.updateProjectNow,
@@ -53,6 +55,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     wrap,
     onshape,
     arm,
+    actuator,
   };
 }
 

@@ -13,7 +13,7 @@ import { ChecksSection } from './build/ChecksSection';
 import { GuideSection } from './build/GuideSection';
 import { download } from './build/format';
 import { PlatesSection } from './build/PlatesSection';
-import type { ReadinessFinding } from '../readiness/types';
+import type { FindingFix, ReadinessFinding } from '../readiness/types';
 import { ignoreFinding, ignoreRule, restoreFinding, restoreRule } from '../readiness/readiness';
 import type { ReadinessHandle } from '../workspace/useReadiness';
 import { usePurchases } from './build/usePurchases';
@@ -33,6 +33,7 @@ interface BuildPanelProps {
   onNewCase?: () => void;
   onCalibrate?: (jointIds: string[]) => void;
   onReplayFall?: (deg: number) => void;
+  onMakeActuator?: (fix: Extract<FindingFix, { kind: 'make-actuator' }>) => void;
   panScroll: boolean;
   guide: BuildGuide;
   readiness: ReadinessHandle;
@@ -62,6 +63,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   onNewCase,
   onCalibrate,
   onReplayFall,
+  onMakeActuator,
   panScroll,
   guide,
   readiness,
@@ -114,6 +116,9 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
 
                     if (fix?.kind === 'calibrate') onCalibrate(fix.joints);
                   },
+                }),
+                ...(onMakeActuator && {
+                  'make-actuator': ({ fix }: ReadinessFinding) => fix?.kind === 'make-actuator' && onMakeActuator(fix),
                 }),
                 ...(onReplayFall && {
                   'replay-fall': ({ fix, ids }: ReadinessFinding) => {

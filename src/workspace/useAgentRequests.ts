@@ -16,6 +16,7 @@ import type { AgentLanes } from './useAgentLanes';
 import type { LaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
 import type { WrapRobot } from './useWrapRobot';
+import type { MakeActuator } from './useMakeActuator';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { SceneDocument } from './useSceneDocument';
 import { errorMessage } from '../utils/errorMessage';
@@ -32,6 +33,7 @@ interface AgentRequestOptions {
   cursors: AgentCursors;
   robots: RobotInsert;
   wrap: WrapRobot;
+  actuator: MakeActuator;
 }
 
 interface Author {
@@ -64,7 +66,8 @@ const partInserter =
     updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));
   };
 
-export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
+export function useAgentRequests(options: AgentRequestOptions) {
+  const { core, lanes, controls, actors, cursors, robots, wrap, actuator } = options;
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
   const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole, commitSkeleton } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
@@ -83,6 +86,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       importRobot: robots.importRobotFrom,
       makeLeader: robots.makeLeader,
       wrap: wrap.wrap,
+      makeActuator: actuator.make,
     });
 
   const simTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>

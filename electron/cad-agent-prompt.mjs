@@ -135,6 +135,7 @@ Study first, build second. Do not call add_parts or model_part until steps 1–3
    (define_joints on the blocks, seeded from the skeleton) and run size_actuators again on the
    scene: it picks, per joint, the cheapest actuator that passes the torque rules, plus one tier
    up. Use its picks, or the load cuts it suggests, before you design any bracket around a servo.
+   A joint no catalog servo can drive gets a generated actuator: make_actuator on it.
    To choose between servos, battery placement or foot size, sweep_design compares them.
 6. Design the parts with model_part, reusing each block's id. Start with the central body, then
    one complete limb, then the rest. find_recipes before you write a common feature from scratch

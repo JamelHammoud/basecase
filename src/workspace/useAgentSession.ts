@@ -14,6 +14,7 @@ import { useAgentCursors } from './useAgentCursors';
 import { useAgentLanes } from './useAgentLanes';
 import { useAgentQueue } from './useAgentQueue';
 import { useAgentRequests } from './useAgentRequests';
+import type { MakeActuator } from './useMakeActuator';
 import { useAdoptedRuns } from './useAdoptedRuns';
 import { useAgentRun } from './useAgentRun';
 import { useLaneControls } from './useLaneControls';
@@ -31,6 +32,7 @@ interface AgentSessionOptions {
   active: boolean;
   robots: RobotInsert;
   wrap: WrapRobot;
+  actuator: MakeActuator;
   placeCustomModel: (model: CustomModelDefinition) => void;
 }
 
@@ -51,7 +53,7 @@ function useAlive() {
 const laneOfEvent = (event: WorkspaceEvent) =>
   typeof event.workspaceId === 'string' ? splitLaneKey(event.workspaceId).laneId : MAIN_LANE;
 
-export function useAgentSession({ core, seed, active, robots, wrap, placeCustomModel }: AgentSessionOptions) {
+export function useAgentSession({ core, seed, active, robots, wrap, actuator, placeCustomModel }: AgentSessionOptions) {
   const { workspaceId, studio, showToast } = core;
   const [actors] = useState(() => new ActorIndex());
   const alive = useAlive();
@@ -72,7 +74,7 @@ export function useAgentSession({ core, seed, active, robots, wrap, placeCustomM
   const persistLane = lanePersister(lanes, studio.setChatList);
   const controls = useLaneControls({ core, lanes, active, alive, persistLane });
   const chat = useAgentChat({ core, lanes, stop: controls.stop, persistLane });
-  const requests = useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap });
+  const requests = useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap, actuator });
   const { handleAgentRequest } = requests;
   const { setUploadedImages } = studio;
   const { current } = lanes;

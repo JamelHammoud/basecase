@@ -22,6 +22,8 @@ import type { Leader } from '../leader/makeLeader';
 import { scopeOf } from '../agent/agentPoseShared';
 import { wrapRobotRequest } from './agentWrapRequest';
 import type { WrapRobot } from './useWrapRobot';
+import type { MakeActuator } from './useMakeActuator';
+import { makeActuatorRequest } from '../actuator/agentActuator';
 import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
@@ -30,6 +32,7 @@ export interface PoseToolContext extends PoseContext {
   setAction: (action: string) => void;
   makeLeader: (robot?: string) => Leader | null;
   wrap: WrapRobot['wrap'];
+  makeActuator: MakeActuator['make'];
   importRobot: (
     source: RobotSource,
     at?: [number, number, number],
@@ -113,6 +116,12 @@ const POSE_TOOLS: Record<string, (ctx: PoseToolContext, payload: Payload) => Pos
     return retargetRequest(ctx, payload as RetargetPayload);
   },
   make_leader: makeLeaderTool,
+  make_actuator: (ctx, payload) =>
+    makeActuatorRequest(payload, {
+      joints: ctx.project.joints ?? [],
+      make: ctx.makeActuator,
+      setAction: ctx.setAction,
+    }),
   find_objects: findObjects,
   insert_object: insertObject,
   wrap_robot: (ctx, payload) =>
@@ -129,6 +138,7 @@ export const POSE_TOOL_KINDS = [
   'retarget',
   'import_robot',
   'make_leader',
+  'make_actuator',
   'wrap_robot',
   'find_objects',
   'insert_object',

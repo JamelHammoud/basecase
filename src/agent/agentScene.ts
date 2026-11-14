@@ -1,5 +1,5 @@
 import { BLOCKOUT_ONLY, PART_CATALOG, catalogItemFromKey, catalogNote } from '../data/catalog';
-import { COMPONENT_BY_ID } from '../data/components';
+import { COMPONENT_BY_ID, componentVariant } from '../data/components';
 import { hardwareName, hardwareNote } from '../data/hardware';
 import { SUPPLY_BY_ID } from '../data/supplies';
 import type { PartMate } from '../types/ports';
@@ -112,7 +112,7 @@ function componentVariantFromKey(key: string): string | undefined {
 
   const c = COMPONENT_BY_ID[head.slice('component:'.length)];
 
-  if (!c?.variants?.some((v) => v.id === variant))
+  if (!c || !componentVariant(c, variant))
     throw new Error(
       `"${key}": ${c?.name ?? 'this part'} comes in ${c?.variants?.map((v) => v.id).join(', ') || 'one version only'}.`,
     );

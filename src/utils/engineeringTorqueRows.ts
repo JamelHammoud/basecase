@@ -1,6 +1,8 @@
 import { jointLabel, nm } from './engineeringFormat';
 import { plural } from '../../electron/plural.mjs';
-import type { CheckRow, JointLoad } from './engineeringTypes';
+import type { CheckRow, FindingFix, JointLoad } from './engineeringTypes';
+
+export type TorqueOffers = (l: JointLoad) => { fix?: FindingFix; why?: string };
 
 const share = (v: number | undefined) => (v === undefined ? '?' : v.toFixed(2));
 
@@ -66,13 +68,18 @@ function torqueStatus({ loads, fails, warns, unknown }: TorqueSummary): CheckRow
   return unknown.length === loads.length ? 'not run' : 'pass';
 }
 
-function torqueItems(s: TorqueSummary): NonNullable<CheckRow['items']> {
-  const line = (l: JointLoad, status: 'warn' | 'fail') => ({ text: loadText(l, s.legs), ids: loadIds(l), status });
+function torqueItems(s: TorqueSummary, offers?: TorqueOffers): NonNullable<CheckRow['items']> {
+  const line = (l: JointLoad, status: 'warn' | 'fail') => {
+    const { fix, why } = offers?.(l) ?? {};
+    const text = why ? `${loadText(l, s.legs)}. ${why}` : loadText(l, s.legs);
+
+    return { text, ids: loadIds(l), status, ...(fix ? { fix, joint: l.joint.id } : {}) };
+  };
 
   return [...s.fails.map((l) => line(l, 'fail')), ...s.warns.map((l) => line(l, 'warn'))];
 }
 
-export function torqueRow(loads: JointLoad[], legShare = 1): CheckRow {
+export function torqueRow(loads: JointLoad[], legShare = 1, offers?: TorqueOffers): CheckRow {
   const summary: TorqueSummary = {
     loads,
     fails: loads.filter((l) => l.status === 'fail'),
@@ -86,7 +93,7 @@ export function torqueRow(loads: JointLoad[], legShare = 1): CheckRow {
     status: torqueStatus(summary),
     detail: torqueDetail(summary),
     detailInItems: true,
-    items: torqueItems(summary),
+    items: torqueItems(summary, offers),
     ids: [...summary.fails, ...summary.warns].flatMap(loadIds),
   };
 }

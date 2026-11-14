@@ -43,7 +43,7 @@ interface CaseExploreOptions {
   kase: Case | null;
   parts: ScenePart[];
   project: ProjectSettings;
-  source: SceneCaseSource & { docs: Pick<SceneDocument, 'commitDesign'> };
+  source: SceneCaseSource & { docs: Pick<SceneDocument, 'commitProject'> };
   showToast: ShowToast;
 }
 
@@ -136,7 +136,9 @@ export function useCaseExplore({ kase, parts, project, source, showToast }: Case
       const scene = { parts: docs.partsRef.current, project: docs.projectRef.current };
       const next = designScene(scene, shown.space, row.design);
 
-      docs.commitDesign(next.parts, next.project.tether);
+      const tether = next.project.tether;
+
+      docs.commitProject({ tether: scene.project.tether }, (p) => ({ ...p, tether }), next.parts);
     },
     isCurrent: (row: ExploredDesign) => !!built && sameDesign(row.design, built),
   };

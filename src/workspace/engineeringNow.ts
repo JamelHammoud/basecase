@@ -49,6 +49,7 @@ export interface EngineeringNowInput {
   falls?: FallSim | string;
   supportG?: EngineeringInputs['supportG'];
   printDowns?: EngineeringInputs['printDowns'];
+  bed?: EngineeringInputs['bed'];
 }
 
 const sweepKey = (spec: SweepSpec) =>
@@ -128,13 +129,14 @@ export async function engineeringInputs(
 }
 
 export async function runEngineeringNow(options: EngineeringNowInput) {
-  const { viewport, parts, project, withSweep, walk, falls, supportG, printDowns } = options;
+  const { viewport, parts, project, withSweep, walk, falls, supportG, printDowns, bed } = options;
   const input: EngineeringInputs = {
     ...(await engineeringInputs(viewport, parts, project)),
     walk,
     falls,
     supportG,
     printDowns,
+    bed,
   };
 
   return withSweep && viewport ? withWorkers(viewport, input) : runEngineering(input);

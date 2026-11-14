@@ -2,7 +2,7 @@ import { armTemplate } from '../../electron/cad-mcp/recipes/templates.mjs';
 import type { ScenePart } from '../types/robotics';
 import type { RobotSkeleton } from '../types/skeleton';
 import type { SizedArm } from '../utils/armSizing';
-import type { AgentCadPayload } from '../agent/cadMesh';
+import { boxPlaceholder, type CadBox } from '../agent/cadPlaceholder';
 import { specToPart } from '../agent/agentScene';
 import { buildSkeleton } from '../agent/skeleton';
 
@@ -17,26 +17,10 @@ export interface ArmBuild {
   skeleton: RobotSkeleton;
 }
 
-type Box = [[number, number, number], [number, number, number]];
-
-const BOX_TRIANGLES = [
-  0, 2, 1, 1, 2, 3, 4, 5, 6, 5, 7, 6, 0, 1, 4, 1, 5, 4, 2, 6, 3, 3, 6, 7, 0, 4, 2, 2, 4, 6, 1, 3, 5, 3, 7, 5,
-];
-
-function placeholder(code: string, [min, max]: Box): AgentCadPayload {
-  const positions = [0, 1, 2, 3, 4, 5, 6, 7].flatMap((k) => [
-    k & 1 ? max[0] : min[0],
-    k & 2 ? max[1] : min[1],
-    k & 4 ? max[2] : min[2],
-  ]);
-
-  return { language: 'openscad', code, positions, indices: BOX_TRIANGLES };
-}
-
 const LINK_MATCH = /servo_link\((\d+(?:\.\d+)?)/;
 const RISER_MATCH = /printed_block\(\[120, 90, (\d+(?:\.\d+)?)\]/;
 
-function roughBox(code: string): Box {
+function roughBox(code: string): CadBox {
   const link = LINK_MATCH.exec(code);
 
   if (link)
@@ -98,7 +82,7 @@ export function armBuild(arm: SizedArm, { links, taken, previous }: ArmBuildOpti
       name: p.name,
       shape: 'cad_part',
       material: 'printed',
-      cad: placeholder(p.code, roughBox(p.code)),
+      cad: boxPlaceholder(p.code, roughBox(p.code)),
       position: p.position,
       rotation: p.rotation,
     });

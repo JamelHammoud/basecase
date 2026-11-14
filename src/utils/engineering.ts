@@ -15,10 +15,18 @@ import { rangeChangeRows } from './engineeringRanges';
 import { simModelRows } from './engineeringSimModel';
 import { servoLookup } from './engineeringEnvelope';
 import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
+import { sceneBed, torqueOffer } from '../actuator/actuatorFix';
 import { FALLS, fallsRow } from './engineeringFalls';
 import { payloadRows } from './engineeringPayload';
 import { STRENGTH_CHECK, strengthRows } from './engineeringStrength';
-import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport, PartMass } from './engineeringTypes';
+import type {
+  CheckContext,
+  CheckRow,
+  EngineeringInputs,
+  EngineeringReport,
+  JointLoad,
+  PartMass,
+} from './engineeringTypes';
 
 export { STRENGTH_CHECK };
 export { rotateEuler } from './engineeringMath';
@@ -120,6 +128,12 @@ export function robotWeight(input: Pick<EngineeringInputs, 'parts' | 'project' |
   return { masses, byId, bodies, all };
 }
 
+const actuatorOffers = (input: EngineeringInputs) => {
+  const bed = sceneBed(input.project, input.bed);
+
+  return (l: JointLoad) => torqueOffer(l, bed, input.walk);
+};
+
 export function runEngineering(input: EngineeringInputs): EngineeringReport {
   const { parts, project, measures } = input;
   const joints = project.joints ?? [];
@@ -146,7 +160,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...(ctx.joints.length ? [] : [{ check: 'Servo torque', status: 'not run' as const, detail: 'No joints' }]),
     ...(loads.length
       ? [
-          withNoFeetNote(torqueRow(loads, env.crouch.share), floating),
+          withNoFeetNote(torqueRow(loads, env.crouch.share, actuatorOffers(input)), floating),
           ...peakRow(loads, project, input.walk, servoLookup(ctx.byPart)),
           ...fallsRow(loads, input.falls),
         ]

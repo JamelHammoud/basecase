@@ -62,6 +62,12 @@ function armCommands(inputs: CommandInputs): Command[] {
   return [paletteCommand(selectionActions(inputs).sizeArm, 'Selection')];
 }
 
+function actuatorCommands(inputs: CommandInputs): Command[] {
+  if (!inputs.actions.actuator.jointId) return [];
+
+  return [paletteCommand(selectionActions(inputs).makeActuator, 'Selection')];
+}
+
 function onePartCommands(inputs: CommandInputs): Command[] {
   const [part, ...others] = inputs.core.selection.selectedParts;
 
@@ -117,6 +123,7 @@ function arrangeCommands(inputs: CommandInputs): Command[] {
 export const editCommands = (inputs: CommandInputs): Command[] => [
   ...wrapCommands(inputs),
   ...armCommands(inputs),
+  ...actuatorCommands(inputs),
   ...clipboardCommands(inputs),
   ...onePartCommands(inputs),
   ...handJointCommands(inputs.actions.joints),

@@ -153,3 +153,141 @@ module pip_hinge(length = 40, segs = 5, knuckle = 6, offset = 4, leaf = 20, t = 
   }
   port("axis", [length / 2, 0, offset - 0.2], [1, 0, 0], "bore");
 }
+
+// ---------------------------------------------------------------- cycloidal reducer
+// Disc profile for a cycloidal drive with ratio lobes and ratio + 1 ring pins of Ø pin_d on
+// radius pin_r, eccentricity ecc: the pin-center path offset inward by pin_d / 2 + fit, sampled
+// at 32 points per lobe, in the disc's own frame.
+function cycloid_profile(ratio = 15, pin_r = 36, pin_d = 5.5, ecc = 1.25, fit = 0.15) =
+  let(n = ratio + 1, r = pin_d / 2 + fit, samples = 32 * ratio)
+  [for (i = [0 : samples - 1]) let(
+    s = 360 * i / samples,
+    q = [pin_r * cos(s) - ecc * cos(n * s), pin_r * sin(s) - ecc * sin(n * s)],
+    t = [-pin_r * sin(s) + ecc * n * sin(n * s), pin_r * cos(s) - ecc * n * cos(n * s)]
+  ) q + r * [-t.y, t.x] / norm(t)];
+
+// Outermost radius a posed disc reaches from the drive axis.
+function cycloid_reach(pin_r, pin_d, ecc, fit) = pin_r + 2 * ecc - pin_d / 2 - fit;
+
+module _cyc_disc(prof, z, turn, center, input, lobes, disc_t, disc_bore, out_pins, out_pin_r, hole_d) {
+  translate([center.x, center.y, z]) rotate(-input / lobes) linear_extrude(height = disc_t) difference() {
+    rotate(turn) polygon(prof);
+    circle(d = disc_bore);
+    for (j = [0 : out_pins - 1]) rotate(360 * j / out_pins) translate([out_pin_r, 0]) circle(d = hole_d);
+  }
+}
+
+// ISO 7380 button head [diameter, height]: low enough to sit in the 4 mm base under the discs.
+function cyc_button_head(m) = m == 3 ? [5.7, 1.65] : m == 4 ? [7.6, 2.2] : [9.5, 2.75];
+
+module _cyc_housing(n, pin_r, pin_d, wall, housing_h, bolt_circle, bolt_m, reach, ins_r) {
+  housing_r = pin_r + pin_d / 2 + wall;
+  head = cyc_button_head(bolt_m);
+  seat = 4.8 - head[1];
+  difference() {
+    union() {
+      cyl(r = housing_r, h = 4, anchor = BOT);
+      difference() {
+        cyl(r = housing_r, h = housing_h, anchor = BOT);
+        down(1) cyl(r = pin_r + pin_d / 2, h = housing_h + 2, anchor = BOT);
+      }
+      for (k = [0 : n - 1]) zrot(360 * k / n) translate([pin_r, 0, 3.8]) {
+        cyl(d = pin_d, h = housing_h - 7.8, anchor = BOT, chamfer2 = 0.4);
+        translate([0, -pin_d / 4, 0]) cube([pin_d / 2 + wall / 2, pin_d / 2, housing_h - 7.8]);
+      }
+      for (k = [0 : 5]) zrot(30 + 60 * k) translate([ins_r, 0, 3.8]) cyl(d = housing_r - reach - 0.7, h = housing_h - 3.8, anchor = BOT);
+    }
+    cyl(d = 22, h = 20);
+    for (k = [0 : 3]) let(a = 45 + 90 * k) placed([bolt_circle / 2 * cos(a), bolt_circle / 2 * sin(a), seat]) {
+      down(seat + 0.01) cyl(d = screw_clear_d(bolt_m), h = seat + 0.02, anchor = BOT);
+      cyl(d = head[0] + 0.6, h = 4 - seat + 0.01, anchor = BOT);
+      port(str("motor_bolt_", k), [0, 0, 0], [0, 0, 1], "screw", bolt_m);
+    }
+    for (k = [0 : 5]) let(a = 30 + 60 * k) placed([ins_r * cos(a), ins_r * sin(a), housing_h]) {
+      heatset_hole(3, insert_len(3));
+      port(str("cover_boss_", k), [0, 0, 0], [0, 0, 1], "boss", 3);
+    }
+  }
+  port("motor", [0, 0, 0], [0, 0, -1], "face");
+  port("mount", [0, 0, 0], [0, 0, -1], "hole_circle", bolt_circle);
+}
+
+module _cyc_cover(housing_r, housing_h, stage_h, out_bearing_d, ins_r) {
+  top = stage_h - 1;
+  difference() {
+    up(housing_h) cyl(r = housing_r, h = top - housing_h, anchor = BOT, rounding2 = 1);
+    down(0.01) cyl(d = out_bearing_d, h = stage_h - 2 + 0.01, anchor = BOT);
+    cyl(d = out_bearing_d - 4, h = 3 * stage_h);
+    for (k = [0 : 5]) let(a = 30 + 60 * k) placed([ins_r * cos(a), ins_r * sin(a), top]) {
+      up(0.01) cyl(d = screw_clear_d(3), h = top - housing_h + 1.02, anchor = TOP);
+      port(str("cover_screw_", k), [0, 0, 0], [0, 0, 1], "screw", 3);
+    }
+  }
+  port("bearing", [0, 0, stage_h - 2], [0, 0, 1], "bore", out_bearing_d);
+}
+
+module _cyc_output(housing_h, stage_h, out_pins, out_pin_d, out_pin_r, out_bearing_d) {
+  carrier_r = out_pin_r + out_pin_d / 2 + 3;
+  hub_d = 30;
+  difference() {
+    union() {
+      up(housing_h - 4) cyl(r = carrier_r, h = 4, anchor = BOT, chamfer1 = 0.6);
+      for (j = [0 : out_pins - 1]) zrot(360 * j / out_pins) translate([out_pin_r, 0, 5.5])
+        cyl(d = out_pin_d, h = housing_h - 4 - 5.5 + 0.2, anchor = BOT, chamfer1 = 0.4);
+      up(housing_h - 0.2) cyl(d = hub_d, h = stage_h - housing_h + 0.2, anchor = BOT, chamfer2 = 0.4);
+    }
+    cyl(d = 14, h = 3 * stage_h);
+    up(housing_h - 0.4) difference() {
+      cyl(r = carrier_r + 1, h = 1, anchor = BOT);
+      down(1) cyl(d = (hub_d + out_bearing_d) / 2, h = 3, anchor = BOT);
+    }
+    for (k = [0 : 3]) zrot(90 * k) translate([10, 0, stage_h]) heatset_hole(3, insert_len(3));
+  }
+  port("output", [0, 0, stage_h], [0, 0, 1], "hole_circle", 20);
+}
+
+module _cyc_shaft(ecc, disc_t, gap, cam_d, shaft_d) {
+  top = 5 + 2 * disc_t + gap;
+  difference() {
+    union() {
+      up(1) cyl(d = 16, h = top - 1, anchor = BOT, chamfer1 = 0.4);
+      translate([ecc, 0, 5]) cyl(d = cam_d, h = disc_t, anchor = BOT);
+      translate([-ecc, 0, 5 + disc_t + gap]) cyl(d = cam_d, h = disc_t, anchor = BOT);
+    }
+    cyl(d = shaft_d + 0.2, h = 3 * top);
+    up(3) ycyl(d = tap_pilot_d(3), h = 20, anchor = FRONT);
+  }
+}
+
+// Printed cycloidal reducer on a motor face: ratio lobes, ratio + 1 fixed ring pins in the
+// housing, two discs 180° apart on an eccentric sleeve (one 6804 bearing in each disc's bore),
+// and an output carrier whose out_pins pins run in the discs' holes, held by a 6806 in the cover.
+// The output turns -input / ratio. Axis = Z, the motor's stator face is z = 0 with the motor below;
+// every part is modeled in this one frame, so each compiles in place. input = input shaft angle
+// (degrees) to pose the moving parts. part = "housing" | "cover" | "disc1" | "disc2" | "output" |
+// "shaft" | "all" (assembled). Screws: 4 × bolt_m × 8 button heads through the base into the motor,
+// 6 × M3 × 14 through the cover into inserts in the housing wall, heads on the cover.
+module cycloidal_drive(ratio = 15, pin_r = 36, pin_d = 5.5, ecc = 1.25, fit = 0.15, disc_t = 8, gap = 0.5,
+                       cam_d = 20, disc_bore = 32, out_pins = 6, out_pin_d = 5, out_pin_r = 23, hole_d = 7.9, wall = 4,
+                       housing_h = 26, stage_h = 35, shaft_d = 10, bolt_circle = 44, bolt_m = 4, out_bearing_d = 42,
+                       input = 0, part = "all") {
+  $fa = 4;
+  $fs = 0.5;
+  lobes = ratio;
+  housing_r = pin_r + pin_d / 2 + wall;
+  reach = cycloid_reach(pin_r, pin_d, ecc, fit);
+  ins_r = (reach + 0.5 + housing_r) / 2;
+  all = part == "all";
+  prof = all || part == "disc1" || part == "disc2" ? cycloid_profile(ratio, pin_r, pin_d, ecc, fit) : [];
+  if (all || part == "housing") _cyc_housing(ratio + 1, pin_r, pin_d, wall, housing_h, bolt_circle, bolt_m, reach, ins_r);
+  if (all || part == "cover") _cyc_cover(housing_r, housing_h, stage_h, out_bearing_d, ins_r);
+  if (all || part == "disc1")
+    _cyc_disc(prof, 5, 0, ecc * [cos(input), sin(input)], input, lobes, disc_t, disc_bore, out_pins, out_pin_r, hole_d);
+  if (all || part == "disc2")
+    _cyc_disc(prof, 5 + disc_t + gap, -180 / lobes, ecc * [cos(input + 180), sin(input + 180)], input, lobes, disc_t, disc_bore, out_pins, out_pin_r, hole_d);
+  if (all || part == "output") zrot(-input / lobes) _cyc_output(housing_h, stage_h, out_pins, out_pin_d, out_pin_r, out_bearing_d);
+  if (all || part == "shaft") {
+    zrot(input) _cyc_shaft(ecc, disc_t, gap, cam_d, shaft_d);
+    port("input", [0, 0, 1], [0, 0, -1], "bore", shaft_d);
+  }
+}

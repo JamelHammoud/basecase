@@ -100,6 +100,50 @@ export const MODULE_RECIPES = [
     ],
   },
   {
+    name: 'cycloidal_drive',
+    use: 'Printed cycloidal reducer on a motor face: fixed ring pins in the housing, two discs 180° apart on an eccentric sleeve (6804 bearings), an output carrier on pins through the discs, held by a 6806 in the cover. Output turns -input / ratio.',
+    tags: 'cycloidal cycloid reducer gearbox reduction actuator joint motor bldc gimbal drive printed robot dog quadruped arm',
+    params:
+      'ratio=15 (lobes; ratio + 1 ring pins), pin_r=36, pin_d=5.5, ecc=1.25, fit=0.15, disc_t=8, gap=0.5, cam_d=20, disc_bore=32, out_pins=6, out_pin_d=5, out_pin_r=23, hole_d=7.9, wall=4, housing_h=26, stage_h=35, shaft_d=10, bolt_circle=44, bolt_m=4, out_bearing_d=42, input=0 (input shaft angle, poses the moving parts), part="housing"|"cover"|"disc1"|"disc2"|"output"|"shaft"|"all"',
+    ports:
+      'motor (housing, z = 0 face), mount (housing, the motor bolt circle on z = 0), motor_bolt_i, cover_boss_i (housing), bearing (cover, Ø42 bore), cover_screw_i, output (hole_circle Ø20 at z = stage_h, 4 × M3 inserts), input (shaft bore)',
+    notes:
+      'Needs include <mechanisms.scad>. Frame: axis = Z, motor stator face z = 0, motor below; every part compiles in place. mount: a parent bracket clamps between the motor and the base plate on the 4 motor bolts. cycloid_profile(...) gives the disc outline. Screws: 4 × M4 × 8 button heads into the motor, 6 × M3 × 14 through the cover into inserts; M3 set screw in the sleeve collar.',
+    code: `${MECH}cycloidal_drive(15, part = "housing");`,
+    expect: { ports: ['motor', 'mount'] },
+    checks: [
+      {
+        why: 'the discs clear the ring pins through one output turn, sampled',
+        code: `${MECH}intersection() {
+  cycloidal_drive(part = "housing", $ports = false, $fn = 24);
+  for (a = [0 : 457 : 5400]) {
+    cycloidal_drive(input = a, part = "disc1", $ports = false);
+    cycloidal_drive(input = a, part = "disc2", $ports = false);
+  }
+}`,
+        empty: true,
+      },
+      {
+        why: 'the output pins clear the disc holes',
+        code: `${MECH}for (a = [0, 1000, 2750, 4321]) intersection() {
+  cycloidal_drive(input = a, part = "output", $ports = false, $fn = 24);
+  union() {
+    cycloidal_drive(input = a, part = "disc1", $ports = false, $fn = 24);
+    cycloidal_drive(input = a, part = "disc2", $ports = false, $fn = 24);
+  }
+}`,
+        empty: true,
+      },
+      {
+        why: 'the cover compiles',
+        code: `${MECH}cycloidal_drive(part = "cover");`,
+        ports: ['bearing', 'cover_screw_0'],
+      },
+      { why: 'the output compiles', code: `${MECH}cycloidal_drive(input = 90, part = "output");`, ports: ['output'] },
+      { why: 'the shaft compiles', code: `${MECH}cycloidal_drive(input = 90, part = "shaft");`, ports: ['input'] },
+    ],
+  },
+  {
     name: 'gt2_pulley_pair',
     use: 'Two GT2 pulleys at the center distance for a closed belt of a stock tooth count (approximate printed GT2 groove; test one on the belt).',
     tags: 'pulley belt gt2 timing drive transmission reduction toothed',

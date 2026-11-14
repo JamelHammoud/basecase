@@ -31,6 +31,8 @@ export const BEARINGS: Record<string, { d: number; D: number; B: number }> = {
   '6800': { d: 10, D: 19, B: 5 },
   '6000': { d: 10, D: 26, B: 8 },
   '6001': { d: 12, D: 28, B: 8 },
+  '6804': { d: 20, D: 32, B: 7 },
+  '6806': { d: 30, D: 42, B: 7 },
   '6200': { d: 10, D: 30, B: 9 },
 };
 

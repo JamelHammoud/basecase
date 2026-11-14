@@ -121,6 +121,7 @@ const EDITS = new Set([
   'mate',
   'define_joints',
   'size_arm',
+  'make_actuator',
   'set_build',
   'add_sourced_item',
   'import_maker_cad',

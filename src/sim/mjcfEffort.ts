@@ -22,6 +22,12 @@ export function jointServos(j: RobotJoint, byId: Map<string, ScenePart>, volts?:
     .map((s) => ratedAt(s, volts));
 }
 
+export function jointArmature(j: RobotJoint, { byId, volts }: Pick<EffortScene, 'byId' | 'volts'>): number | undefined {
+  const specs = jointServos(j, byId, volts);
+
+  return specs.length && specs.every((s) => s.armature) ? specs.reduce((sum, s) => sum + s.armature!, 0) : undefined;
+}
+
 export function holdingLoad(j: RobotJoint, rig: Rig, masses: Masses): { momentNm: number; grams: number } {
   let momentNm = 0;
   let grams = 0;

@@ -88,6 +88,7 @@ A fall hits a leg servo far harder than walking does. **Falls** tips the robot o
 - **A shorter lever.** Torque grows with the distance from the joint to the load it holds.
 - **A lighter robot.** Every leg joint carries the full weight.
 - **A higher voltage,** inside the servo's range. Torque is read at your supply voltage, so a higher one can add torque.
+- **A printed actuator.** When one fits, a failing line offers **Make an Actuator** in place of **Fix**: [Make an actuator for a joint](/help/make-an-actuator).
 
 **Fix**, on a failing line, hands the problem to the agent to solve.
 

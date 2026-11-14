@@ -1,5 +1,7 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import type { CaseConsole } from '../cases/console/format';
+import { GESTURE_EVENT, gestureNames } from '../cases/gestures';
+import { lastInputEvent } from '../sim/inputEvents';
 import { createSignalBus, type SignalBus, type SignalSample } from '../cases/console/signalBus';
 import { workerJudge, type GoalJudge } from '../cases/goalJudge';
 import { liveGoal, type LiveGoal } from '../cases/liveGoal';
@@ -14,6 +16,16 @@ import type { ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 
 const PUSH_EVERY_S = 0.05;
+const PULSE_MS = 500;
+
+const gesturePulses = (names: string[], now = performance.now()) =>
+  Object.fromEntries(
+    names.map((name) => {
+      const at = lastInputEvent(GESTURE_EVENT, name);
+
+      return [name, at !== null && now - at < PULSE_MS ? 1 : 0];
+    }),
+  );
 const JUDGE_EVERY_MS = 500;
 const D2R = Math.PI / 180;
 
@@ -55,6 +67,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
   const live = useEffectEvent(() => ({
     running: input.running,
     cameras: input.cameras,
+    gestures: caseConsole.input.includes('camera') ? gesturePulses(gestureNames(input.kase?.gestures)) : undefined,
     inputs: Object.fromEntries(caseConsole.input.map((id) => [id, sim.drive.inputs()[id] ?? null])),
     robot: sim.latestStats()?.robots[0],
     time: sim.latestStats()?.time ?? 0,
@@ -118,6 +131,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
         inputs: now.inputs,
         goal: now.running ? judged : null,
         cameras: now.cameras,
+        gestures: now.gestures,
       });
     });
     const timer = setInterval(() => {

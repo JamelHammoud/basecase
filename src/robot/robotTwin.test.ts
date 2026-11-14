@@ -41,8 +41,10 @@ const status = (positions: number[], atUs?: number) =>
 async function connect(joints: string[]) {
   const spec: ServoRobotSpec = { family: 'feetech', ids: joints.map((_, k) => k + 1), class: 'arm', emulated: true };
 
+  const connecting = connectRobot(spec, joints);
+
   receiveRobotEvent({ event: 'link', state: 'connected', spec });
-  await connectRobot(spec, joints);
+  await connecting;
   receiveRobotEvent({ event: 'mode', mode: 'test' });
 }
 

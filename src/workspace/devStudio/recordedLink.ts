@@ -1,7 +1,9 @@
 import { OperateRecorder } from '../../../electron/robot/operateRecorder.mjs';
 import { readStoredTry } from '../../cases/tryFile';
 import { keepSession } from '../../cases/tryStore';
+import { DEFAULT_UNIT } from '../../../electron/robot/units.mjs';
 import type { RobotLinkApi } from '../../robot/robotStore';
+import { unitOfEvent } from '../../robot/robotUnits';
 import { applyRobotEvent, INITIAL_ROBOT, type RobotEvent, type RobotState } from '../../robot/robotState';
 import { statusPositions } from '../../robot/runBuffer';
 
@@ -36,7 +38,8 @@ function recorderFor(rec: Recording, event: RobotEvent, forward: Listener) {
     spec,
     sink: sinkOf(rec),
     radians: (status) => statusPositions(status as never, spec.ids, rec.state.calibration),
-    onClosed: (closed) => void rec.saving.then(() => forward({ event: 'recorded', ...closed })),
+    onClosed: (closed) =>
+      void rec.saving.then(() => forward({ event: 'recorded', ...closed, unit: unitOfEvent(event) })),
   });
 }
 
@@ -54,21 +57,42 @@ function observe(rec: Recording, event: RobotEvent, forward: Listener) {
   rec.recorder?.event(event);
 }
 
+function recordingsOf() {
+  const recordings = new Map<string, Recording>();
+
+  return (unit: string | undefined) => {
+    const name = unit ?? DEFAULT_UNIT;
+    const known = recordings.get(name);
+
+    if (known) return known;
+
+    const rec: Recording = { recorder: null, state: INITIAL_ROBOT, texts: new Map(), saving: Promise.resolve() };
+
+    recordings.set(name, rec);
+
+    return rec;
+  };
+}
+
 export function recordedLink(link: RobotLinkApi): RobotLinkApi {
-  const rec: Recording = { recorder: null, state: INITIAL_ROBOT, texts: new Map(), saving: Promise.resolve() };
-  const running = () => rec.state.status?.run === 'running';
+  const recordingOf = recordingsOf();
 
   return {
     ...link,
-    onRobotEvent: (callback) => link.onRobotEvent?.((event) => observe(rec, event, callback)) ?? (() => {}),
-    robotCommand: async (command) => {
-      const reply = (await link.robotCommand?.(command)) ?? { ok: false, message: '' };
+    onRobotEvent: (callback) =>
+      link.onRobotEvent?.((event) => observe(recordingOf(unitOfEvent(event)), event, callback)) ?? (() => {}),
+    robotCommand: async (command, unit) => {
+      const reply = (await link.robotCommand?.(command, unit)) ?? { ok: false, message: '' };
+      const rec = recordingOf(unit);
 
-      if (reply.ok && command.cmd === 'intent' && running()) rec.recorder?.intent(command.joints as number[]);
+      if (reply.ok && command.cmd === 'intent' && rec.state.status?.run === 'running')
+        rec.recorder?.intent(command.joints as number[]);
 
       return reply;
     },
-    robotRecord: async (sample) => {
+    robotRecord: async (sample, unit) => {
+      const rec = recordingOf(unit);
+
       if ('scene' in sample) rec.recorder?.setContext(sample.scene);
       else rec.recorder?.sample(sample);
 

@@ -65,6 +65,9 @@ export const simulation = {
   views) saw at each frame; operate drives the live sim one step at a time and returns those
   views after each step, for tasks steered by sight. A camera part's lens comes from its catalog
   field of view; the user can switch any camera to a fisheye.
+- roll_out puts a ready skill on the robots connected in Operate, canaries first, each proved in
+  Arena on its own calibrated twin. A unit whose twin fails is held back with the failing line.
+- roll_back returns one unit to the policy version it ran before.
 - Anything else the user wants the robot to do is a skill: draft_skill writes the contract and
   shows it, train_skill races solvers on it and Arena judges the result (see Slash commands).`,
 };

@@ -1,6 +1,7 @@
 import { useState, useSyncExternalStore } from 'react';
 import type { ContextMenuEntry } from '../../design-system';
 import type { DataLayerRow, DataLayerStore } from '../../dataLayers/store';
+import { dataLayerMenu } from './dataLayerMenu';
 
 const NO_ROWS: DataLayerRow[] = [];
 const noRows = () => NO_ROWS;
@@ -18,11 +19,7 @@ export function useDataLayerRows(store: DataLayerStore | undefined) {
   const openMenu = (layer: DataLayerRow, at: { x: number; y: number }) =>
     setMenu({
       ...at,
-      items: layer.fields.map((field) => ({
-        label: field,
-        checked: layer.colorBy === field,
-        onSelect: () => store?.setColorBy(layer.id, layer.colorBy === field ? null : field),
-      })),
+      items: dataLayerMenu(layer, store),
     });
 
   return {

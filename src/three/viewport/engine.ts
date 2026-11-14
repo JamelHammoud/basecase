@@ -385,6 +385,13 @@ export class ViewportEngine {
       dragPart: (id, to, free) => this.gizmo.dragTo(id, to, free),
       previewSnap: (part, free) => this.gizmo.snap.preview(part, free),
       projectPoints: (points) => measure.projectPoints(ctx, points),
+      onRender: (listener) => {
+        ctx.loop.afterRender.add(listener);
+
+        return () => {
+          ctx.loop.afterRender.delete(listener);
+        };
+      },
       measureFrom: (x, y) => this.measureTool.startAt(x, y),
       cancelMeasure: () => this.measureTool.clear(),
       shownPartIds: () => this.buildStep.shownIds(),

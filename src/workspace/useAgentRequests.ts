@@ -8,6 +8,7 @@ import { applyAgentOps } from './applyAgentOps';
 import { awaitPartModels } from './agentPartModels';
 import { requestHandler, type RequestContext } from './agentRequestHandlers';
 import { calibrationErrorsText } from '../agent/agentCalibration';
+import { selectedUnit } from '../robot/robotStore';
 import { runPoseTool, runSimTool, withSavedPose } from './agentRobotTools';
 import { sceneChecks } from './sceneChecks';
 import type { AgentRequestEvent, Vec3 } from './types';
@@ -81,11 +82,15 @@ function authorFor(event: AgentRequestEvent, actors: ActorIndex, cursors: AgentC
   };
 }
 
-const tryReadOf = ({ simTraining, posing }: WorkspaceCore, timeline: () => TryTimeline): TryReadSources => ({
+const tryReadOf = (
+  { simTraining, posing, dataLayers }: WorkspaceCore,
+  timeline: () => TryTimeline,
+): TryReadSources => ({
   timeline,
   model: simTraining.sim.modelNow,
   rig: () => posing.rig,
   sought: simTraining.sim.sought,
+  mapMatching: dataLayers.matching,
   partners: simTraining.cases.partners,
 });
 
@@ -111,8 +116,10 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       wrap: wrap.wrap,
     });
 
-  const simTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
-    runSimTool(kind, payload, {
+  const simTool = (kind: string, payload: Payload, setAction: SetAction = quiet) => {
+    const unit = typeof payload.unit === 'string' ? payload.unit : selectedUnit();
+
+    return runSimTool(kind, payload, {
       sim: simTraining.sim,
       training: simTraining.training,
       rig: posing.rig,
@@ -123,9 +130,11 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       parts: partsRef.current,
       fixedCameras: projectRef.current.cameras ?? [],
       velocity: simTraining.skills.velocity,
-      calibrationErrors: () => calibrationErrorsText(projectRef.current),
+      calibrationErrors: () => calibrationErrorsText(projectRef.current, unit),
+      fleet: simTraining.fleet.tools,
       setAction,
     });
+  };
 
   const guard = (author: Author, partId: string) => {
     const holder = actors.holderOf(partId, author.actor, lanes.isBusy);

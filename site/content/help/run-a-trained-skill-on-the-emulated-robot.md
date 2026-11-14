@@ -28,15 +28,18 @@ covers:
 
 With the emulated robot in Test, you can play a trained skill or policy in the simulation, and the robot's servos follow along through the safety layer.
 
-The policy runs in the app's simulation, and the robot copies what the simulation does. Basecase still sends the robot the scene's newest ready skill or up-to-date policy, which opens **Rehearse** and the rungs above it. On those rungs, the robot follows the simulation too.
+The policy runs in the app's simulation, and the selected robot copies what the simulation does. Until a unit is pinned by Roll Out, Basecase sends it the scene's newest ready skill or up-to-date policy. That opens **Rehearse** and the rungs above it, where the robot follows the simulation too.
+
+[Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet) proves each unit's twin first and pins its policy version.
 
 1. Connect the emulated robot and climb to **Test**. See [Connect an emulated robot](/help/connect-an-emulated-robot) for the steps.
-2. Click **Simulate** at the top of the right panel.
-3. Under **Train**, click **Try** on a ready skill. For **Walk**, click **Drive** instead.
-4. Watch the servo angles in **Operate** change as the simulated robot moves.
-5. To stop the motors, click **Stop** in **Operate**.
+2. In **Operate**, click the robot's named row.
+3. Click **Simulate** at the top of the right panel.
+4. Under **Train**, click **Try** on a ready skill. For **Walk**, click **Drive** instead.
+5. Watch the servo angles in **Operate** change as the simulated robot moves.
+6. To stop the motors, click **Stop** in **Operate**.
 
-To run a trained policy, skip step 3 and choose the policy under **Control**. When you try a Case or run a Routine, the app streams it to the robot the same way.
+To run a trained policy, skip step 4 and choose the policy under **Control**. When you try a Case or run a Routine, the app streams it to the robot the same way.
 
 ## What the safety layer changes
 

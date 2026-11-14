@@ -15,6 +15,11 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
   const COUNTS_PER_RAD = 4096 / (2 * Math.PI);
   const counts = (rad) => Math.round(2048 + rad * COUNTS_PER_RAD);
   const isServoSpec = (spec) => spec.family === 'feetech' || spec.family === 'dynamixel';
+  const DEFAULT_UNIT = 'robot';
+  const listeners = new Set();
+  const fleet = { units: {}, broadcast: [] };
+
+  const makeUnit = (name) => {
   const hornOf = (id) => link.horns[id] ?? { offsetDeg: 0, direction: 1 };
   const linkRad = (id, position) => {
     const horn = hornOf(id);
@@ -25,8 +30,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     return (mount.zero_counts - 2048) / COUNTS_PER_RAD + mount.direction * rad;
   };
   const mountsEvent = () => ({ event: 'calibration', joints: robot.ids.map((id, k) => ({ id, ...robot.calibration[k] })) });
-  const listeners = new Set();
-  const emit = (event) => listeners.forEach((l) => l(event));
+  const emit = (event) => listeners.forEach((l) => l({ ...event, unit: name }));
   let robot = null;
 
   const isG1Ask = (spec) => spec && spec.family === 'unitree-g1' && spec.emulated === true && Object.keys(spec).length === 2;
@@ -57,7 +61,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     mode: robot.mode,
     run: robot.run,
     sealed: false,
-    fault_latched: false,
+    fault_latched: robot.stalled !== null,
     joints: robot.ids.map((id, k) =>
       holds(id)
         ? { id, position: counts(robot.position[k]), temp_c: robot.servos ? 30 : null, volts: robot.servos ? 7.4 : null, torque_on: robot.run === 'running' && robot.writable.includes(k) && id !== robot.stalled, reply: 'ok', ...(robot.mounted ? { link_rad: linkRad(id, robot.position[k]) } : {}) }
@@ -187,11 +191,16 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     return { ok: true };
   };
 
-  const link = (window.__fakeRobotLink = {
+  const link = {
+    unit: name,
+    connected: () => robot !== null,
+    mode: () => robot?.mode ?? null,
+    pinned: false,
+    history: [],
     factory: false,
     horns: {},
     written: null,
-    policy: [],
+    policy: fleet.broadcast.slice(0, 1),
     lastAsk: null,
     intents: [],
     statuses: [],
@@ -216,6 +225,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
       link.intents = [];
       link.statuses = [];
       link.lastAsk = JSON.parse(JSON.stringify(ask));
+      Object.assign(link, { pinned: false, history: [], policy: fleet.broadcast.slice(0, 1) });
       const factory = ask.factory === true || link.factory === true;
       robot.bus = factory ? [] : ids.map((id) => ({ id }));
       robot.plugRequested = false;
@@ -243,6 +253,54 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
       return { ok: true };
     },
     writes: () => ({ ...(robot?.writes ?? {}) }),
+  };
+  return link;
+  };
+
+  const unitOf = (name) => (fleet.units[name ?? DEFAULT_UNIT] ??= makeUnit(name ?? DEFAULT_UNIT));
+  const top = unitOf(DEFAULT_UNIT);
+  const own = { ...top };
+  const versionOf = (refs) => (refs ? (refs[0]?.hash ?? refs[0]?.id ?? null) : null);
+  const tell = (u) => listeners.forEach((l) => l({ event: 'policy', unit: u.unit, version: versionOf(u.policy), previous: versionOf(u.history.at(-1)), hasPrevious: u.history.length > 0 }));
+  const routed = (name) => (!name || name === DEFAULT_UNIT ? own : unitOf(name));
+
+  Object.assign(top, {
+    units: fleet.units,
+    robotConnect: async (ask, unit) => {
+      const reply = await routed(unit).robotConnect(ask);
+      const u = routed(unit) === own ? top : unitOf(unit);
+      if (reply.ok) tell(u);
+      return reply;
+    },
+    robotCommand: (command, unit) => routed(unit).robotCommand(command),
+    robotCalibrate: (joints, unit) => routed(unit).robotCalibrate(joints),
+    robotDisconnect: (unit) => routed(unit).robotDisconnect(),
+    robotState: (unit) => routed(unit).robotState(),
+    robotUnits: async () => Object.values(fleet.units).filter((u) => u.connected()).map((u) => ({ unit: u.unit, connected: true, spec: u.lastAsk, hello: null, status: null, calibration: u.written, version: versionOf(u.policy), previous: versionOf(u.history.at(-1)), hasPrevious: u.history.length > 0, mode: u.mode() })),
+    robotPolicy: async (refs, unit) => {
+      if (!unit) {
+        fleet.broadcast = refs;
+        Object.values(fleet.units).forEach((u) => { if (!u.pinned) { u.policy = refs.slice(0, 1); if (u.connected()) tell(u); } });
+        return { ok: true };
+      }
+      const u = routed(unit) === own ? top : unitOf(unit);
+      if (!u.connected()) return { ok: false, message: 'Connect an emulated robot first.' };
+      u.history.push([...u.policy]);
+      u.policy = refs;
+      u.pinned = true;
+      tell(u);
+      return { ok: true };
+    },
+    robotRollBack: async (unit) => {
+      const u = routed(unit) === own ? top : unitOf(unit);
+      if (!u.history.length) return { ok: false, message: 'The robot only takes the documented commands.' };
+      const previous = u.history.pop();
+      u.pinned = previous.length > 0;
+      u.policy = previous;
+      tell(u);
+      return { ok: true };
+    },
   });
+  window.__fakeRobotLink = top;
 })();
 `;

@@ -16,6 +16,7 @@ import { hashOf } from './hash';
 import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
 import type { SnapshotRef } from './snapshots';
+import type { TwinVerdict } from '../fleet/twinArena';
 import { plural } from '../../electron/plural.mjs';
 import { percent } from '../../electron/percent.mjs';
 
@@ -57,6 +58,7 @@ export interface SkillRecord {
   origin: SkillOrigin | null;
   environment: Environment | null;
   snapshots?: SnapshotRef[];
+  twins?: Record<string, TwinVerdict>;
   createdAt: string;
 }
 
@@ -132,7 +134,7 @@ type Variant = ArenaEvidence['variants'][number];
 
 const passShare = (variant: Variant) => variant.passes / variant.trials;
 
-const worstVariant = (evidence: ArenaEvidence): Variant | undefined =>
+export const worstVariant = (evidence: ArenaEvidence): Variant | undefined =>
   [...evidence.variants].sort((a, b) => passShare(a) - passShare(b))[0];
 
 const worstShare = (evidence: ArenaEvidence) => {

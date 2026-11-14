@@ -30,7 +30,8 @@ import { registerDatasetHandlers } from './library/datasetRoutes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerEarthHandlers } from './earth/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
-import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
+import { RobotFleet } from './robot/robotFleet.mjs';
+import { daemonBinary } from './robot/robotLink.mjs';
 import { robotPolicyBytes } from './robot/robotPolicy.mjs';
 import { registerRobotHandlers } from './robot/robotRoutes.mjs';
 import { PhonePairing } from './phone/phonePairing.mjs';
@@ -266,7 +267,7 @@ const sendTo = (channel) => (event) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, event);
 };
 
-const robot = new RobotLink({
+const robot = new RobotFleet({
   binary: robotBinary,
   emit: sendTo('robot:event'),
   policyBytes: robotPolicyBytes({ libraryDir: backend.libraryDir, trainer: backend.trainer }),

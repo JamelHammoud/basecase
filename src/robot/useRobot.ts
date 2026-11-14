@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from 'react';
-import { robotSnapshot, subscribeRobot } from './robotStore';
+import { fleetSnapshot, robotSnapshot, subscribeRobot } from './robotStore';
 
 export const useRobot = () => useSyncExternalStore(subscribeRobot, robotSnapshot, robotSnapshot);
+
+export const useFleet = () => useSyncExternalStore(subscribeRobot, fleetSnapshot, fleetSnapshot);

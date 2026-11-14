@@ -57,6 +57,8 @@ The agent tells you what each method tried. If a design change would make the sk
 
 A skill belongs to the design it was trained on. Changing a color or a name keeps the skill ready. If you change a mass or a size, its row shows **Recheck**. If you change a joint, the row shows **Train**. Either button sends your words back to the agent.
 
+To send a ready network policy to several emulated robots, see [Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet). Each unit must pass Arena on its own twin.
+
 A ready skill can also be a step in a Routine. See [Build a Routine](/help/build-a-routine).
 
 To share a skill, right-click its row and choose **Publish to Hugging Face**. Learn more in [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).

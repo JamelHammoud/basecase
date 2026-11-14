@@ -11,6 +11,7 @@ export interface DataLayerRow {
   colorBy: string | null;
   fields: string[];
   missing: string | null;
+  matching?: boolean;
 }
 
 export interface DataLayerInput {
@@ -66,6 +67,10 @@ export class DataLayerStore {
 
   private listStale = false;
 
+  private matchScans = true;
+
+  matching = (): boolean => this.matchScans;
+
   subscribe = (listen: () => void) => {
     this.listeners.add(listen);
 
@@ -95,6 +100,7 @@ export class DataLayerStore {
       colorBy: this.colorBy.get(t.id) ?? null,
       fields: fieldsOf(t),
       missing: this.missing.get(t.id) ?? null,
+      matching: t.schema === 'scene/Map' ? this.matchScans : undefined,
     }));
 
     return this.listed;
@@ -172,6 +178,13 @@ export class DataLayerStore {
 
     this.listChanged();
     this.redraw();
+  }
+
+  setMatching(enabled: boolean): void {
+    if (enabled === this.matchScans) return;
+
+    this.matchScans = enabled;
+    this.listChanged();
   }
 
   noteDrawn(drawn: DrawnLayer[]): void {

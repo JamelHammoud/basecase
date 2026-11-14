@@ -12,7 +12,7 @@ import type { RobotJoint, ScenePart } from '../types/robotics';
 import { canRunBench, playBench } from './benchRun';
 import { captureWiggle, connectionMounts, remount } from './mountCapture';
 import { servoFamily } from './robotState';
-import { robotSceneJoints, robotSnapshot } from './robotStore';
+import { robotSceneJoints, robotSnapshot, selectedUnit } from './robotStore';
 import { forgetLag } from './robotTwin';
 import { sceneRobotChoices } from './sceneRobot';
 
@@ -46,17 +46,18 @@ export const useCalibrationPhase = () => useSyncExternalStore(subscribe, calibra
 const sameIds = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((id, i) => id === b[i]);
 
-export function connectedFrom(sceneJoints: readonly RobotJoint[]): string[] | null {
-  const connected = robotSceneJoints();
+export function connectedFrom(sceneJoints: readonly RobotJoint[], unit: string = selectedUnit()): string[] | null {
+  const connected = robotSceneJoints(unit);
   const robot = sceneRobotChoices(sceneJoints);
 
   return connected && robot.ok && robot.choices.some((c) => sameIds(connected, c.joints)) ? connected : null;
 }
 
-export const canCalibrate = (sceneJoints: readonly RobotJoint[]) =>
-  phase === 'idle' && Boolean(connectedFrom(sceneJoints)) && canRunBench(robotSnapshot());
+export const canCalibrate = (sceneJoints: readonly RobotJoint[], unit: string = selectedUnit()) =>
+  phase === 'idle' && Boolean(connectedFrom(sceneJoints, unit)) && canRunBench(robotSnapshot(unit));
 
 export interface CalibrateRobotInput {
+  unit?: string;
   joints: readonly RobotJoint[];
   parts: readonly ScenePart[];
   record: RecordCalibration;
@@ -66,14 +67,19 @@ export interface CalibrateRobotInput {
   only?: readonly string[];
 }
 
+type CapturedCalibrationInput = CalibrateRobotInput & { unit: string };
+
 interface BenchJoint {
   index: number;
   jointId: string;
   servo: ServoPart;
 }
 
-function benchJoints({ joints: sceneJoints, parts, only }: CalibrateRobotInput, connected: string[]): BenchJoint[] {
-  const bus = servoFamily(robotSnapshot().spec);
+function benchJoints(
+  { joints: sceneJoints, parts, only, unit }: CapturedCalibrationInput,
+  connected: string[],
+): BenchJoint[] {
+  const bus = servoFamily(robotSnapshot(unit).spec);
 
   if (!bus) return [];
 
@@ -88,7 +94,7 @@ export const wantedMounts = (connected: readonly string[], calibrations: Calibra
   connected.map((jointId) => activeMount(calibrations?.[jointId]) ?? DEFAULT_MOUNT);
 
 interface CaptureInput {
-  input: CalibrateRobotInput;
+  input: CapturedCalibrationInput;
   connected: string[];
   moving: BenchJoint[];
   fitter: Calibrator;
@@ -98,11 +104,11 @@ const unmeasured = (mounts: readonly JointMount[], m: BenchJoint) => sameMount(m
 
 const mountReason = (r: MountResult) => `${r.score.toFixed(3)} / ${r.runnerUp.toFixed(3)}`;
 
-async function capturedFrames(searched: BenchJoint[], source: Parameters<typeof captureWiggle>[1]) {
+async function capturedFrames(searched: BenchJoint[], source: Parameters<typeof captureWiggle>[1], unit: string) {
   const frames: MountFrame[] = [];
 
   for (const { index } of searched) {
-    const shots = await captureWiggle(index, source);
+    const shots = await captureWiggle(index, source, unit);
 
     if (!shots) return null;
 
@@ -113,21 +119,22 @@ async function capturedFrames(searched: BenchJoint[], source: Parameters<typeof 
 }
 
 async function findJointMounts({ input, connected, moving, fitter }: CaptureInput): Promise<boolean> {
+  const { unit } = input;
   const wanted = wantedMounts(connected, input.calibrations);
 
-  if (wanted.some((m, k) => !sameMount(m, connectionMounts()[k])) && !(await remount(wanted))) return false;
+  if (wanted.some((m, k) => !sameMount(m, connectionMounts(unit)[k])) && !(await remount(wanted, unit))) return false;
 
   const searched = moving.filter((m) => unmeasured(wanted, m));
-  const { spec, emulated } = robotSnapshot();
+  const { spec, emulated } = robotSnapshot(unit);
 
   if (!searched.length || !emulated || !spec) return true;
 
   setPhase('capturing');
 
   const view = calibrationView(input.parts, input.cameras);
-  const status = () => robotSnapshot().status;
+  const status = () => robotSnapshot(unit).status;
   const source = emulatedCamera({ ...input, view, connected: { ids: spec.ids, joints: connected }, status });
-  const frames = await capturedFrames(searched, source);
+  const frames = await capturedFrames(searched, source, unit);
 
   if (!frames) return false;
 
@@ -145,13 +152,18 @@ async function findJointMounts({ input, connected, moving, fitter }: CaptureInpu
     (m, k) => results.find((r) => r.jointId === connected[k] && r.verdict === 'measured')?.mount ?? m,
   );
 
-  return found.every((m, k) => sameMount(m, wanted[k])) || remount(found);
+  return found.every((m, k) => sameMount(m, wanted[k])) || remount(found, unit);
 }
 
-async function fitServos(input: CalibrateRobotInput, moving: BenchJoint[], fitter: Calibrator) {
+async function fitServos(input: CapturedCalibrationInput, moving: BenchJoint[], fitter: Calibrator) {
   setPhase('moving');
 
-  const recording = await playBench(moving.map((m) => m.index));
+  const recording = await playBench(
+    moving.map((m) => m.index),
+    undefined,
+    undefined,
+    input.unit,
+  );
 
   if (!recording) return;
 
@@ -162,16 +174,19 @@ async function fitServos(input: CalibrateRobotInput, moving: BenchJoint[], fitte
     const calibration = await fitter.calibrate({ servo, logs });
 
     input.record(jointId, { ...calibration, logId: keepBenchLogs(servo, logs) });
-    forgetLag(jointId);
+
+    if (selectedUnit() === input.unit) forgetLag(jointId);
   }
 }
 
 export async function calibrateRobot(input: CalibrateRobotInput): Promise<void> {
-  const connected = connectedFrom(input.joints);
+  const unit = input.unit ?? selectedUnit();
+  const captured = { ...input, unit };
+  const connected = connectedFrom(input.joints, unit);
 
-  if (!connected || !canCalibrate(input.joints)) return;
+  if (!connected || !canCalibrate(input.joints, unit)) return;
 
-  const moving = benchJoints(input, connected);
+  const moving = benchJoints(captured, connected);
 
   if (!moving.length) return;
 
@@ -180,7 +195,8 @@ export async function calibrateRobot(input: CalibrateRobotInput): Promise<void> 
   const fitter = calibrator();
 
   try {
-    if (await findJointMounts({ input, connected, moving, fitter })) await fitServos(input, moving, fitter);
+    if (await findJointMounts({ input: captured, connected, moving, fitter }))
+      await fitServos(captured, moving, fitter);
   } finally {
     fitter.dispose();
     setPhase('idle');

@@ -3,6 +3,8 @@ import { LAYOUT, PanelResizer } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { setUpServos } from '../robot/servoSetup';
 import { measuredJoints } from '../reality/measuredJoints';
+import { unitHistories } from '../reality/projectCalibrations';
+import { useFleet } from '../robot/useRobot';
 import { calibrateConnectedRobot, rollBackCalibration } from './calibrationActions';
 import { canReplayRuns, replayRobotRun } from './robotReplay';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -22,6 +24,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
   const { library, creation, edits, robots, files } = actions;
   const { panelWidths } = studio;
   const showRobots = () => showPartsSection(core, 'Robots');
+  const unitCalibrations = unitHistories(core.project, useFleet().selected);
   const libraryProps = {
     customModels: studio.customModels,
     onInsertModel: creation.placeCustomModel,
@@ -73,11 +76,11 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         parts,
         onShowRobots: showRobots,
         calibration: {
-          calibrations: core.project.servoCalibrations,
+          calibrations: unitCalibrations,
           measured: measuredJoints({
             joints: core.project.joints ?? [],
             parts,
-            calibrations: core.project.servoCalibrations,
+            calibrations: unitCalibrations,
           }),
           onCalibrate: () =>
             void calibrateConnectedRobot(core.docs.updateProjectNow, {

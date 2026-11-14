@@ -7,7 +7,6 @@ import type { ReadinessDecisions } from '../readiness/types';
 import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
-import type { CalibrationHistory } from '../reality/history';
 import type { StoredFalls, StoredWalk } from '../utils/engineeringTypes';
 import type { BooleanFields } from './booleans';
 import type { SculptMeshData } from './sculpt';
@@ -241,7 +240,6 @@ export interface ProjectSettings extends ProjectRecords, PrintService {
   routines?: Routine[];
   handoffs?: Record<string, TransitionProof>;
   skills?: SkillRecord[];
-  servoCalibrations?: Record<string, CalibrationHistory>;
   cameras?: FixedCamera[];
 }
 

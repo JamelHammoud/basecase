@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { RobotJoint, RobotPoseState, RootOffset, ScenePart } from '../types/robotics';
 import { isZeroRoot, partMatrix, robotRootOffset } from './kinematicsMotion';
 import { buildRig, type Rig, type RobotGroup } from './kinematicsRig';
+import { pruneEmptyJoints } from './kinematicsPrune';
 
 export { buildRig, isMovable, type Rig, type RobotGroup, type V3 } from './kinematicsRig';
 export {
@@ -108,6 +109,7 @@ export function uniqueJointIds(joints: RobotJoint[], taken: Iterable<string> = [
   if (!joints.some((j) => used.has(j.id)) && new Set(joints.map((j) => j.id)).size === joints.length) return joints;
 
   const out: RobotJoint[] = [];
+  const batchIds = new Set<string>();
   let batch: RobotJoint[] = [];
   const flush = () => {
     if (!batch.length) return;
@@ -141,12 +143,14 @@ export function uniqueJointIds(joints: RobotJoint[], taken: Iterable<string> = [
     }
 
     batch = [];
+    batchIds.clear();
   };
 
   for (const j of joints) {
-    if (batch.some((b) => b.id === j.id)) flush();
+    if (batchIds.has(j.id)) flush();
 
     batch.push(j);
+    batchIds.add(j.id);
   }
 
   flush();
@@ -181,17 +185,9 @@ export function jointsWithoutParts(joints: RobotJoint[] | undefined, deleted: Se
     kept.push({ ...j, parent, child, ...(actuators ? { actuators } : {}), frame });
   }
 
-  let out = kept.map((j) => (j.parentJoint && gone.has(j.parentJoint) ? { ...j, parentJoint: undefined } : j));
+  const out = kept.map((j) => (j.parentJoint && gone.has(j.parentJoint) ? { ...j, parentJoint: undefined } : j));
 
-  for (let changed = true; changed;) {
-    const used = new Set(out.map((j) => j.parentJoint).filter(Boolean));
-    const next = out.filter((j) => j.parent.length || j.child.length || used.has(j.id));
-
-    changed = next.length !== out.length;
-    out = next;
-  }
-
-  return out;
+  return pruneEmptyJoints(out);
 }
 
 export const jointUnit = (j: RobotJoint) => (j.type === 'prismatic' ? 'mm' : '°');

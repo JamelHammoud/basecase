@@ -30,10 +30,10 @@ export function nightlyDue(now, lastRunAt, hour = NIGHTLY_HOUR_UTC) {
 
 export const suiteDue = (now, lastSuiteAt) => nightlyDue(now, lastSuiteAt, SUITE_HOUR_UTC);
 
-export function rerunSuite({ now, last, mainHead, running }) {
+export function rerunSuite({ now, last, mainHead, running, repairMerged = () => false }) {
   if (running || !last || last.conclusion === 'success') return false;
 
-  return last.headSha !== mainHead && now - Date.parse(last.createdAt) > HOUR_MS;
+  return last.headSha !== mainHead && (now - Date.parse(last.createdAt) > HOUR_MS || repairMerged());
 }
 
 export function releaseDue({ now, green, tried, lastReleaseAt, running }) {

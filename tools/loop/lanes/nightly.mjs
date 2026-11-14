@@ -33,6 +33,26 @@ const lastRelease = () =>
 
 const dispatch = (workflow) => run('gh', ['workflow', 'run', workflow, '--ref', 'main'], { allowFail: true }).ok;
 
+const repairMergedSince = (since) =>
+  (
+    json('gh', [
+      'pr',
+      'list',
+      '--state',
+      'merged',
+      '--base',
+      'main',
+      '--label',
+      'loop:repair',
+      '--search',
+      `merged:>${since}`,
+      '--limit',
+      '1',
+      '--json',
+      'mergedAt',
+    ]) ?? []
+  ).length > 0;
+
 function suite(log, now) {
   const mainRuns = runs('check.yml', ['--branch', 'main']);
   const running = mainRuns.some((r) => r.status !== 'completed');
@@ -41,8 +61,15 @@ function suite(log, now) {
   if (!running && suiteDue(new Date(now), mainRuns[0]?.createdAt ?? null) && dispatch('check.yml'))
     return log("GitHub's schedule skipped tonight's full suite; started it");
 
-  if (rerunSuite({ now, last, mainHead: mainHead(), running }) && dispatch('check.yml'))
-    log('the full suite failed and fixes have landed since; running it again');
+  const rerun = rerunSuite({
+    now,
+    last,
+    mainHead: mainHead(),
+    running,
+    repairMerged: () => repairMergedSince(last.createdAt),
+  });
+
+  if (rerun && dispatch('check.yml')) log('the full suite failed and fixes have landed since; running it again');
 }
 
 const lastTag = () =>

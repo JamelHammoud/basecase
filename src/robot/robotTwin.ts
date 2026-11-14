@@ -11,7 +11,7 @@ import {
   type Angles,
 } from './robotGap';
 import { motorsCanRun, type RobotSpec, type RobotStatus } from './robotState';
-import { robotBenchDriving, robotSceneJoints, robotSnapshot, subscribeRobot } from './robotStore';
+import { robotBenchDriving, robotSceneJoints, robotSnapshot, selectedUnit, subscribeRobot } from './robotStore';
 
 export interface RobotTwin {
   joints: readonly string[];
@@ -27,7 +27,11 @@ const clock = new DaemonClock();
 const watch = new LagWatch();
 const listeners = new Set<() => void>();
 let twin: RobotTwin | null = null;
-let seen: { spec: RobotSpec | null; status: RobotStatus | null } = { spec: null, status: null };
+let seen: { unit: string | null; spec: RobotSpec | null; status: RobotStatus | null } = {
+  unit: null,
+  spec: null,
+  status: null,
+};
 let started = false;
 
 function publish(next: RobotTwin | null) {
@@ -39,9 +43,11 @@ function publish(next: RobotTwin | null) {
 }
 
 function forConnection(spec: RobotSpec | null) {
-  if (spec === seen.spec) return;
+  const unit = selectedUnit();
 
-  seen = { spec, status: null };
+  if (spec === seen.spec && unit === seen.unit) return;
+
+  seen = { unit, spec, status: null };
   trace.clear();
   clock.reset();
   watch.clear();

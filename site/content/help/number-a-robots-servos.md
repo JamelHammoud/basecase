@@ -1,7 +1,7 @@
 ---
 title: Number a robot's servos
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: operate
 type: task
 covers:
@@ -16,10 +16,13 @@ Give each servo the ID its joint has in the scene, one servo at a time, so the r
 New servos all answer at ID 1. Basecase numbers the robot's movable joints from 1 up, and Set Up Servos writes those numbers onto the servos. This build keeps real motors locked, so Set Up Servos runs on emulated servos, and each one starts out as a new servo.
 
 1. Open a scene with a robot, then open Operate in the Play view.
-2. Click Set Up Servos, or choose Set Up Servos in [[⌘K]]. The robot connects with its servos still at ID 1 and goes to Set Up with the motors off.
-3. Under Motors off, find the highlighted row. It shows the joint and the ID it gets, starting with the highest ID, and Basecase selects that joint's moving parts on the canvas.
-4. Plug in that joint's servo next to the servos you've already numbered. With emulated servos, Basecase plugs it in for you. Once the servo answers at its new ID, Basecase highlights the next joint.
-5. After the last joint (ID 1), all the servos answer under Emulated servos. Click Test on the Ladder to continue.
+2. If several robots are connected, click the unit's row in Operate.
+3. Click Set Up Servos, or choose Set Up Servos in [[⌘K]]. The robot connects with its servos still at ID 1 and goes to Set Up with the motors off.
+4. Under Motors off, find the highlighted row. It shows the joint and the ID it gets, starting with the highest ID, and Basecase selects that joint's moving parts on the canvas.
+5. Plug in that joint's servo next to the servos you've already numbered. With emulated servos, Basecase plugs it in for you. Once the servo answers at its new ID, Basecase highlights the next joint.
+6. After the last joint (ID 1), all the servos answer under Emulated servos. Click Test on the Ladder to continue.
+
+Numbering stays with the unit you started on, even if you select another row.
 
 If a joint uses a motor outside the Feetech and Dynamixel servos, such as the DS3218, it reads No reply because the daemon can't read that motor.
 

@@ -229,7 +229,7 @@ function runningLines(t: Training): string[] {
 
   if (p)
     lines.push(
-      `${duration(p.elapsedS, 'min')} of ${duration(p.budgetS, 'min')}, ${(p.steps / 1e6).toFixed(1)}M steps (${Math.round(p.fps)}/s); reward ${p.reward.toFixed(2)}/s; episodes last ${duration(p.episodeS)} on average (falls end them early).`,
+      `${duration(p.elapsedS)} of ${duration(p.budgetS, 'min')}, ${(p.steps / 1e6).toFixed(1)}M steps (${Math.round(p.fps)}/s); reward ${p.reward.toFixed(2)}/s; episodes last ${duration(p.episodeS)} on average (falls end them early).`,
     );
 
   return lines;

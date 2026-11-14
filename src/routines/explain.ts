@@ -1,9 +1,11 @@
-import { runClock, duration } from '../utils/duration';
+import { runClock } from '../utils/duration';
 import { reachableFrom } from './generatePaths';
 import { findNode } from './nodes';
 import type { Plan, PlanOp } from './planTypes';
 import type { TraceEvent } from './scenarioTypes';
 import type { Condition } from './schema';
+
+import { span } from './explainGraph';
 
 export { describeRoutine } from './explainGraph';
 
@@ -65,7 +67,7 @@ function failureCause(plan: Plan, e: TraceEvent, target: number): string | null 
   const label = op ? nodeLabel(op) : (e.node ?? '');
 
   if (e.kind === 'opTimeout' && op && leads(plan, op.onTimeout, target)) {
-    return `${label} ran out of time after ${duration(op.timeoutMs / 1000)}`;
+    return `${label} ran out of time after ${span(op.timeoutMs)}`;
   }
 
   if (e.kind === 'opFail' && op && leads(plan, op.onFail, target)) return `${label} failed`;

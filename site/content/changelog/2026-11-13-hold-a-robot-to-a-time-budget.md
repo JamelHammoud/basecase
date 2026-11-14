@@ -6,7 +6,7 @@ image: /changelog/hold-a-robot-to-a-time-budget/cover.png
 
 You can now give a robot the hours you have, and a Time check says whether printing, assembly and servo set-up fit.
 
-The field sits beside the money budget in the Build tab. A first robot is often wanted this weekend. Until a design is sliced, nobody knows if the print alone takes 4 hours or 14.
+The field sits beside the money budget in the Build tab. Say you want your first robot built this weekend. Until now, no check told you whether its printing, assembly and set-up fit before Sunday night.
 
 Time adds three numbers. Print is each plate's estimate, or its slicer time once sliced, split across your printers. Assembly is 2 minutes per part, 1 per screw, nut or washer and 1.5 per heat insert. Each moving joint adds 5 minutes to set up and calibrate its servo. The two-wheel rover comes to about 9 h 41 min on one printer.
 

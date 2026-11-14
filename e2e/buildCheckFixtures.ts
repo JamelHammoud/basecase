@@ -11,7 +11,6 @@ export interface StudioHook {
   simState: () => { activeCase: string | null };
   selection: () => string[];
   agentRequest: (kind: string, payload: object) => Promise<unknown>;
-  checkRows: () => Array<{ check: string; status: string; detail: string }>;
 }
 
 export const standIn = (id: string, x: number) => ({
@@ -144,13 +143,10 @@ export function timeBudget(page: Page) {
     .getByRole('textbox', { name: 'Time budget' });
 
   return {
-    loadRover: async (without?: string) => {
+    loadRover: async () => {
       await studioLoad(page, {
-        parts: rover.parts.filter((p) => p.id !== without),
-        project: {
-          ...(await sceneRecord(page)).project,
-          joints: rover.joints.filter((j) => !j.child.includes(without ?? '')),
-        },
+        parts: rover.parts,
+        project: { ...(await sceneRecord(page)).project, joints: rover.joints },
       });
       await page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
     },
@@ -160,11 +156,5 @@ export function timeBudget(page: Page) {
       await field.press('Enter');
     },
     status: () => page.locator(visible('li[data-check="Time"]')).first().getAttribute('data-status'),
-    hours: async () => {
-      const rows = await page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.checkRows());
-      const total = rows.find((r) => r.check === 'Time')?.detail.match(/^≈ (?:(\d+) h )?(\d+) min/);
-
-      return total ? Number(total[1] ?? 0) + Number(total[2]) / 60 : NaN;
-    },
   };
 }

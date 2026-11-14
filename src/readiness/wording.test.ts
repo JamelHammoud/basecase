@@ -84,6 +84,15 @@ describe('engineering rows', () => {
     expect(found.agentText).toContain('Plate 1: 9 h 18 min; Step 3: 12 fasteners, 26 min; 3 servos: 15 min');
   });
 
+  it('keeps an ignored Time finding ignored when its hours change', () => {
+    const time = (detail: string) =>
+      engineeringFindings(
+        report({ check: 'Time', status: 'fail', detail, itemsAreContext: true, items: [{ text: '3 servos: 15 min' }] }),
+      )[0].key;
+
+    expect(time('≈ 9 h 41 min of 2 h')).toBe(time('≈ 8 h 5 min of 2 h'));
+  });
+
   it('leaves a check that did not apply out of the findings', () => {
     expect(engineeringFindings(report({ check: 'Budget', status: 'not run', detail: 'No budget set' }))).toEqual([]);
   });

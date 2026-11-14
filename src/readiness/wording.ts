@@ -159,7 +159,7 @@ export function engineeringFinding(
   const ids = f.ids ?? [];
 
   return {
-    key: keyOf(`design:${code}`, ids, said),
+    key: keyOf(`design:${code}`, ids, f.context ? level : said),
     level,
     area: 'design',
     check,

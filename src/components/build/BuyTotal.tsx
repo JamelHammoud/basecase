@@ -13,6 +13,8 @@ interface BuyTotalProps {
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
 }
 
+const TIME_BUDGET = 'Time budget';
+
 const Total: React.FC<{ t: Totals }> = ({ t }) => {
   const money = useMoney();
   const total = (
@@ -70,7 +72,7 @@ export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChange
             title={`Budget in ${money.code}`}
             onChange={(v, live) => !live && onChangeProject(budgetPatch(v, money))}
           />
-          <Tooltip label="Time budget">
+          <Tooltip label={TIME_BUDGET}>
             <NumberInput
               className="w-[80px]"
               value={project.budgetHours ?? 0}
@@ -78,7 +80,7 @@ export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChange
               step={1}
               precision={1}
               unit="h"
-              title="Time budget"
+              aria-label={TIME_BUDGET}
               onChange={(v, live) => !live && onChangeProject({ budgetHours: v > 0 ? v : undefined })}
             />
           </Tooltip>

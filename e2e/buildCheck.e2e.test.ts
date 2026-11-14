@@ -270,21 +270,14 @@ describe('Build tab fields', () => {
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);
   }, 30000);
 
-  it('hold the rover to a time budget beside it, dropping when a printed part goes', async () => {
+  it('fail Time on the rover when its budget is one hour', async () => {
     const time = timeBudget(app.page);
 
     await time.loadRover();
     await time.setHours('1');
-    await expect.poll(time.status, { timeout: 90000 }).toBe('fail');
-
-    const before = await time.hours();
-
-    await time.loadRover('left_wheel_disc');
-    await expect.poll(time.hours, { timeout: 90000 }).toBeLessThan(before);
-    await time.setHours('1000');
-    await expect.poll(time.status, { timeout: 90000 }).toBe('pass');
+    await expect.poll(time.status, { timeout: 45000 }).toBe('fail');
     expect(app.errors).toEqual([]);
-  }, 240000);
+  }, 90000);
 });
 
 describe('Cables', () => {

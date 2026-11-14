@@ -53,7 +53,6 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     },
     dropFiles: routeFiles,
     selection: () => core.selectedIds,
-    checkRows: () => core.readiness.latest()?.rows ?? [],
     selectFace: core.sketching.selectFace,
     sketchPath: core.sketching.setPath,
     simState: () => devSimState(core, jointsRef.current),

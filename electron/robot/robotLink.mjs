@@ -118,7 +118,11 @@ export class RobotLink {
 
     if (this.session) return { ok: false, message: 'An emulated robot is connected. Disconnect it first.' };
 
-    if (!fs.existsSync(this.binary)) return { ok: false, message: 'The robot daemon is missing from this build.' };
+    if (!fs.existsSync(this.binary))
+      return {
+        ok: false,
+        message: 'This copy of Basecase can’t run robots. Download Basecase again from basecase.so.',
+      };
 
     this.start(checked.spec);
 

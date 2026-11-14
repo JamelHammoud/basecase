@@ -25,6 +25,7 @@ covers:
   - src/robot/robotPolicy.ts
   - hw/crates/robot-daemon/src/ladder/mod.rs
   - hw/crates/robot-daemon/src/fault.rs
+  - electron/robot/robotLink.mjs
 ---
 
 Find the message or missing button you see in Operate below.
@@ -40,6 +41,14 @@ To add a robot to the scene:
 1. Click **Show Robots** under "No robot".
 2. Click a robot in **Parts** to insert it.
 3. Click **Operate** again.
+
+## "This copy of Basecase can’t run robots"
+
+Your copy of Basecase is missing the part that runs robots, so Connect can't start.
+
+1. Quit Basecase.
+2. Download Basecase again from [Install Basecase](/help/install-basecase), and replace the copy you have.
+3. Open Basecase and click **Connect Emulated Robot** again.
 
 ## "Load a policy first"
 

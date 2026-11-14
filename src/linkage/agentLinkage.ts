@@ -1,6 +1,7 @@
 import { r1, toCad, toScene, type V3 } from '../agent/agentFrame';
 import { lengthLabel } from '../utils/size';
 import type { RobotJoint, ScenePart } from '../types/robotics';
+import { angle } from '../utils/angle';
 import {
   MAX_LINK_MM,
   MAX_PATH_POINTS,
@@ -80,10 +81,10 @@ function solutionLine(s: LinkageSolution, index: number, frame: { plane: CadPlan
 
   return (
     `${index + 1}. Path error max ${lengthLabel(s.maxErrorMm)}, RMS ${lengthLabel(s.rmsErrorMm)}; ` +
-    `transmission ≥ ${Math.round(s.minTransmissionDeg)}°; crank ${r1(from)}° → ${r1(to)}° (sweep ${r1(to - from)}°); ` +
+    `transmission ≥ ${angle(s.minTransmissionDeg)}; crank ${angle(from)} → ${angle(to)} (sweep ${angle(to - from)}); ` +
     `links ground ${r1(l.ground)}, crank ${r1(l.crank)}, coupler ${r1(l.coupler)}, rocker ${r1(l.rocker)} mm; ` +
     `coupler point P ${r1(l.point[0])} mm along B→C, ${r1(l.point[1])} mm to its left; ` +
-    `crank pivot A at ${mm(pivotInCad(l, frame.plane, frame.origin))} mm, ground A→D at ${r1(normalized(l.angle))}° from ${x} toward ${y}.`
+    `crank pivot A at ${mm(pivotInCad(l, frame.plane, frame.origin))} mm, ground A→D at ${angle(normalized(l.angle))} from ${x} toward ${y}.`
   );
 }
 
@@ -99,7 +100,7 @@ function insertedText(solutions: LinkageSolution[], pick: number, ctx: LinkageTo
 
   return (
     `\nInserted solution ${pick} as group "Four-Bar": ${build.parts.map((p) => p.id).join(', ')}. ` +
-    `Crank joint ${build.crankJoint} at ${mm(toCad(crank.origin ?? ZERO))} mm, range ${r1(low)}° to ${r1(high)}°, driven by the STS3215 ${servo}. ` +
+    `Crank joint ${build.crankJoint} at ${mm(toCad(crank.origin ?? ZERO))} mm, range ${angle(low)} to ${angle(high)}, driven by the STS3215 ${servo}. ` +
     `Port P on ${build.coupler} traces the path as ${build.crankJoint} turns across its range.`
   );
 }

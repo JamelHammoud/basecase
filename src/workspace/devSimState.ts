@@ -74,6 +74,12 @@ function statsState(stats: SimStats | null) {
   };
 }
 
+const dataLayerState = ({ viewportRef, dataLayers }: WorkspaceCore) => ({
+  scanPoints: viewportRef.current?.scanPointCount() ?? 0,
+  dataLayers: viewportRef.current?.dataLayerState() ?? [],
+  dataPlayhead: dataLayers.playhead(),
+});
+
 export function devSimState(core: WorkspaceCore, joints: Float64Array | null = null) {
   const { sim, skills } = core.simTraining;
   const stats = sim.latestStats() ?? sim.stats;
@@ -95,7 +101,7 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     selected: core.selectedIds,
     timeline: timelineState(core.simTraining.cases.timeline, sim, core.posing.rig),
     facts: sim.latestFacts(),
-    scanPoints: core.viewportRef.current?.scanPointCount() ?? 0,
+    ...dataLayerState(core),
     fingerprints: modelFingerprints(skills.model),
     controller: controllerState(sim.controller),
     joints: jointReadings(sim.model, joints),

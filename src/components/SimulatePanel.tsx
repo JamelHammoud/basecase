@@ -58,7 +58,7 @@ function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTea
 function publishEntries(row: SkillRow, publish: ((row: SkillRow) => void) | null): ContextMenuEntry[] {
   if (!publish || row.state.kind !== 'ready') return [];
 
-  return [{ label: 'Publish to Hugging Face', icon: <ShareIcon className="w-4 h-4" />, onSelect: () => publish(row) }];
+  return [{ label: 'Publish to Hugging Face', icon: <ShareIcon />, onSelect: () => publish(row) }];
 }
 
 export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {

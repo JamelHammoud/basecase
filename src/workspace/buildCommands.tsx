@@ -8,8 +8,6 @@ import { buildBom } from '../utils/bom';
 import { openLink } from '../utils/openLink';
 import type { CommandInputs } from './sceneCommands';
 
-const ic = 'w-4 h-4';
-
 function buyAllCommand({ core }: CommandInputs): Command[] {
   const { parts, project, printing } = core;
   const bom = buildBom({ parts, project, purchases: knownPurchases() ?? {}, measures: printing.measures });
@@ -22,7 +20,7 @@ function buyAllCommand({ core }: CommandInputs): Command[] {
       id: 'buy-all',
       group: 'Scene',
       label: 'Buy All',
-      icon: <ExternalLinkIcon className={ic} />,
+      icon: <ExternalLinkIcon />,
       keywords: 'amazon cart order shop purchase bill of materials bom parts store',
       run: () => openLink(amazonUrl),
     },
@@ -37,7 +35,7 @@ function buildAlongCommand({ core }: CommandInputs): Command[] {
       id: 'build-along',
       group: 'Scene',
       label: 'Build Along',
-      icon: <PackageIcon className={ic} />,
+      icon: <PackageIcon />,
       keywords: 'build guide assembly instructions steps servo bus ids assemble kit',
       run: () => void core.buildAlong.open(),
     },
@@ -62,19 +60,18 @@ function guideCommands({ core }: CommandInputs): Command[] {
 
   if (guide.progress) return [];
 
-  if (!guide.record)
-    return parts.some(isBuilt) ? [make('guide-make', 'Make Build Guide', <PackageIcon className={ic} />)] : [];
+  if (!guide.record) return parts.some(isBuilt) ? [make('guide-make', 'Make Build Guide', <PackageIcon />)] : [];
 
   const open: Command = {
     id: 'guide-open',
     group: 'Scene',
     label: 'Open Build Guide',
-    icon: <PackageIcon className={ic} />,
+    icon: <PackageIcon />,
     keywords: GUIDE_KEYWORDS,
     run: () => void guide.open(),
   };
 
-  return guide.stale ? [open, make('guide-update', 'Update Build Guide', <RefreshIcon className={ic} />)] : [open];
+  return guide.stale ? [open, make('guide-update', 'Update Build Guide', <RefreshIcon />)] : [open];
 }
 
 export const buildCommands = (inputs: CommandInputs): Command[] => [

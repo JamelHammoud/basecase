@@ -4,10 +4,11 @@ import type { V3 } from './engineeringMath';
 import type { RobotJoint } from '../types/robotics';
 import { wiringText } from '../wiring/wiringText';
 import { weight } from './weight';
+import { angle } from './angle';
 import { percent } from '../../electron/percent.mjs';
 import { torque } from './torque';
+import { volts } from './electric';
 
-export const deg = (v: number) => `${Math.round(v) < 0 ? '−' : ''}${Math.abs(Math.round(v))}°`;
 export const jointLabel = (j: RobotJoint) => prettyJointName(j.name);
 export const partLabel = (ctx: CheckContext, id: string) =>
   `the ${(ctx.byPart.get(id)?.name ?? id).replace(/^\w/, (c) => c.toLowerCase())}`;
@@ -23,12 +24,12 @@ function jointLimits(l: EngineeringReport['joints'][number]): string {
   const sim = l.simRmsNm === undefined ? '' : ` from ${torque(l.simRmsNm)} RMS in the walk sim`;
   const heat = l.heatShare === undefined ? '' : `, heat ${l.heatShare.toFixed(2)}× rated${sim}`;
 
-  return ` vs stall ${torque(l.stallNm!)} / rated ${torque(l.ratedNm)}${l.ratedEstimated ? ' (estimated)' : ''}${l.volts ? ` at ${l.volts} V` : ''} (${l.stallShare.toFixed(2)} of stall${heat}) ${MARK[l.status]}`;
+  return ` vs stall ${torque(l.stallNm!)} / rated ${torque(l.ratedNm)}${l.ratedEstimated ? ' (estimated)' : ''}${l.volts ? ` at ${volts(l.volts)}` : ''} (${l.stallShare.toFixed(2)} of stall${heat}) ${MARK[l.status]}`;
 }
 
 function jointTextLine(l: EngineeringReport['joints'][number], toAgent: (v: V3) => V3): string {
   const o = toAgent(l.joint.origin).map((v) => Math.round(v));
-  const crouch = l.crouchNm === undefined ? '' : `, ${l.crouchDeg?.toFixed(0)}° crouch ${torque(l.crouchNm)}`;
+  const crouch = l.crouchNm === undefined ? '' : `, ${angle(l.crouchDeg!)} crouch ${torque(l.crouchNm)}`;
   const load = l.kind === 'stance' ? `stance load ${torque(l.loadNm)}` : `holding load ${torque(l.loadNm)}`;
 
   return (

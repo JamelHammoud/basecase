@@ -59,7 +59,7 @@ export const CommentsSection: React.FC<InspectorProps & { list: SceneAnnotation[
     actions={
       <IconButton
         icon={<PlusIcon className="w-3.5 h-3.5" />}
-        title="Add comment"
+        title="Comment"
         shortcut={keyFor('comment')}
         size="xs"
         onClick={onAddComment}

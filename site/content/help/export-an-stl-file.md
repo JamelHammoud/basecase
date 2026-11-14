@@ -21,7 +21,7 @@ related:
 covers:
   - src/components/ExportMenu.tsx
   - src/workspace/useExportActions.ts
-  - src/utils/aiHandoff.ts
+  - src/three/analysis/sceneStl.ts
   - src/workspace/exchangeCommands.tsx
 ---
 

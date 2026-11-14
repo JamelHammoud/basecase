@@ -9,6 +9,7 @@ import {
   type ScenePart,
 } from '../types/robotics';
 import { readTrained, type GalleryTrained } from './galleryTrained';
+import { validSheetFields } from '../sheet/validation';
 
 export const GALLERY_FORMAT_VERSION = 1;
 
@@ -51,7 +52,8 @@ function readPart(value: unknown, where: string): ScenePart {
 
   if (!isVec3(p.position) || !isVec3(p.rotation)) return refuse(where, 'needs a position and rotation');
 
-  if (![d.width, d.height, d.depth].every((n) => Number.isFinite(n))) return refuse(where, 'needs finite dimensions');
+  if (![d.width, d.height, d.depth].every((n) => Number.isFinite(n)) || !validSheetFields(p))
+    return refuse(where, 'needs finite dimensions');
 
   if (p.mesh !== undefined) readMesh(p.mesh, `${where}.mesh`);
 

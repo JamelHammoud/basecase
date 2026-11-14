@@ -1,7 +1,7 @@
 ---
 title: Export plates as 3MF
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: build-and-print
 type: task
 order: 6
@@ -35,6 +35,8 @@ You can save the laid-out plates as 3MF files and slice them in any slicer. Base
 Basecase saves the files to your downloads. If the scene uses one material, the file is named `<scene>.3mf`. If it uses several, each material gets its own file, such as `robot-arm-PLA.3mf` and `robot-arm-PETG.3mf`.
 
 Inside each file, the plates are named Plate 1, Plate 2, and so on, and they're laid out the way Bambu Studio lays out plates. Parts keep their names and the orientation you chose in Print mode.
+
+Sheet parts aren't on the plates. To export their outlines and holes for cutting, see [Cut parts from sheet](/help/cut-parts-from-sheet).
 
 If **Label parts** is on in Print mode, each part has its build guide letter cut into a hidden face. To learn more, see [Label printed parts with their guide letters](/help/label-printed-parts).
 

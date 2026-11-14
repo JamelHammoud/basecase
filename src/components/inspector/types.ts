@@ -2,6 +2,7 @@ import type { SceneAnnotation, ScenePart } from '../../types/robotics';
 import type { HardwareSpec } from '../../data/hardware';
 import type { AlignMode, Axis } from '../../utils/selection';
 import type { PlaneView } from '../../mirror/plane';
+import type { MeshMeasure } from '../../three/meshMeasure';
 
 export type Phase = boolean | undefined;
 
@@ -9,8 +10,6 @@ export const MATERIALS: Array<{ value: string; label: string }> = [
   { value: '3D Printed PLA/PETG', label: 'Printed PLA / PETG' },
   { value: 'TPU Flexible', label: 'Printed TPU' },
   { value: 'Off-the-shelf COTS', label: 'Off-the-shelf' },
-  { value: 'CNC Aluminum', label: 'CNC aluminum' },
-  { value: 'Laser-Cut Acrylic/Carbon', label: 'Laser-cut sheet' },
 ];
 
 const PRINTED_TAG = MATERIALS[0].value;
@@ -25,6 +24,7 @@ export interface InspectorProps {
   onChangeGoal: (goal: string, live?: Phase) => void;
   snapStepMm: number;
   onUpdate: (patch: Partial<ScenePart>, live?: Phase) => void;
+  measurePart: (id: string) => Promise<MeshMeasure | undefined>;
   onDuplicate: () => void;
   onMirror: (view: PlaneView) => void;
   onSaveAsModel: () => void;

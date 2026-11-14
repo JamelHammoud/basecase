@@ -70,6 +70,18 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       run: () => void exports.exportScene(),
     },
     ...(exports.canExportRobot ? [robotPackage] : []),
+    ...(exports.canExportCutFiles
+      ? [
+          {
+            id: 'export-cut-files',
+            group: 'Scene',
+            label: 'Cut Files',
+            icon: <FileIcon />,
+            keywords: 'sheet aluminum carbon acrylic dxf laser zip download',
+            run: () => void exports.exportCutFiles(),
+          },
+        ]
+      : []),
     {
       id: 'copy-brief',
       group: 'Scene',

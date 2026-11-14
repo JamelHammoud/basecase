@@ -1,7 +1,7 @@
 ---
 title: Cut, join and intersect parts
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: task
 order: 4
@@ -35,7 +35,9 @@ You can merge parts into one solid, cut one part out of another, or keep only th
 1. Select the parts on the canvas. To add each part after the first, Shift-click it.
 2. In the Inspector, under **Combine**, click **Union** to merge the parts, or click **Intersect** to keep only the volume they share.
 
-The parts become one mesh, named after the first part you selected and printed in that part's material. A toast with Undo names the parts, for example **Merged Sphere into Cube**.
+The parts become one mesh, named after the first part you selected and using its print material. A toast with Undo names the parts, for example **Merged Sphere into Cube**.
+
+Combining sheet parts keeps their current geometry. After combining, check the result's **Manufacturing** setting and choose **Cut from Sheet** if it returned to printing. The result must still be flat with only through features, as in [Cut parts from sheet](/help/cut-parts-from-sheet).
 
 ## Cut one part out of another
 
@@ -43,7 +45,7 @@ The parts become one mesh, named after the first part you selected and printed i
 2. Shift-click the parts you want to cut out of it.
 3. In the Inspector, under **Combine**, click **Subtract**.
 
-The first part keeps its name and material. In **Layers**, the parts you cut out appear under it.
+The result keeps the first part's name and print material. In **Layers**, the parts you cut out appear under it.
 
 **Subtract** always cuts from the first part you selected, and its tooltip names that part.
 

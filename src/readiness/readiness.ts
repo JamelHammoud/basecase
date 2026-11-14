@@ -34,6 +34,8 @@ function readingsLine(p: ScenePart): string {
     JSON.stringify(p.dimensions),
     jsonHash(p.deformers),
     jsonHash(p.edges),
+    jsonHash(p.sheet),
+    jsonHash(p.sheetTransform),
     jsonHash(p.customNodes),
     numbersHash(p.cad?.positions),
     numbersHash(p.sculptMesh?.positions),

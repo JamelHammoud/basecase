@@ -8,6 +8,9 @@ import { sleep } from './helpers';
 import { twinHints } from './mirrorHints';
 import type { CommitParts, Vec3 } from './types';
 import { errorMessage } from '../utils/errorMessage';
+import { requestsSheet, sheetSpec } from '../agent/agentSheet';
+import { incomingSheetProfile, profileForUpdate } from '../agent/sheetProfiles';
+import { shapeKey } from '../print/shapeKey';
 
 export interface AgentOpsContext {
   current: () => ScenePart[];
@@ -82,11 +85,11 @@ function claim(ctx: AgentOpsContext, log: OpLog, partId: string) {
   return true;
 }
 
-function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
+async function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
   let part: ScenePart;
 
   try {
-    part = specToPart(op.part);
+    part = specToPart(op.part, await incomingSheetProfile(op.part));
   } catch (err) {
     log.problems.push(errorMessage(err));
 
@@ -104,8 +107,10 @@ function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
   return true;
 }
 
-function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
-  if (!findPartDeep(current, op.part.id)) {
+async function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
+  const part = findPartDeep(current, op.part.id);
+
+  if (!part) {
     log.problems.push(`${op.part.id} not found`);
 
     return true;
@@ -113,8 +118,22 @@ function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
 
   if (!claim(ctx, log, op.part.id)) return false;
 
-  ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? applySpec(p, op.part) : p)), live);
-  log.updated.push(op.part.id);
+  try {
+    const spec = sheetSpec(part, op.part);
+    const profile = await profileForUpdate(part, spec, ctx);
+    const latest = findPartDeep(ctx.current(), part.id);
+
+    if (!latest) return false;
+
+    if (requestsSheet(spec) && shapeKey(latest) !== shapeKey(part)) throw new Error('Measure the sheet profile first.');
+
+    ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? applySpec(p, spec, profile) : p)), live);
+    log.updated.push(op.part.id);
+  } catch (err) {
+    log.problems.push(errorMessage(err));
+
+    return false;
+  }
 
   return true;
 }

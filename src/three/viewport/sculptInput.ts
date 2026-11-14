@@ -132,7 +132,7 @@ export class SculptInput {
   }
 
   private sculptTarget(hitMesh: THREE.Mesh, part: ScenePart): THREE.Mesh {
-    if (hitMesh.userData.isSculptTarget) {
+    if (hitMesh.userData.isSculptTarget && !part.sheetTransform) {
       hitMesh.getObjectByName('cad-edges')?.removeFromParent();
 
       return hitMesh;

@@ -4,6 +4,7 @@ import { hardwareDimensions, heatInsert, isMetric, THREAD, type HardwareSpec } f
 import type { Port, PortVec } from '../types/ports';
 import type { ScenePart } from '../types/robotics';
 import { eulerToMatrix, r2, toCad, toScene, type V3 } from './agentFrame';
+import { sheetPorts } from './sheetPorts';
 
 const UP: PortVec = [0, 1, 0];
 const DOWN: PortVec = [0, -1, 0];
@@ -60,7 +61,7 @@ export function portsOf(part: ScenePart): Port[] {
 
   if (part.kind === 'hardware' && part.hardware) return hardwarePorts(part.hardware);
 
-  return part.cad ? cadPorts(part.cad) : [];
+  return part.cad ? sheetPorts(part, cadPorts(part.cad)) : [];
 }
 
 export function findPort(part: ScenePart, name: string): Port | undefined {

@@ -1,7 +1,7 @@
 ---
 title: Sculpt a part
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: task
 order: 7
@@ -59,3 +59,5 @@ Sculpt is off by default. Turn it on in Settings before you start.
 Select a sculpted part to show **Subdivide**. It adds vertices so the brush can make finer detail, and a toast shows the new count.
 
 Sculpting a box, shaft or other shape turns it into a sculpted mesh. Each stroke is one undo step, so [[⌘Z]] undoes the last stroke. You can render, print and export sculpted parts after you turn the tool off.
+
+Sculpting a sheet part returns it to printing, starting from its current stock thickness. Undo restores its sheet setting along with its previous shape.

@@ -20,6 +20,7 @@ import type { PartSectionProps } from './partSections';
 import { MATERIALS, materialTag, type InspectorProps, type Phase } from './types';
 import { keyFor } from '../../app/shortcuts';
 import { percent } from '../../../electron/percent.mjs';
+import { sheetOf } from '../../sheet/materials';
 
 export const PositionSection: React.FC<
   PartSectionProps & Pick<InspectorProps, 'snapStepMm' | 'onDropToFloor' | 'onStack' | 'onCenter'>
@@ -115,7 +116,9 @@ export const RotationSection: React.FC<PartSectionProps> = ({ part, onUpdate }) 
   );
 };
 
-export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => {
+export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate: updatePart }) => {
+  const onUpdate: PartSectionProps['onUpdate'] = (patch, live) =>
+    updatePart(sheetOf(part) ? { ...patch, sheet: undefined, mechanicalTag: MATERIALS[0].value } : patch, live);
   const d = part.deformers || {};
   const edged = canEdge(part);
   const hasShape = !!d.taper || !!d.bendDeg || !!d.twistDeg || !!d.roundness || !!part.edges?.mm;
@@ -193,14 +196,19 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
   );
 };
 
-export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[] }> = ({ part, onUpdate, parts }) => (
+export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[]; isSheet?: boolean }> = ({
+  part,
+  onUpdate,
+  parts,
+  isSheet,
+}) => (
   <Section title="Appearance">
     <ColorField
       value={part.color}
       suggestions={parts.map((p) => p.color)}
       onChange={(color, live) => onUpdate({ color }, live)}
     />
-    {part.role === 'solid' && (
+    {part.role === 'solid' && !isSheet && (
       <Select
         aria-label="Material"
         value={materialTag(part)}

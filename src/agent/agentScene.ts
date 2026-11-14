@@ -26,6 +26,9 @@ import {
   type V3,
 } from './agentFrame';
 import { plural } from '../../electron/plural.mjs';
+import type { PartSheet, SheetProfile } from '../types/sheet';
+import { applyAgentSheet } from './agentSheet';
+import { sheetOf } from '../sheet/materials';
 
 export { agentCatalog } from './agentCatalog';
 export type { AgentCadPayload } from './cadMesh';
@@ -44,6 +47,7 @@ export interface AgentPartSpec {
   role?: PartRole;
   group?: string;
   material?: AgentMaterial;
+  sheet?: PartSheet;
   supply?: string;
   thickness?: number;
   note?: string;
@@ -238,7 +242,7 @@ function primitivePart(spec: AgentPartSpec, base: PartBase): ScenePart {
   };
 }
 
-export function specToPart(spec: AgentPartSpec): ScenePart {
+export function specToPart(spec: AgentPartSpec, profile?: SheetProfile): ScenePart {
   const base: PartBase = {
     id: spec.id,
     name: spec.name || spec.id,
@@ -250,11 +254,11 @@ export function specToPart(spec: AgentPartSpec): ScenePart {
     ...(spec.frame ? { frame: spec.frame } : {}),
   };
 
-  if (spec.catalog) return catalogPart(spec, spec.catalog, base);
+  if (spec.catalog) return applyAgentSheet(catalogPart(spec, spec.catalog, base), spec, profile);
 
-  if (spec.shape === 'cad_part' && spec.cad) return cadPart(spec, spec.cad, base);
+  if (spec.shape === 'cad_part' && spec.cad) return applyAgentSheet(cadPart(spec, spec.cad, base), spec, profile);
 
-  return primitivePart(spec, base);
+  return applyAgentSheet(primitivePart(spec, base), spec, profile);
 }
 
 export function placementPoint(part: ScenePart): V3 {
@@ -299,8 +303,6 @@ function applyPlacement(next: ScenePart, part: ScenePart, spec: AgentPartSpec) {
   next.position = (
     part.kind === 'cad_part' && next.cad ? add(placement, rotate(next.cad.originOffset, next.rotation)) : placement
   ).map(r3) as V3;
-
-  if (next.cad && next.cad !== part.cad) next.dimensions = { ...next.dimensions, ...sizeOf(next.cad.baseSize) };
 }
 
 const sizeOf = (s: V3) => ({ width: Math.max(0.1, s[0]), height: Math.max(0.1, s[1]), depth: Math.max(0.1, s[2]) });
@@ -324,7 +326,7 @@ function recompiled(old: NonNullable<ScenePart['cad']>, cad: AgentCadPayload): N
   };
 }
 
-export function applySpec(part: ScenePart, spec: AgentPartSpec): ScenePart {
+export function applySpec(part: ScenePart, spec: AgentPartSpec, profile?: SheetProfile): ScenePart {
   const next: ScenePart = { ...part };
 
   applyLooks(next, spec);
@@ -342,11 +344,15 @@ export function applySpec(part: ScenePart, spec: AgentPartSpec): ScenePart {
 
   if (spec.edges !== undefined) next.edges = specEdges(next, spec.edges);
 
-  if (spec.cad && part.cad) next.cad = recompiled(part.cad, spec.cad);
+  if (spec.cad && part.cad) {
+    next.cad = recompiled(part.cad, spec.cad);
+    next.dimensions = { ...next.dimensions, ...sizeOf(next.cad.baseSize) };
+    next.sheetTransform = undefined;
+  }
 
   if (spec.rotation || spec.position || spec.cad) applyPlacement(next, part, spec);
 
-  return next;
+  return applyAgentSheet(next, spec, profile);
 }
 
 function materialOf(p: ScenePart): string | undefined {
@@ -374,6 +380,7 @@ function kindLabel(p: ScenePart): string {
 function partEntry(p: ScenePart, measured?: PartBoxes) {
   const isCad = p.kind === 'cad_part' && !!p.cad;
   const edges = partEdges(p);
+  const sheet = sheetOf(p, measured?.[p.id]?.sheet);
 
   return {
     id: p.id,
@@ -387,7 +394,8 @@ function partEntry(p: ScenePart, measured?: PartBoxes) {
     color: p.color,
     role: p.role,
     group: p.group?.name,
-    material: materialOf(p),
+    material: sheet ? undefined : materialOf(p),
+    ...(sheet ? { sheet } : {}),
     ...(p.componentId
       ? { catalog: `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}` }
       : {}),

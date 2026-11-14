@@ -1,7 +1,14 @@
 import type { Port } from '../types/ports';
+import { Matrix4 } from 'three';
 import type { CustomModelSubNode, PartDeformers, ScenePart, SculptMeshData } from '../types/robotics';
 import { mirrorCode } from '../agent/cadCode';
-import { flipAxis, type MirrorAxis } from './plane';
+import { flipAxis, flipMatrix, type MirrorAxis } from './plane';
+
+export function mirrorSheetTransform(values: number[] | undefined, axis: MirrorAxis): number[] | undefined {
+  if (!values) return undefined;
+
+  return flipMatrix(axis).multiply(new Matrix4().fromArray(values)).multiply(flipMatrix(axis)).toArray();
+}
 
 const CODE_AXIS: Record<MirrorAxis, MirrorAxis> = { 0: 0, 1: 2, 2: 1 };
 

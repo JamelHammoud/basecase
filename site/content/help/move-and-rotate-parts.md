@@ -1,7 +1,7 @@
 ---
 title: Move and rotate parts
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: task
 order: 2
@@ -49,6 +49,8 @@ To change the snap steps, open **Settings** ▸ **Canvas** ▸ **Snapping**. Cho
 If you select several parts, the gizmo appears at their shared center and moves them together. Locked parts stay where they are.
 
 **Note:** A real component keeps its size when you use **Scale**.
+
+Moving or rotating a sheet part keeps its sheet material and stock thickness. Resizing it with **Scale** returns it to printing. To change stock thickness, use **Thickness** under **Manufacturing**, as in [Cut parts from sheet](/help/cut-parts-from-sheet).
 
 ## Type an exact position or angle
 

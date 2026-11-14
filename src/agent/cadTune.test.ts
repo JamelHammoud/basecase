@@ -3,6 +3,11 @@ import { clampNumber } from '../design-system/numberInputMath';
 import { dimensionRows, tunedCad, withTunedPart } from './cadTune';
 import { BRACKET_CODE, bracketAndServo, tunedAnswer } from './fixtures/tunedBracket';
 import { findPort, worldPort } from './ports';
+import { applySpec } from './agentScene';
+import { buildPartGroup, releasePartGroup } from '../three/buildPartMesh';
+import { localTriangles } from '../three/meshMeasure';
+import { detectSheet } from '../sheet/detectSheet';
+import { sheetOf } from '../sheet/materials';
 
 const portAt = (parts: ReturnType<typeof bracketAndServo>, id: string, name: string) => {
   const part = parts.find((p) => p.id === id)!;
@@ -23,6 +28,38 @@ describe('Dimensions rows', () => {
 });
 
 describe('a tuned part', () => {
+  it('returns a tuned sheet to printing and uses the new source geometry', () => {
+    const parts = bracketAndServo();
+    const group = buildPartGroup(parts[0], false);
+    const profile = detectSheet(localTriangles(group))!;
+    const sheet = applySpec(
+      parts[0],
+      {
+        id: 'bracket',
+        sheet: { material: 'carbon-fiber', thicknessMm: 3 },
+      },
+      profile,
+    );
+    const tuned = tunedCad(tunedAnswer(4), undefined);
+
+    releasePartGroup(group);
+
+    if ('error' in tuned) throw new Error(tuned.error);
+
+    const after = withTunedPart(
+      [{ ...sheet, mechanicalTag: 'Laser-Cut Acrylic/Carbon' }, parts[1]],
+      'bracket',
+      tuned.cad,
+    );
+
+    expect(sheetOf(after[0])).toBeUndefined();
+    expect(after[0].sheetTransform).toBeUndefined();
+    expect(after[0].mechanicalTag).toBe('3D Printed PLA/PETG');
+    expect(after[0].dimensions.height).toBeCloseTo(4);
+    expect(after[0].cad?.baseSize[1]).toBeCloseTo(4);
+    expect(after[0].cad?.code).toContain('wall = 4;');
+  });
+
   it('replaces the part with the new code and mesh, and moves what is mated to it', () => {
     const parts = bracketAndServo();
     const tuned = tunedCad(tunedAnswer(3), undefined);

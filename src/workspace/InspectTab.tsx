@@ -4,6 +4,7 @@ import type { BoundSketch } from '../components/studio/SketchPanel';
 import { GROUND_PLANE, sketchSolid, type SketchShape } from '../utils/sketch/placement';
 import { DEFAULT_COLOR } from '../utils/svgTo3DParser';
 import { EMPTY_SKETCH } from '../utils/sketch/types';
+import { errorMessage } from '../utils/errorMessage';
 import { solidSketchParams } from './partFactories';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -68,6 +69,21 @@ function SceneInspector({ core, actions }: InspectTabProps) {
   const { edits, ops, library, tuning } = actions;
   const { saveAsModel } = library;
   const { toggleCommentMode } = annotations;
+  const measurePart = async (id: string) => {
+    const viewport = core.viewportRef.current;
+
+    if (!viewport) return undefined;
+
+    try {
+      await viewport.meshesReady();
+
+      return (await viewport.measureParts([id]))[id];
+    } catch (error) {
+      core.showToast(errorMessage(error), { tone: 'error' });
+
+      return undefined;
+    }
+  };
 
   return (
     <Inspector
@@ -78,6 +94,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       onChangeGoal={scene.setGlobalGoal}
       snapStepMm={studio.snapStepMm}
       onUpdate={edits.updateSelectedPart}
+      measurePart={measurePart}
       onDuplicate={ops.duplicateSelected}
       onMirror={actions.mirror.mirrorSelected}
       onSaveAsModel={() => void saveAsModel('selected')}

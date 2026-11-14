@@ -5,7 +5,8 @@ import type { PartDimensions, PartKind, ScenePart } from '../types/robotics';
 import { partEdges, tubeRadii } from '../utils/partEdges';
 import type { BooleanRecipe, RecipePart, StepSolid } from '../types/step';
 
-export type ExactSource = RecipePart & Partial<Pick<ScenePart, 'deformers' | 'edges' | 'sculptMesh' | 'boolean'>>;
+export type ExactSource = RecipePart &
+  Partial<Pick<ScenePart, 'deformers' | 'edges' | 'sculptMesh' | 'boolean' | 'sheetTransform'>>;
 
 const SAME_MM = 0.01;
 const SAME_SCALE = 1e-3;
@@ -138,7 +139,7 @@ function booleanSolid(part: ExactSource, csg: BooleanRecipe): StepSolid | null {
 }
 
 export function exactSolid(part: ExactSource): StepSolid | null {
-  if (hasDeformers(part) || partEdges(part)) return null;
+  if (hasDeformers(part) || partEdges(part) || part.sheetTransform) return null;
 
   if (part.kind === 'boolean')
     return part.boolean ? cutSolid(placement(part).invert(), part.boolean.op, part.boolean.operands) : null;

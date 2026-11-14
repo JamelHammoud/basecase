@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 0h. Security (mandatory)
 
+Scene and gallery imports validate sheet settings and affine transforms before rendering, including fields inside boolean operands and custom model nodes (`src/sheet/validation.ts`). Unsupported materials, nonpositive or nonfinite thicknesses, nonfinite matrix entries, perspective, singular and reflected transforms are refused. Boundary tests in `src/sheet/importValidation.test.ts` cover both `.basecase` files and gallery bundles.
+
 The agent reads untrusted pages and files and drives an app that can spawn processes, so treat every input from the renderer, the HTTP bridge, the agent and downloaded assets as hostile. The full checklist, attack surface and accepted risks are in the `security-audit` skill; these rules hold for every change:
 
 - **HTTP bridge:** every `/api/*` middleware is wrapped in `guardBridge` (`electron/bridgeGuard.mjs`: loopback `Host`, same-origin `Origin` and `Sec-Fetch-Site`). Vite plugin middlewares run before Vite's own host check and CORS, so nothing else protects them. A website could otherwise POST `/api/bridge/acp-connect` and run a command.

@@ -1,3 +1,4 @@
+import type { SheetFields } from './sheet';
 import type { Case } from '../cases/schema';
 import type { Routine, TransitionProof } from '../routines/schema';
 import type { SkillRecord } from '../skills/skillRecords';
@@ -122,7 +123,7 @@ export interface CustomModelDefinition {
   nodes: CustomModelSubNode[];
 }
 
-export interface ScenePart extends PartRelations, BooleanFields {
+export interface ScenePart extends PartRelations, BooleanFields, SheetFields {
   id: string;
   name: string;
   kind: PartKind;

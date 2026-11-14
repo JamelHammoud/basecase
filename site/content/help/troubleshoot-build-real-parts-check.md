@@ -1,7 +1,7 @@
 ---
 title: Real parts check lists placeholders or unchecked parts
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 2
@@ -40,6 +40,8 @@ When it works, **Real parts** shows a green mark and the **Replace** row is gone
 ## “Nothing says where to get this part.”
 
 This part comes from somewhere other than your printer, like a CNC-machined or laser-cut part, and nothing names its maker.
+
+Flat parts with only through features can use [Cut parts from sheet](/help/cut-parts-from-sheet) instead. Older CNC Aluminum and Laser-Cut Acrylic/Carbon parts join **Sheet** automatically when their geometry qualifies. Parts with pockets keep the source blocker.
 
 1. Click **Fix** on the problem to have the agent find a maker for it.
 2. Or, if you'll print the part yourself, set its **Material** in the Inspector to **Printed PLA / PETG**.

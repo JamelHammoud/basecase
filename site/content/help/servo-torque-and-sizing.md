@@ -1,7 +1,7 @@
 ---
 title: Servo torque and sizing
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: engineer
 type: concept
 order: 3
@@ -50,6 +50,8 @@ A servo's page in **Parts** shows its stall torque as a load: the Feetech STS321
 A leg joint that swings forward and back carries the robot's whole weight on one leg, at the walk's crouch of at least 30°. On a robot with three or more legs, two legs share that load.
 
 Any other joint has to hold its own limb anywhere in its range. If you import a robot with no servos, the check grades its joints against the torque limit in its description.
+
+Changing a shin or chest plate to sheet changes its weight to solid volume times material density. **Servo torque** and the simulation behind **Peak torque** use that weight. For the steps, see [Cut parts from sheet](/help/cut-parts-from-sheet).
 
 ## Pass, warn and fail
 

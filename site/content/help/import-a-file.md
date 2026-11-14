@@ -103,7 +103,7 @@ You can open STEP and IGES files in the desktop app. Each body in the file becom
 
 Basecase converts the file in a sandbox, separate from the rest of the app. It reads the units from the file, so every body comes in at its real size in millimeters.
 
-An imported body counts as a printed part, like any other imported mesh. To mark a body as bought or machined, select it. Then under **Appearance**, change the material from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Checks lists the body among parts without a source until you give it one.
+An imported body counts as a printed part, like any other imported mesh. To mark a body as bought, select it. Then under **Appearance**, change the material from **Printed PLA / PETG** to **Off-the-shelf**. Checks lists the body among parts without a source until you give it one. For a flat body, [cut the part from sheet](/help/cut-parts-from-sheet) instead.
 
 STEP and IGES files have these limits:
 

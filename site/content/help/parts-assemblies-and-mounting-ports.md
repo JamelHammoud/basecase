@@ -1,7 +1,7 @@
 ---
 title: Parts, assemblies and mounting ports
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: concept
 order: 1
@@ -47,7 +47,9 @@ What a part is made from decides whether you can resize it, whether it's printed
 | Imported mesh | Import, including STEP and IGES bodies | Yes |
 | Robot link | Import Robot or **Parts** ▸ **Robots** | No |
 
-Shapes, agent parts and imported meshes are printed until you change their material under **Appearance**. Components keep the maker's exact size, so you can't resize them. To change the size of hardware, use its **Size** and **Length** choices.
+Shapes, agent parts and imported meshes start as printed parts. For a flat part with only through features, choose **Cut from Sheet** under **Manufacturing** to use aluminum, carbon fiber or acrylic. Other material choices stay under **Appearance**. Components keep the maker's exact size, so you can't resize them. To change the size of hardware, use its **Size** and **Length** choices.
+
+Sheet parts have their own material and thickness in the bill of materials and leave the print plates. The steps are in [Cut parts from sheet](/help/cut-parts-from-sheet).
 
 ## Real components are never estimates
 

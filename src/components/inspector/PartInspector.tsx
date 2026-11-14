@@ -12,6 +12,9 @@ import { NotesSection } from './NotesSection';
 import { ImageSection, PartHeader, ProductSection, SizeSection } from './partSections';
 import { AppearanceSection, PositionSection, RotationSection, ShapeSection } from './partTransformSections';
 import type { InspectorProps } from './types';
+import { ManufacturingSection } from './ManufacturingSection';
+import { useSheetProfile } from './useSheetProfile';
+import { sheetOf } from '../../sheet/materials';
 
 type PartInspectorProps = InspectorProps & { part: ScenePart };
 
@@ -37,6 +40,7 @@ const canTune = (part: ScenePart) => !IS_WEB_DEMO && isTunable(part);
 const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnnotation[] }> = (props) => {
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const { part, onUpdate, partComments } = props;
+  const sheetProfile = useSheetProfile(part, props.measurePart);
   const isImage = part.kind === 'image_plane';
   const hw = part.hardware;
   const comp = part.componentId ? COMPONENT_BY_ID[part.componentId] : undefined;
@@ -52,7 +56,7 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
 
       {hw && <HardwareConfigurator spec={hw} onChange={props.onChangeHardware} />}
 
-      {sized && <SizeSection part={part} onUpdate={onUpdate} isImage={isImage} />}
+      {sized && <SizeSection part={part} onUpdate={onUpdate} isImage={isImage} sheetProfile={sheetProfile} />}
 
       {tunable && (
         <DimensionsSection
@@ -67,9 +71,14 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
 
       <RotationSection part={part} onUpdate={onUpdate} />
 
-      {styled && !hw && <ShapeSection part={part} onUpdate={onUpdate} />}
+      {styled && !hw && (
+        <>
+          <ShapeSection part={part} onUpdate={onUpdate} />
+          <ManufacturingSection part={part} onUpdate={onUpdate} profile={sheetProfile} />
+        </>
+      )}
 
-      {styled && <AppearanceSection part={part} onUpdate={onUpdate} parts={props.parts} />}
+      {styled && <AppearanceSection part={part} onUpdate={onUpdate} parts={props.parts} isSheet={!!sheetOf(part)} />}
 
       {hw && <HardwareHoles hw={hw} onAddClearanceHole={props.onAddClearanceHole} />}
 

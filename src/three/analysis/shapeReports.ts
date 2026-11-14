@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { detectSheet } from '../../sheet/detectSheet';
 import { measureTriangles, type MeshMeasure } from '../meshMeasure';
 import { checkPrintability, extraPose, type PrintPose, type PrintShape, type Vec3 } from '../printability';
 import type { ShapeSolid } from './shapeSolid';
@@ -18,7 +19,7 @@ function localMeasure(solid: ShapeSolid): MeshMeasure {
 
   if (cached) return cached;
 
-  const measure = measureTriangles(solid.positions);
+  const measure = { ...measureTriangles(solid.positions), sheet: detectSheet(solid.positions) };
 
   localMeasures.set(solid, measure);
 

@@ -1,6 +1,6 @@
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { anchorJoint, uniqueJointIds } from '../utils/kinematics';
-import { halfExtents } from '../utils/selection';
+import { partBounds } from '../utils/selection';
 import type { Vec3 } from './types';
 
 const AXES = [0, 1, 2] as const;
@@ -11,7 +11,7 @@ const sizeOf = (p: ScenePart) => [p.dimensions.width, p.dimensions.height, p.dim
 
 const placedOthers = (scene: ScenePart[]) => scene.filter((p) => p.visible && p.kind !== 'image_plane');
 
-const sceneRight = (others: ScenePart[]) => Math.max(...others.map((p) => p.position[0] + halfExtents(p)[0]));
+const sceneRight = (others: ScenePart[]) => Math.max(...others.map((p) => partBounds(p).max[0]));
 
 export const shiftVec = (v: Vec3, d: Vec3): Vec3 => [v[0] + d[0], v[1] + d[1], v[2] + d[2]];
 

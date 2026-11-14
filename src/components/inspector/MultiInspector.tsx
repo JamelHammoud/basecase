@@ -26,6 +26,7 @@ import { GroupName } from './GroupName';
 import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
 import { MATERIALS, materialTag, type InspectorProps } from './types';
+import { sheetOf } from '../../sheet/materials';
 import { keyFor } from '../../app/shortcuts';
 import { plural } from '../../../electron/plural.mjs';
 
@@ -177,7 +178,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
 const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoolean, onUpdateMany }) => {
   const base = selectedParts[0];
   const colors = new Set(selectedParts.map((p) => p.color.toLowerCase()));
-  const allSolid = selectedParts.every((p) => p.role === 'solid');
+  const allSolid = selectedParts.every((p) => p.role === 'solid' && !sheetOf(p));
   const materials = new Set(selectedParts.map(materialTag));
 
   return (

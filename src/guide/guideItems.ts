@@ -12,6 +12,7 @@ import {
 import type { ScenePart } from '../types/robotics';
 import { describeKey, hardwareKey } from '../utils/bom';
 import { hashText } from '../utils/geometryHash';
+import { sheetOf } from '../sheet/materials';
 import type { GuideItem, GuideItemKind, GuideStep, GuideTool, ToolIcon } from './guideTypes';
 
 const FASTENER_TYPES = new Set<HardwareSpec['type']>([
@@ -47,7 +48,7 @@ function shapeSignature(p: ScenePart): string {
   const sample = verts ? verts.slice(0, 600).map(round).join(',') + `#${verts.length}` : '';
 
   return hashText(
-    `${p.kind}|${dims}|${p.color}|${JSON.stringify(p.deformers ?? {})}|${JSON.stringify(p.edges ?? {})}|${sample}`,
+    `${p.kind}|${dims}|${p.color}|${JSON.stringify(p.deformers ?? {})}|${JSON.stringify(p.edges ?? {})}|${sample}|${JSON.stringify(p.sheetTransform ?? null)}`,
   );
 }
 
@@ -57,6 +58,10 @@ export function itemKeyOf(p: ScenePart): string {
   if (p.supplyId) return `supply:${p.supplyId}`;
 
   if (p.kind === 'hardware' && p.hardware) return hardwareKey(p.hardware);
+
+  const sheet = sheetOf(p);
+
+  if (sheet) return `sheet:${sheet.material}|${sheet.thicknessMm}|${shapeSignature(p)}`;
 
   return `printed:${shapeSignature(p)}`;
 }

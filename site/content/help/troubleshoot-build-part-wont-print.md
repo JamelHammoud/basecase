@@ -67,8 +67,8 @@ This is a note. Some faces are close to flat and hang over air, so they need sup
 The part is set to print, but its name ends in a word like Glass, or its note starts with clear acrylic.
 
 1. Select the part.
-2. In the Inspector, set **Material** to **Laser-cut sheet** or **Off-the-shelf**.
-3. Source the sheet. **Real parts** then asks where to get it, and **Fix** hands that job to the agent.
+2. For a flat part, [cut it from acrylic sheet](/help/cut-parts-from-sheet).
+3. For another shape, under **Appearance**, set **Material** to **Off-the-shelf** and source the part.
 
 ## “Letter ⟨letter⟩ left off: no flat face is hidden, free and big enough”
 

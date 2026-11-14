@@ -6,6 +6,7 @@ import { kitCommand, type TrainedEntry } from './kitEnvironment';
 import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, rootHeight } from './kitModel';
 import { kitReward } from './kitRewards';
 import { NEAR_DELAYS, type DelaySteps } from './kitSchedule';
+import { servoGains } from './servoDraws';
 
 const D2R = Math.PI / 180;
 const LOG_STD_MIN = -2.5;
@@ -123,5 +124,6 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     ...(!options.warmStart && options.warmPolicy ? { warmPolicy: options.warmPolicy, logStdMin: LOG_STD_MIN } : {}),
     ...(options.eyes?.length ? { eyes: options.eyes } : {}),
     ...(options.startArea ? { startArea: options.startArea } : {}),
+    ...servoGains(model, { seed: options.seed, joints: robot.joints }),
   };
 }

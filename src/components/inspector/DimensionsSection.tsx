@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { dimensionRows } from '../../agent/cadTune';
 import { NumberInput, Section } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
+import { noEdits, seenAt, settled, shownValue, withEdit } from './dimensionEdits';
 import type { InspectorProps } from './types';
 
 interface DimensionsSectionProps {
@@ -10,39 +11,29 @@ interface DimensionsSectionProps {
   onTune: InspectorProps['onTuneDimensions'];
 }
 
-interface Pending {
-  code: string;
-  values: Record<string, number>;
-}
-
 export const DimensionsSection: React.FC<DimensionsSectionProps> = ({ part, code, onTune }) => {
-  const [pending, setPending] = useState<Pending | null>(null);
-  const sent = useRef<Pending | null>(null);
+  const [edits, setEdits] = useState(() => noEdits(code));
+  const seen = seenAt(edits, code);
   const rows = dimensionRows(code);
-  const shown = pending?.code === code ? pending.values : {};
+
+  if (seen !== edits) setEdits(seen);
 
   if (!rows.length) return null;
 
   const commit = async (name: string, value: number, was: number) => {
-    const last = sent.current?.code === code ? sent.current.values : {};
+    const next = withEdit(seen, { code, name, value, was });
 
-    if (value === (last[name] ?? was)) return;
+    if (!next) return;
 
-    const next = { code, values: { ...last, [name]: value } };
-
-    sent.current = next;
-    setPending(next);
+    setEdits(next);
     await onTune(part.id, { [name]: value });
-
-    if (sent.current === next) sent.current = null;
-
-    setPending((p) => (p === next ? null : p));
+    setEdits((current) => settled(current, next));
   };
 
   return (
     <Section title="Dimensions" collapsible>
       {rows.map((row) => {
-        const value = shown[row.name] ?? row.value;
+        const value = shownValue(seen, row.name, row.value);
 
         return (
           <div key={row.name} className="grid grid-cols-3 gap-1.5 items-center">

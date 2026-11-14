@@ -21,10 +21,12 @@
   "s3b-moves": 4,
   "s4-routines-core": 4,
   "s4b-routines-flow": 8,
-  "s5-emu-daemon": 18,
+  "s5-emu-daemon": 23,
   "s5b-daemon-app": 8,
   "s6-hidden-twin": 5,
   "s6-hidden-twin-nad": 1,
+  "s6-servo-population": 2,
+  "s6-servo-population-train": 2,
   "s7-72h-run": 5,
   "s7-rehearsal": 5
 }

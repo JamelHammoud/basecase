@@ -7,7 +7,7 @@ import { benchLogs, type BenchRecording, type BenchSample } from './benchLogs';
 import { BENCH, BENCH_SECONDS, benchOffset, EMULATED_LOAD } from './benchSequence';
 import { calibratedInput, calibrateServo } from './calibrate';
 import { predictLog, type FitContext } from './fitServo';
-import { activeCalibrations } from './history';
+import { simCalibrations } from './history';
 import { keepBenchLogs } from './benchLogStore';
 import { jointReplay } from './jointReplay';
 import { LADDER } from './ladder';
@@ -111,7 +111,7 @@ describe('calibrating from the bench', () => {
     const project = withCalibration({ ...DEFAULT_PROJECT }, BENCH_JOINT, calibration);
     const input = benchInput(STS, EMULATED_LOAD);
     const scene = { ...input, project: { ...input.project, servoCalibrations: project.servoCalibrations } };
-    const simInput = calibratedInput(scene, activeCalibrations(scene.project.servoCalibrations));
+    const simInput = calibratedInput(scene, simCalibrations(scene.project.servoCalibrations));
 
     expect(project.servoCalibrations?.[BENCH_JOINT].active).toBe(1);
     expect(simInput.servoFits?.[BENCH_JOINT].fit).toEqual(calibration.fit);

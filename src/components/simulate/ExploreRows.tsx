@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { designLabel, sameDesign, type ExploredDesign } from '../../cases/explore';
 import { Button, ChevronDownIcon, ChevronUpIcon, RowActions, Tooltip } from '../../design-system';
-import { fmtG } from '../../utils/engineeringFormat';
+import { weight } from '../../utils/weight';
 import { useMoney } from '../../utils/useMoney';
 import type { CaseExplore, Exploration } from '../../workspace/useCaseExplore';
 import { ProgressBar } from './ProgressBar';
@@ -12,7 +12,7 @@ const GRID = 'grid grid-cols-[minmax(0,1fr)_auto_64px_56px] items-center gap-x-3
 const HEADERS: Array<{ key: SortKey; label: string }> = [
   { key: 'passes', label: 'Passes' },
   { key: 'cost', label: 'Cost' },
-  { key: 'mass', label: 'Mass' },
+  { key: 'mass', label: 'Weight' },
 ];
 
 const SortHeader: React.FC<{ sorting: Sorting; onSort: (key: SortKey) => void }> = ({ sorting, onSort }) => (
@@ -65,7 +65,7 @@ const ExploreRow: React.FC<RowProps> = ({ row, label, current, onApply }) => {
         </span>
       </Tooltip>
       <span className="text-right text-[12px] text-white/50 tabular">{money.format(row.costUsd)}</span>
-      <span className="text-right text-[12px] text-white/50 tabular">{fmtG(row.massG)}</span>
+      <span className="text-right text-[12px] text-white/50 tabular">{weight(row.massG)}</span>
       {!current && (
         <RowActions fill="#2a2a2a" className="inset-y-0 right-0 pr-1 rounded-r-[8px]">
           <Button size="xs" onClick={onApply}>

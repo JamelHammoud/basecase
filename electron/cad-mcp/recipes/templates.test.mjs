@@ -5,7 +5,11 @@ import { scadPortsParallel } from './scadPorts.mjs';
 import { CATALOG_HORN, armTemplate, bipedTemplate } from './templates.mjs';
 
 const DEG = Math.PI / 180;
-const TEMPLATES = { arm: armTemplate(), biped: bipedTemplate() };
+const TEMPLATES = {
+  arm: armTemplate(),
+  sized: armTemplate({ links: [75, 140, 185], baseHeight: 20, base: [30, -10, 0], yaw: -18 }),
+  biped: bipedTemplate(),
+};
 const parts = Object.entries(TEMPLATES).flatMap(([template, t]) => t.parts.map((p) => ({ template, ...p })));
 
 const matrixOf = ({ position, rotation }) =>

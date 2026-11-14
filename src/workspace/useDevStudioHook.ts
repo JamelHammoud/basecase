@@ -11,6 +11,7 @@ import { withCalibration } from '../reality/projectCalibrations';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devSimState } from './devSimState';
+import { matDevActions } from './devMatFeed';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import { robotPackageZip } from './robotPackageExport';
 import { trainerStub } from './trainerStub';
@@ -130,6 +131,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
       return made && { html: made.html, pages: made.record.pages, steps: made.record.steps };
     },
     buildAlongSteps: () => core.buildAlong.steps,
+    mat: matDevActions(core),
   });
 
   useEffect(() => {

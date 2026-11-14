@@ -1,4 +1,4 @@
-import { isGenerated, passedTry } from '../cases/tries';
+import { isGenerated, isReal, passedTry } from '../cases/tries';
 import type { Controller } from '../sim/engine';
 import { modelFingerprints } from '../sim/policyFreshness';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -23,6 +23,7 @@ function caseState({ cases }: WorkspaceCore['simTraining']) {
       id: t.id,
       world: t.world ?? 0,
       generated: isGenerated(t),
+      real: isReal(t),
       passed: passedTry(t),
       margin: t.outcome.margin,
       seconds: t.seconds,

@@ -43,7 +43,7 @@ Every servo in **Parts** carries its datasheet's stall torque and rated torque. 
 
 Both are read at the voltage the servo actually gets: a regulator's output, else the battery's nominal voltage, else the tether's. Between the datasheet's voltage points the torque is interpolated, and it's never rated above what the supply reaches. When a datasheet gives no rated torque, a quarter of stall stands in, and the row says so.
 
-A servo's page in **Parts** gives its stall torque as a load: the Feetech STS3215 holds “Up to 2 kg at 10 cm”.
+A servo's page in **Parts** gives its stall torque as a load: the Feetech STS3215 holds “Up to 1.95 kg at 10 cm”.
 
 ## What a joint needs
 
@@ -90,3 +90,5 @@ A fall hits a leg servo far harder than walking does. **Falls** tips the robot o
 - **A higher voltage,** inside the servo's range. Torque is read at your supply voltage, so a higher one can add torque.
 
 **Fix**, on a failing line, hands the problem to the agent to solve.
+
+For an arm, [Size an arm from the points it must reach](/help/size-an-arm-to-its-targets) picks each joint's servo against these limits, with the payload at the wrist. Servo torque grades that arm once it has joints.

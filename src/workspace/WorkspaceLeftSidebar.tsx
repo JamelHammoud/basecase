@@ -29,7 +29,6 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
     onDeleteModel: library.deleteModel,
     onSaveModel: library.saveAsModel,
     onImport: () => void files.pickImports(),
-    onImageToModel: tool.requestAttach,
     onOpenTries: core.triesMode.show,
   };
 
@@ -98,6 +97,8 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       onToggleReferenceImages={ui.toggleReferenceImages}
       onTogglePartFlag={edits.togglePartFlag}
       onRenamePart={edits.renamePart}
+      renamingLayer={ui.renamingLayer}
+      onRenamingLayer={ui.setRenamingLayer}
       onPartContextMenu={onPartContextMenu}
       onAddCatalogItem={creation.addCatalogItem}
       library={libraryProps}

@@ -27,7 +27,7 @@ See every try you've recorded, from every scene, in one place, and open or delet
 
 ![The Library with a Tries section listing one robot and its 4 tries](/help/browse-tries-in-the-library/library.png)
 
-3. The canvas fills with your tries, grouped by robot. Each tile shows the try's filmstrip, its Case, Passed or Missed, and how long it ran. A try made by [Multiply](/help/multiply-a-try-into-demonstrations) has a **Variation** badge.
+3. The canvas fills with your tries, grouped by robot. Each tile shows the try's filmstrip, its Case, Passed or Missed, and how long it ran. A try made by [Multiply](/help/multiply-a-try-into-demonstrations) has a **Variation** badge, and a [try on your real robot](/help/try-a-case-on-your-real-robot) has a **Real** badge.
 4. Click a tile. Its timeline opens under the tiles, one lane per joint, and works as in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
 
 ![Tries from two scenes, with the second one selected and its timeline open](/help/browse-tries-in-the-library/tries.png)

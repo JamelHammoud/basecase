@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { filmBoxes, type FilmBox } from '../../cases/filmstrip';
 import { drawFilmstrip } from '../../cases/filmstripClient';
-import type { TryRecord } from '../../cases/tries';
+import { isReal, type TryRecord } from '../../cases/tries';
 import { loadRecording, saveTryFilm } from '../../cases/tryStore';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
@@ -51,7 +51,7 @@ export function useFilmstrip(record: TryRecord, model: SimModel | null, parts: S
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!model) return;
+    if (!model || isReal(record)) return;
 
     let live = true;
     const boxes = filmBoxes(parts, world);

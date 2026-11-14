@@ -36,7 +36,7 @@ For anything else, attach photos from a few sides, or a sketch. The agent compar
 
 ## Say what it must do and what it must use
 
-Real constraints change the design more than adjectives do. Compare “a gripper” with “a gripper for an STS3215 that opens 60 mm”. Name servos, boards and screws you already own, and a budget if you have one.
+Real constraints change the design more than adjectives do. Compare “a gripper” with “a gripper for an STS3215 that opens 60 mm”. Name servos, boards and screws you already own, and a budget if you have one. For an arm, give the points it must reach in mm and the grams it carries. [Size an arm from the points it must reach](/help/size-an-arm-to-its-targets) shows what you get.
 
 ## Change one thing at a time
 
@@ -44,7 +44,7 @@ After the first design, short follow-ups work best: “Longer legs”, “Thicke
 
 ## Say how you want to drive it
 
-To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad, a phone and the computer's camera. Ask for a joystick, a piano or a readout over the robot, and the agent draws it as a code panel. Ask for changes to it while the Case runs, one at a time, such as “Add a Spin button”.
+To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad, a phone and the computer's camera. Ask for a joystick, a piano or a readout over the robot, and the agent draws it as a code panel. Ask for changes to it while the Case runs, one at a time, such as “Add a Spin button”. Name a movement, as in “wave at the camera and it waves back”, and the Case reacts to that gesture.
 
 ## Ask about Checks instead of hiding them
 

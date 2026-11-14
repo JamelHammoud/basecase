@@ -23,6 +23,7 @@ covers:
   - src/app/useTabs.ts
   - src/app/useTabActions.ts
   - src/app/tabShortcuts.ts
+  - src/workspace/fileCommands.tsx
 ---
 
 Keep up to 8 scenes open side by side as tabs, and move between them without losing your place.
@@ -38,7 +39,9 @@ The new scene opens next to the current one, named Untitled. You can also press 
 1. Double-click the scene's tab.
 2. Type the new name and press Enter.
 
-Press Esc to keep the old name. **Rename** is also in the tab's right-click menu.
+Press Esc to keep the old name. **Rename** is also in the tab's right-click menu, and **Rename Scene** is in [[⌘K]].
+
+![The command palette with Rename typed and Rename Scene highlighted](/help/open-rename-and-close-tabs/rename-scene.png)
 
 ## Close and reopen a scene
 

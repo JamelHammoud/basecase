@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import type { InputRobot } from '../../sim/inputTypes';
+import { createGestureTap } from '../gestures/gestureTap';
 import { createPoseFollower, type PoseFollower, type PoseSample } from './poseFollow';
 import { loadPoseEstimator, type PoseLandmarker } from './poseEstimator';
 import { isSeen, type PoseLandmark } from './poseLandmarks';
@@ -20,8 +21,11 @@ let feedTimer: ReturnType<typeof setTimeout> | null = null;
 let lastTimestamp = 0;
 let seenPerson = false;
 let closed = false;
+let fedUntil = 0;
 
 const post = (event: PoseEvent) => scope.postMessage(event);
+
+const gestures = createGestureTap(post);
 
 const fail = (e: unknown) => post({ type: 'error', message: e instanceof Error ? e.message : String(e) });
 
@@ -44,6 +48,7 @@ function detect(picture: Picture, seenAt: number) {
   const lost = seenPerson && (!world || !marks);
 
   seenPerson = !!world && !!marks;
+  gestures.step(world ?? null, lastTimestamp);
 
   if (lost) post({ type: 'pose', follow: null, image: null, seenAt });
 
@@ -127,19 +132,24 @@ function feed(samples: PoseSample[], fps = FEED_FPS) {
   estimator = null;
 
   const following = createPoseFollower(robot);
+  const from = Math.max(performance.now(), fedUntil) - (samples[0]?.t ?? 0);
   let next = 0;
   const step = () => {
     const sample = samples[next++];
 
     feedTimer = null;
 
-    if (!sample || closed) return;
+    if (closed) return;
+
+    if (!sample) return post({ type: 'fed' });
 
     const seenAt = wallClock();
 
     feedTimer = setTimeout(step, 1000 / fps);
 
     try {
+      fedUntil = from + sample.t + 1000 / fps;
+      gestures.step(sample.world, from + sample.t);
       post({
         type: 'pose',
         follow: following.step(sample),
@@ -169,6 +179,7 @@ function open(msg: Extract<PoseRequest, { type: 'open' }>) {
 function close() {
   closed = true;
   stopFeed();
+  gestures.stop();
   dropLatest();
   void reader?.cancel().catch(() => undefined);
   estimator?.close();
@@ -186,6 +197,8 @@ const handlers: { [K in PoseRequest['type']]: (msg: Extract<PoseRequest, { type:
       fail(e);
     }
   },
+  gestures: ({ taught }) => gestures.teach(taught),
+  record: ({ ms }) => gestures.record(ms),
   close,
 };
 

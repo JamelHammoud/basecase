@@ -3,6 +3,7 @@ import type { RobotSkeleton, SkeletonJoint, SkeletonLimb, ZUpVec } from '../type
 import { r1, r3 } from './agentFrame';
 import { swapWords } from '../mirror/mirrorNames';
 import { plural } from '../../electron/plural.mjs';
+import { weight } from '../utils/weight';
 
 export interface SkeletonJointInput {
   id: string;
@@ -16,6 +17,7 @@ export interface SkeletonJointInput {
   actuator?: string;
   tip?: ZUpVec;
   link_mass_g?: number;
+  payload_g?: number;
 }
 
 export interface SkeletonPayload {
@@ -52,6 +54,7 @@ function jointOf(j: SkeletonJointInput): SkeletonJoint {
     ...(j.actuator ? { actuator: j.actuator } : {}),
     ...(j.tip ? { tip: j.tip } : {}),
     ...(j.link_mass_g ? { linkMassG: j.link_mass_g } : {}),
+    ...(j.payload_g ? { payloadG: j.payload_g } : {}),
   };
 }
 
@@ -193,6 +196,7 @@ function jointLine(skeleton: RobotSkeleton, j: SkeletonJoint): string {
     `- ${j.id}${j.limb ? ` (${j.limb})` : ''}: at ${fmt(j.origin)} axis ${fmt(j.axis)}`,
     link ? `link ${r1(link)} mm${to.length ? ` to ${to.join(', ')}` : ' to its tip'}` : '',
     j.actuator ?? '',
+    j.payloadG ? `carries ${j.payloadG} g at its tip` : '',
   ];
 
   return bits.filter(Boolean).join(', ');
@@ -203,7 +207,7 @@ export function skeletonText(build: SkeletonBuild): string {
   const pairs = skeleton.pairs.map((p) => `${p[0]} / ${p[1]}`);
 
   return [
-    `Skeleton: ${plural(skeleton.joints.length, 'joint')}${skeleton.massG ? `, ${r1(skeleton.massG / 1000)} kg estimated` : ''}.`,
+    `Skeleton: ${plural(skeleton.joints.length, 'joint')}${skeleton.massG ? `, ${weight(skeleton.massG)} estimated` : ''}.`,
     ...skeleton.joints.map((j) => jointLine(skeleton, j)),
     pairs.length ? `Symmetric pairs: ${pairs.join(', ')}.` : '',
     problems.length ? `Problems:\n- ${problems.join('\n- ')}` : '',

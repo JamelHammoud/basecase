@@ -3,18 +3,12 @@ import {
   BotIcon,
   BrushIcon,
   CheckIcon,
-  CloseIcon,
   CommentIcon,
   DeleteIcon,
-  DuplicateIcon,
   EraserIcon,
-  FolderOpenIcon,
-  HistoryIcon,
   MarkerIcon,
   MoveIcon,
   PenIcon,
-  PlusIcon,
-  PhotoAddIcon,
   PhotoIcon,
   PoseIcon,
   PrinterIcon,
@@ -24,7 +18,6 @@ import {
   RulerIcon,
   RunIcon,
   ScaleIcon,
-  SwapIcon,
 } from '../design-system';
 import { ROBOT_PRESETS } from '../utils/robotImport';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -42,7 +35,7 @@ import { buildCommands } from './buildCommands';
 import { leaderCommands } from './leaderCommands';
 import { onshapeCommands } from './onshapeCommands';
 import { keyFor } from '../app/shortcuts';
-import { tabChord } from '../../electron/shortcutKeys.mjs';
+import { fileCommands } from './fileCommands';
 
 export interface CommandInputs {
   core: WorkspaceCore;
@@ -52,73 +45,6 @@ export interface CommandInputs {
 }
 
 const ic = 'w-4 h-4';
-
-function fileCommands({ core }: CommandInputs): Command[] {
-  const { studio, workspaceId } = core;
-  const reopen: Command[] = studio.canReopenTab
-    ? [
-        {
-          id: 'reopen-scene',
-          group: 'Scene',
-          label: 'Reopen Closed Scene',
-          shortcut: keyFor('reopen-tab'),
-          icon: <HistoryIcon className={ic} />,
-          keywords: 'tab undo restore',
-          run: studio.reopenTab,
-        },
-      ]
-    : [];
-
-  return [
-    {
-      id: 'open-scenes',
-      group: 'Scene',
-      label: 'Show Scenes',
-      shortcut: keyFor('open-scenes'),
-      icon: <FolderOpenIcon className={ic} />,
-      keywords: 'open saved files browse recent history delete rename',
-      run: studio.openSceneList,
-    },
-    {
-      id: 'new',
-      group: 'Scene',
-      label: 'New Scene',
-      shortcut: keyFor('new-scene'),
-      icon: <PlusIcon className={ic} />,
-      keywords: 'tab open',
-      run: () => studio.newScene(),
-    },
-    {
-      id: 'duplicate-scene',
-      group: 'Scene',
-      label: 'Duplicate Scene',
-      icon: <DuplicateIcon className={ic} />,
-      keywords: 'tab copy',
-      run: () => studio.duplicateTab(workspaceId),
-    },
-    {
-      id: 'close-scene',
-      group: 'Scene',
-      label: 'Close Scene',
-      shortcut: keyFor('close-tab'),
-      icon: <CloseIcon className={ic} />,
-      keywords: 'tab',
-      run: () => studio.closeTab(workspaceId),
-    },
-    ...reopen,
-    ...studio.tabs
-      .filter((t) => t.id !== workspaceId)
-      .map((t) => ({
-        id: `tab-${t.id}`,
-        group: 'Open Scenes',
-        label: t.name || 'Untitled',
-        shortcut: tabChord(studio.tabs.indexOf(t), studio.tabs.length),
-        icon: <SwapIcon className={ic} />,
-        keywords: 'tab switch go to',
-        run: () => studio.selectTab(t.id),
-      })),
-  ];
-}
 
 function printCommands({ core, actions }: CommandInputs): Command[] {
   const { exports } = actions;
@@ -167,7 +93,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
 }
 
 function createCommands({ core, actions, ui }: CommandInputs): Command[] {
-  const { studio, tool } = core;
+  const { studio } = core;
 
   return [
     {
@@ -194,22 +120,6 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       icon: <PenIcon className={ic} />,
       keywords: 'draw extrude revolve outline face dimension constraint',
       run: core.sketching.open,
-    },
-    {
-      id: 'image',
-      group: 'Scene',
-      label: 'Model from Image',
-      icon: <PhotoAddIcon className={ic} />,
-      keywords: 'photo sketch agent ai',
-      run: tool.requestAttach,
-    },
-    {
-      id: 'agent-sketch',
-      group: 'Scene',
-      label: 'Sketch for Agent',
-      icon: <PenIcon className={ic} />,
-      keywords: 'draw drawing reference composer ai',
-      run: tool.requestSketch,
     },
   ];
 }

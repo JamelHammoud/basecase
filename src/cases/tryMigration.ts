@@ -2,7 +2,7 @@ import type { RecordedFault } from '../sim/faults';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import type { Case } from './schema';
-import { tryJoints, tryRefs, TRY_VERSION, type JointNames, type TryRecord, type TryRef } from './tries';
+import { tryJoints, tryRefs, TRY_VERSION, type JointNames, type TryRecord, type TryRef, type TrySource } from './tries';
 
 export interface LegacyTry {
   id: string;
@@ -13,6 +13,7 @@ export interface LegacyTry {
   margin: number;
   seconds: number;
   generated?: true;
+  real?: true;
   manifest: {
     caseHash: string;
     modelHash: string;
@@ -45,6 +46,12 @@ export const isLegacyTry = (entry: unknown): entry is LegacyTry =>
 
 export const hasLegacyTries = (entries: readonly unknown[] | undefined) => !!entries?.some(isLegacyTry);
 
+const legacySource = (old: LegacyTry): TrySource => {
+  if (old.real) return 'real';
+
+  return old.generated ? 'generated' : 'case';
+};
+
 export function fromLegacy(old: LegacyTry, scene: LegacyScene): TryRecord {
   const { manifest } = old;
   const fits = scene.model && scene.modelHash === manifest.modelHash;
@@ -56,7 +63,7 @@ export function fromLegacy(old: LegacyTry, scene: LegacyScene): TryRecord {
     robot: {
       name: old.robot,
       modelHash: manifest.modelHash,
-      ...(fits ? { joints: tryJoints(scene.model!, scene.names) } : {}),
+      ...(fits && !old.real ? { joints: tryJoints(scene.model!, scene.names) } : {}),
     },
     case: {
       id: old.caseId,
@@ -64,7 +71,7 @@ export function fromLegacy(old: LegacyTry, scene: LegacyScene): TryRecord {
       hash: manifest.caseHash,
       contractHash: '',
     },
-    source: old.generated ? 'generated' : 'case',
+    source: legacySource(old),
     input: null,
     at: old.at,
     seconds: old.seconds,

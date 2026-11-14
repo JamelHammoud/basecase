@@ -24,6 +24,7 @@ covers:
   - src/cases/tries.ts
   - src/cases/tryStore.ts
   - src/cases/caseBuilder.ts
+  - src/cases/gestures.ts
   - src/cases/terrain.ts
   - src/components/cases/CasesPanel.tsx
 ---
@@ -41,6 +42,7 @@ A robot that stands in the simulation tells you little about whether it can reac
 - **A contract.** The rules that judge a try: what must happen to pass, and what makes it fail, such as a fall.
 - **A time limit.** How long a try may take.
 - **A console**, if it has one. The inputs that drive it and the panels around the canvas when you [run it](/help/run-a-case).
+- **Gestures**, if you taught it any: movements it reacts to at the camera, as in [Teach a robot a gesture](/help/teach-a-robot-a-gesture).
 
 Every Case also carries a reference: a route that proves the Case can be passed. [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts) lists each goal and exactly how it's judged.
 
@@ -51,6 +53,8 @@ A Case is written once and runs on any robot that fits its slot. For an arm, Bas
 ## Tries
 
 You take a try by driving the robot through the Case yourself. Basecase records it 50 times a second, along with each change the Case's code makes to the world, then scores the recording with the contract: **Passed** or **Missed**. Results list your tries worst first, each with four frames and a replay.
+
+A wheeled or legged robot can also try a Case for real, on the Case printed as a floor mat. A camera tracks it, and the same contract judges the run. Steps are in [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results count them on that try's row.
 

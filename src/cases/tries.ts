@@ -11,7 +11,7 @@ import type { Case } from './schema';
 
 export const TRY_VERSION = 1;
 
-export type TrySource = 'case' | 'generated';
+export type TrySource = 'case' | 'generated' | 'real';
 
 export type TryResult = 'passed' | 'failed' | 'unjudged';
 
@@ -57,6 +57,8 @@ export interface TryRef {
 export const passedTry = (t: TryRecord) => t.outcome.result === 'passed';
 
 export const isGenerated = (t: TryRecord) => t.source === 'generated';
+
+export const isReal = (t: TryRecord) => t.source === 'real';
 
 export const tryRefs = (tries: Array<{ id: string }>): TryRef[] => tries.map(({ id }) => ({ id }));
 
@@ -141,6 +143,7 @@ export interface NewTry {
   recording: Recording;
   verdict: { passed: boolean; margin: number };
   names?: JointNames;
+  source?: TrySource;
 }
 
 export async function newTry(options: NewTry): Promise<TryRecord> {
@@ -150,14 +153,18 @@ export async function newTry(options: NewTry): Promise<TryRecord> {
     version: TRY_VERSION,
     id,
     sceneId,
-    robot: { name: robot, modelHash: await sha256(model.xml), joints: tryJoints(model, options.names) },
+    robot: {
+      name: robot,
+      modelHash: await sha256(model.xml),
+      joints: recording.nq ? tryJoints(model, options.names) : [],
+    },
     case: {
       id: kase.id,
       name: kase.name,
       hash: await sha256(JSON.stringify(kase)),
       contractHash: await sha256(JSON.stringify(kase.task.contract)),
     },
-    source: 'case',
+    source: options.source ?? 'case',
     input: null,
     at: new Date().toISOString(),
     seconds: recording.frames * recording.dt,
@@ -173,6 +180,8 @@ export async function newTry(options: NewTry): Promise<TryRecord> {
 }
 
 export const multipliable = (t: TryRecord) => passedTry(t) && t.source === 'case' && !!t.commands;
+
+export const simTries = (tries: TryRecord[]) => tries.filter((t) => !isReal(t));
 
 export const generatedFrom = (tries: TryRecord[], source: TryRecord) =>
   tries.filter((t) => isGenerated(t) && t.sourceTry === source.id);

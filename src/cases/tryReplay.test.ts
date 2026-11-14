@@ -77,7 +77,7 @@ describe('Multiply', () => {
     commands.forEach((c, i) => {
       const target = c.command.target!;
       const moved = shifted[i].command.target!;
-      const offset = offsets.get(nearestDot(touch.source, target).id)!;
+      const offset = offsets.get(nearestDot(touch.source, target).id)!.move;
 
       moved.forEach((x, k) => expect(x - target[k]).toBeCloseTo(offset[k], 6));
     });
@@ -109,7 +109,7 @@ describe('Multiply', () => {
 
     const pick = await referenceTry(mj, built.kase, arm);
     const offsets = worldOffsets(pick.source.kase, 5);
-    const block = offsets.get('block')!;
+    const block = offsets.get('block')!.move;
     const variation = await replayTry(mj, pick.source, 5);
     const before = objectAt(pick.source, pick.source.recording, 'block', 0);
     const after = objectAt(pick.source, variation.recording, 'block', 0);

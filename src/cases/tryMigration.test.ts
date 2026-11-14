@@ -90,6 +90,7 @@ describe('moving tries out of IndexedDB', () => {
       sourceTry: null,
       commands: 3,
     });
+    expect(fromLegacy(legacy('try-r', { real: true }), scene).source).toBe('real');
   });
 });
 

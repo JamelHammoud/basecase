@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '../../design-system';
-import { isGenerated, passedTry, type TryRecord } from '../../cases/tries';
+import { isGenerated, isReal, passedTry, type TryRecord } from '../../cases/tries';
 import { runClock } from '../../utils/duration';
 import { tryOutcome } from '../simulate/format';
 import { useTryFilm } from './useTryFilm';
@@ -37,6 +37,7 @@ export const TryTile: React.FC<TryTileProps> = ({ record, selected, onPick, onMe
           <span className={outcomeTone(record)}>{tryOutcome(record)}</span>
           <span className="text-white/50">{runClock(record.seconds)}</span>
           {isGenerated(record) && <Badge>Variation</Badge>}
+          {isReal(record) && <Badge>Real</Badge>}
         </div>
       </div>
     </button>

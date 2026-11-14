@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Button,
+  CameraIcon,
   CloseIcon,
   ExpandIcon,
   IconButton,
@@ -104,8 +105,10 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
   teachWalk,
   cls,
 }) => {
-  const { attempt, active } = cases;
-  const running = attempt.phase === 'running';
+  const { attempt, realTry, active } = cases;
+  const live = realTry.phase === 'running' ? realTry : attempt;
+  const running = live.phase === 'running';
+  const busy = attempt.phase !== 'idle' || realTry.phase !== 'idle';
 
   return (
     <Section title="Try">
@@ -113,9 +116,9 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
         {running ? (
           <div className="flex items-center gap-2">
             <span className="flex-1 text-[13px] tabular text-white/80" data-testid="try-clock">
-              {runClock(attempt.elapsed)} of {runClock(active?.task.seconds ?? 0)}
+              {runClock(live.elapsed)} of {runClock(active?.task.seconds ?? 0)}
             </span>
-            <Button variant="secondary" size="sm" icon={<StopIcon className="w-4 h-4" />} onClick={attempt.end}>
+            <Button variant="secondary" size="sm" icon={<StopIcon className="w-4 h-4" />} onClick={live.end}>
               Stop Try
             </Button>
           </div>
@@ -125,10 +128,22 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
             size="md"
             fullWidth
             icon={<RunIcon className="w-4 h-4" />}
-            disabled={attempt.phase !== 'idle'}
+            disabled={busy}
             onClick={() => void attempt.start()}
           >
             Try It
+          </Button>
+        )}
+        {cases.mat.available && !running && (
+          <Button
+            variant="secondary"
+            size="md"
+            fullWidth
+            icon={<CameraIcon className="w-4 h-4" />}
+            disabled={busy || !realTry.canStart}
+            onClick={() => void realTry.start()}
+          >
+            Try on Real Robot
           </Button>
         )}
         {teachWalk && !running && (
@@ -136,7 +151,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
             Teach It to Move
           </Button>
         )}
-        {running && cls && <DriveKeys cls={cls} />}
+        {attempt.phase === 'running' && cls && <DriveKeys cls={cls} />}
       </div>
     </Section>
   );

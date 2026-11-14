@@ -1,4 +1,5 @@
 import { ComponentInfo, specLines } from '../data/components';
+import { weight } from './weight';
 
 export interface KeySpec {
   label: string;
@@ -43,10 +44,7 @@ function strength(v: string | undefined): string | undefined {
 
   if (!kgcm) return undefined;
 
-  const kg = kgcm / 10;
-  const load = kg >= 1 ? `${Math.round(kg * 10) / 10} kg` : `${Math.max(10, Math.round(kg * 100) * 10)} g`;
-
-  return `Up to ${load} at 10 cm`;
+  return `Up to ${weight(kgcm * 100)} at 10 cm`;
 }
 
 const amount = (v: string) => v.match(/^(Up to )?[<≈~]?\s*[\d.,]+(?:–[\d.,]+)?\s*(kg|g|mm|m)\b/i)?.[0];

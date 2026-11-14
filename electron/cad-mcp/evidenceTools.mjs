@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
+import { fileSize } from '../fileSize.mjs';
 import { EVIDENCE_DIR, IMAGE_EXT, evidencePath, fail, text } from './shared.mjs';
 
 export const listEvidence = {
@@ -42,7 +43,7 @@ export const listEvidence = {
             else {
               count++;
               lines.push(
-                `- ${path.relative(EVIDENCE_DIR, full).split(path.sep).join('/')} (${Math.max(1, Math.round(fs.statSync(full).size / 1024))} KB)`,
+                `- ${path.relative(EVIDENCE_DIR, full).split(path.sep).join('/')} (${fileSize(fs.statSync(full).size)})`,
               );
             }
           }

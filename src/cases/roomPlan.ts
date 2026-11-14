@@ -1,3 +1,4 @@
+import { fileSize, MB } from '../../electron/fileSize.mjs';
 import type { V3 } from '../utils/kinematics';
 import { CONFIDENCES, type Confidence } from './roomFurniture';
 import {
@@ -26,7 +27,7 @@ export interface Room {
 }
 
 export const ROOM_FILE_EXTENSION = 'json';
-export const MAX_ROOM_BYTES = 8 * 1024 * 1024;
+export const MAX_ROOM_BYTES = 8 * MB;
 
 const MAX_ENTRIES = 1024;
 const MAX_SIZE_M = 50;
@@ -125,7 +126,7 @@ export function readRoomScan(input: unknown): RoomScan {
 }
 
 function parseJson(text: string): unknown {
-  if (text.length > MAX_ROOM_BYTES) return refuse('A room file', `is over ${MAX_ROOM_BYTES / 1024 / 1024} MB`);
+  if (text.length > MAX_ROOM_BYTES) return refuse('A room file', `is over ${fileSize(MAX_ROOM_BYTES)}`);
 
   try {
     return JSON.parse(text);

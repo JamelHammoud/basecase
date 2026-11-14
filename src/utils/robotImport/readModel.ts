@@ -1,3 +1,4 @@
+import { MB } from '../../../electron/fileSize.mjs';
 import { ZIP_TOO_LARGE } from './archive';
 import { chooseEntry, inScope, RobotChoiceError } from './entry';
 import { githubTree, repoLink } from './github';
@@ -32,7 +33,7 @@ interface Located {
 }
 
 const NO_ROBOT = 'Choose a folder with a .urdf or MJCF .xml file.';
-const MAX_ZIP_BYTES = 200 * 1024 * 1024;
+const MAX_ZIP_BYTES = 200 * MB;
 
 export const isZipLink = (url: string) => /\.zip(?:[?#]|$)/i.test(url.trim());
 

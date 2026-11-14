@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileSize } from '../fileSize.mjs';
 import { plural } from '../plural.mjs';
 
 const MAX_LISTED_FILES = 400;
@@ -118,7 +119,7 @@ export function describeEvidenceFolder(evidenceDir, rawId) {
 
   return [
     `Evidence folder "${folder.name}" (${kindSummary(folder.files)}):`,
-    ...shown.map((f) => `- ${f.path} (${evidenceKind(f.path)}, ${Math.max(1, Math.round(f.bytes / 1024))} KB)`),
+    ...shown.map((f) => `- ${f.path} (${evidenceKind(f.path)}, ${fileSize(f.bytes)})`),
     ...(hidden > 0 ? [`- …and ${hidden} more (list_evidence shows all)`] : []),
   ].join('\n');
 }

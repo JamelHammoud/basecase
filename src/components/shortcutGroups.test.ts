@@ -13,6 +13,7 @@ import { tabActions, type TabCommands } from '../app/useAppMenu';
 import { CLIPBOARD_EVENTS } from '../workspace/useClipboard';
 import { workspaceKeyHandlers, type WorkspaceKeyDeps } from '../workspace/useWorkspaceKeys';
 import { composerKeyHandlers, type ComposerKeyState } from './agent/composerKeys';
+import { timelineKeyHandlers } from './simulate/useTimelineKeys';
 import { SHORTCUT_GROUPS, type ShortcutGroup } from './shortcutGroups';
 
 const ARTICLE = import.meta.glob<string>('../../site/content/help/keyboard-shortcuts.md', {
@@ -37,7 +38,16 @@ function articleGroups(markdown: string) {
 const anything: unknown = new Proxy(() => anything, { get: () => anything, apply: () => anything });
 
 const TAB_IDS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
-const EVENT_KEYS: Record<string, string> = { '⌫': 'Backspace', '↩': 'Enter', Esc: 'Escape', '[': '{', ']': '}' };
+const EVENT_KEYS: Record<string, string> = {
+  '⌫': 'Backspace',
+  '↩': 'Enter',
+  Esc: 'Escape',
+  '[': '{',
+  ']': '}',
+  Space: ' ',
+  '←': 'ArrowLeft',
+  '→': 'ArrowRight',
+};
 const CODES: Record<string, string> = { '[': 'BracketLeft', ']': 'BracketRight' };
 const POINTER = /\b(drag|click|double-click)\b/;
 const TYPED_BY_THE_FIELD = new Set(['⇧↩', '/']);
@@ -74,6 +84,7 @@ function tabsHandle(chord: string) {
 
 const CANVAS_IDS = Object.keys(workspaceKeyHandlers(anything as WorkspaceKeyDeps));
 const COMPOSER_IDS = Object.keys(composerKeyHandlers(anything as ComposerKeyState));
+const TIMELINE_IDS = Object.keys(timelineKeyHandlers(anything as Parameters<typeof timelineKeyHandlers>[0]));
 
 const HANDLED: Handled = {
   canvas: handledIn(CANVAS_IDS, 'canvas'),
@@ -81,6 +92,7 @@ const HANDLED: Handled = {
   tabs: tabsHandle,
   composer: handledIn(COMPOSER_IDS, 'composer'),
   clipboard: handledIn(CLIPBOARD_EVENTS, 'clipboard'),
+  timeline: handledIn(TIMELINE_IDS, 'timeline'),
 };
 
 function rowProblem([label, keys]: [string, ShortcutId | string[]], handled: Handled) {
@@ -100,7 +112,7 @@ function brokenShortcuts(groups: ShortcutGroup[], handled: Handled = HANDLED) {
   const rows = groups.flatMap((g) => g.rows);
   const listed = new Set(rows.map(([, keys]) => keys).filter((k): k is ShortcutId => typeof k === 'string'));
   const unlistedKeys = SHORTCUT_IDS.filter((id) => !listed.has(id)).map((id) => `${id}: handled but not listed`);
-  const unlistedHandlers = [...CANVAS_IDS, ...COMPOSER_IDS, ...CLIPBOARD_EVENTS]
+  const unlistedHandlers = [...CANVAS_IDS, ...COMPOSER_IDS, ...TIMELINE_IDS, ...CLIPBOARD_EVENTS]
     .filter((id) => !SHORTCUT_IDS.includes(id as ShortcutId))
     .map((id) => `${id}: has a handler but no key`);
 

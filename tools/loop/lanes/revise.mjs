@@ -83,7 +83,7 @@ function evidence(pull, reason, comments) {
   if (reason === 'check') {
     const runInfo = checkRunFor(pull.headRefOid);
 
-    parts.push(`Its Check failed. The failed log:\n\n${runInfo ? failedLog(runInfo.databaseId).slice(-MAX_LOG) : ''}`);
+    parts.push(`Its Check failed. The failed log:\n\n${runInfo ? failedLog(runInfo.databaseId, MAX_LOG) : ''}`);
   }
 
   return parts.join('\n\n');

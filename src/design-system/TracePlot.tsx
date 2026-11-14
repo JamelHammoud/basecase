@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { THEME_COLORS } from './theme';
 import { negative } from '../../electron/minus.mjs';
 import {
@@ -27,6 +27,8 @@ export interface TracePlotProps {
   limit?: number;
   markers?: number[];
   onSeek?: (sample: number) => void;
+  loop?: Range | null;
+  onLoop?: (range: Range | null) => void;
   fromZero?: boolean;
   units?: { x: string; y: string };
 }
@@ -84,28 +86,86 @@ function plotRanges(traces: Trace[], { limit, fromZero }: Pick<TracePlotProps, '
   };
 }
 
-function seekHandlers(count: number, onSeek: TracePlotProps['onSeek']) {
+function usePlotPointer(count: number, { onSeek, onLoop }: Pick<TracePlotProps, 'onSeek' | 'onLoop'>) {
+  const anchor = useRef<number | null>(null);
+
   if (!onSeek || count < 1) return {};
 
-  const seek = (e: React.PointerEvent<HTMLDivElement>) => {
+  const at = (e: React.PointerEvent<HTMLDivElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
 
-    onSeek(sampleAt((e.clientX - box.left) / Math.max(box.width, 1), count));
+    return sampleAt((e.clientX - box.left) / Math.max(box.width, 1), count);
+  };
+
+  const move = (e: React.PointerEvent<HTMLDivElement>) => {
+    const sample = at(e);
+    const from = anchor.current;
+
+    if (from === null) onSeek(sample);
+    else onLoop?.([Math.min(from, sample), Math.max(from, sample)]);
   };
 
   return {
     onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
       e.currentTarget.setPointerCapture?.(e.pointerId);
-      seek(e);
+      anchor.current = e.shiftKey && onLoop ? at(e) : null;
+      move(e);
     },
     onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.currentTarget.hasPointerCapture?.(e.pointerId)) seek(e);
+      if (e.currentTarget.hasPointerCapture?.(e.pointerId)) move(e);
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (anchor.current !== null && anchor.current === at(e)) onLoop?.(null);
+
+      anchor.current = null;
     },
   };
 }
 
+interface LinesProps {
+  markers: number[];
+  playhead: number | undefined;
+  x: (sample: number) => number;
+  height: number;
+}
+
+const Lines: React.FC<LinesProps> = ({ markers, playhead, x, height }) => (
+  <>
+    {markers.map((m) => (
+      <path
+        key={`marker-${m}`}
+        data-testid="trace-marker"
+        d={`M${x(m).toFixed(1)} 0V${height}`}
+        stroke={FAILED}
+        strokeWidth={1.5}
+        {...line}
+      />
+    ))}
+    {playhead !== undefined && (
+      <path
+        data-testid="trace-playhead"
+        d={`M${x(playhead).toFixed(1)} 0V${height}`}
+        stroke="rgba(255, 255, 255, 0.85)"
+        strokeWidth={1}
+        {...line}
+      />
+    )}
+  </>
+);
+
+const LoopBand: React.FC<{ from: number; to: number; height: number }> = ({ from, to, height }) => (
+  <rect
+    data-testid="trace-loop"
+    x={from.toFixed(1)}
+    y={0}
+    width={Math.max(to - from, 1).toFixed(1)}
+    height={height}
+    fill="rgba(13, 153, 255, 0.16)"
+  />
+);
+
 export const TracePlot: React.FC<TracePlotProps> = (props) => {
-  const { traces, height = 96, loading = false, className = '', playhead, limit, markers = [], onSeek, units } = props;
+  const { traces, height = 96, loading = false, className = '', playhead, limit, markers = [], units } = props;
   const box = { width: WIDTH, height, inset: INSET };
   const ranges = plotRanges(traces, props);
   const range = ranges.y;
@@ -113,15 +173,17 @@ export const TracePlot: React.FC<TracePlotProps> = (props) => {
   const count = sampleCount(traces);
   const x = (sample: number) => sampleX(sample, count, box);
   const shown = !loading && count > 0;
+  const pointer = usePlotPointer(count, props);
 
   return (
     <div
       className={`relative w-full rounded-lg bg-[#262626] overflow-hidden ${loading ? 'shimmer' : ''} ${className}`}
       style={{ height }}
       data-loading={loading || undefined}
-      {...seekHandlers(count, onSeek)}
+      {...pointer}
     >
       <svg className="block w-full h-full" viewBox={`0 0 ${WIDTH} ${height}`} preserveAspectRatio="none" aria-hidden>
+        {shown && props.loop && <LoopBand from={x(props.loop[0])} to={x(props.loop[1])} height={height} />}
         {shown && <LimitLine y={limit === undefined ? undefined : valueY(limit, range, box)} />}
         {paths.map((p) => (
           <path
@@ -135,26 +197,7 @@ export const TracePlot: React.FC<TracePlotProps> = (props) => {
             {...line}
           />
         ))}
-        {shown &&
-          markers.map((m) => (
-            <path
-              key={`marker-${m}`}
-              data-testid="trace-marker"
-              d={`M${x(m).toFixed(1)} 0V${height}`}
-              stroke={FAILED}
-              strokeWidth={1.5}
-              {...line}
-            />
-          ))}
-        {shown && playhead !== undefined && (
-          <path
-            data-testid="trace-playhead"
-            d={`M${x(playhead).toFixed(1)} 0V${height}`}
-            stroke="rgba(255, 255, 255, 0.85)"
-            strokeWidth={1}
-            {...line}
-          />
-        )}
+        {shown && <Lines markers={markers} playhead={playhead} x={x} height={height} />}
       </svg>
       {shown && <AxisLabels units={units} x={ranges.x} y={range} />}
     </div>

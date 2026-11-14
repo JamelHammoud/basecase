@@ -148,6 +148,7 @@ export function useHandoffs(input: HandoffsInput) {
   return {
     busy,
     skills,
+    stubbed: stub,
     prove,
     proveRefused,
     train,

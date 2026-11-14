@@ -31,7 +31,7 @@ Line parts up on their edges or centers, or space three or more evenly, without 
 1. Select two or more parts on the canvas. Shift-click adds each one after the first.
 2. In the Inspector, find **Align**.
 3. Click an icon in the **X**, **Y** or **Z** row to line the parts up on their shared bounds.
-4. To space three or more parts evenly, click the **Spread** icon at the end of a row.
+4. To space three or more parts evenly, click the icon at the end of a row, such as **Spread Along X**.
 
 ![Align in the Inspector with three parts selected](/help/align-and-spread-parts/inspector.png)
 

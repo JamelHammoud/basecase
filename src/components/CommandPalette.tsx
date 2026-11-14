@@ -128,7 +128,9 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
                     isActive ? 'bg-white/[0.09] text-white' : 'text-white/80'
                   }`}
                 >
-                  <span className={`w-5 flex justify-center shrink-0 ${isActive ? 'text-white' : 'text-white/50'}`}>
+                  <span
+                    className={`w-5 flex justify-center shrink-0 [&>svg]:size-4 ${isActive ? 'text-white' : 'text-white/50'}`}
+                  >
                     {c.icon}
                   </span>
                   <span className="flex-1 truncate">{c.label}</span>

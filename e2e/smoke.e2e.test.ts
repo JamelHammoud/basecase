@@ -4,16 +4,9 @@ import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { box } from '../src/sim/fixtures/parts';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
-import { openApp, partCount, type App } from './harness';
+import { ACP_STATUS, openApp, partCount, type App } from './harness';
 
 let app: App;
-
-const CONNECTED_STATUS = {
-  connected: true,
-  sessionId: null,
-  agentName: 'Claude Code',
-  agentCommand: 'node node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js',
-};
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
@@ -389,7 +382,7 @@ describe('agent connection', () => {
     const replies: Array<() => void> = [];
 
     await app.page.route('**/api/bridge/acp-connect', (route) => {
-      replies.push(() => route.fulfill({ contentType: 'application/json', body: JSON.stringify(CONNECTED_STATUS) }));
+      replies.push(() => route.fulfill({ contentType: 'application/json', body: JSON.stringify(ACP_STATUS) }));
     });
     await app.page.keyboard.press('Meta+,');
     await app.page.locator(visible('nav[aria-label="Settings panes"] button'), { hasText: 'Agent' }).click();

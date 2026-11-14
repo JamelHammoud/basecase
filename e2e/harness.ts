@@ -23,24 +23,26 @@ const EARLIER_SCENE = {
   partCount: 1,
 };
 
+export const ACP_STATUS = {
+  connected: true,
+  sessionId: null,
+  agentName: 'Claude Code',
+  agentCommand: 'node node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js',
+  defaultEffort: 'xhigh',
+  models: [
+    { id: 'default', name: 'Default', resolvesTo: 'Opus 5.5', effortLevels: EFFORT_LEVELS },
+    { id: 'opus', name: 'Opus 5.5', effortLevels: EFFORT_LEVELS },
+    { id: 'sonnet', name: 'Sonnet 5.5', effortLevels: EFFORT_LEVELS },
+    { id: 'haiku', name: 'Haiku 5.5', effortLevels: [] },
+  ],
+};
+
 const LISTS: Record<string, unknown> = {
   scenes: [EARLIER_SCENE],
   models: [],
   images: [],
   chats: [],
-  'acp-status': {
-    connected: true,
-    sessionId: null,
-    agentName: 'Claude Code',
-    agentCommand: 'node node_modules/@agentclientprotocol/claude-agent-acp/dist/index.js',
-    defaultEffort: 'xhigh',
-    models: [
-      { id: 'default', name: 'Default', resolvesTo: 'Opus 5.5', effortLevels: EFFORT_LEVELS },
-      { id: 'opus', name: 'Opus 5.5', effortLevels: EFFORT_LEVELS },
-      { id: 'sonnet', name: 'Sonnet 5.5', effortLevels: EFFORT_LEVELS },
-      { id: 'haiku', name: 'Haiku 5.5', effortLevels: [] },
-    ],
-  },
+  'acp-status': ACP_STATUS,
   'train-status': { uv: false, ready: false, running: [] },
   'print-status': { slicers: [], downloads: {}, bambuConnect: false },
   'print-printers': [],

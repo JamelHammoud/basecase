@@ -27,7 +27,7 @@ covers:
 
 Export the passed tries from a Case as a LeRobot dataset with camera video. You can then use it to fine-tune LeRobot, GR00T or another robot model.
 
-LeRobot is Hugging Face's open library for robot learning, and GR00T is NVIDIA's foundation model for robots. Both learn from demonstrations, which are recordings of a task done right. Each passed try is one demonstration, and the Case's brief is its instruction.
+LeRobot is Hugging Face's open library for robot learning, and GR00T is NVIDIA's foundation model for robots. Both learn from demonstrations, which are recordings of a task done right. Each passed try is one demonstration. Its instruction is the one you or the agent wrote, else the Case's brief.
 
 1. Open a Case and record tries with **Try It** until at least one passes. To learn how, see [Try a Case](/help/try-a-case).
 2. Under **Results**, click **Export Dataset**.
@@ -42,13 +42,13 @@ You can also find **Export Dataset** in [[⌘K]].
 
 The dataset includes only passed tries, and each one has to match the robot as it is now. Tries recorded before the robot's last change stay out, and the toast tells you how many. For example: "Exported 3 tries as a dataset, left out 2 from an earlier design".
 
-Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each. Tries from your real robot don't go in, because they only record where the robot's base went. [Imported tries](/help/import-robot-data-as-tries) don't go in either, because no Case judged them.
+Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each. Tries from your real robot don't go in, because they only record where the robot's base went. [Imported tries](/help/import-robot-data-as-tries) don't go in either, even when a Case judges them, because Export Dataset takes only tries recorded in the Case.
 
 If every passed try is from an earlier design, the toast says "These tries are from an earlier design. Try It again to record new ones."
 
 ## What's in the zip
 
-Each try becomes one episode, recorded at 25 frames a second. An episode holds the joint positions, the joint targets, and a 640 × 480 video from each camera. There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Camera views you add to the scene aren't part of the dataset.
+Each try becomes one episode, recorded at 25 frames a second. An episode holds the joint positions, the joint targets, and a 640 × 480 video from each camera. A try's segments go in as subtasks, each with its instruction or label. There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Camera views you add to the scene aren't part of the dataset.
 
 The zip holds two copies of the dataset. The top folder is LeRobot v3.0, which LeRobot 0.4 and later can load as is. The `v2.1` folder inside it is LeRobot v2.1, for GR00T, which only reads v2. For a list of every file and column, see [LeRobot dataset contents](/help/lerobot-dataset-contents).
 

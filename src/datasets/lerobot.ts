@@ -9,12 +9,12 @@ import {
   placedEpisodes,
   scanWidthOf,
   SCAN_KEY,
-  taskListOf,
   TASK_ANNOTATION,
   videoKey,
   widthsOf,
   type DatasetSpec,
 } from './lerobotRows';
+import { legacyTaskList, subtaskColumns } from './segmentRows';
 
 export const CODEBASE_VERSION = 'v2.1';
 
@@ -35,7 +35,7 @@ function info(spec: DatasetSpec) {
     robot_type: spec.robotType,
     total_episodes: spec.episodes.length,
     total_frames: frames,
-    total_tasks: taskListOf(spec).length,
+    total_tasks: legacyTaskList(spec).length,
     total_videos: spec.episodes.length * spec.videos.length,
     total_chunks: Math.max(1, Math.ceil(spec.episodes.length / CHUNK_SIZE)),
     chunks_size: CHUNK_SIZE,
@@ -43,7 +43,7 @@ function info(spec: DatasetSpec) {
     splits: { train: `0:${spec.episodes.length}` },
     data_path: 'data/chunk-{episode_chunk:03d}/episode_{episode_index:06d}.parquet',
     video_path: 'videos/chunk-{episode_chunk:03d}/{video_key}/episode_{episode_index:06d}.mp4',
-    features: features(spec),
+    features: features(spec, subtaskColumns(spec)),
   };
 }
 
@@ -51,17 +51,18 @@ function modality(spec: DatasetSpec) {
   const groups = spec.jointGroups ?? [{ name: 'joints', start: 0, end: spec.jointNames.length }];
   const joints = Object.fromEntries(groups.map((g) => [g.name, { start: g.start, end: g.end }]));
   const scan = scanWidthOf(spec);
+  const annotations = [TASK_ANNOTATION, ...subtaskColumns(spec).map((c) => c.name)];
 
   return {
     state: { ...joints, ...(scan ? { scan: { start: 0, end: scan, original_key: SCAN_KEY } } : {}) },
     action: joints,
     video: Object.fromEntries(spec.videos.map((v) => [v.key, { original_key: videoKey(v.key) }])),
-    annotation: { [TASK_ANNOTATION.replace(/^annotation\./, '')]: {} },
+    annotation: Object.fromEntries(annotations.map((key) => [key.replace(/^annotation\./, ''), {}])),
   };
 }
 
 export function lerobotFiles(spec: DatasetSpec): Record<string, Uint8Array> {
-  const widths = widthsOf(spec);
+  const widths = { ...widthsOf(spec), columns: subtaskColumns(spec) };
   const files: Record<string, Uint8Array> = {};
 
   for (const placed of placedEpisodes(spec)) {
@@ -82,7 +83,7 @@ export function lerobotFiles(spec: DatasetSpec): Record<string, Uint8Array> {
       stats: episodeStats(spec.episodes[at.episode], widths, at),
     })),
   );
-  files['meta/tasks.jsonl'] = jsonl(taskListOf(spec).map((task, task_index) => ({ task_index, task })));
+  files['meta/tasks.jsonl'] = jsonl(legacyTaskList(spec).map((task, task_index) => ({ task_index, task })));
   files['meta/modality.json'] = json(modality(spec));
   files['meta/basecase.json'] = basecaseFile(spec);
 

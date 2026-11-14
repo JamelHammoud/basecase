@@ -4,8 +4,11 @@ import { sha256, type TryRecord } from '../cases/tries';
 import type { DatasetJobEpisode } from '../datasets/buildDataset';
 import { datasetCameras, snakeKey } from '../datasets/cameras';
 import { exportDatasetFiles, exportDatasetZip, type DatasetSpec } from '../datasets/datasetClient';
+import { labelSegments } from '../datasets/segmentRows';
 import { usableTries } from '../datasets/usableTries';
 import { slotKeys } from '../cases/slots';
+import type { TryLabels } from '../cases/tryLabels';
+import { loadManifests } from '../cases/tryStore';
 import { hubBridge } from '../hub/hubBridge';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Simulation } from '../sim/useSimulation';
@@ -39,11 +42,26 @@ export interface DatasetExport {
   zip: (tries: TryRecord[]) => Promise<Uint8Array | null>;
 }
 
+const MANIFEST_BATCH = 500;
+
+async function labelsById(ids: string[]) {
+  const labels = new Map<string, TryLabels | undefined>();
+
+  for (let at = 0; at < ids.length; at += MANIFEST_BATCH) {
+    for (const m of await loadManifests(ids.slice(at, at + MANIFEST_BATCH))) labels.set(m.id, m.labels);
+  }
+
+  return labels;
+}
+
 async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) {
   const { usable, modelHash } = await usableTries(passed, model);
+  const labels = await labelsById(usable.map((u) => u.record.id));
+  const caseTask = kase.brief.trim() || kase.name;
   const episodes: DatasetJobEpisode[] = usable.map(({ record, recording }) => ({
     recording,
-    task: kase.brief.trim() || kase.name,
+    task: labels.get(record.id)?.instruction?.trim() || caseTask,
+    segments: labelSegments(labels.get(record.id)),
     source: {
       try: record.id,
       at: record.at,

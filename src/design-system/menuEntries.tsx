@@ -29,3 +29,8 @@ export const moreLikeThisEntry = (onSelect: () => void): MenuEntry => ({
   icon: <SearchIcon />,
   onSelect,
 });
+
+export const tagEntry = (onSelect: () => void): MenuEntry => ({
+  label: 'Tag…',
+  onSelect,
+});

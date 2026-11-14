@@ -1,5 +1,5 @@
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, Mp4OutputFormat, Output } from 'mediabunny';
-import { columnStats, DATASET_FPS, type EpisodeData } from './episodes';
+import { columnStats, DATASET_FPS, type DatasetSegment, type EpisodeData } from './episodes';
 import type { DatasetEpisode, DatasetSpec } from './lerobotRows';
 
 export const FIXTURE_WIDTH = 64;
@@ -61,15 +61,29 @@ function fixtureData(length: number, seed: number, task: string): EpisodeData {
   };
 }
 
+export const FIXTURE_SEGMENTS: DatasetSegment[][] = [
+  [
+    { from: 0, to: 5, text: 'reach point' },
+    { from: 5, to: 12, text: 'Touch the point, then hold still.' },
+  ],
+  [],
+  [
+    { from: 0, to: 8, text: 'reach point' },
+    { from: 8, to: 15, text: 'touch point' },
+  ],
+];
+
 export interface FixtureOptions {
   lengths?: number[];
   tasks?: string[];
+  segments?: DatasetSegment[][];
   clip?: (episode: number, frames: number) => Promise<Uint8Array>;
 }
 
 export async function fixtureSpec({
   lengths = [12, 9, 15],
   tasks = ['Touch the point with the end effector.'],
+  segments = [],
   clip = (_, frames) => fixtureClip({ frames }),
 }: FixtureOptions = {}): Promise<DatasetSpec> {
   const episodes: DatasetEpisode[] = [];
@@ -82,6 +96,7 @@ export async function fixtureSpec({
 
     episodes.push({
       ...data,
+      ...(segments[i]?.length ? { segments: segments[i] } : {}),
       videos,
       imageStats: Object.fromEntries(
         FIXTURE_CAMERAS.map((key, k) => [key, { ...columnStats([0.1 * i, 0.2, 0.3 + k / 10], 3), count: [length] }]),

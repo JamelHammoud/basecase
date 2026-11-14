@@ -55,7 +55,7 @@ import { operate, setWorld, startDrive } from './cad-mcp/worldTools.mjs';
 import { compareCase, createCase, exploreCase, readTry, runCase } from './cad-mcp/caseTools.mjs';
 import { deleteCaseCode, readCaseCode, writeCaseCode } from './cad-mcp/caseCodeTools.mjs';
 import { coachSkill, draftSkill, listSkills, trainSkill } from './cad-mcp/skillTools.mjs';
-import { searchTries } from './cad-mcp/tryTools.mjs';
+import { labelTries, searchTries } from './cad-mcp/tryTools.mjs';
 import { editRoutine, makeRoutine, readRoutine, runRoutine, testRoutine } from './cad-mcp/routineTools.mjs';
 import { checkSkeleton, findImages, findRobotDescription, robotSkeleton, viewImage } from './cad-mcp/webTools.mjs';
 import {
@@ -135,6 +135,7 @@ const TOOLS = [
   listSkills,
   coachSkill,
   searchTries,
+  labelTries,
   trainingStatus,
   verifyDesign,
   getBom,

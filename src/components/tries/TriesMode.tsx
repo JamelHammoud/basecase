@@ -6,12 +6,15 @@ import {
   SectionHeader,
   deleteEntry,
   moreLikeThisEntry,
+  tagEntry,
   useScrollFade,
   type ContextMenuEntry,
 } from '../../design-system';
 import type { TriesView } from '../../workspace/useTriesView';
+import { TagTriesField } from './TagTriesField';
 import { TRIES_GRID, TryResults } from './TryResults';
 import { TryTile, type TileScene } from './TryTile';
+import { useTagTries } from './useTagTries';
 import { useTriesKeys } from './useTriesKeys';
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
@@ -28,6 +31,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
   const [menu, setMenu] = useState<Menu | null>(null);
   const { ref: fadeRef, style: fadeStyle } = useScrollFade();
   const body = useRef<HTMLDivElement | null>(null);
+  const tagging = useTagTries(view.fail);
 
   useTriesKeys(view, active && !timelineOpen);
 
@@ -46,7 +50,18 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      entries: [moreLikeThisEntry(() => view.like(id)), deleteEntry(() => view.remove(id), '⌫')],
+      entries: [
+        tagEntry(() => tagging.open(view.targets(id), { x: e.clientX, y: e.clientY })),
+        ...(view.markable(id)
+          ? [
+              { label: 'Mark Passed', onSelect: () => view.mark(id, 'passed') },
+              { label: 'Mark Failed', onSelect: () => view.mark(id, 'failed') },
+            ]
+          : []),
+        { divider: true },
+        moreLikeThisEntry(() => view.like(id)),
+        deleteEntry(() => view.remove(id), '⌫'),
+      ],
     });
   };
 
@@ -121,6 +136,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
         </div>
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.entries} onClose={() => setMenu(null)} />}
+      <TagTriesField target={tagging.target} onDone={tagging.done} />
     </div>
   );
 };

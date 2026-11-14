@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Badge } from '../../design-system';
+import { Badge, WarningIcon } from '../../design-system';
 import { TRY_SOURCE_BADGE, summaryRecord, type TrySummary } from '../../cases/tryFile';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
@@ -51,6 +51,7 @@ const TileCaption: React.FC<{ summary: TrySummary }> = ({ summary }) => {
           </span>
         )}
         {badge && <Badge>{badge}</Badge>}
+        {summary.flagged && <WarningIcon data-testid="try-flagged" className="w-4 h-4 shrink-0 text-amber-400" />}
       </div>
     </div>
   );

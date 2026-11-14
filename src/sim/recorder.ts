@@ -4,6 +4,7 @@ import type { FaultKind, RecordedFault } from './faults';
 import { torqueShare } from './torqueShare';
 import type { WorldChange, WorldEvent } from '../cases/worldSet';
 import type { WorldMoves } from './worldMoves';
+import type { FactValue } from '../cases/caseFacts';
 
 export const RECORD_HZ = 50;
 
@@ -12,6 +13,12 @@ const MAX_SECONDS = 600;
 export interface RecordedCommand {
   at: number;
   command: DriveCommand;
+}
+
+export interface RecordedInput {
+  at: number;
+  name: string;
+  value: FactValue;
 }
 
 export interface Recording {
@@ -36,6 +43,7 @@ export interface Recording {
   commands?: RecordedCommand[];
   controller?: Controller;
   world?: WorldEvent[];
+  inputs?: RecordedInput[];
 }
 
 class Growing<T extends Float32Array | Float64Array> {
@@ -103,6 +111,7 @@ export class Recorder {
   private readonly faults: RecordedFault[] = [];
   private readonly commands: RecordedCommand[] = [];
   private readonly world: WorldEvent[] = [];
+  private readonly inputs: RecordedInput[] = [];
   private readonly controller: Controller | null;
 
   constructor(engine: SimEngine, controller: Controller | null = null, world: WorldMoves | null = null) {
@@ -145,6 +154,10 @@ export class Recorder {
 
   readonly worldChange = (change: WorldChange) => {
     this.world.push({ ...structuredClone(change), at: this.engine.data.time - this.started });
+  };
+
+  readonly input = (name: string, value: FactValue) => {
+    this.inputs.push({ at: this.engine.data.time - this.started, name, value });
   };
 
   get length() {
@@ -203,6 +216,7 @@ export class Recorder {
       faults: this.faults,
       ...(this.controller ? { commands: this.commands, controller: this.controller } : {}),
       ...(this.world.length ? { world: this.world } : {}),
+      ...(this.inputs.length ? { inputs: this.inputs } : {}),
     };
   }
 }

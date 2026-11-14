@@ -221,6 +221,8 @@ export function useCases(options: CasesOptions) {
     timeline,
     attempt,
     multiply,
+    partners,
+    showError: (message: string) => showToast(message, { tone: 'error' }),
     ...real,
   };
 }

@@ -6,18 +6,25 @@ export interface RenameFieldProps {
   onDone: (name: string | null) => void;
   label?: string;
   className?: string;
+  allowEmpty?: boolean;
 }
 
 const keepToSelf = (e: React.SyntheticEvent) => e.stopPropagation();
 
-export const RenameField: React.FC<RenameFieldProps> = ({ name, onDone, label = 'Name', className = '' }) => {
+export const RenameField: React.FC<RenameFieldProps> = ({
+  name,
+  onDone,
+  label = 'Name',
+  className = '',
+  allowEmpty = false,
+}) => {
   const [draft, setDraft] = useState(name);
   const done = useRef(false);
   const finish = (value: string | null) => {
     if (done.current) return;
 
     done.current = true;
-    onDone(renamedTo(name, value));
+    onDone(renamedTo(name, value, allowEmpty));
   };
 
   return (

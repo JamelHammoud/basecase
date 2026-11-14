@@ -86,10 +86,12 @@ const NAMES_BEFORE_THE_SPLIT = [
   'simTool',
   'sketchPath',
   'stlBase64',
+  'storedTry',
   'stubHandoffs',
   'stubTabEngine',
   'stubTrainer',
   'triangleCount',
+  'tryLabels',
   'tryWorld',
   'worldAt',
 ];

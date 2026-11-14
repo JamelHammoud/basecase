@@ -1,6 +1,7 @@
 import { FAULT_KINDS, type RecordedFault } from '../sim/faults';
 import { RECORD_HZ } from '../sim/recorder';
 import { CASE_FORMAT_VERSION } from './schema';
+import { readLabels, type TryLabels } from './tryLabels';
 import type { TryRecord } from './tries';
 import { readMotion } from './trySearch/motion';
 import type { MotionTrace } from './trySearch/types';
@@ -23,6 +24,7 @@ export type TryVerdict = 'passed' | 'failed' | 'unjudged';
 export interface TryOutcome {
   verdict: TryVerdict;
   margin: number | null;
+  by?: 'contract' | 'person';
 }
 
 export type TryOrigin = { kind: 'hub'; repo: string; revision: string } | { kind: 'file'; name: string; hash: string };
@@ -63,6 +65,7 @@ export interface StoredTry {
   videos?: TryVideo[];
   outOfRange?: number;
   motion?: MotionTrace;
+  labels?: TryLabels;
 }
 
 export interface TrySummary {
@@ -84,6 +87,8 @@ export interface TrySummary {
   task: string | null;
   recording: boolean;
   strip: boolean;
+  tags?: string[];
+  flagged?: boolean;
   stamp?: number;
 }
 
@@ -194,7 +199,13 @@ function readOutcome(v: unknown): TryOutcome | null {
 
   if (v.margin !== null && !isNum(v.margin)) return null;
 
-  return { verdict: v.verdict as TryVerdict, margin: v.margin as number | null };
+  if (v.by !== undefined && v.by !== 'contract' && v.by !== 'person') return null;
+
+  return {
+    verdict: v.verdict as TryVerdict,
+    margin: v.margin as number | null,
+    ...(v.by ? { by: v.by as TryOutcome['by'] } : {}),
+  };
 }
 
 function readFault(v: unknown): RecordedFault | null {
@@ -273,7 +284,8 @@ const hasImportFields = (v: Raw) =>
 
 const hasSearchFields = (v: Raw) =>
   (v.task === undefined || v.task === null || isText(v.task, MAX_TASK)) &&
-  (v.motion === undefined || readMotion(v.motion) !== null);
+  (v.motion === undefined || readMotion(v.motion) !== null) &&
+  (v.labels === undefined || readLabels(v.labels) !== null);
 
 export function readStoredTry(value: unknown): StoredTry | null {
   const valid = isObject(value) && hasIds(value) && hasNumbers(value) && hasImportFields(value);
@@ -287,12 +299,15 @@ export function readStoredTry(value: unknown): StoredTry | null {
 
   if (!robot || kase === undefined || !outcome || faults.some((f) => !f)) return null;
 
+  const labels = value.labels === undefined ? null : readLabels(value.labels);
+
   return {
     ...(value as unknown as StoredTry),
     robot,
     case: kase,
     outcome,
     faults: faults as RecordedFault[],
+    ...(labels ? { labels } : {}),
   };
 }
 
@@ -313,5 +328,7 @@ export const summaryOf = (stored: StoredTry, held: { recording: boolean; strip: 
   sourceTry: stored.sourceTry,
   origin: originLabel(stored.origin),
   task: stored.task ?? null,
+  tags: stored.labels?.tags ?? [],
+  flagged: !!stored.labels?.flags.length,
   ...held,
 });

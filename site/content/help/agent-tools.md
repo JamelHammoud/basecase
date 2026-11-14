@@ -123,6 +123,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
 | `explore_case` | Runs a Case on each catalog version of the robot's servos and supply voltage |
 | `search_tries` | Searches the tries from every scene with the same words and facts as the Library's search, or by motion |
+| `label_tries` | Reads tries' filmstrips, segments and quality flags, and writes an instruction for each try and segment, and tags |
 | `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine, and proves each new switch between skills in it |
 | `test_routine`, `run_routine` | Tests and runs a Routine |
 | `draft_skill` | Writes a skill's contract |

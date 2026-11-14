@@ -9,6 +9,7 @@ import {
 import { captureTime, tryReading } from '../cases/console/tryReading';
 import { workerJudge } from '../cases/goalJudge';
 import type { Case } from '../cases/schema';
+import type { SlotRobot } from '../cases/slots';
 import { summaryRecord, type TrySummary } from '../cases/tryFile';
 import type { TryRecord } from '../cases/tries';
 import { loadTries } from '../cases/tryStore';
@@ -18,6 +19,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { Viewport3DHandle } from '../three/viewport/types';
 import type { ProjectSettings } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
+import { TRY_LABEL_HANDLERS } from './agentTryLabels';
 import { timelineScene } from './useRecordedSignals';
 import type { TryTimeline } from './useTryTimeline';
 
@@ -28,6 +30,7 @@ export interface TryReadSources {
   model: () => SimModel | null;
   rig: () => Rig;
   sought: () => { frame: number } | null;
+  partners: () => SlotRobot[];
 }
 
 export interface TryReadContext {
@@ -259,4 +262,5 @@ export async function searchTriesRequest(payload: Payload) {
 export const TRY_HANDLERS = {
   search_tries: (payload: Payload) => searchTriesRequest(payload),
   read_try: (payload: Payload, ctx: TryReadContext) => readTry(payload, ctx),
+  ...TRY_LABEL_HANDLERS,
 };

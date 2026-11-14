@@ -3,15 +3,17 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
 import { FRAME_HEIGHT, FRAME_WIDTH, type DatasetCamera } from './cameras';
-import { datasetJoints, episodeData, type DatasetSlot } from './episodes';
+import { datasetJoints, episodeData, type DatasetSegment, type DatasetSlot } from './episodes';
 import { datasetFiles } from './lerobotExport';
 import type { DatasetEpisode, ScanSensor } from './lerobotRows';
 import { codecName, createRenderStage, disposeRenderStage, renderEpisode, videoCodec } from './renderVideos';
+import { segmentRows } from './segmentRows';
 
 export interface DatasetJobEpisode {
   recording: Recording;
   task: string;
   source: Record<string, unknown>;
+  segments?: DatasetSegment[];
 }
 
 export interface DatasetJob {
@@ -55,7 +57,9 @@ export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
         codec,
       });
 
-      episodes.push({ ...data, ...rendered, source: e.source });
+      const segments = segmentRows(e.segments ?? [], data.frames);
+
+      episodes.push({ ...data, ...rendered, source: e.source, ...(segments.length ? { segments } : {}) });
     }
   } finally {
     disposeRenderStage(stage);

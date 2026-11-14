@@ -68,6 +68,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 17. **Same word everywhere for the same thing:**
     - Parts are added, models are inserted, scenes are opened (in a tab) and closed, comments are posted, prices are added and checked.
     - Part types are **Solid / Cutout / Guide**.
+    - A try's segments are named by one verb from a fixed set, then the object when one is known (“grasp block”): reach, grasp, lift, carry, place, release, push, walk, turn, stand, sit, wave, idle (`SEGMENT_VERBS` in `src/cases/tryLabels.ts`). Rules never use another verb, so search and training see one word for one motion; a person's rename or the agent's instruction may say anything.
     - A robot with no battery runs on a **power supply** (“The 12 V 10 A power supply”), never a tether or a cable supply, the word its DC Power Supply line in the BOM uses. Only the code says tether.
     - One verb per action, in buttons, menu items, ⌘K, the app menu, confirmations, toasts and help articles. A toast uses its past tense (Deleted, Stopped). `basecase/copy` fails a label that starts with a synonym listed in [`tools/copy/glossary.mjs`](../../tools/copy/glossary.mjs) and names the word to use, so a new row goes there and here together. Train stays right elsewhere, so the Teach row needs a reader.
 

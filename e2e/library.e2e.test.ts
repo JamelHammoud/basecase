@@ -30,6 +30,12 @@ const bracket: CustomModelDefinition = {
 
 const tile = () => app.page.locator(shown('[data-library-tile]'), { hasText: 'Bracket' }).first();
 
+async function showLibrary() {
+  const rail = app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]'));
+
+  if ((await rail.getAttribute('aria-pressed')) !== 'true') await rail.click();
+}
+
 beforeAll(async () => {
   app = await openApp({ models: [bracket] });
 }, 120000);
@@ -59,7 +65,7 @@ describe('Library', () => {
     await app.page.getByRole('button', { name: /^Cube/ }).first().click();
     expect(await partCount(app.page)).toBe(1);
 
-    await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
+    await showLibrary();
 
     const header = app.page.locator(shown('aside div:has(> h2)'), { hasText: 'Library' });
 
@@ -72,6 +78,8 @@ describe('Library', () => {
   });
 
   it('inserts a model once when its tile is clicked, with no controls on the tile', async () => {
+    await showLibrary();
+
     const before = await partCount(app.page);
 
     expect(await tile().evaluate((el) => el.tagName)).toBe('BUTTON');
@@ -84,6 +92,8 @@ describe('Library', () => {
   });
 
   it('opens the model menu on right-click and inserts from it', async () => {
+    await showLibrary();
+
     const before = await partCount(app.page);
 
     await tile().click({ button: 'right' });
@@ -99,6 +109,8 @@ describe('Library', () => {
   });
 
   it('renames, duplicates and deletes a model at once, without waiting for the Library to reload', async () => {
+    await showLibrary();
+
     const library = app.page.locator(shown('aside'));
     const named = (name: string) => library.locator('[data-library-tile]', { hasText: name });
     const writes = () => app.posts.filter((p) => p.route === 'save-model' || p.route === 'delete-model').length;

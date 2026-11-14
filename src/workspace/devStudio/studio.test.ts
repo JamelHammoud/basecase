@@ -85,6 +85,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'stubHandoffs',
   'stubTabEngine',
   'stubTrainer',
+  'timeCheck',
   'triangleCount',
   'tryWorld',
   'worldAt',

@@ -24,6 +24,7 @@ covers:
   - src/utils/engineering.ts
   - src/utils/engineeringPower.ts
   - src/utils/engineeringBudget.ts
+  - src/utils/engineeringTime.ts
   - src/components/build/ChecksSection.tsx
   - src/utils/engineeringSimModel.ts
   - src/utils/engineeringStrength.ts
@@ -76,6 +77,7 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load. Amber under 2 times |
 | Budget | The estimated cost of the parts left to buy against your budget | Over budget. Amber above 90%. Not run until you set a budget |
+| Time | The estimated hours to print, assemble and set up the servos against your time budget | Over the time budget. Amber above 90%. Not run until you set one, with the total shown |
 
 Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
 

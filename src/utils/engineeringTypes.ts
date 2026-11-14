@@ -7,6 +7,7 @@ import type { ArmModel, PayloadMap } from './payload';
 import type { ChainResult } from '../assembly/assemblyTypes';
 import type { StrengthJob, StrengthReading } from '../strength/types';
 import type { Netlist } from '../wiring/netlist';
+import type { TimeInputs } from './buildTime';
 
 export interface PartMass {
   id: string;
@@ -39,6 +40,7 @@ export interface CheckRow {
   check: string;
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
+  agentText?: string;
   ids?: string[];
   items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix; joint?: string }>;
   itemsAreContext?: boolean;
@@ -143,6 +145,7 @@ export interface EngineeringInputs {
   chains?: ChainResult | null;
   printDowns?: Record<string, V3>;
   strength?: (jobs: StrengthJob[]) => Array<StrengthReading | null>;
+  time?: TimeInputs;
 }
 
 export interface SweepRequest {

@@ -16,7 +16,7 @@ export const stepPartsOf = (plan: GuidePlan, parts: ScenePart[], project: Projec
   ids: plan.steps.map((s) => s.partIds),
 });
 
-export function guideStepParts(parts: ScenePart[], project: ProjectSettings): string[][] {
+function planStepParts(parts: ScenePart[], project: ProjectSettings): string[][] {
   const saved = project.buildGuide?.stepParts;
 
   if (saved && saved.fingerprint === stepsFingerprint(parts, project)) return saved.ids;
@@ -28,6 +28,18 @@ export function guideStepParts(parts: ScenePart[], project: ProjectSettings): st
   return buildGuidePlan(approximateScene('', built, project.joints ?? []), project.material).steps.map(
     (s) => s.partIds,
   );
+}
+
+let lastSteps: { parts: ScenePart[]; project: ProjectSettings; ids: string[][] } | null = null;
+
+export function guideStepParts(parts: ScenePart[], project: ProjectSettings): string[][] {
+  if (lastSteps?.parts === parts && lastSteps.project === project) return lastSteps.ids;
+
+  const ids = planStepParts(parts, project);
+
+  lastSteps = { parts, project, ids };
+
+  return ids;
 }
 
 export function firstSteps(steps: string[][]): Map<string, number> {

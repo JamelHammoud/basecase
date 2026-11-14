@@ -168,10 +168,17 @@ export function usePrintJob(options: PrintJobOptions) {
       ? slice?.plates.find((p) => p.number === plate.number && p.hash === plate.hash)
       : undefined;
 
+  const slicedHours = Object.fromEntries(
+    ((slice?.labels ?? '') === options.labels ? (slice?.plates ?? []) : []).flatMap((p) =>
+      p.hash ? [[p.hash, p.seconds / 3600]] : [],
+    ),
+  );
+
   return {
     jobId,
     slice,
     freshSlice,
+    slicedHours,
     slicing,
     progress,
     error,

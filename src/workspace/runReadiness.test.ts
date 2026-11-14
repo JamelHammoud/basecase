@@ -20,7 +20,12 @@ const part: ScenePart = {
   locked: false,
 };
 const project = { printer: 'default', material: 'PLA', infillPct: 15, joints: [], budgetUsd: 100 } as ProjectSettings;
-const world: ReadinessWorld = { purchases: {}, money: { code: 'USD', ratesDate: '2026-01-01' } };
+const world: ReadinessWorld = {
+  purchases: {},
+  money: { code: 'USD', ratesDate: '2026-01-01' },
+  printers: 1,
+  sliced: {},
+};
 const print = (of: ScenePart[] = [part], settings = project, around = world) =>
   projectFingerprint(of, settings, 'p1s', around);
 const edited = (change: Partial<ScenePart>) => print([{ ...part, ...change }]);
@@ -54,6 +59,7 @@ describe('what makes checks run again', () => {
     ['first ranges', { firstRanges: { j: [-90, 90] } }],
     ['print quality', { printProcess: 'fine' }],
     ['active calibration', { servoCalibrations: { j: { versions: [], active: 1 } } }],
+    ['time budget', { budgetHours: 6 }],
   ])('the project’s %s', (_name, change) => {
     expect(print([part], { ...project, ...change })).not.toBe(print());
   });
@@ -65,6 +71,11 @@ describe('what makes checks run again', () => {
   it('the currency or its rates', () => {
     expect(print([part], project, { ...world, money: { code: 'EUR', ratesDate: '2026-01-01' } })).not.toBe(print());
     expect(print([part], project, { ...world, money: { code: 'USD', ratesDate: '2026-02-01' } })).not.toBe(print());
+  });
+
+  it('how many printers there are, or a plate’s sliced time', () => {
+    expect(print([part], project, { ...world, printers: 2 })).not.toBe(print());
+    expect(print([part], project, { ...world, sliced: { plate: 1.5 } })).not.toBe(print());
   });
 
   it('nothing else: the same inputs read the same', () => {
@@ -107,6 +118,7 @@ describe('running the checks', () => {
       project,
       printer: {} as PrinterSetup,
       fingerprint: 'x',
+      printing: { printers: 1, sliced: {} },
     }).catch(() => null);
     await new Promise((resolve) => setTimeout(resolve, 20));
 

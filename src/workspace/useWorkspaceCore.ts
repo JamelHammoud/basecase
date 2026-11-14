@@ -135,7 +135,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
 
-  const readiness = useReadiness({ parts, project, printer, partsRef: docs.partsRef, projectRef, viewportRef });
+  const readiness = useReadiness({ parts, project, printing, partsRef: docs.partsRef, projectRef, viewportRef });
   const caseCompare = useCaseCompare({
     inFront: active,
     kase: simTraining.cases.active,

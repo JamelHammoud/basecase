@@ -6,6 +6,7 @@ import { isLegJoint, robotBodies, type RobotBody } from './engineeringBody';
 import { servoMountRows, rangeOfMotionRows } from './engineeringJoints';
 import { downstreamOf, massOf, partMasses } from './engineeringMass';
 import { budgetRow } from './engineeringBudget';
+import { TIME_CHECK, timeRows } from './engineeringTime';
 import { crouchModel } from './engineeringCrouch';
 import { heatRows } from './engineeringHeat';
 import { powerRows, servoParts, servoSupplyVolts } from './engineeringPower';
@@ -53,6 +54,7 @@ export const ENGINEERING_CHECKS = [
   'Heat near servos',
   STRENGTH_CHECK,
   'Budget',
+  TIME_CHECK,
 ];
 
 const gramsOf = (masses: PartMass[]) => masses.reduce((s, m) => s + m.grams, 0);
@@ -164,6 +166,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...heatRows(ctx),
     ...strengthRows(ctx, loads),
     budgetRow(ctx),
+    ...timeRows(ctx),
   ];
 
   return {

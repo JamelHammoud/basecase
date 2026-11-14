@@ -30,7 +30,13 @@ export function engineeringFindings(report: EngineeringReport): Finding[] {
         }),
       );
 
-    return [engineeringFinding(row.check, levelOf(row.status), { detail: row.detail, ids: row.ids })];
+    return [
+      engineeringFinding(row.check, levelOf(row.status), {
+        detail: row.detail,
+        agentText: row.agentText,
+        ids: row.ids,
+      }),
+    ];
   });
 }
 

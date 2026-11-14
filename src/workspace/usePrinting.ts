@@ -183,6 +183,7 @@ export function usePrinting(options: PrintingOptions) {
     setPartPrint,
     turnPart,
     freshSlice: job.freshSlice,
+    printWorld: { printers: Math.max(1, options.printers.length), sliced: job.slicedHours },
     readySteps: (steps: string[][]) => readySteps(steps, { parts, records, keyOf: shapeKey }),
   };
 }

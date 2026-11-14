@@ -35,3 +35,5 @@ export function budgetPatch(amount: number, money: Money): Partial<ProjectSettin
 
   return { budgetUsd: usd, budgetEntered: entered };
 }
+
+export const hoursPatch = (hours: number): Partial<ProjectSettings> => ({ budgetHours: hours > 0 ? hours : undefined });

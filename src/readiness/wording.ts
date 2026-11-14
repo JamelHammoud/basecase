@@ -146,11 +146,11 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
 export function engineeringFinding(
   check: string,
   level: FindingLevel,
-  f: { detail: string; ids?: string[]; fix?: FindingFix; joint?: string },
+  f: { detail: string; agentText?: string; ids?: string[]; fix?: FindingFix; joint?: string },
 ): Finding {
   const code = slug(check);
   const plain = PLAIN_ENGINEERING[check]?.[level];
-  const agentText = `${check}: ${f.detail}`;
+  const agentText = `${check}: ${f.agentText ?? f.detail}`;
   const ids = f.ids ?? [];
 
   return {

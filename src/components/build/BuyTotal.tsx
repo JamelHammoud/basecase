@@ -3,7 +3,7 @@ import { NumberInput, ProgressBar, Tooltip } from '../../design-system';
 import type { ProjectSettings } from '../../types/robotics';
 import type { Bom } from '../../utils/bom';
 import { useMoney } from '../../utils/useMoney';
-import { budgetPatch, budgetStanding, budgetStep, hasEstimate } from './budget';
+import { budgetPatch, budgetStanding, budgetStep, hasEstimate, hoursPatch } from './budget';
 
 type Totals = Bom['totals'];
 
@@ -54,8 +54,9 @@ export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChange
     <>
       <div className="flex items-center justify-between gap-3">
         <Total t={t} />
-        <div className="w-[112px] shrink-0">
+        <div className="flex shrink-0 gap-2">
           <NumberInput
+            className="w-[96px]"
             label={money.symbol}
             value={budget === undefined ? 0 : Math.round(money.amountOf(budget, project.budgetEntered))}
             min={0}
@@ -64,6 +65,16 @@ export const BuyTotal: React.FC<BuyTotalProps> = ({ totals: t, project, onChange
             unit=""
             title={`Budget in ${money.code}`}
             onChange={(v, live) => !live && onChangeProject(budgetPatch(v, money))}
+          />
+          <NumberInput
+            className="w-[68px]"
+            value={project.budgetHours ?? 0}
+            min={0}
+            step={1}
+            precision={1}
+            unit="h"
+            title="Budget in hours"
+            onChange={(v, live) => !live && onChangeProject(hoursPatch(v))}
           />
         </div>
       </div>

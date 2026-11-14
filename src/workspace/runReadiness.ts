@@ -26,6 +26,7 @@ import { designedFits } from '../utils/designedFits';
 import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
+import { guideStepParts } from '../guide/guideSteps';
 import { caseFindings } from '../readiness/caseChecks';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
@@ -39,9 +40,15 @@ export interface ReadinessInput {
   project: ProjectSettings;
   printer: PrinterSetup;
   fingerprint: string;
+  printing: PrintingWorld;
 }
 
-export interface ReadinessWorld {
+export interface PrintingWorld {
+  printers: number;
+  sliced: Record<string, number>;
+}
+
+export interface ReadinessWorld extends PrintingWorld {
   purchases: object | null;
   money: { code: string; ratesDate: string };
 }
@@ -64,6 +71,7 @@ export const projectFingerprint = (
   readinessFingerprint(parts, {
     joints: project.joints,
     budget: project.budgetUsd,
+    budgetHours: project.budgetHours,
     tether: project.tether,
     extras: project.extras,
     sourced: jsonHash(project.sourced),
@@ -81,6 +89,8 @@ export const projectFingerprint = (
     printerId,
     purchases: jsonHash(world.purchases ?? {}),
     money: [world.money.code, world.money.ratesDate],
+    printers: world.printers,
+    sliced: jsonHash(world.sliced),
   });
 
 function supportOf(print: { parts: Array<{ material: PrintMaterial; supportG: number }> }) {
@@ -97,6 +107,7 @@ export async function runReadiness({
   project,
   printer,
   fingerprint,
+  printing: printingWorld,
 }: ReadinessInput): Promise<Readiness> {
   const turn = nextCaseTurn();
 
@@ -115,6 +126,7 @@ export async function runReadiness({
       falls: freshFalls(parts, project),
       supportG: supportOf(report),
       printDowns: Object.fromEntries(report.parts.map((r) => [r.id, r.check.pose.down])),
+      time: { plates: report.plan.plates, steps: guideStepParts(parts, project), ...printingWorld },
     }),
   );
   const measuring = viewport.measureParts();

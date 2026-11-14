@@ -10,14 +10,14 @@ import type { CheckDot } from '../utils/engineeringTypes';
 import { currentMoney } from '../utils/currencyStore';
 import { useMoney } from '../utils/useMoney';
 import { newestRuns } from './newestRuns';
-import { projectFingerprint, runReadiness } from './runReadiness';
+import { projectFingerprint, runReadiness, type PrintingWorld } from './runReadiness';
 
 const CHECK_AFTER_MS = 1500;
 
 interface ReadinessOptions {
   parts: ScenePart[];
   project: ProjectSettings;
-  printer: PrinterSetup;
+  printing: { printer: PrinterSetup; printWorld: PrintingWorld };
   partsRef: { current: ScenePart[] };
   projectRef: { current: ProjectSettings };
   viewportRef: { current: Viewport3DHandle | null };
@@ -39,7 +39,7 @@ export interface ReadinessHandle {
 export function useReadiness({
   parts,
   project,
-  printer,
+  printing: { printer, printWorld },
   partsRef,
   projectRef,
   viewportRef,
@@ -55,7 +55,7 @@ export function useReadiness({
   const [runs] = useState(newestRuns);
   const money = useMoney();
   const [purchases] = usePurchases();
-  const fingerprint = projectFingerprint(parts, project, printer.model.id, { purchases, money });
+  const fingerprint = projectFingerprint(parts, project, printer.model.id, { purchases, money, ...printWorld });
 
   useEffect(() => {
     void loadSourced();
@@ -69,6 +69,7 @@ export function useReadiness({
     const now = projectFingerprint(partsRef.current, projectRef.current, printer.model.id, {
       purchases: knownPurchases(),
       money: currentMoney(),
+      ...printWorld,
     });
 
     if (!viewport) return Promise.resolve(null);
@@ -94,6 +95,7 @@ export function useReadiness({
       project: projectRef.current,
       printer,
       fingerprint: now,
+      printing: printWorld,
     })
       .then(keepIfNewest)
       .catch((error: unknown) =>

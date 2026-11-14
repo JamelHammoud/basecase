@@ -80,9 +80,14 @@ export async function untilDone({ work, ms, stop }) {
   }
 }
 
-export async function claudeDriver({ session, system, prompt }) {
+export async function claudeDriver({ session, system, prompt, signal }) {
   const tools = personaTools(session.handlers);
   const abortController = new AbortController();
+
+  if (signal?.aborted) return;
+
+  signal?.addEventListener('abort', () => abortController.abort(), { once: true });
+
   const options = {
     model: PERSONA_MODEL,
     effort: PERSONA_EFFORT,

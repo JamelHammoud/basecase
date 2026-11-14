@@ -3,14 +3,14 @@ import { PERSONA_SYSTEM, personaPrompt } from './prompt.mjs';
 import fs from 'node:fs';
 import { createSession } from './session.mjs';
 
-export async function runPersona({ screen, goals, minutes, driver = claudeDriver, devicePixelRatio }) {
+export async function runPersona({ screen, goals, minutes, driver = claudeDriver, devicePixelRatio, signal }) {
   const session = createSession({ screen, minutes, devicePixelRatio: devicePixelRatio ?? process.env.PERSONA_DPR });
 
   const trace = process.env.PERSONA_TRACE;
 
   if (trace) traced(session, trace);
 
-  await driver({ session, system: PERSONA_SYSTEM, prompt: personaPrompt(goals, minutes) });
+  await driver({ session, system: PERSONA_SYSTEM, prompt: personaPrompt(goals, minutes), signal });
 
   return { findings: session.findings.map((f) => ({ ...f })) };
 }

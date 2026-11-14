@@ -40,6 +40,21 @@ describe('PersonaLab scoring', () => {
     expect(matches({ where: 'Another row', at: [195, 1005], t: 30000, problem: 'too short' }, shafts)).toBe(false);
   });
 
+  it('never matches a neighbouring row that moved into space the control held before it shrank', () => {
+    const shrunk: PlantedFault = {
+      ...shafts,
+      rect: { ...row, y: 1405 },
+      held: [
+        { ...row, y: 1405, height: 44, from: 0, to: 500 },
+        { ...row, y: 1405, from: 750, to: 120000 },
+      ],
+    };
+
+    expect(
+      matches({ where: 'Another row', at: [195, 1435], view: [195, 1435], t: 90000, problem: 'too short' }, shrunk),
+    ).toBe(false);
+  });
+
   it('never matches a finding somewhere the control never was', () => {
     expect(matches({ where: 'Sensors', at: [195, 690], t: 30000, problem: 'too dark' }, shafts)).toBe(false);
   });

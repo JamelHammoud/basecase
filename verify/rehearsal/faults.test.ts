@@ -1,7 +1,7 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { openApp, openPlayTab, type App } from '../../e2e/harness';
-import { plantFaults, TARGETS } from './faults';
+import { faultPlaces, plantFaults, TARGETS } from './faults';
 
 let app: App;
 
@@ -20,7 +20,7 @@ describe('planted label faults', () => {
     const { page } = app;
 
     await openPlayTab(page, 'Cases');
-    await expect.poll(() => page.locator(ROW).count(), { timeout: 60000 }).toBeGreaterThan(1);
+    await expect.poll(() => page.locator(ROW).count(), { timeout: 60000 }).toBeGreaterThan(2);
 
     const names = await page.evaluate(
       ({ row, selector }) =>
@@ -28,18 +28,23 @@ describe('planted label faults', () => {
           .map((el) => (el.matches(selector) ? el : el.querySelector(selector)))
           .filter((el): el is Element => !!el)
           .map((el) => (el.getAttribute('aria-label') ?? el.textContent ?? '').trim())
-          .slice(0, 2),
+          .slice(0, 3),
       { row: ROW, selector: TARGETS },
     );
 
-    expect(names).toHaveLength(2);
+    expect(names).toHaveLength(3);
     await plantFaults(page, [
       { kind: 'misleading-label', name: names[0] },
       { kind: 'label-removed', name: names[1] },
+      { kind: 'tiny', name: names[2] },
     ]);
     await sleep(3000);
 
     expect(await page.evaluate(() => document.getElementById('root')?.childElementCount ?? 0)).toBeGreaterThan(0);
     expect(await page.locator(ROW, { hasText: 'Delete Everything' }).count()).toBe(1);
+
+    const tiny = (await faultPlaces(page))[names[2]] ?? [];
+
+    expect(tiny[0]?.height).toBeLessThanOrEqual(15);
   });
 });

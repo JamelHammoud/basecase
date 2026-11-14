@@ -11,7 +11,12 @@ export interface Screen {
 }
 
 export interface PersonaLab {
-  runPersona: (input: { screen: Screen; goals: string[]; minutes: number }) => Promise<{ findings: Finding[] }>;
+  runPersona: (input: {
+    screen: Screen;
+    goals: string[];
+    minutes: number;
+    signal?: AbortSignal;
+  }) => Promise<{ findings: Finding[] }>;
 }
 
 export const screenOf = (page: Page): Screen => ({

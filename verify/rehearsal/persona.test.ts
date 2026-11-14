@@ -59,7 +59,7 @@ interface SessionOptions {
 
 interface Live {
   run?: RunningApp;
-  abandoned: boolean;
+  abandoned: AbortController;
 }
 
 async function session(lab: PersonaLab, options: SessionOptions & { live: Live }) {
@@ -68,7 +68,8 @@ async function session(lab: PersonaLab, options: SessionOptions & { live: Live }
   options.live.run = run;
 
   try {
-    if (options.live.abandoned) throw new Error(`session ${options.index} was abandoned while launching`);
+    if (options.live.abandoned.signal.aborted)
+      throw new Error(`session ${options.index} was abandoned while launching`);
 
     const view = await openView(run.page, options.rng);
     const controls = shuffled(options.rng, [...new Set(await namedControls(run.page))]);
@@ -84,6 +85,7 @@ async function session(lab: PersonaLab, options: SessionOptions & { live: Live }
       screen: screenOf(run.page),
       goals: goalsFor(view),
       minutes: SESSION_MINUTES,
+      signal: options.live.abandoned.signal,
     });
     const places = await faultPlaces(run.page);
     const planted: PlantedFault[] = specs.map((s) => {
@@ -106,7 +108,7 @@ async function session(lab: PersonaLab, options: SessionOptions & { live: Live }
 
 async function guardedSession(lab: PersonaLab, options: SessionOptions) {
   for (let attempt = 1; ; attempt++) {
-    const live: Live = { abandoned: false };
+    const live: Live = { abandoned: new AbortController() };
 
     progress(`session ${options.index} attempt ${attempt}: ${options.kinds.join(', ')}`);
 
@@ -118,7 +120,7 @@ async function guardedSession(lab: PersonaLab, options: SessionOptions) {
       return result;
     } catch (error) {
       progress(`session ${options.index} attempt ${attempt} failed: ${(error as Error).message}`);
-      live.abandoned = true;
+      live.abandoned.abort();
 
       if (live.run) await closeApp(live.run);
 

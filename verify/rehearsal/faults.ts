@@ -60,7 +60,10 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
       const done = new WeakSet<Element>();
       const places: Record<string, Held[]> = {};
       const sameRect = (a: Rect, b: Rect) =>
-        Math.abs(a.x - b.x) < 4 && Math.abs(a.y - b.y) < 4 && Math.abs(a.width - b.width) < 4;
+        Math.abs(a.x - b.x) < 4 &&
+        Math.abs(a.y - b.y) < 4 &&
+        Math.abs(a.width - b.width) < 4 &&
+        Math.abs(a.height - b.height) < 4;
       const open = new Set<string>();
       const remember = (name: string, rect: DOMRect | undefined) => {
         const timeline = (places[name] ??= []);
@@ -167,17 +170,15 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
         for (const spec of list) {
           const el = locate(spec.name);
 
-          remember(spec.name, el?.getBoundingClientRect());
+          if (el && done.has(el) && RELABELLED.has(spec.kind)) apply[spec.kind](el);
 
-          if (!el) continue;
-
-          if (done.has(el) && RELABELLED.has(spec.kind)) apply[spec.kind](el);
-
-          if (!done.has(el)) {
+          if (el && !done.has(el)) {
             done.add(el);
             held.set(spec.name, el);
             apply[spec.kind](el);
           }
+
+          remember(spec.name, el?.getBoundingClientRect());
         }
       };
 

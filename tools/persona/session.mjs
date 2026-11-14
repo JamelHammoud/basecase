@@ -126,6 +126,8 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
       const box = { x: css(x), y: css(y), width: css(width), height: css(height) };
       const shot = await closeUpOf(await screen.screenshot(), box, devicePixelRatio);
 
+      state.shotAt = now();
+
       return {
         image: shot.data,
         text: `Close-up of ${box.width} × ${box.height} at ${shot.scale}×. Coordinates still refer to the full screenshot.`,

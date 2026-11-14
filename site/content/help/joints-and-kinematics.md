@@ -1,7 +1,7 @@
 ---
 title: Joints and kinematics
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: engineer
 type: concept
 order: 1
@@ -27,6 +27,7 @@ related:
 covers:
   - src/types/robotics.ts
   - src/utils/kinematics.ts
+  - src/utils/kinematicsPrune.ts
   - src/utils/kinematicsLoop.ts
   - src/assembly/followers.ts
   - src/data/articulatedParts.ts
@@ -71,7 +72,7 @@ Each joint is anchored to the part it's mounted on. If you move the whole robot 
 
 A four-bar linkage forms a closed loop. You pose only its crank, and the coupler and rocker turn along with it so the loop stays closed. Simulate doesn't simulate closed loops. Instead, the coupler moves with the crank as a single rigid arm.
 
-If you delete all of a joint's moving parts, Basecase deletes the joint too. Undo restores both.
+If you delete all of a joint's moving parts, Basecase deletes the joint too. Empty joints stay while another joint depends on them, and Basecase deletes them when their last dependent is gone. Undo restores the parts and joints.
 
 ## A pose never edits the design
 

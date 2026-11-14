@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { RobotJoint, RobotPoseState, RootOffset, ScenePart } from '../types/robotics';
 import { isZeroRoot, partMatrix, robotRootOffset } from './kinematicsMotion';
 import { buildRig, type Rig, type RobotGroup } from './kinematicsRig';
+import { pruneEmptyJoints } from './kinematicsPrune';
 
 export { buildRig, isMovable, type Rig, type RobotGroup, type V3 } from './kinematicsRig';
 export {
@@ -181,17 +182,9 @@ export function jointsWithoutParts(joints: RobotJoint[] | undefined, deleted: Se
     kept.push({ ...j, parent, child, ...(actuators ? { actuators } : {}), frame });
   }
 
-  let out = kept.map((j) => (j.parentJoint && gone.has(j.parentJoint) ? { ...j, parentJoint: undefined } : j));
+  const out = kept.map((j) => (j.parentJoint && gone.has(j.parentJoint) ? { ...j, parentJoint: undefined } : j));
 
-  for (let changed = true; changed;) {
-    const used = new Set(out.map((j) => j.parentJoint).filter(Boolean));
-    const next = out.filter((j) => j.parent.length || j.child.length || used.has(j.id));
-
-    changed = next.length !== out.length;
-    out = next;
-  }
-
-  return out;
+  return pruneEmptyJoints(out);
 }
 
 export const jointUnit = (j: RobotJoint) => (j.type === 'prismatic' ? 'mm' : '°');

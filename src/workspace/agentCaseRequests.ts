@@ -114,7 +114,7 @@ function caseToCompare(payload: Payload, cases: Cases): Case | string {
 
   if (!kase) return wanted ? `This scene has no Case named ${wanted}.` : 'No Case is open. Name one with case.';
 
-  return comparable(kase) ? kase : `${kase.name} has more than one robot slot, so it can't compare two robots.`;
+  return comparable(kase) ? kase : `${kase.name} has more than one robot slot, so it can’t compare two robots.`;
 }
 
 function comparisonReply(kase: Case, comparison: Comparison) {

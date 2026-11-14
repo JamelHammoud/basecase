@@ -156,7 +156,7 @@ describe('check_interfaces', () => {
       'Datum hip axis: nearest port hip-bracket:hip is 10 mm off the axis at [60, 0, 290] along [1, 0, 0].',
       'Bolt pattern hip mount: 0 of 2 M3 holes found; none at [30, 0, 300], [50, 0, 300].',
       'Seam with Torso needs 1 M3 screw across it, and 0 found. Use fasten through both sides.',
-      "Ownership: edited battery, which Left leg doesn't own. Undo those edits, or ask the lead to move them into this contract.",
+      'Ownership: edited battery, which Left leg doesn’t own. Undo those edits, or ask the lead to move them into this contract.',
     ]);
   });
 

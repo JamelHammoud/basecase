@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { FileImportIcon, Modal, Select, Switch } from '../design-system';
 import type { RobotAnimation } from '../types/robotics';
+import { duration } from '../utils/duration';
 import { isMovable, prettyJointName, type Rig } from '../utils/kinematics';
 import type { PointOf } from '../utils/animation';
 import {
@@ -110,7 +111,7 @@ export const RetargetSheet: React.FC<{
       isOpen
       onClose={onClose}
       title={`Import ${motion.name}`}
-      subtitle={`${motion.duration.toFixed(1)} s`}
+      subtitle={duration(motion.duration)}
       icon={<FileImportIcon className="w-4 h-4" />}
       maxWidth="max-w-[560px]"
       action={{ label: 'Import', onClick: create }}

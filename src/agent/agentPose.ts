@@ -33,6 +33,7 @@ import {
   type PoseReply,
   type Scope,
 } from './agentPoseShared';
+import { duration } from '../utils/duration';
 import { plural } from '../../electron/plural.mjs';
 
 export { animateRequest, type AnimatePayload } from './agentAnimate';
@@ -90,7 +91,7 @@ function libraryLines(ctx: PoseContext, scope: Scope): string[] {
 
   if (animations.length)
     lines.push(
-      `Animations: ${animations.map((a) => `${a.name} (${a.duration}s${a.loop ? ', loops' : ''})`).join(', ')}`,
+      `Animations: ${animations.map((a) => `${a.name} (${duration(a.duration)}${a.loop ? ', loops' : ''})`).join(', ')}`,
     );
 
   return lines;

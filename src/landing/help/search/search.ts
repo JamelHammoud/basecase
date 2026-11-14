@@ -1,3 +1,4 @@
+import { typeset } from '../../pages/typeset';
 import { SYNONYMS } from './synonyms';
 
 export interface SearchArticle {
@@ -185,7 +186,7 @@ function scoreArticle(prepared: PreparedArticle, words: string[], query: string)
     total += score;
   }
 
-  return total + (prepared.article.title.toLowerCase().includes(query.trim().toLowerCase()) ? TITLE_BONUS : 0);
+  return total + (prepared.article.title.toLowerCase().includes(typeset(query.trim().toLowerCase())) ? TITLE_BONUS : 0);
 }
 
 export function searchArticles(prepared: PreparedArticle[], query: string, limit = RESULT_LIMIT): SearchResult[] {

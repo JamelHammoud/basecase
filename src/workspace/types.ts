@@ -1,5 +1,6 @@
 import type { SceneRobot } from '../app/tabModel';
 import type { CompareRobot } from '../cases/caseCompare';
+import type { CaseConsole } from '../cases/console/format';
 import type { Case } from '../cases/schema';
 import type { PrintersState } from '../app/usePrinters';
 import type { SettingsPane } from '../app/settingsPanes';
@@ -114,7 +115,6 @@ export interface StudioShared {
   reconnectAcp: (command?: string) => Promise<void>;
   signInAcp: (methodId: string) => Promise<void>;
   saveAgentApiKey: (key: string) => Promise<void>;
-  agentTargetHeightMm: number;
   agentChoice: AgentChoice;
   setAgentChoice: (choice: AgentChoice) => void;
   settingsOpen: boolean;
@@ -164,6 +164,7 @@ export interface Snapshot {
   marks: SceneMark[] | undefined;
   skeleton: RobotSkeleton | undefined;
   tether?: Tether;
+  consoles?: Record<string, CaseConsole | undefined>;
 }
 
 export interface DocState {

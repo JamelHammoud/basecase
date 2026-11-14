@@ -1,6 +1,7 @@
 import type { CheckRow, EngineeringReport } from './engineeringTypes';
 import { formatWhole } from './currencyStore';
 import { prettyJointName } from './kinematics';
+import { runClock } from './duration';
 
 export interface SweepSim {
   fellAt: number | null;
@@ -66,7 +67,7 @@ function simCell(sim: SweepMetrics['sim'], base: SweepMetrics['sim']): string {
   if (typeof sim === 'string') return sim;
 
   const baseShare = typeof base === 'object' ? base.worstShare : undefined;
-  const stood = sim.fellAt === null ? 'stood' : `fell at ${sim.fellAt.toFixed(1)} s`;
+  const stood = sim.fellAt === null ? 'stood' : `fell at ${runClock(sim.fellAt)}`;
   const where = sim.worstJoint ? ` ${sim.worstJoint}` : '';
 
   return `${stood},${where} ${withDelta(sim.worstShare, baseShare, share)}`;

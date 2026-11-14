@@ -2,7 +2,7 @@ import React from 'react';
 import { MetaLine, Section } from '../../design-system';
 import type { PrintMaterial, ProjectSettings } from '../../types/robotics';
 import { type PrintReport, fmtSize } from '../../utils/printReport';
-import { hm } from '../build/format';
+import { duration } from '../../utils/duration';
 
 type PrintedPart = PrintReport['parts'][number];
 
@@ -35,7 +35,7 @@ const PrintedRow: React.FC<{ part: PrintedPart; material: PrintMaterial; onSelec
           className="text-[12px] text-white/50 tabular-nums"
           items={[
             `${fmtSize(p.check.size)} mm`,
-            hm(p.hours),
+            duration(p.hours * 3600, 'min'),
             p.check.fits && `Plate ${p.plate}`,
             p.material !== material && p.material,
           ]}

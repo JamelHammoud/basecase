@@ -16,6 +16,7 @@ import {
   pickTimeline,
 } from './driveChecks';
 import { openApp, openPlayTab, partCount, type App } from './harness';
+import { plural } from '../electron/plural.mjs';
 
 const HUB_TOKEN = 'hf_e2eFakeHubToken';
 
@@ -401,7 +402,7 @@ describe('Multiply', () => {
       expect((await simState()).multiplying).toBe(false);
       expect((await simState()).tries.every((t) => t.passed)).toBe(true);
       expect(await rows.count()).toBe(1);
-      expect(await rows.first().getByTestId('try-generated').innerText()).toBe(`${kept} generated`);
+      expect(await rows.first().getByTestId('try-generated').innerText()).toBe(plural(kept, 'variation'));
 
       expectGenerated(await datasetFiles(), kept);
       expect(app.errors).toEqual([]);

@@ -135,7 +135,7 @@ export class RobotLink {
     this.takes = takes;
     this.now = now;
     this.takeContext = null;
-    takes?.recover();
+    void takes?.recover();
   }
 
   state() {

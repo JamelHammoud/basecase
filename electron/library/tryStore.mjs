@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { checkedFileId, isSafeFileId } from '../backend/constants.mjs';
+import { TryVideos } from './tryVideos.mjs';
 
 export const TRY_MANIFEST = 'try.json';
 export const TRY_RECORDING = 'recording.bin';
@@ -10,7 +11,6 @@ export const TRY_VIDEO = 'video.mp4';
 const MAX_MANIFEST = 256 * 1024;
 const MAX_RECORDING = 1024 * 1024 * 1024;
 const MAX_STRIP = 2 * 1024 * 1024;
-const MAX_VIDEO = 512 * 1024 * 1024;
 const KEPT_FILES = { strip: TRY_STRIP, video: TRY_VIDEO };
 const SOURCES = new Set(['case', 'generated', 'real', 'operate']);
 const VERDICTS = new Set(['passed', 'failed', 'unjudged']);
@@ -95,6 +95,7 @@ export class TryStore {
     this.triesDir = triesDir;
     this.cacheFile = cacheFile;
     this.cache = null;
+    this.videos = new TryVideos({ triesDir, keptPathOf: (id) => this.keptVideoPath(id) });
   }
 
   readCache() {
@@ -232,19 +233,25 @@ export class TryStore {
     return { ok: true };
   }
 
-  video(id) {
-    return readOrNull(path.join(this.dirOf(id), TRY_VIDEO));
+  videoFile(id) {
+    const file = path.join(this.dirOf(id), TRY_VIDEO);
+
+    return fs.existsSync(file) ? file : null;
   }
 
-  saveVideo({ id, bytes }) {
+  keptVideoPath(id) {
     const dir = this.dirOf(id);
-    const video = checkedBytes(bytes, MAX_VIDEO);
+    const file = path.join(dir, TRY_VIDEO);
 
-    if (!fs.existsSync(path.join(dir, TRY_MANIFEST))) return { ok: false };
+    return fs.existsSync(path.join(dir, TRY_MANIFEST)) && !fs.existsSync(file) ? file : null;
+  }
 
-    writeAtomic(path.join(dir, TRY_VIDEO), video);
+  writeVideo(chunk) {
+    return this.videos.write(chunk);
+  }
 
-    return { ok: true };
+  closeVideo(ending) {
+    return this.videos.close(ending);
   }
 
   delete(ids) {

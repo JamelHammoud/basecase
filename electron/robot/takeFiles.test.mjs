@@ -156,7 +156,7 @@ describe('takes recorded by the robot link', () => {
 
     const restarted = new TakeFiles({ store });
 
-    expect(restarted.recover()).toHaveLength(1);
+    expect(await restarted.recover()).toHaveLength(1);
     expect(store.list()[0]).toMatchObject({ source: 'operate', input: 'by-hand', frames: 200 });
   });
 
@@ -176,7 +176,17 @@ describe('takes recorded by the robot link', () => {
       throw new Error('disk full');
     });
 
-    expect(new TakeFiles({ store }).recover()).toEqual([]);
+    expect(await new TakeFiles({ store }).recover()).toEqual([]);
+    expect(fs.readdirSync(store.triesDir)).toEqual([]);
+  });
+
+  it('removes a crashed take whose log can’t be read, and a video a crash left half written', async () => {
+    const store = storeAt();
+
+    fs.mkdirSync(path.join(store.dirOf('unreadable'), TAKE_LOG), { recursive: true });
+    await store.writeVideo({ id: 'half-written', position: 0, bytes: new Uint8Array([1]) });
+
+    expect(await new TakeFiles({ store }).recover()).toEqual([]);
     expect(fs.readdirSync(store.triesDir)).toEqual([]);
   });
 

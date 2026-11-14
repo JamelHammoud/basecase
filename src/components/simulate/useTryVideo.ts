@@ -1,37 +1,10 @@
-import { useEffect, useState } from 'react';
-import { loadTryVideo } from '../../cases/tryStore';
+import { tryVideoUrl, useTries } from '../../cases/tryStore';
 import type { TryRecord } from '../../cases/tries';
 
-interface Loaded {
-  id: string;
-  url: string;
-}
-
 export function useTryVideo(record: TryRecord | null): string | null {
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const tries = useTries();
   const id = record?.manifest.source === 'operate' ? record.id : null;
+  const listed = id ? tries?.find((t) => t.id === id) : undefined;
 
-  useEffect(() => {
-    if (!id) return;
-
-    let live = true;
-    let url: string | null = null;
-
-    void loadTryVideo(id)
-      .then((blob) => {
-        if (!blob || !live) return;
-
-        url = URL.createObjectURL(blob);
-        setLoaded({ id, url });
-      })
-      .catch(() => undefined);
-
-    return () => {
-      live = false;
-
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [id]);
-
-  return loaded && loaded.id === id ? loaded.url : null;
+  return listed?.video ? tryVideoUrl(listed.id) : null;
 }

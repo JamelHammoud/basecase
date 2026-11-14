@@ -115,8 +115,23 @@ async function fromDevServer(request, { devServer, transformHtml }) {
   return respond(response, transformHtml);
 }
 
+const routed = (routes, request) => {
+  for (const route of routes) {
+    const response = route(request);
+
+    if (response) return response;
+  }
+
+  return null;
+};
+
 export function serveApp(options) {
   const handle = options.devServer ? fromDevServer : fromDist;
+  const routes = options.routes ?? [];
 
-  protocol.handle('app', (request) => handle(request, options));
+  protocol.handle('app', (request) => {
+    const response = routed(routes, request);
+
+    return response ? respond(response) : handle(request, options);
+  });
 }

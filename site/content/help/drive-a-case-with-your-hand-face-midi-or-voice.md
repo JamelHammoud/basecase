@@ -38,7 +38,7 @@ You can control a running Case with your hand, your face, a MIDI keyboard, or yo
 
 2. Click **Try It**.
 3. The first time you try, allow Basecase to use the camera or the microphone.
-4. Use the input the Case names.
+4. Use the input that the Case names.
 
 ![A try 6.8 seconds in, with the computer's camera under You and the arm bent to the right](/help/drive-a-case-with-your-hand-face-midi-or-voice/hand.png)
 
@@ -46,7 +46,7 @@ To use MIDI, plug in a keyboard or controller, or drop a `.mid` file on the canv
 
 To stop, press [[Esc]]. Basecase turns off the camera and the microphone.
 
-You can also add the input to the Case's console in your `.basecase` file, the same way you would in [Run a Case](/help/run-a-case).
+You can also add the input to the Case's console in your `.basecase` file. This works the same way as in [Run a Case](/help/run-a-case).
 
 ## What each input does
 
@@ -59,14 +59,14 @@ You can also add the input to the Case's console in your `.basecase` file, the s
 
 ![A pan-tilt Case during a try, with the computer's camera under You and the camera head turned and tilted](/help/drive-a-case-with-your-hand-face-midi-or-voice/face.png)
 
-When you start, keep your hand still for a moment. Basecase sets the rest position from where your hand is the first time the camera sees it, and moves the arm relative to that.
+When you start, keep your hand still for a moment. Basecase sets the rest position from where your hand is the first time the camera sees it, and the arm then moves relative to that position.
 
-The face input looks for joints named pan and tilt. If the robot doesn't have them, it uses the two joints nearest the robot's camera, and treats the one nearer the base as pan.
+The face input turns the joints named pan and tilt. Otherwise it uses the two joints nearest the robot's camera, and treats the one nearer the base as pan.
 
 A MIDI file you drop plays from the start of each try, on the simulation's clock. If you drop another file, it replaces the last one.
 
-Voice recognizes single English words that the Case's logic names. Each word reaches the logic about a second after you stop speaking. Voice might confuse words that sound alike, such as “sit” and “set”.
+Voice recognizes single English words that the Case's logic names. The logic gets each word about a second after you stop speaking. Voice might confuse words that sound alike, such as “sit” and “set”.
 
-The camera's picture and the microphone's sound stay on your computer. Basecase never saves the sound. It saves the picture only while a robot is connected, as the video of that session's try. To learn more, see [Record a robot session as a try](/help/record-a-robot-session-as-a-try).
+The camera's picture and the microphone's sound stay on your computer. Basecase never saves the sound, and it saves the picture only while a robot is connected, as the video of that session's try. For how that video is kept, see [Record a robot session as a try](/help/record-a-robot-session-as-a-try).
 
 To drive a robot with your whole body, see [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).

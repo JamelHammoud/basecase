@@ -5,6 +5,7 @@ import { chromium, type Browser, type Page } from 'playwright-core';
 import { inject } from 'vitest';
 import { tryPostRoutes } from '../electron/library/tryRoutes.mjs';
 import { TryStore } from '../electron/library/tryStore.mjs';
+import { tryVideoResponse } from '../electron/library/tryVideoRoute.mjs';
 import { TEST_HOOKS_FLAG } from '../src/utils/platform/testHooksFlag';
 
 const EFFORT_LEVELS = [
@@ -67,9 +68,7 @@ interface Backend {
 
 type Reply = (body: unknown) => unknown;
 
-function triesReplies(triesDir: string): Record<string, Reply> {
-  const store = new TryStore({ triesDir, cacheFile: path.join(triesDir, '.try-summaries.json') });
-
+function triesReplies(store: TryStore): Record<string, Reply> {
   return Object.fromEntries(
     tryPostRoutes(store).map(([route, reply]) => [route.slice(1), (body: unknown) => reply(body as { arg?: unknown })]),
   );
@@ -88,12 +87,23 @@ function purchasesReply(saved: SavedPurchases, body: { key?: string; record?: un
 
 async function stubBackend(page: Page, { posts, lists, live, triesDir }: Backend): Promise<void> {
   const purchases: SavedPurchases = { ...((lists.purchases as SavedPurchases | undefined) ?? {}) };
+  const tries = new TryStore({ triesDir, cacheFile: path.join(triesDir, '.try-summaries.json') });
   const replies: Record<string, Reply> = {
-    ...triesReplies(triesDir),
+    ...triesReplies(tries),
     purchases: () => purchases,
     'purchase-save': (body) => purchasesReply(purchases, body as { key?: string; record?: unknown }),
   };
 
+  await page.route('**/api/try-video/**', async (route) => {
+    const range = await route.request().headerValue('range');
+    const response = tryVideoResponse(tries, new Request(route.request().url(), { headers: range ? { range } : {} }));
+
+    return route.fulfill({
+      status: response?.status ?? 404,
+      headers: Object.fromEntries(response?.headers ?? []),
+      body: Buffer.from(await (response?.arrayBuffer() ?? Promise.resolve(new ArrayBuffer(0)))),
+    });
+  });
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }),
   );

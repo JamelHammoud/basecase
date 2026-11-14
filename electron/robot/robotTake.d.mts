@@ -54,6 +54,8 @@ export class RobotTake {
 }
 
 export function takeOfLog(lines: unknown[]): RobotTake | null;
+export function takeOfHeader(first: unknown): RobotTake | null;
+export function applyLogRow(take: RobotTake, row: unknown): void;
 
 export interface Take {
   joints: string[];

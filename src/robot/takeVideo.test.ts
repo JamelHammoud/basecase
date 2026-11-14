@@ -5,7 +5,7 @@ const wired = vi.hoisted(() => ({
   robot: [] as ((event: RobotEvent) => void)[],
   camera: [] as (() => void)[],
   snapshot: { open: false, stream: null as MediaStream | null },
-  saved: [] as [string, number[]][],
+  closed: [] as [string, boolean][],
 }));
 
 vi.mock('./robotStore', () => ({
@@ -16,12 +16,12 @@ vi.mock('../cameras/operator/operatorCamera', () => ({
   subscribeOperatorCamera: (listener: () => void) => wired.camera.push(listener),
 }));
 vi.mock('../cases/tryStore', () => ({
-  saveTryVideo: async (id: string, bytes: Uint8Array) => {
-    wired.saved.push([id, [...bytes]]);
+  closeTryVideo: async (id: string, keep: boolean) => {
+    wired.closed.push([id, keep]);
   },
 }));
 vi.mock('./takeVideoRecorder', () => ({
-  workerRecorder: () => ({ finish: async () => new Uint8Array([4, 2]), drop: () => undefined }),
+  workerRecorder: () => ({ finish: async () => true, drop: async () => undefined }),
 }));
 
 const { createTakeVideo, KEPT_GRACE_MS, startTakeVideo } = await import('./takeVideo');
@@ -30,31 +30,32 @@ const stream = { id: 'camera' } as unknown as MediaStream;
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 interface FakeRecorder {
+  id: string;
   stream: MediaStream;
   lead: number;
   finish: ReturnType<typeof vi.fn>;
   drop: ReturnType<typeof vi.fn>;
 }
 
-function fakeEncoder(bytes = [1, 2, 3]) {
+function fakeEncoder(made = true) {
   const recorders: FakeRecorder[] = [];
-  const kept: [string, number[]][] = [];
+  const closed: [string, boolean][] = [];
   const clock = { ms: 0 };
   const takes = createTakeVideo({
     now: () => clock.ms,
-    record: (from, lead) => {
-      const recorder = { stream: from, lead, finish: vi.fn(async () => new Uint8Array(bytes)), drop: vi.fn() };
+    record: (id, from, lead) => {
+      const recorder = { id, stream: from, lead, finish: vi.fn(async () => made), drop: vi.fn(async () => undefined) };
 
       recorders.push(recorder);
 
       return recorder;
     },
-    keep: async (id, video) => {
-      kept.push([id, [...video]]);
+    close: async (id, keep) => {
+      closed.push([id, keep]);
     },
   });
 
-  return { takes, recorders, kept, clock };
+  return { takes, recorders, closed, clock };
 }
 
 const take = (state: string, id = 'take-1'): RobotEvent => ({ event: 'take', state, id });
@@ -64,14 +65,14 @@ beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }));
 afterEach(() => vi.useRealTimers());
 
 describe('the operator video kept with a take', () => {
-  it('records from the open take’s frames and saves the video once it’s kept', async () => {
-    const { takes, recorders, kept } = fakeEncoder();
+  it('records from the open take’s frames and keeps the video once the take is kept', async () => {
+    const { takes, recorders, closed } = fakeEncoder();
 
     takes.camera(stream);
     takes.event(take('open'));
 
     expect(recorders).toHaveLength(1);
-    expect(recorders[0]).toMatchObject({ stream, lead: 0 });
+    expect(recorders[0]).toMatchObject({ id: 'take-1', stream, lead: 0 });
 
     takes.event(take('kept'));
     takes.event(take('kept'));
@@ -79,11 +80,11 @@ describe('the operator video kept with a take', () => {
 
     expect(recorders[0].finish).toHaveBeenCalledTimes(1);
     expect(recorders[0].drop).not.toHaveBeenCalled();
-    expect(kept).toEqual([['take-1', [1, 2, 3]]]);
+    expect(closed).toEqual([['take-1', true]]);
   });
 
   it('records nothing without the camera, and starts mid-take at the camera’s lead into the take', async () => {
-    const { takes, recorders, kept, clock } = fakeEncoder();
+    const { takes, recorders, closed, clock } = fakeEncoder();
 
     takes.event(take('open'));
     clock.ms = 3500;
@@ -98,11 +99,11 @@ describe('the operator video kept with a take', () => {
     takes.event(take('kept'));
     await vi.runAllTimersAsync();
 
-    expect(kept).toEqual([['take-1', [1, 2, 3]]]);
+    expect(closed).toEqual([['take-1', true]]);
   });
 
-  it('discards the video of a dropped take', async () => {
-    const { takes, recorders, kept } = fakeEncoder();
+  it('discards the staged video of a dropped take', async () => {
+    const { takes, recorders, closed } = fakeEncoder();
 
     takes.camera(stream);
     takes.event(take('open'));
@@ -112,11 +113,11 @@ describe('the operator video kept with a take', () => {
 
     expect(recorders[0].drop).toHaveBeenCalledTimes(1);
     expect(recorders[0].finish).not.toHaveBeenCalled();
-    expect(kept).toEqual([]);
+    expect(closed).toEqual([['take-1', false]]);
   });
 
   it('ends the video when the link is lost and discards it unless the take is kept soon after', async () => {
-    const { takes, recorders, kept } = fakeEncoder();
+    const { takes, recorders, closed } = fakeEncoder();
 
     takes.camera(stream);
     takes.event(take('open', 'lost'));
@@ -128,18 +129,21 @@ describe('the operator video kept with a take', () => {
     takes.event(take('kept', 'lost'));
     await vi.runAllTimersAsync();
 
-    expect(kept).toEqual([]);
+    expect(closed).toEqual([['lost', false]]);
 
     takes.event(take('open', 'saved'));
     takes.event({ event: 'link', state: 'disconnected' });
     takes.event(take('kept', 'saved'));
     await vi.runAllTimersAsync();
 
-    expect(kept).toEqual([['saved', [1, 2, 3]]]);
+    expect(closed).toEqual([
+      ['lost', false],
+      ['saved', true],
+    ]);
   });
 
   it('finishes the video when the camera is switched off mid-take, and starts no second one', async () => {
-    const { takes, recorders, kept } = fakeEncoder();
+    const { takes, recorders, closed } = fakeEncoder();
 
     takes.camera(stream);
     takes.event(take('open'));
@@ -155,11 +159,11 @@ describe('the operator video kept with a take', () => {
     await vi.runAllTimersAsync();
 
     expect(recorders[0].finish).toHaveBeenCalledTimes(1);
-    expect(kept).toEqual([['take-1', [1, 2, 3]]]);
+    expect(closed).toEqual([['take-1', true]]);
   });
 
   it('keeps each take’s video when the next take opens before the last is kept', async () => {
-    const { takes, recorders, kept } = fakeEncoder();
+    const { takes, recorders, closed } = fakeEncoder();
 
     takes.camera(stream);
     takes.event(take('open', 'first'));
@@ -173,23 +177,26 @@ describe('the operator video kept with a take', () => {
     await vi.runAllTimersAsync();
 
     expect(recorders[1].drop).toHaveBeenCalledTimes(1);
-    expect(kept).toEqual([['first', [1, 2, 3]]]);
+    expect([...closed].sort()).toEqual([
+      ['first', true],
+      ['second', false],
+    ]);
   });
 
-  it('saves nothing when the encoder made no video', async () => {
-    const { takes, kept } = fakeEncoder([]);
+  it('discards the staged video when the encoder made no whole video', async () => {
+    const { takes, closed } = fakeEncoder(false);
 
     takes.camera(stream);
     takes.event(take('open'));
     takes.event(take('kept'));
     await vi.runAllTimersAsync();
 
-    expect(kept).toEqual([]);
+    expect(closed).toEqual([['take-1', false]]);
   });
 });
 
 describe('startTakeVideo', () => {
-  it('subscribes once, and keeps the operator camera’s video through the try store', async () => {
+  it('subscribes once, and closes the operator camera’s video through the try store', async () => {
     vi.useRealTimers();
     wired.snapshot = { open: true, stream };
     startTakeVideo();
@@ -202,6 +209,6 @@ describe('startTakeVideo', () => {
     wired.robot[0](take('kept', 'live'));
     await settle();
 
-    expect(wired.saved).toEqual([['live', [4, 2]]]);
+    expect(wired.closed).toEqual([['live', true]]);
   });
 });

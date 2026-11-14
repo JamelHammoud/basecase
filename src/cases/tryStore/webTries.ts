@@ -37,8 +37,9 @@ export const webTries: TryBackend = {
   saveStrip: async (id, strip) => {
     if (await manifests.get(id)) await strips.put(id, strip);
   },
-  video: () => Promise.resolve(null),
-  saveVideo: () => Promise.resolve(),
+  videoUrl: () => null,
+  writeVideo: () => Promise.resolve(false),
+  closeVideo: () => Promise.resolve(false),
   take: () => Promise.resolve(null),
   saveTake: () => Promise.resolve(),
   delete: async (ids) => {

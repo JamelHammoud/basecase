@@ -23,6 +23,7 @@ import { registerGuideHandlers } from './guidePdf.mjs';
 import { installPermissions } from './permissions.mjs';
 import { registerHubHandlers } from './hub/routes.mjs';
 import { registerTryHandlers } from './library/tryRoutes.mjs';
+import { tryVideoResponse } from './library/tryVideoRoute.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerEarthHandlers } from './earth/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
@@ -312,7 +313,12 @@ app.whenReady().then(async () => {
     preload: path.join(__dirname, 'storagePreload.cjs'),
   });
 
-  serveApp({ distDir: path.join(workspaceRoot, 'dist'), devServer, transformHtml: migration.transformHtml });
+  serveApp({
+    distDir: path.join(workspaceRoot, 'dist'),
+    devServer,
+    transformHtml: migration.transformHtml,
+    routes: [(request) => tryVideoResponse(backend.tries, request)],
+  });
   createWindow();
   migration.close();
 

@@ -24,7 +24,7 @@ covers:
   - electron/main.mjs
 ---
 
-You run the agent, slicing, printing and training in the Basecase desktop app. To install it, you need one of these computers:
+The Basecase desktop app is where you run the agent, slicing, printing and training. To install it, you need one of these computers:
 
 - A Mac with Apple silicon. Basecase isn't available for Intel Macs.
 - A PC running 64-bit Windows 11.
@@ -42,19 +42,19 @@ You run the agent, slicing, printing and training in the Basecase desktop app. T
 2. Open `Basecase-Setup.exe`.
 3. If Windows SmartScreen stops the installer, click **More info**, then click **Run anyway**.
 
-You don't need administrator rights to run the installer. It sets up Basecase only for your Windows account and adds a Basecase shortcut.
+You don't need administrator rights to run the installer. It installs Basecase for your Windows account only and adds a Basecase shortcut.
 
 ## The first launch
 
-Basecase opens with a two-wheel rover in the simulator, and the agent connects while the app starts. To learn how to control the rover, see [Drive your first robot](/help/drive-your-first-robot).
+When Basecase opens, you'll see a two-wheel rover in the simulator. The agent connects while the app starts. To learn how to control the rover, see [Drive your first robot](/help/drive-your-first-robot).
 
-The first time you open Basecase, it downloads Claude Code (263 MB). You can follow the download in the Agent tab. If you pick Codex (340 MB) or Gemini CLI (95 MB) in Settings, Basecase downloads that agent instead of Claude Code.
+The first time you open Basecase, it downloads Claude Code (263 MB). You can follow the download in the Agent tab. If you choose Codex (340 MB) or Gemini CLI (95 MB) in Settings, Basecase downloads that agent instead of Claude Code.
 
 Basecase saves your scenes, saved models and tries in these folders:
 
 - On a Mac: `~/Library/Application Support/Basecase`
 - On Windows: `%APPDATA%\Basecase`
 
-Camera video from a robot session can take up to 500 MB of this folder. Uninstalling Basecase on Windows leaves these files in place.
+Camera video from a robot session can take up to 500 MB of this folder. If you uninstall Basecase on Windows, these files stay where they are.
 
-From here, [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot), or [choose the agent](/help/choose-the-agent) you'll design with.
+Next, you can [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot), or [choose the agent](/help/choose-the-agent) you'll design with.

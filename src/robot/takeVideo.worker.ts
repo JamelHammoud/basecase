@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { QUALITY_MEDIUM, VideoSample } from 'mediabunny';
-import { encodableCodec, mp4Writer, type Mp4Writer } from '../utils/mp4Writer';
+import { encodableCodec, streamedMp4Writer, type Mp4Writer } from '../utils/mp4Writer';
 import type { TakeVideoReply, TakeVideoRequest } from './takeVideoProtocol';
 
 type Picture = VideoFrame | ImageBitmap;
@@ -9,7 +9,7 @@ const scope = self as unknown as DedicatedWorkerGlobalScope;
 const MAX_SECONDS = 30 * 60;
 const MAX_BYTES = 500 * 1024 * 1024;
 
-let writer: Promise<Mp4Writer | null> | null = null;
+let writer: Promise<Mp4Writer<void> | null> | null = null;
 let reader: ReadableStreamDefaultReader<VideoFrame> | null = null;
 let encoding: Promise<void> | null = null;
 let firstAt: number | null = null;
@@ -40,7 +40,7 @@ function blankOf({ width, height }: { width: number; height: number }) {
   return canvas;
 }
 
-async function addSample(live: Mp4Writer, picture: CanvasImageSource, timestamp: number) {
+async function addSample(live: Mp4Writer<void>, picture: CanvasImageSource, timestamp: number) {
   const sample = sampleOf(picture, timestamp);
 
   try {
@@ -52,12 +52,15 @@ async function addSample(live: Mp4Writer, picture: CanvasImageSource, timestamp:
   full = live.encodedBytes() >= MAX_BYTES;
 }
 
-async function opened(size: { width: number; height: number }): Promise<Mp4Writer | null> {
+const sendChunk = (position: number, data: Uint8Array<ArrayBuffer>) =>
+  scope.postMessage({ type: 'chunk', position, data } satisfies TakeVideoReply, [data.buffer]);
+
+async function opened(size: { width: number; height: number }): Promise<Mp4Writer<void> | null> {
   const codec = await encodableCodec(size);
 
   if (!codec) return null;
 
-  const next = mp4Writer({ codec, quality: QUALITY_MEDIUM, realtime: true });
+  const next = streamedMp4Writer({ codec, quality: QUALITY_MEDIUM, realtime: true }, sendChunk);
 
   await next.start();
 
@@ -105,27 +108,31 @@ async function pump(frames: ReadableStream<VideoFrame>) {
   }
 }
 
-async function finished(): Promise<Uint8Array | null> {
+async function finished(): Promise<boolean> {
   ended = true;
   await reader?.cancel().catch(() => undefined);
   await encoding;
 
   const live = await writer;
 
-  if (!live) return null;
+  if (!live) return false;
 
-  if (!failed) return live.finish();
+  if (failed) {
+    await live.cancel();
 
-  await live.cancel();
+    return false;
+  }
 
-  return null;
+  await live.finish();
+
+  return true;
 }
 
 function finish() {
   void finished()
-    .catch(() => null)
-    .then((bytes) => {
-      scope.postMessage({ type: 'done', bytes } satisfies TakeVideoReply, bytes ? [bytes.buffer] : []);
+    .catch(() => false)
+    .then((ok) => {
+      scope.postMessage({ type: 'done', ok } satisfies TakeVideoReply);
       scope.close();
     });
 }

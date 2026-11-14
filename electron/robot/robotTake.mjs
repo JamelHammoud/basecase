@@ -263,15 +263,22 @@ export class RobotTake {
   }
 }
 
-export function takeOfLog(lines) {
-  const [first, ...rest] = lines;
-
+export function takeOfHeader(first) {
   if (!first || first.take !== TAKE_VERSION || typeof first.id !== 'string' || !Array.isArray(first.joints))
     return null;
 
-  const take = new RobotTake({ id: first.id, joints: first.joints.map(String), startedAt: String(first.startedAt) });
+  return new RobotTake({ id: first.id, joints: first.joints.map(String), startedAt: String(first.startedAt) });
+}
 
-  for (const row of rest) if (Array.isArray(row) && typeof row[0] === 'string') take.apply(row);
+export function applyLogRow(take, row) {
+  if (Array.isArray(row) && typeof row[0] === 'string') take.apply(row);
+}
+
+export function takeOfLog(lines) {
+  const [first, ...rest] = lines;
+  const take = takeOfHeader(first);
+
+  if (take) for (const row of rest) applyLogRow(take, row);
 
   return take;
 }

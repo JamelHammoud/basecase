@@ -30,7 +30,7 @@ covers:
   - electron/robot/
 ---
 
-You can run the robot in your scene on emulated servos. Basecase drives them with the same control program and safety checks that a real robot will use.
+You can run the robot in your scene on emulated servos. Basecase drives them with the same control program and safety checks a real robot will use.
 
 **Note:** Every servo is emulated. No released build of Basecase can drive real motors. Operate is available only in the desktop app.
 
@@ -47,21 +47,21 @@ You can run the robot in your scene on emulated servos. Basecase drives them wit
 8. Click the **Simulate** button. The emulated servos follow the simulation.
 9. When you're done, click **Disconnect**.
 
-Basecase saves each session as a try in the **Library**. To learn more, see [Record a robot session as a try](/help/record-a-robot-session-as-a-try).
+Basecase keeps each session that moves the robot as a try in the **Library**. To learn more, see [Record a robot session as a try](/help/record-a-robot-session-as-a-try).
 
-**Show Operate**, **Connect Emulated Robot**, **Simulate**, **Show Simulate** and **Disconnect Robot** are also in [[⌘K]]. The **Operate** tab shows a blue dot while a robot is connected.
+You can also find **Show Operate**, **Connect Emulated Robot**, **Simulate**, **Show Simulate** and **Disconnect Robot** in [[⌘K]]. While a robot is connected, the **Operate** tab shows a blue dot.
 
 ## What you're connected to
 
 When you connect, Basecase starts its robot daemon on this computer. The daemon is the program that owns every motor command. It talks to the app without a network port.
 
-The daemon runs the emulated servos on the Feetech bus and numbers them from 1 up, in the order of the scene's moving joints. The emulated servo on each joint depends on the motor that joint has:
+The daemon runs the emulated servos on the Feetech bus. It numbers them from 1 up, in the order of the scene's moving joints. Which emulated servo a joint gets depends on the motor that joint has:
 
 - If the joint has a Feetech or Dynamixel servo from Parts, its emulated servo behaves like that servo.
 - If the joint has a motor that isn't a Feetech or Dynamixel servo, such as the DS3218, its servo reads "No reply."
 - Every other joint gets an STS3215.
 
-Each emulated servo sits on its joint with its own hidden offset of up to 12°, and about one in four is also reversed. To find both with a camera, see [Calibrate an emulated robot](/help/calibrate-an-emulated-robot).
+Each emulated servo sits on its joint with its own hidden offset of up to 12°. About one in four is also reversed. To find both with a camera, see [Calibrate an emulated robot](/help/calibrate-an-emulated-robot).
 
 A robot with a leg joint connects as a legged robot. Any other robot connects as an arm. The type changes what **Stop** does:
 
@@ -74,6 +74,6 @@ You can connect up to 32 servos. If your robot has more than that, **Connect Emu
 
 Basecase can't open a serial port, so it can't reach a real servo, even if one is plugged in. Real motors unlock at the first hardware session, with a maintainer at the power switch. To learn about each rung and what it guards, see [The motor lock and safety ladder](/help/the-motor-lock-and-safety-ladder).
 
-**Rehearse** and the rungs above it need a trained policy. Basecase gives the robot the scene's newest ready skill or up-to-date policy as soon as you connect. If a newer one finishes training while you're connected, Basecase hands it over right away. If there isn't one, clicking **Rehearse** shows "Load a policy first."
+**Rehearse** and the rungs above it need a trained policy. As soon as you connect, Basecase gives the robot the scene's newest ready skill or up-to-date policy. If a newer one finishes training while you're connected, Basecase hands it over right away. If there isn't one, clicking **Rehearse** shows "Load a policy first."
 
 To run a skill, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

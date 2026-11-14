@@ -28,7 +28,7 @@ covers:
 
 You can save what a connected robot did as a try, then replay it on the timeline.
 
-Basecase records every session on a connected robot automatically. If a session runs less than 2 seconds, or no joint moves more than about 1°, Basecase doesn't save it as a try unless a fault ends it.
+Basecase records every session on a connected robot automatically. It doesn't save a session as a try if the session runs less than 2 seconds or no joint moves more than about 1°. If a fault ends the session after Basecase sent the robot a command, Basecase always saves it.
 
 1. Connect the emulated robot. See [Connect an emulated robot](/help/connect-an-emulated-robot).
 2. Move the robot. You can drive it from **Simulate** in **Test**, or run a Case or a policy.
@@ -43,11 +43,11 @@ Basecase records every session on a connected robot automatically. If a session 
 
 ![The Operate try open on the timeline, with lanes for Shoulder and Elbow](/help/record-a-robot-session-as-a-try/timeline.png)
 
-A try from **Operate** keeps the measured position of each joint, and its velocity and effort if the robot reports them. It also keeps every command Basecase sent, with the angles the simulation had at the same moments.
+A try from **Operate** keeps the measured position of each joint, plus velocity and effort if the robot reports them. It also keeps every command Basecase sent, along with the angles the simulation had at the same moments.
 
-The raw values from whatever drove the robot are saved too: a gamepad's sticks, your phone's tilt, or the points your camera tracked on your body. If a trained policy runs at **Rehearse** or above, the try records which policy file ran.
+Basecase also saves the raw values from whatever drove the robot, such as a gamepad's sticks, your phone's tilt, or the points your camera tracked on your body. If a trained policy runs at **Rehearse** or above, the try records which policy file ran.
 
-If your camera is on while you drive, the try keeps up to 30 minutes of its video. The video plays beside the lanes and follows the playhead. It's black until the moment the camera turned on, and it stays on your computer.
+If your camera is on while you drive, the try keeps up to 30 minutes of its video. It plays beside the lanes, follows the playhead, and is black until the moment the camera turned on. The video stays on your computer.
 
 A session longer than 10 minutes shows in full on the timeline, but at fewer frames per second. For example, a 30-minute session shows about 17 frames per second instead of 50.
 

@@ -1,20 +1,40 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import { isSafeFileId } from '../backend/constants.mjs';
 import { TRY_MANIFEST } from '../library/tryStore.mjs';
-import { takeOfLog } from './robotTake.mjs';
+import { applyLogRow, takeOfHeader } from './robotTake.mjs';
 
 export const TAKE_LOG = 'take.jsonl';
 export const FLUSH_MS = 500;
 
-function parsedLines(text) {
-  return text.split('\n').flatMap((line) => {
-    try {
-      return line ? [JSON.parse(line)] : [];
-    } catch {
-      return [];
-    }
+function parsedLine(line) {
+  try {
+    return line ? JSON.parse(line) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function takeOfFile(file) {
+  const lines = readline.createInterface({
+    input: fs.createReadStream(file, { encoding: 'utf-8' }),
+    crlfDelay: Infinity,
   });
+  let take;
+
+  for await (const line of lines) {
+    const row = parsedLine(line);
+
+    if (row === null) continue;
+
+    if (take) applyLogRow(take, row);
+    else take = takeOfHeader(row);
+
+    if (!take) break;
+  }
+
+  return take ?? null;
 }
 
 export class TakeFiles {
@@ -94,28 +114,41 @@ export class TakeFiles {
     }
   }
 
-  recover() {
-    return this.entries().flatMap((entry) => {
-      const dir = path.join(this.store.triesDir, entry.name);
-      const orphan =
-        entry.isDirectory() &&
-        isSafeFileId(entry.name) &&
-        fs.existsSync(path.join(dir, TAKE_LOG)) &&
-        !fs.existsSync(path.join(dir, TRY_MANIFEST));
+  isOrphan(entry) {
+    const dir = path.join(this.store.triesDir, entry.name);
 
-      return orphan && this.open?.id !== entry.name ? this.recoverOne(entry.name) : [];
-    });
+    return (
+      entry.isDirectory() &&
+      isSafeFileId(entry.name) &&
+      this.open?.id !== entry.name &&
+      fs.existsSync(path.join(dir, TAKE_LOG)) &&
+      !fs.existsSync(path.join(dir, TRY_MANIFEST))
+    );
   }
 
-  recoverOne(id) {
+  async recover() {
+    this.store.videos?.sweep();
+
+    const recovered = [];
+
+    for (const entry of this.entries()) {
+      if (this.isOrphan(entry)) recovered.push(...(await this.recoverOne(entry.name)));
+    }
+
+    return recovered;
+  }
+
+  async recoverOne(id) {
     try {
-      const take = takeOfLog(parsedLines(fs.readFileSync(this.logOf(id), 'utf-8')));
+      const take = await takeOfFile(this.logOf(id));
       const kept = !!take && take.id === id && take.keeps(false);
 
       this.finish({ id, kept, take });
 
       return kept ? [id] : [];
     } catch {
+      fs.rmSync(this.store.dirOf(id), { recursive: true, force: true });
+
       return [];
     }
   }

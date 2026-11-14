@@ -24,18 +24,18 @@ covers:
   - electron/library/tryStore.mjs
 ---
 
-The Library keeps the tries you record in every scene, grouped by robot. From there, you can open any try and step through it on the timeline.
+The Library keeps the tries you record in every scene, grouped by robot. You can open any try from there and step through it on the timeline.
 
 1. Click **Library** in the view rail on the left.
 2. Under **Tries**, click a robot.
 
 ![The Library with a robot and its two tries under Tries](/help/open-a-try-from-any-scene/library.png)
 
-3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. Click a try.
+3. Tries fills the canvas and shows every try, grouped by robot, newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. Click a try.
 
 ![Tries over the canvas with a try from each of two scenes](/help/open-a-try-from-any-scene/tries.png)
 
-4. The try timeline opens below the tiles, with one lane for each joint. Step through it as you would in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
+4. The try timeline opens below the tiles, with a lane for each joint. Step through it as you would in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
 
 ![A selected try with its timeline open](/help/open-a-try-from-any-scene/timeline.png)
 
@@ -47,10 +47,10 @@ To select more than one try, hold [[⌘]] or [[⇧]] while you click. To delete 
 
 **Note:** A try opens on the timeline only if it fits the robot in the open scene. If you click a real try, Basecase selects it but doesn't open the timeline.
 
-A try with an **Operate** badge is a session on a connected robot, named for the time the session started. Learn more in [Record a robot session as a try](/help/record-a-robot-session-as-a-try).
+A try with an **Operate** badge is a session on a connected robot. It's named for the time the session started. Learn more in [Record a robot session as a try](/help/record-a-robot-session-as-a-try).
 
 The search at the top of the Library matches a try's Case, its robot, and the Variation, Real, or Operate label on its tile.
 
 If you recorded tries before the Library held them, Basecase moves them into the Library the first time you open their scene.
 
-On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`. Each try has its own folder.
+On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`, with a separate folder for each try.

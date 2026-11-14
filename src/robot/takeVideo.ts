@@ -1,5 +1,5 @@
 import { operatorCameraSnapshot, subscribeOperatorCamera } from '../cameras/operator/operatorCamera';
-import { saveTryVideo } from '../cases/tryStore';
+import { closeTryVideo } from '../cases/tryStore';
 import type { RobotEvent } from './robotState';
 import { subscribeRobotEvents } from './robotStore';
 import type { VideoRecorder } from './takeVideoProtocol';
@@ -8,8 +8,8 @@ import { workerRecorder } from './takeVideoRecorder';
 export type { VideoRecorder } from './takeVideoProtocol';
 
 export interface TakeVideoOptions {
-  record: (stream: MediaStream, lead: number) => VideoRecorder;
-  keep: (id: string, bytes: Uint8Array) => Promise<void>;
+  record: (id: string, stream: MediaStream, lead: number) => VideoRecorder;
+  close: (id: string, keep: boolean) => Promise<void>;
   now?: () => number;
 }
 
@@ -21,7 +21,7 @@ export interface TakeVideo {
 interface Take {
   openedAt: number;
   recorder: VideoRecorder | null;
-  video: Promise<Uint8Array | null> | null;
+  video: Promise<boolean> | null;
   expiry: ReturnType<typeof setTimeout> | null;
 }
 
@@ -31,15 +31,15 @@ export const MIN_LEAD_S = 0.05;
 
 const leadOf = (ms: number) => (ms / 1000 < MIN_LEAD_S ? 0 : ms / 1000);
 
-export function createTakeVideo({ record, keep, now = () => performance.now() }: TakeVideoOptions): TakeVideo {
+export function createTakeVideo({ record, close, now = () => performance.now() }: TakeVideoOptions): TakeVideo {
   const takes = new Map<string, Take>();
   let open: string | null = null;
   let stream: MediaStream | null = null;
 
   const openTake = () => (open === null ? undefined : takes.get(open));
 
-  const begin = (take: Take) => {
-    if (stream && !take.recorder && !take.video) take.recorder = record(stream, leadOf(now() - take.openedAt));
+  const begin = (id: string, take: Take) => {
+    if (stream && !take.recorder && !take.video) take.recorder = record(id, stream, leadOf(now() - take.openedAt));
   };
 
   const end = (take: Take) => {
@@ -49,15 +49,23 @@ export function createTakeVideo({ record, keep, now = () => performance.now() }:
     take.recorder = null;
   };
 
-  const discard = (id: string) => {
+  const forget = (id: string) => {
     const take = takes.get(id);
 
     takes.delete(id);
-    take?.recorder?.drop();
 
     if (take?.expiry) clearTimeout(take.expiry);
 
     if (open === id) open = null;
+
+    return take;
+  };
+
+  const discard = (id: string) => {
+    const take = forget(id);
+    const settled = take?.recorder ? take.recorder.drop() : take?.video;
+
+    if (settled) void settled.then(() => close(id, false)).catch(() => undefined);
   };
 
   const kept = async (id: string) => {
@@ -66,11 +74,9 @@ export function createTakeVideo({ record, keep, now = () => performance.now() }:
     if (!take) return;
 
     end(take);
-    discard(id);
+    forget(id);
 
-    const bytes = await take.video;
-
-    if (bytes?.byteLength) await keep(id, bytes);
+    if (take.video) await close(id, await take.video);
   };
 
   const opened = (id: string) => {
@@ -85,7 +91,7 @@ export function createTakeVideo({ record, keep, now = () => performance.now() }:
 
     takes.set(id, take);
     open = id;
-    begin(take);
+    begin(id, take);
   };
 
   const linkLost = () => {
@@ -119,9 +125,9 @@ export function createTakeVideo({ record, keep, now = () => performance.now() }:
 
       const take = openTake();
 
-      if (!take) return;
+      if (!take || open === null) return;
 
-      if (next) begin(take);
+      if (next) begin(open, take);
       else end(take);
     },
   };
@@ -134,7 +140,7 @@ export function startTakeVideo() {
 
   started = true;
 
-  const takes = createTakeVideo({ record: workerRecorder, keep: saveTryVideo });
+  const takes = createTakeVideo({ record: workerRecorder, close: closeTryVideo });
   const watchCamera = () => {
     const { open, stream } = operatorCameraSnapshot();
 

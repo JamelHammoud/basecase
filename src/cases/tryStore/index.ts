@@ -101,13 +101,17 @@ export async function saveStrip(id: string, strip: Blob) {
   await update((tries) => tries.map((t) => (t.id === id ? { ...t, strip: true } : t)));
 }
 
-export const loadTryVideo = (id: string) => backend.video(id);
+export const tryVideoUrl = (id: string) => backend.videoUrl(id);
 
-export async function saveTryVideo(id: string, bytes: Uint8Array) {
-  if (IS_WEB_DEMO || !bytes.byteLength) return;
+export const writeTryVideo = (id: string, position: number, bytes: Uint8Array) =>
+  IS_WEB_DEMO ? Promise.resolve(false) : backend.writeVideo(id, position, bytes);
 
-  await backend.saveVideo(id, bytes);
-  await update((tries) => tries.map((t) => (t.id === id ? { ...t, video: true } : t)));
+export async function closeTryVideo(id: string, keep: boolean) {
+  if (IS_WEB_DEMO) return;
+
+  const kept = await backend.closeVideo(id, keep);
+
+  if (kept) await update((tries) => tries.map((t) => (t.id === id ? { ...t, video: true } : t)));
 }
 
 export const loadTake = (id: string) => backend.take(id);

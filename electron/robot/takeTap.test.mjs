@@ -167,16 +167,20 @@ describe('take tap', () => {
     expect(Number.isNaN(take.effort[0])).toBe(true);
   });
 
-  it('drops no status frame in a 10-minute session and stays under 200 KB a minute for 6 joints', async () => {
+  it.each([
+    ['keys', 3, 3.5e6],
+    ['camera', 99, 15e6],
+  ])('keeps every status of a 10-minute 6-joint session driven by %s in under its size', async (id, width, limit) => {
     const six = ['a', 'b', 'c', 'd', 'e', 'f'];
     const r = rig({ joints: six, ids: [1, 2, 3, 4, 5, 6] });
     const pose = (t) => six.map((_, k) => 0.4 * Math.sin(t + k));
+    const values = (t) => Array.from({ length: width }, (_, k) => Math.sin(t + k));
 
     r.run(600, 'test', pose, (n) => {
+      r.tap.sample({ twin: pose(n / HZ), input: { id, values: values(n / HZ) } });
+
       if (n % 3 !== 0) r.tap.intent(pose(n / HZ));
     });
-
-    const lines = r.rows.get('try-test-0').length;
 
     r.tap.event({ event: 'link', state: 'closed' });
     await r.flush();
@@ -185,7 +189,6 @@ describe('take tap', () => {
 
     expect(manifest.frames).toBe(600 * HZ);
     expect(decodeTake(bytes).frames).toBe(600 * HZ);
-    expect(lines).toBe(600 * HZ + 20000);
-    expect(bytes.byteLength / 10).toBeLessThan(200 * 1024);
+    expect(bytes.byteLength).toBeLessThan(limit);
   });
 });

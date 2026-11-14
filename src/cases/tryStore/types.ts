@@ -8,8 +8,9 @@ export interface TryBackend {
   recording: (id: string) => Promise<Recording | null>;
   strip: (id: string) => Promise<Blob | null>;
   saveStrip: (id: string, strip: Blob) => Promise<void>;
-  video: (id: string) => Promise<Blob | null>;
-  saveVideo: (id: string, bytes: Uint8Array) => Promise<void>;
+  videoUrl: (id: string) => string | null;
+  writeVideo: (id: string, position: number, bytes: Uint8Array) => Promise<boolean>;
+  closeVideo: (id: string, keep: boolean) => Promise<boolean>;
   take: (id: string) => Promise<Take | null>;
   saveTake: (manifest: TakeManifest, bytes: Uint8Array) => Promise<void>;
   delete: (ids: string[]) => Promise<void>;
@@ -17,4 +18,4 @@ export interface TryBackend {
 
 export const TRIES_LABEL = 'tries';
 
-export const VIDEO_TYPE = 'video/mp4';
+export const TRY_VIDEO_PATH = '/api/try-video/';

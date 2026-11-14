@@ -5,7 +5,7 @@ import { channelCall } from '../../utils/platform/channelCall';
 import { electron } from '../../utils/platform/transport';
 import { decodeRecording, encodeRecording } from '../recordingFile';
 import type { StoredTry, TrySummary } from '../tryFile';
-import { VIDEO_TYPE, type TryBackend } from './types';
+import { TRY_VIDEO_PATH, type TryBackend } from './types';
 
 type Bytes = Uint8Array | { data?: string | null } | null | undefined;
 
@@ -52,14 +52,10 @@ export const desktopTries: TryBackend = {
   saveStrip: async (id, strip) => {
     await call('tries:keep-strip', { id, bytes: new Uint8Array(await strip.arrayBuffer()) });
   },
-  video: async (id) => {
-    const bytes = bytesOf(await call<Bytes>('tries:video', id));
-
-    return bytes && new Blob([bytes as Uint8Array<ArrayBuffer>], { type: VIDEO_TYPE });
-  },
-  saveVideo: async (id, bytes) => {
-    await call('tries:keep-video', { id, bytes });
-  },
+  videoUrl: (id) => `${TRY_VIDEO_PATH}${encodeURIComponent(id)}`,
+  writeVideo: async (id, position, bytes) =>
+    (await call<{ ok?: boolean }>('tries:write-video', { id, position, bytes }))?.ok === true,
+  closeVideo: async (id, keep) => (await call<{ ok?: boolean }>('tries:close-video', { id, keep }))?.ok === true,
   take: async (id) => {
     const bytes = bytesOf(await call<Bytes>('tries:recording', id));
 

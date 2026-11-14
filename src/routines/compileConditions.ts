@@ -67,7 +67,7 @@ function checkLeaf(ctx: CompileContext, leaf: Leaf, path: string) {
   }
 
   if (!(COMPARABLE[fact.type] ?? []).includes(testKind(leaf))) {
-    ctx.fail('type-mismatch', `${leaf.fact} is ${fact.type}, so it can't be compared that way.`, path);
+    ctx.fail('type-mismatch', `${leaf.fact} is ${fact.type}, so it can’t be compared that way.`, path);
 
     return;
   }

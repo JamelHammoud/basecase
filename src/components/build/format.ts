@@ -1,11 +1,3 @@
-export const hm = (h: number) => {
-  const minutes = Math.max(1, Math.round(h * 60));
-
-  if (minutes < 60) return `${minutes} min`;
-
-  return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} min`;
-};
-
 export function download(name: string, text: string, type: string) {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a');

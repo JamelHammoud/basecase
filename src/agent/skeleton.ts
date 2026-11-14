@@ -129,7 +129,7 @@ function pairProblems(skeleton: RobotSkeleton): string[] {
   return skeleton.pairs.flatMap((pair) => {
     const [a, b] = pair.map((id) => byId.get(id));
 
-    if (!a || !b) return [`pair ${pair.join(' / ')}: ${a ? pair[1] : pair[0]} isn't a joint`];
+    if (!a || !b) return [`pair ${pair.join(' / ')}: ${a ? pair[1] : pair[0]} isn’t a joint`];
 
     const off = len(diff(mirrorPoint(a.origin, pairAxis(pair)), b.origin));
 

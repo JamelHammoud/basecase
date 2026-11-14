@@ -7,6 +7,7 @@ import { plural } from '../../electron/plural.mjs';
 import { jointLabel, nm } from './engineeringFormat';
 import type { CheckRow, JointEnvelope, JointLoad, WalkJoint, WalkSim } from './engineeringTypes';
 import { PEAK_LIMITS, peakStatus } from './peakTorque';
+import { duration, runClock } from './duration';
 
 interface PeakLine {
   load: JointLoad;
@@ -26,7 +27,7 @@ const shareOf = (p: PeakLine) => p.walk.p99Nm / p.stallNm;
 const pastLine = (outside: number) => outside > PEAK_LIMITS.outside;
 
 function peakLineText(p: PeakLine): string {
-  const over = p.walk.overS > 0 ? `, above stall for ${p.walk.overS.toFixed(2)} s` : '';
+  const over = p.walk.overS > 0 ? `, above stall for ${duration(p.walk.overS)}` : '';
   const past = pastLine(p.outside) ? `, ${Math.round(p.outside * 100)}% of the walk past its torque–speed line` : '';
 
   return `${jointLabel(p.load.joint)}: asks for ${nm(p.walk.p99Nm)} N·m at the 99th percentile, ${shareOf(p).toFixed(2)} of its ${nm(p.stallNm)} N·m stall${over}${past}`;
@@ -66,7 +67,7 @@ function fellRow(walk: WalkSim, lines: PeakLine[]): CheckRow {
   return {
     check: 'Peak torque',
     status: 'fail',
-    detail: `Fell at ${walk.fellAt!.toFixed(1)} s walking with servos limited to ${PEAK_DERATE} × stall`,
+    detail: `Fell at ${runClock(walk.fellAt!)} walking with servos limited to ${PEAK_DERATE} × stall`,
     items: lines.map((p) => ({ text: peakLineText(p), ids: loadIds(p.load), joint: p.load.joint.id })),
     ids: lines.flatMap((p) => loadIds(p.load)),
   };

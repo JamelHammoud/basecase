@@ -36,7 +36,7 @@ export function estimatedFit(spec: ActuatorSpec): ServoFit {
       viscous: (fit.friction.viscous * torque) / speed,
     },
     ...(fit.maxVelocity ? { maxVelocity: fit.maxVelocity * speed } : {}),
-    source: `${fit.source}, scaled to the catalog's stall torque, speed and volts`,
+    source: `${fit.source}, scaled to the catalog’s stall torque, speed and volts`,
   };
 }
 

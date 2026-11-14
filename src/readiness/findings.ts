@@ -41,7 +41,7 @@ function partPrintFindings(p: PrintReport['parts'][number]): Finding[] {
 
   if (!p.check.fits)
     out.push(
-      ruleFinding('bed', 'blocker', { agentText: `${p.name}: ${p.check.fitNote ?? "doesn't fit the plate"}`, ids }),
+      ruleFinding('bed', 'blocker', { agentText: `${p.name}: ${p.check.fitNote ?? 'doesn’t fit the plate'}`, ids }),
     );
 
   if (thinWallOf(p.check) === 'panel')

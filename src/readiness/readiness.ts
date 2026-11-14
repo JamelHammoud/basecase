@@ -267,7 +267,7 @@ export function fixPrompt(f: Finding): string {
     `Fix this problem from Checks: ${f.text}`,
     f.ids.length ? `Parts: ${f.ids.join(', ')}` : '',
     `Detail: ${f.agentText}`,
-    `Check: ${f.key}. Run get_readiness when you're done. If it's wrong, call dispute_finding with your evidence.`,
+    `Check: ${f.key}. Run get_readiness when you’re done. If it’s wrong, call dispute_finding with your evidence.`,
   ]
     .filter(Boolean)
     .join('\n');

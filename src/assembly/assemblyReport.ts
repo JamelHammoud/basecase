@@ -8,6 +8,7 @@ import { planRemoval, type RemovalPlan } from './removalOrder';
 import { plural } from '../../electron/plural.mjs';
 import type { ReportLine } from './reportText';
 import { serviceClass, serviceDepths, type ServiceResult } from './serviceDepth';
+import { duration } from '../utils/duration';
 
 export const MAX_LINES = 12;
 
@@ -34,7 +35,7 @@ function summary(g: AssemblyGeometry, plan: RemovalPlan): string {
   const screws = g.chains.screws.length;
   const out = Object.values(plan.screws).filter((v) => v.verdict !== 'stuck').length;
   const sleeves = g.chains.sleeves.filter((s) => s.kind !== 'washer').length;
-  const head = `Checked ${plural(screws, 'screw')}, ${plural(sleeves, 'insert or nut', 'inserts and nuts')}, and ${plural(majors, 'part')} in ${(g.ms / 1000).toFixed(1)} s.`;
+  const head = `Checked ${plural(screws, 'screw')}, ${plural(sleeves, 'insert or nut', 'inserts and nuts')}, and ${plural(majors, 'part')} in ${duration(g.ms / 1000)}.`;
   const order = majors
     ? ` Taking it apart: ${majors - plan.stuckParts.length} of ${plural(majors, 'part')} and ${out} of ${plural(screws, 'screw')} come out.`
     : '';

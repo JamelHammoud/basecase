@@ -93,6 +93,14 @@ describe('named targets in a room', () => {
     route.slice(1).forEach((to, i) => expect(crossesSolid(kase, route[i], to)).toBe(false));
   });
 
+  it('times a path through every spot, named or placed ahead', () => {
+    const kase = built({ goal: 'path', values: { stops: 3 }, targets: [null, null, 'Door'] });
+    const stops = [rover.pivot, ...['spot0', 'spot1', 'spot2'].map((id) => at(kase, id))];
+    const trip = stops.slice(1).reduce((sum, p, i) => sum + flatGap(stops[i], p), 0);
+
+    expect(kase.task.seconds).toBe(Math.ceil(trip / 100));
+  });
+
   it('matches the words a person or the agent uses', () => {
     const targets = roomTargets(room, rover);
     const named = (asked: string) => targetNamed(targets, asked)?.name;

@@ -249,9 +249,12 @@ export function specValues(spec: CaseSpec, robot: BuilderRobot): GoalValues | nu
 
   if (typeof chosen === 'string') return null;
 
-  const values = goalValues(chosen.goal, robot, spec.values, chosen.world.kind);
+  const { goal, world } = chosen;
+  const values = goalValues(goal, robot, spec.values, world.kind);
 
-  return typeof spots === 'string' ? values : tripTimed(values, { spots, robot, given: spec.values });
+  if (typeof spots === 'string' || !spots.some(Boolean)) return values;
+
+  return tripTimed(values, { goal, world: world.kind, spots, robot, given: spec.values }).values;
 }
 
 export function buildCase(spec: CaseSpec, robot: BuilderRobot): BuiltCase {
@@ -261,8 +264,13 @@ export function buildCase(spec: CaseSpec, robot: BuilderRobot): BuiltCase {
   if (typeof chosen === 'string' || typeof spots === 'string') return { ok: false, problem: String(spots) };
 
   const { goal, world } = chosen;
-  const values = tripTimed(goalValues(goal, robot, spec.values, world.kind), { spots, robot, given: spec.values });
-  const plan = goal.plan(robot, values, world.kind, spots);
+  const { values, plan } = tripTimed(goalValues(goal, robot, spec.values, world.kind), {
+    goal,
+    world: world.kind,
+    spots,
+    robot,
+    given: spec.values,
+  });
   const scenery = world.objects(plan, robot);
   const problem =
     (spots.some(Boolean) ? null : goal.problem?.(robot, values)) ??

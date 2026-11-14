@@ -119,7 +119,22 @@ function targetsOf({ object, name }: Named, floor: Floor): RoomTarget[] {
   ];
 }
 
+const found = new WeakMap<Room, WeakMap<BuilderRobot, RoomTarget[]>>();
+
 export function roomTargets(room: Room, robot: BuilderRobot): RoomTarget[] {
+  const byRobot = found.get(room) ?? new WeakMap<BuilderRobot, RoomTarget[]>();
+  const known = byRobot.get(robot);
+
+  if (known) return known;
+
+  const targets = searchedTargets(room, robot);
+
+  found.set(room, byRobot.set(robot, targets));
+
+  return targets;
+}
+
+function searchedTargets(room: Room, robot: BuilderRobot): RoomTarget[] {
   const objects = placedIn(room, robot, room.objects);
   const doors = placedIn(room, robot, room.doors);
   const headroom = robot.heightMm || Infinity;

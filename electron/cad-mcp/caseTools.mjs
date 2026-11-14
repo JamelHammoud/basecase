@@ -17,7 +17,7 @@ export const createCase = {
       'handoff (as touch, then a second arm from another open scene tab, facing the first, touches the same point while the first leaves it; needs an arm in another open tab). ' +
       'radius_mm is how close counts, seconds the time allowed; anything left out gets a default sized to the robot. ' +
       'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch; room, the scanned room the user dropped, for reach, push and path. ' +
-      'In the room, target names where reach stops (one name) or the spots path passes in order (one name each), from the room’s doors and furniture: "door", "table", "table 2", or "under table" for the floor beneath a table the robot fits under. A target picks the room world. ' +
+      'In the room, target names where reach stops (one name) or the spots path passes in order (2 to 8 names), from the room’s doors and furniture: "door", "table", "table 2", or "under table" for the floor beneath a table the robot fits under. A target picks the room world. ' +
       'objects adds world objects as in set_world (agent frame). A legged robot that falls fails any Case. ' +
       'logic is a Routine (as in make_routine) the Case runs; score counts dynamic objects in or out of a marker spot. ' +
       'console makes the Case an app the person runs: with one, the app opens the new Case running, laid out by it. ' +

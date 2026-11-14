@@ -24,7 +24,9 @@ The robot starts where you tapped, facing the way you dragged, turned square to 
 
 ## Drive to the door
 
-A Reach a Spot or Follow a Path spot can be a door or a piece of furniture, by name: Door, Sofa, Under Table. People say “drive under the table”, not “drive 2.2 m”, and the agent's Cases take the same names. A table keeps only its top, so a rover passes under it. Seeded runs move and turn each piece of furniture up to 50 mm and 5°, since furniture moves every day. Walls and doors stay put.
+A Reach a Spot or Follow a Path spot can be a door or a piece of furniture, by name: Door, Sofa, Under Table. People say “drive under the table”, not “drive 2.2 m”, and the agent's Cases take the same names. A table keeps only its top, so a rover passes under it.
+
+Furniture moves every day, so seeded runs move and turn it. Each fixed piece moves up to 50 mm and 5°, or 100 mm and 10° where RoomPlan was less sure. Walls and doors stay put.
 
 ![New Case in a scanned room, with Under Table picked as the Spot](/changelog/import-a-scanned-room/under-table.png)
 

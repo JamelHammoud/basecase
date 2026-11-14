@@ -1,6 +1,6 @@
 import { sceneObjects, type AgentObject } from '../agent/agentDrive';
 import type { CaseSpec } from '../cases/caseBuilder';
-import type { GoalKind, GoalValues, ParamKey } from '../cases/caseGoals';
+import { CASE_GOALS, goalParam, type GoalKind, type GoalValues, type ParamKey } from '../cases/caseGoals';
 import type { WorldKind } from '../cases/caseWorlds';
 import type { WorldObject } from '../cases/schema';
 import type { CompileResult } from '../routines/compile';
@@ -56,6 +56,16 @@ function caseTargets(payload: Payload): string[] | undefined {
   return asked.length ? asked : undefined;
 }
 
+function pathProblem(goal: unknown, targets: string[] | undefined): string | null {
+  const path = CASE_GOALS.find((g) => g.kind === 'path' && g.kind === goal);
+
+  if (!path || !targets) return null;
+
+  const { min, max } = goalParam(path, 'stops');
+
+  return targets.length < min || targets.length > max ? `Name ${min} to ${max} spots for ${path.name}.` : null;
+}
+
 function extraObjects(payload: Payload): WorldObject[] | string {
   try {
     return sceneObjects(Array.isArray(payload.objects) ? (payload.objects as AgentObject[]) : []);
@@ -78,12 +88,15 @@ async function logicProblem(spec: CaseSpec, ctx: CaseContext): Promise<string | 
 
 async function createCase(payload: Payload, ctx: CaseContext) {
   const objects = extraObjects(payload);
+  const targets = caseTargets(payload);
+  const unpathed = pathProblem(payload.goal, targets);
 
   if (typeof objects === 'string') return { ok: false, problem: objects };
 
+  if (unpathed) return { ok: false, problem: unpathed };
+
   ctx.setAction('Making a Case');
 
-  const targets = caseTargets(payload);
   const spec: CaseSpec = {
     goal: String(payload.goal) as GoalKind,
     world: (text(payload.world) ?? (targets ? 'room' : 'floor')) as WorldKind,

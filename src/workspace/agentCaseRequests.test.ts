@@ -179,6 +179,13 @@ describe('create_case in a scanned room', () => {
     ).toEqual(['Sofa', 'Door', 'Table'].map((name) => targetAt(name)[2]));
   });
 
+  it('refuses a path with fewer names than it has spots', async () => {
+    const { reply, added } = create({ goal: 'path', target: ['table'] }, 'rover-diff', room);
+
+    expect(await reply).toEqual({ ok: false, problem: 'Name 2 to 8 spots for Follow a Path.' });
+    expect(added).toEqual([]);
+  });
+
   it('refuses a name the room lacks, and a target with no room open, with the names it has', async () => {
     expect(await create({ goal: 'reach', target: 'fridge' }, 'rover-diff', room).reply).toEqual({
       ok: false,

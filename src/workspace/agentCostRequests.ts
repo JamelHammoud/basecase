@@ -1,4 +1,5 @@
 import { agentCatalog, type CatalogContext } from '../agent/agentCatalog';
+import { COMPONENT_BY_ID } from '../data/components';
 import type { AgentOp } from '../agent/agentScene';
 import { sizeActuators } from '../utils/actuatorSizing';
 import { sizingJoints } from '../utils/actuatorSizingInput';
@@ -64,12 +65,26 @@ export async function catalogRequest(payload: Payload, ctx: RequestContext) {
   return { text: agentCatalog(String(payload.query ?? ''), { purchases, used: usedCounts(bom), budget, ...needs }) };
 }
 
-const knownKey = (key: unknown) => typeof key === 'string' && describeKey(key) !== null;
+function versionedKeys(key: string): string[] {
+  if (!key.startsWith('component:') || key.includes('|')) return [];
+
+  const id = key.slice('component:'.length);
+
+  return (COMPONENT_BY_ID[id]?.variants ?? []).map((v) => `${key}|${v.id}`);
+}
+
+function keyRefusal(key: unknown): string | undefined {
+  if (typeof key !== 'string' || !describeKey(key)) return `${String(key)} isn’t a catalog key`;
+
+  const versions = versionedKeys(key);
+
+  return versions.length ? `${key} needs its version: ${versions.join(', ')}` : undefined;
+}
 
 export async function recordOnHandRequest(payload: Payload) {
   const given: unknown[] = Array.isArray(payload.counts) ? payload.counts : [];
   const counts = given.map((c) => ({ key: (c as OnHandCount)?.key, count: (c as OnHandCount)?.count }));
-  const refusals = counts.length ? onHandRefusals(counts, knownKey) : ['no counts given'];
+  const refusals = counts.length ? onHandRefusals(counts, keyRefusal) : ['no counts given'];
 
   if (refusals.length)
     return { text: `Nothing recorded: ${refusals.join('; ')}. Use keys from find_parts or get_bom.` };

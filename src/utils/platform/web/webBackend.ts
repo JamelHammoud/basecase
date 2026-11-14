@@ -45,20 +45,22 @@ async function deleteModel(id: string) {
 
 const listPurchases = async () => (await idbGet<Purchases>('settings', 'purchases')) ?? {};
 
-function storedRecord(record: StoredPurchase): StoredPurchase {
+function storedRecord(record: StoredPurchase): StoredPurchase | null {
   if (record.onHand !== undefined && !isOnHandCount(record.onHand)) throw new Error('On hand must be a whole count');
 
   const price = checkedPrice(record);
 
-  return price
-    ? { ...price, checkedAt: price.checkedAt || new Date().toLocaleDateString('en-CA') }
-    : { onHand: record.onHand ?? 0 };
+  if (price) return { ...price, checkedAt: price.checkedAt || new Date().toLocaleDateString('en-CA') };
+
+  return record.onHand ? { onHand: record.onHand } : null;
 }
 
 async function savePurchase({ key, record }: { key: string; record: StoredPurchase | null }) {
   const all = await listPurchases();
 
-  if (record) all[key] = storedRecord(record);
+  const stored = record && storedRecord(record);
+
+  if (stored) all[key] = stored;
   else delete all[key];
 
   await idbPut('settings', 'purchases', all);

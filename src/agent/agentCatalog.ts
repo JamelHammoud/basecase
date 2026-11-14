@@ -118,9 +118,11 @@ function hardwareLine(t: HardwareType, ctx?: CatalogContext): string {
 const supplyLine = (x: Supply, ctx?: CatalogContext) =>
   `- supply:${x.id} — ${x.name} · ${x.spec}${x.weightG ? ` · about ${x.weightG} g` : ''} · ${priceText(`supply:${x.id}`, ctx)}`;
 
+const keyOf = (key: string, prefix: string) => `${key}|`.startsWith(`${prefix}|`);
+
 function ownedFirst<T>(items: T[], prefixOf: (item: T) => string, ctx?: CatalogContext): T[] {
   const owned = ownedKeys(ctx);
-  const owns = (item: T) => owned.some((key) => `${key}|`.startsWith(`${prefixOf(item)}|`));
+  const owns = (item: T) => owned.some((key) => keyOf(key, prefixOf(item)));
 
   return [...items.filter(owns), ...items.filter((item) => !owns(item))];
 }
@@ -167,5 +169,12 @@ export function agentCatalog(query = '', ctx?: CatalogContext): string {
   if (!lines.length)
     return `Nothing in the catalog matches "${query}". Call find_parts with no query to see everything.`;
 
-  return [...currencyNote(currentMoney()), ...catalogHeader(ctx), ...lines].join('\n');
+  const prefixes = [
+    ...comps.map((c) => `component:${c.id}`),
+    ...hw.map((t) => `hardware:${t.type}`),
+    ...supplies.map((x) => `supply:${x.id}`),
+  ];
+  const listed = (key: string) => prefixes.some((prefix) => keyOf(key, prefix));
+
+  return [...currencyNote(currentMoney()), ...catalogHeader(ctx, listed), ...lines].join('\n');
 }

@@ -33,6 +33,13 @@ describe('purchases', () => {
     expect(savePurchase(dir, { key: servo, record: { ...old, onHand: 6 } })[servo]).toEqual({ ...old, onHand: 6 });
   });
 
+  it('drops a record left with neither a price nor a count', () => {
+    savePurchase(dir, { key: servo, record: { onHand: 6 } });
+
+    expect(savePurchase(dir, { key: servo, record: { onHand: 0 } })).toEqual({});
+    expect(savePurchase(dir, { key: servo, record: {} })).toEqual({});
+  });
+
   it('refuses a count that is negative or not whole', () => {
     expect(() => savePurchase(dir, { key: servo, record: { onHand: -1 } })).toThrow();
     expect(() => savePurchase(dir, { key: servo, record: { onHand: 2.5 } })).toThrow();

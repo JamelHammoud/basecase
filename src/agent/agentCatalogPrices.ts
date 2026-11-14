@@ -110,7 +110,7 @@ function ownedNote(key: string, ctx: CatalogContext): string {
   return `${key} ${onHand} (${left >= 0 ? `${left} left` : `${-left} to buy`})`;
 }
 
-export function catalogHeader(ctx?: CatalogContext): string[] {
+export function catalogHeader(ctx?: CatalogContext, listed: (key: string) => boolean = () => true): string[] {
   if (!ctx) return [];
 
   const lines: string[] = [];
@@ -124,7 +124,7 @@ export function catalogHeader(ctx?: CatalogContext): string[] {
     );
   }
 
-  const owned = ownedKeys(ctx);
+  const owned = ownedKeys(ctx).filter(listed);
 
   if (owned.length)
     lines.push(`The user owns: ${owned.map((key) => ownedNote(key, ctx)).join(', ')}. Use these before buying others.`);

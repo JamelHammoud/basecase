@@ -43,9 +43,11 @@ export function withPrice(stored: StoredPurchase | undefined, record: PurchaseRe
 export const isOnHandCount = (count: unknown): count is number =>
   typeof count === 'number' && Number.isInteger(count) && count >= 0 && count <= MAX_ON_HAND;
 
-export function onHandRefusals(counts: OnHandCount[], known: (key: string) => boolean): string[] {
+export function onHandRefusals(counts: OnHandCount[], keyRefusal: (key: string) => string | undefined): string[] {
   return counts.flatMap(({ key, count }) => {
-    if (!known(key)) return [`${key} isn’t a catalog key`];
+    const refused = keyRefusal(key);
+
+    if (refused) return [refused];
 
     return isOnHandCount(count) ? [] : [`${key}: ${count} isn’t a whole count from 0 to ${MAX_ON_HAND}`];
   });

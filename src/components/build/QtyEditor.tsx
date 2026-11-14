@@ -5,6 +5,8 @@ import { MAX_ON_HAND } from '../../utils/onHand';
 import type { Extra } from './buyExtras';
 import { lineCount } from './buyLine';
 
+const ON_HAND = 'On hand';
+
 interface ExtraControls {
   extra: Extra;
   onQty: (qty: number) => void;
@@ -48,7 +50,7 @@ export const QtyEditor: React.FC<{
 
   return (
     <div className="relative shrink-0 min-w-[28px] flex justify-end" ref={ref}>
-      <Tooltip label="Change quantity">
+      <Tooltip label={extra ? 'Change quantity' : ON_HAND}>
         <button
           type="button"
           aria-haspopup="menu"
@@ -70,7 +72,7 @@ export const QtyEditor: React.FC<{
         {extra && line.unit === 'pcs' && (
           <CountField label="Quantity" value={extra.extra.qty} min={1} unit="" onChange={extra.onQty} />
         )}
-        <CountField label="On Hand" value={onHand} min={0} max={MAX_ON_HAND} unit={unit} onChange={onOnHand} />
+        <CountField label={ON_HAND} value={onHand} min={0} max={MAX_ON_HAND} unit={unit} onChange={onOnHand} />
         {extra && (
           <>
             <MenuDivider />

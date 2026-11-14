@@ -48,5 +48,12 @@ describe('find_parts prices', () => {
     const text = agentCatalog('socket', { purchases: { [key]: { onHand: 10 } }, used: { [key]: 13 } });
 
     expect(text).toContain('M3|10 10 on hand, 13 in this scene, 3 to buy');
+    expect(text).toContain(`The user owns: ${key} 10 (3 to buy).`);
+  });
+
+  it('names only the owned parts the search lists', () => {
+    const purchases = { 'component:feetech-sts3250': { onHand: 6 }, 'hardware:socket_head|M3|10': { onHand: 10 } };
+
+    expect(agentCatalog('socket', { purchases })).not.toContain('component:feetech-sts3250 6');
   });
 });

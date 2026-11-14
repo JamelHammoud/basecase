@@ -34,9 +34,9 @@ Tell Basecase which parts you have, so the bill of materials and the budget coun
 1. In the **Build** tab, find **Bill of materials**.
 2. Click a section, such as **Components**, to open it.
 3. Click a line's quantity.
-4. Type how many you own in **On Hand**, and press Enter.
+4. Type how many you own in **On hand**, and press Enter.
 
-![On Hand set to 6 under the 6× Feetech STS3215 line of an SO-101](/help/count-the-parts-you-already-own/on-hand.png)
+![On hand set to 6 under the 6× Feetech STS3215 line of an SO-101](/help/count-the-parts-you-already-own/on-hand.png)
 
 The quantity drops to what's left to buy, and the line shows how many come from your own parts. The line's price and the total count only the parts left to buy. On an SO-101 with six STS3215s, 6 on hand takes the servo line from ≈ $120.00 to $0.00, and the total from ≈ $127.48 to ≈ $7.48.
 

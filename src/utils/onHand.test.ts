@@ -26,7 +26,8 @@ describe('on hand', () => {
   });
 
   it('refuses unknown keys and counts that are negative or not whole', () => {
-    const known = (key: string) => key === 'component:feetech-sts3215|c001';
+    const known = (key: string) =>
+      key === 'component:feetech-sts3215|c001' ? undefined : `${key} isn’t a catalog key`;
     const refusals = onHandRefusals(
       [
         { key: 'component:feetech-sts3215|c001', count: 6 },

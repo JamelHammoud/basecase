@@ -17,8 +17,10 @@ export function lineAmount(l: BomLine) {
   return l.packs && l.record ? plural(l.packs, 'pack') : '';
 }
 
-export const ownedAmount = (l: BomLine) =>
-  l.owned ? `${l.owned.toLocaleString('en-US')}${l.unit === 'g' ? ' g' : ''} on hand` : '';
+export const onHandAmount = (count: number, unit: BomLine['unit']) =>
+  `${count.toLocaleString('en-US')}${unit === 'g' ? ' g' : ''} on hand`;
+
+export const ownedAmount = (l: BomLine) => (l.owned ? onHandAmount(l.owned, l.unit) : '');
 
 export const linkLabel = (l: BomLine) => (l.urlKind === 'product' ? 'Open listing' : 'Search Amazon');
 

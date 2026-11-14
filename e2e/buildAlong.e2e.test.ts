@@ -203,8 +203,8 @@ describe('Parts on hand', () => {
 
     expect(servoUsd).toBeGreaterThan(0);
     await servos.first().getByRole('button', { name: '6×' }).click();
-    await app.page.getByRole('textbox', { name: 'On Hand' }).fill('6');
-    await app.page.getByRole('textbox', { name: 'On Hand' }).press('Enter');
+    await app.page.getByRole('textbox', { name: 'On hand' }).fill('6');
+    await app.page.getByRole('textbox', { name: 'On hand' }).press('Enter');
     await expect.poll(() => servos.first().innerText(), { timeout: 10000 }).toMatch(/^0×[\s\S]*6 on hand/);
     await expect.poll(async () => dollars(await total.textContent())).toBeCloseTo(before - servoUsd, 2);
     expect(dollars(await price().textContent())).toBe(0);

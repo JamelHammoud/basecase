@@ -118,7 +118,7 @@ export const recordOnHand = {
     title: 'Record parts on hand',
     description:
       'Records how many of a part the user already owns, by catalog key from find_parts or get_bom (units, not packs; grams for filament). Owned units cost nothing in get_bom and the budget, and find_parts lists them first. ' +
-      'Use it when the user says what they own or pastes an order confirmation or a parts list. A count replaces the one saved; 0 clears it. Unknown keys and counts that are negative or not whole are refused, and then nothing is saved.',
+      'Use it when the user says what they own or pastes an order confirmation or a parts list. A count replaces the one saved; 0 clears it. Give a versioned part its version (component:feetech-sts3215|c001, as get_bom keys it). Unknown keys, keys missing their version and counts that are negative or not whole are refused, and then nothing is saved.',
     inputSchema: {
       counts: z
         .array(z.object({ key: z.string().max(200), count: z.number().int().min(0).max(100000) }))

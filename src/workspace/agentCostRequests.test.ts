@@ -36,4 +36,17 @@ describe('record_on_hand', () => {
 
     expect(save).not.toHaveBeenCalled();
   });
+
+  it('asks for the version of a part that comes in versions, so the count lands on its BOM line', async () => {
+    const save = vi.spyOn(platformBridge, 'savePurchase');
+
+    save.mockClear();
+
+    const reply = await recordOnHandRequest({ counts: [{ key: 'component:feetech-sts3215', count: 6 }] });
+
+    expect(reply.text).toBe(
+      'Nothing recorded: component:feetech-sts3215 needs its version: component:feetech-sts3215|c001, component:feetech-sts3215|c018, component:feetech-sts3215|c044, component:feetech-sts3215|c046. Use keys from find_parts or get_bom.',
+    );
+    expect(save).not.toHaveBeenCalled();
+  });
 });

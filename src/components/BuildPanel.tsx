@@ -10,6 +10,7 @@ import type { Printing } from '../workspace/usePrinting';
 import { isBuilt } from '../guide/guidePlan';
 import type { BuildGuide } from '../workspace/useBuildGuide';
 import { BuyList } from './build/BuyList';
+import { onHandAmount } from './build/buyLine';
 import { CheckSheet } from './build/CheckSheet';
 import { ChecksSection } from './build/ChecksSection';
 import { GuideSection } from './build/GuideSection';
@@ -97,7 +98,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     const before = purchases[line.key];
 
     await savePurchase(line.key, withOnHand(before, count));
-    onToast(`Saved ${count} on hand for ${line.name}`, {
+    onToast(`Saved ${onHandAmount(count, line.unit)} for ${line.name}`, {
       action: { label: 'Undo', onClick: () => void savePurchase(line.key, before ?? null) },
     });
   };

@@ -18,7 +18,7 @@ const validOnHand = (n) => n === undefined || (Number.isInteger(n) && n >= 0 && 
 function storedRecord(record) {
   if (!validOnHand(record.onHand)) throw new Error('On hand must be a whole count');
 
-  if (record.priceUsd === undefined) return { onHand: record.onHand };
+  if (record.priceUsd === undefined) return record.onHand ? { onHand: record.onHand } : null;
 
   return { ...record, checkedAt: record.checkedAt || new Date().toLocaleDateString('en-CA') };
 }
@@ -28,7 +28,9 @@ export function savePurchase(libraryDir, { key, record }) {
 
   const all = listPurchases(libraryDir);
 
-  if (record) all[key] = storedRecord(record);
+  const stored = record && storedRecord(record);
+
+  if (stored) all[key] = stored;
   else delete all[key];
 
   fs.writeFileSync(purchasesFile(libraryDir), JSON.stringify(all, null, 2), 'utf-8');

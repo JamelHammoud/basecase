@@ -3,6 +3,7 @@ import { parquetReadObjects } from 'hyparquet';
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { describe, expect, it } from 'vitest';
 import { castRobot, guestsOf } from '../cases/caseCast';
+import { patched, readTryLabels } from '../cases/tryLabels';
 import { caseSlots } from '../cases/schema';
 import { caseRobot } from '../cases/testing';
 import { SimEngine } from '../sim/engine';
@@ -23,6 +24,7 @@ import {
   robotJoints,
   sampledFrames,
 } from './episodes';
+import { episodeText, SUBTASK_ANNOTATION, subtaskRows } from './language';
 import { dataPath, lerobotFiles, videoPath } from './lerobot';
 import { SCAN_KEY, TASK_ANNOTATION, type DatasetEpisode } from './lerobotRows';
 
@@ -161,7 +163,8 @@ describe('LeRobot datasets from tries', () => {
     expect(info.features.action.names).toEqual(names);
     expect(modality.state.joints).toEqual({ start: 0, end: names.length });
     expect(modality.video.scene.original_key).toBe('observation.images.scene');
-    expect(modality.annotation).toEqual({ 'human.task_description': {} });
+    expect(modality.annotation).toEqual({ 'human.task_description': {}, 'human.action.task_description': {} });
+    expect(info.features[SUBTASK_ANNOTATION]).toEqual({ dtype: 'int64', shape: [1], names: null });
     expect(lines(files, 'meta/tasks.jsonl')).toEqual([
       { task_index: 0, task: TASK },
       { task_index: 1, task: 'Reach the spot.' },
@@ -182,6 +185,61 @@ describe('LeRobot datasets from tries', () => {
 
     expect(Object.keys(back).sort()).toEqual(['touch-dataset/a.mp4', 'touch-dataset/meta/info.json']);
     expect(back['touch-dataset/a.mp4']).toEqual(fakeVideo);
+  });
+});
+
+describe('subtasks and instructions in a v2.1 dataset', () => {
+  it('writes each row’s segment as an index into tasks.jsonl', async () => {
+    const { model, recording } = await armTry();
+    const data = episodeData(recording, model, TASK);
+    const labels = readTryLabels({
+      segments: [
+        { start: 0, end: 21, label: 'reach point' },
+        { start: 21, end: recording.frames, label: 'touch point', instruction: 'Touch the point with the tip.' },
+      ],
+    });
+    const words = episodeText(TASK, labels);
+    const subtasks = subtaskRows(words.segments, data.frames, words.task);
+    const files = lerobotFiles({
+      robotType: 'arm',
+      jointNames: robotJoints(model).map((j) => j.name),
+      videos: [],
+      episodes: [asEpisode({ ...data, task: words.task, subtasks }, 0)],
+      source: {},
+    });
+    const tasks = lines(files, 'meta/tasks.jsonl').map((t) => t.task);
+    const rows = await parquetReadObjects({ file: files[dataPath(0)].slice().buffer });
+    const subtaskOf = (row: number) => tasks[Number(rows[row][SUBTASK_ANNOTATION])];
+
+    expect(subtasks).toEqual([
+      { from: 0, text: 'reach point' },
+      { from: 11, text: 'Touch the point with the tip.' },
+    ]);
+    expect(tasks).toEqual([TASK, 'reach point', 'Touch the point with the tip.']);
+    expect(subtaskOf(10)).toBe('reach point');
+    expect(subtaskOf(11)).toBe('Touch the point with the tip.');
+    expect(subtaskOf(rows.length - 1)).toBe('Touch the point with the tip.');
+    expect(Number(rows[11].task_index)).toBe(0);
+    expect(rows[0]).not.toHaveProperty('language_persistent');
+  });
+
+  it('exports an instruction the agent stored on a try as that episode’s task', async () => {
+    const { model, recording } = await armTry();
+    const data = episodeData(recording, model, TASK);
+    const stored = patched(undefined, { instruction: 'Pick up the red cube.' });
+    const words = episodeText(TASK, readTryLabels(JSON.parse(JSON.stringify(stored))));
+    const files = lerobotFiles({
+      robotType: 'arm',
+      jointNames: robotJoints(model).map((j) => j.name),
+      videos: [],
+      episodes: [asEpisode({ ...data, task: words.task }, 0), asEpisode(data, 1)],
+      source: {},
+    });
+    const rows = await parquetReadObjects({ file: files[dataPath(0)].slice().buffer });
+
+    expect(lines(files, 'meta/episodes.jsonl').map((e) => e.tasks)).toEqual([['Pick up the red cube.'], [TASK]]);
+    expect(lines(files, 'meta/tasks.jsonl').map((t) => t.task)).toEqual(['Pick up the red cube.', TASK]);
+    expect(rows.every((r) => Number(r.task_index) === 0 && Number(r[SUBTASK_ANNOTATION]) === 0)).toBe(true);
   });
 });
 

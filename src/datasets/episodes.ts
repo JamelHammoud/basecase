@@ -1,6 +1,7 @@
 import { eyeSize } from '../sim/eyes';
 import type { SimJoint, SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
+import type { Subtask } from './language';
 
 export const DATASET_FPS = 25;
 
@@ -19,6 +20,7 @@ export interface EpisodeData {
   state: Float32Array;
   action: Float32Array;
   scan?: Float32Array;
+  subtasks?: Subtask[];
 }
 
 export const datasetStride = (dt: number) => Math.max(1, Math.round(1 / (dt * DATASET_FPS)));

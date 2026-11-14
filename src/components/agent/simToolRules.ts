@@ -20,6 +20,7 @@ export const SIM_RULES: ToolRule[] = [
   plainRule(['read_case_code'], LookIcon, ['Reading the Case’s code', 'Read the Case’s code']),
   plainRule(['delete_case_code'], DeleteIcon, ['Deleting a code panel', 'Deleted a code panel']),
   plainRule(['explore_case'], SwapIcon, ['Exploring servos', 'Explored servos']),
+  plainRule(['label_tries'], EditIcon, ['Labeling tries', 'Labeled tries']),
   plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
   plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),
   plainRule(['edit_routine'], EditIcon, ['Editing the Routine', 'Edited the Routine']),

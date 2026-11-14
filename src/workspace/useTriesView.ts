@@ -7,6 +7,7 @@ import { plural } from '../../electron/plural.mjs';
 import { errorMessage } from '../utils/errorMessage';
 import type { ShowToast } from './types';
 import type { TryTimeline } from './useTryTimeline';
+import { useTryLabelling } from './useTryLabelling';
 
 export interface TryGroup {
   robot: string;
@@ -63,6 +64,8 @@ export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
   const groups = tryGroups(all);
   const order = groups.flatMap((g) => g.tries.map((t) => t.id));
   const selected = pick.selected.filter((id) => order.includes(id));
+  const labelling = useTryLabelling(all, showToast);
+  const targets = (id?: string) => (id && !selected.includes(id) ? [id] : selected);
 
   const show = (id: string) => {
     const summary = all.find((t) => t.id === id);
@@ -110,7 +113,9 @@ export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
 
       if (next.selected.includes(id)) show(id);
     },
-    remove: (id?: string) => remove(id && !selected.includes(id) ? [id] : selected),
+    remove: (id?: string) => remove(targets(id)),
+    targets,
+    labelling,
   };
 }
 

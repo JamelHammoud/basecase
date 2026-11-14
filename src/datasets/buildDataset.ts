@@ -4,6 +4,7 @@ import type { Recording } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
 import { FRAME_HEIGHT, FRAME_WIDTH, type DatasetCamera } from './cameras';
 import { datasetJoints, episodeData, type DatasetSlot } from './episodes';
+import { subtaskRows, type DatasetSegment } from './language';
 import { datasetFiles } from './lerobotExport';
 import type { DatasetEpisode, ScanSensor } from './lerobotRows';
 import { codecName, createRenderStage, disposeRenderStage, renderEpisode, videoCodec } from './renderVideos';
@@ -11,6 +12,7 @@ import { codecName, createRenderStage, disposeRenderStage, renderEpisode, videoC
 export interface DatasetJobEpisode {
   recording: Recording;
   task: string;
+  segments?: DatasetSegment[];
   source: Record<string, unknown>;
 }
 
@@ -47,6 +49,7 @@ export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
   try {
     for (const e of job.episodes) {
       const data = episodeData(e.recording, job.model, e.task, job.slots);
+      const subtasks = subtaskRows(e.segments ?? [], data.frames, e.task);
       const rendered = await renderEpisode(stage, {
         model: job.model,
         recording: e.recording,
@@ -55,7 +58,7 @@ export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
         codec,
       });
 
-      episodes.push({ ...data, ...rendered, source: e.source });
+      episodes.push({ ...data, subtasks, ...rendered, source: e.source });
     }
   } finally {
     disposeRenderStage(stage);

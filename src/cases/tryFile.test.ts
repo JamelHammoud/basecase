@@ -72,6 +72,24 @@ describe('a try’s manifest', () => {
     expect(tryRecordOf(read!)).toEqual(record());
   });
 
+  it('keeps its flags and labels, and drops a malformed label', () => {
+    const flags = [{ kind: 'limit' as const, at: 2, joint: 'elbow' }];
+    const stored = {
+      ...storedTryOf(record(), { ...context, flags }),
+      labels: { segments: [{ start: 0, end: 10, label: 'reach' }], tags: ['good grip'], mark: 'passed' as const },
+    };
+    const read = readStoredTry(JSON.parse(JSON.stringify({ ...stored, labels: { ...stored.labels, mark: 'meh' } })));
+
+    expect(read?.flags).toEqual(flags);
+    expect(read?.labels).toEqual({ segments: stored.labels.segments, tags: ['good grip'] });
+    expect(summaryOf(read!, { recording: true, strip: false })).toMatchObject({
+      tags: ['good grip'],
+      mark: null,
+      judged: null,
+      flags: ['limit'],
+    });
+  });
+
   it('keeps a generated try’s seed and source, and a real try’s source', () => {
     const generated = record({
       id: 'try-abc-7',

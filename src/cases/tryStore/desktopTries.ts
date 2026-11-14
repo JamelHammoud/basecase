@@ -3,7 +3,7 @@ import { base64ToBytes, bytesToBase64 } from '../../utils/base64';
 import { channelCall } from '../../utils/platform/channelCall';
 import { electron } from '../../utils/platform/transport';
 import { decodeRecording, encodeRecording } from '../recordingFile';
-import type { StoredTry, TrySummary } from '../tryFile';
+import { readStoredTry, type StoredTry, type TrySummary } from '../tryFile';
 import type { TryBackend } from './types';
 
 type Bytes = Uint8Array | { data?: string | null } | null | undefined;
@@ -42,6 +42,10 @@ export const desktopTries: TryBackend = {
     const bytes = bytesOf(await call<Bytes>('tries:recording', id));
 
     return bytes && decodeRecording(bytes);
+  },
+  manifest: async (id) => readStoredTry(await call<unknown>('tries:manifest', id)),
+  relabel: async (changes) => {
+    await call('tries:relabel', changes);
   },
   strip: async (id) => {
     const bytes = bytesOf(await call<Bytes>('tries:strip', id));

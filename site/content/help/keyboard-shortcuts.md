@@ -21,6 +21,7 @@ covers:
   - src/components/ShortcutsList.tsx
   - src/workspace/useWorkspaceKeys.ts
   - src/components/tries/useTriesKeys.ts
+  - src/components/simulate/useTimelineKeys.ts
   - src/app/tabShortcuts.ts
   - src/design-system/platformKeys.ts
   - src/components/agent/Composer.tsx
@@ -88,6 +89,8 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 [[Esc]] also leaves whichever mode is open, once anything smaller in it has cleared. Sketch and Import SVG stay open while they hold a drawing.
 
 In [Tries](/help/open-a-try-from-any-scene), [[⌫]] deletes the selected tries once you confirm. Keys without [[⌘]] leave the scene alone there.
+
+While a try's timeline is open, [[S]] splits the segment under the playhead and [[⌫]] merges the selected segment into the one before. With no segment selected, [[⌫]] still deletes the selected tries. [[⌘Z]] and [[⇧⌘Z]] undo and redo those edits. [Label the segments of a try](/help/label-the-segments-of-a-try) has the rest.
 
 ## Scenes
 

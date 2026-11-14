@@ -1,7 +1,9 @@
 import { FAULT_KINDS, type RecordedFault } from '../sim/faults';
 import { RECORD_HZ } from '../sim/recorder';
+import { flagKinds, readFlags, type FlagKind, type TryFlag } from '../datasets/tryFlags';
 import { CASE_FORMAT_VERSION } from './schema';
 import type { TryRecord } from './tries';
+import { readTryLabels, type Mark, type TryLabels } from './tryLabels';
 
 export const TRY_FILE_VERSION = 1;
 
@@ -40,6 +42,8 @@ export interface StoredTry {
   faults: RecordedFault[];
   commands?: number;
   world?: number;
+  flags?: TryFlag[];
+  labels?: TryLabels;
 }
 
 export interface TrySummary {
@@ -59,6 +63,10 @@ export interface TrySummary {
   sourceTry: string | null;
   recording: boolean;
   strip: boolean;
+  tags: string[];
+  mark: Mark | null;
+  judged: Mark | null;
+  flags: FlagKind[];
 }
 
 export interface TryContext {
@@ -66,6 +74,7 @@ export interface TryContext {
   caseName: string;
   joints: string[];
   input?: string | null;
+  flags?: TryFlag[];
 }
 
 const sourceOf = (record: TryRecord): TrySource => {
@@ -103,6 +112,7 @@ export function storedTryOf(record: TryRecord, context: TryContext): StoredTry {
     faults: manifest.faults ?? [],
     ...(manifest.commands !== undefined ? { commands: manifest.commands } : {}),
     ...(manifest.world !== undefined ? { world: manifest.world } : {}),
+    ...(context.flags?.length ? { flags: context.flags } : {}),
   };
 }
 
@@ -227,12 +237,18 @@ export function readStoredTry(value: unknown): StoredTry | null {
 
   if (!robot || kase === undefined || !outcome || faults.some((f) => !f)) return null;
 
+  const { flags: rawFlags, labels: rawLabels, ...rest } = value;
+  const flags = readFlags(rawFlags);
+  const labels = readTryLabels(rawLabels);
+
   return {
-    ...(value as unknown as StoredTry),
+    ...(rest as unknown as StoredTry),
     robot,
     case: kase,
     outcome,
     faults: faults as RecordedFault[],
+    ...(flags?.length ? { flags } : {}),
+    ...(labels && Object.keys(labels).length ? { labels } : {}),
   };
 }
 
@@ -252,4 +268,8 @@ export const summaryOf = (stored: StoredTry, held: { recording: boolean; strip: 
   seed: stored.seed,
   sourceTry: stored.sourceTry,
   ...held,
+  tags: stored.labels?.tags ?? [],
+  mark: stored.labels?.mark ?? null,
+  judged: stored.labels?.judged?.verdict ?? null,
+  flags: flagKinds(stored.flags),
 });

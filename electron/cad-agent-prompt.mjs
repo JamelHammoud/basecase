@@ -68,6 +68,7 @@ opens it running.
   one that isn't built in comes back in teach: say in one sentence that they teach it with Teach Gesture.
 - Hardware the app can't connect to yet (a robot over ethernet, a MIDI keyboard): say so in one
   sentence and build the sim side anyway.
+- To label tries, label_tries them: write each instruction as the task in words a person would say.
 
 ## Frame
 - Millimeters. Z is up; the floor is z = 0. The object's FRONT faces −Y; its LEFT is +X.

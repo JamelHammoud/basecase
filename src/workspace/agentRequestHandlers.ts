@@ -52,6 +52,8 @@ import type { CaseExplore } from './useCaseExplore';
 import type { CaseRun } from './useCaseRun';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
 import { SKILL_HANDLERS } from './agentSkillRequests';
+import { TRY_HANDLERS } from './agentTryRequests';
+import type { SegmentingScene } from './trySegmenting';
 import type { Cases } from './useCases';
 import type { Routines } from './useRoutines';
 import type { SceneSkills } from './useSkills';
@@ -93,6 +95,7 @@ export interface RequestContext {
   caseRun: CaseRun;
   skills: SceneSkills;
   mergeParts: (ids: string[]) => Promise<string | null>;
+  segmentingScene: () => Promise<SegmentingScene | null>;
 }
 
 type Handler = (payload: Payload, ctx: RequestContext, kind: string) => unknown;
@@ -374,6 +377,7 @@ const HANDLERS: Record<string, Handler> = {
   ...CASE_HANDLERS,
   ...CASE_CODE_HANDLERS,
   ...SKILL_HANDLERS,
+  ...TRY_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [
       kind,

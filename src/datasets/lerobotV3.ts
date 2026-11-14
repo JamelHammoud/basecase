@@ -1,6 +1,7 @@
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { DATASET_FPS } from './episodes';
 import type { JoinedVideo } from './joinVideos';
+import { LANGUAGE_FEATURE, LANGUAGE_KEY } from './language';
 import {
   basecaseFile,
   episodeStats,
@@ -56,7 +57,7 @@ function dataFiles(placed: Placed[], widths: Widths, limitBytes: number): DataFi
   let size = 0;
 
   for (const p of placed) {
-    const bytes = framesParquet([p], widths).byteLength;
+    const bytes = framesParquet([p], widths, true).byteLength;
     const current = groups.at(-1);
 
     if (!current || size + bytes >= limitBytes) {
@@ -70,7 +71,7 @@ function dataFiles(placed: Placed[], widths: Widths, limitBytes: number): DataFi
     size += bytes;
   }
 
-  return groups.map((g) => ({ bytes: framesParquet(g, widths), episodes: g.map((p) => p.at.episode) }));
+  return groups.map((g) => ({ bytes: framesParquet(g, widths, true), episodes: g.map((p) => p.at.episode) }));
 }
 
 const int64 = (name: string) => scalar(name, 'INT64');
@@ -219,7 +220,7 @@ function info(spec: DatasetSpec, limits: FileLimits) {
     splits: { train: `0:${spec.episodes.length}` },
     data_path: `data/${FILE_PATTERN}.parquet`,
     video_path: `videos/{video_key}/${FILE_PATTERN}.mp4`,
-    features: withFps,
+    features: { ...withFps, [LANGUAGE_KEY]: LANGUAGE_FEATURE },
   };
 }
 

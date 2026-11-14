@@ -7,7 +7,7 @@ import { readCases, worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import { generatedFrom, goingWith, simTries, sourceTryOf, worstFirst, type TryRecord } from '../cases/tries';
 import { CASE_STORES, caseStoreKey } from '../cases/console/codeStore';
-import { deleteTries } from '../cases/tryStore';
+import { deleteTries, useTries } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
@@ -26,6 +26,7 @@ import { useTryMultiply, type TryMultiply } from './useTryMultiply';
 import { useTryTimeline, type TryTimeline } from './useTryTimeline';
 import { useTriesTraining, type TriesTraining } from './useTriesTraining';
 import { useStoredTries } from './useStoredTries';
+import { useTryLabelling } from './useTryLabelling';
 import { plural } from '../../electron/plural.mjs';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { CaseRobotInput } from './caseChecks';
@@ -93,7 +94,7 @@ export function useCases(options: CasesOptions) {
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = cases.find((c) => c.id === activeId) ?? null;
-  const { shown, onTry, onTries } = useStoredTries({ project, setProject, sceneId, cases, sim, showToast });
+  const { shown, onTry, onTries } = useStoredTries({ project, setProject, sceneId, cases, sim, rig, parts, showToast });
   const tries = worstFirst(shown((project.tries ?? []).filter((t) => t.caseId === activeId)));
   const fromSim = simTries(tries);
   const hasRobot = rig.robots.length > 0;
@@ -165,11 +166,13 @@ export function useCases(options: CasesOptions) {
     });
   };
 
-  const timeline = useTryTimeline({ sim, rig, parts, active, partners });
+  const timeline = useTryTimeline({ sim, rig, parts, active, partners, cases, showToast });
+  const labelling = useTryLabelling(useTries() ?? [], showToast);
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const naming = useCaseNames(setProject);
-  const dataset = useDatasetExport({ sim, rig, parts, active, tries: fromSim, showToast, openAccounts, sceneId });
+  const exporting = { sim, rig, parts, active, tries: fromSim, showToast, openAccounts, sceneId, cases, partners };
+  const dataset = useDatasetExport({ ...exporting, joints: project.joints ?? [] });
   const multiply = useTryMultiply({ sim, rig, parts, active, tries: fromSim, partners, onTries, showToast });
   const removeTry = (record: TryRecord) =>
     confirmRemoveTry(record, { tries, multiply, timeline, setProject, showToast });
@@ -220,6 +223,7 @@ export function useCases(options: CasesOptions) {
     removeTry,
     saveGesture: (gesture: CaseGesture) => active && saveGesture(setProject, { id: active.id, gesture }),
     timeline,
+    labelling,
     attempt,
     multiply,
     ...real,

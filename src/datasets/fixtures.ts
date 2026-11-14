@@ -1,5 +1,6 @@
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, Mp4OutputFormat, Output } from 'mediabunny';
 import { columnStats, DATASET_FPS, type EpisodeData } from './episodes';
+import { episodeText, subtaskRows } from './language';
 import type { DatasetEpisode, DatasetSpec } from './lerobotRows';
 
 export const FIXTURE_WIDTH = 64;
@@ -61,21 +62,50 @@ function fixtureData(length: number, seed: number, task: string): EpisodeData {
   };
 }
 
+export const FIXTURE_INSTRUCTION = 'Touch the point, then hold still.';
+
+const FIXTURE_LABELS = [
+  {
+    segments: [
+      { start: 0, end: 11, label: 'reach point' },
+      { start: 11, end: 24, label: 'touch point', instruction: 'Touch the point with the tip.' },
+    ],
+  },
+  {
+    instruction: FIXTURE_INSTRUCTION,
+    segments: [
+      { start: 0, end: 8, label: 'reach point' },
+      { start: 8, end: 18, label: 'hold' },
+    ],
+  },
+  {},
+];
+
+function withLanguage(data: EpisodeData, episode: number, language: boolean): EpisodeData {
+  if (!language) return data;
+
+  const text = episodeText(data.task, FIXTURE_LABELS[episode % FIXTURE_LABELS.length]);
+
+  return { ...data, task: text.task, subtasks: subtaskRows(text.segments, data.frames, text.task) };
+}
+
 export interface FixtureOptions {
   lengths?: number[];
   tasks?: string[];
+  language?: boolean;
   clip?: (episode: number, frames: number) => Promise<Uint8Array>;
 }
 
 export async function fixtureSpec({
   lengths = [12, 9, 15],
   tasks = ['Touch the point with the end effector.'],
+  language = true,
   clip = (_, frames) => fixtureClip({ frames }),
 }: FixtureOptions = {}): Promise<DatasetSpec> {
   const episodes: DatasetEpisode[] = [];
 
   for (const [i, length] of lengths.entries()) {
-    const data = fixtureData(length, i, tasks[i % tasks.length]);
+    const data = withLanguage(fixtureData(length, i, tasks[i % tasks.length]), i, language);
     const videos: Record<string, Uint8Array> = {};
 
     for (const key of FIXTURE_CAMERAS) videos[key] = await clip(i, length);

@@ -5,16 +5,17 @@ import type { DatasetJobEpisode } from '../datasets/buildDataset';
 import { datasetCameras, snakeKey } from '../datasets/cameras';
 import { exportDatasetFiles, exportDatasetZip, type DatasetSpec } from '../datasets/datasetClient';
 import { usableTries } from '../datasets/usableTries';
-import { slotKeys } from '../cases/slots';
+import { slotKeys, type SlotRobot } from '../cases/slots';
 import { hubBridge } from '../hub/hubBridge';
-import type { SimModel } from '../sim/mjcfTypes';
 import type { Simulation } from '../sim/useSimulation';
-import type { ScenePart } from '../types/robotics';
+import type { RobotJoint, ScenePart } from '../types/robotics';
 import { downloadBytes } from '../utils/downloadBytes';
 import type { Rig } from '../utils/kinematics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { openLink } from '../utils/openLink';
+import { tryText } from './datasetLanguage';
 import { fileSafe } from './helpers';
+import type { SegmentingScene } from './trySegmenting';
 import type { ShowToast, ToastOptions } from './types';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
@@ -28,6 +29,9 @@ interface DatasetExportOptions {
   showToast: ShowToast;
   openAccounts: () => void;
   sceneId: string;
+  joints: RobotJoint[];
+  cases: Case[];
+  partners: () => SlotRobot[];
 }
 
 export interface DatasetExport {
@@ -39,11 +43,13 @@ export interface DatasetExport {
   zip: (tries: TryRecord[]) => Promise<Uint8Array | null>;
 }
 
-async function usableEpisodes(kase: Case, passed: TryRecord[], model: SimModel) {
-  const { usable, modelHash } = await usableTries(passed, model);
-  const episodes: DatasetJobEpisode[] = usable.map(({ record, recording }) => ({
+async function usableEpisodes(kase: Case, passed: TryRecord[], scene: SegmentingScene) {
+  const { usable, modelHash } = await usableTries(passed, scene.model);
+  const brief = kase.brief.trim() || kase.name;
+  const texts = await Promise.all(usable.map((u) => tryText(brief, u, scene)));
+  const episodes: DatasetJobEpisode[] = usable.map(({ record, recording }, i) => ({
     recording,
-    task: kase.brief.trim() || kase.name,
+    ...texts[i],
     source: {
       try: record.id,
       at: record.at,
@@ -67,7 +73,10 @@ interface PreparedDataset {
   left: number;
 }
 
-type PrepareInput = Pick<DatasetExportOptions, 'sim' | 'rig' | 'parts' | 'sceneId'> & {
+type PrepareInput = Pick<
+  DatasetExportOptions,
+  'sim' | 'rig' | 'parts' | 'sceneId' | 'joints' | 'cases' | 'partners'
+> & {
   kase: Case;
   tries: TryRecord[];
 };
@@ -83,7 +92,8 @@ async function repoName(sceneId: string, kase: Case) {
 async function prepareDataset(input: PrepareInput): Promise<PreparedDataset | null> {
   const { sim, rig, parts, kase, tries } = input;
   const model = sim.model ?? (await sim.buildModel());
-  const { episodes, modelHash } = await usableEpisodes(kase, tries, model);
+  const scene = { model, rig, parts, joints: input.joints, cases: input.cases, partners: input.partners() };
+  const { episodes, modelHash } = await usableEpisodes(kase, tries, scene);
 
   if (!episodes.length) return null;
 
@@ -145,12 +155,12 @@ const PUBLISH: Delivery = {
 };
 
 export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
-  const { sim, rig, parts, active, tries, showToast, openAccounts, sceneId } = options;
+  const { active, tries, showToast, openAccounts } = options;
   const [exporting, setExporting] = useState(false);
   const busy = useRef(false);
   const passed = tries.filter((t) => t.passed);
   const ready = !!active && passed.length > 0;
-  const prepare = (kase: Case, from: TryRecord[]) => prepareDataset({ sim, rig, parts, sceneId, kase, tries: from });
+  const prepare = (kase: Case, from: TryRecord[]) => prepareDataset({ ...options, kase, tries: from });
 
   const run = async (kase: Case, delivery: Delivery) => {
     setExporting(true);

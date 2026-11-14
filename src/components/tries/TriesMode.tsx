@@ -8,6 +8,7 @@ import {
   type ContextMenuEntry,
 } from '../../design-system';
 import type { TriesView } from '../../workspace/useTriesView';
+import { TagSheet } from './TagSheet';
 import { TryTile, type TileScene } from './TryTile';
 import { useTriesKeys } from './useTriesKeys';
 
@@ -39,7 +40,14 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
   const showMenu = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setMenu({ x: e.clientX, y: e.clientY, entries: [deleteEntry(() => view.remove(id), '⌫')] });
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      entries: [
+        ...view.labelling.entries(view.targets(id)),
+        deleteEntry(() => view.remove(id), timelineOpen ? undefined : '⌫'),
+      ],
+    });
   };
 
   return (
@@ -74,6 +82,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
         </div>
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.entries} onClose={() => setMenu(null)} />}
+      {view.labelling.tagging && <TagSheet onTag={view.labelling.tag} onClose={view.labelling.cancelTag} />}
     </div>
   );
 };

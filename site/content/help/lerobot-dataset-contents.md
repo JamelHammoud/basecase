@@ -1,7 +1,7 @@
 ---
 title: LeRobot dataset contents
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: reference
 order: 1
@@ -24,6 +24,7 @@ covers:
   - src/datasets/lerobotRows.ts
   - src/datasets/joinVideos.ts
   - src/datasets/episodes.ts
+  - src/datasets/language.ts
   - src/datasets/cameras.ts
   - src/datasets/renderVideos.ts
 ---
@@ -39,7 +40,7 @@ Each passed try is one episode. The dataset comes in two layouts: LeRobot v3.0 a
 | `data/chunk-000/file-000.parquet` | One row per frame, for many episodes. A new file starts before one passes 100 MB |
 | `videos/observation.images.<camera>/chunk-000/file-000.mp4` | Every episode's video for one camera, one after another. A new file starts before one passes 200 MB |
 | `meta/episodes/chunk-000/file-000.parquet` | One row per episode: its task, length, rows, the file and time span of each camera's video, and its statistics |
-| `meta/tasks.parquet` | The one task: the Case's brief, or its name when it has none |
+| `meta/tasks.parquet` | Every task and subtask. Each episode's task comes first: the try's own instruction, else the Case's brief, else its name. Then each segment's words follow |
 | `meta/stats.json` | The minimum, maximum, mean, standard deviation and count of every column across all episodes |
 | `meta/info.json` | The dataset's version (`v3.0`), frame rate, file size limits, columns and cameras |
 | `meta/basecase.json` | The Case, the hash of the model the tries ran on, and each episode's try, margin, `seed` and `source`: the try Multiply made it from, or null for a try you drove |
@@ -54,9 +55,9 @@ The joined videos aren't encoded again. Basecase copies each episode's frames in
 | `videos/chunk-000/observation.images.<camera>/episode_000000.mp4` | One video per camera per episode |
 | `meta/info.json` | The dataset's version (`v2.1`), frame rate, columns and cameras |
 | `meta/episodes.jsonl` | One line per episode, with its length and task |
-| `meta/tasks.jsonl` | The one task |
+| `meta/tasks.jsonl` | The same list as `meta/tasks.parquet` in v3.0, in the same order |
 | `meta/episodes_stats.jsonl` | Each episode's minimum, maximum, mean, standard deviation and count for every column |
-| `meta/modality.json` | GR00T's map of the columns: one `joints` group for state and action, each camera, and the task annotation |
+| `meta/modality.json` | GR00T's map of the columns: one `joints` group for state and action, each camera, and the task and subtask annotations |
 | `meta/basecase.json` | The same as in v3.0 |
 
 GR00T works out its own `stats.json` from these.
@@ -71,8 +72,10 @@ GR00T works out its own `stats.json` from these.
 | `frame_index`, `episode_index`, `index` | The frame within its episode, the episode, and the frame across the whole dataset |
 | `next.reward` | 1 on the last frame, 0 before it |
 | `next.done` | True on the last frame |
-| `task_index` | The task, always the Case's |
+| `task_index` | The episode's task |
 | `annotation.human.task_description` | The task again, where GR00T looks for it |
+| `annotation.human.action.task_description` | The subtask of the segment the frame is in, as an index into the task list |
+| `language_persistent` | In v3.0 only: the episode's subtasks, each with the time it starts, where LeRobot 0.7 reads them |
 
 Frames are 25 a second: every second frame of the try's 50 Hz recording. Joints are in the same order and carry the same names as in the robot package's `urdf/robot.urdf` and `joint_map.json`.
 

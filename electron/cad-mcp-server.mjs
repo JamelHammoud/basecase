@@ -53,6 +53,7 @@ import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
 import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
 import { operate, setWorld, startDrive } from './cad-mcp/worldTools.mjs';
 import { compareCase, createCase, exploreCase, runCase } from './cad-mcp/caseTools.mjs';
+import { labelTries } from './cad-mcp/tryTools.mjs';
 import { deleteCaseCode, readCaseCode, writeCaseCode } from './cad-mcp/caseCodeTools.mjs';
 import { coachSkill, draftSkill, listSkills, trainSkill } from './cad-mcp/skillTools.mjs';
 import { editRoutine, makeRoutine, readRoutine, runRoutine, testRoutine } from './cad-mcp/routineTools.mjs';
@@ -120,6 +121,7 @@ const TOOLS = [
   runCase,
   compareCase,
   exploreCase,
+  labelTries,
   writeCaseCode,
   readCaseCode,
   deleteCaseCode,

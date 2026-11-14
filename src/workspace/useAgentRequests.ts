@@ -64,6 +64,23 @@ const partInserter =
     updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));
   };
 
+const segmentingSceneOf =
+  ({ docs, posing, simTraining, studio, workspaceId }: WorkspaceCore): RequestContext['segmentingScene'] =>
+  async () => {
+    if (!posing.rig.robots.length) return null;
+
+    const { sim, cases } = simTraining;
+
+    return {
+      model: sim.model ?? (await sim.buildModel()),
+      rig: posing.rig,
+      parts: docs.partsRef.current,
+      joints: docs.projectRef.current.joints ?? [],
+      cases: cases.cases,
+      partners: studio.robotsBeside(workspaceId),
+    };
+  };
+
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
   const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole, commitSkeleton } = docs;
@@ -173,6 +190,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     caseExplore: core.caseExplore,
     caseRun: core.caseRun,
     skills: core.simTraining.skills,
+    segmentingScene: segmentingSceneOf(core),
   });
 
   const runRequest = async (event: Pick<AgentRequestEvent, 'kind' | 'payload'>, author: Author) => {

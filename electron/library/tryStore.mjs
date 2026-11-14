@@ -11,6 +11,9 @@ const MAX_RECORDING = 1024 * 1024 * 1024;
 const MAX_STRIP = 2 * 1024 * 1024;
 const SOURCES = new Set(['case', 'generated', 'real']);
 const VERDICTS = new Set(['passed', 'failed', 'unjudged']);
+const MARKS = new Set(['passed', 'failed']);
+const FLAGS = new Set(['limit', 'gap', 'effort', 'idle', 'model']);
+const MAX_RELABELS = 5000;
 
 const text = (value, fallback = '') => (typeof value === 'string' ? value.slice(0, 512) : fallback);
 const number = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
@@ -25,6 +28,35 @@ function outcomeOf(value) {
     margin: typeof outcome.margin === 'number' && Number.isFinite(outcome.margin) ? outcome.margin : null,
   };
 }
+
+function patchedLabels(labels, patch) {
+  const out = { ...(isPlain(labels) ? labels : {}) };
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === null || value === undefined) delete out[key];
+    else out[key] = value;
+  }
+
+  return out;
+}
+
+const markOf = (value) => (MARKS.has(value) ? value : null);
+
+function labelsOf(manifest) {
+  const labels = isPlain(manifest.labels) ? manifest.labels : {};
+  const tags = Array.isArray(labels.tags) ? labels.tags.filter((t) => typeof t === 'string').map((t) => text(t)) : [];
+
+  return {
+    tags: [...new Set(tags)],
+    mark: markOf(labels.mark),
+    judged: markOf(isPlain(labels.judged) ? labels.judged.verdict : null),
+  };
+}
+
+const flagsOf = (manifest) =>
+  Array.isArray(manifest.flags)
+    ? [...new Set(manifest.flags.map((f) => (isPlain(f) ? f.kind : null)).filter((k) => FLAGS.has(k)))]
+    : [];
 
 export function summarizeTry(manifest, { recording, strip }) {
   const robot = isPlain(manifest.robot) ? manifest.robot : {};
@@ -47,6 +79,8 @@ export function summarizeTry(manifest, { recording, strip }) {
     sourceTry: idOrNull(manifest.sourceTry),
     recording,
     strip,
+    ...labelsOf(manifest),
+    flags: flagsOf(manifest),
   };
 }
 
@@ -202,6 +236,35 @@ export class TryStore {
     this.forget(manifest.id);
 
     return { ok: true };
+  }
+
+  manifest(id) {
+    const bytes = readOrNull(path.join(this.dirOf(id), TRY_MANIFEST));
+
+    try {
+      return bytes ? JSON.parse(bytes.toString('utf-8')) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  relabel(changes) {
+    if (!Array.isArray(changes) || changes.length > MAX_RELABELS) throw new Error('Expected a list of label changes');
+
+    const relabelled = [];
+
+    for (const change of changes) {
+      if (!isPlain(change) || !isPlain(change.patch)) throw new Error('A label change needs its labels');
+
+      const manifest = this.manifest(change.id);
+
+      if (!manifest) continue;
+
+      this.save({ manifest: { ...manifest, labels: patchedLabels(manifest.labels, change.patch) }, recording: null });
+      relabelled.push(change.id);
+    }
+
+    return { relabelled };
   }
 
   recording(id) {

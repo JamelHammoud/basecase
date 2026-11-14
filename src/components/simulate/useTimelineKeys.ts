@@ -7,6 +7,12 @@ type KeyAction = (timeline: TryTimeline, shift: boolean) => void;
 
 const second = (t: TryTimeline) => Math.max(1, Math.round(1 / t.dt));
 
+const merge: KeyAction = (t) => t.segments.merge(t.frame);
+
+const MERGES = new Set(['Backspace', 'Delete']);
+
+const passesOn = (e: KeyboardEvent, timeline: TryTimeline) => MERGES.has(e.key) && timeline.segments.selected === null;
+
 const KEYS: Record<string, KeyAction> = {
   ArrowLeft: (t, shift) => t.step(shift ? -second(t) : -1),
   ArrowRight: (t, shift) => t.step(shift ? second(t) : 1),
@@ -14,18 +20,41 @@ const KEYS: Record<string, KeyAction> = {
   End: (t) => t.seek(t.frames - 1),
   ' ': (t) => t.toggle(),
   Escape: (t) => t.close(),
+  s: (t) => t.segments.split(t.frame),
+  Backspace: merge,
+  Delete: merge,
 };
 
 const typing = (el: Element | null) => isTextEntry(el) && !(el instanceof HTMLInputElement && el.type === 'range');
 
-const ignored = (e: KeyboardEvent) =>
-  e.metaKey || e.ctrlKey || e.altKey || typing(document.activeElement) || isModalOpen();
+const busy = () => typing(document.activeElement) || isModalOpen();
+
+const ignored = (e: KeyboardEvent) => e.metaKey || e.ctrlKey || e.altKey || busy();
+
+function historyStep(e: KeyboardEvent, timeline: TryTimeline): (() => boolean) | null {
+  const key = e.key.toLowerCase();
+
+  if (e.type !== 'keydown' || !(e.metaKey || e.ctrlKey) || e.altKey || busy()) return null;
+
+  if (key === 'y' || (key === 'z' && e.shiftKey)) return timeline.segments.canRedo ? timeline.segments.redo : null;
+
+  return key === 'z' && timeline.segments.canUndo ? timeline.segments.undo : null;
+}
 
 export function useTimelineKeys(timeline: TryTimeline) {
   const onKey = useEffectEvent((e: KeyboardEvent) => {
+    const step = historyStep(e, timeline);
     const action = KEYS[e.key];
 
-    if (!action || ignored(e)) return;
+    if (step) {
+      e.preventDefault();
+      e.stopPropagation();
+      step();
+
+      return;
+    }
+
+    if (!action || ignored(e) || passesOn(e, timeline)) return;
 
     e.preventDefault();
     e.stopPropagation();

@@ -30,6 +30,7 @@ import { ProgressBar } from './ProgressBar';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
 import { plural } from '../../../electron/plural.mjs';
+import { TagSheet } from '../tries/TagSheet';
 
 interface TryRowProps {
   record: TryRecord;
@@ -138,12 +139,28 @@ const TryActions: React.FC<{ cases: Cases }> = ({ cases }) => (
   </>
 );
 
+const TagTries: React.FC<{ ids: string[] | null; labelling: Cases['labelling']; onClose: () => void }> = ({
+  ids,
+  labelling,
+  onClose,
+}) =>
+  ids ? (
+    <TagSheet
+      onTag={(tag) => {
+        onClose();
+        labelling.tagTries(ids, tag);
+      }}
+      onClose={onClose}
+    />
+  ) : null;
+
 const comparesCase = (cases: Cases, compare: CaseCompare | undefined) =>
   cases.active && compare && (compare.comparison || compare.running) ? compare : null;
 
 export const ResultsSection: React.FC<ResultsProps> = (props) => {
   const { cases, rig, share, model, parts, world, run, compare, explore } = props;
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
+  const [tagging, setTagging] = useState<string[] | null>(null);
   const all = cases.active ? cases.tries : [];
   const tries = all.filter((t) => !t.generated);
   const { multiply } = cases;
@@ -164,6 +181,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
       y: e.clientY,
       items: [
         ...(multiply.can(record) ? [{ label: 'Multiply', onSelect: () => multiply.multiply(record) }] : []),
+        ...cases.labelling.entries([record.id], setTagging),
         deleteEntry(() => cases.removeTry(record)),
       ],
     });
@@ -194,6 +212,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
       )}
       {cases.active && <TryActions cases={cases} />}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
+      <TagTries ids={tagging} labelling={cases.labelling} onClose={() => setTagging(null)} />
     </Section>
   );
 };

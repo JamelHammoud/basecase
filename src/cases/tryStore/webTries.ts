@@ -1,6 +1,7 @@
 import type { Recording } from '../../sim/recorder';
 import { indexedDbStore } from '../../utils/keyValueStore';
 import { readStoredTry, summaryOf, type StoredTry } from '../tryFile';
+import { patched } from '../tryLabels';
 import { TRIES_LABEL, type TryBackend } from './types';
 
 const manifests = indexedDbStore<StoredTry>({
@@ -33,6 +34,14 @@ export const webTries: TryBackend = {
     await manifests.put(stored.id, stored);
   },
   recording: async (id) => (await recordings.get(id)) ?? null,
+  manifest: async (id) => readStoredTry(await manifests.get(id)),
+  relabel: async (changes) => {
+    for (const { id, patch } of changes) {
+      const stored = readStoredTry(await manifests.get(id));
+
+      if (stored) await manifests.put(id, { ...stored, labels: patched(stored.labels, patch) });
+    }
+  },
   strip: async (id) => (await strips.get(id)) ?? null,
   saveStrip: async (id, strip) => {
     if (await manifests.get(id)) await strips.put(id, strip);

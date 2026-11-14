@@ -1,6 +1,7 @@
 ---
 title: Scrub a try on the timeline
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 5
@@ -25,12 +26,14 @@ Step through a Case try frame by frame to see what each joint was asked to do, w
 
 ![A try in Results with its play button](/help/scrub-a-try-on-the-timeline/results.png)
 
-3. The timeline opens under the canvas with one lane per joint. The top plot is the joint's position in blue over its target in gray. The bottom one is its effort, with the servo's limit dashed. Effort reads in N·m, or in N for a sliding joint. Red lines mark where the Case's failure checks tripped, and the timeline opens on the first one.
+3. The timeline opens under the canvas. Its top lane shows the try's segments, such as grasp the block. Under it is one lane per joint. A joint's top plot is the joint's position in blue over its target in gray. The bottom one is its effort, with the servo's limit dashed. Effort reads in N·m, or in N for a sliding joint. Red lines mark where the Case's failure checks tripped, and the timeline opens on the first one.
 4. Press [[→]] or [[←]] to move one frame (1/50 s), and hold [[⇧]] to move a second. [[Home]] and [[End]] go to the start and the end, and [[Space]] plays and pauses. The robot on the canvas follows the playhead.
 5. Click a spike in a lane to jump there. The joint's link is selected on the canvas, ready to change.
 
-![The timeline under the canvas, with the second joint's link selected](/help/scrub-a-try-on-the-timeline/timeline.png)
+![The timeline under the canvas, with its segment lane over the joint lanes](/help/scrub-a-try-on-the-timeline/timeline.png)
 
 6. Press [[Esc]] to close it.
+
+To split, merge or rename segments, follow [Label the segments of a try](/help/label-the-segments-of-a-try).
 
 The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open. A try from another scene opens from the Library, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows.

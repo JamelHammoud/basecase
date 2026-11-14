@@ -35,6 +35,7 @@ import { paletteCommand, selectionActions } from './partActions';
 import { showLeftTab, showPartsSection } from './showView';
 import { keyFor } from '../app/shortcuts';
 import { earthCommands } from './earthCommands';
+import { TAG_ITEM } from './useTryLabelling';
 
 const PARTS_SECTIONS = [
   {
@@ -53,6 +54,20 @@ const SIDEBAR_VIEWS = [
 
 export const sceneHasCameraViews = ({ core, actions }: Pick<CommandInputs, 'core' | 'actions'>) =>
   hasCameraViews(core.parts, actions.cameras.cameras, core.simTraining.sim.status !== 'off');
+
+function tagTriesCommands({ triesView }: CommandInputs['core']): Command[] {
+  if (!triesView.open || !triesView.selected.length) return [];
+
+  return [
+    {
+      id: 'tag-tries',
+      group: 'Simulate',
+      label: TAG_ITEM,
+      keywords: 'tries label annotate selected dataset',
+      run: () => triesView.labelling.askTag(triesView.selected),
+    },
+  ];
+}
 
 function showTriesCommands({ triesView }: CommandInputs['core']): Command[] {
   if (!triesView.groups.length || triesView.open) return [];
@@ -124,6 +139,7 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       run: () => showLeftTab(core, v.tab),
     })),
     ...showTriesCommands(core),
+    ...tagTriesCommands(core),
     ...(core.posing.hasRig
       ? [
           {

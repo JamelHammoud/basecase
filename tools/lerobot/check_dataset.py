@@ -21,10 +21,13 @@ from pathlib import Path
 
 import av
 import pyarrow.parquet as pq
+from lerobot.datasets.language_render import active_at
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
 LEGACY = "v2.1"
 VECTORS = {"observation.state", "action", "observation.scan"}
+LANGUAGE = "language_persistent"
+SUBTASK = "annotation.human.action.task_description"
 
 
 def fail(message: str) -> None:
@@ -41,7 +44,30 @@ def frame_count(path: Path) -> int:
         return sum(1 for _ in container.decode(video=0))
 
 
-def check_v3(root: Path) -> None:
+def subtask_at(frame: dict) -> str:
+    row = active_at(float(frame["timestamp"]), persistent=frame[LANGUAGE], style="subtask")
+
+    expect(row is not None, f"no subtask at frame {int(frame['index'])}")
+
+    return row["content"]
+
+
+def v3_subtasks(dataset: LeRobotDataset) -> list[str]:
+    expect(dataset.meta.features[LANGUAGE]["dtype"] == "language", "language_persistent feature")
+
+    frames = dataset.hf_dataset
+    subtasks = [subtask_at(frames[i]) for i in range(len(frames))]
+    first = dataset.meta.episodes[0]
+    last = first["dataset_to_index"] - 1
+    item = dataset[last]
+
+    expect(subtask_at(item) == subtasks[last], "dataset[i] reads another subtask than its row")
+    expect(len(set(subtasks[first["dataset_from_index"] : last + 1])) > 1, "episode 0 has one subtask")
+
+    return subtasks
+
+
+def check_v3(root: Path) -> list[str]:
     info = json.loads((root / "meta/info.json").read_text())
     dataset = LeRobotDataset("basecase/fixture", root=root, video_backend="pyav")
     meta = dataset.meta
@@ -81,7 +107,12 @@ def check_v3(root: Path) -> None:
         expect(shape == tuple(info["features"][key]["shape"]), f"{key} read as {shape}")
         expect(meta.stats[key]["count"][0] == dataset.num_frames, f"{key} stats count")
 
+    subtasks = v3_subtasks(dataset)
+
     print(f"v3.0: {dataset.num_episodes} episodes, {dataset.num_frames} frames, cameras {meta.video_keys}")
+    print(f"v3.0 subtasks by frame: {Counter(subtasks)}")
+
+    return subtasks
 
 
 def legacy_episodes(root: Path) -> list[dict]:
@@ -90,7 +121,16 @@ def legacy_episodes(root: Path) -> list[dict]:
     return [json.loads(line) for line in lines if line]
 
 
-def check_legacy(root: Path) -> None:
+def legacy_tasks(root: Path) -> list[str]:
+    lines = (root / "meta/tasks.jsonl").read_text().splitlines()
+    rows = [json.loads(line) for line in lines if line]
+
+    expect([r["task_index"] for r in rows] == list(range(len(rows))), "tasks.jsonl indices")
+
+    return [r["task"] for r in rows]
+
+
+def check_legacy(root: Path, subtasks: list[str]) -> None:
     info = json.loads((root / "meta/info.json").read_text())
     modality = json.loads((root / "meta/modality.json").read_text())
     joints = info["features"]["observation.state"]["shape"][0]
@@ -98,6 +138,10 @@ def check_legacy(root: Path) -> None:
 
     expect(info["codebase_version"] == LEGACY, f"legacy version {info['codebase_version']}")
     expect(max(g["end"] for g in groups) == joints, "state groups don't cover the joints")
+    expect(SUBTASK.removeprefix("annotation.") in modality["annotation"], "modality has no subtask annotation")
+
+    tasks = legacy_tasks(root)
+    read: list[str] = []
 
     for episode in legacy_episodes(root):
         index = episode["episode_index"]
@@ -106,6 +150,7 @@ def check_legacy(root: Path) -> None:
         table = pq.read_table(data)
 
         expect(table.num_rows == episode["length"], f"v2.1 episode {index} rows")
+        read += [tasks[i] for i in table.column(SUBTASK).to_pylist()]
 
         for name, video in modality["video"].items():
             key = video["original_key"]
@@ -114,14 +159,14 @@ def check_legacy(root: Path) -> None:
             expect(key in info["features"], f"modality camera {name}")
             expect(frame_count(path) == episode["length"], f"v2.1 episode {index} {key} frames")
 
-    print(f"v2.1: {info['total_episodes']} episodes read with modality.json")
+    expect(read == subtasks, "v2.1 subtask annotations differ from v3.0 language_persistent")
+    print(f"v2.1: {info['total_episodes']} episodes read with modality.json, subtasks match v3.0")
 
 
 def main() -> None:
     root = Path(sys.argv[1]).resolve()
 
-    check_v3(root)
-    check_legacy(root / LEGACY)
+    check_legacy(root / LEGACY, check_v3(root))
 
 
 if __name__ == "__main__":

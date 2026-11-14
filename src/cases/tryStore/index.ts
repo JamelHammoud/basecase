@@ -4,7 +4,8 @@ import { indexedDbStore } from '../../utils/keyValueStore';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import { summaryOf, type StoredTry, type TrySummary } from '../tryFile';
 import { desktopTries } from './desktopTries';
-import { TRIES_LABEL, type TryBackend } from './types';
+import { TRIES_LABEL, type Relabel, type TryBackend } from './types';
+import type { LabelPatch } from '../tryLabels';
 import { webTries } from './webTries';
 
 export interface KeptTry {
@@ -92,6 +93,29 @@ export async function deleteTries(ids: string[]) {
 }
 
 export const loadRecording = (id: string) => backend.recording(id);
+
+export const loadStoredTry = (id: string) => backend.manifest(id);
+
+function relabelled(summary: TrySummary, patch: LabelPatch): TrySummary {
+  return {
+    ...summary,
+    ...(patch.tags !== undefined ? { tags: patch.tags ?? [] } : {}),
+    ...(patch.mark !== undefined ? { mark: patch.mark ?? null } : {}),
+    ...(patch.judged !== undefined ? { judged: patch.judged?.verdict ?? null } : {}),
+  };
+}
+
+export async function relabelTries(changes: Relabel[]) {
+  if (!changes.length) return;
+
+  await backend.relabel(changes);
+
+  const byId = new Map(changes.map((c) => [c.id, c.patch]));
+
+  await update((tries) => tries.map((t) => (byId.has(t.id) ? relabelled(t, byId.get(t.id)!) : t)));
+}
+
+export type { Relabel };
 
 export const loadStrip = (id: string) => backend.strip(id);
 

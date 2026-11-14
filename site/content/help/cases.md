@@ -1,7 +1,7 @@
 ---
 title: Cases
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: concept
 order: 2
@@ -56,6 +56,8 @@ A Case is written once and runs on any robot that fits its slot. For an arm, Bas
 You take a try by driving the robot through the Case yourself. Basecase records it 50 times a second, along with each change the Case's code makes to the world, then scores the recording with the contract: **Passed** or **Missed**. Results list your tries worst first, each with four frames and a replay.
 
 A wheeled or legged robot can also try a Case for real, on the Case printed as a floor mat. A camera tracks it, and the same contract judges the run. Steps are in [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
+
+Basecase splits each try into segments named from what the robot did, such as grasp the block. You can move, split and rename them, and tag tries. Steps are in [Label the segments of a try](/help/label-the-segments-of-a-try).
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results count them on that try's row.
 

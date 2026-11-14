@@ -1,11 +1,14 @@
 import React, { useRef } from 'react';
 import { Badge } from '../../design-system';
 import { TRY_SOURCE_BADGE, summaryRecord, type TrySummary } from '../../cases/tryFile';
+import { summaryVerdict } from '../../cases/tryRelabels';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import { runClock } from '../../utils/duration';
 import type { PickKeys } from '../../workspace/useTriesView';
 import { useFilmstrip } from '../simulate/useFilmstrip';
+import { FlagMark } from './FlagMark';
+import { kindLines } from './flagLines';
 import { useSeen } from './useSeen';
 import { useStoredStrip } from './useStoredStrip';
 
@@ -22,6 +25,19 @@ export interface TileScene {
 }
 
 const NONE: ScenePart[] = [];
+const SHOWN_TAGS = 3;
+
+const Tags: React.FC<{ tags: string[] }> = ({ tags }) =>
+  tags.length ? (
+    <div className="mt-1 flex flex-wrap gap-1 min-w-0" data-testid="try-tags">
+      {tags.slice(0, SHOWN_TAGS).map((tag) => (
+        <Badge key={tag} className="max-w-full truncate">
+          {tag}
+        </Badge>
+      ))}
+      {tags.length > SHOWN_TAGS && <Badge>+{tags.length - SHOWN_TAGS}</Badge>}
+    </div>
+  ) : null;
 
 interface TryTileProps {
   summary: TrySummary;
@@ -41,7 +57,8 @@ export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPi
     scene?.world ?? NONE,
   );
   const film = useStoredStrip(summary.id, seen && summary.strip) ?? drawn;
-  const outcome = OUTCOME[summary.outcome.verdict];
+  const verdict = summaryVerdict(summary);
+  const outcome = OUTCOME[verdict];
   const badge = TRY_SOURCE_BADGE[summary.source];
 
   return (
@@ -64,11 +81,17 @@ export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPi
         <div className="text-[13px] font-medium text-white/90 truncate">{summary.caseName}</div>
         <div className="flex items-center gap-2 text-[12.5px]">
           {outcome && (
-            <span className={summary.outcome.verdict === 'passed' ? 'text-white/85' : 'text-[#f87171]'}>{outcome}</span>
+            <span data-verdict={verdict} className={verdict === 'passed' ? 'text-white/85' : 'text-[#f87171]'}>
+              {outcome}
+            </span>
           )}
           <span className="text-white/50 tabular">{runClock(summary.seconds)}</span>
           {badge && <Badge>{badge}</Badge>}
+          <span className="ml-auto">
+            <FlagMark lines={kindLines(summary.flags)} />
+          </span>
         </div>
+        <Tags tags={summary.tags} />
       </div>
     </button>
   );

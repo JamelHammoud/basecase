@@ -1,7 +1,7 @@
 ---
 title: Multiply a try into demonstrations
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 5
@@ -31,7 +31,7 @@ Turn one passed try into up to 50 varied passing tries, so a dataset holds many 
 1. Open a Case and record a try that passes. Steps are in [Try a Case](/help/try-a-case).
 2. Under **Results**, right-click the passed try and choose **Multiply**.
 
-![A passed try's menu in Results, with Multiply above Delete](/help/multiply-a-try-into-demonstrations/menu.png)
+![A passed try's menu in Results, with Multiply and Tag… above Delete](/help/multiply-a-try-into-demonstrations/menu.png)
 
 3. Keep working while the toast shows "Multiplying…". To end early and keep what's done, click **Stop** in the toast.
 

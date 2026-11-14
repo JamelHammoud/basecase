@@ -1,7 +1,7 @@
 ---
 title: Try a Case
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 4
@@ -75,7 +75,7 @@ When the robot lacks what the Case needs, point at the row's note and click **Ne
 
 ## Results
 
-After a run, **Results** shows how it went: whether the robot stayed up, and the joints that worked hardest. Tries are listed under it worst first, so the misses to look at are on top. A replay shows what the Case's code moved, lit or hid during the try. To delete a try, right-click it and choose **Delete**, then confirm.
+After a run, **Results** shows how it went: whether the robot stayed up, and the joints that worked hardest. Tries are listed under it worst first, so the misses to look at are on top. A replay shows what the Case's code moved, lit or hid during the try. To delete a try, right-click it and choose **Delete**, then confirm. The same menu has **Tag…**, as [Label the segments of a try](/help/label-the-segments-of-a-try) shows.
 
 A try from your real robot has a **Real** mark. Its **Replay** draws its path over the best sim try's path.
 

@@ -431,7 +431,10 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     liveCase = null;
   },
   watch,
-  input: (msg) => liveCase?.input(msg.name, msg.value),
+  input: (msg) => {
+    recorder?.input(msg.name);
+    liveCase?.input(msg.name, msg.value);
+  },
   world: (msg) => changeWorld(msg.change),
   cameras: (msg) => {
     cameraPort?.close();

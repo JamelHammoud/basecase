@@ -3,7 +3,8 @@ import { ALL_FORMATS, BufferSource, EncodedPacketSink, Input } from 'mediabunny'
 import { strFromU8 } from 'three/examples/jsm/libs/fflate.module.js';
 import { describe, expect, it } from 'vitest';
 import { DATASET_FPS } from './episodes';
-import { AVC_DESCRIPTION, FIXTURE_CAMERAS, fixtureClip, fixtureSpec } from './fixtures';
+import { AVC_DESCRIPTION, FIXTURE_CAMERAS, FIXTURE_INSTRUCTION, fixtureClip, fixtureSpec } from './fixtures';
+import { LANGUAGE_FEATURE, LANGUAGE_KEY, SUBTASK_ANNOTATION, type LanguageRow } from './language';
 import { joinVideos } from './joinVideos';
 import { datasetFiles, LEGACY_FOLDER } from './lerobotExport';
 import { SCAN_KEY } from './lerobotRows';
@@ -23,6 +24,13 @@ async function packetTimes(bytes: Uint8Array) {
   for await (const packet of new EncodedPacketSink(track).packets()) times.push(packet.timestamp);
 
   return times;
+}
+
+function activeSubtask(row: Record<string, unknown>) {
+  const at = Number(row.timestamp);
+  const rows = (row[LANGUAGE_KEY] as LanguageRow[]).filter((r) => r.style === 'subtask' && r.timestamp <= at);
+
+  return rows.reduce((a, b) => (b.timestamp >= a.timestamp ? b : a)).content;
 }
 
 const legacyLines = (files: Files, path: string) =>
@@ -113,7 +121,7 @@ describe('LeRobot v3 datasets beside v2.1', () => {
   });
 
   it('names tasks the way pandas reads them back', async () => {
-    const spec = await fixtureSpec({ tasks: ['Reach the spot.', 'Touch the dot.'] });
+    const spec = await fixtureSpec({ tasks: ['Reach the spot.', 'Touch the dot.'], language: false });
     const files = await datasetFiles(spec);
     const tasks = await rowsOf(files[TASKS_PATH]);
     const pandas = parquetMetadata(files[TASKS_PATH].slice().buffer).key_value_metadata?.find(
@@ -137,14 +145,55 @@ describe('LeRobot v3 datasets beside v2.1', () => {
   });
 });
 
+describe('Subtasks and instructions in LeRobot v3 and v2.1', () => {
+  it('writes each episode’s subtasks into language_persistent, and only in v3.0', async () => {
+    const files = await datasetFiles(await fixtureSpec());
+    const data = await rowsOf(files[v3DataPath(0)]);
+    const legacy = await rowsOf(files[`${LEGACY_FOLDER}/data/chunk-000/episode_000000.parquet`]);
+    const tasks = legacyLines(files, 'meta/tasks.jsonl').map((t) => t.task);
+    const v3Tasks = (await rowsOf(files[TASKS_PATH])).map((t) => t.task);
+    const episode = (i: number) => data.filter((r) => num(r.episode_index) === i);
+
+    expect(text(files, 'meta/info.json').features[LANGUAGE_KEY]).toEqual(LANGUAGE_FEATURE);
+    expect(text(files, `${LEGACY_FOLDER}/meta/info.json`).features).not.toHaveProperty(LANGUAGE_KEY);
+    expect(legacy[0]).not.toHaveProperty(LANGUAGE_KEY);
+    expect(v3Tasks).toEqual(tasks);
+    expect(data[0][LANGUAGE_KEY]).toEqual([
+      { role: 'assistant', content: 'reach point', style: 'subtask', timestamp: 0, camera: null, tool_calls: null },
+      expect.objectContaining({ content: 'Touch the point with the tip.', timestamp: Math.fround(6 / DATASET_FPS) }),
+    ]);
+    expect(activeSubtask(data[5])).toBe('reach point');
+    expect(activeSubtask(data[6])).toBe('Touch the point with the tip.');
+    expect(episode(1).map(activeSubtask)).toEqual([...Array(4).fill('reach point'), ...Array(5).fill('hold')]);
+    expect(episode(2).map((r) => (r[LANGUAGE_KEY] as LanguageRow[]).length)).toEqual(Array(15).fill(1));
+    expect(activeSubtask(episode(2)[0])).toBe(tasks[0]);
+    expect(data.map((r) => tasks[num(r[SUBTASK_ANNOTATION])])).toEqual(data.map(activeSubtask));
+    expect(legacy.map((r) => tasks[num(r[SUBTASK_ANNOTATION])])).toEqual(episode(0).map(activeSubtask));
+  });
+
+  it('names the instruction stored on a try as its episode’s task', async () => {
+    const files = await datasetFiles(await fixtureSpec());
+    const episodes = await rowsOf(files[EPISODES_PATH]);
+    const data = await rowsOf(files[v3DataPath(0)]);
+    const tasks = (await rowsOf(files[TASKS_PATH])).map((t) => t.task);
+
+    expect(episodes.map((e) => e.tasks)).toEqual([
+      ['Touch the point with the end effector.'],
+      [FIXTURE_INSTRUCTION],
+      ['Touch the point with the end effector.'],
+    ]);
+    expect(tasks[num(data.find((r) => num(r.episode_index) === 1)!.task_index)]).toBe(FIXTURE_INSTRUCTION);
+  });
+});
+
 describe('LeRobot v3 files that start over', () => {
   it('rolls data and video over into a second file past the size limit', async () => {
     const spec = await fixtureSpec({ lengths: [40, 40, 40] });
-    const whole = await datasetFiles(spec);
-    const one = (path: string) => (whole[`${LEGACY_FOLDER}/${path}`].byteLength * 2.5) / MEGABYTE;
+    const single = await datasetFiles(await fixtureSpec({ lengths: [40] }));
+    const one = (path: string) => (single[path].byteLength * 2.5) / MEGABYTE;
     const limits = {
-      dataMb: one('data/chunk-000/episode_000000.parquet'),
-      videoMb: one('videos/chunk-000/observation.images.scene/episode_000000.mp4'),
+      dataMb: one(v3DataPath(0)),
+      videoMb: one(`${LEGACY_FOLDER}/videos/chunk-000/observation.images.scene/episode_000000.mp4`),
     };
     const files = await datasetFiles(spec, limits);
     const episodes = await rowsOf(files[EPISODES_PATH]);

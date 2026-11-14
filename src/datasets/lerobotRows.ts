@@ -1,5 +1,6 @@
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { columnStats, DATASET_FPS, type EpisodeData, type FeatureStats, type JointGroup } from './episodes';
+import { LANGUAGE_KEY, languageSchema, SUBTASK_ANNOTATION, subtaskAt, subtaskLanguage, subtasksOf } from './language';
 
 export const TASK_ANNOTATION = 'annotation.human.task_description';
 export const SCAN_KEY = 'observation.scan';
@@ -41,10 +42,16 @@ export interface Widths {
   scan: number;
 }
 
+export interface Step {
+  from: number;
+  task: number;
+}
+
 export interface EpisodeAt {
   episode: number;
   task: number;
   start: number;
+  steps: Step[];
 }
 
 export interface Placed {
@@ -58,7 +65,9 @@ export const scanWidthOf = (spec: Pick<DatasetSpec, 'scans'>) => (spec.scans ?? 
 
 export const widthsOf = (spec: DatasetSpec): Widths => ({ joints: spec.jointNames.length, scan: scanWidthOf(spec) });
 
-export const taskListOf = (spec: DatasetSpec) => [...new Set(spec.episodes.map((e) => e.task))];
+export const taskListOf = (spec: Pick<DatasetSpec, 'episodes'>) => [
+  ...new Set([...spec.episodes.map((e) => e.task), ...spec.episodes.flatMap((e) => subtasksOf(e).map((s) => s.text))]),
+];
 
 export const videoKey = (key: string) => `observation.images.${key}`;
 
@@ -67,7 +76,8 @@ export function placedEpisodes(spec: DatasetSpec): Placed[] {
   let start = 0;
 
   return spec.episodes.map((data, episode) => {
-    const at = { episode, task: tasks.indexOf(data.task), start };
+    const steps = subtasksOf(data).map((s) => ({ from: s.from, task: tasks.indexOf(s.text) }));
+    const at = { episode, task: tasks.indexOf(data.task), start, steps };
 
     start += data.frames.length;
 
@@ -93,10 +103,15 @@ export const scalar = (name: string, type: string): SchemaElement => ({ name, ty
 
 const floatList = (name: string) => listOf(name, { type: 'FLOAT', repetition_type: 'REQUIRED' });
 
-const INT_COLUMNS = ['frame_index', 'episode_index', 'index', 'task_index', TASK_ANNOTATION];
+const INT_COLUMNS = ['frame_index', 'episode_index', 'index', 'task_index', TASK_ANNOTATION, SUBTASK_ANNOTATION];
 
-const schemaOf = (scan: boolean): SchemaElement[] => [
-  { name: 'root', num_children: scan ? 11 : 10 },
+interface Shape {
+  scan: boolean;
+  language: boolean;
+}
+
+const schemaOf = ({ scan, language }: Shape): SchemaElement[] => [
+  { name: 'root', num_children: 5 + INT_COLUMNS.length + Number(scan) + Number(language) },
   ...floatList('observation.state'),
   ...(scan ? floatList(SCAN_KEY) : []),
   ...floatList('action'),
@@ -104,6 +119,7 @@ const schemaOf = (scan: boolean): SchemaElement[] => [
   ...INT_COLUMNS.map((name) => scalar(name, 'INT64')),
   scalar('next.reward', 'FLOAT'),
   scalar('next.done', 'BOOLEAN'),
+  ...(language ? languageSchema() : []),
 ];
 
 function rowsOf(values: Float32Array, width: number): number[][] {
@@ -125,15 +141,27 @@ function intColumns(placed: Placed[]): Record<string, bigint[]> {
     index: ints((p, i) => p.at.start + i),
     task_index: task,
     [TASK_ANNOTATION]: task,
+    [SUBTASK_ANNOTATION]: ints((p, i) => subtaskAt(p.at.steps, i).task),
   };
 }
 
-export function framesParquet(placed: Placed[], widths: Widths): Uint8Array {
+function languageColumn(placed: Placed[]) {
+  return {
+    name: LANGUAGE_KEY,
+    data: placed.flatMap((p) => {
+      const rows = subtaskLanguage(subtasksOf(p.data), p.data.timestamps);
+
+      return Array.from({ length: p.data.frames.length }, () => rows);
+    }),
+  };
+}
+
+export function framesParquet(placed: Placed[], widths: Widths, language = false): Uint8Array {
   const intData = intColumns(placed);
   const withScan = widths.scan > 0 && placed.every((p) => p.data.scan);
   const scan = withScan ? [{ name: SCAN_KEY, data: placed.flatMap((p) => rowsOf(p.data.scan!, widths.scan)) }] : [];
   const buffer = parquetWriteBuffer({
-    schema: schemaOf(withScan) as never,
+    schema: schemaOf({ scan: withScan, language }) as never,
     columnData: [
       { name: 'observation.state', data: placed.flatMap((p) => rowsOf(p.data.state, widths.joints)) },
       ...scan,
@@ -142,6 +170,7 @@ export function framesParquet(placed: Placed[], widths: Widths): Uint8Array {
       ...INT_COLUMNS.map((name) => ({ name, data: intData[name] })),
       { name: 'next.reward', data: Float32Array.from(perFrame(placed, (_, i, n) => (i === n - 1 ? 1 : 0))) },
       { name: 'next.done', data: perFrame(placed, (_, i, n) => i === n - 1) },
+      ...(language ? [languageColumn(placed)] : []),
     ],
   });
 

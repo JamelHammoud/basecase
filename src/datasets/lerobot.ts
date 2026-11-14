@@ -1,4 +1,5 @@
 import { DATASET_FPS } from './episodes';
+import { SUBTASK_ANNOTATION } from './language';
 import {
   basecaseFile,
   episodeStats,
@@ -56,7 +57,9 @@ function modality(spec: DatasetSpec) {
     state: { ...joints, ...(scan ? { scan: { start: 0, end: scan, original_key: SCAN_KEY } } : {}) },
     action: joints,
     video: Object.fromEntries(spec.videos.map((v) => [v.key, { original_key: videoKey(v.key) }])),
-    annotation: { [TASK_ANNOTATION.replace(/^annotation\./, '')]: {} },
+    annotation: Object.fromEntries(
+      [TASK_ANNOTATION, SUBTASK_ANNOTATION].map((k) => [k.replace(/^annotation\./, ''), {}]),
+    ),
   };
 }
 

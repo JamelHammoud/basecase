@@ -137,6 +137,30 @@ describe('TryStore', () => {
     expect(await post('/tries-strip', 'try-1')).toEqual({ data: Buffer.from([9, 9]).toString('base64') });
   });
 
+  it('tags 50 tries in one call, keeps their recordings and lists the tags and marks', async () => {
+    const ids = Array.from({ length: 50 }, (_, i) => `try-${i}`);
+
+    for (const id of ids) store.save({ manifest: manifest(id), recording: new Uint8Array([1]) });
+
+    store.save({ manifest: manifest('try-x', { labels: { tags: ['old'], instruction: 'pick it up' } }) });
+    store.list();
+
+    const changes = [...ids, 'try-x'].map((id) => ({ id, patch: { tags: ['good grip'] } }));
+
+    expect(await TRY_CALLS['tries:relabel'](store, changes)).toEqual({ relabelled: [...ids, 'try-x'] });
+    expect(store.relabel([{ id: 'try-x', patch: { mark: 'failed', instruction: null } }])).toEqual({
+      relabelled: ['try-x'],
+    });
+
+    const listed = Object.fromEntries(store.list().map((s) => [s.id, s]));
+
+    expect(ids.every((id) => listed[id].tags.join() === 'good grip' && listed[id].recording)).toBe(true);
+    expect(listed['try-x']).toMatchObject({ tags: ['good grip'], mark: 'failed', judged: null, flags: [] });
+    expect(store.manifest('try-x').labels).toEqual({ tags: ['good grip'], mark: 'failed' });
+    expect(store.manifest('try-none')).toBeNull();
+    expect(() => store.relabel('try-1')).toThrow('Expected a list of label changes');
+  });
+
   it('never reads, writes or deletes a try outside its own folder', () => {
     const triesDir = path.join(dir, 'tries');
     const secret = path.join(dir, 'auth.json');
@@ -153,6 +177,8 @@ describe('TryStore', () => {
       expect(() => store.strip(id), String(id)).toThrow('Not a valid id');
       expect(() => store.saveStrip({ id, bytes }), String(id)).toThrow('Not a valid id');
       expect(() => store.delete(['ok', id]), String(id)).toThrow('Not a valid id');
+      expect(() => store.manifest(id), String(id)).toThrow('Not a valid id');
+      expect(() => store.relabel([{ id, patch: { tags: ['x'] } }]), String(id)).toThrow('Not a valid id');
     }
 
     expect(() => store.save({ manifest: manifest('ok', '../auth'), recording: bytes })).toThrow('Not a valid id');

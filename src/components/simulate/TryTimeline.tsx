@@ -3,6 +3,9 @@ import { CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-
 import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
 import type { TryTimeline as Timeline } from '../../workspace/useTryTimeline';
 import { runClock } from '../../utils/duration';
+import { FlagMark } from '../tries/FlagMark';
+import { flagLines } from '../tries/flagLines';
+import { SegmentLane } from './SegmentLane';
 import { TimelineLane } from './TimelineLane';
 import { useTimelineKeys } from './useTimelineKeys';
 
@@ -21,6 +24,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
 
   const { frame, frames, dt, lanes } = timeline;
   const markers = timeline.trips.map((t) => t.frame);
+  const jointName = (id: string) => prettyJointName(rig.byId.get(id)?.name ?? id);
 
   return (
     <div
@@ -28,12 +32,13 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
       data-frame={frame}
       className="glass pointer-events-auto w-[min(760px,calc(100%-32px))] rounded-[12px] p-3 flex flex-col gap-2"
     >
+      <SegmentLane timeline={timeline} />
       <div className="max-h-[40vh] overflow-y-auto flex flex-col gap-2">
         {lanes.map((lane) => (
           <TimelineLane
             key={lane.jointId}
             lane={lane}
-            name={prettyJointName(rig.byId.get(lane.jointId)?.name ?? lane.jointId)}
+            name={jointName(lane.jointId)}
             frame={frame}
             markers={markers}
             onSeek={timeline.seek}
@@ -58,6 +63,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
           format={() => runClock((frames - 1) * dt)}
           onChange={(v) => timeline.seek(v)}
         />
+        <FlagMark lines={flagLines(timeline.flags, jointName)} />
         <IconButton
           icon={<CloseIcon className={ic} />}
           title="Close"

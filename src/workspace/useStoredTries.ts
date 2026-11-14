@@ -4,9 +4,12 @@ import { storedTryOf, type TryContext } from '../cases/tryFile';
 import { inStore, moveTries } from '../cases/tryMigration';
 import type { TryRecord } from '../cases/tries';
 import { deleteTries, keepTries, legacyRecordings, useTries } from '../cases/tryStore';
+import { findGripper } from '../cases/gripper';
+import { tryFlags } from '../datasets/tryFlags';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
-import type { ProjectSettings } from '../types/robotics';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { Rig } from '../utils/kinematics';
 import { errorMessage } from '../utils/errorMessage';
 import type { Setter, ShowToast } from './types';
 
@@ -16,6 +19,8 @@ interface StoredTriesOptions {
   sceneId: string;
   cases: Case[];
   sim: Simulation;
+  rig: Rig;
+  parts: ScenePart[];
   showToast: ShowToast;
 }
 
@@ -27,23 +32,40 @@ export interface MadeTry {
 
 const SAFE_ID = /^[\w-]{1,128}$/;
 
-export function useStoredTries({ project, setProject, sceneId, cases, sim, showToast }: StoredTriesOptions) {
+function flagsOf(recording: Recording, { sim, rig, parts }: Pick<StoredTriesOptions, 'sim' | 'rig' | 'parts'>) {
+  const model = sim.model;
+
+  if (!model || recording.nbody < model.bodies.filter((b) => b.parts.length).length) return [];
+
+  const byId = new Map(parts.map((p) => [p.id, p]));
+  const jaws = findGripper(rig, rig.joints, byId)?.jaws.map((j) => j.joint) ?? [];
+  const bodies = model.bodies.flatMap((b, i) => (b.parts.length && !b.world?.length ? [i] : []));
+
+  return tryFlags(recording, { model, bodies, skipJoints: jaws });
+}
+
+export function useStoredTries(options: StoredTriesOptions) {
+  const { project, setProject, sceneId, cases, sim, showToast } = options;
   const catalog = useTries();
   const stored = catalog && new Set(catalog.map((t) => t.id));
   const moving = useRef<string | null>(null);
   const records = project.tries ?? [];
   const needsMove = !!catalog && !project.triesStored && records.length > 0;
 
-  const contextFor = (record: TryRecord, input?: string | null): TryContext => ({
+  const contextFor = (record: TryRecord, input?: string | null, recording?: Recording): TryContext => ({
     sceneId: SAFE_ID.test(sceneId) ? sceneId : 'scene',
     caseName: cases.find((c) => c.id === record.caseId)?.name ?? record.caseId,
     joints: sim.model?.joints.map((j) => j.id) ?? [],
     ...(input !== undefined ? { input } : {}),
+    ...(recording && !record.real ? { flags: flagsOf(recording, options) } : {}),
   });
 
   const keep = (made: MadeTry[]) =>
     keepTries(
-      made.map((m) => ({ stored: storedTryOf(m.record, contextFor(m.record, m.input)), recording: m.recording })),
+      made.map((m) => ({
+        stored: storedTryOf(m.record, contextFor(m.record, m.input, m.recording)),
+        recording: m.recording,
+      })),
     );
 
   const add = (made: TryRecord[]) =>

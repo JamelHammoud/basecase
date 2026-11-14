@@ -9,7 +9,12 @@ import { loadRecording } from '../cases/tryStore';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
+import type { TryFlag } from '../datasets/tryFlags';
 import type { Rig } from '../utils/kinematics';
+import { errorMessage } from '../utils/errorMessage';
+import { openLabels } from './tryOpenLabels';
+import type { ShowToast } from './types';
+import { useSegmentEdits } from './useSegmentEdits';
 import { useTimelinePlayback } from './useTimelinePlayback';
 
 interface TimelineOptions {
@@ -18,6 +23,8 @@ interface TimelineOptions {
   parts: ScenePart[];
   active: Case | null;
   partners: () => SlotRobot[];
+  cases: Case[];
+  showToast: ShowToast;
 }
 
 interface Opened {
@@ -26,6 +33,7 @@ interface Opened {
   efforts: Float32Array[];
   trips: Trip[];
   before: 'off' | 'paused' | 'playing';
+  flags: TryFlag[];
 }
 
 async function tripsOf(options: TimelineOptions, record: TryRecord, recording: Recording): Promise<Trip[]> {
@@ -39,6 +47,24 @@ async function tripsOf(options: TimelineOptions, record: TryRecord, recording: R
 
   return tripFrames(staged.kase.task.contract, trySignals(scoring)).catch(() => []);
 }
+
+function labelsOf(options: TimelineOptions, record: TryRecord, recording: Recording) {
+  const { sim, rig, parts, cases, partners } = options;
+  const model = sim.modelNow();
+
+  if (!model) return null;
+
+  return openLabels(record, recording, { model, rig, parts, joints: rig.joints, cases, partners: partners() });
+}
+
+const openedView = (opened: Opened | null) => ({
+  open: !!opened,
+  record: opened?.record ?? null,
+  recording: opened?.recording ?? null,
+  dt: opened?.recording.dt ?? 0,
+  trips: opened?.trips ?? [],
+  flags: opened?.flags ?? [],
+});
 
 function simBefore(sim: Simulation): Opened['before'] {
   if (sim.status === 'off') return 'off';
@@ -66,6 +92,17 @@ export function useTryTimeline(options: TimelineOptions) {
   const frames = opened?.recording.frames ?? 0;
   const playback = useTimelinePlayback({ frames, dt: opened?.recording.dt ?? 1, seek: sim.seek });
   const lanes = opened && sim.model ? timelineLanes(sim.model, opened.recording, opened.efforts) : [];
+  const failed = (e: unknown) => options.showToast(errorMessage(e), { tone: 'error' });
+  const segments = useSegmentEdits(failed);
+
+  const label = async (ticket: number, record: TryRecord, recording: Recording) => {
+    const labels = await labelsOf(options, record, recording);
+
+    if (!labels || ticket !== opening.current) return;
+
+    segments.reset(record.id, labels.segments);
+    setOpened((o) => (o?.record.id === record.id ? { ...o, flags: labels.flags } : o));
+  };
 
   const show = async (record: TryRecord) => {
     const ticket = ++opening.current;
@@ -86,8 +123,10 @@ export function useTryTimeline(options: TimelineOptions) {
 
     if (ticket !== opening.current) return;
 
-    setOpened({ record, recording, efforts, trips, before: opened?.before ?? before });
+    setOpened({ record, recording, efforts, trips, before: opened?.before ?? before, flags: [] });
+    segments.reset(null);
     playback.jump(trips[0]?.frame ?? 0, recording.frames);
+    label(ticket, record, recording).catch(failed);
   };
 
   const close = () => {
@@ -96,6 +135,7 @@ export function useTryTimeline(options: TimelineOptions) {
     opening.current++;
     playback.stop();
     setOpened(null);
+    segments.reset(null);
     void sim.scrub(null);
 
     if (opened.before === 'off') sim.stop();
@@ -108,16 +148,14 @@ export function useTryTimeline(options: TimelineOptions) {
     opening.current++;
     playback.stop();
     setOpened(null);
+    segments.reset(null);
   });
 
   return {
-    open: !!opened,
-    record: opened?.record ?? null,
-    recording: opened?.recording ?? null,
+    ...openedView(opened),
     frames,
-    dt: opened?.recording.dt ?? 0,
     lanes,
-    trips: opened?.trips ?? [],
+    segments,
     frame: playback.frame,
     playing: playback.playing,
     show,

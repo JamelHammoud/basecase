@@ -2,10 +2,18 @@ export const AMAZON_HOST = /^(?:www\.)?amazon\.com$/i;
 
 export type ShopLinkKind = 'product' | 'search' | 'none';
 
-const onAmazon = (url: string | undefined) => !!url && URL.canParse(url) && AMAZON_HOST.test(new URL(url).hostname);
+function amazonPath(url: string | undefined) {
+  if (!url || !URL.canParse(url)) return null;
+
+  const parsed = new URL(url);
+
+  return AMAZON_HOST.test(parsed.hostname) ? parsed.pathname : null;
+}
 
 export function shopLinkLabel(kind: ShopLinkKind, url?: string) {
-  if (kind === 'search') return 'Find on Amazon';
+  const path = amazonPath(url);
 
-  return onAmazon(url) ? 'Buy on Amazon' : 'Open listing';
+  if (kind === 'search' || path === '/s') return 'Find on Amazon';
+
+  return path === null ? 'Open listing' : 'Buy on Amazon';
 }

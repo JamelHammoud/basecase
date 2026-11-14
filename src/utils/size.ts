@@ -20,6 +20,8 @@ export function lengthLabel(mm: number): string {
   return Math.round(v) < 1000 ? `${lengthFigure(v)} mm` : metres(Math.round(v) / 1000);
 }
 
+export const signedLengthLabel = (mm: number): string => (mm < 0 ? `-${lengthLabel(-mm)}` : lengthLabel(mm));
+
 export const sizeFigures = (mm: readonly number[]): string => mm.map(lengthFigure).join(' × ');
 
 export const sizeLabel = (mm: readonly number[]): string => `${sizeFigures(mm)} mm`;

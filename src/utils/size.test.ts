@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lengthFigure, lengthLabel, sizeFigures, sizeLabel } from './size';
+import { lengthFigure, lengthLabel, signedLengthLabel, sizeFigures, sizeLabel } from './size';
 
 describe('size', () => {
   it('shows tenths of a millimeter under 100 mm, without a trailing zero', () => {
@@ -37,5 +37,11 @@ describe('size', () => {
     expect(lengthLabel(12_345)).toBe('12.3 m');
     expect(lengthLabel(123_456)).toBe('123 m');
     expect(lengthLabel(-3)).toBe('0 mm');
+  });
+
+  it('keeps the sign of a signed length', () => {
+    expect(signedLengthLabel(-12.34)).toBe('-12.3 mm');
+    expect(signedLengthLabel(-1234)).toBe('-1.23 m');
+    expect(signedLengthLabel(845.2)).toBe('845 mm');
   });
 });

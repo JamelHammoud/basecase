@@ -165,7 +165,7 @@ export const routeClearance = (robot: BuilderRobot) =>
 const blockRunUp = (robot: BuilderRobot) =>
   2 * (BLOCK_DEPTH_MM + routeClearance(robot) * 1.2 + robot.footprint.depth + robot.footprint.width);
 
-export const mm = (x: number) => `${Math.round(x)} mm`;
+const setLength = (x: number) => `${Math.round(x)} mm`;
 
 const reachGoal: CaseGoal = {
   kind: 'reach',
@@ -174,7 +174,7 @@ const reachGoal: CaseGoal = {
   params: ['distanceMm', 'radiusMm', 'seconds'],
   plan: (robot, v, _world, [named] = []) => {
     const [x, z] = named ? [named.at[0], named.at[2]] : [robot.pivot[0], robot.pivot[2] + v.distanceMm];
-    const where = named ? named.phrase : `${mm(v.distanceMm)} ahead`;
+    const where = named ? named.phrase : `${setLength(v.distanceMm)} ahead`;
 
     return {
       brief: `Reach the spot ${where} and stop on it.`,
@@ -276,7 +276,7 @@ const pushGoal: CaseGoal = {
     const behind = half + robot.footprint.depth / 2;
 
     return {
-      brief: `Push the box ${mm(v.pushMm)} onto the spot.`,
+      brief: `Push the box ${setLength(v.pushMm)} onto the spot.`,
       slot: groundSlot(robot),
       objects: [
         {
@@ -348,7 +348,7 @@ const walkGoal: CaseGoal = {
   needs: ['legs'],
   params: ['distanceMm', 'seconds'],
   plan: (robot, v) => ({
-    brief: `Walk ${mm(v.distanceMm)} without falling.`,
+    brief: `Walk ${setLength(v.distanceMm)} without falling.`,
     slot: { needs: ['legs'], binding: {} },
     objects: [],
     probes: [{ signal: 'travel', from: 'base', to: { point: robot.pivot } }],
@@ -363,7 +363,7 @@ const walkGoal: CaseGoal = {
     route: routeAlong(robot, robot.pivot[2] + v.distanceMm),
     waypoints: [{ at: [robot.pivot[0], robot.pivot[1], robot.pivot[2] + v.distanceMm * WALK_PAST_SHARE] }],
   }),
-  problem: (_robot, v) => (v.distanceMm < MIN_WALK_MM ? `Walk at least ${mm(MIN_WALK_MM)}.` : null),
+  problem: (_robot, v) => (v.distanceMm < MIN_WALK_MM ? `Walk at least ${setLength(MIN_WALK_MM)}.` : null),
 };
 
 export function fallGuard(robot: BuilderRobot): { probe: CaseProbe; failure: Contract['failures'][number] } {

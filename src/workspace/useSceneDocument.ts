@@ -70,7 +70,6 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
 
   useBooleanResults(doc.parts, docRef, writeDoc);
 
-  const restoreJoints = (joints: RobotJoint[] | undefined) => updateProjectNow((p) => ({ ...p, joints }));
   const tracked = () => trackedOf(projectRef.current);
 
   const settleLiveJoints = (key?: string) => {
@@ -103,7 +102,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
 
     writeDoc(pushHistory(d, parts, now));
 
-    if (nextJoints !== joints) restoreJoints(nextJoints);
+    if (nextJoints !== joints) updateProjectNow((p) => ({ ...p, joints: nextJoints }));
 
     lastPoseEditRef.current = 0;
   };
@@ -156,6 +155,9 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     lastPoseEditRef.current = 0;
   };
 
+  const commitDesign = (parts: ScenePart[], tether: Tether | undefined) =>
+    commitProject({ tether: projectRef.current.tether }, (p) => ({ ...p, tether }), parts);
+
   const commitConsole = (caseId: string, console: CaseConsole | undefined) =>
     commitProject({ consoles: consolesOf(projectRef.current.cases, [caseId]) }, (p) => ({
       ...p,
@@ -192,8 +194,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     commitParts,
     commitMarks,
     commitJoints,
-    commitDesign: (parts: ScenePart[], tether: Tether | undefined) =>
-      commitProject({ tether: projectRef.current.tether }, (p) => ({ ...p, tether }), parts),
+    commitDesign,
     commitProject,
     commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton | undefined) =>
       commitProject({ skeleton: projectRef.current.skeleton }, (p) => ({ ...p, skeleton }), parts),

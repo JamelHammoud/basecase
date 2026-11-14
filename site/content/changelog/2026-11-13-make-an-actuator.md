@@ -12,6 +12,6 @@ The actuator is an ODrive D6374 brushless motor under a reducer of six printed p
 
 It lands on the joint's axis in one undo step. The motor, driver, bearings and screws go on the bill of materials, and the printed parts on plates. The simulation reads its peak torque and its motor's inertia through the gears. The agent's `make_actuator` tool does the same.
 
-The torque is an estimate from the motor's and driver's current limits. We haven't printed the reducer and measured its backlash or efficiency. Every actuator uses the same 890 g motor, so it adds about 1 kg. On the biped, the hips above the knee then fail. The driver and encoder aren't fastened to anything, and the housing needs a bracket to the link above.
+The torque is an estimate from the motor's and driver's current limits. We haven't printed the reducer and measured its backlash or efficiency. Every actuator uses the same 890 g motor, so it adds about 1 kg. On the biped, the hip servo above the knee then fails. The driver and encoder aren't fastened to anything, and the housing needs a bracket to the link above.
 
 Steps are in [Make an actuator for a joint](/help/make-an-actuator).

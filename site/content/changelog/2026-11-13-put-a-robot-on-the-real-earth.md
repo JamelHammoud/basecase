@@ -4,7 +4,7 @@ date: 2026-11-13
 image: /changelog/place-a-robot-on-a-map/cover.png
 ---
 
-You can now draw a real place under the robot from Google's photorealistic 3D tiles. It works in the desktop app, with your own Map Tiles key in Settings ▸ Accounts.
+You can now draw a real place under the robot from Google's photorealistic 3D tiles. It works in the desktop app, with your own Map Tiles key in **Settings** ▸ **Accounts**.
 
 An outdoor rover designed on an empty grid hides what it will meet. The curb, the slope of the drive and the width of the path only show up on the real street.
 

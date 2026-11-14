@@ -49,7 +49,7 @@ Basecase finds the robot's description in the repo or zip, preferring MJCF, and 
 
 ## Insert a robot from the shelf
 
-Parts lists ready robots under **Robots**, by kind: **Humanoids**, **Small bipeds**, **Quadrupeds** and **Arms**, such as the Unitree G1, Go2 and SO-101. Click a kind, then click a robot to insert it, or drag it onto the canvas. To find one by name, type it in **Search parts** and press [[⌘Enter]].
+Parts lists ready robots under **Robots**, by kind: **Humanoids**, **Small bipeds**, **Quadrupeds** and **Arms**, such as the Unitree G1, Go2 and SO-101. Click a kind, then click a robot to insert it, or drag it onto the canvas. To find one by name, type it in **Search parts** and press [[⌘↩]].
 
 ![Parts on its Robots section, with Imported, Humanoids, Small bipeds, Quadrupeds and Arms](/help/import-a-robot/robots.png)
 

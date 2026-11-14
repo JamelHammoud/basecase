@@ -3,7 +3,7 @@ import { useAgentSession } from './useAgentSession';
 import { useCanvasDrop } from './useCanvasDrop';
 import { useCanvasMenu } from './useCanvasMenu';
 import { useClipboard } from './useClipboard';
-import { useDevStudioHook } from './useDevStudioHook';
+import { useDevStudioHook } from './devStudio/useDevStudioHook';
 import { useGuideAutoUpdate } from './useGuideAutoUpdate';
 import { useMenuCommands } from './useMenuCommands';
 import { useRobotGhost } from './useRobotGhost';

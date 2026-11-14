@@ -56,7 +56,7 @@ To judge your real wheeled or legged robot on a printed mat, click **Try on Real
 
 ## Whether the robot can do it
 
-The icon beside the Case's name is its row in **Build ▸ Checks**. Hover it for how many of 20 runs passed. Click it to open the row.
+The icon beside the Case's name is its row in **Build** ▸ **Checks**. Hover it for how many of 20 runs passed. Click it to open the row.
 
 ![The Simulate tab with Touch the Dots open and its Checks icon beside the name](/help/try-a-case/case.png)
 

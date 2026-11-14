@@ -51,9 +51,14 @@ export const GLOSSARY = [
   { word: 'Update', action: 'Make an out-of-date build guide again', synonyms: ['regenerate'] },
 ];
 
+const synonymPattern = (source) => new RegExp(`^(?:${source})\\b`, 'i');
+
+export const glossaryWord = (text) =>
+  GLOSSARY.find(({ synonyms }) => synonyms.some((source) => synonymPattern(source).test(text)))?.word ?? null;
+
 export const GLOSSARY_COPY = GLOSSARY.flatMap(({ word, action, synonyms }) =>
   synonyms.map((source) => ({
-    pattern: new RegExp(`^(?:${source})\\b`, 'i'),
+    pattern: synonymPattern(source),
     fix: `Say “${word}”: ${action[0].toLowerCase()}${action.slice(1)}.`,
     section: '§3b-17',
   })),

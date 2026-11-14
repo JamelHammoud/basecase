@@ -2,8 +2,6 @@ import type { Command } from '../components/CommandPalette';
 import { RunIcon, StopIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 
-const ic = 'w-4 h-4';
-
 export function simCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
   const { sim } = simTraining;
@@ -16,7 +14,7 @@ export function simCommands({ core }: CommandInputs): Command[] {
         id: 'sim-start',
         group: 'Simulate',
         label: 'Simulate',
-        icon: <RunIcon className={ic} />,
+        icon: <RunIcon />,
         keywords: 'mujoco physics start play sim',
         run: () => {
           tool.openRightTab('sim');
@@ -30,7 +28,7 @@ export function simCommands({ core }: CommandInputs): Command[] {
       id: 'sim-stop',
       group: 'Simulate',
       label: 'Stop Simulation',
-      icon: <StopIcon className={ic} />,
+      icon: <StopIcon />,
       keywords: 'mujoco physics end sim',
       run: sim.stop,
     },

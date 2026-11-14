@@ -45,7 +45,7 @@ afterAll(async () => {
 });
 
 describe('Size Arm to Targets', () => {
-  it('sizes an arm to three reference spheres and undoes it in one step', async () => {
+  it('sizes an arm to three reference spheres from Enter in Payload and undoes it in one step', async () => {
     const base = (await record()).project;
     const parts = SPHERES.map(({ id, at }) =>
       specToPart({ id, name: id, shape: 'sphere', size: [20, 20, 20], position: at, role: 'reference' }),
@@ -63,9 +63,8 @@ describe('Size Arm to Targets', () => {
     const sheet = app.page.locator(shown('[role="dialog"][aria-label="Size Arm to Targets"]'));
 
     await expect.poll(() => sheet.locator('[data-arm-target]').count()).toBe(3);
-    await sheet.getByLabel('Payload').fill('200');
+    await sheet.getByLabel('Payload').fill('250');
     await sheet.getByLabel('Payload').press('Enter');
-    await sheet.getByRole('button', { name: 'Size Arm' }).click();
     await expect.poll(async () => (await record()).project.skeleton?.joints.length ?? 0).toBe(4);
 
     const { project } = await record();
@@ -74,7 +73,7 @@ describe('Size Arm to Targets', () => {
     const servos = lines.filter((l) => /sts3215|sts3250|st3215/.test(l.key));
 
     expect(servos.reduce((n, l) => n + l.qty, 0)).toBe(skeleton.joints.length);
-    expect(skeleton.joints.at(-1)?.payloadG).toBe(200);
+    expect(skeleton.joints.at(-1)?.payloadG).toBe(250);
 
     for (const s of SPHERES) expect(bestReach(skeleton, s.at), s.id).toBeLessThanOrEqual(REACH_MM);
 

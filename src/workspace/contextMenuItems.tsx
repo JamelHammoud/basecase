@@ -43,8 +43,6 @@ export interface ContextInputs {
   ui: WorkspaceUi;
 }
 
-const ic = 'w-3.5 h-3.5';
-
 const ROLE_ENTRIES: Array<{ label: string; role: PartRole }> = [
   { label: 'Solid', role: 'solid' },
   { label: 'Cutout', role: 'cutout' },
@@ -65,7 +63,7 @@ function sharedEntries(inputs: ContextInputs) {
   return {
     align: {
       label: 'Align',
-      icon: <AlignCenterXIcon className={ic} />,
+      icon: <AlignCenterXIcon />,
       submenu: (close: () => void) => (
         <AlignBar
           count={Math.max(1, core.selectedIds.length)}
@@ -102,7 +100,7 @@ function onshapeItems({ actions }: ContextInputs, target: OnshapeTarget | null):
   return [
     {
       label: 'Update from Onshape',
-      icon: <RefreshIcon className={ic} />,
+      icon: <RefreshIcon />,
       onSelect: () => void actions.onshape.update(target.group.id),
     },
   ];
@@ -122,7 +120,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     menuEntry(act.union),
     {
       label: `Subtract from ${selectedParts[0]?.name ?? 'First'}`,
-      icon: <SubtractIcon className={ic} />,
+      icon: <SubtractIcon />,
       onSelect: () => ops.runBoolean('subtract'),
     },
     menuEntry(act.intersect),
@@ -205,7 +203,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     { divider: true },
     {
       label: 'Subtract Overlapping Cutouts',
-      icon: <SubtractIcon className={ic} />,
+      icon: <SubtractIcon />,
       onSelect: () => ops.runBoolean('subtract'),
     },
     ...(part.group
@@ -213,7 +211,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
           {
             label: `Ungroup ${part.group.name}`,
             shortcut: keyFor('ungroup'),
-            icon: <UngroupIcon className={ic} />,
+            icon: <UngroupIcon />,
             onSelect: edits.ungroup,
           },
         ]
@@ -234,28 +232,28 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     {
       label: 'Add Part',
       shortcut: keyFor('palette'),
-      icon: <PlusIcon className={ic} />,
+      icon: <PlusIcon />,
       onSelect: () => ui.setPaletteOpen(true),
     },
     ...commentHere,
     {
       label: 'Add Reference Image',
-      icon: <PhotoIcon className={ic} />,
+      icon: <PhotoIcon />,
       onSelect: () => actions.creation.pickReferenceImage(menu.point),
     },
-    { label: 'Sketch', icon: <PenIcon className={ic} />, onSelect: core.sketching.open },
+    { label: 'Sketch', icon: <PenIcon />, onSelect: core.sketching.open },
     {
       label: 'Annotate',
       shortcut: keyFor('annotate'),
-      icon: <MarkerIcon className={ic} />,
+      icon: <MarkerIcon />,
       onSelect: () => tool.toggleMarking(true),
     },
     ...(core.marks.marks.length
-      ? [{ label: 'Delete Marks', icon: <DeleteIcon className={ic} />, onSelect: core.marks.deleteAll }]
+      ? [{ label: 'Delete Marks', icon: <DeleteIcon />, onSelect: core.marks.deleteAll }]
       : []),
     {
       label: 'Import',
-      icon: <FileImportIcon className={ic} />,
+      icon: <FileImportIcon />,
       onSelect: () => void actions.files.pickImports(menu.point),
     },
     { divider: true },
@@ -264,18 +262,18 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     ...CAMERA_VIEWS.map((v) => ({
       label: `${v.label} View`,
       shortcut: keyFor(`view:${v.id}`),
-      icon: <ShapeIcon className={ic} />,
+      icon: <ShapeIcon />,
       onSelect: () => ui.setCameraView(v.id),
     })),
     menuEntry(selectionActions(inputs).resetView),
-    { label: 'Add Camera View', icon: <CameraAddIcon className={ic} />, onSelect: actions.cameras.add },
+    { label: 'Add Camera View', icon: <CameraAddIcon />, onSelect: actions.cameras.add },
     ...earthMenuItems(actions.earth),
     ...(sceneHasCameraViews(inputs)
       ? [
           {
             label: cameraViewsToggleLabel(),
             shortcut: keyFor('toggle-camera-views'),
-            icon: <CameraIcon className={ic} />,
+            icon: <CameraIcon />,
             onSelect: toggleCameraViews,
           },
         ]
@@ -286,7 +284,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     { divider: true },
     {
       label: 'Export STL',
-      icon: <DownloadIcon className={ic} />,
+      icon: <DownloadIcon />,
       disabled: core.parts.length === 0,
       onSelect: actions.exports.exportStl,
     },
@@ -303,13 +301,13 @@ export function contextMenuItems(menu: CanvasMenuState, inputs: ContextInputs): 
         {
           label: 'Comment Here',
           shortcut: keyFor('comment'),
-          icon: <CommentIcon className={ic} />,
+          icon: <CommentIcon />,
           onSelect: () => core.annotations.place(point, menu.partId),
         },
         {
           label: 'Measure from Here',
           shortcut: keyFor('measure'),
-          icon: <RulerIcon className={ic} />,
+          icon: <RulerIcon />,
           onSelect: () => {
             core.viewportRef.current?.measureFrom(menu.x, menu.y);
             core.tool.toggleMeasure(true);

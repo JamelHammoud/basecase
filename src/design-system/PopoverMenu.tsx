@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { behindModal } from './behindModal';
 import { Kbd } from './Kbd';
 import { Divider } from './Divider';
-import { MenuGutterPad, MenuGutterScope, useMenuGutter } from './menuGutter';
+import { MenuGutterPad, MenuGutterScope, MenuIconSlot, useMenuGutter } from './menuGutter';
 
 export interface PopoverMenuProps {
   isOpen: boolean;
@@ -240,7 +240,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
       {checked !== undefined && (
         <span className="w-4 shrink-0 flex justify-center">{checked && <TickIcon className="w-3.5 h-3.5" />}</span>
       )}
-      {icon && <span className={`w-4 shrink-0 flex justify-center ${iconToneClass(tone)}`}>{icon}</span>}
+      {icon && <MenuIconSlot className={iconToneClass(tone)}>{icon}</MenuIconSlot>}
       {padded && <MenuGutterPad />}
       <span className="flex-1 truncate">{label}</span>
       {detail && (

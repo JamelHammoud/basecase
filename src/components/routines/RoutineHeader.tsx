@@ -81,6 +81,7 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
           <MenuDivider />
           <MenuItem icon={<PlusIcon />} label="New Routine" onSelect={closing(store.create)} />
           <MenuItem {...renameEntry(closing(() => setRenaming(true)))} />
+          <MenuDivider />
           <MenuItem {...deleteEntry(closing(remove))} />
         </PopoverMenu>
       </div>

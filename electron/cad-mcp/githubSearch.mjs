@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from './shared.mjs';
+import { bigFigures } from '../bigCount.mjs';
 
 const IGNORED_REPO_WORDS = ['description', 'urdf', 'model', 'robot', 'ros', 'mjcf', 'assets'];
 
@@ -70,7 +71,7 @@ async function repoLines(repo, words) {
   files.sort((x, y) => score(y) - score(x));
 
   return [
-    `${repo.full_name} (★${repo.stargazers_count}): ${repo.description ?? ''}`.slice(0, 200),
+    `${repo.full_name} (★${bigFigures(repo.stargazers_count)}): ${repo.description ?? ''}`.slice(0, 200),
     ...files
       .slice(0, 6)
       .map((f) => `  https://raw.githubusercontent.com/${repo.full_name}/${repo.default_branch}/${f}`),

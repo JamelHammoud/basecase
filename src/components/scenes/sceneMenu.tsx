@@ -14,5 +14,5 @@ export function sceneMenu(o: SceneMenuOptions): ContextMenuEntry[] {
     ? []
     : [{ label: 'Open', icon: <ExternalLinkIcon />, onSelect: o.onOpen }];
 
-  return [...open, renameEntry(o.onRename), duplicateEntry(o.onDuplicate), { divider: true }, deleteEntry(o.onDelete)];
+  return [...open, renameEntry(o.onRename), duplicateEntry(o.onDuplicate), deleteEntry(o.onDelete)];
 }

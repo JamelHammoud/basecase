@@ -24,6 +24,7 @@ covers:
   - src/cases/tries.ts
   - src/cases/tryStore.ts
   - src/cases/caseBuilder.ts
+  - src/cases/gestures.ts
   - src/cases/terrain.ts
   - src/components/cases/CasesPanel.tsx
 ---
@@ -41,6 +42,7 @@ A robot that stands in the simulation tells you little about whether it can reac
 - **A contract.** The rules that judge a try: what must happen to pass, and what makes it fail, such as a fall.
 - **A time limit.** How long a try may take.
 - **A console**, if it has one. The inputs that drive it and the panels around the canvas when you [run it](/help/run-a-case).
+- **Gestures**, if you taught it any: movements it reacts to at the camera, as in [Teach a robot a gesture](/help/teach-a-robot-a-gesture).
 
 Every Case also carries a reference: a route that proves the Case can be passed. [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts) lists each goal and exactly how it's judged.
 

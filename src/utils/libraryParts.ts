@@ -1,5 +1,11 @@
 import { CustomModelDefinition, ScenePart } from '../types/robotics';
 
+const APP_WRITTEN =
+  /^(Saved from (scene \([\w-]+\)|\d+ parts?)|3D model generated via ACP from reference image \(.*\))\.?$/;
+
+export const modelNote = (model: CustomModelDefinition) =>
+  APP_WRITTEN.test(model.description) ? '' : model.description || '';
+
 export const isSceneModel = (model: CustomModelDefinition) =>
   model.nodes.length > 0 &&
   model.nodes.every((n) => n.part || (model.sourceType === 'scene-selection' && n.nodeType === 'primitive'));
@@ -23,7 +29,7 @@ export function modelToParts(
           rotation: [0, 0, 0],
           dimensions: { ...model.defaultDimensions },
           color: model.defaultColor,
-          note: model.description || '',
+          note: modelNote(model),
           mechanicalTag: model.mechanicalTag || '3D Printed PLA/PETG',
           visible: true,
           locked: false,

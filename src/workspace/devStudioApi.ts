@@ -14,9 +14,11 @@ import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
 import { degrees } from '../robot/robotGhost';
 import { phoneSnapshot } from '../phone/phoneStore';
+import { inputEvents } from '../sim/inputEvents';
 import {
   feedOperatorPose,
   operatorCameraSnapshot,
+  operatorFeeding,
   operatorLatency,
   operatorTrackState,
 } from '../cameras/operator/operatorCamera';
@@ -202,6 +204,7 @@ function operatorCameraState() {
     estimator,
     error,
     latency: operatorLatency(),
+    feeding: operatorFeeding(),
   };
 }
 
@@ -294,6 +297,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     phone: () => phoneSnapshot(),
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
+    inputEvents: () => inputEvents().map(({ name, value }) => ({ name, value })),
     operatorCamera: () => operatorCameraState(),
     cameraStreams: () => ({ ...streamCost }),
     stubTabEngine,

@@ -28,7 +28,7 @@ Whoever opens the link sees the robot in its Case's world with the Case's name a
 
 ![A shared rover open in the browser, with Drive and Open Scene](/help/share-a-robot-as-a-link/browser.png)
 
-A Case with its own console opens the way **Run Case** shows it in the studio, as set up in [Run a Case](/help/run-a-case). Its panels sit around the robot, its code panels work, and the Case card heads the last column. Camera panels, the servos table and the tries list stay in the studio, and the page can't start a try. Code panels can move the Case's movable objects on the page. They get no camera frames there. Open Scene opens the same Case, so **Run Case** in the studio shows the same app.
+A Case with its own console opens the way **Run Case** shows it in the studio, as set up in [Run a Case](/help/run-a-case). Its panels sit around the robot, its code panels work, and the Case card heads the last column. Camera panels, the servos table and the tries list stay in the studio, and the page can't start a try. Code panels can move the Case's movable objects on the page. They get no camera frames there, so a gesture never presses a button on the page. Open Scene opens the same Case, so **Run Case** in the studio shows the same app.
 
 ![A shared rover Case in the browser: speed and tilt over the robot, and Stop Driving, Open Scene and a joystick on the right](/help/share-a-robot-as-a-link/app.png)
 

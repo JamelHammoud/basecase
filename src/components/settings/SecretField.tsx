@@ -10,7 +10,7 @@ interface SecretFieldProps {
   error?: string | null;
 }
 
-export const SecretField: React.FC<SecretFieldProps> = ({ label, saved, onSecret, savedHint = 'Saved', error }) => {
+export const SecretField: React.FC<SecretFieldProps> = ({ label, saved, onSecret, savedHint, error }) => {
   const [draft, setDraft] = useState('');
   const quiet = saved && !draft ? savedHint : undefined;
 

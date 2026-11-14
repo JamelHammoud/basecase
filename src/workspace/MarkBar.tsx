@@ -1,9 +1,9 @@
 import type React from 'react';
 import {
-  Button,
   FloatingIsland,
   IconButton,
   IslandDivider,
+  IslandDone,
   DeleteIcon,
   EraserIcon,
   MarkerIcon,
@@ -87,18 +87,7 @@ export function MarkBar({ marks, onDone }: MarkBarProps) {
           <MarkActions marks={marks} />
         </>
       )}
-      <IslandDivider />
-      <Button
-        size="sm"
-        variant="ghost"
-        className="rounded-full"
-        onClick={onDone}
-        title="Done"
-        shortcut="Esc"
-        tooltipSide="top"
-      >
-        Done
-      </Button>
+      <IslandDone onDone={onDone} className="rounded-full" />
     </FloatingIsland>
   );
 }

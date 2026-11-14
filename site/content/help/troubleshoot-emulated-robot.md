@@ -28,11 +28,11 @@ covers:
   - electron/robot/robotLink.mjs
 ---
 
-If Operate won't let you climb a rung, or the emulated robot stops, find the message or missing button below.
+If Operate won't let you climb a rung, or the emulated robot stops, look for the message you see or the button you can't find.
 
 ## Connect Emulated Robot is missing
 
-Operate needs a joint that moves. If the scene has none, Operate shows "No robot." If it has more than 32 moving joints, Operate shows nothing to connect.
+To show **Connect Emulated Robot**, Operate needs at least one moving joint and no more than 32. If the scene has no moving joints, Operate shows "No robot." If it has more than 32, Operate shows nothing to connect.
 
 **Note:** Operate isn't available in the browser version of Basecase.
 
@@ -44,7 +44,7 @@ To add a robot to the scene:
 
 ## "This copy of Basecase can’t run robots"
 
-Your copy of Basecase is missing the part that runs robots, so Connect can't start.
+Your copy of Basecase is missing the part that runs robots, so Connect can't start. Install Basecase again:
 
 1. Quit Basecase.
 2. Download Basecase again from [Install Basecase](/help/install-basecase), and replace the copy you have.
@@ -52,12 +52,12 @@ Your copy of Basecase is missing the part that runs robots, so Connect can't sta
 
 ## "Load a policy first"
 
-**Rehearse** and every rung above it need a trained policy. You'll see this message if the scene in front has no policy the robot can take.
+**Rehearse** and every rung above it need a trained policy. This message means the scene in front has no policy the robot can take.
 
 Basecase gives the robot the newest skill that's ready, or the newest policy that's up to date. It skips:
 
 - Policies marked **Out of date**. To fix one, see [Retrain an out-of-date policy](/help/retrain-an-out-of-date-policy).
-- Skills that replay an animation. These have no policy to give the robot.
+- Skills that replay an animation, because they have no policy to give the robot.
 
 To train a policy:
 
@@ -67,7 +67,7 @@ To train a policy:
 
 ## "A fault is still active"
 
-When a fault stops the motors, the daemon shows "A fault is still active. Go back to Look and clear it first." The fault stays until you clear it.
+A fault stops the motors and stays active until you clear it. While it's active, the daemon shows "A fault is still active. Go back to Look and clear it first."
 
 1. Read the fault shown under the servo count, and fix the problem it names.
 2. Click **Look** under **Ladder**.
@@ -75,16 +75,16 @@ When a fault stops the motors, the daemon shows "A fault is still active. Go bac
 4. Click **Set Up**.
 5. Click **Test**.
 
-From the moment of the fault until you climb the ladder again, the simulation sends the robot no commands.
+The simulation sends the robot no commands from the moment of the fault until you climb the ladder again.
 
-If the robot is an arm, you can click **Replay in Sim** under the fault to play the 20 seconds before it in the simulation. Learn how to [replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation).
+If the robot is an arm, you can click **Replay in Sim** under the fault to play the 20 seconds before the fault in the simulation. Learn how to [replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation).
 
 ## "The app stopped talking to the robot"
 
-The full message is "The app stopped talking to the robot, so the robot is holding still." The app checks in with the robot daemon every 100 ms. You'll see this message when it misses a check-in, which can happen when the computer is under heavy load or goes to sleep.
+The full message is "The app stopped talking to the robot, so the robot is holding still." The app checks in with the robot daemon every 100 ms and shows this message when it misses a check-in. The app can miss a check-in if your computer is under heavy load or goes to sleep.
 
 1. Click **Look** under **Ladder**.
-2. If **Clear Fault** shows, click it.
+2. If you see **Clear Fault**, click it.
 3. Click **Set Up**.
 4. Click **Test**.
 

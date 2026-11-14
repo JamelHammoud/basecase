@@ -3,10 +3,10 @@ import { fromFeetInches, heightsInFeet, toFeetInches } from '../three/viewport/m
 import type { FigurePlacements, MeasureKind } from '../three/viewport/types';
 import type { MeasureUnit } from '../types/robotics';
 import {
-  Button,
   FloatingIsland,
   IconButton,
   IslandDivider,
+  IslandDone,
   NumberInput,
   DogIcon,
   HumanIcon,
@@ -113,9 +113,6 @@ export const MeasureToolbar: React.FC<MeasureToolbarProps> = ({
         <HeightField heightMm={humanHeightMm} unit={unit} onChange={onHumanHeight} />
       </>
     )}
-    <IslandDivider />
-    <Button size="sm" variant="ghost" onClick={onDone} title="Done" shortcut="Esc" tooltipSide="top">
-      Done
-    </Button>
+    <IslandDone onDone={onDone} />
   </FloatingIsland>
 );

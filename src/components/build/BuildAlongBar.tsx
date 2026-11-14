@@ -3,10 +3,9 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CircleCheckIcon,
-  CloseIcon,
   FloatingIsland,
   IconButton,
-  IslandDivider,
+  IslandDone,
   Spinner,
 } from '../../design-system';
 import type { BuildAlong } from '../../workspace/useBuildAlong';
@@ -68,15 +67,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
             />
           </>
         )}
-        <IslandDivider />
-        <IconButton
-          size="sm"
-          title="Close"
-          shortcut="Esc"
-          tooltipSide="bottom"
-          icon={<CloseIcon className="w-4 h-4" />}
-          onClick={buildAlong.close}
-        />
+        <IslandDone onDone={buildAlong.close} tooltipSide="bottom" />
       </FloatingIsland>
       {!!step?.callout.length && (
         <ul className="flex flex-wrap justify-center gap-2 max-w-[720px]">

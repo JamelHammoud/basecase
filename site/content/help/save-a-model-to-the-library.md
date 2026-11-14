@@ -36,11 +36,11 @@ You can save a part or a group of parts to the Library, then add it to any scene
 
 ![The New Model menu open at the top right of the Library](/help/save-a-model-to-the-library/new-model-menu.png)
 
-When you save one part, the model gets that part's name and its **Notes**. When you save several parts, the model gets the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
+If you save one part, the model uses that part's name and its **Notes**. If you save several parts, the model uses the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
 
 You can also choose **Save to Library** from a part's right-click menu, or from [[⌘K]].
 
-To bring in a file, choose **Import** from the **+** menu. An SVG file opens in Import SVG. Click **Add** there to [turn it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). To save an SVG part to the Library, click **Save to Library** (the bookmark) in the part's Inspector header.
+To bring in a file, choose **Import** from the **+** menu. SVG files open in Import SVG. Click **Add** there to [turn the drawing into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). To save an SVG part to the Library, click **Save to Library** (the bookmark) in the part's Inspector header.
 
 ![The Import SVG panel with a drawing loaded and one Add button under Output](/help/save-a-model-to-the-library/import-svg.png)
 
@@ -48,7 +48,7 @@ To bring in a file, choose **Import** from the **+** menu. An SVG file opens in 
 
 1. Open the scene you want the model in.
 2. Click **Library** in the view rail.
-3. Click the model, or drag it onto the canvas where you want it. The model appears in the scene and is selected.
+3. Click the model, or drag it onto the canvas where you want it. Basecase adds the model to the scene and selects it.
 
 Hold your pointer over a model to see where it came from, its size, how many parts it has, and its notes.
 
@@ -56,4 +56,4 @@ Hold your pointer over a model to see where it came from, its size, how many par
 
 **Search library** finds models by name or notes. It also finds tries by Case or task, robot, label, or the file or repo they came from.
 
-To rename, duplicate, or delete a model, right-click it. Basecase asks before it deletes a model.
+To rename, duplicate, or delete a model, right-click it. Basecase asks you to confirm before it deletes a model.

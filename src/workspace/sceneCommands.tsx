@@ -61,7 +61,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
   };
 
   return [
-    ...(exports.canExportParts ? [export3mf] : []),
+    ...(exports.canExportPlates ? [export3mf] : []),
     {
       id: 'lay-out-plates',
       group: 'Scene',

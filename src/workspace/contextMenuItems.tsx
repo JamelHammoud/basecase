@@ -24,6 +24,7 @@ import { partTarget, selectedTarget, type OnshapeTarget } from '../onshape/onsha
 import { earthMenuItems, mapShownItem } from './earthCommands';
 import type { ContextMenuEntry } from '../design-system';
 import type { PartRole, ScenePart } from '../types/robotics';
+import { makesClearanceHole } from '../utils/hardwareCutouts';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CanvasMenuState } from './useCanvasMenu';
 import { handJointMenuItems } from './jointCommands';
@@ -137,7 +138,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
       onSelect: () => edits.setSelectedRoles(role),
     })),
     { divider: true },
-    ...(selectedParts.some((p) => p.hardware) ? [menuEntry(act.clearanceHole)] : []),
+    ...(selectedParts.some(makesClearanceHole) ? [menuEntry(act.clearanceHole)] : []),
     menuEntry(act.group),
     ...(selectedParts.some((p) => p.group) ? [menuEntry(act.ungroup)] : []),
     ...onshapeItems(inputs, selectedTarget(core.parts, core.selectedIds)),
@@ -177,7 +178,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
   return [
     { heading: part.name, onSelect: () => copyPartName(inputs, part.name) },
     ...faultItems(inputs, part),
-    ...(part.hardware ? [menuEntry(act.clearanceHole)] : []),
+    ...(makesClearanceHole(part) ? [menuEntry(act.clearanceHole)] : []),
     ...shared.rename,
     shared.duplicate,
     shared.mirror,
@@ -283,7 +284,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     {
       label: 'Export STL',
       icon: <DownloadIcon />,
-      disabled: core.parts.length === 0,
+      disabled: !actions.exports.canExportParts,
       onSelect: actions.exports.exportStl,
     },
   ];

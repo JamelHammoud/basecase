@@ -17,6 +17,7 @@ import { SHARE_LABEL } from '../utils/os';
 
 interface ExportMenuProps {
   canExportParts: boolean;
+  canExportPlates: boolean;
   canExportStep: boolean;
   canExportRobot: boolean;
   onExportImage: () => void;
@@ -31,6 +32,7 @@ interface ExportMenuProps {
 
 export const ExportMenu: React.FC<ExportMenuProps> = ({
   canExportParts,
+  canExportPlates,
   canExportStep,
   canExportRobot,
   onExportImage,
@@ -64,7 +66,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       >
         <MenuItem icon={<PhotoIcon />} label="Image" onSelect={run(onExportImage)} />
         <MenuItem icon={<DownloadIcon />} label="STL" disabled={!canExportParts} onSelect={run(onExportStl)} />
-        <MenuItem icon={<PrinterIcon />} label="3MF Plates" disabled={!canExportParts} onSelect={run(onExport3mf)} />
+        <MenuItem icon={<PrinterIcon />} label="3MF Plates" disabled={!canExportPlates} onSelect={run(onExport3mf)} />
         {onExportStep && (
           <MenuItem icon={<ShapeIcon />} label="STEP" disabled={!canExportStep} onSelect={run(onExportStep)} />
         )}

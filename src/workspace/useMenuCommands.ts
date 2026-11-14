@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent } from 'react';
 import type { CameraPreset, TrackpadGestureMode } from '../types/robotics';
 import { platformBridge, type AppMenuState } from '../utils/platformBridge';
+import { isExportedSolid } from './exportable';
 import { isTextEntry } from './helpers';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -53,6 +54,7 @@ function useMenuState({ active, core }: Pick<MenuOptions, 'active' | 'core'>) {
   const { isLeftOpen, isRightOpen, showGrid, showReferenceImages, trackpadMode } = studio;
   const hasSelection = selectedIds.length > 0;
   const hasParts = parts.length > 0;
+  const hasSolids = parts.some(isExportedSolid);
 
   useEffect(() => {
     if (!active) return;
@@ -65,8 +67,9 @@ function useMenuState({ active, core }: Pick<MenuOptions, 'active' | 'core'>) {
       trackpadMode,
       hasSelection,
       hasParts,
+      hasSolids,
     } satisfies Partial<AppMenuState>);
-  }, [active, isLeftOpen, isRightOpen, showGrid, showReferenceImages, trackpadMode, hasSelection, hasParts]);
+  }, [active, isLeftOpen, isRightOpen, showGrid, showReferenceImages, trackpadMode, hasSelection, hasParts, hasSolids]);
 }
 
 export function useMenuCommands({ active, core, actions, ui }: MenuOptions) {

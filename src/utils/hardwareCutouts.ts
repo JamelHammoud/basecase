@@ -160,6 +160,8 @@ function localCutouts(spec: HardwareSpec): LocalCutout[] {
   });
 }
 
+export const makesClearanceHole = (part: ScenePart) => !!part.hardware && localCutouts(part.hardware).length > 0;
+
 export function hardwareCutoutParts(part: ScenePart, newId: () => string): ScenePart[] {
   if (!part.hardware) return [];
 

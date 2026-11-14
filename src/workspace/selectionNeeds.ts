@@ -1,10 +1,11 @@
 import { ALIGN_AXES } from '../components/alignActions';
 import type { ScenePart } from '../types/robotics';
+import { makesClearanceHole } from '../utils/hardwareCutouts';
 
 export interface SelectionFacts {
   selected: number;
   grouped: boolean;
-  hardware: boolean;
+  holes: boolean;
   parts: number;
 }
 
@@ -21,7 +22,7 @@ const NEEDS = new Map<string, Need>([
   ['duplicate', atLeast(1)],
   ['save-to-library', atLeast(1)],
   ['delete', atLeast(1)],
-  ['clearance-hole', (facts) => facts.hardware],
+  ['clearance-hole', (facts) => facts.holes],
   ['cut', atLeast(1)],
   ['mirror', atLeast(1)],
   ['group', atLeast(2)],
@@ -42,7 +43,7 @@ const NEEDS = new Map<string, Need>([
 export const selectionFacts = (selected: ScenePart[], parts: ScenePart[]): SelectionFacts => ({
   selected: selected.length,
   grouped: selected.some((p) => !!p.group),
-  hardware: selected.some((p) => !!p.hardware),
+  holes: selected.some(makesClearanceHole),
   parts: parts.length,
 });
 

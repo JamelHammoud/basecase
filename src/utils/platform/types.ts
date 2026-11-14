@@ -143,6 +143,7 @@ export interface AppMenuState {
   trackpadMode: string;
   hasSelection: boolean;
   hasParts: boolean;
+  hasSolids: boolean;
   tabs: Array<{ id: string; name: string }>;
   activeTab: string;
   canReopenTab: boolean;

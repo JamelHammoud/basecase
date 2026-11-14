@@ -54,6 +54,7 @@ export function TitleBarActions({
         </div>
         <ExportMenu
           canExportParts={exports.canExportParts}
+          canExportPlates={exports.canExportPlates}
           canExportStep={exports.canExportStep}
           canExportRobot={exports.canExportRobot}
           onExportImage={exports.exportImage}

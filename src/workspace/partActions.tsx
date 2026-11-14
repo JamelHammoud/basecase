@@ -29,6 +29,7 @@ import { partQuote } from '../agent/partQuote';
 import { renameTarget } from '../components/layers/layerRows';
 import { keyFor } from '../app/shortcuts';
 import type { ScenePart } from '../types/robotics';
+import { makesClearanceHole } from '../utils/hardwareCutouts';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -69,7 +70,7 @@ export const paletteCommand = (action: PartAction, group: string): Command => ({
   run: action.run,
 });
 
-const clearanceHoles = (selected: ScenePart[]) => selected.filter((p) => p.hardware).length;
+const clearanceHoles = (selected: ScenePart[]) => selected.filter(makesClearanceHole).length;
 
 export function selectionActions({ core, actions, ui }: PartActionInputs) {
   const { ops, edits, library } = actions;

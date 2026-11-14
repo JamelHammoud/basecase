@@ -6,6 +6,7 @@ import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
 import { encodeSceneFile, SCENE_FILE_EXTENSION, sharedScene } from '../utils/sceneFile';
 import { scenePreview } from '../three/scenePreview';
+import { goesOnPlate, isExportedSolid } from './exportable';
 import { fileSafe } from './helpers';
 import { isStepBody } from './stepExport';
 import { useStepExport } from './useStepExport';
@@ -22,13 +23,15 @@ export function useExportActions(core: WorkspaceCore) {
 
   const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing, printing } = core;
   const sharingRef = useRef(false);
+  const canExportParts = parts.some(isExportedSolid);
+  const canExportPlates = parts.some(goesOnPlate);
   const exportStep = useStepExport({ parts, scene, showToast, toasts });
   const exportRobotPackage = useRobotPackageExport(core);
 
   const exportStl = async () => {
     const viewport = viewportRef.current;
 
-    if (!viewport || parts.length === 0) return;
+    if (!viewport || !canExportParts) return;
 
     try {
       download(await viewport.exportStl(), `${fileSafe(scene.sceneName)}.stl`, 'model/stl');
@@ -65,16 +68,12 @@ export function useExportActions(core: WorkspaceCore) {
   const export3mf = async () => {
     const viewport = viewportRef.current;
 
-    if (!viewport) return;
+    if (!viewport || !canExportPlates) return;
 
     const report = await printReportOf(parts, { project, printer }, viewport.printShapes);
     const spec = jobSpec(report.plan, printer, project);
 
-    if (!spec.files.length) {
-      showToast('No printed parts to export', { tone: 'error' });
-
-      return;
-    }
+    if (!spec.files.length) return;
 
     const { files } = await printing.plates.write(spec);
     const single = spec.files.length === 1;
@@ -112,7 +111,7 @@ export function useExportActions(core: WorkspaceCore) {
   const airDrop = async () => {
     const viewport = viewportRef.current;
 
-    if (!viewport || parts.length === 0 || sharingRef.current) return;
+    if (!viewport || !canExportParts || sharingRef.current) return;
 
     const name = `${fileSafe(scene.sceneName)}.usdz`;
 
@@ -125,7 +124,7 @@ export function useExportActions(core: WorkspaceCore) {
       const bytes = await viewport.exportUsdz();
 
       if (!bytes.length) {
-        showToast('No solid parts to share', { tone: 'error' });
+        toasts.dismissToast();
 
         return;
       }
@@ -157,7 +156,8 @@ export function useExportActions(core: WorkspaceCore) {
     airDrop,
     copyBrief,
     exportRobotPackage,
-    canExportParts: parts.length > 0,
+    canExportParts,
+    canExportPlates,
     canExportStep: parts.some(isStepBody),
     canExportRobot: posing.hasRig,
   };

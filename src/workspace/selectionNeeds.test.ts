@@ -4,7 +4,7 @@ import { canRunOnSelection, type SelectionFacts } from './selectionNeeds';
 const facts = (selected: number, extra: Partial<SelectionFacts> = {}): SelectionFacts => ({
   selected,
   grouped: false,
-  hardware: false,
+  holes: false,
   parts: Math.max(selected, 4),
   ...extra,
 });
@@ -74,9 +74,9 @@ describe('canRunOnSelection', () => {
     expect(canRunOnSelection('ungroup', facts(1, { grouped: true }))).toBe(true);
   });
 
-  it('offers Add Clearance Hole only when a selected part is hardware', () => {
+  it('offers Add Clearance Hole only when a selected part makes a hole', () => {
     expect(canRunOnSelection('clearance-hole', facts(1))).toBe(false);
-    expect(canRunOnSelection('clearance-hole', facts(1, { hardware: true }))).toBe(true);
+    expect(canRunOnSelection('clearance-hole', facts(1, { holes: true }))).toBe(true);
   });
 
   it('offers Select All while the scene has parts', () => {

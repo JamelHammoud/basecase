@@ -36,11 +36,11 @@ const ownRow = (row: SkillRow) => !row.kit && row.state.kind === 'ready' && !!ro
 export function useRoutineSkills({ rows, load, project, setProject }: RoutineSkillsInput): SceneRoutineSkills {
   'use memo';
 
-  const latest = useLatestRef({ rows, handoffs: project.handoffs });
+  const latest = useLatestRef({ rows, handoffs: project.handoffs, load });
   const cache = useRef(new Map<string, Promise<Skill | null>>());
 
   const loaded = (record: SkillRecord) => {
-    const known = cache.current.get(record.hash) ?? load(record).catch(() => null);
+    const known = cache.current.get(record.hash) ?? latest.current.load(record).catch(() => null);
 
     cache.current.set(record.hash, known);
 

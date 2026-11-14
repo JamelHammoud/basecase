@@ -216,6 +216,18 @@ function operatorCameraState() {
   };
 }
 
+const base64Files = (files: Record<string, Uint8Array>) =>
+  Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, bytesToBase64(bytes)]));
+
+function printStudioApi(devRef: RefObject<DevActions>) {
+  return {
+    printPlates: () => devRef.current.printPlates(),
+    printState: () => devRef.current.printState(),
+    plateFiles: async () => base64Files(await devRef.current.plateFiles()),
+    labelNotes: () => devRef.current.labelNotes(),
+  };
+}
+
 export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevStudioDeps) {
   return {
     rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
@@ -285,19 +297,13 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     feedVoice: (samples: number[], sampleRate: number) => feedVoice(samples, sampleRate),
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),
-    printPlates: () => devRef.current.printPlates(),
-    plateFiles: async () =>
-      Object.fromEntries(
-        Object.entries(await devRef.current.plateFiles()).map(([material, bytes]) => [material, bytesToBase64(bytes)]),
-      ),
-    labelNotes: () => devRef.current.labelNotes(),
+    ...printStudioApi(devRef),
     bomLines: () =>
       buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
         ({ key, qty }) => ({ key, qty }),
       ),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
-    printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
     multiplyRuns: (runs: number) => devRef.current.multiplyRuns(runs),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
@@ -330,14 +336,14 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 
-      return files && Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, bytesToBase64(bytes)]));
+      return files && base64Files(files);
     },
     robotPackage: async () => {
       const made = await devRef.current.robotPackage();
 
       return (
         made && {
-          files: Object.fromEntries(Object.entries(made.files).map(([path, bytes]) => [path, bytesToBase64(bytes)])),
+          files: base64Files(made.files),
           simXml: made.simXml,
         }
       );

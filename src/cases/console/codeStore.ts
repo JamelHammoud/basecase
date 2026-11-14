@@ -88,9 +88,7 @@ export function caseStores(backend: KeyValueStore<string>): CaseStores {
   };
 }
 
-export const CASE_STORES = caseStores(
-  indexedDbStore<string>({ database: 'basecase-case-stores', store: 'values', label: 'Case values' }),
-);
+export const CASE_STORES = caseStores(indexedDbStore<string>({ database: 'basecase-case-stores', store: 'values' }));
 
 export const storeOf = (stores: CaseStores, key: string): CaseStore => ({
   get: () => stores.get(key),

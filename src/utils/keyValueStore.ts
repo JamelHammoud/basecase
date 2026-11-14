@@ -8,10 +8,10 @@ export interface KeyValueStore<T> {
 interface IndexedDbStoreOptions {
   database: string;
   store: string;
-  label: string;
+  label?: string;
 }
 
-export function indexedDbStore<T>({ database, store, label }: IndexedDbStoreOptions): KeyValueStore<T> {
+export function indexedDbStore<T>({ database, store, label = database }: IndexedDbStoreOptions): KeyValueStore<T> {
   const open = (): Promise<IDBDatabase> | null => {
     if (typeof indexedDB === 'undefined') return null;
 

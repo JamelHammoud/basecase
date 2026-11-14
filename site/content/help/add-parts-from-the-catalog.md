@@ -54,7 +54,7 @@ The part lands on the floor at the origin, selected. You can also click **+** on
 
 ![Parts searched for servo, with the matching servos listed under the field and the + showing on the highlighted DSServo DS3218](/help/add-parts-from-the-catalog/search.png)
 
-The same field finds robots and objects. A robot named in the search comes before the parts named after it, and clicking its row inserts it. [[⌘Enter]] adds the highlighted part or robot.
+The same field finds robots and objects. A robot named in the search comes before the parts named after it, and clicking its row inserts it. [[⌘↩]] adds the highlighted part or robot.
 
 ![Parts searched for so-101, with the SO-101 Arm robot above the SO-101 Gripper and the STS3215 servo](/help/add-parts-from-the-catalog/robot-first.png)
 

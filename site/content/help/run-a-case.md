@@ -37,7 +37,7 @@ covers:
 
 Run a Case in the whole window, laid out the way the Case asks: the robot on the canvas, and around it the cameras, numbers, plots, buttons and tries it needs.
 
-1. Open a Case. Pick one under Play ▸ Cases, or make one with **New Case**. It opens in the Simulate tab.
+1. Open a Case. Pick one under **Play** ▸ **Cases**, or make one with **New Case**. It opens in the Simulate tab.
 2. Click the expand button in the Case's header, or press [[⌘K]] and choose **Run Case**.
 
 ![The Simulate tab with Touch the Dots open and the Run Case tooltip on its expand button](/help/run-a-case/brief.png)

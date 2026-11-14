@@ -48,7 +48,7 @@ The command exits 0 when every Case passes, 1 when any misses, and 2 when it can
 
 - `--case reach-a-spot` runs only that Case, by its id.
 - `--json` prints `{ "cases": [{ "id", "name", "runs", "passes", "margin", "failed" }] }` instead of lines.
-- `basecase export robot.basecase --package robot` writes the same Robot Package Export ▸ Robot Package saves, as a folder.
+- `basecase export robot.basecase --package robot` writes the same Robot Package that **Export** ▸ **Robot Package** saves, as a folder.
 
 In a clone of Basecase, `npx basecase check robot.basecase` runs the same command.
 

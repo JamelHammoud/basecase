@@ -4,7 +4,7 @@ import { onshapeBridge, type OnshapeAccountState, type OnshapeKey } from '../../
 import { SettingsGroup as Group } from '../SettingsRows';
 import { SecretField } from './SecretField';
 import { errorMessage } from '../../utils/errorMessage';
-import { withoutSettingsPath, type SettingsField } from '../../app/settingsPanes';
+import { withoutSettingsPath, type SettingsFocus } from '../../app/settingsPanes';
 import { earthBridge, type EarthAccountState } from '../../earth/earthBridge';
 
 const HUB_SIGNED_OUT: HubAccountState = { signedIn: false, name: null };
@@ -12,7 +12,7 @@ const ONSHAPE_SIGNED_OUT: OnshapeAccountState = { access: false, secret: false, 
 
 const paneError = (e: unknown) => withoutSettingsPath(errorMessage(e));
 
-export const AccountsPane: React.FC<{ field?: SettingsField }> = ({ field }) => {
+export const AccountsPane: React.FC<{ focus?: SettingsFocus }> = ({ focus }) => {
   const [hub, setHub] = useState<HubAccountState>(HUB_SIGNED_OUT);
   const [hubError, setHubError] = useState<string | null>(null);
   const [onshape, setOnshape] = useState<OnshapeAccountState>(ONSHAPE_SIGNED_OUT);
@@ -103,7 +103,7 @@ export const AccountsPane: React.FC<{ field?: SettingsField }> = ({ field }) => 
           label="Map Tiles key"
           saved={maps.saved}
           error={mapsError}
-          autoFocus={field === 'map-tiles'}
+          focusAsk={focus?.field === 'map-tiles' ? focus.ask : undefined}
           onSecret={saveMapKey}
         />
       </Group>

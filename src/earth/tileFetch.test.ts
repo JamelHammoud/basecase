@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { EarthFetchPlugin } from './tileFetch';
+import { EarthFetchPlugin, tileFetcher } from './tileFetch';
 import { FIXTURE_SESSION, fixtureTileBytes } from './tileFixture';
 import { TILES_ROOT_URL } from './tilePaths';
 
@@ -30,5 +30,25 @@ describe('EarthFetchPlugin', () => {
     for (const url of hostile) await expect(plugin.fetchData(url)).rejects.toThrow(/left tile.googleapis.com/);
 
     expect(fetchTile).not.toHaveBeenCalled();
+  });
+});
+
+describe('tileFetcher', () => {
+  it('tells only its own listeners about a failure, once until it forgets', async () => {
+    const failing = tileFetcher(async () => Promise.reject(new Error('Add a Map Tiles key in Settings ▸ Accounts.')));
+    const other = tileFetcher(fixture);
+    const heard = vi.fn();
+    const otherHeard = vi.fn();
+
+    failing.listen(heard);
+    other.listen(otherHeard);
+
+    for (let i = 0; i < 2; i++) await expect(failing.fetchTile('/v1/3dtiles/root.json')).rejects.toThrow();
+
+    failing.forget();
+    await expect(failing.fetchTile('/v1/3dtiles/root.json')).rejects.toThrow();
+
+    expect(heard).toHaveBeenCalledTimes(2);
+    expect(otherHeard).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,4 @@
 import { base64ToBytes } from '../utils/base64';
-import { errorMessage } from '../utils/errorMessage';
 import { channelCall } from '../utils/platform/channelCall';
 import { electron } from '../utils/platform/transport';
 
@@ -20,28 +19,3 @@ export const earthBridge = {
     return typeof data === 'string' ? base64ToBytes(data) : new Uint8Array(data);
   },
 };
-
-const failureListeners = new Set<(message: string) => void>();
-const warned = new Set<string>();
-
-export function onTileFailure(listener: (message: string) => void): () => void {
-  failureListeners.add(listener);
-
-  return () => failureListeners.delete(listener);
-}
-
-export const forgetTileFailures = () => warned.clear();
-
-export async function fetchEarthTile(path: string): Promise<Uint8Array> {
-  try {
-    return await earthBridge.tile(path);
-  } catch (e) {
-    const message = errorMessage(e);
-
-    if (!warned.has(message)) failureListeners.forEach((listener) => listener(message));
-
-    warned.add(message);
-
-    throw e;
-  }
-}

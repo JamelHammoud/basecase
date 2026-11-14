@@ -117,7 +117,7 @@ export function Studio({ initial }: { initial: InitialTabs }) {
         onSculptEnabled={prefs.setSculptEnabled}
         buildPrefs={prefs}
         pane={settings.pane}
-        field={settings.field}
+        focus={settings.focus}
         onPaneChange={settings.changePane}
         onClose={settings.closeSettings}
         snapStepMm={prefs.snapStepMm}

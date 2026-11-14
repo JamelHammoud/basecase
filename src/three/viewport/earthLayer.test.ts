@@ -85,6 +85,19 @@ describe('EarthLayer', () => {
     expect(attributions.at(-1)).toBe(FIXTURE_COPYRIGHT);
   });
 
+  it('sets the floor at once when the place moves within tiles already loaded', async () => {
+    const { layer } = await placed();
+
+    await settle(layer, camera([3000, 2000, 3000], [0, 0, 0]));
+    await layer.set({
+      origin: { ...FIXTURE_SPOT, lat: FIXTURE_SPOT.lat + 0.00001, altitudeM: null, offsetM: 0 },
+      fetchTile,
+    });
+
+    expect(layer.group.visible).toBe(true);
+    expect(layer.state()?.surfaceM).toBeCloseTo(FIXTURE_GROUND_M, 0);
+  });
+
   it('keeps the floor at a given altitude and raises the robot by the offset', async () => {
     const { layer } = await placed({ altitudeM: FIXTURE_GROUND_M, offsetM: 2 });
 

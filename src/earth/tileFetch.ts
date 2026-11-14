@@ -1,6 +1,40 @@
+import { errorMessage } from '../utils/errorMessage';
 import { isJsonPath, sessionOf, tilePathOf } from './tilePaths';
 
 export type FetchTile = (path: string) => Promise<Uint8Array>;
+
+export interface TileFetcher {
+  fetchTile: FetchTile;
+  forget: () => void;
+  listen: (listener: (message: string) => void) => () => void;
+}
+
+export function tileFetcher(tile: FetchTile): TileFetcher {
+  const warned = new Set<string>();
+  const listeners = new Set<(message: string) => void>();
+
+  return {
+    fetchTile: async (path) => {
+      try {
+        return await tile(path);
+      } catch (e) {
+        const message = errorMessage(e);
+
+        if (!warned.has(message)) listeners.forEach((listener) => listener(message));
+
+        warned.add(message);
+
+        throw e;
+      }
+    },
+    forget: () => warned.clear(),
+    listen: (listener) => {
+      listeners.add(listener);
+
+      return () => listeners.delete(listener);
+    },
+  };
+}
 
 export class EarthFetchPlugin {
   readonly name = 'BASECASE_EARTH_FETCH';

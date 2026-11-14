@@ -26,7 +26,7 @@ import { BuildPane, type BuildPrefs } from './settings/BuildPane';
 import { PrintersPane } from './settings/PrintersPane';
 import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
-import { SETTINGS_PANES, type SettingsField, type SettingsPane } from '../app/settingsPanes';
+import { SETTINGS_PANES, type SettingsFocus, type SettingsPane } from '../app/settingsPanes';
 
 const PANE_ICONS: Record<SettingsPane, React.ReactNode> = {
   canvas: <GridIcon className="w-4 h-4" />,
@@ -47,7 +47,7 @@ const MEASURE_UNITS: Array<{ value: MeasureUnit; label: string }> = [
 export interface SettingsWindowProps {
   open: boolean;
   pane: SettingsPane;
-  field?: SettingsField;
+  focus?: SettingsFocus;
   onPaneChange: (pane: SettingsPane) => void;
   onClose: () => void;
   sculptEnabled: boolean;
@@ -161,7 +161,7 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
             {current.id === 'printers' && (
               <PrintersPane key={props.printers.loaded ? 'loaded' : 'loading'} state={props.printers} />
             )}
-            {current.id === 'accounts' && <AccountsPane field={props.field} />}
+            {current.id === 'accounts' && <AccountsPane focus={props.focus} />}
             {current.id === 'shortcuts' && <ShortcutsList sculptEnabled={props.sculptEnabled} />}
           </div>
         </div>

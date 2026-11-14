@@ -4,6 +4,11 @@ export type SettingsPane = 'canvas' | 'agent' | 'build' | 'printers' | 'accounts
 
 export type SettingsField = 'map-tiles';
 
+export interface SettingsFocus {
+  field: SettingsField;
+  ask: number;
+}
+
 const PANES: Array<{ id: SettingsPane; label: string; keywords: string }> = [
   { id: 'canvas', label: 'Canvas', keywords: 'grid snap trackpad scroll measure units imperial sculpt' },
   { id: 'agent', label: 'Agent', keywords: 'claude codex gemini offline command' },

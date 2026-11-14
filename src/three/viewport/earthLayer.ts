@@ -45,6 +45,8 @@ const ORIGIN_KEYS = ['lat', 'lon', 'altitudeM', 'offsetM', 'hidden'] as const;
 const sameOrigin = (a: EarthOrigin | null, b: EarthOrigin | null) =>
   a === b || (!!a && !!b && ORIGIN_KEYS.every((key) => a[key] === b[key]));
 
+const movedFrom = (from: EarthOrigin | null, to: EarthOrigin) => !from || from.lat !== to.lat || from.lon !== to.lon;
+
 function behindOverlays(scene: THREE.Object3D): void {
   scene.traverse((object) => {
     const { material } = object as THREE.Mesh;
@@ -98,7 +100,7 @@ export class EarthLayer {
       return;
     }
 
-    const moved = !this.origin || this.origin.lat !== view.origin.lat || this.origin.lon !== view.origin.lon;
+    const moved = movedFrom(this.origin, view.origin);
 
     if (moved) this.surfaceM = null;
 
@@ -107,6 +109,8 @@ export class EarthLayer {
     if (view.fetchTile !== this.fetchTile && !(await this.start(view.fetchTile, generation))) return;
 
     this.place();
+
+    if (moved) this.sample();
   }
 
   update(camera: THREE.Camera, width: number, height: number): void {

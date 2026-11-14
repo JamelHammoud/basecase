@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { SettingsField, SettingsPane } from '../app/settingsPanes';
-import { earthBridge, fetchEarthTile, forgetTileFailures, onTileFailure } from '../earth/earthBridge';
+import { earthBridge } from '../earth/earthBridge';
 import { checkedOrigin, type EarthOrigin } from '../earth/earthOrigin';
+import { tileFetcher } from '../earth/tileFetch';
 import type { EarthView } from '../three/viewport/earthLayer';
 import type { ProjectSettings } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -20,12 +21,11 @@ const withShown = (earth: EarthOrigin, shown: boolean): EarthOrigin => ({ ...ear
 
 export function useEarthPlace({ project, updateProjectNow, openSettings, showToast }: EarthPlaceOptions) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [tiles] = useState(() => tileFetcher(earthBridge.tile));
   const origin = checkedOrigin(project.earth);
-  const view: EarthView | null = origin && !IS_WEB_DEMO ? { origin, fetchTile: fetchEarthTile } : null;
+  const view: EarthView | null = origin && !IS_WEB_DEMO ? { origin, fetchTile: tiles.fetchTile } : null;
 
-  const mapped = view !== null;
-
-  useEffect(() => (mapped ? onTileFailure((message) => showToast(message)) : undefined), [mapped, showToast]);
+  useEffect(() => tiles.listen((message) => showToast(message)), [tiles, showToast]);
 
   return {
     origin,
@@ -39,7 +39,7 @@ export function useEarthPlace({ project, updateProjectNow, openSettings, showToa
     },
     close: () => setSheetOpen(false),
     place: (placed: EarthOrigin) => {
-      forgetTileFailures();
+      tiles.forget();
       updateProjectNow((p) => ({ ...p, earth: placed }));
       setSheetOpen(false);
     },

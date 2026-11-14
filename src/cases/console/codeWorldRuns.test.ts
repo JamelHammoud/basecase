@@ -4,7 +4,7 @@ import { fixtureRobots } from '../../sim/fixtures/robots';
 import type { V3 } from '../../utils/kinematics';
 import type { Case, WorldObject } from '../schema';
 import { presetCase } from '../testing';
-import { replayTry } from '../tryReplay';
+import { multiplyTry, replayTry, shiftedCommands, worldOffsets } from '../tryReplay';
 import { openCodeRun } from './fixtures/codeRun';
 
 const robot = (id: string) => fixtureRobots().find((r) => r.id === id)!;
@@ -282,5 +282,28 @@ describe('code that changes the world, on the sim', () => {
       `world refused: ${rover.parts[0].id} isn’t in the Case’s world`,
       'sent a malformed world message',
     ]);
+  }, 60000);
+});
+
+describe('Multiply on a try whose code changes the world', () => {
+  it('keeps the arm targets on the lit spot while the other spots jitter', async () => {
+    const run = await openCodeRun(mj, { robot: robot('arm-6dof'), kase: whackATarget(), html: WHACK });
+
+    await run.step(12, () => run.engine.command({ v: [0, 0, 0], target: run.objectAt('lit') }));
+
+    const source = { ...run.scoring, recording: (await run.finish()).recording };
+    const seeds = [1, 2, 3];
+
+    for (const seed of seeds) {
+      const offsets = worldOffsets(source.kase, seed);
+
+      expect(offsets.get('lit')).toEqual([0, 0, 0]);
+      expect(offsets.get('spot0')?.some((x) => x !== 0)).toBe(true);
+      expect(shiftedCommands(source, offsets)).toEqual(source.recording.commands);
+    }
+
+    const { kept } = await multiplyTry(mj, source, seeds);
+
+    expect(kept.map((v) => v.seed)).toEqual(seeds);
   }, 60000);
 });

@@ -53,7 +53,7 @@ The Case's contract judges every variation, and only passes are kept. Multiply a
 
 Tries recorded before Multiply carry no commands, so their menu has no **Multiply**. Record a new try.
 
-An object the Case's code moved during the try goes exactly where the code put it, without the 15 mm shift.
+An object the Case marks movable never shifts, so it goes where the Case's code put it. An arm target nearest it stays where it was.
 
 Only targets move with the objects. A try driven with the keys alone replays the same key presses, so a variation passes only when the moved spot still lies where the hand went.
 

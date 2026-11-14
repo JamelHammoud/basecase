@@ -1,4 +1,12 @@
-import { CoachIcon, CompareIcon, CrosshairIcon, TrainIcon, UndoIcon, type ContextMenuEntry } from '../../design-system';
+import {
+  CoachIcon,
+  CompareIcon,
+  CrosshairIcon,
+  OperateIcon,
+  TrainIcon,
+  UndoIcon,
+  type ContextMenuEntry,
+} from '../../design-system';
 import type { SkillRow } from '../../skills/skillRows';
 import { canCoach, type SkillCoachState } from '../../workspace/useSkillCoach';
 import { canStress, canTrainOnFindings } from '../../workspace/useSkillStress';
@@ -35,3 +43,11 @@ export function stressMenuItems(row: SkillRow, { onStress, onTrain }: StressMenu
 
   return [stress, { label: 'Train on These', icon: <TrainIcon />, onSelect: () => onTrain(row) }];
 }
+
+export interface RollOutMenu {
+  canRollOut: (row: SkillRow) => boolean;
+  rollOut: (row: SkillRow) => void;
+}
+
+export const rollOutMenuItems = (row: SkillRow, fleet: RollOutMenu): ContextMenuEntry[] =>
+  fleet.canRollOut(row) ? [{ label: 'Roll Out', icon: <OperateIcon />, onSelect: () => fleet.rollOut(row) }] : [];

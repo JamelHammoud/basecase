@@ -132,6 +132,8 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `list_skills` | Lists the robot's skills |
 | `coach_skill` | Changes how a ready Motor Kit skill moves, and keeps the change only if Arena still passes it |
 | `stress_skill` | Finds the friction, link mass, servo strength or servo delay where a ready skill starts to fail |
+| `roll_out` | Rolls a ready skill out to your connected robots, canaries first, holding back any robot whose twin fails in Arena |
+| `roll_back` | Returns one connected robot to the version it ran before |
 
 ## Build and cost
 

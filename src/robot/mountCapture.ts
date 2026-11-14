@@ -3,7 +3,8 @@ import { DEFAULT_MOUNT, type MountFrame } from '../reality/mountSearch';
 import type { JointMount } from '../reality/types';
 import { canRunBench, playBench, type BenchPlan } from './benchRun';
 import { mountOf, type RobotMount, type RobotStatus } from './robotState';
-import { robotSnapshot, sendRobotCommand, setRobotMounts, subscribeRobot } from './robotStore';
+import { robotSnapshot, selectedUnit, sendUnitCommand, setUnitMounts } from './robotStore';
+import { subscribeUnitRobot } from './unitSubscription';
 
 export const WIGGLE_RAD = 0.1;
 
@@ -43,11 +44,18 @@ function shotBefore(stepS: number, seconds: number[]) {
   return pick;
 }
 
-export async function captureWiggle(k: number, source: SilhouetteSource): Promise<MountFrame[] | null> {
-  const ids = robotSnapshot().spec?.ids ?? [];
+export async function captureWiggle(
+  k: number,
+  source: SilhouetteSource,
+  unit: string = selectedUnit(),
+): Promise<MountFrame[] | null> {
+  const ids = robotSnapshot(unit).spec?.ids ?? [];
   const heard: Heard[] = [];
-  const recording = await playBench([k], WIGGLE, (status) =>
-    heard.push({ counts: countsOf(status, ids), frame: source.frame() }),
+  const recording = await playBench(
+    [k],
+    WIGGLE,
+    (status) => heard.push({ counts: countsOf(status, ids), frame: source.frame() }),
+    unit,
   );
 
   if (!recording) return null;
@@ -68,20 +76,20 @@ export async function captureWiggle(k: number, source: SilhouetteSource): Promis
 export const jointMount = (mount: RobotMount | undefined): JointMount =>
   mount ? { zeroCounts: mount.zero_counts, direction: mount.direction } : DEFAULT_MOUNT;
 
-export const connectionMounts = (): JointMount[] => {
-  const { spec, calibration } = robotSnapshot();
+export const connectionMounts = (unit: string = selectedUnit()): JointMount[] => {
+  const { spec, calibration } = robotSnapshot(unit);
 
   return (spec?.ids ?? []).map((id) => jointMount(mountOf(calibration, id)));
 };
 
-export const robotMounts = (mounts: readonly JointMount[]): RobotMount[] =>
-  (robotSnapshot().spec?.ids ?? []).map((id, k) => ({
+export const robotMounts = (mounts: readonly JointMount[], unit: string = selectedUnit()): RobotMount[] =>
+  (robotSnapshot(unit).spec?.ids ?? []).map((id, k) => ({
     id,
     zero_counts: mounts[k].zeroCounts,
     direction: mounts[k].direction,
   }));
 
-function waitFor(ready: () => boolean, ms: number): Promise<boolean> {
+function waitFor(unit: string, ready: () => boolean, ms: number): Promise<boolean> {
   if (ready()) return Promise.resolve(true);
 
   return new Promise((resolve) => {
@@ -90,21 +98,20 @@ function waitFor(ready: () => boolean, ms: number): Promise<boolean> {
       unsubscribe();
       resolve(ok);
     };
-    const unsubscribe = subscribeRobot(() => {
+    const unsubscribe = subscribeUnitRobot(unit, () => {
       if (ready()) done(true);
     });
     const timer = setTimeout(() => done(false), ms);
   });
 }
 
-const stopped = () => robotSnapshot().status?.run !== 'running';
+export async function remount(mounts: readonly JointMount[], unit: string = selectedUnit()): Promise<boolean> {
+  const reply = await setUnitMounts(unit, robotMounts(mounts, unit));
+  const stopped = () => robotSnapshot(unit).status?.run !== 'running';
 
-export async function remount(mounts: readonly JointMount[]): Promise<boolean> {
-  const reply = await setRobotMounts(robotMounts(mounts));
+  if (!reply.ok || !(await waitFor(unit, stopped, REENTER_MS))) return false;
 
-  if (!reply.ok || !(await waitFor(stopped, REENTER_MS))) return false;
+  const entered = await sendUnitCommand(unit, { cmd: 'enter', mode: 'test' });
 
-  await sendRobotCommand({ cmd: 'enter', mode: 'test' });
-
-  return waitFor(() => canRunBench(robotSnapshot()), REENTER_MS);
+  return entered.ok && waitFor(unit, () => canRunBench(robotSnapshot(unit)), REENTER_MS);
 }

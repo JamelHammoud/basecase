@@ -15,6 +15,7 @@ import { useRoutines } from './useRoutines';
 import { useShareRobot } from './useShareRobot';
 import { useSkillHub } from './useSkillHub';
 import { useSkills } from './useSkills';
+import { useFleetRollOut } from './useFleetRollOut';
 import type { SceneDocument } from './useSceneDocument';
 
 interface SimTrainingOptions {
@@ -50,6 +51,8 @@ export function useSimTraining(options: SimTrainingOptions) {
     velocity,
   });
   const skills = useSkills({ workspaceId, sim, project, setProject, rig: posing.rig, parts });
+
+  const fleet = useFleetRollOut({ skills, projectRef, setProject });
 
   useLayoutEffect(() => {
     velocity.current = skills.velocity;
@@ -139,7 +142,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     trainHandoff: skills.trainHandoff,
   });
 
-  return { sim, training, policies, deletePolicy, cases, routines, skills, skillHub, share, triesPlaces };
+  return { sim, training, policies, deletePolicy, cases, routines, skills, skillHub, share, triesPlaces, fleet };
 }
 
 export type SimTraining = ReturnType<typeof useSimTraining>;

@@ -1,7 +1,7 @@
 ---
 title: The robotics loop
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: get-started
 type: concept
 order: 1
@@ -33,7 +33,7 @@ Basecase is a 3D CAD studio for robots, with an agent that designs alongside you
 | Simulate | Run the robot under MuJoCo physics, and try it on Cases | The **Simulate** tab, and **Play** ▸ **Cases** |
 | Train | Teach the robot a skill, such as standing up or walking, train a policy on a dataset of your tries, or install one from Hugging Face | The **Train** section of the **Simulate** tab, a dataset in the **Library**, and **Install Skill** in [[⌘K]] |
 | Build | Clear the Checks, price every part and print the plates | The **Build** tab |
-| Operate | Connect a robot, calibrate its servos and run Routines | **Play** ▸ **Operate** and **Play** ▸ **Routines** |
+| Operate | Connect emulated robots, calibrate each unit, roll skills out to canaries and run Routines | **Play** ▸ **Operate** and **Play** ▸ **Routines** |
 
 MuJoCo is the physics engine that robotics labs use to test robots before they build them. Basecase runs it inside the app, on the same model it exports.
 
@@ -50,7 +50,7 @@ You can also [try a Case](/help/try-a-case-on-your-real-robot) with a real wheel
 - Design and Engineer are complete.
 - Simulate and Train are in active development.
 - Build covers the Checks, the bill of materials, the build guide, slicing and print service quotes.
-- Operate works against the simulation and an emulated robot.
+- Operate connects fleets of emulated robots with separate calibrations and faults. [Roll Out](/help/roll-out-a-skill-to-a-fleet) proves each unit's twin before sending its policy.
 
 **Note:** Basecase doesn't drive real motors, but it can watch a real robot through a camera.
 

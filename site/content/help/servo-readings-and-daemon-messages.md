@@ -1,7 +1,7 @@
 ---
 title: Servo readings and daemon messages
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: operate
 type: reference
 order: 1
@@ -37,9 +37,19 @@ The daemon reports every servo 10 times a second, and the app shows the newest r
 
 ![Operate in Test with motors running, the ladder, and a row for each joint](/help/calibrate-an-emulated-robot/test.png)
 
+## Fleet rows
+
+Operate lists each connected unit by name above the controls. Each row shows its rung and policy version. After Roll Out, it also shows the twin's pass count or failing contract line. A fault marks only that unit's row.
+
+Click a row to select the unit. The header, Ladder, servo readings, messages and measured canvas robot then follow that unit. **Stop**, **Disconnect** and commands from the simulation apply to the selected unit.
+
+![Operate with three units, each in Test, and the selected unit's controls below](/help/roll-out-a-skill-to-a-fleet/connected.png)
+
+Hover a unit's row to find **Roll Back** when it has a previous policy. This restores the policy version. A joint's **Roll Back** instead restores its calibration.
+
 ## The header
 
-The first line names the servos, such as "2 emulated Feetech servos", then the motor state, with **Disconnect** at its end. The **Ladder** below it marks the rung the robot is on, from **Look** to **Longer Runs**.
+Below the fleet rows, the header names the servos, such as "2 emulated Feetech servos", then the motor state. **Disconnect** sits at its end. The **Ladder** below it marks the rung the robot is on, from **Look** to **Longer Runs**.
 
 | Motor state | What it means |
 |---|---|
@@ -76,7 +86,7 @@ When the daemon refuses a rung:
 | "A fault is still active. Go back to Look and clear it first." | A fault is latched |
 | "Check the servos first: every servo must answer with the right model." | **Set Up** hasn't passed |
 | "Calibrate the robot first." | There's no calibration |
-| "Load a policy first." | The scene has no ready skill or up-to-date policy |
+| "Load a policy first." | The unit has no loaded policy |
 | "Test every joint with the current calibration first." | **Test** hasn't finished with this calibration |
 | "Rehearse the current policy first." | **Rehearse** hasn't finished with this policy |
 

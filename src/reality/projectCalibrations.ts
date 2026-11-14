@@ -1,3 +1,4 @@
+import { DEFAULT_UNIT } from '../../electron/robot/units.mjs';
 import type { ProjectSettings } from '../types/robotics';
 import {
   EMPTY_HISTORY,
@@ -9,20 +10,36 @@ import {
 } from './history';
 import type { ServoCalibration } from './types';
 
-function withHistory(
-  project: ProjectSettings,
-  jointId: string,
-  change: (history: CalibrationHistory) => CalibrationHistory,
-): ProjectSettings {
-  const history = project.servoCalibrations?.[jointId] ?? EMPTY_HISTORY;
+type Histories = Record<string, CalibrationHistory>;
 
-  return { ...project, servoCalibrations: { ...project.servoCalibrations, [jointId]: change(history) } };
+export const unitHistories = (project: ProjectSettings, unit: string = DEFAULT_UNIT): Histories =>
+  unit === DEFAULT_UNIT ? (project.servoCalibrations ?? {}) : (project.unitCalibrations?.[unit] ?? {});
+
+function withUnitHistories(project: ProjectSettings, unit: string, histories: Histories): ProjectSettings {
+  if (unit === DEFAULT_UNIT) return { ...project, servoCalibrations: histories };
+
+  return { ...project, unitCalibrations: { ...project.unitCalibrations, [unit]: histories } };
 }
 
-export const withCalibration = (project: ProjectSettings, jointId: string, calibration: ServoCalibration) =>
-  withHistory(project, jointId, (history) => recordCalibration(history, calibration));
+function withHistory(
+  project: ProjectSettings,
+  change: { jointId: string; unit: string; next: (history: CalibrationHistory) => CalibrationHistory },
+): ProjectSettings {
+  const histories = unitHistories(project, change.unit);
+  const history = histories[change.jointId] ?? EMPTY_HISTORY;
 
-export const withRollBack = (project: ProjectSettings, jointId: string) => withHistory(project, jointId, rollBack);
+  return withUnitHistories(project, change.unit, { ...histories, [change.jointId]: change.next(history) });
+}
 
-export const withMount = (project: ProjectSettings, jointId: string, found: FoundMount) =>
-  withHistory(project, jointId, (history) => recordMount(history, found));
+export const withCalibration = (
+  project: ProjectSettings,
+  jointId: string,
+  calibration: ServoCalibration,
+  unit: string = DEFAULT_UNIT,
+) => withHistory(project, { jointId, unit, next: (history) => recordCalibration(history, calibration) });
+
+export const withRollBack = (project: ProjectSettings, jointId: string, unit: string = DEFAULT_UNIT) =>
+  withHistory(project, { jointId, unit, next: rollBack });
+
+export const withMount = (project: ProjectSettings, jointId: string, found: FoundMount, unit: string = DEFAULT_UNIT) =>
+  withHistory(project, { jointId, unit, next: (history) => recordMount(history, found) });

@@ -219,6 +219,7 @@ fn parse(args: &[String]) -> Result<Options, String> {
     let mut target = None;
     let mut latency_us = 0;
     let mut factory = false;
+    let mut seed = None;
     let mut rest = args.iter();
 
     while let Some(flag) = rest.next() {
@@ -234,6 +235,7 @@ fn parse(args: &[String]) -> Result<Options, String> {
             "--units" => flags.units = Some(PathBuf::from(value()?)),
             "--artefacts" => artefacts = PathBuf::from(value()?),
             "--latency-ms" => latency_us = value()?.parse::<u64>().map_err(|_| "Bad latency")? * 1000,
+            "--seed" => seed = Some(value()?.parse::<u64>().map_err(|_| "Bad seed")?),
             "--emulated" => {
                 target = Some(Target::Emulated {
                     latency_us: 0,
@@ -254,12 +256,13 @@ fn parse(args: &[String]) -> Result<Options, String> {
     }
 
     let target = match target.ok_or("Choose --emulated, --port or --interface")? {
-        Target::Emulated { seed, .. } => Target::Emulated {
+        Target::Emulated { seed: default, .. } => Target::Emulated {
             latency_us,
-            seed,
+            seed: seed.unwrap_or(default),
             factory,
         },
         _ if factory => Err("--factory needs --emulated")?,
+        _ if seed.is_some() => Err("--seed needs --emulated")?,
         _ if flags.units.is_some() => Err("--units needs --emulated")?,
         real => real,
     };
@@ -373,4 +376,44 @@ fn parse_ids(value: &str) -> Result<Vec<u8>, String> {
         .split(',')
         .map(|id| id.trim().parse::<u8>().map_err(|_| format!("Bad servo id {id}")))
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn seed_of(line: &str) -> Result<Option<u64>, String> {
+        let args: Vec<String> = line.split(' ').map(str::to_string).collect();
+
+        Ok(match parse(&args)?.target {
+            Target::Emulated { seed, .. } => Some(seed),
+            _ => None,
+        })
+    }
+
+    #[test]
+    fn an_emulated_robot_keeps_seed_one_unless_told() {
+        assert_eq!(seed_of("--family feetech --ids 1,2 --emulated"), Ok(Some(1)));
+        assert_eq!(
+            seed_of("--family feetech --ids 1,2 --emulated --seed 2166136261"),
+            Ok(Some(2_166_136_261))
+        );
+        assert_eq!(seed_of("--family unitree-g1 --seed 7 --emulated"), Ok(Some(7)));
+    }
+
+    #[test]
+    fn refuses_a_seed_that_is_not_a_number_or_not_emulated() {
+        assert_eq!(
+            seed_of("--family feetech --ids 1 --emulated --seed -3"),
+            Err("Bad seed".into())
+        );
+        assert_eq!(
+            seed_of("--family feetech --ids 1 --emulated --seed"),
+            Err("--seed needs a value".into())
+        );
+        assert_eq!(
+            seed_of("--family feetech --ids 1 --port /dev/null --seed 3"),
+            Err("--seed needs --emulated".into())
+        );
+    }
 }

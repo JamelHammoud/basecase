@@ -21,7 +21,7 @@ import type { CaseCompare } from '../workspace/useCaseCompare';
 import type { CaseExplore } from '../workspace/useCaseExplore';
 import { SimControls } from './simulate/SimControls';
 import { TrainSection, type CoachSend } from './simulate/TrainSection';
-import { coachMenuItems, stressMenuItems } from './simulate/skillMenu';
+import { coachMenuItems, rollOutMenuItems, stressMenuItems, type RollOutMenu } from './simulate/skillMenu';
 
 interface SimulatePanelProps {
   sim: Simulation;
@@ -45,6 +45,7 @@ interface SimulatePanelProps {
   sceneName: string;
   onToast: (message: string) => void;
   onPublishSkill: ((row: SkillRow) => void) | null;
+  fleet: RollOutMenu;
 }
 
 const toastProblem = (started: Promise<string | null>, onToast: (message: string) => void) =>
@@ -92,6 +93,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         }),
         ...coachMenuItems(row, { coach: skills.coach, coaches: !!props.onCoach }),
         ...publishEntries(row, props.onPublishSkill),
+        ...rollOutMenuItems(row, props.fleet),
       ];
 
       e.preventDefault();

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { unitName } from './fleetTools.mjs';
 import { bridge, fail, imageReply, text } from './shared.mjs';
 
 const vec3 = z.array(z.number().finite()).length(3);
@@ -95,6 +96,7 @@ export const operate = {
       "Each call holds one action for a few seconds, pauses, then returns the views from the robot's camera parts and the scene's camera view, plus whether it fell and where the end effector is. Look at the images, decide the next action, and call again: the robot stays where the last step left it. " +
       'Actions are the same as start_drive: forward, left and turn (-1 to 1) for robots that move around; lift (-1 to 1) or target (a point in mm, z up) for arms. restart: true puts the robot back at its start. ' +
       'The user places stationary camera views with Add Camera View; ask for the ones you need by name. ' +
+      'unit names the connected robot unit the live simulation streams to in Operate. ' +
       "When the robot's servos were calibrated in Operate, the reply ends with each joint's median error replaying the bench log in the sim, with the preset and with the calibration in use.",
     inputSchema: {
       action: z
@@ -113,6 +115,7 @@ export const operate = {
         .optional()
         .describe("Camera names to see through; default the scene view and the robot's cameras"),
       restart: z.boolean().optional(),
+      unit: unitName.optional(),
     },
   },
   handler: async (args) => {

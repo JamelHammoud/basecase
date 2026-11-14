@@ -1,4 +1,5 @@
 import { PrintPanel } from '../components/print/PrintPanel';
+import { RollOutDialog } from '../components/operate/RollOutDialog';
 import { ErrorBoundary, LAYOUT, PanelResizer } from '../design-system';
 import { RightPanelTabs } from './RightPanelTabs';
 import { RightTabPanels } from './RightTabPanels';
@@ -28,6 +29,9 @@ export function RightPanel({ core, actions, ui, agent }: RightPanelProps) {
       }`}
       style={{ width: isRightOpen ? panelWidths.right + LAYOUT.panelGap : 0 }}
     >
+      {core.simTraining.fleet.choice && (
+        <RollOutDialog key={core.simTraining.fleet.choice.hash} choice={core.simTraining.fleet.choice} />
+      )}
       {isRightOpen && (
         <PanelResizer
           edge="left"

@@ -1,11 +1,14 @@
+import { DEFAULT_UNIT } from '../../electron/robot/units.mjs';
 import { replayErrors } from '../reality/jointReplay';
+import { unitHistories } from '../reality/projectCalibrations';
 import type { ProjectSettings } from '../types/robotics';
 import { angleFromRadians as degrees } from '../utils/angle';
 
-export async function calibrationErrorsText(project: ProjectSettings): Promise<string> {
+export async function calibrationErrorsText(project: ProjectSettings, unit: string = DEFAULT_UNIT): Promise<string> {
+  const histories = unitHistories(project, unit);
   const rows = await Promise.all(
     (project.joints ?? []).map(async (joint) => {
-      const errors = await replayErrors(project.servoCalibrations?.[joint.id]);
+      const errors = await replayErrors(histories[joint.id]);
 
       if (!errors) return null;
 

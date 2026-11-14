@@ -26,6 +26,8 @@ covers:
 
 Every session on a connected robot becomes a try in the Library, so you can replay it or train on it later.
 
+Each connected unit records its own session. A fault or disconnect ends only that unit's recording.
+
 There is nothing to turn on. A session counts as a try when it lasts over 2 seconds and a joint moves more than half a degree.
 
 1. Connect the emulated robot. See [Connect an emulated robot](/help/connect-an-emulated-robot).
@@ -44,6 +46,6 @@ Climbing the **Ladder** keeps the same session going. Dropping to a lower rung e
 
 A session keeps the angles the robot measured and the commands Basecase sent. It also keeps the simulation's angles at the same moments and the raw values of the input that drove it. Those are a gamepad's sticks and buttons, a phone's tilt, or the body points your computer's camera found. A ROS 2 robot or a Unitree G1 adds each joint's speed and effort. A session that ran a trained policy keeps which policy it was.
 
-When your computer's camera is on, the session also keeps its video. The video stays on your computer, in the try's folder.
+When your computer's camera is on, the selected unit's session also keeps its video. The video stays on your computer, in the try's folder.
 
 **Note:** Basecase doesn't judge a session, so its tile shows no Passed or Missed. A session opens on the timeline only in the scene it was recorded from.

@@ -7,6 +7,7 @@ import { snapshotRefs, type SnapshotRef } from '../../skills/snapshots';
 import type { StressAxisResult } from '../../skills/stress';
 import { findingLine } from '../../skills/stressWords';
 import { fmtMargin, trainingLine } from './format';
+import { SkillTwins } from './SkillTwins';
 
 export interface SkillActions {
   onTrain: (row: SkillRow) => void;
@@ -165,6 +166,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
             )}
             <RowAction row={row} actions={actions} />
           </div>
+          <SkillTwins twins={row.record?.twins} />
           <SnapshotList row={row} actions={actions} />
           <StressFindings row={row} actions={actions} />
         </li>

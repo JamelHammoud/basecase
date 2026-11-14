@@ -8,6 +8,7 @@ import type {
   RobotLinkState,
   RobotMount,
   RobotSample,
+  RobotUnitState,
 } from '../../robot/robotState';
 import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
@@ -257,13 +258,15 @@ declare global {
       datasetsCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       onshapeCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       earthCall?: (channel: string, payload?: unknown) => Promise<unknown>;
-      robotConnect?: (spec: ConnectSpec) => Promise<ConnectReply>;
-      robotCommand?: (command: Record<string, unknown>) => Promise<ConnectReply>;
-      robotDisconnect?: () => Promise<ConnectReply>;
-      robotPolicy?: (refs: RobotPolicyRef[]) => Promise<ConnectReply>;
-      robotCalibrate?: (joints: RobotMount[]) => Promise<ConnectReply>;
-      robotState?: () => Promise<RobotLinkState>;
-      robotRecord?: (sample: RobotSample) => Promise<ConnectReply>;
+      robotConnect?: (spec: ConnectSpec, unit?: string) => Promise<ConnectReply>;
+      robotCommand?: (command: Record<string, unknown>, unit?: string) => Promise<ConnectReply>;
+      robotDisconnect?: (unit?: string) => Promise<ConnectReply>;
+      robotPolicy?: (refs: RobotPolicyRef[], unit?: string) => Promise<ConnectReply>;
+      robotCalibrate?: (joints: RobotMount[], unit?: string) => Promise<ConnectReply>;
+      robotState?: (unit?: string) => Promise<RobotLinkState>;
+      robotRecord?: (sample: RobotSample, unit?: string) => Promise<ConnectReply>;
+      robotUnits?: () => Promise<RobotUnitState[]>;
+      robotRollBack?: (unit: string) => Promise<ConnectReply>;
       onRobotEvent?: (callback: (event: RobotEvent) => void) => () => void;
       phonePair?: () => Promise<PairReply>;
       phoneUnpair?: () => Promise<{ ok: boolean }>;

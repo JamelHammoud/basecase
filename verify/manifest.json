@@ -73,7 +73,7 @@
   "verify/gates/s7-rehearsal.mjs": "2cbdc184f1830373bba03e38d9b57fd68efaafdc991472e64a76867dfeb1b8c3",
   "verify/hw/canaryHeartbeat.test.ts": "494f775c2a178a0ead7f7c1006fe66ea65747a0c677cdfbe9bc3dd0485e4b0ad",
   "verify/hw/canaryHiddenFault.test.ts": "ef4f7bb1eaa4f9022cf413df839d18fc9ae372afe8f06fa9acfbedc565380764",
-  "verify/hw/caseDrive.test.ts": "bd4eb74285b5cad07dc11b6917dceba0be2dcaee312cea7f9ac5cfc5050d6420",
+  "verify/hw/caseDrive.test.ts": "a954b6efc1b557958310151585e5699332ceafc10d7bb6304d1e7d98c7401754",
   "verify/hw/conformance.py": "f755cf4c5867e4bd8a4379930c50f9b26819ef102c192c7c73f9b1e1434c0e37",
   "verify/hw/daemonUi.test.ts": "5146221de0813c8fac59e53df972eb6f03c161a9851890668ec6913c25a93fa9",
   "verify/hw/devElectron.ts": "88d3df343013d2155ae0dd9ffd015030b1fb66514be5676c750c798ef5f19918",

@@ -20,6 +20,7 @@ related:
   - troubleshoot-build-slicing-fails
   - export-plates-as-3mf
   - merge-printed-parts-into-one-print
+  - label-printed-parts
 covers:
   - src/components/print/PrintPanel.tsx
   - src/components/print/PrintSettings.tsx
@@ -62,6 +63,7 @@ Print mode also opens from **File** ▸ **Print**, from **Print** in the Build t
 - Drag a part to move it. Press F to lay it on a face, or R to turn it 90°.
 - Press ← or → to go to the previous or next plate.
 - **Copies** prints more than one of the selected part. **Don't print** leaves it off the plates.
+- **Label parts** cuts each part's build guide letter into a hidden face. [Label printed parts with their guide letters](/help/label-printed-parts) has the details.
 - **Auto Arrange** in the bottom bar packs the plates of that material again.
 - **Parts** lists every part with its size, time and plate. Parts with problems come first.
 - **Merge** lists printed parts bolted together on one link that could print as one. [Merge printed parts into one print](/help/merge-printed-parts-into-one-print) has the steps.

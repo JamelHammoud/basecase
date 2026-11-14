@@ -24,6 +24,7 @@ covers:
   - src/utils/printReport.ts
   - src/three/printability.ts
   - src/components/print/PrintedSection.tsx
+  - src/print/labels/partLetters.ts
   - src/components/inspector/types.ts
 ---
 
@@ -66,6 +67,17 @@ The part's name ends in a word like Glass, or its note starts with clear acrylic
 1. Select the part.
 2. In the Inspector, set **Material** to **Laser-cut sheet** or **Off-the-shelf**.
 3. Source the sheet, since **Real parts** then asks where to get it. **Fix** hands that to the agent.
+
+## “Letter ⟨letter⟩ left off: no flat face is hidden, free and big enough”
+
+This is a note in **Parts** in Print mode, with the part's build guide letter. With **Label parts** on, every flat face of this part shows from outside, touches another part, rests on the bed or is too small. The part prints plain.
+
+1. Select the part and click **Lay on Face** to rest it on another face. The face it rested on may then take the letter.
+2. To print it plain on purpose, select it and turn on **Don't label**.
+
+## “Letter ⟨letter⟩ left off: its mesh has open edges”
+
+The part's mesh has gaps, so Basecase can't cut the letter into it. The part prints plain. Close the gaps in the part, or turn on **Don't label** for it.
 
 ## The plate shows warnings after slicing
 

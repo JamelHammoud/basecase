@@ -3,6 +3,7 @@ import { Button, MetaLine, ModeHeader, NumberInput, Section, Switch, useScrollFa
 import { slicerOrder } from '../../data/printers';
 import type { Plate } from '../../print/plan';
 import type { PrintToolsStatus, SavedPrinter } from '../../print/printBridge';
+import { labelsOn } from '../../print/labels/partLetters';
 import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
@@ -44,10 +45,14 @@ function showPart(printing: Printing, id: string) {
   printing.selectPart(id);
 }
 
-const SkipPrinted: React.FC<{ printing: Printing }> = ({ printing }) => (
+const SwitchRow: React.FC<{ label: string; checked: boolean; onChange: (on: boolean) => void }> = ({
+  label,
+  checked,
+  onChange,
+}) => (
   <div className="flex items-center justify-between gap-3">
-    <span className="text-[13px] text-white/60">Skip {plural(printing.printedCount, 'printed part')}</span>
-    <Switch aria-label="Skip printed parts" checked={printing.skipPrinted} onChange={printing.setSkipPrinted} />
+    <span className="text-[13px] text-white/60">{label}</span>
+    <Switch aria-label={label} checked={checked} onChange={onChange} />
   </div>
 );
 
@@ -189,10 +194,11 @@ const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; 
   );
 };
 
-const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plate[] }> = ({
+const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plate[]; labels: boolean }> = ({
   printing,
   part,
   plates,
+  labels,
 }) => {
   const plate = plates.find((p) => p.items.some((it) => it.id === part.id));
   const sameMaterial = plates.filter((p) => p.material === plate?.material);
@@ -247,14 +253,18 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
           />
         </div>
       </div>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] text-white/60">Don’t print</span>
-        <Switch
-          aria-label="Don’t print"
-          checked={!!part.print?.skip}
-          onChange={(skip) => set({ skip: skip || undefined })}
+      <SwitchRow
+        label="Don’t print"
+        checked={!!part.print?.skip}
+        onChange={(skip) => set({ skip: skip || undefined })}
+      />
+      {labels && (
+        <SwitchRow
+          label="Don’t label"
+          checked={!!part.print?.noLabel}
+          onChange={(noLabel) => set({ noLabel: noLabel || undefined })}
         />
-      </div>
+      )}
     </Section>
   );
 };
@@ -307,10 +317,30 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             onChangeProject={props.onChangeProject}
             onAddPrinter={props.onAddPrinter}
           />
-          {printing.printedCount > 0 && !printing.fitTest && <SkipPrinted printing={printing} />}
+          {!printing.fitTest && (
+            <SwitchRow
+              label="Label parts"
+              checked={labelsOn(props.project)}
+              onChange={(labelParts) => props.onChangeProject({ labelParts })}
+            />
+          )}
+          {printing.printedCount > 0 && !printing.fitTest && (
+            <SwitchRow
+              label={`Skip ${plural(printing.printedCount, 'printed part')}`}
+              checked={printing.skipPrinted}
+              onChange={printing.setSkipPrinted}
+            />
+          )}
           <PrinterLive printing={printing} />
         </Section>
-        {selected && <PartControls printing={printing} part={selected} plates={plates} />}
+        {selected && (
+          <PartControls
+            printing={printing}
+            part={selected}
+            plates={plates}
+            labels={!printing.fitTest && labelsOn(props.project)}
+          />
+        )}
         {plate && (
           <PlateDetail
             printing={printing}
@@ -324,6 +354,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
         <PrintedSection
           report={printing.report}
           project={props.project}
+          notes={printing.fitTest ? {} : printing.plates.notes}
           onSelectParts={([id]) => id && showPart(printing, id)}
         />
       </div>

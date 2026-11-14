@@ -69,6 +69,8 @@ export interface DevActions {
   worldAt: () => Record<string, number[]>;
   tryWorld: () => Promise<WorldEvent[]>;
   printPlates: () => unknown;
+  plateFiles: () => Promise<Record<string, Uint8Array>>;
+  labelNotes: () => Record<string, string>;
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   printState: () => unknown;
@@ -276,6 +278,11 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),
     printPlates: () => devRef.current.printPlates(),
+    plateFiles: async () =>
+      Object.fromEntries(
+        Object.entries(await devRef.current.plateFiles()).map(([material, bytes]) => [material, bytesToBase64(bytes)]),
+      ),
+    labelNotes: () => devRef.current.labelNotes(),
     bomLines: () =>
       buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
         ({ key, qty }) => ({ key, qty }),

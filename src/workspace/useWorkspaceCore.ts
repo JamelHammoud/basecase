@@ -134,7 +134,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const undo = () => travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
-  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo });
+  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
 
   const readiness = useReadiness({ parts, project, printer, partsRef: docs.partsRef, projectRef, viewportRef });
   const caseCompare = useCaseCompare({

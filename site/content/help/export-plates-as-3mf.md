@@ -16,6 +16,7 @@ related:
   - print-a-robots-parts
   - add-a-printer
   - troubleshoot-build-slicing-fails
+  - label-printed-parts
 covers:
   - src/components/ExportMenu.tsx
   - src/workspace/useExportActions.ts
@@ -33,7 +34,7 @@ Save the laid-out plates as 3MF files to slice in any slicer, one file per mater
 
 Basecase saves the files to your downloads. With one material it's `<scene>.3mf`. With several, each material gets its own file, such as `robot-arm-PLA.3mf` and `robot-arm-PETG.3mf`.
 
-Inside, each plate is named Plate 1, Plate 2 and so on, laid out the way Bambu Studio lays out plates. Parts keep their names and the orientation chosen in Print mode.
+Inside, each plate is named Plate 1, Plate 2 and so on, laid out the way Bambu Studio lays out plates. Parts keep their names and the orientation chosen in Print mode. With **Label parts** on in Print mode, each part has its build guide letter cut into a hidden face, as [Label printed parts with their guide letters](/help/label-printed-parts) explains.
 
 **Export 3MF Plates** is also in ⌘K. It works in the web studio too, since it needs no slicer.
 

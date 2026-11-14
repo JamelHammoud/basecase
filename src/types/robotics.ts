@@ -218,6 +218,7 @@ export interface ProjectSettings extends ProjectRecords {
   material: PrintMaterial;
   infillPct: number;
   printProcess?: string;
+  labelParts?: boolean;
   prints?: PrintRecord[];
   budgetUsd?: number;
   budgetEntered?: EnteredPrice;

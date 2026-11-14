@@ -10,7 +10,9 @@ interface TimelineLaneProps {
   name: string;
   frame: number;
   markers: number[];
+  loop: [number, number] | null;
   onSeek: (frame: number) => void;
+  onLoop: (range: [number, number] | null) => void;
   onSelect: () => void;
 }
 
@@ -27,7 +29,7 @@ function effortText(lane: Lane, v: number): string {
   return lane.unit === 'mm' ? `${negative(v, hundredths)} N` : torque(v);
 }
 
-export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, markers, onSeek, onSelect }) => {
+export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, onSelect, ...plot }) => {
   const motion: Trace[] = [
     ...(lane.target ? [{ id: 'target', values: lane.target, tone: 'muted' as const }] : []),
     { id: 'position', values: lane.position, tone: 'accent' },
@@ -48,15 +50,8 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, m
         <span className="text-[12px] text-white/50 tabular truncate">{effortText(lane, lane.effort[frame])}</span>
       </div>
       <div className="flex-1 min-w-0 flex flex-col gap-1">
-        <TracePlot traces={motion} height={PLOT} playhead={frame} markers={markers} onSeek={onSeek} />
-        <TracePlot
-          traces={effort}
-          height={PLOT}
-          playhead={frame}
-          limit={lane.limit}
-          markers={markers}
-          onSeek={onSeek}
-        />
+        <TracePlot traces={motion} height={PLOT} playhead={frame} {...plot} />
+        <TracePlot traces={effort} height={PLOT} playhead={frame} limit={lane.limit} {...plot} />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { createContext, use, useEffect, useEffectEvent } from 'react';
 import { consoleScope } from '../cases/console/format';
+import { frameAtTime } from '../cases/console/recordedSignals';
 import type { ConsoleLayout } from '../cases/console/layout';
 import { gestureActions, type CaseAction } from '../cases/console/panelKinds';
 import { GESTURE_EVENT } from '../cases/gestures';
@@ -15,6 +16,7 @@ import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useConsoleSignals } from './useConsoleSignals';
+import { useRecordedSignals } from './useRecordedSignals';
 import { showPartsSection } from './showView';
 
 interface CenterValue {
@@ -32,14 +34,15 @@ function useActions(core: WorkspaceCore) {
   const driving = sim.drive.active;
 
   const can = (action: CaseAction) =>
-    ({
+    !core.caseRun.playback &&
+    {
       try: attempt.phase === 'idle' && cases.realTry.phase === 'idle',
       'end-try': attempt.phase === 'running',
       drive: !driving,
       stop: driving,
       'start-over': driving,
       reset: sim.status !== 'off' && attempt.phase === 'idle',
-    })[action];
+    }[action];
 
   return { can, run: { attempt, sim } };
 }
@@ -53,7 +56,8 @@ interface ProviderProps {
 export function CaseRunProvider({ core, actions, children }: ProviderProps) {
   const { caseRun, simTraining, posing, parts } = core;
   const { sim, cases } = simTraining;
-  const { open, caseConsole, layout } = caseRun;
+  const { open, caseConsole, layout, kase } = caseRun;
+  const { timeline } = cases;
   const wantsCameras = caseConsole.panels.some((p) => p.kind === 'camera');
   const cameras = useCameraTiles({
     parts,
@@ -62,8 +66,8 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     patchPart: actions.edits.patchPart,
     active: () => open && wantsCameras,
   });
-  const bus = useConsoleSignals({
-    open,
+  const live = useConsoleSignals({
+    open: caseRun.live && !caseRun.playback,
     kase: cases.active,
     caseConsole,
     sim,
@@ -72,6 +76,14 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     parts,
     cameras: cameras.views.map((v) => v.key),
   });
+  const recorded = useRecordedSignals({
+    timeline,
+    model: sim.model,
+    rig: posing.rig,
+    caseConsole,
+    cameras: cameras.views.map((v) => v.key),
+  });
+  const bus = recorded ?? live;
   const { can, run } = useActions(core);
 
   const fire = (action: CaseAction) => {
@@ -103,15 +115,16 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
         ctx: {
           bus,
           signals: caseConsole.signals ?? [],
-          scope: consoleScope(caseConsole, cases.active),
+          scope: consoleScope(caseConsole, kase),
           inputs: caseConsole.input,
-          brief: cases.active?.brief ?? '',
-          world: movableWorld(cases.active, robotFacts(posing.rig, parts)),
+          brief: kase?.brief ?? '',
+          world: movableWorld(kase, robotFacts(posing.rig, parts)),
           sim,
           parts,
           joints: core.project.joints ?? [],
           fire,
           can,
+          seek: recorded ? (time) => timeline.seek(frameAtTime(recorded.track, time)) : undefined,
           studio: {
             cases,
             cameras,
@@ -122,8 +135,8 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
           },
         },
         areas: layout,
-        title: cases.active?.name ?? '',
-        onDone: caseRun.leave,
+        title: kase?.name ?? timeline.record?.robot ?? '',
+        onDone: caseRun.done,
       }
     : null;
 

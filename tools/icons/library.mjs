@@ -127,7 +127,6 @@ const DRAWN = {
     },
     VerifiedIcon: badge() + 'M8.25 12.25L10.75 14.75L15.75 9.5',
     MenuIcon: 'M4 6.5H20M4 12H20M4 17.5H20',
-    MoreIcon: { d: '', dots: 'M5.5 12h0M12 12h0M18.5 12h0', dotSize: 3.5 },
     GripIcon: { d: '', dots: 'M9 5.5h0M15 5.5h0M9 12h0M15 12h0M9 18.5h0M15 18.5h0', dotSize: 3.25 },
     PauseIcon: rr([5, 4, 5, 16], 1.5) + rr([14, 4, 5, 16], 1.5),
     StopIcon: rr([5, 5, 14, 14], 2.5),

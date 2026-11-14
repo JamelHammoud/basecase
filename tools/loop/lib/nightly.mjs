@@ -36,10 +36,20 @@ export function rerunSuite({ now, last, mainHead, running }) {
   return last.headSha !== mainHead && now - Date.parse(last.createdAt) > HOUR_MS;
 }
 
-export function retryRelease({ now, lastReleaseAt, lastNightlyAt }) {
-  if (now < lastDue(now, NIGHTLY_HOUR_UTC) || nightlyDue(now, lastNightlyAt)) return false;
+export function releaseDue({ now, lastReleaseAt, lastAttemptAt, running }) {
+  const due = new Date(now);
 
-  const releasedToday = lastReleaseAt && new Date(lastReleaseAt) >= dayOf(now);
+  due.setUTCHours(NIGHTLY_HOUR_UTC, GRACE_MINUTES, 0, 0);
 
-  return !releasedToday && now - Date.parse(lastNightlyAt) > 2 * HOUR_MS;
+  if (running || now < due) return false;
+
+  if (lastReleaseAt && new Date(lastReleaseAt) >= dayOf(due)) return false;
+
+  return !lastAttemptAt || now - Date.parse(lastAttemptAt) > 2 * HOUR_MS;
+}
+
+export function nextVersion(tag) {
+  const [major, minor, patch] = String(tag).replace(/^v/, '').split('.').map(Number);
+
+  return `${major}.${minor}.${patch + 1}`;
 }

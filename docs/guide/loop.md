@@ -148,7 +148,7 @@ Then it lists where conflicts landed: one line per file the rebase lane met in a
 
 ### Releases
 
-`.github/workflows/nightly.yml` runs at 09:17 UTC. It takes the newest commit on `main` whose full suite passed, and when that's newer than the last release, dispatches `release.yml` to build that commit (its `ref` input) with the next patch version. GitHub sometimes drops a scheduled run, so the Mac's `nightly` lane starts the suite when it hasn't run by 07:00 UTC and the release when it hasn't run by 09:45, and tries the release again every two hours until one goes out that day ([Releases](releases.md), §0i). basecase.so and app.basecase.so need no release: Cloudflare Workers Builds deploys them on every push to `main` ([Running and testing](running-and-testing.md), §0d).
+The Mac's `nightly` lane releases once a day, from 09:45 UTC (`tools/loop/lanes/nightly.mjs`, `lib/nightly.mjs`). It takes the newest commit on `main` whose full suite passed, and when that's newer than the last release, starts `release.yml` on that commit (its `ref` input) with the next patch version. If no release has gone out that day, it tries again every two hours. It starts the release as Jamel, because a release started by GitHub's workflow token can't create the GitHub release here: from 13 to 14 November every nightly built Mac and Windows and then failed to publish with HTTP 403, until the lane took over and `nightly.yml` was removed. basecase.so and app.basecase.so need no release: Cloudflare Workers Builds deploys them on every push to `main` ([Running and testing](running-and-testing.md), §0d).
 
 ### Writing posts and help
 

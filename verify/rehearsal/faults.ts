@@ -29,6 +29,13 @@ export interface Rect {
   height: number;
 }
 
+export interface Held extends Rect {
+  from: number;
+  to: number;
+}
+
+export const HELD = Object.freeze({ tickMs: 250, max: 400 });
+
 export const TARGETS =
   'button:not(nav[aria-label="Sidebar views"] *), [role=tab], [role=menuitem], [role=switch], [role=checkbox]';
 
@@ -48,16 +55,22 @@ export function namedControls(page: Page): Promise<string[]> {
 
 export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
   return page.evaluate(
-    ({ list, selector, misleading }) => {
+    ({ list, selector, misleading, held: limits }) => {
       const label = (el: Element) => (el.getAttribute('aria-label') ?? el.textContent ?? '').trim();
       const done = new WeakSet<Element>();
-      const rects: Record<string, DOMRect[]> = {};
-      const sameRect = (a: DOMRect, b: DOMRect) =>
+      const places: Record<string, Held[]> = {};
+      const sameRect = (a: Rect, b: Rect) =>
         Math.abs(a.x - b.x) < 4 && Math.abs(a.y - b.y) < 4 && Math.abs(a.width - b.width) < 4;
       const remember = (name: string, rect: DOMRect) => {
-        const seen = (rects[name] ??= []);
+        const timeline = (places[name] ??= []);
+        const last = timeline.at(-1);
+        const now = Date.now();
 
-        if (rect.width > 0 && seen.length < 40 && !seen.some((r) => sameRect(r, rect))) seen.push(rect);
+        if (rect.width <= 0) return;
+
+        if (last && sameRect(last, rect)) last.to = now;
+        else if (timeline.length < limits.max)
+          timeline.push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height, from: now, to: now });
       };
       const swallow = (el: HTMLElement) =>
         el.addEventListener('click', (e) => (e.stopImmediatePropagation(), e.preventDefault()), true);
@@ -158,22 +171,13 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
         }
       };
 
-      (window as unknown as { __gateFaultRects: unknown }).__gateFaultRects = rects;
+      (window as unknown as { __gateFaultPlaces: unknown }).__gateFaultPlaces = places;
       tick();
-      setInterval(tick, 250);
+      setInterval(tick, limits.tickMs);
     },
-    { list: specs, selector: TARGETS, misleading: MISLEADING_LABEL },
+    { list: specs, selector: TARGETS, misleading: MISLEADING_LABEL, held: HELD },
   );
 }
 
-export const faultRects = (page: Page): Promise<Record<string, Rect[]>> =>
-  page.evaluate(() => {
-    const seen = (window as unknown as { __gateFaultRects?: Record<string, DOMRect[]> }).__gateFaultRects ?? {};
-
-    return Object.fromEntries(
-      Object.entries(seen).map(([name, list]) => [
-        name,
-        list.map((r) => ({ x: r.x, y: r.y, width: r.width, height: r.height })),
-      ]),
-    );
-  });
+export const faultPlaces = (page: Page): Promise<Record<string, Held[]>> =>
+  page.evaluate(() => (window as unknown as { __gateFaultPlaces?: Record<string, Held[]> }).__gateFaultPlaces ?? {});

@@ -35,7 +35,14 @@ export function addFinding(findings, raw) {
 
   if (findings.length >= SESSION.maxFindings) return 'Finding limit reached. Report only the clearest problems.';
 
-  const finding = { where, problem, ...(at ? { at } : {}), ...(scrolled ? { view } : {}) };
+  const t = at && finite(raw.t) ? Number(raw.t) : undefined;
+  const finding = {
+    where,
+    problem,
+    ...(at ? { at } : {}),
+    ...(scrolled ? { view } : {}),
+    ...(t === undefined ? {} : { t }),
+  };
 
   if (findings.some((f) => sameFinding(f, finding))) return `Already reported ${where}.`;
 
@@ -59,7 +66,7 @@ export function withdrawFinding(findings, where) {
 
 export function createSession({ screen, minutes, devicePixelRatio, now = Date.now }) {
   const deadline = now() + minutes * 60000;
-  const state = { toCss: 1, done: false, actions: 0, pointer: [0, 0], scrolls: [] };
+  const state = { toCss: 1, done: false, actions: 0, pointer: [0, 0], scrolls: [], shotAt: undefined };
   const findings = [];
   const timeLeft = () => Math.max(0, deadline - now());
   const clock = () => {
@@ -72,7 +79,11 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
   const css = (v) => Math.round(Number(v) * state.toCss);
 
   const look = async (shot) => {
-    const frame = await frameOf(shot ?? (await screen.screenshot()), devicePixelRatio);
+    const png = shot ?? (await screen.screenshot());
+
+    state.shotAt = now();
+
+    const frame = await frameOf(png, devicePixelRatio);
 
     state.toCss = frame.toCss;
 
@@ -138,7 +149,7 @@ export function createSession({ screen, minutes, devicePixelRatio, now = Date.no
       const view = finite(x) && finite(y) ? [css(x), css(y)] : undefined;
       const at = view && [view[0], view[1] + scrollAt(state.scrolls, view[0])];
 
-      return { text: `${addFinding(findings, { where, problem, at, view })} ${clock()}` };
+      return { text: `${addFinding(findings, { where, problem, at, view, t: state.shotAt })} ${clock()}` };
     },
     withdraw: ({ where }) => ({ text: withdrawFinding(findings, where) }),
     finish: () => {

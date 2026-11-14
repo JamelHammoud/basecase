@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { matches, type PlantedFault } from './personaScore';
 
+const row = { x: 60, width: 272, height: 14 };
+
 const shafts: PlantedFault = {
   session: 8,
   kind: 'tiny',
   name: 'Shafts & Linear Bearingsh6 shafts, LM bushings',
-  rect: { x: 60, y: 1405, width: 272, height: 14 },
-  seen: [
-    { x: 60, y: 1405, width: 272, height: 14 },
-    { x: 60, y: 1772, width: 272, height: 14 },
+  rect: { ...row, y: 1405 },
+  held: [
+    { ...row, y: 1405, from: 0, to: 60000 },
+    { ...row, y: 1005, from: 60250, to: 120000 },
   ],
 };
 
@@ -19,18 +21,27 @@ describe('PersonaLab scoring', () => {
     );
   });
 
-  it('matches a finding at any place the control was while the persona looked', () => {
-    expect(matches({ where: 'A short row', at: [195, 1780], problem: 'too short' }, shafts)).toBe(true);
+  it('matches a scroll-corrected point inside where the control was before the session, without a time', () => {
+    expect(matches({ where: 'A short row', at: [195, 1410], problem: 'too short' }, shafts)).toBe(true);
+  });
+
+  it('matches an on-screen point inside where the control was when the screenshot was taken', () => {
+    expect(
+      matches({ where: 'A short row', at: [195, 1700], view: [195, 1010], t: 90000, problem: 'too short' }, shafts),
+    ).toBe(true);
+  });
+
+  it('never matches another row at a place the planted control held at another moment', () => {
+    const after = (view: [number, number], at: [number, number]) =>
+      matches({ where: 'Another row', at, view, t: 90000, problem: 'too short' }, shafts);
+
+    expect(after([195, 605], [195, 1005])).toBe(false);
+    expect(after([195, 1405], [195, 1805])).toBe(false);
+    expect(matches({ where: 'Another row', at: [195, 1005], t: 30000, problem: 'too short' }, shafts)).toBe(false);
   });
 
   it('never matches a finding somewhere the control never was', () => {
-    expect(matches({ where: 'Sensors', at: [195, 690], problem: 'too dark' }, shafts)).toBe(false);
-  });
-
-  it('matches a finding by the point on screen when the scroll it estimated is off', () => {
-    expect(matches({ where: 'A short row', at: [195, 2100], view: [195, 1410], problem: 'too short' }, shafts)).toBe(
-      true,
-    );
+    expect(matches({ where: 'Sensors', at: [195, 690], t: 30000, problem: 'too dark' }, shafts)).toBe(false);
   });
 
   it('matches a control named by the misleading label planted on it, and only for that fault', () => {

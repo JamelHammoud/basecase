@@ -51,7 +51,7 @@ describe('PersonaLab offline parts', () => {
 
   it('clicks and reports in CSS pixels on a Retina screen', async () => {
     const { screen, calls } = fakeScreen(2960, 1840);
-    const session = createSession({ screen, minutes: 1 });
+    const session = createSession({ screen, minutes: 1, now: () => 5000 });
     const shot = await session.handlers.look();
 
     await session.handlers.click({ x: 100, y: 200 });
@@ -59,7 +59,9 @@ describe('PersonaLab offline parts', () => {
 
     expect(shot.text).toMatch(/^Screenshot 1480 × 920/);
     expect(calls).toEqual([['click', 100, 200]]);
-    expect(session.findings).toEqual([{ where: 'Export', problem: 'Nothing happens on click.', at: [100, 200] }]);
+    expect(session.findings).toEqual([
+      { where: 'Export', problem: 'Nothing happens on click.', at: [100, 200], t: 5000 },
+    ]);
   });
 
   it('keeps one finding per control and needs where and problem', () => {
@@ -163,15 +165,15 @@ describe('PersonaLab screen tools', () => {
     expect(calls).toEqual([['click', 100, 200]]);
   });
 
-  it('keeps the on-screen point of a finding reported after a scroll', () => {
+  it('keeps the on-screen point of a finding reported after a scroll, and when its screenshot was taken', () => {
     const findings = [];
 
-    addFinding(findings, { where: 'Bearings', problem: 'Faint.', at: [195, 1400], view: [195, 700] });
-    addFinding(findings, { where: 'Export', problem: 'Dead.', at: [10, 10], view: [10, 10] });
+    addFinding(findings, { where: 'Bearings', problem: 'Faint.', at: [195, 1400], view: [195, 700], t: 9000 });
+    addFinding(findings, { where: 'Export', problem: 'Dead.', at: [10, 10], view: [10, 10], t: 9500 });
 
     expect(findings).toEqual([
-      { where: 'Bearings', problem: 'Faint.', at: [195, 1400], view: [195, 700] },
-      { where: 'Export', problem: 'Dead.', at: [10, 10] },
+      { where: 'Bearings', problem: 'Faint.', at: [195, 1400], view: [195, 700], t: 9000 },
+      { where: 'Export', problem: 'Dead.', at: [10, 10], t: 9500 },
     ]);
   });
 

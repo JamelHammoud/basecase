@@ -3,10 +3,10 @@ import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import type { Page } from 'playwright-core';
 import { describe, expect, it } from 'vitest';
-import { launchPackaged } from '../../e2e/app/packagedApp';
+import { launchPackaged, type RunningApp } from '../../e2e/app/packagedApp';
 import { repoPath } from '../lib/need';
 import { freshSeed, seededRng, shuffled, type Rng } from '../zoo/rng';
-import { FAULT_KINDS, faultRects, namedControls, plantFaults, type FaultSpec } from './faults';
+import { FAULT_KINDS, faultPlaces, namedControls, plantFaults, type FaultSpec } from './faults';
 import { loadPersonaLab, screenOf, type PersonaLab } from './screen';
 import { PERSONA_BARS, personaScore, type PlantedFault, type SessionFindings } from './personaScore';
 
@@ -31,7 +31,7 @@ function within<T>(work: Promise<T>, ms: number, what: string): Promise<T> {
   return Promise.race([work, late]).finally(() => clearTimeout(timer));
 }
 
-async function closeApp(run: Awaited<ReturnType<typeof launchPackaged>>) {
+async function closeApp(run: RunningApp) {
   await within(run.close(), CLOSE_MS, 'closing the app').catch(() => run.app.process().kill('SIGKILL'));
 }
 
@@ -51,10 +51,25 @@ const goalsFor = (view: string) => [
   'Say where anything was confusing, broken, unreadable, too small, slow or misleading.',
 ];
 
-async function session(lab: PersonaLab, options: { index: number; rng: Rng; kinds: FaultSpec['kind'][] }) {
+interface SessionOptions {
+  index: number;
+  rng: Rng;
+  kinds: FaultSpec['kind'][];
+}
+
+interface Live {
+  run?: RunningApp;
+  abandoned: boolean;
+}
+
+async function session(lab: PersonaLab, options: SessionOptions & { live: Live }) {
   const run = await launchPackaged();
 
+  options.live.run = run;
+
   try {
+    if (options.live.abandoned) throw new Error(`session ${options.index} was abandoned while launching`);
+
     const view = await openView(run.page, options.rng);
     const controls = shuffled(options.rng, [...new Set(await namedControls(run.page))]);
 
@@ -70,13 +85,18 @@ async function session(lab: PersonaLab, options: { index: number; rng: Rng; kind
       goals: goalsFor(view),
       minutes: SESSION_MINUTES,
     });
-    const rects = await faultRects(run.page);
-    const planted: PlantedFault[] = specs.map((s) => ({
-      session: options.index,
-      ...s,
-      rect: rects[s.name]?.[0] ?? null,
-      seen: rects[s.name] ?? [],
-    }));
+    const places = await faultPlaces(run.page);
+    const planted: PlantedFault[] = specs.map((s) => {
+      const held = places[s.name] ?? [];
+      const first = held[0];
+
+      return {
+        session: options.index,
+        ...s,
+        rect: first ? { x: first.x, y: first.y, width: first.width, height: first.height } : null,
+        held,
+      };
+    });
 
     return { planted, found: { session: options.index, findings } as SessionFindings };
   } finally {
@@ -84,18 +104,23 @@ async function session(lab: PersonaLab, options: { index: number; rng: Rng; kind
   }
 }
 
-async function guardedSession(lab: PersonaLab, options: { index: number; rng: Rng; kinds: FaultSpec['kind'][] }) {
+async function guardedSession(lab: PersonaLab, options: SessionOptions) {
   for (let attempt = 1; ; attempt++) {
+    const live: Live = { abandoned: false };
+
     progress(`session ${options.index} attempt ${attempt}: ${options.kinds.join(', ')}`);
 
     try {
-      const result = await within(session(lab, options), SESSION_CAP_MS, `session ${options.index}`);
+      const result = await within(session(lab, { ...options, live }), SESSION_CAP_MS, `session ${options.index}`);
 
       progress(`session ${options.index}: ${result.found.findings.length} findings`);
 
       return result;
     } catch (error) {
       progress(`session ${options.index} attempt ${attempt} failed: ${(error as Error).message}`);
+      live.abandoned = true;
+
+      if (live.run) await closeApp(live.run);
 
       if (attempt >= 2) throw error;
     }

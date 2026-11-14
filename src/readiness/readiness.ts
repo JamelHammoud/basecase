@@ -262,35 +262,35 @@ const partList = (f: Finding, parts: ScenePart[]) => {
   return [...new Set(names)].join(', ');
 };
 
-export function fixPrompt(f: Finding): string {
-  return [
-    `Fix this problem from Checks: ${f.text}`,
-    f.ids.length ? `Parts: ${f.ids.join(', ')}` : '',
-    `Detail: ${f.agentText}`,
-    `Check: ${f.key}. Run get_readiness when you’re done. If it’s wrong, call dispute_finding with your evidence.`,
-  ]
+export interface FindingRequest {
+  text: string;
+  quotes: MessageQuote[];
+}
+
+const FIX_NOTE = 'Run get_readiness when you’re done. If it’s wrong, call dispute_finding with your evidence.';
+
+const findingContext = (f: Finding, note?: string) =>
+  [...(f.ids.length ? [`Parts: ${f.ids.join(', ')}`] : []), `Detail: ${f.agentText}`, `Check: ${f.key}`, note]
     .filter(Boolean)
     .join('\n');
+
+const quoteOf = (f: Finding, parts: ScenePart[], note?: string): MessageQuote => ({
+  id: f.key,
+  source: 'Checks',
+  text: f.text,
+  parts: partList(f, parts) || undefined,
+  context: findingContext(f, note),
+});
+
+export const findingQuote = (f: Finding, parts: ScenePart[]): MessageQuote => quoteOf(f, parts);
+
+export function fixRequest(f: Finding, parts: ScenePart[]): FindingRequest {
+  return { text: 'Fix this.', quotes: [quoteOf(f, parts, FIX_NOTE)] };
 }
 
-export function findingQuote(f: Finding, parts: ScenePart[]): MessageQuote {
+export function followUpRequest(added: Finding[], parts: ScenePart[]): FindingRequest {
   return {
-    id: f.key,
-    source: 'Checks',
-    text: f.text,
-    parts: partList(f, parts) || undefined,
-    context: [
-      ...(f.ids.length ? [`Parts: ${f.ids.join(', ')}`] : []),
-      `Detail: ${f.agentText}`,
-      `Check: ${f.key}`,
-    ].join('\n'),
+    text: `Fix what the last change added: ${plural(added.length, 'problem')}.`,
+    quotes: added.slice(0, 10).map((f) => quoteOf(f, parts, FIX_NOTE)),
   };
-}
-
-export function followUpPrompt(added: Finding[]): string {
-  return [
-    `Build check: your last change added ${countText(added.length)}.`,
-    ...added.slice(0, 10).map((f) => `- [${f.key}] ${f.agentText}`),
-    'Fix these. If one is wrong, call dispute_finding with the evidence instead of working around it.',
-  ].join('\n');
 }

@@ -33,7 +33,7 @@ Basecase measures your design against real parts, your printer, your budget and 
 
 Every part you can buy comes from a real product and includes the maker's geometry, datasheet and price. Parts lists only those products, plus ISO hardware such as screws, nuts and bearings, and basic shapes.
 
-The agent may block out a robot with stand-ins first. A stand-in is a generic servo, board or bracket that's about the right size. Stand-ins just hold a place, so a design that contains one is never ready. If the catalog doesn't have a part, the agent finds a real one and adds it. Learn more in [Parts the agent sources](/help/parts-the-agent-sources).
+The agent may block out a robot with stand-ins first. A stand-in is a generic servo, board or bracket that's about the right size. Stand-ins only hold a place, so a design that contains one is never ready. If the catalog doesn't have a part, the agent finds a real one and adds it. Learn more in [Parts the agent sources](/help/parts-the-agent-sources).
 
 ## Checks give the verdict
 

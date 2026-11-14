@@ -4,7 +4,7 @@ date: 2026-11-14
 image: /changelog/keep-every-robot-session-as-a-try/cover.png
 ---
 
-Every session on a connected robot is now kept as a try. There's nothing to start. Moving the robot by hand in Look counts as a demonstration too.
+Every session on a connected robot is now kept as a try, with nothing to start. Moving the robot by hand in Look counts as a demonstration too.
 
 Find the tries in **Library** ▸ **Tries**, badged Operate, next to the tries from your Cases.
 

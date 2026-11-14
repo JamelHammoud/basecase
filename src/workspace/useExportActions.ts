@@ -38,17 +38,23 @@ export function useExportActions(core: WorkspaceCore) {
     }
   };
 
-  const exportImage = () => {
-    const dataUrl = viewportRef.current?.captureScreenshot();
+  const exportImage = async () => {
+    const name = `${fileSafe(scene.sceneName)}.png`;
 
-    if (!dataUrl) return;
+    try {
+      const dataUrl = await viewportRef.current?.captureScreenshot();
 
-    const a = document.createElement('a');
+      if (!dataUrl) return;
 
-    a.href = dataUrl;
-    a.download = `${fileSafe(scene.sceneName)}.png`;
-    a.click();
-    showToast('Exported image');
+      const a = document.createElement('a');
+
+      a.href = dataUrl;
+      a.download = name;
+      a.click();
+      showToast('Exported image');
+    } catch (err) {
+      showToast(errorMessage(err), { tone: 'error' });
+    }
   };
 
   const copyBrief = async () => {

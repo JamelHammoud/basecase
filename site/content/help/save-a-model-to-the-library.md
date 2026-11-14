@@ -38,6 +38,8 @@ You can save a part or a group of parts to the Library, then add it to any scene
 
 When you save one part, the model gets that part's name and its **Notes**. When you save several parts, the model gets the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
 
+Saving several parts also keeps an image of the view when you save. You can keep working while Basecase prepares that image.
+
 You can also choose **Save to Library** from a part's right-click menu, or from [[⌘K]].
 
 To bring in a file, choose **Import** from the **+** menu. An SVG file opens in Import SVG. Click **Add** there to [turn it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). To save an SVG part to the Library, click **Save to Library** (the bookmark) in the part's Inspector header.

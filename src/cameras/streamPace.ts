@@ -3,6 +3,12 @@ export const MAX_STREAM_FPS = 15;
 
 const EARLY_MS = 1;
 
+export interface StreamAsk {
+  width: number;
+  height: number;
+  fps: number;
+}
+
 export interface Pace {
   interval: number;
   due: number;

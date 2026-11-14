@@ -74,7 +74,7 @@ A console can also hold the Case's own code: up to 4 panels, each a small web pa
 
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
 
-A code panel can also change the Case's world while it runs. It can move, light or hide an object the Case marks as movable, such as a target that pops up or a wall that opens. Each change is kept on the try, so a replay shows the same world. It can watch one of the robot's cameras at up to 640 × 480 and 15 frames a second, and the frames stay on your computer. It can keep up to 64 KB with the Case, such as a high score, which stays after a reload and Reset.
+A code panel can also change the Case's world while it runs. It can move, light or hide an object the Case marks as movable, such as a target that pops up or a wall that opens. Each change is kept on the try, so a replay shows the same world. It can watch the Scene view or one of the robot's cameras at up to 640 × 480 and 15 frames a second. It can't see through your computer's camera. It can keep up to 64 KB with the Case, such as a high score, which stays after a reload and Reset.
 
 ![A rover Case with a code panel showing the Scene camera, a target the code lit in red, and a best score of 6](/help/run-a-case/world.png)
 

@@ -9,6 +9,8 @@ import { WorldMoves } from '../../../sim/worldMoves';
 import { DEFAULT_PROJECT } from '../../../types/robotics';
 import { buildRig, type V3 } from '../../../utils/kinematics';
 import { stageCase, stagedEffectors } from '../../caseCast';
+import { robotFacts } from '../../robotFit';
+import { movableWorld } from '../../scale';
 import { LiveCase } from '../../liveCase';
 import { endPoint } from '../../probes';
 import { logicPlan } from '../../runCaseLogic';
@@ -63,12 +65,13 @@ function modelFor(robot: FixtureRobot, kase: Case) {
   return {
     model,
     staged,
+    movable: movableWorld(kase, robotFacts(rig, robot.parts)),
     scoring: { kase: staged.kase, model, rig, ...stagedEffectors(staged, { rig, parts: robot.parts }) },
   };
 }
 
 export async function openCodeRun(mj: MainModule, input: CodeRunInput): Promise<CodeRun> {
-  const { model, staged, scoring } = modelFor(input.robot, input.kase);
+  const { model, staged, movable, scoring } = modelFor(input.robot, input.kase);
   const controller = liveController(input.robot, scoring.rig, model);
   const engine = new SimEngine(mj, model);
 
@@ -92,7 +95,7 @@ export async function openCodeRun(mj: MainModule, input: CodeRunInput): Promise<
   engine.commandHook = recorder.command;
 
   const change = (c: WorldChange) => {
-    const placed = stagedChange(staged.world, c);
+    const placed = stagedChange(movable, c);
     const refusal = typeof placed === 'string' ? placed : world.apply(placed);
 
     if (typeof placed !== 'string' && !refusal) recorder.worldChange(placed);

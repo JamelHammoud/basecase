@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { enlargeCameraView, useCameraViewsState } from '../../cameras/cameraViewsStore';
-import { operatorCameraSnapshot } from '../../cameras/operator/operatorCamera';
-import { streamOperator } from '../../cameras/operator/operatorStream';
 import { useCameraFeed } from '../../cameras/useCameraFeed';
 import { cameraViews, stripParts, type CameraView } from '../../cameras/views';
 import { cameraStream, type CameraStream } from '../../cameras/cameraStream';
@@ -76,11 +74,6 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
       onMenu: (x, y) => setMenu({ x, y, items: cameraMenu(view, actions) }),
     }),
     menu: menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />,
-    stream: cameraStream({
-      views,
-      feed: feed.stream,
-      operator: streamOperator,
-      operatorOpen: () => operatorCameraSnapshot().open,
-    }),
+    stream: cameraStream({ views, feed: feed.stream }),
   };
 }

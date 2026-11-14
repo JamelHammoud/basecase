@@ -8,15 +8,13 @@ const views = [
   { key: 'gripper_cam', label: 'Gripper Cam' },
 ] as CameraView[];
 
-function sources(operatorOpen = false) {
+function sources() {
   const asked: FeedStream[] = [];
   const stop = vi.fn();
-  const operator = vi.fn(() => 'operator needs the camera input running');
 
   return {
     asked,
     stop,
-    operator,
     stream: cameraStream({
       views,
       feed: (stream) => {
@@ -24,8 +22,6 @@ function sources(operatorOpen = false) {
 
         return stop;
       },
-      operator,
-      operatorOpen: () => operatorOpen,
     }),
   };
 }
@@ -45,16 +41,15 @@ describe('cameraStream', () => {
     expect(sources().stream('wrist', ask, () => undefined)).toBe(
       'wrist isn’t a camera here. Cameras: scene, gripper_cam',
     );
-    expect(sources(true).stream('wrist', ask, () => undefined)).toBe(
-      'wrist isn’t a camera here. Cameras: scene, gripper_cam, operator',
-    );
   });
 
-  it('hands operator to the computer’s camera', () => {
-    const { stream, operator, asked } = sources();
+  it('never hands code the computer’s camera', () => {
+    const { stream, asked } = sources();
 
-    expect(stream('operator', ask, () => undefined)).toBe('operator needs the camera input running');
-    expect(operator).toHaveBeenCalledOnce();
+    expect(stream('operator', ask, () => undefined)).toBe('operator isn’t a camera here. Cameras: scene, gripper_cam');
+    expect(stream(' Operator ', ask, () => undefined)).toBe(
+      'Operator isn’t a camera here. Cameras: scene, gripper_cam',
+    );
     expect(asked).toEqual([]);
   });
 });

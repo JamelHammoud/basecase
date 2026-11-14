@@ -3,6 +3,8 @@ import { consoleScope } from '../cases/console/format';
 import type { ConsoleLayout } from '../cases/console/layout';
 import { gestureActions, type CaseAction } from '../cases/console/panelKinds';
 import { GESTURE_EVENT } from '../cases/gestures';
+import { robotFacts } from '../cases/robotFit';
+import { movableWorld } from '../cases/scale';
 import { onInputEvent } from '../sim/inputEvents';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
@@ -103,6 +105,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
           scope: consoleScope(caseConsole, cases.active),
           inputs: caseConsole.input,
           brief: cases.active?.brief ?? '',
+          world: movableWorld(cases.active, robotFacts(posing.rig, parts)),
           sim,
           parts,
           joints: core.project.joints ?? [],

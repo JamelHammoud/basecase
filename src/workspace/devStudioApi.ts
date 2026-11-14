@@ -40,6 +40,8 @@ import type { Vec2 } from '../utils/linkage';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { JointDragStep } from './useSkeletonEdit';
+import type { WorldEvent } from '../cases/worldSet';
+import { streamCost } from '../cameras/liveFeed';
 import type { CodeReport } from '../cases/console/codeBridge';
 import { limitExplore } from './useCaseExplore';
 
@@ -64,6 +66,7 @@ export interface DevActions {
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
   worldAt: () => Record<string, number[]>;
+  tryWorld: () => Promise<WorldEvent[]>;
   printPlates: () => unknown;
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
@@ -269,6 +272,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     simState: () => devRef.current.simState(),
     drive: (command: DriveCommand) => devRef.current.drive(command),
     worldAt: () => devRef.current.worldAt(),
+    tryWorld: () => devRef.current.tryWorld(),
     printPlates: () => devRef.current.printPlates(),
     bomLines: () =>
       buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
@@ -293,6 +297,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
     inputEvents: () => inputEvents().map(({ name, value }) => ({ name, value })),
     operatorCamera: () => operatorCameraState(),
+    cameraStreams: () => ({ ...streamCost }),
     stubTabEngine,
     exploreLimit: (designs: number) => limitExplore(designs),
     pickFiles: (files: { name: string; base64: string }[]) =>

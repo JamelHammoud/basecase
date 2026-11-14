@@ -10,6 +10,7 @@ import type { Scan } from './scanner';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
 import { useRecordingLink } from './useRecordingLink';
+import type { WorldLooks } from '../cases/worldSet';
 
 interface LatestFrame {
   at: number;
@@ -23,6 +24,8 @@ function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame
   latest.facts = msg.facts ?? null;
   latest.scan = msg.scan ?? latest.scan;
 }
+
+const NO_LOOKS: WorldLooks = {};
 
 type RecordingReply = Extract<SimResponse, { type: 'recorded' | 'scrubbed' | 'sought' }>;
 
@@ -40,12 +43,13 @@ export function useSimWorker(
   const [playing, setPlaying] = useState(false);
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [worldLooks, setWorldLooks] = useState<WorldLooks>({});
   const [watched, setWatched] = useState<{ id: number; margin: number } | null>(null);
   const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null });
   const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
-  const routineHookRef = useRef<((update: LiveUpdate) => void) | null>(null);
+  const routines = useRoutineLink(workerRef, modelRef);
   const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
   const recordingLink = useRecordingLink(workerRef);
   const recordingReply = recordingLink.reply;
@@ -64,8 +68,14 @@ export function useSimWorker(
         return;
       }
 
+      if (msg.type === 'world') {
+        setWorldLooks(msg.looks);
+
+        return;
+      }
+
       if (msg.type === 'routine') {
-        routineHookRef.current?.(msg);
+        routines.hookRef.current?.(msg);
 
         return;
       }
@@ -108,7 +118,7 @@ export function useSimWorker(
       setStats(msg.stats);
       setPlaying(msg.playing);
     },
-    [viewportRef, modelRef, poseListeners.listeners, recordingReply],
+    [viewportRef, modelRef, poseListeners.listeners, recordingReply, routines.hookRef],
   );
 
   const worker = useCallback(() => {
@@ -137,18 +147,6 @@ export function useSimWorker(
     [],
   );
 
-  const startRoutine = useCallback(
-    (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => {
-      if (!modelRef.current || !workerRef.current) return false;
-
-      routineHookRef.current = onUpdate;
-      workerRef.current.postMessage({ type: 'routine', ...input } satisfies SimRequest);
-
-      return true;
-    },
-    [modelRef],
-  );
-
   return {
     stopRecording: recordingLink.stopRecording,
     scrub: recordingLink.scrub,
@@ -162,6 +160,7 @@ export function useSimWorker(
     latestStats: () => (status === 'off' ? null : ui.current.stats),
     latestFacts: () => (status === 'off' ? null : ui.current.facts),
     latestScan: () => (status === 'off' ? null : ui.current.scan),
+    worldLooks: status === 'off' ? NO_LOOKS : worldLooks,
     setStats,
     error,
     setError,
@@ -170,10 +169,27 @@ export function useSimWorker(
     worker,
     load,
     frameHookRef,
-    startRoutine,
+    startRoutine: routines.start,
     subscribePoses: poseListeners.subscribe,
     connectCameras,
   };
+}
+
+function useRoutineLink(workerRef: React.RefObject<Worker | null>, modelRef: React.RefObject<SimModel | null>) {
+  const hookRef = useRef<((update: LiveUpdate) => void) | null>(null);
+  const start = useCallback(
+    (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => {
+      if (!modelRef.current || !workerRef.current) return false;
+
+      hookRef.current = onUpdate;
+      workerRef.current.postMessage({ type: 'routine', ...input } satisfies SimRequest);
+
+      return true;
+    },
+    [workerRef, modelRef],
+  );
+
+  return { hookRef, start };
 }
 
 function useCameraLink(workerRef: React.RefObject<Worker | null>) {

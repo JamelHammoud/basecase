@@ -4,6 +4,7 @@ import { fixtureRobots } from '../../sim/fixtures/robots';
 import { readInputs } from '../../sim/inputSources';
 import { openCodeBridge, SILENT_ERROR } from './codeBridge';
 import { setCodeDrive } from './codeDrive';
+import { BRIDGE_VERSION } from './codeProtocol';
 import { fakeClock, openTestFrame, type FrameOptions, type TestFrame } from './fixtures/codeFrames';
 import { createSignalBus, type SignalBus } from './signalBus';
 import type { SignalScope } from './signalNames';
@@ -306,6 +307,8 @@ describe('the bridge’s guards', () => {
         can: () => true,
         fire: () => undefined,
         key: () => undefined,
+        world: () => null,
+        frames: () => () => undefined,
       },
       onFail: (error) => failed.push(error),
       clock,
@@ -351,14 +354,14 @@ describe('the bridge’s guards', () => {
     const panel = open(PICTURES, { bus, scope: scope() });
     const stranger = { postMessage: vi.fn() };
 
-    panel.bridge.receive({ source: stranger, data: { bc: 1, type: 'hello' } });
+    panel.bridge.receive({ source: stranger, data: { bc: BRIDGE_VERSION, type: 'hello' } });
     panel.bridge.receive({ source: stranger, data: { type: 'event', name: 'dance', value: true } });
     expect(stranger.postMessage).not.toHaveBeenCalled();
 
     const spoofed = new MessageChannel();
 
     (panel.window.postMessage as (d: unknown, o: object) => void)(
-      { bc: 1, type: 'port' },
+      { bc: BRIDGE_VERSION, type: 'port' },
       { transfer: [spoofed.port2] },
     );
     spoofed.port1.onmessage = vi.fn();

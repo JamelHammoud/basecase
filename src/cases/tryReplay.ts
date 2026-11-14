@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import type { SimEngine } from '../sim/engine';
 import { toMj, worldDeltas } from '../sim/mjcfFrames';
 import { framePoses, Recorder, type RecordedCommand, type Recording } from '../sim/recorder';
+import { WorldMoves } from '../sim/worldMoves';
+import type { WorldEvent } from './worldSet';
 import type { V3 } from '../utils/kinematics';
 import { jitteredWorld, worldRandom } from './caseRandom';
 import { startEngine } from './runCase';
@@ -29,47 +31,66 @@ export function worldOffsets(kase: Case, seed: number | null): Offsets {
   kase.world.objects.forEach((o, i) => {
     const offset = moved[i].position.map((x, k) => x - o.position[k]) as V3;
 
-    if (offset.some((x) => x !== 0)) offsets.set(o.id, offset);
+    if (o.movable) offsets.set(o.id, [0, 0, 0]);
+    else if (offset.some((x) => x !== 0)) offsets.set(o.id, offset);
   });
 
   return offsets;
 }
 
-function objectsAt(source: TryScoring, frame: number, ids: string[]): Map<string, THREE.Vector3> {
-  const deltas = worldDeltas(source.model, framePoses(source.recording, frame));
-  const rest = new Map(source.kase.world.objects.map((o) => [o.id, o.position]));
+const TIE_MM = 1;
+const held = (offset: V3) => offset.every((x) => x === 0);
 
-  return new Map(
-    ids.map((id) => [id, new THREE.Vector3(...rest.get(id)!).applyMatrix4(deltas.get(id) ?? new THREE.Matrix4())]),
-  );
-}
+const EPSILON_S = 1e-9;
 
-function nearest(at: Map<string, THREE.Vector3>, point: THREE.Vector3): string {
-  let best = '';
-  let bestDistance = Infinity;
+function placedSince(world: readonly WorldEvent[], { from, to }: { from: number; to: number }): Map<string, V3> {
+  const placed = new Map<string, V3>();
 
-  for (const [id, p] of at) {
-    const distance = p.distanceTo(point);
-
-    if (distance < bestDistance) [best, bestDistance] = [id, distance];
+  for (const e of world) {
+    if (e.pose?.position && e.at >= from - EPSILON_S && e.at <= to + EPSILON_S) placed.set(e.id, e.pose.position);
   }
 
-  return best;
+  return placed;
+}
+
+function objectsAt(source: TryScoring, at: number, ids: string[]): Map<string, THREE.Vector3> {
+  const { recording } = source;
+  const frame = Math.round(at / recording.dt);
+  const deltas = worldDeltas(source.model, framePoses(recording, frame));
+  const rest = new Map(source.kase.world.objects.map((o) => [o.id, o.position]));
+  const placed = placedSince(recording.world ?? [], { from: frame * recording.dt, to: at });
+  const where = (id: string) => {
+    const set = placed.get(id);
+
+    return set
+      ? new THREE.Vector3(...set)
+      : new THREE.Vector3(...rest.get(id)!).applyMatrix4(deltas.get(id) ?? new THREE.Matrix4());
+  };
+
+  return new Map(ids.map((id) => [id, where(id)]));
+}
+
+function nearestOffset(at: Map<string, THREE.Vector3>, point: THREE.Vector3, offsets: Offsets): V3 {
+  const ranked = [...at].map(([id, p]) => ({ offset: offsets.get(id)!, distance: p.distanceTo(point) }));
+  const closest = Math.min(...ranked.map((r) => r.distance));
+  const ties = ranked.filter((r) => r.distance <= closest + TIE_MM);
+
+  return (ties.find((r) => held(r.offset)) ?? ranked.find((r) => r.distance === closest)!).offset;
 }
 
 export function shiftedCommands(source: TryScoring, offsets: Offsets): RecordedCommand[] {
   const commands = source.recording.commands ?? [];
   const ids = [...offsets.keys()];
 
-  if (!ids.length) return commands;
+  if (!ids.length || ids.every((id) => held(offsets.get(id)!))) return commands;
 
   return commands.map((c) => {
     const { target } = c.command;
 
     if (!target) return c;
 
-    const at = objectsAt(source, Math.round(c.at / source.recording.dt), ids);
-    const offset = offsets.get(nearest(at, new THREE.Vector3(...target)))!;
+    const at = objectsAt(source, c.at, ids);
+    const offset = nearestOffset(at, new THREE.Vector3(...target), offsets);
 
     return { ...c, command: { ...c.command, target: target.map((x, k) => x + offset[k]) as V3 } };
   });
@@ -91,6 +112,8 @@ function placeStart(mj: MainModule, engine: SimEngine, start: { recording: Recor
   data.qvel.set(recording.qvel.subarray(0, recording.nv));
 
   for (const [id, offset] of offsets) {
+    if (held(offset)) continue;
+
     const body = bodyOf(mj, engine, id);
     const joint = body < 0 ? -1 : model.body_jntadr[body];
     const into = joint >= 0 ? data.qpos : model.body_pos;
@@ -108,9 +131,14 @@ interface Due {
   apply: () => void;
 }
 
+interface Replayed {
+  engine: SimEngine;
+  recorder: Recorder;
+  world: WorldMoves;
+}
+
 function timeline(
-  engine: SimEngine,
-  recorder: Recorder,
+  { engine, recorder, world }: Replayed,
   source: { commands: RecordedCommand[]; recording: Recording },
 ) {
   const fault = (joint: string, kind: Parameters<SimEngine['setFault']>[1]) => () => {
@@ -118,6 +146,12 @@ function timeline(
     recorder.fault(joint, kind);
   };
   const due: Due[] = source.commands.map((c) => ({ at: c.at, apply: () => engine.command(c.command) }));
+
+  const changeWorld = (change: WorldEvent) => () => {
+    if (!world.apply(change)) recorder.worldChange(change);
+  };
+
+  for (const change of source.recording.world ?? []) due.push({ at: change.at, apply: changeWorld(change) });
 
   for (const f of source.recording.faults ?? []) {
     due.push({ at: f.at, apply: fault(f.joint, f.kind) });
@@ -155,13 +189,14 @@ export async function replayTry(mj: MainModule, source: TryScoring, seed: number
     placeStart(mj, engine, { recording, offsets });
 
     const recorder = new Recorder(engine, controller);
+    const world = new WorldMoves(mj, engine);
 
     engine.stepHook = recorder.hook;
     engine.commandHook = recorder.command;
     roll(
       engine,
       recorder,
-      timeline(engine, recorder, { commands: shiftedCommands(source, offsets), recording }),
+      timeline({ engine, recorder, world }, { commands: shiftedCommands(source, offsets), recording }),
       recording.frames,
     );
 

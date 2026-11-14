@@ -6,6 +6,7 @@ import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
 import { gestureNames, readGestures, type CaseGesture } from './gestures';
 import {
+  asBoolean,
   asId,
   asNumber,
   asRecord,
@@ -70,6 +71,7 @@ export interface WorldObject {
   behavior: WorldBehavior;
   massG?: number;
   friction?: number;
+  movable?: boolean;
 }
 
 export interface CaseControl {
@@ -191,6 +193,7 @@ const readObject: Reader<WorldObject> = (value, where) => {
     behavior: oneOf(BEHAVIORS)(v.behavior, `${where}.behavior`),
     massG: optional(asNumber, v.massG, `${where}.massG`),
     friction: optional(asNumber, v.friction, `${where}.friction`),
+    ...(v.movable === undefined ? {} : { movable: asBoolean(v.movable, `${where}.movable`) }),
   };
 };
 
@@ -372,5 +375,5 @@ export function worldItem(o: WorldObject): WorldItem {
     ...(o.friction !== undefined ? { physics: { dynamic: o.behavior === 'dynamic', friction: o.friction } } : {}),
   };
 
-  return { ...part, behavior: o.behavior };
+  return { ...part, behavior: o.behavior, ...(o.movable ? { movable: true } : {}) };
 }

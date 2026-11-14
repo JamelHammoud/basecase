@@ -18,7 +18,7 @@ export const createCase = {
       'radius_mm is how close counts, seconds the time allowed; anything left out gets a default sized to the robot. ' +
       'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch. ' +
       'Terrain worlds for reach, path and walk, sized to the robot’s legs or wheels: rough (a grid of tiles up to rise_mm tall), steps (a platform rise_mm tall to cross) and slope (a ramp up and down at incline_deg); use them to test climbing, e.g. "make sure it can climb a step" is walk or reach over steps. ' +
-      'objects adds world objects as in set_world (agent frame). A legged robot that falls fails any Case. ' +
+      'objects adds world objects as in set_world (agent frame); mark one movable: true when the Case’s code moves, recolors or hides it (basecase.world.set), as for a target to whack. A legged robot that falls fails any Case. ' +
       'logic is a Routine (as in make_routine) the Case runs; score counts dynamic objects in or out of a marker spot. ' +
       'console makes the Case an app the person runs: with one, the app opens the new Case running, laid out by it. ' +
       'gestures names the body movements the Case reacts to; reply.teach lists the ones the person teaches with Teach Gesture. ' +

@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import type { Case } from '../cases/schema';
 import type { TryRecord } from '../cases/tries';
-import { newDataset } from '../datasets/datasetFile';
-import { saveDataset } from '../datasets/datasetStore';
+import { newDataset, type Dataset } from '../datasets/datasetFile';
+import { saveDataset, useDatasets } from '../datasets/datasetStore';
 import { errorMessage } from '../utils/errorMessage';
 import { newId } from './helpers';
 import type { ShowToast } from './types';
@@ -31,8 +32,19 @@ export function caseDatasetOf(kase: Case, tries: TryRecord[], sceneId: string, a
   });
 }
 
+function sameMembers(a: string[], b: string[]) {
+  const ids = new Set(b);
+
+  return a.length === b.length && a.every((id) => ids.has(id));
+}
+
+export const caseDatasetIn = (datasets: Dataset[], kase: Case, members: string[]) =>
+  datasets.find((d) => d.caseId === kase.id && !d.query && sameMembers(d.members, members)) ?? null;
+
 export function useCaseDataset({ active, tries, sceneId, showDataset, showToast }: CaseDatasetOptions): CaseDataset {
-  const canMake = !!active && tries.some((t) => t.passed);
+  const datasets = useDatasets() ?? [];
+  const [saving, setSaving] = useState(false);
+  const canMake = !!active && !saving && tries.some((t) => t.passed);
 
   return {
     canMake,
@@ -40,11 +52,17 @@ export function useCaseDataset({ active, tries, sceneId, showDataset, showToast 
       if (!active || !canMake) return;
 
       const dataset = caseDatasetOf(active, tries, sceneId);
+      const existing = caseDatasetIn(datasets, active, dataset.members);
 
-      saveDataset(dataset).then(
-        () => showDataset(dataset.id),
-        (e: unknown) => showToast(errorMessage(e), { tone: 'error' }),
-      );
+      if (existing) return showDataset(existing.id);
+
+      setSaving(true);
+      saveDataset(dataset)
+        .then(
+          () => showDataset(dataset.id),
+          (e: unknown) => showToast(errorMessage(e), { tone: 'error' }),
+        )
+        .finally(() => setSaving(false));
     },
   };
 }

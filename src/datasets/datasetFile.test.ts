@@ -116,19 +116,13 @@ describe('a dataset’s members', () => {
     expect(queryMembers('real', after)).toEqual(['d']);
   });
 
-  it('counts episodes, time and each source, robot and outcome', () => {
+  it('counts episodes and their total time', () => {
     const stats = datasetStats([
       summary('a'),
       summary('b', { source: 'generated', seconds: 4 }),
       summary('c', { robot: 'SO-100', outcome: { verdict: 'failed', margin: 0 } }),
     ]);
 
-    expect(stats).toEqual({
-      episodes: 3,
-      seconds: 16,
-      sources: { case: 2, generated: 1 },
-      robots: { 'SO-101': 2, 'SO-100': 1 },
-      outcomes: { passed: 2, failed: 1 },
-    });
+    expect(stats).toEqual({ episodes: 3, seconds: 16 });
   });
 });

@@ -74,11 +74,6 @@ export const addMembers = (dataset: Dataset, ids: string[]): Dataset => ({
 
 export const withMembers = (dataset: Dataset, ids: string[]): Dataset => ({ ...dataset, members: unique(ids) });
 
-export const dropMembers = (dataset: Dataset, gone: Set<string>): Dataset =>
-  dataset.members.some((id) => gone.has(id))
-    ? { ...dataset, members: dataset.members.filter((id) => !gone.has(id)) }
-    : dataset;
-
 export async function versionHash(dataset: Pick<Dataset, 'task' | 'members'>, tries: TrySummary[]): Promise<string> {
   const byId = new Map(tries.map((t) => [t.id, t]));
   const members = dataset.members.map((id) => {

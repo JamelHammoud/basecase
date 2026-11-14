@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, DownloadIcon, MetaLine, RefreshIcon, ShareIcon, TrainIcon } from '../../design-system';
-import { TRY_SOURCE_BADGE, type TrySummary } from '../../cases/tryFile';
+import type { TrySummary } from '../../cases/tryFile';
 import { newestVersion, type Dataset } from '../../datasets/datasetFile';
 import { datasetStats } from '../../datasets/datasetView';
 import { duration } from '../../utils/duration';
@@ -22,21 +22,11 @@ export interface DatasetActions {
   update: () => void;
 }
 
-const OUTCOME_LABEL = { passed: 'Passed', failed: 'Missed', unjudged: null } as const;
-
 function statItems(dataset: Dataset, members: TrySummary[]): React.ReactNode[] {
   const stats = datasetStats(members);
   const version = newestVersion(dataset);
-  const counted = (label: string | null, n: number | undefined) => (label && n ? `${label} ${n}` : null);
 
-  return [
-    plural(stats.episodes, 'episode'),
-    duration(stats.seconds),
-    ...Object.entries(stats.robots).map(([robot, n]) => `${robot} ${n}`),
-    ...Object.entries(stats.outcomes).map(([v, n]) => counted(OUTCOME_LABEL[v as keyof typeof OUTCOME_LABEL], n)),
-    ...Object.entries(stats.sources).map(([s, n]) => counted(TRY_SOURCE_BADGE[s as keyof typeof TRY_SOURCE_BADGE], n)),
-    version && `Version ${version.n}`,
-  ];
+  return [plural(stats.episodes, 'episode'), duration(stats.seconds), version && `Version ${version.n}`];
 }
 
 interface DatasetPaneProps {

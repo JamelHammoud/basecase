@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 import type { Case } from '../cases/schema';
 import type { TrySummary } from '../cases/tryFile';
 import { tryMatches } from '../cases/tryQuery';
@@ -54,6 +54,17 @@ function membersFor(input: MakeDatasetInput, all: TrySummary[]) {
   const members = [...new Set(input.ids ?? [])].flatMap((id) => byId.get(id) ?? []);
 
   return { members, leftOut: (input.ids?.length ?? 0) - members.length };
+}
+
+type ShownTries = Pick<TriesView, 'selected' | 'order' | 'query' | 'dataset'>;
+
+export function viewInput(view: ShownTries, ids?: string[]): MakeDatasetInput {
+  const chosen = ids ?? (view.selected.length ? view.selected : null);
+  const query = view.dataset ? '' : view.query.trim();
+
+  if (chosen) return { ids: chosen };
+
+  return query ? { ids: view.order, query } : { ids: view.order };
 }
 
 const caseTask = (kase: Case | null, name: string) => (kase ? kase.brief.trim() || kase.name : name);
@@ -119,19 +130,28 @@ export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions
     else onNoCase();
   };
 
-  const latest = useRef(perform);
+  const pending = useRef<{ dataset: Dataset; act: Act; onNoCase: () => void } | null>(null);
+  const activeId = cases.active?.id ?? null;
+  const runPending = useEffectEvent(() => {
+    const job = pending.current;
 
-  useLayoutEffect(() => {
-    latest.current = perform;
+    if (!job || job.dataset.caseId !== activeId) return;
+
+    pending.current = null;
+    perform(job.dataset, job.act, job.onNoCase);
   });
+
+  useEffect(() => {
+    runPending();
+  }, [activeId]);
 
   const withCase = (dataset: Dataset, act: Act, onNoCase: () => void) => {
     const kase = caseFor(dataset);
 
     if (!kase || cases.active?.id === kase.id) return perform(dataset, act, onNoCase);
 
+    pending.current = { dataset, act, onNoCase };
     cases.open(kase.id);
-    setTimeout(() => latest.current(dataset, act, onNoCase), 0);
   };
 
   return {
@@ -139,11 +159,10 @@ export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions
     make,
     open,
     makeFromView: (ids?: string[]) => {
-      const chosen = ids ?? (view.selected.length ? view.selected : null);
-      const query = view.query.trim();
-      const input = chosen ? { ids: chosen } : { ids: view.order, ...(query ? { query } : {}) };
-
-      make(input).then((made) => 'problem' in made && showToast(made.problem, { tone: 'error' }), failed);
+      make(viewInput(view, ids)).then(
+        (made) => 'problem' in made && showToast(made.problem, { tone: 'error' }),
+        failed,
+      );
     },
     add: (dataset: Dataset, ids: string[]) => {
       const next = addMembers(dataset, ids);

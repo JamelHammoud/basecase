@@ -9,7 +9,7 @@ import { fixtureRobots } from '../sim/fixtures/robots';
 import type { Recording } from '../sim/recorder';
 import { buildRig } from '../utils/kinematics';
 import { prepareDataset } from './datasetJob';
-import { caseDatasetOf } from './useCaseDataset';
+import { caseDatasetIn, caseDatasetOf } from './useCaseDataset';
 
 const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
 
@@ -79,4 +79,17 @@ describe('a dataset made from a Case’s passed tries', () => {
       source: { app: 'basecase', case: kase.id, case_name: kase.name, model_hash: modelHash },
     });
   }, 30000);
+});
+
+describe('Make Dataset in Results', () => {
+  it('opens the dataset it already made from the same passed tries instead of saving a copy', () => {
+    const kase = touchAPoint();
+    const tries = [record('a', 'm', true), record('bb', 'm', true), record('ccc', 'm', false)];
+    const first = caseDatasetOf(kase, tries, 'scene-1', 'now');
+    const fromSearch = { ...first, id: 'searched', query: 'arm' };
+
+    expect(caseDatasetIn([fromSearch, first], kase, ['bb', 'a'])).toBe(first);
+    expect(caseDatasetIn([first], kase, ['a'])).toBeNull();
+    expect(caseDatasetIn([fromSearch], kase, ['a', 'bb'])).toBeNull();
+  });
 });

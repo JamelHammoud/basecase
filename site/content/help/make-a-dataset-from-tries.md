@@ -34,62 +34,69 @@ covers:
   - electron/library/datasetStore.mjs
 ---
 
-Gather tries from any scene into one named dataset, then export it, publish it or train a policy on it.
+A dataset gathers tries from any scene under one name. Once you have one, you can export it, publish it or train a policy on it.
 
 ## From a Case's results
 
-1. Open a Case and record tries with **Try It** until at least one passes. Steps are in [Try a Case](/help/try-a-case).
+1. Open a Case and record tries with **Try It** until at least one passes. For the steps, see [Try a Case](/help/try-a-case).
 2. Under **Results**, click **Make Dataset**.
 
+![Make Dataset under the Results of Touch a Point](/help/make-a-dataset-from-tries/results.png)
 
-The dataset opens over the canvas. It holds the Case's passed tries, takes the Case's name, and uses its brief as the task.
+The dataset opens over the canvas. It holds the Case's passed tries, and its name and task come from the Case's name and brief.
 
-**Make Dataset** is also in [[⌘K]] while the Case is open.
+You can also choose **Make Dataset** in [[⌘K]] while the Case is open.
 
 ## From a Library search
 
 1. Click **Library** in the view rail on the left.
-2. Type in the search box at the top, such as a Case's name, a robot's name, Variation or Real.
-3. Under **Tries**, click a robot. Tries fills the canvas with only the tries your search matches.
+2. Type in the search box at the top. You can search for a Case's name, a robot's name, Variation or Real.
+3. Under **Tries**, click a robot. Tries fills the canvas and shows only the tries that match your search.
 
+![Tries showing only the tries that match Touch a Point in the Library search](/help/make-a-dataset-from-tries/search.png)
 
 4. Press [[⌘K]] and choose **Make Dataset**.
 
-The dataset holds every try shown and keeps your search. It takes the name of the Case its tries came from when this scene has it, else your search.
+The dataset holds every try that's shown, and it keeps your search. If this scene has the Case those tries came from, the dataset takes that Case's name. Otherwise it's named after your search.
 
-To make one from some tries only, select them with [[⌘]] or [[⇧]] held, then right-click one and choose **Make Dataset**.
+To make a dataset from only some of the tries, hold [[⌘]] or [[⇧]] while you select them. Then right-click one of them and choose **Make Dataset**.
 
 ## The dataset
 
-Above its tries, the dataset shows its episodes, their total time, the tries for each robot, how many passed and missed, how many are variations or real, and its version.
+Above its tries, the dataset shows its episodes, their total time and its newest version.
 
-
-Its buttons take it further:
+![Touch a Point open as a dataset, with its episodes, total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 
 - **Export Dataset** saves a LeRobot zip. See [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
-- **Publish to Hugging Face** puts it on the Hub, in the desktop app. See [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
-- **Train from Tries** shows once five tries in it passed, in the desktop app. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+- **Publish to Hugging Face** puts the dataset on the Hub. See [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
+- **Train from Tries** appears once five of its tries have passed. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
-Only passed tries recorded on the robot as it is now go out or train. A missed try stays in the dataset, but is left out of both.
+Publish to Hugging Face and Train from Tries are available in the desktop app.
 
-Every dataset is listed under **Datasets** in the Library, with its count of tries. Click one to open it again.
+Export, publishing and training use only passed tries recorded on the robot as it is now. A missed try stays in the dataset, but all three leave it out.
 
+A dataset holds whole tries, with no segments, labels or tags. To step through a single try, see [Open a try from any scene](/help/open-a-try-from-any-scene).
+
+The Library lists every dataset under **Datasets**, with the number of tries it holds. Click a dataset to open it again.
+
+![Two datasets named Touch a Point under Datasets in the Library](/help/make-a-dataset-from-tries/library.png)
+
+To delete a dataset, right-click it in the Library, choose **Delete**, then click **Delete** again to confirm. Deleting a dataset keeps its tries.
 
 ## Update and Add to Dataset
 
-A dataset made from a search has **Update**. Click it to run the search again, so the dataset holds the tries that match now.
+A dataset made from a search has an **Update** button. Click it to run the search again, so the dataset holds the tries that match now.
 
-To add tries to another dataset, right-click a try, choose **Add to Dataset** and pick the dataset. The toast counts them, such as "Added 2 tries to Touch a Point".
+![A dataset made from a search, with Update beside Export Dataset](/help/make-a-dataset-from-tries/searched.png)
 
+To add tries to a different dataset, right-click a try, choose **Add to Dataset**, then pick the dataset. A toast tells you how many were added, for example "Added 2 tries to Touch a Point".
+
+![The Add to Dataset submenu on a try, listing Touch a Point](/help/make-a-dataset-from-tries/add.png)
 
 ## Versions
 
-Each export, publish and training saves the dataset's tries as a version. The same tries keep the same version, and any change makes the next one. The newest shows above the tries, such as Version 2. A publish tags it on the Hub as `dataset-v2`.
+Each time you export, publish or train, the dataset's tries are saved as a version. The same tries keep the same version, and any change makes the next version. The newest version shows above the tries, for example Version 2. When you publish, the Hub tags it as `dataset-v2`.
 
 ## Tries from an earlier design
 
-A try recorded before the robot last changed moves to the end of the dataset, under "These tries are from an earlier design. Try It again to record new ones." It stays in the dataset, but export and training leave it out, since one dataset holds one joint layout.
-
-A dataset holds whole tries, with no segments, labels or tags.
-
-To delete a dataset, right-click it in the Library, choose **Delete** and click **Delete** again to confirm. Its tries stay. To step through one try, see [Open a try from any scene](/help/open-a-try-from-any-scene).
+If a try was recorded before the robot last changed, it moves to the end of the dataset, under "These tries are from an earlier design. Try It again to record new ones." Export and training leave it out, because one dataset holds one joint layout.

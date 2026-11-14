@@ -8,7 +8,7 @@ export function skeletonCommands({ core, actions }: CommandInputs): Command[] {
       id: 'edit-skeleton',
       group: 'Pose',
       label: 'Edit Skeleton',
-      icon: <PoseIcon className="w-4 h-4" />,
+      icon: <PoseIcon />,
       keywords: 'stick figure joints limbs bones arm biped template servo margin',
       run: () => {
         core.skeleton.setEditing(true);

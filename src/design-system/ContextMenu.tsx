@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronRightIcon } from './glyphs';
 import { createPortal } from 'react-dom';
 import { MenuDivider, MenuItem, MenuLabel } from './PopoverMenu';
-import { MenuGutterPad, MenuGutterScope, useMenuGutter } from './menuGutter';
+import { MenuGutterPad, MenuGutterScope, MenuIconSlot, useMenuGutter } from './menuGutter';
 
 export type ContextMenuEntry =
   | {
@@ -78,7 +78,7 @@ const SubmenuTrigger: React.FC<{ label: string; icon?: React.ReactNode; open: bo
         open ? 'bg-white/[0.09] text-white' : 'text-white/90 hover:bg-white/[0.09]'
       }`}
     >
-      {icon && <span className="w-4 shrink-0 flex justify-center text-white/60">{icon}</span>}
+      {icon && <MenuIconSlot className="text-white/60">{icon}</MenuIconSlot>}
       {padded && <MenuGutterPad />}
       <span className="flex-1 truncate">{label}</span>
       <ChevronRightIcon className="w-3.5 h-3.5 text-white/50" />

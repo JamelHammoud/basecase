@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { blocksOf, sentencesOf, wordCount } from './site/blocks.mjs';
+import { labelIndex } from './copy/labels.mjs';
 import { formatProblem, lintSite } from './site/lint.mjs';
 
 const page = (front, body) => `---\n${front}\n---\n\n${body}\n`;
@@ -151,6 +152,40 @@ describe('lintSite', () => {
       lint(help('1. Press [[⇧⌘Z]], then [[↩]], `⌘K` in code.\n\n![The ⌘K menu](/help/x/menu.png)'), [
         '/help/x/menu.png',
       ]),
+    ).toEqual([]);
+  });
+
+  it('fails a label the app lacks in help and changelog pages, not in blog posts', () => {
+    const labels = labelIndex({ strings: ['Import Mesh', 'Delete Marks'], keys: ['⌘K'] });
+    const body =
+      'You can now clear them.\n\nClick **Clear Marks**.\n\nSteps are in [Import a mesh](/help/import-a-mesh).';
+    const files = Object.entries({
+      'site/content/help/import-a-mesh.md': HELP,
+      'site/content/changelog/2026-11-12-marks.md': page('title: Clear marks\ndate: 2026-11-12', body),
+      'site/content/blog/marks.md': page('title: Marks\ndate: 2026-11-12', body),
+    }).map(([path, source]) => ({ path, source }));
+
+    expect(lintSite({ files, exists: () => true, labels }).map(formatProblem)).toEqual([
+      'site/content/changelog/2026-11-12-marks.md:8: **Clear Marks** names no label in the app; the closest is “Delete Marks” (§3f)',
+    ]);
+  });
+});
+
+describe('menu paths', () => {
+  it('fails a menu path with a plain segment or one bold span, but not a quoted message or alt text', () => {
+    const help = (body) => ({ 'site/content/help/x.md': page('title: Open a scene\ndate: 2026-11-12', body) });
+    const problem = 'site/content/help/x.md:6: write each label in a menu path in bold, **File** ▸ **Import** (§3f)';
+
+    expect(lint(help('1. Choose File ▸ **Import**.'))).toEqual([problem]);
+    expect(lint(help('1. Choose **File ▸ Import**.'))).toEqual([problem]);
+    expect(lint(help('| Mesh | Settings ▸ **Canvas** |'))).toEqual([problem]);
+    expect(
+      lint(
+        help(
+          '1. Choose **File** ▸ **Import**, then **View** ▸ **Camera** ▸ **Reset View**.\n\n## “Add it in Settings ▸ Printers.”\n\n![Settings ▸ Printers](/help/x/p.png)',
+        ),
+        ['/help/x/p.png'],
+      ),
     ).toEqual([]);
   });
 });

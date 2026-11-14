@@ -31,3 +31,8 @@ export function useMenuGutter(own: boolean) {
 }
 
 export const MenuGutterPad: React.FC = () => <span aria-hidden className="w-4 shrink-0" />;
+
+export const MenuIconSlot: React.FC<{ className?: string; children: React.ReactNode }> = ({
+  className = '',
+  children,
+}) => <span className={`w-4 shrink-0 flex justify-center [&>svg]:size-3.5 ${className}`}>{children}</span>;

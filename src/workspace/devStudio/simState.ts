@@ -1,11 +1,11 @@
-import type { Controller } from '../sim/engine';
-import { modelFingerprints } from '../sim/policyFreshness';
-import type { SimModel } from '../sim/mjcfTypes';
-import type { Recording } from '../sim/recorder';
-import type { Simulation } from '../sim/useSimulation';
-import { linkParts, type Rig } from '../utils/kinematics';
-import type { TryTimeline } from './useTryTimeline';
-import type { WorkspaceCore } from './useWorkspaceCore';
+import type { Controller } from '../../sim/engine';
+import { modelFingerprints } from '../../sim/policyFreshness';
+import type { SimModel } from '../../sim/mjcfTypes';
+import type { Recording } from '../../sim/recorder';
+import type { Simulation } from '../../sim/useSimulation';
+import { linkParts, type Rig } from '../../utils/kinematics';
+import type { TryTimeline } from '../useTryTimeline';
+import type { WorkspaceCore } from '../useWorkspaceCore';
 
 const controllerState = (c: Controller) => ({
   kind: c.kind,
@@ -64,6 +64,12 @@ function jointReadings(model: SimModel | null, joints: Float64Array | null) {
   );
 }
 
+const dataLayerState = ({ viewportRef, dataLayers }: WorkspaceCore) => ({
+  scanPoints: viewportRef.current?.scanPointCount() ?? 0,
+  dataLayers: viewportRef.current?.dataLayerState() ?? [],
+  dataPlayhead: dataLayers.playhead(),
+});
+
 export function devSimState(core: WorkspaceCore, joints: Float64Array | null = null) {
   const { sim, skills } = core.simTraining;
   const stats = sim.latestStats() ?? sim.stats;
@@ -87,7 +93,7 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     timeline: timelineState(core.simTraining.cases.timeline, sim, core.posing.rig),
     faults: Object.fromEntries(stats?.joints.flatMap((j) => (j.fault ? [[j.id, j.fault]] : [])) ?? []),
     facts: sim.latestFacts(),
-    scanPoints: core.viewportRef.current?.scanPointCount() ?? 0,
+    ...dataLayerState(core),
     fingerprints: modelFingerprints(skills.model),
     controller: controllerState(sim.controller),
     joints: jointReadings(sim.model, joints),

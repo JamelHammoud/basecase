@@ -5,7 +5,7 @@ date: 2026-11-12
 
 If you design robots in Onshape, you no longer have to export a URDF to see them move in Basecase. Paste the link of an assembly tab into Import Robot, the same field that takes GitHub repos and zips. The assembly comes in as a robot you can pose, check and simulate.
 
-The first time, add an Onshape API key in Settings ▸ Accounts: the access key and the secret key. They stay in the desktop app's encrypted store and are only ever sent to cad.onshape.com.
+The first time, add an Onshape API key in **Settings** ▸ **Accounts**: the access key and the secret key. They stay in the desktop app's encrypted store and are only ever sent to cad.onshape.com.
 
 Basecase reads the assembly the way Onshape describes it. Every part is exported as STEP and converted inside the same sandboxed converter that opens STEP files you drop on the canvas. Parts fastened together become one part.
 

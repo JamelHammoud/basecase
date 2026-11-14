@@ -220,7 +220,9 @@ function linkCameras(w: Worker, link: CameraLink | null) {
   w.postMessage({ type: 'cameras', port } satisfies SimRequest, port ? [port] : []);
 }
 
-type PoseListener = (poses: Float64Array, frame: { joints: Float64Array }) => void;
+export type SimFrameMessage = Extract<SimResponse, { type: 'frame' }>;
+
+type PoseListener = (poses: Float64Array, frame: SimFrameMessage) => void;
 
 export interface SimFrame {
   poses: Float64Array;
@@ -240,8 +242,6 @@ function showFrame(
   if (m.robots.length > 1) robots.forEach((delta, id) => world.set(id, delta));
 
   to.viewport?.setPose(robots, world);
-
-  if (msg.scan) to.viewport?.setScan(msg.scan.points);
 
   to.listeners.forEach((listen) => listen(msg.poses, msg));
 

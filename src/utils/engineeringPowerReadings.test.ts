@@ -8,6 +8,7 @@ import type { WalkSim } from './engineeringTypes';
 import { TorqueRecorder } from './peakTorque';
 import { ampsAt, jointAmpModel, walkAmpModels, walkPower } from './servoAmps';
 import { runEngineering } from './engineering';
+import { amps } from './electric';
 import { biped, box, component, joint, part, project, row, run, XM430, type Measures } from './engineering.fixtures';
 
 describe('Servo voltage and current', () => {
@@ -312,7 +313,7 @@ describe('Current and runtime from the simulated walk', () => {
     expect(read.avg).toBeCloseTo(packAvg, 1);
     expect(read.minutes).toBe(Math.round(((0.8 * 2.2) / packAvg) * 60));
     expect(current.detail).not.toContain('estimate');
-    expect(current.detail).toContain(`Left knee: ${knee.toFixed(1)} A average`);
+    expect(current.detail).toContain(`Left knee: ${amps(knee)} average`);
     expect(current.items).toEqual([{ text: expect.stringMatching(/^Left knee: /), ids: ['a'] }]);
     expect(current).toMatchObject({ status: 'pass', itemsAreContext: true, ids: [] });
   });

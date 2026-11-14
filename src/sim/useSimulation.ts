@@ -22,7 +22,7 @@ import { useWatch } from './useWatch';
 import { useSimTouches } from './useSimTouches';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
-import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
+import { newSimWorker, useSimWorker, type CameraLink, type SimFrameMessage } from './useSimWorker';
 import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
 import type { AmpModel } from '../utils/servoAmps';
@@ -75,7 +75,7 @@ export interface Simulation {
   sought: () => Sought | null;
   worldParts: ScenePart[];
   guestParts: ScenePart[];
-  subscribePoses: (listen: (poses: Float64Array, frame: SimFrame) => void) => () => void;
+  subscribePoses: (listen: (poses: Float64Array, frame: SimFrameMessage) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
   setWorld: (items: WorldItem[], guests?: SimGuests) => void;
   buildModel: (options?: { alone?: boolean }) => Promise<SimModel>;
@@ -353,7 +353,6 @@ export function useSimulation(props: Inputs): Simulation {
     setStatus('off');
     setPlaying(false);
     setStats(null);
-    viewportRef.current?.setScan(null);
     viewportRef.current?.setPose(inputs.current.restDeltas);
   }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
 

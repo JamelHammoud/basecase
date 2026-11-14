@@ -5,10 +5,12 @@ import { printRecordFor, readySteps, splitPrinted, updateRecord, withRecord } fr
 import type { Viewport3DHandle } from '../three/viewport/types';
 import type { PartPrint, PrintRecord, ProjectSettings, ScenePart } from '../types/robotics';
 import { useBuildReport } from '../components/build/useBuildReport';
-import { shapeKey } from '../utils/printReport';
+import { shapeKey } from '../print/shapeKey';
 import type { CommitParts, Setter, ShowToast } from './types';
 import { useFitTest } from './useFitTest';
 import { useMerges } from './useMerges';
+import { useServiceQuotes } from './useServiceQuotes';
+import type { SettingsPane } from '../app/settingsPanes';
 import { usePrintFleet } from './usePrintFleet';
 import { usePrintJob } from './usePrintJob';
 import { usePlateWriter } from './usePlateWriter';
@@ -28,6 +30,7 @@ interface PrintingOptions {
   showToast: ShowToast;
   partsRef: RefObject<ScenePart[]>;
   undo: () => void;
+  openSettings: (pane: SettingsPane) => void;
   guidePlan: () => Promise<GuidePlan | null>;
   guideFingerprint: string;
 }
@@ -37,6 +40,25 @@ function cleanPrint(print: PartPrint): PartPrint | undefined {
 
   return entries.length ? (Object.fromEntries(entries) as PartPrint) : undefined;
 }
+
+interface MarkerContext {
+  records: PrintRecord[];
+  setRecords: (update: (prev: PrintRecord[]) => PrintRecord[]) => void;
+  parts: ScenePart[];
+  printer: PrinterSetup;
+}
+
+const plateMarker =
+  ({ records, setRecords, parts, printer }: MarkerContext) =>
+  (plate: Plate, state: PrintRecord['state']) => {
+    const existing = records.find((r) => r.hash === plate.hash);
+
+    if (existing) return setRecords((prev) => updateRecord(prev, existing.id, { state }));
+
+    const record = printRecordFor(plate, { parts, keyOf: shapeKey, printer: printer.label, now: new Date() });
+
+    setRecords((prev) => withRecord(prev, { ...record, state }));
+  };
 
 export interface PrintMode {
   plate: number;
@@ -49,6 +71,7 @@ export function usePrinting(options: PrintingOptions) {
   const [mode, setMode] = useState<PrintMode | null>(null);
   const [skipPrinted, setSkipPrinted] = useState(true);
   const split = splitPrinted(parts, project.prints, shapeKey);
+  const reporting = options.buildOpen || !!mode;
   const { measures, print: report } = useBuildReport({
     printParts: skipPrinted ? split.remaining : parts,
     parts,
@@ -56,9 +79,14 @@ export function usePrinting(options: PrintingOptions) {
     printer,
     measure: async (ids?: string[]) => (await viewport()?.measureParts(ids)) ?? {},
     printShapes: async (ids, faces) => (await viewport()?.printShapes(ids, faces)) ?? {},
-    enabled: options.buildOpen || !!mode,
+    enabled: reporting,
   });
   const fit = useFitTest({ parts, project, printer, viewport });
+  const service = useServiceQuotes({
+    ...options,
+    plates: report?.plan.plates ?? [],
+    enabled: reporting,
+  });
   const merges = useMerges({
     active: !!mode && !fit.active,
     parts,
@@ -110,19 +138,7 @@ export function usePrinting(options: PrintingOptions) {
     showToast,
   });
 
-  const markPlate = (plate: Plate, state: PrintRecord['state']) => {
-    const existing = records.find((r) => r.hash === plate.hash);
-
-    if (existing) {
-      setRecords((prev) => updateRecord(prev, existing.id, { state }));
-
-      return;
-    }
-
-    const record = printRecordFor(plate, { parts, keyOf: shapeKey, printer: printer.label, now: new Date() });
-
-    setRecords((prev) => withRecord(prev, { ...record, state }));
-  };
+  const markPlate = plateMarker({ records, setRecords, parts, printer });
 
   const startFitTest = async () => {
     if (await fit.start()) setMode({ plate: 1, selected: null, face: false });
@@ -159,6 +175,7 @@ export function usePrinting(options: PrintingOptions) {
     fitCutting: fit.cutting,
     startFitTest,
     merges,
+    service,
     plates,
     sending: fleet.sending,
     sendPlate: fleet.sendPlate,
@@ -181,7 +198,7 @@ interface ScenePrintingOptions {
     setProject: Setter<ProjectSettings>;
     commitParts: CommitParts;
   };
-  studio: { printers: { printers: MyPrinter[] }; isRightOpen: boolean };
+  studio: { printers: { printers: MyPrinter[] }; isRightOpen: boolean; openSettings: (pane: SettingsPane) => void };
   tool: { rightTab: string };
   viewportRef: { current: Viewport3DHandle | null };
   showToast: ShowToast;
@@ -206,6 +223,7 @@ export function useScenePrinting(options: ScenePrintingOptions) {
     showToast,
     partsRef: docs.partsRef,
     undo,
+    openSettings: studio.openSettings,
     guidePlan: guide.currentPlan,
     guideFingerprint: guide.fingerprint,
   });

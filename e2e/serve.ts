@@ -10,6 +10,7 @@ declare module 'vitest' {
     webUrl: string;
     served: 'bundle' | 'dev';
     hubPort: number;
+    servicePort: number;
     tilesPort: number;
   }
 }
@@ -122,6 +123,11 @@ export default async function setup(project: TestProject) {
 
   process.env.BASECASE_HUB_URL = `http://127.0.0.1:${hubPort}`;
   project.provide('hubPort', hubPort);
+
+  const servicePort = await freePort();
+
+  process.env.BASECASE_PRINT_SERVICE_URL = `http://127.0.0.1:${servicePort}`;
+  project.provide('servicePort', servicePort);
 
   const tilesPort = await freePort();
 

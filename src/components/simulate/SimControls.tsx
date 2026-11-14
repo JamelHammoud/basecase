@@ -59,6 +59,6 @@ export const SimControls: React.FC<{ sim: Simulation; on: boolean }> = ({ sim, o
         Simulate
       </Button>
     )}
-    {sim.error && <p className="mt-2 text-[12.5px] leading-snug text-[#f87171]">{sim.error}</p>}
+    {sim.error && <p className="mt-2 text-[12.5px] leading-snug text-red-400">{sim.error}</p>}
   </div>
 );

@@ -1,5 +1,5 @@
-import { hashText, itemKeyOf } from '../guide/guideItems';
-import { jsonHash, numbersHash } from '../utils/geometryHash';
+import { itemKeyOf } from '../guide/guideItems';
+import { hashText, jsonHash, numbersHash } from '../utils/geometryHash';
 import type { MessageQuote, ScenePart } from '../types/robotics';
 import type { CheckRow } from '../utils/engineeringTypes';
 import type { CheckStatus, CheckSummary, Finding, Readiness, ReadinessDecisions, ReadinessFinding } from './types';

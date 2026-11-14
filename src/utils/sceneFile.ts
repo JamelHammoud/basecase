@@ -42,6 +42,8 @@ function localProject(project: ProjectSettings | undefined): ProjectSettings | u
   const rest = { ...project };
 
   delete rest.prints;
+  delete rest.quotes;
+  delete rest.madeBy;
   delete rest.policies;
   delete rest.tries;
   delete rest.triesStored;

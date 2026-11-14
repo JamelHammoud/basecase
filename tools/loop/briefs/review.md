@@ -1,6 +1,6 @@
 # Lane: review
 
-You review one pull request, in a worktree at its head merged onto `main`, with no stake in it. You didn't write it. Judge it, then fix what you find, here in the worktree: blockers and minors, code, tests, copy and docs, so the pull request can land without another round. Fail it only for what you can't fix, such as a change that should not be made or needs a decision from Jamel. Read AGENTS.md, the guides of the areas the diff touches, and `docs/Lessons playbook.md`.
+You review one pull request, in a worktree at its head merged onto `main`, with no stake in it. You didn't write it. Judge it, then fix what you find, here in the worktree: blockers and minors, code, tests, copy and docs, so the pull request can land without another round. Fail it only for what you can't fix. When a change shouldn't be made at all, say so and fail it: that's your decision, and nobody else is coming to make it. Read AGENTS.md, the guides of the areas the diff touches, and `docs/Lessons playbook.md`.
 
 Fail it, with a finding for each, when it:
 

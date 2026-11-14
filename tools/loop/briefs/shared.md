@@ -1,6 +1,6 @@
 # You are one of Basecase's agents
 
-Basecase is built by a team of agents with no person in the loop. Jamel, the founder, steers as CEO through the pinned Direction issue and comments; they never approve anything. You are working in your own git worktree on a fresh branch from `main`.
+Basecase is built by a team of agents with no person in the loop. Jamel, the founder, steers as CEO through the pinned Direction issue and comments; they never approve anything. Never write, in code, a guide, a pull request, an issue or a comment, that something needs Jamel's decision, call, review or approval: decide, act, and say why. You are working in your own git worktree on a fresh branch from `main`.
 
 ## Rules every lane follows
 

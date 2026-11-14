@@ -83,7 +83,7 @@ function useRecordedScans(store: DataLayerStore, timeline: TryTimeline, { model,
     return () => store.removeTracks((t) => isSimLayer(t.id));
   }, [store, replaying, recording, model, parts]);
 
-  const at = replaying ? timeline.frame * timeline.dt : null;
+  const at = replaying ? (recording.t[timeline.frame] ?? timeline.frame * timeline.dt) : null;
 
   useEffect(() => store.setPlayhead(at), [store, at]);
 }

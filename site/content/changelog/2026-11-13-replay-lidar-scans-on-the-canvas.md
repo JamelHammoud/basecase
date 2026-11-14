@@ -16,4 +16,4 @@ Each LiDAR's scan gets its own row in Layers, named after the part and marked wi
 
 ![The Layers view with the Slamtec RPLIDAR S2 scan row under the rover, its Hide button showing](/changelog/replay-lidar-scans-on-the-canvas/layers.png)
 
-Only the simulator's own LiDARs draw today. Point clouds, TF frames, paths and markers from ROS recordings will draw the same way once Basecase opens recordings. Steps are in [Replay a robot's LiDAR scan](/help/replay-a-robots-lidar-scan).
+Only the simulator's own LiDARs draw today. Steps are in [Replay a robot's LiDAR scan](/help/replay-a-robots-lidar-scan).

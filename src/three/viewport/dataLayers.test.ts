@@ -40,10 +40,8 @@ function bigCloud(n: number, shift: number): PointCloud2 {
 const cloudTrack = (cloud: PointCloud2, version: number) =>
   listTrack({ id: 'cloud', name: '/points', schema: 'sensor_msgs/PointCloud2' }, [{ at: 0, message: cloud }], version);
 
-const scanTrack = () =>
-  listTrack({ id: 'scan:lidar', name: 'RPLIDAR', schema: 'scene/Points' }, [
-    { at: 0, message: { points: Float32Array.of(0, 100, 1000, 50, 100, 1000) } },
-  ]);
+const scanTrack = (points = Float32Array.of(0, 100, 1000, 50, 100, 1000)) =>
+  listTrack({ id: 'scan:lidar', name: 'RPLIDAR', schema: 'scene/Points' }, [{ at: 0, message: { points } }]);
 
 describe('data layers on the canvas', () => {
   it('draws nothing for a hidden layer and comes back when shown', () => {
@@ -68,6 +66,15 @@ describe('data layers on the canvas', () => {
     expect(layers.update(input([track]))).toBe(false);
     expect(layers.update(input([]))).toBe(true);
     expect(layers.state()).toEqual([]);
+  });
+
+  it('redraws when another recording replaces a layer at the same playhead', () => {
+    const layers = new DataLayers(new THREE.Group());
+
+    layers.update(input([scanTrack()]));
+
+    expect(layers.update(input([scanTrack(Float32Array.of(7, 100, 1000))]))).toBe(true);
+    expect(layers.state()[0]).toMatchObject({ visible: true, points: 1 });
   });
 
   it('updates a million points in one preallocated buffer', () => {

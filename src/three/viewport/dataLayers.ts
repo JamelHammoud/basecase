@@ -25,6 +25,7 @@ export interface DataLayerState {
 interface Entry {
   meshes: LayerMeshes;
   key: string;
+  drawn: DataTrack | null;
   state: DataLayerState;
   axes: FrameAxes[];
 }
@@ -115,7 +116,7 @@ export class DataLayers {
     if (known) return known;
 
     const meshes = new LayerMeshes(kindOf(track) === 'scan');
-    const entry = { meshes, key: '', state: hiddenState(track), axes: [] };
+    const entry = { meshes, key: '', drawn: null, state: hiddenState(track), axes: [] };
 
     this.group.add(meshes.group);
     this.entries.set(track.id, entry);
@@ -133,6 +134,7 @@ export class DataLayers {
       entry.meshes.group.visible = false;
       entry.state = hiddenState(track);
       entry.key = '';
+      entry.drawn = null;
 
       return was;
     }
@@ -141,7 +143,7 @@ export class DataLayers {
 
     entry.meshes.group.visible = true;
 
-    if (key === entry.key) return false;
+    if (key === entry.key && track === entry.drawn) return false;
 
     const draw = this.drawInto(entry, track, {
       at: input.at,
@@ -151,6 +153,7 @@ export class DataLayers {
     });
 
     entry.key = key;
+    entry.drawn = track;
     entry.meshes.show(draw);
     entry.axes = draw.axes;
     entry.state = {

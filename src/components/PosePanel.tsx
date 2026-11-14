@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ContextMenu, ContextMenuEntry, Section, deleteEntry, useScrollFade } from '../design-system';
 import type { RobotJoint } from '../types/robotics';
-import { jointGroups, nameWords, prettyJointName, sideOf } from '../utils/kinematics';
+import { jointGroups, jointRowLabels } from '../utils/jointNames';
 import type { Posing } from '../utils/usePosing';
 import { AnimationsSection } from './pose/AnimationsSection';
 import { JointRangeFields } from './pose/JointRangeFields';
@@ -26,24 +26,6 @@ interface PosePanelProps {
   measured: ReadonlySet<string>;
 }
 
-function rowLabel(j: RobotJoint, group: string): string {
-  const side = sideOf(j.name);
-  const skip = new Set([
-    'joint',
-    'left',
-    'right',
-    ...(side ? ['l', 'r', 'll', 'lr', 'fl', 'fr', 'rl', 'rr'] : []),
-    ...group
-      .toLowerCase()
-      .split(' ')
-      .filter((w) => w !== 'leg' && w !== 'arm'),
-  ]);
-  const words = nameWords(j.name).filter((w) => !skip.has(w));
-  const s = words.join(' ');
-
-  return s ? s[0].toUpperCase() + s.slice(1) : prettyJointName(j.name);
-}
-
 const jointMenu = (j: RobotJoint, edits: JointEdits): ContextMenuEntry[] => [
   {
     label: 'Range',
@@ -66,7 +48,10 @@ export const PosePanel: React.FC<PosePanelProps> = ({
   const rig = posing.robot?.rig ?? null;
   const pose = posing.robot?.pose;
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
-  const groups = useMemo(() => (rig ? jointGroups(rig) : []), [rig]);
+  const groups = useMemo(
+    () => (rig ? jointGroups(rig) : []).map((g) => ({ ...g, rowLabels: jointRowLabels(g.joints, g.label) })),
+    [rig],
+  );
   const [toggled, setToggled] = useState<Record<string, { open: boolean; joint: string | null }>>({});
   const [revealed, setRevealed] = useState<string[]>([]);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -150,7 +135,7 @@ export const PosePanel: React.FC<PosePanelProps> = ({
                 <JointRow
                   key={j.id}
                   joint={j}
-                  label={rowLabel(j, g.label)}
+                  label={g.rowLabels.get(j.id)!}
                   value={pose?.values[j.id] ?? 0}
                   active={j.id === activeJointId}
                   measured={measured.has(j.id)}

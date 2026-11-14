@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { bridge, fail, text } from './shared.mjs';
+import { clipTexts } from './textLimits.mjs';
 
 export const sizeActuators = {
   name: 'size_actuators',
@@ -37,7 +38,7 @@ export const sizeArm = {
       'Call it first when a person says where an arm must reach and what it carries.',
     inputSchema: {
       targets: z
-        .array(z.object({ name: z.string().max(60).optional(), at: XYZ.describe('mm, z up, front −Y') }))
+        .array(z.object({ name: z.string().optional(), at: XYZ.describe('mm, z up, front −Y') }))
         .min(1)
         .max(8),
       payload_g: z.number().min(0).max(5000).describe('Grams at the wrist: the gripper and what it holds'),
@@ -46,9 +47,10 @@ export const sizeArm = {
   },
   handler: async (args) => {
     try {
-      const res = await bridge('size_arm', args, 120000);
+      const { parts: targets, notice } = clipTexts(args.targets.map((t, i) => ({ ...t, id: `target-${i + 1}` })));
+      const res = await bridge('size_arm', { ...args, targets }, 120000);
 
-      return text(res?.text || 'No arm.');
+      return text(`${res?.text || 'No arm.'}${notice}`);
     } catch (err) {
       return fail(err);
     }

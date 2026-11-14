@@ -34,16 +34,7 @@ export const ArmSizingSheet: React.FC<{
           ))}
         </ul>
         <FieldRow label="Payload">
-          <NumberInput
-            aria-label="Payload"
-            value={payloadG}
-            onChange={setPayloadG}
-            min={0}
-            max={5000}
-            step={10}
-            precision={0}
-            unit="g"
-          />
+          <NumberInput value={payloadG} onChange={setPayloadG} min={0} max={5000} step={10} precision={0} unit="g" />
         </FieldRow>
         {problem && <p className="text-[13px] text-red-400">{problem}</p>}
       </div>

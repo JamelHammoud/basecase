@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toCad } from '../agent/agentFrame';
 import { placeArm } from '../arm/armBuild';
 import { sizeArmInWorker } from '../arm/armSizingClient';
@@ -20,21 +20,28 @@ export function useArmSizing(core: WorkspaceCore) {
   const [targets, setTargets] = useState<ArmTarget[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const requestRef = useRef(0);
   const selected = armTargets(parts, selectedIds);
 
   const close = () => {
+    requestRef.current += 1;
     setTargets(null);
     setProblem(null);
+    setBusy(false);
   };
 
   const size = async (payloadG: number) => {
     if (!targets) return;
+
+    const request = ++requestRef.current;
 
     setBusy(true);
 
     const result = await sizeArmInWorker({ targets, payloadG }).catch((err: unknown) => ({
       problem: errorMessage(err),
     }));
+
+    if (request !== requestRef.current) return;
 
     setBusy(false);
 
@@ -59,7 +66,9 @@ export function useArmSizing(core: WorkspaceCore) {
   return {
     canSize: selected.length > 0 && selected.length <= MAX_TARGETS,
     open: () => {
+      requestRef.current += 1;
       setProblem(null);
+      setBusy(false);
       setTargets(selected);
     },
     targets,

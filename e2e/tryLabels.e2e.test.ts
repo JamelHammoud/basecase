@@ -1,5 +1,5 @@
 import { parquetReadObjects } from 'hyparquet';
-import { afterAll, beforeAll, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it } from 'vitest';
 import { inDataset, loadFixtureRobot, passedDatasetFiles } from './driveChecks';
 import { openApp, openPlayTab, shown, type App } from './harness';
 
@@ -25,11 +25,11 @@ const button = (name: string) => app.page.locator(shown('button'), { hasText: na
 
 const parquetRows = (bytes: Buffer) => parquetReadObjects({ file: new Uint8Array(bytes).buffer });
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
@@ -75,10 +75,28 @@ itUnlessWindows(
     expect((await segmentLabels()).find((label) => label.startsWith('grasp'))).toMatch(/^grasp \S/);
 
     const before = (await segmentLabels()).length;
-    const first = app.page.getByTestId('segment').first();
-    const box = (await first.boundingBox())!;
+    const widest = await app.page
+      .getByTestId('segment')
+      .evaluateAll(
+        (segments) =>
+          segments
+            .map((segment, index) => ({ index, width: segment.getBoundingClientRect().width }))
+            .sort((a, b) => b.width - a.width)[0].index,
+      );
+    const segment = app.page.getByTestId('segment').nth(widest);
+    const from = Number(await segment.getAttribute('data-from'));
+    const to = Number(await segment.getAttribute('data-to'));
+    const box = (await segment.boundingBox())!;
 
+    expect(box.width).toBeGreaterThan(8);
     await app.page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect
+      .poll(async () => {
+        const frame = Number(await app.page.getByTestId('try-timeline').getAttribute('data-frame'));
+
+        return frame > from && frame < to;
+      })
+      .toBe(true);
     await app.page.keyboard.press('s');
     await expect.poll(async () => (await segmentLabels()).length).toBe(before + 1);
     await expect.poll(async () => (await stored())?.labels?.segments.length).toBe(before + 1);

@@ -5,6 +5,7 @@ import {
   ContextMenu,
   DownloadIcon,
   IconButton,
+  ProgressBar,
   RunIcon,
   Section,
   ShareIcon,
@@ -26,7 +27,6 @@ import { FAULT_LABEL } from './faultMenu';
 import { FromTries } from './FromTries';
 import type { ShareRobot } from '../../workspace/useShareRobot';
 import { runClock } from '../../utils/duration';
-import { ProgressBar } from './ProgressBar';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
 import { plural } from '../../../electron/plural.mjs';
@@ -77,7 +77,7 @@ const TryRow: React.FC<TryRowProps> = (props) => {
         <Faults record={record} rig={rig} />
         <IconButton icon={<RunIcon className="w-4 h-4" />} title="Replay" size="xs" onClick={onReplay} />
       </div>
-      {progress !== null && <ProgressBar share={progress} />}
+      {progress !== null && <ProgressBar className="mt-1.5" share={progress} />}
       {film && <img src={film} alt="" className="w-full h-14 object-cover rounded-[6px]" draggable={false} />}
     </div>
   );

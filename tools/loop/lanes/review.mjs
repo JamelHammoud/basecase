@@ -1,20 +1,27 @@
+import { harnessKey, harnessKeyAt } from '../../../bench/compare/cache.mjs';
 import { runAgent } from '../lib/agent.mjs';
+import { runCompare, SETTINGS, settleEstimate, unlinkRuns } from '../lib/benchRuns.mjs';
 import { claim } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
-import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
+import { fetchAll, ownFiles, ownPatchId, resolveSha } from '../lib/branches.mjs';
 import {
   closePull,
   commentOnPull,
+  editComment,
   openPulls,
   pullCheck,
   pullComments,
   pullReview,
+  repoVariable,
   reviewState,
   setReview,
 } from '../lib/github.mjs';
+import { budgetFrom, PULL_BUDGET, skipReason } from '../lib/harnessVerdict.mjs';
 import { duplicateTarget, inFlight, inFlightText } from '../lib/inFlight.mjs';
+import { judgedPass, measurePull, needsMeasure, withMeasure } from '../lib/pullMeasure.mjs';
 import { byRank } from '../lib/rank.mjs';
 import { run } from '../lib/sh.mjs';
+import { pause } from '../lib/usage.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
 export const schedule = {
@@ -25,6 +32,7 @@ export const schedule = {
 };
 
 const MAX_DIFF = 400_000;
+const BENCH_PORT = 5390;
 
 const SCHEMA = {
   type: 'object',
@@ -63,7 +71,36 @@ const reviewComment = ({ verdict, summary, findings }, { sha, copy }) =>
     fenced(copy.text),
   ].join('\n');
 
-function reviewPull(pull, log) {
+const git = (dir, args) => run('git', args, { cwd: dir }).out;
+
+function benchDeps({ dir, onMain, log }) {
+  const mainCommit = git(dir, onMain ? ['rev-parse', 'origin/main'] : ['merge-base', 'HEAD', 'origin/main']);
+
+  git(dir, ['reset', '-q', '--hard', 'HEAD']);
+  git(dir, ['clean', '-fdq']);
+
+  return {
+    pullComments,
+    commentOnPull,
+    editComment,
+    settings: SETTINGS,
+    budget: () => budgetFrom(repoVariable('LOOP_PULL_BENCH_BUDGET'), PULL_BUDGET),
+    paused: () => skipReason({ paused: pause(), pulls: [] }),
+    keys: () => ({ branch: harnessKey(dir), main: harnessKeyAt(dir, mainCommit), mainCommit }),
+    estimate: (keys) => settleEstimate(keys.main),
+    compare: (plan) => runCompare({ dir, log, split: 'tune', port: BENCH_PORT, ...plan }),
+  };
+}
+
+function measureOnce({ pull, paths, log, worktree, onMain }) {
+  if (!needsMeasure(pull, paths)) return null;
+
+  setReview(pull.headRefOid, 'pending', 'Measuring on the micro-evals');
+
+  return measurePull({ pull, paths, log }, benchDeps({ ...worktree, onMain, log }));
+}
+
+function reviewPull(pull, { paths, log }) {
   const sha = pull.headRefOid;
 
   setReview(sha, 'pending', 'Reviewing');
@@ -102,13 +139,16 @@ function reviewPull(pull, log) {
       return;
     }
 
-    const blockers = result.output.findings.filter((f) => f.severity === 'blocker');
-    const verdict = result.output.verdict === 'pass' && blockers.length === 0 ? 'pass' : 'fail';
+    const judged = judgedPass(result.output);
+    const measured = judged ? measureOnce({ pull, paths, log, worktree, onMain }) : null;
+    const { output, verdict, state, description } = withMeasure(result.output, measured);
+    const blockers = output.findings.filter((f) => f.severity === 'blocker');
 
-    commentOnPull(pull.number, reviewComment({ ...result.output, verdict }, { sha, copy }));
-    setReview(sha, verdict === 'pass' ? 'success' : 'failure', result.output.summary);
+    commentOnPull(pull.number, reviewComment({ ...output, verdict }, { sha, copy }));
+    setReview(sha, state, description);
     log(`#${pull.number}: ${verdict}, ${blockers.length} blockers`);
   } finally {
+    unlinkRuns(worktree.dir);
     close(worktree);
   }
 }
@@ -141,6 +181,28 @@ function carryOver(pull, log) {
   return true;
 }
 
+function claimReview(pull, { paths, log }) {
+  const bench = needsMeasure(pull, paths) ? claim('pull-bench') : () => {};
+
+  if (!bench) {
+    log(`#${pull.number}: waits for another review's micro-evals`);
+
+    return null;
+  }
+
+  const release = claim(`review-${pull.number}`);
+
+  if (!release) bench();
+
+  return (
+    release &&
+    (() => {
+      release();
+      bench();
+    })
+  );
+}
+
 export default function review({ log }) {
   fetchAll();
 
@@ -153,12 +215,13 @@ export default function review({ log }) {
     .sort((a, b) => Number(pullCheck(b) === 'success') - Number(pullCheck(a) === 'success') || byRank(a, b));
 
   for (const pull of waiting) {
-    const release = claim(`review-${pull.number}`);
+    const paths = ownFiles(pull.headRefOid);
+    const release = claimReview(pull, { paths, log });
 
     if (!release) continue;
 
     try {
-      if (!carryOver(pull, log)) reviewPull(pull, log);
+      if (!carryOver(pull, log)) reviewPull(pull, { paths, log });
     } catch (error) {
       setReview(pull.headRefOid, 'error', 'The review stopped before it finished; it will run again');
 

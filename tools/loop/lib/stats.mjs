@@ -1,5 +1,7 @@
 import { isLoopReview, isRevert, kindOf, parseReview } from './evidence.mjs';
 import { laneNamesIn, laneStats, MEASURES, median, round, worstChange } from './laneStats.mjs';
+import { LOOP_MARK } from './mark.mjs';
+import { deltaText, lastMeasure } from './pullMeasure.mjs';
 
 export { median } from './laneStats.mjs';
 
@@ -58,6 +60,16 @@ export function redHours(runs, { from, to }) {
 export const hoursToMerge = (pulls) =>
   median(pulls.map((p) => (Date.parse(p.mergedAt) - Date.parse(p.createdAt)) / HOUR_MS));
 
+export function measuredPulls(merged, comments, owner) {
+  const own = comments.filter((c) => c.author === owner && c.body.includes(LOOP_MARK));
+
+  return merged.flatMap((pull) => {
+    const found = lastMeasure(own.filter((c) => c.number === pull.number));
+
+    return found ? [{ number: pull.number, title: pull.title, delta: deltaText(found.data) }] : [];
+  });
+}
+
 export function weekStats({ pulls, comments, commits, runs, steps = [], openSteps, owner, from, to, previous = null }) {
   const merged = mergedIn(pulls, { from, to });
   const byKind = countByKind(merged);
@@ -78,6 +90,7 @@ export function weekStats({ pulls, comments, commits, runs, steps = [], openStep
     openSteps,
     mergeHours: hoursToMerge(merged),
     lanes,
+    harness: measuredPulls(merged, comments, owner),
     lastLanes: previous?.lanes ?? null,
     worst: worstChange(lanes, previous?.lanes ?? null),
   };
@@ -163,10 +176,18 @@ export function parseDigest(body) {
   }
 }
 
+export const harnessSection = (harness) =>
+  harness.length > 0
+    ? [
+        `Harness pull requests, measured on the micro-evals:\n\n${harness.map((p) => `- #${p.number} ${p.title}: ${p.delta}`).join('\n')}`,
+      ]
+    : [];
+
 export const digestBody = (stats) =>
   [
     digestTable(stats),
     laneTable(stats.lanes, stats.lastLanes),
+    ...harnessSection(stats.harness ?? []),
     ...(stats.lastLanes ? [worstLine(stats.worst)] : []),
     digestJson(stats),
   ].join('\n\n');

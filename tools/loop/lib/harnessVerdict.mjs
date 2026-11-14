@@ -3,8 +3,9 @@ import { MIN_TASKS_TO_SETTLE } from '../../../bench/compare/plan.mjs';
 export const MIN_HELDOUT_TASKS = 3;
 export const COST_BAR = 0.2;
 export const DEFAULT_BUDGET = 40;
+export const PULL_BUDGET = 15;
 
-export const budgetFrom = (value) => (Number(value) > 0 ? Number(value) : DEFAULT_BUDGET);
+export const budgetFrom = (value, fallback = DEFAULT_BUDGET) => (Number(value) > 0 ? Number(value) : fallback);
 
 export function skipReason({ paused, pulls, now = Date.now() }) {
   if (paused && now < paused.until) return 'usage is paused';
@@ -14,9 +15,9 @@ export function skipReason({ paused, pulls, now = Date.now() }) {
   return open ? `#${open.number} is already open` : null;
 }
 
-const points = (value) => `${value >= 0 ? '+' : '−'}${Math.abs(Math.round(value * 100))}`;
+export const points = (value) => `${value >= 0 ? '+' : '−'}${Math.abs(Math.round(value * 100))}`;
 
-const gapText = (stats) =>
+export const gapText = (stats) =>
   stats.ci
     ? `${points(stats.meanDiff)} points (95% interval ${points(stats.ci[0])} to ${points(stats.ci[1])})`
     : 'none';
@@ -68,6 +69,29 @@ export function decide({ tune, heldout, costBar = COST_BAR }) {
   if (!heldout) return { verdict: 'confirm', reason: `tune improved: gap ${gapText(tune)}` };
 
   return heldoutVerdict({ tune, heldout, costBar });
+}
+
+const riseText = (rise) => (rise === Infinity ? 'nothing passed here' : `${Math.round(rise * 100)}%`);
+
+export function pullVerdict(stats, costBar = COST_BAR) {
+  const paired = stats?.paired.length ?? 0;
+
+  if (paired < MIN_TASKS_TO_SETTLE)
+    return { verdict: 'inconclusive', reason: `only ${paired} tune tasks were graded on both harnesses` };
+
+  if (stats.ci && stats.ci[1] < 0) return { verdict: 'worse', reason: `the tune set got worse: gap ${gapText(stats)}` };
+
+  const rise = costRise([stats]);
+
+  if (rise !== null && rise > costBar) return { verdict: 'worse', reason: `cost per pass rose ${riseText(rise)}` };
+
+  return { verdict: 'no worse', reason: `gap ${gapText(stats)}` };
+}
+
+export function settleCost({ perRun, tasks, mainCached }) {
+  if (!perRun || tasks === 0) return 0;
+
+  return MIN_TASKS_TO_SETTLE * (2 - mainCached / tasks) * perRun;
 }
 
 export const confirmHeldout = ({ tune, heldout, costBar = COST_BAR }) =>

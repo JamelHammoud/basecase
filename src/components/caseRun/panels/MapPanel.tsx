@@ -1,17 +1,36 @@
 import React from 'react';
+import type { Series } from '../../../cases/console/signalBus';
 import { useBus, type PanelViewProps } from '../panelContext';
 import { Titled } from './PanelTitle';
 import { extent, recent, scaler } from './series';
 
 const SIZE = 240;
 const MARGIN_MM = 150;
+const MOST_POINTS = 600;
+
+function pathOf(x: Series, z: Series, seconds: number) {
+  const xs = recent(x, seconds);
+  const zs = recent(z, seconds);
+  const stride = Math.ceil(xs.v.length / MOST_POINTS);
+  const kept = xs.v.flatMap((v, i) => {
+    const shown = i % stride === 0 || i === xs.v.length - 1;
+
+    return shown && Number.isFinite(v) && Number.isFinite(zs.v[i]) ? [i] : [];
+  });
+
+  return {
+    xs: { t: kept.map((i) => xs.t[i]), v: kept.map((i) => xs.v[i]) },
+    zs: { t: kept.map((i) => zs.t[i]), v: kept.map((i) => zs.v[i]) },
+  };
+}
 
 export const MapPanel: React.FC<PanelViewProps<'map'>> = ({ panel, ctx }) => {
   useBus(ctx.bus);
 
   const trail = 'trail' in panel && panel.trail !== undefined ? panel.trail : 30;
-  const xs = recent(ctx.bus.series('robot.x'), trail);
-  const zs = recent(ctx.bus.series('robot.z'), trail);
+  const whole = ctx.bus.playhead() !== null;
+  const { xs, zs } = pathOf(ctx.bus.series('robot.x'), ctx.bus.series('robot.z'), whole ? Infinity : trail);
+  const now = whole ? { x: ctx.bus.read('robot.x'), z: ctx.bus.read('robot.z') } : { x: xs.v.at(-1), z: zs.v.at(-1) };
   const objects = ctx.sim.worldParts.map((p) => ({
     id: p.id,
     x: p.position[0],
@@ -30,7 +49,7 @@ export const MapPanel: React.FC<PanelViewProps<'map'>> = ({ panel, ctx }) => {
   const px = scaler([cx - span / 2, cx + span / 2], [0, SIZE]);
   const pz = scaler([cz - span / 2, cz + span / 2], [0, SIZE]);
   const k = SIZE / span;
-  const at = xs.v.length ? { x: px(xs.v.at(-1)!), z: pz(zs.v.at(-1) ?? 0) } : null;
+  const at = typeof now.x === 'number' && typeof now.z === 'number' ? { x: px(now.x), z: pz(now.z) } : null;
 
   return (
     <Titled title={panel.title}>
@@ -39,6 +58,7 @@ export const MapPanel: React.FC<PanelViewProps<'map'>> = ({ panel, ctx }) => {
         className="w-full aspect-square block rounded-[10px] bg-[#1a1a1a]"
         data-testid="map"
         data-objects={objects.length}
+        data-path={xs.v.length}
       >
         {objects.map((o) => (
           <rect

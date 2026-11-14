@@ -17,8 +17,9 @@ import type { LaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
 import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
-import type { SceneDocument } from './useSceneDocument';
 import { errorMessage } from '../utils/errorMessage';
+import { useLatestRef } from '../utils/useLatestRef';
+import { partWriters, simSources } from './agentRequestSources';
 
 type Payload = Record<string, unknown>;
 
@@ -57,24 +58,11 @@ function firstDelivery(requestId: string) {
   return true;
 }
 
-const partReplacer =
-  ({ commitParts, updateProjectNow }: SceneDocument): RequestContext['replaceParts'] =>
-  (parts, joints) => {
-    commitParts(() => parts);
-    updateProjectNow((p) => ({ ...p, joints }));
-  };
-
-const partInserter =
-  ({ commitParts, updateProjectNow }: SceneDocument): RequestContext['insertParts'] =>
-  (parts, joints) => {
-    commitParts((prev) => [...prev, ...parts]);
-    updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));
-  };
-
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
   const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole, commitSkeleton } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
+  const timelineRef = useLatestRef(simTraining.cases.timeline);
 
   const poseTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
     runPoseTool(kind, payload, {
@@ -164,8 +152,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     viewport: () => viewportRef.current,
     setProjectNow,
     commitConsole,
-    insertParts: partInserter(docs),
-    replaceParts: partReplacer(docs),
+    ...partWriters(docs),
     commitSkeleton,
     setAction: author.setAction,
     setCursor: author.setCursor,
@@ -175,12 +162,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     applyOps: (ops) => applyOps(ops, author),
     edits: (owner) => actors.editsFor(author.actor, owner),
     buildGuide: core.guide.generate,
-    routines: core.simTraining.routines,
-    cases: core.simTraining.cases,
-    caseCompare: core.caseCompare,
-    caseExplore: core.caseExplore,
-    caseRun: core.caseRun,
-    skills: core.simTraining.skills,
+    ...simSources(core, () => timelineRef.current),
   });
 
   const runRequest = async (event: Pick<AgentRequestEvent, 'kind' | 'payload'>, author: Author) => {

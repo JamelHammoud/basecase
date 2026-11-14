@@ -54,7 +54,7 @@ Plots show the whole try, with a line at the playhead. The map draws the whole p
 
 **Note:** A try plays only if it fits the robot as it is now. If you've added or removed a joint since the try was recorded, it won't open. Tries from a real robot don't play.
 
-While a try plays, the buttons in the cards turn off and Try It disappears. A try records the drive's command but not which input sent it, so every input shows the same command.
+While a try plays, the Case's control buttons turn off and Try It disappears. Dataset actions, including **Make Training Images**, remain available in Results. A try records the drive's command but not which input sent it, so every input shows the same command.
 
 The agent can read a try too. Ask it what happened in a try, and it reads the try's signals, its failures with their times, and the canvas at one moment.
 

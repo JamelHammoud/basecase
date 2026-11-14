@@ -131,6 +131,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
           seek: recorded ? (time) => timeline.seek(frameAtTime(recorded.track, time)) : undefined,
           studio: {
             cases,
+            trainingImages: core.trainingImages,
             cameras,
             onShowRobots: () => {
               caseRun.leave();

@@ -44,6 +44,9 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
     ...o,
     position: place(o.position),
     size: o.size.map((x) => x * s) as V3,
+    ...(o.points
+      ? { points: Object.fromEntries(Object.entries(o.points).map(([name, p]) => [name, p.map((x) => x * s) as V3])) }
+      : {}),
     ...(o.massG !== undefined ? { massG: o.massG * s ** 3 } : {}),
   });
 
@@ -61,6 +64,17 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
     ...kase,
     ...cast,
     world: { objects: kase.world.objects.map(object) },
+    ...(kase.images
+      ? {
+          images: {
+            ...kase.images,
+            ...(kase.images.distractors ? { distractors: kase.images.distractors.map(object) } : {}),
+            ...(kase.images.cameraTolerance
+              ? { cameraTolerance: { ...kase.images.cameraTolerance, mm: kase.images.cameraTolerance.mm * s } }
+              : {}),
+          },
+        }
+      : {}),
     reference: {
       timeline: kase.reference.timeline.map((c) => (c.target ? { ...c, target: place(c.target) } : c)),
     },

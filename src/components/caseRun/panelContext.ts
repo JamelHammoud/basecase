@@ -6,11 +6,13 @@ import type { SignalScope } from '../../cases/console/signalNames';
 import type { CaseWorld } from '../../cases/worldSet';
 import type { Simulation } from '../../sim/useSimulation';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
+import type { TrainingImages } from '../../workspace/useTrainingImages';
 import type { Cases } from '../../workspace/useCases';
 import type { CameraTiles } from '../cameras/useCameraTiles';
 
 export interface StudioPanelContext {
   cases: Cases;
+  trainingImages?: TrainingImages;
   cameras: CameraTiles;
   onShowRobots: () => void;
 }

@@ -35,6 +35,7 @@ export const STAYS_IN_RUN = new Set([
   'case-multiply',
   'case-add-panel',
   'case-export-dataset',
+  'training-images-make',
   'case-publish-dataset',
   'case-train-from-tries',
   ...INPUT_COMMANDS,

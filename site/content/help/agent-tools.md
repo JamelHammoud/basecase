@@ -125,6 +125,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `search_tries` | Searches the tries from every scene with the same words and facts as the Library's search, or by motion |
 | `label_tries` | Reads tries' filmstrips, segments and quality flags, and writes an instruction for each try and segment, and tags |
 | `make_dataset` | Gathers tries from any scene into a dataset, by search or by id, and opens it |
+| `make_images` | Renders seeded training images from a Case with boxes, masks, named keypoints and depth, saves a Library dataset, and returns its frame set id and class counts |
 | `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine, and proves each new switch between skills in it |
 | `test_routine`, `run_routine` | Tests and runs a Routine |
 | `draft_skill` | Writes a skill's contract |

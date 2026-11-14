@@ -12,6 +12,7 @@ import type { TrySummary } from '../../cases/tryFile';
 import type { DatasetMode } from '../../workspace/useDatasetMode';
 import { EARLIER_TRIES, OTHER_TRIES } from '../../workspace/useDatasetExport';
 import { tryGroups, type TriesView } from '../../workspace/useTriesView';
+import { DatasetFrames } from './DatasetFrames';
 import { DatasetPane } from './DatasetPane';
 import { TagTriesField } from './TagTriesField';
 import { TRIES_GRID, TryResults } from './TryResults';
@@ -150,6 +151,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, mode, timeli
       )}
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto" style={fadeStyle}>
         <div ref={body} className="px-[12px] pb-6 flex flex-col gap-4">
+          {mode.dataset && <DatasetFrames {...mode.images} />}
           {view.searching ? (
             <TryResults
               query={view.query}

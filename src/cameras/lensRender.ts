@@ -27,6 +27,7 @@ uniform samplerCube cube;
 uniform mat3 basis;
 uniform float halfFov;
 uniform float aspect;
+uniform bool raw;
 varying vec2 vUv;
 void main() {
   vec2 p = vUv * 2.0 - 1.0;
@@ -40,6 +41,7 @@ void main() {
   vec2 side = rho > 0.0 ? p / rho : vec2(0.0);
   vec3 local = vec3(side * sin(theta), -cos(theta));
   gl_FragColor = vec4(textureCube(cube, basis * local).rgb, 1.0);
+  if (raw) return;
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }
@@ -54,6 +56,7 @@ function fisheyeMaterial(): THREE.ShaderMaterial {
       basis: { value: new THREE.Matrix3() },
       halfFov: { value: 1 },
       aspect: { value: 1 },
+      raw: { value: false },
     },
     depthTest: false,
     depthWrite: false,
@@ -91,7 +94,7 @@ export class LensRenderer {
 
   private readonly material = fisheyeMaterial();
 
-  private readonly cubes = new Map<number, Cube>();
+  private readonly cubes = new Map<string, Cube>();
 
   private readonly forward = new THREE.Vector3();
 
@@ -108,7 +111,7 @@ export class LensRenderer {
     this.quadScene.add(quad);
   }
 
-  render(scene: THREE.Scene, shot: LensShot, viewport?: Viewport): void {
+  render(scene: THREE.Scene, shot: LensShot, viewport?: Viewport, raw = false): void {
     const full = this.renderer.getSize(new THREE.Vector2());
     const size = viewport ?? { width: full.x, height: full.y };
     const aspect = size.width / Math.max(1, size.height);
@@ -121,7 +124,7 @@ export class LensRenderer {
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
 
-    if (shot.lens.model === 'fisheye') this.renderFaces(scene, shot.lens.fovDeg, size.width);
+    if (shot.lens.model === 'fisheye') this.renderFaces(scene, shot.lens.fovDeg, size.width, raw);
 
     this.renderer.setViewport(0, 0, size.width, size.height);
     this.renderer.setScissor(0, 0, size.width, size.height);
@@ -147,23 +150,29 @@ export class LensRenderer {
     (this.quadScene.children[0] as THREE.Mesh).geometry.dispose();
   }
 
-  private cube(face: number): Cube {
-    const known = this.cubes.get(face);
+  private cube(face: number, raw: boolean): Cube {
+    const key = `${face}:${raw}`;
+    const known = this.cubes.get(key);
 
     if (known) return known;
 
-    const target = new THREE.WebGLCubeRenderTarget(face, { type: THREE.HalfFloatType });
+    const target = new THREE.WebGLCubeRenderTarget(face, {
+      type: raw ? THREE.UnsignedByteType : THREE.HalfFloatType,
+      minFilter: raw ? THREE.NearestFilter : THREE.LinearFilter,
+      magFilter: raw ? THREE.NearestFilter : THREE.LinearFilter,
+      generateMipmaps: false,
+    });
     const camera = new THREE.CubeCamera(NEAR_MM, FAR_MM, target);
 
     camera.coordinateSystem = this.renderer.coordinateSystem;
     camera.updateCoordinateSystem();
-    this.cubes.set(face, { target, camera });
+    this.cubes.set(key, { target, camera });
 
     return { target, camera };
   }
 
-  private renderFaces(scene: THREE.Scene, fovDeg: number, width: number): void {
-    const { target, camera } = this.cube(faceSizeFor(width, fovDeg));
+  private renderFaces(scene: THREE.Scene, fovDeg: number, width: number, raw: boolean): void {
+    const { target, camera } = this.cube(faceSizeFor(width, fovDeg), raw);
     const previous = this.renderer.getRenderTarget();
     const forward = this.camera.getWorldDirection(this.forward);
     const faces = camera.children as THREE.PerspectiveCamera[];
@@ -182,5 +191,6 @@ export class LensRenderer {
     uniforms.basis.value.setFromMatrix4(this.camera.matrixWorld);
     uniforms.halfFov.value = THREE.MathUtils.degToRad(fovDeg) / 2;
     uniforms.aspect.value = this.camera.aspect;
+    uniforms.raw.value = raw;
   }
 }

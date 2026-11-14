@@ -75,11 +75,13 @@ Missed tries stay in the dataset, but export, publishing and training leave them
 
 Each try keeps its segments and tags, and export writes the segments as subtasks. To step through one try, see [Open a try from any scene](/help/open-a-try-from-any-scene).
 
-The Library lists each dataset under **Datasets** with its number of tries. Click one to open it.
+The Library lists each dataset under **Datasets** with its number of tries or images. Click one to open it.
+
+To render images from a Case without recording tries, see [Make training images](/help/make-training-images).
 
 ![Two datasets named Touch a Point under Datasets in the Library](/help/make-a-dataset-from-tries/library.png)
 
-To delete a dataset, right-click it in the Library, choose **Delete**, then click **Delete** to confirm. You keep its tries.
+To delete a dataset, right-click it in the Library, choose **Delete**, then click **Delete** to confirm. You keep its tries and image frames.
 
 ## Update and Add to Dataset
 
@@ -93,7 +95,7 @@ To add tries to another dataset, right-click a try, choose **Add to Dataset** an
 
 ## Versions
 
-Each time you export, publish or train, Basecase saves the dataset's tries as a version. If you haven't changed the tries, they keep their version. Any change to them starts the next version.
+Each time you export, publish or train, Basecase saves the dataset's tries and image members as a version. Changing the members or the images' split seed starts the next version.
 
 The newest version shows above the tries, for example Version 2. If you publish Version 2, the Hub tags it `dataset-v2`.
 

@@ -1,5 +1,6 @@
 import { sha256 } from '../cases/tries';
 import type { TrySummary } from '../cases/tryFile';
+import { isHash } from '../skills/hash';
 
 export const DATASET_FILE_VERSION = 1;
 
@@ -15,6 +16,13 @@ export interface DatasetVersion {
   hash: string;
   at: string;
   members: string[];
+  imageMembers?: DatasetImageMember[];
+}
+
+export interface DatasetImageMember {
+  frameSet: string;
+  frames: string[];
+  hash: string;
 }
 
 export interface Dataset {
@@ -26,6 +34,7 @@ export interface Dataset {
   caseId: string | null;
   query: string | null;
   members: string[];
+  imageMembers?: DatasetImageMember[];
   seed: number;
   versions: DatasetVersion[];
   createdAt: string;
@@ -39,6 +48,7 @@ export interface NewDataset {
   caseId?: string | null;
   query?: string | null;
   members: string[];
+  imageMembers?: DatasetImageMember[];
   at: string;
 }
 
@@ -64,6 +74,7 @@ export function newDataset(made: NewDataset): Dataset {
     caseId: safeIdOrNull(made.caseId),
     query: made.query?.trim().slice(0, MAX_QUERY) || null,
     members: unique(made.members),
+    imageMembers: copyImageMembers(made.imageMembers ?? []),
     seed: seedOf(made.id),
     versions: [],
     createdAt: made.at,
@@ -77,10 +88,13 @@ export const addMembers = (dataset: Dataset, ids: string[]): Dataset => ({
 
 export const withMembers = (dataset: Dataset, ids: string[]): Dataset => ({ ...dataset, members: unique(ids) });
 
+const copyImageMembers = (members: DatasetImageMember[]) => members.map((m) => ({ ...m, frames: unique(m.frames) }));
+
 export async function versionHash(
-  dataset: Pick<Dataset, 'task' | 'members'>,
+  dataset: Pick<Dataset, 'task' | 'members'> & Partial<Pick<Dataset, 'seed' | 'imageMembers'>>,
   tries: TrySummary[],
   modelHash: string,
+  frameSummaries: { id: string; hash: string }[] = [],
 ): Promise<string> {
   const byId = new Map(tries.map((t) => [t.id, t]));
   const members = dataset.members.map((id) => {
@@ -89,7 +103,17 @@ export async function versionHash(
     return t ? [id, t.modelHash, t.frames, t.outcome.verdict] : [id];
   });
 
-  return sha256(JSON.stringify({ task: dataset.task, model: modelHash, members }));
+  const images = dataset.imageMembers ?? [];
+  const byFrame = new Map(frameSummaries.map((frame) => [frame.id, frame.hash]));
+  const imageContent = images.map((m) => ({ ...m, frames: m.frames.map((id) => [id, byFrame.get(id) ?? id]) }));
+  const content: Record<string, unknown> = { task: dataset.task, model: modelHash, members };
+
+  if (images.length) {
+    content.imageMembers = imageContent;
+    content.seed = dataset.seed;
+  }
+
+  return sha256(JSON.stringify(content));
 }
 
 export const newestVersion = (dataset: Dataset): DatasetVersion | null => dataset.versions.at(-1) ?? null;
@@ -103,7 +127,13 @@ export function freezeVersion(
 
   if (last?.hash === hash) return { dataset, version: last };
 
-  const version = { n: (last?.n ?? 0) + 1, hash, at, members: [...dataset.members] };
+  const version = {
+    n: (last?.n ?? 0) + 1,
+    hash,
+    at,
+    members: [...dataset.members],
+    imageMembers: copyImageMembers(dataset.imageMembers ?? []),
+  };
 
   return { dataset: { ...dataset, versions: [...dataset.versions, version].slice(-MAX_VERSIONS) }, version };
 }
@@ -117,9 +147,36 @@ const isIdOrNull = (v: unknown) => v === null || isId(v);
 const isIds = (v: unknown): v is string[] => Array.isArray(v) && v.length <= MAX_MEMBERS && v.every(isId);
 const isCount = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0;
 
+const isImageMembers = (v: unknown): v is DatasetImageMember[] =>
+  Array.isArray(v) &&
+  v.length <= MAX_MEMBERS &&
+  v.every(
+    (m) =>
+      isObject(m) &&
+      isHash(m.frameSet) &&
+      isHash(m.hash) &&
+      Array.isArray(m.frames) &&
+      m.frames.length <= MAX_MEMBERS &&
+      m.frames.every(isHash),
+  );
+
+const optionalImageMembers = (v: unknown) => v === undefined || isImageMembers(v);
+
 const readVersion = (v: unknown): DatasetVersion | null =>
-  isObject(v) && isCount(v.n) && v.n > 0 && isText(v.hash, 128) && isText(v.at, 64) && isIds(v.members)
-    ? { n: v.n, hash: v.hash, at: v.at, members: v.members }
+  isObject(v) &&
+  isCount(v.n) &&
+  v.n > 0 &&
+  isText(v.hash, 128) &&
+  isText(v.at, 64) &&
+  isIds(v.members) &&
+  optionalImageMembers(v.imageMembers)
+    ? {
+        n: v.n,
+        hash: v.hash,
+        at: v.at,
+        members: v.members,
+        imageMembers: copyImageMembers((v.imageMembers ?? []) as DatasetImageMember[]),
+      }
     : null;
 
 const hasFields = (v: Raw) =>
@@ -132,6 +189,7 @@ const hasFields = (v: Raw) =>
   isIdOrNull(v.caseId) &&
   (v.query === null || isText(v.query, MAX_QUERY)) &&
   isIds(v.members) &&
+  optionalImageMembers(v.imageMembers) &&
   isCount(v.seed) &&
   isText(v.createdAt, 64) &&
   Array.isArray(v.versions) &&
@@ -153,6 +211,7 @@ export function readDataset(value: unknown): Dataset | null {
     caseId: value.caseId as string | null,
     query: value.query as string | null,
     members: unique(value.members as string[]),
+    imageMembers: copyImageMembers((value.imageMembers ?? []) as DatasetImageMember[]),
     seed: value.seed as number,
     versions: versions as DatasetVersion[],
     createdAt: value.createdAt as string,

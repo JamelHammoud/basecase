@@ -3,6 +3,9 @@ import type { Case } from '../cases/schema';
 import type { TryRecord } from '../cases/tries';
 import { exportDatasetFiles, exportDatasetZip } from '../datasets/datasetClient';
 import type { Dataset } from '../datasets/datasetFile';
+import { imageSetsOf } from '../datasets/imageDataset';
+import { exportImageDatasetFiles, exportImageDatasetZip } from '../datasets/imageDatasetClient';
+import type { VisionFrameSet } from '../vision/frameSet';
 import { hubBridge } from '../hub/hubBridge';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
@@ -13,6 +16,7 @@ import { openLink } from '../utils/openLink';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
 import { prepareDataset, repoName, type PreparedDataset } from './datasetJob';
+import { fileSafe } from './helpers';
 import { useDatasetRecords, type DatasetRecords } from './useDatasetRecords';
 import type { ShowToast, ToastOptions } from './types';
 
@@ -44,9 +48,16 @@ export const OTHER_TRIES = 'These tries are from another Case or scene.';
 export const FITTING_TRIES =
   'Export and training take only passed tries of this Case as it is now. Try It to record more.';
 
+interface PreparedExport {
+  tries: PreparedDataset | null;
+  images: VisionFrameSet[];
+  name: string;
+  modelHash: string;
+}
+
 interface Made {
   dataset: Dataset;
-  prepared: PreparedDataset;
+  prepared: PreparedExport;
 }
 
 interface Delivery {
@@ -55,16 +66,43 @@ interface Delivery {
   deliver: (made: Made, records: DatasetRecords) => Promise<{ message: string; options?: ToastOptions }>;
 }
 
-const leftOut = (made: PreparedDataset) => (made.left ? `, left out ${made.left} from another Case or design` : '');
+const leftOut = (made: PreparedExport) =>
+  made.tries?.left ? `, left out ${made.tries.left} from another Case or design` : '';
+
+const imageJob = async (dataset: Dataset, made: PreparedExport) => ({
+  name: made.name,
+  seed: dataset.seed,
+  sets: made.images,
+  extraFiles: made.tries ? await exportDatasetFiles(made.tries.job) : undefined,
+});
+
+const filesOf = async (dataset: Dataset, made: PreparedExport) =>
+  made.images.length ? exportImageDatasetFiles(await imageJob(dataset, made)) : exportDatasetFiles(made.tries!.job);
+
+const zipOf = async (dataset: Dataset, made: PreparedExport) =>
+  made.images.length ? exportImageDatasetZip(await imageJob(dataset, made)) : exportDatasetZip(made.tries!.job);
+
+function exported(made: PreparedExport) {
+  const counts = [
+    made.tries && plural(made.tries.used, 'try', 'tries'),
+    made.images.length &&
+      plural(
+        made.images.reduce((n, set) => n + set.frames.length, 0),
+        'image',
+      ),
+  ].filter(Boolean);
+
+  return `Exported ${counts.join(' and ')} as a dataset${leftOut(made)}`;
+}
 
 const EXPORT: Delivery = {
   busy: 'Exporting dataset…',
   failed: 'Couldn’t export the dataset.',
   deliver: async ({ dataset, prepared }, records) => {
     await records.freeze(dataset, prepared.modelHash);
-    downloadBytes(await exportDatasetZip(prepared.job), `${prepared.name}.zip`, 'application/zip');
+    downloadBytes(await zipOf(dataset, prepared), `${prepared.name}.zip`, 'application/zip');
 
-    return { message: `Exported ${plural(prepared.used, 'try', 'tries')} as a dataset${leftOut(prepared)}` };
+    return { message: exported(prepared) };
   },
 };
 
@@ -73,7 +111,7 @@ const PUBLISH: Delivery = {
   failed: 'Couldn’t publish the dataset.',
   deliver: async ({ dataset, prepared }, records) => {
     const version = await records.freeze(dataset, prepared.modelHash);
-    const files = await exportDatasetFiles(prepared.job);
+    const files = await filesOf(dataset, prepared);
     const name = await repoName(dataset.name, dataset.id);
     const published = await hubBridge.publish({ name, files, tag: `dataset-v${version.n}` });
 
@@ -104,8 +142,21 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
     });
 
   const caseOf = (dataset: Dataset) => cases.find((c) => c.id === dataset.caseId) ?? null;
-  const prepareFor = (dataset: Dataset) =>
-    prepare(caseOf(dataset), { name: dataset.name, task: dataset.task, records: records.of(dataset) });
+  const prepareFor = async (dataset: Dataset): Promise<PreparedExport | null> => {
+    const images = await imageSetsOf(dataset);
+    const tries = dataset.members.length
+      ? await prepare(caseOf(dataset), { name: dataset.name, task: dataset.task, records: records.of(dataset) })
+      : null;
+
+    if (!tries && !images.some((set) => set.frames.length)) return null;
+
+    return {
+      tries,
+      images,
+      name: tries?.name ?? `${fileSafe(dataset.name)}-dataset`,
+      modelHash: tries?.modelHash ?? '',
+    };
+  };
 
   const run = async (dataset: Dataset, delivery: Delivery) => {
     setExporting(true);
@@ -165,7 +216,7 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
 
       if (made) await records.freeze(dataset, made.modelHash);
 
-      return made ? exportDatasetZip(made.job) : null;
+      return made ? zipOf(dataset, made) : null;
     },
     records,
   };

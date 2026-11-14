@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowseRow, SectionHeader } from '../../design-system';
 import type { Dataset } from '../../datasets/datasetFile';
-import { plural } from '../../../electron/plural.mjs';
+import { datasetCount } from '../../datasets/datasetView';
 
 interface DatasetsSectionProps {
   datasets: Dataset[];
@@ -15,7 +15,7 @@ export const DatasetsSection: React.FC<DatasetsSectionProps> = ({ datasets, onOp
       <SectionHeader title="Datasets" className="px-[8px]" />
       {datasets.map((d) => (
         <div key={d.id} onContextMenu={onMenu(d)}>
-          <BrowseRow title={d.name} meta={plural(d.members.length, 'try', 'tries')} onOpen={() => onOpen(d)} />
+          <BrowseRow title={d.name} meta={datasetCount(d)} onOpen={() => onOpen(d)} />
         </div>
       ))}
     </section>

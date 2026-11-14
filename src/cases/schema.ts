@@ -1,6 +1,12 @@
 import type { PartKind, ScenePart } from '../types/robotics';
 import type { WorldBehavior, WorldItem } from '../sim/mjcfTypes';
 import type { V3 } from '../utils/kinematics';
+import {
+  readCaseImages,
+  readObjectImages,
+  type CaseImageDeclarations,
+  type ObjectImageDeclarations,
+} from './imageDeclarations';
 import { consoleReader, type CaseConsole } from './console/format';
 import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
@@ -59,7 +65,7 @@ export interface RobotSlot {
   pose?: SlotPose;
 }
 
-export interface WorldObject {
+export interface WorldObject extends ObjectImageDeclarations {
   id: string;
   name: string;
   kind: (typeof WORLD_KINDS)[number];
@@ -130,6 +136,7 @@ export interface Case {
   console?: CaseConsole;
   logic?: Routine;
   gestures?: CaseGesture[];
+  images?: CaseImageDeclarations;
 }
 
 const v3 = vector(3) as unknown as Reader<V3>;
@@ -217,14 +224,15 @@ const readObject: Reader<WorldObject> = (value, where) => {
     massG: optional(asNumber, v.massG, `${where}.massG`),
     friction: optional(asNumber, v.friction, `${where}.friction`),
     jitter: optional(readJitter, v.jitter, `${where}.jitter`),
+    ...readObjectImages(v, where),
     ...(v.movable === undefined ? {} : { movable: asBoolean(v.movable, `${where}.movable`) }),
   };
 };
 
-export const readWorldObjects = (value: unknown): WorldObject[] => {
-  const objects = listOf(readObject, MAX_OBJECTS)(value, 'world.objects');
+export const readWorldObjects = (value: unknown, where = 'world.objects'): WorldObject[] => {
+  const objects = listOf(readObject, MAX_OBJECTS)(value, where);
 
-  if (new Set(objects.map((o) => o.id)).size !== objects.length) refuse('world.objects', 'repeats an id');
+  if (new Set(objects.map((o) => o.id)).size !== objects.length) refuse(where, 'repeats an id');
 
   return objects;
 };
@@ -343,6 +351,7 @@ export function parseCase(input: unknown): Case {
   const reference = asRecord(v.reference, 'reference');
   const objects = readWorldObjects(world.objects);
   const task = readTask(v.task, 'task');
+  const images = readCaseImages(v.images, objects, readWorldObjects);
 
   checkScore(task, objects);
 
@@ -363,6 +372,7 @@ export function parseCase(input: unknown): Case {
     ...(caseConsole ? { console: caseConsole } : {}),
     ...(v.logic !== undefined ? { logic: readLogic(v.logic, 'logic') } : {}),
     ...(gestures ? { gestures } : {}),
+    ...(images ? { images } : {}),
   };
 
   checkSlotNames(kase);

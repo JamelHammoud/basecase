@@ -25,6 +25,7 @@ import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
 import { useRobotSync } from './useRobotSync';
+import { useTrainingImages } from './useTrainingImages';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -157,6 +158,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     printing,
     triesView,
     datasets,
+    trainingImages: useTrainingImages({ scene, docs, posing, simTraining, showToast }),
     viewportRef,
     scene,
     docs,

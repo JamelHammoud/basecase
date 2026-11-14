@@ -11,6 +11,11 @@ import { createStudioScene } from '../three/thumbnailStage';
 import type { ScenePart } from '../types/robotics';
 import { LensRenderer } from './lensRender';
 import type { CameraView } from './views';
+import type { ImageAppearance } from '../vision/imageAppearance';
+import { LabelRenderer } from './labelRender';
+import { trainingJpeg } from './lensNoise';
+import type { LabelInstance } from './labelPixels';
+import { TrainingAppearance } from './trainingAppearance';
 
 export const TILE_SIZE: [number, number] = [320, 240];
 export const LARGE_SIZE: [number, number] = [640, 480];
@@ -65,6 +70,7 @@ class Layer {
 
       const p = posed(part);
 
+      p.group.visible = part.visible;
       this.root.add(p.group);
       this.built.set(part.id, { part, posed: p });
     }
@@ -88,6 +94,12 @@ export class LiveStage {
 
   private readonly world: Layer;
 
+  private readonly ground = floor();
+
+  private readonly appearance = new TrainingAppearance();
+
+  private labels: LabelRenderer | null = null;
+
   private model: SimModel | null = null;
 
   private views: CameraView[] = [];
@@ -105,7 +117,7 @@ export class LiveStage {
     this.renderer.setSize(width, height, false);
     this.scene = createStudioScene(this.renderer);
     this.renderer.setClearColor(BACKGROUND, 1);
-    this.scene.add(floor());
+    this.scene.add(this.ground);
     this.lens = new LensRenderer(this.renderer);
     this.parts = new Layer(this.scene);
     this.world = new Layer(this.scene);
@@ -116,6 +128,8 @@ export class LiveStage {
   }
 
   async setScene(parts: ScenePart[], world: ScenePart[], meshes?: MeshFiles): Promise<boolean> {
+    this.appearance.clear();
+
     const ticket = ++this.sceneTicket;
 
     provideMeshFiles(meshes);
@@ -170,7 +184,33 @@ export class LiveStage {
     return out;
   }
 
+  async trainingFrame(options: { key: string; instances: LabelInstance[]; appearance: ImageAppearance; seed: number }) {
+    const view = this.views.find((candidate) => candidate.key === options.key);
+
+    if (!view) throw new Error(`Camera ${options.key} is missing.`);
+
+    this.appearance.apply(this.scene, this.ground, options.appearance);
+
+    try {
+      this.pose(null);
+      this.render(view, EMPTY);
+
+      const image = await trainingJpeg(this.canvas, options.appearance.noise, options.seed);
+      const shot = { ...placeCamera(view, undefined), lens: view.lens };
+
+      this.labels ??= new LabelRenderer(this.renderer, this.canvas.width, this.canvas.height);
+
+      const labels = this.labels.draw(this.scene, this.lens, shot, options.instances);
+
+      return { image, ...labels, camera: { ...shot, key: view.key, label: view.label } };
+    } finally {
+      this.appearance.clear();
+    }
+  }
+
   dispose(): void {
+    this.appearance.clear();
+    this.labels?.dispose();
     this.parts.dispose();
     this.world.dispose();
     this.lens.dispose();

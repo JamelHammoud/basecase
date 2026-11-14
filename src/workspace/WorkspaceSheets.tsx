@@ -1,3 +1,4 @@
+import { TrainingImagesSheet } from '../components/TrainingImagesSheet';
 import { ArmSizingSheet } from '../components/ArmSizingSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
@@ -39,6 +40,16 @@ function MatchJointsHost({ active, data }: { active: boolean; data: DataImport }
   );
 }
 
+function TrainingImagesHost({ active, core }: Pick<WorkspaceSheetsProps, 'active' | 'core'>) {
+  if (!active || !core.trainingImages.opened) return null;
+
+  return (
+    <ErrorBoundary region="Make Training Images" onClose={core.trainingImages.close}>
+      <TrainingImagesSheet key={core.trainingImages.opened} images={core.trainingImages} />
+    </ErrorBoundary>
+  );
+}
+
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
   const { posing, guide } = core;
   const desktop = platformBridge.isElectron();
@@ -71,6 +82,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           onImport={(src, at) => void data.importOrRobot(src, at)}
         />
       </ErrorBoundary>
+      <TrainingImagesHost active={active} core={core} />
       <MatchJointsHost active={active} data={data} />
       <ErrorBoundary region="Install Skill" resetKey={installing} onClose={skillHub.closeInstall}>
         <InstallSkillSheet open={installing} onClose={skillHub.closeInstall} onInstall={skillHub.install} />

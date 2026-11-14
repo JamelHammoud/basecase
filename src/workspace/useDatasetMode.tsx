@@ -14,6 +14,8 @@ import type { Dataset } from '../datasets/datasetFile';
 import { memberGroups, membersOf } from '../datasets/datasetView';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { DatasetActions } from '../components/tries/DatasetPane';
+import type { FrameSetManifest } from '../vision/frameSet';
+import { useDatasetFrames } from './useDatasetFrames';
 import { showNewCase } from './caseCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -93,6 +95,7 @@ export interface DatasetMode {
   fitting: TrySummary[];
   earlier: TrySummary[];
   elsewhere: TrySummary[];
+  images: { sets: FrameSetManifest[]; loading: boolean; error: string | null };
   actions: DatasetActions | null;
   menu: (id: string) => ContextMenuEntry[];
 }
@@ -101,8 +104,9 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
   const { triesView: view, datasets, simTraining } = core;
   const { cases, sim } = simTraining;
   const dataset = view.open ? view.dataset : null;
+  const images = useDatasetFrames(dataset);
   const modelHash = useModelHash(sim.buildModel, {
-    id: dataset ? `${dataset.id}:${cases.active?.id ?? ''}` : null,
+    id: dataset?.members.length ? `${dataset.id}:${cases.active?.id ?? ''}` : null,
     robot: core.posing.rig,
   });
   const members = dataset ? membersOf(dataset, view.all) : [];
@@ -116,6 +120,7 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
   return {
     dataset,
     members,
+    images,
     fitting,
     earlier,
     elsewhere,

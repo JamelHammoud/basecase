@@ -1,7 +1,7 @@
 ---
 title: Case goals, worlds and contracts
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: reference
 order: 2
@@ -133,3 +133,5 @@ The contract never passes by default. A reading that isn't a number counts again
 ## Scaling to another arm
 
 A Case written on one arm runs on another by scaling its world to the new arm's reach, measured from its shoulder. Every distance in the contract scales with it. Angles don't. A position the Case's code gives a movable object scales the same way, so a lit spot lands on the scaled spot. Skills are judged by the same contract code, in [Arena](/help/arena).
+
+For [training images](/help/make-training-images), named object points, distractor positions and sizes, and camera mount tolerance in millimeters scale with the arm too. Angular tolerance stays the same.

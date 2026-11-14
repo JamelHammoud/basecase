@@ -4,6 +4,7 @@ import {
   Button,
   ContextMenu,
   ProgressBar,
+  PhotoIcon,
   Section,
   SpreadsheetIcon,
   Tooltip,
@@ -16,6 +17,7 @@ import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import type { Simulation } from '../../sim/useSimulation';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
+import type { TrainingImages } from '../../workspace/useTrainingImages';
 import type { Cases } from '../../workspace/useCases';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
 import type { CaseExplore } from '../../workspace/useCaseExplore';
@@ -97,6 +99,7 @@ export interface LatestRun {
 
 interface ResultsProps {
   cases: Cases;
+  trainingImages?: TrainingImages;
   rig: Rig;
   share?: ShareRobot;
   model: SimModel | null;
@@ -120,6 +123,25 @@ const MakeDataset: React.FC<{ cases: Cases }> = ({ cases }) =>
     </Button>
   );
 
+function MakeImages({ cases, images }: { cases: Cases; images?: TrainingImages }) {
+  if (!cases.active || !images) return null;
+
+  return (
+    <Button
+      fullWidth
+      size="sm"
+      className="mt-2"
+      icon={<PhotoIcon />}
+      disabled={images.busy}
+      onClick={() => images.open(cases.active!.id)}
+    >
+      Make Training Images
+    </Button>
+  );
+}
+
+const showsImages = (props: ResultsProps) => Boolean(props.cases.active && props.trainingImages);
+
 const comparesCase = (cases: Cases, compare: CaseCompare | undefined) =>
   cases.active && compare && (compare.comparison || compare.running) ? compare : null;
 
@@ -136,7 +158,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
 
   const comparing = comparesCase(cases, compare);
   const exploring = cases.active && explore?.rows.shown ? explore : null;
-  const shows = [tries.length > 0, showRun, !!share?.canShare, !!comparing, !!exploring];
+  const shows = [tries.length > 0, showRun, !!share?.canShare, !!comparing, !!exploring, showsImages(props)];
 
   if (!shows.some(Boolean)) return null;
 
@@ -176,6 +198,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
           ))}
         </div>
       )}
+      <MakeImages cases={cases} images={props.trainingImages} />
       {cases.active && <MakeDataset cases={cases} />}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
       <TagTriesField target={tagging.target} onDone={tagging.done} />

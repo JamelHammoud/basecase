@@ -64,7 +64,7 @@ You can run a Case in the whole window, with the layout the Case asks for. The r
 
 7. Click **Done** or press [[Esc]] to go back. The first [[Esc]] stops driving. Your parts, selection and camera stay as you left them.
 
-You can also go back by picking a view in the rail, or by running any [[⌘K]] command except driving, trying, **Add Panel**, **Multiply** and the dataset commands.
+You can also go back by picking a view in the rail, or by running any [[⌘K]] command except driving, trying, **Add Panel**, **Multiply**, **Make Training Images** and the dataset commands.
 
 A Case can have its own layout, called its console. Basecase saves the console with the Case in your `.basecase` file. To get a console, describe the Case you want to the agent, and it writes the console for you. You can also edit the console in that file yourself, or arrange the cards while the Case runs. See [Arrange a Case's console](/help/arrange-a-case-console). A Case you make with New Case or from a template has no console until you change its layout.
 

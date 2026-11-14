@@ -1,8 +1,23 @@
 import { summaryRecord, type TrySummary } from '../cases/tryFile';
 import type { TryRecord } from '../cases/tries';
 import type { Dataset } from './datasetFile';
+import { plural } from '../../electron/plural.mjs';
 
 export const totalSeconds = (members: TrySummary[]) => members.reduce((sum, t) => sum + t.seconds, 0);
+
+export const imageCount = (dataset: Dataset) =>
+  dataset.imageMembers?.reduce((count, member) => count + member.frames.length, 0) ?? 0;
+
+export function datasetCount(dataset: Dataset): string {
+  const images = imageCount(dataset);
+
+  return [
+    (dataset.members.length > 0 || !images) && plural(dataset.members.length, 'try', 'tries'),
+    images > 0 && plural(images, 'image'),
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
 
 export function membersOf(dataset: Dataset, tries: TrySummary[]): TrySummary[] {
   const byId = new Map(tries.map((t) => [t.id, t]));

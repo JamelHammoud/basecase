@@ -6,6 +6,11 @@ const call = (toolName: string, rawInput: unknown, status: AcpToolCallEvent['sta
   ({ toolCallId: 't1', title: '', toolName, rawInput, status }) as AcpToolCallEvent;
 
 describe('toolLabel', () => {
+  it('names training image generation while running and after completion', () => {
+    expect(toolLabel(call('make_images', { count: 20 }, 'in_progress'))).toEqual({ title: 'Making training images' });
+    expect(toolLabel(call('make_images', { count: 20 }))).toEqual({ title: 'Made training images' });
+  });
+
   it('hides status and todo tools', () => {
     expect(toolLabel(call('mcp__cad__set_status', {}))).toBeNull();
     expect(toolLabel(call('TodoWrite', {}))).toBeNull();

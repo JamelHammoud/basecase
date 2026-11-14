@@ -1,3 +1,4 @@
+import { trainingImageCommands } from './trainingImageCommands';
 import type { Command } from '../components/CommandPalette';
 import {
   BotIcon,
@@ -320,6 +321,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...leaderCommands(inputs),
   ...onshapeCommands(inputs),
   ...caseCommands(inputs),
+  ...trainingImageCommands(inputs.core),
   ...skillCommands(inputs),
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),

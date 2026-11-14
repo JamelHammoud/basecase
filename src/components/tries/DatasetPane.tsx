@@ -1,8 +1,9 @@
 import React from 'react';
+import { plural } from '../../../electron/plural.mjs';
 import { Button, DownloadIcon, MetaLine, RefreshIcon, ShareIcon, TrainIcon } from '../../design-system';
 import type { TrySummary } from '../../cases/tryFile';
 import { newestVersion, type Dataset } from '../../datasets/datasetFile';
-import { totalSeconds } from '../../datasets/datasetView';
+import { imageCount, totalSeconds } from '../../datasets/datasetView';
 import { duration } from '../../utils/duration';
 import type { TriesResult } from '../../workspace/useTriesTraining';
 import { PendingRow } from '../simulate/PendingRow';
@@ -23,8 +24,13 @@ export interface DatasetActions {
 
 function statItems(dataset: Dataset, members: TrySummary[]): React.ReactNode[] {
   const version = newestVersion(dataset);
+  const images = imageCount(dataset);
 
-  return [duration(totalSeconds(members)), version && `Version ${version.n}`];
+  return [
+    members.length > 0 && duration(totalSeconds(members)),
+    images > 0 && plural(images, 'image'),
+    version && `Version ${version.n}`,
+  ];
 }
 
 interface DatasetPaneProps {

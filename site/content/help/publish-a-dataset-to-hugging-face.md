@@ -27,7 +27,7 @@ covers:
   - electron/hub/
 ---
 
-You can publish the passed tries in a dataset to the Hugging Face Hub as a LeRobot dataset. Once it's on the Hub, LeRobot and GR00T training can load it by name.
+You can publish a dataset's passed tries and labeled images to the Hugging Face Hub for training.
 
 **Note:** Publishing works in the desktop app. The dataset is always public.
 
@@ -48,17 +48,19 @@ You can also find **Publish to Hugging Face** in [[⌘K]] while a dataset is ope
 
 Basecase publishes the dataset to a repo on your account. The repo is named after the dataset, plus a 6-character code for it, for example `touch-the-dots-1a2b3c`. Each dataset gets its own code, so two datasets named Touch the Dots publish to two repos.
 
-The repo's main branch holds LeRobot v3.0, tagged `v3.0`. LeRobot 0.4 and later can load it by name without converting it: `lerobot-train --dataset.repo_id=<account>/touch-the-dots-1a2b3c`. To stream the dataset from the Hub instead of downloading it, add `--dataset.streaming=true`.
+Image members publish in `coco/` and `yolo/` folders with the same splits as their zip export. To create them, see [Make training images](/help/make-training-images).
+
+For try members, the repo's main branch holds LeRobot v3.0, tagged `v3.0`. LeRobot 0.4 and later can load it by name without converting it: `lerobot-train --dataset.repo_id=<account>/touch-the-dots-1a2b3c`. To stream the dataset from the Hub instead of downloading it, add `--dataset.streaming=true`.
 
 The `v2.1` tag holds a LeRobot v2.1 copy that includes GR00T's `meta/modality.json`. GR00T only reads v2, so for GR00T, download that revision: `hf download <account>/touch-the-dots-1a2b3c --repo-type dataset --revision v2.1`. For a list of the files in both versions, see [LeRobot dataset contents](/help/lerobot-dataset-contents).
 
 ## Publishing again
 
-If you publish the same dataset again, Basecase replaces the repo's files with the dataset's passed tries. It rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files alone.
+If you publish the same dataset again, Basecase uploads its current passed tries and image members. For try members, it rewrites the `data/`, `videos/` and `meta/` folders. Image members go in `coco/` and `yolo/`.
 
 Tries from your real robot are left out, and so are tries on another robot and tries recorded before the robot last changed. The toast shows how many tries were skipped.
 
-Each publish tags its commit with the dataset's version, such as `dataset-v2`. Publishing the same tries again keeps the same version. To download an earlier version, use its tag: `hf download <account>/touch-the-dots-1a2b3c --repo-type dataset --revision dataset-v1`. LeRobot ignores these tags and keeps loading `v3.0`.
+Each publish tags its commit with the dataset's version, such as `dataset-v2`. Publishing unchanged tries, image members and split seed again keeps the same version. To download an earlier version, use its tag: `hf download <account>/touch-the-dots-1a2b3c --repo-type dataset --revision dataset-v1`. LeRobot ignores these tags and keeps loading `v3.0`.
 
 ## Where the token lives
 

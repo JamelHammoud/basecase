@@ -39,7 +39,7 @@ LeRobot is Hugging Face's open library for robot learning, and GR00T is NVIDIA's
 
 A toast shows "Exporting dataset…" and then tells you how many tries went in. The zip saves to your downloads, named after the dataset. For example, Touch the Dots exports as `touch-the-dots-dataset.zip`.
 
-You can also find **Export Dataset** in [[⌘K]] while a dataset is open. Each export saves the dataset's tries as a version.
+You can also find **Export Dataset** in [[⌘K]] while a dataset is open. Each export saves the dataset's tries and image members as a version.
 
 ## Which tries go in
 
@@ -47,12 +47,14 @@ The export includes only passed tries, and each one has to match the robot as it
 
 Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each. Tries from your real robot don't go in, because they only record where the robot's base went. [Imported tries](/help/import-robot-data-as-tries) on the same robot go in as demonstrations, unless a Case judged them failed or you marked them failed.
 
-If none of the tries fit, the toast says "Export and training take only passed tries of this Case as it is now. Try It to record more."
+If none of the tries fit and the dataset has no images, the toast says "Export and training take only passed tries of this Case as it is now. Try It to record more."
 
 ## What's in the zip
 
 Each try becomes one episode, recorded at 25 frames a second. An episode holds the joint positions, the joint targets, and a 640 × 480 video from each camera. A try's segments go in as subtasks, each with its instruction or label. There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Camera views you add to the scene aren't part of the dataset.
 
 The zip holds two copies of the dataset. The top folder is LeRobot v3.0, which LeRobot 0.4 and later can load as is. The `v2.1` folder inside it is LeRobot v2.1, for GR00T, which only reads v2. For a list of every file and column, see [LeRobot dataset contents](/help/lerobot-dataset-contents).
+
+If the dataset also holds training images, the zip includes `coco/` and `yolo/` folders for those images. An image-only dataset exports those folders without LeRobot episodes. See [Make training images](/help/make-training-images).
 
 To put the dataset on the Hugging Face Hub instead of in a zip, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face). To train on the same tries inside Basecase, see [Train a policy from your tries](/help/train-a-policy-from-your-tries).

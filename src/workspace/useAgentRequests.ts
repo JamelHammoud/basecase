@@ -187,6 +187,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     caseExplore: core.caseExplore,
     caseRun: core.caseRun,
     datasets: core.datasets,
+    trainingImages: core.trainingImages,
     skills: core.simTraining.skills,
     tryRead: tryReadOf(core, () => timelineRef.current),
   });

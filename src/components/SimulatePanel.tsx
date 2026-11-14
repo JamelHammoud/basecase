@@ -17,6 +17,7 @@ import { watchSubject } from '../workspace/watchSubject';
 import { CaseSection, TrySection } from './simulate/CaseSections';
 import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
 import { ResultsSection } from './simulate/ResultsSection';
+import type { TrainingImages } from '../workspace/useTrainingImages';
 import type { CaseCompare } from '../workspace/useCaseCompare';
 import type { CaseExplore } from '../workspace/useCaseExplore';
 import { SimControls } from './simulate/SimControls';
@@ -27,6 +28,7 @@ interface SimulatePanelProps {
   sim: Simulation;
   training: Training;
   cases: Cases;
+  trainingImages?: TrainingImages;
   share: ShareRobot;
   rig: Rig;
   parts: ScenePart[];
@@ -156,6 +158,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         />
         <ResultsSection
           cases={cases}
+          trainingImages={props.trainingImages}
           rig={rig}
           share={share}
           model={sim.model}

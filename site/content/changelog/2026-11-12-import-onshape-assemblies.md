@@ -10,7 +10,7 @@ You can now paste an Onshape assembly's link into Import Robot and get a robot w
 
 Before, an Onshape robot had to leave as an exported URDF before it could move in Basecase.
 
-The first import asks for an Onshape API key, added in Settings ▸ Accounts. Basecase keeps the key encrypted and sends it only to cad.onshape.com.
+The first import asks for an Onshape API key, added in **Settings** ▸ **Accounts**. Basecase keeps the key encrypted and sends it only to cad.onshape.com.
 
 ![The Accounts pane in Settings with the Onshape access key and secret key saved, and the account name under Secret key](/changelog/import-onshape-assemblies/accounts.png)
 

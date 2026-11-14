@@ -4,7 +4,7 @@ date: 2026-11-13
 image: /changelog/prusa-core-one-mk4s-and-xl/cover.png
 ---
 
-Pick a Prusa CORE One, MK4S or XL in Settings ▸ Printers, and Basecase lays your plates out on its bed. It slices them with OrcaSlicer, using Prusa's own presets.
+Pick a Prusa CORE One, MK4S or XL in **Settings** ▸ **Printers**, and Basecase lays your plates out on its bed. It slices them with OrcaSlicer, using Prusa's own presets.
 
 ## What's new
 

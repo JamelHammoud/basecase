@@ -199,6 +199,7 @@ async function startRoutine(msg: Msg<'routine'>) {
 
   if (!engine) throw new Error('Nothing loaded');
 
+  engine.conditions.clear();
   live = await LiveRoutine.start(mj, engine, msg);
   play();
 }

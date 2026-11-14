@@ -10,9 +10,11 @@ Arena checks a skill at friction ×0.8 to ×1.2, masses within 10% and delays up
 
 ## How It Searches
 
-Stress tries each of the four on its own, then all of them together, going as far as friction ×0.2 to ×1.5, mass ×0.5 to ×2, strength 40% to 120% and 150 ms of delay. The skill's own contract judges every run. For Walk, 120 runs take about 25 seconds.
+Stress tries each of the four on its own, then all of them together. It goes as far as friction ×0.2 to ×1.5, mass ×0.5 to ×2, strength 40% to 120% and 150 ms of delay.
 
-Each finding replays its run in the simulation, under that finding's physics.
+Every run passes or fails by the skill's own contract. For Walk, 120 runs take about 25 seconds.
+
+You can replay any finding's run in the simulation, under that finding's physics.
 
 ## Train on These
 

@@ -50,7 +50,7 @@ export interface RuntimeDeps {
   onRecord: (record: SkillRecord) => void;
   onChange: (jobs: SkillJob[]) => void;
   onRefused?: (target: SkillTarget, refusal: SkillRefusal | null) => void;
-  onStressed?: (result: StressResult) => void;
+  onStressed?: (skill: string, result: StressResult | null) => void;
   snapshots?: Snapshots;
 }
 
@@ -107,7 +107,7 @@ export class SkillsRuntime {
       runner: deps.runner,
       startJob: (row, work) => this.startJob(row, work),
       keep: (target, record) => this.keep(target, record),
-      onStressed: (result) => this.deps.onStressed?.(result),
+      onStressed: (skill, result) => this.deps.onStressed?.(skill, result),
       onRefused: (target, refusal) => this.deps.onRefused?.(target, refusal),
     });
   }

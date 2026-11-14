@@ -39,9 +39,9 @@ covers:
   - forge/crates/forge-train/src/trainer.rs
 ---
 
-The Motor Kit trains four basic skills for a robot that stands on its own legs: Stand, Walk, Get up and Settle. You don't need to write a goal. Basecase trains each skill and then proves it in Arena.
+The Motor Kit trains four basic skills for a robot that stands on its own legs: Stand, Walk, Get up and Settle. You don't write a goal for any of them. Basecase trains each skill, then proves it in Arena.
 
-Training runs on your own GPU. You can train in the desktop app, or at app.basecase.so in Chrome or Edge.
+Training runs on your own GPU, either in the desktop app or at app.basecase.so in Chrome or Edge.
 
 To train a skill:
 
@@ -56,25 +56,25 @@ To train a skill:
 ![Stand training at 25%](/help/train-stand-and-walk-with-the-motor-kit/training.png)
 
 5. When the row shows its Arena line (for example, "32 of 32 tries, at least 91%"), click **Try** to run the skill in the simulation.
-6. For **Walk**, click **Drive** instead of **Try**. Then steer with [[W A S D]].
+6. For **Walk**, click **Drive** instead of **Try**, then steer with [[W A S D]].
 
 ![Stand ready, with its Arena line and Try](/help/train-stand-and-walk-with-the-motor-kit/ready.png)
 
-To stop training, click **Stop training** (■) on the row. For more about snapshots, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).
+To stop training, click **Stop training** (■) on the row. To learn more about snapshots, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).
 
 You can also train **Walk** from **Teach It to Move**, under **Control**.
 
 If a skill fails Arena, Basecase discards it. The row shows how close it came, for example "Refused in Arena: 20 of 32 tries", and offers **Train** so you can try again.
 
-A ready skill can still fail on a slippery floor or when it carries a payload. To find where it breaks, see [Stress-test a skill to find where it breaks](/help/stress-test-a-skill).
+A ready skill can still fail on a slippery floor or while it carries a payload. To find where it breaks, see [Stress-test a skill to find where it breaks](/help/stress-test-a-skill).
 
-Only one skill trains at a time. If you click **Train** on a second skill, a message tells you which one is already training. If training can't start, the row says why, for example "Training needs uv".
+Only one skill trains at a time. If you click **Train** on a second skill, a message tells you which one is already training. If training can't start, the row tells you why, for example "Training needs uv".
 
 ## In the browser
 
-The **Train** section appears only if your browser can train on the GPU. Basecase saves the skills you train in the browser with the scene, in that browser, so they're still there after you reload the page. Nothing trains until you click **Train**.
+The **Train** section only appears if your browser can train on the GPU. Basecase saves the skills you train in the browser with the scene, in that browser, so they're still there after you reload the page. Nothing trains until you click **Train**.
 
-Gallery links to legged robots, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), have **Train** on their Case card. It trains Stand, and once the skill passes Arena, the robot uses it to stand. Click **Open Scene** to open the robot in the studio with Stand ready.
+Gallery links to legged robots, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), have **Train** on their Case card. It trains Stand. Once the skill passes Arena, the robot uses it to stand. To open the robot in the studio with Stand ready, click **Open Scene**.
 
 ![The hexapod's Case card with Stand ready](/help/train-stand-and-walk-with-the-motor-kit/gallery.png)
 
@@ -89,17 +89,17 @@ We measured these times in the desktop app on an M5 Pro Mac:
 
 In Chrome on the same Mac, Stand took about two and a quarter minutes.
 
-If Walk fails Arena on its first try, it retrains from its best result. Retraining can take up to 30 minutes on four or six legs, and up to 45 minutes on two.
+If Walk fails Arena on its first try, Basecase retrains it from its best result. Retraining can take up to 30 minutes on four or six legs, and up to 45 minutes on two.
 
 On a Mac with Apple silicon, Stand and Walk train on the GPU. On Windows they train on the CPU, so the times above don't apply.
 
 ## What Walk can do
 
-Walk follows the speed and turn you command. Its top speed is 0.2 m/s on four or more legs and 0.15 m/s on two. While you drive, it can move forward at up to its top speed, move sideways at up to a quarter of that, and turn at up to 0.6 rad/s.
+Walk follows the speed and turn you command. Its top speed is 0.2 m/s on four or more legs, and 0.15 m/s on two. While you drive, it can move forward at up to its top speed, move sideways at up to a quarter of that, and turn at up to 0.6 rad/s.
 
 ## One job at a time
 
-When a training job is running, any other jobs wait in a queue.
+While a training job is running, any other jobs wait in a queue.
 
 Training you start yourself goes to the front of the queue. If a Motor Kit job is retraining in the background, it pauses and shows "Paused for other training. Starts again after it."
 
@@ -111,8 +111,8 @@ In the desktop app, Basecase checks each Motor Kit skill you've trained against 
 - If you change a mass or a size, Basecase reruns Arena in the background, without training.
 - If you change a joint, Basecase trains the skill again.
 
-Skills you haven't trained stay untrained until you start them.
+A skill you haven't trained doesn't start training on its own.
 
-If a ready skill moves in a way you don't want, such as a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). To share a ready skill, follow [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face). To start from someone else's skill, see [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
+If a ready skill moves in a way you don't want, like a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). You can share a ready skill by following [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face), or start from someone else's with [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 
-For what Arena checks, see [Arena](/help/arena). To teach a robot anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).
+[Arena](/help/arena) explains what Arena checks. To teach a robot anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

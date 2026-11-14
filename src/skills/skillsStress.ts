@@ -1,4 +1,5 @@
 import { plural } from '../../electron/plural.mjs';
+import { errorMessage } from '../utils/errorMessage';
 import type { SimModel } from '../sim/mjcfTypes';
 import { skillHash, type Skill } from './artifacts';
 import type { Environment } from './environment';
@@ -20,7 +21,7 @@ export interface StressHost {
   runner: SkillRunner;
   startJob: (row: StressRow & { message?: string }, work: (ports: SkillPorts) => Promise<void>) => string | null;
   keep: (target: SkillTarget, record: SkillRecord) => Promise<void>;
-  onStressed: (result: StressResult) => void;
+  onStressed: (skill: string, result: StressResult | null) => void;
   onRefused: (target: SkillTarget, refusal: SkillRefusal | null) => void;
 }
 
@@ -66,6 +67,7 @@ export class SkillStress {
   seed: string | undefined = undefined;
   last: StressReport | null = null;
   private results = new Map<string, StressResult>();
+  private failures = new Map<string, string>();
   private host: StressHost;
 
   constructor(host: StressHost) {
@@ -76,21 +78,35 @@ export class SkillStress {
     return this.results.get(hash) ?? null;
   }
 
+  failureOf(hash: string): string | null {
+    return this.failures.get(hash) ?? null;
+  }
+
   start(model: SimModel, subject: StressSubject, row: StressRow): string | null {
     const { skill, environment } = subject;
     const hash = skillHash(skill);
     const job = { type: 'stress' as const, model, skill, environment, budget: this.budget, seed: this.seed };
     const refused = this.host.startJob({ ...row, message: STRESSING }, async (ports) => {
-      const { result } = await this.host.runner(job, ports);
+      try {
+        const { result } = await this.host.runner(job, ports);
 
-      this.results.set(hash, result);
-      this.host.onStressed(result);
-      this.last = { name: row.label, lines: stressLines(result) };
+        this.results.set(hash, result);
+        this.host.onStressed(hash, result);
+        this.last = { name: row.label, lines: stressLines(result) };
+      } catch (error) {
+        if (!ports.signal?.aborted) this.failures.set(hash, errorMessage(error));
+
+        throw error;
+      }
     });
 
-    if (!refused) this.results.delete(hash);
+    if (refused) return refused;
 
-    return refused;
+    this.results.delete(hash);
+    this.failures.delete(hash);
+    this.host.onStressed(hash, null);
+
+    return null;
   }
 
   train(model: SimModel, subject: StressTrainSubject, row: StressRow): string | null {

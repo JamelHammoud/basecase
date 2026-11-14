@@ -45,7 +45,7 @@ interface SkillsInput {
 function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId' | 'setProject'>) {
   const [jobs, setJobs] = useState<SkillJob[]>([]);
   const [refusals, setRefusals] = useState<SkillRefusals>({});
-  const [stressed, setStressed] = useState<Record<string, StressResult>>({});
+  const [stressed, setStressed] = useState<Partial<Record<string, StressResult>>>({});
   const [platform] = useState(() => skillsPlatform({ web: IS_WEB_DEMO, workspaceId, store: platformBridge }));
   const [runtime] = useState(
     () =>
@@ -58,7 +58,7 @@ function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId'
         onRecord: (record) => setProject((p) => ({ ...p, skills: withRecord(p.skills ?? [], record) })),
         onChange: setJobs,
         onRefused: (target, refusal) => setRefusals((r) => ({ ...r, [target]: refusal ?? undefined })),
-        onStressed: (result) => setStressed((s) => ({ ...s, [result.skill]: result })),
+        onStressed: (skill, result) => setStressed((s) => ({ ...s, [skill]: result ?? undefined })),
       }),
   );
 

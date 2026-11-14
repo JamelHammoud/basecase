@@ -23,7 +23,7 @@ export function stressCommands({ core }: CommandInputs): Command[] {
     ...skills.rows.filter(canTrainFindings).map((row): Command => ({
       id: `train-findings-${row.target}`,
       group: 'Simulate',
-      label: `Train ${row.label} on These`,
+      label: titleCase(`Train ${row.label} on These`),
       icon: <TrainIcon />,
       keywords: 'stress findings retrain wider ranges robust',
       run: open(() => void skills.stress.train(row)),

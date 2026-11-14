@@ -9,8 +9,10 @@ import type { ForgeJob } from './forgeRunner';
 import { kitEnvironment } from './kitEnvironment';
 import { kitReward } from './kitRewards';
 import type { ProveInput } from './prove';
+import type { SkillRunner } from './skillsClient';
 import { designOf } from './skillsRuntime';
-import { stressPoint, widenedEnvironment, type StressFinding } from './stress';
+import { SkillStress } from './skillsStress';
+import { stressPoint, widenedEnvironment, type StressFinding, type StressResult } from './stress';
 import { FORGE_RANGES, trainOnFindings } from './stressTrain';
 
 const model = fixtureModel('quad-servo');
@@ -158,5 +160,50 @@ describe('Train on These', () => {
 
     expect(job.physicsRanges.strength).toBeUndefined();
     expect(job.delaySteps[1]).toBe(8);
+  });
+});
+
+describe('a stress search in the app', () => {
+  function host(runner: () => Promise<unknown>) {
+    const seen: Array<StressResult | null> = [];
+    let done: Promise<void> = Promise.resolve();
+    const stress = new SkillStress({
+      runner: runner as unknown as SkillRunner,
+      startJob: (_row, work) => {
+        const forge = () => Promise.resolve({ ok: false as const, policy: null, events: [], stderr: '' });
+
+        done = work({ forge, save: () => Promise.resolve(), signal: new AbortController().signal }).catch(() => {});
+
+        return null;
+      },
+      keep: () => Promise.resolve(),
+      onStressed: (_skill, result) => seen.push(result),
+      onRefused: () => {},
+    });
+
+    return { stress, seen, settled: () => done };
+  }
+
+  it('drops the shown findings when a new search starts and keeps a failed search’s error', async () => {
+    const { skill, environment } = ready();
+    const hash = skillHash(skill);
+    const row = { target: 'kit:velocity-tracking' as const, label: 'Walk' };
+    const result = { skill: hash, findings: [strengthFinding] } as unknown as StressResult;
+    const passing = host(() => Promise.resolve({ type: 'stress', result }));
+
+    passing.stress.start(model, { skill, environment }, row);
+    await passing.settled();
+
+    expect(passing.seen).toEqual([null, result]);
+    expect(passing.stress.resultOf(hash)).toBe(result);
+
+    const failing = host(() => Promise.reject(new Error('Worker crashed.')));
+
+    failing.stress.start(model, { skill, environment }, row);
+    await failing.settled();
+
+    expect(failing.seen).toEqual([null]);
+    expect(failing.stress.resultOf(hash)).toBeNull();
+    expect(failing.stress.failureOf(hash)).toBe('Worker crashed.');
   });
 });

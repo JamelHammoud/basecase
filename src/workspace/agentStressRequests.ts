@@ -71,9 +71,12 @@ export async function stressRequest(payload: Payload, ctx: SkillToolContext) {
 
   await runtime.settled();
 
-  const result = runtime.stress.resultOf(row.record!.hash);
+  const { hash } = row.record!;
+  const result = runtime.stress.resultOf(hash);
 
-  return { text: result ? [`${row.label}:`, ...stressLines(result)].join('\n') : 'Stopped before it finished.' };
+  if (result) return { text: [`${row.label}:`, ...stressLines(result)].join('\n') };
+
+  return { text: runtime.stress.failureOf(hash) ?? 'Stopped before it finished.' };
 }
 
 export const stressReportLines = (report: StressReport) => [

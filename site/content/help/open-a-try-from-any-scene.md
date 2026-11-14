@@ -1,6 +1,7 @@
 ---
 title: Open a try from any scene
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 5
@@ -13,40 +14,42 @@ keywords:
   - library
 related:
   - try-a-case
-  - scrub-a-try-on-the-timeline
+  - play-a-try-through-its-console
 covers:
   - src/workspace/viewCommands.tsx
   - src/components/LibraryPanel.tsx
   - src/components/library/TriesSection.tsx
   - src/components/tries/
   - src/workspace/useTriesView.ts
+  - src/workspace/useCaseRun.ts
   - src/cases/tryStore/
   - electron/library/tryStore.mjs
 ---
 
-You can find a try you recorded in any scene, grouped by robot, and step through it on the timeline.
+You can open any try you've recorded from any scene, then step through it on the timeline.
 
 1. Click **Library** in the view rail on the left.
 2. Under **Tries**, click a robot.
 
 ![The Library with a robot and its two tries under Tries](/help/open-a-try-from-any-scene/library.png)
 
-3. Tries fills the canvas and shows every try grouped by robot, newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. Click a try.
+3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. An imported try shows its task and the file or repo it came from instead. Click a try to open it.
 
 ![Tries over the canvas with a try from each of two scenes](/help/open-a-try-from-any-scene/tries.png)
 
-4. The try timeline opens under the tiles, with one lane per joint. Step through it the same way as in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
+4. The try plays through its Case's console, and the try timeline appears under the canvas. Tries stays hidden until you close the try. To step through the try, follow the steps in [Play a try through its console](/help/play-a-try-through-its-console).
 
-![A selected try with its timeline open](/help/open-a-try-from-any-scene/timeline.png)
+![A try from Tries playing through the Touch the Dots console, with its timeline under the canvas](/help/open-a-try-from-any-scene/timeline.png)
 
-5. Press [[Esc]] to close the timeline. To leave Tries, press [[Esc]] again or click **Done**.
+5. To stop playing, click **Done** or press [[Esc]]. Tries comes back.
+6. To leave Tries, click **Done** or press [[Esc]] again.
 
-You can also press [[⌘K]] and choose **Show Tries**.
+Or open Tries from the command menu. Press [[⌘K]], then choose **Show Tries**.
 
-To delete tries, hold [[⌘]] or [[⇧]] while you click to select more than one. Then press [[⌫]] and click **Delete**. Deleting a try also deletes any Variations that came from it.
+The search at the top of the Library also finds tries. It matches a try's Case or task, its robot, the Variation or Real label on its tile, and the file or repo an imported try came from.
 
-**Note:** A try opens on the timeline only if it fits the robot in the open scene. Clicking a real try selects it but doesn't open the timeline.
+To delete tries, select them, press [[⌫]], then click **Delete**. Hold [[⌘]] or [[⇧]] while you click to select more than one try. Deleting a try also deletes any Variations that came from it.
 
-The search at the top of the Library matches a try's Case, its robot, and the Variation or Real label on its tile.
+**Note:** A try opens on the timeline only if it fits the robot in the open scene. If a try's Case isn't in the open scene, or it's an imported try with no Case, the try plays through the default cards, titled with the robot's name. Clicking a real try selects it but doesn't open the timeline.
 
-If you recorded tries before the Library held them, Basecase moves them in the first time you open their scene. On a Mac, Basecase stores them in `library/tries` inside `~/Library/Application Support/Basecase`, with one folder per try.
+If you recorded tries before the Library held them, Basecase moves them into the Library the first time you open their scene. On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`, with one folder per try.

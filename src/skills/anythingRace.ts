@@ -13,7 +13,7 @@ import { planMotion } from './anythingMotion';
 import type { Poser } from './anythingPoser';
 import { planRoute, roverVariants, wheelSetups } from './anythingRoute';
 import { lowerSpec } from './anythingSignals';
-import { tightenedSpec } from './anythingTighten';
+import { claimSpec } from './anythingTighten';
 import type { TaskSpec } from './anythingTypes';
 import { planWalk } from './anythingWalk';
 
@@ -129,7 +129,8 @@ async function rewardSearchPlan(task: Task): Promise<Plan> {
 const sure = (evidence: ArenaEvidence) => evidence.passed && evidence.variants.every((v) => v.passes >= SURE_PASSES);
 
 async function confident(task: Task, controller: SkillController): Promise<boolean> {
-  const strict = lowerSpec(tightenedSpec(task.spec), task.facts);
+  const level = task.facts.cls === 'legs' && !travels(task.spec);
+  const strict = lowerSpec(claimSpec(task.spec, { level }), task.facts);
   const contract = strict.contract;
   const environment = {
     ...task.environment,

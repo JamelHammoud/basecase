@@ -54,9 +54,17 @@ const failureOf = (agent) =>
     (err) => err,
   );
 
-afterEach(() => {
+const exitOf = (child) =>
+  child?.pid && child.exitCode === null && child.signalCode === null
+    ? new Promise((resolve) => child.once('exit', resolve))
+    : null;
+
+afterEach(async () => {
   for (const { agent, dataRoot } of agents.splice(0)) {
+    const exited = exitOf(agent.childProcess);
+
     agent.disconnect();
+    await exited;
     fs.rmSync(dataRoot, { recursive: true, force: true });
   }
 });

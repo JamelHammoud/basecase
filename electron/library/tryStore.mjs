@@ -9,13 +9,19 @@ export const TRY_STRIP = 'strip.webp';
 const MAX_MANIFEST = 256 * 1024;
 const MAX_RECORDING = 1024 * 1024 * 1024;
 const MAX_STRIP = 2 * 1024 * 1024;
-const SOURCES = new Set(['case', 'generated', 'real']);
+const SOURCES = new Set(['case', 'generated', 'real', 'import']);
 const VERDICTS = new Set(['passed', 'failed', 'unjudged']);
 
 const text = (value, fallback = '') => (typeof value === 'string' ? value.slice(0, 512) : fallback);
 const number = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
 const idOrNull = (value) => (isSafeFileId(value) ? value : null);
 const isPlain = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
+
+function originOf(value) {
+  if (!isPlain(value)) return null;
+
+  return text(value.kind === 'hub' ? value.repo : value.name) || null;
+}
 
 function outcomeOf(value) {
   const outcome = isPlain(value) ? value : {};
@@ -45,6 +51,8 @@ export function summarizeTry(manifest, { recording, strip }) {
     outcome: outcomeOf(manifest.outcome),
     seed: number(manifest.seed),
     sourceTry: idOrNull(manifest.sourceTry),
+    origin: originOf(manifest.origin),
+    task: typeof manifest.task === 'string' ? text(manifest.task) : null,
     recording,
     strip,
   };

@@ -1,5 +1,7 @@
 import React from 'react';
-import { CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
+import { Button, CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
+import { allKeysFor, keyFor } from '../../app/shortcuts';
+import { speedText } from '../../workspace/timelinePlayback';
 import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
 import type { TryTimeline as Timeline } from '../../workspace/useTryTimeline';
 import { runClock } from '../../utils/duration';
@@ -26,6 +28,8 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
     <div
       data-testid="try-timeline"
       data-frame={frame}
+      data-speed={timeline.speed}
+      data-loop={timeline.loop?.join('-')}
       className="glass pointer-events-auto w-[min(760px,calc(100%-32px))] rounded-[12px] p-3 flex flex-col gap-2"
     >
       <div className="max-h-[40vh] overflow-y-auto flex flex-col gap-2">
@@ -36,7 +40,9 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
             name={prettyJointName(rig.byId.get(lane.jointId)?.name ?? lane.jointId)}
             frame={frame}
             markers={markers}
+            loop={timeline.loop}
             onSeek={timeline.seek}
+            onLoop={timeline.setLoop}
             onSelect={() => onSelectParts(linkParts(rig, lane.jointId))}
           />
         ))}
@@ -45,7 +51,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
         <IconButton
           icon={timeline.playing ? <PauseIcon className={ic} /> : <RunIcon className={ic} />}
           title={timeline.playing ? 'Pause' : 'Play'}
-          shortcut="Space"
+          shortcut={keyFor('timeline:play')}
           size="sm"
           onClick={timeline.toggle}
         />
@@ -58,10 +64,21 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
           format={() => runClock((frames - 1) * dt)}
           onChange={(v) => timeline.seek(v)}
         />
+        <Button
+          variant="ghost"
+          size="xs"
+          className="tabular min-w-[48px] justify-center"
+          title="Speed"
+          shortcut={allKeysFor('timeline:speed')}
+          data-testid="timeline-speed"
+          onClick={() => timeline.faster(1, true)}
+        >
+          {speedText(timeline.speed)}
+        </Button>
         <IconButton
           icon={<CloseIcon className={ic} />}
           title="Close"
-          shortcut="Esc"
+          shortcut={keyFor('timeline:close')}
           size="sm"
           onClick={timeline.close}
         />

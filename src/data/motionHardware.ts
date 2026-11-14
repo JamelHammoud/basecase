@@ -119,6 +119,7 @@ const linearRail: MotionHardware = {
     return `HIWIN ${spec.size} rail: ${r.widthWR} × ${r.heightHR} mm, ${r.boltSize} holes every ${r.pitchP} mm, ${r.endE} mm from the ends. Cut to length; the length should be (n − 1) × ${r.pitchP} + 2 × ${r.endE} mm.`;
   },
   shop: (spec) => `${spec.size} linear rail ${spec.length}mm`,
+  sizeColumns: 4,
   massG: (spec) => MGN_RAILS[spec.size].kgPerM * (spec.length ?? 0),
   cutToLength: true,
 };

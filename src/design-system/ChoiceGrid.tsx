@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tooltip } from './Tooltip';
 import { CHOICE_TRACK, choiceCellClass } from './choiceStyles';
+import { choiceGridTemplate } from './choiceLayout';
 
 export interface ChoiceOption<T extends string> {
   value: T;
@@ -31,7 +32,14 @@ export function ChoiceGrid<T extends string>({
       role="radiogroup"
       aria-label={label}
       className={`grid select-none ${CHOICE_TRACK} ${className}`}
-      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      style={{
+        gridTemplateColumns: choiceGridTemplate({
+          columns,
+          labels: options.map((o) => o.label),
+          stacked,
+          icons: options.some((o) => o.icon),
+        }),
+      }}
     >
       {options.map((o) => {
         const selected = o.value === value;

@@ -24,7 +24,6 @@ interface RealRobotOptions {
   attempt: CaseTry;
   timeline: TryTimeline;
   onTry: (record: TryRecord, recording: Recording, input: string | null) => Promise<void>;
-  onRefuse: (message: string) => void;
 }
 
 export function useRealRobotTries(options: RealRobotOptions) {
@@ -41,7 +40,6 @@ export function useRealRobotTries(options: RealRobotOptions) {
     viewportRef,
     onStart: realReplay.close,
     onTry: options.onTry,
-    onRefuse: options.onRefuse,
   });
 
   const replay = async (record: TryRecord) => {

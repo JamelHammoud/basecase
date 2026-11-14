@@ -9,6 +9,7 @@ import {
   RunIcon,
   Section,
   StopIcon,
+  Spinner,
   SwapIcon,
   TrainIcon,
 } from '../../design-system';
@@ -100,6 +101,22 @@ export const DriveKeys: React.FC<{ cls: DriveClass }> = ({ cls }) => (
   </div>
 );
 
+const RealTryStatus: React.FC<{ realTry: Cases['realTry'] }> = ({ realTry }) => {
+  if (realTry.phase === 'starting')
+    return (
+      <p className="flex items-center gap-2 text-[13px] text-white/60" data-testid="real-try-status">
+        <Spinner className="w-3 h-3 text-white/60" />
+        Opening the camera…
+      </p>
+    );
+
+  return realTry.note ? (
+    <p className="text-[13px] leading-snug text-red-400" data-testid="real-try-status">
+      {realTry.note}
+    </p>
+  ) : null;
+};
+
 export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null; cls: DriveClass | null }> = ({
   cases,
   teachWalk,
@@ -146,6 +163,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
             Try on Real Robot
           </Button>
         )}
+        {cases.mat.available && !running && <RealTryStatus realTry={realTry} />}
         {teachWalk && !running && (
           <Button variant="secondary" size="md" fullWidth icon={<TrainIcon className="w-4 h-4" />} onClick={teachWalk}>
             Teach It to Move

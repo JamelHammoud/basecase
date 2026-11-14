@@ -70,6 +70,8 @@ export const CaseRunArea: React.FC<CaseRunAreaProps> = ({ area, side, ctx, heade
     };
 
   const openMenu = (e: React.MouseEvent<HTMLElement>) => {
+    if (e.defaultPrevented) return;
+
     e.preventDefault();
 
     const panel = (e.target as HTMLElement).closest<HTMLElement>('[data-panel]')?.dataset.panel ?? null;

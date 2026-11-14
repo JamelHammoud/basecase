@@ -32,7 +32,7 @@ The policy runs in the app's simulation, and the robot copies what the simulatio
 
 1. Connect the emulated robot and climb to **Test**. See [Connect an emulated robot](/help/connect-an-emulated-robot) for the steps.
 2. Click **Simulate** at the top of the right panel.
-3. Under **Train**, click **Try** on a ready skill. For **Walk**, click **Drive**.
+3. Under **Train**, click **Try** on a ready skill. For **Walk**, click **Drive** instead.
 4. Watch the servo angles in **Operate** change as the simulated robot moves.
 5. To stop the motors, click **Stop** in **Operate**.
 

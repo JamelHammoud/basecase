@@ -11,7 +11,7 @@ import {
   type PanelPlace,
 } from '../cases/console/consoleEdits';
 import type { CaseConsole } from '../cases/console/format';
-import type { ConsoleLayout } from '../cases/console/layout';
+import { DEFAULT_CONSOLE, type ConsoleLayout } from '../cases/console/layout';
 import { panelLabel } from '../components/caseRun/panelChoices';
 import { confirmAction } from '../design-system/confirmStore';
 import type { ShowToast } from './types';
@@ -56,7 +56,7 @@ export function useConsoleEditing({ caseRun, docs, showToast }: EditingInput): C
 
   if (!kase) return null;
 
-  const current = editableConsole(kase.console);
+  const current = kase.console ?? DEFAULT_CONSOLE;
 
   const apply = (edit: (c: CaseConsole) => CaseConsole) => {
     const next = edit(editableConsole(kase.console));

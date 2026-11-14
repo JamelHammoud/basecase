@@ -17,7 +17,9 @@ export interface PanelChoice {
 
 export const ADDABLE_KINDS = PANEL_KIND_NAMES.filter((k) => k !== 'code');
 
-export const kindLabel = (kind: PanelKind) => kind[0].toUpperCase() + kind.slice(1);
+const capitalized = (word: string) => word[0].toUpperCase() + word.slice(1);
+
+export const kindLabel = (kind: PanelKind) => capitalized(kind);
 
 export const panelLabel = (panel: PanelSpec) => panel.title ?? kindLabel(panel.kind);
 
@@ -45,7 +47,7 @@ const SIGNAL_DRAFTS: Partial<Record<PanelKind, (signal: string) => PanelDraft>> 
 };
 
 const option = (kind: PanelKind, label: string, config: Record<string, unknown> = {}): PanelChoice => ({
-  label,
+  label: capitalized(label),
   draft: { kind, ...config },
 });
 

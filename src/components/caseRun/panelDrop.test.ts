@@ -74,7 +74,8 @@ describe('Add Panel’s choices', () => {
     expect(labels('value')).toEqual(expect.arrayContaining(['joint.shoulder.position', 'clock', 'input.keys.turn']));
     expect(labels('camera')).toEqual(['camera.*', 'camera.wrist_camera']);
     expect(labels('button')).toEqual(['Try It', 'Stop Try', 'Drive', 'Stop Driving', 'Start Over', 'Reset']);
-    expect(labels('map')).toEqual(['map']);
+    expect(labels('map')).toEqual(['Map']);
+    expect(labels('list')).toEqual(['Tries', 'Failures']);
     expect(kindLabel('plot')).toBe('Plot');
   });
 });

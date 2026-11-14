@@ -1,6 +1,7 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
-import type { Freshness } from './artifacts';
+import { modelHashes, type Freshness } from './artifacts';
+import { hashOf } from './hash';
 import type { TrainedEntry } from './kitEnvironment';
 import { kitEntries } from './motorKit';
 import { moveAnimations } from './moveEnvironment';
@@ -48,7 +49,14 @@ interface DesignInput {
   design: string;
 }
 
-export type SkillRefusals = Partial<Record<SkillTarget, string>>;
+export interface SkillRefusal {
+  line: string;
+  model: string;
+}
+
+export const refusalModel = (model: SimModel) => hashOf(modelHashes(model));
+
+export type SkillRefusals = Partial<Record<SkillTarget, SkillRefusal>>;
 
 interface RowInput extends DesignInput {
   records: SkillRecord[];
@@ -88,6 +96,14 @@ function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefine
 }
 
 function kitRows(input: RowInput): SkillRow[] {
+  const current = Object.keys(input.refusals ?? {}).length ? refusalModel(input.model) : null;
+
+  const refusalFor = (target: SkillTarget) => {
+    const refusal = input.refusals?.[target];
+
+    return refusal && refusal.model === current ? refusal.line : undefined;
+  };
+
   return kitEntries(input.model).map((entry) => {
     const target: SkillTarget = `kit:${entry}`;
     const found = best(
@@ -104,7 +120,7 @@ function kitRows(input: RowInput): SkillRow[] {
       state: stateOf(
         found,
         input.jobs.find((j) => j.target === target),
-        input.refusals?.[target],
+        refusalFor(target),
       ),
       drives: entry === 'velocity-tracking',
     };

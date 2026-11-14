@@ -113,11 +113,23 @@ export function recordFreshness(record: SkillRecord, options: FreshnessInput): F
   return skillFreshness(record, currentDesign({ ...options, environment }));
 }
 
-const worstVariant = (evidence: ArenaEvidence) =>
-  [...evidence.variants].sort((a, b) => a.passes / a.trials - b.passes / b.trials)[0];
+type Variant = ArenaEvidence['variants'][number];
 
-const triesLine = (variant: ArenaEvidence['variants'][number]) =>
-  `${variant.passes} of ${plural(variant.trials, 'try', 'tries')}`;
+const passShare = (variant: Variant) => variant.passes / variant.trials;
+
+const worstVariant = (evidence: ArenaEvidence): Variant | undefined =>
+  [...evidence.variants].sort((a, b) => passShare(a) - passShare(b))[0];
+
+const worstShare = (evidence: ArenaEvidence) => {
+  const worst = worstVariant(evidence);
+
+  return worst ? passShare(worst) : Infinity;
+};
+
+export const worstEvidence = (evidence: readonly ArenaEvidence[]): ArenaEvidence | undefined =>
+  [...evidence].sort((a, b) => worstShare(a) - worstShare(b))[0];
+
+const triesLine = (variant: Variant) => `${variant.passes} of ${plural(variant.trials, 'try', 'tries')}`;
 
 export function arenaLine(evidence: ArenaEvidence): string {
   const worst = worstVariant(evidence);

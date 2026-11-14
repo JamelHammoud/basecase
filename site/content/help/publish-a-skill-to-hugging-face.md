@@ -43,18 +43,6 @@ Publishing works in the desktop app. The repo is always public, and only a skill
 
 **Publish Stand to Hugging Face**, and the same for each ready skill, is also in [[⌘K]]. Signed out, it opens **Accounts** instead.
 
-## What gets published
-
-The repo goes on your account, named after the robot and the skill plus 6 characters of the skill's hash, such as `quad-stand-1a2b3c`. It holds:
-
-| File | What it is |
-|---|---|
-| `skill.json` | The skill, with the hashes of the design, contract and physics it was proved on |
-| `policy.json` | The policy Basecase runs |
-| `policy.onnx` | The same policy for ONNX Runtime |
-| `contract.json`, `environment.json` | What Arena judged it on |
-| `evidence.json` | Arena's result on your robot |
-| `robot.json` | Each joint's limb and place in it, which Install Skill maps from |
-| `README.md` | The model card: body class, joints, observation, action and Arena's runs |
+The repo goes on your account, named after the robot and the skill, such as `quad-stand-1a2b3c`. It holds the policy as JSON and ONNX, its Arena evidence, the joint layout Install Skill maps from and a model card.
 
 To put it on another robot, see [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).

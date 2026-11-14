@@ -44,14 +44,8 @@ Install Skill works in the desktop app, on legged robots. It takes Motor Kit ski
 
 ![The hexapod's Stand row ready after installing](/help/install-a-skill-from-hugging-face/installed.png)
 
-## What happens
+A file that doesn't match `skill.json` stops the install, and the toast names it. Legs with a different number of joints don't fit, and the toast says how many each has.
 
-Basecase downloads the skill's files and checks each one against `skill.json`. A file that doesn't match stops the install, and the toast names it.
+Your skill keeps its own Arena evidence, never the author's. If Arena refuses it, nothing is saved, and the row shows "Refused in Arena" with its worst count.
 
-The skill's legs are matched to yours. Each of your legs takes the nearest leg with as many joints, so a four-legged Stand fits a hexapod. Legs with a different number of joints don't fit, and the toast says how many each has.
-
-Then the Motor Kit trains the skill on your robot, starting from the published policy. Arena judges the result on your robot's physics. Your skill keeps its own evidence, never the author's, and remembers which skill it started from.
-
-If Arena refuses the result, nothing is saved. The row says "Refused in Arena" with its worst run's count, and **Train** starts over from scratch.
-
-To see what Arena checks, read [Arena](/help/arena).
+[Arena](/help/arena) explains what it checks.

@@ -14,7 +14,7 @@ import type { RaceOutcome } from './race';
 import type { SkillRunner } from './skillsClient';
 import type { SkillsJob } from './skillsJob';
 import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
-import { KIT_LABELS, type SkillJob, type SkillTarget } from './skillRows';
+import { KIT_LABELS, refusalModel, type SkillJob, type SkillRefusal, type SkillTarget } from './skillRows';
 import {
   NO_SNAPSHOT_STORE,
   NO_SNAPSHOTS,
@@ -46,7 +46,7 @@ export interface RuntimeDeps {
   loadSkill: (hash: string) => Promise<Skill | null>;
   onRecord: (record: SkillRecord) => void;
   onChange: (jobs: SkillJob[]) => void;
-  onRefused?: (target: SkillTarget, line: string | null) => void;
+  onRefused?: (target: SkillTarget, refusal: SkillRefusal | null) => void;
   snapshots?: Snapshots;
 }
 
@@ -361,7 +361,8 @@ export class SkillsRuntime {
 
     if (outcome.kind === 'skill') return this.keep(`kit:${entry}`, skillRecord(outcome.skill, { kit: entry }));
 
-    if (outcome.evidence) this.deps.onRefused?.(`kit:${entry}`, refusedLine(outcome.evidence));
+    if (outcome.evidence)
+      this.deps.onRefused?.(`kit:${entry}`, { line: refusedLine(outcome.evidence), model: refusalModel(model) });
   }
 
   private async moveWork(

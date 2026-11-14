@@ -13,6 +13,7 @@ import { kitRobot } from './kitModel';
 import { kitSchedule, type KitStage } from './kitSchedule';
 import { firstPassingTry, type Judgement } from './kitTries';
 import { validationScore } from './kitValidation';
+import { worstEvidence } from './skillRecords';
 import { collapsedStart } from './kitStart';
 import { proveSkill } from './prove';
 
@@ -98,8 +99,8 @@ interface Attempt {
   best: { evidence: ArenaEvidence | null; score: number };
 }
 
-function noteEvidence(run: Attempt, evidence: ArenaEvidence, score: number) {
-  if (score > run.best.score) run.best = { evidence, score };
+function noteEvidence(run: Attempt, evidence: readonly ArenaEvidence[], score: number) {
+  if (score > run.best.score) run.best = { evidence: worstEvidence(evidence) ?? null, score };
 }
 
 async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>> {
@@ -110,9 +111,10 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
   if (!slower.every((e) => e.passed)) {
     const { mj, model } = input;
     const full = await runArena({ mj, model, contract: environment.contract, controller, environment });
-    const score = arenaPasses([...slower, full]);
+    const tried = [...slower, full];
+    const score = arenaPasses(tried);
 
-    noteEvidence(run, full, score);
+    noteEvidence(run, tried, score);
 
     return { skill: null, score };
   }
@@ -129,9 +131,10 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
     },
     ...(input.warm ? { warmStartFrom: input.warm.from } : {}),
   });
-  const score = arenaPasses([...slower, proof.evidence]);
+  const tried = [...slower, proof.evidence];
+  const score = arenaPasses(tried);
 
-  noteEvidence(run, proof.evidence, score);
+  noteEvidence(run, tried, score);
 
   return { skill: proof.skill, score };
 }

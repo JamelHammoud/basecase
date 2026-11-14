@@ -50,11 +50,10 @@ async function installFrom(skills: SceneSkills, link: string) {
   return `Training ${KIT_LABELS[plan.entry]} from ${repo}`;
 }
 
-export function useSkillHub({ skills, showToast, openAccounts }: SkillHubOptions): SkillHub {
-  const [installOpen, setInstallOpen] = useState(false);
+function useOnce() {
   const busy = useRef(false);
 
-  const once = async (work: () => Promise<void>) => {
+  return async (work: () => Promise<void>) => {
     if (busy.current) return;
 
     busy.current = true;
@@ -65,6 +64,12 @@ export function useSkillHub({ skills, showToast, openAccounts }: SkillHubOptions
       busy.current = false;
     }
   };
+}
+
+export function useSkillHub({ skills, showToast, openAccounts }: SkillHubOptions): SkillHub {
+  const [installOpen, setInstallOpen] = useState(false);
+  const publishing = useOnce();
+  const installing = useOnce();
 
   const publish = async (row: SkillRow) => {
     if (!(await hubBridge.signedIn())) return openAccounts();
@@ -99,8 +104,8 @@ export function useSkillHub({ skills, showToast, openAccounts }: SkillHubOptions
     openInstall: () => setInstallOpen(true),
     closeInstall: () => setInstallOpen(false),
     publish: (row) => {
-      if (canPublish(row)) void once(() => publish(row));
+      if (canPublish(row)) void publishing(() => publish(row));
     },
-    install: (link) => void once(() => install(link)),
+    install: (link) => void installing(() => install(link)),
   };
 }

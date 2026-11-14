@@ -52,7 +52,7 @@ function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId'
         snapshots: platform.snapshots,
         onRecord: (record) => setProject((p) => ({ ...p, skills: withRecord(p.skills ?? [], record) })),
         onChange: setJobs,
-        onRefused: (target, line) => setRefusals((r) => ({ ...r, [target]: line ?? undefined })),
+        onRefused: (target, refusal) => setRefusals((r) => ({ ...r, [target]: refusal ?? undefined })),
       }),
   );
 

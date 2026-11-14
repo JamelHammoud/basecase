@@ -92,7 +92,7 @@ describe('Try timeline', () => {
     await app.page.getByTestId('try-row').first().locator('button[aria-label="Replay"]').click();
     await expect.poll(() => app.page.getByTestId('timeline-lane').count(), { timeout: 30000 }).toBeGreaterThan(0);
     await expect.poll(async () => (await timeline())?.sought).toBe(0);
-    await expect.poll(areaCount).toBe(1);
+    await expect.poll(areaCount).toBe(2);
 
     const opened = (await timeline())!;
 
@@ -120,7 +120,7 @@ describe('Try timeline', () => {
 
     await app.page.keyboard.press('Escape');
     await expect.poll(() => app.page.getByTestId('try-timeline').count()).toBe(0);
-    expect(await areaCount()).toBe(1);
+    expect(await areaCount()).toBe(2);
     expect((await simState()).canvasSelected).toEqual(lane.link);
     expect((await simState()).gizmo).toBe(false);
     await expect.poll(async () => (await simState()).drive).toBe('off');

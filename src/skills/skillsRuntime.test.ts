@@ -3,10 +3,13 @@ import { fixtureModel } from './fixtureModels';
 import type { ForgeOutcome } from './forgeRunner';
 import { moveEnvironment } from './moveEnvironment';
 import { fixtureMoveSkill, quadSit } from './moveFixtures';
-import type { SkillRecord } from './skillRecords';
+import { NOMINAL_PHYSICS } from '../sim/physicsScales';
+import { skillRecord, type SkillRecord } from './skillRecords';
 import type { SkillJob } from './skillRows';
 import type { SnapshotRef } from './snapshots';
 import type { SkillRunner } from './skillsClient';
+import type { SkillsJob } from './skillsJob';
+import type { StressFinding, StressResult } from './stress';
 import { SkillsRuntime } from './skillsRuntime';
 
 const model = fixtureModel('quad-servo');
@@ -104,5 +107,106 @@ describe('snapshots in the skills runtime', () => {
     expect(keep).toHaveBeenCalledWith(records[0].hash, [snapshot(50), snapshot(100), snapshot(150)]);
     expect(records[0].snapshots).toEqual([snapshot(100), snapshot(150)]);
     expect(runtime.jobs).toEqual([]);
+  });
+});
+
+describe('stressing a skill in the skills runtime', () => {
+  const sit = quadSit();
+  const skill = fixtureMoveSkill({ model, animation: sit });
+  const environment = moveEnvironment(model, sit);
+  const record = skillRecord(skill, { kit: 'stand' });
+  const finding: StressFinding = {
+    axis: 'mass',
+    side: 'above',
+    boundary: 1.4,
+    point: { ...NOMINAL_PHYSICS, mass: 1.8 },
+    start: model.initial,
+    margin: -0.5,
+  };
+  const sample = { point: { ...NOMINAL_PHYSICS }, margin: 0.3, start: 0 };
+  const result: StressResult = {
+    seed: 'seed',
+    budget: 40,
+    rollouts: 40,
+    nominal: sample,
+    axes: [],
+    worst: sample,
+    starts: [model.initial],
+    findings: [finding],
+    trace: [sample],
+  };
+  const stand = { target: 'kit:stand', label: 'Stand', record, skill, environment } as const;
+
+  function stubbed(reply: (job: SkillsJob) => unknown) {
+    const records: SkillRecord[] = [];
+    const messages: string[] = [];
+    const jobs: SkillsJob[] = [];
+    const runtime = new SkillsRuntime({
+      runner: ((job: SkillsJob) => {
+        jobs.push(job);
+
+        return Promise.resolve(reply(job));
+      }) as SkillRunner,
+      forge: () => () => Promise.resolve<ForgeOutcome>({ ok: false, policy: null, events: [], stderr: '' }),
+      save: () => Promise.resolve(),
+      loadSkill: () => Promise.resolve(null),
+      onRecord: (r) => records.push(r),
+      onChange: (list) => messages.push(...list.map((j) => j.message)),
+    });
+
+    return { runtime, records, messages, jobs };
+  }
+
+  it('runs as the row’s job and keeps the findings on the same record, without the trace', async () => {
+    const { runtime, records, messages, jobs } = stubbed(() => ({ type: 'stress', result }));
+
+    expect(await runtime.stress(model, stand, 40)).toEqual(result);
+    expect(messages).toContain('Stressing');
+    expect(jobs[0]).toMatchObject({ type: 'stress', skill, environment, budget: 40 });
+    expect(records).toEqual([{ ...record, stress: { seed: 'seed', budget: 40, rollouts: 40, findings: [finding] } }]);
+    expect(runtime.jobs).toEqual([]);
+  });
+
+  it('says what holds the runtime instead of stressing', async () => {
+    const hold: { release: () => void } = { release: () => {} };
+    const { runtime, records } = stubbed(
+      () => new Promise((resolve) => (hold.release = () => resolve({ type: 'kit', outcome: REFUSED }))),
+    );
+
+    expect(runtime.trainKit(model, 'velocity-tracking')).toBeNull();
+    expect(await runtime.stress(model, stand)).toBe('Walk is training.');
+
+    hold.release();
+    await runtime.settled();
+    expect(records).toEqual([]);
+  });
+
+  it('trains on the findings and keeps the new skill as a fresh Stand record', async () => {
+    const stressed = {
+      ...stand,
+      record: { ...record, stress: { seed: 's', budget: 40, rollouts: 40, findings: [finding] } },
+    };
+    const better = { ...skill, name: 'Stand again' };
+    const { runtime, records, jobs } = stubbed(() => ({
+      type: 'stress-train',
+      result: { skill: better, evidence: null, environment, reason: 'Passed.' },
+    }));
+
+    expect(await runtime.trainOnStress(model, stressed, { kit: 'stand' })).toEqual(better);
+    expect(jobs[0]).toMatchObject({ type: 'stress-train', findings: [finding], target: { kit: 'stand' } });
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({ name: 'Stand again', kit: 'stand' });
+    expect(records[0].stress).toBeUndefined();
+  });
+
+  it('answers with Arena’s reason and keeps the old record when the retrained skill fails', async () => {
+    const reason = 'Passed 20 of 32 held-out tries, in simulation.';
+    const { runtime, records } = stubbed(() => ({
+      type: 'stress-train',
+      result: { skill: null, evidence: null, environment, reason },
+    }));
+
+    expect(await runtime.trainOnStress(model, stand, { kit: 'stand' })).toBe(reason);
+    expect(records).toEqual([]);
   });
 });

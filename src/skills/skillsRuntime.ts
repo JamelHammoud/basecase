@@ -1,17 +1,16 @@
 import type { HandoffResult } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
-import type { Case } from '../cases/schema';
-import type { CaseRuns } from '../cases/caseRuns';
-import type { PolicySpec } from '../sim/policy';
 import { skillFiles, skillHash, type Skill } from './artifacts';
-import { lastError, type ForgeJob, type ForgeRunner, type SkillSave } from './forgeRunner';
+import type { StressResult } from './stress';
+import { retrainedRecord, stressedRecord, type StressRow } from './stressRuns';
+import type { StressTarget } from './stressTraining';
+import { lastError, type ForgeRunner } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
 import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
 import type { RaceOutcome } from './race';
-import type { SkillRunner } from './skillsClient';
-import type { SkillsJob } from './skillsJob';
+import type { SkillPorts, SkillsJob } from './skillsJob';
 import { moveTag, recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, type SkillJob, type SkillTarget } from './skillRows';
 import {
@@ -25,35 +24,9 @@ import {
 } from './snapshots';
 import type { DraftInput, DraftReport, DraftResult } from './teach';
 import { raceSummary } from './teach';
-import type { ForgeProgress } from './trainerForge';
+import type { ForgeFactory, RaceReport, RuntimeDeps, TriesPlan } from './skillsRuntimeTypes';
 import type { Environment } from './environment';
 import { triesSkill } from './triesTraining';
-
-export interface ForgeFactoryOptions {
-  background: boolean;
-  onProgress: (p: ForgeProgress) => void;
-  onSnapshot?: (ref: SnapshotRef) => void;
-  signal: AbortSignal;
-}
-
-export type ForgeFactory = (options: ForgeFactoryOptions) => ForgeRunner;
-
-export interface RuntimeDeps {
-  runner: SkillRunner;
-  forge: ForgeFactory;
-  save: SkillSave;
-  loadSkill: (hash: string) => Promise<Skill | null>;
-  onRecord: (record: SkillRecord) => void;
-  onChange: (jobs: SkillJob[]) => void;
-  snapshots?: Snapshots;
-}
-
-export interface RaceReport {
-  name: string;
-  found: boolean;
-  lines: string[];
-  relaxation: string | null;
-}
 
 interface Run {
   target: SkillTarget;
@@ -62,24 +35,15 @@ interface Run {
   work: (forge: ForgeRunner, signal: AbortSignal) => Promise<void>;
 }
 
-export interface TriesPlan {
-  model: SimModel;
-  kase: Case;
-  job: ForgeJob;
-  judge: (policy: PolicySpec) => Promise<TriesVerdict>;
-  done: (outcome: TriesOutcome) => void;
-}
-
-export interface TriesVerdict {
-  runs: CaseRuns;
-  robotModel: string;
-}
-
-export interface TriesOutcome {
-  runs: CaseRuns | null;
-  kept: boolean;
-  problem: string | null;
-}
+export type {
+  ForgeFactory,
+  ForgeFactoryOptions,
+  RaceReport,
+  RuntimeDeps,
+  TriesOutcome,
+  TriesPlan,
+  TriesVerdict,
+} from './skillsRuntimeTypes';
 
 export const designOf = (model: SimModel) => model.robots[0]?.key ?? 'scene';
 
@@ -179,28 +143,54 @@ export class SkillsRuntime {
     job: Omit<Extract<SkillsJob, { type: 'handoff' }>, 'type'>,
     row: { target: SkillTarget; label: string },
   ): Promise<HandoffResult | null> {
-    if (this.user) return refused(`${this.userLabel} is training.`);
+    const result = await this.awaited(row, async (ports) => {
+      const reply = await this.deps.runner({ type: 'handoff', ...job }, ports);
 
-    let result: HandoffResult | null = null;
-
-    this.running = this.start({
-      ...row,
-      background: false,
-      work: async (forge, signal) => {
-        try {
-          const reply = await this.deps.runner({ type: 'handoff', ...job }, { ...this.ports(), forge, signal });
-
-          result = reply.result;
-        } catch (error) {
-          if (!signal.aborted) result = refused(errorMessage(error));
-
-          throw error;
-        }
-      },
+      return reply.result;
     });
-    await this.running;
+
+    return typeof result === 'string' ? refused(result) : result;
+  }
+
+  async stress(model: SimModel, row: StressRow, budget?: number): Promise<StressResult | string | null> {
+    const { skill, environment } = row;
+    const result = await this.awaited({ ...row, message: 'Stressing' }, async (ports) => {
+      const reply = await this.deps.runner({ type: 'stress', model, skill, environment, budget }, ports);
+
+      return reply.result;
+    });
+
+    if (result && typeof result !== 'string') this.deps.onRecord(stressedRecord(row.record, result));
 
     return result;
+  }
+
+  async trainOnStress(model: SimModel, row: StressRow, kind: StressTarget): Promise<Skill | string | null> {
+    const { skill, environment, record } = row;
+    const job = {
+      type: 'stress-train' as const,
+      model,
+      design: designOf(model),
+      skill,
+      environment,
+      findings: record.stress?.findings ?? [],
+      target: kind,
+    };
+    const result = await this.awaited(row, async (ports) => {
+      const reply = await this.deps.runner(job, ports);
+
+      if (reply.result.skill) await this.keep(row.target, retrainedRecord(reply.result.skill, kind, environment));
+
+      return reply.result;
+    });
+
+    if (!result || typeof result === 'string') return result;
+
+    return result.skill ?? result.reason;
+  }
+
+  loadSkill(hash: string) {
+    return this.deps.loadSkill(hash);
   }
 
   replaceForge(forge: ForgeFactory, snapshots?: Snapshots) {
@@ -261,6 +251,35 @@ export class SkillsRuntime {
     this.user?.abort();
     this.background?.abort();
     this.pending = null;
+  }
+
+  private async awaited<T>(
+    row: { target: SkillTarget; label: string; message?: string },
+    call: (ports: SkillPorts) => Promise<T>,
+  ): Promise<T | string | null> {
+    if (this.user) return `${this.userLabel} is training.`;
+
+    const done: { value: T | string | null } = { value: null };
+
+    this.running = this.start({
+      target: row.target,
+      label: row.label,
+      background: false,
+      work: async (forge, signal) => {
+        if (row.message) this.setJob(row.target, { message: row.message });
+
+        try {
+          done.value = await call({ ...this.ports(), forge, signal });
+        } catch (error) {
+          if (!signal.aborted) done.value = errorMessage(error);
+
+          throw error;
+        }
+      },
+    });
+    await this.running;
+
+    return done.value;
   }
 
   private ports() {

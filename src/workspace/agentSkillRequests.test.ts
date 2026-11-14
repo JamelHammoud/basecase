@@ -1,17 +1,26 @@
 import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
-import { skillFiles, type Skill } from '../skills/artifacts';
+import { currentDesign, skillFiles, skillFromTraining, skillHash, withEvidence, type Skill } from '../skills/artifacts';
 import { fixtureModel } from '../skills/fixtureModels';
 import type { ForgeJob } from '../skills/forgeRunner';
 import type { SkillRunner } from '../skills/skillsClient';
 import { runSkillsJob } from '../skills/skillsJob';
 import type { SkillRecord } from '../skills/skillRecords';
-import { SkillsRuntime, type ForgeFactory } from '../skills/skillsRuntime';
+import { designOf, SkillsRuntime, type ForgeFactory } from '../skills/skillsRuntime';
+import { environmentHash } from '../skills/environment';
+import { kitEnvironment } from '../skills/kitEnvironment';
+import { NOMINAL_PHYSICS } from '../sim/physicsScales';
+import { skillRecord } from '../skills/skillRecords';
+import type { StressResult } from '../skills/stress';
+import type { SkillsJob } from '../skills/skillsJob';
 import { SKILL_HANDLERS } from './agentSkillRequests';
 
-async function rig(fixture: string) {
+async function rig(fixture: string, stress?: (job: SkillsJob) => StressResult) {
   const mj = await loadMujoco();
-  const runner: SkillRunner = (job, ports) => runSkillsJob(job, { mj, ...ports }) as never;
+  const runner: SkillRunner = (job, ports) =>
+    (job.type === 'stress' && stress
+      ? Promise.resolve({ type: 'stress', result: stress(job) })
+      : runSkillsJob(job, { mj, ...ports })) as never;
   const jobs: Array<{ background: boolean; job: ForgeJob }> = [];
   const forge: ForgeFactory =
     ({ background }) =>
@@ -40,7 +49,7 @@ async function rig(fixture: string) {
     setAction: () => {},
   };
 
-  return { ctx, runtime, jobs, records };
+  return { ctx, runtime, jobs, records, saved };
 }
 
 const bend = {
@@ -117,5 +126,73 @@ describe('agent skill tools', () => {
     const { ctx } = await rig('arm-3dof');
 
     expect((await SKILL_HANDLERS.skill_train({ kit: 'walk' }, ctx)).text).toMatch(/Teach this robot with draft_skill/);
+  });
+
+  it('stresses a ready Stand and answers with each condition’s numbers, the worst combination and the seed', async () => {
+    const model = fixtureModel('quad-servo');
+    const environment = kitEnvironment(model, 'stand');
+    const draft = skillFromTraining({
+      name: 'stand',
+      start: null,
+      current: currentDesign({ design: designOf(model), model, environment }),
+      environment,
+      controller: { kind: 'hold' },
+    });
+    const evidence = {
+      arenaVersion: 1,
+      binding: { ...draft.binding, environment: environmentHash(environment) },
+      confidence: 0.95,
+      bar: 0.75,
+      variants: [{ variant: 'held-out' as const, trials: 32, passes: 32, lowerBound: 0.91, diverged: 0, failures: {} }],
+      lowerBound: 0.91,
+      passed: true,
+      conditions: [],
+      summary: '',
+      saltCommitment: 'f'.repeat(64),
+    };
+    const skill = withEvidence(draft, evidence, environment);
+    const sample = { point: { ...NOMINAL_PHYSICS, mass: 2 }, margin: -0.3, start: 0 };
+    const asked: SkillsJob[] = [];
+    const { ctx, records, saved } = await rig('quad-servo', (job) => {
+      asked.push(job);
+
+      return {
+        seed: 'seed-1',
+        budget: 40,
+        rollouts: 40,
+        nominal: { ...sample, point: NOMINAL_PHYSICS, margin: 0.4 },
+        axes: [{ axis: 'mass', side: 'above', boundary: 1.6, worst: sample }],
+        worst: sample,
+        starts: [model.initial],
+        findings: [],
+        trace: [],
+      };
+    });
+
+    saved.set(skillFiles(skillHash(skill)).skill, skill);
+    records.push(skillRecord(skill, { kit: 'stand' }));
+
+    const reply = await SKILL_HANDLERS.skill_stress({ skill: 'stand', budget: 40 }, ctx);
+
+    expect(asked).toMatchObject([{ type: 'stress', budget: 40, skill: { name: 'stand' } }]);
+    expect(reply.text.split('\n').slice(0, 4)).toEqual([
+      'Stressed Stand with 40 of 40 rollouts, seed seed-1.',
+      'Normal physics: margin +0.40, it passes there.',
+      'Each condition alone:',
+      '- Weight: fails above ×1.60 (tested ×0.50 to ×2.00).',
+    ]);
+    expect(reply.text).toContain('Worst combination found: friction 1.00, weight ×2.00, strength 100%, latency 0 ms');
+    expect(records.at(-1)?.stress).toEqual({ seed: 'seed-1', budget: 40, rollouts: 40, findings: [] });
+  });
+
+  it('asks for a trained skill before stressing one', async () => {
+    const { ctx } = await rig('quad-servo');
+
+    expect((await SKILL_HANDLERS.skill_stress({ skill: 'walk' }, ctx)).text).toBe(
+      'Walk isn’t ready (needs training). Stress a skill once Arena has passed it.',
+    );
+    expect((await SKILL_HANDLERS.skill_stress({ skill: 'jump' }, ctx)).text).toBe(
+      'No skill named "jump". Skills: Stand, Walk, Get up, Settle.',
+    );
   });
 });

@@ -1,10 +1,31 @@
 use crate::start_states::{self, StartState};
 use forge_ir::task::Reference;
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 const RESET_JOINT_NOISE: f64 = 0.05;
 const START_AREA_REACH_M: f64 = 5.0;
 const REFERENCE_FRAMES: [usize; 2] = [2, 30_000];
+const RANDOMIZATION_AXES: [&str; 3] = ["friction", "mass", "servo"];
+const FRICTION_BOUNDS: [f64; 2] = [0.1, 3.0];
+const MASS_BOUNDS: [f64; 2] = [0.25, 4.0];
+const SERVO_BOUNDS: [f64; 2] = [0.2, 2.0];
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Randomization {
+    pub friction: [f64; 2],
+    pub mass: [f64; 2],
+    pub servo: [f64; 2],
+}
+
+impl Default for Randomization {
+    fn default() -> Self {
+        Self {
+            friction: [0.6, 1.3],
+            mass: [0.85, 1.15],
+            servo: [0.85, 1.15],
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CommandRanges {
@@ -30,6 +51,7 @@ pub struct TaskOptions {
     pub start_area: Option<[[f64; 2]; 2]>,
     pub reference: Option<Reference>,
     pub start_states: Vec<StartState>,
+    pub randomization: Randomization,
 }
 
 impl Default for TaskOptions {
@@ -50,6 +72,7 @@ impl Default for TaskOptions {
             start_area: None,
             reference: None,
             start_states: Vec::new(),
+            randomization: Randomization::default(),
         }
     }
 }
@@ -144,6 +167,47 @@ fn start_area(root: &Value) -> Result<Option<[[f64; 2]; 2]>, String> {
     Ok(Some([forward, side]))
 }
 
+fn randomization_axis(
+    object: &Map<String, Value>,
+    key: &str,
+    fallback: [f64; 2],
+    [least, most]: [f64; 2],
+) -> Result<[f64; 2], String> {
+    let Some(value) = object.get(key) else {
+        return Ok(fallback);
+    };
+    let name = format!("randomization.{key}");
+    let [low, high] = pair(value, &name)?;
+
+    if low < least || high > most {
+        return Err(format!("{name} multiplies the model's value by {least} to {most}"));
+    }
+
+    Ok([low, high])
+}
+
+fn randomization(root: &Value) -> Result<Randomization, String> {
+    let defaults = Randomization::default();
+    let Some(value) = root.get("randomization") else {
+        return Ok(defaults);
+    };
+    let object = value
+        .as_object()
+        .ok_or("job.json needs an object in randomization, with friction, mass or servo")?;
+
+    if let Some(unknown) = object.keys().find(|k| !RANDOMIZATION_AXES.contains(&k.as_str())) {
+        return Err(format!(
+            "randomization has no {unknown}; it takes friction, mass and servo"
+        ));
+    }
+
+    Ok(Randomization {
+        friction: randomization_axis(object, "friction", defaults.friction, FRICTION_BOUNDS)?,
+        mass: randomization_axis(object, "mass", defaults.mass, MASS_BOUNDS)?,
+        servo: randomization_axis(object, "servo", defaults.servo, SERVO_BOUNDS)?,
+    })
+}
+
 fn reference_frame(value: &Value, index: usize) -> Result<Vec<f64>, String> {
     let numbers = value
         .as_array()
@@ -226,12 +290,13 @@ pub fn parse(root: &Value) -> Result<TaskOptions, String> {
         start_area: start_area(root)?,
         reference: reference(root)?,
         start_states: start_states::parse(root)?,
+        randomization: randomization(root)?,
     })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{check_reference, parse, TaskOptions};
+    use super::{check_reference, parse, Randomization, TaskOptions};
     use serde_json::json;
 
     #[test]
@@ -320,6 +385,41 @@ mod tests {
         let long = vec![json!([0, 0]); 30_001];
 
         assert!(refused(json!({ "loop": true, "frames": long })).contains("30000"));
+    }
+
+    #[test]
+    fn reads_randomization_ranges_and_keeps_the_rest() {
+        let widened = parse(&json!({ "randomization": { "friction": [0.3, 2], "servo": [0.5, 1.5] } }))
+            .expect("parses")
+            .randomization;
+        let defaults = Randomization::default();
+
+        assert_eq!(widened.friction, [0.3, 2.0]);
+        assert_eq!(widened.servo, [0.5, 1.5]);
+        assert_eq!(widened.mass, defaults.mass);
+        assert_eq!(
+            parse(&json!({ "randomization": {} })).expect("parses").randomization,
+            defaults
+        );
+        assert_eq!(defaults.friction, [0.6, 1.3]);
+        assert_eq!((defaults.mass, defaults.servo), ([0.85, 1.15], [0.85, 1.15]));
+    }
+
+    #[test]
+    fn refuses_randomization_outside_physical_bounds() {
+        let refused =
+            |randomization: serde_json::Value| parse(&json!({ "randomization": randomization })).expect_err("refused");
+
+        assert!(refused(json!({ "friction": [0.05, 1] })).contains("randomization.friction multiplies"));
+        assert!(refused(json!({ "friction": [0.5, 3.5] })).contains("0.1 to 3"));
+        assert!(refused(json!({ "mass": [0.2, 1] })).contains("0.25 to 4"));
+        assert!(refused(json!({ "mass": [1, 4.5] })).contains("randomization.mass"));
+        assert!(refused(json!({ "servo": [0.1, 1] })).contains("0.2 to 2"));
+        assert!(refused(json!({ "servo": [1.5, 0.9] })).contains("in order"));
+        assert!(refused(json!({ "servo": [1, "a"] })).contains("non-number"));
+        assert!(refused(json!({ "servo": [1] })).contains("two numbers"));
+        assert!(refused(json!({ "gravity": [1, 1] })).contains("randomization has no gravity"));
+        assert!(refused(json!([0.6, 1.3])).contains("an object in randomization"));
     }
 
     #[test]

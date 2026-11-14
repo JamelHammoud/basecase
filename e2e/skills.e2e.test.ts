@@ -6,7 +6,9 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
 import { fixtureModel } from '../src/skills/fixtureModels';
 import { kitJob } from '../src/skills/kitJob';
+import { kitRobot, offsetPose } from '../src/skills/kitModel';
 import { moveEnvironment } from '../src/skills/moveEnvironment';
+import { movedAxes } from '../src/skills/stressWords';
 import { clockPolicy, quadSit } from '../src/skills/moveFixtures';
 import { DEFAULT_PROJECT, type PolicyRecord, type ProjectSettings, type ScenePart } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematicsRig';
@@ -20,10 +22,12 @@ type Studio = {
   simState: () => {
     fingerprints: Record<string, string>;
     controller: { kind: string; clock: unknown; trainedSteps: number | null };
+    physics: { friction: number; mass: number; strength: number; latencyMs: number } | null;
   };
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
   releaseTrainer: () => void;
+  stressBudget: (rollouts: number) => void;
 };
 
 const trainedSteps = () =>
@@ -326,4 +330,81 @@ describe('watching Stand learn', () => {
     await expect.poll(steps, { timeout: 60000 }).toBe(100);
     expect(app.errors).toEqual([]);
   }, 240000);
+});
+
+const AXIS_WORDS = { friction: 'friction', mass: 'weight', strength: 'strength', latencyMs: 'latency' } as const;
+
+describe('stressing Stand', () => {
+  it('finds where it falls, replays that run in the live sim, and trains on it to a new skill', async () => {
+    const robot = fixtureRobots().find((r) => r.id === 'quad-servo')!;
+    const model = fixtureModel('quad-servo');
+    const job = kitJob(model, 'stand', { minutes: 1, seed: 0 });
+    const crouch = offsetPose(model, 28);
+    const crouched = holdPolicy({
+      ...job,
+      defaultPose: kitRobot(model).joints.map((id) => ((crouch.values[id] ?? 0) * Math.PI) / 180),
+    });
+    const physics = () =>
+      app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().physics);
+
+    await loadScene({ name: 'quad', parts: robot.parts, project: { ...DEFAULT_PROJECT, joints: robot.joints } });
+    await clickTab('Simulate');
+
+    const row = app.page.locator(visible('[data-testid="skill-row"]'), { hasText: 'Stand' }).first();
+
+    await expect.poll(() => row.count(), { timeout: 60000 }).toBe(1);
+    await app.page.route(
+      (url) => url.pathname === '/api/bridge/skill',
+      (route) => {
+        const saved = app.posts.filter((p) => p.route === 'skill-save').at(-1)?.body as { text?: string } | undefined;
+
+        return route.fulfill({ status: 200, contentType: 'application/json', body: saved?.text ?? '{}' });
+      },
+    );
+    await app.page.evaluate(
+      (policy) => (window as unknown as { __studio: Studio }).__studio.stubTrainer(policy),
+      crouched,
+    );
+    await row.locator('button', { hasText: 'Train' }).click();
+    await expect.poll(() => row.innerText(), { timeout: 150000 }).toContain('of 32 tries');
+
+    const first = await row.getAttribute('data-skill');
+
+    expect(first).toMatch(/^[0-9a-f]{64}$/);
+    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.stressBudget(40));
+    await app.page.keyboard.press('Meta+k');
+    await expect.poll(() => app.page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');
+    await app.page.keyboard.type('Stress Stand');
+    await app.page.keyboard.press('Enter');
+
+    const finding = row.getByTestId('stress-finding').first();
+
+    await expect.poll(() => finding.count(), { timeout: 150000 }).toBe(1);
+
+    const words = (await finding.innerText()).toLowerCase();
+
+    await finding.click();
+    await expect.poll(physics, { timeout: 60000 }).not.toBeNull();
+
+    const moved = movedAxes((await physics())!);
+
+    expect(moved.length).toBeGreaterThan(0);
+
+    for (const axis of moved) expect(words).toContain(AXIS_WORDS[axis]);
+
+    await app.page.evaluate(
+      (policy) => (window as unknown as { __studio: Studio }).__studio.stubTrainer(policy),
+      holdPolicy(job),
+    );
+    await row.locator('button', { hasText: 'Train on These' }).click();
+
+    const retrained = async () => {
+      const hash = await row.getAttribute('data-skill');
+
+      return !!hash && hash !== first && (await row.innerText()).includes('of 32 tries');
+    };
+
+    await expect.poll(retrained, { timeout: 240000 }).toBe(true);
+    expect(app.errors).toEqual([]);
+  }, 480000);
 });

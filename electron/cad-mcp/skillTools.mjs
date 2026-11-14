@@ -145,3 +145,31 @@ export const listSkills = {
   },
   handler: () => ask('skill_list', {}, 30000),
 };
+
+export const stressSkill = {
+  name: 'stress_skill',
+  config: {
+    title: 'Stress a skill',
+    description:
+      'Finds where a ready skill fails, with numbers, to answer questions like "will it walk on tile?", "what if the servos are weaker?" or "can it carry more?". ' +
+      'Runs the skill in simulation many times while it changes four conditions, alone and together: floor friction (×0.2 to ×1.5 of the robot’s own; tile or a polished floor is low), weight (×0.5 to ×2), servo strength (40% to 120%) and servo latency (0 to 150 ms added). ' +
+      'Answers with each condition’s boundary (where the skill’s contract starts failing) or that it held across those limits, the worst combination found with its margin (positive passes, negative fails), the rollouts used and the seed; the same seed gives the same answer. ' +
+      'The findings also show under the skill’s row in the Train section, where the user can replay each one and train the skill on them. ' +
+      'Needs a ready skill (list_skills); takes up to a minute at the default budget and holds the trainer while it runs.',
+    inputSchema: {
+      skill: z
+        .string()
+        .min(1)
+        .max(80)
+        .describe('A Motor Kit entry (stand, walk, get-up, settle), a move’s name or a taught skill’s name'),
+      budget: z
+        .number()
+        .int()
+        .min(24)
+        .max(2000)
+        .optional()
+        .describe('Rollouts to spend, default 160; more finds tighter boundaries and takes longer'),
+    },
+  },
+  handler: (args) => ask('skill_stress', args, 600000),
+};

@@ -84,6 +84,7 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     ...caseState(core.simTraining),
     selected: core.selectedIds,
     timeline: timelineState(core.simTraining.cases.timeline, sim, core.posing.rig),
+    physics: sim.physics,
     faults: Object.fromEntries(stats?.joints.flatMap((j) => (j.fault ? [[j.id, j.fault]] : [])) ?? []),
     facts: sim.latestFacts(),
     scanPoints: core.viewportRef.current?.scanPointCount() ?? 0,

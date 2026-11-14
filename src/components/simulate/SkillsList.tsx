@@ -1,17 +1,14 @@
 import React from 'react';
-import { Button, IconButton, RefreshIcon, RunIcon, StopIcon, TrainIcon } from '../../design-system';
+import { Button, IconButton, RefreshIcon, StopIcon, TrainIcon } from '../../design-system';
 import type { SkillRow } from '../../skills/skillRows';
-import { snapshotRefs, type SnapshotRef } from '../../skills/snapshots';
+import { snapshotRefs } from '../../skills/snapshots';
 import { fmtMargin, trainingLine } from './format';
 import { ProgressBar } from './ProgressBar';
+import { ReadyActions } from './ReadyActions';
+import type { SkillActions } from './skillActions';
+import { StressFindings } from './StressFindings';
 
-export interface SkillActions {
-  onTrain: (row: SkillRow) => void;
-  onTry: (row: SkillRow) => void;
-  onDrive: () => void;
-  onStop: () => void;
-  onSnapshot?: (row: SkillRow, ref: SnapshotRef) => void;
-}
+export type { SkillActions } from './skillActions';
 
 function stateLine(row: SkillRow): string | null {
   const { state } = row;
@@ -36,17 +33,7 @@ const RowAction: React.FC<{ row: SkillRow; actions: SkillActions }> = ({ row, ac
       />
     );
 
-  if (state.kind === 'ready')
-    return (
-      <Button
-        variant="secondary"
-        size="xs"
-        icon={<RunIcon className="w-3.5 h-3.5" />}
-        onClick={() => (row.drives ? actions.onDrive() : actions.onTry(row))}
-      >
-        {row.drives ? 'Drive' : 'Try'}
-      </Button>
-    );
+  if (state.kind === 'ready') return <ReadyActions row={row} actions={actions} />;
 
   const recheck = state.kind === 'recheck';
   const ActionIcon = recheck ? RefreshIcon : TrainIcon;
@@ -101,7 +88,12 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
       const shown = watchedMargin(row, margin);
 
       return (
-        <li key={row.target} className="flex flex-col" data-testid="skill-row">
+        <li
+          key={row.target}
+          className="flex flex-col"
+          data-testid="skill-row"
+          data-skill={row.state.kind === 'ready' ? row.record?.hash : undefined}
+        >
           <div className="flex items-center gap-2 min-h-[32px]">
             <div className="flex-1 min-w-0">
               <div className="text-[13px] text-white/85 truncate">{row.label}</div>
@@ -116,6 +108,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
             <RowAction row={row} actions={actions} />
           </div>
           <SnapshotList row={row} actions={actions} />
+          <StressFindings row={row} actions={actions} />
         </li>
       );
     })}

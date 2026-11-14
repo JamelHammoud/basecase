@@ -9,6 +9,8 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import { moveEnvironment } from './moveEnvironment';
 import { quadSit } from './moveFixtures';
+import { NOMINAL_PHYSICS } from '../sim/physicsScales';
+import type { StressFinding } from './stress';
 
 const DESIGN = 'quad';
 
@@ -77,6 +79,27 @@ describe('the skills list', () => {
 
     expect(stand.state).toEqual({ kind: 'ready', arena: '31 of 32 tries, at least 77%' });
     expect(arenaLine(record.evidence!)).toBe('31 of 32 tries, at least 77%');
+  });
+
+  it('puts a stressed record’s findings on its ready row, and none on a plain one or while it runs', () => {
+    const finding: StressFinding = {
+      axis: 'mass',
+      side: 'above',
+      boundary: 1.3,
+      point: { ...NOMINAL_PHYSICS, mass: 1.6 },
+      start: model.initial,
+      margin: -0.4,
+    };
+    const plain = kitRecord(model, 'stand');
+    const stressed = { ...plain, stress: { seed: 's', budget: 40, rollouts: 40, findings: [finding] } };
+    const job: SkillJob = { target: 'kit:stand', label: 'Stand', share: null, message: 'Stressing', background: false };
+    const stand = (records: SkillRecord[], jobs: SkillJob[] = []) =>
+      skillRows({ model, design: DESIGN, records, jobs }).find((r) => r.kit === 'stand')!;
+
+    expect(stand([stressed]).findings).toEqual([finding]);
+    expect(stand([stressed]).state).toEqual(stand([plain]).state);
+    expect(stand([plain]).findings).toEqual([]);
+    expect(stand([stressed], [job]).findings).toEqual([]);
   });
 
   it('shows a job over the entry it trains, with its progress', () => {

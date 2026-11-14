@@ -52,6 +52,8 @@ Training follows a reward, a score that nudges the policy toward the goal. A rew
 
 Each try's random draw is sealed, so the trainer never learns which conditions Arena will use.
 
+Arena says whether a skill passes, not where it fails. **Stress** searches past Arena's ranges with its own draws and never touches Arena's; see [Find where a skill breaks](/help/find-where-a-skill-breaks).
+
 ## When a skill goes stale
 
 A skill is tied to the design it passed on. For Motor Kit skills, **Recheck** runs Arena again with no training; for a skill you taught in words, it asks the agent again.

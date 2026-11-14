@@ -5,6 +5,7 @@ import { withVelocity } from '../sim/driveAccess';
 import type { Simulation } from '../sim/useSimulation';
 import type { SkillRow } from '../skills/skillRows';
 import type { SnapshotRef } from '../skills/snapshots';
+import type { StressFinding } from '../skills/stress';
 import type { Training } from '../sim/useTraining';
 import type { Rig } from '../utils/kinematics';
 import type { Cases } from '../workspace/useCases';
@@ -64,6 +65,12 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
     onDrive: () => void sim.drive.start(),
     onStop: skills.stop,
     onSnapshot: (row: SkillRow, ref: SnapshotRef) => void skills.playSnapshot(row, ref),
+    stress: {
+      onStress: (row: SkillRow) => void skills.stress(row),
+      onFinding: (row: SkillRow, finding: StressFinding) => void skills.replayFinding(row, finding),
+      onTrainOnFindings: (row: SkillRow) => void skills.trainOnFindings(row),
+      canTrainOnFindings: skills.canTrainOnFindings,
+    },
   };
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const on = sim.status !== 'off';

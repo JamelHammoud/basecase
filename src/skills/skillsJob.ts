@@ -9,6 +9,8 @@ import type { TrainedEntry } from './kitEnvironment';
 import { trainKitEntry, type KitOutcome } from './motorKit';
 import { trainMove, type MoveOutcome } from './moves';
 import type { RaceOutcome } from './race';
+import { stressSkill, type StressFinding, type StressResult } from './stress';
+import { stressJob, trainOnFindings, type StressTarget, type StressTrainResult } from './stressTraining';
 import { draftSkill, raceDraft, recheckSkill, type DraftInput, type DraftResult, type SkillDraft } from './teach';
 
 export type SkillsJob =
@@ -17,7 +19,17 @@ export type SkillsJob =
   | { type: 'kit'; model: SimModel; design: string; entry: TrainedEntry }
   | { type: 'move'; model: SimModel; design: string; animation: RobotAnimation }
   | { type: 'recheck'; model: SimModel; design: string; skill: Skill; environment: Environment }
-  | ({ type: 'handoff' } & Omit<HandoffTrainInput, 'mj' | 'forge' | 'save'>);
+  | ({ type: 'handoff' } & Omit<HandoffTrainInput, 'mj' | 'forge' | 'save'>)
+  | { type: 'stress'; model: SimModel; skill: Skill; environment: Environment; budget?: number }
+  | {
+      type: 'stress-train';
+      model: SimModel;
+      design: string;
+      skill: Skill;
+      environment: Environment;
+      findings: StressFinding[];
+      target: StressTarget;
+    };
 
 export type SkillsReply =
   | { type: 'draft'; result: DraftResult }
@@ -25,7 +37,9 @@ export type SkillsReply =
   | { type: 'kit'; outcome: KitOutcome }
   | { type: 'move'; outcome: MoveOutcome }
   | { type: 'recheck'; skill: Skill | null }
-  | { type: 'handoff'; result: HandoffResult };
+  | { type: 'handoff'; result: HandoffResult }
+  | { type: 'stress'; result: StressResult }
+  | { type: 'stress-train'; result: StressTrainResult };
 
 export type ReplyTo<K extends SkillsJob['type']> = Extract<SkillsReply, { type: K }>;
 
@@ -47,6 +61,12 @@ export async function runSkillsJob(job: SkillsJob, ports: SkillPorts & { mj: Mai
   if (job.type === 'move') return { type: 'move', outcome: await trainMove({ mj, ...job, forge, save, signal }) };
 
   if (job.type === 'handoff') return { type: 'handoff', result: await trainHandoff({ mj, ...job, forge, save }) };
+
+  if (job.type === 'stress')
+    return { type: 'stress', result: await stressSkill({ mj, ...job, stop: () => !!signal?.aborted }) };
+
+  if (job.type === 'stress-train')
+    return { type: 'stress-train', result: await trainOnFindings({ mj, ...job, job: stressJob(job), forge, save }) };
 
   return { type: 'recheck', skill: await recheckSkill({ mj, ...job, save }) };
 }

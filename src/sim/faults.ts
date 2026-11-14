@@ -22,7 +22,7 @@ interface Lag {
 }
 
 export class ActuatorFaults {
-  private readonly range: MjModel['actuator_forcerange'];
+  private readonly model: MjModel;
   private readonly lagSteps: number;
   private readonly nu: number;
   private readonly saved = new Map<number, [number, number]>();
@@ -30,11 +30,16 @@ export class ActuatorFaults {
   private readonly held = new Map<number, number>();
   private readonly lags = new Map<number, Lag>();
   private limpAll = false;
+  private scale = 1;
 
   constructor(model: MjModel) {
-    this.range = model.actuator_forcerange;
+    this.model = model;
     this.nu = model.nu;
     this.lagSteps = Math.max(1, Math.round(LAG_S / model.opt.timestep));
+  }
+
+  private get range(): MjModel['actuator_forcerange'] {
+    return this.model.actuator_forcerange;
   }
 
   kindOf(actuator: number): FaultKind | undefined {
@@ -45,8 +50,14 @@ export class ActuatorFaults {
     if (limp === this.limpAll) return;
 
     this.limpAll = limp;
+    this.syncAll();
+  }
 
-    for (let a = 0; a < this.nu; a++) this.syncRange(a);
+  setStrength(scale: number) {
+    if (scale === this.scale) return;
+
+    this.scale = scale;
+    this.syncAll();
   }
 
   set(actuator: number, kind: FaultKind | null, hold: number) {
@@ -78,7 +89,11 @@ export class ActuatorFaults {
 
     const kind = this.kinds.get(actuator);
 
-    return kind ? STRENGTH[kind] : 1;
+    return (kind ? STRENGTH[kind] : 1) * this.scale;
+  }
+
+  private syncAll() {
+    for (let a = 0; a < this.nu; a++) this.syncRange(a);
   }
 
   private syncRange(actuator: number) {

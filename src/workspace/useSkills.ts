@@ -11,21 +11,21 @@ import { kitTopSpeed } from '../skills/kitModel';
 import { backgroundTasks, Debounce, designMoved, taskOf } from '../skills/kitPlan';
 import { kitEntries } from '../skills/motorKit';
 import { inSkillsWorker } from '../skills/skillsClient';
-import { recordEnvironment, withRecord, type SkillRecord } from '../skills/skillRecords';
+import { withRecord, type SkillRecord } from '../skills/skillRecords';
 import type { Environment } from '../skills/environment';
-import { kitEnvironment } from '../skills/kitEnvironment';
 import { watchPlan } from '../skills/liveWatch';
-import { moveEnvironment } from '../skills/moveEnvironment';
+import { rowEnvironment as environmentOf } from '../skills/stressRuns';
 import type { SnapshotRef } from '../skills/snapshots';
 import { readyVelocity, skillRows, type SkillJob, type SkillRow } from '../skills/skillRows';
 import { skillsPlatform, type SkillsPlatform } from '../skills/skillsPlatform';
 import { designOf, SkillsRuntime } from '../skills/skillsRuntime';
 import { teachExamples } from '../skills/teachExamples';
-import type { ProjectSettings, RobotAnimation, ScenePart } from '../types/robotics';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { platformBridge } from '../utils/platformBridge';
 import { trainHandoff, useRoutineSkills, type HandoffJob } from './useRoutineSkills';
+import { useSkillStress } from './useSkillStress';
 
 const BUILD_DEBOUNCE_MS = 1500;
 
@@ -36,6 +36,7 @@ interface SkillsInput {
   setProject: (update: (p: ProjectSettings) => ProjectSettings) => void;
   rig: Rig;
   parts: ScenePart[];
+  showToast: (message: string) => void;
 }
 
 function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId' | 'setProject'>) {
@@ -138,19 +139,6 @@ function useSceneModel(input: SkillsInput, { runtime, platform, watch }: ModelWa
   return model;
 }
 
-function environmentOf(
-  row: SkillRow,
-  scene: { model: SimModel; runtime: SkillsRuntime; animations: RobotAnimation[] },
-) {
-  const { model, runtime, animations } = scene;
-
-  if (row.kit) return kitEnvironment(model, row.kit);
-
-  if (row.move) return moveEnvironment(model, row.move);
-
-  return runtime.environmentOf(row.target) ?? (row.record ? recordEnvironment(row.record, model, animations) : null);
-}
-
 export function useSkills(input: SkillsInput) {
   const { sim, project, rig, parts } = input;
   const hasJoints = rig.joints.length > 0;
@@ -190,13 +178,9 @@ export function useSkills(input: SkillsInput) {
     return row.kit ? runtime.trainKit(built, row.kit) : null;
   };
 
-  const rowEnvironment = (row: SkillRow): Environment | null => {
-    try {
-      return model ? environmentOf(row, { model, runtime, animations }) : null;
-    } catch {
-      return null;
-    }
-  };
+  const rowEnvironment = (row: SkillRow): Environment | null =>
+    model ? environmentOf(row, { model, animations, drafted: (t) => runtime.environmentOf(t) }) : null;
+  const stress = useSkillStress({ runtime, sim, rows, animations, load, showToast: input.showToast });
 
   const playSnapshot = async (row: SkillRow, ref: SnapshotRef) => {
     const policy = row.record ? await runtime.loadSnapshot(ref, row.record.hash) : null;
@@ -207,6 +191,7 @@ export function useSkills(input: SkillsInput) {
 
     const robot = rowEnvironment(row)?.robot ?? model?.robots[0]?.key ?? '';
 
+    sim.setPhysics(null);
     sim.setController({ kind: 'policy', policy, robot });
     sim.reset();
   };
@@ -218,6 +203,7 @@ export function useSkills(input: SkillsInput) {
 
     if (sim.status === 'off') await sim.start();
 
+    sim.setPhysics(null);
     sim.setController(skill.controller);
     sim.reset();
   };
@@ -239,6 +225,7 @@ export function useSkills(input: SkillsInput) {
     watchPlan: (row: SkillRow) => watchPlan(rowEnvironment(row)),
     loadSnapshot: (ref: SnapshotRef) => runtime.loadSnapshot(ref),
     playSnapshot,
+    ...stress,
     stop: () => runtime.stopUser(),
     routineSkills,
     trainHandoff: (job: HandoffJob) => trainHandoff({ runtime, routineSkills, project, job }),

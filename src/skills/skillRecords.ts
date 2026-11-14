@@ -15,6 +15,7 @@ import { hashOf } from './hash';
 import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
 import type { SnapshotRef } from './snapshots';
+import type { StressFinding } from './stress';
 import { plural } from '../../electron/plural.mjs';
 
 export interface MoveTag {
@@ -32,6 +33,13 @@ export interface CaseTag {
   model: string;
 }
 
+export interface StressRecord {
+  seed: string;
+  budget: number;
+  rollouts: number;
+  findings: StressFinding[];
+}
+
 export interface SkillRecord {
   hash: string;
   name: string;
@@ -44,6 +52,7 @@ export interface SkillRecord {
   origin: SkillOrigin | null;
   environment: Environment | null;
   snapshots?: SnapshotRef[];
+  stress?: StressRecord;
   createdAt: string;
 }
 

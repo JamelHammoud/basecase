@@ -6,6 +6,7 @@ import type { Rig } from '../utils/kinematics';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
 import type { FaultKind } from './faults';
+import type { PhysicsScales } from './physicsScales';
 import { buildMjcf, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
@@ -19,6 +20,7 @@ import type { LiveCaseInput } from '../cases/liveCase';
 import type { WatchPlan } from '../skills/liveWatch';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { useWatch } from './useWatch';
+import { usePhysics } from './usePhysics';
 import { useSimTouches } from './useSimTouches';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
@@ -56,7 +58,7 @@ export interface Simulation {
   start: () => Promise<void>;
   play: () => void;
   pause: () => void;
-  reset: () => void;
+  reset: (initial?: RobotPoseState) => void;
   stop: () => void;
   setSpeed: (s: number) => void;
   setController: (c: Controller) => void;
@@ -67,6 +69,8 @@ export interface Simulation {
   ) => void;
   push: (robot?: string, fallDeg?: number) => void;
   setFault: (jointId: string, kind: FaultKind | null) => void;
+  physics: PhysicsScales | null;
+  setPhysics: (scales: PhysicsScales | null) => void;
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
@@ -343,6 +347,7 @@ export function useSimulation(props: Inputs): Simulation {
   const [controller, setController] = useController(send);
   const touch = useSimTouches(modelRef, send);
   const watching = useWatch(send, sw.watched);
+  const physics = usePhysics(model, modelRef, send);
 
   const { start, startPinned, pinned } = useSimStart({ sw, buildModel, modelRef, setModel, controller, speed });
 
@@ -398,7 +403,7 @@ export function useSimulation(props: Inputs): Simulation {
       setPlaying(true);
     },
     pause: () => send({ type: 'pause' }),
-    reset: () => send({ type: 'reset' }),
+    reset: (initial) => send({ type: 'reset', initial }),
     stop,
     setSpeed: (s) => {
       setSpeedState(s);
@@ -408,6 +413,7 @@ export function useSimulation(props: Inputs): Simulation {
     buildModel: (options) => buildModel({ alone: options?.alone }),
     ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
+    ...physics,
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,

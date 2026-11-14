@@ -6,6 +6,7 @@ import { kitEntries } from './motorKit';
 import { moveAnimations } from './moveEnvironment';
 import { arenaLine, recordFreshness, type SkillRecord } from './skillRecords';
 import type { SnapshotRef } from './snapshots';
+import type { StressFinding } from './stress';
 
 export type SkillTarget = `kit:${TrainedEntry}` | `move:${string}` | `goal:${string}`;
 
@@ -31,6 +32,7 @@ export interface SkillRow {
   move: RobotAnimation | null;
   record: SkillRecord | null;
   state: SkillState;
+  findings: StressFinding[];
   drives: boolean;
 }
 
@@ -82,6 +84,13 @@ function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefine
   return found?.freshness === 'rerun-arena' ? { kind: 'recheck' } : { kind: 'untrained' };
 }
 
+function rowState(found: ReturnType<typeof best> | null, job: SkillJob | undefined) {
+  const state = stateOf(found, job);
+  const findings = state.kind === 'ready' ? (found?.record.stress?.findings ?? []) : [];
+
+  return { record: found?.record ?? null, state, findings };
+}
+
 function kitRows(input: RowInput): SkillRow[] {
   return kitEntries(input.model).map((entry) => {
     const target: SkillTarget = `kit:${entry}`;
@@ -95,8 +104,7 @@ function kitRows(input: RowInput): SkillRow[] {
       label: KIT_LABELS[entry],
       kit: entry,
       move: null,
-      record: found?.record ?? null,
-      state: stateOf(
+      ...rowState(
         found,
         input.jobs.find((j) => j.target === target),
       ),
@@ -118,8 +126,7 @@ function moveRows(input: RowInput): SkillRow[] {
       label: move.name,
       kit: null,
       move,
-      record: found?.record ?? null,
-      state: stateOf(
+      ...rowState(
         found,
         input.jobs.find((j) => j.target === target),
       ),
@@ -143,8 +150,7 @@ function taughtRows(input: RowInput): SkillRow[] {
       label: found?.record.goal ?? name,
       kit: null,
       move: null,
-      record: found?.record ?? null,
-      state: stateOf(
+      ...rowState(
         found,
         input.jobs.find((j) => j.target === target),
       ),
@@ -158,8 +164,7 @@ function taughtRows(input: RowInput): SkillRow[] {
       label: job.label,
       kit: null,
       move: null,
-      record: null,
-      state: stateOf(null, job),
+      ...rowState(null, job),
       drives: false,
     }));
 

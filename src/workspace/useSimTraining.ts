@@ -46,7 +46,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     restDeltas: posing.deltas,
     velocity,
   });
-  const skills = useSkills({ workspaceId, sim, project, setProject, rig: posing.rig, parts });
+  const skills = useSkills({ workspaceId, sim, project, setProject, rig: posing.rig, parts, showToast });
 
   useLayoutEffect(() => {
     velocity.current = skills.velocity;

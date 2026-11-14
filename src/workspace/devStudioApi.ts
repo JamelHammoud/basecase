@@ -42,6 +42,7 @@ import type { WorldEvent } from '../cases/worldSet';
 import { streamCost } from '../cameras/liveFeed';
 import type { CodeReport } from '../cases/console/codeBridge';
 import { limitExplore } from './useCaseExplore';
+import { setStressBudget } from './useSkillStress';
 
 type Payload = Record<string, unknown>;
 
@@ -296,6 +297,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     cameraStreams: () => ({ ...streamCost }),
     stubTabEngine,
     exploreLimit: (designs: number) => limitExplore(designs),
+    stressBudget: (rollouts: number) => setStressBudget(rollouts),
     pickFiles: (files: { name: string; base64: string }[]) =>
       pickNextFiles(
         files.map(({ name, base64 }) => new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name)),

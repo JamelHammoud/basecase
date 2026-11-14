@@ -29,6 +29,7 @@ const skill = (hash: string, createdAt: string, state: SkillState = READY): Skil
   move: null,
   record: { hash, createdAt } as SkillRecord,
   state,
+  findings: [],
   drives: true,
 });
 

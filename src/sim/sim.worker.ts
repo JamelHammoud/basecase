@@ -7,6 +7,7 @@ import { fitsRecording, recordedEfforts, setRecordedFrame } from './recordedFram
 import type { Scan } from './scanner';
 import { SimEngine, type Controller } from './engine';
 import type { FaultKind } from './faults';
+import type { PhysicsScales } from './physicsScales';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
@@ -34,6 +35,7 @@ export type SimRequest =
   | { type: 'script'; commands: Array<{ at: number; command: DriveCommand }> }
   | { type: 'respawn'; robot?: string }
   | { type: 'fault'; joint: string; kind: FaultKind | null }
+  | { type: 'physics'; scales: PhysicsScales | null }
   | { type: 'record'; on: boolean }
   | { type: 'scrub'; recording: Recording | null }
   | { type: 'seek'; frame: number }
@@ -414,6 +416,10 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   fault: (msg) => {
     engine?.setFault(msg.joint, msg.kind);
     recorder?.fault(msg.joint, msg.kind);
+    frame();
+  },
+  physics: (msg) => {
+    engine?.setPhysics(msg.scales);
     frame();
   },
   record,

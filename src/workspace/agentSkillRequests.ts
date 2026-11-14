@@ -13,6 +13,9 @@ import { skillRows, type SkillRow } from '../skills/skillRows';
 import { designOf, type SkillsRuntime } from '../skills/skillsRuntime';
 import type { DraftGoal } from '../skills/teachEnvironment';
 import type { DraftInput, DraftReport } from '../skills/teach';
+import { rowEnvironment } from '../skills/stressRuns';
+import { stressBudget } from '../skills/stress';
+import { stressReport } from '../skills/stressWords';
 
 export interface SkillToolContext {
   skills: { runtime: SkillsRuntime; buildModel: () => Promise<SimModel> };
@@ -198,7 +201,7 @@ function raceLines(race: NonNullable<SkillsRuntime['lastRace']>): string[] {
   ];
 }
 
-async function listRequest(_payload: Payload, ctx: SkillToolContext) {
+async function sceneRows(ctx: SkillToolContext) {
   const model = await ctx.skills.buildModel();
   const rows = skillRows({
     model,
@@ -207,6 +210,12 @@ async function listRequest(_payload: Payload, ctx: SkillToolContext) {
     jobs: ctx.skills.runtime.jobs,
     animations: ctx.project().animations,
   });
+
+  return { model, rows };
+}
+
+async function listRequest(_payload: Payload, ctx: SkillToolContext) {
+  const { rows } = await sceneRows(ctx);
   const race = ctx.skills.runtime.lastRace;
   const lines = rows.length
     ? rows.map((r) => `- ${r.label}${rowKind(r)}: ${stateText(r)}`)
@@ -217,8 +226,50 @@ async function listRequest(_payload: Payload, ctx: SkillToolContext) {
   return { text: lines.join('\n') };
 }
 
+function namedRow(rows: SkillRow[], raw: unknown): SkillRow | undefined {
+  const name = String(raw ?? '')
+    .trim()
+    .toLowerCase();
+  const entry = KIT_NAMES[name];
+
+  if (entry) return rows.find((r) => r.kit === entry);
+
+  return rows.find((r) => [r.label, r.record?.name, r.move?.name].some((n) => n?.toLowerCase() === name));
+}
+
+async function stressRequest(payload: Payload, ctx: SkillToolContext) {
+  const { runtime } = ctx.skills;
+  const { model, rows } = await sceneRows(ctx);
+  const row = namedRow(rows, payload.skill);
+
+  if (!row)
+    return {
+      text: `No skill named "${String(payload.skill ?? '')}". Skills: ${rows.map((r) => r.label).join(', ') || 'none'}.`,
+    };
+
+  if (row.state.kind !== 'ready' || !row.record)
+    return { text: `${row.label} isn’t ready (${stateText(row)}). Stress a skill once Arena has passed it.` };
+
+  ctx.setAction(`Stressing ${row.label}`);
+
+  const skill = await runtime.loadSkill(row.record.hash);
+  const animations = ctx.project().animations ?? [];
+  const environment = rowEnvironment(row, { model, animations, drafted: (t) => runtime.environmentOf(t) });
+
+  if (!skill || !environment)
+    return { text: `${row.label}’s saved skill is missing. Train it again with train_skill.` };
+
+  const budget = payload.budget === undefined ? undefined : stressBudget(Number(payload.budget));
+  const result = await runtime.stress(model, { ...row, record: row.record, skill, environment }, budget);
+
+  if (result === null) return { text: 'The stress test was stopped.' };
+
+  return { text: typeof result === 'string' ? result : stressReport(row.label, result) };
+}
+
 export const SKILL_HANDLERS = {
   skill_draft: draftRequest,
   skill_train: trainRequest,
   skill_list: listRequest,
+  skill_stress: stressRequest,
 };

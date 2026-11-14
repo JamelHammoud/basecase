@@ -55,7 +55,7 @@ The Motor Kit is for robots that stand on their own legs. Training runs in the d
 5. When the row shows its Arena line, such as "32 of 32 tries, at least 91%", click **Try** to run it in the simulation.
 6. For **Walk**, click **Drive** instead, and steer with [[W A S D]].
 
-![Stand ready, with its Arena line and Try](/help/train-stand-and-walk-with-the-motor-kit/ready.png)
+![Stand ready, with its Arena line, Stress and Try](/help/train-stand-and-walk-with-the-motor-kit/ready.png)
 
 To stop training, click **Stop training** (■) on the row. [Watch a skill learn while it trains](/help/watch-a-skill-learn) explains the snapshots. **Teach It to Move**, under **Control**, trains **Walk** too. A skill that doesn't pass Arena isn't kept, and its row offers **Train** again.
 
@@ -94,4 +94,4 @@ One training job runs at a time across the whole app, and others wait their turn
 
 In the desktop app, 1.5 seconds after an edit, Basecase checks each Motor Kit skill you've trained against the new design. A color or name change keeps it ready. A mass or size change runs Arena again in the background, with no training. A joint change trains it again. Skills you never trained don't start on their own.
 
-To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).
+To see what Arena checks, read [Arena](/help/arena). To find where a ready skill fails, see [Find where a skill breaks](/help/find-where-a-skill-breaks). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

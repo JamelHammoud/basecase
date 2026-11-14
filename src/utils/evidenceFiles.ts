@@ -1,3 +1,4 @@
+import { fileSize, MB } from '../../electron/fileSize.mjs';
 import { readImageFile } from './imageFile';
 import { platformBridge } from './platformBridge';
 
@@ -27,8 +28,8 @@ const SKIP_DIRS = /^(\.|node_modules$|__pycache__$|venv$|\.venv$)/;
 
 export const MAX_FOLDER_FILES = 400;
 
-const MAX_TEXT_BYTES = 2_000_000;
-const MAX_MESH_BYTES = 120_000_000;
+const MAX_TEXT_BYTES = 2 * MB;
+const MAX_MESH_BYTES = 120 * MB;
 
 export type EvidenceKind = 'image' | 'text' | 'mesh' | null;
 
@@ -222,9 +223,9 @@ async function uploadOne(
   if (kind === 'image') return uploadImage(folderId, folderName, { file, relPath });
 
   if (kind === 'text') {
-    const max = /\.bvh$/i.test(relPath) ? 40_000_000 : MAX_TEXT_BYTES;
+    const max = /\.bvh$/i.test(relPath) ? 40 * MB : MAX_TEXT_BYTES;
     const body = await file.slice(0, max).text();
-    const cut = file.size > max ? `\n[Cut at ${max / 1e6} MB of ${(file.size / 1e6).toFixed(1)} MB]` : '';
+    const cut = file.size > max ? `\n[Cut at ${fileSize(max)} of ${fileSize(file.size)}]` : '';
 
     await platformBridge.saveEvidenceFile({ folderId, folderName, relPath, text: body + cut });
 

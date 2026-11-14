@@ -1,6 +1,7 @@
+import { fileSize, KB } from '../../../electron/fileSize.mjs';
 import { indexedDbStore, type KeyValueStore } from '../../utils/keyValueStore';
 
-export const STORE_MAX_BYTES = 64 * 1024;
+export const STORE_MAX_BYTES = 64 * KB;
 export const STORE_CALLS_PER_SECOND = 10;
 
 export interface CaseStores {
@@ -111,7 +112,7 @@ export function storeRefusal(json: string | null): string | null {
   if (json === null) return null;
 
   if (json.length > STORE_MAX_BYTES || utf8Bytes(json) > STORE_MAX_BYTES)
-    return `the store takes at most ${STORE_MAX_BYTES / 1024} KB`;
+    return `the store takes at most ${fileSize(STORE_MAX_BYTES)}`;
 
   return isJson(json) ? null : 'the store takes JSON';
 }

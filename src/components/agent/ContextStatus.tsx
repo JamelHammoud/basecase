@@ -1,5 +1,5 @@
 import React from 'react';
-import { MetaLine } from '../../design-system';
+import { MetaLine, ProgressBar } from '../../design-system';
 import type { ContextUsage } from '../../types/robotics';
 import type { Money } from '../../utils/currency';
 import { useMoney } from '../../utils/useMoney';
@@ -24,12 +24,7 @@ export const ContextStatus: React.FC<{ context: ContextUsage }> = ({ context }) 
   return (
     <div className="px-2.5 pt-1.5 pb-2 tabular-nums select-none">
       <div className="text-[13px] text-white/90">Context</div>
-      <div className="mt-2 h-[4px] rounded-full bg-white/[0.08] overflow-hidden">
-        <div
-          className={`h-full rounded-full ${share >= NEARLY_FULL ? 'bg-amber-400' : 'bg-white/55'}`}
-          style={{ width: `${share * 100}%` }}
-        />
-      </div>
+      <ProgressBar className="mt-2" share={share} tone={share >= NEARLY_FULL ? 'warning' : 'accent'} />
       <MetaLine
         className="mt-1.5 text-[12px] text-white/50"
         items={[tokens, context.costUsd !== undefined && formatCost(context.costUsd, money)]}

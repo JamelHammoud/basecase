@@ -1,3 +1,4 @@
+import { fileSize, MB } from '../../electron/fileSize.mjs';
 import { parseCase, type Case } from '../cases/schema';
 import { asId, asRecord, asString, listOf, refuse } from '../cases/validate';
 import {
@@ -11,7 +12,7 @@ import { readTrained, type GalleryTrained } from './galleryTrained';
 
 export const GALLERY_FORMAT_VERSION = 1;
 
-export const GALLERY_BUNDLE_MAX_BYTES = 8 * 1024 * 1024;
+export const GALLERY_BUNDLE_MAX_BYTES = 8 * MB;
 
 const MAX_PARTS = 2000;
 const MAX_JOINTS = 200;
@@ -106,7 +107,7 @@ export const bundleScene = (bundle: GalleryBundle): BundleScene => ({
 
 const overBudget = (bytes: number) => bytes > GALLERY_BUNDLE_MAX_BYTES;
 
-const OVER_BUDGET = `It’s over ${GALLERY_BUNDLE_MAX_BYTES / 1024 / 1024} MB.`;
+const OVER_BUDGET = `It’s over ${fileSize(GALLERY_BUNDLE_MAX_BYTES)}.`;
 
 export function galleryBundleBytes(bundle: GalleryBundle): Uint8Array {
   const bytes = new TextEncoder().encode(JSON.stringify(bundle));

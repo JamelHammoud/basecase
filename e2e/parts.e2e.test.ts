@@ -172,4 +172,28 @@ describe('Parts', () => {
 
     expect(app.errors).toEqual([]);
   });
+
+  it('opens a part from the faded end of its row, under the hover +', async () => {
+    const { page } = app;
+
+    await showParts(page);
+    await searchField(page).fill('sts3215');
+
+    const row = page.locator(shown('[data-result="0"]'));
+
+    await expect.poll(() => row.textContent()).toContain('STS3215');
+
+    const box = (await row.boundingBox())!;
+    const fade = { x: box.x + box.width - 52, y: box.y + box.height / 2 };
+
+    await page.mouse.move(fade.x, fade.y);
+    await expect
+      .poll(() =>
+        row.getByRole('button', { name: 'Add' }).evaluate((el) => el.checkVisibility({ opacityProperty: true })),
+      )
+      .toBe(true);
+    await page.mouse.click(fade.x, fade.y);
+    await expect.poll(() => page.locator(shown('h2'), { hasText: 'STS3215' }).count()).toBe(1);
+    expect(app.errors).toEqual([]);
+  });
 });

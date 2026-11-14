@@ -1,5 +1,9 @@
 import { z } from 'zod';
+import { CODE_SOURCE_MAX_BYTES } from '../caseCodeLimits.mjs';
+import { fileSize } from '../fileSize.mjs';
 import { bridge, fail, text } from './shared.mjs';
+
+const CODE_LIMIT = fileSize(CODE_SOURCE_MAX_BYTES);
 
 const ANCHORS = ['top-left', 'top', 'top-right', 'left', 'fill', 'right', 'bottom-left', 'bottom', 'bottom-right'];
 
@@ -28,11 +32,11 @@ export const writeCaseCode = {
   config: {
     title: 'Write a Case’s code',
     description:
-      'Writes or replaces one code panel of a Case’s console: one HTML document with its script and style inline, at most 256 KB, at most 4 per Case. ' +
+      `Writes or replaces one code panel of a Case’s console: one HTML document with its script and style inline, at most ${CODE_LIMIT}, at most 4 per Case. ` +
       'It runs sandboxed and reaches the studio only through window.basecase (the reference is in the system prompt). Adds code to the console’s input when there’s room, so drive works. ' +
       'One undo step. Opens the Case running when it isn’t; a running Case reloads only this panel, so the sim, the try and the other panels keep going. ' +
       'About 2 s after the panel loads it returns { ok, case, panel, loaded, errors: [{ message, line }] (the first 10 uncaught, line in source), logs (the first 20 console lines), refused (bridge calls refused, with why) } and a capture of the running Case window, code panels included. ' +
-      'loaded false with no errors means it didn’t load within 12 s. Fix every error and refused call, and check the capture, before you answer. { ok: false, problem } names the path parseCase refused, e.g. console.panels[2].source must be at most 256 KB.',
+      `loaded false with no errors means it didn’t load within 12 s. Fix every error and refused call, and check the capture, before you answer. { ok: false, problem } names the path parseCase refused, e.g. console.panels[2].source must be at most ${CODE_LIMIT}.`,
     inputSchema: {
       case: CASE,
       panel: PANEL,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, ConfirmDialog, MetaLine } from '../../design-system';
+import { Button, ConfirmDialog, MetaLine, ProgressBar } from '../../design-system';
 import { printBridge, type PrinterStatus } from '../../print/printBridge';
 import type { Printing } from '../../workspace/usePrinting';
 import { duration } from '../../utils/duration';
@@ -33,14 +33,7 @@ export const PrinterLive: React.FC<{ printing: Printing }> = ({ printing }) => {
         {status.job && <span className="text-white/50"> {status.job}</span>}
       </div>
       <MetaLine className="text-[12.5px] text-white/50 tabular-nums" items={facts(status)} />
-      {status.progress !== undefined && running && (
-        <div className="h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-          <div
-            className="h-full rounded-full bg-[#0d99ff]"
-            style={{ width: `${Math.round(status.progress * 100)}%` }}
-          />
-        </div>
-      )}
+      {status.progress !== undefined && running && <ProgressBar share={status.progress} />}
       {status.message && <div className="text-[12.5px] text-amber-400">{status.message}</div>}
       {(running || status.state === 'paused') && (
         <div className="flex gap-2">

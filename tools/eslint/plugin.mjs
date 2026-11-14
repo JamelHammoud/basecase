@@ -1,4 +1,5 @@
 import copy from './copy.mjs';
+import menuPath from './menu-path.mjs';
 import noComments from './no-comments.mjs';
 import noNestedIf from './no-nested-if.mjs';
 import noRestTupleParams from './no-rest-tuple-params.mjs';
@@ -8,6 +9,7 @@ export default {
   meta: { name: 'basecase' },
   rules: {
     copy,
+    'menu-path': menuPath,
     'no-comments': noComments,
     'no-nested-if': noNestedIf,
     'no-rest-tuple-params': noRestTupleParams,

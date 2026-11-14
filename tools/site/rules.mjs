@@ -187,4 +187,22 @@ export function plainKeys(page) {
     .map(({ line, found }) => problem(line, found));
 }
 
+const QUOTED = /“[^”]*”/g;
+const BOLD_LABEL = /\*\*([^*]+)\*\*/g;
+const LABEL = '\u{E000}';
+const PLAIN_SEGMENT = new RegExp(`(?<!${LABEL}\\s*)▸|▸(?!\\s*${LABEL})`, 'u');
+
+const plainSegment = (text) =>
+  PLAIN_SEGMENT.test(
+    keyText(text)
+      .replace(QUOTED, '')
+      .replace(BOLD_LABEL, (_, label) => (label.includes('▸') ? '▸' : LABEL)),
+  );
+
+export function menuPaths(page) {
+  return page.blocks
+    .filter((block) => block.kind !== 'image' && plainSegment(block.text))
+    .map((block) => problem(block.line, 'write each label in a menu path in bold, **File** ▸ **Import** (§3f)'));
+}
+
 export const uiLabels = (page, site) => (site.labels ? missingLabels(page.source, site.labels) : []);

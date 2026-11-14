@@ -8,7 +8,7 @@ Share Robot turns the robot and its open Case into a link, app.basecase.so/r/you
 
 ## Where it is
 
-Open a Case in the Simulate tab. Share Robot sits in Results, under Export Dataset and Publish to Hugging Face when a try has passed, and on its own before that. The same command is in ⌘K. It's in the desktop app, and it uses the Hugging Face account in Settings ▸ Accounts. The first time, it opens that pane for a token with write access.
+Open a Case in the Simulate tab. Share Robot sits in Results, under Export Dataset and Publish to Hugging Face when a try has passed, and on its own before that. The same command is in ⌘K. It's in the desktop app, and it uses the Hugging Face account in **Settings** ▸ **Accounts**. The first time, it opens that pane for a token with write access.
 
 Steps are in [Share a robot as a link](/help/share-a-robot-as-a-link).
 

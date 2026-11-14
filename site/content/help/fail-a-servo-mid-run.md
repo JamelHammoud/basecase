@@ -24,7 +24,7 @@ Break one servo while the simulation runs, to see whether the robot still stands
 
 ![Leg2 bend marked Limp while the hexapod keeps walking on five legs](/help/fail-a-servo-mid-run/limp.png)
 
-5. To mend the servo, right-click it again and choose **Fault ▸ Clear**. Ending the simulation clears every fault.
+5. To mend the servo, right-click it again and choose **Fault** ▸ **Clear**. Ending the simulation clears every fault.
 
 A fault stays through Reset and Start over (R), the way a broken servo would.
 

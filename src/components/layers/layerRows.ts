@@ -74,7 +74,7 @@ export function layerRows(parts: ScenePart[], collapsed: ReadonlySet<string>, qu
   return rows;
 }
 
-export function overallSize(parts: ScenePart[]): string | null {
+export function overallSize(parts: ScenePart[]): number[] | null {
   const solid = parts.filter((p) => p.visible && p.role !== 'reference');
 
   if (solid.length === 0) {
@@ -83,7 +83,7 @@ export function overallSize(parts: ScenePart[]): string | null {
 
   const { min, max } = selectionBounds(solid);
 
-  return [0, 1, 2].map((i) => Math.round(max[i] - min[i])).join(' × ');
+  return [0, 1, 2].map((i) => max[i] - min[i]);
 }
 
 export function layersTitle(parts: ScenePart[]): string[] {

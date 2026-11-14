@@ -14,7 +14,8 @@ export function useSheetProfile(part: ScenePart, measurePart: InspectorProps['me
   const [measured, setMeasured] = useState<MeasuredSheet | null>(null);
 
   useEffect(() => {
-    if (part.role !== 'solid' || part.hardware || part.componentId || part.kind === 'image_plane') return;
+    if (part.role !== 'solid' || part.hardware || part.componentId || part.supplyId || part.kind === 'image_plane')
+      return;
 
     let stopped = false;
 

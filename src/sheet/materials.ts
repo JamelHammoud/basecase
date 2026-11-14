@@ -46,6 +46,10 @@ export function snapThickness(material: SheetMaterial, requested: number): numbe
 }
 
 function profileFor(part: ScenePart, profile?: SheetProfile): SheetProfile {
+  if (part.componentId || part.hardware || part.supplyId || part.role !== 'solid') {
+    throw new Error('Measure the sheet profile first.');
+  }
+
   if (profile) return profile;
 
   if (

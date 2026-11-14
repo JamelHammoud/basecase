@@ -15,7 +15,6 @@ import type { InspectorProps } from './types';
 import { ManufacturingSection } from './ManufacturingSection';
 import { useSheetProfile } from './useSheetProfile';
 import { sheetOf } from '../../sheet/materials';
-import type { SheetProfile } from '../../types/sheet';
 
 type PartInspectorProps = InspectorProps & { part: ScenePart };
 
@@ -37,8 +36,6 @@ const HardwareHoles: React.FC<{ hw: HardwareSpec; onAddClearanceHole: () => void
 );
 
 const canTune = (part: ScenePart) => !IS_WEB_DEMO && isTunable(part);
-const isSheetPart = (part: ScenePart, profile: SheetProfile | null) =>
-  !!(part.sheet || (profile && sheetOf(part, profile)));
 
 const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnnotation[] }> = (props) => {
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
@@ -81,14 +78,7 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
         </>
       )}
 
-      {styled && (
-        <AppearanceSection
-          part={part}
-          onUpdate={onUpdate}
-          parts={props.parts}
-          isSheet={isSheetPart(part, sheetProfile)}
-        />
-      )}
+      {styled && <AppearanceSection part={part} onUpdate={onUpdate} parts={props.parts} isSheet={!!sheetOf(part)} />}
 
       {hw && <HardwareHoles hw={hw} onAddClearanceHole={props.onAddClearanceHole} />}
 

@@ -40,6 +40,18 @@ describe('sheet materials', () => {
     expect(changed.dimensions).toEqual(original.dimensions);
   });
 
+  it.each([
+    { kind: 'component' as const, componentId: 'raspberry-pi-5' },
+    { kind: 'hardware' as const, hardware: { type: 'washer' as const, size: 'M3', length: 0 } },
+    { supplyId: 'battery' },
+    { role: 'cutout' as const },
+  ])('keeps purchased parts and cutouts out of sheet manufacturing for %j', (fields) => {
+    const part = sheetPart(fields);
+
+    expect(() => applySheet(part, { material: 'aluminum-6061', thicknessMm: 3.18 }, profile)).toThrow(/sheet/);
+    expect(part.sheet).toBeUndefined();
+  });
+
   it('maps legacy tags while preserving measured thickness', () => {
     expect(sheetOf(sheetPart({ mechanicalTag: 'CNC Aluminum' }), profile)).toEqual({
       material: 'aluminum-6061',

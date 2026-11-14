@@ -44,7 +44,9 @@ function shapeKey(part: ScenePart): string {
 
 function operandKey(part: ScenePart, origin: readonly number[]): string {
   if (isBooleanPart(part)) {
-    return `b:${booleanHash(part)}@${relative(baseOf(part).position, origin)}`;
+    const frame = JSON.stringify({ dimensions: part.dimensions, sheetTransform: part.sheetTransform });
+
+    return `b:${booleanHash(part)}:${frame}@${relative(baseOf(part).position, origin)}`;
   }
 
   return `${shapeKey(part)}@${relative(part.position, origin)}`;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applySpec, snapshotScene, specToPart, type AgentPartSpec } from './agentScene';
+import { sheetSpec } from './agentSheet';
 
 const sheet = { material: 'aluminum-6061' as const, thicknessMm: 3.18 };
 const plate = () => specToPart({ id: 'chest', size: [100, 60, 2.6] });
@@ -50,6 +51,16 @@ describe('agent sheet parts', () => {
 
     expect(resized.sheet).toEqual(sheet);
     expect(resized.dimensions).toMatchObject({ width: 120, height: 3.18, depth: 80 });
+  });
+
+  it('returns a sheet to printing after an agent changes its edges', () => {
+    const initial = applySpec(plate(), { id: 'chest', sheet });
+    const spec: AgentPartSpec = { id: 'chest', size: [120, 80, 5], edges: { kind: 'chamfer', mm: 1 } };
+    const changed = applySpec(initial, sheetSpec(initial, spec));
+
+    expect(changed.sheet).toBeUndefined();
+    expect(changed.mechanicalTag).toBe('3D Printed PLA/PETG');
+    expect(changed.edges).toEqual({ kind: 'chamfer', mm: 1 });
   });
 
   it.each([

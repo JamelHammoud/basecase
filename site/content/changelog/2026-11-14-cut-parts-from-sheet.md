@@ -6,7 +6,7 @@ image: /changelog/cut-parts-from-sheet/cover.png
 
 You can now make flat robot parts from 6061 aluminum, carbon fiber plate or acrylic, with their mass in Checks and a DXF for cutting.
 
-Select the part and choose Cut from Sheet in the Inspector's Manufacturing section. It works on basic shapes, sketches and agent-made parts whose geometry has two parallel faces and only through features.
+The Inspector's Manufacturing section offers Cut from Sheet for basic shapes, sketches and agent-made parts whose geometry has two parallel faces and only through features.
 
 A chest plate that changes from printed plastic to aluminum adds load to the legs. That change now reaches Weight, Servo torque, Peak torque and simulation through the same mass calculation.
 

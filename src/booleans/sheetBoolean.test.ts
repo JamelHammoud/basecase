@@ -62,10 +62,12 @@ describe('sheet thickness through booleans', () => {
 
   it('keeps the affine thickness when the operand is itself a boolean result', async () => {
     const inner = await evaluated(intersection(tiltedSheet()));
+    const before = await evaluated(intersection({ ...inner, id: 'inner' }));
     const changed = thicker(inner);
     const result = await evaluated(intersection({ ...changed, id: 'inner' }));
 
     expect(changed.sheetTransform).toHaveLength(16);
+    expect(thickness(before).profile?.thicknessMm).toBeCloseTo(3, 3);
     expect(thickness(result).profile?.thicknessMm).toBeCloseTo(4.75, 3);
   });
 });

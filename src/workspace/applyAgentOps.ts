@@ -8,7 +8,9 @@ import { sleep } from './helpers';
 import { twinHints } from './mirrorHints';
 import type { CommitParts, Vec3 } from './types';
 import { errorMessage } from '../utils/errorMessage';
-import { incomingSheetProfile, requestsSheet, sheetSpec } from '../agent/agentSheet';
+import { requestsSheet, sheetSpec } from '../agent/agentSheet';
+import { incomingSheetProfile, profileForUpdate } from '../agent/sheetProfiles';
+import { shapeKey } from '../print/shapeKey';
 
 export interface AgentOpsContext {
   current: () => ScenePart[];
@@ -118,15 +120,14 @@ async function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
 
   try {
     const spec = sheetSpec(part, op.part);
-    const needsMeasure = requestsSheet(spec) && !spec.cad && (part.kind === 'cad_part' || !spec.size);
+    const profile = await profileForUpdate(part, spec, ctx);
+    const latest = findPartDeep(ctx.current(), part.id);
 
-    if (needsMeasure) await ctx.viewport()?.meshesReady();
+    if (!latest) return false;
 
-    const measure = needsMeasure ? (await ctx.viewport()?.measureParts([part.id]))?.[part.id] : undefined;
-    const profile = spec.cad ? await incomingSheetProfile(spec) : measure?.sheet;
-    const next = applySpec(part, spec, profile);
+    if (requestsSheet(spec) && shapeKey(latest) !== shapeKey(part)) throw new Error('Measure the sheet profile first.');
 
-    ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? next : p)), live);
+    ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? applySpec(p, spec, profile) : p)), live);
     log.updated.push(op.part.id);
   } catch (err) {
     log.problems.push(errorMessage(err));

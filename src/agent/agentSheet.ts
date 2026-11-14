@@ -2,7 +2,6 @@ import type { ScenePart } from '../types/robotics';
 import type { PartSheet, SheetProfile } from '../types/sheet';
 import { applySheet, sheetOf } from '../sheet/materials';
 import type { AgentPartSpec } from './agentScene';
-import { geometryWorker } from '../three/geometryWorker';
 
 const LEGACY_SHEET = { aluminum: 'aluminum-6061', laser_cut: 'carbon-fiber' } as const;
 
@@ -28,21 +27,19 @@ export const requestsSheet = (spec: AgentPartSpec) =>
 export function sheetSpec(part: ScenePart, spec: AgentPartSpec): AgentPartSpec {
   const geometryChanged = !!(spec.size || spec.cad);
 
-  return geometryChanged && part.sheet && !spec.material && spec.sheet === undefined
+  return geometryChanged && spec.edges === undefined && part.sheet && !spec.material && spec.sheet === undefined
     ? { ...spec, sheet: part.sheet }
     : spec;
 }
 
-export async function incomingSheetProfile(spec: AgentPartSpec): Promise<SheetProfile | undefined> {
-  if (!spec.cad || !requestsSheet(spec)) return undefined;
-
-  const { positions, indices } = spec.cad;
-  const payload = { positions: Float32Array.from(positions), indices: Uint32Array.from(indices) };
-
-  return geometryWorker.call('sheetProfile', payload, [payload.positions.buffer, payload.indices.buffer]);
-}
+const reshapesSheet = (part: ScenePart, spec: AgentPartSpec) =>
+  spec.edges !== undefined && !requestsSheet(spec) && !!sheetOf(part);
 
 export function applyAgentSheet(part: ScenePart, spec: AgentPartSpec, profile?: SheetProfile): ScenePart {
+  if (reshapesSheet(part, spec)) {
+    return { ...part, sheet: undefined, mechanicalTag: '3D Printed PLA/PETG', printMaterial: undefined };
+  }
+
   if (spec.cad && spec.sheet === undefined && !spec.material && !profile && sheetOf(part)) {
     return { ...part, sheet: undefined, mechanicalTag: '3D Printed PLA/PETG', printMaterial: undefined };
   }

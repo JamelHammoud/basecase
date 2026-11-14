@@ -1,6 +1,7 @@
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import type { ScenePart } from '../src/types/robotics';
+import { pocketTriangles } from '../src/sheet/sheet.fixtures';
 import { openApp, type App } from './harness';
 
 let app: App;
@@ -122,5 +123,34 @@ it('returns a reshaped sheet to printing with one undo restoring the sheet', asy
   expect((await sceneParts())[0].deformers?.taper).toBeGreaterThan(0);
   await app.page.getByRole('button', { name: /^Undo/ }).click();
   await expect.poll(sceneParts).toEqual([sheet]);
+  expect(app.errors).toEqual([]);
+});
+
+it('returns an unsuitable legacy CNC part to printing from Manufacturing', async () => {
+  const positions = Array.from(pocketTriangles());
+  const pocket: ScenePart = {
+    ...PLATE,
+    kind: 'mesh',
+    mechanicalTag: 'CNC Aluminum',
+    dimensions: { width: 80, height: 60, depth: 3 },
+    mesh: { positions, indices: Array.from({ length: positions.length / 3 }, (_, i) => i), baseSize: [80, 60, 3] },
+  };
+
+  await app.page.evaluate((part) => {
+    const studio = (window as unknown as { __studio: Studio }).__studio;
+
+    studio.load({ name: 'Legacy CNC part', parts: [part] });
+    studio.select([part.id]);
+  }, pocket);
+
+  const manufacturing = app.page.locator(visible('select[aria-label="Manufacturing"]'));
+
+  await expect.poll(() => manufacturing.count()).toBe(1);
+  expect(await manufacturing.inputValue()).toBe('sheet');
+  expect(await app.page.locator(visible('select[aria-label="Sheet thickness"]')).isDisabled()).toBe(true);
+  await manufacturing.selectOption('printed');
+  await expect.poll(async () => (await sceneParts())[0].mechanicalTag).toBe('3D Printed PLA/PETG');
+  await app.page.getByRole('button', { name: /^Undo/ }).click();
+  await expect.poll(sceneParts).toEqual([pocket]);
   expect(app.errors).toEqual([]);
 });

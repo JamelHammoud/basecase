@@ -42,5 +42,6 @@ Shop limits, prices and press-in hardware aren't checked.
 To return a part to the print plates, in **Manufacturing**, choose **3D Print**.
 The part keeps its current dimensions.
 Changing its shape also returns it to printing.
+An older CNC or laser-cut part that no longer qualifies keeps **Manufacturing** so you can choose **3D Print**.
 
 Continue with [Build checks](/help/build-checks).

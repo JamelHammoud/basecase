@@ -10,6 +10,9 @@ import { creaseEdgesOnly } from './partMesh/creaseEdges';
 import { evaluateBooleanJob, type BooleanJob } from '../booleans/csg';
 import { detectSheet } from '../sheet/detectSheet';
 import { cadMeshToScene } from '../agent/cadMesh';
+import { buildPartGroup, releasePartGroup } from './buildPartMesh';
+import { localTriangles } from './meshMeasure';
+import type { ScenePart } from '../types/robotics';
 
 type Vec3 = [number, number, number];
 
@@ -161,6 +164,15 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
+  partSheetProfile: (part: ScenePart) => {
+    const group = buildPartGroup(part, false);
+
+    try {
+      return reply(detectSheet(localTriangles(group)));
+    } finally {
+      releasePartGroup(group);
+    }
+  },
   sheetProfile: ({ positions, indices }: { positions: Float32Array; indices: Uint32Array }) => {
     const mesh = cadMeshToScene({
       language: 'openscad',

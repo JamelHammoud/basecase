@@ -140,12 +140,10 @@ export function detectSheet(triangles: Float32Array): SheetProfile | undefined {
 
   const faces = facesOf(triangles);
 
-  if (!closedSolid(faces)) return undefined;
-
   for (const normal of candidateNormals(faces)) {
     const profile = profileAlong(faces, normal);
 
-    if (profile) return profile;
+    if (profile) return closedSolid(faces) ? profile : undefined;
   }
 
   return undefined;

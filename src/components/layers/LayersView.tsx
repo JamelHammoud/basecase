@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
-import { NoMatches, IconButton, PhotoIcon, PhotoOffIcon, SearchField, SectionHeader } from '../../design-system';
+import {
+  ContextMenu,
+  NoMatches,
+  IconButton,
+  PhotoIcon,
+  PhotoOffIcon,
+  SearchField,
+  SectionHeader,
+} from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
+import type { DataLayerStore } from '../../dataLayers/store';
+import { DataLayerItem } from './DataLayerItem';
+import { withDataRows } from './dataRows';
 import { GroupRow, PartRow } from './LayerItems';
+import { useDataLayerRows } from './useDataLayerRows';
 import { layerRows, layersTitle, openFor, overallSize } from './layerRows';
 import { useRevealSelection } from './useRevealSelection';
 import { SizeLine } from '../PartDetails';
@@ -21,6 +33,7 @@ export interface LayersViewProps {
   onPartContextMenu: (id: string, x: number, y: number) => void;
   renamingLayer: string | null;
   onRenamingLayer: (id: string | null) => void;
+  dataLayers?: DataLayerStore;
 }
 
 const ReferenceImagesToggle: React.FC<{ props: LayersViewProps }> = ({ props }) => {
@@ -54,6 +67,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const [query, setQuery] = useState('');
   const scrollerRef = useRevealSelection(parts, selectedIds[0], props.open ?? true);
+  const data = useDataLayerRows(props.dataLayers);
 
   if (parts.length === 0) {
     return null;
@@ -62,7 +76,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
   const selected = new Set(selectedIds);
   const searching = query.trim() !== '';
   const closed = openFor(collapsed, parts, editingId);
-  const rows = layerRows(parts, closed, query);
+  const rows = withDataRows(layerRows(parts, closed, query), data.layers, { collapsed: closed, query });
   const size = overallSize(parts);
   const hasImages = parts.some((p) => p.kind === 'image_plane');
   const toggleCollapsed = (id: string) =>
@@ -108,8 +122,20 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
       <div ref={scrollerRef} className="flex-1 overflow-y-auto px-[8px] pb-3" onClick={() => props.onSelectPart(null)}>
         <SectionHeader title={layersTitle(parts)} action={hasImages && <ReferenceImagesToggle props={props} />} />
         <ul className="space-y-px">
-          {rows.map((row) =>
-            row.type === 'group' ? (
+          {rows.map((row) => {
+            if (row.type === 'data') {
+              return (
+                <DataLayerItem
+                  key={`d-${row.layer.id}`}
+                  layer={row.layer}
+                  depth={row.depth}
+                  onToggle={data.toggle}
+                  onMenu={data.openMenu}
+                />
+              );
+            }
+
+            return row.type === 'group' ? (
               <GroupRow
                 key={`g-${row.id}`}
                 id={row.id}
@@ -141,12 +167,13 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
                 onToggle={props.onTogglePartFlag}
                 onToggleCollapsed={toggleCollapsed}
               />
-            ),
-          )}
+            );
+          })}
         </ul>
         {searching && rows.length === 0 && <NoMatches query={query} />}
       </div>
       {size && <SizeFooter size={size} />}
+      {data.menu && <ContextMenu {...data.menu} minWidth={160} onClose={data.closeMenu} />}
     </div>
   );
 };

@@ -38,6 +38,8 @@ For anything else, attach photos from a few sides, or a sketch. The agent compar
 
 Real constraints change the design more than adjectives do. Compare “a gripper” with “a gripper for an STS3215 that opens 60 mm”. Name servos, boards and screws you already own, and a budget if you have one. The agent picks parts you own first once you [count the parts you already own](/help/count-the-parts-you-already-own). For an arm, give the points it must reach in mm and the grams it carries. [Size an arm from the points it must reach](/help/size-an-arm-to-its-targets) shows what you get.
 
+If the robot must perform a motion, attach it as a .bvh. The agent fits the joints and servos to it before it designs the body.
+
 ## Change one thing at a time
 
 After the first design, short follow-ups work best: “Longer legs”, “Thicker brackets”, “Round the edges”, “Use M3 screws”. Point at the part you mean with **Quote Part** or a mark, since the agent doesn't see your selection. [Point the agent at a part](/help/point-the-agent-at-a-part) has the steps.

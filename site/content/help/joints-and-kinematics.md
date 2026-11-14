@@ -24,6 +24,7 @@ keywords:
 related:
   - pose-a-robot
   - servo-torque-and-sizing
+  - design-a-robot-from-a-motion
 covers:
   - src/types/robotics.ts
   - src/utils/kinematics.ts
@@ -54,6 +55,7 @@ Joints arrive with a robot, a hand or the agent's design, or you add them yourse
 - [Import a robot](/help/import-a-robot) brings every joint in its URDF or MJCF, with axis, limits and torque limit.
 - **Parts** ▸ **Hands** has posable hands whose makers publish their joints, such as LEAP, ORCA and Allegro.
 - The agent declares joints when it designs a robot, and adds or changes them when you ask.
+- [Design a robot from a motion](/help/design-a-robot-from-a-motion) places the fewest joints that replay a BVH clip, with a servo on each.
 - [Design a linkage from a path](/help/design-a-linkage-from-a-path) adds a four-bar whose crank joint a servo drives.
 - [Join two parts with a hinge or slider](/help/join-two-parts-with-a-hinge) adds a joint between two parts you select.
 

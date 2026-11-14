@@ -1,5 +1,4 @@
-import { errorMessage } from '../utils/errorMessage';
-import { parseBvh, type Mocap } from '../utils/mocap';
+import { readBvh } from '../utils/mocap';
 import { fitMotion, TOLERANCE_SHARE, type MotionSkeleton } from '../utils/motionSkeleton';
 import { reply } from '../utils/workerRpc';
 
@@ -9,14 +8,6 @@ export interface MotionFitRequest {
   heightMm: number;
   toleranceMm?: number;
   limbs?: string[];
-}
-
-function readBvh(text: string, name: string): Mocap | string {
-  try {
-    return parseBvh(text, name);
-  } catch (err) {
-    return `Couldn’t read ${name}. ${errorMessage(err)}`;
-  }
 }
 
 export function fitBvh({ text, name, heightMm, toleranceMm, limbs }: MotionFitRequest): MotionSkeleton {

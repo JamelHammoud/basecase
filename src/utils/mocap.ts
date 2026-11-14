@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { BVHLoader } from 'three/examples/jsm/loaders/BVHLoader.js';
 import type { RobotAnimation, RobotJoint } from '../types/robotics';
+import { errorMessage } from './errorMessage';
 import { isMovable, type Rig } from './kinematics';
 import type { Mocap } from './mocapBones';
 
@@ -62,6 +63,14 @@ export function parseBvh(text: string, name = 'Motion'): Mocap {
     root: root.name,
     parentOf,
   };
+}
+
+export function readBvh(text: string, fileName: string): Mocap | string {
+  try {
+    return parseBvh(text, fileName.replace(/\.bvh$/i, ''));
+  } catch (err) {
+    return `Couldn’t read ${fileName}. ${errorMessage(err)}`;
+  }
 }
 
 export function unmappedJoints(rig: Rig, anim: RobotAnimation): RobotJoint[] {

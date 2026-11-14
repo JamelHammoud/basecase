@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { placeMotion } from '../fromMotion/motionBuild';
 import { fitMotionInWorker } from '../fromMotion/motionFitClient';
 import { errorMessage } from '../utils/errorMessage';
-import { parseBvh, type Mocap } from '../utils/mocap';
+import { readBvh, type Mocap } from '../utils/mocap';
 import { pickFiles } from '../utils/pickFiles';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -13,14 +13,13 @@ export interface MotionClip {
 
 export async function readBvhFile(file: File, showToast: WorkspaceCore['showToast']): Promise<MotionClip | null> {
   const text = await file.text();
+  const mocap = readBvh(text, file.name);
 
-  try {
-    return { mocap: parseBvh(text, file.name.replace(/\.bvh$/i, '')), text };
-  } catch (err) {
-    showToast(`Couldn’t read ${file.name}. ${errorMessage(err)}`, { tone: 'error' });
+  if (typeof mocap !== 'string') return { mocap, text };
 
-    return null;
-  }
+  showToast(mocap, { tone: 'error' });
+
+  return null;
 }
 
 export function useMotionDesign(core: WorkspaceCore) {

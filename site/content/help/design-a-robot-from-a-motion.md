@@ -41,7 +41,7 @@ Start from a BVH clip of the motion, and get the fewest joints that replay it, w
 
 6. Read each joint's margin in the Pose tab. To give a joint more torque, click its row and choose the stronger servo.
 
-A limb only gets the joints that move its end. In a wave, the arm gets a shoulder and an elbow, and the legs and head get none. Every limb's end stays within 1% of the height of its path in the clip, in every frame. Each joint's range is the clip's sweep plus 10%. Each servo is the cheapest in the catalog that holds its joint at that joint's fastest speed in the clip. Press [[⌘Z]] to remove the skeleton and servos in one step.
+A limb only gets the joints that move its end. In a wave, the arm gets a shoulder and an elbow, and the legs and head get none. Every limb's end stays within 1% of the height of its path in the clip, checked on up to 240 frames spread over it. Each joint's range is the clip's sweep plus 10%. Each servo is the cheapest on the chosen bus that holds its joint at that joint's fastest speed in the clip. Press [[⌘Z]] to remove the skeleton and servos in one step.
 
 When a limb can't follow the clip that closely, the sheet names the limb and nothing is placed.
 

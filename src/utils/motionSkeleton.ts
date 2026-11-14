@@ -208,7 +208,7 @@ export function fitMotion(req: MotionRequest): MotionSkeleton {
 
   if ('limb' in fitted)
     return {
-      problem: `${fitted.limb.name} can't follow the clip within ${lengthLabel(req.toleranceMm)}.`,
+      problem: `${fitted.limb.name} can’t follow the clip within ${lengthLabel(req.toleranceMm)}.`,
       limb: fitted.limb.name,
     };
 

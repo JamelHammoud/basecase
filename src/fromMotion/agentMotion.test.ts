@@ -60,7 +60,7 @@ describe('skeleton_from_motion', () => {
   it('places nothing and names the limb when the tolerance is out of reach', async () => {
     const { text, placed } = await run({ text: planarArmBvh(), name: 'Arm', height_mm: 290, tolerance_mm: 1e-6 });
 
-    expect(text).toMatch(/^No skeleton: Tip can't follow the clip within/);
+    expect(text).toMatch(/^No skeleton: Tip can’t follow the clip within/);
     expect(placed).toEqual([]);
   });
 

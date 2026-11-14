@@ -37,9 +37,8 @@ describe('Design From Motion', () => {
     await app.page.evaluate((scene) => (window as unknown as Studio).__studio.load(scene), { parts: [], project });
     await app.page.evaluate((files) => (window as unknown as Studio).__studio.dropFiles(files), WAVE);
     await expect.poll(() => sheet().isVisible()).toBe(true);
-    await sheet().getByLabel('Height').fill('300');
+    await sheet().getByLabel('Height').fill('600');
     await sheet().getByLabel('Height').press('Enter');
-    await sheet().getByRole('button', { name: 'Design From Motion' }).click();
     await expect.poll(async () => (await record()).project.skeleton?.joints.length ?? 0).toBe(2);
 
     const skeleton = (await record()).project.skeleton!;
@@ -47,6 +46,7 @@ describe('Design From Motion', () => {
     const keys = new Set(skeleton.joints.map((j) => j.actuator));
 
     expect(skeleton.joints.map((j) => j.id)).toEqual(['right_shoulder_roll', 'right_elbow_roll']);
+    expect(skeleton.joints[0].origin[2]).toBeGreaterThan(450);
     expect(lines.filter((l) => keys.has(l.key)).reduce((n, l) => n + l.qty, 0)).toBe(skeleton.joints.length);
     expect(await app.page.evaluate(() => (window as unknown as Studio).__studio.skeletonEditing())).toBe(true);
     await expect.poll(() => sheet().isVisible()).toBe(false);

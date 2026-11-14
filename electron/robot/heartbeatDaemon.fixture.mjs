@@ -32,6 +32,7 @@ function beat() {
   }
 
   lastBeat = now;
+  say({ event: 'beat', at: Date.now() });
 }
 
 function enter(next) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { panelName } from '../../cases/console/layoutEdits';
 import type { PanelKind, PanelOf, PanelSpec } from '../../cases/console/panelKinds';
-import { RenameField } from '../../design-system';
+import { ErrorBoundary, RenameField } from '../../design-system';
 import type { ConsoleEditor } from './consoleEditor';
 import type { PanelContext } from './panelContext';
 import { PANEL_VIEWS } from './panelViews';
@@ -41,7 +41,9 @@ export const ConsolePanel: React.FC<ConsolePanelProps> = ({ panel, ctx, editor, 
       }`}
     >
       {dropAbove && <DropLine at="top" />}
-      <View panel={panel} ctx={ctx} />
+      <ErrorBoundary region={panel.title || 'Panel'} className="flex-col py-[24px]">
+        <View panel={panel} ctx={ctx} />
+      </ErrorBoundary>
       {renaming && editor && (
         <div className="absolute left-[8px] right-[8px] top-[8px] z-20 flex rounded-[8px] bg-[#1f1f1f]">
           <RenameField

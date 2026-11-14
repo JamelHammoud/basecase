@@ -18,11 +18,11 @@ export const SETTINGS = {
   served: process.env.BASECASE_HARNESS_SERVED || 'claude-opus-5-5',
   effort: process.env.BASECASE_HARNESS_EFFORT || 'high',
   seeds: 3,
-  parallel: 2,
+  parallel: 4,
   port: 5290,
 };
 
-const BENCH_TIMEOUT_MS = 10 * 60 * 60 * 1000;
+const BENCH_TIMEOUT_MS = 90 * 60 * 1000;
 
 export function taskMeta() {
   const tasks = selectTasks().filter((task) => runnable(task));

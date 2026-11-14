@@ -25,17 +25,19 @@ covers:
   - src/print/job.ts
 ---
 
-Save the laid-out plates as 3MF files to slice in any slicer, one file per material, with each part already turned to print.
+You can save the laid-out plates as 3MF files and slice them in any slicer. Basecase saves one file per material, and each part is already in its print orientation.
 
 1. Click **Export** at the top right.
 2. Choose **3MF Plates**.
 
 ![The Export menu with 3MF Plates under STL](/help/export-a-robot-package/menu.png)
 
-Basecase saves the files to your downloads. With one material it's `<scene>.3mf`. With several, each material gets its own file, such as `robot-arm-PLA.3mf` and `robot-arm-PETG.3mf`.
+Basecase saves the files to your downloads. If the scene uses one material, the file is named `<scene>.3mf`. If it uses several, each material gets its own file, such as `robot-arm-PLA.3mf` and `robot-arm-PETG.3mf`.
 
-Inside, each plate is named Plate 1, Plate 2 and so on, laid out the way Bambu Studio lays out plates. Parts keep their names and the orientation chosen in Print mode. With **Label parts** on in Print mode, each part has its build guide letter cut into a hidden face, as [Label printed parts with their guide letters](/help/label-printed-parts) explains.
+Inside each file, the plates are named Plate 1, Plate 2, and so on, and they're laid out the way Bambu Studio lays out plates. Parts keep their names and the orientation you chose in Print mode.
 
-**Export 3MF Plates** is also in [[⌘K]]. It works in the web studio too, since it needs no slicer.
+If **Label parts** is on in Print mode, each part has its build guide letter cut into a hidden face. To learn more, see [Label printed parts with their guide letters](/help/label-printed-parts).
+
+You can also choose **Export 3MF Plates** from [[⌘K]]. It works in the web studio too, because it doesn't need a slicer.
 
 To slice and send from Basecase instead, see [Print a robot's parts](/help/print-a-robots-parts).

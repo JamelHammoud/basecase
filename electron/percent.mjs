@@ -1,3 +1,5 @@
+import { negative } from './minus.mjs';
+
 const WHOLE_EPSILON = 1e-9;
 
 function figures(value) {
@@ -11,8 +13,7 @@ function figures(value) {
 }
 
 export function percent(share, { down = false } = {}) {
-  const value = Math.abs(share) * 100;
-  const shown = down ? Math.floor(value + WHOLE_EPSILON) : figures(value);
+  const shown = (magnitude) => String(down ? Math.floor(magnitude * 100 + WHOLE_EPSILON) : figures(magnitude * 100));
 
-  return `${share < 0 && shown > 0 ? '−' : ''}${shown}%`;
+  return `${negative(share, shown)}%`;
 }

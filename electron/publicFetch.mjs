@@ -1,5 +1,6 @@
 import dns from 'node:dns/promises';
 import net from 'node:net';
+import { fileSize } from './fileSize.mjs';
 
 const MAX_REDIRECTS = 5;
 const REDIRECT_CODES = new Set([301, 302, 303, 307, 308]);
@@ -81,7 +82,7 @@ export async function publicFetch(url, init = {}) {
 export async function readCapped(res, maxBytes, label = 'The response') {
   const declared = Number(res.headers.get('content-length') || 0);
 
-  if (declared > maxBytes) throw new Error(`${label} is larger than ${Math.round(maxBytes / 1e6)} MB`);
+  if (declared > maxBytes) throw new Error(`${label} is larger than ${fileSize(maxBytes)}`);
 
   const chunks = [];
   let size = 0;
@@ -89,7 +90,7 @@ export async function readCapped(res, maxBytes, label = 'The response') {
   for await (const chunk of res.body ?? []) {
     size += chunk.byteLength;
 
-    if (size > maxBytes) throw new Error(`${label} is larger than ${Math.round(maxBytes / 1e6)} MB`);
+    if (size > maxBytes) throw new Error(`${label} is larger than ${fileSize(maxBytes)}`);
 
     chunks.push(chunk);
   }

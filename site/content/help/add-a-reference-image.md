@@ -27,24 +27,28 @@ covers:
   - src/workspace/useCanvasDrop.ts
 ---
 
-Stand a photo or drawing in the scene at real size, so you and the agent can model against it.
+Put a photo or drawing in the scene at its real size, so you and the agent can model against it.
 
-1. Right-click an empty spot on the canvas and choose **Add Reference Image**.
+1. Right-click an empty spot on the canvas, then choose **Add Reference Image**.
 2. Pick one or more image files.
-3. In the Inspector, type **W** or **H** under **Size**, in millimeters, so the image matches the real object.
-4. Under **Image**, choose **Stand Up** for a backdrop or **Lay Flat** for a blueprint on the floor.
-5. Drag **Opacity** down to see parts through the image.
+3. In the Inspector, under **Size**, type a **W** or **H** value in millimeters to match the real object.
+4. Under **Image**, choose **Stand Up** to use the image as a backdrop, or **Lay Flat** to use it as a blueprint on the floor.
+5. To see parts through the image, drag **Opacity** down.
 
-Each image lands selected and upright, 120 mm on its long side, where you right-clicked. Width and height stay locked to the image's shape.
+Each image appears where you right-clicked. It starts out selected and upright, 120 mm on its long side, and its width and height stay locked to the image's shape.
 
-You can also paste an image with [[⌘V]] anywhere outside a text field, or drop image files on the canvas. **Add Reference Image** is in **File** and [[⌘K]] too.
+You can also:
+
+- Paste an image with [[⌘V]] anywhere outside a text field.
+- Drop image files on the canvas.
+- Choose **Add Reference Image** from the **File** menu or from [[⌘K]].
 
 ## Tell the agent what to take from it
 
-Open **Notes** in the Inspector and write what matters, such as “match the leg proportions, ignore the colors”. Notes on a part go to the agent with the scene.
+In the Inspector, open **Notes** and write what matters about the image, for example: “match the leg proportions, ignore the colors.” The agent gets a part's notes along with the scene.
 
 ## Hide every reference image
 
-Press [[⇧I]], or click the image toggle in the header of **Layers**. Hidden images aren't drawn and can't be clicked. **View** ▸ **Show Reference Images** and [[⌘K]] do the same.
+Press [[⇧I]], or click the image toggle in the header of **Layers**. You can also choose **View** ▸ **Show Reference Images**, or use [[⌘K]]. Hidden images aren't drawn, and you can't click them.
 
-Reference images are never printed, exported to STL or used in Union, Subtract or Intersect. Photos larger than 2048 pixels on a side are scaled down to 2048 when you add them.
+Reference images are never printed, exported to STL, or used in Union, Subtract or Intersect. A photo larger than 2048 pixels on a side is scaled down to 2048.

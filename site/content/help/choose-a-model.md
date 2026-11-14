@@ -26,17 +26,17 @@ covers:
   - src/app/useAgentConnection.ts
 ---
 
-Pick which of your agent's models designs with you, and how long it thinks before it acts.
+You can choose which of your agent's models designs with you, and how long it thinks before it acts.
 
 1. Open the **Agent** tab in the right panel.
 2. Click the model's name at the bottom of the composer, next to the send button.
 3. Choose a model.
-4. If an **Effort** slider shows under the list, drag it to the level you want.
+4. If you see an **Effort** slider under the list, drag it to the level you want.
 
-The list comes from the agent you're signed in to, and shows the newest model in each family. Higher effort thinks longer before each step.
+The list shows the newest model in each family from the agent you're signed in to. Higher effort makes the model think longer before each step.
 
-Your choice applies to every scene, from the next message on. Basecase keeps a separate choice for each agent, so switching agents doesn't lose it.
+Your choice applies to every scene, starting with your next message. Basecase keeps a separate choice for each agent, so switching agents doesn't lose it.
 
-The same menu shows **Context**: how much of the model's memory this chat has used, in tokens. When the agent reports it, the cost so far shows too. The bar turns amber from 80%. Past that, a [new chat](/help/open-a-past-chat) starts with a clean memory.
+The menu also shows **Context**, which is how much of the model's memory the chat has used, counted in tokens. If the agent reports it, you'll see the cost so far too. The bar turns amber once it reaches 80%. Past that point, you can start a [new chat](/help/open-a-past-chat) to give the model a clean memory.
 
-The model menu doesn't show for Offline, which has no model, or before the agent connects. Gemini has no **Effort** slider.
+**Note:** The model menu doesn't appear for Offline, which has no model, or before the agent connects. Gemini has no **Effort** slider.

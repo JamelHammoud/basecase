@@ -21,20 +21,20 @@ covers:
   - src/app/tabModel.ts
 ---
 
-Fixes for a .basecase file that shows “Couldn’t open” when you try to open it, or opens somewhere you didn't expect.
+If a .basecase file shows “Couldn’t open” when you try to open it, or opens somewhere you didn't expect, find the message you see below and follow its steps.
 
 ## “Not a Basecase scene”
 
-The file isn't a scene Basecase saved, or it was changed after it was saved.
+The file isn't a scene that Basecase saved, or it changed after Basecase saved it.
 
 1. Ask the sender to export the scene again with **Export** ▸ **Scene**.
 2. Open the new file with **Open Scene File** in [[⌘K]].
 
-A file renamed to end in `.basecase` doesn't become a scene. For STL, OBJ and other meshes, [import them](/help/import-a-file) instead.
+Renaming a file so it ends in `.basecase` doesn't turn it into a scene. If you have an STL, OBJ or other mesh, [import it](/help/import-a-file) instead.
 
 ## “Made with a newer Basecase”
 
-The sender's Basecase is newer than yours, and saved something yours can't read.
+The sender's Basecase is newer than yours, and it saved something your version can't read.
 
 1. [Update Basecase](/help/update-basecase).
 2. Open the file again.
@@ -45,8 +45,8 @@ At least one part in the file is missing its id, its kind or its position. Ask t
 
 ## Double-clicking the file does nothing
 
-Basecase doesn't open `.basecase` files from Finder or File Explorer. Drop the file on the canvas, or use **Open Scene File** in [[⌘K]].
+Basecase doesn't open `.basecase` files from Finder or File Explorer. To open one, drop the file on the canvas, or use **Open Scene File** in [[⌘K]].
 
 ## “Up to 8 stay open”
 
-Eight scenes are already open. Close one with [[⌘W]], then open the file again.
+You already have eight scenes open. Close one with [[⌘W]], then open the file again.

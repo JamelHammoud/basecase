@@ -48,9 +48,9 @@ describe('buildPromptBlocks', () => {
       '',
       'The user attached evidence files. Study ALL of them with read_evidence before you plan: every image, every text file and every mesh summary.',
       'Evidence folder "Robot" (1 mesh summary, 1 text file, 1 image):',
-      '- f1/leg.mesh.txt (mesh summary, 1 KB)',
-      '- f1/notes.md (text, 1 KB)',
-      '- f1/views/front.png (image, 1 KB)',
+      '- f1/leg.mesh.txt (mesh summary, 4 bytes)',
+      '- f1/notes.md (text, 1 byte)',
+      '- f1/views/front.png (image, 8 bytes)',
     ]);
   });
 

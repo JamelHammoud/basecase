@@ -1,7 +1,10 @@
 import type { Controller } from '../../sim/engine';
+import { signed } from '../../../electron/minus.mjs';
 import { percent } from '../../../electron/percent.mjs';
 
-export const fmtMargin = (m: number) => `${m < 0 ? '−' : '+'}${Math.abs(m).toFixed(2)}`;
+const hundredths = (v: number) => v.toFixed(2);
+
+export const fmtMargin = (m: number) => signed(m, hundredths);
 
 export const trainingLine = (message: string, share: number | null): string => {
   if (share !== null) return `${message} ${percent(Math.min(share, 1))}`;

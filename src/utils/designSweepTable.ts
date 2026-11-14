@@ -4,6 +4,7 @@ import { prettyJointName } from './kinematics';
 import { runClock } from './duration';
 import { weight } from './weight';
 import { angle } from './angle';
+import { signed } from '../../electron/minus.mjs';
 
 export interface SweepSim {
   fellAt: number | null;
@@ -48,14 +49,12 @@ const MARK: Record<CheckRow['status'], string> = { pass: 'PASS', warn: 'WARN', f
 
 type Fmt = (v: number) => string;
 
-const signed = (d: number, fmt: Fmt) => `${d >= 0 ? '+' : '−'}${fmt(Math.abs(d))}`;
-
 function withDelta(v: number | undefined, base: number | undefined, fmt: Fmt): string {
   if (v === undefined) return '—';
 
   const delta = base === undefined ? '' : signed(v - base, fmt);
 
-  return !delta || signed(0, fmt) === delta.replace('−', '+') ? fmt(v) : `${fmt(v)} (${delta})`;
+  return !delta || delta === signed(0, fmt) ? fmt(v) : `${fmt(v)} (${delta})`;
 }
 
 const share: Fmt = (v) => v.toFixed(2);

@@ -13,6 +13,7 @@ import { skillRows, type SkillRow } from '../skills/skillRows';
 import { designOf, type SkillsRuntime } from '../skills/skillsRuntime';
 import type { DraftGoal } from '../skills/teachEnvironment';
 import type { DraftInput, DraftReport } from '../skills/teach';
+import { negative } from '../../electron/minus.mjs';
 import { percent } from '../../electron/percent.mjs';
 import { coachLines, coachRequest } from './agentCoachRequests';
 
@@ -76,7 +77,7 @@ export function draftInput(p: Payload): DraftInput {
 }
 
 const rolloutLine = (r: Rollout) =>
-  `- ${r.label}: ${r.passed ? 'passes' : 'fails'} (margin ${r.margin.toFixed(2)}${r.failed.length ? `; failed: ${r.failed.join(', ')}` : ''}${r.diverged ? '; the sim diverged' : ''})`;
+  `- ${r.label}: ${r.passed ? 'passes' : 'fails'} (margin ${negative(r.margin, (v) => v.toFixed(2))}${r.failed.length ? `; failed: ${r.failed.join(', ')}` : ''}${r.diverged ? '; the sim diverged' : ''})`;
 
 function draftText(report: DraftReport): string {
   const { draft, route } = report;

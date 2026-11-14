@@ -93,7 +93,7 @@ export function runCandidates(runsRoot, since) {
     .flatMap((dir) => {
       const check = lastCheck(readLines(path.join(dir, 'events.jsonl')));
       const scene = JSON.parse(fs.readFileSync(path.join(dir, 'scene.json'), 'utf8'));
-      const ref = path.relative(path.dirname(runsRoot), dir);
+      const ref = path.relative(path.dirname(runsRoot), dir).split(path.sep).join('/');
 
       return missedFaults(scene, check).map((f) => ({
         source: 'run',

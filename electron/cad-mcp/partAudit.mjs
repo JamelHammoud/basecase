@@ -1,4 +1,5 @@
 import { plural } from '../plural.mjs';
+import { signed } from '../minus.mjs';
 import { percent } from '../percent.mjs';
 
 const HULL_COLLAPSE = 0.5;
@@ -56,7 +57,7 @@ export function revisionLines(previous, audit, volume) {
   const before = previous.audit;
   const change = previous.volume ? (volume - previous.volume) / previous.volume : 0;
   const facts = [
-    `volume ${kmm3(previous.volume)} → ${kmm3(volume)} mm³ (${change >= 0 ? '+' : ''}${percent(change)})`,
+    `volume ${kmm3(previous.volume)} → ${kmm3(volume)} mm³ (${signed(change, percent)})`,
     before?.hullVolume && audit.hullVolume && `hull ${kmm3(before.hullVolume)} → ${kmm3(audit.hullVolume)} mm³`,
     before?.bodies && `bodies ${before.bodies} → ${audit.bodies}`,
   ].filter(Boolean);

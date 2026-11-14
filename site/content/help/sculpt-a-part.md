@@ -28,19 +28,19 @@ covers:
   - src/components/SettingsWindow.tsx
 ---
 
-Push, pull and smooth a part's surface with a brush, for shapes like a shell or a face that boxes and sketches can't make.
+Use a brush to push, pull and smooth a part's surface. Sculpt is for shapes that boxes and sketches can't make, like a shell or a face.
 
-Sculpt is off until you turn it on in Settings.
+Sculpt is off by default. Turn it on in Settings before you use it.
 
-1. Press [[⌘,]] and choose **Canvas**.
+1. Press [[⌘,]], then choose **Canvas**.
 2. Under **Tools**, turn on **Sculpt**, then close Settings.
 3. Click **Sculpt** in the bottom toolbar.
-4. Under **Add clay**, click **Sphere**, **Block**, **Capsule** or **Cylinder**. The clay lands selected.
+4. Under **Add clay**, click **Sphere**, **Block**, **Capsule** or **Cylinder**. Basecase selects the new clay.
 5. Under **Brush**, choose **Inflate**, **Carve**, **Grab**, **Flatten**, **Smooth** or **Pinch**.
 6. Drag on the part to sculpt it.
 7. Click **Done**, or press [[Esc]], to go back to **Move**.
 
-To sculpt a part already in the scene, select it instead of adding clay. Hold [[⌥]] while you drag to swap **Inflate** and **Carve**. [[C]] picks Sculpt once it's on.
+To sculpt a part that's already in the scene, select it instead of adding clay. To swap **Inflate** and **Carve**, hold [[⌥]] while you drag. Once Sculpt is on, you can also press [[C]] to choose it.
 
 ## Brush settings
 
@@ -51,6 +51,8 @@ To sculpt a part already in the scene, select it instead of adding clay. Hold [[
 | Mirror X | On or off | On |
 | Mirror Z | On or off | Off |
 
-**Mirror X** repeats each stroke on the other side of the part, left to right, and **Mirror Z** front to back. **Subdivide**, shown while a sculpted part is selected, adds vertices so the brush can make finer detail; a toast gives the new count.
+**Mirror X** repeats each stroke on the other side of the part, from left to right. **Mirror Z** does the same from front to back.
 
-Sculpting a box, shaft or other shape turns it into a sculpted mesh. Each stroke is one step, so [[⌘Z]] takes back the last one. Sculpted parts still render, print and export after you turn the tool off.
+**Subdivide** appears while a sculpted part is selected. It adds vertices so the brush can make finer detail, and a toast shows the new count.
+
+When you sculpt a box, shaft or other shape, it becomes a sculpted mesh. Each stroke counts as one step. To undo the last stroke, press [[⌘Z]]. Sculpted parts still render, print and export after you turn the tool off.

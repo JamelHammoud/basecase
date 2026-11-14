@@ -11,18 +11,18 @@ covers:
   - src/components/layers/layerRows.ts
 ---
 
-Move, resize or turn the part that made a hole, and the cut in the result follows.
+After you cut a hole, you can move, resize, or rotate the part that made it, and the cut in the result follows.
 
-The part must already be cut with **Subtract**, as in [Cut, join and intersect parts](/help/cut-join-and-intersect-parts). In Layers, the parts it was made from sit under it, the first part on top.
+You need a part you cut with **Subtract**, as in [Cut, join and intersect parts](/help/cut-join-and-intersect-parts). In Layers, you'll find the parts you made it from nested under it, with the first part on top.
 
 ![Layers with Servo Mount, and Servo Mount, Servo Pocket and Cable Hole nested under it](/help/edit-a-cut/result.png)
 
-1. Double-click a hole on the canvas, or [[⌘]]-click it, to select the part that cut it. Clicking its row in Layers does the same. It shows over the result, with the gizmo on it.
+1. To select the part that cut a hole, double-click the hole on the canvas, [[⌘]]-click it, or click its row in Layers. The part appears over the result with the gizmo on it.
 
 ![The Cable Hole selected inside the plate, drawn in red with the gizmo on it](/help/edit-a-cut/drilled.png)
 
-2. Move it with the gizmo or the Position fields, or change its Size or Rotation. The cut moves with it, and [[⌘Z]] undoes each change on its own.
+2. Move the part with the gizmo or the Position fields, or change its Size or Rotation. The cut moves with it. Each change is its own step, so [[⌘Z]] undoes them one at a time.
 
 ![The Servo Pocket moved 8 mm to the left, with the pocket in the plate following it](/help/edit-a-cut/moved.png)
 
-Click the result once to select the whole part again, the same way you'd leave a group. Moving it carries the parts inside it along.
+To select the whole part, click the result once, the same way you leave a group. When you move the result, the parts inside it move with it.

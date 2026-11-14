@@ -12,7 +12,7 @@ export class ModelControl {
 
       return true;
     } catch (err) {
-      this.emit({ type: 'acp-stderr', text: `Couldn't set ${configId} to ${value}: ${err?.message ?? err}` });
+      this.emit({ type: 'acp-stderr', text: `Couldn’t set ${configId} to ${value}: ${err?.message ?? err}` });
 
       return false;
     }
@@ -27,7 +27,7 @@ export class ModelControl {
 
       return true;
     } catch (err) {
-      this.emit({ type: 'acp-stderr', text: `Couldn't switch to ${model}: ${err?.message ?? err}` });
+      this.emit({ type: 'acp-stderr', text: `Couldn’t switch to ${model}: ${err?.message ?? err}` });
 
       return false;
     }

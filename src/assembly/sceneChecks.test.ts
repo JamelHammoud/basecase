@@ -97,7 +97,7 @@ describe('twin-difference lint', () => {
   it('flags a twin whose volume and size drifted', async () => {
     const [line] = await lint(pair(6));
 
-    expect(line).toMatch(/^left-plate \/ right-plate aren't mirror twins: volume 50%, size z 4 vs 6 mm/);
+    expect(line).toMatch(/^left-plate \/ right-plate aren’t mirror twins: volume 50%, size z 4 vs 6 mm/);
   });
 });
 

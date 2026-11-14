@@ -33,6 +33,20 @@ describe('help search', () => {
     expect(paths('send')).toEqual(['/help/fix-a-crash', '/help/share-a-scene', '/help/slice-plates']);
   });
 
+  it('ranks a title typed with a straight apostrophe above a body match', () => {
+    const articles = prepareArticles({
+      collections: [],
+      articles: [
+        doc('/help/a-slicer', 'Pick a slicer', "Plates won't slice without one."),
+        doc('/help/b-slicing', 'Plates won’t slice', 'Check the printer and the plate.'),
+      ],
+    });
+
+    expect(searchArticles(articles, "plates won't slice").map((result) => result.article.path)[0]).toBe(
+      '/help/b-slicing',
+    );
+  });
+
   it('matches every word by prefix as you type, and needs every word', () => {
     expect(paths('imp')).toEqual(['/help/import-a-mesh']);
     expect(paths('scene printer')).toEqual([]);

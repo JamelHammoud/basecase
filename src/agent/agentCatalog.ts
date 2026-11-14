@@ -53,7 +53,7 @@ function componentPortLine(c: Component): string | null {
   const ports = componentPorts(c.id);
 
   return ports.length
-    ? `  Ports (from the part's position at rotation [0, 0, 0], Z up; use with mate and fasten): ${catalogPortLines(ports).join('; ')}`
+    ? `  Ports (from the part’s position at rotation [0, 0, 0], Z up; use with mate and fasten): ${catalogPortLines(ports).join('; ')}`
     : null;
 }
 

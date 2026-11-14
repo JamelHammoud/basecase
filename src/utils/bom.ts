@@ -151,7 +151,7 @@ function describeHardware(key: string): LineInfo | null {
     detail: std,
     url: hardwareShopUrl(spec),
     urlKind: 'search',
-    warning: spec.length !== undefined && !isStockLength(spec) ? `${spec.length} mm isn't a stock length` : undefined,
+    warning: spec.length !== undefined && !isStockLength(spec) ? `${spec.length} mm isn’t a stock length` : undefined,
   };
 }
 

@@ -14,7 +14,7 @@ covers:
 
 Turn an arm in your scene into a smaller copy you print, wire and move by hand, the way people record demonstrations with an SO-101 or GELLO leader.
 
-1. Open a scene with a fixed-base arm, like the SO-101 from Robots.
+1. Open a scene with a fixed-base arm, like the SO-101 from Parts ▸ Robots.
 2. Press ⌘K and choose Make a Leader, or right-click any part of the arm and choose Make a Leader.
 3. A new tab opens with the arm's name and Leader after it. The leader has the arm's joints in the same order, each turning about the same axis within the same limits.
 4. Give the brackets a few seconds: each shows as a box until the CAD kernel has compiled it.

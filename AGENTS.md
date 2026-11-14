@@ -26,7 +26,7 @@
 | 2 | [Window framing](docs/guide/window-chrome.md) | the title bar, view rail, card grid, vibrancy, boot screen, app icon, menu bar |
 | 3 | [Copy](docs/guide/copy.md) | any user-facing text |
 | 4 | [Visual system](docs/guide/visual-system.md) | type, sizes, radii, surfaces, dividers, motion, hover controls, loading, scrollbars |
-| 5 | [Layout and sidebar views](docs/guide/layout.md) | the side panels, Parts, Robots, Objects, Layers, Library, panel resizing |
+| 5 | [Layout and sidebar views](docs/guide/layout.md) | the side panels, Parts (with its robots and objects), Play, Layers, Library, panel resizing |
 | 5a | [Scene tabs](docs/guide/scene-tabs.md) | tabs, opening and closing scenes, `.basecase` files |
 | 6, 6a | [Toolbar and Settings](docs/guide/toolbar-and-settings.md) | the bottom toolbar, Measure, Annotate, Settings panes |
 | 7–8 | [Inspector and selection](docs/guide/inspector-and-selection.md) | the Inspector, selection, groups, booleans, Mirror (`src/mirror/`), drag and drop, reference images, Sculpt / Sketch / Import SVG |

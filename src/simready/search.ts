@@ -1,6 +1,6 @@
 export const SIMREADY_HOST = 'https://nvidia-simready-central.hf.space';
 
-export type SimReadyShelf = 'objects' | 'robots';
+export type SimReadyShelf = 'objects' | 'robots' | 'all';
 
 const ROBOT_MAKERS = [
   'onrobot',
@@ -18,6 +18,7 @@ const OBJECT_MAKERS = ['nvidia', 'ForgeCAD', 'PalatialSim', 'LGElectronics', 'Ve
 const SHELF_FILTER: Record<SimReadyShelf, string> = {
   objects: `.*/datasets/(${OBJECT_MAKERS.join('|')})/.*`,
   robots: `.*/datasets/(${ROBOT_MAKERS.join('|')})/.*`,
+  all: `.*/datasets/(${[...OBJECT_MAKERS, ...ROBOT_MAKERS].join('|')})/.*`,
 };
 
 export interface SimReadyAsset {

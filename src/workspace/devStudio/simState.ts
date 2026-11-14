@@ -43,6 +43,10 @@ function timelineState(timeline: TryTimeline, sim: Simulation, rig: Rig) {
   return {
     frame: timeline.frame,
     frames: timeline.frames,
+    dt: timeline.dt,
+    playing: timeline.playing,
+    speed: timeline.speed,
+    loop: timeline.loop,
     qpos: sought ? Array.from(sought.qpos) : null,
     sought: sought?.frame ?? null,
     lastQpos: frameQpos(recording, recording.frames - 1),

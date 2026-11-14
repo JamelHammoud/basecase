@@ -52,6 +52,7 @@ import type { CaseExplore } from './useCaseExplore';
 import type { CaseRun } from './useCaseRun';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
 import { SKILL_HANDLERS } from './agentSkillRequests';
+import { TRY_HANDLERS, type TryReadSources } from './agentTryRequests';
 import type { Cases } from './useCases';
 import type { Routines } from './useRoutines';
 import type { SceneSkills } from './useSkills';
@@ -92,6 +93,7 @@ export interface RequestContext {
   caseExplore: CaseExplore;
   caseRun: CaseRun;
   skills: SceneSkills;
+  tryRead: TryReadSources;
   mergeParts: (ids: string[]) => Promise<string | null>;
 }
 
@@ -373,6 +375,7 @@ const HANDLERS: Record<string, Handler> = {
   ...ROUTINE_HANDLERS,
   ...CASE_HANDLERS,
   ...CASE_CODE_HANDLERS,
+  ...TRY_HANDLERS,
   ...SKILL_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [

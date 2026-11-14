@@ -30,27 +30,27 @@ covers:
   - src/components/settings/BuildPane.tsx
 ---
 
-While any check still holds a blocker, the Checks header shows a count to fix instead of Ready to build.
+If any check still holds a blocker, the Checks header shows a count of problems to fix instead of Ready to build.
 
 ## The header still shows a count after you edit
 
-There's still a blocker somewhere in the list, often in a check you haven't opened.
+A blocker is still somewhere in the list, often in a check you haven't opened.
 
 1. Click **Build** at the top of the right panel.
-2. Open the check at the top of **Checks**. The worst ones come first.
+2. Open the check at the top of **Checks**. Basecase lists the worst ones first.
 3. To select a part, click its name under a problem.
 4. Change the part, or click **Fix** to hand the problem to the agent.
-5. Wait a moment after your last edit. The header reads **Checking…** and then shows the new verdict.
+5. Wait a moment after your last edit. The header reads **Checking…**, then shows the new verdict.
 
 It worked when the header reads **Ready to build** and the red dot on the **Build** tab is gone.
 
 ## “Some checks didn’t finish, so this answer isn’t complete.”
 
-A check stopped because it hit its time limit or ran into an error. Basecase counts that as a blocker, so a design never passes on a run that didn't finish.
+A check stopped early because it hit its time limit or ran into an error. Basecase counts that as a blocker, so a design never passes on a run that didn't finish.
 
 1. Press [[⌘K]] and choose **Run Checks**.
 2. If you still see the message, quit Basecase and open it again.
-3. Run **Run Checks** once more.
+3. Choose **Run Checks** once more.
 
 It worked when the message no longer appears in **Assembly**.
 
@@ -59,15 +59,15 @@ It worked when the message no longer appears in **Assembly**.
 The estimated total is higher than your budget. Basecase counts lines marked ≈ at their list price.
 
 1. Open **Budget** in Checks. It shows the total next to your budget.
-2. List prices can be higher than what you pay, so use **Add Price** in **Bill of materials** to save the prices you pay.
+2. List prices can be higher than what you pay. To save the prices you pay, use **Add Price** in **Bill of materials**.
 3. Click a line's quantity, then type how many you already own in **On hand**. Parts you own cost nothing.
 4. Swap out expensive parts, or raise the budget in the field next to the total.
 
-Budget turns amber above 90% of the budget and red when the total goes over it. For the full steps, see [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget).
+Budget turns amber when the total is above 90% of the budget, and red when the total goes over it. For the full steps, see [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget).
 
 ## “This servo could strip its gears when the robot falls.”
 
-In a fall, this leg joint needs more than 5 times its servo's rated torque, or more than the peak listed in its datasheet. The item tells you which joint it is and the direction of its worst fall.
+In a fall, this leg joint needs more than 5 times its servo's rated torque, or more than the peak listed in its datasheet. The item names the joint and the direction of its worst fall.
 
 1. Click **Replay in Sim** on the joint to watch that fall.
 2. Ask the agent for a stronger servo at that joint, or for a lower stance.
@@ -86,16 +86,18 @@ It worked when **Servo bus** is no longer in the list.
 
 ## You know a blocker is wrong
 
-Checks can't see anything that isn't modeled, like a strap that holds a part.
+Checks can only see what's modeled, so they miss things like a strap that holds a part.
 
 1. Click ⋯ on the problem's row.
 2. Choose **Ignore**.
 
-The problem moves to **Ignored**, below the list. Click **Restore** there to bring it back. Only you can ignore a blocker. The agent can tell you it disagrees, but it can't clear a blocker itself.
+The problem moves to **Ignored**, below the list. To bring it back, click **Restore** there.
+
+Only you can ignore a blocker. The agent can tell you it disagrees, but it can't clear a blocker itself.
 
 ## The agent keeps fixing new blockers on its own
 
-After each message, Basecase sends any new blockers to the agent, up to 2 times.
+After each message, Basecase sends any new blockers to the agent, up to 2 times. To turn this off:
 
 1. Press [[⌘,]] and choose **Build**.
 2. Turn off **Have the agent fix new blockers**.

@@ -44,7 +44,7 @@ const failureReason = (err: unknown) => errorMessage(err).trim() || 'It stopped 
 const promptNote = ({ docs, caseRun, simTraining }: WorkspaceCore) =>
   joinNotes(
     marksNote(docs.projectRef.current.marks, docs.partsRef.current),
-    runningCaseNote(caseRun.open ? simTraining.cases.active : null),
+    runningCaseNote(caseRun.live ? simTraining.cases.active : null),
   );
 
 export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel }: AgentRunOptions) {

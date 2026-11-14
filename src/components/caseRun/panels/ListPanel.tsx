@@ -35,7 +35,7 @@ export const ListPanel: React.FC<PanelViewProps<'list'>> = (props) => {
 
   const tries = (
     <>
-      <TrySection cases={cases} teachWalk={null} cls={ctx.sim.drive.cls} />
+      {!ctx.bus.playhead() && <TrySection cases={cases} teachWalk={null} cls={ctx.sim.drive.cls} />}
       <ResultsSection
         cases={cases}
         rig={buildRig(ctx.joints, ctx.parts)}

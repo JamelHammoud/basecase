@@ -27,7 +27,7 @@ export function ensureDaemon({ projectDir, platform, host = process.platform, ru
 
   buildDaemon(projectDir, run);
 
-  if (!fs.existsSync(staged)) throw new Error(`npm run build:daemon left no ${path.relative(projectDir, staged)}.`);
+  if (!fs.existsSync(staged)) throw new Error(`npm run build:daemon left no hw/dist/${path.basename(staged)}.`);
 
   return staged;
 }

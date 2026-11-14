@@ -1,29 +1,8 @@
-import React, { useEffect, useEffectEvent, useRef } from 'react';
-import { Button, EmptyState } from '../../design-system';
+import React from 'react';
+import { Button, EmptyState, LoadMore } from '../../design-system';
 import type { SimReadyAsset } from '../../simready/search';
 import type { SimReadySearch } from '../../simready/useSimReadySearch';
 import { LoadingTiles, SimReadyTile } from './SimReadyTile';
-
-const LoadMore: React.FC<{ onReach: () => void }> = ({ onReach }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const reach = useEffectEvent(onReach);
-
-  useEffect(() => {
-    const el = ref.current;
-
-    if (!el) return;
-
-    const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && reach(), {
-      rootMargin: '400px',
-    });
-
-    io.observe(el);
-
-    return () => io.disconnect();
-  }, []);
-
-  return <div ref={ref} className="h-px" aria-hidden />;
-};
 
 export const SimReadyGrid: React.FC<{
   search: SimReadySearch;

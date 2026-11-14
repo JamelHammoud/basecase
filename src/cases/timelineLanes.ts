@@ -1,4 +1,4 @@
-import type { SimModel } from '../sim/mjcfTypes';
+import type { SimJoint } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 
 export interface TimelineLane {
@@ -10,7 +10,9 @@ export interface TimelineLane {
   limit: number;
 }
 
-const toUnit = (type: SimModel['joints'][number]['type']) => (type === 'prismatic' ? 1000 : 180 / Math.PI);
+export type LaneJoint = Pick<SimJoint, 'id' | 'type' | 'drive' | 'actuator' | 'effort'>;
+
+const toUnit = (type: SimJoint['type']) => (type === 'prismatic' ? 1000 : 180 / Math.PI);
 
 function column(r: Recording, read: (frame: number) => number): Float32Array {
   const out = new Float32Array(r.frames);
@@ -20,11 +22,17 @@ function column(r: Recording, read: (frame: number) => number): Float32Array {
   return out;
 }
 
-export function timelineLanes(model: SimModel, r: Recording, efforts: Float32Array[]): TimelineLane[] {
-  return model.joints.flatMap((j, i) => {
-    const effort = efforts[i];
+const NO_EFFORT = new Float32Array();
 
-    if (j.actuator < 0 || !effort?.length) return [];
+export function timelineLanes(
+  joints: readonly LaneJoint[],
+  r: Recording,
+  efforts: Float32Array[] | null,
+): TimelineLane[] {
+  return joints.flatMap((j, i) => {
+    const effort = efforts ? efforts[i] : NO_EFFORT;
+
+    if (j.actuator < 0 || !effort || (efforts && !effort.length)) return [];
 
     const scale = toUnit(j.type);
     const address = r.jointQpos?.[i];
@@ -35,7 +43,7 @@ export function timelineLanes(model: SimModel, r: Recording, efforts: Float32Arr
         unit: j.type === 'prismatic' ? 'mm' : '°',
         target: j.drive === 'position' ? column(r, (n) => r.ctrl[n * r.nu + j.actuator] * scale) : null,
         position: column(r, (n) => (address === undefined ? Number.NaN : r.qpos[n * r.nq + address] * scale)),
-        effort: column(r, (n) => Math.abs(effort[n] ?? Number.NaN)),
+        effort: effort.length ? column(r, (n) => Math.abs(effort[n] ?? Number.NaN)) : NO_EFFORT,
         limit: j.effort,
       },
     ];

@@ -1,7 +1,7 @@
 import type { RefObject } from 'react';
 import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import type { TryRecord } from '../cases/tries';
+import type { TryDraft, TryRecord } from '../cases/tries';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
@@ -22,7 +22,7 @@ interface RealRobotOptions {
   viewportRef: RefObject<Viewport3DHandle | null>;
   attempt: CaseTry;
   timeline: TryTimeline;
-  onTry: (record: TryRecord) => void;
+  onTry: (draft: TryDraft) => void;
   onRefuse: (message: string) => void;
 }
 

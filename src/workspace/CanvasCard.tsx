@@ -1,6 +1,7 @@
 import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
 import { TryTimeline } from '../components/simulate/TryTimeline';
+import { TriesMode } from '../components/tries/TriesMode';
 import { ViewportToolbar } from '../components/ViewportToolbar';
 import { DropOverlay, FileImportIcon, PhotoIcon, Toast } from '../design-system';
 import { CaseRunOverlays } from './CaseRunProvider';
@@ -66,6 +67,7 @@ function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'ac
 
 function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
   const { tool, marks, toasts } = core;
+  const onCanvas = !core.printing.mode && !core.tries.open;
 
   return (
     <div className="absolute bottom-5 inset-x-0 z-20 flex flex-col items-center gap-[8px] pointer-events-none">
@@ -74,15 +76,15 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
           <Toast toast={toasts.toast} onDismiss={toasts.dismissToast} />
         </div>
       )}
-      {active && !core.printing.mode && (
+      {active && onCanvas && (
         <TryTimeline
           timeline={core.simTraining.cases.timeline}
           rig={core.posing.rig}
           onSelectParts={core.setSelectedIds}
         />
       )}
-      {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
-      {!core.caseRun.open && (
+      {tool.marking && onCanvas && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
+      {!core.caseRun.open && !core.tries.open && (
         <div className="pointer-events-auto">
           <CanvasToolbar core={core} actions={actions} ui={ui} />
         </div>
@@ -129,6 +131,7 @@ export function CanvasCard(props: CanvasCardProps) {
         aria-hidden
         className="absolute inset-0 z-10 rounded-[12px] pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
       />
+      {core.tries.open && <TriesMode active={active} mode={core.tries} onForget={core.simTraining.cases.forget} />}
       <CanvasBottomBar {...props} />
     </main>
   );

@@ -12,6 +12,7 @@ export function libraryPaths(dataRoot) {
     conversationsDir: path.join(libraryDir, 'conversations'),
     evidenceDir: path.join(libraryDir, 'evidence'),
     referencesDir: path.join(libraryDir, 'references'),
+    triesDir: path.join(libraryDir, 'tries'),
     aiRefDir: path.join(dataRoot, 'ai-reference'),
   };
 }
@@ -26,6 +27,7 @@ export function ensureDirectories(paths) {
     paths.conversationsDir,
     paths.evidenceDir,
     paths.referencesDir,
+    paths.triesDir,
   ]) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });

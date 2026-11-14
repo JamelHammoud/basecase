@@ -1,35 +1,88 @@
 import type { Recording } from '../sim/recorder';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { withGenerated, type StoredTry } from './storedTry';
+import type { TryBackend } from './tryBackend';
+import { bridgeTries } from './tryBridge';
+import { idbTries } from './tryStoreIdb';
 
-const DB = 'basecase-tries';
-const STORE = 'recordings';
+let backend: TryBackend = IS_WEB_DEMO ? idbTries : bridgeTries;
+let listed: StoredTry[] | null = null;
+let loading: Promise<StoredTry[]> | null = null;
+const listeners = new Set<() => void>();
 
-function open(): Promise<IDBDatabase> | null {
-  if (typeof indexedDB === 'undefined') return null;
+const publish = (next: StoredTry[]) => {
+  listed = next;
+  listeners.forEach((l) => l());
+};
 
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB, 1);
+export const setTryBackend = (next: TryBackend) => {
+  backend = next;
+  listed = null;
+  loading = null;
+};
 
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('The tries store didn’t open.'));
-  });
+export const storedTriesNow = () => listed;
+
+export function subscribeTries(listener: () => void) {
+  listeners.add(listener);
+
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
-async function run<T>(mode: IDBTransactionMode, act: (store: IDBObjectStore) => IDBRequest<T>): Promise<T | null> {
-  const db = await open();
+export function listTries(): Promise<StoredTry[]> {
+  if (listed) return Promise.resolve(listed);
 
-  if (!db) return null;
+  loading ??= backend.list().then(
+    (reply) => {
+      const all = Array.isArray(reply) ? reply : [];
 
-  return new Promise((resolve, reject) => {
-    const request = act(db.transaction(STORE, mode).objectStore(STORE));
+      publish(all);
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('The tries store failed.'));
-  });
+      return all;
+    },
+    () => {
+      loading = null;
+
+      return [];
+    },
+  );
+
+  return loading;
 }
 
-export const saveRecording = (id: string, recording: Recording) => run('readwrite', (s) => s.put(recording, id));
+export async function keepTry(manifest: StoredTry, recording?: Recording, film?: Blob) {
+  await backend.save({ manifest, recording, film });
 
-export const loadRecording = (id: string) => run<Recording | undefined>('readonly', (s) => s.get(id));
+  const all = await listTries();
 
-export const deleteRecording = (id: string) => run('readwrite', (s) => s.delete(id));
+  publish([...all.filter((t) => t.id !== manifest.id), manifest]);
+}
+
+export async function keepFilm(manifest: StoredTry, film: Blob) {
+  await backend.save({ manifest, film });
+}
+
+export const loadRecording = (id: string) => backend.recording(id).catch(() => null);
+
+export const loadFilm = (id: string) => backend.film(id).catch(() => null);
+
+export async function deleteTries(ids: readonly string[]): Promise<string[]> {
+  const all = await listTries();
+  const gone = withGenerated(all, ids);
+  const goes = new Set(gone);
+
+  await backend.remove(gone);
+  publish(all.filter((t) => !goes.has(t.id)));
+
+  return gone;
+}
+
+export async function passTries(ids: readonly string[]) {
+  const picked = new Set(ids);
+  const all = await listTries();
+
+  for (const t of all.filter((s) => picked.has(s.id)))
+    await keepTry({ ...t, outcome: { ...t.outcome, result: 'passed' } });
+}

@@ -1,11 +1,20 @@
 import { useEffect, useEffectEvent } from 'react';
 import { isModalOpen } from '../../design-system';
 import { isTextEntry } from '../../workspace/helpers';
-import type { TryTimeline } from '../../workspace/useTryTimeline';
 
-type KeyAction = (timeline: TryTimeline, shift: boolean) => void;
+export interface TimelineKeysTarget {
+  open: boolean;
+  dt: number;
+  frames: number;
+  step: (by: number) => void;
+  seek: (frame: number) => void;
+  toggle: () => void;
+  close: () => void;
+}
 
-const second = (t: TryTimeline) => Math.max(1, Math.round(1 / t.dt));
+type KeyAction = (timeline: TimelineKeysTarget, shift: boolean) => void;
+
+const second = (t: TimelineKeysTarget) => Math.max(1, Math.round(1 / t.dt));
 
 const KEYS: Record<string, KeyAction> = {
   ArrowLeft: (t, shift) => t.step(shift ? -second(t) : -1),
@@ -21,7 +30,7 @@ const typing = (el: Element | null) => isTextEntry(el) && !(el instanceof HTMLIn
 const ignored = (e: KeyboardEvent) =>
   e.metaKey || e.ctrlKey || e.altKey || typing(document.activeElement) || isModalOpen();
 
-export function useTimelineKeys(timeline: TryTimeline) {
+export function useTimelineKeys(timeline: TimelineKeysTarget) {
   const onKey = useEffectEvent((e: KeyboardEvent) => {
     const action = KEYS[e.key];
 

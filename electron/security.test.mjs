@@ -17,6 +17,7 @@ import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { openCadFile } from './cadImport/openCadFile.mjs';
 import { encodeReply, decodeReply } from './cadImport/reply.mjs';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
+import { TryLibrary } from './library/tryLibrary.mjs';
 import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
 import { assertPublicUrl, isPublicAddress, publicFetch, readCapped } from './publicFetch.mjs';
 import { RobotLink } from './robot/robotLink.mjs';
@@ -86,7 +87,7 @@ describe('public fetch', () => {
   });
 });
 
-describe('scene library ids', () => {
+describe('library ids', () => {
   let dir;
 
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -106,6 +107,11 @@ describe('scene library ids', () => {
     expect(() => library.save({ id: '../auth', name: 'x', parts: [] })).toThrow('Not a valid id');
     library.delete('../auth');
 
+    const tries = new TryLibrary({ triesDir: scenesDir, cacheFile: path.join(dir, 'tries.json') });
+
+    expect(() => tries.save({ manifest: { id: '../auth' }, recording: new Uint8Array(1) })).toThrow('Not a valid id');
+    expect(() => tries.film('../auth')).toThrow('Not a valid id');
+    expect(() => tries.delete(['..'])).toThrow('Not a valid id');
     expect(fs.readFileSync(secret, 'utf-8')).toBe('{"token":"x"}');
   });
 });

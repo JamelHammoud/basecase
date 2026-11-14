@@ -1,7 +1,7 @@
 import type { Case } from '../cases/schema';
 import type { Routine, TransitionProof } from '../routines/schema';
 import type { SkillRecord } from '../skills/skillRecords';
-import type { TryRecord } from '../cases/tries';
+import type { TryRef } from '../cases/storedTry';
 import type { SourcedItem } from '../data/sourcedItems';
 import type { ReadinessDecisions } from '../readiness/types';
 import type { HardwareSpec } from '../data/hardware';
@@ -235,7 +235,7 @@ export interface ProjectSettings extends ProjectRecords {
   falls?: StoredFalls;
   marks?: SceneMark[];
   cases?: Case[];
-  tries?: TryRecord[];
+  tries?: TryRef[];
   routines?: Routine[];
   handoffs?: Record<string, TransitionProof>;
   skills?: SkillRecord[];

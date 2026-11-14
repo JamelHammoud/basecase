@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
+import { TryLibrary } from './library/tryLibrary.mjs';
 import { HubAccount } from './hub/index.mjs';
 import { OnshapeAccount } from './onshape/index.mjs';
 import { Printing } from './print/index.mjs';
@@ -406,6 +407,15 @@ export class BasecaseBackendService {
     });
 
     return this.sceneLibrary;
+  }
+
+  get tries() {
+    this.tryLibrary ??= new TryLibrary({
+      triesDir: this.triesDir,
+      cacheFile: path.join(this.libraryDir, '.try-summaries.json'),
+    });
+
+    return this.tryLibrary;
   }
 
   listScenes() {

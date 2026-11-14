@@ -1,6 +1,7 @@
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { inject } from 'vitest';
 import { TEST_HOOKS_FLAG } from '../src/utils/platform/testHooksFlag';
+import { memoryTries } from './memoryTries';
 
 const EFFORT_LEVELS = [
   { id: 'low', name: 'Low' },
@@ -63,17 +64,24 @@ async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }),
   );
+
+  const tries = memoryTries();
+
   await page.route('**/api/bridge/**', (route) => {
     const name = new URL(route.request().url()).pathname.split('/').pop() ?? '';
 
     if (live.some((prefix) => name.startsWith(prefix))) return route.continue();
 
-    if (route.request().method() === 'POST') posts.push({ route: name, body: route.request().postDataJSON() });
+    const posted = route.request().method() === 'POST';
+    const body = posted ? route.request().postDataJSON() : null;
+    const tried = tries(name, body);
+
+    if (posted && !tried) posts.push({ route: name, body });
 
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(lists[name] ?? LISTS[name] ?? {}),
+      body: JSON.stringify(tried ? tried.reply : (lists[name] ?? LISTS[name] ?? {})),
     });
   });
 }

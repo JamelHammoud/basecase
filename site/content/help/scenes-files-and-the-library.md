@@ -44,9 +44,9 @@ On disk, each scene is a JSON file in `library/scenes`, inside `~/Library/Applic
 
 ## Scenes and Library models
 
-The Library holds models, not scenes. A model is a part or a group of parts you saved to drop into any scene: a servo bracket, a wheel hub, a gripper.
+The Library holds models and tries, not scenes. A model is a part or a group of parts you saved to drop into any scene: a servo bracket, a wheel hub, a gripper. A try is a recorded run of a Case, from any scene, kept in `library/tries`.
 
-Use a scene for a whole robot, and the Library for pieces you reuse across robots. Steps are in [Save a model to the Library](/help/save-a-model-to-the-library).
+Use a scene for a whole robot, and the Library for pieces you reuse across robots. Steps are in [Save a model to the Library](/help/save-a-model-to-the-library) and [Browse every try in the Library](/help/browse-every-try-in-the-library).
 
 ## Scene files
 

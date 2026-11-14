@@ -8,7 +8,7 @@ interface TimelineLaneProps {
   frame: number;
   markers: number[];
   onSeek: (frame: number) => void;
-  onSelect: () => void;
+  onSelect?: () => void;
 }
 
 const PLOT = 28;
@@ -22,6 +22,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, m
   ];
   const effort: Trace[] = [{ id: 'effort', values: lane.effort, tone: 'primary' }];
   const unit = lane.unit === 'mm' ? ' mm' : '°';
+  const hasEffort = lane.effort.length > 0;
 
   return (
     <div
@@ -33,18 +34,22 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, m
       <div className="w-[112px] shrink-0 flex flex-col gap-0.5 min-w-0">
         <span className="text-[13px] text-white/85 truncate">{name}</span>
         <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.position[frame], 1, unit)}</span>
-        <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.effort[frame], 2, ' N·m')}</span>
+        {hasEffort && (
+          <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.effort[frame], 2, ' N·m')}</span>
+        )}
       </div>
       <div className="flex-1 min-w-0 flex flex-col gap-1">
         <TracePlot traces={motion} height={PLOT} playhead={frame} markers={markers} onSeek={onSeek} />
-        <TracePlot
-          traces={effort}
-          height={PLOT}
-          playhead={frame}
-          limit={lane.limit}
-          markers={markers}
-          onSeek={onSeek}
-        />
+        {hasEffort && (
+          <TracePlot
+            traces={effort}
+            height={PLOT}
+            playhead={frame}
+            limit={lane.limit}
+            markers={markers}
+            onSeek={onSeek}
+          />
+        )}
       </div>
     </div>
   );

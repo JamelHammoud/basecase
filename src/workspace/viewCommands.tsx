@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 import type { Command } from '../components/CommandPalette';
 import { cameraViewsToggleLabel, toggleCameraViews } from '../cameras/cameraViewsStore';
+import { storedTriesNow } from '../cases/tryStore';
 import { hasCameraViews } from '../cameras/views';
 import {
   CameraAddIcon,
   CameraIcon,
+  CasesIcon,
   GridIcon,
   HandIcon,
   KeyboardIcon,
@@ -50,6 +52,20 @@ const SIDEBAR_VIEWS = [
   { tab: 'layers', label: 'Show Layers', icon: <LayersIcon className={ic} />, keywords: 'outline tree groups hide' },
   { tab: 'library', label: 'Show Library', icon: <LibraryIcon className={ic} />, keywords: 'saved models reuse' },
 ] as const;
+
+const triesCommands = ({ core }: CommandInputs): Command[] =>
+  storedTriesNow()?.length
+    ? [
+        {
+          id: 'show-tries',
+          group: 'Panels',
+          label: 'Show Tries',
+          icon: <CasesIcon className={ic} />,
+          keywords: 'recordings replay runs robot',
+          run: () => core.tries.show(null),
+        },
+      ]
+    : [];
 
 export const sceneHasCameraViews = ({ core, actions }: Pick<CommandInputs, 'core' | 'actions'>) =>
   hasCameraViews(core.parts, actions.cameras.cameras, core.simTraining.sim.status !== 'off');
@@ -256,6 +272,7 @@ function catalogCommands({ core, actions }: CommandInputs): Command[] {
 
 export const viewCommands = (inputs: CommandInputs): Command[] => [
   ...panelCommands(inputs),
+  ...triesCommands(inputs),
   ...displayCommands(inputs),
   ...catalogCommands(inputs),
 ];

@@ -4,6 +4,7 @@ import { editCommands } from './editCommands';
 import { sceneCommands, type CommandInputs } from './sceneCommands';
 import { canRunOnSelection, selectionFacts } from './selectionNeeds';
 import type { CaseRun } from './useCaseRun';
+import { useStoredTries } from './useStoredTries';
 import { viewCommands } from './viewCommands';
 
 interface WorkspacePaletteProps {
@@ -26,6 +27,8 @@ const leavingFirst = (commands: Command[], running: CaseRun): Command[] =>
   );
 
 function OpenPalette({ inputs, onClose }: Omit<WorkspacePaletteProps, 'open'>) {
+  useStoredTries();
+
   const { selection, parts } = inputs.core;
   const facts = selectionFacts(selection.selectedParts, parts);
   const all = [...sceneCommands(inputs), ...editCommands(inputs), ...viewCommands(inputs)].filter((c) =>

@@ -58,7 +58,7 @@ A wheeled or legged robot can also try a Case for real, on the Case printed as a
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results count them on that try's row.
 
-Tries stay on this computer. A `.basecase` file you share carries the Case but not its tries.
+Tries stay on this computer. A `.basecase` file you share carries the Case but not its tries. The tries from every scene are together in the Library, as [Browse every try in the Library](/help/browse-every-try-in-the-library) shows.
 
 ## A Case is the test, a skill is the answer
 

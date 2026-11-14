@@ -1,4 +1,4 @@
-import type { FilmstripInput } from './filmstrip';
+import type { FilmShot, FilmstripInput } from './filmstrip';
 
 let worker: Worker | null = null;
 let seq = 0;
@@ -25,3 +25,10 @@ export function drawFilmstrip(input: FilmstripInput, image: ImageEncodeOptions):
     w.postMessage({ id, input, image });
   });
 }
+
+const TRY_FILM = { frames: 4, width: 72, height: 56 };
+
+export const drawTryFilm = async (shot: FilmShot): Promise<Blob | null> =>
+  shot.recording.nbody === shot.model.bodies.length
+    ? drawFilmstrip({ ...shot, ...TRY_FILM }, { type: 'image/webp', quality: 0.8 })
+    : null;

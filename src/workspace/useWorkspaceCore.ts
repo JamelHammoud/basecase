@@ -19,6 +19,7 @@ import { useCaseExplore } from './useCaseExplore';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useCaseRun } from './useCaseRun';
+import { useTriesMode } from './useTriesMode';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
@@ -130,8 +131,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
 
   const { travel } = docs;
-  const { restorePose } = posing;
-  const undo = () => travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
+  const undo = () => travel({ direction: 'undo', codeOnly: caseRun.open }, posing.restorePose);
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo });
@@ -182,10 +182,11 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     skeleton,
     simTraining,
     caseRun,
+    tries: useTriesMode({ caseId: simTraining.cases.active?.id ?? null, caseRunning: caseRun.open }),
     guide,
     buildAlong,
     undo,
-    redo: () => travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
+    redo: () => travel({ direction: 'redo', codeOnly: caseRun.open }, posing.restorePose),
     loadSeed,
   };
 }

@@ -3,8 +3,16 @@ import { stageCase, stagedEffectors } from '../cases/caseCast';
 import { caseCheckPool } from '../cases/caseChecksClient';
 import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import { generatedFrom, generatedTry, multipliable, sha256, type TryRecord, type TryScoring } from '../cases/tries';
-import { deleteRecording, loadRecording, saveRecording } from '../cases/tryStore';
+import {
+  generatedFrom,
+  generatedTry,
+  multipliable,
+  sha256,
+  type TryDraft,
+  type TryRecord,
+  type TryScoring,
+} from '../cases/tries';
+import { loadRecording } from '../cases/tryStore';
 import type { Variation } from '../cases/tryReplay';
 import { rigForWorker } from '../sim/drive';
 import type { Simulation } from '../sim/useSimulation';
@@ -26,7 +34,7 @@ interface MultiplyOptions {
   active: Case | null;
   tries: TryRecord[];
   partners: () => SlotRobot[];
-  onTries: (records: TryRecord[]) => void;
+  onTries: (drafts: TryDraft[]) => Promise<void>;
   showToast: ShowToast;
 }
 
@@ -80,25 +88,19 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
   };
 
   const keep = async (record: TryRecord, kept: Variation[], live: () => boolean) => {
-    const made = kept.map((v) =>
-      generatedTry({
+    const made = kept.map((v) => ({
+      record: generatedTry({
         source: record,
         manifest: record.manifest,
         seed: v.seed ?? 0,
         margin: v.margin,
         recording: v.recording,
       }),
-    );
+      recording: v.recording,
+      input: null,
+    }));
 
-    await Promise.all(made.map((t, i) => saveRecording(t.id, kept[i].recording)));
-
-    if (!live()) {
-      made.forEach((t) => void deleteRecording(t.id));
-
-      return;
-    }
-
-    if (made.length) onTries(made);
+    if (live() && made.length) await onTries(made);
   };
 
   const run = async (record: TryRecord, kase: Case) => {

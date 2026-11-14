@@ -23,12 +23,13 @@ function focusWhenMounted(inputRef: RefObject<HTMLInputElement | null>) {
   requestAnimationFrame(focus);
 }
 
-function useFindParts({ studio, tool }: WorkspaceCore) {
+function useFindParts({ studio, tool, tries }: WorkspaceCore) {
   const partsSearchRef = useRef<HTMLInputElement | null>(null);
   const { setIsLeftOpen } = studio;
   const { setLeftTab } = tool;
 
   const findParts = () => {
+    tries.leave();
     setIsLeftOpen(true);
     setLeftTab('parts');
     focusWhenMounted(partsSearchRef);
@@ -62,7 +63,7 @@ function useKeyEditClock() {
   };
 }
 
-function usePanelToggles({ studio, tool, caseRun }: WorkspaceCore) {
+function usePanelToggles({ studio, tool, caseRun, tries }: WorkspaceCore) {
   'use memo';
 
   const { setIsLeftOpen, setIsRightOpen, setPanelWidths, setResizingPanel } = studio;
@@ -82,8 +83,14 @@ function usePanelToggles({ studio, tool, caseRun }: WorkspaceCore) {
     toggleReferenceImages: () => setShowReferenceImages((v) => !v),
     toggleTrackpad: () => setTrackpadMode((m) => NEXT_SCROLL_MODE[m]),
     pickLeftView: (view: LeftTab) => {
+      const leaving = caseRun.open || tries.open;
+      const shown = isLeftOpen && (leftTab === view || (isPlayTab(leftTab) && isPlayTab(view)));
+
       if (caseRun.open) caseRun.leave();
-      else if (isLeftOpen && (leftTab === view || (isPlayTab(leftTab) && isPlayTab(view)))) {
+
+      tries.leave();
+
+      if (!leaving && shown) {
         setIsLeftOpen(false);
 
         return;

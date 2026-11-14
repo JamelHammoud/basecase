@@ -30,6 +30,7 @@ covers:
   - src/readiness/caseChecks.ts
   - src/cases/tries.ts
   - src/cases/tryStore.ts
+  - src/workspace/useSceneTries.ts
 ---
 
 Drive the robot through an open Case while Basecase records it, then see whether the try passed and replay it.
@@ -87,4 +88,4 @@ When the robot can't drive, **Teach It to Move** shows under **Try It**. It trai
 
 To teach the robot the Case's task instead of driving it, type a goal after **Teach it to** in **Train**, between **Control** and **Results**. Steps are in [Teach a robot a skill](/help/teach-a-robot-a-skill).
 
-Tries are kept on this computer, not in shared `.basecase` files. Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset). Once five pass, you can train a policy from them; see [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+Tries are kept on this computer, not in shared `.basecase` files. To see the tries from every scene together, [browse every try in the Library](/help/browse-every-try-in-the-library). Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset). Once five pass, you can train a policy from them; see [Train a policy from your tries](/help/train-a-policy-from-your-tries).

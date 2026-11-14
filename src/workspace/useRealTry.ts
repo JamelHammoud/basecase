@@ -2,8 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState, type RefObject } from 'rea
 import { stagedEffectors } from '../cases/caseCast';
 import { pivotAt, realRecording, type RealSample } from '../cases/mat/realTry';
 import type { Case } from '../cases/schema';
-import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
-import { saveRecording } from '../cases/tryStore';
+import { scoreTry, tryManifest, type TryDraft } from '../cases/tries';
 import {
   claimMatTracking,
   closeMatTracking,
@@ -31,7 +30,7 @@ interface RealTryOptions {
   matOf: () => StagedMat | null;
   viewportRef: RefObject<Viewport3DHandle | null>;
   onStart: () => void;
-  onTry: (record: TryRecord) => void;
+  onTry: (draft: TryDraft) => void;
   onRefuse: (message: string) => void;
 }
 
@@ -80,7 +79,7 @@ export function useRealTry(options: RealTryOptions): RealTry {
     setPhase('idle');
   };
 
-  const recordOf = async (current: Running): Promise<TryRecord> => {
+  const draftOf = async (current: Running): Promise<TryDraft> => {
     const { staged, mat, kase, samples } = current;
     const seconds = Math.min(kase.task.seconds, samples.at(-1)?.t ?? 0);
     const model = sim.modelNow() ?? (await sim.buildModel());
@@ -92,12 +91,8 @@ export function useRealTry(options: RealTryOptions): RealTry {
       rig,
       ...stagedEffectors(staged, { rig, parts }),
     });
-    const id = newTryId();
-
-    await saveRecording(id, recording);
-
-    return {
-      id,
+    const record = {
+      id: newTryId(),
       caseId: kase.id,
       robot: rig.robots[0]?.name ?? 'Robot',
       at: new Date().toISOString(),
@@ -105,8 +100,10 @@ export function useRealTry(options: RealTryOptions): RealTry {
       margin: verdict.margin,
       seconds: recording.frames * recording.dt,
       manifest: await tryManifest(staged.kase, model, recording),
-      real: true,
+      real: true as const,
     };
+
+    return { record, recording, input: null };
   };
 
   const finish = async () => {
@@ -120,7 +117,7 @@ export function useRealTry(options: RealTryOptions): RealTry {
     setPhase('scoring');
 
     try {
-      if (current.samples.length) onTry(await recordOf(current));
+      if (current.samples.length) onTry(await draftOf(current));
     } finally {
       settle();
     }

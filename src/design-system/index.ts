@@ -32,6 +32,7 @@ export * from './Toast';
 export * from './Spinner';
 export * from './EmptyState';
 export * from './DropOverlay';
+export * from './LoadMore';
 export * from './NoMatches';
 export * from './MetaLine';
 export * from './ContextMenu';

@@ -3,8 +3,7 @@ import { castOf, stageCase, stagedEffectors, type StagedCase } from '../cases/ca
 import { driveFor, slotIndexOf, toCommand } from '../cases/caseDrives';
 import { worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
-import { saveRecording } from '../cases/tryStore';
+import { scoreTry, tryManifest, type TryDraft } from '../cases/tries';
 import type { RobotDrive } from '../sim/drive';
 import type { DriveTeam } from '../sim/useDrive';
 import type { Simulation } from '../sim/useSimulation';
@@ -22,7 +21,7 @@ interface TryOptions {
   joints: RobotJoint[];
   active: Case | null;
   partners: () => SlotRobot[];
-  onTry: (record: TryRecord) => void;
+  onTry: (draft: TryDraft) => void;
   onRefuse: (message: string) => void;
   skills?: RoutineSkills;
 }
@@ -63,6 +62,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [startedAt, setStartedAt] = useState(0);
   const finishing = useRef(false);
+  const input = useRef<string | null>(null);
   const time = sim.stats?.time ?? 0;
   const elapsed = phase === 'running' ? Math.max(0, time - startedAt) : 0;
 
@@ -93,11 +93,8 @@ export function useCaseTry(options: TryOptions): CaseTry {
       rig,
       ...stagedEffectors(staged, { rig, parts }),
     });
-    const id = newTryId();
-
-    await saveRecording(id, recording);
-    onTry({
-      id,
+    const record = {
+      id: newTryId(),
       caseId: kase.id,
       robot: rig.robots[0]?.name ?? 'Robot',
       at: new Date().toISOString(),
@@ -105,7 +102,9 @@ export function useCaseTry(options: TryOptions): CaseTry {
       margin: verdict.margin,
       seconds: recording.frames * recording.dt,
       manifest: await tryManifest(staged.kase, model, recording),
-    });
+    };
+
+    onTry({ record, recording, input: input.current });
     sim.drive.stop();
     setPhase('idle');
     finishing.current = false;
@@ -148,6 +147,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
       return;
     }
 
+    input.current = all ? 'script' : null;
     setStartedAt(sim.latestStats()?.time ?? 0);
     sim.runCase({ kase, plan: logic.plan, joints, kit: logic.kit });
     sim.record();

@@ -1,7 +1,7 @@
 ---
 title: Arena
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: concept
 order: 3
@@ -45,7 +45,7 @@ A skill passes when, in every variant, the share of passing tries is at least 75
 
 The skill's row shows its weakest variant, such as "31 of 32 tries, at least 86%". The percentage is the confidence bound, so it's lower than the raw share of passing tries.
 
-Basecase drops a Motor Kit skill that fails. Its row shows the weakest variant of its best try, such as "Refused in Arena: 20 of 32 tries". For Walk, this includes the runs at half speed and standing still.
+Basecase drops a Motor Kit skill that fails. Its row shows the weakest variant of its best try, such as "Refused in Arena: 20 of 32 tries". For Walk, this includes the runs at half speed and standing still. Basecase also drops a move trained from an animation that fails, and its row says why.
 
 If you trained a policy from a Case's tries, the Case judges it in Arena's place. The policy runs the Case 32 times. Each run starts with joints up to 5° off, and draws friction, masses, servo strength and delays of up to 20 ms the same way **Checks** does. The bar stays at 29 of 32. For steps, see [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 

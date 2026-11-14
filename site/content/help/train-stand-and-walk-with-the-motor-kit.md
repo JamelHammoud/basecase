@@ -1,7 +1,7 @@
 ---
 title: Train Stand and Walk with the Motor Kit
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 8
@@ -65,6 +65,8 @@ To stop training, click **Stop training** (■) on the row. To learn more about 
 You can also train **Walk** from **Teach It to Move**, under **Control**.
 
 If a skill fails Arena, Basecase discards it. The row shows how close it came, such as "Refused in Arena: 20 of 32 tries", and offers **Train** so you can try again.
+
+Only one skill trains at a time. If you click **Train** on another, a message names the one that's training. When training can't start, its row says why, such as "Training needs uv".
 
 ## In the browser
 

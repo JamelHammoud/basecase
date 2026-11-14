@@ -232,6 +232,13 @@ interface BuildStudio extends Studio {
   readySteps: () => boolean[];
 }
 
+interface Send {
+  plate: number;
+  printerId: string;
+}
+
+const sends: Send[] = [];
+
 const readySteps = () =>
   app.page.evaluate(() => (window as unknown as { __studio: BuildStudio }).__studio.readySteps());
 
@@ -244,9 +251,11 @@ async function stubPrinters() {
   await app.page.route('**/api/bridge/print-slice', (route) =>
     route.fulfill({ json: { slicer: { name: 'OrcaSlicer', version: null }, slicedAt: '', plates: [] } }),
   );
-  await app.page.route('**/api/bridge/print-send', (route) =>
-    route.fulfill({ json: { started: true, message: 'Started' } }),
-  );
+  await app.page.route('**/api/bridge/print-send', (route) => {
+    sends.push((route.request().postDataJSON() as { arg: Send }).arg);
+
+    return route.fulfill({ json: { started: true, message: 'Started' } });
+  });
 }
 
 async function addFoundPrinters() {
@@ -295,12 +304,8 @@ describe('printing in build order on every printer', () => {
         .getByRole('button', { name: 'Start Next' })
         .click();
       await app.page.getByRole('button', { name: 'Start Print' }).click();
-      await expect.poll(() => app.posts.filter((p) => p.route === 'print-send').length).toBe(i + 1);
+      await expect.poll(() => sends.length).toBe(i + 1);
     }
-
-    const sends = app.posts
-      .filter((p) => p.route === 'print-send')
-      .map((p) => (p.body as { arg: { plate: number; printerId: string } }).arg);
 
     expect(sends.map((s) => s.plate)).toEqual([1, 2]);
     expect(new Set(sends.map((s) => s.printerId)).size).toBe(2);

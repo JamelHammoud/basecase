@@ -1,7 +1,7 @@
 ---
 title: The design agent
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: concept
 order: 1
@@ -73,7 +73,7 @@ Matching a photo's silhouette matters less than any of these.
 
 After each edit, the agent sees the same Checks as the **Build** tab. It never passes a check by narrowing a joint's range, hiding a part, deleting a part or editing a Case. If a check seems wrong, it tells you instead.
 
-When a new blocker appears, the agent follows up on its own, up to twice per message. To turn this off, go to **Settings** ▸ **Build**.
+When a new blocker appears, the agent follows up on its own, up to twice per message. The follow-up shows in the chat as “Fix what the last change added: 2 problems.” over the new problems. To turn this off, go to **Settings** ▸ **Build**.
 
 If the scene has Cases, it runs each one and isn't done until they pass. For the steps, see [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 

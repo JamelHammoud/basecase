@@ -32,6 +32,7 @@ export * from './Toast';
 export * from './Spinner';
 export * from './ProgressBar';
 export * from './EmptyState';
+export * from './ErrorBoundary';
 export * from './DropOverlay';
 export * from './NoMatches';
 export * from './MetaLine';

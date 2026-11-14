@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nightlyDue, rerunSuite, retryRelease, suiteDue } from './nightly.mjs';
+import { nextVersion, nightlyDue, releaseDue, rerunSuite, suiteDue } from './nightly.mjs';
 
 const at = (iso) => new Date(iso);
 
@@ -38,17 +38,19 @@ describe('the nightly full suite', () => {
     expect(rerunSuite({ now, last: { ...last, conclusion: 'cancelled' }, mainHead: 'bbb', running: false })).toBe(true);
   });
 
-  it('tries the release again every two hours until one goes out that day', () => {
-    const now = Date.parse('2026-11-13T13:00:00Z');
+  it('releases right after the suite passes on a commit it has not tried, once a day, never over a running release', () => {
+    const now = Date.parse('2026-11-14T13:00:00Z');
+    const base = { now, green: 'bbb', tried: ['aaa'], lastReleaseAt: '2026-11-13T09:40:00Z', running: false };
 
-    expect(retryRelease({ now, lastReleaseAt: '2026-11-12T09:40:00Z', lastNightlyAt: '2026-11-13T09:20:00Z' })).toBe(
-      true,
-    );
-    expect(retryRelease({ now, lastReleaseAt: '2026-11-13T09:40:00Z', lastNightlyAt: '2026-11-13T09:20:00Z' })).toBe(
-      false,
-    );
-    expect(retryRelease({ now, lastReleaseAt: '2026-11-12T09:40:00Z', lastNightlyAt: '2026-11-13T12:00:00Z' })).toBe(
-      false,
-    );
+    expect(releaseDue(base)).toBe(true);
+    expect(releaseDue({ ...base, green: 'aaa' })).toBe(false);
+    expect(releaseDue({ ...base, green: null })).toBe(false);
+    expect(releaseDue({ ...base, running: true })).toBe(false);
+    expect(releaseDue({ ...base, lastReleaseAt: '2026-11-14T08:00:00Z' })).toBe(false);
+  });
+
+  it('bumps the patch version', () => {
+    expect(nextVersion('v0.1.2')).toBe('0.1.3');
+    expect(nextVersion('0.9.9')).toBe('0.9.10');
   });
 });

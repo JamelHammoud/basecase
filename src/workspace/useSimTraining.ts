@@ -129,6 +129,8 @@ export function useSimTraining(options: SimTrainingOptions) {
     sim,
     commitParts,
     updateProjectNow,
+    commitRoutines: docs.commitRoutines,
+    undo: () => docs.travel({ direction: 'undo' }, posing.restorePose),
     showToast,
     skills: skills.routineSkills,
     trainHandoff: skills.trainHandoff,

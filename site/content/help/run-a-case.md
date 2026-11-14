@@ -60,7 +60,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 7. Click **Done** or press [[Esc]] to go back. The first [[Esc]] stops driving. Your parts, selection and camera are as you left them.
 
-A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. Ask the agent for a Case in words and it writes one, or edit that file. New Case and the templates make Cases without one.
+A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. Ask the agent for a Case in words and it writes one. You can move, resize, add and delete its panels while it runs, as in [Arrange a Case's console](/help/arrange-a-case-console). New Case and the templates make Cases without one.
 
 A console says which inputs drive the Case, which cards sit on which side of the canvas and how wide, and what's in them: a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above. A game Case, for example, can put its time and score on the left and Try It, Reset and the tries on the right; the time counts down while you play, and between tries Reset puts the robot, the blocks and the score back.
 
@@ -86,4 +86,4 @@ The agent can write these panels and change them while the Case runs. [Build a C
 
 A link made with **Share Robot** opens the same console in the browser, as in [Share a robot as a link](/help/share-a-robot-as-a-link). Camera panels, the servos table and the tries stay in the studio. In the browser, code panels get no camera frames and keep no values.
 
-Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Multiply** and the dataset ones.
+Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Add Panel**, **Multiply** and the dataset ones.

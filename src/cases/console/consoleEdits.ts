@@ -1,0 +1,154 @@
+import { errorMessage } from '../../utils/errorMessage';
+import { parseCase, type Case } from '../schema';
+import { copyOf, isCanvas, placedOn, SIDE_SIZE, withoutPanel, withoutPlace, type ConsoleEdit } from './codeEdits';
+import { AREA_MAX, AREA_MIN, type CaseConsole } from './format';
+import {
+  CASE_ACTION_LABELS,
+  CASE_ACTIONS,
+  PANEL_KIND_NAMES,
+  readPanelConfig,
+  type PanelKind,
+  type PanelSpec,
+} from './panelKinds';
+import type { SignalScope } from './signalNames';
+
+export type PanelDrop = { area: number; before?: string } | { column: number };
+
+export type AddableKind = Exclude<PanelKind, 'code'>;
+
+export const ADDABLE_KINDS = PANEL_KIND_NAMES.filter((k): k is AddableKind => k !== 'code');
+
+export interface PanelChoice {
+  label: string;
+  config: Record<string, unknown>;
+  title?: string;
+}
+
+const MOVING = '\u0000moving';
+
+const titleCase = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+
+export const kindLabel = (kind: PanelKind) => titleCase(kind);
+
+const missing = (id: string): ConsoleEdit => ({ ok: false, problem: `This console has no panel named ${id}.` });
+
+const has = (c: CaseConsole, id: string) => c.panels.some((p) => p.id === id);
+
+const insertedBefore = (ids: string[], id: string, before: string | undefined) => {
+  const at = before === undefined ? -1 : ids.indexOf(before);
+
+  return at < 0 ? [...ids, id] : ids.toSpliced(at, 0, id);
+};
+
+export function movePanel(current: CaseConsole | undefined, id: string, to: PanelDrop): ConsoleEdit {
+  const next = copyOf(current);
+
+  if (!has(next, id)) return missing(id);
+
+  const marked =
+    'column' in to
+      ? next.layout.areas.toSpliced(to.column, 0, { size: SIDE_SIZE, panels: [MOVING] })
+      : next.layout.areas.map((a, i) =>
+          i === to.area && !isCanvas(a) ? { ...a, panels: insertedBefore(a.panels, MOVING, to.before) } : a,
+        );
+  const areas = withoutPlace(marked, id).map((a) =>
+    isCanvas(a) ? a : { ...a, panels: a.panels.map((p) => (p === MOVING ? id : p)) },
+  );
+
+  return { ok: true, console: { ...next, layout: { areas } } };
+}
+
+export const areaSize = (size: number) => Math.round(Math.min(AREA_MAX, Math.max(AREA_MIN, size)));
+
+export function resizeArea(current: CaseConsole | undefined, at: number, size: number): ConsoleEdit {
+  const next = copyOf(current);
+  const area = next.layout.areas[at];
+
+  if (!area || isCanvas(area)) return { ok: false, problem: `layout.areas[${at}] isn’t a column of panels.` };
+
+  const areas = next.layout.areas.map((a, i) => (i === at ? { ...area, size: areaSize(size) } : a));
+
+  return { ok: true, console: { ...next, layout: { areas } } };
+}
+
+const freshId = (c: CaseConsole, kind: PanelKind) => {
+  const taken = new Set(c.panels.map((p) => p.id));
+  let n = 1;
+
+  while (taken.has(n === 1 ? kind : `${kind}-${n}`)) n++;
+
+  return n === 1 ? kind : `${kind}-${n}`;
+};
+
+export function addPanel(
+  current: CaseConsole | undefined,
+  add: { kind: AddableKind; choice: PanelChoice; area?: number },
+): ConsoleEdit {
+  const next = copyOf(current);
+  const id = freshId(next, add.kind);
+  const { title, config } = add.choice;
+  const panel = { id, kind: add.kind, ...(title === undefined ? {} : { title }), ...config } as PanelSpec;
+  const target = add.area === undefined ? undefined : next.layout.areas[add.area];
+  const areas =
+    target && !isCanvas(target)
+      ? next.layout.areas.map((a) => (a === target ? { ...target, panels: [...target.panels, id] } : a))
+      : placedOn(next.layout.areas, id, { side: 'right' });
+
+  return { ok: true, console: { ...next, panels: [...next.panels, panel], layout: { areas } } };
+}
+
+export function deletePanel(current: CaseConsole | undefined, id: string): ConsoleEdit {
+  const next = copyOf(current);
+
+  return has(next, id) ? { ok: true, console: withoutPanel(next, id) } : missing(id);
+}
+
+export function renamePanel(current: CaseConsole | undefined, id: string, title: string): ConsoleEdit {
+  const next = copyOf(current);
+
+  if (!has(next, id)) return missing(id);
+
+  return { ok: true, console: { ...next, panels: next.panels.map((p) => (p.id === id ? { ...p, title } : p)) } };
+}
+
+const signalChoice = (title: boolean, config: (name: string) => Record<string, unknown>) => (names: string[]) =>
+  names.map((name) => ({ label: name, config: config(name), ...(title ? { title: name } : {}) }));
+
+const ofChoices = (...values: string[]) => values.map((of) => ({ label: titleCase(of), config: { of } }));
+
+const CANDIDATES: Record<AddableKind, (names: string[]) => PanelChoice[]> = {
+  camera: signalChoice(false, (signal) => ({ signal })),
+  value: signalChoice(true, (signal) => ({ signal })),
+  plot: signalChoice(true, (signal) => ({ signals: [signal] })),
+  table: (names) => [
+    ...ofChoices('servos', 'joints'),
+    ...signalChoice(true, (signal) => ({ of: 'signals', signals: [signal] }))(names),
+  ],
+  button: () => CASE_ACTIONS.map((action) => ({ label: CASE_ACTION_LABELS[action], config: { action } })),
+  list: () => ofChoices('tries', 'failures'),
+  text: () => ofChoices('brief'),
+  map: () => [{ label: kindLabel('map'), config: {} }],
+};
+
+const reads = (kind: PanelKind, config: Record<string, unknown>, scope: SignalScope) => {
+  try {
+    readPanelConfig(kind, config, 'panel', scope);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const panelChoices = (kind: AddableKind, names: string[], scope: SignalScope): PanelChoice[] =>
+  CANDIDATES[kind](names).filter((choice) => reads(kind, choice.config, scope));
+
+export function checkedConsole(kase: Case, edit: ConsoleEdit): Case | string {
+  if (!edit.ok) return edit.problem;
+
+  try {
+    return parseCase({ ...kase, console: edit.console });
+  } catch (e) {
+    return errorMessage(e);
+  }
+}

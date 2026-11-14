@@ -1,6 +1,7 @@
 import type { PoseReply } from '../agent/agentPose';
 import { describeMarks } from '../agent/agentMarks';
 import { partCode, partRecord, partSource } from '../agent/agentPartRecord';
+import { consolesForAgent } from '../cases/console/consoleForAgent';
 import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
@@ -282,8 +283,13 @@ const HANDLERS: Record<string, Handler> = {
   snapshot: async (_payload, ctx) => {
     const marks = describeMarks(ctx.project().marks, ctx.parts());
     const measured = await ctx.viewport()?.measureParts();
+    const consoles = consolesForAgent(ctx.project().cases);
 
-    return { ...snapshotScene(ctx.parts(), measured), ...(marks.length ? { marks } : {}) };
+    return {
+      ...snapshotScene(ctx.parts(), measured),
+      ...(marks.length ? { marks } : {}),
+      ...(consoles.length ? { consoles } : {}),
+    };
   },
   focus,
   part_code: (payload, ctx) => partCode(ctx.parts(), String(payload.id)),

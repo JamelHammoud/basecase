@@ -5,6 +5,15 @@ export const CASE_ACTIONS = ['try', 'end-try', 'drive', 'stop', 'start-over', 'r
 
 export type CaseAction = (typeof CASE_ACTIONS)[number];
 
+export const CASE_ACTION_LABELS: Record<CaseAction, string> = {
+  try: 'Try It',
+  'end-try': 'Stop Try',
+  drive: 'Drive',
+  stop: 'Stop Driving',
+  'start-over': 'Start Over',
+  reset: 'Reset',
+};
+
 type Config = Record<string, unknown>;
 
 interface PanelKindSpec<C extends Config> {

@@ -46,8 +46,9 @@ export const MAX_CODE_PANELS = 4;
 
 const OVERLAY_MIN = 40;
 const OVERLAY_MAX = 1600;
-const AREA_MIN = 200;
-const AREA_MAX = 720;
+
+export const AREA_MIN = 200;
+export const AREA_MAX = 720;
 
 const unique = <T>(items: T[], key: (item: T) => string, where: string) => {
   const seen = new Set<string>();

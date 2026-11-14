@@ -1,16 +1,10 @@
 import type { CodeReport } from '../cases/console/codeBridge';
-import {
-  codePanelsOf,
-  withCodePanel,
-  withoutCodePanel,
-  type CodeEdit,
-  type CodePlace,
-} from '../cases/console/codeEdits';
+import { codePanelsOf, withCodePanel, withoutCodePanel, type CodePlace } from '../cases/console/codeEdits';
 import { codePanelKey, codeReport, codeReportsWatched } from '../cases/console/codeReports';
 import type { CaseConsole } from '../cases/console/format';
 import { OVERLAY_ANCHORS, type OverlayAnchor } from '../cases/console/format';
-import { parseCase, type Case } from '../cases/schema';
-import { errorMessage } from '../utils/errorMessage';
+import { checkedConsole } from '../cases/console/consoleEdits';
+import type { Case } from '../cases/schema';
 import { caseNamed } from './agentCaseRun';
 import type { Cases } from './useCases';
 import type { CaseRun } from './useCaseRun';
@@ -87,16 +81,6 @@ function readPlace(value: unknown): CodePlace | undefined {
   return undefined;
 }
 
-function checked(kase: Case, edit: CodeEdit): Case | string {
-  if (!edit.ok) return edit.problem;
-
-  try {
-    return parseCase({ ...kase, console: edit.console });
-  } catch (e) {
-    return errorMessage(e);
-  }
-}
-
 function runIt(kase: Case, ctx: CaseCodeContext) {
   if (ctx.caseRun.open && ctx.cases.active?.id === kase.id) return;
 
@@ -121,7 +105,7 @@ async function writeCaseCode(payload: Payload, ctx: CaseCodeContext) {
     height: num(payload.height),
     place: readPlace(payload.place),
   };
-  const next = checked(kase, withCodePanel(kase.console, write));
+  const next = checkedConsole(kase, withCodePanel(kase.console, write));
 
   if (typeof next === 'string') return { ok: false, problem: next };
 
@@ -198,7 +182,7 @@ function deleteCaseCode(payload: Payload, ctx: CaseCodeContext) {
   if (typeof kase === 'string') return { ok: false, problem: kase };
 
   const panel = String(payload.panel ?? '');
-  const next = checked(kase, withoutCodePanel(kase.console, panel));
+  const next = checkedConsole(kase, withoutCodePanel(kase.console, panel));
 
   if (typeof next === 'string') return { ok: false, problem: next };
 

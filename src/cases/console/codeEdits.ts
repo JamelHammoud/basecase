@@ -14,16 +14,17 @@ export interface CodeWrite {
   place?: CodePlace;
 }
 
-export type CodeEdit = { ok: true; console: CaseConsole } | { ok: false; problem: string };
+export type ConsoleEdit = { ok: true; console: CaseConsole } | { ok: false; problem: string };
 
 const MAX_INPUTS = 4;
-const SIDE_SIZE = 320;
 
-const copyOf = (c: CaseConsole | undefined): CaseConsole => structuredClone(c ?? DEFAULT_CONSOLE);
+export const SIDE_SIZE = 320;
 
-const isCanvas = (a: ConsoleArea): a is Extract<ConsoleArea, { canvas: true }> => 'canvas' in a;
+export const copyOf = (c: CaseConsole | undefined): CaseConsole => structuredClone(c ?? DEFAULT_CONSOLE);
 
-function withoutPlace(areas: ConsoleArea[], id: string): ConsoleArea[] {
+export const isCanvas = (a: ConsoleArea): a is Extract<ConsoleArea, { canvas: true }> => 'canvas' in a;
+
+export function withoutPlace(areas: ConsoleArea[], id: string): ConsoleArea[] {
   return areas.flatMap((a): ConsoleArea[] => {
     if (isCanvas(a)) {
       const overlays = (a.overlays ?? []).filter((o) => o.panel !== id);
@@ -37,7 +38,7 @@ function withoutPlace(areas: ConsoleArea[], id: string): ConsoleArea[] {
   });
 }
 
-function placedOn(areas: ConsoleArea[], id: string, place: CodePlace): ConsoleArea[] {
+export function placedOn(areas: ConsoleArea[], id: string, place: CodePlace): ConsoleArea[] {
   const at = areas.findIndex(isCanvas);
 
   if ('overlay' in place) {
@@ -83,7 +84,7 @@ function codeSpec(write: CodeWrite, existing: PanelSpec | undefined): PanelSpec 
 const withCodeInput = (input: string[]) =>
   input.includes('code') || input.length >= MAX_INPUTS ? input : [...input, 'code'];
 
-export function withCodePanel(current: CaseConsole | undefined, write: CodeWrite): CodeEdit {
+export function withCodePanel(current: CaseConsole | undefined, write: CodeWrite): ConsoleEdit {
   const next = copyOf(current);
   const existing = next.panels.find((p) => p.id === write.panel);
 
@@ -107,20 +108,19 @@ export function withCodePanel(current: CaseConsole | undefined, write: CodeWrite
   };
 }
 
-export function withoutCodePanel(current: CaseConsole | undefined, id: string): CodeEdit {
+export function withoutCodePanel(current: CaseConsole | undefined, id: string): ConsoleEdit {
   const panel = current?.panels.find((p) => p.id === id);
 
   if (!current || panel?.kind !== 'code') return { ok: false, problem: `This Case has no code panel named ${id}.` };
 
-  return {
-    ok: true,
-    console: {
-      ...current,
-      panels: current.panels.filter((p) => p.id !== id),
-      layout: { areas: withoutPlace(current.layout.areas, id) },
-    },
-  };
+  return { ok: true, console: withoutPanel(current, id) };
 }
+
+export const withoutPanel = (current: CaseConsole, id: string): CaseConsole => ({
+  ...current,
+  panels: current.panels.filter((p) => p.id !== id),
+  layout: { areas: withoutPlace(current.layout.areas, id) },
+});
 
 export const codePanelsOf = (c: CaseConsole | undefined) =>
   (c?.panels ?? []).filter((p): p is Extract<PanelSpec, { kind: 'code' }> => p.kind === 'code');

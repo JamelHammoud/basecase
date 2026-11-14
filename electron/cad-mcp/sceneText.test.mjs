@@ -130,6 +130,26 @@ describe('sceneText with booleans', () => {
   });
 });
 
+describe('sceneText with Case consoles', () => {
+  it('ends with each Case’s console as the person arranged it, in the full list and the summary', () => {
+    const console = {
+      input: ['keys'],
+      panels: [{ id: 'plot', kind: 'plot', title: 'joint.*.position', signals: ['joint.*.position'] }],
+      layout: { areas: [{ size: 360, panels: ['plot'] }, { canvas: true }] },
+    };
+    const consoles = [{ case: 'reach', name: 'Reach', console }];
+
+    for (const count of [2, 30]) {
+      const lines = sceneText({ ...scene(count), consoles }).split('\n');
+
+      expect(lines.at(-2)).toMatch(/^Case consoles, as the person last arranged them/);
+      expect(JSON.parse(lines.at(-1))).toEqual(consoles[0]);
+    }
+
+    expect(sceneText(scene(2))).not.toContain('Case consoles');
+  });
+});
+
 describe('findInScene', () => {
   it('matches words, group and a region, and sorts by distance with near', () => {
     expect(findInScene(scene(30), { query: 'part 7' })).toContain('1 of 30 parts matched');

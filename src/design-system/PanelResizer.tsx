@@ -5,9 +5,9 @@ export interface PanelResizerProps {
   width: number;
   min: number;
   max: number;
-  defaultWidth: number;
+  defaultWidth?: number;
   onResize: (width: number) => void;
-  onCollapse: () => void;
+  onCollapse?: () => void;
   onResizingChange?: (resizing: boolean) => void;
 }
 
@@ -61,7 +61,7 @@ export const PanelResizer: React.FC<PanelResizerProps> = ({
         const dx = e.clientX - start.x;
         const raw = start.width + (edge === 'right' ? dx : -dx);
 
-        if (raw < min - COLLAPSE_SLACK) {
+        if (onCollapse && raw < min - COLLAPSE_SLACK) {
           end(e.currentTarget, e.pointerId);
           onCollapse();
 
@@ -72,7 +72,9 @@ export const PanelResizer: React.FC<PanelResizerProps> = ({
       }}
       onPointerUp={(e) => end(e.currentTarget, e.pointerId)}
       onPointerCancel={(e) => end(e.currentTarget, e.pointerId)}
-      onDoubleClick={() => onResize(defaultWidth)}
+      onDoubleClick={() => {
+        if (defaultWidth !== undefined) onResize(defaultWidth);
+      }}
       className={`group absolute top-0 bottom-0 z-30 w-[8px] cursor-col-resize ${edge === 'right' ? 'right-0' : 'left-0'}`}
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >

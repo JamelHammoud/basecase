@@ -97,28 +97,38 @@ function missingIds(parts, ids) {
   return missing.length ? [`Not in the scene: ${missing.join(', ')}.`] : [];
 }
 
-function summary(snap, picked, marks) {
+const CONSOLES_NOTE =
+  'Case consoles, as the person last arranged them (code sources left out; read_case_code reads one). Build on this layout:';
+
+function tail(snap) {
+  const marks = snap.marks?.length ? ['Marks:', ...snap.marks.map((m) => JSON.stringify(m))] : [];
+  const consoles = snap.consoles?.length ? [CONSOLES_NOTE, ...snap.consoles.map((c) => JSON.stringify(c))] : [];
+
+  return [...marks, ...consoles];
+}
+
+function summary(snap, picked, extra) {
   return [
     ...header(snap, [], false).slice(0, 2),
     `${plural(picked.length, 'part')}, by group. Call get_scene with group or ids for full lines (placement, size, box, ports, notes), or find_in_scene to search:`,
     ...groupSummary(picked),
-    ...marks,
+    ...extra,
   ].join('\n');
 }
 
 export function sceneText(snap, filter = {}) {
   const filtered = !!(filter.ids?.length || filter.group);
   const picked = pickParts(snap.parts, filter);
-  const marks = snap.marks?.length ? ['Marks:', ...snap.marks.map((m) => JSON.stringify(m))] : [];
+  const extra = tail(snap);
   const list = (withNotes) =>
     [
       ...header(snap, picked, filtered),
       ...picked.flatMap((p) => partLines(p, withNotes)),
       ...missingIds(snap.parts, filter.ids),
-      ...marks,
+      ...extra,
     ].join('\n');
 
-  if (!filtered && picked.length > FULL_LIST_PARTS) return summary(snap, picked, marks);
+  if (!filtered && picked.length > FULL_LIST_PARTS) return summary(snap, picked, extra);
 
   const full = list(true);
 
@@ -126,5 +136,5 @@ export function sceneText(snap, filter = {}) {
 
   const noNotes = `${list(false)}\nNotes left out to fit. Call get_scene with fewer ids to read them.`;
 
-  return noNotes.length <= MAX_SCENE_CHARS || filtered ? noNotes : summary(snap, picked, marks);
+  return noNotes.length <= MAX_SCENE_CHARS || filtered ? noNotes : summary(snap, picked, extra);
 }

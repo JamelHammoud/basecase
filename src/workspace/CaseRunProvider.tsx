@@ -10,8 +10,11 @@ import { useCameraTiles } from '../components/cameras/useCameraTiles';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
 import { CodeOverlays } from '../components/caseRun/code/CodeOverlays';
 import { startDriving } from '../components/simulate/driveWithCamera';
-import { ModeHeader } from '../design-system';
+import { ContextMenu, ModeHeader } from '../design-system';
 import type { PanelContext } from '../components/caseRun/panelContext';
+import type { ConsoleEditor } from '../components/caseRun/edit/consoleEditor';
+import { addPanelEntries } from '../components/caseRun/edit/AddPanelMenu';
+import { useConsoleEditor } from './useConsoleEditor';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useConsoleSignals } from './useConsoleSignals';
@@ -19,6 +22,7 @@ import { showPartsSection } from './showView';
 
 interface CenterValue {
   ctx: PanelContext;
+  editor: ConsoleEditor;
   areas: ConsoleLayout;
   title: string;
   onDone: () => void;
@@ -73,6 +77,9 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     cameras: cameras.views.map((v) => v.key),
   });
   const { can, run } = useActions(core);
+  const scope = consoleScope(caseConsole, cases.active);
+  const joints = core.project.joints ?? [];
+  const editor = useConsoleEditor(core, { bus, scope, joints });
 
   const fire = (action: CaseAction) => {
     if (!can(action)) return;
@@ -103,13 +110,13 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
         ctx: {
           bus,
           signals: caseConsole.signals ?? [],
-          scope: consoleScope(caseConsole, cases.active),
+          scope,
           inputs: caseConsole.input,
           brief: cases.active?.brief ?? '',
           world: movableWorld(cases.active, robotFacts(posing.rig, parts)),
           sim,
           parts,
-          joints: core.project.joints ?? [],
+          joints,
           fire,
           can,
           studio: {
@@ -121,6 +128,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
             },
           },
         },
+        editor,
         areas: layout,
         title: cases.active?.name ?? '',
         onDone: caseRun.leave,
@@ -131,6 +139,14 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     <CaseRunContext value={value}>
       {children}
       {open && cameras.menu}
+      {caseRun.adding && (
+        <ContextMenu
+          x={caseRun.adding.x}
+          y={caseRun.adding.y}
+          items={addPanelEntries(editor)}
+          onClose={caseRun.doneAdding}
+        />
+      )}
     </CaseRunContext>
   );
 }
@@ -146,6 +162,7 @@ export function CaseRunAreas({ side }: { side: 'before' | 'after' }) {
       area={area}
       side={side}
       ctx={running.ctx}
+      editor={running.editor}
       header={<ModeHeader title={running.title} onDone={running.onDone} />}
     />
   ));

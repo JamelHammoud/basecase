@@ -88,3 +88,22 @@ export const matches = (pattern: string, id: string) => {
     id.startsWith(before) && id.endsWith(after) && !id.slice(before.length, id.length - after.length).includes('.')
   );
 };
+
+export function signalNamesOf(scope: SignalScope, joints: readonly string[], live: readonly string[]): string[] {
+  const named = [
+    'time',
+    ...scope.declared,
+    ...joints.flatMap((id) => JOINT_FIELDS.map((field) => `joint.${id}.${field}`)),
+    ...ROBOT_FIELDS.map((field) => `robot.${field}`),
+    ...[...scope.probes].map((probe) => `probe.${probe}`),
+    ...[...scope.inputs].flatMap((source) => INPUT_AXES.map((axis) => `input.${source}.${axis}`)),
+    ...GOAL_FIELDS.map((field) => `goal.${field}`),
+    ...live,
+  ];
+  const wildcards = [
+    ...(joints.length ? JOINT_FIELDS.map((field) => `joint.*.${field}`) : []),
+    ...(named.some((id) => id.startsWith('camera.')) ? ['camera.*'] : []),
+  ];
+
+  return [...new Set([...wildcards, ...named])];
+}

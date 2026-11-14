@@ -35,6 +35,7 @@ export const STAYS_IN_RUN = new Set([
   'drive-stop',
   'drive-respawn',
   'case-try',
+  'case-add-panel',
   'case-multiply',
   'case-export-dataset',
   'case-publish-dataset',
@@ -55,6 +56,26 @@ const runCaseCommand = (core: WorkspaceCore): Command => ({
   keywords: 'case app console teleop cameras joints tries operator dashboard',
   run: core.caseRun.enter,
 });
+
+const addPanelAt = () => {
+  const card = [...document.querySelectorAll('[data-area-card]')].at(-1)?.getBoundingClientRect();
+
+  return card ? { x: card.left + 12, y: card.top + 12 } : { x: window.innerWidth / 2, y: window.innerHeight / 3 };
+};
+
+const addPanelCommands = ({ caseRun }: WorkspaceCore): Command[] =>
+  caseRun.open
+    ? [
+        {
+          id: 'case-add-panel',
+          group: 'Simulate',
+          label: 'Add Panel',
+          icon: <PlusIcon className={ic} />,
+          keywords: 'console layout plot value camera table button chart readout',
+          run: () => caseRun.addPanel(addPanelAt()),
+        },
+      ]
+    : [];
 
 function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Command[] {
   if (dataset.exporting) return [];
@@ -295,6 +316,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...respawn,
     ...tryIt,
     ...caseRun,
+    ...addPanelCommands(core),
     ...renameCommands(core),
     ...(cases.active ? compareCommands(core) : []),
     ...exploreCommands(core),

@@ -21,6 +21,7 @@ type Studio = {
   load: (r: unknown) => void;
   parts: () => ScenePart[];
   attachRobot: (link: unknown) => void;
+  sceneRecord: () => { project: { cases?: Array<{ id: string; console?: { layout: { areas: unknown[] } } }> } };
 };
 
 const simState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
@@ -77,6 +78,54 @@ function armWithCamera() {
     },
   };
 }
+
+async function runBlockGame() {
+  const { page } = app;
+  const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+  const game = ARC_CONSOLES.find((c) => c.name === 'Block game')!.console;
+  const kase = {
+    ...presetCase('touch-the-dots', buildRig(arm.joints, arm.parts), arm.parts),
+    id: 'block-game',
+    name: 'Knock the Dots',
+    console: game,
+  };
+  const scene = {
+    name: 'block-game',
+    parts: arm.parts,
+    project: { ...DEFAULT_PROJECT, joints: arm.joints, cases: [kase] },
+  };
+
+  await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
+  await expect.poll(() => partCount(page)).toBe(arm.parts.length);
+  await openPlayTab(page, 'Cases');
+  await page.locator(shown('[data-testid="cases-panel"] button'), { hasText: 'Knock the Dots' }).first().click();
+  await expect.poll(async () => (await simState()).activeCase).toBe('block-game');
+
+  await runCase();
+  await expect.poll(panelIds).toEqual(['clock', 'score', 'go', 'reset', 'tries']);
+}
+
+const savedAreas = () =>
+  app.page.evaluate(
+    () =>
+      (window as unknown as { __studio: Studio }).__studio
+        .sceneRecord()
+        .project.cases?.find((c) => c.id === 'block-game')?.console?.layout.areas,
+  );
+
+const menuItem = (name: string) => app.page.locator(shown('[role=menuitem]'), { hasText: name }).first();
+
+async function dragBy(from: { x: number; y: number }, to: { x: number; y: number }) {
+  await app.page.mouse.move(from.x, from.y);
+  await app.page.mouse.down();
+  await app.page.mouse.move(to.x, to.y, { steps: 12 });
+  await app.page.mouse.up();
+}
+
+const middle = (box: { x: number; y: number; width: number; height: number } | null) => ({
+  x: box!.x + box!.width / 2,
+  y: box!.y + box!.height / 2,
+});
 
 beforeAll(async () => {
   app = await openApp();
@@ -162,28 +211,8 @@ describe('Run Case', () => {
 
   it('opens a Case’s own console: its areas, a live timer and score, Try It and Reset as buttons', async () => {
     const { page } = app;
-    const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
-    const game = ARC_CONSOLES.find((c) => c.name === 'Block game')!.console;
-    const kase = {
-      ...presetCase('touch-the-dots', buildRig(arm.joints, arm.parts), arm.parts),
-      id: 'block-game',
-      name: 'Knock the Dots',
-      console: game,
-    };
-    const scene = {
-      name: 'block-game',
-      parts: arm.parts,
-      project: { ...DEFAULT_PROJECT, joints: arm.joints, cases: [kase] },
-    };
 
-    await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
-    await expect.poll(() => partCount(page)).toBe(arm.parts.length);
-    await openPlayTab(page, 'Cases');
-    await page.locator(shown('[data-testid="cases-panel"] button'), { hasText: 'Knock the Dots' }).first().click();
-    await expect.poll(async () => (await simState()).activeCase).toBe('block-game');
-
-    await runCase();
-    await expect.poll(panelIds).toEqual(['clock', 'score', 'go', 'reset', 'tries']);
+    await runBlockGame();
     expect(await areaCount()).toBe(2);
 
     const [left, right] = await Promise.all([panel('clock').boundingBox(), panel('go').boundingBox()]);
@@ -213,6 +242,76 @@ describe('Run Case', () => {
 
     await inPanel('reset', 'Reset').click();
     await expect.poll(() => clock.textContent()).toBe('60.0 s');
+
+    await page.keyboard.press('Escape');
+    await expect.poll(areaCount).toBe(0);
+    expect(app.errors).toEqual([]);
+  }, 180000);
+});
+
+describe('Arranging a console', () => {
+  it('arranges a running Case’s console by hand, during a try, and keeps it with the Case', async () => {
+    const { page } = app;
+
+    await runBlockGame();
+    await inPanel('go', 'Try It').click();
+    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+
+    const rightCard = await page.locator(shown('[data-area-card="2"]')).boundingBox();
+
+    await dragBy(middle(await panel('clock').locator('header h3').boundingBox()), {
+      x: rightCard!.x + rightCard!.width / 2,
+      y: rightCard!.y + rightCard!.height - 40,
+    });
+    await expect.poll(panelIds).toEqual(['score', 'go', 'reset', 'tries', 'clock']);
+    expect(await simState()).toMatchObject({ drive: 'on', tries: [] });
+
+    await inPanel('tries', 'Stop Try').click();
+    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+    await expect.poll(async () => (await simState()).drive).toBe('off');
+
+    const resizer = middle(
+      await page.locator(shown('[data-testid="case-run-area"]')).last().locator('[role=separator]').boundingBox(),
+    );
+
+    await dragBy(resizer, { x: resizer.x - 100, y: resizer.y });
+    await expect.poll(async () => ((await savedAreas())?.[2] as { size: number }).size).toBeGreaterThan(390);
+
+    await page.keyboard.press('Meta+k');
+    await page.keyboard.type('Add Panel');
+    await page.keyboard.press('Enter');
+    await menuItem('Value').click();
+    await menuItem('time').click();
+    await expect.poll(panelIds).toEqual(['score', 'go', 'reset', 'tries', 'clock', 'value']);
+
+    await panel('score').click({ button: 'right' });
+    await menuItem('Rename').click();
+    await page.keyboard.type('Points');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => panel('score').locator('header h3').textContent()).toBe('Points');
+
+    await panel('reset').click({ button: 'right' });
+    await menuItem('Delete').click();
+    await page
+      .getByRole('dialog', { name: 'Delete reset?' })
+      .getByRole('button', { name: 'Delete', exact: true })
+      .click();
+    await expect.poll(panelIds).toEqual(['score', 'go', 'tries', 'clock', 'value']);
+    await page.keyboard.press('Meta+z');
+    await expect.poll(panelIds).toEqual(['score', 'go', 'reset', 'tries', 'clock', 'value']);
+
+    await page.keyboard.press('Escape');
+    await expect.poll(areaCount).toBe(0);
+    await runCase();
+    await expect.poll(panelIds).toEqual(['score', 'go', 'reset', 'tries', 'clock', 'value']);
+
+    const areas = await savedAreas();
+
+    expect(areas).toMatchObject([
+      { size: 240, panels: ['score'] },
+      { canvas: true },
+      { panels: ['go', 'reset', 'tries', 'clock', 'value'] },
+    ]);
 
     await page.keyboard.press('Escape');
     await expect.poll(areaCount).toBe(0);

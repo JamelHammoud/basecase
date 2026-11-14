@@ -26,6 +26,7 @@ export interface SignalBus {
   read: (id: string) => SignalValue | undefined;
   series: (id: string) => Series;
   expand: (pattern: string) => string[];
+  names: () => string[];
   reset: () => void;
   subscribe: (listen: () => void) => () => void;
   version: () => number;
@@ -173,6 +174,7 @@ export function createSignalBus(defs: readonly ConsoleSignal[] = []): SignalBus 
     read: (id) => values.get(id),
     series: (id) => history.get(id) ?? { t: [], v: [] },
     expand: (pattern) => (pattern.includes('*') ? [...values.keys()].filter((id) => matches(pattern, id)) : [pattern]),
+    names: () => [...values.keys()],
     reset: () => {
       clear();
       changed();

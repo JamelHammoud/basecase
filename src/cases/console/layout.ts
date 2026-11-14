@@ -22,6 +22,7 @@ export const DEFAULT_CONSOLE: CaseConsole = {
 
 export interface PlacedArea {
   key: string;
+  at: number;
   size: number;
   panels: PanelSpec[];
   last: boolean;
@@ -54,8 +55,9 @@ export function consoleLayout(caseConsole: CaseConsole | undefined, surface: Pan
     return shown.length ? [{ key: `area-${i}`, at: i, size: area.size, panels: shown }] : [];
   });
   const lastKey = placed.at(-1)?.key;
-  const area = ({ key, size, panels: list }: (typeof placed)[number]) => ({
+  const area = ({ key, at, size, panels: list }: (typeof placed)[number]) => ({
     key,
+    at,
     size,
     panels: list,
     last: key === lastKey,

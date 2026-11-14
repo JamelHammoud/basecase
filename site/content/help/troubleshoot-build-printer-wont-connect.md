@@ -33,7 +33,7 @@ Basecase shows a message under **Test Connection** or in Print mode if it can't 
 
 ## “Couldn’t reach the printer at …”
 
-The printer is off, asleep or on a different network, or its address has changed.
+The printer is off, asleep, or on a different network, or its address has changed.
 
 1. Turn the printer on and connect it to the same network as your computer.
 2. Find the printer's address on its screen and compare it with **Address** in **Settings** ▸ **Printers**.

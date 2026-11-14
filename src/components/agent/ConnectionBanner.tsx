@@ -3,7 +3,7 @@ import type { AcpStatusInfo } from '../../types/robotics';
 import { Button, ProgressBar, TextInput } from '../../design-system';
 import { percent } from '../../../electron/percent.mjs';
 
-const BANNER = 'mx-[8px] px-3 py-2 rounded-xl bg-amber-500/10 text-[13px] text-amber-200/90 flex flex-col gap-2';
+const BANNER = 'mx-[8px] px-3 py-2 rounded-xl bg-amber-500/10 text-[13px] text-amber-400 flex flex-col gap-2';
 const ROW = 'flex items-center gap-2';
 
 const ApiKeyField: React.FC<{ onSave: (key: string) => Promise<void>; onCancel: () => void }> = ({
@@ -84,7 +84,7 @@ const SignInBanner: React.FC<{
           </Button>
         )}
       </div>
-      {acpStatus.error && <span className="text-[12.5px] text-amber-200/70 break-words">{acpStatus.error}</span>}
+      {acpStatus.error && <span className="text-[12.5px] text-amber-400 break-words">{acpStatus.error}</span>}
       {enteringKey && <ApiKeyField onSave={onSaveApiKey} onCancel={() => setEnteringKey(false)} />}
     </div>
   );

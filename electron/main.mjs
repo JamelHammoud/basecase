@@ -23,6 +23,7 @@ import { registerGuideHandlers } from './guidePdf.mjs';
 import { installPermissions } from './permissions.mjs';
 import { registerHubHandlers } from './hub/routes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
+import { registerEarthHandlers } from './earth/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
 import { robotPolicyBytes } from './robot/robotPolicy.mjs';
@@ -249,6 +250,7 @@ registerGuideHandlers(ipcMain, backend.libraryDir);
 registerPrintHandlers(ipcMain, backend.printing);
 registerHubHandlers(ipcMain, backend.hub);
 registerOnshapeHandlers(ipcMain, backend.onshape);
+registerEarthHandlers(ipcMain, backend.earth);
 registerShareHandlers(ipcMain);
 
 const robotBinary = daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot });

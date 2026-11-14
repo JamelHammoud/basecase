@@ -8,9 +8,10 @@ interface SecretFieldProps {
   onSecret: (secret: string) => Promise<unknown>;
   savedHint?: React.ReactNode;
   error?: string | null;
+  autoFocus?: boolean;
 }
 
-export const SecretField: React.FC<SecretFieldProps> = ({ label, saved, onSecret, savedHint, error }) => {
+export const SecretField: React.FC<SecretFieldProps> = ({ label, saved, onSecret, savedHint, error, autoFocus }) => {
   const [draft, setDraft] = useState('');
   const quiet = saved && !draft ? savedHint : undefined;
 
@@ -18,6 +19,7 @@ export const SecretField: React.FC<SecretFieldProps> = ({ label, saved, onSecret
     <Row label={label} hint={error ? <span className="text-amber-200/80">{error}</span> : quiet}>
       <div className="w-[200px]">
         <TextInput
+          autoFocus={autoFocus}
           type="password"
           value={draft}
           placeholder={saved ? '••••••••' : ''}

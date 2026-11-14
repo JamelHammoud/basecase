@@ -12,7 +12,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
   - **Rename** on a part or group (the menus above, or Rename in ⌘K's Selection group while one part or one whole group is selected) shows Layers and opens that row's rename field (`renameAction` in `partActions.tsx`, `renameTarget` in `layers/layerRows.ts`), opening its group if it's collapsed. It isn't offered while a Case runs, since the sidebar is hidden.
   - Submenus (`submenu` entries) open on hover, flip left near the window edge, shift up to stay above its bottom, and can hold custom content.
   - **Routine step** (Routines view, §8j): Add Step After, Delete (⌫). The Start step has only Add Step After.
-  - **Empty canvas:** Add Part, Comment Here, Measure from Here, Add Reference Image, Sketch, Annotate, Delete Marks (with marks), Import, Select All, camera views, Reset View, Add Camera View, Collapse / Expand Camera Views (while the scene has camera views), Show Grid, Export STL.
+  - **Empty canvas:** Add Part, Comment Here, Measure from Here, Add Reference Image, Sketch, Annotate, Delete Marks (with marks), Import, Select All, camera views, Reset View, Add Camera View, Collapse / Expand Camera Views (while the scene has camera views), Place on Map (desktop only, §12), Show Grid, Show Map (checked while a placed map shows), Export STL.
   - **Camera tile** (§8l): the camera's name heads the menu; Look Through, Rename, Lens ▸; stationary cameras add Use Current View and Delete.
   - **Case** (Cases view, §8h): Rename, then for the open Case Compare With ▸ (when another open scene's robot fits) and Export Case Mat (a ground Case, desktop only), then Delete.
   - Select All (⌘A) is in every menu. Like ⌘A and ⌘K, it skips hidden parts and hidden reference photos.

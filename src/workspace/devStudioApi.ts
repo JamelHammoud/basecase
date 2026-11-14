@@ -1,3 +1,4 @@
+import { earthBridge } from '../earth/earthBridge';
 import { buildBom } from '../utils/bom';
 import type { HandoffStub } from './handoffStub';
 import type { RefObject } from 'react';
@@ -245,6 +246,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     parts: () => partSummaries(partsRef.current),
     interference: () => viewportRef.current?.interference() ?? { interferences: [], coplanar: [] },
     checkDots: () => viewportRef.current?.checkDotCount() ?? 0,
+    earth: () => viewportRef.current?.earthState() ?? null,
+    saveMapKey: (key: string) => earthBridge.setKey(key),
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(partsRef.current),
     lastDownload: () => lastDownloadFile(),

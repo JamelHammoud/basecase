@@ -1,5 +1,6 @@
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { GhostState } from './ghostLayer';
+import type { EarthState, EarthView } from './earthLayer';
 import type { DataLayerState } from './dataLayers';
 import type { DataLayerInput } from '../../dataLayers/store';
 import type { MatTrackOverlay } from './matTrack';
@@ -134,6 +135,7 @@ export interface ViewportProps {
   agentFrames?: AgentFrame[];
   fixedCameras?: FixedCamera[];
   checkDots?: CheckDot[] | null;
+  earth?: EarthView | null;
   onAddMark?: (mark: NewMark) => void;
   onSelectMark?: (id: string | null) => void;
   onEraseMarks?: (ids: string[]) => void;
@@ -223,6 +225,7 @@ export interface Viewport3DHandle {
   setMatTrack: (track: MatTrackOverlay | null) => void;
   setGhost: (ghost: RobotGhost | null) => void;
   ghostState: () => GhostState | null;
+  earthState: () => EarthState | null;
   followPart: (partId: string | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
   restShapes: (ids: string[]) => SceneShapes;

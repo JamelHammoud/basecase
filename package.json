@@ -207,6 +207,7 @@
     "@google/gemini-cli": "^0.68.0",
     "@mediapipe/tasks-vision": "1.2.2",
     "@modelcontextprotocol/sdk": "^1.32.1",
+    "3d-tiles-renderer": "^0.5.4",
     "electron-updater": "^6.8.10",
     "hyparquet-writer": "^0.18.0",
     "mediabunny": "^1.65.2",

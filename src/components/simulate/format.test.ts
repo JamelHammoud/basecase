@@ -13,6 +13,8 @@ describe('simulate format', () => {
 
   it('ends a training line in its percentage, or an ellipsis when the message has no end of its own', () => {
     expect(trainingLine('Training on 64 robots', 0.45)).toBe('Training on 64 robots 45%');
+    expect(trainingLine('Training on 64 robots', 0.997)).toBe('Training on 64 robots 99.7%');
+    expect(trainingLine('Training on 64 robots', 1.2)).toBe('Training on 64 robots 100%');
     expect(trainingLine('Building environments', null)).toBe('Building environments…');
     expect(trainingLine('Training from a fall.', null)).toBe('Training from a fall.');
   });

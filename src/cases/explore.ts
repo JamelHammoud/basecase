@@ -1,6 +1,6 @@
 import { COMPONENT_BY_ID, componentVariant } from '../data/components';
 import type { MeshMeasure } from '../three/meshMeasure';
-import type { PurchaseRecord } from '../types/robotics';
+import type { Purchases } from '../types/robotics';
 import { robotTotals } from './caseCompare';
 import type { CaseRuns } from './caseRuns';
 import {
@@ -53,7 +53,7 @@ export interface ExploredDesign {
 
 export interface ExploreOptions {
   runs: (robot: ExploreRobot) => Promise<CaseRuns>;
-  purchases: Record<string, PurchaseRecord>;
+  purchases: Purchases;
   designs?: Design[];
   stopped?: () => boolean;
   onDesign?: (row: ExploredDesign) => void;

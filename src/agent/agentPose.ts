@@ -34,6 +34,7 @@ import {
   type Scope,
 } from './agentPoseShared';
 import { duration } from '../utils/duration';
+import { lengthLabel } from '../utils/size';
 import { plural } from '../../electron/plural.mjs';
 
 export { animateRequest, type AnimatePayload } from './agentAnimate';
@@ -262,7 +263,7 @@ function applyIk(rig: Rig, state: RobotPoseState, p: PosePayload, setup: IkSetup
   for (const g of goals) {
     const e = res.errors[i] ?? 0;
 
-    if (e > 2) setup.notes.push(`${g.part} ends ${r1(e)} mm from its target (out of reach or a joint limit)`);
+    if (e > 2) setup.notes.push(`${g.part} ends ${lengthLabel(e)} from its target (out of reach or a joint limit)`);
 
     i += g.keepOrientation ? 4 : 1;
   }

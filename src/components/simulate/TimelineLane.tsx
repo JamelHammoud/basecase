@@ -1,6 +1,7 @@
 import React from 'react';
 import { TracePlot, type Trace } from '../../design-system';
 import type { TimelineLane as Lane } from '../../cases/timelineLanes';
+import { torque } from '../../utils/torque';
 
 interface TimelineLaneProps {
   lane: Lane;
@@ -14,6 +15,12 @@ interface TimelineLaneProps {
 const PLOT = 28;
 
 const reading = (v: number, digits: number, unit: string) => (Number.isFinite(v) ? `${v.toFixed(digits)}${unit}` : '');
+
+function effortText(lane: Lane, v: number): string {
+  if (!Number.isFinite(v)) return '';
+
+  return lane.unit === 'mm' ? reading(v, 2, ' N') : torque(v);
+}
 
 export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, markers, onSeek, onSelect }) => {
   const motion: Trace[] = [
@@ -35,7 +42,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, m
         <span className="text-[13px] text-white/85 truncate">{name}</span>
         <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.position[frame], 1, unit)}</span>
         {hasEffort && (
-          <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.effort[frame], 2, ' N·m')}</span>
+          <span className="text-[12px] text-white/50 tabular truncate">{effortText(lane, lane.effort[frame])}</span>
         )}
       </div>
       <div className="flex-1 min-w-0 flex flex-col gap-1">

@@ -19,7 +19,7 @@ const STEP_DEG = 3;
 
 const plane = () => app.page.locator(shown('[data-testid="sketch-plane"]'));
 const pathTab = () => app.page.locator(shown('[role="tab"]'), { hasText: /^Path$/ });
-const choices = () => app.page.locator(shown('button'), { hasText: /^\d+\.\d mm$/ });
+const choices = () => app.page.locator(shown('button'), { hasText: /^\d+(\.\d+)? mm$/ });
 const drawn = () => app.page.locator(shown('[data-testid="linkage-solution"]'));
 const pathPoints = () => plane().locator('[data-testid="path-point"]');
 

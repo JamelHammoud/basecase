@@ -21,7 +21,7 @@ import { TryLibrary } from './library/tryLibrary.mjs';
 import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
 import { assertPublicUrl, isPublicAddress, publicFetch, readCapped } from './publicFetch.mjs';
 import { RobotLink } from './robot/robotLink.mjs';
-import { registerRobotHandlers } from './robot/robotRoutes.mjs';
+import { registerRobotHandlers, ROBOT_CALLS } from './robot/robotRoutes.mjs';
 import { checkedRobotSpec } from './robot/robotSpec.mjs';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -436,9 +436,10 @@ describe('robot daemon', () => {
     const ipcMain = { handle: (channel, fn) => handlers.set(channel, fn), on: () => {} };
     const link = { connect: vi.fn(), command: vi.fn(), disconnect: vi.fn(), state: vi.fn(), policy: vi.fn() };
 
+    link.calibrate = vi.fn();
     registerRobotHandlers(trustedIpc(ipcMain, 'app://basecase'), link);
 
-    for (const channel of ['robot:connect', 'robot:command', 'robot:disconnect', 'robot:state', 'robot:policy']) {
+    for (const channel of Object.keys(ROBOT_CALLS)) {
       const evil = { senderFrame: { parent: null, url: 'https://example.com/' } };
 
       expect(() => handlers.get(channel)(evil, ARM), channel).toThrow('Refused');
@@ -446,6 +447,7 @@ describe('robot daemon', () => {
 
     expect(link.connect).not.toHaveBeenCalled();
     expect(link.policy).not.toHaveBeenCalled();
+    expect(link.calibrate).not.toHaveBeenCalled();
   });
 });
 

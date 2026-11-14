@@ -1,4 +1,5 @@
 import { guideStepParts } from '../guide/guideSteps';
+import { jobSpec } from '../print/job';
 import { plateStatus } from '../print/tracker';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -16,6 +17,11 @@ export function printDevActions(core: WorkspaceCore) {
       fitTest: !!printing.fitTest,
       plates: (printing.report?.plan.plates ?? []).map((p) => p.items.map((it) => it.id)),
     }),
+    plateFiles: async (): Promise<Record<string, Uint8Array>> =>
+      printing.report
+        ? (await printing.plates.write(jobSpec(printing.report.plan, printing.printer, docs.projectRef.current))).files
+        : {},
+    labelNotes: () => printing.plates.notes,
     markPlatePrinted: (number: number) => {
       const plate = printing.report?.plan.plates.find((p) => p.number === number);
 

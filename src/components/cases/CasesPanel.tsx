@@ -19,11 +19,11 @@ export interface CasesPanelProps {
   cases: Cases;
   compare: Pick<CaseCompare, 'choices' | 'start'>;
   onOpen: () => void;
-  onBrowseRobots: () => void;
+  onShowRobots: () => void;
   onDescribe?: () => void;
 }
 
-function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onBrowseRobots' | 'compare'>) {
+function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onShowRobots' | 'compare'>) {
   const { builder } = cases;
 
   return (

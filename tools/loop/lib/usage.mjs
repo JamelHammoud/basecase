@@ -5,6 +5,7 @@ import { LOOP_DIR } from './paths.mjs';
 import { run } from './sh.mjs';
 
 const FILE = path.join(LOOP_DIR, 'state', 'usage-pause.json');
+const CODEX_FILE = path.join(LOOP_DIR, 'state', 'codex-pause.json');
 const UNKNOWN_RESET_MS = 30 * 60 * 1000;
 const PROBE_EVERY_MS = 15 * 60 * 1000;
 const LIMIT_TEXT =
@@ -59,34 +60,58 @@ export function limitIn({ out = '', err = '' }, now = Date.now()) {
   return LIMIT_TEXT.test(text) ? { until: now + UNKNOWN_RESET_MS } : null;
 }
 
-const read = () => {
+const readFrom = (file) => {
   try {
-    return JSON.parse(fs.readFileSync(FILE, 'utf8'));
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch {
     return null;
   }
 };
 
-const write = (state) => {
-  const tmp = `${FILE}.${process.pid}`;
+const writeTo = (file, state) => {
+  const tmp = `${file}.${process.pid}`;
 
-  fs.mkdirSync(path.dirname(FILE), { recursive: true });
+  fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(tmp, JSON.stringify(state));
-  fs.renameSync(tmp, FILE);
+  fs.renameSync(tmp, file);
+};
+
+const read = () => readFrom(FILE);
+
+const write = (state) => writeTo(FILE, state);
+
+const startIn = (file, until, now) => {
+  const current = readFrom(file);
+
+  writeTo(file, {
+    since: current?.since ?? now,
+    until: Math.max(until, current?.until ?? 0),
+    probedAt: current?.probedAt ?? now,
+    announced: current?.announced ?? false,
+  });
+
+  return !current;
 };
 
 export const pause = () => read();
 
-export function startPause(until, now = Date.now()) {
-  const current = read();
-  const started = !current;
-
-  write({ since: current?.since ?? now, until: Math.max(until, current?.until ?? 0), probedAt: now });
-
-  return started;
-}
+export const startPause = (until, now = Date.now()) => startIn(FILE, until, now);
 
 export const resume = () => fs.rmSync(FILE, { force: true });
+
+export const markAnnounced = () => {
+  const current = read();
+
+  if (current) write({ ...current, announced: true });
+};
+
+export const codexPause = () => readFrom(CODEX_FILE);
+
+export const startCodexPause = (until, now = Date.now()) => startIn(CODEX_FILE, until, now);
+
+export const resumeCodex = () => fs.rmSync(CODEX_FILE, { force: true });
+
+export const isActive = (state, now = Date.now()) => Boolean(state) && now < state.until;
 
 export function probeDue(now = Date.now()) {
   const current = read();

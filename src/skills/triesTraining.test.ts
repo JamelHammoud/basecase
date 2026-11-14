@@ -11,7 +11,8 @@ import { obsSize, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from '../sim/
 import { buildRig } from '../utils/kinematics';
 import type { SkillRecord } from './skillRecords';
 import { skillRows } from './skillRows';
-import { designOf, SkillsRuntime, type TriesOutcome } from './skillsRuntime';
+import { designOf, SkillsRuntime } from './skillsRuntime';
+import type { TriesOutcome } from './triesRun';
 import { TRIES_RUNS, triesJob } from './triesTraining';
 
 const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;

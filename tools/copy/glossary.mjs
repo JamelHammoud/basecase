@@ -36,8 +36,8 @@ export const GLOSSARY = [
   { word: 'Close', action: 'Put away a tab, window, sheet or Case', synonyms: ['dismiss'] },
   {
     word: 'Show',
-    action: 'Bring a panel, view or layer into sight (Hide puts it away)',
-    synonyms: ['reveal', 'toggle'],
+    action: 'Bring a panel, view, section or layer into sight (Hide puts it away)',
+    synonyms: ['reveal', 'toggle', 'browse'],
   },
   { word: 'Duplicate', action: 'Make a second one beside the first', synonyms: ['clone'] },
   { word: 'Run', action: 'Start a Case, Routine, Checks or a policy', synonyms: ['launch', 'execute'] },

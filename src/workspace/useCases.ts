@@ -6,6 +6,7 @@ import { withGesture, type CaseGesture } from '../cases/gestures';
 import { readCases, worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import { generatedFrom, simTries, worstFirst, type TryRecord } from '../cases/tries';
+import { CASE_STORES, caseStoreKey } from '../cases/console/codeStore';
 import { confirmAction } from '../design-system/confirmStore';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
@@ -142,6 +143,7 @@ export function useCases(options: CasesOptions) {
 
         scene.drop(goes);
         setProject((p) => ({ ...p, cases: (p.cases ?? []).filter((c) => c.id !== id) }));
+        CASE_STORES.delete(caseStoreKey(sceneId, id));
 
         if (activeId === id) open(null);
       },
@@ -196,6 +198,7 @@ export function useCases(options: CasesOptions) {
   return {
     cases,
     active,
+    sceneId,
     builder,
     dataset,
     fromTries,

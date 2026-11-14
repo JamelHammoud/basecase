@@ -218,6 +218,7 @@ export interface ProjectSettings extends ProjectRecords {
   material: PrintMaterial;
   infillPct: number;
   printProcess?: string;
+  labelParts?: boolean;
   prints?: PrintRecord[];
   budgetUsd?: number;
   budgetEntered?: EnteredPrice;
@@ -323,7 +324,12 @@ export interface PurchaseRecord {
   entered?: EnteredPrice;
   checkedAt: string;
   note?: string;
+  onHand?: number;
 }
+
+export type StoredPurchase = PurchaseRecord | { onHand: number };
+
+export type Purchases = Record<string, StoredPurchase>;
 
 export interface ReferenceImageRecord {
   id: string;

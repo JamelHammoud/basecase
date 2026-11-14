@@ -1,4 +1,6 @@
+import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { labelFixture } from '../src/print/labels/label.fixtures';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -10,6 +12,14 @@ interface Studio {
     project: unknown;
   };
   printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
+  plateFiles: () => Promise<Record<string, string>>;
+  labelNotes: () => Record<string, string>;
+}
+
+interface PlateMesh {
+  triangles: number;
+  volume: number;
+  xml: string;
 }
 
 const printed = (id: string, position: number[], dimensions: Record<string, number>) => ({
@@ -68,6 +78,32 @@ const sceneParts = () =>
       .sceneRecord()
       .parts.map(({ id, kind, position, rotation, print }) => ({ id, kind, position, rotation, print: print ?? null })),
   );
+
+function meshOf(xml: string): PlateMesh {
+  const v = [...xml.matchAll(/<vertex x="([^"]+)" y="([^"]+)" z="([^"]+)"/g)].map((m) => m.slice(1, 4).map(Number));
+  const t = [...xml.matchAll(/<triangle v1="(\d+)" v2="(\d+)" v3="(\d+)"/g)].map((m) => m.slice(1, 4).map(Number));
+  const volume = t.reduce((sum, [a, b, c]) => {
+    const [p, q, r] = [v[a], v[b], v[c]];
+
+    return (
+      sum +
+      (p[0] * (q[1] * r[2] - q[2] * r[1]) - p[1] * (q[0] * r[2] - q[2] * r[0]) + p[2] * (q[0] * r[1] - q[1] * r[0])) / 6
+    );
+  }, 0);
+
+  return { triangles: t.length, volume, xml };
+}
+
+async function plateMeshes(): Promise<Record<string, PlateMesh>> {
+  const files = await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.plateFiles());
+  const objects = Object.values(files).flatMap((b64) =>
+    strFromU8(unzipSync(Buffer.from(b64, 'base64'))['3D/3dmodel.model'])
+      .split('<object ')
+      .slice(1),
+  );
+
+  return Object.fromEntries(objects.map((o) => [/name="([^"]+)"/.exec(o)![1], meshOf(o)]));
+}
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
@@ -169,6 +205,60 @@ describe('print layout', () => {
       app.posts.filter((p) => p.route.startsWith('print-') && !/status|printers|last-slice/.test(p.route)),
     ).toEqual([]);
   });
+});
+
+describe('part labels', () => {
+  const LABEL_FIXTURE = labelFixture();
+
+  it('debosses the guide letter into the tray’s hidden floor, and Label parts off writes plain meshes', async () => {
+    await app.page.evaluate((parts) => {
+      const studio = (window as unknown as { __studio: Studio }).__studio;
+
+      studio.load({ parts, project: studio.sceneRecord().project });
+    }, LABEL_FIXTURE);
+    await expect.poll(() => partCount(app.page)).toBe(LABEL_FIXTURE.length);
+    await app.page
+      .locator('main')
+      .first()
+      .click({ position: { x: 20, y: 20 } });
+    await app.page.keyboard.press('Meta+p');
+    await expect.poll(async () => (await printPlates()).plates.flat().length, { timeout: 60000 }).toBe(5);
+
+    const labelSwitch = app.page.locator(visible('[role=switch][aria-label="Label parts"]'));
+
+    expect(await labelSwitch.getAttribute('aria-checked')).toBe('true');
+
+    const labeled = await plateMeshes();
+    const notedParts = async () =>
+      Object.keys(
+        await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.labelNotes()),
+      ).sort();
+
+    await expect.poll(notedParts).toEqual(['bracket-left', 'bracket-right', 'lid', 'tag']);
+    await app.page.locator(visible('button'), { hasText: /^Parts/ }).click();
+    await expect
+      .poll(() => app.page.locator(visible('li'), { hasText: 'Spare Tag' }).textContent())
+      .toMatch(/Letter [A-Z]+ left off: no flat face is hidden, free and big enough/);
+
+    await labelSwitch.click();
+    await expect.poll(() => labelSwitch.getAttribute('aria-checked')).toBe('false');
+
+    const plain = await plateMeshes();
+    const changed = Object.keys(plain).filter((name) => labeled[name].xml !== plain[name].xml);
+
+    expect(changed).toEqual(['Body Tray']);
+
+    for (const name of changed) {
+      expect(labeled[name].triangles).toBeGreaterThan(plain[name].triangles);
+      expect(labeled[name].volume).toBeLessThan(plain[name].volume - 1);
+    }
+
+    for (const part of LABEL_FIXTURE.filter((p) => ['tray', 'lid', 'tag'].includes(p.id)))
+      expect(plain[part.name].triangles).toBe(part.cad!.positions.length / 9);
+
+    await app.page.keyboard.press('Escape');
+    expect(app.errors).toEqual([]);
+  }, 180000);
 });
 
 describe('a Prusa printer', () => {

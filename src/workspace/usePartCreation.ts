@@ -15,16 +15,7 @@ import { modelToParts } from '../utils/libraryParts';
 import type { SnapPlacement } from '../agent/snap';
 import { modelBase, withPlacement } from './dropPreview';
 import { newId } from './helpers';
-import {
-  CLAY_LABELS,
-  catalogItemLabel,
-  catalogPart,
-  clayPart,
-  imagePlanePart,
-  sketchPart,
-  type ClayPreset,
-  type SketchParams,
-} from './partFactories';
+import { catalogPart, clayPart, imagePlanePart, sketchPart, type ClayPreset, type SketchParams } from './partFactories';
 import type { Vec3 } from './types';
 import type { RobotInsert } from './useRobotInsert';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -51,7 +42,6 @@ function useReferenceImages(core: WorkspaceCore) {
       });
       setSelectedIds([id]);
       setTransformMode('translate');
-      showToast('Added reference image');
     } catch (err) {
       showToast(`Couldn’t add image. ${errorMessage(err)}`, { tone: 'error' });
     }
@@ -86,7 +76,6 @@ function useSculptCreation(core: WorkspaceCore) {
     commitParts((prev) => [...prev, clayPart(preset, id, createSculptClayPreset(preset))]);
     setSelectedIds([id]);
     setTransformMode('sculpt');
-    showToast(`Added ${CLAY_LABELS[preset]}`);
   };
 
   const subdivideSelectedClay = () => {
@@ -115,12 +104,10 @@ const partsFromFile = async (file: File, at: Vec3 | null): Promise<ScenePart[]> 
     ? cadPartsFromFile({ file, at, newId })
     : [await meshPartFromFile({ file, id: newId('mesh'), at })];
 
-const importedName = (parts: ScenePart[]) => parts[0].group?.name ?? parts[0].name;
-
 function useMeshImport(core: WorkspaceCore) {
   'use memo';
 
-  const { docs, setSelectedIds, tool, showToast } = core;
+  const { docs, setSelectedIds, tool, showToast, toasts } = core;
 
   const importMeshes = async (files: File[], at?: Vec3 | null) => {
     if (files.length === 0) return;
@@ -148,7 +135,7 @@ function useMeshImport(core: WorkspaceCore) {
       return;
     }
 
-    showToast(imported.length === 1 ? `Inserted ${importedName(imported[0])}` : `Inserted ${imported.length} meshes`);
+    toasts.dismissToast();
   };
 
   return { importMeshes };
@@ -167,7 +154,6 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
 
     commitParts((prev) => [...prev, withPlacement(catalogPart(item, id, prev, at), place)]);
     setSelectedIds([id]);
-    showToast(`Added ${catalogItemLabel(item)}`);
   };
 
   const addCatalogItem = (item: CatalogItem, at?: Vec3, place?: SnapPlacement) => {
@@ -187,12 +173,12 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
 
     commitParts((prev) => [...prev, ...inserted]);
     setSelectedIds(inserted.map((p) => p.id));
-    showToast(
-      missingShapes
-        ? `Inserted ${model.name} as blocks. Save it to Library again from a scene to keep its CAD shapes.`
-        : `Inserted ${model.name}`,
-      missingShapes ? { tone: 'error' } : {},
-    );
+
+    if (missingShapes) {
+      showToast(`Inserted ${model.name} as blocks. Save it to Library again from a scene to keep its CAD shapes.`, {
+        tone: 'error',
+      });
+    }
   };
 
   const createFromSketch = (params: SketchParams) => {
@@ -200,7 +186,6 @@ export function usePartCreation(core: WorkspaceCore, robots: RobotInsert) {
 
     commitParts((prev) => [...prev, sketchPart(params, id)]);
     setSelectedIds([id]);
-    showToast(`Added ${params.name}`);
   };
 
   return { ...images, ...sculpt, ...meshes, addCatalogItem, placeCustomModel, createFromSketch };

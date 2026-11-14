@@ -24,7 +24,6 @@ const LISTS: Record<string, unknown> = {
   models: [],
   images: [],
   chats: [],
-  purchases: {},
   'acp-status': {
     connected: true,
     sessionId: null,
@@ -60,7 +59,24 @@ interface Backend {
   live: string[];
 }
 
+type SavedPurchases = Record<string, unknown>;
+
+function purchasesReply(saved: SavedPurchases, body: { key?: string; record?: unknown } | null) {
+  if (!body?.key) return saved;
+
+  if (body.record) saved[body.key] = body.record;
+  else delete saved[body.key];
+
+  return saved;
+}
+
 async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise<void> {
+  const purchases: SavedPurchases = { ...((lists.purchases as SavedPurchases | undefined) ?? {}) };
+  const replies: Record<string, (body: unknown) => unknown> = {
+    purchases: () => purchases,
+    'purchase-save': (body) => purchasesReply(purchases, body as { key?: string; record?: unknown }),
+  };
+
   await page.route('**/api/events', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }),
   );
@@ -81,7 +97,7 @@ async function stubBackend(page: Page, { posts, lists, live }: Backend): Promise
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(tried ? tried.reply : (lists[name] ?? LISTS[name] ?? {})),
+      body: JSON.stringify(tried ? tried.reply : (replies[name]?.(body) ?? lists[name] ?? LISTS[name] ?? {})),
     });
   });
 }

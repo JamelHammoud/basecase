@@ -35,7 +35,7 @@ Sculpt is off until you turn it on in Settings.
 1. Press [[⌘,]] and choose **Canvas**.
 2. Under **Tools**, turn on **Sculpt**, then close Settings.
 3. Click **Sculpt** in the bottom toolbar.
-4. Under **Add clay**, click **Sphere**, **Block**, **Capsule** or **Cylinder**.
+4. Under **Add clay**, click **Sphere**, **Block**, **Capsule** or **Cylinder**. The clay lands selected.
 5. Under **Brush**, choose **Inflate**, **Carve**, **Grab**, **Flatten**, **Smooth** or **Pinch**.
 6. Drag on the part to sculpt it.
 7. Click **Done**, or press [[Esc]], to go back to **Move**.

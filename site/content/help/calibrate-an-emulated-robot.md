@@ -45,20 +45,24 @@ covers:
   - src/utils/engineeringSimModel.ts
 ---
 
-Calibration uses a camera to find each joint's zero and direction, then fits a model to each emulated servo. When it's done, the simulation and training move the way your servos do.
+Calibration makes simulation and training move the way your servos do. Basecase uses a camera to find each joint's zero and direction, then fits a model to each emulated servo.
 
-Calibration works on the emulated robot and hasn't recorded a real servo. Basecase fits each joint against its own servo and variant, and the emulated servo stands in for that part.
+Calibration works on the emulated robot and hasn't logged a real servo. Basecase fits each joint against the servo and variant that joint uses, and the emulated servo stands in for that part.
 
-The STS3215 C001 and XL330 start from a measured catalog model. Every other Feetech and Dynamixel servo starts from an estimate scaled from its stall torque, speed and volts. PWM servos such as the DS3218 can't answer on the bus, so Calibrate skips them and their rows read **No reply**.
+The STS3215 C001 and XL330 start from a measured catalog model. Every other Feetech and Dynamixel servo starts from an estimate, scaled from its stall torque, speed and volts.
+
+**Note:** PWM servos such as the DS3218 can't answer on the bus. Calibrate skips them, and their rows read **No reply**.
+
+To calibrate a robot:
 
 1. Connect the emulated robot from the scene you want to calibrate. For steps, see [Connect an emulated robot](/help/connect-an-emulated-robot).
 2. Under **Ladder**, click **Set Up**.
-3. Click **Test**, then wait until you see "Motors running".
+3. Click **Test**, then wait for "Motors running".
 4. Click **Calibrate Servos**.
 
 ![Operate in Test, with Calibrate Servos above the emulated servos](/help/calibrate-an-emulated-robot/test.png)
 
-First, Basecase wiggles each joint whose zero and direction it has never found. Each joint moves on its own for about 4 seconds while a camera watches, and Basecase writes what it finds to the robot.
+First, Basecase wiggles each joint whose zero and direction it has never found. Each joint moves on its own for about 4 seconds while a camera watches, then Basecase writes what it finds to the robot.
 
 ![The Shoulder wiggling in Operate while Calibrate Servos watches it, with the measured robot drawn in blue](/help/calibrate-an-emulated-robot/wiggle.png)
 
@@ -76,20 +80,22 @@ The light line shows what the servo did. The gray line is the simulation on the 
 
 ![A joint's replay with the preset error and the calibrated error](/help/calibrate-an-emulated-robot/replay.png)
 
-7. To go back to the previous version, hover over the joint's row, click **More**, then choose **Roll Back**.
+7. To go back to the previous version, right-click the joint's row and choose **Roll Back**.
 8. Click **Roll Back** to confirm.
 
 ![The row's menu with its versions and Roll Back](/help/calibrate-an-emulated-robot/menu.png)
 
-To see what an older version would do before you roll back, choose it in the same menu. Basecase redraws the blue line using that version.
+To see what an older version would do before you roll back, choose it in the same menu. Basecase redraws the blue line for that version.
 
-**Calibrate Servos** is also in [[⌘K]]. It shows only in **Test** with the motors running, and only in the scene you connected the robot from. Once a scene has calibrations, Operate lists its joints with their verdicts before you connect.
+**Calibrate Servos** is also in [[⌘K]]. It appears there only when the robot is in **Test** with the motors running, in the scene you connected the robot from.
+
+Once a scene has calibrations, Operate lists its joints and their verdicts before you connect.
 
 ## Verdicts
 
 | Verdict | What it means |
 |---|---|
-| **Measured** | The fit predicts the servo better than its catalog model and is now in use, shown as its version: v1, v2 and up. The joint is marked **Measured** in Operate and the Pose tab |
+| **Measured** | The fit predicts the servo better than its catalog model and is now in use. It's shown as its version: v1, v2 and up. The joint is marked **Measured** in Operate and the Pose tab |
 | **Consistent with preset** | The catalog model matches the servo. Nothing changes |
 | **Can’t tell** | Basecase couldn't decide either way from the recording, so the joint keeps what it had |
 
@@ -97,31 +103,42 @@ A joint with no version in use shows **Preset**. **Roll Back** steps back one me
 
 ## Zero and direction
 
-A joint's zero is the servo reading where the joint sits at 0°. Its direction is the way the reading grows. For example, a horn pressed on one tooth off on a 25-tooth spline sits 14.4° from the joint's 0°. A servo mounted in reverse turns the joint the wrong way while its own reading still agrees, so the bench can't see the problem.
+A joint's zero is the servo reading where the joint sits at 0°. Its direction says which way the reading grows.
 
-While a joint wiggles, it steps 0.1 rad one way, then 0.1 rad the other way, and back. Basecase draws the robot's outline from your CAD for both directions and for every zero within 20°, then keeps the one that matches the camera. It checks the joints nearest the base first.
+Both can be wrong in ways the servo can't report. For example:
 
-- When a joint's zero changes, Basecase saves it as a new version, marked **Measured**, before the bench sequence starts. The robot stops, then starts **Test** again on the new zero.
+- A horn pressed on one tooth off on a 25-tooth spline sits 14.4° from the joint's 0°.
+- A servo mounted reversed turns the joint the wrong way, and its own reading agrees with it, so the bench sequence can't catch it.
+
+While a joint wiggles, it steps 0.1 rad one way, then 0.1 rad the other way, and back. Basecase draws the robot's outline from your CAD for both directions and for every zero within 20°, then keeps the one that matches the camera. It starts with the joints nearest the base.
+
+- If a joint's zero changes, Basecase saves it as a new version, marked **Measured**, before the bench sequence starts. The robot stops, then starts **Test** again on the new zero.
 - If a joint's zero already matches the camera, Basecase records nothing for it.
-- If the camera can't see a joint move, the joint reads **Can’t tell** and keeps its zero. A joint hidden behind the robot's body can do this, and so can a round wrist rolling on its own axis.
+- If the camera can't see a joint move, the joint reads **Can’t tell** and keeps its zero. This happens with a joint hidden behind the robot's body, or with a round wrist rolling on its own axis.
 
-The camera is your scene's first camera view, or the framed scene if you haven't placed one. The emulated robot has no camera plugged in, so Basecase draws that view at the servos' true angles. It also gives each emulated servo its own hidden offset and mounts some of them in reverse.
+The camera is your scene's first camera view. If you haven't placed one, Basecase uses the framed scene.
 
-**Roll Back** undoes a zero the same way it undoes any fit, and Basecase updates the robot's calibration to match. A joint rolled back past its first zero returns to the default.
+The emulated robot has no camera plugged in, so Basecase draws that view at the servos' true angles. It also gives each emulated servo its own hidden offset, and mounts some of them reversed.
+
+**Roll Back** undoes a zero the same way it undoes any fit, and Basecase updates the robot's calibration to match. If you roll a joint back past its first zero, it returns to the default.
 
 ## What the bench sequence does
 
-For the first 9 seconds, the bench sequence ramps every joint 0.25 rad each way at 0.12 rad/s, holding for 0.6 s at each end. It then swings each joint through a 0.15 rad wave at 0.12 Hz for 9 more seconds. Test caps each joint at 0.5 rad/s, and a move the servo couldn't follow would read **Can’t tell**, so the sequence stays slow.
+For the first 9 seconds, the bench sequence ramps every joint 0.25 rad each way at 0.12 rad/s and holds for 0.6 s at each end. For the next 9 seconds, it swings each joint through a 0.15 rad wave at 0.12 Hz.
 
-Basecase fits the first half of each recording and checks the fit against the second half. It fits the servo's gain, delay, damping, inertia, friction and torque limit. Each value stays between a quarter and 4 times its starting value (up to 8 times for the delay). In a run on three emulated STS3215 servos, all three read **Measured** and came out 7 to 10% closer than the catalog model.
+The sequence is slow because Test caps each joint at 0.5 rad/s. If the servo couldn't follow a move, the joint would read **Can’t tell**.
 
-If the robot leaves **Test** or faults during the run, Basecase records nothing, and a message under the servo count tells you why.
+Basecase fits the first half of each recording, then checks the fit against the second half. It fits the servo's gain, delay, damping, inertia, friction and torque limit. Each value stays between a quarter and 4 times its starting value, except the delay, which can go up to 8 times.
 
-Replays use the latest bench run, which Basecase keeps until it reloads. A reload keeps the verdicts and versions, and the replays come back the next time you run **Calibrate Servos**.
+In a run with three emulated STS3215 servos, all three read **Measured**. Each fit was 7 to 10% closer than the catalog model.
+
+If the robot leaves **Test** or faults during the run, Basecase records nothing. A message under the servo count tells you why.
+
+Replays use the latest bench run, which Basecase keeps until it reloads. After a reload, the verdicts and versions stay, and the replays come back the next time you run **Calibrate Servos**.
 
 ## Where the fit is used
 
-The **Simulate** tab, Cases, the Motor Kit and every skill you teach all run on the fitted servos.
+The **Simulate** tab, Cases, the Motor Kit and every skill you teach run on the fitted servos.
 
 **Build** ▸ **Checks** ▸ **Servo models** passes once every servo's joint is **Measured**. Until then, its note names the servos and joints that aren't **Measured**.
 

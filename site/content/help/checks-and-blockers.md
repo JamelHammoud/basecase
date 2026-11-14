@@ -30,38 +30,38 @@ covers:
   - src/components/settings/BuildPane.tsx
 ---
 
-Only the Checks in the Build tab decide whether a design is ready to build. They measure the scene itself, so what anyone says about the design doesn't change the result.
+The Checks in the Build tab decide whether a design is ready to build. The verdict comes only from what they measure in the scene.
 
 ![The Checks list for a single cube, every check green and Ready to build in the header](/help/get-a-robot-ready-to-build/build-tab.png)
 
 ## Where the verdict comes from
 
-Checks run on their own about 1.5 seconds after your last change. While they run, the header shows **Checking…**. When they finish, it shows **Ready to build** or the number of problems you have left to fix.
+Checks start on their own about 1.5 seconds after your last change. While they run, the header reads **Checking…**, then switches to **Ready to build** or the number of problems left to fix.
 
-Basecase does the heavy measuring in the background, so you can keep working. On a robot with 225 parts, you get the verdict about 5 seconds after an edit.
+Basecase does the heavy measuring in the background, so you can keep working while it runs. On a robot with 225 parts, you get the verdict about 5 seconds after an edit.
 
-Each problem is either a **blocker** or a **note**. A single blocker keeps a design from being ready. A note turns a check amber and tells you something about the build, like the order the screws go in, but it never changes the verdict.
+Each problem is a **blocker** or a **note**. One blocker is enough to keep a design from being ready. A note turns its check amber to tell you something about the build, like the order the screws go in, but leaves the verdict as it is.
 
-A check that stops on an error or runs out of time counts as a blocker. The header won't keep showing an old “Ready to build” while a check is unfinished.
+A check that stops on an error or runs out of time counts as a blocker. While any check is unfinished, the header won't show an old “Ready to build”.
 
 ## Why the agent's word doesn't count
 
-The agent can't change the verdict. If it tells you a servo is strong enough, Servo torque still measures the load at a 30° crouch.
+If the agent tells you a servo is strong enough, the Servo torque check still measures the load at a 30° crouch.
 
-The agent sees the same problems you do and hears about any new blockers after each change. To have it try to fix them, turn on **Have the agent fix new blockers** in **Settings** ▸ **Build**. The agent then makes up to 2 follow-ups per message. Each follow-up reads like "Fix what the last change added: 2 problems." and quotes the problems from **Checks**.
+The agent sees the problems you see, and Basecase tells it about new blockers after each change. To have it try to fix them, turn on **Have the agent fix new blockers** in **Settings** ▸ **Build**. It makes up to 2 follow-ups per message. Each one reads like "Fix what the last change added: 2 problems." and quotes the problems from **Checks**.
 
-If the agent thinks a check is wrong, it can dispute it. You'll see its reason on the row, but the blocker still counts.
+If the agent thinks a check is wrong, it can dispute it. Its reason shows on the row, and the blocker still counts.
 
 ## Only you can set a blocker aside
 
-To set aside a single problem, open its **⋯** menu and choose **Ignore**. To set aside every problem of that kind, choose **Ignore All ⟨kind⟩**, where ⟨kind⟩ names the kind of problem. That choice also covers problems on parts you add later.
+To set one problem aside, right-click its row and choose **Ignore**. To set aside every problem of that kind, including problems on parts you add later, choose **Ignore All ⟨kind⟩**. The menu shows the kind's name in place of ⟨kind⟩.
 
-An ignored problem stays ignored when the parts change, because you made that call. The agent sees what you ignored and leaves it alone. You'll find everything you've set aside in **Ignored**, below the list, and you can put any of it back from there.
+Because the decision was yours, an ignored problem stays ignored when the parts change. The agent sees what you've ignored and leaves those problems alone. Everything you've set aside is listed under **Ignored**, below the list, and you can put any of it back from there.
 
 ## What Ready to build doesn't promise
 
-Checks measure the design as you modeled it. Anything you'll add by hand, like a strap or zip tie, isn't in the model, so its row is a note for you to check yourself.
+Checks measure the design as you modeled it. A strap or zip tie you'll add by hand isn't in the model, so its row is a note that you check yourself.
 
-Range of motion samples each joint every 15°, so a clash thinner than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits for the agent to tip the robot over. Prices are estimates until you add the prices you see, or until a print service quotes the printed parts.
+Range of motion samples each joint every 15°, so a clash narrower than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits until the agent tips the robot over. Prices stay estimates until you add the prices you see or a print service quotes the printed parts.
 
-For every check and what makes it fail, see [Build tab checks](/help/build-checks).
+[Build tab checks](/help/build-checks) lists every check and what makes it fail.

@@ -1,7 +1,7 @@
 ---
 title: Point the agent at a part
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: task
 order: 6
@@ -25,7 +25,7 @@ covers:
   - src/components/build/FindingRow.tsx
 ---
 
-The agent doesn't see what you've selected. To show it which part, area or message you mean, you can quote it or draw on it.
+The agent doesn't see what you've selected. To show it the part, area or message you mean, quote it or draw on it.
 
 - Quote a part
 - Draw on the canvas
@@ -35,14 +35,16 @@ The agent doesn't see what you've selected. To show it which part, area or messa
 
 1. Right-click the part on the canvas.
 2. Choose **Quote Part**.
-3. Type what you want to change, such as “Move this 10 mm forward”, then press [[↩]].
+3. Type what you want to change, for example “Move this 10 mm forward.” Then press [[↩]].
 
-The agent gets the quote with your message, including the part's name, id and position. When the part is selected, **Quote Part** is also in [[⌘K]].
+The agent gets the quote along with your message, including the part's name, id and position.
+
+You can also select the part, then find **Quote Part** in [[⌘K]].
 
 ## Draw on the canvas
 
 1. Press [[N]] to start **Annotate**.
-2. Draw around the area you mean. To tell marks apart, pick a different color from the bar.
+2. Draw around the area you mean. To tell your marks apart, pick another color from the bar.
 3. Click **Done**, then send your message.
 
 The agent reads the color of each mark and the parts it circles. Marks aren't parts, so they never appear in the bill of materials or in a print.
@@ -52,4 +54,4 @@ The agent reads the color of each mark and the parts it circles. Marks aren't pa
 1. Right-click a message in the chat.
 2. Choose **Quote Message**, then type your reply.
 
-In the **Build** tab, each Check has a **Fix** button that asks the agent to fix that problem. To ask the agent about the problem first, choose **Quote** from the button's menu.
+In the **Build** tab, each Check has a **Fix** button that asks the agent to fix that problem. To ask the agent about the problem before it fixes anything, right-click the problem's row and choose **Quote**.

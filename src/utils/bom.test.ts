@@ -63,6 +63,7 @@ describe('buildBom', () => {
     expect(line('supply:xt60-pigtail').qty).toBe(1);
     expect(line('supply:blade-fuse-holder').qty).toBe(1);
     expect(line('supply:rocker-switch-20a').qty).toBe(1);
+    expect(line('supply:lipo-balance-charger').qty).toBe(1);
     expect(line('supply:hex-key-set').category).toBe('Equipment');
   });
 

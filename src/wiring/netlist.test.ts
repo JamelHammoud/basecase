@@ -115,6 +115,16 @@ describe('wiringNetlist', () => {
     expect(supplies(rover())).toMatchObject({ 'supply:xt60-pigtail': 1, 'supply:servo-cable-5264-3pin': 2 });
   });
 
+  it('takes the battery the voltage checks pick, not the first one listed', () => {
+    const motors = servoJoints({ prefix: 'qdd', componentId: 'mjbots-qdd100', count: 2 });
+    const packs = [component('small', 'ovonic-2s-2200-50c'), component('big', 'ovonic-6s-5000-120c')];
+    const scene = sceneOf([...packs, ...motors.parts], motors.joints);
+
+    expect(wiringNetlist(scene).power.source).toMatchObject({ id: 'big', connector: 'ec5' });
+    expect(supplies(scene)).toMatchObject({ 'supply:ec5-pigtail': 1 });
+    expect(supplies(scene)['supply:xt60-pigtail']).toBeUndefined();
+  });
+
   it('flags Dynamixel servos left on a Feetech adapter as one Servo bus blocker', () => {
     const net = wiringNetlist(mixedArm());
 

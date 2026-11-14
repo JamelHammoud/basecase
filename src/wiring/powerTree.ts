@@ -1,7 +1,7 @@
 import { COMPONENT_BY_ID } from '../data/components';
 import { SUPPLY_BY_ID } from '../data/supplies';
 import type { ScenePart } from '../types/robotics';
-import { servoParts, servoRegulator } from '../utils/engineeringPower';
+import { servoParts, servoRegulator, servoSource } from '../utils/engineeringPower';
 import { sceneTether } from '../utils/powerSources';
 import { endOf, isBusAdapter, portOf, type Net, type NetEnd, type PowerTree, type WiringScene } from './connectors';
 
@@ -17,33 +17,40 @@ const isPack = (p: ScenePart) => {
   return !!(c?.battery || c?.holder);
 };
 
-function suppliedBattery(id: string | null, supplyId: string): NetEnd | null {
-  const s = SUPPLY_BY_ID[supplyId];
-
-  return s?.battery && s.connector ? { id, name: s.name, connector: s.connector } : null;
-}
-
 interface Source {
   end: NetEnd;
   battery: boolean;
+  name: string;
 }
 
-function batterySource({ parts, project }: WiringScene): Source | null {
-  const pack = parts.find((p) => isPack(p) && portOf(p, 'power-out'));
+function packSource(pack: ScenePart): Source {
+  const c = COMPONENT_BY_ID[pack.componentId!];
 
-  if (pack)
-    return { end: endOf(pack, portOf(pack, 'power-out')!), battery: !!COMPONENT_BY_ID[pack.componentId!].battery };
+  return { end: endOf(pack, portOf(pack, 'power-out')!), battery: !!c.battery, name: c.name };
+}
 
-  const supplied = [
-    ...parts.flatMap((p) => (p.supplyId ? [suppliedBattery(p.id, p.supplyId)] : [])),
+function suppliedSource(id: string | null, supplyId: string): Source | null {
+  const s = SUPPLY_BY_ID[supplyId];
+
+  return s?.battery && s.connector
+    ? { end: { id, name: s.name, connector: s.connector }, battery: true, name: s.name }
+    : null;
+}
+
+const isChosen = (source: Source, chosen: string) => chosen === source.name || chosen.endsWith(` in ${source.name}`);
+
+function batterySource(scene: WiringScene): Source | null {
+  const { parts, project } = scene;
+  const candidates = [
+    ...parts.filter((p) => isPack(p) && portOf(p, 'power-out')).map(packSource),
+    ...parts.flatMap((p) => (p.supplyId ? [suppliedSource(p.id, p.supplyId)] : [])),
     ...(project.extras ?? []).flatMap((x) =>
-      x.key.startsWith('supply:') ? [suppliedBattery(null, x.key.slice(7))] : [],
+      x.key.startsWith('supply:') ? [suppliedSource(null, x.key.slice(7))] : [],
     ),
-  ];
+  ].filter((s): s is Source => s !== null);
+  const chosen = servoSource({ ...scene, servos: servoParts(parts) })?.name;
 
-  const end = supplied.find((e) => e !== null);
-
-  return end ? { end, battery: true } : null;
+  return candidates.find((s) => chosen !== undefined && isChosen(s, chosen)) ?? candidates[0] ?? null;
 }
 
 const regulatorParts = (parts: ScenePart[]) =>

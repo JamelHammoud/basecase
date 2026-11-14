@@ -28,13 +28,13 @@ covers:
 
 Every keyboard shortcut in Basecase, grouped by what you're doing, as the **Shortcuts** pane in Settings lists them.
 
-On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? while you're not typing to open the **Shortcuts** pane.
+Press [[?]] while you're not typing to open the **Shortcuts** pane.
 
 ## Navigate
 
 | Action | Keys |
 |---|---|
-| Pan | Hold Space and drag |
+| Pan | Hold [[Space]] and drag |
 | Zoom to selection | [[Z]] |
 | Isometric view | [[1]] |
 | Top view | [[2]] |
@@ -49,19 +49,19 @@ On Windows, use Ctrl for ⌘ and ⌃, Alt for ⌥, and Shift for ⇧. Press ? wh
 | Rotate | [[E]] |
 | Scale | [[R]] |
 | Sculpt | [[C]] |
-| Sculpt inverted | ⌥ and drag |
+| Sculpt inverted | [[⌥]] and drag |
 | Show pose | [[P]] |
 | Comment | [[M]] |
 | Measure | [[D]] |
-| Measure without snapping | ⇧ and click |
-| Measure vertically | ⌥ and click |
+| Measure without snapping | [[⇧]] and click |
+| Measure vertically | [[⌥]] and click |
 | Annotate | [[N]] |
 | Marker while annotating | [[P]] |
 | Eraser while annotating | [[E]] |
 | Shapes | [[A]] |
 | Drop to floor | [[F]] |
 | Stack on part below | [[S]] |
-| Move or rotate without snapping | ⇧ and drag |
+| Move or rotate without snapping | [[⇧]] and drag |
 
 The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 
@@ -71,9 +71,9 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 |---|---|
 | Undo | [[⌘Z]] |
 | Redo | [[⇧⌘Z]] or [[⌘Y]] |
-| Add to selection | ⇧ and click |
-| Box select | ⇧ and drag |
-| Select a part inside a group | ⌘ and click, or double-click |
+| Add to selection | [[⇧]] and click |
+| Box select | [[⇧]] and drag |
+| Select a part inside a group | [[⌘]] and click, or double-click |
 | Select all | [[⌘A]] |
 | Copy | [[⌘C]] |
 | Cut | [[⌘X]] |
@@ -94,8 +94,8 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Show scenes | [[⌘O]] |
 | Close scene | [[⌘W]] |
 | Reopen closed scene | [[⇧⌘T]] |
-| Next scene | [[⌃Tab]], or ⇧⌘ and ] |
-| Previous scene | [[⌃⇧Tab]], or ⇧⌘ and [ |
+| Next scene | [[⌃Tab]], or [[⇧⌘]] and ] |
+| Previous scene | [[⌃⇧Tab]], or [[⇧⌘]] and [ |
 | Go to scene 1–8 | [[⌘1]] to [[⌘8]] |
 | Go to last scene | [[⌘9]] |
 
@@ -128,6 +128,6 @@ These keys work in the message field of the **Agent** tab.
 | Stop | [[Esc]] |
 | Slash commands | [[/]] |
 
-Queue sends the message once the agent finishes its current work. Esc stops the agent only while the message field is empty. A slash at the start of a message opens the slash commands.
+Queue sends the message once the agent finishes its current work. [[Esc]] stops the agent only while the message field is empty. A slash at the start of a message opens the slash commands.
 
 For the trackpad and mouse, see [Trackpad and mouse controls](/help/trackpad-and-mouse-controls).

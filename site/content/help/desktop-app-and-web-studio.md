@@ -44,7 +44,7 @@ It saves scenes and Library models in your browser's storage, on that computer o
 | STEP and IGES import | Meshes only: STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE |
 | Publishing a dataset to Hugging Face | Export only |
 
-Settings has no **Agent**, **Printers** or **Accounts** pane in the web studio. There's no menu bar either; ⌘K runs every command the menus would.
+Settings has no **Agent**, **Printers** or **Accounts** pane in the web studio. There's no menu bar either; [[⌘K]] runs every command the menus would.
 
 A blue strip at the top of the web studio links the desktop download. Closing it hides it for good in that browser.
 

@@ -54,7 +54,7 @@ A message that the agent “didn’t match its checksum” means the download ar
 The agent stopped or never started. The text after it, when there is any, says why.
 
 1. Click **Reconnect** in the banner.
-2. If it still fails, press ⌘, (Ctrl+, on Windows) and choose **Agent**.
+2. If it still fails, press [[⌘,]] and choose **Agent**.
 3. Under **Run with**, click the agent you want. That puts back its usual **Command** and reconnects.
 
 “Couldn't start the agent:” means the **Command** in Settings is wrong, often after you edited it. Step 3 fixes it. A message that the agent “isn’t available for this computer” means there's no download for your system; pick another agent in **Run with**.
@@ -89,7 +89,7 @@ Google no longer signs personal accounts in to Gemini CLI.
 
 1. Make a Gemini API key with your Google account.
 2. In the banner, click **Add API Key**.
-3. Paste the key and press Enter.
+3. Paste the key and press [[↩]].
 
 ## “isn’t available for this computer”
 

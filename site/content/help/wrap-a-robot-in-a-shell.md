@@ -14,7 +14,7 @@ Turn a mesh you imported, like an owl or a droid body, into printed shells aroun
 
 1. Insert the robot (File ▸ Import Robot, or a preset from Parts ▸ Robots) and import the mesh (File ▸ Import, or drop the file on the canvas).
 2. Click the robot to select it, then Shift-click the mesh.
-3. Press ⌘K and choose **Wrap Robot**, or right-click the selection and choose **Wrap Robot**.
+3. Press [[⌘K]] and choose **Wrap Robot**, or right-click the selection and choose **Wrap Robot**.
 
 ![The ⌘K palette with Wrap Robot, over the SO-101 arm and an owl mesh, both selected](/help/wrap-a-robot-in-a-shell/palette.png)
 
@@ -30,6 +30,6 @@ When it's done, the mesh is hidden and one shell per link takes its place, selec
 
 ![The arm posed, with its shells following each link](/help/wrap-a-robot-in-a-shell/posed.png)
 
-The mesh is scaled evenly and centered on the robot until it covers the robot's box with 6 mm to spare, then hollowed to a 2 mm wall. Anywhere a servo, a link or another shell would hit across a joint's range is cut away, so a joint that turns far, like the SO-101's ±100° shoulder, leaves wide openings around it. Each shell is a printed part: it shows in the BOM and on the plates, and its weight goes into the simulation with its link. Resize a shell with Size like any other part. ⌘Z brings the mesh back and removes the shells in one step.
+The mesh is scaled evenly and centered on the robot until it covers the robot's box with 6 mm to spare, then hollowed to a 2 mm wall. Anywhere a servo, a link or another shell would hit across a joint's range is cut away, so a joint that turns far, like the SO-101's ±100° shoulder, leaves wide openings around it. Each shell is a printed part: it shows in the BOM and on the plates, and its weight goes into the simulation with its link. Resize a shell with Size like any other part. [[⌘Z]] brings the mesh back and removes the shells in one step.
 
 The agent can do the same: ask it to wrap the robot in the mesh, and it uses its `wrap_robot` tool.

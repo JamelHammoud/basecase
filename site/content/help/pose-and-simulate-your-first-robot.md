@@ -44,7 +44,7 @@ The arm appears on the canvas, selected. A toast at the bottom says how many joi
 
 1. Click **Pose** at the top of the right panel.
 2. Drag the slider in the first joint's row. The arm turns on the canvas as you drag.
-3. Click the number at the end of another joint's row, type `45`, and press Enter.
+3. Click the number at the end of another joint's row, type `45`, and press [[↩]].
 
 Double-click a slider to send its joint back to 0. Posing never changes the parts; it only moves them on the canvas.
 

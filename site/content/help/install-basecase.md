@@ -24,7 +24,7 @@ covers:
   - electron/main.mjs
 ---
 
-The agent, slicing, printing and training all run in the Basecase desktop app. To install it, you need one of these computers:
+The agent, slicing, printing and training all run in the desktop app. To install it, you need one of these:
 
 - A Mac with Apple silicon. There's no build for Intel Macs.
 - A PC with 64-bit Windows 11.
@@ -46,7 +46,7 @@ You don't need administrator rights to run the installer. It installs Basecase f
 
 ## The first launch
 
-The agent connects while the app starts. Basecase opens with a two-wheel rover in the simulator. To learn more, see [Drive your first robot](/help/drive-your-first-robot).
+Basecase opens with a two-wheel rover in the simulator (see [Drive your first robot](/help/drive-your-first-robot)). The agent connects while the app starts.
 
 The first time you open Basecase, it downloads Claude Code (263 MB). You can follow its progress in the Agent tab. If you pick Codex (340 MB) or Gemini CLI (95 MB) in Settings, Basecase downloads that one instead.
 

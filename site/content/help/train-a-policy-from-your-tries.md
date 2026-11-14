@@ -32,9 +32,9 @@ covers:
   - forge/crates/forge-train/src/bc/
 ---
 
-You can teach your robot a Case using tries you drove yourself. Basecase keeps the policy only if it can pass the Case on its own.
+You can teach your robot a Case from tries you drove yourself. Basecase keeps the policy only if it passes the Case on its own.
 
-Training runs in the desktop app and uses Forge to train on your computer.
+Training runs in the desktop app, which uses Forge to train on your computer.
 
 1. Open a Case and drive it with **Try It** until at least five tries pass. For steps, see [Try a Case](/help/try-a-case).
 2. Under **Results**, click **Make Dataset**. The dataset opens over the canvas. To gather tries from a Library search instead, see [Make a dataset from tries](/help/make-a-dataset-from-tries).
@@ -45,13 +45,13 @@ Training runs in the desktop app and uses Forge to train on your computer.
 4. When a count appears under the buttons, click **Done**.
 5. Under **Train**, click **Try** on the Case's row.
 
-While it trains, the Case's row under **Train** shows the progress. On the arm-3dof test robot, ten 4-second tries trained in under 3 seconds. The 32 runs that judge the policy took about 6 seconds more.
+While it trains, the Case's row under **Train** shows the progress. On the arm-3dof test robot, ten 4-second tries trained in under 3 seconds, and the 32 runs that judge the policy took about 6 seconds more.
 
 **Note:** With a dataset open, **Train from Tries** is also in [[⌘K]] once five of its tries have passed. Basecase judges the policy with the dataset's Case. If another Case is open, Basecase opens the dataset's Case first. If the dataset's Case isn't in this scene, or the dataset has no Case and none is open, you see **New Case** instead.
 
 ## When the policy is kept
 
-Basecase judges the policy by having it run the Case 32 times on its own. In each run, every joint starts up to 5° off its start pose. Each run also draws its own friction, link masses, servo strength and servo delay (up to 20 ms).
+To judge the policy, Basecase has it run the Case 32 times by itself. In each run, every joint starts up to 5° off its start pose, and the run draws its own friction, link masses, servo strength and servo delay (up to 20 ms).
 
 If 29 or more runs pass, Basecase keeps the policy as the Case's skill. The count appears under the dataset's buttons, and the skill's row under **Train** shows how many runs passed.
 
@@ -61,7 +61,7 @@ If 29 or more runs pass, Basecase keeps the policy as the Case's skill. The coun
 
 From then on, the Case's row in **Checks** runs the skill instead of the Case's scripted motion.
 
-If fewer than 29 runs pass, Basecase doesn't save anything. The count turns red, and the start, middle and end of the worst run appear beside it. Drive more tries that finish the task the same way, then click **Train from Tries** again.
+If fewer than 29 runs pass, Basecase saves nothing. The count turns red, and the start, middle and end of the worst run appear beside it. Drive more tries that finish the task the same way, then click **Train from Tries** again.
 
 ![A count in red under the dataset's buttons, with the worst run's start, middle and end](/help/train-a-policy-from-your-tries/missed.png)
 

@@ -33,7 +33,7 @@ The policy runs in the app's simulation, and the robot copies what the simulatio
 1. Connect the emulated robot and climb to **Test**. See [Connect an emulated robot](/help/connect-an-emulated-robot) for the steps.
 2. Click **Simulate** at the top of the right panel.
 3. Under **Train**, click **Try** on a ready skill. For **Walk**, click **Drive** instead.
-4. Watch the servo angles in **Operate**. They change as the simulated robot moves.
+4. Watch the servo angles in **Operate** change as the simulated robot moves.
 5. To stop the motors, click **Stop** in **Operate**.
 
 To run a trained policy, skip step 3 and choose the policy under **Control**. When you try a Case or run a Routine, the app streams it to the robot the same way.
@@ -54,6 +54,6 @@ If something goes wrong:
 
 To run the robot without Basecase, choose **Export** ▸ **Robot Package**. The package holds the MuJoCo model, a URDF, the joint map and the scene's policies, each with a `spec.json` file that lists its inputs and outputs.
 
-**Note:** The package doesn't include skills you trained in **Train**.
+**Note:** The package leaves out skills you trained in **Train**.
 
 See [Export a robot package](/help/export-a-robot-package) for more.

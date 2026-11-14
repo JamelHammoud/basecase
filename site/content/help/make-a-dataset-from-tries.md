@@ -33,7 +33,9 @@ covers:
   - electron/library/datasetStore.mjs
 ---
 
-A dataset collects tries from any scene under one name. You can export it, publish it or train a policy on it. You can make one from a Case's results or from a search of your tries.
+You can gather tries from any scene into a named dataset, then export it, publish it or train a policy on it.
+
+You can make one from a Case's results or from a search of your tries.
 
 ## From a Case's results
 

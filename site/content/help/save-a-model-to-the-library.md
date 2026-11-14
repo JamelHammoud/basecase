@@ -36,11 +36,11 @@ You can save a part or a group of parts to the Library, then add it to any scene
 
 ![The New Model menu open at the top right of the Library](/help/save-a-model-to-the-library/new-model-menu.png)
 
-If you save one part, the model gets that part's name and its **Notes**. If you save several parts, the model gets the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
+When you save one part, the model gets that part's name and its **Notes**. When you save several parts, the model gets the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
 
 You can also choose **Save to Library** from a part's right-click menu, or from [[⌘K]].
 
-To bring in a file, choose **Import** from the **+** menu. SVG files open in Import SVG. Click **Add** there to [turn the drawing into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). To save an SVG part to the Library, click **Save to Library** (the bookmark) in the part's Inspector header.
+To bring in a file, choose **Import** from the **+** menu. An SVG file opens in Import SVG. Click **Add** there to [turn it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). To save an SVG part to the Library, click **Save to Library** (the bookmark) in the part's Inspector header.
 
 ![The Import SVG panel with a drawing loaded and one Add button under Output](/help/save-a-model-to-the-library/import-svg.png)
 
@@ -50,14 +50,10 @@ To bring in a file, choose **Import** from the **+** menu. SVG files open in Imp
 2. Click **Library** in the view rail.
 3. Click the model, or drag it onto the canvas where you want it. The model appears in the scene and is selected.
 
-To see a model's details, hold your pointer over it. The details show where the model came from, its size, how many parts it has, and its notes.
+Hold your pointer over a model to see where it came from, its size, how many parts it has, and its notes.
 
 ![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)
 
 **Search library** finds models by name or notes, and datasets by name or task. It also finds tries from every scene, by words and by facts such as failed or last week. See [Search tries](/help/search-tries).
 
 To rename, duplicate, or delete a model, right-click it. Basecase asks before it deletes a model.
-
-<!--
-Scores (original): Directness 8, Rhythm 7, Trust 8, Authenticity 8, Density 7 = 38/50. At or above 35, so no revision.
--->

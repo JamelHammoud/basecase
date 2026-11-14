@@ -12,24 +12,24 @@ covers:
   - src/app/tabModel.ts
 ---
 
-You can run two arms in the same simulation. One arm touches a point, then the other arm takes over. Basecase records the tries as one dataset.
+You can run two arms in the same simulation, where one arm touches a point and the other takes over. Basecase records the tries as one dataset.
 
-1. Open each arm's scene in its own tab. The second arm can be a copy of the first. To make a copy, right-click the arm's tab and choose **Duplicate**.
-2. In the first arm's tab, open **Play** ▸ **Cases**, then click **New Case**.
-3. Choose **Hand Off to a Spot**. Set how far ahead and how high the point sits, and how close an arm has to get for it to count. Then click **Make Case**.
+1. Open each arm's scene in its own tab. The second arm can be a copy of the first. To make a copy, right-click its tab and choose **Duplicate**.
+2. In the first arm's tab, open **Play** ▸ **Cases** and click **New Case**.
+3. Choose **Hand Off to a Spot**. Set how far ahead and how high the point sits, and how close counts, then click **Make Case**.
 
 ![The New Case card with Hand Off to a Spot chosen](/help/put-two-robots-in-one-case/new-case.png)
 
-The second arm stands facing the first, on the other side of the point and the same distance from it. It's the robot from the other tab, at its own size and weight. If you edit it in that tab, the next try uses your change.
+The second arm stands facing the first, the same distance from the point but on the other side. It's the robot from the other tab, at its own size and weight. If you edit it in that tab, the next try uses the change.
 
 ![Both arms on the canvas with the point between them](/help/put-two-robots-in-one-case/case.png)
 
-4. In the Simulate tab, click **Try It**. Drive the first arm with [[W A S D]], [[Q]], and [[E]]. Touch the point within the first 3 seconds, then pull away. At 3 seconds, the second arm reaches for the point.
+4. Click **Try It** in the Simulate tab. Drive the first arm with [[W A S D]], [[Q]] and [[E]]. Touch the point within the first 3 seconds, then pull away. At 3 seconds, the second arm reaches for it.
 
 ![The second arm on the point after the first pulled away](/help/put-two-robots-in-one-case/try.png)
 
-A try passes when the first arm held the point, and then the second arm held it while the first arm was clear.
+The try passes when the first arm held the point and the second arm then held it while the first was clear.
 
-From **Results**, click **Make Dataset**. When you click **Export Dataset** in the dataset that opens, both arms' joints go into one `observation.state` and one `action`. Each joint name shows its arm (`a.` or `b.`), and `modality.json` has one group per arm.
+From **Results**, click **Make Dataset**. **Export Dataset** in the dataset puts both arms' joints in one `observation.state` and one `action`. It names each joint after its arm (`a.` or `b.`), and `modality.json` has one group per arm.
 
-**Note:** If you close the second arm's tab, the Case stays, but tries fail until you open an arm in another tab.
+**Note:** If you close the second arm's tab, the Case stays. Tries fail until you open an arm in another tab.

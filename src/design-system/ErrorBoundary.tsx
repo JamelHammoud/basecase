@@ -31,7 +31,7 @@ function RegionFallback({ region, className, onRetry }: { region: string; classN
       {...markers(region)}
       className={`flex items-center justify-center gap-[12px] px-[12px] text-center select-none ${className}`}
     >
-      <div className="text-[14px] font-medium text-white/80">{stoppedWorking(region)}</div>
+      <div className="text-[14px] font-medium text-white/90">{stoppedWorking(region)}</div>
       <Button size="sm" onClick={onRetry}>
         Reload
       </Button>

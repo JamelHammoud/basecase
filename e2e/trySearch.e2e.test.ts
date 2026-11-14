@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { StoredTry } from '../src/cases/tryFile';
 import { openApp, shown, type App } from './harness';
-import { SEARCH_FIXTURES, storedFixture } from './trySearchFixtures';
+import { searchTries } from './trySearchFixtures';
 
 let app: App;
 
@@ -22,7 +22,7 @@ const tileOrder = () =>
 
 describe('Searching tries', () => {
   it('finds failed tries by Case and input from the Library and ranks grasps with More Like This', async () => {
-    const tries = SEARCH_FIXTURES.map((f) => storedFixture(f));
+    const tries = searchTries();
 
     await app.page.evaluate(
       (list) => (window as unknown as { __studio: Studio }).__studio.keepStoredTries(list),

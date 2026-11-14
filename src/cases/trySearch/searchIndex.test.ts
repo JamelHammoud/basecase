@@ -27,6 +27,8 @@ const SPECS: TrySpec[] = [
   { id: 'old-2', caseName: 'Stack Cups', startedAt: '2026-11-08T21:00:00.000Z', input: null },
   { id: 'older', caseName: 'Stack Cups', startedAt: '2026-10-20T10:00:00.000Z', input: null },
   { id: 'tidy', caseName: 'Tidy Desk', input: 'script', task: 'Put the yellow duck in the blue bin' },
+  { id: 'mat-keys', robot: 'Hexapod', caseName: 'Walk the Mat', input: 'keys' },
+  { id: 'mat-input', robot: 'Hexapod', caseName: 'Walk the Ramp', input: 'mat' },
   { id: 'like-a1', sceneId: 'scene-a', caseName: 'Pick Cube', motion: graspMotion(1.2, 0.01) },
   { id: 'like-a2', sceneId: 'scene-a', caseName: 'Pick Cube', motion: graspMotion(0.8, 0.02) },
   { id: 'like-b1', sceneId: 'scene-b', caseName: 'Pick Bolt', motion: graspMotion(1.5, 0.015) },
@@ -87,6 +89,11 @@ describe('searching tries by words and facts', () => {
     expect(sorted(find(build(), 'walk corridor g1'))).toEqual(['walk-g1']);
     expect(ids(find(build(), 'failed red keys'))).toEqual(['pick-keys']);
     expect(ids(find(build(), 'faulted'))).toEqual(['pick-faulted']);
+  });
+
+  it('reads an input that names a Case both as a fact and as words', () => {
+    expect(sorted(find(build(), 'walk the mat'))).toEqual(['mat-input', 'mat-keys']);
+    expect(ids(find(build(), 'walk the gamepad'))).not.toContain('mat-keys');
   });
 
   it('returns nothing for an empty search, and respects the limit', () => {

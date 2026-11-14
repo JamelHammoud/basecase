@@ -62,8 +62,7 @@ describe('try search at 10,000 tries', () => {
     index.put(tries);
 
     const buildMs = performance.now() - started;
-    const vocab = index.vocab();
-    const query = (text: string) => () => index.search(parseQuery(text, vocab, NOW), 200);
+    const query = (text: string) => () => index.search(parseQuery(text, index.vocab(), NOW), 200);
     const texts = [
       'failed grasp red block leader-arm',
       'walk hexapod over 30 s',

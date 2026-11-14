@@ -32,11 +32,13 @@ export interface QueryFilters {
 export interface ParsedQuery {
   words: string[];
   filters: QueryFilters;
+  alternate?: ParsedQuery;
 }
 
 export interface QueryVocab {
   robots: string[];
   inputs: string[];
+  named?: string[];
 }
 
 export type HitMatch = 'words' | 'facts' | 'motion';
@@ -66,6 +68,7 @@ export interface IndexedTry {
   time: number;
   faulted: boolean;
   terms: Array<[term: string, weight: number]>;
+  named: string[];
   motionKey: string | null;
   signature: number[] | null;
   stamp: number;

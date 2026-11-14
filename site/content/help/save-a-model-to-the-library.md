@@ -1,7 +1,7 @@
 ---
 title: Save a model to the Library
 date: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-14
 collection: files-and-sharing
 type: task
 order: 5
@@ -36,24 +36,24 @@ You can save a part or a group of parts to the Library, then add it to any scene
 
 ![The New Model menu open at the top right of the Library](/help/save-a-model-to-the-library/new-model-menu.png)
 
-If you save a single part, the model gets that part's name and its **Notes**. If you save several parts, it gets the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
+A model saved from a single part takes that part's name and its **Notes**. A model saved from several parts takes the scene's name. To save every visible part in the scene instead, choose **Save Whole Scene**.
 
-**Save to Library** is also in a part's right-click menu and in [[⌘K]].
+You can also find **Save to Library** in a part's right-click menu and in [[⌘K]].
 
 ## Use a saved model
 
 1. Open the scene you want the model in.
 2. Click **Library** in the view rail.
-3. Click the model, or drag it onto the canvas where you want it. The model appears in the scene already selected.
+3. Click the model, or drag it onto the canvas where you want it. The model appears in the scene, already selected.
 
 Hold your pointer over a model to see where it came from, its size, how many parts it has and its notes.
 
-**Search library** finds models by name or notes. Once you have tries, it also lists matching tries below the models. Learn more in [Search tries](/help/search-tries).
+![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)
+
+To find a model by name or notes, use **Search library**. Once you have tries, the search also lists matching tries below the models. Learn more in [Search tries](/help/search-tries).
 
 To rename, duplicate or delete a model, right-click it. Basecase asks before it deletes a model.
 
-![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)
-
-The **+** menu also has **Import**, which brings in a file. An SVG opens in Import SVG. Click **Add** there to [turn it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). To save an SVG part to the Library, click **Save to Library**, the bookmark in its Inspector header.
+To bring in a file, click **+** and choose **Import**. An SVG opens in Import SVG, where you can click **Add** to [turn it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). To save an SVG part to the Library, click **Save to Library** (the bookmark in its Inspector header).
 
 ![The Import SVG panel with a drawing loaded and one Add button under Output](/help/save-a-model-to-the-library/import-svg.png)

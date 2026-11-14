@@ -105,9 +105,14 @@ export async function keepTries(given: KeptTry[]) {
   changed({ kept: kept.map((k) => k.stored), deleted: [] });
 }
 
-export async function saveManifest(stored: StoredTry) {
-  await backend.save(stored, null);
-  changed({ kept: [stored], deleted: [] });
+export async function updateManifests(given: StoredTry[]) {
+  const updated: StoredTry[] = [];
+
+  for (const stored of given) if (await backend.update(stored)) updated.push(stored);
+
+  if (updated.length) changed({ kept: updated, deleted: [] });
+
+  return updated;
 }
 
 export const loadManifests = (ids: string[]) => backend.manifests(ids);

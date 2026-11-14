@@ -1,5 +1,6 @@
 import type { TrySource, TryVerdict } from '../tryFile';
 import { DATE_PATTERN, dateSpan } from './queryDates';
+import { stem, termsOf } from './searchTerms';
 import type { ParsedQuery, QueryFilters, QueryVocab } from './types';
 
 export const KNOWN_INPUTS = [
@@ -135,7 +136,25 @@ interface Name {
   list: 'robots' | 'inputs';
 }
 
-function takeNames(text: string, filters: QueryFilters, vocab: QueryVocab): string {
+interface Reading {
+  vocab: QueryVocab;
+  named: Set<string>;
+  literal: boolean;
+  ambiguous: boolean;
+}
+
+const isNamed = (text: string, reading: Reading) => termsOf(text).every((term) => reading.named.has(term));
+
+function keptAsWords(name: Name, reading: Reading): boolean {
+  if (name.list !== 'inputs' || !isNamed(name.value, reading)) return false;
+
+  reading.ambiguous = true;
+
+  return reading.literal;
+}
+
+function takeNames(text: string, filters: QueryFilters, reading: Reading): string {
+  const { vocab } = reading;
   const names: Name[] = [
     ...vocab.robots.map((value) => ({ value, list: 'robots' as const })),
     ...[...new Set([...vocab.inputs, ...KNOWN_INPUTS])].map((value) => ({ value, list: 'inputs' as const })),
@@ -145,7 +164,7 @@ function takeNames(text: string, filters: QueryFilters, vocab: QueryVocab): stri
   for (const name of names) {
     const pattern = phrasePattern(name.value.toLowerCase());
 
-    if (!name.value.trim() || !pattern.test(rest)) continue;
+    if (!name.value.trim() || !pattern.test(rest) || keptAsWords(name, reading)) continue;
 
     addOnce<string>(filters[name.list], name.value);
     rest = rest.replace(pattern, ' ');
@@ -154,22 +173,44 @@ function takeNames(text: string, filters: QueryFilters, vocab: QueryVocab): stri
   return rest;
 }
 
-function readWord(word: string, filters: QueryFilters, words: string[]) {
+function sourceWord(word: string, reading: Reading): TrySource | null {
+  const source = SOURCE_WORDS[word];
+
+  if (!source || !reading.named.has(stem(word))) return source ?? null;
+
+  reading.ambiguous = true;
+
+  return reading.literal ? null : source;
+}
+
+function readWord(word: string, filters: QueryFilters, words: string[], reading: Reading) {
+  const source = sourceWord(word, reading);
+
   if (VERDICT_WORDS[word]) addOnce(filters.verdicts, VERDICT_WORDS[word]);
-  else if (SOURCE_WORDS[word]) addOnce(filters.sources, SOURCE_WORDS[word]);
+  else if (source) addOnce(filters.sources, source);
   else if (FAULT_WORDS.has(word)) filters.faulted = true;
   else if (!STOP_WORDS.has(word)) addOnce(words, word);
 }
 
-export function parseQuery(text: string, vocab: QueryVocab, now: Date): ParsedQuery {
+function read(text: string, now: Date, reading: Reading): ParsedQuery {
   const filters = emptyFilters();
   const words: string[] = [];
   const lowered = takeLike(` ${text} `, filters).toLowerCase();
-  const rest = takeNames(takeDates(takeDurations(lowered, filters), filters, now), filters, vocab);
+  const rest = takeNames(takeDates(takeDurations(lowered, filters), filters, now), filters, reading);
 
-  for (const word of rest.split(/[^\p{L}\p{N}]+/u)) if (word) readWord(word, filters, words);
+  for (const word of rest.split(/[^\p{L}\p{N}]+/u)) if (word) readWord(word, filters, words, reading);
 
   return { words, filters };
+}
+
+export function parseQuery(text: string, vocab: QueryVocab, now: Date): ParsedQuery {
+  const named = new Set(vocab.named ?? []);
+  const facts: Reading = { vocab, named, literal: false, ambiguous: false };
+  const query = read(text, now, facts);
+
+  if (!facts.ambiguous) return query;
+
+  return { ...query, alternate: read(text, now, { vocab, named, literal: true, ambiguous: false }) };
 }
 
 export const hasFacts = (f: QueryFilters) =>

@@ -1,6 +1,6 @@
 import { TRY_SOURCE_BADGE, type StoredTry, type TrySource } from '../tryFile';
 import { motionKey, motionSignature } from './motion';
-import { weightedTerms } from './searchTerms';
+import { termsOf, weightedTerms } from './searchTerms';
 import type { IndexedTry } from './types';
 
 const CASE_BOOST = 2;
@@ -39,6 +39,7 @@ export function indexedTryOf(stored: StoredTry, stamp: number): IndexedTry {
       { text: sourceText(stored.source), boost: 1 },
       { text: stored.input ?? '', boost: 1 },
     ]),
+    named: [...new Set(termsOf(`${stored.case?.name ?? ''} ${stored.task ?? ''}`))],
     motionKey: stored.motion ? motionKey(stored.motion) : null,
     signature: stored.motion ? quantized(motionSignature(stored.motion)) : null,
     stamp,

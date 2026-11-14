@@ -38,6 +38,7 @@ export const desktopTries: TryBackend = {
   save: async (stored: StoredTry, recording: Recording | null) => {
     await call('tries:save', { manifest: stored, recording: recording ? encodeRecording(recording) : null });
   },
+  update: async (stored) => (await call<{ ok?: boolean }>('tries:update', { manifest: stored }))?.ok === true,
   recording: async (id) => {
     const bytes = bytesOf(await call<Bytes>('tries:recording', id));
 

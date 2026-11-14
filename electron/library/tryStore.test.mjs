@@ -178,6 +178,7 @@ describe('TryStore', () => {
       expect(() => store.recording(id), String(id)).toThrow('Not a valid id');
       expect(() => store.strip(id), String(id)).toThrow('Not a valid id');
       expect(() => store.saveStrip({ id, bytes }), String(id)).toThrow('Not a valid id');
+      expect(() => store.update({ manifest: manifest(id) }), String(id)).toThrow('Not a valid id');
       expect(() => store.delete(['ok', id]), String(id)).toThrow('Not a valid id');
     }
 
@@ -185,5 +186,24 @@ describe('TryStore', () => {
     expect(() => store.delete('../auth')).toThrow();
     expect(fs.readFileSync(secret, 'utf-8')).toBe('{"token":"x"}');
     expect(fs.existsSync(triesDir) ? fs.readdirSync(triesDir) : []).toEqual([]);
+  });
+});
+
+describe('Updating a manifest', () => {
+  it('updates a kept manifest and never brings back a deleted try', async () => {
+    store.save({ manifest: manifest('try-1'), recording: new Uint8Array(8) });
+    store.delete(['try-1']);
+
+    expect(store.update({ manifest: manifest('try-1', { task: 'Lift' }) })).toEqual({ ok: false });
+    expect(fs.existsSync(path.join(dir, 'tries', 'try-1'))).toBe(false);
+
+    store.save({ manifest: manifest('try-2'), recording: new Uint8Array(8) });
+
+    const routes = tryPostRoutes(store);
+    const post = (url, arg) => routes.find(([prefix]) => url.startsWith(prefix))[1]({ arg });
+
+    expect(await post('/tries-update', { manifest: manifest('try-2', { task: 'Lift' }) })).toEqual({ ok: true });
+    expect(store.manifests(['try-2'])).toEqual([manifest('try-2', { task: 'Lift' })]);
+    expect(store.recording('try-2')).toHaveLength(8);
   });
 });

@@ -7,7 +7,7 @@ import type { HitMatch, IndexedTry, ParsedQuery, QueryFilters, QueryVocab, TryHi
 
 const FORMAT = 'basecase-try-index';
 
-export const INDEX_VERSION = 1;
+export const INDEX_VERSION = 2;
 
 interface Saved {
   format: string;
@@ -39,10 +39,23 @@ const isSaved = (value: unknown): value is Saved =>
   Array.isArray((value as Saved).tries);
 
 const isEntry = (e: IndexedTry) =>
-  typeof e?.id === 'string' && Array.isArray(e.terms) && typeof e.startedAt === 'string';
+  typeof e?.id === 'string' && Array.isArray(e.terms) && Array.isArray(e.named) && typeof e.startedAt === 'string';
+
+function merged(first: TryHit[], second: TryHit[], limit: number): TryHit[] {
+  const best = new Map<string, TryHit>();
+
+  for (const hit of [...first, ...second]) {
+    const held = best.get(hit.tryId);
+
+    if (!held || hit.score > held.score) best.set(hit.tryId, hit);
+  }
+
+  return [...best.values()].sort(byScore).slice(0, limit);
+}
 
 export class TrySearchIndex {
   private tries = new Map<string, IndexedTry>();
+  private words: QueryVocab | null = null;
 
   static fromSnapshot(bytes: Uint8Array): TrySearchIndex | null {
     try {
@@ -68,10 +81,14 @@ export class TrySearchIndex {
 
   put(tries: StoredTry[], stamps: Record<string, number> = {}) {
     for (const stored of tries) this.tries.set(stored.id, indexedTryOf(stored, stamps[stored.id] ?? 0));
+
+    this.words = null;
   }
 
   remove(ids: string[]) {
     for (const id of ids) this.tries.delete(id);
+
+    this.words = null;
   }
 
   stamps(): Record<string, number> {
@@ -83,15 +100,28 @@ export class TrySearchIndex {
   }
 
   vocab(): QueryVocab {
+    this.words ??= this.freshVocab();
+
+    return this.words;
+  }
+
+  private freshVocab(): QueryVocab {
     const all = [...this.tries.values()];
 
     return {
       robots: [...new Set(all.map((t) => t.robot).filter(Boolean))],
       inputs: [...new Set(all.flatMap((t) => (t.input ? [t.input] : [])))],
+      named: [...new Set(all.flatMap((t) => t.named))],
     };
   }
 
-  search({ words, filters }: ParsedQuery, limit: number): TryHit[] {
+  search(query: ParsedQuery, limit: number): TryHit[] {
+    const hits = this.searchOne(query, limit);
+
+    return query.alternate ? merged(hits, this.searchOne(query.alternate, limit), limit) : hits;
+  }
+
+  private searchOne({ words, filters }: ParsedQuery, limit: number): TryHit[] {
     if (filters.like) return this.like(words, filters, limit);
 
     if (words.length) return this.wordHits(words, filters).slice(0, limit);

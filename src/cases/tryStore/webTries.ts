@@ -36,6 +36,13 @@ export const webTries: TryBackend = {
 
     await manifests.put(stored.id, stored);
   },
+  update: async (stored) => {
+    if (!(await manifests.get(stored.id))) return false;
+
+    await manifests.put(stored.id, stored);
+
+    return true;
+  },
   recording: async (id) => (await recordings.get(id)) ?? null,
   strip: async (id) => (await strips.get(id)) ?? null,
   saveStrip: async (id, strip) => {

@@ -4,6 +4,7 @@ import type { StoredTry, TrySummary } from '../tryFile';
 export interface TryBackend {
   list: () => Promise<TrySummary[]>;
   save: (stored: StoredTry, recording: Recording | null) => Promise<void>;
+  update: (stored: StoredTry) => Promise<boolean>;
   recording: (id: string) => Promise<Recording | null>;
   strip: (id: string) => Promise<Blob | null>;
   saveStrip: (id: string, strip: Blob) => Promise<void>;

@@ -6,10 +6,9 @@ import {
   loadSearchIndex,
   loadTries,
   onTriesChanged,
-  saveManifest,
   saveSearchIndex,
+  updateManifests,
 } from '../tryStore';
-import { motionTrace } from './motion';
 import { trySearchJobs, type TrySearchJobs } from './trySearchJobs';
 import type { TryHit } from './types';
 
@@ -55,28 +54,50 @@ function saveSoon() {
 const stampsOf = (tries: StoredTry[], stamp: (id: string) => number) =>
   Object.fromEntries(tries.map((t) => [t.id, stamp(t.id)]));
 
-async function backfillMotion(tries: StoredTry[], summaries: Map<string, TrySummary>) {
+const needsMotion = (stored: StoredTry, summaries: Map<string, TrySummary>) =>
+  !stored.motion && !!summaries.get(stored.id)?.recording;
+
+async function traced(stored: StoredTry) {
+  const recording = await loadRecording(stored.id).catch(() => null);
+
+  return recording && client.call('trace', { recording });
+}
+
+async function backfillBatch(tries: StoredTry[], summaries: Map<string, TrySummary>) {
+  const moved: StoredTry[] = [];
+  const still: StoredTry[] = [];
+
   for (const stored of tries) {
-    if (stored.motion || !summaries.get(stored.id)?.recording) continue;
+    const motion = await traced(stored);
 
-    const recording = await loadRecording(stored.id).catch(() => null);
-    const motion = recording && motionTrace(recording);
-
-    if (!motion) continue;
-
-    const [current] = await loadManifests([stored.id]).catch(() => []);
-
-    if (current && !current.motion) await saveManifest({ ...current, motion }).catch(() => {});
+    if (motion) moved.push({ ...stored, motion });
+    else still.push(stored);
   }
+
+  const current = new Map((await loadManifests(tries.map((t) => t.id))).map((t) => [t.id, t]));
+  const kept = still.filter((t) => current.has(t.id));
+
+  await updateManifests(moved.filter((t) => current.has(t.id) && !current.get(t.id)?.motion));
+  await client.call('put', { tries: kept, stamps: stampsOf(kept, (id) => summaries.get(id)?.stamp ?? SESSION_STAMP) });
+}
+
+async function backfillMotion(tries: StoredTry[], summaries: Map<string, TrySummary>) {
+  const pending = tries.filter((t) => needsMotion(t, summaries));
+
+  for (let i = 0; i < pending.length; i += BATCH) await backfillBatch(pending.slice(i, i + BATCH), summaries);
+
+  if (pending.length) saveSoon();
 }
 
 async function fetchWanted(wanted: string[], summaries: Map<string, TrySummary>) {
   const fetched: StoredTry[] = [];
+  const stamp = (stored: StoredTry) =>
+    needsMotion(stored, summaries) ? SESSION_STAMP : (summaries.get(stored.id)?.stamp ?? SESSION_STAMP);
 
   for (let i = 0; i < wanted.length; i += BATCH) {
     const tries = await loadManifests(wanted.slice(i, i + BATCH));
 
-    await client.call('put', { tries, stamps: stampsOf(tries, (id) => summaries.get(id)?.stamp ?? SESSION_STAMP) });
+    await client.call('put', { tries, stamps: Object.fromEntries(tries.map((t) => [t.id, stamp(t)])) });
     fetched.push(...tries);
   }
 
@@ -96,7 +117,7 @@ async function sync() {
 
   if (wanted.length || gone.length) saveSoon();
 
-  void backfillMotion(fetched, summaries);
+  void backfillMotion(fetched, summaries).catch(() => {});
 }
 
 function follow() {

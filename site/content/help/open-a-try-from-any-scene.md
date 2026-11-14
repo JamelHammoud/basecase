@@ -33,18 +33,18 @@ You can find any try you've recorded, from any scene, and step through it on the
 
 ![The Library with a robot and its two tries under Tries](/help/open-a-try-from-any-scene/library.png)
 
-3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. Click a try to open it.
+3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile lists the try's Case, whether it Passed or Missed, and how long it ran. Click a try to open it.
 
 ![Tries over the canvas with a try from each of two scenes](/help/open-a-try-from-any-scene/tries.png)
 
-4. The try plays through its Case's console, with the try timeline under the canvas. Tries stays hidden until you close the try. To step through the try, follow the steps in [Play a try through its console](/help/play-a-try-through-its-console).
+4. The try plays through its Case's console, and the try timeline appears under the canvas. Tries stays hidden until you close the try. To step through the try, see [Play a try through its console](/help/play-a-try-through-its-console).
 
 ![A try from Tries playing through the Touch the Dots console, with its timeline under the canvas](/help/open-a-try-from-any-scene/timeline.png)
 
 5. To stop playing, click **Done** or press [[Esc]]. Tries comes back.
 6. To leave Tries, click **Done** or press [[Esc]] again.
 
-You can also open Tries by pressing [[⌘K]] and choosing **Show Tries**.
+You can also open Tries from the command menu. Press [[⌘K]], then choose **Show Tries**.
 
 To find tries by words, facts or motion, use the search at the top of the Library or of Tries. See [Search tries](/help/search-tries).
 

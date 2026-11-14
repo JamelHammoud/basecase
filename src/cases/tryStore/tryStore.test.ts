@@ -17,11 +17,20 @@ vi.mock('./desktopTries', () => ({
       backend.saved.push(stored.id);
       backend.stored.push(stored);
     },
-    delete: async () => {},
+    update: async (stored) => {
+      if (!backend.saved.includes(stored.id)) return false;
+
+      backend.stored.push(stored);
+
+      return true;
+    },
+    delete: async (ids) => {
+      backend.saved = backend.saved.filter((id) => !ids.includes(id));
+    },
   } as Partial<TryBackend>,
 }));
 
-const { deleteTries, keepTries, loadTries, onTriesChanged, saveManifest } = await import('./index');
+const { deleteTries, keepTries, loadTries, onTriesChanged, updateManifests } = await import('./index');
 
 const record = (id: string): TryRecord => ({
   id,
@@ -87,8 +96,14 @@ describe('the search index’s view of the store', () => {
     expect(saved.motion).toMatchObject({ body: 'fixed', joints: 1 });
     expect(saved.motion!.path.slice(-3)).toEqual([0.59, 0, 0]);
 
-    await saveManifest({ ...saved, task: 'Lift the cup' });
+    expect(
+      await updateManifests([
+        { ...saved, task: 'Lift the cup' },
+        { ...saved, id: 'try-gone' },
+      ]),
+    ).toHaveLength(1);
     await deleteTries(['try-moved']);
+    expect(await updateManifests([{ ...saved, task: 'Lift it again' }])).toEqual([]);
     stop();
     await deleteTries(['try-new']);
 

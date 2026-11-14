@@ -48,6 +48,7 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   create_case: ['Making # Cases', 'Made # Cases'],
   run_case: ['Running the Case # times', 'Ran the Case # times'],
   read_try: ['Reading # tries', 'Read # tries'],
+  search_tries: ['Searching tries # times', 'Searched tries # times'],
   explore_case: ['Exploring servos # times', 'Explored servos # times'],
   start_drive: ['Driving # times', 'Drove # times'],
   make_routine: ['Making # Routines', 'Made # Routines'],

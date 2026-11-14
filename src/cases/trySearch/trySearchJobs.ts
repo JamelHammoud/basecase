@@ -1,8 +1,10 @@
+import type { Recording } from '../../sim/recorder';
 import { reply } from '../../utils/workerRpc';
 import type { StoredTry } from '../tryFile';
+import { motionTrace } from './motion';
 import { parseQuery } from './queryParser';
 import { TrySearchIndex } from './searchIndex';
-import type { TryHit } from './types';
+import type { MotionTrace, TryHit } from './types';
 
 export interface SyncPlan {
   wanted: string[];
@@ -39,6 +41,8 @@ export function trySearchJobs() {
     },
     search: ({ text, now, limit }: { text: string; now: number; limit: number }): ReturnType<typeof reply<TryHit[]>> =>
       reply(index.search(parseQuery(text, index.vocab(), new Date(now)), limit)),
+    trace: ({ recording }: { recording: Recording }): ReturnType<typeof reply<MotionTrace | null>> =>
+      reply(motionTrace(recording)),
     snapshot: () => {
       const bytes = index.snapshot();
 

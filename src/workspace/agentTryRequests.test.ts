@@ -21,7 +21,7 @@ vi.mock('../cases/tryStore', async () => {
     loadRecording: async () => null,
     loadSearchIndex: async () => null,
     saveSearchIndex: async () => {},
-    saveManifest: async () => {},
+    updateManifests: async () => [],
     onTriesChanged: () => () => {},
   };
 });

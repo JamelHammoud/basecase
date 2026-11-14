@@ -70,6 +70,14 @@ describe('reading a search', () => {
     expect(parse('unlike:x').filters.like).toBeNull();
   });
 
+  it('also reads an input or source that names a Case as words', () => {
+    const named = parseQuery('walk the mat case', { ...vocab, named: ['walk', 'mat'] }, NOW);
+
+    expect(named).toMatchObject({ words: ['walk'], filters: { inputs: ['mat'], sources: ['case'] } });
+    expect(named.alternate).toMatchObject({ words: ['walk', 'mat'], filters: { inputs: [], sources: ['case'] } });
+    expect(parse('walk the mat').alternate).toBeUndefined();
+  });
+
   it('matches robot names whole, never inside another word', () => {
     expect(facts('armchair')).toEqual({});
     expect(parse('armchair').words).toEqual(['armchair']);

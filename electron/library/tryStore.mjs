@@ -211,6 +211,18 @@ export class TryStore {
     return { ok: true };
   }
 
+  update({ manifest }) {
+    const json = checkedManifest(manifest);
+    const file = path.join(this.dirOf(manifest.id), TRY_MANIFEST);
+
+    if (!fs.existsSync(file)) return { ok: false };
+
+    writeAtomic(file, json);
+    this.forget(manifest.id);
+
+    return { ok: true };
+  }
+
   recording(id) {
     return readOrNull(path.join(this.dirOf(id), TRY_RECORDING));
   }

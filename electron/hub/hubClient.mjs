@@ -1,16 +1,26 @@
-import { publicFetch } from '../publicFetch.mjs';
+import { publicFetch, readCapped } from '../publicFetch.mjs';
 import { serviceRefusal } from '../refusal.mjs';
 
 export const HUB_ENDPOINT = 'https://huggingface.co';
 
 const API_TIMEOUT_MS = 120000;
+const REDIRECTS_MAX = 3;
+const REDIRECT_CODES = new Set([301, 302, 303, 307, 308]);
 const ERROR_TEXT_MAX = 300;
 const TREE_PAGES_MAX = 50;
 const LFS_JSON = 'application/vnd.git-lfs+json';
 
 export const DATASETS = '/datasets';
 
-const DATASETS_API = `/api${DATASETS}`;
+const REPO_ROOTS = { dataset: DATASETS, model: '' };
+
+export function repoRoot(kind) {
+  if (!Object.hasOwn(REPO_ROOTS, kind)) throw new Error('A Hugging Face repo is a dataset or a model.');
+
+  return REPO_ROOTS[kind];
+}
+
+const apiRoot = (kind) => `/api${kind === 'model' ? '/models' : DATASETS}`;
 
 function errorDetail(text) {
   try {
@@ -31,8 +41,11 @@ const plainDetail = (detail) => {
 const nextLink = (header) => /<([^>]+)>;\s*rel="next"/.exec(header ?? '')?.[1] ?? null;
 
 export class HubClient {
-  constructor({ endpoint = HUB_ENDPOINT, token, outbound = publicFetch, again = 'Publish again' }) {
+  constructor({ endpoint = HUB_ENDPOINT, token, outbound = publicFetch, again = 'Publish again', kind = 'dataset' }) {
     this.origin = new URL(endpoint).origin;
+    this.kind = kind;
+    this.root = repoRoot(kind);
+    this.apiRoot = apiRoot(kind);
     this.token = token;
     this.outbound = outbound;
     this.again = again;
@@ -88,14 +101,14 @@ export class HubClient {
   createRepo(name) {
     return this.api('/api/repos/create', {
       method: 'POST',
-      json: { name, private: false, type: 'dataset' },
+      json: { name, private: false, type: this.kind },
       allow: [409],
     });
   }
 
   async listFiles(repo) {
     const paths = [];
-    let next = `${DATASETS_API}/${repo}/tree/main?recursive=true`;
+    let next = `${this.apiRoot}/${repo}/tree/main?recursive=true`;
 
     for (let page = 0; next && page < TREE_PAGES_MAX; page += 1) {
       const res = await this.api(next, { allow: [404] });
@@ -111,7 +124,7 @@ export class HubClient {
   }
 
   async preupload(repo, files) {
-    const res = await this.api(`${DATASETS_API}/${repo}/preupload/main`, {
+    const res = await this.api(`${this.apiRoot}/${repo}/preupload/main`, {
       method: 'POST',
       json: {
         files: files.map(({ path, bytes }) => ({
@@ -126,7 +139,7 @@ export class HubClient {
   }
 
   async lfsBatch(repo, objects) {
-    const res = await this.api(`${DATASETS}/${repo}.git/info/lfs/objects/batch`, {
+    const res = await this.api(`${this.root}/${repo}.git/info/lfs/objects/batch`, {
       method: 'POST',
       body: JSON.stringify({
         operation: 'upload',
@@ -144,7 +157,7 @@ export class HubClient {
   reach(url, init) {
     if (url.origin === this.origin) return fetch(url, { ...init, redirect: 'manual' });
 
-    if (url.protocol !== 'https:') throw new Error('Hugging Face sent an upload address that isn’t https.');
+    if (url.protocol !== 'https:') throw new Error('Hugging Face sent an address that isn’t https.');
 
     return this.outbound(url.href, init);
   }
@@ -164,7 +177,7 @@ export class HubClient {
   }
 
   async commit(repo, lines) {
-    const res = await this.api(`${DATASETS_API}/${repo}/commit/main`, {
+    const res = await this.api(`${this.apiRoot}/${repo}/commit/main`, {
       method: 'POST',
       body: lines.map((line) => JSON.stringify(line)).join('\n'),
       headers: { 'Content-Type': 'application/x-ndjson' },
@@ -174,9 +187,41 @@ export class HubClient {
   }
 
   async retag(repo, tag) {
-    const api = `${DATASETS_API}/${repo}/tag`;
+    const api = `${this.apiRoot}/${repo}/tag`;
 
     await this.api(`${api}/${tag}`, { method: 'DELETE', allow: [404] });
     await this.api(`${api}/main`, { method: 'POST', json: { tag } });
+  }
+
+  hop(url) {
+    if (url.origin !== this.origin) return this.reach(url, { signal: AbortSignal.timeout(API_TIMEOUT_MS) });
+
+    return fetch(url, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
+      headers: this.token ? { Authorization: `Bearer ${this.token}` } : {},
+    });
+  }
+
+  async download(path, { maxBytes, label }) {
+    let url = this.url(path);
+
+    for (let hop = 0; hop <= REDIRECTS_MAX; hop += 1) {
+      const res = await this.hop(url);
+      const location = res.headers.get('location');
+
+      if (REDIRECT_CODES.has(res.status) && location) {
+        await res.body?.cancel();
+        url = new URL(location, url);
+
+        continue;
+      }
+
+      if (!res.ok) throw await this.failure(res);
+
+      return readCapped(res, maxBytes, label);
+    }
+
+    throw new Error('Hugging Face sent too many redirects.');
   }
 }

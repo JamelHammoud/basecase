@@ -15,6 +15,7 @@ import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useConsoleSignals } from './useConsoleSignals';
+import { showPartsSection } from './showView';
 
 interface CenterValue {
   ctx: PanelContext;
@@ -50,7 +51,7 @@ interface ProviderProps {
 }
 
 export function CaseRunProvider({ core, actions, children }: ProviderProps) {
-  const { caseRun, simTraining, posing, parts, tool, studio } = core;
+  const { caseRun, simTraining, posing, parts } = core;
   const { sim, cases } = simTraining;
   const { open, caseConsole, layout } = caseRun;
   const wantsCameras = caseConsole.panels.some((p) => p.kind === 'camera');
@@ -116,8 +117,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
             cameras,
             onBrowseRobots: () => {
               caseRun.leave();
-              tool.setLeftTab('robots');
-              studio.setIsLeftOpen(true);
+              showPartsSection(core, 'Robots');
             },
           },
         },

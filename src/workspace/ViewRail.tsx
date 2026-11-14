@@ -8,9 +8,7 @@ import {
   LayersIcon,
   LibraryIcon,
   NO_DRAG_REGION,
-  ObjectsIcon,
   PartsIcon,
-  RobotsIcon,
   type GlyphProps,
   SettingsIcon,
 } from '../design-system';
@@ -20,8 +18,6 @@ type RailView = Exclude<LeftTab, PlayTab> | 'play';
 
 const LEFT_VIEWS: Array<{ value: RailView; label: string; Icon: React.FC<GlyphProps> }> = [
   { value: 'parts', label: 'Parts', Icon: PartsIcon },
-  { value: 'robots', label: 'Robots', Icon: RobotsIcon },
-  { value: 'objects', label: 'Objects', Icon: ObjectsIcon },
   { value: 'play', label: 'Play', Icon: CasesIcon },
   { value: 'layers', label: 'Layers', Icon: LayersIcon },
   { value: 'library', label: 'Library', Icon: LibraryIcon },

@@ -16,7 +16,7 @@ const HEADERS: Array<{ key: SortKey; label: string }> = [
 ];
 
 const SortHeader: React.FC<{ sorting: Sorting; onSort: (key: SortKey) => void }> = ({ sorting, onSort }) => (
-  <div className={`${GRID} h-8 text-[12px] text-white/50`}>
+  <div className={`${GRID} h-[28px] text-[12px] text-white/50`}>
     <span />
     {HEADERS.map(({ key, label }) => {
       const on = sorting.key === key;
@@ -52,7 +52,7 @@ const ExploreRow: React.FC<RowProps> = ({ row, label, current, onApply }) => {
 
   return (
     <div
-      className={`${GRID} group relative h-8 -mx-1.5 px-1.5 rounded-[8px] text-[13px] hover:bg-white/[0.05]`}
+      className={`${GRID} group relative h-[32px] -mx-1.5 px-1.5 rounded-[8px] text-[13px] hover:bg-white/[0.05]`}
       data-testid="explore-row"
       data-current={current}
     >

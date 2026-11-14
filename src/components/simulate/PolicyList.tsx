@@ -42,7 +42,7 @@ const PolicyRow: React.FC<PolicyActions & { policy: PolicyRecord; training: Trai
 
   return (
     <li
-      className="min-h-8 flex items-center gap-2 -mx-[6px] px-[6px] rounded-lg hover:bg-white/[0.04]"
+      className="min-h-[32px] flex items-center gap-2 -mx-[6px] px-[6px] rounded-lg hover:bg-white/[0.04]"
       data-policy={policy.id}
       data-stale={stale}
       data-retraining={running}
@@ -51,7 +51,7 @@ const PolicyRow: React.FC<PolicyActions & { policy: PolicyRecord; training: Trai
       <div className="flex-1 min-w-0">
         <button
           type="button"
-          className="w-full h-8 text-left text-[13px] text-white/85 truncate cursor-default"
+          className="w-full h-[32px] text-left text-[13px] text-white/85 truncate cursor-default"
           onClick={() => onChoose(policy.id)}
         >
           {policy.name}

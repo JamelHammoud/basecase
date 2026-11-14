@@ -4,9 +4,12 @@ import { onshapeBridge, type OnshapeAccountState, type OnshapeKey } from '../../
 import { SettingsGroup as Group } from '../SettingsRows';
 import { SecretField } from './SecretField';
 import { errorMessage } from '../../utils/errorMessage';
+import { withoutSettingsPath } from '../../app/settingsPanes';
 
 const HUB_SIGNED_OUT: HubAccountState = { signedIn: false, name: null };
 const ONSHAPE_SIGNED_OUT: OnshapeAccountState = { access: false, secret: false, name: null, error: null };
+
+const paneError = (e: unknown) => withoutSettingsPath(errorMessage(e));
 
 export const AccountsPane: React.FC = () => {
   const [hub, setHub] = useState<HubAccountState>(HUB_SIGNED_OUT);
@@ -30,7 +33,7 @@ export const AccountsPane: React.FC = () => {
       setHub(await hubBridge.signIn(token));
       setHubError(null);
     } catch (e) {
-      setHubError(errorMessage(e));
+      setHubError(paneError(e));
 
       throw e;
     }
@@ -41,7 +44,7 @@ export const AccountsPane: React.FC = () => {
       setOnshape(await onshapeBridge.setKey(kind, value));
       setOnshapeErrors({});
     } catch (e) {
-      setOnshapeErrors({ [kind]: errorMessage(e) });
+      setOnshapeErrors({ [kind]: paneError(e) });
       setOnshape(await onshapeBridge.account().catch(() => onshape));
 
       throw e;
@@ -70,7 +73,10 @@ export const AccountsPane: React.FC = () => {
           label="Secret key"
           saved={onshape.secret}
           savedHint={onshape.name ?? undefined}
-          error={onshapeErrors.secret ?? (onshapeErrors.access ? undefined : onshape.error)}
+          error={
+            onshapeErrors.secret ??
+            (onshapeErrors.access ? undefined : onshape.error && withoutSettingsPath(onshape.error))
+          }
           onSecret={saveOnshape('secret')}
         />
       </Group>

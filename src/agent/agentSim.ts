@@ -4,6 +4,7 @@ import type { Controller } from '../sim/engine';
 import type { SimRun, Simulation } from '../sim/useSimulation';
 import type { Training } from '../sim/useTraining';
 import { cameraShots } from '../cameras/cameraShots';
+import { angle } from '../utils/angle';
 import type { FixedCamera } from '../cameras/fixed';
 import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
 import { prettyJointName, type Rig } from '../utils/kinematics';
@@ -90,7 +91,7 @@ function robotLine(r: SimRun['stats']['robots'][number], model: SimRun['model'],
 
   if (!robot.floating) return `${robot.name}: base welded to the floor (no leg joints).`;
 
-  return `${robot.name}: ${r.fellAt !== null ? `FELL at ${runClock(r.fellAt)}` : `stayed up for ${duration(seconds)}`}; tilt ${Math.round(r.tilt)}°, height change ${signedLengthLabel(r.height * 1000)}, moved ${lengthLabel(r.travelled * 1000)} (${signedLengthLabel(r.forward * 1000)} forward).`;
+  return `${robot.name}: ${r.fellAt !== null ? `FELL at ${runClock(r.fellAt)}` : `stayed up for ${duration(seconds)}`}; tilt ${angle(r.tilt)}, height change ${signedLengthLabel(r.height * 1000)}, moved ${lengthLabel(r.travelled * 1000)} (${signedLengthLabel(r.forward * 1000)} forward).`;
 }
 
 function effortLine(j: SimRun['stats']['joints'][number], model: SimRun['model'], rig: Rig): string {

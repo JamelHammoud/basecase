@@ -45,7 +45,7 @@ The agent can also pose and animate the robot, run it in the simulation, write a
 
 Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos before anything else. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, it merges printed parts bolted together on one link into a single print.
 
-Tell the agent what you want to do with a robot, such as play a game on a gamepad, and it builds a Case for it. The Case opens running, just as in [Run a Case](/help/run-a-case). While the agent builds the Case:
+Tell the agent what you want to do with a robot, such as play a game on a gamepad, and it builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). While the agent builds the Case:
 
 - In a [scanned room](/help/import-a-scanned-room), it aims the Case at a door or a piece of furniture you name, such as under the table.
 - If the Case's panels lack a control it needs, like a joystick or a piano, it draws one as a code panel. If that code moves an object, for example a target to whack, the agent marks the object as movable.
@@ -69,7 +69,7 @@ Matching the silhouette in a photo matters less than any of these.
 
 After each edit, the agent sees the same Checks you see in the **Build** tab. It never passes a check by narrowing a joint's range, hiding or deleting a part, or editing a Case. If a check seems wrong, the agent tells you.
 
-If a new blocker appears, the agent follows up on its own, up to twice per message. You can turn this off in **Settings** ▸ **Build**.
+If a new blocker appears, the agent follows up on its own, up to twice per message. The follow-up shows in the chat as “Fix what the last change added: 2 problems.” over the new problems. You can turn this off in **Settings** ▸ **Build**.
 
 If the scene has Cases, the agent runs each one and isn't done until they all pass. For the steps, see [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 

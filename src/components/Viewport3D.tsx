@@ -34,6 +34,7 @@ const DETACHED: Viewport3DHandle = {
   printShapes: async () => ({}),
   printMeshes: async () => ({}),
   printThreeMf: async () => ({ files: {}, unlabeled: [] }),
+  printStl: async () => ({}),
   fitCoupons: async () => [],
   exportStl: async () => new Uint8Array(),
   exportUsdz: async () => new Uint8Array(),

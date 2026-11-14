@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ExternalLinkIcon, HoverCard, Tooltip } from '../../design-system';
+import { Button, ExternalLinkIcon, HoverCard, REVEAL_ON_HOVER, Tooltip } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
 import { type BomLine, STALE_DAYS } from '../../utils/bom';
 import { scaledEntry } from '../../utils/currency';
@@ -7,7 +7,7 @@ import { dayLabel } from '../../utils/timeAgo';
 import { useMoney } from '../../utils/useMoney';
 import { PART_PREVIEW_WIDTH, PartPreviewCard } from '../agent/PartPreviewCard';
 import type { Extra } from './buyExtras';
-import { lineAmount, linkLabel, ownedAmount } from './buyLine';
+import { lineAmount, lineCount, linkLabel, ownedAmount } from './buyLine';
 import { QtyEditor } from './QtyEditor';
 
 export interface BuyContext {
@@ -31,7 +31,7 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
   return (
     <Tooltip
       label={linkLabel(l)}
-      className="absolute right-0 top-px opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto transition-opacity duration-150"
+      className={`absolute right-0 top-px transition-opacity ${REVEAL_ON_HOVER}`}
     >
       <a
         href={l.url}
@@ -46,9 +46,41 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
   );
 };
 
+const CheckedPrice: React.FC<{
+  checkedAt: string;
+  stale: boolean;
+  old: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}> = ({ checkedAt, stale, old, onClick, children }) => {
+  const className = `${PRICE_CLASS} ${stale ? 'text-amber-400' : 'text-white/90'}`;
+
+  return (
+    <Tooltip
+      label={`Checked ${dayLabel(checkedAt)}${old ? `, over ${STALE_DAYS} days ago` : ''}`}
+      className="shrink-0 -my-[5px]"
+    >
+      {onClick ? (
+        <button type="button" onClick={onClick} className={className}>
+          {children}
+        </button>
+      ) : (
+        <span className={`${className} inline-flex items-center`}>{children}</span>
+      )}
+    </Tooltip>
+  );
+};
+
 const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: l, onCheck }) => {
   const stale = l.status === 'stale';
   const money = useMoney();
+
+  if (l.category === 'Printed parts')
+    return l.quote && l.lineUsd !== undefined ? (
+      <CheckedPrice checkedAt={l.quote.checkedAt} stale={stale} old={(l.ageDays ?? 0) > STALE_DAYS}>
+        {money.format(l.lineUsd)}
+      </CheckedPrice>
+    ) : null;
 
   if (l.toBuy === 0 && !l.record)
     return (
@@ -59,15 +91,9 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
   if (l.record)
     return (
-      <Tooltip label={`Checked ${dayLabel(l.record.checkedAt)}${stale ? `, over ${STALE_DAYS} days ago` : ''}`} className="shrink-0 -my-[5px]">
-        <button
-          type="button"
-          onClick={onCheck}
-          className={`${PRICE_CLASS} ${stale ? 'text-amber-400' : 'text-white/90'}`}
-        >
-          {money.format(l.lineUsd ?? l.record.priceUsd, scaledEntry(l.record.entered, l.packs ?? 1))}
-        </button>
-      </Tooltip>
+      <CheckedPrice checkedAt={l.record.checkedAt} stale={stale} old={stale} onClick={onCheck}>
+        {money.format(l.lineUsd ?? l.record.priceUsd, scaledEntry(l.record.entered, l.packs ?? 1))}
+      </CheckedPrice>
     );
 
   if (l.estimate && l.estUsd !== undefined)
@@ -147,6 +173,13 @@ const LineText: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, c
 
 const LineCount: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, context }) => {
   const extra = context.extraOf(l.key);
+
+  if (l.category === 'Printed parts')
+    return (
+      <span className="shrink-0 min-w-[28px] text-right text-[13px] leading-[14px] tabular-nums text-white/50">
+        {lineCount(l)}
+      </span>
+    );
 
   return (
     <QtyEditor

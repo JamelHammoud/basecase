@@ -1,7 +1,7 @@
 import React from 'react';
-import { HiddenIcon, LookIcon, Tooltip, WarningIcon } from '../../design-system';
+import { HiddenIcon, LookIcon, RowActions, Tooltip, WarningIcon } from '../../design-system';
 import type { DataLayerRow } from '../../dataLayers/store';
-import { ACTIONS_FADE, REVEAL, ROW, RowToggle, rowIndent, rowTone } from './LayerItems';
+import { ACTIONS_PLACE, ROW, ROW_FILL, RowToggle, rowIndent, rowTone } from './LayerItems';
 
 export interface DataLayerItemProps {
   layer: DataLayerRow;
@@ -44,11 +44,7 @@ export const DataLayerItem: React.FC<DataLayerItemProps> = ({ layer, depth, onTo
           </span>
         </Tooltip>
       )}
-      <div
-        className={`absolute inset-y-0 right-0 flex items-center pl-8 pr-1 rounded-r-lg pointer-events-none transition-opacity ${hidden ? '' : REVEAL}`}
-        style={{ backgroundImage: ACTIONS_FADE }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <RowActions fill={ROW_FILL} shown={hidden} className={ACTIONS_PLACE}>
         <RowToggle
           on={hidden}
           pinned={hidden}
@@ -56,7 +52,7 @@ export const DataLayerItem: React.FC<DataLayerItemProps> = ({ layer, depth, onTo
           title={hidden ? 'Show' : 'Hide'}
           icons={[<HiddenIcon key="on" className="w-3.5 h-3.5" />, <LookIcon key="off" className="w-3.5 h-3.5" />]}
         />
-      </div>
+      </RowActions>
     </li>
   );
 };

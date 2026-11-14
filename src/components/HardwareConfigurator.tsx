@@ -268,7 +268,7 @@ const LengthSection: React.FC<{
       />
       {stock.length > 0 && <StockStrip lengths={stock} value={length} onPick={(l) => set({ length: l })} />}
       {!isStockLength(spec) && !motionOf(spec.type)?.cutToLength && (
-        <p className="text-[12.5px] text-amber-300/80 leading-relaxed">
+        <p className="text-[12.5px] text-amber-400 leading-relaxed">
           {length > stock[stock.length - 1]
             ? `Longer than stock ${spec.size} (${stock[stock.length - 1]} mm). Cut threaded rod to length.`
             : 'Not a stock length.'}

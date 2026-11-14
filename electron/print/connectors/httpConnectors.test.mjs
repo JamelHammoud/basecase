@@ -116,7 +116,7 @@ describe('Moonraker', () => {
     });
     expect(await connector.test()).toEqual({
       ok: false,
-      message: 'Check the API key. Find it in Mainsail or Fluidd: Settings → Authorization.',
+      message: 'Check the API key. Find it in Mainsail or Fluidd: Settings ▸ Authorization.',
     });
   });
 });
@@ -166,7 +166,7 @@ describe('PrusaLink', () => {
     const connector = connectorFor(printer('prusalink'), 'bad');
 
     expect((await connector.test()).message).toBe(
-      'Check the API key. It’s on the printer: Settings → Network → PrusaLink.',
+      'Check the API key. It’s on the printer: Settings ▸ Network ▸ PrusaLink.',
     );
     expect(await connector.status()).toEqual({ state: 'idle' });
     await expect(connector.pause()).rejects.toThrow('No print is running.');

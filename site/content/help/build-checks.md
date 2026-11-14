@@ -77,6 +77,8 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load; amber under 2 times |
 | Budget | The estimated cost of the parts left to buy against your budget | Over budget; amber above 90%. Not run until you set a budget |
 
+In the desktop app, a failing Servo torque item offers **Make an Actuator** when a printed gearbox on a brushless motor can carry the joint. [Make an actuator for a joint](/help/make-an-actuator) has the steps.
+
 Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
 
 A servo can't give full torque and full speed at once, so the blue line falls from stall at 0 rpm to no torque at top speed. Each dot is 25 ms of the walk, and a white dot above the line asks for more than the servo gives at that speed.

@@ -45,7 +45,7 @@ const isCell = (c: ComponentInfo) => !!c.battery?.cell;
 export const drivesJoint = (p: ScenePart) => {
   const c = componentOf(p);
 
-  return c?.group === 'Servos' || !!c?.actuator;
+  return c?.group === 'Servos' || !!c?.actuator || (!!c && !!actuatorOf(c.id, p.componentVariant));
 };
 
 function holderPack(comps: ComponentInfo[]): PowerSource | undefined {

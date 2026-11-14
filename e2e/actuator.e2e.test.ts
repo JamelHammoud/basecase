@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { fallBiped, LOADED_BODY_G } from '../src/sim/fixtures/fallBiped';
+import { loadedBiped } from '../src/sim/fixtures/fallBiped';
 import type { ScenePart } from '../src/types/robotics';
 import { buildCheckPage, sceneRecord, studioLoad, visible, type StudioHook } from './buildCheckFixtures';
 import { openApp, partCount, type App } from './harness';
@@ -30,7 +30,7 @@ afterAll(async () => {
 
 describe('Make an Actuator', () => {
   it('replaces a failing knee servo with a printed cycloidal actuator from its Fix, and undoes it in one step', async () => {
-    const biped = fallBiped('c001', LOADED_BODY_G);
+    const biped = loadedBiped();
 
     await studioLoad(app.page, {
       parts: biped.parts,

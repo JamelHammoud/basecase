@@ -12,17 +12,16 @@ export type ActuatorFix = Extract<FindingFix, { kind: 'make-actuator' }>;
 export const sceneBed = (project: Pick<ProjectSettings, 'printer'>, bed?: Bed): Bed =>
   bed ?? bedOf(resolvePrinter(project.printer, []).model);
 
-export function actuatorFor(load: JointLoad, bed: Bed, walk?: WalkSim | string): ActuatorPick {
+export interface OfferScene {
+  bed: Bed;
+  walk?: WalkSim | string;
+  volts?: number;
+}
+
+export function actuatorFor(load: JointLoad, { bed, walk, volts }: OfferScene): ActuatorPick {
   const peakNm = typeof walk === 'object' ? walk.joints[load.joint.id]?.p99Nm : undefined;
 
-  return pickActuator({
-    loadNm: load.loadNm,
-    kind: load.kind,
-    rmsNm: load.simRmsNm,
-    peakNm,
-    volts: load.volts,
-    bed,
-  });
+  return pickActuator({ loadNm: load.loadNm, kind: load.kind, rmsNm: load.simRmsNm, peakNm, volts, bed });
 }
 
 export const fixOf = (joint: string, c: ActuatorChoice): ActuatorFix => ({
@@ -54,10 +53,10 @@ export interface TorqueOffer {
   why?: string;
 }
 
-export function torqueOffer(load: JointLoad, bed: Bed, walk?: WalkSim | string): TorqueOffer {
+export function torqueOffer(load: JointLoad, scene: OfferScene): TorqueOffer {
   if (load.status !== 'fail' || !load.joint.actuators?.length) return {};
 
-  const pick = actuatorFor(load, bed, walk);
+  const pick = actuatorFor(load, scene);
 
   return 'choice' in pick ? { fix: fixOf(load.joint.id, pick.choice) } : { why: pick.problem };
 }

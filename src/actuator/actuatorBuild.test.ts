@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { actuatorOf } from '../data/components';
 import { fixtureTriangles } from '../sim/fixtures/parts';
+import { fallBiped } from '../sim/fixtures/fallBiped';
 import { buildMjcf } from '../sim/mjcf';
 import { buildBom } from '../utils/bom';
 import { buildRig } from '../utils/kinematics';
@@ -37,6 +38,20 @@ describe('Make an Actuator', () => {
     expect(after.joints.find((j) => j.id === 'l_knee')!.actuators).toEqual([after.motorId]);
     expect(status(after, 'l_knee')).toBe('pass');
     expect(kneeItem(after)).toBeUndefined();
+  });
+
+  it('powers the actuator from the supply the servos share, and refuses a supply below its driver', () => {
+    const after = makeActuator(loadedBiped(), 'l_knee');
+    const row = (scene: ActuatorScene, check: string) => engineeringOf(scene).rows.find((r) => r.check === check)!;
+    const smallBiped = fallBiped('c001', 3000);
+
+    expect(row(after, 'Servo voltage')).toMatchObject({ status: 'pass', detail: expect.stringContaining('10–48 V') });
+    expect(row(after, 'Supply current').detail).not.toBe(row(loadedBiped(), 'Supply current').detail);
+    expect(kneeItem(smallBiped)).toMatchObject({
+      status: 'fail',
+      text: expect.stringContaining('not the 7.4 V supply'),
+    });
+    expect(kneeItem(smallBiped)).not.toHaveProperty('fix');
   });
 
   it('writes the knee’s gear, force range and reflected armature into the MJCF', () => {
@@ -85,6 +100,21 @@ describe('Make an Actuator', () => {
       'Disc 1',
       'Disc 2',
     ]);
+  });
+
+  it('replaces the whole actuator when the joint already has one', () => {
+    const once = makeActuator(loadedBiped(), 'l_knee');
+    const twice = buildActuator(once, 'l_knee', choiceOf(D6374_15)!)!;
+    const housings = twice.parts.filter((p) => p.name === 'Housing');
+    const ids = new Set(twice.parts.map((p) => p.id));
+    const knee = twice.joints.find((j) => j.id === 'l_knee')!;
+
+    expect(twice.parts).toHaveLength(once.parts.length);
+    expect(housings).toHaveLength(1);
+    expect(twice.removed).toBe(once.motorId);
+    expect(twice.joints.flatMap((j) => [...j.parent, ...j.child]).every((id) => ids.has(id))).toBe(true);
+    expect(knee.actuators).toEqual([twice.motorId]);
+    expect(twice.parts.find((p) => p.id === twice.motorId)!.componentVariant).toBe('cycloidal-15-moteus-r4');
   });
 
   it('gives the same actuator for the same scene and joint', () => {

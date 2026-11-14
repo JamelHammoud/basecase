@@ -128,10 +128,10 @@ export function robotWeight(input: Pick<EngineeringInputs, 'parts' | 'project' |
   return { masses, byId, bodies, all };
 }
 
-const actuatorOffers = (input: EngineeringInputs) => {
-  const bed = sceneBed(input.project, input.bed);
+const actuatorOffers = (input: EngineeringInputs, volts?: number) => {
+  const scene = { bed: sceneBed(input.project, input.bed), walk: input.walk, volts };
 
-  return (l: JointLoad) => torqueOffer(l, bed, input.walk);
+  return (l: JointLoad) => torqueOffer(l, scene);
 };
 
 export function runEngineering(input: EngineeringInputs): EngineeringReport {
@@ -160,7 +160,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...(ctx.joints.length ? [] : [{ check: 'Servo torque', status: 'not run' as const, detail: 'No joints' }]),
     ...(loads.length
       ? [
-          withNoFeetNote(torqueRow(loads, env.crouch.share, actuatorOffers(input)), floating),
+          withNoFeetNote(torqueRow(loads, env.crouch.share, actuatorOffers(input, env.volts)), floating),
           ...peakRow(loads, project, input.walk, servoLookup(ctx.byPart)),
           ...fallsRow(loads, input.falls),
         ]

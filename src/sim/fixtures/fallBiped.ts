@@ -93,4 +93,11 @@ export function fallBiped(kneeVariant = 'c001', bodyG = 1400): FixtureRobot {
 
 export const FALL_BIPED_KNEES = ['l_knee', 'r_knee'];
 
-export const LOADED_BODY_G = 3000;
+export function loadedBiped(): FixtureRobot {
+  const robot = fallBiped('c018', 5500);
+
+  return {
+    ...robot,
+    parts: robot.parts.map((p) => (p.componentId === SERVO ? { ...p, componentVariant: 'c018' } : p)),
+  };
+}

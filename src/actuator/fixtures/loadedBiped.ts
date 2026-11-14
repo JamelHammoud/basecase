@@ -1,12 +1,12 @@
 import { fixtureMeasures } from '../../sim/fixtures/parts';
-import { fallBiped, LOADED_BODY_G } from '../../sim/fixtures/fallBiped';
+import { loadedBiped as loadedRobot } from '../../sim/fixtures/fallBiped';
 import type { MeshMeasure } from '../../three/meshMeasure';
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../../types/robotics';
 import { runEngineering } from '../../utils/engineering';
 import type { ActuatorScene } from '../actuatorBuild';
 
 export const loadedBiped = (): ActuatorScene => {
-  const robot = fallBiped('c001', LOADED_BODY_G);
+  const robot = loadedRobot();
 
   return { parts: robot.parts, joints: robot.joints };
 };

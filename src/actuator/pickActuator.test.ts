@@ -43,13 +43,19 @@ describe('pickActuator', () => {
     const pick = pickActuator(need(1, { bed: small }));
 
     expect('choice' in pick).toBe(false);
-    expect(pick).toEqual({ problem: 'The smallest actuator is 84.5 mm across, too wide for a 80 × 80 × 80 mm bed' });
+    expect(pick).toEqual({ problem: 'The smallest actuator is 84.5 mm across, wider than the 80 × 80 × 80 mm bed' });
+  });
+
+  it('never offers a driver the supply can’t power, and says why', () => {
+    expect(pickActuator(need(1, { volts: 7.4 }))).toEqual({
+      problem: 'Actuators run on 10–48 V, not the 7.4 V supply',
+    });
+    expect(pickActuator(need(1, { volts: 12 }))).toHaveProperty('choice.driver.short', 'moteus-c1');
+    expect(pickActuator(need(1, { volts: 46 }))).toHaveProperty('choice.driver.short', 'moteus-c1');
   });
 
   it('says what the strongest actuator stalls at when none carries the load', () => {
-    expect(pickActuator(need(200))).toEqual({
-      problem: 'No actuator carries 200.00 N·m: the strongest stalls at 89.32 N·m',
-    });
+    expect(pickActuator(need(200))).toEqual({ problem: 'The strongest actuator stalls at 89.32 N·m' });
   });
 
   it('gives the same actuator for the same inputs', () => {

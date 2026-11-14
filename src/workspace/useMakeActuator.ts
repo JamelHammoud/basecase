@@ -3,6 +3,7 @@ import { actuatorFor, choiceOf, type ActuatorFix } from '../actuator/actuatorFix
 import type { ActuatorChoice } from '../actuator/pickActuator';
 import { bedOf } from '../print/bed';
 import type { ScenePart } from '../types/robotics';
+import { servoParts, servoSupplyVolts } from '../utils/engineeringPower';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { runEngineeringNow } from './engineeringNow';
 import { freshWalk } from './storedWalk';
@@ -26,7 +27,8 @@ export function useMakeActuator(core: WorkspaceCore) {
 
     if (!load) return `No joint ${jointId}`;
 
-    const pick = actuatorFor(load, bedOf(printer.model), freshWalk(parts, project));
+    const volts = servoSupplyVolts({ parts, project, servos: servoParts(parts) });
+    const pick = actuatorFor(load, { bed: bedOf(printer.model), walk: freshWalk(parts, project), volts });
 
     return 'choice' in pick ? pick.choice : pick.problem;
   };

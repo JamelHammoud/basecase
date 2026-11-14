@@ -18,6 +18,7 @@ related:
   - build-checks
   - troubleshoot-build-real-parts-check
   - troubleshoot-build-part-wont-print
+  - make-an-actuator
 covers:
   - src/components/build/ChecksSection.tsx
   - src/components/build/FindingRow.tsx
@@ -64,6 +65,16 @@ The estimated total is over your budget. Lines marked ≈ count at their list pr
 4. Swap expensive parts, or raise the budget in the field beside the total.
 
 Budget turns amber above 90% of the budget and red over it. [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget) has the steps.
+
+## Servo torque is red
+
+A servo is too weak for its joint: its load in a 30° crouch is over 0.60 of its stall torque.
+
+1. Open **Servo torque** in Checks.
+2. Click **Make an Actuator** on the joint's item. It swaps the servo for a printed gearbox on a brushless motor.
+3. If the item says why no actuator fits, ask the agent for a stronger servo or a lighter robot instead.
+
+It worked when **Servo torque** has no red mark. The actuator adds about 1 kg, so the joints above it can fail next. Make an Actuator is in the desktop app only. [Make an actuator for a joint](/help/make-an-actuator) has the details.
 
 ## “This servo could strip its gears when the robot falls.”
 

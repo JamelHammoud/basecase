@@ -5,6 +5,7 @@ import type { RobotJoint, ScenePart } from '../types/robotics';
 import { prettyJointName } from '../utils/kinematics';
 import { pieceCad, PRINTED_PIECES } from './actuatorCode';
 import { DISC_BEARING, OUTPUT_BEARING } from './cycloidal';
+import { cycloidalVariant } from './generated';
 import { ENCODER_ID } from './motors';
 import type { ActuatorChoice } from './pickActuator';
 
@@ -184,12 +185,30 @@ function rewire(joints: RobotJoint[], target: RobotJoint, ids: Rewire): RobotJoi
   );
 }
 
-export function buildActuator(scene: ActuatorScene, jointId: string, choice: ActuatorChoice): BuiltActuator | null {
-  const joint = scene.joints.find((j) => j.id === jointId);
+const isGenerated = (p: ScenePart) => !!p.componentId && !!cycloidalVariant(p.componentId, p.componentVariant ?? '');
 
-  if (!joint || joint.type !== 'revolute') return null;
+function withoutOld(scene: ActuatorScene, servo: ScenePart | undefined): ActuatorScene {
+  const groupId = servo && isGenerated(servo) ? servo.group?.id : undefined;
 
-  const servo = scene.parts.find((p) => p.id === joint.actuators?.[0]);
+  if (!groupId) return scene;
+
+  const gone = new Set(scene.parts.filter((p) => p.group?.id === groupId && p.id !== servo?.id).map((p) => p.id));
+  const keep = (ids: string[]) => ids.filter((id) => !gone.has(id));
+
+  return {
+    parts: scene.parts.filter((p) => !gone.has(p.id)),
+    joints: scene.joints.map((j) => ({ ...j, parent: keep(j.parent), child: keep(j.child) })),
+  };
+}
+
+export function buildActuator(current: ActuatorScene, jointId: string, choice: ActuatorChoice): BuiltActuator | null {
+  const target = current.joints.find((j) => j.id === jointId);
+
+  if (!target || target.type !== 'revolute') return null;
+
+  const servo = current.parts.find((p) => p.id === target.actuators?.[0]);
+  const scene = withoutOld(current, servo);
+  const joint = scene.joints.find((j) => j.id === jointId)!;
   const frame = actuatorFrame(scene, joint, servo, choice.design.stageH);
   const taken = new Set(scene.parts.filter((p) => p.id !== servo?.id).map((p) => p.id));
   const group = { id: uniqueId(`${joint.id}-actuator`, taken), name: `${prettyJointName(joint.name)} actuator` };

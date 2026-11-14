@@ -15,6 +15,8 @@ keywords:
   - checking it stays up
   - camera
   - couldn't open the camera
+  - microphone
+  - couldn't open the microphone
 related:
   - drive-a-robot-in-the-simulation
   - train-stand-and-walk-with-the-motor-kit
@@ -26,9 +28,10 @@ covers:
   - src/sim/useDrive.ts
   - src/cameras/operator/operatorCamera.ts
   - electron/permissions.mjs
+  - src/voice/voiceSession.ts
 ---
 
-Fixes for a robot that shows Teach It to Move, has no Drive button, ignores the keys or the camera, or falls as soon as it moves.
+Fixes for a robot that shows Teach It to Move, has no Drive button, ignores the keys, the camera or your voice, or falls as soon as it moves.
 
 ## Teach It to Move shows instead of Drive
 
@@ -61,16 +64,27 @@ Keys also let go when the window loses focus, so switching apps stops the robot.
 
 ## “Couldn’t open the camera.”
 
-**Drive with Camera** got no picture: Basecase isn't allowed to use the camera, or no camera is connected.
+**Drive with Camera**, or a Case's hand or face input, got no picture. Basecase isn't allowed to use the camera, or no camera is connected.
 
 1. On a Mac, open **System Settings** ▸ **Privacy & Security** ▸ **Camera**.
 2. Turn on **Basecase**.
 3. Quit and reopen Basecase.
-4. Click **Drive with Camera** again.
+4. Click **Drive with Camera** or **Try It** again.
 
 On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **Camera**. In the web studio, allow the camera in the browser's site settings.
 
 The same message shows when pose estimation can't start, even with the camera allowed. The camera's tile shows for a moment, then closes. Quit and reopen Basecase, then click **Drive with Camera** again.
+
+## “Couldn’t open the microphone.”
+
+A Case that listens for words got no sound when you clicked **Try It**. Basecase isn't allowed to use the microphone, no microphone is connected, or the voice model didn't load.
+
+1. On a Mac, open **System Settings** ▸ **Privacy & Security** ▸ **Microphone**.
+2. Turn on **Basecase**.
+3. Quit and reopen Basecase.
+4. Click **Try It** again.
+
+On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **Microphone**. The web studio has no voice model, so a Case with voice always shows this there; open it in the desktop app.
 
 ## Drive is grayed out
 

@@ -61,7 +61,7 @@ export const createCase = {
         .record(z.string(), z.unknown())
         .optional()
         .describe(
-          'What the running Case shows and reads. input: 1–4 input source ids (keys, gamepad, phone, camera, code; a source this version lacks is refused, so leave it out and say so). ' +
+          'What the running Case shows and reads. input: 1–4 input source ids (keys, gamepad, phone, camera, hand, face, midi, voice, code; a source this version lacks is refused, so leave it out and say so). voice sends logic the event voice with each word its live-input watchers compare against; midi sends midi with each note number and midi.cc.<n> from 0 to 1. ' +
             'panels: [{ id, kind, title?, ... }] with kind camera (signal: camera.<name> or camera.*), value (signal), plot (signals, seconds), table (of: servos, joints or signals), button (action: try, end-try, drive, stop, start-over, reset), list (of: tries or failures), text (of: brief, or text), map (trail), ' +
             'code (source: one HTML document with its script and style inline, at most 256 KB; height 80–900; at most 4 per console) for a control or readout no other kind draws, such as a joystick, a piano, a HUD or picture buttons. ' +
             'A code panel runs sandboxed with no network, storage or parent access, and its script uses window.basecase: signals(names, (values, time) => …) gets those signals at most 20 times a second; ' +

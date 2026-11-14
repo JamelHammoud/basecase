@@ -15,12 +15,18 @@ import type { Angles } from '../robot/robotGap';
 import { degrees } from '../robot/robotGhost';
 import { phoneSnapshot } from '../phone/phoneStore';
 import {
+  feedOperatorFace,
+  feedOperatorHand,
   feedOperatorPose,
+  type FaceSample,
+  type HandSample,
   operatorCameraSnapshot,
   operatorLatency,
   operatorTrackState,
 } from '../cameras/operator/operatorCamera';
 import type { PoseSample } from '../cameras/operator/poseFollow';
+import { recentInputEvents } from '../sim/inputEvents';
+import { feedVoice, setVoiceWords } from '../voice/voiceSession';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
@@ -60,6 +66,7 @@ export interface DevActions {
   buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
+  driveWith: (inputs: string[]) => Promise<boolean>;
   worldAt: () => Record<string, number[]>;
   printPlates: () => unknown;
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
@@ -261,6 +268,12 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     shownParts: () => viewportRef.current?.shownPartIds() ?? [],
     simState: () => devRef.current.simState(),
     drive: (command: DriveCommand) => devRef.current.drive(command),
+    driveWith: (inputs: string[]) => devRef.current.driveWith(inputs),
+    feedVoice: (samples: number[], sampleRate: number, words: string[]) => {
+      setVoiceWords(words);
+      feedVoice(samples, sampleRate);
+    },
+    inputEvents: () => recentInputEvents().map(({ name, value }) => ({ name, value })),
     worldAt: () => devRef.current.worldAt(),
     printPlates: () => devRef.current.printPlates(),
     bomLines: () =>
@@ -282,6 +295,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     phone: () => phoneSnapshot(),
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
+    feedHand: (samples: HandSample[], fps?: number) => feedOperatorHand(samples, fps),
+    feedFace: (samples: FaceSample[], fps?: number) => feedOperatorFace(samples, fps),
     operatorCamera: () => operatorCameraState(),
     stubTabEngine,
     exploreLimit: (designs: number) => limitExplore(designs),

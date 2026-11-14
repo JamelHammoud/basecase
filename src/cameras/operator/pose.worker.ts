@@ -1,189 +1,147 @@
 /// <reference lib="webworker" />
 import type { InputRobot } from '../../sim/inputTypes';
-import { createPoseFollower, type PoseFollower, type PoseSample } from './poseFollow';
-import { loadPoseEstimator, type PoseLandmarker } from './poseEstimator';
-import { isSeen, type PoseLandmark } from './poseLandmarks';
-import { FEED_FPS, wallClock, type PoseEvent, type PoseRequest, type SkeletonPoint } from './poseProtocol';
+import {
+  FEED_FPS,
+  wallClock,
+  type FeedRequest,
+  type LandmarkKind,
+  type PoseEvent,
+  type PoseRequest,
+} from './poseProtocol';
+import { playback, RUNNERS, type Picture, type Runner } from './runners';
+import { createFrameQueue } from './workerFrames';
 
-type Picture = VideoFrame | ImageBitmap;
+interface Lane {
+  robot: InputRobot;
+  runner: Runner | null;
+  fed: boolean;
+  feedTimer: ReturnType<typeof setTimeout> | null;
+}
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
+const lanes = new Map<LandmarkKind, Lane>();
 
-let robot: InputRobot | null = null;
-let follower: PoseFollower | null = null;
-let estimator: PoseLandmarker | null = null;
-let reader: ReadableStreamDefaultReader<VideoFrame> | null = null;
-let latest: { picture: Picture; seenAt: number } | null = null;
-let scheduled = false;
-let fed = false;
-let feedTimer: ReturnType<typeof setTimeout> | null = null;
 let lastTimestamp = 0;
-let seenPerson = false;
 let closed = false;
 
 const post = (event: PoseEvent) => scope.postMessage(event);
 
-const fail = (e: unknown) => post({ type: 'error', message: e instanceof Error ? e.message : String(e) });
+const fail = (e: unknown, kind?: LandmarkKind) =>
+  post({ type: 'error', ...(kind ? { kind } : {}), message: e instanceof Error ? e.message : String(e) });
 
-const skeleton = (marks: PoseLandmark[]): SkeletonPoint[] => marks.map((p) => [p.x, p.y, isSeen(p)]);
-
-function dropLatest() {
-  latest?.picture.close();
-  latest = null;
-}
+const detecting = (lane: Lane): lane is Lane & { runner: Runner } => !!lane.runner && !lane.fed;
 
 function detect(picture: Picture, seenAt: number) {
-  if (!estimator || !follower) return;
-
   lastTimestamp = Math.max(performance.now(), lastTimestamp + 1);
 
-  const result = estimator.detectForVideo(picture, lastTimestamp);
-  const world = result.worldLandmarks[0];
-  const marks = result.landmarks[0];
-
-  const lost = seenPerson && (!world || !marks);
-
-  seenPerson = !!world && !!marks;
-
-  if (lost) post({ type: 'pose', follow: null, image: null, seenAt });
-
-  if (!world || !marks) return;
-
-  post({
-    type: 'pose',
-    follow: follower.step({ t: lastTimestamp, world, image: marks }),
-    image: skeleton(marks),
-    seenAt,
-  });
-}
-
-function detectLatest() {
-  scheduled = false;
-
-  const frame = latest;
-
-  latest = null;
-
-  if (!frame) return;
-
-  try {
-    if (!fed) detect(frame.picture, frame.seenAt);
-  } catch (e) {
-    fail(e);
-  } finally {
-    frame.picture.close();
-  }
-}
-
-function loadEstimator() {
-  loadPoseEstimator().then(({ landmarker, delegate }) => {
-    if (closed || fed) return landmarker.close();
-
-    estimator = landmarker;
-    post({ type: 'ready', delegate });
-  }, fail);
-}
-
-function take(picture: Picture) {
-  const seenAt = wallClock();
-
-  if (fed || !estimator || closed) return picture.close();
-
-  dropLatest();
-  latest = { picture, seenAt };
-
-  if (scheduled) return;
-
-  scheduled = true;
-  setTimeout(detectLatest, 0);
-}
-
-async function pump(frames: ReadableStream<VideoFrame>) {
-  reader = frames.getReader();
-
-  for (;;) {
-    const { value, done } = await reader.read();
-
-    if (done) return;
-
-    take(value);
-  }
-}
-
-function stopFeed() {
-  if (feedTimer !== null) clearTimeout(feedTimer);
-
-  feedTimer = null;
-}
-
-function feed(samples: PoseSample[], fps = FEED_FPS) {
-  stopFeed();
-
-  if (!robot) return fail(new Error('The camera is closed.'));
-
-  fed = true;
-  dropLatest();
-  estimator?.close();
-  estimator = null;
-
-  const following = createPoseFollower(robot);
-  let next = 0;
-  const step = () => {
-    const sample = samples[next++];
-
-    feedTimer = null;
-
-    if (!sample || closed) return;
-
-    const seenAt = wallClock();
-
-    feedTimer = setTimeout(step, 1000 / fps);
+  for (const [kind, lane] of lanes) {
+    if (!detecting(lane)) continue;
 
     try {
-      post({
-        type: 'pose',
-        follow: following.step(sample),
-        image: sample.image ? skeleton(sample.image) : null,
-        seenAt,
-      });
+      const event = lane.runner.run(picture, lastTimestamp, seenAt);
+
+      if (event) post(event);
     } catch (e) {
-      fail(e);
+      fail(e, kind);
+    }
+  }
+}
+
+const frames = createFrameQueue({
+  wanted: () => !closed && [...lanes.values()].some(detecting),
+  detect,
+  fail: (e) => fail(e),
+});
+
+function stopFeed(lane: Lane) {
+  if (lane.feedTimer !== null) clearTimeout(lane.feedTimer);
+
+  lane.feedTimer = null;
+}
+
+function leave({ kind }: { kind: LandmarkKind }) {
+  const lane = lanes.get(kind);
+
+  if (!lane) return;
+
+  lanes.delete(kind);
+  stopFeed(lane);
+  lane.runner?.close();
+}
+
+function join({ kind, robot, standIn }: Extract<PoseRequest, { type: 'join' }>) {
+  leave({ kind });
+
+  const lane: Lane = { robot, runner: null, fed: !!standIn, feedTimer: null };
+
+  lanes.set(kind, lane);
+
+  if (lane.fed) return;
+
+  RUNNERS[kind](robot).then(
+    ({ runner, delegate }) => {
+      if (closed || lanes.get(kind) !== lane || lane.fed) return runner.close();
+
+      lane.runner = runner;
+      post({ type: 'ready', kind, delegate });
+    },
+    (e) => fail(e, kind),
+  );
+}
+
+function feed(request: FeedRequest) {
+  const { kind } = request;
+  const lane = lanes.get(kind);
+
+  if (!lane) return fail(new Error('The camera is closed.'), kind);
+
+  stopFeed(lane);
+  lane.fed = true;
+  lane.runner?.close();
+  lane.runner = null;
+
+  const played = playback(request, lane.robot);
+  const interval = 1000 / (request.fps ?? FEED_FPS);
+  let next = 0;
+  const step = () => {
+    lane.feedTimer = null;
+
+    if (closed || lanes.get(kind) !== lane || next >= played.count) return;
+
+    const seenAt = wallClock();
+    const index = next++;
+
+    lane.feedTimer = setTimeout(step, interval);
+
+    try {
+      post(played.at(index, seenAt));
+    } catch (e) {
+      fail(e, kind);
     }
   };
 
-  follower = following;
   step();
-}
-
-function open(msg: Extract<PoseRequest, { type: 'open' }>) {
-  robot = msg.robot;
-  follower = createPoseFollower(msg.robot);
-
-  fed = !!msg.standIn;
-
-  if (msg.frames) pump(msg.frames).catch(fail);
-
-  if (!fed) loadEstimator();
 }
 
 function close() {
   closed = true;
-  stopFeed();
-  dropLatest();
-  void reader?.cancel().catch(() => undefined);
-  estimator?.close();
-  estimator = null;
+  [...lanes.keys()].forEach((kind) => leave({ kind }));
+  frames.stop();
   scope.close();
 }
 
 const handlers: { [K in PoseRequest['type']]: (msg: Extract<PoseRequest, { type: K }>) => void } = {
-  open,
-  frame: ({ bitmap }) => take(bitmap),
-  feed: ({ samples, fps }) => {
+  open: ({ frames: stream }) => {
+    if (stream) frames.pump(stream).catch((e: unknown) => fail(e));
+  },
+  join,
+  leave,
+  frame: ({ bitmap }) => frames.take(bitmap),
+  feed: (request) => {
     try {
-      feed(samples, fps);
+      feed(request);
     } catch (e) {
-      fail(e);
+      fail(e, request.kind);
     }
   },
   close,

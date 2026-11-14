@@ -64,7 +64,7 @@ describe('a Case console', () => {
     const base = DEFAULT_CONSOLE;
 
     expect(withConsole({ ...base, input: ['leader-arm'] })).toThrow(/console.input\[0\] leader-arm can’t drive a Case/);
-    expect(withConsole({ ...base, input: ['midi'] })).toThrow(/console.input\[0\] midi can’t drive/);
+    expect(withConsole({ ...base, input: ['policy'] })).toThrow(/console.input\[0\] policy can’t drive/);
     expect(withConsole({ ...base, input: ['mind'] })).toThrow(/console.input\[0\] mind is no input source/);
     expect(withConsole({ ...base, input: ['keys', 'keys'] })).toThrow(/console.input\[1\] repeats keys/);
     expect(withConsole({ ...base, input: [] })).toThrow(/console.input must name an input source/);
@@ -89,6 +89,14 @@ describe('a Case console', () => {
     );
     expect(one({ id: 'a', kind: 'plot', signals: ['joint.*.position'] })).not.toThrow();
     expect(one({ id: 'a', kind: 'camera', signal: 'camera.operator' })).toThrow(/needs the camera input/);
+
+    for (const input of ['camera', 'hand', 'face']) {
+      const operator = { id: 'you', kind: 'camera', signal: 'camera.operator' };
+      const layout = { areas: [{ canvas: true }, { size: 300, panels: ['you'] }] };
+
+      expect(withConsole({ input: [input], panels: [operator], layout }), input).not.toThrow();
+    }
+
     expect(one({ id: 'a', kind: 'plot', signals: [] })).toThrow(/must name a signal/);
     expect(one({ id: 'a', kind: 'plot', signals: ['time'], seconds: 900 })).toThrow(/seconds must be from 2 to 120/);
     expect(one({ id: 'a', kind: 'button', action: 'launch' })).toThrow(/action must be one of try/);
@@ -229,10 +237,7 @@ describe('five consoles from arc #184', () => {
       }
     });
 
-    expect(refused).toEqual([
-      ['Sorting cell', 'console.input[0] policy can’t drive a Case in this version'],
-      ['MIDI hexapod', 'console.input[0] midi can’t drive a Case in this version'],
-    ]);
+    expect(refused).toEqual([['Sorting cell', 'console.input[0] policy can’t drive a Case in this version']]);
   });
 
   it('parses each once keys stand in for the missing input, and lays out its own areas', () => {

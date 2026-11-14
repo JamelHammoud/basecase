@@ -5,6 +5,7 @@ export const ROBOT_FIELDS = ['height', 'tilt', 'speed', 'travelled', 'x', 'z'] a
 export const INPUT_AXES = ['forward', 'left', 'turn', 'lift', 'grip'] as const;
 export const GOAL_FIELDS = ['passed', 'margin', 'failed'] as const;
 export const NAMESPACES = ['time', 'joint', 'robot', 'probe', 'input', 'goal', 'camera'] as const;
+export const OPERATOR_INPUTS = ['camera', 'hand', 'face'];
 
 export type JointField = (typeof JOINT_FIELDS)[number];
 export type RobotField = (typeof ROBOT_FIELDS)[number];
@@ -37,7 +38,7 @@ const SHAPERS: Record<string, Shaper> = {
     return has(INPUT_AXES, axis) ? 'number' : `must be input.${source}.${INPUT_AXES.join(' or ')}`;
   },
   camera: ([key], scope) => {
-    if (key === 'operator' && !scope.inputs.has('camera')) return 'needs the camera input';
+    if (key === 'operator' && !OPERATOR_INPUTS.some((id) => scope.inputs.has(id))) return 'needs the camera input';
 
     return key ? 'camera' : 'must be camera.<name or *>';
   },

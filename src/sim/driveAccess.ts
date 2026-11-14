@@ -1,3 +1,4 @@
+import { lookJoints } from '../cameras/operator/lookJoints';
 import { robotFacts } from '../cases/robotFit';
 import type { JointValues, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
@@ -95,10 +96,25 @@ function armAccess(input: DriveInput, robot: string): DriveAccess {
   return { kind: 'ready', cls: 'arm', setup, needsFallCheck: false, followPart: null };
 }
 
+function armlessAccess(input: DriveInput, robot: SimModel['robots'][number]): DriveAccess {
+  const { rig, parts, start } = input;
+  const facts = robotFacts(rig, parts, robot.key);
+  const look = lookJoints(rig, parts, robot.key);
+  const aimsCamera = !!look && facts.armJoints.every((id) => id === look.pan || id === look.tilt);
+  const isArm = robot.morphology === 'fixed' && !!facts.endEffector && !aimsCamera;
+
+  if (isArm || !look) return robot.morphology === 'fixed' ? armAccess(input, robot.key) : { kind: 'none' };
+
+  const setup = poseSetup(rig, { robot: robot.key, start });
+  const pin = robot.floating ? { pin: robot.key } : {};
+
+  return { kind: 'ready', cls: 'pose', setup, needsFallCheck: false, followPart: null, ...pin };
+}
+
 function poseAccess(input: DriveInput, robot: SimModel['robots'][number], followPart: string | null): DriveAccess {
   const { rig, velocity, start } = input;
 
-  if (!hasArms(rig)) return robot.morphology === 'fixed' ? armAccess(input, robot.key) : { kind: 'none' };
+  if (!hasArms(rig)) return armlessAccess(input, robot);
 
   const pose = poseSetup(rig, { robot: robot.key, start });
 

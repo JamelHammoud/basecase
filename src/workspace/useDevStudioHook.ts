@@ -52,6 +52,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     sketchPath: core.sketching.setPath,
     simState: () => devSimState(core, jointsRef.current),
     drive: (command) => core.simTraining.sim.drive.setKeys(command),
+    driveWith: (inputs) => core.simTraining.sim.drive.start(undefined, { inputs }),
     worldAt: () => {
       const { model, worldParts } = core.simTraining.sim;
       const deltas = model && posesRef.current ? worldDeltas(model, posesRef.current) : new Map();

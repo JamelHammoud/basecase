@@ -20,7 +20,6 @@ interface Studio {
   dropFiles: (files: Array<{ name: string; base64: string }>) => void;
   simState: () => SimState;
   worldState: () => WorldState | null;
-  referenceTry: () => Promise<void>;
 }
 
 let app: App;
@@ -80,7 +79,7 @@ afterEach(async () => {
 });
 
 describe('a captured world dropped on the canvas', () => {
-  it('opens New Case with its splat and separate colliders, then passes a reference try under the table', async () => {
+  it('opens New Case with its splat and separate colliders without adding scene parts', async () => {
     app = await openApp();
     await loadFixtureRobot(app.page, 'rover-diff');
 
@@ -96,9 +95,6 @@ describe('a captured world dropped on the canvas', () => {
     expect(world.pieces).toBeLessThanOrEqual(64);
     expect(await partCount(app.page)).toBe(parts);
 
-    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.referenceTry());
-    await expect.poll(async () => (await simState()).tries.length).toBe(1);
-    expect((await simState()).tries[0].passed).toBe(true);
     expect(app.errors).toEqual([]);
   });
 

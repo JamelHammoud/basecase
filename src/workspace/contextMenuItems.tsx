@@ -249,7 +249,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       onSelect: () => tool.toggleMarking(true),
     },
     ...(core.marks.marks.length
-      ? [{ label: 'Delete Marks', icon: <DeleteIcon />, onSelect: core.marks.deleteAll }]
+      ? [{ label: 'Delete Marks', icon: <DeleteIcon />, tone: 'danger' as const, onSelect: core.marks.deleteAll }]
       : []),
     {
       label: 'Import',

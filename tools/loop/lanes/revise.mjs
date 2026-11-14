@@ -21,13 +21,13 @@ import { landedIn } from '../lib/landed.mjs';
 import { kindOf, pullTitle, REVISED_FIELDS, revisedBody } from '../lib/pull.mjs';
 import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
-import { voiceChangedPosts, voiced } from '../lib/voiceHook.mjs';
+import { voiceNewPages, voiced } from '../lib/voiceHook.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 
 export const schedule = {
   agent: true,
-  slots: 4,
+  slots: 10,
   everySeconds: 60,
   labels: ['loop:revising'],
   does: "Answers a failed review, a pull request's own Check failure or a comment from Jamel on its branch, and rebuilds a change from main after four failed attempts",
@@ -106,7 +106,7 @@ function publishRevision(pull, { dir, output }) {
 
   if (problems.length > 0) throw new Error(`Commit message credits a model or tool: ${problems.join('; ')}`);
 
-  voiceChangedPosts(dir);
+  voiceNewPages(dir);
   git(['add', '-A'], dir);
   git(['commit', '-q', '-F', '-'], dir, { input: output.commitMessage });
   run('node', [path.join(HOME_CHECKOUT, 'tools', 'check-credit.mjs'), 'origin/main..HEAD'], { cwd: dir });

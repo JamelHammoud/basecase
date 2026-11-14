@@ -175,13 +175,13 @@ function flatSketchPart(params: SketchParams, id: string): ScenePart {
 
 export { PRINTED_TAG };
 
-export const solidSketchParams = (solid: SketchSolid, output: { name: string; color: string }): SketchParams => ({
-  name: output.name,
+export const solidSketchParams = (solid: SketchSolid): SketchParams => ({
+  name: solid.node.name,
   mode: solid.record.mode,
   widthMm: solid.dimensions.width,
   heightMm: solid.dimensions.height,
   depthMm: solid.dimensions.depth,
-  color: output.color,
+  color: solid.node.color,
   bevel: false,
   nodes: [solid.node],
   solid,

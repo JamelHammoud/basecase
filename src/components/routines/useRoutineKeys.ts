@@ -4,22 +4,18 @@ import { hasPrimaryModifier } from '../../utils/os';
 import { isTextEntry } from '../../workspace/helpers';
 import type { Routines } from '../../workspace/useRoutines';
 
-type KeyAction = 'undo' | 'redo' | 'delete' | 'run' | 'deselect';
+type KeyAction = 'delete' | 'run' | 'deselect';
 
 export const OWN_EDIT_EVENT = 'own-edit';
 
 const MENU_ECHO_MS = 300;
-const MENU_ACTIONS: Record<string, KeyAction> = { undo: 'undo', redo: 'redo', delete: 'delete' };
+const MENU_ACTIONS: Record<string, KeyAction> = { delete: 'delete' };
 
 function keyAction(e: React.KeyboardEvent): KeyAction | null {
   const key = e.key.toLowerCase();
   const mod = hasPrimaryModifier(e);
 
   if (isTextEntry(e.target as Element)) return null;
-
-  if (mod && key === 'z') return e.shiftKey ? 'redo' : 'undo';
-
-  if (mod && key === 'y') return 'redo';
 
   if (mod && key === 'enter') return 'run';
 
@@ -32,10 +28,8 @@ export function useRoutineKeys(routines: Routines, rootRef: React.RefObject<HTML
   const lastKey = useRef(0);
 
   const run = (action: KeyAction): boolean => {
-    const { store, editor, view } = routines;
+    const { editor, view } = routines;
     const actions: Record<KeyAction, () => unknown> = {
-      undo: store.undo,
-      redo: store.redo,
       delete: editor.removeSelected,
       run: () => {
         if (view.compiled?.ok) void routines.run();

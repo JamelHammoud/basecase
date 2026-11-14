@@ -18,7 +18,7 @@ interface ExtractedShape {
   color: string;
 }
 
-const DEFAULT_COLOR = '#e4e4e7';
+export const DEFAULT_COLOR = '#e4e4e7';
 
 function filledShapes(svgData: SVGResult, overrideColor?: string): ExtractedShape[] {
   const out: ExtractedShape[] = [];

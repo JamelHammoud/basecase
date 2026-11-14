@@ -3,7 +3,7 @@ import { base64ToBytes, bytesToBase64 } from '../../utils/base64';
 import { channelCall } from '../../utils/platform/channelCall';
 import { electron } from '../../utils/platform/transport';
 import { decodeRecording, encodeRecording } from '../recordingFile';
-import type { StoredTry, TrySummary } from '../tryFile';
+import { readStoredTry, type StoredTry, type TrySummary } from '../tryFile';
 import type { TryBackend } from './types';
 
 type Bytes = Uint8Array | { data?: string | null } | null | undefined;
@@ -29,6 +29,8 @@ function bytesOf(reply: Bytes): Uint8Array | null {
   return typeof reply?.data === 'string' ? base64ToBytes(reply.data) : null;
 }
 
+const recordingBytes = async (id: string) => bytesOf(await call<Bytes>('tries:recording', id));
+
 export const desktopTries: TryBackend = {
   list: async () => {
     const listed = await call<TrySummary[]>('tries:list');
@@ -38,11 +40,13 @@ export const desktopTries: TryBackend = {
   save: async (stored: StoredTry, recording: Recording | null) => {
     await call('tries:save', { manifest: stored, recording: recording ? encodeRecording(recording) : null });
   },
+  update: async (stored) => (await call<{ ok?: boolean }>('tries:update', { manifest: stored }))?.ok === true,
   recording: async (id) => {
-    const bytes = bytesOf(await call<Bytes>('tries:recording', id));
+    const bytes = await recordingBytes(id);
 
     return bytes && decodeRecording(bytes);
   },
+  recordingBytes,
   strip: async (id) => {
     const bytes = bytesOf(await call<Bytes>('tries:strip', id));
 
@@ -53,6 +57,15 @@ export const desktopTries: TryBackend = {
   },
   delete: async (ids) => {
     await call('tries:delete', ids);
+  },
+  manifests: async (ids) => {
+    const found = await call<unknown[]>('tries:manifests', ids);
+
+    return Array.isArray(found) ? found.flatMap((raw) => readStoredTry(raw) ?? []) : [];
+  },
+  index: async () => bytesOf(await call<Bytes>('tries:index')),
+  saveIndex: async (bytes) => {
+    await call('tries:keep-index', { bytes });
   },
   session: async (id) => {
     const bytes = bytesOf(await call<Bytes>('tries:session', id));

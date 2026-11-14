@@ -35,6 +35,19 @@ describe('sceneText', () => {
     );
   });
 
+  it('shows each Case’s console as it stands, in the full list and the summary', () => {
+    const consoles = [
+      { case: 'reach', name: 'Reach', console: { input: ['keys'], panels: [{ id: 'plot', kind: 'plot' }] } },
+    ];
+
+    for (const count of [2, 30]) {
+      const lines = sceneText({ ...scene(count), consoles }).split('\n');
+
+      expect(lines.at(-1)).toBe(JSON.stringify(consoles[0]));
+      expect(lines.at(-2)).toMatch(/^Case consoles/);
+    }
+  });
+
   it('filters by group and ids, and names ids it can’t find', () => {
     expect(sceneText(scene(4), { group: 'head' })).toContain('2 of 4 parts:');
 

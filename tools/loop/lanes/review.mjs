@@ -1,29 +1,23 @@
-import { harnessKey, harnessKeyAt } from '../../../bench/compare/cache.mjs';
+import { creditProblems } from '../credit.mjs';
 import { runAgent } from '../lib/agent.mjs';
-import { runCompare, SETTINGS, settleEstimate, spentOn, unlinkRuns } from '../lib/benchRuns.mjs';
-import { claim, claimWithin, held } from '../lib/claim.mjs';
+import { claim } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
 import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
 import {
   closePull,
   commentOnPull,
-  editComment,
   openPulls,
   pullCheck,
   pullComments,
   pullReview,
-  repoVariable,
   reviewState,
   setReview,
 } from '../lib/github.mjs';
-import { budgetFrom, PULL_BUDGET, skipReason } from '../lib/harnessVerdict.mjs';
 import { duplicateTarget, inFlight, inFlightText } from '../lib/inFlight.mjs';
-import { OWNER_LOGIN } from '../lib/paths.mjs';
-import { judgedAt, markJudged } from '../lib/pullState.mjs';
-import { judgedPass, measurePull, needsMeasure, withMeasure } from '../lib/pullMeasure.mjs';
 import { byRank } from '../lib/rank.mjs';
+import { isSmall } from '../lib/smallChange.mjs';
 import { run } from '../lib/sh.mjs';
-import { pause } from '../lib/usage.mjs';
+import { voiceNewPages } from '../lib/voiceHook.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
 export const schedule = {
@@ -34,7 +28,6 @@ export const schedule = {
 };
 
 const MAX_DIFF = 400_000;
-const BENCH_PORT = 5390;
 
 const SCHEMA = {
   type: 'object',
@@ -42,6 +35,8 @@ const SCHEMA = {
     verdict: { type: 'string', enum: ['pass', 'fail'] },
     summary: { type: 'string' },
     duplicateOf: { type: 'integer' },
+    fixed: { type: 'array', items: { type: 'string' }, description: 'One line per finding you fixed in the worktree' },
+    commitMessage: { type: 'string', description: 'A subject line, a blank line, then what you fixed and why' },
     findings: {
       type: 'array',
       items: {
@@ -64,84 +59,15 @@ const findingLine = (f) => `- **${f.severity}** \`${f.file}${f.line ? `:${f.line
 
 const fenced = (text) => ['```', text, '```'].join('\n');
 
-const reviewComment = ({ verdict, summary, findings }, { sha, copy }) =>
+const reviewComment = ({ verdict, summary, findings, fixed = [] }, { sha, copy }) =>
   [
     `### Review: ${verdict === 'pass' ? 'pass' : 'changes needed'} (${sha.slice(0, 7)})`,
     summary,
+    ...(fixed.length > 0 ? ['', 'Fixed in this review:', ...fixed.map((line) => `- ${line}`)] : []),
     ...(findings.length > 0 ? ['', ...findings.map(findingLine)] : []),
     '',
     fenced(copy.text),
   ].join('\n');
-
-const git = (dir, args) => run('git', args, { cwd: dir }).out;
-
-function benchDeps({ dir, onMain, log }) {
-  const mainCommit = git(dir, onMain ? ['rev-parse', 'origin/main'] : ['merge-base', 'HEAD', 'origin/main']);
-
-  git(dir, ['reset', '-q', '--hard', 'HEAD']);
-  git(dir, ['clean', '-fdq']);
-
-  return {
-    owner: OWNER_LOGIN,
-    pullComments,
-    commentOnPull,
-    editComment,
-    settings: SETTINGS,
-    budget: () => budgetFrom(repoVariable('LOOP_PULL_BENCH_BUDGET'), PULL_BUDGET),
-    paused: () => skipReason({ paused: pause(), pulls: [] }),
-    keys: () => ({ branch: harnessKey(dir), main: harnessKeyAt(dir, mainCommit), mainCommit }),
-    estimate: (keys) => settleEstimate(keys.main),
-    compare: (plan) => runCompare({ dir, log, split: 'tune', port: BENCH_PORT, ...plan }),
-    spentOn,
-  };
-}
-
-const BENCH_WAIT_MS = 2 * 60 * 60 * 1000;
-
-const BENCH_BUSY = {
-  verdict: 'busy',
-  description: "Another review's micro-evals held the bench; it will run again",
-  log: 'waited two hours for the micro-evals bench; will run again',
-};
-
-const PULL_BUSY = {
-  verdict: 'busy',
-  description: 'Another lane held this pull request; the micro-evals will run again',
-  log: 'another lane held the pull request; micro-evals will run again',
-};
-
-function onBench(sha, measure) {
-  setReview(sha, 'pending', 'Waiting for the micro-evals');
-
-  const release = claimWithin('pull-bench', { ms: BENCH_WAIT_MS });
-
-  if (!release) return BENCH_BUSY;
-
-  try {
-    setReview(sha, 'pending', 'Measuring on the micro-evals');
-
-    return measure();
-  } finally {
-    release();
-  }
-}
-
-function measureOnce({ pull, paths, log, worktree, onMain }) {
-  if (!needsMeasure(pull, paths)) return null;
-
-  const hold = claim(`pull-${pull.number}`);
-
-  if (!hold) return PULL_BUSY;
-
-  try {
-    return onBench(pull.headRefOid, () => measurePull({ pull, paths, log }, benchDeps({ ...worktree, onMain, log })));
-  } finally {
-    hold();
-  }
-}
-
-const changedFiles = (dir) =>
-  git(dir, ['diff', '--name-only', '--no-renames', '-z', 'origin/main...HEAD']).split('\0').filter(Boolean);
 
 function ontoMain(dir) {
   const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: dir }).out.slice(0, MAX_DIFF);
@@ -153,6 +79,35 @@ function ontoMain(dir) {
   return { diff, copy, onMain };
 }
 
+const FIX_IT =
+  'Fix every finding you can, here in the worktree: blockers and minors, code, tests, copy and docs. Run `npm run check:changed -- <files>` on what you change. List each fix in `fixed` and write a commit message in `commitMessage`. Leave in `findings` only what you could not fix, and pass the pull request when nothing left blocks it.';
+
+function pushFixes({ pull, worktree, judged, log }) {
+  const dir = worktree.dir;
+
+  if (!judged.fixed?.length || run('git', ['status', '--porcelain'], { cwd: dir }).out === '') return null;
+
+  const message = judged.commitMessage || `Fix the review findings on #${pull.number}`;
+  const hold = claim(`pull-${pull.number}`);
+
+  if (!hold || creditProblems(message).length > 0) return hold?.() ?? null;
+
+  try {
+    voiceNewPages(dir);
+    run('git', ['add', '-A'], { cwd: dir });
+
+    const committed = run('git', ['commit', '-q', '-F', '-'], { cwd: dir, input: message, allowFail: true }).ok;
+    const pushed =
+      committed && run('git', ['push', '-q', 'origin', `HEAD:${pull.headRefName}`], { cwd: dir, allowFail: true }).ok;
+
+    if (!pushed) return log(`#${pull.number}: couldn't push the review's fixes; reviewing as it stands`) ?? null;
+
+    return run('git', ['rev-parse', 'HEAD'], { cwd: dir }).out.trim();
+  } finally {
+    hold();
+  }
+}
+
 function judge({ pull, worktree, diff, copy, onMain, log }) {
   const where = onMain
     ? 'The worktree is the pull request merged onto current main, so judge it as it would land.'
@@ -160,7 +115,7 @@ function judge({ pull, worktree, diff, copy, onMain, log }) {
   const counted = `Its user-facing strings (\`tools/copy-diff.mjs\`):\n\n${fenced(copy.text)}\n\n${copyReviewNote(copy)}`;
   const others = inFlight();
   const duplicates = `Other pull requests, open or merged in the last day:\n\n${inFlightText({ ...others, except: pull.number })}\n\nIf one of them makes this same change (the same strings or the same behaviour, not merely the same area), set duplicateOf to its number.`;
-  const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\n${counted}\n\n${duplicates}\n\nIts diff against main:\n\n${diff}`;
+  const prompt = `Review pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${where}\n\n${counted}\n\n${duplicates}\n\n${FIX_IT}\n\nIts diff against main:\n\n${diff}`;
   const result = runAgent({ cwd: worktree.dir, name: 'review', prompt, schema: SCHEMA, hours: 2 });
 
   if (!result.ok) {
@@ -180,56 +135,32 @@ function judge({ pull, worktree, diff, copy, onMain, log }) {
   return null;
 }
 
+function report({ pull, head, judged, copy, fixed, log }) {
+  const blockers = judged.findings.filter((f) => f.severity === 'blocker');
+  const verdict = judged.verdict === 'pass' && blockers.length === 0 ? 'pass' : 'fail';
+  const fixes = fixed ? `, fixed ${judged.fixed.length} in ${head.slice(0, 7)}` : '';
+
+  commentOnPull(pull.number, reviewComment({ ...judged, verdict }, { sha: head, copy }));
+  setReview(head, verdict === 'pass' ? 'success' : 'failure', judged.summary);
+  log(`#${pull.number}: ${verdict}, ${blockers.length} blockers${fixes}`);
+}
+
 function reviewPull(pull, log) {
   const sha = pull.headRefOid;
   const worktree = openPullHead(pull.number, sha);
 
   try {
-    const paths = changedFiles(worktree.dir);
-    const measure = needsMeasure(pull, paths);
-    const earlier = measure ? judgedAt(pull.number, sha) : null;
-
-    if (earlier && held('pull-bench')) {
-      log(`#${pull.number}: passed review; the micro-evals bench is busy, so it measures on a later tick`);
-
-      return false;
-    }
-
-    if (!earlier) setReview(sha, 'pending', 'Reviewing');
+    setReview(sha, 'pending', 'Reviewing');
 
     const { diff, copy, onMain } = ontoMain(worktree.dir);
-    const judged = earlier ?? judge({ pull, worktree, diff, copy, onMain, log });
+    const judged = judge({ pull, worktree, diff, copy, onMain, log });
 
     if (!judged) return;
 
-    const passed = judgedPass(judged);
+    const fixedSha = pushFixes({ pull, worktree, judged, log });
 
-    if (passed && measure) markJudged(pull.number, sha, judged);
-
-    if (passed && measure && held('pull-bench')) {
-      setReview(sha, 'error', 'Passed review; the micro-evals run once the bench is free');
-      log(`#${pull.number}: passed review; the micro-evals bench is busy, so it measures on a later tick`);
-
-      return;
-    }
-
-    const measured = passed ? measureOnce({ pull, paths, log, worktree, onMain }) : null;
-
-    if (measured?.verdict === 'busy') {
-      setReview(sha, 'error', measured.description);
-      log(`#${pull.number}: ${measured.log}`);
-
-      return;
-    }
-
-    const { output, verdict, state, description } = withMeasure(judged, measured);
-    const blockers = output.findings.filter((f) => f.severity === 'blocker');
-
-    commentOnPull(pull.number, reviewComment({ ...output, verdict }, { sha, copy }));
-    setReview(sha, state, description);
-    log(`#${pull.number}: ${verdict}, ${blockers.length} blockers`);
+    report({ pull, head: fixedSha ?? sha, judged, copy, fixed: Boolean(fixedSha), log });
   } finally {
-    unlinkRuns(worktree.dir);
     close(worktree);
   }
 }
@@ -274,12 +205,19 @@ export default function review({ log }) {
     .sort((a, b) => Number(pullCheck(b) === 'success') - Number(pullCheck(a) === 'success') || byRank(a, b));
 
   for (const pull of waiting) {
+    if (isSmall(pull)) {
+      setReview(pull.headRefOid, 'success', 'Small change: it lands on its Check without an agent review');
+      log(`#${pull.number}: small change; no agent review`);
+
+      continue;
+    }
+
     const release = claim(`review-${pull.number}`);
 
     if (!release) continue;
 
     try {
-      if (!carryOver(pull, log) && reviewPull(pull, log) === false) continue;
+      if (!carryOver(pull, log)) reviewPull(pull, log);
     } catch (error) {
       setReview(pull.headRefOid, 'error', 'The review stopped before it finished; it will run again');
 

@@ -209,7 +209,10 @@ function verdictOf(judging: Judging): Promise<CaseRuns> {
   return running;
 }
 
-const verdictKey = (kase: Case, reading: RobotReading) => `${hashOf(kase)}|${reading.modelHash}|${reading.walkHash}`;
+const judged = (kase: Case) => Object.fromEntries(Object.entries(kase).filter(([key]) => key !== 'console'));
+
+const verdictKey = (kase: Case, reading: RobotReading) =>
+  `${hashOf(judged(kase))}|${reading.modelHash}|${reading.walkHash}`;
 
 const controlKey = (control: CaseControl | null | undefined) =>
   control ? `|${hashOf(control.policy)}|${control.jointNoiseDeg ?? 0}` : '';

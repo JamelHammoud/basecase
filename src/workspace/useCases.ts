@@ -199,7 +199,6 @@ export function useCases(options: CasesOptions) {
     ...{ sim, rig, parts, active, tries, partners, attempt, timeline },
     viewportRef: options.viewportRef,
     onTry,
-    onRefuse: (message) => showToast(message),
   });
 
   return {

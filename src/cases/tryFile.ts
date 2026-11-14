@@ -2,6 +2,8 @@ import { FAULT_KINDS, type RecordedFault } from '../sim/faults';
 import { RECORD_HZ } from '../sim/recorder';
 import { CASE_FORMAT_VERSION } from './schema';
 import type { TryRecord } from './tries';
+import { readMotion } from './trySearch/motion';
+import type { MotionTrace } from './trySearch/types';
 
 export const TRY_FILE_VERSION = 1;
 
@@ -64,6 +66,7 @@ export interface StoredTry {
   family?: string;
   ended?: 'rung' | 'disconnect' | 'fault';
   policy?: string;
+  motion?: MotionTrace;
 }
 
 export interface TrySummary {
@@ -85,6 +88,7 @@ export interface TrySummary {
   task: string | null;
   recording: boolean;
   strip: boolean;
+  stamp?: number;
 }
 
 export interface TryContext {
@@ -92,6 +96,7 @@ export interface TryContext {
   caseName: string;
   joints: string[];
   input?: string | null;
+  task?: string;
 }
 
 const sourceOf = (record: TryRecord): TrySource => {
@@ -129,6 +134,7 @@ export function storedTryOf(record: TryRecord, context: TryContext): StoredTry {
     faults: manifest.faults ?? [],
     ...(manifest.commands !== undefined ? { commands: manifest.commands } : {}),
     ...(manifest.world !== undefined ? { world: manifest.world } : {}),
+    ...(context.task ? { task: context.task } : {}),
   };
 }
 
@@ -243,6 +249,7 @@ const hasNumbers = (v: Raw) =>
   optionalCount(v.commands) &&
   optionalCount(v.world);
 
+const MAX_TASK = 4096;
 const MAX_VIDEOS = 32;
 const HASH = /^[0-9a-f]{64}$/;
 
@@ -264,13 +271,18 @@ const isVideo = (v: unknown): v is TryVideo =>
   isObject(v) && isText(v.camera, 256) && isText(v.path, 512) && isNum(v.from) && isNum(v.to);
 
 const hasImportFields = (v: Raw) =>
-  (v.task === undefined || v.task === null || isText(v.task, 1000)) &&
   (v.videos === undefined || (Array.isArray(v.videos) && v.videos.length <= MAX_VIDEOS && v.videos.every(isVideo))) &&
   optionalCount(v.outOfRange) &&
   readOrigin(v.origin) !== null;
 
+const hasSearchFields = (v: Raw) =>
+  (v.task === undefined || v.task === null || isText(v.task, MAX_TASK)) &&
+  (v.motion === undefined || readMotion(v.motion) !== null);
+
 export function readStoredTry(value: unknown): StoredTry | null {
-  if (!isObject(value) || !hasIds(value) || !hasNumbers(value) || !hasImportFields(value)) return null;
+  const valid = isObject(value) && hasIds(value) && hasNumbers(value) && hasImportFields(value);
+
+  if (!valid || !hasSearchFields(value)) return null;
 
   const robot = readRobot(value.robot);
   const kase = readCase(value.case);

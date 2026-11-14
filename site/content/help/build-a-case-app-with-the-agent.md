@@ -44,4 +44,6 @@ When you're not in a panel or a text field, [[âŒ˜Z]] works like **Undo** and [[â
 
 To ask the agent why a try failed, stop the simulation first, or open the try on the timeline. The agent can't read a try while the Case is running, because reading it would reset the simulation. See [Requests that get good results](/help/requests-that-get-good-results).
 
+If you moved, resized or added panels yourself, the agent keeps your layout when it changes the app. See [Arrange a Case's console](/help/arrange-a-case-console).
+
 To learn about the panels a Case can show and how a code panel reaches the robot, see [Run a Case](/help/run-a-case).

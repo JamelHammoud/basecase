@@ -38,11 +38,12 @@ Parts come from the same catalog as the **Parts** view, with their real sizes, m
 
 The agent can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. For example:
 
-- Ask it to change how a ready Motor Kit skill moves. The agent keeps the change if Arena passes it and drops it if not.
-- In a Routine, it proves each switch between skills and names any switch that fell.
-- With a Case and two scenes open, it tells you which robot passes more often.
-- Ask what happened in a try. The agent reads the try's recording and answers with times and values.
-- Ask which servo to buy. The agent runs the Case on each catalog version and answers with passes, cost and mass.
+- Ask it to change how a ready Motor Kit skill moves. It keeps the change if Arena passes it and drops it if not.
+- For a Routine, it proves each switch between skills and names any that fell.
+- With a Case and two open scenes, it tells you which robot passes more often.
+- Ask what happened in a try. It reads the try's recording and answers with times and values.
+- Ask for tries, such as failed grasps from last week. It searches the tries from every scene and names the ones that match.
+- Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
 
 If you tell the agent where an arm must reach and what it carries, it sizes the arm's links and servos first. For a leg or finger, give it the path to trace and it fits a four-bar linkage to that path. Ask for fewer parts, and the agent merges printed parts that are bolted together on one link into a single print.
 

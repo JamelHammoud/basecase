@@ -11,13 +11,27 @@ export const schedule = {
   does: 'Moves the agent adapters to their latest releases',
 };
 
-const ADAPTERS = ['@agentclientprotocol/claude-agent-acp', '@agentclientprotocol/codex-acp', '@google/gemini-cli'];
+const CLAUDE_ADAPTER = '@agentclientprotocol/claude-agent-acp';
+const CLAUDE_SDK = '@anthropic-ai/claude-agent-sdk';
+const ADAPTERS = [CLAUDE_ADAPTER, '@agentclientprotocol/codex-acp', '@google/gemini-cli'];
 
 const versions = (dir) => {
   const { dependencies = {} } = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
 
   return ADAPTERS.map((name) => `${name} ${dependencies[name]}`);
 };
+
+const pinnedSdk = (dir) => {
+  const lock = JSON.parse(fs.readFileSync(path.join(dir, 'package-lock.json'), 'utf8'));
+
+  return lock.packages[`node_modules/${CLAUDE_ADAPTER}`].dependencies[CLAUDE_SDK];
+};
+
+const lockInstall = (dir, args) =>
+  run('npm', ['install', '--package-lock-only', '--min-release-age=0', ...args], {
+    cwd: dir,
+    timeout: 20 * 60 * 1000,
+  });
 
 export default function update({ log }) {
   const open = openPulls().find((pull) => pull.headRefName.startsWith('loop/update/'));
@@ -33,10 +47,11 @@ export default function update({ log }) {
   try {
     const before = versions(worktree.dir);
 
-    run('npm', ['install', '--package-lock-only', '--min-release-age=0', ...ADAPTERS.map((name) => `${name}@latest`)], {
-      cwd: worktree.dir,
-      timeout: 20 * 60 * 1000,
-    });
+    lockInstall(
+      worktree.dir,
+      ADAPTERS.map((name) => `${name}@latest`),
+    );
+    lockInstall(worktree.dir, ['--save-dev', '--save-exact', `${CLAUDE_SDK}@${pinnedSdk(worktree.dir)}`]);
 
     const after = versions(worktree.dir);
     const moved = after.filter((line, i) => line !== before[i]);

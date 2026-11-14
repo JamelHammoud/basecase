@@ -13,6 +13,8 @@ const MAX_RECORDING = 1024 * 1024 * 1024;
 const MAX_STRIP = 2 * 1024 * 1024;
 const MAX_SESSION = 256 * 1024 * 1024;
 const MAX_VIDEO = 2 * 1024 * 1024 * 1024;
+const MAX_INDEX = 512 * 1024 * 1024;
+const MAX_MANIFEST_BATCH = 500;
 const SOURCES = new Set(['case', 'generated', 'real', 'import', 'operate']);
 const VERDICTS = new Set(['passed', 'failed', 'unjudged']);
 
@@ -36,7 +38,7 @@ function outcomeOf(value) {
   };
 }
 
-export function summarizeTry(manifest, { recording, strip }) {
+export function summarizeTry(manifest, { recording, strip, stamp }) {
   const robot = isPlain(manifest.robot) ? manifest.robot : {};
   const kase = isPlain(manifest.case) ? manifest.case : null;
 
@@ -59,6 +61,7 @@ export function summarizeTry(manifest, { recording, strip }) {
     task: typeof manifest.task === 'string' ? text(manifest.task) : null,
     recording,
     strip,
+    ...(typeof stamp === 'number' ? { stamp } : {}),
   };
 }
 
@@ -99,9 +102,10 @@ const readOrNull = (file) => {
 };
 
 export class TryStore {
-  constructor({ triesDir, cacheFile }) {
+  constructor({ triesDir, cacheFile, indexFile }) {
     this.triesDir = triesDir;
     this.cacheFile = cacheFile;
+    this.indexFile = indexFile ?? path.join(path.dirname(cacheFile), '.try-index.bin');
     this.cache = null;
     this.appended = new Map();
   }
@@ -144,6 +148,7 @@ export class TryStore {
     const summary = summarizeTry(manifest, {
       recording: fs.existsSync(path.join(dir, TRY_RECORDING)),
       strip: fs.existsSync(path.join(dir, TRY_STRIP)),
+      stamp: stat.mtimeMs,
     });
 
     this.summaries.set(id, { mtimeMs: stat.mtimeMs, size: stat.size, summary });
@@ -152,9 +157,11 @@ export class TryStore {
   }
 
   withStrip(id, cached) {
-    if (cached.summary.strip || !fs.existsSync(path.join(this.triesDir, id, TRY_STRIP))) return { summary: cached.summary };
+    const strip = cached.summary.strip || fs.existsSync(path.join(this.triesDir, id, TRY_STRIP));
 
-    cached.summary = { ...cached.summary, strip: true };
+    if (strip === cached.summary.strip && cached.summary.stamp === cached.mtimeMs) return { summary: cached.summary };
+
+    cached.summary = { ...cached.summary, strip, stamp: cached.mtimeMs };
 
     return { summary: cached.summary, fresh: true };
   }
@@ -221,6 +228,18 @@ export class TryStore {
     return { ok: true };
   }
 
+  update({ manifest }) {
+    const json = checkedManifest(manifest);
+    const file = path.join(this.dirOf(manifest.id), TRY_MANIFEST);
+
+    if (!fs.existsSync(file)) return { ok: false };
+
+    writeAtomic(file, json);
+    this.forget(manifest.id);
+
+    return { ok: true };
+  }
+
   recording(id) {
     return readOrNull(path.join(this.dirOf(id), TRY_RECORDING));
   }
@@ -263,6 +282,35 @@ export class TryStore {
     if (!fs.existsSync(path.join(dir, TRY_MANIFEST))) return { ok: false };
 
     writeAtomic(path.join(dir, TRY_STRIP), checkedBytes(bytes, MAX_STRIP));
+
+    return { ok: true };
+  }
+
+  manifests(ids) {
+    if (!Array.isArray(ids)) throw new Error('Expected a list of tries');
+
+    if (ids.length > MAX_MANIFEST_BATCH) throw new Error('Too many tries at once');
+
+    return ids.flatMap((id) => {
+      const file = path.join(this.dirOf(id), TRY_MANIFEST);
+
+      try {
+        const manifest = JSON.parse(fs.readFileSync(file, 'utf-8'));
+
+        return isPlain(manifest) && manifest.id === id ? [manifest] : [];
+      } catch {
+        return [];
+      }
+    });
+  }
+
+  index() {
+    return readOrNull(this.indexFile);
+  }
+
+  saveIndex(bytes) {
+    fs.mkdirSync(path.dirname(this.indexFile), { recursive: true });
+    writeAtomic(this.indexFile, checkedBytes(bytes, MAX_INDEX));
 
     return { ok: true };
   }

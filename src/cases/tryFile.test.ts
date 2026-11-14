@@ -183,6 +183,15 @@ describe('a try’s recording on disk', () => {
     expect(back.controller.weights).toEqual(Float32Array.from([1, 2]));
   });
 
+  it('keeps a drive controller’s rig maps and sets', () => {
+    const rig = { parentOf: new Map([['knee', 'hip']]), jaws: new Set(['left']) };
+    const r = { ...recording(2), controller: { kind: 'drive', setup: { rig } } } as unknown as Recording;
+    const back = decodeRecording(encodeRecording(r)) as unknown as { controller: { setup: { rig: typeof rig } } };
+
+    expect(back.controller.setup.rig.parentOf.get('knee')).toBe('hip');
+    expect(back.controller.setup.rig.jaws).toEqual(new Set(['left']));
+  });
+
   it('refuses a file that is cut short, lies about its sizes or isn’t one', () => {
     const bytes = encodeRecording(recording(50));
     const header = new DataView(bytes.buffer).getUint32(8, true);

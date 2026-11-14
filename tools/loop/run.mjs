@@ -8,7 +8,7 @@ import { laneNames, laneModule } from './lib/lanes.mjs';
 import { claim } from './lib/claim.mjs';
 import { commentOnIssue, createIssue, issues } from './lib/github.mjs';
 import { firstLine, isBad, LOAD_CHECK, markBad } from './lib/homeGuard.mjs';
-import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
+import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS, LOOP_DIR } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 import { CODEX_EFFORT, CODEX_MODEL } from './lib/codex.mjs';
 import {
@@ -63,11 +63,7 @@ const lockHash = (dir) =>
     .update(fs.readFileSync(path.join(dir, 'package-lock.json')))
     .digest('hex');
 
-const othersRunning = () =>
-  fs
-    .readdirSync(LOCKS)
-    .filter((name) => name !== `${id}.lock`)
-    .some((name) => isAlive(Number(fs.readFileSync(path.join(LOCKS, name), 'utf8'))));
+const DEPS_STAGING = path.join(LOOP_DIR, 'deps-staging');
 
 function updateHome() {
   const exists = run('git', ['ls-remote', '--exit-code', '--heads', 'origin', HOME_REF], {
@@ -85,8 +81,8 @@ function updateHome() {
   if (target === before || isBad(target)) return false;
 
   run('git', ['reset', '-q', '--hard', target], { cwd: HOME_CHECKOUT });
-
-  if (depsCurrent()) keepIfLoads({ before, target });
+  syncDeps();
+  keepIfLoads({ before, target });
 
   return true;
 }
@@ -112,22 +108,52 @@ function keepIfLoads({ before, target }) {
   });
 }
 
-function depsCurrent() {
+function keepCaches(from, to) {
+  const caches = fs.existsSync(from) ? fs.readdirSync(from).filter((name) => name.startsWith('.')) : [];
+
+  for (const name of caches.filter((cache) => !fs.existsSync(path.join(to, cache)))) {
+    fs.renameSync(path.join(from, name), path.join(to, name));
+  }
+}
+
+function swapIn(staged) {
+  const modules = path.join(HOME_CHECKOUT, 'node_modules');
+  const old = path.join(DEPS_STAGING, 'old');
+
+  keepCaches(modules, staged);
+
+  if (fs.existsSync(modules)) fs.renameSync(modules, old);
+
+  fs.renameSync(staged, modules);
+  fs.rmSync(DEPS_STAGING, { recursive: true, force: true });
+}
+
+function syncDeps() {
   const stampFile = path.join(HOME_CHECKOUT, 'node_modules', '.loop-lock-hash');
   const hash = lockHash(HOME_CHECKOUT);
   const current = fs.existsSync(stampFile) ? fs.readFileSync(stampFile, 'utf8') : '';
 
-  if (current === hash) return true;
-
-  if (othersRunning()) return false;
+  if (current === hash) return false;
 
   log('package-lock.json changed; installing');
-  run('npm', ['ci', '--no-audit', '--no-fund'], {
-    cwd: HOME_CHECKOUT,
+  fs.rmSync(DEPS_STAGING, { recursive: true, force: true });
+  fs.mkdirSync(DEPS_STAGING, { recursive: true });
+
+  for (const file of ['package.json', 'package-lock.json', '.npmrc']) {
+    const from = path.join(HOME_CHECKOUT, file);
+
+    if (fs.existsSync(from)) fs.copyFileSync(from, path.join(DEPS_STAGING, file));
+  }
+
+  run('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], {
+    cwd: DEPS_STAGING,
     timeout: 30 * 60 * 1000,
     env: { ELECTRON_SKIP_BINARY_DOWNLOAD: '1' },
   });
-  fs.writeFileSync(stampFile, hash);
+  fs.writeFileSync(path.join(DEPS_STAGING, 'node_modules', '.loop-lock-hash'), hash);
+  swapIn(path.join(DEPS_STAGING, 'node_modules'));
+  run('npm', ['run', 'prepare'], { cwd: HOME_CHECKOUT, allowFail: true });
+  log('installed the new dependencies');
 
   return true;
 }
@@ -213,7 +239,9 @@ const startedAt = Date.now();
 const LONG_RUN_MINUTES = 2;
 
 try {
-  const updated = runsFromHome && lane === 'merge' && updateHome();
+  const tending = runsFromHome && lane === 'merge';
+  const updated = tending && updateHome();
+  const installed = tending && !updated && syncDeps();
 
   if (updated) {
     spawn(process.execPath, [path.join(HOME_CHECKOUT, 'tools', 'loop', 'install.mjs'), 'sync', String(process.pid)], {
@@ -223,7 +251,7 @@ try {
   }
 
   if (updated) log('updated to the latest main; the next run uses it');
-  else await runOnce();
+  else if (!installed) await runOnce();
 } catch (error) {
   if (error instanceof UsageLimit) announcePause(error);
   else {

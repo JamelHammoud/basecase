@@ -5,6 +5,7 @@ import { InstallSkillSheet } from '../components/InstallSkillSheet';
 import { PlaceOnMapSheet } from '../components/PlaceOnMapSheet';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
+import { ErrorBoundary } from '../design-system';
 import { TeachGestureHost } from './TeachGestureHost';
 import type { EarthPlace } from './useEarthPlace';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -19,7 +20,11 @@ interface WorkspaceSheetsProps {
 function PlaceOnMapHost({ active, earth }: { active: boolean; earth: EarthPlace }) {
   if (!active || !earth.sheetOpen) return null;
 
-  return <PlaceOnMapSheet origin={earth.origin} onClose={earth.close} onPlace={earth.place} />;
+  return (
+    <ErrorBoundary region="Place on Map" onClose={earth.close}>
+      <PlaceOnMapSheet origin={earth.origin} onClose={earth.close} onPlace={earth.place} />
+    </ErrorBoundary>
+  );
 }
 
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
@@ -29,51 +34,57 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
   const { motionInputRef } = pose;
   const { importRobotFrom } = robots;
   const { skillHub } = core.simTraining;
+  const installing = active && skillHub.installOpen;
 
   return (
     <>
       {active && guide.viewing && (
-        <GuideViewer
-          key={guide.viewing.key}
-          pages={guide.viewing}
-          title={core.scene.sceneName}
-          onClosed={guide.closeViewer}
-          onReveal={desktop ? () => void guide.reveal() : undefined}
-          onOpenPdf={desktop ? () => void guide.openPdf() : undefined}
-          onBuildAlong={() => void core.buildAlong.open()}
-          ready={core.printing.readySteps(guide.record?.stepParts?.ids ?? [])}
-        />
+        <ErrorBoundary key={guide.viewing.key} region="Build guide" onClose={guide.closeViewer}>
+          <GuideViewer
+            pages={guide.viewing}
+            title={core.scene.sceneName}
+            onClosed={guide.closeViewer}
+            onReveal={desktop ? () => void guide.reveal() : undefined}
+            onOpenPdf={desktop ? () => void guide.openPdf() : undefined}
+            onBuildAlong={() => void core.buildAlong.open()}
+            ready={core.printing.readySteps(guide.record?.stepParts?.ids ?? [])}
+          />
+        </ErrorBoundary>
       )}
-      <ImportRobotSheet
-        key={robots.robotChoice?.choices.join('\n') ?? 'link'}
-        open={robots.importRobotOpen}
-        choice={robots.robotChoice}
-        onClose={robots.closeImportRobot}
-        onImport={(src, at) => void importRobotFrom(src, at)}
-      />
-      <InstallSkillSheet
-        open={active && skillHub.installOpen}
-        onClose={skillHub.closeInstall}
-        onInstall={skillHub.install}
-      />
+      <ErrorBoundary region="Import Robot" resetKey={robots.importRobotOpen} onClose={robots.closeImportRobot}>
+        <ImportRobotSheet
+          key={robots.robotChoice?.choices.join('\n') ?? 'link'}
+          open={robots.importRobotOpen}
+          choice={robots.robotChoice}
+          onClose={robots.closeImportRobot}
+          onImport={(src, at) => void importRobotFrom(src, at)}
+        />
+      </ErrorBoundary>
+      <ErrorBoundary region="Install Skill" resetKey={installing} onClose={skillHub.closeInstall}>
+        <InstallSkillSheet open={installing} onClose={skillHub.closeInstall} onInstall={skillHub.install} />
+      </ErrorBoundary>
       <PlaceOnMapHost active={active} earth={actions.earth} />
       {arm.targets && (
-        <ArmSizingSheet
-          targets={arm.targets}
-          busy={arm.busy}
-          problem={arm.problem}
-          onClose={arm.close}
-          onSize={arm.size}
-        />
+        <ErrorBoundary region="Size Arm to Targets" onClose={arm.close}>
+          <ArmSizingSheet
+            targets={arm.targets}
+            busy={arm.busy}
+            problem={arm.problem}
+            onClose={arm.close}
+            onSize={arm.size}
+          />
+        </ErrorBoundary>
       )}
       {pose.motion && (
-        <RetargetSheet
-          motion={pose.motion}
-          rig={posing.robot?.rig ?? posing.rig}
-          pointOf={posing.pointOf}
-          onClose={pose.closeMotion}
-          onCreate={pose.createAnimation}
-        />
+        <ErrorBoundary key={pose.motion.name} region={`Import ${pose.motion.name}`} onClose={pose.closeMotion}>
+          <RetargetSheet
+            motion={pose.motion}
+            rig={posing.robot?.rig ?? posing.rig}
+            pointOf={posing.pointOf}
+            onClose={pose.closeMotion}
+            onCreate={pose.createAnimation}
+          />
+        </ErrorBoundary>
       )}
       <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input

@@ -5,6 +5,7 @@ import { DEFAULT_SCAN_HZ } from './lidar';
 export interface Scan {
   values: Float32Array;
   points: Float32Array;
+  counts: number[];
 }
 
 interface ScanSlot {
@@ -90,7 +91,7 @@ export class Scanner {
       at += s.hits * 3;
     }
 
-    return { values: this.values.slice(), points };
+    return { values: this.values.slice(), points, counts: this.slots.map((s) => s.hits) };
   }
 
   dispose() {

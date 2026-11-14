@@ -23,7 +23,7 @@ const finishRename = (state: SectionState, rename: (name: string) => void) => (n
 const EmptyModelsAction: React.FC<{ props: LibraryPanelProps }> = ({ props }) =>
   props.selectedIds.length > 0 ? (
     <Button size="sm" onClick={() => props.onSaveModel('selected')}>
-      Save Selection
+      Save to Library
     </Button>
   ) : (
     <Button size="sm" onClick={props.onImport}>

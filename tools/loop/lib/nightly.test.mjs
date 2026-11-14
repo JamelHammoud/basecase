@@ -38,15 +38,15 @@ describe('the nightly full suite', () => {
     expect(rerunSuite({ now, last: { ...last, conclusion: 'cancelled' }, mainHead: 'bbb', running: false })).toBe(true);
   });
 
-  it('releases once a day after 09:45 UTC, tries again every two hours, and never over a running release', () => {
+  it('releases right after the suite passes on a commit it has not tried, once a day, never over a running release', () => {
     const now = Date.parse('2026-11-14T13:00:00Z');
-    const base = { now, lastReleaseAt: '2026-11-02T15:40:00Z', lastAttemptAt: '2026-11-14T09:50:00Z', running: false };
+    const base = { now, green: 'bbb', tried: ['aaa'], lastReleaseAt: '2026-11-13T09:40:00Z', running: false };
 
     expect(releaseDue(base)).toBe(true);
-    expect(releaseDue({ ...base, lastAttemptAt: '2026-11-14T12:00:00Z' })).toBe(false);
+    expect(releaseDue({ ...base, green: 'aaa' })).toBe(false);
+    expect(releaseDue({ ...base, green: null })).toBe(false);
     expect(releaseDue({ ...base, running: true })).toBe(false);
-    expect(releaseDue({ ...base, lastReleaseAt: '2026-11-14T10:30:00Z' })).toBe(false);
-    expect(releaseDue({ ...base, now: Date.parse('2026-11-14T09:30:00Z'), lastAttemptAt: null })).toBe(false);
+    expect(releaseDue({ ...base, lastReleaseAt: '2026-11-14T08:00:00Z' })).toBe(false);
   });
 
   it('bumps the patch version', () => {

@@ -2,6 +2,7 @@ import { workerClient, type WorkerClient } from '../../utils/workerRpc';
 import type { Coplanar, Interference } from '../interference';
 import type { MeshMeasure } from '../meshMeasure';
 import type { MeshData } from '../../print/threeMf';
+import type { SheetProfile } from '../../sheet/detect';
 import type { ShapeReport } from './shapeReports';
 import type { CollideOptions } from './collide';
 import type { OutputRiders } from './outputRiders';
@@ -133,6 +134,10 @@ export function printReportsIn(
 
 export function printMeshesIn(scene: SceneShapes): Promise<Record<string, MeshData>> {
   return analyze(leastBusy(), scene, { kind: 'meshes', instances: scene.instances });
+}
+
+export function sheetProfilesIn(scene: SceneShapes): Promise<Record<string, SheetProfile | null>> {
+  return analyze(leastBusy(), scene, { kind: 'sheets', instances: scene.instances });
 }
 
 export function threeMfIn(scene: SceneShapes, plates: PlateFilesInput): Promise<ThreeMfResult> {

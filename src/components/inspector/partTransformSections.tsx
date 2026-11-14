@@ -5,7 +5,6 @@ import {
   IconButton,
   NumberInput,
   Section,
-  Select,
   Slider,
   CrosshairIcon,
   FloorIcon,
@@ -17,7 +16,8 @@ import { EdgesField } from './EdgesField';
 import { wrapDegrees } from './partMath';
 import { QuarterTurns } from './QuarterTurns';
 import type { PartSectionProps } from './partSections';
-import { MATERIALS, materialTag, type InspectorProps, type Phase } from './types';
+import type { InspectorProps, Phase } from './types';
+import { MaterialFields } from './MaterialFields';
 import { keyFor } from '../../app/shortcuts';
 import { percent } from '../../../electron/percent.mjs';
 
@@ -193,20 +193,18 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
   );
 };
 
-export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[] }> = ({ part, onUpdate, parts }) => (
+export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[]; sheetMm?: number | null }> = ({
+  part,
+  onUpdate,
+  parts,
+  sheetMm,
+}) => (
   <Section title="Appearance">
     <ColorField
       value={part.color}
       suggestions={parts.map((p) => p.color)}
       onChange={(color, live) => onUpdate({ color }, live)}
     />
-    {part.role === 'solid' && (
-      <Select
-        aria-label="Material"
-        value={materialTag(part)}
-        onChange={(e) => onUpdate({ mechanicalTag: e.target.value })}
-        options={MATERIALS}
-      />
-    )}
+    {part.role === 'solid' && <MaterialFields part={part} sheetMm={sheetMm} onUpdate={onUpdate} />}
   </Section>
 );

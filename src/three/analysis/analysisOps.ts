@@ -6,6 +6,7 @@ import { collide, place, type CollideOptions, type Placed } from './collide';
 import { collideRiding, type OutputRiders } from './outputRiders';
 import { printReportOf, worldMeasure } from './shapeReports';
 import { mergeMeshes, solidFromPositions, type ShapeSolid } from './shapeSolid';
+import { sheetProfile } from '../../sheet/detect';
 import { lowestPart, sweepClashes, type SweepSpec } from './sweep';
 import { pairsWithin, type PairIds } from './gaps';
 import { visibleShares } from './visibility';
@@ -45,7 +46,7 @@ export type AnalysisTask =
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
   | { kind: 'strength'; instances: Instance[]; jobs: StrengthJob[] }
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
-  | { kind: 'measure' | 'meshes' | 'visibility' | 'floor' | 'stl'; instances: Instance[] }
+  | { kind: 'measure' | 'meshes' | 'sheets' | 'visibility' | 'floor' | 'stl'; instances: Instance[] }
   | { kind: 'gaps'; instances: Instance[]; pairs: PairIds[]; withinMm: number }
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
@@ -113,6 +114,8 @@ function run(task: Exclude<AnalysisTask, { kind: 'strength' }>) {
       return byId(task.instances, (i) => worldMeasure(solidOf(i.key), new THREE.Matrix4().fromArray(i.matrix)));
     case 'meshes':
       return byId(task.instances, (i) => weld(solidOf(i.key).positions));
+    case 'sheets':
+      return byId(task.instances, (i) => sheetProfile(solidOf(i.key).positions));
     case 'visibility':
       return visibleShares(
         task.instances.map((i) => ({

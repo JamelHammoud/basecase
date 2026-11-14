@@ -26,6 +26,7 @@ import {
   type V3,
 } from './agentFrame';
 import { plural } from '../../electron/plural.mjs';
+import { partSheet, type SheetMaterial } from '../sheet/materials';
 
 export { agentCatalog } from './agentCatalog';
 export type { AgentCadPayload } from './cadMesh';
@@ -52,6 +53,7 @@ export interface AgentPartSpec {
   mates?: PartMate[];
   frame?: string;
   edges?: PartEdges | null;
+  sheet?: SheetMaterial | null;
 }
 
 export type AgentOp =
@@ -66,7 +68,7 @@ export type AgentOp =
       skeleton?: RobotSkeleton;
     };
 
-export type AgentMaterial = 'printed' | 'pla' | 'petg' | 'asa' | 'tpu' | 'cots' | 'aluminum' | 'laser_cut';
+export type AgentMaterial = 'printed' | 'pla' | 'petg' | 'asa' | 'tpu' | 'cots';
 
 const PRINT_MATERIAL: Partial<Record<AgentMaterial, PrintMaterial>> = {
   pla: 'PLA',
@@ -82,8 +84,6 @@ const MATERIAL_TAGS: Record<AgentMaterial, string> = {
   asa: '3D Printed PLA/PETG',
   tpu: 'TPU Flexible',
   cots: 'Off-the-shelf COTS',
-  aluminum: 'CNC Aluminum',
-  laser_cut: 'Laser-Cut Acrylic/Carbon',
 };
 const TAG_TO_MATERIAL = Object.fromEntries(
   Object.entries(MATERIAL_TAGS)
@@ -355,6 +355,14 @@ function materialOf(p: ScenePart): string | undefined {
   return p.mechanicalTag ? TAG_TO_MATERIAL[p.mechanicalTag] : undefined;
 }
 
+function sheetOrMaterial(p: ScenePart): { sheet: string } | { material?: string } {
+  const sheet = partSheet(p);
+
+  if (!sheet) return { material: materialOf(p) };
+
+  return { sheet: sheet.thicknessMm ? `${sheet.material}:${sheet.thicknessMm}` : sheet.material };
+}
+
 function sceneLinks(p: ScenePart) {
   const ports = p.kind === 'hardware' ? '' : portSummary(portsOf(p));
 
@@ -387,7 +395,7 @@ function partEntry(p: ScenePart, measured?: PartBoxes) {
     color: p.color,
     role: p.role,
     group: p.group?.name,
-    material: materialOf(p),
+    ...sheetOrMaterial(p),
     ...(p.componentId
       ? { catalog: `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}` }
       : {}),

@@ -1,3 +1,4 @@
+import type { SheetProfile } from '../../sheet/detect';
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { GhostState } from './ghostLayer';
 import type { EarthState, EarthView } from './earthLayer';
@@ -206,6 +207,7 @@ export interface Viewport3DHandle {
     faces?: Record<string, Array<[number, number, number]>>,
   ) => Promise<Record<string, ShapeReport>>;
   printMeshes: (ids: string[]) => Promise<Record<string, MeshData>>;
+  sheetProfiles: (ids: string[]) => Promise<Record<string, SheetProfile | null>>;
   printThreeMf: (plates: PlateFilesInput) => Promise<ThreeMfResult>;
   printStl: (items: StlItem[]) => Promise<Record<string, Uint8Array>>;
   fitCoupons: (task: FitCouponTask) => Promise<FitCoupon[]>;

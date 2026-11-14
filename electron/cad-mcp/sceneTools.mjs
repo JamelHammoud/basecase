@@ -13,7 +13,7 @@ export const getScene = {
   config: {
     title: 'Read scene',
     description:
-      'Lists the parts, one per line: id, name, kind, group, pos (placement), rot, size (or vol for CAD parts), edges (fillet:mm or chamfer:mm, when rounded or beveled), box (world bounding box min..max), color, role, material, catalog or supply key, note. All in mm, z up. A boolean shows its operation as its kind (boolean(subtract), union or intersect) and operands=[base, tools…]; each operand follows on its own indented line marked operand-of. Move, resize or rotate an operand by id with update_parts and the result re-cuts, instead of redoing the cut. `Marks` (when present) lists the strokes the user drew on the canvas: color, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). ' +
+      'Lists the parts, one per line: id, name, kind, group, pos (placement), rot, size (or vol for CAD parts), edges (fillet:mm or chamfer:mm, when rounded or beveled), box (world bounding box min..max), color, role, material (or sheet=material:thickness mm for a part cut from sheet), catalog or supply key, note. All in mm, z up. A boolean shows its operation as its kind (boolean(subtract), union or intersect) and operands=[base, tools…]; each operand follows on its own indented line marked operand-of. Move, resize or rotate an operand by id with update_parts and the result re-cuts, instead of redoing the cut. `Marks` (when present) lists the strokes the user drew on the canvas: color, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). ' +
       'Over 20 parts, the whole scene comes back as a summary per group (box and ids); pass group or ids for the full lines, or use find_in_scene. Call first, and whenever the user may have edited the scene.',
     inputSchema: {
       ids: z.array(idSchema).optional().describe('Only these parts'),
@@ -113,7 +113,7 @@ export const updateParts = {
   config: {
     title: 'Move or restyle parts',
     description:
-      "Changes placement (position, rotation), color, name, group, role, material or note of existing parts by id. For primitives you can also change size, and round or bevel the edges of a box, cube, cylinder, tube, hex_prism or wedge with edges { kind: fillet or chamfer, mm }. Ids may be a boolean's operands; the boolean re-cuts. To change a CAD part's geometry, call model_part again.",
+      "Changes placement (position, rotation), color, name, group, role, material, sheet or note of existing parts by id. For primitives you can also change size, and round or bevel the edges of a box, cube, cylinder, tube, hex_prism or wedge with edges { kind: fillet or chamfer, mm }. Ids may be a boolean's operands; the boolean re-cuts. To change a CAD part's geometry, call model_part again.",
     inputSchema: {
       updates: z
         .array(
@@ -122,6 +122,13 @@ export const updateParts = {
             position: vec3.optional(),
             size: vec3.optional(),
             edges: edgesSchema,
+            sheet: z
+              .enum(['aluminum', 'carbon', 'acrylic'])
+              .nullable()
+              .optional()
+              .describe(
+                'Cut this part from sheet instead of printing it: aluminum (6061), carbon (carbon fiber plate) or acrylic. Only a flat plate qualifies (two parallel faces, only through holes and cuts between them); its thickness snaps to the nearest stock size. It leaves the print plates, weighs what the material does, and lists under Sheet in the BOM. null prints it again.',
+              ),
             ...Object.fromEntries(Object.entries(common).map(([k, v]) => [k, v.optional()])),
           }),
         )

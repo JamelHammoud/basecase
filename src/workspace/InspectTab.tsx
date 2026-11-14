@@ -6,6 +6,7 @@ import { EMPTY_SKETCH } from '../utils/sketch/types';
 import { solidSketchParams } from './partFactories';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { useSheetThickness } from './useSheetThickness';
 
 interface InspectTabProps {
   core: WorkspaceCore;
@@ -66,6 +67,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
   const { edits, ops, library, tuning } = actions;
   const { saveAsModel } = library;
   const { toggleCommentMode } = annotations;
+  const sheetMm = useSheetThickness(core);
 
   return (
     <Inspector
@@ -100,6 +102,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       onChangeHardware={edits.changeHardware}
       onAddClearanceHole={ops.addClearanceHole}
       onTuneDimensions={tuning.tune}
+      sheetMm={sheetMm}
     />
   );
 }

@@ -12,6 +12,7 @@ import {
   measuresIn,
   visibilityIn,
   printMeshesIn,
+  sheetProfilesIn,
   printReportsIn,
   partStlsIn,
   strengthIn,
@@ -351,6 +352,7 @@ export class ViewportEngine {
       visibleShares: () => visibilityIn(restSolids(true)),
       printShapes: (ids, faces) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids)), faces),
       printMeshes: (ids) => printMeshesIn(snapshotShapes(measure.partObjects(ctx, ids))),
+      sheetProfiles: (ids) => sheetProfilesIn(snapshotShapes(measure.partObjects(ctx, ids))),
       printStl: (items) => {
         const ids = items.map((i) => i.id);
 

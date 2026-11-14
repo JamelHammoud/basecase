@@ -58,10 +58,10 @@ export const common = {
       `Subassembly, at most ${TEXT_LIMITS.group} characters, e.g. "Left Front Leg". Parts sharing it are grouped.`,
     ),
   material: z
-    .enum(['printed', 'pla', 'petg', 'asa', 'tpu', 'cots', 'aluminum', 'laser_cut'])
+    .enum(['printed', 'pla', 'petg', 'asa', 'tpu', 'cots'])
     .optional()
     .describe(
-      'printed (the project filament, default), pla, petg or asa (a specific filament: parts that hold or touch a servo need petg or asa, since servos run at 60–70 °C and PLA softens at 54 °C), tpu (soles, bumpers), cots (bought part), aluminum, laser_cut',
+      'printed (the project filament, default), pla, petg or asa (a specific filament: parts that hold or touch a servo need petg or asa, since servos run at 60–70 °C and PLA softens at 54 °C), tpu (soles, bumpers), cots (bought part). For a flat plate cut from aluminum, carbon or acrylic, use sheet on update_parts',
     ),
   supply: z
     .string()

@@ -25,7 +25,7 @@ import { SizeLine } from '../PartDetails';
 import { GroupName } from './GroupName';
 import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
-import { MATERIALS, materialTag, type InspectorProps } from './types';
+import { SHEET_VALUE, madeWith, materialOptions, materialTag, type InspectorProps } from './types';
 import { keyFor } from '../../app/shortcuts';
 import { plural } from '../../../electron/plural.mjs';
 
@@ -214,8 +214,11 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
           <Select
             aria-label="Material"
             value={materials.size > 1 ? '' : [...materials][0]}
-            onChange={(e) => e.target.value && onUpdateMany({ mechanicalTag: e.target.value })}
-            options={materials.size > 1 ? [{ value: '', label: 'Mixed' }, ...MATERIALS] : MATERIALS}
+            onChange={(e) => e.target.value && e.target.value !== SHEET_VALUE && onUpdateMany(madeWith(e.target.value))}
+            options={[
+              ...(materials.size > 1 ? [{ value: '', label: 'Mixed' }] : []),
+              ...materialOptions(materials.has(SHEET_VALUE)),
+            ]}
           />
         )}
       </Section>

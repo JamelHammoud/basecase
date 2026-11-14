@@ -33,6 +33,7 @@ const DETACHED: Viewport3DHandle = {
   visibleShares: async () => ({}),
   printShapes: async () => ({}),
   printMeshes: async () => ({}),
+  sheetProfiles: async () => ({}),
   printThreeMf: async () => ({ files: {}, unlabeled: [] }),
   printStl: async () => ({}),
   fitCoupons: async () => [],

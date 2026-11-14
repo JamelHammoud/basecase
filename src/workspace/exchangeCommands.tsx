@@ -6,6 +6,7 @@ import {
   FileImportIcon,
   FolderOpenIcon,
   PhotoIcon,
+  RectangleIcon,
   RobotsIcon,
   ShapeIcon,
   ShareIcon,
@@ -32,6 +33,14 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     icon: <ShapeIcon />,
     keywords: 'stp cad assembly fusion onshape solidworks freecad download',
     run: () => void exports.exportStep(),
+  };
+  const cutFiles: Command = {
+    id: 'export-cut-files',
+    group: 'Scene',
+    label: 'Export Cut Files',
+    icon: <RectangleIcon />,
+    keywords: 'dxf sheet laser waterjet aluminum carbon acrylic plate sendcutsend download',
+    run: () => void exports.exportCutFiles(),
   };
   const partExports: Command[] = [
     {
@@ -70,6 +79,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       run: () => void exports.exportScene(),
     },
     ...(exports.canExportRobot ? [robotPackage] : []),
+    ...(exports.canExportCutFiles ? [cutFiles] : []),
     {
       id: 'copy-brief',
       group: 'Scene',

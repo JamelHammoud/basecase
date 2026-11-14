@@ -19,6 +19,7 @@ import {
   daysSince,
 } from './bomTypes';
 import { printedLine } from './bomPrinted';
+import { SHEET_MATERIALS, partSheet, sheetFromKey, sheetKey, thicknessText, type PartSheet } from '../sheet/materials';
 
 import { neededSupplyKeys } from './bomNeeds';
 import { wiringNetlist } from '../wiring/netlist';
@@ -66,20 +67,18 @@ export function specFromHardwareKey(key: string): HardwareSpec | null {
 }
 
 const MADE_ELSEWHERE: Record<string, string> = {
-  'CNC Aluminum': 'CNC aluminum',
-  'Laser-Cut Acrylic/Carbon': 'Laser-cut sheet',
   'Off-the-shelf COTS': 'Bought part, not from the catalog',
 };
 
 const isImportedMesh = (p: ScenePart) => p.kind === 'mesh' && !!p.mesh?.file;
 
+const isMadeShape = (p: ScenePart) =>
+  p.role === 'solid' && (isImportedMesh(p) || !NOT_PRINTED.has(p.kind)) && !BLOCKOUT_KINDS.has(p.kind);
+
+export const cutSheet = (p: ScenePart): PartSheet | undefined => (isMadeShape(p) ? partSheet(p) : undefined);
+
 export function isPrinted(p: ScenePart): boolean {
-  return (
-    p.role === 'solid' &&
-    (isImportedMesh(p) || !NOT_PRINTED.has(p.kind)) &&
-    !BLOCKOUT_KINDS.has(p.kind) &&
-    !(p.mechanicalTag && MADE_ELSEWHERE[p.mechanicalTag])
-  );
+  return isMadeShape(p) && !(p.mechanicalTag && MADE_ELSEWHERE[p.mechanicalTag]) && !cutSheet(p);
 }
 
 export const printMaterialOf = (p: ScenePart, project: ProjectSettings): PrintMaterial =>
@@ -183,10 +182,24 @@ function describeSupply(key: string): LineInfo | null {
   };
 }
 
+function describeSheet(key: string): LineInfo | null {
+  const sheet = sheetFromKey(key);
+
+  if (!sheet) return null;
+
+  return {
+    category: 'Sheet',
+    name: SHEET_MATERIALS[sheet.material].name,
+    detail: sheet.thicknessMm ? thicknessText(sheet.thicknessMm) : '',
+    urlKind: 'none',
+  };
+}
+
 const DESCRIBERS: Array<[string, (key: string) => LineInfo | null]> = [
   ['component:', describeComponent],
   ['hardware:', describeHardware],
   ['supply:', describeSupply],
+  ['sheet:', describeSheet],
 ];
 
 export function describeKey(key: string): LineInfo | null {
@@ -244,6 +257,10 @@ function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: Mesh
   if (key) return addCount(t.counts, key, 1, [p.id].filter(Boolean));
 
   if (isStandIn(p)) return t.standIns.push({ id: p.id, name: p.name });
+
+  const sheet = cutSheet(p);
+
+  if (sheet) return addCount(t.counts, sheetKey(sheet), 1, [p.id]);
 
   const process = madeElsewhereProcess(p);
 

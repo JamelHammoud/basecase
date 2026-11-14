@@ -8,6 +8,7 @@ import { sleep } from './helpers';
 import { twinHints } from './mirrorHints';
 import type { CommitParts, Vec3 } from './types';
 import { errorMessage } from '../utils/errorMessage';
+import { sheetUpdate } from './agentSheet';
 
 export interface AgentOpsContext {
   current: () => ScenePart[];
@@ -104,8 +105,10 @@ function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
   return true;
 }
 
-function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
-  if (!findPartDeep(current, op.part.id)) {
+async function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
+  const found = findPartDeep(current, op.part.id);
+
+  if (!found) {
     log.problems.push(`${op.part.id} not found`);
 
     return true;
@@ -113,7 +116,14 @@ function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
 
   if (!claim(ctx, log, op.part.id)) return false;
 
-  ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? applySpec(p, op.part) : p)), live);
+  const sheet = await sheetUpdate(found, op.part.sheet, ctx.viewport());
+
+  if (sheet.problem) log.problems.push(sheet.problem);
+
+  ctx.commitParts(
+    (prev) => prev.map((p) => (p.id === op.part.id ? { ...applySpec(p, op.part), ...sheet.patch } : p)),
+    live,
+  );
   log.updated.push(op.part.id);
 
   return true;

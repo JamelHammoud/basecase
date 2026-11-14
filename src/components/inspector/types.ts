@@ -2,6 +2,7 @@ import type { SceneAnnotation, ScenePart } from '../../types/robotics';
 import type { HardwareSpec } from '../../data/hardware';
 import type { AlignMode, Axis } from '../../utils/selection';
 import type { PlaneView } from '../../mirror/plane';
+import { partSheet } from '../../sheet/materials';
 
 export type Phase = boolean | undefined;
 
@@ -9,14 +10,22 @@ export const MATERIALS: Array<{ value: string; label: string }> = [
   { value: '3D Printed PLA/PETG', label: 'Printed PLA / PETG' },
   { value: 'TPU Flexible', label: 'Printed TPU' },
   { value: 'Off-the-shelf COTS', label: 'Off-the-shelf' },
-  { value: 'CNC Aluminum', label: 'CNC aluminum' },
-  { value: 'Laser-Cut Acrylic/Carbon', label: 'Laser-cut sheet' },
 ];
+
+export const SHEET_VALUE = 'sheet';
 
 const PRINTED_TAG = MATERIALS[0].value;
 
-export const materialTag = (part: ScenePart): string =>
-  MATERIALS.find((m) => m.value === part.mechanicalTag)?.value ?? PRINTED_TAG;
+export const materialOptions = (canCut: boolean) =>
+  canCut ? [...MATERIALS, { value: SHEET_VALUE, label: 'Cut from Sheet' }] : MATERIALS;
+
+export function materialTag(part: ScenePart): string {
+  if (partSheet(part)) return SHEET_VALUE;
+
+  return MATERIALS.find((m) => m.value === part.mechanicalTag)?.value ?? PRINTED_TAG;
+}
+
+export const madeWith = (tag: string): Partial<ScenePart> => ({ mechanicalTag: tag, sheet: undefined });
 
 export interface InspectorProps {
   part: ScenePart | null;
@@ -49,4 +58,5 @@ export interface InspectorProps {
   onChangeHardware: (spec: HardwareSpec, live?: Phase) => void;
   onAddClearanceHole: () => void;
   onTuneDimensions: (id: string, values: Record<string, number>) => Promise<void>;
+  sheetMm?: number | null;
 }

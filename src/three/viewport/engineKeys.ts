@@ -32,6 +32,7 @@ export const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'visibleShares',
   'printShapes',
   'printMeshes',
+  'sheetProfiles',
   'printThreeMf',
   'printStl',
   'fitCoupons',

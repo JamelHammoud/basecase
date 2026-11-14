@@ -56,9 +56,11 @@ export function TitleBarActions({
           canExportParts={exports.canExportParts}
           canExportStep={exports.canExportStep}
           canExportRobot={exports.canExportRobot}
+          canExportCutFiles={exports.canExportCutFiles}
           onExportImage={exports.exportImage}
           onExportStl={exports.exportStl}
           onExport3mf={() => void exports.export3mf()}
+          onExportCutFiles={() => void exports.exportCutFiles()}
           onExportStep={IS_WEB_DEMO ? undefined : () => void exports.exportStep()}
           onExportScene={() => void exports.exportScene()}
           onExportRobot={() => void exports.exportRobotPackage()}

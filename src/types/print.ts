@@ -1,4 +1,5 @@
 import type { PrintMaterial } from './robotics';
+import type { PartSheet } from '../sheet/materials';
 
 export interface PartPrint {
   down?: [number, number, number];
@@ -8,6 +9,11 @@ export interface PartPrint {
   copies?: number;
   skip?: boolean;
   noLabel?: boolean;
+}
+
+export interface PartMaking {
+  print?: PartPrint;
+  sheet?: PartSheet;
 }
 
 export interface PrintRecord {

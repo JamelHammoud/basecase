@@ -32,7 +32,7 @@ covers:
 
 The Weight check adds up every part of your robot and finds its center of mass. Servo torque and standing stability both depend on these results.
 
-To see the robot's total weight and how high its center of mass sits above the floor, click **Weight** under **Checks** in the Build tab.
+To see your robot's total weight and how high its center of mass sits above the floor, click **Weight** under **Checks** in the Build tab.
 
 ## Where each part's weight comes from
 
@@ -42,20 +42,19 @@ To see the robot's total weight and how high its center of mass sits above the f
 | Component | Its catalog weight |
 | Hardware | Its volume and the density of its finish |
 | Printed part | The filament its shell and infill use, at your material and infill settings |
-| CNC aluminum | Its volume at 2.7 g/cm³, an estimate |
-| Laser-cut sheet | Its volume at 1.4 g/cm³, an estimate |
+| Part cut from sheet | Its volume at its material's density: 2.7 g/cm³ for 6061 aluminum, 1.55 for carbon fiber plate, 1.19 for acrylic |
 | Off-the-shelf part or stand-in | Its volume at 1.2 g/cm³, an estimate |
 | Supply | Its listed weight, or its volume at 1.5 g/cm³ if it has none |
 
 Printed parts start as PLA at 15% infill. You can change both in Print mode. Cutouts, guides and reference images don't add any weight.
 
-The Weight check never fails. If any part's weight is an estimate, the check shows a warning with how many parts are estimated and what they weigh, so you know how far to trust the total.
+The Weight check never fails. If the weight of any part is an estimate, the check shows a warning with how many parts are estimated and what they weigh.
 
 ## Which parts are the robot
 
-Each robot counts its own parts, plus any solid within 50 mm of them. For example, a battery tucked inside the torso counts toward the robot. Anything farther away is treated as scenery, and so is every object that moves freely in Simulate.
+Each robot counts its own parts, plus any solid within 50 mm of them. For example, a battery tucked inside the torso counts toward the robot. The check treats anything farther away as scenery, along with every object that moves freely in Simulate.
 
-Scenery isn't included in the weight, the leg loads or the footprint, and the Weight row shows how much it left out. Adding a table or a second robot to the scene doesn't change the results.
+Scenery doesn't count toward the weight, the leg loads or the footprint, and the Weight row shows how much it left out. Adding a table or a second robot to the scene doesn't change the results.
 
 ## Standing stability
 

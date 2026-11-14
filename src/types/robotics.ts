@@ -123,7 +123,7 @@ export interface CustomModelDefinition {
   nodes: CustomModelSubNode[];
 }
 
-export interface ScenePart extends PartRelations, BooleanFields {
+export interface ScenePart extends PartRelations, BooleanFields, PartMaking {
   id: string;
   name: string;
   kind: PartKind;
@@ -174,7 +174,6 @@ export interface ScenePart extends PartRelations, BooleanFields {
   physics?: { dynamic: boolean; friction?: number };
   group?: PartGroup;
   printMaterial?: PrintMaterial;
-  print?: PartPrint;
   jointId?: string;
   cameraLens?: Lens;
   sketch?: PartSketch;
@@ -187,7 +186,7 @@ import type { Lens } from '../cameras/lens';
 import type { OnshapeMate, PartGroup, RobotLinkRef } from './robotLink';
 import type { PartSketch } from '../utils/sketch/types';
 
-import type { PartPrint, PrintRecord, PrintService } from './print';
+import type { PartMaking, PrintRecord, PrintService } from './print';
 
 export type PrintMaterial = 'PLA' | 'PETG' | 'ABS' | 'ASA' | 'TPU';
 

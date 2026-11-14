@@ -1,9 +1,10 @@
 import { base64ToBytes } from '../../utils/base64';
 import { MAX_UNPACKED_BYTES, unzipEntries, ZIP_TOO_LARGE } from '../../utils/robotImport/archive';
-import { isLeRobotFolder, readLeRobot } from './lerobotRead';
-import { readMcap } from './mcapRead';
-import { isRosbag2Folder, readRosbag2 } from './rosbag2';
-import { DataImportError, type SourceData, type SourceFile, type SourceFolder } from './types';
+import { readLeRobot } from './lerobotRead';
+import { MCAP_TOO_LARGE, readMcap } from './mcapRead';
+import { readRosbag2 } from './rosbag2';
+import { sourceKind } from './sourceKind';
+import { DataImportError, IMPORT_LIMITS, type SourceData, type SourceFile, type SourceFolder } from './types';
 
 export interface PickedFile {
   path: string;
@@ -24,8 +25,6 @@ const hex = (bytes: ArrayBuffer) => [...new Uint8Array(bytes)].map((b) => b.toSt
 
 const digest = async (bytes: Uint8Array) =>
   hex(await crypto.subtle.digest('SHA-256', bytes as Uint8Array<ArrayBuffer>));
-
-export const isMcapName = (path: string) => /\.mcap$/i.test(path);
 
 class HashedFolder {
   private readonly hashes = new Map<string, string>();
@@ -74,15 +73,9 @@ async function zipFiles(blob: Blob): Promise<SourceFile[]> {
   return entries.map((e) => ({ path: e.path, size: e.data.byteLength, read: async () => e.data }));
 }
 
-export function sourceKind(paths: string[]): 'lerobot' | 'rosbag2' | 'mcap' | null {
-  if (isLeRobotFolder(paths) !== null) return 'lerobot';
-
-  if (isRosbag2Folder(paths) !== null) return 'rosbag2';
-
-  return paths.length && paths.every(isMcapName) ? 'mcap' : null;
-}
-
 async function readMcapFiles(files: SourceFile[]) {
+  if (files.some((f) => f.size > IMPORT_LIMITS.fileBytes)) throw new DataImportError(MCAP_TOO_LARGE);
+
   const sorted = [...files].sort((a, b) => a.path.localeCompare(b.path));
   const read = await Promise.all(sorted.map(async (f) => ({ name: f.path.split('/').pop()!, bytes: await f.read() })));
 

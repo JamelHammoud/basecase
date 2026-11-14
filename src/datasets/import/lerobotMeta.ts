@@ -1,3 +1,4 @@
+import { plural } from '../../../electron/plural.mjs';
 import {
   isRecord,
   readJson,
@@ -67,7 +68,8 @@ function stateNames(features: Row): string[] {
 
   if (!names.length) refuse('The dataset has no observation.state.');
 
-  if (names.length > IMPORT_LIMITS.joints) refuse(`The dataset’s robot has more than ${IMPORT_LIMITS.joints} joints.`);
+  if (names.length > IMPORT_LIMITS.joints)
+    refuse(`The dataset’s robot has more than ${plural(IMPORT_LIMITS.joints, 'joint')}.`);
 
   return names.map((n) => n.slice(0, IMPORT_LIMITS.textChars));
 }

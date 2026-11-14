@@ -29,20 +29,20 @@ covers:
   - electron/cadImport/bodiesPolicy.mjs
 ---
 
-If a file shows “Couldn’t import”, or comes in at the wrong size or lying on its side, here’s what to check.
+If an import fails with “Couldn’t import”, or a part comes in at the wrong size or lying on its side, use the section below that matches what you see.
 
 ## “Couldn’t import” after picking a STEP or IGES file
 
-If you see a toast that reads “Couldn’t import ⟨file⟩”, the file is too large or too complex for the built-in converter. The converter gives up on a file after 2.5 minutes, and a detailed assembly can take that long.
+If you see a toast that reads “Couldn’t import ⟨file⟩”, the file is too large or too complex for the built-in converter. The converter stops after 2.5 minutes, and a detailed assembly can take that long.
 
 1. Make sure the file is under 200 MB.
 2. In your CAD app, export only the part or subassembly you need, so the file has fewer than 1,000 bodies.
 3. Import the smaller file again.
-4. If it still fails, export it from your CAD app as STL or 3MF and import that instead.
+4. If it still doesn’t import, export it from your CAD app as STL or 3MF and import that file instead.
 
 ## “Couldn’t import” after picking a mesh
 
-Either Basecase can’t read the file’s format, or the file is damaged.
+Basecase can’t read the file’s format, or the file is damaged.
 
 1. Make sure the file ends in `.stl`, `.3mf`, `.obj`, `.ply`, `.fbx`, `.glb`, `.gltf` or `.dae`.
 2. Open it in the app it came from and export it again as STL or 3MF.
@@ -55,7 +55,7 @@ If the toast appears as soon as you drop a file, Basecase doesn’t read that fi
 1. Make sure the file ends in one of the extensions listed above.
 2. If it’s a STEP or IGES file, open the scene in the desktop app.
 
-A `.mcap` file, or a zip or folder that holds a LeRobot dataset, comes in as tries. If Basecase can’t read one of those, the message tells you what’s wrong with it. [Import robot data as tries](/help/import-robot-data-as-tries) lists what Basecase reads.
+A `.mcap` file, or a zip or folder that holds a LeRobot dataset, comes in as tries. If Basecase can’t read one of those, the message tells you what’s wrong with it. To see what Basecase reads, go to [Import robot data as tries](/help/import-robot-data-as-tries).
 
 ## The part is far too big or too small
 
@@ -68,11 +68,11 @@ If a mesh is less than 1 mm across, Basecase assumes it’s in meters and scales
 
 ## The part lies on its side
 
-Basecase reads STL, 3MF and PLY files with Z pointing up, which is how most CAD and print apps save them. If your app saved the file with Y up, the part comes in on its side.
+Basecase reads STL, 3MF and PLY files with Z pointing up. Most CAD and print apps save files this way. If your app saved the file with Y up, the part comes in on its side.
 
 1. Select the part.
 2. Under **Rotation** in the Inspector, click **90°** under **X**.
 
 ## How to tell it worked
 
-When an import succeeds, Basecase closes the “Importing” toast and selects the new part on the canvas.
+When an import works, Basecase closes the “Importing” toast and selects the new part on the canvas.

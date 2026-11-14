@@ -1,7 +1,8 @@
+import { plural } from '../../../electron/plural.mjs';
 import { DataImportError, IMPORT_LIMITS } from './types';
 
 export const MCAP_DAMAGED = 'This MCAP file is damaged.';
-export const MCAP_TOO_MANY_JOINTS = `This MCAP file has more than ${IMPORT_LIMITS.joints} joints.`;
+export const MCAP_TOO_MANY_JOINTS = `This MCAP file has more than ${plural(IMPORT_LIMITS.joints, 'joint')}.`;
 
 const ENCAPSULATION_BYTES = 4;
 const CDR_BIG_ENDIAN = 0;

@@ -3,7 +3,7 @@ title: Import robot data as tries
 date: 2026-11-14
 collection: simulate-and-train
 type: task
-order: 5
+order: 16
 keywords:
   - lerobot
   - hugging face
@@ -72,4 +72,5 @@ If an episode goes outside your robot's joint limits on every frame, Basecase le
 - A Hugging Face dataset can be up to 1 GB and 2,000 files, and each file can be up to 256 MB. For a larger dataset, download it and import its folder.
 - Files on your computer can be up to 512 MB, and episodes up to 10 minutes.
 - Basecase opens uncompressed and zstd MCAP files, but not LZ4 ones.
+- Basecase can't always tell units apart by range. SO-101 data saved in LeRobot's −100 to 100 range reads as degrees. Degrees that all stay within 6.6 of zero read as radians. Either one replays at the wrong angles.
 - If any value in a file isn't a number, Basecase rejects the whole file.

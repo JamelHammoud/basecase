@@ -1,11 +1,11 @@
 import { MCAP_TOO_LARGE, readMcap } from './mcapRead';
+import { BAG_METADATA_FILE, isRosbag2Folder } from './sourceKind';
 import { DataImportError, IMPORT_LIMITS, type SourceData, type SourceFile, type SourceFolder } from './types';
 
 export const BAG_NOT_MCAP = 'Only bags stored as MCAP open.';
 export const BAG_METADATA = 'This bag’s metadata.yaml can’t be read.';
 export const bagMissing = (file: string) => `This bag is missing ${file}.`;
 
-const METADATA = 'metadata.yaml';
 const FILE_NAME_CHARS = 255;
 const BAG_KEY = /^rosbag2_bagfile_information:\s*$/mu;
 const STORAGE_KEY = /^\s*storage_identifier:\s*(.*)$/u;
@@ -14,19 +14,7 @@ const BLOCK_ITEM = /^\s*-\s+(.+)$/u;
 
 const unquote = (value: string) => value.trim().replace(/^(['"])(.*)\1$/u, '$2');
 
-const depth = (prefix: string) => prefix.split('/').length;
-
 const refuseMetadata = () => new DataImportError(BAG_METADATA);
-
-export function isRosbag2Folder(paths: string[]): string | null {
-  const prefixes = paths
-    .filter((path) => path === METADATA || path.endsWith(`/${METADATA}`))
-    .map((path) => path.slice(0, path.length - METADATA.length));
-
-  if (prefixes.length === 0) return null;
-
-  return prefixes.reduce((best, prefix) => (depth(prefix) < depth(best) ? prefix : best));
-}
 
 function storageOf(lines: string[]) {
   for (const line of lines) {
@@ -123,7 +111,7 @@ function bagFile(folder: SourceFolder, prefix: string, name: string) {
 
 export async function readRosbag2(folder: SourceFolder): Promise<SourceData | null> {
   const prefix = isRosbag2Folder(folder.files.map((file) => file.path));
-  const metadata = folder.files.find((file) => file.path === `${prefix}${METADATA}`);
+  const metadata = folder.files.find((file) => file.path === `${prefix}${BAG_METADATA_FILE}`);
   const text = metadata && (await bagMetadata(metadata));
 
   if (!text || prefix === null) return null;

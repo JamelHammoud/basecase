@@ -1,22 +1,12 @@
 import { plural } from '../../../electron/plural.mjs';
 import { episodePlans, type EpisodePlan } from './lerobotEpisodes';
 import { ACTION_KEY, readInfo, STATE_KEY, type LeRobotInfo } from './lerobotMeta';
-import {
-  datasetRootOf,
-  filesUnder,
-  mismatched,
-  readParquet,
-  refuse,
-  toNumber,
-  type DatasetFiles,
-  type Row,
-} from './lerobotSource';
+import { filesUnder, mismatched, readParquet, refuse, toNumber, type DatasetFiles, type Row } from './lerobotSource';
+import { isLeRobotFolder } from './sourceKind';
 import { finiteOrRefuse, IMPORT_LIMITS, type SourceData, type SourceEpisode, type SourceFolder } from './types';
 
 const TIME_KEY = 'timestamp';
 const EPISODE_KEY = 'episode_index';
-
-export const isLeRobotFolder = (paths: string[]): string | null => datasetRootOf(paths);
 
 const tooLong = (index: number) =>
   refuse(`Episode ${index} runs longer than ${plural(IMPORT_LIMITS.seconds / 60, 'minute')}.`);

@@ -11,6 +11,7 @@ import {
   type FixtureMessage,
 } from './mcapFixtures';
 import { MCAP_COMPRESSION, MCAP_NO_JOINTS, MCAP_TOO_LARGE, MCAP_TOO_LONG, readMcap } from './mcapRead';
+import { readSource } from './readSource';
 import { encodeCompressedImage, encodeJointState, MCAP_DAMAGED } from './ros2Cdr';
 import { DataImportError, IMPORT_LIMITS } from './types';
 
@@ -169,5 +170,18 @@ describe('readMcap', () => {
     Object.defineProperty(bytes, 'byteLength', { value: IMPORT_LIMITS.fileBytes + 1 });
 
     await expect(read(bytes)).rejects.toThrow(MCAP_TOO_LARGE);
+  });
+
+  it('refuses a picked .mcap over the size cap before reading any file', async () => {
+    const small = { size: 8, arrayBuffer: vi.fn() } as unknown as Blob;
+    const huge = { size: IMPORT_LIMITS.fileBytes + 1, arrayBuffer: vi.fn() } as unknown as Blob;
+    const files = [
+      { path: 'a.mcap', blob: small },
+      { path: 'b.mcap', blob: huge },
+    ];
+
+    await expect(readSource({ kind: 'files', name: 'arm', files })).rejects.toThrow(MCAP_TOO_LARGE);
+    expect(small.arrayBuffer).not.toHaveBeenCalled();
+    expect(huge.arrayBuffer).not.toHaveBeenCalled();
   });
 });

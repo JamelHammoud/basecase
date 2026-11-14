@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ARM_JOINTS, armJointStates, armPose, writeMcap } from './mcapFixtures';
-import { BAG_METADATA, BAG_NOT_MCAP, bagMissing, isRosbag2Folder, readRosbag2 } from './rosbag2';
+import { BAG_METADATA, BAG_NOT_MCAP, bagMissing, readRosbag2 } from './rosbag2';
+import { isRosbag2Folder } from './sourceKind';
 import type { SourceFile, SourceFolder } from './types';
 
 const fileOf = (path: string, bytes: Uint8Array): SourceFile => ({

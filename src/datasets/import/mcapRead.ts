@@ -1,5 +1,6 @@
 import { McapStreamReader, type McapTypes, type TypedMcapRecord } from '@mcap/core';
 import { decompress } from 'fzstd';
+import { plural } from '../../../electron/plural.mjs';
 import { decodeImageStamp, decodeJointState, MCAP_DAMAGED, MCAP_TOO_MANY_JOINTS } from './ros2Cdr';
 import {
   DataImportError,
@@ -13,7 +14,7 @@ import {
 export const MCAP_TOO_LARGE = 'This MCAP file is too large.';
 export const MCAP_COMPRESSION = 'Only zstd or uncompressed MCAP files open.';
 export const MCAP_NO_JOINTS = 'This MCAP file has no joint states.';
-export const MCAP_TOO_LONG = `This MCAP file is longer than ${IMPORT_LIMITS.seconds / 60} minutes.`;
+export const MCAP_TOO_LONG = `This MCAP file is longer than ${plural(IMPORT_LIMITS.seconds / 60, 'minute')}.`;
 
 export const MCAP_GRID_HZ = 50;
 

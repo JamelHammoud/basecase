@@ -1,10 +1,9 @@
 import { parquetMetadata, parquetReadObjects, parquetSchema } from 'hyparquet';
+import { INFO_FILE } from './sourceKind';
 import { DataImportError, IMPORT_LIMITS, type SourceFile } from './types';
 
 export type DatasetFiles = Map<string, SourceFile>;
 export type Row = Record<string, unknown>;
-
-const INFO_FILE = 'meta/info.json';
 
 export const refuse = (message: string): never => {
   throw new DataImportError(message);
@@ -12,18 +11,6 @@ export const refuse = (message: string): never => {
 
 export const unreadable = (path: string) => refuse(`The dataset’s ${path} couldn’t be read.`);
 export const mismatched = (path: string) => refuse(`The dataset’s ${path} doesn’t match its metadata.`);
-
-const depthOf = (path: string) => path.split('/').length;
-
-const rootOf = (path: string) => path.slice(0, -INFO_FILE.length).replace(/\/$/, '');
-
-const isInfoFile = (path: string) => path === INFO_FILE || path.endsWith(`/${INFO_FILE}`);
-
-export function datasetRootOf(paths: string[]): string | null {
-  const infos = paths.filter(isInfoFile).sort((a, b) => depthOf(a) - depthOf(b) || a.localeCompare(b));
-
-  return infos.length ? rootOf(infos[0]) : null;
-}
 
 export function filesUnder(files: SourceFile[], root: string): DatasetFiles {
   const prefix = root ? `${root}/` : '';

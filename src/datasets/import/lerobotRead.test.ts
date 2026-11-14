@@ -4,7 +4,8 @@ import { columnStats, DATASET_FPS } from '../episodes';
 import { lerobotFiles } from '../lerobot';
 import type { DatasetEpisode, DatasetSpec } from '../lerobotRows';
 import { lerobotV3Files } from '../lerobotV3';
-import { isLeRobotFolder, readLeRobot } from './lerobotRead';
+import { readLeRobot } from './lerobotRead';
+import { isLeRobotFolder } from './sourceKind';
 import { DataImportError, IMPORT_LIMITS, type SourceFolder } from './types';
 
 type Files = Record<string, Uint8Array>;

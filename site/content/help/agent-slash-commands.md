@@ -22,13 +22,14 @@ related:
 covers:
   - src/agent/slashCommands.ts
   - src/components/agent/useSlashMenu.ts
+  - src/components/agent/CommandList.tsx
   - src/workspace/slashPaletteCommands.tsx
   - electron/cad-agent-prompt.mjs
 ---
 
 The six commands you can start a message with to give the agent a job other than designing.
 
-Type / at the start of a message to list them, then press Enter or Tab to pick one and add what you want after it. They're also under **Commands** in the composer's **+** menu, and in ⌘K by their names.
+Type / at the start of a message to list them, each with its name, then press Enter or Tab to pick one and add what you want after it. They're also under **Commands** in the composer's **+** menu, and in ⌘K by their names.
 
 | Command | Name | What the agent does |
 |---|---|---|

@@ -90,3 +90,5 @@ A fall hits a leg servo far harder than walking does. **Falls** tips the robot o
 - **A higher voltage,** inside the servo's range. Torque is read at your supply voltage, so a higher one can add torque.
 
 **Fix**, on a failing line, hands the problem to the agent to solve.
+
+For an arm, [Size an arm from the points it must reach](/help/size-an-arm-to-its-targets) picks each joint's servo against these limits, with the payload at the wrist. Servo torque grades that arm once it has joints.

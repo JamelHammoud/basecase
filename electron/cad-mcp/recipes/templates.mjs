@@ -12,6 +12,8 @@ const r2 = (v) => {
   return Object.is(x, -0) ? 0 : x;
 };
 
+const toZUp = (v) => [v.x, v.y, v.z].map(r2);
+
 const rotXYZ = ([x, y, z]) =>
   new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x * DEG, y * DEG, z * DEG, 'XYZ'));
 const frame = (pos, rot = [0, 0, 0]) => rotXYZ(rot).setPosition(...pos);
@@ -68,10 +70,14 @@ function servoChain({ prefix, label, start, holder, links, tip, joints }) {
   return { parts, servos, joints: specs };
 }
 
-function finish({ parts, servos, joints }) {
+function finish({ parts, servos, joints }, catalog = []) {
   return {
     parts: parts.map((p) => ({ ...p, ...poseOf(p.frame) })),
-    servos: servos.map((s) => ({ ...s, catalog: SERVO_KEY, ...poseOf(s.frame.clone().multiply(SERVO_FROM_MESH)) })),
+    servos: servos.map((s, i) => ({
+      ...s,
+      catalog: catalog[i] ?? SERVO_KEY,
+      ...poseOf(s.frame.clone().multiply(SERVO_FROM_MESH)),
+    })),
     joints: joints.map(({ servo, parent, child, ...j }) => ({
       ...j,
       parent: [parent, servo],
@@ -83,17 +89,29 @@ function finish({ parts, servos, joints }) {
 
 export const CATALOG_HORN = new THREE.Vector3(-12.5, 0, 18.9);
 
-export function armTemplate() {
-  const start = frame([0, 0, 47.4], [0, 0, -90]);
+const ARM_LINKS = [80, 116, 116];
+
+export const ARM_MIN_LINK = 75;
+export const ARM_SHOULDER_Z = 47.4;
+export const ARM_TOOL = new THREE.Vector3(36, 0, -8);
+
+const riserCode = (height) =>
+  `${INC}b = _rcp_cradle_box(STS3215, 3, 0.25);\ntranslate([b[0] + 54, 0, ${r2(-ARM_SHOULDER_Z - height)}]) printed_block([120, 90, ${r2(height)}], r = 6, $ports = false);`;
+
+export function armTemplate({ links = ARM_LINKS, baseHeight = 0, base = [0, 0, 0], yaw = 0, servos = [] } = {}) {
+  const start = frame([0, 0, 0], [0, 0, yaw]).multiply(frame([0, 0, ARM_SHOULDER_Z + baseHeight], [0, 0, -90]));
+
+  start.premultiply(new THREE.Matrix4().makeTranslation(...base));
+
   const chain = servoChain({
     prefix: '',
     label: '',
     start,
     holder: 'arm-base',
     links: [
-      { id: 'shoulder-bracket', name: 'Shoulder Bracket', length: 80, twist: 90 },
-      { id: 'upper-arm', name: 'Upper Arm', length: 116, twist: 0 },
-      { id: 'forearm', name: 'Forearm', length: 116, twist: 0 },
+      { id: 'shoulder-bracket', name: 'Shoulder Bracket', length: links[0], twist: 90 },
+      { id: 'upper-arm', name: 'Upper Arm', length: links[1], twist: 0 },
+      { id: 'forearm', name: 'Forearm', length: links[2], twist: 0 },
     ],
     tip: { id: 'wrist-flange', name: 'Wrist Flange', code: 'servo_u_link(reach = 28, mount = true);' },
     joints: [
@@ -103,16 +121,21 @@ export function armTemplate() {
       { id: 'wrist_pitch', name: 'Wrist Pitch', range: [-110, 110] },
     ],
   });
+  const riser =
+    baseHeight > 0 ? [{ id: 'arm-riser', name: 'Riser', code: riserCode(baseHeight), frame: start.clone() }] : [];
 
-  chain.parts.unshift({ id: 'arm-base', name: 'Arm Base', code: `${INC}servo_base();`, frame: start.clone() });
+  chain.parts.unshift(
+    { id: 'arm-base', name: 'Arm Base', code: `${INC}servo_base();`, frame: start.clone() },
+    ...riser,
+  );
 
-  return finish(chain);
+  const wrist = chain.servos[chain.servos.length - 1].frame;
+
+  return { ...finish(chain, servos), tool: toZUp(ARM_TOOL.clone().applyMatrix4(wrist)) };
 }
 
 const ARM_MASS_G = 900;
 const BIPED_MASS_G = 1600;
-
-const toZUp = (v) => [v.x, v.y, v.z].map(r2);
 
 export function templateSkeleton(template, { limb, massG }) {
   const servos = new Map(template.servos.map((s) => [s.id, s]));
@@ -140,7 +163,7 @@ export function templateSkeleton(template, { limb, massG }) {
   };
 }
 
-export const armSkeleton = () => templateSkeleton(armTemplate(), { limb: 'arm', massG: ARM_MASS_G });
+export const armSkeleton = (options) => templateSkeleton(armTemplate(options), { limb: 'arm', massG: ARM_MASS_G });
 
 const HIP_X = 62;
 const HIP_Z = 301.8;

@@ -62,7 +62,7 @@ Below 29 passes, nothing is saved. The count turns red, with the start, middle a
 
 ## Which tries it learns from
 
-Only passed tries recorded on the robot as it is now count, as in [Export a LeRobot dataset](/help/export-a-lerobot-dataset). Tries recorded before Train from Tries arrived are left out too. When fewer than five count, a toast says "These tries are from an earlier design. Try It again to record new ones."
+Only passed tries recorded on the robot as it is now count, as in [Export a LeRobot dataset](/help/export-a-lerobot-dataset). Tries recorded before Train from Tries arrived are left out too, and so are tries from your real robot. When fewer than five count, a toast says "These tries are from an earlier design. Try It again to record new ones."
 
 Tries that **Multiply** made from a passed try count too, so one try you drove can be enough. See [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 

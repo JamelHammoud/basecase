@@ -12,7 +12,7 @@ covers:
 
 Turn a mesh you imported, like an owl or a droid body, into printed shells around a jointed robot, cut so every joint still moves.
 
-1. Insert the robot (File ▸ Import Robot, or a preset from the Robots view) and import the mesh (File ▸ Import, or drop the file on the canvas).
+1. Insert the robot (File ▸ Import Robot, or a preset from Parts ▸ Robots) and import the mesh (File ▸ Import, or drop the file on the canvas).
 2. Click the robot to select it, then Shift-click the mesh.
 3. Press ⌘K and choose **Wrap Robot**, or right-click the selection and choose **Wrap Robot**.
 

@@ -51,7 +51,7 @@ The Case's contract judges every variation, and only passes are kept. Multiply a
 
 ## Limits
 
-Tries recorded before Multiply carry no commands, so their menu has no **Multiply**. Record a new try.
+Tries recorded before Multiply carry no commands, so their menu has no **Multiply**. Record a new try. A try from your real robot has no **Multiply** either.
 
 An object the Case marks movable never shifts, so it goes where the Case's code put it. An arm target nearest it stays where it was.
 

@@ -47,7 +47,7 @@ export function useFilmstrip(record: TryRecord, model: SimModel | null, parts: S
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!model) return;
+    if (!model || record.real) return;
 
     let live = true;
     const boxes = filmBoxes(parts, world);

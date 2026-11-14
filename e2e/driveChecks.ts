@@ -7,12 +7,14 @@ import { robotFacts } from '../src/cases/robotFit';
 import { DEMO_CONTROL_DT } from '../src/datasets/demos';
 import { obsSize, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from '../src/sim/policy';
 import type { ReferenceCommand } from '../src/cases/schema';
+import type { FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
 import { solveIK } from '../src/utils/kinematicsIk';
 import type { FakeHub } from './fakeHub';
 import type { SimState, Studio } from './driveStudio';
-import { shown } from './harness';
+import { partCount, shown } from './harness';
 
 export async function expectDataset(files: Record<string, Buffer>) {
   const paths = Object.keys(files);
@@ -170,4 +172,15 @@ export async function passedDatasetFiles(page: Page) {
   await expect.poll(triesPassed).toBe(true);
 
   return datasetFiles(page);
+}
+
+export async function loadFixtureRobot(page: Page, id: string | FixtureRobot) {
+  const robot = typeof id === 'string' ? fixtureRobots().find((r) => r.id === id)! : id;
+
+  await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
+    name: robot.id,
+    parts: robot.parts,
+    project: { ...DEFAULT_PROJECT, joints: robot.joints },
+  });
+  await expect.poll(() => partCount(page)).toBe(robot.parts.length);
 }

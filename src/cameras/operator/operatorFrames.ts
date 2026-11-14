@@ -1,4 +1,7 @@
-import type { PoseRequest } from './poseProtocol';
+export interface FrameMessage {
+  type: 'frame';
+  bitmap: ImageBitmap;
+}
 
 type TrackProcessor = new (init: { track: MediaStreamTrack }) => { readable: ReadableStream<VideoFrame> };
 
@@ -16,7 +19,7 @@ function videoFrames(stream: MediaStream, worker: Worker): FrameSource {
   const send = (bitmap: ImageBitmap) => {
     if (stopped) return bitmap.close();
 
-    worker.postMessage({ type: 'frame', bitmap } satisfies PoseRequest, [bitmap]);
+    worker.postMessage({ type: 'frame', bitmap } satisfies FrameMessage, [bitmap]);
   };
   const onFrame = () => {
     if (stopped) return;

@@ -390,9 +390,9 @@ describe('Operate zero and direction', () => {
   it('finds a reversed elbow and a 12° shoulder horn from the camera in Calibrate Servos', async () => {
     const { page } = app;
 
-    await page.evaluate((h) => Object.assign((window as unknown as StudioWindow).__fakeRobotLink.horns, h), horns);
     await loadRecord(ARM);
     await climbToTest();
+    await page.evaluate((h) => Object.assign((window as unknown as StudioWindow).__fakeRobotLink.horns, h), horns);
     await expect.poll(() => button('Calibrate Servos').isEnabled()).toBe(true);
     await page.keyboard.press('ControlOrMeta+k');
     await page.getByLabel('Search commands').fill('Calibrate Servos');

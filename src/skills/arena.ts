@@ -61,6 +61,7 @@ function conditionsFor(env: Environment): string[] {
     `Friction ${times(held.friction)}`,
     `Link masses ${times(held.mass)}`,
     `Servo strength ${times(held.strength)}`,
+    ...(held.servos ? ['Each servo drawn from its calibrated spread'] : []),
     `Start joints within ±${held.jointNoiseDeg}°`,
     `Heading within ±${held.baseYawDeg}°, start position within ±${held.baseOffsetMm} mm`,
     `Servo delay ${held.latencyMs[0]} to ${held.latencyMs[1]} ms, and ${late.latencyMs[0]} to ${late.latencyMs[1]} ms in the delay runs`,

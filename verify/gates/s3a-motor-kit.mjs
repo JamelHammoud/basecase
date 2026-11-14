@@ -5,7 +5,7 @@ import { vitestCanary } from '../lib/canary.mjs';
 import { fail, pass, ROOT, shCheck, vitestCheck } from '../lib/gate.mjs';
 
 const FROZEN = {
-  'src/skills/arena.ts': '4dea77bd85cdc2aaa45497ce8609f3bec1297244e954b574c63b294b040d55f9',
+  'src/skills/arena.ts': '210392f8d438761dc1e02e9b7599ab9f6019550d569f4e66d820e4ff7951bd25',
   'src/skills/arenaWorld.ts': '44583601dbbf7f9f1053da3b7777ae1c6311de7ff27cecf1dd2aca6c4cb31b7a',
   'src/skills/arenaStats.ts': '483b8139b520fcb4aa1839f397739f746190a7f0bb910f46b7bcb5fd4a7f9aff',
   'src/skills/arenaSignals.ts': '4c8e0213acef95405bd4f20a807bd5e9f763441cf4e819a2ee2b7c83f5c28107',

@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { calibratedInput } from '../../src/reality/calibratedInput';
-import { SERVO_POPULATIONS } from '../../src/reality/servoPopulations';
+import type { ServoPopulation } from '../../src/reality/population';
 import { fixtureMeasures, fixtureTriangles } from '../../src/sim/fixtures/parts';
 import { withServos } from '../../src/sim/fixtures/servoLegs';
 import { buildMjcf } from '../../src/sim/mjcf';
@@ -23,10 +23,11 @@ export const quadInput = (): MjcfInput => ({
   partTriangles: fixtureTriangles(quad.parts),
 });
 
-export const populationQuad = (): SimModel => buildMjcf(calibratedInput(quadInput(), {}, SERVO_POPULATIONS));
+export const populationQuad = (population: ServoPopulation): SimModel =>
+  buildMjcf(calibratedInput(quadInput(), {}, [population]));
 
-export function uniformQuad(): SimModel {
-  const model = populationQuad();
+export function uniformQuad(population: ServoPopulation): SimModel {
+  const model = populationQuad(population);
 
   delete model.servoSpreads;
 

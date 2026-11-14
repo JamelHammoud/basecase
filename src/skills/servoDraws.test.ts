@@ -1,7 +1,7 @@
 import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { calibratedInput } from '../reality/calibratedInput';
-import { SERVO_POPULATIONS } from '../reality/servoPopulations';
+import { FIXTURE_POPULATIONS } from '../reality/population.fixtures';
 import { fixtureMeasures, fixtureTriangles, type FixtureRobot } from '../sim/fixtures/parts';
 import { withServos } from '../sim/fixtures/servoLegs';
 import { buildMjcf } from '../sim/mjcf';
@@ -29,7 +29,7 @@ function inputOf(robot: FixtureRobot) {
 }
 
 const presetModel = buildMjcf(inputOf(quad));
-const medianModel = buildMjcf(calibratedInput(inputOf(quad), {}, SERVO_POPULATIONS));
+const medianModel = buildMjcf(calibratedInput(inputOf(quad), {}, FIXTURE_POPULATIONS));
 const joints = medianModel.joints.map((j) => j.id);
 
 const oldStand = (): Environment => ({

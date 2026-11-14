@@ -37,8 +37,6 @@ Arena tries the skill 32 times in each of three variants, on MuJoCo, judged by t
 - **Half the timestep.** The physics steps twice as finely, so a skill that only works at one step size fails.
 - **Servo delays.** Each servo answers late by a random delay of up to 40 ms.
 
-A joint driven by an STS3215 C001 or XL330 draws its own servo instead, in every variant. Its gain, damping, inertia, friction, torque limit and delay come from how 24 emulated units of that servo differ. The servo strength and delay ranges above still apply on top. Once you calibrate the joint, it runs on its own fit and draws nothing.
-
 Where a skill was trained on wider ranges, Arena uses those instead. It never uses narrower ones, so no training setup can make Arena easier.
 
 ## The bar
@@ -67,7 +65,6 @@ A skill is tied to the design it passed on. For Motor Kit skills, **Recheck** ru
 |---|---|
 | A color or a name | Nothing; the skill stays ready |
 | A mass, a size or a joint's range | The row shows **Recheck** |
-| A servo calibrated or rolled back | The row shows **Recheck** |
 | A joint added or removed, or its type or axis changed | The row shows **Train**: the skill must be trained again |
 
 A skill moved to another design starts its training from the old one, but never carries its Arena result with it. The same holds for a skill you [install from Hugging Face](/help/install-a-skill-from-hugging-face): Arena judges it again on your robot.

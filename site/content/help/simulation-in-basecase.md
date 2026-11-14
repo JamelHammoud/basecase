@@ -44,8 +44,6 @@ When the robot does something wrong, fix the design. The model follows on the ne
 
 A joint driven by a catalog servo with a published model moves the way a bench test of that servo model says it does. The STS3215 is modeled at 7.4 V and the XL330 at 5 V. [Explore](/help/explore-servo-versions-on-a-case) models each servo at the supply voltage it tries instead. Each model includes the servo's gain, its delay, back-EMF damping and friction that grows with load.
 
-An STS3215 C001 or XL330 joint you haven't calibrated runs on the median of 24 emulated units of that servo. Their median delay is about 2.5 times the catalog model's. Training varies each such joint's gain by how those units differ. [Arena](/help/arena) varies its gain, damping, inertia, friction, torque limit and delay.
-
 Any other joint gets an estimated servo. Its torque comes from the servo's stall torque, or from the weight the joint holds when it has no servo. **Build** ▸ **Checks** names these joints under **Torque estimates**, and every servo not yet **Measured** under **Servo models**.
 
 Calibrating a connected robot replaces each Feetech or Dynamixel servo's model, published or estimated, with one fitted to it. It marks the joint **Measured** in the Pose tab. Steps are in [Calibrate an emulated robot](/help/calibrate-an-emulated-robot).

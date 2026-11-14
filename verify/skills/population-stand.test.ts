@@ -7,6 +7,7 @@ import type { Skill } from '../../src/skills/artifacts';
 import { kitEnvironment } from '../../src/skills/kitEnvironment';
 import { trainKitEntry } from '../../src/skills/motorKit';
 import type { SimModel } from '../../src/sim/mjcfTypes';
+import { calibratedUnits, twinPopulation } from '../twin/population';
 import { freshSeed } from '../zoo/rng';
 import { forgeRunner } from './forge';
 import { skillStore, writeJson } from './plans';
@@ -55,7 +56,8 @@ const rate = (rows: Row[], skill: string) => {
 
 describe('Stand trained against a servo population', () => {
   it('passes Arena on 8 held-out hidden twins, at a rate no worse than Stand trained on uniform ranges', async () => {
-    const population = populationQuad();
+    const servos = twinPopulation(await calibratedUnits(mj, freshSeed(), 'sts3215'));
+    const population = populationQuad(servos);
     const [first] = heldOutTwins(freshSeed()).map((unit) => twinQuad(unit));
     const firstEnvironment = kitEnvironment(first, 'stand');
     const limp = await runArena({
@@ -71,7 +73,7 @@ describe('Stand trained against a servo population', () => {
 
     const skills = {
       population: await trainStand('population', population),
-      uniform: await trainStand('uniform', uniformQuad()),
+      uniform: await trainStand('uniform', uniformQuad(servos)),
     };
     const rows: Row[] = [];
 

@@ -41,7 +41,7 @@ MuJoCo is the physics engine robotics labs use to test robots before they build 
 
 A failure in Engineer, Simulate or Train sends you back to Design. Say a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg. The **Servo torque** check fails in the **Build** tab, and the fix is a stronger servo in Design.
 
-Data from a running robot loops back the other way. Calibrating a robot finds each joint's zero and direction from a camera. Then it fits each servo's model from an 18-second bench run, so the simulation moves the way the servo does. Training then runs on that fit. An STS3215 C001 or XL330 you haven't calibrated runs on the median of 24 emulated units, and training varies its gain by how they differ. A real wheeled or legged robot can also [try a Case](/help/try-a-case-on-your-real-robot) on the Case printed as a floor mat, judged from a camera by the same contract.
+Data from a running robot loops back the other way. Calibrating a robot finds each joint's zero and direction from a camera. Then it fits each servo's model from an 18-second bench run, so the simulation moves the way the servo does. Training then runs on that fit. A real wheeled or legged robot can also [try a Case](/help/try-a-case-on-your-real-robot) on the Case printed as a floor mat, judged from a camera by the same contract.
 
 ## What works today
 

@@ -18,7 +18,7 @@ export default {
       'src/skills/environment.test.ts',
     ]),
     vitestCheck(
-      '24 fresh hidden units per family: a population from 16 holds at least 7 of the other 8 in its 90% band, and the bundled median replays all 24 closer than the preset',
+      '24 fresh hidden units per family: a population from 16 holds at least 7 of the other 8 in its 90% band, and the median of all 24 replays 24 other fresh units closer than the preset',
       'verify/twin/population.test.ts',
     ),
   ],

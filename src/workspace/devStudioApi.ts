@@ -180,6 +180,7 @@ function robotGhostState(viewport: Viewport3DHandle | null) {
 }
 
 interface DevRecord {
+  id?: string;
   name?: string;
   parts: ScenePart[];
   project?: ProjectSettings;
@@ -266,7 +267,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     posing: () => devRef.current.posing,
     load: (record: DevRecord) =>
       devRef.current.load({
-        sceneId: newSceneId(),
+        sceneId: record.id ?? newSceneId(),
         sceneName: record.name ?? 'Untitled',
         globalGoal: '',
         parts: record.parts,

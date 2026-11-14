@@ -11,7 +11,9 @@ import type { PoseReply } from './agentPose';
 import { TOOL_IMAGE_SIDE } from './agentPoseShared';
 import { errorMessage } from '../utils/errorMessage';
 import { duration, runClock } from '../utils/duration';
+import { lengthLabel, signedLengthLabel } from '../utils/size';
 import { weight } from '../utils/weight';
+import { torque } from '../utils/torque';
 import { plural } from '../../electron/plural.mjs';
 import { percent } from '../../electron/percent.mjs';
 
@@ -88,15 +90,15 @@ function robotLine(r: SimRun['stats']['robots'][number], model: SimRun['model'],
 
   if (!robot.floating) return `${robot.name}: base welded to the floor (no leg joints).`;
 
-  return `${robot.name}: ${r.fellAt !== null ? `FELL at ${runClock(r.fellAt)}` : `stayed up for ${duration(seconds)}`}; tilt ${Math.round(r.tilt)}°, height change ${Math.round(r.height * 1000)} mm, moved ${Math.round(r.travelled * 1000)} mm (${Math.round(r.forward * 1000)} mm forward).`;
+  return `${robot.name}: ${r.fellAt !== null ? `FELL at ${runClock(r.fellAt)}` : `stayed up for ${duration(seconds)}`}; tilt ${Math.round(r.tilt)}°, height change ${signedLengthLabel(r.height * 1000)}, moved ${lengthLabel(r.travelled * 1000)} (${signedLengthLabel(r.forward * 1000)} forward).`;
 }
 
 function effortLine(j: SimRun['stats']['joints'][number], model: SimRun['model'], rig: Rig): string {
   const sj = model.joints.find((x) => x.id === j.id);
   const name = rig.byId.get(j.id)?.name ?? j.id;
-  const unit = sj?.type === 'prismatic' ? 'N' : 'N·m';
+  const limit = sj?.type === 'prismatic' ? `${sj.effort.toFixed(2)} N` : sj && torque(sj.effort);
 
-  return `- ${j.id} (${prettyJointName(name)}): ${percent(Math.min(j.peak, 1))} of ${sj ? sj.effort.toFixed(2) : '?'} ${unit} (${sj?.effortSource ?? '?'})${j.saturatedS > 0.02 ? `, ${duration(j.saturatedS)} at the limit` : ''}`;
+  return `- ${j.id} (${prettyJointName(name)}): ${percent(Math.min(j.peak, 1))} of ${limit ?? '?'} (${sj?.effortSource ?? '?'})${j.saturatedS > 0.02 ? `, ${duration(j.saturatedS)} at the limit` : ''}`;
 }
 
 export function simReport(run: SimRun, rig: Rig, seconds: number): string {
@@ -242,7 +244,7 @@ function evalSummary(e: PolicyRecord['eval']): string {
 
   if (e.fellAt !== null) return `; fell at ${runClock(e.fellAt)} in a clean run`;
 
-  return `; stayed up ${duration(e.seconds)} in a clean run, ${Math.round(e.forward * 1000)} mm forward`;
+  return `; stayed up ${duration(e.seconds)} in a clean run, ${signedLengthLabel(e.forward * 1000)} forward`;
 }
 
 export function trainingStatusText(ctx: SimContext): string {

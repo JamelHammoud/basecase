@@ -1,4 +1,5 @@
 import { toMj } from '../sim/mjcfFrames';
+import { lengthLabel } from '../utils/size';
 import type { RobotPoseState } from '../types/robotics';
 import {
   bodyCorners,
@@ -27,6 +28,7 @@ import {
 import { seededRandom } from '../utils/seededRandom';
 import { HOLD_LIMIT, holdTorque } from '../utils/holdingTorque';
 import { percent } from '../../electron/percent.mjs';
+import { torque as torqueText } from '../utils/torque';
 
 export type Basis = 'exact' | 'estimate' | 'sampled';
 
@@ -65,7 +67,6 @@ const REFINED = 6;
 const GRIP_CLEARANCE_MM = 2;
 const CROUCH_SLOP = 0.002;
 
-const nm = (v: number) => v.toFixed(2);
 const mm = (metres: number) => Math.round(metres * 1000);
 
 function jointByName(kin: Kin, id: string): JointInfo {
@@ -156,14 +157,14 @@ function holdingVerdict(kin: Kin, worst: ReturnType<typeof worstJoint>, what: st
   const common = { id: 'holding-torque' as const, joint: joint.id, ratio };
 
   const basis = kin.robot.floating ? 'estimate' : 'exact';
-  const share = `${percent(ratio)} of its servo’s ${nm(joint.effort)} N·m`;
+  const share = `${percent(ratio)} of its servo’s ${torqueText(joint.effort)}`;
 
   if (ratio > HOLD_LIMIT)
     return {
       ...common,
       passed: false,
       basis,
-      message: `Too weak to ${what}: ${joint.id} needs ${nm(torque)} N·m, ${share}. A servo holds for long only up to ${percent(HOLD_LIMIT)}.`,
+      message: `Too weak to ${what}: ${joint.id} needs ${torqueText(torque)}, ${share}. A servo holds for long only up to ${percent(HOLD_LIMIT)}.`,
     };
 
   return {
@@ -212,7 +213,7 @@ export function supportCheck(kin: Kin): FeasibilityCheck {
       passed: false,
       basis: 'exact',
       marginMm,
-      message: `It tips over: its center of mass is ${-marginMm} mm outside its feet.`,
+      message: `It tips over: its center of mass is ${lengthLabel(-margin * 1000)} outside its feet.`,
     };
 
   return {
@@ -220,7 +221,7 @@ export function supportCheck(kin: Kin): FeasibilityCheck {
     passed: true,
     basis: 'exact',
     marginMm,
-    message: `Balanced: its center of mass sits ${marginMm} mm inside its feet.`,
+    message: `Balanced: its center of mass sits ${lengthLabel(margin * 1000)} inside its feet.`,
   };
 }
 
@@ -272,7 +273,7 @@ export function reachCheck(kin: Kin, reach: ReachRequirement): FeasibilityCheck 
       id: 'reach',
       passed: false,
       basis: 'exact',
-      message: `Out of reach: the target is ${mm(fromBase)} mm from the first joint, and the arm reaches at most ${mm(bound)} mm.`,
+      message: `Out of reach: the target is ${lengthLabel(fromBase * 1000)} from the first joint, and the arm reaches at most ${lengthLabel(bound * 1000)}.`,
     };
 
   const gap = Math.min(
@@ -289,7 +290,7 @@ export function reachCheck(kin: Kin, reach: ReachRequirement): FeasibilityCheck 
       id: 'reach',
       passed: false,
       basis: 'sampled',
-      message: `Out of reach within its joint ranges: the closest pose found stops ${mm(gap)} mm short.`,
+      message: `Out of reach within its joint ranges: the closest pose found stops ${lengthLabel(gap * 1000)} short.`,
     };
 
   return { id: 'reach', passed: true, basis: 'sampled', message: 'Reaches the target within its joint ranges.' };
@@ -309,13 +310,13 @@ export function gripCheck(kin: Kin, grip: GripRequirement): FeasibilityCheck {
       id: 'grip',
       passed: false,
       basis: 'exact',
-      message: `The gripper opens ${mm(opening)} mm, and a ${grip.objectMm} mm object needs ${mm(needed)} mm.`,
+      message: `The gripper opens ${lengthLabel(opening * 1000)}, and a ${grip.objectMm} mm object needs ${lengthLabel(needed * 1000)}.`,
     };
 
   return {
     id: 'grip',
     passed: true,
     basis: 'exact',
-    message: `The gripper opens ${mm(opening)} mm, enough for ${grip.objectMm} mm.`,
+    message: `The gripper opens ${lengthLabel(opening * 1000)}, enough for ${grip.objectMm} mm.`,
   };
 }

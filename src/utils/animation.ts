@@ -9,6 +9,7 @@ import type {
 } from '../types/robotics';
 import { goalTargets, roundTo, type IkGoal, type PointOf } from './animationGoals';
 import { clampJoint, isMovable, preBend, solveIK, type IkTarget, type Rig, type V3 } from './kinematics';
+import { lengthLabel } from './size';
 
 export { goalParts, goalTargets, type BuiltAnimation, type IkGoal, type PointOf } from './animationGoals';
 export { buildGait, defaultPhases, type GaitSpec } from './gait';
@@ -208,7 +209,7 @@ export function buildKeyframes(
 
   for (const [part, e] of Object.entries(run.ikError))
     if (e > 3)
-      run.notes.push(`${part} misses its target by up to ${roundTo(e, 1)} mm (out of reach or past a joint limit)`);
+      run.notes.push(`${part} misses its target by up to ${lengthLabel(e)} (out of reach or past a joint limit)`);
 
   return { keyframes: out, notes: run.notes, ikError: run.ikError };
 }

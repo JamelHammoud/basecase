@@ -1,6 +1,6 @@
 import type { Eye } from '../sim/eyes';
 import type { PolicySpec } from '../sim/policy';
-import type { StartArea } from './environment';
+import type { Range, StartArea } from './environment';
 import type { SimModel } from '../sim/mjcfTypes';
 import { kitCommand, type TrainedEntry } from './kitEnvironment';
 import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, rootHeight } from './kitModel';
@@ -29,6 +29,7 @@ export interface KitJobOptions {
   reverse?: boolean;
   eyes?: Eye[];
   startArea?: StartArea;
+  physicsRanges?: { friction: Range; mass: Range; strength?: Range };
 }
 
 const ROBUST = Object.freeze({
@@ -87,6 +88,17 @@ function startJoints(model: SimModel, start: KitStart | null) {
   return model.joints.map((j) => start?.joints[j.name] ?? unit(j, model.initial.values[j.id] ?? 0));
 }
 
+const scheduleFields = (options: KitJobOptions) => ({
+  ...(options.delaySteps ? { delaySteps: options.delaySteps } : {}),
+  ...(options.delayRamp ? { delayRamp: options.delayRamp } : {}),
+});
+
+const worldFields = (options: KitJobOptions) => ({
+  ...(options.eyes?.length ? { eyes: options.eyes } : {}),
+  ...(options.startArea ? { startArea: options.startArea } : {}),
+  ...(options.physicsRanges ? { physicsRanges: options.physicsRanges } : {}),
+});
+
 export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOptions) {
   const robot = kitRobot(model);
   const sim = model.robots[0];
@@ -118,12 +130,10 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     reward: options.reward ?? kitReward(model, entry, { reverse: options.reverse }),
     ...(options.maxIterations ? { maxIterations: options.maxIterations } : {}),
     ...fields,
-    ...(options.delaySteps ? { delaySteps: options.delaySteps } : {}),
-    ...(options.delayRamp ? { delayRamp: options.delayRamp } : {}),
+    ...scheduleFields(options),
     ...(options.warmStart ? { warmStart: options.warmStart, logStdMin: LOG_STD_MIN } : {}),
     ...(!options.warmStart && options.warmPolicy ? { warmPolicy: options.warmPolicy, logStdMin: LOG_STD_MIN } : {}),
-    ...(options.eyes?.length ? { eyes: options.eyes } : {}),
-    ...(options.startArea ? { startArea: options.startArea } : {}),
+    ...worldFields(options),
     ...servoGains(model, { seed: options.seed, joints: robot.joints }),
   };
 }

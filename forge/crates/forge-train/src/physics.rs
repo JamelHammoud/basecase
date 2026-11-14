@@ -1,4 +1,3 @@
-use crate::eyes::EYES_REFUSAL;
 use crate::job::Backend;
 use forge_ir::Kernel;
 use forge_mujoco::{Batch, Model, StateLayout};
@@ -35,14 +34,14 @@ fn on_wgpu(kernel: Kernel) -> Engine {
 }
 
 impl Engine {
-    pub fn choose(model: &Model, backend: Backend, sees: bool) -> Self {
+    pub fn choose(model: &Model, backend: Backend, refusal: Option<&str>) -> Self {
         if backend == Backend::Mujoco {
             return Engine::Mujoco { refusal: None };
         }
 
-        if sees {
+        if let Some(why) = refusal {
             return Engine::Mujoco {
-                refusal: Some(EYES_REFUSAL.to_owned()),
+                refusal: Some(why.to_owned()),
             };
         }
 

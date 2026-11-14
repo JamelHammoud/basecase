@@ -18,6 +18,12 @@ const failed = (e: unknown): ForgeOutcome => ({
 });
 
 function answer(worker: Worker, msg: SkillsMessage, ports: SkillPorts) {
+  if (msg.type === 'progress') {
+    ports.onProgress?.(msg.share);
+
+    return true;
+  }
+
   if (msg.type === 'forge') {
     void ports
       .forge(msg.job)

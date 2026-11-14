@@ -37,6 +37,7 @@ pub mod physics;
 #[cfg(not(feature = "native"))]
 #[path = "physics_host.rs"]
 pub mod physics;
+pub mod physics_ranges;
 pub mod platform;
 pub mod pool;
 pub mod ppo;

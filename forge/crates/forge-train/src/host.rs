@@ -111,6 +111,10 @@ impl Robot {
             return Err("The browser can't cast eye rays yet".to_owned());
         }
 
+        if job.options.physics.strength.is_some() {
+            return Err("The browser can't vary servo strength".to_owned());
+        }
+
         let joints = model.joints(&job)?;
         let layout = RowMap::new(&model.fields)?.offsets();
 

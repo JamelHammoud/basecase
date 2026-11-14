@@ -1,3 +1,4 @@
+import type { SimConditions } from './conditions';
 import type { FaultKind } from './faults';
 
 export interface JointStat {
@@ -22,6 +23,7 @@ export interface SimStats {
   robots: RobotStat[];
   joints: JointStat[];
   rtf: number;
+  conditions?: SimConditions | null;
   effector?: [number, number, number];
   effectors?: Array<[number, number, number]>;
 }

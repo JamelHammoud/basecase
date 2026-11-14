@@ -7,6 +7,7 @@ import { kitEntries } from './motorKit';
 import { moveAnimations } from './moveEnvironment';
 import { arenaLine, recordFreshness, type SkillRecord } from './skillRecords';
 import type { SnapshotRef } from './snapshots';
+import type { StressResult } from './stress';
 
 export type SkillTarget = `kit:${TrainedEntry}` | `move:${string}` | `goal:${string}`;
 
@@ -21,7 +22,7 @@ export interface SkillJob {
 
 export type SkillState =
   | { kind: 'training'; share: number | null; message: string; background: boolean; snapshot: SnapshotRef | null }
-  | { kind: 'ready'; arena: string }
+  | { kind: 'ready'; arena: string; refused?: string }
   | { kind: 'recheck' }
   | { kind: 'untrained'; refused?: string };
 
@@ -33,7 +34,10 @@ export interface SkillRow {
   record: SkillRecord | null;
   state: SkillState;
   drives: boolean;
+  stress: StressResult | null;
 }
+
+type RowBase = Omit<SkillRow, 'stress'>;
 
 export const KIT_LABELS: Record<TrainedEntry, string> = {
   stand: 'Stand',
@@ -63,6 +67,7 @@ interface RowInput extends DesignInput {
   jobs: SkillJob[];
   animations?: readonly RobotAnimation[];
   refusals?: SkillRefusals;
+  stressed?: Partial<Record<string, StressResult>>;
 }
 
 function best(records: SkillRecord[], input: DesignInput) {
@@ -88,14 +93,17 @@ function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefine
 
   const evidence = readyEvidence(found);
 
-  if (evidence) return { kind: 'ready', arena: arenaLine(evidence) };
+  if (evidence)
+    return refused
+      ? { kind: 'ready', arena: arenaLine(evidence), refused }
+      : { kind: 'ready', arena: arenaLine(evidence) };
 
   if (found?.freshness === 'rerun-arena') return { kind: 'recheck' };
 
   return refused ? { kind: 'untrained', refused } : { kind: 'untrained' };
 }
 
-function kitRows(input: RowInput): SkillRow[] {
+function kitRows(input: RowInput): RowBase[] {
   const current = Object.keys(input.refusals ?? {}).length ? refusalModel(input.model) : null;
 
   const refusalFor = (target: SkillTarget) => {
@@ -127,7 +135,7 @@ function kitRows(input: RowInput): SkillRow[] {
   });
 }
 
-function moveRows(input: RowInput): SkillRow[] {
+function moveRows(input: RowInput): RowBase[] {
   return moveAnimations(input.model, input.animations ?? []).map((move) => {
     const target: SkillTarget = `move:${move.id}`;
     const found = best(
@@ -150,10 +158,10 @@ function moveRows(input: RowInput): SkillRow[] {
   });
 }
 
-function taughtRows(input: RowInput): SkillRow[] {
+function taughtRows(input: RowInput): RowBase[] {
   const taught = input.records.filter((r) => !r.kit && !r.move);
   const names = [...new Set(taught.map((r) => r.name))];
-  const known = names.map((name): SkillRow => {
+  const known = names.map((name): RowBase => {
     const target: SkillTarget = `goal:${name}`;
     const found = best(
       taught.filter((r) => r.name === name),
@@ -175,7 +183,7 @@ function taughtRows(input: RowInput): SkillRow[] {
   });
   const pending = input.jobs
     .filter((j) => j.target.startsWith('goal:') && !names.includes(j.target.slice(5)))
-    .map((job): SkillRow => ({
+    .map((job): RowBase => ({
       target: job.target,
       label: job.label,
       kit: null,
@@ -188,8 +196,14 @@ function taughtRows(input: RowInput): SkillRow[] {
   return [...known, ...pending];
 }
 
+const stressOf = (row: RowBase, input: RowInput) =>
+  row.state.kind === 'ready' && row.record ? (input.stressed?.[row.record.hash] ?? null) : null;
+
 export function skillRows(input: RowInput): SkillRow[] {
-  return [...kitRows(input), ...moveRows(input), ...taughtRows(input)];
+  return [...kitRows(input), ...moveRows(input), ...taughtRows(input)].map((row) => ({
+    ...row,
+    stress: stressOf(row, input),
+  }));
 }
 
 export const readyVelocity = (rows: SkillRow[]) =>

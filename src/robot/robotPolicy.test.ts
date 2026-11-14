@@ -28,6 +28,7 @@ const skill = (hash: string, createdAt: string, state: SkillState = READY): Skil
   kit: 'velocity-tracking',
   move: null,
   record: { hash, createdAt } as SkillRecord,
+  stress: null,
   state,
   drives: true,
 });

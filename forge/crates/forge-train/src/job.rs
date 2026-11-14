@@ -1,6 +1,7 @@
 use crate::deployed::Squash;
-use crate::eyes::{self, EyeSpec};
+use crate::eyes::{self, EyeSpec, EYES_REFUSAL};
 use crate::options::{self, TaskOptions};
+use crate::physics_ranges::STRENGTH_REFUSAL;
 use crate::start_states;
 use serde_json::Value;
 use std::fs;
@@ -311,6 +312,14 @@ pub fn parse(root: &Value) -> Result<Job, String> {
 impl Job {
     pub fn sees(&self) -> bool {
         !self.eyes.is_empty()
+    }
+
+    pub fn engine_refusal(&self) -> Option<&'static str> {
+        if self.sees() {
+            return Some(EYES_REFUSAL);
+        }
+
+        self.options.physics.strength.map(|_| STRENGTH_REFUSAL)
     }
 
     pub fn clock_width(&self) -> usize {

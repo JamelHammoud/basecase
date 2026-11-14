@@ -1,3 +1,4 @@
+use crate::physics_ranges::{self, PhysicsRanges};
 use crate::servo_gains::{self, ServoGains};
 use crate::start_states::{self, StartState};
 use forge_ir::task::Reference;
@@ -32,6 +33,7 @@ pub struct TaskOptions {
     pub reference: Option<Reference>,
     pub start_states: Vec<StartState>,
     pub servo_gains: ServoGains,
+    pub physics: PhysicsRanges,
 }
 
 impl Default for TaskOptions {
@@ -53,6 +55,7 @@ impl Default for TaskOptions {
             reference: None,
             start_states: Vec::new(),
             servo_gains: Vec::new(),
+            physics: PhysicsRanges::default(),
         }
     }
 }
@@ -230,6 +233,7 @@ pub fn parse(root: &Value) -> Result<TaskOptions, String> {
         reference: reference(root)?,
         start_states: start_states::parse(root)?,
         servo_gains: servo_gains::parse(root)?,
+        physics: physics_ranges::parse(root)?,
     })
 }
 

@@ -3,7 +3,7 @@ use crate::conditions::{Conditions, Setup};
 use crate::events::Phases;
 use crate::eye_rays::EyeRays;
 use crate::physics::Physics;
-use crate::randomize::{randomize, RANDOMIZED_FIELDS};
+use crate::randomize::{randomize, RETHREADED_FIELDS};
 use crate::rewarder::Rewarder;
 use crate::rng::Rng;
 use crate::robot::{quat_multiply, rotate_into_frame, Robot};
@@ -83,7 +83,7 @@ impl<'a> Envs<'a> {
         let mut rngs: Vec<Rng> = (0..count).map(|i| Rng::new(seed, i as u64)).collect();
 
         if randomized {
-            randomize(&mut batch, robot.nu, &robot.job.options.servo_gains, &mut rngs)?;
+            randomize(&mut batch, robot.nu, &robot.job.options, &mut rngs)?;
         }
 
         for sim in 0..count {
@@ -357,7 +357,7 @@ impl<'a> Envs<'a> {
         phases.physics += physics_seconds;
 
         if let Some(threads) = self.tuner.as_mut().and_then(|t| t.record(physics_seconds)) {
-            self.batch.rethread(threads, &RANDOMIZED_FIELDS)?;
+            self.batch.rethread(threads, &RETHREADED_FIELDS)?;
         }
 
         phases.reward += write_seconds;

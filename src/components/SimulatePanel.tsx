@@ -20,7 +20,8 @@ import type { CaseCompare } from '../workspace/useCaseCompare';
 import type { CaseExplore } from '../workspace/useCaseExplore';
 import { SimControls } from './simulate/SimControls';
 import { TrainSection, type CoachSend } from './simulate/TrainSection';
-import { coachMenuItems } from './simulate/skillMenu';
+import { coachMenuItems, stressMenuItems } from './simulate/skillMenu';
+import type { StressFinding } from '../skills/stress';
 
 interface SimulatePanelProps {
   sim: Simulation;
@@ -74,9 +75,13 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
     onDrive: () => void sim.drive.start(),
     onStop: skills.stop,
     onSnapshot: (row: SkillRow, ref: SnapshotRef) => void skills.playSnapshot(row, ref),
+    onFinding: (row: SkillRow, finding: StressFinding) => void skills.stress.replay(row, finding),
+    onTrainFindings: (row: SkillRow) => void skills.stress.train(row),
+    canTrainFindings: skills.stress.canTrain,
     onMenu: (e: React.MouseEvent, row: SkillRow) => {
       const items = [
         ...coachMenuItems(row, { coach: skills.coach, coaches: !!props.onCoach }),
+        ...stressMenuItems(row, skills.stress),
         ...publishEntries(row, props.onPublishSkill),
       ];
 

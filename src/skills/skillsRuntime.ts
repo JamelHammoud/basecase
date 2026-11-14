@@ -11,6 +11,8 @@ import type { RaceOutcome } from './race';
 import type { SkillRunner } from './skillsClient';
 import type { SkillPorts, SkillsJob } from './skillsJob';
 import { SkillCoach } from './skillsCoach';
+import { SkillStress } from './skillsStress';
+import type { StressResult } from './stress';
 import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, refusalModel, type SkillJob, type SkillRefusal, type SkillTarget } from './skillRows';
 import {
@@ -45,6 +47,7 @@ export interface RuntimeDeps {
   onRecord: (record: SkillRecord) => void;
   onChange: (jobs: SkillJob[]) => void;
   onRefused?: (target: SkillTarget, refusal: SkillRefusal | null) => void;
+  onStressed?: (result: StressResult) => void;
   snapshots?: Snapshots;
 }
 
@@ -63,6 +66,7 @@ export interface RaceReport {
 interface Run {
   target: SkillTarget;
   label: string;
+  message?: string;
   background: boolean;
   work: (forge: ForgeRunner, signal: AbortSignal) => Promise<void>;
 }
@@ -86,6 +90,7 @@ export class SkillsRuntime {
 
   private deps: RuntimeDeps;
   readonly coach: SkillCoach;
+  readonly stress: SkillStress;
 
   constructor(deps: RuntimeDeps) {
     this.deps = deps;
@@ -95,19 +100,31 @@ export class SkillsRuntime {
       startJob: (row, work) => this.startJob(row, work),
       keep: (target, record) => this.keep(target, record),
     });
+    this.stress = new SkillStress({
+      runner: deps.runner,
+      startJob: (row, work) => this.startJob(row, work),
+      keep: (target, record) => this.keep(target, record),
+      onStressed: (result) => this.deps.onStressed?.(result),
+      onRefused: (target, refusal) => this.deps.onRefused?.(target, refusal),
+    });
   }
 
   loadSkill(hash: string) {
     return this.deps.loadSkill(hash);
   }
 
-  startJob(row: { target: SkillTarget; label: string }, work: (ports: SkillPorts) => Promise<void>): string | null {
+  startJob(
+    row: { target: SkillTarget; label: string; message?: string },
+    work: (ports: SkillPorts) => Promise<void>,
+  ): string | null {
     if (this.user) return BUSY;
+
+    const onProgress = (share: number) => this.setJob(row.target, { share });
 
     this.running = this.start({
       ...row,
       background: false,
-      work: (forge, signal) => work({ ...this.ports(), forge, signal }),
+      work: (forge, signal) => work({ ...this.ports(), forge, signal, onProgress }),
     });
 
     return null;
@@ -419,7 +436,10 @@ export class SkillsRuntime {
     this.userLabel = run.label;
     this.deps.onRefused?.(run.target, null);
     this.trails.set(run.target, NO_SNAPSHOTS);
-    this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting', snapshot: null });
+
+    const message = run.message ?? 'Starting';
+
+    this.setJob(run.target, { label: run.label, background: false, share: null, message, snapshot: null });
 
     try {
       await run.work(this.forgeFor(run, controller.signal), controller.signal);

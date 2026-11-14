@@ -30,6 +30,7 @@ import { fitTestCommands, mergeCommands } from './printCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
 import { coachCommands } from './coachCommands';
+import { stressCommands } from './stressCommands';
 import { exchangeCommands } from './exchangeCommands';
 import { inputCommands } from './inputCommands';
 import { operateCommands } from './operateCommands';
@@ -323,6 +324,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),
   ...coachCommands(inputs),
+  ...stressCommands(inputs),
   ...operateCommands(inputs),
   ...inputCommands(inputs),
 ];

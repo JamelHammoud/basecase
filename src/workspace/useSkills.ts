@@ -27,6 +27,8 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { platformBridge } from '../utils/platformBridge';
 import { trainHandoff, useRoutineSkills, type HandoffJob } from './useRoutineSkills';
 import { useSkillCoach } from './useSkillCoach';
+import { useSkillStress } from './useSkillStress';
+import type { StressResult } from '../skills/stress';
 
 const BUILD_DEBOUNCE_MS = 1500;
 
@@ -42,6 +44,7 @@ interface SkillsInput {
 function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId' | 'setProject'>) {
   const [jobs, setJobs] = useState<SkillJob[]>([]);
   const [refusals, setRefusals] = useState<SkillRefusals>({});
+  const [stressed, setStressed] = useState<Record<string, StressResult>>({});
   const [platform] = useState(() => skillsPlatform({ web: IS_WEB_DEMO, workspaceId, store: platformBridge }));
   const [runtime] = useState(
     () =>
@@ -54,12 +57,13 @@ function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId'
         onRecord: (record) => setProject((p) => ({ ...p, skills: withRecord(p.skills ?? [], record) })),
         onChange: setJobs,
         onRefused: (target, refusal) => setRefusals((r) => ({ ...r, [target]: refusal ?? undefined })),
+        onStressed: (result) => setStressed((s) => ({ ...s, [result.skill]: result })),
       }),
   );
 
   useEffect(() => () => runtime.dispose(), [runtime]);
 
-  return { runtime, platform, jobs, refusals };
+  return { runtime, platform, jobs, refusals, stressed };
 }
 
 function useTabTraining(hasJoints: boolean) {
@@ -158,7 +162,7 @@ export function useSkills(input: SkillsInput) {
   const { sim, project, rig, parts } = input;
   const hasJoints = rig.joints.length > 0;
   const available = useTabTraining(hasJoints) && hasJoints;
-  const { runtime, platform, jobs, refusals } = useRuntime(input);
+  const { runtime, platform, jobs, refusals, stressed } = useRuntime(input);
   const records = project.skills ?? [];
   const facts = robotFacts(rig, parts);
   const watch =
@@ -166,7 +170,7 @@ export function useSkills(input: SkillsInput) {
   const model = useSceneModel(input, { runtime, platform, watch });
   const animations = project.animations ?? [];
   const rows: SkillRow[] = model
-    ? skillRows({ model, design: designOf(model), records, jobs, animations, refusals })
+    ? skillRows({ model, design: designOf(model), records, jobs, animations, refusals, stressed })
     : [];
   const velocityRecord = readyVelocity(rows);
   const examples = teachExamples(facts, footPoints(rig, parts).length);
@@ -204,6 +208,8 @@ export function useSkills(input: SkillsInput) {
     }
   };
 
+  const stress = useSkillStress({ runtime, sim, load, environmentOf: rowEnvironment, stopReplay: coach.stopReplay });
+
   const playSnapshot = async (row: SkillRow, ref: SnapshotRef) => {
     const policy = row.record ? await runtime.loadSnapshot(ref, row.record.hash) : null;
 
@@ -212,6 +218,8 @@ export function useSkills(input: SkillsInput) {
     coach.stopReplay();
 
     if (sim.status === 'off') await sim.start();
+
+    sim.setConditions(null);
 
     const robot = rowEnvironment(row)?.robot ?? model?.robots[0]?.key ?? '';
 
@@ -228,6 +236,7 @@ export function useSkills(input: SkillsInput) {
 
     if (sim.status === 'off') await sim.start();
 
+    sim.setConditions(null);
     sim.setController(skill.controller);
     sim.reset();
   };
@@ -254,6 +263,7 @@ export function useSkills(input: SkillsInput) {
     playSnapshot,
     stop: () => runtime.stopUser(),
     coach,
+    stress,
     routineSkills,
     trainHandoff: (job: HandoffJob) => trainHandoff({ runtime, routineSkills, project, job }),
   };

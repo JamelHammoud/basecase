@@ -82,6 +82,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'simTool',
   'sketchPath',
   'stlBase64',
+  'stressWith',
   'stubHandoffs',
   'stubTabEngine',
   'stubTrainer',

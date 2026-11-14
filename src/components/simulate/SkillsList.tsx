@@ -5,8 +5,9 @@ import type { CoachTag } from '../../skills/skillRecords';
 import type { SkillRow } from '../../skills/skillRows';
 import { snapshotRefs, type SnapshotRef } from '../../skills/snapshots';
 import { fmtMargin, trainingLine } from './format';
+import { SkillFindings, type FindingActions } from './SkillFindings';
 
-export interface SkillActions {
+export interface SkillActions extends FindingActions {
   onTrain: (row: SkillRow) => void;
   onTry: (row: SkillRow) => void;
   onDrive: () => void;
@@ -22,7 +23,8 @@ function stateLines(row: SkillRow): string[] {
   const { state } = row;
   const tag = row.record?.coach;
 
-  if (state.kind === 'ready') return tag ? [state.arena, coachedLine(tag)] : [state.arena];
+  if (state.kind === 'ready')
+    return [state.arena, ...(tag ? [coachedLine(tag)] : []), ...(state.refused ? [state.refused] : [])];
 
   if (state.kind === 'untrained') return state.refused ? [state.refused] : [];
 
@@ -136,6 +138,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
             <RowAction row={row} actions={actions} />
           </div>
           <SnapshotList row={row} actions={actions} />
+          <SkillFindings row={row} actions={actions} />
         </li>
       );
     })}

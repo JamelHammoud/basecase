@@ -6,6 +6,7 @@ import type { Rig } from '../utils/kinematics';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
 import type { FaultKind } from './faults';
+import type { SimConditions } from './conditions';
 import { buildMjcf, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
@@ -56,7 +57,7 @@ export interface Simulation {
   start: () => Promise<void>;
   play: () => void;
   pause: () => void;
-  reset: () => void;
+  reset: (initial?: RobotPoseState) => void;
   stop: () => void;
   setSpeed: (s: number) => void;
   setController: (c: Controller) => void;
@@ -67,6 +68,7 @@ export interface Simulation {
   ) => void;
   push: (robot?: string, fallDeg?: number) => void;
   setFault: (jointId: string, kind: FaultKind | null) => void;
+  setConditions: (conditions: SimConditions | null) => void;
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
@@ -397,7 +399,7 @@ export function useSimulation(props: Inputs): Simulation {
       setPlaying(true);
     },
     pause: () => send({ type: 'pause' }),
-    reset: () => send({ type: 'reset' }),
+    reset: (initial) => send(initial ? { type: 'reset', initial } : { type: 'reset' }),
     stop,
     setSpeed: (s) => {
       setSpeedState(s);
@@ -407,6 +409,7 @@ export function useSimulation(props: Inputs): Simulation {
     buildModel: (options) => buildModel({ alone: options?.alone }),
     ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
+    setConditions: (conditions) => send({ type: 'conditions', conditions }),
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,

@@ -17,6 +17,8 @@ import { stepPolicy, type PolicyState } from './policyStep';
 import { routePolicy, RouteRunner, type RouteController } from './route';
 import { readJointAngles, readJointStates } from './jointReadout';
 import { Scanner } from './scanner';
+import { holdValues } from './holdValues';
+import { LiveConditions } from './conditions';
 
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
@@ -29,7 +31,6 @@ export type Controller =
 export type { JointStat, RobotStat, SimStats } from './engineStats';
 
 const D2R = Math.PI / 180;
-const GAIN_SLOTS = 10;
 
 const jointQposOf = (type: 'revolute' | 'prismatic', v: number) => (type === 'revolute' ? v * D2R : v / 1000);
 
@@ -37,8 +38,8 @@ export class SimEngine {
   readonly model: MjModel;
   readonly data: MjData;
   private bodyIds: number[];
-  private jointQpos: number[];
-  private jointDof: number[];
+  readonly jointQpos: number[];
+  readonly jointDof: number[];
   private robots: Array<{
     key: string;
     rootQpos: number;
@@ -62,6 +63,7 @@ export class SimEngine {
   private pushes: PushForce;
   private grab: GrabForce;
   private faults: ActuatorFaults;
+  readonly conditions: LiveConditions;
   private policyState: PolicyState | null = null;
   readonly dt: number;
   readonly scanner: Scanner | null;
@@ -78,6 +80,7 @@ export class SimEngine {
     this.pushes = new PushForce(this.data);
     this.scanner = Scanner.create(mj, this.model, this.data, sim.scans);
     this.faults = new ActuatorFaults(this.model);
+    this.conditions = new LiveConditions(mj, this.model, this.data);
 
     const id = (type: number, name: string) => mj.mj_name2id(this.model, type, name);
     const [BODY, JOINT] = [mj.mjtObj.mjOBJ_BODY.value, mj.mjtObj.mjOBJ_JOINT.value];
@@ -133,6 +136,7 @@ export class SimEngine {
     this.pushes.forget();
     this.grab.forget();
     this.faults.reprime();
+    this.conditions.reprime();
     this.setController(this.controller);
   }
 
@@ -239,7 +243,7 @@ export class SimEngine {
   command(c: DriveCommand) {
     this.given.set(c.slot ?? 0, c);
     this.commandHook?.(c);
-    this.drive?.command(c, this.drive.hand ? this.holdValues() : undefined);
+    this.drive?.command(c, this.drive.hand ? holdValues(this) : undefined);
     this.arms?.command(c);
 
     if (this.policyState) this.policyState.command = [c.v[0], c.v[1], c.v[2]];
@@ -364,6 +368,7 @@ export class SimEngine {
     for (let s = 0; s < steps; s++) {
       this.applyControl();
       this.faults.apply(data.ctrl);
+      this.conditions.delay(data.ctrl);
       this.pushes.apply();
       this.grab.apply();
       mj.mj_step(model, data);
@@ -429,22 +434,10 @@ export class SimEngine {
         saturatedS: this.saturated[i],
         ...this.faultField(j.actuator),
       })),
+      conditions: this.conditions.read(),
       ...(this.drive?.hand ? { effector: this.handAt(this.drive.hand) } : {}),
       ...(this.drive?.hands ? { effectors: this.drive.hands.map((h) => this.handAt(h)) } : {}),
     };
-  }
-
-  private holdValues(): Record<string, number> {
-    const { data, model } = this;
-
-    return Object.fromEntries(
-      this.sim.joints.map((j, i) => {
-        const kp = j.actuator >= 0 ? model.actuator_gainprm[j.actuator * GAIN_SLOTS] : 0;
-        const bias = kp > 0 ? data.qfrc_bias[this.jointDof[i]] / kp : 0;
-
-        return [j.id, (data.qpos[this.jointQpos[i]] + bias) / (j.type === 'revolute' ? D2R : 0.001)];
-      }),
-    );
   }
 
   private handAt({ part, point }: DriveHand): [number, number, number] {

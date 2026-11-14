@@ -98,6 +98,7 @@ const skillRow = (createdAt: string): SkillRow => {
     kit: record.kit,
     record,
     state: { kind: 'ready', arena: '' },
+    stress: null,
     drives: false,
     move: null,
   };

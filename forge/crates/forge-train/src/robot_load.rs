@@ -130,7 +130,7 @@ impl Robot {
             layout,
             joints,
             settled,
-            engine: Engine::choose(&model, job.backend, job.sees()),
+            engine: Engine::choose(&model, job.backend, job.engine_refusal()),
             mujoco: forge_mujoco::version(),
             eye_bodies,
         };

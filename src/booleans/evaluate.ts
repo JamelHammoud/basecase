@@ -8,6 +8,7 @@ import type { CsgOutput, OperandPiece } from './csg';
 import { booleanHash } from './hash';
 import { baseOf, isBooleanPart, type BooleanPart, type BooleanResult, type Vec3 } from './parts';
 import type { ResultLookup } from './results';
+import { quaternionOf } from './rotation';
 
 const REMEMBERED = 64;
 
@@ -23,11 +24,6 @@ function remember(hash: string, result: BooleanResult | null) {
 
   if (results.size > REMEMBERED) results.delete(results.keys().next().value!);
 }
-
-const quaternionOf = (rotation: readonly number[]) =>
-  new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(...(rotation.map((d) => THREE.MathUtils.degToRad(d)) as Vec3), 'XYZ'),
-  );
 
 export function meshPiece(
   part: Pick<ScenePart, 'position' | 'rotation' | 'dimensions'>,

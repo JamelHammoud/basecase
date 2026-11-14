@@ -1,11 +1,8 @@
 import * as THREE from 'three';
 import type { BooleanFrame, PartDimensions, ScenePart } from '../types/robotics';
 import { isBooleanPart, sameVec, type BooleanPart, type Vec3 } from './parts';
-
-const quaternionOf = (rotation: readonly number[]) =>
-  new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(...(rotation.map((d) => THREE.MathUtils.degToRad(d)) as Vec3), 'XYZ'),
-  );
+import { quaternionOf } from './rotation';
+import { keepsShape, stretchOf } from './stretch';
 
 const degrees = (q: THREE.Quaternion): Vec3 =>
   new THREE.Euler()
@@ -63,15 +60,35 @@ function moveOperand(operand: ScenePart, delta: Delta): ScenePart {
   const position = local.multiply(delta.scale).applyQuaternion(delta.to.rotation).add(delta.to.position);
   const own = quaternionOf(operand.rotation);
   const rotation = delta.to.rotation.clone().multiply(inverse).multiply(own);
-  const dimensions = delta.scaled ? scaledDimensions(operand, inverse.multiply(own), delta.scale) : operand.dimensions;
+  const dimensions =
+    delta.scaled && !keepsShape(operand)
+      ? scaledDimensions(operand, inverse.multiply(own), delta.scale)
+      : operand.dimensions;
 
   return { ...operand, position: position.toArray().map(round) as Vec3, rotation: degrees(rotation), dimensions };
 }
 
-function followFrame(part: BooleanPart): BooleanPart {
-  const { frame } = part.boolean;
+const SIZE_KEYS = ['width', 'height', 'depth'] as const;
 
-  if (!frame || sameFrame(frame, part)) return part;
+function withinStretch(part: BooleanPart, frame: BooleanFrame): BooleanPart {
+  const { fixed } = stretchOf(part);
+  const held = SIZE_KEYS.filter((key, i) => fixed[i] && part.dimensions[key] !== frame.dimensions[key]);
+
+  if (held.length === 0) return part;
+
+  const kept = Object.fromEntries(held.map((key) => [key, frame.dimensions[key]]));
+
+  return { ...part, dimensions: { ...part.dimensions, ...kept } };
+}
+
+function followFrame(edited: BooleanPart): BooleanPart {
+  const { frame } = edited.boolean;
+
+  if (!frame || sameFrame(frame, edited)) return edited;
+
+  const part = withinStretch(edited, frame);
+
+  if (sameFrame(frame, part)) return part;
 
   const delta = deltaOf(frame, part);
   const operands = part.boolean.operands.map((o) => moveOperand(o, delta));

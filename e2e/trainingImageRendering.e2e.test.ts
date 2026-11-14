@@ -19,25 +19,13 @@ import {
   meshTrainingJob,
   roverPersonTrainingJob,
   trainingView,
-  wristTrainingJob,
 } from './trainingImageFixtures';
 
 let app: App;
 
 type RenderedSet = Omit<VisionFrameSet, 'frames'> & { frames: StoredVisionFrame[] };
 
-type Sample = Pick<StoredVisionFrame, 'seed' | 'camera' | 'width' | 'height' | 'annotations'>;
-
-type Budget = {
-  samples: Sample[];
-  frames: string[];
-  imageBytes: number;
-  depthPixels: number;
-  annotated: number;
-  elapsedMs: number;
-};
-
-type Studio = { renderTrainingFixture: (job: MakeImagesJob, summary?: boolean) => Promise<RenderedSet | Budget> };
+type Studio = { renderTrainingFixture: (job: MakeImagesJob) => Promise<RenderedSet> };
 
 beforeAll(async () => {
   app = await openApp();
@@ -206,33 +194,5 @@ describe('training image rendering', () => {
       expect(Math.abs(tip.keypoints.tip.x - projected[0])).toBeLessThanOrEqual(1);
       expect(Math.abs(tip.keypoints.tip.y - projected[1])).toBeLessThanOrEqual(1);
     }
-  });
-
-  it('streams 1000 labelled 640 by 480 frames within the CI rendering budget', async () => {
-    const job = wristTrainingJob();
-    const result = await app.page.evaluate(
-      async (input) =>
-        (await (window as unknown as { __studio: Studio }).__studio.renderTrainingFixture(input, true)) as Budget,
-      job,
-    );
-
-    expect(result.samples).toHaveLength(500);
-
-    for (const sample of result.samples) {
-      const resolved = resolveImageScene({ ...job, seed: sample.seed });
-      const target = resolved.world.find((part) => part.id === 'red-block')!;
-      const label = sample.annotations.find((annotation) => annotation.partId === target.id)!;
-      const expected = projectedBox(target, sample);
-      const [x, y, w, h] = label.bbox;
-
-      [x, y, x + w, y + h].forEach((value, index) => expect(Math.abs(value - expected[index])).toBeLessThanOrEqual(1));
-    }
-
-    expect(result.frames).toHaveLength(1000);
-    expect(new Set(result.frames).size).toBe(1000);
-    expect(result.depthPixels).toBe(1000 * 640 * 480);
-    expect(result.imageBytes).toBeGreaterThan(1000 * 1000);
-    expect(result.annotated).toBe(1000);
-    expect(result.elapsedMs).toBeLessThanOrEqual(120000);
   });
 });

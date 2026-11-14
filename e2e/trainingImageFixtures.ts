@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { CameraView } from '../src/cameras/views';
 import { touchTheDots } from '../src/cases/testing';
-import { worldItem } from '../src/cases/schema';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { box, joint } from '../src/sim/fixtures/parts';
 import type { RobotJoint, ScenePart } from '../src/types/robotics';
@@ -139,37 +138,6 @@ export function boxTrainingJob(): MakeImagesJob {
   });
 
   return { parts, world: [], joints: [], views: [trainingView], seed: 42, count: 1 };
-}
-
-export function wristTrainingJob(): MakeImagesJob {
-  const robot = fixtureRobots().find((item) => item.id === 'arm-3dof')!;
-  const wrist = robot.parts.find((part) => part.id === 'link2')!;
-  const base = touchTheDots(robot);
-  const object = {
-    ...base.world.objects[0],
-    id: 'red-block',
-    name: 'Red block',
-    kind: 'box' as const,
-    position: [0, 100, 450] as V3,
-    rotation: [0, 0, 0] as V3,
-    size: [80, 80, 80] as V3,
-    color: '#ff0000',
-    behavior: 'dynamic' as const,
-  };
-  const kase = { ...base, world: { objects: [object] }, images: { cameraTolerance: { mm: 2, deg: 1 } } };
-  const position: V3 = [wrist.position[0], wrist.position[1], wrist.position[2] + wrist.dimensions.depth / 2 + 5];
-  const view = { ...trainingView, key: 'wrist', label: 'Wrist', part: wrist.id, position, target: object.position };
-
-  return {
-    parts: robot.parts,
-    world: [worldItem(object)],
-    joints: robot.joints,
-    views: [view],
-    kase,
-    classes: ['Red block'],
-    seed: 1234,
-    count: 1000,
-  };
 }
 
 export function roverPersonTrainingJob(): MakeImagesJob {

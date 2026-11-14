@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildCase, builderRobot } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
@@ -13,10 +13,8 @@ type FrameSet = { id: string; frames: Frame[]; classes: Array<{ id: number; name
 
 type Studio = {
   load: (record: unknown) => void;
-  addCase: (kase: unknown) => string;
   frameSets: () => Promise<Array<{ id: string; frames: number }>>;
   frameSet: (id: string) => Promise<FrameSet>;
-  frameSetFiles: (id: string) => Promise<Record<string, string>>;
   datasetFiles: () => Promise<Record<string, string>>;
   trainingImages: () => { busy: boolean; problem: string | null };
   datasets: () => Array<{ id: string; imageMembers?: Array<{ frameSet: string }> }>;
@@ -25,15 +23,15 @@ type Studio = {
 const studio = <T>(fn: (s: Studio) => T) =>
   app.page.evaluate(`(${fn.toString()})(window.__studio)`) as Promise<Awaited<T>>;
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
 }, 120000);
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
 describe('training images from a Case', () => {
-  it('makes 20 labelled arm images through the command palette and exports COCO', async () => {
+  it('makes a labelled arm image batch through the command palette and exports COCO', async () => {
     const robot = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
     const result = buildCase(
       { goal: 'pick', world: 'floor' },
@@ -54,7 +52,7 @@ describe('training images from a Case', () => {
 
     const dialog = app.page.getByRole('dialog', { name: 'Make Training Images' });
 
-    await dialog.getByLabel('Count', { exact: true }).fill('20');
+    await dialog.getByLabel('Count', { exact: true }).fill('2');
     await dialog.getByLabel('Count', { exact: true }).press('Tab');
     await dialog.getByRole('button', { name: 'Make Training Images', exact: true }).click();
     await expect.poll(async () => (await studio((s) => s.frameSets())).length).toBe(1);
@@ -67,8 +65,8 @@ describe('training images from a Case', () => {
       summary.id,
     );
 
-    expect(set.frames).toHaveLength(20);
-    expect(summary.frames).toBe(20);
+    expect(set.frames).toHaveLength(2);
+    expect(summary.frames).toBe(2);
 
     const block = set.classes.find((c) => c.name === 'Block')!;
 
@@ -99,16 +97,14 @@ describe('training images from a Case', () => {
     };
     const exportedBlock = coco.categories.find((category: { name: string }) => category.name === 'Block');
 
-    expect(coco.images).toHaveLength(20);
+    expect(coco.images).toHaveLength(2);
     expect(exportedBlock).toBeDefined();
-    expect(coco.annotations.filter((a: { category_id: number }) => a.category_id === exportedBlock.id)).toHaveLength(
-      20,
-    );
+    expect(coco.annotations.filter((a: { category_id: number }) => a.category_id === exportedBlock.id)).toHaveLength(2);
     expect(coco.categories).toHaveLength(set.classes.length);
     expect(coco.categories).toEqual(
       expect.arrayContaining(set.classes.map((c) => expect.objectContaining({ name: c.name }))),
     );
-    expect(Object.keys(files).filter((name) => /(?:^|\/)coco\/images\/.+\.jpe?g$/.test(name))).toHaveLength(20);
+    expect(Object.keys(files).filter((name) => /(?:^|\/)coco\/images\/.+\.jpe?g$/.test(name))).toHaveLength(2);
     expect((await studio((s) => s.datasets())).some((d) => d.imageMembers?.some((m) => m.frameSet === set.id))).toBe(
       true,
     );

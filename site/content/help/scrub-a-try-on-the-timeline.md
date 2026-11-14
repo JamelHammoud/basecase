@@ -35,4 +35,4 @@ Step through a Case try frame by frame to see what each joint was asked to do, w
 
 A failed run from a Case's row in **Checks** opens here too, at the frame where it first failed. [Replay a failed run of a Case](/help/replay-a-failed-run-of-a-case) has the steps.
 
-The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open.
+The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open. A try from another scene opens from the Library, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows.

@@ -37,7 +37,7 @@ Find the friction, weight, servo strength or servo delay where a ready skill sta
 
 ![The right-click menu of a ready Stand row with Stress at the top](/help/stress-a-skill/menu.png)
 
-3. Wait while the row reads Stressing with a percentage. It takes about 20 seconds for Stand. To stop early, click the stop button on the row.
+3. Wait while the row reads Stressing with a percentage. It takes about 20 seconds for Stand. To stop early, click **Stop training** (■) on the row.
 
 ![The Stand row reading Stressing 4%, with a progress bar and a stop button](/help/stress-a-skill/stressing.png)
 
@@ -58,7 +58,7 @@ Stress changes one setting at a time, then all of them together, and judges each
 
 Stress uses 48 runs, all from the same start pose, so stressing the same skill again gives the same findings. Train on These widens only the settings that failed, a little past where they failed, and trains from the skill as it is.
 
-Train on These works on Motor Kit skills: Stand, Walk, Get up and Settle. Findings last until you close the scene or the skill changes. If a design change retrains the skill in the background, it trains on the usual ranges again.
+Train on These works on Motor Kit skills in the desktop app: Stand, Walk, Get up and Settle. Findings last until you close the scene or the skill changes. If a design change retrains the skill in the background, it trains on the usual ranges again.
 
 You can also use [[⌘K]]: **Stress Stand** and **Train Stand on These** do the same as their menu items. You can ask the agent too, for example whether Walk holds up carrying a load, and it answers with the same numbers.
 

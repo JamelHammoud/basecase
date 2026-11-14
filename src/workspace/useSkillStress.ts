@@ -7,6 +7,7 @@ import { kitEnvironment } from '../skills/kitEnvironment';
 import type { SkillRow } from '../skills/skillRows';
 import { coachReward } from '../skills/skillsCoach';
 import { designOf, type SkillsRuntime } from '../skills/skillsRuntime';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { STRESS_BUDGET, type StressAxisResult } from '../skills/stress';
 import { trainingProblem } from './trainingProblem';
 
@@ -22,7 +23,7 @@ const MISSING = 'This skill’s file is missing. Train it again.';
 export const canStress = (row: SkillRow) => row.state.kind === 'ready' && !!row.record;
 
 export const canTrainOnFindings = (row: SkillRow) =>
-  !!row.kit && canStress(row) && !!row.stress?.result.findings.length;
+  !IS_WEB_DEMO && !!row.kit && canStress(row) && !!row.stress?.result.findings.length;
 
 async function subjectOf(row: SkillRow, input: StressInput) {
   const skill = row.record ? await input.loadSkill(row.record.hash) : null;

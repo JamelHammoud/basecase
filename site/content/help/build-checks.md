@@ -69,7 +69,7 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Servo version | Servos sold in more than one version | A servo with no version chosen |
 | Servo voltage | The supply's voltage against each servo's range | A voltage outside the servos' range |
 | Current and runtime | The battery's current against the servos' draw | A battery that can't supply enough current |
-| Supply current | A cable supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
+| Supply current | The power supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
 | Regulator input | The battery against each regulator's input range | A battery outside the regulator's range |
 | Servo bus | Each servo's connector against the bus adapters in the build | A servo no adapter plugs into. Shown only when it fails |
 | Standing stability | The center of mass over the feet | “The robot would tip over standing still.” |

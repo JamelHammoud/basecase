@@ -33,7 +33,12 @@ const PricesGroup: React.FC = () => {
         }
       >
         <div className="w-[240px]">
-          <Select value={money.code} onChange={(e) => setCurrency(e.target.value)} options={CURRENCIES} />
+          <Select
+            value={money.code}
+            onChange={(e) => setCurrency(e.target.value)}
+            options={CURRENCIES}
+            aria-label="Currency"
+          />
         </div>
       </Row>
     </Group>

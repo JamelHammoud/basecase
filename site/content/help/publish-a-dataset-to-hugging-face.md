@@ -42,7 +42,7 @@ Publishing works in the desktop app. The dataset is always public.
 
 6. When the toast says "Published to" and the dataset's name, click **Open** to see it on the Hub.
 
-**Publish to Hugging Face** is also in [[⌘K]]. Signed out, it opens **Accounts** instead.
+**Publish to Hugging Face** is also in [[⌘K]]. Signed out, it opens **Accounts** instead. If the Hub refuses the token, click **Open** in the message to paste a new one in **Accounts**.
 
 ## What gets published
 

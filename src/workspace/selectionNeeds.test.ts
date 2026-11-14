@@ -26,6 +26,7 @@ const SELECTION_IDS = [
   'spread-x',
   'floor',
   'stack',
+  'center-on-origin',
   'zoom-selection',
 ];
 
@@ -45,6 +46,7 @@ describe('canRunOnSelection', () => {
       'align-left',
       'floor',
       'stack',
+      'center-on-origin',
       'zoom-selection',
     ]);
   });
@@ -62,6 +64,7 @@ describe('canRunOnSelection', () => {
       'intersect',
       'align-left',
       'floor',
+      'center-on-origin',
       'zoom-selection',
     ]);
     expect(canRunOnSelection('spread-z', facts(3))).toBe(true);

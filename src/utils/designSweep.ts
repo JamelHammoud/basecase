@@ -60,7 +60,7 @@ export function parseServoKey(key: string): { componentId: string; variant?: str
   if (c.variants?.length && !c.variants.some((v) => v.id === variant))
     return `"${key}": ${c.name} comes in ${c.variants.map((v) => v.id).join(', ')}. Add the version, e.g. component:${componentId}|${c.variants[0].id}.`;
 
-  if (!actuatorOf(componentId, variant)) return `"${key}" isn't an actuator.`;
+  if (!actuatorOf(componentId, variant)) return `"${key}" isn’t an actuator.`;
 
   return { componentId, variant };
 }

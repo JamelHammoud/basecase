@@ -5,6 +5,7 @@ import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
+import type { CaseConsole } from '../cases/console/format';
 import { bomText, buildBom } from '../utils/bom';
 import { engineeringText, type EngineeringReport } from '../utils/engineering';
 import { downscaleDataUrl } from '../utils/imageFile';
@@ -38,6 +39,7 @@ import { fitView } from './agentFitView';
 import { labelledScreenshot } from './agentLabelRequest';
 import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
+import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
 import { CASE_HANDLERS } from './agentCaseRequests';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore } from './useCaseExplore';
@@ -61,12 +63,13 @@ export interface RequestContext {
   slice: (report: PrintReport) => Promise<SliceRecord>;
   viewport: () => Viewport3DHandle | null;
   setProjectNow: (next: ProjectSettings) => void;
+  commitConsole: (caseId: string, console: CaseConsole | undefined) => void;
   insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
-  verify: (opts?: { peak?: boolean }) => Promise<EngineeringReport>;
+  verify: (opts?: { peak?: boolean; falls?: boolean }) => Promise<EngineeringReport>;
   readiness: ReadinessHandle;
   sweep: (payload: SweepPayload) => Promise<{ text: string }>;
   applyOps: (ops: AgentOp[]) => Promise<string>;
@@ -310,7 +313,9 @@ const HANDLERS: Record<string, Handler> = {
   verify: async (payload, ctx) => {
     ctx.setAction('Checking the design');
 
-    return { text: engineeringText(await ctx.verify({ peak: payload.peak === true }), toCad) };
+    return {
+      text: engineeringText(await ctx.verify({ peak: payload.peak === true, falls: payload.falls === true }), toCad),
+    };
   },
   set_build: setBuild,
   readiness: (_payload, ctx) => readinessRequest(ctx),
@@ -344,6 +349,7 @@ const HANDLERS: Record<string, Handler> = {
   ...PLAN_HANDLERS,
   ...ROUTINE_HANDLERS,
   ...CASE_HANDLERS,
+  ...CASE_CODE_HANDLERS,
   ...SKILL_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [

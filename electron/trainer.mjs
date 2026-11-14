@@ -384,7 +384,7 @@ export class Trainer {
       try {
         return { kind: 'done', record: this.storePolicy(id, dir, job, done), eval: done.eval, stopped: done.stopped };
       } catch (e) {
-        return { kind: 'error', message: `Couldn't save the policy: ${e.message}` };
+        return { kind: 'error', message: `Couldn’t save the policy: ${e.message}` };
       }
     }
 

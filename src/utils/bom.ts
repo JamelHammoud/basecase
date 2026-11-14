@@ -18,6 +18,8 @@ import {
 } from './bomTypes';
 
 import { neededSupplyKeys } from './bomNeeds';
+import { wiringNetlist } from '../wiring/netlist';
+import { wiringSupplies } from '../wiring/wiringSupplies';
 import { sceneTether } from './powerSources';
 
 export { FILAMENT_MARGIN, STALE_DAYS, localDate } from './bomTypes';
@@ -151,7 +153,7 @@ function describeHardware(key: string): LineInfo | null {
     detail: std,
     url: hardwareShopUrl(spec),
     urlKind: 'search',
-    warning: spec.length !== undefined && !isStockLength(spec) ? `${spec.length} mm isn't a stock length` : undefined,
+    warning: spec.length !== undefined && !isStockLength(spec) ? `${spec.length} mm isn’t a stock length` : undefined,
   };
 }
 
@@ -381,7 +383,16 @@ export function buildBom({ parts, project, purchases, measures, now = new Date()
 
   for (const x of project.extras ?? []) if (x.qty > 0) addCount(tally.counts, x.key, x.qty);
 
-  for (const key of neededSupplyKeys(parts, listedText(tally.counts), !!sceneTether({ parts, project })))
+  const netlist = wiringNetlist({ parts, project });
+  const listed = listedText(tally.counts);
+
+  for (const [key, qty] of wiringSupplies(netlist)) {
+    const missing = qty - (tally.counts.get(key)?.qty ?? 0);
+
+    if (missing > 0) addCount(tally.counts, key, missing);
+  }
+
+  for (const key of neededSupplyKeys(parts, listed, { tether: !!sceneTether({ parts, project }), netlist }))
     addCount(tally.counts, key, 1);
 
   const lines = [...tally.counts]

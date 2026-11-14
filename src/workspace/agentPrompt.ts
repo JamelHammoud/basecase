@@ -7,13 +7,19 @@ export interface AgentSendParams {
   images?: ReferenceImageRecord[];
   folders?: EvidenceFolder[];
   quotes?: MessageQuote[];
-  targetHeightMm?: number;
   model?: string;
   effort?: string;
   note?: string;
 }
 
-export type PromptOptions = Pick<AgentSendParams, 'targetHeightMm' | 'model' | 'effort' | 'note'>;
+export type PromptOptions = Pick<AgentSendParams, 'model' | 'effort' | 'note'>;
+
+export const runningCaseNote = (kase: { id: string; name: string } | null) =>
+  kase
+    ? `(The user is running the Case ${kase.name} (${kase.id}) and watching it. This message is about that Case, as with /case: change its app with write_case_code, and leave the design alone unless the words ask.)`
+    : '';
+
+export const joinNotes = (...notes: string[]) => notes.filter(Boolean).join('\n\n') || undefined;
 
 const quoteForAgent = (quote: MessageQuote) => {
   const lines = [quote.text, quote.context].filter(Boolean).join('\n').split('\n');
@@ -28,7 +34,6 @@ export function withQuotes(text: string, quotes: MessageQuote[] = []): string {
 const runFields = (text: string, options: PromptOptions) => ({
   action: 'build' as const,
   promptText: options.note ? `${text}\n\n${options.note}` : text,
-  targetHeightMm: options.targetHeightMm || undefined,
   model: options.model,
   effort: options.effort,
 });

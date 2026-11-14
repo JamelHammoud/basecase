@@ -58,7 +58,6 @@ export interface RenderedCad {
 export interface AcpPromptPayload {
   action: 'image-to-3d' | 'generate-part' | 'build';
   workspaceId?: string;
-  targetHeightMm?: number;
   model?: string;
   effort?: string;
   imageDataUrls?: string[];
@@ -233,7 +232,7 @@ declare global {
       listImages: () => Promise<ReferenceImageRecord[]>;
       listModels: () => Promise<CustomModelDefinition[]>;
       saveModel: (modelDef: CustomModelDefinition) => Promise<CustomModelDefinition>;
-      deleteModel: (modelId: string) => Promise<CustomModelDefinition[]>;
+      deleteModel: (modelId: string) => Promise<{ ok: boolean }>;
       listScenes: () => Promise<SavedSceneSummary[]>;
       getScene: (sceneId: string) => Promise<SavedSceneRecord | null>;
       saveScenePreview: (payload: ScenePreviewPayload) => Promise<SavedSceneSummary | null>;

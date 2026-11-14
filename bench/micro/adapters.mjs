@@ -1,5 +1,6 @@
 import { AdapterMissing } from './adapterMissing.mjs';
 import { craft, enclosures, removalOrder, serviceDepth, servoSolver } from './appAdapters.mjs';
+import { runCodeApp } from './caseCodeApp.mjs';
 import { probeFasteners } from './fasteners.mjs';
 
 export const missing = (name, what) => () => {
@@ -64,6 +65,7 @@ export const DEFAULT_ADAPTERS = {
   },
   runCase,
   inputBuilt,
+  codeApp: runCodeApp,
   checkRows: async (ctx) =>
     parseCheckRows((await needApp(ctx, 'checkRows', 'the engineering checks').call('verify')).text),
 };

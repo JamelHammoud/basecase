@@ -29,7 +29,7 @@ import { printReportOf } from '../utils/printReport';
 import { caseFindings } from '../readiness/caseChecks';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
-import { freshWalk } from './storedWalk';
+import { freshFalls, freshWalk } from './storedWalk';
 
 const BUDGET_MS = 30000;
 
@@ -74,6 +74,7 @@ export const projectFingerprint = (
     cases: jsonHash(project.cases),
     walks: (project.skills ?? []).map((s) => s.hash),
     walk: jsonHash(project.walk),
+    falls: jsonHash(project.falls),
     firstRanges: project.firstRanges,
     calibrations: activeVersions(project.servoCalibrations),
     goneMates: goneMateIds(project.joints),
@@ -111,6 +112,7 @@ export async function runReadiness({
       project,
       withSweep: true,
       walk: freshWalk(parts, project),
+      falls: freshFalls(parts, project),
       supportG: supportOf(report),
       printDowns: Object.fromEntries(report.parts.map((r) => [r.id, r.check.pose.down])),
     }),

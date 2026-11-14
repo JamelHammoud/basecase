@@ -50,7 +50,7 @@ Only you can set a blocker aside, with **Ignore**. The agent can say it disagree
 
 The **Bill of materials** is built from the scene. Components count by part, screws and nuts by their exact size, and printed parts become grams of filament per material. Filament rounds up to whole spools with 15% to spare.
 
-What the build needs but the model doesn't show joins the list too. A battery brings a switch, fuse, connector, wire and charger; servos bring their cables. Prices you check in a store are exact; the rest are list prices, marked ≈.
+What the build needs but the model doesn't show joins the list too. A battery brings a switch, fuse, wire and charger. Bus servos bring one cable per hop of their bus, of the type they plug into, and each battery plug or barrel jack on the power path brings a pigtail. Prices you check in a store are exact; the rest are list prices, marked ≈.
 
 ## How it gets made
 
@@ -58,6 +58,6 @@ Print mode lays the printed parts out on your printer's plates, slices them in B
 
 ## What the checks can't promise
 
-Print times and filament are estimates until the plates are sliced. Range of motion is tested every 15°, so a clash thinner than that step can slip through. Peak torque needs a trained walking policy, and stays Not run without one.
+Print times and filament are estimates until the plates are sliced. Range of motion is tested every 15°, so a clash thinner than that step can slip through. Peak torque needs a trained walking policy, and stays Not run without one. Falls stays Not run until the agent tips the robot over in the simulation.
 
 To start, open the Build tab and follow [Get a robot ready to build](/help/get-a-robot-ready-to-build).

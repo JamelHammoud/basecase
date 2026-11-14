@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type DriveSetup } from './drive';
 import { PoseDrive, type PoseSetup } from './drivePose';
 import { GrabForce } from './grabForce';
+import { PushForce, type PushTiming } from './pushForce';
 import type { SimModel } from './mjcf';
 import { simDeltas } from './mjcfFrames';
 import type { SimStats } from './engineStats';
@@ -58,7 +59,7 @@ export class SimEngine {
   private peaks: Float64Array;
   private saturated: Float64Array;
   private fellAt = new Map<string, number>();
-  private push: { body: number; force: [number, number, number]; until: number } | null = null;
+  private pushes: PushForce;
   private grab: GrabForce;
   private faults: ActuatorFaults;
   private policyState: PolicyState | null = null;
@@ -74,6 +75,7 @@ export class SimEngine {
     this.data = new mj.MjData(this.model);
     this.dt = this.model.opt.timestep;
     this.grab = new GrabForce(this.model, this.data, this.dt);
+    this.pushes = new PushForce(this.data);
     this.scanner = Scanner.create(mj, this.model, this.data, sim.scans);
     this.faults = new ActuatorFaults(this.model);
 
@@ -128,7 +130,7 @@ export class SimEngine {
     this.peaks.fill(0);
     this.saturated.fill(0);
     this.fellAt.clear();
-    this.push = null;
+    this.pushes.forget();
     this.grab.forget();
     this.faults.reprime();
     this.setController(this.controller);
@@ -169,7 +171,7 @@ export class SimEngine {
     }
 
     this.fellAt.delete(r.key);
-    this.push = null;
+    this.pushes.forget();
     this.grab.forget();
     this.setController(this.controller);
     mj.mj_forward(model, data);
@@ -265,12 +267,10 @@ export class SimEngine {
     this.grab.end();
   }
 
-  pushRobot(key: string, force: [number, number, number], seconds = 0.15) {
+  pushRobot(key: string, force: [number, number, number], timing: PushTiming = {}) {
     const r = this.robots.find((x) => x.key === key) ?? this.robots[0];
 
-    if (!r) return;
-
-    this.push = { body: r.rootBody, force: [force[0], -force[2], force[1]], until: this.data.time + seconds };
+    if (r) this.pushes.start(r.rootBody, force, { ...timing, tilt: () => this.tiltOf(r) });
   }
 
   private targetFor(i: number, values: Record<string, number> | undefined): number {
@@ -355,19 +355,6 @@ export class SimEngine {
     });
   }
 
-  private applyPush() {
-    if (!this.push) return;
-
-    const xf = this.data.xfrc_applied;
-    const b = this.push.body * 6;
-
-    if (this.data.time < this.push.until) [xf[b], xf[b + 1], xf[b + 2]] = this.push.force;
-    else {
-      xf[b] = xf[b + 1] = xf[b + 2] = 0;
-      this.push = null;
-    }
-  }
-
   step(seconds: number, afterStep?: () => void) {
     const { mj, model, data } = this;
     const steps = Math.max(1, Math.round(seconds / this.dt));
@@ -377,7 +364,7 @@ export class SimEngine {
     for (let s = 0; s < steps; s++) {
       this.applyControl();
       this.faults.apply(data.ctrl);
-      this.applyPush();
+      this.pushes.apply();
       this.grab.apply();
       mj.mj_step(model, data);
       afterStep?.();

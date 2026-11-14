@@ -352,7 +352,7 @@ const StockStrip: React.FC<{ lengths: number[]; value: number; onPick: (l: numbe
           role="radio"
           aria-checked={l === value}
           onClick={() => onPick(l)}
-          className={`shrink-0 min-w-[40px] h-7 px-1.5 text-[12.5px] ${choiceCellClass(l === value)}`}
+          className={`shrink-0 min-w-[40px] h-[32px] px-1.5 text-[12.5px] ${choiceCellClass(l === value)}`}
         >
           {l}
         </button>

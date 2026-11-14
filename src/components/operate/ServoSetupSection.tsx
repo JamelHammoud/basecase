@@ -24,7 +24,7 @@ export const ServoSetupSection: React.FC<ServoSetupSectionProps> = ({ robot, joi
           <div
             data-servo-setup-step={step.id}
             data-joint={step.jointId}
-            className={`h-8 px-1 flex items-center justify-between gap-3 rounded-lg text-[13px] ${CURRENT_ROW}`}
+            className={`h-[32px] px-1 flex items-center justify-between gap-3 rounded-lg text-[13px] ${CURRENT_ROW}`}
           >
             <span className="min-w-0 truncate text-white">{step.name}</span>
             <span className="shrink-0 tabular-nums text-white/90">{step.id}</span>

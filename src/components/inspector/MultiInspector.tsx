@@ -66,7 +66,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
               />
             </div>
           ) : (
-            <div className="text-[14px] font-semibold text-white/95 truncate h-8 flex items-center">
+            <div className="text-[14px] font-semibold text-white/95 truncate h-[32px] flex items-center">
               {selectedParts.length} parts
             </div>
           )}
@@ -131,6 +131,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
   onAlign,
   onDistribute,
   onDropToFloor,
+  onCenter,
   onMoveSelection,
   onRotateSelection,
 }) => (
@@ -154,7 +155,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
             icon={<CrosshairIcon className="w-3.5 h-3.5" />}
             title="Center on origin"
             size="xs"
-            onClick={() => onMoveSelection({ 0: 0, 2: 0 })}
+            onClick={onCenter}
           />
         </>
       }

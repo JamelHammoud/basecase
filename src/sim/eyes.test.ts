@@ -106,7 +106,7 @@ describe('building an eye from a camera part', () => {
   });
 
   it('refuses a part off the robot and a grid out of bounds', () => {
-    expect(buildEye({ bodies: [] } as unknown as SimModel, [camera], { part: 'cam' })).toMatch(/isn't on the robot/);
+    expect(buildEye({ bodies: [] } as unknown as SimModel, [camera], { part: 'cam' })).toMatch(/isn’t on the robot/);
     expect(buildEye(simModel, [camera], { part: 'cam', cols: 99 })).toMatch(/columns/);
   });
 });

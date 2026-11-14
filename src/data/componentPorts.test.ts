@@ -60,6 +60,18 @@ const faceRadius = (d: number) => (d > 12 ? d / 2 - 2 : d / 2 - 0.5);
 
 const isHole = (p: Port) => p.kind === 'screw' || p.kind === 'bore';
 
+const CONNECTOR_REACH_MM = 1;
+
+const surfaceGap = (bvh: MeshBVH, port: Port) =>
+  bvh.closestPointToPoint(new THREE.Vector3(...port.position))?.distance ?? Infinity;
+
+const connectorProblems = (bvh: MeshBVH, ports: Port[]) =>
+  ports
+    .filter((p) => p.kind === 'connector')
+    .map((p) => ({ name: p.name, gap: surfaceGap(bvh, p) }))
+    .filter(({ gap }) => gap > CONNECTOR_REACH_MM)
+    .map(({ name, gap }) => `${name}: ${gap.toFixed(2)} mm off the part`);
+
 describe('catalog ports match the shipped meshes', () => {
   for (const [id, ports] of Object.entries(COMPONENT_PORTS)) {
     it(id, async () => {
@@ -82,6 +94,8 @@ describe('catalog ports match the shipped meshes', () => {
 
         if (hits < 2 && Math.abs(center) > FACE_TOLERANCE) problems.push(`${port.name}: no face at the port`);
       }
+
+      problems.push(...connectorProblems(bvh, ports));
 
       expect(problems).toEqual([]);
     });

@@ -10,6 +10,7 @@ import type { DriveCommand } from '../sim/driveTypes';
 import { SimEngine, type Controller, type SimStats } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
+import { runClock } from '../utils/duration';
 import { errorMessage } from '../utils/errorMessage';
 import type { Rig } from '../utils/kinematics';
 
@@ -90,7 +91,7 @@ export function checkFit(mj: MainModule, input: FitInput): Fit {
 
   const fell = settle.robots.find((r) => r.fellAt !== null);
 
-  if (fell) return { model, stop: `Fell at ${fell.fellAt!.toFixed(1)} s` };
+  if (fell) return { model, stop: `Fell at ${runClock(fell.fellAt!)}` };
 
   return { model, stop: fallsOnWalk(mj, input, model) ? 'Falls on its walk' : null };
 }

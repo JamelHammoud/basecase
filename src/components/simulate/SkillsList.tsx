@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, IconButton, RunIcon, StopIcon, TrainIcon } from '../../design-system';
+import { Button, IconButton, RefreshIcon, RunIcon, StopIcon, TrainIcon } from '../../design-system';
 import type { SkillRow } from '../../skills/skillRows';
 import { snapshotRefs, type SnapshotRef } from '../../skills/snapshots';
 import { fmtMargin, trainingLine } from './format';
@@ -48,14 +48,17 @@ const RowAction: React.FC<{ row: SkillRow; actions: SkillActions }> = ({ row, ac
       </Button>
     );
 
+  const recheck = state.kind === 'recheck';
+  const ActionIcon = recheck ? RefreshIcon : TrainIcon;
+
   return (
     <Button
       variant="secondary"
       size="xs"
-      icon={<TrainIcon className="w-3.5 h-3.5" />}
+      icon={<ActionIcon className="w-3.5 h-3.5" />}
       onClick={() => actions.onTrain(row)}
     >
-      {state.kind === 'recheck' ? 'Recheck' : 'Train'}
+      {recheck ? 'Recheck' : 'Train'}
     </Button>
   );
 };
@@ -99,7 +102,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
 
       return (
         <li key={row.target} className="flex flex-col" data-testid="skill-row">
-          <div className="flex items-center gap-2 min-h-9">
+          <div className="flex items-center gap-2 min-h-[32px]">
             <div className="flex-1 min-w-0">
               <div className="text-[13px] text-white/85 truncate">{row.label}</div>
               {line && <div className="text-[12px] text-white/50 tabular truncate">{line}</div>}

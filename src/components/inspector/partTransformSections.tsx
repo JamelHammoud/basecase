@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ScenePart } from '../../types/robotics';
 import {
   ColorField,
@@ -12,6 +12,8 @@ import {
   LayersIcon,
   RotateLeftIcon,
 } from '../../design-system';
+import { canEdge } from '../../utils/partEdges';
+import { EdgesField } from './EdgesField';
 import { wrapDegrees } from './partMath';
 import { QuarterTurns } from './QuarterTurns';
 import type { PartSectionProps } from './partSections';
@@ -19,8 +21,8 @@ import { MATERIALS, type InspectorProps, type Phase } from './types';
 import { keyFor } from '../../app/shortcuts';
 
 export const PositionSection: React.FC<
-  PartSectionProps & Pick<InspectorProps, 'snapStepMm' | 'onDropToFloor' | 'onStack'>
-> = ({ part, onUpdate, snapStepMm, onDropToFloor, onStack }) => {
+  PartSectionProps & Pick<InspectorProps, 'snapStepMm' | 'onDropToFloor' | 'onStack' | 'onCenter'>
+> = ({ part, onUpdate, snapStepMm, onDropToFloor, onStack, onCenter }) => {
   const setPos = (idx: number, v: number, live?: Phase) => {
     const next: [number, number, number] = [...part.position];
 
@@ -51,7 +53,7 @@ export const PositionSection: React.FC<
             icon={<CrosshairIcon className="w-3.5 h-3.5" />}
             title="Center on origin"
             size="xs"
-            onClick={() => onUpdate({ position: [0, part.position[1], 0] })}
+            onClick={onCenter}
           />
         </>
       }
@@ -114,36 +116,48 @@ export const RotationSection: React.FC<PartSectionProps> = ({ part, onUpdate }) 
 
 export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => {
   const d = part.deformers || {};
-  const hasDeform = !!d.taper || !!d.bendDeg || !!d.twistDeg || !!d.roundness;
+  const edged = canEdge(part);
+  const hasShape = !!d.taper || !!d.bendDeg || !!d.twistDeg || !!d.roundness || !!part.edges?.mm;
+  const [roundingId, setRoundingId] = useState<string | null>(null);
+  const showRound = !!d.roundness || roundingId === part.id;
   const setDeformer = (key: keyof NonNullable<ScenePart['deformers']>, v: number, live?: Phase) =>
     onUpdate({ deformers: { ...part.deformers, [key]: v } }, live);
+  const setRound = (v: number, live?: Phase) => {
+    setRoundingId(live ? part.id : null);
+    setDeformer('roundness', v, live);
+  };
 
   return (
     <Section
       title="Shape"
       collapsible
-      defaultOpen={hasDeform}
+      defaultOpen={hasShape}
       actions={
-        hasDeform ? (
+        hasShape ? (
           <IconButton
             icon={<RotateLeftIcon className="w-3.5 h-3.5" />}
             title="Reset shape"
             size="xs"
-            onClick={() => onUpdate({ deformers: { taper: 0, bendDeg: 0, twistDeg: 0, roundness: 0 } })}
+            onClick={() =>
+              onUpdate({ deformers: { taper: 0, bendDeg: 0, twistDeg: 0, roundness: 0 }, edges: undefined })
+            }
           />
         ) : undefined
       }
     >
-      <Slider
-        label="Round"
-        min={0}
-        max={1}
-        step={0.05}
-        defaultValue={0}
-        value={d.roundness || 0}
-        format={(v) => `${Math.round(v * 100)}%`}
-        onChange={(v, l) => setDeformer('roundness', v, l)}
-      />
+      {edged && <EdgesField part={part} onUpdate={onUpdate} />}
+      {showRound && (
+        <Slider
+          label="Round"
+          min={0}
+          max={1}
+          step={0.05}
+          defaultValue={0}
+          value={d.roundness || 0}
+          format={(v) => `${Math.round(v * 100)}%`}
+          onChange={setRound}
+        />
+      )}
       <Slider
         label="Taper"
         min={-0.8}

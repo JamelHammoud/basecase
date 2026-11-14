@@ -1,4 +1,5 @@
 import { BANNED_COPY } from '../../verify/rehearsal/uiRules.ts';
+import { APOSTROPHE_COPY } from './apostrophe.mjs';
 import { isUserFacing } from './extract.mjs';
 import { GLOSSARY_COPY } from './glossary.mjs';
 import { SPELLING_COPY } from './spelling.mjs';
@@ -28,6 +29,7 @@ export const LINTED_COPY = [
   })),
   ...GLOSSARY_COPY,
   ...SPELLING_COPY,
+  ...APOSTROPHE_COPY,
 ];
 
 const isId = (text) => /\p{L}{2,}/u.test(text) && !isUserFacing(text);

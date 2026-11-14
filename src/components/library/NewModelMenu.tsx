@@ -1,5 +1,15 @@
 import React, { useRef, useState } from 'react';
-import { IconButton, MenuDivider, MenuItem, PopoverMenu, FileImportIcon, LayersIcon, PhotoAddIcon, PlusIcon, ShapeIcon } from '../../design-system';
+import {
+  BookmarkAddIcon,
+  IconButton,
+  MenuDivider,
+  MenuItem,
+  PopoverMenu,
+  FileImportIcon,
+  LayersIcon,
+  PhotoAddIcon,
+  PlusIcon,
+} from '../../design-system';
 
 export const NewModelMenu: React.FC<{
   canSaveSelection: boolean;
@@ -35,7 +45,7 @@ export const NewModelMenu: React.FC<{
         className="w-52"
       >
         <MenuItem
-          icon={<ShapeIcon className="w-3.5 h-3.5" />}
+          icon={<BookmarkAddIcon className="w-3.5 h-3.5" />}
           label="Save Selection"
           disabled={!canSaveSelection}
           onSelect={run(() => onSaveModel('selected'))}

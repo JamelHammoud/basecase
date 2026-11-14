@@ -3,13 +3,13 @@ import {
   Button,
   IconButton,
   SegmentedControl,
-  CloseIcon,
   PauseIcon,
   RotateLeftIcon,
   RunIcon,
+  StopIcon,
 } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
-import { fmtTime } from './format';
+import { runClock } from '../../utils/duration';
 
 const SPEEDS = [
   { value: '0.25', label: '¼×' },
@@ -18,7 +18,7 @@ const SPEEDS = [
 ];
 
 const RunningControls: React.FC<{ sim: Simulation }> = ({ sim }) => (
-  <div className="flex items-center gap-1.5 h-9">
+  <div className="flex items-center gap-1.5 h-[32px]">
     <IconButton
       icon={sim.playing ? <PauseIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
       title={sim.playing ? 'Pause' : 'Play'}
@@ -34,13 +34,13 @@ const RunningControls: React.FC<{ sim: Simulation }> = ({ sim }) => (
       onClick={sim.reset}
     />
     <div className="flex-1 min-w-0 pl-1 text-[13px] tabular text-white/80">
-      {sim.status === 'loading' ? <span className="text-white/50">Loading…</span> : fmtTime(sim.stats?.time ?? 0)}
+      {sim.status === 'loading' ? <span className="text-white/50">Loading…</span> : runClock(sim.stats?.time ?? 0)}
       {sim.playing && sim.stats && sim.stats.rtf < 0.9 && (
         <span className="ml-2 text-[12px] text-white/50">{sim.stats.rtf.toFixed(1)}× real time</span>
       )}
     </div>
     <SegmentedControl size="sm" value={String(sim.speed)} onChange={(v) => sim.setSpeed(Number(v))} options={SPEEDS} />
-    <IconButton icon={<CloseIcon className="w-4 h-4" />} title="Stop simulation" size="sm" onClick={sim.stop} />
+    <IconButton icon={<StopIcon className="w-4 h-4" />} title="Stop simulation" size="sm" onClick={sim.stop} />
   </div>
 );
 

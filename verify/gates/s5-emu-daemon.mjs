@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fail, pass, ROOT, sh, shCheck } from '../lib/gate.mjs';
+import { fail, pass, ROOT, sh, shCheck, vitestCheck } from '../lib/gate.mjs';
+import { networkSourceProblems, readNetworkSources } from '../lib/networkLock.mjs';
 
 const MANIFEST = path.join(ROOT, 'hw', 'Cargo.toml');
 const EMU = path.join(ROOT, 'hw', 'target', 'release', 'servo-emu');
@@ -24,26 +25,8 @@ const FAULTS = [
   'ros2_app_lost',
 ];
 
-const LOOPBACK_ONLY = path.join('hw', 'crates', 'servo-emu', 'src', 'loopback.rs');
-
 function networkProblems() {
-  const grep = sh('grep', [
-    '-rlE',
-    '--include=*.rs',
-    'rustdds::|::bind\\(|0\\.0\\.0\\.0|UNSPECIFIED',
-    path.join(ROOT, 'hw', 'crates'),
-  ]);
-  const outside = grep.stdout
-    .split('\n')
-    .filter((f) => f && !f.includes('transport-real') && !f.endsWith(LOOPBACK_ONLY));
-  const loopback = fs.readFileSync(path.join(ROOT, LOOPBACK_ONLY), 'utf8');
-  const binds = [...loopback.matchAll(/::bind\(([^)]*)\)/g)].map((m) => m[1]);
-
-  if (outside.length) return `Network use outside the loopback emulator: ${outside.join(', ')}`;
-
-  if (!binds.length || binds.some((b) => !b.includes('LOOPBACK'))) return `The emulator binds ${binds.join(', ')}`;
-
-  return null;
+  return networkSourceProblems(readNetworkSources(ROOT)).join('\n') || null;
 }
 
 const CONFORMANCE = path.join(ROOT, 'verify', 'hw', process.platform === 'darwin' ? 'pty_baud.py' : 'conformance.py');
@@ -99,6 +82,7 @@ export default {
   checks: [
     shCheck('cargo test passes', 'cargo', ['test', '--release', '--manifest-path', MANIFEST]),
     shCheck('tools build', 'cargo', ['build', '--release', '--manifest-path', MANIFEST]),
+    vitestCheck('the private control listener source lock catches seeded faults', 'verify/lib/networkLock.test.mjs'),
     { name: 'Feetech SDK, unmodified, works against the emulator', run: () => conform('feetech') },
     { name: 'Dynamixel SDK, unmodified, works against the emulator', run: () => conform('dynamixel') },
     {

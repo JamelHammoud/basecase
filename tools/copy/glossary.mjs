@@ -42,7 +42,11 @@ export const GLOSSARY = [
   { word: 'Duplicate', action: 'Make a second one beside the first', synonyms: ['clone'] },
   { word: 'Run', action: 'Start a Case, Routine, Checks or a policy', synonyms: ['launch', 'execute'] },
   { word: 'Add', action: 'Put a part in the scene', synonyms: ['insert (?:a )?parts?'] },
-  { word: 'Insert', action: 'Put a model or robot in the scene', synonyms: ['add (?:a |an )?(?:models?|robots?)'] },
+  {
+    word: 'Insert',
+    action: 'Put a model or robot in the scene',
+    synonyms: ['(?!add a robot computer$)add (?:a |an )?(?:models?|robots?)'],
+  },
   {
     word: 'Make',
     action: 'Bring a new build guide, Case or Routine into being',

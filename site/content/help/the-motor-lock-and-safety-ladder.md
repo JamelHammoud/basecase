@@ -77,7 +77,9 @@ Torque starts at 5% and ramps up over 1 second. A joint outside its calibrated r
 
 ## How it stops
 
-While motors run, the app must send a command at least every 100 ms. If the commands stop, the robot stops within 100 ms: an arm holds, and a legged robot stands still.
+While motors run, the app must send a command at least every 100 ms. After 100 ms without commands or a heartbeat, the daemon starts its stop plan. An arm holds, and a legged robot moves toward its standing pose. The standing motion can take longer than the watchdog delay.
+
+On a [robot computer](/help/connect-a-robot-computer), the daemon keeps running when the app closes or the network drops. It stops the robot on its own. Reconnecting starts at **Look** after the stop finishes.
 
 | Problem | Daemon's response |
 |---|---|

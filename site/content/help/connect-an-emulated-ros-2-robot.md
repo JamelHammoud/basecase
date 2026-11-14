@@ -1,6 +1,7 @@
 ---
 title: Connect an emulated ROS 2 robot
 date: 2026-11-13
+updated: 2026-11-14
 collection: operate
 type: task
 keywords:
@@ -25,7 +26,9 @@ covers:
 
 You can drive the robot in your scene as a ros2_control robot, the same way you'd drive a UR, Franka, or SO-101 arm through its ROS 2 controllers.
 
-The robot is emulated. The daemon talks to it over 127.0.0.1, and no released build reaches a real network. Operate is available only in the desktop app.
+The robot is emulated. The daemon talks to its ROS 2 emulator over 127.0.0.1 and can't reach real motor hardware. Operate is available only in the desktop app.
+
+The steps below run the daemon on this computer. To run it on Linux and connect over your local network, see [Connect a robot computer](/help/connect-a-robot-computer).
 
 1. Open a scene with a robot that has joints. If you imported the robot from a URDF, it keeps its joint names, and those are the names the robot publishes.
 2. Click **Play** in the view rail, then click **Operate**.

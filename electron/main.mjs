@@ -267,6 +267,7 @@ const sendTo = (channel) => (event) => {
 
 const robot = new RobotFleet({
   binary: robotBinary,
+  networkStoreDir: path.join(app.getPath('userData'), 'robot-pairings'),
   emit: sendTo('robot:event'),
   policyBytes: robotPolicyBytes({ libraryDir: backend.libraryDir, trainer: backend.trainer }),
   tries: sessionSink(backend.tries),

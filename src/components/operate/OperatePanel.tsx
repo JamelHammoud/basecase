@@ -14,6 +14,7 @@ import { RobotJoints, type JointCalibrate } from './RobotJoints';
 import { RobotLadder } from './RobotLadder';
 import { RobotMessages } from './RobotMessages';
 import { ServoSetupSection } from './ServoSetupSection';
+import { Button } from '../../design-system';
 
 export interface OperatePanelProps {
   joints: RobotJoint[];
@@ -21,6 +22,7 @@ export interface OperatePanelProps {
   onShowRobots: () => void;
   calibration: CalibrationProps;
   onSetUpServos: () => void;
+  onAddRobotComputer?: () => void;
   onReplay?: (messageId: number) => void;
 }
 
@@ -41,6 +43,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
   onShowRobots,
   calibration,
   onSetUpServos,
+  onAddRobotComputer,
   onReplay,
 }) => {
   const robot = useRobot();
@@ -56,6 +59,11 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-[8px] pb-3" data-testid="operate-panel">
       <FleetRows />
+      {onAddRobotComputer && (
+        <Button variant="ghost" fullWidth onClick={onAddRobotComputer}>
+          Add a Robot Computer
+        </Button>
+      )}
       {connected ? (
         <RobotHeader robot={robot} />
       ) : (

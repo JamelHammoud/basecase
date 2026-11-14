@@ -12,6 +12,7 @@ import { replayableFault, replayRobotRun } from './robotReplay';
 import type { CommandInputs } from './sceneCommands';
 import { showLeftTab } from './showView';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { addRobotComputer } from './robotComputer';
 
 const showOperateOf = (core: WorkspaceCore) => () => showLeftTab(core, 'operate');
 
@@ -149,6 +150,17 @@ export function operateCommands(inputs: CommandInputs): Command[] {
       run: showOperate,
     },
     ...linkCommands(inputs, showOperate),
+    {
+      id: 'add-robot-computer',
+      group: 'Operate',
+      label: 'Add a Robot Computer',
+      icon: <OperateIcon />,
+      keywords: 'network robot raspberry pi jetson linux ssh host pairing daemon install',
+      run: () => {
+        showOperate();
+        addRobotComputer(core);
+      },
+    },
     ...(robot.ok && servoFamily(robot.spec)
       ? [
           {

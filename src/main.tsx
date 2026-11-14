@@ -12,6 +12,7 @@ import { setPhoneLink } from './phone/phoneStore';
 import { startRobotStore } from './robot/robotStore';
 import { refreshRates } from './utils/currencyStore';
 import { exposesTestHooks } from './utils/platform/testHooks';
+import { AddRobotComputer } from './components/operate/AddRobotComputer';
 
 const electronAPI = window.electronAPI;
 
@@ -32,6 +33,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <WindowBoundary>
       <App />
+      <AddRobotComputer />
       <OverlayScrollbars />
       <ConfirmHost />
       <PairPhoneHost />

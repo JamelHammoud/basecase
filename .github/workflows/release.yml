@@ -20,6 +20,84 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  daemon-linux:
+    name: daemon-linux-${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04-arm
+            arch: arm64
+            target: aarch64-unknown-linux-musl
+          - os: ubuntu-24.04
+            arch: x64
+            target: x86_64-unknown-linux-musl
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Install the static Linux toolchain
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          rustup toolchain install stable --profile minimal --target "$TARGET"
+          sudo apt-get update
+          sudo apt-get install --yes musl-tools
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: hw
+      - name: Build the locked robot daemon
+        env:
+          TARGET: ${{ matrix.target }}
+          RUSTFLAGS: -C linker=musl-gcc -C target-feature=+crt-static
+        run: cargo build --locked --release --manifest-path hw/Cargo.toml -p robot-daemon --target "$TARGET"
+      - name: Check the daemon needs no shared Linux libraries
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          binary="hw/target/$TARGET/release/robot-daemon"
+          readelf --program-headers "$binary" > "$RUNNER_TEMP/daemon-program-headers.txt"
+          readelf --dynamic "$binary" > "$RUNNER_TEMP/daemon-dynamic.txt"
+          if grep -q INTERP "$RUNNER_TEMP/daemon-program-headers.txt" || grep -q NEEDED "$RUNNER_TEMP/daemon-dynamic.txt"; then
+            echo 'The robot daemon depends on shared Linux libraries' >&2
+            exit 1
+          fi
+      - name: Check the released daemon keeps real motors locked
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { lockProblems } from './verify/hw/motorLock.mjs';
+          const problems = lockProblems(`hw/target/${process.env.TARGET}/release/robot-daemon`);
+          if (problems.length) throw new Error(problems.join('\n'));
+          NODE
+      - name: Stage the Linux binary and checksum
+        env:
+          TARGET: ${{ matrix.target }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          mkdir -p release
+          cp "hw/target/$TARGET/release/robot-daemon" "release/robot-daemon-linux-$ARCH"
+          cd release
+          sha256sum "robot-daemon-linux-$ARCH" > "robot-daemon-linux-$ARCH.sha256"
+          sha256sum --check "robot-daemon-linux-$ARCH.sha256"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: robot-daemon-linux-${{ matrix.arch }}
+          if-no-files-found: error
+          path: |
+            release/robot-daemon-linux-${{ matrix.arch }}
+            release/robot-daemon-linux-${{ matrix.arch }}.sha256
+
   mac:
     runs-on: macos-latest
     timeout-minutes: 90

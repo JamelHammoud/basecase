@@ -23,6 +23,7 @@ import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { judgedAt, markJudged } from '../lib/pullState.mjs';
 import { judgedPass, measurePull, needsMeasure, withMeasure } from '../lib/pullMeasure.mjs';
 import { byRank } from '../lib/rank.mjs';
+import { isSmall } from '../lib/smallChange.mjs';
 import { run } from '../lib/sh.mjs';
 import { pause } from '../lib/usage.mjs';
 import { voiceChangedPosts } from '../lib/voiceHook.mjs';
@@ -158,6 +159,8 @@ function ontoMain(dir) {
   return { diff, copy, onMain };
 }
 
+const MEASURE_IN_REVIEW = false;
+
 const FIX_IT =
   'Fix every finding you can, here in the worktree: blockers and minors, code, tests, copy and docs. Run `npm run check:changed -- <files>` on what you change. List each fix in `fixed` and write a commit message in `commitMessage`. Leave in `findings` only what you could not fix, and pass the pull request when nothing left blocks it.';
 
@@ -236,7 +239,7 @@ function benchStep({ pull, sha, judged, measure, paths, worktree, onMain, log })
     return { stop: true };
   }
 
-  const measured = passed ? measureOnce({ pull, paths, log, worktree, onMain }) : null;
+  const measured = passed && measure ? measureOnce({ pull, paths, log, worktree, onMain }) : null;
 
   if (measured?.verdict === 'busy') {
     setReview(sha, 'error', measured.description);
@@ -254,7 +257,7 @@ function reviewPull(pull, log) {
 
   try {
     const paths = changedFiles(worktree.dir);
-    const measure = needsMeasure(pull, paths);
+    const measure = MEASURE_IN_REVIEW && needsMeasure(pull, paths);
     const earlier = measure ? judgedAt(pull.number, sha) : null;
 
     if (earlier && held('pull-bench')) {
@@ -323,6 +326,13 @@ export default function review({ log }) {
     .sort((a, b) => Number(pullCheck(b) === 'success') - Number(pullCheck(a) === 'success') || byRank(a, b));
 
   for (const pull of waiting) {
+    if (isSmall(pull)) {
+      setReview(pull.headRefOid, 'success', 'Small change: it lands on its Check without an agent review');
+      log(`#${pull.number}: small change; no agent review`);
+
+      continue;
+    }
+
     const release = claim(`review-${pull.number}`);
 
     if (!release) continue;

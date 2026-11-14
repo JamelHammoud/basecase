@@ -15,7 +15,7 @@ export const repo = () => {
 };
 
 const PULL_FIELDS =
-  'number,title,body,url,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable,labels,updatedAt,statusCheckRollup';
+  'number,title,body,url,headRefName,headRefOid,isDraft,isCrossRepository,createdAt,mergeable,labels,updatedAt,statusCheckRollup,additions,deletions,files';
 
 export const openPulls = ({ fresh = false } = {}) =>
   cached('open-pulls', { ttlMs: 20_000, refresh: fresh }, () =>

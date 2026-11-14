@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { isPaused } from '../lib/github.mjs';
 import { nextVersion, releaseDue, rerunSuite, suiteDue } from '../lib/nightly.mjs';
 import { json, run } from '../lib/sh.mjs';
@@ -77,12 +80,70 @@ const ahead = (from, to) =>
     allowFail: true,
   }).out.trim() === 'ahead';
 
-const releases = store('release', { tried: [] });
+const releases = store('release', { tried: [], pending: null });
+
+const releaseRuns = () =>
+  json('gh', ['run', 'list', '--workflow', 'release.yml', '--limit', '5', '--json', 'databaseId,createdAt,status']) ??
+  [];
+
+const jobsOf = (id) =>
+  json('gh', ['run', 'view', String(id), '--json', 'jobs'])?.jobs?.map((job) => [job.name, job.conclusion]) ?? [];
+
+function publish(pending, log) {
+  const started = releaseRuns().find((r) => r.createdAt >= pending.dispatchedAt);
+
+  if (!started || started.status !== 'completed') return false;
+
+  const jobs = Object.fromEntries(jobsOf(started.databaseId));
+
+  if (jobs.mac !== 'success' || jobs.windows !== 'success') {
+    log(
+      `the ${pending.version} build failed (Mac ${jobs.mac}, Windows ${jobs.windows}); the next suite pass tries again`,
+    );
+
+    return true;
+  }
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-release-'));
+
+  try {
+    run('gh', ['run', 'download', String(started.databaseId), '-D', dir]);
+
+    const files = ['mac', 'windows'].flatMap((name) =>
+      fs.readdirSync(path.join(dir, name)).map((file) => path.join(dir, name, file)),
+    );
+    const tag = `v${pending.version}`;
+    const args = [
+      'release',
+      'create',
+      tag,
+      '--target',
+      pending.ref,
+      '--title',
+      `Basecase ${pending.version}`,
+      '--generate-notes',
+      ...files,
+    ];
+
+    log(run('gh', args, { allowFail: true }).ok ? `published ${tag}` : `couldn't publish ${tag}`);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  return true;
+}
+
+function settle(state, log) {
+  if (publish(state.pending, log)) releases.save('state', { ...state, pending: null });
+}
 
 function release(log, now) {
   const state = releases.get('state');
+
+  if (state.pending) return settle(state, log);
+
   const green = newestSuitePass();
-  const running = runs('release.yml').some((r) => r.status !== 'completed');
+  const running = releaseRuns().some((r) => r.status !== 'completed');
 
   if (!releaseDue({ now, green, tried: state.tried, lastReleaseAt: lastRelease(), running })) return;
 
@@ -91,25 +152,13 @@ function release(log, now) {
   if (!tag || !ahead(tag, green)) return;
 
   const version = nextVersion(tag);
-  const args = [
-    'workflow',
-    'run',
-    'release.yml',
-    '--ref',
-    'main',
-    '-f',
-    `version=${version}`,
-    '-f',
-    `ref=${green}`,
-    '-f',
-    'release=true',
-  ];
+  const args = ['workflow', 'run', 'release.yml', '--ref', 'main', '-f', `version=${version}`, '-f', `ref=${green}`];
+  const pending = { version, ref: green, dispatchedAt: new Date(now).toISOString() };
 
-  state.tried = [...state.tried, green].slice(-50);
-  releases.save('state', state);
+  releases.save('state', { tried: [...state.tried, green].slice(-50), pending });
 
   if (run('gh', args, { allowFail: true }).ok)
-    log(`the full suite passed on ${green.slice(0, 7)}; releasing ${version}`);
+    log(`the full suite passed on ${green.slice(0, 7)}; building ${version}`);
 }
 
 export default function nightly({ log }) {

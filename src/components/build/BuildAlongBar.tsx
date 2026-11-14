@@ -69,7 +69,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
           </>
         )}
         <IslandDivider />
-        <Button size="sm" variant="ghost" onClick={buildAlong.close} title="Done" shortcut="Esc">
+        <Button size="sm" variant="ghost" onClick={buildAlong.close} title="Done" shortcut="Esc" tooltipSide="bottom">
           Done
         </Button>
       </FloatingIsland>

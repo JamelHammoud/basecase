@@ -39,6 +39,14 @@ describe('ground routes', () => {
     expect(groundRoute([{ at: [0, 0, 300] }, push], objects, robot)).toEqual([{ at: [0, 0, 300] }, push]);
   });
 
+  it('crosses ground no taller than the step it is given, a turned ramp by its top, and detours past anything taller', () => {
+    const ramp = { ...block([0, 10, 450], [300, 40, 400]), rotation: [-10, 0, 0] as V3 };
+    const objects = [block([0, 10, 300], [150, 20, 120]), ramp];
+
+    expect(groundRoute([{ at: [0, 0, 900] }], objects, { ...robot, stepMm: 65 })).toEqual([{ at: [0, 0, 900] }]);
+    expect(groundRoute([{ at: [0, 0, 900] }], objects, { ...robot, stepMm: 40 }).length).toBeGreaterThan(1);
+  });
+
   it('reaches a waypoint that sits inside the grown block by growing it less', () => {
     const route = groundRoute([{ at: [0, 0, 600] }], [block([0, 75, 450], [150, 150, 120])], robot);
 

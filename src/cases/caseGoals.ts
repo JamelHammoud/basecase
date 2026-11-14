@@ -5,34 +5,40 @@ import type { RobotFacts } from './robotFit';
 import type { WorldKind } from './caseWorlds';
 import type { RoutePoint } from './groundRoute';
 import { DOT_COUNT } from './dotSpots';
+import type { GoalParam, GoalValues, ParamKey } from './goalParams';
 import { pickDefaults, pickGoalWith } from './pickGoal';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
+import { terrainDefaults } from './terrain';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 
 export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff';
 
-export type ParamKey =
-  'dots' | 'distanceMm' | 'heightMm' | 'sideMm' | 'radiusMm' | 'pushMm' | 'boxMm' | 'stops' | 'spacingMm' | 'seconds';
+export type { GoalParam, GoalValues, ParamKey } from './goalParams';
 
-export type GoalValues = Record<ParamKey, number>;
+const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
+  dots: { key: 'dots', label: 'Dots', unit: '', min: 1, max: DOT_COUNT, step: 1 },
+  distanceMm: { key: 'distanceMm', label: 'Distance', unit: 'mm', min: 0, max: 5000, step: 50 },
+  heightMm: { key: 'heightMm', label: 'Height', unit: 'mm', min: 0, max: 2000, step: 10 },
+  sideMm: { key: 'sideMm', label: 'Side', unit: 'mm', min: -2000, max: 2000, step: 10 },
+  radiusMm: { key: 'radiusMm', label: 'Radius', unit: 'mm', min: 5, max: 1000, step: 10 },
+  pushMm: { key: 'pushMm', label: 'Push', unit: 'mm', min: 100, max: 5000, step: 50 },
+  boxMm: { key: 'boxMm', label: 'Box', unit: 'mm', min: 40, max: 600, step: 10 },
+  stops: { key: 'stops', label: 'Spots', unit: '', min: 2, max: 8, step: 1 },
+  spacingMm: { key: 'spacingMm', label: 'Spacing', unit: 'mm', min: 200, max: 3000, step: 50 },
+  seconds: { key: 'seconds', label: 'Time', unit: 's', min: 2, max: 120, step: 1 },
+  riseMm: { key: 'riseMm', label: 'Height', unit: 'mm', min: 2, max: 500, step: 2 },
+  inclineDeg: { key: 'inclineDeg', label: 'Incline', unit: '°', min: 2, max: 40, step: 1 },
+};
 
 export interface BuilderRobot {
   facts: RobotFacts;
   pivot: V3;
   forward: V3;
   footprint: { width: number; depth: number };
+  footSpacingMm: number;
   armSpots: V3[];
   partner?: BuilderRobot;
   heightMm: number;
-}
-
-export interface GoalParam {
-  key: ParamKey;
-  label: string;
-  unit: string;
-  min: number;
-  max: number;
-  step: number;
 }
 
 export interface Route {
@@ -69,19 +75,6 @@ export interface CaseGoal {
   bounds?: Partial<Record<ParamKey, Pick<GoalParam, 'min'>>>;
 }
 
-const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
-  dots: { key: 'dots', label: 'Dots', unit: '', min: 1, max: DOT_COUNT, step: 1 },
-  distanceMm: { key: 'distanceMm', label: 'Distance', unit: 'mm', min: 0, max: 5000, step: 50 },
-  heightMm: { key: 'heightMm', label: 'Height', unit: 'mm', min: 0, max: 2000, step: 10 },
-  sideMm: { key: 'sideMm', label: 'Side', unit: 'mm', min: -2000, max: 2000, step: 10 },
-  radiusMm: { key: 'radiusMm', label: 'Radius', unit: 'mm', min: 5, max: 1000, step: 10 },
-  pushMm: { key: 'pushMm', label: 'Push', unit: 'mm', min: 100, max: 5000, step: 50 },
-  boxMm: { key: 'boxMm', label: 'Box', unit: 'mm', min: 40, max: 600, step: 10 },
-  stops: { key: 'stops', label: 'Spots', unit: '', min: 2, max: 8, step: 1 },
-  spacingMm: { key: 'spacingMm', label: 'Spacing', unit: 'mm', min: 200, max: 3000, step: 50 },
-  seconds: { key: 'seconds', label: 'Time', unit: 's', min: 2, max: 120, step: 1 },
-};
-
 export const goalParam = (goal: CaseGoal, key: ParamKey): GoalParam => ({ ...GOAL_PARAMS[key], ...goal.bounds?.[key] });
 
 const GOAL_BLUE = '#0d99ff';
@@ -114,6 +107,8 @@ const WALK_PAST_SHARE = 1.25;
 export const BLOCK_DEPTH_MM = 120;
 
 const PUSH_SPEED = 0.3;
+
+const SLOWER: ReadonlySet<WorldKind> = new Set(['block', 'rough', 'steps', 'slope']);
 
 export const groundOf = (facts: RobotFacts): Capability | null => {
   if (facts.capabilities.includes('legs')) return 'legs';
@@ -442,6 +437,7 @@ export function goalDefaults(
     stops: 3,
     spacingMm: 600,
     seconds: legs ? 14 : 8,
+    ...terrainDefaults(robot, world),
   };
   const byKind: Record<GoalKind, Partial<GoalValues>> = {
     reach: {},
@@ -454,7 +450,7 @@ export function goalDefaults(
   };
 
   const values = { ...base, ...byKind[kind] };
-  const around = world === 'block' ? AROUND_SECONDS[legs ? 'legs' : 'wheels'] : 0;
+  const around = SLOWER.has(world) ? AROUND_SECONDS[legs ? 'legs' : 'wheels'] : 0;
 
   return { ...values, seconds: values.seconds + around };
 }

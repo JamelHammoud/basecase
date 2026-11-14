@@ -25,6 +25,7 @@ covers:
   - src/cases/tryStore.ts
   - src/cases/caseBuilder.ts
   - src/cases/gestures.ts
+  - src/cases/terrain.ts
   - src/components/cases/CasesPanel.tsx
 ---
 
@@ -36,6 +37,7 @@ A robot that stands in the simulation tells you little about whether it can reac
 
 - **A slot.** What the robot needs to enter: an arm, wheels or legs.
 - **A world.** Objects placed around the robot. Some are solid, some can be pushed, and markers show a spot without getting in the way.
+  The ground can be part of it too: [rough ground, a step or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope), sized to the robot's legs or wheels when you make the Case.
 - **Controls.** What you steer while trying it, such as Move and Turn, or Move and Raise and Lower for an arm.
 - **A contract.** The rules that judge a try: what must happen to pass, and what makes it fail, such as a fall.
 - **A time limit.** How long a try may take.

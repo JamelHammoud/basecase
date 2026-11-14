@@ -35,7 +35,7 @@ Merge parts into one solid, cut one part out of another, or keep only the volume
 1. Select the parts on the canvas. Shift-click adds each one after the first.
 2. Under **Combine** in the Inspector, click **Union** to merge them, or **Intersect** to keep only the volume they share.
 
-The parts become one mesh, named after the first part you selected and printed in its material. A toast with Undo names the parts, as in **Merged Sphere into Cube**.
+The parts become one mesh, named after the first part you selected and made in its material. A toast with Undo names the parts, as in **Merged Sphere into Cube**.
 
 ## Cut one part out of another
 

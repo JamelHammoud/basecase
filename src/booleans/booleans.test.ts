@@ -116,6 +116,14 @@ describe('editable booleans', () => {
     expect(buildPartGroup(old, false).children.length).toBeGreaterThan(0);
   });
 
+  it('keeps the base part cut from sheet when holes are cut from it', () => {
+    const plate = { ...box, sheet: { material: 'aluminum' as const } };
+
+    expect(booleanPart({ id: 'r', base: plate, tools: [cylinder], op: 'subtract' }).sheet).toEqual({
+      material: 'aluminum',
+    });
+  });
+
   it('gives no result when the parts do not overlap', async () => {
     const apart = { ...cylinder, position: [200, 10, 0] as [number, number, number] };
 

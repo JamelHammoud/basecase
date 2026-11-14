@@ -37,6 +37,8 @@ Taper, Bend and Twist still work on a part with rounded edges. You can also ask 
 
 A part from an older scene may show **Round**, a percentage that pulls the shape toward an ellipsoid. It stays until you set it to 0.
 
+A part [cut from sheet](/help/cut-a-part-from-sheet) isn't flat once its edges are rounded, so Checks blocks it.
+
 Only basic shapes have Fillet and Chamfer. Parts the agent models round their edges in their own code. In a STEP file, a part with rounded edges arrives as a faceted solid.
 
 To cut holes or slots in the shape next, see [Cut, join and intersect parts](/help/cut-join-and-intersect-parts).

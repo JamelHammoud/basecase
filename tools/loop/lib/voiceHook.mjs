@@ -16,7 +16,7 @@ export function newPages(dir) {
     .sort();
 }
 
-export function voiceChangedPosts(dir, log = () => {}) {
+export function voiceNewPages(dir, log = () => {}) {
   if (off()) return [];
 
   const pages = newPages(dir);

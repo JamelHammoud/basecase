@@ -29,7 +29,7 @@ Put a Case's passed tries on the Hugging Face Hub as a LeRobot dataset, so LeRob
 
 Publishing works in the desktop app. The dataset is always public.
 
-1. On huggingface.co, make an access token with write access, under Settings ▸ Access Tokens.
+1. On huggingface.co, make an access token with write access, under **Settings** ▸ **Access Tokens**.
 2. In Basecase, press [[⌘,]] and choose **Accounts**.
 3. Paste the token into **Access token** and press [[↩]]. The account name shows under it once the Hub accepts the token.
 

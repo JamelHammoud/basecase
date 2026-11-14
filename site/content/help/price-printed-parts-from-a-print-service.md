@@ -50,7 +50,7 @@ Basecase uploads each part's shape in the pose its plate gives it. Two copies of
 
 A part is quoted again when its shape, print face, material or copies change. Until the new price arrives, the old one shows in amber. Infill doesn't change the quote: Slant 3D prints at its own settings.
 
-When Slant 3D doesn't answer, Basecase shows the error once and asks again a minute later. A key you fix in Settings ▸ Accounts is used from then on.
+When Slant 3D doesn't answer, Basecase shows the error once and asks again a minute later. A key you fix in **Settings** ▸ **Accounts** is used from then on.
 
 Slant 3D prints PLA and PETG. A part in another material, or one too big for its printers, shows the reason in amber and has no price. Its blockers stay in Checks.
 

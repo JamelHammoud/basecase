@@ -35,7 +35,7 @@ A dataset here is a set of demonstrations of the task done right, so failed trie
 
 ## The token never reaches the page
 
-You paste a token once, in Settings ▸ Accounts. The app's main process asks the Hub whose it is and refuses one that can only read. It's stored sealed by Electron's `safeStorage`, or kept in memory only where the system can't encrypt it. The page that draws the app learns two things: whether you're signed in, and your account name.
+You paste a token once, in **Settings** ▸ **Accounts**. The app's main process asks the Hub whose it is and refuses one that can only read. It's stored sealed by Electron's `safeStorage`, or kept in memory only where the system can't encrypt it. The page that draws the app learns two things: whether you're signed in, and your account name.
 
 Every Hub API request is checked to stay on huggingface.co, and redirects are refused. The Hub hands back upload addresses on other hosts for the large files, and those requests carry no token. Hub error messages have the token removed before they're shown.
 

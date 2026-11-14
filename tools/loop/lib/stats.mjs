@@ -1,6 +1,7 @@
 import { isLoopReview, isRevert, kindOf, parseReview } from './evidence.mjs';
 import { laneNamesIn, laneStats, MEASURES, median, round, worstChange } from './laneStats.mjs';
 import { deltaText, lastMeasure } from './pullMeasure.mjs';
+import { conflictsSection } from './conflicts.mjs';
 
 export { median } from './laneStats.mjs';
 
@@ -72,7 +73,19 @@ export function measuredPulls(merged, comments, owner) {
   });
 }
 
-export function weekStats({ pulls, comments, commits, runs, steps = [], openSteps, owner, from, to, previous = null }) {
+export function weekStats({
+  pulls,
+  comments,
+  commits,
+  runs,
+  steps = [],
+  openSteps,
+  owner,
+  from,
+  to,
+  previous = null,
+  conflicts = [],
+}) {
   const merged = mergedIn(pulls, { from, to });
   const byKind = countByKind(merged);
   const lanes = laneStats({ pulls, comments, commits, steps, owner, from, to });
@@ -95,6 +108,7 @@ export function weekStats({ pulls, comments, commits, runs, steps = [], openStep
     measured: measuredPulls(merged, comments, owner),
     lastLanes: previous?.lanes ?? null,
     worst: worstChange(lanes, previous?.lanes ?? null),
+    conflicts,
   };
 }
 
@@ -190,6 +204,7 @@ export const digestBody = (stats) =>
     digestTable(stats),
     laneTable(stats.lanes, stats.lastLanes),
     ...measuredSection(stats.measured ?? []),
+    conflictsSection(stats.conflicts ?? []),
     ...(stats.lastLanes ? [worstLine(stats.worst)] : []),
     digestJson(stats),
   ].join('\n\n');

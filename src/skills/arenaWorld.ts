@@ -2,8 +2,9 @@ import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import { SimEngine, type Controller } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotPoseState } from '../types/robotics';
-import type { Range } from './environment';
+import type { Range, ServoSpread } from './environment';
 import { sha256Hex } from './hash';
+import { drawServos, type ServoDraw } from './servoDraws';
 import type { Random } from '../utils/seededRandom';
 
 export { seededRandom, type Random } from '../utils/seededRandom';
@@ -16,6 +17,7 @@ export interface ArenaRanges {
   jointNoiseDeg: number;
   baseYawDeg: number;
   baseOffsetMm: number;
+  servos?: ServoSpread[];
 }
 
 export interface Instance {
@@ -26,6 +28,7 @@ export interface Instance {
   jointNoise: number[];
   yawDeg: number;
   offsetMm: [number, number];
+  servos?: Record<string, ServoDraw>;
 }
 
 const toHex = (bytes: Uint8Array) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -47,6 +50,7 @@ export function drawInstance(random: Random, options: { ranges: ArenaRanges; bod
     jointNoise: Array.from({ length: joints }, () => symmetric(random, ranges.jointNoiseDeg)),
     yawDeg: symmetric(random, ranges.baseYawDeg),
     offsetMm: [symmetric(random, ranges.baseOffsetMm), symmetric(random, ranges.baseOffsetMm)],
+    servos: drawServos(ranges.servos, random),
   } satisfies Instance;
 }
 
@@ -79,7 +83,25 @@ function delayedModule(mj: MainModule, delay: Delay): MainModule {
   return Object.create(mj, { mj_step: { value: step } }) as MainModule;
 }
 
-const SNAPSHOT = ['geom_friction', 'body_mass', 'body_inertia', 'actuator_forcerange'] as const;
+const SNAPSHOT = [
+  'geom_friction',
+  'body_mass',
+  'body_inertia',
+  'actuator_forcerange',
+  'actuator_gainprm',
+  'actuator_biasprm',
+  'actuator_delay',
+  'dof_damping',
+  'dof_armature',
+  'dof_frictionloss',
+] as const;
+
+interface ServoSlot {
+  actuator: number;
+  dof: number;
+}
+
+const GAIN_WIDTH = 10;
 const DIVERGENCE = ['mjWARN_BADQPOS', 'mjWARN_BADQVEL', 'mjWARN_BADQACC'] as const;
 
 export class ArenaWorld {
@@ -87,6 +109,7 @@ export class ArenaWorld {
   private mj: MainModule;
   private delay: Delay = { steps: 0, history: [] };
   private baseline: Record<(typeof SNAPSHOT)[number], Float64Array>;
+  private slots: Map<string, ServoSlot>;
 
   constructor(mj: MainModule, model: SimModel) {
     this.mj = mj;
@@ -95,6 +118,13 @@ export class ArenaWorld {
     this.baseline = Object.fromEntries(
       SNAPSHOT.map((field) => [field, Float64Array.from(this.engine.model[field] as ArrayLike<number>)]),
     ) as ArenaWorld['baseline'];
+    this.slots = new Map(
+      this.engine.sim.joints.map((j) => {
+        const id = mj.mj_name2id(this.engine.model, mj.mjtObj.mjOBJ_JOINT.value, j.name);
+
+        return [j.id, { actuator: j.actuator, dof: this.engine.model.jnt_dofadr[id] }];
+      }),
+    );
   }
 
   private restore() {
@@ -117,6 +147,25 @@ export class ArenaWorld {
     }
 
     for (let i = 0; i < forcerange.length; i++) forcerange[i] *= instance.strength;
+
+    for (const [joint, draw] of Object.entries(instance.servos ?? {})) this.drawServo(this.slots.get(joint), draw);
+  }
+
+  private drawServo(slot: ServoSlot | undefined, draw: ServoDraw) {
+    if (!slot) return;
+
+    const { model } = this.engine;
+    const { actuator: a, dof } = slot;
+    const forcerange = model.actuator_forcerange as Float64Array;
+
+    (model.actuator_gainprm as Float64Array)[a * GAIN_WIDTH] *= draw.kp;
+    (model.actuator_biasprm as Float64Array)[a * GAIN_WIDTH + 1] *= draw.kp;
+    forcerange[2 * a] *= draw.forceNm;
+    forcerange[2 * a + 1] *= draw.forceNm;
+    (model.actuator_delay as Float64Array)[a] *= draw.delayS;
+    (model.dof_damping as Float64Array)[dof] *= draw.damping;
+    (model.dof_armature as Float64Array)[dof] *= draw.armature;
+    (model.dof_frictionloss as Float64Array)[dof] *= draw.frictionloss;
   }
 
   private startPose(base: RobotPoseState, instance: Instance, robot: string): RobotPoseState {

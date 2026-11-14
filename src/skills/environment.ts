@@ -1,12 +1,18 @@
-import type { SimModel } from '../sim/mjcfTypes';
+import type { ServoSpread, SimModel } from '../sim/mjcfTypes';
 import type { RobotPoseState } from '../types/robotics';
 import { contractSignals, type Contract } from './contract';
-import { hashOf, isHash } from './hash';
+import { canonicalJson, hashOf, isHash } from './hash';
 import { eyeProblems, eyeRays, type Eye } from '../sim/eyes';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
+import { robotSpreads } from './servoDraws';
 
-export const ENVIRONMENT_VERSION = 1;
+export type { ServoSpread } from '../sim/mjcfTypes';
+
+export const ENVIRONMENT_VERSION = 2;
+export const ENVIRONMENT_VERSIONS = [1, ENVIRONMENT_VERSION] as const;
+
+export type EnvironmentVersion = (typeof ENVIRONMENT_VERSIONS)[number];
 
 export type Range = [number, number];
 export type Axis = 'x' | 'y' | 'z';
@@ -65,6 +71,7 @@ export interface Randomization {
   mass: Range;
   strength: Range;
   latencyMs: Range;
+  servos?: ServoSpread[];
 }
 
 export type RewardRef = { kind: 'contract-robustness' } | { kind: 'rewardlang'; hash: string };
@@ -90,7 +97,7 @@ export interface MoveReference {
 export const MAX_REFERENCE_FRAMES = 30000;
 
 export interface Environment {
-  version: typeof ENVIRONMENT_VERSION;
+  version: EnvironmentVersion;
   robot: string;
   horizonS: number;
   traceDt: number;
@@ -135,6 +142,14 @@ export function policyObservation(joints: string[]): ObservationTerm[] {
 }
 
 export const environmentHash = (env: Environment) => hashOf(env);
+
+export function withServoSpreads(model: Pick<SimModel, 'servoSpreads'>, env: Environment): Environment {
+  const kept = robotSpreads(model.servoSpreads, env.action.joints);
+
+  if (!kept.length) return env;
+
+  return { ...env, version: ENVIRONMENT_VERSION, randomization: { ...env.randomization, servos: kept } };
+}
 
 const finiteIn = (v: unknown, min: number, max: number) =>
   typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
@@ -214,6 +229,19 @@ function randomizationProblems(r: Randomization): string[] {
   if (!rangeIn(r.latencyMs, 0, MAX_LATENCY_MS)) out.push(`Latency runs from 0 to ${MAX_LATENCY_MS} ms.`);
 
   return out;
+}
+
+function servoProblems(env: Environment, model: SimModel): string[] {
+  const spreads = env.randomization.servos;
+
+  if (spreads === undefined) return [];
+
+  const own = robotSpreads(model.servoSpreads, env.action.joints);
+  const matches = own.length > 0 && canonicalJson(spreads) === canonicalJson(own);
+
+  return env.version === ENVIRONMENT_VERSION && matches
+    ? []
+    : ['Servo spreads need environment version 2 and must match the robot’s servos.'];
 }
 
 export const MAX_START_M = 5;
@@ -330,7 +358,7 @@ function rewardProblems(reward: RewardRef): string[] {
 function shapeProblems(env: Environment, index: ModelIndex): string[] {
   const out: string[] = [];
 
-  if (env.version !== ENVIRONMENT_VERSION) out.push('This environment version is not supported.');
+  if (!ENVIRONMENT_VERSIONS.includes(env.version)) out.push('This environment version is not supported.');
 
   if (!index.robots.has(env.robot)) out.push('The environment names a robot this scene lacks.');
 
@@ -349,6 +377,7 @@ export async function validateEnvironment(env: Environment, model: SimModel): Pr
     ...env.observation.flatMap((term) => termProblems(term, index)),
     ...actionProblems(env.action, index),
     ...randomizationProblems(env.randomization),
+    ...servoProblems(env, model),
     ...resetProblems(env.reset, index),
     ...rewardProblems(env.reward),
     ...referenceProblems(env.reference, env.action.joints),

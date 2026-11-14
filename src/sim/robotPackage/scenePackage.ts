@@ -1,4 +1,4 @@
-import { activeCalibrations } from '../../reality/history';
+import { simCalibrations } from '../../reality/history';
 import { calibratedInput } from '../../reality/calibratedInput';
 import type { MeshFiles } from '../../three/componentMeshes';
 import { headlessParts } from '../../three/headlessParts';
@@ -13,7 +13,7 @@ export async function scenePackageFiles(scene: SharedScene, meshes: MeshFiles): 
   const { joints, measures, partTriangles } = await headlessParts(scene.parts, project.joints ?? [], meshes);
   const rig = buildRig(joints, scene.parts);
   const input = { parts: scene.parts, rig, project, measures, partTriangles };
-  const model = buildMjcf(calibratedInput(input, activeCalibrations(project.servoCalibrations)));
+  const model = buildMjcf(calibratedInput(input, simCalibrations(project.servoCalibrations)));
   const ids = robotPartIds(model);
   const triangles: Record<string, Float32Array> = {};
 

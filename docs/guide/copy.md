@@ -179,7 +179,7 @@ Changelog posts, blog posts and help articles go through three separate sessions
 
 The loop runs it on every page a pull request adds or changes and on every revision (`tools/loop/lib/voiceHook.mjs`), on every pull request body it opens or rewrites, and on every issue it files. `node tools/voice/rewrite.mjs <file>` runs it by hand. UI strings aren't rewritten: they follow §3a to §3e, and review fails a new string that shows humanizer's patterns.
 
-The samples are the voice. To change how something sounds, change its samples, not the rules: a page Jamel approves goes into `samples/`, and a sample that leads somewhere he doesn't like comes out. Today they are Amp's changelog posts and the approved snap post (changelog and blog), Things' and Panic's help articles (help), Ghostty's pull requests and the approved #334 description (pull requests), and Ghostty's issues (issues).
+The samples are the voice. To change how something sounds, change its samples, not the rules: a page Jamel approves goes into `samples/`, and a sample that leads somewhere he doesn't like comes out. Today they come from teams known for their writing: GitHub, Linear, Raycast, Ghostty and Amp changelogs plus the approved snap post (changelog), Things, Zed and Vercel posts (blog), Panic, Things, Apple, Tailscale and Slack articles (help), pull requests by BurntSushi, Anders Hejlsberg, matklad and Mitchell Hashimoto plus the approved #334 description (pull requests), and Rust, TypeScript and Ghostty issues (issues). Each sample keeps its writer's words, with semicolons and dashes turned into full stops and commas.
 
 #### Every page
 

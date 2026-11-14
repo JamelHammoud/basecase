@@ -87,7 +87,7 @@ describe('Try segments', () => {
       .toBe(opened.segments.length + 1);
 
     await app.page.locator(shown('[data-testid="try-row"]')).first().click({ button: 'right' });
-    await app.page.getByRole('menuitem', { name: 'Tag…' }).click();
+    await app.page.getByRole('menuitem', { name: 'Tag', exact: true }).click();
     await app.page.getByRole('dialog').getByRole('textbox').fill('slow grasp');
     await app.page.keyboard.press('Enter');
     await expect.poll(async () => (await tryLabels(opened.id!))?.tags ?? []).toEqual(['slow grasp']);

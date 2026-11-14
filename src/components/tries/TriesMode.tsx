@@ -43,10 +43,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      entries: [
-        ...view.labelling.entries(view.targets(id)),
-        deleteEntry(() => view.remove(id), timelineOpen ? undefined : '⌫'),
-      ],
+      entries: [...view.labelling.entries(view.targets(id)), deleteEntry(() => view.remove(id), '⌫')],
     });
   };
 

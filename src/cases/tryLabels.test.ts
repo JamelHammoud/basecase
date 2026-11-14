@@ -1,16 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  canMark,
-  mergeBack,
-  moveEdge,
-  patched,
-  readTryLabels,
-  renamed,
-  shownVerdict,
-  splitAt,
-  withTags,
-  type TrySegment,
-} from './tryLabels';
+import { mergeBack, moveEdge, patched, readTryLabels, renamed, splitAt, withTags, type TrySegment } from './tryLabels';
 
 const segments: TrySegment[] = [
   { start: 0, end: 50, label: 'reach the block' },
@@ -48,27 +37,19 @@ describe('try labels', () => {
     expect(renamed(segments, 2, '  ')[2].label).toBe('lift the block');
   });
 
-  it('marks only an unjudged try, and never overrides a contract verdict', () => {
-    expect(canMark('unjudged', undefined)).toBe(true);
-    expect(canMark('failed', undefined)).toBe(false);
-    expect(canMark('passed', { mark: 'failed' })).toBe(false);
-    expect(
-      canMark('unjudged', { judged: { caseId: 'c', caseName: 'Touch a Point', verdict: 'passed', margin: 1 } }),
-    ).toBe(false);
-    expect(shownVerdict('passed', { mark: 'failed' })).toBe('passed');
-    expect(shownVerdict('unjudged', { mark: 'failed' })).toBe('failed');
-  });
-
   it('reads only well-formed labels, and patches keys away with null', () => {
     const read = readTryLabels({
       segments: [...segments, { start: 130, end: 140, label: 'gap' }],
       tags: ['  good  grip ', 'good grip', 3],
-      mark: 'maybe',
+      verdict: 'passed',
       instruction: 'pick up the red block',
     });
 
     expect(read).toEqual({ tags: ['good grip'], instruction: 'pick up the red block' });
-    expect(patched({ tags: ['a'], mark: 'passed' }, { mark: null, segments })).toEqual({ segments, tags: ['a'] });
+    expect(patched({ tags: ['a'], instruction: 'lift it' }, { instruction: null, segments })).toEqual({
+      segments,
+      tags: ['a'],
+    });
     expect(withTags(['a'], ['b', 'a', ' '])).toEqual(['a', 'b']);
   });
 });

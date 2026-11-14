@@ -4,8 +4,6 @@ export const TAG_MAX = 64;
 const MAX_TAGS = 32;
 const MAX_SEGMENTS = 2000;
 
-export type Mark = 'passed' | 'failed';
-
 export interface TrySegment {
   start: number;
   end: number;
@@ -14,19 +12,10 @@ export interface TrySegment {
   tags?: string[];
 }
 
-export interface Judged {
-  caseId: string;
-  caseName: string;
-  verdict: Mark;
-  margin: number;
-}
-
 export interface TryLabels {
   segments?: TrySegment[];
   instruction?: string;
   tags?: string[];
-  mark?: Mark;
-  judged?: Judged;
 }
 
 export type LabelPatch = { [K in keyof TryLabels]?: TryLabels[K] | null };
@@ -37,7 +26,6 @@ const isObject = (v: unknown): v is Raw => typeof v === 'object' && v !== null &
 const isText = (v: unknown, max: number): v is string =>
   typeof v === 'string' && v.trim().length > 0 && v.length <= max;
 const isFrame = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0;
-const isMark = (v: unknown): v is Mark => v === 'passed' || v === 'failed';
 
 export const cleanTag = (tag: string) => tag.trim().replace(/\s+/g, ' ').slice(0, TAG_MAX);
 
@@ -75,27 +63,16 @@ function readSegments(v: unknown): TrySegment[] | undefined {
   return list.every((s, i) => i === 0 || s.start === list[i - 1].end) ? list : undefined;
 }
 
-function readJudged(v: unknown): Judged | undefined {
-  if (!isObject(v) || !isText(v.caseId, 128) || !isText(v.caseName, 512) || !isMark(v.verdict)) return undefined;
-
-  return typeof v.margin === 'number' && Number.isFinite(v.margin)
-    ? { caseId: v.caseId, caseName: v.caseName, verdict: v.verdict, margin: v.margin }
-    : undefined;
-}
-
 export function readTryLabels(value: unknown): TryLabels | undefined {
   if (!isObject(value)) return undefined;
 
   const segments = readSegments(value.segments);
   const tags = readTags(value.tags);
-  const judged = readJudged(value.judged);
 
   return {
     ...(segments ? { segments } : {}),
     ...(isText(value.instruction, LABEL_MAX) ? { instruction: value.instruction } : {}),
     ...(tags?.length ? { tags } : {}),
-    ...(isMark(value.mark) ? { mark: value.mark } : {}),
-    ...(judged ? { judged } : {}),
   };
 }
 
@@ -153,12 +130,3 @@ export const renamed = (segments: TrySegment[], index: number, label: string) =>
 
 export const segmentAt = (segments: TrySegment[], frame: number) =>
   segments.findIndex((s) => s.start <= frame && frame < s.end);
-
-export const canMark = (verdict: 'passed' | 'failed' | 'unjudged', labels: TryLabels | undefined) =>
-  verdict === 'unjudged' && !labels?.judged;
-
-export function shownVerdict(verdict: 'passed' | 'failed' | 'unjudged', labels: TryLabels | undefined) {
-  if (verdict !== 'unjudged') return verdict;
-
-  return labels?.judged?.verdict ?? labels?.mark ?? 'unjudged';
-}

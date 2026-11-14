@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { Badge } from '../../design-system';
 import { TRY_SOURCE_BADGE, summaryRecord, type TrySummary } from '../../cases/tryFile';
-import { summaryVerdict } from '../../cases/tryRelabels';
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import { runClock } from '../../utils/duration';
@@ -57,8 +56,7 @@ export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPi
     scene?.world ?? NONE,
   );
   const film = useStoredStrip(summary.id, seen && summary.strip) ?? drawn;
-  const verdict = summaryVerdict(summary);
-  const outcome = OUTCOME[verdict];
+  const outcome = OUTCOME[summary.outcome.verdict];
   const badge = TRY_SOURCE_BADGE[summary.source];
 
   return (
@@ -81,9 +79,7 @@ export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPi
         <div className="text-[13px] font-medium text-white/90 truncate">{summary.caseName}</div>
         <div className="flex items-center gap-2 text-[12.5px]">
           {outcome && (
-            <span data-verdict={verdict} className={verdict === 'passed' ? 'text-white/90' : 'text-red-400'}>
-              {outcome}
-            </span>
+            <span className={summary.outcome.verdict === 'passed' ? 'text-white/90' : 'text-red-400'}>{outcome}</span>
           )}
           <span className="text-white/50 tabular">{runClock(summary.seconds)}</span>
           {badge && <Badge>{badge}</Badge>}

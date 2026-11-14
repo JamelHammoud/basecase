@@ -11,7 +11,6 @@ const MAX_RECORDING = 1024 * 1024 * 1024;
 const MAX_STRIP = 2 * 1024 * 1024;
 const SOURCES = new Set(['case', 'generated', 'real']);
 const VERDICTS = new Set(['passed', 'failed', 'unjudged']);
-const MARKS = new Set(['passed', 'failed']);
 const FLAGS = new Set(['limit', 'gap', 'effort', 'idle', 'model']);
 const MAX_RELABELS = 5000;
 
@@ -40,17 +39,11 @@ function patchedLabels(labels, patch) {
   return out;
 }
 
-const markOf = (value) => (MARKS.has(value) ? value : null);
-
 function labelsOf(manifest) {
   const labels = isPlain(manifest.labels) ? manifest.labels : {};
   const tags = Array.isArray(labels.tags) ? labels.tags.filter((t) => typeof t === 'string').map((t) => text(t)) : [];
 
-  return {
-    tags: [...new Set(tags)],
-    mark: markOf(labels.mark),
-    judged: markOf(isPlain(labels.judged) ? labels.judged.verdict : null),
-  };
+  return { tags: [...new Set(tags)] };
 }
 
 const flagsOf = (manifest) =>

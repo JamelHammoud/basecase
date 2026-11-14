@@ -3,7 +3,7 @@ import { RECORD_HZ } from '../sim/recorder';
 import { flagKinds, readFlags, type FlagKind, type TryFlag } from '../datasets/tryFlags';
 import { CASE_FORMAT_VERSION } from './schema';
 import type { TryRecord } from './tries';
-import { readTryLabels, type Mark, type TryLabels } from './tryLabels';
+import { readTryLabels, type TryLabels } from './tryLabels';
 
 export const TRY_FILE_VERSION = 1;
 
@@ -64,8 +64,6 @@ export interface TrySummary {
   recording: boolean;
   strip: boolean;
   tags: string[];
-  mark: Mark | null;
-  judged: Mark | null;
   flags: FlagKind[];
 }
 
@@ -269,7 +267,5 @@ export const summaryOf = (stored: StoredTry, held: { recording: boolean; strip: 
   sourceTry: stored.sourceTry,
   ...held,
   tags: stored.labels?.tags ?? [],
-  mark: stored.labels?.mark ?? null,
-  judged: stored.labels?.judged?.verdict ?? null,
   flags: flagKinds(stored.flags),
 });

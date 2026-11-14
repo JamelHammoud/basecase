@@ -100,8 +100,6 @@ function relabelled(summary: TrySummary, patch: LabelPatch): TrySummary {
   return {
     ...summary,
     ...(patch.tags !== undefined ? { tags: patch.tags ?? [] } : {}),
-    ...(patch.mark !== undefined ? { mark: patch.mark ?? null } : {}),
-    ...(patch.judged !== undefined ? { judged: patch.judged?.verdict ?? null } : {}),
   };
 }
 

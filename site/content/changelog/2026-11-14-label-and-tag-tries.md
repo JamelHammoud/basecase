@@ -6,23 +6,23 @@ image: /changelog/label-and-tag-tries/cover.png
 
 You can now see every try split into named subtasks on its timeline, fix the splits by hand, and tag tries.
 
-Until now, a two-minute try reached a dataset as one task. Policies and vision-language-action models learn better from steps in words, like reach, grasp, lift and place the block. In labeling tools you mark those frames by hand, one at a time. Basecase marks them from what it already knows about the try.
+Until now, a two-minute try reached a dataset as one task. Policies and vision-language-action models learn better from steps put into words, like reach, grasp, lift and place the block. Labeling tools have you mark those frames by hand, one at a time. Basecase marks them for you from what it already knows about the try.
 
 ## How a Try Splits
 
-A try splits where the gripper closes or opens. While an object is held, it also splits when the object rises 5 mm, when it moves 10 mm, and when it comes down. A pause of 0.3 s splits it too, and so do a Case's stages and named events, like a wave gesture. The same try always splits the same way.
+A try splits where the gripper closes or opens. While an object is held, it also splits when the object rises 5 mm, when it moves 10 mm, and when it comes down. A Case's stages and named events, like a wave gesture, split it too. On an arm without a gripper, or on a legged robot, a pause of 0.3 s splits it. The same try always splits the same way.
 
-The reference try for Pick Up a Block on the six-joint arm splits into reach, grasp, lift, carry, place and release, with the block named in each subtask. Real tries split only on the gripper and on pauses.
+Take Pick Up a Block on the six-joint arm. Its reference try splits into reach, grasp, lift, carry, place and release, and each subtask names the block. Real tries split only on the gripper and on pauses.
 
 ## Fix and Tag
 
-Split, merge, move and rename segments on the timeline, and undo any edit.
+Split, merge, move and rename segments on the timeline. You can undo any edit.
 
-Right-click a try for Tag, Mark Passed and Mark Failed. You can't mark over a Case's verdict.
+To tag a try, right-click it and choose Tag. Select several tries and right-click any of them, and Tag applies to all of them at once.
 
 ## Export
 
-Export Dataset writes each frame's subtask for LeRobot and GR00T. To load the new datasets, LeRobot needs version 0.7 or later.
+Export Dataset writes the subtask of each frame, for LeRobot and GR00T. LeRobot needs version 0.7 or later to load the new datasets.
 
 The agent labels tries too, with its `label_tries` tool.
 

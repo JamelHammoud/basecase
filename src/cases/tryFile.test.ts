@@ -76,16 +76,16 @@ describe('a try’s manifest', () => {
     const flags = [{ kind: 'limit' as const, at: 2, joint: 'elbow' }];
     const stored = {
       ...storedTryOf(record(), { ...context, flags }),
-      labels: { segments: [{ start: 0, end: 10, label: 'reach' }], tags: ['good grip'], mark: 'passed' as const },
+      labels: { segments: [{ start: 0, end: 10, label: 'reach' }], tags: ['good grip'] },
     };
-    const read = readStoredTry(JSON.parse(JSON.stringify({ ...stored, labels: { ...stored.labels, mark: 'meh' } })));
+    const read = readStoredTry(
+      JSON.parse(JSON.stringify({ ...stored, labels: { ...stored.labels, tags: ['good grip', 7] } })),
+    );
 
     expect(read?.flags).toEqual(flags);
     expect(read?.labels).toEqual({ segments: stored.labels.segments, tags: ['good grip'] });
     expect(summaryOf(read!, { recording: true, strip: false })).toMatchObject({
       tags: ['good grip'],
-      mark: null,
-      judged: null,
       flags: ['limit'],
     });
   });

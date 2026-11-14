@@ -137,7 +137,7 @@ describe('TryStore', () => {
     expect(await post('/tries-strip', 'try-1')).toEqual({ data: Buffer.from([9, 9]).toString('base64') });
   });
 
-  it('tags 50 tries in one call, keeps their recordings and lists the tags and marks', async () => {
+  it('tags 50 tries in one call, keeps their recordings and lists the tags', async () => {
     const ids = Array.from({ length: 50 }, (_, i) => `try-${i}`);
 
     for (const id of ids) store.save({ manifest: manifest(id), recording: new Uint8Array([1]) });
@@ -148,15 +148,15 @@ describe('TryStore', () => {
     const changes = [...ids, 'try-x'].map((id) => ({ id, patch: { tags: ['good grip'] } }));
 
     expect(await TRY_CALLS['tries:relabel'](store, changes)).toEqual({ relabelled: [...ids, 'try-x'] });
-    expect(store.relabel([{ id: 'try-x', patch: { mark: 'failed', instruction: null } }])).toEqual({
+    expect(store.relabel([{ id: 'try-x', patch: { instruction: null } }])).toEqual({
       relabelled: ['try-x'],
     });
 
     const listed = Object.fromEntries(store.list().map((s) => [s.id, s]));
 
     expect(ids.every((id) => listed[id].tags.join() === 'good grip' && listed[id].recording)).toBe(true);
-    expect(listed['try-x']).toMatchObject({ tags: ['good grip'], mark: 'failed', judged: null, flags: [] });
-    expect(store.manifest('try-x').labels).toEqual({ tags: ['good grip'], mark: 'failed' });
+    expect(listed['try-x']).toMatchObject({ tags: ['good grip'], flags: [] });
+    expect(store.manifest('try-x').labels).toEqual({ tags: ['good grip'] });
     expect(store.manifest('try-none')).toBeNull();
     expect(() => store.relabel('try-1')).toThrow('Expected a list of label changes');
   });

@@ -76,6 +76,24 @@ describe('gripping in live drive', () => {
     expect(Math.abs(across.x)).toBeGreaterThan(0.95);
   });
 
+  it('holds the measured joints from the first control step after key-up, so the hand stays put', () => {
+    const { drive, rig, facts } = armDrive('arm-6dof');
+    const moving = run(drive, { v: [1, 0, 0], aux: [0, 0] }, 1);
+    const lagging = { ...moving, arm3: moving.arm3 - 12, arm4: moving.arm4 + 9, arm5: moving.arm5 - 7 };
+    const tip = (values: Record<string, number>) =>
+      new THREE.Vector3(...facts.endEffector!.point).applyMatrix4(
+        forwardKinematics(rig, { values }).joint.get(rig.ownerOf.get(facts.endEffector!.part)!)!,
+      );
+
+    drive.command({ v: [0, 0, 0], aux: [0, 0] }, lagging);
+
+    const held = Array.from({ length: 50 }, (_, i) => drive.tick(1.02 + i * 0.02).values!);
+
+    for (const values of held) expect(values).toEqual(held[0]);
+
+    expect(tip(held[0]).distanceTo(tip(lagging))).toBeLessThan(0.01);
+  });
+
   it('drives an arm without a gripper the same whether or not Space is held', () => {
     const target: V3 = [0, 120, 120];
     const gripping = run(armDrive('arm-3dof').drive, { v: [0, 0, 0], target, aux: [0, 1] }, 1);

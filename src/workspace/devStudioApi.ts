@@ -28,7 +28,7 @@ import {
 } from '../cameras/operator/operatorCamera';
 import type { PoseSample } from '../cameras/operator/poseFollow';
 import { feedVoice } from '../voice/voiceSession';
-import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
+import { robotLinkState, startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
 import { twinSnapshot } from '../robot/robotTwin';
@@ -201,6 +201,12 @@ async function rangeClashes(parts: ScenePart[], project: ProjectSettings, viewpo
   return hits.flatMap((list, i) => list.map((hit) => ({ ...hit, joint: turning[i].id })));
 }
 
+function lastDownloadFile() {
+  const file = lastDownload();
+
+  return file && { name: file.name, base64: bytesToBase64(file.bytes) };
+}
+
 function operatorCameraState() {
   const { open, label, estimator, error } = operatorCameraSnapshot();
   const track = operatorTrackState();
@@ -225,11 +231,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     checkDots: () => viewportRef.current?.checkDotCount() ?? 0,
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(partsRef.current),
-    lastDownload: () => {
-      const file = lastDownload();
-
-      return file && { name: file.name, base64: bytesToBase64(file.bytes) };
-    },
+    lastDownload: () => lastDownloadFile(),
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],
     projectPoints: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     meshByColor: () => meshByColor(partsRef.current),
@@ -308,6 +310,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
     plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    robotCalibration: async () => (await robotLinkState())?.calibration ?? null,
     phone: () => phoneSnapshot(),
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
     feedHand: (samples: HandSample[], fps?: number) => feedOperatorHand(samples, fps),

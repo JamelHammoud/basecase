@@ -8,6 +8,20 @@ export function lengthFigure(mm: number): string {
   return tenths(v) < 100 ? String(tenths(v)) : String(Math.round(v));
 }
 
+function metres(m: number): string {
+  if (m < 9.995) return `${m.toFixed(2)} m`;
+
+  return m < 99.95 ? `${m.toFixed(1)} m` : `${Math.round(m)} m`;
+}
+
+export function lengthLabel(mm: number): string {
+  const v = Math.max(0, mm);
+
+  return Math.round(v) < 1000 ? `${lengthFigure(v)} mm` : metres(Math.round(v) / 1000);
+}
+
+export const signedLengthLabel = (mm: number): string => (mm < 0 ? `-${lengthLabel(-mm)}` : lengthLabel(mm));
+
 export const sizeFigures = (mm: readonly number[]): string => mm.map(lengthFigure).join(' × ');
 
 export const sizeLabel = (mm: readonly number[]): string => `${sizeFigures(mm)} mm`;

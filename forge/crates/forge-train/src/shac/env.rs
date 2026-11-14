@@ -61,7 +61,7 @@ impl<'a> Env<'a> {
         let mut rngs: Vec<Rng> = (0..count).map(|i| Rng::new(seed, i as u64)).collect();
         let mut params = WorldParams::new(&robot.model, count)?;
 
-        randomize(&mut physics, robot.nu, &mut rngs)?;
+        randomize(&mut physics, (robot.nu, &robot.job.options.ranges), &mut rngs)?;
         mirror(&mut physics, &mut params)?;
 
         let k = &plan.kernel;

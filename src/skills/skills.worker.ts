@@ -14,6 +14,7 @@ export type SkillsMessage =
   | SkillsReply
   | { type: 'forge'; call: number; job: ForgeJob }
   | { type: 'save'; call: number; path: string; text: string }
+  | { type: 'progress'; share: number }
   | { type: 'error'; message: string };
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
@@ -53,7 +54,10 @@ ctx.onmessage = async (ev: MessageEvent<SkillsRequest>) => {
 
   try {
     mj ??= await loadMujoco();
-    ctx.postMessage(await runSkillsJob(msg, { mj, forge, save }));
+
+    const onProgress = (share: number) => ctx.postMessage({ type: 'progress', share } satisfies SkillsMessage);
+
+    ctx.postMessage(await runSkillsJob(msg, { mj, forge, save, onProgress }));
   } catch (e) {
     ctx.postMessage({ type: 'error', message: errorMessage(e) } satisfies SkillsMessage);
   }

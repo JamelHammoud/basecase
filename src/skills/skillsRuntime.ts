@@ -11,6 +11,7 @@ import type { RaceOutcome } from './race';
 import type { SkillRunner } from './skillsClient';
 import type { SkillPorts, SkillsJob } from './skillsJob';
 import { SkillCoach } from './skillsCoach';
+import { SkillStress } from './skillsStress';
 import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, refusalModel, type SkillJob, type SkillRefusal, type SkillTarget } from './skillRows';
 import {
@@ -71,6 +72,12 @@ export const designOf = (model: SimModel) => model.robots[0]?.key ?? 'scene';
 
 const refused = (reason: string): HandoffResult => ({ skill: null, proof: null, reason });
 
+interface JobRow {
+  target: SkillTarget;
+  label: string;
+  message?: string;
+}
+
 const BUSY = 'Training is running. Check list_skills, or wait for it to finish.';
 
 export class SkillsRuntime {
@@ -86,6 +93,7 @@ export class SkillsRuntime {
 
   private deps: RuntimeDeps;
   readonly coach: SkillCoach;
+  readonly stress: SkillStress;
 
   constructor(deps: RuntimeDeps) {
     this.deps = deps;
@@ -95,19 +103,27 @@ export class SkillsRuntime {
       startJob: (row, work) => this.startJob(row, work),
       keep: (target, record) => this.keep(target, record),
     });
+    this.stress = new SkillStress({
+      runner: deps.runner,
+      startJob: (row, work) => this.startJob(row, work),
+      keep: (target, record) => this.keep(target, record),
+    });
   }
 
   loadSkill(hash: string) {
     return this.deps.loadSkill(hash);
   }
 
-  startJob(row: { target: SkillTarget; label: string }, work: (ports: SkillPorts) => Promise<void>): string | null {
+  startJob(row: JobRow, work: (ports: SkillPorts) => Promise<void>): string | null {
     if (this.user) return BUSY;
+
+    const onProgress = (share: number) =>
+      this.setJob(row.target, { share, ...(row.message ? { message: row.message } : {}) });
 
     this.running = this.start({
       ...row,
       background: false,
-      work: (forge, signal) => work({ ...this.ports(), forge, signal }),
+      work: (forge, signal) => work({ ...this.ports(), forge, signal, onProgress }),
     });
 
     return null;

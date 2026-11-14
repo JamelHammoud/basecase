@@ -1,4 +1,5 @@
-import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
+import type { MainModule } from '@mujoco/mujoco';
+import { ConditionedPhysics, type Conditions } from '../sim/conditions';
 import { SimEngine, type Controller } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotPoseState } from '../types/robotics';
@@ -18,11 +19,7 @@ export interface ArenaRanges {
   baseOffsetMm: number;
 }
 
-export interface Instance {
-  friction: number;
-  masses: number[];
-  strength: number;
-  latencyMs: number;
+export interface Instance extends Conditions {
   jointNoise: number[];
   yawDeg: number;
   offsetMm: [number, number];
@@ -58,83 +55,41 @@ export function withTimestep(model: SimModel, factor: number): SimModel {
   return { ...model, xml };
 }
 
-interface Delay {
-  steps: number;
-  history: Float64Array[];
+export function startPose(
+  joints: SimModel['joints'],
+  start: { base: RobotPoseState; instance: Pick<Instance, 'jointNoise' | 'offsetMm'>; robot: string },
+): RobotPoseState {
+  const { base, instance, robot } = start;
+  const values = { ...base.values };
+
+  joints.forEach((j, i) => {
+    if (j.robot !== robot) return;
+
+    const [lo, hi] = j.range ?? [-Infinity, Infinity];
+
+    values[j.id] = Math.max(lo, Math.min(hi, (values[j.id] ?? 0) + (instance.jointNoise[i] ?? 0)));
+  });
+
+  const root = base.roots?.[robot];
+  const p = root?.position ?? [0, 0, 0];
+  const position: [number, number, number] = [p[0] + instance.offsetMm[0], p[1], p[2] + instance.offsetMm[1]];
+
+  return { ...base, values, roots: { ...base.roots, [robot]: { ...root, position } } };
 }
 
-function delayedModule(mj: MainModule, delay: Delay): MainModule {
-  const step = (model: MjModel, data: MjData) => {
-    if (delay.steps > 0) {
-      delay.history.push(Float64Array.from(data.ctrl));
-
-      const late = delay.history.length > delay.steps ? delay.history.shift()! : delay.history[0];
-
-      data.ctrl.set(late);
-    }
-
-    mj.mj_step(model, data);
-  };
-
-  return Object.create(mj, { mj_step: { value: step } }) as MainModule;
-}
-
-const SNAPSHOT = ['geom_friction', 'body_mass', 'body_inertia', 'actuator_forcerange'] as const;
 const DIVERGENCE = ['mjWARN_BADQPOS', 'mjWARN_BADQVEL', 'mjWARN_BADQACC'] as const;
 
 export class ArenaWorld {
   readonly engine: SimEngine;
   private mj: MainModule;
-  private delay: Delay = { steps: 0, history: [] };
-  private baseline: Record<(typeof SNAPSHOT)[number], Float64Array>;
+  private physics: ConditionedPhysics;
 
   constructor(mj: MainModule, model: SimModel) {
     this.mj = mj;
-    this.engine = new SimEngine(delayedModule(mj, this.delay), model);
+    this.physics = new ConditionedPhysics(mj);
+    this.engine = new SimEngine(this.physics.module, model);
     this.engine.model.opt.disableflags |= mj.mjtDisableBit.mjDSBL_AUTORESET.value;
-    this.baseline = Object.fromEntries(
-      SNAPSHOT.map((field) => [field, Float64Array.from(this.engine.model[field] as ArrayLike<number>)]),
-    ) as ArenaWorld['baseline'];
-  }
-
-  private restore() {
-    for (const field of SNAPSHOT) (this.engine.model[field] as Float64Array).set(this.baseline[field]);
-  }
-
-  private scale(instance: Instance) {
-    const { model } = this.engine;
-    const friction = model.geom_friction as Float64Array;
-    const forcerange = model.actuator_forcerange as Float64Array;
-
-    for (let g = 0; g < model.ngeom; g++) friction[g * 3] *= instance.friction;
-
-    for (let b = 1; b < model.nbody; b++) {
-      const s = instance.masses[(b - 1) % instance.masses.length];
-
-      model.body_mass[b] *= s;
-
-      for (let k = 0; k < 3; k++) model.body_inertia[b * 3 + k] *= s;
-    }
-
-    for (let i = 0; i < forcerange.length; i++) forcerange[i] *= instance.strength;
-  }
-
-  private startPose(base: RobotPoseState, instance: Instance, robot: string): RobotPoseState {
-    const values = { ...base.values };
-
-    this.engine.sim.joints.forEach((j, i) => {
-      if (j.robot !== robot) return;
-
-      const [lo, hi] = j.range ?? [-Infinity, Infinity];
-
-      values[j.id] = Math.max(lo, Math.min(hi, (values[j.id] ?? 0) + (instance.jointNoise[i] ?? 0)));
-    });
-
-    const root = base.roots?.[robot];
-    const p = root?.position ?? [0, 0, 0];
-    const position: [number, number, number] = [p[0] + instance.offsetMm[0], p[1], p[2] + instance.offsetMm[1]];
-
-    return { ...base, values, roots: { ...base.roots, [robot]: { ...root, position } } };
+    this.physics.attach(this.engine.model);
   }
 
   private turn(robot: string, yawDeg: number) {
@@ -156,16 +111,12 @@ export class ArenaWorld {
 
   prepare(options: { instance: Instance; controller: Controller; start: RobotPoseState; robot: string }) {
     const { instance, controller, start, robot } = options;
-    const { engine, mj } = this;
+    const { engine } = this;
 
     engine.setController({ kind: 'hold' });
-    this.restore();
-    this.scale(instance);
-    mj.mj_setConst(engine.model, engine.data);
-    this.delay.steps = Math.round(instance.latencyMs / 1000 / engine.dt);
-    this.delay.history = [];
+    this.physics.apply(engine.model, engine.data, instance);
     engine.setController(controller);
-    engine.reset(this.startPose(start, instance, robot));
+    engine.reset(startPose(engine.sim.joints, { base: start, instance, robot }));
     this.turn(robot, instance.yawDeg);
   }
 

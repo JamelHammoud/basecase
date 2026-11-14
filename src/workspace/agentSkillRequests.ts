@@ -15,6 +15,7 @@ import type { DraftGoal } from '../skills/teachEnvironment';
 import type { DraftInput, DraftReport } from '../skills/teach';
 import { percent } from '../../electron/percent.mjs';
 import { coachLines, coachRequest } from './agentCoachRequests';
+import { stressRequest } from './agentStressRequests';
 
 export interface SkillToolContext {
   skills: { runtime: SkillsRuntime; buildModel: () => Promise<SimModel> };
@@ -226,4 +227,5 @@ export const SKILL_HANDLERS = {
   skill_train: trainRequest,
   skill_list: listRequest,
   skill_coach: coachRequest,
+  skill_stress: stressRequest,
 };

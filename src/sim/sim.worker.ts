@@ -6,6 +6,7 @@ import { Recorder, recordingTransfer, type Recording } from './recorder';
 import { fitsRecording, recordedEfforts, setRecordedFrame } from './recordedFrames';
 import type { Scan } from './scanner';
 import { SimEngine, type Controller } from './engine';
+import { ConditionedPhysics, liveConditions, NOMINAL_CONDITIONS, type LiveConditions } from './conditions';
 import type { FaultKind } from './faults';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
@@ -34,6 +35,7 @@ export type SimRequest =
   | { type: 'script'; commands: Array<{ at: number; command: DriveCommand }> }
   | { type: 'respawn'; robot?: string }
   | { type: 'fault'; joint: string; kind: FaultKind | null }
+  | { type: 'conditions'; conditions: LiveConditions | null }
   | { type: 'record'; on: boolean }
   | { type: 'scrub'; recording: Recording | null }
   | { type: 'seek'; frame: number }
@@ -91,6 +93,8 @@ export type SimResponse =
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 let mj: MainModule | null = null;
 let engine: SimEngine | null = null;
+let physics: ConditionedPhysics | null = null;
+let conditioned = false;
 let world: WorldMoves | null = null;
 let looksShown = -1;
 let playing = false;
@@ -128,7 +132,11 @@ const frame = (force = false) => {
   const scan = scanner && scanner.version !== scanShown ? scanner.latest() : undefined;
 
   scanShown = scanner?.version ?? -1;
-  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing, facts, ...(scan ? { scan } : {}) }, [
+
+  const stats =
+    conditioned && physics ? { ...engine.stats(rtf), conditions: physics.reading(engine.model) } : engine.stats(rtf);
+
+  post({ type: 'frame', poses, joints, stats, playing, facts, ...(scan ? { scan } : {}) }, [
     poses.buffer,
     joints.buffer,
     ...(scan ? [scan.values.buffer, scan.points.buffer] : []),
@@ -239,7 +247,10 @@ async function load(msg: Msg<'load'>) {
   liveCase = null;
   script = null;
   playing = false;
-  engine = new SimEngine(mj, msg.model);
+  physics = new ConditionedPhysics(mj);
+  conditioned = false;
+  engine = new SimEngine(physics.module, msg.model);
+  physics.attach(engine.model);
   world = new WorldMoves(mj, engine);
   looksShown = -1;
   post({ type: 'world', looks: {} });
@@ -385,6 +396,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     frame();
   },
   reset: (msg) => {
+    physics?.clearDelay();
     engine?.reset(msg.initial);
     world?.reset();
     postLooks();
@@ -414,6 +426,13 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   fault: (msg) => {
     engine?.setFault(msg.joint, msg.kind);
     recorder?.fault(msg.joint, msg.kind);
+    frame();
+  },
+  conditions: (msg) => {
+    if (!engine || !physics) return;
+
+    physics.apply(engine.model, engine.data, msg.conditions ? liveConditions(msg.conditions) : NOMINAL_CONDITIONS);
+    conditioned = !!msg.conditions;
     frame();
   },
   record,

@@ -92,6 +92,7 @@ export interface DevActions {
   sharedLink: () => string | null;
   stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
   releaseTrainer: () => void;
+  stressBudget: (budget: number | null) => void;
   stubHandoffs: (stub: HandoffStub) => void;
   plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
@@ -320,6 +321,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown, snapshots?: unknown[]) => devRef.current.stubTrainer(policy, snapshots),
     releaseTrainer: () => devRef.current.releaseTrainer(),
+    stressBudget: (budget: number | null) => devRef.current.stressBudget(budget),
     stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
     plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),

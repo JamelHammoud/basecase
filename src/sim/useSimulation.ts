@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import * as THREE from 'three';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/robotics';
+import type { LiveConditions } from './conditions';
 import type { Rig } from '../utils/kinematics';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
@@ -56,7 +57,7 @@ export interface Simulation {
   start: () => Promise<void>;
   play: () => void;
   pause: () => void;
-  reset: () => void;
+  reset: (initial?: RobotPoseState) => void;
   stop: () => void;
   setSpeed: (s: number) => void;
   setController: (c: Controller) => void;
@@ -67,6 +68,7 @@ export interface Simulation {
   ) => void;
   push: (robot?: string, fallDeg?: number) => void;
   setFault: (jointId: string, kind: FaultKind | null) => void;
+  setConditions: (conditions: LiveConditions | null) => void;
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
@@ -398,7 +400,7 @@ export function useSimulation(props: Inputs): Simulation {
       setPlaying(true);
     },
     pause: () => send({ type: 'pause' }),
-    reset: () => send({ type: 'reset' }),
+    reset: (initial) => send({ type: 'reset', initial }),
     stop,
     setSpeed: (s) => {
       setSpeedState(s);
@@ -408,6 +410,7 @@ export function useSimulation(props: Inputs): Simulation {
     buildModel: (options) => buildModel({ alone: options?.alone }),
     ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
+    setConditions: (conditions) => send({ type: 'conditions', conditions }),
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,

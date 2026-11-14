@@ -1,3 +1,4 @@
+import type { LiveConditions } from './conditions';
 import type { FaultKind } from './faults';
 
 export interface JointStat {
@@ -24,4 +25,5 @@ export interface SimStats {
   rtf: number;
   effector?: [number, number, number];
   effectors?: Array<[number, number, number]>;
+  conditions?: LiveConditions;
 }

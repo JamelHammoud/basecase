@@ -7,6 +7,7 @@ import { kitEntries } from './motorKit';
 import { moveAnimations } from './moveEnvironment';
 import { arenaLine, recordFreshness, type SkillRecord } from './skillRecords';
 import type { SnapshotRef } from './snapshots';
+import type { StressState } from './skillsStress';
 
 export type SkillTarget = `kit:${TrainedEntry}` | `move:${string}` | `goal:${string}`;
 
@@ -33,6 +34,7 @@ export interface SkillRow {
   record: SkillRecord | null;
   state: SkillState;
   drives: boolean;
+  stress?: StressState | null;
 }
 
 export const KIT_LABELS: Record<TrainedEntry, string> = {

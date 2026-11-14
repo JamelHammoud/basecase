@@ -6,6 +6,7 @@ import type { SkillRow } from '../../skills/skillRows';
 import { snapshotRefs, type SnapshotRef } from '../../skills/snapshots';
 import { fmtMargin, trainingLine } from './format';
 import { ProgressBar } from './ProgressBar';
+import { StressFindings, type StressActions } from './StressFindings';
 
 export interface SkillActions {
   onTrain: (row: SkillRow) => void;
@@ -14,6 +15,7 @@ export interface SkillActions {
   onStop: () => void;
   onSnapshot?: (row: SkillRow, ref: SnapshotRef) => void;
   onMenu?: (e: React.MouseEvent, row: SkillRow) => void;
+  stress?: StressActions;
 }
 
 const coachedLine = (tag: CoachTag) =>
@@ -135,6 +137,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
             <RowAction row={row} actions={actions} />
           </div>
           <SnapshotList row={row} actions={actions} />
+          {actions.stress && <StressFindings row={row} actions={actions.stress} />}
         </li>
       );
     })}

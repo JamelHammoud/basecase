@@ -172,4 +172,25 @@ describe('agent skill tools', () => {
       '- Dropped; the old skill stays. stub forge: no policy',
     );
   }, 60_000);
+
+  it('stresses a ready Walk and answers with where it fails, the limits and the run count', async () => {
+    const { ctx, runtime, records, saved } = await rig('quad-servo');
+
+    expect((await SKILL_HANDLERS.skill_stress({ skill: 'Walk' }, ctx)).text).toBe(
+      'Stress tests a ready skill, and none is ready. Train one first.',
+    );
+    readyWalk(saved, records);
+    runtime.stress.setBudget(16);
+    expect((await SKILL_HANDLERS.skill_stress({ skill: 'Run' }, ctx)).text).toBe(
+      'No ready skill named "Run". Ready: Walk.',
+    );
+
+    const lines = (await SKILL_HANDLERS.skill_stress({ skill: 'walk' }, ctx)).text.split('\n');
+
+    expect(lines[0]).toBe('Walk:');
+    expect(lines).toContainEqual(expect.stringMatching(/^Worst combination: friction ×\d\.\d\d, weight ×/));
+    expect(lines.at(-1)).toMatch(
+      /^Searched friction ×0\.20 to ×1\.50, weight ×0\.50 to ×2\.00, strength 40% to 120%, delay 0 ms to 150 ms: 1[0-6] runs, each judged/,
+    );
+  }, 120_000);
 });

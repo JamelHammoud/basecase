@@ -11,22 +11,22 @@ import { kitTopSpeed } from '../skills/kitModel';
 import { backgroundTasks, Debounce, designMoved, taskOf } from '../skills/kitPlan';
 import { kitEntries } from '../skills/motorKit';
 import { inSkillsWorker } from '../skills/skillsClient';
-import { recordEnvironment, withRecord, type SkillRecord } from '../skills/skillRecords';
+import { withRecord, type SkillRecord } from '../skills/skillRecords';
 import type { Environment } from '../skills/environment';
-import { kitEnvironment } from '../skills/kitEnvironment';
 import { watchPlan } from '../skills/liveWatch';
-import { moveEnvironment } from '../skills/moveEnvironment';
 import type { SnapshotRef } from '../skills/snapshots';
 import { readyVelocity, skillRows, type SkillJob, type SkillRefusals, type SkillRow } from '../skills/skillRows';
+import { skillEnvironment } from '../skills/skillEnvironment';
 import { skillsPlatform, type SkillsPlatform } from '../skills/skillsPlatform';
 import { designOf, SkillsRuntime, type KitInstall } from '../skills/skillsRuntime';
 import { teachExamples } from '../skills/teachExamples';
-import type { ProjectSettings, RobotAnimation, ScenePart } from '../types/robotics';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { platformBridge } from '../utils/platformBridge';
 import { trainHandoff, useRoutineSkills, type HandoffJob } from './useRoutineSkills';
 import { useSkillCoach } from './useSkillCoach';
+import { useSkillStress } from './useSkillStress';
 
 const BUILD_DEBOUNCE_MS = 1500;
 
@@ -141,19 +141,6 @@ function useSceneModel(input: SkillsInput, { runtime, platform, watch }: ModelWa
   return model;
 }
 
-function environmentOf(
-  row: SkillRow,
-  scene: { model: SimModel; runtime: SkillsRuntime; animations: RobotAnimation[] },
-) {
-  const { model, runtime, animations } = scene;
-
-  if (row.kit) return kitEnvironment(model, row.kit);
-
-  if (row.move) return moveEnvironment(model, row.move);
-
-  return runtime.environmentOf(row.target) ?? (row.record ? recordEnvironment(row.record, model, animations) : null);
-}
-
 export function useSkills(input: SkillsInput) {
   const { sim, project, rig, parts } = input;
   const hasJoints = rig.joints.length > 0;
@@ -165,14 +152,24 @@ export function useSkills(input: SkillsInput) {
     available && (facts.morphology === 'legged' || records.length > 0 || jobs.length > 0 || !!project.policies?.length);
   const model = useSceneModel(input, { runtime, platform, watch });
   const animations = project.animations ?? [];
+  const load = (record: SkillRecord) => platform.loadSkill(record.hash);
+  const coach = useSkillCoach({ sim, model, records, loadSkill: platform.loadSkill, setProject: input.setProject });
+  const stress = useSkillStress({
+    runtime,
+    sim,
+    model,
+    load: async (row) => (row.record ? load(row.record) : null),
+    environmentOf: (row, built) => skillEnvironment(row, { model: built, runtime, animations }),
+    stopReplay: coach.stopReplay,
+  });
   const rows: SkillRow[] = model
-    ? skillRows({ model, design: designOf(model), records, jobs, animations, refusals })
+    ? skillRows({ model, design: designOf(model), records, jobs, animations, refusals }).map((row) => ({
+        ...row,
+        stress: stress.of(row),
+      }))
     : [];
   const velocityRecord = readyVelocity(rows);
   const examples = teachExamples(facts, footPoints(rig, parts).length);
-
-  const load = (record: SkillRecord) => platform.loadSkill(record.hash);
-  const coach = useSkillCoach({ sim, model, records, loadSkill: platform.loadSkill, setProject: input.setProject });
   const routineSkills = useRoutineSkills({ rows, load, project, setProject: input.setProject });
 
   const velocity = async (): Promise<VelocityDrive | null> => {
@@ -198,7 +195,7 @@ export function useSkills(input: SkillsInput) {
 
   const rowEnvironment = (row: SkillRow): Environment | null => {
     try {
-      return model ? environmentOf(row, { model, runtime, animations }) : null;
+      return model ? skillEnvironment(row, { model, runtime, animations }) : null;
     } catch {
       return null;
     }
@@ -215,6 +212,7 @@ export function useSkills(input: SkillsInput) {
 
     const robot = rowEnvironment(row)?.robot ?? model?.robots[0]?.key ?? '';
 
+    sim.setConditions(null);
     sim.setController({ kind: 'policy', policy, robot });
     sim.reset();
   };
@@ -228,6 +226,7 @@ export function useSkills(input: SkillsInput) {
 
     if (sim.status === 'off') await sim.start();
 
+    sim.setConditions(null);
     sim.setController(skill.controller);
     sim.reset();
   };
@@ -254,6 +253,7 @@ export function useSkills(input: SkillsInput) {
     playSnapshot,
     stop: () => runtime.stopUser(),
     coach,
+    stress,
     routineSkills,
     trainHandoff: (job: HandoffJob) => trainHandoff({ runtime, routineSkills, project, job }),
   };

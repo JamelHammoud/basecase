@@ -18,6 +18,7 @@ related:
   - teach-a-robot-a-skill
   - case-goals-worlds-and-contracts
   - coach-a-skill
+  - find-where-a-skill-fails
 covers:
   - src/skills/arena.ts
   - src/skills/artifacts.ts
@@ -56,6 +57,8 @@ Training follows a reward, a score that nudges the policy toward the goal. A rew
 Each try's random draw is sealed, so the trainer never learns which conditions Arena will use.
 
 [Coaching](/help/coach-a-skill) rewrites only a skill's reward, so the coached version must pass the same contract to be kept.
+
+Arena says whether a skill passes, not where it starts to fail. [Find where a skill fails](/help/find-where-a-skill-fails) searches past Arena's ranges for that point. Its runs use their own random draws, so Arena's stay sealed.
 
 ## When a skill goes stale
 

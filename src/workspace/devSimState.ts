@@ -3,6 +3,7 @@ import { modelFingerprints } from '../sim/policyFreshness';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
+import type { SimStats } from '../sim/engineStats';
 import { linkParts, type Rig } from '../utils/kinematics';
 import type { TryTimeline } from './useTryTimeline';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -64,6 +65,15 @@ function jointReadings(model: SimModel | null, joints: Float64Array | null) {
   );
 }
 
+function statsState(stats: SimStats | null) {
+  return {
+    effector: stats?.effector ?? null,
+    effectors: stats?.effectors ?? null,
+    conditions: stats?.conditions ?? null,
+    faults: Object.fromEntries(stats?.joints.flatMap((j) => (j.fault ? [[j.id, j.fault]] : [])) ?? []),
+  };
+}
+
 export function devSimState(core: WorkspaceCore, joints: Float64Array | null = null) {
   const { sim, skills } = core.simTraining;
   const stats = sim.latestStats() ?? sim.stats;
@@ -75,8 +85,7 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     driveClass: sim.drive.cls,
     offer: sim.drive.offer,
     stats,
-    effector: stats?.effector ?? null,
-    effectors: stats?.effectors ?? null,
+    ...statsState(stats),
     robots: sim.model?.robots.map((r) => r.key) ?? [],
     guests: sim.guestParts.map((p) => p.id),
     world: sim.worldParts.map((p) => p.id),
@@ -85,7 +94,6 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     ...caseState(core.simTraining),
     selected: core.selectedIds,
     timeline: timelineState(core.simTraining.cases.timeline, sim, core.posing.rig),
-    faults: Object.fromEntries(stats?.joints.flatMap((j) => (j.fault ? [[j.id, j.fault]] : [])) ?? []),
     facts: sim.latestFacts(),
     scanPoints: core.viewportRef.current?.scanPointCount() ?? 0,
     fingerprints: modelFingerprints(skills.model),

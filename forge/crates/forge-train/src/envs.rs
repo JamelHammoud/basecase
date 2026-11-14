@@ -83,7 +83,7 @@ impl<'a> Envs<'a> {
         let mut rngs: Vec<Rng> = (0..count).map(|i| Rng::new(seed, i as u64)).collect();
 
         if randomized {
-            randomize(&mut batch, robot.nu, &mut rngs)?;
+            randomize(&mut batch, (robot.nu, &robot.job.options.ranges), &mut rngs)?;
         }
 
         for sim in 0..count {

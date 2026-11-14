@@ -12,6 +12,7 @@ keywords:
 related:
   - teach-a-robot-a-skill
   - arena
+  - find-where-a-skill-fails
 covers:
   - src/skills/coach.ts
   - src/skills/coachPrompt.ts

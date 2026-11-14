@@ -107,6 +107,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
       releaseTrainer.current = stub.release;
     },
     releaseTrainer: () => releaseTrainer.current(),
+    stressBudget: (budget) => core.simTraining.skills.stress.setBudget(budget),
     stubHandoffs: (stub) => core.simTraining.routines.handoffs.stub(stub),
     plantHandoff: (from, to, falls) => core.simTraining.routines.handoffs.plant({ from, to }, falls),
     robotPackage: async () => {

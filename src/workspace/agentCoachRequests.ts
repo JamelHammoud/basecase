@@ -39,27 +39,41 @@ async function subjectOf(row: SkillRow, model: SimModel, ctx: SkillToolContext) 
   return { skill, entry, environment: kitEnvironment(model, entry), reward: coachReward(model, row.record!, entry) };
 }
 
+export function namedRow(rows: SkillRow[], skill: unknown, none: string): { row: SkillRow } | { text: string } {
+  const name = String(skill ?? '')
+    .trim()
+    .toLowerCase();
+  const row = rows.find((r) => r.label.toLowerCase() === name);
+
+  if (row) return { row };
+
+  return {
+    text: rows.length
+      ? `No ready skill named "${String(skill)}". Ready: ${rows.map((r) => r.label).join(', ')}.`
+      : none,
+  };
+}
+
+export const missingSkill = (row: SkillRow) => `${row.label}’s skill file is missing. Train it again.`;
+
 export async function coachRequest(payload: Payload, ctx: SkillToolContext) {
   ctx.setAction('Coaching a skill');
 
   const model = await ctx.skills.buildModel();
   const rows = readyRows(model, ctx);
-  const name = String(payload.skill ?? '')
-    .trim()
-    .toLowerCase();
-  const row = rows.find((r) => r.label.toLowerCase() === name);
+  const found = namedRow(
+    rows,
+    payload.skill,
+    'Coaching changes a ready Motor Kit skill, and none is ready. Train one first.',
+  );
   const words = String(payload.words ?? '');
 
-  if (!row)
-    return {
-      text: rows.length
-        ? `No ready skill named "${String(payload.skill)}". Ready: ${rows.map((r) => r.label).join(', ')}.`
-        : 'Coaching changes a ready Motor Kit skill, and none is ready. Train one first.',
-    };
+  if ('text' in found) return found;
 
+  const { row } = found;
   const subject = await subjectOf(row, model, ctx);
 
-  if (!subject) return { text: `${row.label}’s skill file is missing. Train it again.` };
+  if (!subject) return { text: missingSkill(row) };
 
   const { coach } = ctx.skills.runtime;
 

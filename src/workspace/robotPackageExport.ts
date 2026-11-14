@@ -1,4 +1,5 @@
 import { robotPartIds, type RobotPackageJob } from '../sim/robotPackage/buildRobotPackage';
+import type { JointMapInput } from '../sim/robotPackage/jointMap';
 import type { PackagedPolicy } from '../sim/robotPackage/policyFiles';
 import { exportRobotPackageZip } from '../sim/robotPackage/robotPackageClient';
 import { fileSafe } from './helpers';
@@ -23,13 +24,36 @@ async function scenePolicies(core: WorkspaceCore): Promise<PackagedPolicy[]> {
   return found.filter((p): p is PackagedPolicy => !!p);
 }
 
-async function robotPackageJob(core: WorkspaceCore): Promise<RobotPackageJob | null> {
-  const viewport = core.viewportRef.current;
+async function robotPackageInput(core: WorkspaceCore) {
   const { sim } = core.simTraining;
 
-  if (!viewport || !core.posing.hasRig) return null;
+  if (!core.posing.hasRig) return null;
 
   const model = sim.model ?? (await sim.buildModel());
+  const input: JointMapInput = {
+    name: model.robots.length === 1 ? model.robots[0].name : core.scene.sceneName,
+    model: { joints: model.joints, robots: model.robots },
+    parts: core.parts,
+    project: core.project,
+  };
+
+  return { model, input };
+}
+
+export async function robotJointMapJob(core: WorkspaceCore): Promise<JointMapInput | null> {
+  return (await robotPackageInput(core))?.input ?? null;
+}
+
+export async function robotPackageJob(core: WorkspaceCore): Promise<RobotPackageJob | null> {
+  const viewport = core.viewportRef.current;
+
+  if (!viewport) return null;
+
+  const source = await robotPackageInput(core);
+
+  if (!source) return null;
+
+  const { model, input } = source;
   const ids = robotPartIds(model);
   const measured = await viewport.measureParts();
   const triangles: Record<string, Float32Array> = {};
@@ -41,11 +65,10 @@ async function robotPackageJob(core: WorkspaceCore): Promise<RobotPackageJob | n
   }
 
   return {
+    ...input,
     name: `${fileSafe(core.scene.sceneName)}-robot`,
-    robot: model.robots.length === 1 ? model.robots[0].name : core.scene.sceneName,
+    robot: input.name,
     model,
-    parts: core.parts,
-    project: core.project,
     measures: Object.fromEntries(ids.map((id) => [id, measured[id]])),
     triangles,
     policies: await scenePolicies(core),

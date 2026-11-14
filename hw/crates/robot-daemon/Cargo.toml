@@ -18,6 +18,14 @@ servo-emu = { path = "../servo-emu" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
+getrandom = "0.4"
+base64 = "0.22"
+mdns-sd = "0.17"
+spake2 = "0.4"
+hkdf = "0.12"
+hmac = "0.12"
+subtle = "2"
+aes-gcm = "0.10"
 transport-real = { path = "../transport-real", optional = true }
 ort = { version = "=2.0.0-rc.15", optional = true }
 

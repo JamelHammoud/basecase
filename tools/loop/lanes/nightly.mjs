@@ -116,6 +116,9 @@ const releaseRuns = () =>
 const jobsOf = (id) =>
   json('gh', ['run', 'view', String(id), '--json', 'jobs'])?.jobs?.map((job) => [job.name, job.conclusion]) ?? [];
 
+const RELEASE_BUILDS = ['mac', 'windows', 'daemon-linux-arm64', 'daemon-linux-x64'];
+const RELEASE_ARTIFACTS = ['mac', 'windows', 'robot-daemon-linux-arm64', 'robot-daemon-linux-x64'];
+
 function publish(pending, log) {
   const started = releaseRuns().find((r) => r.createdAt >= pending.dispatchedAt);
 
@@ -123,10 +126,10 @@ function publish(pending, log) {
 
   const jobs = Object.fromEntries(jobsOf(started.databaseId));
 
-  if (jobs.mac !== 'success' || jobs.windows !== 'success') {
-    log(
-      `the ${pending.version} build failed (Mac ${jobs.mac}, Windows ${jobs.windows}); the next suite pass tries again`,
-    );
+  if (RELEASE_BUILDS.some((name) => jobs[name] !== 'success')) {
+    const results = RELEASE_BUILDS.map((name) => `${name} ${jobs[name]}`).join(', ');
+
+    log(`the ${pending.version} build failed (${results}), so the next suite pass tries again`);
 
     return true;
   }
@@ -136,7 +139,7 @@ function publish(pending, log) {
   try {
     run('gh', ['run', 'download', String(started.databaseId), '-D', dir]);
 
-    const files = ['mac', 'windows'].flatMap((name) =>
+    const files = RELEASE_ARTIFACTS.flatMap((name) =>
       fs.readdirSync(path.join(dir, name)).map((file) => path.join(dir, name, file)),
     );
     const tag = `v${pending.version}`;

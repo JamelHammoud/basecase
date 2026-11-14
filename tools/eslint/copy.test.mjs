@@ -176,6 +176,7 @@ describe('glossary', () => {
       'See Person',
       'Show in Finder',
       'Insert Robot',
+      'Add a Robot Computer',
       'Add Part',
       'Add Price',
       'Send to Printer',
@@ -193,6 +194,13 @@ describe('glossary', () => {
       expect(action.length).toBeGreaterThan(0);
       expect(synonyms.length).toBeGreaterThan(0);
     }
+  });
+
+  it('keeps scene insertion verbs distinct from adding a robot computer', () => {
+    expect(findBannedCopy('Add a Robot Computer')).toBeNull();
+    expect(findBannedCopy('Add a Robot')?.fix).toContain('“Insert”');
+    expect(findBannedCopy('Add a Robot Computer model')?.fix).toContain('“Insert”');
+    expect(findBannedCopy('Add a Model Computer')?.fix).toContain('“Insert”');
   });
 });
 

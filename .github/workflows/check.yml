@@ -21,6 +21,7 @@ jobs:
       ros: ${{ steps.filter.outputs.ros }}
       ios: ${{ steps.filter.outputs.ios }}
       lerobot: ${{ steps.filter.outputs.lerobot }}
+      daemon: ${{ steps.filter.outputs.daemon }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -32,7 +33,7 @@ jobs:
         env:
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" != pull_request ]; then printf 'app=true\nros=true\nios=true\nlerobot=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$EVENT" != pull_request ]; then printf 'app=true\nros=true\nios=true\nlerobot=true\ndaemon=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           files=$(git diff --name-only HEAD^1 HEAD)
           pattern='^(electron/|forge/|hw/|build/|tools/forge/|tools/native/|e2e/app/|\.github/workflows/|package\.json$|package-lock\.json$|vitest\.app\.config\.ts$)'
           if grep -qE "$pattern" <<< "$files"; then echo "app=true"; else echo "app=false"; fi >> "$GITHUB_OUTPUT"
@@ -42,6 +43,36 @@ jobs:
           if grep -qE "$ios" <<< "$files"; then echo "ios=true"; else echo "ios=false"; fi >> "$GITHUB_OUTPUT"
           lerobot='^(src/datasets/|tools/lerobot/|\.github/workflows/check\.yml$|package-lock\.json$)'
           if grep -qE "$lerobot" <<< "$files"; then echo "lerobot=true"; else echo "lerobot=false"; fi >> "$GITHUB_OUTPUT"
+          daemon='^(hw/|verify/hw/|\.github/workflows/(check|release)\.yml$)'
+          if grep -qE "$daemon" <<< "$files"; then echo "daemon=true"; else echo "daemon=false"; fi >> "$GITHUB_OUTPUT"
+
+  daemon-arm64:
+    needs: changes
+    if: needs.changes.outputs.daemon == 'true'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install stable --profile minimal
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: hw
+      - name: Run the fault matrix on arm64
+        run: >-
+          cargo test --locked --release --manifest-path hw/Cargo.toml -p robot-daemon
+          --test faults_bus --test faults_servo --test faults_host --test faults_g1 --test faults_ros2
+      - name: Check every reachable mode ladder state on arm64
+        run: cargo test --locked --release --manifest-path hw/Cargo.toml -p robot-daemon --test ladder_model
+      - name: Check no unsafe motor write reaches any robot family on arm64
+        run: >-
+          cargo test --locked --release --manifest-path hw/Cargo.toml -p robot-daemon
+          --test no_unsafe_write --test no_unsafe_write_g1 --test no_unsafe_write_ros2
+      - name: Check network authentication and session safety on arm64
+        run: >-
+          cargo test --locked --release --manifest-path hw/Cargo.toml -p robot-daemon
+          --test network_security --test binary_network
 
   unit:
     strategy:
@@ -101,6 +132,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: rustup toolchain install stable --profile minimal
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: hw
+      - name: Stage the native robot daemon for network tests
+        run: npm run build:daemon
       - run: npx vite build
       - run: npx vite build --mode web --outDir dist-web
       - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/${{ strategy.job-total }}
@@ -133,6 +170,15 @@ jobs:
           cache: npm
       - if: ${{ steps.files.outputs.pattern != '' }}
         run: npm ci
+      - if: ${{ steps.files.outputs.pattern != '' && contains(steps.files.outputs.list, 'e2e/operateNetwork.e2e.test.ts') }}
+        run: rustup toolchain install stable --profile minimal
+      - if: ${{ steps.files.outputs.pattern != '' && contains(steps.files.outputs.list, 'e2e/operateNetwork.e2e.test.ts') }}
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: hw
+      - name: Stage the native robot daemon for network tests
+        if: ${{ steps.files.outputs.pattern != '' && contains(steps.files.outputs.list, 'e2e/operateNetwork.e2e.test.ts') }}
+        run: npm run build:daemon
       - if: ${{ steps.files.outputs.pattern != '' }}
         run: npx vite build && npx vite build --mode web --outDir dist-web
       - if: ${{ steps.files.outputs.pattern != '' }}
@@ -163,6 +209,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: rustup toolchain install stable --profile minimal
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: hw
+      - name: Stage the native robot daemon for network tests
+        run: npm run build:daemon
       - run: npx vite build
       - run: npx vite build --mode web --outDir dist-web
       - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/${{ strategy.job-total }}
@@ -311,7 +363,7 @@ jobs:
 
   check:
     if: always()
-    needs: [changes, unit, e2e, e2e-changed, e2e-windows, app, ros, ios, lerobot, credit, copy]
+    needs: [changes, unit, e2e, e2e-changed, e2e-windows, app, ros, ios, lerobot, daemon-arm64, credit, copy]
     runs-on: ubuntu-latest
     steps:
       - name: Pass only when every job that had to run passed
@@ -329,6 +381,8 @@ jobs:
           IOS_NEEDED: ${{ needs.changes.outputs.ios }}
           LEROBOT: ${{ needs.lerobot.result }}
           LEROBOT_NEEDED: ${{ needs.changes.outputs.lerobot }}
+          DAEMON: ${{ needs.daemon-arm64.result }}
+          DAEMON_NEEDED: ${{ needs.changes.outputs.daemon }}
           WINDOWS_E2E: ${{ needs.e2e-windows.result }}
           COPY: ${{ needs.copy.result }}
           EVENT: ${{ github.event_name }}
@@ -356,6 +410,9 @@ jobs:
           want_lerobot=success
           [ "$LEROBOT_NEEDED" = true ] || want_lerobot=skipped
           [ "$LEROBOT" = "$want_lerobot" ] || exit 1
+          want_daemon=success
+          [ "$DAEMON_NEEDED" = true ] || want_daemon=skipped
+          [ "$DAEMON" = "$want_daemon" ] || exit 1
           want_copy=skipped
           [ "$EVENT" = pull_request ] && [[ "$HEAD_REF" != loop/batch/* ]] && want_copy=success
           [ "$COPY" = "$want_copy" ] || exit 1

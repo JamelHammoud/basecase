@@ -1,60 +1,38 @@
+mod cli;
+
+use cli::{parse, Robot};
 use robot_daemon::artefacts::DirectoryArtefacts;
-use robot_daemon::calibration::RobotClass;
 use robot_daemon::g1::G1Daemon;
 use robot_daemon::intent::IntentWriter;
-use robot_daemon::protocol::{
-    g1_hello_line, hello_line, parse_line, refused_line, ros2_hello_line, Routed, G1_FAMILY, ROS2_FAMILY,
-};
-use robot_daemon::ros2::{Ros2Daemon, Ros2Parts, Ros2Spec};
+use robot_daemon::protocol::{g1_hello_line, hello_line, parse_line, refused_line, ros2_hello_line, Routed};
+use robot_daemon::ros2::{Ros2Daemon, Ros2Parts};
 use robot_daemon::runner::{Controller, Runner};
 use robot_daemon::transport::{open, open_g1, open_ros2, NewServos, Ros2Link, ServoRobot, Target, NO_MORE_SERVOS};
-use robot_daemon::units::parse_units;
 use robot_daemon::{Command, Daemon, DaemonConfig, Inputs};
-use servo_emu::PartModel;
-use servo_wire::ros2::{checked_joints, checked_topic, ControllerKind};
-use servo_wire::{Clock, Family, SystemClock};
+use servo_wire::{Clock, SystemClock};
 use std::io::{BufRead, Write};
-use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, sync_channel, Sender, SyncSender};
 use std::sync::Arc;
 
-enum Robot {
-    Servos {
-        family: Family,
-        ids: Vec<u8>,
-        class: RobotClass,
-        units: Vec<Option<PartModel>>,
-    },
-    G1,
-    Ros2 {
-        spec: Ros2Spec,
-        topic: String,
-    },
-}
-
-#[derive(Default)]
-struct Flags {
-    family: Option<String>,
-    ids: Vec<u8>,
-    class: Option<RobotClass>,
-    controller: Option<String>,
-    topic: Option<String>,
-    joints: Option<String>,
-    units: Option<PathBuf>,
-}
-
-struct Options {
-    robot: Robot,
-    artefacts: PathBuf,
-    target: Target,
-}
-
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let options = parse(&args).unwrap_or_else(|message| quit(2, &message));
+    if args.first().is_some_and(|argument| argument == "--pair-client") {
+        let address = args
+            .get(1)
+            .filter(|_| args.len() == 2)
+            .unwrap_or_else(|| quit(2, "--pair-client needs a private IP address and port."));
+        robot_daemon::network::pair_client::run(address).unwrap_or_else(|message| quit(4, &message));
+        return;
+    }
+
+    let mut options = parse(&args).unwrap_or_else(|message| quit(2, &message));
     let clock: Arc<dyn Clock> = Arc::new(SystemClock::new());
     let emulated = matches!(options.target, Target::Emulated { .. });
+    if let Some(network) = &mut options.network {
+        network.spec = options.robot.spec(emulated);
+    }
+
     let artefacts = Box::new(DirectoryArtefacts::new(options.artefacts.clone()));
 
     match options.robot {
@@ -62,8 +40,14 @@ fn main() {
             let transport = open_g1(&options.target).unwrap_or_else(|message| quit(3, &message));
             let daemon = G1Daemon::new(transport, clock.clone(), artefacts);
 
-            say_hello(&g1_hello_line(emulated));
-            serve(daemon.inputs(), daemon, clock, None);
+            dispatch(
+                daemon.inputs(),
+                daemon,
+                clock,
+                None,
+                g1_hello_line(emulated),
+                options.network,
+            );
         }
         Robot::Ros2 { spec, topic } => {
             let link = Ros2Link {
@@ -79,8 +63,14 @@ fn main() {
                 artefacts,
             });
 
-            say_hello(&ros2_hello_line(emulated));
-            serve(daemon.inputs(), daemon, clock, None);
+            dispatch(
+                daemon.inputs(),
+                daemon,
+                clock,
+                None,
+                ros2_hello_line(emulated),
+                options.network,
+            );
         }
         Robot::Servos {
             family,
@@ -98,10 +88,34 @@ fn main() {
             let mut daemon = Daemon::new(config, opened.transport, clock.clone(), artefacts);
             let _policy = attach_policy(&mut daemon, &options.artefacts);
 
-            say_hello(&hello_line(family, emulated));
-            serve(daemon.inputs(), daemon, clock, opened.new_servos);
+            dispatch(
+                daemon.inputs(),
+                daemon,
+                clock,
+                opened.new_servos,
+                hello_line(family, emulated),
+                options.network,
+            );
         }
     }
+}
+
+fn dispatch<C: Controller + Send + 'static>(
+    inputs: Inputs,
+    daemon: C,
+    clock: Arc<dyn Clock>,
+    new_servos: Option<NewServos>,
+    hello: String,
+    network: Option<robot_daemon::network::server::NetworkOptions>,
+) {
+    if let Some(options) = network {
+        robot_daemon::network::server::serve(inputs, daemon, clock, hello, options)
+            .unwrap_or_else(|message| quit(4, &message));
+        return;
+    }
+
+    say_hello(&hello);
+    serve(inputs, daemon, clock, new_servos);
 }
 
 fn quit(code: i32, message: &str) -> ! {
@@ -211,209 +225,4 @@ fn spawn_reader(mut reader: Reader, client_gone: Arc<AtomicBool>) {
 
         client_gone.store(true, Ordering::SeqCst);
     });
-}
-
-fn parse(args: &[String]) -> Result<Options, String> {
-    let mut flags = Flags::default();
-    let mut artefacts = PathBuf::from(".");
-    let mut target = None;
-    let mut latency_us = 0;
-    let mut factory = false;
-    let mut seed = None;
-    let mut rest = args.iter();
-
-    while let Some(flag) = rest.next() {
-        let mut value = || rest.next().cloned().ok_or(format!("{flag} needs a value"));
-
-        match flag.as_str() {
-            "--family" => flags.family = Some(value()?),
-            "--ids" => flags.ids = parse_ids(&value()?)?,
-            "--class" => flags.class = Some(parse_class(&value()?)?),
-            "--controller" => flags.controller = Some(value()?),
-            "--topic" => flags.topic = Some(value()?),
-            "--joints" => flags.joints = Some(value()?),
-            "--units" => flags.units = Some(PathBuf::from(value()?)),
-            "--artefacts" => artefacts = PathBuf::from(value()?),
-            "--latency-ms" => latency_us = value()?.parse::<u64>().map_err(|_| "Bad latency")? * 1000,
-            "--seed" => seed = Some(value()?.parse::<u64>().map_err(|_| "Bad seed")?),
-            "--emulated" => {
-                target = Some(Target::Emulated {
-                    latency_us: 0,
-                    seed: 1,
-                    factory: false,
-                })
-            }
-            "--factory" => factory = true,
-            "--port" => {
-                target = Some(Target::SerialPort {
-                    path: value()?,
-                    baud: 1_000_000,
-                })
-            }
-            "--interface" => target = Some(Target::Interface { name: value()? }),
-            other => return Err(format!("Unknown option {other}")),
-        }
-    }
-
-    let target = match target.ok_or("Choose --emulated, --port or --interface")? {
-        Target::Emulated { seed: default, .. } => Target::Emulated {
-            latency_us,
-            seed: seed.unwrap_or(default),
-            factory,
-        },
-        _ if factory => Err("--factory needs --emulated")?,
-        _ if seed.is_some() => Err("--seed needs --emulated")?,
-        _ if flags.units.is_some() => Err("--units needs --emulated")?,
-        real => real,
-    };
-    let units = flags.units.take();
-
-    Ok(Options {
-        robot: with_units(robot_of(flags)?, units)?,
-        artefacts,
-        target,
-    })
-}
-
-fn with_units(robot: Robot, path: Option<PathBuf>) -> Result<Robot, String> {
-    let Some(path) = path else {
-        return Ok(robot);
-    };
-    let Robot::Servos { family, ids, class, .. } = robot else {
-        return Err("--units is for --family feetech or dynamixel only".into());
-    };
-    let bytes = std::fs::read(&path).map_err(|error| format!("The servo models file can't be read: {error}"))?;
-    let units = parse_units(&bytes, &ids)?;
-
-    Ok(Robot::Servos {
-        family,
-        ids,
-        class,
-        units,
-    })
-}
-
-fn ros2_robot(flags: Flags) -> Result<Robot, String> {
-    if !flags.ids.is_empty() || flags.class.is_some() {
-        return Err("A ROS 2 robot names its own joints: leave out --ids and --class".into());
-    }
-
-    let controller = flags
-        .controller
-        .ok_or("--controller is required: forward_position, joint_trajectory or diff_drive")?;
-    let kind = ControllerKind::parse(&controller)
-        .ok_or("Choose a forward_position, joint_trajectory or diff_drive controller")?;
-    let topic = flags.topic.unwrap_or_else(|| kind.default_topic().to_string());
-    let joints: Vec<String> = flags
-        .joints
-        .ok_or("--joints is required")?
-        .split(',')
-        .map(str::to_string)
-        .collect();
-
-    checked_topic(kind, &topic)?;
-    checked_joints(kind, &joints)?;
-
-    Ok(Robot::Ros2 {
-        spec: Ros2Spec { kind, joints },
-        topic,
-    })
-}
-
-fn robot_of(flags: Flags) -> Result<Robot, String> {
-    let family = flags
-        .family
-        .clone()
-        .ok_or("--family is required: feetech, dynamixel, unitree-g1 or ros2")?;
-
-    if family == ROS2_FAMILY {
-        return ros2_robot(flags);
-    }
-
-    if flags.controller.is_some() || flags.topic.is_some() || flags.joints.is_some() {
-        return Err("--controller, --topic and --joints are for --family ros2 only".into());
-    }
-
-    let Flags { ids, class, .. } = flags;
-
-    if family == G1_FAMILY {
-        return match (ids.is_empty(), class) {
-            (true, None) => Ok(Robot::G1),
-            _ => Err("The G1 has its own 29 motors: leave out --ids and --class".into()),
-        };
-    }
-
-    if ids.is_empty() {
-        return Err("--ids is required".into());
-    }
-
-    Ok(Robot::Servos {
-        family: parse_family(&family)?,
-        ids,
-        class: class.unwrap_or(RobotClass::Arm),
-        units: Vec::new(),
-    })
-}
-
-fn parse_family(value: &str) -> Result<Family, String> {
-    match value {
-        "feetech" => Ok(Family::Feetech),
-        "dynamixel" => Ok(Family::Dynamixel),
-        other => Err(format!("Unknown family {other}")),
-    }
-}
-
-fn parse_class(value: &str) -> Result<RobotClass, String> {
-    match value {
-        "arm" => Ok(RobotClass::Arm),
-        "legged" => Ok(RobotClass::Legged),
-        other => Err(format!("Unknown robot class {other}")),
-    }
-}
-
-fn parse_ids(value: &str) -> Result<Vec<u8>, String> {
-    value
-        .split(',')
-        .map(|id| id.trim().parse::<u8>().map_err(|_| format!("Bad servo id {id}")))
-        .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn seed_of(line: &str) -> Result<Option<u64>, String> {
-        let args: Vec<String> = line.split(' ').map(str::to_string).collect();
-
-        Ok(match parse(&args)?.target {
-            Target::Emulated { seed, .. } => Some(seed),
-            _ => None,
-        })
-    }
-
-    #[test]
-    fn an_emulated_robot_keeps_seed_one_unless_told() {
-        assert_eq!(seed_of("--family feetech --ids 1,2 --emulated"), Ok(Some(1)));
-        assert_eq!(
-            seed_of("--family feetech --ids 1,2 --emulated --seed 2166136261"),
-            Ok(Some(2_166_136_261))
-        );
-        assert_eq!(seed_of("--family unitree-g1 --seed 7 --emulated"), Ok(Some(7)));
-    }
-
-    #[test]
-    fn refuses_a_seed_that_is_not_a_number_or_not_emulated() {
-        assert_eq!(
-            seed_of("--family feetech --ids 1 --emulated --seed -3"),
-            Err("Bad seed".into())
-        );
-        assert_eq!(
-            seed_of("--family feetech --ids 1 --emulated --seed"),
-            Err("--seed needs a value".into())
-        );
-        assert_eq!(
-            seed_of("--family feetech --ids 1 --port /dev/null --seed 3"),
-            Err("--seed needs --emulated".into())
-        );
-    }
 }

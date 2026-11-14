@@ -7,6 +7,7 @@ import { connectRobot } from '../../robot/robotStore';
 import { sceneRobotChoices } from '../../robot/sceneRobot';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
 import { PlayNoRobot } from '../PlayNoRobot';
+import { NetworkRobotConnect } from './NetworkRobotConnect';
 
 interface ConnectRobotButtonProps {
   joints: RobotJoint[];
@@ -34,6 +35,7 @@ export const ConnectRobotButton: React.FC<ConnectRobotButtonProps> = ({ joints, 
 
   return (
     <div className="mb-3">
+      <NetworkRobotConnect choices={robot.choices} />
       <div data-testid="robot-family" className="mb-2">
         <SegmentedControl options={options} value={chosen.spec.family} onChange={setFamily} />
       </div>

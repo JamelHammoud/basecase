@@ -82,6 +82,17 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 - **Worse than Basecase:** it visualizes and manages data a robot already recorded ([pricing](https://foxglove.dev/pricing)). Basecase makes the robot and its data ([Cases](../guide/cases.md)). Basecase also opens the same MCAP files and ROS 1 bags, with ROS 1, ROS 2, Protobuf and JSON channels, keeps every field of every topic as a signal, and plays them through Log, Diagnostics, Message and States panels and XY plots on one timeline beside the robot's own design, its joints replayed on it ([Cases](../guide/cases.md#imported-tries)). Its Map layer fuses an imported run's laser scans, point clouds or depth images into a height-colored 5 cm voxel map, with optional scan matching, and also maps simulated LiDAR runs. The result is a viewing overlay without collision geometry or a Case handoff ([Scan maps](../guide/cases.md#scan-maps)). It reads no FlatBuffers channels or live ROS streams.
 - **Basecase should:** integrate through LeRobot: `lerobot-dataset-viz --display-mode foxglove` serves a v3 dataset's episode to Foxglove over WebSocket, fetching only the frames on screen ([LeRobotDataset v3](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)). Basecase's datasets are v2.1 ([Cases](../guide/cases.md)), so writing v3 ([integrations](integrations.md#lerobot)) is what puts a Case's tries in Foxglove.
 
+## Operate
+
+### Viam
+
+- **Link:** https://www.viam.com
+- **Checked:** 2026-11-14
+- **Better than Basecase:** `viam-server` runs on a robot's computer, with Linux arm64 and x86_64 installation paths. Its agent manages the server and machine software as a service ([server reference](https://docs.viam.com/operate/reference/viam-server/manage-viam-server/)). The developer platform includes sensor data storage, fleet management, remote access, OTA updates, modular drivers and SDKs ([pricing](https://www.viam.com/pricing)).
+- **Pricing:** the first $5 of monthly cloud services is free. Published usage rates include $0.25/GB/month for tabular data, $0.05/GB/month for non-tabular storage, $0.15/GB uploaded and $0.25/GB downloaded. Surface-finishing systems have quoted pricing ([pricing](https://www.viam.com/pricing)).
+- **Worse than Basecase:** Viam's installation starts from a machine and its configuration ([Pi setup](https://docs.viam.com/reference/device-setup/rpi-setup/)). Basecase already holds the robot's design, joint mapping and calibration, and can export those files together ([Robot runtime](../guide/robot-runtime.md)). Its local emulator, mode ladder and fault matrix run without a cloud account. Real motors remain locked, so this is evidence from emulation rather than a hardware comparison ([Robot runtime](../guide/robot-runtime.md)).
+- **Basecase should:** beat it on taking the same design through simulation, training, installation and operation. Use the design's joint map and calibration for deployment, retain the robot-side watchdog, and bring measured runs back into the same tries store ([Robot runtime](../guide/robot-runtime.md)).
+
 ## Printing
 
 ### Bambu Studio

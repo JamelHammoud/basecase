@@ -99,6 +99,7 @@ export interface RobotMessage {
 }
 
 export interface RobotState {
+  name?: string;
   link: 'off' | 'connected' | 'lost';
   spec: RobotSpec | null;
   emulated: boolean;
@@ -129,6 +130,7 @@ export interface RobotMount {
 }
 
 export interface RobotLinkState {
+  endpoint?: { host: string; port: number };
   connected: boolean;
   spec: RobotSpec | null;
   hello: RobotEvent | null;
@@ -194,7 +196,12 @@ const mountsOf = (joints: unknown): RobotMount[] => (Array.isArray(joints) ? joi
 const EVENTS: Record<string, (state: RobotState, event: RobotEvent) => RobotState> = {
   calibration: (state, event) => ({ ...state, calibration: mountsOf(event.joints) }),
   link: onLink,
-  hello: (state, event) => ({ ...state, emulated: event.emulated === true, lostMessage: String(event.lost_message) }),
+  hello: (state, event) => ({
+    ...state,
+    ...(typeof event.name === 'string' ? { name: event.name } : {}),
+    emulated: event.emulated === true,
+    lostMessage: String(event.lost_message),
+  }),
   status: (state, event) => ({ ...onMode(state, event.mode), status: event as unknown as RobotStatus }),
   mode: (state, event) => onMode(state, event.mode),
   fault: (state, event) => withMessage({ ...state, pending: null }, 'fault', event.message),

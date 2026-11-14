@@ -105,6 +105,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown map call')),
   robotConnect: (spec, unit) => ipcRenderer.invoke('robot:connect', spec, unit),
+  robotDiscover: () => ipcRenderer.invoke('robot:discover'),
+  robotNetworkConnect: (ask, unit) => ipcRenderer.invoke('robot:network-connect', ask, unit),
+  robotInstall: (ask) => ipcRenderer.invoke('robot:install', ask),
   robotCommand: (command, unit) => ipcRenderer.invoke('robot:command', command, unit),
   robotDisconnect: (unit) => ipcRenderer.invoke('robot:disconnect', unit),
   robotPolicy: (refs, unit) => ipcRenderer.invoke('robot:policy', refs, unit),

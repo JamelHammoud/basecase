@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 8d. Simulate & Train (MuJoCo)
 
+Robot Computer installation reuses the Robot Package worker's joint-map generation. `robotJointMapJob` prepares only the model's joints and robots, scene parts and project calibrations. `exportRobotJointMap` strips embedded CAD and mesh payloads before sending that input to the worker, and returns the map without measuring geometry, loading policy files or generating a ZIP. The installer derives the daemon's `calibration.json` from that checked map. Full package export reuses the same metadata input before adding its meshes, measurements and policies in `src/workspace/robotPackageExport.ts`.
+
 Stages 3 and 4 of the robotics loop (§1); milestones in [docs/Robotics loop.md](../../docs/Robotics%20loop.md). The **Simulate** tab (right panel, shown while the scene has joints) runs the scene's robots under MuJoCo physics and trains policies for them.
 
 - **One formulation, one model, one oracle.** MuJoCo's formulation runs everywhere: the live sim (`@mujoco/mujoco`, DeepMind's official WebAssembly build), Forge's own batched physics for training (§8g), and C MuJoCo as the unforked oracle, all from the same generated MJCF at the **same pinned version**. Forge may train on a cheaper profile of the model, but a result counts only after replay on the reference model in C. Never add a physics engine with a different formulation.

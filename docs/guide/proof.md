@@ -82,6 +82,14 @@ Pose-tab animations trained as moves (`verify/skills/moves.test.ts`). The cases 
 - **Standing still fails every legged move,** in the unit test (one nominal rollout each) and in the canary.
 - **Canary:** a zero policy (holding the rest pose) passes a move contract in Arena. It fires when every legged case's contract rejects it.
 
+### Stage 5: `s5-emu-daemon`
+
+The motor transport source lock keeps `serialport` and `rustdds` out of default builds. Only `transport-real` may name either hardware transport. The emulator's sockets still bind only `LOOPBACK`.
+
+The optional app control connection has one separate allowance: `robot-daemon/src/network/server.rs` may call `TcpListener::bind(options.address)` once, after refusing a non-private address. The CLI starts with no listener and constructs network options only from an explicit `--listen` address. `verify/lib/networkLock.mjs` checks these conditions and refuses another bind, wildcard address or DDS use in that module or anywhere else outside the existing hardware transport and emulator allowances. The two network refusal test files may contain their exact wildcard address strings, but may not open sockets.
+
+`networkLock.test.mjs` plants a removed or inverted private-address check, another bind in the listener, another source module, a socket in a test fixture, a listener enabled without `--listen`, and a non-loopback emulator bind. Each must fail the source lock. The binary network tests reject public and wildcard listeners and connect to an explicitly requested loopback control listener on every supported robot family. Their signed greetings must still report emulated operation with real transport absent. The control connection never enables a motor transport, changes a safety cap or replaces the fault matrix.
+
 ### Stage 6: `s6-hidden-twin` and `s6-hidden-twin-nad`
 
 The HiddenTwin (`verify/twin/`) is gate-side TypeScript, so builders never see its parameters. The builder implements `src/reality/calibrate.ts` exporting `calibrateServo` (logs in, a calibration with a verdict `measured`, `consistent` or `cant-tell` out) and `calibratedInput` (applies calibrations to an `MjcfInput`, so MuJoCo predicts and the gate measures).

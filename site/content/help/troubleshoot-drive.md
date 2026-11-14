@@ -1,7 +1,7 @@
 ---
 title: Robot won't drive in the simulation
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 1
@@ -96,7 +96,7 @@ The overlay reads "Fell. Press R."
 
 1. Press [[R]] to put the robot back where it started.
 2. Drive more gently: tap the keys instead of holding them.
-3. If it still falls, press [[Esc]] and choose **Hold pose** under **Control**.
+3. If it still falls, choose **Hold pose** under **Control**.
 4. Read **Peak torque** for joints at their limit.
 
 Steps for reading **Peak torque** are in [Run a simulation](/help/run-a-simulation).

@@ -80,6 +80,22 @@ describe('ACP agent failures', () => {
     expect(err.message).toBe('Claude Code stopped on an error. Choose another agent in Settings ▸ Agent.');
   });
 
+  it('keeps the reason an agent gives with its error, such as a usage limit', async () => {
+    const limit = "You've hit your usage limit";
+    const internal = await rejection(
+      failingAgent(RequestError.internalError(undefined, limit)).sendPrompt({ text: 'hi', workspaceId: 'main' }),
+    );
+    const params = await rejection(
+      failingAgent(RequestError.invalidParams(undefined, 'Choose a model')).sendPrompt({
+        text: 'hi',
+        workspaceId: 'main',
+      }),
+    );
+
+    expect(internal.message).toBe(limit);
+    expect(params.message).toBe('Choose a model');
+  });
+
   it('points to the Agent tab when the agent wants a sign-in', async () => {
     const err = await rejection(
       failingAgent(RequestError.authRequired()).sendPrompt({ text: 'hi', workspaceId: 'main' }),

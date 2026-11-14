@@ -137,4 +137,6 @@ The contract never passes by default. A reading that isn't a number counts again
 
 A Case written on one arm runs on another by scaling its world to the new arm's reach, measured from its shoulder. Every distance in the contract scales with it. Angles don't. A position the Case's code gives a movable object scales the same way, so a lit spot lands on the scaled spot. Skills are judged by the same contract code, in [Arena](/help/arena).
 
+For [training images](/help/make-training-images), named object points, object pose variation, distractors and camera mount tolerance in millimeters scale too. Color classes and angular tolerances stay the same.
+
 Imported rooms and captured worlds keep their true size when you change robots.

@@ -12,9 +12,10 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { openLink } from '../utils/openLink';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
-import { prepareDataset, repoName, type PreparedDataset } from './datasetJob';
+import { datasetLeftOut, prepareDataset, repoName, type PreparedDataset } from './datasetJob';
 import { useDatasetRecords, type DatasetRecords } from './useDatasetRecords';
 import type { ShowToast, ToastOptions } from './types';
+import { deliverImageDataset, imageDatasetDownload } from './deliverImageDataset';
 
 interface DatasetExportOptions {
   sim: Simulation;
@@ -55,8 +56,6 @@ interface Delivery {
   deliver: (made: Made, records: DatasetRecords) => Promise<{ message: string; options?: ToastOptions }>;
 }
 
-const leftOut = (made: PreparedDataset) => (made.left ? `, left out ${made.left} from another Case or design` : '');
-
 const EXPORT: Delivery = {
   busy: 'Exporting dataset…',
   failed: 'Couldn’t export the dataset.',
@@ -64,7 +63,7 @@ const EXPORT: Delivery = {
     await records.freeze(dataset, prepared.modelHash);
     downloadBytes(await exportDatasetZip(prepared.job), `${prepared.name}.zip`, 'application/zip');
 
-    return { message: `Exported ${plural(prepared.used, 'try', 'tries')} as a dataset${leftOut(prepared)}` };
+    return { message: `Exported ${plural(prepared.used, 'try', 'tries')} as a dataset${datasetLeftOut(prepared)}` };
   },
 };
 
@@ -78,7 +77,7 @@ const PUBLISH: Delivery = {
     const published = await hubBridge.publish({ name, files, tag: `dataset-v${version.n}` });
 
     return {
-      message: `Published to ${published.repo}${leftOut(prepared)}`,
+      message: `Published to ${published.repo}${datasetLeftOut(prepared)}`,
       options: { action: { label: 'Open', onClick: () => openLink(published.url) } },
     };
   },
@@ -112,15 +111,25 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
     showToast(delivery.busy, { tone: 'progress' });
 
     try {
+      if (dataset.imageMembers?.length && !dataset.members.length) {
+        const done = await deliverImageDataset(dataset, records, delivery === PUBLISH);
+
+        showToast(done.message, done.options);
+
+        return;
+      }
+
       const prepared = await prepareFor(dataset);
 
-      if (!prepared) {
+      if (!prepared && !dataset.imageMembers?.length) {
         showToast(FITTING_TRIES, { tone: 'error' });
 
         return;
       }
 
-      const done = await delivery.deliver({ dataset, prepared }, records);
+      const done = dataset.imageMembers?.length
+        ? await deliverImageDataset(dataset, records, delivery === PUBLISH, prepared ?? undefined)
+        : await delivery.deliver({ dataset, prepared: prepared! }, records);
 
       showToast(done.message, done.options);
     } catch (err) {
@@ -161,7 +170,11 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
       return made ? exportDatasetZip(made.job) : null;
     },
     zipDataset: async (dataset) => {
+      if (dataset.imageMembers?.length && !dataset.members.length) return imageDatasetDownload(dataset, records);
+
       const made = await prepareFor(dataset);
+
+      if (dataset.imageMembers?.length) return imageDatasetDownload(dataset, records, made ?? undefined);
 
       if (made) await records.freeze(dataset, made.modelHash);
 

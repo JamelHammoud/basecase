@@ -11,6 +11,12 @@ import { createStudioScene } from '../three/thumbnailStage';
 import type { ScenePart } from '../types/robotics';
 import { LensRenderer } from './lensRender';
 import type { CameraView } from './views';
+import { trainingJpeg } from './trainingImage';
+import { projectTrainingPoints } from './trainingLabels';
+import { TrainingPasses } from './trainingPasses';
+import { TrainingSurfaces } from './trainingSurfaces';
+import type { CameraTrainingFrame, CameraTrainingRequest } from './trainingTypes';
+import { varyTrainingScene, varyTrainingShot } from './trainingVariation';
 
 export const TILE_SIZE: [number, number] = [320, 240];
 export const LARGE_SIZE: [number, number] = [640, 480];
@@ -72,6 +78,12 @@ class Layer {
     this.items = [...this.built.values()].map((b) => b.posed);
   }
 
+  surfaces(): THREE.Group[] {
+    return [...this.built.values()]
+      .filter(({ part }) => /\b(wall|floor|ground)\b/i.test(part.name))
+      .map(({ posed }) => posed.group);
+  }
+
   dispose(): void {
     this.sync([]);
   }
@@ -84,6 +96,12 @@ export class LiveStage {
 
   private readonly lens: LensRenderer;
 
+  private readonly labels: TrainingPasses;
+
+  private readonly ground = floor();
+
+  private readonly surfacePool = new TrainingSurfaces();
+
   private readonly parts: Layer;
 
   private readonly world: Layer;
@@ -93,6 +111,8 @@ export class LiveStage {
   private views: CameraView[] = [];
 
   private sceneTicket = 0;
+
+  private trainingTail: Promise<void> = Promise.resolve();
 
   constructor([width, height]: [number, number] = LARGE_SIZE) {
     this.renderer = new THREE.WebGLRenderer({
@@ -105,8 +125,9 @@ export class LiveStage {
     this.renderer.setSize(width, height, false);
     this.scene = createStudioScene(this.renderer);
     this.renderer.setClearColor(BACKGROUND, 1);
-    this.scene.add(floor());
+    this.scene.add(this.ground);
     this.lens = new LensRenderer(this.renderer);
+    this.labels = new TrainingPasses(this.renderer, this.scene, this.lens);
     this.parts = new Layer(this.scene);
     this.world = new Layer(this.scene);
   }
@@ -123,6 +144,7 @@ export class LiveStage {
 
     if (ticket !== this.sceneTicket) return false;
 
+    this.surfacePool.dispose();
     this.parts.sync(parts);
     this.world.sync(world);
     await this.lens.warm(this.scene).catch(() => undefined);
@@ -170,9 +192,88 @@ export class LiveStage {
     return out;
   }
 
+  training(request: CameraTrainingRequest): Promise<CameraTrainingFrame> {
+    const result = this.trainingTail.then(() => this.captureTraining(request));
+
+    this.trainingTail = result.then(
+      () => undefined,
+      () => undefined,
+    );
+
+    return result;
+  }
+
+  private async captureTraining(request: CameraTrainingRequest): Promise<CameraTrainingFrame> {
+    const view = this.views.find((candidate) => candidate.key === request.key);
+    const { width, height } = request;
+
+    if (!view) throw new Error('Choose a camera view.');
+
+    if (
+      !Number.isInteger(width) ||
+      !Number.isInteger(height) ||
+      width < 1 ||
+      height < 1 ||
+      width > 4096 ||
+      height > 4096
+    )
+      throw new Error('Choose an image size between 1 and 4096 pixels.');
+
+    this.pose(request.poses);
+    this.renderer.setSize(width, height, false);
+
+    const items = [...this.parts.items, ...this.world.items];
+    const variation = varyTrainingScene({
+      scene: this.scene,
+      items,
+      seed: request.seed,
+      randomization: request.randomization,
+      surfaces: [this.ground, ...this.world.surfaces()],
+      surfacePool: this.surfacePool,
+    });
+    const delta = view.part ? variation.deltas.get(view.part) : undefined;
+    const shot = varyTrainingShot(
+      { ...placeCamera(view, delta), lens: view.lens },
+      request.seed,
+      request.randomization,
+    );
+
+    try {
+      this.lens.render(this.scene, shot);
+
+      const jpeg = await trainingJpeg(this.canvas, request.seed, request.randomization?.noise);
+      const labels = this.labels.capture({
+        shot,
+        items,
+        width,
+        height,
+      });
+      const keypoints = projectTrainingPoints({
+        shot,
+        width,
+        height,
+        depth: labels.depth,
+        points: request.keypoints,
+        deltas: variation.deltas,
+      });
+
+      return { jpeg, width, height, ...labels, keypoints, variants: variation.variants };
+    } finally {
+      variation.restore();
+    }
+  }
+
   dispose(): void {
     this.parts.dispose();
     this.world.dispose();
+    this.ground.geometry.dispose();
+
+    const materials = Array.isArray(this.ground.material) ? this.ground.material : [this.ground.material];
+
+    materials.forEach((material) => material.dispose());
+    this.scene.environment?.dispose();
+    this.surfacePool.dispose();
+    this.labels.dispose();
     this.lens.dispose();
     this.renderer.dispose();
   }

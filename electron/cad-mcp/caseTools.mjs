@@ -68,6 +68,15 @@ export const createCase = {
       rise_mm: mm('rough: the tallest tile; steps: the platform’s height'),
       incline_deg: z.number().finite().optional().describe('slope: the ramp’s incline in degrees'),
       objects: z.array(worldObject).max(32).optional(),
+      imageRandomization: z
+        .object({
+          cameraTolerance: z
+            .object({ mm: z.number().finite().min(0).max(500), deg: z.number().finite().min(0).max(45) })
+            .optional(),
+          distractors: z.array(worldObject).max(32).optional(),
+        })
+        .optional()
+        .describe('Training image camera variation and unlabelled distractor objects'),
       logic: z
         .record(z.string(), z.unknown())
         .optional()

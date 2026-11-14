@@ -47,6 +47,15 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
     position: place(o.position),
     size: o.size.map((x) => x * s) as V3,
     ...(o.massG !== undefined ? { massG: o.massG * s ** 3 } : {}),
+    ...(o.points
+      ? {
+          points: Object.fromEntries(Object.entries(o.points).map(([k, v]) => [k, v.map((x) => x * s)])) as Record<
+            string,
+            V3
+          >,
+        }
+      : {}),
+    ...(o.jitter ? { jitter: { ...o.jitter, mm: o.jitter.mm * s } } : {}),
   });
 
   const guest = (slot: RobotSlot): RobotSlot => ({
@@ -63,6 +72,24 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
     ...kase,
     ...cast,
     world: { objects: kase.world.objects.map(object) },
+    ...(kase.imageRandomization
+      ? {
+          imageRandomization: {
+            ...kase.imageRandomization,
+            ...(kase.imageRandomization.cameraTolerance
+              ? {
+                  cameraTolerance: {
+                    ...kase.imageRandomization.cameraTolerance,
+                    mm: kase.imageRandomization.cameraTolerance.mm * s,
+                  },
+                }
+              : {}),
+            ...(kase.imageRandomization.distractors
+              ? { distractors: kase.imageRandomization.distractors.map(object) }
+              : {}),
+          },
+        }
+      : {}),
     reference: {
       timeline: kase.reference.timeline.map((c) => (c.target ? { ...c, target: place(c.target) } : c)),
     },

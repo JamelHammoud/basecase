@@ -1,61 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildCase, builderRobot, type CaseSpec } from '../cases/caseBuilder';
+import { buildCase, builderRobot } from '../cases/caseBuilder';
 import { compileCaseLogic } from '../cases/caseLogic';
 import type { Case } from '../cases/schema';
-import type { Routine } from '../routines/schema';
 import { fixtureRobots } from '../sim/fixtures/robots';
-import type { ProjectSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import type { CaseRuns } from '../cases/caseRuns';
 import { designChanges, designKey, exploreSpace, type Design } from '../cases/explore';
 import { servoArm } from '../sim/fixtures/servoArm';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { CASE_HANDLERS, caseValues } from './agentCaseRequests';
+import { contextFor, create, logicForSkill, robotOf, scene } from './agentCaseRequestFixtures';
 import type { Cases } from './useCases';
 import { fixtureRoom } from '../cases/roomFixture';
-import { readRoomPlan, type Room } from '../cases/roomPlan';
+import { readRoomPlan } from '../cases/roomPlan';
 import { roomTargets } from '../cases/roomTargets';
-
-const scene = { parts: () => [], project: () => ({}) as ProjectSettings, viewport: () => null };
-
-const robotOf = (id: string) => {
-  const r = fixtureRobots().find((f) => f.id === id)!;
-
-  return builderRobot(buildRig(r.joints, r.parts), r.parts);
-};
-
-function contextFor(id: string, room?: Room) {
-  const robot = robotOf(id);
-  const added: Case[] = [];
-  const inRoom = (spec: CaseSpec): CaseSpec => (room ? { ...spec, room } : spec);
-  const cases = {
-    builder: {
-      preview: (spec: CaseSpec) => buildCase(inRoom(spec), robot),
-      add: (spec: CaseSpec) => {
-        const built = buildCase(inRoom(spec), robot);
-
-        if (built.ok) added.push(built.kase);
-
-        return built;
-      },
-    },
-  } as unknown as Cases;
-  const routines = { checkLogic: async (logic: unknown) => compileCaseLogic(logic as Routine, { skills: [] }) };
-
-  const caseCompare = { choicesFor: () => [], compareNow: async () => null as never, start: () => {} };
-  const running: string[] = [];
-  const caseRun = { enterCase: (caseId: string) => void running.push(caseId) };
-
-  const caseExplore = { explore: async () => 'unused' };
-
-  return { ctx: { cases, routines, caseCompare, caseExplore, caseRun, setAction: () => {}, ...scene }, added, running };
-}
-
-const create = (payload: Record<string, unknown>, id = 'rover-diff', room?: Room) => {
-  const { ctx, added, running } = contextFor(id, room);
-
-  return { reply: CASE_HANDLERS.create_case(payload, ctx), added, running };
-};
 
 const ROVER_APP = {
   input: ['gamepad', 'keys'],
@@ -152,6 +110,34 @@ describe('create_case', () => {
     expect(movable).toMatchObject({ lit: true, still: false });
   });
 
+  it('keeps training classes and converts points and distractors from the agent frame', async () => {
+    const fruit = {
+      id: 'fruit',
+      name: 'Fruit',
+      kind: 'sphere',
+      position: [100, 200, 300],
+      size: [20, 30, 40],
+      behavior: 'static',
+      points: { stem: [1, 2, 3] },
+      colors: [{ name: 'ripe tomato', color: '#ff0000' }],
+    };
+    const { reply, added } = create({
+      goal: 'reach',
+      objects: [fruit],
+      imageRandomization: {
+        cameraTolerance: { mm: 15, deg: 5 },
+        distractors: [{ ...fruit, id: 'leaf', name: 'Leaf' }],
+      },
+    });
+
+    expect(await reply).toMatchObject({ ok: true });
+    expect(added[0].world.objects.find((object) => object.id === 'fruit')?.points).toEqual({ stem: [1, 3, -2] });
+    expect(added[0].imageRandomization).toMatchObject({
+      cameraTolerance: { mm: 15, deg: 5 },
+      distractors: [{ id: 'leaf', position: [100, 300, -200], size: [20, 40, 30], points: { stem: [1, 3, -2] } }],
+    });
+  });
+
   it('answers a goal the robot cannot try, or hostile objects, with what to change', async () => {
     expect(await create({ goal: 'touch' }).reply).toEqual({ ok: false, problem: expect.stringMatching(/reach/) });
     expect(await create({ goal: 'nope' }).reply).toMatchObject({ ok: false });
@@ -166,23 +152,13 @@ describe('create_case', () => {
   });
 
   it('runs the agent’s logic through the compiler, and refuses a Routine it refuses with its message', async () => {
-    const logic = (skill: string): Routine => ({
-      schema: 1,
-      id: 'cheer',
-      name: 'Cheer',
-      requires: ['wheels'],
-      base: { kind: 'do', id: 'start', skill, holds: ['body'], timeoutMs: 10000, onTimeout: [], onFail: [] },
-      watchers: [{ id: 'goal-count', model: 'case-fact', rateHz: 10, maxAgeMs: 500, publishes: { type: 'number' } }],
-      reactions: [],
-      safeStop: skill,
-    });
-    const kept = create({ goal: 'reach', logic: logic('drive') });
+    const kept = create({ goal: 'reach', logic: logicForSkill('drive') });
 
     expect(await kept.reply).toMatchObject({ ok: true });
     expect(kept.added[0].logic?.id).toBe('cheer');
 
-    const refused = create({ goal: 'reach', logic: logic('backflip') });
-    const compiled = compileCaseLogic(logic('backflip'), { skills: [] });
+    const refused = create({ goal: 'reach', logic: logicForSkill('backflip') });
+    const compiled = compileCaseLogic(logicForSkill('backflip'), { skills: [] });
 
     expect(compiled.ok).toBe(false);
     expect(await refused.reply).toEqual({ ok: false, problem: compiled.errors![0].message });

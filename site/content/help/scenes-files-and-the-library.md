@@ -57,7 +57,9 @@ Every try you record goes to the Library, whichever scene you recorded it in. Ea
 
 Tries you import from a LeRobot dataset or a ROS 2 recording also go to the Library. See [Import robot data as tries](/help/import-robot-data-as-tries).
 
-A dataset is a named set of tries, and the tries can come from any of your scenes. Each dataset is a single file in `library/datasets`. A dataset lists its tries without copying them, so deleting a dataset leaves its tries in the Library. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
+A dataset is a named set of tries, images or both. The tries can come from any of your scenes. Each dataset is a single file in `library/datasets`. It lists its tries and images without copying them, so deleting a dataset leaves the recordings and images on this computer. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
+
+Rendered training images and their labels live in `library/frame-sets` in the desktop app, and in the browser's storage in the web studio. Their datasets appear under **Datasets** in the Library. See [Make training images from a Case](/help/make-training-images).
 
 ## Scene files
 
@@ -67,6 +69,7 @@ A `.basecase` file is a copy of one scene that you can send to someone. It holds
 - The print service and its quotes
 - Trained policies
 - Case tries
+- Rendered training images and their datasets
 - Taught skills
 - The build guide
 

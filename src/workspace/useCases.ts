@@ -28,6 +28,7 @@ import { useTryTimeline, type TryTimeline } from './useTryTimeline';
 import { useTriesTraining, type TriesTraining } from './useTriesTraining';
 import { useStoredTries } from './useStoredTries';
 import { useCaseDataset } from './useCaseDataset';
+import { useTrainingImages } from './useTrainingImages';
 import { plural } from '../../electron/plural.mjs';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { CaseRobotInput } from './caseChecks';
@@ -185,6 +186,7 @@ export function useCases(options: CasesOptions) {
     records: dataset.records,
     skills: skillTraining,
   });
+  const images = useTrainingImages({ ...options, active });
   const caseDataset = useCaseDataset({ active, tries: fromSim, sceneId, showDataset: options.showDataset, showToast });
   const attempt = useCaseTry({
     skills: options.skills,
@@ -200,9 +202,8 @@ export function useCases(options: CasesOptions) {
 
   const addAndTry = useAddAndTry({ add, active, attempt });
   const real = useRealRobotTries({
-    ...{ sim, rig, parts, active, tries, partners, attempt, timeline },
+    ...{ sim, rig, parts, active, tries, partners, attempt, timeline, onTry },
     viewportRef: options.viewportRef,
-    onTry,
   });
 
   return {
@@ -212,6 +213,7 @@ export function useCases(options: CasesOptions) {
     builder,
     dataset,
     caseDataset,
+    images,
     fromTries,
     tries,
     hasRobot,

@@ -11,15 +11,15 @@ import { PlayNoRobot } from '../PlayNoRobot';
 interface ConnectRobotButtonProps {
   joints: RobotJoint[];
   parts: readonly ScenePart[];
-  onBrowseRobots: () => void;
+  onShowRobots: () => void;
 }
 
-export const ConnectRobotButton: React.FC<ConnectRobotButtonProps> = ({ joints, parts, onBrowseRobots }) => {
+export const ConnectRobotButton: React.FC<ConnectRobotButtonProps> = ({ joints, parts, onShowRobots }) => {
   const [refusal, setRefusal] = useState<string | null>(null);
   const [family, setFamily] = useState<RobotFamily | null>(null);
   const robot = sceneRobotChoices(joints);
 
-  if (!joints.some((j) => j.type !== 'fixed')) return <PlayNoRobot onBrowseRobots={onBrowseRobots} />;
+  if (!joints.some((j) => j.type !== 'fixed')) return <PlayNoRobot onShowRobots={onShowRobots} />;
 
   if (!robot.ok) return null;
 

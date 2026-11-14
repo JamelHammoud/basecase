@@ -71,7 +71,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
       | Halt something running (the sim, a try, driving, a print, training, the agent) | Stop | End (End effector and the End key stay), Halt, Abort, Terminate, Kill |
       | Open a scene, file, image or page | Open | View (a menu named View stays), See Inside |
       | Put away a tab, window, sheet or Case | Close | Dismiss |
-      | Bring a panel, view or layer into sight; Hide puts it away | Show | Reveal, Toggle |
+      | Bring a panel, view, section or layer into sight; Hide puts it away | Show | Reveal, Toggle, Browse |
       | Make a second one beside the first | Duplicate | Clone |
       | Start a Case, Routine, Checks or a policy | Run | Launch, Execute |
       | Put a part in the scene | Add | Insert Part |

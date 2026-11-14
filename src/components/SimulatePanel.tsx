@@ -43,6 +43,7 @@ interface SimulatePanelProps {
   explore: CaseExplore;
   sceneName: string;
   onToast: (message: string) => void;
+  onPublishSkill: ((row: SkillRow) => void) | null;
 }
 
 function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
@@ -68,7 +69,11 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
     onStop: skills.stop,
     onSnapshot: (row: SkillRow, ref: SnapshotRef) => void skills.playSnapshot(row, ref),
     onMenu: (e: React.MouseEvent, row: SkillRow) => {
-      const items = skillMenuItems(row, skills.coach, !!props.onCoach);
+      const items = skillMenuItems(row, {
+        coach: skills.coach,
+        coaches: !!props.onCoach,
+        publish: props.onPublishSkill,
+      });
 
       e.preventDefault();
 

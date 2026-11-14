@@ -25,6 +25,8 @@ function stateLines(row: SkillRow): string[] {
 
   if (state.kind === 'ready') return tag ? [state.arena, coachedLine(tag)] : [state.arena];
 
+  if (state.kind === 'untrained') return state.refused ? [state.refused] : [];
+
   if (state.kind !== 'training') return [];
 
   return [trainingLine(state.message, state.share)];

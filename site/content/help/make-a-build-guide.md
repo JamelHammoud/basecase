@@ -19,6 +19,7 @@ covers:
   - src/components/build/GuideSection.tsx
   - src/components/build/guideViewer/GuideViewer.tsx
   - src/workspace/useBuildGuide.ts
+  - src/workspace/buildCommands.tsx
   - src/components/settings/BuildPane.tsx
   - src/guide/
   - electron/guidePdf.mjs
@@ -35,11 +36,13 @@ Turn the design into a step-by-step assembly PDF, in an order Basecase checked t
 4. Press [[→]] or [[←]] to turn the pages.
 5. Press [[Esc]] to close the guide.
 
+**Make Build Guide** and **Open Build Guide** are also in [[⌘K]].
+
 Pinch, or press + and −, to zoom. In the desktop app, **Open PDF** opens the file and **Show in Finder** shows where it's saved. If the PDF was moved or deleted, either one makes it again first.
 
 ## Keep it current
 
-When the design or the infill in Print mode changes, the card reads **Out of date** in amber, and **Update** appears beside **Open**.
+When the design or the infill in Print mode changes, the card reads **Out of date** in amber, and **Update** appears beside **Open**. [[⌘K]] has it as **Update Build Guide**.
 
 ![The Build guide card reading Out of date, with Open and Update buttons](/help/make-a-build-guide/out-of-date.png)
 

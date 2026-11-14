@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { caseName, goalFields, goalValues, worldsFor } from '../../cases/caseBuilder';
+import { caseFields, caseName, goalValues, worldsFor } from '../../cases/caseBuilder';
 import { goalParam, type GoalKind, type GoalValues } from '../../cases/caseGoals';
 import type { WorldKind } from '../../cases/caseWorlds';
 import { Button, ChoiceGrid, FieldRow, NumberInput, TextInput } from '../../design-system';
@@ -29,6 +29,11 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
     setGiven({});
   };
 
+  const pickWorld = (kind: WorldKind) => {
+    setWorld(kind);
+    setGiven((g) => ({ ...g, riseMm: undefined, inclineDeg: undefined }));
+  };
+
   const create = () => {
     if (builder.create(spec).ok) onCreated();
   };
@@ -55,12 +60,12 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
           label="World"
           columns={worlds.length > MAX_WORLD_COLUMNS ? 2 : worlds.length}
           value={world}
-          onChange={setWorld}
+          onChange={pickWorld}
           options={worlds.map((w) => ({ value: w.kind, label: w.name, title: w.trueSize ? w.name : undefined }))}
         />
       )}
       <div className="flex flex-col gap-2">
-        {goalFields(goal, values).map((key) => {
+        {caseFields(goal, values, world).map((key) => {
           const param = goalParam(goal, key);
 
           return (

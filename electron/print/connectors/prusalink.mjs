@@ -26,7 +26,7 @@ const MESSAGES = {
   ERROR: 'The printer reported an error. Check the printer screen.',
 };
 
-const AUTH_MESSAGE = 'Check the API key. It’s on the printer: Settings → Network → PrusaLink.';
+const AUTH_MESSAGE = 'Check the API key. It’s on the printer: Settings ▸ Network ▸ PrusaLink.';
 
 export function prusaStatus(status, jobName) {
   const printerState = String(status?.printer?.state ?? '').toUpperCase();

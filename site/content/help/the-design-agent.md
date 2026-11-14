@@ -26,32 +26,32 @@ covers:
   - src/workspace/applyAgentOps.ts
 ---
 
-Describe a robot or show the agent a photo, and it models the robot in your scene with real servos, boards and screws you can buy.
+Describe a robot or show the agent a photo, and it models the robot in your scene from real servos, boards and screws you can buy.
 
-The agent is Claude Code, Codex or Gemini CLI. It runs on your computer inside the desktop app and is signed in with your own login. To use the agent from the web studio, download the desktop app.
+The agent is Claude Code, Codex or Gemini CLI. It runs on your computer inside the desktop app and uses your own login. To use the agent from the web studio, download the desktop app.
 
 ## What it does
 
-You can watch the agent build in the open scene. It reads your words, photos, sketches and files, and looks up the robot's published model when one exists. Before it shapes any part, the agent plans where the joints go. Then it blocks out the robot, models each part as code and checks its work.
+The agent builds in the open scene, so you can watch it work. It reads your words, photos, sketches and files, and looks up the robot's published model if one exists. Before it shapes any part, it plans where the joints go. Then it blocks out the robot, models each part as code and checks its work.
 
-The agent picks parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) get tried first. If the catalog lacks a part, the agent can add one it found on the web, and the bill of materials lists that part as Added by Agent.
+Parts come from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices, and the agent tries parts you [own](/help/count-the-parts-you-already-own) first. If the catalog doesn't have a part, the agent can add one it found on the web. The bill of materials lists that part as Added by Agent.
 
-The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, or teach the robot a skill:
+The agent can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, or teach the robot a skill. You can ask it to:
 
-- Ask it to change how a ready Motor Kit skill moves. The agent keeps the change if Arena passes it and drops it if Arena doesn't.
-- For a Routine, it proves each switch between skills and names any that fell.
-- Give it a Case and two open scenes, and it tells you which robot passes more often.
-- To find out what happened in a try, ask. The agent reads the try's recording and answers with times and values.
-- To find tries from every scene, ask the agent. It searches them with the same words as the [Library's search](/help/search-tries).
-- When you're deciding which servo to buy, the agent can run the Case on each catalog version and answer with passes, cost and mass.
+- Change how a ready Motor Kit skill moves. The agent keeps the change only if Arena passes it.
+- Write a Routine. The agent proves each switch between skills and names any that fell.
+- Compare two open scenes on a Case to find out which robot passes more often.
+- Explain what happened in a try. The agent reads the try's recording and answers with times and values.
+- Find tries from every scene, searching with the same words as the [Library's search](/help/search-tries).
+- Run the Case on each catalog version of a servo you're deciding to buy. The agent answers with passes, cost and mass.
 
-Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos before anything else. For a leg or finger, give it a path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges the printed parts that bolt together on one link into a single print.
+If you tell the agent where an arm needs to reach and what it carries, it sizes the arm's links and servos first. For a leg or finger, give it a path to trace, and it fits a four-bar linkage to that path. When you ask for fewer parts, the agent merges the printed parts that bolt together on one link into a single print.
 
-Say what you want to do with a robot, like play a game on a gamepad, and the agent builds a Case for it. The Case opens running, as described in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
+Tell the agent what you want to do with a robot, like play a game on a gamepad, and it builds a Case for it. The Case opens running, as [Run a Case](/help/run-a-case) describes. In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
 
-If the Case's panels lack a control you need, like a joystick or a piano, the agent draws one as a code panel. It also marks any object that code moves, such as a target to whack, as movable. After each write, the agent reads the panel's errors and a capture of the window, then fixes anything that broke.
+If the Case's panels lack a control you need, like a joystick or a piano, the agent draws one as a code panel. It marks any object the code moves as movable, such as a target to whack. After each write, the agent reads the panel's errors and a capture of the window, then fixes anything that broke.
 
-Name a movement, such as a wave, and the Case reacts to it as a gesture. If no built-in gesture matches, the agent asks you to teach it. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
+Name a movement, such as a wave, and the Case reacts to it as a gesture. If no built-in gesture matches, the agent asks you to teach it. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
 
 ## What it cares about
 
@@ -61,20 +61,20 @@ The agent weighs its work in this order:
 2. Each part costs no more than the job needs.
 3. Parts look like an expert designed them.
 
-Matching a photo's silhouette ranks below all three.
+Matching the silhouette in a photo matters less than all three.
 
 ## How it checks its work
 
-After each edit, the agent sees the same Checks as the **Build** tab. It never makes a check pass by narrowing a joint's range, hiding or deleting a part, or editing a Case. When a check seems wrong, the agent tells you.
+After each edit, the agent sees the same Checks as the **Build** tab. It never makes a check pass by narrowing a joint's range, hiding or deleting a part, or editing a Case. If a check looks wrong, the agent tells you.
 
-If an edit adds a blocker, the agent follows up on its own, up to twice per message. In the chat, the follow-up appears as “Fix what the last change added: 2 problems.” above the new problems. You can turn this off in **Settings** ▸ **Build**.
+If an edit adds a blocker, the agent follows up on its own, up to twice per message. The chat shows the follow-up as “Fix what the last change added: 2 problems.” above the new problems. To turn this off, go to **Settings** ▸ **Build**.
 
-In a scene with Cases, the agent runs each one and keeps going until they all pass. [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent) walks through it.
+In a scene with Cases, the agent runs each Case and keeps working until they all pass. See [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 
 ## What you keep control of
 
-Each change the agent makes is one undo step. To take changes back, see [Undo what the agent changed](/help/undo-agent-changes).
+Each change the agent makes is a single undo step. To take a change back, see [Undo what the agent changed](/help/undo-agent-changes).
 
 While the agent works, you can steer it, queue your next request or stop it. Your edits come first, and the agent never blocks you from changing a part.
 
-The agent can't run commands, open files you haven't attached or reach your hardware. For the full list, see [Agent limits](/help/agent-limits).
+The agent can't run commands, open files you haven't attached or reach your hardware. [Agent limits](/help/agent-limits) has the full list.

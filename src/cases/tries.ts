@@ -106,6 +106,14 @@ export const multipliable = (t: TryRecord) => t.passed && !t.generated && !t.rea
 
 export const simTries = (tries: TryRecord[]) => tries.filter((t) => !t.real);
 
+export function goingWith(ids: Iterable<string>) {
+  const going = new Set(ids);
+
+  return (id: string, source: string | null | undefined) => going.has(id) || (!!source && going.has(source));
+}
+
+export const sourceTryOf = (t: TryRecord) => (t.generated ? (t.manifest.source ?? null) : null);
+
 export const generatedFrom = (tries: TryRecord[], source: TryRecord) =>
   tries.filter((t) => t.generated && t.manifest.source === source.id);
 

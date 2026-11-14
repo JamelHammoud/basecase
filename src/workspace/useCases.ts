@@ -5,9 +5,9 @@ import { robotFacts } from '../cases/robotFit';
 import { withGesture, type CaseGesture } from '../cases/gestures';
 import { readCases, worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import { generatedFrom, simTries, worstFirst, type TryRecord } from '../cases/tries';
+import { generatedFrom, goingWith, simTries, sourceTryOf, worstFirst, type TryRecord } from '../cases/tries';
 import { CASE_STORES, caseStoreKey } from '../cases/console/codeStore';
-import { deleteRecording } from '../cases/tryStore';
+import { deleteTries } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
@@ -24,6 +24,7 @@ import { useDatasetExport } from './useDatasetExport';
 import { useTryMultiply, type TryMultiply } from './useTryMultiply';
 import { useTryTimeline, type TryTimeline } from './useTryTimeline';
 import { useTriesTraining, type TriesTraining } from './useTriesTraining';
+import { useStoredTries } from './useStoredTries';
 import { plural } from '../../electron/plural.mjs';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { CaseRobotInput } from './caseChecks';
@@ -47,7 +48,7 @@ interface CasesOptions {
 const dropTries = (tries: TryRecord[] | undefined, goes: (t: TryRecord) => boolean) => {
   const all = tries ?? [];
 
-  all.filter(goes).forEach((t) => void deleteRecording(t.id));
+  void deleteTries(all.filter(goes).map((t) => t.id));
 
   return all.filter((t) => !goes(t));
 };
@@ -61,7 +62,8 @@ interface TryRemoval {
 
 function confirmRemoveTry(record: TryRecord, { tries, multiply, timeline, setProject }: TryRemoval) {
   const generated = generatedFrom(tries, record).length;
-  const goes = (t: TryRecord) => t.id === record.id || (t.generated === true && t.manifest.source === record.id);
+  const going = goingWith([record.id]);
+  const goes = (t: TryRecord) => going(t.id, sourceTryOf(t));
 
   confirmAction({
     title: `Delete this try?`,
@@ -89,7 +91,8 @@ export function useCases(options: CasesOptions) {
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = cases.find((c) => c.id === activeId) ?? null;
-  const tries = worstFirst((project.tries ?? []).filter((t) => t.caseId === activeId));
+  const { shown, onTry, onTries } = useStoredTries({ project, setProject, sceneId, cases, sim });
+  const tries = worstFirst(shown((project.tries ?? []).filter((t) => t.caseId === activeId)));
   const fromSim = simTries(tries);
   const hasRobot = rig.robots.length > 0;
   const fixedBase = hasRobot && robotFacts(rig, parts).morphology === 'fixed';
@@ -165,8 +168,7 @@ export function useCases(options: CasesOptions) {
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const naming = useCaseNames(setProject);
   const dataset = useDatasetExport({ sim, rig, parts, active, tries: fromSim, showToast, openAccounts, sceneId });
-  const addTries = (records: TryRecord[]) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), ...records] }));
-  const multiply = useTryMultiply({ sim, rig, parts, active, tries: fromSim, partners, onTries: addTries, showToast });
+  const multiply = useTryMultiply({ sim, rig, parts, active, tries: fromSim, partners, onTries, showToast });
   const removeTry = (record: TryRecord) => confirmRemoveTry(record, { tries, multiply, timeline, setProject });
 
   const fromTries: TriesTraining = useTriesTraining({
@@ -185,7 +187,7 @@ export function useCases(options: CasesOptions) {
     joints: project.joints ?? [],
     active,
     partners,
-    onTry: (record) => addTries([record]),
+    onTry,
     onRefuse: (message) => showToast(message),
   });
 
@@ -193,7 +195,7 @@ export function useCases(options: CasesOptions) {
   const real = useRealRobotTries({
     ...{ sim, rig, parts, active, tries, partners, attempt, timeline },
     viewportRef: options.viewportRef,
-    onTry: (record) => addTries([record]),
+    onTry,
     onRefuse: (message) => showToast(message),
   });
 

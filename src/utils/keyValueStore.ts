@@ -11,7 +11,12 @@ interface IndexedDbStoreOptions {
   label?: string;
 }
 
-export function indexedDbStore<T>({ database, store, label = database }: IndexedDbStoreOptions): KeyValueStore<T> {
+export interface ListedStore<T> extends KeyValueStore<T> {
+  values: () => Promise<T[]>;
+  keys: () => Promise<string[]>;
+}
+
+export function indexedDbStore<T>({ database, store, label = database }: IndexedDbStoreOptions): ListedStore<T> {
   const open = (): Promise<IDBDatabase> | null => {
     if (typeof indexedDB === 'undefined') return null;
 
@@ -42,5 +47,7 @@ export function indexedDbStore<T>({ database, store, label = database }: Indexed
     put: (key, value) => run('readwrite', (s) => s.put(value, key)),
     delete: (key) => run('readwrite', (s) => s.delete(key)),
     deletePrefix: (prefix) => run('readwrite', (s) => s.delete(IDBKeyRange.bound(prefix, `${prefix}￿`))),
+    values: async () => (await run<T[]>('readonly', (s) => s.getAll())) ?? [],
+    keys: async () => ((await run<IDBValidKey[]>('readonly', (s) => s.getAllKeys())) ?? []).map(String),
   };
 }

@@ -49,6 +49,11 @@ export const GLOSSARY = [
     synonyms: ['creat(?:e|es|ed|ing)', '(?:auto-)?generat(?:e|es|ed|ing)'],
   },
   { word: 'Update', action: 'Make an out-of-date build guide again', synonyms: ['regenerate'] },
+  {
+    word: 'Try',
+    action: 'Name a recording of a robot, whatever made it',
+    synonyms: ['recordings?(?! parts)', 'episodes?', 'demos?', 'demonstrations?'],
+  },
 ];
 
 const synonymPattern = (source) => new RegExp(`^(?:${source})\\b`, 'i');

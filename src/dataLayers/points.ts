@@ -1,4 +1,4 @@
-import type { LaserScan, PointCloud2, PointField, ScenePoints } from './messages';
+import type { LaserScan, MapCloud, PointCloud2, PointField, ScenePoints } from './messages';
 import { ACCENT, local, paint, pushPoint, rampInto, type Placer, type PointSink } from './pointSink';
 
 export const HEIGHT_FIELD = 'z';
@@ -324,4 +324,31 @@ export function cloudPoints(cloud: PointCloud2, at: Placer, sink: PointSink, col
 
     shade(base, k);
   }
+}
+
+export function mapPoints(map: MapCloud, at: Placer, sink: PointSink) {
+  const [e0, e1, e2, , e4, e5, e6, , e8, e9, e10, , e12, e13, e14] = Array.from(at.e);
+  const { positions, colors } = sink;
+  const { points, low } = map;
+  const scale = (LUT_SIZE - 1) / Math.max(1e-6, map.high - low);
+  const room = Math.min(points.length / 3, positions.length / 3 - sink.count);
+  const top = LUT_SIZE - 1;
+
+  for (let i = 0; i < room; i++) {
+    const x = points[i * 3];
+    const y = points[i * 3 + 1];
+    const z = points[i * 3 + 2];
+    const k = (sink.count + i) * 3;
+    const t = ((z - low) * scale) | 0;
+    const c = (t < 0 ? 0 : Math.min(t, top)) * 3;
+
+    positions[k] = e0 * x + e4 * y + e8 * z + e12;
+    positions[k + 1] = e1 * x + e5 * y + e9 * z + e13;
+    positions[k + 2] = e2 * x + e6 * y + e10 * z + e14;
+    colors[k] = LUT[c];
+    colors[k + 1] = LUT[c + 1];
+    colors[k + 2] = LUT[c + 2];
+  }
+
+  sink.count += room;
 }

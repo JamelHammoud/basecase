@@ -117,6 +117,8 @@ describe('robot link', () => {
   });
 
   it('beats while idle, holds the measured pose from Test on, and forwards the latest intent', async () => {
+    vi.useFakeTimers();
+
     const { link, spawned } = linkWithFake();
 
     link.connect(ARM);
@@ -125,16 +127,16 @@ describe('robot link', () => {
 
     child.say(HELLO);
     child.say({ event: 'status', mode: 'look', run: 'idle', joints: [{ id: 1, position: 2048 }] });
-    await settle(80);
+    await vi.advanceTimersByTimeAsync(80);
     expect(child.sent.every((c) => c.cmd === 'heartbeat')).toBe(true);
     expect(child.sent.length).toBeGreaterThan(1);
 
     child.say({ event: 'mode', mode: 'test' });
-    await settle(80);
+    await vi.advanceTimersByTimeAsync(80);
     expect(child.sent.at(-1)).toEqual({ cmd: 'intent', joints: [0, 0] });
 
     expect(link.command({ cmd: 'intent', joints: [0.25, -0.5] })).toEqual({ ok: true });
-    await settle(80);
+    await vi.advanceTimersByTimeAsync(80);
     expect(child.sent.at(-1)).toEqual({ cmd: 'intent', joints: [0.25, -0.5] });
     link.disconnect();
   });

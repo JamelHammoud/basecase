@@ -1,11 +1,12 @@
 import type { DataMessage, DataSchema } from './messages';
 
-export type DataKind = 'points' | 'scan' | 'frames' | 'path' | 'markers' | 'grid' | 'poses';
+export type DataKind = 'points' | 'scan' | 'map' | 'frames' | 'path' | 'markers' | 'grid' | 'poses';
 
 export const KIND_OF: Record<DataSchema, DataKind> = {
   'sensor_msgs/LaserScan': 'scan',
   'sensor_msgs/PointCloud2': 'points',
   'scene/Points': 'scan',
+  'scene/Map': 'map',
   'visualization_msgs/Marker': 'markers',
   'visualization_msgs/MarkerArray': 'markers',
   'foxglove.SceneUpdate': 'markers',

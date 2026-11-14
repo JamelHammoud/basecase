@@ -251,6 +251,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           sceneName={core.scene.sceneName}
           onToast={core.showToast}
           onPublishSkill={simTraining.skillHub.publishable.length ? simTraining.skillHub.publish : null}
+          fleet={simTraining.fleet}
         />
       </TabActivity>
       <TabActivity tab="inspector" current={current} visited={visited}>

@@ -63,6 +63,7 @@ const DETACHED: Viewport3DHandle = {
   posedFloor: async () => null,
   meshGaps: async () => [],
   projectPoints: (points) => points.map(() => ({ x: 0, y: 0, visible: false })),
+  onRender: () => () => {},
   measureFrom: () => {},
   cancelMeasure: () => false,
   shownPartIds: () => [],

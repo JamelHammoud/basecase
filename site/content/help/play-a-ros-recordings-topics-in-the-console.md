@@ -1,6 +1,7 @@
 ---
 title: Play a ROS recording's topics in the console
 date: 2026-11-14
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 17
@@ -66,6 +67,8 @@ The column has one card for each kind of topic in the recording:
 - **Message**: the newest message on one topic at the playhead, shown as a tree.
 
 Laser scans, point clouds, TF frames, odometry, paths, markers and occupancy grids also draw on the canvas at the playhead. Each one gets its own row in **Layers**. An IMU sets the robot's tilt, and odometry sets its path on the map.
+
+Recordings with laser scans, point clouds or depth images also build a height-colored **Map** layer from the whole run. It stays complete while the topic layers follow the playhead. Depth images need matching camera calibration and recorded transforms. See [Map a robot run](/help/map-a-robot-run) for placement requirements and scan matching.
 
 Every field of every topic is also a signal. Its name is `topic.` followed by the topic and the field, for example `topic./imu.angular_velocity.z`. To pick one item of a list, add `[2]`. To pick all of them, add `[:]`, as in `topic./joint_states.effort[:]`. A Case's console and the agent can read these signals too.
 

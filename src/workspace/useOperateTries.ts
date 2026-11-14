@@ -14,7 +14,15 @@ import {
   stopOperateVideo,
   type VideoSegment,
 } from '../robot/operateVideo';
-import { recordRobotSample, robotSnapshot, subscribeRobot, subscribeRobotEvents } from '../robot/robotStore';
+import {
+  fleetSnapshot,
+  recordRobotSample,
+  robotSnapshot,
+  selectedUnit,
+  subscribeFleetEvents,
+  subscribeRobot,
+} from '../robot/robotStore';
+import { connectedUnits, unitOfEvent } from '../robot/robotUnits';
 import type { RobotEvent } from '../robot/robotState';
 import { useRobot } from '../robot/useRobot';
 import type { Simulation } from '../sim/useSimulation';
@@ -77,7 +85,10 @@ export function useOperateTries({ active, sceneId, joints, sim, showToast }: Ope
 
   const syncScene = useEffectEvent(() => {
     const ids = active && robotSnapshot().link === 'connected' ? connectedFrom(joints) : null;
-    const key = ids ? `${sceneId}:${ids.join()}` : '';
+    const units = connectedUnits(fleetSnapshot())
+      .map((u) => u.unit)
+      .join();
+    const key = ids ? `${sceneId}:${ids.join()}:${units}` : '';
 
     if (key === sent.current) return;
 
@@ -108,7 +119,7 @@ export function useOperateTries({ active, sceneId, joints, sim, showToast }: Ope
   const onRecorded = useEffectEvent(async (event: RobotEvent) => {
     const stored = recordedTry(event);
     const ours = stored?.sceneId === sceneId;
-    const video = active ? await cutOperateVideo() : null;
+    const video = active && unitOfEvent(event) === selectedUnit() ? await cutOperateVideo() : null;
 
     if (!stored) return;
 
@@ -121,7 +132,7 @@ export function useOperateTries({ active, sceneId, joints, sim, showToast }: Ope
 
   useEffect(
     () =>
-      subscribeRobotEvents((event) => {
+      subscribeFleetEvents((event) => {
         if (event.event === 'recorded') void onRecorded(event).catch(refuse);
       }),
     [],

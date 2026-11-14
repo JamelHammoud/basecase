@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { resolveFrame, type FrameAnchors, type TfTree } from '../three/viewport/dataFrames';
+import { resolveFrame, ROS_TO_SCENE, type FrameAnchors, type TfTree } from '../three/viewport/dataFrames';
 import { gridPlacement, gridTexels, type GridDraw } from './grid';
 import { addEntity, addMarker, liveMarkers, poseMatrix, type FrameOf } from './markers';
 import type { Marker, Odometry, RosPose } from './messages';
-import { cloudPoints, laserScanPoints, scenePoints } from './points';
+import { cloudPoints, laserScanPoints, mapPoints, scenePoints } from './points';
 import { placer, type PointSink } from './pointSink';
 import { addSegment, addStrip, emptyShapes, type Rgba, type Shapes } from './shapes';
 import { asTrack, spanAt, type DataTrack, type MessageOf } from './track';
@@ -154,6 +154,7 @@ const DRAWERS: Partial<Record<DataTrack['schema'], Drawer>> = {
     if (at) cloudPoints(cloud, placer(at), draw.sink, colorBy);
   }),
   'scene/Points': drawer<'scene/Points'>((cloud, { draw }) => scenePoints(cloud, draw.sink)),
+  'scene/Map': drawer<'scene/Map'>((map, { draw }) => mapPoints(map, placer(ROS_TO_SCENE), draw.sink)),
   'foxglove.SceneUpdate': drawer<'foxglove.SceneUpdate'>((update, { frameOf, draw }) => {
     for (const entity of update.entities) addEntity(draw.shapes, entity, frameOf);
   }),

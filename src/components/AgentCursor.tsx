@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { Viewport3DHandle } from './Viewport3D';
 import { AGENT_COLOR, ARROW_PATH } from '../design-system';
+import { watchCursor } from './cursorMotion';
 
 interface AgentCursorProps {
   viewportRef: React.RefObject<Viewport3DHandle | null>;
@@ -20,40 +21,16 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({
   color = AGENT_COLOR,
 }) => {
   const elRef = useRef<HTMLDivElement | null>(null);
-  const targetRef = useRef(target);
   const posRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    if (target) targetRef.current = target;
-  }, [target]);
+    const element = elRef.current;
+    const viewport = viewportRef.current;
 
-  useEffect(() => {
-    let raf = 0;
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
+    if (!element || !viewport) return;
 
-      const el = elRef.current;
-      const t = targetRef.current;
-      const vp = viewportRef.current;
-
-      if (!el || !t || !vp) return;
-
-      const [p] = vp.projectPoints([t]);
-
-      if (!p) return;
-
-      const cur = posRef.current ?? { x: p.x - 80, y: p.y + 60 };
-
-      cur.x += (p.x - cur.x) * 0.16;
-      cur.y += (p.y - cur.y) * 0.16;
-      posRef.current = cur;
-      el.style.transform = `translate3d(${cur.x.toFixed(1)}px, ${cur.y.toFixed(1)}px, 0)`;
-    };
-
-    raf = requestAnimationFrame(tick);
-
-    return () => cancelAnimationFrame(raf);
-  }, [viewportRef]);
+    return watchCursor(viewport, element, { target, visible, position: posRef });
+  }, [viewportRef, target, visible]);
 
   return (
     <div

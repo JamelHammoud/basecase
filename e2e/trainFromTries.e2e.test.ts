@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
-import { datasetFiles, touchingPolicy } from './driveChecks';
+import { datasetFiles, endTryAt, inDataset, touchingPolicy } from './driveChecks';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
 let app: App;
@@ -34,23 +34,6 @@ const simState = () =>
 const stubTrainer = (policy: unknown) =>
   app.page.evaluate((stub) => (window as unknown as { __studio: Studio }).__studio.stubTrainer(stub), policy);
 
-async function endTryAt(seconds: number) {
-  await app.page.evaluate(async (at) => {
-    const clock = () =>
-      [...document.querySelectorAll('[data-testid="try-clock"]')].find((el) => !el.closest('[inert]'));
-    const elapsed = () => Number.parseFloat(clock()?.textContent ?? '') || 0;
-    const deadline = Date.now() + 30000;
-
-    while (elapsed() < at) {
-      if (Date.now() > deadline) throw new Error(`The try clock never reached ${at} s`);
-
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-
-    clock()?.parentElement?.querySelector('button')?.click();
-  }, seconds);
-}
-
 async function openTouchAPoint() {
   const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
 
@@ -69,8 +52,7 @@ async function openTouchAPoint() {
 async function driveTries() {
   for (let n = 1; n <= TRIES; n++) {
     await button('Try It').click();
-    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-    await endTryAt(SHORT_TRY_SECONDS);
+    await endTryAt(app.page, SHORT_TRY_SECONDS);
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(n);
     await expect.poll(async () => (await simState()).drive, { timeout: 30000 }).toBe('off');
   }
@@ -93,7 +75,7 @@ async function datasetFromSearch(query: string) {
   await expect.poll(() => app.page.getByTestId('dataset-pane').count()).toBe(1);
 }
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp({ 'train-status': { uv: true, ready: true, running: [] } });
   await app.page.route(
     (url) => url.pathname === '/api/bridge/skill',
@@ -105,7 +87,7 @@ beforeAll(async () => {
   );
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
@@ -130,7 +112,7 @@ describe('Train from Tries', () => {
       await datasetFromSearch('Touch a Point');
 
       const [made] = await datasets();
-      const files = await datasetFiles(app.page);
+      const files = inDataset(await datasetFiles(app.page));
 
       expect(made).toMatchObject({ name: 'Touch a Point', query: 'Touch a Point' });
       expect(made.members).toHaveLength(TRIES);

@@ -1,7 +1,7 @@
 ---
 title: Calibrate an emulated robot
 date: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-14
 collection: operate
 type: task
 order: 2
@@ -56,9 +56,10 @@ The STS3215 C001 and XL330 start from a measured catalog model. Every other Feet
 To calibrate a robot:
 
 1. Connect the emulated robot from the scene you want to calibrate. For steps, see [Connect an emulated robot](/help/connect-an-emulated-robot).
-2. Under **Ladder**, click **Set Up**.
-3. Click **Test**, then wait for "Motors running".
-4. Click **Calibrate Servos**.
+2. In Operate, click the connected robot's named row.
+3. Under **Ladder**, click **Set Up**.
+4. Click **Test**, then wait for "Motors running".
+5. Click **Calibrate Servos**.
 
 ![Operate in Test, with Calibrate Servos above the emulated servos](/help/calibrate-an-emulated-robot/test.png)
 
@@ -68,20 +69,22 @@ First, Basecase wiggles each joint whose zero and direction it has never found. 
 
 Next, all the joints move together through a slow bench sequence for about 18 seconds. Then Basecase fits each servo, one joint at a time.
 
-5. Read each joint's row under **Emulated servos**. The row shows the joint's name, bus ID, position and temperature. **Measured** beside the name means the simulation now runs on the fit. The version in use appears under the name, after any other verdict.
+6. Read each joint's row under **Emulated servos**. The row shows the joint's name, bus ID, position and temperature. **Measured** beside the name means that unit's twin uses the fit. The version in use appears under the name, after any other verdict.
 
-The **Pose** tab marks the same joints **Measured**.
+Each named robot keeps its own fits, zeros, directions and replay history. Selecting another row changes which history Operate shows.
+
+For the first robot, named robot, the **Pose** tab marks the same joints **Measured**.
 
 ![Shoulder 1 and Elbow 2 marked Measured at v1 in Operate, and Shoulder and Elbow marked Measured in the Pose tab](/help/calibrate-an-emulated-robot/verdicts.png)
 
-6. Click a joint's row to open its replay.
+7. Click a joint's row to open its replay.
 
 The light line shows what the servo did. The gray line is the simulation on the catalog model, and the blue line is the simulation on the fit. Under the plot, gray is the catalog model's median error and blue is the fit's.
 
 ![A joint's replay with the preset error and the calibrated error](/help/calibrate-an-emulated-robot/replay.png)
 
-7. To go back to the previous version, right-click the joint's row and choose **Roll Back**.
-8. Click **Roll Back** to confirm.
+8. To go back to the previous version, right-click the joint's row and choose **Roll Back**.
+9. Click **Roll Back** to confirm.
 
 ![The row's menu with its versions and Roll Back](/help/calibrate-an-emulated-robot/menu.png)
 
@@ -138,11 +141,13 @@ Replays use the latest bench run, which Basecase keeps until it reloads. After a
 
 ## Where the fit is used
 
-The **Simulate** tab, Cases, the Motor Kit and every skill you teach run on the fitted servos.
+The **Simulate** tab, Cases, the Motor Kit and every skill you teach use the first robot's fits. **Pose** and **Build** ▸ **Checks** use those fits too.
+
+[Roll Out](/help/roll-out-a-skill-to-a-fleet) instead proves the skill on each named robot's own fits. Calibrating or rolling back one unit leaves every other unit's history alone.
 
 **Build** ▸ **Checks** ▸ **Servo models** passes once every servo's joint is **Measured**. Until then, its note names the servos and joints that aren't **Measured**.
 
-To calibrate only those joints, connect the robot from this scene and put it in **Test**. Then:
+To calibrate only those joints, select the first robot's row, named robot, and put it in **Test**. Then:
 
 1. In **Build** ▸ **Checks**, expand **Servo models**.
 2. Hover over the note and click **Fix**.
@@ -151,4 +156,4 @@ Basecase selects those servos and calibrates only their joints.
 
 ![Servo models after Elbow was rolled back, naming the Elbow servo with Fix on its note](/help/calibrate-an-emulated-robot/checks-rolled-back.png)
 
-**Export** ▸ **Robot Package** includes each joint's active calibration, zero and direction in `joint_map.json`. To learn more, see [Export a robot package](/help/export-a-robot-package).
+**Export** ▸ **Robot Package** includes each joint's active calibration, zero and direction from the first robot in `joint_map.json`. To learn more, see [Export a robot package](/help/export-a-robot-package).

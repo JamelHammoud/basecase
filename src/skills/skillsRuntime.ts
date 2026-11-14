@@ -1,6 +1,7 @@
 import type { HandoffResult } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
+import type { ArenaEvidence, Skill } from './artifacts';
 import { lastError, type ForgeRunner } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
 import type { KitWarm } from './motorKit';
@@ -110,6 +111,12 @@ export class SkillsRuntime {
     if (reply.result.ok) this.drafts.set(reply.result.report.draft.id, reply.result.report);
 
     return reply.result;
+  }
+
+  async twin(model: SimModel, skill: Skill, environment: Environment): Promise<ArenaEvidence> {
+    const reply = await this.deps.runner({ type: 'twin', model, skill, environment }, this.ports());
+
+    return reply.evidence;
   }
 
   trainKit(model: SimModel, entry: TrainedEntry): string | null {

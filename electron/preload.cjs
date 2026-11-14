@@ -104,13 +104,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     String(channel).startsWith('earth:')
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown map call')),
-  robotConnect: (spec) => ipcRenderer.invoke('robot:connect', spec),
-  robotCommand: (command) => ipcRenderer.invoke('robot:command', command),
-  robotDisconnect: () => ipcRenderer.invoke('robot:disconnect'),
-  robotPolicy: (id) => ipcRenderer.invoke('robot:policy', id),
-  robotCalibrate: (joints) => ipcRenderer.invoke('robot:calibration', joints),
-  robotState: () => ipcRenderer.invoke('robot:state'),
-  robotRecord: (sample) => ipcRenderer.invoke('robot:record', sample),
+  robotConnect: (spec, unit) => ipcRenderer.invoke('robot:connect', spec, unit),
+  robotCommand: (command, unit) => ipcRenderer.invoke('robot:command', command, unit),
+  robotDisconnect: (unit) => ipcRenderer.invoke('robot:disconnect', unit),
+  robotPolicy: (refs, unit) => ipcRenderer.invoke('robot:policy', refs, unit),
+  robotCalibrate: (joints, unit) => ipcRenderer.invoke('robot:calibration', joints, unit),
+  robotState: (unit) => ipcRenderer.invoke('robot:state', unit),
+  robotRecord: (sample, unit) => ipcRenderer.invoke('robot:record', sample, unit),
+  robotUnits: () => ipcRenderer.invoke('robot:units'),
+  robotRollBack: (unit) => ipcRenderer.invoke('robot:rollback', unit),
   onRobotEvent: (callback) => {
     const handler = (_event, data) => callback(data);
 

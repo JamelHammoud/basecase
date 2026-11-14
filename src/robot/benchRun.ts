@@ -1,7 +1,15 @@
 import type { BenchRecording, BenchSample } from '../reality/benchLogs';
 import { BENCH_SECONDS, benchOffset } from '../reality/benchSequence';
-import { servoFamily, statusRadians, type RobotMount, type RobotState, type RobotStatus } from './robotState';
-import { robotSnapshot, sendRobotCommand, setBenchDriving, subscribeRobot } from './robotStore';
+import {
+  servoFamily,
+  statusRadians,
+  type RobotEvent,
+  type RobotMount,
+  type RobotState,
+  type RobotStatus,
+} from './robotState';
+import { robotSnapshot, selectedUnit, sendUnitCommand, setBenchDriving } from './robotStore';
+import { subscribeUnitRobot } from './unitSubscription';
 
 export const BENCH_INTENT_MS = 25;
 
@@ -11,7 +19,9 @@ export const canRunBench = (state: RobotState) =>
   state.link === 'connected' &&
   servoFamily(state.spec) !== null &&
   state.mode === 'test' &&
-  state.status?.run === 'running';
+  state.status?.run === 'running' &&
+  !state.status.fault_latched &&
+  !state.status.sealed;
 
 function measuredStarts(state: RobotState): number[] {
   return (state.spec?.ids ?? []).map((id) => statusRadians(state.status, state.calibration, id) ?? 0);
@@ -75,8 +85,9 @@ export function playBench(
   moving?: readonly number[],
   plan: BenchPlan = SERVO_BENCH,
   hear?: HearStatus,
+  unit: string = selectedUnit(),
 ): Promise<BenchRecording | null> {
-  const begun = robotSnapshot();
+  const begun = robotSnapshot(unit);
 
   if (!canRunBench(begun) || !begun.spec) return Promise.resolve(null);
 
@@ -89,7 +100,7 @@ export function playBench(
   const startedAt = performance.now();
   const elapsed = () => (performance.now() - startedAt) / 1000;
   const intent = (offset: number) =>
-    void sendRobotCommand({ cmd: 'intent', joints: holds.map((s, k) => (subset.includes(k) ? s + offset : s)) });
+    void sendUnitCommand(unit, { cmd: 'intent', joints: holds.map((s, k) => (subset.includes(k) ? s + offset : s)) });
   const recording = (): BenchRecording => {
     const seconds = benchSeconds(heard);
 
@@ -113,7 +124,7 @@ export function playBench(
       clearInterval(timer);
       unsubscribe();
       intent(0);
-      setBenchDriving(false);
+      setBenchDriving(false, unit);
 
       resolve(finished ? recording() : null);
     };
@@ -123,10 +134,10 @@ export function playBench(
       if (seconds >= plan.seconds + BENCH_END_GRACE_S) finish(true);
       else intent(plan.offset(seconds));
     };
-    const onState = () => {
-      const state = robotSnapshot();
+    const onState = (event: RobotEvent) => {
+      const state = robotSnapshot(unit);
 
-      if (!canRunBench(state)) {
+      if (event.event === 'fault' || !canRunBench(state)) {
         finish(false);
 
         return;
@@ -144,9 +155,9 @@ export function playBench(
       if (secondsOf(status, lead) >= plan.seconds) finish(true);
     };
 
-    setBenchDriving(true);
+    setBenchDriving(true, unit);
 
-    const unsubscribe = subscribeRobot(onState);
+    const unsubscribe = subscribeUnitRobot(unit, onState);
     const timer = setInterval(tick, BENCH_INTENT_MS);
   });
 }

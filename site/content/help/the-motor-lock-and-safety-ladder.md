@@ -1,7 +1,7 @@
 ---
 title: The motor lock and safety ladder
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: operate
 type: concept
 order: 1
@@ -41,6 +41,8 @@ Released builds of Basecase ship without the code that talks to real servos, so 
 A maintainer lifts the lock at the first hardware session, with the power cut-off in reach. Until then, every robot in Operate is emulated, and nothing in Basecase has moved a real motor.
 
 ## The ladder
+
+Every connected unit has its own ladder, motor state and faults. In Operate, click a unit's named row to choose which robot the controls act on. A fault on one unit leaves the others in their own modes.
 
 A robot climbs one rung at a time. You can click the next rung and **Look**. To earn a rung, finish the one below it. No one can mark a rung done by hand.
 

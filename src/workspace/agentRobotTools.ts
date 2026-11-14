@@ -23,6 +23,7 @@ import { scopeOf } from '../agent/agentPoseShared';
 import { wrapRobotRequest } from './agentWrapRequest';
 import type { WrapRobot } from './useWrapRobot';
 import { plural } from '../../electron/plural.mjs';
+import { FLEET_TOOL_KINDS, runFleetTool, selectUnit, type FleetToolContext } from './agentFleetTools';
 
 type Payload = Record<string, unknown>;
 
@@ -140,15 +141,34 @@ export async function runPoseTool(kind: string, payload: Payload, ctx: PoseToolC
   return tool(ctx, payload);
 }
 
-export interface SimToolContext extends SimContext, DriveToolContext {
+export interface SimToolContext extends SimContext, DriveToolContext, FleetToolContext {
   setAction: (action: string) => void;
   calibrationErrors?: () => Promise<string>;
 }
 
-export const SIM_TOOL_KINDS = ['simulate', 'training_status', 'set_world', 'start_drive', 'operate'];
+export const SIM_TOOL_KINDS = [
+  'simulate',
+  'training_status',
+  'set_world',
+  'start_drive',
+  'operate',
+  ...FLEET_TOOL_KINDS,
+];
+
+async function operateTool(ctx: SimToolContext, payload: Payload): Promise<PoseReply> {
+  const refused = selectUnit(ctx.fleet, payload.unit);
+
+  if (refused) return { text: refused };
+
+  ctx.setAction('Operating');
+
+  return operateRequest({ ...ctx, fixedCameras: ctx.fixedCameras ?? [] }, payload as OperatePayload);
+}
 
 export async function runSimTool(kind: string, payload: Payload, ctx: SimToolContext): Promise<PoseReply> {
   if (kind === 'set_world') return setWorldRequest(ctx, payload);
+
+  if (FLEET_TOOL_KINDS.includes(kind)) return runFleetTool(kind, payload, ctx);
 
   if (kind === 'start_drive') {
     ctx.setAction('Driving');
@@ -156,11 +176,7 @@ export async function runSimTool(kind: string, payload: Payload, ctx: SimToolCon
     return startDriveRequest(ctx, payload);
   }
 
-  if (kind === 'operate') {
-    ctx.setAction('Operating');
-
-    return operateRequest({ ...ctx, fixedCameras: ctx.fixedCameras ?? [] }, payload as OperatePayload);
-  }
+  if (kind === 'operate') return operateTool(ctx, payload);
 
   if (kind === 'simulate') {
     ctx.setAction('Simulating');

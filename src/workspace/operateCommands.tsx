@@ -2,7 +2,7 @@ import type { Command } from '../components/CommandPalette';
 import { OperateIcon } from '../design-system';
 import { canCalibrate } from '../robot/calibrationSession';
 import { emulatedSpec } from '../robot/emulatedUnits';
-import { connectRobot, disconnectRobot, robotSnapshot } from '../robot/robotStore';
+import { connectRobot, disconnectRobot, fleetSnapshot, robotSnapshot } from '../robot/robotStore';
 import { servoFamily } from '../robot/robotState';
 import { sceneRobot } from '../robot/sceneRobot';
 import { canSetUpServos, servoSetup, setUpServos } from '../robot/servoSetup';
@@ -66,37 +66,68 @@ function replayCommands(core: WorkspaceCore): Command[] {
   ];
 }
 
+const DISCONNECT: Command = {
+  id: 'disconnect-robot',
+  group: 'Operate',
+  label: 'Disconnect Robot',
+  icon: <OperateIcon />,
+  keywords: 'robot daemon emulated servos stop unit fleet',
+  run: () => void disconnectRobot(),
+};
+
 function linkCommands({ core }: CommandInputs, showOperate: () => void): Command[] {
   const joints = core.project.joints ?? [];
   const robot = sceneRobot(joints);
+  const connected = robotSnapshot().link === 'connected' ? [DISCONNECT] : [];
 
-  if (robotSnapshot().link === 'connected')
-    return [
-      {
-        id: 'disconnect-robot',
-        group: 'Operate',
-        label: 'Disconnect Robot',
-        icon: <OperateIcon />,
-        keywords: 'robot daemon emulated servos stop',
-        run: () => void disconnectRobot(),
-      },
-    ];
-
-  if (!robot.ok) return [];
+  if (!robot.ok) return connected;
 
   return [
+    ...connected,
     {
       id: 'connect-emulated-robot',
       group: 'Operate',
       label: 'Connect Emulated Robot',
       icon: <OperateIcon />,
-      keywords: 'robot daemon emulated servos feetech unitree g1',
+      keywords: 'robot daemon emulated servos feetech unitree g1 fleet unit add another',
       run: () => {
         showOperate();
         void connectRobot(emulatedSpec({ choice: robot, joints, parts: core.parts }), robot.joints);
       },
     },
   ];
+}
+
+function rollOutCommands(core: WorkspaceCore, showOperate: () => void): Command[] {
+  const { fleet, skills } = core.simTraining;
+
+  return skills.rows.filter(fleet.canRollOut).map((row) => ({
+    id: `roll-out-${row.target}`,
+    group: 'Operate',
+    label: `Roll Out ${row.label}`,
+    icon: <OperateIcon />,
+    keywords: 'fleet canary canaries deploy skill policy units robots twin arena',
+    run: () => {
+      showOperate();
+      fleet.rollOut(row);
+    },
+  }));
+}
+
+function rollBackCommands(core: WorkspaceCore, showOperate: () => void): Command[] {
+  return fleetSnapshot()
+    .units.filter((unit) => unit.hasPrevious)
+    .map((unit) => ({
+      id: `roll-back-${unit.unit}`,
+      group: 'Operate',
+      label: `Roll Back ${unit.unit}`,
+      icon: <OperateIcon />,
+      keywords: 'fleet previous version policy robot unit',
+      run: () => {
+        showOperate();
+        void core.simTraining.fleet.tools.rollBack(unit.unit);
+      },
+    }));
 }
 
 export function operateCommands(inputs: CommandInputs): Command[] {
@@ -132,5 +163,7 @@ export function operateCommands(inputs: CommandInputs): Command[] {
       : []),
     ...setUpServosCommands(inputs, showOperate),
     ...replayCommands(core),
+    ...rollOutCommands(core, showOperate),
+    ...rollBackCommands(core, showOperate),
   ];
 }

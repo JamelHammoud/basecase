@@ -55,7 +55,7 @@ Your copy of Basecase is missing the part that runs robots, so Connect can't sta
 
 **Rehearse** and every rung above it need a trained policy. You'll see this message if the scene in front has no policy the robot can take.
 
-Basecase gives the robot the newest skill that's ready, or the newest policy that's up to date. It skips:
+For a unit that hasn't been pinned by Roll Out, Basecase loads the newest ready skill or up-to-date policy. A pinned unit keeps its version. Select the affected unit's row in Operate before checking its policy or Ladder. Automatic loading skips:
 
 - Policies marked **Out of date**. To fix one, see [Retrain an out-of-date policy](/help/retrain-an-out-of-date-policy).
 - Skills that replay an animation. These have no policy to give the robot.
@@ -67,6 +67,8 @@ To train a policy:
 3. Click **Rehearse** in **Operate** again. You don't need to reconnect.
 
 ## "A fault is still active"
+
+Click the affected unit's named row in Operate first. Faults and recovery apply only to that unit.
 
 When a fault stops the motors, the daemon shows "A fault is still active. Go back to Look and clear it first." The fault stays until you clear it.
 

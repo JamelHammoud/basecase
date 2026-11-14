@@ -1,7 +1,7 @@
 ---
 title: Find, hide and lock parts in Layers
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: task
 order: 11
@@ -60,3 +60,5 @@ If the scene is empty, Layers is empty too. To bring in robots, objects and save
 ## Sensor data rows
 
 When a simulation with a LiDAR is loaded, the LiDAR's scan gets its own row under the robot, marked with four blue dots. Click its eye to hide the scan on the canvas. Clicking the row doesn't select anything. For steps, see [Replay a robot's LiDAR scan](/help/replay-a-robots-lidar-scan).
+
+The **Map** row controls the combined readings from the whole try, or the simulated run so far. Its eye hides the map independently of each sensor's scan. Right-click **Map** for **Scan Matching**, which adjusts imported readings from their recorded poses. For steps and a view of the row, see [Map a robot run](/help/map-a-robot-run).

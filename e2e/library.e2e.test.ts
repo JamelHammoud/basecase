@@ -119,8 +119,11 @@ describe('Library', () => {
 
     await tile().click({ button: 'right' });
     await app.page.getByRole('menuitem', { name: 'Rename' }).click();
-    await library.getByLabel('Name').fill('Base plate');
-    await library.getByLabel('Name').press('Enter');
+
+    const rename = library.getByLabel('Name', { exact: true });
+
+    await rename.fill('Base plate');
+    await rename.press('Enter');
     await named('Base plate').first().waitFor();
 
     await named('Base plate').first().click({ button: 'right' });

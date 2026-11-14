@@ -122,7 +122,7 @@ export class TryStore {
     const stat = fs.statSync(path.join(dir, TRY_MANIFEST));
     const cached = this.summaries.get(id);
 
-    if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) return { summary: cached.summary };
+    if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) return this.withStrip(id, cached);
 
     const manifest = JSON.parse(fs.readFileSync(path.join(dir, TRY_MANIFEST), 'utf-8'));
 
@@ -136,6 +136,14 @@ export class TryStore {
     this.summaries.set(id, { mtimeMs: stat.mtimeMs, size: stat.size, summary });
 
     return { summary, fresh: true };
+  }
+
+  withStrip(id, cached) {
+    if (cached.summary.strip || !fs.existsSync(path.join(this.triesDir, id, TRY_STRIP))) return { summary: cached.summary };
+
+    cached.summary = { ...cached.summary, strip: true };
+
+    return { summary: cached.summary, fresh: true };
   }
 
   storedIds() {
@@ -178,7 +186,7 @@ export class TryStore {
   }
 
   forget(id) {
-    if (this.summaries.delete(id)) this.writeCache();
+    this.summaries.delete(id);
   }
 
   save({ manifest, recording }) {
@@ -210,7 +218,6 @@ export class TryStore {
     if (!fs.existsSync(path.join(dir, TRY_MANIFEST))) return { ok: false };
 
     writeAtomic(path.join(dir, TRY_STRIP), checkedBytes(bytes, MAX_STRIP));
-    this.forget(id);
 
     return { ok: true };
   }
@@ -222,9 +229,7 @@ export class TryStore {
 
     for (const dir of dirs) fs.rmSync(dir, { recursive: true, force: true });
 
-    for (const id of ids) this.summaries.delete(id);
-
-    this.writeCache();
+    for (const id of ids) this.forget(id);
 
     return { deleted: ids };
   }

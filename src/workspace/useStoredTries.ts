@@ -73,7 +73,7 @@ export function useStoredTries({ project, setProject, sceneId, cases, sim, showT
 
     moving.current = sceneId;
     void move();
-  }, [needsMove, sceneId]);
+  }, [needsMove, sceneId, catalog]);
 
   return {
     shown: (tries: TryRecord[]) => inStore(tries, stored, !!project.triesStored),

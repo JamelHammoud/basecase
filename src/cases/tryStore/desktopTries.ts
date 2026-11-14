@@ -49,7 +49,7 @@ export const desktopTries: TryBackend = {
     return bytes && new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'image/webp' });
   },
   saveStrip: async (id, strip) => {
-    await call('tries:save-strip', { id, bytes: new Uint8Array(await strip.arrayBuffer()) });
+    await call('tries:keep-strip', { id, bytes: new Uint8Array(await strip.arrayBuffer()) });
   },
   delete: async (ids) => {
     await call('tries:delete', ids);

@@ -9,7 +9,7 @@ export const TRY_CALLS = {
   'tries:save': (store, payload) => store.save({ manifest: payload?.manifest, recording: fromBase64(payload?.recording) }),
   'tries:recording': (store, id) => store.recording(id),
   'tries:strip': (store, id) => store.strip(id),
-  'tries:save-strip': (store, payload) => store.saveStrip({ id: payload?.id, bytes: fromBase64(payload?.bytes) }),
+  'tries:keep-strip': (store, payload) => store.saveStrip({ id: payload?.id, bytes: fromBase64(payload?.bytes) }),
   'tries:delete': (store, ids) => store.delete(ids),
 };
 

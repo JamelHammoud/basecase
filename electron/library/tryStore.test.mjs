@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TRY_CALLS } from './tryRoutes.mjs';
+import { TRY_CALLS, tryPostRoutes } from './tryRoutes.mjs';
 import { TRY_MANIFEST, TRY_RECORDING, TRY_STRIP, TryStore } from './tryStore.mjs';
 
 let dir;
@@ -84,9 +84,14 @@ describe('TryStore', () => {
     store.save({ manifest: manifest('try-1'), recording: new Uint8Array(8) });
     store.list();
 
+    const cache = path.join(dir, '.try-summaries.json');
+    const listedOnce = fs.readFileSync(cache, 'utf-8');
+
     expect(store.saveStrip({ id: 'try-1', bytes: new Uint8Array([9, 9]) })).toEqual({ ok: true });
     expect(store.saveStrip({ id: 'missing', bytes: new Uint8Array([9]) })).toEqual({ ok: false });
     expect(fs.existsSync(path.join(dir, 'tries', 'try-1', TRY_STRIP))).toBe(true);
+    expect(fs.readFileSync(cache, 'utf-8')).toBe(listedOnce);
+    expect(open().list()[0].strip).toBe(true);
     expect(store.list()[0].strip).toBe(true);
     expect([...store.strip('try-1')]).toEqual([9, 9]);
   });
@@ -117,6 +122,19 @@ describe('TryStore', () => {
     await TRY_CALLS['tries:save'](store, { manifest: manifest('try-1'), recording });
     expect([...(await TRY_CALLS['tries:recording'](store, 'try-1'))]).toEqual([5, 6, 7]);
     expect(() => store.save({ manifest: manifest('try-2'), recording: 'not bytes' })).toThrow('Expected bytes');
+  });
+
+  it('reaches each call through the bridge, which picks the first route its URL starts with', async () => {
+    const routes = tryPostRoutes(store);
+    const post = (url, arg) => routes.find(([prefix]) => url.startsWith(prefix))[1]({ arg });
+
+    expect(routes.map(([url]) => routes.find(([prefix]) => url.startsWith(prefix))[0])).toEqual(
+      routes.map(([url]) => url),
+    );
+
+    await post('/tries-save', { manifest: manifest('try-1'), recording: null });
+    await post('/tries-keep-strip', { id: 'try-1', bytes: Buffer.from([9, 9]).toString('base64') });
+    expect(await post('/tries-strip', 'try-1')).toEqual({ data: Buffer.from([9, 9]).toString('base64') });
   });
 
   it('never reads, writes or deletes a try outside its own folder', () => {

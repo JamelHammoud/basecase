@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Badge } from '../../design-system';
 import { TRY_SOURCE_BADGE, summaryRecord, type TrySummary } from '../../cases/tryFile';
 import type { SimModel } from '../../sim/mjcfTypes';
@@ -6,6 +6,7 @@ import type { ScenePart } from '../../types/robotics';
 import { runClock } from '../../utils/duration';
 import type { PickKeys } from '../../workspace/useTriesView';
 import { useFilmstrip } from '../simulate/useFilmstrip';
+import { useSeen } from './useSeen';
 import { useStoredStrip } from './useStoredStrip';
 
 const OUTCOME: Record<TrySummary['outcome']['verdict'], string | null> = {
@@ -31,18 +32,21 @@ interface TryTileProps {
 }
 
 export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPick, onMenu }) => {
+  const tile = useRef<HTMLButtonElement | null>(null);
+  const seen = useSeen(tile);
   const drawn = useFilmstrip(
     summaryRecord(summary),
-    scene && !summary.strip ? scene.model : null,
+    seen && scene && !summary.strip ? scene.model : null,
     scene?.parts ?? NONE,
     scene?.world ?? NONE,
   );
-  const film = useStoredStrip(summary.id, summary.strip) ?? drawn;
+  const film = useStoredStrip(summary.id, seen && summary.strip) ?? drawn;
   const outcome = OUTCOME[summary.outcome.verdict];
   const badge = TRY_SOURCE_BADGE[summary.source];
 
   return (
     <button
+      ref={tile}
       type="button"
       data-testid="try-tile"
       data-try={summary.id}

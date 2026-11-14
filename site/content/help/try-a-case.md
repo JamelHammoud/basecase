@@ -32,11 +32,11 @@ covers:
   - src/cases/tryStore/
 ---
 
-Drive your robot through an open Case while Basecase records the try. After you stop, Basecase shows whether the try passed, and you can replay it.
+You can drive your robot through an open Case while Basecase records the try. When you stop, Basecase tells you whether the try passed, and you can replay it.
 
 1. Click **Play** in the view rail, then click **Cases**.
 2. Click a Case under **New Case**. The Case and its brief open at the top of the **Simulate** tab.
-3. Under **Try**, click **Try It**. A clock shows how much of the Case's time limit you've used. The keys for your kind of robot appear below it.
+3. Under **Try**, click **Try It**. A clock shows how much of the Case's time limit you've used, and the keys for your kind of robot appear below it.
 4. Click the canvas so it receives your key presses.
 5. Use the keys under **Try** to drive the robot to the goal. To start over, press [[R]].
 
@@ -48,15 +48,15 @@ Drive your robot through an open Case while Basecase records the try. After you 
 
 ![Results with the latest run and one try](/help/try-a-case/results.png)
 
-You can drive with a gamepad in place of the keys, and you'll find **Try ⟨Case⟩** in [[⌘K]] too. Press [[Esc]] to stop driving and end the try. If you don't see a Case under **New Case**, [make a Case](/help/make-a-case) first.
+You can also drive with a gamepad instead of the keys. **Try ⟨Case⟩** is in [[⌘K]] too. To stop driving and end the try, press [[Esc]]. If you don't see a Case under **New Case**, [make a Case](/help/make-a-case) first.
 
 To drive a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
-To judge your real wheeled or legged robot on a printed mat, click **Try on Real Robot** in place of **Try It**, then follow [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
+To judge your real wheeled or legged robot on a printed mat, click **Try on Real Robot** instead of **Try It**. Then follow the steps in [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
-If the robot can't drive, you'll see **Teach It to Move** under **Try It**, which trains a **Walk** skill. See [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
+If the robot can't drive, **Teach It to Move** appears under **Try It** and trains a **Walk** skill. See [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 
-To teach the robot the Case's task yourself rather than drive it, go to **Train**, between **Control** and **Results**, and type a goal after **Teach it to**. [Teach a robot a skill](/help/teach-a-robot-a-skill) has the steps.
+You can also teach the robot the Case's task yourself instead of driving it. Go to **Train**, between **Control** and **Results**, and type a goal after **Teach it to**. [Teach a robot a skill](/help/teach-a-robot-a-skill) has the steps.
 
 ## Whether the robot can do it
 
@@ -64,7 +64,7 @@ The icon next to the Case's name stands for its row in **Build** ▸ **Checks**.
 
 ![The Simulate tab with Touch the Dots open and its Checks icon beside the name](/help/try-a-case/case.png)
 
-Basecase checks the robot before it runs the Case, and the row names the first thing that stops it:
+Basecase checks the robot before it runs the Case. The row names the first thing that stops the robot:
 
 | What stops the robot | What the row says |
 |---|---|
@@ -75,18 +75,18 @@ Basecase checks the robot before it runs the Case, and the row names the first t
 
 ![A Checks row saying the arm needs driven wheels for Reach a Spot, with New Case on its note](/help/try-a-case/misfit.png)
 
-If the robot doesn't have what the Case needs, hold your pointer over the row's note and click **New Case** to build a Case the robot can do.
+If the robot doesn't have what the Case needs, hold your pointer over the row's note and click **New Case**. Basecase builds a Case the robot can do.
 
 ## Results
 
-After a run, **Results** shows whether the robot stayed up and which joints worked hardest. The list of tries below it puts the worst first, so misses sit at the top. A replay includes anything the Case's code moved, lit or hid during the try.
+After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that, the list of tries puts the worst first, so misses are at the top. A replay includes anything the Case's code moved, lit or hid during the try.
 
 - To delete a try, right-click it, choose **Delete**, then confirm.
 - To tag a try, right-click it and choose **Tag**. See [Label the segments of a try](/help/label-the-segments-of-a-try).
 
-Basecase marks tries from your real robot **Real**. Click **Replay** on one and Basecase draws its path over the path of the best sim try.
+Basecase marks tries from your real robot **Real**. When you click **Replay** on one, Basecase draws its path over the path of the best sim try.
 
-A passed try's menu also has **Multiply**, which makes up to 50 varied passing tries from it. The try's row then shows how many it made, such as **50 variations**. If you delete the try, Basecase deletes its variations too. For the steps, see [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
+A passed try's menu also has **Multiply**, which makes up to 50 varied passing tries from it. The try's row then shows how many it made, such as **50 variations**. Deleting the try also deletes its variations. For the steps, see [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 
 If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their rows appear above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) puts its rows there too, below any comparison.
 

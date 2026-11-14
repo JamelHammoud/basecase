@@ -26,14 +26,14 @@ covers:
   - src/workspace/caseCommands.tsx
 ---
 
-Multiply turns one passed try into as many as 50 varied tries that also pass, so driving the robot once gives your dataset many demonstrations.
+Multiply turns one passed try into as many as 50 varied tries that also pass, so you drive the robot once and your dataset gets many demonstrations.
 
 1. Open a Case and record a try that passes. To learn how, see [Try a Case](/help/try-a-case).
 2. Under **Results**, right-click the passed try, then choose **Multiply**.
 
 ![A passed try's menu in Results, with Multiply and Tag… above Delete](/help/multiply-a-try-into-demonstrations/menu.png)
 
-3. While the toast shows "Multiplying…", you can keep working. To stop early and keep the variations made so far, click **Stop** in the toast.
+3. You can keep working while the toast shows "Multiplying…". To stop early and keep the variations made so far, click **Stop** in the toast.
 
 ![The toast shows Multiplying… with Stop, and a progress bar runs under the try](/help/multiply-a-try-into-demonstrations/multiplying.png)
 
@@ -41,7 +41,7 @@ When Multiply finishes, the toast shows how many variations it kept, for example
 
 ![The passed try's row reads 50 variations, above Export Dataset](/help/multiply-a-try-into-demonstrations/results.png)
 
-You can also run **Multiply** from [[⌘K]]. From there, it multiplies the newest passed try in the open Case.
+You can also run **Multiply** from [[⌘K]], which multiplies the newest passed try in the open Case.
 
 ## What each variation changes
 
@@ -57,15 +57,15 @@ The Case's contract judges every variation, and Multiply keeps only the ones tha
 
 ## Limits
 
-Tries recorded before Multiply don't carry any commands, so **Multiply** doesn't appear in their menu. Record a new try instead. Tries from your real robot don't show **Multiply** either.
+Tries recorded before Multiply was added don't carry any commands, so **Multiply** doesn't appear in their menu. Record a new try instead. Tries from your real robot don't show **Multiply** either.
 
 An object the Case marks movable never shifts. It stays where the Case's code put it, and any arm target nearest to it stays where it was.
 
-Only arm targets move with the objects. If you drove a try with the keys alone, each variation replays the same key presses and passes only if the moved spot still lies where the hand went.
+Only arm targets move with the objects. If you drove a try with the keys alone, each variation replays the same key presses. It passes only if the moved spot still lies where the hand went.
 
-You can't multiply a try from an earlier design of the robot. If you do, the toast says "These tries are from an earlier design. Try It again to record new ones."
+You can't multiply a try from an earlier design of the robot. If you try, the toast says "These tries are from an earlier design. Try It again to record new ones."
 
-Deleting a try also deletes its variations, and the confirmation shows how many.
+Deleting a try also deletes its variations. The confirmation shows how many.
 
 ## In the dataset
 

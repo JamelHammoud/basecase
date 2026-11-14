@@ -39,9 +39,9 @@ covers:
   - forge/crates/forge-train/src/trainer.rs
 ---
 
-The Motor Kit trains four basic skills for a robot that stands on its own legs: Stand, Walk, Get up and Settle. You don't write a goal. Basecase trains each skill for you and proves it in Arena.
+The Motor Kit trains four basic skills for a robot that stands on its own legs: Stand, Walk, Get up and Settle. You don't have to write a goal. Basecase trains each skill and proves it in Arena.
 
-Training runs on your own GPU, either in the desktop app or at app.basecase.so in Chrome or Edge.
+You train on your own GPU, in the desktop app or at app.basecase.so in Chrome or Edge.
 
 To train a skill:
 
@@ -60,7 +60,7 @@ To train a skill:
 
 ![Stand ready, with its Arena line and Try](/help/train-stand-and-walk-with-the-motor-kit/ready.png)
 
-To stop training, click **Stop training** (■) on the row. To learn more about snapshots, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).
+To stop, click **Stop training** (■) on the row. For more on the snapshots, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).
 
 You can also train **Walk** with **Teach It to Move**, under **Control**.
 
@@ -70,9 +70,9 @@ Only one skill trains at a time. If you click **Train** on another, a message na
 
 ## In the browser
 
-The **Train** section appears only when your browser can train on the GPU. Nothing trains until you click **Train**. Basecase saves a skill you train in the browser with the scene, in that browser, so it's still there after you reload the page.
+The **Train** section appears only when the browser can train on the GPU. A skill you train in the browser is saved with the scene in that browser, so it's still there after you reload the page. Nothing trains until you click **Train**.
 
-When you open a gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), its Case card has a **Train** button that trains Stand. Once the skill passes Arena, the robot uses it to stand. To open the robot in the studio with Stand ready, click **Open Scene**.
+When you open a gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), its Case card has **Train**, which trains Stand. Once the skill passes Arena, the robot uses it to stand. Click **Open Scene** to open the robot in the studio with Stand ready.
 
 ![The hexapod's Case card with Stand ready](/help/train-stand-and-walk-with-the-motor-kit/gallery.png)
 
@@ -87,30 +87,26 @@ These times come from the desktop app on an M5 Pro Mac:
 
 In Chrome on the same Mac, Stand took about two and a quarter minutes.
 
-If Walk fails Arena on its first try, it retrains from its best result, which can take up to 30 minutes on four or six legs and up to 45 minutes on two.
+If Walk fails Arena on its first try, it retrains from its best result. That can take up to 30 minutes on four or six legs, and up to 45 minutes on two.
 
-On a Mac with Apple silicon, Stand and Walk train on the GPU. On Windows, they train on the CPU, and the times above don't apply.
+On a Mac with Apple silicon, Stand and Walk train on the GPU. On Windows they train on the CPU, and the times above don't apply there.
 
 ## What Walk can do
 
-Walk follows the speed and turn you command. Its top speed is 0.2 m/s on four or more legs and 0.15 m/s on two. While you drive, it moves forward at up to its top speed, sideways at up to a quarter of that, and turns at up to 0.6 rad/s.
+Walk follows the speed and turn you command. Its top speed is 0.2 m/s on four or more legs and 0.15 m/s on two. As you drive, it moves forward at up to that top speed, sideways at up to a quarter of it, and turns at up to 0.6 rad/s.
 
 ## One job at a time
 
-The app runs one training job at a time, and any others wait in a queue.
+The app runs one training job at a time and queues the rest.
 
-Training you start yourself goes to the front of the queue and pauses any Motor Kit job that's retraining in the background. The paused job shows "Paused for other training. Starts again after it."
+Training you start yourself goes to the front of the queue and pauses any Motor Kit job that's retraining in the background. The paused job says "Paused for other training. Starts again after it."
 
 ## After you change the design
 
-In the desktop app, Basecase checks each Motor Kit skill you've trained against the new design 1.5 seconds after you make an edit:
+In the desktop app, Basecase checks each Motor Kit skill you've trained against the new design 1.5 seconds after you make an edit.
 
-- If you change a color or name, the skill stays ready.
-- If you change a mass or size, Basecase reruns Arena in the background without retraining.
-- If you change a joint, Basecase trains the skill again.
+If you change a color or name, the skill stays ready. If you change a mass or size, Basecase reruns Arena in the background without training. If you change a joint, it trains the skill again. Skills you haven't trained stay untrained until you start them.
 
-Skills you haven't trained stay untrained until you start them.
-
-If a ready skill moves in a way you don't want, such as a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). To share a ready skill, follow [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face). To start from someone else's skill, see [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
+If a ready skill moves in a way you don't want, such as a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). To share a ready skill, follow [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face), or start from someone else's with [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 
 [Arena](/help/arena) lists what Arena checks. To teach a robot anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

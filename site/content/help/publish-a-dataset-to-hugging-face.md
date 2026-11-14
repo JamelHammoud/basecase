@@ -25,9 +25,9 @@ covers:
   - electron/hub/
 ---
 
-You can publish a Case's passed tries to the Hugging Face Hub as a LeRobot dataset. Once it's on the Hub, LeRobot and GR00T training can load it by name.
+You can publish a Case's passed tries to the Hugging Face Hub as a LeRobot dataset. LeRobot and GR00T training can then load the dataset by name.
 
-Publishing works in the desktop app. The dataset is always public.
+**Note:** Publishing works in the desktop app. The dataset is always public.
 
 1. On huggingface.co, go to **Settings** ▸ **Access Tokens** and create an access token with write access.
 2. In Basecase, press [[⌘,]], then choose **Accounts**.
@@ -48,22 +48,33 @@ If the Hub refuses your token, click **Open** in the message, then paste a new t
 
 ## What gets published
 
-Basecase publishes the dataset to a repo on your account. The repo is named after the Case, followed by a 6-character code for the scene, such as `touch-the-dots-1a2b3c`. Each scene gets its own code, so if you publish Touch the Dots from two scenes, you get two datasets.
+Basecase publishes the dataset to a repo on your account. The repo's name is the Case's name followed by a 6-character code for the scene, for example `touch-the-dots-1a2b3c`. Each scene has its own code, so if you publish Touch the Dots from two scenes, you get two datasets.
 
-The repo's main branch holds LeRobot v3.0, tagged `v3.0`. LeRobot 0.7 and later can load it by name without converting it: `lerobot-train --dataset.repo_id=<account>/touch-the-dots-1a2b3c`. To stream it from the Hub instead of downloading it, add `--dataset.streaming=true`.
+The repo's main branch holds LeRobot v3.0, tagged `v3.0`. LeRobot 0.7 or later can load it by name without converting it:
 
-The `v2.1` tag holds a LeRobot v2.1 copy that includes GR00T's `meta/modality.json`. GR00T reads only v2, so download that revision for GR00T: `hf download <account>/touch-the-dots-1a2b3c --repo-type dataset --revision v2.1`.
+`lerobot-train --dataset.repo_id=<account>/touch-the-dots-1a2b3c`
+
+To stream the dataset from the Hub instead of downloading it, add `--dataset.streaming=true`.
+
+The `v2.1` tag holds a LeRobot v2.1 copy that includes GR00T's `meta/modality.json`. GR00T reads only v2, so download that revision when you train with GR00T:
+
+`hf download <account>/touch-the-dots-1a2b3c --repo-type dataset --revision v2.1`
 
 For a list of the files in both versions, see [LeRobot dataset contents](/help/lerobot-dataset-contents).
 
 ## Publishing again
 
-If you publish the same Case from the same scene again, Basecase replaces the dataset with the tries that pass now. It rewrites the `data/`, `videos/` and `meta/` folders. Basecase doesn't touch `README.md` or any other files.
+If you publish the same Case from the same scene again, Basecase replaces the dataset with the tries that pass now. It rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files in the repo unchanged.
 
-Basecase also leaves out tries from your real robot and tries recorded before the robot last changed. The toast shows how many of those older tries it skipped.
+Basecase leaves out these tries:
+
+- Tries from your real robot
+- Tries recorded before the robot last changed
+
+The toast shows how many older tries Basecase skipped.
 
 ## Where the token lives
 
-Basecase keeps your token in the app's main process, sealed on disk. It never passes the token to the page you work in. The page knows only whether you're signed in and what your account name is.
+Basecase keeps your token in the app's main process, sealed on disk, and never passes it to the page you work in. That page knows only whether you're signed in and your account name.
 
 Publishing a ready skill uses the same token. To learn more, see [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).

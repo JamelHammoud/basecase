@@ -1,12 +1,12 @@
 import { IDLE_S } from '../../datasets/segmentFrames';
 import type { FlagKind, TryFlag } from '../../datasets/tryFlags';
-import { runClock } from '../../utils/duration';
+import { duration, runClock } from '../../utils/duration';
 
 const FLAG_WORDS: Record<FlagKind, string> = {
   limit: 'Joint limit',
   gap: 'Frame gap',
   effort: 'Effort at the servo’s limit',
-  idle: `Idle over ${IDLE_S} s`,
+  idle: `Idle for ${duration(IDLE_S)} or more`,
   model: 'Model changed',
 };
 

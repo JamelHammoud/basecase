@@ -67,10 +67,15 @@ export class TakeFiles {
     if (this.open?.id === id) this.stop();
 
     const dir = this.store.dirOf(id);
+    let saved = false;
 
-    if (kept) this.store.save({ manifest: take.manifest(), recording: take.bytes() });
+    try {
+      if (kept) this.store.save({ manifest: take.manifest(), recording: take.bytes() });
 
-    fs.rmSync(kept ? path.join(dir, TAKE_LOG) : dir, { recursive: true, force: true });
+      saved = kept;
+    } finally {
+      fs.rmSync(saved ? path.join(dir, TAKE_LOG) : dir, { recursive: true, force: true });
+    }
   }
 
   sink() {

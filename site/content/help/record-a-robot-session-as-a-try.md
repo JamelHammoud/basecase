@@ -11,7 +11,6 @@ keywords:
   - episode
   - leader arm
   - gamepad
-  - move by hand
   - dataset
 related:
   - connect-an-emulated-robot
@@ -22,20 +21,21 @@ covers:
   - electron/robot/robotTake.mjs
   - electron/robot/takeFiles.mjs
   - src/robot/takeVideo.ts
+  - src/components/simulate/TryVideo.tsx
   - src/robot/robotStore.ts
   - src/sim/takeRecording.ts
 ---
 
-You can keep what a connected robot did as a try, then replay it on the timeline.
+You can save what a connected robot did as a try, then replay it on the timeline.
 
-Basecase records every session on a connected robot on its own. A session that runs under 2 seconds, or where no joint moves more than about 1°, doesn't leave a try unless a fault ends it.
+Basecase records every session on a connected robot automatically. If a session runs less than 2 seconds, or no joint moves more than about 1°, Basecase doesn't save it as a try unless a fault ends it.
 
 1. Connect the emulated robot. See [Connect an emulated robot](/help/connect-an-emulated-robot).
-2. Move the robot. You can drive it from **Simulate** in **Test**, run a Case or a policy, or move its joints by hand in **Look**.
+2. Move the robot. You can drive it from **Simulate** in **Test**, or run a Case or a policy.
 3. To end the session, click **Look** on the **Ladder** from a higher rung, or click **Disconnect**. A fault also ends the session.
 4. Click **Library** in the view rail on the left.
 5. Under **Tries**, click the robot.
-6. Click the try with the **Operate** badge. Its tile shows the time it started and how long it ran.
+6. Click the try with the **Operate** badge. Its tile shows when the session started and how long it ran.
 
 ![Tries with one Operate try from 3:23 AM that ran 12.7 s](/help/record-a-robot-session-as-a-try/tries.png)
 
@@ -43,12 +43,14 @@ Basecase records every session on a connected robot on its own. A session that r
 
 ![The Operate try open on the timeline, with lanes for Shoulder and Elbow](/help/record-a-robot-session-as-a-try/timeline.png)
 
-A try from **Operate** keeps each joint's measured position, plus its velocity and effort if the robot reports them. It also keeps every command Basecase sent and the angles the simulation had at the same moments. The try also keeps the raw values from whatever drove the robot: a gamepad's sticks, your phone's tilt, or the points your camera tracked on your body. If a trained policy runs at **Rehearse** or above, the try also records which policy file ran.
+A try from **Operate** keeps the measured position of each joint, and its velocity and effort if the robot reports them. It also keeps every command Basecase sent, with the angles the simulation had at the same moments.
 
-If you drive the robot with your camera, the try keeps up to 30 minutes of the camera's video. The video stays on your computer.
+The raw values from whatever drove the robot are saved too: a gamepad's sticks, your phone's tilt, or the points your camera tracked on your body. If a trained policy runs at **Rehearse** or above, the try records which policy file ran.
 
-A session longer than 10 minutes shows in full on the timeline, but at fewer frames per second: a 30-minute session shows about 17 frames per second instead of 50.
+If your camera is on while you drive, the try keeps up to 30 minutes of its video. The video plays beside the lanes and follows the playhead. It's black until the moment the camera turned on, and it stays on your computer.
 
-**Note:** Real motors stay locked, so every session is on an emulated robot. Because the try has no Case, Basecase doesn't mark it Passed or Missed.
+A session longer than 10 minutes shows in full on the timeline, but at fewer frames per second. For example, a 30-minute session shows about 17 frames per second instead of 50.
 
-If Basecase quits during a session, it saves the session as a try the next time it starts.
+**Note:** Real motors stay locked, so every session runs on an emulated robot. The try has no Case, so Basecase doesn't mark it Passed or Missed.
+
+If Basecase quits during a session, it saves that session as a try the next time it starts.

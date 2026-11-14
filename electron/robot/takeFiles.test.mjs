@@ -160,6 +160,26 @@ describe('takes recorded by the robot link', () => {
     expect(store.list()[0]).toMatchObject({ source: 'operate', input: 'by-hand', frames: 200 });
   });
 
+  it('removes a crashed take the store refuses, so it isn’t retried at every start', async () => {
+    const store = storeAt();
+    const crashed = rigged(store);
+
+    crashed.link.connect(ARM);
+
+    for (let n = 0; n < 200; n++) {
+      crashed.tick(20);
+      await say(crashed.spawned[0].child, [status('look', [Math.sin(n / 20), 0])]);
+    }
+
+    crashed.takes.stop();
+    vi.spyOn(store, 'save').mockImplementation(() => {
+      throw new Error('disk full');
+    });
+
+    expect(new TakeFiles({ store }).recover()).toEqual([]);
+    expect(fs.readdirSync(store.triesDir)).toEqual([]);
+  });
+
   it('refuses a scene or sample that isn’t exactly the documented shape', () => {
     const { link } = rigged();
 

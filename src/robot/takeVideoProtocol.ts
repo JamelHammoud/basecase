@@ -1,7 +1,7 @@
 import type { FrameMessage } from '../cameras/operator/operatorFrames';
 
 export type TakeVideoRequest =
-  { type: 'open'; frames?: ReadableStream<VideoFrame> } | FrameMessage | { type: 'finish' };
+  { type: 'open'; frames?: ReadableStream<VideoFrame>; lead: number } | FrameMessage | { type: 'finish' };
 
 export interface TakeVideoReply {
   type: 'done';

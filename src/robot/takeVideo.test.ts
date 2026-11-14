@@ -29,12 +29,21 @@ const { createTakeVideo, KEPT_GRACE_MS, startTakeVideo } = await import('./takeV
 const stream = { id: 'camera' } as unknown as MediaStream;
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+interface FakeRecorder {
+  stream: MediaStream;
+  lead: number;
+  finish: ReturnType<typeof vi.fn>;
+  drop: ReturnType<typeof vi.fn>;
+}
+
 function fakeEncoder(bytes = [1, 2, 3]) {
-  const recorders: { stream: MediaStream; finish: ReturnType<typeof vi.fn>; drop: ReturnType<typeof vi.fn> }[] = [];
+  const recorders: FakeRecorder[] = [];
   const kept: [string, number[]][] = [];
+  const clock = { ms: 0 };
   const takes = createTakeVideo({
-    record: (from) => {
-      const recorder = { stream: from, finish: vi.fn(async () => new Uint8Array(bytes)), drop: vi.fn() };
+    now: () => clock.ms,
+    record: (from, lead) => {
+      const recorder = { stream: from, lead, finish: vi.fn(async () => new Uint8Array(bytes)), drop: vi.fn() };
 
       recorders.push(recorder);
 
@@ -45,7 +54,7 @@ function fakeEncoder(bytes = [1, 2, 3]) {
     },
   });
 
-  return { takes, recorders, kept };
+  return { takes, recorders, kept, clock };
 }
 
 const take = (state: string, id = 'take-1'): RobotEvent => ({ event: 'take', state, id });
@@ -62,7 +71,7 @@ describe('the operator video kept with a take', () => {
     takes.event(take('open'));
 
     expect(recorders).toHaveLength(1);
-    expect(recorders[0].stream).toBe(stream);
+    expect(recorders[0]).toMatchObject({ stream, lead: 0 });
 
     takes.event(take('kept'));
     takes.event(take('kept'));
@@ -73,16 +82,18 @@ describe('the operator video kept with a take', () => {
     expect(kept).toEqual([['take-1', [1, 2, 3]]]);
   });
 
-  it('records nothing without the camera, and starts when it’s switched on mid-take', async () => {
-    const { takes, recorders, kept } = fakeEncoder();
+  it('records nothing without the camera, and starts mid-take at the camera’s lead into the take', async () => {
+    const { takes, recorders, kept, clock } = fakeEncoder();
 
     takes.event(take('open'));
+    clock.ms = 3500;
 
     expect(recorders).toHaveLength(0);
 
     takes.camera(stream);
 
     expect(recorders).toHaveLength(1);
+    expect(recorders[0].lead).toBe(3.5);
 
     takes.event(take('kept'));
     await vi.runAllTimersAsync();

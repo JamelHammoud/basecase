@@ -8,8 +8,9 @@ import { workerRecorder } from './takeVideoRecorder';
 export type { VideoRecorder } from './takeVideoProtocol';
 
 export interface TakeVideoOptions {
-  record: (stream: MediaStream) => VideoRecorder;
+  record: (stream: MediaStream, lead: number) => VideoRecorder;
   keep: (id: string, bytes: Uint8Array) => Promise<void>;
+  now?: () => number;
 }
 
 export interface TakeVideo {
@@ -18,6 +19,7 @@ export interface TakeVideo {
 }
 
 interface Take {
+  openedAt: number;
   recorder: VideoRecorder | null;
   video: Promise<Uint8Array | null> | null;
   expiry: ReturnType<typeof setTimeout> | null;
@@ -25,8 +27,11 @@ interface Take {
 
 export const PENDING_TAKES = 4;
 export const KEPT_GRACE_MS = 30_000;
+export const MIN_LEAD_S = 0.05;
 
-export function createTakeVideo({ record, keep }: TakeVideoOptions): TakeVideo {
+const leadOf = (ms: number) => (ms / 1000 < MIN_LEAD_S ? 0 : ms / 1000);
+
+export function createTakeVideo({ record, keep, now = () => performance.now() }: TakeVideoOptions): TakeVideo {
   const takes = new Map<string, Take>();
   let open: string | null = null;
   let stream: MediaStream | null = null;
@@ -34,7 +39,7 @@ export function createTakeVideo({ record, keep }: TakeVideoOptions): TakeVideo {
   const openTake = () => (open === null ? undefined : takes.get(open));
 
   const begin = (take: Take) => {
-    if (stream && !take.recorder && !take.video) take.recorder = record(stream);
+    if (stream && !take.recorder && !take.video) take.recorder = record(stream, leadOf(now() - take.openedAt));
   };
 
   const end = (take: Take) => {
@@ -76,7 +81,7 @@ export function createTakeVideo({ record, keep }: TakeVideoOptions): TakeVideo {
     discard(id);
     [...takes.keys()].slice(0, Math.max(0, takes.size + 1 - PENDING_TAKES)).forEach(discard);
 
-    const take: Take = { recorder: null, video: null, expiry: null };
+    const take: Take = { openedAt: now(), recorder: null, video: null, expiry: null };
 
     takes.set(id, take);
     open = id;

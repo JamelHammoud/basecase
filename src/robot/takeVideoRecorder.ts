@@ -1,7 +1,7 @@
 import { frameSource } from '../cameras/operator/operatorFrames';
 import type { TakeVideoReply, TakeVideoRequest, VideoRecorder } from './takeVideoProtocol';
 
-export function workerRecorder(stream: MediaStream): VideoRecorder {
+export function workerRecorder(stream: MediaStream, lead: number): VideoRecorder {
   const copy = new MediaStream(stream.getVideoTracks().map((track) => track.clone()));
   const worker = new Worker(new URL('./takeVideo.worker.ts', import.meta.url), { type: 'module' });
   const frames = frameSource(copy, worker);
@@ -12,7 +12,7 @@ export function workerRecorder(stream: MediaStream): VideoRecorder {
     copy.getTracks().forEach((track) => track.stop());
   };
 
-  const open: TakeVideoRequest = { type: 'open', frames: frames.frames };
+  const open: TakeVideoRequest = { type: 'open', frames: frames.frames, lead };
 
   worker.postMessage(open, frames.frames ? [frames.frames] : []);
 

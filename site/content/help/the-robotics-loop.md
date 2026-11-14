@@ -20,9 +20,9 @@ covers:
   - src/components/PlayTabs.tsx
 ---
 
-Basecase is a 3D CAD studio for robots, with an agent that designs alongside you. In one app you design a robot, test it under physics, teach it skills and build it. The work moves through six stages, and what you learn in one stage carries back into the others.
+Basecase is a 3D CAD studio for robots, with an agent that designs alongside you. In one app you design a robot, test it under physics, teach it skills and build it. You work through six stages and bring what you learn in one stage back into the others.
 
-Basecase runs on Apple silicon Macs and on 64-bit Windows 11. You can also use it in a browser as the [web studio](/help/desktop-app-and-web-studio).
+Basecase runs on Apple silicon Macs and on 64-bit Windows 11. You can also open it in a browser as the [web studio](/help/desktop-app-and-web-studio).
 
 ## The six stages
 
@@ -35,13 +35,13 @@ Basecase runs on Apple silicon Macs and on 64-bit Windows 11. You can also use i
 | Build | Clear the Checks, price every part and print the plates | The **Build** tab |
 | Operate | Connect a robot, calibrate its servos, run Routines and keep each session as a try | **Play** ▸ **Operate** and **Play** ▸ **Routines** |
 
-MuJoCo is the physics engine robotics labs use to test robots before they build them. Basecase runs MuJoCo inside the app, on the same model it exports.
+Robotics labs use MuJoCo, a physics engine, to test robots before they build them. Basecase runs MuJoCo inside the app, on the same model it exports.
 
 ## How the stages loop
 
-If something fails in Engineer, Simulate or Train, go back to Design and change it. For example, the **Servo torque** check in the **Build** tab fails if a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg. To fix it, choose a stronger servo in Design.
+If a design fails in Engineer, Simulate or Train, go back to Design and change it. For example, the **Servo torque** check in the **Build** tab fails if a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg. To fix it, choose a stronger servo in Design.
 
-Calibration brings what your running robot does back into the simulation. You start it, and Basecase finds each joint's zero and direction from a camera. Then it fits each servo's model from an 18-second bench run, so the simulation moves the way the servo does. After you calibrate, you train the robot on that simulation.
+To bring your running robot's behavior into the simulation, calibrate it. When you calibrate, Basecase uses a camera to find each joint's zero and direction, then fits each servo's model from an 18-second bench run, so the servo in the simulation moves the way the real one does. After that, train the robot on the calibrated simulation.
 
 You can also [try a Case](/help/try-a-case-on-your-real-robot) with a real wheeled or legged robot, on a floor mat printed with the Case. Basecase watches the run through a camera and judges it by the same contract it uses in simulation.
 
@@ -54,4 +54,4 @@ You can also [try a Case](/help/try-a-case-on-your-real-robot) with a real wheel
 
 **Note:** Basecase doesn't drive real motors, but it can watch a real robot through a camera.
 
-For a quick first look at the loop, [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot).
+To watch the loop run, [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot).

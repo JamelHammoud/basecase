@@ -16,6 +16,7 @@ let firstAt: number | null = null;
 let failed = false;
 let ended = false;
 let full = false;
+let lead = 0;
 
 const secondsOf = (picture: Picture) =>
   picture instanceof VideoFrame ? picture.timestamp / 1e6 : performance.now() / 1000;
@@ -27,25 +28,19 @@ const sizeOf = (picture: Picture) =>
 
 const sampleOf = (picture: CanvasImageSource, timestamp: number) => new VideoSample(picture, { timestamp });
 
-async function opened(size: { width: number; height: number }): Promise<Mp4Writer | null> {
-  const codec = await encodableCodec(size);
+function blankOf({ width, height }: { width: number; height: number }) {
+  const canvas = new OffscreenCanvas(width, height);
+  const context = canvas.getContext('2d');
 
-  if (!codec) return null;
+  if (context) {
+    context.fillStyle = '#000';
+    context.fillRect(0, 0, width, height);
+  }
 
-  const next = mp4Writer({ codec, quality: QUALITY_MEDIUM, realtime: true });
-
-  await next.start();
-
-  return next;
+  return canvas;
 }
 
-async function encode(picture: Picture, timestamp: number) {
-  writer ??= opened(sizeOf(picture));
-
-  const live = await writer;
-
-  if (!live) return;
-
+async function addSample(live: Mp4Writer, picture: CanvasImageSource, timestamp: number) {
   const sample = sampleOf(picture, timestamp);
 
   try {
@@ -57,12 +52,34 @@ async function encode(picture: Picture, timestamp: number) {
   full = live.encodedBytes() >= MAX_BYTES;
 }
 
+async function opened(size: { width: number; height: number }): Promise<Mp4Writer | null> {
+  const codec = await encodableCodec(size);
+
+  if (!codec) return null;
+
+  const next = mp4Writer({ codec, quality: QUALITY_MEDIUM, realtime: true });
+
+  await next.start();
+
+  if (lead > 0) await addSample(next, blankOf(size), 0);
+
+  return next;
+}
+
+async function encode(picture: Picture, timestamp: number) {
+  writer ??= opened(sizeOf(picture));
+
+  const live = await writer;
+
+  if (live) await addSample(live, picture, timestamp);
+}
+
 function take(picture: Picture) {
   const at = secondsOf(picture);
 
   firstAt ??= at;
 
-  const timestamp = at - firstAt;
+  const timestamp = lead + at - firstAt;
 
   if (ended || failed || full || encoding || timestamp > MAX_SECONDS) return picture.close();
 
@@ -115,6 +132,8 @@ function finish() {
 
 scope.onmessage = (ev: MessageEvent<TakeVideoRequest>) => {
   const msg = ev.data;
+
+  if (msg.type === 'open') lead = msg.lead;
 
   if (msg.type === 'open' && msg.frames) pump(msg.frames).catch(() => undefined);
 

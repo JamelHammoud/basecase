@@ -54,6 +54,7 @@ export interface App {
   errors: string[];
   posts: Array<{ route: string; body: unknown }>;
   requests: string[];
+  triesDir: string;
   close: () => Promise<void>;
 }
 
@@ -157,6 +158,7 @@ export async function openApp(
     errors,
     posts,
     requests,
+    triesDir,
     close: async () => {
       await browser.close();
       fs.rmSync(triesDir, { recursive: true, force: true });

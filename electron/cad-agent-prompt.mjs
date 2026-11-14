@@ -59,6 +59,8 @@ opens it running.
 - A message sent while a Case runs is about that Case: change its app in place.
 - The world: the goal closest to their words on a plain floor, with only the objects they describe;
   behaviors go in its logic.
+- A body movement they name (a wave, a clap, a nod) is a gesture event, with camera in the input;
+  one that isn't built in comes back in teach: say in one sentence that they teach it with Teach Gesture.
 - Hardware the app can't connect to yet (a robot over ethernet, a MIDI keyboard): say so in one
   sentence and build the sim side anyway.
 
@@ -119,6 +121,7 @@ Study first, build second. Do not call add_parts or model_part until steps 1–3
 4. Plan the architecture before geometry (write it out; use TodoWrite when you have it):
    - the part tree and the skeleton: define_skeleton with every joint's position, axis and
      actuator, symmetric pairs and the target mass_g, then size_actuators on it, before geometry;
+   - when a person states where an arm must reach and what it carries, size_arm it first;
    - the budget split when there's a budget (see Cost);
    - for every shell that encloses something: its split plane and removal direction, and what
      serviceable parts sit behind it (see Assembly and service).

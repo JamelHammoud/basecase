@@ -22,7 +22,8 @@ export const createCase = {
       'objects adds world objects as in set_world (agent frame); mark one movable: true when the Case’s code moves, recolors or hides it (basecase.world.set), as for a target to whack. A legged robot that falls fails any Case. ' +
       'logic is a Routine (as in make_routine) the Case runs; score counts dynamic objects in or out of a marker spot. ' +
       'console makes the Case an app the person runs: with one, the app opens the new Case running, laid out by it. ' +
-      'Returns { ok, id, name, brief, seconds, objects, running? } or { ok: false, problem } saying what to change, e.g. the goals this robot can try or the console path it refused.',
+      'gestures names the body movements the Case reacts to; reply.teach lists the ones the person teaches with Teach Gesture. ' +
+      'Returns { ok, id, name, brief, seconds, objects, running?, teach? } or { ok: false, problem } saying what to change, e.g. the goals this robot can try or the console path it refused.',
     inputSchema: {
       goal: z.enum(['reach', 'push', 'path', 'walk', 'touch', 'pick', 'handoff']),
       world: z
@@ -62,23 +63,30 @@ export const createCase = {
         .record(z.string(), z.unknown())
         .optional()
         .describe(
-          'Base do drive hands the robot to the Case’s drive; watchers with model case-fact read score, timer, elapsed, <spot>-count, <object>-over…; live-input reads named events like voice',
+          'Base do drive hands the robot to the Case’s drive; watchers with model case-fact read score, timer, elapsed, <spot>-count, <object>-over…; live-input reads named events like voice, and a live-input watcher with id gesture reads the gesture’s name (when: { fact: gesture, is: wave })',
         ),
       score: z
         .object({ spot: z.string(), counts: z.enum(['in', 'out']) })
         .optional()
         .describe('in: objects inside the spot; out: objects that started in it and left'),
+      gestures: z
+        .array(z.string().regex(/^[a-z][a-z0-9-]{0,31}$/))
+        .max(18)
+        .optional()
+        .describe(
+          'Lowercase gesture names, with the camera input. Built in: wave, raise-hand, raise-both-hands, point-left, point-right, thumbs-up, open-palm, clap, nod, shake-head. Any other name, up to 8, waits for the person to teach it',
+        ),
       console: z
         .record(z.string(), z.unknown())
         .optional()
         .describe(
           'What the running Case shows and reads. input: 1–4 input source ids (keys, gamepad, phone, camera, hand, face, midi, voice, code; a source this version lacks is refused, so leave it out and say so). voice sends logic the event voice with each word its live-input watchers compare against; midi sends midi with each note number and midi.cc.<n> from 0 to 1. ' +
-            'panels: [{ id, kind, title?, ... }] with kind camera (signal: camera.<name> or camera.*), value (signal), plot (signals, seconds), table (of: servos, joints or signals), button (action: try, end-try, drive, stop, start-over, reset), list (of: tries or failures), text (of: brief, or text), map (trail), ' +
+            'panels: [{ id, kind, title?, ... }] with kind camera (signal: camera.<name> or camera.*), value (signal), plot (signals, seconds), table (of: servos, joints or signals), button (action: try, end-try, drive, stop, start-over, reset; gesture: a gesture name that presses it), list (of: tries or failures), text (of: brief, or text), map (trail), ' +
             'code (source: one HTML document with its script and style inline, at most 256 KB; height 80–900; at most 4 per console) for a control or readout no other kind draws, such as a joystick, a piano, a HUD or picture buttons. ' +
             'A code panel runs sandboxed with no network, storage or parent access, and its script uses window.basecase: signals(names, (values, time) => …) gets those signals at most 20 times a second; ' +
             'drive({ v: [forward, left, turn] each −1 to 1, aux?, target? }) drives the robot, drive(null) lets go, and needs code in input; event(name, value?) sends a named event to logic; action(name) runs a button action and resolves { ok, problem? }; ' +
             'CSS variables --bc-bg, --bc-panel, --bc-surface, --bc-accent, --bc-red, --bc-ink, --bc-ink-2, --bc-ink-3, --bc-font, --bc-text, --bc-radius and --bc-control match the studio. ' +
-            'Signals: joint.<id>.target/position/effort (joint.*.position in plots), robot.height/tilt/speed/travelled/x/z, probe.<name>, input.<source>.forward/left/turn/lift/grip, goal.passed/margin, time, and the Case’s own. ' +
+            'Signals: joint.<id>.target/position/effort (joint.*.position in plots), robot.height/tilt/speed/travelled/x/z, probe.<name>, input.<source>.forward/left/turn/lift/grip, gesture.<name> (1 for half a second after it, with the camera input), goal.passed/margin, time, and the Case’s own. ' +
             'signals (optional): [{ id, kind: timer (seconds), counter (when: { signal, above|below }), score (sum: [{ signal, times }]) }]. ' +
             'layout: { areas: [{ size: 200–720, panels: [ids] }, { canvas: true, overlays? }, …] }, the canvas once, every panel placed once. ' +
             'overlays draw code panels over the canvas: [{ panel, anchor, width?, height?, pointer? }], anchor top-left, top-right, bottom-left or bottom-right (width and height), top or bottom (height), left or right (width), or fill; sizes 40–1600; clicks pass through to the canvas unless pointer is true.',

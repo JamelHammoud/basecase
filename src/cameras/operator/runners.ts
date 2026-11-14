@@ -25,6 +25,8 @@ export interface Started {
   delegate: Delegate;
 }
 
+export type WorldWatch = (world: PoseLandmark[] | null, timestamp: number) => void;
+
 export interface Playback {
   count: number;
   at: (index: number, seenAt: number) => FollowEvent;
@@ -44,7 +46,7 @@ function sighting() {
   };
 }
 
-function bodyRunner(landmarker: PoseLandmarker, robot: InputRobot): Runner {
+function bodyRunner(landmarker: PoseLandmarker, robot: InputRobot, watch: WorldWatch): Runner {
   const follower = createPoseFollower(robot);
   const lost = sighting();
 
@@ -53,6 +55,8 @@ function bodyRunner(landmarker: PoseLandmarker, robot: InputRobot): Runner {
       const result = landmarker.detectForVideo(picture, timestamp);
       const world = result.worldLandmarks[0];
       const image = result.landmarks[0];
+
+      watch(world ?? null, timestamp);
 
       if (!world || !image) return lost(false) ? { type: 'pose', follow: null, image: null, seenAt } : null;
 
@@ -105,9 +109,12 @@ function faceRunner(landmarker: FaceLandmarker, robot: InputRobot): Runner {
   };
 }
 
-export const RUNNERS: Record<LandmarkKind, (robot: InputRobot) => Promise<Started>> = {
-  body: (robot) =>
-    loadPoseLandmarker().then(({ landmarker, delegate }) => ({ runner: bodyRunner(landmarker, robot), delegate })),
+export const RUNNERS: Record<LandmarkKind, (robot: InputRobot, watch: WorldWatch) => Promise<Started>> = {
+  body: (robot, watch) =>
+    loadPoseLandmarker().then(({ landmarker, delegate }) => ({
+      runner: bodyRunner(landmarker, robot, watch),
+      delegate,
+    })),
   hand: (robot) =>
     loadHandLandmarker().then(({ landmarker, delegate }) => ({ runner: handRunner(landmarker, robot), delegate })),
   face: (robot) =>

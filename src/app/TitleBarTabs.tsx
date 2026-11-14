@@ -38,6 +38,8 @@ export interface TitleBarTabActions {
   closeTabs: (ids: string[]) => void;
   duplicateTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
+  renamingTab: string | null;
+  setRenamingTab: (id: string | null) => void;
   reorderTab: (from: number, to: number) => void;
   reopenTab: () => void;
   capturePreview: (id: string) => void;
@@ -128,6 +130,8 @@ export function TitleBarTabs({
           onCloseRight={(id) => actions.closeTabs(idsAfter(tabs, id))}
           onDuplicate={actions.duplicateTab}
           onRename={actions.renameTab}
+          renaming={actions.renamingTab}
+          onRenaming={actions.setRenamingTab}
           onReorder={actions.reorderTab}
           onReopen={actions.reopenTab}
           onPreview={actions.capturePreview}

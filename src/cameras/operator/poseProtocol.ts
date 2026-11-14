@@ -1,4 +1,6 @@
 import type { InputRobot } from '../../sim/inputTypes';
+import type { GestureNews } from '../gestures/gestureTap';
+import type { TaughtGesture } from '../gestures/gestureRecognizer';
 import type { FaceFollow, FaceSample } from './faceFollow';
 import type { HandFollow, HandSample } from './handFollow';
 import type { PoseFollow, PoseSample } from './poseFollow';
@@ -22,6 +24,8 @@ export type PoseRequest =
   | { type: 'leave'; kind: LandmarkKind }
   | { type: 'frame'; bitmap: ImageBitmap }
   | FeedRequest
+  | { type: 'gestures'; taught: TaughtGesture[] }
+  | { type: 'record'; ms: number }
   | { type: 'close' };
 
 export type FollowEvent =
@@ -32,6 +36,8 @@ export type FollowEvent =
 export type PoseEvent =
   | FollowEvent
   | { type: 'ready'; kind: LandmarkKind; delegate: Delegate }
-  | { type: 'error'; kind?: LandmarkKind; message: string };
+  | { type: 'error'; kind?: LandmarkKind; message: string }
+  | { type: 'fed'; kind: LandmarkKind }
+  | GestureNews;
 
 export const wallClock = () => performance.timeOrigin + performance.now();

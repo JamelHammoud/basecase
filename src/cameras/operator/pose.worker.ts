@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import type { InputRobot } from '../../sim/inputTypes';
+import { createGestureTap } from '../gestures/gestureTap';
 import {
   FEED_FPS,
   wallClock,
@@ -23,8 +24,11 @@ const lanes = new Map<LandmarkKind, Lane>();
 
 let lastTimestamp = 0;
 let closed = false;
+let fedUntil = 0;
 
 const post = (event: PoseEvent) => scope.postMessage(event);
+
+const gestures = createGestureTap(post);
 
 const fail = (e: unknown, kind?: LandmarkKind) =>
   post({ type: 'error', ...(kind ? { kind } : {}), message: e instanceof Error ? e.message : String(e) });
@@ -78,7 +82,7 @@ function join({ kind, robot, standIn }: Extract<PoseRequest, { type: 'join' }>) 
 
   if (lane.fed) return;
 
-  RUNNERS[kind](robot).then(
+  RUNNERS[kind](robot, gestures.step).then(
     ({ runner, delegate }) => {
       if (closed || lanes.get(kind) !== lane || lane.fed) return runner.close();
 
@@ -87,6 +91,20 @@ function join({ kind, robot, standIn }: Extract<PoseRequest, { type: 'join' }>) 
     },
     (e) => fail(e, kind),
   );
+}
+
+function fedGestures(request: FeedRequest, interval: number) {
+  if (request.kind !== 'body') return () => undefined;
+
+  const { samples } = request;
+  const from = Math.max(performance.now(), fedUntil) - (samples[0]?.t ?? 0);
+
+  return (index: number) => {
+    const { t, world } = samples[index];
+
+    fedUntil = from + t + interval;
+    gestures.step(world, from + t);
+  };
 }
 
 function feed(request: FeedRequest) {
@@ -102,11 +120,14 @@ function feed(request: FeedRequest) {
 
   const played = playback(request, lane.robot);
   const interval = 1000 / (request.fps ?? FEED_FPS);
+  const watch = fedGestures(request, interval);
   let next = 0;
   const step = () => {
     lane.feedTimer = null;
 
-    if (closed || lanes.get(kind) !== lane || next >= played.count) return;
+    if (closed || lanes.get(kind) !== lane) return;
+
+    if (next >= played.count) return post({ type: 'fed', kind });
 
     const seenAt = wallClock();
     const index = next++;
@@ -114,6 +135,7 @@ function feed(request: FeedRequest) {
     lane.feedTimer = setTimeout(step, interval);
 
     try {
+      watch(index);
       post(played.at(index, seenAt));
     } catch (e) {
       fail(e, kind);
@@ -127,6 +149,7 @@ function close() {
   closed = true;
   [...lanes.keys()].forEach((kind) => leave({ kind }));
   frames.stop();
+  gestures.stop();
   scope.close();
 }
 
@@ -144,6 +167,8 @@ const handlers: { [K in PoseRequest['type']]: (msg: Extract<PoseRequest, { type:
       fail(e, request.kind);
     }
   },
+  gestures: ({ taught }) => gestures.teach(taught),
+  record: ({ ms }) => gestures.record(ms),
   close,
 };
 

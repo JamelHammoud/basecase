@@ -3,32 +3,16 @@ export type SlashName = 'train' | 'routine' | 'case' | 'simulate' | 'operate' | 
 export interface SlashCommand {
   name: SlashName;
   label: string;
-  hint: string;
   keywords: string;
 }
 
 export const SLASH_COMMANDS: readonly SlashCommand[] = Object.freeze([
-  { name: 'train', label: 'Teach a Skill', hint: 'Teach the robot a skill', keywords: 'train skill learn policy' },
-  {
-    name: 'routine',
-    label: 'Make a Routine',
-    hint: 'Build or change a Routine',
-    keywords: 'routine behavior behaviour steps',
-  },
-  { name: 'case', label: 'Make a Case', hint: 'A world and a goal to try', keywords: 'case challenge world goal' },
-  {
-    name: 'simulate',
-    label: 'Simulate the Scene',
-    hint: 'Run the scene in the sim',
-    keywords: 'sim physics mujoco run',
-  },
-  {
-    name: 'operate',
-    label: 'Operate the Robot',
-    hint: 'Do a task by watching its cameras',
-    keywords: 'operate control camera teleop task pick look',
-  },
-  { name: 'check', label: 'Run Checks', hint: 'Check the design is ready to build', keywords: 'check ready build' },
+  { name: 'train', label: 'Teach a Skill', keywords: 'train skill learn policy' },
+  { name: 'routine', label: 'Make a Routine', keywords: 'routine behavior behaviour steps' },
+  { name: 'case', label: 'Make a Case', keywords: 'case challenge world goal' },
+  { name: 'simulate', label: 'Simulate the Scene', keywords: 'sim physics mujoco run' },
+  { name: 'operate', label: 'Operate the Robot', keywords: 'operate control camera teleop task pick look' },
+  { name: 'check', label: 'Run Checks', keywords: 'check ready build' },
 ]);
 
 const QUERY = /^\/([a-z]*)$/i;

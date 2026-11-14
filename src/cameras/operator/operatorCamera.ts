@@ -1,5 +1,9 @@
 import { useSyncExternalStore } from 'react';
+import { GESTURE_EVENT } from '../../cases/gestures';
+import { emitInputEvent } from '../../sim/inputEvents';
 import type { InputRobot } from '../../sim/inputTypes';
+import type { GestureExample } from '../gestures/gestureMatch';
+import type { TaughtGesture } from '../gestures/gestureRecognizer';
 import type { FaceFollow, FaceSample } from './faceFollow';
 import type { HandFollow, HandSample } from './handFollow';
 import { createLatencyLog, type LatencyStats } from './latencyLog';
@@ -65,8 +69,11 @@ let starting: Promise<Session | null> | null = null;
 let lastTrack: MediaStreamTrack | null = null;
 let points: SkeletonPoint[] | null = null;
 let fresh: { [K in LandmarkKind]?: Fresh<Follows[K]> } = {};
+let taught: TaughtGesture[] = [];
+let settleExample: ((example: GestureExample | null) => void) | null = null;
 const members = new Map<LandmarkKind, Member>();
 const standIns = new Map<LandmarkKind, FeedRequest>();
+const feeding = new Set<LandmarkKind>();
 const listeners = new Set<() => void>();
 const pointListeners = new Set<(next: SkeletonPoint[] | null) => void>();
 const latency = createLatencyLog(LATENCY_SAMPLES);
@@ -95,6 +102,13 @@ function fail(message: string, kind?: LandmarkKind) {
   set({ error: message });
 }
 
+function example(next: GestureExample | null) {
+  const resolve = settleExample;
+
+  settleExample = null;
+  resolve?.(next);
+}
+
 const entry = <T>(follow: T | null, seenAt: number): Fresh<T> | undefined =>
   follow ? { follow, seenAt, read: false } : undefined;
 
@@ -112,6 +126,16 @@ function keep(event: FollowEvent) {
 
 function receive(event: PoseEvent) {
   if (event.type === 'error') return fail(event.message, event.kind);
+
+  if (event.type === 'gesture') return emitInputEvent(GESTURE_EVENT, event.name);
+
+  if (event.type === 'example') return example(event.example);
+
+  if (event.type === 'fed') {
+    feeding.delete(event.kind);
+
+    return;
+  }
 
   if (event.type !== 'ready') return keep(event);
 
@@ -140,6 +164,7 @@ function start(stream: MediaStream): Session {
   const open: PoseRequest = { type: 'open', frames: frames.frames };
 
   worker.postMessage(open, frames.frames ? [frames.frames] : []);
+  worker.postMessage({ type: 'gestures', taught } satisfies PoseRequest);
   session = { worker, frames, stream };
   lastTrack = track ?? null;
   latency.clear();
@@ -177,6 +202,8 @@ function endSession() {
 
   session = null;
   fresh = {};
+  feeding.clear();
+  example(null);
 
   if (!live) return;
 
@@ -209,6 +236,7 @@ export function leaveOperatorCamera(kind: LandmarkKind) {
   settle(kind, null);
   members.delete(kind);
   fresh[kind] = undefined;
+  feeding.delete(kind);
 
   if (!members.size) return endSession();
 
@@ -272,6 +300,8 @@ export const latestFaceFollow = (): FaceFollow | null => latest('face');
 export const handGrip = (): number | null => (members.has('hand') ? (fresh.hand?.follow.grip ?? null) : null);
 
 function feedOperator(feed: FeedRequest) {
+  feeding.add(feed.kind);
+
   if (!session || !members.get(feed.kind)?.joined) {
     standIns.set(feed.kind, feed);
 
@@ -291,9 +321,30 @@ export const feedOperatorHand = (samples: HandSample[], fps?: number) =>
 export const feedOperatorFace = (samples: FaceSample[], fps?: number) =>
   feedOperator({ type: 'feed', kind: 'face', samples, fps });
 
+export function teachGestures(next: TaughtGesture[]) {
+  taught = next;
+  session?.worker.postMessage({ type: 'gestures', taught } satisfies PoseRequest);
+}
+
+export function recordGestureExample(ms: number): Promise<GestureExample | null> {
+  example(null);
+
+  if (!session) return Promise.resolve(null);
+
+  const recorded = new Promise<GestureExample | null>((resolve) => {
+    settleExample = resolve;
+  });
+
+  session.worker.postMessage({ type: 'record', ms } satisfies PoseRequest);
+
+  return recorded;
+}
+
 export const operatorLatency = (): LatencyStats | null => latency.stats();
 
 export const operatorPoints = () => points;
+
+export const operatorFeeding = () => feeding.size > 0;
 
 export const operatorTrackState = () => lastTrack?.readyState ?? null;
 

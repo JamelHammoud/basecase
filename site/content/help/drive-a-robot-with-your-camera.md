@@ -15,6 +15,7 @@ keywords:
 related:
   - drive-a-robot-in-the-simulation
   - try-a-case
+  - teach-a-robot-a-gesture
   - export-a-lerobot-dataset
 covers:
   - src/components/simulate/driveWithCamera.ts
@@ -57,3 +58,5 @@ A humanoid with a ready Walk skill keeps standing on it, and [[W]] [[A]] [[S]] [
 The still moment in step 5 is your rest pose. If the robot doesn't move, put your arms down, hold still for a second, and try again.
 
 With a Case open, **Drive with Camera** is in [[⌘K]] only; choose it, then click **Try It**. The try records like any other, so it can go into a dataset, as in [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
+
+While the camera drives, a wave, a clap or a nod is also an event the open Case can react to. [Teach a robot a gesture](/help/teach-a-robot-a-gesture) lists them and adds your own.

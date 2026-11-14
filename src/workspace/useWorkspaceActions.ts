@@ -1,3 +1,4 @@
+import { useArmSizing } from './useArmSizing';
 import { useCadTune } from './useCadTune';
 import { useExportActions } from './useExportActions';
 import { useFileImport } from './useFileImport';
@@ -28,6 +29,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const joints = useHandJoints(core);
   const wrap = useWrapRobot(core);
   const onshape = useOnshapeUpdate(core);
+  const arm = useArmSizing(core);
   const cameras = useFixedCameras({
     project: core.project,
     updateProjectNow: core.docs.updateProjectNow,
@@ -50,6 +52,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     joints,
     wrap,
     onshape,
+    arm,
   };
 }
 

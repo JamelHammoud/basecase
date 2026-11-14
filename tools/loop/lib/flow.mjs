@@ -15,7 +15,9 @@ export const LANE_SHARE = { refine: 3 };
 
 const hoursSince = (iso, now) => (iso ? (now - Date.parse(iso)) / 3_600_000 : null);
 
-export function expired({ pulls, inBatch, now = Date.now() }) {
+const free = () => false;
+
+export function expired({ pulls, inBatch, now = Date.now(), busy = free }) {
   const limitMs = LIMITS.maxOpenHours * 3_600_000;
 
   return pulls.filter(
@@ -23,8 +25,15 @@ export function expired({ pulls, inBatch, now = Date.now() }) {
       !pull.headRefName.startsWith('loop/batch/') &&
       !pull.headRefName.startsWith('loop/repair/') &&
       !inBatch.includes(pull.number) &&
+      !busy(pull) &&
       now - Date.parse(pull.createdAt) > limitMs,
   );
+}
+
+export function idle({ pulls, now = Date.now(), busy = free }) {
+  const since = now - LIMITS.idlePullMinutes * 60_000;
+
+  return pulls.filter((pull) => Date.parse(pull.updatedAt) < since && !busy(pull));
 }
 
 export const laneOf = (branch) => /^loop\/([^/]+)\//.exec(branch)?.[1] ?? null;

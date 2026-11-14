@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
@@ -10,23 +11,27 @@ export const HARNESS_EXCLUDES = [
   ':(exclude)**/AGENTS.md',
 ];
 
-export const HARNESS_PATHS = [
+export const AGENT_PATHS = [
   'electron/cad-agent-prompt.mjs',
   'electron/cad-agent-guides',
   'electron/cad-mcp-server.mjs',
   'electron/cad-mcp',
   'electron/cad-kernel',
-  'electron/cadImport',
-  'electron/backend',
   'electron/acp-3d-agent.mjs',
   'electron/acp-3d-model.mjs',
+  'src/assembly',
+  'src/readiness',
+];
+
+export const HARNESS_PATHS = [
+  ...AGENT_PATHS,
+  'electron/cadImport',
+  'electron/backend',
   'electron/robot-skeleton.mjs',
   'electron/publicFetch.mjs',
   'src/agent',
-  'src/assembly',
   'src/data',
   'src/print',
-  'src/readiness',
   'src/robot',
   'src/three',
   'src/types',
@@ -39,7 +44,7 @@ export const HARNESS_PATHS = [
   ...HARNESS_EXCLUDES,
 ];
 
-const git = (cwd, args) => execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+const git = (cwd, args, env) => execFileSync('git', args, { cwd, env, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
 
 function untrackedDigest(cwd, paths) {
   const files = git(cwd, ['ls-files', '--others', '--exclude-standard', '--', ...paths])
@@ -53,14 +58,31 @@ function untrackedDigest(cwd, paths) {
   return hash.digest('hex');
 }
 
-export function harnessKey(cwd, paths = HARNESS_PATHS) {
-  const hash = crypto.createHash('sha256');
+const keyOf = ({ staged, changed, untracked }) =>
+  crypto.createHash('sha256').update(staged).update(changed).update(untracked).digest('hex').slice(0, 16);
 
-  hash.update(git(cwd, ['ls-files', '-s', '--', ...paths]));
-  hash.update(git(cwd, ['diff', 'HEAD', '--', ...paths]));
-  hash.update(untrackedDigest(cwd, paths));
+export const harnessKey = (cwd, paths = HARNESS_PATHS) =>
+  keyOf({
+    staged: git(cwd, ['ls-files', '-s', '--', ...paths]),
+    changed: git(cwd, ['diff', 'HEAD', '--', ...paths]),
+    untracked: untrackedDigest(cwd, paths),
+  });
 
-  return hash.digest('hex').slice(0, 16);
+export function harnessKeyAt(cwd, commit, paths = HARNESS_PATHS) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-index-'));
+  const env = { ...process.env, GIT_INDEX_FILE: path.join(dir, 'index') };
+
+  try {
+    git(cwd, ['read-tree', commit], env);
+
+    return keyOf({
+      staged: git(cwd, ['ls-files', '-s', '--', ...paths], env),
+      changed: '',
+      untracked: crypto.createHash('sha256').digest('hex'),
+    });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 const canonical = (id) =>

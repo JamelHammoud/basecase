@@ -1,20 +1,28 @@
+import { harnessKey, harnessKeyAt } from '../../../bench/compare/cache.mjs';
 import { runAgent } from '../lib/agent.mjs';
-import { claim } from '../lib/claim.mjs';
+import { runCompare, SETTINGS, settleEstimate, spentOn, unlinkRuns } from '../lib/benchRuns.mjs';
+import { claim, claimWithin, held } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
 import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
 import {
   closePull,
   commentOnPull,
+  editComment,
   openPulls,
   pullCheck,
   pullComments,
   pullReview,
+  repoVariable,
   reviewState,
   setReview,
 } from '../lib/github.mjs';
+import { budgetFrom, PULL_BUDGET, skipReason } from '../lib/harnessVerdict.mjs';
 import { duplicateTarget, inFlight, inFlightText } from '../lib/inFlight.mjs';
+import { OWNER_LOGIN } from '../lib/paths.mjs';
+import { judgedPass, measurePull, needsMeasure, withMeasure } from '../lib/pullMeasure.mjs';
 import { byRank } from '../lib/rank.mjs';
 import { run } from '../lib/sh.mjs';
+import { pause } from '../lib/usage.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
 
 export const schedule = {
@@ -25,6 +33,7 @@ export const schedule = {
 };
 
 const MAX_DIFF = 400_000;
+const BENCH_PORT = 5390;
 
 const SCHEMA = {
   type: 'object',
@@ -63,14 +72,91 @@ const reviewComment = ({ verdict, summary, findings }, { sha, copy }) =>
     fenced(copy.text),
   ].join('\n');
 
+const git = (dir, args) => run('git', args, { cwd: dir }).out;
+
+function benchDeps({ dir, onMain, log }) {
+  const mainCommit = git(dir, onMain ? ['rev-parse', 'origin/main'] : ['merge-base', 'HEAD', 'origin/main']);
+
+  git(dir, ['reset', '-q', '--hard', 'HEAD']);
+  git(dir, ['clean', '-fdq']);
+
+  return {
+    owner: OWNER_LOGIN,
+    pullComments,
+    commentOnPull,
+    editComment,
+    settings: SETTINGS,
+    budget: () => budgetFrom(repoVariable('LOOP_PULL_BENCH_BUDGET'), PULL_BUDGET),
+    paused: () => skipReason({ paused: pause(), pulls: [] }),
+    keys: () => ({ branch: harnessKey(dir), main: harnessKeyAt(dir, mainCommit), mainCommit }),
+    estimate: (keys) => settleEstimate(keys.main),
+    compare: (plan) => runCompare({ dir, log, split: 'tune', port: BENCH_PORT, ...plan }),
+    spentOn,
+  };
+}
+
+const BENCH_WAIT_MS = 2 * 60 * 60 * 1000;
+
+const BENCH_BUSY = {
+  verdict: 'busy',
+  description: "Another review's micro-evals held the bench; it will run again",
+  log: 'waited two hours for the micro-evals bench; will run again',
+};
+
+const PULL_BUSY = {
+  verdict: 'busy',
+  description: 'Another lane held this pull request; the micro-evals will run again',
+  log: 'another lane held the pull request; micro-evals will run again',
+};
+
+function onBench(sha, measure) {
+  setReview(sha, 'pending', 'Waiting for the micro-evals');
+
+  const release = claimWithin('pull-bench', { ms: BENCH_WAIT_MS });
+
+  if (!release) return BENCH_BUSY;
+
+  try {
+    setReview(sha, 'pending', 'Measuring on the micro-evals');
+
+    return measure();
+  } finally {
+    release();
+  }
+}
+
+function measureOnce({ pull, paths, log, worktree, onMain }) {
+  if (!needsMeasure(pull, paths)) return null;
+
+  const hold = claim(`pull-${pull.number}`);
+
+  if (!hold) return PULL_BUSY;
+
+  try {
+    return onBench(pull.headRefOid, () => measurePull({ pull, paths, log }, benchDeps({ ...worktree, onMain, log })));
+  } finally {
+    hold();
+  }
+}
+
+const changedFiles = (dir) =>
+  git(dir, ['diff', '--name-only', '--no-renames', '-z', 'origin/main...HEAD']).split('\0').filter(Boolean);
+
 function reviewPull(pull, log) {
   const sha = pull.headRefOid;
-
-  setReview(sha, 'pending', 'Reviewing');
-
   const worktree = openPullHead(pull.number, sha);
 
   try {
+    const paths = changedFiles(worktree.dir);
+
+    if (needsMeasure(pull, paths) && held('pull-bench')) {
+      log(`#${pull.number}: the micro-evals bench is busy; reviewing it on a later tick`);
+
+      return false;
+    }
+
+    setReview(sha, 'pending', 'Reviewing');
+
     const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: worktree.dir }).out.slice(0, MAX_DIFF);
     const copy = copyReport(worktree.dir);
     const onMain = run('git', ['merge', '-q', '--no-edit', 'origin/main'], { cwd: worktree.dir, allowFail: true }).ok;
@@ -102,13 +188,24 @@ function reviewPull(pull, log) {
       return;
     }
 
-    const blockers = result.output.findings.filter((f) => f.severity === 'blocker');
-    const verdict = result.output.verdict === 'pass' && blockers.length === 0 ? 'pass' : 'fail';
+    const judged = judgedPass(result.output);
+    const measured = judged ? measureOnce({ pull, paths, log, worktree, onMain }) : null;
 
-    commentOnPull(pull.number, reviewComment({ ...result.output, verdict }, { sha, copy }));
-    setReview(sha, verdict === 'pass' ? 'success' : 'failure', result.output.summary);
+    if (measured?.verdict === 'busy') {
+      setReview(sha, 'error', measured.description);
+      log(`#${pull.number}: ${measured.log}`);
+
+      return;
+    }
+
+    const { output, verdict, state, description } = withMeasure(result.output, measured);
+    const blockers = output.findings.filter((f) => f.severity === 'blocker');
+
+    commentOnPull(pull.number, reviewComment({ ...output, verdict }, { sha, copy }));
+    setReview(sha, state, description);
     log(`#${pull.number}: ${verdict}, ${blockers.length} blockers`);
   } finally {
+    unlinkRuns(worktree.dir);
     close(worktree);
   }
 }
@@ -158,7 +255,7 @@ export default function review({ log }) {
     if (!release) continue;
 
     try {
-      if (!carryOver(pull, log)) reviewPull(pull, log);
+      if (!carryOver(pull, log) && reviewPull(pull, log) === false) continue;
     } catch (error) {
       setReview(pull.headRefOid, 'error', 'The review stopped before it finished; it will run again');
 

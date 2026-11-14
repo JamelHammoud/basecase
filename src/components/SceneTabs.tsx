@@ -29,6 +29,8 @@ export interface SceneTabsProps {
   onCloseRight: (id: string) => void;
   onDuplicate: (id: string) => void;
   onRename: (id: string, name: string) => void;
+  renaming: string | null;
+  onRenaming: (id: string | null) => void;
   onReorder: (from: number, to: number) => void;
   onReopen: () => void;
   onPreview?: (id: string) => void;
@@ -69,13 +71,14 @@ export const SceneTabs: React.FC<SceneTabsProps> = ({
   onCloseRight,
   onDuplicate,
   onRename,
+  renaming,
+  onRenaming: setRenaming,
   onReorder,
   onReopen,
   onPreview,
 }) => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const tabEls = useRef(new Map<string, HTMLDivElement>());
-  const [renaming, setRenaming] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [initialIds] = useState(() => new Set(tabs.map((t) => t.id)));
   const { drag, startPress, movePress, endPress, isPressing } = useTabDrag({

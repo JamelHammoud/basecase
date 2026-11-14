@@ -14,6 +14,7 @@ import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
 import { degrees } from '../robot/robotGhost';
 import { phoneSnapshot } from '../phone/phoneStore';
+import { inputEvents } from '../sim/inputEvents';
 import {
   feedOperatorFace,
   feedOperatorHand,
@@ -21,11 +22,11 @@ import {
   type FaceSample,
   type HandSample,
   operatorCameraSnapshot,
+  operatorFeeding,
   operatorLatency,
   operatorTrackState,
 } from '../cameras/operator/operatorCamera';
 import type { PoseSample } from '../cameras/operator/poseFollow';
-import { recentInputEvents } from '../sim/inputEvents';
 import { feedVoice } from '../voice/voiceSession';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
@@ -207,6 +208,7 @@ function operatorCameraState() {
     estimator,
     error,
     latency: operatorLatency(),
+    feeding: operatorFeeding(),
   };
 }
 
@@ -277,7 +279,6 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     drive: (command: DriveCommand) => devRef.current.drive(command),
     driveWith: (inputs: string[]) => devRef.current.driveWith(inputs),
     feedVoice: (samples: number[], sampleRate: number) => feedVoice(samples, sampleRate),
-    inputEvents: () => recentInputEvents().map(({ name, value }) => ({ name, value })),
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),
     printPlates: () => devRef.current.printPlates(),
@@ -304,6 +305,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
     feedHand: (samples: HandSample[], fps?: number) => feedOperatorHand(samples, fps),
     feedFace: (samples: FaceSample[], fps?: number) => feedOperatorFace(samples, fps),
+    inputEvents: () => inputEvents().map(({ name, value }) => ({ name, value })),
     operatorCamera: () => operatorCameraState(),
     cameraStreams: () => ({ ...streamCost }),
     stubTabEngine,

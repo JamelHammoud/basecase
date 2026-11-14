@@ -73,7 +73,7 @@ export const PosesSection: React.FC<{
           ) : (
             <button
               type="button"
-              className="flex-1 min-w-0 h-[32px] text-left text-[13px] text-white/85 truncate cursor-default"
+              className="flex-1 min-w-0 h-[32px] text-left text-[13px] text-white/90 truncate cursor-default"
               onClick={() => posing.applySavedPose(p.id)}
             >
               {p.name}

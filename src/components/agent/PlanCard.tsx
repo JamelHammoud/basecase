@@ -13,7 +13,7 @@ const STATUS_ICON: Record<PlanStatus, React.ReactNode> = {
 const STATUS_TEXT: Record<PlanStatus, string> = {
   completed: 'text-white/50',
   in_progress: 'text-white',
-  pending: 'text-white/70',
+  pending: 'text-white/60',
 };
 
 export const PlanCard: React.FC<{ entries: AcpPlanEntry[] }> = ({ entries }) => {
@@ -22,7 +22,7 @@ export const PlanCard: React.FC<{ entries: AcpPlanEntry[] }> = ({ entries }) => 
   return (
     <div className="rounded-xl bg-white/[0.04] ring-1 ring-inset ring-white/[0.06] px-3 py-2.5">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[12.5px] font-medium text-white/70">Plan</span>
+        <span className="text-[12.5px] font-medium text-white/60">Plan</span>
         <span className="text-[12px] text-white/50 tabular">
           {done}/{entries.length}
         </span>

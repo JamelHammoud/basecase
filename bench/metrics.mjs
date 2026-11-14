@@ -94,7 +94,7 @@ export function runMetrics(records, { result = {}, seconds } = {}) {
   };
 }
 
-const APP_UNREACHABLE = /The app did not answer|The app window is not open|This scene was closed/;
+const APP_UNREACHABLE = /The app (?:didn’t|did not) answer|The app window (?:isn’t|is not) open|This scene was closed/;
 
 export function appTimeouts(records) {
   return sessionUpdates(records).filter(

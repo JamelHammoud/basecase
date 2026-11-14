@@ -29,9 +29,9 @@ const PageTitle: React.FC<{ title: string; subtitle: string | string[]; descript
   description,
 }) => (
   <div className="px-[12px] pt-4 pb-4">
-    <h2 className="text-[17px] font-semibold text-white/95 leading-tight">{title}</h2>
+    <h2 className="text-[17px] font-semibold text-white/90 leading-tight">{title}</h2>
     <MetaLine items={[subtitle].flat()} className="mt-1 text-[13px] text-white/50" />
-    {description && <p className="mt-2.5 text-[13px] text-white/70 leading-relaxed">{description}</p>}
+    {description && <p className="mt-2.5 text-[13px] text-white/60 leading-relaxed">{description}</p>}
   </div>
 );
 

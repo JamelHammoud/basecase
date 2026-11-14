@@ -102,7 +102,7 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
         label={`List price at ${l.estimate.store}, ${dayLabel(l.estimate.seen)}. Add the price you see`}
         className="shrink-0 -my-[5px]"
       >
-        <button type="button" onClick={onCheck} className={`${PRICE_CLASS} text-white/50 hover:text-white/75`}>
+        <button type="button" onClick={onCheck} className={`${PRICE_CLASS} text-white/50 hover:text-white/90`}>
           ≈ {money.format(l.estUsd)}
         </button>
       </Tooltip>

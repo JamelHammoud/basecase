@@ -16,7 +16,7 @@ const RestoreRow: React.FC<{ label: string; onRestore: () => void; children?: Re
 }) => (
   <li className="flex items-start gap-2 py-1.5 px-[7px]">
     <div className="min-w-0 flex-1">
-      <p className="text-[13px] leading-[18px] text-white/65">{label}</p>
+      <p className="text-[13px] leading-[18px] text-white/60">{label}</p>
       {children}
     </div>
     <Button variant="secondary" size="xs" onClick={onRestore}>

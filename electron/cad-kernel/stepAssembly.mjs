@@ -108,7 +108,7 @@ function writeStep(oc, doc) {
   oc.Interface_Static.SetIVal('write.precision.mode', 0);
 
   if (!writer.Perform(doc, STEP_FILE, new oc.Message_ProgressRange()))
-    throw new Error('OpenCascade could not write the STEP file.');
+    throw new Error('OpenCascade couldn’t write the STEP file.');
 
   const text = new TextDecoder().decode(oc.FS.readFile(STEP_FILE));
 

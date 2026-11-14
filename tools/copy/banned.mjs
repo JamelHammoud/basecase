@@ -1,5 +1,6 @@
 import { BANNED_COPY } from '../../verify/rehearsal/uiRules.ts';
 import { APOSTROPHE_COPY } from './apostrophe.mjs';
+import { CONTRACTION_COPY } from './contraction.mjs';
 import { isUserFacing } from './extract.mjs';
 import { GLOSSARY_COPY } from './glossary.mjs';
 import { MINUS_COPY } from './minus.mjs';
@@ -31,6 +32,7 @@ export const LINTED_COPY = [
   ...GLOSSARY_COPY,
   ...SPELLING_COPY,
   ...APOSTROPHE_COPY,
+  ...CONTRACTION_COPY,
   ...MINUS_COPY,
 ];
 

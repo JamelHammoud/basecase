@@ -43,7 +43,7 @@ export const Landing: React.FC<LandingProps> = ({ browserApp, sections }) => (
     <ul className="mt-[44px] px-[24px] w-full max-w-[480px] mx-auto list-none flex flex-col gap-[22px]">
       {FEATURES.map(({ Icon, title, text }) => (
         <li key={title} className="flex gap-[14px]">
-          <span className="w-[36px] h-[36px] shrink-0 rounded-[10px] bg-white/[0.06] flex items-center justify-center text-white/70">
+          <span className="w-[36px] h-[36px] shrink-0 rounded-[10px] bg-white/[0.06] flex items-center justify-center text-white/60">
             <Icon className="w-[18px] h-[18px]" />
           </span>
           <div className="flex flex-col pt-[1px]">

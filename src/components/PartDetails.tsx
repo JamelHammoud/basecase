@@ -74,7 +74,7 @@ export const SpecRow: React.FC<{ label: string; children: React.ReactNode }> = (
 export const DetailBlock: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="text-[13px] leading-relaxed">
     <div className="text-white/50">{label}</div>
-    <div className="mt-0.5 text-white/80">{children}</div>
+    <div className="mt-0.5 text-white/90">{children}</div>
   </div>
 );
 
@@ -163,10 +163,10 @@ export const Header: React.FC<{
   clamp?: boolean;
 }> = ({ title, subtitle, description, clamp = true }) => (
   <div className="px-4 pt-3">
-    <div className="text-[15px] font-semibold text-white/95 leading-tight">{title}</div>
+    <div className="text-[15px] font-semibold text-white/90 leading-tight">{title}</div>
     <MetaLine items={[subtitle].flat()} className={`text-[12.5px] text-white/50 mt-1 ${clamp ? '' : 'flex-wrap'}`} />
     {description && (
-      <p className={`text-[13px] text-white/70 leading-relaxed mt-2 ${clamp ? 'line-clamp-2' : ''}`}>{description}</p>
+      <p className={`text-[13px] text-white/60 leading-relaxed mt-2 ${clamp ? 'line-clamp-2' : ''}`}>{description}</p>
     )}
   </div>
 );

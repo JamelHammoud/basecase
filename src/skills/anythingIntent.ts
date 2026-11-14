@@ -89,7 +89,7 @@ async function askAgain(session: IntentSession, prompt: string): Promise<string>
     }
   }
 
-  throw last instanceof Error ? last : new Error('Claude could not be reached.');
+  throw last instanceof Error ? last : new Error('Claude couldn’t be reached.');
 }
 
 async function askVerdict(session: IntentSession, prompt: string): Promise<{ verdict: IntentVerdict; text: string }> {

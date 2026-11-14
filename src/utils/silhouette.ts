@@ -71,7 +71,7 @@ export function floodMaskOf({ data, width: w, height: h }: ImageData): { mask?: 
   const dist = (i: number) => Math.hypot(data[i * 4] - med[0], data[i * 4 + 1] - med[1], data[i * 4 + 2] - med[2]);
   const spread = border.reduce((s, i) => s + dist(i), 0) / border.length;
 
-  if (spread > 14) return { reason: 'the background is not plain (busy scene or gradient)' };
+  if (spread > 14) return { reason: 'the background isn’t plain (busy scene or gradient)' };
 
   const bg = floodBackground(border, w, h, (i) => dist(i) > 12);
   const mask = new Uint8Array(w * h);

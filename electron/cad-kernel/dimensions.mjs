@@ -93,7 +93,7 @@ export function rewriteDimensions(code, values) {
   const edits = Object.keys(values).map((name) => {
     const dim = dims.get(name);
 
-    if (!dim) throw new Error('That is not a dimension of this part.');
+    if (!dim) throw new Error('That isn’t a dimension of this part.');
 
     formatDimension(values[name]);
 

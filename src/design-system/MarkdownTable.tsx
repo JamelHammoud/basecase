@@ -25,5 +25,5 @@ export const TableCell: React.FC<{ header?: boolean; children: React.ReactNode }
       </th>
     );
 
-  return <td className="align-top px-2.5 py-1.5 border-b border-white/[0.04] text-white/85">{content}</td>;
+  return <td className="align-top px-2.5 py-1.5 border-b border-white/[0.04] text-white/90">{content}</td>;
 };

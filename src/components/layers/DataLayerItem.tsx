@@ -33,7 +33,7 @@ export const DataLayerItem: React.FC<DataLayerItemProps> = ({ layer, depth, onTo
         if (layer.fields.length) onMenu(layer, { x: e.clientX, y: e.clientY });
       }}
       style={{ paddingLeft: rowIndent(depth, false) }}
-      className={`${ROW} pr-2.5 gap-2 ${rowTone(false, 'text-white/80')} ${hidden ? 'text-white/50' : ''}`}
+      className={`${ROW} pr-2.5 gap-2 ${rowTone(false, hidden)}`}
     >
       <Glyph />
       <span className="flex-1 truncate">{layer.name}</span>

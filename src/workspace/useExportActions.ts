@@ -12,7 +12,8 @@ import { useStepExport } from './useStepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
 import { useRobotPackageExport } from './useRobotPackageExport';
-import { isCutPart, useCutFilesExport } from './useCutFilesExport';
+import { isCutPart } from '../sheet/cutFiles';
+import { useCutFilesExport } from './useCutFilesExport';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
 

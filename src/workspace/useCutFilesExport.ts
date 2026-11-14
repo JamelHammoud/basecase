@@ -1,14 +1,10 @@
 import { useRef } from 'react';
 import { plural } from '../../electron/plural.mjs';
-import { cutFileList } from '../sheet/cutFiles';
-import { sheetOf } from '../sheet/sheetStock';
-import type { ScenePart } from '../types/robotics';
+import { cutFileList, isCutPart } from '../sheet/cutFiles';
 import { downloadBytes } from '../utils/downloadBytes';
 import { errorMessage } from '../utils/errorMessage';
 import { fileSafe } from './helpers';
 import type { WorkspaceCore } from './useWorkspaceCore';
-
-export const isCutPart = (p: ScenePart) => p.visible && !!sheetOf(p);
 
 type CutFilesSource = Pick<WorkspaceCore, 'parts' | 'scene' | 'showToast' | 'viewportRef'>;
 

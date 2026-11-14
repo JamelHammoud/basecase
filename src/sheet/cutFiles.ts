@@ -48,13 +48,15 @@ export interface CutFilesResult {
   skipped: string[];
 }
 
+export const isCutPart = (part: ScenePart) => part.visible && !!sheetOf(part);
+
 export function cutFileList(parts: ScenePart[]): CutFile[] {
   const taken = new Set<string>();
 
   return parts.flatMap((part) => {
     const sheet = sheetOf(part);
 
-    return sheet && part.visible ? [{ id: part.id, name: unique(cutFileName(part.name, sheet), taken) }] : [];
+    return sheet && isCutPart(part) ? [{ id: part.id, name: unique(cutFileName(part.name, sheet), taken) }] : [];
   });
 }
 

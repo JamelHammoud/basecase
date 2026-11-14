@@ -126,7 +126,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const dataLayers = useDataLayers({ sim: simTraining.sim, timeline: simTraining.cases.timeline, parts, viewportRef });
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
-  const triesView = useTriesView(simTraining.cases.timeline);
+  const triesView = useTriesView(simTraining.cases.timeline, showToast);
 
   const { travel } = docs;
   const { restorePose } = posing;

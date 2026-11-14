@@ -7,7 +7,8 @@ import { deleteTries, keepTries, legacyRecordings, useTries } from '../cases/try
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings } from '../types/robotics';
-import type { Setter } from './types';
+import { errorMessage } from '../utils/errorMessage';
+import type { Setter, ShowToast } from './types';
 
 interface StoredTriesOptions {
   project: ProjectSettings;
@@ -15,6 +16,7 @@ interface StoredTriesOptions {
   sceneId: string;
   cases: Case[];
   sim: Simulation;
+  showToast: ShowToast;
 }
 
 export interface MadeTry {
@@ -25,7 +27,7 @@ export interface MadeTry {
 
 const SAFE_ID = /^[\w-]{1,128}$/;
 
-export function useStoredTries({ project, setProject, sceneId, cases, sim }: StoredTriesOptions) {
+export function useStoredTries({ project, setProject, sceneId, cases, sim, showToast }: StoredTriesOptions) {
   const catalog = useTries();
   const stored = catalog && new Set(catalog.map((t) => t.id));
   const moving = useRef<string | null>(null);
@@ -52,13 +54,18 @@ export function useStoredTries({ project, setProject, sceneId, cases, sim }: Sto
     }));
 
   const move = useEffectEvent(async () => {
-    await moveTries(records, (record) => ({ ...contextFor(record), joints: [] }), {
-      stored: stored ?? new Set(),
-      legacy: legacyRecordings.get,
-      dropLegacy: legacyRecordings.delete,
-      keep: keepTries,
-    });
-    setProject((p) => ({ ...p, triesStored: true }));
+    try {
+      await moveTries(records, (record) => ({ ...contextFor(record), joints: [] }), {
+        stored: stored ?? new Set(),
+        legacy: legacyRecordings.get,
+        dropLegacy: legacyRecordings.delete,
+        keep: keepTries,
+      });
+      setProject((p) => ({ ...p, triesStored: true }));
+    } catch (e) {
+      moving.current = null;
+      showToast(errorMessage(e), { tone: 'error' });
+    }
   });
 
   useEffect(() => {

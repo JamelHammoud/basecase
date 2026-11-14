@@ -65,7 +65,9 @@ export function useTries(): TrySummary[] | null {
 }
 
 async function update(change: (tries: TrySummary[]) => TrySummary[]) {
-  publish(change(await loadTries()));
+  await loadTries();
+
+  if (listed) publish(change(listed));
 }
 
 export async function keepTries(kept: KeptTry[]) {

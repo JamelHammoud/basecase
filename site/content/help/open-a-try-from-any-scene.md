@@ -15,6 +15,7 @@ related:
   - try-a-case
   - scrub-a-try-on-the-timeline
 covers:
+  - src/workspace/viewCommands.tsx
   - src/components/LibraryPanel.tsx
   - src/components/library/TriesSection.tsx
   - src/components/tries/
@@ -40,8 +41,10 @@ Find a try you recorded in any scene, grouped by robot, and step through it on t
 
 5. Press [[Esc]] to close the timeline, then [[Esc]] or click **Done** to leave Tries.
 
+You can also press [[⌘K]] and choose **Show Tries**.
+
 To delete tries, hold [[⌘]] or [[⇧]] while you click to select more, then press [[⌫]] and click **Delete**. Variations go with the try they came from.
 
-A try opens on the timeline only when it fits the robot in the open scene. The search at the top of the Library matches a try's Case, its robot, and the Variation or Real label on its tile.
+A try opens on the timeline only when it fits the robot in the open scene. A real try never opens there; clicking it only selects it. The search at the top of the Library matches a try's Case, its robot, and the Variation or Real label on its tile.
 
 Tries recorded before the Library held them move in the first time you open their scene. On a Mac they live in `library/tries` inside `~/Library/Application Support/Basecase`, one folder per try.

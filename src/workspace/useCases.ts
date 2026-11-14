@@ -13,6 +13,7 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
+import { errorMessage } from '../utils/errorMessage';
 import type { Setter, ShowToast } from './types';
 import { useCaseBuilder } from './useCaseBuilder';
 import { useCaseNames } from './useCaseNames';
@@ -45,10 +46,10 @@ interface CasesOptions {
   viewportRef: RefObject<Viewport3DHandle | null>;
 }
 
-const dropTries = (tries: TryRecord[] | undefined, goes: (t: TryRecord) => boolean) => {
+const dropTries = (tries: TryRecord[] | undefined, goes: (t: TryRecord) => boolean, showToast: ShowToast) => {
   const all = tries ?? [];
 
-  void deleteTries(all.filter(goes).map((t) => t.id));
+  deleteTries(all.filter(goes).map((t) => t.id)).catch((e: unknown) => showToast(errorMessage(e), { tone: 'error' }));
 
   return all.filter((t) => !goes(t));
 };
@@ -58,9 +59,10 @@ interface TryRemoval {
   multiply: TryMultiply;
   timeline: TryTimeline;
   setProject: Setter<ProjectSettings>;
+  showToast: ShowToast;
 }
 
-function confirmRemoveTry(record: TryRecord, { tries, multiply, timeline, setProject }: TryRemoval) {
+function confirmRemoveTry(record: TryRecord, { tries, multiply, timeline, setProject, showToast }: TryRemoval) {
   const generated = generatedFrom(tries, record).length;
   const going = goingWith([record.id]);
   const goes = (t: TryRecord) => going(t.id, sourceTryOf(t));
@@ -73,7 +75,7 @@ function confirmRemoveTry(record: TryRecord, { tries, multiply, timeline, setPro
 
       if (timeline.record && goes(timeline.record)) timeline.close();
 
-      setProject((p) => ({ ...p, tries: dropTries(p.tries, goes) }));
+      setProject((p) => ({ ...p, tries: dropTries(p.tries, goes, showToast) }));
     },
   });
 }
@@ -91,7 +93,7 @@ export function useCases(options: CasesOptions) {
   const cases = readCases(project.cases);
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = cases.find((c) => c.id === activeId) ?? null;
-  const { shown, onTry, onTries } = useStoredTries({ project, setProject, sceneId, cases, sim });
+  const { shown, onTry, onTries } = useStoredTries({ project, setProject, sceneId, cases, sim, showToast });
   const tries = worstFirst(shown((project.tries ?? []).filter((t) => t.caseId === activeId)));
   const fromSim = simTries(tries);
   const hasRobot = rig.robots.length > 0;
@@ -154,7 +156,7 @@ export function useCases(options: CasesOptions) {
         setProject((p) => ({
           ...p,
           cases: (p.cases ?? []).filter((c) => c.id !== id),
-          tries: dropTries(p.tries, goes),
+          tries: dropTries(p.tries, goes, showToast),
         }));
         CASE_STORES.delete(caseStoreKey(sceneId, id));
 
@@ -169,7 +171,8 @@ export function useCases(options: CasesOptions) {
   const naming = useCaseNames(setProject);
   const dataset = useDatasetExport({ sim, rig, parts, active, tries: fromSim, showToast, openAccounts, sceneId });
   const multiply = useTryMultiply({ sim, rig, parts, active, tries: fromSim, partners, onTries, showToast });
-  const removeTry = (record: TryRecord) => confirmRemoveTry(record, { tries, multiply, timeline, setProject });
+  const removeTry = (record: TryRecord) =>
+    confirmRemoveTry(record, { tries, multiply, timeline, setProject, showToast });
 
   const fromTries: TriesTraining = useTriesTraining({
     sim,

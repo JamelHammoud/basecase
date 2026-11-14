@@ -4,6 +4,8 @@ import { goingWith } from '../cases/tries';
 import { deleteTries, useTries } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
 import { plural } from '../../electron/plural.mjs';
+import { errorMessage } from '../utils/errorMessage';
+import type { ShowToast } from './types';
 import type { TryTimeline } from './useTryTimeline';
 
 export interface TryGroup {
@@ -53,7 +55,7 @@ export const goingTries = (all: TrySummary[], ids: string[]) => {
   return all.filter((t) => going(t.id, t.source === 'generated' ? t.sourceTry : null)).map((t) => t.id);
 };
 
-export function useTriesView(timeline: TryTimeline) {
+export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
   const all = useTries() ?? [];
   const [open, setOpen] = useState(false);
   const [robot, setRobot] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export function useTriesView(timeline: TryTimeline) {
         if (timeline.record && going.includes(timeline.record.id)) timeline.close();
 
         setPick((p) => ({ selected: p.selected.filter((id) => !going.includes(id)), anchor: null }));
-        void deleteTries(going);
+        deleteTries(going).catch((e: unknown) => showToast(errorMessage(e), { tone: 'error' }));
       },
     });
   };

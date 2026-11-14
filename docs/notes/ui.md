@@ -99,7 +99,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 ## AcpStudioPanel (agent panel)
 
 - `MAX_IMAGES = 20` images go inline with a message. More images and other files go as evidence.
-- The picker can be opened from elsewhere (⌘K → Attach Images) by incrementing `attachRequest`. The component compares to the last value so it doesn't open on mount.
+- The picker can be opened from elsewhere (Attach Images in ⌘K) by incrementing `attachRequest`. The component compares to the last value so it doesn't open on mount.
 - Attached images keep the order they were picked in (`Promise.all` over the inline set).
 - Follow-the-bottom (`stickRef`):
   - Scrolling a nested scroller (code blocks, `data-inner-scroll`) doesn't count until it reaches its top.

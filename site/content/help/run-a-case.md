@@ -50,7 +50,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![Three emulated servos connected, motors off, each reading its angle](/help/run-a-case/connected.png)
 
-5. Click **Try It** and drive with W A S D and Q E, or a gamepad. While the try runs, anything the Case counts as a failure shows in red under the brief as it happens.
+5. Click **Try It** and drive with [[W A S D]], [[Q]] and [[E]], or a gamepad. While the try runs, anything the Case counts as a failure shows in red under the brief as it happens.
 
 ![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
@@ -58,7 +58,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 
-7. Click **Done** or press Esc to go back. The first Esc stops driving. Your parts, selection and camera are as you left them.
+7. Click **Done** or press [[Esc]] to go back. The first [[Esc]] stops driving. Your parts, selection and camera are as you left them.
 
 A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. Ask the agent for a Case in words and it writes one, or edit that file. New Case and the templates make Cases without one.
 
@@ -68,7 +68,7 @@ A console that lists `camera` among its inputs opens the computer's camera when 
 
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 
-A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. Esc and [[⌘K]] still work while you use it. While a Case runs, **Undo** at the top right undoes only changes to the code panels, so the robot stays as it is. Outside a panel and a text field, [[⌘Z]] does the same, and [[⌘I]] shows the **Agent** tab beside the Case. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
+A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. [[Esc]] and [[⌘K]] still work while you use it. While a Case runs, **Undo** at the top right undoes only changes to the code panels, so the robot stays as it is. Outside a panel and a text field, [[⌘Z]] does the same, and [[⌘I]] shows the **Agent** tab beside the Case. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
 
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
 

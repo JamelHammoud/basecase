@@ -33,7 +33,7 @@ The Printing check flags parts your printer can't make as drawn, measured agains
 
 The part is larger than your printer's bed in every way it could lie, the diagonal included.
 
-1. Press ⌘P to open Print mode.
+1. Press [[⌘P]] to open Print mode.
 2. Under **Printer**, check that **Printer** names the printer you'll use. A larger bed may fit the part.
 3. Open **Parts** and read the part's row. It says how many pieces to split the part into.
 4. Click **Fix** on the problem in the Build tab to have the agent split it, joined with dowels or screws.
@@ -55,7 +55,7 @@ This is a note. A small sliver, usually from a cut that grazes a face, is under 
 
 This is a note. Faces close to flat hang over air and need support under them.
 
-1. Press ⌘P, select the part and click **Lay on Face**.
+1. Press [[⌘P]], select the part and click **Lay on Face**.
 2. Click a face that leaves less hanging in the air.
 3. If that's not enough, add 45° chamfers under the overhangs, or split the part flat.
 
@@ -69,4 +69,4 @@ The part's name ends in a word like Glass, or its note starts with clear acrylic
 
 ## The plate shows warnings after slicing
 
-The amber lines on a sliced plate come from the slicer itself. Follow what they say, then slice again with **Slice Plates** in ⌘K.
+The amber lines on a sliced plate come from the slicer itself. Follow what they say, then slice again with **Slice Plates** in [[⌘K]].

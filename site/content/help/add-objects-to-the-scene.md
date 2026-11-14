@@ -31,13 +31,13 @@ covers:
 Place a mug, a box, a shelf or another real object from NVIDIA's SimReady Central next to your robot, at true size and weight.
 
 1. Click **Parts** in the view rail on the left.
-2. Type what you want in **Search parts**, such as `mug`, and press Enter.
+2. Type what you want in **Search parts**, such as `mug`, and press [[↩]].
 3. Hover a result to see its size, weight and moving parts.
 4. Click the result to insert it.
 
 ![Kitchen objects searched for mug, showing a grid of SimReady mugs from NVIDIA](/help/add-objects-to-the-scene/kitchen.png)
 
-A word that names a category, like `mug`, opens that category with your search in it. When nothing in Parts matches, Enter lists SimReady results instead. A toast shows the download and conversion. You can also drag a result to where it should go on the canvas.
+A word that names a category, like `mug`, opens that category with your search in it. When nothing in Parts matches, [[↩]] lists SimReady results instead. A toast shows the download and conversion. You can also drag a result to where it should go on the canvas.
 
 To browse instead of searching, click a category under **Objects** in Parts, such as **Kitchen** or **Boxes and bins**.
 

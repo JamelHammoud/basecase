@@ -58,7 +58,7 @@ A humanoid or an arm can also follow your own arms: click **Drive with Camera** 
 | Any | [[R]] | Start over |
 | Any | [[Esc]] | Stop driving |
 
-The arrow keys work like W A S D. While a text field has focus, the canvas says "Click the canvas to drive" and the keys do nothing.
+The arrow keys work like [[W A S D]]. While a text field has focus, the canvas says "Click the canvas to drive" and the keys do nothing.
 
 ## Gamepad
 

@@ -55,7 +55,7 @@ To keep both off, change **Send prints with** to **Bambu Studio** instead.
 The access code is wrong.
 
 1. On the printer, open Settings ▸ LAN Only and read the code.
-2. Type it in **Access code** and press Enter.
+2. Type it in **Access code** and press [[↩]].
 3. Click **Test Connection**.
 
 ## “The printer didn’t answer as …”
@@ -79,7 +79,7 @@ The message says where to make a key, and differs by connection:
 | PrusaLink | The printer, under Settings ▸ Network ▸ PrusaLink |
 | OctoPrint | OctoPrint, under Settings ▸ Application Keys |
 
-Paste the new key in **API key**, press Enter, then click **Test Connection**.
+Paste the new key in **API key**, press [[↩]], then click **Test Connection**.
 
 ## The printer is busy, or out of storage
 

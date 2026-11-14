@@ -44,6 +44,7 @@ The agent can pose and animate the robot, run it in the simulation, write and ru
 - With a Case and two open scenes, it tells you which robot passes more often.
 - Ask what happened in a try. It reads the try's recording and answers with times and values. For a try with scans, it also reads the [map's](/help/map-a-robot-run) bounds and point count.
 - Ask for tries, such as failed grasps from last week. It searches the tries from every scene and names the ones that match.
+- Ask it to label tries. It watches each try's filmstrip and writes the task in plain words for the try and each segment.
 - Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
 
 Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges printed parts bolted together on one link into a single print.

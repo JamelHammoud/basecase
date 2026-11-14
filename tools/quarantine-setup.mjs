@@ -1,9 +1,9 @@
 import path from 'node:path';
 import { beforeEach } from 'vitest';
-import { ROOT, activeEntries, entryMatches, loadQuarantine, quarantineMode } from './quarantine.mjs';
+import { ROOT, activeEntries, entryMatches, loadQuarantine, onPlatform, quarantineMode } from './quarantine.mjs';
 
 const mode = quarantineMode();
-const entries = mode === 'off' ? [] : activeEntries(loadQuarantine());
+const entries = mode === 'off' ? [] : onPlatform(activeEntries(loadQuarantine()));
 
 const relative = (filepath) => path.relative(ROOT, filepath).split(path.sep).join('/');
 

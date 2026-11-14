@@ -90,6 +90,7 @@ const tryReadOf = (
   rig: () => posing.rig,
   sought: simTraining.sim.sought,
   mapMatching: dataLayers.matching,
+  partners: simTraining.cases.partners,
 });
 
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {

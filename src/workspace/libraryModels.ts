@@ -53,10 +53,15 @@ export interface SceneModelInput {
   sourceParts: ScenePart[];
   single: ScenePart | null;
   sceneName: string;
-  screenshot: () => string | undefined;
+  screenshot: () => Promise<string> | undefined;
 }
 
-export function sceneModel({ sourceParts, single, sceneName, screenshot }: SceneModelInput): CustomModelDefinition {
+export async function sceneModel({
+  sourceParts,
+  single,
+  sceneName,
+  screenshot,
+}: SceneModelInput): Promise<CustomModelDefinition> {
   const { min, max } = partsBox(sourceParts);
   const center = [0, 1, 2].map((i) => (min[i] + max[i]) / 2);
   const side = (i: number) => Math.max(MIN_MODEL_SIDE, Math.round(max[i] - min[i]));
@@ -67,7 +72,7 @@ export function sceneModel({ sourceParts, single, sceneName, screenshot }: Scene
     description: single?.note ?? '',
     createdAt: stamp(),
     sourceType: 'scene-selection',
-    sourceImageDataUrl: single ? single.sourceImageDataUrl : screenshot(),
+    sourceImageDataUrl: single ? single.sourceImageDataUrl : await screenshot(),
     defaultDimensions: { width: side(0), height: side(1), depth: side(2), thickness: 4 },
     defaultColor: sourceParts[0].color,
     mechanicalTag: sourceParts[0].mechanicalTag || PRINTED_TAG,

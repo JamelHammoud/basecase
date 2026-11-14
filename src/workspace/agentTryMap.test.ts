@@ -90,6 +90,7 @@ function context(recording: Recording, matching = true, scanModel = model) {
       rig: () => buildRig([], []),
       sought: () => ({ frame: 0 }),
       mapMatching: () => matching,
+      partners: () => [],
     },
     listTries: async () => [],
   };

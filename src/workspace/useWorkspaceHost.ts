@@ -1,5 +1,4 @@
 import { useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react';
-import { downscaleDataUrl } from '../utils/imageFile';
 import { useLatestRef } from '../utils/useLatestRef';
 import type { Case } from '../cases/schema';
 import type { SceneDraft } from './sceneDraft';
@@ -67,11 +66,7 @@ function useRegisterHandle({ core, agent, autosave }: HandleOptions) {
     const handle: WorkspaceHandle = {
       onEvent: (e) => hostRef.current.event(e),
       snapshot: () => hostRef.current.snapshot(),
-      thumbnail: async () => {
-        const shot = viewportRef.current?.captureScreenshot();
-
-        return shot ? downscaleDataUrl(shot, THUMBNAIL_SIDE, 0.86) : '';
-      },
+      thumbnail: async () => viewportRef.current?.captureScreenshot(THUMBNAIL_SIDE) ?? '',
       load: (next, toast) => hostRef.current.load(next, toast),
       rename: (name) => setSceneName(name),
       toast: (message, opts) => hostRef.current.toast(message, opts),

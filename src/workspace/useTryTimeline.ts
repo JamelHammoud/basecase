@@ -14,6 +14,7 @@ import type { Trace } from '../skills/contract';
 import type { ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { useTimelinePlayback } from './useTimelinePlayback';
+import { useTryLabels } from './useTryLabels';
 
 interface TimelineOptions {
   sim: Simulation;
@@ -89,6 +90,17 @@ export function useTryTimeline(options: TimelineOptions) {
   const frames = opened?.recording.frames ?? 0;
   const playback = useTimelinePlayback({ frames, dt: opened?.recording.dt ?? 1, seek: sim.seek });
   const lanes = opened && sim.model ? timelineLanes(sim.model, opened.recording, opened.efforts.peaks) : [];
+  const labels = useTryLabels({
+    id: opened?.record.id ?? null,
+    recording: opened?.recording ?? null,
+    scene: () => ({
+      model: sim.modelNow(),
+      rig: options.rig,
+      parts: options.parts,
+      cases: options.cases,
+      partners: options.partners,
+    }),
+  });
 
   const show = async (record: TryRecord, at?: number) => {
     const ticket = ++opening.current;
@@ -141,6 +153,7 @@ export function useTryTimeline(options: TimelineOptions) {
     frames,
     dt: opened?.recording.dt ?? 0,
     lanes,
+    labels,
     frame: playback.frame,
     playing: playback.playing,
     speed: playback.speed,

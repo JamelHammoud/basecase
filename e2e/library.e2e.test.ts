@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { readFile } from 'node:fs/promises';
 import type { CustomModelDefinition } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
 
@@ -73,6 +74,22 @@ describe('Library', () => {
     await app.page.getByRole('menuitem', { name: 'Save Whole Scene' }).click();
 
     await expect.poll(() => app.posts.some((p) => p.route === 'save-model')).toBe(true);
+
+    const saved = app.posts.find((p) => p.route === 'save-model')!.body as CustomModelDefinition;
+
+    expect(saved.sourceImageDataUrl).toMatch(/^data:image\/png;base64,/);
+
+    const image = await app.page.evaluate(async (url) => {
+      const bitmap = await createImageBitmap(await (await fetch(url)).blob());
+      const size = { width: bitmap.width, height: bitmap.height };
+
+      bitmap.close();
+
+      return size;
+    }, saved.sourceImageDataUrl!);
+
+    expect(image.width).toBeGreaterThan(0);
+    expect(image.height).toBeGreaterThan(0);
     expect(await app.page.locator(shown('aside')).getByText('Models', { exact: true }).count()).toBe(0);
     expect(app.errors).toEqual([]);
   });
@@ -137,6 +154,25 @@ describe('Library', () => {
     await expect.poll(() => named('Base plate copy').count()).toBe(0);
     expect(await named('Base plate').count()).toBe(1);
     expect({ writes: writes(), reloads: reloads() }).toEqual({ writes: before.writes + 3, reloads: before.reloads });
+    expect(app.errors).toEqual([]);
+  });
+});
+
+describe('current-view exports', () => {
+  it('downloads the captured frame as a full-size PNG', async () => {
+    const canvas = app.page.locator(shown('canvas')).first();
+    const size = await canvas.evaluate((el: HTMLCanvasElement) => ({ width: el.width, height: el.height }));
+    const downloaded = app.page.waitForEvent('download');
+
+    await app.page.getByRole('button', { name: 'Export', exact: true }).click();
+    await app.page.getByRole('menuitem', { name: 'Image', exact: true }).click();
+
+    const file = await downloaded;
+    const bytes = await readFile((await file.path())!);
+
+    expect(file.suggestedFilename()).toMatch(/\.png$/);
+    expect(bytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect({ width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) }).toEqual(size);
     expect(app.errors).toEqual([]);
   });
 });

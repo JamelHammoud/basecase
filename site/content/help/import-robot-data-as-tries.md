@@ -67,7 +67,7 @@ Joints are matched by name, so an ALOHA's left and right arms land on two robots
 
 If no joint matches and the dataset names a robot that isn't in your scene, such as an SO-101 or a Unitree G1, you see a message with **Import Robot**. Add the robot to your scene, then repeat the import.
 
-An episode that breaks your robot's joint limits on every frame is skipped. One that breaks them on only some frames comes in.
+An episode that breaks your robot's joint limits on every frame is skipped. One that breaks them on only some frames comes in, and once you open it, its tile shows an amber warning mark.
 
 ## Limits
 

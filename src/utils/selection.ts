@@ -74,15 +74,22 @@ function alignTarget(sel: ScenePart[], axis: Axis, mode: AlignMode): number {
 
 const ALIGN_SIGN: Record<AlignMode, number> = { min: 1, center: 0, max: -1 };
 
+function unlockedSelection(all: ScenePart[], ids: string[]): ScenePart[] {
+  const selected = new Set(ids);
+
+  return all.filter((p) => selected.has(p.id) && !p.locked);
+}
+
 export function alignParts(all: ScenePart[], ids: string[], axis: Axis, mode: AlignMode): ScenePart[] {
-  const sel = all.filter((p) => ids.includes(p.id) && !p.locked);
+  const sel = unlockedSelection(all, ids);
 
   if (sel.length === 0) return all;
 
   const target = alignTarget(sel, axis, mode);
+  const selected = new Set(sel);
 
   return all.map((p) => {
-    if (!sel.includes(p)) return p;
+    if (!selected.has(p)) return p;
 
     const center = target + ALIGN_SIGN[mode] * halfExtents(p)[axis];
     const position: [number, number, number] = [...p.position];
@@ -94,7 +101,7 @@ export function alignParts(all: ScenePart[], ids: string[], axis: Axis, mode: Al
 }
 
 export function distributeParts(all: ScenePart[], ids: string[], axis: Axis): ScenePart[] {
-  const sel = all.filter((p) => ids.includes(p.id) && !p.locked).sort((a, b) => a.position[axis] - b.position[axis]);
+  const sel = unlockedSelection(all, ids).sort((a, b) => a.position[axis] - b.position[axis]);
 
   if (sel.length < 3) return all;
 

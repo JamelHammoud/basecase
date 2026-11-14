@@ -77,9 +77,6 @@ export const ImportRobotSheet: React.FC<{
           autoFocus
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') submit();
-          }}
           aria-label="Robot link"
           placeholder="e.g. github.com/unitreerobotics/unitree_ros"
         />

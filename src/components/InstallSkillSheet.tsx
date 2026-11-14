@@ -34,9 +34,6 @@ export const InstallSkillSheet: React.FC<{
         autoFocus
         value={url}
         onChange={(e) => setUrl(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') submit();
-        }}
         aria-label="Skill link"
         placeholder="e.g. huggingface.co/you/quad-stand"
       />

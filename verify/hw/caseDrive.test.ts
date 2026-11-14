@@ -118,6 +118,8 @@ describe('a Case drives the emulated robot through the daemon', () => {
     expect(Math.max(...status.map(range)), 'emulated servos moved').toBeGreaterThanOrEqual(MIN_TELEMETRY_COUNTS);
     expect(Math.abs(bestCorrelation(drive[busiest], status[busiest]))).toBeGreaterThanOrEqual(MIN_CORRELATION);
 
+    await openOperate(dev.page);
+
     const recent = daemonEvents(relay, 'status')
       .slice(-30)
       .flatMap((w) => (w.msg.joints as Array<{ id: number; position: number }>).filter((j) => j.id === busiest + 1))

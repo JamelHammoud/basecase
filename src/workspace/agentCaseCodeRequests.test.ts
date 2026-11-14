@@ -28,7 +28,7 @@ function studio({ running = true } = {}) {
   const calls = { open: vi.fn(), enterCase: vi.fn() };
   const ctx = (): CaseCodeContext => ({
     cases: { cases: project.cases!, active: project.cases![0], open: calls.open },
-    caseRun: { open: running, enterCase: calls.enterCase },
+    caseRun: { live: running, enterCase: calls.enterCase },
     commitConsole: (id, console) => {
       doc = pushHistory(doc, doc.parts, { ...trackedOf(project), consoles: consolesOf(project.cases, [id]) });
       project = { ...project, cases: withCaseConsoles(project.cases, { [id]: console }) };

@@ -9,6 +9,7 @@ import type { FaultKind } from './faults';
 import { buildMjcf, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
+import type { RecordedEfforts } from './recordedFrames';
 import type { Recording } from './recorder';
 import type { Scan } from './scanner';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
@@ -70,7 +71,7 @@ export interface Simulation {
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
-  scrub: (r: Recording | null) => Promise<Float32Array[] | null>;
+  scrub: (r: Recording | null) => Promise<RecordedEfforts | null>;
   seek: (frame: number) => void;
   sought: () => Sought | null;
   worldParts: ScenePart[];

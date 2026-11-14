@@ -10,6 +10,7 @@ interface SimState {
   activeCase: string | null;
   tries: Array<{ passed: boolean; margin: number }>;
   selected: string[];
+  outlined: string[];
   timeline: {
     frame: number;
     frames: number;
@@ -109,12 +110,12 @@ describe('Try timeline', () => {
       .locator(`[data-testid="timeline-lane"][data-joint="${lane.joint}"] svg`)
       .nth(1)
       .click({ position: { x: 1, y: 10 } });
-    await expect.poll(async () => (await simState()).selected).toEqual(lane.link);
+    await expect.poll(async () => (await simState()).outlined).toEqual(lane.link);
     await expect.poll(async () => (await timeline())?.sought).toBe(0);
 
     await app.page.keyboard.press('Escape');
     await expect.poll(() => app.page.getByTestId('try-timeline').count()).toBe(0);
-    expect((await simState()).selected).toEqual(lane.link);
+    expect((await simState()).outlined).toEqual(lane.link);
     expect(await sceneParts()).toBe(scene);
     expect(app.errors).toEqual([]);
   });

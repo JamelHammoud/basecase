@@ -7,7 +7,7 @@ const read = (...parts) => fs.readFileSync(path.join(HERE, ...parts), 'utf8');
 const STEP_MS = 10 * 60 * 1000;
 const FENCED = /```(?:markdown|md)?\n([\s\S]*?)\n```/g;
 const KEEP_FILE =
-  'Keep its YAML front matter exactly, and every fact, link, image path, heading, numbered step, bold UI label and [[key cap]]. Add no fact it does not have.';
+  'Keep its YAML front matter exactly, and every fact, link, image path, heading, numbered step, bold UI label and [[key cap]]. Add no fact or heading it does not have.';
 
 export const KINDS = {
   changelog: { dir: 'site/content/changelog/', what: 'changelog posts', prose: true },
@@ -90,7 +90,21 @@ export function restoreMenuPaths(before, after) {
   }, after);
 }
 
+const HEADING = /^#{1,6}\s/;
+
+export const headingCount = (text) => {
+  let fenced = false;
+
+  return text.split('\n').filter((line) => {
+    if (line.trimStart().startsWith('```')) fenced = !fenced;
+
+    return !fenced && HEADING.test(line);
+  }).length;
+};
+
 export function keepsMarkers(before, after, kind) {
+  if (headingCount(before) !== headingCount(after)) return false;
+
   const bold = kind === 'help' ? [...before.matchAll(BOLD)].map(([found]) => found) : [];
 
   if (bold.some((label) => !after.includes(label))) return false;

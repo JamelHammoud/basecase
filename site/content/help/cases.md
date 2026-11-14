@@ -1,7 +1,7 @@
 ---
 title: Cases
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: concept
 order: 2
@@ -59,7 +59,7 @@ You can also run a wheeled or legged robot through a Case in the real world, on 
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results shows the count on that try's row.
 
-Basecase stores tries on this computer, along with any value the Case's code keeps, such as a high score. When you share a `.basecase` file, the Case goes without its tries or those values. The Library lists tries from all your scenes. See [Open a try from any scene](/help/open-a-try-from-any-scene).
+Basecase stores tries on this computer, along with any value the Case's code keeps, such as a high score. When you share a `.basecase` file, the Case goes without its tries or those values. The Library lists tries from all your scenes. See [Open a try from any scene](/help/open-a-try-from-any-scene). To find tries by words, facts such as failed, or a similar motion, see [Search tries](/help/search-tries).
 
 ## A Case is the test, a skill is the answer
 

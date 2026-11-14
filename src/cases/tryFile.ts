@@ -2,6 +2,8 @@ import { FAULT_KINDS, type RecordedFault } from '../sim/faults';
 import { RECORD_HZ } from '../sim/recorder';
 import { CASE_FORMAT_VERSION } from './schema';
 import type { TryRecord } from './tries';
+import { readMotion } from './trySearch/motion';
+import type { MotionTrace } from './trySearch/types';
 
 export const TRY_FILE_VERSION = 1;
 
@@ -40,6 +42,8 @@ export interface StoredTry {
   faults: RecordedFault[];
   commands?: number;
   world?: number;
+  task?: string;
+  motion?: MotionTrace;
 }
 
 export interface TrySummary {
@@ -59,6 +63,7 @@ export interface TrySummary {
   sourceTry: string | null;
   recording: boolean;
   strip: boolean;
+  stamp?: number;
 }
 
 export interface TryContext {
@@ -66,6 +71,7 @@ export interface TryContext {
   caseName: string;
   joints: string[];
   input?: string | null;
+  task?: string;
 }
 
 const sourceOf = (record: TryRecord): TrySource => {
@@ -103,6 +109,7 @@ export function storedTryOf(record: TryRecord, context: TryContext): StoredTry {
     faults: manifest.faults ?? [],
     ...(manifest.commands !== undefined ? { commands: manifest.commands } : {}),
     ...(manifest.world !== undefined ? { world: manifest.world } : {}),
+    ...(context.task ? { task: context.task } : {}),
   };
 }
 
@@ -217,8 +224,13 @@ const hasNumbers = (v: Raw) =>
   optionalCount(v.commands) &&
   optionalCount(v.world);
 
+const MAX_TASK = 4096;
+
+const hasSearchFields = (v: Raw) =>
+  (v.task === undefined || isText(v.task, MAX_TASK)) && (v.motion === undefined || readMotion(v.motion) !== null);
+
 export function readStoredTry(value: unknown): StoredTry | null {
-  if (!isObject(value) || !hasIds(value) || !hasNumbers(value)) return null;
+  if (!isObject(value) || !hasIds(value) || !hasNumbers(value) || !hasSearchFields(value)) return null;
 
   const robot = readRobot(value.robot);
   const kase = readCase(value.case);

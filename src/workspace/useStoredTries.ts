@@ -34,12 +34,17 @@ export function useStoredTries({ project, setProject, sceneId, cases, sim, showT
   const records = project.tries ?? [];
   const needsMove = !!catalog && !project.triesStored && records.length > 0;
 
-  const contextFor = (record: TryRecord, input?: string | null): TryContext => ({
-    sceneId: SAFE_ID.test(sceneId) ? sceneId : 'scene',
-    caseName: cases.find((c) => c.id === record.caseId)?.name ?? record.caseId,
-    joints: sim.model?.joints.map((j) => j.id) ?? [],
-    ...(input !== undefined ? { input } : {}),
-  });
+  const contextFor = (record: TryRecord, input?: string | null): TryContext => {
+    const kase = cases.find((c) => c.id === record.caseId);
+
+    return {
+      sceneId: SAFE_ID.test(sceneId) ? sceneId : 'scene',
+      caseName: kase?.name ?? record.caseId,
+      ...(kase?.brief ? { task: kase.brief } : {}),
+      joints: sim.model?.joints.map((j) => j.id) ?? [],
+      ...(input !== undefined ? { input } : {}),
+    };
+  };
 
   const keep = (made: MadeTry[]) =>
     keepTries(

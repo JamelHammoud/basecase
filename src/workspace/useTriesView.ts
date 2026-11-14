@@ -7,6 +7,8 @@ import { plural } from '../../electron/plural.mjs';
 import { errorMessage } from '../utils/errorMessage';
 import type { ShowToast } from './types';
 import type { TryTimeline } from './useTryTimeline';
+import type { TryHit } from '../cases/trySearch/types';
+import { likeQuery, useTrySearch } from './useTrySearch';
 
 export interface TryGroup {
   robot: string;
@@ -55,13 +57,17 @@ export const goingTries = (all: TrySummary[], ids: string[]) => {
   return all.filter((t) => going(t.id, t.source === 'generated' ? t.sourceTry : null)).map((t) => t.id);
 };
 
+export const hitOrder = (hits: TryHit[]) => hits.map((h) => h.tryId);
+
 export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
   const all = useTries() ?? [];
   const [open, setOpen] = useState(false);
   const [robot, setRobot] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const [pick, setPick] = useState<{ selected: string[]; anchor: string | null }>({ selected: [], anchor: null });
+  const hits = useTrySearch(query);
   const groups = tryGroups(all);
-  const order = groups.flatMap((g) => g.tries.map((t) => t.id));
+  const order = query.trim() ? hitOrder(hits ?? []) : groups.flatMap((g) => g.tries.map((t) => t.id));
   const selected = pick.selected.filter((id) => order.includes(id));
 
   const show = (id: string) => {
@@ -74,6 +80,7 @@ export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
     if (timeline.open) timeline.close();
 
     setOpen(false);
+    setQuery('');
     setPick({ selected: [], anchor: null });
   };
 
@@ -97,10 +104,21 @@ export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
     open,
     robot,
     groups,
+    query,
+    hits,
     selected,
+    setQuery,
     openFor: (name: string | null) => {
       setRobot(name);
+      setQuery('');
       setOpen(true);
+    },
+    openAt: (text: string, tryId: string) => {
+      setRobot(null);
+      setQuery(text);
+      setOpen(true);
+      setPick({ selected: [tryId], anchor: tryId });
+      show(tryId);
     },
     close,
     pick: (id: string, keys: PickKeys) => {
@@ -110,6 +128,7 @@ export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
 
       if (next.selected.includes(id)) show(id);
     },
+    like: (tryId: string) => setQuery(likeQuery(tryId)),
     remove: (id?: string) => remove(id && !selected.includes(id) ? [id] : selected),
   };
 }

@@ -65,6 +65,15 @@ describe('the voice pipeline', () => {
     expect(keepsMarkers(post, post.replace('title: Snap parts', 'title: Other'), 'help')).toBe(false);
   });
 
+  it('keeps the original when a rewrite adds or drops a heading', () => {
+    const headed = post.replace('You can now', '## Snapping\n\nYou can now');
+
+    expect(keepsMarkers(post, headed, 'changelog')).toBe(false);
+    expect(keepsMarkers(headed, post, 'changelog')).toBe(false);
+    expect(keepsMarkers(headed, headed.replace('## Snapping', '## Snap a part'), 'changelog')).toBe(true);
+    expect(keepsMarkers(post, `${post}\n\n\`\`\`\n# a comment\n\`\`\``, 'changelog')).toBe(true);
+  });
+
   it('ends every rewrite without semicolons or em dashes, leaving code alone', () => {
     expect(plainPunctuation('One thing; another — and `a; b`.\n```\nx; y\n```')).toBe(
       'One thing. Another, and `a; b`.\n```\nx; y\n```',

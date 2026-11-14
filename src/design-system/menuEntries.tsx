@@ -1,6 +1,6 @@
 import type { ContextMenuEntry } from './ContextMenu';
 import { DuplicateIcon } from './glyphs';
-import { DeleteIcon, EditIcon } from './toolIcons';
+import { DeleteIcon, EditIcon, SearchIcon } from './toolIcons';
 
 type MenuEntry = Extract<ContextMenuEntry, { label: string; onSelect: () => void }>;
 
@@ -21,5 +21,11 @@ export const deleteEntry = (onSelect: () => void, shortcut?: string): MenuEntry 
   icon: <DeleteIcon />,
   tone: 'danger',
   shortcut,
+  onSelect,
+});
+
+export const moreLikeThisEntry = (onSelect: () => void): MenuEntry => ({
+  label: 'More Like This',
+  icon: <SearchIcon />,
   onSelect,
 });

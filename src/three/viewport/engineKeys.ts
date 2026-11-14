@@ -33,6 +33,7 @@ export const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'printShapes',
   'printMeshes',
   'printThreeMf',
+  'printStl',
   'fitCoupons',
   'exportStl',
   'exportUsdz',
@@ -71,4 +72,20 @@ export function shownPropsChanged(previous: ViewportProps, next: ViewportProps):
   const keys = new Set([...Object.keys(previous), ...Object.keys(next)]) as Set<keyof ViewportProps>;
 
   return [...keys].some((key) => previous[key] !== next[key] && !bothCallbacks(previous[key], next[key]));
+}
+
+export function completing(api: Viewport3DHandle, complete: () => void): Viewport3DHandle {
+  const wrapped = { ...api } as Record<string, (...args: never[]) => unknown>;
+
+  for (const key of NEEDS_WHOLE_SCENE) {
+    const run = api[key] as (...args: never[]) => unknown;
+
+    wrapped[key] = (...args) => {
+      complete();
+
+      return run(...args);
+    };
+  }
+
+  return wrapped as unknown as Viewport3DHandle;
 }

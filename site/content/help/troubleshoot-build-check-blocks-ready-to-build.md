@@ -56,7 +56,7 @@ It worked when the message no longer appears in **Assembly**.
 
 ## Budget is red
 
-The estimated total is higher than your budget. Basecase counts lines marked ≈ at their list price.
+The estimated total is higher than your budget. Basecase counts lines marked ≈ at their list price. If you choose **Made by a Service**, Basecase counts printed parts at their Slant 3D quotes.
 
 1. Open **Budget** in Checks. It shows the total next to your budget.
 2. List prices can be higher than what you pay, so use **Add Price** in **Bill of materials** to save the prices you pay.

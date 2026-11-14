@@ -21,7 +21,12 @@ export default function printStudio(studio: Studio) {
     printState: () => {
       const { mode, printer, report } = printing();
 
-      return { open: !!mode, printer: printer.model.id, bed: report?.plan.bed ?? null };
+      return {
+        open: !!mode,
+        printer: printer.model.id,
+        madeBy: studio().core.docs.projectRef.current.madeBy ?? null,
+        bed: report?.plan.bed ?? null,
+      };
     },
     printPlates: () => {
       const { mode, fitTest, report } = printing();

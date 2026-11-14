@@ -35,7 +35,7 @@ export const MatchJointsSheet: React.FC<{
       >
         {sheet.names.map((name, row) => (
           <React.Fragment key={name}>
-            <span className="text-[13px] text-white/70 truncate">{name}</span>
+            <span className="text-[13px] text-white/60 truncate">{name}</span>
             <Select
               aria-label={name}
               options={options}

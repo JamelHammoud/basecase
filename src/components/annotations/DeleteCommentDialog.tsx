@@ -5,7 +5,7 @@ import type { SceneAnnotation } from '../../types/robotics';
 export type PendingDelete = { kind: 'thread' } | { kind: 'comment'; commentId: string } | null;
 
 const Quote: React.FC<{ text: string }> = ({ text }) => (
-  <p className="line-clamp-3 whitespace-pre-wrap break-words text-white/80">{text}</p>
+  <p className="line-clamp-3 whitespace-pre-wrap break-words text-white/90">{text}</p>
 );
 
 function dialogCopy(annotation: SceneAnnotation, number: number, pending: NonNullable<PendingDelete>) {

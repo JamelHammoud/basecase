@@ -16,7 +16,7 @@ Several scenes stay open at once, each with its own parts, undo history, selecti
 - **Where:** in the title bar (§2), ending 8px before the scene's actions. With the sidebar open, the first tab starts over the canvas card's left edge (rail + sidebar width + 8px gap), so the strip lines up with the canvas, and slides with it as the sidebar resizes or toggles; with the sidebar closed (or too narrow to clear the title bar controls) it starts 8px after the Scenes menu. `App.tsx` lays the sidebar toggle and `SceneTabs` over each scene's title bar drag region. No glass: the tabs are part of the window chrome.
 - **Tabs (`SceneTabs`):** 28px rounded pills (8px corners), 180px wide, shrinking to 96px, 6px apart, on the title bar's centerline.
   - The active tab sits on a flat `#262626` fill (no edge or highlight); its label is `white/90`, 13px medium, and its × always shows.
-  - Background tabs are labels (`white/50`, `white/80` on hover) in a faint `white/[0.07]` inset ring (box-shadow, so it takes no space), with a soft fill on hover and × on hover.
+  - Background tabs are labels (`white/50`, `white/90` on hover) in a faint `white/[0.07]` inset ring (box-shadow, so it takes no space), with a soft fill on hover and × on hover.
   - Nothing else: no icons or separators. While a scene's agent works, a 12px white spinner sits before its name.
   - Past their minimum width they scroll sideways (the wheel scrolls; an edge fades only while tabs are hidden past it, measured from layout so sliding tabs don't trigger it).
   - New tabs grow in (`animate-tab-in`); tabs slide into place after insert, close and drop (FLIP, 220ms).

@@ -39,7 +39,7 @@ const QueuedActions: React.FC<{ item: QueuedItem; queue: QueueControls }> = ({ i
         confirmAction({
           title: 'Delete queued message?',
           body: item.params.text ? (
-            <p className="line-clamp-3 whitespace-pre-wrap break-words text-white/80">{item.params.text}</p>
+            <p className="line-clamp-3 whitespace-pre-wrap break-words text-white/90">{item.params.text}</p>
           ) : undefined,
           confirmLabel: 'Delete',
           onConfirm: () => queue.remove(item.id),
@@ -121,7 +121,7 @@ export const QueuedMessages: React.FC<{ queue: QueueControls; onEdit: (id: strin
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="w-full h-10 pl-4 pr-3 flex items-center gap-2 text-[13px] text-white/55 hover:text-white/85 cursor-default transition-colors"
+        className="w-full h-10 pl-4 pr-3 flex items-center gap-2 text-[13px] text-white/60 hover:text-white/90 cursor-default transition-colors"
       >
         <span className="flex-1 min-w-0 truncate text-left">{plural(items.length, 'message')} queued</span>
         {open ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}

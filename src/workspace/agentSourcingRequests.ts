@@ -83,7 +83,7 @@ export async function readinessRequest(ctx: SourcingContext) {
 
   const result = await ctx.readiness.checkNow();
 
-  return { text: result ? readinessText(result) : 'The viewport is not ready.' };
+  return { text: result ? readinessText(result) : 'The viewport isn’t ready.' };
 }
 
 export function disputeFinding(payload: Payload, ctx: SourcingContext) {

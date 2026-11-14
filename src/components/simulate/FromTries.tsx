@@ -5,7 +5,7 @@ import { PendingRow } from './PendingRow';
 
 const Result: React.FC<{ result: TriesResult }> = ({ result }) => (
   <div className="py-1.5 flex flex-col gap-1.5" data-testid="tries-policy" data-kept={result.kept}>
-    <span className={`text-[13px] tabular ${result.kept ? 'text-white/85' : 'text-red-400'}`}>
+    <span className={`text-[13px] tabular ${result.kept ? 'text-white/90' : 'text-red-400'}`}>
       {result.passes} of {result.runs}
     </span>
     {result.film && (

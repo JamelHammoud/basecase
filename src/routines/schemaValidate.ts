@@ -289,7 +289,7 @@ export type Validated = { ok: true; routine: Routine } | { ok: false; errors: Ro
 
 export function validateRoutine(input: unknown): Validated {
   if (!isRecord(input)) {
-    return { ok: false, errors: [{ code: 'not-a-routine', message: 'This is not a Routine.' }] };
+    return { ok: false, errors: [{ code: 'not-a-routine', message: 'This isn’t a Routine.' }] };
   }
 
   if (input.schema !== SCHEMA) {

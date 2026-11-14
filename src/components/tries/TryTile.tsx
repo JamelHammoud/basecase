@@ -42,7 +42,7 @@ const TileCaption: React.FC<{ summary: TrySummary }> = ({ summary }) => {
       <div className="text-[13px] font-medium text-white/90 truncate">{title}</div>
       <div className="flex items-center gap-2 text-[12.5px]">
         {outcome && (
-          <span className={summary.outcome.verdict === 'passed' ? 'text-white/85' : 'text-red-400'}>{outcome}</span>
+          <span className={summary.outcome.verdict === 'passed' ? 'text-white/90' : 'text-red-400'}>{outcome}</span>
         )}
         <span className="text-white/50 tabular">{runClock(summary.seconds)}</span>
         {origin && (

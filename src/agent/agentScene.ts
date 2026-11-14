@@ -26,6 +26,9 @@ import {
   type V3,
 } from './agentFrame';
 import { plural } from '../../electron/plural.mjs';
+import type { SheetMaterial } from '../sheet/materials';
+import { sheetOf } from '../utils/bom';
+import { applySheet, sheetEntry, sheetField } from './agentSheet';
 
 export { agentCatalog } from './agentCatalog';
 export type { AgentCadPayload } from './cadMesh';
@@ -44,6 +47,7 @@ export interface AgentPartSpec {
   role?: PartRole;
   group?: string;
   material?: AgentMaterial;
+  sheet?: SheetMaterial | null;
   supply?: string;
   thickness?: number;
   note?: string;
@@ -66,7 +70,7 @@ export type AgentOp =
       skeleton?: RobotSkeleton;
     };
 
-export type AgentMaterial = 'printed' | 'pla' | 'petg' | 'asa' | 'tpu' | 'cots' | 'aluminum' | 'laser_cut';
+export type AgentMaterial = 'printed' | 'pla' | 'petg' | 'asa' | 'tpu' | 'cots';
 
 const PRINT_MATERIAL: Partial<Record<AgentMaterial, PrintMaterial>> = {
   pla: 'PLA',
@@ -82,8 +86,6 @@ const MATERIAL_TAGS: Record<AgentMaterial, string> = {
   asa: '3D Printed PLA/PETG',
   tpu: 'TPU Flexible',
   cots: 'Off-the-shelf COTS',
-  aluminum: 'CNC Aluminum',
-  laser_cut: 'Laser-Cut Acrylic/Carbon',
 };
 const TAG_TO_MATERIAL = Object.fromEntries(
   Object.entries(MATERIAL_TAGS)
@@ -168,6 +170,7 @@ function cadPart(spec: AgentPartSpec, cad: AgentCadPayload, base: PartBase): Sce
     },
     color: spec.color ?? (role === 'cutout' ? '#ef4444' : '#e4e4e7'),
     ...materialFields(spec.material ?? 'printed'),
+    ...sheetField(spec.sheet),
     ...supplyFields(spec.supply),
     cad: {
       language: cad.language,
@@ -233,6 +236,7 @@ function primitivePart(spec: AgentPartSpec, base: PartBase): ScenePart {
     dimensions,
     color: primitiveColor(spec, role, catalog),
     ...primitiveMaterial(spec, catalog),
+    ...sheetField(spec.sheet),
     ...supplyFields(spec.supply),
     ...(edges ? { edges } : {}),
   };
@@ -277,7 +281,10 @@ function applyLooks(next: ScenePart, spec: AgentPartSpec) {
 
     next.mechanicalTag = m.mechanicalTag;
     next.printMaterial = m.printMaterial;
+    delete next.sheet;
   }
+
+  applySheet(next, spec.sheet);
 
   if (spec.supply !== undefined)
     Object.assign(next, supplyFields(spec.supply), spec.supply ? {} : { supplyId: undefined });
@@ -350,6 +357,8 @@ export function applySpec(part: ScenePart, spec: AgentPartSpec): ScenePart {
 }
 
 function materialOf(p: ScenePart): string | undefined {
+  if (sheetOf(p)) return undefined;
+
   if (p.printMaterial) return p.printMaterial.toLowerCase();
 
   return p.mechanicalTag ? TAG_TO_MATERIAL[p.mechanicalTag] : undefined;
@@ -388,6 +397,7 @@ function partEntry(p: ScenePart, measured?: PartBoxes) {
     role: p.role,
     group: p.group?.name,
     material: materialOf(p),
+    ...sheetEntry(p, measured?.[p.id]),
     ...(p.componentId
       ? { catalog: `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}` }
       : {}),

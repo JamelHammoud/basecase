@@ -21,6 +21,8 @@ import { neededSupplyKeys } from './bomNeeds';
 import { wiringNetlist } from '../wiring/netlist';
 import { wiringSupplies } from '../wiring/wiringSupplies';
 import { sceneTether } from './powerSources';
+import { SHEET_MATERIALS, isSheetMaterial, sheetChoice, type SheetMaterial } from '../sheet/materials';
+import { sheetKey, sheetThickness } from '../sheet/stock';
 
 export { FILAMENT_MARGIN, STALE_DAYS, localDate } from './bomTypes';
 export type { Bom, BomCategory, BomLine, PriceStatus, PrintedPart } from './bomTypes';
@@ -63,20 +65,19 @@ export function specFromHardwareKey(key: string): HardwareSpec | null {
 }
 
 const MADE_ELSEWHERE: Record<string, string> = {
-  'CNC Aluminum': 'CNC aluminum',
-  'Laser-Cut Acrylic/Carbon': 'Laser-cut sheet',
   'Off-the-shelf COTS': 'Bought part, not from the catalog',
 };
 
 const isImportedMesh = (p: ScenePart) => p.kind === 'mesh' && !!p.mesh?.file;
 
+const isMade = (p: ScenePart) =>
+  p.role === 'solid' && (isImportedMesh(p) || !NOT_PRINTED.has(p.kind)) && !BLOCKOUT_KINDS.has(p.kind);
+
+export const sheetOf = (p: ScenePart): SheetMaterial | undefined =>
+  isMade(p) && !p.supplyId ? sheetChoice(p) : undefined;
+
 export function isPrinted(p: ScenePart): boolean {
-  return (
-    p.role === 'solid' &&
-    (isImportedMesh(p) || !NOT_PRINTED.has(p.kind)) &&
-    !BLOCKOUT_KINDS.has(p.kind) &&
-    !(p.mechanicalTag && MADE_ELSEWHERE[p.mechanicalTag])
-  );
+  return isMade(p) && !sheetOf(p) && !(p.mechanicalTag && MADE_ELSEWHERE[p.mechanicalTag]);
 }
 
 export const printMaterialOf = (p: ScenePart, project: ProjectSettings): PrintMaterial =>
@@ -183,10 +184,19 @@ function describeSupply(key: string): LineInfo | null {
   };
 }
 
+function describeSheet(key: string): LineInfo | null {
+  const [material, mm] = key.slice('sheet:'.length).split('|');
+
+  if (!isSheetMaterial(material) || Number.isNaN(Number(mm)) || Number(mm) <= 0) return null;
+
+  return { category: 'Sheet', name: SHEET_MATERIALS[material].name, detail: `${mm} mm`, urlKind: 'none' };
+}
+
 const DESCRIBERS: Array<[string, (key: string) => LineInfo | null]> = [
   ['component:', describeComponent],
   ['hardware:', describeHardware],
   ['supply:', describeSupply],
+  ['sheet:', describeSheet],
 ];
 
 export function describeKey(key: string): LineInfo | null {
@@ -239,6 +249,12 @@ function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: Mesh
   if (key) return addCount(t.counts, key, 1, [p.id].filter(Boolean));
 
   if (isStandIn(p)) return t.standIns.push({ id: p.id, name: p.name });
+
+  const sheet = sheetOf(p);
+
+  if (sheet && m) return addCount(t.counts, sheetKey(sheet, sheetThickness(sheet, m)), 1, [p.id]);
+
+  if (sheet) return t.unmeasured.push(p.id);
 
   const process = madeElsewhereProcess(p);
 

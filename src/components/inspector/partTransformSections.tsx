@@ -17,7 +17,8 @@ import { EdgesField } from './EdgesField';
 import { wrapDegrees } from './partMath';
 import { QuarterTurns } from './QuarterTurns';
 import type { PartSectionProps } from './partSections';
-import { MATERIALS, materialTag, type InspectorProps, type Phase } from './types';
+import { materialOptions, materialPatch, materialValue, type InspectorProps, type Phase } from './types';
+import { sheetChoice } from '../../sheet/materials';
 import { keyFor } from '../../app/shortcuts';
 
 export const PositionSection: React.FC<
@@ -192,7 +193,12 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
   );
 };
 
-export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[] }> = ({ part, onUpdate, parts }) => (
+export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[]; sheetMm?: number | null }> = ({
+  part,
+  onUpdate,
+  parts,
+  sheetMm = null,
+}) => (
   <Section title="Appearance">
     <ColorField
       value={part.color}
@@ -202,9 +208,9 @@ export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[]
     {part.role === 'solid' && (
       <Select
         aria-label="Material"
-        value={materialTag(part)}
-        onChange={(e) => onUpdate({ mechanicalTag: e.target.value })}
-        options={MATERIALS}
+        value={materialValue(part)}
+        onChange={(e) => onUpdate(materialPatch(e.target.value))}
+        options={materialOptions(sheetMm !== null || !!sheetChoice(part), sheetMm)}
       />
     )}
   </Section>

@@ -4,6 +4,7 @@ import type { BoundSketch, SketchOutput } from '../components/studio/SketchPanel
 import { GROUND_PLANE, sketchSolid, type SketchShape } from '../utils/sketch/placement';
 import { EMPTY_SKETCH } from '../utils/sketch/types';
 import { solidSketchParams } from './partFactories';
+import { useSheetThickness } from './useSheetThickness';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -64,6 +65,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
 function SceneInspector({ core, actions }: InspectTabProps) {
   const { scene, parts, studio, selection, annotations } = core;
   const { edits, ops, library, tuning } = actions;
+  const sheetMm = useSheetThickness(selection.selectedPart, core.viewportRef);
   const { saveAsModel } = library;
   const { toggleCommentMode } = annotations;
 
@@ -71,6 +73,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
     <Inspector
       key={scene.sceneId}
       part={selection.selectedPart}
+      sheetMm={sheetMm}
       parts={parts}
       globalGoal={scene.globalGoal}
       onChangeGoal={scene.setGlobalGoal}

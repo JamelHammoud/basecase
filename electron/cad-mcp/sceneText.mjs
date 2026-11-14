@@ -15,6 +15,8 @@ const links = (p) => [
   p.frame && `frame=${p.frame}`,
 ];
 
+const sheetText = (sheet) => sheet && `sheet=${sheet.material}${sheet.mm ? `:${sheet.mm}mm` : ''}`;
+
 export function partLine(p, withNotes = true) {
   return [
     p.id,
@@ -29,6 +31,7 @@ export function partLine(p, withNotes = true) {
     p.color,
     p.role && p.role !== 'solid' && `role=${p.role}`,
     p.material,
+    sheetText(p.sheet),
     p.catalog,
     p.supply,
     ...links(p),

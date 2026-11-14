@@ -40,7 +40,7 @@ From left to right, the title bar holds:
 - The **Scenes** menu, a list of every scene you've saved ([[⌘O]]).
 - A tab for each open scene, and **+** for a new one ([[⌘T]]).
 - **Undo** and **Redo** ([[⌘Z]] and [[⇧⌘Z]]).
-- **Export**, for STL, 3MF, scene files and robot packages.
+- **Export**, for STL, 3MF, STEP, cut files, scene files and robot packages.
 - The inspector button, which shows or hides the right panel ([[⌘I]]).
 
 On Windows, a **Menu** button at the far left opens the File, Edit, View, Window and Help menus. On a Mac they're in the menu bar.

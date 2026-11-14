@@ -63,6 +63,8 @@ Every export is in the **Export** menu at the top right of the window.
 | **Image** | `<scene>.png` | The canvas as you see it, without the grid, gizmos and other helpers |
 | **STL** | `<scene>.stl` | Every visible solid part as one binary mesh, in millimeters, Z up |
 | **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates |
+| **STEP**, in the desktop app | `<scene>.step` | Every visible part as its own body in one assembly, in millimeters, Z up |
+| **Cut Files** | `<scene>-cut-files.zip` | One DXF per part cut from sheet, in millimeters |
 | **Scene** | `<scene>.basecase` | The scene, to open in Basecase |
 | **Robot Package** | `<scene>-robot.zip` | MJCF, URDF, meshes, joint map, policies and ROS 2 package files, listed in [Robot package contents](/help/robot-package-contents) |
 | **Copy as Markdown** | The clipboard | The scene as a Markdown spec: its goal and every part with its size |

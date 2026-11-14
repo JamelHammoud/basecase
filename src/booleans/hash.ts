@@ -16,6 +16,7 @@ const NOT_GEOMETRY = new Set<string>([
   'mechanicalTag',
   'print',
   'printMaterial',
+  'sheet',
   'massG',
   'com',
   'supplyId',

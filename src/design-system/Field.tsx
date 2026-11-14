@@ -134,18 +134,47 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(({ 
 
 TextArea.displayName = 'TextArea';
 
+export interface SelectOption {
+  value: string;
+  label: string;
+  group?: string;
+}
+
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  options: Array<{ value: string; label: string }>;
+  options: SelectOption[];
+}
+
+const optionOf = (o: SelectOption) => (
+  <option key={o.value} value={o.value} className="bg-[#282828] text-white">
+    {o.label}
+  </option>
+);
+
+function optionRuns(options: SelectOption[]) {
+  const runs: Array<{ group?: string; options: SelectOption[] }> = [];
+
+  for (const o of options) {
+    const last = runs[runs.length - 1];
+
+    if (last && last.group === o.group) last.options.push(o);
+    else runs.push({ group: o.group, options: [o] });
+  }
+
+  return runs;
 }
 
 export const Select: React.FC<SelectProps> = ({ options, className = '', ...props }) => (
   <div className="relative w-full">
     <select className={`${fieldBase} h-[32px] pl-2.5 pr-8 appearance-none cursor-default ${className}`} {...props}>
-      {options.map((o) => (
-        <option key={o.value} value={o.value} className="bg-[#282828] text-white">
-          {o.label}
-        </option>
-      ))}
+      {optionRuns(options).map((run) =>
+        run.group ? (
+          <optgroup key={run.group} label={run.group} className="bg-[#282828] text-white/50">
+            {run.options.map(optionOf)}
+          </optgroup>
+        ) : (
+          run.options.map(optionOf)
+        ),
+      )}
     </select>
     <ChevronDownIcon className="w-3.5 h-3.5 text-white/50 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
   </div>

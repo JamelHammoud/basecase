@@ -1,3 +1,4 @@
+import type { SheetProfile } from '../sheet/detect';
 import * as THREE from 'three';
 import type { ScenePart } from '../types/robotics';
 import { eulerToMatrix, r2, toCad, type V3 } from './agentFrame';
@@ -35,6 +36,6 @@ function boxToCad(b: { min: V3; max: V3 }) {
   };
 }
 
-export type PartBoxes = Record<string, { min: V3; max: V3 } | undefined>;
+export type PartBoxes = Record<string, { min: V3; max: V3; sheet?: SheetProfile } | undefined>;
 
 export const partBoundsCad = (p: ScenePart, measured?: PartBoxes) => boxToCad(measured?.[p.id] ?? worldBox(p));

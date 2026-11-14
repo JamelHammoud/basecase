@@ -2,24 +2,60 @@ import type { SceneAnnotation, ScenePart } from '../../types/robotics';
 import type { HardwareSpec } from '../../data/hardware';
 import type { AlignMode, Axis } from '../../utils/selection';
 import type { PlaneView } from '../../mirror/plane';
+import {
+  SHEET_MATERIALS,
+  SHEET_MATERIAL_IDS,
+  isSheetMaterial,
+  sheetChoice,
+  snapThickness,
+} from '../../sheet/materials';
+import type { SelectOption } from '../../design-system';
 
 export type Phase = boolean | undefined;
 
-export const MATERIALS: Array<{ value: string; label: string }> = [
+export const MATERIALS: SelectOption[] = [
   { value: '3D Printed PLA/PETG', label: 'Printed PLA / PETG' },
   { value: 'TPU Flexible', label: 'Printed TPU' },
   { value: 'Off-the-shelf COTS', label: 'Off-the-shelf' },
-  { value: 'CNC Aluminum', label: 'CNC aluminum' },
-  { value: 'Laser-Cut Acrylic/Carbon', label: 'Laser-cut sheet' },
 ];
 
 const PRINTED_TAG = MATERIALS[0].value;
+const SHEET_PREFIX = 'sheet:';
 
-export const materialTag = (part: ScenePart): string =>
-  MATERIALS.find((m) => m.value === part.mechanicalTag)?.value ?? PRINTED_TAG;
+export function materialValue(part: ScenePart): string {
+  const sheet = sheetChoice(part);
+
+  if (sheet) return `${SHEET_PREFIX}${sheet}`;
+
+  return MATERIALS.find((m) => m.value === part.mechanicalTag)?.value ?? PRINTED_TAG;
+}
+
+export function materialOptions(offerSheet: boolean, sheetMm: number | null): SelectOption[] {
+  if (!offerSheet) return MATERIALS;
+
+  return [
+    ...MATERIALS,
+    ...SHEET_MATERIAL_IDS.map((id) => ({
+      value: `${SHEET_PREFIX}${id}`,
+      label:
+        sheetMm === null ? SHEET_MATERIALS[id].name : `${SHEET_MATERIALS[id].name}, ${snapThickness(id, sheetMm)} mm`,
+      group: 'Cut from Sheet',
+    })),
+  ];
+}
+
+export function materialPatch(value: string): Partial<ScenePart> {
+  const material = value.slice(SHEET_PREFIX.length);
+
+  if (value.startsWith(SHEET_PREFIX) && isSheetMaterial(material))
+    return { sheet: { material }, mechanicalTag: undefined };
+
+  return { mechanicalTag: value, sheet: undefined };
+}
 
 export interface InspectorProps {
   part: ScenePart | null;
+  sheetMm?: number | null;
   parts: ScenePart[];
   globalGoal: string;
   onChangeGoal: (goal: string, live?: Phase) => void;

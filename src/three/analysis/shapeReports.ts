@@ -3,6 +3,7 @@ import { measureTriangles, type MeshMeasure } from '../meshMeasure';
 import { checkPrintability, extraPose, type PrintPose, type PrintShape, type Vec3 } from '../printability';
 import type { ShapeSolid } from './shapeSolid';
 import { convexHull } from '../../utils/engineeringMath';
+import { detectSheet } from '../../sheet/detect';
 
 export interface ShapeReport {
   check: PrintShape | null;
@@ -18,7 +19,9 @@ function localMeasure(solid: ShapeSolid): MeshMeasure {
 
   if (cached) return cached;
 
-  const measure = measureTriangles(solid.positions);
+  const plain = measureTriangles(solid.positions);
+  const sheet = detectSheet(solid.positions);
+  const measure = sheet ? { ...plain, sheet } : plain;
 
   localMeasures.set(solid, measure);
 

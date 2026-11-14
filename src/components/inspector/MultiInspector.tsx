@@ -25,7 +25,8 @@ import { SizeLine } from '../PartDetails';
 import { GroupName } from './GroupName';
 import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
-import { MATERIALS, materialTag, type InspectorProps } from './types';
+import { materialOptions, materialPatch, materialValue, type InspectorProps } from './types';
+import { sheetChoice } from '../../sheet/materials';
 import { keyFor } from '../../app/shortcuts';
 
 const isWholeGroup = (selectedParts: ScenePart[], parts: ScenePart[]): boolean => {
@@ -177,7 +178,11 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
   const base = selectedParts[0];
   const colors = new Set(selectedParts.map((p) => p.color.toLowerCase()));
   const allSolid = selectedParts.every((p) => p.role === 'solid');
-  const materials = new Set(selectedParts.map(materialTag));
+  const materials = new Set(selectedParts.map(materialValue));
+  const shown = materialOptions(
+    selectedParts.some((p) => !!sheetChoice(p)),
+    null,
+  );
 
   return (
     <>
@@ -213,8 +218,8 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
           <Select
             aria-label="Material"
             value={materials.size > 1 ? '' : [...materials][0]}
-            onChange={(e) => e.target.value && onUpdateMany({ mechanicalTag: e.target.value })}
-            options={materials.size > 1 ? [{ value: '', label: 'Mixed' }, ...MATERIALS] : MATERIALS}
+            onChange={(e) => e.target.value && onUpdateMany(materialPatch(e.target.value))}
+            options={materials.size > 1 ? [{ value: '', label: 'Mixed' }, ...shown] : shown}
           />
         )}
       </Section>

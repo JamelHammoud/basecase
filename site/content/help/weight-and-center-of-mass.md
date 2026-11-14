@@ -42,8 +42,7 @@ Click **Weight** under **Checks** in the Build tab to see the robot's total weig
 | Component | Its catalog weight |
 | Hardware | Its volume and the density of its finish |
 | Printed part | The filament it takes, shell and infill, in your material and infill |
-| CNC aluminum | Its volume at 2.7 g/cm³, an estimate |
-| Laser-cut sheet | Its volume at 1.4 g/cm³, an estimate |
+| Cut from sheet | Its outline's area times the stock thickness, at the sheet's density |
 | Off-the-shelf part or stand-in | Its volume at 1.2 g/cm³, an estimate |
 | Supply | Its listed weight, else its volume at 1.5 g/cm³ |
 

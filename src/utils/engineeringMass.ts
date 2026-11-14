@@ -3,7 +3,8 @@ import { HardwareSpec, hardwareFinish, motionOf } from '../data/hardware';
 import { SUPPLY_BY_ID } from '../data/supplies';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
-import { filamentGrams, isPrinted, isStandIn, printMaterialOf } from './bom';
+import { filamentGrams, isPrinted, isStandIn, printMaterialOf, sheetOf } from './bom';
+import { sheetGrams } from '../sheet/stock';
 import { V3, rotateEuler } from './engineeringMath';
 import type { PartMass } from './engineeringTypes';
 
@@ -17,7 +18,6 @@ const FINISH_DENSITY: Record<string, number> = {
   aluminum: 2.7,
   anodized: 2.7,
 };
-const OTHER_DENSITY: Record<string, number> = { 'CNC Aluminum': 2.7, 'Laser-Cut Acrylic/Carbon': 1.4 };
 
 type Mass = Omit<PartMass, 'id'>;
 
@@ -60,8 +60,9 @@ function madeMass(p: ScenePart, m: MeshMeasure, project: ProjectSettings, cm3: n
   if (isPrinted(p))
     return { grams: filamentGrams(m, printMaterialOf(p, project), project.infillPct), centroid: at, source: 'printed' };
 
-  if (p.mechanicalTag && OTHER_DENSITY[p.mechanicalTag])
-    return { grams: cm3 * OTHER_DENSITY[p.mechanicalTag], centroid: at, source: 'estimate' };
+  const sheet = sheetOf(p);
+
+  if (sheet) return { grams: sheetGrams(sheet, m), centroid: at, source: 'sheet' };
 
   if (isStandIn(p) || p.mechanicalTag === 'Off-the-shelf COTS')
     return { grams: cm3 * 1.2, centroid: at, source: 'estimate' };

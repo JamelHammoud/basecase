@@ -64,8 +64,8 @@ This is a note. Faces close to flat hang over air and need support under them.
 The part's name ends in a word like Glass, or its note starts with clear acrylic, and it's set to print.
 
 1. Select the part.
-2. In the Inspector, set **Material** to **Laser-cut sheet** or **Off-the-shelf**.
-3. Source the sheet, since **Real parts** then asks where to get it. **Fix** hands that to the agent.
+2. In the Inspector, set **Material** to **Acrylic** under **Cut from Sheet**, if the part is flat. [Cut a part from sheet](/help/cut-a-part-from-sheet) has the rest.
+3. Otherwise set it to **Off-the-shelf**. **Real parts** then asks where to get it, and **Fix** hands that to the agent.
 
 ## The plate shows warnings after slicing
 

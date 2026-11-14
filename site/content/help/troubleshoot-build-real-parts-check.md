@@ -39,7 +39,7 @@ It worked when **Real parts** shows a green mark and the **Replace** row is gone
 
 ## “Nothing says where to get this part.”
 
-The part is made outside your printer, such as a CNC-machined or laser-cut part, and nothing says who makes it.
+The part's **Material** is **Off-the-shelf**, and nothing says where to buy it. Parts cut from sheet don't get this problem.
 
 1. Click **Fix** on the problem to have the agent find a maker for it.
 2. Or set the part's **Material** in the Inspector to **Printed PLA / PETG**, if you'll print it.

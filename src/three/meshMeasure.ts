@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { SheetProfile } from '../sheet/detect';
 
 export function worldTriangles(object: THREE.Object3D): Float32Array {
   const chunks: Float32Array[] = [];
@@ -75,6 +76,7 @@ export interface MeshMeasure {
   centroid: [number, number, number];
   triangles: number;
   base?: Array<[number, number]>;
+  sheet?: SheetProfile;
 }
 
 function bounds(t: Float32Array) {

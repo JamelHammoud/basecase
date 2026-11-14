@@ -136,6 +136,14 @@ export interface RobotLinkState {
   calibration?: RobotMount[] | null;
 }
 
+export interface RobotUnitState extends RobotLinkState {
+  unit: string;
+  version: string | null;
+  previous: string | null;
+  hasPrevious: boolean;
+  mode?: string | null;
+}
+
 export const MAX_MESSAGES = 6;
 
 export const INITIAL_ROBOT: RobotState = {

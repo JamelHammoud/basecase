@@ -50,6 +50,16 @@ A Motor Kit skill that fails isn't kept. Its row shows the weakest variant of it
 
 If a policy was trained from a Case's tries, its Case judges it instead. The policy runs the Case 32 times. Each run starts with joints up to 5° off and draws friction, masses, servo strength and delays of up to 20 ms the same way as in **Checks**. The bar is the same: 29 of 32. For steps, see [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
+## Each robot's twin
+
+Before a fleet rollout, Arena judges the skill on each unit's own calibrated model. A unit without a calibration uses the catalog preset, never another unit's fit.
+
+The skill's row lists each unit's pass count from its weakest variant. A failed twin also shows its failing contract line. That unit keeps its policy while the passing units receive the rollout.
+
+![The Reach skill with passes for robot and robot-2, and Shoulder sags for robot-3](/help/roll-out-a-skill-to-a-fleet/twins.png)
+
+For the steps, see [Roll out a skill to a fleet of emulated robots](/help/roll-out-a-skill-to-a-fleet).
+
 ## Why the reward can't cheat
 
 Training follows a reward, a score that guides the policy toward the goal. A reward can be gamed. For example, a robot rewarded for staying upright may learn to stand still instead of walking.

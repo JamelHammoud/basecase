@@ -13,6 +13,7 @@ import {
   CoachIcon,
   CrosshairIcon,
   TrainIcon,
+  UndoIcon,
 } from '../../design-system';
 import { plainRule, type ToolRule } from './toolRule';
 
@@ -37,5 +38,7 @@ export const SIM_RULES: ToolRule[] = [
   plainRule(['list_skills'], TrainIcon, ['Checking skills', 'Checked skills']),
   plainRule(['coach_skill'], CoachIcon, ['Coaching a skill', 'Coached a skill']),
   plainRule(['stress_skill'], CrosshairIcon, ['Stress testing a skill', 'Stress tested a skill']),
+  plainRule(['roll_out'], RunIcon, ['Rolling out a skill', 'Rolled out a skill']),
+  plainRule(['roll_back'], UndoIcon, ['Rolling back a robot', 'Rolled back a robot']),
   plainRule(['training_status'], TrainIcon, ['Checking training', 'Checked training']),
 ];

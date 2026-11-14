@@ -7,7 +7,7 @@ import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
 import type { FaultKind } from './faults';
 import type { SimPhysics } from './livePhysics';
-import { buildMjcf, simDeltas, type SimModel, type WorldItem } from './mjcf';
+import { simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { RecordedEfforts } from './recordedFrames';
@@ -22,8 +22,8 @@ import type { WatchPlan } from '../skills/liveWatch';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { useWatch } from './useWatch';
 import { useSimTouches } from './useSimTouches';
-import { calibratedInput } from '../reality/calibratedInput';
-import { simCalibrations } from '../reality/history';
+import type { CalibrationHistory } from '../reality/history';
+import { calibratedModel } from './calibratedModel';
 import { newSimWorker, useSimWorker, type CameraLink, type SimFrameMessage } from './useSimWorker';
 import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
@@ -83,7 +83,7 @@ export interface Simulation {
   subscribePoses: (listen: (poses: Float64Array, frame: SimFrameMessage) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
   setWorld: (items: WorldItem[], guests?: SimGuests) => void;
-  buildModel: (options?: { alone?: boolean }) => Promise<SimModel>;
+  buildModel: (options?: SceneModelOptions) => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
   runCase: (input: LiveCaseInput | null) => void;
   watch: (plan: WatchPlan | null) => void;
@@ -182,9 +182,10 @@ export const fallsOn = (m: SimModel, plan: (model: SimModel, robot: string) => F
     answer: (msg) => (msg.type === 'fell' ? msg.runs : undefined),
   });
 
-interface SceneModelOptions {
+export interface SceneModelOptions {
   alone?: boolean;
   pin?: string | null;
+  calibrations?: Record<string, CalibrationHistory>;
 }
 
 function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: Inputs) {
@@ -227,7 +228,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
         options?.alone ? NO_GUESTS : guestsRef.current,
       );
 
-      return buildMjcf(calibratedInput(input, simCalibrations(current.project.servoCalibrations)));
+      return calibratedModel(input, options?.calibrations ?? current.project.servoCalibrations);
     },
     [viewportRef],
   );

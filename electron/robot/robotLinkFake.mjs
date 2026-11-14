@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import { vi } from 'vitest';
+import { RobotFleet } from './robotFleet.mjs';
 import { RobotLink } from './robotLink.mjs';
 
 function fakeDaemon() {
@@ -27,14 +28,14 @@ function fakeDaemon() {
   return child;
 }
 
-export function linkWithFake(options = {}) {
+function fakeSpawns(options) {
   const binary = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-robot-test-')), 'robot-daemon');
 
   fs.writeFileSync(binary, '');
 
   const spawned = [];
   const events = [];
-  const link = new RobotLink({
+  const linkOptions = {
     ...options,
     binary,
     emit: (e) => events.push(e),
@@ -45,7 +46,19 @@ export function linkWithFake(options = {}) {
 
       return child;
     },
-  });
+  };
 
-  return { link, spawned, events };
+  return { linkOptions, spawned, events };
+}
+
+export function linkWithFake(options = {}) {
+  const { linkOptions, spawned, events } = fakeSpawns(options);
+
+  return { link: new RobotLink(linkOptions), spawned, events };
+}
+
+export function fleetWithFake(options = {}) {
+  const { linkOptions, spawned, events } = fakeSpawns(options);
+
+  return { fleet: new RobotFleet(linkOptions), spawned, events };
 }

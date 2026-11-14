@@ -1,14 +1,16 @@
 export const ROBOT_CALLS = {
-  'robot:connect': (link, spec) => link.connect(spec),
-  'robot:command': (link, command) => link.command(command),
-  'robot:disconnect': (link) => link.disconnect(),
-  'robot:policy': (link, id) => link.policy(id),
-  'robot:calibration': (link, joints) => link.calibrate(joints),
-  'robot:state': (link) => link.state(),
-  'robot:record': (link, sample) => link.record(sample),
+  'robot:connect': (fleet, spec, unit) => fleet.connect(spec, unit),
+  'robot:command': (fleet, command, unit) => fleet.command(command, unit),
+  'robot:disconnect': (fleet, unit) => fleet.disconnect(unit),
+  'robot:policy': (fleet, refs, unit) => fleet.policy(refs, unit),
+  'robot:calibration': (fleet, joints, unit) => fleet.calibrate(joints, unit),
+  'robot:state': (fleet, unit) => fleet.state(unit),
+  'robot:record': (fleet, sample, unit) => fleet.record(sample, unit),
+  'robot:units': (fleet) => fleet.units(),
+  'robot:rollback': (fleet, unit) => fleet.rollBack(unit),
 };
 
-export function registerRobotHandlers(ipcMain, link) {
+export function registerRobotHandlers(ipcMain, fleet) {
   for (const [channel, call] of Object.entries(ROBOT_CALLS))
-    ipcMain.handle(channel, (_e, payload) => call(link, payload));
+    ipcMain.handle(channel, (_e, ...args) => call(fleet, ...args));
 }

@@ -23,13 +23,15 @@ import { UNITS_FILE, unitsJson } from './servoUnits.mjs';
 
 export const DAEMON_ENV = 'BASECASE_ROBOT_DAEMON';
 export const DAEMON_FILE = process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon';
+export const NOT_CONNECTED = { ok: false, message: 'Connect an emulated robot first.' };
+export const UNDOCUMENTED = { ok: false, message: 'The robot only takes the documented commands.' };
 
 const NEVER_STARTED = 'The robot daemon stopped before it started.';
-const NOT_CONNECTED = { ok: false, message: 'Connect an emulated robot first.' };
 const UNSAVED = { ok: false, message: "Couldn't save the calibration." };
 const CALIBRATION_FILE = 'calibration.json';
-const UNDOCUMENTED = { ok: false, message: 'The robot only takes the documented commands.' };
 const POLICY_FILE = 'policy.onnx';
+const UNAVAILABLE_POLICY = { ok: false, message: 'Choose a skill with a saved policy.' };
+const UNSAVED_POLICY = { ok: false, message: 'Couldn’t save the policy.' };
 const MAX_LINE = 64 * 1024;
 const STOP_GRACE_MS = 3000;
 const ALIVE_MS = 100;
@@ -39,6 +41,15 @@ function lostMessage(session, error) {
 
   return error ?? (session.stderr.trim().split('\n').at(-1) || NEVER_STARTED);
 }
+
+export const disconnectedState = () => ({
+  connected: false,
+  spec: null,
+  hello: null,
+  status: null,
+  mode: null,
+  calibration: null,
+});
 
 export function daemonBinary({ env = process.env, resources, fromSource, repo }) {
   if (env[DAEMON_ENV]) return env[DAEMON_ENV];
@@ -76,6 +87,16 @@ function statusRadians(status, session) {
 
 const hashOf = (bytes) => (bytes ? createHash('sha256').update(bytes).digest('hex') : null);
 
+function removeFile(target) {
+  try {
+    fs.rmSync(target, { force: true });
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function written(bytes, target) {
   const staged = `${target}.part`;
 
@@ -85,7 +106,7 @@ function written(bytes, target) {
 
     return true;
   } catch {
-    fs.rmSync(staged, { force: true });
+    removeFile(staged);
 
     return false;
   }
@@ -94,9 +115,7 @@ function written(bytes, target) {
 function placePolicy(artefacts, bytes) {
   const target = path.join(artefacts, POLICY_FILE);
 
-  if (bytes && written(bytes, target)) return;
-
-  fs.rmSync(target, { force: true });
+  return bytes ? written(bytes, target) : removeFile(target);
 }
 
 export class RobotLink {
@@ -109,7 +128,9 @@ export class RobotLink {
     hornFor = emulatedHorn,
     tries = null,
     clock = () => Date.now(),
+    seed = null,
   }) {
+    this.seed = seed;
     this.tries = tries;
     this.clock = clock;
     this.binary = binary;
@@ -119,13 +140,14 @@ export class RobotLink {
     this.tmpDir = tmpDir;
     this.policyBytes = policyBytes;
     this.policyRefs = [];
+    this.activePolicy = null;
     this.session = null;
   }
 
   state() {
     const s = this.session;
 
-    if (!s) return { connected: false, spec: null, hello: null, status: null, mode: null, calibration: null };
+    if (!s) return disconnectedState();
 
     const calibration = isServoFamily(s.spec) ? calibrationMounts(s.calibration) : null;
 
@@ -169,10 +191,10 @@ export class RobotLink {
   start(spec) {
     const artefacts = fs.mkdtempSync(path.join(this.tmpDir, 'basecase-robot-'));
     const calibration = emulatedCalibration(spec);
-    const policy = this.currentPolicy();
+    const { ref, bytes: policy } = this.currentPolicy();
 
     fs.writeFileSync(path.join(artefacts, CALIBRATION_FILE), JSON.stringify(calibration));
-    placePolicy(artefacts, policy);
+    this.activePolicy = placePolicy(artefacts, policy) ? ref : null;
 
     if (spec.units) fs.writeFileSync(path.join(artefacts, UNITS_FILE), unitsJson(spec.units));
 
@@ -191,7 +213,7 @@ export class RobotLink {
     this.session = session;
     session.pipe = this.openPipe({
       binary: this.binary,
-      args: daemonArgs(spec, artefacts),
+      args: daemonArgs(spec, artefacts, this.seed),
       on: {
         line: (line) => this.onLine(session, line),
         stderr: (chunk) => {
@@ -279,30 +301,33 @@ export class RobotLink {
     }
   }
 
-  currentPolicy() {
-    for (const ref of this.policyRefs) {
+  currentPolicy(refs = this.policyRefs) {
+    for (const ref of refs) {
       const bytes = this.bytesOf(ref);
 
-      if (bytes) return bytes;
+      if (bytes) return { ref, bytes };
     }
 
-    return null;
+    return { ref: null, bytes: null };
   }
 
-  policy(ask) {
+  policy(ask, requirePolicy = false) {
     const refs = checkedPolicyRefs(ask);
 
     if (!refs) return UNDOCUMENTED;
 
-    this.policyRefs = refs;
-
     const session = this.session;
+    const { ref, bytes: policy } = this.currentPolicy(refs);
+
+    if (requirePolicy && !policy) return UNAVAILABLE_POLICY;
+
+    if (session && !placePolicy(session.artefacts, policy)) return UNSAVED_POLICY;
+
+    this.policyRefs = refs;
+    this.activePolicy = ref;
 
     if (!session) return { ok: true };
 
-    const policy = this.currentPolicy();
-
-    placePolicy(session.artefacts, policy);
     session.recorder?.setPolicy(hashOf(policy));
     this.write(session, { cmd: 'recheck' });
 

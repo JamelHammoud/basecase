@@ -4,7 +4,7 @@ import type { RobotJoint } from '../types/robotics';
 import { connectedFrom, useCalibrationPhase, wantedMounts } from './calibrationSession';
 import { robotMounts } from './mountCapture';
 import { servoFamily, type RobotMount } from './robotState';
-import { setRobotMounts } from './robotStore';
+import { selectedUnit, setUnitMounts } from './robotStore';
 import { useRobot } from './useRobot';
 
 interface RobotMountsInput {
@@ -21,14 +21,15 @@ const mountsKey = (mounts: readonly RobotMount[]) =>
 
 export function useRobotMounts({ active, joints, calibrations }: RobotMountsInput) {
   const robot = useRobot();
+  const unit = selectedUnit();
   const idle = useCalibrationPhase() === 'idle';
-  const connected = robot.link === 'connected' && servoFamily(robot.spec) ? connectedFrom(joints) : null;
-  const wanted = connected ? robotMounts(wantedMounts(connected, calibrations)) : [];
+  const connected = robot.link === 'connected' && servoFamily(robot.spec) ? connectedFrom(joints, unit) : null;
+  const wanted = connected ? robotMounts(wantedMounts(connected, calibrations), unit) : [];
   const key = mountsKey(wanted);
   const differs = connected !== null && robot.calibration.length > 0 && key !== mountsKey(robot.calibration);
-  const send = useEffectEvent(() => void setRobotMounts(wanted));
+  const send = useEffectEvent(() => void setUnitMounts(unit, wanted));
 
   useEffect(() => {
     if (active && idle && differs) send();
-  }, [active, idle, differs, key]);
+  }, [active, idle, differs, key, unit]);
 }

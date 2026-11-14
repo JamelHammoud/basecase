@@ -2,7 +2,8 @@ import type { MainModule } from '@mujoco/mujoco';
 import { trainHandoff, type HandoffResult, type HandoffTrainInput } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
-import type { Skill } from './artifacts';
+import { proveOnTwin } from '../fleet/twinArena';
+import type { ArenaEvidence, Skill } from './artifacts';
 import { coachBrief, trainRevision, type CoachBrief, type CoachOutcome, type CoachRevision } from './coach';
 import type { Environment } from './environment';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
@@ -24,6 +25,7 @@ export type SkillsJob =
   | ({ type: 'coach-brief'; model: SimModel } & CoachSubjectJob)
   | ({ type: 'coach'; model: SimModel } & CoachJob)
   | { type: 'stress'; model: SimModel; skill: Skill; environment: Environment; budget?: number }
+  | { type: 'twin'; model: SimModel; skill: Skill; environment: Environment }
   | ({ type: 'stress-train' } & Omit<StressTraining, 'mj' | 'forge' | 'save' | 'judge'>);
 
 export interface CoachSubjectJob {
@@ -49,6 +51,7 @@ export type SkillsReply =
   | { type: 'coach-brief'; brief: CoachBrief }
   | { type: 'coach'; outcome: CoachOutcome }
   | { type: 'stress'; result: StressResult }
+  | { type: 'twin'; evidence: ArenaEvidence }
   | { type: 'stress-train'; outcome: StressTrainOutcome };
 
 export type ReplyTo<K extends SkillsJob['type']> = Extract<SkillsReply, { type: K }>;
@@ -78,6 +81,8 @@ export async function runSkillsJob(job: SkillsJob, ports: SkillPorts & { mj: Mai
   if (job.type === 'coach') return { type: 'coach', outcome: await trainRevision({ mj, ...job, forge, save }) };
 
   if (job.type === 'stress') return { type: 'stress', result: await stressSkill({ mj, ...job, onProgress: progress }) };
+
+  if (job.type === 'twin') return { type: 'twin', evidence: await proveOnTwin({ mj, ...job }) };
 
   if (job.type === 'stress-train')
     return { type: 'stress-train', outcome: await trainOnFindings({ mj, ...job, forge, save }) };

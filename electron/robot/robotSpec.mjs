@@ -159,7 +159,12 @@ const FAMILY_ARGS = new Map([
   [ROS2, ros2Args],
 ]);
 
-export const daemonArgs = (spec, artefacts) => (FAMILY_ARGS.get(spec.family) ?? servoArgs)(spec, artefacts);
+const seedArgs = (seed) => (Number.isInteger(seed) && seed >= 0 ? ['--seed', String(seed)] : []);
+
+export const daemonArgs = (spec, artefacts, seed = null) => [
+  ...(FAMILY_ARGS.get(spec.family) ?? servoArgs)(spec, artefacts),
+  ...seedArgs(seed),
+];
 
 const isJointValue = (value) => value === null || (typeof value === 'number' && Number.isFinite(value));
 

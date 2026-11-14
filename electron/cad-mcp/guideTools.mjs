@@ -44,6 +44,8 @@ const TOOL_GUIDES = {
   train_skill: ['simulation'],
   coach_skill: ['simulation'],
   stress_skill: ['simulation'],
+  roll_out: ['simulation'],
+  roll_back: ['simulation'],
   find_objects: ['simready'],
   insert_object: ['simready'],
 };

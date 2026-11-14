@@ -2,15 +2,8 @@ import { useSyncExternalStore } from 'react';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { connectedFrom } from './calibrationSession';
 import { isServoAsk, servoFamily, type RobotEvent, type RobotState, type RobotStatus } from './robotState';
-import {
-  connectRobot,
-  enterRung,
-  receiveRobotEvent,
-  robotSnapshot,
-  sendRobotCommand,
-  subscribeRobot,
-  subscribeRobotEvents,
-} from './robotStore';
+import { connectRobot, receiveRobotEvent, robotSnapshot, selectedUnit, sendUnitCommand } from './robotStore';
+import { subscribeUnitRobot } from './unitSubscription';
 import { emulatedUnits } from './emulatedUnits';
 import { sceneRobot } from './sceneRobot';
 import { FACTORY_ID, SERVO_MODEL, servoAnswers, servoStepsToDo, servoWalk, type ServoWalkStep } from './servoWalk';
@@ -28,6 +21,7 @@ export interface ServoSetupOptions {
 }
 
 interface Walk extends ServoSetupOptions {
+  unit: string;
   steps: ServoWalkStep[] | null;
   staleStatus: RobotStatus | null;
   written: number[];
@@ -99,9 +93,10 @@ function showStep(current: Walk, steps: ServoWalkStep[]) {
 }
 
 async function send(current: Walk, command: Record<string, unknown>) {
-  const reply = await sendRobotCommand(command);
+  const reply = await sendUnitCommand(current.unit, command);
 
-  if (!reply.ok && walk === current) receiveRobotEvent({ event: 'refused', message: reply.message });
+  if (!reply.ok && walk === current)
+    receiveRobotEvent({ event: 'refused', unit: current.unit, message: reply.message });
 }
 
 function onStatus(current: Walk, state: RobotState) {
@@ -141,9 +136,10 @@ function onEntering(current: Walk, state: RobotState) {
 
 function onState() {
   const current = walk;
-  const state = robotSnapshot();
 
   if (!current) return;
+
+  const state = robotSnapshot(current.unit);
 
   if (state.link !== 'connected') endServoSetup();
   else if (!current.steps) onEntering(current, state);
@@ -157,7 +153,7 @@ function onEvent(event: RobotEvent) {
 
   if (!current) return;
 
-  if (event.event === 'refused') {
+  if (event.event === 'refused' || event.event === 'fault') {
     endServoSetup();
 
     return;
@@ -169,35 +165,33 @@ function onEvent(event: RobotEvent) {
   showStep(current, current.steps?.slice(1) ?? []);
 }
 
-async function connectFactory({ joints, parts = [] }: Pick<ServoSetupOptions, 'joints' | 'parts'>): Promise<boolean> {
+async function connectFactory({ joints, parts = [], unit }: Walk): Promise<boolean> {
   const robot = sceneRobot(joints);
 
   if (!robot.ok || !isServoAsk(robot.spec)) return false;
 
-  if (robotSnapshot().link === 'connected') return true;
+  if (robotSnapshot(unit).link === 'connected') return true;
 
   const units = emulatedUnits({ choice: robot, joints, parts });
-  const reply = await connectRobot({ ...robot.spec, ...units, factory: true }, robot.joints);
+  const reply = await connectRobot({ ...robot.spec, ...units, factory: true }, robot.joints, unit);
 
-  if (!reply.ok) receiveRobotEvent({ event: 'refused', message: reply.message });
+  if (!reply.ok) receiveRobotEvent({ event: 'refused', unit, message: reply.message });
 
   return reply.ok;
 }
 
 function follow(current: Walk) {
-  const state = robotSnapshot();
+  const state = robotSnapshot(current.unit);
 
   current.staleStatus = state.status;
 
-  const offState = subscribeRobot(onState);
-  const offEvents = subscribeRobotEvents(onEvent);
+  current.stop = subscribeUnitRobot(current.unit, (event) => {
+    onEvent(event);
 
-  current.stop = () => {
-    offState();
-    offEvents();
-  };
+    if (walk === current) onState();
+  });
 
-  if (state.mode === 'look') void enterRung('set_up');
+  if (state.mode === 'look') void send(current, { cmd: 'enter', mode: 'set_up' });
   else onState();
 }
 
@@ -205,7 +199,9 @@ export async function setUpServos({ joints, parts, select }: ServoSetupOptions):
   if (walk || !canSetUpServos(joints, robotSnapshot())) return;
 
   const current: Walk = {
+    unit: selectedUnit(),
     joints,
+    parts,
     select,
     steps: null,
     staleStatus: null,
@@ -218,12 +214,12 @@ export async function setUpServos({ joints, parts, select }: ServoSetupOptions):
   walk = current;
   publish();
 
-  const connected = await connectFactory({ joints, parts });
+  const connected = await connectFactory(current);
 
   if (walk !== current) return;
 
-  const state = robotSnapshot();
-  const ready = connected && state.link === 'connected' && Boolean(connectedFrom(joints));
+  const state = robotSnapshot(current.unit);
+  const ready = connected && state.link === 'connected' && Boolean(connectedFrom(joints, current.unit));
 
   if (ready && (state.mode === 'look' || state.mode === 'set_up')) follow(current);
   else endServoSetup();

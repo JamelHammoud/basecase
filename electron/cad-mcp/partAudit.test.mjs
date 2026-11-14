@@ -14,7 +14,7 @@ describe('revision diff', () => {
     );
 
     expect(lines).toEqual([
-      'Since the last revision: volume 1155k → 74k mm³ (-94%), hull 1000k → 990k mm³, bodies 1 → 1.',
+      'Since the last revision: volume 1155k → 74k mm³ (−94%), hull 1000k → 990k mm³, bodies 1 → 1.',
     ]);
   });
 

@@ -3,6 +3,7 @@ import { Button, ConfirmDialog, MetaLine } from '../../design-system';
 import { printBridge, type PrinterStatus } from '../../print/printBridge';
 import type { Printing } from '../../workspace/usePrinting';
 import { duration } from '../../utils/duration';
+import { percent } from '../../../electron/percent.mjs';
 
 const STATE_TEXT: Record<PrinterStatus['state'], string> = {
   idle: 'Ready',
@@ -16,7 +17,7 @@ const STATE_TEXT: Record<PrinterStatus['state'], string> = {
 
 function facts(status: PrinterStatus) {
   return [
-    status.progress !== undefined && `${Math.round(status.progress * 100)}%`,
+    status.progress !== undefined && percent(status.progress),
     status.layer && status.totalLayers && `Layer ${status.layer} of ${status.totalLayers}`,
     status.remainingMin !== undefined && `${duration(status.remainingMin * 60, 'min')} left`,
   ];

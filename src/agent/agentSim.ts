@@ -13,6 +13,7 @@ import { errorMessage } from '../utils/errorMessage';
 import { duration, runClock } from '../utils/duration';
 import { weight } from '../utils/weight';
 import { plural } from '../../electron/plural.mjs';
+import { percent } from '../../electron/percent.mjs';
 
 export interface SimulatePayload {
   seconds?: number;
@@ -95,7 +96,7 @@ function effortLine(j: SimRun['stats']['joints'][number], model: SimRun['model']
   const name = rig.byId.get(j.id)?.name ?? j.id;
   const unit = sj?.type === 'prismatic' ? 'N' : 'N·m';
 
-  return `- ${j.id} (${prettyJointName(name)}): ${Math.round(Math.min(j.peak, 1) * 100)}% of ${sj ? sj.effort.toFixed(2) : '?'} ${unit} (${sj?.effortSource ?? '?'})${j.saturatedS > 0.02 ? `, ${duration(j.saturatedS)} at the limit` : ''}`;
+  return `- ${j.id} (${prettyJointName(name)}): ${percent(Math.min(j.peak, 1))} of ${sj ? sj.effort.toFixed(2) : '?'} ${unit} (${sj?.effortSource ?? '?'})${j.saturatedS > 0.02 ? `, ${duration(j.saturatedS)} at the limit` : ''}`;
 }
 
 export function simReport(run: SimRun, rig: Rig, seconds: number): string {

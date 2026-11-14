@@ -14,6 +14,7 @@ import type { ProjectSettings } from '../types/robotics';
 import { premiumPick, premiumText } from '../utils/premiumPick';
 import type { RequestContext } from './agentRequestHandlers';
 import { runEngineeringNow } from './engineeringNow';
+import { percent } from '../../electron/percent.mjs';
 
 type Payload = Record<string, unknown>;
 
@@ -74,7 +75,7 @@ function skeletonReply(project: ProjectSettings) {
   if (typeof input === 'string') return { text: input };
 
   const lead =
-    `From the skeleton alone: link lengths, actuator weights, and ${Math.round(LIMB_SHARE * 100)}% of the rest of the ` +
+    `From the skeleton alone: link lengths, actuator weights, and ${percent(LIMB_SHARE)} of the rest of the ` +
     'estimated mass spread over the links by length (link_mass_g overrides it). Run it again on the model once joints are declared.\n';
 
   return sizedReply(sizeActuators(input), input.totalG, lead);

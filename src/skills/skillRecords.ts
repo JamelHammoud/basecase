@@ -16,6 +16,7 @@ import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
 import type { SnapshotRef } from './snapshots';
 import { plural } from '../../electron/plural.mjs';
+import { percent } from '../../electron/percent.mjs';
 
 export interface MoveTag {
   animation: string;
@@ -133,7 +134,7 @@ const triesLine = (variant: Variant) => `${variant.passes} of ${plural(variant.t
 
 export function arenaLine(evidence: ArenaEvidence): string {
   const worst = worstVariant(evidence);
-  const share = `at least ${Math.floor(evidence.lowerBound * 100)}%`;
+  const share = `at least ${percent(evidence.lowerBound, { down: true })}`;
 
   return worst ? `${triesLine(worst)}, ${share}` : share;
 }

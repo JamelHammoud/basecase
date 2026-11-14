@@ -16,6 +16,7 @@ export interface Rating {
   ratedEstimated: boolean;
   volts: number;
   rpm?: number;
+  peakNm?: number;
 }
 
 export interface LoadVerdict {

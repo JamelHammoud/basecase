@@ -32,6 +32,7 @@ interface BuildPanelProps {
   onOpenCase?: (id: string) => void;
   onNewCase?: () => void;
   onCalibrate?: (jointIds: string[]) => void;
+  onReplayFall?: (deg: number) => void;
   panScroll: boolean;
   guide: BuildGuide;
   readiness: ReadinessHandle;
@@ -60,6 +61,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   onOpenCase,
   onNewCase,
   onCalibrate,
+  onReplayFall,
   panScroll,
   guide,
   readiness,
@@ -111,6 +113,13 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
                     onSelectParts(ids);
 
                     if (fix?.kind === 'calibrate') onCalibrate(fix.joints);
+                  },
+                }),
+                ...(onReplayFall && {
+                  'replay-fall': ({ fix, ids }: ReadinessFinding) => {
+                    onSelectParts(ids);
+
+                    if (fix?.kind === 'replay-fall') onReplayFall(fix.deg);
                   },
                 }),
               },

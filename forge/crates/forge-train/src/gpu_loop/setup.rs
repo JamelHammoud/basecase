@@ -65,7 +65,12 @@ pub(super) fn worlds(start: &Start, task: &forge_ir::task::Task) -> Result<(Gpu,
     let mut physics = Physics::new(&robot.model, &robot.engine, &robot.layout, (start.envs, 1))?;
     let mut rngs: Vec<Rng> = (0..start.envs).map(|i| Rng::new(start.env_seed, i as u64)).collect();
 
-    randomize(&mut physics, (robot.nu, &robot.job.options.ranges), &mut rngs)?;
+    randomize(
+        &mut physics,
+        (robot.nu, &robot.job.options.ranges),
+        &robot.job.options.servo_gains,
+        &mut rngs,
+    )?;
 
     for sim in 0..start.envs {
         physics.row(sim).copy_from_slice(&robot.start_row);

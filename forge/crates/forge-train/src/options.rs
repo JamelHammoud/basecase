@@ -1,4 +1,5 @@
 use crate::randomize::{self, Ranges};
+use crate::servo_gains::{self, ServoGains};
 use crate::start_states::{self, StartState};
 use forge_ir::task::Reference;
 use serde_json::Value;
@@ -32,6 +33,7 @@ pub struct TaskOptions {
     pub reference: Option<Reference>,
     pub start_states: Vec<StartState>,
     pub ranges: Ranges,
+    pub servo_gains: ServoGains,
 }
 
 impl Default for TaskOptions {
@@ -53,6 +55,7 @@ impl Default for TaskOptions {
             reference: None,
             start_states: Vec::new(),
             ranges: Ranges::default(),
+            servo_gains: Vec::new(),
         }
     }
 }
@@ -230,6 +233,7 @@ pub fn parse(root: &Value) -> Result<TaskOptions, String> {
         reference: reference(root)?,
         start_states: start_states::parse(root)?,
         ranges: randomize::parse(root)?,
+        servo_gains: servo_gains::parse(root)?,
     })
 }
 

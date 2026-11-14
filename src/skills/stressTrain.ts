@@ -18,7 +18,7 @@ export const FORGE_RANGES: Readonly<Record<'friction' | 'mass' | 'strength', Ran
 const MAX_DELAY_STEPS = 8;
 const LOG_STD_MIN = -2.5;
 
-const KEY: Record<StressAxis, keyof Randomization> = {
+const KEY: Record<StressAxis, Exclude<keyof Randomization, 'servos'>> = {
   friction: 'friction',
   mass: 'mass',
   strength: 'strength',

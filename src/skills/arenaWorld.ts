@@ -1,10 +1,11 @@
 import type { MainModule } from '@mujoco/mujoco';
-import { ConditionedPhysics, type Conditions } from '../sim/conditions';
+import { ConditionedPhysics, type Conditions, type ServoScale } from '../sim/conditions';
 import { SimEngine, type Controller } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotPoseState } from '../types/robotics';
-import type { Range } from './environment';
+import type { Range, ServoSpread } from './environment';
 import { sha256Hex } from './hash';
+import { drawServos, type ServoDraw } from './servoDraws';
 import type { Random } from '../utils/seededRandom';
 
 export { seededRandom, type Random } from '../utils/seededRandom';
@@ -17,12 +18,14 @@ export interface ArenaRanges {
   jointNoiseDeg: number;
   baseYawDeg: number;
   baseOffsetMm: number;
+  servos?: ServoSpread[];
 }
 
 export interface Instance extends Conditions {
   jointNoise: number[];
   yawDeg: number;
   offsetMm: [number, number];
+  servos?: Record<string, ServoDraw>;
 }
 
 const toHex = (bytes: Uint8Array) => [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -44,6 +47,7 @@ export function drawInstance(random: Random, options: { ranges: ArenaRanges; bod
     jointNoise: Array.from({ length: joints }, () => symmetric(random, ranges.jointNoiseDeg)),
     yawDeg: symmetric(random, ranges.baseYawDeg),
     offsetMm: [symmetric(random, ranges.baseOffsetMm), symmetric(random, ranges.baseOffsetMm)],
+    servos: drawServos(ranges.servos, random),
   } satisfies Instance;
 }
 
@@ -83,6 +87,7 @@ export class ArenaWorld {
   readonly engine: SimEngine;
   private mj: MainModule;
   private physics: ConditionedPhysics;
+  private slots: Map<string, Omit<ServoScale, 'draw'>>;
 
   constructor(mj: MainModule, model: SimModel) {
     this.mj = mj;
@@ -90,6 +95,21 @@ export class ArenaWorld {
     this.engine = new SimEngine(this.physics.module, model);
     this.engine.model.opt.disableflags |= mj.mjtDisableBit.mjDSBL_AUTORESET.value;
     this.physics.attach(this.engine.model);
+    this.slots = new Map(
+      this.engine.sim.joints.map((j) => {
+        const id = mj.mj_name2id(this.engine.model, mj.mjtObj.mjOBJ_JOINT.value, j.name);
+
+        return [j.id, { actuator: j.actuator, dof: this.engine.model.jnt_dofadr[id] }];
+      }),
+    );
+  }
+
+  private servoScales(instance: Instance): ServoScale[] {
+    return Object.entries(instance.servos ?? {}).flatMap(([joint, draw]) => {
+      const slot = this.slots.get(joint);
+
+      return slot ? [{ ...slot, draw }] : [];
+    });
   }
 
   private turn(robot: string, yawDeg: number) {
@@ -114,7 +134,7 @@ export class ArenaWorld {
     const { engine } = this;
 
     engine.setController({ kind: 'hold' });
-    this.physics.apply(engine.model, engine.data, instance);
+    this.physics.apply(engine.model, engine.data, instance, this.servoScales(instance));
     engine.setController(controller);
     engine.reset(startPose(engine.sim.joints, { base: start, instance, robot }));
     this.turn(robot, instance.yawDeg);

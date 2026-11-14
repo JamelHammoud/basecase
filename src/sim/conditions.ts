@@ -1,4 +1,5 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
+import type { DYNAMICS_TERMS } from './servoModel';
 
 export interface Conditions {
   friction: number;
@@ -14,12 +15,31 @@ export interface LiveConditions {
   latencyMs: number;
 }
 
+export interface ServoScale {
+  actuator: number;
+  dof: number;
+  draw: Record<(typeof DYNAMICS_TERMS)[number], number>;
+}
+
 interface Delay {
   steps: number;
   history: Float64Array[];
 }
 
-const SNAPSHOT = ['geom_friction', 'body_mass', 'body_inertia', 'actuator_forcerange'] as const;
+const SNAPSHOT = [
+  'geom_friction',
+  'body_mass',
+  'body_inertia',
+  'actuator_forcerange',
+  'actuator_gainprm',
+  'actuator_biasprm',
+  'actuator_delay',
+  'dof_damping',
+  'dof_armature',
+  'dof_frictionloss',
+] as const;
+
+const GAIN_WIDTH = 10;
 
 type Baseline = Record<(typeof SNAPSHOT)[number], Float64Array>;
 
@@ -44,6 +64,19 @@ const ratio = (now: ArrayLike<number>, base: Float64Array, stride = 1) => {
 
   return 1;
 };
+
+function scaleServo(model: MjModel, { actuator: a, dof, draw }: ServoScale) {
+  const forcerange = model.actuator_forcerange as Float64Array;
+
+  (model.actuator_gainprm as Float64Array)[a * GAIN_WIDTH] *= draw.kp;
+  (model.actuator_biasprm as Float64Array)[a * GAIN_WIDTH + 1] *= draw.kp;
+  forcerange[2 * a] *= draw.forceNm;
+  forcerange[2 * a + 1] *= draw.forceNm;
+  (model.actuator_delay as Float64Array)[a] *= draw.delayS;
+  (model.dof_damping as Float64Array)[dof] *= draw.damping;
+  (model.dof_armature as Float64Array)[dof] *= draw.armature;
+  (model.dof_frictionloss as Float64Array)[dof] *= draw.frictionloss;
+}
 
 const liveConditions = (c: LiveConditions): Conditions => ({ ...c, masses: [c.mass] });
 
@@ -73,7 +106,7 @@ export class ConditionedPhysics {
     for (const field of SNAPSHOT) (model[field] as Float64Array).set(this.baseline![field]);
   }
 
-  apply(model: MjModel, data: MjData, conditions: Conditions) {
+  apply(model: MjModel, data: MjData, conditions: Conditions, servos: readonly ServoScale[] = []) {
     const friction = model.geom_friction as Float64Array;
     const forcerange = model.actuator_forcerange as Float64Array;
 
@@ -90,6 +123,8 @@ export class ConditionedPhysics {
     }
 
     for (let i = 0; i < forcerange.length; i++) forcerange[i] *= conditions.strength;
+
+    for (const servo of servos) scaleServo(model, servo);
 
     this.mj.mj_setConst(model, data);
     this.delay.steps = Math.round(conditions.latencyMs / 1000 / this.dt);

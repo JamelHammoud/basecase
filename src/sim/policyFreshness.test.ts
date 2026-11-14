@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BAM_STS3215_7V4 } from '../data/servoFits';
 import { calibratedInput } from '../reality/calibratedInput';
-import { activeCalibrations } from '../reality/history';
+import { simCalibrations } from '../reality/history';
 import { withCalibration, withRollBack } from '../reality/projectCalibrations';
 import type { ServoCalibration } from '../reality/types';
 import { DEFAULT_PROJECT, type ProjectSettings, type RobotPoseState, type ScenePart } from '../types/robotics';
@@ -54,7 +54,7 @@ function model({ parts, project }: Scene, pose?: RobotPoseState) {
     partTriangles: fixtureTriangles(parts),
   };
 
-  return buildMjcf(calibratedInput(input, activeCalibrations(project.servoCalibrations)));
+  return buildMjcf(calibratedInput(input, simCalibrations(project.servoCalibrations)));
 }
 
 const fingerprint = (scene: Scene, pose?: RobotPoseState) => model(scene, pose).robots[0].fingerprint;

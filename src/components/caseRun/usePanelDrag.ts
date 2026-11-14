@@ -12,6 +12,8 @@ export interface PanelDrag {
 
 interface Press {
   panel: PanelSpec;
+  handle: HTMLElement;
+  pointer: number;
   x: number;
   y: number;
   moving: boolean;
@@ -53,6 +55,9 @@ export function usePanelDrag(caseConsole: CaseConsole, onDrop: (id: string, drop
     const press = pressRef.current;
 
     pressRef.current = null;
+
+    if (press?.handle.hasPointerCapture(press.pointer)) press.handle.releasePointerCapture(press.pointer);
+
     setPressing(false);
     setDrag(null);
     document.body.style.cursor = '';
@@ -65,6 +70,7 @@ export function usePanelDrag(caseConsole: CaseConsole, onDrop: (id: string, drop
 
     const move = (e: PointerEvent) => moved(e);
     const up = () => ended(true);
+    const lost = () => ended(false);
     const key = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
 
@@ -75,21 +81,32 @@ export function usePanelDrag(caseConsole: CaseConsole, onDrop: (id: string, drop
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
+    window.addEventListener('lostpointercapture', lost);
     window.addEventListener('keydown', key, true);
 
     return () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
+      window.removeEventListener('lostpointercapture', lost);
       window.removeEventListener('keydown', key, true);
     };
   }, [pressing]);
 
   const start = (e: React.PointerEvent<HTMLElement>, panel: PanelSpec) => {
-    if (e.button !== 0 || !grabsPanel(e, e.currentTarget, panel.title !== undefined)) return;
+    if (e.button !== 0 || !grabsPanel(e, e.currentTarget, panel)) return;
 
     e.preventDefault();
-    pressRef.current = { panel, x: e.clientX, y: e.clientY, moving: false, drop: null };
+    e.currentTarget.setPointerCapture(e.pointerId);
+    pressRef.current = {
+      panel,
+      handle: e.currentTarget,
+      pointer: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      moving: false,
+      drop: null,
+    };
     setPressing(true);
   };
 

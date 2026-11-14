@@ -1,4 +1,5 @@
 import type { PanelDrop } from '../../cases/console/layoutEdits';
+import type { PanelSpec } from '../../cases/console/panelKinds';
 
 export const COLUMN_EDGE = 32;
 
@@ -7,12 +8,14 @@ const HANDLE_BARE = 12;
 
 const INTERACTIVE = 'button, input, select, textarea, a, canvas, iframe, [role=slider], [role=separator]';
 
-export function grabsPanel(e: { target: EventTarget; clientY: number }, wrapper: HTMLElement, titled: boolean) {
+const tallHandle = (panel: PanelSpec) => panel.title !== undefined || (panel.kind === 'list' && panel.of === 'tries');
+
+export function grabsPanel(e: { target: EventTarget; clientY: number }, wrapper: HTMLElement, panel: PanelSpec) {
   const target = e.target as Element;
 
   if (target.closest(INTERACTIVE)) return false;
 
-  return e.clientY - wrapper.getBoundingClientRect().top <= (titled ? HANDLE_TITLED : HANDLE_BARE);
+  return e.clientY - wrapper.getBoundingClientRect().top <= (tallHandle(panel) ? HANDLE_TITLED : HANDLE_BARE);
 }
 
 const shown = (el: Element) => (el as HTMLElement).offsetHeight > 0;

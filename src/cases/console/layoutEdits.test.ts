@@ -12,6 +12,7 @@ import {
   movedPanel,
   removedPanel,
   renamedPanel,
+  TITLE_MAX,
   resizedArea,
 } from './layoutEdits';
 import { panelName } from './panelNames';
@@ -116,6 +117,9 @@ describe('arranging a console by hand', () => {
     expect(gone.panels.map((p) => p.id)).not.toContain('cameras');
     expect(areaPanels(gone)).toEqual(['canvas', ['brief', 'failures', 'servos', 'tries', 'plot']]);
     expect(saved(renamedPanel(plotted, 'plot', 'Arm')).console!.panels.at(-1)!.title).toBe('Arm');
+    expect(saved(renamedPanel(plotted, 'plot', 'x'.repeat(5000))).console!.panels.at(-1)!.title).toHaveLength(
+      TITLE_MAX,
+    );
   });
 
   it('refuses an edit that breaks the format with its path, as the agent’s replies do', () => {

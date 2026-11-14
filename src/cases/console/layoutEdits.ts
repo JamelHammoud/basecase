@@ -19,6 +19,8 @@ export type NewPanel = { kind: Exclude<PanelKind, 'code'>; title?: string } & Re
 
 const LEAVING = '\u0000leaving';
 
+export const TITLE_MAX = 80;
+
 export const snappedSize = (size: number) => Math.round(Math.min(AREA_MAX, Math.max(AREA_MIN, size)));
 
 function marked(areas: ConsoleArea[], id: string): ConsoleArea[] {
@@ -70,7 +72,7 @@ export const resizedArea = (c: CaseConsole, area: number, size: number): CaseCon
 
 export const renamedPanel = (c: CaseConsole, id: string, title: string): CaseConsole => ({
   ...c,
-  panels: c.panels.map((p) => (p.id === id ? { ...p, title } : p)),
+  panels: c.panels.map((p) => (p.id === id ? { ...p, title: title.slice(0, TITLE_MAX) } : p)),
 });
 
 export const removedPanel = (c: CaseConsole, id: string): CaseConsole => ({

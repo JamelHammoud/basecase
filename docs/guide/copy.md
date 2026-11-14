@@ -65,6 +65,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
 17. **Same word everywhere for the same thing:**
     - Parts are added, models are inserted, scenes are opened (in a tab) and closed, comments are posted, prices are added and checked.
     - Part types are **Solid / Cutout / Guide**.
+    - A robot with no battery runs on a **power supply** (“The 12 V 10 A power supply”), never a tether or a cable supply, the word its DC Power Supply line in the BOM uses. Only the code says tether.
     - One verb per action, in buttons, menu items, ⌘K, the app menu, confirmations, toasts and help articles. A toast uses its past tense (Deleted, Stopped). `basecase/copy` fails a label that starts with a synonym listed in [`tools/copy/glossary.mjs`](../../tools/copy/glossary.mjs) and names the word to use, so a new row goes there and here together. Train stays right elsewhere, so the Teach row needs a reader.
 
       | Action | Word | Not |
@@ -84,6 +85,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
       | Make an out-of-date build guide again | Update | Regenerate |
       | Describe a new skill for the agent to train; Train runs training on a skill row | Teach | — |
       | A recording of a robot, whatever made it (a Case, a real robot, Multiply) | Try | Recordings, Episode, Rollout, Demonstration |
+    - An action offered in several places has its ⌘K name in each: a button's tooltip, a menu item, an empty state's button and an icon's `aria-label` (Save to Library in the Library's + menu, Comment on the Inspector's Comments +, Open Build Guide on the guide's cover), never a second name for the same thing (Save Selection, Add comment).
     - A duplicate is named the way Finder names one: “Bracket copy”, then “Bracket copy 2”, skipping names already taken, through `copyName` (`src/workspace/helpers.ts`). That holds for a part, a group, a scene or tab, and a Library model; a pasted part keeps its name, and several duplicated parts keep theirs while their group is renamed.
 18. **Icon-first.** Our own icons (`src/design-system`, §14) with custom tooltips (the `Tooltip` primitive), never native `title` on buttons. There's no third-party icon set.
     - When the library has nothing that reads clearly, draw a new icon with the `icon-design` skill (`.agents/skills/icon-design/SKILL.md`): 24 grid, 2px round strokes, an outline/filled pair for anything that toggles, previewed beside its neighbors before shipping.

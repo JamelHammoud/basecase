@@ -32,11 +32,11 @@ Keep a part or a group of parts in the Library, so you can drop it into any scen
 1. Select the parts you want to keep.
 2. Click **Library** in the view rail on the left.
 3. Click **+** at the top right of the Library.
-4. Choose **Save Selection**.
+4. Choose **Save to Library**.
 
 ![The New Model menu open at the top right of the Library](/help/save-a-model-to-the-library/new-model-menu.png)
 
-A single part is saved under its own name, with its **Notes**, and several parts under the scene's name. To keep every visible part in the scene instead, choose **Save Whole Scene**. You can also right-click a part, or press [[⌘K]], and choose **Save to Library**.
+A single part is saved under its own name, with its **Notes**, and several parts under the scene's name. To keep every visible part in the scene instead, choose **Save Whole Scene**. **Save to Library** is also in a part's right-click menu and in [[⌘K]].
 
 ## Use a saved model
 

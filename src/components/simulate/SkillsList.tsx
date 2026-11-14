@@ -1,11 +1,10 @@
 import React from 'react';
-import { Button, IconButton, RefreshIcon, RunIcon, StopIcon, TrainIcon } from '../../design-system';
+import { Button, IconButton, ProgressBar, RefreshIcon, RunIcon, StopIcon, TrainIcon } from '../../design-system';
 import { signalFigure, signalNumber } from '../../skills/coachSignals';
 import type { CoachTag } from '../../skills/skillRecords';
 import type { SkillRow } from '../../skills/skillRows';
 import { snapshotRefs, type SnapshotRef } from '../../skills/snapshots';
 import { fmtMargin, trainingLine } from './format';
-import { ProgressBar } from './ProgressBar';
 
 export interface SkillActions {
   onTrain: (row: SkillRow) => void;
@@ -119,13 +118,15 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
         >
           <div className="flex items-center gap-2 min-h-[32px]">
             <div className="flex-1 min-w-0">
-              <div className="text-[13px] text-white/85 truncate">{row.label}</div>
+              <div className="text-[13px] text-white/90 truncate">{row.label}</div>
               {lines.map((line) => (
                 <div key={line} className="text-[12px] text-white/50 tabular truncate">
                   {line}
                 </div>
               ))}
-              {row.state.kind === 'training' && row.state.share !== null && <ProgressBar share={row.state.share} />}
+              {row.state.kind === 'training' && row.state.share !== null && (
+                <ProgressBar className="mt-1.5" share={row.state.share} />
+              )}
             </div>
             {shown !== null && (
               <span className="text-[12px] text-white/60 tabular" data-testid="watch-margin">

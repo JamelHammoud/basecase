@@ -24,9 +24,9 @@ covers:
   - electron/phone/phonePage.mjs
 ---
 
-Steer a rover, a walking robot or an arm in the simulation by tilting your phone, with a touch pad and two buttons on its screen.
+You can steer a rover, a walking robot or an arm in the simulation by tilting your phone. The page on your phone has a touch pad and two buttons too.
 
-Pairing works in the desktop app, with a robot in the scene and the phone on the same network as the computer. The web studio can't open a network socket, so it doesn't offer it.
+Pairing works in the desktop app. You need a robot in the scene, and your phone needs to be on the same network as your computer. The web studio can't open a network socket, so it doesn't offer pairing.
 
 1. Press [[⌘K]].
 2. Choose **Pair Phone**.
@@ -37,20 +37,20 @@ Pairing works in the desktop app, with a robot in the scene and the phone on the
 
 ![The pairing code over the canvas](/help/drive-a-robot-with-your-phone/code.png)
 
-4. On the phone, open the link.
-5. Continue past the warning that the connection isn't private.
+4. On your phone, open the link.
+5. Continue past the warning that says the connection isn't private.
 
 ![The phone's page: Tilt to drive, a touch pad, and the A and B buttons](/help/drive-a-robot-with-your-phone/phone.png)
 
 6. Tap the page once.
 7. On an iPhone, allow access to motion and orientation.
-8. On the computer, click **Simulate** at the top of the right panel.
+8. On your computer, click **Simulate** at the top of the right panel.
 9. In **Control**, click **Drive**.
-10. Tilt the top of the phone down to go forward, and its left edge down to turn left.
+10. To go forward, tilt the top of the phone down. To turn left, tilt its left edge down.
 
-The phone warns because Basecase makes a new certificate for each pairing, so no browser knows it. The code on the computer closes once the phone connects.
+Your phone shows the warning because Basecase makes a new certificate for each pairing, so no browser recognizes it. The code on your computer goes away as soon as your phone connects.
 
-When you're done, press [[⌘K]] and choose **Unpair Phone**. Press [[Esc]] while the code shows to stop pairing. A pairing nobody joins ends after 5 minutes.
+When you're done, press [[⌘K]] and choose **Unpair Phone**. To stop pairing while the code is showing, press [[Esc]]. If no phone connects within 5 minutes, the pairing ends.
 
 ## What each input does
 
@@ -62,6 +62,8 @@ When you're done, press [[⌘K]] and choose **Unpair Phone**. Press [[Esc]] whil
 | Touch pad, up and down | | | Raise and lower the hand |
 | A | | | Close the gripper |
 
-A phone held within 4° of level counts as still, and a 25° tilt is full speed. If the phone locks or the page closes, the robot stops within half a second. Closing the page also ends the pairing.
+The phone counts as still when you hold it within 4° of level. A tilt of 25° is full speed. If the phone locks or the page closes, the robot stops within half a second. Closing the page also ends the pairing.
 
-A connected phone takes over from a gamepad and the keys while it's tilted. Each press of A or B is also an event named `phone` with the value `a` or `b`, which a Case's logic can react to, as in [Build a routine](/help/build-a-routine).
+While a connected phone is tilted, it takes over from a gamepad and the keys.
+
+Each press of A or B also counts as an event named `phone` with the value `a` or `b`. A Case's logic can react to these events, as in [Build a routine](/help/build-a-routine).

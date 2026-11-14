@@ -20,7 +20,8 @@ const propertyName = (node) => {
 
 const TEXTS = {
   Literal: (node) => (typeof node.value === 'string' ? [{ node, text: node.value }] : []),
-  TemplateLiteral: (node) => node.quasis.map((q) => ({ node: q, text: q.value.cooked ?? '' })),
+  TemplateLiteral: (node) =>
+    node.quasis.map((q, index) => ({ node: q, text: q.value.cooked ?? '', afterValue: index > 0 })),
   ConditionalExpression: (node) => [...textsOf(node.consequent), ...textsOf(node.alternate)],
   LogicalExpression: (node) => [...textsOf(node.left), ...textsOf(node.right)],
   BinaryExpression: (node) => (node.operator === '+' ? [...textsOf(node.left), ...textsOf(node.right)] : []),
@@ -52,7 +53,7 @@ export default {
     type: 'suggestion',
     docs: {
       description:
-        'Disallow words and separators the copy guide bans (§3c), synonyms of its glossary (§3b-17), British spellings (§3b-20), straight apostrophes (§3b-21) and placeholders that give instructions (§3b-11) in user-facing strings',
+        'Disallow words and separators the copy guide bans (§3c), synonyms of its glossary (§3b-17), British spellings (§3b-20), straight apostrophes (§3b-21), hyphens for minus signs (§3b-22), negatives written out in full (§3b-24) and placeholders that give instructions (§3b-11) in user-facing strings',
     },
     messages: {
       banned: 'Copy ({{section}}): “{{word}}” is banned. {{fix}}',
@@ -64,8 +65,8 @@ export default {
     const reported = new Set();
 
     const check = (entries) => {
-      for (const { node, text } of entries) {
-        const hit = !reported.has(node) && findBannedCopy(text);
+      for (const { node, text, afterValue } of entries) {
+        const hit = !reported.has(node) && findBannedCopy(text, { afterValue });
 
         if (!hit) continue;
 

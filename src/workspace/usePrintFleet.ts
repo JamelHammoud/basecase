@@ -6,7 +6,7 @@ import { printBridge, type PrinterStatus } from '../print/printBridge';
 import { printRecordFor, withRecord } from '../print/tracker';
 import type { PrintRecord, ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
-import { shapeKey } from '../utils/printReport';
+import { shapeKey } from '../print/shapeKey';
 import type { ShowToast } from './types';
 import type { PrintJob } from './usePrintJob';
 import { reportsStatus, usePrintStatus } from './usePrintStatus';

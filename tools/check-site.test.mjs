@@ -59,11 +59,15 @@ describe('lintSite', () => {
     ).toEqual([]);
   });
 
-  it('fails long sentences, long paragraphs and a long first paragraph in changelog entries', () => {
-    const entry = page('title: Old\ndate: 2026-11-01', `${TOO_LONG}\n\nA. B. C. D. E. F.`);
+  it('fails semicolons, em dashes, long paragraphs and a long first paragraph in changelog entries, not long sentences', () => {
+    const entry = page(
+      'title: Old\ndate: 2026-11-01',
+      `${TOO_LONG}\n\nA. B. C. D. E. F.\n\nOne thing; another — and a third.`,
+    );
 
     expect(lint({ 'site/content/changelog/2026-11-01-old.md': entry })).toEqual([
-      'site/content/changelog/2026-11-01-old.md:6: a sentence of 26 words; split it (§3f): “One two three four five six seven eight nine ten eleven twel…”',
+      'site/content/changelog/2026-11-01-old.md:10: a semicolon: end the sentence or join it with a word (§3f)',
+      'site/content/changelog/2026-11-01-old.md:10: an em dash: use a comma, a full stop or parentheses (§3f)',
       'site/content/changelog/2026-11-01-old.md:8: a paragraph of 6 sentences; keep it to 5 (§3f)',
     ]);
     expect(
@@ -110,6 +114,18 @@ describe('lintSite', () => {
     ]);
   });
 
+  it('fails a negative written out in full in prose and titles, but not in code or front-matter keywords', () => {
+    const help = page(
+      'title: When a print does not start\ndate: 2026-11-12\nkeywords:\n  - cannot',
+      "Do not start a print with anything on the bed. It won't start when `is not` shows.",
+    );
+
+    expect(lint({ 'site/content/help/import-a-mesh.md': help })).toEqual([
+      'site/content/help/import-a-mesh.md:1: write “does not” as “doesn’t” (§3b-24)',
+      'site/content/help/import-a-mesh.md:8: write “Do not” as “Don’t” (§3b-24)',
+    ]);
+  });
+
   it('fails a blog sentence copied from a changelog entry', () => {
     const sentence = 'The token stays in the main process, encrypted on disk.';
     const entry = page('title: Hub\ndate: 2026-11-01', `You can publish.\n\n${sentence}`);
@@ -135,7 +151,9 @@ describe('lintSite', () => {
       'site/content/help/x.md:1: the title has 66 characters; keep it to 65',
     ]);
   });
+});
 
+describe('key caps and labels', () => {
   it('fails a help key outside a key cap, and Windows keys written by hand', () => {
     const help = (body) => ({ 'site/content/help/x.md': page('title: Open a scene\ndate: 2026-11-12', body) });
 
@@ -186,6 +204,18 @@ describe('menu paths', () => {
         ),
         ['/help/x/p.png'],
       ),
+    ).toEqual([]);
+  });
+
+  it('fails a menu path joined by an arrow, but not a quoted message, a key cap or a change in numbers', () => {
+    const help = (body) => ({ 'site/content/help/x.md': page('title: Open a scene\ndate: 2026-11-12', body) });
+    const problem =
+      'site/content/help/x.md:6: join the labels of a menu path with ▸, **Settings** ▸ **Accounts** (§3f)';
+
+    expect(lint(help('1. Open **Settings** → **Accounts**.'))).toEqual([problem]);
+    expect(lint(help('1. On the printer, open Settings > Network.'))).toEqual([problem]);
+    expect(
+      lint(help('## “It’s on the printer: Settings → Device.”\n\nPress [[→]] to go on, from 130 → 119 mm.')),
     ).toEqual([]);
   });
 });

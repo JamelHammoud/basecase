@@ -1,5 +1,6 @@
 import type { RobotJoint } from '../types/robotics';
 import { jointLabel } from './engineeringFormat';
+import { negative } from '../../electron/minus.mjs';
 import { plural } from '../../electron/plural.mjs';
 import type { CheckContext, CheckRow } from './engineeringTypes';
 import { angle } from './angle';
@@ -8,7 +9,9 @@ const SLACK_DEG = 0.5;
 
 const sorted = (r: [number, number]): [number, number] => [Math.min(...r), Math.max(...r)];
 
-const millimeters = (v: number) => `${v < 0 ? '−' : ''}${Math.abs(Math.round(v))} mm`;
+const whole = (v: number) => String(Math.round(v));
+
+const millimeters = (v: number) => `${negative(v, whole)} mm`;
 
 const show = (j: RobotJoint, [lo, hi]: [number, number]) => {
   const fmt = j.type === 'prismatic' ? millimeters : angle;

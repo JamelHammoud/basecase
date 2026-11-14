@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, FolderOpenIcon, IconButton, Section, settleTilt, tiltToward } from '../../design-system';
+import { Button, FolderOpenIcon, IconButton, ProgressBar, Section, settleTilt, tiltToward } from '../../design-system';
 import type { GuidePages } from '../../guide/viewer/guidePages';
 import type { BuildGuideRecord } from '../../types/robotics';
 import { platformBridge } from '../../utils/platformBridge';
@@ -67,12 +67,7 @@ const Progress: React.FC<{ progress: GuideRunProgress; onStop: () => void }> = (
     <div className="text-[12.5px] mt-0.5 text-white/50 tabular-nums truncate">
       {timeLeft(progress.secondsLeft) || ' '}
     </div>
-    <div className="mt-2 h-1.5 rounded-full bg-white/[0.07] overflow-hidden" aria-label="Guide progress">
-      <div
-        className="h-full rounded-full bg-[#0d99ff] transition-[width] duration-200"
-        style={{ width: `${Math.round(progress.share * 100)}%` }}
-      />
-    </div>
+    <ProgressBar className="mt-2" share={progress.share} label="Guide progress" />
     <div className="flex gap-2 mt-2.5">
       <Button size="sm" variant="secondary" onClick={onStop}>
         Stop

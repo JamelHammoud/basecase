@@ -76,7 +76,7 @@ interface FindingRowProps {
 
 const FindingText: React.FC<FindingRowProps & { muted?: boolean }> = ({ finding, context, muted, children }) => (
   <div className="min-w-0 flex-1">
-    <p className={`text-[13px] leading-[18px] ${muted ? 'text-white/65' : 'text-white/85'}`}>{finding.text}</p>
+    <p className={`text-[13px] leading-[18px] ${muted ? 'text-white/60' : 'text-white/90'}`}>{finding.text}</p>
     {finding.detail && <p className="text-[12px] leading-[16px] text-white/50">{finding.detail}</p>}
     <PartLinks
       ids={finding.ids}

@@ -1,9 +1,10 @@
+import { findLongForms } from '../copy/contraction.mjs';
 import { missingLabels } from '../copy/labels.mjs';
+import { arrowPathIn } from '../copy/menuPath.mjs';
 import { findBritish } from '../copy/spelling.mjs';
 import { SITE_BANNED, VAGUE_ALT, VAGUE_LINK_TEXT } from './banned.mjs';
 import { IMAGE, KEYS, LINK, plainText, prose, sentencesOf, wordCount } from './blocks.mjs';
 
-export const MAX_SENTENCE_WORDS = 25;
 export const MAX_PARAGRAPH_SENTENCES = 5;
 export const MAX_SUMMARY_SENTENCES = 2;
 export const MAX_TITLE_CHARS = 65;
@@ -15,15 +16,17 @@ const PAGE_LINK = /^\/(changelog|blog|help)\/([^/#?]+)/;
 
 const problem = (line, message) => ({ line, message });
 
-export function sentenceLength(page) {
-  return prose(page.blocks).flatMap((block) =>
-    sentencesOf(block.text)
-      .map((sentence) => ({ sentence, words: wordCount(sentence) }))
-      .filter(({ words }) => words > MAX_SENTENCE_WORDS)
-      .map(({ sentence, words }) =>
-        problem(block.line, `a sentence of ${words} words; split it (§3f): “${sentence.slice(0, 60)}…”`),
-      ),
-  );
+const PUNCTUATION = [
+  [';', 'a semicolon: end the sentence or join it with a word'],
+  ['—', 'an em dash: use a comma, a full stop or parentheses'],
+];
+
+export function punctuation(page) {
+  return prose(page.blocks).flatMap((block) => {
+    const text = plainText(block.text).replace(/`[^`]*`/g, '');
+
+    return PUNCTUATION.filter(([mark]) => text.includes(mark)).map(([, what]) => problem(block.line, `${what} (§3f)`));
+  });
 }
 
 export function paragraphLength(page) {
@@ -64,6 +67,14 @@ export function spelling(page) {
     findBritish(readText(text)).map(({ word, use }) =>
       problem(line, `“${word}” is British; spell it “${use}” (§3b-20)`),
     ),
+  );
+}
+
+export function contractions(page) {
+  const lines = [{ line: 1, text: String(page.data.title ?? '') }, ...page.blocks];
+
+  return lines.flatMap(({ line, text }) =>
+    findLongForms(readText(text)).map(({ word, use }) => problem(line, `write “${word}” as “${use}” (§3b-24)`)),
   );
 }
 
@@ -199,10 +210,21 @@ const plainSegment = (text) =>
       .replace(BOLD_LABEL, (_, label) => (label.includes('▸') ? '▸' : LABEL)),
   );
 
+const ARROW_PATH = 'join the labels of a menu path with ▸, **Settings** ▸ **Accounts** (§3f)';
+const BOLD_PATH = 'write each label in a menu path in bold, **File** ▸ **Import** (§3f)';
+
+function pathProblem(text) {
+  if (arrowPathIn(keyText(text).replace(QUOTED, ''))) return ARROW_PATH;
+
+  return plainSegment(text) ? BOLD_PATH : null;
+}
+
 export function menuPaths(page) {
   return page.blocks
-    .filter((block) => block.kind !== 'image' && plainSegment(block.text))
-    .map((block) => problem(block.line, 'write each label in a menu path in bold, **File** ▸ **Import** (§3f)'));
+    .filter((block) => block.kind !== 'image')
+    .map((block) => ({ line: block.line, found: pathProblem(block.text) }))
+    .filter(({ found }) => found)
+    .map(({ line, found }) => problem(line, found));
 }
 
 export const uiLabels = (page, site) => (site.labels ? missingLabels(page.source, site.labels) : []);

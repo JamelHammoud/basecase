@@ -84,7 +84,7 @@ Frames are 25 a second: every second frame of the try's 50 Hz recording. Joints 
 | Camera | Where it looks from |
 |---|---|
 | `scene` | A fixed view of the robot and the Case's world from the front three-quarters, 60° wide |
-| One per camera part | The camera's lens, moving with the part it's on; named from the part, such as `wrist_camera` for Wrist Camera |
+| One per camera part | The camera's lens, moving with the part it's on. Named from the part, such as `wrist_camera` for Wrist Camera |
 
 Camera parts are the ones under **Cameras** and **Depth Cameras** in Parts. A fisheye lens records as a fisheye. Every video is 640 × 480, encoded as H.264, or VP9 or AV1 where H.264 isn't available, with a key frame each second.
 

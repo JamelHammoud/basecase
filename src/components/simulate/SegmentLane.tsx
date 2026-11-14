@@ -37,8 +37,8 @@ const SegmentBlock: React.FC<SegmentBlockProps> = ({ segment, frames, selected, 
       <span
         className={`flex h-full min-w-0 items-center rounded-[6px] px-1.5 text-[12px] transition-colors ${
           selected
-            ? 'bg-[#0d99ff]/25 text-white/95 ring-1 ring-inset ring-[#0d99ff]/70'
-            : 'bg-white/[0.08] text-white/70 hover:bg-white/[0.12]'
+            ? 'bg-[#0d99ff]/25 text-white ring-1 ring-inset ring-[#0d99ff]/70'
+            : 'bg-white/[0.08] text-white/60 hover:bg-white/[0.12]'
         }`}
       >
         <span className="truncate">{segment.label}</span>
@@ -49,7 +49,7 @@ const SegmentBlock: React.FC<SegmentBlockProps> = ({ segment, frames, selected, 
 
 const Focus: React.FC<{ segment: TrySegment | undefined }> = ({ segment }) => (
   <div className="w-[112px] shrink-0 flex flex-col gap-0.5 min-w-0">
-    <span className="text-[13px] text-white/85 truncate">{segment?.label}</span>
+    <span className="text-[13px] text-white/90 truncate">{segment?.label}</span>
     {!!segment?.tags?.length && (
       <span className="text-[12px] text-white/50 truncate" data-testid="segment-tags">
         {segment.tags.join(', ')}

@@ -20,14 +20,14 @@ covers:
   - src/workspace/exchangeCommands.tsx
 ---
 
-Turn a .basecase file someone sent you into a scene of your own, with its parts, joints and comments.
+You can open a `.basecase` file someone sent you as a scene of your own. The scene keeps its parts, joints and comments.
 
 1. Press [[⌘K]].
 2. Choose **Open Scene File**.
-3. Pick the `.basecase` file.
+3. Select the `.basecase` file.
 
-The scene opens in a new tab, or in the front tab if that's a blank scene you haven't touched. It's saved to your **Scenes** menu as a new scene, so opening the same file twice makes two copies.
+The scene opens in a new tab. If the front tab is a blank scene you haven't touched, the scene opens there instead. Basecase saves it to your **Scenes** menu as a new scene, so opening the same file twice gives you two copies.
 
-It's also **File** ▸ **Open Scene File**, or drop the file on the canvas. Double-clicking a `.basecase` file in Finder or File Explorer doesn't open it in Basecase.
+You can also choose **File** ▸ **Open Scene File**, or drop the file on the canvas. Double-clicking a `.basecase` file in Finder or File Explorer doesn't open it in Basecase.
 
 If the file won't open, see [Scene file doesn't open](/help/troubleshoot-scene-files).

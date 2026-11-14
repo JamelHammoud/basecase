@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { designLabel, sameDesign, type ExploredDesign } from '../../cases/explore';
-import { Button, ChevronDownIcon, ChevronUpIcon, RowActions, Tooltip } from '../../design-system';
+import { Button, ChevronDownIcon, ChevronUpIcon, ProgressBar, RowActions, Tooltip } from '../../design-system';
 import { weight } from '../../utils/weight';
 import { useMoney } from '../../utils/useMoney';
 import type { CaseExplore, Exploration } from '../../workspace/useCaseExplore';
-import { ProgressBar } from './ProgressBar';
 import { sortRows, type SortKey, type Sorting } from '../../cases/exploreSort';
 
 const GRID = 'grid grid-cols-[minmax(0,1fr)_auto_64px_56px] items-center gap-x-3';
@@ -26,7 +25,7 @@ const SortHeader: React.FC<{ sorting: Sorting; onSort: (key: SortKey) => void }>
         <button
           key={key}
           type="button"
-          className={`flex items-center justify-end gap-0.5 cursor-default hover:text-white/85 ${on ? 'text-white/85' : ''}`}
+          className={`flex items-center justify-end gap-0.5 cursor-default hover:text-white/90 ${on ? 'text-white/90' : ''}`}
           aria-pressed={on}
           onClick={() => onSort(key)}
         >
@@ -57,10 +56,10 @@ const ExploreRow: React.FC<RowProps> = ({ row, label, current, onApply }) => {
       data-current={current}
     >
       <Tooltip label={label} className="min-w-0">
-        <span className={`block truncate ${current ? 'text-[#0d99ff]' : 'text-white/85'}`}>{label}</span>
+        <span className={`block truncate ${current ? 'text-[#0d99ff]' : 'text-white/90'}`}>{label}</span>
       </Tooltip>
       <Tooltip label={runs.refusal} disabled={!runs.refusal} className="min-w-0">
-        <span className="block max-w-[96px] truncate tabular text-white/70" data-testid="explore-passes">
+        <span className="block max-w-[96px] truncate tabular text-white/60" data-testid="explore-passes">
           {passes}
         </span>
       </Tooltip>
@@ -101,7 +100,7 @@ export const ExploreRows: React.FC<{ explore: CaseExplore; sceneName: string }> 
           onApply={() => explore.apply(row)}
         />
       ))}
-      {shown.running && <ProgressBar share={shown.rows.length / Math.max(1, shown.total)} />}
+      {shown.running && <ProgressBar className="mt-1.5" share={shown.rows.length / Math.max(1, shown.total)} />}
     </div>
   );
 };

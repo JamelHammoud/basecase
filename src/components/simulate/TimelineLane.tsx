@@ -3,6 +3,7 @@ import { TracePlot, type Trace } from '../../design-system';
 import type { TimelineLane as Lane } from '../../cases/timelineLanes';
 import { angleReading } from '../../utils/angle';
 import { torque } from '../../utils/torque';
+import { negative } from '../../../electron/minus.mjs';
 
 interface TimelineLaneProps {
   lane: Lane;
@@ -16,12 +17,14 @@ interface TimelineLaneProps {
 const PLOT = 28;
 
 const reading = (v: number, format: (v: number) => string) => (Number.isFinite(v) ? format(v) : '');
-const millimeters = (v: number) => `${v.toFixed(1)} mm`;
+const tenths = (v: number) => v.toFixed(1);
+const hundredths = (v: number) => v.toFixed(2);
+const millimeters = (v: number) => `${negative(v, tenths)} mm`;
 
 function effortText(lane: Lane, v: number): string {
   if (!Number.isFinite(v)) return '';
 
-  return lane.unit === 'mm' ? `${v.toFixed(2)} N` : torque(v);
+  return lane.unit === 'mm' ? `${negative(v, hundredths)} N` : torque(v);
 }
 
 export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, markers, onSeek, onSelect }) => {
@@ -40,7 +43,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, m
       onPointerDown={onSelect}
     >
       <div className="w-[112px] shrink-0 flex flex-col gap-0.5 min-w-0">
-        <span className="text-[13px] text-white/85 truncate">{name}</span>
+        <span className="text-[13px] text-white/90 truncate">{name}</span>
         <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.position[frame], position)}</span>
         <span className="text-[12px] text-white/50 tabular truncate">{effortText(lane, lane.effort[frame])}</span>
       </div>

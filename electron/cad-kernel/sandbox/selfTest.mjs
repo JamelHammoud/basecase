@@ -64,7 +64,7 @@ export async function kernelSelfTest(kernel, { outFile, probeFile }) {
   }
 
   const probe = await render(kernel, 'replicad', probeCode(pathToFileURL(probeFile).href));
-  const reached = /REACHED:(.*)/.exec(probe.error ?? '')?.[1] ?? 'the probe did not run';
+  const reached = /REACHED:(.*)/.exec(probe.error ?? '')?.[1] ?? 'the probe didn’t run';
   const step = await exportedStep(kernel);
   const passed = parts.every((p) => p.ok && p.volume === BOX_VOLUME) && reached === '' && step.ok;
 

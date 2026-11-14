@@ -146,7 +146,7 @@ export class AgentBridge {
 
   ask({ kind, payload, timeoutMs, workspaceId, toolUseId }) {
     if (this.events.size === 0) {
-      return Promise.reject(new Error('The app window is not open.'));
+      return Promise.reject(new Error('The app window isn’t open.'));
     }
 
     const requestId = newRequestId();
@@ -154,7 +154,7 @@ export class AgentBridge {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(requestId);
-        reject(new Error(`The app did not answer "${kind}" in time.`));
+        reject(new Error(`The app didn’t answer "${kind}" in time.`));
       }, timeoutMs);
 
       const event = { type: 'agent-request', requestId, kind, payload, workspaceId, toolUseId };

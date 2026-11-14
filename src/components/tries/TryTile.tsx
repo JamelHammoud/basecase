@@ -81,7 +81,7 @@ export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPi
         <div className="text-[13px] font-medium text-white/90 truncate">{summary.caseName}</div>
         <div className="flex items-center gap-2 text-[12.5px]">
           {outcome && (
-            <span data-verdict={verdict} className={verdict === 'passed' ? 'text-white/85' : 'text-[#f87171]'}>
+            <span data-verdict={verdict} className={verdict === 'passed' ? 'text-white/90' : 'text-red-400'}>
               {outcome}
             </span>
           )}

@@ -32,7 +32,7 @@ function IfFields({ node, routine, apply, update }: FieldProps) {
   if (!isBooleanLeaf(test)) {
     return (
       <FieldRow label="When">
-        <span className="text-[13px] text-white/80">{describeCondition(test)}</span>
+        <span className="text-[13px] text-white/90">{describeCondition(test)}</span>
       </FieldRow>
     );
   }

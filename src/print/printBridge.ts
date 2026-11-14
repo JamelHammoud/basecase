@@ -1,5 +1,6 @@
 import type { ConnectionKind, MyPrinter, SlicerKind } from '../data/printers';
 import type { PrintMaterial } from '../types/robotics';
+import type { QuoteReply } from './serviceQuotes';
 import { bytesToBase64 } from '../utils/base64';
 import { channelCall } from '../utils/platform/channelCall';
 import { electron } from '../utils/platform/transport';
@@ -79,8 +80,23 @@ export interface SliceRecord {
   plates: SlicedPlate[];
 }
 
+export interface ServiceStatus {
+  name: string;
+  hasKey: boolean;
+}
+
+export interface QuoteShape {
+  part: string;
+  name: string;
+  material: PrintMaterial;
+  copies: number;
+  stl: Uint8Array;
+}
+
 const forHttp = (payload: unknown) => {
-  const job = payload as Partial<JobPayload> | undefined;
+  const job = payload as Partial<JobPayload> & { shapes?: QuoteShape[] };
+
+  if (job?.shapes) return { shapes: job.shapes.map((s) => ({ ...s, stl: bytesToBase64(s.stl) })) };
 
   if (!job?.groups) return payload;
 
@@ -97,6 +113,26 @@ function asTools(value: unknown): PrintToolsStatus {
 
   return { slicers: asList(v.slicers), downloads: v.downloads ?? {}, bambuConnect: !!v.bambuConnect };
 }
+
+const asService = (value: unknown): ServiceStatus => {
+  const v = (value ?? {}) as Partial<ServiceStatus>;
+
+  return { name: String(v.name ?? ''), hasKey: !!v.hasKey };
+};
+
+const asReplies = (value: unknown): QuoteReply[] =>
+  asList<QuoteReply>((value as { replies?: unknown } | null)?.replies).filter(
+    (r) =>
+      typeof r?.part === 'string' &&
+      (r.usd === undefined || (Number.isFinite(r.usd) && r.usd >= 0)) &&
+      (r.refusal === undefined || typeof r.refusal === 'string'),
+  );
+
+const asQuoted = (value: unknown) => {
+  const error = (value as { error?: unknown } | null)?.error;
+
+  return { replies: asReplies(value), error: typeof error === 'string' ? error : undefined };
+};
 
 const asSlice = (value: unknown): SliceRecord | null =>
   value && Array.isArray((value as SliceRecord).plates) ? (value as SliceRecord) : null;
@@ -132,4 +168,7 @@ export const printBridge = {
   }) => call<{ started: boolean; message: string }>('print:send', payload),
   reveal: (jobId: string) => call<boolean>('print:reveal', jobId),
   openLink: (url: string) => call<boolean>('print:open-link', url),
+  service: async () => asService(await call('print:service')),
+  setServiceKey: async (key: string) => asService(await call('print:set-service-key', key)),
+  quote: async (shapes: QuoteShape[]) => asQuoted(await call('print:quote', { shapes })),
 };

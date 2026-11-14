@@ -118,7 +118,7 @@ export function PanelTabs<T extends string>({ tabs, value, onChange, label }: Pa
               className={`h-[32px] shrink-0 whitespace-nowrap rounded-[8px] flex items-center gap-1.5 text-[13px] font-medium cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
                 tab.menu ? 'pl-[10px] pr-[11px]' : 'px-[10px]'
               } ${
-                selected ? 'bg-white/[0.08] text-white/90' : 'text-white/50 hover:text-white/75 hover:bg-white/[0.04]'
+                selected ? 'bg-white/[0.08] text-white/90' : 'text-white/50 hover:text-white/90 hover:bg-white/[0.04]'
               }`}
             >
               {tab.indicator}
@@ -183,7 +183,7 @@ function TabWithMenu<T extends string>({
             <span className="min-w-0 overflow-hidden flex">
               <ChevronDownIcon
                 className={`ml-[4px] w-3.5 h-3.5 shrink-0 opacity-0 -translate-x-[6px] transition-[opacity,translate,rotate] duration-[180ms] ease-[cubic-bezier(0.2,0,0,1)] group-hover/tab:opacity-100 group-hover/tab:translate-x-0 group-[.is-shown]/tab:opacity-100 group-[.is-shown]/tab:translate-x-0 ${
-                  open ? 'rotate-180 text-white/90' : 'text-white/55'
+                  open ? 'rotate-180 text-white/90' : 'text-white/60'
                 }`}
                 strokeWidth={2.75}
               />

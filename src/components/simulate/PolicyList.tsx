@@ -1,9 +1,8 @@
 import React from 'react';
-import { Badge, IconButton, StopIcon } from '../../design-system';
+import { Badge, IconButton, ProgressBar, StopIcon } from '../../design-system';
 import type { Training } from '../../sim/useTraining';
 import type { PolicyRecord } from '../../types/robotics';
 import { fmtSteps, trainingLine } from './format';
-import { ProgressBar } from './ProgressBar';
 import { percent } from '../../../electron/percent.mjs';
 
 const share = (training: Training) => {
@@ -21,7 +20,7 @@ const Retraining: React.FC<{ training: Training }> = ({ training }) => {
   return (
     <>
       {line && <div className="text-[12px] text-white/50 tabular truncate">{line}</div>}
-      {done !== null && <ProgressBar share={done} />}
+      {done !== null && <ProgressBar className="mt-1.5" share={done} />}
     </>
   );
 };
@@ -52,7 +51,7 @@ const PolicyRow: React.FC<PolicyActions & { policy: PolicyRecord; training: Trai
       <div className="flex-1 min-w-0">
         <button
           type="button"
-          className="w-full h-[32px] text-left text-[13px] text-white/85 truncate cursor-default"
+          className="w-full h-[32px] text-left text-[13px] text-white/90 truncate cursor-default"
           onClick={() => onChoose(policy.id)}
         >
           {policy.name}

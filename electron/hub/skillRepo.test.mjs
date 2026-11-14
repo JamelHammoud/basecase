@@ -141,7 +141,7 @@ describe('downloading a skill', () => {
     });
 
     await expect(account().skillFiles({ owner: 'tester', repo: 'huge' })).rejects.toThrow(
-      'skill.json is larger than 34 MB',
+      'skill.json is larger than 32 MB',
     );
   });
 

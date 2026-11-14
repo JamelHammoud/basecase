@@ -1,3 +1,5 @@
+import { MB } from '../fileSize.mjs';
+
 export const SKILL_DOWNLOADS = Object.freeze([
   'skill.json',
   'policy.json',
@@ -7,4 +9,4 @@ export const SKILL_DOWNLOADS = Object.freeze([
   'robot.json',
 ]);
 
-export const SKILL_FILE_BYTES = 32 * 1024 * 1024;
+export const SKILL_FILE_BYTES = 32 * MB;

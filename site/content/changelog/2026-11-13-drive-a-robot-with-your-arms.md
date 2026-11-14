@@ -6,10 +6,24 @@ image: /changelog/drive-a-robot-with-your-arms/cover.png
 
 You can now drive a humanoid's arms, or a fixed robot arm, by moving your own in front of your computer's camera. It works in the simulation.
 
-Drive with Camera is in the Simulate tab's Control section, and in ⌘K. Collecting arm demonstrations for a humanoid meant keyframing poses or a separate motion capture setup. Now you raise your arm and the robot raises its arm, and a Case try records it as a demonstration.
+Open Drive with Camera from the Control section of the Simulate tab, or from ⌘K. The camera's tile shows up beside the canvas, with your skeleton on top of the picture.
 
-The camera's tile shows beside the canvas with your skeleton drawn over it. A humanoid's arms, waist and head follow yours, each joint at most 240° a second and inside its limits. Its legs stay still. Without a Walk skill its base is held in place; with one, the keys still walk it. A fixed arm's hand follows your right hand, and pinching your left fingers closes its gripper.
+Until now, collecting arm demonstrations for a humanoid meant keyframing poses or a separate motion capture setup. Now you raise your arm and the robot raises its arm. Drive it during a Case try, and the try records the motion as a demonstration.
 
-Pose estimation runs on your computer, and the camera's picture is never saved or sent anywhere. Press Esc to stop, and the camera turns off.
+## Humanoids
 
-Steps are in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
+A humanoid's arms, waist and head follow yours, with each joint moving at most 240° a second and staying inside its limits. The legs stay still.
+
+If the robot has no Walk skill, its base stays in place. If it has one, you still walk it with the keys.
+
+## Fixed Arms
+
+A fixed arm's hand follows your right hand. Pinch the fingers of your left hand to close its gripper.
+
+## On Your Computer
+
+Pose estimation runs on your computer, and the camera's picture is never saved or sent anywhere.
+
+Press Esc to stop, and the camera turns off.
+
+Read [Drive a robot with your camera](/help/drive-a-robot-with-your-camera) in the help center for the steps.

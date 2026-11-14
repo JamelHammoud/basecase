@@ -6,7 +6,7 @@ import type { DataLayerInput } from '../../dataLayers/store';
 import type { MatTrackOverlay } from './matTrack';
 import type { RobotGhost } from '../../robot/robotGhost';
 import type { FixedCamera } from '../../cameras/fixed';
-import type { PlateFilesInput, ThreeMfResult } from '../analysis/analysisOps';
+import type { PlateFilesInput, StlItem, ThreeMfResult } from '../analysis/analysisOps';
 import type { FitCoupon, FitCouponTask } from '../analysis/fitCoupons';
 import type { MeshData } from '../../print/threeMf';
 import type * as THREE from 'three';
@@ -207,6 +207,7 @@ export interface Viewport3DHandle {
   ) => Promise<Record<string, ShapeReport>>;
   printMeshes: (ids: string[]) => Promise<Record<string, MeshData>>;
   printThreeMf: (plates: PlateFilesInput) => Promise<ThreeMfResult>;
+  printStl: (items: StlItem[]) => Promise<Record<string, Uint8Array>>;
   fitCoupons: (task: FitCouponTask) => Promise<FitCoupon[]>;
   exportStl: () => Promise<Uint8Array>;
   exportUsdz: () => Promise<Uint8Array>;

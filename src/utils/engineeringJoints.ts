@@ -216,7 +216,7 @@ function rangeDetail(designed: Item[], published: Item[], slides: number): strin
   const unswept = slides ? `; ${plural(slides, 'slide')} not swept` : '';
 
   if (designed.length)
-    return `${plural(designed.length, 'joint end')} hit another part before the end of the range${unswept}`;
+    return `Another part stops ${plural(designed.length, 'joint end')} before the end of the range${unswept}`;
 
   if (published.length)
     return `The maker’s limits are motor limits: another part stops ${plural(published.length, 'joint end')} first, with the rest of the robot in its home pose${unswept}`;

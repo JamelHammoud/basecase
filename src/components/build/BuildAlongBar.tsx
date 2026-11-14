@@ -12,7 +12,7 @@ import {
 import type { BuildAlong } from '../../workspace/useBuildAlong';
 import { useBuildAlongKeys } from '../../workspace/useBuildAlongKeys';
 
-const chip = 'glass rounded-full h-[28px] px-3.5 flex items-center text-[13px] text-white/85 tabular-nums whitespace-nowrap';
+const chip = 'glass rounded-full h-[28px] px-3.5 flex items-center text-[13px] text-white/90 tabular-nums whitespace-nowrap';
 
 interface BuildAlongBarProps {
   buildAlong: BuildAlong;

@@ -110,8 +110,8 @@ function checkGuard(c: Checker, step: Record_, path: string, depth: number) {
 const MOTION_RANGES: Record<string, { min: number; max: number; message: string }> = {
   distance: { min: 0.01, max: 100, message: 'Drive between 0.01 and 100 m.' },
   speed: { min: 0.01, max: 2, message: 'Drive between 0.01 and 2 m/s.' },
-  heading: { min: -180, max: 180, message: 'Head between -180° and 180°.' },
-  turn: { min: -1080, max: 1080, message: 'Turn between -1080° and 1080°.' },
+  heading: { min: -180, max: 180, message: 'Head between −180° and 180°.' },
+  turn: { min: -1080, max: 1080, message: 'Turn between −1080° and 1080°.' },
 };
 
 function checkMotion(c: Checker, move: unknown, path: string) {
@@ -289,7 +289,7 @@ export type Validated = { ok: true; routine: Routine } | { ok: false; errors: Ro
 
 export function validateRoutine(input: unknown): Validated {
   if (!isRecord(input)) {
-    return { ok: false, errors: [{ code: 'not-a-routine', message: 'This is not a Routine.' }] };
+    return { ok: false, errors: [{ code: 'not-a-routine', message: 'This isn’t a Routine.' }] };
   }
 
   if (input.schema !== SCHEMA) {

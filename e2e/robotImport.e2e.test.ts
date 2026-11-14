@@ -77,7 +77,7 @@ afterAll(async () => {
 });
 
 describe('robot import', () => {
-  it('opens Import Robot with a zip dropped on the canvas and inserts it', async () => {
+  it('inserts a zip dropped on the canvas at once, without a sheet', async () => {
     const zip = Buffer.from(deskArmZip()).toString('base64');
     const before = await jointCount();
 
@@ -95,12 +95,8 @@ describe('robot import', () => {
       }
     }, zip);
 
-    const sheet = app.page.getByRole('dialog', { name: 'Import Robot' });
-
-    await sheet.getByText('desk_arm.zip').waitFor();
-    await sheet.getByRole('button', { name: 'Import', exact: true }).click();
-
     await expect.poll(jointCount, { timeout: 30000 }).toBe(before + 2);
+    expect(await app.page.getByRole('dialog', { name: 'Import Robot' }).count()).toBe(0);
   });
 
   it('imports a fusion2urdf xacro package from Choose Folder', async () => {

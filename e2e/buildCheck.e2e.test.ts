@@ -267,6 +267,9 @@ describe('Build tab fields', () => {
     const bom = section(/^Bill of materials/);
     const budget = bom.getByRole('textbox', { name: /^Budget in / });
 
+    await loadKnees(app.page);
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+    await expect.poll(() => budget.isVisible(), { timeout: 15000 }).toBe(true);
     await budget.fill('100000');
     await budget.press('Enter');
     await expect.poll(async () => (await bom.textContent()) ?? '', { timeout: 10000 }).toMatch(/ left/);

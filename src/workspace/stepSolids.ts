@@ -2,9 +2,10 @@ import * as THREE from 'three';
 import { hasDeformers } from '../three/partMesh/context';
 import { meshScale } from '../three/partMesh/creased';
 import type { PartDimensions, PartKind, ScenePart } from '../types/robotics';
+import { partEdges, tubeRadii } from '../utils/partEdges';
 import type { BooleanRecipe, RecipePart, StepSolid } from '../types/step';
 
-export type ExactSource = RecipePart & Partial<Pick<ScenePart, 'deformers' | 'sculptMesh' | 'boolean'>>;
+export type ExactSource = RecipePart & Partial<Pick<ScenePart, 'deformers' | 'edges' | 'sculptMesh' | 'boolean'>>;
 
 const SAME_MM = 0.01;
 const SAME_SCALE = 1e-3;
@@ -38,9 +39,9 @@ export const moved = (matrix: THREE.Matrix4, solid: StepSolid): StepSolid => ({
 const upright = (solid: StepSolid) => moved(UPRIGHT, solid);
 const column = (radii: [number, number], height: number) => upright({ type: 'cylinder', radii, height });
 
-function tube({ width, height, depth, thickness = 4 }: PartDimensions): StepSolid | null {
-  const outer = Math.min(width, depth) / 2;
-  const inner = Math.max(1, outer - Math.min(thickness, outer * 0.75));
+function tube(d: PartDimensions): StepSolid | null {
+  const { outer, inner } = tubeRadii(d);
+  const { height } = d;
 
   if (inner >= outer) return null;
 
@@ -137,7 +138,7 @@ function booleanSolid(part: ExactSource, csg: BooleanRecipe): StepSolid | null {
 }
 
 export function exactSolid(part: ExactSource): StepSolid | null {
-  if (hasDeformers(part)) return null;
+  if (hasDeformers(part) || partEdges(part)) return null;
 
   if (part.kind === 'boolean')
     return part.boolean ? cutSolid(placement(part).invert(), part.boolean.op, part.boolean.operands) : null;

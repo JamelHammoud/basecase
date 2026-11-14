@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { box } from '../src/sim/fixtures/parts';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -385,5 +387,33 @@ describe('studio import', () => {
       ['Post', 'mesh'],
     ]);
     expect(app.errors).toEqual([]);
+  });
+});
+
+interface PlacingStudio {
+  load: (record: unknown) => void;
+  sceneRecord: () => { parts: Array<{ position: number[] }> };
+}
+
+describe('placing parts', () => {
+  it('centers a part on the origin from the context menu', async () => {
+    const xz = () =>
+      app.page.evaluate(() => {
+        const [part] = (window as unknown as { __studio: PlacingStudio }).__studio.sceneRecord().parts;
+
+        return [part.position[0], part.position[2]];
+      });
+
+    await app.page.evaluate((record) => (window as unknown as { __studio: PlacingStudio }).__studio.load(record), {
+      name: 'Centering',
+      parts: [box('bracket', [40, 10, 30], [20, 20, 20], 10)],
+      project: DEFAULT_PROJECT,
+    });
+    await expect.poll(() => partCount(app.page)).toBe(1);
+    await clickRail('Layers');
+    await app.page.locator(visible('li'), { hasText: 'bracket' }).first().click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Center on Origin' }).click();
+
+    await expect.poll(xz).toEqual([0, 0]);
   });
 });

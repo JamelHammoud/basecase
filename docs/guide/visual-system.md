@@ -13,7 +13,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 - **Control sizes** (minimums, checked on every view by the Stage 7 rehearsal, §0k):
   - Inputs, selects, segmented controls, tabs, menu items and any button with text: at least 32px. `Button` is 32px at `xs` and `sm`, 36px at `md`.
   - Icon-only buttons: at least 28px (`IconButton` `xs`); 32px `sm` is the default, 36px `md`, 44px `lg` (the bottom toolbar, with 22px icons). A small visual (a switch track, a tab's ×) sits inside a 28px hit box.
-  - Write control heights in px (`h-[32px]`), never rem steps: the root font size is 14px, so Tailwind's `h-8` is only 28px and `h-7` 24.5px.
+  - Write control heights in px (`h-[32px]`), never rem steps: the root font size is 14px, so Tailwind's `h-8` is only 28px and `h-7` 24.5px. `controlHeights.test.ts` fails `h-7` to `h-9` (with `min-`, `max-` or `size-`) anywhere in `src/`, since that's where a rem step hides a control under 32px. Clickable rows count as controls: Layers, poses, policies, joints, Peak torque and the agent's subagent rows are 32px. Comment pins are 32px too, which their 16px corners were drawn for.
 - **Radius ladder (concentric):**
   - Inputs and buttons: 8px.
   - Menus and popovers: 14px.

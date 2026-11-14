@@ -16,12 +16,15 @@ keywords:
   - code panel
   - joystick
   - HUD
+  - movable
 related:
   - try-a-case
   - make-a-case
   - share-a-robot-as-a-link
 covers:
   - src/cases/console/
+  - src/cases/worldSet.ts
+  - src/sim/worldMoves.ts
   - src/sim/inputSources.ts
   - src/workspace/useCaseRun.ts
   - src/workspace/useConsoleSignals.ts
@@ -65,12 +68,20 @@ A console that lists `camera` among its inputs opens the computer's camera when 
 
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 
-A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. Esc and [[⌘K]] still work while you use it. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
+A console can also hold the Case's own code: up to 4 panels, each a small web page, in a column or over the canvas. One can draw a joystick that drives the robot, another a readout of its speed over the canvas. Esc and [[⌘K]] still work while you use it. While a Case runs, **Undo** at the top right undoes only changes to the code panels, so the robot stays as it is. Outside a panel and a text field, [[⌘Z]] does the same, and [[⌘I]] shows the **Agent** tab beside the Case. A panel over the canvas lets your clicks through to the robot unless it's made to take them.
 
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
 
+A code panel can also change the Case's world while it runs. It can move, light or hide an object the Case marks as movable, such as a target that pops up or a wall that opens. To get one, tell the agent which object should move when it makes the Case. Each change is kept on the try, so a replay shows the same world.
+
+It can watch the Scene view, a camera view you placed or one of the robot's cameras at up to 640 × 480 and 15 frames a second. It can't see through your computer's camera.
+
+![A rover Case running, with a code panel showing the Scene camera and the target its code moved and lit red](/help/run-a-case/world.png)
+
 A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
 
-A link made with **Share Robot** opens the same console in the browser, as in [Share a robot as a link](/help/share-a-robot-as-a-link). Camera panels, the servos table and the tries stay in the studio.
+The agent can write these panels and change them while the Case runs. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
+
+A link made with **Share Robot** opens the same console in the browser, as in [Share a robot as a link](/help/share-a-robot-as-a-link). Camera panels, the servos table and the tries stay in the studio. In the browser, code panels get no camera frames.
 
 Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Multiply** and the dataset ones.

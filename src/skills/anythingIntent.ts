@@ -61,7 +61,7 @@ export async function specProblems(spec: TaskSpec, facts: BodyFacts): Promise<st
 
     return spec.intent.length ? [] : ['The intent has no keyframes.'];
   } catch (error) {
-    return [`The contract can't be used: ${errorMessage(error)}`];
+    return [`The contract can’t be used: ${errorMessage(error)}`];
   }
 }
 

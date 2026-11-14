@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, type Dispatch, type SetStateAction } from 'react';
 import type { AcpStatusInfo, CustomModelDefinition, SavedSceneSummary } from '../types/robotics';
+import { withModel, withoutModel } from '../utils/modelList';
 import { platformBridge } from '../utils/platformBridge';
 import { sceneStore } from '../utils/sceneStore';
 
@@ -15,6 +16,10 @@ function appEventHandlers({ setAcpStatus, setCustomModels }: BackendEventTargets
   const applyModels = (event: BackendEvent) => {
     if (Array.isArray(event.models)) setCustomModels(event.models as CustomModelDefinition[]);
   };
+  const applyModel = ({ id, model }: BackendEvent) => {
+    if (model) setCustomModels((models) => withModel(models, model as CustomModelDefinition));
+    else if (typeof id === 'string') setCustomModels((models) => withoutModel(models, id));
+  };
   const applyScenes = (event: BackendEvent) => {
     if (Array.isArray(event.scenes)) sceneStore.set(event.scenes as SavedSceneSummary[]);
   };
@@ -26,7 +31,7 @@ function appEventHandlers({ setAcpStatus, setCustomModels }: BackendEventTargets
         if (event.status) setAcpStatus(event.status as AcpStatusInfo);
       },
     ],
-    ['library-models-changed', applyModels],
+    ['library-model-changed', applyModel],
     ['library-scenes-changed', applyScenes],
     [
       'acp-file-written',

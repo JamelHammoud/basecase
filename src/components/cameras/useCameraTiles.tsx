@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { enlargeCameraView, useCameraViewsState } from '../../cameras/cameraViewsStore';
 import { useCameraFeed } from '../../cameras/useCameraFeed';
 import { cameraViews, stripParts, type CameraView } from '../../cameras/views';
+import { cameraStream, type CameraStream } from '../../cameras/cameraStream';
 import { ContextMenu, type ContextMenuEntry } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import type { ScenePart } from '../../types/robotics';
@@ -22,7 +23,11 @@ export interface CameraTiles {
   views: CameraView[];
   tile: (view: CameraView) => Omit<CameraTileProps, 'fill'>;
   menu: React.ReactNode;
+  stream: CameraStream;
 }
+
+const shownWorld = (world: ScenePart[]) =>
+  world.some((p) => p.visible === false) ? world.filter((p) => p.visible !== false) : world;
 
 export function useCameraTiles(input: CameraTilesInput): CameraTiles {
   const { parts, sim, cameras, patchPart, active, onFrames } = input;
@@ -31,10 +36,10 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
   const [renaming, setRenaming] = useState<string | null>(null);
   const solid = stripParts(parts);
   const views = cameraViews(solid, sim.worldParts, cameras.cameras);
-  const canvasRef = useCameraFeed({
+  const feed = useCameraFeed({
     active: active(views),
     parts: solid,
-    world: sim.worldParts,
+    world: shownWorld(sim.worldParts),
     model: sim.model,
     views,
     enlarged,
@@ -62,10 +67,11 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
       large: enlarged === view.key,
       renaming: renaming === view.key,
       onRename: (name) => rename(view, name),
-      canvasRef: canvasRef(view.key),
+      canvasRef: feed.canvasRef(view.key),
       onToggleSize: () => enlargeCameraView(view.key),
       onMenu: (x, y) => setMenu({ x, y, items: cameraMenu(view, actions) }),
     }),
     menu: menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />,
+    stream: cameraStream({ views, feed: feed.stream }),
   };
 }

@@ -7,7 +7,7 @@ const timeoutError = (timeoutMs) =>
   `Rendering took longer than ${Math.round(timeoutMs / 1000)} s. Simplify the part (fewer booleans, lower $fn, fewer hull() pieces).`;
 
 export const startError = (reason) =>
-  `The CAD kernel sandbox couldn't start: ${reason}. Restart Basecase. Parts can't compile until it starts.`;
+  `The CAD kernel sandbox couldn’t start: ${reason}. Restart Basecase. Parts can’t compile until it starts.`;
 
 export const MAX_RESULT_BYTES = 64_000_000;
 

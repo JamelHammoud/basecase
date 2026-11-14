@@ -15,6 +15,7 @@ related:
   - design-a-robot-with-the-agent
   - attach-photos-files-and-sketches
   - make-a-case-pass-with-the-agent
+  - build-a-case-app-with-the-agent
 covers:
   - electron/cad-agent-prompt.mjs
   - electron/backend/promptBlocks.mjs
@@ -25,7 +26,7 @@ Give the agent a size, real parts and a photo, and the robot it builds lands muc
 
 ## Give it a size
 
-Without a size, the agent estimates one from your words and photos. “Open Duck Mini, 40 cm tall” anchors every part to the right scale from the first step. **Target height** in **Settings** ▸ **Agent** does the same for every request.
+Without a size, the agent estimates one from your words and photos. “Open Duck Mini, 40 cm tall” anchors every part to the right scale from the first step.
 
 ## Name the robot or show it
 
@@ -43,7 +44,7 @@ After the first design, short follow-ups work best: “Longer legs”, “Thicke
 
 ## Say how you want to drive it
 
-To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad, a phone, the computer's camera, your hand or face, MIDI and voice. Ask for a joystick, a piano or a readout over the robot, and the agent draws it as a code panel.
+To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad, a phone, the computer's camera, your hand or face, MIDI and voice. Ask for a joystick, a piano or a readout over the robot, and the agent draws it as a code panel. Ask for changes to it while the Case runs, one at a time, such as “Add a Spin button”.
 
 ## Ask about Checks instead of hiding them
 

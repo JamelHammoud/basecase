@@ -2,9 +2,9 @@ import type { Command } from '../components/CommandPalette';
 import {
   BotIcon,
   BrushIcon,
+  CheckIcon,
   CloseIcon,
   CommentIcon,
-  ComposeIcon,
   DeleteIcon,
   DuplicateIcon,
   EraserIcon,
@@ -13,7 +13,7 @@ import {
   MarkerIcon,
   MoveIcon,
   PenIcon,
-  PhotoAddIcon,
+  PlusIcon,
   PhotoIcon,
   PoseIcon,
   PrinterIcon,
@@ -83,7 +83,7 @@ function fileCommands({ core }: CommandInputs): Command[] {
       group: 'Scene',
       label: 'New Scene',
       shortcut: keyFor('new-scene'),
-      icon: <ComposeIcon className={ic} />,
+      icon: <PlusIcon className={ic} />,
       keywords: 'tab open',
       run: () => studio.newScene(),
     },
@@ -145,7 +145,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
       id: 'check-ready',
       group: 'Scene',
       label: 'Run Checks',
-      icon: <PrinterIcon className={ic} />,
+      icon: <CheckIcon className={ic} />,
       keywords: 'ready to build buildable audit blockers build check assemble case fit robot',
       run: () => {
         core.tool.setRightTab('build');
@@ -166,7 +166,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
 }
 
 function createCommands({ core, actions, ui }: CommandInputs): Command[] {
-  const { studio, tool } = core;
+  const { studio } = core;
 
   return [
     {
@@ -193,22 +193,6 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       icon: <PenIcon className={ic} />,
       keywords: 'draw extrude revolve outline face dimension constraint',
       run: core.sketching.open,
-    },
-    {
-      id: 'image',
-      group: 'Scene',
-      label: 'Model from Image',
-      icon: <PhotoAddIcon className={ic} />,
-      keywords: 'photo sketch agent ai',
-      run: tool.requestAttach,
-    },
-    {
-      id: 'agent-sketch',
-      group: 'Scene',
-      label: 'Sketch for Agent',
-      icon: <PenIcon className={ic} />,
-      keywords: 'draw drawing reference composer ai',
-      run: tool.requestSketch,
     },
   ];
 }

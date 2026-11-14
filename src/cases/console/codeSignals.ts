@@ -35,7 +35,7 @@ export interface SignalFeed {
   close: () => void;
 }
 
-const MAX_SUBSCRIPTIONS = 16;
+export const MAX_SUBSCRIPTIONS = 16;
 
 function refusalOf(scope: SignalScope, name: string): string | null {
   try {

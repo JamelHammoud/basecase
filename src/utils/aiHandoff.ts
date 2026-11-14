@@ -186,7 +186,7 @@ function hardwareBomLines(parts: ScenePart[]): string[] {
     ``,
     ...[...bom.entries()].sort().map(([name, count]) => `- ${count} × ${name}`),
     ``,
-    `Model clearance holes, counterbores, nut traps and insert holes from each hardware part's note (ISO 273 medium clearance + 0.2 mm for printing).`,
+    `Model clearance holes, counterbores, nut traps and insert holes from each hardware part’s note (ISO 273 medium clearance + 0.2 mm for printing).`,
   ];
 }
 

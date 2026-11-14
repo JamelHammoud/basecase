@@ -2,6 +2,7 @@ import { BOM_CATEGORIES, Bom, BomLine, FILAMENT_MARGIN, PriceStatus, STALE_DAYS,
 import { currencyNote, type Money, scaledEntry } from './currency';
 import { currentMoney } from './currencyStore';
 import { plural } from '../../electron/plural.mjs';
+import { weight } from './weight';
 
 const STATUS_LABEL: Record<PriceStatus, string> = { checked: 'Checked', stale: 'Stale', unchecked: 'Not checked' };
 const LINK_TYPE: Record<BomLine['urlKind'], string> = { product: 'Listing', search: 'Search', none: '' };
@@ -119,10 +120,10 @@ function markdownPrinted(bom: Bom): string[] {
     '| Part | Material | Size (mm) | Filament |',
     '|---|---|---|---:|',
     ...bom.printed.map(
-      (p) => `| ${p.name} | ${p.material} | ${p.size.map((v) => v.toFixed(0)).join(' × ')} | ${p.grams.toFixed(0)} g |`,
+      (p) => `| ${p.name} | ${p.material} | ${p.size.map((v) => v.toFixed(0)).join(' × ')} | ${weight(p.grams)} |`,
     ),
     '',
-    `Filament estimates assume 2 walls, 4 top/bottom layers and the project's infill; spools include estimated supports and a ${Math.round(FILAMENT_MARGIN * 100)}% margin for brims and reprints.`,
+    `Filament estimates assume 2 walls, 4 top/bottom layers and the project’s infill; spools include estimated supports and a ${Math.round(FILAMENT_MARGIN * 100)}% margin for brims and reprints.`,
     '',
   ];
 }
@@ -221,7 +222,7 @@ function textNotes(bom: Bom, names: Record<string, string>): string[] {
 export function bomText(bom: Bom, names: Record<string, string>, money: Money = currentMoney()): string {
   const out: string[] = [
     textSummary(bom.totals, money),
-    "Checked prices are the user's own Amazon listing checks; estimates are maker or distributor list prices. Never state or guess any other price.",
+    'Checked prices are the user’s own Amazon listing checks; estimates are maker or distributor list prices. Never state or guess any other price.',
     ...currencyNote(money),
   ];
 

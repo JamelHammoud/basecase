@@ -38,7 +38,7 @@ Sculpt is off until you turn it on in Settings.
 4. Under **Add clay**, click **Sphere**, **Block**, **Capsule** or **Cylinder**.
 5. Under **Brush**, choose **Inflate**, **Carve**, **Grab**, **Flatten**, **Smooth** or **Pinch**.
 6. Drag on the part to sculpt it.
-7. Click **Done** to go back to **Move**.
+7. Click **Done**, or press [[Esc]], to go back to **Move**.
 
 To sculpt a part already in the scene, select it instead of adding clay. Hold [[⌥]] while you drag to swap **Inflate** and **Carve**. [[C]] picks Sculpt once it's on.
 

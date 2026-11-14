@@ -79,6 +79,16 @@ describe('specToPart and applySpec', () => {
       }),
     ]).toMatchSnapshot();
   });
+
+  it('rounds a primitive’s edges, clamped to its size, reports them, and makes them sharp again', () => {
+    const plate = specToPart({ id: 'plate', size: [40, 20, 10] });
+    const rounded = applySpec(plate, { id: 'plate', edges: { kind: 'fillet', mm: 8 } });
+
+    expect(rounded.edges).toEqual({ kind: 'fillet', mm: 4.9 });
+    expect(snapshotScene([rounded]).parts[0].edges).toEqual({ kind: 'fillet', mm: 4.9 });
+    expect(applySpec(rounded, { id: 'plate', edges: null }).edges).toBeUndefined();
+    expect(specToPart({ id: 'ball', shape: 'sphere', edges: { kind: 'chamfer', mm: 2 } }).edges).toBeUndefined();
+  });
 });
 
 describe('scene ops', () => {

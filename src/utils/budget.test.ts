@@ -40,8 +40,8 @@ describe('budget', () => {
   it('compares the list-price estimate with the budget', () => {
     const bom = buildBom({ parts, project: withBudget(500), purchases: {}, measures: {} });
 
-    expect(bom.totals).toMatchObject({ pricedUsd: 0, estimatedUsd: 608.17, overBudget: true });
-    expect(budgetLine(bom)).toBe('BOM ≈ $608 of $500 (actuators $444), $108 over');
+    expect(bom.totals).toMatchObject({ pricedUsd: 0, estimatedUsd: 604.18, overBudget: true });
+    expect(budgetLine(bom)).toBe('BOM ≈ $604 of $500 (actuators $444), $104 over');
   });
 
   it('fails verify_design over budget and warns above 90%', () => {
@@ -49,7 +49,7 @@ describe('budget', () => {
     expect(budgetOf(650).status).toBe('warn');
     expect(budgetOf(1000)).toMatchObject({
       status: 'pass',
-      detail: expect.stringContaining('BOM ≈ $608 of $1,000 (actuators $444)'),
+      detail: expect.stringContaining('BOM ≈ $604 of $1,000 (actuators $444)'),
     });
   });
 
@@ -59,7 +59,7 @@ describe('budget', () => {
     expect(budgetPlan(600, bom).map((p) => [p.cls, Math.round(p.capUsd), Math.round(p.spentUsd), p.over])).toEqual([
       ['actuators', 360, 444, true],
       ['compute', 90, 110, true],
-      ['power', 60, 4, false],
+      ['power', 60, 0, false],
     ]);
     expect(budgetPlanText(600, bom)).toContain('Plan broken: actuators $444 > $360; compute $110 > $90.');
   });

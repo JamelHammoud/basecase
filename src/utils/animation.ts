@@ -133,7 +133,7 @@ function setKeyframeValues(run: KeyframeRun, k: KeyframeSpec, values: JointValue
 
     const c = clampJoint(j, v);
 
-    if (Math.abs(c - v) > 0.01) run.notes.push(`${id} at ${k.t}s: ${v} is past its range, held at ${roundTo(c)}`);
+    if (Math.abs(c - v) > 0.01) run.notes.push(`${id} at ${k.t} s: ${v} is past its range, held at ${roundTo(c)}`);
 
     values[id] = c;
     run.animated.add(id);

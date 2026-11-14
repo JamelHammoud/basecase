@@ -63,9 +63,9 @@ When the robot lacks what the Case needs, point at the row's note and click **Ne
 
 ## Results
 
-Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
+Tries are listed worst first, so the misses to look at are on top. A replay shows what the Case's code moved, lit or hid during the try. To delete a try, right-click it and choose **Delete**, then confirm.
 
-A passed try's menu also has **Multiply**, which makes up to 50 varied passing tries from it. Its row counts them, such as **50 generated**, and deleting the try deletes them too. Steps are in [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
+A passed try's menu also has **Multiply**, which makes up to 50 varied passing tries from it. Its row counts them, such as **50 variations**, and deleting the try deletes them too. Steps are in [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 
 While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) puts its rows there too, under any comparison.
 

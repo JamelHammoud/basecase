@@ -33,7 +33,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `find_in_scene` | Finds parts by words, group, kind, region or nearness |
 | `get_part_code` | Reads a modeled part's code |
 | `add_parts` | Adds block-out shapes and real catalog parts |
-| `update_parts` | Moves, recolors, renames, regroups or re-notes parts |
+| `update_parts` | Moves, resizes, recolors, renames, regroups or re-notes parts, and rounds or bevels their edges |
 | `delete_parts` | Removes parts |
 | `mirror_parts` | Makes mirrored copies for left and right sides |
 | `find_parts` | Searches the catalog of real parts, with sizes and prices |
@@ -56,7 +56,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `check_scene` | Finds parts that overlap, float or sit below the floor |
 | `check_assembly` | Checks the robot can be put together and serviced, and lists printed parts that could print as one |
 | `craft_review` | Flags parts that look plain or unfinished |
-| `verify_design` | Runs the engineering checks: pass, warn or fail |
+| `verify_design` | Runs the engineering checks: pass, warn or fail. It ends with what plugs where |
 | `get_readiness` | Reads the Build tab's verdict |
 | `dispute_finding` | Records why a blocker might be wrong |
 | `get_guide` | Opens one of the agent's design guides |
@@ -114,7 +114,10 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |
-| `create_case` | Adds a Case, with the inputs and panels it runs with |
+| `create_case` | Adds a Case, with the inputs and panels it runs with, and marks which objects its code can move. In a scanned room, it aims at a door or furniture by name |
+| `write_case_code` | Writes or replaces one of a Case's code panels, and replies with its errors, its console lines, its refused calls and a picture of the window |
+| `read_case_code` | Reads a code panel's source, or lists a Case's code panels |
+| `delete_case_code` | Takes a code panel out of a Case |
 | `run_case` | Runs a Case 20 times and reports how often it passed and why it failed |
 | `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
 | `explore_case` | Runs a Case on each catalog version of the robot's servos and supply voltage |

@@ -24,7 +24,7 @@ import { SketchCanvas } from './SketchCanvas';
 import type { SketchEditor } from './useSketchDrawing';
 import { useLinkageSolutions } from './useLinkageSolutions';
 import { usePathHistory } from './usePathHistory';
-import type { SketchPanelMode, SketchTool, StudioDraft } from './useStudioDraft';
+import { isDrawn, type SketchPanelMode, type SketchTool, type StudioDraft } from './useStudioDraft';
 
 export interface BoundSketch {
   record: PartSketch;
@@ -97,7 +97,7 @@ const ignorePath = () => {};
 
 const clearedSketch = (sketch: Sketch): Sketch => ({
   points: sketch.points.filter((p) => p.fixed),
-  entities: sketch.entities.filter((e) => e.kind === 'line' && e.ref),
+  entities: sketch.entities.filter((e) => !isDrawn(e)),
   constraints: [],
 });
 

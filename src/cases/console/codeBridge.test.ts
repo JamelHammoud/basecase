@@ -4,6 +4,7 @@ import { fixtureRobots } from '../../sim/fixtures/robots';
 import { readInputs } from '../../sim/inputSources';
 import { openCodeBridge, SILENT_ERROR } from './codeBridge';
 import { setCodeDrive } from './codeDrive';
+import { BRIDGE_VERSION } from './codeProtocol';
 import { fakeClock, openTestFrame, type FrameOptions, type TestFrame } from './fixtures/codeFrames';
 import { createSignalBus, type SignalBus } from './signalBus';
 import type { SignalScope } from './signalNames';
@@ -193,7 +194,7 @@ describe('code panels through the bridge', () => {
     start.dispatch('click');
     await vi.waitFor(() => expect(start.textContent).toBe('try can’t run now'));
     expect(panel.log.fired).toEqual(['try']);
-    expect(panel.bridge.errors()).toEqual(['action refused: try can’t run now']);
+    expect(panel.bridge.report().refused).toEqual(['action refused: try can’t run now']);
   });
 
   it('draws a plot from joint.*.effort, at most 20 times a second', async () => {
@@ -230,7 +231,7 @@ describe('code panels through the bridge', () => {
     );
 
     await vi.waitFor(() =>
-      expect(panel.bridge.errors()).toEqual([
+      expect(panel.bridge.report().refused).toEqual([
         'signals refused: robot.mood must be robot.height or tilt or speed or travelled or x or z',
         'drive refused: the console’s input doesn’t list code',
       ]),
@@ -306,6 +307,8 @@ describe('the bridge’s guards', () => {
         can: () => true,
         fire: () => undefined,
         key: () => undefined,
+        world: () => null,
+        frames: () => () => undefined,
       },
       onFail: (error) => failed.push(error),
       clock,
@@ -338,7 +341,7 @@ describe('the bridge’s guards', () => {
     );
 
     await vi.waitFor(() =>
-      expect(panel.bridge.errors()).toEqual([
+      expect(panel.bridge.report().refused).toEqual([
         'sent a malformed drive message',
         'sent a malformed event message',
         'action refused: launch is no action',
@@ -351,14 +354,14 @@ describe('the bridge’s guards', () => {
     const panel = open(PICTURES, { bus, scope: scope() });
     const stranger = { postMessage: vi.fn() };
 
-    panel.bridge.receive({ source: stranger, data: { bc: 1, type: 'hello' } });
+    panel.bridge.receive({ source: stranger, data: { bc: BRIDGE_VERSION, type: 'hello' } });
     panel.bridge.receive({ source: stranger, data: { type: 'event', name: 'dance', value: true } });
     expect(stranger.postMessage).not.toHaveBeenCalled();
 
     const spoofed = new MessageChannel();
 
     (panel.window.postMessage as (d: unknown, o: object) => void)(
-      { bc: 1, type: 'port' },
+      { bc: BRIDGE_VERSION, type: 'port' },
       { transfer: [spoofed.port2] },
     );
     spoofed.port1.onmessage = vi.fn();

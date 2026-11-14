@@ -10,6 +10,8 @@ import { prettyJointName, type Rig } from '../utils/kinematics';
 import type { PoseReply } from './agentPose';
 import { TOOL_IMAGE_SIDE } from './agentPoseShared';
 import { errorMessage } from '../utils/errorMessage';
+import { duration, runClock } from '../utils/duration';
+import { weight } from '../utils/weight';
 import { plural } from '../../electron/plural.mjs';
 
 export interface SimulatePayload {
@@ -85,7 +87,7 @@ function robotLine(r: SimRun['stats']['robots'][number], model: SimRun['model'],
 
   if (!robot.floating) return `${robot.name}: base welded to the floor (no leg joints).`;
 
-  return `${robot.name}: ${r.fellAt !== null ? `FELL at ${r.fellAt.toFixed(2)} s` : `stayed up for ${seconds} s`}; tilt ${Math.round(r.tilt)}°, height change ${Math.round(r.height * 1000)} mm, moved ${Math.round(r.travelled * 1000)} mm (${Math.round(r.forward * 1000)} mm forward).`;
+  return `${robot.name}: ${r.fellAt !== null ? `FELL at ${runClock(r.fellAt)}` : `stayed up for ${duration(seconds)}`}; tilt ${Math.round(r.tilt)}°, height change ${Math.round(r.height * 1000)} mm, moved ${Math.round(r.travelled * 1000)} mm (${Math.round(r.forward * 1000)} mm forward).`;
 }
 
 function effortLine(j: SimRun['stats']['joints'][number], model: SimRun['model'], rig: Rig): string {
@@ -93,7 +95,7 @@ function effortLine(j: SimRun['stats']['joints'][number], model: SimRun['model']
   const name = rig.byId.get(j.id)?.name ?? j.id;
   const unit = sj?.type === 'prismatic' ? 'N' : 'N·m';
 
-  return `- ${j.id} (${prettyJointName(name)}): ${Math.round(Math.min(j.peak, 1) * 100)}% of ${sj ? sj.effort.toFixed(2) : '?'} ${unit} (${sj?.effortSource ?? '?'})${j.saturatedS > 0.02 ? `, ${j.saturatedS.toFixed(2)} s at the limit` : ''}`;
+  return `- ${j.id} (${prettyJointName(name)}): ${Math.round(Math.min(j.peak, 1) * 100)}% of ${sj ? sj.effort.toFixed(2) : '?'} ${unit} (${sj?.effortSource ?? '?'})${j.saturatedS > 0.02 ? `, ${duration(j.saturatedS)} at the limit` : ''}`;
 }
 
 export function simReport(run: SimRun, rig: Rig, seconds: number): string {
@@ -104,7 +106,7 @@ export function simReport(run: SimRun, rig: Rig, seconds: number): string {
   const guessed = model.joints.filter((j) => j.dynamics === 'estimated' && j.effortSource !== 'estimate');
 
   lines.push(
-    `MuJoCo model: ${plural(model.joints.length, 'actuated joint')}, ${total.toFixed(2)} kg${estimated.length ? `; torque limits are estimated for ${plural(estimated.length, 'joint')} from weight (no servo assigned)` : ''}${guessed.length ? `; servo response is estimated for ${plural(guessed.length, 'joint')} (measured fits exist only for the STS3215 7.4 V and XL330)` : ''}.`,
+    `MuJoCo model: ${plural(model.joints.length, 'actuated joint')}, ${weight(total * 1000)}${estimated.length ? `; torque limits are estimated for ${plural(estimated.length, 'joint')} from weight (no servo assigned)` : ''}${guessed.length ? `; servo response is estimated for ${plural(guessed.length, 'joint')} (measured fits exist only for the STS3215 7.4 V and XL330)` : ''}.`,
   );
 
   for (const r of stats.robots) {
@@ -116,14 +118,14 @@ export function simReport(run: SimRun, rig: Rig, seconds: number): string {
   const worst = stats.joints.filter((j) => j.peak > 0.05).sort((a, b) => b.peak - a.peak);
 
   if (worst.length) {
-    lines.push("Peak actuator effort (share of the joint's torque limit):");
+    lines.push('Peak actuator effort (share of the joint’s torque limit):');
 
     for (const j of worst.slice(0, 10)) lines.push(effortLine(j, model, rig));
   }
 
   if (worst.some((j) => j.peak >= 0.99)) {
     lines.push(
-      "A joint at its limit for long can't hold its load: a stronger servo, two servos, a shorter lever or less weight beyond it.",
+      'A joint at its limit for long can’t hold its load: a stronger servo, two servos, a shorter lever or less weight beyond it.',
     );
   }
 
@@ -158,7 +160,7 @@ export async function simulateRequest(ctx: SimContext, p: SimulatePayload): Prom
       frames: requestedFrames(p, seconds),
     });
   } catch (e) {
-    return { text: `The simulation didn't run: ${errorMessage(e)}` };
+    return { text: `The simulation didn’t run: ${errorMessage(e)}` };
   }
 
   const text = simReport(run, ctx.rig, seconds);
@@ -181,7 +183,7 @@ async function viewportShots(ctx: SimContext, run: SimRun, requested: string[] |
     shots.push(
       vp
         .captureViews(views, undefined, { maxSide: TOOL_IMAGE_SIDE })
-        .then((taken) => taken.map((shot) => ({ view: `${shot.view} at ${f.t.toFixed(1)} s`, dataUrl: shot.dataUrl }))),
+        .then((taken) => taken.map((shot) => ({ view: `${shot.view} at ${runClock(f.t)}`, dataUrl: shot.dataUrl }))),
     );
   }
 
@@ -228,7 +230,7 @@ function runningLines(t: Training): string[] {
 
   if (p)
     lines.push(
-      `${Math.round(p.elapsedS / 60)} of ${Math.round(p.budgetS / 60)} min, ${(p.steps / 1e6).toFixed(1)}M steps (${Math.round(p.fps)}/s); reward ${p.reward.toFixed(2)}/s; episodes last ${p.episodeS.toFixed(1)} s on average (falls end them early).`,
+      `${duration(p.elapsedS)} of ${duration(p.budgetS, 'min')}, ${(p.steps / 1e6).toFixed(1)}M steps (${Math.round(p.fps)}/s); reward ${p.reward.toFixed(2)}/s; episodes last ${duration(p.episodeS)} on average (falls end them early).`,
     );
 
   return lines;
@@ -237,9 +239,9 @@ function runningLines(t: Training): string[] {
 function evalSummary(e: PolicyRecord['eval']): string {
   if (!e) return '';
 
-  if (e.fellAt !== null) return `; fell at ${e.fellAt.toFixed(1)} s in a clean run`;
+  if (e.fellAt !== null) return `; fell at ${runClock(e.fellAt)} in a clean run`;
 
-  return `; stayed up ${e.seconds} s in a clean run, ${Math.round(e.forward * 1000)} mm forward`;
+  return `; stayed up ${duration(e.seconds)} in a clean run, ${Math.round(e.forward * 1000)} mm forward`;
 }
 
 export function trainingStatusText(ctx: SimContext): string {

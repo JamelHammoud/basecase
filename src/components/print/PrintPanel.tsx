@@ -8,7 +8,8 @@ import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import type { Printing } from '../../workspace/usePrinting';
 import { plural } from '../../../electron/plural.mjs';
-import { hm } from '../build/format';
+import { duration } from '../../utils/duration';
+import { weight } from '../../utils/weight';
 import { plateNumbers, plateStateText } from './plateFacts';
 import { MergeSection } from './MergeSection';
 import { PrintedSection } from './PrintedSection';
@@ -169,8 +170,8 @@ const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; 
         className="text-[12.5px] text-white/50 tabular-nums"
         items={[
           plate.material,
-          `${exact ? '' : '≈ '}${hm(hours)}`,
-          `${Math.round(grams)} g`,
+          `${exact ? '' : '≈ '}${duration(hours * 3600, 'min')}`,
+          weight(grams),
           sliced?.support && 'Supports',
           plateStateText(status, printing.status),
         ]}
@@ -247,9 +248,9 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
         </div>
       </div>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] text-white/60">Don't print</span>
+        <span className="text-[13px] text-white/60">Don’t print</span>
         <Switch
-          aria-label="Don't print"
+          aria-label="Don’t print"
           checked={!!part.print?.skip}
           onChange={(skip) => set({ skip: skip || undefined })}
         />

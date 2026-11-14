@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { partMatrix } from '../utils/kinematics';
+import { partEdges } from '../utils/partEdges';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
 import { esc, f, safeId, vec } from './mjcfText';
@@ -32,6 +33,8 @@ const boxSize = ({ dimensions: d }: WorldItem) => vec([d.width / 2000, d.depth /
 
 function primitiveShape(item: WorldItem): string | null {
   const d = item.dimensions;
+
+  if (partEdges(item)) return null;
 
   if (item.kind === 'sphere') return `type="sphere" size="${f(d.width / 2000)}"`;
 
@@ -72,8 +75,11 @@ export function emitWorld(input: MjcfInput, assetOffset: number): WorldEmit {
     const name = `w${i}_${safeId(item.id)}`;
     const geom = worldGeom(item, input, out, assetOffset);
 
-    out.bodies.push({ name, parts: [], world: [item.id], origin: item.position });
-    out.lines.push(`    <body name="${esc(name)}" pos="${vec(toMj(item.position))}">`);
+    const mocap = item.movable && item.behavior !== 'dynamic';
+    const moves = item.movable ? { moves: { kind: mocap ? 'mocap' : 'free', rotation: item.rotation } as const } : {};
+
+    out.bodies.push({ name, parts: [], world: [item.id], origin: item.position, ...moves });
+    out.lines.push(`    <body name="${esc(name)}" pos="${vec(toMj(item.position))}"${mocap ? ' mocap="true"' : ''}>`);
 
     if (item.behavior === 'dynamic') out.lines.push(`      <freejoint name="${esc(name)}"/>`);
 

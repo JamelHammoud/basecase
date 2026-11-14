@@ -32,7 +32,7 @@ export const motion = {
 
 export const simulation = {
   name: 'simulation',
-  use: 'MuJoCo simulation, training, the Peak torque test and design sweeps',
+  use: 'MuJoCo simulation, training, the Peak torque and Falls tests and design sweeps',
   text: `
 - Design checks use hold and shove: simulate with controller "hold" for 5 s, then shoves of 0.3
   × body weight from each side. If it falls, or a servo sits at its limit for long, fix the design
@@ -42,6 +42,9 @@ export const simulation = {
   (velocity tracking, proved in Arena), then start_drive drives it. Once a walk policy exists,
   verify_design with peak: true walks it with every servo derated to 0.7 × stall; fix any joint
   that asks for more than its stall.
+- verify_design with falls: true tips a legged robot over from 12 directions with its servos
+  derated the same way, and grades each leg joint's impact torque against its rated torque. For a
+  joint that fails, pick a stronger servo with size_actuators or lower the stance, then run it again.
 - sweep_design tries one parameter at a time (a servo for a set of joints, a battery offset, foot
   length or width) on copies of the scene and returns the deltas in torque, price, stability and
   a derated hold-and-shove sim. Choose with it instead of guessing, then apply the winner.

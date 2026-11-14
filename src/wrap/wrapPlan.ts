@@ -192,7 +192,7 @@ function chosenMesh(parts: ScenePart[], id: string | undefined): ScenePart | str
   const meshes = parts.filter(isWrapMesh);
   const mesh = id ? meshes.find((m) => m.id === id) : meshes[0];
 
-  if (id && !mesh) return `${id} isn't a visible imported mesh.`;
+  if (id && !mesh) return `${id} isn’t a visible imported mesh.`;
 
   if (!mesh) return 'No imported mesh in the scene: the user imports one with File ▸ Import Mesh.';
 

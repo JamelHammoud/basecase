@@ -10,7 +10,7 @@ import { TYPED_FIELDS, type SketchDrawing } from './useSketchDrawing';
 import type { SketchSelection } from './useSketchSelection';
 
 const FIELD =
-  'w-[64px] h-7 px-2 rounded-lg bg-[#2c2c2c] text-[12px] text-white tabular outline-none ring-1 ring-inset ring-[#0d99ff] shadow-lg';
+  'w-[64px] h-[32px] px-2 rounded-lg bg-[#2c2c2c] text-[12px] text-white tabular outline-none ring-1 ring-inset ring-[#0d99ff] shadow-lg';
 
 const Field: React.FC<{
   value: string;

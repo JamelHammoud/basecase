@@ -26,7 +26,7 @@ import { errorMessage } from '../utils/errorMessage';
 
 export type RobotSource =
   | { kind: 'url'; url: string; name?: string; entry?: string }
-  | { kind: 'files'; files: LocalFile[]; entry?: string }
+  | { kind: 'files'; files: LocalFile[]; name?: string; entry?: string }
   | { kind: 'simready'; asset: Pick<SimReadyAsset, 'url' | 'name' | 'maker' | 'license'> };
 
 export type ImportRobotResult = ImportedRobot | string;
@@ -34,12 +34,6 @@ export type ImportRobotResult = ImportedRobot | string;
 interface PlacedRig {
   parts: ScenePart[];
   joints: RobotJoint[];
-}
-
-export interface RobotFiles {
-  name: string;
-  files: LocalFile[];
-  at?: Vec3;
 }
 
 export interface RobotChoice {
@@ -71,7 +65,7 @@ function savePreview(robot: ImportedRobot, url: string) {
 const sourceName = (source: RobotSource) => {
   if (source.kind === 'simready') return source.asset.name;
 
-  return source.kind === 'url' && source.name ? source.name : 'robot';
+  return source.name ?? 'robot';
 };
 
 async function loadRobot(source: RobotSource, say: (m: string) => void): Promise<SimReadyImport> {
@@ -105,7 +99,6 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
   const leader = useLeader(core);
   const [importRobotOpen, setImportRobotOpen] = useState(false);
   const [robotChoice, setRobotChoice] = useState<RobotChoice | null>(null);
-  const [robotFiles, setRobotFiles] = useState<RobotFiles | null>(null);
 
   useEffect(() => {
     if (!frameNextRef.current) return;
@@ -152,7 +145,6 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
 
     if (!ask) return;
 
-    setRobotFiles(null);
     setRobotChoice(choice);
     setImportRobotOpen(true);
   };
@@ -215,17 +207,10 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
     pickRobot,
     importRobotOpen,
     robotChoice,
-    robotFiles,
     openImportRobot: () => setImportRobotOpen(true),
-    openRobotFiles: (loaded: RobotFiles) => {
-      setRobotChoice(null);
-      setRobotFiles(loaded);
-      setImportRobotOpen(true);
-    },
     closeImportRobot: () => {
       setImportRobotOpen(false);
       setRobotChoice(null);
-      setRobotFiles(null);
     },
   };
 }

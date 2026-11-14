@@ -33,6 +33,7 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
   const [rightTab, setRightTab] = useState<RightTab>('inspector');
   const [creator, setCreator] = useState<CreatorMode | null>(null);
   const [creatorSvg, setCreatorSvg] = useState<TextFile | null>(null);
+  const [studioUnsaved, setStudioUnsaved] = useState(false);
   const [sculptSettings, setSculptSettings] = useState<SculptSettings>(DEFAULT_SCULPT);
   const [attachRequest, setAttachRequest] = useState(0);
   const [sketchRequest, setSketchRequest] = useState(0);
@@ -124,6 +125,8 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
 
   const studioMode: StudioSubTab | null = transformMode === 'sculpt' ? 'clay' : creator;
 
+  const leaveStudio = () => (transformMode === 'sculpt' ? setMode('translate') : setCreator(null));
+
   return {
     transformMode,
     setTransformMode,
@@ -144,6 +147,9 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     openCreator,
     creatorSvg,
     studioMode,
+    leaveStudio,
+    studioUnsaved,
+    setStudioUnsaved,
     sculptSettings,
     updateSculptSettings: (patch: Partial<SculptSettings>) => setSculptSettings((s) => ({ ...s, ...patch })),
     attachRequest,

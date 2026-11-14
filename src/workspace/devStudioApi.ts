@@ -44,6 +44,9 @@ import type { Vec2 } from '../utils/linkage';
 import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { JointDragStep } from './useSkeletonEdit';
+import type { WorldEvent } from '../cases/worldSet';
+import { streamCost } from '../cameras/liveFeed';
+import type { CodeReport } from '../cases/console/codeBridge';
 import { limitExplore } from './useCaseExplore';
 
 type Payload = Record<string, unknown>;
@@ -68,6 +71,7 @@ export interface DevActions {
   drive: (command: DriveCommand) => void;
   driveWith: (inputs: string[]) => Promise<boolean>;
   worldAt: () => Record<string, number[]>;
+  tryWorld: () => Promise<WorldEvent[]>;
   printPlates: () => unknown;
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
@@ -76,6 +80,8 @@ export interface DevActions {
   passTries: () => void;
   multiplyRuns: (runs: number) => void;
   addCase: (raw: unknown) => string;
+  runCase: (id: string) => void;
+  codeReports: () => Record<string, CodeReport | null>;
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
   stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
@@ -245,6 +251,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
       return part ? posedPort(rig, pose, { part, port }) : null;
     },
     triangleCount: (id: string) => (viewportRef.current?.partTriangles(id)?.length ?? 0) / 9,
+    partTriangles: (id: string) => Array.from(viewportRef.current?.partTriangles(id) ?? []),
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),
@@ -275,6 +282,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     },
     inputEvents: () => recentInputEvents().map(({ name, value }) => ({ name, value })),
     worldAt: () => devRef.current.worldAt(),
+    tryWorld: () => devRef.current.tryWorld(),
     printPlates: () => devRef.current.printPlates(),
     bomLines: () =>
       buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
@@ -286,6 +294,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     passTries: () => devRef.current.passTries(),
     multiplyRuns: (runs: number) => devRef.current.multiplyRuns(runs),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
+    runCase: (id: string) => devRef.current.runCase(id),
+    codeReports: () => devRef.current.codeReports(),
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown, snapshots?: unknown[]) => devRef.current.stubTrainer(policy, snapshots),
@@ -298,6 +308,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     feedHand: (samples: HandSample[], fps?: number) => feedOperatorHand(samples, fps),
     feedFace: (samples: FaceSample[], fps?: number) => feedOperatorFace(samples, fps),
     operatorCamera: () => operatorCameraState(),
+    cameraStreams: () => ({ ...streamCost }),
     stubTabEngine,
     exploreLimit: (designs: number) => limitExplore(designs),
     pickFiles: (files: { name: string; base64: string }[]) =>

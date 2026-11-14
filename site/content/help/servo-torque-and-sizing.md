@@ -29,6 +29,7 @@ covers:
   - src/utils/engineeringTorqueRows.ts
   - src/utils/engineeringCrouch.ts
   - src/utils/engineeringPeak.ts
+  - src/utils/engineeringFalls.ts
   - src/utils/engineeringEnvelope.ts
   - src/utils/keySpecs.ts
   - docs/guide/build.md
@@ -42,7 +43,7 @@ Every servo in **Parts** carries its datasheet's stall torque and rated torque. 
 
 Both are read at the voltage the servo actually gets: a regulator's output, else the battery's nominal voltage, else the tether's. Between the datasheet's voltage points the torque is interpolated, and it's never rated above what the supply reaches. When a datasheet gives no rated torque, a quarter of stall stands in, and the row says so.
 
-A servo's page in **Parts** gives its stall torque as a load: the Feetech STS3215 holds “Up to 2 kg at 10 cm”.
+A servo's page in **Parts** gives its stall torque as a load: the Feetech STS3215 holds “Up to 1.95 kg at 10 cm”.
 
 ## What a joint needs
 
@@ -76,6 +77,10 @@ After a walk policy is trained, the agent can test it in simulation. The robot w
 A servo can't give full torque and full speed at once. Its torque–speed line falls from stall at 0 rpm to its no-load speed at your supply voltage. Peak torque also warns when more than 5% of a joint's walk is past that line, and names the joint and the share.
 
 Open **Peak torque** to plot each joint's walk on its servo's line, beside the next stronger servo in the catalog. [Checks in the Build tab](/help/build-checks) shows the plot.
+
+## Falls, once the legs have servos
+
+A fall hits a leg servo far harder than walking does. **Falls** tips the robot over from 12 directions and compares each leg joint's torque with its rated torque. Up to 3× rated passes, up to 5× is amber, and above 5× fails. A datasheet peak torque, where one is given, replaces the 5× limit. [Check what a fall does to the servos](/help/check-what-a-fall-does-to-the-servos) has the steps.
 
 ## Making a joint pass
 

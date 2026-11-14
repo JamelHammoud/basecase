@@ -18,6 +18,9 @@ import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import { LiveWatch, type WatchInput } from '../skills/liveWatch';
 import { errorMessage } from '../utils/errorMessage';
 import { PoseGate } from './poseGate';
+import { WorldMoves } from './worldMoves';
+import type { WorldChange, WorldLooks } from '../cases/worldSet';
+import { runFalls, type FallPlan, type FallRun } from './fallRuns';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -26,7 +29,7 @@ export type SimRequest =
   | { type: 'reset'; initial?: RobotPoseState }
   | { type: 'speed'; value: number }
   | { type: 'controller'; controller: Controller }
-  | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number }
+  | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number; releaseDeg?: number }
   | ({ type: 'command' } & DriveCommand)
   | { type: 'script'; commands: Array<{ at: number; command: DriveCommand }> }
   | { type: 'respawn'; robot?: string }
@@ -48,11 +51,13 @@ export type SimRequest =
       currents?: Record<string, AmpModel>;
       commands?: Array<{ at: number; command: DriveCommand }>;
     }
+  | ({ type: 'falls'; id: number } & FallPlan)
   | ({ type: 'routine' } & LiveRoutineInput)
   | ({ type: 'case' } & LiveCaseInput)
   | { type: 'caseEnd' }
   | { type: 'watch'; watch: WatchInput | null }
   | { type: 'input'; name: string; value: FactValue }
+  | { type: 'world'; change: WorldChange }
   | { type: 'cameras'; port: MessagePort | null }
   | { type: 'dispose' };
 
@@ -63,6 +68,7 @@ export type SimResponse =
   | { type: 'recorded'; recording: Recording | null }
   | { type: 'scrubbed'; efforts: Float32Array[] | null }
   | { type: 'sought'; frame: number; qpos: Float64Array }
+  | { type: 'world'; looks: WorldLooks }
   | { type: 'watched'; id: number; margin: number }
   | {
       type: 'frame';
@@ -73,6 +79,7 @@ export type SimResponse =
       facts?: CaseFacts;
       scan?: Scan;
     }
+  | { type: 'fell'; id: number; runs: FallRun[] }
   | {
       type: 'ran';
       id: number;
@@ -84,6 +91,8 @@ export type SimResponse =
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 let mj: MainModule | null = null;
 let engine: SimEngine | null = null;
+let world: WorldMoves | null = null;
+let looksShown = -1;
 let playing = false;
 let speed = 1;
 let timer = 0;
@@ -125,6 +134,21 @@ const frame = (force = false) => {
     ...(scan ? [scan.values.buffer, scan.points.buffer] : []),
   ]);
 };
+
+function postLooks() {
+  if (!world || world.looksVersion === looksShown) return;
+
+  looksShown = world.looksVersion;
+  post({ type: 'world', looks: world.looks() });
+}
+
+function changeWorld(change: WorldChange) {
+  if (!engine || !world || world.apply(change)) return;
+
+  recorder?.worldChange(change);
+  postLooks();
+  frame();
+}
 
 function loop() {
   if (!engine || !playing) return;
@@ -216,6 +240,9 @@ async function load(msg: Msg<'load'>) {
   script = null;
   playing = false;
   engine = new SimEngine(mj, msg.model);
+  world = new WorldMoves(mj, engine);
+  looksShown = -1;
+  post({ type: 'world', looks: {} });
   scanShown = -1;
   poseGate.reset();
 
@@ -231,7 +258,7 @@ function record(msg: Msg<'record'>) {
   if (!engine) return;
 
   if (msg.on) {
-    recorder = new Recorder(engine, driveController);
+    recorder = new Recorder(engine, driveController, world);
     engine.stepHook = recorder.hook;
     engine.commandHook = recorder.command;
 
@@ -269,6 +296,8 @@ function seek(msg: Msg<'seek'>) {
   const frameAt = setRecordedFrame(mj, engine, scrubbed, msg.frame);
   const qpos = Float64Array.from(engine.data.qpos);
 
+  world?.replay(scrubbed.world ?? [], frameAt * scrubbed.dt);
+  postLooks();
   frame();
   post({ type: 'sought', frame: frameAt, qpos }, [qpos.buffer]);
 }
@@ -357,6 +386,8 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   reset: (msg) => {
     engine?.reset(msg.initial);
+    world?.reset();
+    postLooks();
     frame();
   },
   speed: (msg) => {
@@ -368,7 +399,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   grab,
   push: (msg) => {
-    engine?.pushRobot(msg.robot, msg.force, msg.seconds);
+    engine?.pushRobot(msg.robot, msg.force, { seconds: msg.seconds, releaseDeg: msg.releaseDeg });
   },
   command: ({ slot, v, target, aux, joints }) => {
     if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux, joints });
@@ -389,6 +420,11 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   scrub,
   seek,
   run,
+  falls: (msg) => {
+    if (!mj || !engine) throw new Error('Nothing loaded');
+
+    post({ type: 'fell', id: msg.id, runs: runFalls(mj, engine, msg) });
+  },
   routine: startRoutine,
   case: startCase,
   caseEnd: () => {
@@ -396,6 +432,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   watch,
   input: (msg) => liveCase?.input(msg.name, msg.value),
+  world: (msg) => changeWorld(msg.change),
   cameras: (msg) => {
     cameraPort?.close();
     cameraPort = msg.port;
@@ -411,6 +448,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     clearTimeout(timer);
     engine?.dispose();
     engine = null;
+    world = null;
   },
 };
 
@@ -420,6 +458,6 @@ ctx.onmessage = async (ev: MessageEvent<SimRequest>) => {
   try {
     await (handlers[msg.type] as (m: SimRequest) => void | Promise<void>)(msg);
   } catch (e) {
-    post({ type: 'error', message: errorText(e), id: msg.type === 'run' ? msg.id : undefined });
+    post({ type: 'error', message: errorText(e), id: msg.type === 'run' || msg.type === 'falls' ? msg.id : undefined });
   }
 };

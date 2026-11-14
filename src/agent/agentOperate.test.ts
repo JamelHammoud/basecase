@@ -61,7 +61,7 @@ describe('operate', () => {
     expect(sim.drive.setKeys).toHaveBeenLastCalledWith({ v: [0, 0, 0] });
     expect(sim.pause).toHaveBeenCalled();
     expect([...shoot.mock.calls[0][0].frames[0].poses!]).toEqual([1, 2, 3]);
-    expect(reply.text).toMatch(/Ran 2\.0 s\. Upright/);
+    expect(reply.text).toMatch(/Ran 2 s\. Upright/);
     expect(reply.images).toHaveLength(1);
   });
 

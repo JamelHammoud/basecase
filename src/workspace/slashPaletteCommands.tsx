@@ -1,7 +1,16 @@
 import type React from 'react';
 import { SLASH_COMMANDS, slashText, type SlashName } from '../agent/slashCommands';
 import type { Command } from '../components/CommandPalette';
-import { CameraIcon, CasesIcon, CheckIcon, RoutinesIcon, RunIcon, TrainIcon } from '../design-system';
+import {
+  CameraIcon,
+  CasesIcon,
+  CheckIcon,
+  PenIcon,
+  PhotoAddIcon,
+  RoutinesIcon,
+  RunIcon,
+  TrainIcon,
+} from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
 
@@ -36,11 +45,31 @@ function makeItPass({ core }: CommandInputs): Command[] {
   ];
 }
 
+const attachCommands = ({ core }: CommandInputs): Command[] => [
+  {
+    id: 'agent-attach-images',
+    group: 'Agent',
+    label: 'Attach Images',
+    icon: <PhotoAddIcon className={ic} />,
+    keywords: 'model from image photo picture upload composer',
+    run: core.tool.requestAttach,
+  },
+  {
+    id: 'agent-attach-sketch',
+    group: 'Agent',
+    label: 'Attach Sketch',
+    icon: <PenIcon className={ic} />,
+    keywords: 'sketch for agent draw drawing reference composer',
+    run: core.tool.requestSketch,
+  },
+];
+
 export function slashPaletteCommands(inputs: CommandInputs): Command[] {
   if (IS_WEB_DEMO) return [];
 
   return [
     ...makeItPass(inputs),
+    ...attachCommands(inputs),
     ...SLASH_COMMANDS.map((command) => ({
       id: `agent-slash-${command.name}`,
       group: 'Agent',

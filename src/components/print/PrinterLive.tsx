@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, ConfirmDialog, MetaLine } from '../../design-system';
 import { printBridge, type PrinterStatus } from '../../print/printBridge';
 import type { Printing } from '../../workspace/usePrinting';
-import { hm } from '../build/format';
+import { duration } from '../../utils/duration';
 
 const STATE_TEXT: Record<PrinterStatus['state'], string> = {
   idle: 'Ready',
@@ -18,7 +18,7 @@ function facts(status: PrinterStatus) {
   return [
     status.progress !== undefined && `${Math.round(status.progress * 100)}%`,
     status.layer && status.totalLayers && `Layer ${status.layer} of ${status.totalLayers}`,
-    status.remainingMin !== undefined && `${hm(status.remainingMin / 60)} left`,
+    status.remainingMin !== undefined && `${duration(status.remainingMin * 60, 'min')} left`,
   ];
 }
 

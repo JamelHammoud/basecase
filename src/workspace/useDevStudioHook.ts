@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { worldDeltas } from '../sim/mjcf';
+import { codePanelsOf } from '../cases/console/codeEdits';
+import { codePanelKey, codeReport } from '../cases/console/codeReports';
 import { parseCase } from '../cases/schema';
+import { loadRecording } from '../cases/tryStore';
 import { withCalibration } from '../reality/projectCalibrations';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
@@ -65,6 +68,11 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
         }),
       );
     },
+    tryWorld: async () => {
+      const newest = projectRef.current.tries?.at(-1);
+
+      return (newest && (await loadRecording(newest.id))?.world) ?? [];
+    },
     calibrate: (jointId, calibration) => docs.setProject((p) => withCalibration(p, jointId, calibration)),
     routineState: () => core.simTraining.routines.state(),
     printState: () => ({
@@ -84,6 +92,17 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
       return zip && unzipSync(zip);
     },
     addCase: (raw) => core.simTraining.cases.add(parseCase(raw)).id,
+    runCase: (id) => {
+      core.simTraining.cases.open(id);
+      core.caseRun.enterCase(id);
+    },
+    codeReports: () => {
+      const kase = core.simTraining.cases.active;
+
+      return Object.fromEntries(
+        codePanelsOf(kase?.console).map((p) => [p.id, codeReport(codePanelKey(kase!.id, p.id), p.source)]),
+      );
+    },
     referenceTry: () => core.simTraining.cases.attempt.reference(),
     passTries: () => docs.setProject((p) => ({ ...p, tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })) })),
     multiplyRuns: (runs) => core.simTraining.cases.multiply.setRuns(runs),

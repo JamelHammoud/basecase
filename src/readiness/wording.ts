@@ -25,7 +25,7 @@ const printing = (name: string, text: string): Rule => ({ area: 'printing', chec
 const sourcing = (name: string, text: string): Rule => ({ area: 'parts', check: REAL_PARTS, name, text });
 
 export const RULES = {
-  air: screw('Screws Ending in Air', "These screws don't grip anything. Each needs an insert, a nut or more material."),
+  air: screw('Screws Ending in Air', 'These screws don’t grip anything. Each needs an insert, a nut or more material.'),
   uncut: screw('Screws Without Holes', 'These screws run through solid material, so they need a hole cut for them.'),
   unseated: screw('Loose Screw Heads', 'Nothing sits under these screw heads, so they can’t tighten.'),
   sunk: screw('Buried Screw Heads', 'These screw heads are buried inside another part.'),
@@ -120,6 +120,10 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
     blocker: 'This servo gets pushed past its limit while walking.',
     note: 'This servo has little to spare while walking.',
   },
+  Falls: {
+    blocker: 'This servo could strip its gears when the robot falls.',
+    note: 'This servo has little to spare when the robot falls.',
+  },
   'Torque estimates': { note: 'These joints have no servo, so the simulation guesses their torque from weight.' },
   'Servo models': { note: 'These servos aren’t calibrated on this robot.' },
   'Servo alignment': { blocker: 'These servos don’t line up with their joints.' },
@@ -131,6 +135,7 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
   'Servo voltage': { blocker: 'The supply voltage doesn’t suit these servos.' },
   'Current and runtime': { blocker: 'The battery can’t supply enough current for the servos.' },
   'Supply current': { blocker: 'The tether can’t supply enough current for the servos.' },
+  'Servo bus': { blocker: 'These servos need an adapter for their bus.' },
   'Heat near servos': { note: 'Some parts touching servos are PLA, which softens from servo heat.' },
   'Standing stability': {
     blocker: 'The robot would tip over standing still.',

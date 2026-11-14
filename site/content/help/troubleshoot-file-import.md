@@ -20,7 +20,6 @@ keywords:
   - units
 related:
   - import-a-file
-  - open-a-step-or-iges-file
 covers:
   - src/workspace/usePartCreation.ts
   - src/workspace/meshImport.ts

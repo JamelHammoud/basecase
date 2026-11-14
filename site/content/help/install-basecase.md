@@ -49,6 +49,6 @@ Basecase opens on a two-wheel rover in the simulator, as [Drive your first robot
 
 The first time, Basecase downloads Claude Code, a 263 MB download, and the Agent tab shows its progress. Picking Codex or Gemini CLI in Settings downloads that one instead: 340 MB and 95 MB.
 
-Your scenes, saved models and tries live in `~/Library/Application Support/Basecase` on a Mac and `%APPDATA%\Basecase` on Windows. Uninstalling on Windows leaves them in place.
+Your scenes, saved models, tries and datasets live in `~/Library/Application Support/Basecase` on a Mac and `%APPDATA%\Basecase` on Windows. Uninstalling on Windows leaves them in place.
 
 Next, [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot), or [choose the agent](/help/choose-the-agent) you'll design with.

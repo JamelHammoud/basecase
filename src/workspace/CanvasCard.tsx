@@ -2,6 +2,7 @@ import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
 import { TryTimeline } from '../components/simulate/TryTimeline';
 import { TriesMode } from '../components/tries/TriesMode';
+import { useDatasetMode } from './useDatasetMode';
 import { ViewportToolbar } from '../components/ViewportToolbar';
 import { DropOverlay, FileImportIcon, PhotoIcon, Toast } from '../design-system';
 import { CaseRunOverlays } from './CaseRunProvider';
@@ -96,6 +97,7 @@ export function CanvasCard(props: CanvasCardProps) {
   const { active, core, actions, agent, pointerHandlers, drop } = props;
   const { creation } = actions;
   const { imageInputRef } = creation;
+  const datasetMode = useDatasetMode(core);
 
   return (
     <main
@@ -130,6 +132,7 @@ export function CanvasCard(props: CanvasCardProps) {
         <TriesMode
           active={active}
           view={core.triesView}
+          mode={datasetMode}
           timelineOpen={core.simTraining.cases.timeline.open}
           sceneId={core.scene.sceneId}
           scene={{ model: core.simTraining.sim.model, parts: core.parts, world: core.simTraining.sim.worldParts }}

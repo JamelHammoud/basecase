@@ -1,7 +1,7 @@
 ---
 title: Scenes, files and the Library
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: files-and-sharing
 type: concept
 order: 1
@@ -24,6 +24,7 @@ covers:
   - src/components/ScenesMenu.tsx
   - src/components/LibraryPanel.tsx
   - electron/backend/libraryPaths.mjs
+  - electron/library/datasetStore.mjs
 ---
 
 Basecase saves each scene as you work, so there's no Save command, and shares scenes as single .basecase files.
@@ -44,13 +45,15 @@ On disk, each scene is a JSON file in `library/scenes`, inside `~/Library/Applic
 
 ## Scenes and Library models
 
-The Library holds models and tries, not scenes. A model is a part or a group of parts you saved to drop into any scene: a servo bracket, a wheel hub, a gripper.
+The Library holds models, tries and datasets, not scenes. A model is a part or a group of parts you saved to drop into any scene: a servo bracket, a wheel hub, a gripper.
 
 Use a scene for a whole robot, and the Library for pieces you reuse across robots. Steps are in [Save a model to the Library](/help/save-a-model-to-the-library).
 
 ## Tries
 
 Every try you record lands in the Library, whichever scene it came from. Each one is a folder in `library/tries`, beside `library/scenes`. A scene keeps a short record of each of its tries, and the recordings stay in the Library. Steps are in [Open a try from any scene](/help/open-a-try-from-any-scene).
+
+A dataset is a named set of tries from any scenes, kept as one file in `library/datasets`. It lists its tries rather than copying them, so deleting a dataset leaves its tries alone. Steps are in [Make a dataset from tries](/help/make-a-dataset-from-tries).
 
 ## Scene files
 

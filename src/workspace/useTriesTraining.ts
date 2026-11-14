@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { filmImage } from '../cases/filmImage';
 import type { Case } from '../cases/schema';
-import type { TryRecord } from '../cases/tries';
+import type { Dataset } from '../datasets/datasetFile';
 import { canTrain } from '../datasets/demos';
+import { splitOf } from '../datasets/datasetSplit';
 import { usableTries } from '../datasets/usableTries';
 import type { Simulation } from '../sim/useSimulation';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
@@ -12,9 +13,10 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { caseVerdict, type CaseRobotInput, type CaseVerdict } from './caseChecks';
 import type { ShowToast } from './types';
 import { EARLIER_TRIES } from './useDatasetExport';
+import type { DatasetRecords } from './useDatasetRecords';
 
 export interface TriesResult {
-  caseId: string;
+  datasetId: string;
   passes: number;
   runs: number;
   kept: boolean;
@@ -23,19 +25,19 @@ export interface TriesResult {
 
 interface TriesTrainingOptions {
   sim: Simulation;
-  active: Case | null;
-  tries: TryRecord[];
+  cases: Case[];
+  records: DatasetRecords;
   skills: { runtime: SkillsRuntime; busy: boolean };
   caseRobot: () => Promise<CaseRobotInput | null>;
   showToast: ShowToast;
 }
 
 export interface TriesTraining {
-  shown: boolean;
-  ready: boolean;
-  training: boolean;
-  result: TriesResult | null;
-  train: () => void;
+  canTrain: boolean;
+  busy: boolean;
+  training: string | null;
+  resultFor: (dataset: Dataset) => TriesResult | null;
+  train: (dataset: Dataset, kase: Case) => void;
 }
 
 async function worstFilm(verdict: CaseVerdict | null): Promise<string | null> {
@@ -49,27 +51,27 @@ async function worstFilm(verdict: CaseVerdict | null): Promise<string | null> {
 }
 
 export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
-  const { sim, active, tries, caseRobot, showToast } = options;
+  const { sim, records, caseRobot, showToast } = options;
   const { runtime, busy } = options.skills;
   const [training, setTraining] = useState<string | null>(null);
   const [result, setResult] = useState<TriesResult | null>(null);
-  const passed = tries.filter((t) => t.passed);
-  const shown = !IS_WEB_DEMO && !!active && passed.length >= TRIES_TO_TRAIN;
 
-  const finish = async (kase: Case, outcome: TriesOutcome, verdict: CaseVerdict | null) => {
+  const finish = async (dataset: Dataset, outcome: TriesOutcome, verdict: CaseVerdict | null) => {
     const { runs, kept, problem } = outcome;
 
     if (problem) showToast(problem, { tone: 'error' });
 
     const film = runs && !runs.refusal ? await worstFilm(verdict) : null;
+    const shown = runs && !runs.refusal;
 
-    setResult(runs && !runs.refusal ? { caseId: kase.id, passes: runs.passes, runs: runs.runs, kept, film } : null);
+    setResult(shown ? { datasetId: dataset.id, passes: runs.passes, runs: runs.runs, kept, film } : null);
     setTraining(null);
   };
 
-  const start = async (kase: Case) => {
+  const start = async (dataset: Dataset, kase: Case) => {
     const robot = await caseRobot();
     const model = await sim.buildModel();
+    const passed = records.of(dataset).filter((t) => t.passed);
     const { usable } = await usableTries(passed, model, { accepts: canTrain });
 
     if (!robot || usable.length < TRIES_TO_TRAIN) {
@@ -79,40 +81,38 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
       return;
     }
 
+    await records.freeze(dataset);
+
+    const byId = new Map(usable.map((u) => [u.record.id, u.recording]));
+    const ordered = splitOf([...byId.keys()], dataset.seed).order.map((id) => byId.get(id)!);
     let verdict: CaseVerdict | null = null;
     const control = { jointNoiseDeg: TRIES_JOINT_NOISE_DEG };
     const refused = runtime.learnFromTries({
       model,
       kase,
-      job: triesJob(
-        model,
-        kase,
-        usable.map((u) => u.recording),
-      ),
+      job: triesJob(model, kase, ordered),
       judge: async (policy) => {
         verdict = await caseVerdict(robot, kase, TRIES_RUNS, { ...control, policy });
 
         return { runs: verdict.runs, robotModel: verdict.modelHash };
       },
-      done: (outcome) => void finish(kase, outcome, verdict),
+      done: (outcome) => void finish(dataset, outcome, verdict),
     });
 
     if (refused) setTraining(null);
   };
 
-  const train = () => {
-    if (!active || training || busy) return;
-
-    setTraining(active.id);
-    setResult(null);
-    start(active).catch(() => setTraining(null));
-  };
-
   return {
-    shown,
-    ready: shown && !training && !busy,
-    training: !!active && training === active.id,
-    result: result && result.caseId === active?.id ? result : null,
-    train,
+    canTrain: !IS_WEB_DEMO,
+    busy: !!training || busy,
+    training,
+    resultFor: (dataset) => (result?.datasetId === dataset.id ? result : null),
+    train: (dataset, kase) => {
+      if (IS_WEB_DEMO || training || busy) return;
+
+      setTraining(dataset.id);
+      setResult(null);
+      start(dataset, kase).catch(() => setTraining(null));
+    },
   };
 }

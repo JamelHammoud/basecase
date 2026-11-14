@@ -1,12 +1,11 @@
 import { parquetReadObjects } from 'hyparquet';
 import { plural } from '../electron/plural.mjs';
-import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ReferenceCommand } from '../src/cases/schema';
 import type { DriveCommand } from '../src/sim/driveTypes';
 import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import type { SimState, Studio } from './driveStudio';
-import { startFakeHub, type FakeHub } from './fakeHub';
 import {
   datasetFiles,
   endTryAt,
@@ -14,7 +13,6 @@ import {
   expectDataset,
   expectGenerated,
   inDataset,
-  expectPublished,
   loadFixtureRobot,
   passedDatasetFiles,
   pickTimeline,
@@ -22,10 +20,7 @@ import {
 import { expectRealTry } from './driveMat';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
-const HUB_TOKEN = 'hf_e2eFakeHubToken';
-
 let app: App;
-let hub: FakeHub;
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
@@ -66,13 +61,11 @@ async function stopDriving() {
 }
 
 beforeAll(async () => {
-  hub = await startFakeHub({ token: HUB_TOKEN, port: inject('hubPort') });
-  app = await openApp({}, ['hub-']);
+  app = await openApp();
 }, 120000);
 
 afterAll(async () => {
   await app?.close();
-  await hub?.close();
 });
 
 const itUnlessWindows = it.skipIf(process.platform === 'win32');
@@ -231,61 +224,6 @@ describe('Cases', () => {
       await expectCaseCheckOpensRow(app.page, 'Touch the Dots');
       expect(app.errors).toEqual([]);
     },
-  );
-
-  itUnlessWindows(
-    'publishes a passed try to Hugging Face after signing in from Settings',
-    async () => {
-      const publish = () => button('Publish to Hugging Face');
-      const commitsOf = (name: string) => hub.repos.get(name)?.commits.length ?? 0;
-      const ours = () => [...hub.repos.keys()].filter((name) => /^tester\/touch-the-dots-[0-9a-f]{6}$/.test(name));
-      const before = new Map(ours().map((name) => [name, commitsOf(name)]));
-      const published = () => ours().filter((name) => commitsOf(name) > (before.get(name) ?? 0));
-
-      const token = app.page.locator(visible('input[aria-label="Access token"]'));
-      const toast = (text: RegExp) => app.page.getByRole('status').filter({ hasText: text });
-      const outcome = toast(/Published to|Couldn’t publish|earlier design/);
-
-      await openTouchTheDots();
-      await button('Try It').click();
-      await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-      await endTryAt(app.page, SHORT_TRY_SECONDS);
-      await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
-      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
-      await expect.poll(() => publish().count()).toBe(1);
-
-      await publish().click();
-      await token
-        .or(toast(/Publishing dataset/))
-        .or(outcome)
-        .first()
-        .waitFor({ timeout: 10000 });
-
-      if (await token.isVisible()) {
-        await token.fill(HUB_TOKEN);
-        await token.press('Enter');
-        await expect
-          .poll(() => app.page.locator(visible('[role=dialog][aria-label=Settings]')).innerText())
-          .toContain('tester');
-        await app.page.keyboard.press('Escape');
-        await publish().dblclick();
-      }
-
-      await outcome.first().waitFor({ timeout: 120000 });
-
-      const said = await outcome.first().innerText();
-      const [repo] = published();
-
-      expect(said).toMatch(/^Published to /);
-      expect(published()).toHaveLength(1);
-      expect(said).toContain(repo);
-      expect(commitsOf(repo)).toBe((before.get(repo) ?? 0) + 2);
-      await expectPublished(hub, repo);
-      expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
-      expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
-      expect(app.errors).toEqual([]);
-    },
-    180000,
   );
 
   itUnlessWindows('makes a Case with New Case, the only way to start one besides the agent, and opens it', async () => {

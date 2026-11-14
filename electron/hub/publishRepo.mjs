@@ -4,6 +4,7 @@ import { HUB_ENDPOINT, repoRoot } from './hubClient.mjs';
 const NAME = /^(?!.*(?:--|\.\.))[A-Za-z0-9](?:[A-Za-z0-9._-]{0,94}[A-Za-z0-9])?$/;
 const SEGMENT = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/;
 const VERSION_TAG = /^v\d+\.\d+$/;
+const DATASET_TAG = /^dataset-v\d{1,6}$/;
 const FILES_MAX = 20000;
 const PATH_MAX = 300;
 const BATCH = 200;
@@ -16,6 +17,15 @@ export function checkedName(name) {
   if (!NAME.test(value)) throw new Error(`“${value.slice(0, 100)}” can’t name a Hugging Face repo.`);
 
   return value;
+}
+
+export function checkedTag(tag) {
+  if (tag === undefined || tag === null) return null;
+
+  if (typeof tag !== 'string' || !DATASET_TAG.test(tag))
+    throw new Error(`“${String(tag).slice(0, 100)}” can’t tag a dataset version.`);
+
+  return tag;
 }
 
 const isFilePath = (path) =>
@@ -222,9 +232,10 @@ async function commitRevision(client, { repo, entries, existing }) {
   return [...new Set([...existing.filter((p) => !gone.has(p)), ...entries.map((e) => e.path)])];
 }
 
-export async function publishRepo(client, { namespace, name, files }) {
+export async function publishRepo(client, { namespace, name, files, tag }) {
   const repo = `${checkedName(namespace)}/${checkedName(name)}`;
   const entries = checkedFiles(files);
+  const versionTag = checkedTag(tag);
 
   await client.createRepo(name);
 
@@ -232,6 +243,8 @@ export async function publishRepo(client, { namespace, name, files }) {
 
   for (const revision of revisions(entries))
     existing = await commitRevision(client, { repo, entries: revision, existing });
+
+  if (versionTag) await client.retag(repo, versionTag);
 
   return { repo, url: repoUrl(client.origin, repo, client.kind) };
 }

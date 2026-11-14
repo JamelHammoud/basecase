@@ -20,6 +20,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'clear',
   'codeReports',
   'datasetFiles',
+  'datasets',
   'dragPart',
   'dragSkeleton',
   'drive',

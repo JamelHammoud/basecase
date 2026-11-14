@@ -1,6 +1,7 @@
 ---
 title: Put two robots in one Case
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 covers:
@@ -28,6 +29,6 @@ The second arm now stands facing the first, the same distance from the point on 
 
 ![The second arm on the point after the first pulled away](/help/put-two-robots-in-one-case/try.png)
 
-The try passes when the first arm held the point and the second then held it while the first was clear. **Export Dataset** puts both arms' joints in one `observation.state` and one `action`, each joint named after its arm (`a.` or `b.`), with one group per arm in `modality.json`.
+The try passes when the first arm held the point and the second then held it while the first was clear. A dataset of these tries, made with **Make Dataset** under **Results**, exports both arms' joints in one `observation.state` and one `action`, each joint named after its arm (`a.` or `b.`), with one group per arm in `modality.json`.
 
 If you close the second arm's tab, the Case stays, but tries fail until an arm is open in another tab again.

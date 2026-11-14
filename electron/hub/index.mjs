@@ -3,7 +3,7 @@ import { AgentKeys } from '../backend/agentKeys.mjs';
 import { publicFetch } from '../publicFetch.mjs';
 import { policyOnnx } from '../robot/policyOnnx.mjs';
 import { HUB_ENDPOINT, HubClient } from './hubClient.mjs';
-import { checkedName, publishRepo } from './publishRepo.mjs';
+import { checkedName, checkedTag, publishRepo } from './publishRepo.mjs';
 import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from './skillRepo.mjs';
 
 const TOKEN = 'huggingface';
@@ -83,16 +83,18 @@ export class HubAccount {
     return this.account();
   }
 
-  async publish({ name, files, kind = 'dataset' } = {}) {
+  async publish({ name, files, kind = 'dataset', tag } = {}) {
     const token = this.keys.get(TOKEN);
 
     if (!token) throw new Error('Add a Hugging Face access token in Settings ▸ Accounts.');
+
+    const versionTag = checkedTag(tag);
 
     const client = this.client(token, undefined, kind);
     const namespace = this.keys.get(NAME) ?? (await client.whoami()).name;
     const sent = kind === 'model' ? withPolicyOnnx(files) : files;
 
-    return publishRepo(client, { namespace, name, files: sent });
+    return publishRepo(client, { namespace, name, files: sent, tag: versionTag });
   }
 
   async skillFiles({ owner, repo, rev } = {}) {

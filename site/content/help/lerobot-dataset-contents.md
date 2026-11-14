@@ -1,7 +1,7 @@
 ---
 title: LeRobot dataset contents
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: reference
 order: 1
@@ -16,8 +16,8 @@ keywords:
   - gr00t
   - groot
 related:
+  - make-a-dataset-from-tries
   - export-a-lerobot-dataset
-  - publish-a-dataset-to-hugging-face
 covers:
   - src/datasets/lerobot.ts
   - src/datasets/lerobotV3.ts
@@ -30,7 +30,7 @@ covers:
 
 Every file in a dataset from Export Dataset or Publish to Hugging Face, and what each column and camera video holds.
 
-Each passed try is one episode. The dataset comes in two layouts: LeRobot v3.0 at the top, and LeRobot v2.1 with GR00T's `meta/modality.json` in a `v2.1` folder. On the Hub, v3.0 is the main branch and v2.1 is the `v2.1` tag.
+Each passed try in the [dataset](/help/make-a-dataset-from-tries) is one episode. The dataset comes in two layouts: LeRobot v3.0 at the top, and LeRobot v2.1 with GR00T's `meta/modality.json` in a `v2.1` folder. On the Hub, v3.0 is the main branch and v2.1 is the `v2.1` tag.
 
 ## Files in v3.0
 
@@ -39,10 +39,10 @@ Each passed try is one episode. The dataset comes in two layouts: LeRobot v3.0 a
 | `data/chunk-000/file-000.parquet` | One row per frame, for many episodes. A new file starts before one passes 100 MB |
 | `videos/observation.images.<camera>/chunk-000/file-000.mp4` | Every episode's video for one camera, one after another. A new file starts before one passes 200 MB |
 | `meta/episodes/chunk-000/file-000.parquet` | One row per episode: its task, length, rows, the file and time span of each camera's video, and its statistics |
-| `meta/tasks.parquet` | The one task: the Case's brief, or its name when it has none |
+| `meta/tasks.parquet` | The one task: the dataset's task, which is the Case's brief, or its name when it has none |
 | `meta/stats.json` | The minimum, maximum, mean, standard deviation and count of every column across all episodes |
 | `meta/info.json` | The dataset's version (`v3.0`), frame rate, file size limits, columns and cameras |
-| `meta/basecase.json` | The Case, the hash of the model the tries ran on, and each episode's try, margin, `seed` and `source`: the try Multiply made it from, or null for a try you drove |
+| `meta/basecase.json` | The Case, when the dataset has one, the hash of the model the tries ran on, and each episode's try, margin, `seed` and `source`: the try Multiply made it from, or null for a try you drove |
 
 The joined videos aren't encoded again. Basecase copies each episode's frames into the camera's file as they are. An episode encoded with other settings starts a new file.
 
@@ -71,7 +71,7 @@ GR00T works out its own `stats.json` from these.
 | `frame_index`, `episode_index`, `index` | The frame within its episode, the episode, and the frame across the whole dataset |
 | `next.reward` | 1 on the last frame, 0 before it |
 | `next.done` | True on the last frame |
-| `task_index` | The task, always the Case's |
+| `task_index` | The task, always the dataset's |
 | `annotation.human.task_description` | The task again, where GR00T looks for it |
 
 Frames are 25 a second: every second frame of the try's 50 Hz recording. Joints are in the same order and carry the same names as in the robot package's `urdf/robot.urdf` and `joint_map.json`.

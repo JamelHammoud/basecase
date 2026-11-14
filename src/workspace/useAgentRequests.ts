@@ -172,6 +172,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     caseCompare: core.caseCompare,
     caseExplore: core.caseExplore,
     caseRun: core.caseRun,
+    datasets: core.datasets,
     skills: core.simTraining.skills,
   });
 

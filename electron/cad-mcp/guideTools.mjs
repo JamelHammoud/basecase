@@ -37,6 +37,7 @@ const TOOL_GUIDES = {
   compare_case: ['simulation'],
   explore_case: ['simulation'],
   run_case: ['simulation'],
+  make_dataset: ['simulation'],
   start_drive: ['simulation'],
   draft_skill: ['simulation'],
   train_skill: ['simulation'],

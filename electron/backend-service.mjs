@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { TryStore } from './library/tryStore.mjs';
+import { DatasetStore } from './library/datasetStore.mjs';
 import { EarthTiles } from './earth/index.mjs';
 import { HubAccount } from './hub/index.mjs';
 import { OnshapeAccount } from './onshape/index.mjs';
@@ -418,6 +419,12 @@ export class BasecaseBackendService {
     });
 
     return this.tryStore;
+  }
+
+  get datasets() {
+    this.datasetStore ??= new DatasetStore({ dir: path.join(this.libraryDir, 'datasets') });
+
+    return this.datasetStore;
   }
 
   listScenes() {

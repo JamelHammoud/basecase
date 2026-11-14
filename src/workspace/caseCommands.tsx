@@ -13,10 +13,10 @@ import {
   ShareIcon,
   StopIcon,
   SwapIcon,
-  TrainIcon,
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
 import { INPUT_COMMANDS } from './inputCommands';
+import { datasetCommands } from './datasetCommands';
 import { showLeftTab } from './showView';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -54,29 +54,6 @@ const runCaseCommand = (core: WorkspaceCore): Command => ({
   run: core.caseRun.enter,
 });
 
-function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Command[] {
-  if (dataset.exporting) return [];
-
-  const exportDataset: Command = {
-    id: 'case-export-dataset',
-    group: 'Simulate',
-    label: 'Export Dataset',
-    icon: <DownloadIcon />,
-    keywords: 'lerobot gr00t groot demonstrations training data video parquet',
-    run: dataset.exportDataset,
-  };
-  const publishDataset: Command = {
-    id: 'case-publish-dataset',
-    group: 'Simulate',
-    label: 'Publish to Hugging Face',
-    icon: <ShareIcon />,
-    keywords: 'hub upload share dataset lerobot gr00t groot hf',
-    run: dataset.publishDataset,
-  };
-
-  return [...(dataset.canExport ? [exportDataset] : []), ...(dataset.canPublish ? [publishDataset] : [])];
-}
-
 function multiplyCommands({ multiply }: WorkspaceCore['simTraining']['cases']): Command[] {
   const { latest } = multiply;
 
@@ -90,21 +67,6 @@ function multiplyCommands({ multiply }: WorkspaceCore['simTraining']['cases']): 
       icon: <DuplicateIcon />,
       keywords: 'try variations demonstrations dataset augment generate jitter',
       run: () => multiply.multiply(latest),
-    },
-  ];
-}
-
-function fromTriesCommands({ fromTries }: WorkspaceCore['simTraining']['cases']): Command[] {
-  if (!fromTries.ready) return [];
-
-  return [
-    {
-      id: 'case-train-from-tries',
-      group: 'Simulate',
-      label: 'Train from Tries',
-      icon: <TrainIcon />,
-      keywords: 'policy imitation behaviour behavior cloning learn demonstrations demos act lerobot skill',
-      run: fromTries.train,
     },
   ];
 }
@@ -298,8 +260,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...exploreCommands(core),
     ...matCommands(core),
     ...(cases.active ? multiplyCommands(cases) : []),
-    ...datasetCommands(cases),
-    ...fromTriesCommands(cases),
+    ...datasetCommands(core),
     ...shareCommands(simTraining),
   ];
 }

@@ -1,6 +1,7 @@
 ---
 title: Pick up a block with a gripper
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 3
@@ -30,4 +31,4 @@ Make a Case where an arm lifts a block off the floor and sets it on a spot, then
 
 ![Results with a passed try](/help/pick-up-a-block-with-a-gripper/results.png)
 
-Passed tries can go out with Export Dataset or Publish to Hugging Face, with the Case's brief as the task.
+To export or publish the passed tries, with the Case's brief as the task, click **Make Dataset** under **Results**; see [Make a dataset from tries](/help/make-a-dataset-from-tries).

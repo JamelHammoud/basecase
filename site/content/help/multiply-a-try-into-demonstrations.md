@@ -1,7 +1,7 @@
 ---
 title: Multiply a try into demonstrations
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 5
@@ -16,7 +16,7 @@ keywords:
   - jitter
 related:
   - try-a-case
-  - export-a-lerobot-dataset
+  - make-a-dataset-from-tries
   - lerobot-dataset-contents
 covers:
   - src/cases/tryReplay.ts
@@ -39,7 +39,7 @@ Turn one passed try into up to 50 varied passing tries, so a dataset holds many 
 
 When it's done, the toast says how many it kept: "Kept 50 of 50". The try's row counts them, as in **50 variations**.
 
-![The passed try's row reads 50 variations, above Export Dataset](/help/multiply-a-try-into-demonstrations/results.png)
+![The passed try's row counting its variations, above Make Dataset](/help/multiply-a-try-into-demonstrations/results.png)
 
 **Multiply** is also in [[⌘K]], where it multiplies the open Case's newest passed try.
 
@@ -63,4 +63,4 @@ Deleting a try deletes its variations too, and the confirmation counts them.
 
 ## In the dataset
 
-[Export Dataset](/help/export-a-lerobot-dataset) writes each variation as its own episode. `meta/basecase.json` lists each episode's `seed` and its `source`, the try it was made from. A try you drove has a `source` of null.
+**Make Dataset** under **Results** puts the variations in the dataset with the try they came from; see [Make a dataset from tries](/help/make-a-dataset-from-tries). In the Library, search for Variation to find them. [Export Dataset](/help/export-a-lerobot-dataset) writes each variation as its own episode. `meta/basecase.json` lists each episode's `seed` and its `source`, the try it was made from. A try you drove has a `source` of null.

@@ -26,6 +26,7 @@ import { useTryMultiply, type TryMultiply } from './useTryMultiply';
 import { useTryTimeline, type TryTimeline } from './useTryTimeline';
 import { useTriesTraining, type TriesTraining } from './useTriesTraining';
 import { useStoredTries } from './useStoredTries';
+import { useCaseDataset } from './useCaseDataset';
 import { plural } from '../../electron/plural.mjs';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { CaseRobotInput } from './caseChecks';
@@ -44,6 +45,7 @@ interface CasesOptions {
   skillTraining: { runtime: SkillsRuntime; busy: boolean };
   caseRobot: () => Promise<CaseRobotInput | null>;
   viewportRef: RefObject<Viewport3DHandle | null>;
+  showDataset: (id: string) => void;
 }
 
 const dropTries = (tries: TryRecord[] | undefined, goes: (t: TryRecord) => boolean, showToast: ShowToast) => {
@@ -169,19 +171,20 @@ export function useCases(options: CasesOptions) {
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
   const naming = useCaseNames(setProject);
-  const dataset = useDatasetExport({ sim, rig, parts, active, tries: fromSim, showToast, openAccounts, sceneId });
+  const dataset = useDatasetExport({
+    ...{ sim, rig, parts, cases, active, showToast, openAccounts },
+    sceneTries: project.tries ?? [],
+  });
   const multiply = useTryMultiply({ sim, rig, parts, active, tries: fromSim, partners, onTries, showToast });
   const removeTry = (record: TryRecord) =>
     confirmRemoveTry(record, { tries, multiply, timeline, setProject, showToast });
 
   const fromTries: TriesTraining = useTriesTraining({
-    sim,
-    active,
-    tries: fromSim,
+    ...{ sim, cases, caseRobot, showToast },
+    records: dataset.records,
     skills: skillTraining,
-    caseRobot,
-    showToast,
   });
+  const caseDataset = useCaseDataset({ active, tries: fromSim, sceneId, showDataset: options.showDataset, showToast });
   const attempt = useCaseTry({
     skills: options.skills,
     sim,
@@ -208,6 +211,7 @@ export function useCases(options: CasesOptions) {
     sceneId,
     builder,
     dataset,
+    caseDataset,
     fromTries,
     tries,
     hasRobot,

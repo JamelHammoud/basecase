@@ -47,6 +47,8 @@ import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
 import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
 import { CASE_HANDLERS } from './agentCaseRequests';
+import { DATASET_HANDLERS } from './agentDatasetRequests';
+import type { Datasets } from './useDatasets';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore } from './useCaseExplore';
 import type { CaseRun } from './useCaseRun';
@@ -91,6 +93,7 @@ export interface RequestContext {
   caseCompare: CaseCompare;
   caseExplore: CaseExplore;
   caseRun: CaseRun;
+  datasets: Pick<Datasets, 'make'>;
   skills: SceneSkills;
   mergeParts: (ids: string[]) => Promise<string | null>;
 }
@@ -373,6 +376,7 @@ const HANDLERS: Record<string, Handler> = {
   ...ROUTINE_HANDLERS,
   ...CASE_HANDLERS,
   ...CASE_CODE_HANDLERS,
+  ...DATASET_HANDLERS,
   ...SKILL_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [

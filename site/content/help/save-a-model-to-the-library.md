@@ -44,7 +44,7 @@ A single part is saved under its own name, with its **Notes**, and several parts
 2. Click **Library** in the view rail.
 3. Click the model, or drag it onto the canvas where you want it. It lands selected.
 
-Hover a model to see where it came from, its size, how many parts it has and its notes. **Search library** finds a model by its name or notes, and a try by its Case, robot or source. Right-click it to rename, duplicate or delete it; deleting asks first.
+Hover a model to see where it came from, its size, how many parts it has and its notes. **Search library** finds a model by its name or notes, a try by its Case, robot or source, and a dataset by its name or task. Right-click it to rename, duplicate or delete it; deleting asks first.
 
 ![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)
 

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { checkedFileId, isSafeFileId } from '../backend/constants.mjs';
+import { writeAtomic } from './atomicFile.mjs';
 
 export const TRY_MANIFEST = 'try.json';
 export const TRY_RECORDING = 'recording.bin';
@@ -69,13 +70,6 @@ function checkedBytes(bytes, max) {
   if (bytes.byteLength > max) throw new Error('Too large to keep');
 
   return bytes;
-}
-
-function writeAtomic(file, data) {
-  const temp = `${file}.${process.pid}.tmp`;
-
-  fs.writeFileSync(temp, data);
-  fs.renameSync(temp, file);
 }
 
 const readOrNull = (file) => {

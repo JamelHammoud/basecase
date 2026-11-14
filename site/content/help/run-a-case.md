@@ -1,7 +1,7 @@
 ---
 title: Run a Case
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 5
@@ -54,7 +54,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
-6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train from Tries joins them once five pass.
+6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay. Once a try passes, Results also has Make Dataset, to export, publish or train on the tries; see [Make a dataset from tries](/help/make-a-dataset-from-tries).
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 

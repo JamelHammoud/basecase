@@ -1,7 +1,7 @@
 ---
 title: Simulate a LiDAR
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 covers:
@@ -22,6 +22,7 @@ See what a LiDAR on your robot would see before you buy it. A catalog LiDAR scan
 
 ![A rover with an RPLIDAR C1 in a corridor Case, its returns drawn along both walls](/help/simulate-a-lidar/scan.png)
 
-4. Record tries in a Case, then click Export Dataset in Results. Each frame of the dataset has an `observation.scan` column with one value per ray: the distance divided by the LiDAR's range, and 1 where nothing came back. `meta/basecase.json` lists each LiDAR's ray count, range, rate and field of view.
+4. Record tries in a Case until one passes, then click **Make Dataset** under **Results**.
+5. Click **Export Dataset** in the dataset that opens. Each frame of the dataset has an `observation.scan` column with one value per ray: the distance divided by the LiDAR's range, and 1 where nothing came back. `meta/basecase.json` lists each LiDAR's ray count, range, rate and field of view.
 
 The points stay on the canvas while the simulation runs and clear when it stops. They never show in captures or camera views. Each LiDAR casts at most 720 rays a scan, and a 3D LiDAR casts only its horizontal ring. To see a recorded try's scans again, [replay a robot's LiDAR scan](/help/replay-a-robots-lidar-scan).

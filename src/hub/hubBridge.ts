@@ -11,6 +11,7 @@ export interface HubPublish {
   name: string;
   files: Record<string, Uint8Array>;
   kind?: 'dataset' | 'model';
+  tag?: string;
 }
 
 export interface HubRepoRef {

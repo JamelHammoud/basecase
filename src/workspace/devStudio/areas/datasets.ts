@@ -5,10 +5,13 @@ import type { Studio } from '../types';
 export default function datasetsStudio(studio: Studio) {
   return {
     datasetFiles: async () => {
-      const { cases } = studio().core.simTraining;
-      const zip = await cases.dataset.zip(cases.tries);
+      const { triesView, simTraining } = studio().core;
+      const { cases } = simTraining;
+      const open = triesView.open ? triesView.dataset : null;
+      const zip = await (open ? cases.dataset.zipDataset(open) : cases.dataset.zip(cases.tries));
 
       return zip && base64Files(unzipSync(zip));
     },
+    datasets: () => studio().core.triesView.datasets,
   };
 }

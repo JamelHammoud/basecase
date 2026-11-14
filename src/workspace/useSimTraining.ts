@@ -10,6 +10,7 @@ import type { PolicyRecord } from '../types/robotics';
 import type { Posing } from '../utils/usePosing';
 import type { ShowToast, StudioShared } from './types';
 import { useCases } from './useCases';
+import { useTriesPlace } from './useTriesView';
 import { useRoutines } from './useRoutines';
 import { useShareRobot } from './useShareRobot';
 import { useSkillHub } from './useSkillHub';
@@ -38,6 +39,7 @@ export function useSimTraining(options: SimTrainingOptions) {
   const { workspaceId, scene, docs, posing, viewportRef, showToast, studio } = options;
   const { parts, project, projectRef, setProject, commitParts, updateProjectNow } = docs;
   const velocity = useRef<VelocitySource | null>(null);
+  const triesPlaces = useTriesPlace();
   const sim = useSimulation({
     parts,
     project,
@@ -93,6 +95,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     skills: skills.routineSkills,
     skillTraining: skills,
     viewportRef,
+    showDataset: triesPlaces.showDataset,
     caseRobot: async () => {
       const viewport = viewportRef.current;
 
@@ -134,7 +137,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     trainHandoff: skills.trainHandoff,
   });
 
-  return { sim, training, policies, deletePolicy, cases, routines, skills, skillHub, share };
+  return { sim, training, policies, deletePolicy, cases, routines, skills, skillHub, share, triesPlaces };
 }
 
 export type SimTraining = ReturnType<typeof useSimTraining>;

@@ -44,7 +44,7 @@ export const NewModelMenu: React.FC<{
       >
         <MenuItem
           icon={<BookmarkAddIcon className="w-3.5 h-3.5" />}
-          label="Save Selection"
+          label="Save to Library"
           disabled={!canSaveSelection}
           onSelect={run(() => onSaveModel('selected'))}
         />

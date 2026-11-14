@@ -50,7 +50,7 @@ Put a Case's passed tries on the Hugging Face Hub, where LeRobot and GR00T can t
 ![The Accounts pane with a token saved](/help/publish-a-dataset-to-hugging-face/accounts.png)
 ```
 
-A task's title starts with its verb. Then one sentence of 160 characters or fewer on what it's for, then numbered steps: one action each, where before what, every UI label in bold as the app spells it. Alternatives (⌘K, a drop) go after the steps. Link the concept or the next task where it helps. `covers` lists the code the article describes.
+A task's title starts with its verb. Then one sentence of 160 characters or fewer on what it's for, then numbered steps: one action each, where before what, every UI label in bold as the app spells it. `check:site` fails a label, menu path or key combination the app doesn't have, so a change that renames a label rewrites the articles that name it. Alternatives (⌘K, a drop) go after the steps. Link the concept or the next task where it helps. `covers` lists the code the article describes.
 
 **Screenshots (for changelog entries, help articles and the pull request):** capture the states a person sees, one per change of state. Write a throwaway test in `scratch/` that opens the app with `openApp` from `e2e/harness.ts`, drives it to each state the way the steps say, and saves PNGs with `page.screenshot({ path })` into `site/public/help/<slug>/` or `site/public/changelog/<slug>/`. Run it with `npm run scratch -- <file>`. Reference the PNGs from the article. The pull request shows every image the diff adds under `site/public/` on its own; list any other committed capture in your answer's `screenshots`. Capturing is for showing; don't judge how things look from them.
 

@@ -117,7 +117,7 @@ describe('gripper opening', () => {
 
     expect(fits.feasible).toBe(true);
     expect(wide.feasible).toBe(false);
-    expect(wide.checks[0].message).toMatch(/opens 42 mm/);
+    expect(wide.checks[0].message).toMatch(/opens 41.7 mm/);
     expect(wide.relaxation?.change).toBe('range+20deg');
   });
 });

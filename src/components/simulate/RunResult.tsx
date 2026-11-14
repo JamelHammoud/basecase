@@ -6,7 +6,8 @@ import { prettyJointName, type Rig } from '../../utils/kinematics';
 import { FAULT_LABEL, faultSubmenu } from './faultMenu';
 import { runClock } from '../../utils/duration';
 import { angle } from '../../utils/angle';
-import { pct } from './format';
+import { percent } from '../../../electron/percent.mjs';
+import { lengthLabel } from '../../utils/size';
 
 type SimStats = NonNullable<Simulation['stats']>;
 
@@ -29,7 +30,7 @@ const RobotResult: React.FC<{ result: SimStats['robots'][number]; model: SimMode
       </div>
       <MetaLine
         className="text-[12px] text-white/50 tabular"
-        items={[`Tilt ${angle(r.tilt)}`, `Moved ${(r.travelled * 100).toFixed(0)} cm`]}
+        items={[`Tilt ${angle(r.tilt)}`, `Moved ${lengthLabel(r.travelled * 1000)}`]}
       />
     </div>
   );
@@ -75,7 +76,7 @@ const PeakTorque: React.FC<{
             <span
               className={`w-10 text-right text-[13px] tabular ${j.peak >= 0.98 ? 'text-[#f87171]' : 'text-white/70'}`}
             >
-              {pct(j.peak)}
+              {percent(Math.min(j.peak, 1))}
             </span>
           </button>
         );

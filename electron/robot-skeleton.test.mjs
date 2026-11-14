@@ -72,7 +72,7 @@ describe('robot skeleton', () => {
       ]
     `);
     expect(describeSkeleton(sk)).toMatchInlineSnapshot(`
-      "URDF "tiny": 2 links, 1 moving joints, zero pose.
+      "URDF "tiny": 2 links, 1 moving joint, zero pose.
       Studio frame: mm, Z up, front −Y, left +X (assuming the source faces +x; if the photo disagrees, call again with another forward).
       z = 0 is the lowest joint/frame; soles and covers usually extend a little below it and the shells above the top joints.
       A joint's coordinate ALONG its own axis marks where its frame sits on the axis line. When the left and right joints agree in magnitude (e.g. ±160), it is real geometry: build to it (stance and hip width). When they disagree (e.g. 109 vs −72), the CAD export put the frames on different faces; take that coordinate from the photo instead.

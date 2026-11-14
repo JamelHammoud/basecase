@@ -5,6 +5,7 @@ import { componentPorts } from '../data/componentPorts';
 import { catalogPortLines } from './ports';
 import { currencyNote } from '../utils/currency';
 import { currentMoney } from '../utils/currencyStore';
+import { torque } from '../utils/torque';
 import {
   actuatorValue,
   catalogHeader,
@@ -22,9 +23,8 @@ type HardwareType = (typeof HARDWARE_TYPES)[number];
 
 type Supply = (typeof SUPPLIES)[number];
 
-const nm = (x: number) => x.toFixed(2);
 const act = (x: ActuatorSpec) =>
-  `${x.peak ? 'peak' : 'stall'} ${nm(x.stallNm)} N·m${x.ratedNm === undefined ? '' : `, rated ${nm(x.ratedNm)} N·m`} at ${x.atVolts} V (input ${x.volts[0]}–${x.volts[1]} V)${x.rpm ? `, ${x.rpm} rpm` : ''}${x.stallA ? `, stall ${x.stallA} A` : ''}`;
+  `${x.peak ? 'peak' : 'stall'} ${torque(x.stallNm)}${x.ratedNm === undefined ? '' : `, rated ${torque(x.ratedNm)}`} at ${x.atVolts} V (input ${x.volts[0]}–${x.volts[1]} V)${x.rpm ? `, ${x.rpm} rpm` : ''}${x.stallA ? `, stall ${x.stallA} A` : ''}`;
 
 function versionText(c: Component, v: NonNullable<Component['variants']>[number], ctx?: CatalogContext): string {
   const key = `component:${c.id}|${v.id}`;

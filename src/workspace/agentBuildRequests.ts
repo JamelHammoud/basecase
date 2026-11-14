@@ -8,6 +8,7 @@ import { currentMoney } from '../utils/currencyStore';
 import { jointFrom, jointProblem, withJoints } from '../joints/declare';
 import type { Vec3 } from './types';
 import { plural } from '../../electron/plural.mjs';
+import { lengthLabel } from '../utils/size';
 
 export interface JointSpec {
   id: string;
@@ -101,7 +102,7 @@ function skeletonDrift(j: RobotJoint, planned: SkeletonJoint | undefined): strin
 
   if (off <= DRIFT_MM && parallel) return null;
 
-  return `${j.id}: ${parallel ? '' : 'not parallel to and '}${Math.round(off * 10) / 10} mm off the skeleton axis; move the parts or update define_skeleton`;
+  return `${j.id}: ${parallel ? '' : 'not parallel to and '}${lengthLabel(off)} off the skeleton axis; move the parts or update define_skeleton`;
 }
 
 export function declareJoints(

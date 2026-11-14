@@ -5,6 +5,7 @@ import type { ScenePart } from '../types/robotics';
 import type { ZUpVec } from '../types/skeleton';
 import { dot, lineDistance, norm, sub } from '../utils/engineeringMath';
 import { r1, toCad } from './agentFrame';
+import { lengthLabel } from '../utils/size';
 import { partBoundsCad, type PartBoxes } from './agentScene';
 import { contractOf } from './interfaces';
 import { portsOf, worldPort } from './ports';
@@ -76,7 +77,7 @@ function envelopeLines(
     const b = partBoundsCad(p, input.measured);
     const worst = Math.min(...contract.envelopes.map((box) => overshoot(b, box)));
 
-    return worst > ENVELOPE_MM ? [`${p.id} is ${r1(worst)} mm outside its envelope`] : [];
+    return worst > ENVELOPE_MM ? [`${p.id} is ${lengthLabel(worst)} outside its envelope`] : [];
   });
 
   if (outside.length) out.problems.push(...outside.map((l) => `Envelope: ${l}.`));
@@ -127,7 +128,7 @@ function datumMiss(d: InterfaceDatum, line: Line, best: { p: WorldPortZ; off: nu
 
   if (!best) return `Datum ${d.name}: no port lies parallel to the ${where}. Add one, or mate a part to it.`;
 
-  return `Datum ${d.name}: nearest port ${best.p.part}:${best.p.name} is ${r1(best.off)} mm off the ${where}.`;
+  return `Datum ${d.name}: nearest port ${best.p.part}:${best.p.name} is ${lengthLabel(best.off)} off the ${where}.`;
 }
 
 function chainLine(c: FastenerChain): Line {
@@ -231,7 +232,7 @@ export function checkInterfaces(input: InterfaceCheckInput): InterfaceCheck | st
 export function interfaceText(owner: string, check: InterfaceCheck): string {
   const head = check.pass
     ? `Interfaces for ${owner}: pass. You can hand back.`
-    : `Interfaces for ${owner}: ${check.problems.length} problems. Fix them before you hand back.`;
+    : `Interfaces for ${owner}: ${plural(check.problems.length, 'problem')}. Fix them before you hand back.`;
 
   return [
     head,

@@ -3,6 +3,7 @@ import type { RobotBody } from './engineeringBody';
 import { convexHull, lineDistance, norm, polygonMargin, type V3 } from './engineeringMath';
 import type { CheckContext, CheckRow, Stability } from './engineeringTypes';
 import { angle } from './angle';
+import { lengthLabel } from './size';
 
 function stabilityStatus({ marginMm, tipDeg, onALine }: Stability): CheckRow['status'] {
   if (onALine) return 'warn';
@@ -88,8 +89,8 @@ function stabilityDetail({ marginMm, heightMm, tipDeg, onALine }: Stability): st
   if (onALine) return 'Rests on a line with no third contact, so it has to balance itself';
 
   return marginMm <= 0
-    ? `Center of mass is ${Math.abs(Math.round(marginMm))} mm outside the feet: it falls over`
-    : `Center of mass ${Math.round(marginMm)} mm inside the outline of the feet, ${Math.round(heightMm)} mm up: tips past ${angle(tipDeg)}`;
+    ? `Center of mass is ${lengthLabel(Math.abs(marginMm))} outside the feet: it falls over`
+    : `Center of mass ${lengthLabel(marginMm)} inside the outline of the feet, ${lengthLabel(heightMm)} up: tips past ${angle(tipDeg)}`;
 }
 
 function stabilityRow(s: Stability): CheckRow {

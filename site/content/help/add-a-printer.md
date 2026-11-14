@@ -35,22 +35,24 @@ covers:
   - electron/print/slicers.mjs
 ---
 
-Save your printer once, so Print mode lays parts out on its real bed and sends sliced plates to it from the desktop app.
+Once you save your printer, Print mode lays parts out on its real bed and sends sliced plates to it from the desktop app.
 
 1. Press [[⌘,]] to open Settings, then choose **Printers**.
 2. Click **Add Printer**.
 3. Type a name in **Name**.
-4. Pick your printer in **Model**. For a printer that isn't listed, pick **Custom printer** and type its **Build volume** in millimeters.
-5. In **Send prints with**, choose how Basecase reaches the printer. The table below says what each one needs.
+4. Pick your printer in **Model**. If your printer isn't listed, pick **Custom printer** and type its **Build volume** in millimeters.
+5. In **Send prints with**, choose how Basecase reaches the printer. Each option needs different details, listed under Connections.
 6. If the connection asks for one, type the printer's **Address**, such as 192.168.1.40.
-7. Type the **Access code** or **API key**, and for Bambu LAN the **Serial number**.
-8. Click **Test Connection**. The row reads “Connected to” and the printer's name when it works.
+7. Type the **Access code** or **API key**. For Bambu LAN, also type the **Serial number**.
+8. Click **Test Connection**. If it works, the row reads “Connected to” followed by the printer's name.
 
-**Model** lists over a hundred printers, from the profiles Bambu Studio and OrcaSlicer ship. On first launch, Basecase adds the printer you last chose in Bambu Studio, if you have it. **Find on Network** in the same pane lists Bambu Lab, Klipper and OctoPrint printers it can see; click **Add** on one.
+**Model** lists more than a hundred printers, taken from the profiles that ship with Bambu Studio and OrcaSlicer. On first launch, Basecase adds the printer you last chose in Bambu Studio, if you have it.
+
+You can also click **Find on Network** in the same pane to list the Bambu Lab, Klipper and OctoPrint printers it can see. Then click **Add** on the one you want.
 
 ## Prusa printers
 
-Prusa's CORE One, MK4, MK4S, MK3.5, MINI IS and XL slice with OrcaSlicer, so install it before you slice for them. The XL is its single-tool version; the 5-tool XL and printers with an MMU aren't listed.
+The Prusa CORE One, MK4, MK4S, MK3.5, MINI IS and XL slice with OrcaSlicer, so install OrcaSlicer before you slice for them. The XL in the list is the single-tool version. The 5-tool XL and printers with an MMU aren't listed.
 
 ![Settings ▸ Printers with a Prusa CORE One sending through PrusaLink](/help/add-your-printer/printers.png)
 
@@ -64,12 +66,12 @@ Prusa's CORE One, MK4, MK4S, MK3.5, MINI IS and XL slice with OrcaSlicer, so ins
 | Klipper (Moonraker) | Uploads and starts the print, with live progress | **Address** and **API key** |
 | PrusaLink | Uploads and starts the print, with live progress | **Address** and **API key** |
 | OctoPrint | Uploads and starts the print, with live progress | **Address** and **API key** |
-| Export only | Sends nothing; you print the files yourself | Nothing |
+| Export only | Sends nothing. You print the files yourself. | Nothing |
 
 Bambu printers offer the three Bambu connections, and every other printer offers the other three.
 
 > [!WARNING]
-> Bambu LAN needs LAN Only and Developer Mode turned on in the printer's settings, which Bambu doesn't support. Use Bambu Studio if you don't want either on.
+> Bambu LAN needs LAN Only and Developer Mode turned on in the printer's settings, and Bambu doesn't support this setup. If you'd rather not turn either one on, use Bambu Studio instead.
 
 ## Where to find codes and keys
 
@@ -79,6 +81,8 @@ Bambu printers offer the three Bambu connections, and every other printer offers
 - **PrusaLink API key:** on the printer, in **Settings** ▸ **Network** ▸ **PrusaLink**.
 - **OctoPrint API key:** in OctoPrint, under **Settings** ▸ **Application Keys**.
 
-Codes and keys are encrypted on your computer and never saved in a scene. One printer is marked **Default**, and every scene that hasn't picked a printer uses it. **Make Default** on another printer changes it.
+Basecase encrypts codes and keys on your computer and never saves them in a scene.
+
+Scenes that haven't picked a printer use the one marked **Default**. To change the default, click **Make Default** on another printer.
 
 Next, [print a robot's parts](/help/print-a-robots-parts).

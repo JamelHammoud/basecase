@@ -23,23 +23,23 @@ covers:
   - hw/crates/servo-emu/src/ros2/
 ---
 
-Drive the robot in your scene as a ros2_control robot, the way you'd drive a UR, Franka or SO-101 arm through its ROS 2 controllers.
+You can drive the robot in your scene as a ros2_control robot, the same way you'd drive a UR, Franka, or SO-101 arm through its ROS 2 controllers.
 
-The robot is emulated: the daemon talks to it over 127.0.0.1, and no released build reaches a real network. Operate is in the desktop app only.
+The robot is emulated. The daemon talks to it over 127.0.0.1, and no released build reaches a real network. Operate is available only in the desktop app.
 
-1. Open a scene with a robot that has joints. An imported URDF keeps its joint names, and those are the names the robot publishes.
+1. Open a scene with a robot that has joints. If you imported the robot from a URDF, it keeps its joint names, and those are the names the robot publishes.
 2. Click **Play** in the view rail, then click **Operate**.
 3. Above **Connect Emulated Robot**, click **ROS 2**.
 
 ![Operate with ROS 2 chosen above Connect Emulated Robot](/help/connect-an-emulated-ros-2-robot/connect.png)
 
 4. Click **Connect Emulated Robot**. The emulated robot publishes `/joint_states` and takes commands on `/forward_position_controller/commands`.
-5. Under **Ladder**, click **Set Up**. It checks that the robot publishes every joint in your scene, matched by name. A joint it doesn't publish, or one your scene lacks, is named in the message, and nothing moves.
-6. Click **Test**. The ladder stops at Test for a ROS 2 robot.
-7. Drive the robot in the Simulate tab, a Case try or Drive. Each joint follows the simulation through the same safety checks as emulated servos.
+5. Under **Ladder**, click **Set Up**. Basecase matches joints by name and checks that the robot publishes every joint in your scene. If the robot doesn't publish one of your joints, or publishes a joint your scene doesn't have, the message names that joint and nothing moves.
+6. Click **Test**. For a ROS 2 robot, the ladder stops at Test.
+7. Drive the robot in the Simulate tab, a Case try, or Drive. Each joint follows the simulation and goes through the same safety checks as emulated servos.
 
 ![The emulated ROS 2 robot following the simulation in Test](/help/connect-an-emulated-ros-2-robot/test.png)
 
-8. Click **Stop**. The robot holds the last positions it measured, and the daemon sends nothing more. If the app stops sending commands, it holds within 100 ms on its own.
+8. Click **Stop**. The robot holds the last positions it measured, and the daemon sends nothing more. If the app stops sending commands, the robot holds on its own within 100 ms.
 
-Any scene robot with up to 32 joints can connect this way. Servo calibration stays with Feetech and Dynamixel servos.
+Any scene robot with up to 32 joints can connect this way. Servo calibration applies only to Feetech and Dynamixel servos.

@@ -41,7 +41,7 @@ Pin a comment to a spot on a part, or draw colored marks over the scene to show 
 
 The pin is numbered and moves with its part. Click a pin to open it, where you can reply, **Resolve** it or **Delete comment**.
 
-Resolved comments leave the canvas but stay in the Inspector under **Comments** with nothing selected. Hover a comment to edit or delete it; deleting asks first, and a toast offers Undo. **Comment Here**, in any right-click menu, drops a pin where you clicked.
+Resolved comments leave the canvas but stay in the Inspector under **Comments** with nothing selected. Hover a comment to edit or delete it. Deleting asks first, and a toast offers Undo. **Comment Here**, in any right-click menu, drops a pin where you clicked.
 
 Open comments are part of the scene's brief, which **Export** ▸ **Copy as Markdown** copies.
 

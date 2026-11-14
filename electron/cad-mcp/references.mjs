@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { IMAGE_EXT, NO_WEB, REFERENCES_DIR, bridge, evidencePath, fetchWithTimeout } from './shared.mjs';
+import { fileSize, MB } from '../fileSize.mjs';
 import { readCapped } from '../publicFetch.mjs';
 
+const REFERENCE_MAX_BYTES = 20 * MB;
 const SVG_MIME = 'image/svg+xml';
 const used = new Set();
 
@@ -30,7 +32,7 @@ async function loadWebReference(r) {
     (res.headers.get('content-type') || '').split(';')[0].trim() ||
     IMAGE_EXT[path.extname(new URL(r).pathname).toLowerCase()];
 
-  return { mime, buf: await readCapped(res, 25_000_000, 'The image') };
+  return { mime, buf: await readCapped(res, 25 * MB, 'The image') };
 }
 
 function loadEvidenceReference(r) {
@@ -55,7 +57,7 @@ export async function loadReference(ref) {
 
   const { buf, mime } = await readReference(r);
 
-  if (buf.length > 20_000_000) throw new Error(`${r} is larger than 20 MB.`);
+  if (buf.length > REFERENCE_MAX_BYTES) throw new Error(`${r} is larger than ${fileSize(REFERENCE_MAX_BYTES)}.`);
 
   if (mime === SVG_MIME) return { name: r, buf, mime, svg: buf.toString('utf8') };
 

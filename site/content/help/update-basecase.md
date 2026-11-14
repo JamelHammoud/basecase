@@ -21,22 +21,24 @@ covers:
   - src/workspace/ViewRail.tsx
 ---
 
-Install a new version of Basecase when it has downloaded, or check for one yourself.
+You can install a new version of Basecase once it has downloaded, or check for one yourself.
 
-Basecase checks for a new version when it starts and every hour after, and downloads it in the background. Nothing installs until you choose to restart.
+Basecase checks for a new version when it starts and every hour after that. If it finds one, it downloads it in the background and waits for you to restart before installing it.
 
 ## Install a downloaded update
 
-1. Click the blue arrow above **Settings** at the bottom of the view rail. Its tooltip reads “Restart to install” and the new version.
+The blue arrow appears in the view rail only after an update has downloaded.
 
-Basecase quits, installs the update and opens again with your scenes as you left them. The blue arrow shows only once an update has downloaded.
+1. At the bottom of the view rail, click the blue arrow above **Settings**. Its tooltip reads “Restart to install” and the new version.
+
+Basecase quits, installs the update, then opens again with your scenes as you left them.
 
 ## Check for an update
 
 1. On a Mac, choose **Basecase** ▸ **Check for Updates**. On Windows, click **Menu**, then choose **Help** ▸ **Check for Updates**.
-2. Read the dialog. It says “Basecase is up to date”, or “Downloading Basecase” and the new version.
+2. A dialog appears. It says “Basecase is up to date”, or “Downloading Basecase” and the new version.
 3. When the download finishes, click the blue arrow in the view rail.
 
-If an update can't install within a minute, Basecase shows “Couldn’t install the update”. Click **Download Basecase** to get the latest version and install it over the old one.
+If an update can't install within a minute, Basecase shows “Couldn’t install the update”. Click **Download Basecase** to get the latest version, then install it over the old one.
 
-What's new in each version is in the [changelog](/changelog). To get versions before everyone else, [get beta updates](/help/get-beta-updates).
+To see what's new in each version, read the [changelog](/changelog). To get new versions before everyone else, [get beta updates](/help/get-beta-updates).

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isCount, isSnapshotRef, readJsonOrNull, RUN_ID, snapshotFile } from './backend/trainingSnapshots.mjs';
 import { IS_WINDOWS } from './executables.mjs';
+import { fileSize, MB } from './fileSize.mjs';
 import { findUv, UV_INSTALL } from './uv.mjs';
 
 const TRAINER_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'trainer');
@@ -98,7 +99,7 @@ export function writeJobFolder(dir, { xml, job }) {
 }
 
 const WARM_POLICY_FILE = 'warm-policy.json';
-const WARM_POLICY_MAX_BYTES = 64 * 1024 * 1024;
+const WARM_POLICY_MAX_BYTES = 64 * MB;
 
 function warmPolicyText(policy, forge) {
   if (policy === undefined || policy === null) return null;
@@ -109,7 +110,8 @@ function warmPolicyText(policy, forge) {
 
   const text = JSON.stringify(policy);
 
-  if (Buffer.byteLength(text) > WARM_POLICY_MAX_BYTES) throw new Error('The policy to start from is over 64 MB.');
+  if (Buffer.byteLength(text) > WARM_POLICY_MAX_BYTES)
+    throw new Error(`The policy to start from is over ${fileSize(WARM_POLICY_MAX_BYTES)}.`);
 
   return text;
 }

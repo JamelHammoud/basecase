@@ -1,8 +1,9 @@
+import { MB } from '../../../../electron/fileSize.mjs';
 import { isSkill } from '../../../skills/bundle';
 import { isHash } from '../../../skills/hash';
 import { idbGet, idbPut } from './idb';
 
-const MAX_SKILL_CHARS = 32 * 1024 * 1024;
+const MAX_SKILL_CHARS = 32 * MB;
 
 function checkedHash(hash: unknown): string {
   if (!isHash(hash)) throw new Error('A skill is named by its hash.');

@@ -1,11 +1,12 @@
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { buildProbe, enclosedMisses, refineHole } from './holeProbe.mjs';
 import { readGlb, viewBytes } from './meshopt.mjs';
+import { fileSize, MB } from '../fileSize.mjs';
 import { buildPartGlb } from './partGlb.mjs';
 import { readOcctBytes, rotationMatrix, triangleCollector } from './stepCore.mjs';
 
 const CAD_EXT = /\.(step|stp|igs|iges)$/i;
-const MAX_UNZIPPED = 600_000_000;
+const MAX_UNZIPPED = 600 * MB;
 const MIN_HOLE_MM = 1.8;
 const MAX_HOLE_MM = 12;
 const STEP_FOR_SCAN = 0.25;
@@ -18,7 +19,7 @@ function cadFromZip(bytes, member) {
     filter: (f) => {
       total += f.originalSize;
 
-      if (total > MAX_UNZIPPED) throw new Error('The archive unpacks to more than 600 MB.');
+      if (total > MAX_UNZIPPED) throw new Error(`The archive unpacks to more than ${fileSize(MAX_UNZIPPED)}.`);
 
       return CAD_EXT.test(f.name) && (!member || f.name.endsWith(member));
     },

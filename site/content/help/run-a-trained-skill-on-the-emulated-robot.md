@@ -26,24 +26,32 @@ covers:
   - electron/robot/intentPacer.mjs
 ---
 
-Play a trained skill or policy in the simulation while the emulated robot is in Test, and watch its servos follow through the safety layer.
+You can play a trained skill or policy in the simulation while the emulated robot is in Test, then watch its servos follow along through the safety layer.
 
-The robot follows the app's simulation; it doesn't run the policy itself. Basecase still hands the robot the scene's newest ready skill or up-to-date policy, so **Rehearse** and the rungs above it open. On those rungs the robot follows the simulation too.
+The robot copies the app's simulation instead of running the policy itself. Basecase still sends it the scene's newest ready skill or up-to-date policy. That opens **Rehearse** and the rungs above it, where the robot also follows the simulation.
 
-1. Connect the emulated robot and climb to **Test**. Steps are in [Connect an emulated robot](/help/connect-an-emulated-robot).
+1. Connect the emulated robot and climb to **Test**. For the steps, see [Connect an emulated robot](/help/connect-an-emulated-robot).
 2. Click **Simulate** at the top of the right panel.
 3. Under **Train**, click **Try** on a ready skill. For **Walk**, click **Drive** instead.
 4. Watch the servo angles in **Operate** change as the simulated robot moves.
-5. Click **Stop** in **Operate** to stop the motors.
+5. To stop the motors, click **Stop** in **Operate**.
 
-To run a trained policy, choose it under **Control** instead of step 3. A Case try or a Routine run streams to the robot the same way.
+To run a trained policy, choose it under **Control** in place of step 3. A Case try or a Routine run streams to the robot the same way.
 
 ## What the safety layer changes
 
-In **Test**, each joint is held to 30% torque and 0.5 rad/s. A goal moves at most 0.02 rad every 20 ms, and never leads the servo's measured position by more than 0.25 rad. A fast skill shows up on the servos slower than on the canvas.
+In **Test**, the safety layer holds each joint to 30% torque and 0.5 rad/s. A goal moves at most 0.02 rad every 20 ms and stays at most 0.25 rad ahead of the servo's measured position. Expect a fast skill to look slower on the servos than on the canvas.
 
-The app sends the robot the simulation's joint targets up to every 25 ms. After a fault, it sends none until you climb the **Ladder** again. A joint the simulation doesn't have holds where it is. If the app stops sending for 100 ms, the robot stops: an arm holds, and a legged robot stands still.
+The app sends the robot the simulation's joint targets as often as every 25 ms. If something goes wrong:
+
+- After a fault, the app sends no targets until you climb the **Ladder** again.
+- A joint the simulation doesn't have holds where it is.
+- If the app stops sending for 100 ms, the robot stops: an arm holds, and a legged robot stands still.
 
 ## Run it outside Basecase
 
-**Export** ▸ **Robot Package** holds the MuJoCo model, a URDF, the joint map and the scene's policies. Each policy comes with a `spec.json` of its inputs and outputs. Skills trained in **Train** aren't in the package. See [Export a robot package](/help/export-a-robot-package).
+To run the robot without Basecase, choose **Export** ▸ **Robot Package**. The package holds the MuJoCo model, a URDF, the joint map and the scene's policies. Each policy comes with a `spec.json` that lists its inputs and outputs.
+
+**Note:** The package leaves out skills you trained in **Train**.
+
+Learn more in [Export a robot package](/help/export-a-robot-package).

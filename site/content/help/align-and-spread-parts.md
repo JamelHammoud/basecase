@@ -26,20 +26,20 @@ covers:
   - src/utils/selection.ts
 ---
 
-Line parts up on their edges or centers, or space three or more evenly, without typing a single position.
+You can line up parts on their edges or centers, or space three or more parts evenly, without typing positions.
 
-1. Select two or more parts on the canvas. Shift-click adds each one after the first.
+1. Select two or more parts on the canvas. Shift-click each part after the first to add it.
 2. In the Inspector, find **Align**.
-3. Click an icon in the **X**, **Y** or **Z** row to line the parts up on their shared bounds.
-4. To space three or more parts evenly, click the icon at the end of a row, such as **Spread Along X**.
+3. Click an icon in the **X**, **Y** or **Z** row. The parts line up on their shared bounds.
+4. To space three or more parts evenly, click the icon at the end of a row, such as **Spread Along X**. The **Spread** icons appear once you select three parts.
 
 ![Align in the Inspector with three parts selected](/help/align-and-spread-parts/inspector.png)
 
-The same strip is under **Align** in the right-click menu. While parts are selected, [[⌘K]] has each one by name: **Align Left**, **Align Top**, **Spread Along X** and the rest.
+The right-click menu has the same strip under **Align**. With parts selected, you can also run each command by name from [[⌘K]]: **Align Left**, **Align Top**, **Spread Along X** and the rest.
 
 ![The Align strip in a part's right-click menu](/help/align-and-spread-parts/menu.png)
 
-**Center on Origin**, a little lower in the menu, moves the selection so its middle sits over the origin at the same height.
+**Center on Origin** is further down the same menu. It moves the selection's middle over the origin and keeps its height.
 
 ## What each row does
 
@@ -49,4 +49,4 @@ The same strip is under **Align** in the right-click menu. While parts are selec
 | Y | Bottom, Middle, Top | Bottom puts the part on the floor |
 | Z | Back, Center, Front | Puts that side or the center on the origin |
 
-The bounds count each part's rotation, so turned parts line up by what you see. **Spread** shows once three parts are selected.
+The bounds include each part's rotation, so rotated parts line up the way they look on the canvas.

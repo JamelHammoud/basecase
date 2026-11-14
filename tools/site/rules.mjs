@@ -4,7 +4,6 @@ import { findBritish } from '../copy/spelling.mjs';
 import { SITE_BANNED, VAGUE_ALT, VAGUE_LINK_TEXT } from './banned.mjs';
 import { IMAGE, KEYS, LINK, plainText, prose, sentencesOf, wordCount } from './blocks.mjs';
 
-export const MAX_SENTENCE_WORDS = 25;
 export const MAX_PARAGRAPH_SENTENCES = 5;
 export const MAX_SUMMARY_SENTENCES = 2;
 export const MAX_TITLE_CHARS = 65;
@@ -16,15 +15,17 @@ const PAGE_LINK = /^\/(changelog|blog|help)\/([^/#?]+)/;
 
 const problem = (line, message) => ({ line, message });
 
-export function sentenceLength(page) {
-  return prose(page.blocks).flatMap((block) =>
-    sentencesOf(block.text)
-      .map((sentence) => ({ sentence, words: wordCount(sentence) }))
-      .filter(({ words }) => words > MAX_SENTENCE_WORDS)
-      .map(({ sentence, words }) =>
-        problem(block.line, `a sentence of ${words} words; split it (§3f): “${sentence.slice(0, 60)}…”`),
-      ),
-  );
+const PUNCTUATION = [
+  [';', 'a semicolon: end the sentence or join it with a word'],
+  ['—', 'an em dash: use a comma, a full stop or parentheses'],
+];
+
+export function punctuation(page) {
+  return prose(page.blocks).flatMap((block) => {
+    const text = plainText(block.text).replace(/`[^`]*`/g, '');
+
+    return PUNCTUATION.filter(([mark]) => text.includes(mark)).map(([, what]) => problem(block.line, `${what} (§3f)`));
+  });
 }
 
 export function paragraphLength(page) {

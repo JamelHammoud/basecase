@@ -12,18 +12,27 @@ import { servoArm } from '../sim/fixtures/servoArm';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { CASE_HANDLERS, caseValues } from './agentCaseRequests';
 import type { Cases } from './useCases';
+import { fixtureRoom } from '../cases/roomFixture';
+import { readRoomPlan, type Room } from '../cases/roomPlan';
+import { roomTargets } from '../cases/roomTargets';
 
 const scene = { parts: () => [], project: () => ({}) as ProjectSettings, viewport: () => null };
 
-function contextFor(id: string) {
+const robotOf = (id: string) => {
   const r = fixtureRobots().find((f) => f.id === id)!;
-  const robot = builderRobot(buildRig(r.joints, r.parts), r.parts);
+
+  return builderRobot(buildRig(r.joints, r.parts), r.parts);
+};
+
+function contextFor(id: string, room?: Room) {
+  const robot = robotOf(id);
   const added: Case[] = [];
+  const inRoom = (spec: CaseSpec): CaseSpec => (room ? { ...spec, room } : spec);
   const cases = {
     builder: {
-      preview: (spec: CaseSpec) => buildCase(spec, robot),
+      preview: (spec: CaseSpec) => buildCase(inRoom(spec), robot),
       add: (spec: CaseSpec) => {
-        const built = buildCase(spec, robot);
+        const built = buildCase(inRoom(spec), robot);
 
         if (built.ok) added.push(built.kase);
 
@@ -42,8 +51,8 @@ function contextFor(id: string) {
   return { ctx: { cases, routines, caseCompare, caseExplore, caseRun, setAction: () => {}, ...scene }, added, running };
 }
 
-const create = (payload: Record<string, unknown>, id = 'rover-diff') => {
-  const { ctx, added, running } = contextFor(id);
+const create = (payload: Record<string, unknown>, id = 'rover-diff', room?: Room) => {
+  const { ctx, added, running } = contextFor(id, room);
 
   return { reply: CASE_HANDLERS.create_case(payload, ctx), added, running };
 };
@@ -116,6 +125,23 @@ describe('create_case', () => {
     });
   });
 
+  it('keeps an object the agent marks movable movable, and only that one', async () => {
+    const target = { kind: 'cylinder', position: [300, 0, 1], size: [120, 120, 2], behavior: 'marker' };
+    const { reply, added } = create({
+      goal: 'reach',
+      objects: [
+        { ...target, id: 'lit', name: 'Lit', movable: true },
+        { ...target, id: 'still', name: 'Still' },
+      ],
+    });
+
+    expect(await reply).toMatchObject({ ok: true, objects: 3 });
+
+    const movable = Object.fromEntries(added[0].world.objects.map((o) => [o.id, o.movable ?? false]));
+
+    expect(movable).toMatchObject({ lit: true, still: false });
+  });
+
   it('answers a goal the robot cannot try, or hostile objects, with what to change', async () => {
     expect(await create({ goal: 'touch' }).reply).toEqual({ ok: false, problem: expect.stringMatching(/reach/) });
     expect(await create({ goal: 'nope' }).reply).toMatchObject({ ok: false });
@@ -151,6 +177,55 @@ describe('create_case', () => {
     expect(compiled.ok).toBe(false);
     expect(await refused.reply).toEqual({ ok: false, problem: compiled.errors![0].message });
     expect(refused.added).toEqual([]);
+  });
+});
+
+describe('create_case in a scanned room', () => {
+  const room = readRoomPlan(JSON.stringify(fixtureRoom()), 'Fixture Flat.json');
+  const spotOf = (kase: Case) => kase.world.objects.find((o) => o.id === 'spot')!.position;
+  const targetAt = (name: string) => roomTargets(room, robotOf('rover-diff')).find((t) => t.name === name)!.at;
+
+  it('picks the table by name, and the floor under it from the way a person says it', async () => {
+    const table = create({ goal: 'reach', target: 'table' }, 'rover-diff', room);
+    const under = create({ goal: 'reach', target: 'under the kitchen table' }, 'rover-diff', room);
+
+    expect(await table.reply).toMatchObject({ ok: true, brief: 'Reach the spot at the Table and stop on it.' });
+    expect(await under.reply).toMatchObject({ ok: true, brief: 'Reach the spot under the Table and stop on it.' });
+    expect(spotOf(table.added[0])).toEqual([targetAt('Table')[0], expect.any(Number), targetAt('Table')[2]]);
+    expect(spotOf(under.added[0])).toEqual([
+      targetAt('Under Table')[0],
+      expect.any(Number),
+      targetAt('Under Table')[2],
+    ]);
+  });
+
+  it('passes a path’s spots in the order named', async () => {
+    const { reply, added } = create({ goal: 'path', target: ['sofa', 'door', 'table'] }, 'rover-diff', room);
+
+    expect(await reply).toMatchObject({ ok: true, brief: 'Pass the 3 spots in order.' });
+    expect(
+      ['spot0', 'spot1', 'spot2'].map((id) => added[0].world.objects.find((o) => o.id === id)!.position[2]),
+    ).toEqual(['Sofa', 'Door', 'Table'].map((name) => targetAt(name)[2]));
+  });
+
+  it('refuses a path with one name and a reach with two, adding nothing', async () => {
+    const path = create({ goal: 'path', target: ['table'] }, 'rover-diff', room);
+    const reach = create({ goal: 'reach', target: ['table', 'door'] }, 'rover-diff', room);
+
+    expect(await path.reply).toEqual({ ok: false, problem: 'Name 2 to 8 spots for Follow a Path.' });
+    expect(await reach.reply).toEqual({ ok: false, problem: 'Name one spot for Reach a Spot.' });
+    expect([...path.added, ...reach.added]).toEqual([]);
+  });
+
+  it('refuses a name the room lacks, and a target with no room open, with the names it has', async () => {
+    expect(await create({ goal: 'reach', target: 'fridge' }, 'rover-diff', room).reply).toEqual({
+      ok: false,
+      problem: 'Pick a target in Fixture Flat: Door, Sofa, Table, Under Table.',
+    });
+    expect(await create({ goal: 'reach', target: 'table' }).reply).toEqual({
+      ok: false,
+      problem: 'Pick a world for Reach a Spot: floor, corridor, block, rough, steps, slope.',
+    });
   });
 });
 

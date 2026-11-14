@@ -99,7 +99,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 ## AcpStudioPanel (agent panel)
 
 - `MAX_IMAGES = 20` images go inline with a message. More images and other files go as evidence.
-- The picker can be opened from elsewhere (Library → From Image…) by incrementing `attachRequest`. The component compares to the last value so it doesn't open on mount.
+- The picker can be opened from elsewhere (⌘K → Attach Images) by incrementing `attachRequest`. The component compares to the last value so it doesn't open on mount.
 - Attached images keep the order they were picked in (`Promise.all` over the inline set).
 - Follow-the-bottom (`stickRef`):
   - Scrolling a nested scroller (code blocks, `data-inner-scroll`) doesn't count until it reaches its top.
@@ -153,7 +153,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 
 - Sidebar aside width includes the 8px gap after the card, like the inspector.
 - Layers: an empty scene returns no Layers content at all.
-- Library: a description written as “Saved from 52 parts” (what Save to Library writes) is hidden, since Parts shows it better. The hover card is suppressed while renaming so it doesn't cover the field. Thumbnails and sizes use only solid, visible parts.
+- Library: older models carry descriptions the app wrote (“Saved from 52 parts”, “Saved from scene (box)”, “3D model generated via ACP …”). `modelNote` hides them everywhere a description is read, since the subtitle and Parts already say it. The hover card is suppressed while renaming so it doesn't cover the field. Thumbnails and sizes use only solid, visible parts.
 - Parts search:
   - Words under 3 characters must start a word (“5” finds “Pi 5”, not “65 mm”). Longer words can sit anywhere (“3215”).
   - Size queries parse “m3x12”, “M2.5 × 8”, “m3 12mm”, “608” into size, length and leftover words. A size turns hardware hits into that exact part.

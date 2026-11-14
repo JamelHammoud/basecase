@@ -8,6 +8,7 @@ import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotic
 import { hashText } from '../guide/guideItems';
 import { filamentGrams, isPrinted, printMaterialOf } from './bom';
 import { duration } from './duration';
+import { weight } from './weight';
 import { jsonHash, numbersHash } from './geometryHash';
 import { plural } from '../../electron/plural.mjs';
 
@@ -118,7 +119,7 @@ function issuesFor(check: PrintCheck, grams: number, supportG: number): string[]
     );
 
   if (supportG > Math.max(2, grams * 0.25))
-    issues.push(`Add 45° chamfers or split it flat (needs about ${Math.round(supportG)} g of support)`);
+    issues.push(`Add 45° chamfers or split it flat (needs about ${weight(supportG)} of support)`);
 
   return issues;
 }
@@ -252,14 +253,14 @@ export function printReportText(r: PrintReport): string {
     : '';
 
   lines.push(
-    `${plural(r.parts.length, 'printed part')} on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${Math.round(r.totals.grams)} g + ${Math.round(r.totals.supportG)} g support, ${duration(r.totals.hours * 3600, 'min')}, ${plates}. Estimates without a slicer.`,
+    `${plural(r.parts.length, 'printed part')} on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${weight(r.totals.grams)} + ${weight(r.totals.supportG)} support, ${duration(r.totals.hours * 3600, 'min')}, ${plates}. Estimates without a slicer.`,
   );
   lines.push(r.totals.failing ? `Issues on ${plural(r.totals.failing, 'part')}:` : 'Every part fits and prints.');
 
   for (const p of r.parts) {
     const s = fmtSize(p.check.size);
     const turned = p.check.yaw && p.check.yaw % 90 ? `, turned ${p.check.yaw}° across the plate` : '';
-    const head = `- ${p.id} (${p.material}, ${Math.round(p.grams)} g${p.supportG >= 1 ? ` + ${Math.round(p.supportG)} g support` : ''}, ${s} mm, ${faceText(p.check)}${turned})`;
+    const head = `- ${p.id} (${p.material}, ${weight(p.grams)}${p.supportG >= 1 ? ` + ${weight(p.supportG)} support` : ''}, ${s} mm, ${faceText(p.check)}${turned})`;
 
     const said = [...p.issues, ...p.notes];
 

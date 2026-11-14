@@ -48,7 +48,8 @@ function ModePanel({ core, actions }: InspectTabProps) {
       mode={studioMode}
       svgFile={tool.creatorSvg}
       onChangeMode={(m) => m !== 'clay' && tool.setCreator(m)}
-      onDone={() => (studioMode === 'clay' ? tool.setMode('translate') : tool.setCreator(null))}
+      onDone={tool.leaveStudio}
+      onUnsavedChange={tool.setStudioUnsaved}
       onUpdateSculptSettings={tool.updateSculptSettings}
       onAddClayPreset={creation.addClayPreset}
       onSubdivideSelectedClay={creation.subdivideSelectedClay}
@@ -81,6 +82,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       onDelete={ops.deleteSelected}
       onDropToFloor={edits.dropToGround}
       onStack={edits.stackOnBelow}
+      onCenter={edits.centerOnOrigin}
       annotations={annotations.annotations}
       activeAnnotationId={annotations.activeId}
       onOpenAnnotation={annotations.setActiveId}

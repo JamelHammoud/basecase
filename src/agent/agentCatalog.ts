@@ -52,8 +52,12 @@ function componentPowerLine(c: Component): string | null {
 function componentPortLine(c: Component): string | null {
   const ports = componentPorts(c.id);
 
+  const cables = ports.some((p) => p.kind === 'connector')
+    ? '. Connector ports don’t mate; verify_design lists the wiring they make'
+    : '';
+
   return ports.length
-    ? `  Ports (from the part's position at rotation [0, 0, 0], Z up; use with mate and fasten): ${catalogPortLines(ports).join('; ')}`
+    ? `  Ports (from the part’s position at rotation [0, 0, 0], Z up; use with mate and fasten): ${catalogPortLines(ports).join('; ')}${cables}`
     : null;
 }
 

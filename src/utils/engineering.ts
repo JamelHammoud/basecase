@@ -8,11 +8,14 @@ import { budgetRow } from './engineeringBudget';
 import { crouchModel } from './engineeringCrouch';
 import { heatRows } from './engineeringHeat';
 import { powerRows, servoParts, servoSupplyVolts } from './engineeringPower';
+import { wiringNetlist } from '../wiring/netlist';
+import { wiringRows } from '../wiring/wiringChecks';
 import { stabilityOf, stabilityRows } from './engineeringStability';
 import { rangeChangeRows } from './engineeringRanges';
 import { simModelRows } from './engineeringSimModel';
 import { servoLookup } from './engineeringEnvelope';
 import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
+import { FALLS, fallsRow } from './engineeringFalls';
 import { payloadRows } from './engineeringPayload';
 import { STRENGTH_CHECK, strengthRows } from './engineeringStrength';
 import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport, PartMass } from './engineeringTypes';
@@ -36,6 +39,7 @@ export const ENGINEERING_CHECKS = [
   'Weight',
   'Servo torque',
   'Peak torque',
+  FALLS,
   'Torque estimates',
   'Servo models',
   'Servo alignment',
@@ -80,7 +84,7 @@ function jointPartsRows(ctx: CheckContext): CheckRow[] {
     {
       check: 'Joint parts',
       status: 'fail',
-      detail: `Joints name parts that don't exist: ${[...new Set(unknownIds)].join(', ')}`,
+      detail: `Joints name parts that don’t exist: ${[...new Set(unknownIds)].join(', ')}`,
     },
   ];
 }
@@ -136,6 +140,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
   const floating = bodies.filter((b) => hasNoFeet(ctx, b));
   const env = { volts: servoSupplyVolts(ctx), crouch: crouchModel(ctx) };
   const loads = ctx.joints.filter((j) => j.type === 'revolute').map((j) => jointLoad(ctx, j, env));
+  const wiring = wiringNetlist({ parts, project });
   const rows: CheckRow[] = [
     weightRow(ctx.all, masses, bodies),
     ...(ctx.joints.length ? [] : [{ check: 'Servo torque', status: 'not run' as const, detail: 'No joints' }]),
@@ -143,6 +148,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
       ? [
           withNoFeetNote(torqueRow(loads, env.crouch.share), floating),
           ...peakRow(loads, project, input.walk, servoLookup(ctx.byPart)),
+          ...fallsRow(loads, input.falls),
         ]
       : []),
     ...simModelRows(ctx),
@@ -152,11 +158,20 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...rangeOfMotionRows(ctx),
     ...rangeChangeRows(ctx),
     ...powerRows(ctx),
+    ...wiringRows(wiring),
     ...stabilityRows(ctx),
     ...heatRows(ctx),
     ...strengthRows(ctx, loads),
     budgetRow(ctx),
   ];
 
-  return { rows, joints: loads, massG: ctx.all.grams, com: ctx.all.com, masses, stability: stabilityOf(ctx) };
+  return {
+    rows,
+    joints: loads,
+    massG: ctx.all.grams,
+    com: ctx.all.com,
+    masses,
+    stability: stabilityOf(ctx),
+    wiring,
+  };
 }

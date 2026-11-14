@@ -26,6 +26,7 @@ import {
   type Scope,
 } from './agentPoseShared';
 import { plural } from '../../electron/plural.mjs';
+import { duration, runClock } from '../utils/duration';
 
 export interface AnimatePayload {
   robot?: string;
@@ -141,7 +142,7 @@ export function worstProblems(sampled: Array<{ time: number; lines: string[] }>)
       const key = line.replace(SIZE_OF_PROBLEM, '');
       const size = parseFloat(SIZE_OF_PROBLEM.exec(line)?.[0] ?? '0');
 
-      if (size > (worst.get(key)?.size ?? -1)) worst.set(key, { size, text: `${line} at ${r1(time)} s` });
+      if (size > (worst.get(key)?.size ?? -1)) worst.set(key, { size, text: `${line} at ${runClock(time)}` });
     }
   }
 
@@ -199,7 +200,7 @@ function animateText(made: RobotAnimation, p: AnimatePayload, built: Built, prob
   const ik = Object.entries(built.ikError).map(([k, v]) => `${k} within ${r1(v)} mm`);
 
   return (
-    `${made.name}: ${made.duration} s, ${plural(made.keyframes.length, 'keyframe')}, ${plural(joints.size, 'joint')}${made.loop ? ', loops' : ''}${p.play !== false ? ', playing' : ''}.` +
+    `${made.name}: ${duration(made.duration)}, ${plural(made.keyframes.length, 'keyframe')}, ${plural(joints.size, 'joint')}${made.loop ? ', loops' : ''}${p.play !== false ? ', playing' : ''}.` +
     (ik.length ? `\nIK: ${ik.join(', ')}` : '') +
     notesText(built.notes) +
     (problems.size

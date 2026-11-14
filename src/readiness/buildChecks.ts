@@ -35,7 +35,7 @@ export function sourcingFindings(bom: Bom): Finding[] {
 
     return [
       ruleFinding('unreferenced', 'blocker', {
-        agentText: `${item.name} isn't referenceable: ${reason}.`,
+        agentText: `${item.name} isn’t referenceable: ${reason}.`,
         ids: line.partIds,
         subject: item.id,
       }),
@@ -48,7 +48,7 @@ export function unprintableFindings(parts: ScenePart[]): Finding[] {
     .filter((p) => isPrinted(p) && isMarkedClear(p))
     .map((p) =>
       ruleFinding('unprintable', 'blocker', {
-        agentText: `${p.name} is marked as clear or glass, which can't be printed. Buy it (add_sourced_item) or leave the opening empty.`,
+        agentText: `${p.name} is marked as clear or glass, which can’t be printed. Buy it (add_sourced_item) or leave the opening empty.`,
         ids: [p.id],
       }),
     );

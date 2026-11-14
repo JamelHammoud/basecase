@@ -39,7 +39,7 @@ describe('kernel pool', () => {
 
     expect(decode(result)).toEqual({
       ok: false,
-      error: expect.stringMatching(/^The CAD kernel sandbox couldn't start: its bundle is missing/),
+      error: expect.stringMatching(/^The CAD kernel sandbox couldn’t start: its bundle is missing/),
     });
   });
 
@@ -51,7 +51,7 @@ describe('kernel pool', () => {
 
     await vi.advanceTimersByTimeAsync(600);
 
-    expect(decode(await pending).error).toMatch(/couldn't start: it took too long/);
+    expect(decode(await pending).error).toMatch(/couldn’t start: it took too long/);
     expect(slots.opened[0].killed).toBe(true);
   });
 

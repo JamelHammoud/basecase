@@ -3,6 +3,7 @@ import { Button, FolderOpenIcon, IconButton, Section, settleTilt, tiltToward } f
 import type { GuidePages } from '../../guide/viewer/guidePages';
 import type { BuildGuideRecord } from '../../types/robotics';
 import { platformBridge } from '../../utils/platformBridge';
+import { duration } from '../../utils/duration';
 import { agoPhrase } from '../../utils/timeAgo';
 import { REVEAL_LABEL } from '../../utils/os';
 import type { BuildGuide, GuideRunProgress } from '../../workspace/useBuildGuide';
@@ -21,9 +22,7 @@ function timeLeft(seconds: number | undefined): string {
 
   if (seconds < 10) return 'A few seconds left';
 
-  if (seconds < 60) return `About ${Math.round(seconds / 5) * 5} s left`;
-
-  return `About ${Math.round(seconds / 60)} min left`;
+  return `About ${seconds < 60 ? duration(Math.round(seconds / 5) * 5) : duration(seconds, 'min')} left`;
 }
 
 const THUMB_W_PX = 64;

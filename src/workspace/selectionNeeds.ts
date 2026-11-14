@@ -31,6 +31,7 @@ const NEEDS = new Map<string, Need>([
   ['intersect', atLeast(2)],
   ['floor', atLeast(1)],
   ['stack', (facts) => facts.selected === 1],
+  ['center-on-origin', atLeast(1)],
   ['zoom-selection', atLeast(1)],
   ...ALIGN_AXES.flatMap(({ spread, aligns }): Array<[string, Need]> => [
     [spread.id, atLeast(3)],

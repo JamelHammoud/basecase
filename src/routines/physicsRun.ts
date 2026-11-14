@@ -19,6 +19,7 @@ import { type ScenarioRig, scenarioResult, startScenario } from './scenario';
 import { CONTROL_PERIOD_MS, SKILL_MS } from './scenarioMocks';
 import type { Scenario, ScenarioResult } from './scenarioTypes';
 import type { Motion } from './schema';
+import { runClock } from '../utils/duration';
 
 export interface PhysicsSample {
   t: number;
@@ -186,7 +187,7 @@ export class PhysicsRun {
   }
 
   result(): PhysicsScenarioResult {
-    const fell = this.fell === null ? [] : [`The robot fell at ${this.fell.toFixed(1)} s.`];
+    const fell = this.fell === null ? [] : [`The robot fell at ${runClock(this.fell)}.`];
 
     return { ...scenarioResult(this.rig, fell), physics: { samples: this.samples, fellAt: this.fell } };
   }

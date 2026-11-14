@@ -1,6 +1,7 @@
 import { quatToMj, toMj, type SimModel } from './mjcf';
 import type { SimRequest } from './sim.worker';
 import type { Simulation } from './useSimulation';
+import { FALL_PUSH, fallForce } from './fallRuns';
 
 type GrabHand = Parameters<Simulation['grab']>[1];
 
@@ -21,12 +22,20 @@ function grabRequest(
   return { type: 'grab', phase: 'move', point: toMj(hand.position), turn: hand.turn ? quatToMj(hand.turn) : null };
 }
 
-function pushRequest(m: SimModel | null, robot: string | undefined): SimRequest | null {
+function pushRequest(m: SimModel | null, robot: string | undefined, fallDeg?: number): SimRequest | null {
   const key = robot ?? m?.robots.find((r) => r.floating)?.key ?? m?.robots[0]?.key;
 
   if (!m || !key) return null;
 
-  const n = (m.massKg[key] || 1) * 9.81 * 0.5;
+  const weight = (m.massKg[key] || 1) * 9.81;
+
+  if (fallDeg !== undefined) {
+    const { seconds, releaseDeg, share } = FALL_PUSH;
+
+    return { type: 'push', robot: key, force: fallForce(fallDeg, weight * share), seconds, releaseDeg };
+  }
+
+  const n = weight * 0.5;
   const a = Math.random() * Math.PI * 2;
 
   return { type: 'push', robot: key, force: [Math.cos(a) * n, 0, Math.sin(a) * n] };
@@ -45,8 +54,8 @@ export function useSimTouches(
 
       if (msg) send(msg);
     },
-    push: (robot) => {
-      const msg = pushRequest(modelRef.current, robot);
+    push: (robot, fallDeg) => {
+      const msg = pushRequest(modelRef.current, robot, fallDeg);
 
       if (msg) send(msg);
     },

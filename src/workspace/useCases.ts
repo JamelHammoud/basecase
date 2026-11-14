@@ -19,6 +19,7 @@ import { useDatasetExport } from './useDatasetExport';
 import { useTryMultiply } from './useTryMultiply';
 import { useTryTimeline } from './useTryTimeline';
 import { useTriesTraining, type TriesTraining } from './useTriesTraining';
+import { plural } from '../../electron/plural.mjs';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { CaseRobotInput } from './caseChecks';
 
@@ -132,9 +133,7 @@ export function useCases(options: CasesOptions) {
 
     confirmAction({
       title: `Delete this try?`,
-      ...(generated
-        ? { body: `Its ${generated} generated ${generated === 1 ? 'try goes' : 'tries go'} with it.` }
-        : {}),
+      ...(generated ? { body: `Deletes its ${plural(generated, 'variation')} too.` } : {}),
       onConfirm: () => {
         if (multiply.running?.source === record.id) multiply.stop();
 

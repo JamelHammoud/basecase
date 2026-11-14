@@ -4,7 +4,7 @@ import type { Plate } from '../../print/plan';
 import type { SlicedPlate } from '../../print/printBridge';
 import type { Printing } from '../../workspace/usePrinting';
 import { plural } from '../../../electron/plural.mjs';
-import { hm } from './format';
+import { duration } from '../../utils/duration';
 import { plateNumbers } from '../print/plateFacts';
 import { keyFor } from '../../app/shortcuts';
 
@@ -41,7 +41,7 @@ export const PlatesSection: React.FC<{ printing: Printing }> = ({ printing }) =>
           className="text-[13px] text-white/90 tabular-nums"
           items={[
             plural(plates.length, 'plate'),
-            `${totals.exact ? '' : '≈ '}${hm(totals.hours)}`,
+            `${totals.exact ? '' : '≈ '}${duration(totals.hours * 3600, 'min')}`,
           ]}
         />
         <Button size="sm" variant="secondary" title="Print" shortcut={keyFor('print')} onClick={() => printing.openMode(1)}>

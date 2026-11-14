@@ -23,6 +23,8 @@ export interface FindingContext {
   showDots?: (check: string | null) => void;
 }
 
+const FIX_LABELS: Record<string, string> = { 'new-case': 'New Case', 'replay-fall': 'Replay in Sim' };
+
 const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -58,7 +60,7 @@ const FindingButtons: React.FC<{ finding: ReadinessFinding; actions: FindingActi
     <>
       {fix && (
         <Button variant="secondary" size="xs" onClick={() => fix(finding)}>
-          {finding.fix?.kind === 'new-case' ? 'New Case' : 'Fix'}
+          {FIX_LABELS[finding.fix?.kind ?? ''] ?? 'Fix'}
         </Button>
       )}
       <MoreMenu finding={finding} actions={actions} />

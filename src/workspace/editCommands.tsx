@@ -102,6 +102,7 @@ function arrangeCommands(inputs: CommandInputs): Command[] {
     })),
     paletteCommand(act.floor, 'Tools'),
     paletteCommand(act.stack, 'Tools'),
+    paletteCommand(act.center, 'Tools'),
   ];
 }
 

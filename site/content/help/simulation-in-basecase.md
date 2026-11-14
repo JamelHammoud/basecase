@@ -59,6 +59,7 @@ Simulating never changes your parts. The canvas shows the simulated pose, and en
 - **Cases** record tries and judge each one pass or miss.
 - **Training** teaches skills on Forge, Basecase's own trainer, built on the same MuJoCo formulation. While it trains, the canvas runs its newest snapshot. A trained skill counts only after Arena replays it on MuJoCo itself.
 - **Routines** run step by step on the live simulation.
+- **Falls**, in the Build tab, tips a legged robot over from 12 directions to find the servos a fall would strip.
 - **The emulated robot** follows the simulation once it reaches Test.
 
 ## Limits

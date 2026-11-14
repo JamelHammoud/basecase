@@ -1,7 +1,7 @@
 ---
 title: Run a simulation
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 1
@@ -25,6 +25,7 @@ covers:
   - src/components/simulate/ResultsSection.tsx
   - src/components/simulate/RunResult.tsx
   - src/utils/engineeringSimModel.ts
+  - src/sim/push.ts
 ---
 
 Start MuJoCo physics on the canvas, choose what drives the joints, and see whether the robot stays up and which servos work hardest.
@@ -34,13 +35,13 @@ The **Simulate** tab appears in the right panel once the scene has a joint. [Sim
 1. Click **Simulate** at the top of the right panel.
 2. Click the **Simulate** button at the top of the tab. The robot drops onto the floor and the clock starts.
 3. In **Control**, choose what drives the joints: **Hold pose**, one of the robot's animations, a trained policy, or **Limp**.
-4. To shove the robot sideways with half its weight, click **Push**.
+4. To shove the robot sideways, click **Push**.
 5. To lift or fling the robot, select one of its parts, press [[V]] and drag the Move gizmo.
 6. Read **Results**: **Standing**, or the moment the robot fell, with its tilt and how far it moved.
 7. Click a joint under **Peak torque** to select the parts it moves.
 8. Click **Stop simulation** to put the canvas back.
 
-**Simulate** and **Stop Simulation** are also in [[⌘K]]. The bar at the top of the tab also has **Pause**, **Reset** and three speeds: ¼×, ½× and 1×.
+**Push** shoves with half the robot's weight, or twice its weight on wheels. While you drive the robot, **Control** reads **Drive**. **Simulate** and **Stop Simulation** are also in [[⌘K]]. The bar at the top of the tab also has **Pause**, **Reset** and three speeds: ¼×, ½× and 1×.
 
 After **Drive with Camera** on a humanoid with no ready Walk, its base stays held in place, so **Push** can't move it. **Reset** keeps it held; click **Stop simulation**, then **Simulate**, to free it.
 

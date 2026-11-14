@@ -34,6 +34,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
   const { motionInputRef } = pose;
   const { importRobotFrom } = robots;
   const { skillHub } = core.simTraining;
+  const installing = active && skillHub.installOpen;
 
   return (
     <>
@@ -59,12 +60,8 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           onImport={(src, at) => void importRobotFrom(src, at)}
         />
       </ErrorBoundary>
-      <ErrorBoundary region="Install skill" resetKey={skillHub.installOpen} onClose={skillHub.closeInstall}>
-        <InstallSkillSheet
-          open={active && skillHub.installOpen}
-          onClose={skillHub.closeInstall}
-          onInstall={skillHub.install}
-        />
+      <ErrorBoundary region="Install skill" resetKey={installing} onClose={skillHub.closeInstall}>
+        <InstallSkillSheet open={installing} onClose={skillHub.closeInstall} onInstall={skillHub.install} />
       </ErrorBoundary>
       <PlaceOnMapHost active={active} earth={actions.earth} />
       {arm.targets && (

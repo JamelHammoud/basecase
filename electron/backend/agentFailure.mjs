@@ -21,7 +21,7 @@ export function agentFailure(err, agentName) {
     return protocolDetail(err) || `${agentName} stopped on an error. Choose another agent in Settings ▸ Agent.`;
   }
 
-  return plainText(err) || `${agentName} stopped responding.`;
+  return plainText(err);
 }
 
 export const plainAgentError = (err, agentName) => new Error(agentFailure(err, agentName));

@@ -1,7 +1,7 @@
 ---
 title: Arena
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: concept
 order: 3
@@ -45,7 +45,7 @@ A skill passes when, in every variant, the share of passing tries is at least 75
 
 The skill's row shows its weakest variant, such as "31 of 32 tries, at least 86%". The percentage is that confidence bound, not the raw share.
 
-A Motor Kit skill that fails isn't kept. Its row shows the weakest variant of its best try, such as "Refused in Arena: 20 of 32 tries". For Walk, that includes the runs at half speed and standing still.
+A Motor Kit skill that fails isn't kept. Its row shows the weakest variant of its best try, such as "Refused in Arena: 20 of 32 tries". For Walk, that includes the runs at half speed and standing still. A move trained from an animation that fails isn't kept either, and its row says why.
 
 A policy trained from a Case's tries is judged by its Case instead. It runs the Case 32 times, each from joints up to 5° off, with friction, masses, servo strength and delays up to 20 ms drawn as in **Checks**. The bar is the same: 29 of 32. Steps are in [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 

@@ -1,7 +1,7 @@
 ---
 title: Agent slash commands
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: reference
 order: 1
@@ -28,6 +28,8 @@ covers:
 ---
 
 The six commands you can start a message with to give the agent a job other than designing.
+
+Commands need Claude, Codex or Gemini as the agent. Offline answers one in a single line that points to **Settings** ▸ **Agent**.
 
 Type / at the start of a message to list them, each with its name, then press [[↩]] or [[Tab]] to pick one and add what you want after it. They're also under **Commands** in the composer's **+** menu, and in [[⌘K]] by their names.
 

@@ -1,7 +1,7 @@
 ---
 title: A check blocks Ready to build
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 1
@@ -95,7 +95,7 @@ The problem moves to **Ignored**, under the list, where **Restore** brings it ba
 
 ## The agent keeps fixing new blockers on its own
 
-Basecase sends new blockers to the agent after each message, up to 2 times.
+Basecase sends new blockers to the agent after each message, up to 2 times. In the chat, that reads "The last change added 2 problems. Fix them." over the problems.
 
 1. Press [[⌘,]] and choose **Build**.
 2. Turn off **Have the agent fix new blockers**.

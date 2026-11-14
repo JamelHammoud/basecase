@@ -3,7 +3,7 @@ import { chordsOf, keysOf, parseChord, scopeOf, type Chord } from '../../electro
 
 export type ShortcutId = keyof typeof SHORTCUTS;
 
-export type ShortcutScope = 'canvas' | 'annotate' | 'tabs' | 'composer' | 'clipboard';
+export type ShortcutScope = 'canvas' | 'annotate' | 'tabs' | 'composer' | 'clipboard' | 'timeline';
 
 export interface ShortcutKey {
   key: string;
@@ -21,6 +21,9 @@ const NAMED_KEYS: Record<string, string[]> = {
   '↩': ['enter'],
   Esc: ['escape'],
   Tab: ['tab'],
+  Space: [' '],
+  '←': ['arrowleft'],
+  '→': ['arrowright'],
 };
 const KEYS_BY_CODE: Record<string, string> = { '[': 'BracketLeft', ']': 'BracketRight' };
 const SHIFT_FREE_KEYS = new Set(['?', ',']);
@@ -34,6 +37,8 @@ const BINDINGS = SHORTCUT_IDS.flatMap((id) =>
 export const scopeOfShortcut = (id: ShortcutId) => scopeOf(id) as ShortcutScope;
 
 export const keyFor = (id: ShortcutId) => keysOf(id)[0];
+
+export const allKeysFor = (id: ShortcutId) => keysOf(id).join(' ');
 
 export const paneKeys = (id: ShortcutId) => keysOf(id).flatMap((key, i) => (i === 0 ? [key] : ['or', key]));
 

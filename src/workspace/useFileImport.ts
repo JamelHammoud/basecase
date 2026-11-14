@@ -2,9 +2,9 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { pickFiles } from '../utils/pickFiles';
 import type { LocalFile } from '../utils/robotImport';
 import { couldntImport, importAccept, routeImports } from './importRoute';
+import type { DataImport } from './useDataImport';
 import type { PartCreation } from './usePartCreation';
 import type { PoseActions } from './usePoseActions';
-import type { RobotInsert } from './useRobotInsert';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -19,11 +19,11 @@ export interface FileImport {
 
 interface FileImportActions {
   creation: PartCreation;
-  robots: RobotInsert;
   pose: PoseActions;
+  data: DataImport;
 }
 
-export function useFileImport(core: WorkspaceCore, { creation, robots, pose }: FileImportActions) {
+export function useFileImport(core: WorkspaceCore, { creation, pose, data }: FileImportActions) {
   'use memo';
 
   const { tool, studio, showToast } = core;
@@ -32,7 +32,7 @@ export function useFileImport(core: WorkspaceCore, { creation, robots, pose }: F
     const name = [...folders.map((f) => f.name), ...files.map((f) => f.name)].join(', ');
     const local = [...folders.flatMap((f) => f.files), ...files.map((blob) => ({ path: blob.name, blob }))];
 
-    void robots.importRobotFrom({ kind: 'files', files: local, name }, at);
+    void data.importOrRobot({ kind: 'files', files: local, name }, at);
   };
 
   const openSvg = async (file: File) => tool.openCreator('svg', { name: file.name, text: await file.text() });
@@ -46,6 +46,7 @@ export function useFileImport(core: WorkspaceCore, { creation, robots, pose }: F
         parts: (parts) => void creation.importMeshes(parts, at),
         svg: (file) => void openSvg(file),
         robot: (picked) => robotFiles.push(...picked),
+        data: data.importFiles,
         motion: pose.importMotionFile,
         scene: (file) => void studio.importSceneFile(file),
         image: (file, i) =>

@@ -1,13 +1,5 @@
-import React, { useRef, useState } from 'react';
-import {
-  confirmAction,
-  IconButton,
-  MenuDivider,
-  MenuItem,
-  MoreIcon,
-  PopoverMenu,
-  RowActions,
-} from '../../design-system';
+import React, { useState } from 'react';
+import { confirmAction, ContextMenu, type ContextMenuEntry } from '../../design-system';
 import type { CalibrationHistory } from '../../reality/history';
 import { benchLogOf, measuredVersions } from '../../reality/jointReplay';
 
@@ -18,7 +10,7 @@ export interface ReplayChoice {
   version: number | null;
 }
 
-interface JointRowMenuProps {
+interface JointRowMenuOptions {
   name: string;
   history: CalibrationHistory;
   drawn: number | null;
@@ -29,46 +21,32 @@ interface JointRowMenuProps {
 export const hasJointRowMenu = (history: CalibrationHistory) =>
   history.active !== null || (Boolean(benchLogOf(history)) && measuredVersions(history).length > 0);
 
-export const JointRowMenu: React.FC<JointRowMenuProps> = ({ name, history, drawn, onShow, onRollBack }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-  const versions = benchLogOf(history) ? [...measuredVersions(history)].reverse() : [];
-
-  const rollBack = () => {
-    setOpen(false);
-    confirmAction({ title: `Roll back ${name}?`, confirmLabel: ROLL_BACK, onConfirm: onRollBack });
-  };
-
-  const show = (version: number) => {
-    setOpen(false);
-    onShow(version);
-  };
-
-  return (
-    <RowActions fill="#333333" className="right-0 inset-y-0 pr-1 rounded-r-lg">
-      <div ref={ref} className="flex items-center">
-        <IconButton
-          icon={<MoreIcon className="w-4 h-4" />}
-          title="More"
-          size="xs"
-          isToggled={open}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-        />
-        <PopoverMenu isOpen={open} onClose={() => setOpen(false)} ignoreRef={ref} position="bottom" align="end">
-          {versions.map((c) => (
-            <MenuItem
-              key={c.version}
-              label={`v${c.version}`}
-              checked={c.version === drawn}
-              onSelect={() => show(c.version)}
-            />
-          ))}
-          {versions.length > 0 && history.active !== null && <MenuDivider />}
-          {history.active !== null && <MenuItem label={ROLL_BACK} onSelect={rollBack} />}
-        </PopoverMenu>
-      </div>
-    </RowActions>
+function menuEntries({ name, history, drawn, onShow, onRollBack }: JointRowMenuOptions): ContextMenuEntry[] {
+  const versions: ContextMenuEntry[] = (benchLogOf(history) ? [...measuredVersions(history)].reverse() : []).map(
+    (c) => ({ label: `v${c.version}`, checked: c.version === drawn, onSelect: () => onShow(c.version) }),
   );
-};
+
+  if (history.active === null) return versions;
+
+  const rollBack = () => confirmAction({ title: `Roll back ${name}?`, confirmLabel: ROLL_BACK, onConfirm: onRollBack });
+
+  return [
+    ...versions,
+    ...(versions.length ? [{ divider: true as const }] : []),
+    { label: ROLL_BACK, onSelect: rollBack },
+  ];
+}
+
+export function useJointRowMenu(options: JointRowMenuOptions | null) {
+  const [at, setAt] = useState<{ x: number; y: number } | null>(null);
+
+  return {
+    onContextMenu: options
+      ? (e: React.MouseEvent) => {
+          e.preventDefault();
+          setAt({ x: e.clientX, y: e.clientY });
+        }
+      : undefined,
+    menu: options && at && <ContextMenu x={at.x} y={at.y} items={menuEntries(options)} onClose={() => setAt(null)} />,
+  };
+}

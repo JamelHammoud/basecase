@@ -14,10 +14,12 @@ function checkout(dir, head) {
     ['git', ['clone', '--quiet', '--no-local', '--no-checkout', ROOT, dir], ROOT],
     ['git', ['-C', dir, 'checkout', '--quiet', '--detach', head], ROOT],
     ['npm', ['ci', '--no-audit', '--no-fund'], dir],
+    ['uv', ['sync', '--project', path.join(dir, 'electron', 'trainer'), '--frozen', '--exact'], dir],
   ];
+  const env = { UV_PROJECT_ENVIRONMENT: path.join(dir, 'library', 'trainer-env') };
 
   for (const [command, args, cwd] of steps) {
-    const r = sh(command, args, { cwd });
+    const r = sh(command, args, { cwd, env: { ...process.env, ...env } });
 
     if (!r.ok) return `${command} ${args[0]} failed: ${tail(r)}`;
   }

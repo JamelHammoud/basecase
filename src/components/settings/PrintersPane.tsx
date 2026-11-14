@@ -46,7 +46,13 @@ const PrinterRow: React.FC<{
           Make Default
         </Button>
       )}
-      <IconButton icon={<DeleteIcon className="w-4 h-4" />} title="Delete" size="sm" onClick={onDelete} />
+      <IconButton
+        icon={<DeleteIcon className="w-4 h-4" />}
+        variant="danger"
+        title="Delete"
+        size="sm"
+        onClick={onDelete}
+      />
     </div>
   </Row>
 );

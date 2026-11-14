@@ -3,6 +3,8 @@ import { isMadePart, printMaterialOf } from '../utils/bom';
 import { bedMatrixOf, type Plate } from './plan';
 import { copiesOf, quoteKey, quoteOf } from './quoteKey';
 
+export const QUOTES_PER_ROUND = 200;
+
 export interface QuoteRequest {
   part: string;
   key: string;

@@ -127,7 +127,7 @@ describe('quoting printed parts from Slant 3D', () => {
     expect(partly).toEqual({
       service: 'Slant 3D',
       replies: [{ part: 'plate', usd: fakeUnitUsd([80, 60, 4]) }],
-      error: expect.stringMatching(/can’t read/),
+      error: expect.stringMatching(/couldn’t read/),
     });
 
     let uploads = 0;
@@ -148,7 +148,9 @@ describe('quoting printed parts from Slant 3D', () => {
     const s = await keyed();
     const { replies } = await s.quote({ shapes: [shape('duct', [30, 30, 30], { material: 'ABS' })] });
 
-    expect(replies).toEqual([{ part: 'duct', refusal: 'Slant 3D doesn’t print ABS' }]);
+    expect(replies).toEqual([
+      { part: 'duct', refusal: 'Slant 3D doesn’t print ABS. Set its material to PLA or PETG.' },
+    ]);
     expect(fake.state.requests.some((r) => r.method === 'PUT')).toBe(false);
   });
 
@@ -191,7 +193,7 @@ describe('exploits', () => {
           ? [200, `{"success":true,"data":{"total":${total},"quantity":1}}`]
           : undefined;
 
-      await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(/can’t read/);
+      await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(/couldn’t read/);
     }
   });
 
@@ -203,7 +205,7 @@ describe('exploits', () => {
         ? [200, { success: true, data: { publicFileServiceId: '../orders' } }]
         : undefined;
 
-    await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(/can’t read/);
+    await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(/couldn’t read/);
     expect(fake.state.requests.some((r) => r.path.includes('orders'))).toBe(false);
   });
 
@@ -246,7 +248,7 @@ describe('exploits', () => {
     await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(/larger than/);
 
     override = (record) => (record.path.endsWith('/estimate') ? [200, '<html>'] : undefined);
-    await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(/can’t read/);
+    await expect(s.quote({ shapes: [shape('lid', [20, 20, 2])] })).rejects.toThrow(/couldn’t read/);
   });
 
   it('takes a test address only over https or on this computer', () => {

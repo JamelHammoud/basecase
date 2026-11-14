@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { SettingsPane } from '../app/settingsPanes';
 import type { Plate } from '../print/plan';
 import { printBridge } from '../print/printBridge';
-import { quotesWanted, stlItems, withQuotes, type QuoteRequest } from '../print/serviceQuotes';
+import { QUOTES_PER_ROUND, quotesWanted, stlItems, withQuotes, type QuoteRequest } from '../print/serviceQuotes';
 import type { Viewport3DHandle } from '../three/viewport/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { localDate } from '../utils/bomTypes';
@@ -22,6 +22,7 @@ export interface ServiceQuotesOptions {
 }
 
 const SETTLE_MS = 1500;
+const RETRY_MS = 60_000;
 
 async function quoteShapes(asked: QuoteRequest[], options: ServiceQuotesOptions) {
   const stls = (await options.viewport()?.printStl(stlItems(asked, options.plates))) ?? {};
@@ -36,12 +37,19 @@ export function useServiceQuotes(options: ServiceQuotesOptions) {
   const { parts, project, setProject, enabled } = options;
   const busy = useRef(false);
   const missed = useRef(false);
+  const shownError = useRef<string | undefined>(undefined);
   const [rounds, setRounds] = useState(0);
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const wanted = enabled && !IS_WEB_DEMO ? quotesWanted(parts, project, failed).map((a) => a.key) : [];
 
+  const report = (error: string | undefined) => {
+    if (error && error !== shownError.current) options.showToast(error, { tone: 'error' });
+
+    shownError.current = error;
+  };
+
   const run = useEffectEvent(async () => {
-    const asked = quotesWanted(parts, project, failed);
+    const asked = quotesWanted(parts, project, failed).slice(0, QUOTES_PER_ROUND);
 
     if (!asked.length) return;
 
@@ -61,10 +69,10 @@ export function useServiceQuotes(options: ServiceQuotesOptions) {
       setProject((p) => ({ ...p, quotes: withQuotes(p.quotes, asked, { replies, checkedAt: localDate(), parts }) }));
       setFailed((prev) => (unanswered.length ? new Set([...prev, ...unanswered]) : prev));
 
-      if (error) options.showToast(error, { tone: 'error' });
+      report(error);
     } catch (e) {
       setFailed((prev) => new Set([...prev, ...asked.map((a) => a.key)]));
-      options.showToast(errorMessage(e), { tone: 'error' });
+      report(errorMessage(e));
     } finally {
       busy.current = false;
 
@@ -85,11 +93,20 @@ export function useServiceQuotes(options: ServiceQuotesOptions) {
     return () => window.clearTimeout(timer);
   }, [wantedKey, rounds]);
 
+  useEffect(() => {
+    if (!failed.size) return;
+
+    const timer = window.setTimeout(() => setFailed(new Set()), RETRY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [failed]);
+
   const choose = async () => {
     const status = await printBridge.service().catch(() => null);
 
     if (!status?.hasKey) return options.openSettings('accounts');
 
+    shownError.current = undefined;
     setFailed(new Set());
     setProject((p) => ({ ...p, madeBy: 'service' }));
   };

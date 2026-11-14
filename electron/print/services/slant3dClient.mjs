@@ -4,6 +4,9 @@ import { serviceRefusal } from '../../refusal.mjs';
 export const SLANT_ORIGIN = 'https://slant3dapi.com';
 export const SERVICE_NAME = 'Slant 3D';
 export const KEY_REFUSED = 'Slant 3D didn’t accept the API key in Settings ▸ Accounts.';
+export const UNREADABLE = 'Basecase couldn’t read Slant 3D’s reply and asks again in a minute.';
+
+const AGAIN = 'Basecase asks again';
 
 const API_PATH = '/v2/api';
 const API_TIMEOUT_MS = 60000;
@@ -33,7 +36,7 @@ function parsed(bytes) {
   try {
     return JSON.parse(bytes.toString('utf8'));
   } catch {
-    throw new Error('Slant 3D sent a reply Basecase can’t read. Quote again in a minute.');
+    throw new Error(UNREADABLE);
   }
 }
 
@@ -47,8 +50,7 @@ export class Slant3dClient {
   url(route) {
     const url = new URL(`${API_PATH}${route}`, this.origin);
 
-    if (url.origin !== this.origin || !url.pathname.startsWith(`${API_PATH}/`))
-      throw new Error('A Slant 3D request left its API.');
+    if (url.origin !== this.origin || !url.pathname.startsWith(`${API_PATH}/`)) throw new Error(UNREADABLE);
 
     return url;
   }
@@ -75,7 +77,7 @@ export class Slant3dClient {
 
     if (res.status >= 400 && res.status < 500 && res.status !== 429 && detail) throw new Refusal(detail);
 
-    throw new Error(serviceRefusal(SERVICE_NAME, { status: res.status, detail, again: 'Quote again' }));
+    throw new Error(serviceRefusal(SERVICE_NAME, { status: res.status, detail, again: AGAIN }));
   }
 
   async upload(href, bytes) {
@@ -88,13 +90,13 @@ export class Slant3dClient {
     };
 
     if (url.origin !== this.origin && url.protocol !== 'https:')
-      throw new Error('Slant 3D sent an upload address that isn’t https.');
+      throw new Error(`Slant 3D sent an upload address that isn’t https. ${AGAIN} in a minute.`);
 
     const res =
       url.origin === this.origin
         ? await fetch(url, { ...init, redirect: 'manual' })
         : await this.outbound(url.href, init);
 
-    if (!res.ok) throw new Error(serviceRefusal(SERVICE_NAME, { status: res.status, again: 'Quote again' }));
+    if (!res.ok) throw new Error(serviceRefusal(SERVICE_NAME, { status: res.status, again: AGAIN }));
   }
 }

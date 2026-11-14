@@ -37,7 +37,7 @@ The agent doesn't see what you've selected. To show it the part, area or message
 2. Choose **Quote Part**.
 3. Type what you want to change, for example “Move this 10 mm forward.” Then press [[↩]].
 
-The agent gets your message along with the quote, which includes the part's name, id and position.
+The agent gets the quote along with your message, including the part's name, id and position.
 
 You can also select the part, then find **Quote Part** in [[⌘K]].
 
@@ -54,4 +54,4 @@ The agent reads the color of each mark and the parts it circles. Marks aren't pa
 1. Right-click a message in the chat.
 2. Choose **Quote Message**, then type your reply.
 
-Each Check in the **Build** tab has a **Fix** button. Click it to ask the agent to fix that problem. To ask the agent about the problem before it fixes anything, right-click the problem's row and choose **Quote**.
+In the **Build** tab, each Check has a **Fix** button that asks the agent to fix that problem. To ask the agent about the problem before it fixes anything, right-click the problem's row and choose **Quote**.

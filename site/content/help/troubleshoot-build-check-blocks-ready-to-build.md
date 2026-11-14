@@ -30,7 +30,7 @@ covers:
   - src/components/settings/BuildPane.tsx
 ---
 
-The Checks header shows Ready to build only when no check holds a blocker. Until then, it shows a count of what's left to fix. If your design isn't passing, find the case below that matches what you see.
+The Checks header shows Ready to build only when no check holds a blocker. Until then, it shows how many problems are left to fix. If your design isn't passing, find the case below that matches what you see.
 
 ## The header still shows a count after you edit
 
@@ -46,7 +46,7 @@ You're done when the header reads **Ready to build** and the red dot on the **Bu
 
 ## “Some checks didn’t finish, so this answer isn’t complete.”
 
-A check stopped because it hit its time limit or ran into an error. Basecase counts that as a blocker, so a design never passes on a run that didn't finish.
+A check stopped because it hit its time limit or ran into an error. Basecase counts this as a blocker, so a design never passes on a run that didn't finish.
 
 1. Press [[⌘K]] and choose **Run Checks**.
 2. If the message is still there, quit Basecase and open it again.
@@ -56,7 +56,7 @@ You're done when the message no longer appears in **Assembly**.
 
 ## Budget is red
 
-The estimated total is over your budget. Basecase counts lines marked ≈ at their list price. If you choose **Made by a Service**, it counts printed parts at their Slant 3D quotes.
+The estimated total is over your budget. Basecase counts lines marked ≈ at their list price. If you choose **Made by a Service**, Basecase counts printed parts at their Slant 3D quotes.
 
 1. Open **Budget** in Checks to see the total next to your budget.
 2. List prices can be higher than what you pay. To save the prices you pay, use **Add Price** in **Bill of materials**.
@@ -67,9 +67,9 @@ Budget turns amber above 90% of the budget, and red when the total goes over it.
 
 ## “This servo could strip its gears when the robot falls.”
 
-In a fall, this leg joint needs more than 5 times its servo's rated torque, or more than the peak listed in its datasheet. The item names the joint and the direction of its worst fall.
+In a fall, this leg joint needs more than 5 times its servo's rated torque, or more than the peak listed in the servo's datasheet. The item names the joint and the direction of its worst fall.
 
-1. To watch that fall, click **Replay in Sim** on the joint.
+1. To watch the fall, click **Replay in Sim** on the joint.
 2. Ask the agent for a stronger servo at that joint, or for a lower stance.
 3. Ask the agent to verify the design with falls again.
 
@@ -77,27 +77,27 @@ You're done when **Falls** in Checks no longer shows a red mark.
 
 ## Servo bus is red
 
-Your build has at least one bus adapter, but none of them takes these servos' connector. For example, you'd see this with DYNAMIXEL X servos on a Waveshare Bus Servo Adapter (A).
+Your build has at least one bus adapter, but none of them takes these servos' connector. For example, you'll see this if you use DYNAMIXEL X servos with a Waveshare Bus Servo Adapter (A).
 
 1. Open **Servo bus** in Checks. It names the adapter you need to add, for example **Add a JST EH 3-pin bus adapter for 2 servos.**
 2. Open **Parts** and place that adapter in the robot. For JST EH 3-pin, use the **ROBOTIS U2D2** or **ROBOTIS OpenRB-150**. For 5264 3-pin, use the **Waveshare Bus Servo Adapter (A)**.
 
-You're done when **Servo bus** is no longer in the list.
+You're done when **Servo bus** no longer appears in the list.
 
 ## You know a blocker is wrong
 
-Checks only see what's modeled, so they miss things like a strap that holds a part in place. To ignore a blocker:
+Checks only see what's in the model, so they miss things like a strap that holds a part in place. To ignore a blocker:
 
 1. Right-click the problem's row.
 2. Choose **Ignore**.
 
 The problem moves to **Ignored**, below the list. To bring it back, click **Restore** there.
 
-**Note:** Only you can ignore a blocker. The agent can tell you it disagrees, but it can't clear a blocker itself.
+**Note:** Only you can ignore a blocker. The agent can tell you it disagrees, but it can't clear a blocker by itself.
 
 ## The agent keeps fixing new blockers on its own
 
-After each message, Basecase sends any new blockers to the agent, up to 2 times. In the chat, you'll see "Fix what the last change added: 2 problems." above the problems. To turn this off:
+After each message, Basecase sends any new blockers to the agent, up to 2 times. Each time it does, you'll see "Fix what the last change added: 2 problems." above the problems in the chat. To turn this off:
 
 1. Press [[⌘,]] and choose **Build**.
 2. Turn off **Have the agent fix new blockers**.

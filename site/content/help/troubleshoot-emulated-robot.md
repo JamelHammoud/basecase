@@ -28,11 +28,11 @@ covers:
   - electron/robot/robotLink.mjs
 ---
 
-Find the message or missing button you see in Operate below.
+If Operate won't let you climb a rung, or the emulated robot stops, find the message or missing button below.
 
 ## Connect Emulated Robot is missing
 
-If the scene has no joint that moves, Operate shows "No robot." If the scene has more than 32 moving joints, Operate shows nothing to connect.
+Operate needs a joint that moves. If the scene has none, Operate shows "No robot." If it has more than 32 moving joints, Operate shows nothing to connect.
 
 **Note:** Operate isn't available in the browser version of Basecase.
 
@@ -54,10 +54,10 @@ Your copy of Basecase is missing the part that runs robots, so Connect can't sta
 
 **Rehearse** and every rung above it need a trained policy. You'll see this message if the scene in front has no policy the robot can take.
 
-Basecase hands the robot the newest skill that's ready, or the newest policy that's up to date. It skips:
+Basecase gives the robot the newest skill that's ready, or the newest policy that's up to date. It skips:
 
 - Policies marked **Out of date**. To fix one, see [Retrain an out-of-date policy](/help/retrain-an-out-of-date-policy).
-- Skills that replay an animation, because they have no policy to hand over.
+- Skills that replay an animation. These have no policy to give the robot.
 
 To train a policy:
 
@@ -75,13 +75,13 @@ When a fault stops the motors, the daemon shows "A fault is still active. Go bac
 4. Click **Set Up**.
 5. Click **Test**.
 
-The simulation sends the robot no commands from the moment of the fault until you climb the ladder again.
+From the moment of the fault until you climb the ladder again, the simulation sends the robot no commands.
 
-If the robot is an arm, you can click **Replay in Sim** under the fault to play the 20 seconds before it in the simulation. For the steps, see [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation).
+If the robot is an arm, you can click **Replay in Sim** under the fault to play the 20 seconds before it in the simulation. Learn how to [replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation).
 
 ## "The app stopped talking to the robot"
 
-The full message is "The app stopped talking to the robot, so the robot is holding still." You'll see it when the app misses its 100 ms check-in with the robot daemon. This can happen when the computer is under heavy load or goes to sleep.
+The full message is "The app stopped talking to the robot, so the robot is holding still." The app checks in with the robot daemon every 100 ms. You'll see this message when it misses a check-in, which can happen when the computer is under heavy load or goes to sleep.
 
 1. Click **Look** under **Ladder**.
 2. If **Clear Fault** shows, click it.

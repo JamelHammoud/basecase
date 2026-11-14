@@ -20,6 +20,7 @@ covers:
   - src/components/simulate/TrainSection.tsx
   - src/components/simulate/skillMenu.tsx
   - src/workspace/useSkillCoach.ts
+  - src/workspace/coachCommands.tsx
   - src/workspace/agentCoachRequests.ts
   - electron/cad-mcp/skillTools.mjs
 ---
@@ -37,7 +38,7 @@ Coaching works on Stand, Walk, Get up and Settle once they're ready, in the desk
 
 ![The Teach field scoped to Stand, with crouch lower typed in](/help/coach-a-skill/field.png)
 
-4. Wait for the agent to report back. It reads five measurements of one clean run, rewrites only the skill's reward and trains from the skill as it is.
+4. Wait for the agent to report back.
 5. Open the **Simulate** tab again. The row shows its Arena result and the measurement before and after, such as 130 → 119 mm. **Try** plays the version that's kept.
 6. Right-click the row and choose **Compare** to play the old skill and then the new one on the canvas.
 
@@ -45,6 +46,6 @@ Coaching works on Stand, Walk, Get up and Settle once they're ready, in the desk
 
 The new version is kept only if Arena passes the same contract and the measurement the agent named moved by its minimum. Otherwise the old skill stays, and the agent says why.
 
-To go back to the version before, right-click the row and choose **Undo Coach**. Press [[Esc]] in the field to teach a new skill instead. In [[⌘K]], **Coach Walk** and the other ready skills do the same as step 2.
+To go back to the version before, right-click the row and choose **Undo Coach**. Press [[Esc]] in the field to teach a new skill instead. In [[⌘K]], **Coach Walk**, **Compare Walk** and **Undo Coach Walk** do the same as their menu items.
 
-The five measurements are foot clearance, contact impulse, joint jerk, base height and speed. A design change that retrains the skill in the background drops its coaching. How Arena judges a skill is in [Arena](/help/arena).
+The agent changes only the skill's reward. Forge trains from the skill as it is. The agent names one of five measurements: foot clearance, contact impulse, joint jerk, base height or speed. A design change that retrains the skill in the background drops its coaching. How Arena judges a skill is in [Arena](/help/arena).

@@ -437,6 +437,7 @@ describe('coaching a ready skill', () => {
       direction: 'down',
     });
     await expect.poll(listed, { timeout: 150000 }).toContain('- Dropped; the old skill stays.');
+    expect(await listed()).not.toContain('short of what was asked');
     await expect.poll(() => row.innerText(), { timeout: 60000 }).toContain('of 32 tries');
     expect(await row.getAttribute('data-skill')).toBe(coached);
     expect(await row.innerText()).toContain('→');

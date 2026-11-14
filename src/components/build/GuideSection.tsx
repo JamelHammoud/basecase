@@ -39,7 +39,7 @@ const CoverThumb: React.FC<CoverThumbProps> = ({ cover, page, sceneName, onOpen 
     type="button"
     onClick={onOpen}
     disabled={!onOpen}
-    aria-label="Open guide"
+    aria-label="Open Build Guide"
     data-guide-cover
     onPointerMove={tiltToward}
     onPointerLeave={(e) => settleTilt(e.currentTarget)}

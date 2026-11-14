@@ -22,7 +22,7 @@ export const Switch: React.FC<SwitchProps> = ({
       disabled ? 'opacity-40 pointer-events-none' : 'cursor-default'
     } ${className}`}
   >
-    {label && <span className="text-[13px] text-white/70 truncate">{label}</span>}
+    {label && <span className="text-[13px] text-white/60 truncate">{label}</span>}
     <button
       type="button"
       role="switch"

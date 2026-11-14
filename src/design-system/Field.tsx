@@ -79,7 +79,7 @@ export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
           </Tooltip>
         ) : (
           <SearchIcon
-            className="ml-[12px] w-[16px] h-[16px] shrink-0 text-white/50 group-has-[input:focus]:text-white/70 transition-colors duration-150 pointer-events-none"
+            className="ml-[12px] w-[16px] h-[16px] shrink-0 text-white/50 group-has-[input:focus]:text-white/60 transition-colors duration-150 pointer-events-none"
             strokeWidth={2}
           />
         )}

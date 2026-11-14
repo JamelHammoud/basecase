@@ -66,7 +66,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
               />
             </div>
           ) : (
-            <div className="text-[14px] font-semibold text-white/95 truncate h-[32px] flex items-center">
+            <div className="text-[14px] font-semibold text-white/90 truncate h-[32px] flex items-center">
               {plural(selectedParts.length, 'part')}
             </div>
           )}

@@ -46,7 +46,7 @@ const TeachField: React.FC<TeachFieldProps> = ({ examples, onTeach, scope, onCoa
         submit();
       }}
     >
-      <label className="shrink-0 max-w-[40%] truncate text-[13px] text-white/70" htmlFor={id}>
+      <label className="shrink-0 max-w-[40%] truncate text-[13px] text-white/60" htmlFor={id}>
         {scope ? scope.label : 'Teach it to'}
       </label>
       <TextInput

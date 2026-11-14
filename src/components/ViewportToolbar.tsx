@@ -202,7 +202,7 @@ const ShapeGrid: React.FC<{
               />
             )}
           </span>
-          <span className="text-[12px] text-white/75 group-hover:text-white truncate max-w-full">{item.name}</span>
+          <span className="text-[12px] text-white/60 group-hover:text-white truncate max-w-full">{item.name}</span>
         </button>
       ))}
     </div>
@@ -226,7 +226,7 @@ const MenuTrigger: React.FC<{
       className={`${
         size === 'lg' ? 'h-[44px] pl-3 pr-1.5 rounded-[14px]' : 'w-[36px] h-[36px] justify-center rounded-[10px]'
       } flex items-center gap-0.5 cursor-default transition-colors active:scale-[0.96] ${
-        open ? 'bg-white/[0.1] text-white' : 'text-white/60 hover:text-white/95 hover:bg-white/[0.07]'
+        open ? 'bg-white/[0.1] text-white' : 'text-white/60 hover:text-white/90 hover:bg-white/[0.07]'
       }`}
     >
       {icon}

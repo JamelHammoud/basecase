@@ -32,7 +32,7 @@ export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) =
       className="absolute left-3 top-3 z-20 flex flex-col items-start gap-2"
     >
       <div className="flex items-center gap-1 rounded-[10px] glass py-1 pl-3 pr-1">
-        <span className="text-[13px] font-medium text-white/85">Cameras</span>
+        <span className="text-[13px] font-medium text-white/90">Cameras</span>
         <IconButton
           icon={expanded ? <ChevronUpIcon className={ic} /> : <ChevronDownIcon className={ic} />}
           title={expanded ? 'Collapse' : 'Expand'}

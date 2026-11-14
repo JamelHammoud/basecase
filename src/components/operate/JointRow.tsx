@@ -95,7 +95,7 @@ function JointLabel({ row: { busId, joint, history }, measured }: { row: JointRo
   return (
     <span className="min-w-0 flex flex-col">
       <span className="flex min-w-0 items-center gap-[8px]">
-        {joint && <span className="min-w-0 truncate text-white/80">{joint.name}</span>}
+        {joint && <span className="min-w-0 truncate text-white/90">{joint.name}</span>}
         <span className="shrink-0 tabular-nums text-white/50">{busId}</span>
         {measured && <MeasuredBadge />}
       </span>

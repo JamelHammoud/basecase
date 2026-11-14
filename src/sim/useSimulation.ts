@@ -6,6 +6,7 @@ import type { Rig } from '../utils/kinematics';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
 import type { FaultKind } from './faults';
+import type { SimPhysics } from './livePhysics';
 import { buildMjcf, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
@@ -49,6 +50,7 @@ export interface Simulation {
   stats: SimStats | null;
   latestStats: () => SimStats | null;
   latestScan: () => Scan | null;
+  latestPhysics: () => SimPhysics | null;
   error: string | null;
   model: SimModel | null;
   modelNow: () => SimModel | null;
@@ -68,6 +70,8 @@ export interface Simulation {
   ) => void;
   push: (robot?: string, fallDeg?: number) => void;
   setFault: (jointId: string, kind: FaultKind | null) => void;
+  setPhysics: (physics: SimPhysics | null) => void;
+  resetTo: (pose: RobotPoseState) => void;
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
@@ -387,6 +391,7 @@ export function useSimulation(props: Inputs): Simulation {
     stats,
     latestStats: sw.latestStats,
     latestScan: sw.latestScan,
+    latestPhysics: sw.latestPhysics,
     error,
     model,
     modelNow: () => modelRef.current,
@@ -408,6 +413,8 @@ export function useSimulation(props: Inputs): Simulation {
     buildModel: (options) => buildModel({ alone: options?.alone }),
     ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
+    setPhysics: (physics) => send({ type: 'physics', physics }),
+    resetTo: (initial) => send({ type: 'reset', initial }),
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,

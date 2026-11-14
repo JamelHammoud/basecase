@@ -1,3 +1,4 @@
+use crate::random_ranges::{self, RandomRanges};
 use crate::servo_gains::{self, ServoGains};
 use crate::start_states::{self, StartState};
 use forge_ir::task::Reference;
@@ -32,6 +33,7 @@ pub struct TaskOptions {
     pub reference: Option<Reference>,
     pub start_states: Vec<StartState>,
     pub servo_gains: ServoGains,
+    pub random_ranges: RandomRanges,
 }
 
 impl Default for TaskOptions {
@@ -53,11 +55,12 @@ impl Default for TaskOptions {
             reference: None,
             start_states: Vec::new(),
             servo_gains: Vec::new(),
+            random_ranges: RandomRanges::default(),
         }
     }
 }
 
-fn pair(value: &Value, key: &str) -> Result<[f64; 2], String> {
+pub(crate) fn pair(value: &Value, key: &str) -> Result<[f64; 2], String> {
     let list = value
         .as_array()
         .filter(|l| l.len() == 2)
@@ -230,6 +233,7 @@ pub fn parse(root: &Value) -> Result<TaskOptions, String> {
         reference: reference(root)?,
         start_states: start_states::parse(root)?,
         servo_gains: servo_gains::parse(root)?,
+        random_ranges: random_ranges::parse(root)?,
     })
 }
 

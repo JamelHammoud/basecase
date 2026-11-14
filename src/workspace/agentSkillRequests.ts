@@ -16,6 +16,7 @@ import type { DraftInput, DraftReport } from '../skills/teach';
 import { negative } from '../../electron/minus.mjs';
 import { percent } from '../../electron/percent.mjs';
 import { coachLines, coachRequest } from './agentCoachRequests';
+import { stressRequest } from './agentStressRequests';
 
 export interface SkillToolContext {
   skills: { runtime: SkillsRuntime; buildModel: () => Promise<SimModel> };
@@ -219,6 +220,10 @@ async function listRequest(_payload: Payload, ctx: SkillToolContext) {
 
   if (ctx.skills.runtime.coach.last) lines.push(...coachLines(ctx.skills.runtime.coach.last));
 
+  const trained = ctx.skills.runtime.stress.lastTrain;
+
+  if (trained) lines.push(`Last Train on These, “${trained.name}”:`, `- ${trained.line}`);
+
   return { text: lines.join('\n') };
 }
 
@@ -227,4 +232,5 @@ export const SKILL_HANDLERS = {
   skill_train: trainRequest,
   skill_list: listRequest,
   skill_coach: coachRequest,
+  skill_stress: stressRequest,
 };

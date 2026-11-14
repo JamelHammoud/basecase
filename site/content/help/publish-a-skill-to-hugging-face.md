@@ -1,6 +1,7 @@
 ---
 title: Publish a skill to Hugging Face
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 14
@@ -35,7 +36,7 @@ You can publish a ready skill to the Hugging Face Hub as a model repo, so anothe
 2. In the **Simulate** tab, find the ready skill under **Train**. A ready row shows its Arena result, such as "32 of 32 tries".
 3. Right-click the row, then choose **Publish to Hugging Face**.
 
-![The Stand row's right-click menu with Coach and Publish to Hugging Face](/help/publish-a-skill-to-hugging-face/menu.png)
+![The Stand row's right-click menu with Stress, Coach and Publish to Hugging Face](/help/publish-a-skill-to-hugging-face/menu.png)
 
 4. When the toast says "Published to" followed by the repo's name, click **Open** to see the repo on the Hub.
 

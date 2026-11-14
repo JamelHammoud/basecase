@@ -31,6 +31,23 @@ afterAll(async () => {
 });
 
 describe('stopping a try on the first launch rover', () => {
+  it('ends the try at once from the canvas’s Stop Driving', async () => {
+    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    await startTry();
+
+    const stop = await app.page
+      .getByText(/^(Esc)?Stop Driving$/)
+      .last()
+      .boundingBox();
+
+    await app.page.mouse.click(stop!.x + stop!.width / 2, stop!.y + stop!.height / 2);
+    await expect.poll(() => tryClock().count(), { timeout: 3000 }).toBe(0);
+    await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+    expect((await simState()).tries[0].seconds).toBeLessThan(6);
+    await expect.poll(() => button('Try It').isEnabled()).toBe(true);
+    expect(app.errors).toEqual([]);
+  });
+
   it('brings Try It back after Stop Try on a paused simulation', async () => {
     await expect.poll(() => tryClock().count(), { timeout: 15000 }).toBe(0);
 

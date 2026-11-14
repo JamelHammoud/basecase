@@ -56,7 +56,7 @@ To find a try, use the Library's search. It finds tries by words, facts and moti
 
 ## Scene files
 
-A `.basecase` file is a copy of one scene that you can send to someone. It holds the whole scene, except for print history, trained policies, Case tries, taught skills and the build guide. Your chat with the agent also stays on your computer.
+A `.basecase` file is a copy of one scene that you can send to someone. It holds the whole scene, except for print history, the print service and its quotes, trained policies, Case tries, taught skills and the build guide. Your chat with the agent also stays on your computer.
 
 When you open a scene file, Basecase makes a new scene from it. The two are separate, so changes you make to one don't affect the other.
 

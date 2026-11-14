@@ -277,7 +277,7 @@ const AgentPane: React.FC<PaneProps> = (p) => {
         label="Command"
         hint={
           <span
-            className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-200/80'}`}
+            className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-400'}`}
           >
             {agentStatusText(p.acpStatus)}
           </span>

@@ -141,7 +141,7 @@ The full rules are in the guides; these are the ones every change must keep.
 - **Performance** ([guide](docs/guide/performance.md)): the app must feel instant. The viewport never rebuilds everything; parts are immutable (replace, never mutate). Heavy geometry, agent checks, captures, thumbnails and printing run in workers, never on the main thread. Render on demand, never an always-on `requestAnimationFrame`. Small payloads across IPC and HTTP. Profile anything over 16 ms in a production build.
 - **Security** ([guide](docs/guide/security.md)): every `/api/*` middleware goes through `guardBridge`, IPC through `trustedIpc`; ids that become paths through `checkedFileId`; agent-controlled fetches through `publicFetch`; no `shell: true`, no `dangerouslySetInnerHTML`; every security fix gets an exploit test.
 - **Windows** ([guide](docs/guide/windows.md)): every change keeps macOS and Windows 11 working. Never spawn `.cmd` / `.bat`; find tools with `findOnPath`; build paths with `path.join`; no signals on Windows (watch a stop file); open files with `openFile` or Electron's `shell`.
-- **Releases** ([guide](docs/guide/releases.md)): Actions → Release with a version higher than the last; never a draft, never a stable version as a prerelease.
+- **Releases** ([guide](docs/guide/releases.md)): Actions ▸ Release with a version higher than the last; never a draft, never a stable version as a prerelease.
 
 ## 1. Core Mission & Design Ideals
 

@@ -24,7 +24,7 @@ const RobotResult: React.FC<{ result: SimStats['robots'][number]; model: SimMode
     <div className="py-1">
       <div className="flex items-baseline justify-between gap-2 text-[13px]">
         <span className="text-white/85 truncate">{robot.name}</span>
-        <span className={r.fellAt !== null ? 'text-[#f87171]' : 'text-white/70'}>
+        <span className={r.fellAt !== null ? 'text-red-400' : 'text-white/70'}>
           {r.fellAt !== null ? `Fell at ${runClock(r.fellAt)}` : 'Standing'}
         </span>
       </div>
@@ -74,7 +74,7 @@ const PeakTorque: React.FC<{
               <span className="text-[12px] text-white/50 tabular">{runClock(j.saturatedS)} at limit</span>
             )}
             <span
-              className={`w-10 text-right text-[13px] tabular ${j.peak >= 0.98 ? 'text-[#f87171]' : 'text-white/70'}`}
+              className={`w-10 text-right text-[13px] tabular ${j.peak >= 0.98 ? 'text-red-400' : 'text-white/70'}`}
             >
               {percent(Math.min(j.peak, 1))}
             </span>

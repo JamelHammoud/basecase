@@ -42,7 +42,7 @@ const TileCaption: React.FC<{ label: TileLabel; badge: string | null }> = ({ lab
     <div className="px-0.5 min-w-0">
       <div className="text-[13px] font-medium text-white/90 truncate">{label.title}</div>
       <div className="flex items-center gap-2 text-[12.5px]">
-        {outcome && <span className={label.verdict === 'passed' ? 'text-white/85' : 'text-[#f87171]'}>{outcome}</span>}
+        {outcome && <span className={label.verdict === 'passed' ? 'text-white/85' : 'text-red-400'}>{outcome}</span>}
         <span className="text-white/50 tabular">{label.span}</span>
         {badge && <Badge>{badge}</Badge>}
       </div>

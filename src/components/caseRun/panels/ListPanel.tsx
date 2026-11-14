@@ -15,7 +15,7 @@ const Failures: React.FC<PanelViewProps<'list'>> = ({ panel, ctx }) => {
 
   return (
     <Titled title={panel.title}>
-      <ul className="flex flex-col gap-1 text-[13px] text-[#f87171]" aria-live="polite" data-testid="goal-failed">
+      <ul className="flex flex-col gap-1 text-[13px] text-red-400" aria-live="polite" data-testid="goal-failed">
         {failed.map((label) => (
           <li key={label}>{label}</li>
         ))}

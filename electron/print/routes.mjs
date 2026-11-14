@@ -24,6 +24,9 @@ export const PRINT_CALLS = {
   'print:send': (p, payload) => p.send(payload),
   'print:reveal': (p, jobId) => p.reveal(jobId),
   'print:open-link': (p, url) => p.openLink(url),
+  'print:service': (p) => p.serviceStatus(),
+  'print:set-service-key': (p, key) => p.setServiceKey(key),
+  'print:quote': (p, payload) => p.quote(payload),
 };
 
 export const registerPrintHandlers = (ipcMain, printing) => registerCalls(ipcMain, PRINT_CALLS, printing);

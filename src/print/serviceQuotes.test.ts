@@ -34,7 +34,7 @@ function quoted(parts: ScenePart[], project: ProjectSettings, refuse: Record<str
     refuse[a.part] ? { part: a.part, refusal: refuse[a.part] } : { part: a.part, usd: priceOf(a.part) * a.copies },
   );
 
-  return { ...project, quotes: withQuotes(project.quotes, asked, { replies, checkedAt: TODAY }) };
+  return { ...project, quotes: withQuotes(project.quotes, asked, { replies, checkedAt: TODAY, parts }) };
 }
 
 const bomOf = (parts: ScenePart[], project: ProjectSettings) =>
@@ -150,14 +150,17 @@ describe('quoting printed parts from a print service', () => {
     expect(quotesWanted(parts, { ...printer, quotes: [] })).toEqual([]);
   });
 
-  it('replaces a part’s quote and keeps the rest', () => {
+  it('replaces a part’s quote, keeps the rest and drops a deleted part’s', () => {
     const old: PrintQuote[] = [
       { part: 'a', key: 'k1', material: 'PLA', copies: 1, usd: 3, checkedAt: '2026-11-01' },
       { part: 'b', key: 'k2', material: 'PLA', copies: 1, usd: 5, checkedAt: '2026-11-01' },
+      { part: 'gone', key: 'k4', material: 'PLA', copies: 1, usd: 6, checkedAt: '2026-11-01' },
     ];
     const asked: QuoteRequest[] = [{ part: 'a', key: 'k3', name: 'a', material: 'PETG', copies: 2 }];
+    const parts = ['a', 'b'].map((id) => ({ ...rover.parts[0], id, name: id }));
+    const ctx = { replies: [{ part: 'a', usd: 8 }], checkedAt: TODAY, parts };
 
-    expect(withQuotes(old, asked, { replies: [{ part: 'a', usd: 8 }], checkedAt: TODAY })).toEqual([
+    expect(withQuotes(old, asked, ctx)).toEqual([
       old[1],
       { part: 'a', key: 'k3', material: 'PETG', copies: 2, usd: 8, checkedAt: TODAY },
     ]);

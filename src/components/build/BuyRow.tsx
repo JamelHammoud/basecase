@@ -7,7 +7,7 @@ import { dayLabel } from '../../utils/timeAgo';
 import { useMoney } from '../../utils/useMoney';
 import { PART_PREVIEW_WIDTH, PartPreviewCard } from '../agent/PartPreviewCard';
 import type { Extra } from './buyExtras';
-import { lineAmount, linkLabel, ownedAmount } from './buyLine';
+import { lineAmount, lineCount, linkLabel, ownedAmount } from './buyLine';
 import { QtyEditor } from './QtyEditor';
 
 export interface BuyContext {
@@ -165,6 +165,13 @@ const LineText: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, c
 
 const LineCount: React.FC<{ line: BomLine; context: BuyContext }> = ({ line: l, context }) => {
   const extra = context.extraOf(l.key);
+
+  if (l.category === 'Printed parts')
+    return (
+      <span className="shrink-0 min-w-[28px] text-right text-[13px] leading-[14px] tabular-nums text-white/50">
+        {lineCount(l)}
+      </span>
+    );
 
   return (
     <QtyEditor

@@ -33,8 +33,9 @@ export function quotesWanted(parts: ScenePart[], project: ProjectSettings, skip:
 export function withQuotes(
   quotes: PrintQuote[] = [],
   asked: QuoteRequest[],
-  ctx: { replies: QuoteReply[]; checkedAt: string },
+  ctx: { replies: QuoteReply[]; checkedAt: string; parts: ScenePart[] },
 ): PrintQuote[] {
+  const made = new Set(ctx.parts.filter(isMadePart).map((p) => p.id));
   const byPart = new Map(ctx.replies.map((r) => [r.part, r]));
   const fresh = asked.flatMap((a): PrintQuote[] => {
     const reply = byPart.get(a.part);
@@ -55,7 +56,7 @@ export function withQuotes(
   });
   const replaced = new Set(fresh.map((q) => q.part));
 
-  return [...quotes.filter((q) => !replaced.has(q.part)), ...fresh];
+  return [...quotes.filter((q) => !replaced.has(q.part)), ...fresh].filter((q) => made.has(q.part));
 }
 
 export const stlItems = (asked: QuoteRequest[], plates: Plate[]) =>

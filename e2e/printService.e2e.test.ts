@@ -15,11 +15,27 @@ interface Studio {
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
+const SERVICE_ROUTES = ['print-service', 'print-set-service-key', 'print-quote'];
+
+const saveKey = (key: string) =>
+  app.page.evaluate(
+    (arg) =>
+      fetch('/api/bridge/print-set-service-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ arg }),
+      }).then((r) => r.json()),
+    key,
+  );
+
 beforeAll(async () => {
-  app = await openApp();
+  app = await openApp({}, SERVICE_ROUTES);
+  await saveKey('');
 }, 120000);
 
 afterAll(async () => {
+  if (app) await saveKey('');
+
   await app?.close();
 });
 

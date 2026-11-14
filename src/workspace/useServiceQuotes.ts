@@ -35,13 +35,21 @@ async function quoteShapes(asked: QuoteRequest[], options: ServiceQuotesOptions)
 export function useServiceQuotes(options: ServiceQuotesOptions) {
   const { parts, project, setProject, enabled } = options;
   const busy = useRef(false);
+  const missed = useRef(false);
+  const [rounds, setRounds] = useState(0);
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const wanted = enabled && !IS_WEB_DEMO ? quotesWanted(parts, project, failed).map((a) => a.key) : [];
 
   const run = useEffectEvent(async () => {
     const asked = quotesWanted(parts, project, failed);
 
-    if (!asked.length || busy.current) return;
+    if (!asked.length) return;
+
+    if (busy.current) {
+      missed.current = true;
+
+      return;
+    }
 
     busy.current = true;
 
@@ -50,13 +58,18 @@ export function useServiceQuotes(options: ServiceQuotesOptions) {
       const answered = new Set(replies.map((r) => r.part));
       const unanswered = asked.filter((a) => !answered.has(a.part)).map((a) => a.key);
 
-      setProject((p) => ({ ...p, quotes: withQuotes(p.quotes, asked, { replies, checkedAt: localDate() }) }));
+      setProject((p) => ({ ...p, quotes: withQuotes(p.quotes, asked, { replies, checkedAt: localDate(), parts }) }));
       setFailed((prev) => (unanswered.length ? new Set([...prev, ...unanswered]) : prev));
     } catch (e) {
       setFailed((prev) => new Set([...prev, ...asked.map((a) => a.key)]));
       options.showToast(errorMessage(e), { tone: 'error' });
     } finally {
       busy.current = false;
+
+      if (missed.current) {
+        missed.current = false;
+        setRounds((n) => n + 1);
+      }
     }
   });
 
@@ -68,7 +81,7 @@ export function useServiceQuotes(options: ServiceQuotesOptions) {
     const timer = window.setTimeout(() => void run(), SETTLE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [wantedKey]);
+  }, [wantedKey, rounds]);
 
   const choose = async () => {
     const status = await printBridge.service().catch(() => null);

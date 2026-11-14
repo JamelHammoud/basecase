@@ -17,6 +17,7 @@ import {
   TrainIcon,
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
+import { storedTries } from '../cases/tryStore';
 import { INPUT_COMMANDS } from './inputCommands';
 import { showLeftTab } from './showView';
 import type { CommandInputs } from './sceneCommands';
@@ -211,6 +212,20 @@ function exploreCommands({ caseExplore, tool }: WorkspaceCore): Command[] {
   ];
 }
 
+const showTries = (core: WorkspaceCore): Command[] =>
+  storedTries().length
+    ? [
+        {
+          id: 'show-tries',
+          group: 'Panels',
+          label: 'Show Tries',
+          icon: <LibraryIcon className={ic} />,
+          keywords: 'recordings runs library replay variations',
+          run: () => core.triesMode.show(null),
+        },
+      ]
+    : [];
+
 export function caseCommands({ core }: CommandInputs): Command[] {
   const { simTraining, posing, tool } = core;
   const { sim, cases } = simTraining;
@@ -291,14 +306,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       keywords: 'challenge world goal level',
       run: () => showCases(core),
     },
-    {
-      id: 'show-tries',
-      group: 'Panels',
-      label: 'Show Tries',
-      icon: <LibraryIcon className={ic} />,
-      keywords: 'recordings runs library replay variations',
-      run: () => core.triesMode.show(null),
-    },
+    ...showTries(core),
     ...newCase,
     drive,
     ...respawn,

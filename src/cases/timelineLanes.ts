@@ -6,7 +6,7 @@ export interface TimelineLane {
   unit: '°' | 'mm';
   target: Float32Array | null;
   position: Float32Array;
-  effort: Float32Array;
+  effort: Float32Array | null;
   limit: number;
 }
 
@@ -24,9 +24,9 @@ function column(r: Recording, read: (frame: number) => number): Float32Array {
 
 export function timelineLanes(joints: LaneJoint[], r: Recording, efforts: Float32Array[] | null): TimelineLane[] {
   return joints.flatMap((j, i) => {
-    const effort = efforts ? efforts[i] : new Float32Array(r.frames).fill(Number.NaN);
+    const effort = efforts?.[i];
 
-    if (j.actuator < 0 || !effort?.length) return [];
+    if (j.actuator < 0 || (efforts && !effort?.length)) return [];
 
     const scale = toUnit(j.type);
     const address = r.jointQpos?.[i];
@@ -37,7 +37,7 @@ export function timelineLanes(joints: LaneJoint[], r: Recording, efforts: Float3
         unit: j.type === 'prismatic' ? 'mm' : '°',
         target: j.drive === 'position' ? column(r, (n) => r.ctrl[n * r.nu + j.actuator] * scale) : null,
         position: column(r, (n) => (address === undefined ? Number.NaN : r.qpos[n * r.nq + address] * scale)),
-        effort: column(r, (n) => Math.abs(effort[n] ?? Number.NaN)),
+        effort: effort ? column(r, (n) => Math.abs(effort[n] ?? Number.NaN)) : null,
         limit: j.effort,
       },
     ];

@@ -82,6 +82,11 @@ describe('Tries in the Library', () => {
         })
         .toBeGreaterThan(0);
 
+      const lanes = app.page.locator(shown('[data-testid="tries-mode"] [data-testid="timeline-lane"]'));
+
+      expect(await lanes.locator('[data-testid="trace-position"]').count()).toBeGreaterThan(0);
+      expect(await lanes.locator('[data-testid="trace-effort"], [data-testid="trace-limit"]').count()).toBe(0);
+
       const gone = await tiles().nth(1).getAttribute('data-try');
 
       await tiles().nth(1).click({ button: 'right' });

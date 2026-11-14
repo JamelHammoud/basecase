@@ -20,7 +20,6 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, m
     ...(lane.target ? [{ id: 'target', values: lane.target, tone: 'muted' as const }] : []),
     { id: 'position', values: lane.position, tone: 'accent' },
   ];
-  const effort: Trace[] = [{ id: 'effort', values: lane.effort, tone: 'primary' }];
   const unit = lane.unit === 'mm' ? ' mm' : '°';
 
   return (
@@ -33,18 +32,22 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, m
       <div className="w-[112px] shrink-0 flex flex-col gap-0.5 min-w-0">
         <span className="text-[13px] text-white/85 truncate">{name}</span>
         <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.position[frame], 1, unit)}</span>
-        <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.effort[frame], 2, ' N·m')}</span>
+        {lane.effort && (
+          <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.effort[frame], 2, ' N·m')}</span>
+        )}
       </div>
       <div className="flex-1 min-w-0 flex flex-col gap-1">
         <TracePlot traces={motion} height={PLOT} playhead={frame} markers={markers} onSeek={onSeek} />
-        <TracePlot
-          traces={effort}
-          height={PLOT}
-          playhead={frame}
-          limit={lane.limit}
-          markers={markers}
-          onSeek={onSeek}
-        />
+        {lane.effort && (
+          <TracePlot
+            traces={[{ id: 'effort', values: lane.effort, tone: 'primary' }]}
+            height={PLOT}
+            playhead={frame}
+            limit={lane.limit}
+            markers={markers}
+            onSeek={onSeek}
+          />
+        )}
       </div>
     </div>
   );

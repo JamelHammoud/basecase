@@ -34,6 +34,8 @@ export const TriesCanvas: React.FC<TriesCanvasProps> = ({ active, mode, onDelete
     confirmTriesDelete(gone, (deleted) => {
       setPicked(NONE);
       onDelete(deleted);
+
+      if (all.every((t) => deleted.includes(t.id))) mode.close();
     });
 
   useTriesKeys({ active, picked: ids, onClear: () => setPicked(NONE), onDelete: remove, onLeave: mode.close });

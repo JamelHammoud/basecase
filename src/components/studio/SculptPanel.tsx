@@ -33,7 +33,7 @@ const CLAY_PRESETS = [
 ] as const;
 
 const PRESET_TILE =
-  'h-16 rounded-xl flex flex-col items-center justify-center gap-1.5 text-[12.5px] font-medium cursor-default transition-[background-color,color,transform] active:scale-[0.97] bg-white/[0.05] text-white/75 hover:bg-white/[0.09] hover:text-white';
+  'h-16 rounded-xl flex flex-col items-center justify-center gap-1.5 text-[12.5px] font-medium cursor-default transition-[background-color,color,transform] active:scale-[0.97] bg-white/[0.05] text-white/60 hover:bg-white/[0.09] hover:text-white';
 
 export const SculptPanel: React.FC<{
   sculptSettings: SculptSettings;

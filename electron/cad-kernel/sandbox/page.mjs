@@ -38,7 +38,7 @@ function sendAsset(from, name) {
 
   asset(name).then(
     (value) => from.postMessage({ asset: name, value }),
-    (err) => host.failed(`Could not load ${name}: ${err?.message ?? err}`),
+    (err) => host.failed(`Couldn’t load ${name}: ${err?.message ?? err}`),
   );
 }
 
@@ -104,7 +104,7 @@ function runConvert(job) {
   };
 
   converter.addEventListener('message', (event) => onConvertMessage({ converter, job, finish }, event.data));
-  converter.addEventListener('error', (event) => finish(failureBytes(event.message || 'it did not load')));
+  converter.addEventListener('error', (event) => finish(failureBytes(event.message || 'it didn’t load')));
   converter.addEventListener('messageerror', () => finish(failureBytes('it sent an unreadable message')));
 }
 

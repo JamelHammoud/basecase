@@ -60,7 +60,7 @@ describe('cadimport sandbox', () => {
   });
 
   it('cadimport sandbox opens each body of a dropped STEP, and fails closed on a broken one', () => {
-    expect(report.opens['broken.step']?.error).toMatch(/could not read/);
+    expect(report.opens['broken.step']?.error).toMatch(/couldn’t read/);
     expect(report.opens['broken.step']?.bodies).toBeUndefined();
     expect(report.opens['two-bodies-inch.step']?.bodies?.map((b) => b.name)).toEqual(['Base Plate', 'Post']);
   });

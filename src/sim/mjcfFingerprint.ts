@@ -1,4 +1,4 @@
-import { hashText } from '../guide/guideItems';
+import { hashText } from '../utils/geometryHash';
 
 const SCENE_INDEXED: Array<[RegExp, string]> = [
   [/(?<![A-Za-z0-9])j\d+_/g, 'j_'],

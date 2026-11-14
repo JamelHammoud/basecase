@@ -51,7 +51,7 @@ const PolicyRow: React.FC<PolicyActions & { policy: PolicyRecord; training: Trai
       <div className="flex-1 min-w-0">
         <button
           type="button"
-          className="w-full h-[32px] text-left text-[13px] text-white/85 truncate cursor-default"
+          className="w-full h-[32px] text-left text-[13px] text-white/90 truncate cursor-default"
           onClick={() => onChoose(policy.id)}
         >
           {policy.name}

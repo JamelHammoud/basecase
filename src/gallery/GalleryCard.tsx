@@ -45,7 +45,7 @@ export const GalleryCard: React.FC<{
     >
       <div>
         <h1 className="text-[15px] font-semibold text-white/90">{kase.name}</h1>
-        <p className="mt-1 text-[13px] leading-snug text-white/70">{kase.brief}</p>
+        <p className="mt-1 text-[13px] leading-snug text-white/60">{kase.brief}</p>
       </div>
       <Button
         variant="primary"

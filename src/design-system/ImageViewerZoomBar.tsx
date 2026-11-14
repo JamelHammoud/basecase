@@ -31,7 +31,7 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
       <button
         type="button"
         onClick={onFit}
-        className="h-[32px] min-w-14 px-1.5 rounded-lg text-[13px] text-white/80 tabular hover:bg-white/[0.07] cursor-default"
+        className="h-[32px] min-w-14 px-1.5 rounded-lg text-[13px] text-white/90 tabular hover:bg-white/[0.07] cursor-default"
         aria-label="Zoom to fit"
       >
         {zoom}

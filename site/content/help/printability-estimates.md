@@ -17,6 +17,7 @@ related:
   - print-a-robots-parts
   - troubleshoot-build-part-wont-print
   - build-checks
+  - price-printed-parts-from-a-print-service
 covers:
   - src/three/printability.ts
   - src/utils/printReport.ts
@@ -24,30 +25,28 @@ covers:
   - src/readiness/wording.ts
 ---
 
-Before you slice, Basecase works out how each printed part should sit on the bed, how much support it needs, how thick its walls are, and how much time and filament it will take.
+Before you slice, Basecase works out which way each printed part sits, the support it needs, its walls, its time and its filament.
 
 ## How a part is turned
 
-Basecase tries each printed part in the 6 ways its axes can point up, plus up to 6 large flat faces it could rest on. It picks the orientation that prints best on your printer's bed and works around any areas the bed keeps clear. A long part can be placed across the diagonal. If you chose a face with **Lay on Face**, Basecase uses that face instead.
+Each printed part tries the 6 ways its axes can point up, plus up to 6 large flat faces it could rest on. Basecase picks the one that prints best on your printer's bed, around any areas the bed keeps clear. A long part can go across the diagonal. If you chose a face with **Lay on Face**, that one wins.
 
 ## What it measures
 
-- **Overhangs** are faces that lean more than 45° from upright.
+- **Overhangs** are faces leaning more than 45° from upright.
 - **Support** goes under faces within 30° of flat, the same threshold the stock slicer profiles use.
-- **Thin walls** are walls thinner than 0.84 mm, which don't print. Basecase finds them by shooting rays inward through the part.
-- **Time** is an estimate based on the volume of plastic laid down.
-- **Filament** is counted in grams for each material and rounded up to whole spools, with 15% to spare.
+- **Thin walls** are found with rays shot inward through the part. A wall under 0.84 mm doesn't print.
+- **Time** comes from the volume of plastic laid down.
+- **Filament** is counted in grams per material, then rounded up to whole spools with 15% to spare. With **Made by a Service** chosen, the bill of materials lists each part's quote instead.
 
-A thin area of 100 mm² or more is a panel that would print with holes, so it blocks Ready to build. A smaller thin area is usually a thin edge left by a cut. The slicer drops those edges, so they show only as a note.
+A thin area of 100 mm² or more is a panel that would print with holes, and it blocks Ready to build. A smaller one is usually a thin edge from a cut, which the slicer drops, so it's only a note.
 
 ## From estimate to slice
 
-Basecase packs plates by material, around the bed's clear areas. Parts the build guide needs first go on the first plates, and parts that no step uses go last.
-
-Until a plate is sliced, its time and weight show with ≈. Once Bambu Studio or OrcaSlicer slices it, the plate shows the slicer's own time, grams, supports and warnings.
+Plates are packed per material, around the bed's clear areas. Parts the build guide needs first go on the first plates, and parts no step uses go last. Until a plate is sliced, its time and weight show with ≈. Once Bambu Studio or OrcaSlicer slices it, the plate shows the slicer's own time, grams, supports and warnings.
 
 ## What Basecase won't print
 
-A part meant to be clear, such as one named “Front Glass”, blocks the build, because a printer can't make clear parts. A part bigger than the plate also blocks the build, and **Parts** in Print mode tells you how many pieces to split it into.
+A part meant to be clear, such as one named “Front Glass”, blocks the build. A printer can't make clear parts. A part bigger than the plate blocks it too. **Parts** in Print mode says how many pieces to split it into.
 
-If a part is flagged, see [A part is too big to print or has thin walls](/help/troubleshoot-build-part-wont-print) for the fixes.
+When a part is flagged, [A part is too big to print or has thin walls](/help/troubleshoot-build-part-wont-print) has the fixes.

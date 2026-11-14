@@ -30,7 +30,7 @@ export const PlaceOnMapSheet: React.FC<{
           value={text}
           onChange={(e) => setText(e.target.value)}
           aria-label="Place"
-          placeholder="e.g. 37.7793, -122.4193 or a Google Maps link"
+          placeholder="e.g. 37.7793° N, 122.4193° W or a Google Maps link"
         />
         <FieldRow label="Height offset">
           <NumberInput

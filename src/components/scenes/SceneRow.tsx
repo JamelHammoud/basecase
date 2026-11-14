@@ -61,9 +61,7 @@ export const SceneRow: React.FC<SceneRowProps> = ({
             <RenameField name={scene.name} onDone={onRename} className={TILE_RENAME} />
           </span>
         ) : (
-          <span
-            className={`block truncate text-[13px] leading-[19px] ${current ? 'font-medium text-white/95' : 'text-white/85'}`}
-          >
+          <span className={`block truncate text-[13px] leading-[19px] text-white/90 ${current ? 'font-medium' : ''}`}>
             {scene.name}
           </span>
         )}

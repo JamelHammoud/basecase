@@ -35,7 +35,7 @@ Mark where an arm's tool must reach and give the grams it carries, and get exact
 
    ![The Size Arm to Targets sheet listing Desk, Top Shelf and Bin with a 200 g payload](/help/size-an-arm-to-its-targets/sheet.png)
 
-7. Click **Size Arm**. The arm appears at the origin, turned to face the targets, and the Pose tab opens on its skeleton.
+7. Press [[↩]], or click **Size Arm**. The arm appears at the origin, turned to face the targets, and the Pose tab opens on its skeleton.
 
    ![A 4-joint arm on the canvas beside its three targets, with each joint's margin in the Pose tab](/help/size-an-arm-to-its-targets/arm.png)
 

@@ -60,9 +60,6 @@ export function TeachGestureSheet({ gestures, onTaught, onClose }: TeachGestureS
             autoFocus
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') submit();
-            }}
             aria-label="Name"
             placeholder="e.g. salute"
           />

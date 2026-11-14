@@ -41,10 +41,29 @@ function partRows(part: ScenePart, depth: number, ctx: RowContext, operandOf?: s
   return [{ ...row, collapsed: closed }, ...operands.flatMap((o) => partRows(o, depth + 1, ctx, part.id))];
 }
 
+function groupMembers(parts: ScenePart[]): Map<string, ScenePart[]> {
+  const groups = new Map<string, ScenePart[]>();
+
+  for (const part of parts) {
+    const group = part.group;
+
+    if (!group) continue;
+
+    const members = groups.get(group.id) ?? [];
+
+    members.push(part);
+    groups.set(group.id, members);
+  }
+
+  return groups;
+}
+
 export function layerRows(parts: ScenePart[], collapsed: ReadonlySet<string>, query = ''): LayerRow[] {
   const words = queryWords(query);
   const searching = words.length > 0;
   const shown = searching ? parts.filter((p) => matchesDeep(p, words)) : parts;
+  const matches = new Set(shown);
+  const groups = groupMembers(parts);
   const ctx: RowContext = { words, collapsed };
   const rows: LayerRow[] = [];
   const seen = new Set<string>();
@@ -62,12 +81,12 @@ export function layerRows(parts: ScenePart[], collapsed: ReadonlySet<string>, qu
 
     seen.add(group.id);
 
-    const members = parts.filter((m) => m.group?.id === group.id);
+    const members = groups.get(group.id)!;
 
     rows.push({ type: 'group', id: group.id, name: group.name, members });
 
     if (searching || !collapsed.has(group.id)) {
-      shown.filter((m) => m.group?.id === group.id).forEach((m) => rows.push(...partRows(m, 1, ctx)));
+      members.filter((m) => matches.has(m)).forEach((m) => rows.push(...partRows(m, 1, ctx)));
     }
   }
 

@@ -4,6 +4,7 @@ export interface QuarantineEntry {
   issue: number;
   until: string;
   reason: string;
+  platform?: 'darwin' | 'linux' | 'win32';
 }
 
-export function quarantineExclude(entries?: QuarantineEntry[], day?: string): string[];
+export function quarantineExclude(entries?: QuarantineEntry[], day?: string, platform?: string): string[];

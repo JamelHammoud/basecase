@@ -1,4 +1,5 @@
 import { originLabel, TRY_SOURCE_BADGE, type StoredTry, type TrySource } from '../tryFile';
+import { labelText } from '../tryLabels';
 import { motionKey, motionSignature } from './motion';
 import { termsOf, weightedTerms } from './searchTerms';
 import { SIGNATURE_SCALE, type IndexedTry } from './types';
@@ -42,6 +43,7 @@ export function indexedTryOf(stored: StoredTry, stamp: number): IndexedTry {
       { text: sourceText(stored.source), boost: 1 },
       { text: originLabel(stored.origin) ?? '', boost: 1 },
       { text: stored.input ?? '', boost: 1 },
+      { text: labelText(stored.labels), boost: 1 },
     ]),
     named: [...new Set(termsOf(`${stored.case?.name ?? ''} ${stored.task ?? ''}`))],
     motionKey: stored.motion ? motionKey(stored.motion) : null,

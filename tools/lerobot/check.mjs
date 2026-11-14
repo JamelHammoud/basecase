@@ -24,7 +24,7 @@ async function exportFixture() {
       server.ssrLoadModule('/src/datasets/lerobotExport.ts'),
     ]);
 
-    return exporter.datasetFiles(await fixtures.fixtureSpec());
+    return exporter.datasetFiles(await fixtures.fixtureSpec({ segments: fixtures.FIXTURE_SEGMENTS }));
   } finally {
     await server.close();
   }

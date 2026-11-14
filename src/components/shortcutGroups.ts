@@ -100,6 +100,8 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
       ['Go to start or end', 'timeline:ends'],
       ['Slower or faster', 'timeline:speed'],
       ['Loop a range', ['⇧', 'drag']],
+      ['Split a segment', 'timeline:split'],
+      ['Merge into the one before', 'timeline:merge'],
       ['Close', 'timeline:close'],
     ],
   },

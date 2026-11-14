@@ -1,7 +1,7 @@
 ---
 title: Import and export formats
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: files-and-sharing
 type: reference
 order: 1
@@ -71,3 +71,5 @@ Every export is in the **Export** menu at the top right of the window.
 | **AirDrop** on a Mac, **USDZ Model** on Windows | `<scene>.usdz` | The solid parts as a USDZ model, which an iPhone or iPad opens in 3D |
 
 File names use the scene's name in lowercase, with dashes for spaces.
+
+An image keeps the view from when you choose **Image**. You can keep working while Basecase prepares the PNG.

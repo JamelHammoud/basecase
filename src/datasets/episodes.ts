@@ -12,6 +12,12 @@ export interface FeatureStats {
   count: number[];
 }
 
+export interface DatasetSegment {
+  from: number;
+  to: number;
+  text: string;
+}
+
 export interface EpisodeData {
   task: string;
   frames: number[];
@@ -19,6 +25,7 @@ export interface EpisodeData {
   state: Float32Array;
   action: Float32Array;
   scan?: Float32Array;
+  segments?: DatasetSegment[];
 }
 
 export const datasetStride = (dt: number) => Math.max(1, Math.round(1 / (dt * DATASET_FPS)));

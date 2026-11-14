@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { activeEntries, configFor, entryMatches, quarantineExclude, validateQuarantine } from './quarantine.mjs';
+import {
+  activeEntries,
+  configFor,
+  entryMatches,
+  onPlatform,
+  quarantineExclude,
+  validateQuarantine,
+} from './quarantine.mjs';
 
 const exists = () => true;
 const entry = (overrides = {}) => ({
@@ -33,6 +40,7 @@ describe('quarantine list', () => {
     ['a file no run includes', { file: 'e2e/app/kernel.app.test.ts' }],
     ['a file outside the tests', { file: 'src/a.ts' }],
     ['an unknown key', { owner: 'someone' }],
+    ['an unknown platform', { platform: 'windows' }],
   ])('rejects an entry with %s', (_label, overrides) => {
     const broken = Object.fromEntries(Object.entries(entry(overrides)).filter(([, value]) => value !== undefined));
 
@@ -57,6 +65,17 @@ describe('quarantine list', () => {
     const list = [entry({ test: '' }), entry({ test: '', file: 'src/b.test.ts', until: '2026-01-01' }), entry()];
 
     expect(quarantineExclude(list, '2026-11-12')).toEqual(['e2e/smoke.e2e.test.ts']);
+  });
+
+  it('holds a platform entry only on that platform', () => {
+    const windows = entry({ platform: 'win32' });
+    const wholeFile = entry({ test: '', platform: 'win32' });
+
+    expect(validateQuarantine([windows], { exists })).toEqual([]);
+    expect(onPlatform([windows, entry()], 'linux')).toEqual([entry()]);
+    expect(onPlatform([windows, entry()], 'win32')).toEqual([windows, entry()]);
+    expect(quarantineExclude([wholeFile], '2026-11-12', 'linux')).toEqual([]);
+    expect(quarantineExclude([wholeFile], '2026-11-12', 'win32')).toEqual(['e2e/smoke.e2e.test.ts']);
   });
 
   it('matches a test by its own name or its full name', () => {

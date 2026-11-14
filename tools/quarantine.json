@@ -1,1 +1,33 @@
-[]
+[
+  {
+    "file": "e2e/webTrain.e2e.test.ts",
+    "test": "trains Stand on the tab engine, passes Arena, and keeps it through a reload",
+    "issue": 794,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Passes on Linux in about 70 s. On Windows the web studio trains and checks Stand so slowly that the Arena check is still running after the 180 s wait, in three of the last five nightly runs."
+  },
+  {
+    "file": "e2e/firstLaunch.e2e.test.ts",
+    "test": "opens on the rover driving to its flag",
+    "issue": 794,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Passes on Linux in about 7 s. On Windows a fresh web studio needed a retry in two nightly runs and failed both attempts in run 43623862725, with Drive still off after 60 s."
+  },
+  {
+    "file": "e2e/firstLaunch.e2e.test.ts",
+    "test": "opens the saved scene instead after a relaunch",
+    "issue": 795,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "On Windows the untouched first-launch rover was written when New Scene opened beside it, so the test read the rover's 4 parts instead of the cube. Passes on Linux."
+  },
+  {
+    "file": "e2e/caseLogic.e2e.test.ts",
+    "test": "scores a knock-the-blocks game from its Case logic and records the try as a pass",
+    "issue": 803,
+    "until": "2026-11-28",
+    "reason": "The test sends the arm's commands from Node against the simulation's clock, so when the page stalls under load they land after the 9 s Case ends. It passed 4 of 10 runs in CI's Linux setup on main, and 2 of 10 before #767."
+  }
+]

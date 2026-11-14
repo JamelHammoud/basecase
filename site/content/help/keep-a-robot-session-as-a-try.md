@@ -48,4 +48,6 @@ A session keeps the angles the robot measured and the commands Basecase sent. It
 
 When your computer's camera is on, the selected unit's session also keeps its video. The video stays on your computer, in the try's folder.
 
-**Note:** Basecase doesn't judge a session, so its tile shows no Passed or Missed. A session opens on the timeline only in the scene it was recorded from.
+An amber warning mark on the tile flags a problem in the recording, such as missing frames. On the timeline, point at the same mark beside the segments to see what happened and when.
+
+**Note:** Basecase judges a session only when a Case in the scene can judge it from what the session recorded, as in [Label a try](/help/label-a-try). Otherwise its tile shows no Passed or Missed until you right-click it and choose **Mark Passed** or **Mark Failed**. A session opens on the timeline only in the scene it was recorded from.

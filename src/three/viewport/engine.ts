@@ -302,7 +302,7 @@ export class ViewportEngine {
     };
 
     return {
-      captureScreenshot: () => captureScreenshot(ctx, this.gizmo.controls.getHelper()),
+      captureScreenshot: (maxSide) => captureScreenshot(ctx, this.gizmo.controls.getHelper(), maxSide),
       captureViews: (views, onlyIds, opts) => {
         const run = () =>
           captureViews(ctx, {

@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { ROOT, activeEntries, configFor, entryMatches, loadQuarantine, today } from './quarantine.mjs';
+import { ROOT, activeEntries, configFor, entryMatches, loadQuarantine, onPlatform, today } from './quarantine.mjs';
 
 const VITEST = path.join(ROOT, 'node_modules', 'vitest', 'vitest.mjs');
 
@@ -52,8 +52,9 @@ function report(entry, outcome) {
 }
 
 const entries = loadQuarantine();
-const active = activeEntries(entries);
-const expired = entries.filter((entry) => !active.includes(entry));
+const live = activeEntries(entries);
+const active = onPlatform(live);
+const expired = entries.filter((entry) => !live.includes(entry));
 
 if (active.length === 0) {
   console.log('No quarantined tests.');

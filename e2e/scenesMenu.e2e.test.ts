@@ -83,5 +83,12 @@ describe('scenes menu', () => {
     expect(tab && name && tab.x + tab.width - (name.x + name.width)).toBeCloseTo(10, 0);
     await background.hover();
     await expect.poll(clickable).toBe('auto');
+
+    const preview = page.getByRole('tooltip').locator('img');
+
+    await expect.poll(() => preview.getAttribute('src')).toMatch(/^data:image\/jpeg;base64,/);
+    await expect
+      .poll(() => preview.evaluate((el: HTMLImageElement) => Math.max(el.naturalWidth, el.naturalHeight)))
+      .toBe(560);
   });
 });

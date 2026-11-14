@@ -132,9 +132,11 @@ These keys work while a try plays on the timeline.
 | Go to start or end | [[Home]] or [[End]] |
 | Slower or faster | [ or ] |
 | Loop a range | [[⇧]] and drag |
+| Split a segment | [[S]] |
+| Merge into the one before | [[⌫]] |
 | Close | [[Esc]] |
 
-Speed goes from 0.25× to 4×. A range dragged on a lane plays over and over. Press [[⇧]] and click a lane to drop it.
+Speed goes from 0.25× to 4×. A range dragged on a lane plays over and over. Press [[⇧]] and click a lane to drop it. [[S]] splits the segment under the playhead. [[⌫]] merges the chosen segment, or the one under the playhead, into the one before. [[⌘Z]] undoes either while the timeline has focus.
 
 ## Agent
 

@@ -14,13 +14,17 @@ export function capacityHold({ lane, sessions, loadPerCore }) {
   return null;
 }
 
-const SESSION = /(^|\/)claude (-p|--print)\b/;
+const CLAUDE_SESSION = /^\s*(?:\S*\/)?claude (-p|--print)\b/;
+const CODEX_SESSION = /^\s*(?:\S*\/)?codex\s+(?:--search\s+)?exec(?:\s|$)/;
+
+export const sessionCount = (listed) =>
+  listed.split('\n').filter((line) => CLAUDE_SESSION.test(line) || CODEX_SESSION.test(line)).length;
 
 export function measure() {
   const listed = spawnSync('ps', ['-A', '-o', 'command='], { encoding: 'utf8' }).stdout ?? '';
 
   return {
-    sessions: listed.split('\n').filter((line) => SESSION.test(line)).length,
+    sessions: sessionCount(listed),
     loadPerCore: os.loadavg()[0] / os.cpus().length,
   };
 }

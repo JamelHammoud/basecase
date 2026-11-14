@@ -54,6 +54,10 @@ describe('missingLabels', () => {
     expect(check('1. Click **Simulate**.')).toEqual([]);
   });
 
+  it('passes a menu item that ends in an ellipsis', () => {
+    expect(check('1. Right-click a try and choose **Tag…**.', labelIndex({ strings: ['Tag…'] }))).toEqual([]);
+  });
+
   it('fails a renamed label and suggests the current one through the glossary', () => {
     expect(check('1. Right-click the canvas and click **Clear Marks**.')).toEqual([
       '6: **Clear Marks** names no label in the app; the closest is “Delete Marks” (§3f)',

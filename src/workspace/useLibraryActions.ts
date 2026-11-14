@@ -55,7 +55,7 @@ export function useLibraryActions(core: WorkspaceCore) {
   const { setLeftTab } = tool;
   const { saveModel, renameModel, duplicateModel, deleteModel } = useLibraryModels(core);
 
-  const saveAsModel = (mode: 'selected' | 'all') => {
+  const saveAsModel = async (mode: 'selected' | 'all') => {
     const { selectedParts, selectedPart } = selection;
     const useSelection = mode === 'selected' && selectedParts.length > 0;
     const sourceParts = useSelection ? selectedParts : parts.filter((p) => p.visible);
@@ -67,17 +67,22 @@ export function useLibraryActions(core: WorkspaceCore) {
     }
 
     const single = mode === 'selected' && selectedParts.length === 1 ? selectedPart : null;
-    const model = sceneModel({
-      sourceParts,
-      single,
-      sceneName: scene.sceneName,
-      screenshot: () => viewportRef.current?.captureScreenshot(),
-    });
 
-    saveModel(model);
-    setIsLeftOpen(true);
-    setLeftTab('library');
-    showToast(`Saved ${model.name} to Library`);
+    try {
+      const model = await sceneModel({
+        sourceParts,
+        single,
+        sceneName: scene.sceneName,
+        screenshot: () => viewportRef.current?.captureScreenshot(),
+      });
+
+      saveModel(model);
+      setIsLeftOpen(true);
+      setLeftTab('library');
+      showToast(`Saved ${model.name} to Library`);
+    } catch (err) {
+      showToast(errorMessage(err), { tone: 'error' });
+    }
   };
 
   return { renameModel, duplicateModel, deleteModel, saveAsModel };

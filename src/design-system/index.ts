@@ -10,6 +10,7 @@ export * from './Switch';
 export * from './Field';
 export * from './FieldRow';
 export * from './RenameField';
+export * from './FloatingField';
 export * from './FloatingIsland';
 export * from './Divider';
 export * from './PopoverMenu';

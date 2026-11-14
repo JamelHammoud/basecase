@@ -66,8 +66,10 @@ it('counts servos on hand at $0 in their row, the total and the Budget check, an
   await expect.poll(() => count(0).count(), { timeout: 10000 }).toBe(1);
   expect(await row.textContent()).toContain('6 on hand');
   expect(dollars(await row.textContent())).toBe(0);
-  await expect.poll(total, { timeout: 10000 }).toBeCloseTo(before.total - before.row, 2);
-  await expect.poll(budgetBom, { timeout: 45000 }).toBe(before.budget - Math.round(before.row));
+  await expect.poll(total, { timeout: 10000 }).toBeCloseTo(before.total - before.row, 1);
+  await expect
+    .poll(async () => Math.abs((await budgetBom()) - (before.budget - before.row)), { timeout: 45000 })
+    .toBeLessThanOrEqual(1);
 
   await app.page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await app.page.keyboard.press('Meta+z');

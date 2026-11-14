@@ -82,6 +82,8 @@ describe('slash commands', () => {
 
     for (const name of ['/train', '/routine', '/case', '/simulate', '/check']) expect(listed).toContain(name);
 
+    expect(listed).toContain('Teach a Skill');
+
     await app.page.keyboard.type('tr');
     await app.page.keyboard.press('Enter');
     await expect.poll(() => composer().inputValue()).toBe('/train ');

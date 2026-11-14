@@ -14,6 +14,8 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
   const { addAnimation, play } = posing;
   const motionInputRef = useRef<HTMLInputElement | null>(null);
   const [motion, setMotion] = useState<Mocap | null>(null);
+  const [designing, setDesigning] = useState(false);
+  const designNextRef = useRef(false);
   const robotRig = posing.robot?.rig ?? null;
   const canWalk = !!robotRig && robotRig.joints.some((j) => j.limb === 'leg' || LEG_JOINT.test(j.name));
 
@@ -59,24 +61,27 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
     play(made.id, 0);
   };
 
-  const importMotion = () => motionInputRef.current?.click();
+  const pickMotion = (design: boolean) => {
+    designNextRef.current = design;
+    motionInputRef.current?.click();
+  };
 
-  const readMotionFile = async (file: File | undefined) => {
-    if (!file) return;
-
+  const openMotion = async (file: File, design: boolean) => {
     const text = await file.text();
 
     try {
       setMotion(parseBvh(text, file.name.replace(/\.bvh$/i, '')));
+      setDesigning(design);
     } catch (err) {
       showToast(`Couldn’t read ${file.name}. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 
-  const importMotionFile = (file: File) => {
-    if (posing.hasRig) void readMotionFile(file);
-    else showToast('Add joints to retarget motion onto');
+  const readMotionFile = async (file: File | undefined) => {
+    if (file) await openMotion(file, designNextRef.current || !posing.hasRig);
   };
+
+  const importMotionFile = (file: File) => void openMotion(file, !posing.hasRig);
 
   const createAnimation = (anim: RobotAnimation, summary: string) => {
     setMotion(null);
@@ -95,8 +100,10 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
     walkCycle,
     motionInputRef,
     motion,
+    designing,
     closeMotion: () => setMotion(null),
-    importMotion,
+    importMotion: () => pickMotion(false),
+    designFromMotion: () => pickMotion(true),
     readMotionFile,
     importMotionFile,
     createAnimation,

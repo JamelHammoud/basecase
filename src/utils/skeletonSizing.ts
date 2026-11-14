@@ -10,6 +10,7 @@ import { childrenOf, linkEnds, linkLength } from '../agent/skeleton';
 export const LIMB_SHARE = 0.45;
 
 const PITCH_AXIS = 0.9;
+const DEG_TO_RAD = Math.PI / 180;
 
 interface PointMass {
   g: number;
@@ -147,7 +148,25 @@ function stance(skeleton: RobotSkeleton, j: SkeletonJoint, leg: LegContext, swin
 const legCount = (skeleton: RobotSkeleton) =>
   skeleton.joints.filter((j) => j.limb === 'leg' && !childrenOf(skeleton, j.id).some((c) => c.limb === 'leg')).length;
 
-export function skeletonSizing(skeleton: RobotSkeleton): SizingInput | string {
+export interface JointPace {
+  peakDegS: number;
+  peakDegS2: number;
+}
+
+function inertiaNm(masses: PointMass[], ids: Set<string>, j: SkeletonJoint, accelDegS2: number): number {
+  const a = norm(j.axis);
+  const kgM2 = masses
+    .filter((m) => ids.has(m.joint))
+    .reduce((s, m) => {
+      const r = cross(diff(m.at, j.origin), a);
+
+      return s + (m.g / 1000) * ((r[0] ** 2 + r[1] ** 2 + r[2] ** 2) / 1e6);
+    }, 0);
+
+  return kgM2 * accelDegS2 * DEG_TO_RAD;
+}
+
+export function skeletonSizing(skeleton: RobotSkeleton, pace: Record<string, JointPace> = {}): SizingInput | string {
   const totalG = skeleton.massG;
 
   if (!totalG) return 'Give the skeleton an estimated mass (define_skeleton mass_g) to size actuators from it.';
@@ -158,8 +177,11 @@ export function skeletonSizing(skeleton: RobotSkeleton): SizingInput | string {
   const leg: LegContext = { weightN: (totalG / 1000) * G, share: legCount(skeleton) >= 3 ? 0.5 : 1 };
   const joints = skeleton.joints.map((j): SizingJoint => {
     const riders = descendants(skeleton, j.id);
-    const swing = distal(masses, new Set([j.id, ...riders]));
-    const holdNm = swingTorque(toScene(diff(swing.com, j.origin)), toScene(norm(j.axis)), swing.g, j.range);
+    const moved = new Set([j.id, ...riders]);
+    const swing = distal(masses, moved);
+    const moving = pace[j.id];
+    const accelNm = moving ? inertiaNm(masses, moved, j, moving.peakDegS2) : 0;
+    const holdNm = swingTorque(toScene(diff(swing.com, j.origin)), toScene(norm(j.axis)), swing.g, j.range) + accelNm;
     const standing = j.limb === 'leg' ? stance(skeleton, j, leg, swing) : undefined;
 
     return {
@@ -172,6 +194,7 @@ export function skeletonSizing(skeleton: RobotSkeleton): SizingInput | string {
       servos: 1,
       currentG: actuatorGrams(j),
       riders: riders.filter((id) => skeleton.joints.some((k) => k.id === id)),
+      ...(moving ? { speedDegS: moving.peakDegS } : {}),
     };
   });
 

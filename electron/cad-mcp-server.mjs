@@ -37,7 +37,7 @@ import {
   wrapRobot,
 } from './cad-mcp/robotTools.mjs';
 import { modelPart } from './cad-mcp/modelPart.mjs';
-import { checkInterfaces, defineSkeleton, setInterfaces } from './cad-mcp/planTools.mjs';
+import { checkInterfaces, defineSkeleton, setInterfaces, skeletonFromMotion } from './cad-mcp/planTools.mjs';
 import {
   addParts,
   deleteParts,
@@ -68,6 +68,7 @@ import { warmUp } from './cad-kernel/client.mjs';
 
 const TOOLS = [
   defineSkeleton,
+  skeletonFromMotion,
   setInterfaces,
   checkInterfaces,
   getScene,

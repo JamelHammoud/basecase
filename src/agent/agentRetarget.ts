@@ -33,9 +33,11 @@ export interface RetargetPayload {
 
 type Mocap = ReturnType<typeof parseBvh>;
 
+type BvhSource = Pick<RetargetPayload, 'text' | 'url' | 'file' | 'name'>;
+
 type Retargeted = Exclude<ReturnType<typeof retarget>, string>;
 
-async function bvhText(p: RetargetPayload): Promise<{ text: string } | { error: string }> {
+async function bvhText(p: BvhSource): Promise<{ text: string } | { error: string }> {
   if (p.text) return { text: p.text };
 
   if (!p.url) return { error: 'Give the BVH as an evidence path or a URL.' };
@@ -51,7 +53,7 @@ async function bvhText(p: RetargetPayload): Promise<{ text: string } | { error: 
   return text ? { text } : { error: 'Give the BVH as an evidence path or a URL.' };
 }
 
-function motionName(p: RetargetPayload): string {
+function motionName(p: BvhSource): string {
   return (
     p.name ??
     (p.file ?? p.url ?? 'Motion')
@@ -59,6 +61,20 @@ function motionName(p: RetargetPayload): string {
       .pop()!
       .replace(/\.bvh$/i, '')
   );
+}
+
+export async function readBvh(p: BvhSource): Promise<{ mocap: Mocap; name: string } | { error: string }> {
+  const source = await bvhText(p);
+
+  if ('error' in source) return source;
+
+  const name = motionName(p);
+
+  try {
+    return { mocap: parseBvh(source.text, name), name };
+  } catch (err) {
+    return { error: `Couldn’t read the BVH: ${errorMessage(err)}` };
+  }
 }
 
 function unmatchedText(res: string, mocap: Mocap): string {
@@ -85,18 +101,11 @@ export async function retargetRequest(ctx: PoseContext, p: RetargetPayload): Pro
 
   if (typeof scope === 'string') return { text: scope };
 
-  const source = await bvhText(p);
+  const read = await readBvh(p);
 
-  if ('error' in source) return { text: source.error };
+  if ('error' in read) return { text: read.error };
 
-  const name = motionName(p);
-  let mocap: Mocap;
-
-  try {
-    mocap = parseBvh(source.text, name);
-  } catch (err) {
-    return { text: `Couldn’t read the BVH: ${errorMessage(err)}` };
-  }
+  const { mocap, name } = read;
 
   const res = retarget(mocap, scope.rig, pointOfFor(scope.rig, ctx.viewport), {
     bones: p.bones,

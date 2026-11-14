@@ -50,6 +50,7 @@ export interface Mocap {
   frames: number;
   duration: number;
   bones: string[];
+  ends?: string[];
   sample: (t: number) => Map<string, THREE.Vector3>;
   rootQuaternion: (t: number) => THREE.Quaternion;
   rest: Map<string, THREE.Vector3>;

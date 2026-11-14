@@ -1,7 +1,7 @@
 import type { RobotSkeleton } from '../types/skeleton';
-import { actuatorOptions } from './actuatorCatalog';
+import { actuatorOptions, type ActuatorOption } from './actuatorCatalog';
 import { sizeActuators } from './actuatorSizing';
-import { skeletonSizing } from './skeletonSizing';
+import { skeletonSizing, type JointPace } from './skeletonSizing';
 
 export const LINK_OUTLINE = ['feetech-sts3215', 'feetech-sts3250', 'waveshare-st3215-hs'];
 
@@ -18,12 +18,17 @@ const componentOf = (key: string) => key.split('|')[0].replace(/^component:/, ''
 
 export const linkServos = () => actuatorOptions().filter((o) => LINK_OUTLINE.includes(componentOf(o.key)));
 
-export function armServos(skeleton: RobotSkeleton): ServoPick | { joint: string } {
-  const input = skeletonSizing(skeleton);
+export interface ServoChoice {
+  options?: ActuatorOption[];
+  pace?: Record<string, JointPace>;
+}
+
+export function skeletonServos(skeleton: RobotSkeleton, choice: ServoChoice = {}): ServoPick | { joint: string } {
+  const input = skeletonSizing(skeleton, choice.pace);
 
   if (typeof input === 'string') return { joint: skeleton.joints[0]?.name ?? 'arm' };
 
-  const families = sizeActuators({ ...input, options: linkServos() });
+  const families = sizeActuators({ ...input, options: choice.options ?? actuatorOptions() });
   const family = families.find((f) => !f.failures.length);
 
   if (!family) {
@@ -41,3 +46,5 @@ export function armServos(skeleton: RobotSkeleton): ServoPick | { joint: string 
     costUsd: family.costUsd,
   };
 }
+
+export const armServos = (skeleton: RobotSkeleton) => skeletonServos(skeleton, { options: linkServos() });

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { settledWrites } from './pendingWrites.mjs';
 import { vec3 } from './schemas.mjs';
+import { readEvidenceText } from './robotTools.mjs';
 import { bridge, fail, text } from './shared.mjs';
 
 const jointId = z.string().regex(/^[a-z0-9_-]+$/);
@@ -49,6 +50,42 @@ export const defineSkeleton = {
   handler: async (args) => {
     try {
       return text((await bridge('define_skeleton', args))?.text ?? '');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const skeletonFromMotion = {
+  name: 'skeleton_from_motion',
+  config: {
+    title: 'Skeleton from motion',
+    description:
+      'Fits a robot skeleton to a BVH motion clip (an attached evidence file, or a URL): per limb, the fewest revolute joints that keep every point of the limb within tolerance_mm of the clip over the whole clip. ' +
+      'A bone that barely turns merges into its neighbour, a ball joint becomes the revolute axes that actually move, and a limb that holds still gets no joints. Limbs are measured against the body they hang from, so the body itself gets no joints. ' +
+      'Link lengths scale to height_mm, the skeleton is posed as the clip’s first frame, and each range is the clip’s span plus 10%. It then picks the cheapest catalog servo per joint that holds the load and turns faster than the joint’s peak speed, at the cheapest supply that passes. ' +
+      'It writes the skeleton (as define_skeleton, replacing any), places one servo per joint at its joint, and returns the joints, ranges, peak speeds, servos and prices. A tolerance no joints meet gives no skeleton and names the limb. ' +
+      'Call it first when a person shows or names a motion the robot must perform, then design the body on the skeleton.',
+    inputSchema: {
+      file: z.string().optional().describe('Evidence path of a .bvh file'),
+      url: z.string().url().optional().describe('Or an https link to one'),
+      name: z.string().max(40).optional(),
+      height_mm: z.number().min(50).max(3000).describe('Robot height standing, mm, matched to the performer’s'),
+      tolerance_mm: z.number().positive().max(100).optional().describe('Default 1% of the height'),
+      limbs: z
+        .array(z.string().max(40))
+        .max(12)
+        .optional()
+        .describe('Only these limbs, e.g. ["right_arm"]; a wrong name lists the clip’s limbs'),
+    },
+  },
+  handler: async ({ file, ...rest }) => {
+    try {
+      const evidence = readEvidenceText(file);
+
+      if (!evidence.found) return text(`${file}: not found. Call list_evidence for the exact paths.`);
+
+      return text((await bridge('skeleton_from_motion', { ...rest, file, text: evidence.body }, 120000))?.text ?? '');
     } catch (err) {
       return fail(err);
     }

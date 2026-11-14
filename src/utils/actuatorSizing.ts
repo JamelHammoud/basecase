@@ -32,6 +32,7 @@ export interface SizingJoint {
   servos: number;
   currentG: number;
   riders: string[];
+  speedDegS?: number;
 }
 
 export interface SizingInput {
@@ -122,15 +123,22 @@ export function jointVerdict(j: SizingJoint, loads: JointLoads, act: ActuatorSpe
   return holdWorse > 0 ? hold : stance;
 }
 
+export function loadedDegS(act: ActuatorSpec, volts: number, stallShare: number): number {
+  const rpm = ratingAt(act, volts).rpm;
+
+  return rpm === undefined ? 0 : rpm * 6 * Math.max(0, 1 - stallShare);
+}
+
 function fitOf(j: SizingJoint, loads: JointLoads, option: ActuatorOption, volts: number): Fit & { ok: boolean } {
   const worst = jointVerdict(j, loads, option.act, volts);
+  const fast = !j.speedDegS || j.speedDegS <= loadedDegS(option.act, volts, worst.stallShare);
 
   return {
     option,
     kind: worst.kind,
     stallShare: worst.stallShare,
     heatShare: worst.heatShare,
-    ok: worst.status === 'pass',
+    ok: worst.status === 'pass' && fast,
   };
 }
 

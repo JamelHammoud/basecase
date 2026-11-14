@@ -1,8 +1,8 @@
 import type { Command } from '../components/CommandPalette';
-import { PoseIcon } from '../design-system';
+import { JointsIcon, PoseIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 
-export function skeletonCommands({ core }: CommandInputs): Command[] {
+export function skeletonCommands({ core, actions }: CommandInputs): Command[] {
   return [
     {
       id: 'edit-skeleton',
@@ -14,6 +14,14 @@ export function skeletonCommands({ core }: CommandInputs): Command[] {
         core.skeleton.setEditing(true);
         core.tool.setMode('pose');
       },
+    },
+    {
+      id: 'design-from-motion',
+      group: 'Pose',
+      label: 'Design From Motion',
+      icon: <JointsIcon />,
+      keywords: 'bvh mocap motion capture clip animation fit skeleton joints dof servos robot from movement',
+      run: actions.pose.designFromMotion,
     },
   ];
 }

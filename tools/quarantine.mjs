@@ -8,6 +8,8 @@ export const UNIT_CONFIG = 'vitest.config.ts';
 export const E2E_CONFIG = 'vitest.e2e.config.ts';
 
 const KEYS = ['file', 'test', 'issue', 'until', 'reason'];
+const OPTIONAL_KEYS = ['platform'];
+const PLATFORMS = ['darwin', 'linux', 'win32'];
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -41,7 +43,7 @@ function fileProblem(file, exists) {
 function entryProblems(entry, exists) {
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return ['is not an object'];
 
-  const unknown = Object.keys(entry).filter((key) => !KEYS.includes(key));
+  const unknown = Object.keys(entry).filter((key) => !KEYS.includes(key) && !OPTIONAL_KEYS.includes(key));
   const problems = [
     ...unknown.map((key) => `has an unknown key "${key}"`),
     ...KEYS.filter((key) => !(key in entry)).map((key) => `needs "${key}"`),
@@ -50,6 +52,7 @@ function entryProblems(entry, exists) {
     Number.isInteger(entry.issue) && entry.issue > 0 ? null : '"issue" must be an issue number',
     isRealDay(entry.until) ? null : '"until" must be a date, YYYY-MM-DD',
     typeof entry.reason === 'string' && entry.reason.trim() !== '' ? null : 'needs a "reason"',
+    !('platform' in entry) || PLATFORMS.includes(entry.platform) ? null : `"platform" must be ${PLATFORMS.join(', ')}`,
   ];
 
   return [...new Set(problems.filter(Boolean))];
@@ -85,10 +88,13 @@ export function loadQuarantine(file = QUARANTINE_FILE) {
 
 export const activeEntries = (entries, day = today()) => entries.filter((entry) => entry.until > day);
 
-export function quarantineExclude(entries = loadQuarantine(), day = today()) {
+export const onPlatform = (entries, platform = process.platform) =>
+  entries.filter((entry) => !entry.platform || entry.platform === platform);
+
+export function quarantineExclude(entries = loadQuarantine(), day = today(), platform = process.platform) {
   if (quarantineMode() !== 'skip') return [];
 
-  return activeEntries(entries, day)
+  return onPlatform(activeEntries(entries, day), platform)
     .filter((entry) => entry.test === '')
     .map((entry) => entry.file);
 }

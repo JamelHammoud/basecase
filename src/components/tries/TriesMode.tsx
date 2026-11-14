@@ -30,7 +30,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
   const { ref: fadeRef, style: fadeStyle } = useScrollFade();
   const body = useRef<HTMLDivElement | null>(null);
 
-  useTriesKeys(view, timelineOpen, active);
+  useTriesKeys(view, active && !timelineOpen);
 
   useEffect(() => {
     if (!view.robot) return;
@@ -67,7 +67,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
   return (
     <div
       data-testid="tries-mode"
-      className="absolute inset-0 z-20 flex flex-col bg-[#1b1b1b] rounded-[12px]"
+      className={`absolute inset-0 z-20 flex-col bg-[#1b1b1b] rounded-[12px] ${timelineOpen ? 'hidden' : 'flex'}`}
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -88,7 +88,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
         }
       />
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto" style={fadeStyle}>
-        <div ref={body} className={`px-[12px] flex flex-col gap-4 ${timelineOpen ? 'pb-[50vh]' : 'pb-6'}`}>
+        <div ref={body} className="px-[12px] pb-6 flex flex-col gap-4">
           {searching ? (
             <TryResults
               query={view.query}

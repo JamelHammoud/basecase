@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Button, IconButton, MenuItem, MoreIcon, PopoverMenu, RowActions } from '../../design-system';
+import React, { useState } from 'react';
+import { Button, ContextMenu, RowActions, type ContextMenuEntry } from '../../design-system';
 import type { FindingFix, ReadinessFinding } from '../../readiness/types';
 import type { ScenePart } from '../../types/robotics';
 import { PartLinks } from './PartLinks';
@@ -25,48 +25,34 @@ export interface FindingContext {
 
 const FIX_LABELS: Record<string, string> = { 'new-case': 'New Case', 'replay-fall': 'Replay in Sim' };
 
-const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-  const run = (action?: (f: ReadinessFinding) => void) => () => {
-    setOpen(false);
-    action?.(finding);
+function useFindingMenu(finding: ReadinessFinding, actions: FindingActions) {
+  const [at, setAt] = useState<{ x: number; y: number } | null>(null);
+  const items: ContextMenuEntry[] = [
+    { label: 'Ignore', onSelect: () => actions.onIgnore(finding) },
+    { label: `Ignore All ${finding.ruleName}`, onSelect: () => actions.onIgnoreRule(finding) },
+    ...(actions.onQuote ? [{ label: 'Quote', onSelect: () => actions.onQuote?.(finding) }] : []),
+  ];
+
+  return {
+    onContextMenu: (e: React.MouseEvent) => {
+      e.preventDefault();
+      setAt({ x: e.clientX, y: e.clientY });
+    },
+    menu: at && <ContextMenu x={at.x} y={at.y} items={items} onClose={() => setAt(null)} />,
   };
+}
 
-  return (
-    <div className="relative" ref={ref}>
-      <IconButton
-        icon={<MoreIcon className="w-4 h-4" />}
-        title="More"
-        size="xs"
-        isToggled={open}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      />
-      <PopoverMenu isOpen={open} onClose={() => setOpen(false)} ignoreRef={ref} position="bottom" align="end">
-        <MenuItem label="Ignore" onSelect={run(actions.onIgnore)} />
-        <MenuItem label={`Ignore All ${finding.ruleName}`} onSelect={run(actions.onIgnoreRule)} />
-        {actions.onQuote && <MenuItem label="Quote" onSelect={run(actions.onQuote)} />}
-      </PopoverMenu>
-    </div>
-  );
-};
+const fixOf = (finding: ReadinessFinding, actions: FindingActions) =>
+  finding.fix ? actions.onApplyFix?.[finding.fix.kind] : actions.onFix;
 
-const FindingButtons: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {
-  const fix = finding.fix ? actions.onApplyFix?.[finding.fix.kind] : actions.onFix;
-
-  return (
-    <>
-      {fix && (
-        <Button variant="secondary" size="xs" onClick={() => fix(finding)}>
-          {FIX_LABELS[finding.fix?.kind ?? ''] ?? 'Fix'}
-        </Button>
-      )}
-      <MoreMenu finding={finding} actions={actions} />
-    </>
-  );
-};
+const FixButton: React.FC<{ finding: ReadinessFinding; fix: (finding: ReadinessFinding) => void }> = ({
+  finding,
+  fix,
+}) => (
+  <Button variant="secondary" size="xs" className="shrink-0" onClick={() => fix(finding)}>
+    {FIX_LABELS[finding.fix?.kind ?? ''] ?? 'Fix'}
+  </Button>
+);
 
 interface FindingRowProps {
   finding: ReadinessFinding;
@@ -91,24 +77,44 @@ const FindingText: React.FC<FindingRowProps & { muted?: boolean }> = ({ finding,
   </div>
 );
 
-export const BlockerRow: React.FC<FindingRowProps> = ({ finding, context, children }) => (
-  <li className="flex items-start gap-2 py-1.5 pl-[31px] pr-[7px]">
-    <FindingText finding={finding} context={context}>
-      {children}
-    </FindingText>
-    <div className="flex items-center gap-1 shrink-0">
-      <FindingButtons finding={finding} actions={context.actions} />
-    </div>
-  </li>
-);
+export const BlockerRow: React.FC<FindingRowProps> = ({ finding, context, children }) => {
+  const { onContextMenu, menu } = useFindingMenu(finding, context.actions);
+  const fix = fixOf(finding, context.actions);
 
-export const NoteRow: React.FC<FindingRowProps> = ({ finding, context, children }) => (
-  <li className="group relative py-1.5 pl-[31px] pr-[7px] rounded-lg hover:bg-[#333333]">
-    <FindingText finding={finding} context={context} muted>
-      {children}
-    </FindingText>
-    <RowActions fill="#333333" className="right-0 top-0.5 gap-1 pr-1 rounded-r-lg">
-      <FindingButtons finding={finding} actions={context.actions} />
-    </RowActions>
-  </li>
-);
+  return (
+    <li
+      data-finding={finding.key}
+      className="flex items-start gap-2 py-1.5 pl-[31px] pr-[7px]"
+      onContextMenu={onContextMenu}
+    >
+      <FindingText finding={finding} context={context}>
+        {children}
+      </FindingText>
+      {fix && <FixButton finding={finding} fix={fix} />}
+      {menu}
+    </li>
+  );
+};
+
+export const NoteRow: React.FC<FindingRowProps> = ({ finding, context, children }) => {
+  const { onContextMenu, menu } = useFindingMenu(finding, context.actions);
+  const fix = fixOf(finding, context.actions);
+
+  return (
+    <li
+      data-finding={finding.key}
+      className="group relative py-1.5 pl-[31px] pr-[7px] rounded-lg hover:bg-[#333333]"
+      onContextMenu={onContextMenu}
+    >
+      <FindingText finding={finding} context={context} muted>
+        {children}
+      </FindingText>
+      {fix && (
+        <RowActions fill="#333333" className="right-0 top-0.5 pr-1 rounded-r-lg">
+          <FixButton finding={finding} fix={fix} />
+        </RowActions>
+      )}
+      {menu}
+    </li>
+  );
+};

@@ -67,7 +67,7 @@ export function RoutineFlow({ flow, states, errors }: RoutineFlowProps) {
           icon: <PlusIcon />,
           onSelect: () => editor.addAfter(node.id),
         },
-        ...(kind === 'base' ? [] : [{ divider: true as const }, deleteEntry(() => editor.remove(node.id), '⌫')]),
+        ...(kind === 'base' ? [] : [deleteEntry(() => editor.remove(node.id), '⌫')]),
       ],
     });
   };

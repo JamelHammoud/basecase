@@ -128,6 +128,45 @@ export const runCase = {
   },
 };
 
+const seconds = (what) => z.number().min(0).max(3600).optional().describe(what);
+
+export const readTry = {
+  name: 'read_try',
+  config: {
+    title: 'Read a try',
+    description:
+      'Reads a try (one recorded run of a Case in simulation) from its recording: its signals over a time window, the Case’s failure labels at the time each first tripped, and a capture of the canvas at one moment. ' +
+      'It opens the try on the user’s timeline while it reads, then puts the timeline back as it was. While the simulation runs outside the timeline it refuses, since opening a try would reset it. ' +
+      'signals takes console signal names, with * for one name part: joint.*.position, joint.<id>.target or effort, robot.height, robot.tilt (degrees), robot.speed, robot.travelled, robot.x, robot.z, probe.<name>, input.<source>.<axis>, goal.passed, goal.margin and the Case’s own; every number signal when left out. ' +
+      'Returns { ok, try, case, seconds, from, to, step, t, signals: { <id>: { v, min: [value, time], max: [value, time] } }, failures: [{ label, at, values }], unknown, captured } and the capture, or { ok: false, problem }. ' +
+      't is the sample times and v the values at them (null where unknown), at most 200 per signal; min and max cover every frame in the window; values are the signals at each failure; unknown lists the names that matched nothing. Times are seconds from the try’s start. ' +
+      'Use it to answer what happened in a try, citing times and values.',
+    inputSchema: {
+      id: z
+        .string()
+        .min(1)
+        .max(120)
+        .optional()
+        .describe('The try’s id; the try open in the timeline, else this scene’s latest, when left out'),
+      from: seconds('Window start in seconds; the try’s start when left out'),
+      to: seconds('Window end in seconds; the try’s end when left out'),
+      signals: z.array(z.string().min(1).max(120)).min(1).max(24).optional(),
+      at: seconds(
+        'When to capture the canvas; the first failure in the window, else the window’s start, when left out',
+      ),
+    },
+  },
+  handler: async (args) => {
+    try {
+      const { images, ...reply } = await bridge('read_try', args, 60000);
+
+      return imageReply({ text: JSON.stringify(reply), images }, '');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
 export const compareCase = {
   name: 'compare_case',
   config: {

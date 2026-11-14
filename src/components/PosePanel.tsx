@@ -49,7 +49,6 @@ const jointMenu = (j: RobotJoint, edits: JointEdits): ContextMenuEntry[] => [
     label: 'Range',
     submenu: () => <JointRangeFields joint={j} onChange={(range, live) => edits.setRange(j.id, range, live)} />,
   },
-  { divider: true },
   deleteEntry(() => edits.remove(j.id)),
 ];
 

@@ -29,7 +29,7 @@ Find tries from every scene at once by words, by facts such as failed or last we
 
 ![The Library listing two Grasp the Red Block tries for that search](/help/search-tries/library.png)
 
-3. Click a result. Tries fills the canvas with every result, and the timeline opens on the one you clicked if it fits the robot in the open scene.
+3. Click a result. If it fits the robot in the open scene, it plays through its Case's console. To see every result in Tries, click **Done** or press [[Esc]].
 
 ![Tries showing the two missed Grasp the Red Block tries](/help/search-tries/results.png)
 

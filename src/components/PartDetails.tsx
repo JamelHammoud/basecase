@@ -4,6 +4,7 @@ import { COMPONENT_BY_ID, ComponentInfo, SpecValue, specLines } from '../data/co
 import { isSourcedId } from '../data/sourcedItems';
 import { usePartThumbnail } from '../three/partThumbnails';
 import { keySpecs } from '../utils/keySpecs';
+import { shopLinkLabel } from '../utils/shopLink';
 import { sizeFigures } from '../utils/size';
 import { MetaLine, PreviewImage, Tooltip, ArrowUpRightIcon, CartIcon, FileIcon } from '../design-system';
 
@@ -46,7 +47,7 @@ export const ComponentLinks: React.FC<{ c: ComponentInfo; shop?: boolean }> = ({
     <div className="flex flex-wrap gap-1.5">
       {amazon && (
         <LinkButton href={amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} primary>
-          {amazon.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon'}
+          {shopLinkLabel(amazon.kind, amazon.url)}
         </LinkButton>
       )}
       {c.links.datasheet && (
@@ -181,7 +182,7 @@ const BuyLinks: React.FC<{ c: ComponentInfo }> = ({ c }) => (
     {c.links.amazon && (
       <div className="flex-1 min-w-0 [&>a]:w-full">
         <LinkButton href={c.links.amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} primary>
-          {c.links.amazon.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon'}
+          {shopLinkLabel(c.links.amazon.kind, c.links.amazon.url)}
         </LinkButton>
       </div>
     )}

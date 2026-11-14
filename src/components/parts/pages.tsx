@@ -17,6 +17,7 @@ import {
 } from '../PartDetails';
 import { HardwareConfigurator, HardwareSpecs } from '../HardwareConfigurator';
 import { keySpecs } from '../../utils/keySpecs';
+import { type ShopLinkKind, shopLinkLabel } from '../../utils/shopLink';
 import { hardwareItem, type View } from './partsViews';
 import { ResultRow, dragProps } from './rows';
 
@@ -130,23 +131,24 @@ const AddBar: React.FC<{ onAdd: () => void; children?: React.ReactNode }> = ({ o
   </div>
 );
 
+const ShopLink: React.FC<{ kind: ShopLinkKind; href: string }> = ({ kind, href }) => {
+  const label = shopLinkLabel(kind, href);
+
+  return (
+    <Tooltip label={label}>
+      <LinkButton href={href} icon={<CartIcon className="w-3.5 h-3.5" />} label={label} />
+    </Tooltip>
+  );
+};
+
 const ItemFooter: React.FC<{ ref_: string; onAdd: (i: CatalogItem) => void }> = ({ ref_, onAdd }) => {
   const item = catalogItemFromKey(ref_);
 
   if (!item) return null;
 
   const amazon = item.componentId ? COMPONENT_BY_ID[item.componentId]?.links.amazon : undefined;
-  const label = amazon?.kind === 'product' ? 'Buy on Amazon' : 'Find on Amazon';
 
-  return (
-    <AddBar onAdd={() => onAdd(item)}>
-      {amazon && (
-        <Tooltip label={label}>
-          <LinkButton href={amazon.url} icon={<CartIcon className="w-3.5 h-3.5" />} label={label} />
-        </Tooltip>
-      )}
-    </AddBar>
-  );
+  return <AddBar onAdd={() => onAdd(item)}>{amazon && <ShopLink kind={amazon.kind} href={amazon.url} />}</AddBar>;
 };
 
 const HardwareFooter: React.FC<{ spec: HardwareSpec; onAdd: (i: CatalogItem) => void }> = ({ spec, onAdd }) => {
@@ -154,9 +156,7 @@ const HardwareFooter: React.FC<{ spec: HardwareSpec; onAdd: (i: CatalogItem) => 
 
   return (
     <AddBar onAdd={() => onAdd(item)}>
-      <Tooltip label="Find on Amazon">
-        <LinkButton href={hardwareShopUrl(spec)} icon={<CartIcon className="w-3.5 h-3.5" />} label="Find on Amazon" />
-      </Tooltip>
+      <ShopLink kind="search" href={hardwareShopUrl(spec)} />
     </AddBar>
   );
 };

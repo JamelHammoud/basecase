@@ -1,5 +1,6 @@
 import { BOM_CATEGORIES, type Bom, type BomCategory, type BomLine } from '../../utils/bomTypes';
 import { plural } from '../../../electron/plural.mjs';
+import { shopLinkLabel } from '../../utils/shopLink';
 
 export interface BomGroup {
   category: BomCategory;
@@ -22,7 +23,7 @@ export const onHandAmount = (count: number, unit: BomLine['unit']) =>
 
 export const ownedAmount = (l: BomLine) => (l.owned ? onHandAmount(l.owned, l.unit) : '');
 
-export const linkLabel = (l: BomLine) => (l.urlKind === 'product' ? 'Open listing' : 'Search Amazon');
+export const linkLabel = (l: BomLine) => shopLinkLabel(l.urlKind, l.url);
 
 const linePrice = (l: BomLine) => l.lineUsd ?? l.estUsd;
 

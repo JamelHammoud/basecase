@@ -1,5 +1,6 @@
 import { parseAsin } from '../../utils/bom';
 import type { BomLine } from '../../utils/bomTypes';
+import { AMAZON_HOST } from '../../utils/shopLink';
 
 export interface CartItem {
   key: string;
@@ -26,7 +27,6 @@ export interface Cart {
 }
 
 const AMAZON_CART = 'https://www.amazon.com/gp/aws/cart/add.html';
-const AMAZON_HOST = /^(?:www\.)?amazon\.com$/i;
 const GRAMS_PER_SPOOL = 1000;
 
 function httpsUrl(url: string | undefined): URL | null {

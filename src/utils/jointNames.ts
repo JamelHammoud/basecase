@@ -94,3 +94,30 @@ export function prettyJointName(name: string): string {
 
   return s ? s[0].toUpperCase() + s.slice(1) : name;
 }
+
+const SIDE_TAGS = ['l', 'r', 'll', 'lr', 'fl', 'fr', 'rl', 'rr'];
+
+const groupNamesSide = (group: string) => /^(left|right)\b/i.test(group);
+
+function shortJointLabel(j: RobotJoint, group: string): string {
+  const sideWords = groupNamesSide(group) ? ['left', 'right', ...(sideOf(j.name) ? SIDE_TAGS : [])] : [];
+  const groupWords = group
+    .toLowerCase()
+    .split(' ')
+    .filter((w) => w !== 'leg' && w !== 'arm');
+  const skip = new Set(['joint', ...sideWords, ...groupWords]);
+  const s = nameWords(j.name)
+    .filter((w) => !skip.has(w))
+    .join(' ');
+
+  return s ? s[0].toUpperCase() + s.slice(1) : prettyJointName(j.name);
+}
+
+export function jointRowLabels(joints: RobotJoint[], group: string): Map<string, string> {
+  const short = joints.map((j) => [j, shortJointLabel(j, group)] as const);
+  const uses = new Map<string, number>();
+
+  for (const [, label] of short) uses.set(label, (uses.get(label) ?? 0) + 1);
+
+  return new Map(short.map(([j, label]) => [j.id, (uses.get(label) ?? 0) > 1 ? prettyJointName(j.name) : label]));
+}

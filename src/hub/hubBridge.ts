@@ -24,6 +24,12 @@ export interface HubSkillFiles {
   files: Record<string, string>;
 }
 
+export interface HubDatasetFiles {
+  repo: string;
+  revision: string;
+  files: Record<string, Uint8Array | string>;
+}
+
 export interface HubPublished {
   repo: string;
   url: string;
@@ -57,4 +63,5 @@ export const hubBridge = {
   signIn: async (token: string) => asAccount(await call('hub:sign-in', token)),
   publish: (payload: HubPublish) => call<HubPublished>('hub:publish', payload),
   skillFiles: (ref: HubRepoRef) => call<HubSkillFiles>('hub:skill-files', ref),
+  datasetFiles: (ref: HubRepoRef) => call<HubDatasetFiles>('hub:dataset-files', ref),
 };

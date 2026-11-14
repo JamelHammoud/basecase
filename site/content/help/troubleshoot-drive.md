@@ -1,7 +1,7 @@
 ---
 title: Robot won't drive in the simulation
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 1
@@ -31,11 +31,11 @@ covers:
   - src/voice/voiceSession.ts
 ---
 
-Use these steps if your robot shows Teach It to Move, has no Drive button, ignores the keys, the camera or your voice, or falls as soon as it moves.
+Use this page when your robot shows Teach It to Move, has no Drive button, ignores the keys, the camera or your voice, or falls as soon as it moves.
 
 ## Teach It to Move shows instead of Drive
 
-Teach It to Move takes the place of Drive when Basecase doesn't have a gait it can trust for your robot. That's the case if the robot has two legs, has wheels on legs, or fails the fall check. The fall check walks the robot for 5 seconds. To pass, the robot must move 3 cm forward without falling, tilting past 35° or dropping below 60% of its height.
+Basecase shows Teach It to Move in place of Drive when it doesn't have a gait it can trust for your robot. That happens if the robot has two legs, has wheels on legs, or fails the fall check. The fall check walks the robot for 5 seconds. To pass, the robot has to move 3 cm forward without falling, tilting past 35° or dropping below 60% of its height.
 
 1. Click **Teach It to Move**. If the robot stands on legs, this trains the Motor Kit's **Walk**. For any other robot, it asks the agent.
 2. When **Walk** under **Train** shows its Arena line, click **Drive**.
@@ -44,23 +44,23 @@ To learn how to train **Walk**, see [Train Stand and Walk with the Motor Kit](/h
 
 ## There's no Drive button
 
-**Drive** is hidden while a Case is open, because **Try It** drives instead.
+Basecase hides **Drive** while a Case is open, because **Try It** does the driving then.
 
 1. Click **Close Case** (×) next to the Case's name in the **Simulate** tab.
 2. Find **Drive** under **Control**.
 
-If your robot has no arm, wheels or legs, it has nothing to drive, and **Drive** doesn't show.
+If your robot has no arm, wheels or legs, there's nothing to drive, and **Drive** doesn't show.
 
-**Drive with Camera** is hidden too while a Case is open, but you can still find it in [[⌘K]].
+Basecase hides **Drive with Camera** while a Case is open too, but you can still find it in [[⌘K]].
 
 ## The keys do nothing
 
-The canvas reads "Click the canvas to drive." while a text field or a dialog has the keyboard.
+When a text field or a dialog has the keyboard, the canvas reads "Click the canvas to drive."
 
 1. Click the canvas.
 2. Press [[W]] again.
 
-Keys are released when the window loses focus, so switching to another app stops the robot.
+Basecase releases the keys when its window loses focus, so the robot stops when you switch to another app.
 
 ## “Couldn’t open the camera.”
 
@@ -73,11 +73,11 @@ Keys are released when the window loses focus, so switching to another app stops
 
 On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **Camera**. In the web studio, allow the camera in your browser's site settings.
 
-The same message appears when pose estimation can't start, even if the camera is allowed. The camera's tile then shows for a moment and closes. Quit and reopen Basecase, then click **Drive with Camera** again.
+You'll also see this message when pose estimation can't start, even if the camera is allowed. In that case the camera's tile shows for a moment, then closes. Quit and reopen Basecase, then click **Drive with Camera** again.
 
 ## “Couldn’t open the microphone. Allow Basecase to use it in Privacy & Security.”
 
-A Case that listens for words didn't get any sound when you clicked **Try It**. Basecase might not be allowed to use the microphone, no microphone might be connected, or the voice model might not have loaded.
+A Case that listens for words didn't get any sound when you clicked **Try It**. Basecase might not be allowed to use the microphone, there might be no microphone connected, or the voice model might not have loaded.
 
 1. On a Mac, open **System Settings** ▸ **Privacy & Security** ▸ **Microphone**.
 2. Turn on **Basecase**.
@@ -88,15 +88,15 @@ On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **
 
 ## Drive is grayed out
 
-While a robot with legs runs its 5-second fall check in the background, **Drive** reads "Checking it stays up…". Wait for the check to finish. **Drive** then starts, or **Teach It to Move** takes its place.
+A robot with legs runs a 5-second fall check in the background. While it runs, **Drive** reads "Checking it stays up…". Wait for the check to finish. Then **Drive** starts, or **Teach It to Move** takes its place.
 
 ## The robot falls over
 
-If the robot falls, the overlay reads "Fell. Press R."
+When the robot falls, the overlay reads "Fell. Press R."
 
 1. Press [[R]] to put the robot back where it started.
 2. Drive more gently. Tap the keys instead of holding them down.
-3. If it still falls, press [[Esc]] and choose **Hold pose** under **Control**.
+3. If it still falls, choose **Hold pose** under **Control**. This stops driving.
 4. Check **Peak torque** for joints at their limit.
 
 To learn how to read **Peak torque**, see [Run a simulation](/help/run-a-simulation).

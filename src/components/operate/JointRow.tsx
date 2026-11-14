@@ -4,7 +4,7 @@ import type { CalibrationHistory } from '../../reality/history';
 import { benchLogOf } from '../../reality/jointReplay';
 import type { CalibrationVerdict } from '../../reality/types';
 import type { JointRow as JointRowModel } from '../../robot/jointRows';
-import { signedDegrees } from '../../robot/robotGhost';
+import { radiansToDegrees, readingFigure, signedAngleReading } from '../../utils/angle';
 import type { JointStatus } from '../../robot/robotState';
 import { JointReplayPlot } from './JointReplayPlot';
 import { hasJointRowMenu, JointRowMenu, type ReplayChoice } from './JointRowMenu';
@@ -17,7 +17,7 @@ const REPLIES: Record<string, string> = {
   wrong_id: 'Wrong ID answered',
 };
 
-const degrees = (radians: number) => ((radians * 180) / Math.PI).toFixed(1);
+const degrees = (radians: number) => readingFigure(radiansToDegrees(radians));
 
 function versionLabel(history: CalibrationHistory, verdict: CalibrationVerdict | undefined) {
   if (history.active !== null) return `v${history.active}`;
@@ -49,7 +49,7 @@ function Reading({ reading, radians, gap, showTemp }: ReadingProps) {
         {degrees(radians)}
         <span className="text-white/50">°</span>
       </span>
-      {gap !== null && <span className="text-[#0d99ff]">{signedDegrees(gap)}</span>}
+      {gap !== null && <span className="text-[#0d99ff]">{signedAngleReading(radiansToDegrees(gap))}</span>}
       {showTemp && typeof reading.temp_c === 'number' && (
         <span className="text-white/50">
           {reading.temp_c.toFixed(0)}

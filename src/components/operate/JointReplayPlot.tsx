@@ -2,8 +2,7 @@ import React from 'react';
 import { TracePlot } from '../../design-system';
 import type { CalibrationHistory } from '../../reality/history';
 import { useJointReplay } from './useJointReplay';
-
-const degrees = (rad: number) => `${((rad * 180) / Math.PI).toFixed(2)}°`;
+import { angleFromRadians } from '../../utils/angle';
 
 interface JointReplayPlotProps {
   history: CalibrationHistory;
@@ -36,7 +35,7 @@ export const JointReplayPlot: React.FC<JointReplayPlotProps> = ({ history, versi
               data-testid="replay-error-preset"
               data-error-rad={replay.preset.medianErrorRad}
             >
-              {degrees(replay.preset.medianErrorRad)}
+              {angleFromRadians(replay.preset.medianErrorRad)}
             </span>
           )}
           {replay.calibration?.medianErrorRad != null && (
@@ -45,7 +44,7 @@ export const JointReplayPlot: React.FC<JointReplayPlotProps> = ({ history, versi
               data-testid="replay-error-calibration"
               data-error-rad={replay.calibration.medianErrorRad}
             >
-              {degrees(replay.calibration.medianErrorRad)}
+              {angleFromRadians(replay.calibration.medianErrorRad)}
             </span>
           )}
         </div>

@@ -46,7 +46,8 @@ const DETACHED: Viewport3DHandle = {
   frameAll: () => {},
   animateSpawn: () => {},
   setPose: () => {},
-  setScan: () => {},
+  setDataLayers: () => [],
+  dataLayerState: () => [],
   scanPointCount: () => 0,
   setMatTrack: () => {},
   setGhost: () => {},
@@ -94,6 +95,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
   const markFieldRef = useRef<HTMLDivElement | null>(null);
   const buildLabelsRef = useRef<HTMLDivElement | null>(null);
   const ghostLabelRef = useRef<HTMLDivElement | null>(null);
+  const frameLabelRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<ViewportEngine | null>(null);
   const [spacePressed, setSpacePressed] = useState(false);
   const [snapBypassed, setSnapBypassed] = useState(false);
@@ -113,6 +115,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
       markField: () => markFieldRef.current,
       buildLabels: () => buildLabelsRef.current,
       ghostLabel: () => ghostLabelRef.current,
+      frameLabel: () => frameLabelRef.current,
       ui: { setSnapBypassed, setSpacePressed },
       ...currentInput(),
     });
@@ -161,6 +164,12 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
         ref={ghostLabelRef}
         data-testid="ghost-gap"
         className="absolute left-0 top-0 glass rounded-full h-[28px] px-3.5 items-center text-[13px] tabular-nums text-[#0d99ff] pointer-events-none"
+        style={{ display: 'none' }}
+      />
+      <div
+        ref={frameLabelRef}
+        data-testid="frame-label"
+        className="absolute left-0 top-0 glass rounded-full h-[28px] px-3.5 items-center text-[13px] text-white/85 pointer-events-none"
         style={{ display: 'none' }}
       />
       <div ref={markFieldRef} className="absolute left-0 top-0">

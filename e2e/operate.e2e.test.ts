@@ -172,6 +172,7 @@ describe('Operate calibration', () => {
     await expect
       .poll(() => page.locator(visible('[data-testid="robot-calibration"]')).first().getAttribute('data-calibrating'))
       .not.toBe('idle');
+    expect(await button('Calibrating…').isDisabled()).toBe(true);
 
     for (const id of ['shoulder', 'elbow'])
       await expect

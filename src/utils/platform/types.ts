@@ -247,6 +247,7 @@ declare global {
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       hubCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       onshapeCall?: (channel: string, payload?: unknown) => Promise<unknown>;
+      earthCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       robotConnect?: (spec: ConnectSpec) => Promise<ConnectReply>;
       robotCommand?: (command: Record<string, unknown>) => Promise<ConnectReply>;
       robotDisconnect?: () => Promise<ConnectReply>;

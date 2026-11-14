@@ -2,6 +2,13 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
 export type SettingsPane = 'canvas' | 'agent' | 'build' | 'printers' | 'accounts' | 'shortcuts';
 
+export type SettingsField = 'map-tiles';
+
+export interface SettingsFocus {
+  field: SettingsField;
+  ask: number;
+}
+
 const PANES: Array<{ id: SettingsPane; label: string; keywords: string }> = [
   { id: 'canvas', label: 'Canvas', keywords: 'grid snap trackpad scroll measure units imperial sculpt' },
   { id: 'agent', label: 'Agent', keywords: 'claude codex gemini offline command' },
@@ -11,7 +18,11 @@ const PANES: Array<{ id: SettingsPane; label: string; keywords: string }> = [
     keywords: 'currency money price budget euro pound yen dollar region checks blockers guide',
   },
   { id: 'printers', label: 'Printers', keywords: 'printer bambu prusa slicer orcaslicer network' },
-  { id: 'accounts', label: 'Accounts', keywords: 'hugging face onshape slant 3d print service token key login' },
+  {
+    id: 'accounts',
+    label: 'Accounts',
+    keywords: 'hugging face onshape google maps tiles slant 3d print service token key login',
+  },
   { id: 'shortcuts', label: 'Shortcuts', keywords: 'keys keyboard hotkeys' },
 ];
 

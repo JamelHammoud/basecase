@@ -3,7 +3,7 @@ import type { CompareRobot } from '../cases/caseCompare';
 import type { CaseConsole } from '../cases/console/format';
 import type { Case } from '../cases/schema';
 import type { PrintersState } from '../app/usePrinters';
-import type { SettingsPane } from '../app/settingsPanes';
+import type { SettingsField, SettingsPane } from '../app/settingsPanes';
 import type { ToastData } from '../design-system';
 import type { RobotSkeleton } from '../types/skeleton';
 import type { LaneChat } from './agentLanes';
@@ -118,7 +118,7 @@ export interface StudioShared {
   agentChoice: AgentChoice;
   setAgentChoice: (choice: AgentChoice) => void;
   settingsOpen: boolean;
-  openSettings: (pane?: SettingsPane) => void;
+  openSettings: (pane?: SettingsPane, field?: SettingsField) => void;
   printers: PrintersState;
   tabs: Array<{ id: string; name: string; sceneId: string }>;
   robotsBeside: (except: string) => SceneRobot[];

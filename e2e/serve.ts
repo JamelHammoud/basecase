@@ -11,6 +11,7 @@ declare module 'vitest' {
     served: 'bundle' | 'dev';
     hubPort: number;
     servicePort: number;
+    tilesPort: number;
   }
 }
 
@@ -127,6 +128,11 @@ export default async function setup(project: TestProject) {
 
   process.env.BASECASE_PRINT_SERVICE_URL = `http://127.0.0.1:${servicePort}`;
   project.provide('servicePort', servicePort);
+
+  const tilesPort = await freePort();
+
+  process.env.BASECASE_EARTH_TILES_URL = `http://127.0.0.1:${tilesPort}`;
+  project.provide('tilesPort', tilesPort);
 
   const bundled = TARGETS.map(servesBundle);
   const running = await Promise.all(TARGETS.map((t, i) => (bundled[i] ? serveBundle(t) : serveDev(t))));

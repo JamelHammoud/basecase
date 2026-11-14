@@ -54,6 +54,7 @@ const DETACHED: Viewport3DHandle = {
   setMatTrack: () => {},
   setGhost: () => {},
   ghostState: () => null,
+  earthState: () => null,
   followPart: () => {},
   restBounds: () => null,
   restShapes: () => ({ instances: [], shapes: new Map(), geometries: new Map() }),
@@ -98,6 +99,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
   const buildLabelsRef = useRef<HTMLDivElement | null>(null);
   const ghostLabelRef = useRef<HTMLDivElement | null>(null);
   const frameLabelRef = useRef<HTMLDivElement | null>(null);
+  const attributionRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<ViewportEngine | null>(null);
   const [spacePressed, setSpacePressed] = useState(false);
   const [snapBypassed, setSnapBypassed] = useState(false);
@@ -118,6 +120,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
       buildLabels: () => buildLabelsRef.current,
       ghostLabel: () => ghostLabelRef.current,
       frameLabel: () => frameLabelRef.current,
+      attribution: () => attributionRef.current,
       ui: { setSnapBypassed, setSpacePressed },
       ...currentInput(),
     });
@@ -172,6 +175,12 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
         ref={frameLabelRef}
         data-testid="frame-label"
         className="absolute left-0 top-0 glass rounded-full h-[28px] px-3.5 items-center text-[13px] text-white/85 pointer-events-none"
+        style={{ display: 'none' }}
+      />
+      <div
+        ref={attributionRef}
+        data-testid="map-attribution"
+        className="absolute left-3 bottom-3 max-w-[50%] truncate glass rounded-full px-2.5 py-1 text-[12px] text-white/80 pointer-events-none"
         style={{ display: 'none' }}
       />
       <div ref={markFieldRef} className="absolute left-0 top-0">

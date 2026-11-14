@@ -60,3 +60,5 @@ This is a note, so it never blocks Ready to build. The listed parts have no list
 
 1. Click **Add Price** on the part's line in **Bill of materials**.
 2. Type the price and click **Save**.
+
+A line under **Printed parts** has no **Add Price**. Its price comes from the [print service's quote](/help/price-printed-parts-from-a-print-service), and a part the service can't print says why in amber.

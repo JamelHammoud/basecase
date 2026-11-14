@@ -45,7 +45,7 @@ Data from a running robot loops back the other way. Calibrating a robot finds ea
 
 ## What works today
 
-Design and Engineer are complete. Simulate and Train are in active development. Build covers the Checks, the bill of materials, the build guide and slicing.
+Design and Engineer are complete. Simulate and Train are in active development. Build covers the Checks, the bill of materials, the build guide, slicing and print service quotes.
 
 Operate works against the simulation and an emulated robot. Basecase doesn't drive real motors, but it can watch a real robot through a camera.
 

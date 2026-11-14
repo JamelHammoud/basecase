@@ -45,7 +45,7 @@ Lay the printed parts out on your printer's plates, slice them with Bambu Studio
 
 ![Print mode with the printer settings, Plate 1 with Add Printer, and Parts](/help/get-a-robot-ready-to-build/print-mode.png)
 
-If you haven't saved a printer, the plate's button reads **Add Printer** and opens **Settings** ▸ **Printers**. [Add a printer](/help/add-a-printer) covers the rest.
+If you haven't saved a printer, the plate's button reads **Add Printer** and opens **Settings** ▸ **Printers**. [Add a printer](/help/add-a-printer) covers the rest. With no printer at all, choose **Made by a Service** in **Printer** to [price printed parts from a print service](/help/price-printed-parts-from-a-print-service).
 
 ![Settings open at Printers after clicking Add Printer](/help/get-a-robot-ready-to-build/add-printer.png)
 

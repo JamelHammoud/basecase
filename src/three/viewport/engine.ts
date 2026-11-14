@@ -13,10 +13,11 @@ import {
   visibilityIn,
   printMeshesIn,
   printReportsIn,
-  stlIn,
+  partStlsIn,
   strengthIn,
   sweepsIn,
   threeMfIn,
+  stlIn,
 } from '../analysis/analysisPool';
 import { snapshotShapes } from '../analysis/sceneShapes';
 import { componentMeshesReady } from '../componentMeshes';
@@ -47,7 +48,7 @@ import { samePose } from './samePose';
 import { SelectionOutline } from './selectionOutline';
 import { StressOverlay } from './stressOverlay';
 import { warmShaders } from './shaderWarmup';
-import { changed, FIGURE_KEYS, GIZMO_KEYS, NEEDS_WHOLE_SCENE, shownPropsChanged, steadyProps } from './engineKeys';
+import { changed, completing, FIGURE_KEYS, GIZMO_KEYS, shownPropsChanged, steadyProps } from './engineKeys';
 import { createStage, disposeStage } from './stage';
 import type { Viewport3DHandle, ViewportProps } from './types';
 import type { ViewportContext, ViewportUi } from './viewportContext';
@@ -184,7 +185,7 @@ export class ViewportEngine {
       () => outline.dispose(),
     ];
     this.cleanups.push(this.skeleton.install());
-    this.api = this.completing(this.handle());
+    this.api = completing(this.handle(), () => this.complete());
     this.syncWorld();
     this.syncScene();
     frameScene(stage, options.props.parts);
@@ -348,6 +349,11 @@ export class ViewportEngine {
       visibleShares: () => visibilityIn(restSolids(true)),
       printShapes: (ids, faces) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids)), faces),
       printMeshes: (ids) => printMeshesIn(snapshotShapes(measure.partObjects(ctx, ids))),
+      printStl: (items) => {
+        const ids = items.map((i) => i.id);
+
+        return partStlsIn(snapshotShapes(measure.partObjects(ctx, ids)), items);
+      },
       printThreeMf: (plates) => {
         const ids = [...new Set(plates.files.flatMap((f) => f.items.map((i) => i.id)))];
 
@@ -441,22 +447,6 @@ export class ViewportEngine {
 
       this.scheduleBuilds();
     });
-  }
-
-  private completing(api: Viewport3DHandle): Viewport3DHandle {
-    const wrapped = { ...api } as Record<string, (...args: never[]) => unknown>;
-
-    for (const key of NEEDS_WHOLE_SCENE) {
-      const run = api[key] as (...args: never[]) => unknown;
-
-      wrapped[key] = (...args) => {
-        this.complete();
-
-        return run(...args);
-      };
-    }
-
-    return wrapped as unknown as Viewport3DHandle;
   }
 
   private complete(): void {

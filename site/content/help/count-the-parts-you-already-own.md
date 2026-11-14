@@ -48,6 +48,7 @@ Click **Undo** in the toast to put the old count back. Type 0 to clear it.
 
 - Counts are in pieces, not packs. With 100 M3 screws on hand, a robot that uses 13 lists none to buy.
 - Filament counts in grams.
+- Printed parts from a print service have no **On hand**. Their quoted price covers every copy.
 - A count belongs to the part, not the scene. Every scene that uses the part takes it off.
 - Basecase doesn't take parts off the count when you build a robot. Change the count yourself after a build.
 - The Budget check and **Buy All** leave out the parts you own.

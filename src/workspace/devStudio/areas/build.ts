@@ -13,7 +13,7 @@ export default function buildStudio(studio: Studio) {
       const { partsRef, projectRef } = studio().core.docs;
 
       return buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
-        ({ key, qty }) => ({ key, qty }),
+        ({ key, qty, category, lineUsd }) => ({ key, qty, category, lineUsd }),
       );
     },
   };

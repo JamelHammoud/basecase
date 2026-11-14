@@ -30,6 +30,8 @@ covers:
 
 The Printing check flags parts your printer can't make as drawn, measured against the printer chosen in Print mode.
 
+With **Made by a Service** chosen, parts are still measured against the printer you chose before it.
+
 ## “This part is too big for your printer’s plate.”
 
 The part is larger than your printer's bed in every way it could lie, the diagonal included.

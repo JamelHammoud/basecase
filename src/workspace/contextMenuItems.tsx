@@ -69,6 +69,7 @@ function sharedEntries(inputs: ContextInputs) {
       ),
     } satisfies ContextMenuEntry,
     drop: menuEntry(act.floor),
+    center: menuEntry(act.center),
     duplicate: menuEntry(act.duplicate),
     mirror: mirrorMenuEntry(actions.mirror),
     selectAll: menuEntry(act.selectAll, { disabled: core.parts.length === 0 }),
@@ -117,6 +118,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     ...handJointMenuItems(actions.joints),
     shared.align,
     shared.drop,
+    shared.center,
     { divider: true },
     ...ROLE_ENTRIES.map(({ label, role }) => ({
       label,
@@ -175,6 +177,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.align,
     shared.drop,
     menuEntry(act.stack),
+    shared.center,
     menuEntry(one.resetRotation, { disabled: !isRotated(part) }),
     menuEntry(act.zoom),
     { divider: true },

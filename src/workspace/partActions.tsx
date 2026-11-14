@@ -6,6 +6,7 @@ import {
   CrosshairIcon,
   DeleteIcon,
   DuplicateIcon,
+  FitIcon,
   FloorIcon,
   GroupIcon,
   HiddenIcon,
@@ -115,11 +116,18 @@ export function selectionActions({ core, actions, ui }: PartActionInputs) {
       icon: LayersIcon,
       run: edits.stackOnBelow,
     },
+    center: {
+      id: 'center-on-origin',
+      label: 'Center on Origin',
+      icon: CrosshairIcon,
+      keywords: 'origin zero middle position',
+      run: edits.centerOnOrigin,
+    },
     zoom: {
       id: 'zoom-selection',
       label: 'Zoom to Selection',
       shortcut: keyFor('zoom-selection'),
-      icon: CrosshairIcon,
+      icon: FitIcon,
       run: ui.focusSelected,
     },
     group: { id: 'group', label: 'Group', shortcut: keyFor('group'), icon: GroupIcon, run: edits.group },
@@ -152,7 +160,7 @@ export function selectionActions({ core, actions, ui }: PartActionInputs) {
       keywords: 'shell skin character mesh cover body printable',
       run: actions.wrap.wrapSelected,
     },
-    resetView: { id: 'reset-view', label: 'Reset View', icon: CrosshairIcon, run: ui.resetView },
+    resetView: { id: 'reset-view', label: 'Reset View', icon: RotateLeftIcon, run: ui.resetView },
   } satisfies Record<string, PartAction>;
 }
 

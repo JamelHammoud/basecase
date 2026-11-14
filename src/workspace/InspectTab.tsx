@@ -81,6 +81,7 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       onDelete={ops.deleteSelected}
       onDropToFloor={edits.dropToGround}
       onStack={edits.stackOnBelow}
+      onCenter={edits.centerOnOrigin}
       annotations={annotations.annotations}
       activeAnnotationId={annotations.activeId}
       onOpenAnnotation={annotations.setActiveId}

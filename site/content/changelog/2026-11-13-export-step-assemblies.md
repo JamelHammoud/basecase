@@ -4,26 +4,36 @@ date: 2026-11-13
 image: /changelog/export-step-assemblies/cover.png
 ---
 
-STEP saves the whole design as one file that Fusion, Onshape and SolidWorks open, with each part a named, colored body. Agent-modeled parts and basic shapes arrive as exact solids; catalog parts and meshes arrive faceted.
+You can now export your whole design as one STEP file. Fusion, Onshape and SolidWorks open it with each part as a named, colored body.
 
 ## Where it is
 
-Click Export at the top right and choose STEP, between 3MF Plates and Scene. It's also Export STEP in ⌘K. It runs in the desktop app, not the web demo, and asks where to save the file. Steps are in [Export a STEP file](/help/export-a-step-file).
+Click Export at the top right and choose STEP, between 3MF Plates and Scene. In ⌘K, it's Export STEP.
+
+Export runs in the desktop app and asks where to save the file. The web demo can't export STEP.
 
 ![The Export menu open over a base plate with a Feetech STS3215 on it, STEP fourth in the list](/changelog/export-step-assemblies/cover.png)
 
 ![⌘K with Export STEP typed and the command highlighted](/changelog/export-step-assemblies/command.png)
 
-While the file is built, Exporting STEP… shows in a toast. A three-part scene takes about 3 seconds. The CAD kernel builds it in its sandbox, off the main thread.
+The CAD kernel builds the file in its sandbox, off the main thread. While it works, a toast shows Exporting STEP… above the toolbar. A three-part scene takes about 3 seconds.
 
 ![The Exporting STEP… toast above the toolbar](/changelog/export-step-assemblies/exporting.png)
 
 ## What's in the file
 
-One assembly in millimeters, Z up. Each visible part is its own named, colored body, placed where it sits in the scene. Each group becomes a sub-assembly.
+You get one assembly, in millimeters, with Z up. Each visible part is its own named, colored body at its place in the scene, and each group becomes a sub-assembly.
 
-Parts the agent wrote in replicad come out as exact solids, and so do most basic shapes and booleans made from them. Their curves and faces stay true, so you can pick and dimension them. Catalog parts, imported meshes and everything else come out as faceted solids built from their triangles, simplified to about 6,000 triangles each. A faceted Feetech STS3215 adds about 5 MB.
+Parts the agent wrote in replicad export as exact solids, and so do most basic shapes and booleans of them. You can pick their true curves and faces and dimension them.
+
+Everything else, including catalog parts and imported meshes, exports as faceted solids. Basecase builds each one from its triangles and simplifies it to about 6,000 triangles. A faceted Feetech STS3215 adds about 5 MB.
 
 ## What's left out
 
-Cutouts, hidden parts and reference images aren't exported, and parts are exported as modeled, not as posed. If a part can't be built, the rest still export and a toast says Exported STEP without 1 part, so nothing goes missing silently. An export that runs past 5 minutes stops; hiding the largest parts gets it under.
+Cutouts, hidden parts and reference images stay out of the file. Each part exports in its modeled state, whatever pose it's in.
+
+If the kernel can't build a part, it exports the rest, and a toast says Exported STEP without 1 part.
+
+An export stops after 5 minutes. To finish under that, hide the largest parts.
+
+Read [Export a STEP file](/help/export-a-step-file) in the help center for the steps.

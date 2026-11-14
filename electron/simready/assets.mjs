@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { serviceRefusal } from '../refusal.mjs';
+import { fileSize, MB } from '../fileSize.mjs';
 import { percent } from '../percent.mjs';
 
 const HF = 'https://huggingface.co';
@@ -10,8 +11,8 @@ const SKIP_DIRS = ['/source_assets/', '/.thumbs/', '/.metadata/'];
 const IMAGE = /\.(png|jpe?g|exr|hdr|tga|tiff?|bmp|dds|ktx2?)$/i;
 const NOT_ALBEDO =
   /(^|[_.-])(normal|nrm|n|orm|rough(ness)?|metal(lic|ness)?|ao|occlusion|height|disp(lacement)?|bump|mask|opacity|emissive|spec(ular)?|gloss)([_.-]|$)/i;
-const MAX_FILE = 200 * 1024 * 1024;
-const MAX_TOTAL = 600 * 1024 * 1024;
+const MAX_FILE = 200 * MB;
+const MAX_TOTAL = 600 * MB;
 
 const refused = (res) =>
   new Error(serviceRefusal('SimReady Central', { status: res.status, again: 'Insert it again' }));
@@ -94,7 +95,7 @@ export async function downloadAsset(a, dir, say) {
   const files = neededFiles(await listTree(a));
   const total = files.reduce((s, f) => s + (f.size ?? 0), 0);
 
-  if (total > MAX_TOTAL) throw new Error('The asset is larger than 600 MB. Choose a smaller one.');
+  if (total > MAX_TOTAL) throw new Error(`The asset is larger than ${fileSize(MAX_TOTAL)}. Choose a smaller one.`);
 
   if (!files.some((f) => f.path === a.rootPath)) throw new Error('The asset’s main file is missing.');
 

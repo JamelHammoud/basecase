@@ -2,6 +2,7 @@ import { cached } from './cache.mjs';
 import { LOOP_MARK, withMark } from './mark.mjs';
 import { json, run } from './sh.mjs';
 import { openMatch } from './titles.mjs';
+import { voiced } from './voiceHook.mjs';
 
 const REVIEW_CONTEXT = 'agent-review';
 let slug;
@@ -256,7 +257,7 @@ export const createIssue = ({ title, body, labels, similarAmong }) => {
   return ghCreating(
     ['issue', 'create', '--title', title, '--body-file', '-', ...labels.flatMap((l) => ['--label', l])],
     {
-      input: body,
+      input: voiced(body, 'issue'),
     },
   );
 };

@@ -3,6 +3,7 @@ import { photoMasks } from './photoMask.mjs';
 import { loadReference } from './references.mjs';
 import { bridge, fail } from './shared.mjs';
 import { maskSource, smallReference } from './silhouetteMeasure.mjs';
+import { signed } from '../minus.mjs';
 import { plural } from '../plural.mjs';
 
 const AXES = { front: '[x, z]', side: '[y, z] (front = −y)', top: '[x, y]' };
@@ -23,7 +24,7 @@ function bandRows(traced, model) {
 
     const diff = m - mm;
 
-    return `${range}: ${Math.round(mm)} → ${Math.round(m)} mm (${diff >= 0 ? '+' : '−'}${Math.round(Math.abs(diff))})${widthFlag(diff, mm)}`;
+    return `${range}: ${Math.round(mm)} → ${Math.round(m)} mm (${signed(diff, (v) => String(Math.round(v)))})${widthFlag(diff, mm)}`;
   });
 }
 

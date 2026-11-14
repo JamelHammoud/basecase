@@ -29,49 +29,49 @@ covers:
   - src/components/print/PrinterLive.tsx
 ---
 
-Each message below is what Basecase shows when it can't reach a printer or send it a plate, under **Test Connection** or in Print mode.
+If Basecase can't reach a printer or send it a plate, it shows a message under **Test Connection** or in Print mode. Find your message below and follow its steps.
 
 ## “Couldn’t reach the printer at …”
 
-The printer is off, asleep or on another network, or its address changed.
+The printer is off, asleep or on a different network, or its address has changed.
 
-1. Check the printer is on and on the same network as your computer.
-2. Read the printer's address on its screen and compare it with **Address** in **Settings** ▸ **Printers**.
+1. Make sure the printer is on and on the same network as your computer.
+2. Find the printer's address on its screen, and compare it with **Address** in **Settings** ▸ **Printers**.
 3. Click **Test Connection**.
 
-It worked when the row reads “Connected to” and the printer's name. A printer that drops off later shows “Can’t reach the printer” in Print mode.
+When the connection works, the row reads “Connected to” and the printer's name. If the printer drops off later, Print mode shows “Can’t reach the printer”.
 
 ## “The printer refused the connection. Turn on LAN Only and Developer Mode on the printer.”
 
-Bambu LAN needs both modes on, from the printer's own screen. Bambu doesn't support Developer Mode.
+Bambu LAN needs both of these modes on, and you can only turn them on from the printer's own screen. Bambu doesn't support Developer Mode.
 
 1. On the printer, turn on LAN Only and Developer Mode.
 2. Click **Test Connection** again.
 
-To keep both off, change **Send prints with** to **Bambu Studio** instead.
+If you'd rather keep both modes off, change **Send prints with** to **Bambu Studio**.
 
 ## “Check the access code on the printer: Settings → LAN Only.”
 
-The access code is wrong.
+The access code you entered is wrong.
 
-1. On the printer, open **Settings** ▸ **LAN Only** and read the code.
+1. On the printer, open **Settings** ▸ **LAN Only** and find the code.
 2. Type it in **Access code** and press [[↩]].
 3. Click **Test Connection**.
 
 ## “The printer didn’t answer as …”
 
-The serial number doesn't match the printer at that address.
+The serial number you entered doesn't match the printer at that address.
 
-1. On the printer, open **Settings** ▸ **Device** and read the serial number.
+1. On the printer, open **Settings** ▸ **Device** and find the serial number.
 2. Type it in **Serial number**, then click **Test Connection**.
 
 ## “The printer couldn’t save the file. Check its SD card is in and has space.”
 
-Bambu printers store each print on their card. Put a card in, or delete old files from it, then send the plate again.
+Bambu printers store each print on their card. Put a card in the printer, or delete old files from it to make room. Then send the plate again.
 
 ## The API key is wrong
 
-The message says where to make a key, and differs by connection:
+If your API key is wrong, the message tells you where to make a new one. Where that is depends on how you connect:
 
 | Connection | Where to find the key |
 |---|---|
@@ -79,20 +79,20 @@ The message says where to make a key, and differs by connection:
 | PrusaLink | The printer, under **Settings** ▸ **Network** ▸ **PrusaLink** |
 | OctoPrint | OctoPrint, under **Settings** ▸ **Application Keys** |
 
-Paste the new key in **API key**, press [[↩]], then click **Test Connection**.
+Paste the new key in **API key** and press [[↩]], then click **Test Connection**.
 
 ## The printer is busy, or out of storage
 
-“The printer is busy. Wait for it to finish.” means a print is running. “The printer is out of storage. Delete some files on it.” means its storage is full. With Klipper, “Moonraker answered, but Klipper isn’t ready.” means the printer itself needs attention.
+“The printer is busy. Wait for it to finish.” means the printer is running a print. “The printer is out of storage. Delete some files on it.” means its storage is full. On Klipper, “Moonraker answered, but Klipper isn’t ready.” means the printer itself needs attention.
 
-## “Add the printer in Settings ▸ Printers.”
+## “Add the printer in **Settings** ▸ **Printers**.”
 
-The printer picked under **Printer** in Print mode is no longer saved. It was removed in Settings while Print mode was open.
+The printer you chose under **Printer** in Print mode is no longer in Settings. This happens if you remove the printer in Settings while Print mode is open.
 
 1. Click **Open** in the message to go to **Settings** ▸ **Printers**.
-2. Add the printer again, as in [Add a printer](/help/add-a-printer).
-3. Back in Print mode, pick it under **Printer** and send the plate again.
+2. Add the printer again, as described in [Add a printer](/help/add-a-printer).
+3. Back in Print mode, choose it under **Printer** and send the plate again.
 
 ## “Install Bambu Studio to send prints” or “Install Bambu Connect from bambulab.com.”
 
-The app the connection hands plates to isn't installed. Install it, or pick another option in **Send prints with**.
+With this option, Basecase hands plates to another app, and that app isn't installed. Install it, or choose another option in **Send prints with**.

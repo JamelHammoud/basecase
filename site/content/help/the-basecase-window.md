@@ -30,7 +30,7 @@ covers:
   - src/app/WindowBoundary.tsx
 ---
 
-Find your way around the studio: views on the left, the canvas in the middle, and the panel for what you've selected on the right.
+The Basecase window has views on the left, the canvas in the middle, and a panel on the right for whatever you've selected.
 
 ![The Basecase window: the view rail with Parts, Play, Layers and Library, Parts open beside it, the canvas in the middle and the right panel](/help/the-basecase-window/window.png)
 
@@ -39,17 +39,17 @@ Find your way around the studio: views on the left, the canvas in the middle, an
 From left to right, the title bar holds:
 
 - The sidebar button, which shows or hides the left panel ([[⌘B]]).
-- The **Scenes** menu, a list of every scene you've saved ([[⌘O]]).
-- A tab for each open scene, and **+** for a new one ([[⌘T]]).
+- The **Scenes** menu, which lists every scene you've saved ([[⌘O]]).
+- A tab for each open scene. Click **+** to start a new one ([[⌘T]]).
 - **Undo** and **Redo** ([[⌘Z]] and [[⇧⌘Z]]).
 - **Export**, for STL, 3MF, scene files and robot packages.
 - The inspector button, which shows or hides the right panel ([[⌘I]]).
 
-On Windows, a **Menu** button at the far left opens the File, Edit, View, Window and Help menus. On a Mac they're in the menu bar.
+On Windows, click the **Menu** button at the far left to open the File, Edit, View, Window and Help menus. On a Mac, these menus are in the menu bar.
 
 ## The view rail and the sidebar
 
-The column of icons on the left is the view rail. Each icon opens a view in the sidebar beside it, and clicking the open view again hides the sidebar.
+The column of icons on the left is the view rail. Click an icon to open its view in the sidebar beside it. To hide the sidebar, click the open view again.
 
 | View | What it holds |
 |---|---|
@@ -58,25 +58,25 @@ The column of icons on the left is the view rail. Each icon opens a view in the 
 | **Layers** | Every part in the scene, as a tree |
 | **Library** | Models you've saved to use in any scene |
 
-The gear at the bottom opens Settings ([[⌘,]]). When an update has downloaded, a blue arrow appears above it.
+To open Settings, click the gear at the bottom ([[⌘,]]). When an update has downloaded, a blue arrow appears above the gear.
 
 ## The canvas and the toolbar
 
-The canvas shows the scene in 3D. Right-click a part or an empty spot for the commands that apply there.
+The canvas shows your scene in 3D. To see the commands that apply to a part or an empty spot, right-click it.
 
-The toolbar at the bottom holds **Move** (V), **Rotate** (E), **Scale** (R) and **Comment** (M). **Shapes** (A) opens basic shapes, **Sketch**, **Measure**, **Annotate** and **Import SVG**.
+The toolbar at the bottom holds **Move** (V), **Rotate** (E), **Scale** (R) and **Comment** (M). Click **Shapes** (A) to open basic shapes, **Sketch**, **Measure**, **Annotate** and **Import SVG**.
 
 ## The right panel
 
 The right panel has a tab for each job:
 
 - **Inspect** edits the selected part's size, position, rotation and look.
-- **Pose** moves a robot's joints. It shows while a robot is selected.
-- **Simulate** runs the scene under physics. It shows once the scene has movable joints.
-- **Build** holds the Checks, bill of materials, build guide and printing. A red dot on it means something is left to fix. Its tooltip says how many.
+- **Pose** moves a robot's joints. It appears while a robot is selected.
+- **Simulate** runs the scene under physics. It appears once the scene has movable joints.
+- **Build** holds the Checks, the bill of materials, the build guide and printing. A red dot on the tab means something is left to fix, and the tab's tooltip tells you how many.
 - **Agent** is where you talk to the agent. While a Case runs, it's the only tab.
 
-Drag the edge of the sidebar or the right panel to resize it. Double-click the edge to put it back to its default width.
+To resize the sidebar or the right panel, drag its edge. To put it back to its default width, double-click the edge.
 
 ## When part of the window fails
 
@@ -84,4 +84,4 @@ A view, panel or sheet that fails shows its name and “stopped working”, such
 
 ## The command menu
 
-Press [[⌘K]] to search every command, part and saved model by name. Steps are in [Run any command from the keyboard](/help/run-a-command).
+Press [[⌘K]] to search every command, part and saved model by name. For steps, see [Run any command from the keyboard](/help/run-a-command).

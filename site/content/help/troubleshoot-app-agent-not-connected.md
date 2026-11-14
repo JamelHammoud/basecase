@@ -29,74 +29,78 @@ covers:
   - src/workspace/useAgentChat.ts
 ---
 
-The banner at the top of the Agent tab says why the agent can't answer, and its button is usually the fix.
+If the agent can't answer, the banner at the top of the Agent tab tells you why. In most cases, clicking the button in the banner fixes the problem.
 
 ## “Downloading Claude Code…” stays on screen
 
-Basecase downloads the agent the first time you use it. Claude Code is about 263 MB, Codex 340 MB and Gemini CLI 95 MB. The banner shows the percent.
+Basecase downloads the agent the first time you use it. Claude Code is about 263 MB, Codex is 340 MB, and Gemini CLI is 95 MB. The banner shows the download's progress as a percentage.
 
 1. Keep Basecase open until the bar fills.
-2. Send your message once the banner is gone.
+2. Once the banner is gone, send your message.
 
-It only downloads again when the app updates to a newer agent.
+After that, the agent downloads again only when Basecase updates to a newer version of it.
 
 ## “Couldn’t download Claude Code. Check your connection, then reconnect.”
 
-The download failed. It comes from the npm registry, registry.npmjs.org, which a firewall or proxy may block.
+The download failed. Basecase gets the agent from the npm registry (registry.npmjs.org), and a firewall or proxy may be blocking it.
 
-1. Check you're online, and that registry.npmjs.org isn't blocked.
+1. Make sure you're online and that registry.npmjs.org isn't blocked.
 2. Click **Reconnect** in the banner.
 
-A message that the agent “didn’t match its checksum” means the download arrived damaged. Click **Reconnect** to fetch it again.
+If the message says the agent “didn’t match its checksum,” the download arrived damaged. Click **Reconnect** to download it again.
 
 ## “Agent isn’t connected.”
 
-The agent stopped or never started. The text after it, when there is any, says why.
+The agent stopped, or it never started. If more text follows the message, it explains why.
 
 1. Click **Reconnect** in the banner.
 2. If it still fails, press [[⌘,]] and choose **Agent**.
-3. Under **Run with**, click the agent you want. That puts back its usual **Command** and reconnects.
+3. Under **Run with**, click the agent you want. This restores its usual **Command** and reconnects.
 
-“Couldn't start the agent:” means the **Command** in Settings is wrong, often after you edited it. Step 3 fixes it. A message that the agent “isn’t available for this computer” means there's no download for your system; pick another agent in **Run with**.
+If the message starts with “Couldn't start the agent:”, the **Command** in Settings is wrong, often because it was edited. Step 3 fixes it.
 
-It worked when the line under **Command** reads “Connected to” and the agent's name.
+If the message says the agent “isn’t available for this computer,” there's no download for your system. Pick another agent in **Run with**.
+
+When the agent connects, the line under **Command** reads “Connected to” followed by the agent's name.
 
 ## “Sign in to use Claude Code”
 
-The agent runs with your own account, and it isn't signed in on this computer.
+The agent runs with your own account, and that account isn't signed in on this computer.
 
 1. In the **Agent** tab, click the sign-in button in the banner.
-2. Finish signing in in the browser window that opens.
+2. Complete the sign-in in the browser window that opens.
 
-For Gemini with a personal Google account, click **Add API Key** and paste a Gemini API key instead. On a Mac, if you deny Basecase access to its keychain item, a saved key reads as missing and the banner asks again.
+If you use Gemini with a personal Google account, click **Add API Key** and paste a Gemini API key instead.
+
+On a Mac, if you deny Basecase access to its keychain item, Basecase treats your saved key as missing and the banner asks for it again.
 
 ## A reply ends with “Couldn’t finish.”
 
-The agent stopped with an error of its own, such as a usage limit on your account. A toast starting “The agent couldn’t finish.” shows the same reason.
+The agent ran into an error, such as a usage limit on your account, and stopped. A toast starting with “The agent couldn’t finish.” shows the same reason.
 
 1. Read the reason after the message.
-2. Click **Retry** under the reply once the cause is gone.
+2. Once you've dealt with the cause, click **Retry** under the reply.
 
 “Stopped on an error” with no reason means the agent itself failed. If **Retry** fails again, choose another agent under **Run with** in **Settings** ▸ **Agent**.
 
 ## “Up to 4 chats run at once. Stop one to start another.”
 
-Four chats are already working. Stop one, or wait for it to finish, then send again.
+Four chats are already working. Stop one or wait for one to finish, then send your message again.
 
-Which agent to use, and how to switch, is in [Choose the agent](/help/choose-the-agent).
+To learn which agent to use and how to switch, see [Choose the agent](/help/choose-the-agent).
 
 ## Gemini won't sign in with a Google account
 
-Google no longer signs personal accounts in to Gemini CLI.
+Gemini CLI no longer accepts sign-in from personal Google accounts. Use an API key instead.
 
-1. Make a Gemini API key with your Google account.
+1. Create a Gemini API key with your Google account.
 2. In the banner, click **Add API Key**.
 3. Paste the key and press [[↩]].
 
 ## “isn’t available for this computer”
 
-That agent has no build for your computer. Pick another agent under **Run with** in **Settings** ▸ **Agent**.
+That agent has no build for your computer. Go to **Settings** ▸ **Agent** and pick another agent under **Run with**.
 
 ## The Agent tab offers a download instead
 
-You're in the web studio, which has no agent. [Install Basecase](/help/install-basecase) to use it.
+You're using the web studio, which doesn't include the agent. To use the agent, see [Install Basecase](/help/install-basecase).

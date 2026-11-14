@@ -6,10 +6,12 @@ version: 0.1.1
 
 You can now bring an STL, 3MF, OBJ, PLY, FBX, GLB, glTF or DAE file into a scene as a printable part.
 
-A bracket downloaded from Printables, or a shell drawn in another CAD app, no longer needs redrawing before it can sit on your robot.
+If you downloaded a bracket from Printables or drew a shell in another CAD app, you don't have to redraw it before it goes on your robot.
 
-Right-click the canvas and choose Import Mesh, or drop the files on it. Each file becomes one part named after the file, placed where you clicked. Several files land 40 mm apart.
+Right-click the canvas and choose Import Mesh, or drop the files on the canvas. Each file becomes one part, named after the file and placed where you clicked. Bring in several files and they land 40 mm apart.
 
-STL, 3MF, PLY and OBJ are read in millimeters, GLB, glTF and DAE in meters, and FBX in its own units. A model under 1 mm across is read as meters. Meshes are welded but never simplified, so a print keeps every triangle.
+Basecase reads STL, 3MF, PLY and OBJ files in millimeters. It reads GLB, glTF and DAE files in meters, and FBX files in their own units. A model under 1 mm across is read as meters.
 
-Steps are in [Import a file](/help/import-a-file).
+Basecase welds meshes but never simplifies them, so a print keeps every triangle.
+
+Read [Import a file](/help/import-a-file) in the help center for the steps.

@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { CODE_SOURCE_MAX_BYTES } from '../caseCodeLimits.mjs';
+import { fileSize } from '../fileSize.mjs';
 import { bridge, fail, imageReply, text } from './shared.mjs';
 import { worldObject } from './worldTools.mjs';
 
@@ -82,7 +84,7 @@ export const createCase = {
         .describe(
           'What the running Case shows and reads. input: 1–4 input source ids (keys, gamepad, phone, camera, hand, face, midi, voice, code; a source this version lacks is refused, so leave it out and say so). voice sends logic the event voice with each word its live-input watchers compare against; midi sends midi with each note number and midi.cc.<n> from 0 to 1. ' +
             'panels: [{ id, kind, title?, ... }] with kind camera (signal: camera.<name> or camera.*), value (signal), plot (signals, seconds), table (of: servos, joints or signals), button (action: try, end-try, drive, stop, start-over, reset; gesture: a gesture name that presses it), list (of: tries or failures), text (of: brief, or text), map (trail), ' +
-            'code (source: one HTML document with its script and style inline, at most 256 KB; height 80–900; at most 4 per console) for a control or readout no other kind draws, such as a joystick, a piano, a HUD or picture buttons. ' +
+            `code (source: one HTML document with its script and style inline, at most ${fileSize(CODE_SOURCE_MAX_BYTES)}; height 80–900; at most 4 per console) for a control or readout no other kind draws, such as a joystick, a piano, a HUD or picture buttons. ` +
             'A code panel runs sandboxed with no network, storage or parent access, and its script uses window.basecase: signals(names, (values, time) => …) gets those signals at most 20 times a second; ' +
             'drive({ v: [forward, left, turn] each −1 to 1, aux?, target? }) drives the robot, drive(null) lets go, and needs code in input; event(name, value?) sends a named event to logic; action(name) runs a button action and resolves { ok, problem? }; ' +
             'CSS variables --bc-bg, --bc-panel, --bc-surface, --bc-accent, --bc-red, --bc-ink, --bc-ink-2, --bc-ink-3, --bc-font, --bc-text, --bc-radius and --bc-control match the studio. ' +

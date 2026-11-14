@@ -12,6 +12,7 @@ export interface FakeRepo {
   files: Map<string, Buffer>;
   tags: Map<string, number>;
   commits: CommitLine[][];
+  revisions: Map<string, Buffer>[];
 }
 
 export interface FakeHubRequest {
@@ -29,6 +30,8 @@ export interface FakeHubOptions {
   failCommit?: string;
   port?: number;
 }
+
+export const filesAtTag = (repo: FakeRepo, tag: string) => repo.revisions[(repo.tags.get(tag) ?? 0) - 1];
 
 export interface FakeHub {
   url: string;
@@ -171,6 +174,7 @@ class FakeHubServer {
       files: new Map([['.gitattributes', Buffer.from('*.parquet filter=lfs\n')]]),
       tags: new Map(),
       commits: [],
+      revisions: [],
     });
     send(ctx.res, 200, { url: `${this.url}/datasets/${id}` });
   }
@@ -250,6 +254,7 @@ class FakeHubServer {
     }
 
     repo.commits.push(lines);
+    repo.revisions.push(new Map(repo.files));
     send(ctx.res, 200, {
       commitOid: `c${repo.commits.length}`,
       commitUrl: `${this.url}/commit/${repo.commits.length}`,

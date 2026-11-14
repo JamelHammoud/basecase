@@ -20,7 +20,7 @@ import {
   type Skill,
   type SkillOrigin,
 } from './artifacts';
-import { ENVIRONMENT_VERSION, environmentHash, policyObservation, type Environment } from './environment';
+import { environmentHash, policyObservation, type Environment } from './environment';
 import type { ForgeJob } from './forgeRunner';
 import { hashOf } from './hash';
 
@@ -58,7 +58,7 @@ export function triesJob(model: SimModel, kase: Case, recordings: Recording[]): 
 
 export function triesEnvironment(model: SimModel, kase: Case, policy: PolicySpec): Environment {
   return {
-    version: ENVIRONMENT_VERSION,
+    version: 1,
     robot: model.robots[0]?.key ?? '',
     horizonS: kase.task.seconds,
     traceDt: 1 / RECORD_HZ,

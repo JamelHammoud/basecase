@@ -5,7 +5,7 @@ const IMAGE_LINE = /^\s*!\[[^\]]*\]\([^)]*\)\s*$/;
 const TABLE_LINE = /^\s*\|/;
 
 export const IMAGE = /!\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g;
-export const KEYS = /\[\[[^[\]]+\]\]/g;
+export const KEYS = /\[\[(?:[^[\]]+|[[\]])\]\]/g;
 export const LINK = /(?<!!)\[([^\]]*)\]\(([^)\s]+)[^)]*\)/g;
 
 export function splitSource(source) {

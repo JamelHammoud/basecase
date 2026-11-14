@@ -28,6 +28,7 @@ covers:
   - src/components/caseRun/panels/
   - src/sim/recordedFrames.ts
   - src/cases/tripFrames.ts
+  - src/workspace/useCaseRun.ts
 ---
 
 Play a recorded try through its Case's panels, and step through it frame by frame to see what each joint did.
@@ -40,13 +41,16 @@ Play a recorded try through its Case's panels, and step through it frame by fram
 3. The Case opens running, with its panels around the canvas and the timeline under it. Every panel now shows the try: plots draw the whole try with a line at the playhead, and the map draws the robot's whole path.
 4. Click or drag on a plot to go to that moment. The numbers, the map, the cameras and the robot on the canvas follow.
 
+5. Press [[Space]] to play and pause, and [[→]] or [[←]] to move one frame (1/50 s). Press [[[]] or [[]]] to play slower or faster, from 0.25× to 4×.
+6. Hold [[⇧]] and drag across a lane of the timeline to play that range over and over. [[⇧]]-click a lane to stop.
+
 ![The timeline under the canvas, with the second joint's link selected](/help/scrub-a-try-on-the-timeline/timeline.png)
 
-5. Press [[Space]] to play and pause, and [[→]] or [[←]] to move one frame (1/50 s). Press [ or ] to play slower or faster, from 0.25× to 4×.
-6. Hold [[⇧]] and drag across a lane of the timeline to play that range over and over. [[⇧]]-click a lane to stop.
 7. Click **Done** or press [[Esc]] to go back to the live robot. The Case keeps running.
 
-Each lane is one joint. Its top plot is the joint's position in blue over its target in gray, and its bottom one is its effort, with the servo's limit dashed. Effort reads in N·m, or in N for a sliding joint. Red lines mark where the Case's failure checks tripped, and the timeline opens on the first one. Click in a lane to select the joint's link on the canvas, ready to change.
+Each lane is one joint. Its top plot is the joint's position in blue over its target in gray, and its bottom one is its effort, with the servo's limit dashed. Effort reads in N·m, or in N for a sliding joint. Red lines mark where the Case's failure checks tripped, and the timeline opens on the first one.
+
+Click in a lane to select the joint's link on the canvas. It stays selected when you leave the Case, ready to change in the Inspector.
 
 In a running Case, the play button on a try in its tries panel does the same. [[⇧]] with [[→]] or [[←]] moves a second, and [[Home]] and [[End]] go to the start and the end.
 

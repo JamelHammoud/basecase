@@ -19,7 +19,10 @@ interface Return {
   caseId: string;
   view: ViewShot | null;
   selection: string[];
+  picked: boolean;
 }
+
+const NO_SELECTION: string[] = [];
 
 export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining }: CaseRunInput) {
   const { sim, cases } = simTraining;
@@ -29,7 +32,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   const caseConsole = cases.active?.console ?? DEFAULT_CONSOLE;
 
   const enterCase = (caseId: string) => {
-    const fresh = { caseId, view: viewportRef.current?.currentView() ?? null, selection: selectedIds };
+    const fresh = { caseId, view: viewportRef.current?.currentView() ?? null, selection: selectedIds, picked: false };
 
     setBack((saved) => (saved ? { ...saved, caseId } : fresh));
   };
@@ -54,6 +57,14 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   const leave = () => {
     if (open && back) restore(back);
   };
+
+  const pick = (ids: string[]) => {
+    setSelectedIds(ids);
+
+    if (open) setBack((saved) => saved && { ...saved, selection: ids, picked: true });
+  };
+
+  const canvasSelection = open && !back?.picked ? NO_SELECTION : selectedIds;
 
   const stale = back !== null && !open;
   const leaveStale = useEffectEvent(() => {
@@ -98,7 +109,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
 
   const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO, studio: true });
 
-  return { open, caseConsole, layout, enter, enterCase, leave };
+  return { open, caseConsole, layout, canvasSelection, enter, enterCase, leave, pick };
 }
 
 export type CaseRun = ReturnType<typeof useCaseRun>;

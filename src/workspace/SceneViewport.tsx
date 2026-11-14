@@ -11,8 +11,6 @@ import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-const NO_SELECTION: string[] = [];
-
 interface SceneViewportProps {
   active: boolean;
   core: WorkspaceCore;
@@ -64,7 +62,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         ref={viewportRef}
         sceneKey={scene.sceneId}
         parts={shownParts}
-        selectedPartIds={core.caseRun.open ? NO_SELECTION : selectedIds}
+        selectedPartIds={core.caseRun.canvasSelection}
         transformMode={tool.transformMode}
         sculptSettings={tool.sculptSettings}
         snapStepMm={studio.snapStepMm}

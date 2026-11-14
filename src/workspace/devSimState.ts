@@ -84,6 +84,7 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
     ...caseState(core.simTraining),
     selected: core.selectedIds,
+    canvasSelected: core.caseRun.canvasSelection,
     timeline: timelineState(core.simTraining.cases.timeline, sim, core.posing.rig),
     faults: Object.fromEntries(stats?.joints.flatMap((j) => (j.fault ? [[j.id, j.fault]] : [])) ?? []),
     facts: sim.latestFacts(),

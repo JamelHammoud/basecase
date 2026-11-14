@@ -10,6 +10,7 @@ interface SimState {
   activeCase: string | null;
   tries: Array<{ passed: boolean; margin: number }>;
   selected: string[];
+  canvasSelected: string[];
   timeline: {
     frame: number;
     frames: number;
@@ -27,6 +28,7 @@ type Studio = {
 };
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
+const areaCount = () => app.page.locator(visible('[data-testid="case-run-area"]')).count();
 
 const simState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
 
@@ -74,7 +76,7 @@ afterAll(async () => {
 const itUnlessWindows = it.skipIf(process.platform === 'win32');
 
 describe('Try timeline', () => {
-  itUnlessWindows('scrubs a try on the timeline under the canvas and selects a joint from its lane', async () => {
+  itUnlessWindows('scrubs a try in its running Case and keeps a joint picked from its lane', async () => {
     const timeline = async () => (await simState()).timeline;
 
     await openTouchTheDots();
@@ -89,6 +91,7 @@ describe('Try timeline', () => {
     await app.page.getByTestId('try-row').first().locator('button[aria-label="Replay"]').click();
     await expect.poll(() => app.page.getByTestId('timeline-lane').count(), { timeout: 30000 }).toBeGreaterThan(0);
     await expect.poll(async () => (await timeline())?.sought).toBe(0);
+    await expect.poll(areaCount).toBe(1);
 
     const opened = (await timeline())!;
 
@@ -110,11 +113,19 @@ describe('Try timeline', () => {
       .nth(1)
       .click({ position: { x: 1, y: 10 } });
     await expect.poll(async () => (await simState()).selected).toEqual(lane.link);
+    expect((await simState()).canvasSelected).toEqual(lane.link);
     await expect.poll(async () => (await timeline())?.sought).toBe(0);
 
     await app.page.keyboard.press('Escape');
     await expect.poll(() => app.page.getByTestId('try-timeline').count()).toBe(0);
+    expect(await areaCount()).toBe(1);
+    expect((await simState()).canvasSelected).toEqual(lane.link);
+    await expect.poll(async () => (await simState()).drive).toBe('off');
+
+    await app.page.keyboard.press('Escape');
+    await expect.poll(areaCount).toBe(0);
     expect((await simState()).selected).toEqual(lane.link);
+    expect((await simState()).canvasSelected).toEqual(lane.link);
     expect(await sceneParts()).toBe(scene);
     expect(app.errors).toEqual([]);
   });

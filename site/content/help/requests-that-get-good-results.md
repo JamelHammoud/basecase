@@ -19,6 +19,7 @@ related:
 covers:
   - electron/cad-agent-prompt.mjs
   - electron/backend/promptBlocks.mjs
+  - electron/cad-mcp/caseTools.mjs
   - src/components/agent/Composer.tsx
 ---
 
@@ -49,5 +50,7 @@ To play with or operate a robot, name the input and the cameras to watch. “Dri
 ## Ask about Checks instead of hiding them
 
 When a Check fails, ask the agent to fix it, or why it matters. It won't narrow a range or hide a part to pass a check, and it tells you when a check looks wrong. When the scene has Cases, it runs them before it calls a design done. It never edits a Case to pass one.
+
+To learn why a try failed, ask, as in “Why did it fall in the last try?” The agent reads the try's recording and answers with times and values.
 
 For what the agent won't do however you ask, see [Agent limits](/help/agent-limits).

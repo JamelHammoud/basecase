@@ -9,7 +9,7 @@ const SECOND_LEVEL = /^##\s+(.+?)\s*#*\s*$/;
 export const inlineText = (markdown: string) =>
   markdown
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/\[\[([^[\]]+)\]\]/g, '$1')
+    .replace(/\[\[([^[\]]+|[[\]])\]\]/g, '$1')
     .replace(/[*`]|\b_+|_+\b/g, '')
     .replace(/\s+/g, ' ')
     .trim();

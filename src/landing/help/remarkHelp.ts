@@ -8,7 +8,7 @@ interface MdNode {
   data?: { hName?: string; hProperties?: Record<string, string> };
 }
 
-const KEYS = /\[\[([^[\]]+)\]\]/g;
+const KEYS = /\[\[([^[\]]+|[[\]])\]\]/g;
 const CALLOUT = /^\[!(NOTE|WARNING)\][ \t]*\n?/;
 const MODIFIERS = /[⌘⇧⌥⌃]|[^⌘⇧⌥⌃\s+]+/g;
 

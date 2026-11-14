@@ -12,7 +12,7 @@ const BODY = [
   '',
   '## Choose a file',
   '',
-  '1. Press [[⌘K]].',
+  '1. Press [[⌘K]], or [[[]] and [[]]].',
   '2. Choose **Import Mesh**.',
   '',
   '> [!WARNING]',
@@ -75,6 +75,7 @@ describe('help pages', () => {
     expect(article).toContain('<meta name="description" content="Bring a model in with ⌘I."/>');
     expect(article).toContain('class="help-steps');
     expect(article).toMatch(/<span data-keys=""[^>]*><kbd[^>]*>⌘<\/kbd><kbd[^>]*>K<\/kbd><\/span>/);
+    expect(article).toMatch(/<kbd[^>]*>\[<\/kbd><\/span> and <span data-keys=""[^>]*><kbd[^>]*>\]<\/kbd>/);
     expect(article).toMatch(/<aside[^>]*>.*Warning.*Big files take a while\./s);
     expect(article).not.toContain('[!WARNING]');
     expect(article).toContain('<table');

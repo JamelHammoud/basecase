@@ -78,7 +78,7 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
         <TryTimeline
           timeline={core.simTraining.cases.timeline}
           rig={core.posing.rig}
-          onSelectParts={core.setSelectedIds}
+          onSelectParts={core.caseRun.pick}
         />
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}

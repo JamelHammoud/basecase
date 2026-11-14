@@ -103,7 +103,7 @@ export function useRoutines(options: RoutineOptions) {
 
   useEffect(() => {
     recheck();
-  }, [parts, project.joints, project.skills, project.handoffs, handoffs.skills, active]);
+  }, [parts, project.joints, project.skills, project.handoffs, handoffs.stubbed, active]);
 
   const make = async (input: unknown) => {
     const valid = validateRoutine(input);

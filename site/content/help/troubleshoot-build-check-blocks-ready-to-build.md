@@ -25,6 +25,7 @@ covers:
   - src/readiness/wording.ts
   - src/readiness/readiness.ts
   - src/utils/engineeringBudget.ts
+  - src/wiring/wiringChecks.ts
   - src/components/settings/BuildPane.tsx
 ---
 
@@ -62,6 +63,15 @@ The estimated total is over your budget. Lines marked ≈ count at their list pr
 4. Swap expensive parts, or raise the budget in the field beside the total.
 
 Budget turns amber above 90% of the budget and red over it. [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget) has the steps.
+
+## Servo bus is red
+
+The build has a bus adapter, but none takes these servos' connector. DYNAMIXEL X servos on a Waveshare Bus Servo Adapter (A) are one case.
+
+1. Open **Servo bus** in Checks. It names the adapter to add, such as **Add a JST EH 3-pin bus adapter for 2 servos.**
+2. Open **Parts** and place that adapter in the robot. For JST EH 3-pin, that's the **ROBOTIS U2D2** or **ROBOTIS OpenRB-150**. For 5264 3-pin, it's the **Waveshare Bus Servo Adapter (A)**.
+
+It worked when **Servo bus** leaves the list.
 
 ## You know a blocker is wrong
 

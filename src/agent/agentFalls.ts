@@ -1,5 +1,5 @@
 import type { Simulation } from '../sim/useSimulation';
-import { CANT_TIP, fallPlan, fallSim, NO_LEGS } from '../utils/engineeringFalls';
+import { fallPlan, fallSim, NO_LEGS, untipped } from '../utils/engineeringFalls';
 import { peakJoints } from '../utils/engineeringPeak';
 import type { FallSim, JointLoad } from '../utils/engineeringTypes';
 import { errorMessage } from '../utils/errorMessage';
@@ -15,7 +15,7 @@ export async function fallsSim(deps: FallsDeps, loads: JointLoad[]): Promise<Fal
   try {
     const { model, runs } = await deps.sim.falls((m, robot) => fallPlan(m, robot, peakLimits(loads, m)));
 
-    return model.robots.some((r) => r.floating) ? fallSim(model, runs) : CANT_TIP;
+    return model.robots.some((r) => r.floating) ? fallSim(model, runs) : untipped(runs.length);
   } catch (e) {
     return `The falls didn’t run: ${errorMessage(e)}`;
   }

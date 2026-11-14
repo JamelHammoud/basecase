@@ -12,7 +12,7 @@ export const FALL_AROUND_S = 0.3;
 export const FALL_LIMITS = { pass: 3, warn: 5 };
 export const NO_LEGS = 'No legs';
 export const CANT_TIP = 'Didn’t tip over in any direction';
-export const FALLS_UNMEASURED = 'Measured when the agent knocks the robot over in simulation';
+export const FALLS_UNMEASURED = 'Measured when the agent tips the robot over in simulation';
 
 const DIRECTIONS = [
   'forward',
@@ -50,10 +50,12 @@ export const fallPeakNm = (values: number[], windowS: number, touchS: number) =>
 
 const worse = (a: FallJoint | undefined, b: FallJoint) => (!a || b.p99Nm > a.p99Nm ? b : a);
 
-export function fallSim(model: SimModel, runs: FallRun[]): FallSim | string {
+export const untipped = (directions: number): FallSim => ({ directions, tipped: 0, joints: {} });
+
+export function fallSim(model: SimModel, runs: FallRun[]): FallSim {
   const tipped = runs.filter((r): r is FallRun & { touchS: number } => r.fell && r.touchS !== null);
 
-  if (!tipped.length) return CANT_TIP;
+  if (!tipped.length) return untipped(runs.length);
 
   const joints: Record<string, FallJoint> = {};
 
@@ -126,6 +128,8 @@ export function fallsRow(loads: JointLoad[], falls: FallSim | string | undefined
   if (!peakJoints(loads).length) return [];
 
   if (!falls) return notRun(FALLS_UNMEASURED);
+
+  if (!falls.tipped) return notRun(CANT_TIP);
 
   const lines = linesOf(loads, falls).sort((a, b) => b.multiple - a.multiple);
   const fails = lines.filter((p) => p.status === 'fail');

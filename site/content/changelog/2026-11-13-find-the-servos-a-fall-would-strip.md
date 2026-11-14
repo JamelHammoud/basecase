@@ -8,10 +8,10 @@ You can now tip a legged robot over in the simulation from 12 directions. A new 
 
 Most first walking robots strip a knee servo the first time they fall. Every other sim check in Basecase stops at whether the robot fell. Falls measures what the fall does.
 
-Ask the agent to verify the design with falls. It holds your modeled pose with each servo limited to 0.7 of its stall torque, as Peak torque does. Then it leans on the torso until the robot tips, 30° apart all the way around. Each leg joint reads as a multiple of its servo's rated torque, at the 99th percentile within 0.3 seconds of hitting the floor.
+The agent runs it when it verifies the design with falls. It holds your modeled pose with each servo limited to 0.7 of its stall torque, as Peak torque does. Then it leans on the torso until the robot tips, 30° apart all the way around. Each leg joint reads as a multiple of its servo's rated torque, at the 99th percentile within 0.3 seconds of hitting the floor.
 
-Up to 3× passes, and above 5× blocks Ready to build. Those limits follow the SafeFall paper's rule that gears survive 3 to 5 times rated torque for a moment. On our test biped, a 1.9 kg walker on STS3215s, both knees read 10.4× falling backward. Its 12 falls take 0.65 seconds of simulation on a MacBook.
+Up to 3× passes, and above 5× blocks Ready to build. Those limits follow the SafeFall paper's rule that gears survive 3 to 5 times rated torque for a moment. On our test biped, a 2.4 kg walker on STS3215s, both knees fail.
 
-The numbers are estimates, and only robots with legs get the row. Replay in Sim tips the robot the same way in Simulate.
+The numbers are estimates. Only robots with legs get the row. Replay in Sim tips the robot the same way in Simulate.
 
 Steps are in [Check what a fall does to the servos](/help/check-what-a-fall-does-to-the-servos).

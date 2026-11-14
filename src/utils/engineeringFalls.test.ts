@@ -9,7 +9,17 @@ import { buildMjcf } from '../sim/mjcf';
 import { fixtureRobot } from '../skills/fixtureModels';
 import { DEFAULT_PROJECT, type RobotPoseState } from '../types/robotics';
 import { runEngineering } from './engineering';
-import { aroundTouch, FALLS, fallDirection, fallPeakNm, fallsRow, FALLS_UNMEASURED, NO_LEGS } from './engineeringFalls';
+import {
+  aroundTouch,
+  CANT_TIP,
+  FALLS,
+  fallDirection,
+  fallPeakNm,
+  fallsRow,
+  FALLS_UNMEASURED,
+  NO_LEGS,
+  untipped,
+} from './engineeringFalls';
 import type { CheckRow, FallSim } from './engineeringTypes';
 import { buildRig } from './kinematics';
 import { percentile, TorqueRecorder } from './peakTorque';
@@ -122,10 +132,11 @@ describe('Falls', () => {
     expect(again.falls).toEqual(first.falls);
   }, 60000);
 
-  it('reads Not run on a legged robot until it’s measured, and leaves robots without legs out', () => {
-    expect(fallsRow(engineering(fallBiped()).joints, undefined)).toEqual([
-      { check: FALLS, status: 'not run', detail: FALLS_UNMEASURED },
-    ]);
+  it('reads Not run on a legged robot until it’s measured or when it can’t tip, and leaves robots without legs out', () => {
+    const legs = engineering(fallBiped()).joints;
+
+    expect(fallsRow(legs, undefined)).toEqual([{ check: FALLS, status: 'not run', detail: FALLS_UNMEASURED }]);
+    expect(fallsRow(legs, untipped(12))).toEqual([{ check: FALLS, status: 'not run', detail: CANT_TIP }]);
     expect(fallsRow(engineering(fixtureRobot('arm-3dof')).joints, undefined)).toEqual([]);
   });
 });

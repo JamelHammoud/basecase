@@ -1,6 +1,7 @@
 import { actuatorOf, COMPONENT_BY_ID } from '../data/components';
 import type { RobotSkeleton, SkeletonJoint, SkeletonLimb, ZUpVec } from '../types/skeleton';
 import { r1, r3 } from './agentFrame';
+import { lengthLabel } from '../utils/size';
 import { swapWords } from '../mirror/mirrorNames';
 import { plural } from '../../electron/plural.mjs';
 import { weight } from '../utils/weight';
@@ -134,7 +135,7 @@ function pairProblems(skeleton: RobotSkeleton): string[] {
 
     const off = len(diff(mirrorPoint(a.origin, pairAxis(pair)), b.origin));
 
-    return off > SYMMETRY_MM ? [`pair ${pair.join(' / ')}: not mirror images, ${r1(off)} mm apart`] : [];
+    return off > SYMMETRY_MM ? [`pair ${pair.join(' / ')}: not mirror images, ${lengthLabel(off)} apart`] : [];
   });
 }
 

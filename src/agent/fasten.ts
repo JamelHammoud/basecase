@@ -10,6 +10,7 @@ import {
   type MetricSize,
 } from '../data/hardware';
 import type { ScenePart } from '../types/robotics';
+import { lengthFigure, lengthLabel } from '../utils/size';
 import { eulerToMatrix, r2, rotToCad, toCad, type V3 } from './agentFrame';
 import { partSpans } from './axisHits';
 import type { CodeHole } from './cadCode';
@@ -265,8 +266,8 @@ function describe(b: Build, r: { L: number; grip: number; engage: string; tip: n
   const pokes = b.into !== 'nut' && r.tip > last.exit + 0.05 && b.into === 'insert';
 
   return (
-    `${b.size} × ${r.L} ${(b.args.head ?? 'socket_head').replace('_', ' ')}: grip ${r2(r.grip)} mm, ${r2(thread)} mm of thread into the ${r.engage}.` +
-    (pokes ? ` The tip comes out of ${last.part.id} by ${r2(r.tip - last.exit)} mm.` : '')
+    `${b.size} × ${r.L} ${(b.args.head ?? 'socket_head').replace('_', ' ')}: grip ${lengthLabel(r.grip)}, ${lengthLabel(thread)} of thread into the ${r.engage}.` +
+    (pokes ? ` The tip comes out of ${last.part.id} by ${lengthLabel(r.tip - last.exit)}.` : '')
   );
 }
 
@@ -300,7 +301,7 @@ function buildPlan(parts: ScenePart[], b: Build): FastenPlan | string {
   const { need, L } = lengthFor(b, seat);
 
   if (L === null)
-    return `No stock ${b.size} screw fits: it needs ${r2(need.min)}–${r2(need.max)} mm (grip ${r2(need.grip)} mm plus the ${need.engage}). Change the stack or the thread size.`;
+    return `No stock ${b.size} screw fits: it needs ${lengthFigure(need.min)}–${lengthLabel(need.max)} (grip ${lengthLabel(need.grip)} plus the ${need.engage}). Change the stack or the thread size.`;
 
   const tip = seat + L;
   const { specs, top } = partsFor(b, seat, L);
@@ -316,7 +317,7 @@ function buildPlan(parts: ScenePart[], b: Build): FastenPlan | string {
       describe(b, { L, grip: need.grip, engage: need.engage, tip }),
       notes.length ? `Holes: ${notes.join('; ')}.` : '',
       blocked
-        ? `Driver access: ${blocked.id} is ${r2(blocked.t)} mm above the head, in the driver’s way.`
+        ? `Driver access: ${blocked.id} is ${lengthLabel(blocked.t)} above the head, in the driver’s way.`
         : `Driver access: clear for ${DRIVER_REACH} mm.`,
     ]
       .filter(Boolean)

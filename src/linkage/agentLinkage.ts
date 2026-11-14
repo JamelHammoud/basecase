@@ -1,4 +1,5 @@
 import { r1, toCad, toScene, type V3 } from '../agent/agentFrame';
+import { lengthLabel } from '../utils/size';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import {
   MAX_LINK_MM,
@@ -78,7 +79,7 @@ function solutionLine(s: LinkageSolution, index: number, frame: { plane: CadPlan
   const [x, y] = PLANE_AXES[frame.plane].names;
 
   return (
-    `${index + 1}. Path error max ${r1(s.maxErrorMm)} mm, RMS ${r1(s.rmsErrorMm)} mm; ` +
+    `${index + 1}. Path error max ${lengthLabel(s.maxErrorMm)}, RMS ${lengthLabel(s.rmsErrorMm)}; ` +
     `transmission ≥ ${Math.round(s.minTransmissionDeg)}°; crank ${r1(from)}° → ${r1(to)}° (sweep ${r1(to - from)}°); ` +
     `links ground ${r1(l.ground)}, crank ${r1(l.crank)}, coupler ${r1(l.coupler)}, rocker ${r1(l.rocker)} mm; ` +
     `coupler point P ${r1(l.point[0])} mm along B→C, ${r1(l.point[1])} mm to its left; ` +

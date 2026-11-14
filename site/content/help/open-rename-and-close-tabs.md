@@ -26,20 +26,20 @@ covers:
   - src/workspace/fileCommands.tsx
 ---
 
-Keep up to 8 scenes open side by side as tabs, and move between them without losing your place.
+You can keep up to 8 scenes open side by side as tabs and switch between them at any time. Each scene stays where you left it.
 
 ## Open a new scene
 
 1. Click **+** after the last tab.
 
-The new scene opens next to the current one, named Untitled. You can also press [[⌘T]]. With 8 tabs open, Basecase asks you to close one first.
+The new scene opens next to the current one, named Untitled. Or press [[⌘T]]. If you already have 8 tabs open, Basecase asks you to close one first.
 
 ## Rename a scene
 
 1. Double-click the scene's tab.
 2. Type the new name and press [[↩]].
 
-Press [[Esc]] to keep the old name. **Rename** is also in the tab's right-click menu, and **Rename Scene** is in [[⌘K]].
+To keep the old name, press [[Esc]]. Or choose **Rename** from the tab's right-click menu, or find **Rename Scene** in [[⌘K]].
 
 ![The command palette with Rename typed and Rename Scene highlighted](/help/open-rename-and-close-tabs/rename-scene.png)
 
@@ -48,12 +48,14 @@ Press [[Esc]] to keep the old name. **Rename** is also in the tab's right-click 
 1. Hover the tab and click its **×**.
 2. To bring it back, click **Undo** in the toast.
 
-You can also press [[⌘W]] to close the front tab, and [[⇧⌘T]] to reopen it. Basecase remembers the last 10 scenes you closed. Closing a scene while the agent works on it stops the agent. A blank scene you never touched closes without saving and can't be reopened.
+You can also press [[⌘W]] to close the front tab and [[⇧⌘T]] to reopen it. Basecase remembers the last 10 scenes you closed.
+
+If the agent is working on a scene when you close it, the agent stops. A blank scene you never touched closes without saving, and you can't reopen it.
 
 ## Move between scenes
 
-Press [[⌃Tab]] for the next tab and [[⌃⇧Tab]] for the previous one. [[⌘1]] to [[⌘8]] jump to a tab by position, and [[⌘9]] to the last.
+Press [[⌃Tab]] to go to the next tab and [[⌃⇧Tab]] to go to the previous one. To jump to a tab by its position, press [[⌘1]] to [[⌘8]]. Press [[⌘9]] to jump to the last tab.
 
-Drag a tab to reorder it, or middle-click it to close it. Right-click a tab for **Duplicate**, **Close Other Scenes** and **Close Scenes to the Right**.
+Drag a tab to reorder it, or middle-click a tab to close it. Right-click a tab to find **Duplicate**, **Close Other Scenes** and **Close Scenes to the Right**.
 
 To find a scene you've closed, see [Reopen a saved scene](/help/reopen-a-saved-scene).

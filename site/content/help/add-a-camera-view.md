@@ -23,26 +23,28 @@ covers:
   - src/components/cameras/cameraMenu.tsx
 ---
 
-Save the canvas's current framing as a camera that stays put, so you watch every run from the same spot beside the canvas.
+A camera view saves what the canvas currently shows as a camera that doesn't move. Use one to watch every run from the same spot, in a view beside the canvas.
 
-1. Move the canvas until it frames what the camera should see.
+1. Move the canvas until it frames what you want the camera to see.
 2. Right-click an empty spot on the canvas.
 3. Choose **Add Camera View**.
 
-The new view, Camera 1, appears under **Cameras** at the top left of the canvas. On the canvas, the camera shows as a small frustum.
+The new view, Camera 1, appears under **Cameras** at the top left of the canvas. The camera also shows on the canvas as a small frustum.
 
-**Add Camera View** is also in [[⌘K]].
+You can also find **Add Camera View** in [[⌘K]].
 
 ## Change a camera view
 
-Right-click its view under **Cameras**, then choose:
+Right-click the view under **Cameras**, then choose one of these:
 
-- **Use Current View** to move the camera to where the canvas is looking now.
-- **Lens** to give it another angle, such as **90°** or **Fisheye 180°**.
-- **Rename** to name it, such as "Overhead".
-- **Look Through** to move the canvas to the camera.
-- **Delete** to remove it, after you confirm.
+- **Use Current View** moves the camera to where the canvas is looking now.
+- **Lens** gives it another angle, such as **90°** or **Fisheye 180°**.
+- **Rename** lets you give it a name, like "Overhead".
+- **Look Through** moves the canvas to the camera.
+- **Delete** removes it after you confirm.
 
 ## Limits
 
-A scene holds up to 8 camera views. They aren't parts, so they stay out of the bill of materials, the Checks and the physics. Exported datasets record the robot's camera parts and a fixed scene camera, not the camera views you add.
+A scene can hold up to 8 camera views. Camera views aren't parts, so the bill of materials, the Checks and the physics don't include them.
+
+Exported datasets record the robot's camera parts and a fixed scene camera. They don't record the camera views you add.

@@ -21,15 +21,15 @@ covers:
   - src/workspace/exchangeCommands.tsx
 ---
 
-Send a whole design to someone as one .basecase file, which they can open in the desktop app or the web studio.
+You can send a whole design to someone as a single .basecase file. They can open it in the desktop app or in the web studio.
 
 1. Open the scene you want to send.
 2. Click **Export** at the top right of the window.
 3. Choose **Scene**.
-4. Send the `.basecase` file Basecase saved. It's named after the scene, in lowercase with dashes, such as `robot-arm.basecase`.
+4. Send the `.basecase` file that Basecase saved. Basecase names the file after the scene, in lowercase with dashes. For example, `robot-arm.basecase`.
 
 ![The Export menu with Scene highlighted](/help/share-a-scene/menu.png)
 
-The file holds the parts, joints, poses, comments, Cases, Routines and the scene's goal. Print history, trained policies, Case tries, taught skills, the build guide and your chat with the agent stay on your computer. [Scenes, files and the Library](/help/scenes-files-and-the-library) explains why.
+The file includes the parts, joints, poses, comments, Cases, Routines and the scene's goal. Print history, the print service and its quotes, trained policies, Case tries, taught skills, the build guide and your chat with the agent stay on your computer and aren't in the file. To learn why, see [Scenes, files and the Library](/help/scenes-files-and-the-library).
 
-It's also **File** ▸ **Export Scene**, and **Export Scene** in [[⌘K]]. The person you send it to follows [Open a shared scene](/help/open-a-shared-scene).
+To export from the menu instead, choose **File** ▸ **Export Scene**. Or choose **Export Scene** in [[⌘K]]. The person you send the file to can open it by following [Open a shared scene](/help/open-a-shared-scene).

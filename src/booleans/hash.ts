@@ -1,6 +1,5 @@
-import { hashText } from '../guide/guideItems';
 import type { ScenePart } from '../types/robotics';
-import { numbersHash } from '../utils/geometryHash';
+import { hashText, numbersHash } from '../utils/geometryHash';
 import { baseOf, isBooleanPart, type BooleanPart } from './parts';
 
 const NOT_GEOMETRY = new Set<string>([

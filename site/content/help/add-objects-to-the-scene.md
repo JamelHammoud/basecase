@@ -29,21 +29,23 @@ covers:
   - electron/simready/
 ---
 
-Place a mug, a box, a shelf or another real object from NVIDIA's SimReady Central next to your robot, at true size and weight.
+You can place real objects next to your robot, such as a mug, a box or a shelf. They come from NVIDIA's SimReady Central at their true size and weight.
 
 1. Click **Parts** in the view rail on the left.
-2. Type what you want in **Search parts**, such as `mug`, and press [[↩]].
-3. Hover a result to see its size, weight and moving parts.
-4. Click the result to insert it.
+2. Type what you want in **Search parts**, such as `mug`, then press [[↩]].
+3. Hover over a result to see its size, weight and moving parts.
+4. Click the result to insert it. Or drag it to the spot on the canvas where you want it.
 
 ![Kitchen objects searched for mug, showing a grid of SimReady mugs from NVIDIA](/help/add-objects-to-the-scene/kitchen.png)
 
-A word that names a category, like `mug`, opens that category with your search in it. When nothing in Parts matches, [[↩]] lists SimReady results instead. A toast shows the download and conversion, and closes when the object lands on the canvas, selected. You can also drag a result to where it should go on the canvas.
+A search that names a category, like `mug`, opens that category in Parts with your search in it. If nothing in Parts matches, pressing [[↩]] lists SimReady results instead.
 
-To browse instead of searching, click a category under **Objects** in Parts, such as **Kitchen** or **Boxes and bins**.
+A toast appears while the object downloads and converts. It closes when the object lands on the canvas, selected.
+
+To browse instead of search, click a category under **Objects** in Parts, such as **Kitchen** or **Boxes and bins**.
 
 ![Parts scrolled to its Objects section, listing Kitchen, Food, Boxes and bins and the other categories](/help/add-objects-to-the-scene/objects.png)
 
-Objects whose maker gave a mass move freely in Simulate, and the rest stay fixed. Checks treat a free object as scenery, so its weight stays out of the robot's.
+An object moves freely in Simulate if its maker gave it a mass. Objects without a mass stay fixed. Checks treat a free object as scenery and don't add its weight to the robot's.
 
-Each object shows its maker and license; most are CC-BY 4.0. **Open on Hugging Face**, in the hover card, opens its page there.
+Each object shows its maker and license. Most are CC-BY 4.0. To see an object's page on Hugging Face, click **Open on Hugging Face** in its hover card.

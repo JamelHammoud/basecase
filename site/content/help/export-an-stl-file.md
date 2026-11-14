@@ -25,15 +25,15 @@ covers:
   - src/workspace/exchangeCommands.tsx
 ---
 
-Save the whole scene as one STL mesh, in millimeters, to open in a slicer or another CAD app.
+You can save your whole scene as a single STL mesh, in millimeters, and open it in a slicer or another CAD app.
 
 1. Click **Export** at the top right of the window.
 2. Choose **STL**.
 
 ![The Export menu with STL](/help/export-a-robot-package/menu.png)
 
-Basecase saves a binary STL named after the scene. It holds every visible solid part, turned so Z points up, the way slicers expect. Hidden parts aren't in it.
+Basecase saves a binary STL file named after the scene. The file includes every visible solid part, rotated so that Z points up, the way slicers expect. Hidden parts are left out.
 
-**STL** turns on once the scene has a part. It's also **File** ▸ **Export STL**, and **Export STL** in [[⌘K]].
+**STL** is available once the scene has a part. You can also choose **File** ▸ **Export STL**, or use **Export STL** in [[⌘K]].
 
-To print, **3MF Plates** in the same menu lays parts out on plates for your printer instead. Every format Basecase writes is in [Import and export formats](/help/import-and-export-formats).
+If you're exporting to print, use **3MF Plates** in the same menu instead. It lays parts out on plates for your printer. For every format Basecase writes, see [Import and export formats](/help/import-and-export-formats).

@@ -1,4 +1,5 @@
 import { publicFetch, readCapped } from './publicFetch.mjs';
+import { MB } from './fileSize.mjs';
 import { plural } from './plural.mjs';
 
 function parseXml(xml) {
@@ -271,7 +272,7 @@ export async function fetchSkeleton(url, forward) {
 
   if (!res.ok) throw new Error(`Fetch failed: HTTP ${res.status} for ${u}`);
 
-  const xml = (await readCapped(res, 12e6, 'The file')).toString('utf8');
+  const xml = (await readCapped(res, 12 * MB, 'The file')).toString('utf8');
 
   return skeletonFromXml(xml, forward);
 }
@@ -399,7 +400,7 @@ export function checkAgainstSkeleton(sk, parts, floorOffset) {
   const jzMax = Math.max(...joints.map((j) => j.p[2]));
 
   return [
-    `${plural(joints.length, 'joint')} and their frames checked; the lowest joint fits best ${Math.round(lift)} mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.`,
+    `Checked the frame of ${plural(joints.length, 'joint')}; the lowest joint fits best ${Math.round(lift)} mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.`,
     missesText(misses, offCentre),
     `Joint span X ${span(joints.map((j) => j.p[0]))}, Y ${span(joints.map((j) => j.p[1]))}, Z ${span(joints.map((j) => j.p[2]))}; model span X ${span(parts.flatMap((p) => [p.bounds.min[0], p.bounds.max[0]]))}, Y ${span(parts.flatMap((p) => [p.bounds.min[1], p.bounds.max[1]]))}, Z ${span(parts.flatMap((p) => [p.bounds.min[2], p.bounds.max[2]]))}.`,
     `Model top is ${Math.round(mzMax - jzMax)} mm above the highest joint; check that against the photo (shells above the top joint, e.g. a head or cap).`,

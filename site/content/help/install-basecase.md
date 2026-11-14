@@ -24,9 +24,10 @@ covers:
   - electron/main.mjs
 ---
 
-Download the desktop app, where the agent, slicing, printing and training run.
+The agent, slicing, printing and training all run in the desktop app. To install it, you need one of these:
 
-The Mac app needs a Mac with Apple silicon; there's no build for Intel Macs. The Windows app needs 64-bit Windows 11.
+- A Mac with Apple silicon. There's no build for Intel Macs.
+- A PC with 64-bit Windows 11.
 
 ## On a Mac
 
@@ -39,16 +40,21 @@ The Mac app needs a Mac with Apple silicon; there's no build for Intel Macs. The
 
 1. Go to [basecase.so](https://basecase.so) and click **Download for Windows**.
 2. Open `Basecase-Setup.exe`.
-3. If Windows SmartScreen stops the installer, click **More info**, then **Run anyway**.
+3. If Windows SmartScreen stops the installer, click **More info**, then click **Run anyway**.
 
-The installer needs no administrator rights. It installs Basecase for your Windows account and adds a Basecase shortcut.
+You don't need administrator rights to run the installer. It installs Basecase for your Windows account and adds a Basecase shortcut.
 
 ## The first launch
 
-Basecase opens on a two-wheel rover in the simulator, as [Drive your first robot](/help/drive-your-first-robot) shows. The agent connects as the app starts.
+Basecase opens with a two-wheel rover in the simulator (see [Drive your first robot](/help/drive-your-first-robot)). The agent connects while the app starts.
 
-The first time, Basecase downloads Claude Code, a 263 MB download, and the Agent tab shows its progress. Picking Codex or Gemini CLI in Settings downloads that one instead: 340 MB and 95 MB.
+The first time you open Basecase, it downloads Claude Code (263 MB). You can follow its progress in the Agent tab. If you pick Codex (340 MB) or Gemini CLI (95 MB) in Settings, Basecase downloads that one instead.
 
-Your scenes, saved models, tries and datasets live in `~/Library/Application Support/Basecase` on a Mac and `%APPDATA%\Basecase` on Windows. Uninstalling on Windows leaves them in place.
+Basecase keeps your scenes, saved models, tries and datasets in these folders:
+
+- On a Mac: `~/Library/Application Support/Basecase`
+- On Windows: `%APPDATA%\Basecase`
+
+If you uninstall Basecase on Windows, these files stay where they are.
 
 Next, [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot), or [choose the agent](/help/choose-the-agent) you'll design with.

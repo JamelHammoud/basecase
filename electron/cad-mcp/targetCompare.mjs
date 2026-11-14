@@ -1,5 +1,6 @@
 import { photoMasks } from './photoMask.mjs';
 import { bridge } from './shared.mjs';
+import { signed } from '../minus.mjs';
 
 const RASTER_SIDE = 900;
 const MM_PER_UNIT = { mm: 1, cm: 10, in: 25.4, pt: 25.4 / 72, pc: 25.4 / 6 };
@@ -65,7 +66,7 @@ function bandLine(b, flagMm) {
 
   if (Math.abs(diff) > flagMm) flag = diff < 0 ? '  ← model narrower' : '  ← model wider';
 
-  return `${b.band * 10}–${(b.band + 1) * 10}%: ${r(b.targetMm)} → ${r(b.modelMm)} mm (${diff >= 0 ? '+' : '−'}${r(Math.abs(diff))})${flag}`;
+  return `${b.band * 10}–${(b.band + 1) * 10}%: ${r(b.targetMm)} → ${r(b.modelMm)} mm (${signed(diff, (v) => String(r(v)))})${flag}`;
 }
 
 export function targetText(name, view, fit) {

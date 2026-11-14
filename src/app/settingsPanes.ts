@@ -18,7 +18,11 @@ const PANES: Array<{ id: SettingsPane; label: string; keywords: string }> = [
     keywords: 'currency money price budget euro pound yen dollar region checks blockers guide',
   },
   { id: 'printers', label: 'Printers', keywords: 'printer bambu prusa slicer orcaslicer network' },
-  { id: 'accounts', label: 'Accounts', keywords: 'hugging face onshape google maps tiles token key login' },
+  {
+    id: 'accounts',
+    label: 'Accounts',
+    keywords: 'hugging face onshape google maps tiles slant 3d print service token key login',
+  },
   { id: 'shortcuts', label: 'Shortcuts', keywords: 'keys keyboard hotkeys' },
 ];
 

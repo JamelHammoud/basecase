@@ -66,9 +66,9 @@ Above its tries, the dataset shows its episodes, their total time, the tries for
 
 Its buttons take it further:
 
-- **Export Dataset** saves a LeRobot zip; see [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
-- **Publish to Hugging Face** puts it on the Hub, in the desktop app; see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
-- **Train from Tries** shows once five tries in it passed, in the desktop app; see [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+- **Export Dataset** saves a LeRobot zip. See [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
+- **Publish to Hugging Face** puts it on the Hub, in the desktop app. See [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
+- **Train from Tries** shows once five tries in it passed, in the desktop app. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
 Only passed tries recorded on the robot as it is now go out or train. A missed try stays in the dataset, but is left out of both.
 

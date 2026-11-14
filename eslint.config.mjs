@@ -99,7 +99,7 @@ export default tseslint.config(
   {
     files: ['src/**/*.{ts,tsx}', 'electron/**/*.mjs'],
     ignores: ['**/*.test.{ts,tsx,mjs}', 'electron/cad-kernel/**'],
-    rules: { 'basecase/plural': 'error' },
+    rules: { 'basecase/plural': 'error', 'basecase/menu-path': 'error' },
   },
   {
     files: ['**/*.cjs'],

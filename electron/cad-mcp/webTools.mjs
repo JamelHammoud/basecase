@@ -6,6 +6,7 @@ import { findRobotDescriptionText } from './githubSearch.mjs';
 import { pageImages } from './pageImages.mjs';
 import { settledWrites } from './pendingWrites.mjs';
 import { IMAGE_EXT, bridge, fail, fetchWithTimeout, text } from './shared.mjs';
+import { MB } from '../fileSize.mjs';
 import { readCapped } from '../publicFetch.mjs';
 
 export const robotSkeleton = {
@@ -102,7 +103,7 @@ export const findImages = {
 
       if (!res.ok) return fail(`The page returned ${res.status}.`);
 
-      const html = (await readCapped(res, 8_000_000, 'The page')).toString('utf8').slice(0, 3_000_000);
+      const html = (await readCapped(res, 8 * MB, 'The page')).toString('utf8').slice(0, 3_000_000);
       const list = pageImages(html, res.url || url);
 
       if (!list.length) return text('No images found on that page.');
@@ -126,7 +127,7 @@ async function downloadImage(url) {
 
   if (!mime) throw new Error(`is ${type || 'not an image'}`);
 
-  const buf = await readCapped(res, 20_000_000, 'The image');
+  const buf = await readCapped(res, 20 * MB, 'The image');
 
   return { mime, buf };
 }

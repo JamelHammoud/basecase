@@ -82,7 +82,7 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
       )}
 
       {svgError && (
-        <p className="px-3 py-2 rounded-lg bg-red-500/10 text-[12.5px] text-red-300">
+        <p className="px-3 py-2 rounded-lg bg-red-500/10 text-[12.5px] text-red-400">
           Couldn’t read that SVG. {svgError.replace(/^Error:\s*/, '')}
         </p>
       )}

@@ -22,6 +22,7 @@ import { useWatch } from './useWatch';
 import { useSimTouches } from './useSimTouches';
 import { calibratedInput } from '../reality/calibratedInput';
 import { activeCalibrations } from '../reality/history';
+import { SERVO_POPULATIONS } from '../reality/servoPopulations';
 import { newSimWorker, useSimWorker, type CameraLink } from './useSimWorker';
 import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
@@ -222,7 +223,9 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
         options?.alone ? NO_GUESTS : guestsRef.current,
       );
 
-      return buildMjcf(calibratedInput(input, activeCalibrations(current.project.servoCalibrations)));
+      return buildMjcf(
+        calibratedInput(input, activeCalibrations(current.project.servoCalibrations), SERVO_POPULATIONS),
+      );
     },
     [viewportRef],
   );

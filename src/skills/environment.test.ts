@@ -46,6 +46,10 @@ describe('the environment interface', () => {
     expect(await validateEnvironment(stand(), model)).toEqual([]);
   });
 
+  it('keeps a version 1 environment’s hash, so the evidence bound to it still verifies', () => {
+    expect(environmentHash(stand())).toBe('1625a9e574d5df4da549eae120b56be7dfa8da482ec56e193df2a0faca66d4b6');
+  });
+
   it('describes today’s policy observation exactly', () => {
     expect(observationSize(stand())).toBe(obsSize(joints.length));
   });

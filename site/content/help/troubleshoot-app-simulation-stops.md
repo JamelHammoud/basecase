@@ -26,34 +26,39 @@ covers:
   - src/sim/engine.ts
 ---
 
-The Simulate tab runs your robot in MuJoCo, and it needs a robot with at least one joint that turns or slides.
+The Simulate tab runs your robot in MuJoCo once the robot has at least one joint that turns or slides.
 
 ## There's no Simulate tab
 
-The scene has no movable joint yet. Parts joined only rigidly have nothing to simulate.
+The tab appears only when the scene has a movable joint. If your parts are joined rigidly, MuJoCo has nothing to simulate.
 
 1. Add a joint that turns or slides between two parts, or ask the agent to define the robot's joints.
-2. Look at the tabs at the top of the right panel again.
+2. Check the tabs at the top of the right panel again.
 
-It worked when **Simulate** appears beside **Inspect**.
+When the fix works, **Simulate** appears beside **Inspect**.
 
 ## “The simulator stopped.”
 
-The simulation crashed in the background. Your scene is safe; only the running simulation stopped.
+The simulation crashed in the background, but your scene is safe.
 
 1. Click **Stop simulation** beside the speed buttons.
 2. Click **Simulate** to start it again.
 
-Any other red text under **Simulate** is MuJoCo's own message about a model it couldn't load. Stop the simulation, change the part it names, and start again.
+Any other red text under **Simulate** comes from MuJoCo and means it can't load the model. Stop the simulation, change the part the message names, and start the simulation again.
 
 ## “This policy was trained on joints this robot no longer has. Train it again.”
 
-You changed the robot's joints after training. A policy only drives the joints it learned on, so train it again on the robot as it is now.
+You changed the robot's joints after you trained this policy. A policy drives only the joints it learned on, so train it again on the robot as it is now.
 
 ## The time shows a figure like 0.6× real time
 
-The figure shows how fast the simulation runs against the clock. At **1×**, a figure under 1 means your computer can't keep up with the model. At **½×** or **¼×**, it shows the speed you chose, and nothing is wrong.
+The figure compares the simulation's speed with the clock.
+
+- At **1×**, a figure under 1 means your computer can't keep up with the model.
+- At **½×** or **¼×**, the figure should match the speed you chose.
 
 ## Checks says the simulation guesses torque
 
-In the **Build** tab, Checks may say “These joints have no servo, so the simulation guesses their torque from weight.” Assign a servo from **Parts** to each of those joints, and the simulation uses the servo's datasheet limits. When Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model yet. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) measures any Feetech or Dynamixel servo. Any other servo stays on its estimate.
+In the **Build** tab, Checks may say “These joints have no servo, so the simulation guesses their torque from weight.” Assign a servo from **Parts** to each of those joints so the simulation can use the servo's datasheet limits.
+
+If Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model. You can measure any Feetech or Dynamixel servo with [Calibrate an emulated robot](/help/calibrate-an-emulated-robot). Other servos keep their estimate.

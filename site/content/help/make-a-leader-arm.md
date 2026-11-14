@@ -12,13 +12,13 @@ covers:
   - src/workspace/leaderCommands.tsx
 ---
 
-Turn an arm in your scene into a smaller copy you print, wire and move by hand, the way people record demonstrations with an SO-101 or GELLO leader.
+You can turn an arm in your scene into a smaller copy that you print, wire and move by hand. Use it to record demonstrations the way you would with an SO-101 or GELLO leader.
 
 1. Open a scene with a fixed-base arm, like the SO-101 from **Parts** ▸ **Robots**.
-2. Press [[⌘K]] and choose Make a Leader, or right-click any part of the arm and choose Make a Leader.
-3. A new tab opens with the arm's name and Leader after it. The leader has the arm's joints in the same order, each turning about the same axis within the same limits.
-4. Give the brackets a few seconds: each shows as a box until the CAD kernel has compiled it.
-5. Open Build to see its Checks, its bill of materials and its plates.
+2. Press [[⌘K]] and choose Make a Leader. Or right-click any part of the arm and choose Make a Leader.
+3. A new tab opens, named after the arm with Leader at the end. The leader has the same joints as the arm, in the same order. Each joint turns about the same axis, within the same limits.
+4. Wait a few seconds while the CAD kernel compiles the brackets. Until it does, each bracket shows as a box.
+5. Open Build to see the leader's Checks, bill of materials and plates.
 
 ![Make a Leader in ⌘K, with an SO-101 in the scene](/help/make-a-leader-arm/command.png)
 
@@ -28,8 +28,12 @@ Turn an arm in your scene into a smaller copy you print, wire and move by hand, 
 
 ![Build for the leader, with its Checks and bill of materials](/help/make-a-leader-arm/build.png)
 
-Every joint gets a Dynamixel XL330-M288, used only to read its angle, so the bill of materials lists one per joint. The brackets come from the same servo links and bases as the arm template. The last joint carries a handle. If the arm has a gripper, a trigger on the handle is the gripper's joint.
+Each joint gets a Dynamixel XL330-M288, which the leader uses only to read the joint's angle. The bill of materials lists one for each joint. The brackets come from the same servo links and bases as the arm template. The last joint carries a handle. If the arm has a gripper, the trigger on the handle is the gripper's joint.
 
-The leader is about half the arm's reach, but no link is shorter than 56 mm, the closest two XL330s can sit. A small arm like the SO-101 comes out nearer 0.6×.
+A leader has about half the arm's reach. No link is shorter than 56 mm, because two XL330s can't sit any closer than that. For a small arm like the SO-101, the leader comes out nearer 0.6×.
 
-The leader's joints keep the arm's joint ids, and its scene remembers which scene and arm it leads, so its readings can map onto the arm without an offset script. It works on arms whose joints form a single chain, so an arm whose gripper has two finger joints, like the Franka, isn't offered one. The agent can make one too: ask it for a leader for the arm.
+The leader's joints keep the arm's joint ids, and its scene remembers which scene and arm it leads. You can map its readings onto the arm without an offset script.
+
+Make a Leader needs an arm whose joints form a single chain. You won't see it offered for an arm with two finger joints in its gripper, like the Franka.
+
+You can also ask the agent to make a leader for the arm.

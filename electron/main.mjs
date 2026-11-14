@@ -22,7 +22,9 @@ import { APP_DISPLAY_NAME, DEV_MODE } from './appName.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
 import { installPermissions } from './permissions.mjs';
 import { registerHubHandlers } from './hub/routes.mjs';
+import { registerTryHandlers } from './library/tryRoutes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
+import { registerEarthHandlers } from './earth/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
 import { robotPolicyBytes } from './robot/robotPolicy.mjs';
@@ -248,7 +250,9 @@ ipcMain.handle('library:delete-scene', (_e, sceneId) => backend.deleteScene(scen
 registerGuideHandlers(ipcMain, backend.libraryDir);
 registerPrintHandlers(ipcMain, backend.printing);
 registerHubHandlers(ipcMain, backend.hub);
+registerTryHandlers(ipcMain, backend.tries);
 registerOnshapeHandlers(ipcMain, backend.onshape);
+registerEarthHandlers(ipcMain, backend.earth);
 registerShareHandlers(ipcMain);
 
 const robotBinary = daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot });

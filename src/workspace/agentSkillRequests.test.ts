@@ -98,7 +98,7 @@ describe('agent skill tools', () => {
     const id = /^Draft ([0-9a-f]{64})/.exec(drafted)?.[1];
 
     expect(drafted).toContain('- Passes when: q_arm1 above 0.6, held 0.2 s within the whole try.');
-    expect(drafted).toMatch(/- Holding still: fails \(margin -/);
+    expect(drafted).toMatch(/- Holding still: fails \(margin −/);
     expect(drafted).toContain(`ask before train_skill draft "${id}"`);
 
     const started = await SKILL_HANDLERS.skill_train({ draft: id }, ctx);

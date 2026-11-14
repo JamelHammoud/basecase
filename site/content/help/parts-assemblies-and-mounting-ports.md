@@ -47,38 +47,62 @@ What a part is made from decides whether you can resize it, whether it's printed
 | Imported mesh | Import, including STEP and IGES bodies | Yes |
 | Robot link | Import Robot or **Parts** ▸ **Robots** | No |
 
-A shape, agent part or imported mesh is printed until you change its material under **Appearance**. Components keep the maker's exact size, so they can't be resized. Hardware changes size through its own **Size** and **Length** choices.
+Shapes, agent parts and imported meshes are printed until you change their material under **Appearance**. Components keep the maker's exact size, so you can't resize them. To change the size of hardware, use its **Size** and **Length** choices.
 
 ## Real components are never estimates
 
-Every component in **Parts** is a real product with exact geometry. Its mesh comes from the maker's CAD file, or is modeled from the maker's drawing when there isn't one. A third-party file only ships after it's measured against the maker's drawing to about 0.1 mm.
+Every component in **Parts** is a real product with exact geometry. Its mesh comes from the maker's CAD file, or from the maker's drawing if the maker doesn't provide a CAD file. A third-party file ships only after it's measured against the maker's drawing to about 0.1 mm.
 
-The **Product** section in the Inspector shows the maker, part number, mounting notes, where the 3D model came from and links to buy it. Parts the agent finds outside the catalog appear under **Added by Agent**, with their link and source.
+Select a component to see its **Product** section in the Inspector. It shows the maker, the part number, mounting notes, where the 3D model came from, and links to buy the part.
 
-Estimated stand-ins, such as a generic servo or bracket, never appear in **Parts**. The agent can block out a design with them, and Checks list each one as a placeholder to replace.
+When the agent finds a part that isn't in the catalog, the part appears under **Added by Agent** with its link and source.
+
+Estimated stand-ins, such as a generic servo or bracket, never appear in **Parts**. The agent can use them to block out a design, and Checks list each one as a placeholder you need to replace.
 
 ## Assemblies
 
-A robot is an assembly: parts held together by screws, inserts and nuts, with joints where they move. Groups only organize parts; they don't hold anything together.
+A robot is an assembly. Screws, inserts and nuts hold its parts together, with joints where parts move. Groups only organize parts and don't hold anything together.
 
-Checks read the assembly as it's modeled. They ask whether every part is attached, every screw grips something, and there's an order in which it all goes together. [Build tab checks](/help/build-checks) lists each one.
+Checks read the assembly as it's modeled and make sure that:
+
+- Every part is attached.
+- Every screw grips something.
+- There's an order in which everything goes together.
+
+For a list of every check, see [Build tab checks](/help/build-checks).
 
 ## Mounting ports
 
-Every component carries mounting ports: named holes, bores, bosses, faces and outputs, each with a position and a direction. They're measured from the maker's mesh and tested against it.
+Every component has mounting ports: named holes, bores, bosses, faces and outputs, each with a position and a direction. Each port's position and direction come from the maker's mesh, and tests check them against it.
 
-The Feetech STS3215 servo, for example, has:
+For example, the Feetech STS3215 servo has:
 
-- an output horn 19.95 mm across, with four M3 holes 3 mm deep on a 14 mm circle;
-- an idler horn with the same pattern on the underside;
-- four M2 holes on the top of the case and four on the bottom.
+- An output horn 19.95 mm across, with four M3 holes 3 mm deep on a 14 mm circle
+- An idler horn on the underside, with the same hole pattern
+- Four M2 holes on the top of the case and four on the bottom
 
-Bus servos, servo adapters, batteries and regulators also carry connector ports where a cable plugs in. Each has a type, such as 5264 or XT60. Connectors never mate; the bill of materials counts cables from them.
+Bus servos, servo adapters, batteries and regulators also have connector ports where a cable plugs in. Each connector port has a type, such as 5264 or XT60. Connectors never mate. The bill of materials uses them to count cables.
 
-Hardware has ports too, and parts the agent models declare their own in their code.
+Hardware has ports too, and parts the agent models declare their own ports in their code.
 
-The agent places parts by their ports. It mates a port on one part to a port on another: fastened, on the same axis, face to face, press fit or sliding. The mate is kept: when the agent moves or remodels either part, it's applied again. Dragging a mated part yourself releases the mate.
+### How the agent uses ports
 
-To join two parts with a screw, the agent picks the stock length from what the screw passes through. It adds the washer, insert or nut, and cuts the holes in the parts it modeled.
+The agent places parts by their ports. It mates a port on one part to a port on another in one of these ways:
 
-Checks use the ports too. A screw that threads into a component more than 1 mm from every hole is a blocker. So is one that goes deeper than its hole. Servo alignment reads each servo's output to see that it sits on its joint's axis.
+- Fastened
+- On the same axis
+- Face to face
+- Press fit
+- Sliding
+
+The agent keeps each mate and applies it again whenever it moves or remodels either part. If you drag a mated part yourself, that releases the mate.
+
+When the agent joins two parts with a screw, it picks the stock length based on what the screw passes through. It also adds the washer, insert or nut, and cuts the holes in any parts it modeled.
+
+### How Checks use ports
+
+Checks also read ports to find problems:
+
+- A screw that threads into a component more than 1 mm from every hole is a blocker.
+- A screw that goes deeper than its hole is a blocker.
+- Servo alignment reads each servo's output to make sure it sits on its joint's axis.

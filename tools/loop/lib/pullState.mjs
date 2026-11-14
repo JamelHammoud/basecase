@@ -8,6 +8,7 @@ const pulls = store('pulls', {
   conflictFails: 0,
   refreshed: [],
   rebuilt: false,
+  judged: null,
 });
 
 export const entryFor = pulls.get;
@@ -15,6 +16,14 @@ export const entryFor = pulls.get;
 export const saveEntry = pulls.save;
 
 export const markLooked = (number, at) => pulls.update(number, () => ({ lastLook: at }));
+
+export const markJudged = (number, sha, output) => pulls.update(number, () => ({ judged: { sha, output } }));
+
+export const judgedAt = (number, sha) => {
+  const { judged } = pulls.get(number);
+
+  return judged?.sha === sha ? judged.output : null;
+};
 
 export const markRebuilt = (number) => pulls.update(number, () => ({ rebuilt: true }));
 

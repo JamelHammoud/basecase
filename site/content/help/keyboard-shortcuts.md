@@ -20,6 +20,7 @@ covers:
   - src/components/shortcutGroups.ts
   - src/components/ShortcutsList.tsx
   - src/workspace/useWorkspaceKeys.ts
+  - src/components/tries/useTriesKeys.ts
   - src/app/tabShortcuts.ts
   - src/design-system/platformKeys.ts
   - src/components/agent/Composer.tsx
@@ -85,6 +86,8 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Deselect | [[Esc]] |
 
 [[Esc]] also leaves whichever mode is open, once anything smaller in it has cleared. Sketch and Import SVG stay open while they hold a drawing.
+
+In [Tries](/help/open-a-try-from-any-scene), [[⌫]] deletes the selected tries once you confirm. Keys without [[⌘]] leave the scene alone there.
 
 ## Scenes
 

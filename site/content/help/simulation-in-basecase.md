@@ -33,7 +33,7 @@ MuJoCo is the physics engine much of robotics research uses. Basecase runs Googl
 
 You never write or edit a model file. Each time a simulation starts, Basecase writes a MuJoCo model (MJCF, MuJoCo's XML format) from the scene as it is.
 
-- **Bodies.** Each joint gets one body, holding the parts that joint moves. A robot that walks or rolls floats free; an arm stays bolted to the floor.
+- **Bodies.** Each joint gets one body, holding the parts that joint moves. A robot that walks or rolls floats free. An arm stays bolted to the floor.
 - **Mass.** Each part weighs what the Weight check in the Build tab says it weighs.
 - **Shape.** Each part collides as the convex hull of its mesh, the shape a sheet of plastic wrap would make around it.
 - **Start.** The robot starts in the pose on the canvas, lifted until it clears the floor.

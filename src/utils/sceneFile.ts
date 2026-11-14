@@ -44,6 +44,7 @@ function localProject(project: ProjectSettings | undefined): ProjectSettings | u
   delete rest.prints;
   delete rest.policies;
   delete rest.tries;
+  delete rest.triesStored;
   delete rest.skills;
   delete rest.buildGuide;
 

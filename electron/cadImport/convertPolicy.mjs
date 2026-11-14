@@ -1,5 +1,7 @@
+import { MB } from '../fileSize.mjs';
+
 export const CONVERT_MS = 150_000;
-export const MAX_SOURCE_BYTES = 200_000_000;
+export const MAX_SOURCE_BYTES = 200 * MB;
 
 export const CONVERT_MESSAGES = {
   timeout: 'Converting took too long. The file may be too big for the built-in reader.',

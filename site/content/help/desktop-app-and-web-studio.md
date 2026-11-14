@@ -24,15 +24,19 @@ covers:
   - src/forge/tabSupport.ts
 ---
 
-Model, pose and simulate in your browser at app.basecase.so, with no download, and move to the desktop app when you need the agent.
+You can model, pose and simulate in your browser at app.basecase.so without downloading anything. When you need the agent, move to the desktop app.
 
 ## What the web studio does
 
 The [web studio](https://app.basecase.so) is the same studio as the desktop app, running in a browser tab. You can place parts, import meshes and robots, pose joints, run the simulation and export files.
 
-It saves scenes and Library models in your browser's storage, on that computer only. Clearing site data for app.basecase.so deletes them. Chats aren't saved.
+The web studio saves your scenes and Library models in your browser's storage, on that computer only. It doesn't save chats.
+
+**Note:** If you clear site data for app.basecase.so, your browser deletes your scenes and Library models.
 
 ## What needs the desktop app
+
+Some features work only in the desktop app. In the web studio, you see this instead:
 
 | Feature | In the web studio |
 |---|---|
@@ -43,11 +47,12 @@ It saves scenes and Library models in your browser's storage, on that computer o
 | **Play** ▸ **Operate** | Not shown |
 | STEP and IGES import | Meshes only: STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE |
 | Publishing a dataset to Hugging Face | Export only |
+| **Place on Map** | Not shown |
 
-Settings has no **Agent**, **Printers** or **Accounts** pane in the web studio. There's no menu bar either; [[⌘K]] runs every command the menus would.
+In the web studio, Settings doesn't have the **Agent**, **Printers** or **Accounts** panes. There's no menu bar either. Press [[⌘K]] to run any command you'd find in the menus.
 
-A blue strip at the top of the web studio links the desktop download. Closing it hides it for good in that browser.
+A blue strip at the top of the web studio links to the desktop download. If you close it, it won't come back in that browser.
 
 ## Moving a scene between them
 
-The two don't share storage. To move a scene, [share it as a file](/help/share-a-scene) from one and [open the shared scene](/help/open-a-shared-scene) in the other.
+The web studio and the desktop app don't share storage. To move a scene from one to the other, [share it as a file](/help/share-a-scene), then [open the shared scene](/help/open-a-shared-scene) in the other.

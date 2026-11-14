@@ -23,24 +23,26 @@ covers:
   - src/workspace/agentLanes.ts
 ---
 
-Go back to an earlier conversation with the agent, or start a fresh one while the current chat keeps working.
+You can go back to an earlier conversation with the agent, or start a new one while your current chat keeps working.
 
 ## Open a past chat
 
 1. Click **Agent** at the top of the right panel.
 2. Click **Agent** again to open **History**.
-3. Click the chat.
+3. Click the chat you want to open.
 
-Chats are grouped by when you last used them, and **Running** lists the ones at work now. A chat's name is its first message.
+History groups your chats by when you last used them. Chats that are working appear under **Running**. Each chat takes its name from its first message.
 
-To delete a chat, hover it in **History** and click **Delete**. Basecase asks first, and you can't undo it.
+To delete a chat, hover over it in **History**, then click **Delete**. Basecase asks you to confirm first. You can't undo a delete.
 
 ## Start a new chat
 
 1. Click the **New chat** button beside the composer.
 
-**New Chat** is also in [[⌘K]].
+You can also find **New Chat** in [[⌘K]].
 
-A chat that's still working keeps going in the background. Each scene runs up to 4 chats at once. A new chat starts with a clean memory, which helps once the **Context** bar in the model menu nears full.
+If your current chat is still working, it keeps going in the background. Each scene can run up to 4 chats at once.
 
-Chats stay on your computer. They aren't in a shared `.basecase` file, and the web studio doesn't save them.
+A new chat starts with a clean memory, which helps when the **Context** bar in the model menu is nearly full.
+
+**Note:** Chats save on your computer. A `.basecase` file you share doesn't include them, and the web studio doesn't save them.

@@ -24,3 +24,5 @@ Pass it when none of those hold. Style preferences that no guide states are not 
 Size is never a failure. A large pull request that carries one idea everywhere it applies is what the loop wants; a pull request that mixes unrelated ideas is a `minor` finding, never a blocker.
 
 Answer with your verdict, a two-sentence summary, and each finding with its file, line, severity (`blocker` or `minor`), what's wrong and what would fix it. Only `blocker` findings fail a pull request.
+
+Fail a new or changed user-facing string that reads machine-made, using the patterns in `tools/voice/prompts/humanizer.md` (staged contrasts, forced threes, inflated words, filler, a semicolon or an em dash). Product copy isn't rewritten by the voice pipeline, so review is where it gets caught.

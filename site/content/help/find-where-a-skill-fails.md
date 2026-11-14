@@ -43,7 +43,7 @@ Find the friction, weight, servo strength or servo delay where a ready skill sto
 
 ![The Stand row while it's stressed, with its progress and Stop](/help/find-where-a-skill-fails/stressing.png)
 
-4. Read the findings under the row. Each names a condition and the value past which the skill fails, such as **Delay > 76 ms**. The number on the right is its margin at the worst value; below zero means it failed.
+4. Read the findings under the row. Each names a condition and the value past which the skill fails, such as **Delay > 76 ms**. The number on the right is its margin at the worst value. A margin below zero means the skill failed.
 
 ![A Stand row with one finding, Delay over 76 ms, and Train on These](/help/find-where-a-skill-fails/findings.png)
 

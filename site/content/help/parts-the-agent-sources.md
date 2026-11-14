@@ -26,33 +26,36 @@ covers:
   - src/utils/bom.ts
 ---
 
-When the catalog lacks a part, the agent finds a real one online and adds it to Parts, marked Added by Agent.
+If the catalog doesn't have the part you need, the agent finds a real one online and adds it to Parts, marked Added by Agent.
 
 ## How a part gets added
 
-Ask the agent for a part by name or with a link. It opens the maker's page and looks for the part number before it saves anything. When the maker publishes a STEP or IGES model, the agent downloads it, converts it and checks its size against the datasheet. Holes that go through the part become mounting points, like a catalog part's.
+Ask the agent for a part by name or with a link. Before it saves anything, the agent opens the maker's page and looks for the part number. If the maker publishes a STEP or IGES model, the agent downloads it, converts it and checks its size against the datasheet. You get a mounting point at each through-hole, as you do on a catalog part.
 
-The part joins **Parts** at once, under **Added by Agent** in **Components**. Parts with no 3D model yet are listed under **Needs a 3D model**. They can't be placed, so each opens its product page instead.
+The part appears in **Parts** at once, under **Added by Agent** in **Components**. Parts that don't have a 3D model yet are listed under **Needs a 3D model**. You can't place these in the scene, so each one opens its product page instead.
 
 ## On the bill of materials
 
-Sourced parts have their own section, **Added by Agent**. Materials and equipment the agent found have no shape, so they appear under **Materials** or **Equipment**. Their prices are estimates until you save the price you see with **Add Price**.
+The bill of materials gives sourced parts their own section, **Added by Agent**. Materials and equipment the agent found have no shape, so the bill lists them under **Materials** or **Equipment**.
+
+Prices for sourced items stay estimates until you save the price you see with **Add Price**.
 
 ## When a sourced part counts as real
 
-A finished robot uses only parts someone can look up. The **Real parts** check blocks a sourced part until all of these hold:
+A finished robot uses only parts someone can look up. The **Real parts** check blocks a sourced part until it meets all four of these:
 
 - Its link is confirmed. A store link counts once you save a price for that line.
 - Its numbers, such as torque or voltage, come from a named source.
 - It has the maker's geometry, if it takes up space in the robot.
-- Its CAD matches the datasheet's size.
+- Its CAD matches the size in the datasheet.
 
 Until then, the check reads “Its link and numbers aren’t checked”.
 
-Amazon links are never opened by the app, so an Amazon part waits for your price.
+The app never opens Amazon links, so an Amazon part waits until you save a price for it.
 
 ## Limits
 
-Sourcing runs in the desktop app, where the agent runs. A sourced part's model stays on the computer that added it. A shared scene keeps the part's record, but not its 3D model.
+- Sourcing works in the desktop app, where the agent runs.
+- A sourced part's 3D model stays on the computer that added it. If you share the scene, the part's record goes with it, but the model doesn't.
 
-What to do when the check stays red is in [Real parts check lists placeholders or unchecked parts](/help/troubleshoot-build-real-parts-check).
+If the check stays red, see [Real parts check lists placeholders or unchecked parts](/help/troubleshoot-build-real-parts-check).

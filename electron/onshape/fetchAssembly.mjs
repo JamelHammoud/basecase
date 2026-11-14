@@ -1,11 +1,12 @@
 import { assemblyModel } from './assembly.mjs';
 import { isId } from './link.mjs';
+import { MB } from '../fileSize.mjs';
 import { mateLimits } from './mates.mjs';
 import { occurrencesOf, partKey, uniqueParts } from './occurrences.mjs';
 import { partMesh } from './partMesh.mjs';
 
 const API = '/api/v10';
-const MAX_STEP_BYTES = 200_000_000;
+const MAX_STEP_BYTES = 200 * MB;
 const POLL_MS = 1000;
 const MAX_POLLS = 180;
 const WORKERS = 4;

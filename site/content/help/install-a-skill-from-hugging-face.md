@@ -27,25 +27,25 @@ covers:
   - electron/hub/
 ---
 
-Start your robot from a skill someone published, then train it on your robot and prove it in Arena before it counts as ready.
+You can start your robot from a skill that someone else published. Basecase then trains the skill on your robot and proves it in Arena before it counts as ready.
 
 Install Skill works in the desktop app, on legged robots. It takes Motor Kit skills: Stand, Walk, Get up and Settle.
 
-1. Open your robot and the **Simulate** tab.
+1. Open your robot, then open the **Simulate** tab.
 2. Press [[⌘K]] and choose **Install Skill**.
 
 ![Install Skill in the command palette](/help/install-a-skill-from-hugging-face/command.png)
 
-3. Paste the skill's Hugging Face link into the field, and press [[↩]].
+3. Paste the skill's Hugging Face link into the field, then press [[↩]].
 
 ![The Install Skill sheet with a repo link](/help/install-a-skill-from-hugging-face/link.png)
 
-4. Wait for the skill's row under **Train** to finish training. It shows Arena's result when it's ready.
+4. Wait for the skill's row under **Train** to finish training. When it's ready, the row shows Arena's result.
 
 ![The hexapod's Stand row ready after installing](/help/install-a-skill-from-hugging-face/installed.png)
 
-A file that doesn't match `skill.json` stops the install, and the toast names it. Legs with a different number of joints don't fit, and the toast says how many each has.
+If a file doesn't match `skill.json`, the install stops and a toast names the file. Legs with a different number of joints don't fit, and the toast then says how many joints each one has.
 
-Your skill keeps its own Arena evidence, never the author's. If Arena refuses it, nothing is saved, and the row shows "Refused in Arena" with its worst count.
+Your skill earns its own Arena evidence. The author's evidence doesn't carry over. If Arena refuses the skill, Basecase saves nothing, and the row shows "Refused in Arena" with its worst count.
 
-[Arena](/help/arena) explains what it checks.
+To learn what Arena checks, see [Arena](/help/arena).

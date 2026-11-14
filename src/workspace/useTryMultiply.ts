@@ -4,9 +4,10 @@ import { caseCheckPool } from '../cases/caseChecksClient';
 import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import { generatedFrom, generatedTry, multipliable, sha256, type TryRecord, type TryScoring } from '../cases/tries';
-import { deleteRecording, loadRecording, saveRecording } from '../cases/tryStore';
+import { loadRecording } from '../cases/tryStore';
 import type { Variation } from '../cases/tryReplay';
 import { rigForWorker } from '../sim/drive';
+import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
@@ -26,7 +27,7 @@ interface MultiplyOptions {
   active: Case | null;
   tries: TryRecord[];
   partners: () => SlotRobot[];
-  onTries: (records: TryRecord[]) => void;
+  onTries: (made: Array<{ record: TryRecord; recording: Recording }>, live: () => boolean) => Promise<void>;
   showToast: ShowToast;
 }
 
@@ -90,15 +91,12 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
       }),
     );
 
-    await Promise.all(made.map((t, i) => saveRecording(t.id, kept[i].recording)));
+    if (!live() || !made.length) return;
 
-    if (!live()) {
-      made.forEach((t) => void deleteRecording(t.id));
-
-      return;
-    }
-
-    if (made.length) onTries(made);
+    await onTries(
+      made.map((record, i) => ({ record, recording: kept[i].recording })),
+      live,
+    );
   };
 
   const run = async (record: TryRecord, kase: Case) => {

@@ -6,12 +6,16 @@ image: /changelog/explore-servo-versions/cover.png
 
 You can now run a Case on every catalog version of your robot's servos and supply voltage, then apply the winner in one undo step.
 
-It's **Explore** in the open Case's header in the Simulate tab, and in ⌘K. The rows land in Results with passes, cost and mass, and sort by any of them.
+Open a Case in the Simulate tab and click **Explore** in its header, or find it in ⌘K. Results shows a row for each design with its passes, cost and mass, and you can sort by any of them.
 
-Picking a servo used to mean swapping a version by hand and trying the Case again. On a three-joint test arm with a 500 g hand on Touch the Dots, the STS3215 C001 shoulder passed 8 of 8 runs. A C046 shoulder, geared 1:147 for speed, passed 1. C018 servos on every joint passed none at 7.4 V and all 8 at 12 V.
+Until now, picking a servo meant swapping a version by hand and trying the Case again. On a three-joint test arm with a 500 g hand on Touch the Dots, the STS3215 C001 shoulder passed 8 of 8 runs, and a C046 shoulder, geared 1:147 for speed, passed 1. With C018 servos on every joint, the arm passed none at 7.4 V and all 8 at 12 V.
 
-Each design gets 8 seeded runs, with friction, weight, servo strength and delay varied. Every servo is rated at the row's voltage, as the Servo torque check rates it. Explore stops at 64 designs. **Apply** swaps the servos and the power supply's voltage, so the bill of materials and Checks follow, and ⌘Z puts it all back.
+Each design gets 8 seeded runs that vary friction, weight, servo strength and delay. Explore rates every servo at the row's voltage, the same way the Servo torque check does, and stops at 64 designs.
 
-Only Cases with one robot can be explored. A robot on a battery keeps the battery's voltage. The agent answers "which servo should I buy" with the same runs.
+Click **Apply** and Basecase swaps the servos and the power supply's voltage, so the bill of materials and Checks update to match. Press ⌘Z to undo all of it.
 
-Steps are in [Explore servo versions on a Case](/help/explore-servo-versions-on-a-case).
+Explore only works on Cases with one robot. A robot on a battery keeps the battery's voltage.
+
+Ask the agent "which servo should I buy" and it answers with the same runs.
+
+Read [Explore servo versions on a Case](/help/explore-servo-versions-on-a-case) in the help center for the steps.

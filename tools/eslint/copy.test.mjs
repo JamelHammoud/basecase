@@ -67,13 +67,29 @@ const GLOSSARY_SAMPLES = [
   ['Generate Guide', 'Generate', 'Make'],
   ['Auto-generated guide', 'Auto-generated', 'Make'],
   ['Regenerate', 'Regenerate', 'Update'],
+  ['Recordings', 'Recordings', 'Try'],
+  ['Episode 3', 'Episode', 'Try'],
+  ['Demos', 'Demos', 'Try'],
+  ['Demonstration from the leader arm', 'Demonstration', 'Try'],
 ];
 
 const SPELLING_SAMPLES = Object.keys(SPELLING).map((british) => [`The ${british} one`, british]);
 
 const APOSTROPHE_SAMPLES = [["Couldn't load the model", "n't"]];
 
-const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES, ...SPELLING_SAMPLES, ...APOSTROPHE_SAMPLES];
+const MINUS_SAMPLES = [
+  ['Head between -180° and 180°.', '-180'],
+  ['-0.42 N·m', '-0.42'],
+  ['Margin (-1.5)', '-1.5'],
+];
+
+const SAMPLES_WITH_GLOSSARY = [
+  ...SAMPLES,
+  ...GLOSSARY_SAMPLES,
+  ...SPELLING_SAMPLES,
+  ...APOSTROPHE_SAMPLES,
+  ...MINUS_SAMPLES,
+];
 
 const errors = (text) => [{ messageId: 'banned', data: findBannedCopy(text) }];
 
@@ -133,6 +149,8 @@ describe('glossary', () => {
       'Clear sketch?',
       'Clear Fault',
       'Eraser',
+      'Recording parts on hand',
+      'Recorded 3 tries',
       'View',
       'Viewer',
       'Endless',
@@ -202,6 +220,22 @@ describe('apostrophes', () => {
   });
 });
 
+describe('minus signs', () => {
+  it('flags a hyphen written as a minus sign', () => {
+    for (const [text, word] of MINUS_SAMPLES) {
+      const hit = findBannedCopy(text);
+
+      expect(hit?.word).toBe(word);
+      expect(hit?.section).toBe('§3b-22');
+    }
+  });
+
+  it('allows − and hyphens inside words and ranges', () => {
+    for (const text of ['Head between −180° and 180°.', 'M3-12 screw', 'SO-101 Arm', 'Pages 3-4', 'Wi-Fi'])
+      expect(findBannedCopy(text)).toBeNull();
+  });
+});
+
 tester.run('basecase/copy', rule, {
   valid: [
     'const yet = 1;',
@@ -228,6 +262,7 @@ tester.run('basecase/copy', rule, {
     'const el = <input placeholder={saved ? "••••••••" : ""} />;',
     'const el = <input placeholder={hint} />;',
     "const field = { placeholder: 'e.g. Jump' };",
+    'const el = <p>{`Pages ${lo}-5`}</p>;',
   ],
   invalid: [
     ...SAMPLES.map(([text]) => ({ code: `const el = <p>${text}</p>;`, errors: errors(text) })),
@@ -252,6 +287,8 @@ tester.run('basecase/copy', rule, {
     { code: '<IconButton title="Remove Price" />;', errors: errors('Remove Price') },
     { code: '<a aria-label={`View ${name}`} />;', errors: errors('View ') },
     { code: 'const el = <p>Centre of mass</p>;', errors: errors('Centre of mass') },
+    { code: 'const el = <p>{`-90° to ${hi}`}</p>;', errors: errors('-90° to ') },
+    { code: 'const el = <p>{`${lo} to -90°`}</p>;', errors: errors(' to -90°') },
     ...['Add a comment', 'Reply', 'Name', 'Type a label', 'What’s next'].map((text) => ({
       code: `const el = <input placeholder="${text}" />;`,
       errors: [{ messageId: 'placeholder', data: { text, fix: PLACEHOLDER_FIX } }],

@@ -33,8 +33,9 @@ Fixes for Operate when Connect is missing, a rung is refused, a fault stops the 
 
 Operate shows "No robot" when the scene has no joint that moves. With more than 32 moving joints, it shows nothing to connect. Operate isn't in the browser version of Basecase.
 
-1. Click **Browse Robots** under "No robot" to insert a robot.
-2. Click **Operate** again.
+1. Click **Show Robots** under "No robot".
+2. Click a robot in **Parts** to insert it.
+3. Click **Operate** again.
 
 ## "Load a policy first"
 

@@ -87,11 +87,11 @@ describe('Parts', () => {
     expect(labels).toEqual(['Parts', 'Play', 'Layers', 'Library', 'Settings']);
   });
 
-  it('opens on its Robots section from Browse Robots in Play', async () => {
+  it('opens on its Robots section from Show Robots in Play', async () => {
     const { page } = app;
 
     await page.locator(shown(PLAY_RAIL)).first().click();
-    await page.getByRole('button', { name: 'Browse Robots' }).first().click();
+    await page.getByRole('button', { name: 'Show Robots' }).first().click();
 
     await expect.poll(() => railButton(page, 'Parts').getAttribute('aria-pressed')).toBe('true');
     await expect.poll(() => sectionInView(page, 'Robots')).toBe(true);

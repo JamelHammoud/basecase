@@ -78,7 +78,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
       onReplayFall={(deg) => void replayFall(core, deg)}
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
-      onToast={(m) => showToast(m)}
+      onToast={showToast}
       guide={guide}
       readiness={core.readiness}
     />

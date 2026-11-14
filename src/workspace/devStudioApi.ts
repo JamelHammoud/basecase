@@ -76,6 +76,8 @@ export interface DevActions {
   worldAt: () => Record<string, number[]>;
   tryWorld: () => Promise<WorldEvent[]>;
   printPlates: () => unknown;
+  markPlatePrinted: (plate: number) => void;
+  readySteps: () => boolean[];
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   printState: () => unknown;
@@ -285,6 +287,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),
     printPlates: () => devRef.current.printPlates(),
+    markPlatePrinted: (plate: number) => devRef.current.markPlatePrinted(plate),
+    readySteps: () => devRef.current.readySteps(),
     bomLines: () =>
       buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
         ({ key, qty }) => ({ key, qty }),

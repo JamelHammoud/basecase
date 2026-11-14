@@ -109,7 +109,6 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
       y: e.clientY,
       items: [
         { label: 'Retrain', disabled: !training.canTrain, onSelect: () => void training.retrain(policy) },
-        { divider: true },
         deleteEntry(() => onDeletePolicy(id)),
       ],
     });

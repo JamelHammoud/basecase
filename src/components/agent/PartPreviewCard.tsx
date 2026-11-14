@@ -5,6 +5,7 @@ import type { ScenePart } from '../../types/robotics';
 import { overallSize } from '../layers/layerRows';
 import { sizeLabel } from '../../utils/size';
 import { Header } from '../PartDetails';
+import { plural } from '../../../electron/plural.mjs';
 
 export const PART_PREVIEW_WIDTH = 280;
 
@@ -22,7 +23,7 @@ const titleOf = (parts: ScenePart[]) => {
 
   if (group && parts.every((p) => p.group?.id === group.id)) return group.name;
 
-  return `${parts.length} parts`;
+  return plural(parts.length, 'part');
 };
 
 function usePreviewCanvas(shown: ScenePart[], panScroll: boolean) {

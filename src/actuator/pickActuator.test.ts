@@ -55,7 +55,7 @@ describe('pickActuator', () => {
   });
 
   it('says what the strongest actuator stalls at when none carries the load', () => {
-    expect(pickActuator(need(200))).toEqual({ problem: 'The strongest actuator stalls at 89.32 N·m' });
+    expect(pickActuator(need(200))).toEqual({ problem: 'The strongest actuator stalls at 89.3 N·m' });
   });
 
   it('gives the same actuator for the same inputs', () => {

@@ -1,5 +1,6 @@
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { actuatorOf } from '../data/components';
+import { torque } from '../utils/torque';
 import type { MadeActuator } from '../workspace/useMakeActuator';
 
 export interface ActuatorToolContext {
@@ -19,7 +20,7 @@ function madeText(made: Extract<MadeActuator, { added: ScenePart[] }>): string {
   const spec = motor && actuatorOf(motor.componentId!, motor.componentVariant)!;
   const printed = added.filter((p) => p.cad).map((p) => `${p.id} (${p.name})`);
   const rating = spec
-    ? `${motor!.name} ${motor!.componentVariant}: ${spec.stallNm} N·m peak, ${spec.ratedNm} N·m rated, ${spec.rpm} rpm at ${spec.atVolts} V, armature ${spec.armature} kg·m² (estimates). `
+    ? `${motor!.name} ${motor!.componentVariant}: ${torque(spec.stallNm)} peak, ${torque(spec.ratedNm)} rated, ${spec.rpm} rpm at ${spec.atVolts} V, armature ${spec.armature} kg·m² (estimates). `
     : '';
 
   return `Made ${made.name} (one undo step): ${rating}Printed: ${printed.join(', ')}. The joint's actuator is ${motor?.id}; Checks re-run on their own.`;

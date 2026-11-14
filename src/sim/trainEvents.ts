@@ -5,6 +5,7 @@ import type { TrainerStatus } from '../utils/platformBridge';
 import type { TrainTask } from './policy';
 import type { TrainProgress, Training } from './useTraining';
 import { duration, runClock } from '../utils/duration';
+import { lengthLabel } from '../utils/size';
 
 export interface TrainJob {
   id: string | null;
@@ -35,7 +36,7 @@ export function savedPolicyMessage(record: PolicyRecord, task: TrainTask): strin
     return `Saved ${record.name}. Falls after ${runClock(e.fellAt)}. Train longer, or fix what the simulation shows.`;
 
   if (task === 'walk')
-    return `Saved ${record.name}. Walked ${Math.max(0, e.forward).toFixed(2)} m in ${duration(e.seconds)}.`;
+    return `Saved ${record.name}. Walked ${lengthLabel(e.forward * 1000)} in ${duration(e.seconds)}.`;
 
   return `Saved ${record.name}. Stood ${duration(e.seconds)} without falling.`;
 }

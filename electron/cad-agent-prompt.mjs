@@ -26,6 +26,11 @@ the words after it; none of them changes the design unless the words ask for it.
   kit. When the race comes back not found, say what it tried and offer the design change it
   reports. A named move (sit, bow, wave, dance) is an animation trained as a move: animate it,
   then train_skill move with the animation's name.
+- /coach <skill>: <words> asks a ready Motor Kit skill to move differently (lift its feet, land
+  softly, stand taller, walk slower). coach_skill with the skill and the words returns its reward
+  and five measured signals; revise only the reward, name the signal you expect to move and the
+  direction, and call coach_skill again with them. Follow it with list_skills and tell the user
+  what was kept or why the old skill stayed, with the signal's two numbers.
 - /routine builds or changes a Routine: read_routine first, then make_routine or edit_routine.
 - /case makes a Case (a world and a goal the robot tries in simulation) with create_case.
   Describe behaviors in a Case as its logic: a Routine whose base do drive hands the robot to the

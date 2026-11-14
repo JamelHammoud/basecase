@@ -3,7 +3,18 @@ import os from 'node:os';
 import path from 'node:path';
 import { BRIEFS } from './paths.mjs';
 import { run } from './sh.mjs';
-import { limitIn, pause, resume, startPause, UsageLimit } from './usage.mjs';
+import { runCodex } from './codex.mjs';
+import {
+  codexPause,
+  isActive,
+  limitIn,
+  pause,
+  resume,
+  resumeCodex,
+  startCodexPause,
+  startPause,
+  UsageLimit,
+} from './usage.mjs';
 
 const TELLING = new Set(['build', 'refine', 'revise', 'rebuild']);
 
@@ -44,23 +55,7 @@ const withoutGithub = (fn) => {
   }
 };
 
-function throwIfLimited(output) {
-  const limit = limitIn(output);
-
-  if (!limit) return;
-
-  const error = new UsageLimit(limit.until);
-
-  error.started = startPause(limit.until);
-
-  throw error;
-}
-
-export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox }) {
-  const paused = pause();
-
-  if (paused && Date.now() < paused.until) throw new UsageLimit(paused.until);
-
+function runClaude({ cwd, name, prompt, schema, hours, sandbox }) {
   const args = [
     '-p',
     prompt,
@@ -76,10 +71,9 @@ export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox }) {
   const launch = (env) =>
     run(process.env.CLAUDE_BIN || 'claude', args, { cwd, env, timeout: hours * 60 * 60 * 1000, allowFail: true });
   const { out, err } = sandbox ? withoutGithub(launch) : launch();
+  const limited = limitIn({ out, err });
 
-  throwIfLimited({ out, err });
-
-  if (paused) resume();
+  if (limited) return { ok: false, limited };
 
   try {
     const result = lastResult(out);
@@ -89,6 +83,48 @@ export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox }) {
   } catch (error) {
     return { ok: false, error: `${error.message}: ${(err || out).slice(-1000)}` };
   }
+}
+
+const bothLimited = (codexUntil) => new UsageLimit(Math.min(pause()?.until ?? codexUntil, codexUntil));
+
+function viaCodex(options) {
+  const held = codexPause();
+
+  if (isActive(held)) throw bothLimited(held.until);
+
+  const launch = (env) => runCodex({ ...options, brief: brief(options.name), env });
+  const result = options.sandbox ? withoutGithub(launch) : launch();
+
+  if (result.limited) {
+    const error = bothLimited(result.limited.until);
+
+    error.started = startCodexPause(result.limited.until);
+
+    throw error;
+  }
+
+  if (held) resumeCodex();
+
+  return result;
+}
+
+export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox }) {
+  const options = { cwd, name, prompt, schema, hours, sandbox };
+  const held = pause();
+
+  if (isActive(held)) return viaCodex(options);
+
+  const result = runClaude(options);
+
+  if (result.limited) {
+    startPause(result.limited.until);
+
+    return viaCodex(options);
+  }
+
+  if (held) resume();
+
+  return result;
 }
 
 const text = (description) => ({ type: 'string', description });

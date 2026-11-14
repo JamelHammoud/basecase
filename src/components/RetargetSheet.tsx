@@ -4,6 +4,7 @@ import type { RobotAnimation } from '../types/robotics';
 import { duration } from '../utils/duration';
 import { isMovable, prettyJointName, type Rig } from '../utils/kinematics';
 import type { PointOf } from '../utils/animation';
+import { lengthLabel } from '../utils/size';
 import {
   KEYPOINTS,
   KEYPOINT_LABELS,
@@ -25,7 +26,7 @@ function worstMissSummary(errors: Partial<Record<Keypoint, number>>) {
 
   if (!worst || (worst[1] ?? 0) <= 25) return '';
 
-  return `${KEYPOINT_LABELS[worst[0] as Keypoint]} off by ${Math.round(worst[1]!)} mm`;
+  return `${KEYPOINT_LABELS[worst[0] as Keypoint]} off by ${lengthLabel(worst[1]!)}`;
 }
 
 const MappingGrid: React.FC<{

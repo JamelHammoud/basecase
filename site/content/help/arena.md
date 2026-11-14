@@ -17,6 +17,7 @@ keywords:
 related:
   - teach-a-robot-a-skill
   - case-goals-worlds-and-contracts
+  - coach-a-skill
 covers:
   - src/skills/arena.ts
   - src/skills/artifacts.ts
@@ -53,6 +54,8 @@ A policy trained from a Case's tries is judged by its Case instead. It runs the 
 Training follows a reward, a score that nudges the policy toward the goal. A reward can be gamed: a robot paid for staying upright may learn to stand still instead of walking. Arena never reads the reward. It judges the contract, the written rules of what passes and fails, and the trainer can't change those.
 
 Each try's random draw is sealed, so the trainer never learns which conditions Arena will use.
+
+[Coaching](/help/coach-a-skill) rewrites only a skill's reward, so the coached version must pass the same contract to be kept.
 
 ## When a skill goes stale
 

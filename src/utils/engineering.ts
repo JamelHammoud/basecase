@@ -1,5 +1,6 @@
 import type { RobotJoint } from '../types/robotics';
 import { weight } from './weight';
+import { lengthLabel } from './size';
 import { plural } from '../../electron/plural.mjs';
 import { isLegJoint, robotBodies, type RobotBody } from './engineeringBody';
 import { servoMountRows, rangeOfMotionRows } from './engineeringJoints';
@@ -76,7 +77,7 @@ function weightRow(all: CheckContext['all'], masses: PartMass[], bodies: RobotBo
   return {
     check: 'Weight',
     status: est.length ? 'warn' : 'pass',
-    detail: `${weight(all.grams)}, center of mass ${Math.round(all.com[1])} mm up${estimated}${leftOut}`,
+    detail: `${weight(all.grams)}, center of mass ${lengthLabel(all.com[1])} up${estimated}${leftOut}`,
     ids: est.map((m) => m.id),
   };
 }

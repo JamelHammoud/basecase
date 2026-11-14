@@ -1,3 +1,6 @@
+import { percent } from '../percent.mjs';
+import { plural } from '../plural.mjs';
+
 const SHARP_WARN = 0.6;
 const BRICK_SOLIDITY = 0.85;
 const SHELL_SOLIDITY = 0.2;
@@ -8,7 +11,6 @@ const SHELL_SHARE = 0.02;
 const HEADS = new Set(['socket_head', 'button_head', 'countersunk', 'pan_head', 'hex_bolt']);
 const THREADED = /^M\d/;
 
-const pct = (v) => `${Math.round(v * 100)}%`;
 const r2 = (v) => Math.round(v * 100) / 100;
 const named = (p, extra) => `${p.name} (${extra})`;
 
@@ -35,7 +37,7 @@ function sharpRow(parts, faceted) {
 
   const warn = sharp.value > SHARP_WARN && !faceted;
   const targets = sharp.targets.map((p) =>
-    named(p, `${pct(p.share)} of the visible surface, ${p.craft.envelopeSharp}`),
+    named(p, `${percent(p.share)} of the visible surface, ${p.craft.envelopeSharp}`),
   );
 
   return {
@@ -55,7 +57,7 @@ function brickRow(parts) {
     status: bricks.length ? 'WARN' : 'OK',
     name: 'Printed bricks',
     detail: bricks.length
-      ? `${bricks.length} solid printed parts fill over ${pct(BRICK_SOLIDITY)} of their hull.`
+      ? `${bricks.length} solid printed parts fill over ${percent(BRICK_SOLIDITY)} of their hull.`
       : 'No solid printed bricks.',
     items: bricks.map((p) => `Shell or pocket ${named(p, `solidity ${p.craft.solidity}`)}, unless it's a grip`),
   };
@@ -88,11 +90,11 @@ function wallRow(parts) {
     status: off.length ? 'WARN' : 'OK',
     name: 'Shell walls',
     detail: shells.length
-      ? `${shells.length} visible shells, modal walls ${modal.join(', ')} mm; aim for one wall between 1.6 and 3.5 mm.`
+      ? `${plural(shells.length, 'visible shell')}, modal walls ${modal.join(', ')} mm; aim for one wall between 1.6 and 3.5 mm.`
       : 'No visible thin shells.',
     items: off.map(
       (p) =>
-        `Even out ${named(p, `modal ${p.craft.walls.modalMm} mm, ${pct(p.craft.walls.consistent)} within ±0.6 mm`)}`,
+        `Even out ${named(p, `modal ${p.craft.walls.modalMm} mm, ${percent(p.craft.walls.consistent)} within ±0.6 mm`)}`,
     ),
   };
 }
@@ -106,13 +108,13 @@ function fastenerRows(parts) {
     {
       status: sizes.length > MAX_THREADS ? 'WARN' : 'OK',
       name: 'Fastener vocabulary',
-      detail: `${sizes.length} thread sizes${sizes.length ? ` (${sizes.join(', ')})` : ''}; expert robots use 1 or 2.`,
+      detail: `${plural(sizes.length, 'thread size')}${sizes.length ? ` (${sizes.join(', ')})` : ''}; expert robots use 1 or 2.`,
       items: sizes.length > MAX_THREADS ? ['Standardize on at most 3 thread sizes'] : [],
     },
     {
       status: exposed.length ? 'WARN' : 'OK',
       name: 'Exposed heads',
-      detail: `${exposed.length} screw heads visible from the front, back, sides or top (counterbored ones included).`,
+      detail: `${plural(exposed.length, 'screw head')} visible from the front, back, sides or top (counterbored ones included).`,
       items: exposed.length
         ? [
             `Counterbore them or move them to hidden faces: ${exposed

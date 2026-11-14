@@ -1,6 +1,7 @@
 import type { ScenePart } from '../types/robotics';
 import type { RobotSkeleton } from '../types/skeleton';
-import { r1, r3, toScene, type V3 } from './agentFrame';
+import { r3, toScene, type V3 } from './agentFrame';
+import { lengthLabel } from '../utils/size';
 import { mirrorPoint, pairAxis } from './skeleton';
 
 export interface SkeletonMirrorResult {
@@ -44,7 +45,7 @@ function placed(copy: ScenePart, skeleton: RobotSkeleton, axis: 'x' | 'y'): { pa
     part,
     note:
       off > SHIFT_NOTE_MM
-        ? `${copy.id} placed on the ${dst.id} joint, ${r1(off)} mm from the plain mirror.`
+        ? `${copy.id} placed on the ${dst.id} joint, ${lengthLabel(off)} from the plain mirror.`
         : undefined,
   };
 }

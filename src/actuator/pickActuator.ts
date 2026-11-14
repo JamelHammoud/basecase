@@ -1,8 +1,8 @@
 import type { ActuatorSpec } from '../data/components';
 import { bedSizeText, fitOnBed, type Bed } from '../print/bed';
 import { holdVerdict, PEAK_DERATE, ratingAt, stanceVerdict, suitsVolts } from '../utils/actuatorRules';
-import { nm } from '../utils/engineeringFormat';
 import { sizeLabel } from '../utils/size';
+import { torque } from '../utils/torque';
 import { cycloidalDesign, type CycloidalDesign } from './cycloidal';
 import { cycloidalOptions, cycloidalSpec, cycloidalVariantId } from './generated';
 import { BLDC_MOTORS, type BldcDriver, type BldcMotor } from './motors';
@@ -83,5 +83,5 @@ export function pickActuator(need: ActuatorNeed): ActuatorPick {
 
   const strongest = Math.max(...powered.map((c) => c.spec.stallNm));
 
-  return { problem: `The strongest actuator stalls at ${nm(strongest)} N·m` };
+  return { problem: `The strongest actuator stalls at ${torque(strongest)}` };
 }

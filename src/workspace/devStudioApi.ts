@@ -12,7 +12,7 @@ import { lastDownload } from '../utils/downloadBytes';
 import { replayErrors } from '../reality/jointReplay';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
-import { degrees } from '../robot/robotGhost';
+import { radiansToDegrees as degrees } from '../utils/angle';
 import { phoneSnapshot } from '../phone/phoneStore';
 import { inputEvents } from '../sim/inputEvents';
 import {
@@ -75,6 +75,8 @@ export interface DevActions {
   worldAt: () => Record<string, number[]>;
   tryWorld: () => Promise<WorldEvent[]>;
   printPlates: () => unknown;
+  plateFiles: () => Promise<Record<string, Uint8Array>>;
+  labelNotes: () => Record<string, string>;
   markPlatePrinted: (plate: number) => void;
   readySteps: () => boolean[];
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
@@ -223,6 +225,20 @@ function operatorCameraState() {
   };
 }
 
+const base64Files = (files: Record<string, Uint8Array>) =>
+  Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, bytesToBase64(bytes)]));
+
+function printStudioApi(devRef: RefObject<DevActions>) {
+  return {
+    printPlates: () => devRef.current.printPlates(),
+    printState: () => devRef.current.printState(),
+    plateFiles: async () => base64Files(await devRef.current.plateFiles()),
+    labelNotes: () => devRef.current.labelNotes(),
+    markPlatePrinted: (plate: number) => devRef.current.markPlatePrinted(plate),
+    readySteps: () => devRef.current.readySteps(),
+  };
+}
+
 export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevStudioDeps) {
   return {
     rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
@@ -288,16 +304,13 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     feedVoice: (samples: number[], sampleRate: number) => feedVoice(samples, sampleRate),
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),
-    printPlates: () => devRef.current.printPlates(),
-    markPlatePrinted: (plate: number) => devRef.current.markPlatePrinted(plate),
-    readySteps: () => devRef.current.readySteps(),
+    ...printStudioApi(devRef),
     bomLines: () =>
       buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
         ({ key, qty }) => ({ key, qty }),
       ),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
-    printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
     multiplyRuns: (runs: number) => devRef.current.multiplyRuns(runs),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
@@ -331,14 +344,14 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 
-      return files && Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, bytesToBase64(bytes)]));
+      return files && base64Files(files);
     },
     robotPackage: async () => {
       const made = await devRef.current.robotPackage();
 
       return (
         made && {
-          files: Object.fromEntries(Object.entries(made.files).map(([path, bytes]) => [path, bytesToBase64(bytes)])),
+          files: base64Files(made.files),
           simXml: made.simXml,
         }
       );

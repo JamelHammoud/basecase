@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ContextMenu, ContextMenuEntry, deleteEntry, useScrollFade } from '../design-system';
+import { ContextMenu, ContextMenuEntry, deleteEntry, ShareIcon, useScrollFade } from '../design-system';
 import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
 import { withVelocity } from '../sim/driveAccess';
 import type { Simulation } from '../sim/useSimulation';
@@ -20,7 +20,7 @@ import type { CaseCompare } from '../workspace/useCaseCompare';
 import type { CaseExplore } from '../workspace/useCaseExplore';
 import { SimControls } from './simulate/SimControls';
 import { TrainSection, type CoachSend } from './simulate/TrainSection';
-import { skillMenuItems } from './simulate/skillMenu';
+import { coachMenuItems } from './simulate/skillMenu';
 
 interface SimulatePanelProps {
   sim: Simulation;
@@ -54,6 +54,12 @@ function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTea
   return { velocityReady: skills.velocityReady, teachWalk, walkTraining: walkRow?.state.kind === 'training' };
 }
 
+function publishEntries(row: SkillRow, publish: ((row: SkillRow) => void) | null): ContextMenuEntry[] {
+  if (!publish || row.state.kind !== 'ready') return [];
+
+  return [{ label: 'Publish to Hugging Face', icon: <ShareIcon className="w-4 h-4" />, onSelect: () => publish(row) }];
+}
+
 export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy } = props;
   const { skills, onTeach, share } = props;
@@ -69,11 +75,10 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
     onStop: skills.stop,
     onSnapshot: (row: SkillRow, ref: SnapshotRef) => void skills.playSnapshot(row, ref),
     onMenu: (e: React.MouseEvent, row: SkillRow) => {
-      const items = skillMenuItems(row, {
-        coach: skills.coach,
-        coaches: !!props.onCoach,
-        publish: props.onPublishSkill,
-      });
+      const items = [
+        ...coachMenuItems(row, { coach: skills.coach, coaches: !!props.onCoach }),
+        ...publishEntries(row, props.onPublishSkill),
+      ];
 
       e.preventDefault();
 

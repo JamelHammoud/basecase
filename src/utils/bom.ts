@@ -315,11 +315,11 @@ function bomLine(key: string, qty: number, partIds: string[], { purchases, now }
 
   if (!info) return null;
 
+  const filament = info.category === 'Filament';
   const record = pricedRecord(purchases[key]);
-  const onHand = onHandOf(purchases[key]);
+  const onHand = filament ? 0 : onHandOf(purchases[key]);
   const { toBuy } = ownedSplit(qty, onHand);
   const ageDays = record ? daysSince(record.checkedAt, now) : undefined;
-  const filament = info.category === 'Filament';
 
   return {
     key,

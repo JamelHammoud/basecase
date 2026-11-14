@@ -58,6 +58,14 @@ describe('buildBom', () => {
     expect(line('supply:filament-pla')).toMatchObject({ unit: 'g', packs: 1, partIds: ['bracket'] });
   });
 
+  it('ignores a count on hand for filament, which is counted in grams', () => {
+    const purchases = { 'supply:filament-pla': { onHand: 2000 } };
+    const owned = buildBom({ parts, project, purchases, measures, now: new Date('2026-10-18T12:00:00') });
+
+    expect(owned.lines.find((l) => l.key === 'supply:filament-pla')).toMatchObject({ onHand: 0, toBuy: 13, packs: 1 });
+    expect(owned.totals.estimatedUsd).toBe(bom.totals.estimatedUsd);
+  });
+
   it('adds what the scene needs by itself: cables for servos, keys for screws', () => {
     expect(line('supply:servo-cable-5264-3pin').qty).toBe(1);
     expect(line('supply:hex-key-set').category).toBe('Equipment');

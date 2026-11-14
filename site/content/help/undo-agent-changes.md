@@ -19,6 +19,7 @@ covers:
   - src/workspace/useLaneControls.ts
   - src/workspace/applyAgentOps.ts
   - src/workspace/docHistory.ts
+  - src/workspace/agentCostRequests.ts
 ---
 
 Take back one step of the agent's work, or everything it changed in its last run.
@@ -28,6 +29,8 @@ Take back one step of the agent's work, or everything it changed in its last run
 1. Press [[⌘Z]].
 
 Each change the agent makes, such as adding parts, reshaping one or writing a Case's code panel, is one undo step. Press [[⌘Z]] again to go further back, up to 50 steps. While a Case runs, [[⌘Z]] steps back through code panel changes only and stops at any other change.
+
+Counts of parts you own, which the agent records from an order you paste, aren't undo steps. Change those on their bill of materials line, as in [Count the parts you already own](/help/count-the-parts-you-own).
 
 ## Revert a whole run
 

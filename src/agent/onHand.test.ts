@@ -46,11 +46,13 @@ describe('record_on_hand', () => {
     });
   });
 
-  it('refuses unknown keys and negative or non-integer counts', () => {
+  it('refuses unknown keys, versionless components, filament, and negative or non-integer counts', () => {
     const { updates, refused } = onHandUpdates([
       { key: 'component:no-such-servo', onHand: 2 },
       { key: 'hardware:socket_head|M99|5', onHand: 2 },
       { key: '__proto__', onHand: 1 },
+      { key: 'component:feetech-sts3215', onHand: 6 },
+      { key: 'supply:filament-pla', onHand: 2 },
       { key: 'component:feetech-sts3215|c001', onHand: -1 },
       { key: 'component:feetech-sts3215|c001', onHand: 2.5 },
       { key: 'component:feetech-sts3215|c001', onHand: Number.NaN },
@@ -58,7 +60,7 @@ describe('record_on_hand', () => {
     ]);
 
     expect(updates).toEqual([]);
-    expect(refused).toHaveLength(7);
+    expect(refused).toHaveLength(9);
   });
 
   it('refuses a payload that is not a list', () => {

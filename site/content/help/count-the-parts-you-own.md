@@ -40,6 +40,6 @@ The quantity now shows only the units left to buy, and the price counts only tho
 
 The total, the Budget check and **Buy All** count only the units to buy. Counts are in pieces, not packs: two packs of 100 screws is 200. A count applies to every scene, like a saved price, so two scenes can each count the same 6 servos. Filament isn't counted. Press ⌘Z to undo a count, or set it to 0 to clear it.
 
-You can also tell the agent what you have, or paste an order confirmation into the chat. It records each part with `record_on_hand`, and its parts search lists the parts you own first.
+You can also tell the agent what you have, or paste an order confirmation into the chat. It records each part with `record_on_hand`, and its parts search lists the parts you own first. Its counts aren't undo steps; change them on the line.
 
 Next, [buy the parts for a robot](/help/buy-the-parts-for-a-robot).

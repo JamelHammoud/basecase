@@ -166,6 +166,17 @@ function createWindow() {
   });
 }
 
+const CAPTURE_WIDTH = 1568;
+
+backend.bridge.serve('capture_window', async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) throw new Error('The app window is not open.');
+
+  const image = await mainWindow.webContents.capturePage();
+  const fitted = image.getSize().width > CAPTURE_WIDTH ? image.resize({ width: CAPTURE_WIDTH }) : image;
+
+  return { dataUrl: `data:image/jpeg;base64,${fitted.toJPEG(82).toString('base64')}` };
+});
+
 backend.onEvent((event) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('backend:event', event);

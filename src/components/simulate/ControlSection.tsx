@@ -143,7 +143,7 @@ export const ControlSection: React.FC<
         <div className="flex items-center gap-2">
           <Select
             aria-label="Controller"
-            value={controllerValue(sim.controller, policyKey)}
+            value={drive.active ? 'drive' : controllerValue(sim.controller, policyKey)}
             options={options}
             disabled={drive.status === 'checking'}
             onChange={(e) => void choose(e.target.value)}

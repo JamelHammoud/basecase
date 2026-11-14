@@ -27,9 +27,9 @@ covers:
   - electron/hub/
 ---
 
-You can start your robot from a skill that someone else published. Basecase then trains the skill on your robot and proves it in Arena before it counts as ready.
+You can start your robot from a skill that someone else published. Basecase trains the skill on your robot, then runs it in Arena. The skill is ready only after it passes.
 
-Install Skill works in the desktop app, on legged robots. It takes Motor Kit skills: Stand, Walk, Get up and Settle.
+**Note:** Install Skill works in the desktop app, with legged robots. It accepts Motor Kit skills: Stand, Walk, Get up and Settle.
 
 1. Open your robot, then open the **Simulate** tab.
 2. Press [[⌘K]] and choose **Install Skill**.
@@ -44,8 +44,8 @@ Install Skill works in the desktop app, on legged robots. It takes Motor Kit ski
 
 ![The hexapod's Stand row ready after installing](/help/install-a-skill-from-hugging-face/installed.png)
 
-If a file doesn't match `skill.json`, the install stops and a toast names the file. Legs with a different number of joints don't fit, and the toast then says how many joints each one has.
+If a file doesn't match `skill.json`, the install stops and a toast names the file. The skill also won't fit legs with a different number of joints. In that case, the toast says how many joints each one has.
 
-Your skill earns its own Arena evidence. The author's evidence doesn't carry over. If Arena refuses the skill, Basecase saves nothing, and the row shows "Refused in Arena" with its worst count.
+Arena tests the skill on your robot and keeps its own evidence for it. Evidence from the skill's author doesn't carry over. If Arena refuses the skill, Basecase saves nothing, and the row shows "Refused in Arena" with its worst count.
 
 To learn what Arena checks, see [Arena](/help/arena).

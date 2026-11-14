@@ -41,13 +41,13 @@ You can bring in a published robot, with its joints, limits and masses, from a G
 
 ![Import Robot with a GitHub repo link](/help/import-a-robot/link.png)
 
-Basecase looks for the robot's description in the repo or zip (it prefers MJCF), then inserts the robot with its joints ready to pose. If the repo holds several robots, the sheet lists them. Click the one you want, then click **Import**.
+Basecase looks for the robot's description in the repo or zip, preferring MJCF. Then it inserts the robot with its joints ready to pose. If the repo holds more than one robot, the sheet lists them. Click the one you want, then click **Import**.
 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
-You can also find **Import Robot** in **File**.
+You can also open **Import Robot** from **File**.
 
-To import from your computer, do any of these:
+To import a robot from your computer, do any of the following:
 
 - Click **Choose Folder** in the sheet.
 - Drag a robot's folder, zip, URDF, xacro or MJCF file onto the canvas.
@@ -57,14 +57,14 @@ Basecase inserts the robot right away, where you dropped it or where you right-c
 
 ## Insert a robot from the shelf
 
-Parts lists ready-made robots under **Robots**, grouped by kind: **Humanoids**, **Small bipeds**, **Quadrupeds** and **Arms**. These include the Unitree G1, Go2 and SO-101.
+Parts lists ready-made robots under **Robots**, grouped by kind: **Humanoids**, **Small bipeds**, **Quadrupeds** and **Arms**. They include the Unitree G1, Go2 and SO-101.
 
 - To insert a robot, click a kind, then click the robot. Or drag the robot onto the canvas.
 - To find a robot by name, type it in **Search parts** and press [[⌘↩]].
 
 ![Parts on its Robots section, with Imported, Humanoids, Small bipeds, Quadrupeds and Arms](/help/import-a-robot/robots.png)
 
-Robots you've imported come first, under **Imported**, so you can insert them again with one click. To remove one from the list, right-click it and choose **Delete**. Scenes that already use the robot keep it.
+Robots you've imported appear first, under **Imported**, so you can insert them again with one click. To remove a robot from this list, right-click it and choose **Delete**. Scenes that already use the robot keep it.
 
 ![An imported robot's right-click menu with Insert and Delete](/help/import-a-robot/imported.png)
 
@@ -74,9 +74,9 @@ Robots you've imported come first, under **Imported**, so you can insert them ag
 - Every revolute and prismatic joint keeps its axis, limits and torque limit.
 - Basecase never prints or resizes robot parts.
 
-Robots exported from Fusion 360 with fusion2urdf import the same way, and so do ROS description packages written in xacro. Choose the package folder, drop it on the canvas, or paste its repo link.
+Robots exported from Fusion 360 with fusion2urdf import the same way, and so do ROS description packages written in xacro. To import one, choose the package folder, drop it on the canvas, or paste the link to its repo.
 
-For a xacro package, Basecase reads the top-level `.xacro` or `.urdf.xacro` file and follows its includes inside the package. It fills in the properties, macros and `xacro:arg` defaults. If the package also has a plain `.urdf`, Basecase uses that file instead. If a xacro needs something Basecase can't fill in, like a YAML file or an environment variable, the import stops and names the file.
+For a xacro package, Basecase reads the top-level `.xacro` or `.urdf.xacro` file and follows its includes inside the package. It fills in the properties, macros and `xacro:arg` defaults. If the package also has a plain `.urdf`, Basecase uses that file instead. If a xacro needs something Basecase can't fill in, like a YAML file or an environment variable, the import stops and tells you which file it needs.
 
 Links must use https. A zip link downloads up to 200 MB, and a zip unpacks up to 600 MB and 20,000 files. If a link has no robot description, you see one toast that names the link.
 

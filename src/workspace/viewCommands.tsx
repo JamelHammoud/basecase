@@ -7,6 +7,7 @@ import {
   CameraIcon,
   GridIcon,
   HandIcon,
+  HistoryIcon,
   KeyboardIcon,
   LayersIcon,
   LibraryIcon,
@@ -52,6 +53,21 @@ const SIDEBAR_VIEWS = [
 
 export const sceneHasCameraViews = ({ core, actions }: Pick<CommandInputs, 'core' | 'actions'>) =>
   hasCameraViews(core.parts, actions.cameras.cameras, core.simTraining.sim.status !== 'off');
+
+function showTriesCommands({ triesView }: CommandInputs['core']): Command[] {
+  if (!triesView.groups.length || triesView.open) return [];
+
+  return [
+    {
+      id: 'show-tries',
+      group: 'Panels',
+      label: 'Show Tries',
+      icon: <HistoryIcon />,
+      keywords: 'recordings episodes demonstrations all scenes library',
+      run: () => triesView.openFor(null),
+    },
+  ];
+}
 
 function panelCommands({ core, ui }: CommandInputs): Command[] {
   const { studio, tool } = core;
@@ -107,6 +123,7 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       keywords: v.keywords,
       run: () => showLeftTab(core, v.tab),
     })),
+    ...showTriesCommands(core),
     ...(core.posing.hasRig
       ? [
           {

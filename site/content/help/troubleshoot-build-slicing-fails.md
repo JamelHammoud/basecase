@@ -32,60 +32,75 @@ covers:
   - src/print/labels/partLabels.ts
 ---
 
-Basecase slices with Bambu Studio or OrcaSlicer on your computer, so most slicing errors mean a missing slicer, profile or printer.
+Basecase slices your plates with Bambu Studio or OrcaSlicer on your computer. Most slicing errors come from a missing slicer, profile or printer. Find the message or problem you're seeing below.
 
 ## “Slicing needs Bambu Studio or OrcaSlicer. Install one, then slice again.”
 
-Neither slicer is where Basecase looks. On a Mac that's Applications, in your home folder or the main one. On Windows it's Program Files or your user's Programs folder.
+Basecase didn't find either slicer. On a Mac, it looks in the main Applications folder and in the Applications folder in your home folder. On Windows, it looks in Program Files and in your user's Programs folder.
 
-1. Install Bambu Studio or OrcaSlicer in its default place.
-2. Press [[⌘,]], choose **Printers** and find **Slicers**. The slicer should be listed there.
+1. Install Bambu Studio or OrcaSlicer in its default location.
+2. Press [[⌘,]], choose **Printers** and find **Slicers**. Make sure the slicer you installed is listed there.
 3. Slice again with **Slice Plates** in [[⌘K]].
 
-PrusaSlicer shows under **Slicers** too, but Basecase doesn't slice with it. It worked when the plate shows a thumbnail and its time loses the ≈.
+**Slicers** lists PrusaSlicer too, but Basecase doesn't slice with it.
+
+When slicing works, the plate shows a thumbnail and its time no longer starts with ≈.
 
 ## The plate's button reads Add Printer
 
-No printer is saved, so there's nowhere to send the plate. Clicking it opens **Settings** ▸ **Printers**.
+You don't have a printer saved yet, so Basecase has nowhere to send the plate. Click the button to open **Settings** ▸ **Printers**.
 
 1. Follow [Add a printer](/help/add-a-printer) from step 2.
-2. Pick the printer under **Printer** in Print mode.
+2. In Print mode, pick the printer under **Printer**.
 
 ## The send button is grayed out
 
-The plate is slicing or sending, or a printer is set but no slicer is installed. Wait for the progress line to finish, or install a slicer as above. **Start Next** is grayed out while any plate slices or sends.
+This happens while the plate is slicing or sending, and when a printer is set up but no slicer is installed. Wait for the progress line to finish, or install Bambu Studio or OrcaSlicer.
+
+**Start Next** is grayed out while any plate is slicing or sending.
 
 ## A printer has no Start Next
 
-**Start Next** shows only beside a printer that reads Ready and has a plate left that it can print. Plates that are sent, printing or printed aren't offered. Neither are plates too big for its bed, or of a material other than the filament it reports. [Print plates on several printers](/help/print-plates-on-several-printers) has the steps.
+**Start Next** appears only beside a printer that reads Ready and has a plate left that it can print. Basecase doesn't offer a plate that:
+
+- Has already been sent, is printing or has printed
+- Is too big for the printer's bed
+- Is in a material other than the filament the printer reports
+
+For the steps, see [Print plates on several printers](/help/print-plates-on-several-printers).
 
 ## A printer or material has no slicer profile
 
-The messages read “⟨printer⟩ has no slicer profile. Export the 3MF and set it up in your slicer.” or “The slicer has no PLA profile for this printer. Pick another material.”, with your printer and material. Custom printers have no profile.
+You'll see one of these messages, with your own printer and material in it:
 
-1. For a material, pick another one in **Material** under **Printer**.
-2. For a printer, click **Export** and choose **3MF Plates**.
+- “⟨printer⟩ has no slicer profile. Export the 3MF and set it up in your slicer.”
+- “The slicer has no PLA profile for this printer. Pick another material.”
+
+Custom printers don't have a profile.
+
+1. If the message is about a material, pick another one in **Material** under **Printer**.
+2. If the message is about a printer, click **Export** and choose **3MF Plates**.
 3. Open the 3MF in your slicer and pick your printer there.
 
-A message ending “Update the slicer or pick another printer.” names a profile your slicer lacks. Update Bambu Studio or OrcaSlicer to its latest version.
+If the message ends with “Update the slicer or pick another printer.”, your slicer doesn't have the profile it names. Update Bambu Studio or OrcaSlicer to the latest version.
 
 ## “No plates to print. Add printed parts first.”
 
-No part in the scene prints. Components, screws and stand-ins are bought, not printed. So are parts whose **Material** in the Inspector is **CNC aluminum**, **Laser-cut sheet** or **Off-the-shelf**.
+None of the parts in your scene are printed. Components, screws and stand-ins are bought, and so are parts whose **Material** in the Inspector is set to **CNC aluminum**, **Laser-cut sheet** or **Off-the-shelf**.
 
 ## “The slicer returned no plates. Slice again.”
 
-The slicer finished without a result Basecase could read. The same goes for a message that a plate “isn’t in the sliced file”, and for “The slicer stopped without saying why. Slice again.”
+The slicer finished, but Basecase couldn't read what it returned. The same steps apply when a message says a plate “isn’t in the sliced file”, or reads “The slicer stopped without saying why. Slice again.”
 
 1. Press [[⌘K]] and choose **Slice Plates**.
-2. If it fails again, read the slicer's own message under the plate. Basecase shows it as the slicer wrote it.
+2. If it fails again, read the slicer's own message under the plate. Basecase shows it exactly as the slicer wrote it.
 
 ## “Couldn’t cut the guide letters. Turn off Label parts to print without them.”
 
-Basecase couldn't load the tool that cuts each part's build guide letter, so no plate was written.
+The tool that cuts each part's build guide letter didn't load, so Basecase didn't write any plates.
 
 1. Press [[⌘P]] to open Print mode.
 2. Under **Printer**, turn off **Label parts**.
 3. Slice again with **Slice Plates** in [[⌘K]].
 
-The parts then print without letters. [Label printed parts with their guide letters](/help/label-printed-parts) explains them.
+Your parts then print without letters. To learn more about guide letters, see [Label printed parts with their guide letters](/help/label-printed-parts).

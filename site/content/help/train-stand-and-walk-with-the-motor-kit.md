@@ -39,9 +39,11 @@ covers:
   - forge/crates/forge-train/src/trainer.rs
 ---
 
-Give a robot with legs its four basic skills, Stand, Walk, Get up and Settle, trained and proved in Arena without writing a goal.
+The Motor Kit trains four basic skills for a robot that stands on its own legs: Stand, Walk, Get up and Settle. You don't have to write a goal. Basecase trains each skill and proves it in Arena.
 
-The Motor Kit is for robots that stand on their own legs. Training runs in the desktop app, and at app.basecase.so in Chrome or Edge, on your own GPU.
+You train on your own GPU, in the desktop app or at app.basecase.so in Chrome or Edge.
+
+To train a skill:
 
 1. Click **Simulate** at the top of the right panel.
 2. Under **Train**, find **Stand**, **Walk**, **Get up** and **Settle**.
@@ -49,28 +51,32 @@ The Motor Kit is for robots that stand on their own legs. Training runs in the d
 ![The Train section with Stand, Walk, Get up and Settle](/help/train-stand-and-walk-with-the-motor-kit/rows.png)
 
 3. Click **Train** on the skill you want.
-4. Wait while the row shows the trainer's message and a progress bar. The robot on the canvas runs the newest snapshot of the skill.
+4. Wait while the row shows the trainer's message and a progress bar. As the skill trains, the robot on the canvas runs its newest snapshot.
 
 ![Stand training at 25%](/help/train-stand-and-walk-with-the-motor-kit/training.png)
 
-5. When the row shows its Arena line, such as "32 of 32 tries, at least 91%", click **Try** to run it in the simulation.
-6. For **Walk**, click **Drive** instead, and steer with [[W A S D]].
+5. When the row shows its Arena line, such as "32 of 32 tries, at least 91%", click **Try** to run the skill in the simulation.
+6. For **Walk**, click **Drive** instead of **Try**, then steer with [[W A S D]].
 
 ![Stand ready, with its Arena line and Try](/help/train-stand-and-walk-with-the-motor-kit/ready.png)
 
-To stop training, click **Stop training** (■) on the row. [Watch a skill learn while it trains](/help/watch-a-skill-learn) explains the snapshots. **Teach It to Move**, under **Control**, trains **Walk** too. A skill that doesn't pass Arena isn't kept. Its row says how close it came, such as "Refused in Arena: 20 of 32 tries", and offers **Train** again.
+To stop, click **Stop training** (■) on the row. For more on the snapshots, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).
+
+You can also train **Walk** with **Teach It to Move**, under **Control**.
+
+If a skill fails Arena, Basecase discards it. The row shows how close it came, such as "Refused in Arena: 20 of 32 tries", and offers **Train** so you can try again.
 
 ## In the browser
 
-The **Train** section shows only when the browser can train on the GPU. A skill trained there is saved with the scene in that browser, so it's still there after a reload. The browser trains only when you click **Train**.
+The **Train** section appears only when the browser can train on the GPU. A skill you train in the browser is saved with the scene in that browser, so it's still there after you reload the page. Nothing trains until you click **Train**.
 
-A gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), has **Train** on its Case card. It trains Stand, and the robot stands on the skill once Arena passes it. **Open Scene** opens the robot in the studio with Stand ready.
+When you open a gallery link to a legged robot, such as [the hexapod](https://app.basecase.so/c/hexapod-reach-the-flag), its Case card has **Train**, which trains Stand. Once the skill passes Arena, the robot uses it to stand. Click **Open Scene** to open the robot in the studio with Stand ready.
 
 ![The hexapod's Case card with Stand ready](/help/train-stand-and-walk-with-the-motor-kit/gallery.png)
 
 ## How long it takes
 
-Measured in the desktop app on an M5 Pro Mac:
+These times come from the desktop app on an M5 Pro Mac:
 
 | Skill | Four or six legs | Two legs |
 |---|---|---|
@@ -79,22 +85,26 @@ Measured in the desktop app on an M5 Pro Mac:
 
 In Chrome on the same Mac, Stand took about two and a quarter minutes.
 
-When the first try fails Arena, Walk trains again from its best result. It can then take up to 30 minutes on four or six legs, and 45 on two.
+If Walk fails Arena on its first try, it retrains from its best result. That can take up to 30 minutes on four or six legs, and up to 45 minutes on two.
 
-On a Mac with Apple silicon, Stand and Walk train on the GPU. On Windows they train on the CPU instead, and the times above don't apply.
+On a Mac with Apple silicon, Stand and Walk train on the GPU. On Windows they train on the CPU, and the times above don't apply there.
 
 ## What Walk can do
 
-Walk follows a speed and a turn you command. Its top speed is 0.2 m/s on four or more legs and 0.15 m/s on two. Driving it, forward goes up to the top speed, sideways up to a quarter of it, and turns up to 0.6 rad/s.
+Walk follows the speed and turn you command. Its top speed is 0.2 m/s on four or more legs and 0.15 m/s on two. As you drive, it moves forward at up to that top speed, sideways at up to a quarter of it, and turns at up to 0.6 rad/s.
 
 ## One job at a time
 
-One training job runs at a time across the whole app, and others wait their turn. Training you start comes first: it pauses any Motor Kit job retraining in the background, which says "Paused for other training. Starts again after it."
+The app runs one training job at a time and queues the rest.
+
+Training you start yourself goes to the front of the queue and pauses any Motor Kit job that's retraining in the background. The paused job says "Paused for other training. Starts again after it."
 
 ## After you change the design
 
-In the desktop app, 1.5 seconds after an edit, Basecase checks each Motor Kit skill you've trained against the new design. A color or name change keeps it ready. A mass or size change runs Arena again in the background, with no training. A joint change trains it again. Skills you never trained don't start on their own.
+In the desktop app, Basecase checks each Motor Kit skill you've trained against the new design 1.5 seconds after you make an edit.
 
-To change how a ready skill moves, such as a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). To share a ready skill, follow [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face). To start from someone else's, follow [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
+If you change a color or name, the skill stays ready. If you change a mass or size, Basecase reruns Arena in the background without training. If you change a joint, it trains the skill again. Skills you haven't trained stay untrained until you start them.
 
-To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).
+If a ready skill moves in a way you don't want, such as a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). To share a ready skill, follow [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face), or start from someone else's with [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
+
+[Arena](/help/arena) lists what Arena checks. To teach a robot anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

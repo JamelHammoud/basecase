@@ -1,8 +1,9 @@
+import { MB } from '../fileSize.mjs';
 import { readCapped } from '../publicFetch.mjs';
 import { serviceRefusal } from '../refusal.mjs';
 import { ONSHAPE_ORIGIN } from './link.mjs';
 
-const MAX_JSON_BYTES = 50_000_000;
+const MAX_JSON_BYTES = 50 * MB;
 const MAX_HOPS = 3;
 const REDIRECTS = new Set([301, 302, 303, 307, 308]);
 const MALFORMED_REPLY = 'Onshape sent a malformed reply.';

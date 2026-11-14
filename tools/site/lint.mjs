@@ -12,7 +12,7 @@ import {
   pageLinks,
   paragraphLength,
   plainKeys,
-  sentenceLength,
+  punctuation,
   spelling,
   summaryLength,
   title,
@@ -21,11 +21,11 @@ import {
 
 const CONTENT_PATH = /(?:^|\/)site\/content\/(changelog|blog|help)\/([^/]+)\.md$/;
 
-const EVERY_PAGE = [bannedWords, spelling, linkText, pageLinks, images, title, menuPaths];
+const EVERY_PAGE = [bannedWords, spelling, linkText, pageLinks, images, title, menuPaths, punctuation];
 
 export const RULES = {
-  changelog: [...EVERY_PAGE, sentenceLength, paragraphLength, summaryLength, helpLink, uiLabels],
-  blog: [...EVERY_PAGE, sentenceLength, paragraphLength, copiedFromChangelog],
+  changelog: [...EVERY_PAGE, paragraphLength, summaryLength, helpLink, uiLabels],
+  blog: [...EVERY_PAGE, paragraphLength, copiedFromChangelog],
   help: [...EVERY_PAGE, helpTitle, plainKeys, uiLabels],
 };
 

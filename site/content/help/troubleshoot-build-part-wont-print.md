@@ -28,58 +28,58 @@ covers:
   - src/components/inspector/types.ts
 ---
 
-The Printing check flags parts your printer can't make as drawn, measured against the printer chosen in Print mode.
+The Printing check flags parts your printer can't make as drawn. It measures each part against the printer you chose in Print mode.
 
 With **Made by a Service** chosen, parts are still measured against the printer you chose before it.
 
 ## “This part is too big for your printer’s plate.”
 
-The part is larger than your printer's bed in every way it could lie, the diagonal included.
+The part is larger than your printer's bed in every way it could lie, including across the diagonal.
 
 1. Press [[⌘P]] to open Print mode.
-2. Under **Printer**, check that **Printer** names the printer you'll use. A larger bed may fit the part.
-3. Open **Parts** and read the part's row. It says how many pieces to split the part into.
-4. Click **Fix** on the problem in the Build tab to have the agent split it, joined with dowels or screws.
+2. Under **Printer**, check that **Printer** shows the printer you'll use. A printer with a larger bed may fit the part.
+3. Open **Parts** and find the part's row. It tells you how many pieces to split the part into.
+4. Click **Fix** on the problem in the Build tab to have the agent split the part into pieces that join with dowels or screws.
 
-It worked when the part sits on a plate and **Printing** in Checks shows no red mark.
+You'll know it worked when the part sits on a plate and **Printing** in Checks no longer shows a red mark.
 
 ## “This part has a wall too thin to print, so it would come out with holes.”
 
-A wall is under 0.84 mm thick over 100 mm² or more.
+A wall on this part is under 0.84 mm thick over an area of 100 mm² or more.
 
 1. Click the part name under the problem to select it.
 2. Thicken the wall to at least 0.84 mm, or click **Fix** to have the agent do it.
 
 ## “A thin edge here may not print cleanly. It’s usually fine.”
 
-This is a note. A small sliver, usually from a cut that grazes a face, is under 0.84 mm thick. The slicer drops it, so the part prints without it.
+This is a note. The part has a small sliver under 0.84 mm thick, usually left by a cut that grazes a face. The slicer drops the sliver, so the part prints without it.
 
 ## “This part needs a lot of support material to print.”
 
-This is a note. Faces close to flat hang over air and need support under them.
+This is a note. Some faces are close to flat and hang over air, so they need support under them.
 
-1. Press [[⌘P]], select the part and click **Lay on Face**.
-2. Click a face that leaves less hanging in the air.
-3. If that's not enough, add 45° chamfers under the overhangs, or split the part flat.
+1. Press [[⌘P]], select the part, then click **Lay on Face**.
+2. Click a face that leaves less of the part hanging in the air.
+3. If that isn't enough, add 45° chamfers under the overhangs, or split the part flat.
 
 ## “This part is meant to be clear, which a printer can’t make.”
 
-The part's name ends in a word like Glass, or its note starts with clear acrylic, and it's set to print.
+The part is set to print, but its name ends in a word like Glass, or its note starts with clear acrylic.
 
 1. Select the part.
 2. In the Inspector, set **Material** to **Laser-cut sheet** or **Off-the-shelf**.
-3. Source the sheet, since **Real parts** then asks where to get it. **Fix** hands that to the agent.
+3. Source the sheet. **Real parts** then asks where to get it, and **Fix** hands that job to the agent.
 
 ## “Letter ⟨letter⟩ left off: no flat face is hidden, free and big enough”
 
-This is a note in **Parts** in Print mode, with the part's build guide letter. With **Label parts** on, every flat face of this part shows from outside, touches another part, rests on the bed or is too small. The part prints plain.
+This note appears in **Parts** in Print mode, next to the part's build guide letter. With **Label parts** on, every flat face of this part either shows from outside, touches another part, rests on the bed, or is too small. The letter has nowhere to go, so the part prints plain.
 
-1. Select the part and click **Lay on Face** to rest it on another face. The face it rested on may then take the letter.
-2. To print it plain on purpose, select it and turn on **Don't label**.
+1. Select the part and click **Lay on Face** to rest it on a different face. The face it rested on before may then take the letter.
+2. To print the part plain on purpose, select it and turn on **Don't label**.
 
 ## “Letter ⟨letter⟩ left off: its mesh has open edges”
 
-The part's mesh has gaps, so Basecase can't cut the letter into it. The part prints plain. Close the gaps in the part, or turn on **Don't label** for it.
+The part's mesh has gaps, so Basecase can't cut the letter into it, and the part prints plain. Close the gaps in the part, or turn on **Don't label** for it.
 
 ## The plate shows warnings after slicing
 

@@ -237,6 +237,7 @@ export interface ProjectSettings extends ProjectRecords, PrintService {
   marks?: SceneMark[];
   cases?: Case[];
   tries?: TryRecord[];
+  triesStored?: boolean;
   routines?: Routine[];
   handoffs?: Record<string, TransitionProof>;
   skills?: SkillRecord[];

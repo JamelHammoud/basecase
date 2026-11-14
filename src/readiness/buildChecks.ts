@@ -62,7 +62,7 @@ export function hiddenFindings(parts: ScenePart[]): Finding[] {
 
   return [
     ruleFinding('hidden', 'note', {
-      agentText: `${plural(hidden.length, 'hidden part')} left out of the clash, fit and assembly checks: ${hidden.map((p) => p.id).join(', ')}. Show them to check them.`,
+      agentText: `${plural(hidden.length, 'hidden part')} left out of the clash, fit and assembly checks: ${hidden.map((p) => p.id).join(', ')}. Show a part to check it.`,
       ids: hidden.map((p) => p.id),
       subject: 'parts',
     }),

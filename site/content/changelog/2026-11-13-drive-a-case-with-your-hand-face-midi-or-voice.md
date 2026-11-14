@@ -6,14 +6,28 @@ image: /changelog/drive-a-case-with-your-hand-face-midi-or-voice/cover.png
 
 You can now puppet an arm with your hand and aim a camera head at your face. A Case's logic can also hear MIDI notes and, in the desktop app, spoken words.
 
-A Case's console lists the inputs that drive it. Four join keys, a gamepad, a phone and the body camera: `hand`, `face`, `midi` and `voice`.
+A Case's console lists the inputs that drive it. Four new ones join the keys, the gamepad, the phone and the body camera: `hand`, `face`, `midi` and `voice`.
 
-The case that started it was a robot dog that should sit when you say “sit”. Nothing in Basecase could hear a word or read a MIDI note.
+It started with a robot dog that should sit when you say “sit”. Until now, nothing in Basecase could hear a word or read a MIDI note.
 
-The hand moves a fixed arm's hand from where yours started, scaled to its reach. 10 cm of your hand is 18% of the arm's reach. Your pinch closes its gripper. The face turns a pan-tilt head toward you. Hand and face share the one camera stream the body input uses.
+## Hand and Face
 
-Each MIDI note sends the logic `midi` with its number, and each knob sends a value from 0 to 1. A `.mid` file dropped on the canvas plays on the simulation's clock. Voice listens on your computer for the words the Case's logic names, and each arrives about a second after you stop speaking. Its model is 41 MB, and no sound is saved.
+Your hand moves a fixed arm's hand, starting from wherever your hand was and scaled to the arm's reach. Move your hand 10 cm and the arm's hand moves 18% of its reach. Pinch, and its gripper closes.
 
-Voice hears single English words only, and can mistake “set” for “sit”.
+Your face turns a pan-tilt head toward you.
 
-Steps are in [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
+Hand and face share one camera stream with the body input.
+
+## MIDI
+
+Each note you play sends the logic `midi` with the note's number, and each knob sends a value from 0 to 1.
+
+Drop a `.mid` file on the canvas and it plays on the simulation's clock.
+
+## Voice
+
+Voice listens on your computer for the words the Case's logic names. Each word arrives about a second after you stop speaking. The model is 41 MB, and no sound is saved.
+
+Voice only hears single English words, and it can mistake “set” for “sit”.
+
+Read [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice) in the help center for the steps.

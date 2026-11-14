@@ -1,4 +1,4 @@
-const MINUS = '−';
+import { negative, signed } from '../../electron/minus.mjs';
 
 const tenths = (deg: number) => Math.round(deg * 10) / 10;
 
@@ -8,26 +8,16 @@ function magnitude(deg: number): string {
   return tenths(deg) < 10 ? String(tenths(deg)) : String(Math.round(deg));
 }
 
-export function angle(deg: number): string {
-  const text = magnitude(Math.abs(deg));
-
-  return `${deg < 0 && text !== '0' ? MINUS : ''}${text}°`;
-}
+export const angle = (deg: number): string => `${negative(deg, magnitude)}°`;
 
 export const radiansToDegrees = (radians: number) => (radians * 180) / Math.PI;
 
 export const angleFromRadians = (radians: number) => angle(radiansToDegrees(radians));
 
-export function readingFigure(deg: number): string {
-  const text = Math.abs(deg).toFixed(1);
+const tenthsFigure = (deg: number) => deg.toFixed(1);
 
-  return `${deg < 0 && text !== '0.0' ? MINUS : ''}${text}`;
-}
+export const readingFigure = (deg: number): string => negative(deg, tenthsFigure);
 
 export const angleReading = (deg: number) => `${readingFigure(deg)}°`;
 
-export function signedAngleReading(deg: number): string {
-  const text = readingFigure(deg);
-
-  return `${text.startsWith(MINUS) ? '' : '+'}${text}°`;
-}
+export const signedAngleReading = (deg: number): string => `${signed(deg, tenthsFigure)}°`;

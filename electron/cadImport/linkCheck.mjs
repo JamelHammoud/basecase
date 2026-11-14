@@ -1,6 +1,7 @@
+import { MB } from '../fileSize.mjs';
 import { publicFetch, readCapped } from '../publicFetch.mjs';
 
-const MAX_PAGE = 3_000_000;
+const MAX_PAGE = 3 * MB;
 const STORES_WE_NEVER_FETCH = /(^|\.)amazon\.[a-z.]+$/i;
 const TIMEOUT_MS = 20_000;
 

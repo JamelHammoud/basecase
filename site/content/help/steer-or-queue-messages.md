@@ -23,26 +23,34 @@ covers:
   - src/workspace/useAgentRun.ts
 ---
 
-Correct the agent mid-run, or line up your next requests, without waiting for it to finish.
+While the agent works, you can correct it in the middle of a run or line up your next requests.
 
 ## Steer the agent
 
-1. While the agent works, type the correction, such as “Make the legs longer”.
+1. While the agent works, type your correction. For example, “Make the legs longer”.
 2. Press [[↩]].
 
-With Claude and Codex, the agent reads it right away and changes course. Gemini can't be steered, so the message waits at the front of the queue instead.
+With Claude and Codex, the agent reads your message right away and changes course. You can't steer Gemini, so your message waits at the front of the queue instead.
 
 ## Queue a message
 
-1. While the agent works, type the next request.
+1. While the agent works, type your next request.
 2. Press [[⌘↩]].
 
-You can also right-click the send button and choose **Queue**. Queued messages show above the composer and send one at a time after the run. Click one to edit it. Hover one to click **Send now** or **Delete**. Delete asks first. Drag a message to change the order.
+You can also right-click the send button and choose **Queue**.
+
+Queued messages appear above the composer. When the run ends, Basecase sends them one at a time.
+
+- To edit a queued message, click it.
+- To send a message right away or remove it, hover over it, then click **Send now** or **Delete**. Basecase asks before it deletes a message.
+- To change the order, drag a message.
 
 ## Stop the agent
 
 1. Click the round stop button in the composer.
 
-Pressing [[Esc]] in an empty composer stops it too. Stopping also pauses the queue. Queued messages are lost if Basecase reloads.
+You can also press [[Esc]] when the composer is empty. Stopping the agent also pauses the queue.
+
+**Note:** If Basecase reloads, you lose any queued messages.
 
 To take back what the agent changed, see [Undo what the agent changed](/help/undo-agent-changes).

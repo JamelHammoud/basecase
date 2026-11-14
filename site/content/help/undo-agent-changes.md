@@ -21,20 +21,24 @@ covers:
   - src/workspace/docHistory.ts
 ---
 
-Take back one step of the agent's work, or everything it changed in its last run.
+You can take back one step of the agent's work, or everything it changed in its last run.
 
 ## Undo one step
 
 1. Press [[⌘Z]].
 
-Each change the agent makes, such as adding parts, reshaping one or writing a Case's code panel, is one undo step. Press [[⌘Z]] again to go further back, up to 50 steps. While a Case runs, [[⌘Z]] steps back through code panel changes only and stops at any other change.
+Each change the agent makes, such as adding parts, reshaping a part or writing a Case's code panel, is one undo step. To go further back, press [[⌘Z]] again, up to 50 steps.
+
+While a Case is running, [[⌘Z]] only steps back through code panel changes, and it stops when it reaches any other kind of change.
 
 ## Revert a whole run
 
 1. Under the agent's last reply, click **Revert Changes**.
 
-Only the parts that run changed go back; your own edits stay. Code panels it wrote stay too; undo those step by step. A toast reads “Reverted agent changes”, with **Undo** if you change your mind.
+Only the parts that the run changed go back. Your own edits stay, and so do any code panels the agent wrote, so undo those step by step.
 
-**Revert Changes** shows under the last reply only, and doesn't survive a reload. Earlier runs can still be undone step by step.
+A toast appears that says “Reverted agent changes.” If you change your mind, click **Undo** in the toast.
 
-To stop the agent before it changes more, see [Steer or queue messages while the agent works](/help/steer-or-queue-messages).
+**Note:** **Revert Changes** only appears under the last reply, and it's gone after you reload. You can still undo earlier runs step by step.
+
+To stop the agent before it makes more changes, see [Steer or queue messages while the agent works](/help/steer-or-queue-messages).

@@ -1,10 +1,11 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { MB } from '../fileSize.mjs';
 import { isSnapshotRef, readJsonOrNull, snapshotFile } from './trainingSnapshots.mjs';
 
 const HASH = /^[0-9a-f]{64}$/;
-const MAX_SKILL_BYTES = 32 * 1024 * 1024;
+const MAX_SKILL_BYTES = 32 * MB;
 const SKILL_FORMAT = 'basecase-skill';
 const MAX_KEPT_SNAPSHOTS = 12;
 

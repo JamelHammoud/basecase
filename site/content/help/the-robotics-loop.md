@@ -20,9 +20,9 @@ covers:
   - src/components/PlayTabs.tsx
 ---
 
-Design a robot, test it under physics, teach it skills and build it in one app, through six stages that feed back into each other.
+With Basecase, you can design a robot, test it under physics, teach it skills and build it, all in one app. You work through six stages and carry what you learn in each one back into the others.
 
-Basecase is a 3D CAD studio for robots, with an agent that designs alongside you. It runs on Apple silicon Macs and 64-bit Windows 11, and in a browser as the [web studio](/help/desktop-app-and-web-studio).
+Basecase is a 3D CAD studio for robots, with an agent that designs alongside you. It runs on Apple silicon Macs and 64-bit Windows 11. You can also use it in a browser as the [web studio](/help/desktop-app-and-web-studio).
 
 ## The six stages
 
@@ -35,18 +35,23 @@ Basecase is a 3D CAD studio for robots, with an agent that designs alongside you
 | Build | Clear the Checks, price every part and print the plates | The **Build** tab |
 | Operate | Connect a robot, calibrate its servos and run Routines | **Play** ▸ **Operate** and **Play** ▸ **Routines** |
 
-MuJoCo is the physics engine robotics labs use to test robots before they build them. Basecase runs it inside the app, on the same model it exports.
+MuJoCo is the physics engine that robotics labs use to test robots before they build them. Basecase runs it inside the app, on the same model it exports.
 
 ## How the stages loop
 
-A failure in Engineer, Simulate or Train sends you back to Design. Say a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg. The **Servo torque** check fails in the **Build** tab, and the fix is a stronger servo in Design.
+If something fails in Engineer, Simulate or Train, you go back to Design. For example, if a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg, the **Servo torque** check fails in the **Build** tab. To fix it, go back to Design and choose a stronger servo.
 
-Data from a running robot loops back the other way. Calibrating a robot finds each joint's zero and direction from a camera. Then it fits each servo's model from an 18-second bench run, so the simulation moves the way the servo does. Training then runs on that fit. A real wheeled or legged robot can also [try a Case](/help/try-a-case-on-your-real-robot) on the Case printed as a floor mat, judged from a camera by the same contract.
+Calibration sends data the other way, from a running robot back into the simulation. Basecase finds each joint's zero and direction from a camera. Then it fits each servo's model from an 18-second bench run, so the simulation moves the way the servo does. You then train the robot on that calibrated simulation.
+
+You can also [try a Case](/help/try-a-case-on-your-real-robot) with a real wheeled or legged robot, on a floor mat printed with the Case. Basecase watches the run through a camera and judges it by the same contract as in simulation.
 
 ## What works today
 
-Design and Engineer are complete. Simulate and Train are in active development. Build covers the Checks, the bill of materials, the build guide, slicing and print service quotes.
+- Design and Engineer are complete.
+- Simulate and Train are in active development.
+- Build covers the Checks, the bill of materials, the build guide, slicing and print service quotes.
+- Operate works against the simulation and an emulated robot.
 
-Operate works against the simulation and an emulated robot. Basecase doesn't drive real motors, but it can watch a real robot through a camera.
+**Note:** Basecase doesn't drive real motors, but it can watch a real robot through a camera.
 
-The quickest way to see the loop is to [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot).
+For the quickest look at the loop, [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot).

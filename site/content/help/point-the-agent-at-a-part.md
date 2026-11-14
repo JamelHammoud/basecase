@@ -25,7 +25,11 @@ covers:
   - src/components/build/FindingRow.tsx
 ---
 
-Tell the agent exactly which part, area or message you mean, since it doesn't see what you've selected.
+The agent doesn't see what you've selected. To show it which part, area or message you mean, quote it or draw on it.
+
+- Quote a part
+- Draw on the canvas
+- Quote a message
 
 ## Quote a part
 
@@ -33,19 +37,19 @@ Tell the agent exactly which part, area or message you mean, since it doesn't se
 2. Choose **Quote Part**.
 3. Type what to change, such as “Move this 10 mm forward”, and press [[↩]].
 
-The quote sends the part's name, id and position along with your message. With the part selected, **Quote Part** is in [[⌘K]] too.
+The quote goes to the agent with your message and includes the part's name, id and position. You can also find **Quote Part** in [[⌘K]] when the part is selected.
 
 ## Draw on the canvas
 
 1. Press [[N]] to start **Annotate**.
-2. Draw around the area you mean. Pick another color from the bar to tell marks apart.
+2. Draw around the area you mean. To tell marks apart, pick another color from the bar.
 3. Click **Done**, then send your message.
 
-The agent reads each mark's color and the parts it circles. Marks aren't parts, so they never reach the bill of materials or a print.
+The agent reads the color of each mark and the parts it circles. Marks aren't parts, so they never show up in the bill of materials or in a print.
 
 ## Quote a message
 
 1. Right-click a message in the chat.
 2. Choose **Quote Message**, then type your reply.
 
-From the **Build** tab, a Check's **Fix** button sends the agent a fix request for that problem. Its menu has **Quote**, to ask about it first.
+Each Check in the **Build** tab has a **Fix** button that sends the agent a request to fix that problem. To ask the agent about the problem first, choose **Quote** from the button's menu.

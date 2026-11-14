@@ -1,7 +1,9 @@
-export type WebStore = 'scenes' | 'models' | 'guides' | 'settings' | 'skills' | 'trained';
+import { migrateSceneSummaries } from './sceneSummary';
 
-const STORES: WebStore[] = ['scenes', 'models', 'guides', 'settings', 'skills', 'trained'];
-const VERSION = 3;
+export type WebStore = 'scenes' | 'sceneSummaries' | 'models' | 'guides' | 'settings' | 'skills' | 'trained';
+
+const STORES: WebStore[] = ['scenes', 'sceneSummaries', 'models', 'guides', 'settings', 'skills', 'trained'];
+const VERSION = 4;
 
 let opening: Promise<IDBDatabase> | null = null;
 
@@ -19,6 +21,8 @@ function openDb(): Promise<IDBDatabase> {
       for (const name of STORES) {
         if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name);
       }
+
+      migrateSceneSummaries(request.transaction!);
     };
     request.onsuccess = () => {
       const db = request.result;
@@ -60,4 +64,28 @@ export async function idbPut(name: WebStore, key: string, value: unknown): Promi
 
 export async function idbDelete(name: WebStore, key: string): Promise<void> {
   await done((await storeOf(name, 'readwrite')).delete(key));
+}
+
+type Change = { store: WebStore; key: string } & ({ kind: 'put'; value: unknown } | { kind: 'delete' });
+
+export async function idbWrite(changes: Change[]): Promise<void> {
+  const db = await openDb();
+  const transaction = db.transaction([...new Set(changes.map((change) => change.store))], 'readwrite');
+
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () => reject(transaction.error);
+
+    try {
+      for (const change of changes) {
+        const store = transaction.objectStore(change.store);
+
+        if (change.kind === 'delete') store.delete(change.key);
+        else store.put(change.value, change.key);
+      }
+    } catch (error) {
+      transaction.abort();
+      reject(error);
+    }
+  });
 }

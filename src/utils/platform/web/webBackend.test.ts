@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SavedSceneRecord } from '../../../types/robotics';
 import { webRequest } from './webBackend';
-import { summarizeScene } from './webScenes';
+import { summarizeScene } from './sceneSummary';
 
 const body = async (path: string, init?: RequestInit) => {
   const res = await webRequest(path, init);

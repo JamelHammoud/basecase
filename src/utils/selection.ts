@@ -65,8 +65,14 @@ export function selectionBounds(parts: ScenePart[]) {
 }
 
 export function expandToGroups(parts: ScenePart[], ids: string[]): string[] {
-  const groupIds = new Set(ids.map((id) => parts.find((p) => p.id === id)?.group?.id).filter(Boolean) as string[]);
-  const extra = parts.filter((p) => p.group && groupIds.has(p.group.id) && !ids.includes(p.id)).map((p) => p.id);
+  const selected = new Set(ids);
+  const groupIds = new Set<string>();
+
+  for (const part of parts) {
+    if (selected.has(part.id) && part.group?.id) groupIds.add(part.group.id);
+  }
+
+  const extra = parts.filter((p) => p.group && groupIds.has(p.group.id) && !selected.has(p.id)).map((p) => p.id);
 
   return [...ids, ...extra];
 }

@@ -5,7 +5,7 @@ import {
   CameraIcon,
   AlignCenterXIcon,
   CommentIcon,
-  DeleteIcon,
+  deleteEntry,
   DownloadIcon,
   FileImportIcon,
   MarkerIcon,
@@ -248,9 +248,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
       icon: <MarkerIcon />,
       onSelect: () => tool.toggleMarking(true),
     },
-    ...(core.marks.marks.length
-      ? [{ label: 'Delete Marks', icon: <DeleteIcon />, onSelect: core.marks.deleteAll }]
-      : []),
+    ...(core.marks.marks.length ? [{ ...deleteEntry(core.marks.deleteAll), label: 'Delete Marks' }] : []),
     {
       label: 'Import',
       icon: <FileImportIcon />,

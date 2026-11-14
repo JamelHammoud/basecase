@@ -100,7 +100,6 @@ const AnimationRow: React.FC<{
             onSelect: () => (playing ? posing.pause() : posing.play(a.id)),
           },
           { label: 'Loop', checked: a.loop, onSelect: () => posing.setAnimationLoop(a.id, !a.loop) },
-          { divider: true },
           renameEntry(() => setRenaming(a.id)),
           deleteEntry(() =>
             confirmAction({ title: `Delete ${a.name}?`, onConfirm: () => posing.deleteAnimation(a.id) }),

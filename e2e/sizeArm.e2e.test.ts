@@ -60,7 +60,7 @@ describe('Size Arm to Targets', () => {
     await app.page.keyboard.type('Size Arm to Targets');
     await app.page.keyboard.press('Enter');
 
-    const payload = app.page.getByLabel('Payload', { exact: true });
+    const payload = app.page.getByRole('dialog').getByLabel('Payload');
 
     await expect.poll(() => payload.isVisible(), { timeout: 20000 }).toBe(true);
     await payload.fill('200');

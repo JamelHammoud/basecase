@@ -23,7 +23,8 @@ import {
   robotJoints,
   sampledFrames,
 } from './episodes';
-import { dataPath, lerobotFiles, SCAN_KEY, TASK_ANNOTATION, videoPath, type DatasetEpisode } from './lerobot';
+import { dataPath, lerobotFiles, videoPath } from './lerobot';
+import { SCAN_KEY, TASK_ANNOTATION, type DatasetEpisode } from './lerobotRows';
 
 const TASK = 'Touch the point with the end effector.';
 

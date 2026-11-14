@@ -238,6 +238,7 @@
     "@types/three": "^0.187.0",
     "@vitejs/plugin-react": "^6.1.1",
     "@xyflow/react": "^12.12.1",
+    "3d-tiles-renderer": "^0.5.4",
     "axe-core": "4.14.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "concurrently": "^10.0.6",

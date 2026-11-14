@@ -4,7 +4,8 @@ import type { Recording } from '../sim/recorder';
 import type { ScenePart } from '../types/robotics';
 import { FRAME_HEIGHT, FRAME_WIDTH, type DatasetCamera } from './cameras';
 import { datasetJoints, episodeData, type DatasetSlot } from './episodes';
-import { lerobotFiles, type DatasetEpisode, type ScanSensor } from './lerobot';
+import { datasetFiles } from './lerobotExport';
+import type { DatasetEpisode, ScanSensor } from './lerobotRows';
 import { codecName, createRenderStage, disposeRenderStage, renderEpisode, videoCodec } from './renderVideos';
 
 export interface DatasetJobEpisode {
@@ -62,7 +63,7 @@ export async function buildDataset(job: DatasetJob): Promise<DatasetFiles> {
 
   const { names, groups } = datasetJoints(job.model, job.slots);
 
-  return lerobotFiles({
+  return datasetFiles({
     robotType: job.robotType,
     jointNames: names,
     jointGroups: groups,

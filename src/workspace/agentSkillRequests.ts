@@ -13,6 +13,7 @@ import { skillRows, type SkillRow } from '../skills/skillRows';
 import { designOf, type SkillsRuntime } from '../skills/skillsRuntime';
 import type { DraftGoal } from '../skills/teachEnvironment';
 import type { DraftInput, DraftReport } from '../skills/teach';
+import { coachLines, coachRequest } from './agentCoachRequests';
 
 export interface SkillToolContext {
   skills: { runtime: SkillsRuntime; buildModel: () => Promise<SimModel> };
@@ -214,6 +215,8 @@ async function listRequest(_payload: Payload, ctx: SkillToolContext) {
 
   if (race) lines.push(...raceLines(race));
 
+  if (ctx.skills.runtime.coach.last) lines.push(...coachLines(ctx.skills.runtime.coach.last));
+
   return { text: lines.join('\n') };
 }
 
@@ -221,4 +224,5 @@ export const SKILL_HANDLERS = {
   skill_draft: draftRequest,
   skill_train: trainRequest,
   skill_list: listRequest,
+  skill_coach: coachRequest,
 };

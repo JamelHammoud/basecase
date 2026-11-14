@@ -166,7 +166,7 @@ describe('the Train section', () => {
     const row = train.getByTestId('policy-list').locator('li', { hasText: 'Walk forward' });
 
     await expect.poll(() => row.count()).toBe(1);
-    expect(await row.innerText()).toContain('2.0M steps');
+    expect(await row.innerText()).toContain('2M steps');
     expect(await app.page.locator(visible('h3'), { hasText: /^Policies$/ }).count()).toBe(0);
     await row.click({ button: 'right' });
     await expect.poll(() => app.page.getByRole('menuitem', { name: 'Delete' }).count()).toBe(1);

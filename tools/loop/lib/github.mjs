@@ -1,4 +1,5 @@
 import { cached } from './cache.mjs';
+import { failureDigest, jobsOf } from './failedLog.mjs';
 import { LOOP_MARK, withMark } from './mark.mjs';
 import { json, run } from './sh.mjs';
 import { openMatch } from './titles.mjs';
@@ -183,8 +184,6 @@ export const lastFinishedMainCheck = () =>
     ),
   );
 
-const JOB_LOG_CHARS = 40_000;
-
 const failedJobLogs = (runId) =>
   (
     json('gh', [
@@ -193,16 +192,16 @@ const failedJobLogs = (runId) =>
       '--jq',
       '[.jobs[] | select(.conclusion == "failure" or .conclusion == "timed_out") | {id, name}]',
     ]) ?? []
-  )
-    .map(({ id, name }) => {
-      const log = run('gh', ['api', `repos/${repo()}/actions/jobs/${id}/logs`], { allowFail: true }).out;
+  ).map(({ id, name }) => ({
+    name,
+    log: run('gh', ['api', `repos/${repo()}/actions/jobs/${id}/logs`], { allowFail: true }).out,
+  }));
 
-      return `## ${name}\n\n${log.slice(-JOB_LOG_CHARS)}`;
-    })
-    .join('\n\n');
+export function failedLog(runId, maxChars) {
+  const combined = run('gh', ['run', 'view', String(runId), '--log-failed'], { allowFail: true }).out;
 
-export const failedLog = (runId) =>
-  run('gh', ['run', 'view', String(runId), '--log-failed'], { allowFail: true }).out || failedJobLogs(runId);
+  return failureDigest(combined ? jobsOf(combined) : failedJobLogs(runId), maxChars);
+}
 
 export const repoVariable = (name) => run('gh', ['variable', 'get', name], { allowFail: true }).out.trim();
 

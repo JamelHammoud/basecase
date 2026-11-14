@@ -46,10 +46,18 @@ interface SimulatePanelProps {
   onPublishSkill: ((row: SkillRow) => void) | null;
 }
 
-function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
+const toastProblem = (started: Promise<string | null>, onToast: (message: string) => void) =>
+  void started.then((problem) => problem && onToast(problem));
+
+function useWalkTeaching(
+  skills: SceneSkills,
+  { onTeach, onToast }: Pick<SimulatePanelProps, 'onTeach' | 'onToast'>,
+): WalkTeaching {
   const walkRow = skills.rows.find((r) => r.kit === 'velocity-tracking');
   const kit = skills.canKit('velocity-tracking');
-  const teachWalk = kit ? () => void skills.trainKit('velocity-tracking') : onTeach && (() => onTeach('move'));
+  const teachWalk = kit
+    ? () => toastProblem(skills.trainKit('velocity-tracking'), onToast)
+    : onTeach && (() => onTeach('move'));
 
   return { velocityReady: skills.velocityReady, teachWalk, walkTraining: walkRow?.state.kind === 'training' };
 }
@@ -63,13 +71,13 @@ function publishEntries(row: SkillRow, publish: ((row: SkillRow) => void) | null
 export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy } = props;
   const { skills, onTeach, share } = props;
-  const walk = useWalkTeaching(skills, onTeach);
+  const walk = useWalkTeaching(skills, props);
   const subject = watchSubject(skills, training);
   const margin = useTrainingWatch(sim, subject);
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const skillActions = {
     onTrain: (row: SkillRow) =>
-      row.kit || row.move ? void skills.train(row) : onTeach?.(row.record?.goal ?? row.label),
+      row.kit || row.move ? toastProblem(skills.train(row), props.onToast) : onTeach?.(row.record?.goal ?? row.label),
     onTry: (row: SkillRow) => void skills.tryRow(row),
     onDrive: () => void sim.drive.start(),
     onStop: skills.stop,
@@ -101,7 +109,6 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
       y: e.clientY,
       items: [
         { label: 'Retrain', disabled: !training.canTrain, onSelect: () => void training.retrain(policy) },
-        { divider: true },
         deleteEntry(() => onDeletePolicy(id)),
       ],
     });

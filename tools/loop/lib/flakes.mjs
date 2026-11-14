@@ -1,5 +1,5 @@
 const ANSI = new RegExp(`(?:${String.fromCharCode(27)}|\\^\\[)\\[[0-9;]*m`, 'g');
-const FAILED = /\bFAIL\s+(\S+\.test\.ts)\s+>\s+(.+?)\s*$/;
+const FAILED = /\bFAIL\s+(\S+\.test\.[cm]?[jt]sx?)\s+>\s+(.+?)\s*$/;
 
 export function failedTests(log) {
   const found = new Set();

@@ -61,7 +61,6 @@ const RobotTile: React.FC<{
 
 const importedMenu = (robot: RobotEntry, onInsert: () => void): ContextMenuEntry[] => [
   { label: 'Insert', icon: <PlusIcon />, onSelect: onInsert },
-  { divider: true },
   deleteEntry(() =>
     confirmAction({
       title: `Delete ${robot.preset.title}?`,

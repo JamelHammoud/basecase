@@ -59,8 +59,8 @@ export default function repair({ log }) {
   try {
     const prompt = [
       `Check failed on main at ${latest.headSha} (${runUrl}).`,
-      'The failed steps’ log, last part:',
-      failedLog(latest.databaseId).slice(-MAX_LOG),
+      'Every failed job, with the end of its log:',
+      failedLog(latest.databaseId, MAX_LOG),
     ].join('\n\n');
     const result = runAgent({ cwd: worktree.dir, name: 'repair', prompt, schema: CHANGE_SCHEMA });
 

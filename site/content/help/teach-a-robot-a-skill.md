@@ -1,7 +1,7 @@
 ---
 title: Teach a robot a skill
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 7
@@ -31,7 +31,7 @@ covers:
 
 Tell the robot what you want it to do in your own words, then approve the test the agent writes for it. Basecase trains the skill until it passes Arena.
 
-Teaching needs the desktop app, with Claude, Codex or Gemini connected as the agent. You can teach the robot any goal that the simulation can judge.
+Teaching runs in the desktop app, with Claude, Codex or Gemini connected as the agent. With Offline chosen, **Teach** shows a message instead. You can teach the robot any goal it can be judged on in the simulation, so there's no list of tasks to pick from.
 
 1. Click **Simulate** at the top of the right panel.
 2. Under **Train**, type the goal into **Teach it to**. For example, "walk to the box".

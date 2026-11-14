@@ -27,7 +27,7 @@ import { rebuild } from '../lib/rebuild.mjs';
 
 export const schedule = {
   agent: true,
-  slots: 4,
+  slots: 10,
   everySeconds: 60,
   labels: ['loop:revising'],
   does: "Answers a failed review, a pull request's own Check failure or a comment from Jamel on its branch, and rebuilds a change from main after four failed attempts",

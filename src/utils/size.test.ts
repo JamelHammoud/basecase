@@ -40,8 +40,9 @@ describe('size', () => {
   });
 
   it('keeps the sign of a signed length', () => {
-    expect(signedLengthLabel(-12.34)).toBe('-12.3 mm');
-    expect(signedLengthLabel(-1234)).toBe('-1.23 m');
+    expect(signedLengthLabel(-12.34)).toBe('−12.3 mm');
+    expect(signedLengthLabel(-1234)).toBe('−1.23 m');
     expect(signedLengthLabel(845.2)).toBe('845 mm');
+    expect(signedLengthLabel(-0)).toBe('0 mm');
   });
 });

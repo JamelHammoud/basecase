@@ -73,7 +73,19 @@ const SPELLING_SAMPLES = Object.keys(SPELLING).map((british) => [`The ${british}
 
 const APOSTROPHE_SAMPLES = [["Couldn't load the model", "n't"]];
 
-const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES, ...SPELLING_SAMPLES, ...APOSTROPHE_SAMPLES];
+const MINUS_SAMPLES = [
+  ['Head between -180° and 180°.', '-180'],
+  ['-0.42 N·m', '-0.42'],
+  ['Margin (-1.5)', '-1.5'],
+];
+
+const SAMPLES_WITH_GLOSSARY = [
+  ...SAMPLES,
+  ...GLOSSARY_SAMPLES,
+  ...SPELLING_SAMPLES,
+  ...APOSTROPHE_SAMPLES,
+  ...MINUS_SAMPLES,
+];
 
 const errors = (text) => [{ messageId: 'banned', data: findBannedCopy(text) }];
 
@@ -198,6 +210,22 @@ describe('apostrophes', () => {
 
   it('allows ’ and quotes around a word', () => {
     for (const text of ['Couldn’t load the model', "Name it 'Arm'", "The robots' joints"])
+      expect(findBannedCopy(text)).toBeNull();
+  });
+});
+
+describe('minus signs', () => {
+  it('flags a hyphen written as a minus sign', () => {
+    for (const [text, word] of MINUS_SAMPLES) {
+      const hit = findBannedCopy(text);
+
+      expect(hit?.word).toBe(word);
+      expect(hit?.section).toBe('§3b-22');
+    }
+  });
+
+  it('allows − and hyphens inside words and ranges', () => {
+    for (const text of ['Head between −180° and 180°.', 'M3-12 screw', 'SO-101 Arm', 'Pages 3-4', 'Wi-Fi'])
       expect(findBannedCopy(text)).toBeNull();
   });
 });

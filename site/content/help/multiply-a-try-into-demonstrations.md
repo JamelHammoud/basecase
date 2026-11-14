@@ -44,7 +44,7 @@ When it's done, the toast says how many it kept: "Kept 50 of 50". The try's row 
 
 ## What each variation changes
 
-Each variation moves every loose object and every spot up to 15 mm each way across the floor. It also changes friction, masses, servo strength and servo delay, the way Checks does. Then it replays the commands you drove the try with. Each arm target moves with the object or spot it was nearest at that moment, so the hand still meets it.
+Each variation moves every loose object and every spot up to 15 mm each way across the floor. In a [scanned room](/help/import-a-scanned-room), each fixed piece of furniture moves up to 50 mm and turns up to 5°. The variation also changes friction, masses, servo strength and servo delay, the way Checks does. Then it replays the commands you drove the try with. Each arm target moves with the object or spot it was nearest at that moment, so the hand still meets it.
 
 The Case's contract judges every variation, and only passes are kept. Multiply again for 50 more: each round uses new variations.
 

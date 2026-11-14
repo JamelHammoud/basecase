@@ -16,14 +16,22 @@ export const createCase = {
       'pick (pick up a block distance_mm ahead of the arm and set it on a spot spacing_mm farther out; arms with a gripper, open floor only). ' +
       'handoff (as touch, then a second arm from another open scene tab, facing the first, touches the same point while the first leaves it; needs an arm in another open tab). ' +
       'radius_mm is how close counts, seconds the time allowed; anything left out gets a default sized to the robot. ' +
-      'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch. ' +
+      'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch; room, the scanned room the user dropped, for reach, push and path. ' +
+      'In the room, target names where reach stops (one name) or the spots path passes in order (one name each), from the room’s doors and furniture: "door", "table", "table 2", or "under table" for the floor beneath a table the robot fits under. A target picks the room world. ' +
       'objects adds world objects as in set_world (agent frame). A legged robot that falls fails any Case. ' +
       'logic is a Routine (as in make_routine) the Case runs; score counts dynamic objects in or out of a marker spot. ' +
       'console makes the Case an app the person runs: with one, the app opens the new Case running, laid out by it. ' +
       'Returns { ok, id, name, brief, seconds, objects, running? } or { ok: false, problem } saying what to change, e.g. the goals this robot can try or the console path it refused.',
     inputSchema: {
       goal: z.enum(['reach', 'push', 'path', 'walk', 'touch', 'pick', 'handoff']),
-      world: z.enum(['floor', 'corridor', 'block', 'shelf']).optional().describe('floor when left out'),
+      world: z
+        .enum(['floor', 'corridor', 'block', 'shelf', 'room'])
+        .optional()
+        .describe('floor when left out, room when target is given'),
+      target: z
+        .union([z.string().min(1).max(80), z.array(z.string().min(1).max(80)).min(1).max(8)])
+        .optional()
+        .describe('reach and path in the room: object names, e.g. "under table" or ["sofa", "door", "table"]'),
       name: z
         .string()
         .min(1)

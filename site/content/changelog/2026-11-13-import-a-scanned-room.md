@@ -22,6 +22,12 @@ Each piece of furniture is a box at the size RoomPlan measured, named after its 
 
 The robot starts where you tapped, facing the way you dragged, turned square to the walls. When it doesn't fit there, or another RoomPlan app wrote the file, it starts on the open floor nearest the middle. Reach a Spot, Push a Box and Follow a Path plan from there, routing around the walls and furniture. An arm gets Touch a Point only when a table-height surface is within its reach.
 
+## Drive to the door
+
+A Reach a Spot or Follow a Path spot can be a door or a piece of furniture, by name: Door, Sofa, Under Table. People say “drive under the table”, not “drive 2.2 m”, and the agent's Cases take the same names. A table keeps only its top, so a rover passes under it. Seeded runs move and turn each piece of furniture up to 50 mm and 5°, since furniture moves every day. Walls and doors stay put.
+
+![New Case in a scanned room, with Under Table picked as the Spot](/changelog/import-a-scanned-room/under-table.png)
+
 ## True size
 
 A room never resizes to fit the robot the way the made-up worlds do for arms. A 4 m room is 4 m for a rover or a humanoid. A try, a dataset or a trained policy learns the distances the robot will really meet.
@@ -30,4 +36,4 @@ A room never resizes to fit the robot the way the made-up worlds do for arms. A 
 
 ## What it doesn't do
 
-It reads the JSON only, not RoomPlan's USDZ. Basecase Scan runs from Xcode on a LiDAR iPhone or iPad; it isn't on the App Store. A room holds up to 256 objects, and a bigger scan keeps the largest ones. Furniture is solid to the floor, so a robot can't drive under a table.
+It reads the JSON only, not RoomPlan's USDZ. Basecase Scan runs from Xcode on a LiDAR iPhone or iPad; it isn't on the App Store. A room holds up to 256 objects, and a bigger scan keeps the largest ones. Only a table is hollow underneath; a bed or a sofa is solid to the floor.

@@ -50,6 +50,12 @@ export function caseValues(payload: Payload): Partial<GoalValues> {
   );
 }
 
+function caseTargets(payload: Payload): string[] | undefined {
+  const asked = (Array.isArray(payload.target) ? payload.target : [payload.target]).flatMap((t) => text(t) ?? []);
+
+  return asked.length ? asked : undefined;
+}
+
 function extraObjects(payload: Payload): WorldObject[] | string {
   try {
     return sceneObjects(Array.isArray(payload.objects) ? (payload.objects as AgentObject[]) : []);
@@ -77,10 +83,12 @@ async function createCase(payload: Payload, ctx: CaseContext) {
 
   ctx.setAction('Making a Case');
 
+  const targets = caseTargets(payload);
   const spec: CaseSpec = {
     goal: String(payload.goal) as GoalKind,
-    world: (text(payload.world) ?? 'floor') as WorldKind,
-    values: caseValues(payload),
+    world: (text(payload.world) ?? (targets ? 'room' : 'floor')) as WorldKind,
+    values: { ...caseValues(payload), ...(targets && payload.goal === 'path' ? { stops: targets.length } : {}) },
+    ...(targets ? { targets } : {}),
     name: text(payload.name),
     brief: text(payload.brief),
     objects,

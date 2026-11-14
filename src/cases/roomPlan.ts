@@ -1,6 +1,8 @@
 import type { V3 } from '../utils/kinematics';
+import { CONFIDENCES, type Confidence } from './roomFurniture';
 import {
   inRoomFrame,
+  roomDoors,
   roomFrame,
   roomObjects,
   type RoomFrame,
@@ -19,6 +21,7 @@ export interface RoomStart {
 export interface Room {
   name: string;
   objects: WorldObject[];
+  doors: WorldObject[];
   start?: RoomStart;
 }
 
@@ -88,10 +91,22 @@ const readSurface: Reader<RoomSurface> = (value, where) => {
   };
 };
 
-const readItem: Reader<RoomItem> = (value, where) => ({
-  ...readSurface(value, where),
-  category: readCategory(asRecord(value, where).category, `${where}.category`),
-});
+const readConfidence = (value: unknown): Confidence | undefined => {
+  const key = typeof value === 'string' ? value : Object.keys(Object(value ?? {}))[0];
+
+  return CONFIDENCES.find((c) => c === key);
+};
+
+const readItem: Reader<RoomItem> = (value, where) => {
+  const v = asRecord(value, where);
+  const confidence = readConfidence(v.confidence);
+
+  return {
+    ...readSurface(value, where),
+    category: readCategory(v.category, `${where}.category`),
+    ...(confidence ? { confidence } : {}),
+  };
+};
 
 const listIn = <T>(v: Record<string, unknown>, key: string, read: Reader<T>): T[] =>
   v[key] === undefined ? [] : listOf(read, MAX_ENTRIES)(v[key], key);
@@ -161,5 +176,10 @@ export function readRoomPlan(text: string, fileName: string): Room {
 
   const start = readStart(asRecord(file, 'A room file').basecase, roomFrame(scan));
 
-  return { name: roomName(fileName), objects: readWorldObjects(objects), ...(start ? { start } : {}) };
+  return {
+    name: roomName(fileName),
+    objects: readWorldObjects(objects),
+    doors: readWorldObjects(roomDoors(scan)),
+    ...(start ? { start } : {}),
+  };
 }

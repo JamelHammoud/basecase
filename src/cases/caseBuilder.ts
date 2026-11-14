@@ -5,9 +5,7 @@ import {
   CASE_GOALS,
   fallGuard,
   goalParam,
-  goalDefaults,
   routeClearance,
-  touchRadius,
   type BuilderRobot,
   type CaseGoal,
   type GoalKind,
@@ -16,10 +14,12 @@ import {
   type ParamKey,
 } from './caseGoals';
 import { CASE_WORLDS, type CaseWorld, type WorldKind } from './caseWorlds';
+import { goalDefaults, touchRadius } from './goalDefaults';
 import { handoffGoal } from './handoffGoal';
 import { robotFacts, type RobotFacts } from './robotFit';
 import { groundRoute } from './groundRoute';
 import type { Room } from './roomPlan';
+import { spotsOf, tripTimed } from './namedSpots';
 import { roomWorld } from './roomWorld';
 import { CASE_FORMAT_VERSION, parseCase, type Case, type ReferenceCommand, type WorldObject } from './schema';
 import { dotSpots } from './dotSpots';
@@ -36,6 +36,7 @@ export interface CaseSpec {
   score?: unknown;
   console?: unknown;
   room?: Room;
+  targets?: Array<string | null>;
 }
 
 export type BuiltCase = { ok: true; kase: Case } | { ok: false; problem: string };
@@ -191,7 +192,8 @@ const ROUTE_START_S = 0.5;
 function referenceOf(plan: GoalPlan, scenery: WorldObject[], robot: BuilderRobot): ReferenceCommand[] {
   if (!plan.waypoints) return plan.timeline;
 
-  const route = groundRoute(plan.waypoints, [...plan.objects, ...scenery], {
+  const inTheWay = scenery.map((o): WorldObject => (o.behavior === 'dynamic' ? { ...o, behavior: 'static' } : o));
+  const route = groundRoute(plan.waypoints, [...plan.objects, ...inTheWay], {
     start: robot.pivot,
     clearanceMm: routeClearance(robot),
     headroomMm: robot.heightMm || undefined,
@@ -241,17 +243,29 @@ function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): u
   };
 }
 
+export function specValues(spec: CaseSpec, robot: BuilderRobot): GoalValues | null {
+  const chosen = choose(spec, robot);
+  const spots = typeof chosen === 'string' ? [] : spotsOf(spec, chosen, robot);
+
+  if (typeof chosen === 'string') return null;
+
+  const values = goalValues(chosen.goal, robot, spec.values, chosen.world.kind);
+
+  return typeof spots === 'string' ? values : tripTimed(values, { spots, robot, given: spec.values });
+}
+
 export function buildCase(spec: CaseSpec, robot: BuilderRobot): BuiltCase {
   const chosen = choose(spec, robot);
+  const spots = typeof chosen === 'string' ? chosen : spotsOf(spec, chosen, robot);
 
-  if (typeof chosen === 'string') return { ok: false, problem: chosen };
+  if (typeof chosen === 'string' || typeof spots === 'string') return { ok: false, problem: String(spots) };
 
   const { goal, world } = chosen;
-  const values = goalValues(goal, robot, spec.values, world.kind);
-  const plan = goal.plan(robot, values, world.kind);
+  const values = tripTimed(goalValues(goal, robot, spec.values, world.kind), { spots, robot, given: spec.values });
+  const plan = goal.plan(robot, values, world.kind, spots);
   const scenery = world.objects(plan, robot);
   const problem =
-    goal.problem?.(robot, values) ??
+    (spots.some(Boolean) ? null : goal.problem?.(robot, values)) ??
     (scenery.some((o) => footprintHits(o, robot)) ? `Move the goal farther ahead to fit the ${world.name}.` : null);
 
   if (problem) return { ok: false, problem };

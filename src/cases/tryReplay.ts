@@ -1,7 +1,7 @@
 import type { MainModule } from '@mujoco/mujoco';
 import * as THREE from 'three';
 import type { SimEngine } from '../sim/engine';
-import { toMj, worldDeltas } from '../sim/mjcfFrames';
+import { quatToMj, toMj, worldDeltas } from '../sim/mjcfFrames';
 import { framePoses, Recorder, type RecordedCommand, type Recording } from '../sim/recorder';
 import type { V3 } from '../utils/kinematics';
 import { jitteredWorld, worldRandom } from './caseRandom';
@@ -9,7 +9,12 @@ import { startEngine } from './runCase';
 import type { Case } from './schema';
 import { scoreTry, type TryScoring } from './tries';
 
-export type Offsets = Map<string, V3>;
+export interface Offset {
+  move: V3;
+  turnDeg: number;
+}
+
+export type Offsets = Map<string, Offset>;
 
 export interface Variation {
   seed: number | null;
@@ -27,9 +32,10 @@ export function worldOffsets(kase: Case, seed: number | null): Offsets {
   const moved = jitteredWorld(kase, worldRandom(seed), { spots: true }).world.objects;
 
   kase.world.objects.forEach((o, i) => {
-    const offset = moved[i].position.map((x, k) => x - o.position[k]) as V3;
+    const move = moved[i].position.map((x, k) => x - o.position[k]) as V3;
+    const turnDeg = moved[i].rotation[1] - o.rotation[1];
 
-    if (offset.some((x) => x !== 0)) offsets.set(o.id, offset);
+    if (turnDeg !== 0 || move.some((x) => x !== 0)) offsets.set(o.id, { move, turnDeg });
   });
 
   return offsets;
@@ -69,9 +75,9 @@ export function shiftedCommands(source: TryScoring, offsets: Offsets): RecordedC
     if (!target) return c;
 
     const at = objectsAt(source, Math.round(c.at / source.recording.dt), ids);
-    const offset = offsets.get(nearest(at, new THREE.Vector3(...target)))!;
+    const { move } = offsets.get(nearest(at, new THREE.Vector3(...target)))!;
 
-    return { ...c, command: { ...c.command, target: target.map((x, k) => x + offset[k]) as V3 } };
+    return { ...c, command: { ...c.command, target: target.map((x, k) => x + move[k]) as V3 } };
   });
 }
 
@@ -79,6 +85,22 @@ function bodyOf(mj: MainModule, engine: SimEngine, id: string): number {
   const body = engine.sim.bodies.find((b) => b.world?.includes(id));
 
   return body ? mj.mj_name2id(engine.model, mj.mjtObj.mjOBJ_BODY.value, body.name) : -1;
+}
+
+type MjQuat = [number, number, number, number];
+
+export function turnedQuat([w, x, y, z]: MjQuat, turnDeg: number): MjQuat {
+  const yaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), (turnDeg * Math.PI) / 180);
+  const [tw, tx, ty, tz] = quatToMj(yaw);
+  const turned = new THREE.Quaternion(tx, ty, tz, tw).multiply(new THREE.Quaternion(x, y, z, w));
+
+  return [turned.w, turned.x, turned.y, turned.z];
+}
+
+function turnBody(quats: Float64Array, body: number, turnDeg: number) {
+  const at = body * 4;
+
+  quats.set(turnedQuat([...quats.subarray(at, at + 4)] as MjQuat, turnDeg), at);
 }
 
 function placeStart(mj: MainModule, engine: SimEngine, start: { recording: Recording; offsets: Offsets }) {
@@ -95,9 +117,11 @@ function placeStart(mj: MainModule, engine: SimEngine, start: { recording: Recor
     const joint = body < 0 ? -1 : model.body_jntadr[body];
     const into = joint >= 0 ? data.qpos : model.body_pos;
     const at = joint >= 0 ? model.jnt_qposadr[joint] : body * 3;
-    const move = toMj(offset);
+    const move = toMj(offset.move);
 
     if (body >= 0) move.forEach((x, k) => (into[at + k] += x));
+
+    if (body >= 0 && joint < 0 && offset.turnDeg) turnBody(model.body_quat, body, offset.turnDeg);
   }
 
   mj.mj_forward(model, data);

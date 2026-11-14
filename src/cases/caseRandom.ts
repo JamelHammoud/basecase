@@ -1,7 +1,8 @@
 import { drawInstance, seededRandom, type Instance, type Random } from '../skills/arenaWorld';
 import type { Randomization } from '../skills/environment';
 import { sha256Hex } from '../skills/hash';
-import type { Case } from './schema';
+import { footprint, jitteredFurniture } from './roomJitter';
+import type { Case, WorldObject } from './schema';
 
 export const CASE_RANDOMIZATION: Randomization = Object.freeze({
   friction: [0.8, 1.2],
@@ -32,8 +33,13 @@ export const caseInstance = (random: Random, options: InstanceOptions): Instance
 
 const nudge = (random: Random) => (2 * random() - 1) * OBJECT_JITTER_MM;
 
+const scanned = (o: WorldObject) => o.behavior === 'static' && !!o.jitter;
+
 export function jitteredWorld(kase: Case, random: Random, { spots = false } = {}): Case {
+  const fixed = kase.world.objects.filter((o) => o.behavior === 'static' && !o.jitter).map(footprint);
   const objects = kase.world.objects.map((o) => {
+    if (scanned(o)) return jitteredFurniture(o, fixed, random);
+
     if (o.behavior === 'static' || (o.behavior === 'marker' && !spots)) return o;
 
     const [x, y, z] = o.position;

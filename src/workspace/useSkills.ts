@@ -26,6 +26,7 @@ import type { Rig } from '../utils/kinematics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { platformBridge } from '../utils/platformBridge';
 import { trainHandoff, useRoutineSkills, type HandoffJob } from './useRoutineSkills';
+import { useSkillCoach } from './useSkillCoach';
 
 const BUILD_DEBOUNCE_MS = 1500;
 
@@ -171,6 +172,7 @@ export function useSkills(input: SkillsInput) {
   const examples = teachExamples(facts, footPoints(rig, parts).length);
 
   const load = (record: SkillRecord) => platform.loadSkill(record.hash);
+  const coach = useSkillCoach({ sim, model, records, loadSkill: platform.loadSkill, setProject: input.setProject });
   const routineSkills = useRoutineSkills({ rows, load, project, setProject: input.setProject });
 
   const velocity = async (): Promise<VelocityDrive | null> => {
@@ -207,6 +209,8 @@ export function useSkills(input: SkillsInput) {
 
     if (!policy) return;
 
+    coach.stopReplay();
+
     if (sim.status === 'off') await sim.start();
 
     const robot = rowEnvironment(row)?.robot ?? model?.robots[0]?.key ?? '';
@@ -219,6 +223,8 @@ export function useSkills(input: SkillsInput) {
     const skill = row.record ? await load(row.record) : null;
 
     if (!skill) return;
+
+    coach.stopReplay();
 
     if (sim.status === 'off') await sim.start();
 
@@ -247,6 +253,7 @@ export function useSkills(input: SkillsInput) {
     loadSnapshot: (ref: SnapshotRef) => runtime.loadSnapshot(ref),
     playSnapshot,
     stop: () => runtime.stopUser(),
+    coach,
     routineSkills,
     trainHandoff: (job: HandoffJob) => trainHandoff({ runtime, routineSkills, project, job }),
   };

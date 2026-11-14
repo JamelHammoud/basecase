@@ -145,3 +145,23 @@ export const listSkills = {
   },
   handler: () => ask('skill_list', {}, 30000),
 };
+
+export const coachSkill = {
+  name: 'coach_skill',
+  config: {
+    title: 'Coach a skill',
+    description:
+      'Changes how a ready Motor Kit skill moves, from the user’s words (a message starting with /coach asks for this). ' +
+      'Call it first with skill and words: it returns the skill’s RewardLang reward and five signals measured on one clean run (foot_clearance, contact_impulse, joint_jerk, base_height, speed) with the least each must move. ' +
+      'Then call it again with the whole revised reward, the signal you expect to move and its direction. Forge trains from the ready skill; the result is kept only if Arena passes the same contract and that signal moved by its minimum, otherwise the old skill stays. ' +
+      'The contract, the observation and the action can’t change. Follow it with list_skills.',
+    inputSchema: {
+      skill: z.string().min(1).max(60).describe('The ready skill’s name as the list shows it, e.g. "Walk"'),
+      words: z.string().min(1).max(400).describe('What the user asked for, in their words'),
+      reward: z.string().max(8000).optional().describe('Second call: the whole revised RewardLang program'),
+      signal: z.enum(['foot_clearance', 'contact_impulse', 'joint_jerk', 'base_height', 'speed']).optional(),
+      direction: z.enum(['up', 'down']).optional(),
+    },
+  },
+  handler: (args) => ask('skill_coach', args, 180000),
+};

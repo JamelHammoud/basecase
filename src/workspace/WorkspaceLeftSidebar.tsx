@@ -21,7 +21,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
   const { studio, tool, parts, selectedIds, selection } = core;
   const { library, creation, edits, robots, files } = actions;
   const { panelWidths } = studio;
-  const browseRobots = () => showPartsSection(core, 'Robots');
+  const showRobots = () => showPartsSection(core, 'Robots');
   const libraryProps = {
     customModels: studio.customModels,
     onInsertModel: creation.placeCustomModel,
@@ -59,14 +59,14 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         cases: core.simTraining.cases,
         compare: core.caseCompare,
         onOpen: () => tool.setRightTab('sim'),
-        onBrowseRobots: browseRobots,
+        onShowRobots: showRobots,
         onDescribe: IS_WEB_DEMO ? undefined : () => tool.requestCompose('/case '),
       }}
       routines={{ routines: core.simTraining.routines, onTrain: () => tool.setRightTab('sim') }}
       operate={{
         joints: core.project.joints ?? [],
         parts,
-        onBrowseRobots: browseRobots,
+        onShowRobots: showRobots,
         calibration: {
           calibrations: core.project.servoCalibrations,
           measured: measuredJoints({

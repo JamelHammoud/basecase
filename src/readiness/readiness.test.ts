@@ -4,6 +4,7 @@ import type { ScenePart } from '../types/robotics';
 import { buildBom } from '../utils/bom';
 import type { CheckRow } from '../utils/engineeringTypes';
 import { sourcingFindings, unprintableFindings } from './buildChecks';
+import { bomFindings } from './findings';
 import { thinWallOf } from '../utils/printReport';
 import {
   failedReadiness,
@@ -254,6 +255,24 @@ describe('parts-list checks', () => {
 
     expect(bom.lines[0].category).toBe('Equipment');
     expect(bom.totals.estimatedUsd).toBe(0);
+  });
+
+  it('asks no price for a part the user owns enough of', () => {
+    registerSourced([item({ id: 'owned-thing' })]);
+
+    const extras = [{ key: 'supply:owned-thing', qty: 2 }];
+    const priceNotes = (onHand: number) =>
+      bomFindings(
+        buildBom({
+          parts: [],
+          project: { extras } as never,
+          purchases: { 'supply:owned-thing': { onHand } },
+          measures: {},
+        }),
+      ).filter((f) => f.rule === 'no-price');
+
+    expect(priceNotes(1)).toHaveLength(1);
+    expect(priceNotes(2)).toEqual([]);
   });
 });
 

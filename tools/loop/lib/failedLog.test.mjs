@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { failureDigest, jobsOf } from './failedLog.mjs';
+import { failureDigest, jobsOf, withTimeouts } from './failedLog.mjs';
 
 const esc = String.fromCharCode(27);
 const filler = (job, count) =>
@@ -45,7 +45,45 @@ describe('failed log digest', () => {
     expect(digest.length).toBeLessThanOrEqual(10_000);
   });
 
+  it('says which job ran past its timeout', () => {
+    const digest = failureDigest(
+      [
+        { name: 'e2e (1)', log: ' ✓ e2e/booleans.e2e.test.ts (2 tests) 11593ms', timedOut: true },
+        { name: 'check', log: 'Process completed with exit code 1.' },
+      ],
+      10_000,
+    );
+
+    expect(digest).toContain('- e2e (1): ran past its timeout, so GitHub cancelled it. no failed test named');
+    expect(digest).toContain('- check: no failed test named');
+  });
+
   it('is empty when no job failed', () => {
     expect(failureDigest([], 10_000)).toBe('');
+  });
+});
+
+describe('timed-out jobs', () => {
+  const messages = {
+    1: ['The job has exceeded the maximum execution time of 15m0s', 'The operation was canceled.'],
+    2: ['The run was canceled by @someone.', 'The operation was canceled.'],
+  };
+
+  it('counts a job GitHub cancelled at its timeout as timed out, and leaves every other job as it was', () => {
+    const jobs = [
+      { id: 1, name: 'e2e (1)', conclusion: 'cancelled' },
+      { id: 2, name: 'e2e (2)', conclusion: 'cancelled' },
+      { id: 3, name: 'e2e (3)', conclusion: 'failure' },
+      { id: 4, name: 'unit', conclusion: 'success' },
+    ];
+    const asked = [];
+    const result = withTimeouts(jobs, (id) => {
+      asked.push(id);
+
+      return messages[id] ?? [];
+    });
+
+    expect(result.map(({ conclusion }) => conclusion)).toEqual(['timed_out', 'cancelled', 'failure', 'success']);
+    expect(asked).toEqual([1, 2]);
   });
 });

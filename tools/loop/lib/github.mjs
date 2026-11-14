@@ -1,5 +1,5 @@
 import { cached } from './cache.mjs';
-import { failureDigest, jobsOf } from './failedLog.mjs';
+import { failureDigest, jobsOf, withTimeouts } from './failedLog.mjs';
 import { LOOP_MARK, withMark } from './mark.mjs';
 import { json, run } from './sh.mjs';
 import { openMatch } from './titles.mjs';
@@ -146,17 +146,25 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 const FAILED = new Set(['failure', 'timed_out']);
 
+const annotations = (jobId) =>
+  json('gh', ['api', `repos/${repo()}/check-runs/${jobId}/annotations`, '--jq', '[.[].message]'], {
+    allowFail: true,
+  }) ?? [];
+
+const listJobs = (runId) =>
+  withTimeouts(
+    json('gh', [
+      'api',
+      `repos/${repo()}/actions/runs/${runId}/jobs?per_page=100`,
+      '--jq',
+      '[.jobs[] | {id, name, conclusion}]',
+    ]) ?? [],
+    annotations,
+  );
+
 const runJobs = (run) =>
-  cached(
-    `run-jobs-${run.databaseId}-${run.status}`,
-    { ttlMs: run.status === 'completed' ? WEEK_MS : 60_000 },
-    () =>
-      json('gh', [
-        'api',
-        `repos/${repo()}/actions/runs/${run.databaseId}/jobs?per_page=100`,
-        '--jq',
-        '[.jobs[] | {id, name, conclusion}]',
-      ]) ?? [],
+  cached(`run-jobs-${run.databaseId}-${run.status}`, { ttlMs: run.status === 'completed' ? WEEK_MS : 60_000 }, () =>
+    listJobs(run.databaseId),
   );
 
 export const failedJobs = (run) => runJobs(run).filter((job) => FAILED.has(job.conclusion));
@@ -192,22 +200,16 @@ export const lastFinishedMainCheck = () =>
     ),
   );
 
-const failedJobLogs = (runId) =>
-  (
-    json('gh', [
-      'api',
-      `repos/${repo()}/actions/runs/${runId}/jobs?per_page=100`,
-      '--jq',
-      '[.jobs[] | select(.conclusion == "failure" or .conclusion == "timed_out") | {id, name}]',
-    ]) ?? []
-  ).map(({ id, name }) => ({
-    name,
-    log: run('gh', ['api', `repos/${repo()}/actions/jobs/${id}/logs`], { allowFail: true }).out,
-  }));
+const jobLog = (id) => run('gh', ['api', `repos/${repo()}/actions/jobs/${id}/logs`], { allowFail: true }).out;
 
 export function failedLog(runId, maxChars, only) {
   const combined = run('gh', ['run', 'view', String(runId), '--log-failed'], { allowFail: true }).out;
-  const jobs = combined ? jobsOf(combined) : failedJobLogs(runId);
+  const shown = combined ? jobsOf(combined) : [];
+  const failed = listJobs(runId).filter((job) => FAILED.has(job.conclusion));
+  const named = new Set(shown.map(({ name }) => name));
+  const unshown = failed.filter(({ name }) => !named.has(name)).map(({ id, name }) => ({ name, log: jobLog(id) }));
+  const timedOut = new Set(failed.filter((job) => job.conclusion === 'timed_out').map(({ name }) => name));
+  const jobs = [...shown, ...unshown].map((job) => ({ ...job, timedOut: timedOut.has(job.name) }));
 
   return failureDigest(only ? jobs.filter(({ name }) => only.includes(name)) : jobs, maxChars);
 }

@@ -17,8 +17,6 @@ type Studio = {
 let app: App;
 let hub: FakeHub;
 
-const studio = () => (window as unknown as { __studio: Studio }).__studio;
-
 const tabCount = () => app.page.locator(shown('[role="tab"]:has([data-tab-close])')).count();
 
 const standRow = () => app.page.locator(shown('[data-testid="skill-row"]'), { hasText: 'Stand' }).first();
@@ -34,7 +32,7 @@ const savedSkills = () =>
 async function openFixture(id: string) {
   const robot = fixtureRobots().find((r) => r.id === id)!;
 
-  await app.page.evaluate((record) => studio().load(record), {
+  await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
     name: id,
     parts: robot.parts,
     project: { ...DEFAULT_PROJECT, joints: robot.joints },
@@ -43,7 +41,7 @@ async function openFixture(id: string) {
   await app.page.locator(shown('[role=tab]'), { hasText: 'Simulate' }).first().click();
   await expect.poll(() => standRow().count(), { timeout: 60000 }).toBe(1);
   await app.page.evaluate(
-    (policy) => studio().stubTrainer(policy),
+    (policy) => (window as unknown as { __studio: Studio }).__studio.stubTrainer(policy),
     holdPolicy(kitJob(fixtureModel(id), 'stand', { minutes: 1, seed: 0 })),
   );
 }

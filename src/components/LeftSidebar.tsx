@@ -1,5 +1,5 @@
 import React, { Activity, useState } from 'react';
-import { IconButton, LAYOUT, PlusIcon } from '../design-system';
+import { LAYOUT } from '../design-system';
 import type { CatalogItem, ScenePart } from '../types/robotics';
 import type { SimReadyAsset } from '../simready/search';
 import type { RobotPreset } from '../utils/robotImport';
@@ -8,21 +8,17 @@ import { LibraryPanel, type LibraryPanelProps } from './LibraryPanel';
 import { NewModelMenu } from './library/NewModelMenu';
 import { CasesPanel, type CasesPanelProps } from './cases/CasesPanel';
 import { RoutinesPanel, type RoutinesPanelProps } from './routines/RoutinesPanel';
-import { ObjectsPanel } from './objects/ObjectsPanel';
 import { OperatePanel, type OperatePanelProps } from './operate/OperatePanel';
-import { PartsPanel } from './PartsPanel';
+import { PartsPanel, type PartsReveal } from './PartsPanel';
 import { isPlayTab } from './playViews';
 import { PlayNoRobot } from './PlayNoRobot';
 import { PlayTabs } from './PlayTabs';
-import { RobotsPanel } from './RobotsPanel';
 
-export type LeftTab = 'layers' | 'parts' | 'robots' | 'objects' | 'cases' | 'routines' | 'operate' | 'library';
+export type LeftTab = 'layers' | 'parts' | 'cases' | 'routines' | 'operate' | 'library';
 
 const VIEW_TITLES: Record<Exclude<LeftTab, 'cases' | 'routines' | 'operate'>, string> = {
   layers: 'Layers',
   parts: 'Parts',
-  robots: 'Robots',
-  objects: 'Objects',
   library: 'Library',
 };
 
@@ -38,7 +34,9 @@ interface LeftSidebarProps extends Omit<LayersViewProps, 'parts' | 'selectedIds'
   selectedIds: string[];
   onAddCatalogItem: (item: CatalogItem) => void;
   partsSearchRef?: React.MutableRefObject<HTMLInputElement | null>;
-  onImportRobot: (preset: RobotPreset | null) => Promise<unknown> | void;
+  partsReveal: PartsReveal | null;
+  onPartsRevealed: () => void;
+  onInsertRobot: (preset: RobotPreset) => Promise<unknown> | void;
   onInsertSimReady: (asset: SimReadyAsset) => Promise<unknown> | void;
   library: Omit<LibraryPanelProps, 'parts' | 'selectedIds'>;
   cases: CasesPanelProps;
@@ -97,14 +95,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
           ) : (
             <h2 className="text-[15px] font-semibold text-white/90 tracking-[-0.01em]">{VIEW_TITLES[tab]}</h2>
           )}
-          {tab === 'robots' && (
-            <IconButton
-              icon={<PlusIcon className="w-4 h-4" />}
-              title="Import robot"
-              size="xs"
-              onClick={() => props.onImportRobot(null)}
-            />
-          )}
           {tab === 'library' && (
             <NewModelMenu
               canSaveSelection={props.selectedIds.length > 0}
@@ -121,13 +111,14 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
             <LayersView {...props} />
           </View>
           <View tab="parts" current={tab} visited={visited}>
-            <PartsPanel onAdd={props.onAddCatalogItem} searchInputRef={props.partsSearchRef} />
-          </View>
-          <View tab="robots" current={tab} visited={visited}>
-            <RobotsPanel onInsert={(r) => props.onImportRobot(r)} onInsertSimReady={props.onInsertSimReady} />
-          </View>
-          <View tab="objects" current={tab} visited={visited}>
-            <ObjectsPanel onInsert={props.onInsertSimReady} />
+            <PartsPanel
+              onAdd={props.onAddCatalogItem}
+              onInsertRobot={props.onInsertRobot}
+              onInsertSimReady={props.onInsertSimReady}
+              reveal={props.partsReveal}
+              onRevealed={props.onPartsRevealed}
+              searchInputRef={props.partsSearchRef}
+            />
           </View>
           {noRobot && <PlayNoRobot onBrowseRobots={props.cases.onBrowseRobots} />}
           <View tab="cases" current={playing} visited={visited}>

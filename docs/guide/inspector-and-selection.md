@@ -75,7 +75,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 7a-2. Drag and Drop
 
-- **Draggable onto the canvas:** Parts tiles, Shapes menu tiles, Library model tiles, Robots tiles and SimReady tiles (Objects and Robots). They use `PART_DRAG_TYPE` / `MODEL_DRAG_TYPE` / `ROBOT_DRAG_TYPE` (`{ url, name }`, imported on drop) / `SIMREADY_DRAG_TYPE` (`{ url, name, maker, license }`) from `src/data/dnd.ts`, and the tile’s preview is the drag image.
+- **Draggable onto the canvas:** Parts tiles, Shapes menu tiles, Library model tiles, robot tiles and rows, and SimReady tiles (all in Parts). They use `PART_DRAG_TYPE` / `MODEL_DRAG_TYPE` / `ROBOT_DRAG_TYPE` (`{ url, name }`, imported on drop) / `SIMREADY_DRAG_TYPE` (`{ url, name, maker, license }`) from `src/data/dnd.ts`, and the tile’s preview is the drag image.
 - **Where it lands:** at the drop point, snapped to the grid step. Dropping on a part stacks it on that surface; otherwise it sits on the floor.
 - **Snapping by ports** (§12): a Parts tile, or a Library model that inserts as one part, snaps onto a compatible port within reach of the drop point, with the same dots as a gizmo drag and the mate recorded. The browser hides drag data until the drop, so tiles start their drag with `setSceneDrag` (`data/dnd.ts`), which also keeps the payload for `dragover`; `workspace/dropPreview.ts` builds the part that would land and `previewSnap` on the viewport handle solves and draws it. ⌘ (Ctrl on Windows) drops without snapping. Articulated parts (grippers, hands) and multi-part Library models land as before.
 - **Shapes menu:** fades out (stays mounted) while dragging, then closes on drag end. Removing the drag source would cancel the drag.

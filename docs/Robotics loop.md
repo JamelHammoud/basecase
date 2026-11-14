@@ -65,7 +65,7 @@ New rows in Build → Checks, with the same Pass / Warn / Fail rows that select 
 - **Done when:** a bench run uses `simulate` and changes the design because of what it found.
 
 ### S5. Objects to work with (SimReady)
-- The Objects view and `find_objects` / `insert_object` bring in real props from NVIDIA SimReady Central with the maker's mass, friction and colliders; the Robots view adds makers' arms and grippers with their joints (docs/guide/simready.md §8e).
+- Parts' Objects section and search and `find_objects` / `insert_object` bring in real props from NVIDIA SimReady Central with the maker's mass, friction and colliders; Parts' search adds makers' arms and grippers with their joints (docs/guide/simready.md §8e).
 - In the sim, objects are free bodies: they fall, slide and can be pushed or grasped.
 - **Next:** Reach and Pick training tasks aimed at an object in the scene (T1), with the object's pose randomized.
 

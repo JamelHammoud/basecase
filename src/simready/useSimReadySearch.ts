@@ -56,7 +56,7 @@ export function useSimReadySearch(query: string, shelf: SimReadyShelf, enabled =
   }, [q]);
 
   useEffect(() => {
-    if (!enabled || next === null || !nextKey || pages.has(nextKey)) return;
+    if (!enabled || debounced !== q || next === null || !nextKey || pages.has(nextKey)) return;
 
     const ctrl = new AbortController();
 
@@ -70,7 +70,7 @@ export function useSimReadySearch(query: string, shelf: SimReadyShelf, enabled =
       });
 
     return () => ctrl.abort();
-  }, [enabled, next, nextKey, debounced, shelf, attempt]);
+  }, [enabled, next, nextKey, debounced, q, shelf, attempt]);
 
   const last = loaded[loaded.length - 1];
 

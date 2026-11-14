@@ -46,4 +46,4 @@ The header counts parts and cutouts, and the footer gives the **Overall size** o
 
 The eye or lock stays on the row while the part is hidden or locked. **Hide** and **Lock** are also in the part's right-click menu and [[⌘K]], as **Show** and **Unlock** once they're on.
 
-An empty scene leaves Layers empty. To bring robots, objects and saved models in, use **Robots**, **Objects** and **Library** in the same view rail.
+An empty scene leaves Layers empty. To bring robots, objects and saved models in, use **Parts** and **Library** in the same view rail.

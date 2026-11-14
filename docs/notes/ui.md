@@ -149,7 +149,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - Image planes keep their aspect ratio: editing width or height changes the other.
 - `GroupName` commits once on Enter or blur.
 
-## LeftSidebar, LibraryPanel, PartsPanel, RobotsPanel
+## LeftSidebar, LibraryPanel, PartsPanel
 
 - Sidebar aside width includes the 8px gap after the card, like the inspector.
 - Layers: an empty scene returns no Layers content at all.
@@ -160,6 +160,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
   - A hardware match uses only its own type's label, so “flat” finds countersunk screws, not every screw.
   - Group and family words (`GROUP_WORDS`, `FAMILY_WORDS`) rank a match higher (“servo” → servos first).
   - Scoped search covers hardware by type, not by spec, since a size in the query makes a new variant.
+  - Robots and object categories join the same ranked list (`insertSearch.ts`). A robot gets +0.5 so a whole robot outranks the parts named after it, and +20 when a query word names robots. Object categories match only whole words, singular or plural, because substring matching put Tools (“screwdrivers”) under “screw” and Appliances (“washers”) above washers.
 - `lastSpecByFamily` is module-level, so coming back to a family keeps the last spec.
 - The hardware family default item and Parts only list real components and hardware (`inParts`).
 - Robot tiles try preview sources in order, moving to the next when one fails to load: shipped `public/robots`, then the remembered import preview.

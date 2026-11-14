@@ -25,7 +25,7 @@ related:
   - export-a-robot-package
 covers:
   - src/components/ImportRobotSheet.tsx
-  - src/components/RobotsPanel.tsx
+  - src/components/parts/robotViews.tsx
   - src/workspace/useCanvasDrop.ts
   - src/workspace/droppedFolders.ts
   - src/workspace/useFileImport.ts
@@ -35,10 +35,9 @@ covers:
 
 Bring in a published robot with its joints, limits and masses, from a GitHub or Hugging Face link, a zip, or files on your computer.
 
-1. Click **Robots** in the view rail on the left.
-2. Click **+** at the top of the view.
-3. Paste a link to a GitHub or Hugging Face repo or folder, a URDF or MJCF file, or a zip.
-4. Click **Import**.
+1. Press [[⌘K]] and choose **Import Robot**.
+2. Paste a link to a GitHub or Hugging Face repo or folder, a URDF or MJCF file, or a zip.
+3. Click **Import**.
 
 ![Import Robot with a GitHub repo link](/help/import-a-robot/link.png)
 
@@ -46,11 +45,15 @@ Basecase finds the robot's description in the repo or zip, preferring MJCF, and 
 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
-**Import Robot** is also in **File** and [[⌘K]]. To import from your computer, click **Choose Folder** in the sheet. You can also drag a robot's folder, zip, URDF, xacro or MJCF file onto the canvas, or pick the file with **Import** in the canvas menu. Import Robot opens with it loaded; click **Import** and the robot stands where you dropped it.
+**Import Robot** is also in **File**. To import from your computer, click **Choose Folder** in the sheet. You can also drag a robot's folder, zip, URDF, xacro or MJCF file onto the canvas, or pick the file with **Import** in the canvas menu. Import Robot opens with it loaded; click **Import** and the robot stands where you dropped it.
 
 ## Insert a robot from the shelf
 
-**Robots** lists ready robots by kind: **Humanoids**, **Small bipeds**, **Quadrupeds** and **Arms**, such as the Unitree G1, Go2 and SO-101. Click one to insert it, or drag it onto the canvas. Robots you imported come first, under **Imported**, so you can insert them again with a click. To take one off the list, right-click it and choose **Delete**. Scenes that already use it keep it.
+Parts lists ready robots under **Robots**, by kind: **Humanoids**, **Small bipeds**, **Quadrupeds** and **Arms**, such as the Unitree G1, Go2 and SO-101. Click a kind, then click a robot to insert it, or drag it onto the canvas. To find one by name, type it in **Search parts** and press [[⌘Enter]].
+
+![Parts on its Robots section, with Imported, Humanoids, Small bipeds, Quadrupeds and Arms](/help/import-a-robot/robots.png)
+
+Robots you imported come first, under **Imported**, so you can insert them again with a click. To take one off the list, right-click it and choose **Delete**. Scenes that already use it keep it.
 
 ![An imported robot's right-click menu with Insert and Delete](/help/import-a-robot/imported.png)
 

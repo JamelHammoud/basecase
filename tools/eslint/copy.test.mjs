@@ -83,12 +83,18 @@ const MINUS_SAMPLES = [
   ['Margin (-1.5)', '-1.5'],
 ];
 
+const AT_SAMPLES = [
+  ['0.52 N·m @ 5 V', '@'],
+  ['4× Cortex-A76 @ 2.4 GHz', '@'],
+];
+
 const SAMPLES_WITH_GLOSSARY = [
   ...SAMPLES,
   ...GLOSSARY_SAMPLES,
   ...SPELLING_SAMPLES,
   ...APOSTROPHE_SAMPLES,
   ...MINUS_SAMPLES,
+  ...AT_SAMPLES,
 ];
 
 const errors = (text) => [{ messageId: 'banned', data: findBannedCopy(text) }];
@@ -236,6 +242,22 @@ describe('minus signs', () => {
   });
 });
 
+describe('at', () => {
+  it('flags a spaced @ before a condition', () => {
+    for (const [text, word] of AT_SAMPLES) {
+      const hit = findBannedCopy(text);
+
+      expect(hit?.word).toBe(word);
+      expect(hit?.section).toBe('§3b-23');
+    }
+  });
+
+  it('allows at, emails, mentions and names with @', () => {
+    for (const text of ['0.52 N·m at 5 V', 'someone@example.com', 'Ask @agent about it', '0.20mm Standard @4MaxPro'])
+      expect(findBannedCopy(text)).toBeNull();
+  });
+});
+
 tester.run('basecase/copy', rule, {
   valid: [
     'const yet = 1;',
@@ -289,6 +311,7 @@ tester.run('basecase/copy', rule, {
     { code: 'const el = <p>Centre of mass</p>;', errors: errors('Centre of mass') },
     { code: 'const el = <p>{`-90° to ${hi}`}</p>;', errors: errors('-90° to ') },
     { code: 'const el = <p>{`${lo} to -90°`}</p>;', errors: errors(' to -90°') },
+    { code: "const spec = { detail: '0.52 N·m @ 5 V' };", errors: errors('0.52 N·m @ 5 V') },
     ...['Add a comment', 'Reply', 'Name', 'Type a label', 'What’s next'].map((text) => ({
       code: `const el = <input placeholder="${text}" />;`,
       errors: [{ messageId: 'placeholder', data: { text, fix: PLACEHOLDER_FIX } }],

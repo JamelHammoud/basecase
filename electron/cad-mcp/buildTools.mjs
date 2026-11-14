@@ -211,9 +211,7 @@ export const setBuild = {
         .min(0)
         .max(10000)
         .optional()
-        .describe(
-          'Hours the user gives to have the robot printed, assembled and its servos set up; 0 clears it. Checks then holds the build to it in its Time row.',
-        ),
+        .describe('Hours the user has to print, assemble and set up the robot; 0 clears it'),
       material: z.enum(['PLA', 'PETG', 'ABS', 'ASA']).optional(),
       tether: z
         .object({ volts: z.number().min(0).max(100), amps: z.number().min(0).max(200) })

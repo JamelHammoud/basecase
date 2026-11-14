@@ -26,7 +26,7 @@ import { designedFits } from '../utils/designedFits';
 import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
 import { buildPrintReport, printReportOf, type PrintContext, type PrintReport } from '../utils/printReport';
-import { splitPrinted } from '../print/tracker';
+import { printedKeys, splitPrinted } from '../print/tracker';
 import { shapeKey } from '../print/shapeKey';
 import { guideStepParts } from '../guide/guideSteps';
 import { caseFindings } from '../readiness/caseChecks';
@@ -74,7 +74,7 @@ export const projectFingerprint = (
     joints: project.joints,
     budget: project.budgetUsd,
     budgetHours: project.budgetHours,
-    prints: jsonHash(project.prints ?? []),
+    printed: [...printedKeys(project.prints)],
     tether: project.tether,
     extras: project.extras,
     sourced: jsonHash(project.sourced),

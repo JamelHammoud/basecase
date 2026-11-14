@@ -5,9 +5,8 @@ export const build = {
 When the user wants to build the robot (a printer, a budget, "buildable", "BOM"), the model is
 a build package, not a picture.
 1. Budget plan first: actuators ≤ 60%, compute ≤ 15%, power ~10% of the budget. set_build records
-   the budget; size_actuators picks the actuators against it. A deadline ("by tonight", "this
-   weekend") is set_build's budget_hours: the Time check holds printing, assembly and servo set-up to it.
-   Only get_readiness runs Time; verify_design doesn't, so confirm a time cut with get_readiness.
+   the budget; size_actuators picks the actuators against it. A deadline is set_build's
+   budget_hours, which get_readiness's Time check holds the build to.
 2. Every screw and insert is a hardware part (fasten places them): they're what the BOM counts.
 3. Materials: petg or asa anywhere near a servo; tpu soles and bumpers; pla only for covers away
    from heat.

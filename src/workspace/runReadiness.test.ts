@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { COMPONENT_BY_ID } from '../data/components';
 import type { PrinterSetup } from '../data/printers';
+import type { PrintRecord } from '../types/print';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { batteriesIn, projectFingerprint, runReadiness, type ReadinessWorld } from './runReadiness';
 
@@ -26,6 +27,16 @@ const world: ReadinessWorld = {
   printers: 1,
   sliced: {},
 };
+const printRecord = (state: PrintRecord['state']): PrintRecord => ({
+  id: 'r1',
+  plate: 1,
+  material: 'PLA',
+  hash: 'h',
+  parts: [{ id: part.id, key: 'k' }],
+  printer: 'default',
+  sentAt: '2026-11-14T10:00:00Z',
+  state,
+});
 const print = (of: ScenePart[] = [part], settings = project, around = world) =>
   projectFingerprint(of, settings, 'p1s', around);
 const edited = (change: Partial<ScenePart>) => print([{ ...part, ...change }]);
@@ -60,7 +71,7 @@ describe('what makes checks run again', () => {
     ['print quality', { printProcess: 'fine' }],
     ['active calibration', { servoCalibrations: { j: { versions: [], active: 1 } } }],
     ['time budget', { budgetHours: 6 }],
-    ['printed plates', { prints: [{ id: 'r1', hash: 'h', state: 'printed' }] as ProjectSettings['prints'] }],
+    ['printed plates', { prints: [printRecord('printed')] }],
   ])('the project’s %s', (_name, change) => {
     expect(print([part], { ...project, ...change })).not.toBe(print());
   });
@@ -82,6 +93,7 @@ describe('what makes checks run again', () => {
   it('nothing else: the same inputs read the same', () => {
     expect(print([{ ...part }], { ...project }, { ...world, purchases: {} })).toBe(print());
     expect(print([part], project, { ...world, purchases: null })).toBe(print());
+    expect(print([part], { ...project, prints: [printRecord('sent')] })).toBe(print());
   });
 });
 

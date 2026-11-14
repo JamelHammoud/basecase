@@ -11,6 +11,7 @@ import { firstLine, isBad, LOAD_CHECK, markBad } from './lib/homeGuard.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS, LOOP_DIR } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 import { quietRequested } from '../../verify/lib/quiet.mjs';
+import { capacityHold, measure as measureCapacity } from './lib/capacity.mjs';
 import { CODEX_EFFORT, CODEX_MODEL } from './lib/codex.mjs';
 import {
   codexPause,
@@ -245,7 +246,10 @@ const gateHold = () =>
 
 async function runOnce() {
   const { default: runLane, schedule } = await laneModule(lane);
-  const held = gateHold() ?? (PRODUCERS.has(lane) ? backpressure(flowCounts(), lane) : null);
+  const held =
+    gateHold() ??
+    (schedule.agent ? capacityHold({ lane, ...measureCapacity() }) : null) ??
+    (PRODUCERS.has(lane) ? backpressure(flowCounts(), lane) : null);
 
   if (held) log(`waiting: ${held}`);
   else if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });

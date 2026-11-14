@@ -113,7 +113,7 @@ describe('budgetFrom', () => {
     expect(budgetFrom('25')).toBe(25);
     expect(budgetFrom('')).toBe(DEFAULT_BUDGET);
     expect(budgetFrom('lots')).toBe(DEFAULT_BUDGET);
-    expect(DEFAULT_BUDGET).toBe(40);
+    expect(DEFAULT_BUDGET).toBe(20);
   });
 });
 

@@ -2,7 +2,7 @@ import { MIN_TASKS_TO_SETTLE } from '../../../bench/compare/plan.mjs';
 
 export const MIN_HELDOUT_TASKS = 3;
 export const COST_BAR = 0.2;
-export const DEFAULT_BUDGET = 40;
+export const DEFAULT_BUDGET = 20;
 export const PULL_BUDGET = 15;
 
 export const budgetFrom = (value, fallback = DEFAULT_BUDGET) => (Number(value) > 0 ? Number(value) : fallback);

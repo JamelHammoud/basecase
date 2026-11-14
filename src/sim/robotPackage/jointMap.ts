@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { activeCalibrations } from '../../reality/history';
+import { activeCalibrations, activeMounts } from '../../reality/history';
 import { busOf, jointServo } from '../../reality/servoPart';
 import type { ServoCalibration, ServoPart } from '../../reality/types';
 import type { ServoFamily } from '../../robot/robotState';
@@ -66,6 +66,7 @@ function entryType(j: RobotJoint, sim: SimJoint | undefined): JointMapEntry['typ
 export function jointMap({ model, project, parts, name }: JointMapInput): JointMap {
   const layout = servoLayout(project.joints ?? []);
   const calibrations = activeCalibrations(project.servoCalibrations);
+  const mounts = activeMounts(project.servoCalibrations);
   const joints = layout.movable.map((j, i): JointMapEntry => {
     const sim = model.joints.find((s) => s.id === j.id);
 
@@ -75,8 +76,8 @@ export function jointMap({ model, project, parts, name }: JointMapInput): JointM
       joint: j.name,
       type: entryType(j, sim),
       ...servoOf(j, parts),
-      zero_counts: ZERO_COUNTS,
-      direction: 1,
+      zero_counts: mounts[j.id]?.zeroCounts ?? ZERO_COUNTS,
+      direction: mounts[j.id]?.direction ?? 1,
       ...limits(sim),
       calibration: calibrations[j.id] ?? null,
     };

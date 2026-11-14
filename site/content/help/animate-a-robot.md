@@ -38,7 +38,7 @@ Make a legged robot walk in place, or copy a person's movement from a BVH motion
 2. Click **+** beside **Animations**.
 3. Choose **Walk Cycle**.
 
-The new animation is called “Walk”. Its stride, foot lift and timing start from the robot's leg length. Feet in contact with the ground stay planted while the others swing.
+The new animation is called “Walk”, and it starts playing. Its stride, foot lift and timing start from the robot's leg length. Feet in contact with the ground stay planted while the others swing.
 
 A walk cycle needs leg joints. Without them, **+** offers only **Import BVH**. **New Walk Cycle** in [[⌘K]] does the same as the menu.
 

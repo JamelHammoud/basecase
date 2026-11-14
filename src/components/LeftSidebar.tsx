@@ -119,7 +119,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
               searchInputRef={props.partsSearchRef}
             />
           </View>
-          {noRobot && <PlayNoRobot onBrowseRobots={props.cases.onBrowseRobots} />}
+          {noRobot && <PlayNoRobot onShowRobots={props.cases.onShowRobots} />}
           <View tab="cases" current={playing} visited={visited}>
             <CasesPanel {...props.cases} />
           </View>

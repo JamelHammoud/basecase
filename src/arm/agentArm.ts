@@ -1,5 +1,6 @@
 import type { ZUpVec } from '../types/skeleton';
 import { r1 } from '../agent/agentFrame';
+import { angle } from '../utils/angle';
 import { lengthLabel } from '../utils/size';
 import { prettyJointName } from '../utils/jointNames';
 import { MAX_TARGETS, type ArmRequest, type ArmSizing, type ArmTarget, type SizedArm } from '../utils/armSizing';
@@ -42,7 +43,7 @@ function armText(arm: SizedArm, targets: ArmTarget[], payloadG: number, links: b
 
   return [
     `Placed the shortest arm on the 5 mm grid that reaches ${plural(targets.length, 'target')} carrying ${payloadG} g: ${placed}.`,
-    `Base at ${mm(shape.base)} turned ${shape.yaw}°${shape.baseHeight ? ` on a ${shape.baseHeight} mm riser` : ''}; links ${shape.links.join(', ')} mm (shoulder bracket, upper arm, forearm).`,
+    `Base at ${mm(shape.base)} turned ${angle(shape.yaw)}${shape.baseHeight ? ` on a ${shape.baseHeight} mm riser` : ''}; links ${shape.links.join(', ')} mm (shoulder bracket, upper arm, forearm).`,
     `Servos at ${r1(servos.volts)} V from ${servos.rail}: ${joints.map((j, i) => `${prettyJointName(j.name ?? j.id)} ${servos.names[i]}`).join('; ')}. Servos ${usd(servos.servosUsd)}, ${usd(servos.costUsd)} with the battery, regulator and bus adapter.`,
     `Reach: ${arm.reach.map((r) => `${targets.find((t) => t.id === r.id)!.name} within ${lengthLabel(r.errorMm)}`).join(', ')}, with every joint at least 10% inside its range.`,
     'Joint ids match define_skeleton; declare them with define_joints, then run size_actuators on the scene.',

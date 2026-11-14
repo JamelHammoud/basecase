@@ -31,7 +31,7 @@ export function nightlyDue(now, lastRunAt, hour = NIGHTLY_HOUR_UTC) {
 export const suiteDue = (now, lastSuiteAt) => nightlyDue(now, lastSuiteAt, SUITE_HOUR_UTC);
 
 export function rerunSuite({ now, last, mainHead, running }) {
-  if (running || !last || last.conclusion !== 'failure') return false;
+  if (running || !last || last.conclusion === 'success') return false;
 
   return last.headSha !== mainHead && now - Date.parse(last.createdAt) > HOUR_MS;
 }

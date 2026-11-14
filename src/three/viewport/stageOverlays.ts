@@ -4,13 +4,19 @@ import { CheckDots } from './checkDots';
 import type { ViewportContext } from './viewportContext';
 import { GhostLayer } from './ghostLayer';
 import { MatTrack } from './matTrack';
-import { ScanPoints } from './scanPoints';
+import { DataLayers } from './dataLayers';
+import { FrameLabel } from './frameLabel';
 import type { Viewport3DHandle, ViewportProps } from './types';
 
 type OverlayHandle = Pick<
   Viewport3DHandle,
-  'setScan' | 'scanPointCount' | 'setMatTrack' | 'setGhost' | 'ghostState' | 'checkDotCount'
+  'setDataLayers' | 'dataLayerState' | 'scanPointCount' | 'setMatTrack' | 'setGhost' | 'ghostState' | 'checkDotCount'
 >;
+
+export interface OverlayLabels {
+  ghost: () => HTMLElement | null;
+  frame: () => HTMLElement | null;
+}
 
 export class StageOverlays {
   readonly ghost: GhostLayer;
@@ -19,22 +25,25 @@ export class StageOverlays {
 
   private readonly cameraGlyphs: CameraGlyphs;
 
-  private readonly scanPoints: ScanPoints;
+  private readonly dataLayers: DataLayers;
+
+  private readonly frameLabel: FrameLabel;
 
   private readonly matTrack: MatTrack;
 
   private readonly checkDots: CheckDots;
 
-  constructor(ctx: ViewportContext, props: ViewportProps, ghostLabel: () => HTMLElement | null) {
+  constructor(ctx: ViewportContext, props: ViewportProps, labels: OverlayLabels) {
     const { overlays } = ctx.stage;
 
     this.cameraGlyphs = new CameraGlyphs(overlays);
     this.cameraGlyphs.sync(props.fixedCameras);
-    this.scanPoints = new ScanPoints(overlays);
+    this.dataLayers = new DataLayers(overlays);
+    this.frameLabel = new FrameLabel(ctx, labels.frame, () => this.dataLayers.frames());
     this.matTrack = new MatTrack(overlays);
     this.checkDots = new CheckDots(overlays);
     this.checkDots.sync(props.checkDots);
-    this.ghost = new GhostLayer(ctx, ghostLabel);
+    this.ghost = new GhostLayer(ctx, labels.ghost);
     this.agentFrames = new AgentFrames(ctx);
     this.agentFrames.sync(props.agentFrames ?? []);
   }
@@ -49,10 +58,17 @@ export class StageOverlays {
 
   handle(redraw: () => void): OverlayHandle {
     return {
-      setScan: (points) => {
-        if (this.scanPoints.set(points)) redraw();
+      setDataLayers: (input) => {
+        if (this.dataLayers.update(input)) redraw();
+
+        return this.dataLayers.state();
       },
-      scanPointCount: () => this.scanPoints.size,
+      dataLayerState: () => this.dataLayers.state(),
+      scanPointCount: () =>
+        this.dataLayers
+          .state()
+          .filter((layer) => layer.kind === 'scan')
+          .reduce((n, layer) => n + layer.points, 0),
       setMatTrack: (track) => {
         if (this.matTrack.set(track)) redraw();
       },
@@ -64,7 +80,8 @@ export class StageOverlays {
 
   dispose(): void {
     this.cameraGlyphs.dispose();
-    this.scanPoints.dispose();
+    this.dataLayers.dispose();
+    this.frameLabel.dispose();
     this.matTrack.dispose();
     this.checkDots.dispose();
     this.ghost.dispose();

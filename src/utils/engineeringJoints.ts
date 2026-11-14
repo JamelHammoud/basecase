@@ -1,6 +1,7 @@
 import { actuatorOf } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
-import { deg, jointLabel, partLabel } from './engineeringFormat';
+import { jointLabel, partLabel } from './engineeringFormat';
+import { angle } from './angle';
 import { lengthLabel } from './size';
 import { plural } from '../../electron/plural.mjs';
 import { isLegJoint } from './engineeringBody';
@@ -35,7 +36,7 @@ function misalignments(ctx: CheckContext, j: RobotJoint): string[] {
   return (j.actuators ?? []).flatMap((id) => {
     const o = outputOffset(ctx, j, id);
 
-    return o && isOffAxis(o) ? [`${j.name} (${o.angle.toFixed(1)}°, ${lengthLabel(o.off)} off)`] : [];
+    return o && isOffAxis(o) ? [`${j.name} (${angle(o.angle)}, ${lengthLabel(o.off)} off)`] : [];
   });
 }
 
@@ -189,7 +190,7 @@ function clashItem(ctx: CheckContext, { j, range, samples, clashes }: SweepResul
   const what = first.b === 'floor' ? 'touches the floor' : `meets ${partLabel(ctx, first.b)}`;
 
   return {
-    text: `${jointLabel(j)}: clear to ${deg(clear)} of ${deg(end)}; at ${deg(first.angle)} ${partLabel(ctx, first.a)} ${what}`,
+    text: `${jointLabel(j)}: clear to ${angle(clear)} of ${angle(end)}; at ${angle(first.angle)} ${partLabel(ctx, first.a)} ${what}`,
     ids: first.b === 'floor' ? [first.a] : [first.a, first.b],
   };
 }
@@ -220,7 +221,7 @@ function rangeDetail(designed: Item[], published: Item[], slides: number): strin
   if (published.length)
     return `The maker’s limits are motor limits: another part stops ${plural(published.length, 'joint end')} first, with the rest of the robot in its home pose${unswept}`;
 
-  return `Every turning joint clears its range, sampled every ${DESIGNED_STEP_DEG}°${unswept}`;
+  return `Every turning joint clears its range, sampled every ${angle(DESIGNED_STEP_DEG)}${unswept}`;
 }
 
 function rangeStatus(designed: Item[], published: Item[]): CheckRow['status'] {

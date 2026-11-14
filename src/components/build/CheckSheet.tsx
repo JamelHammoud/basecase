@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Button,
   IconButton,
@@ -141,7 +141,6 @@ const SheetFields: React.FC<{
 
 export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave }) => {
   const money = useMoney();
-  const formId = useId();
   const [form, setForm] = useState(() => initialPurchaseForm(line, money));
   const valid = canSave(form);
   const update = (patch: Partial<PurchaseForm>) => setForm((f) => ({ ...f, ...patch }));
@@ -154,7 +153,7 @@ export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave })
       subtitle={<MetaLine items={[`Need ${needed(line)}`, line.detail]} />}
       headerActions={<ListingLink line={line} />}
       maxWidth="max-w-[440px]"
-      action={{ label: 'Save', form: formId, disabled: !valid }}
+      action={{ label: 'Save', disabled: !valid, onClick: () => onSave(purchaseRecord(form, money)) }}
       footerStart={
         <>
           {line.record && (
@@ -169,16 +168,7 @@ export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave })
         </>
       }
     >
-      <form
-        id={formId}
-        onSubmit={(e) => {
-          e.preventDefault();
-
-          if (valid) onSave(purchaseRecord(form, money));
-        }}
-      >
-        <SheetFields line={line} form={form} onChange={update} />
-      </form>
+      <SheetFields line={line} form={form} onChange={update} />
     </Modal>
   );
 };

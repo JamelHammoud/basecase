@@ -24,7 +24,7 @@ covers:
   - src/readiness/wording.ts
 ---
 
-Before you slice, Basecase works out which way each printed part sits, the support it needs, its walls, its time and its filament.
+Before you slice, Basecase works out which way each printed part sits, the support it needs, its walls, its time and its filament. A part [cut from sheet](/help/cut-a-part-from-sheet) isn't printed, so none of this applies to it.
 
 ## How a part is turned
 
@@ -46,6 +46,6 @@ Plates are packed per material, around the bed's clear areas. Parts the build gu
 
 ## What Basecase won't print
 
-A part meant to be clear, such as one named “Front Glass”, blocks the build. A printer can't make clear parts. A part bigger than the plate blocks it too. **Parts** in Print mode says how many pieces to split it into.
+A printed part meant to be clear, such as one named “Front Glass”, blocks the build. A printer can't make clear parts, but a flat one can be cut from acrylic sheet. A part bigger than the plate blocks it too. **Parts** in Print mode says how many pieces to split it into.
 
 When a part is flagged, [A part is too big to print or has thin walls](/help/troubleshoot-build-part-wont-print) has the fixes.

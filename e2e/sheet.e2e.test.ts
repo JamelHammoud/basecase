@@ -82,10 +82,13 @@ describe('a plate cut from sheet', () => {
 
     await expect.poll(() => sheetGroup.count(), { timeout: 30000 }).toBe(1);
     await sheetGroup.click();
-    await expect.poll(() => page.locator(shown('li'), { hasText: /^6061 aluminum3 mm/ }).count()).toBeGreaterThan(0);
+    await expect.poll(() => page.locator(shown('li'), { hasText: /6061 aluminum3 mm/ }).count()).toBeGreaterThan(0);
 
-    await page.getByRole('button', { name: 'Export', exact: true }).click();
-    await page.getByRole('menuitem', { name: 'Cut Files' }).click();
+    await page
+      .locator(shown('button'), { hasText: /^Export$/ })
+      .first()
+      .click();
+    await page.locator(shown('[role=menuitem]'), { hasText: 'Cut Files' }).first().click();
     await expect.poll(async () => (await download())?.name ?? '').toMatch(/-cut-files\.zip$/);
 
     const zip = unzipSync(Buffer.from((await download())!.base64, 'base64'));

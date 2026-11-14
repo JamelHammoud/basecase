@@ -239,7 +239,7 @@ describe('harness health', () => {
 
   it('counts tool calls that never reached the app, not ordinary tool errors', () => {
     const records = [
-      failed('The app did not answer "snapshot" in time.'),
+      failed('The app didn’t answer "snapshot" in time.'),
       failed('Expected size 40 mm, got 38 mm.'),
       failed('The app window is not open.'),
     ];

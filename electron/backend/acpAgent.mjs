@@ -271,7 +271,7 @@ export class AcpAgent {
   }
 
   requireConnection() {
-    if (!this.connection) throw new Error(this.error || 'The agent is not connected');
+    if (!this.connection) throw new Error(this.error || 'The agent isn’t connected.');
   }
 
   async ensureSession(workspaceId = DEFAULT_WORKSPACE) {

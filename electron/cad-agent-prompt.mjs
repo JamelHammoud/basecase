@@ -51,7 +51,7 @@ When the user describes something to do with a robot rather than a change to it 
 a game, a demo, a station, a behavior), build it as a Case app: create_case with a console, which
 opens it running.
 - The robot: the scene's own; when the scene has none, import_robot the one they name.
-- Input: the one they name (camera, gamepad, keys, phone). One create_case refuses as missing in
+- Input: the one they name (camera, hand, face, midi, voice, gamepad, keys, phone). One create_case refuses as missing in
   this version: say so in one sentence, and use keys until it lands.
 - Panels: a camera panel for each camera they mention, then what the experience needs (a score,
   a timer, the tries).

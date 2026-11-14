@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { openApp, shown, type App } from './harness';
+import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { openApp, partCount, shown, type App } from './harness';
 
 let app: App;
 
@@ -11,8 +13,9 @@ interface Part {
 
 interface Studio {
   sceneRecord: () => { parts: Part[] };
-  load: (record: { parts: unknown[] }) => void;
+  load: (record: { parts: unknown[]; name?: string; project?: unknown }) => void;
   select: (ids: string[]) => void;
+  simState: () => { activeCase: string | null };
 }
 
 const box = (id: string, name: string, extra: object = {}) => ({
@@ -98,6 +101,35 @@ describe('Rename', () => {
     await expect
       .poll(() => app.page.locator('[aria-label="Open scenes"] [role="tab"]').first().innerText())
       .toContain('Rover');
+    expect(app.errors).toEqual([]);
+  });
+
+  it('makes a Case with ↩, then renames it from ⌘K and from its right-click menu', async () => {
+    const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+    const caseRow = (name: string) => app.page.locator(shown('[data-testid="cases-panel"] button'), { hasText: name });
+
+    await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
+      name: arm.id,
+      parts: arm.parts,
+      project: { ...DEFAULT_PROJECT, joints: arm.joints },
+    });
+    await expect.poll(() => partCount(app.page)).toBe(arm.parts.length);
+    await runCommand('New Case');
+    await expect.poll(() => app.page.evaluate(() => document.activeElement?.textContent ?? '')).toBe('Make Case');
+    await app.page.keyboard.press('Enter');
+    await expect
+      .poll(() => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().activeCase))
+      .toMatch(/^touch-a-point/);
+
+    await runCommand('Rename Case');
+    await typeName('Touch Test');
+    await expect.poll(() => caseRow('Touch Test').count()).toBe(1);
+
+    await caseRow('Touch Test').click({ button: 'right' });
+    await app.page.locator(shown('[role="menuitem"]:has-text("Rename")')).first().click();
+    await expect.poll(() => renameField().inputValue()).toBe('Touch Test');
+    await typeName('Bench Touch');
+    await expect.poll(() => caseRow('Bench Touch').count()).toBe(1);
     expect(app.errors).toEqual([]);
   });
 });

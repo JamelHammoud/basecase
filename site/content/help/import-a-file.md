@@ -71,7 +71,7 @@ A URDF, MJCF or zip, such as an exported Robot Package, comes in as a robot with
 
 A BVH motion file opens the retarget sheet for the selected robot. Images become reference images, and a `.basecase` file opens in a new tab.
 
-Import is also in File ▸ Import and in ⌘K. Dropping files on the canvas does the same, at the spot where you drop them.
+Import is also in File ▸ Import and in [[⌘K]]. Dropping files on the canvas does the same, at the spot where you drop them. A dropped `.mid` file plays in a Case's tries instead, as in [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
 ## Units and axes
 

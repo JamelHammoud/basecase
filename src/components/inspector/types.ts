@@ -11,9 +11,12 @@ export const MATERIALS: Array<{ value: string; label: string }> = [
   { value: 'Off-the-shelf COTS', label: 'Off-the-shelf' },
   { value: 'CNC Aluminum', label: 'CNC aluminum' },
   { value: 'Laser-Cut Acrylic/Carbon', label: 'Laser-cut sheet' },
-  { value: 'Cutout / Clearance', label: 'Clearance' },
-  { value: 'Reference Axis', label: 'Reference' },
 ];
+
+const PRINTED_TAG = MATERIALS[0].value;
+
+export const materialTag = (part: ScenePart): string =>
+  MATERIALS.find((m) => m.value === part.mechanicalTag)?.value ?? PRINTED_TAG;
 
 export interface InspectorProps {
   part: ScenePart | null;

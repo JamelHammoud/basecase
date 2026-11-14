@@ -32,8 +32,8 @@ Turn the design into a step-by-step assembly PDF, in an order Basecase checked t
 
    ![The Build guide card with an 8-page guide made just now and an Open button](/help/make-a-build-guide/current.png)
 
-4. Press → or ← to turn the pages.
-5. Press Esc to close the guide.
+4. Press [[→]] or [[←]] to turn the pages.
+5. Press [[Esc]] to close the guide.
 
 Pinch, or press + and −, to zoom. In the desktop app, **Open PDF** opens the file and **Show in Finder** shows where it's saved. If the PDF was moved or deleted, either one makes it again first.
 
@@ -45,7 +45,7 @@ When the design or the infill in Print mode changes, the card reads **Out of dat
 
 Basecase also updates the guide on its own, 15 seconds after the last change, once the agent is done. An update redraws only the steps that show the parts you changed.
 
-To stop the automatic updates, press ⌘, (Ctrl+, on Windows), choose **Build** and turn off **Update automatically**.
+To stop the automatic updates, press [[⌘,]], choose **Build** and turn off **Update automatically**.
 
 ## Steps marked as unchecked
 

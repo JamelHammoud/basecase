@@ -17,7 +17,7 @@ import { EdgesField } from './EdgesField';
 import { wrapDegrees } from './partMath';
 import { QuarterTurns } from './QuarterTurns';
 import type { PartSectionProps } from './partSections';
-import { MATERIALS, type InspectorProps, type Phase } from './types';
+import { MATERIALS, materialTag, type InspectorProps, type Phase } from './types';
 import { keyFor } from '../../app/shortcuts';
 
 export const PositionSection: React.FC<
@@ -199,11 +199,13 @@ export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[]
       suggestions={parts.map((p) => p.color)}
       onChange={(color, live) => onUpdate({ color }, live)}
     />
-    <Select
-      aria-label="Material"
-      value={part.mechanicalTag || '3D Printed PLA/PETG'}
-      onChange={(e) => onUpdate({ mechanicalTag: e.target.value })}
-      options={MATERIALS}
-    />
+    {part.role === 'solid' && (
+      <Select
+        aria-label="Material"
+        value={materialTag(part)}
+        onChange={(e) => onUpdate({ mechanicalTag: e.target.value })}
+        options={MATERIALS}
+      />
+    )}
   </Section>
 );

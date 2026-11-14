@@ -41,7 +41,7 @@ Mark where an arm's tool must reach and give the grams it carries, and get exact
 
 8. Read each joint's margin in the Pose tab. Drag a joint ball to try another length, and the margins update as you drag.
 
-The arm has base yaw, shoulder, elbow and wrist pitch joints. Its links are the shortest set on a 5 mm grid, from 75 mm, that reach every target within 2 mm. Each joint keeps at least 10% of its range spare at every target. Each servo is the cheapest in the Feetech STS3215 outline that holds its joint with the payload. Press ⌘Z to remove the whole arm in one step.
+The arm has base yaw, shoulder, elbow and wrist pitch joints. Its links are the shortest set on a 5 mm grid, from 75 mm, that reach every target within 2 mm. Each joint keeps at least 10% of its range spare at every target. Each servo is the cheapest in the Feetech STS3215 outline that holds its joint with the payload. Press [[⌘Z]] to remove the whole arm in one step.
 
 When no arm reaches a target, the sheet names it and nothing is placed.
 
@@ -49,4 +49,4 @@ When no arm reaches a target, the sheet names it and nothing is placed.
 
 Links are only placed in the desktop app; the web studio places the skeleton and servos. The sizing doesn't check that links clear the table or each other.
 
-You can also run **Size Arm to Targets** from ⌘K, or ask the agent to size an arm from the points and payload you describe. Next, [shape the skeleton as a stick figure](/help/edit-a-robot-skeleton) or have the agent build around it.
+You can also run **Size Arm to Targets** from [[⌘K]], or ask the agent to size an arm from the points and payload you describe. Next, [shape the skeleton as a stick figure](/help/edit-a-robot-skeleton) or have the agent build around it.

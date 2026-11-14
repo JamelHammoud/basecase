@@ -105,10 +105,21 @@ function relabelled(summary: TrySummary, patch: LabelPatch): TrySummary {
   };
 }
 
+const relabelListeners = new Set<(changes: Relabel[]) => void>();
+
+export function onRelabel(listener: (changes: Relabel[]) => void) {
+  relabelListeners.add(listener);
+
+  return () => {
+    relabelListeners.delete(listener);
+  };
+}
+
 export async function relabelTries(changes: Relabel[]) {
   if (!changes.length) return;
 
   await backend.relabel(changes);
+  relabelListeners.forEach((listener) => listener(changes));
 
   const byId = new Map(changes.map((c) => [c.id, c.patch]));
 

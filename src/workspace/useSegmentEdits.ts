@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { mergeBack, moveEdge, renamed, segmentAt, splitAt, withTags, type TrySegment } from '../cases/tryLabels';
-import { relabelTries } from '../cases/tryStore';
+import { onRelabel, relabelTries, type Relabel } from '../cases/tryStore';
 
 interface Edits {
   id: string;
@@ -30,13 +30,44 @@ export function stepped(edits: Edits, back: boolean): Edits | null {
   };
 }
 
+export const adopted = (edits: Edits | null, id: string, next: TrySegment[]): Edits | null => {
+  if (!edits || edits.id !== id || same(next, edits.segments)) return edits;
+
+  return { ...edits, segments: next, past: [...edits.past, edits.segments].slice(-HISTORY), future: [] };
+};
+
+interface OutsideWrites {
+  id: string | null;
+  setEdits: (change: (edits: Edits | null) => Edits | null) => void;
+  clear: () => void;
+}
+
+function useOutsideWrites({ id, setEdits, clear }: OutsideWrites) {
+  const sent = useRef(new WeakSet<TrySegment[]>());
+
+  const adopt = useEffectEvent((changes: Relabel[]) => {
+    const next = changes.find((c) => c.id === id)?.patch.segments;
+
+    if (!id || !next || sent.current.has(next)) return;
+
+    setEdits((edits) => adopted(edits, id, next));
+    clear();
+  });
+
+  useEffect(() => onRelabel(adopt), []);
+
+  return (segments: TrySegment[]) => sent.current.add(segments);
+}
+
 export function useSegmentEdits(onError: (e: unknown) => void) {
   const [edits, setEdits] = useState<Edits | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const segments = edits?.segments ?? [];
+  const sending = useOutsideWrites({ id: edits?.id ?? null, setEdits, clear: () => setSelected(null) });
 
   const save = (next: Edits) => {
     setEdits(next);
+    sending(next.segments);
     relabelTries([{ id: next.id, patch: { segments: next.segments } }]).catch(onError);
   };
 

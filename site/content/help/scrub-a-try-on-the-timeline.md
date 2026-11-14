@@ -19,21 +19,21 @@ covers:
   - src/cases/tripFrames.ts
 ---
 
-Step through a Case try one frame at a time to see what each joint was asked to do, where it went, and how hard its servo worked.
+You can step through a Case try one frame at a time. For each joint, you'll see what it was asked to do, where it went, and how hard its servo worked.
 
-1. Open a Case, then record a try with **Try It** in the Simulate tab.
+1. Open a Case, then click **Try It** in the Simulate tab to record a try.
 2. In Results, click the play button on the try's row.
 
 ![A try in Results with its play button](/help/scrub-a-try-on-the-timeline/results.png)
 
-3. The timeline opens below the canvas. Its top lane shows the try's segments, such as grasp the block. Below it is one lane for each joint. Each joint lane has two plots:
+3. The timeline opens below the canvas. The top lane shows the try's segments, such as "grasp the block." Below that, each joint has its own lane with two plots:
    - The top plot shows the joint's position in blue over its target in gray.
-   - The bottom plot shows its effort in N·m (or N for a sliding joint), with the servo's limit as a dashed line.
+   - The bottom plot shows the joint's effort in N·m (or N for a sliding joint). The dashed line is the servo's limit.
 
-   Red lines mark where the Case's failure checks tripped, and the timeline opens at the first one.
-4. Use the keyboard to move the playhead. The robot on the canvas follows it.
+   Red lines mark where the Case's failure checks tripped. The timeline opens at the first one.
+4. Move the playhead with the keyboard. The robot on the canvas follows it.
    - To move one frame (1/50 s), press [[→]] or [[←]].
-   - To move one second, hold [[⇧]] while you press [[→]] or [[←]].
+   - To move one second, hold [[⇧]] and press [[→]] or [[←]].
    - To go to the start or end, press [[Home]] or [[End]].
    - To play or pause, press [[Space]].
 5. To jump to a spike, click it in a lane. Basecase selects the joint's link on the canvas so you can change it.
@@ -42,8 +42,8 @@ Step through a Case try one frame at a time to see what each joint was asked to 
 
 6. To close the timeline, press [[Esc]].
 
-To split, merge or rename segments, follow [Label the segments of a try](/help/label-the-segments-of-a-try).
+To split, merge or rename segments, see [Label the segments of a try](/help/label-the-segments-of-a-try).
 
-When the timeline opens, Basecase recalculates effort from the recording, so its peaks match Peak torque in Results.
+**Note:** When the timeline opens, Basecase recalculates effort from the recording, so its peaks match Peak torque in Results.
 
-A try recorded before you added or removed a joint won't open. To open a try from another scene, use the Library ([Open a try from any scene](/help/open-a-try-from-any-scene)).
+A try won't open if it was recorded before you added or removed a joint. To open a try from another scene, use the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).

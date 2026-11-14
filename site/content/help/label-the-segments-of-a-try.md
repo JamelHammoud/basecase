@@ -25,28 +25,32 @@ covers:
   - src/cases/judgeTry.ts
 ---
 
-Check and fix the subtasks Basecase finds in a try, such as grasp the block, then tag the try for your dataset.
+Basecase finds the subtasks in a try, such as grasp the block. You can check and fix them, then tag the try for your dataset.
 
-1. In Results, click the play button on the try's row. A try from another scene opens from **Library** ▸ **Tries**.
-2. The top lane of the timeline shows the try's segments. Basecase names each one from what the robot did: the gripper closing and opening, a held object rising, moving and coming down, and pauses.
+1. In Results, click the play button on the try's row.
+2. On the top lane of the timeline, click a segment. This selects it and moves the playhead to its start.
 
 ![The timeline with its segment lane: reach, grasp, lift, carry, place and release the block, then idle](/help/label-the-segments-of-a-try/timeline.png)
 
-3. Click a segment to select it and move the playhead to its start.
-4. Drag the edge between two segments to move where one ends and the next begins.
-5. Press [[S]] to split the segment under the playhead in two.
-6. Press [[⌫]] to merge the selected segment into the one before it.
-7. Double-click a segment, type a new name and press [[↩]].
-8. Right-click the try's row and choose **Tag…**. A segment's right-click menu has **Tag…** too.
+3. To move where one segment ends and the next begins, drag the edge between them.
+4. To split the segment under the playhead in two, press [[S]].
+5. To merge the selected segment into the one before it, press [[⌫]].
+6. To rename a segment, double-click it.
+7. Type the new name, then press [[↩]].
+8. Right-click the try's row, then choose **Tag**.
 
 ![The try's right-click menu with Tag…](/help/label-the-segments-of-a-try/menu.png)
 
-9. Type a tag, such as slow grasp, and press [[↩]].
+9. Type a tag, such as slow grasp, then press [[↩]].
 
 ![The Tag sheet with slow grasp typed](/help/label-the-segments-of-a-try/tag.png)
 
-Press [[⌘Z]] to undo a segment edit while the timeline is open, and [[⇧⌘Z]] to redo it. Every edit is saved with the try as you make it.
+To label a try from another scene, open it from **Library** ▸ **Tries**. To tag a single segment, right-click the segment and choose **Tag**.
 
-In **Library** ▸ **Tries**, select several tries and right-click one to tag them all at once. A try that no Case judged gets **Mark Passed** and **Mark Failed** in the same menu. A try a Case judged keeps its verdict, and those two don't show.
+Basecase names each segment from what the robot did: the gripper closing and opening, a held object rising, moving and coming down, and pauses.
 
-Segment names and tags go into the files Export Dataset writes, as each frame's subtask. The agent reads and writes them too, with its `label_tries` tool.
+While the timeline is open, press [[⌘Z]] to undo a segment edit or [[⇧⌘Z]] to redo it. Basecase saves every edit with the try as you make it.
+
+To tag several tries at once, select them in **Library** ▸ **Tries**, then right-click one of them. If no Case judged a try, the same menu also has **Mark Passed** and **Mark Failed**. A try that a Case judged keeps its verdict, and those two options don't appear.
+
+Export Dataset writes segment names and tags into its files as each frame's subtask. The agent can also read and write them with its `label_tries` tool.

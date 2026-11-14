@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
 import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
 import type { TryTimeline as Timeline } from '../../workspace/useTryTimeline';
@@ -13,12 +13,15 @@ interface TryTimelineProps {
   timeline: Timeline;
   rig: Rig;
   onSelectParts: (ids: string[]) => void;
+  onKeyEdit: () => void;
 }
 
 const ic = 'w-4 h-4';
 
-export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelectParts }) => {
-  useTimelineKeys(timeline);
+export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelectParts, onKeyEdit }) => {
+  const root = useRef<HTMLDivElement>(null);
+
+  useTimelineKeys(timeline, { root, onKeyEdit });
 
   if (!timeline.open) return null;
 
@@ -28,6 +31,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
 
   return (
     <div
+      ref={root}
       data-testid="try-timeline"
       data-frame={frame}
       className="glass pointer-events-auto w-[min(760px,calc(100%-32px))] rounded-[12px] p-3 flex flex-col gap-2"

@@ -90,4 +90,4 @@ Camera parts are the ones under **Cameras** and **Depth Cameras** in Parts. A fi
 
 ## Versions
 
-LeRobot 0.4 and later read v3.0 and stream it from the Hub. GR00T reads LeRobot v2 only, so it takes the v2.1 copy. Both hold the same rows, so their episode counts, frame counts and statistics match.
+LeRobot 0.7 and later read v3.0 and stream it from the Hub. Earlier versions refuse it, because they don't know the `language_persistent` column. GR00T reads LeRobot v2 only, so it takes the v2.1 copy. Both hold the same rows, so their episode counts, frame counts and statistics match.

@@ -29,20 +29,20 @@ covers:
   - src/workspace/useAgentChat.ts
 ---
 
-If the agent can't answer, the banner at the top of the Agent tab tells you why. In most cases, clicking the button in the banner fixes the problem.
+If the agent can't answer, a banner at the top of the Agent tab shows the reason. Most of the time, clicking the button in the banner fixes the problem.
 
 ## “Downloading Claude Code…” stays on screen
 
 Basecase downloads the agent the first time you use it. Claude Code is about 263 MB, Codex is 340 MB, and Gemini CLI is 95 MB. The banner shows the download's progress as a percentage.
 
 1. Keep Basecase open until the bar fills.
-2. Once the banner is gone, send your message.
+2. When the banner goes away, send your message.
 
 After that, the agent downloads again only when Basecase updates to a newer version of it.
 
 ## “Couldn’t download Claude Code. Check your connection, then reconnect.”
 
-The download failed. Basecase gets the agent from the npm registry (registry.npmjs.org), and a firewall or proxy may be blocking it.
+Basecase gets the agent from the npm registry (registry.npmjs.org), so a firewall or proxy may be blocking the download.
 
 1. Make sure you're online and that registry.npmjs.org isn't blocked.
 2. Click **Reconnect** in the banner.
@@ -51,41 +51,41 @@ If the message says the agent “didn’t match its checksum,” the download ar
 
 ## “Agent isn’t connected.”
 
-The agent stopped, or it never started. If more text follows the message, it explains why.
+The agent stopped or never started. Any text after the message gives the reason.
 
 1. Click **Reconnect** in the banner.
-2. If it still fails, press [[⌘,]] and choose **Agent**.
+2. If that doesn't work, press [[⌘,]] and choose **Agent**.
 3. Under **Run with**, click the agent you want. This restores its usual **Command** and reconnects.
 
-If the message starts with “Couldn't start the agent:”, the **Command** in Settings is wrong, often because it was edited. Step 3 fixes it.
+If the message starts with “Couldn't start the agent:”, the **Command** in Settings is wrong, usually because someone edited it. Step 3 fixes it.
 
 If the message says the agent “isn’t available for this computer,” there's no download for your system. Pick another agent in **Run with**.
 
-When the agent connects, the line under **Command** reads “Connected to” followed by the agent's name.
+Once the agent connects, the line under **Command** reads “Connected to” followed by the agent's name.
 
 ## “Sign in to use Claude Code”
 
-The agent runs with your own account, and that account isn't signed in on this computer.
+The agent uses your own account, and that account isn't signed in on this computer.
 
 1. In the **Agent** tab, click the sign-in button in the banner.
-2. Complete the sign-in in the browser window that opens.
+2. Finish signing in in the browser window that opens.
 
 If you use Gemini with a personal Google account, click **Add API Key** and paste a Gemini API key instead.
 
-On a Mac, if you deny Basecase access to its keychain item, Basecase treats your saved key as missing and the banner asks for it again.
+On a Mac, if you deny Basecase access to its keychain item, it treats your saved key as missing and the banner asks for the key again.
 
 ## A reply ends with “Couldn’t finish.”
 
-The agent ran into an error, such as a usage limit on your account, and stopped. A toast starting with “The agent couldn’t finish.” shows the same reason.
+The agent hit an error, such as a usage limit on your account, and stopped. A toast starting with “The agent couldn’t finish.” shows the same reason.
 
 1. Read the reason after the message.
-2. Once you've dealt with the cause, click **Retry** under the reply.
+2. Once you've taken care of the cause, click **Retry** under the reply.
 
 ## “Up to 4 chats run at once. Stop one to start another.”
 
 Four chats are already working. Stop one or wait for one to finish, then send your message again.
 
-To learn which agent to use and how to switch, see [Choose the agent](/help/choose-the-agent).
+For help picking an agent and switching to another one, see [Choose the agent](/help/choose-the-agent).
 
 ## Gemini won't sign in with a Google account
 

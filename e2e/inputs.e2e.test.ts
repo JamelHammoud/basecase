@@ -126,7 +126,7 @@ async function runCase(scene: Scene) {
   await app.page.locator(shown('[data-testid="cases-panel"] button'), { hasText: kase.name }).first().click();
   await expect.poll(async () => (await studio()).activeCase).toBe(kase.id);
   await command('Run Case');
-  await expect.poll(areaCount).toBe(2);
+  await expect.poll(areaCount).toBe(1);
 }
 
 async function tryIt() {

@@ -1,7 +1,8 @@
 import React from 'react';
 import { MetaLine, Section } from '../../design-system';
 import type { PrintMaterial, ProjectSettings } from '../../types/robotics';
-import { type PrintReport, fmtSize } from '../../utils/printReport';
+import type { PrintReport } from '../../utils/printReport';
+import { SizeLine } from '../PartDetails';
 import { duration } from '../../utils/duration';
 import { weight } from '../../utils/weight';
 
@@ -35,7 +36,7 @@ const PrintedRow: React.FC<{ part: PrintedPart; material: PrintMaterial; onSelec
         <MetaLine
           className="text-[12px] text-white/50 tabular-nums"
           items={[
-            `${fmtSize(p.check.size)} mm`,
+            <SizeLine mm={p.check.size} />,
             duration(p.hours * 3600, 'min'),
             p.check.fits && `Plate ${p.plate}`,
             p.material !== material && p.material,

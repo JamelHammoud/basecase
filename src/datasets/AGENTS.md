@@ -1,6 +1,6 @@
 # src/datasets/
 
-Datasets from Case tries: LeRobot v2.1 for GR00T and other vision-language-action models, camera views rendered in a worker. Before editing here, read:
+Datasets from Case tries: LeRobot v3.0 for `lerobot-train` and v2.1 for GR00T, camera views rendered and joined in a worker. Before editing here, read:
 
 - [Cases](../../docs/guide/cases.md) (§8h, Datasets)
 - [Performance](../../docs/guide/performance.md) (§0f)

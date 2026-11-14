@@ -3,7 +3,7 @@ import { FloatingField } from '../../design-system';
 import type { TagTarget } from './useTagTries';
 
 interface TagTriesFieldProps {
-  target: TagTarget | null;
+  target: Pick<TagTarget, 'x' | 'y' | 'before'> | null;
   onDone: (text: string | null) => void;
 }
 

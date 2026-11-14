@@ -39,13 +39,13 @@ The try opens on the timeline, with its segments in the lane above the joints. E
 3. To split a segment, click where it should split, then press [[S]].
 4. To merge a segment into the one before it, click it, then press [[⌫]].
 5. To rename a segment, double-click it, type the new name, then press [[↩]].
-6. To tag a try, right-click it and choose **Tag…**. Type the tags with commas between them, then press [[↩]].
+6. To tag a try, right-click it and choose **Tag**. Type the tags with commas between them, then press [[↩]].
 
 ![A try's right-click menu in Results with Tag… above Multiply and Delete](/help/label-a-try/menu.png)
 
 - To undo a segment change, press [[⌘Z]] while the timeline has focus.
-- To tag several tries at once, choose them in **Tries**.
-- To tag only one step, right-click its segment and choose **Tag…**.
+- To tag several tries at once, select them in **Tries** first.
+- To tag only one step, right-click its segment and choose **Tag**.
 
 ## Mark a try passed or failed
 
@@ -71,7 +71,7 @@ An amber warning mark beside the segments flags any of these:
 
 - A joint at its limit
 - Missing frames
-- Torque over the servo's limit
+- Torque at the servo's limit
 - More than 2 s of standing still
 - A try from an earlier design
 

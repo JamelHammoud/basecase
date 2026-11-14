@@ -59,8 +59,10 @@ const tagged = (segments: TrySegment[], index: number, tags: string[]) =>
 
 export function useTryLabels({ id, recording, scene }: LabelOptions) {
   const [held, setHeld] = useState<Held | null>(null);
-  const [selected, setSelected] = useState<number | null>(null);
+  const [chosen, setChosen] = useState<{ id: string; index: number } | null>(null);
   const current = held?.id === id ? held : null;
+  const selected = current && chosen?.id === current.id ? chosen.index : null;
+  const select = (index: number | null) => setChosen(current && index !== null ? { id: current.id, index } : null);
   const segments = current?.history.now ?? [];
   const read = useEffectEvent((at: string, from: Recording) => labelled(at, from, scene()));
 
@@ -85,6 +87,8 @@ export function useTryLabels({ id, recording, scene }: LabelOptions) {
 
     const stored = withLabels(current.stored, { segments: history.now, by: 'person' });
 
+    if (history.now.length !== current.history.now.length) setChosen(null);
+
     setHeld({ id: current.id, stored, history });
     void saveLabels([stored]).catch(() => {});
   };
@@ -104,17 +108,11 @@ export function useTryLabels({ id, recording, scene }: LabelOptions) {
     segments,
     flags: current ? labelsOf(current.stored).flags : [],
     selected,
-    select: setSelected,
+    select,
     canUndo: !!current?.history.canUndo,
     canRedo: !!current?.history.canRedo,
     split: (frame: number) => edit(splitAt(segments, frame)),
-    merge: (frame: number) => {
-      const merged = edit(mergeIntoPrevious(segments, indexAt(frame)));
-
-      if (merged) setSelected(null);
-
-      return merged;
-    },
+    merge: (frame: number) => edit(mergeIntoPrevious(segments, indexAt(frame))),
     move: (index: number, frame: number) => edit(moveBoundary(segments, index, frame)),
     rename: (index: number, label: string) => edit(renameSegment(segments, index, label)),
     tag: (index: number, text: string) => {

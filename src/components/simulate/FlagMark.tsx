@@ -6,7 +6,7 @@ import { runClock } from '../../utils/duration';
 const FLAG_LABEL: Record<FlagKind, string> = {
   'joint-limit': 'At its limit',
   'frame-gap': 'Frames missing',
-  effort: 'Over the servo’s torque',
+  effort: 'At a servo’s torque limit',
   idle: 'Still for over 2 s',
   model: 'From an earlier design',
 };
@@ -16,8 +16,14 @@ interface FlagMarkProps {
   jointName: (id: string) => string;
 }
 
-const flagLine = (flag: QualityFlag, jointName: (id: string) => string) =>
-  [flag.joint ? jointName(flag.joint) : null, FLAG_LABEL[flag.kind], runClock(flag.at)].filter(Boolean).join(', ');
+const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
+
+function flagLine(flag: QualityFlag, jointName: (id: string) => string) {
+  const label = FLAG_LABEL[flag.kind];
+  const what = flag.joint ? `${jointName(flag.joint)} ${lowerFirst(label)}` : label;
+
+  return `${what}, ${runClock(flag.at)}`;
+}
 
 export const FlagMark: React.FC<FlagMarkProps> = ({ flags, jointName }) => {
   if (!flags.length) return null;

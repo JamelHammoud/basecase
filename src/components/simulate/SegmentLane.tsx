@@ -1,14 +1,8 @@
 import React, { useRef, useState } from 'react';
-import {
-  ContextMenu,
-  FloatingField,
-  RenameField,
-  renameEntry,
-  tagEntry,
-  type ContextMenuEntry,
-} from '../../design-system';
+import { ContextMenu, RenameField, renameEntry, tagEntry, type ContextMenuEntry } from '../../design-system';
 import { moveBoundary, segmentAt, type TrySegment } from '../../cases/tryLabels';
 import type { TryLabelsState } from '../../workspace/useTryLabels';
+import { TagTriesField } from '../tries/TagTriesField';
 import { FlagMark } from './FlagMark';
 import { useSegmentDrag } from './useSegmentDrag';
 
@@ -52,7 +46,7 @@ const Block: React.FC<BlockProps> = ({ segment, frames, selected, renaming, ...o
     onContextMenu={on.onMenu}
   >
     {renaming ? (
-      <RenameField name={segment.label} label="Segment" className="h-[32px]" onDone={on.onRename} />
+      <RenameField name={segment.label} className="h-[32px]" onDone={on.onRename} />
     ) : (
       <div
         className={`flex-1 min-w-0 rounded-[6px] px-1.5 flex items-center text-[12px] truncate transition-colors ${
@@ -148,18 +142,13 @@ export const SegmentLane: React.FC<SegmentLaneProps> = ({ labels, frame, frames,
         />
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.entries} onClose={() => setMenu(null)} />}
-      {tagging && (
-        <FloatingField
-          x={tagging.x}
-          y={tagging.y}
-          name={(shown[tagging.index]?.tags ?? []).join(', ')}
-          label="Tags"
-          onDone={(text) => {
-            setTagging(null);
-            edited(text !== null && labels.tag(tagging.index, text));
-          }}
-        />
-      )}
+      <TagTriesField
+        target={tagging && { ...tagging, before: shown[tagging.index]?.tags ?? [] }}
+        onDone={(text) => {
+          setTagging(null);
+          edited(!!tagging && text !== null && labels.tag(tagging.index, text));
+        }}
+      />
     </div>
   );
 };

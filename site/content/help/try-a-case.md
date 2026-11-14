@@ -81,7 +81,7 @@ If the robot lacks what the Case needs, hold your pointer over the row's note an
 
 After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that, the tries are listed worst first, so misses appear at the top. A replay includes anything the Case's code moved, lit or hid during the try.
 
-To delete a try, right-click it, choose **Delete**, then confirm. To tag it, choose **Tag…** in the same menu, as in [Label a try](/help/label-a-try).
+To delete a try, right-click it, choose **Delete**, then confirm. To tag it, choose **Tag** in the same menu, as in [Label a try](/help/label-a-try).
 
 Tries from your real robot are marked **Real**. When you click one of them, Basecase draws its path over the path of the best sim try.
 

@@ -17,11 +17,11 @@ The part must already be cut with **Subtract**, as in [Cut, join and intersect p
 
 ![Layers with Servo Mount, and Servo Mount, Servo Pocket and Cable Hole nested under it](/help/edit-a-cut/result.png)
 
-1. Double-click a hole on the canvas, or ⌘-click it, to select the part that cut it. Clicking its row in Layers does the same. It shows over the result, with the gizmo on it.
+1. Double-click a hole on the canvas, or [[⌘]]-click it, to select the part that cut it. Clicking its row in Layers does the same. It shows over the result, with the gizmo on it.
 
 ![The Cable Hole selected inside the plate, drawn in red with the gizmo on it](/help/edit-a-cut/drilled.png)
 
-2. Move it with the gizmo or the Position fields, or change its Size or Rotation. The cut moves with it, and ⌘Z undoes each change on its own.
+2. Move it with the gizmo or the Position fields, or change its Size or Rotation. The cut moves with it, and [[⌘Z]] undoes each change on its own.
 
 ![The Servo Pocket moved 8 mm to the left, with the pocket in the plate following it](/help/edit-a-cut/moved.png)
 

@@ -92,6 +92,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     partners: () => studio.robotsBeside(workspaceId),
     skills: skills.routineSkills,
     skillTraining: skills,
+    viewportRef,
     caseRobot: async () => {
       const viewport = viewportRef.current;
 

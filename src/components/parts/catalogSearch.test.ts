@@ -43,7 +43,8 @@ describe('parts views', () => {
     const scope = searchScope({ kind: 'category', id: 'Servos' })!;
 
     expect(scope.label).toBe('servos');
-    expect(servos.items.every(scope.has)).toBe(true);
+    expect(servos.items.every((item) => scope.has({ kind: 'part', item }))).toBe(true);
     expect(searchScope({ kind: 'home' })).toBeNull();
+    expect(searchScope({ kind: 'robots', group: 'Quadrupeds' })?.label).toBe('quadrupeds');
   });
 });

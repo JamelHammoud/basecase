@@ -21,6 +21,7 @@ function caseState({ cases }: WorkspaceCore['simTraining']) {
     tries: cases.tries.map((t) => ({
       world: t.manifest.world ?? 0,
       generated: !!t.generated,
+      real: !!t.real,
       passed: t.passed,
       margin: t.margin,
       seconds: t.seconds,

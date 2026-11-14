@@ -44,6 +44,6 @@ Each agent uses your own account: Claude Code your Claude login, Codex your Chat
 1. If Settings says to sign in, open the **Agent** tab.
 2. Click the sign-in button in the banner at the top, and finish signing in in your browser.
 
-Google no longer signs personal accounts in to Gemini CLI. With a personal account, click **Add API Key** in the banner, paste a Gemini API key, and press Enter. Basecase keeps the key encrypted on your computer.
+Google no longer signs personal accounts in to Gemini CLI. With a personal account, click **Add API Key** in the banner, paste a Gemini API key, and press [[↩]]. Basecase keeps the key encrypted on your computer.
 
 To pick a model within the agent, see [Choose a model and effort](/help/choose-a-model).

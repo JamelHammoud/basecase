@@ -91,15 +91,17 @@ function receive(event: PoseEvent) {
   setPoints(event.image);
 }
 
-const stopTracks = (stream: MediaStream) => stream.getTracks().forEach((track) => track.stop());
+const OPERATOR_SIZE = { width: 640, height: 480 };
 
-async function requestStream(): Promise<MediaStream | null> {
+export async function requestCameraStream(size = OPERATOR_SIZE): Promise<MediaStream | null> {
   const devices = typeof navigator === 'undefined' ? undefined : navigator.mediaDevices;
 
   if (!devices?.getUserMedia) return null;
 
-  return devices.getUserMedia({ video: { width: 640, height: 480 }, audio: false }).catch(() => null);
+  return devices.getUserMedia({ video: size, audio: false }).catch(() => null);
 }
+
+export const stopCameraStream = (stream: MediaStream) => stream.getTracks().forEach((track) => track.stop());
 
 function start(stream: MediaStream, robot: InputRobot) {
   const [track] = stream.getVideoTracks();
@@ -139,7 +141,7 @@ export function closeOperatorCamera() {
   frames.stop();
   worker.postMessage({ type: 'close' } satisfies PoseRequest);
   worker.terminate();
-  stopTracks(stream);
+  stopCameraStream(stream);
   setPoints(null);
   set(CLOSED);
 }
@@ -148,12 +150,12 @@ export async function openOperatorCamera(robot: InputRobot): Promise<string | nu
   closeOperatorCamera();
 
   const opening = generation;
-  const stream = await requestStream();
+  const stream = await requestCameraStream();
 
   if (!stream) return CAMERA_REFUSAL;
 
   if (opening !== generation) {
-    stopTracks(stream);
+    stopCameraStream(stream);
 
     return null;
   }

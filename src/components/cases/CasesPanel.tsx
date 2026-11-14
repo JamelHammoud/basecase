@@ -3,6 +3,7 @@ import {
   Button,
   CompareIcon,
   ContextMenu,
+  DownloadIcon,
   MenuItem,
   PlusIcon,
   deleteEntry,
@@ -66,6 +67,15 @@ function compareEntry(compare: CasesPanelProps['compare'], onOpen: () => void): 
   ];
 }
 
+function matEntry({ mat }: Cases): ContextMenuEntry[] {
+  if (!mat.available) return [];
+
+  return [
+    { label: 'Export Case Mat', icon: <DownloadIcon className="w-3.5 h-3.5" />, onSelect: mat.exportMat },
+    { divider: true },
+  ];
+}
+
 export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, onDescribe }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
 
@@ -78,7 +88,10 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, 
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: [...(cases.active?.id === id ? compareEntry(compare, onOpen) : []), deleteEntry(() => cases.remove(id))],
+      items: [
+        ...(cases.active?.id === id ? [...compareEntry(compare, onOpen), ...matEntry(cases)] : []),
+        deleteEntry(() => cases.remove(id)),
+      ],
     });
   };
 

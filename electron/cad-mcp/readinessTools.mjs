@@ -120,6 +120,7 @@ const EDITS = new Set([
   'fasten',
   'mate',
   'define_joints',
+  'size_arm',
   'set_build',
   'add_sourced_item',
   'import_maker_cad',

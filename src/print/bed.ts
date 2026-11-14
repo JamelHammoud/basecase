@@ -1,3 +1,4 @@
+import { sizeLabel } from '../utils/size';
 import type { Point2, PrinterModel } from '../data/printers';
 
 export interface Rect {
@@ -182,5 +183,4 @@ export function fitOnBed(w: number, d: number, h: number, bed: Bed): BedFit | nu
   return null;
 }
 
-export const bedSizeText = (bed: Bed): string =>
-  `${Math.round(bed.width)} × ${Math.round(bed.depth)} × ${Math.round(bed.height)} mm`;
+export const bedSizeText = (bed: Bed): string => sizeLabel([bed.width, bed.depth, bed.height]);

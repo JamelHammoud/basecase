@@ -81,9 +81,9 @@ The builder starts each number at a default sized to the robot. Its limits:
 | **Open Floor** | All | Nothing but the floor |
 | **Corridor** | Wheels and legs | A wall on each side of the route |
 | **Block** | Wheels and legs | A block in the way; tries get 5 s more on wheels and 8 s on legs |
-| **Rough Ground** | Wheels and legs | A grid of tiles up to **Height** tall; tries get 5 s more on wheels and 8 s on legs |
-| **Steps** | Wheels and legs | A platform **Height** tall to climb onto and step off; tries get the same extra time |
-| **Slope** | Wheels and legs | A ramp up at **Incline**, a flat top and a ramp down; tries get the same extra time |
+| **Rough Ground** | Reach a Spot, Follow a Path, Walk Without Falling | A grid of tiles up to **Height** tall; tries get 5 s more on wheels and 8 s on legs |
+| **Steps** | Reach a Spot, Follow a Path, Walk Without Falling | A platform **Height** tall to climb onto and step off; tries get the same extra time |
+| **Slope** | Reach a Spot, Follow a Path, Walk Without Falling | A ramp up at **Incline**, a flat top and a ramp down; tries get the same extra time |
 | **Shelf** | Touch a Point | A box under the point |
 | A room you imported | Reach a Spot, Push a Box, Follow a Path; Touch a Point when a table is in reach | The room's largest walls and furniture, at true size |
 

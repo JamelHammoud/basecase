@@ -8,7 +8,7 @@ import { DOT_COUNT } from './dotSpots';
 import type { GoalParam, GoalValues, ParamKey } from './goalParams';
 import { pickDefaults, pickGoalWith } from './pickGoal';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
-import { terrainDefaults, terrainLength } from './terrain';
+import { terrainDefaults } from './terrain';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 
 export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff';
@@ -108,9 +108,7 @@ export const BLOCK_DEPTH_MM = 120;
 
 const PUSH_SPEED = 0.3;
 
-const IN_THE_WAY: ReadonlySet<WorldKind> = new Set(['block', 'steps', 'slope']);
-
-const SLOWER: ReadonlySet<WorldKind> = new Set([...IN_THE_WAY, 'rough']);
+const SLOWER: ReadonlySet<WorldKind> = new Set(['block', 'rough', 'steps', 'slope']);
 
 export const groundOf = (facts: RobotFacts): Capability | null => {
   if (facts.capabilities.includes('legs')) return 'legs';
@@ -161,9 +159,6 @@ export const routeClearance = (robot: BuilderRobot) =>
 
 const blockRunUp = (robot: BuilderRobot) =>
   2 * (BLOCK_DEPTH_MM + routeClearance(robot) * 1.2 + robot.footprint.depth + robot.footprint.width);
-
-const inTheWayRunUp = (robot: BuilderRobot, world: WorldKind) =>
-  Math.max(blockRunUp(robot), terrainLength(world, robot) + 2 * routeClearance(robot));
 
 export const mm = (x: number) => `${Math.round(x)} mm`;
 
@@ -268,7 +263,7 @@ const pushGoal: CaseGoal = {
   params: ['pushMm', 'boxMm', 'radiusMm', 'seconds'],
   plan: (robot, v, world) => {
     const [x, y] = robot.pivot;
-    const runUp = IN_THE_WAY.has(world) ? inTheWayRunUp(robot, world) : ROBOT_CLEARANCE_MM;
+    const runUp = world === 'block' ? blockRunUp(robot) : ROBOT_CLEARANCE_MM;
     const boxZ = front(robot) + v.boxMm / 2 + runUp;
     const goalZ = boxZ + v.pushMm;
     const half = v.boxMm / 2;

@@ -29,6 +29,11 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
     setGiven({});
   };
 
+  const pickWorld = (kind: WorldKind) => {
+    setWorld(kind);
+    setGiven((g) => ({ ...g, riseMm: undefined, inclineDeg: undefined }));
+  };
+
   const create = () => {
     if (builder.create(spec).ok) onCreated();
   };
@@ -55,7 +60,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
           label="World"
           columns={worlds.length > MAX_WORLD_COLUMNS ? 2 : worlds.length}
           value={world}
-          onChange={setWorld}
+          onChange={pickWorld}
           options={worlds.map((w) => ({ value: w.kind, label: w.name, title: w.trueSize ? w.name : undefined }))}
         />
       )}

@@ -31,7 +31,9 @@ const BLOCK_HEIGHT_MM = 150;
 const MIN_SHELF_MM = 10;
 const GROUND_GOALS: ReadonlySet<GoalKind> = new Set(['reach', 'push', 'path', 'walk']);
 
-const ground = { ground: true, fits: (g: GoalKind) => GROUND_GOALS.has(g) };
+const TERRAIN_GOALS: ReadonlySet<GoalKind> = new Set(['reach', 'path', 'walk']);
+
+const ground = { ground: true, fits: (g: GoalKind) => TERRAIN_GOALS.has(g) };
 
 const solid = (id: string, name: string, position: V3, size: V3): WorldObject => ({
   id,

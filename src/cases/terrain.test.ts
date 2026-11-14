@@ -80,9 +80,9 @@ function geared(nm: number) {
 }
 
 describe('terrain worlds', () => {
-  it('build for every ground goal on every fixture robot, and the route crosses them', () => {
+  it('build for every goal they offer on every fixture robot, and the route crosses them', () => {
     for (const r of fixtureRobots().filter((f) => groundOf(robotOf(f.id).facts)))
-      for (const goal of goalsFor(robotOf(r.id)).filter((g) => g.kind !== 'touch' && g.kind !== 'pick'))
+      for (const goal of goalsFor(robotOf(r.id)).filter((g) => ['reach', 'path', 'walk'].includes(g.kind)))
         for (const world of TERRAIN) {
           const kase = built(r.id, { goal: goal.kind, world });
           const ground = kase.world.objects.filter((o) => o.behavior === 'static');
@@ -92,6 +92,8 @@ describe('terrain worlds', () => {
             kase.reference.timeline.every((c) => Math.abs((c.target?.[0] ?? 0) - robotOf(r.id).pivot[0]) < 400),
           ).toBe(true);
         }
+
+    expect(buildCase({ goal: 'push', world: 'rough' }, robotOf('rover-four'))).toMatchObject({ ok: false });
   });
 
   it('take their number from the robot, and name the Case after the world', () => {

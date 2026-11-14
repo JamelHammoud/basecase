@@ -18,7 +18,6 @@ const TILE_FOOT_SHARE = 0.5;
 const TILE_WHEEL_SHARE = 2;
 const MIN_TILE_MM = 30;
 const TILE_START_SHARE = 0.1;
-const PIT_MARGIN_MM = 30;
 const RAMP_THICKNESS_MM = 40;
 const RUN_UP_SHARE = 0.25;
 const MIN_PLATFORM_MM = 120;
@@ -69,17 +68,6 @@ function tileSize(robot: BuilderRobot, span: Span): number {
   return size;
 }
 
-function pitOf(o: WorldObject, tileHalf: number) {
-  const grow = PIT_MARGIN_MM + tileHalf;
-
-  return {
-    minX: o.position[0] - o.size[0] / 2 - grow,
-    maxX: o.position[0] + o.size[0] / 2 + grow,
-    minZ: o.position[2] - o.size[2] / 2 - grow,
-    maxZ: o.position[2] + o.size[2] / 2 + grow,
-  };
-}
-
 const roughSeed = (): Random => seededRandom(sha256Hex('rough-ground'));
 
 export function roughGround(plan: GoalPlan, robot: BuilderRobot, values: GoalValues): WorldObject[] {
@@ -88,7 +76,6 @@ export function roughGround(plan: GoalPlan, robot: BuilderRobot, values: GoalVal
   const size = tileSize(robot, span);
   const columns = Math.ceil((span.halfWidth * 2) / size);
   const rows = Math.ceil((span.to - span.from) / size);
-  const pits = plan.objects.filter((o) => o.behavior === 'dynamic').map((o) => pitOf(o, size / 2));
   const tiles: WorldObject[] = [];
 
   for (let row = 0; row < rows; row++)
@@ -98,16 +85,15 @@ export function roughGround(plan: GoalPlan, robot: BuilderRobot, values: GoalVal
       const z = span.from + (row + 0.5) * size;
       const height = values.riseMm * share;
 
-      if (!pits.some((p) => x > p.minX && x < p.maxX && z > p.minZ && z < p.maxZ))
-        tiles.push({
-          ...groundBox(
-            `${TILE_PREFIX}${row}-${column}`,
-            'Tile',
-            [x, height / 2, z],
-            [size - TILE_GAP_MM, height, size - TILE_GAP_MM],
-          ),
-          color: grey(share),
-        });
+      tiles.push({
+        ...groundBox(
+          `${TILE_PREFIX}${row}-${column}`,
+          'Tile',
+          [x, height / 2, z],
+          [size - TILE_GAP_MM, height, size - TILE_GAP_MM],
+        ),
+        color: grey(share),
+      });
     }
 
   return tiles.slice(0, MAX_OBJECTS - plan.objects.length);
@@ -120,14 +106,8 @@ const slopeRun = (robot: BuilderRobot) => platformLength(robot) * RAMP_SHARE;
 const slopeHeight = (robot: BuilderRobot, values: GoalValues) =>
   slopeRun(robot) * Math.tan(THREE.MathUtils.degToRad(values.inclineDeg));
 
-export function terrainLength(world: WorldKind, robot: BuilderRobot): number {
-  if (world === 'steps') return platformLength(robot);
-
-  return world === 'slope' ? platformLength(robot) + 2 * slopeRun(robot) : 0;
-}
-
 function middleOf(plan: GoalPlan, robot: BuilderRobot, length: number): number {
-  return plan.blockAt ?? plan.route.from[2] + robot.footprint.depth * RUN_UP_SHARE + length / 2;
+  return plan.route.from[2] + robot.footprint.depth * RUN_UP_SHARE + length / 2;
 }
 
 export function steps(plan: GoalPlan, robot: BuilderRobot, values: GoalValues): WorldObject[] {
@@ -168,7 +148,7 @@ export function slope(plan: GoalPlan, robot: BuilderRobot, values: GoalValues): 
   const height = slopeHeight(robot, values);
   const run = slopeRun(robot);
   const top = platformLength(robot);
-  const middle = middleOf(plan, robot, terrainLength('slope', robot));
+  const middle = middleOf(plan, robot, top + 2 * run);
   const width = halfWidth * 2;
   const [up, down] = [middle - top / 2, middle + top / 2];
 

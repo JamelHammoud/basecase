@@ -45,6 +45,7 @@ describe('the Case builder', () => {
     expect(worldsFor('touch').map((w) => w.kind)).toEqual(['floor', 'shelf']);
     expect(worldsFor('reach').map((w) => w.kind)).toEqual(['floor', 'corridor', 'block', 'rough', 'steps', 'slope']);
     expect(worldsFor('walk').map((w) => w.kind)).toEqual(['floor', 'corridor', 'block', 'rough', 'steps', 'slope']);
+    expect(worldsFor('push').map((w) => w.kind)).toEqual(['floor', 'corridor', 'block']);
   });
 
   it('builds every goal in every world it suits, and each one passes the Case validator', () => {

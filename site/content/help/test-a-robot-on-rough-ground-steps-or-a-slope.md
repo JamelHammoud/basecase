@@ -33,7 +33,7 @@ The scene's robot must have legs or wheels. [Make a Case](/help/make-a-case) cov
 1. Click **Play** in the view rail on the left.
 2. Click **Cases** at the top of the panel.
 3. Click **New Case**.
-4. Under **Goal**, choose **Reach a Spot**, **Push a Box**, **Follow a Path** or **Walk Without Falling**.
+4. Under **Goal**, choose **Reach a Spot**, **Follow a Path** or **Walk Without Falling**.
 5. Under **World**, choose **Rough Ground**, **Steps** or **Slope**.
 6. Set **Height** for Rough Ground or Steps, or **Incline** for Slope. It starts at a value sized to the robot.
 

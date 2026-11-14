@@ -52,7 +52,7 @@ interface Running extends StagedMat {
   path: Array<FloorPoint | null>;
 }
 
-export const NO_FRAMES = 'The camera sent no frames, so nothing was recorded.';
+export const NO_FRAMES = 'The camera sent no frames.';
 
 const CLOCK_STEP = 0.1;
 const END_SLACK = 1e-6;
@@ -103,8 +103,15 @@ export function useRealTry(options: RealTryOptions): RealTry {
   const [elapsed, setElapsed] = useState(0);
   const [owner, setOwner] = useState(0);
   const [noted, setNoted] = useState<{ caseId: string; text: string } | null>(null);
+  const noteScope = blocked ? null : (active?.id ?? null);
+  const [notedScope, setNotedScope] = useState(noteScope);
   const run = useRef<Running | null>(null);
   const finishing = useRef(false);
+
+  if (notedScope !== noteScope) {
+    setNotedScope(noteScope);
+    setNoted(null);
+  }
 
   const settle = () => {
     run.current = null;

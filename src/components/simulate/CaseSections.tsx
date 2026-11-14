@@ -111,7 +111,7 @@ const RealTryStatus: React.FC<{ realTry: Cases['realTry'] }> = ({ realTry }) => 
     );
 
   return realTry.note ? (
-    <p className="text-[13px] leading-snug text-amber-400" data-testid="real-try-status">
+    <p className="text-[13px] leading-snug text-red-400" data-testid="real-try-status">
       {realTry.note}
     </p>
   ) : null;

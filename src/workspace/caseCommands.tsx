@@ -16,6 +16,7 @@ import {
   TrainIcon,
 } from '../design-system';
 import type { Room } from '../cases/roomPlan';
+import { roomToAdd } from '../cases/console/consoleEdits';
 import { INPUT_COMMANDS } from './inputCommands';
 import { showLeftTab } from './showView';
 import type { CommandInputs } from './sceneCommands';
@@ -61,8 +62,8 @@ const addPanelAt = () => {
   return card ? { x: card.left + 12, y: card.top + 12 } : { x: window.innerWidth / 2, y: window.innerHeight / 3 };
 };
 
-const addPanelCommands = ({ caseRun }: WorkspaceCore): Command[] =>
-  caseRun.open
+const addPanelCommands = ({ caseRun, simTraining }: WorkspaceCore): Command[] =>
+  caseRun.open && roomToAdd(simTraining.cases.active?.console)
     ? [
         {
           id: 'case-add-panel',

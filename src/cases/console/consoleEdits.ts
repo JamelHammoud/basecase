@@ -2,7 +2,7 @@ import { errorMessage } from '../../utils/errorMessage';
 import { titleCase } from '../../utils/titleCase';
 import { parseCase, type Case } from '../schema';
 import { copyOf, isCanvas, placedOn, SIDE_SIZE, withoutPanel, withoutPlace, type ConsoleEdit } from './codeEdits';
-import { AREA_MAX, AREA_MIN, type CaseConsole } from './format';
+import { AREA_MAX, AREA_MIN, MAX_AREA_PANELS, MAX_AREAS, MAX_PANELS, type CaseConsole } from './format';
 import {
   CASE_ACTION_LABELS,
   CASE_ACTIONS,
@@ -37,8 +37,6 @@ export function panelName(panel: PanelSpec): string {
   return 'of' in panel && typeof panel.of === 'string' ? titleCase(panel.of) : kindLabel(panel.kind);
 }
 
-const missing = (id: string): ConsoleEdit => ({ ok: false, problem: `This console has no panel named ${id}.` });
-
 const has = (c: CaseConsole, id: string) => c.panels.some((p) => p.id === id);
 
 const insertedBefore = (ids: string[], id: string, before: string | undefined) => {
@@ -47,10 +45,10 @@ const insertedBefore = (ids: string[], id: string, before: string | undefined) =
   return at < 0 ? [...ids, id] : ids.toSpliced(at, 0, id);
 };
 
-export function movePanel(current: CaseConsole | undefined, id: string, to: PanelDrop): ConsoleEdit {
+export function movePanel(current: CaseConsole | undefined, id: string, to: PanelDrop): CaseConsole | null {
   const next = copyOf(current);
 
-  if (!has(next, id)) return missing(id);
+  if (!has(next, id)) return null;
 
   const marked =
     'column' in to
@@ -62,20 +60,20 @@ export function movePanel(current: CaseConsole | undefined, id: string, to: Pane
     isCanvas(a) ? a : { ...a, panels: a.panels.map((p) => (p === MOVING ? id : p)) },
   );
 
-  return { ok: true, console: { ...next, layout: { areas } } };
+  return { ...next, layout: { areas } };
 }
 
 export const areaSize = (size: number) => Math.round(Math.min(AREA_MAX, Math.max(AREA_MIN, size)));
 
-export function resizeArea(current: CaseConsole | undefined, at: number, size: number): ConsoleEdit {
+export function resizeArea(current: CaseConsole | undefined, at: number, size: number): CaseConsole | null {
   const next = copyOf(current);
   const area = next.layout.areas[at];
 
-  if (!area || isCanvas(area)) return { ok: false, problem: `layout.areas[${at}] isn’t a column of panels.` };
+  if (!area || isCanvas(area)) return null;
 
   const areas = next.layout.areas.map((a, i) => (i === at ? { ...area, size: areaSize(size) } : a));
 
-  return { ok: true, console: { ...next, layout: { areas } } };
+  return { ...next, layout: { areas } };
 }
 
 const freshId = (c: CaseConsole, kind: PanelKind) => {
@@ -90,7 +88,7 @@ const freshId = (c: CaseConsole, kind: PanelKind) => {
 export function addPanel(
   current: CaseConsole | undefined,
   add: { kind: AddableKind; choice: PanelChoice; area?: number },
-): ConsoleEdit {
+): CaseConsole {
   const next = copyOf(current);
   const id = freshId(next, add.kind);
   const { title, config } = add.choice;
@@ -101,21 +99,40 @@ export function addPanel(
       ? next.layout.areas.map((a) => (a === target ? { ...target, panels: [...target.panels, id] } : a))
       : placedOn(next.layout.areas, id, { side: 'right' });
 
-  return { ok: true, console: { ...next, panels: [...next.panels, panel], layout: { areas } } };
+  return { ...next, panels: [...next.panels, panel], layout: { areas } };
 }
 
-export function deletePanel(current: CaseConsole | undefined, id: string): ConsoleEdit {
+export function deletePanel(current: CaseConsole | undefined, id: string): CaseConsole | null {
   const next = copyOf(current);
 
-  return has(next, id) ? { ok: true, console: withoutPanel(next, id) } : missing(id);
+  return has(next, id) ? withoutPanel(next, id) : null;
 }
 
-export function renamePanel(current: CaseConsole | undefined, id: string, title: string): ConsoleEdit {
+export function renamePanel(current: CaseConsole | undefined, id: string, title: string): CaseConsole | null {
   const next = copyOf(current);
 
-  if (!has(next, id)) return missing(id);
+  if (!has(next, id)) return null;
 
-  return { ok: true, console: { ...next, panels: next.panels.map((p) => (p.id === id ? { ...p, title } : p)) } };
+  return { ...next, panels: next.panels.map((p) => (p.id === id ? { ...p, title } : p)) };
+}
+
+export const fits = (c: CaseConsole | null): c is CaseConsole =>
+  !!c &&
+  c.panels.length <= MAX_PANELS &&
+  c.layout.areas.length <= MAX_AREAS &&
+  c.layout.areas.every((a) => isCanvas(a) || a.panels.length <= MAX_AREA_PANELS);
+
+export const roomToAdd = (current: CaseConsole | undefined, area?: number) =>
+  fits(addPanel(current, { kind: 'map', choice: { label: '', config: {} }, area }));
+
+export function handEdited(kase: Case, next: CaseConsole | null): Case | null {
+  if (!fits(next)) return null;
+
+  try {
+    return parseCase({ ...kase, console: next });
+  } catch {
+    return null;
+  }
 }
 
 const signalChoice = (title: boolean, config: (name: string) => Record<string, unknown>) => (names: string[]) =>

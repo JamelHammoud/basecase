@@ -38,11 +38,13 @@ function menuItems(
   area: number,
   rename: (id: string) => void,
 ): ContextMenuEntry[] {
-  const add: ContextMenuEntry = {
-    label: 'Add Panel',
-    icon: <PlusIcon />,
-    submenu: (close) => <AddPanelMenu editor={editor} area={area} close={close} />,
-  };
+  const add: ContextMenuEntry = editor.canAdd(area)
+    ? {
+        label: 'Add Panel',
+        icon: <PlusIcon />,
+        submenu: (close) => <AddPanelMenu editor={editor} area={area} close={close} />,
+      }
+    : { label: 'Add Panel', icon: <PlusIcon />, disabled: true, onSelect: () => undefined };
   const { panel } = menu;
 
   if (!panel) return [add];
@@ -56,7 +58,10 @@ export const CaseRunArea: React.FC<CaseRunAreaProps> = ({ area, side, ctx, heade
   const [renaming, setRenaming] = useState<string | null>(null);
   const [draft, setDraft] = useState<number | null>(null);
   const drafted = useRef<number | null>(null);
-  const drag = usePanelDrag((id, drop) => editor?.move(id, drop));
+  const drag = usePanelDrag({
+    accepts: (id, drop) => !!editor?.canMove(id, drop),
+    onDrop: (id, drop) => editor?.move(id, drop),
+  });
   const size = draft ?? area.size;
   const surface = side === 'before' ? 'sidebar-surface' : 'bg-[#1f1f1f]';
 

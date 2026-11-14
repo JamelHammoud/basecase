@@ -27,7 +27,18 @@ export function gripsPanel(target: Element, panel: HTMLElement, y: number) {
   );
 }
 
-export function usePanelDrag(onDrop: (id: string, drop: PanelDrop) => void) {
+interface DropRules {
+  accepts: (id: string, drop: PanelDrop) => boolean;
+  onDrop: (id: string, drop: PanelDrop) => void;
+}
+
+const acceptedAt = (rules: DropRules, id: string, e: React.PointerEvent) => {
+  const at = dropAt(areaBoxes(document), e.clientX, e.clientY);
+
+  return at && rules.accepts(id, at.drop) ? at : null;
+};
+
+export function usePanelDrag(rules: DropRules) {
   const pending = useRef<Pending | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [target, setTarget] = useState<DropAt | null>(null);
@@ -64,16 +75,16 @@ export function usePanelDrag(onDrop: (id: string, drop: PanelDrop) => void) {
       document.body.style.cursor = 'grabbing';
     }
 
-    setTarget(dropAt(areaBoxes(document), e.clientX, e.clientY));
+    setTarget(acceptedAt(rules, p.id, e));
   };
 
   const onPointerUp = (e: React.PointerEvent<HTMLElement>) => {
     const p = pending.current;
-    const drop = p?.moved ? dropAt(areaBoxes(document), e.clientX, e.clientY) : null;
+    const drop = p?.moved ? acceptedAt(rules, p.id, e) : null;
 
     end(e.currentTarget, e.pointerId);
 
-    if (p && drop) onDrop(p.id, drop.drop);
+    if (p && drop) rules.onDrop(p.id, drop.drop);
   };
 
   const line = target?.line;

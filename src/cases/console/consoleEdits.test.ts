@@ -4,17 +4,18 @@ import { parseGalleryBundle } from '../../gallery/galleryBundle';
 import { fixtureRobots } from '../../sim/fixtures/robots';
 import type { Case } from '../schema';
 import { parseCase, touchTheDots } from '../testing';
-import type { ConsoleEdit } from './codeEdits';
 import {
   ADDABLE_KINDS,
   addPanel,
-  checkedConsole,
   deletePanel,
+  fits,
+  handEdited,
   movePanel,
   panelChoices,
   panelName,
   renamePanel,
   resizeArea,
+  roomToAdd,
 } from './consoleEdits';
 import { consoleScope, type CaseConsole } from './format';
 import { DEFAULT_CONSOLE } from './layout';
@@ -39,10 +40,10 @@ const desk: CaseConsole = {
 
 const withDesk = (): Case => ({ ...plain(), console: desk });
 
-const saved = (kase: Case, edit: ConsoleEdit): Case => {
-  const next = checkedConsole(kase, edit);
+const saved = (kase: Case, edit: CaseConsole | null): Case => {
+  const next = handEdited(kase, edit);
 
-  if (typeof next === 'string') throw new Error(next);
+  if (!next) throw new Error('The edit didn’t fit');
 
   return next;
 };
@@ -79,7 +80,7 @@ describe('arranging a console by hand', () => {
     ]);
   });
 
-  it('makes a new column at an area’s edge, and refuses a seventh column with its path', () => {
+  it('makes a new column at an area’s edge, and never a seventh', () => {
     const next = saved(withDesk(), movePanel(desk, 'brief', { column: 3 }));
 
     expect(layoutOf(next)).toEqual([
@@ -106,16 +107,16 @@ describe('arranging a console by hand', () => {
     const crowded = saved(full, addPanel(full.console, { kind: 'value', choice: value, area: 5 }));
 
     expect(layoutOf(crowded)).toHaveLength(6);
-    expect(checkedConsole(crowded, movePanel(crowded.console, 'value-2', { column: 0 }))).toBe(
-      'console.layout.areas holds more than 6 items',
-    );
+    expect(fits(movePanel(crowded.console, 'value-2', { column: 0 }))).toBe(false);
+    expect(handEdited(crowded, movePanel(crowded.console, 'value-2', { column: 0 }))).toBeNull();
+    expect(fits(movePanel(crowded.console, 'value-2', { area: 0 }))).toBe(true);
   });
 
   it('snaps a resized area into 200 to 720 px', () => {
     expect(layoutOf(saved(withDesk(), resizeArea(desk, 0, 912)))[0]).toMatchObject({ size: 720 });
     expect(layoutOf(saved(withDesk(), resizeArea(desk, 2, 64)))[2]).toMatchObject({ size: 200 });
     expect(layoutOf(saved(withDesk(), resizeArea(desk, 2, 333.6)))[2]).toMatchObject({ size: 334 });
-    expect(resizeArea(desk, 1, 300).ok).toBe(false);
+    expect(resizeArea(desk, 1, 300)).toBeNull();
   });
 
   it('adds a plot of every joint’s position from the signal names, titled with the signal', () => {
@@ -145,7 +146,7 @@ describe('arranging a console by hand', () => {
     expect(labels('map')).toHaveLength(1);
     ADDABLE_KINDS.forEach((kind) =>
       choicesFor(kase, kind).forEach((choice) =>
-        expect(typeof checkedConsole(kase, addPanel(kase.console, { kind, choice }))).not.toBe('string'),
+        expect(handEdited(kase, addPanel(kase.console, { kind, choice }))).not.toBeNull(),
       ),
     );
   });
@@ -164,7 +165,7 @@ describe('arranging a console by hand', () => {
       title: 'Runs',
       of: 'tries',
     });
-    expect(deletePanel(desk, 'nope')).toEqual({ ok: false, problem: 'This console has no panel named nope.' });
+    expect(deletePanel(desk, 'nope')).toBeNull();
   });
 
   it('names a panel the way the screen and Add Panel do, never by its id', () => {
@@ -175,7 +176,7 @@ describe('arranging a console by hand', () => {
 });
 
 describe('what a hand edit keeps', () => {
-  it('refuses an edit that breaks the format with its path, as the agent’s replies do', () => {
+  it('offers no Add Panel for a full column, and leaves room in the others', () => {
     const kase = withDesk();
     const value = choicesFor(kase, 'value')[0];
     const crowded = Array.from({ length: 9 }).reduce<Case>(
@@ -184,9 +185,10 @@ describe('what a hand edit keeps', () => {
     );
 
     expect(layoutOf(crowded)[2]).toMatchObject({ size: 328 });
-    expect(checkedConsole(crowded, addPanel(crowded.console, { kind: 'value', choice: value, area: 2 }))).toBe(
-      'console.layout.areas[2].panels holds more than 12 items',
-    );
+    expect(roomToAdd(crowded.console, 2)).toBe(false);
+    expect(roomToAdd(crowded.console)).toBe(false);
+    expect(roomToAdd(crowded.console, 0)).toBe(true);
+    expect(handEdited(crowded, addPanel(crowded.console, { kind: 'value', choice: value, area: 2 }))).toBeNull();
   });
 
   it('edits its own copy of the default console when the Case has none', () => {

@@ -159,6 +159,7 @@ describe('Run Case', () => {
     await runCase();
 
     await expect.poll(panelIds).toEqual(['cameras', 'brief', 'servos', 'tries']);
+    expect(await page.locator('[data-panel="failures"]').evaluate((el) => el.getBoundingClientRect().height)).toBe(0);
     expect(await areaCount()).toBe(2);
     await expect.poll(() => panel('cameras').locator('[data-testid="camera-tile"]').count()).toBe(2);
     expect(await page.locator('[data-camera="wrist_camera"]').count()).toBe(1);

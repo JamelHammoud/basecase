@@ -23,10 +23,11 @@ export const ConsolePanel: React.FC<ConsolePanelProps> = ({ panel, ctx, editable
       data-panel={panel.id}
       data-kind={panel.kind}
       className={`relative border-b border-white/[0.06] last:border-b-0 empty:hidden ${
-        editable ? '[&>section>header]:cursor-grab' : ''
+        editable
+          ? "[&>section>header]:cursor-grab before:content-[''] before:absolute before:inset-x-0 before:top-0 before:h-[8px] before:z-10 before:cursor-grab"
+          : ''
       } ${dragging ? 'opacity-40' : ''}`}
     >
-      {editable && <div aria-hidden className="absolute inset-x-0 top-0 h-[8px] z-10 cursor-grab" />}
       <View panel={panel} ctx={ctx} />
       {onRenamed && (
         <div className={`absolute inset-x-0 top-0 z-20 h-[48px] px-[12px] flex items-center ${surface}`}>

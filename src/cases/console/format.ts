@@ -40,7 +40,11 @@ export interface CaseConsole {
   layout: { areas: ConsoleArea[] };
 }
 
-const MAX_PANELS = 24;
+export const MAX_PANELS = 24;
+
+export const MAX_AREAS = 6;
+
+export const MAX_AREA_PANELS = 12;
 
 export const MAX_CODE_PANELS = 4;
 
@@ -189,7 +193,7 @@ const readArea: Reader<ConsoleArea> = (value, where) => {
 
   if (size < AREA_MIN || size > AREA_MAX) refuse(`${where}.size`, `must be from ${AREA_MIN} to ${AREA_MAX}`);
 
-  const panels = listOf(asId, 12)(v.panels, `${where}.panels`);
+  const panels = listOf(asId, MAX_AREA_PANELS)(v.panels, `${where}.panels`);
 
   if (!panels.length) refuse(`${where}.panels`, 'must name a panel');
 
@@ -198,7 +202,7 @@ const readArea: Reader<ConsoleArea> = (value, where) => {
 
 function readLayout(value: unknown, where: string, panels: PanelSpec[]) {
   const v = asRecord(value, where);
-  const areas = listOf(readArea, 6)(v.areas, `${where}.areas`);
+  const areas = listOf(readArea, MAX_AREAS)(v.areas, `${where}.areas`);
 
   if (areas.filter((a) => 'canvas' in a).length !== 1) refuse(`${where}.areas`, 'must hold the canvas once');
 

@@ -1,6 +1,7 @@
 import { MATERIAL_DENSITY } from '../data/supplies';
 import type { PrinterSetup } from '../data/printers';
 import { bedOf, bedSizeText } from '../print/bed';
+import { sizeLabel } from './size';
 import { buildPrintPlan, choosePose, type PrintCheck, type PrintPlan } from '../print/plan';
 import type { MeshMeasure } from '../three/meshMeasure';
 import { PRINT_RULES, printHours, type PrintShape, type Vec3 } from '../three/printability';
@@ -39,9 +40,6 @@ export interface PrintReport {
   plan: PrintPlan;
   totals: { grams: number; supportG: number; hours: number; failing: number };
 }
-
-export const fmtSize = (size: number[]) =>
-  size.map((v) => (v < 10 ? String(Math.round(v * 10) / 10) : String(Math.round(v)))).join(' × ');
 
 export interface PartShape {
   check: PrintShape;
@@ -257,9 +255,7 @@ export function printReportText(r: PrintReport): string {
   const plates = Object.entries(r.plates)
     .map(([m, n]) => plural(n, `${m} plate`))
     .join(', ');
-  const keepOut = bed.keepOut.length
-    ? `, ${bed.keepOut.map((k) => `${Math.round(k.w)} × ${Math.round(k.d)} mm`).join(' and ')} keep-out`
-    : '';
+  const keepOut = bed.keepOut.length ? `, ${bed.keepOut.map((k) => sizeLabel([k.w, k.d])).join(' and ')} keep-out` : '';
 
   lines.push(
     `${plural(r.parts.length, 'printed part')} on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${weight(r.totals.grams)} + ${weight(r.totals.supportG)} support, ${duration(r.totals.hours * 3600, 'min')}, ${plates}. Estimates without a slicer.`,
@@ -267,9 +263,8 @@ export function printReportText(r: PrintReport): string {
   lines.push(r.totals.failing ? `Issues on ${plural(r.totals.failing, 'part')}:` : 'Every part fits and prints.');
 
   for (const p of r.parts) {
-    const s = fmtSize(p.check.size);
     const turned = p.check.yaw && p.check.yaw % 90 ? `, turned ${p.check.yaw}° across the plate` : '';
-    const head = `- ${p.id} (${p.material}, ${weight(p.grams)}${p.supportG >= 1 ? ` + ${weight(p.supportG)} support` : ''}, ${s} mm, ${faceText(p.check)}${turned})`;
+    const head = `- ${p.id} (${p.material}, ${weight(p.grams)}${p.supportG >= 1 ? ` + ${weight(p.supportG)} support` : ''}, ${sizeLabel(p.check.size)}, ${faceText(p.check)}${turned})`;
 
     const said = [...p.issues, ...p.notes];
 

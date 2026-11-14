@@ -8,7 +8,7 @@ const NOW = new Date('2026-11-12T12:00:00Z');
 const SCRIPT = '/assets/help-search-abc.js';
 
 const BODY = [
-  'Bring a model in.',
+  'Bring a model in with [[⌘I]].',
   '',
   '## Choose a file',
   '',
@@ -72,8 +72,9 @@ describe('help pages', () => {
   });
 
   it('renders steps, key caps, warnings and tables', () => {
+    expect(article).toContain('<meta name="description" content="Bring a model in with ⌘I."/>');
     expect(article).toContain('class="help-steps');
-    expect(article).toMatch(/<kbd[^>]*>⌘<\/kbd><kbd[^>]*>K<\/kbd>/);
+    expect(article).toMatch(/<span data-keys=""[^>]*><kbd[^>]*>⌘<\/kbd><kbd[^>]*>K<\/kbd><\/span>/);
     expect(article).toMatch(/<aside[^>]*>.*Warning.*Big files take a while\./s);
     expect(article).not.toContain('[!WARNING]');
     expect(article).toContain('<table');

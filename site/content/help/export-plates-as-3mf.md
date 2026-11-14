@@ -35,6 +35,6 @@ Basecase saves the files to your downloads. With one material it's `<scene>.3mf`
 
 Inside, each plate is named Plate 1, Plate 2 and so on, laid out the way Bambu Studio lays out plates. Parts keep their names and the orientation chosen in Print mode.
 
-**Export 3MF Plates** is also in ⌘K. It works in the web studio too, since it needs no slicer.
+**Export 3MF Plates** is also in [[⌘K]]. It works in the web studio too, since it needs no slicer.
 
 To slice and send from Basecase instead, see [Print a robot's parts](/help/print-a-robots-parts).

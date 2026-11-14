@@ -4,6 +4,8 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
 import type { ViewShot } from '../three/viewport/types';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { setVoiceWords } from '../voice/voiceSession';
+import { voiceWordsOf } from '../voice/voiceWords';
 import type { Cases } from './useCases';
 
 interface CaseRunInput {
@@ -74,6 +76,16 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
 
     return () => setInputs(null);
   }, [inputs, setInputs]);
+
+  const logic = open ? cases.active?.logic : undefined;
+
+  useEffect(() => {
+    if (!logic) return;
+
+    setVoiceWords(voiceWordsOf(logic));
+
+    return () => setVoiceWords([]);
+  }, [logic]);
 
   const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO, studio: true });
 

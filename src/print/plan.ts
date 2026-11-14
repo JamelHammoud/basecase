@@ -3,6 +3,7 @@ import type { PrinterSetup } from '../data/printers';
 import { sameDirection, type PrintPose, type PrintShape, type Vec3 } from '../three/printability';
 import type { PartPrint, PrintMaterial } from '../types/robotics';
 import { bedSizeText, fitOnBed, type Bed } from './bed';
+import { sizeLabel } from '../utils/size';
 import { packPlates, type PackItem } from './pack';
 
 export interface PrintCheck {
@@ -74,7 +75,7 @@ function splitNote(size: Vec3, bed: Bed) {
   const sorted = [...size].sort((a, b) => b - a);
   const pieces = Math.max(2, Math.ceil(sorted[0] / (Math.max(bed.width, bed.depth, bed.height) * 0.94)));
 
-  return `${sorted.map((v) => Math.round(v)).join(' × ')} mm is larger than the ${bed.name} plate (${bedSizeText(bed)}). Split it into ${pieces} pieces along its longest side, joined with dowels or screws.`;
+  return `${sizeLabel(sorted)} is larger than the ${bed.name} plate (${bedSizeText(bed)}). Split it into ${pieces} pieces along its longest side, joined with dowels or screws.`;
 }
 
 export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): PrintCheck {

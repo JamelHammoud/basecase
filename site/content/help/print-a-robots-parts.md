@@ -35,7 +35,7 @@ covers:
 
 Lay the printed parts out on your printer's plates, slice them with Bambu Studio or OrcaSlicer, and send each plate to the printer.
 
-1. Press ⌘P (Ctrl+P on Windows) to open Print mode.
+1. Press [[⌘P]] to open Print mode.
 2. Under **Printer**, pick your printer in **Printer**.
 3. Set **Quality**, **Material** and **Infill**.
 4. To change how a part sits, select it, click **Lay on Face**, then click the face it should rest on.
@@ -56,12 +56,12 @@ If you haven't saved a printer, the plate's button reads **Add Printer** and ope
 
 With Bambu Studio, the plate opens there and you start the print in Bambu Studio. Bambu Connect works the same way.
 
-Print mode also opens from **File** ▸ **Print**, from **Print** in the Build tab, and from ⌘K. **Slice Plates** in ⌘K slices every plate at once; a toast shows the progress, with **Stop**.
+Print mode also opens from **File** ▸ **Print**, from **Print** in the Build tab, and from [[⌘K]]. **Slice Plates** in [[⌘K]] slices every plate at once; a toast shows the progress, with **Stop**.
 
 ## On the plate
 
-- Drag a part to move it. Press F to lay it on a face, or R to turn it 90°.
-- Press ← or → to go to the previous or next plate.
+- Drag a part to move it. Press [[F]] to lay it on a face, or [[R]] to turn it 90°.
+- Press [[←]] or [[→]] to go to the previous or next plate.
 - **Copies** prints more than one of the selected part. **Don't print** leaves it off the plates.
 - Plates follow the build guide's order. The number beside the box icon in the bottom bar is the step that first needs the plate.
 - **Auto Arrange** in the bottom bar packs the plates of that material again.
@@ -72,4 +72,4 @@ After a print, a switch under **Printer**, such as Skip 3 printed parts, leaves 
 
 With two or more printers that report their state, each idle one gets **Start Next**. [Print plates on several printers](/help/print-plates-on-several-printers) has the steps.
 
-Press Esc or click **Done** to go back to the scene. Next, [make a build guide](/help/make-a-build-guide) for putting the parts together.
+Press [[Esc]] or click **Done** to go back to the scene. Next, [make a build guide](/help/make-a-build-guide) for putting the parts together.

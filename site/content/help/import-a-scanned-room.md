@@ -42,7 +42,7 @@ Basecase Scan, the iPhone app, scans the room with Apple's RoomPlan and marks wh
 
 ![The room on the canvas: two rooms joined by a doorway, with a sofa, a table and a chair](/help/import-a-scanned-room/room.png)
 
-10. Click **Try It** and drive with W, A, S and D.
+10. Click **Try It** and drive with [[W]], [[A]], [[S]] and [[D]].
 
 ![A rover driving through the doorway toward the spot](/help/import-a-scanned-room/drive.png)
 

@@ -31,7 +31,7 @@ Send each idle printer the next plate your build needs, so the parts for the fir
 You need two or more printers that report their state: Bambu LAN, Klipper, PrusaLink or OctoPrint. Printers that send through Bambu Studio or Bambu Connect don't report it. Start Next is in the desktop app only.
 
 1. Add each printer in Settings ▸ **Printers**, as [Add a printer](/help/add-a-printer) shows.
-2. Press ⌘P (Ctrl+P on Windows) to open Print mode.
+2. Press [[⌘P]] to open Print mode.
 3. Under **Printer**, find the printer you want to use. Each one shows its state, such as Ready.
 4. Click **Start Next** beside a printer that reads Ready.
 

@@ -21,13 +21,12 @@ import {
   UngroupIcon,
   UnionIcon,
 } from '../../design-system';
+import { SizeLine } from '../PartDetails';
 import { GroupName } from './GroupName';
 import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
-import { MATERIALS, type InspectorProps } from './types';
+import { MATERIALS, materialTag, type InspectorProps } from './types';
 import { keyFor } from '../../app/shortcuts';
-
-const fmt = (v: number) => String(Math.round(v * 10) / 10);
 
 const isWholeGroup = (selectedParts: ScenePart[], parts: ScenePart[]): boolean => {
   const base = selectedParts[0];
@@ -114,12 +113,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
       </div>
       <MetaLine
         className="text-[12.5px] text-white/50 tabular mt-0.5"
-        items={[
-          wholeGroup && `${selectedParts.length} parts`,
-          <>
-            {fmt(size[0])} × {fmt(size[1])} × {fmt(size[2])} <span className="text-white/50">mm</span>
-          </>,
-        ]}
+        items={[wholeGroup && `${selectedParts.length} parts`, <SizeLine mm={size} />]}
       />
     </div>
   );
@@ -182,7 +176,8 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
 const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoolean, onUpdateMany }) => {
   const base = selectedParts[0];
   const colors = new Set(selectedParts.map((p) => p.color.toLowerCase()));
-  const materials = new Set(selectedParts.map((p) => p.mechanicalTag || '3D Printed PLA/PETG'));
+  const allSolid = selectedParts.every((p) => p.role === 'solid');
+  const materials = new Set(selectedParts.map(materialTag));
 
   return (
     <>
@@ -214,12 +209,14 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
           suggestions={parts.map((p) => p.color)}
           onChange={(color) => onUpdateMany({ color })}
         />
-        <Select
-          aria-label="Material"
-          value={materials.size > 1 ? '' : [...materials][0]}
-          onChange={(e) => e.target.value && onUpdateMany({ mechanicalTag: e.target.value })}
-          options={materials.size > 1 ? [{ value: '', label: 'Mixed' }, ...MATERIALS] : MATERIALS}
-        />
+        {allSolid && (
+          <Select
+            aria-label="Material"
+            value={materials.size > 1 ? '' : [...materials][0]}
+            onChange={(e) => e.target.value && onUpdateMany({ mechanicalTag: e.target.value })}
+            options={materials.size > 1 ? [{ value: '', label: 'Mixed' }, ...MATERIALS] : MATERIALS}
+          />
+        )}
       </Section>
     </>
   );

@@ -1,9 +1,11 @@
 import { ComponentInfo, specLines } from '../data/components';
 import { weight } from './weight';
+import { sizeLabel } from './size';
 
 export interface KeySpec {
   label: string;
   value: string;
+  mm?: number[];
 }
 
 const spec = (c: ComponentInfo, ...labels: string[]) => {
@@ -54,8 +56,6 @@ const widest = (v: string) => {
 
   return m ? m[m.length - 1].replace(/\s*mm/, ' mm') : undefined;
 };
-
-const round = (v: number) => (v < 10 ? Math.round(v * 10) / 10 : Math.round(v));
 
 type Add = (label: string, value: string | undefined) => void;
 
@@ -139,9 +139,8 @@ const GROUP_SPECS: Partial<Record<ComponentInfo['group'], (c: ComponentInfo, add
   };
 
 export function keySpecs(c: ComponentInfo, size: { width: number; height: number; depth: number }): KeySpec[] {
-  const out: KeySpec[] = [
-    { label: 'Size', value: `${round(size.width)} × ${round(size.height)} × ${round(size.depth)} mm` },
-  ];
+  const mm = [size.width, size.height, size.depth];
+  const out: KeySpec[] = [{ label: 'Size', value: sizeLabel(mm), mm }];
   const weight = spec(c, 'Weight');
 
   if (weight) out.push({ label: 'Weight', value: plainValue(weight) });

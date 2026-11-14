@@ -6,6 +6,7 @@ import { humanoid } from '../utils/mocap.fixtures';
 import { buildRig } from '../utils/kinematics';
 import { driveAccess, poseOffer, posePin, type VelocityDrive } from './driveAccess';
 import { SimEngine } from './engine';
+import { box, joint } from './fixtures/parts';
 import { fixtureRobots } from './fixtures/robots';
 import { buildMjcf } from './mjcf';
 import type { PolicySpec } from './policy';
@@ -59,6 +60,35 @@ describe('driving by pose', () => {
     expect(posePin({ rig: armRig, parts: arm.parts })).toBeNull();
     expect(poseOffer({ rig: armRig, parts: arm.parts })).toBe(true);
     expect(poseOffer({ rig: buildRig(rover.joints, rover.parts), parts: rover.parts })).toBe(false);
+  });
+
+  it('drives a rover with a pan camera by its wheels, unpinned, when a pose input is asked for', () => {
+    const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+    const camera = {
+      ...box('cam', [0, 120, 0], [25, 12, 24], 4),
+      kind: 'component' as const,
+      category: 'perception' as const,
+      componentId: 'raspberry-pi-camera-3',
+    };
+    const parts = [...rover.parts, box('turret', [0, 100, 0], [40, 20, 40], 40), camera];
+    const pan = joint({
+      id: 'pan',
+      link: ['chassis', 'turret'],
+      origin: [0, 90, 0],
+      axis: [0, 1, 0],
+      effortNm: 1,
+      range: [-90, 90],
+    });
+    const joints = [...rover.joints, { ...pan, child: [...pan.child, camera.id] }];
+    const rig = buildRig(joints, parts);
+    const model = buildMjcf({
+      ...caseRobot({ ...rover, parts, joints }),
+      rig,
+      project: { ...DEFAULT_PROJECT, joints },
+    });
+
+    expect(model.robots[0].floating).toBe(true);
+    expect(driveAccess({ rig, parts, model, pose: true })).toMatchObject({ kind: 'ready', cls: 'rover' });
   });
 
   it('moves the commanded shoulder in the sim while the pinned base and legs stay still', async () => {

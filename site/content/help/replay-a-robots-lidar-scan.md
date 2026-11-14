@@ -22,7 +22,7 @@ You can see what a robot's LiDAR saw at any point in a recorded try, drawn from 
 
 1. Put a LiDAR on the robot and group it with the body. See [Simulate a LiDAR](/help/simulate-a-lidar).
 2. Record a try in a Case. See [Try a Case](/help/try-a-case).
-3. In **Results**, click **Replay** (▷) on the try's row. The timeline opens under the canvas.
+3. In **Results**, click the try's row. The timeline opens under the canvas.
 4. Press [[→]] or [[←]] to move the playhead, or press [[End]] to go to the end. The canvas uses the robot's pose at that time to draw the scan the LiDAR recorded at or before that moment.
 
 ![A rover with an RPLIDAR S2 in a corridor Case, the scan at the playhead drawn as blue points along both walls, the timeline under the canvas](/help/replay-a-robots-lidar-scan/replay.png)

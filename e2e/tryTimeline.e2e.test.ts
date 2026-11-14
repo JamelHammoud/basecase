@@ -87,7 +87,7 @@ describe('Try timeline', () => {
 
     const scene = await sceneParts();
 
-    await app.page.getByTestId('try-row').first().locator('button[aria-label="Replay"]').click();
+    await app.page.getByTestId('try-row').first().click();
     await expect.poll(() => app.page.getByTestId('timeline-lane').count(), { timeout: 30000 }).toBeGreaterThan(0);
     await expect.poll(async () => (await timeline())?.sought).toBe(0);
 

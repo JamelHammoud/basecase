@@ -109,6 +109,7 @@ export function uniqueJointIds(joints: RobotJoint[], taken: Iterable<string> = [
   if (!joints.some((j) => used.has(j.id)) && new Set(joints.map((j) => j.id)).size === joints.length) return joints;
 
   const out: RobotJoint[] = [];
+  const batchIds = new Set<string>();
   let batch: RobotJoint[] = [];
   const flush = () => {
     if (!batch.length) return;
@@ -142,12 +143,14 @@ export function uniqueJointIds(joints: RobotJoint[], taken: Iterable<string> = [
     }
 
     batch = [];
+    batchIds.clear();
   };
 
   for (const j of joints) {
-    if (batch.some((b) => b.id === j.id)) flush();
+    if (batchIds.has(j.id)) flush();
 
     batch.push(j);
+    batchIds.add(j.id);
   }
 
   flush();

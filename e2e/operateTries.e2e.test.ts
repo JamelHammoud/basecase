@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ARM } from './armFixture';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
@@ -70,7 +70,7 @@ async function openTries() {
   await app.page.locator(shown('[data-testid="library-tries"] button')).first().click();
 }
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
   await app.page.addScriptTag({ content: FAKE_DAEMON_SCRIPT });
   await app.page.evaluate(() => {
@@ -82,7 +82,7 @@ beforeAll(async () => {
   await vi.waitFor(async () => expect(await partCount(app.page)).toBe(ARM.parts.length), { timeout: 10000 });
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
@@ -103,24 +103,34 @@ describe('Operate tries', () => {
       expect(await operateTiles().first().textContent()).toContain('Operate');
 
       const id = (await operateTiles().first().getAttribute('data-try'))!;
-      const lanes = await page.evaluate((tryId) => (window as unknown as StudioWindow).__studio.tryLanes(tryId), id);
+      const lanes = await vi.waitFor(
+        async () => {
+          const found = await page.evaluate(
+            (tryId) => (window as unknown as StudioWindow).__studio.tryLanes(tryId),
+            id,
+          );
+
+          expect(found).not.toBeNull();
+
+          return found!;
+        },
+        { timeout: 10000 },
+      );
       const statuses = await page.evaluate(() =>
         (window as unknown as StudioWindow).__fakeRobotLink.statuses.map((s) =>
           s.map((c) => (c === null ? 0 : c - 2048)),
         ),
       );
 
-      expect(lanes).not.toBeNull();
-
-      const frames = lanes![ARM_JOINTS[0]].length;
+      const frames = lanes[ARM_JOINTS[0]].length;
 
       expect(frames).toBeGreaterThan(50);
       ARM_JOINTS.forEach((joint, k) => {
-        const gaps = lanes![joint].map((q, n) => Math.abs(q - statuses[n][k] / COUNTS_PER_RAD));
+        const gaps = lanes[joint].map((q, n) => Math.abs(q - statuses[n][k] / COUNTS_PER_RAD));
 
         expect(Math.max(...gaps)).toBeLessThan(0.001);
       });
-      expect(Math.max(...lanes![ARM_JOINTS[0]]) - Math.min(...lanes![ARM_JOINTS[0]])).toBeGreaterThan(0.05);
+      expect(Math.max(...lanes[ARM_JOINTS[0]]) - Math.min(...lanes[ARM_JOINTS[0]])).toBeGreaterThan(0.05);
 
       await page.keyboard.press('Escape');
       await climbToTest();

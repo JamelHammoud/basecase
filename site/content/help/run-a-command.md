@@ -35,6 +35,6 @@ Every word you type must match, and results whose name starts with your words co
 
 The command menu holds the commands from every menu, each catalog part and hardware size, your Library models, and your other open scenes. It doesn't list saved scenes; **Show Scenes** ([[⌘O]]) opens them.
 
-Commands that act on parts are listed only while they can run. **Copy** and **Delete** need a selected part, **Hide** and **Lock** exactly one, **Group** and **Union** two, and **Spread Along X** three.
+Commands are listed only while they can run. **Copy** and **Delete** need a selected part, **Hide** and **Lock** exactly one, **Group** and **Union** two, and **Spread Along X** three. **Simulate** turns into **Stop Simulation** while the simulation is on.
 
 Press [[Esc]] to close it. It's also **View** ▸ **Command Menu**. For the keys themselves, see [Keyboard shortcuts](/help/keyboard-shortcuts).

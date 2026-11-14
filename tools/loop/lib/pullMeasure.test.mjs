@@ -66,9 +66,11 @@ function bench({ result = compared({ branch: TWO_IN_THREE }), keys = { branch: '
       keys: () => state.keys,
       compare: (plan) => {
         calls.push(['compare', plan.budget]);
+        state.names = [...(state.names ?? []), plan.name];
 
         return result;
       },
+      spentOn: () => state.failedSpend ?? 0,
     },
   };
 }
@@ -189,6 +191,19 @@ describe('micro-evals in review: limits', () => {
     expect(measure(b, { sha: 'bbbbbbb' }).verdict).toBe('pass');
     expect(b.calls).toEqual([['compare', 15], 'comment', 'edit']);
     expect(b.thread[0].body).toContain("settling needs about $8.00, and $5.00 of this pull request's $15.00 is left");
+  });
+
+  it('runs a compare that ended without results again, counting what it spent, and stops after three', () => {
+    const b = bench({ result: null, failedSpend: 4 });
+
+    expect(measure(b)).toMatchObject({ verdict: 'busy' });
+    expect(measure(b)).toMatchObject({ verdict: 'busy' });
+    expect(measure(b).verdict).toBe('pass');
+    expect(measure(b).verdict).toBe('pass');
+    expect(b.calls).toEqual([['compare', 15], 'comment', ['compare', 11], 'edit', ['compare', 7], 'edit']);
+    expect(b.state.names).toEqual(['review-12-aaaaaaa', 'review-12-aaaaaaa-2', 'review-12-aaaaaaa-3']);
+    expect(b.thread[0].body).toContain('the compare ended without results 3 times on this head');
+    expect(b.thread[0].body).toContain('"spent":12');
   });
 
   it('skips a change to the tasks, graders or lockfile, which both sides must share', () => {

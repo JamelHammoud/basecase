@@ -90,8 +90,20 @@ export const measureComment = (data, table = '') =>
 const FIX =
   'Read the runs the micro-evals comment lists, find what the change made the agent do worse, and change the harness so the tune set passes at least as often as on `main`, at no more than 20% more cost per pass.';
 
-export const outcomeOf = (data) =>
-  data.verdict === 'worse'
+export const MAX_FAILURES = 3;
+
+const retrying = (data) => data.skip === 'failed' && data.failures < MAX_FAILURES;
+
+const RETRY = {
+  verdict: 'busy',
+  description: 'The micro-evals ended without results; they will run again',
+  log: 'the micro-evals compare ended without results; will run again',
+};
+
+export const outcomeOf = (data) => {
+  if (retrying(data)) return RETRY;
+
+  return data.verdict === 'worse'
     ? {
         verdict: 'fail',
         reason: `Micro-evals: ${data.reason}`,
@@ -103,6 +115,7 @@ export const outcomeOf = (data) =>
         },
       }
     : { verdict: 'pass', reason: `Micro-evals: ${data.reason}` };
+};
 
 const money = (value) => `$${value.toFixed(2)}`;
 
@@ -128,23 +141,31 @@ function skipCause({ paths, keys, spent }, deps) {
   return null;
 }
 
-function measured({ pull, sha, keys, paths, spent }, deps) {
+const failedReason = (failures) =>
+  failures < MAX_FAILURES
+    ? 'not measured: the compare ended without results, and it will run again'
+    : `not measured: the compare ended without results ${failures} times on this head`;
+
+function failedRun({ base, spent, failures }) {
+  const tries = failures + 1;
+
+  return {
+    data: { ...base, spent, verdict: 'skipped', skip: 'failed', failures: tries, reason: failedReason(tries) },
+  };
+}
+
+function measured({ pull, sha, keys, paths, spent, failures }, deps) {
   const base = { sha, branch: keys.branch, main: keys.main, spent };
   const cause = skipCause({ paths, keys, spent }, deps);
 
   if (cause) return { data: { ...base, verdict: 'skipped', skip: cause.skip, reason: `not measured: ${cause.text}` } };
 
-  const result = deps.compare({
-    against: keys.mainCommit,
-    budget: deps.budget() - spent,
-    name: `review-${pull.number}-${sha.slice(0, 7)}`,
-  });
-  const after = { ...base, spent: spent + (result?.spent ?? 0) };
+  const name = `review-${pull.number}-${sha.slice(0, 7)}${failures > 0 ? `-${failures + 1}` : ''}`;
+  const result = deps.compare({ against: keys.mainCommit, budget: deps.budget() - spent, name });
 
-  if (!result)
-    return {
-      data: { ...after, verdict: 'skipped', skip: 'empty', reason: 'not measured: the compare ended without results' },
-    };
+  if (!result) return failedRun({ base, spent: spent + deps.spentOn(name), failures });
+
+  const after = { ...base, spent: spent + result.spent };
 
   const decision = pullVerdict(result.stats);
   const data = {
@@ -167,7 +188,10 @@ const reusable = (last, keys) =>
 
 const LASTING_SKIPS = ['shared', 'budget'];
 
-const settled = (data) => data.verdict !== 'skipped' || LASTING_SKIPS.includes(data.skip);
+const settled = (data) =>
+  data.verdict !== 'skipped' || LASTING_SKIPS.includes(data.skip) || (data.skip === 'failed' && !retrying(data));
+
+const failuresOn = (last, sha) => (last?.data.sha === sha && last.data.skip === 'failed' ? last.data.failures : 0);
 
 export function measurePull({ pull, paths, log }, deps) {
   if (!needsMeasure(pull, paths)) return null;
@@ -184,7 +208,7 @@ export function measurePull({ pull, paths, log }, deps) {
   const spent = last?.data.spent ?? 0;
   const { data, table } = reusable(last, keys)
     ? { data: { ...last.data, sha, measuredAt: last.data.measuredAt ?? last.data.sha }, table: tableOf(last.body) }
-    : measured({ pull, sha, keys, paths, spent }, deps);
+    : measured({ pull, sha, keys, paths, spent, failures: failuresOn(last, sha) }, deps);
   const body = measureComment(data, table);
 
   if (last) deps.editComment(last.url, body);

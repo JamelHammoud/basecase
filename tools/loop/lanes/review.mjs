@@ -1,7 +1,7 @@
 import { harnessKey, harnessKeyAt } from '../../../bench/compare/cache.mjs';
 import { runAgent } from '../lib/agent.mjs';
-import { runCompare, SETTINGS, settleEstimate, unlinkRuns } from '../lib/benchRuns.mjs';
-import { claim, claimWithin } from '../lib/claim.mjs';
+import { runCompare, SETTINGS, settleEstimate, spentOn, unlinkRuns } from '../lib/benchRuns.mjs';
+import { claim, claimWithin, held } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
 import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
 import {
@@ -91,6 +91,7 @@ function benchDeps({ dir, onMain, log }) {
     keys: () => ({ branch: harnessKey(dir), main: harnessKeyAt(dir, mainCommit), mainCommit }),
     estimate: (keys) => settleEstimate(keys.main),
     compare: (plan) => runCompare({ dir, log, split: 'tune', port: BENCH_PORT, ...plan }),
+    spentOn,
   };
 }
 
@@ -143,14 +144,20 @@ const changedFiles = (dir) =>
 
 function reviewPull(pull, log) {
   const sha = pull.headRefOid;
-
-  setReview(sha, 'pending', 'Reviewing');
-
   const worktree = openPullHead(pull.number, sha);
 
   try {
-    const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: worktree.dir }).out.slice(0, MAX_DIFF);
     const paths = changedFiles(worktree.dir);
+
+    if (needsMeasure(pull, paths) && held('pull-bench')) {
+      log(`#${pull.number}: the micro-evals bench is busy; reviewing it on a later tick`);
+
+      return false;
+    }
+
+    setReview(sha, 'pending', 'Reviewing');
+
+    const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: worktree.dir }).out.slice(0, MAX_DIFF);
     const copy = copyReport(worktree.dir);
     const onMain = run('git', ['merge', '-q', '--no-edit', 'origin/main'], { cwd: worktree.dir, allowFail: true }).ok;
 
@@ -248,7 +255,7 @@ export default function review({ log }) {
     if (!release) continue;
 
     try {
-      if (!carryOver(pull, log)) reviewPull(pull, log);
+      if (!carryOver(pull, log) && reviewPull(pull, log) === false) continue;
     } catch (error) {
       setReview(pull.headRefOid, 'error', 'The review stopped before it finished; it will run again');
 

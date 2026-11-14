@@ -58,7 +58,7 @@ The Motor Kit is for robots that stand on their own legs. Training runs in the d
 
 ![Stand ready, with its Arena line and Try](/help/train-stand-and-walk-with-the-motor-kit/ready.png)
 
-To stop training, click **Stop training** (■) on the row. [Watch a skill learn while it trains](/help/watch-a-skill-learn) explains the snapshots. **Teach It to Move**, under **Control**, trains **Walk** too. A skill that doesn't pass Arena isn't kept. Its row says how close it came, such as "Refused in Arena: 20 of 32 tries", and offers **Train** again.
+To stop training, click **Stop training** (■) on the row. [Watch a skill learn while it trains](/help/watch-a-skill-learn) explains the snapshots. **Teach It to Move**, under **Control**, trains **Walk** too. A skill that doesn't pass Arena isn't kept. Its row says how close it came, such as "Refused in Arena: 20 of 32 tries", and offers **Train** again. One skill trains at a time: clicking **Train** on another names the one that's training. When training can't start, a message says why.
 
 ## In the browser
 

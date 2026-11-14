@@ -40,7 +40,7 @@ Operate shows "No robot" when the scene has no joint that moves. With more than 
 
 ## "This copy of Basecase can’t run robots"
 
-Your copy of Basecase lacks the robot daemon, the program that drives the emulated servos. Connect can't start without it.
+Your copy of Basecase is missing the part that runs robots, so Connect can't start.
 
 1. Quit Basecase.
 2. Download Basecase again from [Install Basecase](/help/install-basecase), and replace the copy you have.

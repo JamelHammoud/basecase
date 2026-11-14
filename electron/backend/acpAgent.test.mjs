@@ -77,7 +77,7 @@ describe('ACP agent failures', () => {
 
     expect(err.name).toBe('Error');
     expect(String(err)).not.toMatch(/RequestError|Internal error/);
-    expect(err.message).toBe('Claude Code stopped on an error. Try again, or pick another agent in Settings → Agent.');
+    expect(err.message).toBe('Claude Code stopped on an error. Choose another agent in Settings ▸ Agent.');
   });
 
   it('points to the Agent tab when the agent wants a sign-in', async () => {
@@ -92,6 +92,6 @@ describe('ACP agent failures', () => {
     const { agent } = packagedAgent('node scratch/no-such-agent.mjs');
     const err = await rejection(agent.sendPrompt({ text: 'hi', workspaceId: 'main' }));
 
-    expect(err.message).toBe('Agent isn’t connected. Set one up in Settings → Agent.');
+    expect(err.message).toBe('Agent isn’t connected. Set one up in Settings ▸ Agent.');
   }, 30000);
 });

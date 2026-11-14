@@ -5,6 +5,7 @@ import {
   CompareIcon,
   DownloadIcon,
   DuplicateIcon,
+  EditIcon,
   ExpandIcon,
   LibraryIcon,
   PlusIcon,
@@ -139,6 +140,26 @@ function matCommands({ simTraining, tool }: WorkspaceCore): Command[] {
   const idle = realTry.canStart && attempt.phase === 'idle';
 
   return [exportMat, ...(idle ? [tryReal] : [])];
+}
+
+function renameCommands(core: WorkspaceCore): Command[] {
+  const { active, naming } = core.simTraining.cases;
+
+  if (!active || core.caseRun.open) return [];
+
+  return [
+    {
+      id: 'case-rename',
+      group: 'Simulate',
+      label: 'Rename Case',
+      icon: <EditIcon className={ic} />,
+      keywords: 'case name title',
+      run: () => {
+        showCases(core);
+        naming.start(active.id);
+      },
+    },
+  ];
 }
 
 function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
@@ -283,6 +304,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...respawn,
     ...tryIt,
     ...caseRun,
+    ...renameCommands(core),
     ...(cases.active ? compareCommands(core) : []),
     ...exploreCommands(core),
     ...matCommands(core),

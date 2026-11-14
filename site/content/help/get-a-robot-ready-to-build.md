@@ -54,9 +54,9 @@ Clear every problem the Build tab finds, so the design can be printed, bought an
 
 ![An SO-101 arm inside a cloud of dots, with Payload open in Checks reading 1.26 kg at full reach, 1.88 kg close in](/help/get-a-robot-ready-to-build/payload.png)
 
-**Show Build** and **Run Checks** are also in ⌘K.
+**Show Build** and **Run Checks** are also in [[⌘K]].
 
-Settings ▸ Build (⌘, or **Build Settings** in ⌘K) holds the settings for this tab: whether the agent fixes new blockers, the currency prices show in, and whether the build guide updates on its own.
+Settings ▸ Build ([[⌘,]] or **Build Settings** in [[⌘K]]) holds the settings for this tab: whether the agent fixes new blockers, the currency prices show in, and whether the build guide updates on its own.
 
 ![Settings ▸ Build with Checks, Prices and Build guide](/help/get-a-robot-ready-to-build/build-settings.png)
 

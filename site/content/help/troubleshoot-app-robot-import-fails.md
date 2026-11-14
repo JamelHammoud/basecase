@@ -36,7 +36,7 @@ The link isn't one Basecase can read. It takes a GitHub repo or folder, a Huggin
 The repo is private, the link points at a branch or folder that doesn't exist, or GitHub turned the request away. GitHub limits how often a computer can list repos without a sign-in.
 
 1. Open the link in a browser and check it shows the files.
-2. Wait a few minutes, then press Enter in **Import Robot** again.
+2. Wait a few minutes, then press [[↩]] in **Import Robot** again.
 3. If it still fails, download the repo, then click **Choose Folder** and pick it.
 
 ## “Couldn’t find a .urdf or MJCF .xml file in …”

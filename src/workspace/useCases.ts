@@ -15,6 +15,7 @@ import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import type { Setter, ShowToast } from './types';
 import { useCaseBuilder } from './useCaseBuilder';
+import { useCaseNames } from './useCaseNames';
 import type { RoutineSkills } from './routineCheck';
 import { useAddAndTry } from './useAddAndTry';
 import { useCaseTry } from './useCaseTry';
@@ -145,6 +146,7 @@ export function useCases(options: CasesOptions) {
   const timeline = useTryTimeline({ sim, rig, parts, active, partners });
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
+  const naming = useCaseNames(setProject);
   const dataset = useDatasetExport({ sim, rig, parts, active, tries: fromSim, showToast, openAccounts, sceneId });
   const addTries = (records: TryRecord[]) =>
     setProject((p) => ({ ...p, tries: [...(p.tries ?? []), ...tryRefs(records)] }));
@@ -206,6 +208,7 @@ export function useCases(options: CasesOptions) {
     add,
     addAndTry,
     remove,
+    naming,
     removeTry,
     deleteTries: dropTries,
     saveGesture: (gesture: CaseGesture) => active && saveGesture(setProject, { id: active.id, gesture }),

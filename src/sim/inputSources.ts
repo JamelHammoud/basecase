@@ -1,7 +1,9 @@
-import { cameraInputSource } from '../cameras/operator/cameraSource';
+import { cameraInputSource, faceInputSource, handInputSource } from '../cameras/operator/cameraSource';
 import { codeDriveReading } from '../cases/console/codeDrive';
+import { midiInputSource } from '../midi/midiSource';
 import { phoneCommand } from '../phone/phoneDrive';
 import { phoneReading } from '../phone/phoneStore';
+import { voiceInputSource } from '../voice/voiceSource';
 import { commandFromPad, isIdle } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { InputMoment, InputRobot, InputSource } from './inputTypes';
@@ -23,11 +25,11 @@ export const inputSourceIds = () => [...sources.keys()];
 
 export const hasInputSource = (id: string) => sources.has(id);
 
-export async function openInputs(ids: readonly string[], robot: InputRobot): Promise<string | null> {
+export async function openInputs(ids: readonly string[], robot: InputRobot | null): Promise<string | null> {
   const opened: InputSource[] = [];
 
   for (const source of ids.flatMap((id) => sources.get(id) ?? [])) {
-    if (!source.open) continue;
+    if (!source.open || (source.pose && !robot)) continue;
 
     const refusal = await source.open(robot);
 
@@ -58,6 +60,10 @@ function firstPad(): Gamepad | null {
 registerInputSource({ id: 'keys', read: ({ keys }) => keys });
 registerInputSource({ id: 'code', read: codeDriveReading });
 registerInputSource(cameraInputSource);
+registerInputSource(handInputSource);
+registerInputSource(faceInputSource);
+registerInputSource(midiInputSource);
+registerInputSource(voiceInputSource);
 registerInputSource({
   id: 'phone',
   read: ({ cls }) => {

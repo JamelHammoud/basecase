@@ -37,9 +37,9 @@ The new scene opens next to the current one, named Untitled. You can also press 
 ## Rename a scene
 
 1. Double-click the scene's tab.
-2. Type the new name and press Enter.
+2. Type the new name and press [[↩]].
 
-Press Esc to keep the old name. **Rename** is also in the tab's right-click menu, and **Rename Scene** is in [[⌘K]].
+Press [[Esc]] to keep the old name. **Rename** is also in the tab's right-click menu, and **Rename Scene** is in [[⌘K]].
 
 ![The command palette with Rename typed and Rename Scene highlighted](/help/open-rename-and-close-tabs/rename-scene.png)
 

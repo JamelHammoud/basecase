@@ -34,22 +34,22 @@ How to orbit, pan and zoom the 3D view with a trackpad or mouse, and what two-fi
 |---|---|
 | Drag the canvas | Orbit |
 | Right-drag or middle-drag | Pan |
-| Hold Space and drag | Pan |
-| Pinch, or ⌘ and scroll | Zoom |
-| ⇧ and drag on an empty spot | Select the parts inside a box |
+| Hold [[Space]] and drag | Pan |
+| Pinch, or [[⌘]] and scroll | Zoom |
+| [[⇧]] and drag on an empty spot | Select the parts inside a box |
 | Right-click, or two-finger click | Open the menu for what's under the pointer |
 
 ## Scrolling
 
 What a two-finger scroll or mouse wheel does depends on the mode in **Settings** ▸ **Canvas** ▸ **Two-finger scroll**. On Windows, the row is called **Scroll**.
 
-| Mode | Scroll | ⇧ and scroll |
+| Mode | Scroll | [[⇧]] and scroll |
 |---|---|---|
 | **Orbit**, the Mac default | Orbits | Pans |
 | **Pan** | Pans | Pans |
 | **Zoom**, the Windows default | Zooms | Pans |
 
-The same choice is in **View** ▸ **Two-Finger Scroll**, and in ⌘K as **Scroll to Orbit**, **Scroll to Pan** or **Scroll to Zoom**.
+The same choice is in **View** ▸ **Two-Finger Scroll**, and in [[⌘K]] as **Scroll to Orbit**, **Scroll to Pan** or **Scroll to Zoom**.
 
 ## Views
 
@@ -65,4 +65,4 @@ The same choice is in **View** ▸ **Two-Finger Scroll**, and in ⌘K as **Scrol
 
 ## Snapping
 
-Moving snaps to 5 mm and rotating to 15° until you change them in **Settings** ▸ **Canvas** ▸ **Snapping**. Hold ⇧ while you drag to move or rotate freely.
+Moving snaps to 5 mm and rotating to 15° until you change them in **Settings** ▸ **Canvas** ▸ **Snapping**. Hold [[⇧]] while you drag to move or rotate freely.

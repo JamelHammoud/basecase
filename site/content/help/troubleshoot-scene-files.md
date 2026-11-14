@@ -28,7 +28,7 @@ Fixes for a .basecase file that shows “Couldn’t open” when you try to open
 The file isn't a scene Basecase saved, or it was changed after it was saved.
 
 1. Ask the sender to export the scene again with **Export** ▸ **Scene**.
-2. Open the new file with **Open Scene File** in ⌘K.
+2. Open the new file with **Open Scene File** in [[⌘K]].
 
 A file renamed to end in `.basecase` doesn't become a scene. For STL, OBJ and other meshes, [import them](/help/import-a-file) instead.
 
@@ -45,7 +45,7 @@ At least one part in the file is missing its id, its kind or its position. Ask t
 
 ## Double-clicking the file does nothing
 
-Basecase doesn't open `.basecase` files from Finder or File Explorer. Drop the file on the canvas, or use **Open Scene File** in ⌘K.
+Basecase doesn't open `.basecase` files from Finder or File Explorer. Drop the file on the canvas, or use **Open Scene File** in [[⌘K]].
 
 ## “Up to 8 stay open”
 

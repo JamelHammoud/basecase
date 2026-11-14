@@ -58,6 +58,6 @@ To delete a saved price, click it, click **Delete Price**, then **Delete**. The 
 
 ## Show prices in your currency
 
-Press ⌘, (Ctrl+, on Windows), choose **Build** and pick one of 30 currencies in **Currency** under **Prices**. Basecase converts at European Central Bank rates, updated once a day when the app starts. A price you type in your currency reads back exactly as you typed it.
+Press [[⌘,]], choose **Build** and pick one of 30 currencies in **Currency** under **Prices**. Basecase converts at European Central Bank rates, updated once a day when the app starts. A price you type in your currency reads back exactly as you typed it.
 
 Next, [buy the parts for a robot](/help/buy-the-parts-for-a-robot).

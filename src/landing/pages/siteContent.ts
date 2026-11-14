@@ -39,6 +39,7 @@ const text = (value: FrontMatterValue | undefined) => (typeof value === 'string'
 const plainText = (markdown: string) =>
   markdown
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[\[([^[\]]+)\]\]/g, '$1')
     .replace(/[*_`>#]/g, '')
     .replace(/\s+/g, ' ')
     .trim();

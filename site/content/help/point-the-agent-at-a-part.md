@@ -31,7 +31,7 @@ Tell the agent exactly which part, area or message you mean, since it doesn't se
 
 1. Right-click the part on the canvas.
 2. Choose **Quote Part**.
-3. Type what to change, such as “Move this 10 mm forward”, and press Enter.
+3. Type what to change, such as “Move this 10 mm forward”, and press [[↩]].
 
 The quote sends the part's name, id and position along with your message. With the part selected, **Quote Part** is in [[⌘K]] too.
 

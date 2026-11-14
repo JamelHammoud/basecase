@@ -37,7 +37,7 @@ covers:
 
 Save your printer once, so Print mode lays parts out on its real bed and sends sliced plates to it from the desktop app.
 
-1. Press ⌘, (Ctrl+, on Windows) to open Settings, then choose **Printers**.
+1. Press [[⌘,]] to open Settings, then choose **Printers**.
 2. Click **Add Printer**.
 3. Type a name in **Name**.
 4. Pick your printer in **Model**. For a printer that isn't listed, pick **Custom printer** and type its **Build volume** in millimeters.

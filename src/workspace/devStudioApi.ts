@@ -40,6 +40,7 @@ import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { JointDragStep } from './useSkeletonEdit';
 import type { WorldEvent } from '../cases/worldSet';
 import { streamCost } from '../cameras/liveFeed';
+import type { CodeReport } from '../cases/console/codeBridge';
 import { limitExplore } from './useCaseExplore';
 
 type Payload = Record<string, unknown>;
@@ -72,6 +73,8 @@ export interface DevActions {
   passTries: () => void;
   multiplyRuns: (runs: number) => void;
   addCase: (raw: unknown) => string;
+  runCase: (id: string) => void;
+  codeReports: () => Record<string, CodeReport | null>;
   referenceTry: () => Promise<void>;
   sharedLink: () => string | null;
   stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
@@ -241,6 +244,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
       return part ? posedPort(rig, pose, { part, port }) : null;
     },
     triangleCount: (id: string) => (viewportRef.current?.partTriangles(id)?.length ?? 0) / 9,
+    partTriangles: (id: string) => Array.from(viewportRef.current?.partTriangles(id) ?? []),
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),
@@ -277,6 +281,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     passTries: () => devRef.current.passTries(),
     multiplyRuns: (runs: number) => devRef.current.multiplyRuns(runs),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
+    runCase: (id: string) => devRef.current.runCase(id),
+    codeReports: () => devRef.current.codeReports(),
     referenceTry: () => devRef.current.referenceTry(),
     sharedLink: () => devRef.current.sharedLink(),
     stubTrainer: (policy: unknown, snapshots?: unknown[]) => devRef.current.stubTrainer(policy, snapshots),

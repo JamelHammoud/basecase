@@ -88,7 +88,7 @@ describe('world.set from a code panel', () => {
     await vi.waitFor(() =>
       expect(applied).toEqual([{ id: 'ball', pose: { position: [100, 0, 20] }, color: '#ff0000' }]),
     );
-    expect(panel.bridge.errors()).toEqual([
+    expect(panel.bridge.report().refused).toEqual([
       'world refused: table isn’t movable',
       'world refused: link-2 isn’t in the Case’s world',
     ]);
@@ -105,8 +105,8 @@ describe('world.set from a code panel', () => {
       { world },
     );
 
-    await vi.waitFor(() => expect(panel.bridge.errors()).toHaveLength(3));
-    expect(new Set(panel.bridge.errors())).toEqual(new Set(['sent a malformed world message']));
+    await vi.waitFor(() => expect(panel.bridge.report().refused).toHaveLength(3));
+    expect(new Set(panel.bridge.report().refused)).toEqual(new Set(['sent a malformed world message']));
     expect(applied).toEqual([]);
   });
 
@@ -117,10 +117,12 @@ describe('world.set from a code panel', () => {
       { clock },
     );
 
-    await vi.waitFor(() => expect(panel.bridge.errors()).toContain('world refused: more than 60 calls a second'));
+    await vi.waitFor(() =>
+      expect(panel.bridge.report().refused).toContain('world refused: more than 60 calls a second'),
+    );
     await settle();
     expect(panel.log.world).toHaveLength(60);
-    expect(panel.bridge.errors().filter((e) => e.startsWith('world refused'))).toHaveLength(1);
+    expect(panel.bridge.report().refused.filter((e) => e.startsWith('world refused'))).toHaveLength(1);
   });
 });
 
@@ -147,7 +149,7 @@ describe('store from a code panel', () => {
       { best: 12, names: ['ada'] },
     ]);
     await vi.waitFor(() => expect(panel.log.store).toEqual({ best: 12, names: ['ada'] }));
-    expect(panel.bridge.errors()).toEqual(['store refused: the value is over the 64 KB a Case keeps']);
+    expect(panel.bridge.report().refused).toEqual(['store refused: the value is over the 64 KB a Case keeps']);
   });
 
   it('writes the Case at most twice a second, keeping the last value', async () => {
@@ -244,7 +246,7 @@ describe('frames from a code panel', () => {
 
     expect(seen.every((b) => b.width === 640 && b.height === 480 && !b.closed)).toBe(true);
     expect(wrist.pushed.filter((b) => !seen.includes(b)).every((b) => b.closed)).toBe(true);
-    expect(panel.bridge.errors()).toEqual([]);
+    expect(panel.bridge.report()).toMatchObject({ errors: [], refused: [] });
   });
 
   it('asks for 320 × 240 at 10 fps by default, and refuses a missing camera and a fifth stream', async () => {
@@ -258,8 +260,8 @@ describe('frames from a code panel', () => {
       { clock, frames: wrist.source },
     );
 
-    await vi.waitFor(() => expect(panel.bridge.errors()).toHaveLength(2));
-    expect(panel.bridge.errors()).toEqual([
+    await vi.waitFor(() => expect(panel.bridge.report().refused).toHaveLength(2));
+    expect(panel.bridge.report().refused).toEqual([
       'frames refused: front isn’t a camera here',
       'frames refused: holds 4 streams already',
     ]);

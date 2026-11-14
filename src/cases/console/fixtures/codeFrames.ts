@@ -125,14 +125,18 @@ function transferringChannel(): MessageChannel {
 const runIn = (win: Record<string, unknown>, script: string) =>
   (new Function('window', `with (window) {\n${script}\n}`) as (w: Record<string, unknown>) => void)(win);
 
-const scriptsOf = (html: string) => [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+const scriptsOf = (html: string) =>
+  [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => ({
+    code: m[1],
+    line: html.slice(0, m.index).split('\n').length,
+  }));
 
 function fakeWindow(parent: object, globals: Record<string, unknown> = {}) {
   const listeners = new Map<string, Listener[]>();
   const body = new FakeElement('body');
   const win: Record<string, unknown> = {
     parent,
-    console,
+    console: { log: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined },
     setTimeout,
     clearTimeout,
     Promise,
@@ -211,11 +215,11 @@ export function openTestFrame(html: string, o: FrameOptions): TestFrame {
   const run = (script: string) => runIn(frame.win, script);
   const opened = bridge;
 
-  const runPanel = (script: string) => {
+  const runPanel = ({ code, line }: { code: string; line: number }) => {
     try {
-      run(script);
+      run(code);
     } catch (error) {
-      frame.dispatch('error', { message: `Uncaught ${String(error)}`, error });
+      frame.dispatch('error', { message: `Uncaught ${String(error)}`, error, lineno: line });
     }
   };
 

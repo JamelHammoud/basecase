@@ -40,7 +40,9 @@ export interface CaseConsole {
 }
 
 const MAX_PANELS = 24;
-const MAX_CODE_PANELS = 4;
+
+export const MAX_CODE_PANELS = 4;
+
 const OVERLAY_MIN = 40;
 const OVERLAY_MAX = 1600;
 const AREA_MIN = 200;

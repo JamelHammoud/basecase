@@ -85,12 +85,21 @@ export const common = {
     ),
 };
 
+export const edgesSchema = z
+  .object({ kind: z.enum(['fillet', 'chamfer']), mm: z.number().min(0).max(500) })
+  .nullable()
+  .optional()
+  .describe(
+    'Round (fillet) or bevel (chamfer) every edge of a box, cube, cylinder, tube, hex_prism or wedge by mm, kept inside its size and clamped to just under its limit (half the smallest side, half a tube’s wall, a hex_prism’s or wedge’s inradius); get_scene reports the result. mm 0 or null makes the edges sharp again.',
+  );
+
 export const primitiveSchema = z.object({
   id: idSchema,
   shape: z.enum(SHAPES),
   size: vec3.describe('[x, y, z] extents in mm before rotation (z is height)'),
   position: vec3.describe('Center [x, y, z] in mm; z up, floor z = 0'),
   thickness: z.number().positive().max(50).optional(),
+  edges: edgesSchema,
   ...common,
 });
 

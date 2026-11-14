@@ -194,7 +194,7 @@ describe('code panels through the bridge', () => {
     start.dispatch('click');
     await vi.waitFor(() => expect(start.textContent).toBe('try can’t run now'));
     expect(panel.log.fired).toEqual(['try']);
-    expect(panel.bridge.errors()).toEqual(['action refused: try can’t run now']);
+    expect(panel.bridge.report().refused).toEqual(['action refused: try can’t run now']);
   });
 
   it('draws a plot from joint.*.effort, at most 20 times a second', async () => {
@@ -231,7 +231,7 @@ describe('code panels through the bridge', () => {
     );
 
     await vi.waitFor(() =>
-      expect(panel.bridge.errors()).toEqual([
+      expect(panel.bridge.report().refused).toEqual([
         'signals refused: robot.mood must be robot.height or tilt or speed or travelled or x or z',
         'drive refused: the console’s input doesn’t list code',
       ]),
@@ -342,7 +342,7 @@ describe('the bridge’s guards', () => {
     );
 
     await vi.waitFor(() =>
-      expect(panel.bridge.errors()).toEqual([
+      expect(panel.bridge.report().refused).toEqual([
         'sent a malformed drive message',
         'sent a malformed event message',
         'action refused: launch is no action',

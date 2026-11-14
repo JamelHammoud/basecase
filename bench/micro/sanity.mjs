@@ -9,7 +9,11 @@ export async function appFor(studio, scene) {
   await studio.page.evaluate((r) => window.__studio.load(r), scene);
   await new Promise((r) => setTimeout(r, 800));
 
-  return { call: studio.call };
+  return {
+    call: studio.call,
+    page: studio.page,
+    studio: (method, ...rest) => studio.page.evaluate(([m, a]) => window.__studio[m](...a), [method, rest]),
+  };
 }
 
 export async function sanity(task, ctx, saveDir = null) {

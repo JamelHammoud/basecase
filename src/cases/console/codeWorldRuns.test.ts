@@ -139,7 +139,7 @@ describe('code that changes the world, on the sim', () => {
 
     await run.step(12, () => run.engine.command({ v: [0, 0, 0], target: run.objectAt('lit') }));
 
-    expect(run.frame.bridge.errors()).toEqual([]);
+    expect(run.frame.bridge.report()).toMatchObject({ errors: [], refused: [] });
 
     const { recording, passed } = await run.finish();
     const lit = recording.world ?? [];
@@ -214,7 +214,7 @@ describe('code that changes the world, on the sim', () => {
       const run = await openCodeRun(mj, { robot: robot('rover-diff'), kase: walledFlag(), html: ROVER(open) });
 
       await run.step(7);
-      expect(run.frame.bridge.errors()).toEqual([]);
+      expect(run.frame.bridge.report()).toMatchObject({ errors: [], refused: [] });
       outcomes.push(await run.finish());
     }
 
@@ -256,7 +256,7 @@ describe('code that changes the world, on the sim', () => {
 
     expect(recording.world?.length).toBeLessThanOrEqual(60);
     expect(recording.world?.length).toBeGreaterThan(0);
-    expect(run.frame.bridge.errors()).toContain('world refused: more than 60 calls a second');
+    expect(run.frame.bridge.report().refused).toContain('world refused: more than 60 calls a second');
     expect(took).toBeLessThan(1);
   }, 60000);
 
@@ -277,7 +277,7 @@ describe('code that changes the world, on the sim', () => {
     const { recording } = await run.finish();
 
     expect(recording.world).toBeUndefined();
-    expect(run.frame.bridge.errors()).toEqual([
+    expect(run.frame.bridge.report().refused).toEqual([
       'world refused: spot isn’t movable',
       `world refused: ${rover.parts[0].id} isn’t in the Case’s world`,
       'sent a malformed world message',

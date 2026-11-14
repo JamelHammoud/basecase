@@ -114,7 +114,7 @@ describe('code that sees what the robot sees', () => {
     });
 
     expect(sizes).toEqual([{ width: 320, height: 240, fps: 15 }]);
-    expect(run.frame.bridge.errors()).toEqual([]);
+    expect(run.frame.bridge.report()).toMatchObject({ errors: [], refused: [] });
     expect(before).toBeGreaterThan(80);
     expect(offset()).toBeLessThanOrEqual(20);
     await run.finish();

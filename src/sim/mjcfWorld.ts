@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { partMatrix } from '../utils/kinematics';
+import { partEdges } from '../utils/partEdges';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
 import { esc, f, safeId, vec } from './mjcfText';
@@ -32,6 +33,8 @@ const boxSize = ({ dimensions: d }: WorldItem) => vec([d.width / 2000, d.depth /
 
 function primitiveShape(item: WorldItem): string | null {
   const d = item.dimensions;
+
+  if (partEdges(item)) return null;
 
   if (item.kind === 'sphere') return `type="sphere" size="${f(d.width / 2000)}"`;
 

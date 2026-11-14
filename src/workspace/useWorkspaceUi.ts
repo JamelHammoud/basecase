@@ -57,7 +57,13 @@ function usePanelToggles({ studio, tool, caseRun }: WorkspaceCore) {
 
   return {
     toggleLeft: () => setIsLeftOpen((v) => !v),
-    toggleRight: () => setIsRightOpen((v) => !v),
+    toggleRight: () => {
+      if (!caseRun.open || tool.rightTab === 'acp') setIsRightOpen((v) => !v);
+      else {
+        tool.setRightTab('acp');
+        setIsRightOpen(true);
+      }
+    },
     toggleGrid: () => setShowGrid((v) => !v),
     toggleReferenceImages: () => setShowReferenceImages((v) => !v),
     toggleTrackpad: () => setTrackpadMode((m) => NEXT_SCROLL_MODE[m]),

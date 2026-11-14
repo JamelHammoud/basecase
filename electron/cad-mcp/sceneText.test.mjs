@@ -29,7 +29,10 @@ describe('sceneText', () => {
 
     expect(lines[2]).toBe('2 parts:');
     expect(lines[3]).toMatch(/^p0 "Part 0" hardware group="Torso" pos=\[0,0,10\] size=\[3,3,6\] box=/);
-    expect(lines[3]).not.toMatch(/rot=|role=/);
+    expect(lines[3]).not.toMatch(/rot=|role=|edges=/);
+    expect(sceneText({ ...scene(0), parts: [{ ...part(0), edges: { kind: 'fillet', mm: 3 } }] })).toMatch(
+      / size=\[3,3,6\] edges=fillet:3 box=/,
+    );
   });
 
   it('filters by group and ids, and names ids it can’t find', () => {

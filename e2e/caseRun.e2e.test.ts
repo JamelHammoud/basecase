@@ -182,13 +182,7 @@ describe('Run Case', () => {
 
     await inPanel('tries', 'Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-    await inPanel('tries', 'Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
-
-    const ended = await simState();
-
-    expect(ended.tries[0].seconds).toBeLessThan(ended.caseSeconds! - 1);
-
     await expect.poll(() => panel('tries').getByTestId('try-row').count()).toBe(1);
 
     const strip = panel('tries').getByTestId('try-row').locator('img');

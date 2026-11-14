@@ -34,7 +34,7 @@ covers:
   - docs/guide/parts-catalog.md
 ---
 
-What you can do with a part depends on its kind: whether you can resize it, whether it's printed or bought, and how other parts fasten to it.
+A part's kind decides whether you can resize it, whether it's printed or bought, and how other parts fasten to it.
 
 ## Kinds of parts
 
@@ -49,13 +49,13 @@ Every part in a scene is one of these kinds:
 | Imported mesh | Import, including STEP and IGES bodies | Yes |
 | Robot link | Import Robot or **Parts** ▸ **Robots** | No |
 
-Shapes, agent parts and imported meshes are printed until you change their material under **Appearance**. If one of them is flat, you can have it [cut from sheet](/help/cut-a-flat-part-from-sheet) instead.
+Shapes, agent parts and imported meshes are printed unless you change their material under **Appearance**. If one of them is flat, you can have it [cut from sheet](/help/cut-a-flat-part-from-sheet) instead.
 
 Components keep the maker's exact size, so you can't resize them. To change the size of hardware, use its **Size** and **Length** choices.
 
 ## Real components are never estimates
 
-Every component in **Parts** is a real product with exact geometry. Its mesh comes from the maker's CAD file, or from the maker's drawing if there's no CAD file. We ship a third-party file only after measuring it against the maker's drawing to about 0.1 mm.
+Every component in **Parts** is a real product with exact geometry. Its mesh comes from the maker's CAD file, or from the maker's drawing when there's no CAD file. We only ship a third-party file after measuring it against the maker's drawing to within about 0.1 mm.
 
 To see where a component came from, select it and look at the **Product** section in the Inspector. It shows:
 
@@ -65,25 +65,25 @@ To see where a component came from, select it and look at the **Product** sectio
 - Where the 3D model came from
 - Links to buy the part
 
-If the agent finds a part that isn't in the catalog, the part appears under **Added by Agent** with its link and source.
+If the agent finds a part that isn't in the catalog, it appears under **Added by Agent** with its link and source.
 
-Estimated stand-ins, such as a generic servo or bracket, never appear in **Parts**. The agent can use them to block out a design, and Checks list each one as a placeholder you need to replace.
+Estimated stand-ins, like a generic servo or bracket, never appear in **Parts**. The agent can use them to block out a design, but Checks list each one as a placeholder you need to replace.
 
 ## Assemblies
 
-A robot is an assembly. Screws, inserts and nuts hold its parts together, and joints sit where parts move. Groups only organize parts and don't hold anything together.
+A robot is an assembly. Screws, inserts and nuts hold its parts together, and joints sit wherever parts move. Groups only organize parts and don't hold anything together.
 
-Checks read the assembly as it's modeled and make sure that:
+Checks read the assembly as it's modeled and confirm that:
 
 - Every part is attached.
 - Every screw grips something.
 - There's an order in which everything goes together.
 
-For a list of every check, see [Build tab checks](/help/build-checks).
+For the full list of checks, see [Build tab checks](/help/build-checks).
 
 ## Mounting ports
 
-Every component has mounting ports: named holes, bores, bosses, faces and outputs, each with a position and a direction. Both come from the maker's mesh, and tests check each port against it.
+Every component has mounting ports. A port is a named hole, bore, boss, face or output, with a position and a direction. Both come from the maker's mesh, and tests check every port against that mesh.
 
 For example, the Feetech STS3215 servo has:
 
@@ -91,9 +91,9 @@ For example, the Feetech STS3215 servo has:
 - An idler horn on the underside, with the same hole pattern
 - Four M2 holes on the top of the case and four on the bottom
 
-Bus servos, servo adapters, batteries and regulators have connector ports too, where a cable plugs in. Each connector port has a type, such as 5264 or XT60. Connectors never mate, but the bill of materials uses them to count cables.
+Bus servos, servo adapters, batteries and regulators also have connector ports, where a cable plugs in. Each connector port has a type, such as 5264 or XT60. Connectors never mate, but the bill of materials uses them to count cables.
 
-Hardware has ports as well, and parts the agent models declare their own ports in their code.
+Hardware has ports too, and parts the agent models declare their own ports in their code.
 
 ### How the agent uses ports
 
@@ -105,14 +105,15 @@ The agent places parts by their ports. It mates a port on one part to a port on 
 - Press fit
 - Sliding
 
-The agent keeps each mate and applies it again whenever it moves or remodels either part. Dragging a mated part by hand releases the mate.
+The agent keeps track of each mate and applies it again whenever it moves or remodels either part. If you drag a mated part by hand, the mate is released.
 
-When the agent joins two parts with a screw, it picks a stock length based on what the screw passes through. It adds the washer, insert or nut, and cuts the holes in any parts it modeled.
+When the agent joins two parts with a screw, it picks a stock length based on what the screw passes through. It also adds the washer, insert or nut, and cuts the holes in any parts it modeled.
 
 ### How Checks use ports
 
-Checks read ports to find problems:
+Checks read ports to find these problems:
 
-- A screw that threads into a component more than 1 mm from every hole is a blocker.
+- A screw that threads into a component more than 1 mm away from every hole is a blocker.
 - A screw that goes deeper than its hole is a blocker.
-- Servo alignment reads each servo's output to make sure it sits on its joint's axis.
+
+Servo alignment also reads each servo's output to make sure it sits on its joint's axis.

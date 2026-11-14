@@ -55,7 +55,7 @@ covers:
   - electron/cadImport/convertPolicy.mjs
 ---
 
-Import brings files from other apps into your scene. One command opens every kind of file Basecase reads, and what you get depends on the kind of file you pick.
+Use Import to bring files from other apps into your scene. The one command opens every file type Basecase reads, and each type comes in its own way.
 
 1. Right-click an empty spot on the canvas.
 2. Choose **Import**.
@@ -63,7 +63,9 @@ Import brings files from other apps into your scene. One command opens every kin
 
 ![The canvas menu with Import](/help/import-a-file/menu.png)
 
-Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. New parts appear where you right-clicked and are selected, so you can move them.
+You can also choose **File** ▸ **Import**, or press [[⌘K]].
+
+Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. New parts appear where you right-clicked, and they're selected so you can move them.
 
 If you pick an SVG, the Import SVG panel opens with your drawing loaded. Set the width and thickness, then click **Add** to extrude the drawing into a part.
 
@@ -77,7 +79,7 @@ Other files come in like this:
 - A `.basecase` file opens in a new tab.
 - A `.mcap` recording, or a zip that holds a LeRobot dataset, comes in as tries on the robot in the scene. See [Import robot data as tries](/help/import-robot-data-as-tries).
 
-You can also choose **File** ▸ **Import**, or press [[⌘K]]. To import files at a specific spot, drop them on the canvas. If you drop a `.mid` file, it plays in a Case's tries instead. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
+To import files at a specific spot, drop them on the canvas. If you drop a `.mid` file, it plays in a Case's tries instead. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
 ## Units and axes
 
@@ -91,19 +93,22 @@ Basecase reads each format with these units and up axis:
 | DAE | Meters | As set in the file |
 | FBX | Centimeters, times the file's unit scale | As set in the file |
 
-If a model measures less than 1 mm across, Basecase reads it as meters instead.
-
-Basecase never simplifies a mesh, so your print keeps every triangle.
+If a model measures less than 1 mm across, Basecase reads it as meters instead. Basecase never simplifies a mesh, so your print keeps every triangle in the file.
 
 **Note:** FBX textures don't come in with the model.
 
 ## STEP and IGES files
 
-You can open STEP and IGES files in the desktop app. Each body in the file becomes its own part, named from the file's product names and colored with the body's main face color. If the file has more than one body, the parts come in as a group named after the file.
+You can open STEP and IGES files in the desktop app. Each body in the file becomes its own part. Basecase names each part from the file's product names and colors it with the body's main face color. If the file has more than one body, the parts come in as a group named after the file.
 
 Basecase converts the file in a sandbox, separate from the rest of the app. It reads the units from the file, so every body comes in at its real size in millimeters.
 
-An imported body counts as a printed part, like any other imported mesh. To mark a body as bought, select it. Then under **Appearance**, change the material from **Printed PLA / PETG** to **Off-the-shelf**. Checks lists the body among parts without a source until you give it one. A flat body can be **Cut from sheet** instead. See [Cut a flat part from sheet](/help/cut-a-flat-part-from-sheet).
+An imported body counts as a printed part, like any other imported mesh. To mark a body as bought:
+
+1. Select the body.
+2. Under **Appearance**, change the material from **Printed PLA / PETG** to **Off-the-shelf**.
+
+Checks lists the body among parts without a source until you give it one. A flat body can be **Cut from sheet** instead. See [Cut a flat part from sheet](/help/cut-a-flat-part-from-sheet).
 
 STEP and IGES files have these limits:
 

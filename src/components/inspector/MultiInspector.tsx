@@ -217,7 +217,7 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
             onChange={(e) => e.target.value && e.target.value !== SHEET_VALUE && onUpdateMany(madeWith(e.target.value))}
             options={[
               ...(materials.size > 1 ? [{ value: '', label: 'Mixed' }] : []),
-              ...materialOptions(materials.has(SHEET_VALUE)),
+              ...materialOptions(materials.size === 1 && materials.has(SHEET_VALUE)),
             ]}
           />
         )}

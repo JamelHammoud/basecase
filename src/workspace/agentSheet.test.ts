@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Viewport3DHandle } from '../components/Viewport3D';
-import { snapshotScene } from '../agent/agentScene';
+import { applySpec, snapshotScene } from '../agent/agentScene';
 import { solidPart } from '../sheet/sheet.fixtures';
 import { sheetUpdate } from './agentSheet';
 
@@ -42,6 +42,16 @@ describe('agent sheet updates', () => {
     const { patch } = await sheetUpdate({ ...plate, mechanicalTag: 'CNC Aluminum' }, { sheet: null }, viewportWith(3));
 
     expect(patch).toEqual({ sheet: undefined, mechanicalTag: undefined });
+  });
+
+  it('prints a sheet part again when the agent sets a print material', () => {
+    const next = applySpec(
+      { ...plate, sheet: { material: 'aluminum', thicknessMm: 3.18 } },
+      { id: plate.id, material: 'pla' },
+    );
+
+    expect(next.sheet).toBeUndefined();
+    expect(next.printMaterial).toBe('PLA');
   });
 
   it('reports the sheet in get_scene instead of a material', () => {

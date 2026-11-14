@@ -70,7 +70,7 @@ export function useExportActions(core: WorkspaceCore) {
       return;
     }
 
-    const files = await printing.plates.write(spec);
+    const { files } = await printing.plates.write(spec);
     const single = spec.files.length === 1;
 
     for (const file of spec.files) {

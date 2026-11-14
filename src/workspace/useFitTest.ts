@@ -8,7 +8,7 @@ import { snapshotShapes } from '../three/analysis/sceneShapes';
 import type { Viewport3DHandle } from '../three/viewport/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { printReportOf } from '../utils/printReport';
-import type { PlateFiles } from './usePlateWriter';
+import type { PlateFiles, WrittenPlates } from './usePlateWriter';
 
 interface FitTestOptions {
   parts: ScenePart[];
@@ -74,7 +74,9 @@ export function useFitTest({ parts, project, printer, viewport }: FitTestOptions
     available: canFitTest(parts),
     start,
     leave: () => setCut(null),
-    threeMf: (plates: PlateFiles): Promise<Record<string, Uint8Array>> =>
-      cut ? couponThreeMf(cut, plates) : Promise.resolve({}),
+    threeMf: async (plates: PlateFiles): Promise<WrittenPlates> => ({
+      files: cut ? await couponThreeMf(cut, plates) : {},
+      labels: '',
+    }),
   };
 }

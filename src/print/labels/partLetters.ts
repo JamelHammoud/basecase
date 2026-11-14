@@ -22,6 +22,24 @@ export function partLetters(plan: Pick<GuidePlan, 'items'>, parts: ScenePart[]):
   );
 }
 
+export interface LettersToWrite {
+  letters?: Record<string, string>;
+  key: string;
+}
+
+export async function lettersToWrite(options: {
+  project: ProjectSettings;
+  parts: ScenePart[];
+  guidePlan: () => Promise<Pick<GuidePlan, 'items'> | null>;
+  key: string;
+}): Promise<LettersToWrite> {
+  if (!labelsOn(options.project)) return { key: '' };
+
+  const plan = await options.guidePlan().catch(() => null);
+
+  return plan ? { letters: partLetters(plan, options.parts), key: options.key } : { key: '' };
+}
+
 export function unlabeledNote(letter: string, reason: Unlabeled['reason']): string {
   return reason === 'mesh'
     ? `Letter ${letter} left off: its mesh has open edges`

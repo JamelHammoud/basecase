@@ -1,4 +1,4 @@
-import { manifoldCsg } from '../../booleans/manifoldCsg';
+import { manifoldRun } from '../../booleans/manifoldCsg';
 import type { Placed } from '../../three/analysis/collide';
 import type { MeshData } from '../threeMf';
 import { canWrite } from './labelFont';
@@ -34,12 +34,16 @@ export async function labelPart(
 
   if (!pick) return 'face';
 
-  const cut = await manifoldCsg('subtract', [
+  const cut = await manifoldRun('subtract', [
     { positions: mesh.vertices, indices: mesh.indices },
     ...labelSolids(pick.face, pick.spot, target.text),
   ]);
 
-  return cut ? { vertices: cut.positions, indices: cut.indices } : 'mesh';
+  if ('mesh' in cut) return { vertices: cut.mesh.positions, indices: cut.mesh.indices };
+
+  if (cut.failed === 'operand' && cut.index === 0) return 'mesh';
+
+  throw new Error('Couldn’t cut the guide letters. Turn off Label parts to print without them.');
 }
 
 export async function labelMeshes(

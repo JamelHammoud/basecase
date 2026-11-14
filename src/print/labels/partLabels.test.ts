@@ -11,7 +11,7 @@ import { printReportOf, shapeKey } from '../../utils/printReport';
 import { jobSpec } from '../job';
 import { quadrupedFixture } from '../merge/merge.fixtures';
 import { fixtureMesh, labelFixture } from './label.fixtures';
-import { labelsKey, partLetters, unlabeledNote } from './partLetters';
+import { labelsKey, lettersToWrite, partLetters, unlabeledNote } from './partLetters';
 
 const printer = resolvePrinter('bambu-lab-p1s', []);
 
@@ -109,6 +109,17 @@ describe('letters on printed parts', () => {
     expect(labelsKey(on, parts, 'guide-1')).toBe(labelsKey(on, labelFixture(), 'guide-1'));
     expect(labelsKey(on, parts, 'guide-1')).not.toBe(labelsKey(on, parts, 'guide-2'));
     expect(labelsKey(on, parts, 'guide-1')).not.toBe(labelsKey(on, offTray, 'guide-1'));
+  });
+
+  it('keys plates written without the guide plan as unlabeled, so a later lettered slice is never stale', async () => {
+    const plan = buildGuidePlan(approximateScene('Bot', parts, []), 'PLA');
+    const write = (guidePlan: () => Promise<typeof plan | null>, project = DEFAULT_PROJECT) =>
+      lettersToWrite({ project, parts, guidePlan, key: 'guide-1' });
+
+    expect(await write(async () => null)).toEqual({ key: '' });
+    expect(await write(() => Promise.reject(new Error('stopped')))).toEqual({ key: '' });
+    expect(await write(async () => plan, { ...DEFAULT_PROJECT, labelParts: false })).toEqual({ key: '' });
+    expect(await write(async () => plan)).toEqual({ letters: lettersOf(parts), key: 'guide-1' });
   });
 
   it('writes the same faces and letters for the same scene', async () => {

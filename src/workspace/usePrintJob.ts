@@ -9,7 +9,7 @@ import type { PrintMaterial, ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { PrintReport } from '../utils/printReport';
 import type { ShowToast } from './types';
-import type { PlateFiles } from './usePlateWriter';
+import type { PlateFiles, WrittenPlates } from './usePlateWriter';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
 
@@ -19,7 +19,7 @@ interface PrintJobOptions {
   report: PrintReport | null;
   printer: PrinterSetup;
   project: ProjectSettings;
-  write: (plates: PlateFiles) => Promise<Record<string, Uint8Array>>;
+  write: (plates: PlateFiles) => Promise<WrittenPlates>;
   labels: string;
   showToast: ShowToast;
 }
@@ -34,7 +34,7 @@ async function buildPayload(options: PrintJobOptions, material?: PrintMaterial):
   if (!spec.printer)
     throw new Error(`${printer.label} has no slicer profile. Export the 3MF and set it up in your slicer.`);
 
-  const files = await options.write(spec);
+  const { files, labels } = await options.write(spec);
 
   return {
     jobId,
@@ -42,7 +42,7 @@ async function buildPayload(options: PrintJobOptions, material?: PrintMaterial):
     infillPct: project.infillPct,
     printer: spec.printer,
     material,
-    labels: options.labels,
+    labels,
     groups: spec.groups.map((g) => ({ ...g, bytes: files[g.material] })),
   };
 }

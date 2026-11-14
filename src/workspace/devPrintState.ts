@@ -19,7 +19,7 @@ export function printDevActions(core: WorkspaceCore) {
     }),
     plateFiles: async (): Promise<Record<string, Uint8Array>> =>
       printing.report
-        ? printing.plates.write(jobSpec(printing.report.plan, printing.printer, docs.projectRef.current))
+        ? (await printing.plates.write(jobSpec(printing.report.plan, printing.printer, docs.projectRef.current))).files
         : {},
     labelNotes: () => printing.plates.notes,
     markPlatePrinted: (number: number) => {

@@ -82,7 +82,7 @@ function jointPartsRows(ctx: CheckContext): CheckRow[] {
     {
       check: 'Joint parts',
       status: 'fail',
-      detail: `Joints name parts that don't exist: ${[...new Set(unknownIds)].join(', ')}`,
+      detail: `Joints name parts that don’t exist: ${[...new Set(unknownIds)].join(', ')}`,
     },
   ];
 }

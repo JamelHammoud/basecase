@@ -58,7 +58,7 @@ function failureLine(runs: CaseRuns): string {
 
 export function runCaseText(kase: Pick<Case, 'name'>, runs: CaseRuns, cached: boolean): string {
   if (runs.refusal) {
-    const why = runs.misfit ? "can't enter it" : "can't run it";
+    const why = runs.misfit ? 'can’t enter it' : 'can’t run it';
 
     return `Case ${kase.name}: the robot ${why}. ${runs.refusal} Change the design so it does, then run_case again.`;
   }

@@ -68,7 +68,7 @@ export function loadFigure(kind: FigureKind): Promise<THREE.BufferGeometry> {
   if (existing) return existing;
 
   const load = fetch(figureUrl(kind)).then(async (res) => {
-    if (!res.ok) throw new Error(`Couldn't load the ${kind} figure (${res.status}).`);
+    if (!res.ok) throw new Error(`Couldn’t load the ${kind} figure (${res.status}).`);
 
     return parseFigure(await res.arrayBuffer(), kind);
   });

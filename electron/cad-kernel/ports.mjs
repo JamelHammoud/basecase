@@ -49,7 +49,7 @@ export function portsFromLogs(logs) {
     seen.add(m[1]);
 
     const args = parseEchoArgs(m[1]);
-    const port = args ? portFrom(args) : { error: `couldn't read ${line.slice(6, 120)}` };
+    const port = args ? portFrom(args) : { error: `couldn’t read ${line.slice(6, 120)}` };
 
     if (port.error) problems.push(port.error);
     else ports.push(port);

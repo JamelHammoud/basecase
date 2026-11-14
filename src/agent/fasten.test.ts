@@ -198,7 +198,7 @@ describe('fasten through existing holes', () => {
     if (typeof plan === 'string') throw new Error(plan);
 
     expect(plan.recode.map((r) => r.id)).toEqual(['post']);
-    expect(plan.text).toContain("through board's own mounting hole");
+    expect(plan.text).toContain('through board’s own mounting hole');
   });
 
   it('names a catalog part with no hole instead of crashing', () => {
@@ -267,6 +267,6 @@ describe('mate', () => {
       type: 'face',
     });
 
-    expect(plan).toBe("bus-in is a connector; connectors don't mate.");
+    expect(plan).toBe('bus-in is a connector; connectors don’t mate.');
   });
 });

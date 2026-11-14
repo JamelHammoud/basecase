@@ -92,7 +92,7 @@ export function weekStats({ pulls, comments, commits, runs, steps = [], openStep
     openSteps,
     mergeHours: hoursToMerge(merged),
     lanes,
-    harness: measuredPulls(merged, comments, owner),
+    measured: measuredPulls(merged, comments, owner),
     lastLanes: previous?.lanes ?? null,
     worst: worstChange(lanes, previous?.lanes ?? null),
   };
@@ -178,10 +178,10 @@ export function parseDigest(body) {
   }
 }
 
-export const harnessSection = (harness) =>
-  harness.length > 0
+export const measuredSection = (measured) =>
+  measured.length > 0
     ? [
-        `Harness pull requests, measured on the micro-evals:\n\n${harness.map((p) => `- #${p.number} ${p.title}: ${p.delta}`).join('\n')}`,
+        `Pull requests measured on the micro-evals:\n\n${measured.map((p) => `- #${p.number} ${p.title}: ${p.delta}`).join('\n')}`,
       ]
     : [];
 
@@ -189,7 +189,7 @@ export const digestBody = (stats) =>
   [
     digestTable(stats),
     laneTable(stats.lanes, stats.lastLanes),
-    ...harnessSection(stats.harness ?? []),
+    ...measuredSection(stats.measured ?? []),
     ...(stats.lastLanes ? [worstLine(stats.worst)] : []),
     digestJson(stats),
   ].join('\n\n');

@@ -131,7 +131,7 @@ describe('weekStats', () => {
   });
 
   it('lists the merged pull requests the review measured on the micro-evals, with their delta, and not the skipped', () => {
-    expect(stats.harness).toEqual([
+    expect(stats.measured).toEqual([
       { number: 2, title: 'Pull 2', delta: 'no worse: +3 points (95% interval −2 to +8), cost per pass +5%' },
     ]);
     expect(digestBody(stats)).toContain('- #2 Pull 2: no worse: +3 points (95% interval −2 to +8), cost per pass +5%');

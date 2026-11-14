@@ -3,7 +3,7 @@ import { runAgent } from '../lib/agent.mjs';
 import { runCompare, SETTINGS, settleEstimate, unlinkRuns } from '../lib/benchRuns.mjs';
 import { claim, claimWithin } from '../lib/claim.mjs';
 import { copyReport, copyReviewNote } from '../lib/copy.mjs';
-import { fetchAll, ownFiles, ownPatchId, resolveSha } from '../lib/branches.mjs';
+import { fetchAll, ownPatchId, resolveSha } from '../lib/branches.mjs';
 import {
   closePull,
   commentOnPull,
@@ -138,7 +138,10 @@ function measureOnce({ pull, paths, log, worktree, onMain }) {
   }
 }
 
-function reviewPull(pull, { paths, log }) {
+const changedFiles = (dir) =>
+  git(dir, ['diff', '--name-only', '--no-renames', '-z', 'origin/main...HEAD']).split('\0').filter(Boolean);
+
+function reviewPull(pull, log) {
   const sha = pull.headRefOid;
 
   setReview(sha, 'pending', 'Reviewing');
@@ -147,6 +150,7 @@ function reviewPull(pull, { paths, log }) {
 
   try {
     const diff = run('git', ['diff', 'origin/main...HEAD'], { cwd: worktree.dir }).out.slice(0, MAX_DIFF);
+    const paths = changedFiles(worktree.dir);
     const copy = copyReport(worktree.dir);
     const onMain = run('git', ['merge', '-q', '--no-edit', 'origin/main'], { cwd: worktree.dir, allowFail: true }).ok;
 
@@ -239,13 +243,12 @@ export default function review({ log }) {
     .sort((a, b) => Number(pullCheck(b) === 'success') - Number(pullCheck(a) === 'success') || byRank(a, b));
 
   for (const pull of waiting) {
-    const paths = ownFiles(pull.headRefOid);
     const release = claim(`review-${pull.number}`);
 
     if (!release) continue;
 
     try {
-      if (!carryOver(pull, log)) reviewPull(pull, { paths, log });
+      if (!carryOver(pull, log)) reviewPull(pull, log);
     } catch (error) {
       setReview(pull.headRefOid, 'error', 'The review stopped before it finished; it will run again');
 

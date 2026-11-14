@@ -28,8 +28,3 @@ export function ownPatchId(sha) {
 }
 
 export const resolveSha = (short) => git(['rev-parse', '--verify', '--quiet', `${short}^{commit}`]).out.trim() || null;
-
-export const ownFiles = (sha) =>
-  git(['diff', '--name-only', '--no-renames', '-z', `origin/main...${sha}`])
-    .out.split('\0')
-    .filter(Boolean);

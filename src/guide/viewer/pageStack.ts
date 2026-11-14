@@ -1,4 +1,5 @@
 import type { GuidePages } from './guidePages';
+import { READY_MARK_CSS } from './readyMarks';
 
 export const PAGE_W_PX = (210 / 25.4) * 96;
 export const PAGE_H_PX = (297 / 25.4) * 96;
@@ -14,6 +15,7 @@ const VIEWER_CSS = `
   font-variant-numeric: tabular-nums;
 }
 .zoom > .page { margin: 0 !important; box-shadow: none !important; }
+${READY_MARK_CSS}
 `;
 
 const DECODE_WAIT_MS = 350;

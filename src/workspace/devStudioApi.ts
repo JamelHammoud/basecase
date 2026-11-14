@@ -16,13 +16,18 @@ import { degrees } from '../robot/robotGhost';
 import { phoneSnapshot } from '../phone/phoneStore';
 import { inputEvents } from '../sim/inputEvents';
 import {
+  feedOperatorFace,
+  feedOperatorHand,
   feedOperatorPose,
+  type FaceSample,
+  type HandSample,
   operatorCameraSnapshot,
   operatorFeeding,
   operatorLatency,
   operatorTrackState,
 } from '../cameras/operator/operatorCamera';
 import type { PoseSample } from '../cameras/operator/poseFollow';
+import { feedVoice } from '../voice/voiceSession';
 import { robotLinkState, startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
@@ -66,9 +71,12 @@ export interface DevActions {
   buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
+  driveWith: (inputs: string[]) => Promise<boolean>;
   worldAt: () => Record<string, number[]>;
   tryWorld: () => Promise<WorldEvent[]>;
   printPlates: () => unknown;
+  markPlatePrinted: (plate: number) => void;
+  readySteps: () => boolean[];
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   printState: () => unknown;
@@ -192,6 +200,12 @@ async function rangeClashes(parts: ScenePart[], project: ProjectSettings, viewpo
   return hits.flatMap((list, i) => list.map((hit) => ({ ...hit, joint: turning[i].id })));
 }
 
+function lastDownloadFile() {
+  const file = lastDownload();
+
+  return file && { name: file.name, base64: bytesToBase64(file.bytes) };
+}
+
 function operatorCameraState() {
   const { open, label, estimator, error } = operatorCameraSnapshot();
   const track = operatorTrackState();
@@ -216,11 +230,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     checkDots: () => viewportRef.current?.checkDotCount() ?? 0,
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(partsRef.current),
-    lastDownload: () => {
-      const file = lastDownload();
-
-      return file && { name: file.name, base64: bytesToBase64(file.bytes) };
-    },
+    lastDownload: () => lastDownloadFile(),
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],
     projectPoints: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     meshByColor: () => meshByColor(partsRef.current),
@@ -273,9 +283,13 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     shownParts: () => viewportRef.current?.shownPartIds() ?? [],
     simState: () => devRef.current.simState(),
     drive: (command: DriveCommand) => devRef.current.drive(command),
+    driveWith: (inputs: string[]) => devRef.current.driveWith(inputs),
+    feedVoice: (samples: number[], sampleRate: number) => feedVoice(samples, sampleRate),
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),
     printPlates: () => devRef.current.printPlates(),
+    markPlatePrinted: (plate: number) => devRef.current.markPlatePrinted(plate),
+    readySteps: () => devRef.current.readySteps(),
     bomLines: () =>
       buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
         ({ key, qty }) => ({ key, qty }),
@@ -298,6 +312,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     robotCalibration: async () => (await robotLinkState())?.calibration ?? null,
     phone: () => phoneSnapshot(),
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
+    feedHand: (samples: HandSample[], fps?: number) => feedOperatorHand(samples, fps),
+    feedFace: (samples: FaceSample[], fps?: number) => feedOperatorFace(samples, fps),
     inputEvents: () => inputEvents().map(({ name, value }) => ({ name, value })),
     operatorCamera: () => operatorCameraState(),
     cameraStreams: () => ({ ...streamCost }),

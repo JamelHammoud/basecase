@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { DATASETS, HUB_ENDPOINT } from './hubClient.mjs';
+import { HUB_ENDPOINT, repoRoot } from './hubClient.mjs';
 
 const NAME = /^(?!.*(?:--|\.\.))[A-Za-z0-9](?:[A-Za-z0-9._-]{0,94}[A-Za-z0-9])?$/;
 const SEGMENT = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/;
@@ -165,8 +165,8 @@ function commitLines({ entries, modes, lfs, stale }) {
   ];
 }
 
-export function repoUrl(endpoint, repo) {
-  return `${new URL(endpoint ?? HUB_ENDPOINT).origin}${DATASETS}/${repo}`;
+export function repoUrl(endpoint, repo, kind = 'dataset') {
+  return `${new URL(endpoint ?? HUB_ENDPOINT).origin}${repoRoot(kind)}/${repo}`;
 }
 
 export async function publishRepo(client, { namespace, name, files }) {
@@ -188,5 +188,5 @@ export async function publishRepo(client, { namespace, name, files }) {
 
   if (version) await client.retag(repo, version);
 
-  return { repo, url: repoUrl(client.origin, repo) };
+  return { repo, url: repoUrl(client.origin, repo, client.kind) };
 }

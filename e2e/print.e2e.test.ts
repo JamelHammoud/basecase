@@ -215,3 +215,107 @@ describe('a Prusa printer', () => {
     expect(app.errors).toEqual([]);
   });
 });
+
+const ROBOT = [
+  printed('base', [0, 300, 0], { width: 140, height: 120, depth: 140 }),
+  printed('front-leg', [0, 220, 0], { width: 150, height: 40, depth: 150 }),
+  printed('back-leg', [0, 180, 0], { width: 150, height: 40, depth: 150 }),
+];
+
+const FOUND = [
+  { name: 'Voron A', host: '127.0.0.1:7125', kind: 'moonraker', modelId: 'prusa-core-one' },
+  { name: 'Voron B', host: '127.0.0.1:7126', kind: 'moonraker', modelId: 'prusa-mk4s' },
+];
+
+interface BuildStudio extends Studio {
+  markPlatePrinted: (plate: number) => void;
+  readySteps: () => boolean[];
+}
+
+interface Send {
+  plate: number;
+  printerId: string;
+}
+
+const sends: Send[] = [];
+
+const readySteps = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: BuildStudio }).__studio.readySteps());
+
+async function stubPrinters() {
+  await app.page.route('**/api/bridge/print-save-printers', (route) =>
+    route.fulfill({ json: (route.request().postDataJSON() as { arg: unknown }).arg }),
+  );
+  await app.page.route('**/api/bridge/print-discover', (route) => route.fulfill({ json: FOUND }));
+  await app.page.route('**/api/bridge/print-printer-status', (route) => route.fulfill({ json: { state: 'idle' } }));
+  await app.page.route('**/api/bridge/print-slice', (route) =>
+    route.fulfill({ json: { slicer: { name: 'OrcaSlicer', version: null }, slicedAt: '', plates: [] } }),
+  );
+  await app.page.route('**/api/bridge/print-send', (route) => {
+    sends.push((route.request().postDataJSON() as { arg: Send }).arg);
+
+    return route.fulfill({ json: { started: true, message: 'Started' } });
+  });
+}
+
+async function addFoundPrinters() {
+  await app.page.keyboard.press('Meta+,');
+
+  const settings = app.page.getByRole('dialog', { name: 'Settings' });
+
+  await settings.getByRole('navigation').getByRole('button', { name: 'Printers' }).click();
+  await settings.getByRole('button', { name: 'Find on Network' }).click();
+  await expect.poll(() => settings.getByRole('button', { name: 'Add', exact: true }).count()).toBe(FOUND.length);
+
+  for (const found of FOUND) {
+    const before = await settings.getByText(found.name, { exact: true }).count();
+
+    await settings.getByRole('button', { name: 'Add', exact: true }).nth(FOUND.indexOf(found)).click();
+    await expect.poll(() => settings.getByText(found.name, { exact: true }).count()).toBe(before + 1);
+  }
+
+  await app.page.keyboard.press('Escape');
+  await expect.poll(() => settings.count()).toBe(0);
+}
+
+describe('printing in build order on every printer', () => {
+  it('puts the base on plate 1 and gives two idle printers different plates with Start Next', async () => {
+    await stubPrinters();
+    await app.page.evaluate((parts) => {
+      const studio = (window as unknown as { __studio: Studio }).__studio;
+
+      studio.load({ parts, project: studio.sceneRecord().project });
+    }, ROBOT);
+    await expect.poll(() => partCount(app.page)).toBe(ROBOT.length);
+    await addFoundPrinters();
+
+    await app.page
+      .locator('main')
+      .first()
+      .click({ position: { x: 20, y: 20 } });
+    await app.page.keyboard.press('Meta+p');
+    await expect
+      .poll(async () => (await printPlates()).plates, { timeout: 30000 })
+      .toEqual([['base'], ['front-leg'], ['back-leg']]);
+
+    for (const [i, found] of FOUND.entries()) {
+      await app.page
+        .locator(visible('[data-printer]'), { hasText: found.name })
+        .getByRole('button', { name: 'Start Next' })
+        .click();
+      await app.page.getByRole('button', { name: 'Start Print' }).click();
+      await expect.poll(() => sends.length).toBe(i + 1);
+    }
+
+    expect(sends.map((s) => s.plate)).toEqual([1, 2]);
+    expect(new Set(sends.map((s) => s.printerId)).size).toBe(2);
+    expect(await readySteps()).not.toContain(true);
+
+    await app.page.evaluate(() => (window as unknown as { __studio: BuildStudio }).__studio.markPlatePrinted(1));
+    await expect.poll(async () => (await readySteps())[0]).toBe(true);
+    expect((await readySteps()).slice(1)).not.toContain(true);
+
+    await app.page.keyboard.press('Escape');
+    expect(app.errors).toEqual([]);
+  }, 120000);
+});

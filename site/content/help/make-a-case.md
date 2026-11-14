@@ -18,6 +18,8 @@ related:
 covers:
   - src/components/cases/CasesPanel.tsx
   - src/components/cases/NewCaseCard.tsx
+  - src/components/cases/CaseRow.tsx
+  - src/workspace/useCaseNames.ts
   - src/cases/caseBuilder.ts
   - src/cases/caseGoals.ts
   - src/cases/caseWorlds.ts
@@ -50,17 +52,21 @@ The scene must have a robot with joints. [Cases](/help/cases) explains what a Ca
 
 The Case opens in the **Simulate** tab, and its world appears on the canvas. Next, [try the Case](/help/try-a-case).
 
-**New Case** is also in [[⌘K]], and [[↩]] makes the Case from the **Name** field. To start from a ready-made Case instead, click one under **Examples**.
+**New Case** is also in [[⌘K]]. **Make Case** has the focus when the card opens, so [[↩]] makes the Case until you click a field.
 
 ## Describe a Case in words
 
 **Ask the Agent**, under **New Case**, puts `/case` in the agent's box. Write the goal after it, such as "push the box to the wall in under 10 seconds", and send it. The agent builds the Case through the same builder and opens it. **Ask the Agent** is in the desktop app only.
 
-You can also tell the agent what you want to do with a robot, such as "drive this rover with a gamepad while I watch its front camera". It imports the robot you name when the scene has none. It makes a Case with the input and camera panels you asked for, and opens it running, as in [Run a Case](/help/run-a-case). Inputs are keys, a gamepad, a phone and the computer's camera. When you name another, such as MIDI, the agent says so and uses keys. A movement you name, such as a wave, becomes a gesture the Case reacts to at the camera. When it isn't built in, the agent asks you to teach it, as in [Teach a robot a gesture](/help/teach-a-robot-a-gesture). A control the panels don't have, such as a joystick or a piano, the agent draws as a code panel. While the Case runs, ask for a change in the **Agent** tab, and the agent rewrites that panel in place. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
+You can also tell the agent what you want to do with a robot, such as "drive this rover with a gamepad while I watch its front camera". It imports the robot you name when the scene has none. It makes a Case with the input and camera panels you asked for, and opens it running, as in [Run a Case](/help/run-a-case). Inputs are keys, a gamepad, a phone, the computer's camera, your hand or face, MIDI and voice. When you name another, such as a leader arm, the agent says so and uses keys. A movement you name, such as a wave, becomes a gesture the Case reacts to at the camera. When it isn't built in, the agent asks you to teach it, as in [Teach a robot a gesture](/help/teach-a-robot-a-gesture). A control the panels don't have, such as a joystick or a piano, the agent draws as a code panel. While the Case runs, ask for a change in the **Agent** tab, and the agent rewrites that panel in place. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
 
-## Name or delete a Case
+## Rename or delete a Case
 
-The **Name** field sets the name before you click **Make Case**. To delete a Case, right-click it in the **Cases** tab and choose **Delete**. Its tries go with it, so Basecase asks first.
+A new Case is named after its goal and world, such as Touch the Dots. To rename it, right-click it in the **Cases** tab and choose **Rename**. Type the name and press [[↩]], or press [[Esc]] to keep the old one. **Rename Case** in [[⌘K]] renames the open Case the same way.
+
+![A Case named Touch Three Dots in its rename field in the Cases tab](/help/make-a-case/rename.png)
+
+To delete a Case, right-click it and choose **Delete**. Its tries go with it, so Basecase asks first.
 
 The open Case's menu also has **Compare With**, which runs it on another open scene's robot. See [Compare two robots on a Case](/help/compare-two-robots-on-a-case). A wheeled or legged robot's Case also has **Export Case Mat**, which saves it as a floor mat to print; see [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 

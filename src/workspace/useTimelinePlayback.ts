@@ -6,9 +6,29 @@ interface PlaybackOptions {
   seek: (frame: number) => void;
 }
 
+export type LoopRange = [number, number];
+
+export const PLAYBACK_SPEEDS = [0.25, 0.5, 1, 2, 4] as const;
+
+export function playedFrame(from: number, steps: number, end: { last: number; loop: LoopRange | null }): number {
+  const { last, loop } = end;
+
+  if (!loop) return Math.min(last, from + steps);
+
+  const [a, b] = loop;
+  const start = from < a || from > b ? a : from;
+
+  return a + ((start - a + steps) % (b - a + 1));
+}
+
+export const loopOf = (from: number, to: number): LoopRange | null =>
+  Math.round(from) === Math.round(to) ? null : [Math.round(Math.min(from, to)), Math.round(Math.max(from, to))];
+
 export function useTimelinePlayback({ frames, dt, seek }: PlaybackOptions) {
   const [frame, setFrame] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [loop, setLoop] = useState<LoopRange | null>(null);
   const last = Math.max(frames - 1, 0);
 
   const jump = (to: number, count = frames) => {
@@ -19,16 +39,20 @@ export function useTimelinePlayback({ frames, dt, seek }: PlaybackOptions) {
   };
 
   const advance = useEffectEvent((from: number, seconds: number) => {
-    const next = Math.min(last, from + Math.floor(seconds / dt));
+    const next = playedFrame(from, Math.floor((seconds * speed) / dt), { last, loop });
 
     if (next !== frame) jump(next);
 
-    if (next >= last) setPlaying(false);
+    if (!loop && next >= last) setPlaying(false);
 
-    return next < last;
+    return !!loop || next < last;
   });
 
-  const startFrame = useEffectEvent(() => (frame >= last ? 0 : frame));
+  const startFrame = useEffectEvent(() => {
+    if (loop) return frame;
+
+    return frame >= last ? 0 : frame;
+  });
 
   useEffect(() => {
     if (!playing) return;
@@ -44,11 +68,19 @@ export function useTimelinePlayback({ frames, dt, seek }: PlaybackOptions) {
     raf = requestAnimationFrame(tick);
 
     return () => cancelAnimationFrame(raf);
-  }, [playing]);
+  }, [playing, speed, loop]);
+
+  const faster = (by: number) => {
+    const at = PLAYBACK_SPEEDS.indexOf(speed as (typeof PLAYBACK_SPEEDS)[number]);
+
+    setSpeed(PLAYBACK_SPEEDS[Math.max(0, Math.min(PLAYBACK_SPEEDS.length - 1, at + by))]);
+  };
 
   return {
     frame: Math.min(frame, last),
     playing,
+    speed,
+    loop,
     jump: (to: number, count = frames) => {
       setPlaying(false);
       jump(to, count);
@@ -58,6 +90,11 @@ export function useTimelinePlayback({ frames, dt, seek }: PlaybackOptions) {
       jump(frame + by);
     },
     toggle: () => setPlaying((p) => !p && frames > 1),
-    stop: () => setPlaying(false),
+    stop: () => {
+      setPlaying(false);
+      setLoop(null);
+    },
+    faster,
+    setLoop: (from: number, to: number) => setLoop(loopOf(from, to)),
   };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ConsoleSignal } from './format';
-import { createSignalBus, type SignalSample } from './signalBus';
+import { createSignalBus, type SignalSample, type SignalTrack, type SignalValue } from './signalBus';
 
 const sample = (time: number, over: Partial<SignalSample> = {}): SignalSample => ({
   time,
@@ -92,5 +92,46 @@ describe('the signal bus', () => {
     expect(heard).toBe(6);
     expect(bus.series('joint.elbow.position').t).toEqual([3]);
     expect(bus.read('binned')).toBe(0);
+  });
+});
+
+describe('the signal bus playing a recording', () => {
+  const frames = 5;
+  const track: SignalTrack = {
+    frames,
+    dt: 0.5,
+    time: (frame) => frame * 0.5,
+    frameAt: (time) => Math.round(time / 0.5),
+    values: (frame) =>
+      new Map<string, SignalValue>([
+        ['time', frame * 0.5],
+        ['joint.elbow.position', frame * 10],
+      ]),
+    series: () => ({ t: [0, 0.5, 1, 1.5, 2], v: [0, 10, 20, 30, 40] }),
+    column: () => Float64Array.from([0, 10, 20, 30, 40]),
+  };
+
+  it('reads the recording at the playhead in place of the live samples, then goes back to live', () => {
+    const bus = createSignalBus();
+
+    bus.push(sample(1));
+    bus.play(track);
+    bus.seek(3);
+
+    expect(bus.playhead()?.frame).toBe(3);
+    expect(bus.read('joint.elbow.position')).toBe(30);
+    expect(bus.read('time')).toBe(1.5);
+    expect(bus.series('joint.elbow.position').t).toHaveLength(frames);
+    expect(bus.expand('joint.*.position')).toEqual(['joint.elbow.position']);
+
+    bus.push(sample(2, { joints: [{ id: 'elbow', target: 0, position: 99, effort: 0 }] }));
+    bus.seek(99);
+    expect(bus.read('joint.elbow.position')).toBe(40);
+
+    bus.play(null);
+
+    expect(bus.playhead()).toBeNull();
+    expect(bus.read('joint.elbow.position')).toBe(28);
+    expect(bus.series('joint.elbow.position').t).toEqual([1]);
   });
 });

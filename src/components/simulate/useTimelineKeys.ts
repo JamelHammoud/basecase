@@ -13,6 +13,8 @@ const KEYS: Record<string, KeyAction> = {
   Home: (t) => t.seek(0),
   End: (t) => t.seek(t.frames - 1),
   ' ': (t) => t.toggle(),
+  '[': (t) => t.faster(-1),
+  ']': (t) => t.faster(1),
   Escape: (t) => t.close(),
 };
 

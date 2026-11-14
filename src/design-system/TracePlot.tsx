@@ -26,6 +26,8 @@ export interface TracePlotProps {
   limit?: number;
   markers?: number[];
   onSeek?: (sample: number) => void;
+  loop?: [number, number] | null;
+  onLoop?: (from: number, to: number) => void;
   fromZero?: boolean;
   units?: { x: string; y: string };
 }
@@ -83,28 +85,72 @@ function plotRanges(traces: Trace[], { limit, fromZero }: Pick<TracePlotProps, '
   };
 }
 
-function seekHandlers(count: number, onSeek: TracePlotProps['onSeek']) {
+const looping = new WeakMap<Element, number>();
+
+function seekHandlers(count: number, { onSeek, onLoop }: Pick<TracePlotProps, 'onSeek' | 'onLoop'>) {
   if (!onSeek || count < 1) return {};
 
-  const seek = (e: React.PointerEvent<HTMLDivElement>) => {
+  const sampleOf = (e: React.PointerEvent<HTMLDivElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
 
-    onSeek(sampleAt((e.clientX - box.left) / Math.max(box.width, 1), count));
+    return sampleAt((e.clientX - box.left) / Math.max(box.width, 1), count);
+  };
+
+  const follow = (e: React.PointerEvent<HTMLDivElement>) => {
+    const from = looping.get(e.currentTarget);
+
+    if (from === undefined || !onLoop) onSeek(sampleOf(e));
+    else onLoop(from, sampleOf(e));
   };
 
   return {
     onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
       e.currentTarget.setPointerCapture?.(e.pointerId);
-      seek(e);
+
+      if (e.shiftKey && onLoop) looping.set(e.currentTarget, sampleOf(e));
+      else looping.delete(e.currentTarget);
+
+      follow(e);
     },
     onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.currentTarget.hasPointerCapture?.(e.pointerId)) seek(e);
+      if (e.currentTarget.hasPointerCapture?.(e.pointerId)) follow(e);
     },
   };
 }
 
+const LoopShade: React.FC<{ loop?: [number, number] | null; x: (sample: number) => number; height: number }> = ({
+  loop,
+  x,
+  height,
+}) =>
+  loop ? (
+    <rect
+      data-testid="trace-loop"
+      x={x(loop[0])}
+      y={0}
+      width={Math.max(x(loop[1]) - x(loop[0]), 1)}
+      height={height}
+      fill="rgba(13, 153, 255, 0.16)"
+    />
+  ) : null;
+
+const PlayheadLine: React.FC<{ playhead?: number; x: (sample: number) => number; height: number }> = ({
+  playhead,
+  x,
+  height,
+}) =>
+  playhead === undefined ? null : (
+    <path
+      data-testid="trace-playhead"
+      d={`M${x(playhead).toFixed(1)} 0V${height}`}
+      stroke="rgba(255, 255, 255, 0.85)"
+      strokeWidth={1}
+      {...line}
+    />
+  );
+
 export const TracePlot: React.FC<TracePlotProps> = (props) => {
-  const { traces, height = 96, loading = false, className = '', playhead, limit, markers = [], onSeek, units } = props;
+  const { traces, height = 96, loading = false, className = '', playhead, limit, markers = [], units } = props;
   const box = { width: WIDTH, height, inset: INSET };
   const ranges = plotRanges(traces, props);
   const range = ranges.y;
@@ -118,9 +164,10 @@ export const TracePlot: React.FC<TracePlotProps> = (props) => {
       className={`relative w-full rounded-lg bg-[#262626] overflow-hidden ${loading ? 'shimmer' : ''} ${className}`}
       style={{ height }}
       data-loading={loading || undefined}
-      {...seekHandlers(count, onSeek)}
+      {...seekHandlers(count, props)}
     >
       <svg className="block w-full h-full" viewBox={`0 0 ${WIDTH} ${height}`} preserveAspectRatio="none" aria-hidden>
+        {shown && <LoopShade loop={props.loop} x={x} height={height} />}
         {shown && <LimitLine y={limit === undefined ? undefined : valueY(limit, range, box)} />}
         {paths.map((p) => (
           <path
@@ -145,15 +192,7 @@ export const TracePlot: React.FC<TracePlotProps> = (props) => {
               {...line}
             />
           ))}
-        {shown && playhead !== undefined && (
-          <path
-            data-testid="trace-playhead"
-            d={`M${x(playhead).toFixed(1)} 0V${height}`}
-            stroke="rgba(255, 255, 255, 0.85)"
-            strokeWidth={1}
-            {...line}
-          />
-        )}
+        {shown && <PlayheadLine playhead={playhead} x={x} height={height} />}
       </svg>
       {shown && <AxisLabels units={units} x={ranges.x} y={range} />}
     </div>

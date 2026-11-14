@@ -19,6 +19,7 @@ import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { SceneDocument } from './useSceneDocument';
 import { errorMessage } from '../utils/errorMessage';
+import { useLatestRef } from '../utils/useLatestRef';
 
 type Payload = Record<string, unknown>;
 
@@ -68,6 +69,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
   const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole, commitSkeleton } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
+  const liveRef = useLatestRef({ cases: simTraining.cases, sim: simTraining.sim, rig: posing.rig });
 
   const poseTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
     runPoseTool(kind, payload, {
@@ -172,6 +174,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     caseCompare: core.caseCompare,
     caseExplore: core.caseExplore,
     caseRun: core.caseRun,
+    live: () => liveRef.current,
     skills: core.simTraining.skills,
   });
 

@@ -5,7 +5,7 @@ import { cameraViews } from '../../cameras/views';
 import { ARC_CONSOLES } from '../../cases/console/fixtures/arcConsoles';
 import type { CaseConsole } from '../../cases/console/format';
 import { consoleLayout, DEFAULT_CONSOLE } from '../../cases/console/layout';
-import { createSignalBus } from '../../cases/console/signalBus';
+import { createSignalBus, type SignalTrack, type SignalValue } from '../../cases/console/signalBus';
 import { parseCase, touchTheDots } from '../../cases/testing';
 import { box } from '../../sim/fixtures/parts';
 import { fixtureRobots } from '../../sim/fixtures/robots';
@@ -62,6 +62,7 @@ function context(caseConsole: CaseConsole): PanelContext {
     joints: arm.joints,
     fire: () => undefined,
     can: () => true,
+    seek: null,
     studio: {
       cases: {
         active: kase,
@@ -90,8 +91,11 @@ function context(caseConsole: CaseConsole): PanelContext {
   };
 }
 
-function render(caseConsole: CaseConsole) {
+function render(caseConsole: CaseConsole, prepare: (ctx: PanelContext) => void = () => undefined) {
   const ctx = context(caseConsole);
+
+  prepare(ctx);
+
   const layout = consoleLayout(caseConsole, { desktop: true, studio: true });
   const html = (side: 'before' | 'after') =>
     layout[side]
@@ -199,3 +203,59 @@ describe('a running Case renders code panels', () => {
 function views() {
   return cameraViews(arm.parts, []);
 }
+
+const FRAMES = 200;
+
+const driveStraight: SignalTrack = {
+  frames: FRAMES,
+  dt: 0.02,
+  time: (n) => n * 0.02,
+  frameAt: (t) => Math.round(t / 0.02),
+  values: (n) =>
+    new Map<string, SignalValue>([
+      ['time', n * 0.02],
+      ['robot.speed', 0.3],
+      ['robot.x', n * 5],
+      ['robot.z', -n * 2],
+      ...arm.joints.map((j, i): [string, number] => [`joint.${j.id}.position`, n + i]),
+    ]),
+  series: (id) => {
+    const column = driveStraight.column(id);
+
+    return column ? { t: Array.from(column, (_, n) => n * 0.02), v: Array.from(column) } : { t: [], v: [] };
+  },
+  column: (id) => {
+    const values = Array.from({ length: FRAMES }, (_, n) => driveStraight.values(n).get(id));
+
+    return values.every((v) => typeof v === 'number') ? Float64Array.from(values as number[]) : null;
+  },
+};
+
+describe('a running Case plays a recorded try through its console', () => {
+  const consoleNamed = (name: string) =>
+    parseCase({
+      ...JSON.parse(JSON.stringify(kase)),
+      console: runnable(ARC_CONSOLES.find((c) => c.name === name)!.console),
+    }).console!;
+  const playing = (ctx: PanelContext) => {
+    ctx.bus.play(driveStraight);
+    ctx.bus.seek(FRAMES / 2);
+  };
+
+  it('draws a plot over the whole try with a playhead, not the last seconds', () => {
+    const { after } = render(consoleNamed('G1 arm teleop'), playing);
+
+    expect(after).toContain('data-playhead="2.00"');
+    expect(after).toContain(`data-lines="${arm.joints.length}"`);
+    expect(after.match(/data-testid="trace-playhead"/g)).toHaveLength(1);
+  });
+
+  it('draws the rover’s full path on the map with the robot at the playhead, and the value there', () => {
+    const { after } = render(consoleNamed('Rover'), playing);
+    const robot = /<circle cx="([\d.]+)"[^>]*data-testid="map-robot"/.exec(after);
+
+    expect(after).toContain(`data-points="${FRAMES}"`);
+    expect(Number(robot?.[1])).toBeCloseTo(120.46, 1);
+    expect(after).toMatch(/data-signal="robot.speed">0.3/);
+  });
+});

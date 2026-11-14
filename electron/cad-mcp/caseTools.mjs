@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { bridge, fail, imageReply, text } from './shared.mjs';
+import { VIEW, bridge, fail, imageReply, text } from './shared.mjs';
 import { worldObject } from './worldTools.mjs';
 
 const mm = (what) => z.number().finite().optional().describe(what);
@@ -120,6 +120,47 @@ export const runCase = {
       const res = await bridge('run_case', args, 300000);
 
       return res?.ok === false ? text(res) : imageReply(res, 'The Case ran.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+const seconds = (what) => z.number().min(0).max(600).optional().describe(what);
+
+export const readTry = {
+  name: 'read_try',
+  config: {
+    title: 'Read a try',
+    description:
+      'Reads one recorded try of a Case: what the robot did, from the recording the timeline plays, so you can answer questions about a run with times and values. ' +
+      'Opens the try on the timeline (and its Case, when another is open), samples the console signals over a time window, lists the contract’s failure labels with the time each first fired, and captures the canvas at one time. ' +
+      'Signals take the names console panels take, with * for one name part: joint.<id>.target/position/effort (joint.*.position), robot.height/tilt/speed/travelled/x/z (tilt in degrees), probe.<name>, input.<source>.<axis>, goal.passed/margin, and the Case’s own. ' +
+      'At most 200 rows and 32 signals come back; a longer window samples more coarsely. ' +
+      'Returns { ok, try: { id, case, passed, margin, seconds }, window: { from, to, every }, samples: { time: [...], <signal>: [...] }, failures: [{ label, time }], capture, unknown?, left_out? } with the picture at capture seconds, ' +
+      'or { ok: false, problem } when the try isn’t found (it lists the open Case’s tries), ran on the real robot, or its recording no longer fits the robot.',
+    inputSchema: {
+      id: z.string().min(1).max(120).optional().describe('The try’s id; the open Case’s newest try when left out'),
+      from: seconds('Window start in seconds; 0 when left out'),
+      to: seconds('Window end in seconds; the try’s end when left out'),
+      signals: z
+        .array(z.string().min(1).max(120))
+        .min(1)
+        .max(32)
+        .optional()
+        .describe(
+          'Signal names or patterns, e.g. ["robot.tilt", "joint.*.position"]; robot.* and goal.* when left out',
+        ),
+      every: z.number().min(0.02).max(60).optional().describe('Seconds between samples; about 50 rows when left out'),
+      at: seconds('When to capture the canvas; the first failure, else the window’s end, when left out'),
+      view: VIEW.optional().describe('The capture’s view; iso when left out'),
+    },
+  },
+  handler: async (args) => {
+    try {
+      const res = await bridge('read_try', args, 120000);
+
+      return res?.ok === false ? text(res) : imageReply(res, 'The try was read.');
     } catch (err) {
       return fail(err);
     }

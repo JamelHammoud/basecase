@@ -28,8 +28,32 @@ function rangeOf(values: number[]): Range {
 
 const finite = (values: number[]) => values.filter((v) => Number.isFinite(v));
 
+const extents = new WeakMap<ArrayLike<number>, number[]>();
+
+function finiteExtent(values: ArrayLike<number>): number[] {
+  const held = extents.get(values);
+
+  if (held && held[2] === values.length) return held.slice(0, 2);
+
+  let low = Infinity;
+  let high = -Infinity;
+
+  for (let i = 0; i < values.length; i++) {
+    if (!Number.isFinite(values[i])) continue;
+
+    low = Math.min(low, values[i]);
+    high = Math.max(high, values[i]);
+  }
+
+  const found = low <= high ? [low, high] : [];
+
+  extents.set(values, [...(found.length ? found : [Number.NaN, Number.NaN]), values.length]);
+
+  return found;
+}
+
 export const traceRange = (traces: Trace[], extra: number[] = []): Range =>
-  rangeOf(finite([...traces.flatMap((t) => Array.from(t.values)), ...extra]));
+  rangeOf(finite([...traces.flatMap((t) => finiteExtent(t.values)), ...extra]));
 
 export const hasX = (traces: Trace[]) => traces.some((t) => t.x);
 
@@ -76,7 +100,24 @@ function samplePoints(values: ArrayLike<number>, columns: number): Array<[number
   ).flat();
 }
 
+const drawn = new WeakMap<ArrayLike<number>, Map<string, string>>();
+
 function pathOf(values: ArrayLike<number>, range: Range, box: TraceBox): string {
+  const key = `${values.length}:${range.join(',')}:${box.width}:${box.height}:${box.inset}`;
+  const held = drawn.get(values) ?? new Map<string, string>();
+  const known = held.get(key);
+
+  if (known !== undefined) return known;
+
+  const d = drawPath(values, range, box);
+
+  held.set(key, d);
+  drawn.set(values, held);
+
+  return d;
+}
+
+function drawPath(values: ArrayLike<number>, range: Range, box: TraceBox): string {
   const parts: string[] = [];
   let pen = 'M';
 

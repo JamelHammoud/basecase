@@ -47,6 +47,7 @@ import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
 import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
 import { CASE_HANDLERS } from './agentCaseRequests';
+import type { LiveScene } from './agentReadTry';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore } from './useCaseExplore';
 import type { CaseRun } from './useCaseRun';
@@ -91,6 +92,7 @@ export interface RequestContext {
   caseCompare: CaseCompare;
   caseExplore: CaseExplore;
   caseRun: CaseRun;
+  live: () => LiveScene;
   skills: SceneSkills;
   mergeParts: (ids: string[]) => Promise<string | null>;
 }

@@ -59,6 +59,15 @@ function useSimGone(opened: Opened | null, sim: Simulation, drop: () => void) {
   }, [gone]);
 }
 
+const shownOf = (opened: Opened | null) => ({
+  open: !!opened,
+  record: opened?.record ?? null,
+  recording: opened?.recording ?? null,
+  efforts: opened?.efforts ?? null,
+  dt: opened?.recording.dt ?? 0,
+  trips: opened?.trips ?? [],
+});
+
 export function useTryTimeline(options: TimelineOptions) {
   const { sim } = options;
   const [opened, setOpened] = useState<Opened | null>(null);
@@ -111,20 +120,20 @@ export function useTryTimeline(options: TimelineOptions) {
   });
 
   return {
-    open: !!opened,
-    record: opened?.record ?? null,
-    recording: opened?.recording ?? null,
+    ...shownOf(opened),
     frames,
-    dt: opened?.recording.dt ?? 0,
     lanes,
-    trips: opened?.trips ?? [],
     frame: playback.frame,
     playing: playback.playing,
+    speed: playback.speed,
+    loop: playback.loop,
     show,
     close,
     seek: (frame: number) => playback.jump(frame),
     step: playback.step,
     toggle: playback.toggle,
+    faster: playback.faster,
+    setLoop: playback.setLoop,
   };
 }
 

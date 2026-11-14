@@ -11,6 +11,7 @@ import { designLabel, designServos, EXPLORE_RUNS, sameDesign } from '../cases/ex
 import { sortRows } from '../cases/exploreSort';
 import type { Case } from '../cases/schema';
 import { caseNamed, runCase, type RunCaseContext } from './agentCaseRun';
+import { readTry, type LiveScene } from './agentReadTry';
 import type { Cases } from './useCases';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore, Exploration } from './useCaseExplore';
@@ -25,6 +26,7 @@ interface CaseContext extends RunCaseContext {
   caseExplore: Pick<CaseExplore, 'explore'>;
   caseRun: Pick<CaseRun, 'enterCase'>;
   routines: { checkLogic: (logic: unknown) => Promise<CompileResult> };
+  live: () => LiveScene;
 }
 
 const VALUE_KEYS: Array<[string, ParamKey]> = [
@@ -241,6 +243,7 @@ async function exploreCaseRequest(payload: Payload, ctx: CaseContext) {
 export const CASE_HANDLERS: Record<string, (payload: Payload, ctx: CaseContext) => Promise<unknown>> = {
   create_case: createCase,
   run_case: runCase,
+  read_try: readTry,
   compare_case: compareCaseRequest,
   explore_case: exploreCaseRequest,
 };

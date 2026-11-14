@@ -54,7 +54,7 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
-6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train from Tries joins them once five pass.
+6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train from Tries joins them once five pass. Click the play button on a try to play it through the panels, as in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 

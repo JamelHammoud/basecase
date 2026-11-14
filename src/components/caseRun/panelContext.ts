@@ -27,6 +27,7 @@ export interface PanelContext {
   joints: RobotJoint[];
   fire: (action: CaseAction) => void;
   can: (action: CaseAction) => boolean;
+  seek: ((frame: number) => void) | null;
   studio: StudioPanelContext | null;
 }
 
@@ -35,7 +36,21 @@ export interface PanelViewProps<K extends PanelKind> {
   ctx: PanelContext;
 }
 
-export const useBus = (bus: SignalBus) => useSyncExternalStore(bus.subscribe, bus.version, bus.version);
+export type BusReading = Pick<SignalBus, 'read' | 'series' | 'expand' | 'playhead'> & { version: number };
+
+const readingAt = (bus: SignalBus, version: number): BusReading => ({
+  version,
+  read: (id) => bus.read(id),
+  series: (id) => bus.series(id),
+  expand: (pattern) => bus.expand(pattern),
+  playhead: () => bus.playhead(),
+});
+
+export function useBus(bus: SignalBus): BusReading {
+  const version = useSyncExternalStore(bus.subscribe, bus.version, bus.version);
+
+  return readingAt(bus, version);
+}
 
 const busKeys = new WeakMap<SignalBus, number>();
 let busCount = 0;

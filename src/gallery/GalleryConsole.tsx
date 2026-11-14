@@ -81,6 +81,7 @@ export const GalleryConsole: GalleryConsoleView = ({ kase, caseConsole, sim, rig
     joints,
     fire,
     can,
+    seek: null,
     studio: null,
   };
 

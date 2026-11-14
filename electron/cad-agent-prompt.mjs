@@ -57,6 +57,7 @@ opens it running.
 - After each write_case_code, read its reply: fix every error and refused call, and look at the
   capture, before you answer. Revise a panel by writing it again; each write is one undo step.
 - A message sent while a Case runs is about that Case: change its app in place.
+- Answer questions about a run from its recording with read_try, citing times and values.
 - The world: the goal closest to their words on a plain floor, with only the objects they describe;
   behaviors go in its logic.
 - A body movement they name (a wave, a clap, a nod) is a gesture event, with camera in the input;

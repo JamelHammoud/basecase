@@ -16,7 +16,14 @@ import { fixtureRoom } from '../cases/roomFixture';
 import { readRoomPlan, type Room } from '../cases/roomPlan';
 import { roomTargets } from '../cases/roomTargets';
 
-const scene = { parts: () => [], project: () => ({}) as ProjectSettings, viewport: () => null };
+const scene = {
+  parts: () => [],
+  project: () => ({}) as ProjectSettings,
+  viewport: () => null,
+  live: (): never => {
+    throw new Error('Only read_try reads the live scene.');
+  },
+};
 
 const robotOf = (id: string) => {
   const r = fixtureRobots().find((f) => f.id === id)!;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
+import { Button, CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../../design-system';
+import { PLAYBACK_SPEEDS } from '../../workspace/useTimelinePlayback';
 import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
 import type { TryTimeline as Timeline } from '../../workspace/useTryTimeline';
 import { runClock } from '../../utils/duration';
@@ -36,7 +37,9 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
             name={prettyJointName(rig.byId.get(lane.jointId)?.name ?? lane.jointId)}
             frame={frame}
             markers={markers}
+            loop={timeline.loop}
             onSeek={timeline.seek}
+            onLoop={timeline.setLoop}
             onSelect={() => onSelectParts(linkParts(rig, lane.jointId))}
           />
         ))}
@@ -58,6 +61,17 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
           format={() => runClock((frames - 1) * dt)}
           onChange={(v) => timeline.seek(v)}
         />
+        <Button
+          variant="ghost"
+          size="xs"
+          className="tabular"
+          title="Speed"
+          shortcut="]"
+          data-testid="timeline-speed"
+          onClick={() => timeline.faster(timeline.speed === PLAYBACK_SPEEDS.at(-1) ? -PLAYBACK_SPEEDS.length : 1)}
+        >
+          {timeline.speed}×
+        </Button>
         <IconButton
           icon={<CloseIcon className={ic} />}
           title="Close"

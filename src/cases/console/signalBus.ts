@@ -21,12 +21,30 @@ export interface Series {
   v: number[];
 }
 
+export interface SignalTrack {
+  frames: number;
+  dt: number;
+  time: (frame: number) => number;
+  frameAt: (time: number) => number;
+  values: (frame: number) => Map<string, SignalValue>;
+  series: (id: string) => Series;
+  column: (id: string) => Float64Array | null;
+}
+
+export interface Playhead {
+  track: SignalTrack;
+  frame: number;
+}
+
 export interface SignalBus {
   push: (sample: SignalSample) => void;
   read: (id: string) => SignalValue | undefined;
   series: (id: string) => Series;
   expand: (pattern: string) => string[];
   reset: () => void;
+  play: (track: SignalTrack | null) => void;
+  seek: (frame: number) => void;
+  playhead: () => Playhead | null;
   subscribe: (listen: () => void) => () => void;
   version: () => number;
 }
@@ -41,7 +59,7 @@ const AXES: Record<InputAxis, (c: DriveCommand) => number> = {
   grip: (c) => c.aux?.[1] ?? 0,
 };
 
-function baseValues(s: SignalSample): Map<string, SignalValue> {
+export function baseValues(s: SignalSample): Map<string, SignalValue> {
   const out = new Map<string, SignalValue>([['time', s.time]]);
 
   for (const j of s.joints) {
@@ -117,15 +135,43 @@ function withCaseValues(
   return base;
 }
 
+export interface CaseClock {
+  next: (base: Map<string, SignalValue>, time: number, running: boolean) => Map<string, SignalValue>;
+  idle: (base: Map<string, SignalValue>) => Map<string, SignalValue>;
+  clear: () => void;
+}
+
+export function caseClock(defs: readonly ConsoleSignal[]): CaseClock {
+  let clock = fresh();
+
+  return {
+    next(base, time, running) {
+      const step = clock.last === null ? 0 : time - clock.last;
+
+      if (running && step > 0 && step < 1) clock.elapsed += step;
+
+      clock.last = time;
+
+      return withCaseValues(defs, base, clock, running);
+    },
+    idle: (base) => withCaseValues(defs, base, clock, false),
+    clear: () => {
+      clock = fresh();
+    },
+  };
+}
+
 const HZ = 20;
 const CAP = HISTORY_SECONDS * HZ;
 
 export function createSignalBus(defs: readonly ConsoleSignal[] = []): SignalBus {
-  let values = withCaseValues(defs, new Map(), fresh(), false);
+  const cases = caseClock(defs);
+  let values = cases.idle(new Map());
   let history = new Map<string, Series>();
-  let clock = fresh();
   let wasRunning = false;
   let version = 0;
+  let playhead: Playhead | null = null;
+  let shown: Map<string, SignalValue> | null = null;
   const listeners = new Set<() => void>();
 
   const record = (id: string, t: number, v: number) => {
@@ -143,9 +189,9 @@ export function createSignalBus(defs: readonly ConsoleSignal[] = []): SignalBus 
   };
 
   const clear = () => {
-    clock = fresh();
+    cases.clear();
     history = new Map();
-    values = withCaseValues(defs, new Map([...values].filter(([id]) => !defs.some((d) => d.id === id))), clock, false);
+    values = cases.idle(new Map([...values].filter(([id]) => !defs.some((d) => d.id === id))));
   };
 
   const changed = () => {
@@ -153,30 +199,53 @@ export function createSignalBus(defs: readonly ConsoleSignal[] = []): SignalBus 
     listeners.forEach((l) => l());
   };
 
+  const current = () => shown ?? values;
+
+  const show = (frame: number) => {
+    if (!playhead) return;
+
+    const at = Math.max(0, Math.min(playhead.track.frames - 1, Math.round(frame)));
+
+    playhead = { track: playhead.track, frame: at };
+    shown = playhead.track.values(at);
+  };
+
   return {
     push(sample) {
+      if (playhead) return;
+
       if (sample.running && !wasRunning) clear();
 
       wasRunning = sample.running;
-
-      const step = clock.last === null ? 0 : sample.time - clock.last;
-
-      if (sample.running && step > 0 && step < 1) clock.elapsed += step;
-
-      clock.last = sample.time;
-      values = withCaseValues(defs, baseValues(sample), clock, sample.running);
+      values = cases.next(baseValues(sample), sample.time, sample.running);
       values.forEach((v, id) => {
         if (typeof v === 'number') record(id, sample.time, v);
       });
       changed();
     },
-    read: (id) => values.get(id),
-    series: (id) => history.get(id) ?? { t: [], v: [] },
-    expand: (pattern) => (pattern.includes('*') ? [...values.keys()].filter((id) => matches(pattern, id)) : [pattern]),
+    read: (id) => current().get(id),
+    series: (id) => (playhead ? playhead.track.series(id) : (history.get(id) ?? { t: [], v: [] })),
+    expand: (pattern) =>
+      pattern.includes('*') ? [...current().keys()].filter((id) => matches(pattern, id)) : [pattern],
     reset: () => {
       clear();
       changed();
     },
+    play(track) {
+      if (track === playhead?.track) return;
+
+      playhead = track && { track, frame: 0 };
+      shown = null;
+      show(0);
+      changed();
+    },
+    seek(frame) {
+      if (!playhead || Math.round(frame) === playhead.frame) return;
+
+      show(frame);
+      changed();
+    },
+    playhead: () => playhead,
     subscribe(listen) {
       listeners.add(listen);
 

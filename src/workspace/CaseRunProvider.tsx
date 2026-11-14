@@ -14,6 +14,7 @@ import { ModeHeader } from '../design-system';
 import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { useConsolePlayback } from './useConsolePlayback';
 import { useConsoleSignals } from './useConsoleSignals';
 import { showPartsSection } from './showView';
 
@@ -72,6 +73,17 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     parts,
     cameras: cameras.views.map((v) => v.key),
   });
+  const seek = useConsolePlayback({
+    open,
+    bus,
+    timeline: cases.timeline,
+    kase: cases.active,
+    caseConsole,
+    sim,
+    rig: posing.rig,
+    parts,
+    cameras: cameras.views.map((v) => v.key),
+  });
   const { can, run } = useActions(core);
 
   const fire = (action: CaseAction) => {
@@ -112,6 +124,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
           joints: core.project.joints ?? [],
           fire,
           can,
+          seek,
           studio: {
             cases,
             cameras,
@@ -123,7 +136,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
         },
         areas: layout,
         title: cases.active?.name ?? '',
-        onDone: caseRun.leave,
+        onDone: cases.timeline.open ? cases.timeline.close : caseRun.leave,
       }
     : null;
 

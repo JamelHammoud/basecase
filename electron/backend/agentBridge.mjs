@@ -25,6 +25,7 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['test_routine', 180000],
   ['run_routine', 180000],
   ['run_case', 300000],
+  ['read_try', 120000],
   ['explore_case', 600000],
 ]);
 

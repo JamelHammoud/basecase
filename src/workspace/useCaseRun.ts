@@ -43,6 +43,8 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   const restore = (saved: Return) => {
     if (sim.drive.active) sim.drive.stop();
 
+    if (cases.timeline.open) cases.timeline.close();
+
     setBack(null);
     setSelectedIds(saved.selection);
 
@@ -65,6 +67,13 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
 
     return () => clearTimeout(soon);
   }, [stale]);
+
+  const played = cases.timeline.record?.id ?? null;
+  const enterPlayed = useEffectEvent(enter);
+
+  useEffect(() => {
+    if (played) enterPlayed();
+  }, [played]);
 
   const inputs = open ? caseConsole.input : null;
   const { setInputs } = sim.drive;

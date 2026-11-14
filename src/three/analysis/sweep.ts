@@ -80,7 +80,11 @@ function rotationAbout(spec: SweepSpec, angle: number) {
 }
 
 export function sweepClashes(scene: Placed[], spec: SweepSpec): SweepHit[] {
-  const { placed, moving: movingSet } = withRotors(scene, spec);
+  const skip = new Set(spec.skip ?? []);
+  const { placed, moving: movingSet } = withRotors(
+    scene.filter((p) => !skip.has(p.id)),
+    spec,
+  );
   const moving = [...movingSet];
   const options = { ...SWEEP_OPTIONS, focus: moving, straddle: moving, coplanar: false };
   const baseline = new Map(collide(placed, options).interferences.map((f) => [pairKey(f.a, f.b), f.depthMm]));

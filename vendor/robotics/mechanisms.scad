@@ -153,3 +153,133 @@ module pip_hinge(length = 40, segs = 5, knuckle = 6, offset = 4, leaf = 20, t = 
   }
   port("axis", [length / 2, 0, offset - 0.2], [1, 0, 0], "bore");
 }
+
+// ---------------------------------------------------------------- cycloidal drive
+// Printed cycloidal reducer around a BLDC motor, ring output: the housing bolts to the motor's
+// stator face and holds both discs still through its posts, the eccentric input shaft rocks them,
+// and the ring of output pins turns, so ratio = pins / (pins - lobes). Axis along +Z; z = 0 is the
+// motor's stator face, the output face is on top. Two discs phased 180° balance each other.
+// motor = [stator bolt circle, holes, screw M, shaft Ø, shaft length, first hole angle, rim height
+// above the stator face] (a land inside the bolt circle clears a rim); bearings are [bore, OD, width]:
+// cam_bearing in each disc on the eccentric, shaft_bearing in the cap hub on the motor shaft,
+// out_bearing between the cap hub and the output. turn = input angle in degrees (poses the moving
+// parts). part = "all" | "housing" | "cap" | "disc_a" | "disc_b" | "output" | "shaft".
+function cycloid_profile(pins, lobes, R, r, e, steps) =
+  let(n = pins, k = pins - lobes)
+  [for (i = [0 : steps - 1])
+    let(t = 360 * i / steps, psi = atan2(sin((k - n) * t), R / (e * n) - cos((k - n) * t)))
+    [R * cos(t) - r * cos(t + psi) - e * cos(n * t), -R * sin(t) + r * sin(t + psi) + e * sin(n * t)]];
+
+function cycloidal_post_r(R, e, pin_d, post_d, cam_bearing, clr = 0.15) =
+  let(hole = post_d / 2 + e + clr, lo = cam_bearing[1] / 2 + 0.05 + 1.2 + hole,
+      hi = R - e - pin_d / 2 - clr - 1.2 - hole)
+  (lo + hi) / 2;
+
+// z levels: [flange top, disc A, disc B, cap, out bearing, hub top, output plate, cavity top, output face]
+function cycloidal_levels(t, out_bearing, rim = 0) =
+  let(base_top = rim > 0 ? rim + 6.5 : 8, za = base_top + 1, zb = za + t + 1, cap = zb + t + 1.5, ob = cap + 6.3, hub = ob + out_bearing[2])
+  [base_top, za, zb, cap, ob, hub, cap + 6.8, hub + 5.5, hub + 8.9];
+
+module _cyc_disc(pins, lobes, R, pin_d, e, t, posts, post_d, post_r, cam_bearing, clr, phase = 0) {
+  difference() {
+    linear_extrude(t) rotate(phase) polygon(cycloid_profile(pins, lobes, R, pin_d / 2 + clr, e, 24 * pins));
+    translate([0, 0, -0.01]) cylinder(d = cam_bearing[1] + 0.1, h = cam_bearing[2] + 0.21);
+    translate([0, 0, -1]) cylinder(d = cam_bearing[1] - 3, h = t + 2);
+    for (i = [0 : posts - 1]) rotate(360 * i / posts)
+      translate([post_r, 0, -1]) cylinder(d = post_d + 2 * (e + clr), h = t + 2);
+  }
+}
+
+module cycloidal_drive(pins = 15, lobes, R = 32, pin_d = 5, e = 1, t = 6, posts = 4, post_d = 8,
+                       cam_bearing = [20, 27, 4], shaft_bearing = [10, 19, 5], out_bearing = [25, 37, 7],
+                       motor = [44, 4, 4, 10, 30, 45, 0], clr = 0.15, turn = 0, part = "all") {
+  L = is_undef(lobes) ? pins - 1 : lobes;
+  z = cycloidal_levels(t, out_bearing, motor[6]);
+  land = motor[6] > 0 ? motor[6] + 0.5 : 0;
+  ring_r = R + 3;
+  ear_r = ring_r + 5;
+  post_r = cycloidal_post_r(R, e, pin_d, post_d, cam_bearing, clr);
+  cap_r = min(post_r + post_d / 2 + 2, R - pin_d / 2 - 1);
+  out_pcd = (out_bearing[1] / 2 + 1 + ring_r) / 2;
+  spin = turn * (pins - L) / pins;
+  assert(L < pins && e * pins < R, "cycloidal_drive: needs lobes < pins and e × pins < R");
+  assert(z[3] + 0.5 + shaft_bearing[2] <= motor[4], "cycloidal_drive: the motor shaft is too short for this stack");
+  all = part == "all";
+  centre = function(phase) e * [cos(turn + phase), sin(turn + phase)];
+  if (all || part == "housing") {
+    difference() {
+      union() {
+        if (land > 0) cylinder(r = motor[0] / 2 + 1.5, h = land + 0.01);
+        translate([0, 0, land]) cylinder(r = ring_r, h = z[0] - land);
+        for (a = [0 : 90 : 270]) rotate(a) hull() {
+          translate([ring_r - 4, 0, land]) cylinder(r = 4.5, h = z[0] - land);
+          translate([ear_r, 0, land]) cylinder(r = 4.5, h = z[0] - land);
+        }
+        for (i = [0 : posts - 1]) rotate(360 * i / posts) translate([post_r, 0, land]) cylinder(d = post_d, h = z[3] - land);
+      }
+      translate([0, 0, -1]) cylinder(d = motor[3] + 6, h = z[0] + 2);
+      for (a = [0 : 360 / motor[1] : 359]) rotate(a + motor[5]) translate([motor[0] / 2, 0, z[0]]) counterbore_cut(motor[2], depth = z[0], $ports = false);
+      for (a = [0 : 90 : 270]) rotate(a) translate([ear_r, 0, -1]) cylinder(d = screw_clear_d(3), h = z[0] + 2);
+      for (i = [0 : posts - 1]) rotate(360 * i / posts) translate([post_r, 0, z[3]]) heatset_hole(3, insert_len(3));
+    }
+    port("motor", [0, 0, 0], [0, 0, -1], "hole_circle", motor[0]);
+    port("mount", [ear_r, 0, land], [0, 0, -1], "face");
+    for (i = [0 : 3]) port(str("mount_", i), [ear_r * cos(90 * i), ear_r * sin(90 * i), land], [0, 0, -1], "screw", 3);
+    for (i = [0 : motor[1] - 1]) let(a = motor[5] + 360 / motor[1] * i) port(str("motor_screw_", i), [motor[0] / 2 * cos(a), motor[0] / 2 * sin(a), z[0] - socket_head(motor[2])[1] - 0.4], [0, 0, 1], "screw", motor[2]);
+    for (i = [0 : posts - 1]) let(a = 360 * i / posts) port(str("post_", i), [post_r * cos(a), post_r * sin(a), z[3]], [0, 0, 1], "screw", 3);
+  }
+  if (all || part == "disc_a") {
+    translate([each centre(0), z[1]]) _cyc_disc(pins, L, R, pin_d, e, t, posts, post_d, post_r, cam_bearing, clr);
+    port("bearing_a", [each centre(0), z[1]], [0, 0, -1], "bore", cam_bearing[1]);
+  }
+  if (all || part == "disc_b") {
+    translate([each centre(180), z[2]]) _cyc_disc(pins, L, R, pin_d, e, t, posts, post_d, post_r, cam_bearing, clr, 180 / L);
+    port("bearing_b", [each centre(180), z[2]], [0, 0, -1], "bore", cam_bearing[1]);
+  }
+  if (all || part == "shaft") {
+    rotate(turn) difference() {
+      union() {
+        translate([0, 0, z[0] + 0.3]) cylinder(d = motor[3] + 6, h = z[3] - z[0] - 1.3);
+        translate([e, 0, z[1]]) cylinder(d = cam_bearing[0] - 0.1, h = t);
+        translate([-e, 0, z[2]]) cylinder(d = cam_bearing[0] - 0.1, h = t);
+      }
+      translate([0, 0, z[0]]) cylinder(d = motor[3] + 0.1, h = z[3]);
+    }
+    port("motor_shaft", [0, 0, z[0] + 0.3], [0, 0, -1], "bore", motor[3]);
+  }
+  if (all || part == "cap") {
+    difference() {
+      union() {
+        translate([0, 0, z[3]]) cylinder(r = cap_r, h = 6);
+        translate([0, 0, z[3]]) cylinder(d = out_bearing[0] - 0.1, h = z[5] - z[3]);
+      }
+      translate([0, 0, z[3] - 0.01]) cylinder(d = shaft_bearing[1] + 0.1, h = shaft_bearing[2] + 0.51);
+      translate([0, 0, z[3]]) cylinder(d = motor[3] + 1, h = motor[4] - z[3] + 0.5);
+      for (i = [0 : posts - 1]) rotate(360 * i / posts) translate([post_r, 0, z[3] + 6]) counterbore_cut(3, depth = 6, $ports = false);
+    }
+    port("shaft_bearing", [0, 0, z[3]], [0, 0, -1], "bore", shaft_bearing[1]);
+    port("out_bearing", [0, 0, z[4]], [0, 0, 1], "boss", out_bearing[0]);
+    port("encoder", [0, 0, z[5]], [0, 0, 1], "face");
+    for (i = [0 : posts - 1]) let(a = 360 * i / posts) port(str("cap_screw_", i), [post_r * cos(a), post_r * sin(a), z[3] + 6 - socket_head(3)[1] - 0.4], [0, 0, 1], "screw", 3);
+  }
+  if (all || part == "output") {
+    rotate(spin) difference() {
+      union() {
+        translate([0, 0, z[0] + 0.4]) difference() {
+          cylinder(r = ring_r, h = z[6] - z[0] - 0.4);
+          translate([0, 0, -1]) cylinder(r = R, h = z[6] - z[0] + 2);
+        }
+        translate([0, 0, z[6]]) cylinder(r = ring_r, h = z[8] - z[6]);
+        for (i = [0 : pins - 1]) rotate(360 * i / pins) translate([R, 0, z[0] + 0.6]) cylinder(d = pin_d, h = z[6] - z[0] - 0.59);
+      }
+      translate([0, 0, z[6] - 0.01]) cylinder(d = out_bearing[1] + 0.1, h = z[5] - z[6] + 0.01);
+      translate([0, 0, z[5] - 0.01]) cylinder(r = 16, h = z[7] - z[5] + 0.01);
+      translate([0, 0, z[7] - 0.01]) cylinder(d = 6.2, h = 2.61);
+      for (i = [0 : 5]) rotate(60 * i) translate([out_pcd, 0, z[8]]) heatset_hole(3, insert_len(3));
+    }
+    port("output", [0, 0, z[8]], [0, 0, 1], "output", 2 * out_pcd);
+    port("bearing", [0, 0, z[6]], [0, 0, -1], "bore", out_bearing[1]);
+    port("magnet", [0, 0, z[7]], [0, 0, -1], "bore", 6);
+    for (i = [0 : 5]) let(a = 60 * i + spin) port(str("out_", i), [out_pcd * cos(a), out_pcd * sin(a), z[8]], [0, 0, 1], "screw", 3);
+  }
+}

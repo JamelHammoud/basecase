@@ -1,7 +1,7 @@
 ---
 title: Agent tools
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: reference
 order: 2
@@ -141,6 +141,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_build` | Sets extras, budget, filament and the power supply for a robot with no battery |
 | `build_guide` | Writes the printable assembly guide |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
+| `make_actuator` | Replaces a joint's servo with a printed cycloidal gearbox around a brushless motor, sized to the joint's load |
 | `size_arm` | Sizes and places an arm from the points it must reach and the grams it carries |
 | `sweep_design` | Tries a value on copies, without changing the scene |
 

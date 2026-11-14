@@ -11,7 +11,7 @@ import type { CalibrationHistory } from '../reality/history';
 import type { StoredFalls, StoredWalk } from '../utils/engineeringTypes';
 import type { BooleanFields } from './booleans';
 import type { SculptMeshData } from './sculpt';
-import type { LoopClosure } from './loopClosure';
+import type { JointLinks } from './jointLinks';
 import type { PartDeformers, PartEdges } from './partShape';
 
 export type { BooleanData, BooleanFrame, BooleanOp } from './booleans';
@@ -184,14 +184,14 @@ export type { PartPrint, PrintQuote, PrintRecord } from './print';
 
 import type { FixedCamera } from '../cameras/fixed';
 import type { Lens } from '../cameras/lens';
-import type { OnshapeMate, PartGroup, RobotLinkRef } from './robotLink';
+import type { PartGroup, RobotLinkRef } from './robotLink';
 import type { PartSketch } from '../utils/sketch/types';
 
 import type { PartPrint, PrintRecord, PrintService } from './print';
 
 export type PrintMaterial = 'PLA' | 'PETG' | 'ABS' | 'ASA' | 'TPU';
 
-export interface RobotJoint {
+export interface RobotJoint extends JointLinks {
   id: string;
   name: string;
   type: 'revolute' | 'prismatic' | 'fixed';
@@ -207,8 +207,6 @@ export interface RobotJoint {
   velocity?: number;
   published?: string;
   limb?: 'leg' | 'arm' | 'neck' | 'torso' | 'other';
-  onshape?: OnshapeMate;
-  loop?: LoopClosure;
 }
 
 export type { BuildGuideRecord, ProjectRecords } from './projectRecords';

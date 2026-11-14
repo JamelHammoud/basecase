@@ -75,6 +75,26 @@ export function fixtureMeasures(parts: ScenePart[]): Record<string, MeshMeasure>
   );
 }
 
+export function placedMeasures(parts: ScenePart[]): Record<string, MeshMeasure> {
+  const turn = new THREE.Quaternion();
+
+  return Object.fromEntries(
+    parts.map((p) => {
+      const [x, y, z] = p.rotation.map((v) => THREE.MathUtils.degToRad(v));
+      const place = new THREE.Matrix4().compose(
+        new THREE.Vector3(...p.position),
+        turn.setFromEuler(new THREE.Euler(x, y, z)),
+        new THREE.Vector3(1, 1, 1),
+      );
+      const triangles = boxTriangles(p);
+
+      new THREE.BufferAttribute(triangles, 3).applyMatrix4(place);
+
+      return [p.id, measureTriangles(triangles)];
+    }),
+  );
+}
+
 export function fixtureTriangles(parts: ScenePart[]): (id: string) => Float32Array | null {
   const byId = new Map(parts.map((p) => [p.id, p]));
 

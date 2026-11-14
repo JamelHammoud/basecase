@@ -191,6 +191,20 @@ const M2_CAMERA: Hole = { kind: 'bore', thread: 'M2', diameterMm: 2.2 };
 const STS3215 = [...stsBody(18.35, -18.9, 16.3, -15.7), ...STS_BUS];
 
 export const COMPONENT_PORTS: Record<string, Port[]> = {
+  'odrive-d6374': [
+    output([0, 60, 0], UP, 10),
+    {
+      name: 'stator',
+      position: [0, 30, 0],
+      axis: UP,
+      kind: 'hole_circle',
+      pitchDiameterMm: 44,
+      count: 4,
+      ref: [0.7071, 0, 0.7071],
+      diameterMm: 4,
+    },
+    boss('rear-shaft', [0, -60, 0], DOWN, 8),
+  ],
   'feetech-sts3215': STS3215,
   'feetech-sts3250': STS3215,
   'waveshare-st3215-hs': STS3215,

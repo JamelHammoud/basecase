@@ -240,6 +240,17 @@ describe('range-of-motion sweeps', () => {
     expect(toFloor).toEqual([{ a: 'arm', b: 'floor', depthMm: 50, angle: 180 }]);
   });
 
+  it('leaves out the parts of a gear train the joint names, which turn by their own gears', async () => {
+    const sweep = { moving: ['arm'], anglesDeg: [-90] };
+    const [hits, skipped] = await sweepsIn(snapshotShapes([arm(), wall()]), [
+      { ...sweep, origin: [0, 50, 0], axis: [0, 0, 1] },
+      { ...sweep, origin: [0, 50, 0], axis: [0, 0, 1], skip: ['wall'] },
+    ]);
+
+    expect(hits.map((h) => h.b)).toEqual(['wall']);
+    expect(skipped).toEqual([]);
+  });
+
   it('reports a pair that overlaps a little at rest once it gets much deeper', async () => {
     const post = new THREE.Mesh(new THREE.BoxGeometry(20, 200, 20));
     const swinging = new THREE.Mesh(new THREE.BoxGeometry(10, 100, 10));

@@ -1,7 +1,7 @@
 ---
 title: Checks in the Build tab
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: build-and-print
 type: reference
 order: 1
@@ -84,6 +84,8 @@ A servo can't give full torque and full speed at once, so the blue line falls fr
 ![Peak torque's warning for Left knee, with its walk plotted against the STS3215's line and the next servo up](/help/build-checks/peak-torque-plot.png)
 
 Gray dots are moments the joint was braking, which the line doesn't limit. The dashed line is the servo's rated torque. The gray line is the next stronger servo in the catalog for the same bus and voltage, named under the plot.
+
+A revolute joint with one servo that fails Servo torque shows **Make an Actuator** beside it. It replaces the servo with a printed gearbox around a brushless motor, as [Make an actuator for a joint](/help/make-an-actuator-for-a-joint) shows.
 
 Each Case in the scene also gets a row, named after it. It runs the Case 20 times with randomized physics and passes at 18. A Case that misses more adds a note, never a blocker. A robot that can't run the Case fails its row with the reason, such as an arm on a Case that needs driven wheels, or a fall on hold. [Try a Case](/help/try-a-case) lists each reason.
 

@@ -200,7 +200,7 @@ function sweepJoint(ctx: CheckContext, j: RobotJoint): Item[] {
   const range = j.range ?? [-90, 90];
   const minDepth = j.published ? 5 : 0.3;
   const samples = sweepSamples(j, range);
-  const request = { moving: down, origin: j.origin, axis: norm(j.axis), anglesDeg: samples };
+  const request = { moving: down, origin: j.origin, axis: norm(j.axis), anglesDeg: samples, skip: j.gearTrain };
   const clashes = ctx.input.sweep!({ ...request, actuators: outputsOnAxis(ctx, j) }).filter(
     (c) => c.depthMm > minDepth && !(c.b === 'floor' && (isLegJoint(j) || j.published)),
   );

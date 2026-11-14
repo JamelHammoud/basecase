@@ -3,7 +3,11 @@ import { torque } from './torque';
 import { plural } from '../../electron/plural.mjs';
 import { angle } from './angle';
 import type { CheckRow, JointLoad } from './engineeringTypes';
+
+type CheckItem = NonNullable<CheckRow['items']>[number];
+
 import { volts } from './electric';
+import { RMS_OF_STANCE } from './actuatorRules';
 
 const share = (v: number | undefined) => (v === undefined ? '?' : v.toFixed(2));
 
@@ -69,13 +73,30 @@ function torqueStatus({ loads, fails, warns, unknown }: TorqueSummary): CheckRow
   return unknown.length === loads.length ? 'not run' : 'pass';
 }
 
-function torqueItems(s: TorqueSummary): NonNullable<CheckRow['items']> {
-  const line = (l: JointLoad, status: 'warn' | 'fail') => ({ text: loadText(l, s.legs), ids: loadIds(l), status });
+const rmsOf = (l: JointLoad) => (l.kind === 'stance' ? (l.simRmsNm ?? RMS_OF_STANCE * l.loadNm) : l.loadNm);
 
-  return [...s.fails.map((l) => line(l, 'fail')), ...s.warns.map((l) => line(l, 'warn'))];
+export const actuatorLoads = (l: JointLoad, peakNm?: number) => ({
+  loadNm: l.loadNm,
+  rmsNm: rmsOf(l),
+  ...(peakNm === undefined ? {} : { peakNm }),
+});
+
+function actuatorFix(l: JointLoad, peaks: Record<string, number>): Pick<CheckItem, 'fix'> {
+  if (l.joint.type !== 'revolute' || l.joint.actuators?.length !== 1) return {};
+
+  return { fix: { kind: 'make-actuator', joint: l.joint.id, loads: actuatorLoads(l, peaks[l.joint.id]) } };
 }
 
-export function torqueRow(loads: JointLoad[], legShare = 1): CheckRow {
+function torqueItems(s: TorqueSummary, peaks: Record<string, number>): CheckItem[] {
+  const line = (l: JointLoad, status: 'warn' | 'fail') => ({ text: loadText(l, s.legs), ids: loadIds(l), status });
+
+  return [
+    ...s.fails.map((l) => ({ ...line(l, 'fail'), ...actuatorFix(l, peaks) })),
+    ...s.warns.map((l) => line(l, 'warn')),
+  ];
+}
+
+export function torqueRow(loads: JointLoad[], legShare = 1, peaks: Record<string, number> = {}): CheckRow {
   const summary: TorqueSummary = {
     loads,
     fails: loads.filter((l) => l.status === 'fail'),
@@ -89,7 +110,7 @@ export function torqueRow(loads: JointLoad[], legShare = 1): CheckRow {
     status: torqueStatus(summary),
     detail: torqueDetail(summary),
     detailInItems: true,
-    items: torqueItems(summary),
+    items: torqueItems(summary, peaks),
     ids: [...summary.fails, ...summary.warns].flatMap(loadIds),
   };
 }

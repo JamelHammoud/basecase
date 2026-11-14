@@ -14,8 +14,8 @@ export const agentRequest = (page: Page, kind: string, payload: object) =>
 export const selection = (page: Page) =>
   page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.selection().sort());
 
-export async function loadFallBiped(page: Page) {
-  const biped = fallBiped();
+export async function loadFallBiped(page: Page, bodyG?: number) {
+  const biped = fallBiped('c001', bodyG);
 
   await studioLoad(page, {
     parts: biped.parts,

@@ -21,6 +21,7 @@ import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { replayFall } from './fallReplay';
+import { makeActuator } from './makeActuator';
 
 interface RightTabPanelsProps {
   core: WorkspaceCore;
@@ -77,6 +78,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
       onNewCase={simTraining.cases.builder.goals.length ? () => showNewCase(core) : undefined}
       onCalibrate={IS_WEB_DEMO ? undefined : (jointIds) => calibrateJoints(core, jointIds)}
       onReplayFall={(deg) => void replayFall(core, deg)}
+      onMakeActuator={IS_WEB_DEMO ? undefined : (target) => void makeActuator(core, target)}
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
       onToast={showToast}

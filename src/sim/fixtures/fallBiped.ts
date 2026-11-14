@@ -79,16 +79,18 @@ export const FALL_BIPED_POSE: RobotPoseState = {
   ),
 };
 
-export function fallBiped(kneeVariant = 'c001'): FixtureRobot {
+export function fallBiped(kneeVariant = 'c001', bodyG = 1400): FixtureRobot {
   const legs = [leg('l', -45 * SCALE, kneeVariant), leg('r', 45 * SCALE, kneeVariant)];
   const size: P3 = [140 * SCALE, 90 * SCALE, 70 * SCALE];
 
   return {
     id: 'fall-biped',
-    parts: [box('body', [0, HIP_Y + size[1] / 2, 0], size, 1400), ...legs.flatMap((l) => l.parts)],
+    parts: [box('body', [0, HIP_Y + size[1] / 2, 0], size, bodyG), ...legs.flatMap((l) => l.parts)],
     joints: legs.flatMap((l) => l.joints),
     expect: { morphology: 'legged', stand: 'pass', walk: 'uncertain' },
   };
 }
 
 export const FALL_BIPED_KNEES = ['l_knee', 'r_knee'];
+
+export const LOADED_BIPED_BODY_G = 3200;

@@ -24,7 +24,7 @@ import { listEvidence, readEvidence } from './cad-mcp/evidenceTools.mjs';
 import { createGuidePusher, getGuide } from './cad-mcp/guideTools.mjs';
 import { checkScene, look } from './cad-mcp/inspectTools.mjs';
 import { fasten, getPorts, mate } from './cad-mcp/portTools.mjs';
-import { findRecipes, synthesizeLinkage } from './cad-mcp/recipeTools.mjs';
+import { findRecipes, makeActuator, synthesizeLinkage } from './cad-mcp/recipeTools.mjs';
 import {
   animate,
   defineJoints,
@@ -85,6 +85,7 @@ const TOOLS = [
   findParts,
   findRecipes,
   synthesizeLinkage,
+  makeActuator,
   compare,
   fitView,
   traceOutline,

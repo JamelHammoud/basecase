@@ -62,7 +62,7 @@ Any other joint has to hold its own limb anywhere in its range. If you import a 
 
 These limits come from robots that walk. Under the older rule of a fifth of stall, every walking robot fails at the knee.
 
-A failing joint is a blocker. A joint with no servo data turns amber and shows up as “No torque data”.
+A failing joint is a blocker. A joint with no servo data turns amber and shows up as “No torque data”. To swap a failing servo for a printed gearbox around a brushless motor, see [Make an actuator for a joint](/help/make-an-actuator-for-a-joint).
 
 ## Reading a row
 

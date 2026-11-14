@@ -57,6 +57,13 @@ function firstDelivery(requestId: string) {
   return true;
 }
 
+const partReplacer =
+  ({ commitParts, updateProjectNow }: SceneDocument): RequestContext['replaceParts'] =>
+  (parts, joints) => {
+    commitParts(() => parts);
+    updateProjectNow((p) => ({ ...p, joints }));
+  };
+
 const partInserter =
   ({ commitParts, updateProjectNow }: SceneDocument): RequestContext['insertParts'] =>
   (parts, joints) => {
@@ -158,6 +165,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     setProjectNow,
     commitConsole,
     insertParts: partInserter(docs),
+    replaceParts: partReplacer(docs),
     commitSkeleton,
     setAction: author.setAction,
     setCursor: author.setCursor,

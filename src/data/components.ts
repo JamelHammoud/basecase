@@ -1,5 +1,6 @@
 import MESHES from './component-meshes.json';
 import { BAM_STS3215_7V4, BAM_XL330, type ServoFit } from './servoFits';
+import { generatedVariant } from './generatedActuators';
 
 export type { ServoFit } from './servoFits';
 
@@ -102,6 +103,7 @@ export interface ActuatorSpec {
   idleA?: number;
   dualShaft?: boolean;
   fit?: ServoFit;
+  armature?: number;
   source: string;
 }
 
@@ -6101,7 +6103,7 @@ export function componentNote(c: ComponentInfo): string {
 }
 
 export const componentVariant = (c: ComponentInfo, variant?: string): ComponentVariant | undefined =>
-  variant ? c.variants?.find((v) => v.id === variant) : undefined;
+  variant ? (c.variants?.find((v) => v.id === variant) ?? generatedVariant(c, variant)) : undefined;
 
 export function actuatorOf(componentId: string, variant?: string): ActuatorSpec | undefined {
   const c = COMPONENT_BY_ID[componentId];

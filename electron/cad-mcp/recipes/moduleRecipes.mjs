@@ -100,6 +100,49 @@ export const MODULE_RECIPES = [
     ],
   },
   {
+    name: 'cycloidal_drive',
+    use: 'Printed cycloidal reducer around a BLDC motor (ring output): housing on the stator face with posts that hold two phased discs, an eccentric input shaft, a cap and an output ring of pins. Ratio = pins ÷ (pins − lobes).',
+    tags: 'cycloidal cycloid reducer gearbox actuator bldc motor reduction joint knee hip leg high torque odrive d6374 printed',
+    params:
+      'pins=15, lobes=pins-1, R=32 (pin circle radius), pin_d=5, e=1 (eccentricity, e × pins < R), t=6 (disc), posts=4, post_d=8, cam_bearing=[20,27,4], shaft_bearing=[10,19,5], out_bearing=[25,37,7] ([bore, OD, width]), motor=[44,4,4,10,30] (stator bolt circle, holes, M, shaft Ø, shaft length), turn=0 (input angle), part="all"|"housing"|"cap"|"disc_a"|"disc_b"|"output"|"shaft"',
+    ports:
+      'housing: motor (hole_circle on the stator face), mount and mount_i (ears), motor_screw_i, post_i (inserts); cap: shaft_bearing, out_bearing, encoder (face for an AS5600), cap_screw_i; disc_a, disc_b: bearing_a, bearing_b; output: output, out_i (inserts), bearing, magnet; shaft: motor_shaft',
+    notes:
+      'Needs include <mechanisms.scad>. z = 0 is the stator face, output on +Z. make_actuator sizes one to a joint and places it with its motor, driver, encoder, bearings and screws; use this recipe for a reducer the joint tool doesn’t cover.',
+    code: `${MECH}cycloidal_drive(pins = 15, part = "output");`,
+    expect: { ports: ['output', 'bearing', 'out_0'] },
+    checks: [
+      {
+        why: 'the discs clear the output pins through one output turn',
+        code: `${MECH}for (a = [0, 37, 455, 1000, 1803, 2200, 2701, 3300, 3850, 4400, 4950, 5390]) intersection() {
+  union() { cycloidal_drive(part = "disc_a", turn = a, $ports = false); cycloidal_drive(part = "disc_b", turn = a, $ports = false); }
+  cycloidal_drive(part = "output", turn = a, $ports = false);
+}`,
+        empty: true,
+      },
+      {
+        why: 'the discs clear the posts, cap and shaft through one output turn',
+        code: `${MECH}for (a = [0, 455, 1803, 2701, 3850, 4950]) intersection() {
+  union() { cycloidal_drive(part = "disc_a", turn = a, $ports = false); cycloidal_drive(part = "disc_b", turn = a, $ports = false); }
+  union() { cycloidal_drive(part = "housing", $ports = false); cycloidal_drive(part = "cap", $ports = false); cycloidal_drive(part = "shaft", turn = a, $ports = false); }
+}`,
+        empty: true,
+      },
+      {
+        why: 'turned at pins ÷ (pins − lobes) − 1 instead, the pins hit the disc',
+        code: `${MECH}for (a = [37, 1000, 2701]) intersection() {
+  cycloidal_drive(part = "disc_a", turn = a, $ports = false);
+  rotate(a / 14 - a / 15) cycloidal_drive(part = "output", turn = a, $ports = false);
+}`,
+      },
+      {
+        why: 'the housing compiles',
+        code: `${MECH}cycloidal_drive(part = "housing");`,
+        ports: ['motor', 'mount', 'post_0'],
+      },
+    ],
+  },
+  {
     name: 'gt2_pulley_pair',
     use: 'Two GT2 pulleys at the center distance for a closed belt of a stock tooth count (approximate printed GT2 groove; test one on the belt).',
     tags: 'pulley belt gt2 timing drive transmission reduction toothed',

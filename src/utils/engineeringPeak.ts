@@ -133,3 +133,6 @@ export function peakRow(
 
   return [envelopes.length ? { ...row, envelopes } : row];
 }
+
+export const walkPeaks = (walk?: WalkSim | string): Record<string, number> =>
+  typeof walk === 'object' ? Object.fromEntries(Object.entries(walk.joints).map(([id, w]) => [id, w.p99Nm])) : {};

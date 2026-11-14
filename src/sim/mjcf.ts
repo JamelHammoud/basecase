@@ -3,7 +3,7 @@ import type { MeshMeasure } from '../three/meshMeasure';
 import type { RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
 import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
-import { effortOf } from './mjcfEffort';
+import { effortOf, jointArmature } from './mjcfEffort';
 import { robotFingerprint } from './mjcfFingerprint';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
@@ -171,8 +171,8 @@ function actuatorXml(spec: ActuatorSpecXml): string {
   return `    <position name="${name}" joint="${name}" kp="${f(kp)}" dampratio="1" ${force}${ctrl}/>`;
 }
 
-function estimatedJointAttrs(effort: number, revolute: boolean): string {
-  const armature = revolute ? Math.max(0.002, effort * 0.004) : 0.05;
+function estimatedJointAttrs(effort: number, revolute: boolean, reflected?: number): string {
+  const armature = reflected ?? (revolute ? Math.max(0.002, effort * 0.004) : 0.05);
 
   return `damping="${f(effort * 0.02)}" armature="${f(armature)}" frictionloss="${f(effort * 0.01)}"`;
 }
@@ -189,7 +189,7 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const servo = wheel ? null : fittedServo({ j, ...scene, calibrated });
   const { effort, source } = servo ? { effort: servo.forceNm, source: 'servo' as const } : effortOf(j, scene);
   const rangeAttr = range ? ` range="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
-  const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${rangeAttr} ${servo ? fittedJointAttrs(servo) : estimatedJointAttrs(effort, revolute)}/>`;
+  const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${rangeAttr} ${servo ? fittedJointAttrs(servo) : estimatedJointAttrs(effort, revolute, jointArmature(j, st.byId))}/>`;
   const ctrlrange = range ? ` ctrlrange="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
 
   st.actuatorXml.push(

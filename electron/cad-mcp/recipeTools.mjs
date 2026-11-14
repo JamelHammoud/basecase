@@ -60,3 +60,24 @@ export const synthesizeLinkage = {
     }
   },
 };
+
+export const makeActuator = {
+  name: 'make_actuator',
+  config: {
+    title: 'Make an actuator',
+    description:
+      'Replaces a revolute joint’s servo with a generated printed cycloidal actuator around a catalog BLDC motor (the cycloidal_drive recipe), sized to the joint’s stance, hold and walking peak loads and to the bed. ' +
+      'Places the motor, its driver and output encoder, bearings and screws as bought parts and six printed parts on the joint axis, rewires the joint, and its estimated torque, speed and reflected armature drive Servo torque, Peak torque and the MJCF. One undo removes it. ' +
+      'Use it for a joint no catalog servo can drive; it says why when no actuator fits.',
+    inputSchema: {
+      joint: z.string().max(80).describe('the joint id, e.g. "l_knee"'),
+    },
+  },
+  handler: async (args) => {
+    try {
+      return text((await bridge('make_actuator', args))?.text || 'ok');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};

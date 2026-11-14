@@ -33,7 +33,8 @@ export type FindingFix =
   | { kind: 'print-face'; part: string; down: V3 }
   | { kind: 'calibrate'; joints: string[] }
   | { kind: 'new-case' }
-  | { kind: 'replay-fall'; deg: number };
+  | { kind: 'replay-fall'; deg: number }
+  | { kind: 'make-actuator'; joint: string; loads: { loadNm: number; rmsNm: number; peakNm?: number } };
 
 export interface CheckRow {
   check: string;
@@ -151,6 +152,7 @@ export interface SweepRequest {
   axis: V3;
   anglesDeg: number[];
   actuators?: string[];
+  skip?: string[];
 }
 
 export interface Stability {

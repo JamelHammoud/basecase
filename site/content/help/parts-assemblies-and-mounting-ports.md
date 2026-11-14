@@ -1,7 +1,7 @@
 ---
 title: Parts, assemblies and mounting ports
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: concept
 order: 1
@@ -34,7 +34,7 @@ covers:
   - docs/guide/parts-catalog.md
 ---
 
-What a part is made from decides whether you can resize it, whether it's printed or bought, and how other parts fasten to it.
+What a part is made from decides three things: whether you can resize it, whether it's printed or bought, and how other parts fasten to it.
 
 ## Kinds of parts
 
@@ -47,21 +47,25 @@ What a part is made from decides whether you can resize it, whether it's printed
 | Imported mesh | Import, including STEP and IGES bodies | Yes |
 | Robot link | Import Robot or **Parts** ▸ **Robots** | No |
 
-Shapes, agent parts and imported meshes are printed until you change their material under **Appearance**. Components keep the maker's exact size, so you can't resize them. To change the size of hardware, use its **Size** and **Length** choices.
+Shapes, agent parts and imported meshes are printed until you change their material under **Appearance**.
+
+Components keep the maker's exact size, so you can't resize them. To resize hardware, pick a different **Size** or **Length**.
 
 ## Real components are never estimates
 
-Every component in **Parts** is a real product with exact geometry. Its mesh comes from the maker's CAD file, or from the maker's drawing if the maker doesn't provide a CAD file. A third-party file ships only after it's measured against the maker's drawing to about 0.1 mm.
+Every component in **Parts** is a real product with exact geometry. Its mesh comes from the maker's CAD file, or from the maker's drawing if there's no CAD file. A third-party file ships only after it's measured against the maker's drawing to about 0.1 mm.
 
-Select a component to see its **Product** section in the Inspector. It shows the maker, the part number, mounting notes, where the 3D model came from, and links to buy the part.
+To see where a component comes from, select it and look at the **Product** section in the Inspector. It shows the maker, the part number, mounting notes, where the 3D model came from, and links to buy the part.
 
-When the agent finds a part that isn't in the catalog, the part appears under **Added by Agent** with its link and source.
+If the agent finds a part that isn't in the catalog, the part appears under **Added by Agent** with its link and source.
 
-Estimated stand-ins, such as a generic servo or bracket, never appear in **Parts**. The agent can use them to block out a design, and Checks list each one as a placeholder you need to replace.
+**Note:** Estimated stand-ins, such as a generic servo or bracket, never appear in **Parts**. The agent can use them to block out a design, and Checks list each one as a placeholder you need to replace.
+
+A [generated actuator](/help/make-an-actuator-for-a-joint) is a real ODrive D6374 motor with a printed gearbox on its front. Its parts are exact, but its torque and speed are estimates based on the motor's datasheet and the gear ratio.
 
 ## Assemblies
 
-A robot is an assembly. Screws, inserts and nuts hold its parts together, with joints where parts move. Groups only organize parts and don't hold anything together.
+A robot is an assembly: screws, inserts and nuts hold its parts together, and joints sit where parts move. Groups are only for organizing parts and don't hold anything together.
 
 Checks read the assembly as it's modeled and make sure that:
 
@@ -69,11 +73,11 @@ Checks read the assembly as it's modeled and make sure that:
 - Every screw grips something.
 - There's an order in which everything goes together.
 
-For a list of every check, see [Build tab checks](/help/build-checks).
+To see every check, go to [Build tab checks](/help/build-checks).
 
 ## Mounting ports
 
-Every component has mounting ports: named holes, bores, bosses, faces and outputs, each with a position and a direction. Each port's position and direction come from the maker's mesh, and tests check them against it.
+Every component has mounting ports. These are named holes, bores, bosses, faces and outputs, and each one has a position and a direction. The positions and directions come from the maker's mesh, and tests check each port against it.
 
 For example, the Feetech STS3215 servo has:
 
@@ -81,9 +85,9 @@ For example, the Feetech STS3215 servo has:
 - An idler horn on the underside, with the same hole pattern
 - Four M2 holes on the top of the case and four on the bottom
 
-Bus servos, servo adapters, batteries and regulators also have connector ports where a cable plugs in. Each connector port has a type, such as 5264 or XT60. Connectors never mate. The bill of materials uses them to count cables.
+Bus servos, servo adapters, batteries and regulators also have connector ports, where a cable plugs in. Each connector port has a type, such as 5264 or XT60. Connectors never mate, and the bill of materials uses them to count cables.
 
-Hardware has ports too, and parts the agent models declare their own ports in their code.
+Hardware has ports too. Parts the agent models declare their own ports in their code.
 
 ### How the agent uses ports
 
@@ -97,7 +101,7 @@ The agent places parts by their ports. It mates a port on one part to a port on 
 
 The agent keeps each mate and applies it again whenever it moves or remodels either part. If you drag a mated part yourself, that releases the mate.
 
-When the agent joins two parts with a screw, it picks the stock length based on what the screw passes through. It also adds the washer, insert or nut, and cuts the holes in any parts it modeled.
+When the agent joins two parts with a screw, it picks a stock length to fit what the screw passes through. It also adds the washer, insert or nut, and cuts the holes in any parts it modeled.
 
 ### How Checks use ports
 

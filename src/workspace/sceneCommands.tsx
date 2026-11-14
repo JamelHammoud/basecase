@@ -34,6 +34,7 @@ import { exchangeCommands } from './exchangeCommands';
 import { inputCommands } from './inputCommands';
 import { operateCommands } from './operateCommands';
 import { buildCommands } from './buildCommands';
+import { actuatorCommands } from './actuatorCommands';
 import { leaderCommands } from './leaderCommands';
 import { onshapeCommands } from './onshapeCommands';
 import { keyFor } from '../app/shortcuts';
@@ -310,6 +311,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...exchangeCommands(inputs),
   ...printCommands(inputs),
   ...buildCommands(inputs),
+  ...actuatorCommands(inputs),
   ...simCommands(inputs),
   ...createCommands(inputs),
   ...toolCommands(inputs),

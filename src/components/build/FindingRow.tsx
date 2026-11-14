@@ -23,7 +23,11 @@ export interface FindingContext {
   showDots?: (check: string | null) => void;
 }
 
-const FIX_LABELS: Record<string, string> = { 'new-case': 'New Case', 'replay-fall': 'Replay in Sim' };
+const FIX_LABELS: Record<string, string> = {
+  'new-case': 'New Case',
+  'replay-fall': 'Replay in Sim',
+  'make-actuator': 'Make an Actuator',
+};
 
 const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {
   const [open, setOpen] = useState(false);

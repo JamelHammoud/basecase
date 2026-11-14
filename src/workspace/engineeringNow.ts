@@ -52,7 +52,7 @@ export interface EngineeringNowInput {
 }
 
 const sweepKey = (spec: SweepSpec) =>
-  JSON.stringify([spec.moving, spec.origin, spec.axis, spec.anglesDeg, spec.actuators ?? []]);
+  JSON.stringify([spec.moving, spec.origin, spec.axis, spec.anglesDeg, spec.actuators ?? [], spec.skip ?? []]);
 
 async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs) {
   const sweeps = new Map<string, SweepSpec>();

@@ -62,6 +62,7 @@ import { sizeArmInWorker } from '../arm/armSizingClient';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { RobotSkeleton } from '../types/skeleton';
 import { newId } from './helpers';
+import { makeActuatorRequest } from './makeActuator';
 import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
@@ -75,6 +76,7 @@ export interface RequestContext {
   setProjectNow: (next: ProjectSettings) => void;
   commitConsole: (caseId: string, console: CaseConsole | undefined) => void;
   insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
+  replaceParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
   commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton) => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;
@@ -362,6 +364,7 @@ const HANDLERS: Record<string, Handler> = {
     dataUrl: await downscaleDataUrl(String(payload.dataUrl), Number(payload.maxSide) || EVIDENCE_IMAGE_SIDE, 0.88),
   }),
   apply: applyWithCost,
+  make_actuator: (payload, ctx) => makeActuatorRequest(payload, ctx),
   synthesize_linkage: (payload, ctx) =>
     synthesizeLinkageRequest(payload as LinkagePayload, {
       solve: synthesizeInWorker,

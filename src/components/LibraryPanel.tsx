@@ -10,12 +10,12 @@ import {
 import type { CustomModelDefinition, ScenePart } from '../types/robotics';
 import { modelNote } from '../utils/libraryParts';
 import { useTries } from '../cases/tryStore';
-import { textMatcher, tryMatches } from '../cases/tryQuery';
 import type { Dataset } from '../datasets/datasetFile';
 import { tryGroups } from '../workspace/useTriesView';
+import { useTrySearch } from '../workspace/useTrySearch';
 import { DatasetsSection } from './library/DatasetsSection';
 import { ModelsSection, type SectionState } from './library/sections';
-import { TriesSection } from './library/TriesSection';
+import { TriesSection, TryHitsSection } from './library/TriesSection';
 
 export interface LibraryPanelProps {
   customModels: CustomModelDefinition[];
@@ -28,8 +28,7 @@ export interface LibraryPanelProps {
   onSaveModel: (mode: 'selected' | 'all') => void;
   onImport: () => void;
   onOpenTries: (robot: string) => void;
-  query: string;
-  onQuery: (query: string) => void;
+  onOpenHit: (query: string, tryId: string) => void;
   datasets: Dataset[];
   onOpenDataset: (dataset: Dataset) => void;
   onDeleteDataset: (dataset: Dataset) => void;
@@ -37,15 +36,23 @@ export interface LibraryPanelProps {
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
 
+const matcher = (query: string) => {
+  const q = query.trim().toLowerCase();
+
+  return (...fields: Array<string | undefined>) => !q || fields.some((f) => f?.toLowerCase().includes(q));
+};
+
 export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
-  const { query, onQuery: setQuery } = props;
+  const [query, setQuery] = useState('');
   const [renaming, setRenaming] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
   const { ref: fadeRef, style: fadeStyle } = useScrollFade();
   const searching = query.trim() !== '';
-  const matches = textMatcher(query);
+  const matches = matcher(query);
   const models = props.customModels.filter((m) => matches(m.name, modelNote(m)));
-  const tries = tryGroups((useTries() ?? []).filter(tryMatches(query)));
+  const allTries = useTries() ?? [];
+  const tries = tryGroups(allTries);
+  const found = useTrySearch(query);
   const datasets = props.datasets.filter((d) => matches(d.name, d.task));
   const state: SectionState = {
     renaming,
@@ -76,12 +83,16 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
       </div>
 
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={fadeStyle}>
-        {searching && models.length === 0 && tries.length === 0 && datasets.length === 0 ? (
+        {searching && models.length === 0 && datasets.length === 0 && found?.length === 0 ? (
           <NoMatches query={query} />
         ) : (
           <div className="px-[8px] pb-4">
             {(!searching || models.length > 0) && <ModelsSection props={props} models={models} state={state} />}
-            <TriesSection groups={tries} onOpen={props.onOpenTries} />
+            {searching ? (
+              <TryHitsSection hits={found ?? []} onOpen={(hit) => props.onOpenHit(query, hit.tryId)} />
+            ) : (
+              <TriesSection groups={tries} onOpen={props.onOpenTries} />
+            )}
             <DatasetsSection
               datasets={datasets}
               onOpen={props.onOpenDataset}

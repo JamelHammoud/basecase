@@ -18,7 +18,7 @@ Build Along plays your robot's build guide on the canvas one step at a time, so 
 3. Watch the step's parts and screws fly in along the blue arrows. You can orbit to see the step from any side.
 4. Put each servo into the joint named on its label, for example Shoulder lift, ID 2. First set the servo to that bus ID, so that Operate and the sim drive the right joint.
 5. To go to the next step, press [[→]]. To go back, press [[←]].
-6. To return to your scene, press [[Esc]]. Nothing in your scene changes.
+6. To return to your scene, click **Done** or press [[Esc]]. Nothing in your scene changes.
 
 ![A step with four screws flying into the base along blue arrows, and 4 × M3 × 6 Socket Head Screw listed under the bar](/help/build-along/step.png)
 

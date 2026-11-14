@@ -1,16 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import type { Dataset } from '../datasets/datasetFile';
 import { viewInput } from './useDatasets';
 
-const shown = { selected: [], order: ['a', 'b'], query: 'Touch a Point', dataset: null };
+const shown = { selected: [], order: ['a', 'b'], query: ' Touch a Point ', searching: true };
 
 describe('Make Dataset from Tries mode', () => {
-  it('keeps the Library search when Tries shows what it matches', () => {
-    expect(viewInput(shown)).toEqual({ ids: ['a', 'b'], query: 'Touch a Point' });
+  it('keeps the search, so the dataset takes every try it finds and Update runs it again', () => {
+    expect(viewInput(shown)).toEqual({ query: 'Touch a Point' });
   });
 
-  it('takes only the tries on screen while a dataset is open, whatever the Library search still holds', () => {
-    expect(viewInput({ ...shown, dataset: { id: 'open' } as Dataset })).toEqual({ ids: ['a', 'b'] });
+  it('takes the tries on screen while nothing is searched, as with a dataset open', () => {
+    expect(viewInput({ ...shown, searching: false })).toEqual({ ids: ['a', 'b'] });
   });
 
   it('takes the selected or right-clicked tries alone', () => {

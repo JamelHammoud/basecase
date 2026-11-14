@@ -126,8 +126,8 @@ describe('Tries and datasets in the Library', () => {
     const pane = app.page.getByTestId('dataset-pane');
 
     await openLibrary();
-    await app.page.getByLabel('Search library').fill('Touch a Point');
     await triesRow().click();
+    await app.page.locator(shown('input[aria-label="Search tries"]')).fill('Touch a Point');
     await expect.poll(() => tiles().count()).toBeGreaterThan(0);
 
     const matching = await tiles().count();

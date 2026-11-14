@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
 import type { Case } from '../cases/schema';
 import type { TrySummary } from '../cases/tryFile';
-import { tryMatches } from '../cases/tryQuery';
+import { searchTries } from '../cases/trySearch/trySearchClient';
 import { addMembers, newDataset, withMembers, type Dataset } from '../datasets/datasetFile';
 import { deleteDatasets, saveDataset } from '../datasets/datasetStore';
 import { confirmAction } from '../design-system/confirmStore';
@@ -11,7 +11,7 @@ import { newId } from './helpers';
 import type { ShowToast } from './types';
 import type { Cases } from './useCases';
 import type { SimTraining } from './useSimTraining';
-import { tryGroups, useTriesView, type TriesView } from './useTriesView';
+import { useTriesView, type TriesView } from './useTriesView';
 
 export interface MakeDatasetInput {
   ids?: string[];
@@ -43,28 +43,27 @@ function commonCase(members: TrySummary[], cases: Cases): Case | null {
   return ranked.map((id) => cases.cases.find((c) => c.id === id)).find(Boolean) ?? null;
 }
 
-const allInOrder = (all: TrySummary[]) => tryGroups(all).flatMap((g) => g.tries);
+const DATASET_TRIES = 100_000;
 
-function membersFor(input: MakeDatasetInput, all: TrySummary[]) {
-  const ordered = allInOrder(all);
+const searchedIds = async (query: string) => (await searchTries(query, DATASET_TRIES)).map((hit) => hit.tryId);
 
-  if (input.query?.trim()) return { members: ordered.filter(tryMatches(input.query)), leftOut: 0 };
-
+async function membersFor(input: MakeDatasetInput, all: TrySummary[]) {
   const byId = new Map(all.map((t) => [t.id, t]));
-  const members = [...new Set(input.ids ?? [])].flatMap((id) => byId.get(id) ?? []);
+  const query = input.query?.trim();
+  const ids = query ? await searchedIds(query) : [...new Set(input.ids ?? [])];
+  const members = ids.flatMap((id) => byId.get(id) ?? []);
 
-  return { members, leftOut: (input.ids?.length ?? 0) - members.length };
+  return { members, leftOut: query ? 0 : ids.length - members.length };
 }
 
-type ShownTries = Pick<TriesView, 'selected' | 'order' | 'query' | 'dataset'>;
+type ShownTries = Pick<TriesView, 'selected' | 'order' | 'query' | 'searching'>;
 
 export function viewInput(view: ShownTries, ids?: string[]): MakeDatasetInput {
   const chosen = ids ?? (view.selected.length ? view.selected : null);
-  const query = view.dataset ? '' : view.query.trim();
 
   if (chosen) return { ids: chosen };
 
-  return query ? { ids: view.order, query } : { ids: view.order };
+  return view.searching ? { query: view.query.trim() } : { ids: view.order };
 }
 
 const caseTask = (kase: Case | null, name: string) => (kase ? kase.brief.trim() || kase.name : name);
@@ -75,8 +74,8 @@ const chosenCase = (input: MakeDatasetInput, members: TrySummary[], cases: Cases
 const nameOf = (input: MakeDatasetInput, kase: Case | null, first: TrySummary) =>
   input.name?.trim() || kase?.name || input.query?.trim() || first.caseName || first.robot;
 
-function built(input: MakeDatasetInput, all: TrySummary[], cases: Cases): MadeDataset {
-  const { members, leftOut } = membersFor(input, all);
+async function built(input: MakeDatasetInput, all: TrySummary[], cases: Cases): Promise<MadeDataset> {
+  const { members, leftOut } = await membersFor(input, all);
 
   if (!members.length) return { problem: input.query ? `No tries match ${input.query}.` : 'No tries have these ids.' };
 
@@ -109,7 +108,7 @@ export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions
   };
 
   const make = async (input: MakeDatasetInput): Promise<MadeDataset> => {
-    const made = built(input, view.all, cases);
+    const made = await built(input, view.all, cases);
 
     if ('problem' in made) return made;
 
@@ -173,11 +172,9 @@ export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions
     update: (dataset: Dataset) => {
       if (!dataset.query) return;
 
-      const ids = allInOrder(view.all)
-        .filter(tryMatches(dataset.query))
-        .map((t) => t.id);
-
-      saveDataset(withMembers(dataset, ids)).catch(failed);
+      searchedIds(dataset.query)
+        .then((ids) => saveDataset(withMembers(dataset, ids)))
+        .catch(failed);
     },
     remove: (dataset: Dataset) =>
       confirmAction({

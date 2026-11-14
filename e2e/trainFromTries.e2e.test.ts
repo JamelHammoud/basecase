@@ -86,8 +86,8 @@ async function runCommand(label: string) {
 
 async function datasetFromSearch(query: string) {
   await app.page.locator(visible('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
-  await app.page.getByLabel('Search library').fill(query);
   await app.page.locator(visible('[data-testid="library-tries"] button')).first().click();
+  await app.page.locator(visible('input[aria-label="Search tries"]')).fill(query);
   await expect.poll(() => app.page.locator(visible('[data-testid="try-tile"]')).count()).toBe(TRIES);
   await runCommand('Make Dataset');
   await expect.poll(() => app.page.getByTestId('dataset-pane').count()).toBe(1);

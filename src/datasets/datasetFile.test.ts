@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TrySummary } from '../cases/tryFile';
 import { addMembers, freezeVersion, newDataset, readDataset, versionHash, withMembers } from './datasetFile';
 import { heldOut, splitOf } from './datasetSplit';
-import { memberGroups, memberRecord, membersOf, queryMembers, totalSeconds } from './datasetView';
+import { memberGroups, memberRecord, membersOf, totalSeconds } from './datasetView';
 
 const summary = (id: string, over: Partial<TrySummary> = {}): TrySummary => ({
   id,
@@ -135,14 +135,12 @@ describe('a dataset’s members', () => {
     expect(memberGroups(members, { ...here, modelHash: null }).fitting).toEqual(members);
   });
 
-  it('reruns its query on Update, picking up tries recorded since', () => {
-    const before = [summary('a'), summary('b', { caseName: 'Push the Box' })];
-    const dataset = made(queryMembers('grasp', before), { query: 'grasp' });
-    const after = [...before, summary('c'), summary('d', { source: 'real' })];
+  it('keeps its query when Update replaces its members with what the search finds now', () => {
+    const dataset = made(['a'], { query: 'grasp' });
+    const updated = withMembers(dataset, ['a', 'c', 'c', 'd']);
 
-    expect(dataset.members).toEqual(['a']);
-    expect(withMembers(dataset, queryMembers(dataset.query!, after)).members).toEqual(['a', 'c', 'd']);
-    expect(queryMembers('real', after)).toEqual(['d']);
+    expect(updated.members).toEqual(['a', 'c', 'd']);
+    expect(updated.query).toBe('grasp');
   });
 
   it('adds up its total time', () => {

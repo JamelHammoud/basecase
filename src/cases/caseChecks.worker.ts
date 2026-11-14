@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
-import loadMujoco, { type MainModule } from '@mujoco/mujoco';
+import type { MainModule } from '@mujoco/mujoco';
 import { CaseCheckSession, replyTransfer, type CaseCheckJob } from './caseCheckJob';
+import { loadMujoco } from '../sim/loadMujoco';
 import { errorMessage } from '../utils/errorMessage';
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;

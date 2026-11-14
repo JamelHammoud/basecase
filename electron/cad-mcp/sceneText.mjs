@@ -106,10 +106,18 @@ function summary(snap, picked, marks) {
   ].join('\n');
 }
 
+const consoleLines = (consoles) =>
+  consoles?.length
+    ? ['Case consoles, as they stand with the person’s own changes:', ...consoles.map((c) => JSON.stringify(c))]
+    : [];
+
 export function sceneText(snap, filter = {}) {
   const filtered = !!(filter.ids?.length || filter.group);
   const picked = pickParts(snap.parts, filter);
-  const marks = snap.marks?.length ? ['Marks:', ...snap.marks.map((m) => JSON.stringify(m))] : [];
+  const marks = [
+    ...(snap.marks?.length ? ['Marks:', ...snap.marks.map((m) => JSON.stringify(m))] : []),
+    ...consoleLines(snap.consoles),
+  ];
   const list = (withNotes) =>
     [
       ...header(snap, picked, filtered),

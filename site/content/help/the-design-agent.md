@@ -41,8 +41,9 @@ The agent can also pose and animate the robot, run it in the simulation, write a
 - Ask it to change how a ready Motor Kit skill moves. The agent keeps the change if Arena passes it and drops it if not.
 - For a Routine, it proves each switch between skills and names any that fell.
 - With a Case and two open scenes, it tells you which robot passes more often.
-- Ask what happened in a try. The agent reads the try's recording and answers with times and values.
-- Ask which servo to buy. The agent runs the Case on each catalog version and answers with passes, cost and mass.
+- Ask what happened in a try. It reads the try's recording and answers with times and values.
+- Ask for tries, such as failed grasps from last week. It searches the tries from every scene and names the ones that match.
+- Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
 
 Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, printed parts that are bolted together on one link get merged into a single print.
 

@@ -137,6 +137,32 @@ describe('TryStore', () => {
     expect(await post('/tries-strip', 'try-1')).toEqual({ data: Buffer.from([9, 9]).toString('base64') });
   });
 
+  it('stamps summaries with the manifest time, reads manifests in batches and keeps the search index', async () => {
+    store.save({ manifest: manifest('try-1', { task: 'Grasp the block' }), recording: null });
+    store.save({ manifest: manifest('try-2'), recording: null });
+
+    const stamp = fs.statSync(path.join(dir, 'tries', 'try-1', TRY_MANIFEST)).mtimeMs;
+
+    expect(store.list().find((s) => s.id === 'try-1').stamp).toBe(stamp);
+    expect(open().list().find((s) => s.id === 'try-1').stamp).toBe(stamp);
+    expect(store.manifests(['try-1', 'gone'])).toEqual([manifest('try-1', { task: 'Grasp the block' })]);
+    expect(() => store.manifests(Array.from({ length: 501 }, (_, i) => `try-${i}`))).toThrow('Too many');
+    expect(() => store.manifests(['../auth'])).toThrow('Not a valid id');
+
+    expect(store.index()).toBeNull();
+    store.saveIndex(new Uint8Array([4, 5, 6]));
+    expect(fs.existsSync(path.join(dir, '.try-index.bin'))).toBe(true);
+    expect([...open().index()]).toEqual([4, 5, 6]);
+    expect(() => store.saveIndex('nope')).toThrow('Expected bytes');
+
+    const routes = tryPostRoutes(store);
+    const post = (url, arg) => routes.find(([prefix]) => url.startsWith(prefix))[1]({ arg });
+
+    await post('/tries-keep-index', { bytes: Buffer.from([7, 8]).toString('base64') });
+    expect(await post('/tries-index')).toEqual({ data: Buffer.from([7, 8]).toString('base64') });
+    expect((await post('/tries-manifests', ['try-2'])).map((m) => m.id)).toEqual(['try-2']);
+  });
+
   it('never reads, writes or deletes a try outside its own folder', () => {
     const triesDir = path.join(dir, 'tries');
     const secret = path.join(dir, 'auth.json');
@@ -152,6 +178,7 @@ describe('TryStore', () => {
       expect(() => store.recording(id), String(id)).toThrow('Not a valid id');
       expect(() => store.strip(id), String(id)).toThrow('Not a valid id');
       expect(() => store.saveStrip({ id, bytes }), String(id)).toThrow('Not a valid id');
+      expect(() => store.update({ manifest: manifest(id) }), String(id)).toThrow('Not a valid id');
       expect(() => store.delete(['ok', id]), String(id)).toThrow('Not a valid id');
     }
 
@@ -159,5 +186,24 @@ describe('TryStore', () => {
     expect(() => store.delete('../auth')).toThrow();
     expect(fs.readFileSync(secret, 'utf-8')).toBe('{"token":"x"}');
     expect(fs.existsSync(triesDir) ? fs.readdirSync(triesDir) : []).toEqual([]);
+  });
+});
+
+describe('Updating a manifest', () => {
+  it('updates a kept manifest and never brings back a deleted try', async () => {
+    store.save({ manifest: manifest('try-1'), recording: new Uint8Array(8) });
+    store.delete(['try-1']);
+
+    expect(store.update({ manifest: manifest('try-1', { task: 'Lift' }) })).toEqual({ ok: false });
+    expect(fs.existsSync(path.join(dir, 'tries', 'try-1'))).toBe(false);
+
+    store.save({ manifest: manifest('try-2'), recording: new Uint8Array(8) });
+
+    const routes = tryPostRoutes(store);
+    const post = (url, arg) => routes.find(([prefix]) => url.startsWith(prefix))[1]({ arg });
+
+    expect(await post('/tries-update', { manifest: manifest('try-2', { task: 'Lift' }) })).toEqual({ ok: true });
+    expect(store.manifests(['try-2'])).toEqual([manifest('try-2', { task: 'Lift' })]);
+    expect(store.recording('try-2')).toHaveLength(8);
   });
 });

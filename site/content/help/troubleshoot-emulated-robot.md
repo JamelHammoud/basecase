@@ -1,7 +1,7 @@
 ---
 title: Emulated robot refuses a rung or stops
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 2
@@ -26,6 +26,7 @@ covers:
   - hw/crates/robot-daemon/src/ladder/mod.rs
   - hw/crates/robot-daemon/src/fault.rs
   - electron/robot/robotLink.mjs
+  - electron/robot/intentPacer.mjs
 ---
 
 If Operate won't let you climb a rung, or the emulated robot stops, find the message you're seeing or the button that's missing below.
@@ -81,7 +82,7 @@ If the robot is an arm, you can click **Replay in Sim** under the fault to play 
 
 ## "The app stopped talking to the robot"
 
-The full message is "The app stopped talking to the robot, so the robot is holding still." The app checks in with the robot daemon every 100 ms, and you'll see this message when it misses a check-in. This can happen when the computer is under heavy load or goes to sleep.
+The full message is "The app stopped talking to the robot, so the robot is holding still." The app checks in with the robot daemon every 30 ms, and the robot stops after 100 ms without a check-in. You'll see this message when Basecase stops responding for about a second, or when the computer goes to sleep or is under very heavy load.
 
 1. Click **Look** under **Ladder**.
 2. If you see **Clear Fault**, click it.

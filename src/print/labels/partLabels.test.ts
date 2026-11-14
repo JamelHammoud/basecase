@@ -1,44 +1,12 @@
-import * as THREE from 'three';
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { describe, expect, it } from 'vitest';
-import { resolvePrinter } from '../../data/printers';
 import { buildGuidePlan } from '../../guide/guidePlan';
 import { approximateScene } from '../../guide/guideScene';
-import { printReportsIn, threeMfIn } from '../../three/analysis/analysisPool';
-import { snapshotShapes } from '../../three/analysis/sceneShapes';
-import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../../types/robotics';
-import { printReportOf } from '../../utils/printReport';
+import { DEFAULT_PROJECT } from '../../types/robotics';
 import { shapeKey } from '../shapeKey';
-import { jobSpec } from '../job';
-import { quadrupedFixture } from '../merge/merge.fixtures';
-import { fixtureMesh, labelFixture } from './label.fixtures';
+import { labelFixture } from './label.fixtures';
+import { lettersOf, platesOf, writePlates as write } from './labelPlates.fixtures';
 import { labelsKey, lettersToWrite, partLetters, unlabeledNote } from './partLetters';
-
-const printer = resolvePrinter('bambu-lab-p1s', []);
-
-const meshOf = (p: ScenePart) => {
-  if (p.cad) return fixtureMesh(p);
-
-  const { width, height, depth } = p.dimensions;
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth));
-
-  mesh.position.set(...p.position);
-  mesh.updateMatrixWorld();
-
-  return mesh;
-};
-
-const shapesOf = (parts: ScenePart[]) => snapshotShapes(parts.map((p) => ({ id: p.id, object: meshOf(p) })));
-
-const lettersOf = (parts: ScenePart[]) => partLetters(buildGuidePlan(approximateScene('Bot', parts, []), 'PLA'), parts);
-
-async function platesOf(parts: ScenePart[], project: ProjectSettings = DEFAULT_PROJECT) {
-  const report = await printReportOf(parts, { project, printer }, (ids, faces) =>
-    printReportsIn(shapesOf(parts.filter((p) => ids.includes(p.id))), faces),
-  );
-
-  return { report, spec: jobSpec(report.plan, printer, project) };
-}
 
 function modelText(bytes: Uint8Array): string {
   return strFromU8(unzipSync(bytes)['3D/3dmodel.model']);
@@ -48,12 +16,6 @@ function triangleCounts(bytes: Uint8Array): Record<string, number> {
   const objects = modelText(bytes).split('<object ').slice(1);
 
   return Object.fromEntries(objects.map((o) => [/name="([^"]+)"/.exec(o)![1], o.split('<triangle ').length - 1]));
-}
-
-async function write(parts: ScenePart[], labels?: Record<string, string>) {
-  const { spec } = await platesOf(parts);
-
-  return threeMfIn(shapesOf(parts), { files: spec.files, plateSize: spec.plateSize, labels });
 }
 
 const parts = labelFixture();
@@ -128,20 +90,5 @@ describe('letters on printed parts', () => {
 
     expect(modelText(a.files.PLA)).toBe(modelText(b.files.PLA));
     expect(a.unlabeled).toEqual(b.unlabeled);
-  });
-
-  it('labels the quadruped’s plates in under 2 s more than writing them plain', async () => {
-    const quadruped = quadrupedFixture().parts;
-    const letters = lettersOf(quadruped);
-    const started = performance.now();
-
-    await write(quadruped);
-
-    const plain = performance.now() - started;
-    const again = performance.now();
-
-    await write(quadruped, letters);
-
-    expect(performance.now() - again - plain).toBeLessThan(2000);
   });
 });

@@ -27,14 +27,13 @@ covers:
   - src/workspace/useDatasetRecords.ts
   - src/workspace/datasetCommands.tsx
   - src/workspace/useTriesView.ts
-  - src/cases/tryQuery.ts
   - src/datasets/datasetFile.ts
   - src/datasets/datasetView.ts
   - src/datasets/datasetStore/
   - electron/library/datasetStore.mjs
 ---
 
-A dataset collects tries from any scene under one name. You can export it, publish it or train a policy on it. You can make one from a Case's results or from a Library search.
+A dataset collects tries from any scene under one name. You can export it, publish it or train a policy on it. You can make one from a Case's results or from a search of your tries.
 
 ## From a Case's results
 
@@ -47,17 +46,14 @@ The dataset opens over the canvas with the Case's passed tries in it. It takes i
 
 Or press [[⌘K]] while the Case is open and choose **Make Dataset**.
 
-## From a Library search
+## From a search
 
 1. Click **Library** in the view rail on the left.
-2. In the search box at the top, type a Case's name, a robot's name, Variation or Real.
-3. Under **Tries**, click a robot. Tries fills the canvas with the tries that match your search.
-
-![Tries showing only the tries that match Touch a Point in the Library search](/help/make-a-dataset-from-tries/search.png)
-
+2. Under **Tries**, click a robot. Tries fills the canvas.
+3. In the search field at the top of Tries, type what you're after, such as a Case's name or failed last week. See [Search tries](/help/search-tries).
 4. Press [[⌘K]] and choose **Make Dataset**.
 
-The dataset holds every try on screen and keeps your search. If the scene has the Case those tries came from, the dataset takes that Case's name. If it doesn't, the dataset takes the name of your search.
+The dataset holds every try the search finds and keeps your search. If the scene has the Case those tries came from, the dataset takes that Case's name. If it doesn't, the dataset takes the name of your search.
 
 To make a dataset from only some of the tries, hold [[⌘]] or [[⇧]] as you select them, then right-click one and choose **Make Dataset**.
 

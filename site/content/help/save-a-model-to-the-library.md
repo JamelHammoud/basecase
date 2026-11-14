@@ -54,11 +54,7 @@ To see a model's details, hold your pointer over it. The details show where the 
 
 ![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)
 
-You can use **Search library** to find:
-
-- Models, by name or notes
-- Tries, by Case or task, robot, label, or the file or repo they came from
-- Datasets, by name or task
+**Search library** finds models by name or notes, and datasets by name or task. It also finds tries from every scene, by words and by facts such as failed or last week. See [Search tries](/help/search-tries).
 
 To rename, duplicate, or delete a model, right-click it. Basecase asks before it deletes a model.
 

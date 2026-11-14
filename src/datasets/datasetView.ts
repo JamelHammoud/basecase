@@ -1,6 +1,5 @@
 import { summaryRecord, type TrySummary } from '../cases/tryFile';
 import type { TryRecord } from '../cases/tries';
-import { tryMatches } from '../cases/tryQuery';
 import type { Dataset } from './datasetFile';
 
 export const totalSeconds = (members: TrySummary[]) => members.reduce((sum, t) => sum + t.seconds, 0);
@@ -35,8 +34,6 @@ export function memberGroups(members: TrySummary[], here: OpenModel): MemberGrou
     elsewhere: apart.filter((t) => !sameCase(t)),
   };
 }
-
-export const queryMembers = (query: string, tries: TrySummary[]) => tries.filter(tryMatches(query)).map((t) => t.id);
 
 export const memberRecord = (summary: TrySummary): TryRecord => ({
   ...summaryRecord(summary),

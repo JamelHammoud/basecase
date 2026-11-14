@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { summaryRecord, type TrySummary } from '../cases/tryFile';
 import { goingWith } from '../cases/tries';
 import { deleteTries, useTries } from '../cases/tryStore';
-import { tryMatches } from '../cases/tryQuery';
 import type { Dataset } from '../datasets/datasetFile';
 import { useDatasets } from '../datasets/datasetStore';
 import { confirmAction } from '../design-system/confirmStore';
@@ -10,6 +9,8 @@ import { plural } from '../../electron/plural.mjs';
 import { errorMessage } from '../utils/errorMessage';
 import type { ShowToast } from './types';
 import type { TryTimeline } from './useTryTimeline';
+import type { TryHit } from '../cases/trySearch/types';
+import { likeQuery, useTrySearch } from './useTrySearch';
 
 export interface TryGroup {
   robot: string;
@@ -58,6 +59,8 @@ export const goingTries = (all: TrySummary[], ids: string[]) => {
   return all.filter((t) => going(t.id, t.source === 'generated' ? t.sourceTry : null)).map((t) => t.id);
 };
 
+export const hitOrder = (hits: TryHit[]) => hits.map((h) => h.tryId);
+
 export interface TriesPlace {
   open: boolean;
   robot: string | null;
@@ -86,6 +89,8 @@ const datasetGroups = (dataset: Dataset, all: TrySummary[]) => {
   return tryGroups(dataset.members.flatMap((id) => byId.get(id) ?? []));
 };
 
+const groupOrder = (groups: TryGroup[]) => groups.flatMap((g) => g.tries.map((t) => t.id));
+
 export function useTriesView({ places, timeline, showToast }: TriesViewOptions) {
   const all = useTries() ?? [];
   const datasets = useDatasets() ?? [];
@@ -94,8 +99,10 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
   const dataset = (place.dataset && datasets.find((d) => d.id === place.dataset)) || null;
   const [query, setQuery] = useState('');
   const [pick, setPick] = useState<{ selected: string[]; anchor: string | null }>({ selected: [], anchor: null });
-  const groups = dataset ? datasetGroups(dataset, all) : tryGroups(all.filter(tryMatches(query)));
-  const order = groups.flatMap((g) => g.tries.map((t) => t.id));
+  const hits = useTrySearch(query);
+  const searching = !dataset && query.trim() !== '';
+  const groups = dataset ? datasetGroups(dataset, all) : tryGroups(all);
+  const order = searching ? hitOrder(hits ?? []) : groupOrder(groups);
   const selected = pick.selected.filter((id) => order.includes(id));
 
   const show = (id: string) => {
@@ -108,6 +115,7 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
     if (timeline.open) timeline.close();
 
     setPlace(CLOSED);
+    setQuery('');
     setPick({ selected: [], anchor: null });
   };
 
@@ -131,20 +139,30 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
     open,
     robot,
     groups,
+    query,
+    hits,
     selected,
     order,
     all,
-    query,
+    searching,
     setQuery,
     dataset,
     datasets,
     openFor: (name: string | null) => {
       setPick({ selected: [], anchor: null });
+      setQuery('');
       setPlace({ open: true, robot: name, dataset: null });
     },
     openDataset: (id: string) => {
       setPick({ selected: [], anchor: null });
+      setQuery('');
       setPlace({ open: true, robot: null, dataset: id });
+    },
+    openAt: (text: string, tryId: string) => {
+      setQuery(text);
+      setPlace({ open: true, robot: null, dataset: null });
+      setPick({ selected: [tryId], anchor: tryId });
+      show(tryId);
     },
     close,
     pick: (id: string, keys: PickKeys, shown = order) => {
@@ -154,6 +172,7 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
 
       if (next.selected.includes(id)) show(id);
     },
+    like: (tryId: string) => setQuery(likeQuery(tryId)),
     remove: (id?: string) => remove(id && !selected.includes(id) ? [id] : selected),
   };
 }

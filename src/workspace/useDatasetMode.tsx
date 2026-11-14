@@ -2,7 +2,14 @@ import React, { useEffect, useEffectEvent, useState } from 'react';
 import { sha256, type TryRecord } from '../cases/tries';
 import { TRIES_TO_TRAIN } from '../skills/triesTraining';
 import type { TrySummary } from '../cases/tryFile';
-import { MenuItem, PlusIcon, SpreadsheetIcon, deleteEntry, type ContextMenuEntry } from '../design-system';
+import {
+  MenuItem,
+  PlusIcon,
+  SpreadsheetIcon,
+  deleteEntry,
+  moreLikeThisEntry,
+  type ContextMenuEntry,
+} from '../design-system';
 import type { Dataset } from '../datasets/datasetFile';
 import { memberGroups, membersOf } from '../datasets/datasetView';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -70,7 +77,10 @@ function tileMenu(core: WorkspaceCore, id: string): ContextMenuEntry[] {
       ]
     : [];
 
+  const like = view.dataset ? [] : [moreLikeThisEntry(() => view.like(id))];
+
   return [
+    ...like,
     { label: 'Make Dataset', icon: <SpreadsheetIcon />, onSelect: () => datasets.makeFromView(ids) },
     ...addTo,
     deleteEntry(() => view.remove(id), '⌫'),

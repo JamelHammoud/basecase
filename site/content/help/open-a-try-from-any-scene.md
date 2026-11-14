@@ -46,7 +46,7 @@ You can open any try you've recorded, from any scene, and step through it on the
 
 To open Tries from the command menu, press [[⌘K]], then choose **Show Tries**.
 
-The search at the top of the Library finds tries too. It matches a try's Case or task, its robot, the Variation or Real label on its tile, and the file or repo an imported try came from. To gather the tries it shows into a dataset, press [[⌘K]] and choose **Make Dataset**. For more information, see [Make a dataset from tries](/help/make-a-dataset-from-tries).
+The search at the top of the Library also finds tries, by words or by facts such as failed or last week. See [Search tries](/help/search-tries). To gather the tries a search finds into a dataset, press [[⌘K]] and choose **Make Dataset**. For more information, see [Make a dataset from tries](/help/make-a-dataset-from-tries).
 
 To delete tries, select them and press [[⌫]], then click **Delete**. To select more than one try, hold [[⌘]] or [[⇧]] while you click. Deleting a try also deletes any Variations that came from it.
 

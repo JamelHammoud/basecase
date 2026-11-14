@@ -33,6 +33,7 @@ export const STAYS_IN_RUN = new Set([
   'drive-respawn',
   'case-try',
   'case-multiply',
+  'case-add-panel',
   'case-export-dataset',
   'case-publish-dataset',
   'case-train-from-tries',
@@ -98,6 +99,21 @@ function matCommands({ simTraining, tool }: WorkspaceCore): Command[] {
   const idle = realTry.canStart && attempt.phase === 'idle';
 
   return [exportMat, ...(idle ? [tryReal] : [])];
+}
+
+function addPanelCommands({ consoleEditing }: WorkspaceCore): Command[] {
+  if (!consoleEditing) return [];
+
+  return [
+    {
+      id: 'case-add-panel',
+      group: 'Simulate',
+      label: 'Add Panel',
+      icon: <PlusIcon />,
+      keywords: 'console layout plot value camera table chart readout dashboard arrange',
+      run: () => consoleEditing.startAdd(),
+    },
+  ];
 }
 
 function renameCommands(core: WorkspaceCore): Command[] {
@@ -254,6 +270,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...respawn,
     ...tryIt,
     ...caseRun,
+    ...addPanelCommands(core),
     ...renameCommands(core),
     ...(cases.active ? compareCommands(core) : []),
     ...exploreCommands(core),

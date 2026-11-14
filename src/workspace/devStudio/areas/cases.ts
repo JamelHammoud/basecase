@@ -33,6 +33,7 @@ export default function casesStudio(studio: Studio) {
       return (newest && (await loadRecording(newest.id))?.world) ?? [];
     },
     sharedLink: () => studio().core.simTraining.share.link,
+    caseConsole: () => cases().active?.console ?? null,
     caseRunState: () => {
       const { open, live, playback } = studio().core.caseRun;
 

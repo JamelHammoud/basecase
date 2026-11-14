@@ -80,6 +80,7 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
         <TryTimeline
           timeline={core.simTraining.cases.timeline}
           rig={core.posing.rig}
+          closable={!core.caseRun.doneClosesTimeline}
           onSelectParts={core.setSelectedIds}
         />
       )}
@@ -101,6 +102,7 @@ export function CanvasCard(props: CanvasCardProps) {
 
   return (
     <main
+      data-canvas-card
       className="relative flex-1 min-w-0 h-full overflow-hidden bg-[#1b1b1b] rounded-[12px]"
       {...pointerHandlers}
       {...drop.dropHandlers}

@@ -29,7 +29,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 
 | Tool | What it does |
 |---|---|
-| `get_scene` | Lists the scene's parts, one per line, and your marks |
+| `get_scene` | Lists the scene's parts, one per line, your marks, and each Case's console as you arranged it |
 | `find_in_scene` | Finds parts by words, group, kind, region or nearness |
 | `get_part_code` | Reads a modeled part's code |
 | `add_parts` | Adds block-out shapes and real catalog parts |
@@ -122,6 +122,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `read_try` | Reads one try from its recording: its signals over a time window, when each failure first tripped, and a picture of the canvas at one moment |
 | `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
 | `explore_case` | Runs a Case on each catalog version of the robot's servos and supply voltage |
+| `search_tries` | Searches the tries from every scene with the same words and facts as the Library's search, or by motion |
 | `make_dataset` | Gathers tries from any scene into a dataset, by search or by id, and opens it |
 | `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine, and proves each new switch between skills in it |
 | `test_routine`, `run_routine` | Tests and runs a Routine |

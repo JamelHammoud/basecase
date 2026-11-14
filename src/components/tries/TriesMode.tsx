@@ -1,16 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ContextMenu, ModeHeader, SectionHeader, useScrollFade, type ContextMenuEntry } from '../../design-system';
+import {
+  ContextMenu,
+  ModeHeader,
+  SearchField,
+  SectionHeader,
+  useScrollFade,
+  type ContextMenuEntry,
+} from '../../design-system';
 import type { TrySummary } from '../../cases/tryFile';
 import type { DatasetMode } from '../../workspace/useDatasetMode';
 import { EARLIER_TRIES, OTHER_TRIES } from '../../workspace/useDatasetExport';
 import { tryGroups, type TriesView } from '../../workspace/useTriesView';
 import { DatasetPane } from './DatasetPane';
+import { TRIES_GRID, TryResults } from './TryResults';
 import { TryTile, type TileScene } from './TryTile';
 import { useTriesKeys } from './useTriesKeys';
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
-
-const GRID = 'grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2';
 
 interface TriesModeProps {
   active: boolean;
@@ -31,7 +37,7 @@ interface TileGridProps {
 }
 
 const TileGrid: React.FC<TileGridProps> = ({ tries, view, order, sceneId, scene, showMenu }) => (
-  <div className={GRID}>
+  <div className={TRIES_GRID}>
     {tries.map((t) => (
       <TryTile
         key={t.id}
@@ -72,11 +78,27 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, mode, timeli
     body.current?.querySelector(`[data-robot="${CSS.escape(view.robot)}"]`)?.scrollIntoView({ block: 'start' });
   }, [view.robot]);
 
+  const summaries = new Map(view.groups.flatMap((g) => g.tries.map((t) => [t.id, t] as const)));
+
   const showMenu = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setMenu({ x: e.clientX, y: e.clientY, entries: mode.menu(id) });
   };
+
+  const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Escape') return;
+
+    if (view.query) {
+      view.setQuery('');
+
+      return;
+    }
+
+    e.stopPropagation();
+    e.currentTarget.blur();
+  };
+
   const grid = { view, order, sceneId, scene, showMenu };
 
   return (
@@ -89,18 +111,46 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, mode, timeli
         e.stopPropagation();
       }}
     >
-      <ModeHeader title={mode.dataset?.name ?? 'Tries'} onDone={view.close} />
+      <ModeHeader
+        title={mode.dataset?.name ?? 'Tries'}
+        onDone={view.close}
+        actions={
+          !mode.dataset && (
+            <SearchField
+              value={view.query}
+              onChange={view.setQuery}
+              onKeyDown={onSearchKey}
+              placeholder="e.g. failed grasp red block last week"
+              aria-label="Search tries"
+              className="w-[300px]"
+            />
+          )
+        }
+      />
       {mode.dataset && mode.actions && (
         <DatasetPane dataset={mode.dataset} members={mode.members} actions={mode.actions} />
       )}
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto" style={fadeStyle}>
         <div ref={body} className="px-[12px] pb-6 flex flex-col gap-4">
-          {groups.map((g) => (
-            <section key={g.robot} data-robot={g.robot}>
-              <SectionHeader title={g.robot} />
-              <TileGrid tries={g.tries} {...grid} />
-            </section>
-          ))}
+          {view.searching ? (
+            <TryResults
+              query={view.query}
+              hits={view.hits}
+              summaries={summaries}
+              selected={view.selected}
+              sceneId={sceneId}
+              scene={scene}
+              onPick={view.pick}
+              onMenu={showMenu}
+            />
+          ) : (
+            groups.map((g) => (
+              <section key={g.robot} data-robot={g.robot}>
+                <SectionHeader title={g.robot} />
+                <TileGrid tries={g.tries} {...grid} />
+              </section>
+            ))
+          )}
           <Apart tries={mode.earlier} testId="dataset-earlier" note={EARLIER_TRIES} {...grid} />
           <Apart tries={mode.elsewhere} testId="dataset-elsewhere" note={OTHER_TRIES} {...grid} />
         </div>

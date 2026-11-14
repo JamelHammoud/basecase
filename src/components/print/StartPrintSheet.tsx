@@ -4,6 +4,7 @@ import type { PrinterSetup } from '../../data/printers';
 import type { Plate } from '../../print/plan';
 import type { PrinterStatus, SlicedPlate } from '../../print/printBridge';
 import { duration } from '../../utils/duration';
+import { weight } from '../../utils/weight';
 import { plateNumbers } from './plateFacts';
 
 interface StartPrintSheetProps {
@@ -48,7 +49,7 @@ export const StartPrintSheet: React.FC<StartPrintSheetProps> = ({ plate, sliced,
         <div className="min-w-0 flex flex-col gap-2 text-[13px] text-white/80">
           <MetaLine
             className="text-[12.5px] text-white/50 tabular-nums"
-            items={[`${exact ? '' : '≈ '}${duration(hours * 3600, 'min')}`, `${Math.round(grams)} g`]}
+            items={[`${exact ? '' : '≈ '}${duration(hours * 3600, 'min')}`, weight(grams)]}
           />
           <p>{trayNote(plate, live)}</p>
           <p>

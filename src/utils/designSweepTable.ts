@@ -2,6 +2,7 @@ import type { CheckRow, EngineeringReport } from './engineeringTypes';
 import { formatWhole } from './currencyStore';
 import { prettyJointName } from './kinematics';
 import { runClock } from './duration';
+import { weight } from './weight';
 
 export interface SweepSim {
   fellAt: number | null;
@@ -59,7 +60,6 @@ function withDelta(v: number | undefined, base: number | undefined, fmt: Fmt): s
 const share: Fmt = (v) => v.toFixed(2);
 const usd: Fmt = (v) => formatWhole(v);
 const tip: Fmt = (v) => `${v.toFixed(1)}°`;
-const grams: Fmt = (v) => `${Math.round(v)} g`;
 
 function simCell(sim: SweepMetrics['sim'], base: SweepMetrics['sim']): string {
   if (sim === undefined) return '—';
@@ -77,7 +77,7 @@ function cells(m: SweepMetrics, base: SweepMetrics): string[] {
   const torque = `${MARK[m.torque]} ${m.worstJoint ?? ''} ${withDelta(m.worstShare, base.worstShare, share)}`;
 
   return [
-    withDelta(m.massG, base.massG, grams),
+    withDelta(m.massG, base.massG, weight),
     torque.replace(/\s+/g, ' '),
     withDelta(m.servosUsd, base.servosUsd, usd),
     withDelta(m.sizedUsd, base.sizedUsd, usd),
@@ -89,7 +89,7 @@ function cells(m: SweepMetrics, base: SweepMetrics): string[] {
 export function sweepTable(base: SweepRow, rows: SweepRow[]): string {
   const head = [
     'Value',
-    'Mass',
+    'Weight',
     'Servo torque (worst, share of stall)',
     'Servos as chosen',
     'Cheapest passing set',

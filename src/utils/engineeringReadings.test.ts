@@ -39,7 +39,7 @@ describe('leg loads follow the robot, not the scene', () => {
     expect(load(r, 'kneeL').loadNm).toBeCloseTo(load(alone, 'kneeL').loadNm, 6);
     expect(r.stability).toEqual(alone.stability);
     expect(r.massG).toBeCloseTo(alone.massG, 6);
-    expect(row(r, 'Weight')?.detail).toMatch(/Leaves out 1 part off the robot \(20\.00 kg\)$/);
+    expect(row(r, 'Weight')?.detail).toMatch(/Leaves out 1 part off the robot \(20\.0 kg\)$/);
   });
 
   it('never counts a dynamic object as robot', () => {

@@ -39,7 +39,7 @@ The Case must have one robot. At least one joint must use a catalog servo that c
 ![Results filling in while Explore runs, with Stop in the Case's header](/help/explore-servo-versions-on-a-case/exploring.png)
 
 3. Wait for the rows in **Results** to finish. Click **Stop** in the Case's header to end early.
-4. Click **Passes**, **Cost** or **Mass** to sort the rows.
+4. Click **Passes**, **Cost** or **Weight** to sort the rows.
 
 ![Results with ten designs of a three-joint arm, the scene's own row in blue](/help/explore-servo-versions-on-a-case/results.png)
 

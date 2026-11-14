@@ -42,6 +42,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 ## 7a. Selection, Groups & Booleans
 
 - **Selection is an ordered list** (`selectedIds` in `App.tsx`). The first id is the primary, and Subtract keeps that part.
+- Group expansion (`utils/selection.ts`) collects selected group ids in one scene pass, then appends missing members in scene order. Additions, toggles and inside-group detection (`workspace/selection.ts`) use membership sets. Canvas clicks, marquee selection and Layers reuse these helpers, preserving primary order without repeated membership scans.
 - **Canvas:**
   - Click a part to select it, or its whole group. Clicking again keeps the group selected.
   - Double-click or ⌘-click a grouped part to drill into just that part, or a boolean to drill into the operand under the pointer. Once inside a group (some but not all of its members selected), a single click selects another member.

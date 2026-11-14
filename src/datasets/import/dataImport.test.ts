@@ -152,4 +152,12 @@ describe('importing ROS 2 recordings', () => {
 
     expect(read).toBeNull();
   });
+
+  it('leaves a robot folder with a meta/info.json that isn’t a dataset to robot import', async () => {
+    const info = new TextEncoder().encode('{"name":"so101","version":2}');
+    const files = { 'so101/robot.urdf': new Uint8Array([60]), 'so101/meta/info.json': info };
+    const read = await importHandlers().read(filesSource('so101', files));
+
+    expect(read).toBeNull();
+  });
 });

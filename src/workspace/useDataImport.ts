@@ -45,11 +45,6 @@ interface Loaded {
   origin?: TryOrigin;
 }
 
-interface SceneModel {
-  model: SimModel | null;
-  started: boolean;
-}
-
 const originName = (name: string) =>
   name.length > ORIGIN_NAME_CHARS ? `${name.slice(0, ORIGIN_NAME_CHARS - 1)}…` : name;
 
@@ -73,15 +68,7 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
     };
   }, []);
 
-  const sceneModel = async (): Promise<SceneModel> => {
-    const open = sim.modelNow();
-
-    if (open) return { model: open, started: false };
-
-    await sim.start();
-
-    return { model: sim.modelNow(), started: true };
-  };
+  const sceneModel = async (): Promise<SimModel | null> => sim.modelNow() ?? sim.buildModel().catch(() => null);
 
   const jointNames = () => Object.fromEntries((docs.projectRef.current.joints ?? []).map((j) => [j.id, j.name]));
 
@@ -164,7 +151,6 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
 
   const importLoaded = async (name: string, load: () => Promise<Loaded | null>): Promise<boolean> => {
     const run = openDataImport();
-    let opened: SceneModel | null = null;
 
     showToast(importing(name), { tone: 'progress' });
 
@@ -174,16 +160,14 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
 
       if (!loaded || !summary) return false;
 
-      opened = await sceneModel();
+      const model = await sceneModel();
 
-      if (opened.model) await build(run, loaded, summary, opened.model);
+      if (model) await build(run, loaded, summary, model);
       else offerRobot(name, robotTypePreset(summary.robotType));
     } catch (e) {
       showToast(errorMessage(e), { tone: 'error' });
     } finally {
       run.close();
-
-      if (opened?.started) sim.stop();
     }
 
     return true;

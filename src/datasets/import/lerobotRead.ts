@@ -1,6 +1,6 @@
 import { plural } from '../../../electron/plural.mjs';
 import { episodePlans, type EpisodePlan } from './lerobotEpisodes';
-import { ACTION_KEY, readInfo, STATE_KEY, type LeRobotInfo } from './lerobotMeta';
+import { ACTION_KEY, lerobotInfo, readInfo, STATE_KEY, type LeRobotInfo } from './lerobotMeta';
 import { filesUnder, mismatched, readParquet, refuse, toNumber, type DatasetFiles, type Row } from './lerobotSource';
 import { isLeRobotFolder } from './sourceKind';
 import { finiteOrRefuse, IMPORT_LIMITS, type SourceData, type SourceEpisode, type SourceFolder } from './types';
@@ -134,10 +134,14 @@ async function readEpisodes(files: DatasetFiles, info: LeRobotInfo, plans: Episo
 const withRoot = (episode: SourceEpisode, root: string): SourceEpisode =>
   root ? { ...episode, videos: episode.videos.map((v) => ({ ...v, path: `${root}/${v.path}` })) } : episode;
 
-export async function readLeRobot(folder: SourceFolder): Promise<SourceData> {
+export async function readLeRobot(folder: SourceFolder): Promise<SourceData | null> {
   const root = isLeRobotFolder(folder.files.map((f) => f.path)) ?? refuse('This folder isn’t a LeRobot dataset.');
   const files = filesUnder(folder.files, root);
-  const info = await readInfo(files);
+  const raw = await lerobotInfo(files);
+
+  if (!raw) return null;
+
+  const info = readInfo(raw);
   const episodes = await readEpisodes(files, info, await episodePlans(files, info));
 
   return {

@@ -6,19 +6,19 @@ image: /changelog/import-robot-data-as-tries/cover.png
 
 You can now import LeRobot datasets and ROS 2 MCAP recordings as tries on the robot in your scene.
 
-Import opens a `.mcap` file, a rosbag2 folder stored as MCAP, or a LeRobot dataset as a zip or a folder. In the desktop app, Import Robot takes a Hugging Face dataset link.
+Import opens a `.mcap` file, a rosbag2 folder stored as MCAP, or a LeRobot dataset as a zip or a folder. In the desktop app, Import Robot also takes a Hugging Face dataset link.
 
-Say someone recorded 50 SO-101 pick-and-place episodes with LeRobot and shared them on the Hub. Until now, Basecase could write that dataset but not read it, so you couldn't replay it on your arm. Now each episode comes in as a try named after its task and replays joint by joint on your robot's model.
+Say someone recorded 50 SO-101 pick-and-place episodes with LeRobot and shared them on the Hub. Until now, Basecase could write that dataset but not read it, so you couldn't replay it on your arm. Now each episode comes in as a try named after its task, and it replays joint by joint on your robot's model.
 
-## Joints Match by Name
+## Matching Joints
 
 Each joint in the data goes to the joint with the same name on your robot. With ALOHA, the left and right arms go to two robots. When the names differ, Match Joints asks you once and keeps your answer.
 
-Basecase tells radians, degrees and raw Feetech counts apart by their range, so you don't pick a unit.
+Basecase tells radians, degrees and raw Feetech counts apart by their range, so you don't have to pick a unit.
 
-## Nothing Gets Copied Twice
+## Importing Again
 
-If you import the same data again, Basecase adds nothing. A try keeps each camera's file and its time span, and Basecase never re-encodes the video.
+Import the same data again and Basecase adds nothing. A try keeps each camera's file and its time span, and Basecase never re-encodes the video.
 
 ## Limits
 

@@ -55,7 +55,7 @@ covers:
   - electron/cadImport/convertPolicy.mjs
 ---
 
-You can bring files from other apps into your scene with Import, which opens every file type Basecase reads.
+Use Import to bring files from other apps into your scene. It opens every file type Basecase reads.
 
 To import a file:
 
@@ -65,7 +65,7 @@ To import a file:
 
 ![The canvas menu with Import](/help/import-a-file/menu.png)
 
-Meshes and CAD files come in as parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. New parts appear where you right-clicked. They're already selected, so you can move them right away.
+Meshes and CAD files come in as parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files. The desktop app also reads STEP, STP, IGES and IGS files. Basecase places new parts where you right-clicked and selects them, so you can move them right away.
 
 If you pick an SVG file, the Import SVG panel opens with the drawing loaded. Set the width and thickness, then click **Add** to extrude the drawing into a part.
 
@@ -95,13 +95,13 @@ Basecase reads each format in these units, with this up axis:
 
 If a model measures less than 1 mm across, Basecase reads it as meters.
 
-Basecase doesn't simplify meshes, so your print keeps every triangle. It also leaves out the textures in FBX files.
+Basecase doesn't simplify meshes, so your print keeps every triangle. Textures in FBX files don't come in.
 
 ## STEP and IGES files
 
-In the desktop app, each body in a STEP or IGES file becomes its own part. The part takes its name from the file's product names and its color from the body's main face color. If a file has more than one body, the parts come in as a group named after the file.
+In the desktop app, each body in a STEP or IGES file becomes its own part. Each part gets its name from the file's product names and its color from the body's main face color. If a file has more than one body, the parts come in as a group named after the file.
 
-The conversion runs in a sandbox, apart from the rest of the app. Units come from the file itself, so each body arrives in millimeters at its real size.
+Basecase converts the file in a sandbox, apart from the rest of the app. It reads units from the file, so each body arrives in millimeters at its real size.
 
 Like any imported mesh, an imported body counts as a printed part. To mark a body as bought or machined:
 

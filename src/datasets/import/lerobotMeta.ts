@@ -108,8 +108,13 @@ function templatesOf(info: Row, videos: VideoFeature[]) {
   return { dataPath, videoPath };
 }
 
-export async function readInfo(files: DatasetFiles): Promise<LeRobotInfo> {
-  const info = await readJson(files, INFO_PATH);
+export async function lerobotInfo(files: DatasetFiles): Promise<Row | null> {
+  const info = await readJson(files, INFO_PATH).catch(() => null);
+
+  return info && typeof info.codebase_version === 'string' ? info : null;
+}
+
+export function readInfo(info: Row): LeRobotInfo {
   const format = versionOf(info);
   const features = isRecord(info.features) ? info.features : unreadable(INFO_PATH);
   const names = stateNames(features);

@@ -6,7 +6,7 @@ import type { DatasetEpisode, DatasetSpec } from '../lerobotRows';
 import { lerobotV3Files } from '../lerobotV3';
 import { readLeRobot } from './lerobotRead';
 import { isLeRobotFolder } from './sourceKind';
-import { DataImportError, IMPORT_LIMITS, type SourceFolder } from './types';
+import { DataImportError, IMPORT_LIMITS, type SourceData, type SourceFolder } from './types';
 
 type Files = Record<string, Uint8Array>;
 
@@ -105,6 +105,9 @@ const kochFiles = () =>
 const so101Spec = () =>
   spec({ names: SO101, lengths: [12, 9, 15], cameras: ['front', 'wrist'], robotType: 'so101_follower' });
 
+const read = async (folder: SourceFolder): Promise<SourceData> =>
+  (await readLeRobot(folder)) ?? expect.unreachable('read as not LeRobot');
+
 async function refusal(files: Files, options?: FolderOptions) {
   const error = await readLeRobot(folderOf(files, options).folder).catch((e: unknown) => e);
 
@@ -115,7 +118,7 @@ async function refusal(files: Files, options?: FolderOptions) {
 
 describe('reading LeRobot v2.x datasets', () => {
   it('reads a Koch-style v2.1 folder with object-form joint names', async () => {
-    const data = await readLeRobot(folderOf(kochFiles()).folder);
+    const data = await read(folderOf(kochFiles()).folder);
     const [first, second] = data.episodes;
 
     expect(data).toMatchObject({ format: 'lerobot-v2.1', robotType: 'koch', names: KOCH });
@@ -145,7 +148,7 @@ describe('reading LeRobot v2.x datasets', () => {
 
   it('reads v2.0 the same way and never opens a video', async () => {
     const { folder, reads } = folderOf(patchInfo(kochFiles(), (info) => (info.codebase_version = 'v2.0')));
-    const data = await readLeRobot(folder);
+    const data = await read(folder);
 
     expect(data.format).toBe('lerobot-v2.1');
     expect(data.episodes).toHaveLength(2);
@@ -159,7 +162,7 @@ describe('reading LeRobot v2.x datasets', () => {
       features['observation.state'].names = null;
       features.action = { dtype: 'float32', shape: [2], names: null };
     });
-    const data = await readLeRobot(folderOf(files).folder);
+    const data = await read(folderOf(files).folder);
 
     expect(data.names).toEqual(KOCH.map((_, i) => `state_${i}`));
     expect(data.episodes[0].action).toBeNull();
@@ -169,7 +172,7 @@ describe('reading LeRobot v2.x datasets', () => {
 describe('reading LeRobot v3.0 datasets', () => {
   it('splits one data file into its SO-101 episodes with each one’s span of the shared videos', async () => {
     const { folder, reads } = folderOf(v3Files(so101Spec()));
-    const data = await readLeRobot(folder);
+    const data = await read(folder);
 
     expect(data).toMatchObject({ format: 'lerobot-v3.0', robotType: 'so101_follower', names: SO101 });
     expect(data.episodes.map((e) => [e.index, e.t.length, e.state.length])).toEqual([
@@ -194,7 +197,7 @@ describe('reading LeRobot v3.0 datasets', () => {
   });
 
   it('reads a dataset with no video', async () => {
-    const data = await readLeRobot(folderOf(v3Files(spec({ names: SO101, lengths: [4, 6], cameras: [] }))).folder);
+    const data = await read(folderOf(v3Files(spec({ names: SO101, lengths: [4, 6], cameras: [] }))).folder);
 
     expect(data.episodes.map((e) => [e.t.length, e.videos])).toEqual([
       [4, []],
@@ -205,7 +208,7 @@ describe('reading LeRobot v3.0 datasets', () => {
   it('finds a dataset nested one folder deep and keeps its video paths whole', async () => {
     const files = v3Files(so101Spec());
     const nested = { ...files, ...Object.fromEntries(Object.entries(kochFiles()).map(([p, b]) => [`v2.1/${p}`, b])) };
-    const data = await readLeRobot(folderOf(nested, { prefix: 'so101_pick/' }).folder);
+    const data = await read(folderOf(nested, { prefix: 'so101_pick/' }).folder);
 
     expect(isLeRobotFolder(Object.keys(nested).map((p) => `so101_pick/${p}`))).toBe('so101_pick');
     expect(isLeRobotFolder(Object.keys(files))).toBe('');
@@ -248,10 +251,15 @@ describe('refusing LeRobot datasets that can’t be trusted', () => {
     const escaping = patchInfo(kochFiles(), (info) => (info.data_path = '../{episode_index:06d}.parquet'));
 
     expect(await refusal(escaping)).toBe('The dataset’s meta/info.json points outside the dataset.');
-    expect(await refusal({ ...kochFiles(), 'meta/info.json': strToU8('{ "fps": ') })).toBe(
-      'The dataset’s meta/info.json couldn’t be read.',
-    );
     expect(await refusal({ 'README.md': strToU8('hi') })).toBe('This folder isn’t a LeRobot dataset.');
+  });
+
+  it('leaves a meta/info.json that isn’t LeRobot’s to robot import', async () => {
+    const unparsed = { ...kochFiles(), 'meta/info.json': strToU8('{ "fps": ') };
+    const robot = { 'arm/robot.urdf': strToU8('<robot/>'), 'arm/meta/info.json': strToU8('{"name":"arm"}') };
+
+    expect(await readLeRobot(folderOf(unparsed).folder)).toBeNull();
+    expect(await readLeRobot(folderOf(robot).folder)).toBeNull();
   });
 
   it('refuses a dataset without joint state or the data an episode needs', async () => {

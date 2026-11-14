@@ -7,6 +7,7 @@ import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { CaseFacts } from '../cases/caseFacts';
 import type { Scan } from './scanner';
+import type { WorldLooks } from './worldLooks';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
 import { useRecordingLink } from './useRecordingLink';
@@ -16,12 +17,14 @@ interface LatestFrame {
   stats: SimStats | null;
   facts: CaseFacts | null;
   scan: Scan | null;
+  looks: WorldLooks | null;
 }
 
 function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame' }>) {
   latest.stats = msg.stats;
   latest.facts = msg.facts ?? null;
   latest.scan = msg.scan ?? latest.scan;
+  latest.looks = msg.looks ?? latest.looks;
 }
 
 type RecordingReply = Extract<SimResponse, { type: 'recorded' | 'scrubbed' | 'sought' }>;
@@ -41,7 +44,7 @@ export function useSimWorker(
   const [stats, setStats] = useState<SimStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [watched, setWatched] = useState<{ id: number; margin: number } | null>(null);
-  const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null });
+  const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null, looks: null });
   const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
@@ -131,6 +134,7 @@ export function useSimWorker(
   const load = useCallback(
     (w: Worker, model: SimModel, controller: Controller) =>
       new Promise<boolean>((resolve) => {
+        ui.current.looks = null;
         loadWaiter.current = { resolve: () => resolve(true), reject: () => resolve(false) };
         w.postMessage({ type: 'load', model, controller } satisfies SimRequest);
       }),
@@ -162,6 +166,7 @@ export function useSimWorker(
     latestStats: () => (status === 'off' ? null : ui.current.stats),
     latestFacts: () => (status === 'off' ? null : ui.current.facts),
     latestScan: () => (status === 'off' ? null : ui.current.scan),
+    latestLooks: () => (status === 'off' ? null : ui.current.looks),
     setStats,
     error,
     setError,
@@ -226,6 +231,8 @@ function showFrame(
   to.viewport?.setPose(robots, world);
 
   if (msg.scan) to.viewport?.setScan(msg.scan.points);
+
+  if (msg.looks) to.viewport?.setWorldLooks(msg.looks);
 
   to.listeners.forEach((listen) => listen(msg.poses, msg));
 

@@ -1,5 +1,6 @@
 import { codePanelTokenCss } from '../../design-system/codeTokens';
 import { installCodeClient } from './codeClient';
+import { codeClientTools } from './codeClientTools';
 
 export const CODE_PANEL_CSP = [
   "default-src 'none'",
@@ -18,7 +19,7 @@ const BASE_STYLE =
   'html,body{margin:0;height:100%;background:transparent;color:var(--bc-ink);' +
   'font:var(--bc-text)/1.4 var(--bc-font);color-scheme:dark;-webkit-font-smoothing:antialiased}';
 
-export const codeClientScript = () => `(${installCodeClient.toString()})(window);`;
+export const codeClientScript = () => `(${installCodeClient.toString()})(window, ${codeClientTools.toString()});`;
 
 const documentHead = () =>
   '<!doctype html><meta charset="utf-8">' +

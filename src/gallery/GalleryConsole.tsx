@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { CaseConsole } from '../cases/console/format';
 import { consoleLayout, type PlacedArea } from '../cases/console/layout';
 import type { CaseAction } from '../cases/console/panelKinds';
@@ -67,6 +67,7 @@ export const GalleryConsole: GalleryConsoleView = ({ kase, caseConsole, sim, rig
   const { can, fire } = galleryActions(sim, bus);
   const { setInputs } = sim.drive;
   const [framed, setFramed] = useState(false);
+  const pageStore = useRef(kase.store);
   const ctx: PanelContext = {
     bus,
     signals: caseConsole.signals ?? [],
@@ -82,6 +83,13 @@ export const GalleryConsole: GalleryConsoleView = ({ kase, caseConsole, sim, rig
     joints,
     fire,
     can,
+    tools: {
+      world: {
+        objects: () => kase.world.objects,
+        set: (change) => (sim.status === 'off' ? 'the sim isn’t running' : sim.setWorldObject(change)),
+      },
+      store: { read: () => pageStore.current, write: (next) => (pageStore.current = next) },
+    },
     studio: null,
   };
 

@@ -13,6 +13,7 @@ import {
   type FrameMessage,
   type StudioMessage,
 } from './codeProtocol';
+import { bridgeTools, type BridgeTools } from './codeBridgeTools';
 import { REAL_CLOCK, signalFeed, type BridgeClock } from './codeSignals';
 import { CASE_ACTIONS, type CaseAction } from './panelKinds';
 import type { SignalBus } from './signalBus';
@@ -32,6 +33,7 @@ export interface CodeBridgeOptions {
   scope: SignalScope;
   inputs: readonly string[];
   studio: BridgeStudio;
+  tools?: BridgeTools;
   onFail: (error: string) => void;
   clock?: BridgeClock;
   firstLine?: number;
@@ -115,7 +117,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   let lastTick = opened;
   let repinged = false;
 
-  const post = (message: StudioMessage) => port?.postMessage(message);
+  const post = (message: StudioMessage, transfer: Transferable[] = []) => port?.postMessage(message, transfer);
   const feed = signalFeed({ bus: o.bus, scope: o.scope, post, clock });
 
   const keep = <T>(list: T[], item: T, limit: number) => {
@@ -123,6 +125,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   };
 
   const note = (error: string) => keep(refused, error.slice(0, ERROR_MAX_CHARS), REPORT_LIMITS.refused);
+  const tools = bridgeTools({ tools: o.tools ?? {}, clock, post, note });
 
   const thrown = (message: string, line?: number) => {
     const at = line === undefined ? undefined : line - firstLine + 1;
@@ -136,6 +139,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     closed = true;
     stopPing();
     feed.close();
+    tools.close();
     o.studio.drive(null);
     port?.close();
     port = null;
@@ -172,6 +176,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     error: (m) => (loaded ? thrown(m.message, m.line) : fail(m.message, m.line)),
     log: (m) => keep(logs, m.text, REPORT_LIMITS.logs),
     key: (m) => o.studio.key({ key: m.key, meta: m.meta, ctrl: m.ctrl, shift: m.shift }),
+    ...tools.handlers,
   };
 
   const onPortMessage = (e: MessageEvent) => {

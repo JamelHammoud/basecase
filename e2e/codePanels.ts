@@ -64,3 +64,39 @@ export async function pushStick(page: Page, pad: Locator) {
   await page.mouse.down();
   await page.mouse.move(cx, cy - 70, { steps: 4 });
 }
+
+export const LIT = '#ff5a1f';
+
+export const LIT_AT = [150, 1, 300];
+
+export const WHACK_BUTTONS = `<button data-go="try">Try</button>
+<button data-go="light">Light</button>
+<button data-go="end">End</button>
+<script>
+const on = (go, run) => document.querySelector('[data-go="' + go + '"]').addEventListener('click', run);
+on('try', () => basecase.action('try'));
+on('light', () => {
+  basecase.world.set('beacon', { pose: { position: ${JSON.stringify(LIT_AT)} }, visible: true, colour: '${LIT}' });
+  basecase.store.set('score', 42);
+});
+on('end', () => basecase.action('end-try'));
+</script>`;
+
+export const FRAME_COUNTER = `<button data-go="watch">Watch</button>
+<button data-go="stop">Stop</button>
+<div data-frames="0"></div>
+<script>
+const out = document.querySelector('[data-frames]');
+let n = 0;
+let stop = null;
+document.querySelector('[data-go="watch"]').addEventListener('click', () => {
+  stop ??= basecase.frames('scene', { width: 320, fps: 15 }, (bitmap) => {
+    out.dataset.frames = String(++n);
+    out.dataset.size = bitmap.width + 'x' + bitmap.height;
+  });
+});
+document.querySelector('[data-go="stop"]').addEventListener('click', () => {
+  stop?.();
+  stop = null;
+});
+</script>`;

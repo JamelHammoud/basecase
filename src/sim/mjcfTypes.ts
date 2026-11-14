@@ -23,6 +23,17 @@ export type WorldBehavior = 'static' | 'dynamic' | 'marker';
 
 export interface WorldItem extends ScenePart {
   behavior: WorldBehavior;
+  movable?: boolean;
+}
+
+export interface MovableBody {
+  id: string;
+  body: string;
+  geom: string;
+  behavior: WorldBehavior;
+  position: V3;
+  rotation: V3;
+  color: string;
 }
 
 export interface SimJoint {
@@ -57,6 +68,7 @@ export interface SimModel {
   initial: RobotPoseState;
   massKg: Record<string, number>;
   scans?: Eye[];
+  movable?: MovableBody[];
 }
 
 export interface MjcfInput {

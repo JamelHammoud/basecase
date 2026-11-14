@@ -5,7 +5,7 @@ import type { RoutineKit } from '../routines/physicsKit';
 import type { Plan } from '../routines/planTypes';
 import type { RobotJoint } from '../types/robotics';
 import { caseFactReader, caseSignalNames, sampleSignals, type CaseFactReader, type CaseFacts } from './caseFacts';
-import { CaseLogicRun, judgeSoFar, usesBodySkills } from './caseLogic';
+import { CaseLogicRun, judgeSoFar, usesBodySkills, type CaseLogicResult } from './caseLogic';
 import type { Case } from './schema';
 
 export interface LiveCaseInput {
@@ -61,6 +61,10 @@ export class LiveCase {
 
   get driving(): boolean {
     return this.logic?.driving ?? true;
+  }
+
+  get logicResult(): CaseLogicResult | null {
+    return this.logic?.result() ?? null;
   }
 
   input(name: string, value: CaseFacts[string]) {

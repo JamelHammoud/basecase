@@ -26,6 +26,10 @@ export const worldObject = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
     .optional(),
+  movable: z
+    .boolean()
+    .optional()
+    .describe("A Case's code panels may move, show, hide or recolour it with basecase.world.set (create_case only)"),
 });
 
 export const setWorld = {

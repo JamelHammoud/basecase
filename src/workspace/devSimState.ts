@@ -4,6 +4,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
 import { linkParts, type Rig } from '../utils/kinematics';
+import { worldObjects } from './devWorldObjects';
 import type { TryTimeline } from './useTryTimeline';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -18,7 +19,10 @@ function caseState({ cases }: WorkspaceCore['simTraining']) {
     activeCase: cases.active?.id ?? null,
     caseSeconds: cases.active?.task.seconds ?? null,
     multiplying: !!cases.multiply.running,
+    tryPhase: cases.attempt.phase,
+    store: cases.active?.store ?? null,
     tries: cases.tries.map((t) => ({
+      world: t.manifest.world ?? 0,
       generated: !!t.generated,
       passed: t.passed,
       margin: t.margin,
@@ -62,7 +66,12 @@ function jointReadings(model: SimModel | null, joints: Float64Array | null) {
   );
 }
 
-export function devSimState(core: WorkspaceCore, joints: Float64Array | null = null) {
+export interface LiveSimFrame {
+  joints: Float64Array | null;
+  poses: Float64Array | null;
+}
+
+export function devSimState(core: WorkspaceCore, { joints, poses }: LiveSimFrame = { joints: null, poses: null }) {
   const { sim, skills } = core.simTraining;
   const stats = sim.latestStats() ?? sim.stats;
 
@@ -78,6 +87,7 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     robots: sim.model?.robots.map((r) => r.key) ?? [],
     guests: sim.guestParts.map((p) => p.id),
     world: sim.worldParts.map((p) => p.id),
+    objects: worldObjects({ model: sim.model, parts: sim.worldParts, poses }, sim.latestLooks()),
     bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
     ...caseState(core.simTraining),
     selected: core.selectedIds,

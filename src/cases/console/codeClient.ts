@@ -1,3 +1,5 @@
+import type { codeClientTools, ToolMessage } from './codeClientTools';
+
 type Values = Record<string, number | string[]>;
 
 type Reply = { ok: boolean; problem?: string };
@@ -10,16 +12,12 @@ interface ClientWindow {
   console?: ConsoleLike;
 }
 
-interface PortMessage {
-  type: string;
-  id?: number;
+interface PortMessage extends ToolMessage {
   time?: number;
   values?: Values;
-  ok?: boolean;
-  problem?: string;
 }
 
-export function installCodeClient(win: ClientWindow) {
+export function installCodeClient(win: ClientWindow, makeTools: typeof codeClientTools) {
   const pending: unknown[] = [];
   const subs = new Map<number, (values: Values, time: number) => void>();
   const replies = new Map<number, (reply: Reply) => void>();
@@ -31,7 +29,11 @@ export function installCodeClient(win: ClientWindow) {
     else if (pending.length < 256) pending.push(message);
   };
 
-  const receive = (m: PortMessage) => {
+  const tools = makeTools({ send: (m) => send(m), id: () => next++ });
+
+  const receive = (m: PortMessage, ports: readonly MessagePort[]) => {
+    tools.receive(m, ports);
+
     if (m.type === 'ping') send({ type: 'pong' });
 
     if (m.type === 'signals') subs.get(m.id ?? 0)?.(m.values ?? {}, m.time ?? 0);
@@ -45,10 +47,10 @@ export function installCodeClient(win: ClientWindow) {
   const adopt = (e: MessageEvent) => {
     const data = e.data as { bc?: number; type?: string } | null;
 
-    if (port || e.source !== win.parent || data?.bc !== 1 || data.type !== 'port' || !e.ports[0]) return;
+    if (port || e.source !== win.parent || data?.bc !== 2 || data.type !== 'port' || !e.ports[0]) return;
 
     port = e.ports[0];
-    port.onmessage = (m: MessageEvent) => receive(m.data as PortMessage);
+    port.onmessage = (m: MessageEvent) => receive(m.data as PortMessage, m.ports);
     pending.splice(0).forEach((m) => port?.postMessage(m));
   };
 
@@ -107,7 +109,7 @@ export function installCodeClient(win: ClientWindow) {
   win.addEventListener('load', () => send({ type: 'loaded' }));
 
   const api = Object.freeze({
-    version: 1,
+    version: 2,
     signals(names: string | string[], onValue: (values: Values, time: number) => void) {
       const id = next++;
 
@@ -132,8 +134,11 @@ export function installCodeClient(win: ClientWindow) {
 
       return new Promise<Reply>((resolve) => replies.set(id, resolve));
     },
+    world: tools.world,
+    frames: tools.frames,
+    store: tools.store,
   });
 
   Object.defineProperty(win, 'basecase', { value: api });
-  win.parent.postMessage({ bc: 1, type: 'hello' }, '*');
+  win.parent.postMessage({ bc: 2, type: 'hello' }, '*');
 }

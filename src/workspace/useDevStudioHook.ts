@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
-import { worldDeltas } from '../sim/mjcf';
 import { codePanelsOf } from '../cases/console/codeEdits';
 import { codePanelKey, codeReport } from '../cases/console/codeReports';
 import { parseCase } from '../cases/schema';
@@ -9,6 +7,7 @@ import { withCalibration } from '../reality/projectCalibrations';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
 import { devSimState } from './devSimState';
+import { worldPositions } from './devWorldObjects';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import { robotPackageZip } from './robotPackageExport';
 import { trainerStub } from './trainerStub';
@@ -52,19 +51,12 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     selection: () => core.selectedIds,
     selectFace: core.sketching.selectFace,
     sketchPath: core.sketching.setPath,
-    simState: () => devSimState(core, jointsRef.current),
+    simState: () => devSimState(core, { joints: jointsRef.current, poses: posesRef.current }),
     drive: (command) => core.simTraining.sim.drive.setKeys(command),
     worldAt: () => {
       const { model, worldParts } = core.simTraining.sim;
-      const deltas = model && posesRef.current ? worldDeltas(model, posesRef.current) : new Map();
 
-      return Object.fromEntries(
-        worldParts.map((p) => {
-          const at = new THREE.Vector3(...p.position).applyMatrix4(deltas.get(p.id) ?? new THREE.Matrix4());
-
-          return [p.id, at.toArray()];
-        }),
-      );
+      return worldPositions({ model, parts: worldParts, poses: posesRef.current });
     },
     calibrate: (jointId, calibration) => docs.setProject((p) => withCalibration(p, jointId, calibration)),
     routineState: () => core.simTraining.routines.state(),

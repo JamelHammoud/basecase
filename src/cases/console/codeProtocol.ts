@@ -1,7 +1,9 @@
 import type { DriveCommand } from '../../sim/driveTypes';
+import type { WorldChange } from '../../sim/worldLooks';
 import type { FactValue } from '../caseFacts';
+import { readWorldChange } from './codeWorld';
 
-export const BRIDGE_VERSION = 1;
+export const BRIDGE_VERSION = 2;
 export const SIGNAL_INTERVAL_MS = 50;
 export const PING_MS = 500;
 export const SILENT_MS = 2000;
@@ -26,14 +28,22 @@ export type FrameMessage =
   | { type: 'action'; id: number; name: string }
   | { type: 'error'; message: string; line?: number }
   | { type: 'log'; text: string }
-  | ({ type: 'key' } & FrameKey);
+  | ({ type: 'key' } & FrameKey)
+  | { type: 'world'; change: WorldChange }
+  | { type: 'frames'; id: number; camera: string; width?: number; fps?: number }
+  | { type: 'unframes'; id: number }
+  | { type: 'store-get'; id: number; key: string }
+  | { type: 'store-set'; id: number; key: string; value: unknown };
 
 export type SignalValues = Record<string, number | string[]>;
 
 export type StudioMessage =
   | { type: 'ping' }
   | { type: 'signals'; id: number; time: number; values: SignalValues }
-  | { type: 'action'; id: number; ok: boolean; problem?: string };
+  | { type: 'action'; id: number; ok: boolean; problem?: string }
+  | { type: 'frames'; id: number; ok: true; width: number; height: number; fps: number }
+  | { type: 'frames'; id: number; ok: false; problem: string }
+  | { type: 'store'; id: number; ok: boolean; value?: unknown; problem?: string };
 
 type Data = Record<string, unknown>;
 
@@ -53,6 +63,12 @@ const isFinite3 = (value: unknown): value is [number, number, number] =>
   Array.isArray(value) && value.length === 3 && value.every((n) => typeof n === 'number' && Number.isFinite(n));
 
 const isName = (value: unknown): value is string => typeof value === 'string' && /^[a-z][\w-]{0,39}$/i.test(value);
+
+const isKey = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 80;
+
+const isSize = (value: unknown) => value === undefined || (Number.isInteger(value) && Number(value) > 0);
+
+const isRate = (value: unknown) => value === undefined || (typeof value === 'number' && value > 0 && value <= 1000);
 
 function readCommand(value: unknown): DriveCommand | null | undefined {
   if (value === null) return null;
@@ -112,6 +128,19 @@ const READERS: Record<string, (m: Data) => FrameMessage | undefined> = {
     ...(isLine(m.line) ? { line: m.line } : {}),
   }),
   log: (m) => ({ type: 'log', text: String(m.text).slice(0, LOG_MAX_CHARS) }),
+  world: (m) => {
+    const change = readWorldChange(m.name, m.change);
+
+    return change ? { type: 'world', change } : undefined;
+  },
+  frames: (m) =>
+    isId(m.id) && isKey(m.camera) && isSize(m.width) && isRate(m.fps)
+      ? { type: 'frames', id: m.id, camera: m.camera, width: m.width as number, fps: m.fps as number }
+      : undefined,
+  unframes: (m) => (isId(m.id) ? { type: 'unframes', id: m.id } : undefined),
+  'store-get': (m) => (isId(m.id) && isKey(m.key) ? { type: 'store-get', id: m.id, key: m.key } : undefined),
+  'store-set': (m) =>
+    isId(m.id) && isKey(m.key) ? { type: 'store-set', id: m.id, key: m.key, value: m.value } : undefined,
   key: (m) =>
     m.key === 'Escape' || m.key === 'k'
       ? { type: 'key', key: m.key, meta: m.meta === true, ctrl: m.ctrl === true, shift: m.shift === true }

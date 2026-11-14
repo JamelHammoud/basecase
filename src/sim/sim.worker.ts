@@ -18,6 +18,8 @@ import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import { LiveWatch, type WatchInput } from '../skills/liveWatch';
 import { errorMessage } from '../utils/errorMessage';
 import { PoseGate } from './poseGate';
+import { WorldMover } from './worldMover';
+import type { WorldChange, WorldLooks } from './worldLooks';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller }
@@ -53,6 +55,7 @@ export type SimRequest =
   | { type: 'caseEnd' }
   | { type: 'watch'; watch: WatchInput | null }
   | { type: 'input'; name: string; value: FactValue }
+  | { type: 'world'; change: WorldChange }
   | { type: 'cameras'; port: MessagePort | null }
   | { type: 'dispose' };
 
@@ -72,6 +75,7 @@ export type SimResponse =
       playing: boolean;
       facts?: CaseFacts;
       scan?: Scan;
+      looks?: WorldLooks;
     }
   | {
       type: 'ran';
@@ -98,9 +102,22 @@ let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
 let script: { start: number; commands: Array<{ at: number; command: DriveCommand }> } | null = null;
 let scanShown = -1;
+let mover: WorldMover | null = null;
+let looksShown = -1;
 const poseGate = new PoseGate();
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
+
+function newLooks(): WorldLooks | undefined {
+  const looks = mover && mover.version !== looksShown ? mover.looks() : undefined;
+
+  looksShown = mover?.version ?? -1;
+
+  if (looks) cameraPort?.postMessage({ looks });
+
+  return looks;
+}
+
 const frame = (force = false) => {
   if (!engine) return;
 
@@ -114,12 +131,13 @@ const frame = (force = false) => {
     cameraPort.postMessage(copy, [copy.buffer]);
   }
 
+  const looks = newLooks();
   const facts = liveCase?.facts;
   const scanner = engine.scanner;
   const scan = scanner && scanner.version !== scanShown ? scanner.latest() : undefined;
 
   scanShown = scanner?.version ?? -1;
-  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing, facts, ...(scan ? { scan } : {}) }, [
+  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing, facts, ...(scan ? { scan } : {}), looks }, [
     poses.buffer,
     joints.buffer,
     ...(scan ? [scan.values.buffer, scan.points.buffer] : []),
@@ -216,6 +234,8 @@ async function load(msg: Msg<'load'>) {
   script = null;
   playing = false;
   engine = new SimEngine(mj, msg.model);
+  mover = new WorldMover(mj, engine);
+  looksShown = -1;
   scanShown = -1;
   poseGate.reset();
 
@@ -231,7 +251,7 @@ function record(msg: Msg<'record'>) {
   if (!engine) return;
 
   if (msg.on) {
-    recorder = new Recorder(engine, driveController);
+    recorder = new Recorder(engine, driveController, mover?.current());
     engine.stepHook = recorder.hook;
     engine.commandHook = recorder.command;
 
@@ -267,6 +287,9 @@ function seek(msg: Msg<'seek'>) {
   halt();
 
   const frameAt = setRecordedFrame(mj, engine, scrubbed, msg.frame);
+
+  mover?.replay(scrubbed.world ?? [], frameAt * scrubbed.dt);
+
   const qpos = Float64Array.from(engine.data.qpos);
 
   frame();
@@ -357,6 +380,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   reset: (msg) => {
     engine?.reset(msg.initial);
+    mover?.reset();
     frame();
   },
   speed: (msg) => {
@@ -396,9 +420,15 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   watch,
   input: (msg) => liveCase?.input(msg.name, msg.value),
+  world: (msg) => {
+    if (mover?.apply(msg.change)) recorder?.world(msg.change);
+
+    frame();
+  },
   cameras: (msg) => {
     cameraPort?.close();
     cameraPort = msg.port;
+    looksShown = -1;
     frame(true);
   },
   dispose: () => {
@@ -409,6 +439,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     recorder = null;
     scrubbed = null;
     clearTimeout(timer);
+    mover = null;
     engine?.dispose();
     engine = null;
   },

@@ -4,6 +4,7 @@ import type { SimEngine } from '../sim/engine';
 import { toMj, worldDeltas } from '../sim/mjcfFrames';
 import { framePoses, Recorder, type RecordedCommand, type Recording } from '../sim/recorder';
 import type { V3 } from '../utils/kinematics';
+import { WorldMover } from '../sim/worldMover';
 import { jitteredWorld, worldRandom } from './caseRandom';
 import { startEngine } from './runCase';
 import type { Case } from './schema';
@@ -103,6 +104,8 @@ function placeStart(mj: MainModule, engine: SimEngine, start: { recording: Recor
   mj.mj_forward(model, data);
 }
 
+const startChanges = (recording: Recording) => (recording.world ?? []).filter((w) => w.at <= 0).map((w) => w.change);
+
 interface Due {
   at: number;
   apply: () => void;
@@ -111,7 +114,7 @@ interface Due {
 function timeline(
   engine: SimEngine,
   recorder: Recorder,
-  source: { commands: RecordedCommand[]; recording: Recording },
+  source: { commands: RecordedCommand[]; recording: Recording; mover: WorldMover },
 ) {
   const fault = (joint: string, kind: Parameters<SimEngine['setFault']>[1]) => () => {
     engine.setFault(joint, kind);
@@ -124,6 +127,9 @@ function timeline(
 
     if (f.until !== undefined) due.push({ at: f.until, apply: fault(f.joint, null) });
   }
+
+  for (const w of source.recording.world ?? [])
+    if (w.at > 0) due.push({ at: w.at, apply: () => source.mover.apply(w.change) && recorder.world(w.change) });
 
   return due.sort((a, b) => a.at - b.at);
 }
@@ -154,14 +160,18 @@ export async function replayTry(mj: MainModule, source: TryScoring, seed: number
   try {
     placeStart(mj, engine, { recording, offsets });
 
-    const recorder = new Recorder(engine, controller);
+    const mover = new WorldMover(mj, engine);
+
+    mover.replay(recording.world ?? [], 0);
+
+    const recorder = new Recorder(engine, controller, startChanges(recording));
 
     engine.stepHook = recorder.hook;
     engine.commandHook = recorder.command;
     roll(
       engine,
       recorder,
-      timeline(engine, recorder, { commands: shiftedCommands(source, offsets), recording }),
+      timeline(engine, recorder, { commands: shiftedCommands(source, offsets), recording, mover }),
       recording.frames,
     );
 

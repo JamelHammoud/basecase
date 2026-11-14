@@ -51,6 +51,7 @@ import { createStage, disposeStage } from './stage';
 import type { Viewport3DHandle, ViewportProps } from './types';
 import type { ViewportContext, ViewportUi } from './viewportContext';
 import { installWheel, zoomCamera } from './wheel';
+import { WorldLookLayer } from './worldLookLayer';
 
 const FRAME_BUDGET_MS = 6;
 
@@ -102,6 +103,8 @@ export class ViewportEngine {
 
   private readonly buildStep: BuildStepLayer;
 
+  private readonly worldLooks: WorldLookLayer;
+
   private readonly cleanups: Array<() => void>;
 
   private buildFrame = 0;
@@ -144,6 +147,7 @@ export class ViewportEngine {
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
     this.buildStep = new BuildStepLayer(this.ctx, options.buildLabels);
     this.stress = new StressOverlay(this.ctx);
+    this.worldLooks = new WorldLookLayer(world);
 
     const outline = new SelectionOutline(stage);
 
@@ -311,6 +315,10 @@ export class ViewportEngine {
       frameAll: () => this.frameAll(),
       animateSpawn: (ids) => ids.forEach((id) => ctx.loop.spawns.set(id, performance.now())),
       setPose: (deltas, worldDeltas) => this.setPose(deltas, worldDeltas),
+      setWorldLooks: (looks) => {
+        this.worldLooks.set(looks);
+        ctx.loop.invalidate();
+      },
       ...this.overlays.handle(ctx.loop.redraw),
       followPart: (partId) => {
         this.follow.follow(partId);
@@ -398,6 +406,7 @@ export class ViewportEngine {
   private buildWorld(): void {
     this.ctx.world.buildPending();
     this.ctx.world.applyPose();
+    this.worldLooks.apply();
     this.ctx.loop.invalidate();
   }
 

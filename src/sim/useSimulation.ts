@@ -11,6 +11,7 @@ import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
 import type { Scan } from './scanner';
+import type { WorldChange, WorldLooks } from './worldLooks';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
 import type { LiveCaseInput } from '../cases/liveCase';
@@ -77,6 +78,8 @@ export interface Simulation {
   subscribePoses: (listen: (poses: Float64Array, frame: SimFrame) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
   setWorld: (items: WorldItem[], guests?: SimGuests) => void;
+  setWorldObject: (change: WorldChange) => void;
+  latestLooks: () => WorldLooks | null;
   buildModel: (options?: { alone?: boolean }) => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
   runCase: (input: LiveCaseInput | null) => void;
@@ -332,6 +335,7 @@ export function useSimulation(props: Inputs): Simulation {
     setPlaying(false);
     setStats(null);
     viewportRef.current?.setScan(null);
+    viewportRef.current?.setWorldLooks(null);
     viewportRef.current?.setPose(inputs.current.restDeltas);
   }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
 
@@ -401,6 +405,8 @@ export function useSimulation(props: Inputs): Simulation {
     subscribePoses: sw.subscribePoses,
     connectCameras: sw.connectCameras,
     setWorld,
+    setWorldObject: (change) => send({ type: 'world', change }),
+    latestLooks: sw.latestLooks,
     runRoutine: async (input, onUpdate) => {
       await start();
 

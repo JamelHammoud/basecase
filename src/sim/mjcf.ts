@@ -414,5 +414,6 @@ export function buildMjcf(given: MjcfInput): SimModel {
     initial: { values: st.initialValues, roots: st.roots },
     massKg: st.massKg,
     ...(scans.length ? { scans } : {}),
+    ...(world.movable.length ? { movable: world.movable } : {}),
   };
 }

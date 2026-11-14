@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import type { BridgeTools } from '../../cases/console/codeBridgeTools';
 import type { ConsoleSignal } from '../../cases/console/format';
 import type { CaseAction, PanelKind, PanelOf } from '../../cases/console/panelKinds';
 import type { SignalBus } from '../../cases/console/signalBus';
@@ -25,6 +26,7 @@ export interface PanelContext {
   joints: RobotJoint[];
   fire: (action: CaseAction) => void;
   can: (action: CaseAction) => boolean;
+  tools: BridgeTools;
   studio: StudioPanelContext | null;
 }
 

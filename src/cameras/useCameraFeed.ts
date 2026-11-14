@@ -5,11 +5,15 @@ import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import type { ScenePart } from '../types/robotics';
 import type { FeedEvent, FeedRequest } from './feedProtocol';
+import type { FrameHub, FrameSink } from './frameHub';
+import type { FrameSpec } from './frameStreams';
 import { LARGE_SIZE, TILE_SIZE } from './liveStage';
 import type { CameraView } from './views';
 
 export interface CameraFeedInput {
   active: boolean;
+  tiles: boolean;
+  hub: FrameHub;
   parts: ScenePart[];
   world: ScenePart[];
   model: SimModel | null;
@@ -23,7 +27,7 @@ type Canvases = Map<string, HTMLCanvasElement>;
 
 const same = <T>(a: T[], b: T[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 
-class LiveFeed {
+class LiveFeed implements FrameSink {
   private readonly worker = new Worker(new URL('./feed.worker.ts', import.meta.url), { type: 'module' });
 
   private sceneTicket = 0;
@@ -54,6 +58,14 @@ class LiveFeed {
     return channel.port2;
   }
 
+  stream(id: string, { key, size, fps }: { key: string } & FrameSpec, port: MessagePort): void {
+    this.post({ type: 'stream', id, key, size, fps, port }, [port]);
+  }
+
+  unstream(id: string): void {
+    this.post({ type: 'unstream', id });
+  }
+
   async scene(parts: ScenePart[], world: ScenePart[]): Promise<void> {
     if (this.sceneTicket && same(this.sent.parts, parts) && same(this.sent.world, world)) return;
 
@@ -73,8 +85,9 @@ class LiveFeed {
     this.post({ type: 'model', model });
   }
 
-  views(views: CameraView[], enlarged: string | null): void {
-    const sizes = Object.fromEntries(views.map((v) => [v.key, v.key === enlarged ? LARGE_SIZE : TILE_SIZE]));
+  views(views: CameraView[], enlarged: string | null, tiles: boolean): void {
+    const shown = tiles ? views : [];
+    const sizes = Object.fromEntries(shown.map((v) => [v.key, v.key === enlarged ? LARGE_SIZE : TILE_SIZE]));
     const key = JSON.stringify([views, sizes]);
 
     if (this.sent.views === key) return;
@@ -95,7 +108,7 @@ class LiveFeed {
 export function useCameraFeed(input: CameraFeedInput) {
   const canvases = useRef<Canvases>(new Map());
   const feedRef = useRef<LiveFeed | null>(null);
-  const { active, parts, world, model, views, enlarged, connectCameras } = input;
+  const { active, tiles, hub, parts, world, model, views, enlarged, connectCameras } = input;
   const onFrames = useEffectEvent((frames: number) => input.onFrames(frames));
 
   useEffect(() => {
@@ -105,13 +118,15 @@ export function useCameraFeed(input: CameraFeedInput) {
 
     feedRef.current = feed;
     connectCameras(() => feed.link());
+    hub.attach(feed);
 
     return () => {
+      hub.attach(null);
       connectCameras(null);
       feed.dispose();
       feedRef.current = null;
     };
-  }, [active, connectCameras]);
+  }, [active, connectCameras, hub]);
 
   useEffect(() => {
     if (active) void feedRef.current?.scene(parts, world);
@@ -122,8 +137,8 @@ export function useCameraFeed(input: CameraFeedInput) {
   }, [active, model]);
 
   useEffect(() => {
-    if (active) feedRef.current?.views(views, enlarged);
-  }, [active, views, enlarged]);
+    if (active) feedRef.current?.views(views, enlarged, tiles);
+  }, [active, views, enlarged, tiles]);
 
   return (key: string) => (canvas: HTMLCanvasElement | null) => {
     if (canvas) canvases.current.set(key, canvas);

@@ -1,4 +1,8 @@
+import { CODE_FRAME_DEFAULT, CODE_FRAME_MAX, MAX_FRAME_STREAMS } from '../../cameras/codeFrameTypes';
 import { CODE_PANEL_TOKENS } from '../../design-system/codeTokens';
+import { CASE_STORE_MAX_BYTES } from '../caseStore';
+import { STORE_WRITES_PER_SECOND } from './codeBridgeTools';
+import { WORLD_CALLS_PER_SECOND } from './codeWorld';
 import { REPORT_LIMITS } from './codeBridge';
 import { HELLO_MS, MAX_NAMES, MESSAGES_PER_SECOND, SIGNAL_INTERVAL_MS, SILENT_MS } from './codeProtocol';
 import { MAX_SUBSCRIPTIONS } from './codeSignals';
@@ -19,6 +23,10 @@ export function codeBridgeReference(): string {
     '- basecase.drive({ v: [forward, left, turn], aux?: [lift, grip], target?: [x, y, z] }) drives the robot: v and aux each −1 to 1; target is a point for an arm’s hand in scene mm, y up. drive(null) lets go. Needs code in the console’s input.',
     '- basecase.event(name, value = true) sends a named event to the Case’s logic: name a plain word, value a boolean, a number or up to 200 characters.',
     `- basecase.action(name) → Promise<{ ok, problem? }>. name: ${or(CASE_ACTIONS)}; refused when it can’t run now.`,
+    `- basecase.world.set(name, { pose?: { position?: [x, y, z], rotation?: [x, y, z] }, visible?, colour? }) moves, shows, hides or recolours the world object with that id: scene mm, y up, rotation in degrees, colour as #rrggbb. Only objects the Case marks "movable": true; at most ${WORLD_CALLS_PER_SECOND} calls a second; only while the sim runs. Each change is recorded on the try, so Replay and scoring see it; Reset puts the world back.`,
+    `- basecase.frames(camera, { width, fps }, (bitmap, time) => …) → stop. camera: a camera view's name or key (scene for the framed Scene view). width ≤ ${CODE_FRAME_MAX.width} (height is 3/4 of it), fps ≤ ${CODE_FRAME_MAX.fps}, default ${CODE_FRAME_DEFAULT.width} px at ${CODE_FRAME_DEFAULT.fps} fps, at most ${MAX_FRAME_STREAMS} streams. The ImageBitmap is closed after the callback returns: draw it to an OffscreenCanvas to read pixels.`,
+    `- basecase.store.get(key) → Promise<value>; basecase.store.set(key, value) → Promise<{ ok, problem? }>. JSON kept in the Case across tries and reloads, at most ${CASE_STORE_MAX_BYTES / 1024} KB and ${STORE_WRITES_PER_SECOND} writes a second; set(key, null) deletes. Reset doesn't clear it.`,
+    '- Sound: Web Audio works in the panel once the person has clicked or pressed a key in it.',
     `- CSS variables: ${Object.keys(CODE_PANEL_TOKENS).join(', ')}. The body starts transparent in the studio’s font, size and ink.`,
     `- The studio keeps the first ${REPORT_LIMITS.errors} uncaught errors with their lines, the first ${REPORT_LIMITS.logs} console lines and the calls it refused. More than ${MESSAGES_PER_SECOND} messages a second are dropped. A panel that throws while it loads, says nothing for ${HELLO_MS / 1000} s or stops answering for ${SILENT_MS / 1000} s is unloaded.`,
     '- Esc and ⌘K reach the studio; every other key stays in the panel while it has focus.',

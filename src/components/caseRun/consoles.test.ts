@@ -61,6 +61,7 @@ function context(caseConsole: CaseConsole): PanelContext {
     joints: arm.joints,
     fire: () => undefined,
     can: () => true,
+    tools: {},
     studio: {
       cases: {
         active: kase,
@@ -80,6 +81,7 @@ function context(caseConsole: CaseConsole): PanelContext {
           onMenu: () => undefined,
         }),
         menu: null,
+        frames: ({ camera }) => `names ${camera}, which isn’t a camera here`,
       } satisfies CameraTiles,
       onBrowseRobots: () => undefined,
     },

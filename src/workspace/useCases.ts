@@ -121,6 +121,12 @@ export function useCases(options: CasesOptions) {
     });
   };
 
+  const setStore = (id: string, store: Case['store']) =>
+    setProject((p) => ({
+      ...p,
+      cases: (p.cases ?? []).map((c) => (c.id === id ? { ...c, store } : c)),
+    }));
+
   const timeline = useTryTimeline({ sim, rig, parts, active, partners });
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
@@ -179,6 +185,7 @@ export function useCases(options: CasesOptions) {
     add,
     addAndTry,
     remove,
+    setStore,
     removeTry,
     timeline,
     attempt,

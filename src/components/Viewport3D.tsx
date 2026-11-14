@@ -47,6 +47,7 @@ const DETACHED: Viewport3DHandle = {
   animateSpawn: () => {},
   setPose: () => {},
   setScan: () => {},
+  setWorldLooks: () => {},
   scanPointCount: () => 0,
   setGhost: () => {},
   ghostState: () => null,

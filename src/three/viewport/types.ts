@@ -1,3 +1,4 @@
+import type { WorldLooks } from '../../sim/worldLooks';
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { GhostState } from './ghostLayer';
 import type { RobotGhost } from '../../robot/robotGhost';
@@ -215,6 +216,7 @@ export interface Viewport3DHandle {
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;
   setScan: (points: Float32Array | null) => void;
+  setWorldLooks: (looks: WorldLooks | null) => void;
   scanPointCount: () => number;
   setGhost: (ghost: RobotGhost | null) => void;
   ghostState: () => GhostState | null;

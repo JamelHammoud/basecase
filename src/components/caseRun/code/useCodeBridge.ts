@@ -37,6 +37,7 @@ export function useCodeBridge({ frameRef, panel, ctx, onFail }: BridgeInput) {
   const fire = useEffectEvent((action: CaseAction) => ctx.fire(action));
   const event = useEffectEvent((name: string, value: FactValue) => ctx.sim.input(name, value));
   const failed = useEffectEvent((error: string) => onFail(error));
+  const tools = useEffectEvent(() => ctx.tools);
 
   useLayoutEffect(() => {
     const owner = {};
@@ -44,6 +45,11 @@ export function useCodeBridge({ frameRef, panel, ctx, onFail }: BridgeInput) {
       frame: () => frameRef.current?.contentWindow,
       ...current(),
       studio: { drive: (command) => setCodeDrive(owner, command), event, can, fire, key: pressStudioKey },
+      tools: {
+        world: { objects: () => tools().world?.objects() ?? [], set: (change) => tools().world?.set(change) },
+        store: { read: () => tools().store?.read(), write: (next) => tools().store?.write(next) },
+        frames: (request) => tools().frames?.(request) ?? 'no camera feed here',
+      },
       onFail: failed,
       firstLine: codeSourceFirstLine(),
     });

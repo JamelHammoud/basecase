@@ -2,6 +2,7 @@ import type { DriveCommand } from './driveTypes';
 import type { Controller, SimEngine } from './engine';
 import type { FaultKind, RecordedFault } from './faults';
 import { torqueShare } from './torqueShare';
+import type { RecordedWorldChange, WorldChange } from './worldLooks';
 
 export const RECORD_HZ = 50;
 
@@ -33,6 +34,7 @@ export interface Recording {
   faults?: RecordedFault[];
   commands?: RecordedCommand[];
   controller?: Controller;
+  world?: RecordedWorldChange[];
 }
 
 class Growing<T extends Float32Array | Float64Array> {
@@ -99,9 +101,10 @@ export class Recorder {
   private readonly scan: Growing<Float32Array> | null;
   private readonly faults: RecordedFault[] = [];
   private readonly commands: RecordedCommand[] = [];
+  private readonly changes: RecordedWorldChange[] = [];
   private readonly controller: Controller | null;
 
-  constructor(engine: SimEngine, controller: Controller | null = null) {
+  constructor(engine: SimEngine, controller: Controller | null = null, world: WorldChange[] = []) {
     const { model } = engine;
 
     this.engine = engine;
@@ -121,6 +124,8 @@ export class Recorder {
 
     for (const j of engine.stats().joints) if (j.fault) this.faults.push({ joint: j.id, kind: j.fault, at: 0 });
 
+    for (const change of world) this.changes.push({ at: 0, change: structuredClone(change) });
+
     this.sample();
   }
 
@@ -135,6 +140,10 @@ export class Recorder {
 
   readonly command = (c: DriveCommand) => {
     this.commands.push({ at: this.engine.data.time - this.started, command: structuredClone(c) });
+  };
+
+  readonly world = (change: WorldChange) => {
+    this.changes.push({ at: this.engine.data.time - this.started, change: structuredClone(change) });
   };
 
   get length() {
@@ -191,6 +200,7 @@ export class Recorder {
         ? { scan: this.scan.done(), scanWidth: this.engine.scanner.values.length }
         : {}),
       faults: this.faults,
+      ...(this.changes.length ? { world: this.changes } : {}),
       ...(this.controller ? { commands: this.commands, controller: this.controller } : {}),
     };
   }

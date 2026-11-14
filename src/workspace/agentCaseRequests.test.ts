@@ -93,15 +93,20 @@ describe('create_case', () => {
   it('adds the agent’s own objects in the agent frame', async () => {
     const { reply, added } = create({
       goal: 'reach',
-      objects: [{ name: 'Ramp', kind: 'box', position: [0, -500, 20], size: [300, 200, 40], behavior: 'static' }],
+      objects: [
+        { name: 'Ramp', kind: 'box', position: [0, -500, 20], size: [300, 200, 40], behavior: 'static' },
+        { name: 'Lamp', kind: 'sphere', position: [0, -300, 0], size: [40, 40, 40], behavior: 'marker', movable: true },
+      ],
     });
 
-    expect(await reply).toMatchObject({ ok: true, objects: 2 });
+    expect(await reply).toMatchObject({ ok: true, objects: 3 });
     expect(added[0].world.objects.find((o) => o.name === 'Ramp')).toMatchObject({
       name: 'Ramp',
       position: [0, 20, 500],
       size: [300, 40, 200],
     });
+    expect(added[0].world.objects.find((o) => o.name === 'Ramp')?.movable).toBeUndefined();
+    expect(added[0].world.objects.find((o) => o.name === 'Lamp')?.movable).toBe(true);
   });
 
   it('answers a goal the robot cannot try, or hostile objects, with what to change', async () => {

@@ -4,7 +4,7 @@ import { partEdges } from '../utils/partEdges';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
 import { esc, f, safeId, vec } from './mjcfText';
-import type { MjcfInput, SimBody, WorldBehavior, WorldItem } from './mjcfTypes';
+import type { MjcfInput, MovableBody, SimBody, WorldBehavior, WorldItem } from './mjcfTypes';
 
 const CONTACT: Record<WorldBehavior, string> = {
   static: 'contype="0" conaffinity="1"',
@@ -14,10 +14,17 @@ const CONTACT: Record<WorldBehavior, string> = {
 
 const DEFAULT_DYNAMIC_GRAMS = 100;
 
+const MOVABLE: Record<WorldBehavior, string> = {
+  static: ' mocap="true"',
+  dynamic: ' gravcomp="1e-9"',
+  marker: ' mocap="true"',
+};
+
 export interface WorldEmit {
   lines: string[];
   assets: string[];
   bodies: SimBody[];
+  movable: MovableBody[];
 }
 
 function geomAttrs(item: WorldItem): string {
@@ -68,15 +75,28 @@ function worldGeom(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffse
   return `<geom name="${esc(name)}" ${shape} quat="${vec(turn)}" ${geomAttrs(item)}/>`;
 }
 
+const movableBody = (item: WorldItem, body: string): MovableBody => ({
+  id: item.id,
+  body,
+  geom: `wg_${safeId(item.id)}`,
+  behavior: item.behavior,
+  position: item.position,
+  rotation: item.rotation,
+  color: item.color,
+});
+
 export function emitWorld(input: MjcfInput, assetOffset: number): WorldEmit {
-  const out: WorldEmit = { lines: [], assets: [], bodies: [] };
+  const out: WorldEmit = { lines: [], assets: [], bodies: [], movable: [] };
 
   (input.world ?? []).forEach((item, i) => {
     const name = `w${i}_${safeId(item.id)}`;
     const geom = worldGeom(item, input, out, assetOffset);
+    const mocap = item.movable ? MOVABLE[item.behavior] : '';
+
+    if (item.movable) out.movable.push(movableBody(item, name));
 
     out.bodies.push({ name, parts: [], world: [item.id], origin: item.position });
-    out.lines.push(`    <body name="${esc(name)}" pos="${vec(toMj(item.position))}">`);
+    out.lines.push(`    <body name="${esc(name)}" pos="${vec(toMj(item.position))}"${mocap}>`);
 
     if (item.behavior === 'dynamic') out.lines.push(`      <freejoint name="${esc(name)}"/>`);
 

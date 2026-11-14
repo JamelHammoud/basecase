@@ -69,6 +69,8 @@ A console can also hold the Case's own code: up to 4 panels, each a small web pa
 
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
 
+A panel can also change the Case's world while it runs, such as lighting a target, putting the next box on a conveyor or hiding a wall. It moves only the objects the Case marks movable, and each change is kept on the try, so **Replay** shows it. A panel can watch one of the robot's cameras at up to 640 × 480 and 15 frames a second. It can also keep a high score in the Case, which saves with the scene and stays after **Reset**. Sound plays once you've clicked or pressed a key in the panel.
+
 A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
 
 The agent can write these panels and change them while the Case runs. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.

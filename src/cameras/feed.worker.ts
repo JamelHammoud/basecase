@@ -1,14 +1,16 @@
 /// <reference lib="webworker" />
+import type { WorldLooks } from '../sim/worldLooks';
 import { FRAME_MS, type FeedEvent, type FeedRequest } from './feedProtocol';
+import { FENCE_POLL_MS, FrameStreams, timerClock } from './frameStreams';
 import { LiveStage, type LiveTarget } from './liveStage';
 import { GpuFence } from '../three/gpuFence';
-
-const FENCE_POLL_MS = 4;
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 const stage = new LiveStage();
 const fence = new GpuFence(stage.renderer.getContext() as WebGL2RenderingContext);
 const targets = new Map<string, LiveTarget>();
+
+type SimMessage = Float64Array | { looks: WorldLooks };
 
 let poses: Float64Array | null = null;
 let scheduled = false;
@@ -67,6 +69,23 @@ function setTargets(sizes: Record<string, [number, number]>) {
   }
 }
 
+const streams = new FrameStreams<LiveTarget>(
+  timerClock(() => performance.now()),
+  {
+    target,
+    draw: (key, into) => (stage.drawView(poses, key, into) ? into.canvas.transferToImageBitmap() : null),
+    busy: () => fence.full(),
+    drew: () => fence.mark(),
+  },
+);
+
+function receive(data: SimMessage) {
+  if (data instanceof Float64Array) poses = data;
+  else stage.setLooks(data.looks ?? {});
+
+  schedule();
+}
+
 const handlers: { [K in FeedRequest['type']]: (msg: Extract<FeedRequest, { type: K }>) => unknown } = {
   scene: async ({ parts, world, meshes }) => {
     if (await stage.setScene(parts, world, meshes)) schedule();
@@ -84,11 +103,10 @@ const handlers: { [K in FeedRequest['type']]: (msg: Extract<FeedRequest, { type:
     schedule();
   },
   port: ({ port }) => {
-    port.onmessage = ({ data }: MessageEvent<Float64Array>) => {
-      poses = data;
-      schedule();
-    };
+    port.onmessage = ({ data }: MessageEvent<SimMessage>) => receive(data);
   },
+  stream: ({ id, key, size, fps, port }) => streams.open(id, { key, size, fps }, port),
+  unstream: ({ id }) => streams.close(id),
 };
 
 scope.onmessage = ({ data }: MessageEvent<FeedRequest>) => {

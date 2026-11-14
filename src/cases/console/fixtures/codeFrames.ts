@@ -1,6 +1,7 @@
 import type { DriveCommand } from '../../../sim/driveTypes';
 import type { FactValue } from '../../caseFacts';
 import { openCodeBridge, type BridgeStudio, type CodeBridge } from '../codeBridge';
+import type { BridgeTools } from '../codeBridgeTools';
 import { codeClientScript } from '../codeDocument';
 import type { FrameKey } from '../codeProtocol';
 import type { BridgeClock } from '../codeSignals';
@@ -66,6 +67,9 @@ export interface FrameOptions {
   inputs?: string[];
   can?: (action: CaseAction) => boolean;
   clock?: BridgeClock;
+  tools?: BridgeTools;
+  studio?: Partial<Pick<BridgeStudio, 'drive' | 'event'>>;
+  globals?: Record<string, unknown>;
 }
 
 export interface TestFrame {
@@ -89,7 +93,7 @@ const scriptsOf = (html: string) =>
     line: html.slice(0, m.index).split('\n').length,
   }));
 
-function fakeWindow(parent: object) {
+function fakeWindow(parent: object, globals: Record<string, unknown> = {}) {
   const listeners = new Map<string, Listener[]>();
   const body = new FakeElement('body');
   const win: Record<string, unknown> = {
@@ -100,6 +104,7 @@ function fakeWindow(parent: object) {
     Promise,
     document: { body, createElement: (tag: string) => new FakeElement(tag) },
     addEventListener: (type: string, l: Listener) => listeners.set(type, [...(listeners.get(type) ?? []), l]),
+    ...globals,
   };
   const dispatch = (type: string, e: Record<string, unknown>) =>
     listeners.get(type)?.forEach((l) => l({ type, preventDefault: () => undefined, ...e }));
@@ -114,7 +119,7 @@ export function openTestFrame(html: string, o: FrameOptions): TestFrame {
   const ports: MessagePort[] = [];
   let bridge: CodeBridge | null = null;
   const parent = { postMessage: (data: unknown) => bridge?.receive({ source: frame.win, data }) };
-  const frame = fakeWindow(parent);
+  const frame = fakeWindow(parent, o.globals);
 
   frame.win.postMessage = (data: unknown, options: { transfer?: MessagePort[] }) => {
     ports.push(...(options.transfer ?? []));
@@ -122,8 +127,14 @@ export function openTestFrame(html: string, o: FrameOptions): TestFrame {
   };
 
   const studio: BridgeStudio = {
-    drive: (command) => log.drives.push(command),
-    event: (name, value) => log.events.push([name, value]),
+    drive: (command) => {
+      log.drives.push(command);
+      o.studio?.drive?.(command);
+    },
+    event: (name, value) => {
+      log.events.push([name, value]);
+      o.studio?.event?.(name, value);
+    },
     can: o.can ?? (() => true),
     fire: (action) => log.fired.push(action),
     key: (key) => log.keys.push(key),
@@ -137,6 +148,7 @@ export function openTestFrame(html: string, o: FrameOptions): TestFrame {
     studio,
     onFail: (error) => log.failed.push(error),
     ...(o.clock ? { clock: o.clock } : {}),
+    ...(o.tools ? { tools: o.tools } : {}),
   });
 
   const run = (script: string) => runIn(frame.win, script);

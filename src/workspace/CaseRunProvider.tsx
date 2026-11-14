@@ -54,7 +54,8 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     sim,
     cameras: actions.cameras,
     patchPart: actions.edits.patchPart,
-    active: () => open && wantsCameras,
+    active: (_views, streaming) => open && (wantsCameras || streaming),
+    tiles: wantsCameras,
   });
   const bus = useConsoleSignals({
     open,
@@ -99,6 +100,17 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
           joints: core.project.joints ?? [],
           fire,
           can,
+          tools: {
+            world: {
+              objects: () => cases.active?.world.objects ?? [],
+              set: (change) => (sim.status === 'off' ? 'the sim isn’t running' : sim.setWorldObject(change)),
+            },
+            store: {
+              read: () => cases.active?.store,
+              write: (store) => (cases.active ? cases.setStore(cases.active.id, store) : undefined),
+            },
+            frames: cameras.frames,
+          },
           studio: {
             cases,
             cameras,

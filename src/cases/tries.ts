@@ -18,6 +18,7 @@ export interface TryManifest {
   dt: number;
   faults?: RecordedFault[];
   commands?: number;
+  world?: number;
   source?: string;
 }
 
@@ -89,13 +90,14 @@ export const scoreTry = (scoring: TryScoring) => evaluateContract(scoring.kase.t
 export async function tryManifest(kase: Case, model: SimModel, recording: Recording): Promise<TryManifest> {
   return {
     formatVersion: CASE_FORMAT_VERSION,
-    caseHash: await sha256(JSON.stringify(kase)),
+    caseHash: await sha256(JSON.stringify({ ...kase, store: undefined })),
     modelHash: await sha256(model.xml),
     seed: 0,
     frames: recording.frames,
     dt: recording.dt,
     faults: recording.faults ?? [],
     ...(recording.commands && recording.controller ? { commands: recording.commands.length } : {}),
+    ...(recording.world ? { world: recording.world.length } : {}),
   };
 }
 

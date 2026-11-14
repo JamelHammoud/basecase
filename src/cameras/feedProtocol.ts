@@ -7,7 +7,9 @@ export type FeedRequest =
   | { type: 'scene'; parts: ScenePart[]; world: ScenePart[]; meshes: MeshFiles }
   | { type: 'model'; model: SimModel | null }
   | { type: 'views'; views: CameraView[]; sizes: Record<string, [number, number]> }
-  | { type: 'port'; port: MessagePort };
+  | { type: 'port'; port: MessagePort }
+  | { type: 'stream'; id: string; key: string; size: [number, number]; fps: number; port: MessagePort }
+  | { type: 'unstream'; id: string };
 
 export type FeedEvent = { type: 'frame'; bitmaps: Record<string, ImageBitmap>; frames: number };
 

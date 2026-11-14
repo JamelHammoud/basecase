@@ -42,6 +42,8 @@ export function useChooseController({ sim, training, animations, policies, setPo
   };
 
   return async (value: string) => {
+    if (value === 'drive') return;
+
     if (sim.drive.active) sim.drive.stop();
 
     if (value.startsWith('policy:')) await choosePolicy(value.slice(7));
@@ -128,6 +130,7 @@ export const ControlSection: React.FC<
 > = ({ sim, animations, policies, policyKey, showDrive, choose, walk, onToast }) => {
   const { drive } = sim;
   const options = [
+    ...(drive.active ? [{ value: 'drive', label: 'Drive' }] : []),
     { value: 'hold', label: 'Hold pose' },
     ...animations.map((a) => ({ value: `anim:${a.id}`, label: a.name })),
     ...policies.map((p) => ({ value: `policy:${p.id}`, label: p.name })),
@@ -140,9 +143,9 @@ export const ControlSection: React.FC<
         <div className="flex items-center gap-2">
           <Select
             aria-label="Controller"
-            value={controllerValue(sim.controller, policyKey)}
+            value={drive.active ? 'drive' : controllerValue(sim.controller, policyKey)}
             options={options}
-            disabled={drive.active}
+            disabled={drive.status === 'checking'}
             onChange={(e) => void choose(e.target.value)}
           />
           <Button

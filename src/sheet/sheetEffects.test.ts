@@ -147,4 +147,24 @@ describe('a part cut from sheet', () => {
     expect(tagged.madeElsewhere).toEqual([{ id: 'block', name: 'block', process: 'CNC aluminum' }]);
     expect(bomFindings(tagged).some((f) => f.rule === 'no-source')).toBe(true);
   });
+
+  it('keeps an old CNC aluminum tag on a thin shaped part needing a source', () => {
+    const thin = { mechanicalTag: 'CNC Aluminum', dimensions: { width: 60, height: 10, depth: 40 } };
+    const shaped = [
+      part({ ...thin, id: 'pocketed', kind: 'boolean', boolean: { op: 'subtract', operands: [] } }),
+      part({ ...thin, id: 'chamfered', edges: { kind: 'chamfer', mm: 2 } }),
+      part({ ...thin, id: 'modeled', kind: 'cad_part' }),
+      part({ ...thin, id: 'rod', kind: 'cylinder', dimensions: { width: 10, height: 80, depth: 10 } }),
+    ];
+    const tagged = buildBom({
+      parts: shaped,
+      project,
+      purchases: {},
+      measures: Object.fromEntries(shaped.map((p) => [p.id, box([-30, 0, -20], [30, 10, 20], 20000)])),
+    });
+
+    expect(tagged.lines.some((l) => l.category === 'Sheet')).toBe(false);
+    expect(tagged.madeElsewhere.map((p) => p.id)).toEqual(['pocketed', 'chamfered', 'modeled', 'rod']);
+    expect(bomFindings(tagged).filter((f) => f.rule === 'no-source')).toHaveLength(4);
+  });
 });

@@ -8,7 +8,7 @@ You can now cut a flat part from aluminum, carbon fiber or acrylic instead of pr
 
 Choose Cut from sheet as a flat part's material in the Inspector. Basecase decides what's flat from the geometry: two parallel faces with only through holes between them, 13 mm thick at most.
 
-A PLA hip plate that flexes is often the first part to outgrow printing. Before this, tagging it CNC aluminum left it with no source, and Checks blocked the build. A flat part with one of those tags now counts as sheet, so it stops blocking.
+A PLA hip plate that flexes is often the first part to outgrow printing. Before this, tagging it CNC aluminum left it with no source, and Checks blocked the build. A plain plate with one of those tags now counts as sheet, so it stops blocking. A tagged part with a pocket or chamfer still needs a source.
 
 Weight follows the metal. A 100 × 60 × 3 mm plate is 16.3 g printed in PLA at 20% infill and 48.6 g in 6061 aluminum. Servo torque and the simulation carry the same mass.
 

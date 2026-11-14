@@ -10,6 +10,9 @@ function polyline(loop: Loop, layer: string): string[] {
       [0, 'POLYLINE'],
       [8, layer],
       [66, '1'],
+      [10, '0'],
+      [20, '0'],
+      [30, '0'],
       [70, '1'],
     ]),
     ...loop.flatMap(([x, y]) =>
@@ -18,6 +21,7 @@ function polyline(loop: Loop, layer: string): string[] {
         [8, layer],
         [10, num(x)],
         [20, num(y)],
+        [30, '0'],
       ]),
     ),
     ...pairs([
@@ -57,13 +61,16 @@ export function sheetDxf(profile: SheetProfile): string {
 export function dxfLoops(dxf: string): Loop[] {
   const lines = dxf.split('\n');
   const loops: Loop[] = [];
+  let entity = '';
 
   for (let i = 0; i + 1 < lines.length; i += 2) {
     const [code, value] = [lines[i], lines[i + 1]];
 
+    if (code === '0') entity = value;
+
     if (code === '0' && value === 'POLYLINE') loops.push([]);
 
-    if (code === '10') loops[loops.length - 1].push([Number(value), Number(lines[i + 3])]);
+    if (code === '10' && entity === 'VERTEX') loops[loops.length - 1].push([Number(value), Number(lines[i + 3])]);
   }
 
   return loops;

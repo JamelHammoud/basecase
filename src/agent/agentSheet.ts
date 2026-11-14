@@ -9,6 +9,11 @@ export interface AgentSheet {
 
 const PRINTED_TAG = '3D Printed PLA/PETG';
 
+export const MADE_ELSEWHERE_MATERIAL: Record<string, string> = {
+  'CNC Aluminum': 'cnc',
+  'Laser-Cut Acrylic/Carbon': 'laser_cut',
+};
+
 export function sheetPatch(part: ScenePart, sheet: AgentSheet | null): Pick<ScenePart, 'sheet' | 'mechanicalTag'> {
   if (!sheet) return { sheet: undefined, mechanicalTag: sheetOf(part) ? PRINTED_TAG : part.mechanicalTag };
 

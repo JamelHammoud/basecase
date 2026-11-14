@@ -26,7 +26,7 @@ import {
   type V3,
 } from './agentFrame';
 import { plural } from '../../electron/plural.mjs';
-import { sheetEntry, sheetPatch, type AgentSheet } from './agentSheet';
+import { MADE_ELSEWHERE_MATERIAL, sheetEntry, sheetPatch, type AgentSheet } from './agentSheet';
 
 export { agentCatalog } from './agentCatalog';
 export type { AgentCadPayload } from './cadMesh';
@@ -362,7 +362,7 @@ function materialOf(p: ScenePart): string | undefined {
 
   if (p.printMaterial) return p.printMaterial.toLowerCase();
 
-  return p.mechanicalTag ? TAG_TO_MATERIAL[p.mechanicalTag] : undefined;
+  return p.mechanicalTag ? (TAG_TO_MATERIAL[p.mechanicalTag] ?? MADE_ELSEWHERE_MATERIAL[p.mechanicalTag]) : undefined;
 }
 
 function sceneLinks(p: ScenePart) {

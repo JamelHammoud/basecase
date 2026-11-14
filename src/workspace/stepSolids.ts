@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { hasDeformers } from '../three/partMesh/context';
+import { hasDeformers } from '../utils/partDeformers';
 import { meshScale } from '../three/partMesh/creased';
 import type { PartDimensions, PartKind, ScenePart } from '../types/robotics';
 import { partEdges, tubeRadii } from '../utils/partEdges';

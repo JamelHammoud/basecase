@@ -101,6 +101,10 @@ describe('specToPart and applySpec', () => {
 
     expect(snapshotScene([legacy]).parts[0].sheet).toBe('aluminum:3.18');
     expect(applySpec(legacy, { id: 'chest', sheet: null }).mechanicalTag).toBe('3D Printed PLA/PETG');
+
+    const chamfered = snapshotScene([{ ...legacy, edges: { kind: 'chamfer', mm: 1 } }]).parts[0];
+
+    expect([chamfered.material, chamfered.sheet]).toEqual(['cnc', undefined]);
   });
 
   it('rounds a primitive’s edges, clamped to its size, reports them, and makes them sharp again', () => {

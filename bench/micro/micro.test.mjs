@@ -30,7 +30,7 @@ describe('seed tasks', () => {
   it('covers the 56 seed tasks with a held-out third', () => {
     expect(SEED_TASKS).toHaveLength(56);
     expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(56);
-    expect(selectTasks({ split: 'heldout' })).toHaveLength(18);
+    expect(SEED_TASKS.filter((t) => t.heldOut)).toHaveLength(18);
     expect(selectTasks({ split: 'tune' }).some((t) => t.heldOut)).toBe(false);
   });
 

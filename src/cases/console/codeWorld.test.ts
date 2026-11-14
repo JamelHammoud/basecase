@@ -168,6 +168,32 @@ describe('store from a code panel', () => {
     expect(writes).toEqual([{ best: 50 }, { best: 51 }]);
   });
 
+  it('reads its own write back until the studio shows it, then the studio’s value', async () => {
+    const clock = fakeClock();
+    const replies: unknown[] = [];
+    let shown: StoreValue = { best: 3 };
+    let written: StoreValue = null;
+    const panel = open(`<script>basecase.store.set({ best: 9 });</script>`, {
+      clock,
+      store: { get: () => shown, set: (value) => (written = value) },
+      globals: { replies },
+    });
+    const read = async (count: number) => {
+      panel.run('basecase.store.get().then((v) => replies.push(v))');
+      await vi.waitFor(() => expect(replies).toHaveLength(count));
+    };
+
+    await settle();
+    clock.tick(500);
+    await read(1);
+    shown = written;
+    await read(2);
+    shown = { best: 12 };
+    await read(3);
+    expect(replies).toEqual([{ best: 9 }, { best: 9 }, { best: 12 }]);
+    panel.close();
+  });
+
   it('refuses a tiny message that doubles to two billion values without walking them all', async () => {
     const replies: unknown[] = [];
     const started = performance.now();

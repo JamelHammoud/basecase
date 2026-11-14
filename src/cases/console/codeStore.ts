@@ -28,6 +28,7 @@ export const STORE_WRITE_MS = 500;
 
 export function coalescedStore(store: BridgeStore, clock: BridgeClock): BridgeStore & { flush: () => void } {
   let pending: { value: StoreValue } | null = null;
+  let written: { value: StoreValue } | null = null;
   let cancel: (() => void) | null = null;
 
   const flush = () => {
@@ -36,11 +37,22 @@ export function coalescedStore(store: BridgeStore, clock: BridgeClock): BridgeSt
 
     if (pending) store.set(pending.value);
 
+    written = pending ?? written;
     pending = null;
   };
 
+  const saved = () => {
+    const value = store.get();
+
+    if (written && value !== written.value) return written.value;
+
+    written = null;
+
+    return value;
+  };
+
   return {
-    get: () => (pending ? pending.value : store.get()),
+    get: () => (pending ? pending.value : saved()),
     set: (value) => {
       pending = { value };
       cancel ??= clock.after(STORE_WRITE_MS, flush);

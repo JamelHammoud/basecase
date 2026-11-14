@@ -4,6 +4,7 @@ import { comparable } from '../cases/caseCompare';
 import {
   designScene,
   exploreCase,
+  exploreCaseKey,
   exploreDesigns,
   exploreSpace,
   EXPLORE_RUNS,
@@ -17,7 +18,6 @@ import type { Case } from '../cases/schema';
 import { readinessFingerprint } from '../readiness/readiness';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { errorMessage } from '../utils/errorMessage';
-import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
 import { exploreVerdict } from './caseChecks';
 import type { ShowToast } from './types';
@@ -67,7 +67,7 @@ export function useCaseExplore({ kase, parts, project, source, showToast }: Case
   const [state, setState] = useState<Exploration | null>(null);
   const runId = useRef(0);
   const space = exploreSpace(parts, project);
-  const caseKey = kase ? jsonHash(kase) : '';
+  const caseKey = kase ? exploreCaseKey(kase) : '';
   const shown =
     state && space && state.caseKey === caseKey && state.base === exploreBase(parts, project, space) ? state : null;
 
@@ -86,7 +86,7 @@ export function useCaseExplore({ kase, parts, project, source, showToast }: Case
     const run = ++runId.current;
     const designs = exploreDesigns(at, designLimit);
     const started: Exploration = {
-      caseKey: jsonHash(target),
+      caseKey: exploreCaseKey(target),
       base: exploreBase(scene.parts, scene.project, at),
       space: at,
       rows: [],

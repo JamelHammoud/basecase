@@ -57,6 +57,6 @@ Explore tries the design as it is first, then each version on every joint at onc
 
 **Apply** swaps the servos, and the tether's voltage when it changed. The bill of materials, Checks and plates update. Press ⌘Z to undo the whole swap in one step.
 
-Nothing is saved. Change anything other than the servos' versions and the rows go away.
+Nothing is saved. Change anything other than the servos' versions and the rows go away. A high score the Case's code keeps doesn't count as a change.
 
 [Compare two robots on a Case](/help/compare-two-robots-on-a-case) runs a Case on a design that differs in more than its servos.

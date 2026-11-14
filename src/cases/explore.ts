@@ -1,8 +1,10 @@
 import { COMPONENT_BY_ID, componentVariant } from '../data/components';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { PurchaseRecord } from '../types/robotics';
+import { jsonHash } from '../utils/geometryHash';
 import { robotTotals } from './caseCompare';
 import type { CaseRuns } from './caseRuns';
+import { caseIdentity } from './caseStore';
 import {
   designKey,
   designScene,
@@ -26,6 +28,8 @@ export {
 export type { Design, DesignScene, ExploreSpace, ServoGroup } from './exploreDesigns';
 
 export const EXPLORE_RUNS = 8;
+
+export const exploreCaseKey = (kase: object): string => jsonHash(caseIdentity(kase));
 
 export interface ExploreBase extends DesignScene {
   measures: Record<string, MeshMeasure | undefined>;

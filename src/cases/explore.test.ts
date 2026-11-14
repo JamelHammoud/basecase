@@ -10,6 +10,7 @@ import {
   designLabel,
   designScene,
   exploreCase,
+  exploreCaseKey,
   exploreDesigns,
   exploreSpace,
   EXPLORE_RUNS,
@@ -89,6 +90,13 @@ describe('the design space', () => {
     const plain = arm.parts.map((p) => ({ ...p, componentId: undefined, componentVariant: undefined }));
 
     expect(exploreSpace(plain, project)).toBeNull();
+  });
+
+  it('keeps a Case’s rows when only its stored score changes', () => {
+    const kase = touchTheDots(arm);
+
+    expect(exploreCaseKey({ ...kase, store: { best: 9 } })).toBe(exploreCaseKey(kase));
+    expect(exploreCaseKey({ ...kase, name: 'Other' })).not.toBe(exploreCaseKey(kase));
   });
 });
 

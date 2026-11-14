@@ -34,7 +34,7 @@ covers:
   - src/workspace/partActions.tsx
 ---
 
-You can move and turn a part by dragging the gizmo on the canvas. Or, to place it exactly, type its position in millimeters and its angle in degrees in the Inspector.
+You can move and turn a part by dragging the gizmo on the canvas. To place it exactly, type its position in millimeters and its angle in degrees in the Inspector.
 
 ## Drag with the gizmo
 
@@ -42,9 +42,9 @@ You can move and turn a part by dragging the gizmo on the canvas. Or, to place i
 2. Press [[V]] for **Move**, [[E]] for **Rotate** or [[R]] for **Scale**.
 3. Drag one of the gizmo's arrows, rings or handles.
 
-Moves snap to 5 mm and turns snap to 15°. To move or turn without snapping, hold [[⇧]] while you drag. The canvas shows **Snapping off** while you hold it.
+Moves snap to 5 mm, and turns snap to 15°. Hold [[⇧]] while you drag to move or turn without snapping. The canvas shows **Snapping off** for as long as you hold the key.
 
-To change these steps, open **Settings** ▸ **Canvas** ▸ **Snapping**. You can set **Move** to Off, 1, 2, 5 or 10 mm, and **Rotate** to Off, 5°, 15°, 45° or 90°.
+To change how far each snap goes, open **Settings** ▸ **Canvas** ▸ **Snapping**. You can set **Move** to Off, 1, 2, 5 or 10 mm, and **Rotate** to Off, 5°, 15°, 45° or 90°.
 
 If you select several parts, the gizmo appears at their shared center and moves them together. Locked parts stay where they are. A real component keeps its size when you use **Scale**.
 
@@ -56,9 +56,13 @@ If you select several parts, the gizmo appears at their shared center and moves 
 
 Position is the part's center, in millimeters. Y points up.
 
-You can type math in a field, such as `40/2` or `12+3.5`. To step the value up or down, press [[↑]] or [[↓]]. Hold [[⇧]] to step 10 times as far, or hold [[⌥]] to step a tenth as far. Or drag the field's label left or right to scrub the value. To go back to the value you started with, press [[Esc]].
+Each field accepts math, such as `40/2` or `12+3.5`. You can also take any of these actions:
 
-Other fields have letter labels too, such as **W** under **Size**. To see what a letter stands for, hold the pointer over it.
+- To step the value up or down, press [[↑]] or [[↓]]. Hold [[⇧]] to step 10 times as far, or hold [[⌥]] to step a tenth as far.
+- To scrub the value, drag the field's label left or right.
+- To go back to the value you started with, press [[Esc]].
+
+Other fields have letter labels too, such as **W** under **Size**. Hold the pointer over a letter to see what it stands for.
 
 To rotate the part 90° around X, Y or Z, click a **90°** button under **Rotation**. To set all three angles back to 0, click **Reset rotation** in the section's header. Or choose **Reset Rotation** from the part's right-click menu or from [[⌘K]].
 

@@ -9,6 +9,9 @@ export interface AgentPaneProps {
   onReconnectAcp: (command?: string) => Promise<void>;
 }
 
+const RUN_WITH_LABEL = 'Run with';
+const COMMAND_LABEL = 'Command';
+
 const agentOfCommand = (command: string) => AGENT_PROFILES.find((p) => p.command === command);
 
 function agentStatusText(status: AcpStatusInfo) {
@@ -25,10 +28,10 @@ export const AgentPane: React.FC<AgentPaneProps> = (p) => {
 
   return (
     <Group>
-      <Row label="Run with" hint={agent?.hint ?? 'Custom ACP agent'}>
+      <Row label={RUN_WITH_LABEL} hint={agent?.hint ?? 'Custom ACP agent'}>
         <SegmentedControl<string>
           className="w-[320px]"
-          aria-label="Run with"
+          aria-label={RUN_WITH_LABEL}
           value={agent?.kind ?? ''}
           onChange={(kind) => {
             const cmd = AGENT_PROFILES.find((profile) => profile.kind === kind)?.command;
@@ -43,7 +46,7 @@ export const AgentPane: React.FC<AgentPaneProps> = (p) => {
       </Row>
       <Row
         stacked
-        label="Command"
+        label={COMMAND_LABEL}
         hint={
           <span
             className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-400'}`}
@@ -59,7 +62,7 @@ export const AgentPane: React.FC<AgentPaneProps> = (p) => {
             onKeyDown={(e) => {
               if (e.key === 'Enter') p.onReconnectAcp(command);
             }}
-            aria-label="Command"
+            aria-label={COMMAND_LABEL}
             className="font-mono text-[12px]"
           />
           <IconButton

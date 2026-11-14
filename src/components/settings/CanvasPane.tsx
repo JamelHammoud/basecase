@@ -31,6 +31,9 @@ const SCROLL_HINTS: Record<TrackpadGestureMode, string> = {
 };
 
 const SCROLL_LABEL = IS_MAC ? 'Two-finger scroll' : 'Scroll';
+const ROTATE_LABEL = 'Rotate';
+const UNITS_LABEL = 'Units';
+const SCULPT_LABEL = 'Sculpt';
 
 export const CanvasPane: React.FC<CanvasPaneProps> = (p) => (
   <>
@@ -65,10 +68,10 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (p) => (
           options={MOVE_SNAP_STEPS.map((v) => ({ value: v, label: v === '0' ? 'Off' : v }))}
         />
       </Row>
-      <Row label="Rotate">
+      <Row label={ROTATE_LABEL}>
         <SegmentedControl
           className="w-[240px]"
-          aria-label="Rotate"
+          aria-label={ROTATE_LABEL}
           value={String(p.snapAngleDeg)}
           onChange={(v) => p.onSnapAngle(Number(v))}
           options={ROTATE_SNAP_STEPS.map((v) => ({ value: v, label: v === '0' ? 'Off' : `${v}°` }))}
@@ -76,10 +79,10 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (p) => (
       </Row>
     </Group>
     <Group title="Measure">
-      <Row label="Units">
+      <Row label={UNITS_LABEL}>
         <SegmentedControl<MeasureUnit>
           className="w-[240px]"
-          aria-label="Units"
+          aria-label={UNITS_LABEL}
           value={p.measureUnit}
           onChange={p.onMeasureUnit}
           options={MEASURE_UNITS}
@@ -87,8 +90,8 @@ export const CanvasPane: React.FC<CanvasPaneProps> = (p) => (
       </Row>
     </Group>
     <Group title="Tools">
-      <Row label="Sculpt">
-        <Switch aria-label="Sculpt" checked={p.sculptEnabled} onChange={p.onSculptEnabled} />
+      <Row label={SCULPT_LABEL}>
+        <Switch aria-label={SCULPT_LABEL} checked={p.sculptEnabled} onChange={p.onSculptEnabled} />
       </Row>
     </Group>
   </>

@@ -20,6 +20,7 @@ keywords:
 related:
   - try-a-case
   - make-a-case
+  - play-a-try-through-its-console
   - share-a-robot-as-a-link
 covers:
   - src/cases/console/
@@ -35,75 +36,67 @@ covers:
   - src/workspace/agentCaseRequests.ts
 ---
 
-You can run a Case in the whole window, using the layout the Case asks for. The robot stays on the canvas, with the cameras, numbers, plots, buttons and tries the Case needs around it.
+You can run a Case in the whole window, with the layout the Case asks for. The robot sits on the canvas, with the cameras, numbers, plots, buttons and tries the Case needs around it.
 
-1. Open a Case. Choose one in **Play** ▸ **Cases**, or create one with **New Case**. The Case opens in the Simulate tab.
-2. Click the expand button in the Case's header, or press [[⌘K]] and choose **Run Case**.
+1. Open a Case. Pick one under **Play** ▸ **Cases**, or make one with **New Case**. The Case opens in the Simulate tab.
+2. Click the expand button in the Case's header. Or press [[⌘K]] and choose **Run Case**.
 
 ![The Simulate tab with Touch the Dots open and the Run Case tooltip on its expand button](/help/run-a-case/brief.png)
 
-3. Look at the cards around the canvas. If the Case doesn't have its own layout, the cameras are on the left: first the Scene view or your stationary camera views, then a tile for each camera on the robot. The brief, the emulated robot and your tries are on the right. To draw a camera tile sharper, click it. To choose Look Through, Rename or Lens, right-click it.
+3. Look at the cards around the canvas. If the Case doesn't have its own layout, its cameras sit on the left: first the Scene view or your stationary camera views, then one tile for each camera on the robot. The brief, the emulated robot and your tries sit on the right.
+   - To show a camera tile in sharper detail, click it.
+   - To choose Look Through, Rename or Lens, right-click the tile.
 
 ![The Case running with the cameras on the left, the arm in the middle and the brief, Connect Emulated Robot and Try It on the right](/help/run-a-case/center.png)
 
-4. In the desktop app, click **Connect Emulated Robot**. You see the number of servos and whether the motors are running, and Stop while they run. Below that are the daemon's newest message and each servo's angle and temperature.
+4. In the desktop app, click **Connect Emulated Robot**. The card shows the number of servos and whether the motors are running. While they run, you see Stop. Below that are the daemon's newest message and each servo's angle and temperature.
 
 ![Three emulated servos connected, motors off, each reading its angle](/help/run-a-case/connected.png)
 
-5. Click **Try It**, then drive with [[W A S D]], [[Q]] and [[E]], or with a gamepad. Anything the Case counts as a failure shows in red under the brief as soon as it happens.
+5. Click **Try It**, then drive with [[W A S D]], [[Q]] and [[E]], or with a gamepad. If the Case counts something as a failure, the failure appears in red under the brief as soon as it happens.
 
 ![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
-6. Click **Stop Try**, or wait for the clock to run out. The try appears in Results. Once a try passes, you can choose Replay, Export Dataset or Publish to Hugging Face in Results. After five passing tries, you can also choose Train from Tries.
+6. Click **Stop Try**, or let the clock run out. The try appears in Results. To play it back through the cards, click **Replay** on its row. See [Play a try through its console](/help/play-a-try-through-its-console). Once a try passes, you can choose Export Dataset or Publish to Hugging Face in Results. After five passing tries, you can also choose Train from Tries there.
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 
-7. To go back, click **Done** or press [[Esc]]. The first [[Esc]] stops driving. Your parts, selection and camera are as you left them.
+7. Click **Done** or press [[Esc]] to go back. The first [[Esc]] stops driving. Your parts, selection and camera stay as you left them.
 
-You can also leave by choosing a view in the rail, or by running any [[⌘K]] command except driving, trying, **Multiply** and the dataset commands.
+You can also go back by picking a view in the rail, or by running any [[⌘K]] command except driving, trying, **Multiply** and the dataset commands.
 
-## Cases with their own layout
+A Case can have its own layout, called its console. Basecase saves the console with the Case in your `.basecase` file. To get a console, describe the Case you want to the agent, and it writes the console for you. You can also edit the console in that file yourself. A Case you make with New Case or from a template has no console.
 
-A Case can bring its own layout, called its console. Basecase saves the console with the Case in your `.basecase` file. To get a console, describe the Case you want to the agent, and it writes the console for you. You can also edit that file yourself. Cases you make with New Case or from a template have no console.
+A console lists:
 
-A console lists the inputs that drive the Case, the cards on each side of the canvas, and each card's width and contents. A card can hold any of these:
+- The inputs that drive the Case
+- The cards on each side of the canvas, and their widths
+- The contents of each card
 
-- A camera
-- A big number, such as a timer or a score
-- A plot of joint angles over time
-- A table of joints
-- A button, such as Reset
-- The tries
-- The failures
-- Some text
-- A map of the world from above
+A card can hold a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above.
 
-For example, a game Case can show its time and score on the left, with Try It, Reset and the tries on the right. The time counts down while you play, and Reset between tries puts the robot, the blocks and the score back.
+For example, a game Case can put its time and score on the left, and Try It, Reset and the tries on the right. The time counts down as you play. Between tries, Reset puts the robot, the blocks and the score back where they started.
+
+If a console lists `camera` among its inputs, **Try It** opens your computer's camera, and you drive a humanoid or an arm with your arms. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera). The Case's logic receives the gestures you make, and the Case can set a button to press when you make one. See [Teach a robot a gesture](/help/teach-a-robot-a-gesture). A console can list `hand`, `face`, `midi` and `voice` as well. To learn more, see [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
 ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 
-If a console lists `camera` among its inputs, **Try It** opens your computer's camera and your arms drive a humanoid or an arm, as in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera). The Case's logic receives the gestures you make, and the Case can set a button to press when you make one, as in [Teach a robot a gesture](/help/teach-a-robot-a-gesture). A console can also list `hand`, `face`, `midi` and `voice`. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
+A console can hold the Case's own code in up to 4 panels. Each panel is a small web page in a column or over the canvas. For example, one panel might draw a joystick that drives the robot, and another might show the robot's speed over the canvas.
 
-## Code panels
-
-A console can hold the Case's own code in up to 4 panels. Each panel is a small web page in a column or over the canvas. For example, one panel might draw a joystick that drives the robot while another shows the robot's speed over the canvas.
-
-[[Esc]] and [[⌘K]] keep working inside a panel. While a Case runs, **Undo** at the top right undoes changes to the code panels without touching the robot. Outside a panel or a text field, [[⌘Z]] does the same, and [[⌘I]] shows the **Agent** tab next to the Case. When you click a panel over the canvas, the click goes through to the robot unless the panel handles it.
+[[Esc]] and [[⌘K]] work inside a panel. While a Case runs, **Undo** at the top right undoes changes to the code panels and leaves the robot as it is. Outside a panel or a text field, [[⌘Z]] does the same thing, and [[⌘I]] shows the **Agent** tab beside the Case. Clicks on a panel over the canvas go through to the robot, unless the panel uses them.
 
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
 
-Code panels can change the Case's world during a run. They can move, light or hide any object the Case marks as movable, such as a target that pops up or a wall that opens. To get a movable object, tell the agent which object should move when it makes the Case. Each try records these changes, so a replay shows the same world.
+Code panels can change the Case's world during a run. They can move, light or hide any object the Case marks as movable, such as a target that pops up or a wall that opens. To get a movable object, tell the agent which object should move when it makes the Case. Basecase records each change in the try, so a replay shows the same world.
 
-A panel can watch the Scene view, a camera view you placed, or one of the robot's cameras, at up to 640 × 480 and 15 frames per second. It can't watch your computer's camera.
+A panel can watch the Scene view, a camera view you placed, or one of the robot's cameras, at up to 640 × 480 and 15 frames a second. A panel can't watch your computer's camera.
 
-To remember something like a high score, a panel can keep a value of up to 64 KB on this computer. The value survives **Reset** and reopening the scene, and it's gone when you delete the Case or the scene. Basecase doesn't save it with the Case, so a Case you share, open somewhere else or copy with **Duplicate Scene** starts without it.
+To remember something like a high score, a panel can keep a value of up to 64 KB on this computer. The value stays after **Reset** and after you reopen the scene. Deleting the Case or the scene removes it. The Case doesn't carry the value, so a Case you share, open on another computer or copy with **Duplicate Scene** starts without it.
 
 ![A rover Case running, with a code panel showing the Scene camera and the target its code moved and lit red](/help/run-a-case/world.png)
 
-If a code panel stops answering for 2 seconds, or doesn't start within 10 seconds, it closes. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” If the panel's script fails while it loads, you see its error there instead. If any other panel fails, it shows its title and “stopped working” with **Reload**, while the robot and the try keep going.
+If a code panel stops answering for 2 seconds, or doesn't start within 10 seconds, it closes. In its place, you see “Couldn’t run” with the panel's name and “It didn’t answer.” If the panel's script fails while it loads, you see its error there instead. If any other panel fails, it shows its title and “stopped working” with **Reload**, and the robot and the try keep going.
 
-The agent can write these panels and change them while the Case runs. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
+The agent can write these panels and change them during a run. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
 
-## Run a Case from a shared link
-
-A link you make with **Share Robot** opens the same console in a browser (see [Share a robot as a link](/help/share-a-robot-as-a-link)). Camera panels, the servos table and the tries appear only in the studio. In the browser, code panels get no camera frames and keep no values.
+A link you make with **Share Robot** opens the same console in the browser. See [Share a robot as a link](/help/share-a-robot-as-a-link). Camera panels, the servos table and the tries work only in the studio. In the browser, code panels get no camera frames and keep no values.

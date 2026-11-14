@@ -88,7 +88,7 @@ function measuredServoArm(): SimModel {
 function expectPeaksMatch(mj: MainModule, engine: SimEngine, recording: Recording) {
   const live = engine.stats().joints;
   const scrub = new SimEngine(mj, engine.sim);
-  const efforts = recordedEfforts(mj, scrub, recording);
+  const efforts = recordedEfforts(mj, scrub, recording).peaks;
 
   engine.sim.joints.forEach((j, i) => {
     if (j.actuator < 0) return expect(efforts[i]).toHaveLength(0);

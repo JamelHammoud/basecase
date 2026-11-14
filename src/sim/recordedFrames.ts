@@ -81,15 +81,27 @@ function windowPeaks({ mj, engine, r }: Scrubbed, frame: number, out: Float64Arr
   }
 }
 
-export function recordedEfforts(mj: MainModule, engine: SimEngine, r: Recording): Float32Array[] {
+export interface RecordedEfforts {
+  peaks: Float32Array[];
+  forces: Float32Array[];
+}
+
+export const effortsTransfer = (e: RecordedEfforts | null) => (e ? [...e.peaks, ...e.forces].map((a) => a.buffer) : []);
+
+export function recordedEfforts(mj: MainModule, engine: SimEngine, r: Recording): RecordedEfforts {
   const joints = engine.sim.joints;
-  const efforts = joints.map((j) => new Float32Array(j.actuator < 0 ? 0 : r.frames));
+  const column = (j: (typeof joints)[number]) => new Float32Array(j.actuator < 0 ? 0 : r.frames);
+  const efforts = { peaks: joints.map(column), forces: joints.map(column) };
   const peaks = new Float64Array(joints.length);
+  const force = engine.data.actuator_force;
 
   for (let n = 0; n < r.frames; n++) {
     windowPeaks({ mj, engine, r }, n, peaks);
     joints.forEach((j, i) => {
-      if (j.actuator >= 0) efforts[i][n] = peaks[i];
+      if (j.actuator < 0) return;
+
+      efforts.peaks[i][n] = peaks[i];
+      efforts.forces[i][n] = force[j.actuator];
     });
   }
 

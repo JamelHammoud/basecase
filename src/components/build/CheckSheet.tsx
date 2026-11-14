@@ -158,7 +158,7 @@ export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave })
         <>
           {line.record && (
             <Button
-              variant="ghost"
+              variant="danger"
               onClick={() => confirmAction({ title: `Delete price for ${line.name}?`, onConfirm: () => onSave(null) })}
             >
               Delete Price

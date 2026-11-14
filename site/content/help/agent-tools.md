@@ -1,7 +1,7 @@
 ---
 title: Agent tools
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: reference
 order: 2
@@ -120,6 +120,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `read_case_code` | Reads a code panel's source, or lists a Case's code panels |
 | `delete_case_code` | Takes a code panel out of a Case |
 | `run_case` | Runs a Case 20 times and reports how often it passed and why it failed |
+| `read_try` | Reads one try from its recording: its signals over a time window, when each failure first tripped, and a picture of the canvas at one moment |
 | `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
 | `explore_case` | Runs a Case on each catalog version of the robot's servos and supply voltage |
 | `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine, and proves each new switch between skills in it |

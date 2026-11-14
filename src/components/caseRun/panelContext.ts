@@ -27,6 +27,7 @@ export interface PanelContext {
   joints: RobotJoint[];
   fire: (action: CaseAction) => void;
   can: (action: CaseAction) => boolean;
+  seek?: (time: number) => void;
   studio: StudioPanelContext | null;
 }
 

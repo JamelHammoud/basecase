@@ -8,6 +8,7 @@ const bin = (relative) => path.join(root, 'node_modules', relative);
 const SCRIPT = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/;
 const TYPED = /\.(ts|tsx|mts|cts)$/;
 const TESTED_ROOTS = ['src/', 'electron/', 'tools/', 'bench/', 'verify/lib/'];
+const SITE_INPUTS = /^(?:site\/|tools\/(?:site|copy)\/|src\/.+\.tsx?$|electron\/[^/]+\.(?:mjs|json)$)/;
 
 function git(args) {
   const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
@@ -57,7 +58,7 @@ function steps(files) {
     python.length > 0 && (() => run('Ruff format', 'uvx', ['ruff', 'format', '--check', ...python])),
     files.some((file) => file.endsWith('.md')) &&
       (() => run('Docs', process.execPath, [path.join(root, 'tools/check-docs.mjs')])),
-    files.some((file) => file.startsWith('site/') || file.startsWith('tools/site/')) &&
+    files.some((file) => SITE_INPUTS.test(file)) &&
       (() => run('Site copy', process.execPath, [path.join(root, 'tools/check-site.mjs')])),
     files.includes('tools/quarantine.json') &&
       (() => run('Quarantine', process.execPath, [path.join(root, 'tools/quarantine.mjs')])),

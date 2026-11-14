@@ -49,7 +49,7 @@ Both robots run the same 20 runs. Each run changes friction, weight, servo stren
 
 Click the copy's row to open its tab with the Case. If the copy doesn't have the Case, it's added there.
 
-You can also press [[⌘K]] and choose **Compare with** followed by the scene's name. Ask the agent which version is better and it runs the same comparison.
+You can also press [[⌘K]] and choose **Compare with ⟨scene⟩**, named for the other scene. Ask the agent which version is better and it runs the same comparison.
 
 Nothing is saved. Change either robot and the rows update, the next time the first scene is in front.
 

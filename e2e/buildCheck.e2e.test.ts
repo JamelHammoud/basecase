@@ -91,9 +91,9 @@ describe('Checks', () => {
     await expect.poll(() => checks().getByRole('button', { name: 'Fix' }).count(), { timeout: 45000 }).toBe(fixes);
     await checks().getByRole('button', { name: 'Fix' }).first().click();
 
-    const prompt = () => promptContaining('Fix this problem from Checks');
+    const prompt = () => promptContaining('Quoted from Checks');
 
-    await expect.poll(prompt, { timeout: 15000 }).toContain('Fix this problem from Checks');
+    await expect.poll(prompt, { timeout: 15000 }).toContain('Fix this.');
     expect(prompt()).toContain('dispute_finding');
   }, 120000);
 

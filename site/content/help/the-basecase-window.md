@@ -1,7 +1,7 @@
 ---
 title: The Basecase window
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: get-started
 type: concept
 order: 3
@@ -26,6 +26,8 @@ covers:
   - src/components/LeftSidebar.tsx
   - src/components/PlayTabs.tsx
   - src/design-system/PanelResizer.tsx
+  - src/design-system/ErrorBoundary.tsx
+  - src/app/WindowBoundary.tsx
 ---
 
 Find your way around the studio: views on the left, the canvas in the middle, and the panel for what you've selected on the right.
@@ -75,6 +77,10 @@ The right panel has a tab for each job:
 - **Agent** is where you talk to the agent. While a Case runs, it's the only tab.
 
 Drag the edge of the sidebar or the right panel to resize it. Double-click the edge to put it back to its default width.
+
+## When part of the window fails
+
+A view, panel or sheet that fails shows its name and “stopped working”, such as “Parts stopped working”, with **Reload**. The rest of the window keeps working. If the whole window fails, **Reload Window** opens it again.
 
 ## The command menu
 

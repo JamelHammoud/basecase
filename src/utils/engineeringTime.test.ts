@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { resolvePrinter } from '../data/printers';
 import { firstSteps, guideStepParts } from '../guide/guideSteps';
 import { engineeringFindings } from '../readiness/findings';
-import { box, fixtureMeasures, fixtureTriangles, joint } from '../sim/fixtures/parts';
+import { box, fixtureMeasures, fixtureTriangles } from '../sim/fixtures/parts';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import { checkPrintability } from '../three/printability';
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../types/robotics';
@@ -37,27 +37,28 @@ function timeOf(parts: ScenePart[], project: ProjectSettings, extra: Partial<Tim
   const report = runEngineering({ parts, project, measures: fixtureMeasures(parts), servoOutputs: {}, time });
 
   return {
-    total: buildTime({ parts, project, time }),
+    total: buildTime({ parts, time }),
     row: report.rows.find((r) => r.check === TIME_CHECK)!,
     findings: engineeringFindings(report).filter((f) => f.check === TIME_CHECK),
   };
 }
 
-const servoJoints = (n: number) =>
-  Array.from({ length: n }, (_, i) =>
-    joint({ id: `j${i}`, link: ['base', `link${i}`], origin: [0, 0, 0], axis: [1, 0, 0], effortNm: 1 }),
-  );
+const servo = (id: string): ScenePart => ({
+  ...box(id, [0, 0, 0], [45, 24, 35], 55),
+  kind: 'component',
+  componentId: 'feetech-sts3215',
+});
 
 describe('the Time row', () => {
   it('fails the rover under a 2 h budget, naming the longest plate and how to cut time', () => {
     const { row, findings } = timeOf(rover.parts, roverProject({ budgetHours: 2 }));
 
     expect(row.status).toBe('fail');
-    expect(row.detail).toMatch(/^≈ \d+ h \d+ min of 2 h, .+ over: printing .+, assembly .+, servo set-up/);
+    expect(row.detail).toMatch(/^≈ \d+ h \d+ min of 2 h, .+ over: printing .+, assembly \d+ min$/);
     expect(findings).toHaveLength(1);
     expect(findings[0].level).toBe('blocker');
     expect(findings[0].agentText).toMatch(/plate 1 \(PLA, .*chassis.*\) prints for \d+ h /);
-    expect(findings[0].agentText).toMatch(/3 servos to set up and calibrate/);
+    expect(findings[0].agentText).not.toMatch(/servo/);
     expect(findings[0].agentText).toMatch(/Cut time: merge printed parts/);
   });
 
@@ -113,13 +114,16 @@ describe('the Time row', () => {
     expect(many.minutes - few.minutes).toBeCloseTo(3 * ASSEMBLY_MINUTES.fastener);
   });
 
-  it('spends more set-up time on 18 servos than on 6', () => {
+  it('spends more set-up time on 18 servos than on 6, and none on a joint without one', () => {
     const time = { plates: [], steps: [], printers: 1 };
-    const six = buildTime({ parts: [], project: { ...DEFAULT_PROJECT, joints: servoJoints(6) }, time });
-    const eighteen = buildTime({ parts: [], project: { ...DEFAULT_PROJECT, joints: servoJoints(18) }, time });
+    const servos = (n: number) => Array.from({ length: n }, (_, i) => servo(`servo${i}`));
+    const six = buildTime({ parts: servos(6), time });
+    const eighteen = buildTime({ parts: servos(18), time });
 
+    expect(six.servos).toBe(6);
     expect(six.setupHours).toBeCloseTo((6 * SERVO_SETUP_MINUTES) / 60);
     expect(eighteen.setupHours).toBeGreaterThan(six.setupHours);
+    expect(buildTime({ parts: rover.parts, time }).servos).toBe(0);
   });
 
   it('shows the total as a note with no time budget, never a verdict', () => {

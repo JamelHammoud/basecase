@@ -25,7 +25,9 @@ import { buildBom } from '../utils/bom';
 import { designedFits } from '../utils/designedFits';
 import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
-import { printReportOf } from '../utils/printReport';
+import { buildPrintReport, printReportOf, type PrintContext, type PrintReport } from '../utils/printReport';
+import { splitPrinted } from '../print/tracker';
+import { shapeKey } from '../print/shapeKey';
 import { guideStepParts } from '../guide/guideSteps';
 import { caseFindings } from '../readiness/caseChecks';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
@@ -72,6 +74,7 @@ export const projectFingerprint = (
     joints: project.joints,
     budget: project.budgetUsd,
     budgetHours: project.budgetHours,
+    prints: jsonHash(project.prints ?? []),
     tether: project.tether,
     extras: project.extras,
     sourced: jsonHash(project.sourced),
@@ -92,6 +95,14 @@ export const projectFingerprint = (
     printers: world.printers,
     sliced: jsonHash(world.sliced),
   });
+
+function unprintedPlates(parts: ScenePart[], ctx: PrintContext, report: PrintReport) {
+  const { remaining } = splitPrinted(parts, ctx.project.prints, shapeKey);
+
+  if (remaining.length === parts.length) return report.plan.plates;
+
+  return buildPrintReport(remaining, { ...ctx, scene: parts }).plan.plates;
+}
 
 function supportOf(print: { parts: Array<{ material: PrintMaterial; supportG: number }> }) {
   const supportG: Partial<Record<PrintMaterial, number>> = {};
@@ -126,7 +137,11 @@ export async function runReadiness({
       falls: freshFalls(parts, project),
       supportG: supportOf(report),
       printDowns: Object.fromEntries(report.parts.map((r) => [r.id, r.check.pose.down])),
-      time: { plates: report.plan.plates, steps: guideStepParts(parts, project), ...printingWorld },
+      time: {
+        plates: unprintedPlates(parts, { project, printer }, report),
+        steps: guideStepParts(parts, project),
+        ...printingWorld,
+      },
     }),
   );
   const measuring = viewport.measureParts();

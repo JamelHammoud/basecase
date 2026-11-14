@@ -4,14 +4,24 @@ date: 2026-11-14
 image: /changelog/hold-a-build-to-a-time-budget/cover.png
 ---
 
-You can now give a robot the hours you have, beside its money budget, and a Time check says whether printing, assembly and servo set-up fit in them.
+You can now give a robot the hours you have, next to its money budget. A Time check adds up printing, assembly and servo set-up and tells you whether they fit.
 
-A first robot is often wanted tonight or this weekend. Slicers give print time per plate, and only after slicing. Nothing added the build and the servo set-up, or checked the total against a deadline.
+You might want your first robot tonight or this weekend. Slicers give you a print time for each plate once you slice it, but until now you added the build and servo set-up on top yourself and checked the total against your deadline.
 
-The hours field sits beside the budget in the Build tab's bill of materials. The Time check adds each plate's print time, spread across the printers you've added, then 2 minutes a part, 45 seconds a screw and 90 seconds a heat insert for each step of the build guide, then 5 minutes a servo. A plate you've sliced counts the slicer's time instead of the estimate. The two-wheel rover from the gallery comes to about 9 hours 40 minutes, almost all of it printing.
+## How It Adds Up
 
-The check fails over the budget and warns above 90%. Fix sends the agent the longest plate, the build step with the most screws and the servo count. You can also tell the agent your deadline and it sets the hours. Without a time budget the check only shows the total.
+Set the hours next to the budget in the bill of materials, in the Build tab.
 
-The minutes for assembly and set-up are estimates, not measured on a real build.
+The Time check starts with each plate's print time, spread across the printers you've added. For each step of the build guide, it adds 2 minutes a part, 45 seconds a screw and 90 seconds a heat insert. It also counts 5 minutes for each servo. Once you slice a plate, the check uses the slicer's time in place of its estimate.
 
-Steps are in [Set a time budget for a build](/help/set-a-time-budget-for-a-build).
+The two-wheel rover from the gallery comes to about 9 hours, almost all of it printing.
+
+## Over Budget
+
+The check fails when the total goes over your budget and warns above 90%. Fix sends the agent the longest plate, the build step with the most screws and the servo count.
+
+Or tell the agent your deadline, and it sets the hours. Without a time budget, the check only shows the total.
+
+We estimated the minutes for assembly and set-up and haven't timed them on a real build.
+
+Read [Set a time budget for a build](/help/set-a-time-budget-for-a-build) in the help center for the steps.

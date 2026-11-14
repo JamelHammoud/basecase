@@ -1,8 +1,8 @@
 import { isFastener, isInsert } from '../guide/guideItems';
 import { firstSteps } from '../guide/guideSteps';
 import type { Plate } from '../print/plan';
-import { servoLayout } from '../robot/sceneRobot';
-import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { ScenePart } from '../types/robotics';
+import { hasActuatorOrServo } from './actuatorParts';
 
 export const ASSEMBLY_MINUTES = { part: 2, fastener: 0.75, insert: 1.5 };
 export const SERVO_SETUP_MINUTES = 5;
@@ -87,7 +87,7 @@ export function stepTimes(parts: ScenePart[], steps: string[][]): StepTime[] {
 
 const sum = (values: number[]) => values.reduce((total, v) => total + v, 0);
 
-export function buildTime(input: { parts: ScenePart[]; project: ProjectSettings; time: TimeInputs }): BuildTime {
+export function buildTime(input: { parts: ScenePart[]; time: TimeInputs }): BuildTime {
   const plates = plateTimes(input.time);
   const printHours = printMakespan(
     plates.map((p) => p.hours),
@@ -95,7 +95,7 @@ export function buildTime(input: { parts: ScenePart[]; project: ProjectSettings;
   );
   const steps = stepTimes(input.parts, input.time.steps);
   const assemblyHours = sum(steps.map((s) => s.minutes)) / 60;
-  const servos = servoLayout(input.project.joints ?? []).movable.length;
+  const servos = input.parts.filter(hasActuatorOrServo).length;
   const setupHours = (servos * SERVO_SETUP_MINUTES) / 60;
 
   return {

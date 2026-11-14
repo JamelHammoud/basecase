@@ -66,7 +66,7 @@ export function timeRows(ctx: CheckContext): CheckRow[] {
 
   if (!time) return [];
 
-  const t = buildTime({ parts: ctx.parts, project: ctx.project, time });
+  const t = buildTime({ parts: ctx.parts, time });
   const split = splitText(t);
   const total = `≈ ${hoursText(t.totalHours)}`;
   const budget = ctx.project.budgetHours;

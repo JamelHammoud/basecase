@@ -30,15 +30,15 @@ The agent can edit only the scene you're working in. It can't run commands, open
 
 ## It only edits the scene
 
-The agent has three tools: the CAD tools, a to-do list and web search. It can't run shell commands, read or write files on your computer, or change Basecase's settings. If the agent tries to use any other tool, Basecase blocks it and shows a toast that says “Blocked” with the tool's name.
+The agent's only tools are the CAD tools, a to-do list and web search. It can't run shell commands, read or write files on your computer, or change Basecase's settings. If it tries to use another tool, Basecase blocks it and shows a toast that says “Blocked” with the tool's name.
 
-The agent sees only the files you attach. Your selection, your other scenes and your other chats stay hidden from it.
+The agent only sees files you attach. Your selection, your other scenes and your other chats are hidden from it.
 
 ## It works on your login and your computer
 
-Each agent runs on your computer and uses your Claude, ChatGPT or Google login, so its usage counts against your own plan. The agent needs an internet connection. If it doesn't connect at all, see [Agent doesn't connect](/help/troubleshoot-app-agent-not-connected). The web studio doesn't have an agent.
+Each agent runs on your computer and uses your Claude, ChatGPT or Google login, so its usage counts against your own plan. The agent needs an internet connection, and the web studio doesn't have an agent.
 
-Offline works without AI. It traces one outline from an image, or works from your words, to make a single extruded model. Offline can't edit the scene or use tools. If you send it a slash command or a problem from **Checks**, it answers in one line that points to **Settings** ▸ **Agent**.
+Offline works without AI. It traces one outline from an image, or works from your words, to make a single extruded model. It can't edit the scene or use tools. If you send it a slash command or a problem from **Checks**, it answers in one line that points to **Settings** ▸ **Agent**.
 
 ## It reaches only the public web
 
@@ -50,8 +50,8 @@ The agent can read public web pages up to 8 MB and images up to 20 MB. It can't 
 - A part's name is cut off at 60 characters, and its note at 400.
 - Each scene can run up to 4 chats at the same time.
 
-When a run hits a limit, it ends with **Stopped** and a **Continue** button, or with “Couldn’t finish” and a **Retry** button.
-
 ## It doesn't drive hardware
 
-**/operate** moves the robot in the simulation, and Basecase locks the real motors. The agent can slice plates to report the print time and grams, but it never sends a print to a printer.
+**/operate** moves the robot in the simulation, and Basecase locks real motors. The agent can slice plates to report the time and grams, but it never sends a print to a printer.
+
+When a run hits a limit, it ends with **Stopped** and a **Continue** button, or with “Couldn’t finish” and a **Retry** button. If the agent doesn't connect at all, see [Agent doesn't connect](/help/troubleshoot-app-agent-not-connected).

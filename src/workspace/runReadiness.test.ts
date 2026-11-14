@@ -60,6 +60,7 @@ describe('what makes checks run again', () => {
     ['print quality', { printProcess: 'fine' }],
     ['active calibration', { servoCalibrations: { j: { versions: [], active: 1 } } }],
     ['time budget', { budgetHours: 6 }],
+    ['printed plates', { prints: [{ id: 'r1', hash: 'h', state: 'printed' }] as ProjectSettings['prints'] }],
   ])('the project’s %s', (_name, change) => {
     expect(print([part], { ...project, ...change })).not.toBe(print());
   });

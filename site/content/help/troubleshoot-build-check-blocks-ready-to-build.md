@@ -32,11 +32,11 @@ covers:
   - src/components/settings/BuildPane.tsx
 ---
 
-The Checks header shows Ready to build only when no check holds a blocker. Until then, it shows how many problems are left to fix. If your design isn't passing, find the case below that matches what you see.
+The Checks header shows Ready to build only when no check holds a blocker. Until then, it shows how many problems you have left to fix. If your design isn't passing, look for what you see below.
 
 ## The header still shows a count after you edit
 
-At least one check still holds a blocker, often one you haven't opened.
+At least one check still holds a blocker. It's often in a check you haven't opened.
 
 1. Click **Build** at the top of the right panel.
 2. Open the check at the top of **Checks**. Basecase lists the worst ones first.
@@ -48,7 +48,7 @@ You're done when the header reads **Ready to build** and the red dot on the **Bu
 
 ## “Some checks didn’t finish, so this answer isn’t complete.”
 
-A check stopped because it hit its time limit or ran into an error. Basecase counts this as a blocker, so a design never passes on a run that didn't finish.
+A check stopped early. Either it hit its time limit or it ran into an error. Basecase counts this as a blocker, so a design never passes on a run that didn't finish.
 
 1. Press [[⌘K]] and choose **Run Checks**.
 2. If the message is still there, quit Basecase and open it again.
@@ -58,10 +58,10 @@ You're done when the message no longer appears in **Assembly**.
 
 ## Budget is red
 
-The estimated total is over your budget. Basecase counts lines marked ≈ at their list price. If you choose **Made by a Service**, Basecase counts printed parts at their Slant 3D quotes.
+The estimated total is over your budget. Basecase counts lines marked ≈ at their list price. If you choose **Made by a Service**, it counts printed parts at their Slant 3D quotes.
 
 1. Open **Budget** in Checks to see the total next to your budget.
-2. List prices can be higher than what you pay. To save the prices you pay, use **Add Price** in **Bill of materials**.
+2. List prices can be higher than what you pay. To save your own prices, use **Add Price** in **Bill of materials**.
 3. Click a line's quantity, then type how many you already own in **On hand**. Parts you own cost nothing.
 4. Swap out expensive parts, or raise the budget in the field next to the total.
 
@@ -69,7 +69,7 @@ Budget turns amber above 90% of the budget, and red when the total goes over it.
 
 ## Time is red
 
-The estimated hours to print, assemble and set up the servos are more than your time budget.
+The estimated hours to print, assemble and set up the servos add up to more than your time budget.
 
 1. Open **Time** in Checks. It shows the total against your time budget, split into printing, assembly and servo set-up.
 2. Click **Fix** on the problem. The agent cuts print time or assembly steps, for example by merging printed parts.
@@ -80,7 +80,7 @@ Time turns amber above 90% of the time budget, and red when the total goes over 
 
 ## “This servo could strip its gears when the robot falls.”
 
-In a fall, this leg joint needs more than 5 times its servo's rated torque, or more than the peak listed in the servo's datasheet. The item names the joint and the direction of its worst fall.
+When the robot falls, this leg joint needs more than 5 times its servo's rated torque, or more than the peak listed in the servo's datasheet. The item names the joint and the direction of its worst fall.
 
 1. To watch the fall, click **Replay in Sim** on the joint.
 2. Ask the agent for a stronger servo at that joint, or for a lower stance.
@@ -99,7 +99,7 @@ You're done when **Servo bus** no longer appears in the list.
 
 ## You know a blocker is wrong
 
-Checks only see what's in the model, so they miss things like a strap that holds a part in place. To ignore a blocker:
+Checks only see what's in the model, so they miss things like a strap that holds a part in place. If a blocker doesn't apply to your build, you can ignore it:
 
 1. Right-click the problem's row.
 2. Choose **Ignore**.

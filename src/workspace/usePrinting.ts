@@ -13,6 +13,7 @@ import { useServiceQuotes } from './useServiceQuotes';
 import type { SettingsPane } from '../app/settingsPanes';
 import { usePrintFleet } from './usePrintFleet';
 import { usePrintJob } from './usePrintJob';
+import { useDesignSliced } from './useDesignSliced';
 import { usePlateWriter } from './usePlateWriter';
 import type { GuidePlan } from '../guide/guideTypes';
 
@@ -107,6 +108,7 @@ export function usePrinting(options: PrintingOptions) {
     write: fit.active ? fit.threeMf : plates.write,
     labels: fit.active ? '' : plates.key,
   });
+  const designSliced = useDesignSliced(job.slicedHours, fit.active);
   const records = project.prints ?? [];
   const setRecords = (update: (prev: PrintRecord[]) => PrintRecord[]) =>
     setProject((p) => ({ ...p, prints: update(p.prints ?? []) }));
@@ -183,7 +185,7 @@ export function usePrinting(options: PrintingOptions) {
     setPartPrint,
     turnPart,
     freshSlice: job.freshSlice,
-    printWorld: { printers: Math.max(1, options.printers.length), sliced: job.slicedHours },
+    printWorld: { printers: Math.max(1, options.printers.length), sliced: designSliced },
     readySteps: (steps: string[][]) => readySteps(steps, { parts, records, keyOf: shapeKey }),
   };
 }

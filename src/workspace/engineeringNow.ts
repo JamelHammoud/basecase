@@ -1,8 +1,8 @@
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { portsOf, worldPort } from '../agent/ports';
-import { COMPONENT_BY_ID, actuatorOf } from '../data/components';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { SweepSpec } from '../three/analysis/sweep';
+import { hasActuatorOrServo, isServo } from '../utils/actuatorParts';
 import { runEngineering, type ServoOutput } from '../utils/engineering';
 import { SERVO_TOUCH_MM, servoTouchPairs } from '../utils/engineeringHeat';
 import type { EngineeringInputs, FallSim, ServoLine, WalkSim } from '../utils/engineeringTypes';
@@ -12,14 +12,6 @@ import { payloadMapsIn } from '../three/analysis/analysisPool';
 import type { ArmModel } from '../utils/payload';
 import { rememberStress } from '../strength/fields';
 import type { StrengthJob } from '../strength/types';
-
-const isServo = (p: ScenePart) =>
-  p.kind === 'component' && !!p.componentId && COMPONENT_BY_ID[p.componentId]?.group === 'Servos';
-
-const hasActuator = (p: ScenePart) =>
-  p.kind === 'component' && !!p.componentId && !!actuatorOf(p.componentId, p.componentVariant);
-
-const hasActuatorOrServo = (p: ScenePart) => isServo(p) || hasActuator(p);
 
 function declaredOutputs(p: ScenePart): ServoLine[] {
   return portsOf(p)

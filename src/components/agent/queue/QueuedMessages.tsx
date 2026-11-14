@@ -8,6 +8,7 @@ import {
   ChevronUpIcon,
   DeleteIcon,
   GripIcon,
+  RowActions,
 } from '../../../design-system';
 import { plural } from '../../../../electron/plural.mjs';
 import { QueueControls, QueuedItem } from '../types';
@@ -16,16 +17,12 @@ import { QueuedRowBody } from './QueuedRowBody';
 import { QueueDrag, SETTLE_MS, useQueueDrag } from './useQueueDrag';
 
 const EASE = 'cubic-bezier(0.2, 0, 0, 1)';
-const ROW = 'group/queued relative flex items-center gap-2 px-2.5 rounded-[10px] cursor-default select-none';
+const ROW = 'group relative flex items-center gap-2 px-2.5 rounded-[10px] cursor-default select-none';
 const BANNER = '#222222';
 const ROW_HOVER = '#2a2a2a';
-const ACTIONS_FADE = `linear-gradient(to right, transparent, ${ROW_HOVER} 32px)`;
 
-const RowActions: React.FC<{ item: QueuedItem; queue: QueueControls }> = ({ item, queue }) => (
-  <div
-    className="absolute inset-y-0 right-0 flex items-center pl-10 pr-1 rounded-r-[10px] opacity-0 pointer-events-none group-hover/queued:opacity-100 group-hover/queued:pointer-events-auto group-focus-within/queued:opacity-100 group-focus-within/queued:pointer-events-auto transition-opacity duration-150"
-    style={{ backgroundImage: ACTIONS_FADE }}
-  >
+const QueuedActions: React.FC<{ item: QueuedItem; queue: QueueControls }> = ({ item, queue }) => (
+  <RowActions fill={ROW_HOVER} className="inset-y-0 right-0 pr-1 rounded-r-[10px]">
     <IconButton
       icon={<ArrowUpIcon className="w-4 h-4" />}
       title="Send now"
@@ -50,7 +47,7 @@ const RowActions: React.FC<{ item: QueuedItem; queue: QueueControls }> = ({ item
       }
     />
     <GripIcon className="w-3.5 h-3.5 mx-1.5 text-white/35 cursor-grab" />
-  </div>
+  </RowActions>
 );
 
 const DragOverlay: React.FC<{ drag: QueueDrag; item: QueuedItem }> = ({ drag, item }) =>
@@ -147,7 +144,7 @@ export const QueuedMessages: React.FC<{ queue: QueueControls; onEdit: (id: strin
                 style={{ height: QUEUE_ROW_PX }}
               >
                 <QueuedRowBody params={item.params} />
-                {!drag && <RowActions item={item} queue={queue} />}
+                {!drag && <QueuedActions item={item} queue={queue} />}
               </div>
             ))}
             {drag && <DropLine drag={drag} />}

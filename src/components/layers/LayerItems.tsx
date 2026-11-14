@@ -7,6 +7,7 @@ import {
   LockIcon,
   LookIcon,
   RenameField,
+  RowActions,
   UnlockIcon,
 } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
@@ -19,11 +20,9 @@ const SELECTED = '[--layer-row-fill:color-mix(in_srgb,#0d99ff_18%,var(--color-pa
 const RESTING =
   '[--layer-row-fill:var(--color-panel-bg)] hover:[--layer-row-fill:color-mix(in_srgb,white_5%,var(--color-panel-bg))]';
 
-export const ACTIONS_FADE = 'linear-gradient(to right, transparent, var(--layer-row-fill) 32px)';
-export const REVEAL = 'opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100';
+export const ROW_FILL = 'var(--layer-row-fill)';
+export const ACTIONS_PLACE = 'inset-y-0 right-0 pr-1 rounded-r-lg';
 
-const CLICKABLE_ON_REVEAL =
-  'pointer-events-none group-hover:pointer-events-auto group-has-[:focus-visible]:pointer-events-auto';
 const COLLAPSED_UNTIL_REVEAL = 'hidden group-hover:flex group-has-[:focus-visible]:flex';
 
 export const rowTone = (selected: boolean, rest: string) => (selected ? SELECTED : `${RESTING} ${rest}`);
@@ -72,25 +71,21 @@ export const RowToggle: React.FC<{
       title={title}
       variant="ghost"
       size="xs"
-      className={on ? 'pointer-events-auto' : CLICKABLE_ON_REVEAL}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
     />
   );
 
   return pinned && !on ? <span className={COLLAPSED_UNTIL_REVEAL}>{button}</span> : button;
 };
 
-const RowActions: React.FC<{ part: ScenePart; onToggle: PartRowProps['onToggle'] }> = ({ part, onToggle }) => {
+const PartToggles: React.FC<{ part: ScenePart; onToggle: PartRowProps['onToggle'] }> = ({ part, onToggle }) => {
   const pinned = part.locked || !part.visible;
 
   return (
-    <div
-      className={`absolute inset-y-0 right-0 flex items-center pl-8 pr-1 rounded-r-lg pointer-events-none transition-opacity ${
-        pinned ? '' : REVEAL
-      }`}
-      style={{ backgroundImage: ACTIONS_FADE }}
-      onClick={(e) => e.stopPropagation()}
-    >
+    <RowActions fill={ROW_FILL} shown={pinned} className={ACTIONS_PLACE}>
       <RowToggle
         on={part.locked}
         pinned={pinned}
@@ -105,7 +100,7 @@ const RowActions: React.FC<{ part: ScenePart; onToggle: PartRowProps['onToggle']
         title={part.visible ? 'Hide' : 'Show'}
         icons={[<HiddenIcon key="on" className="w-3.5 h-3.5" />, <LookIcon key="off" className="w-3.5 h-3.5" />]}
       />
-    </div>
+    </RowActions>
   );
 };
 
@@ -189,7 +184,7 @@ export const PartRow: React.FC<PartRowProps> = ({
       ) : (
         <span className="flex-1 truncate">{part.name}</span>
       )}
-      {topLevel && !editing && <RowActions part={part} onToggle={on.onToggle} />}
+      {topLevel && !editing && <PartToggles part={part} onToggle={on.onToggle} />}
     </li>
   );
 };

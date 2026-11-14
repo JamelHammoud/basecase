@@ -14,6 +14,9 @@ import type { TryRecord } from '../cases/tries';
 import { loadTries } from '../cases/tryStore';
 import { searchTries } from '../cases/trySearch/trySearchClient';
 import type { TryHit } from '../cases/trySearch/types';
+import { mapSummary } from '../dataLayers/map';
+import { tryMap } from '../dataLayers/mapClient';
+import { scanSources } from '../dataLayers/simTracks';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Viewport3DHandle } from '../three/viewport/types';
 import type { ProjectSettings } from '../types/robotics';
@@ -30,6 +33,7 @@ export interface TryReadSources {
   model: () => SimModel | null;
   rig: () => Rig;
   sought: () => { frame: number } | null;
+  mapMatching?: () => boolean;
 }
 
 export interface TryReadContext {
@@ -181,6 +185,11 @@ async function readOpened({ record, caseName }: Found, payload: Payload, ctx: Tr
     signals,
   });
   const at = captureTime(reading, num(payload.at));
+  const cloud = await tryMap(
+    timeline.recording,
+    scanSources(scene.model, sources.rig().parts),
+    sources.mapMatching?.(),
+  );
 
   return {
     ok: true,
@@ -188,6 +197,7 @@ async function readOpened({ record, caseName }: Found, payload: Payload, ctx: Tr
     case: caseName,
     ...reading,
     captured: at,
+    map: cloud ? mapSummary(cloud) : null,
     images: await captureAt(track, at, ctx),
   };
 }

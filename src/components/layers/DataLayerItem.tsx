@@ -30,7 +30,7 @@ export const DataLayerItem: React.FC<DataLayerItemProps> = ({ layer, depth, onTo
         e.preventDefault();
         e.stopPropagation();
 
-        if (layer.fields.length) onMenu(layer, { x: e.clientX, y: e.clientY });
+        if (layer.fields.length || layer.matching !== undefined) onMenu(layer, { x: e.clientX, y: e.clientY });
       }}
       style={{ paddingLeft: rowIndent(depth, false) }}
       className={`${ROW} pr-2.5 gap-2 ${rowTone(false, hidden)}`}

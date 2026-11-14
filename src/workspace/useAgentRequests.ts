@@ -81,11 +81,15 @@ function authorFor(event: AgentRequestEvent, actors: ActorIndex, cursors: AgentC
   };
 }
 
-const tryReadOf = ({ simTraining, posing }: WorkspaceCore, timeline: () => TryTimeline): TryReadSources => ({
+const tryReadOf = (
+  { simTraining, posing, dataLayers }: WorkspaceCore,
+  timeline: () => TryTimeline,
+): TryReadSources => ({
   timeline,
   model: simTraining.sim.modelNow,
   rig: () => posing.rig,
   sought: simTraining.sim.sought,
+  mapMatching: dataLayers.matching,
 });
 
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {

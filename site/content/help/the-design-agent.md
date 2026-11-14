@@ -42,7 +42,7 @@ The agent can pose and animate the robot, run it in the simulation, write and ru
 - Ask whether a ready skill holds up on a slicker floor or while carrying a load. It answers with the values where the skill starts to fail.
 - For a Routine, it proves each switch between skills and names any that fell.
 - With a Case and two open scenes, it tells you which robot passes more often.
-- Ask what happened in a try. It reads the try's recording and answers with times and values.
+- Ask what happened in a try. It reads the try's recording and answers with times and values. For a try with scans, it also reads the [map's](/help/map-a-robot-run) bounds and point count.
 - Ask for tries, such as failed grasps from last week. It searches the tries from every scene and names the ones that match.
 - Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
 

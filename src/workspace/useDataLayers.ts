@@ -8,6 +8,7 @@ import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import { recordingTopics } from '../topics/recordingTopics';
 import { isTopicLayer, topicTracks } from '../topics/topicTracks';
+import { useMapLayer } from './useMapLayer';
 import type { TryTimeline } from './useTryTimeline';
 
 interface DataLayerOptions {
@@ -108,6 +109,7 @@ export function useDataLayers({ sim, timeline, parts, viewportRef }: DataLayerOp
   useLiveScans(store, sim.subscribePoses, scene);
   useRecordedScans(store, timeline, scene);
   useRecordedTopics(store, timeline);
+  useMapLayer(store, sim, timeline, parts);
 
   useEffect(() => {
     if (loaded) return;

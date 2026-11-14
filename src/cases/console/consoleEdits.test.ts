@@ -12,6 +12,7 @@ import {
   deletePanel,
   movePanel,
   panelChoices,
+  panelName,
   renamePanel,
   resizeArea,
 } from './consoleEdits';
@@ -164,6 +165,12 @@ describe('arranging a console by hand', () => {
       of: 'tries',
     });
     expect(deletePanel(desk, 'nope')).toEqual({ ok: false, problem: 'This console has no panel named nope.' });
+  });
+
+  it('names a panel the way the screen and Add Panel do, never by its id', () => {
+    const reset = { id: 'reset', kind: 'button', action: 'reset' } as const;
+
+    expect([...desk.panels, reset].map(panelName)).toEqual(['Camera', 'Brief', 'Speed', 'Tries', 'Reset']);
   });
 });
 

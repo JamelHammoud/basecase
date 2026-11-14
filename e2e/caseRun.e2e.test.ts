@@ -293,7 +293,7 @@ describe('Arranging a console', () => {
     await panel('reset').click({ button: 'right' });
     await menuItem('Delete').click();
     await page
-      .getByRole('dialog', { name: 'Delete reset?' })
+      .getByRole('dialog', { name: 'Delete Reset?' })
       .getByRole('button', { name: 'Delete', exact: true })
       .click();
     await expect.poll(panelIds).toEqual(['score', 'go', 'tries', 'clock', 'value']);

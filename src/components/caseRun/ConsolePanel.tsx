@@ -1,4 +1,5 @@
 import React from 'react';
+import { panelName } from '../../cases/console/consoleEdits';
 import type { PanelKind, PanelOf, PanelSpec } from '../../cases/console/panelKinds';
 import { RenameField } from '../../design-system';
 import type { PanelContext } from './panelContext';
@@ -29,7 +30,7 @@ export const ConsolePanel: React.FC<ConsolePanelProps> = ({ panel, ctx, editable
       <View panel={panel} ctx={ctx} />
       {onRenamed && (
         <div className={`absolute inset-x-0 top-0 z-20 h-[48px] px-[12px] flex items-center ${surface}`}>
-          <RenameField name={panel.title ?? ''} onDone={onRenamed} />
+          <RenameField name={panelName(panel)} onDone={onRenamed} />
         </div>
       )}
     </div>

@@ -68,7 +68,7 @@ const addPanelCommands = ({ caseRun }: WorkspaceCore): Command[] =>
           id: 'case-add-panel',
           group: 'Simulate',
           label: 'Add Panel',
-          icon: <PlusIcon className={ic} />,
+          icon: <PlusIcon />,
           keywords: 'console layout plot value camera table button chart readout',
           run: () => caseRun.addPanel(addPanelAt()),
         },

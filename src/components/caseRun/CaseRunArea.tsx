@@ -40,7 +40,7 @@ function menuItems(
 ): ContextMenuEntry[] {
   const add: ContextMenuEntry = {
     label: 'Add Panel',
-    icon: <PlusIcon className="w-3.5 h-3.5" />,
+    icon: <PlusIcon />,
     submenu: (close) => <AddPanelMenu editor={editor} area={area} close={close} />,
   };
   const { panel } = menu;

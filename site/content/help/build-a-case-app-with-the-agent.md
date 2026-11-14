@@ -36,7 +36,7 @@ The agent works in the desktop app. Its panels can't move one joint on its own, 
 
 3. Use the app: press its buttons, or click **Try It** to start a try.
 4. In the **Agent** tab beside the Case, type a change, such as “Add a Spin button”, and press [[↩]]. Only the panel it changes reloads, so the robot and a running try keep going.
-5. Click **Undo** at the top right to take back the agent's last change. Each change it makes is one step.
+5. Click **Undo** at the top right to take back the last change to the panels, the agent's or your own. Each change is one step.
 6. Click **Done** or press [[Esc]] to go back to the scene.
 
 Outside a panel and a text field, [[⌘Z]] works like **Undo**, and [[⌘I]] shows or hides the agent.

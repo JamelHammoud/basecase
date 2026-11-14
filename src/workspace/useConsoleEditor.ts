@@ -4,6 +4,7 @@ import {
   deletePanel,
   movePanel,
   panelChoices,
+  panelName,
   renamePanel,
   resizeArea,
 } from '../cases/console/consoleEdits';
@@ -39,7 +40,7 @@ export function useConsoleEditor(core: WorkspaceCore, ctx: Pick<PanelContext, 'b
     rename: (id, title) => edit((c) => renamePanel(c, id, title)),
     remove: (panel) =>
       confirmAction({
-        title: `Delete ${panel.title ?? panel.id}?`,
+        title: `Delete ${panelName(panel)}?`,
         onConfirm: () => edit((c) => deletePanel(c, panel.id)),
       }),
     choices: (kind) => {

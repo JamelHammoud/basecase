@@ -1,4 +1,5 @@
 import { errorMessage } from '../../utils/errorMessage';
+import { titleCase } from '../../utils/titleCase';
 import { parseCase, type Case } from '../schema';
 import { copyOf, isCanvas, placedOn, SIDE_SIZE, withoutPanel, withoutPlace, type ConsoleEdit } from './codeEdits';
 import { AREA_MAX, AREA_MIN, type CaseConsole } from './format';
@@ -26,9 +27,15 @@ export interface PanelChoice {
 
 const MOVING = '\u0000moving';
 
-const titleCase = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
-
 export const kindLabel = (kind: PanelKind) => titleCase(kind);
+
+export function panelName(panel: PanelSpec): string {
+  if (panel.title) return panel.title;
+
+  if (panel.kind === 'button') return CASE_ACTION_LABELS[panel.action];
+
+  return 'of' in panel && typeof panel.of === 'string' ? titleCase(panel.of) : kindLabel(panel.kind);
+}
 
 const missing = (id: string): ConsoleEdit => ({ ok: false, problem: `This console has no panel named ${id}.` });
 

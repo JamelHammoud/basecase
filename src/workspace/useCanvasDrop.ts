@@ -5,11 +5,12 @@ import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, SIMREADY_DRAG_TYPE, i
 import { isRoomFileName } from '../cases/roomPlan';
 import { isMidiFileName, loadMidiSong } from '../midi/midiSource';
 import { hasPrimaryModifier } from '../utils/os';
-import { showRoomCase } from './caseCommands';
+import { showPlaceCase } from './caseCommands';
 import { droppedPart } from './dropPreview';
 import { droppedFolders } from './droppedFolders';
 import { isImageType } from './importRoute';
 import { readRoomFile } from './roomImport';
+import { openDroppedWorld, splitWorldDrop } from './worldDrop';
 import type { Vec3 } from './types';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -80,24 +81,28 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots, files }: 
   const openItself = async (file: File) => {
     try {
       if (isMidiFileName(file.name)) loadMidiSong(new Uint8Array(await file.arrayBuffer()));
-      else showRoomCase(core, await readRoomFile(file));
+      else showPlaceCase(core, await readRoomFile(file));
     } catch {
       showToast(`Couldn’t import ${file.name}.`, { tone: 'error' });
     }
   };
 
-  const routeFiles = (all: File[], at?: Vec3) => {
-    all.filter(opensItself).forEach((f) => void openItself(f));
-    files.importFiles({ files: all.filter((f) => !opensItself(f)), at });
+  const routeAll = async (all: File[], at?: Vec3, folders?: Awaited<ReturnType<typeof droppedFolders>['folders']>) => {
+    const { world, rest } = await splitWorldDrop(all);
+
+    if (world.length) void openDroppedWorld(core, world);
+
+    rest.filter(opensItself).forEach((f) => void openItself(f));
+    files.importFiles({ files: rest.filter((f) => !opensItself(f)), at, folders });
   };
+
+  const routeFiles = (all: File[], at?: Vec3) => routeAll(all, at);
 
   const dropFiles = async (e: React.DragEvent) => {
     const at = dropPoint(viewportRef.current?.pickAt(e.clientX, e.clientY), studio.snapStepMm);
     const { folders, plain } = droppedFolders(e.dataTransfer.items);
-    const own = plain.filter(opensItself);
 
-    own.forEach((f) => void openItself(f));
-    files.importFiles({ files: plain.filter((f) => !own.includes(f)), at, folders: await folders });
+    await routeAll(plain, at, await folders);
   };
 
   const previewSnap = (e: React.DragEvent | null) => {

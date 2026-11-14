@@ -15,7 +15,7 @@ import {
   SwapIcon,
   TrainIcon,
 } from '../design-system';
-import type { Room } from '../cases/roomPlan';
+import type { Place } from '../cases/caseBuilder';
 import { INPUT_COMMANDS } from './inputCommands';
 import { showLeftTab } from './showView';
 import type { CommandInputs } from './sceneCommands';
@@ -40,9 +40,9 @@ export const STAYS_IN_RUN = new Set([
   ...INPUT_COMMANDS,
 ]);
 
-export const showRoomCase = (core: WorkspaceCore, room: Room) => {
+export const showPlaceCase = (core: WorkspaceCore, place: Place) => {
   showCases(core);
-  core.simTraining.cases.builder.startInRoom(room);
+  core.simTraining.cases.builder.startIn(place);
 };
 
 const runCaseCommand = (core: WorkspaceCore): Command => ({

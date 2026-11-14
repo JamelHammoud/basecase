@@ -11,7 +11,8 @@ import { presetCase as builtPreset, type PresetId } from './caseBuilder';
 import { stageCase, stagedEffectors } from './caseCast';
 import { toCommand } from './caseDrives';
 import { runCase as runCaseOn, type CaseRobot, type RunOptions } from './runCase';
-import { parseCase as parseCaseFile, worldItem, type Case } from './schema';
+import { parseCase as parseCaseFile, type Case } from './schema';
+import { caseWorldItems } from './worldPieces';
 import { scoreTry, tryManifest, type TryRecord, type TryScoring } from './tries';
 
 export const parseCase = parseCaseFile;
@@ -61,7 +62,7 @@ export async function referenceTry(mj: MainModule, kase: Case, robot: FixtureRob
     project: DEFAULT_PROJECT,
     measures: fixtureMeasures(robot.parts),
     partTriangles: fixtureTriangles(robot.parts),
-    world: staged.kase.world.objects.map(worldItem),
+    world: caseWorldItems(staged.kase.world),
   });
   const controller = liveController(robot, rig, model);
   const engine = new SimEngine(mj, model);

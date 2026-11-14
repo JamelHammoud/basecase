@@ -8,6 +8,8 @@ import { MatTrack } from './matTrack';
 import { DataLayers } from './dataLayers';
 import { FrameLabel } from './frameLabel';
 import { EarthLayer } from './earthLayer';
+import { WorldLookLayer } from './worldLookLayer';
+import { loadWorld } from '../../workspace/worldStore';
 import type { Viewport3DHandle, ViewportProps } from './types';
 
 type OverlayHandle = Pick<
@@ -20,6 +22,7 @@ type OverlayHandle = Pick<
   | 'ghostState'
   | 'checkDotCount'
   | 'earthState'
+  | 'worldLookKind'
 >;
 
 export interface OverlayLabels {
@@ -52,6 +55,8 @@ export class StageOverlays {
 
   private readonly earth: EarthLayer;
 
+  private readonly worldLook: WorldLookLayer;
+
   constructor(ctx: ViewportContext, props: ViewportProps, labels: OverlayLabels) {
     const { overlays, camera, renderer } = ctx.stage;
     const size = new THREE.Vector2();
@@ -71,6 +76,13 @@ export class StageOverlays {
       attribution: (text) => showAttribution(labels.attribution(), text),
     });
     void this.earth.set(props.earth ?? null);
+    this.worldLook = new WorldLookLayer(ctx.stage.worldRoot, {
+      renderer,
+      redraw: ctx.loop.redraw,
+      invalidate: ctx.loop.invalidate,
+      load: loadWorld,
+    });
+    void this.worldLook.set(props.worldLook ?? null);
     ctx.loop.beforeRender.add(() => {
       renderer.getDrawingBufferSize(size);
       this.earth.update(camera, size.x, size.y);
@@ -85,6 +97,8 @@ export class StageOverlays {
     if (previous.checkDots !== props.checkDots) this.checkDots.sync(props.checkDots);
 
     if (previous.earth !== props.earth) void this.earth.set(props.earth ?? null);
+
+    if (previous.worldLook !== props.worldLook) void this.worldLook.set(props.worldLook ?? null);
   }
 
   handle(redraw: () => void): OverlayHandle {
@@ -107,6 +121,7 @@ export class StageOverlays {
       ghostState: () => this.ghost.state(),
       checkDotCount: () => this.checkDots.count,
       earthState: () => this.earth.state(),
+      worldLookKind: () => this.worldLook.kind,
     };
   }
 
@@ -119,5 +134,6 @@ export class StageOverlays {
     this.ghost.dispose();
     this.agentFrames.dispose();
     this.earth.dispose();
+    this.worldLook.dispose();
   }
 }

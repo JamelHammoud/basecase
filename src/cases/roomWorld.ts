@@ -27,7 +27,7 @@ function boundsOf(objects: WorldObject[]): Bounds {
   return { min: [Math.min(...xs), Math.min(...zs)], max: [Math.max(...xs), Math.max(...zs)] };
 }
 
-function floorSpots({ min, max }: Bounds, clearanceMm: number): V3[] {
+export function floorSpots({ min, max }: Bounds, clearanceMm: number): V3[] {
   const step = Math.max(MIN_STEP_MM, Math.max(max[0] - min[0], max[1] - min[1]) / STEPS_ACROSS);
   const centre = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2];
   const spots: V3[] = [];
@@ -44,12 +44,14 @@ const solidOf = (room: Room) => room.objects.filter((o) => o.behavior !== 'marke
 
 const within = (p: V3, { min, max }: Bounds) => p[0] >= min[0] && p[0] <= max[0] && p[2] >= min[1] && p[2] <= max[1];
 
-export function openSpot(room: Room, clearanceMm: number): V3 {
-  const solid = solidOf(room);
-  const spots = floorSpots(boundsOf(room.objects), clearanceMm);
+export function openSpotAmong(solid: WorldObject[], bounds: Bounds, clearanceMm: number): V3 {
+  const spots = floorSpots(bounds, clearanceMm);
 
   return spots.find((p) => !occupied(p, solid, clearanceMm)) ?? spots[0];
 }
+
+export const openSpot = (room: Room, clearanceMm: number): V3 =>
+  openSpotAmong(solidOf(room), boundsOf(room.objects), clearanceMm);
 
 export function tappedStart(room: Room, clearanceMm: number): RoomStart | undefined {
   const { start } = room;

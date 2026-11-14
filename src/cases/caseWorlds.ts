@@ -9,8 +9,9 @@ import {
 } from './caseGoals';
 import { roughGround, slope, steps } from './terrain';
 import type { WorldObject } from './schema';
+import type { WorldMeshRef } from './worldTypes';
 
-export type WorldKind = 'floor' | 'corridor' | 'block' | 'shelf' | 'rough' | 'steps' | 'slope' | 'room';
+export type WorldKind = 'floor' | 'corridor' | 'block' | 'shelf' | 'rough' | 'steps' | 'slope' | 'room' | 'mesh';
 
 export interface CaseWorld {
   kind: WorldKind;
@@ -21,6 +22,7 @@ export interface CaseWorld {
   ground?: boolean;
   fits: (goal: GoalKind, robot?: BuilderRobot) => boolean;
   objects: (plan: GoalPlan, robot: BuilderRobot, values: GoalValues) => WorldObject[];
+  mesh?: (robot: BuilderRobot) => WorldMeshRef;
 }
 
 const WALL_GREY = '#6e6e6e';

@@ -229,6 +229,7 @@
     "@eslint/js": "^10.0.1",
     "@mujoco/mujoco": "4.0.0",
     "@rolldown/plugin-babel": "^0.2.4",
+    "@sparkjsdev/spark": "2.4.0",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/babel__core": "^7.20.5",
@@ -267,6 +268,7 @@
     "three-bvh-csg": "^0.0.18",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.71.2",
+    "vhacd-js": "0.0.1",
     "vite": "^8.3.0",
     "vitest": "^5.0.5",
     "wait-on": "^9.0.4"

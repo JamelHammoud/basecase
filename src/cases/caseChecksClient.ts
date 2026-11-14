@@ -1,4 +1,6 @@
 import type { CaseCheckJob, CaseCheckReply, WireRobot } from './caseCheckJob';
+import { caseWorldPieces } from './worldPieces';
+import type { WorldPiece } from './worldTypes';
 
 const MAX_WORKERS = 4;
 const IDLE_MS = 30000;
@@ -33,7 +35,7 @@ interface Slot {
 export interface WorkerLike {
   onmessage: ((ev: MessageEvent<Answer>) => void) | null;
   onerror: ((ev: ErrorEvent) => void) | null;
-  postMessage: (message: { id: number; job: CaseCheckJob }) => void;
+  postMessage: (message: { id: number; job: CaseCheckJob; pieces?: Record<string, WorldPiece[]> }) => void;
   terminate: () => void;
 }
 
@@ -137,7 +139,11 @@ export class CaseCheckPool {
     }
 
     slot.running = queued;
-    slot.worker.postMessage({ id: queued.id, job: this.withRobot(slot, queued) });
+
+    const job = this.withRobot(slot, queued);
+    const pieces = 'kase' in job ? caseWorldPieces(job.kase.world) : {};
+
+    slot.worker.postMessage({ id: queued.id, job, ...(Object.keys(pieces).length ? { pieces } : {}) });
   }
 
   private settle(slot: Slot, answer: Answer) {

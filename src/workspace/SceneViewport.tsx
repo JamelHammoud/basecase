@@ -10,6 +10,7 @@ import { MarkLabelField } from './MarkLabelField';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import type { Simulation } from '../sim/useSimulation';
 
 const NO_SELECTION: string[] = [];
 
@@ -19,6 +20,11 @@ interface SceneViewportProps {
   actions: WorkspaceActions;
   agent: AgentSession;
 }
+
+const worldLayer = (sim: Simulation) => ({
+  worldParts: sim.guestParts.length ? [...sim.worldParts, ...sim.guestParts] : sim.worldParts,
+  worldLook: sim.worldLook,
+});
 
 function markFieldFor(marks: WorkspaceCore['marks']) {
   const editingMark = marks.selected;
@@ -103,7 +109,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         checkDots={core.readiness.dots}
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
-        worldParts={sim.guestParts.length ? [...sim.worldParts, ...sim.guestParts] : sim.worldParts}
+        {...worldLayer(sim)}
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}

@@ -43,9 +43,21 @@ function primitiveShape(item: WorldItem): string | null {
   return item.kind === 'box' || item.kind === 'cube' ? `type="box" size="${boxSize(item)}"` : null;
 }
 
+const MIN_HULL_VALUES = 12;
+
+function pieceVertices(hull: number[] | undefined): number[] | null {
+  if (!hull || hull.length < MIN_HULL_VALUES || hull.length % 3) return null;
+
+  const out: number[] = [];
+
+  for (let i = 0; i < hull.length; i += 3) out.push(...toMj([hull[i], hull[i + 1], hull[i + 2]]));
+
+  return out.every(Number.isFinite) ? out : null;
+}
+
 function hullShape(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffset: number): string | null {
-  const tris = input.worldTriangles?.(item.id);
-  const verts = tris && tris.length >= 9 ? cachedHull(item, tris, item.position) : null;
+  const tris = item.hull ? null : input.worldTriangles?.(item.id);
+  const verts = pieceVertices(item.hull) ?? (tris && tris.length >= 9 ? cachedHull(item, tris, item.position) : null);
 
   if (!verts) return null;
 
@@ -58,7 +70,7 @@ function hullShape(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffse
 
 function worldGeom(item: WorldItem, input: MjcfInput, out: WorldEmit, assetOffset: number): string {
   const name = `wg_${safeId(item.id)}`;
-  const hull = primitiveShape(item) ? null : hullShape(item, input, out, assetOffset);
+  const hull = primitiveShape(item) && !item.hull ? null : hullShape(item, input, out, assetOffset);
 
   if (hull) return `<geom name="${esc(name)}" ${hull} ${geomAttrs(item)}/>`;
 

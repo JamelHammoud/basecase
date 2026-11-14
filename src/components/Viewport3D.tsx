@@ -55,6 +55,7 @@ const DETACHED: Viewport3DHandle = {
   setGhost: () => {},
   ghostState: () => null,
   earthState: () => null,
+  worldLookKind: () => null,
   followPart: () => {},
   restBounds: () => null,
   restShapes: () => ({ instances: [], shapes: new Map(), geometries: new Map() }),

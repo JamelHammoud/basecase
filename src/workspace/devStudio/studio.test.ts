@@ -88,6 +88,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'triangleCount',
   'tryWorld',
   'worldAt',
+  'worldLayer',
 ];
 
 const unused: Studio = () => {

@@ -14,7 +14,8 @@ import { movableWorld } from '../../scale';
 import { LiveCase } from '../../liveCase';
 import { endPoint } from '../../probes';
 import { logicPlan } from '../../runCaseLogic';
-import { worldItem, type Case } from '../../schema';
+import type { Case } from '../../schema';
+import { caseWorldItems } from '../../worldPieces';
 import { liveController } from '../../testing';
 import { caseProbeReader, caseProbeWorld, scoreTry, type TryScoring } from '../../tries';
 import { stagedChange, type WorldChange } from '../../worldSet';
@@ -57,7 +58,7 @@ function modelFor(robot: FixtureRobot, kase: Case) {
     project: DEFAULT_PROJECT,
     measures: fixtureMeasures(robot.parts),
     partTriangles: fixtureTriangles(robot.parts),
-    world: staged.kase.world.objects.map(worldItem),
+    world: caseWorldItems(staged.kase.world),
   });
 
   return {

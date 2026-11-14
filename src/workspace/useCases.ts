@@ -3,7 +3,9 @@ import { uniqueCaseId } from '../cases/caseBuilder';
 import { stageCase } from '../cases/caseCast';
 import { robotFacts } from '../cases/robotFit';
 import { withGesture, type CaseGesture } from '../cases/gestures';
-import { readCases, worldItem, type Case } from '../cases/schema';
+import { readCases, type Case } from '../cases/schema';
+import { caseWorldItems } from '../cases/worldPieces';
+import { useCaseWorlds } from './useCaseWorlds';
 import type { SlotRobot } from '../cases/slots';
 import { generatedFrom, goingWith, simTries, sourceTryOf, worstFirst, type TryRecord } from '../cases/tries';
 import { CASE_STORES, caseStoreKey } from '../cases/console/codeStore';
@@ -99,10 +101,13 @@ export function useCases(options: CasesOptions) {
   const hasRobot = rig.robots.length > 0;
   const fixedBase = hasRobot && robotFacts(rig, parts).morphology === 'fixed';
 
+  const loadingWorld = useCaseWorlds(cases);
+
   const stage = (kase: Case | null) => {
     const staged = kase && stageCase(kase, { rig, parts }, partners());
 
-    sim.setWorld(staged?.kase.world.objects.map(worldItem) ?? [], staged?.joined);
+    sim.setWorld(staged ? caseWorldItems(staged.kase.world) : [], staged?.joined, staged?.kase.world.mesh ?? null);
+    loadingWorld(kase, stage);
   };
 
   const open = (id: string | null) => {

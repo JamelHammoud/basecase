@@ -16,6 +16,7 @@ import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore, Exploration } from './useCaseExplore';
 import type { CaseRun } from './useCaseRun';
 import { errorMessage } from '../utils/errorMessage';
+import { loadWorld } from './worldStore';
 
 type Payload = Record<string, unknown>;
 
@@ -43,6 +44,12 @@ const VALUE_KEYS: Array<[string, ParamKey]> = [
 ];
 
 const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v : undefined);
+
+function defaultWorld(targets: unknown, place: Pick<CaseSpec, 'meshWorld'>): WorldKind {
+  if (place.meshWorld) return 'mesh';
+
+  return targets ? 'room' : 'floor';
+}
 
 export function caseValues(payload: Payload): Partial<GoalValues> {
   return Object.fromEntries(
@@ -100,7 +107,21 @@ async function logicProblem(spec: CaseSpec, ctx: CaseContext): Promise<string | 
   return compiled.ok ? null : compiled.errors[0].message;
 }
 
+async function droppedWorld(payload: Payload): Promise<Pick<CaseSpec, 'meshWorld'> | string> {
+  const hash = text(payload.world_hash);
+
+  if (!hash) return {};
+
+  const found = await loadWorld(hash);
+
+  return found ? { meshWorld: found } : 'Drop the world on the canvas first, then make the Case in it.';
+}
+
 async function createCase(payload: Payload, ctx: CaseContext) {
+  const place = await droppedWorld(payload);
+
+  if (typeof place === 'string') return { ok: false, problem: place };
+
   const objects = extraObjects(payload);
   const targets = caseTargets(payload);
   const miscounted = targetCountProblem(payload.goal, targets);
@@ -113,7 +134,8 @@ async function createCase(payload: Payload, ctx: CaseContext) {
 
   const spec: CaseSpec = {
     goal: String(payload.goal) as GoalKind,
-    world: (text(payload.world) ?? (targets ? 'room' : 'floor')) as WorldKind,
+    world: (text(payload.world) ?? defaultWorld(targets, place)) as WorldKind,
+    ...place,
     values: { ...caseValues(payload), ...(targets && payload.goal === 'path' ? { stops: targets.length } : {}) },
     ...(targets ? { targets } : {}),
     name: text(payload.name),

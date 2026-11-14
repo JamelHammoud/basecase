@@ -4,6 +4,7 @@ import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
 import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
+import type { WorldMeshRef } from './worldTypes';
 import { gestureNames, readGestures, type CaseGesture } from './gestures';
 import {
   asBoolean,
@@ -73,6 +74,8 @@ export interface WorldObject {
   friction?: number;
   jitter?: ObjectJitter;
   movable?: boolean;
+  piece?: number;
+  ground?: boolean;
 }
 
 export interface ObjectJitter {
@@ -123,7 +126,7 @@ export interface Case {
   brief: string;
   slot?: RobotSlot;
   slots?: RobotSlot[];
-  world: { objects: WorldObject[] };
+  world: { objects: WorldObject[]; mesh?: WorldMeshRef };
   controls: CaseControl[];
   reference: { timeline: ReferenceCommand[] };
   task: CaseTask;
@@ -218,6 +221,31 @@ const readObject: Reader<WorldObject> = (value, where) => {
     friction: optional(asNumber, v.friction, `${where}.friction`),
     jitter: optional(readJitter, v.jitter, `${where}.jitter`),
     ...(v.movable === undefined ? {} : { movable: asBoolean(v.movable, `${where}.movable`) }),
+    ...(v.piece === undefined ? {} : { piece: readPiece(v.piece, `${where}.piece`) }),
+    ...(v.ground === undefined ? {} : { ground: asBoolean(v.ground, `${where}.ground`) }),
+  };
+};
+
+export const MAX_PIECES = 64;
+
+const HASH = /^[0-9a-f]{64}$/;
+
+const readPiece: Reader<number> = (value, where) => {
+  const n = asNumber(value, where);
+
+  return Number.isInteger(n) && n >= 0 && n < MAX_PIECES
+    ? n
+    : refuse(where, `must be a whole number under ${MAX_PIECES}`);
+};
+
+const readMeshRef: Reader<WorldMeshRef> = (value, where) => {
+  const v = asRecord(value, where);
+  const hash = asString(v.hash, `${where}.hash`);
+
+  return {
+    hash: HASH.test(hash) ? hash : refuse(`${where}.hash`, 'must be a content hash'),
+    name: asString(v.name, `${where}.name`),
+    at: v3(v.at, `${where}.at`),
   };
 };
 
@@ -356,7 +384,7 @@ export function parseCase(input: unknown): Case {
     name: asString(v.name, 'name'),
     brief: asString(v.brief, 'brief'),
     ...readCast(v),
-    world: { objects },
+    world: { objects, ...(world.mesh === undefined ? {} : { mesh: readMeshRef(world.mesh, 'world.mesh') }) },
     controls: listOf(readControl, 16)(v.controls, 'controls'),
     reference: { timeline: listOf(readCommand, MAX_COMMANDS)(reference.timeline, 'reference.timeline') },
     task,

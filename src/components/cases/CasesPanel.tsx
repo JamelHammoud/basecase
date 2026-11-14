@@ -28,7 +28,7 @@ function NewCase({ cases, onOpen, onDescribe }: Omit<CasesPanelProps, 'onShowRob
 
   return (
     <div className="mb-3 flex flex-col gap-1">
-      {builder.open && <NewCaseCard key={builder.roomKey} builder={builder} onCreated={onOpen} />}
+      {builder.open && <NewCaseCard key={builder.placeKey} builder={builder} onCreated={onOpen} />}
       {!builder.open && builder.goals.length > 0 && (
         <Button variant="primary" size="md" fullWidth icon={<PlusIcon className="w-4 h-4" />} onClick={builder.start}>
           New Case

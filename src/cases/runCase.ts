@@ -26,7 +26,8 @@ import { robotFacts, type EndEffector, type RobotFacts } from './robotFit';
 import { bodyFor, factSampler, logicPlan, startLogic, type LogicOptions, type Signals } from './runCaseLogic';
 import { scaledToReach } from './scale';
 import { reseededGround } from './terrain';
-import { caseSlots, worldItem, type Case, type ReferenceCommand } from './schema';
+import { caseSlots, type Case, type ReferenceCommand } from './schema';
+import { caseWorldItems } from './worldPieces';
 import { slotRefusals } from './slots';
 import { WorldMoves } from '../sim/worldMoves';
 import type { WorldEvent } from './worldSet';
@@ -320,7 +321,7 @@ function fitted(authored: Case, robot: CaseRobot, options: RunOptions): Fitted |
 async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Promise<CaseResult> {
   const jitter = options.seed === undefined ? null : worldRandom(options.seed);
   const kase = jitter ? reseededGround(jitteredWorld(fit.scaled, jitter), jitter) : fit.scaled;
-  const world = kase.world.objects.map(worldItem);
+  const world = caseWorldItems(kase.world);
   const model = buildMjcf({ ...fit.input, world, fixedBase: fixedBaseFor(fit.cast) });
   const { plan, refusal: logicRefusal } = logicPlan(kase, options);
 

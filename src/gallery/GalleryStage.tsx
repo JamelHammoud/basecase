@@ -64,6 +64,7 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryCon
         ref={viewportRef}
         parts={parts}
         worldParts={sim.worldParts}
+        worldLook={sim.worldLook}
         selectedPartIds={[]}
         transformMode="translate"
         sculptSettings={SCULPT}

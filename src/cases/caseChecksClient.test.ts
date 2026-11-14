@@ -2,14 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CaseCheckJob, CaseCheckReply, WireRobot } from './caseCheckJob';
 import { CaseCheckPool, type WorkerLike } from './caseChecksClient';
 import type { Case } from './schema';
+import { keepPieces } from './worldPieces';
+import type { WorldPiece } from './worldTypes';
 
 class FakeWorker implements WorkerLike {
   onmessage: WorkerLike['onmessage'] = null;
   onerror: WorkerLike['onerror'] = null;
-  posted: Array<{ id: number; job: CaseCheckJob }> = [];
+  posted: Array<{ id: number; job: CaseCheckJob; pieces?: Record<string, WorldPiece[]> }> = [];
   terminated = false;
 
-  postMessage(message: { id: number; job: CaseCheckJob }) {
+  postMessage(message: { id: number; job: CaseCheckJob; pieces?: Record<string, WorldPiece[]> }) {
     this.posted.push(message);
   }
 
@@ -26,7 +28,7 @@ class FakeWorker implements WorkerLike {
 }
 
 const robot = { id: 'scene', parts: [], joints: [], measures: {}, triangles: {} } as WireRobot;
-const kase = { id: 'flag' } as Case;
+const kase = { id: 'flag', world: { objects: [] } } as unknown as Case;
 const runs = (seeds: number[], modelHash = 'm1') => ({
   type: 'runs' as const,
   kase,
@@ -69,6 +71,21 @@ describe('the Case checks pool', () => {
     workers[0].answer(ran);
     await second;
     expect(wire).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends a dropped world’s collider pieces with each job that runs in it', async () => {
+    const { pool: p, workers } = pool();
+    const hash = 'a'.repeat(64);
+    const pieces: WorldPiece[] = [
+      { center: [0, 100, 0], vertices: [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1], ground: false },
+    ];
+    const inWorld = { ...kase, world: { objects: [], mesh: { hash, name: 'Kitchen', at: [0, 0, 0] } } } as Case;
+
+    keepPieces(hash, pieces);
+    void p.run(0, { ...runs([1]), kase: inWorld }, { robot: () => robot });
+
+    expect(workers[0].posted[0].pieces).toEqual({ [hash]: pieces });
+    workers[0].answer(ran);
   });
 
   it('drops queued jobs a newer check no longer wants, and puts the model first', async () => {

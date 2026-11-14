@@ -36,6 +36,7 @@ covers:
   - src/cases/roomWorld.ts
   - src/cases/roomTargets.ts
   - src/cases/roomJitter.ts
+  - src/cases/meshWorld.ts
   - src/cases/namedSpots.ts
   - src/cases/terrain.ts
   - src/cases/contract.ts
@@ -90,6 +91,7 @@ The builder starts each number at a default sized to the robot. Its limits:
 | **Slope** | Reach a Spot, Follow a Path, Walk Without Falling | A ramp up at **Incline**, a flat top and a ramp down. Tries get the same extra time |
 | **Shelf** | Touch a Point | A box under the point |
 | A room you imported | Reach a Spot, Push a Box, Follow a Path. Touch a Point when a table is in reach | The room's largest walls and furniture, at true size |
+| A 3D world you dropped | Reach a Spot, Push a Box, Follow a Path, Walk Without Falling | The capture's splat or mesh, with up to 64 hidden convex pieces the robot collides with, at true size |
 
 Rough Ground, Steps and Slope start their number at a value sized to the robot's legs or wheels. The steps are in [Test a robot on rough ground, steps or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope).
 
@@ -98,6 +100,8 @@ In a room, the robot starts where the scan marked it, turned to the nearest quar
 In a room, a spot can be a door or a piece of furniture, picked by name. A furniture spot sits on the open floor in front of it, and a door's sits in the doorway. **Under Table** is offered only to a robot shorter than the table's underside. With a named spot, **Time** grows with the trip: 100 mm a second on wheels, 60 on legs, up to 120 s.
 
 Each run in Checks moves the room's fixed furniture by up to 50 mm and turns it up to 5°, or 100 mm and 10° where RoomPlan was less sure. Walls and doors never move. The steps are in [Import a scanned room as a Case world](/help/import-a-scanned-room).
+
+In a 3D world you dropped, the robot starts on the open floor nearest the middle, and the pieces never move between runs. The steps are in [Import a captured 3D world as a Case world](/help/import-a-captured-3d-world).
 
 A Case is named after its goal and world, such as "Push a Box in a Corridor", and you [rename it](/help/make-a-case#rename-or-delete-a-case) from its right-click menu. A world that would put a solid object where the robot stands is refused, with what to change.
 

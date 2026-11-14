@@ -25,6 +25,7 @@ export type WorldBehavior = 'static' | 'dynamic' | 'marker';
 export interface WorldItem extends ScenePart {
   behavior: WorldBehavior;
   movable?: boolean;
+  hull?: number[];
 }
 
 export interface SimJoint {

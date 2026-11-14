@@ -15,6 +15,10 @@ import type { Cases } from './useCases';
 import { fixtureRoom } from '../cases/roomFixture';
 import { readRoomPlan, type Room } from '../cases/roomPlan';
 import { roomTargets } from '../cases/roomTargets';
+import { kitchenMesh } from '../cases/worldFixtures';
+import { fixtureWorld } from '../cases/worldTesting';
+import type { StoredWorld } from '../cases/worldTypes';
+import { keepWorld } from './worldStore';
 
 const scene = { parts: () => [], project: () => ({}) as ProjectSettings, viewport: () => null };
 
@@ -66,6 +70,30 @@ const ROVER_APP = {
   ],
   layout: { areas: [{ size: 480, panels: ['front'] }, { canvas: true }, { size: 300, panels: ['speed', 'tries'] }] },
 };
+
+describe('create_case in a dropped world', () => {
+  it('makes the Case in the world its hash names, and asks for the drop when the hash is unknown', async () => {
+    const world = await fixtureWorld(kitchenMesh(), 'Kitchen');
+    const stored: StoredWorld = {
+      ...world,
+      files: [],
+      look: { mesh: { file: 'Kitchen.glb', format: 'glb' } },
+      frame: { mmPerUnit: 1000, liftMm: 0 },
+    };
+
+    await keepWorld(stored);
+
+    const made = create({ goal: 'reach', world_hash: world.hash });
+    const unknown = create({ goal: 'reach', world_hash: 'f'.repeat(64) });
+
+    expect(await made.reply).toMatchObject({ ok: true, name: 'Reach a Spot in Kitchen' });
+    expect(made.added[0].world.mesh?.hash).toBe(world.hash);
+    expect(await unknown.reply).toEqual({
+      ok: false,
+      problem: 'Drop the world on the canvas first, then make the Case in it.',
+    });
+  });
+});
 
 describe('create_case', () => {
   it('maps the agent’s numbers onto the builder’s', () => {

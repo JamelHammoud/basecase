@@ -1,6 +1,8 @@
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { GhostState } from './ghostLayer';
 import type { EarthState, EarthView } from './earthLayer';
+import type { WorldMeshRef } from '../../cases/worldTypes';
+import type { LookKind } from '../worldLook';
 import type { DataLayerState } from './dataLayers';
 import type { DataLayerInput } from '../../dataLayers/store';
 import type { MatTrackOverlay } from './matTrack';
@@ -143,6 +145,7 @@ export interface ViewportProps {
   paused?: boolean;
   pose?: Map<string, THREE.Matrix4> | null;
   worldParts?: ScenePart[];
+  worldLook?: WorldMeshRef | null;
   poseJoint?: PoseJointTarget | null;
   onPoseJoint?: (id: string, delta: number, phase: GrabPhase) => void;
   onGrab?: GrabHandler | null;
@@ -228,6 +231,7 @@ export interface Viewport3DHandle {
   setGhost: (ghost: RobotGhost | null) => void;
   ghostState: () => GhostState | null;
   earthState: () => EarthState | null;
+  worldLookKind: () => LookKind | null;
   followPart: (partId: string | null) => void;
   restBounds: (ids: string[]) => { min: Vec3; max: Vec3 } | null;
   restShapes: (ids: string[]) => SceneShapes;

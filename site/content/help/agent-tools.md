@@ -1,7 +1,7 @@
 ---
 title: Agent tools
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: reference
 order: 2
@@ -114,7 +114,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |
-| `create_case` | Adds a Case, with the inputs, panels and gestures it runs with, and marks which objects its code can move. In a scanned room, it aims at a door or furniture by name |
+| `create_case` | Adds a Case, with the inputs, panels and gestures it runs with, and marks which objects its code can move. In a scanned room, it aims at a door or furniture by name. It can also make the Case in a 3D world you dropped on the canvas |
 | `write_case_code` | Writes or replaces one of a Case's code panels, and replies with its errors, its console lines, its refused calls and a picture of the window |
 | `read_case_code` | Reads a code panel's source, or lists a Case's code panels |
 | `delete_case_code` | Takes a code panel out of a Case |

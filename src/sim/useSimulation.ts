@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import type { WorldMeshRef } from '../cases/worldTypes';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
@@ -77,7 +78,8 @@ export interface Simulation {
   guestParts: ScenePart[];
   subscribePoses: (listen: (poses: Float64Array, frame: SimFrameMessage) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
-  setWorld: (items: WorldItem[], guests?: SimGuests) => void;
+  setWorld: (items: WorldItem[], guests?: SimGuests, look?: WorldMeshRef | null) => void;
+  worldLook: WorldMeshRef | null;
   buildModel: (options?: { alone?: boolean }) => Promise<SimModel>;
   runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
   runCase: (input: LiveCaseInput | null) => void;
@@ -188,6 +190,7 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
   const worldRef = useRef<WorldItem[]>(worldParts);
   const [guests, setGuests] = useState<SimGuests>(NO_GUESTS);
   const guestsRef = useRef<SimGuests>(guests);
+  const [worldLook, setWorldLook] = useState<WorldMeshRef | null>(null);
 
   useLayoutEffect(() => {
     inputs.current = { parts, project, rig, pose, restDeltas };
@@ -227,14 +230,15 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     [viewportRef],
   );
 
-  const setWorldItems = (items: WorldItem[], cast: SimGuests) => {
+  const setWorldItems = (items: WorldItem[], cast: SimGuests, look: WorldMeshRef | null) => {
     worldRef.current = items;
     guestsRef.current = cast;
     setWorldParts(items);
     setGuests(cast);
+    setWorldLook(look);
   };
 
-  return { inputs, buildModel, worldParts, guestParts: guests.parts, setWorldItems };
+  return { inputs, buildModel, worldParts, guestParts: guests.parts, worldLook, setWorldItems };
 }
 
 function useStopOnEdit({
@@ -336,7 +340,7 @@ export function useSimulation(props: Inputs): Simulation {
   const [model, setModel] = useState<SimModel | null>(null);
   const [speed, setSpeedState] = useState(1);
   const modelRef = useRef<SimModel | null>(null);
-  const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
+  const { inputs, buildModel, worldParts, guestParts, worldLook, setWorldItems } = useSceneModel(props);
   const runSeq = useRef(0);
   const sw = useSimWorker(viewportRef, modelRef);
   const { status, setStatus, playing, setPlaying, stats, setStats, error, send, frameHookRef } = sw;
@@ -375,8 +379,8 @@ export function useSimulation(props: Inputs): Simulation {
     runOn,
     velocity: props.velocity,
   });
-  const setWorld = (items: WorldItem[], cast: SimGuests = NO_GUESTS) => {
-    setWorldItems(items, cast);
+  const setWorld = (items: WorldItem[], cast: SimGuests = NO_GUESTS, look: WorldMeshRef | null = null) => {
+    setWorldItems(items, cast, look);
     stop();
   };
 
@@ -419,6 +423,7 @@ export function useSimulation(props: Inputs): Simulation {
     sought: sw.sought,
     worldParts: withLooks(worldParts, sw.worldLooks),
     guestParts,
+    worldLook,
     subscribePoses: sw.subscribePoses,
     connectCameras: sw.connectCameras,
     setWorld,

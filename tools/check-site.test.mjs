@@ -110,6 +110,18 @@ describe('lintSite', () => {
     ]);
   });
 
+  it('fails a negative written out in full in prose and titles, but not in code or front-matter keywords', () => {
+    const help = page(
+      'title: When a print does not start\ndate: 2026-11-12\nkeywords:\n  - cannot',
+      "Do not start a print with anything on the bed. It won't start when `is not` shows.",
+    );
+
+    expect(lint({ 'site/content/help/import-a-mesh.md': help })).toEqual([
+      'site/content/help/import-a-mesh.md:1: write “does not” as “doesn’t” (§3b-22)',
+      'site/content/help/import-a-mesh.md:8: write “Do not” as “Don’t” (§3b-22)',
+    ]);
+  });
+
   it('fails a blog sentence copied from a changelog entry', () => {
     const sentence = 'The token stays in the main process, encrypted on disk.';
     const entry = page('title: Hub\ndate: 2026-11-01', `You can publish.\n\n${sentence}`);

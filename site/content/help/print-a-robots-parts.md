@@ -50,7 +50,7 @@ If you haven't saved a printer, the plate's button reads **Add Printer** and ope
 ![Settings open at Printers after clicking Add Printer](/help/get-a-robot-ready-to-build/add-printer.png)
 
 > [!WARNING]
-> Do not start a print with anything on the bed. Clear the bed before the next step.
+> Don't start a print with anything on the bed. Clear the bed before the next step.
 
 7. For Bambu LAN, Klipper, PrusaLink or OctoPrint, read the material line in the sheet that opens, then click **Start Print**.
 8. When the plate is done, click **Mark Printed** if it doesn't already read Printed.

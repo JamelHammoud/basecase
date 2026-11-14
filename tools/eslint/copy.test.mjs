@@ -73,7 +73,20 @@ const SPELLING_SAMPLES = Object.keys(SPELLING).map((british) => [`The ${british}
 
 const APOSTROPHE_SAMPLES = [["Couldn't load the model", "n't"]];
 
-const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES, ...SPELLING_SAMPLES, ...APOSTROPHE_SAMPLES];
+const CONTRACTION_SAMPLES = [
+  ['This is not a Routine.', 'is not'],
+  ['The slicer could not read the plate.', 'could not'],
+  ['Cannot reach the robot.', 'Cannot'],
+  ['Do not touch the bed.', 'Do not'],
+];
+
+const SAMPLES_WITH_GLOSSARY = [
+  ...SAMPLES,
+  ...GLOSSARY_SAMPLES,
+  ...SPELLING_SAMPLES,
+  ...APOSTROPHE_SAMPLES,
+  ...CONTRACTION_SAMPLES,
+];
 
 const errors = (text) => [{ messageId: 'banned', data: findBannedCopy(text) }];
 
@@ -198,6 +211,23 @@ describe('apostrophes', () => {
 
   it('allows ’ and quotes around a word', () => {
     for (const text of ['Couldn’t load the model', "Name it 'Arm'", "The robots' joints"])
+      expect(findBannedCopy(text)).toBeNull();
+  });
+});
+
+describe('contractions', () => {
+  it('flags a negative written out in full', () => {
+    for (const [text, word] of CONTRACTION_SAMPLES) {
+      const hit = findBannedCopy(text);
+
+      expect(hit?.word).toBe(word);
+      expect(hit?.fix).toContain('“isn’t”');
+      expect(hit?.section).toBe('§3b-22');
+    }
+  });
+
+  it('allows contractions and a not that ends no verb', () => {
+    for (const text of ['This isn’t a Routine.', 'Not a stock length.', 'Snapping off', 'Notes'])
       expect(findBannedCopy(text)).toBeNull();
   });
 });

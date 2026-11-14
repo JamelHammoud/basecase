@@ -60,7 +60,7 @@ export async function loadReference(ref) {
   if (mime === SVG_MIME) return { name: r, buf, mime, svg: buf.toString('utf8') };
 
   if (!/^image\/(png|jpeg|webp|gif)$/.test(mime || '')) {
-    throw new Error(`${r} is not a PNG, JPEG, WebP, GIF or SVG image.`);
+    throw new Error(`${r} isn’t a PNG, JPEG, WebP, GIF or SVG image.`);
   }
 
   if (/^ref-\d+$/i.test(r)) used.add(r.toLowerCase());

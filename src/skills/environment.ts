@@ -330,7 +330,7 @@ function rewardProblems(reward: RewardRef): string[] {
 function shapeProblems(env: Environment, index: ModelIndex): string[] {
   const out: string[] = [];
 
-  if (env.version !== ENVIRONMENT_VERSION) out.push('This environment version is not supported.');
+  if (env.version !== ENVIRONMENT_VERSION) out.push('This environment version isn’t supported.');
 
   if (!index.robots.has(env.robot)) out.push('The environment names a robot this scene lacks.');
 

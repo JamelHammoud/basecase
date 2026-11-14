@@ -38,7 +38,7 @@ You need two or more printers that report their state: Bambu LAN, Klipper, Prusa
 ![Two printers under Printer, each Ready with Start Next](/help/print-plates-on-several-printers/printers.png)
 
 > [!WARNING]
-> Do not start a print with anything on the bed. Clear the bed before the next step.
+> Don't start a print with anything on the bed. Clear the bed before the next step.
 
 5. Read the material line in the sheet that opens, then click **Start Print**.
 

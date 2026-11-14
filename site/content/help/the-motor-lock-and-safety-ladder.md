@@ -84,6 +84,6 @@ The app must send a command at least every 100 ms while motors run. If it stops,
 A fault stays until you clear it. Climb back down to **Look**, click **Clear Fault**, and climb again. Until you climb, the simulation sends the robot no commands.
 
 > [!WARNING]
-> Feetech servos keep holding their last position if the daemon itself stops. On a real robot, do not touch it until you've switched off the servo power. Dynamixel servos stop on their own within 100 ms.
+> Feetech servos keep holding their last position if the daemon itself stops. On a real robot, don't touch it until you've switched off the servo power. Dynamixel servos stop on their own within 100 ms.
 
 What each message means is in [Servo readings and daemon messages](/help/servo-readings-and-daemon-messages).

@@ -34,7 +34,7 @@ function bridgeHeaders() {
 }
 
 export async function bridge(kind, payload, timeoutMs = 120000) {
-  if (!BRIDGE_URL) throw new Error('CAD_BRIDGE_URL is not set; the app bridge is unavailable.');
+  if (!BRIDGE_URL) throw new Error('CAD_BRIDGE_URL isn’t set; the app bridge is unavailable.');
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

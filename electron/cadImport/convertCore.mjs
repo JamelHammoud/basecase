@@ -10,7 +10,7 @@ const MIN_HOLE_MM = 1.8;
 const MAX_HOLE_MM = 12;
 const STEP_FOR_SCAN = 0.25;
 
-export const UNREADABLE_ERROR = 'OpenCascade could not read this file. It may be too big for the built-in reader.';
+export const UNREADABLE_ERROR = 'OpenCascade couldn’t read this file. It may be too big for the built-in reader.';
 
 function cadFromZip(bytes, member) {
   let total = 0;

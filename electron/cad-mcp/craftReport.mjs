@@ -1,3 +1,5 @@
+import { plural } from '../plural.mjs';
+
 const SHARP_WARN = 0.6;
 const BRICK_SOLIDITY = 0.85;
 const SHELL_SOLIDITY = 0.2;
@@ -88,7 +90,7 @@ function wallRow(parts) {
     status: off.length ? 'WARN' : 'OK',
     name: 'Shell walls',
     detail: shells.length
-      ? `${shells.length} visible shells, modal walls ${modal.join(', ')} mm; aim for one wall between 1.6 and 3.5 mm.`
+      ? `${plural(shells.length, 'visible shell')}, modal walls ${modal.join(', ')} mm; aim for one wall between 1.6 and 3.5 mm.`
       : 'No visible thin shells.',
     items: off.map(
       (p) =>
@@ -106,13 +108,13 @@ function fastenerRows(parts) {
     {
       status: sizes.length > MAX_THREADS ? 'WARN' : 'OK',
       name: 'Fastener vocabulary',
-      detail: `${sizes.length} thread sizes${sizes.length ? ` (${sizes.join(', ')})` : ''}; expert robots use 1 or 2.`,
+      detail: `${plural(sizes.length, 'thread size')}${sizes.length ? ` (${sizes.join(', ')})` : ''}; expert robots use 1 or 2.`,
       items: sizes.length > MAX_THREADS ? ['Standardize on at most 3 thread sizes'] : [],
     },
     {
       status: exposed.length ? 'WARN' : 'OK',
       name: 'Exposed heads',
-      detail: `${exposed.length} screw heads visible from the front, back, sides or top (counterbored ones included).`,
+      detail: `${plural(exposed.length, 'screw head')} visible from the front, back, sides or top (counterbored ones included).`,
       items: exposed.length
         ? [
             `Counterbore them or move them to hidden faces: ${exposed

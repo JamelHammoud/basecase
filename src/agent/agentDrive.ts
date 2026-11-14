@@ -104,7 +104,7 @@ function liveDrive(ctx: DriveToolContext, commands: AgentCommand[]) {
   });
 
   return {
-    text: `Driving on the canvas: ${commands.length} commands over ${duration(Math.max(...commands.map((c) => c.at)))}.`,
+    text: `Driving on the canvas: ${plural(commands.length, 'command')} over ${duration(Math.max(...commands.map((c) => c.at)))}.`,
   };
 }
 

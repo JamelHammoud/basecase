@@ -188,7 +188,7 @@ function primitiveIssues(solids) {
   if (!primitives.length) return [];
 
   return [
-    `${primitives.length} solid parts are still block-out primitives (replace each with model_part or a catalog part): ${primitives
+    `Replace ${plural(primitives.length, 'block-out primitive')} with model_part or a catalog part: ${primitives
       .slice(0, 20)
       .map((p) => p.id)
       .join(', ')}${primitives.length > 20 ? '…' : ''}`,

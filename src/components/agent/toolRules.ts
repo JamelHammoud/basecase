@@ -360,7 +360,7 @@ const SOURCE_RULES: ToolRule[] = [
       const paths = list(input.paths).map((p) => String(p).split('/').pop() ?? '');
 
       return {
-        title: `${verb('Studying', 'Studied')} ${paths.length > 1 ? `${paths.length} attached files` : 'an attached file'}`,
+        title: `${verb('Studying', 'Studied')} ${paths.length > 1 ? plural(paths.length, 'attached file') : 'an attached file'}`,
         detail: optional(names(paths)),
       };
     },
@@ -379,7 +379,9 @@ const SOURCE_RULES: ToolRule[] = [
     label: ({ input, verb }) => {
       const urls = list(input.urls);
 
-      return { title: `${verb('Looking at', 'Looked at')} ${urls.length > 1 ? `${urls.length} photos` : 'a photo'}` };
+      return {
+        title: `${verb('Looking at', 'Looked at')} ${urls.length > 1 ? plural(urls.length, 'photo') : 'a photo'}`,
+      };
     },
   },
   {

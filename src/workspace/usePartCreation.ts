@@ -29,6 +29,7 @@ import type { Vec3 } from './types';
 import type { RobotInsert } from './useRobotInsert';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../../electron/plural.mjs';
 
 const IMAGE_STEP = 16;
 
@@ -125,7 +126,7 @@ function useMeshImport(core: WorkspaceCore) {
   const importMeshes = async (files: File[], at?: Vec3 | null) => {
     if (files.length === 0) return;
 
-    const label = files.length === 1 ? files[0].name : `${files.length} meshes`;
+    const label = files.length === 1 ? files[0].name : plural(files.length, 'mesh', 'meshes');
 
     showToast(`Importing ${label}…`, { tone: 'progress' });
 
@@ -148,7 +149,11 @@ function useMeshImport(core: WorkspaceCore) {
       return;
     }
 
-    showToast(imported.length === 1 ? `Inserted ${importedName(imported[0])}` : `Inserted ${imported.length} meshes`);
+    showToast(
+      imported.length === 1
+        ? `Inserted ${importedName(imported[0])}`
+        : `Inserted ${plural(imported.length, 'mesh', 'meshes')}`,
+    );
   };
 
   return { importMeshes };

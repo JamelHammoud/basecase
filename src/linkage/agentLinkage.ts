@@ -106,7 +106,7 @@ function insertedText(solutions: LinkageSolution[], pick: number, ctx: LinkageTo
 const emptyText = (count: number) =>
   count < MIN_PATH_POINTS || count > MAX_PATH_POINTS
     ? `No buildable four-bar: give ${MIN_PATH_POINTS}–${MAX_PATH_POINTS} path points, not ${count}.`
-    : `No buildable four-bar: no crank-rocker with links of ${MIN_LINK_MM}–${MAX_LINK_MM} mm passes close enough to these ${count} points. Space them along a smoother path, or scale the path so its links fit.`;
+    : `No buildable four-bar: no crank-rocker with links of ${MIN_LINK_MM}–${MAX_LINK_MM} mm passes close enough to these ${plural(count, 'point')}. Space them along a smoother path, or scale the path so its links fit.`;
 
 export async function synthesizeLinkageRequest(payload: LinkagePayload, ctx: LinkageToolContext) {
   const points = pathPoints(payload.points);
@@ -119,7 +119,7 @@ export async function synthesizeLinkageRequest(payload: LinkagePayload, ctx: Lin
 
   const frame = { plane: planeOf(payload.plane), origin: originOf(payload.origin) };
   const lines = solutions.map((s, i) => solutionLine(s, i, frame));
-  const head = `${plural(solutions.length, 'crank-rocker four-bar')} through ${points.length} points in CAD ${frame.plane}, best first:`;
+  const head = `${plural(solutions.length, 'crank-rocker four-bar')} through ${plural(points.length, 'point')} in CAD ${frame.plane}, best first:`;
   const tail = payload.insert
     ? insertedText(solutions, payload.insert, ctx, scenePlane(frame.plane, frame.origin))
     : `\nInsert one with insert: ${choices(solutions)}.`;

@@ -26,6 +26,8 @@ covers:
   - src/workspace/usePrinting.ts
   - src/print/printBridge.ts
   - src/components/print/PrintPanel.tsx
+  - src/components/print/PrinterFleet.tsx
+  - src/print/fleet.ts
   - src/components/settings/PrintersPane.tsx
 ---
 
@@ -50,7 +52,11 @@ No printer is saved, so there's nowhere to send the plate. Clicking it opens Set
 
 ## The send button is grayed out
 
-The plate is slicing or sending, or a printer is set but no slicer is installed. Wait for the progress line to finish, or install a slicer as above.
+The plate is slicing or sending, or a printer is set but no slicer is installed. Wait for the progress line to finish, or install a slicer as above. **Start Next** is grayed out while any plate slices or sends.
+
+## A printer has no Start Next
+
+**Start Next** shows only beside a printer that reads Ready and has a plate left that it can print. Plates that are sent, printing or printed aren't offered. Neither are plates too big for its bed, or of a material other than the filament it reports. [Print plates on several printers](/help/print-plates-on-several-printers) has the steps.
 
 ## A printer or material has no slicer profile
 

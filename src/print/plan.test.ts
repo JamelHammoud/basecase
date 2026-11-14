@@ -1,11 +1,16 @@
 import * as THREE from 'three';
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { describe, expect, it } from 'vitest';
-import { printerModel } from '../data/printers';
+import { printerModel, resolvePrinter } from '../data/printers';
+import { buildGuidePlan } from '../guide/guidePlan';
+import { approximateScene } from '../guide/guideScene';
+import { firstSteps } from '../guide/guideSteps';
 import { checkPrintability } from '../three/printability';
+import type { PrintMaterial, ScenePart } from '../types/robotics';
 import { bedOf } from './bed';
 import { packPlates } from './pack';
-import { choosePose, itemMatrix, turnedPrint } from './plan';
+import { buildPrintPlan, choosePose, itemMatrix, turnedPrint } from './plan';
+import { planInput } from './plan.fixtures';
 import { weld, writeThreeMf } from './threeMf';
 
 const bed = bedOf(printerModel('bambu-lab-p1s')!);
@@ -83,7 +88,7 @@ describe('plate transforms', () => {
 });
 
 describe('turning a part on its plate', () => {
-  const item = { id: 'arm', copy: 0, name: 'Arm', x: 20, y: 30, w: 100, d: 40, yaw: 0, matrix: [] };
+  const item = { id: 'arm', copy: 0, name: 'Arm', x: 20, y: 30, w: 100, d: 40, h: 10, yaw: 0, matrix: [] };
   const plate = { number: 2, local: 1, material: 'PLA' as const, items: [item], grams: 0, hours: 0, hash: '' };
 
   it('keeps the part where it sits and turns it a quarter', () => {
@@ -103,5 +108,112 @@ describe('turning a part on its plate', () => {
 
   it('leaves a part that is not on a plate alone', () => {
     expect(turnedPrint([plate], 'missing')).toBeNull();
+  });
+});
+
+const setup = resolvePrinter('bambu-lab-p1s', []);
+
+type V3 = [number, number, number];
+
+const part = (id: string, position: V3, size: V3): ScenePart => ({
+  id,
+  name: id,
+  kind: 'cad_part',
+  category: 'structure',
+  role: 'solid',
+  position,
+  rotation: [0, 0, 0],
+  dimensions: { width: size[0], height: size[1], depth: size[2] },
+  color: '#eeeeee',
+  note: '',
+  visible: true,
+  locked: false,
+});
+
+const robot = [
+  part('base', [0, 10, 0], [140, 20, 140]),
+  part('front-leg', [0, -60, 0], [150, 120, 150]),
+  part('back-leg', [0, -190, 0], [150, 140, 150]),
+];
+
+const footprint = (p: ScenePart): V3 => [p.dimensions.width!, p.dimensions.depth!, p.dimensions.height!];
+
+function planFor(assembly: string[], material: (id: string) => PrintMaterial = () => 'PLA') {
+  const guide = buildGuidePlan({ ...approximateScene('', robot, []), order: { assembly, unproven: [] } }, 'PLA');
+  const first = firstSteps(guide.steps.map((s) => s.partIds));
+  const inputs = robot.map((p) =>
+    planInput(p.id, footprint(p), { material: material(p.id), firstStep: first.get(p.id) }),
+  );
+
+  return buildPrintPlan(inputs, setup, bed, 'fine');
+}
+
+const plateIds = (plan: ReturnType<typeof planFor>) => plan.plates.map((p) => p.items.map((it) => it.id));
+
+describe('build-order plates', () => {
+  it('packs the part the proven order builds first onto plate 1', () => {
+    const plan = planFor(['base', 'front-leg', 'back-leg']);
+
+    expect(plan.plates[0].items.map((it) => it.id)).toEqual(['base']);
+    expect(plan.plates.map((p) => p.step)).toEqual([0, 1, 2]);
+  });
+
+  it('follows the order when it changes, and keeps every hash when it does not', () => {
+    const forward = planFor(['base', 'front-leg', 'back-leg']);
+    const again = planFor(['base', 'front-leg', 'back-leg']);
+    const reversed = planFor(['back-leg', 'front-leg', 'base']);
+
+    expect(plateIds(reversed)[0]).toEqual(['back-leg']);
+    expect(plateIds(reversed)).not.toEqual(plateIds(forward));
+    expect(again.plates.map((p) => p.hash)).toEqual(forward.plates.map((p) => p.hash));
+    expect(JSON.stringify(again)).toBe(JSON.stringify(forward));
+  });
+
+  it('numbers plates by their earliest step across materials', () => {
+    const plan = planFor(['front-leg', 'base', 'back-leg'], (id) => (id === 'base' ? 'PETG' : 'PLA'));
+
+    expect(plan.plates.map((p) => [p.material, p.items.map((it) => it.id)])).toEqual([
+      ['PLA', ['front-leg']],
+      ['PETG', ['base']],
+      ['PLA', ['back-leg']],
+    ]);
+    expect(plan.plates.map((p) => p.number)).toEqual([1, 2, 3]);
+    expect(plan.plates.map((p) => p.local)).toEqual([1, 1, 2]);
+  });
+
+  it('puts a part no step uses on the last plate, even when an earlier plate has room', () => {
+    const inputs = [
+      planInput('first', [200, 200, 20], { firstStep: 0 }),
+      planInput('second', [200, 200, 20], { firstStep: 1 }),
+      planInput('spare', [20, 20, 5]),
+    ];
+    const plan = buildPrintPlan(inputs, setup, bed, 'fine');
+
+    expect(plan.plates.map((p) => p.items.map((it) => it.id).sort())).toEqual([['first'], ['second', 'spare']]);
+    expect(plan.plateOf.spare).toBe(2);
+  });
+
+  it('packs a scene with no guide steps the way it always has, largest first', () => {
+    const inputs = [
+      planInput('small', [60, 60, 10]),
+      planInput('large', [150, 150, 10]),
+      planInput('mid', [150, 120, 10]),
+    ];
+    const plan = buildPrintPlan(inputs, setup, bed, 'fine');
+
+    expect(plan.plates.map((p) => p.step)).toEqual([undefined, undefined]);
+    expect(plan.plates.map((p) => p.items.map((it) => it.id).sort())).toEqual([['large', 'small'], ['mid']]);
+  });
+
+  it('leaves a part pinned to a spot where it is, whatever its step', () => {
+    const inputs = [
+      planInput('first', [100, 100, 20], { firstStep: 0 }),
+      planInput('pinned', [40, 40, 20], { firstStep: 5, print: { plate: 1, at: [180, 180] } }),
+    ];
+    const plan = buildPrintPlan(inputs, setup, bed, 'fine');
+    const pinned = plan.plates.flatMap((p) => p.items).find((it) => it.id === 'pinned')!;
+
+    expect([pinned.x, pinned.y]).toEqual([180, 180]);
+    expect(plan.plateOf.pinned).toBe(1);
   });
 });

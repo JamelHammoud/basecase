@@ -1,5 +1,5 @@
 import type { MeshMeasure } from '../three/meshMeasure';
-import type { ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
+import type { ProjectSettings, Purchases, ScenePart } from '../types/robotics';
 import { buildBom } from '../utils/bom';
 import { robotWeight } from '../utils/engineering';
 import { buildRig } from '../utils/kinematics';
@@ -33,7 +33,7 @@ export interface Comparison {
 
 export interface CompareOptions {
   runs: (robot: CompareRobot) => Promise<CaseRuns>;
-  purchases: Record<string, PurchaseRecord>;
+  purchases: Purchases;
 }
 
 export const comparable = (kase: Case) => caseSlots(kase).length === 1;

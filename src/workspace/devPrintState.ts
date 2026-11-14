@@ -1,6 +1,10 @@
+import { guideStepParts } from '../guide/guideSteps';
+import { plateStatus } from '../print/tracker';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-export function printDevActions({ printing }: WorkspaceCore) {
+export function printDevActions(core: WorkspaceCore) {
+  const { printing, docs } = core;
+
   return {
     printState: () => ({
       open: !!printing.mode,
@@ -12,5 +16,11 @@ export function printDevActions({ printing }: WorkspaceCore) {
       fitTest: !!printing.fitTest,
       plates: (printing.report?.plan.plates ?? []).map((p) => p.items.map((it) => it.id)),
     }),
+    markPlatePrinted: (number: number) => {
+      const plate = printing.report?.plan.plates.find((p) => p.number === number);
+
+      if (plate && plateStatus(plate, printing.records).state !== 'printed') printing.markPlate(plate, 'printed');
+    },
+    readySteps: () => printing.readySteps(guideStepParts(docs.partsRef.current, docs.projectRef.current)),
   };
 }

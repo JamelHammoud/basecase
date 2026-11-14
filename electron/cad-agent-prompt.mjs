@@ -245,6 +245,8 @@ source for its numbers. Never say "it isn't in the catalog" as a reason to compr
 const COST = `
 ## Cost
 - find_parts shows each part's price; state an actuator's cost before you commit to it.
+- Prefer parts the user owns: find_parts lists them first with how many are left, and
+  record_on_hand saves what they own.
 - With a budget: plan about ≤ 60% actuators, ≤ 15% compute, ~10% power. One actuator family;
   try a gear-ratio version or lowering the load (shorter link, lower battery) before a bigger
   servo. Tethered compute unless the brief says autonomous.

@@ -1,6 +1,7 @@
 import type { ActuatorSpec } from '../data/components';
 import { LIST_PRICES, listPriceFor } from '../data/listPrices';
-import type { PurchaseRecord } from '../types/robotics';
+import type { Purchases } from '../types/robotics';
+import { checkedPrice, onHandOf } from '../utils/onHand';
 import { holdVerdict, ratingAt, stanceVerdict } from '../utils/actuatorRules';
 import { currentMoney, formatMoney, formatWhole } from '../utils/currencyStore';
 
@@ -10,7 +11,8 @@ export interface CatalogNeed {
 }
 
 export interface CatalogContext {
-  purchases: Record<string, PurchaseRecord>;
+  purchases: Purchases;
+  used?: Record<string, number>;
   budget?: { budgetUsd: number; estimatedUsd: number };
   stance?: CatalogNeed & { crouchDeg?: number };
   hold?: CatalogNeed;
@@ -19,8 +21,24 @@ export interface CatalogContext {
 
 const per = (n: number) => (n > 1 ? ` per ${n}` : '');
 
+const usedOf = (key: string, ctx?: CatalogContext) => ctx?.used?.[key] ?? 0;
+
+export const ownedKeys = (ctx?: CatalogContext) =>
+  Object.keys(ctx?.purchases ?? {}).filter((key) => onHandOf(ctx?.purchases[key]) > 0);
+
+function stockText(key: string, ctx?: CatalogContext): string {
+  const onHand = onHandOf(ctx?.purchases[key]);
+
+  if (!onHand) return '';
+
+  const used = usedOf(key, ctx);
+  const rest = onHand >= used ? `${onHand - used} left` : `${used - onHand} to buy`;
+
+  return `${onHand} on hand, ${used} in this scene, ${rest}`;
+}
+
 export function unitPrice(key: string, ctx?: CatalogContext): number | undefined {
-  const checked = ctx?.purchases[key];
+  const checked = checkedPrice(ctx?.purchases[key]);
 
   if (checked) return checked.priceUsd / checked.packQty;
 
@@ -29,8 +47,8 @@ export function unitPrice(key: string, ctx?: CatalogContext): number | undefined
   return list && list.usd / list.per;
 }
 
-export function priceText(key: string, ctx?: CatalogContext): string {
-  const checked = ctx?.purchases[key];
+function listedPrice(key: string, ctx?: CatalogContext): string {
+  const checked = checkedPrice(ctx?.purchases[key]);
 
   if (checked)
     return `${formatMoney(checked.priceUsd, checked.entered)}${per(checked.packQty)} checked ${checked.checkedAt}`;
@@ -38,6 +56,12 @@ export function priceText(key: string, ctx?: CatalogContext): string {
   const list = listPriceFor(key);
 
   return list ? `≈ ${formatMoney(list.usd)}${per(list.per)} list at ${list.store}, ${list.seen}` : 'no price';
+}
+
+export function priceText(key: string, ctx?: CatalogContext): string {
+  const stock = stockText(key, ctx);
+
+  return `${stock ? `${stock} · ` : ''}${listedPrice(key, ctx)}`;
 }
 
 const verdictWord = { pass: 'PASS', warn: 'WARN', fail: 'FAIL' };
@@ -71,14 +95,22 @@ export function actuatorValue(act: ActuatorSpec, key: string, ctx?: CatalogConte
 
 export function hardwarePrices(type: string, ctx?: CatalogContext): string {
   const prefix = `hardware:${type}|`;
-  const keys = Object.keys(LIST_PRICES).filter((k) => k.startsWith(prefix));
+  const owned = ownedKeys(ctx).filter((k) => k.startsWith(prefix));
+  const keys = [...new Set([...owned, ...Object.keys(LIST_PRICES).filter((k) => k.startsWith(prefix))])];
 
   if (!keys.length) return '';
 
   return `; prices: ${keys.map((k) => `${k.slice(prefix.length)} ${priceText(k, ctx)}`).join('; ')}`;
 }
 
-export function catalogHeader(ctx?: CatalogContext): string[] {
+function ownedNote(key: string, ctx: CatalogContext): string {
+  const onHand = onHandOf(ctx.purchases[key]);
+  const left = onHand - usedOf(key, ctx);
+
+  return `${key} ${onHand} (${left >= 0 ? `${left} left` : `${-left} to buy`})`;
+}
+
+export function catalogHeader(ctx?: CatalogContext, listed: (key: string) => boolean = () => true): string[] {
   if (!ctx) return [];
 
   const lines: string[] = [];
@@ -91,6 +123,11 @@ export function catalogHeader(ctx?: CatalogContext): string[] {
       `Budget ${formatWhole(b.budgetUsd)}; this scene ≈ ${formatWhole(b.estimatedUsd)} so far (${left >= 0 ? `${formatWhole(left)} left` : `${formatWhole(-left)} over`}).`,
     );
   }
+
+  const owned = ownedKeys(ctx).filter(listed);
+
+  if (owned.length)
+    lines.push(`The user owns: ${owned.map((key) => ownedNote(key, ctx)).join(', ')}. Use these before buying others.`);
 
   const needs = [
     ctx.stance &&

@@ -34,7 +34,7 @@ The agent is Claude Code, Codex or Gemini CLI, running on your computer with you
 
 The agent builds in the open scene, in front of you. It reads your words, photos, sketches and files, and looks up the robot's published model when there is one. It plans where the joints go before it shapes any part. Then it blocks the robot out, models each part as code, and checks its work.
 
-It chooses parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. When a part isn't in the catalog, it can add one it found on the web. Those show as Added by Agent in the bill of materials.
+It chooses parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. It uses parts you [own](/help/count-the-parts-you-already-own) first. When a part isn't in the catalog, it can add one it found on the web. Those show as Added by Agent in the bill of materials.
 
 It can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach it a skill. Asked to change how a ready Motor Kit skill moves, it keeps the change only if Arena still passes it. When it writes a Routine, it proves each switch between skills and names any that fell. Given a Case and two open scenes, it says which robot passes more often. Asked which servo to buy, it runs the Case on each catalog version and answers with passes, cost and mass.
 

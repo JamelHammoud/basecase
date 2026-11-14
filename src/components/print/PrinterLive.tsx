@@ -3,16 +3,8 @@ import { Button, ConfirmDialog, MetaLine } from '../../design-system';
 import { printBridge, type PrinterStatus } from '../../print/printBridge';
 import type { Printing } from '../../workspace/usePrinting';
 import { duration } from '../../utils/duration';
-
-const STATE_TEXT: Record<PrinterStatus['state'], string> = {
-  idle: 'Ready',
-  preparing: 'Preparing…',
-  printing: 'Printing',
-  paused: 'Paused',
-  finished: 'Finished',
-  failed: 'Failed',
-  offline: 'Can’t reach the printer',
-};
+import { PRINTER_STATE_TEXT } from './plateFacts';
+import { showsFleet } from './PrinterFleet';
 
 function facts(status: PrinterStatus) {
   return [
@@ -27,7 +19,7 @@ export const PrinterLive: React.FC<{ printing: Printing }> = ({ printing }) => {
   const status = printing.status;
   const id = printing.printer.mine?.id;
 
-  if (!status || !id) return null;
+  if (!status || !id || (status.state === 'idle' && showsFleet(printing))) return null;
 
   const control = (action: 'pause' | 'resume' | 'cancel') => () =>
     void printBridge.control(id, action).catch((e: unknown) => console.warn(e));
@@ -36,7 +28,7 @@ export const PrinterLive: React.FC<{ printing: Printing }> = ({ printing }) => {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="text-[13px] text-white/90">
-        {STATE_TEXT[status.state]}
+        {PRINTER_STATE_TEXT[status.state]}
         {status.job && <span className="text-white/50"> {status.job}</span>}
       </div>
       <MetaLine className="text-[12.5px] text-white/50 tabular-nums" items={facts(status)} />

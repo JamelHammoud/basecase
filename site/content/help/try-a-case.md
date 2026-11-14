@@ -32,39 +32,39 @@ covers:
   - src/cases/tryStore/
 ---
 
-Drive your robot through an open Case while Basecase records the try. When you stop, Basecase shows whether the try passed, and you can replay it.
+You can drive your robot through an open Case while Basecase records the try. After you stop, Basecase shows whether the try passed, and you can replay it.
 
 1. Click **Play** in the view rail, then click **Cases**.
-2. Click a Case under **New Case**. Basecase opens it at the top of the **Simulate** tab with its brief. If you don't see a Case there, [make a Case](/help/make-a-case) first.
+2. Click a Case under **New Case**. Basecase opens it at the top of the **Simulate** tab, along with its brief. If there's no Case there, [make a Case](/help/make-a-case) first.
 3. Under **Try**, click **Try It**. A clock shows how much of the Case's time limit you've used, and the keys for your kind of robot appear below it.
-4. Click the canvas so your key presses go there.
+4. Click the canvas so it gets your key presses.
 5. Drive the robot to the goal with the keys shown under **Try**, or with a gamepad. To start over, press [[R]].
 
 ![A try running, with the clock, Stop Try and the keys](/help/try-a-case/trying.png)
 
-6. To end the try, click **Stop Try** or press [[Esc]]. Or let the clock run out, and the try ends on its own.
-7. Find the new try under **Results**. It's marked **Passed** or **Missed**, with how long it took and four frames from it.
-8. To watch a try again, click **Replay** (▷) on it. Basecase plays it through the Case's cards, as in [Play a try through its console](/help/play-a-try-through-its-console).
+6. To end the try, click **Stop Try** or press [[Esc]]. The try also ends on its own if the clock runs out.
+7. Find the new try under **Results**. It's marked **Passed** or **Missed**, and shows how long it took and four frames from the try.
+8. To watch a try again, click **Replay** (▷) on it. Basecase plays it through the Case's cards, the same way as in [Play a try through its console](/help/play-a-try-through-its-console).
 
 ![Results with the latest run and one try](/help/try-a-case/results.png)
 
-You can also start a try from [[⌘K]] with **Try ⟨Case⟩**.
+To start a try from [[⌘K]], choose **Try ⟨Case⟩**.
 
-Before you click **Try It**, you can press [[⌘K]] and choose **Drive with Camera** to steer a humanoid or an arm with your own arms ([Drive a robot with your camera](/help/drive-a-robot-with-your-camera)).
+To steer a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. Learn more in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
-To judge your real wheeled or legged robot on a printed mat, click **Try on Real Robot** instead of **Try It**. [Try a Case on your real robot](/help/try-a-case-on-your-real-robot) covers the rest.
+To judge your real wheeled or legged robot on a printed mat, click **Try on Real Robot** instead of **Try It**, then follow [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
-If the robot can't drive, **Teach It to Move** appears under **Try It**. It trains a **Walk** skill, and [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit) explains how.
+If the robot can't drive, **Teach It to Move** appears under **Try It** and trains a **Walk** skill. To learn how, see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 
-Instead of driving the robot, you can teach it the Case's task. Go to **Train**, between **Control** and **Results**, and type a goal after **Teach it to**. [Teach a robot a skill](/help/teach-a-robot-a-skill) has the steps.
+To teach the robot the Case's task instead of driving it yourself, go to **Train**, between **Control** and **Results**, and type a goal after **Teach it to**. For the steps, see [Teach a robot a skill](/help/teach-a-robot-a-skill).
 
 ## Whether the robot can do it
 
-The icon next to the Case's name shows the Case's row in **Build** ▸ **Checks**. Hold your pointer over it to see how many of 20 runs passed, or click it to open the row.
+The icon next to the Case's name shows the Case's row in **Build** ▸ **Checks**. Hold your pointer over the icon to see how many of 20 runs passed, or click it to open the row.
 
 ![The Simulate tab with Touch the Dots open and its Checks icon beside the name](/help/try-a-case/case.png)
 
-Basecase tests the robot before it runs the Case, and the row names the first thing that stops it:
+Basecase tests the robot before it runs the Case. The row names the first thing that stops it:
 
 | Problem | The row shows |
 |---|---|
@@ -79,19 +79,19 @@ If the robot lacks what the Case needs, hold your pointer over the row's note an
 
 ## Results
 
-After a run, **Results** shows whether the robot stayed up and which joints worked hardest. The tries are listed below that, worst first, so misses sit at the top. A replay includes anything the Case's code moved, lit or hid during the try.
+After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Your tries are listed below that, worst first, which puts misses at the top. A replay includes anything the Case's code moved, lit or hid during the try.
 
-To delete a try, right-click it, choose **Delete**, and confirm.
+To delete a try, right-click it, choose **Delete**, then confirm.
 
-Tries from your real robot are marked **Real**. When you click **Replay** on one, Basecase draws its path over the path of the best sim try.
+Tries from your real robot are marked **Real**. If you click **Replay** on one, Basecase draws its path over the path of the best sim try.
 
-The menu for a passed try also has **Multiply**, which makes up to 50 varied passing tries from it. The try's row then shows the count, such as **50 variations**. If you delete the try, its variations are deleted with it. [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations) covers the steps.
+For a passed try, the menu also has **Multiply**, which makes up to 50 varied passing tries from the original. The try's row then shows the count, such as **50 variations**. Deleting the try deletes its variations too. [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations) has the steps.
 
-If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their rows appear above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) adds its rows in the same spot, below any comparison.
+If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their rows appear above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) adds its rows in the same place, below any comparison.
 
 ## Where tries go
 
-- Tries are saved on this computer and left out of shared `.basecase` files.
-- The Library lists tries from every scene ([Open a try from any scene](/help/open-a-try-from-any-scene)).
+- Tries are saved on this computer. Shared `.basecase` files don't include them.
+- The Library lists tries from every scene. To open one, see [Open a try from any scene](/help/open-a-try-from-any-scene).
 - Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset).
-- With five passed tries, you can train a policy from them ([Train a policy from your tries](/help/train-a-policy-from-your-tries)).
+- With five passed tries, you can train a policy from them. Learn how in [Train a policy from your tries](/help/train-a-policy-from-your-tries).

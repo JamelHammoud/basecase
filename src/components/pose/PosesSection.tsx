@@ -54,7 +54,6 @@ export const PosesSection: React.FC<{
             openMenu(e, [
               { label: 'Apply', onSelect: () => posing.applySavedPose(p.id) },
               renameEntry(() => setRenaming(p.id)),
-              { divider: true },
               deleteEntry(() =>
                 confirmAction({ title: `Delete ${p.name}?`, onConfirm: () => posing.deletePose(p.id) }),
               ),

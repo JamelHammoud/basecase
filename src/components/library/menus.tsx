@@ -15,7 +15,6 @@ export function modelMenu(o: ModelMenuOptions): ContextMenuEntry[] {
     { label: 'Insert', icon: <PlusIcon />, onSelect: o.onInsert },
     renameEntry(o.onRename),
     duplicateEntry(o.onDuplicate),
-    { divider: true },
     deleteEntry(o.onDelete),
   ];
 }

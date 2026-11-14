@@ -11,13 +11,9 @@ on:
         description: Commit to build. Empty builds the branch the workflow runs on.
         type: string
         required: false
-      release:
-        description: Put the build on a GitHub release
-        type: boolean
-        default: true
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release
@@ -215,42 +211,3 @@ jobs:
             release/latest.yml
             release/beta.yml
             release/alpha.yml
-
-  publish:
-    if: ${{ !cancelled() && inputs.release && needs.mac.result == 'success' && needs.windows.result == 'success' }}
-    needs: [mac, windows]
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          ref: ${{ inputs.ref || github.sha }}
-
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          path: release
-          merge-multiple: true
-
-      - name: Put the build on a release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.version }}
-          WINDOWS: ${{ needs.windows.result }}
-          TARGET: ${{ inputs.ref || github.sha }}
-        run: |
-          shopt -s nullglob
-          version="$VERSION"
-          [ -n "$version" ] || version=$(node -p "require('./package.json').version")
-          tag="v$version"
-          beta=()
-          case "$version" in *-*) beta=(--prerelease) ;; esac
-          [ "$WINDOWS" = success ] || echo "::warning::The Windows build failed, so this release has only the Mac build."
-          assets=(release/*)
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "${assets[@]}" --clobber
-          else
-            gh release create "$tag" --target "$TARGET" --title "Basecase $version" --generate-notes "${beta[@]}" "${assets[@]}"
-          fi

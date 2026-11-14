@@ -19,7 +19,7 @@ Check the oldest entries first, then the names with no entry. Spend most of the 
 
 ## Accounts
 
-You hold no accounts and can't sign up: read public pages only. When an account (free or paid) would teach something the pages don't, add a row to `accounts.md` with the service, the plan, what it would teach and today's date. Jamel decides.
+You hold no accounts and can't sign up: read public pages only. When an account (free or paid) would teach something the pages don't, add a row to `accounts.md` with the service, the plan, what it would teach and today's date. The lead weighs them when it plans integrations.
 
 ## Ideas
 

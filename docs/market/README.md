@@ -27,4 +27,4 @@ What the rest of the field does, who Basecase could work with, and what to build
 - Every claim links to the page that says it. If the page doesn't say it, the claim goes. A claim about Basecase links to its guide or code.
 - **Checked** is the date someone last fetched the pages behind the entry. Update an entry in place; git keeps the history.
 - Names under **To check** have no entry yet.
-- The lane reads public pages only and holds no accounts. When signing up would teach something the pages don't, it lists the account in `accounts.md`, and Jamel decides whether to open it.
+- The lane reads public pages only and holds no accounts. When signing up would teach something the pages don't, it lists the account in `accounts.md`, and the lead weighs it when it plans integrations.

@@ -24,7 +24,7 @@ function projected(point: THREE.Vector3, input: Projection): VisionKeypoint {
 
   const surface = input.depth[Math.floor(y) * input.width + Math.floor(x)];
 
-  return { x, y, visibility: surface > 0 && point.length() <= surface + 5 ? 2 : 1 };
+  return { x, y, visibility: surface === 0 || point.length() <= surface + 5 ? 2 : 1 };
 }
 
 export function projectedKeypoints(input: Projection): Record<number, Record<string, VisionKeypoint>> {

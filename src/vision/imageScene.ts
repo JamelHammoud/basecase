@@ -171,8 +171,8 @@ export function resolveImageScene(input: ImageSceneInput): ImageScene {
   const wallPartIds = sampled.world.filter((p) => /\bwall\b/i.test(p.name)).map((p) => p.id);
 
   return {
-    parts: input.parts,
-    world: sampled.world,
+    parts: input.parts.filter(solid),
+    world: sampled.world.filter(solid),
     joints: input.joints,
     views: imageCameraViews(input.views, input.seed, input.kase?.images?.cameraTolerance),
     classes,

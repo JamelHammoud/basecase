@@ -102,6 +102,23 @@ describe('seeded image scene', () => {
     expect(scene.instances.some((i) => i.partId === parts[1].id)).toBe(false);
   });
 
+  it('excludes editing aids and hidden objects from rendered geometry as well as labels', () => {
+    const source = input();
+    const solid = source.parts[0];
+    const parts = [
+      solid,
+      { ...solid, id: 'cutout', role: 'cutout' as const },
+      { ...solid, id: 'guide', role: 'reference' as const },
+      { ...solid, id: 'hidden', visible: false },
+    ];
+    const world = parts.map((part) => ({ ...part, id: `world-${part.id}` }));
+    const scene = resolveImageScene({ ...source, parts, world, kase: undefined });
+
+    expect(scene.parts).toEqual([solid]);
+    expect(scene.world).toEqual([world[0]]);
+    expect(scene.instances.map((instance) => instance.partId)).toEqual([solid.id, world[0].id]);
+  });
+
   it('keeps semantic alternatives distinct even when their RGB colors match', () => {
     const source = input();
 

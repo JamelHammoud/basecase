@@ -10,7 +10,11 @@ export type { FrameSetSummary } from './frameSetPersistence';
 const backend = IS_WEB_DEMO ? webFrameSets : desktopFrameSets;
 const client = workerClient<typeof persistenceHandlers>(
   () => new Worker(new URL('./frameSetPersistence.worker.ts', import.meta.url), { type: 'module' }),
-  async () => (await import('./frameSetPersistence')).persistenceHandlers,
+  async () => {
+    if (typeof window !== 'undefined') throw new Error('Image storage is unavailable.');
+
+    return (await import('./frameSetPersistence')).persistenceHandlers;
+  },
 );
 
 export async function saveFrame(frame: VisionFrame): Promise<void> {

@@ -1,8 +1,11 @@
+import fs from 'node:fs/promises';
+import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildCase, builderRobot } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
+import { box } from '../src/sim/fixtures/parts';
 import { openApp, partCount, shown, type App } from './harness';
 
 let app: App;
@@ -19,6 +22,58 @@ afterEach(async () => {
 });
 
 describe('training images from a Case', () => {
+  it('saves an image from the sheet, opens its Dataset and exports its labels', async () => {
+    const robot = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
+    const result = buildCase(
+      { goal: 'pick', world: 'floor' },
+      builderRobot(buildRig(robot.joints, robot.parts), robot.parts),
+    );
+
+    if (!result.ok) throw new Error(result.problem);
+
+    await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
+      name: 'Image scene',
+      parts: [box('stand', [0, 25, 0], [60, 50, 60], 100)],
+      project: { ...DEFAULT_PROJECT, cases: [result.kase] },
+    });
+    await expect.poll(() => partCount(app.page)).toBe(1);
+    await app.page.keyboard.press('Meta+k');
+    await app.page.getByLabel('Search commands').fill('Make Training Images');
+    await app.page.locator(shown('button[data-idx]')).filter({ hasText: 'Make Training Images' }).first().click();
+
+    const dialog = app.page.getByRole('dialog', { name: 'Make Training Images' });
+
+    await dialog.getByLabel('Count', { exact: true }).fill('1');
+    await dialog.getByLabel('Count', { exact: true }).press('Tab');
+
+    const saved = app.page.waitForResponse((response) => response.url().endsWith('/datasets-save'));
+
+    await dialog.getByRole('button', { name: 'Make Training Images', exact: true }).click();
+    expect(await (await saved).json()).toEqual({ ok: true });
+    await expect.poll(() => app.page.getByTestId('dataset-pane').count()).toBe(1);
+    await expect.poll(() => app.page.getByTestId('dataset-frame').locator('img').count()).toBe(1);
+    expect(await dialog.count()).toBe(0);
+
+    const downloading = app.page.waitForEvent('download');
+
+    await app.page.getByTestId('dataset-pane').getByRole('button', { name: 'Export Dataset', exact: true }).click();
+
+    const download = await downloading;
+
+    expect(download.suggestedFilename()).toMatch(/-dataset\.zip$/);
+    expect(await download.failure()).toBeNull();
+
+    const files = unzipSync(await fs.readFile((await download.path())!));
+    const annotations = Object.entries(files)
+      .filter(([path]) => /\/coco\/annotations\/instances_.*\.json$/.test(path))
+      .map(([, bytes]) => JSON.parse(new TextDecoder().decode(bytes)));
+
+    expect(annotations.flatMap((split) => split.images)).toHaveLength(1);
+    expect(annotations.flatMap((split) => split.annotations).length).toBeGreaterThan(0);
+    expect(Object.keys(files).filter((path) => /\/yolo\/images\/.+\.jpg$/.test(path))).toHaveLength(1);
+    expect(app.errors).toEqual([]);
+  });
+
   it('opens camera and class choices from the command palette', async () => {
     const robot = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
     const result = buildCase(

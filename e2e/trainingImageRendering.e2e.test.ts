@@ -93,6 +93,63 @@ function projectedBox(part: ScenePart, frame: Pick<StoredVisionFrame, 'camera' |
   ];
 }
 
+async function checkMeshLabels(lens: Lens) {
+  const { job, points } = meshTrainingJob();
+  const invisible = { ...box('invisible', [-279, 1000, 150], [150, 150, 80], 1), visible: false };
+  const cutout = { ...box('cutout', [0, 1000, 500], [2000, 1000, 80], 1), role: 'cutout' as const };
+  const guide = { ...cutout, id: 'guide', role: 'reference' as const };
+  const hidden = box('occluded', [-650, 1000, 0], [70, 70, 70], 1);
+  const blocker = box('blocker', [-650, 1000, 100], [180, 180, 80], 1);
+  const partial = box('partial', [650, 1000, 0], [120, 120, 80], 1);
+  const cover = box('cover', [710, 1000, 100], [120, 180, 80], 1);
+  const input = {
+    ...job,
+    parts: [...job.parts, invisible, cutout, guide, hidden, blocker, partial, cover],
+    views: [{ ...trainingView, lens }],
+  };
+  const set = await render(input);
+  const stored = set.frames[0];
+  const frame = restoreFrame(stored);
+  const byPart = new Map(frame.annotations.map((annotation) => [annotation.partId, annotation]));
+  const cup = byPart.get('mug')!;
+  const person = byPart.get('person')!;
+
+  expect(byPart.has('occluded')).toBe(false);
+  expect(byPart.has('invisible')).toBe(false);
+  expect(byPart.has('cutout')).toBe(false);
+  expect(byPart.has('guide')).toBe(false);
+  expect(byPart.get('partial')!.bbox[2]).toBeLessThan(
+    projectedBox(partial, stored)[2] - projectedBox(partial, stored)[0],
+  );
+  expect(maskAt(cup, ...pixel(points.mug.hole, stored))).toBe(0);
+  expect(maskAt(cup, ...pixel(points.mug.handle, stored))).toBe(1);
+  expect(maskAt(person, ...pixel(points.person.gap, stored))).toBe(0);
+  expect(maskAt(person, ...pixel(points.person.toe, stored))).toBe(1);
+  expect(person.keypoints.head.visibility).toBe(2);
+  expect(person.keypoints.hidden.visibility).toBe(1);
+  expect(person.keypoints.toe.visibility).toBe(2);
+  expect(cup.polygons.length).toBeGreaterThan(1);
+  expect(cup.keypoints.handle.visibility).toBe(2);
+
+  const handle = pixel(points.mug.handle, stored);
+
+  expect(Math.abs(cup.keypoints.handle.x - handle[0])).toBeLessThanOrEqual(1);
+  expect(Math.abs(cup.keypoints.handle.y - handle[1])).toBeLessThanOrEqual(1);
+
+  const [px, py] = pixel(points.mug.body, stored);
+  const depth = frame.depth[Math.floor(py) * frame.width + Math.floor(px)];
+  const expectedDepth = new THREE.Vector3(...points.mug.body).distanceTo(new THREE.Vector3(...frame.camera.position));
+
+  expect(Math.abs(depth - expectedDepth)).toBeLessThanOrEqual(5);
+
+  const repeated = await render(input);
+
+  expect(repeated.id).toBe(set.id);
+  expect(repeated.frames[0].image).toBe(stored.image);
+  expect(repeated.frames[0].depth).toBe(stored.depth);
+  expect(repeated.frames[0].annotations).toEqual(stored.annotations);
+}
+
 describe('training image rendering', () => {
   it('keeps all 500 visible box bounds within one pixel of independent corner projection', async () => {
     const job = boxTrainingJob();
@@ -111,66 +168,13 @@ describe('training image rendering', () => {
     }
   });
 
-  it.each<Lens>([
-    { model: 'pinhole', hfovDeg: 60 },
-    { model: 'fisheye', fovDeg: 180 },
-  ])(
-    'captures mesh holes, person silhouettes, leg tips, occlusion and millimetre depth through $model',
-    async (lens) => {
-      const { job, points } = meshTrainingJob();
-      const invisible = { ...box('invisible', [-279, 1000, 150], [150, 150, 80], 1), visible: false };
-      const hidden = box('occluded', [-650, 1000, 0], [70, 70, 70], 1);
-      const blocker = box('blocker', [-650, 1000, 100], [180, 180, 80], 1);
-      const partial = box('partial', [650, 1000, 0], [120, 120, 80], 1);
-      const cover = box('cover', [710, 1000, 100], [120, 180, 80], 1);
-      const input = {
-        ...job,
-        parts: [...job.parts, invisible, hidden, blocker, partial, cover],
-        views: [{ ...trainingView, lens }],
-      };
-      const set = await render(input);
-      const stored = set.frames[0];
-      const frame = restoreFrame(stored);
-      const byPart = new Map(frame.annotations.map((annotation) => [annotation.partId, annotation]));
-      const cup = byPart.get('mug')!;
-      const person = byPart.get('person')!;
+  it('captures pinhole mesh masks, occlusion, keypoints, depth and seeded images without editing aids', async () => {
+    await checkMeshLabels({ model: 'pinhole', hfovDeg: 60 });
+  });
 
-      expect(byPart.has('occluded')).toBe(false);
-      expect(byPart.has('invisible')).toBe(false);
-      expect(byPart.get('partial')!.bbox[2]).toBeLessThan(
-        projectedBox(partial, stored)[2] - projectedBox(partial, stored)[0],
-      );
-      expect(maskAt(cup, ...pixel(points.mug.hole, stored))).toBe(0);
-      expect(maskAt(cup, ...pixel(points.mug.handle, stored))).toBe(1);
-      expect(maskAt(person, ...pixel(points.person.gap, stored))).toBe(0);
-      expect(maskAt(person, ...pixel(points.person.toe, stored))).toBe(1);
-      expect(person.keypoints.head.visibility).toBe(2);
-      expect(person.keypoints.hidden.visibility).toBe(1);
-      expect(person.keypoints.toe.visibility).toBe(2);
-      expect(cup.polygons.length).toBeGreaterThan(1);
-      expect(cup.keypoints.handle.visibility).toBe(2);
-
-      const handle = pixel(points.mug.handle, stored);
-
-      expect(Math.abs(cup.keypoints.handle.x - handle[0])).toBeLessThanOrEqual(1);
-      expect(Math.abs(cup.keypoints.handle.y - handle[1])).toBeLessThanOrEqual(1);
-
-      const [px, py] = pixel(points.mug.body, stored);
-      const depth = frame.depth[Math.floor(py) * frame.width + Math.floor(px)];
-      const expectedDepth = new THREE.Vector3(...points.mug.body).distanceTo(
-        new THREE.Vector3(...frame.camera.position),
-      );
-
-      expect(Math.abs(depth - expectedDepth)).toBeLessThanOrEqual(5);
-
-      const repeated = await render(input);
-
-      expect(repeated.id).toBe(set.id);
-      expect(repeated.frames[0].image).toBe(stored.image);
-      expect(repeated.frames[0].depth).toBe(stored.depth);
-      expect(repeated.frames[0].annotations).toEqual(stored.annotations);
-    },
-  );
+  it('captures fisheye mesh masks, occlusion, keypoints, depth and seeded images without editing aids', async () => {
+    await checkMeshLabels({ model: 'fisheye', fovDeg: 180 });
+  });
 
   it('labels a person from a rover front camera and all six hexapod foot tips from overhead', async () => {
     const rover = await render(roverPersonTrainingJob());

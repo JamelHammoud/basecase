@@ -32,6 +32,18 @@ it('projects world points through the camera lens and marks occluded and out-of-
   });
 });
 
+it('keeps an in-frame point visible when no rendered surface occludes its pixel', () => {
+  const result = projectedKeypoints({
+    shot,
+    width: 4,
+    height: 4,
+    depth: new Float32Array(16),
+    instances: [{ id: 1, partId: 'cup', classId: 0, keypoints: { handle: [0, 0, -100] } }],
+  });
+
+  expect(result[1].handle).toEqual({ x: 2, y: 2, visibility: 2 });
+});
+
 describe.each([120, 180, 240])('fisheye %i degrees', (fovDeg) => {
   it('keeps points behind the optical plane when the lens sees them', () => {
     const result = projectedKeypoints({

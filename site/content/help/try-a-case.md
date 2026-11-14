@@ -65,7 +65,7 @@ When the robot lacks what the Case needs, point at the row's note and click **Ne
 
 ## Results
 
-Tries are listed worst first, so the misses to look at are on top. To delete a try, right-click it and choose **Delete**, then confirm.
+Tries are listed worst first, so the misses to look at are on top. A replay shows what the Case's code moved, lit or hid during the try. To delete a try, right-click it and choose **Delete**, then confirm.
 
 A try from your real robot has a **Real** mark. Its **Replay** draws its path over the best sim try's path.
 

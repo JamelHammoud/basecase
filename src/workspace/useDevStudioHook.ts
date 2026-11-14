@@ -5,6 +5,7 @@ import { worldDeltas } from '../sim/mjcf';
 import { codePanelsOf } from '../cases/console/codeEdits';
 import { codePanelKey, codeReport } from '../cases/console/codeReports';
 import { parseCase } from '../cases/schema';
+import { loadRecording } from '../cases/tryStore';
 import { withCalibration } from '../reality/projectCalibrations';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
@@ -66,6 +67,11 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
           return [p.id, at.toArray()];
         }),
       );
+    },
+    tryWorld: async () => {
+      const newest = projectRef.current.tries?.at(-1);
+
+      return (newest && (await loadRecording(newest.id))?.world) ?? [];
     },
     calibrate: (jointId, calibration) => docs.setProject((p) => withCalibration(p, jointId, calibration)),
     routineState: () => core.simTraining.routines.state(),

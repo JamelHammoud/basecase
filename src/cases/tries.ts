@@ -18,6 +18,7 @@ export interface TryManifest {
   dt: number;
   faults?: RecordedFault[];
   commands?: number;
+  world?: number;
   source?: string;
 }
 
@@ -97,6 +98,7 @@ export async function tryManifest(kase: Case, model: SimModel, recording: Record
     dt: recording.dt,
     faults: recording.faults ?? [],
     ...(recording.commands && recording.controller ? { commands: recording.commands.length } : {}),
+    ...(recording.world?.length ? { world: recording.world.length } : {}),
   };
 }
 

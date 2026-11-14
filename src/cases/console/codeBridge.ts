@@ -1,5 +1,6 @@
 import type { DriveCommand } from '../../sim/driveTypes';
 import type { FactValue } from '../caseFacts';
+import { WORLD_CALLS_PER_SECOND, type WorldChange } from '../worldSet';
 import {
   BRIDGE_VERSION,
   ERROR_MAX_CHARS,
@@ -14,6 +15,7 @@ import {
   type StudioMessage,
 } from './codeProtocol';
 import { REAL_CLOCK, signalFeed, type BridgeClock } from './codeSignals';
+import { dropFrame, frameStreams, type FrameSource } from './codeStreams';
 import { CASE_ACTIONS, type CaseAction } from './panelKinds';
 import type { SignalBus } from './signalBus';
 import type { SignalScope } from './signalNames';
@@ -24,6 +26,8 @@ export interface BridgeStudio {
   can: (action: CaseAction) => boolean;
   fire: (action: CaseAction) => void;
   key: (key: FrameKey) => void;
+  world: (change: WorldChange) => string | null;
+  frames: FrameSource;
 }
 
 export interface CodeBridgeOptions {
@@ -34,6 +38,7 @@ export interface CodeBridgeOptions {
   studio: BridgeStudio;
   onFail: (error: string) => void;
   clock?: BridgeClock;
+  channel?: () => MessageChannel;
   firstLine?: number;
 }
 
@@ -83,7 +88,7 @@ function actionReply(m: { id: number; name: string }, studio: BridgeStudio): Stu
   return { type: 'action', id: m.id, ok: true };
 }
 
-function budget(clock: BridgeClock) {
+function budget(clock: BridgeClock, perSecond: number) {
   let start = clock.now();
   let count = 0;
 
@@ -95,18 +100,53 @@ function budget(clock: BridgeClock) {
 
     count++;
 
-    return count - MESSAGES_PER_SECOND;
+    return count - perSecond;
+  };
+}
+
+function worldGate({ clock, studio, note }: { clock: BridgeClock; studio: BridgeStudio; note: (e: string) => void }) {
+  const spend = budget(clock, WORLD_CALLS_PER_SECOND);
+
+  return (change: WorldChange) => {
+    const over = spend();
+
+    if (over === 1) note(`world refused: more than ${WORLD_CALLS_PER_SECOND} calls a second`);
+
+    if (over > 0) return;
+
+    const refusal = studio.world(change);
+
+    if (refusal) note(`world refused: ${refusal}`);
+  };
+}
+
+function reportLog(firstLine: number) {
+  const errors: CodeError[] = [];
+  const logs: string[] = [];
+  const refused: string[] = [];
+
+  const keep = <T>(list: T[], item: T, limit: number) => {
+    if (list.length < limit) list.push(item);
+  };
+
+  return {
+    note: (error: string) => keep(refused, error.slice(0, ERROR_MAX_CHARS), REPORT_LIMITS.refused),
+    thrown: (message: string, line?: number) => {
+      const at = line === undefined ? undefined : line - firstLine + 1;
+
+      keep(errors, at !== undefined && at > 0 ? { message, line: at } : { message }, REPORT_LIMITS.errors);
+    },
+    logged: (text: string) => keep(logs, text, REPORT_LIMITS.logs),
+    lists: () => ({ errors: [...errors], logs: [...logs], refused: [...refused] }),
   };
 }
 
 export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   const clock = o.clock ?? REAL_CLOCK;
-  const errors: CodeError[] = [];
-  const logs: string[] = [];
-  const refused: string[] = [];
-  const firstLine = o.firstLine ?? 1;
+  const log = reportLog(o.firstLine ?? 1);
+  const { note, thrown } = log;
   let failed: string | null = null;
-  const spend = budget(clock);
+  const spend = budget(clock, MESSAGES_PER_SECOND);
   let port: MessagePort | null = null;
   let loaded = false;
   let closed = false;
@@ -118,17 +158,13 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
   const post = (message: StudioMessage) => port?.postMessage(message);
   const feed = signalFeed({ bus: o.bus, scope: o.scope, post, clock });
 
-  const keep = <T>(list: T[], item: T, limit: number) => {
-    if (list.length < limit) list.push(item);
+  const postFrame = (id: number, bitmap: ImageBitmap) => {
+    if (port) port.postMessage({ type: 'frame', id, bitmap } satisfies StudioMessage, [bitmap]);
+    else dropFrame(bitmap);
   };
 
-  const note = (error: string) => keep(refused, error.slice(0, ERROR_MAX_CHARS), REPORT_LIMITS.refused);
-
-  const thrown = (message: string, line?: number) => {
-    const at = line === undefined ? undefined : line - firstLine + 1;
-
-    keep(errors, at !== undefined && at > 0 ? { message, line: at } : { message }, REPORT_LIMITS.errors);
-  };
+  const streams = frameStreams({ source: o.studio.frames, clock, post: postFrame, note });
+  const world = worldGate({ clock, studio: o.studio, note });
 
   const close = () => {
     if (closed) return;
@@ -136,6 +172,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     closed = true;
     stopPing();
     feed.close();
+    streams.close();
     o.studio.drive(null);
     port?.close();
     port = null;
@@ -170,8 +207,11 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
       post(reply);
     },
     error: (m) => (loaded ? thrown(m.message, m.line) : fail(m.message, m.line)),
-    log: (m) => keep(logs, m.text, REPORT_LIMITS.logs),
+    log: (m) => log.logged(m.text),
     key: (m) => o.studio.key({ key: m.key, meta: m.meta, ctrl: m.ctrl, shift: m.shift }),
+    world: (m) => world(m.change),
+    frames: (m) => streams.open(m),
+    unframes: (m) => streams.stop(m.id),
   };
 
   const onPortMessage = (e: MessageEvent) => {
@@ -223,7 +263,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     receive(e) {
       if (closed || port || !e.source || e.source !== o.frame() || !isHello(e.data)) return;
 
-      const channel = new MessageChannel();
+      const channel = o.channel?.() ?? new MessageChannel();
 
       port = channel.port1;
       port.onmessage = onPortMessage;
@@ -232,7 +272,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
         { targetOrigin: '*', transfer: [channel.port2] },
       );
     },
-    report: () => ({ loaded, failed, errors: [...errors], logs: [...logs], refused: [...refused] }),
+    report: () => ({ loaded, failed, ...log.lists() }),
     close,
   };
 }

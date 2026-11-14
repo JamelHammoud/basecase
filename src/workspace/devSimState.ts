@@ -19,6 +19,7 @@ function caseState({ cases }: WorkspaceCore['simTraining']) {
     caseSeconds: cases.active?.task.seconds ?? null,
     multiplying: !!cases.multiply.running,
     tries: cases.tries.map((t) => ({
+      world: t.manifest.world ?? 0,
       generated: !!t.generated,
       real: !!t.real,
       passed: t.passed,
@@ -79,6 +80,7 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     robots: sim.model?.robots.map((r) => r.key) ?? [],
     guests: sim.guestParts.map((p) => p.id),
     world: sim.worldParts.map((p) => p.id),
+    worldLooks: Object.fromEntries(sim.worldParts.map((p) => [p.id, { color: p.color, visible: p.visible }])),
     bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
     ...caseState(core.simTraining),
     selected: core.selectedIds,

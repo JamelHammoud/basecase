@@ -116,6 +116,23 @@ describe('create_case', () => {
     });
   });
 
+  it('keeps an object the agent marks movable movable, and only that one', async () => {
+    const target = { kind: 'cylinder', position: [300, 0, 1], size: [120, 120, 2], behavior: 'marker' };
+    const { reply, added } = create({
+      goal: 'reach',
+      objects: [
+        { ...target, id: 'lit', name: 'Lit', movable: true },
+        { ...target, id: 'still', name: 'Still' },
+      ],
+    });
+
+    expect(await reply).toMatchObject({ ok: true, objects: 3 });
+
+    const movable = Object.fromEntries(added[0].world.objects.map((o) => [o.id, o.movable ?? false]));
+
+    expect(movable).toMatchObject({ lit: true, still: false });
+  });
+
   it('answers a goal the robot cannot try, or hostile objects, with what to change', async () => {
     expect(await create({ goal: 'touch' }).reply).toEqual({ ok: false, problem: expect.stringMatching(/reach/) });
     expect(await create({ goal: 'nope' }).reply).toMatchObject({ ok: false });

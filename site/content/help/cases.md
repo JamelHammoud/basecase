@@ -35,7 +35,7 @@ A robot that stands in the simulation tells you little about whether it can reac
 ## What a Case holds
 
 - **A slot.** What the robot needs to enter: an arm, wheels or legs.
-- **A world.** Objects placed around the robot. Some are solid, some can be pushed, and markers show a spot without getting in the way.
+- **A world.** Objects placed around the robot. Some are solid, some can be pushed, and markers show a spot without getting in the way. Ones marked movable can be moved, lit or hidden by the Case's code while it runs.
   The ground can be part of it too: [rough ground, a step or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope), sized to the robot's legs or wheels when you make the Case.
 - **Controls.** What you steer while trying it, such as Move and Turn, or Move and Raise and Lower for an arm.
 - **A contract.** The rules that judge a try: what must happen to pass, and what makes it fail, such as a fall.
@@ -50,7 +50,7 @@ A Case is written once and runs on any robot that fits its slot. For an arm, Bas
 
 ## Tries
 
-You take a try by driving the robot through the Case yourself. Basecase records it 50 times a second, then scores the recording with the contract: **Passed** or **Missed**. Results list your tries worst first, each with four frames and a replay.
+You take a try by driving the robot through the Case yourself. Basecase records it 50 times a second, along with each change the Case's code makes to the world, then scores the recording with the contract: **Passed** or **Missed**. Results list your tries worst first, each with four frames and a replay.
 
 A wheeled or legged robot can also try a Case for real, on the Case printed as a floor mat. A camera tracks it, and the same contract judges the run. Steps are in [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 

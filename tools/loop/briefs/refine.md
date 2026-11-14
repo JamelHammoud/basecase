@@ -8,7 +8,7 @@ Pick one idea that makes Basecase fit better, and land it everywhere it holds in
 - remove a dead end, an unused option or a feature that a better one replaced;
 - make a slow interaction feel instant (AGENTS.md, §0f).
 
-Don't pick an area another open pull request is changing (`gh pr list` is read-only and allowed). When the refinement is something a user notices, update the help article that covers it to §3f in `docs/guide/copy.md`, with new screenshots if the screen changed (below). A refinement doesn't get a changelog entry.
+Don't pick an area another open pull request is changing (`gh pr list` is read-only and allowed). Your prompt lists the steps waiting to be built, each with the files and guide sections its body names: those belong to that step, so pick something else. The runner holds back a change whose every file belongs to one waiting step, not counting guides, `AGENTS.md` and help articles. Your prompt also lists the refinements of the last 14 days. Don't pick one of their ideas again (a rename, a rule, a pattern). If one was applied in only some places, finish it everywhere in one pull request, not one more place. When the refinement is something a user notices, update the help article that covers it to §3f in `docs/guide/copy.md`, with new screenshots if the screen changed (below). A refinement doesn't get a changelog entry.
 
 Before you finish, run `node tools/copy-diff.mjs`: a refinement's net is zero or below. If it's positive, list each added string in `copy` with why the screen needs it.
 

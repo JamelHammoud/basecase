@@ -26,5 +26,16 @@ export function store(kind, defaults) {
     return entry;
   };
 
-  return { get, save, update: (number, change) => save(number, { ...get(number), ...change(get(number)) }) };
+  const all = () => {
+    try {
+      return fs
+        .readdirSync(dir)
+        .filter((file) => file.endsWith('.json'))
+        .map((file) => ({ ...get(path.basename(file, '.json')), key: path.basename(file, '.json') }));
+    } catch {
+      return [];
+    }
+  };
+
+  return { get, save, all, update: (number, change) => save(number, { ...get(number), ...change(get(number)) }) };
 }

@@ -1,5 +1,7 @@
 export const AMAZON_HOST = /^(?:www\.)?amazon\.com$/i;
 
+const AMAZON_SEARCH_PATH = /^\/s(?:\/|$)/;
+
 export type ShopLinkKind = 'product' | 'search' | 'none';
 
 function amazonPath(url: string | undefined) {
@@ -13,7 +15,7 @@ function amazonPath(url: string | undefined) {
 export function shopLinkLabel(kind: ShopLinkKind, url?: string) {
   const path = amazonPath(url);
 
-  if (kind === 'search' || path === '/s') return 'Find on Amazon';
+  if (kind === 'search' || AMAZON_SEARCH_PATH.test(path ?? '')) return 'Find on Amazon';
 
   return path === null ? 'Open Listing' : 'Buy on Amazon';
 }

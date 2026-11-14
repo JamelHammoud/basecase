@@ -46,8 +46,10 @@ export const MAX_CODE_PANELS = 4;
 
 const OVERLAY_MIN = 40;
 const OVERLAY_MAX = 1600;
-const AREA_MIN = 200;
-const AREA_MAX = 720;
+
+export const AREA_MIN = 200;
+export const AREA_MAX = 720;
+export const MAX_AREAS = 6;
 
 const unique = <T>(items: T[], key: (item: T) => string, where: string) => {
   const seen = new Set<string>();
@@ -197,7 +199,7 @@ const readArea: Reader<ConsoleArea> = (value, where) => {
 
 function readLayout(value: unknown, where: string, panels: PanelSpec[]) {
   const v = asRecord(value, where);
-  const areas = listOf(readArea, 6)(v.areas, `${where}.areas`);
+  const areas = listOf(readArea, MAX_AREAS)(v.areas, `${where}.areas`);
 
   if (areas.filter((a) => 'canvas' in a).length !== 1) refuse(`${where}.areas`, 'must hold the canvas once');
 

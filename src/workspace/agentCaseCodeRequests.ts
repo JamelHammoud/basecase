@@ -9,8 +9,8 @@ import {
 import { codePanelKey, codeReport, codeReportsWatched } from '../cases/console/codeReports';
 import type { CaseConsole } from '../cases/console/format';
 import { OVERLAY_ANCHORS, type OverlayAnchor } from '../cases/console/format';
-import { parseCase, type Case } from '../cases/schema';
-import { errorMessage } from '../utils/errorMessage';
+import { checkedConsole } from '../cases/console/layoutEdits';
+import type { Case } from '../cases/schema';
 import { caseNamed } from './agentCaseRun';
 import type { Cases } from './useCases';
 import type { CaseRun } from './useCaseRun';
@@ -87,15 +87,8 @@ function readPlace(value: unknown): CodePlace | undefined {
   return undefined;
 }
 
-function checked(kase: Case, edit: CodeEdit): Case | string {
-  if (!edit.ok) return edit.problem;
-
-  try {
-    return parseCase({ ...kase, console: edit.console });
-  } catch (e) {
-    return errorMessage(e);
-  }
-}
+const checked = (kase: Case, edit: CodeEdit): Case | string =>
+  edit.ok ? checkedConsole(kase, edit.console) : edit.problem;
 
 function runIt(kase: Case, ctx: CaseCodeContext) {
   if (ctx.caseRun.open && ctx.cases.active?.id === kase.id) return;

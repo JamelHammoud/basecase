@@ -24,6 +24,21 @@ const scene = (count) => ({
 });
 
 describe('sceneText', () => {
+  it('ends with the open Case’s console as the user arranged it, so the agent builds on it', () => {
+    const caseConsole = {
+      case: 'touch',
+      input: ['keys'],
+      panels: [{ id: 'plot', kind: 'plot' }],
+      layout: { areas: [] },
+    };
+    const lines = sceneText({ ...scene(2), caseConsole }).split('\n');
+
+    expect(lines.at(-2)).toBe('Case console (as the user arranged it):');
+    expect(JSON.parse(lines.at(-1))).toEqual(caseConsole);
+    expect(sceneText(scene(30), {}).endsWith(JSON.stringify(caseConsole))).toBe(false);
+    expect(sceneText({ ...scene(30), caseConsole }).endsWith(JSON.stringify(caseConsole))).toBe(true);
+  });
+
   it('lists one compact line per part, leaving out defaults', () => {
     const lines = sceneText(scene(2)).split('\n');
 

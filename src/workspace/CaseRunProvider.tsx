@@ -7,18 +7,25 @@ import { robotFacts } from '../cases/robotFit';
 import { movableWorld } from '../cases/scale';
 import { onInputEvent } from '../sim/inputEvents';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
+import { AddPanelSheet } from '../components/caseRun/AddPanelSheet';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
+import type { ConsoleEditor } from '../components/caseRun/consoleEditor';
+import { CanvasEdge, DragChip } from '../components/caseRun/DragChip';
+import { usePanelDrag } from '../components/caseRun/usePanelDrag';
 import { CodeOverlays } from '../components/caseRun/code/CodeOverlays';
 import { startDriving } from '../components/simulate/driveWithCamera';
 import { ModeHeader } from '../design-system';
 import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { useConsoleEditor } from './useConsoleEditor';
 import { useConsoleSignals } from './useConsoleSignals';
 import { showPartsSection } from './showView';
 
 interface CenterValue {
   ctx: PanelContext;
+  editor: ConsoleEditor;
+  canvasAt: number;
   areas: ConsoleLayout;
   title: string;
   onDone: () => void;
@@ -73,6 +80,9 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     cameras: cameras.views.map((v) => v.key),
   });
   const { can, run } = useActions(core);
+  const edits = useConsoleEditor(core);
+  const { drag, start, chipRef } = usePanelDrag(caseConsole, edits.move);
+  const scope = consoleScope(caseConsole, cases.active);
 
   const fire = (action: CaseAction) => {
     if (!can(action)) return;
@@ -103,7 +113,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
         ctx: {
           bus,
           signals: caseConsole.signals ?? [],
-          scope: consoleScope(caseConsole, cases.active),
+          scope,
           inputs: caseConsole.input,
           brief: cases.active?.brief ?? '',
           world: movableWorld(cases.active, robotFacts(posing.rig, parts)),
@@ -121,6 +131,8 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
             },
           },
         },
+        editor: { ...edits, drag, startDrag: start },
+        canvasAt: caseConsole.layout.areas.findIndex((a) => 'canvas' in a),
         areas: layout,
         title: cases.active?.name ?? '',
         onDone: caseRun.leave,
@@ -131,6 +143,18 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     <CaseRunContext value={value}>
       {children}
       {open && cameras.menu}
+      {open && <DragChip chipRef={chipRef} drag={drag} />}
+      {caseRun.adding && (
+        <AddPanelSheet
+          sources={{
+            scope,
+            joints: (core.project.joints ?? []).map((j) => j.id),
+            cameras: cameras.views.map((v) => v.key),
+          }}
+          onAdd={(panel) => edits.add(panel, caseRun.adding?.area)}
+          onClose={caseRun.closeAdd}
+        />
+      )}
     </CaseRunContext>
   );
 }
@@ -140,15 +164,30 @@ export function CaseRunAreas({ side }: { side: 'before' | 'after' }) {
 
   if (!running) return null;
 
-  return running.areas[side].map((area) => (
-    <CaseRunArea
-      key={area.key}
-      area={area}
+  const areas = running.areas[side];
+  const drop = running.editor.drag?.drop;
+  const edge = running.editor.drag && !areas.length && (
+    <CanvasEdge
+      key="canvas-edge"
       side={side}
-      ctx={running.ctx}
-      header={<ModeHeader title={running.title} onDone={running.onDone} />}
+      area={running.canvasAt}
+      active={!!drop && 'column' in drop && drop.area === running.canvasAt && drop.column === side}
     />
-  ));
+  );
+
+  return [
+    ...areas.map((area) => (
+      <CaseRunArea
+        key={area.key}
+        area={area}
+        side={side}
+        ctx={running.ctx}
+        editor={running.editor}
+        header={<ModeHeader title={running.title} onDone={running.onDone} />}
+      />
+    )),
+    edge,
+  ];
 }
 
 export function CaseRunOverlays() {

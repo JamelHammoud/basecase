@@ -15,6 +15,10 @@ interface CaseRunInput {
   simTraining: { sim: Simulation; cases: Cases };
 }
 
+export interface PanelAdd {
+  area?: number;
+}
+
 interface Return {
   caseId: string;
   view: ViewShot | null;
@@ -24,6 +28,7 @@ interface Return {
 export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining }: CaseRunInput) {
   const { sim, cases } = simTraining;
   const [back, setBack] = useState<Return | null>(null);
+  const [adding, setAdding] = useState<PanelAdd | null>(null);
   const activeId = cases.active?.id ?? null;
   const open = back !== null && back.caseId === activeId;
   const caseConsole = cases.active?.console ?? DEFAULT_CONSOLE;
@@ -44,6 +49,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
     if (sim.drive.active) sim.drive.stop();
 
     setBack(null);
+    setAdding(null);
     setSelectedIds(saved.selection);
 
     if (saved.view) viewportRef.current?.lookThrough(saved.view);
@@ -89,7 +95,17 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
 
   const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO, studio: true });
 
-  return { open, caseConsole, layout, enter, enterCase, leave };
+  return {
+    open,
+    caseConsole,
+    layout,
+    enter,
+    enterCase,
+    leave,
+    adding: open ? adding : null,
+    addPanel: (area?: number) => setAdding({ area }),
+    closeAdd: () => setAdding(null),
+  };
 }
 
 export type CaseRun = ReturnType<typeof useCaseRun>;

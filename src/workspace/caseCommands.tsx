@@ -1,3 +1,4 @@
+import { ADD_PANEL } from '../components/caseRun/consoleEditor';
 import type { Command } from '../components/CommandPalette';
 import {
   CameraIcon,
@@ -37,6 +38,7 @@ export const STAYS_IN_RUN = new Set([
   'case-export-dataset',
   'case-publish-dataset',
   'case-train-from-tries',
+  'case-add-panel',
   ...INPUT_COMMANDS,
 ]);
 
@@ -44,6 +46,21 @@ export const showRoomCase = (core: WorkspaceCore, room: Room) => {
   showCases(core);
   core.simTraining.cases.builder.startInRoom(room);
 };
+
+function addPanelCommands(core: WorkspaceCore): Command[] {
+  if (!core.caseRun.open) return [];
+
+  return [
+    {
+      id: 'case-add-panel',
+      group: 'Simulate',
+      label: ADD_PANEL,
+      icon: <PlusIcon />,
+      keywords: 'case console panel plot value camera table button map layout',
+      run: () => core.caseRun.addPanel(),
+    },
+  ];
+}
 
 const runCaseCommand = (core: WorkspaceCore): Command => ({
   id: 'case-run',
@@ -293,6 +310,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...respawn,
     ...tryIt,
     ...caseRun,
+    ...addPanelCommands(core),
     ...renameCommands(core),
     ...(cases.active ? compareCommands(core) : []),
     ...exploreCommands(core),

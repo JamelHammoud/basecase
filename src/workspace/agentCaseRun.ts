@@ -124,3 +124,19 @@ export async function runCase(payload: Payload, ctx: RunCaseContext) {
 
   return { text: runCaseText(kase, verdict.runs, verdict.cached), images: await worstFilm(verdict), data };
 }
+
+export function agentConsole(kase: Case | null) {
+  if (!kase?.console) return undefined;
+
+  const { input, signals, panels, layout } = kase.console;
+
+  return {
+    case: kase.id,
+    input,
+    ...(signals ? { signals } : {}),
+    panels: panels.map((p) =>
+      p.kind === 'code' ? { ...p, source: undefined, bytes: new TextEncoder().encode(p.source).length } : p,
+    ),
+    layout,
+  };
+}

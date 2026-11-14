@@ -7,7 +7,7 @@ export interface PanelResizerProps {
   max: number;
   defaultWidth: number;
   onResize: (width: number) => void;
-  onCollapse: () => void;
+  onCollapse?: () => void;
   onResizingChange?: (resizing: boolean) => void;
 }
 
@@ -61,7 +61,7 @@ export const PanelResizer: React.FC<PanelResizerProps> = ({
         const dx = e.clientX - start.x;
         const raw = start.width + (edge === 'right' ? dx : -dx);
 
-        if (raw < min - COLLAPSE_SLACK) {
+        if (onCollapse && raw < min - COLLAPSE_SLACK) {
           end(e.currentTarget, e.pointerId);
           onCollapse();
 

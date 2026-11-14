@@ -20,6 +20,7 @@ export default function casesStudio(studio: Studio) {
         codePanelsOf(kase?.console).map((p) => [p.id, codeReport(codePanelKey(kase!.id, p.id), p.source)]),
       );
     },
+    caseConsole: () => cases().active?.console ?? null,
     referenceTry: () => cases().attempt.reference(),
     passTries: () =>
       studio().core.docs.setProject((p) => ({

@@ -17,13 +17,14 @@ export interface CodeWrite {
 export type CodeEdit = { ok: true; console: CaseConsole } | { ok: false; problem: string };
 
 const MAX_INPUTS = 4;
-const SIDE_SIZE = 320;
 
-const copyOf = (c: CaseConsole | undefined): CaseConsole => structuredClone(c ?? DEFAULT_CONSOLE);
+export const SIDE_SIZE = 320;
 
-const isCanvas = (a: ConsoleArea): a is Extract<ConsoleArea, { canvas: true }> => 'canvas' in a;
+export const copyOf = (c: CaseConsole | undefined): CaseConsole => structuredClone(c ?? DEFAULT_CONSOLE);
 
-function withoutPlace(areas: ConsoleArea[], id: string): ConsoleArea[] {
+export const isCanvas = (a: ConsoleArea): a is Extract<ConsoleArea, { canvas: true }> => 'canvas' in a;
+
+export function withoutPlace(areas: ConsoleArea[], id: string): ConsoleArea[] {
   return areas.flatMap((a): ConsoleArea[] => {
     if (isCanvas(a)) {
       const overlays = (a.overlays ?? []).filter((o) => o.panel !== id);
@@ -37,7 +38,7 @@ function withoutPlace(areas: ConsoleArea[], id: string): ConsoleArea[] {
   });
 }
 
-function placedOn(areas: ConsoleArea[], id: string, place: CodePlace): ConsoleArea[] {
+export function placedOn(areas: ConsoleArea[], id: string, place: CodePlace): ConsoleArea[] {
   const at = areas.findIndex(isCanvas);
 
   if ('overlay' in place) {

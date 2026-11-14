@@ -1,7 +1,7 @@
 ---
 title: Agent tools
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: reference
 order: 2
@@ -29,7 +29,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 
 | Tool | What it does |
 |---|---|
-| `get_scene` | Lists the scene's parts, one per line, and your marks |
+| `get_scene` | Lists the scene's parts, one per line, your marks and the open Case's console as you arranged it |
 | `find_in_scene` | Finds parts by words, group, kind, region or nearness |
 | `get_part_code` | Reads a modeled part's code |
 | `add_parts` | Adds block-out shapes and real catalog parts |

@@ -12,6 +12,8 @@ import { workerJudge } from '../cases/goalJudge';
 import type { ProbeWorld } from '../cases/probes';
 import { caseProbeWorld } from '../cases/tries';
 import type { SimModel } from '../sim/mjcfTypes';
+import { recordingTopics } from '../topics/recordingTopics';
+import { topicBus, withMeaning } from '../topics/topicBus';
 import type { Rig, V3 } from '../utils/kinematics';
 import type { TryTimeline } from './useTryTimeline';
 
@@ -61,6 +63,12 @@ const consoleOf = ({ caseConsole, cameras }: RecordedInput) => ({
   cameras,
 });
 
+function busOf(scene: RecordedScene, input: RecordedInput): RecordedBus {
+  const topics = recordingTopics(scene.recording);
+
+  return topicBus(recordedBus(withMeaning(recordedTrack(scene, consoleOf(input)), topics)), topics);
+}
+
 export function useRecordedSignals(input: RecordedInput): RecordedBus | null {
   const { timeline, model, caseConsole, cameras } = input;
 
@@ -77,7 +85,7 @@ export function useRecordedSignals(input: RecordedInput): RecordedBus | null {
 
     if (!scene || !alive()) return;
 
-    const shown = recordedBus(recordedTrack(scene, consoleOf(input)));
+    const shown = busOf(scene, input);
     const contract = timeline.scene?.scoring.kase.task.contract;
 
     setHeld({ key: built, bus: shown });
@@ -87,7 +95,7 @@ export function useRecordedSignals(input: RecordedInput): RecordedBus | null {
     void goalVerdicts(workerJudge(contract), scene.trace).then((verdicts) => {
       if (!alive() || !verdicts.length) return;
 
-      const judged = recordedBus(recordedTrack({ ...scene, verdicts }, consoleOf(input)));
+      const judged = busOf({ ...scene, verdicts }, input);
 
       judged.seek(shown.frame());
       setHeld({ key: built, bus: judged });

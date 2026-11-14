@@ -83,12 +83,12 @@ export const createCase = {
         .optional()
         .describe(
           'What the running Case shows and reads. input: 1–4 input source ids (keys, gamepad, phone, camera, hand, face, midi, voice, code; a source this version lacks is refused, so leave it out and say so). voice sends logic the event voice with each word its live-input watchers compare against; midi sends midi with each note number and midi.cc.<n> from 0 to 1. ' +
-            'panels: [{ id, kind, title?, ... }] with kind camera (signal: camera.<name> or camera.*), value (signal), plot (signals, seconds), table (of: servos, joints or signals), button (action: try, end-try, drive, stop, start-over, reset; gesture: a gesture name that presses it), list (of: tries or failures), text (of: brief, or text), map (trail), ' +
+            'panels: [{ id, kind, title?, ... }] with kind camera (signal: camera.<name> or camera.*), value (signal), plot (signals, seconds, x: one number signal for an XY plot), table (of: servos, joints or signals), button (action: try, end-try, drive, stop, start-over, reset; gesture: a gesture name that presses it), list (of: tries or failures), text (of: brief, or text), map (trail), log (topics: topic.<topic> refs, level: debug, info, warn, error or fatal), diagnostics (topic), message (topic: the newest message on topic.<topic> as a tree), states (signal: a string or number signal as colored spans), ' +
             `code (source: one HTML document with its script and style inline, at most ${fileSize(CODE_SOURCE_MAX_BYTES)}; height 80–900; at most 4 per console) for a control or readout no other kind draws, such as a joystick, a piano, a HUD or picture buttons. ` +
             'A code panel runs sandboxed with no network, storage or parent access, and its script uses window.basecase: signals(names, (values, time) => …) gets those signals at most 20 times a second; ' +
             'drive({ v: [forward, left, turn] each −1 to 1, aux?, target? }) drives the robot, drive(null) lets go, and needs code in input; event(name, value?) sends a named event to logic; action(name) runs a button action and resolves { ok, problem? }; ' +
             'CSS variables --bc-bg, --bc-panel, --bc-surface, --bc-accent, --bc-red, --bc-ink, --bc-ink-2, --bc-ink-3, --bc-font, --bc-text, --bc-radius and --bc-control match the studio. ' +
-            'Signals: joint.<id>.target/position/effort (joint.*.position in plots), robot.height/tilt/speed/travelled/x/z, probe.<name>, input.<source>.forward/left/turn/lift/grip, gesture.<name> (1 for half a second after it, with the camera input), goal.passed/margin, time, and the Case’s own. ' +
+            'Signals: joint.<id>.target/position/effort (joint.*.position in plots), robot.height/tilt/speed/travelled/x/z, probe.<name>, input.<source>.forward/left/turn/lift/grip, gesture.<name> (1 for half a second after it, with the camera input), goal.passed/margin, time, the Case’s own, and while an imported recording plays topic.<topic>.<field path> ([i] one item, [:] every item). ' +
             'signals (optional): [{ id, kind: timer (seconds), counter (when: { signal, above|below }), score (sum: [{ signal, times }]) }]. ' +
             'layout: { areas: [{ size: 200–720, panels: [ids] }, { canvas: true, overlays? }, …] }, the canvas once, every panel placed once. ' +
             'overlays draw code panels over the canvas: [{ panel, anchor, width?, height?, pointer? }], anchor top-left, top-right, bottom-left or bottom-right (width and height), top or bottom (height), left or right (width), or fill; sizes 40–1600; clicks pass through to the canvas unless pointer is true.',
@@ -137,7 +137,7 @@ export const readTry = {
     description:
       'Reads a try (one recorded run of a Case in simulation) from its recording: its signals over a time window, the Case’s failure labels at the time each first tripped, and a capture of the canvas at one moment. ' +
       'It opens the try on the user’s timeline while it reads, then puts the timeline back as it was. While the simulation runs outside the timeline it refuses, since opening a try would reset it. ' +
-      'signals takes console signal names, with * for one name part: joint.*.position, joint.<id>.target or effort, robot.height, robot.tilt (degrees), robot.speed, robot.travelled, robot.x, robot.z, probe.<name>, input.<source>.<axis>, goal.passed, goal.margin and the Case’s own; every number signal when left out. ' +
+      'signals takes console signal names, with * for one name part: joint.*.position, joint.<id>.target or effort, robot.height, robot.tilt (degrees), robot.speed, robot.travelled, robot.x, robot.z, probe.<name>, input.<source>.<axis>, goal.passed, goal.margin and the Case’s own; an imported recording’s topics as topic.<topic>.<field path>, with [i] for one item and [:] for every item (topic./imu.angular_velocity.z, topic./joint_states.effort[:]), held at each frame; every number signal but topics when left out. ' +
       'Returns { ok, try, case, seconds, from, to, step, t, signals: { <id>: { v, min: [value, time], max: [value, time] } }, failures: [{ label, at, values }], unknown, captured } and the capture, or { ok: false, problem }. ' +
       't is the sample times and v the values at them (null where unknown), at most 200 per signal; min and max cover every frame in the window; values are the signals at each failure; unknown lists the names that matched nothing. Times are seconds from the try’s start. ' +
       'Use it to answer what happened in a try, citing times and values.',
@@ -150,7 +150,7 @@ export const readTry = {
         .describe('The try’s id; the try open in the timeline, else this scene’s latest, when left out'),
       from: seconds('Window start in seconds; the try’s start when left out'),
       to: seconds('Window end in seconds; the try’s end when left out'),
-      signals: z.array(z.string().min(1).max(120)).min(1).max(24).optional(),
+      signals: z.array(z.string().min(1).max(240)).min(1).max(24).optional(),
       at: seconds(
         'When to capture the canvas; the first failure in the window, else the window’s start, when left out',
       ),

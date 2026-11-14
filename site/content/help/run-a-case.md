@@ -74,7 +74,7 @@ A console lists:
 - The cards on each side of the canvas, and their widths
 - The contents of each card
 
-A card can hold a camera, a big number such as a timer or a score, a plot of joint angles over time, a table of joints, a button such as Reset, the tries, the failures, some text, or a map of the world from above.
+A card can hold a camera, a big number such as a timer or a score, a table of joints, or a button such as Reset. It can show the tries, the failures, some text, or a map of the world from above. A plot draws signals over time, or one signal against another. A states card draws a signal, such as a mode, as colored spans. A try imported from a ROS recording can also show its log, its diagnostics and the newest message on a topic.
 
 For example, a game Case can put its time and score on the left, and Try It, Reset and the tries on the right. The time counts down as you play. Between tries, Reset puts the robot, the blocks and the score back where they started.
 

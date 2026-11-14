@@ -1,5 +1,6 @@
 import { decompress } from 'fzstd';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { lz4Frame } from './lz4';
 import {
   ARM_JOINTS,
   armJointStates,
@@ -10,7 +11,9 @@ import {
   writeMcap,
   type FixtureMessage,
 } from './mcapFixtures';
-import { MCAP_COMPRESSION, MCAP_NO_JOINTS, MCAP_TOO_LARGE, MCAP_TOO_LONG, readMcap } from './mcapRead';
+import { MCAP_COMPRESSION, MCAP_TOO_LARGE } from './mcapRead';
+import { readMcap } from './recordingFiles';
+import { RECORDING_EMPTY, RECORDING_TOO_LONG } from './recordingRead';
 import { readSource } from './readSource';
 import { encodeCompressedImage, encodeJointState, MCAP_DAMAGED } from './ros2Cdr';
 import { DataImportError, IMPORT_LIMITS } from './types';
@@ -19,6 +22,12 @@ vi.mock('fzstd', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fzstd')>();
 
   return { ...actual, decompress: vi.fn(actual.decompress) };
+});
+
+vi.mock('./lz4', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./lz4')>();
+
+  return { ...actual, lz4Frame: vi.fn(actual.lz4Frame) };
 });
 
 const IMAGE_TOPIC = '/camera/color/image_raw/compressed';
@@ -52,6 +61,7 @@ function expectArm(state: Float64Array, t: Float64Array) {
 
 beforeEach(() => {
   vi.mocked(decompress).mockClear();
+  vi.mocked(lz4Frame).mockClear();
 });
 
 describe('readMcap', () => {
@@ -72,14 +82,14 @@ describe('readMcap', () => {
     expectArm(episode.state, episode.t);
   });
 
-  it('reads zstd chunks', async () => {
-    const bytes = await writeMcap(armJointStates({ hz: 100, seconds: 1, start: 5 }), {
-      compression: 'zstd',
-      chunkSize: 4096,
-    });
-    const [episode] = (await read(bytes)).episodes;
+  it.each([
+    ['zstd', decompress],
+    ['lz4', lz4Frame],
+  ] as const)('reads %s chunks', async (compression, inflate) => {
+    const arm = armJointStates({ hz: 100, seconds: 1, start: 5 });
+    const [episode] = (await read(await writeMcap(arm, { compression, chunkSize: 4096 }))).episodes;
 
-    expect(decompress).toHaveBeenCalled();
+    expect(inflate).toHaveBeenCalled();
     expect(episode.t).toHaveLength(51);
     expectArm(episode.state, episode.t);
   });
@@ -120,21 +130,34 @@ describe('readMcap', () => {
     expect(episode.videos[0].from).toBeCloseTo(0.1, 6);
     expect(episode.videos[0].to).toBeCloseTo(0.1 + 29 / 30, 6);
   });
+});
 
-  it('refuses a recording without joint states', async () => {
-    await expect(read(await writeMcap([image(1), image(2)]))).rejects.toThrow(MCAP_NO_JOINTS);
+describe('readMcap refusals and recordings', () => {
+  it('keeps a recording without joint states as topics on the time grid', async () => {
+    const data = await read(await writeMcap([image(1), image(2)]));
+    const [episode] = data.episodes;
+
+    expect(data.names).toEqual([]);
+    expect([episode.t.length, episode.state.length, episode.videos[0].frames]).toEqual([51, 0, 2]);
+    expect(episode.topics).toBeInstanceOf(Uint8Array);
+  });
+
+  it('refuses a recording with no channel it can read', async () => {
+    const unknown = { ...image(1), schema: 'vendor_msgs/msg/Unknown' };
+
+    await expect(read(await writeMcap([unknown]))).rejects.toThrow(RECORDING_EMPTY);
   });
 
   it('refuses a position that isn’t a number', async () => {
     const bytes = await writeMcap([joints(1, ['a'], [0]), joints(1.1, ['a'], [Number.NaN])]);
 
-    await expect(read(bytes)).rejects.toThrow('This MCAP file holds a value that isn’t a number.');
+    await expect(read(bytes)).rejects.toThrow('This recording holds a value that isn’t a number.');
   });
 
   it('refuses a recording longer than the limit', async () => {
     const bytes = await writeMcap([joints(1, ['a'], [0]), joints(2 + IMPORT_LIMITS.seconds, ['a'], [0])]);
 
-    await expect(read(bytes)).rejects.toThrow(MCAP_TOO_LONG);
+    await expect(read(bytes)).rejects.toThrow(RECORDING_TOO_LONG);
   });
 
   it('refuses a truncated message and a truncated file', async () => {
@@ -149,20 +172,22 @@ describe('readMcap', () => {
     await expect(read(new Uint8Array())).rejects.toThrow(MCAP_DAMAGED);
   });
 
-  it('refuses lz4 chunks', async () => {
-    const bytes = await writeMcap(armJointStates({ hz: 100, seconds: 1, start: 5 }), { compression: 'lz4' });
-
-    await expect(read(bytes)).rejects.toThrow(MCAP_COMPRESSION);
+  it('refuses chunks in other compressions', async () => {
+    await expect(read(mcapWithChunk({ compression: 'bz2', uncompressedSize: 64n }))).rejects.toThrow(MCAP_COMPRESSION);
   });
 
-  it.each(['zstd', ''])('refuses a chunk declaring more than the cap before inflating it (%j)', async (compression) => {
-    const bytes = mcapWithChunk({ compression, uncompressedSize: 1n << 40n });
-    const error = await read(bytes).catch((caught: unknown) => caught);
+  it.each(['zstd', 'lz4', ''])(
+    'refuses a chunk declaring more than the cap before inflating it (%j)',
+    async (compression) => {
+      const bytes = mcapWithChunk({ compression, uncompressedSize: 1n << 40n });
+      const error = await read(bytes).catch((caught: unknown) => caught);
 
-    expect(error).toBeInstanceOf(DataImportError);
-    expect((error as Error).message).toBe(MCAP_TOO_LARGE);
-    expect(decompress).not.toHaveBeenCalled();
-  });
+      expect(error).toBeInstanceOf(DataImportError);
+      expect((error as Error).message).toBe(MCAP_TOO_LARGE);
+      expect(decompress).not.toHaveBeenCalled();
+      expect(lz4Frame).not.toHaveBeenCalled();
+    },
+  );
 
   it('refuses a file over the size cap without reading it', async () => {
     const bytes = new Uint8Array(8);
@@ -172,16 +197,26 @@ describe('readMcap', () => {
     await expect(read(bytes)).rejects.toThrow(MCAP_TOO_LARGE);
   });
 
-  it('reads each picked .mcap as its own episode on the joints they share, however far apart', async () => {
-    const later = 1000 + 4 * IMPORT_LIMITS.seconds;
+  it('plays several picked files as one recording on one timeline', async () => {
     const first = await writeMcap([joints(1000, ['a', 'b'], [1, 2]), joints(1001, ['a', 'b'], [1, 2])]);
-    const second = await writeMcap([joints(later, ['c', 'a'], [5, 3]), joints(later + 0.5, ['c', 'a'], [5, 3])]);
+    const second = await writeMcap([joints(1004, ['c', 'a'], [5, 3]), image(1005)]);
     const source = await readSource({ kind: 'bytes', name: 'arm', files: { 'b.mcap': second, 'a.mcap': first } });
-    const [one, two] = source!.data.episodes;
+    const [episode] = source!.data.episodes;
 
-    expect(source!.data.names).toEqual(['a']);
-    expect([one.index, one.t.length, one.state[0]]).toEqual([0, 51, 1]);
-    expect([two.index, two.t.length, two.state[0]]).toEqual([1, 26, 3]);
+    expect(source!.data.names).toEqual(['a', 'b', 'c']);
+    expect(source!.data.episodes).toHaveLength(1);
+    expect([episode.t.length, episode.state[0], episode.state.at(-3)]).toEqual([251, 1, 3]);
+    expect(episode.videos[0]).toMatchObject({ path: 'b.mcap', from: 5 });
+  });
+
+  it('refuses picked files that together run longer than the limit', async () => {
+    const later = 1000 + 4 * IMPORT_LIMITS.seconds;
+    const first = await writeMcap([joints(1000, ['a'], [1])]);
+    const second = await writeMcap([joints(later, ['a'], [3])]);
+
+    await expect(
+      readSource({ kind: 'bytes', name: 'arm', files: { 'a.mcap': first, 'b.mcap': second } }),
+    ).rejects.toThrow(RECORDING_TOO_LONG);
   });
 
   it('refuses a picked .mcap over the size cap before reading any file', async () => {

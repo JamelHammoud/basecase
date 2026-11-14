@@ -36,6 +36,7 @@ export interface Recording {
   commands?: RecordedCommand[];
   controller?: Controller;
   world?: WorldEvent[];
+  topics?: Uint8Array;
 }
 
 class Growing<T extends Float32Array | Float64Array> {
@@ -208,7 +209,7 @@ export class Recorder {
 }
 
 export const recordingTransfer = (r: Recording): Transferable[] =>
-  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.torque, r.jointQpos, r.jointDof, r.scan].flatMap((a) =>
+  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.torque, r.jointQpos, r.jointDof, r.scan, r.topics].flatMap((a) =>
     a ? [a.buffer] : [],
   );
 

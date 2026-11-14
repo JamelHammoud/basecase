@@ -4,9 +4,12 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
 import type { ViewShot } from '../three/viewport/types';
+import { recordingTopics } from '../topics/recordingTopics';
+import { recordingConsole } from '../topics/topicConsole';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { setVoiceWords } from '../voice/voiceSession';
 import { voiceWordsOf } from '../voice/voiceWords';
+import type { Case } from '../cases/schema';
 import type { Cases } from './useCases';
 
 interface CaseRunInput {
@@ -24,6 +27,14 @@ interface Return {
 
 const consoleCase = (live: boolean, cases: Cases) => (live ? cases.active : (cases.timeline.scene?.kase ?? null));
 
+function shownConsole(kase: Case | null, recording: Recording | null) {
+  const topics = kase ? null : recordingTopics(recording);
+
+  if (topics) return recordingConsole(DEFAULT_CONSOLE, topics);
+
+  return kase?.console ?? DEFAULT_CONSOLE;
+}
+
 export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining }: CaseRunInput) {
   const { sim, cases } = simTraining;
   const [back, setBack] = useState<Return | null>(null);
@@ -33,7 +44,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   const [dismissed, setDismissed] = useState<Recording | null>(null);
   const playback = timeline.open && !!timeline.recording && dismissed !== timeline.recording;
   const kase = consoleCase(live, cases);
-  const caseConsole = kase?.console ?? DEFAULT_CONSOLE;
+  const caseConsole = shownConsole(kase, live ? null : timeline.recording);
 
   const enterCase = (caseId: string) => {
     const fresh = { caseId, view: viewportRef.current?.currentView() ?? null, selection: selectedIds };

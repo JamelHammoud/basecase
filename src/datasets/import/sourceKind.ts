@@ -9,6 +9,10 @@ const isBagMetadata = (path: string) => path === BAG_METADATA_FILE || path.endsW
 
 export const isMcapName = (path: string) => /\.mcap$/i.test(path);
 
+export const isBagName = (path: string) => /\.bag$/i.test(path);
+
+const isRecordingName = (path: string) => isMcapName(path) || isBagName(path);
+
 export function isLeRobotFolder(paths: string[]): string | null {
   const infos = paths.filter(isInfoFile).sort((a, b) => depthOf(a) - depthOf(b) || a.localeCompare(b));
 
@@ -28,5 +32,5 @@ export function sourceKind(paths: string[]): 'lerobot' | 'rosbag2' | 'mcap' | nu
 
   if (isRosbag2Folder(paths) !== null) return 'rosbag2';
 
-  return paths.length && paths.every(isMcapName) ? 'mcap' : null;
+  return paths.length && paths.every(isRecordingName) ? 'mcap' : null;
 }

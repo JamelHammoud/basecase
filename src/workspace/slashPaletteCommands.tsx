@@ -1,29 +1,11 @@
-import type React from 'react';
-import { SLASH_COMMANDS, slashText, type SlashName } from '../agent/slashCommands';
+import { SLASH_COMMANDS, slashText } from '../agent/slashCommands';
 import type { Command } from '../components/CommandPalette';
-import {
-  CameraIcon,
-  CasesIcon,
-  CheckIcon,
-  PenIcon,
-  PhotoAddIcon,
-  RoutinesIcon,
-  RunIcon,
-  TrainIcon,
-} from '../design-system';
+import { SLASH_ICONS } from '../components/agent/slashIcons';
+import { CasesIcon, PenIcon, PhotoAddIcon } from '../design-system';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
 
 const ic = 'w-4 h-4';
-
-const ICONS: Record<SlashName, React.ReactNode> = {
-  train: <TrainIcon className={ic} />,
-  routine: <RoutinesIcon className={ic} />,
-  case: <CasesIcon className={ic} />,
-  simulate: <RunIcon className={ic} />,
-  operate: <CameraIcon className={ic} />,
-  check: <CheckIcon className={ic} />,
-};
 
 const FAILING = new Set(['fail', 'warn']);
 
@@ -74,7 +56,7 @@ export function slashPaletteCommands(inputs: CommandInputs): Command[] {
       id: `agent-slash-${command.name}`,
       group: 'Agent',
       label: command.label,
-      icon: ICONS[command.name],
+      icon: SLASH_ICONS[command.name],
       keywords: `/${command.name} ${command.keywords} agent`,
       run: () => inputs.core.tool.requestCompose(slashText(command.name)),
     })),

@@ -115,6 +115,9 @@ function useSelectionMoves({ docs, selectedIds, selection, parts }: WorkspaceCor
     if (part) updateSelectedPart({ position: stackedPosition(part, parts) });
   };
 
+  const moveSelection = (target: Partial<Record<Axis, number>>, live?: boolean) =>
+    commitParts((prev) => moveSelectionTo(prev, new Set(selectedIds), target, live), live);
+
   return {
     updateSelectedPart,
     align,
@@ -122,8 +125,8 @@ function useSelectionMoves({ docs, selectedIds, selection, parts }: WorkspaceCor
     dropToGround,
     stackOnBelow,
     rotateSelection: (axis: Axis) => commitParts((prev) => rotateQuarterTurn(prev, new Set(selectedIds), axis)),
-    moveSelection: (target: Partial<Record<Axis, number>>, live?: boolean) =>
-      commitParts((prev) => moveSelectionTo(prev, new Set(selectedIds), target, live), live),
+    moveSelection,
+    centerOnOrigin: () => moveSelection({ 0: 0, 2: 0 }),
   };
 }
 

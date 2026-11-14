@@ -21,6 +21,14 @@ vi.mock('../utils/platform/web/idb', () => ({
   idbPut: (store: string, key: string, value: unknown) => Promise.resolve(void stored.set(`${store}/${key}`, value)),
   idbAll: () => Promise.resolve([]),
   idbDelete: () => Promise.resolve(),
+  idbWrite: (changes: Array<{ store: string; key: string; kind: string; value?: unknown }>) => {
+    for (const change of changes) {
+      if (change.kind === 'delete') stored.delete(`${change.store}/${change.key}`);
+      else stored.set(`${change.store}/${change.key}`, change.value);
+    }
+
+    return Promise.resolve();
+  },
 }));
 
 const hexapod = () => galleryBundles().find((b) => b.slug === 'hexapod-reach-the-flag')!;
@@ -146,6 +154,10 @@ describe('Train on a gallery Case card', () => {
 
     expect(scene.project.skills).toEqual([record]);
     expect(scene.project.cases).toHaveLength(1);
+    expect(stored.get(`sceneSummaries/gallery-${bundle.slug}`)).toMatchObject({
+      id: `gallery-${bundle.slug}`,
+      partCount: bundle.robot.parts.length,
+    });
     expect(stored.get(`trained/skill:${record!.hash}`)).toEqual(passedStand());
     expect(location.assign).toHaveBeenCalledWith('/');
   });

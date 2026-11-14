@@ -36,9 +36,9 @@ Turn one passed try into up to 50 varied passing tries, so a dataset holds many 
 
 ![The toast shows Multiplying… with Stop, and a progress bar runs under the try](/help/multiply-a-try-into-demonstrations/multiplying.png)
 
-When it's done, the toast says how many it kept: "Kept 50 of 50". The try's row counts them, as in **50 generated**.
+When it's done, the toast says how many it kept: "Kept 50 of 50". The try's row counts them, as in **50 variations**.
 
-![The passed try's row reads 50 generated, above Export Dataset](/help/multiply-a-try-into-demonstrations/results.png)
+![The passed try's row reads 50 variations, above Export Dataset](/help/multiply-a-try-into-demonstrations/results.png)
 
 **Multiply** is also in [[⌘K]], where it multiplies the open Case's newest passed try.
 
@@ -50,14 +50,14 @@ The Case's contract judges every variation, and only passes are kept. Multiply a
 
 ## Limits
 
-Tries recorded before Multiply carry no commands, so their menu has no **Multiply**. Record a new try.
+Tries recorded before Multiply carry no commands, so their menu has no **Multiply**. Record a new try. A try from your real robot has no **Multiply** either.
 
 Only targets move with the objects. A try driven with the keys alone replays the same key presses, so a variation passes only when the moved spot still lies where the hand went.
 
 A try from an earlier design of the robot can't be multiplied. The toast says "These tries are from an earlier design. Try It again to record new ones."
 
-Deleting a try deletes its generated tries too, and the confirmation counts them.
+Deleting a try deletes its variations too, and the confirmation counts them.
 
 ## In the dataset
 
-[Export Dataset](/help/export-a-lerobot-dataset) writes each generated try as its own episode. `meta/basecase.json` lists each episode's `seed` and its `source`, the try it was made from. A try you drove has a `source` of null.
+[Export Dataset](/help/export-a-lerobot-dataset) writes each variation as its own episode. `meta/basecase.json` lists each episode's `seed` and its `source`, the try it was made from. A try you drove has a `source` of null.

@@ -39,6 +39,7 @@ import type { WorkspaceSeed } from './types';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { JointDragStep } from './useSkeletonEdit';
 import { limitExplore } from './useCaseExplore';
+import { matStudioApi, type MatDevActions } from './devMatFeed';
 
 type Payload = Record<string, unknown>;
 
@@ -76,6 +77,7 @@ export interface DevActions {
   stubHandoffs: (stub: HandoffStub) => void;
   plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
+  mat: MatDevActions;
 }
 
 export interface DevStudioDeps {
@@ -292,6 +294,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
     calibrations: () => projectRef.current.servoCalibrations ?? {},
     robotGhost: () => robotGhostState(viewportRef.current),
+    ...matStudioApi(() => devRef.current.mat),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 

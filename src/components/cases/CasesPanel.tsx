@@ -57,6 +57,12 @@ function compareEntry(compare: CasesPanelProps['compare'], onOpen: () => void): 
   ];
 }
 
+function matEntry({ mat }: Cases): ContextMenuEntry[] {
+  if (!mat.available) return [];
+
+  return [{ label: 'Export Case Mat', onSelect: mat.exportMat }, { divider: true }];
+}
+
 export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, onDescribe }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
 
@@ -69,7 +75,10 @@ export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, 
     setMenu({
       x: e.clientX,
       y: e.clientY,
-      items: [...(cases.active?.id === id ? compareEntry(compare, onOpen) : []), deleteEntry(() => cases.remove(id))],
+      items: [
+        ...(cases.active?.id === id ? [...compareEntry(compare, onOpen), ...matEntry(cases)] : []),
+        deleteEntry(() => cases.remove(id)),
+      ],
     });
   };
 

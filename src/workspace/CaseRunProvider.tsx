@@ -27,7 +27,7 @@ function useActions(core: WorkspaceCore) {
 
   const can = (action: CaseAction) =>
     ({
-      try: attempt.phase === 'idle',
+      try: attempt.phase === 'idle' && cases.realTry.phase === 'idle',
       'end-try': attempt.phase === 'running',
       drive: !driving,
       stop: driving,

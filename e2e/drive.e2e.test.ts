@@ -1,4 +1,5 @@
 import { parquetReadObjects } from 'hyparquet';
+import { plural } from '../electron/plural.mjs';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import type { ReferenceCommand } from '../src/cases/schema';
 import type { DriveCommand } from '../src/sim/driveTypes';
@@ -8,6 +9,7 @@ import { DEFAULT_PROJECT } from '../src/types/robotics';
 import type { SimState, Studio } from './driveStudio';
 import { startFakeHub, type FakeHub } from './fakeHub';
 import { expectCaseCheckOpensRow, expectDataset, expectGenerated, expectPublished, pickTimeline } from './driveChecks';
+import { expectCaseMat, makeReachCase } from './driveMat';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
 const HUB_TOKEN = 'hf_e2eFakeHubToken';
@@ -350,6 +352,27 @@ describe('Cases', () => {
   });
 });
 
+describe('a real robot', () => {
+  itUnlessWindows(
+    'exports a Case mat and records a passing try on the real robot from the camera',
+    async () => {
+      await loadFixture('rover-diff');
+      await openPlayTab(app.page, 'Cases');
+      await makeReachCase(app.page, 4);
+      await expect.poll(async () => (await simState()).activeCase).toMatch(/^reach-a-spot/);
+      await expectCaseMat(app.page);
+
+      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.feedMatFrames());
+      await button('Try on Real Robot').click();
+      await expect.poll(async () => (await simState()).tries.filter((t) => t.real).length, { timeout: 60000 }).toBe(1);
+      expect((await simState()).tries.find((t) => t.real)!.passed).toBe(true);
+      await expect.poll(() => app.page.locator(visible('[data-testid="try-real"]')).count()).toBe(1);
+      expect(app.errors).toEqual([]);
+    },
+    120000,
+  );
+});
+
 describe('Multiply', () => {
   itUnlessWindows(
     'multiplies a passed try from ⌘K into generated tries under its row, and exports them with their seeds',
@@ -377,7 +400,7 @@ describe('Multiply', () => {
       expect((await simState()).multiplying).toBe(false);
       expect((await simState()).tries.every((t) => t.passed)).toBe(true);
       expect(await rows.count()).toBe(1);
-      expect(await rows.first().getByTestId('try-generated').innerText()).toBe(`${kept} generated`);
+      expect(await rows.first().getByTestId('try-generated').innerText()).toBe(plural(kept, 'variation'));
 
       expectGenerated(await datasetFiles(), kept);
       expect(app.errors).toEqual([]);

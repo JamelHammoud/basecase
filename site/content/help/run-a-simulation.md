@@ -53,4 +53,6 @@ Each joint shows the most torque it needed as a share of its servo's limit. A sh
 
 **Build** ▸ **Checks** says when a joint's torque or servo response is estimated. **Torque estimates** names the joints with no servo from Parts. **Servo models** names the servos with no measured model.
 
+![Checks with Torque estimates open on a joint without a servo](/help/run-a-simulation/checks.png)
+
 Editing a part or a joint while the simulation runs ends it, and the canvas goes back to the posed model. Next, steer the robot yourself in [Drive a robot in the simulation](/help/drive-a-robot-in-the-simulation).

@@ -17,7 +17,7 @@ keywords:
   - explore_case
 related:
   - compare-two-robots-on-a-case
-  - try-a-robot-on-a-case
+  - try-a-case
 covers:
   - src/cases/explore.ts
   - src/cases/exploreDesigns.ts

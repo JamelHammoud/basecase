@@ -2,8 +2,6 @@ import type { ContextMenuEntry } from '../../design-system';
 import { PlusIcon, deleteEntry, duplicateEntry, renameEntry } from '../../design-system';
 import type { CustomModelDefinition } from '../../types/robotics';
 
-const icon = 'w-3.5 h-3.5';
-
 interface ModelMenuOptions {
   model: CustomModelDefinition;
   onInsert: () => void;
@@ -14,7 +12,7 @@ interface ModelMenuOptions {
 
 export function modelMenu(o: ModelMenuOptions): ContextMenuEntry[] {
   return [
-    { label: 'Insert', icon: <PlusIcon className={icon} />, onSelect: o.onInsert },
+    { label: 'Insert', icon: <PlusIcon />, onSelect: o.onInsert },
     renameEntry(o.onRename),
     duplicateEntry(o.onDuplicate),
     { divider: true },

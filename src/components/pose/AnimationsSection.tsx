@@ -51,7 +51,7 @@ const AddAnimationMenu: React.FC<Omit<AddAnimationProps, 'canWalk'>> = ({ onWalk
         className="w-[210px]"
       >
         <MenuItem
-          icon={<WalkIcon className="w-4 h-4" />}
+          icon={<WalkIcon />}
           label="Walk Cycle"
           onSelect={() => {
             setAddOpen(false);
@@ -59,7 +59,7 @@ const AddAnimationMenu: React.FC<Omit<AddAnimationProps, 'canWalk'>> = ({ onWalk
           }}
         />
         <MenuItem
-          icon={<FileImportIcon className="w-4 h-4" />}
+          icon={<FileImportIcon />}
           label="Import BVH"
           onSelect={() => {
             setAddOpen(false);

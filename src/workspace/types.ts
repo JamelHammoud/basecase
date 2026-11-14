@@ -2,6 +2,7 @@ import type { SceneRobot } from '../app/tabModel';
 import type { CompareRobot } from '../cases/caseCompare';
 import type { CaseConsole } from '../cases/console/format';
 import type { Case } from '../cases/schema';
+import type { Routine } from '../routines/schema';
 import type { PrintersState } from '../app/usePrinters';
 import type { SettingsField, SettingsPane } from '../app/settingsPanes';
 import type { ToastData } from '../design-system';
@@ -166,6 +167,7 @@ export interface Snapshot {
   skeleton: RobotSkeleton | undefined;
   tether?: Tether;
   consoles?: Record<string, CaseConsole | undefined>;
+  routines?: Routine[];
 }
 
 export interface DocState {

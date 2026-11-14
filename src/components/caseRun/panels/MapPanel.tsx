@@ -25,12 +25,12 @@ function pathOf(x: Series, z: Series, seconds: number) {
 }
 
 export const MapPanel: React.FC<PanelViewProps<'map'>> = ({ panel, ctx }) => {
-  useBus(ctx.bus);
+  const bus = useBus(ctx.bus);
 
   const trail = 'trail' in panel && panel.trail !== undefined ? panel.trail : 30;
-  const whole = ctx.bus.playhead() !== null;
-  const { xs, zs } = pathOf(ctx.bus.series('robot.x'), ctx.bus.series('robot.z'), whole ? Infinity : trail);
-  const now = whole ? { x: ctx.bus.read('robot.x'), z: ctx.bus.read('robot.z') } : { x: xs.v.at(-1), z: zs.v.at(-1) };
+  const whole = bus.playhead() !== null;
+  const { xs, zs } = pathOf(bus.series('robot.x'), bus.series('robot.z'), whole ? Infinity : trail);
+  const now = whole ? { x: bus.read('robot.x'), z: bus.read('robot.z') } : { x: xs.v.at(-1), z: zs.v.at(-1) };
   const objects = ctx.sim.worldParts.map((p) => ({
     id: p.id,
     x: p.position[0],

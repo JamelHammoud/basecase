@@ -18,6 +18,7 @@ export interface SegmentedControlProps<T extends string> {
   className?: string;
   size?: 'sm' | 'md';
   variant?: 'pill' | 'tabs';
+  'aria-label'?: string;
 }
 
 export function SegmentedControl<T extends string>({
@@ -27,6 +28,7 @@ export function SegmentedControl<T extends string>({
   className = '',
   size = 'md',
   variant = 'pill',
+  'aria-label': ariaLabel,
 }: SegmentedControlProps<T>) {
   const found = options.findIndex((o) => o.value === value);
   const idx = Math.max(0, found);
@@ -36,6 +38,7 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       role="tablist"
+      aria-label={ariaLabel}
       className={`relative grid select-none ${isTabs ? 'gap-1' : 'p-0.5 rounded-lg bg-white/[0.05]'} ${className}`}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >

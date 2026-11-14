@@ -2,6 +2,7 @@ import type { Case } from '../cases/schema';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { RobotUpgrade } from '../utils/robotImport';
 import { patchParts } from '../utils/robotUpgrade';
+import { routinesView, writeRoutines } from './caseLogicRoutines';
 import type { DocState, Snapshot } from './types';
 
 export const HISTORY_LIMIT = 50;
@@ -42,6 +43,7 @@ function supplyFor(next: Snapshot | undefined, project: ProjectSettings): Partia
   return {
     ...(next && 'tether' in next ? { tether: project.tether } : {}),
     ...(next?.consoles ? { consoles: consolesOf(project.cases, Object.keys(next.consoles)) } : {}),
+    ...(next?.routines ? { routines: routinesView(project) } : {}),
   };
 }
 
@@ -70,7 +72,10 @@ export function travelProject(d: DocState, project: ProjectSettings, { direction
 
   if (!moved) return null;
 
-  return { ...moved, here, project: { ...project, ...restoredProject(moved.to, here, project.cases) } };
+  const restored = { ...project, ...restoredProject(moved.to, here, project.cases) };
+  const { routines } = moved.to;
+
+  return { ...moved, here, project: routines ? writeRoutines(restored, routines) : restored };
 }
 
 export function stepHistory(

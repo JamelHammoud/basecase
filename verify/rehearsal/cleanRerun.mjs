@@ -42,7 +42,6 @@ async function rerun(dir, log) {
 
 export const cleanRerun = {
   name: 'every required gate passes again from a clean checkout of this commit, parked gates listed with reasons',
-  timed: true,
   run: async () => {
     const head = sh('git', ['rev-parse', 'HEAD']).stdout.trim();
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-rehearsal-'));

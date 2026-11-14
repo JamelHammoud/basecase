@@ -1,15 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { AcpStatusInfo, MeasureUnit, TrackpadGestureMode } from '../types/robotics';
-import { AGENT_PROFILES } from '../agent/agentKinds';
-import { IS_MAC } from '../utils/os';
 import {
   IconButton,
-  modifierName,
   NO_DRAG_REGION,
-  SegmentedControl,
-  Switch,
-  TextInput,
   useScrollFade,
   BotIcon,
   CloseIcon,
@@ -18,13 +11,13 @@ import {
   KeyboardIcon,
   PackageIcon,
   PrinterIcon,
-  RefreshIcon,
 } from '../design-system';
 import type { PrintersState } from '../app/usePrinters';
 import { AccountsPane } from './settings/AccountsPane';
+import { AgentPane, type AgentPaneProps } from './settings/AgentPane';
 import { BuildPane, type BuildPrefs } from './settings/BuildPane';
+import { CanvasPane, type CanvasPaneProps } from './settings/CanvasPane';
 import { PrintersPane } from './settings/PrintersPane';
-import { SettingsGroup as Group, SettingsRow as Row } from './SettingsRows';
 import { ShortcutsList } from './ShortcutsList';
 import { SETTINGS_PANES, type SettingsFocus, type SettingsPane } from '../app/settingsPanes';
 
@@ -37,32 +30,13 @@ const PANE_ICONS: Record<SettingsPane, React.ReactNode> = {
   shortcuts: <KeyboardIcon className="w-4 h-4" />,
 };
 
-const MOVE_SNAP_STEPS = ['0', '1', '2', '5', '10'];
-const ROTATE_SNAP_STEPS = ['0', '5', '15', '45', '90'];
-const MEASURE_UNITS: Array<{ value: MeasureUnit; label: string }> = [
-  { value: 'metric', label: 'Metric' },
-  { value: 'imperial', label: 'Imperial' },
-];
-
-export interface SettingsWindowProps {
+export interface SettingsWindowProps extends CanvasPaneProps, AgentPaneProps {
   open: boolean;
   pane: SettingsPane;
   focus?: SettingsFocus;
   onPaneChange: (pane: SettingsPane) => void;
   onClose: () => void;
-  sculptEnabled: boolean;
-  onSculptEnabled: (v: boolean) => void;
   buildPrefs: BuildPrefs;
-  snapStepMm: number;
-  onSnapStep: (mm: number) => void;
-  snapAngleDeg: number;
-  onSnapAngle: (deg: number) => void;
-  measureUnit: MeasureUnit;
-  onMeasureUnit: (unit: MeasureUnit) => void;
-  trackpadMode: TrackpadGestureMode;
-  onTrackpadMode: (mode: TrackpadGestureMode) => void;
-  acpStatus: AcpStatusInfo;
-  onReconnectAcp: (command?: string) => Promise<void>;
   printers: PrintersState;
 }
 
@@ -168,138 +142,5 @@ export const SettingsWindow: React.FC<SettingsWindowProps> = ({ open, pane, onPa
       </div>
     </div>,
     document.body,
-  );
-};
-
-type PaneProps = Omit<SettingsWindowProps, 'open' | 'pane' | 'onPaneChange' | 'onClose'>;
-
-const Unit: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="text-white/50">{children}</span>
-);
-
-const SCROLL_HINTS: Record<TrackpadGestureMode, string> = {
-  'orbit-scroll': `Hold ${modifierName('⇧')} while scrolling to pan. Pinch to zoom.`,
-  'pan-scroll': 'Drag the canvas to orbit. Pinch to zoom.',
-  'zoom-scroll': 'Drag the canvas to orbit. Right-drag or middle-drag to pan.',
-};
-
-const CanvasPane: React.FC<PaneProps> = (p) => (
-  <>
-    <Group title={IS_MAC ? 'Trackpad' : 'Mouse and touchpad'}>
-      <Row label={IS_MAC ? 'Two-finger scroll' : 'Scroll'} hint={SCROLL_HINTS[p.trackpadMode]}>
-        <SegmentedControl<TrackpadGestureMode>
-          className="w-[240px]"
-          value={p.trackpadMode}
-          onChange={p.onTrackpadMode}
-          options={[
-            { value: 'orbit-scroll', label: 'Orbit' },
-            { value: 'pan-scroll', label: 'Pan' },
-            { value: 'zoom-scroll', label: 'Zoom' },
-          ]}
-        />
-      </Row>
-    </Group>
-    <Group title="Snapping">
-      <Row
-        label={
-          <>
-            Move <Unit>mm</Unit>
-          </>
-        }
-      >
-        <SegmentedControl
-          className="w-[240px]"
-          value={String(p.snapStepMm)}
-          onChange={(v) => p.onSnapStep(Number(v))}
-          options={MOVE_SNAP_STEPS.map((v) => ({ value: v, label: v === '0' ? 'Off' : v }))}
-        />
-      </Row>
-      <Row label="Rotate">
-        <SegmentedControl
-          className="w-[240px]"
-          value={String(p.snapAngleDeg)}
-          onChange={(v) => p.onSnapAngle(Number(v))}
-          options={ROTATE_SNAP_STEPS.map((v) => ({ value: v, label: v === '0' ? 'Off' : `${v}°` }))}
-        />
-      </Row>
-    </Group>
-    <Group title="Measure">
-      <Row label="Units">
-        <SegmentedControl<MeasureUnit>
-          className="w-[240px]"
-          value={p.measureUnit}
-          onChange={p.onMeasureUnit}
-          options={MEASURE_UNITS}
-        />
-      </Row>
-    </Group>
-    <Group title="Tools">
-      <Row label="Sculpt">
-        <Switch aria-label="Sculpt" checked={p.sculptEnabled} onChange={p.onSculptEnabled} />
-      </Row>
-    </Group>
-  </>
-);
-
-const agentOfCommand = (command: string) => AGENT_PROFILES.find((p) => p.command === command);
-
-function agentStatusText(status: AcpStatusInfo) {
-  if (status.connecting) return 'Connecting…';
-
-  if (status.connected && status.signIn) return `Sign in to ${status.agentName} from the Agent tab`;
-
-  return status.connected ? `Connected to ${status.agentName}` : status.error || 'Not connected';
-}
-
-const AgentPane: React.FC<PaneProps> = (p) => {
-  const [command, setCommand] = useState(p.acpStatus.agentCommand);
-  const agent = agentOfCommand(command);
-
-  return (
-    <Group>
-      <Row label="Run with" hint={agent?.hint ?? 'Custom ACP agent'}>
-        <SegmentedControl<string>
-          className="w-[320px]"
-          value={agent?.kind ?? ''}
-          onChange={(kind) => {
-            const cmd = AGENT_PROFILES.find((profile) => profile.kind === kind)?.command;
-
-            if (!cmd) return;
-
-            setCommand(cmd);
-            p.onReconnectAcp(cmd);
-          }}
-          options={AGENT_PROFILES.map((profile) => ({ value: profile.kind, label: profile.label }))}
-        />
-      </Row>
-      <Row
-        stacked
-        label="Command"
-        hint={
-          <span
-            className={`break-words ${p.acpStatus.connecting || (p.acpStatus.connected && !p.acpStatus.signIn) ? '' : 'text-amber-400'}`}
-          >
-            {agentStatusText(p.acpStatus)}
-          </span>
-        }
-      >
-        <div className="flex gap-[6px]">
-          <TextInput
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') p.onReconnectAcp(command);
-            }}
-            aria-label="Agent command"
-            className="font-mono text-[12px]"
-          />
-          <IconButton
-            icon={<RefreshIcon className="w-3.5 h-3.5" />}
-            title="Reconnect"
-            onClick={() => p.onReconnectAcp(command)}
-          />
-        </div>
-      </Row>
-    </Group>
   );
 };

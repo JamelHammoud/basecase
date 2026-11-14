@@ -15,8 +15,8 @@ export const DatasetImages: React.FC<{ dataset: Dataset }> = ({ dataset }) => {
     <section data-testid="dataset-images">
       <SectionHeader title="Images" />
       <div className={TRIES_GRID}>
-        {frames.map((frame, index) => (
-          <DatasetImageTile key={`${frame.setId}:${frame.frameId}`} {...frame} index={index} />
+        {frames.map((frame) => (
+          <DatasetImageTile key={`${frame.setId}:${frame.frameId}`} {...frame} />
         ))}
       </div>
     </section>

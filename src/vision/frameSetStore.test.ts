@@ -102,4 +102,27 @@ describe('the frame set library', () => {
     expect((await listFrameSets()).some((set) => set.id === 'bad')).toBe(false);
     expect(stored.reads).toHaveLength(before);
   });
+
+  it.each([
+    { width: 8193 },
+    { width: 8192, height: 8192 },
+    { annotations: null },
+    { jpeg: [255, 216, 255, 217] },
+    { depth: [1] },
+  ])('rejects corrupt stored frame metadata before reading blobs: %j', async (changes) => {
+    const set = fixture();
+
+    await saveFrameSet(set);
+
+    const manifest = stored.manifests.get(set.id)!;
+    const before = stored.reads.length;
+
+    stored.manifests.set(set.id, {
+      ...manifest,
+      frames: [{ ...manifest.frames[0], ...changes }] as FrameSetManifest['frames'],
+    });
+
+    expect(await loadFrameSet(set.id)).toBeNull();
+    expect(stored.reads).toHaveLength(before);
+  });
 });

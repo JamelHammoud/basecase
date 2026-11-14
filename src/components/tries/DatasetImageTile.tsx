@@ -6,10 +6,9 @@ import { useSeen } from './useSeen';
 interface DatasetImageTileProps {
   setId: string;
   frameId: string;
-  index: number;
 }
 
-export const DatasetImageTile: React.FC<DatasetImageTileProps> = ({ setId, frameId, index }) => {
+export const DatasetImageTile: React.FC<DatasetImageTileProps> = ({ setId, frameId }) => {
   const tile = useRef<HTMLDivElement | null>(null);
   const seen = useSeen(tile);
   const [image, setImage] = useState<{ key: string; url: string } | null>(null);
@@ -47,7 +46,6 @@ export const DatasetImageTile: React.FC<DatasetImageTileProps> = ({ setId, frame
       <div className="aspect-[4/3] rounded-[6px] bg-white/[0.04] overflow-hidden">
         <PreviewImage src={image?.key === key ? image.url : undefined} lazy />
       </div>
-      <div className="px-0.5 text-[13px] font-medium text-white/90 truncate">Image {index + 1}</div>
     </div>
   );
 };

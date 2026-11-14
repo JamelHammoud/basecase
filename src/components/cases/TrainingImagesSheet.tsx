@@ -37,7 +37,7 @@ export function TrainingImagesSheet({ images }: { images: TrainingImages }) {
           />
         </FieldRow>
         <div>
-          <p className="text-[12px] text-white/40">Cameras</p>
+          <p className="text-[12px] text-white/50">Cameras</p>
           {images.views.map((view) => (
             <Switch
               key={view.key}
@@ -49,7 +49,7 @@ export function TrainingImagesSheet({ images }: { images: TrainingImages }) {
           ))}
         </div>
         <div>
-          <p className="text-[12px] text-white/40">Classes</p>
+          <p className="text-[12px] text-white/50">Classes</p>
           {images.classes.map((item) => (
             <Switch
               key={item.id}

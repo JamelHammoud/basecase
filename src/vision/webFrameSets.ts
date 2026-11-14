@@ -30,13 +30,19 @@ export const webFrameSets: FrameSetBackend = {
     await frames.put(`${stem}:depth`, bytes.depth);
   },
   saveManifest: async (manifest, sourceId) => {
-    if (sourceId && sourceId !== manifest.id) await moveFrames(manifest, sourceId);
+    const staged = sourceId && sourceId !== manifest.id ? checkedFrameId(sourceId) : null;
+
+    checkedFrameId(manifest.id);
+
+    if (staged) await copyFrames(manifest, staged);
 
     await manifests.put(checkedFrameId(manifest.id), manifest);
+
+    if (staged) await removeStaging(staged);
   },
 };
 
-async function moveFrames(manifest: FrameSetManifest, sourceId: string) {
+async function copyFrames(manifest: FrameSetManifest, sourceId: string) {
   checkedFrameId(sourceId);
 
   for (const frame of manifest.frames) {
@@ -49,7 +55,9 @@ async function moveFrames(manifest: FrameSetManifest, sourceId: string) {
     await frames.put(`${stem}:jpeg`, bytes.jpeg);
     await frames.put(`${stem}:depth`, bytes.depth);
   }
+}
 
-  await frames.deletePrefix(`${checkedFrameId(sourceId)}:`);
+async function removeStaging(sourceId: string) {
+  await frames.deletePrefix(`${sourceId}:`);
   await manifests.delete(sourceId);
 }

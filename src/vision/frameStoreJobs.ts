@@ -3,6 +3,7 @@ import { depthBytes, readDepth } from './imageBytes';
 import {
   validateFrameSet,
   validateTrainingFrame,
+  validateTrainingFrameHeader,
   validateFrameSetHeader,
   type FrameSet,
   type ImageClass,
@@ -62,9 +63,10 @@ function checkedFrameManifest(manifest: FrameSetManifest) {
   const ids = new Set<string>();
 
   for (const frame of manifest.frames) {
+    validateTrainingFrameHeader(frame);
     checkedFrameId(frame.id);
 
-    if (ids.has(frame.id)) throw new Error('Check the image id.');
+    if (ids.has(frame.id) || 'jpeg' in frame || 'depth' in frame) throw new Error('Check the image id.');
 
     ids.add(frame.id);
   }

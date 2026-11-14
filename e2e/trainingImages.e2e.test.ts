@@ -1,4 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { readFile } from 'node:fs/promises';
+import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { Matrix4, Quaternion, Vector3 } from 'three';
 import { matrixToEuler } from '../src/agent/agentFrame';
 import { buildCase, builderRobot } from '../src/cases/caseBuilder';
@@ -14,7 +16,6 @@ interface ImageStudio {
     running: unknown;
     last: { frameSet: { id: string; frames: unknown[] }; classCounts: Record<string, number> } | null;
   };
-  trainingImageFiles: () => Promise<Record<string, string> | null>;
 }
 
 let app: App;
@@ -115,17 +116,27 @@ describe('Training images', () => {
 
     expect(result?.classCounts.Block).toBe(20);
 
-    const files = await page.evaluate(() =>
-      (window as unknown as { __studio: ImageStudio }).__studio.trainingImageFiles(),
+    const pane = page.locator(shown('[data-testid="dataset-pane"]'));
+    const downloaded = page.waitForEvent('download');
+
+    await pane.getByRole('button', { name: 'Export Dataset', exact: true }).click();
+
+    const download = await downloaded;
+    const archive = unzipSync(await readFile((await download.path())!));
+    const files = Object.fromEntries(
+      Object.entries(archive)
+        .filter(([name]) => name.includes('/coco/'))
+        .map(([name, bytes]) => [name.slice(name.indexOf('/coco/') + 6), bytes]),
     );
 
-    expect(files).not.toBeNull();
+    expect(download.suggestedFilename()).toMatch(/-dataset\.zip$/);
+    expect(Object.keys(archive).some((name) => name.endsWith('/yolo/data.yaml'))).toBe(true);
 
-    const splits = Object.entries(files!).filter(([name]) => /^annotations\/instances_.*\.json$/.test(name));
-    const coco = splits.map(([, bytes]) => JSON.parse(Buffer.from(bytes, 'base64').toString('utf8')));
+    const splits = Object.entries(files).filter(([name]) => /^annotations\/instances_.*\.json$/.test(name));
+    const coco = splits.map(([, bytes]) => JSON.parse(new TextDecoder().decode(bytes)));
 
     expect(coco.flatMap((split) => split.images)).toHaveLength(20);
-    expect(Object.keys(files!).filter((name) => /\.(png|jpe?g)$/.test(name))).toHaveLength(20);
+    expect(Object.keys(files).filter((name) => /\.(png|jpe?g)$/.test(name))).toHaveLength(20);
 
     for (const split of coco) {
       const category = split.categories.find((entry: { name: string }) => entry.name === 'Block');

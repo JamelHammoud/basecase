@@ -39,6 +39,9 @@ export interface PreparedDataset {
   modelHash: string;
 }
 
+export const datasetLeftOut = (made: PreparedDataset) =>
+  made.left ? `, left out ${made.left} from another Case or design` : '';
+
 const REPO_STEM_MAX = 80;
 const MANIFEST_BATCH = 500;
 

@@ -20,6 +20,16 @@ describe('make_images schema', () => {
 });
 
 describe('create_case image metadata schema', () => {
+  it.each([
+    { mm: 501, deg: 0 },
+    { mm: 0, deg: 46 },
+  ])('refuses camera tolerance beyond the Case limits: %j', (cameraTolerance) => {
+    expect(
+      z.object(createCase.config.inputSchema).safeParse({ goal: 'touch', imageRandomization: { cameraTolerance } })
+        .success,
+    ).toBe(false);
+  });
+
   it('keeps named points, color classes, camera tolerances and distractors', () => {
     const object = {
       name: 'Block',

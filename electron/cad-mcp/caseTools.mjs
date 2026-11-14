@@ -64,7 +64,7 @@ export const createCase = {
       imageRandomization: z
         .object({
           cameraTolerance: z
-            .object({ mm: z.number().finite().min(0).max(1000), deg: z.number().finite().min(0).max(180) })
+            .object({ mm: z.number().finite().min(0).max(500), deg: z.number().finite().min(0).max(45) })
             .optional(),
           distractors: z.array(worldObject).max(32).optional(),
         })

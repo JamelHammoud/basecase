@@ -117,6 +117,8 @@ export function varyTrainingScene(job: SceneVariation) {
 
   const byId = new Map(job.items.map((item) => [item.id, item]));
 
+  varySurfaces(job, random, restores);
+
   for (const { instance } of trainingInstances(job.items)) {
     const item = byId.get(instance)!;
     const object = options.objects?.[item.id] ?? {};
@@ -138,8 +140,6 @@ export function varyTrainingScene(job: SceneVariation) {
       item.group.updateMatrixWorld(true);
     });
   }
-
-  varySurfaces(job, random, restores);
 
   job.scene.traverse((child) => {
     if (child instanceof THREE.Light && options.lighting) varyLight(child, random, options.lighting, restores);

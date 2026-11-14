@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { annotationFromInstances, decodeMask, encodeMask, maskPolygons } from './imageMasks';
 import { frameHash, frameSetHash, frameSetManifestHash, validateFrameSet, type FrameSet } from './frameSet';
 import { exportCoco, importCoco } from './cocoExport';
 import { exportYolo, importYolo } from './yoloExport';
 import { imageSplit } from './imageSplit';
 import { splitOf } from '../datasets/datasetSplit';
+
+afterEach(() => vi.restoreAllMocks());
 
 export function fixture(): FrameSet {
   const width = 5;
@@ -177,6 +179,26 @@ describe('image labels', () => {
       mutate(changed);
       expect(await frameSetHash(changed)).not.toBe(hash);
     }
+  });
+});
+
+describe('image dataset hashing', () => {
+  it('bounds concurrent hash buffer copies while preserving the complete set identity', async () => {
+    const set = fixture();
+    const expected = await frameSetManifestHash(set, await Promise.all(set.frames.map(frameHash)));
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    let pending = 0;
+    let peak = 0;
+
+    vi.spyOn(crypto.subtle, 'digest').mockImplementation((algorithm, data) => {
+      pending++;
+      peak = Math.max(peak, pending);
+
+      return digest(algorithm, data).finally(() => pending--);
+    });
+
+    expect(await frameSetHash(set)).toBe(expected);
+    expect(peak).toBe(1);
   });
 });
 

@@ -32,7 +32,7 @@ function renderedBounds(frame: CameraTrainingFrame): number[] | null {
   return found ? edges : null;
 }
 
-export async function trainingLabelBenchmark(): Promise<TrainingBenchmarkResult> {
+export async function trainingLabelBenchmark(frames = 1000): Promise<TrainingBenchmarkResult> {
   const feed = cameraFeed();
   const base = { poses: null, key: acceptanceView.key, width: 640, height: 480, seed: 0, keypoints: [] };
 
@@ -43,14 +43,14 @@ export async function trainingLabelBenchmark(): Promise<TrainingBenchmarkResult>
     const start = performance.now();
     const measured: TrainingBenchmarkResult['measured'] = [];
 
-    for (let index = 0; index < 1000; index++) {
+    for (let index = 0; index < frames; index++) {
       const position: V3 = [((index * 73) % 401) - 200, 150 + ((index * 37) % 81) - 40, ((index * 29) % 201) - 100];
       const frame = await feed.training({ ...base, seed: index, randomization: { objects: { target: { position } } } });
 
       if (index < 500) measured.push({ position, bounds: renderedBounds(frame) });
     }
 
-    return { frames: 1000, width: 640, height: 480, milliseconds: performance.now() - start, measured };
+    return { frames, width: 640, height: 480, milliseconds: performance.now() - start, measured };
   } finally {
     feed.dispose();
   }

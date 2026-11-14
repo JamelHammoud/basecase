@@ -69,4 +69,40 @@ describe('training surface textures', () => {
     floor.geometry.dispose();
     partMesh.geometry.dispose();
   });
+
+  it('reuses surface textures when a wall also has a declared color variant', () => {
+    const wall = mesh();
+    const original = wall.material;
+    const group = new THREE.Group();
+    const scene = new THREE.Scene();
+    const pool = new TrainingSurfaces();
+
+    group.add(wall);
+    scene.add(group);
+
+    const job = {
+      scene,
+      items: [{ id: 'wall', group, position: group.position.clone(), quaternion: group.quaternion.clone() }],
+      surfaces: [group],
+      surfacePool: pool,
+      seed: 42,
+      randomization: { textures: 1, objects: { wall: { colors: [{ name: 'green', color: '#00ff00' }] } } },
+    };
+    const first = varyTrainingScene(job);
+    const map = wall.material.map;
+
+    expect(wall.material.color.getHexString()).toBe('00ff00');
+    first.restore();
+    expect(wall.material).toBe(original);
+
+    const second = varyTrainingScene(job);
+
+    expect(wall.material.map).toBe(map);
+    expect(wall.material.color.getHexString()).toBe('00ff00');
+    second.restore();
+    expect(wall.material).toBe(original);
+    pool.dispose();
+    original.dispose();
+    wall.geometry.dispose();
+  });
 });

@@ -6,7 +6,7 @@ import { hubBridge } from '../hub/hubBridge';
 import { downloadBytes } from '../utils/downloadBytes';
 import { openLink } from '../utils/openLink';
 import { imageDatasetFiles, imageDatasetZip } from '../vision/imageDataset';
-import { repoName, type PreparedDataset } from './datasetJob';
+import { datasetLeftOut, repoName, type PreparedDataset } from './datasetJob';
 import { fileSafe } from './helpers';
 import type { DatasetRecords } from './useDatasetRecords';
 import type { ToastOptions } from './types';
@@ -42,7 +42,7 @@ export async function deliverImageDataset(
 
     return {
       message: prepared
-        ? `Exported ${plural(images, 'image')} and ${plural(prepared.used, 'try', 'tries')}`
+        ? `Exported ${plural(images, 'image')} and ${plural(prepared.used, 'try', 'tries')}${datasetLeftOut(prepared)}`
         : `Exported ${plural(images, 'image')}`,
     };
   }
@@ -56,7 +56,7 @@ export async function deliverImageDataset(
   });
 
   return {
-    message: `Published to ${published.repo}`,
+    message: `Published to ${published.repo}${prepared ? datasetLeftOut(prepared) : ''}`,
     options: { action: { label: 'Open', onClick: () => openLink(published.url) } },
   };
 }

@@ -139,8 +139,16 @@ function frameFields(value: unknown): boolean {
   return object(value) && id(value.id) && uint(value.seed) && text(value.camera) && frameDimensions(value);
 }
 
-export function validateTrainingFrame(value: unknown, classes: ImageClass[]): asserts value is TrainingFrame {
+export function validateTrainingFrameHeader(value: unknown): asserts value is Omit<TrainingFrame, 'jpeg' | 'depth'> {
   if (!frameFields(value)) refuse();
+
+  const frame = value as Omit<TrainingFrame, 'jpeg' | 'depth'>;
+
+  if (!Array.isArray(frame.annotations) || frame.annotations.length > 10_000) refuse();
+}
+
+export function validateTrainingFrame(value: unknown, classes: ImageClass[]): asserts value is TrainingFrame {
+  validateTrainingFrameHeader(value);
 
   const frame = value as unknown as TrainingFrame;
 
@@ -149,9 +157,7 @@ export function validateTrainingFrame(value: unknown, classes: ImageClass[]): as
     frame.jpeg.length < 4 ||
     frame.jpeg.length > 64_000_000 ||
     !(frame.depth instanceof Float32Array) ||
-    frame.depth.length !== frame.width * frame.height ||
-    !Array.isArray(frame.annotations) ||
-    frame.annotations.length > 10_000
+    frame.depth.length !== frame.width * frame.height
   )
     refuse();
 
@@ -254,5 +260,9 @@ export async function frameSetManifestHash(set: Omit<FrameSet, 'frames'>, frames
 export async function frameSetHash(set: FrameSet): Promise<string> {
   validateFrameSet(set);
 
-  return frameSetManifestHash(set, await Promise.all(set.frames.map(frameHash)));
+  const hashes: string[] = [];
+
+  for (const frame of set.frames) hashes.push(await frameHash(frame));
+
+  return frameSetManifestHash(set, hashes);
 }

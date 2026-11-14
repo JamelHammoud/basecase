@@ -5,7 +5,9 @@ export const POLICY_RUNG: string;
 
 export interface RecorderSink {
   append(id: string, text: string): void;
+
   keep(manifest: Record<string, unknown>): void;
+
   drop(id: string): void;
 }
 

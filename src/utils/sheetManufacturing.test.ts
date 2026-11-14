@@ -6,8 +6,10 @@ import { MATERIAL_DENSITY } from '../data/supplies';
 import { quotesWanted } from '../print/serviceQuotes';
 import { bomFindings } from '../readiness/findings';
 import { detectSheet } from '../sheet/detectSheet';
+import { pocketTriangles } from '../sheet/sheet.fixtures';
 import { buildMjcf } from '../sim/mjcf';
 import { SimEngine } from '../sim/engine';
+import { buildPartGroup, releasePartGroup } from '../three/buildPartMesh';
 import { localTriangles, measureObject } from '../three/meshMeasure';
 import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../types/robotics';
 import { buildBom, isPrinted } from './bom';
@@ -100,17 +102,30 @@ describe('sheet manufacturing in the bill of materials', () => {
     expect(bomFindings(bom).filter((finding) => finding.level === 'blocker')).toEqual([]);
   });
 
-  it('keeps a non-sheet legacy CNC shape needing a source', () => {
-    const sphere = new THREE.Mesh(new THREE.SphereGeometry(10));
-    const triangles = localTriangles(sphere);
+  it('keeps a legacy CNC pocketed part out of Sheet and needing a source', () => {
+    const positions = Array.from(pocketTriangles());
+    const part = panel('cnc', {
+      kind: 'mesh',
+      mechanicalTag: 'CNC Aluminum',
+      dimensions: { width: 80, height: 60, depth: 3 },
+      mesh: { positions, indices: Array.from({ length: positions.length / 3 }, (_, i) => i), baseSize: [80, 60, 3] },
+    });
+    const group = buildPartGroup(part, false);
+    const triangles = localTriangles(group);
+    const measured = { ...measureObject(group), sheet: detectSheet(triangles) };
+
+    releasePartGroup(group);
+
     const bom = buildBom({
-      parts: [panel('cnc', { kind: 'mesh', mechanicalTag: 'CNC Aluminum' })],
-      measures: { cnc: { ...measureObject(sphere), sheet: detectSheet(triangles) } },
+      parts: [part],
+      measures: { cnc: measured },
       project: DEFAULT_PROJECT,
       purchases: {},
     });
 
-    expect(detectSheet(triangles)).toBeUndefined();
+    expect(measured.triangles).toBeGreaterThan(0);
+    expect(measured.volumeMm3).toBeCloseTo(12800, 4);
+    expect(measured.sheet).toBeUndefined();
     expect(bom.lines.filter((line) => line.category === 'Sheet')).toEqual([]);
     expect(bomFindings(bom).filter((finding) => finding.level === 'blocker')).toMatchObject([
       { rule: 'no-source', ids: ['cnc'] },

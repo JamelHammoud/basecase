@@ -1,7 +1,6 @@
 import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import type { ScenePart } from '../src/types/robotics';
-import { pocketTriangles } from '../src/sheet/sheet.fixtures';
 import { openApp, type App } from './harness';
 
 let app: App;
@@ -13,8 +12,6 @@ interface Studio {
   printPlates: () => { open: boolean; plates: string[][] };
   bomLines: () => Array<{ category: string; qty: number }>;
   lastDownload: () => { name: string; base64: string } | null;
-  sheetProfile: (id: string) => Promise<unknown>;
-  triangleCount: (id: string) => number;
 }
 
 const PLATE: ScenePart = {
@@ -99,40 +96,6 @@ it('cuts an aluminum plate from sheet, exports its profile and undoes the conver
 
   await app.page.getByRole('button', { name: /^Undo/ }).click();
   await expect.poll(sceneParts).toEqual([PLATE]);
-  expect(app.errors).toEqual([]);
-});
-
-it('keeps a legacy CNC pocketed part out of sheet manufacturing', async () => {
-  const pocket: ScenePart = {
-    ...PLATE,
-    id: 'pocket-plate',
-    name: 'Pocketed Plate',
-    mechanicalTag: 'CNC Aluminum',
-    kind: 'mesh',
-    dimensions: { width: 80, height: 60, depth: 3 },
-    mesh: { positions: Array.from(pocketTriangles()), indices: [], baseSize: [80, 60, 3] },
-  };
-
-  await app.page.evaluate((part) => {
-    const studio = (window as unknown as { __studio: Studio }).__studio;
-
-    studio.load({ name: 'Pocketed plate', parts: [part] });
-    studio.select([part.id]);
-  }, pocket);
-  await expect
-    .poll(() =>
-      app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.triangleCount('pocket-plate')),
-    )
-    .toBeGreaterThan(0);
-  expect(
-    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.sheetProfile('pocket-plate')),
-  ).toBeNull();
-  expect(await app.page.locator(visible('select[aria-label="Manufacturing"]')).count()).toBe(0);
-  expect(await app.page.locator(visible('select[aria-label="Material"]')).locator('option').allTextContents()).toEqual([
-    'Printed PLA / PETG',
-    'Printed TPU',
-    'Off-the-shelf',
-  ]);
   expect(app.errors).toEqual([]);
 });
 

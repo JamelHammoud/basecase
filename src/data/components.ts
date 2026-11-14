@@ -137,8 +137,8 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Servos',
     description: 'Dual-shaft serial bus servo with a 12-bit magnetic encoder, used in the SO-100 and SO-101 arms.',
     specs: [
-      ['Stall torque', ['19.5 kg·cm @ 7.4 V (C001)', '30 kg·cm @ 12 V (C018)']],
-      ['Speed', '0.192 s/60° @ 7.4 V'],
+      ['Stall torque', ['19.5 kg·cm at 7.4 V (C001)', '30 kg·cm at 12 V (C018)']],
+      ['Speed', '0.192 s/60° at 7.4 V'],
       ['Voltage', ['4–7.4 V (C001)', '4–14 V (C018)']],
       ['Gear ratio', '1:345, copper gears'],
       ['Interface', 'TTL half-duplex serial bus, 1 Mbps'],
@@ -252,8 +252,8 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Servos',
     description: 'Micro serial bus servo with potentiometer feedback and 300° range, used in the Amazing Hand.',
     specs: [
-      ['Stall torque', '2.3 kg·cm @ 6 V'],
-      ['Speed', '0.1 s/60° @ 6 V'],
+      ['Stall torque', '2.3 kg·cm at 6 V'],
+      ['Speed', '0.1 s/60° at 6 V'],
       ['Voltage', '4–7.4 V'],
       ['Gear ratio', '1:416, metal gears'],
       ['Interface', 'TTL half-duplex serial bus, 1 Mbps'],
@@ -292,8 +292,8 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Low-voltage smart servo with a 12-bit contactless encoder and current control, used in Koch and GELLO arms.',
     specs: [
-      ['Stall torque', '0.52 N·m @ 5 V'],
-      ['Speed', '103 rpm @ 5 V'],
+      ['Stall torque', '0.52 N·m at 5 V'],
+      ['Speed', '103 rpm at 5 V'],
       ['Voltage', '3.7–6 V'],
       ['Gear ratio', '288.4 : 1'],
       ['Interface', 'TTL multidrop, Protocol 2.0, up to 4 Mbps'],
@@ -333,8 +333,8 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       '11.1 V smart servo with a 12-bit contactless encoder in the 430 body, used in TurtleBot3 and OpenManipulator-X.',
     specs: [
-      ['Stall torque', '1.4 N·m @ 11.1 V'],
-      ['Speed', '57 rpm @ 11.1 V'],
+      ['Stall torque', '1.4 N·m at 11.1 V'],
+      ['Speed', '57 rpm at 11.1 V'],
       ['Voltage', '6.5–12 V'],
       ['Gear ratio', '258.5 : 1'],
       ['Interface', 'TTL multidrop, Protocol 2.0, up to 4.5 Mbps'],
@@ -372,8 +372,8 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Servos',
     description: 'Standard-size metal-gear PWM hobby servo for arm and hexapod joints.',
     specs: [
-      ['Stall torque', ['9.4 kg·cm @ 4.8 V', '11 kg·cm @ 6 V']],
-      ['Speed', '0.15 s/60° @ 6 V'],
+      ['Stall torque', ['9.4 kg·cm at 4.8 V', '11 kg·cm at 6 V']],
+      ['Speed', '0.15 s/60° at 6 V'],
       ['Voltage', '4.8–6.6 V'],
       ['Interface', 'PWM, JR plug'],
       ['Weight', '55 g'],
@@ -405,8 +405,8 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Servos',
     description: '9 g micro PWM hobby servo with plastic gears, for light joints and pan-tilt mounts.',
     specs: [
-      ['Stall torque', '1.8 kg·cm @ 4.8 V'],
-      ['Speed', '0.12 s/60° @ 4.8 V'],
+      ['Stall torque', '1.8 kg·cm at 4.8 V'],
+      ['Speed', '0.12 s/60° at 4.8 V'],
       ['Voltage', '4.8–6 V'],
       ['Interface', 'PWM, JR plug'],
       ['Weight', '9 g'],
@@ -788,9 +788,9 @@ export const COMPONENTS: ComponentInfo[] = [
     description: '6 V brushed gearmotor with a 100:1 metal gearbox and a rear shaft for a magnetic encoder (N20 size).',
     specs: [
       ['Gear ratio', '100.37 : 1'],
-      ['Speed', '310 rpm @ 6 V'],
-      ['Stall torque', '1.7 kg·cm @ 6 V'],
-      ['Stall current', '1.6 A @ 6 V'],
+      ['Speed', '310 rpm at 6 V'],
+      ['Stall torque', '1.7 kg·cm at 6 V'],
+      ['Stall current', '1.6 A at 6 V'],
       ['Weight', '9.5 g'],
     ],
     mounting:
@@ -2221,7 +2221,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Quad-core 2.4 GHz Cortex-A76 single-board computer with PCIe, two 4-lane camera/display ports, dual micro-HDMI and Gigabit Ethernet.',
     specs: [
-      ['CPU', 'BCM2712, 4× Cortex-A76 @ 2.4 GHz'],
+      ['CPU', 'BCM2712, 4× Cortex-A76 at 2.4 GHz'],
       ['RAM', '1–16 GB LPDDR4X'],
       ['I/O', ['2× USB 3.0', '2× USB 2.0', 'GbE', 'PCIe 2.0 x1', '2× MIPI']],
       ['Video', '2× micro-HDMI, 4Kp60'],
@@ -2254,7 +2254,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Quad-core Cortex-A72 single-board computer with dual micro-HDMI, USB 3.0, Gigabit Ethernet and the 40-pin GPIO header.',
     specs: [
-      ['CPU', 'BCM2711, 4× Cortex-A72 @ 1.8 GHz'],
+      ['CPU', 'BCM2711, 4× Cortex-A72 at 1.8 GHz'],
       ['RAM', '1, 2, 4 or 8 GB LPDDR4'],
       ['I/O', ['2× USB 3.0', '2× USB 2.0', 'Gigabit Ethernet', 'CSI', 'DSI']],
       ['Video', '2× micro-HDMI, up to 4Kp60'],
@@ -2286,7 +2286,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Computers',
     description: '65 × 30 mm quad-core single-board computer with Wi-Fi and Bluetooth.',
     specs: [
-      ['CPU', 'RP3A0, 4× Cortex-A53 @ 1 GHz'],
+      ['CPU', 'RP3A0, 4× Cortex-A53 at 1 GHz'],
       ['RAM', '512 MB'],
       ['Wireless', ['2.4 GHz Wi-Fi', 'Bluetooth 4.2']],
       ['I/O', ['Mini-HDMI', 'micro-USB OTG', 'CSI', '40-pin footprint']],
@@ -2313,7 +2313,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Computers',
     description: 'Quad-core RK3566 single-board computer in the Pi Zero’s 65 × 30 mm outline, with Wi-Fi 6 and USB 3.',
     specs: [
-      ['CPU', 'RK3566, 4× Cortex-A55 @ 1.6 GHz'],
+      ['CPU', 'RK3566, 4× Cortex-A55 at 1.6 GHz'],
       ['RAM', '2 GB LPDDR4'],
       ['Wireless', ['Wi-Fi 6', 'Bluetooth 5.4']],
       ['I/O', ['Micro-HDMI', 'USB-C 2.0 OTG', 'USB-C 3.2 host', '4-lane MIPI CSI', '40-pin header']],
@@ -2369,7 +2369,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Microcontrollers',
     description: 'UNO-size board with a 48 MHz Renesas RA4M1, USB-C and 5 V I/O.',
     specs: [
-      ['MCU', 'Renesas RA4M1, Cortex-M4 @ 48 MHz'],
+      ['MCU', 'Renesas RA4M1, Cortex-M4 at 48 MHz'],
       ['Memory', ['256 kB flash', '32 kB SRAM']],
       ['I/O', ['14 digital (6 PWM)', '6 analog', 'DAC', 'CAN']],
       ['Power', ['USB-C 5 V', '6–24 V barrel jack']],
@@ -2485,11 +2485,11 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Microcontrollers',
     description: '600 MHz Cortex-M7 board with 8 MB flash, microSD, Ethernet PHY and 55 I/O pins.',
     specs: [
-      ['MCU', 'NXP i.MX RT1062, Cortex-M7 @ 600 MHz'],
+      ['MCU', 'NXP i.MX RT1062, Cortex-M7 at 600 MHz'],
       ['Memory', ['1 MB RAM', '8 MB flash']],
       ['I/O', ['55 digital', '35 PWM', '18 analog, 3.3 V']],
       ['Interfaces', ['8 serial', '3 SPI', '3 I2C', '3 CAN', 'Ethernet']],
-      ['Current', '100 mA @ 600 MHz'],
+      ['Current', '100 mA at 600 MHz'],
     ],
     mounting:
       'PCB 60.96 × 17.78 × 1.57 mm, no mounting holes. 2× 24-pin rows, 15.24 mm apart. Micro-USB overhangs the end by 0.7 mm.',
@@ -2511,7 +2511,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Microcontrollers',
     description: '21 × 51 mm RP2350 board with 4 MB flash, micro-USB and castellated 0.1-inch pins.',
     specs: [
-      ['MCU', 'RP2350, 2× Cortex-M33 or RISC-V @ 150 MHz'],
+      ['MCU', 'RP2350, 2× Cortex-M33 or RISC-V at 150 MHz'],
       ['Memory', ['520 KB SRAM', '4 MB flash']],
       ['I/O', ['26 GPIO (3 ADC)', '12 PIO state machines']],
       ['USB', 'Micro-USB, USB 1.1'],
@@ -2774,7 +2774,7 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'ROBOTIS',
     mpn: 'U2D2 (902-0132-000)',
     group: 'Drivers',
-    description: 'USB to DYNAMIXEL bus adapter (TTL, RS-485 and UART) up to 6 Mbps. It does not power the servos.',
+    description: 'USB to DYNAMIXEL bus adapter (TTL, RS-485 and UART) up to 6 Mbps. It doesn’t power the servos.',
     specs: [
       ['Interface', 'USB-C, FTDI virtual COM port, up to 6 Mbps'],
       ['Ports', 'TTL 3-pin, RS-485 4-pin, UART 4-pin'],
@@ -2964,7 +2964,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'LiDAR',
     description: 'Compact 360° × 59° 3D lidar with a built-in IMU and Ethernet output, common on quadrupeds.',
     specs: [
-      ['Range', ['40 m @ 10%', '70 m @ 80%']],
+      ['Range', ['40 m at 10% reflectivity', '70 m at 80% reflectivity']],
       ['FOV', '360° × −7° to +52°'],
       ['Point rate', '200,000 pts/s'],
       ['Laser', '905 nm, Class 1'],
@@ -2990,7 +2990,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'LiDAR',
     description: 'Hemispherical 360° × 90° 3D lidar with built-in IMU and Ethernet or UART output.',
     specs: [
-      ['Range', ['30 m @ 90%', '15 m @ 10%']],
+      ['Range', ['30 m at 90% reflectivity', '15 m at 10% reflectivity']],
       ['FOV', '360° × 90°'],
       ['Point rate', '64,000 pts/s effective'],
       ['Laser', '905 nm, Class 1'],
@@ -3196,7 +3196,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'LiDAR',
     description: 'Mid-range 360° digital lidar with 32–128 channels, 42.4° vertical FOV, IMU and gigabit Ethernet.',
     specs: [
-      ['Range', ['90 m @ 10%', '170 m @ 80%']],
+      ['Range', ['90 m at 10% reflectivity', '170 m at 80% reflectivity']],
       ['FOV', '360° × 42.4°'],
       ['Channels', '32, 64 or 128'],
       ['Laser', '865 nm, Class 1'],
@@ -3222,7 +3222,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Short-range, ultra-wide (90.8° vertical) 360° digital lidar with 32–128 channels and gigabit Ethernet.',
     specs: [
-      ['Range', ['35 m @ 10%', '75 m @ 80%']],
+      ['Range', ['35 m at 10% reflectivity', '75 m at 80% reflectivity']],
       ['FOV', '360° × 90.8°'],
       ['Channels', '32, 64 or 128'],
       ['Laser', '865 nm, Class 1'],
@@ -3272,7 +3272,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'LiDAR',
     description: 'Long-range solid-state 3D lidar with a non-repetitive scan pattern and built-in IMU.',
     specs: [
-      ['Range', ['190 m @ 10%', '320 m @ 80%']],
+      ['Range', ['190 m at 10% reflectivity', '320 m at 80% reflectivity']],
       ['FOV', '70.4° × 77.2°'],
       ['Point rate', '240,000 pts/s'],
       ['Laser', '905 nm, Class 1'],
@@ -3299,7 +3299,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'LiDAR',
     description: 'Compact 128-channel hyper-hemispherical lidar (360° × 95°) with built-in IMU, for robots and AMRs.',
     specs: [
-      ['Range', '40 m @ 10%'],
+      ['Range', '40 m at 10% reflectivity'],
       ['FOV', '360° × 95°'],
       ['Channels', '128'],
       ['Laser', '905 nm, Class 1'],
@@ -3512,7 +3512,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Depth Cameras',
     description: 'Active stereo depth camera with IR pair, 850 nm projector, 2 MP RGB, IMU and on-board depth ASIC.',
     specs: [
-      ['Depth', '1280 × 800 @ 30 fps, 90° × 65°'],
+      ['Depth', '1280 × 800 at 30 fps, 90° × 65°'],
       ['Baseline', '50 mm'],
       ['Range', '0.1–20 m (ideal 0.26–3 m)'],
       ['RGB', '1920 × 1080'],
@@ -3538,7 +3538,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Depth Cameras',
     description: 'Short-range stereo depth camera (7–50 cm) with an 18 mm baseline, made for wrist cameras on arms.',
     specs: [
-      ['Depth', '1280 × 720 @ 90 fps, 84° × 58°'],
+      ['Depth', '1280 × 720 at 90 fps, 84° × 58°'],
       ['Baseline', '18 mm'],
       ['Range', '7–50 cm ideal'],
       ['Sensors', '2× OV9782, global shutter, color'],
@@ -3571,7 +3571,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Long-baseline active stereo depth camera with global-shutter RGB, IR projector and IMU, for navigation and mapping.',
     specs: [
-      ['Depth', '1280 × 720 @ 90 fps, 87° × 58°'],
+      ['Depth', '1280 × 720 at 90 fps, 87° × 58°'],
       ['Baseline', '95 mm'],
       ['Range', '0.6–6 m ideal'],
       ['RGB', 'OV9782, global shutter'],
@@ -3604,7 +3604,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Active stereo depth camera with a 50 mm baseline, global-shutter wide-FOV imagers and 1080p RGB; no IMU.',
     specs: [
-      ['Depth', '1280 × 720 @ 90 fps, 87° × 58°'],
+      ['Depth', '1280 × 720 at 90 fps, 87° × 58°'],
       ['Baseline', '50 mm'],
       ['Range', '0.2 m to over 3 m'],
       ['RGB', 'OV2740, 1920 × 1080'],
@@ -3631,7 +3631,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description:
       'Active stereo depth camera with a 55 mm baseline and narrow-FOV imagers for more depth detail at short to mid range.',
     specs: [
-      ['Depth', '1280 × 720 @ 90 fps, 65° × 40°'],
+      ['Depth', '1280 × 720 at 90 fps, 65° × 40°'],
       ['Baseline', '55 mm'],
       ['Range', '0.3 m to over 4 m'],
       ['RGB', 'OV2740, 1920 × 1080'],
@@ -3841,7 +3841,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Depth Cameras',
     description: 'Compact active stereo depth camera with 50 mm baseline, on-board depth ASIC, 1080p RGB and IMU.',
     specs: [
-      ['Depth', '1280 × 800 @ 30 fps'],
+      ['Depth', '1280 × 800 at 30 fps'],
       ['Baseline', '50 mm'],
       ['Range', '0.15–10 m'],
       ['RGB', '1920 × 1080'],
@@ -3896,7 +3896,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Sensor', 'Sony IMX500, 12.3 MP'],
       ['Field of view', '66.3° × 52.3°'],
-      ['Frame rate', '2028 × 1520 @ 30 fps'],
+      ['Frame rate', '2028 × 1520 at 30 fps'],
       ['On-sensor AI', 'Up to 640 × 640 input tensor'],
       ['Interface', 'MIPI CSI-2'],
     ],
@@ -3924,7 +3924,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['Sensor', 'OV9281, 1280 × 800, global shutter, mono'],
       ['Lens', 'M12, 2.8 mm, 70° H'],
-      ['Frame rate', '100 fps @ 1280 × 800 (MJPG)'],
+      ['Frame rate', '100 fps at 1280 × 800 (MJPG)'],
       ['Interface', 'USB 2.0 UVC'],
       ['Power', '5 V, 200 mA'],
     ],
@@ -4027,7 +4027,7 @@ export const COMPONENTS: ComponentInfo[] = [
     description: '1.6 MP Sony IMX296 global-shutter camera with a C/CS lens mount, for machine vision.',
     specs: [
       ['Sensor', 'Sony IMX296, 1.58 MP, global shutter'],
-      ['Frame rate', '1456 × 1088 @ 60 fps'],
+      ['Frame rate', '1456 × 1088 at 60 fps'],
       ['Lens mount', 'CS (C with adapter)'],
       ['Interface', 'MIPI CSI-2'],
       ['Weight', '34 g'],
@@ -4993,7 +4993,7 @@ export const COMPONENTS: ComponentInfo[] = [
     specs: [
       ['AI', '100 TOPS'],
       ['GPU', 'Ampere, 1024 CUDA cores, 32 Tensor Cores'],
-      ['CPU', '8× Cortex-A78AE @ 2 GHz'],
+      ['CPU', '8× Cortex-A78AE at 2 GHz'],
       ['RAM', '16 GB LPDDR5'],
       ['Storage', '128 GB NVMe SSD (M.2 Key M)'],
       ['I/O', ['4× USB 3.2', 'GbE', 'HDMI 2.1', '2× CSI', 'CAN', '40-pin']],
@@ -5024,7 +5024,7 @@ export const COMPONENTS: ComponentInfo[] = [
     group: 'Microcontrollers',
     description: 'Arduino MKR-size SAMD21 board with 4 DYNAMIXEL TTL ports and a battery input that powers the servos.',
     specs: [
-      ['MCU', 'SAMD21, Cortex-M0+ @ 48 MHz'],
+      ['MCU', 'SAMD21, Cortex-M0+ at 48 MHz'],
       ['Memory', ['256 KB flash', '32 KB SRAM']],
       ['I/O', ['24 digital (12 PWM)', '7 analog', 'DAC, 3.3 V']],
       ['DYNAMIXEL', '4× TTL (JST EH 3-pin), 3 A, up to 1 Mbps'],
@@ -5904,7 +5904,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '118 g'],
     ],
     mounting:
-      'Soft shrink-wrapped pack 87 × 33 × 18 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance, not a tight pocket (Ovonic spec list).',
+      'Soft shrink-wrapped pack 87 × 33 × 18 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points aren’t published. Hold it with a strap or a tray with clearance, not a tight pocket (Ovonic spec list).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Ovonic+2S+2200mAh+50C+LiPo+XT60+TRX', kind: 'search' },
       product: 'https://us.ovonicshop.com/products/ovonic-50c-7-4v-2200mah-2s1p-xt60-and-trx-lipo-battery',
@@ -5935,7 +5935,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '179 g (US store: 168 g)'],
     ],
     mounting:
-      'Soft shrink-wrapped pack 105 × 33 × 21 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance (Ovonic spec list).',
+      'Soft shrink-wrapped pack 105 × 33 × 21 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points aren’t published. Hold it with a strap or a tray with clearance (Ovonic spec list).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Ovonic+3S+2200mAh+50C+LiPo+XT60', kind: 'search' },
       product: 'https://us.ovonicshop.com/products/ovonic-50c-2200mah-3s1p-11-1v-xt60-2pcs-lipo-battery',
@@ -5966,7 +5966,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '182 g'],
     ],
     mounting:
-      'Soft shrink-wrapped pack 77 × 34 × 34 mm (±5 mm length, ±2 mm width and height; Ovonic’s US dimension photo shows 76 × 35 × 33), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance (Ovonic spec list).',
+      'Soft shrink-wrapped pack 77 × 34 × 34 mm (±5 mm length, ±2 mm width and height; Ovonic’s US dimension photo shows 76 × 35 × 33), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points aren’t published. Hold it with a strap or a tray with clearance (Ovonic spec list).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Ovonic+4S+2200mAh+35C+LiPo+XT60', kind: 'search' },
       product: 'https://us.ovonicshop.com/products/ovonic-35c-14-8v-2200mah-4s1p-xt60-lipo-battery',
@@ -5997,7 +5997,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '683 g'],
     ],
     mounting:
-      'Soft shrink-wrapped pack 156 × 44 × 48 mm (L × W × H, ±5 mm length, ±2 mm width and height), label face 156 × 44 on top, edges rounded. Main and balance leads leave one short end; exit points are not published. Size a tray for up to 161 × 46 × 50 mm and strap it down (Ovonic spec list).',
+      'Soft shrink-wrapped pack 156 × 44 × 48 mm (L × W × H, ±5 mm length, ±2 mm width and height), label face 156 × 44 on top, edges rounded. Main and balance leads leave one short end; exit points aren’t published. Size a tray for up to 161 × 46 × 50 mm and strap it down (Ovonic spec list).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Ovonic+6S+5000mAh+120C+LiPo+EC5', kind: 'search' },
       product:
@@ -6030,7 +6030,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '70 g max'],
     ],
     mounting:
-      'Flat-top cylinder Ø21.55 × 70.15 mm max, steel can, positive cap inside an insulating ring. No tabs or leads: spot-weld nickel strip or use a 21700 holder. Cap size is not published (Molicel P42A data sheet v1.7).',
+      'Flat-top cylinder Ø21.55 × 70.15 mm max, steel can, positive cap inside an insulating ring. No tabs or leads: spot-weld nickel strip or use a 21700 holder. Cap size isn’t published (Molicel P42A data sheet v1.7).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Molicel+P42A+21700', kind: 'search' },
       product: 'https://www.molicel.com/product/inr-21700-p42a/',
@@ -6062,7 +6062,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '46 g'],
     ],
     mounting:
-      'Flat-top cylinder Ø18.6 × 65.2 mm max, steel can, positive cap inside an insulating ring. No tabs or leads: spot-weld nickel strip or use an 18650 holder (MPD holders want 65–68 mm cells, so a bare 65.2 mm flat top sits at the short end). Cap size is not published (Molicel P28A data sheet v1.3).',
+      'Flat-top cylinder Ø18.6 × 65.2 mm max, steel can, positive cap inside an insulating ring. No tabs or leads: spot-weld nickel strip or use an 18650 holder (MPD holders want 65–68 mm cells, so a bare 65.2 mm flat top sits at the short end). Cap size isn’t published (Molicel P28A data sheet v1.3).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Molicel+P28A+18650', kind: 'search' },
       product: 'https://www.molicel.com/product/inr-18650-p28a/',

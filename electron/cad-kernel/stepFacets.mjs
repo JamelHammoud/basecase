@@ -83,7 +83,7 @@ export function facetedSolid({ oc }, { positions }, share) {
 
   oc.FS.unlink(STL_FILE);
 
-  if (!read) throw new Error('The mesh could not be read.');
+  if (!read) throw new Error('The mesh couldn’t be read.');
 
   const sewing = new oc.BRepBuilderAPI_Sewing(SEW_TOLERANCE, true, true, true, false);
 

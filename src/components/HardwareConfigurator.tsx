@@ -225,7 +225,7 @@ const TypeTile: React.FC<{
       </span>
       <span
         className={`block mt-[6px] text-center text-[12.5px] font-medium truncate transition-colors duration-150 ${
-          selected ? 'text-white/90' : 'text-white/55 group-hover:text-white/80'
+          selected ? 'text-white/90' : 'text-white/60 group-hover:text-white/90'
         }`}
       >
         {label}

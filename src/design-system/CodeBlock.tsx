@@ -49,7 +49,7 @@ const Lines: React.FC<{ lines: Token[][]; numbered?: boolean }> = ({ lines, numb
         {lines.map((_, i) => `${i + 1}\n`).join('')}
       </div>
     )}
-    <code className="block whitespace-pre text-white/80">
+    <code className="block whitespace-pre text-white/90">
       {lines.map((tokens, i) => (
         <Line key={i} tokens={tokens} />
       ))}

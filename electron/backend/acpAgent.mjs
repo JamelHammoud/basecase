@@ -3,6 +3,7 @@ import { Readable, Writable } from 'node:stream';
 import { ClientSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclientprotocol/sdk';
 import { agentEnv, anchorArgs, resolveCommand } from './agentProcess.mjs';
 import { createClientHandler } from './acpClientHandler.mjs';
+import { NOT_CONNECTED, agentFailure, plainAgentError } from './agentFailure.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { agentCwd, agentKindOf, agentProcessArgs, agentProcessEnv } from './agentProfiles.mjs';
@@ -146,13 +147,30 @@ export class AcpAgent {
       await this.control.startLearning(await this.createSession(DEFAULT_WORKSPACE));
       this.signIn = null;
     } catch (err) {
-      const methods = signInMethods(this.authMethods);
-      const apiKey = acceptsApiKey(this.authMethods);
+      const signIn = this.signInFor(err);
 
-      if (!isAuthError(err) || (!methods.length && !apiKey)) throw err;
+      if (!signIn) throw err;
 
-      this.signIn = { methods, apiKey, message: String(err?.message ?? '') };
+      this.signIn = signIn;
     }
+  }
+
+  signInFor(err) {
+    const methods = signInMethods(this.authMethods);
+    const apiKey = acceptsApiKey(this.authMethods);
+
+    if (!isAuthError(err) || (!methods.length && !apiKey)) return null;
+
+    return { methods, apiKey, message: String(err?.message ?? '') };
+  }
+
+  noteSignIn(err) {
+    const signIn = this.signInFor(err);
+
+    if (!signIn || this.signIn || !this.connected) return;
+
+    this.signIn = signIn;
+    this.emit({ type: 'acp-status', status: this.status() });
   }
 
   async authenticate(methodId) {
@@ -215,7 +233,7 @@ export class AcpAgent {
     } catch (err) {
       this.connected = false;
       this.download = null;
-      this.error = String(err?.message ?? err);
+      this.error = agentFailure(err, this.status().agentName);
     }
 
     if (attempt === this.attempts) this.connecting = false;
@@ -271,7 +289,7 @@ export class AcpAgent {
   }
 
   requireConnection() {
-    if (!this.connection) throw new Error(this.error || 'The agent is not connected');
+    if (!this.connection) throw new Error(this.error || 'The agent isn’t connected.');
   }
 
   async ensureSession(workspaceId = DEFAULT_WORKSPACE) {
@@ -279,9 +297,9 @@ export class AcpAgent {
 
     if (!this.connected || !this.connection) await this.connect();
 
-    this.requireConnection();
+    if (!this.connected || !this.connection) throw new Error(NOT_CONNECTED);
 
-    if (this.signIn) throw new Error(`Sign in to ${this.status().agentName} first.`);
+    if (this.signIn) throw new Error(`Sign in to ${this.status().agentName} from the Agent tab.`);
 
     return this.sessionOf(workspaceId) ?? (await this.createSession(workspaceId));
   }
@@ -414,6 +432,16 @@ export class AcpAgent {
   }
 
   async sendPrompt(payload) {
+    try {
+      return await this.runPrompt(payload);
+    } catch (err) {
+      this.noteSignIn(err);
+
+      throw plainAgentError(err, this.status().agentName);
+    }
+  }
+
+  async runPrompt(payload) {
     const sessionId = await this.ensureSession(payload.workspaceId);
     const key = safeWorkspace(payload.workspaceId);
 
@@ -435,7 +463,7 @@ export class AcpAgent {
         ...this.libraryState(),
       };
     } catch (err) {
-      this.endRun(key, { error: String(err?.message ?? err) });
+      this.endRun(key, { error: agentFailure(err, this.status().agentName) });
 
       throw err;
     }

@@ -28,7 +28,7 @@ export const ArmSizingSheet: React.FC<{
         <ul className="space-y-1.5">
           {targets.map((t) => (
             <li key={t.id} data-arm-target={t.id} className="flex items-center justify-between gap-3 text-[13px]">
-              <span className="text-white/70 truncate">{t.name}</span>
+              <span className="text-white/60 truncate">{t.name}</span>
               <span className="text-white/50 tabular-nums shrink-0">{coordinates(t.at)}</span>
             </li>
           ))}

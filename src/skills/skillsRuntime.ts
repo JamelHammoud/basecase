@@ -2,7 +2,7 @@ import type { HandoffResult } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import type { Skill } from './artifacts';
-import type { ForgeRunner, SkillSave } from './forgeRunner';
+import { lastError, type ForgeRunner, type SkillSave } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
 import type { KitWarm } from './motorKit';
 import { errorMessage } from '../utils/errorMessage';
@@ -13,7 +13,7 @@ import type { SkillPorts, SkillsJob } from './skillsJob';
 import { SkillCoach } from './skillsCoach';
 import { SkillStress } from './skillsStress';
 import type { StressResult } from './stress';
-import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
+import { skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, refusalModel, type SkillJob, type SkillRefusal, type SkillTarget } from './skillRows';
 import {
   NO_SNAPSHOT_STORE,
@@ -29,6 +29,9 @@ import { raceSummary } from './teach';
 import type { ForgeProgress } from './trainerForge';
 import type { Environment } from './environment';
 import { runTries, type TriesPlan } from './triesRun';
+import { backgroundWork, designOf, kitWork, moveWork, recheckWork, type TrainingHost } from './skillsTraining';
+
+export { designOf };
 
 export interface ForgeFactoryOptions {
   background: boolean;
@@ -68,10 +71,9 @@ interface Run {
   label: string;
   message?: string;
   background: boolean;
+  model?: SimModel;
   work: (forge: ForgeRunner, signal: AbortSignal) => Promise<void>;
 }
-
-export const designOf = (model: SimModel) => model.robots[0]?.key ?? 'scene';
 
 const refused = (reason: string): HandoffResult => ({ skill: null, proof: null, reason });
 
@@ -87,6 +89,7 @@ export class SkillsRuntime {
   private background: AbortController | null = null;
   private pending: { model: SimModel; tasks: BackgroundTask[] } | null = null;
   private trails = new Map<SkillTarget, SnapshotTrail>();
+  private forgeErrors = new Map<SkillTarget, string>();
 
   private deps: RuntimeDeps;
   readonly coach: SkillCoach;
@@ -134,6 +137,10 @@ export class SkillsRuntime {
     return !!this.user;
   }
 
+  get training(): string | null {
+    return this.user ? this.userLabel : null;
+  }
+
   draftOf(id: string) {
     return this.drafts.get(id) ?? null;
   }
@@ -153,7 +160,8 @@ export class SkillsRuntime {
       target: `kit:${entry}`,
       label: KIT_LABELS[entry],
       background: false,
-      work: (forge, signal) => this.kitWork(model, entry, { forge, signal }),
+      model,
+      work: (forge, signal) => kitWork(this.host(), { model, entry }, { forge, signal }),
     });
 
     return null;
@@ -168,7 +176,8 @@ export class SkillsRuntime {
       target: `kit:${entry}`,
       label: KIT_LABELS[entry],
       background: false,
-      work: (forge, signal) => this.kitWork(model, entry, { forge, signal, warm }),
+      model,
+      work: (forge, signal) => kitWork(this.host(), { model, entry }, { forge, signal, warm }),
     });
 
     return null;
@@ -181,7 +190,8 @@ export class SkillsRuntime {
       target: `move:${animation.id}`,
       label: animation.name,
       background: false,
-      work: (forge, signal) => this.moveWork(model, animation, { forge, signal }),
+      model,
+      work: (forge, signal) => moveWork(this.host(), { model, animation }, { forge, signal }),
     });
 
     return null;
@@ -194,7 +204,8 @@ export class SkillsRuntime {
       target: task.target,
       label: task.label,
       background: false,
-      work: (forge, signal) => this.recheckWork(model, task, { forge, signal }),
+      model,
+      work: (forge, signal) => recheckWork(this.host(), { model, task }, { forge, signal }),
     });
 
     return null;
@@ -313,6 +324,17 @@ export class SkillsRuntime {
     return { forge: failForge, save: this.deps.save };
   }
 
+  private host(): TrainingHost {
+    return {
+      runner: this.deps.runner,
+      loadSkill: this.deps.loadSkill,
+      ports: () => this.ports(),
+      keep: (target, record) => this.keep(target, record),
+      forgeError: (target) => this.forgeErrors.get(target),
+      refuse: (target, model, refusal) => this.refuse(target, model, refusal),
+    };
+  }
+
   private async keep(target: SkillTarget, record: SkillRecord) {
     const refs = trailRefs(this.trails.get(target) ?? NO_SNAPSHOTS);
     const kept = refs.length ? await (this.deps.snapshots ?? NO_SNAPSHOT_STORE).keep(record.hash, refs) : [];
@@ -337,65 +359,8 @@ export class SkillsRuntime {
     };
   }
 
-  private async kitWork(
-    model: SimModel,
-    entry: TrainedEntry,
-    ports: { forge: ForgeRunner; signal: AbortSignal; warm?: KitWarm },
-  ) {
-    const { warm, ...rest } = ports;
-    const reply = await this.deps.runner(
-      { type: 'kit', model, design: designOf(model), entry, ...(warm ? { warm } : {}) },
-      { ...this.ports(), ...rest },
-    );
-    const { outcome } = reply;
-
-    if (outcome.kind === 'skill') return this.keep(`kit:${entry}`, skillRecord(outcome.skill, { kit: entry }));
-
-    if (outcome.evidence)
-      this.deps.onRefused?.(`kit:${entry}`, { line: refusedLine(outcome.evidence), model: refusalModel(model) });
-  }
-
-  private async moveWork(
-    model: SimModel,
-    animation: RobotAnimation,
-    ports: { forge: ForgeRunner; signal: AbortSignal },
-  ) {
-    const reply = await this.deps.runner(
-      { type: 'move', model, design: designOf(model), animation },
-      { ...this.ports(), ...ports },
-    );
-    const { outcome, environment } = reply.outcome;
-
-    if (outcome.kind === 'skill')
-      await this.keep(
-        `move:${animation.id}`,
-        skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }),
-      );
-  }
-
-  private retrain(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
-    if (task.move) return this.moveWork(model, task.move, ports);
-
-    return task.entry ? this.kitWork(model, task.entry, ports) : Promise.resolve();
-  }
-
-  private async recheckWork(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
-    const skill = await this.deps.loadSkill(task.record.hash);
-    const environment = recordEnvironment(task.record, model, task.move ? [task.move] : []);
-
-    if (!skill || !environment) return this.retrain(model, task, ports);
-
-    const job = { type: 'recheck' as const, model, design: designOf(model), skill, environment };
-    const reply = await this.deps.runner(job, { ...this.ports(), ...ports });
-
-    if (!reply.skill) return this.retrain(model, task, ports);
-
-    const move = task.move ? moveTag(task.move.id, environment) : undefined;
-
-    await this.keep(
-      task.target,
-      skillRecord(reply.skill, { kit: task.entry, move, coach: task.record.coach ?? undefined }),
-    );
+  private refuse(target: SkillTarget, model: SimModel, { line, signal }: { line: string; signal: AbortSignal }) {
+    if (!signal.aborted) this.deps.onRefused?.(target, { line, model: refusalModel(model) });
   }
 
   private setJob(target: SkillTarget, patch: Partial<SkillJob> | null) {
@@ -422,6 +387,9 @@ export class SkillsRuntime {
 
       const outcome = await forge(job);
 
+      if (outcome.ok) this.forgeErrors.delete(run.target);
+      else if (!signal.aborted) this.forgeErrors.set(run.target, lastError(outcome));
+
       this.setJob(run.target, { message: 'Checking in Arena', share: null });
 
       return outcome;
@@ -443,10 +411,13 @@ export class SkillsRuntime {
 
     try {
       await run.work(this.forgeFor(run, controller.signal), controller.signal);
-    } catch {
+    } catch (error) {
+      if (run.model) this.refuse(run.target, run.model, { line: errorMessage(error), signal: controller.signal });
+
       controller.abort();
     } finally {
       this.user = null;
+      this.forgeErrors.delete(run.target);
       this.trails.delete(run.target);
       this.setJob(run.target, null);
       void this.drainBackground();
@@ -462,10 +433,7 @@ export class SkillsRuntime {
         target: task.target,
         label: task.label,
         background: true,
-        work: (forge, signal) =>
-          task.kind === 'recheck'
-            ? this.recheckWork(model, task, { forge, signal })
-            : this.retrain(model, task, { forge, signal }),
+        work: (forge, signal) => backgroundWork(this.host(), { model, task }, { forge, signal }),
       };
 
       this.background = controller;
@@ -484,6 +452,7 @@ export class SkillsRuntime {
         controller.abort();
       }
 
+      this.forgeErrors.delete(run.target);
       this.trails.delete(run.target);
       this.setJob(run.target, null);
 

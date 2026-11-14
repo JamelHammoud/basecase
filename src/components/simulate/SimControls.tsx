@@ -33,7 +33,7 @@ const RunningControls: React.FC<{ sim: Simulation }> = ({ sim }) => (
       disabled={sim.status !== 'ready'}
       onClick={() => sim.reset()}
     />
-    <div className="flex-1 min-w-0 pl-1 text-[13px] tabular text-white/80">
+    <div className="flex-1 min-w-0 pl-1 text-[13px] tabular text-white/90">
       {sim.status === 'loading' ? <span className="text-white/50">Loading…</span> : runClock(sim.stats?.time ?? 0)}
       {sim.playing && sim.stats && sim.stats.rtf < 0.9 && (
         <span className="ml-2 text-[12px] text-white/50">{sim.stats.rtf.toFixed(1)}× real time</span>

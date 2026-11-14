@@ -103,14 +103,18 @@ function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefine
   return refused ? { kind: 'untrained', refused } : { kind: 'untrained' };
 }
 
-function kitRows(input: RowInput): RowBase[] {
+function refusals(input: RowInput) {
   const current = Object.keys(input.refusals ?? {}).length ? refusalModel(input.model) : null;
 
-  const refusalFor = (target: SkillTarget) => {
+  return (target: SkillTarget) => {
     const refusal = input.refusals?.[target];
 
     return refusal && refusal.model === current ? refusal.line : undefined;
   };
+}
+
+function kitRows(input: RowInput): RowBase[] {
+  const refusalFor = refusals(input);
 
   return kitEntries(input.model).map((entry) => {
     const target: SkillTarget = `kit:${entry}`;
@@ -136,6 +140,8 @@ function kitRows(input: RowInput): RowBase[] {
 }
 
 function moveRows(input: RowInput): RowBase[] {
+  const refusalFor = refusals(input);
+
   return moveAnimations(input.model, input.animations ?? []).map((move) => {
     const target: SkillTarget = `move:${move.id}`;
     const found = best(
@@ -152,6 +158,7 @@ function moveRows(input: RowInput): RowBase[] {
       state: stateOf(
         found,
         input.jobs.find((j) => j.target === target),
+        refusalFor(target),
       ),
       drives: false,
     };

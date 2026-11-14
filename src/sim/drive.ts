@@ -83,6 +83,8 @@ class ArmDrive implements DriveLoop {
 
   private side: V3 = [1, 0, 0];
 
+  private held = true;
+
   constructor(setup: ArmSetup) {
     this.setup = setup;
     this.hand = { part: setup.part, point: setup.point };
@@ -106,8 +108,7 @@ class ArmDrive implements DriveLoop {
 
     if (measured) this.values = Object.fromEntries(this.setup.joints.map((id) => [id, measured[id] ?? 0]));
 
-    this.goal = tipOf(this.setup, this.values);
-    this.aim = [...this.goal];
+    this.hold();
   }
 
   private follow(c: DriveCommand) {
@@ -115,8 +116,13 @@ class ArmDrive implements DriveLoop {
 
     this.cmd = c;
     this.values = { ...this.values, ...Object.fromEntries(given) };
+    this.hold();
+  }
+
+  private hold() {
     this.goal = tipOf(this.setup, this.values);
     this.aim = [...this.goal];
+    this.held = true;
   }
 
   private speed() {
@@ -126,7 +132,7 @@ class ArmDrive implements DriveLoop {
   private moveAim() {
     const { v, aux, target } = this.cmd;
 
-    if (target) return;
+    if (target || !isMoving(this.cmd)) return;
 
     const step = this.speed() * CONTROL_DT;
 
@@ -148,7 +154,7 @@ class ArmDrive implements DriveLoop {
     this.aim = offset.map((x, i) => anchor[i] + x * scale) as V3;
   }
 
-  private moveGoal() {
+  private moveGoal(): boolean {
     const offset = this.aim.map((x, i) => x - this.goal[i]);
     const length = Math.hypot(...offset);
     const step = this.speed() * CONTROL_DT;
@@ -156,10 +162,12 @@ class ArmDrive implements DriveLoop {
     if (length <= step) {
       this.goal = [...this.aim];
 
-      return;
+      return length > 0;
     }
 
     this.goal = this.goal.map((x, i) => x + (offset[i] / length) * step) as V3;
+
+    return true;
   }
 
   tick(time: number): DriveOutput {
@@ -167,7 +175,10 @@ class ArmDrive implements DriveLoop {
 
     this.nextAt = time + CONTROL_DT;
     this.moveAim();
-    this.moveGoal();
+
+    if (this.moveGoal()) this.held = false;
+
+    if (this.held) return { values: this.output() };
 
     const { rig, joints } = this.setup;
     const solved = solveIK(rig, this.values, this.targets(), {

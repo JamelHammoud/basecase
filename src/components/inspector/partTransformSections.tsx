@@ -20,6 +20,7 @@ import type { PartSectionProps } from './partSections';
 import { materialOptions, materialPatch, materialValue, type InspectorProps, type Phase } from './types';
 import { sheetChoice } from '../../sheet/materials';
 import { keyFor } from '../../app/shortcuts';
+import { percent } from '../../../electron/percent.mjs';
 
 export const PositionSection: React.FC<
   PartSectionProps & Pick<InspectorProps, 'snapStepMm' | 'onDropToFloor' | 'onStack' | 'onCenter'>
@@ -155,7 +156,7 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
           step={0.05}
           defaultValue={0}
           value={d.roundness || 0}
-          format={(v) => `${Math.round(v * 100)}%`}
+          format={percent}
           onChange={setRound}
         />
       )}
@@ -166,7 +167,7 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
         step={0.05}
         defaultValue={0}
         value={d.taper || 0}
-        format={(v) => `${Math.round(v * 100)}%`}
+        format={percent}
         onChange={(v, l) => setDeformer('taper', v, l)}
       />
       <Slider

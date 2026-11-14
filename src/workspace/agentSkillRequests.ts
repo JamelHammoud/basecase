@@ -13,6 +13,7 @@ import { skillRows, type SkillRow } from '../skills/skillRows';
 import { designOf, type SkillsRuntime } from '../skills/skillsRuntime';
 import type { DraftGoal } from '../skills/teachEnvironment';
 import type { DraftInput, DraftReport } from '../skills/teach';
+import { percent } from '../../electron/percent.mjs';
 import { coachLines, coachRequest } from './agentCoachRequests';
 
 export interface SkillToolContext {
@@ -180,7 +181,7 @@ function stateText(row: SkillRow): string {
 
   if (state.kind === 'untrained') return 'needs training';
 
-  const share = state.share === null ? '' : ` ${Math.round(state.share * 100)}%`;
+  const share = state.share === null ? '' : ` ${percent(state.share)}`;
 
   return `${state.background ? 'retraining in the background' : 'training'}${share} (${state.message})`;
 }

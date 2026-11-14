@@ -5,6 +5,7 @@ import { settledWrites } from './pendingWrites.mjs';
 import { lineMemory, reportLines } from './repeatLines.mjs';
 import { VIEW, bridge, fail, text } from './shared.mjs';
 import { plural } from '../plural.mjs';
+import { percent } from '../percent.mjs';
 
 function legendText(res) {
   const rows = (res.legend ?? []).map((l) => `${l.label} ${l.id}${l.name && l.name !== l.id ? ` (${l.name})` : ''}`);
@@ -142,7 +143,7 @@ function interferenceText(it) {
     return `${it.screw.id} ↔ ${it.screw.into}: the screw runs up to ${it.depthMm} mm into ${it.screw.into}. Catalog parts model their real holes, so line the screw up with the hole (or shorten it if it bottoms out).`;
   }
 
-  const share = it.fraction >= 0.01 ? ` (${Math.round(it.fraction * 100)}% of the smaller part inside)` : '';
+  const share = it.fraction >= 0.01 ? ` (${percent(it.fraction)} of the smaller part inside)` : '';
 
   return `${it.a} ↔ ${it.b}: pass through each other, up to ${it.depthMm} mm deep${share}. Cut a pocket or hole, move one, or resize.`;
 }

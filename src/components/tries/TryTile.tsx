@@ -31,6 +31,31 @@ interface TryTileProps {
   onMenu: (e: React.MouseEvent) => void;
 }
 
+const TileCaption: React.FC<{ summary: TrySummary }> = ({ summary }) => {
+  const outcome = OUTCOME[summary.outcome.verdict];
+  const badge = TRY_SOURCE_BADGE[summary.source];
+  const title = summary.caseName ?? summary.task ?? summary.origin;
+  const origin = summary.origin !== title ? summary.origin : null;
+
+  return (
+    <div className="px-0.5 min-w-0">
+      <div className="text-[13px] font-medium text-white/90 truncate">{title}</div>
+      <div className="flex items-center gap-2 text-[12.5px]">
+        {outcome && (
+          <span className={summary.outcome.verdict === 'passed' ? 'text-white/85' : 'text-[#f87171]'}>{outcome}</span>
+        )}
+        <span className="text-white/50 tabular">{runClock(summary.seconds)}</span>
+        {origin && (
+          <span data-testid="try-origin" className="text-white/50 truncate min-w-0">
+            {origin}
+          </span>
+        )}
+        {badge && <Badge>{badge}</Badge>}
+      </div>
+    </div>
+  );
+};
+
 export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPick, onMenu }) => {
   const tile = useRef<HTMLButtonElement | null>(null);
   const seen = useSeen(tile);
@@ -41,8 +66,6 @@ export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPi
     scene?.world ?? NONE,
   );
   const film = useStoredStrip(summary.id, seen && summary.strip) ?? drawn;
-  const outcome = OUTCOME[summary.outcome.verdict];
-  const badge = TRY_SOURCE_BADGE[summary.source];
 
   return (
     <button
@@ -60,16 +83,7 @@ export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPi
       <div className="h-14 rounded-[6px] bg-white/[0.04] overflow-hidden">
         {film && <img src={film} alt="" className="w-full h-full object-cover" draggable={false} />}
       </div>
-      <div className="px-0.5 min-w-0">
-        <div className="text-[13px] font-medium text-white/90 truncate">{summary.caseName}</div>
-        <div className="flex items-center gap-2 text-[12.5px]">
-          {outcome && (
-            <span className={summary.outcome.verdict === 'passed' ? 'text-white/85' : 'text-[#f87171]'}>{outcome}</span>
-          )}
-          <span className="text-white/50 tabular">{runClock(summary.seconds)}</span>
-          {badge && <Badge>{badge}</Badge>}
-        </div>
-      </div>
+      <TileCaption summary={summary} />
     </button>
   );
 };

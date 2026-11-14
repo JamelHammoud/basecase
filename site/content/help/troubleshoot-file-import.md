@@ -1,7 +1,7 @@
 ---
 title: STEP or mesh file doesn't import
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 1
@@ -76,3 +76,5 @@ Basecase doesn't read that kind of file. The web studio doesn't read STEP and IG
 
 1. Check the file ends in one of the extensions above.
 2. For STEP or IGES, open the scene in the desktop app.
+
+A `.mcap` file, or a zip or folder holding a LeRobot dataset, comes in as tries. When one of those can't be read, the message says what's wrong with it. [Import robot data as tries](/help/import-robot-data-as-tries) lists what Basecase reads.

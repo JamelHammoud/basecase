@@ -1,7 +1,7 @@
 ---
 title: Import a file
 date: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: task
 order: 15
@@ -30,6 +30,8 @@ keywords:
   - svg
   - urdf
   - bvh
+  - mcap
+  - lerobot
   - import mesh
   - thingiverse
   - printables
@@ -68,6 +70,8 @@ An SVG opens the Import SVG panel with the drawing loaded. Set its width and thi
 ![The Import SVG panel with a drawing loaded](/help/import-a-file/svg.png)
 
 A URDF, MJCF or zip, such as an exported Robot Package, comes in as a robot with its joints.
+
+A `.mcap` recording, or a zip holding a LeRobot dataset, comes in as tries on the robot in the scene, as in [Import robot data as tries](/help/import-robot-data-as-tries).
 
 A BVH motion file opens the retarget sheet for the selected robot. Images become reference images, and a `.basecase` file opens in a new tab.
 

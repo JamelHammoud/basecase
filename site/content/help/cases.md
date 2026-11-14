@@ -1,7 +1,7 @@
 ---
 title: Cases
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: concept
 order: 2
@@ -58,6 +58,8 @@ You take a try by driving the robot through the Case yourself. Basecase records 
 A wheeled or legged robot can also try a Case for real, on the Case printed as a floor mat. A camera tracks it, and the same contract judges the run. Steps are in [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results count them on that try's row.
+
+Tries can also come from teleop data recorded elsewhere, as in [Import robot data as tries](/help/import-robot-data-as-tries). An imported try has no Case, so it's never scored.
 
 Tries stay on this computer, and so does a value the Case's code keeps, such as a high score. A `.basecase` file you share carries the Case but neither of these. The Library lists the tries from every scene, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows.
 

@@ -1,7 +1,7 @@
 ---
 title: Import a robot
 date: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: task
 order: 16
@@ -64,6 +64,8 @@ Robots you imported come first, under **Imported**, so you can insert them again
 - Robot parts are never printed or resized.
 
 Robots exported from Fusion 360 with fusion2urdf, and ROS description packages written in xacro, import the same way. Choose the package folder, drop it on the canvas, or paste its repo link. Basecase reads the top-level `.xacro` or `.urdf.xacro` file, follows its includes inside the package, and fills in its properties, macros and `xacro:arg` defaults. When the package also has a plain `.urdf`, that file is used instead. If a xacro needs something Basecase can't fill in, like a YAML file or an environment variable, the import stops and names the file.
+
+A Hugging Face dataset link, or a folder or zip holding a LeRobot dataset or a ROS 2 recording, comes in as tries on the robot in the scene instead. Steps are in [Import robot data as tries](/help/import-robot-data-as-tries).
 
 Links must be https. A zip link downloads up to 200 MB, and a zip unpacks up to 600 MB and 20,000 files. A link with no robot description shows one toast naming the link.
 

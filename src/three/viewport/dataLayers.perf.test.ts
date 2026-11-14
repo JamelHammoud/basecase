@@ -46,19 +46,22 @@ function fastest(colorBy: string | null) {
   const layers = new DataLayers(new THREE.Group());
   const clouds = [cloud(0), cloud(1)];
   const times: number[] = [];
+  let last = track(clouds[1], 0);
 
-  layers.update(input([track(clouds[1], 0)], colorBy));
+  layers.update(input([last], colorBy));
 
   for (let i = 1; i <= RUNS; i++) {
+    last = track(clouds[i % 2], i);
+
     const started = performance.now();
 
-    layers.update(input([track(clouds[i % 2], i)], colorBy));
+    layers.update(input([last], colorBy));
     times.push(performance.now() - started);
   }
 
   const idle = performance.now();
 
-  layers.update(input([track(clouds[0], RUNS)], colorBy));
+  layers.update(input([last], colorBy));
 
   return { update: Math.min(...times), idle: performance.now() - idle };
 }

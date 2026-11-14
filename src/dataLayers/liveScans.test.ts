@@ -52,13 +52,16 @@ describe('live LiDAR scans on the canvas', () => {
     expect(layers.state()[0]).toMatchObject({ points: 2 });
   });
 
-  it('gives each LiDAR its own scanner slot’s hits when one is left out', () => {
+  it('numbers scanner slots over the LiDARs whose body resolves, as the scanner does', () => {
     const kept = scanSources(model([eye('loose', 'gone'), eye('front', 'base'), eye('top', 'mast')]), []);
-    const points = Float32Array.from({ length: 12 }, (_, i) => i);
-    const [front, top] = liveScanPoints(kept, points, [1, 2, 1]);
+    const points = Float32Array.from({ length: 9 }, (_, i) => i);
+    const [front, top] = liveScanPoints(kept, points, [1, 2]);
 
-    expect(kept.map((s) => s.slot)).toEqual([1, 2]);
-    expect([...front.points]).toEqual([3, 4, 5, 6, 7, 8]);
-    expect([...top.points]).toEqual([9, 10, 11]);
+    expect(kept.map((s) => [s.slot, s.offset])).toEqual([
+      [0, 0],
+      [1, 2],
+    ]);
+    expect([...front.points]).toEqual([0, 1, 2]);
+    expect([...top.points]).toEqual([3, 4, 5, 6, 7, 8]);
   });
 });

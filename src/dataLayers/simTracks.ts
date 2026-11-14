@@ -22,28 +22,26 @@ export interface ScanSource {
 export const scanLayerId = (part: string) => `scan:${part}`;
 
 export function scanSources(model: SimModel, parts: ScenePart[]): ScanSource[] {
+  const placed = (model.scans ?? [])
+    .map((eye) => ({ eye, body: model.bodies.findIndex((b) => b.name === eye.body) }))
+    .filter((p) => p.body >= 0);
   let offset = 0;
 
-  return (model.scans ?? []).flatMap((eye, slot) => {
+  return placed.map(({ eye, body }, slot) => {
     const part = parts.find((p) => p.id === eye.part);
-    const body = model.bodies.findIndex((b) => b.name === eye.body);
     const at = offset;
 
     offset += eye.cols * eye.rows;
 
-    if (body < 0) return [];
-
-    return [
-      {
-        id: scanLayerId(eye.part),
-        name: part?.name ?? eye.part,
-        owner: part?.group?.id ?? eye.part,
-        eye,
-        body,
-        offset: at,
-        slot,
-      },
-    ];
+    return {
+      id: scanLayerId(eye.part),
+      name: part?.name ?? eye.part,
+      owner: part?.group?.id ?? eye.part,
+      eye,
+      body,
+      offset: at,
+      slot,
+    };
   });
 }
 

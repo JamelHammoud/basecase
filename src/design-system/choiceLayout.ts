@@ -1,31 +1,49 @@
 import type React from 'react';
 
 export const CHOICE_GAP_PX = 2;
-export const CHOICE_PADDING_PX = { row: 12, stacked: 4 };
+export const CHOICE_PADDING_PX = { row: 12, stacked: 0 };
 
-const ICON_PX = 22;
+const ICON_BESIDE_PX = 18;
 const FIT_MARGIN_PX = 1;
 
 const GLYPH_EM = new Map(
   (
     [
-      ['W%', 0.99],
-      ['Mm', 0.9],
+      ['W', 0.99],
+      ['%', 0.97],
+      ['m', 0.9],
+      ['M', 0.89],
       ['w', 0.81],
       ['OQØ', 0.78],
-      ['HNGU', 0.76],
-      ['DC&', 0.74],
-      ['XAVKYBRZ', 0.7],
-      ['SPT#+×0123456789', 0.66],
-      ['bdpqg', 0.63],
-      ['Ehonu', 0.61],
-      ['eFLcaky', 0.59],
-      ['Jvzxs', 0.57],
+      ['GHN', 0.76],
+      ['U', 0.75],
+      ['D', 0.74],
+      ['C&', 0.73],
+      ['AVX', 0.7],
+      ['BKY', 0.68],
+      ['RZ', 0.67],
+      ['S', 0.66],
+      ['PT0123456789#+×', 0.65],
+      ['bdgpq', 0.63],
+      ['hoE', 0.61],
+      ['nu', 0.6],
+      ['eF', 0.59],
+      ['L', 0.58],
+      ['ackyJ', 0.57],
+      ['v', 0.56],
+      ['xz', 0.55],
+      ['s', 0.54],
       ['?', 0.53],
       ['-', 0.48],
-      ['rt()f', 0.41],
-      ["!/,;:.'", 0.33],
-      ['Il|ij ', 0.29],
+      ['r', 0.41],
+      ['()', 0.4],
+      ['t', 0.39],
+      ['f', 0.38],
+      ['!', 0.33],
+      ["/,;:.'", 0.32],
+      ['I', 0.29],
+      ['| ', 0.28],
+      ['ijl', 0.27],
     ] as const
   ).flatMap(([glyphs, em]) => [...glyphs].map((glyph) => [glyph, em] as const)),
 );
@@ -47,7 +65,7 @@ export function choiceMinCell({ labels, stacked, icons }: Omit<ChoiceTrack, 'col
   if (!texts.length) return 0;
 
   const widest = Math.max(...texts.map((text) => labelWidth(text, stacked ? 12 : 13)));
-  const beside = icons && !stacked ? ICON_PX : 0;
+  const beside = icons && !stacked ? ICON_BESIDE_PX : 0;
 
   return Math.ceil(widest + (stacked ? CHOICE_PADDING_PX.stacked : CHOICE_PADDING_PX.row) + beside + FIT_MARGIN_PX);
 }

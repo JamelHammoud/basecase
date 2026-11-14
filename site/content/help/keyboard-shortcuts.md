@@ -27,9 +27,7 @@ covers:
   - electron/app-menu.mjs
 ---
 
-Every keyboard shortcut in Basecase is listed below, grouped by what you're doing, the same way the **Shortcuts** pane in Settings groups them.
-
-To open the **Shortcuts** pane, press [[?]] when you're not typing.
+Every keyboard shortcut in Basecase is below, grouped by what you're doing, the same way as in the **Shortcuts** pane in Settings. To open the **Shortcuts** pane, press [[?]] when you're not typing.
 
 ## Navigate
 
@@ -64,7 +62,7 @@ To open the **Shortcuts** pane, press [[?]] when you're not typing.
 | Stack on part below | [[S]] |
 | Move or rotate without snapping | [[⇧]] and drag |
 
-**Note:** To use the two Sculpt shortcuts, turn on **Sculpt** in **Settings** ▸ **Canvas**.
+**Note:** The two Sculpt shortcuts only work when **Sculpt** is turned on in **Settings** ▸ **Canvas**.
 
 ## Edit
 
@@ -85,9 +83,9 @@ To open the **Shortcuts** pane, press [[?]] when you're not typing.
 | Delete | [[⌫]] |
 | Deselect | [[Esc]] |
 
-To leave the open mode, clear anything smaller inside it, then press [[Esc]]. Sketch and Import SVG stay open as long as they hold a drawing.
+To leave the mode you're in, first clear anything smaller that's open inside it, then press [[Esc]]. Sketch and Import SVG stay open as long as they hold a drawing.
 
-In [Tries](/help/open-a-try-from-any-scene), [[⌫]] deletes the selected tries once you confirm. Keys without [[⌘]] leave the scene alone there.
+In [Tries](/help/open-a-try-from-any-scene), [[⌫]] deletes the selected tries after you confirm. While you're there, keys without [[⌘]] don't change the scene.
 
 ## Scenes
 
@@ -117,7 +115,7 @@ In [Tries](/help/open-a-try-from-any-scene), [[⌫]] deletes the selected tries 
 | Settings | [[⌘,]] |
 | Keyboard shortcuts | [[?]] |
 
-While a Case is running, [[⌘Z]], [[⇧⌘Z]], and [[⌘Y]] undo and redo changes to its code panels and nothing else. In a running Case, [[⌘I]] shows or hides the **Agent** tab next to it.
+While a Case is running, [[⌘Z]], [[⇧⌘Z]], and [[⌘Y]] only undo and redo changes to its code panels. [[⌘I]] shows or hides the **Agent** tab next to the running Case.
 
 ## Agent
 
@@ -131,6 +129,8 @@ These shortcuts work in the message field of the **Agent** tab.
 | Stop | [[Esc]] |
 | Slash commands | [[/]] |
 
-When you queue a message, it goes out as soon as the agent finishes what it's working on. To stop the agent with [[Esc]], clear the message field first. To open the slash commands, type a slash at the start of a message.
+- A queued message goes out as soon as the agent finishes what it's working on.
+- To stop the agent with [[Esc]], clear the message field first.
+- To open the slash commands, type a slash at the start of a message.
 
-For the trackpad and mouse, see [Trackpad and mouse controls](/help/trackpad-and-mouse-controls).
+For trackpad and mouse controls, see [Trackpad and mouse controls](/help/trackpad-and-mouse-controls).

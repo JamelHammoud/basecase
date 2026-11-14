@@ -27,35 +27,35 @@ covers:
   - src/components/simulate/ControlSection.tsx
 ---
 
-Put a six-joint SO-101 arm in a new scene, bend its joints, and run it under MuJoCo physics.
+Add a six-joint SO-101 arm to a new scene, bend its joints, and run it under MuJoCo physics. In the simulation, the arm holds the pose you set, and when you switch its motors off, it folds under its own weight.
 
-By the end, the arm holds a pose you set, then folds under its own weight when you switch its motors off. It works in the desktop app and the web studio. Basecase downloads the arm's model from GitHub, so you need an internet connection.
+You can follow these steps in the desktop app or the web studio. Basecase downloads the arm's model from GitHub, so you'll need an internet connection.
 
 ## Add the arm
 
 1. Click **+** after the last tab at the top of the window. A blank scene named Untitled opens.
-2. Click **Parts** in the view rail on the left, the first icon from the top.
+2. In the view rail on the left, click **Parts**. It's the first icon from the top.
 3. Under **Robots**, click **Arms**.
 4. Click **SO-101 Arm**.
 
-The arm appears on the canvas, selected. A toast at the bottom says how many joints it has.
+The arm appears on the canvas, selected. A toast at the bottom shows how many joints it has.
 
 ## Pose it
 
 1. Click **Pose** at the top of the right panel.
 2. Drag the slider in the first joint's row. The arm turns on the canvas as you drag.
-3. Click the number at the end of another joint's row, type `45`, and press [[↩]].
+3. Click the number at the end of another joint's row, type `45`, then press [[↩]].
 
-Double-click a slider to send its joint back to 0. Posing never changes the parts; it only moves them on the canvas.
+To send a joint back to 0, double-click its slider. Posing moves the parts on the canvas without changing them.
 
 ## Simulate it
 
 1. Click **Simulate** at the top of the right panel.
-2. Click the blue **Simulate** button. The arm starts under physics and holds the pose you set, while the clock beside the controls counts up.
-3. Under **Control**, choose **Limp**. The motors let go, and the arm folds down.
-4. Click **Reset** to start again from your pose.
-5. Click **Stop simulation** to go back to editing.
+2. Click the blue **Simulate** button. The arm starts running under physics and holds the pose you set. The clock beside the controls counts up.
+3. Under **Control**, choose **Limp**. The motors let go and the arm folds down.
+4. To start again from your pose, click **Reset**.
+5. To go back to editing, click **Stop simulation**.
 
-Your scene saves itself as you work. Press [[⌘O]] to find it again later in the Scenes menu.
+Basecase saves your scene as you work. To find it again later, press [[⌘O]] and look in the Scenes menu.
 
-Next, [design a robot with the agent](/help/design-a-robot-with-the-agent), or [get a robot ready to build](/help/get-a-robot-ready-to-build).
+Next, you can [design a robot with the agent](/help/design-a-robot-with-the-agent), or [get a robot ready to build](/help/get-a-robot-ready-to-build).

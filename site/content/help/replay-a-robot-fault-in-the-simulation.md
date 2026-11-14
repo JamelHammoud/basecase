@@ -24,11 +24,11 @@ covers:
   - src/sim/torqueShare.ts
 ---
 
-Turn the 20 seconds before a servo fault into a Case, and see in the simulation whether the design or the simulation was wrong.
+When a servo faults, you can turn the 20 seconds before the fault into a Case. Replay the Case in the simulation to find out whether the design or the simulation was wrong.
 
-Replay in Sim is offered only for a robot with an arm. It plays back the commands the robot's joints got.
+**Replay in Sim** is available only for a robot with an arm. It plays back the commands the robot's joints received.
 
-1. Connect the emulated robot and climb the **Ladder** to **Test**, as in [Connect an emulated robot](/help/connect-an-emulated-robot).
+1. Connect the emulated robot and climb the **Ladder** to **Test**. See [Connect an emulated robot](/help/connect-an-emulated-robot).
 2. In **Simulate**, click **Drive**.
 3. Move the arm. The robot follows the simulation.
 4. When a fault stops a motor, find its message in **Operate** under **Stopped by a fault**.
@@ -36,13 +36,15 @@ Replay in Sim is offered only for a robot with an arm. It plays back the command
 
    ![Operate showing a stall on servo 2, with Replay in Sim under the message](/help/replay-a-robot-fault-in-the-simulation/fault.png)
 
-6. Watch the replay. A Case named after the fault's time opens in **Simulate**, with the faulting joint's link selected, and plays once as a try.
-7. Read **Results**. **Peak torque** shows each joint's highest torque as a share of its stall torque, and the try shows **Passed** or **Missed**.
+6. Watch the replay. A Case named after the time of the fault opens in **Simulate**, with the link of the faulting joint selected. The Case plays once, as a try.
+7. Read **Results**. **Peak torque** shows the highest torque each joint reached, as a share of its stall torque. The try shows **Passed** or **Missed**.
 
    ![Results after the replay, with both joints at 100% and the try missed](/help/replay-a-robot-fault-in-the-simulation/results.png)
 
-The Case starts from the robot's first measured pose, then sends every command the robot got, at the same times. It passes when no joint reaches 98% of the most its servo can push, counted from 1.5 seconds in.
+The Case starts from the first pose measured on the robot, then sends every command the robot received, at the same times. Counting from 1.5 seconds in, the try passes if no joint reaches 98% of the most torque its servo can push.
 
-A miss means the design can't make that move with those servos. A stronger servo or a lighter arm fixes it, and the Case's row in **Build** ▸ **Checks** reruns after every change. A pass while the robot faulted means the simulation is off; [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) fits the joint.
+If the try is missed, the design can't make that move with those servos. Use a stronger servo or a lighter arm. The Case's row in **Build** ▸ **Checks** reruns after every change, so you can see when the fix works.
 
-After a fault, the simulation stops sending commands to the robot until you climb the **Ladder** again. A replay never moves the robot. The 20 seconds live in memory, and go when the message leaves **Operate**.
+If the try passes but the robot faulted, the simulation is off. To fit the joint, see [Calibrate an emulated robot](/help/calibrate-an-emulated-robot).
+
+**Note:** After a fault, the simulation stops sending commands to the robot until you climb the **Ladder** again. A replay never moves the robot. The 20 seconds live only in memory and are gone once the message leaves **Operate**.

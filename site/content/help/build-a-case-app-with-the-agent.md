@@ -25,20 +25,20 @@ covers:
   - electron/cad-agent-prompt.mjs
 ---
 
-Describe the controls you want for your robot, watch the agent build them into a running Case, and ask for changes while it runs.
+Describe the controls you want for your robot, and the agent builds them into a running Case. You can keep asking for changes while it runs.
 
-The agent works in the desktop app. Its panels can't move one joint on its own, drive a second robot or save a file in this version.
+**Note:** The agent works in the desktop app. In this version, its panels can't move one joint on its own, drive a second robot, or save a file.
 
-1. In the **Agent** tab, describe the app, such as “Make a remote for the rover with big Wave, Dance, Sit and Stop buttons, and its speed over the canvas.”
-2. Wait while the agent writes it. The Case opens running, and a panel reloads each time the agent fixes an error in it.
+1. In the **Agent** tab, describe the app. For example: “Make a remote for the rover with big Wave, Dance, Sit and Stop buttons, and its speed over the canvas.”
+2. Wait while the agent writes it. The Case opens and runs. Each time the agent fixes an error in a panel, that panel reloads.
 
 ![The rover Case running with a remote on the left, its speed over the canvas and the agent on the right](/help/build-a-case-app-with-the-agent/app.png)
 
-3. Use the app: press its buttons, or click **Try It** to start a try.
-4. In the **Agent** tab beside the Case, type a change, such as “Add a Spin button”, and press [[↩]]. Only the panel it changes reloads, so the robot and a running try keep going.
-5. Click **Undo** at the top right to take back the agent's last change. Each change it makes is one step.
-6. Click **Done** or press [[Esc]] to go back to the scene.
+3. Use the app. Press its buttons, or click **Try It** to start a try.
+4. In the **Agent** tab beside the Case, type a change, such as “Add a Spin button”, then press [[↩]]. Only the panel that changes reloads, so the robot and a running try keep going.
+5. To take back the agent's last change, click **Undo** at the top right. Each change the agent makes is one undo step.
+6. To go back to the scene, click **Done** or press [[Esc]].
 
-Outside a panel and a text field, [[⌘Z]] works like **Undo**, and [[⌘I]] shows or hides the agent.
+When you're not in a panel or a text field, [[⌘Z]] works like **Undo**, and [[⌘I]] shows or hides the agent.
 
-[Run a Case](/help/run-a-case) explains the panels a Case can show and how a code panel reaches the robot.
+To learn about the panels a Case can show and how a code panel reaches the robot, see [Run a Case](/help/run-a-case).

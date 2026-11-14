@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BomLine } from '../../utils/bomTypes';
-import { bomGroups, lineAmount, lineCount } from './buyLine';
+import { bomGroups, lineAmount, lineCount, ownedAmount } from './buyLine';
 
 const line = (o: Partial<BomLine>): BomLine => ({
   key: 'k',
@@ -8,6 +8,8 @@ const line = (o: Partial<BomLine>): BomLine => ({
   name: 'Servo',
   detail: '',
   qty: 2,
+  owned: 0,
+  toBuy: o.qty ?? 2,
   unit: 'pcs',
   partIds: [],
   urlKind: 'none',
@@ -72,5 +74,18 @@ describe('line quantities', () => {
 
     expect(lineCount(filament)).toBe('2×');
     expect(lineAmount(filament)).toBe('1,240 g');
+  });
+
+  it('counts what is left to buy past the parts on hand, and keeps a fully owned line at $0', () => {
+    expect(lineCount(line({ qty: 8, owned: 6, toBuy: 2 }))).toBe('2×');
+    expect(ownedAmount(line({ qty: 8, owned: 6, toBuy: 2 }))).toBe('6 on hand');
+    expect(ownedAmount(line({ unit: 'g', qty: 1240, owned: 1000, toBuy: 240 }))).toBe('1,000 g on hand');
+    expect(ownedAmount(line({}))).toBe('');
+
+    const owned = line({ qty: 13, owned: 13, toBuy: 0, packs: 0, lineUsd: 0 });
+    const [group] = bomGroups({ lines: [owned] });
+
+    expect(lineCount(owned)).toBe('0×');
+    expect(group).toMatchObject({ usd: 0, estimated: false });
   });
 });

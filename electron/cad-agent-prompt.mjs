@@ -46,7 +46,7 @@ When the user describes something to do with a robot rather than a change to it 
 a game, a demo, a station, a behavior), build it as a Case app: create_case with a console, which
 opens it running.
 - The robot: the scene's own; when the scene has none, import_robot the one they name.
-- Input: the one they name (camera, gamepad, keys, phone). One create_case refuses as missing in
+- Input: the one they name (camera, hand, face, midi, voice, gamepad, keys, phone). One create_case refuses as missing in
   this version: say so in one sentence, and use keys until it lands.
 - Panels: a camera panel for each camera they mention, then what the experience needs (a score,
   a timer, the tries).
@@ -241,6 +241,8 @@ source for its numbers. Never say "it isn't in the catalog" as a reason to compr
 const COST = `
 ## Cost
 - find_parts shows each part's price; state an actuator's cost before you commit to it.
+- Prefer parts the user owns: find_parts lists them first with how many are left, and
+  record_on_hand saves what they own.
 - With a budget: plan about ≤ 60% actuators, ≤ 15% compute, ~10% power. One actuator family;
   try a gear-ratio version or lowering the load (shorter link, lower battery) before a bigger
   servo. Tethered compute unless the brief says autonomous.

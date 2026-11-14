@@ -57,8 +57,8 @@ export const AddButton: React.FC<{ onAdd: () => void; className?: string }> = ({
   </Tooltip>
 );
 
-const ACTIVE_FILL = '[--result-row-fill:color-mix(in_srgb,white_7%,var(--color-panel-bg))]';
-const RESTING_FILL =
+export const ACTIVE_FILL = '[--result-row-fill:color-mix(in_srgb,white_7%,var(--color-panel-bg))]';
+export const RESTING_FILL =
   '[--result-row-fill:var(--color-panel-bg)] hover:[--result-row-fill:color-mix(in_srgb,white_5%,var(--color-panel-bg))]';
 
 export const ResultRow: React.FC<{

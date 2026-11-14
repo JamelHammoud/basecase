@@ -17,7 +17,7 @@ const Details: React.FC<{ asset: SimReadyAsset }> = ({ asset }) => (
     <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
       {asset.sizeMm && (
         <Stat label="Size" wide>
-          <SizeLine w={asset.sizeMm[0]} h={asset.sizeMm[1]} d={asset.sizeMm[2]} />
+          <SizeLine mm={asset.sizeMm} />
         </Stat>
       )}
       {asset.massKg !== null && <Stat label="Weight">{weight(asset.massKg * 1000)}</Stat>}

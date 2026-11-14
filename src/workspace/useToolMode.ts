@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { LeftTab } from '../components/LeftSidebar';
+import type { PartsReveal } from '../components/PartsPanel';
 import { isPlayTab, type PlayTab } from '../components/playViews';
 import type { StudioSubTab } from '../components/SculptAndDrawStudio';
 import type { MessageQuote, SculptSettings, TransformMode } from '../types/robotics';
@@ -23,13 +24,35 @@ interface ToolModeOptions {
 
 const SCENE_VIEWS: ReadonlySet<LeftTab> = new Set(['cases', 'routines']);
 
+function useLeftTab() {
+  const [leftTab, setShownLeftTab] = useState<LeftTab>('parts');
+  const [playTab, setPlayTab] = useState<PlayTab>('cases');
+  const [partsReveal, setPartsReveal] = useState<PartsReveal | null>(null);
+
+  return {
+    leftTab,
+    playTab,
+    partsReveal,
+    setLeftTab: (tab: LeftTab) => {
+      if (isPlayTab(tab)) setPlayTab(tab);
+
+      setShownLeftTab(tab);
+    },
+    revealPartsSection: (section: PartsReveal['section']) => {
+      setShownLeftTab('parts');
+      setPartsReveal({ section });
+    },
+    clearPartsReveal: () => setPartsReveal(null),
+    leaveSceneView: () => setShownLeftTab((tab) => (SCENE_VIEWS.has(tab) ? 'parts' : tab)),
+  };
+}
+
 export function useToolMode({ setIsRightOpen, annotations, measure, mark }: ToolModeOptions) {
   const { setCommentMode, setDraft } = annotations;
   const { measuring, setMeasuring } = measure;
   const { marking, setMarking } = mark;
   const [transformMode, setTransformMode] = useState<TransformMode>('translate');
-  const [leftTab, setShownLeftTab] = useState<LeftTab>('parts');
-  const [playTab, setPlayTab] = useState<PlayTab>('cases');
+  const left = useLeftTab();
   const [rightTab, setRightTab] = useState<RightTab>('inspector');
   const [creator, setCreator] = useState<CreatorMode | null>(null);
   const [creatorSvg, setCreatorSvg] = useState<TextFile | null>(null);
@@ -39,12 +62,6 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
   const [sketchRequest, setSketchRequest] = useState(0);
   const [quoteRequest, setQuoteRequest] = useState<MessageQuote | null>(null);
   const [composeRequest, setComposeRequest] = useState<string | null>(null);
-
-  const setLeftTab = (tab: LeftTab) => {
-    if (isPlayTab(tab)) setPlayTab(tab);
-
-    setShownLeftTab(tab);
-  };
 
   const setMode = (mode: TransformMode) => {
     setTransformMode(mode);
@@ -135,10 +152,7 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     toggleMeasure,
     marking,
     toggleMarking,
-    leftTab,
-    setLeftTab,
-    playTab,
-    leaveSceneView: () => setShownLeftTab((tab) => (SCENE_VIEWS.has(tab) ? 'parts' : tab)),
+    ...left,
     rightTab,
     setRightTab,
     openRightTab,

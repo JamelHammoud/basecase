@@ -1,6 +1,6 @@
 import { findBritish } from '../copy/spelling.mjs';
 import { SITE_BANNED, VAGUE_ALT, VAGUE_LINK_TEXT } from './banned.mjs';
-import { IMAGE, LINK, plainText, prose, sentencesOf, wordCount } from './blocks.mjs';
+import { IMAGE, KEYS, LINK, plainText, prose, sentencesOf, wordCount } from './blocks.mjs';
 
 export const MAX_SENTENCE_WORDS = 25;
 export const MAX_PARAGRAPH_SENTENCES = 5;
@@ -152,4 +152,36 @@ export function copiedFromChangelog(page, site) {
     .map(({ sentence, line }) =>
       problem(line, `“${sentence.slice(0, 60)}…” is copied from the changelog; link the entry instead`),
     );
+}
+
+const KEY_GLYPH = /[⌘⇧⌥⌃⌫↩]+[^\s.,;:)]*/u;
+const NAMED_KEY = /\b(?:[Pp]ress(?:ing)?|[Hh]old(?:ing)?) (Enter|Return|Esc|Tab|Space|Delete|Home|End)\b/;
+const WINDOWS_KEYS = /\bCtrl\b/;
+const CAP_FOR = { Enter: '↩', Return: '↩', Delete: '⌫' };
+
+const keyText = (text) =>
+  text
+    .replace(KEYS, '')
+    .replace(IMAGE, '')
+    .replace(LINK, '$1')
+    .replace(/`[^`]*`/g, '');
+
+function keyProblem(text) {
+  const glyph = KEY_GLYPH.exec(text);
+
+  if (glyph) return `write “${glyph[0]}” as a key cap, [[${glyph[0]}]] (§3f)`;
+
+  const named = NAMED_KEY.exec(text);
+
+  if (named) return `write ${named[1]} as a key cap, [[${CAP_FOR[named[1]] ?? named[1]}]] (§3f)`;
+
+  return WINDOWS_KEYS.test(text) && 'key caps show Windows keys on Windows; drop the Ctrl version (§3f)';
+}
+
+export function plainKeys(page) {
+  return page.blocks
+    .filter((block) => block.kind !== 'image')
+    .map((block) => ({ line: block.line, found: keyProblem(keyText(block.text)) }))
+    .filter(({ found }) => found)
+    .map(({ line, found }) => problem(line, found));
 }

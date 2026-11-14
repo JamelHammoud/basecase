@@ -39,7 +39,7 @@ export const CASE_APP_TASKS = [
     title: 'Puppet a desktop arm with a hand pose',
     instruction: 'Let me puppet a desktop arm with my hand, from the camera.',
     robot: 'arm',
-    want: { inputs: ['camera'], panels: ['camera'] },
+    want: { inputs: ['hand|camera'], panels: ['camera'] },
   }),
   caseApp({
     id: 'E3',
@@ -70,7 +70,7 @@ export const CASE_APP_TASKS = [
     instruction: 'Make a pan-tilt camera that keeps my face centered.',
     robot: 'panTilt',
     heldOut: true,
-    want: { inputs: ['camera'], panels: ['camera'] },
+    want: { inputs: ['face|camera'], panels: ['camera'] },
   }),
   caseApp({
     id: 'E7',

@@ -9,13 +9,18 @@ export interface BomGroup {
   attention: boolean;
 }
 
-export const lineCount = (l: BomLine) => `${l.unit === 'g' ? (l.packs ?? 1) : l.qty}×`;
+export const lineCount = (l: BomLine) => `${l.unit === 'g' ? (l.packs ?? 1) : l.toBuy}×`;
 
 export function lineAmount(l: BomLine) {
   if (l.unit === 'g') return `${l.qty.toLocaleString('en-US')} g`;
 
   return l.packs && l.record ? plural(l.packs, 'pack') : '';
 }
+
+export const onHandAmount = (count: number, unit: BomLine['unit']) =>
+  `${count.toLocaleString('en-US')}${unit === 'g' ? ' g' : ''} on hand`;
+
+export const ownedAmount = (l: BomLine) => (l.owned ? onHandAmount(l.owned, l.unit) : '');
 
 export const linkLabel = (l: BomLine) => (l.urlKind === 'product' ? 'Open listing' : 'Search Amazon');
 

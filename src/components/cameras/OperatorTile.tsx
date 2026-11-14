@@ -8,9 +8,10 @@ interface OperatorTileProps {
   stream: MediaStream;
   label: string | null;
   large: boolean;
+  fill?: boolean;
 }
 
-export const OperatorTile: React.FC<OperatorTileProps> = ({ stream, label, large }) => {
+export const OperatorTile: React.FC<OperatorTileProps> = ({ stream, label, large, fill }) => {
   const video = useRef<HTMLVideoElement | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
 
@@ -29,7 +30,7 @@ export const OperatorTile: React.FC<OperatorTileProps> = ({ stream, label, large
   }, [large]);
 
   return (
-    <div data-testid="camera-tile" data-camera={OPERATOR_KEY} className={tileFrame(false, large)}>
+    <div data-testid="camera-tile" data-camera={OPERATOR_KEY} className={tileFrame(fill, large)}>
       <button
         type="button"
         aria-label={label ?? undefined}

@@ -45,9 +45,9 @@ Fill an Amazon cart from the bill of materials, open the other stores' listings,
 
 ![The bill of materials menu with Buy All for amazon.com, and screws and wire listed under their own stores](/help/buy-the-parts-for-a-robot/buy-all.png)
 
-You can also press ⌘K and choose **Buy All**.
+You can also press [[⌘K]] and choose **Buy All**.
 
-The cart counts packs from the price you checked. Six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. A line with no saved pack size goes in by the piece.
+The cart leaves out the parts you [already own](/help/count-the-parts-you-already-own). It counts packs from the price you checked. Six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. A line with no saved pack size goes in by the piece.
 
 Other stores take no shared cart, so their lines open one listing at a time. A line with no store link keeps its own link: hover it and click the link at its right end for an Amazon search.
 

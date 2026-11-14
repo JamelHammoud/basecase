@@ -4,19 +4,28 @@ import type { DriveCommand } from './driveTypes';
 
 export type PointTable = Record<string, V3>;
 
+export interface InputLook {
+  pan: string;
+  tilt: string | null;
+  panSign: 1 | -1;
+  tiltSign: 1 | -1;
+}
+
 export type InputRobot =
-  { kind: 'tip'; start: V3; reachMm: number } | { kind: 'joints'; rig: Rig; points: PointTable; joints: string[] };
+  | { kind: 'tip'; start: V3; reachMm: number }
+  | { kind: 'joints'; rig: Rig; points: PointTable; joints: string[]; look?: InputLook };
 
 export interface InputMoment {
   cls: DriveClass;
   keys: DriveCommand;
+  time?: number;
 }
 
 export interface InputSource {
   id: string;
   read: (at: InputMoment) => DriveCommand | null;
   pose?: boolean;
-  open?: (robot: InputRobot) => Promise<string | null>;
+  open?: (robot: InputRobot | null) => Promise<string | null>;
   close?: () => void;
 }
 

@@ -31,7 +31,7 @@ Publishing works in the desktop app. The dataset is always public.
 
 1. On huggingface.co, make an access token with write access, under Settings ▸ Access Tokens.
 2. In Basecase, press [[⌘,]] and choose **Accounts**.
-3. Paste the token into **Access token** and press Enter. The account name shows under it once the Hub accepts the token.
+3. Paste the token into **Access token** and press [[↩]]. The account name shows under it once the Hub accepts the token.
 
 ![The Accounts pane with a token saved](/help/publish-a-dataset-to-hugging-face/accounts.png)
 
@@ -55,3 +55,5 @@ Publishing the same Case from the same scene replaces the dataset with the tries
 ## Where the token lives
 
 The token stays in the app's main process, sealed on disk. The page you work in never sees it; it learns only whether you're signed in and your account name.
+
+A ready skill publishes with the same token; see [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).

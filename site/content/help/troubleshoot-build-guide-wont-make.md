@@ -45,7 +45,7 @@ Basecase updates the guide on its own 15 seconds after the last change, but wait
 A guide whose order check stopped at its 20-second limit reads Out of date too. An automatic update tries once more, and **Update** tries again whenever you click it.
 
 1. Click **Update** in **Build guide**.
-2. To have it update on its own, press ⌘, (Ctrl+, on Windows), choose **Build** and turn on **Update automatically**.
+2. To have it update on its own, press [[⌘,]], choose **Build** and turn on **Update automatically**.
 
 ## Show in Finder and Open PDF are missing
 

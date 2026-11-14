@@ -3,8 +3,8 @@ import { currentDesign, skillFromTraining, type ArenaEvidence, type Skill } from
 import { editParts, fixtureModel, fixtureRobot, modelOf } from './fixtureModels';
 import type { TrainedEntry } from './kitEnvironment';
 import { kitEnvironment } from './motorKit';
-import { arenaLine, moveTag, skillRecord, type SkillRecord } from './skillRecords';
-import { readyVelocity, readyWalkRecord, skillRows, type SkillJob } from './skillRows';
+import { arenaLine, moveTag, refusedLine, skillRecord, worstEvidence, type SkillRecord } from './skillRecords';
+import { readyVelocity, readyWalkRecord, refusalModel, skillRows, type SkillJob } from './skillRows';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import { moveEnvironment } from './moveEnvironment';
@@ -77,6 +77,26 @@ describe('the skills list', () => {
 
     expect(stand.state).toEqual({ kind: 'ready', arena: '31 of 32 tries, at least 77%' });
     expect(arenaLine(record.evidence!)).toBe('31 of 32 tries, at least 77%');
+  });
+
+  it('counts a refused Walk from the slower run that failed, not the top speed that passed', () => {
+    const draft = kitRecord(model, 'velocity-tracking');
+    const top = draft.evidence!;
+    const standstill = { ...top, variants: top.variants.map((v, i) => (i === 1 ? { ...v, passes: 9 } : v)) };
+
+    expect(refusedLine(worstEvidence([standstill, top])!)).toBe('Refused in Arena: 9 of 32 tries');
+    expect(refusedLine(worstEvidence([top, standstill])!)).toBe('Refused in Arena: 9 of 32 tries');
+  });
+
+  it('drops a refusal once the design it was refused on changes', () => {
+    const quad = fixtureRobot('quad-servo');
+    const heavier = modelOf(editParts(quad, (p) => ({ ...p, massG: (p.massG ?? 50) * 1.5 })));
+    const refusals = { 'kit:stand': { line: 'Refused in Arena: 9 of 32 tries', model: refusalModel(model) } } as const;
+    const stand = (m: SimModel) =>
+      skillRows({ model: m, design: DESIGN, records: [], jobs: [], refusals }).find((r) => r.kit === 'stand')?.state;
+
+    expect(stand(model)).toEqual({ kind: 'untrained', refused: 'Refused in Arena: 9 of 32 tries' });
+    expect(stand(heavier)).toEqual({ kind: 'untrained' });
   });
 
   it('shows a job over the entry it trains, with its progress', () => {

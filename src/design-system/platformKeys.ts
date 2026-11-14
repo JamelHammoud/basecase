@@ -1,6 +1,13 @@
 import { IS_MAC } from '../utils/os';
 
-const WINDOWS_NAMES: Record<string, string> = { '⌘': 'Ctrl', '⌃': 'Ctrl', '⌥': 'Alt', '⇧': 'Shift', '⌫': 'Del' };
+const WINDOWS_NAMES: Record<string, string> = {
+  '⌘': 'Ctrl',
+  '⌃': 'Ctrl',
+  '⌥': 'Alt',
+  '⇧': 'Shift',
+  '⌫': 'Del',
+  '↩': 'Enter',
+};
 const MODIFIER_ORDER = ['Ctrl', 'Alt', 'Shift'];
 
 const rank = (key: string) => {

@@ -30,7 +30,7 @@ covers:
 
 Find your way around the studio: views on the left, the canvas in the middle, and the panel for what you've selected on the right.
 
-![The Basecase window: the view rail and Parts on the left, the canvas in the middle and the right panel](/help/export-a-robot-package/exported.png)
+![The Basecase window: the view rail with Parts, Play, Layers and Library, Parts open beside it, the canvas in the middle and the right panel](/help/the-basecase-window/window.png)
 
 ## The title bar
 
@@ -51,9 +51,7 @@ The column of icons on the left is the view rail. Each icon opens a view in the 
 
 | View | What it holds |
 |---|---|
-| **Parts** | Real servos, motors, boards, sensors and cameras, and ISO hardware such as screws and nuts |
-| **Robots** | Published robots to insert, and robots you've imported |
-| **Objects** | SimReady objects to put in a robot's world, such as furniture and props |
+| **Parts** | Real servos, motors, boards, sensors and cameras, ISO hardware such as screws and nuts, published robots, and SimReady objects such as furniture and props |
 | **Play** | **Cases**, **Routines** and **Operate** |
 | **Layers** | Every part in the scene, as a tree |
 | **Library** | Models you've saved to use in any scene |

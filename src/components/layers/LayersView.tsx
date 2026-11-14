@@ -4,6 +4,7 @@ import type { ScenePart } from '../../types/robotics';
 import { GroupRow, PartRow } from './LayerItems';
 import { layerRows, layersTitle, openFor, overallSize } from './layerRows';
 import { useRevealSelection } from './useRevealSelection';
+import { SizeLine } from '../PartDetails';
 import { keyFor } from '../../app/shortcuts';
 
 export interface LayersViewProps {
@@ -39,11 +40,11 @@ const ReferenceImagesToggle: React.FC<{ props: LayersViewProps }> = ({ props }) 
   );
 };
 
-const SizeFooter: React.FC<{ size: string }> = ({ size }) => (
+const SizeFooter: React.FC<{ size: number[] }> = ({ size }) => (
   <div className="h-[32px] shrink-0 px-[12px] flex items-center justify-between border-t border-white/[0.06] text-[12.5px] select-none">
     <span className="text-white/50">Overall size</span>
-    <span className="text-white/70 tabular">
-      {size} <span className="text-white/50">mm</span>
+    <span className="text-white/70">
+      <SizeLine mm={size} />
     </span>
   </div>
 );

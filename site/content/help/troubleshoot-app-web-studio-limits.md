@@ -26,11 +26,11 @@ covers:
   - src/workspace/meshImport.ts
 ---
 
-The web studio at app.basecase.so designs, checks and prices robots in your browser, but anything that runs programs on a computer needs the desktop app.
+The web studio at app.basecase.so lets you design, check and price robots in your browser. Anything that runs programs on a computer needs the desktop app.
 
 ## A message starts with “Download Basecase to”
 
-You used something only the desktop app can do. The message names it:
+You tried to use something only the desktop app can do. The rest of the message names it:
 
 | Message | What needs the desktop app |
 |---|---|
@@ -42,20 +42,20 @@ You used something only the desktop app can do. The message names it:
 
 1. Click **Download for Mac** or **Download for Windows** in the banner above the studio, or in the **Agent** tab.
 2. Install Basecase.
-3. Move your scenes over, as the next section says.
+3. Move your scenes over. Export each one from the web studio, then open it in the desktop app.
 
-The **Agent** tab in the web studio reads “Build with the agent in the desktop app”. Settings has no **Agent**, **Printers** or **Accounts** panes, Checks have no **Fix**, and STEP and IGES files don't import.
+In the web studio, the **Agent** tab reads “Build with the agent in the desktop app”. Settings doesn't have the **Agent**, **Printers** or **Accounts** panes, Checks don't have **Fix**, and you can't import STEP or IGES files.
 
 ## Your scenes are gone from the web studio
 
-The web studio keeps scenes, Library models, prices and the parts you own in your browser, not online. Clearing the site's data deletes them. Another browser or computer doesn't see them.
+The web studio stores your scenes, Library models, prices and the parts you own in your browser, not online. Clearing the site's data deletes them, and they don't show up in another browser or on another computer.
 
 1. Before you clear browser data, open each scene and click **Export** in the title bar.
 2. Choose **Scene** to download a `.basecase` file.
-3. Open the file later in the web studio or the desktop app with **Open Scene File** in [[⌘K]].
+3. To open the file later in the web studio or the desktop app, use **Open Scene File** in [[⌘K]].
 
-A scene deleted with the browser's data can't be brought back.
+If you clear the browser's data and a scene goes with it, you can't get that scene back.
 
 ## What works without the desktop app
 
-Designing, Checks, the bill of materials and prices, Print mode's plate layout and 3MF export all run in the browser. Saving a scene to share works the same in both; [Share a scene](/help/share-a-scene) has the steps.
+Designing, Checks, the bill of materials and prices, Print mode's plate layout and 3MF export all run in your browser. Saving a scene to share works the same way in the web studio and the desktop app. For the steps, see [Share a scene](/help/share-a-scene).

@@ -44,8 +44,8 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 | STEP, STP, IGES, IGS | Import a mesh, in the desktop app only | The file's own units |
 | SVG | [Draw a part from a sketch or SVG](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part) | The width you type |
 | URDF, MJCF, zip | [Import a robot](/help/import-a-robot), with its joints | The file's own units |
-| `.basecase` | [Open a shared scene](/help/open-a-shared-scene) | — |
-| PNG, JPEG and other images | Dropped on the canvas, as a flat reference image | — |
+| `.basecase` | [Open a shared scene](/help/open-a-shared-scene) |, |
+| PNG, JPEG and other images | Dropped on the canvas, as a flat reference image |, |
 | BVH | **File** ▸ **Import**, as motion for a robot with joints, or to [design a robot from it](/help/design-a-robot-from-a-motion) | The height you type |
 
 A mesh that comes in smaller than 1 mm across is read as meters and scaled up 1,000 times.

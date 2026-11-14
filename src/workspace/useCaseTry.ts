@@ -4,8 +4,8 @@ import { driveFor, slotIndexOf, toCommand } from '../cases/caseDrives';
 import { worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
-import { saveRecording } from '../cases/tryStore';
 import type { RobotDrive } from '../sim/drive';
+import type { Recording } from '../sim/recorder';
 import type { DriveTeam } from '../sim/useDrive';
 import type { Simulation } from '../sim/useSimulation';
 import type { RobotJoint, ScenePart } from '../types/robotics';
@@ -22,7 +22,7 @@ interface TryOptions {
   joints: RobotJoint[];
   active: Case | null;
   partners: () => SlotRobot[];
-  onTry: (record: TryRecord) => void;
+  onTry: (record: TryRecord, recording: Recording, input: string | null) => Promise<void>;
   onRefuse: (message: string) => void;
   skills?: RoutineSkills;
 }
@@ -63,6 +63,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [startedAt, setStartedAt] = useState(0);
   const finishing = useRef(false);
+  const scripted = useRef(false);
   const time = sim.stats?.time ?? 0;
   const elapsed = phase === 'running' ? Math.max(0, time - startedAt) : 0;
 
@@ -95,17 +96,20 @@ export function useCaseTry(options: TryOptions): CaseTry {
     });
     const id = newTryId();
 
-    await saveRecording(id, recording);
-    onTry({
-      id,
-      caseId: kase.id,
-      robot: rig.robots[0]?.name ?? 'Robot',
-      at: new Date().toISOString(),
-      passed: verdict.passed,
-      margin: verdict.margin,
-      seconds: recording.frames * recording.dt,
-      manifest: await tryManifest(staged.kase, model, recording),
-    });
+    await onTry(
+      {
+        id,
+        caseId: kase.id,
+        robot: rig.robots[0]?.name ?? 'Robot',
+        at: new Date().toISOString(),
+        passed: verdict.passed,
+        margin: verdict.margin,
+        seconds: recording.frames * recording.dt,
+        manifest: await tryManifest(staged.kase, model, recording),
+      },
+      recording,
+      scripted.current ? 'script' : null,
+    );
     sim.drive.stop();
     setPhase('idle');
     finishing.current = false;
@@ -149,6 +153,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
     }
 
     setStartedAt(sim.latestStats()?.time ?? 0);
+    scripted.current = all;
     sim.runCase({ kase, plan: logic.plan, joints, kit: logic.kit });
     sim.record();
     setPhase('running');

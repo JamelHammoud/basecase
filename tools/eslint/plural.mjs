@@ -2,6 +2,8 @@ const COUNT_NAME = /^(n|count|total)$|Count$/;
 const NOT_PLURAL = new Set(['always', 'across', 'does', 'fps', 'has', 'its', 'lens', 'plus', 'this', 'was', 'yes']);
 const COMPARES = new Set(['===', '!==', '==', '!=', '>', '<=']);
 const SUFFIXES = new Set(['s', 'es']);
+const AGREEING_VERB =
+  /^ (are|is|were|was|have|has|do|does|need|needs|come|comes|go|goes|stay|stays|fit|fits|sit|sits|hit|hits|fail|fails|pass|passes|reach|reaches|touch|touches|overlap|overlaps|clash|clashes|lack|lacks|hold|holds|run|runs|move|moves|block|blocks|(?:are|is|were|was|have|has|do|does)n[’']t)\b/;
 
 const nameOf = (node) => {
   if (node.type === 'Identifier') return node.name;
@@ -39,6 +41,11 @@ const stringOf = (node) => {
   return null;
 };
 
+const isPluralCall = (node) =>
+  node?.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === 'plural';
+
+const agreeingVerb = (text) => AGREEING_VERB.exec(text)?.[1] ?? null;
+
 const comparesToOne = (test) =>
   test.type === 'BinaryExpression' &&
   COMPARES.has(test.operator) &&
@@ -69,6 +76,8 @@ export default {
     messages: {
       bare: 'Count “{{word}}” through plural(n, …) (electron/plural.mjs, §3b-15), so 1 never reads “1 {{word}}”.',
       ternary: 'Pluralize through plural(n, …) (electron/plural.mjs, §3b-15), not an n === 1 ternary.',
+      agrees:
+        '“{{verb}}” has to agree with this count. Word it so no verb does (§3b-15): “No price on 2 lines”, not “2 lines have no price”.',
     },
     schema: [],
   },
@@ -76,9 +85,13 @@ export default {
     return {
       TemplateLiteral(node) {
         node.expressions.forEach((expression, i) => {
+          const after = node.quasis[i + 1].value.cooked ?? '';
+          const verb = isPluralCall(expression) ? agreeingVerb(after) : null;
+
+          if (verb) context.report({ node: expression, messageId: 'agrees', data: { verb } });
+
           if (!isCount(expression)) return;
 
-          const after = node.quasis[i + 1].value.cooked ?? '';
           const word = pluralAfter(after);
           const next = node.expressions[i + 1];
 
@@ -90,10 +103,14 @@ export default {
         if (comparesToOne(node.test) && isSuffixChoice(node)) context.report({ node, messageId: 'ternary' });
       },
       JSXExpressionContainer(node) {
-        if (!isCount(node.expression)) return;
-
         const siblings = node.parent?.children ?? [];
         const next = siblings[siblings.indexOf(node) + 1];
+        const verb = isPluralCall(node.expression) && next?.type === 'JSXText' ? agreeingVerb(next.value) : null;
+
+        if (verb) context.report({ node: node.expression, messageId: 'agrees', data: { verb } });
+
+        if (!isCount(node.expression)) return;
+
         const word = next?.type === 'JSXText' ? pluralAfter(next.value) : null;
 
         if (word) context.report({ node: node.expression, messageId: 'bare', data: { word } });

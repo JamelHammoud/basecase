@@ -1,3 +1,5 @@
+import { negative } from '../../electron/minus.mjs';
+
 const SMALLEST = 0.001;
 
 function figures(nm: number): string {
@@ -8,8 +10,4 @@ function figures(nm: number): string {
   return nm < 99.95 ? nm.toFixed(1) : String(Math.round(nm));
 }
 
-export function torque(nm: number): string {
-  const shown = figures(Math.abs(nm));
-
-  return `${nm < 0 && Number(shown) > 0 ? '−' : ''}${shown} N·m`;
-}
+export const torque = (nm: number): string => `${negative(nm, figures)} N·m`;

@@ -23,17 +23,19 @@ covers:
   - src/cases/gestures.ts
 ---
 
-Show the camera a movement three times, and the open Case can react each time you make it again.
+Show the camera a movement three times, and the open Case can react each time you make that movement again.
 
-Ten gestures need no teaching: Wave, Raise Hand, Raise Both Hands, Point Left, Point Right, Thumbs Up, Open Palm, Clap, Nod and Shake Head. The camera's picture is never saved; only the taught movement is, inside the Case.
+Ten gestures are built in and need no teaching: Wave, Raise Hand, Raise Both Hands, Point Left, Point Right, Thumbs Up, Open Palm, Clap, Nod and Shake Head.
 
-Gestures work while the camera drives a humanoid or a fixed arm. On other robots the camera doesn't open.
+**Note:** Only the taught movement is saved, inside the Case. The camera's picture is never saved.
 
-1. Open a Case. Pick one under **Play** ▸ **Cases**.
+Gestures work while the camera drives a humanoid or a fixed arm. On other robots, the camera doesn't open.
+
+1. Open a Case. You'll find them under **Play** ▸ **Cases**.
 2. Press [[⌘K]] and choose **Drive with Camera**.
-3. Stand where the camera sees you from the hips up.
+3. Stand where the camera can see you from the hips up.
 4. Press [[⌘K]] and choose **Teach Gesture**.
-5. Type a name for the movement and click **Record**.
+5. Type a name for the movement, then click **Record**.
 
 ![Teach Gesture with the name salute typed and the Record button](/help/teach-a-robot-a-gesture/name.png)
 
@@ -41,8 +43,10 @@ Gestures work while the camera drives a humanoid or a fixed arm. On other robots
 
 ![Teach Gesture counting down from 3, with three dots for the three recordings](/help/teach-a-robot-a-gesture/countdown.png)
 
-7. Make it again after each of the next two countdowns. A dot fills for each recording, and the sheet closes after the third.
+7. Make the movement again after each of the next two countdowns. A dot fills in for each recording, and the sheet closes after the third.
 
-If you stood still through a recording, its countdown starts again. A name can hold lowercase letters, numbers and dashes, and can't be a built-in gesture's name. Teaching a name again replaces it. A Case holds up to 8 gestures, counting names the agent added that nobody has taught. With 8, **Record** stays off for a new name.
+If you stood still during a recording, its countdown starts over.
 
-The Case's logic reads each gesture as the event **gesture**, with the gesture's name as its value. Ask the agent for the reaction in words, such as "when I salute, the dog bows". A button in a running Case can also be pressed by a gesture, so a thumbs up can start a try. Laying out a running Case is in [Run a Case](/help/run-a-case).
+A name can use lowercase letters, numbers and dashes, but it can't be the name of a built-in gesture. If you teach a name again, the new recording replaces the old one. Each Case holds up to 8 gestures, counting names the agent added that nobody has taught. Once a Case has 8, **Record** stays off for a new name.
+
+In the Case's logic, each gesture arrives as the event **gesture**, with the gesture's name as its value. To set up a reaction, describe it to the agent in words, such as "when I salute, the dog bows". A gesture can also press a button in a running Case, so a thumbs up can start a try. To learn how a running Case is laid out, see [Run a Case](/help/run-a-case).

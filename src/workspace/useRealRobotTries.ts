@@ -3,6 +3,7 @@ import type { Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import type { TryRecord } from '../cases/tries';
 import type { Viewport3DHandle } from '../components/Viewport3D';
+import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
@@ -22,7 +23,7 @@ interface RealRobotOptions {
   viewportRef: RefObject<Viewport3DHandle | null>;
   attempt: CaseTry;
   timeline: TryTimeline;
-  onTry: (record: TryRecord) => void;
+  onTry: (record: TryRecord, recording: Recording, input: string | null) => Promise<void>;
   onRefuse: (message: string) => void;
 }
 

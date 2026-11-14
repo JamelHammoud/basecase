@@ -25,37 +25,37 @@ covers:
   - electron/guidePdf.mjs
 ---
 
-Turn the design into a step-by-step assembly PDF, in an order Basecase checked the parts can go together.
+Basecase turns your design into a step-by-step assembly guide and saves it as a PDF. It checks the order of the steps to make sure the parts can go together.
 
 1. In the **Build** tab, find **Build guide**.
-2. Click **Make Guide**. The card shows the step it's drawing and the time left, and you can keep working.
-3. When the toast says the guide is made, click **Open**.
+2. Click **Make Guide**. The card shows which step it's drawing and how much time is left. You can keep working while it runs.
+3. Once a toast says the guide is made, click **Open**.
 
    ![The Build guide card with an 8-page guide made just now and an Open button](/help/make-a-build-guide/current.png)
 
-4. Press [[→]] or [[←]] to turn the pages.
-5. Press [[Esc]] to close the guide.
+4. To turn the pages, press [[→]] or [[←]].
+5. To close the guide, press [[Esc]].
 
-**Make Build Guide** and **Open Build Guide** are also in [[⌘K]].
+You can also run **Make Build Guide** and **Open Build Guide** from [[⌘K]].
 
-A check beside a step's number means every printed part in that step is marked printed in Print mode. The PDF doesn't show it.
+A check beside a step's number means you've marked every printed part in that step as printed in Print mode. The check doesn't appear in the PDF.
 
-Pinch, or press + and −, to zoom. In the desktop app, **Open PDF** opens the file and **Show in Finder** shows where it's saved. If the PDF was moved or deleted, either one makes it again first.
+To zoom, pinch or press + and −. In the desktop app, **Open PDF** opens the file and **Show in Finder** shows where Basecase saved it. If you've moved or deleted the PDF, either button makes it again first.
 
 ## Keep it current
 
-When the design or the infill in Print mode changes, the card reads **Out of date** in amber, and **Update** appears beside **Open**. [[⌘K]] has it as **Update Build Guide**.
+If you change the design, or the infill in Print mode, the card reads **Out of date** in amber, with **Update** beside **Open**. **Update Build Guide** in [[⌘K]] does the same.
 
 ![The Build guide card reading Out of date, with Open and Update buttons](/help/make-a-build-guide/out-of-date.png)
 
-Basecase also updates the guide on its own, 15 seconds after the last change, once the agent is done. An update redraws only the steps that show the parts you changed.
+Basecase updates the guide on its own 15 seconds after your last change, once the agent finishes. Each update redraws only the steps that show the parts you changed.
 
-To stop the automatic updates, press [[⌘,]], choose **Build** and turn off **Update automatically**.
+To turn off automatic updates, press [[⌘,]], choose **Build**, then turn off **Update automatically**.
 
 ## Steps marked as unchecked
 
-Steps follow an order Basecase proved works. Parts the planner couldn't place come first, in a likely order, and their steps say “Order not checked”.
+Basecase checks that the steps work in the order shown. Parts the planner couldn't place go first, in a likely order, and their steps say “Order not checked”.
 
-Checking the order stops after 20 seconds. When it stops early, the card reads **Out of date**, and **Update** checks the order again.
+Basecase spends up to 20 seconds checking the order. If it stops early, the card reads **Out of date**. Click **Update** to check the order again.
 
 To print the parts the guide uses, see [Print a robot's parts](/help/print-a-robots-parts).

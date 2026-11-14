@@ -74,7 +74,7 @@ describe('check_assembly finds seeded faults', () => {
   it('a deleted screw leaves its insert without a screw', async () => {
     const { report } = await check(edit(bracket(), 'screw-1', () => null));
 
-    expect(report.text).toContain('insert-1: no screw threads into this insert');
+    expect(report.text).toContain('insert-1: no screw threads into the insert');
   });
 
   it('a screw pulled 4 mm out has nothing under its head and too little thread', async () => {

@@ -1,7 +1,7 @@
 ---
 title: Agent isn't connected or asks you to sign in
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 7
@@ -80,6 +80,8 @@ The agent hit an error and stopped, often because your account reached a usage l
 
 1. Read the reason after the message.
 2. Once you've dealt with the cause, click **Retry** under the reply.
+
+“Stopped on an error” with no reason means the agent itself failed. If **Retry** fails again, choose another agent under **Run with** in **Settings** ▸ **Agent**.
 
 ## “Up to 4 chats run at once. Stop one to start another.”
 

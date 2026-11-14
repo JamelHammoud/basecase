@@ -227,7 +227,18 @@ function announcePause(error) {
     );
 }
 
-const KEEPS_RUNNING_FOR_GATES = new Set(['merge', 'nightly', 'health', 'tidy']);
+const KEEPS_RUNNING_FOR_GATES = new Set([
+  'merge',
+  'nightly',
+  'health',
+  'tidy',
+  'review',
+  'revise',
+  'rebase',
+  'repair',
+  'doctor',
+  'flakes',
+]);
 
 const gateHold = () =>
   !KEEPS_RUNNING_FOR_GATES.has(lane) && quietRequested() ? 'a Gatekeeper timed check needs a quiet machine' : null;

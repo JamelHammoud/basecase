@@ -1,6 +1,6 @@
 # Accounts
 
-Accounts worth opening, for Jamel to decide: the market lane reads public pages only and signs up for nothing. Rules: [README](README.md).
+Accounts worth opening, which the lead weighs when it plans integrations: the market lane reads public pages only and signs up for nothing. Rules: [README](README.md).
 
 | Service | Plan | What it would teach | Proposed |
 |---|---|---|---|

@@ -26,31 +26,31 @@ covers:
   - src/workspace/applyAgentOps.ts
 ---
 
-Describe a robot or show the agent a photo, and it models the robot in your scene with real servos, boards and screws you can buy.
+Describe a robot or show the agent a photo, and the agent models the robot in your scene with real servos, boards and screws that you can buy.
 
-The agent is Claude Code, Codex or Gemini CLI. It runs on your computer in the desktop app and signs in with your own login. To use it from the web studio, download the desktop app.
+The agent is Claude Code, Codex or Gemini CLI. It runs on your computer in the desktop app and signs in with your own login. If you're using the web studio, download the desktop app to use the agent.
 
 ## What it does
 
-The agent builds in the open scene, so you can watch it work. It reads your words, photos, sketches and files, and looks up the robot's published model if one exists. Before it shapes any part, it plans where the joints go. Then it blocks out the robot, models each part as code, and checks its work.
+The agent builds in the open scene, so you can watch it work. It reads your words, photos, sketches and files, and if the robot has a published model, it looks that up too. Before shaping any part, the agent plans where the joints go. Then it blocks out the robot, models each part as code, and checks its work.
 
-The agent picks parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) come first. If the catalog doesn't have a part, the agent can add one it found on the web, and the bill of materials lists it as Added by Agent.
+Parts come from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) come first. If a part isn't in the catalog, the agent can add one it found on the web, and the bill of materials lists that part as Added by Agent.
 
-The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. For example:
+The agent can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. It can gather tries into a dataset from a search or from a list of tries. For example:
 
-- Ask it to change how a ready Motor Kit skill moves. It keeps the change if Arena passes it and drops it if not.
+- Ask it to change how a ready Motor Kit skill moves. The agent keeps the change if Arena passes it and drops it if not.
 - For a Routine, it proves each switch between skills and names any that fell.
 - With a Case and two open scenes, it tells you which robot passes more often.
-- Ask what happened in a try. It reads the try's recording and answers with times and values.
-- Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
+- Ask what happened in a try. The agent reads the try's recording and answers with times and values.
+- Ask which servo to buy. The agent runs the Case on each catalog version and answers with passes, cost and mass.
 
-Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges printed parts bolted together on one link into a single print.
+Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, printed parts that are bolted together on one link get merged into a single print.
 
-Say what you want to do with a robot, such as play a game on a gamepad, and the agent builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
+Tell the agent what you want to do with a robot, such as play a game on a gamepad, and it builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
 
-If the agent needs a control the Case's panels don't have, like a joystick or a piano, it draws one as a code panel. If that code moves an object, such as a target to whack, the agent marks the object as movable. After each write, it reads the panel's errors and a capture of the window, then fixes what broke.
+If the agent needs a control that the Case's panels don't have, like a joystick or a piano, it draws one as a code panel. When that code moves an object, such as a target to whack, the agent marks the object as movable. After each write, it reads the panel's errors and a capture of the window, then fixes anything that broke.
 
-Name a movement, such as a wave, and the Case reacts to it as a gesture. If no built-in gesture matches, the agent asks you to teach it. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
+Name a movement, such as a wave, and the Case reacts to it as a gesture. If none of the built-in gestures match, the agent asks you to teach it. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
 
 ## What it cares about
 
@@ -64,9 +64,9 @@ Matching the silhouette in a photo matters less than any of these.
 
 ## How it checks its work
 
-After each edit, the agent sees the same Checks as the **Build** tab. It never passes a check by narrowing a joint's range, hiding a part, deleting a part or editing a Case. If a check seems wrong, it tells you.
+After each edit, the agent sees the same Checks as the **Build** tab. It never passes a check by narrowing a joint's range, hiding a part, deleting a part or editing a Case. If a check seems wrong, the agent tells you.
 
-If an edit adds a blocker, the agent follows up on its own, up to twice per message. The follow-up shows in the chat as “Fix what the last change added: 2 problems.” above the new problems. To turn this off, go to **Settings** ▸ **Build**.
+If an edit adds a blocker, the agent follows up on its own, up to twice per message. In the chat, the follow-up appears as “Fix what the last change added: 2 problems.” above the new problems. To turn this off, go to **Settings** ▸ **Build**.
 
 If the scene has Cases, the agent runs each one and isn't done until they all pass. For the steps, see [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 

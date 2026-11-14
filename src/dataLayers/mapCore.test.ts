@@ -168,6 +168,27 @@ describe('placing map sweeps', () => {
     expect(session.map.count).toBe(1);
   });
 
+  it('omits a sensor subtree disconnected from odometry without claiming the map frame', () => {
+    const session = new MapSession({ match: false });
+
+    session.odometry(
+      {
+        header: { frame_id: 'odom' },
+        child_frame_id: 'base',
+        pose: { pose: { position: { x: 2, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 1 } } },
+      },
+      0,
+    );
+    session.transform({ parent: 'unconnected', child: 'camera', stamp: 0, pose: { p: [1, 0, 0], q: [0, 0, 0, 1] } });
+    session.transform({ parent: 'base', child: 'laser', stamp: 0, pose: { p: [0, 0, 0], q: [0, 0, 0, 1] } });
+    expect(session.sweep({ at: 0, frame: 'camera', optical: true, points: Float32Array.of(1, 0, 0) })).toBe(false);
+    expect(session.frame).toBeNull();
+    expect(session.sweep({ at: 0, frame: 'laser', points: Float32Array.of(1, 0, 0) })).toBe(true);
+    expect(session.sweep({ at: 0, frame: 'odom', points: Float32Array.of(4, 0, 0) })).toBe(true);
+    expect(session.cloud().frame).toBe('odom');
+    expect(Array.from(session.cloud().points)).toEqual([3, 0, 0, 4, 0, 0]);
+  });
+
   it('does not fix the map frame from an empty sensor message', () => {
     const session = new MapSession({ match: false });
 

@@ -55,7 +55,7 @@ function depthSensor(index: TopicIndex, topic: RecordedTopic): Sensor | null {
     read: (i) => {
       const image = decoded<DepthImage & { header: { frame_id: string } }>(topic, i);
 
-      return { frame: bare(image.header.frame_id), points: depthSweep(image, lens) };
+      return { frame: bare(image.header?.frame_id), points: depthSweep(image, lens) };
     },
   };
 }
@@ -67,7 +67,7 @@ function sensorsOf(index: TopicIndex): Sensor[] {
     read: (i: number) => {
       const scan = decoded<LaserScan>(topic, i);
 
-      return { frame: bare(scan.header.frame_id), points: scanSweep(scan) };
+      return { frame: bare(scan.header?.frame_id), points: scanSweep(scan) };
     },
   }));
   const clouds = topicsOf(index, 'sensor_msgs/PointCloud2').map((topic) => ({
@@ -76,7 +76,7 @@ function sensorsOf(index: TopicIndex): Sensor[] {
     read: (i: number) => {
       const cloud = decoded<PointCloud2>(topic, i);
 
-      return { frame: bare(cloud.header.frame_id), points: cloudSweep(cloud) };
+      return { frame: bare(cloud.header?.frame_id), points: cloudSweep(cloud) };
     },
   }));
   const depths = topicsOf(index, 'sensor_msgs/Image').flatMap((t) => depthSensor(index, t) ?? []);

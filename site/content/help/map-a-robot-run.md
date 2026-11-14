@@ -28,7 +28,7 @@ covers:
 
 Combine a run's laser scans, point clouds or depth images into one height-colored map on the canvas.
 
-Start with an [imported ROS recording](/help/play-a-ros-recordings-topics-in-the-console) containing scans or a [recorded simulated LiDAR try](/help/replay-a-robots-lidar-scan). A moving sensor needs recorded TF transforms or odometry to place its readings along the run. Its mounting frame must connect to the robot's base. Depth images must include matching `CameraInfo` messages and optical-frame TF transforms.
+Start with an [imported ROS recording](/help/play-a-ros-recordings-topics-in-the-console) containing scans or a [recorded simulated LiDAR try](/help/replay-a-robots-lidar-scan). A moving sensor needs recorded TF transforms or odometry to place its readings along the run. Its mounting frame must connect to the robot's base. A separate sensor TF subtree isn’t enough to place its readings. Depth images must include matching `CameraInfo` messages and optical-frame TF transforms.
 
 1. In the view rail, click **Library**.
 2. Under **Tries**, click the robot whose recording you want to map.

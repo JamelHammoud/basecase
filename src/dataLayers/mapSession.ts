@@ -155,11 +155,13 @@ export class MapSession {
   }
 
   private placement(frame: string, at: number, optical: boolean): { root: string; pose: THREE.Matrix4 } | null {
-    if (frame && knowsFrame(this.tree, frame, ANCHORS)) {
-      const root = this.rootOf(frame);
+    if (!frame) return null;
 
-      return root === null ? null : { root, pose: resolveFrame(this.tree, frame, at, ANCHORS)! };
-    }
+    const root = this.rootOf(frame);
+
+    if (root === null || (this.base && root !== this.rootOf(this.base))) return null;
+
+    if (knowsFrame(this.tree, frame, ANCHORS)) return { root, pose: resolveFrame(this.tree, frame, at, ANCHORS)! };
 
     if (this.base || optical) return null;
 

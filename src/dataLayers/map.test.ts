@@ -4,6 +4,8 @@ import { writeMcap, type FixtureMessage } from '../datasets/import/mcapFixtures'
 import { readMcap } from '../datasets/import/recordingFiles';
 import { ROS_TO_SCENE } from '../three/viewport/dataFrames';
 import { recordingTopics } from '../topics/recordingTopics';
+import { TopicCollector } from '../topics/collector';
+import { TopicIndex } from '../topics/topicIndex';
 import { drawTrack, freshDraw } from './draw';
 import { ScanMap } from './map';
 import { mapTrack } from './mapClient';
@@ -187,5 +189,48 @@ describe('fusing a robot’s scans into one map', () => {
     expect(out.sink.count).toBe(2);
     expect(Array.from(out.sink.positions.slice(3, 6))).toEqual([top.x, top.y, top.z]);
     expect(Array.from(out.sink.colors.slice(0, 3))).not.toEqual(Array.from(out.sink.colors.slice(3, 6)));
+  });
+});
+
+describe('incomplete map sensors', () => {
+  it('keeps valid readings when another sensor topic is missing clipped fields', () => {
+    const topics = new TopicCollector();
+    const scan = {
+      header: { frame_id: 'map' },
+      angle_min: 0,
+      angle_max: 0,
+      angle_increment: 1,
+      range_min: 0.1,
+      range_max: 10,
+      ranges: Float64Array.of(1, 2),
+    };
+
+    topics.add('/clipped/scan', 'sensor_msgs/LaserScan', 0n, { header: { frame_id: 'map' } });
+    topics.add('/clipped/cloud', 'sensor_msgs/PointCloud2', 0n, { header: { frame_id: 'map' } });
+    topics.add('/clipped/cloud-bytes', 'sensor_msgs/PointCloud2', 0n, {
+      header: { frame_id: 'map' },
+      width: 1,
+      height: 1,
+      point_step: 12,
+      row_step: 12,
+      fields: ['x', 'y', 'z'].map((name, i) => ({ name, offset: i * 4, datatype: 7, count: 1 })),
+    });
+    topics.add('/clipped/depth/image_raw', 'sensor_msgs/Image', 0n, {
+      encoding: '16UC1',
+      width: 1,
+      height: 1,
+      step: 2,
+    });
+    topics.add('/clipped/depth/camera_info', 'sensor_msgs/CameraInfo', 0n, {
+      k: Float64Array.of(1, 0, 0, 0, 1, 0, 0, 0, 1),
+    });
+    topics.add('/unframed', 'sensor_msgs/LaserScan', 0n, { ...scan, header: null });
+    topics.add('/valid', 'sensor_msgs/LaserScan', 0n, scan);
+
+    const built = topicMap(new TopicIndex(topics.finish(0n)), { match: false })!;
+
+    expect(built.cloud.frame).toBe('map');
+    expect(built.cloud.points).toHaveLength(6);
+    expect(built.placed).toHaveLength(1);
   });
 });

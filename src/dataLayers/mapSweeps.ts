@@ -29,6 +29,13 @@ const IDENTITY = placer(new THREE.Matrix4());
 const filled = (sink: PointSink) => sink.positions.slice(0, sink.count * 3);
 
 export function scanSweep(scan: LaserScan): Float32Array {
+  if (
+    !Number.isSafeInteger(scan.ranges?.length) ||
+    scan.ranges.length <= 0 ||
+    ![scan.angle_min, scan.angle_increment, scan.range_min, scan.range_max].every(Number.isFinite)
+  )
+    return new Float32Array();
+
   const capacity = Math.min(scan.ranges.length, MAX_POINTS);
   const sink = pointSink(capacity);
   const ranges =
@@ -42,6 +49,8 @@ export function scanSweep(scan: LaserScan): Float32Array {
 const FIELD_BYTES: Record<number, number> = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 4, 6: 4, 7: 4, 8: 8 };
 
 function readableCloud(cloud: PointCloud2): boolean {
+  if (!Array.isArray(cloud.fields) || !(cloud.data instanceof Uint8Array)) return false;
+
   const shape = [cloud.width, cloud.height, cloud.point_step, cloud.row_step];
   const fields = ['x', 'y', 'z'].map((name) => cloud.fields.find((field) => field.name === name));
 
@@ -93,6 +102,8 @@ export function intrinsicsOf(k: ArrayLike<number> | undefined): Intrinsics | nul
 }
 
 function depthReader(image: DepthImage): ((u: number, v: number) => number) | null {
+  if (!(image.data instanceof Uint8Array)) return null;
+
   const float = image.encoding === '32FC1';
   const size = float ? 4 : 2;
   const shape = [image.width, image.height, image.step];

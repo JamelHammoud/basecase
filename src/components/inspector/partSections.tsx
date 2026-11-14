@@ -14,6 +14,8 @@ import {
   DeleteIcon,
   DuplicateIcon,
 } from '../../design-system';
+import { isBooleanPart } from '../../booleans/parts';
+import { resizeReason, stretchOf } from '../../booleans/stretch';
 import { imageStance, resizedDimensions, type DimensionKey, type ImageStance } from './partMath';
 import type { InspectorProps, Phase } from './types';
 import { keyFor } from '../../app/shortcuts';
@@ -100,40 +102,40 @@ export const ImageSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
   </Section>
 );
 
+const SIZE_FIELDS: Array<{ key: Exclude<DimensionKey, 'thickness'>; label: string; title: string; max: number }> = [
+  { key: 'width', label: 'W', title: 'Width (X)', max: 2000 },
+  { key: 'height', label: 'H', title: 'Height (Y)', max: 2000 },
+  { key: 'depth', label: 'D', title: 'Depth (Z)', max: 600 },
+];
+
 export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({ part, onUpdate, isImage }) => {
   const setDim = (key: DimensionKey, v: number, live?: Phase) =>
     onUpdate({ dimensions: resizedDimensions(part.dimensions, key, v, isImage) }, live);
+  const fields = isImage ? SIZE_FIELDS.slice(0, 2) : SIZE_FIELDS;
+  const stretch = isBooleanPart(part) ? stretchOf(part) : null;
+  const reason = resizeReason(stretch);
 
   return (
     <Section title="Size">
       <div className={`grid ${isImage ? 'grid-cols-2' : 'grid-cols-3'} gap-1.5`}>
-        <NumberInput
-          label="W"
-          title="Width (X)"
-          value={part.dimensions.width}
-          min={1}
-          max={2000}
-          onChange={(v, l) => setDim('width', v, l)}
-        />
-        <NumberInput
-          label="H"
-          title="Height (Y)"
-          value={part.dimensions.height}
-          min={1}
-          max={2000}
-          onChange={(v, l) => setDim('height', v, l)}
-        />
-        {!isImage && (
+        {fields.map(({ key, label, title, max }, i) => (
           <NumberInput
-            label="D"
-            title="Depth (Z)"
-            value={part.dimensions.depth}
+            key={key}
+            label={label}
+            title={title}
+            value={part.dimensions[key]}
             min={1}
-            max={600}
-            onChange={(v, l) => setDim('depth', v, l)}
+            max={max}
+            disabled={!!stretch?.fixed[i]}
+            onChange={(v, l) => setDim(key, v, l)}
           />
-        )}
+        ))}
       </div>
+      {reason && (
+        <p className="text-[13px] leading-snug text-white/50" data-testid="size-fixed">
+          {reason}
+        </p>
+      )}
       {part.dimensions.thickness !== undefined && (
         <div className="grid grid-cols-3 gap-1.5 items-center">
           <span className="col-span-2 text-[13px] text-white/50">Wall thickness</span>

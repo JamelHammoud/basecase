@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { hardwareDimensions, type HardwareSpec } from '../src/data/hardware';
 import { openApp, shown, type App } from './harness';
 
 let app: App;
@@ -72,6 +73,28 @@ function verticalRayHits(t: number[], x: number, z: number): boolean {
   return false;
 }
 
+const span = (t: number[]) => {
+  const [minX, , , maxX] = bounds(t);
+
+  return Math.round((maxX - minX) * 100) / 100;
+};
+
+const SCREW: HardwareSpec = { type: 'socket_head', size: 'M3', length: 20 };
+
+async function unite(parts: object[]) {
+  await app.page.evaluate((list) => {
+    const studio = (window as unknown as { __studio: Studio }).__studio;
+
+    studio.load({ parts: list });
+    studio.select(['plate', 'pin']);
+  }, parts);
+  await app.page.keyboard.press('Meta+k');
+  await app.page.keyboard.type('Union');
+  await app.page.keyboard.press('Enter');
+  await expect.poll(async () => (await record()).map((p) => p.kind)).toEqual(['boolean']);
+  await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.select(['plate']));
+}
+
 const holeAt = async (x: number) => !verticalRayHits(await triangles(), x, 0);
 
 beforeAll(async () => {
@@ -133,6 +156,44 @@ describe('editable booleans', () => {
 
     await expect.poll(() => holeAt(0)).toBe(true);
     expect(await holeAt(10)).toBe(false);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('resizes a union from the Inspector and keeps the new width', async () => {
+    await unite([
+      shape('plate', 'box', { width: 60, height: 20, depth: 40 }),
+      { ...shape('pin', 'cylinder', { width: 10, height: 40, depth: 10 }), position: [30, 10, 0] },
+    ]);
+
+    const width = app.page.locator(shown('input[aria-label="Width (X)"]')).first();
+
+    await expect.poll(() => width.inputValue()).toBe('65');
+    await width.fill('130');
+    await width.press('Enter');
+
+    await expect.poll(async () => span(await triangles()), { timeout: 15000 }).toBe(130);
+    expect(await width.inputValue()).toBe('130');
+    expect(app.errors).toEqual([]);
+  });
+
+  it('locks the size a screw in a union sets, and says how to resize it', async () => {
+    await unite([
+      { ...shape('plate', 'box', { width: 2, height: 2, depth: 2 }), position: [0, 20, 0] },
+      {
+        ...shape('pin', 'hardware', hardwareDimensions(SCREW)),
+        name: 'M3 Screw',
+        category: 'hardware',
+        hardware: SCREW,
+        position: [0, 20, 0],
+      },
+    ]);
+
+    const width = app.page.locator(shown('input[aria-label="Width (X)"]')).first();
+
+    await expect.poll(() => width.isDisabled()).toBe(true);
+    expect(await app.page.locator(shown('[data-testid="size-fixed"]')).innerText()).toBe(
+      'M3 Screw keeps its shape. Resize the parts in Layers.',
+    );
     expect(app.errors).toEqual([]);
   });
 });

@@ -17,7 +17,7 @@ interface Recording {
   samples: number[][];
   ms: number;
   from: number | null;
-  timer: ReturnType<typeof setTimeout>;
+  timer: ReturnType<typeof setTimeout> | undefined;
 }
 
 export function createGestureTap(post: (news: GestureNews) => void): GestureTap {
@@ -58,7 +58,7 @@ export function createGestureTap(post: (news: GestureNews) => void): GestureTap 
     record: (ms) => {
       if (recording) clearTimeout(recording.timer);
 
-      recording = { samples: [], ms, from: null, timer: setTimeout(finish, ms + QUIET_MS) };
+      recording = { samples: [], ms, from: null, timer: undefined };
     },
     stop: () => {
       if (recording) clearTimeout(recording.timer);

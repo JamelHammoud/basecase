@@ -159,6 +159,26 @@ describe('the worker’s gesture tap', () => {
     tap.stop();
   });
 
+  it('waits for a feed that starts late instead of ending the recording empty', () => {
+    vi.useFakeTimers();
+
+    const news: GestureNews[] = [];
+    const tap = createGestureTap((n) => news.push(n));
+
+    tap.record(3000);
+    vi.advanceTimersByTime(10000);
+    expect(news).toEqual([]);
+
+    for (const s of saluteMotion(1)) tap.step(s.world, s.t);
+
+    vi.advanceTimersByTime(QUIET_MS);
+
+    const examples = news.flatMap((n) => (n.type === 'example' ? [n.example] : []));
+
+    expect(examples).toHaveLength(1);
+    expect(examples[0]!.length).toBeGreaterThan(5);
+  });
+
   it('posts no example when the frames stop and nothing moved', () => {
     vi.useFakeTimers();
 

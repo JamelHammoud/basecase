@@ -18,6 +18,7 @@ import { connectPhone, type PhoneSocket } from './phoneClient';
 interface SimState {
   drive: string;
   activeCase: string | null;
+  tries: unknown[];
   stats: { robots: Array<{ forward: number }> } | null;
   effector: number[] | null;
   joints: Record<string, { target: number; position: number }>;
@@ -136,6 +137,7 @@ async function tryIt() {
 
 async function leaveCase() {
   await stopDriving();
+  await expect.poll(async () => (await studio()).tries.length, { timeout: 30000 }).toBe(1);
   await app.page.keyboard.press('Escape');
   await expect.poll(areaCount).toBe(0);
 }

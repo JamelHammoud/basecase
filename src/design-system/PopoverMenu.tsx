@@ -245,7 +245,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
       <span className="flex-1 truncate">{label}</span>
       {detail && (
         <span
-          className={`shrink-0 text-[12.5px] group-hover/menuitem:text-white/80 ${active ? 'text-white/80' : 'text-white/50'}`}
+          className={`shrink-0 text-[12.5px] group-hover/menuitem:text-white/90 ${active ? 'text-white/90' : 'text-white/50'}`}
         >
           {detail}
         </span>
@@ -268,7 +268,7 @@ export const MenuLabel: React.FC<{ children: React.ReactNode; onSelect?: () => v
     <button
       type="button"
       onClick={onSelect}
-      className={`${menuLabelClass} block max-w-full truncate text-left cursor-default transition-colors hover:text-white/80`}
+      className={`${menuLabelClass} block max-w-full truncate text-left cursor-default transition-colors hover:text-white/90`}
     >
       {children}
     </button>

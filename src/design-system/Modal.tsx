@@ -85,7 +85,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div className="flex items-center justify-between gap-[12px] min-h-[60px] px-[20px] py-[16px] shrink-0">
           <div className="flex items-center gap-[12px] min-w-0">
             {icon && (
-              <span className="w-[28px] h-[28px] rounded-[8px] bg-white/[0.06] flex items-center justify-center text-white/80 shrink-0">
+              <span className="w-[28px] h-[28px] rounded-[8px] bg-white/[0.06] flex items-center justify-center text-white/90 shrink-0">
                 {icon}
               </span>
             )}

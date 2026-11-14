@@ -68,9 +68,9 @@ export function SegmentedControl<T extends string>({
                 ? `rounded-md ${
                     isSelected
                       ? 'text-white bg-white/[0.08]'
-                      : 'text-white/50 hover:text-white/80 hover:bg-white/[0.04]'
+                      : 'text-white/50 hover:text-white/90 hover:bg-white/[0.04]'
                   }`
-                : `rounded-md ${isSelected ? 'text-white' : 'text-white/55 hover:text-white/85'}`
+                : `rounded-md ${isSelected ? 'text-white' : 'text-white/60 hover:text-white/90'}`
             }`}
           >
             {opt.icon && <span className="shrink-0 inline-flex">{opt.icon}</span>}

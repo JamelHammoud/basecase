@@ -28,6 +28,7 @@ interface WorldEvent {
 type Studio = {
   simState: () => SimState;
   load: (r: unknown) => void;
+  agentRequest: (kind: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
   worldAt: () => Record<string, number[]>;
   tryWorld: () => Promise<WorldEvent[]>;
   cameraStreams: () => { frames: number; ms: number };
@@ -99,9 +100,8 @@ const LAMP = {
   id: 'lamp',
   name: 'Lamp',
   kind: 'cylinder',
-  position: [0, 1, 300],
-  rotation: [0, 0, 0],
-  size: [120, 2, 120],
+  position: [0, -300, 1],
+  size: [120, 120, 2],
   color: '#555555',
   behavior: 'marker',
   movable: true,
@@ -114,36 +114,42 @@ document.querySelector('[data-light]').addEventListener('click', () => {
 });
 </script>`;
 
-function roverScene(console: unknown, extra: unknown[] = []) {
-  const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
-  const preset = presetCase('reach-the-flag', buildRig(rover.joints, rover.parts), rover.parts);
-  const kase = {
-    ...preset,
-    world: { objects: [...preset.world.objects, ...extra] },
-    id: 'rover-code',
-    name: 'Rover Cockpit',
-    console,
-  };
+const rover = () => fixtureRobots().find((r) => r.id === 'rover-diff')!;
 
-  return {
-    name: 'rover-code',
-    parts: rover.parts,
-    project: { ...DEFAULT_PROJECT, joints: rover.joints, cases: [kase] },
-  };
-}
-
-async function openCase(console: unknown, extra: unknown[] = []) {
+async function loadRover(cases: unknown[] = []) {
   const { page } = app;
-  const scene = roverScene(console, extra);
+  const { parts, joints } = rover();
+  const scene = { name: 'rover-code', parts, project: { ...DEFAULT_PROJECT, joints, cases } };
 
   await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
-  await expect.poll(() => partCount(page)).toBe(scene.parts.length);
+  await expect.poll(() => partCount(page)).toBe(parts.length);
+}
+
+async function openCase(console: unknown) {
+  const { page } = app;
+  const { parts, joints } = rover();
+  const preset = presetCase('reach-the-flag', buildRig(joints, parts), parts);
+
+  await loadRover([{ ...preset, id: 'rover-code', name: 'Rover Cockpit', console }]);
   await openPlayTab(page, 'Cases');
   await page.locator(shown('[data-testid="cases-panel"] button'), { hasText: 'Rover Cockpit' }).first().click();
   await expect.poll(async () => (await simState()).activeCase).toBe('rover-code');
   await page.keyboard.press('Meta+k');
   await page.keyboard.type('Run Case');
   await page.keyboard.press('Enter');
+  await expect.poll(areaCount).toBe(1);
+}
+
+async function askAgentForCase(payload: Record<string, unknown>) {
+  await loadRover();
+
+  const reply = await app.page.evaluate(
+    (p) => (window as unknown as { __studio: Studio }).__studio.agentRequest('create_case', p),
+    payload,
+  );
+
+  expect(reply).toMatchObject({ ok: true, running: true });
+  await expect.poll(async () => (await simState()).activeCase).toBe(reply.id);
   await expect.poll(areaCount).toBe(1);
 }
 
@@ -252,12 +258,15 @@ describe('Case code panels', () => {
 });
 
 describe('Case code that shapes its world', () => {
-  it('lights a movable target from code during a try and records the change', async () => {
+  it('lights a target the agent made movable, from code during a try, and records the change', async () => {
     const { page } = app;
     const tries = (name: string) => page.locator(shown('[data-panel="tries"] button'), { hasText: name }).first();
 
-    await openCase(
-      {
+    await askAgentForCase({
+      goal: 'reach',
+      name: 'Light the Lamp',
+      objects: [LAMP],
+      console: {
         input: ['keys'],
         panels: [
           { id: 'light', kind: 'code', title: 'Light', height: 80, source: LIGHT },
@@ -265,8 +274,7 @@ describe('Case code that shapes its world', () => {
         ],
         layout: { areas: [{ canvas: true }, { size: 320, panels: ['light', 'tries'] }] },
       },
-      [LAMP],
-    );
+    });
 
     await tries('Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');

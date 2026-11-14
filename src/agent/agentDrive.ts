@@ -39,6 +39,7 @@ export interface AgentObject {
   mass_g?: number;
   friction?: number;
   color?: string;
+  movable?: boolean;
 }
 
 interface AgentCommand {
@@ -71,6 +72,7 @@ export function sceneObjects(objects: AgentObject[]): WorldObject[] {
     behavior: o.behavior,
     ...(o.mass_g !== undefined ? { massG: o.mass_g } : {}),
     ...(o.friction !== undefined ? { friction: o.friction } : {}),
+    ...(o.movable ? { movable: true } : {}),
   }));
 
   return readWorldObjects(raw);

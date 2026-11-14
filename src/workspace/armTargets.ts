@@ -13,11 +13,11 @@ export interface ArmTarget {
 const r1 = (v: number) => Math.round(v * 10) / 10 || 0;
 
 export function armTargetsOf(parts: ScenePart[]): ArmTarget[] {
-  const guides = parts.filter((p) => p.role === 'reference' && p.kind !== 'image_plane');
+  const allGuides = parts.every((p) => p.role === 'reference' && p.kind !== 'image_plane');
 
-  if (guides.length > MAX_TARGETS) return [];
+  if (!allGuides || parts.length > MAX_TARGETS) return [];
 
-  return guides.map((p) => ({ id: p.id, name: p.name, at: toCad(p.position).map(r1) as ZUpVec }));
+  return parts.map((p) => ({ id: p.id, name: p.name, at: toCad(p.position).map(r1) as ZUpVec }));
 }
 
 const REACH_FIX = {

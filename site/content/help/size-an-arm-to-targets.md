@@ -18,7 +18,7 @@ Get a desk arm's link lengths and a servo for each joint from the points its wri
 
 1. Place a small part, such as a sphere, at each point the wrist must reach. You can use up to 8.
 2. Select those parts, right-click them and choose **Guide**.
-3. With the guide parts still selected, press ⌘K and run **Size Arm to Targets**. The sheet lists each target's position in millimeters.
+3. With only the guide parts selected, press ⌘K and run **Size Arm to Targets**. The sheet lists each target's position in millimeters.
 4. In **Payload**, enter the grams the arm carries at its wrist.
 5. Click **Size Arm**. The arm appears with a servo on each joint, and the Pose tab opens with Edit Skeleton on.
 

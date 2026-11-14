@@ -1,7 +1,7 @@
 ---
 title: Case goals, worlds and contracts
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: reference
 order: 2
@@ -90,6 +90,7 @@ The builder starts each number at a default sized to the robot. Its limits:
 | **Slope** | Reach a Spot, Follow a Path, Walk Without Falling | A ramp up at **Incline**, a flat top and a ramp down. Tries get the same extra time |
 | **Shelf** | Touch a Point | A box under the point |
 | A room you imported | Reach a Spot, Push a Box, Follow a Path. Touch a Point when a table is in reach | The room's largest walls and furniture, at true size |
+| A captured or generated world you dropped | Reach a Spot, Push a Box, Follow a Path, Walk Without Falling | Its collider mesh, with an optional splat for its appearance, at true size |
 
 Rough Ground, Steps and Slope start their number at a value sized to the robot's legs or wheels. The steps are in [Test a robot on rough ground, steps or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope).
 
@@ -98,6 +99,8 @@ In a room, the robot starts where the scan marked it, turned to the nearest quar
 In a room, a spot can be a door or a piece of furniture, picked by name. A furniture spot sits on the open floor in front of it, and a door's sits in the doorway. **Under Table** is offered only to a robot shorter than the table's underside. With a named spot, **Time** grows with the trip: 100 mm a second on wheels, 60 on legs, up to 120 s.
 
 Each run in Checks moves the room's fixed furniture by up to 50 mm and turns it up to 5°, or 100 mm and 10° where RoomPlan was less sure. Walls and doors never move. The steps are in [Import a scanned room as a Case world](/help/import-a-scanned-room).
+
+In a captured world, the robot starts on clear floor nearest the world's middle. The reference route avoids colliders in the robot's height range, so a low robot can pass under a table. The captured geometry stays fixed across runs. The steps are in [Import a captured world](/help/import-a-world).
 
 A Case is named after its goal and world, such as "Push a Box in a Corridor", and you [rename it](/help/make-a-case#rename-or-delete-a-case) from its right-click menu. A world that would put a solid object where the robot stands is refused, with what to change.
 
@@ -133,3 +136,5 @@ The contract never passes by default. A reading that isn't a number counts again
 ## Scaling to another arm
 
 A Case written on one arm runs on another by scaling its world to the new arm's reach, measured from its shoulder. Every distance in the contract scales with it. Angles don't. A position the Case's code gives a movable object scales the same way, so a lit spot lands on the scaled spot. Skills are judged by the same contract code, in [Arena](/help/arena).
+
+Imported rooms and captured worlds keep their true size when you change robots.

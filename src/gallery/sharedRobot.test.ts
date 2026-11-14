@@ -10,6 +10,8 @@ import { fetchGalleryBundle } from './fetchBundle';
 import { bundleScene, GALLERY_BUNDLE_MAX_BYTES, galleryBundleBytes, readGalleryBundleBytes } from './galleryBundle';
 import { galleryBundles } from './galleryEntries';
 import { galleryBundleSource, sharedBundleUrl, sharedRobotLink, sharedRobotPath } from './galleryLinks';
+import { meshWorldAsset } from '../cases/worldAssets.fixtures';
+import { getWorldAsset, hashWorldAsset, registerWorldAsset } from '../cases/worldAssets';
 
 const bundle = () => JSON.parse(JSON.stringify(galleryBundles()[1]));
 const bytesOf = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
@@ -99,6 +101,44 @@ describe('shared robot links', () => {
 });
 
 describe('shared robot bundles', () => {
+  it('carry one world asset through the shared page and Open Scene, and reject missing or changed content', async () => {
+    const asset = meshWorldAsset();
+    const hash = await hashWorldAsset(asset);
+    const source = cockpit();
+
+    registerWorldAsset(hash, asset);
+
+    const kase = {
+      ...source.case,
+      world: { ...source.case.world, imported: { hash, position: [0, 0, 0] as [number, number, number] } },
+    };
+    const shared = galleryBundleOf({
+      slug: source.slug,
+      title: source.title,
+      robotName: source.robot.name,
+      parts: source.robot.parts,
+      joints: source.robot.joints,
+      kase,
+    });
+    const fetched = vi.fn<typeof fetch>();
+
+    vi.stubGlobal('fetch', fetched);
+    fetched.mockResolvedValueOnce(new Response(galleryBundleBytes(shared) as BodyInit));
+
+    const restored = await fetchGalleryBundle('/world');
+
+    expect(bundleScene(restored).worldAssets).toEqual(shared.worldAssets);
+    expect(getWorldAsset(hash)?.world.mesh.positions).toEqual(asset.world.mesh.positions);
+    expect(() => readGalleryBundleBytes(bytesOf({ ...shared, worldAssets: undefined }))).toThrow('missing');
+
+    const altered = JSON.parse(JSON.stringify(shared));
+
+    altered.worldAssets[hash].world.name = 'Changed';
+    fetched.mockResolvedValueOnce(new Response(bytesOf(altered) as BodyInit));
+
+    await expect(fetchGalleryBundle('/world')).rejects.toThrow('hash');
+  });
+
   it('refuse a bundle over the 8 MB cap, before parsing it', () => {
     const big = bundle();
 

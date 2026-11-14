@@ -1,4 +1,6 @@
 import { drilledOperands } from '../booleans/picking';
+import { importedPlacement } from '../cases/importedWorld';
+import { caseWorldView } from '../cases/worldView';
 import { AgentCursor } from '../components/AgentCursor';
 import { AnnotationLayer } from '../components/Annotations';
 import { BuildAlongBar } from '../components/build/BuildAlongBar';
@@ -36,6 +38,19 @@ function markFieldFor(marks: WorkspaceCore['marks']) {
   );
 }
 
+function worldViewFor(core: WorkspaceCore) {
+  const { active, builder } = core.simTraining.cases;
+  const imported = builder.open && builder.imported;
+
+  return imported ? { ...imported, position: importedPlacement(imported, builder.robot) } : caseWorldView(active);
+}
+
+function shownPartsFor(core: WorkspaceCore) {
+  const parts = core.studio.showReferenceImages ? core.parts : core.parts.filter((p) => p.kind !== 'image_plane');
+
+  return [...parts, ...drilledOperands(core.parts, core.selectedIds)];
+}
+
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
   const {
     viewportRef,
@@ -54,15 +69,13 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
   } = core;
   const { edits } = actions;
   const { cursors, lanes } = agent;
-  const topParts = studio.showReferenceImages ? parts : parts.filter((p) => p.kind !== 'image_plane');
-  const shownParts = [...topParts, ...drilledOperands(parts, selectedIds)];
 
   return (
     <>
       <Viewport3D
         ref={viewportRef}
         sceneKey={scene.sceneId}
-        parts={shownParts}
+        parts={shownPartsFor(core)}
         selectedPartIds={canvasSelection(core.caseRun, selectedIds)}
         transformMode={tool.transformMode}
         sculptSettings={tool.sculptSettings}
@@ -103,6 +116,8 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         paused={!active || !!core.printing.mode}
         pose={posing.deltas}
         worldParts={sim.guestParts.length ? [...sim.worldParts, ...sim.guestParts] : sim.worldParts}
+        importedWorld={worldViewFor(core)}
+        onWorldError={core.simTraining.cases.showError}
         poseJoint={tool.transformMode === 'pose' ? posing.poseJoint : null}
         onGrab={sim.status === 'ready' ? sim.grab : null}
         onPoseJoint={posing.onPoseJoint}

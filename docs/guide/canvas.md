@@ -4,6 +4,9 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 12. 3D Canvas
 
+Imported Case visuals (`three/viewport/importedWorld.ts`) attach to `stage.worldRoot` alongside the world PartLayer. Embedded mesh textures use the imported sampler settings. Spark receives splat bytes directly and schedules redraws through `onDirty` after worker loading or sorting completes. Moving the same world retains its buffers. Closing or replacing it disposes textures, splats and the renderer, and rejects stale asynchronous loads. Collision pieces stay hidden.
+
+
 - Background `#1b1b1b` (the canvas card) with a soft CSS vignette.
 - **Sheet thickness** (§8b): axis-aligned profiles resize through the part's dimensions. Tilted profiles store a normal stretch in `sheetTransform`, applied to each child matrix when its group is built. Source meshes stay shared and unchanged. Selection bounds and hand placement include the affine matrix and its translation. Sculpt converts the transformed triangles into its vertex data and clears the matrix on commit, so it is applied once. The geometry worker measures newly requested primitive sheet parts and resized sheet geometry through the same mesh builder. The analysis worker, STL and simulation read those transformed meshes, and `shapeKey` includes the matrix so geometry-dependent results refresh when thickness changes.
 - **Current-view captures** (`captureScreenshot`): copy the frame synchronously after rendering without helpers, then restore helpers and encode in the image worker. The handle returns a promise of the PNG, or a JPEG when `maxSide` bounds a tab preview (§0f).

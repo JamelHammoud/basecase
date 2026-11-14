@@ -18,7 +18,7 @@ import {
   type SimRobot,
 } from './mjcfTypes';
 import { adoptEmbeddedParts, isSolidPart } from './mjcfEmbedded';
-import { emitWorld } from './mjcfWorld';
+import { emitWorld, worldFloor } from './mjcfWorld';
 import { robotScans } from './lidar';
 import { classifyRobot, isWheelJoint } from './morphology';
 
@@ -360,7 +360,7 @@ ${st.assets.join('\n')}
   </asset>
   <worldbody>
     <light pos="0 0 3" dir="0 0 -1" directional="true"/>
-    <geom name="floor" type="plane" size="0 0 0.05" contype="0" conaffinity="1"/>
+${worldFloor(st.input)}
 ${st.worldXml.join('\n')}
   </worldbody>
   <actuator>

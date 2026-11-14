@@ -4,6 +4,7 @@ import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
 import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
+import { readWorldReference, type ImportedWorldRef } from './worldReference';
 import { gestureNames, readGestures, type CaseGesture } from './gestures';
 import {
   asBoolean,
@@ -123,7 +124,7 @@ export interface Case {
   brief: string;
   slot?: RobotSlot;
   slots?: RobotSlot[];
-  world: { objects: WorldObject[] };
+  world: { objects: WorldObject[]; imported?: ImportedWorldRef };
   controls: CaseControl[];
   reference: { timeline: ReferenceCommand[] };
   task: CaseTask;
@@ -356,7 +357,10 @@ export function parseCase(input: unknown): Case {
     name: asString(v.name, 'name'),
     brief: asString(v.brief, 'brief'),
     ...readCast(v),
-    world: { objects },
+    world: {
+      objects,
+      ...(world.imported === undefined ? {} : { imported: readWorldReference(world.imported, 'world.imported') }),
+    },
     controls: listOf(readControl, 16)(v.controls, 'controls'),
     reference: { timeline: listOf(readCommand, MAX_COMMANDS)(reference.timeline, 'reference.timeline') },
     task,

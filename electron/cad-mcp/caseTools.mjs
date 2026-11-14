@@ -18,7 +18,7 @@ export const createCase = {
       'pick (pick up a block distance_mm ahead of the arm and set it on a spot spacing_mm farther out; arms with a gripper, open floor only). ' +
       'handoff (as touch, then a second arm from another open scene tab, facing the first, touches the same point while the first leaves it; needs an arm in another open tab). ' +
       'radius_mm is how close counts, seconds the time allowed; anything left out gets a default sized to the robot. ' +
-      'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch; room, the scanned room the user dropped, for reach, push and path. ' +
+      'Worlds: floor; corridor (a wall on each side) and block (a block in the way) for reach, push, path and walk; shelf (the point sits on a shelf) for touch; room, the scanned room the user dropped, for reach, push and path; imported, a dropped 3D world at true size, for reach, push, path and walk. ' +
       'Terrain worlds for reach, path and walk, sized to the robot’s legs or wheels: rough (a grid of tiles up to rise_mm tall), steps (a platform rise_mm tall to cross) and slope (a ramp up and down at incline_deg); use them to test climbing, e.g. "make sure it can climb a step" is walk or reach over steps. ' +
       'In the room, target names where reach stops (one name) or the spots path passes in order (2 to 8 names), from the room’s doors and furniture: "door", "table", "table 2", or "under table" for the floor beneath a table the robot fits under. A target picks the room world. ' +
       'objects adds world objects as in set_world (agent frame); mark one movable: true when the Case’s code moves, recolors or hides it (basecase.world.set), as for a target to whack. A legged robot that falls fails any Case. ' +
@@ -29,9 +29,16 @@ export const createCase = {
     inputSchema: {
       goal: z.enum(['reach', 'push', 'path', 'walk', 'touch', 'pick', 'handoff']),
       world: z
-        .enum(['floor', 'corridor', 'block', 'shelf', 'rough', 'steps', 'slope', 'room'])
+        .enum(['floor', 'corridor', 'block', 'shelf', 'rough', 'steps', 'slope', 'room', 'imported'])
         .optional()
         .describe('floor when left out, room when target is given'),
+      world_hash: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional()
+        .describe(
+          'The imported world asset hash returned when the user drops a 3D world; picks imported when world is left out',
+        ),
       target: z
         .union([z.string().min(1).max(80), z.array(z.string().min(1).max(80)).min(1).max(8)])
         .optional()

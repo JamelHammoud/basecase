@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildCase, builderRobot, type CaseSpec } from '../cases/caseBuilder';
 import { compileCaseLogic } from '../cases/caseLogic';
 import type { Case } from '../cases/schema';
@@ -86,6 +86,16 @@ describe('create_case', () => {
       seconds: 12,
       objects: 4,
     });
+  });
+
+  it('forwards an imported world hash to the builder and chooses its world', async () => {
+    const { ctx } = contextFor('rover-diff');
+    const add = vi.spyOn(ctx.cases.builder, 'add');
+    const worldHash = 'a'.repeat(64);
+
+    await CASE_HANDLERS.create_case({ goal: 'reach', world_hash: worldHash }, ctx);
+
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ world: 'imported', worldHash }));
   });
 
   it('touches several dots in order on an arm when given a dot count', async () => {

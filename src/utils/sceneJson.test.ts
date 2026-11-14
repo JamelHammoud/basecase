@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { ScenePart } from '../types/robotics';
 import { sceneJson } from './sceneJson';
+import { meshWorldAsset } from '../cases/worldAssets.fixtures';
+import { hashWorldAsset, registerWorldAsset, serializeWorldAssets } from '../cases/worldAssets';
+import type { ProjectSettings } from '../types/robotics';
 
 const part = (id: string): ScenePart => ({
   id,
@@ -19,6 +22,23 @@ const part = (id: string): ScenePart => ({
 });
 
 describe('sceneJson', () => {
+  it('adds referenced worlds once outside the project and reuses their cached serialization', async () => {
+    const asset = meshWorldAsset();
+    const hash = await hashWorldAsset(asset);
+    const project = {
+      cases: [{ world: { objects: [], imported: { hash, position: [0, 0, 0] } } }],
+    } as unknown as ProjectSettings;
+
+    registerWorldAsset(hash, asset);
+
+    const first = JSON.parse(await sceneJson({ parts: [], project }));
+    const second = JSON.parse(await sceneJson({ parts: [], project: { ...project, infillPct: 20 } }));
+
+    expect(first.worldAssets).toEqual(serializeWorldAssets({ [hash]: asset }));
+    expect(second.worldAssets).toEqual(first.worldAssets);
+    expect(first.project).not.toHaveProperty('worldAssets');
+  });
+
   it('matches JSON.stringify for a scene, and reuses part JSON across saves', async () => {
     const parts = [part('a'), part('b')];
     const payload = { id: 'scene-1', name: 'Robot', parts, project: { budget: 800 }, autosave: true };

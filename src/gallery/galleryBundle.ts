@@ -10,6 +10,7 @@ import {
 } from '../types/robotics';
 import { readTrained, type GalleryTrained } from './galleryTrained';
 import { validSheetFields } from '../sheet/validation';
+import { isWorldAssetHash, type SerializedWorldAssets } from '../cases/worldAssets';
 
 export const GALLERY_FORMAT_VERSION = 1;
 
@@ -25,6 +26,7 @@ export interface GalleryBundle {
   robot: { name: string; parts: ScenePart[]; joints: RobotJoint[] };
   case: Case;
   trained?: GalleryTrained;
+  worldAssets?: SerializedWorldAssets;
 }
 
 const isVec3 = (v: unknown) => Array.isArray(v) && v.length === 3 && v.every((n) => Number.isFinite(n));
@@ -70,12 +72,26 @@ function readJoint(value: unknown, where: string): RobotJoint {
   return j as unknown as RobotJoint;
 }
 
+function readWorldAssets(value: unknown, kase: Case): SerializedWorldAssets | undefined {
+  const table = value === undefined ? {} : asRecord(value, 'World assets');
+  const hashes = Object.keys(table);
+  const reference = kase.world.imported?.hash;
+
+  if (hashes.some((hash) => !isWorldAssetHash(hash))) return refuse('World assets', 'needs content hashes');
+
+  if (reference && !Object.hasOwn(table, reference)) return refuse('World asset', 'is missing');
+
+  return hashes.length ? (table as SerializedWorldAssets) : undefined;
+}
+
 export function parseGalleryBundle(input: unknown): GalleryBundle {
   const v = asRecord(input, 'A gallery Case');
 
   if (v.formatVersion !== GALLERY_FORMAT_VERSION) return refuse('A gallery Case', 'is from a newer Basecase');
 
   const robot = asRecord(v.robot, 'robot');
+  const kase = parseCase(v.case);
+  const worldAssets = readWorldAssets(v.worldAssets, kase);
 
   return {
     formatVersion: GALLERY_FORMAT_VERSION,
@@ -86,7 +102,8 @@ export function parseGalleryBundle(input: unknown): GalleryBundle {
       parts: listOf(readPart, MAX_PARTS)(robot.parts, 'robot.parts'),
       joints: listOf(readJoint, MAX_JOINTS)(robot.joints, 'robot.joints'),
     },
-    case: parseCase(v.case),
+    case: kase,
+    ...(worldAssets ? { worldAssets } : {}),
     ...(v.trained === undefined ? {} : { trained: readTrained(v.trained) }),
   };
 }
@@ -97,6 +114,7 @@ export interface BundleScene {
   parts: ScenePart[];
   annotations: SceneAnnotation[];
   project: ProjectSettings;
+  worldAssets?: SerializedWorldAssets;
 }
 
 export const bundleScene = (bundle: GalleryBundle): BundleScene => ({
@@ -105,6 +123,7 @@ export const bundleScene = (bundle: GalleryBundle): BundleScene => ({
   parts: bundle.robot.parts,
   annotations: [],
   project: { ...DEFAULT_PROJECT, joints: bundle.robot.joints, cases: [bundle.case] },
+  ...(bundle.worldAssets ? { worldAssets: bundle.worldAssets } : {}),
 });
 
 const overBudget = (bytes: number) => bytes > GALLERY_BUNDLE_MAX_BYTES;

@@ -1,7 +1,7 @@
 ---
 title: Make a Case
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 3
@@ -53,6 +53,8 @@ Before you start, make sure the scene has a robot with joints. To learn what a C
 Basecase opens the Case in the **Simulate** tab and shows its world on the canvas. Next, [try the Case](/help/try-a-case).
 
 **Tip:** You can also find **New Case** in [[⌘K]]. The card opens with the focus on **Make Case**, so you can press [[↩]] to make the Case as long as you haven't clicked a field.
+
+To use a captured or generated place, drop its collider mesh onto the canvas. New Case opens with that world picked. See [Import a captured world](/help/import-a-world) for the files to include.
 
 ## Describe a Case in words
 

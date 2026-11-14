@@ -16,10 +16,11 @@ interface NewCaseCardProps {
 
 export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   const [goalKind, setGoalKind] = useState<GoalKind>(builder.goals[0].kind);
-  const [chosenWorld, setWorld] = useState<WorldKind>(builder.room ? 'room' : 'floor');
+  const initialWorld: WorldKind = builder.room ? 'room' : 'floor';
+  const [chosenWorld, setWorld] = useState<WorldKind>(builder.imported ? 'imported' : initialWorld);
   const [given, setGiven] = useState<Partial<GoalValues>>({});
   const goal = builder.goals.find((g) => g.kind === goalKind) ?? builder.goals[0];
-  const worlds = worldsFor(goal.kind, builder.robot, builder.room);
+  const worlds = worldsFor(goal.kind, builder.robot, builder.room, builder.imported);
   const world = worlds.some((w) => w.kind === chosenWorld) ? chosenWorld : 'floor';
   const spots = useRoomTargetPick({
     builder,
@@ -30,7 +31,8 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   const chosen = spots.chosen;
   const spec = { goal: goal.kind, world, values: given, targets: chosen };
   const values =
-    specValues({ ...spec, room: builder.room }, builder.robot) ?? goalValues(goal, builder.robot, given, world);
+    specValues({ ...spec, room: builder.room, imported: builder.imported }, builder.robot) ??
+    goalValues(goal, builder.robot, given, world);
   const preview = builder.preview(spec);
   const fields = caseFields(goal, values, world).filter((key) => !(key === 'distanceMm' && chosen[0]));
 

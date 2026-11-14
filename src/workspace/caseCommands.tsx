@@ -14,6 +14,7 @@ import {
   StopIcon,
   SwapIcon,
 } from '../design-system';
+import type { WorldAsset } from '../cases/worldAssets';
 import type { Room } from '../cases/roomPlan';
 import { INPUT_COMMANDS } from './inputCommands';
 import { showLeftTab } from './showView';
@@ -43,6 +44,11 @@ export const STAYS_IN_RUN = new Set([
 export const showRoomCase = (core: WorkspaceCore, room: Room) => {
   showCases(core);
   core.simTraining.cases.builder.startInRoom(room);
+};
+
+export const showWorldCase = (core: WorkspaceCore, hash: string, asset: WorldAsset) => {
+  showCases(core);
+  core.simTraining.cases.builder.startInWorld(hash, asset);
 };
 
 const runCaseCommand = (core: WorkspaceCore): Command => ({

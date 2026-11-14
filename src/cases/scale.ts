@@ -29,6 +29,8 @@ export function movableWorld(kase: Case | null, facts: { reachMm: number; anchor
 }
 
 export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
+  if (kase.world.imported) return kase;
+
   const { s, place, same } = reachFrame(kase, reachMm, anchor);
 
   if (same) return kase;

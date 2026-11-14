@@ -2,14 +2,15 @@ import { useRef, useState } from 'react';
 import type { Snap } from '../agent/snap';
 import { catalogItemFromKey } from '../data/catalog';
 import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, SIMREADY_DRAG_TYPE, isSceneDrag } from '../data/dnd';
-import { isRoomFileName } from '../cases/roomPlan';
 import { isMidiFileName, loadMidiSong } from '../midi/midiSource';
 import { hasPrimaryModifier } from '../utils/os';
-import { showRoomCase } from './caseCommands';
+import { showRoomCase, showWorldCase } from './caseCommands';
 import { droppedPart } from './dropPreview';
-import { droppedFolders } from './droppedFolders';
+import { droppedFolders, type DroppedFolder } from './droppedFolders';
 import { isImageType } from './importRoute';
-import { readRoomFile } from './roomImport';
+import { hasWorldFile, readDroppedWorld } from './worldImport';
+import { registerWorldAsset } from '../cases/worldAssets';
+import { errorMessage } from '../utils/errorMessage';
 import type { Vec3 } from './types';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -75,29 +76,44 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots, files }: 
     return true;
   };
 
-  const opensItself = (file: File) => isRoomFileName(file.name) || isMidiFileName(file.name);
-
-  const openItself = async (file: File) => {
+  const openWorld = async (all: File[]) => {
     try {
-      if (isMidiFileName(file.name)) loadMidiSong(new Uint8Array(await file.arrayBuffer()));
-      else showRoomCase(core, await readRoomFile(file));
-    } catch {
-      showToast(`Couldn’t import ${file.name}.`, { tone: 'error' });
+      const prepared = await readDroppedWorld(all);
+
+      if (prepared.kind === 'room') return showRoomCase(core, prepared.room);
+
+      const asset = { world: prepared.world, pieces: prepared.pieces };
+
+      registerWorldAsset(prepared.hash, asset, prepared.serializedJson);
+      showWorldCase(core, prepared.hash, asset);
+    } catch (error) {
+      showToast(errorMessage(error), { tone: 'error' });
     }
   };
 
-  const routeFiles = (all: File[], at?: Vec3) => {
-    all.filter(opensItself).forEach((f) => void openItself(f));
-    files.importFiles({ files: all.filter((f) => !opensItself(f)), at });
+  const routeFiles = async (all: File[], at?: Vec3, folders?: DroppedFolder[]) => {
+    const midi = all.filter((file) => isMidiFileName(file.name));
+    const remaining = all.filter((file) => !midi.includes(file));
+
+    await Promise.all(
+      midi.map(async (file) => {
+        try {
+          loadMidiSong(new Uint8Array(await file.arrayBuffer()));
+        } catch {
+          showToast(`Couldn’t import ${file.name}.`, { tone: 'error' });
+        }
+      }),
+    );
+
+    if (hasWorldFile(remaining)) await openWorld(remaining);
+    else files.importFiles({ files: remaining, at, folders });
   };
 
   const dropFiles = async (e: React.DragEvent) => {
     const at = dropPoint(viewportRef.current?.pickAt(e.clientX, e.clientY), studio.snapStepMm);
     const { folders, plain } = droppedFolders(e.dataTransfer.items);
-    const own = plain.filter(opensItself);
 
-    own.forEach((f) => void openItself(f));
-    files.importFiles({ files: plain.filter((f) => !own.includes(f)), at, folders: await folders });
+    await routeFiles(plain, at, await folders);
   };
 
   const previewSnap = (e: React.DragEvent | null) => {

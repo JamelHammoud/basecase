@@ -26,6 +26,13 @@ import { topOf } from './terrain';
 import { CASE_FORMAT_VERSION, parseCase, type Case, type ReferenceCommand, type WorldObject } from './schema';
 import { dotSpots } from './dotSpots';
 import { CaseFileError } from './validate';
+import {
+  importedPlacement,
+  importedScenery,
+  importedWorld,
+  openWorldSpot,
+  type ImportedCaseWorld,
+} from './importedWorld';
 
 export interface CaseSpec {
   goal: GoalKind;
@@ -39,6 +46,8 @@ export interface CaseSpec {
   console?: unknown;
   gestures?: unknown;
   room?: Room;
+  imported?: ImportedCaseWorld;
+  worldHash?: string;
   targets?: Array<string | null>;
 }
 
@@ -110,10 +119,14 @@ const GOALS: CaseGoal[] = [...CASE_GOALS, handoffGoal];
 
 export const goalOf = (kind: GoalKind): CaseGoal | undefined => GOALS.find((g) => g.kind === kind);
 
-const worldsWith = (room?: Room): CaseWorld[] => (room ? [...CASE_WORLDS, roomWorld(room)] : CASE_WORLDS);
+const worldsWith = (room?: Room, imported?: ImportedCaseWorld): CaseWorld[] => [
+  ...CASE_WORLDS,
+  ...(room ? [roomWorld(room)] : []),
+  ...(imported ? [importedWorld(imported)] : []),
+];
 
-export const worldOf = (kind: WorldKind, room?: Room): CaseWorld | undefined =>
-  worldsWith(room).find((w) => w.kind === kind);
+export const worldOf = (kind: WorldKind, room?: Room, imported?: ImportedCaseWorld): CaseWorld | undefined =>
+  worldsWith(room, imported).find((w) => w.kind === kind);
 
 const able = (needs: CaseGoal['needs'], robot: BuilderRobot | undefined) =>
   !!robot && needs.some((n) => robot.facts.capabilities.includes(n));
@@ -123,8 +136,12 @@ const canDo = (goal: CaseGoal, robot: BuilderRobot) =>
 
 export const goalsFor = (robot: BuilderRobot): CaseGoal[] => GOALS.filter((g) => canDo(g, robot));
 
-export const worldsFor = (goal: GoalKind, robot?: BuilderRobot, room?: Room): CaseWorld[] =>
-  worldsWith(room).filter((w) => w.fits(goal, robot));
+export const worldsFor = (
+  goal: GoalKind,
+  robot?: BuilderRobot,
+  room?: Room,
+  imported?: ImportedCaseWorld,
+): CaseWorld[] => worldsWith(room, imported).filter((w) => w.fits(goal, robot));
 
 export const CASE_PRESETS = {
   'touch-the-dots': { goal: 'touch', world: 'floor', values: { dots: 3 } },
@@ -151,8 +168,15 @@ export const caseFields = (goal: CaseGoal, values: GoalValues, world: WorldKind)
   ...worldParams(world),
 ];
 
-export function caseName(goal: GoalKind, world: WorldKind, values?: GoalValues, room?: Room): string {
-  const suffix = worldOf(world, room)?.suffix;
+export function caseName(
+  goal: GoalKind,
+  world: WorldKind,
+  values?: GoalValues,
+  context?: Pick<CaseSpec, 'room' | 'imported'> | Room,
+): string {
+  const spec: Pick<CaseSpec, 'room' | 'imported'> | undefined =
+    context && 'objects' in context ? { room: context } : context;
+  const suffix = worldOf(world, spec?.room, spec?.imported)?.suffix;
   const kind = goalOf(goal);
   const title = kind && values ? kind.title?.(values) : undefined;
 
@@ -201,7 +225,7 @@ const footprintHits = (o: WorldObject, robot: BuilderRobot) =>
 
 function choose(spec: CaseSpec, robot: BuilderRobot): { goal: CaseGoal; world: CaseWorld } | string {
   const goal = goalOf(spec.goal);
-  const world = worldOf(spec.world, spec.room);
+  const world = worldOf(spec.world, spec.room, spec.imported);
 
   if (!goal || !canDo(goal, robot)) {
     const fits = goalsFor(robot).map((g) => g.kind);
@@ -210,7 +234,7 @@ function choose(spec: CaseSpec, robot: BuilderRobot): { goal: CaseGoal; world: C
   }
 
   if (!world || !world.fits(goal.kind, robot))
-    return `Pick a world for ${goal.name}: ${worldsFor(goal.kind, robot, spec.room)
+    return `Pick a world for ${goal.name}: ${worldsFor(goal.kind, robot, spec.room, spec.imported)
       .map((w) => w.kind)
       .join(', ')}.`;
 
@@ -219,10 +243,13 @@ function choose(spec: CaseSpec, robot: BuilderRobot): { goal: CaseGoal; world: C
 
 const ROUTE_START_S = 0.5;
 
-function referenceOf({ plan, scenery, robot, world }: Draft): ReferenceCommand[] {
+function referenceOf({ spec, plan, scenery, robot, world }: Draft): ReferenceCommand[] {
   if (!plan.waypoints) return plan.timeline;
 
-  const inTheWay = scenery.map((o): WorldObject => (o.behavior === 'dynamic' ? { ...o, behavior: 'static' } : o));
+  const imported = world.kind === 'imported' && spec.imported ? importedScenery(spec.imported, robot) : [];
+  const inTheWay = [...scenery, ...imported].map((o): WorldObject =>
+    o.behavior === 'dynamic' ? { ...o, behavior: 'static' } : o,
+  );
   const route = groundRoute(plan.waypoints, [...plan.objects, ...inTheWay], {
     start: robot.pivot,
     clearanceMm: routeClearance(robot),
@@ -248,9 +275,18 @@ interface Draft {
   robot: BuilderRobot;
 }
 
+function caseWorldJson({ spec, world, plan, scenery, robot }: Draft) {
+  const imported = world.kind === 'imported' ? spec.imported : undefined;
+
+  return {
+    objects: [...plan.objects, ...scenery, ...(spec.objects ?? [])],
+    ...(imported ? { imported: { hash: imported.hash, position: importedPlacement(imported, robot) } } : {}),
+  };
+}
+
 function caseJson(draft: Draft): unknown {
-  const { spec, goal, world, values, plan, scenery, robot } = draft;
-  const name = spec.name?.trim().slice(0, MAX_CASE_NAME) || caseName(goal.kind, world.kind, values, spec.room);
+  const { spec, goal, world, values, plan, robot } = draft;
+  const name = spec.name?.trim().slice(0, MAX_CASE_NAME) || caseName(goal.kind, world.kind, values, spec);
   const guard = plan.slot.needs.includes('legs') ? fallGuard(robot) : null;
 
   return {
@@ -261,7 +297,7 @@ function caseJson(draft: Draft): unknown {
     ...(plan.slots
       ? { slots: plan.slots }
       : { slot: world.trueSize ? { ...plan.slot, reachMm: undefined, anchor: undefined } : plan.slot }),
-    world: { objects: [...plan.objects, ...scenery, ...(spec.objects ?? [])] },
+    world: caseWorldJson(draft),
     controls: plan.controls,
     reference: { timeline: referenceOf(draft) },
     task: {
@@ -297,6 +333,10 @@ export function buildCase(spec: CaseSpec, robot: BuilderRobot): BuiltCase {
   if (typeof chosen === 'string' || typeof spots === 'string') return { ok: false, problem: String(spots) };
 
   const { goal, world } = chosen;
+
+  if (world.kind === 'imported' && spec.imported && !openWorldSpot(spec.imported.asset, robot))
+    return { ok: false, problem: `${world.name} has no clear floor for this robot.` };
+
   const { values, plan } = tripTimed(goalValues(goal, robot, spec.values, world.kind), {
     goal,
     world: world.kind,

@@ -34,7 +34,7 @@ covers:
   - src/wiring/wiringSupplies.ts
 ---
 
-You can buy a robot's parts from its bill of materials: fill an Amazon cart, open listings in other stores, add the supplies a build needs, and export the list.
+You can buy everything for a robot from its bill of materials. Fill an Amazon cart, open listings in other stores, add the supplies the build needs, and export the list.
 
 1. In the **Build** tab, click the spreadsheet icon next to **Bill of materials**.
 2. Choose **Buy All**. Your browser opens an Amazon cart with every line that has an Amazon listing, in whole packs.
@@ -42,23 +42,26 @@ You can buy a robot's parts from its bill of materials: fill an Amazon cart, ope
 4. To add something the model doesn't show, click **+** next to **Bill of materials**.
 5. Choose a supply under **Power**, **Wiring**, **Electronics** or **Tools**.
 6. To buy more of a supply you added, click its quantity, then change **Quantity**.
-7. To keep a copy of the list, click the spreadsheet icon, then choose **CSV Spreadsheet** or **Markdown**.
+7. To keep a copy, click the spreadsheet icon, then choose **CSV Spreadsheet** or **Markdown**.
 
 ![The bill of materials menu with Buy All for amazon.com, and screws and wire listed under their own stores](/help/buy-the-parts-for-a-robot/buy-all.png)
 
 You can also press [[⌘K]] and choose **Buy All**.
 
-Basecase leaves parts you [already own](/help/count-the-parts-you-already-own) out of the cart. Pack counts come from the price you checked. For example, six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. If a line has no saved pack size, it goes in by the piece.
+Parts you [already own](/help/count-the-parts-you-already-own) stay out of the cart. Basecase works out how many packs to add from the price you checked. For example, six servos sold in pairs go in as 3, and 13 screws sold by the hundred go in as 1. A line with no saved pack size goes in by the piece.
 
-Other stores don't take a shared cart, so you open their listings one at a time. If a line has only an Amazon search and no listing, hover over the line, then click **Find on Amazon** at its right end.
+Other stores don't take a shared cart, so you open their listings one at a time. If a line has only an Amazon search, hover over it and click **Find on Amazon** at its right end.
 
-Exports save to your downloads as `<scene>-bom.csv` or `<scene>-bom.md`, and you can order from either file in any store.
+Exports save to your downloads as `<scene>-bom.csv` or `<scene>-bom.md`. You can order from either file in any store.
 
-Basecase adds some lines on its own. If your design has a battery, the list gets a switch, fuse, wire and charger. Basecase counts filament in grams from the printed parts, so filament isn't in the **+** menu. If you choose **Made by a Service**, **Printed parts** replaces the filament, and Basecase doesn't order those parts.
+Basecase adds some lines for you:
 
-Basecase also adds a cable for each hop of each servo bus in the wiring, starting at the adapter. For example, an SO-101 with six STS3215s on a Waveshare adapter lists 6 **Bus Servo Cable**. DYNAMIXEL X servos get **ROBOTIS Robot Cable-X3P** instead. Any cable you add yourself counts toward that number. For each battery plug and barrel jack on the power path, such as the XT60 on a LiPo, you also get a pigtail.
+- If your design has a battery, you get a switch, fuse, wire and charger.
+- The filament line is in grams, counted from the printed parts, so you won't find it in the **+** menu. If you choose **Made by a Service**, **Printed parts** takes its place, and Basecase doesn't order them.
+- The cable count follows the wiring: one cable for each hop of each servo bus, starting at the adapter. For example, an SO-101 with six STS3215s on a Waveshare adapter lists 6 **Bus Servo Cable**. DYNAMIXEL X servos get **ROBOTIS Robot Cable-X3P** instead. Any cable you add yourself counts toward that number.
+- You get a pigtail for each battery plug and barrel jack on the power path, such as the XT60 on a LiPo.
 
-To find the links for a single part, select it, then look in the **Product** section of the Inspector for **Buy on Amazon** or **Find on Amazon**, **Datasheet** and **Product Page**.
+To find the links for one part, select it and look in the **Product** section of the Inspector. It has **Buy on Amazon** or **Find on Amazon**, **Datasheet** and **Product Page**.
 
 **Note:** Basecase never places an order or reads store pages. You buy everything in the store yourself.
 

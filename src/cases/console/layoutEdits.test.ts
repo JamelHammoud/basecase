@@ -52,6 +52,11 @@ describe('arranging a console by hand', () => {
     expect(areaPanels(next)[2]).toEqual(['tries', 'brief', 'failures', 'servos', 'plot']);
   });
 
+  it('leaves a panel where it is when it drops on its own slot', () => {
+    expect(movedPanel(plotted, 'brief', { area: 2, before: 'brief' }).layout).toEqual(plotted.layout);
+    expect(movedPanel(plotted, 'plot', { area: 2, before: 'plot' }).layout).toEqual(plotted.layout);
+  });
+
   it('drops an area its last panel leaves', () => {
     const next = movedPanel(plotted, 'cameras', { area: 2, before: 'brief' });
 

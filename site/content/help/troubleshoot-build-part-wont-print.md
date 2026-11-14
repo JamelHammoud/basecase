@@ -28,7 +28,7 @@ covers:
   - src/components/inspector/types.ts
 ---
 
-The Printing check flags parts that your printer can't make as they're drawn. It measures each part against the printer you chose in Print mode. Find the message you see below and follow the steps under it.
+The Printing check flags parts your printer can't make as drawn. It measures each part against the printer you chose in Print mode.
 
 With **Made by a Service** chosen, parts are still measured against the printer you chose before it.
 
@@ -37,26 +37,26 @@ With **Made by a Service** chosen, parts are still measured against the printer 
 The part is larger than your printer's bed in every way it could lie, including across the diagonal.
 
 1. Press [[⌘P]] to open Print mode.
-2. Under **Printer**, make sure **Printer** shows the printer you'll use. A printer with a larger bed may fit the part.
-3. Open **Parts** and find the part's row. The row tells you how many pieces to split the part into.
-4. To have the agent split the part into pieces that join with dowels or screws, click **Fix** on the problem in the Build tab.
+2. Under **Printer**, check that **Printer** shows the printer you'll use. A printer with a larger bed may fit the part.
+3. Open **Parts** and find the part's row. It tells you how many pieces to split the part into.
+4. Click **Fix** on the problem in the Build tab to have the agent split the part into pieces that join with dowels or screws.
 
-When the part sits on a plate and **Printing** in Checks no longer shows a red mark, you're done.
+You'll know it worked when the part sits on a plate and **Printing** in Checks no longer shows a red mark.
 
 ## “This part has a wall too thin to print, so it would come out with holes.”
 
-A wall on this part is less than 0.84 mm thick across an area of 100 mm² or more.
+A wall on this part is under 0.84 mm thick over an area of 100 mm² or more.
 
 1. Click the part name under the problem to select it.
-2. Make the wall at least 0.84 mm thick. Or click **Fix** to have the agent do it.
+2. Thicken the wall to at least 0.84 mm, or click **Fix** to have the agent do it.
 
 ## “A thin edge here may not print cleanly. It’s usually fine.”
 
-This note means the part has a small sliver less than 0.84 mm thick, usually where a cut grazes a face. The slicer drops the sliver, so the part prints without it.
+This is a note. The part has a small sliver under 0.84 mm thick, usually left by a cut that grazes a face. The slicer drops the sliver, so the part prints without it.
 
 ## “This part needs a lot of support material to print.”
 
-This note means some faces on the part are close to flat and hang over air, so they need support under them.
+This is a note. Some faces are close to flat and hang over air, so they need support under them.
 
 1. Press [[⌘P]], select the part, then click **Lay on Face**.
 2. Click a face that leaves less of the part hanging in the air.
@@ -72,14 +72,14 @@ The part is set to print, but its name ends in a word like Glass, or its note st
 
 ## “Letter ⟨letter⟩ left off: no flat face is hidden, free and big enough”
 
-This note appears in **Parts** in Print mode, next to the part's build guide letter. With **Label parts** on, every flat face of this part either shows from the outside, touches another part, rests on the bed, or is too small, so the letter has nowhere to go and the part prints plain.
+This note appears in **Parts** in Print mode, next to the part's build guide letter. With **Label parts** on, every flat face of this part either shows from outside, touches another part, rests on the bed, or is too small. The letter has nowhere to go, so the part prints plain.
 
 1. Select the part and click **Lay on Face** to rest it on a different face. The face it rested on before may then take the letter.
 2. To print the part plain on purpose, select it and turn on **Don't label**.
 
 ## “Letter ⟨letter⟩ left off: its mesh has open edges”
 
-The part's mesh has gaps, so Basecase can't cut the letter into it, and the part prints plain. To fix this, close the gaps in the part, or turn on **Don't label** for it.
+The part's mesh has gaps, so Basecase can't cut the letter into it, and the part prints plain. Close the gaps in the part, or turn on **Don't label** for it.
 
 ## The plate shows warnings after slicing
 

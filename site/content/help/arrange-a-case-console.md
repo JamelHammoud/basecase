@@ -26,20 +26,20 @@ covers:
   - src/workspace/caseCommands.tsx
 ---
 
-Move, resize, add and delete the panels around a running Case, and the Case keeps that layout every time it runs.
+You can move, resize, add and delete the panels around a running Case. The Case keeps your layout for every run.
 
-1. Open the Case, press [[⌘K]] and choose **Run Case**.
-2. Drag a panel by its title to another place in its column or to another column. A panel without a title drags by its top edge. A blue line shows where it will land.
+1. Open the Case, then press [[⌘K]] and choose **Run Case**.
+2. Drag a panel by its title to a new place in its column, or to another column. If a panel doesn't have a title, drag it by its top edge. A blue line shows where the panel will land.
 
 ![The plot dragged over the left column, with a blue line under the Scene camera where it will land](/help/arrange-a-case-console/drag.png)
 
-3. To start a new column, drop the panel along the left or right edge of a column. A console holds up to six columns, counting the canvas.
-4. To resize a column, drag the gap between it and the canvas. A column is 200 to 720 pixels wide.
+3. To start a new column, drop the panel along the left or right edge of a column. A console can hold up to six columns, including the canvas.
+4. To resize a column, drag the gap between the column and the canvas. A column can be 200 to 720 pixels wide.
 
 ![The plot in the left column during a try, with the right column wider](/help/arrange-a-case-console/arranged.png)
 
 5. Right-click a column and choose **Add Panel**.
-6. Choose a kind, then choose what it shows, and click **Add Panel**. A value shows one number, and a plot shows up to eight signals, such as `joint.*.position` for every joint's angle.
+6. Choose a kind of panel, then choose what it shows, and click **Add Panel**. A value shows one number. A plot shows up to eight signals, such as `joint.*.position` for the angle of every joint.
 
 ![Add Panel with Plot chosen and joint.*.position checked](/help/arrange-a-case-console/add-panel.png)
 
@@ -47,10 +47,10 @@ Move, resize, add and delete the panels around a running Case, and the Case keep
 
 ![A panel's menu with Add Panel, Rename and Delete](/help/arrange-a-case-console/menu.png)
 
-You can also press [[⌘K]] and choose **Add Panel**, which adds the panel to the column right of the canvas.
+You can also press [[⌘K]] and choose **Add Panel**. The new panel goes in the column to the right of the canvas.
 
-Each change is one undo step, so [[⌘Z]] puts the last one back while the Case runs. Editing never stops a try that's running.
+Each change is one undo step, so pressing [[⌘Z]] while the Case runs undoes the last change. Editing the console never stops a try that's running.
 
-The layout is saved in the Case. It's in your `.basecase` file and in a link you make with **Share Robot**. A Case that had no layout of its own gets one the first time you change it.
+Basecase saves your layout in the Case, so it's in your `.basecase` file and in any link you make with **Share Robot**. If a Case has no layout of its own, it gets one the first time you change it.
 
-The agent reads the layout you made, so when you ask it to change the Case, it keeps your panels where you put them. Code panels are the agent's to write. See [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
+The agent reads your layout. When you ask it to change the Case, it keeps your panels where you put them. The agent also writes code panels. See [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).

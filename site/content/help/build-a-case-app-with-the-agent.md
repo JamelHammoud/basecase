@@ -15,6 +15,7 @@ keywords:
 related:
   - run-a-case
   - make-a-case
+  - arrange-a-case-console
 covers:
   - src/workspace/agentCaseCodeRequests.ts
   - src/cases/console/codeEdits.ts
@@ -25,20 +26,22 @@ covers:
   - electron/cad-agent-prompt.mjs
 ---
 
-Describe the controls you want for your robot, and the agent builds them into a running Case. You can keep asking for changes while it runs.
+Tell the agent what controls you want for your robot, and it builds them into a running Case. You can keep asking for changes while the Case runs.
 
-**Note:** The agent works in the desktop app. In this version, its panels can't move one joint on its own, drive a second robot, or save a file.
+**Note:** The agent works in the desktop app. In this version, the panels it builds can't move one joint on its own, drive a second robot, or save a file.
 
-1. In the **Agent** tab, describe the app. For example: “Make a remote for the rover with big Wave, Dance, Sit and Stop buttons, and its speed over the canvas.”
-2. Wait while the agent writes it. The Case opens and runs. Each time the agent fixes an error in a panel, that panel reloads.
+1. In the **Agent** tab, describe the app you want. For example: “Make a remote for the rover with big Wave, Dance, Sit and Stop buttons, and its speed over the canvas.”
+2. Wait while the agent writes the app. When it's done, the Case opens and runs. Each time the agent fixes an error in a panel, that panel reloads.
 
 ![The rover Case running with a remote on the left, its speed over the canvas and the agent on the right](/help/build-a-case-app-with-the-agent/app.png)
 
 3. Use the app. Press its buttons, or click **Try It** to start a try.
-4. In the **Agent** tab beside the Case, type a change, such as “Add a Spin button”, then press [[↩]]. Only the panel that changes reloads, so the robot and a running try keep going.
-5. To take back the agent's last change, click **Undo** at the top right. Each change the agent makes is one undo step.
+4. In the **Agent** tab beside the Case, type a change, such as “Add a Spin button”, then press [[↩]]. Only the panel that changes reloads, so the robot and any running try keep going.
+5. To undo the agent's last change, click **Undo** at the top right. Each change the agent makes is one undo step.
 6. To go back to the scene, click **Done** or press [[Esc]].
 
 When you're not in a panel or a text field, [[⌘Z]] works like **Undo**, and [[⌘I]] shows or hides the agent.
+
+To move, resize, add or delete panels yourself, see [Arrange a Case's console](/help/arrange-a-case-console). The agent reads your layout and keeps it when it changes a panel.
 
 To learn about the panels a Case can show and how a code panel reaches the robot, see [Run a Case](/help/run-a-case).

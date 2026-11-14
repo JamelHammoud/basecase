@@ -28,7 +28,7 @@ function marked(areas: ConsoleArea[], id: string): ConsoleArea[] {
 function landed(area: ConsoleArea, id: string, before: string | undefined): ConsoleArea {
   if (isCanvas(area)) return area;
 
-  const at = before === undefined ? -1 : area.panels.indexOf(before);
+  const at = before === undefined ? -1 : area.panels.indexOf(before === id ? LEAVING : before);
 
   return { ...area, panels: at < 0 ? [...area.panels, id] : area.panels.toSpliced(at, 0, id) };
 }

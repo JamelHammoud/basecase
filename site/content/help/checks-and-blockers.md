@@ -72,7 +72,7 @@ Checks measure the design as you modeled it. Some things fall outside that:
 - Range of motion samples each joint every 15°. A clash thinner than one step can fall between samples.
 - Peak torque waits for a trained walk policy.
 - Falls waits for the agent to tip the robot over.
-- Prices are estimates until you add the ones you see.
+- Prices are estimates until you add the ones you see, or a print service quotes the printed parts.
 
 ## Learn more
 

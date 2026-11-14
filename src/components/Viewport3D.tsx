@@ -34,6 +34,7 @@ const DETACHED: Viewport3DHandle = {
   printShapes: async () => ({}),
   printMeshes: async () => ({}),
   printThreeMf: async () => ({ files: {}, unlabeled: [] }),
+  printStl: async () => ({}),
   fitCoupons: async () => [],
   exportStl: async () => new Uint8Array(),
   exportUsdz: async () => new Uint8Array(),
@@ -153,7 +154,7 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
         style={{ cursor: spacePressed ? undefined : canvasCursor(props) }}
       />
       {snapBypassed && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 glass-menu rounded-full h-[28px] px-3.5 flex items-center text-[12.5px] text-white/85 pointer-events-none animate-fade-in">
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 glass-menu rounded-full h-[28px] px-3.5 flex items-center text-[12.5px] text-white/90 pointer-events-none animate-fade-in">
           Snapping off
         </div>
       )}
@@ -173,13 +174,13 @@ export const Viewport3D = React.forwardRef<Viewport3DHandle, Viewport3DProps>(fu
       <div
         ref={frameLabelRef}
         data-testid="frame-label"
-        className="absolute left-0 top-0 glass rounded-full h-[28px] px-3.5 items-center text-[13px] text-white/85 pointer-events-none"
+        className="absolute left-0 top-0 glass rounded-full h-[28px] px-3.5 items-center text-[13px] text-white/90 pointer-events-none"
         style={{ display: 'none' }}
       />
       <div
         ref={attributionRef}
         data-testid="map-attribution"
-        className="absolute left-3 bottom-3 max-w-[50%] truncate glass rounded-full px-2.5 py-1 text-[12px] text-white/80 pointer-events-none"
+        className="absolute left-3 bottom-3 max-w-[50%] truncate glass rounded-full px-2.5 py-1 text-[12px] text-white/90 pointer-events-none"
         style={{ display: 'none' }}
       />
       <div ref={markFieldRef} className="absolute left-0 top-0">

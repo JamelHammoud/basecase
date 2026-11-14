@@ -6,6 +6,7 @@ import type { PrintMaterial, ProjectSettings } from '../../types/robotics';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 
 const ADD = '__add';
+const SERVICE = '__service';
 
 const MATERIALS: Array<{ value: PrintMaterial; label: string }> = [
   { value: 'PLA', label: 'PLA' },
@@ -20,6 +21,7 @@ interface PrintSettingsProps {
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   onAddPrinter: () => void;
+  onChooseService: () => void;
 }
 
 const Row: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -35,9 +37,25 @@ function printerOptions(printer: PrinterSetup, printers: SavedPrinter[]) {
   const mine = printers.map((p) => ({ value: p.id, label: p.nickname }));
   const current = printer.mine ? [] : [{ value: printer.id, label: printer.label }];
 
-  const add = IS_WEB_DEMO ? [] : [{ value: ADD, label: 'Add Printer' }];
+  const more = IS_WEB_DEMO
+    ? []
+    : [
+        { value: SERVICE, label: 'Made by a Service' },
+        { value: ADD, label: 'Add Printer' },
+      ];
 
-  return [...current, ...mine, ...add];
+  return [...current, ...mine, ...more];
+}
+
+function choosePrinter(
+  value: string,
+  on: Pick<PrintSettingsProps, 'onAddPrinter' | 'onChooseService' | 'onChangeProject'>,
+) {
+  if (value === ADD) return on.onAddPrinter();
+
+  if (value === SERVICE) return on.onChooseService();
+
+  on.onChangeProject({ printer: value, madeBy: undefined });
 }
 
 export const PrintSettings: React.FC<PrintSettingsProps> = ({
@@ -46,6 +64,7 @@ export const PrintSettings: React.FC<PrintSettingsProps> = ({
   project,
   onChangeProject,
   onAddPrinter,
+  onChooseService,
 }) => {
   const presets = printer.model.presets;
   const processes = presets?.processes ?? [];
@@ -55,10 +74,10 @@ export const PrintSettings: React.FC<PrintSettingsProps> = ({
     <>
       <Row label="Printer">
         <Select
-          value={printer.id}
+          value={project.madeBy === 'service' ? SERVICE : printer.id}
           options={printerOptions(printer, printers)}
           aria-label="Printer"
-          onChange={(e) => (e.target.value === ADD ? onAddPrinter() : onChangeProject({ printer: e.target.value }))}
+          onChange={(e) => choosePrinter(e.target.value, { onAddPrinter, onChooseService, onChangeProject })}
         />
       </Row>
       {processes.length > 0 && process && (

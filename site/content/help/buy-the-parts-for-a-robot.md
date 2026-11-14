@@ -53,7 +53,7 @@ Other stores don't take a shared cart, so you open their listings one at a time.
 
 Basecase saves exports to your downloads as `<scene>-bom.csv` or `<scene>-bom.md`, and you can order from either file in any store.
 
-Basecase adds some lines for you. A design with a battery gets a switch, fuse, wire and charger. Basecase works out filament in grams from the printed parts, so you won't find it in the **+** menu.
+Basecase adds some lines for you. A design with a battery gets a switch, fuse, wire and charger. Basecase works out filament in grams from the printed parts, so you won't find it in the **+** menu. If you choose **Made by a Service**, **Printed parts** takes its place, and Basecase doesn't order them.
 
 Basecase counts cables from the wiring: one for each hop of each servo bus, starting at the adapter. For example, an SO-101 with six STS3215s on a Waveshare adapter lists 6 **Bus Servo Cable**. DYNAMIXEL X servos get **ROBOTIS Robot Cable-X3P** instead. Any cable you add yourself counts toward that number. Each battery plug and barrel jack on the power path, such as the XT60 on a LiPo, also gets a pigtail.
 

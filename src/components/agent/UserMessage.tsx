@@ -48,7 +48,7 @@ const FolderChips: React.FC<{ folders: FolderAttachment[] }> = ({ folders }) => 
         className="h-[28px] max-w-full px-2.5 rounded-lg bg-white/[0.06] flex items-center gap-1.5 min-w-0"
       >
         <FolderIcon className="w-3.5 h-3.5 text-white/60 shrink-0" />
-        <span className="text-[13px] text-white/85 truncate">{f.name}</span>
+        <span className="text-[13px] text-white/90 truncate">{f.name}</span>
         <span className="text-[12px] text-white/50 tabular shrink-0">{f.fileCount}</span>
       </span>
     ))}

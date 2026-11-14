@@ -48,6 +48,7 @@ To put back the old count, click **Undo** in the toast. To clear a count, type 0
 
 - Count single pieces, even if you bought them in packs. For example, if you have 100 M3 screws on hand and a robot uses 13, the bill of materials lists none to buy.
 - Count filament in grams.
+- Printed parts from a print service have no **On hand**. Their quoted price covers every copy.
 - A count belongs to the part, so every scene that uses the part takes your count off what's left to buy.
 - Basecase doesn't take parts off your count when you build a robot. After a build, update the count yourself.
 - The Budget check and **Buy All** leave out the parts you own.

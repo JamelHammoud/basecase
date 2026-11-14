@@ -49,7 +49,7 @@ You can [try a Case](/help/try-a-case-on-your-real-robot) with a real wheeled or
 
 - Design and Engineer are complete.
 - Simulate and Train are in active development.
-- Build covers the Checks, the bill of materials, the build guide and slicing.
+- Build covers the Checks, the bill of materials, the build guide, slicing and print service quotes.
 - Operate works against the simulation and an emulated robot.
 
 **Note:** Basecase doesn't drive real motors, but it can watch a real robot through a camera.

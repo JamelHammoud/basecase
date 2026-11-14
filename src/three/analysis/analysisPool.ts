@@ -11,6 +11,7 @@ import {
   type AnalysisTask,
   type Instance,
   type PlateFilesInput,
+  type StlItem,
   type ThreeMfResult,
 } from './analysisOps';
 import { copyGeometries, type SceneShapes } from './sceneShapes';
@@ -136,6 +137,10 @@ export function printMeshesIn(scene: SceneShapes): Promise<Record<string, MeshDa
 
 export function threeMfIn(scene: SceneShapes, plates: PlateFilesInput): Promise<ThreeMfResult> {
   return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, ...plates });
+}
+
+export function partStlsIn(scene: SceneShapes, items: StlItem[]): Promise<Record<string, Uint8Array>> {
+  return analyze(leastBusy(), scene, { kind: 'partStls', instances: scene.instances, items });
 }
 
 export function stlIn(scene: SceneShapes): Promise<Uint8Array> {

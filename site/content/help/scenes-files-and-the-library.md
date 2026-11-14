@@ -72,6 +72,7 @@ A scene keeps a short record of each of its tries, but the recordings stay in th
 A `.basecase` file is a copy of one scene that you can send to someone. It includes the whole scene except:
 
 - Print history
+- The print service and its quotes
 - Trained policies
 - Case tries
 - Taught skills

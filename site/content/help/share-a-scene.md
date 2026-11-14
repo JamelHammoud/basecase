@@ -35,6 +35,7 @@ The file includes the parts, joints, poses, comments, Cases, Routines and the sc
 These stay on your computer and aren't in the file:
 
 - Print history
+- The print service and its quotes
 - Trained policies
 - Case tries
 - Taught skills

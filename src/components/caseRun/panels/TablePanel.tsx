@@ -30,7 +30,7 @@ const JointsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
         </div>
         {ids.map((id) => (
           <div key={id} className="h-[28px] flex items-center gap-2" data-joint={id}>
-            <span className="flex-1 min-w-0 truncate text-white/80">{names.get(id) ?? id}</span>
+            <span className="flex-1 min-w-0 truncate text-white/90">{names.get(id) ?? id}</span>
             {columns.map((c) => (
               <span key={c} className={`${cell} text-white/90`}>
                 {signalText(`joint.${id}.${c}`, ctx.bus.read(`joint.${id}.${c}`), ctx.signals)}
@@ -53,7 +53,7 @@ const SignalsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
       <div className="flex flex-col text-[13px]">
         {ids.map((id) => (
           <div key={id} className="h-[28px] flex items-center justify-between gap-3" data-signal={id}>
-            <span className="min-w-0 truncate text-white/80">{id}</span>
+            <span className="min-w-0 truncate text-white/90">{id}</span>
             <span className="tabular-nums text-white/90">{signalText(id, ctx.bus.read(id), ctx.signals)}</span>
           </div>
         ))}

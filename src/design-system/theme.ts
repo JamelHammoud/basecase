@@ -26,7 +26,7 @@ export const THEME_COLORS = {
   borderMedium: 'rgba(255, 255, 255, 0.12)',
   borderStrong: 'rgba(255, 255, 255, 0.18)',
 
-  textPrimary: 'rgba(255, 255, 255, 0.92)',
+  textPrimary: 'rgba(255, 255, 255, 0.9)',
   textSecondary: 'rgba(255, 255, 255, 0.6)',
   textMuted: 'rgba(255, 255, 255, 0.5)',
 } as const;

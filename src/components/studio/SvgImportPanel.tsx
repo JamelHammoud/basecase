@@ -68,7 +68,7 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
         }`}
       >
         <FileImportIcon className="w-5 h-5 text-white/50" />
-        <span className="text-[13.5px] text-white/85">Choose or drop an SVG</span>
+        <span className="text-[13.5px] text-white/90">Choose or drop an SVG</span>
       </button>
 
       {showPasteSvg && (
@@ -82,7 +82,7 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
       )}
 
       {svgError && (
-        <p className="px-3 py-2 rounded-lg bg-red-500/10 text-[12.5px] text-red-300">
+        <p className="px-3 py-2 rounded-lg bg-red-500/10 text-[12.5px] text-red-400">
           Couldn’t read that SVG. {svgError.replace(/^Error:\s*/, '')}
         </p>
       )}
@@ -148,7 +148,7 @@ const SvgOutput: React.FC<{
           className="w-14 h-14 rounded-lg bg-white p-1.5 object-contain shrink-0"
         />
         <MetaLine
-          className="min-w-0 flex-1 text-[13px] text-white/70 tabular"
+          className="min-w-0 flex-1 text-[13px] text-white/60 tabular"
           items={[
             plural(parsedSvg.shapeCount, 'shape'),
             parsedSvg.holeCount > 0 && plural(parsedSvg.holeCount, 'hole'),

@@ -77,7 +77,7 @@ export function createNodeKernel({ permissionModel = true } = {}) {
     const k = { proc, busy: false, job: null };
 
     k.ready = new Promise((resolve, reject) => {
-      proc.once('message', (m) => (m?.ready ? resolve() : reject(new Error('Kernel did not start'))));
+      proc.once('message', (m) => (m?.ready ? resolve() : reject(new Error('The kernel didn’t start.'))));
       proc.once('exit', (code) => reject(new Error(`Kernel exited (${code})`)));
     });
     k.ready.catch(() => {});

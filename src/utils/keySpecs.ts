@@ -21,7 +21,7 @@ const spec = (c: ComponentInfo, ...labels: string[]) => {
 export const plainValue = (v: string) =>
   v
     .replace(/\s*\([^)]*\)/g, '')
-    .split(/ @ | at /)[0]
+    .split(' at ')[0]
     .replace(/,\s*IP\w+.*$/, '')
     .replace(/\s+(with|without) .*$/, '')
     .replace(/\s+(rated|peak|max|typical|manual)$/i, '')

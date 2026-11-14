@@ -23,10 +23,7 @@ function useLibraryModels({ studio, showToast }: WorkspaceCore) {
     void write(() => platformBridge.saveModel(model), `Couldn’t save ${model.name}.`);
   };
 
-  const renameModel = (model: CustomModelDefinition, name: string) => {
-    resaveModel({ ...model, name });
-    showToast(`Renamed to ${name}`);
-  };
+  const renameModel = (model: CustomModelDefinition, name: string) => resaveModel({ ...model, name });
 
   const duplicateModel = (model: CustomModelDefinition) => {
     const name = copyName(
@@ -35,7 +32,6 @@ function useLibraryModels({ studio, showToast }: WorkspaceCore) {
     );
 
     resaveModel({ ...model, id: modelId(), name, createdAt: stamp() });
-    showToast(`Duplicated ${model.name}`);
   };
 
   const removeModel = (model: CustomModelDefinition) => {

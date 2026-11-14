@@ -275,6 +275,13 @@ export class ViewportEngine {
     const unbatched = <T>(run: () => T) => ctx.batches.unbatched(run);
     const solidShapes = (visibleOnly: boolean) => snapshotShapes(measure.solidObjects(ctx, { visibleOnly }));
     const restSolids = (visibleOnly: boolean) => withRest(() => solidShapes(visibleOnly));
+    const restSolidsWith = (ids: string[]) =>
+      withRest(() => {
+        const solids = measure.solidObjects(ctx, { visibleOnly: true });
+        const known = new Set(solids.map((s) => s.id));
+
+        return snapshotShapes([...solids, ...measure.partObjects(ctx, ids).filter((o) => !known.has(o.id))]);
+      });
     const restShapes = (ids?: string[]) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids)));
     const camera = <T>(run: () => T) => {
       ctx.loop.frameAnimation = null;
@@ -336,12 +343,11 @@ export class ViewportEngine {
       visibleShares: () => visibilityIn(restSolids(true)),
       printShapes: (ids, faces) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids)), faces),
       printMeshes: (ids) => printMeshesIn(snapshotShapes(measure.partObjects(ctx, ids))),
-      printThreeMf: (files, plateSize) =>
-        threeMfIn(
-          snapshotShapes(measure.partObjects(ctx, [...new Set(files.flatMap((f) => f.items.map((i) => i.id)))])),
-          files,
-          plateSize,
-        ),
+      printThreeMf: (plates) => {
+        const ids = [...new Set(plates.files.flatMap((f) => f.items.map((i) => i.id)))];
+
+        return threeMfIn(plates.labels ? restSolidsWith(ids) : snapshotShapes(measure.partObjects(ctx, ids)), plates);
+      },
       fitCoupons: (task) =>
         fitCouponsIn(
           withRest(() => snapshotShapes(measure.partObjects(ctx, [...task.hosts, ...task.fits.map((f) => f.id)]))),

@@ -63,7 +63,7 @@ describe('the measured robot', () => {
     const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
     const rig = buildRig(arm.joints, arm.parts);
     const ids = arm.parts.map((p) => p.id);
-    const measured = [3072, 1024, 2560].map(radiansFromCounts);
+    const measured = [3072, 1024, 2560].map((c) => radiansFromCounts(c));
     const ghost = robotGhost(rig, ids, {
       joints: ['arm0', 'arm1', 'arm2'],
       measured,

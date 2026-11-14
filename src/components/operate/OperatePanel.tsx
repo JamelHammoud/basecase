@@ -17,7 +17,7 @@ import { ServoSetupSection } from './ServoSetupSection';
 export interface OperatePanelProps {
   joints: RobotJoint[];
   parts: readonly ScenePart[];
-  onBrowseRobots: () => void;
+  onShowRobots: () => void;
   calibration: CalibrationProps;
   onSetUpServos: () => void;
   onReplay?: (messageId: number) => void;
@@ -37,7 +37,7 @@ function useJointCalibrate(robot: RobotState, joints: RobotJoint[], calibration:
 export const OperatePanel: React.FC<OperatePanelProps> = ({
   joints,
   parts,
-  onBrowseRobots,
+  onShowRobots,
   calibration,
   onSetUpServos,
   onReplay,
@@ -57,7 +57,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
       {connected ? (
         <RobotHeader robot={robot} />
       ) : (
-        <ConnectRobotButton joints={joints} parts={parts} onBrowseRobots={onBrowseRobots} />
+        <ConnectRobotButton joints={joints} parts={parts} onShowRobots={onShowRobots} />
       )}
       <ServoSetupSection robot={robot} joints={joints} onSetUp={onSetUpServos} />
       <RobotMessages messages={robot.messages} onReplay={onReplay} />

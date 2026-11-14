@@ -28,4 +28,32 @@ describe('find_parts prices', () => {
     expect(agentCatalog('heat-set')).toContain('M3 ≈ $14.99 per 100 list at West3D (CNC Kitchen M3 × 5.7), 2026-10-29');
     expect(agentCatalog('zero 2')).toContain('≈ $17.25 list at PiShop.us, 2026-10-29');
   });
+
+  it('ranks an owned servo above a cheaper one, with how many are owned, used and left', () => {
+    const owned = 'component:feetech-sts3250';
+    const text = agentCatalog('servo', {
+      purchases: { [owned]: { onHand: 6 } },
+      used: { [owned]: 4, 'component:feetech-sts3215|c001': 2 },
+    });
+    const at = (key: string) => text.indexOf(`- ${key} `);
+
+    expect(at(owned)).toBeGreaterThan(-1);
+    expect(at(owned)).toBeLessThan(at('component:feetech-sts3215'));
+    expect(text).toContain('6 on hand, 4 in this scene, 2 left');
+    expect(text).toContain(`The user owns: ${owned} 6 (2 left). Use these before buying others.`);
+  });
+
+  it('says how many more to buy when the scene uses more than are owned', () => {
+    const key = 'hardware:socket_head|M3|10|black|hex';
+    const text = agentCatalog('socket', { purchases: { [key]: { onHand: 10 } }, used: { [key]: 13 } });
+
+    expect(text).toContain('M3|10|black|hex 10 on hand, 13 in this scene, 3 to buy');
+    expect(text).toContain(`The user owns: ${key} 10 (3 to buy).`);
+  });
+
+  it('names only the owned parts the search lists', () => {
+    const purchases = { 'component:feetech-sts3250': { onHand: 6 }, 'hardware:socket_head|M3|10': { onHand: 10 } };
+
+    expect(agentCatalog('socket', { purchases })).not.toContain('component:feetech-sts3250 6');
+  });
 });

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { serviceRefusal } from '../refusal.mjs';
+import { percent } from '../percent.mjs';
 
 const HF = 'https://huggingface.co';
 const SHA = /^[0-9a-f]{40}$/;
@@ -105,7 +106,7 @@ export async function downloadAsset(a, dir, say) {
       await downloadOne(a, f, dir);
       done++;
       bytes += f.size ?? 0;
-      say(`Downloading ${Math.round((bytes / Math.max(total, 1)) * 100)}%…`, { done, total: files.length });
+      say(`Downloading ${percent(bytes / Math.max(total, 1))}`, { done, total: files.length });
     }
   };
 

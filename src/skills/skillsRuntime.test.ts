@@ -3,7 +3,7 @@ import { fixtureModel } from './fixtureModels';
 import type { ForgeOutcome } from './forgeRunner';
 import { moveEnvironment } from './moveEnvironment';
 import { fixtureMoveSkill, quadSit } from './moveFixtures';
-import type { SkillRecord } from './skillRecords';
+import { skillRecord, type CoachTag, type SkillRecord } from './skillRecords';
 import type { SkillJob } from './skillRows';
 import type { SnapshotRef } from './snapshots';
 import type { SkillRunner } from './skillsClient';
@@ -104,5 +104,37 @@ describe('snapshots in the skills runtime', () => {
     expect(keep).toHaveBeenCalledWith(records[0].hash, [snapshot(50), snapshot(100), snapshot(150)]);
     expect(records[0].snapshots).toEqual([snapshot(100), snapshot(150)]);
     expect(runtime.jobs).toEqual([]);
+  });
+});
+
+describe('rechecking a coached Kit skill', () => {
+  it('keeps the coaching on the record Arena proves again', async () => {
+    const skill = fixtureMoveSkill({ model, animation: quadSit() });
+    const coach: CoachTag = {
+      words: 'crouch lower',
+      reward: 'def reward(state):\n    return -state.z\n',
+      signal: 'base_height',
+      direction: 'down',
+      before: 130,
+      after: 118.7,
+      from: 'old',
+    };
+    const record = skillRecord(skill, { kit: 'stand', coach });
+    const records: SkillRecord[] = [];
+    const runtime = new SkillsRuntime({
+      runner: (() => Promise.resolve({ type: 'recheck', skill })) as SkillRunner,
+      forge: () => () => Promise.resolve<ForgeOutcome>({ ok: true, policy: null, events: [], stderr: '', run: 'r' }),
+      save: () => Promise.resolve(),
+      loadSkill: () => Promise.resolve(skill),
+      onRecord: (r) => records.push(r),
+      onChange: () => {},
+    });
+
+    const task = { target: 'kit:stand', label: 'Stand', entry: 'stand', move: null, kind: 'recheck', record } as const;
+
+    expect(runtime.recheck(model, task)).toBeNull();
+    await runtime.settled();
+
+    expect(records.at(-1)?.coach).toEqual(coach);
   });
 });

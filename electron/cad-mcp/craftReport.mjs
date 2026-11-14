@@ -1,3 +1,5 @@
+import { percent } from '../percent.mjs';
+
 const SHARP_WARN = 0.6;
 const BRICK_SOLIDITY = 0.85;
 const SHELL_SOLIDITY = 0.2;
@@ -8,7 +10,6 @@ const SHELL_SHARE = 0.02;
 const HEADS = new Set(['socket_head', 'button_head', 'countersunk', 'pan_head', 'hex_bolt']);
 const THREADED = /^M\d/;
 
-const pct = (v) => `${Math.round(v * 100)}%`;
 const r2 = (v) => Math.round(v * 100) / 100;
 const named = (p, extra) => `${p.name} (${extra})`;
 
@@ -35,7 +36,7 @@ function sharpRow(parts, faceted) {
 
   const warn = sharp.value > SHARP_WARN && !faceted;
   const targets = sharp.targets.map((p) =>
-    named(p, `${pct(p.share)} of the visible surface, ${p.craft.envelopeSharp}`),
+    named(p, `${percent(p.share)} of the visible surface, ${p.craft.envelopeSharp}`),
   );
 
   return {
@@ -55,7 +56,7 @@ function brickRow(parts) {
     status: bricks.length ? 'WARN' : 'OK',
     name: 'Printed bricks',
     detail: bricks.length
-      ? `${bricks.length} solid printed parts fill over ${pct(BRICK_SOLIDITY)} of their hull.`
+      ? `${bricks.length} solid printed parts fill over ${percent(BRICK_SOLIDITY)} of their hull.`
       : 'No solid printed bricks.',
     items: bricks.map((p) => `Shell or pocket ${named(p, `solidity ${p.craft.solidity}`)}, unless it's a grip`),
   };
@@ -92,7 +93,7 @@ function wallRow(parts) {
       : 'No visible thin shells.',
     items: off.map(
       (p) =>
-        `Even out ${named(p, `modal ${p.craft.walls.modalMm} mm, ${pct(p.craft.walls.consistent)} within ±0.6 mm`)}`,
+        `Even out ${named(p, `modal ${p.craft.walls.modalMm} mm, ${percent(p.craft.walls.consistent)} within ±0.6 mm`)}`,
     ),
   };
 }

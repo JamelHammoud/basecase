@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { BAM_XL330 } from '../data/servoFits';
-import { activeCalibration, activeCalibrations, EMPTY_HISTORY, recordCalibration, rollBack } from './history';
+import {
+  activeCalibration,
+  activeCalibrations,
+  activeMount,
+  EMPTY_HISTORY,
+  recordCalibration,
+  recordMount,
+  rollBack,
+} from './history';
 import type { CalibrationVerdict, ServoCalibration } from './types';
 
 const calibration = (verdict: CalibrationVerdict, gain = 1): ServoCalibration => ({
@@ -50,5 +58,30 @@ describe('calibration history', () => {
 
     expect(Object.keys(activeCalibrations({ a: h, b: EMPTY_HISTORY }))).toEqual(['a']);
     expect(activeCalibrations(undefined)).toEqual({});
+  });
+
+  const servo = { componentId: 'feetech-sts3215', variant: 'c001' };
+  const reversed = { zeroCounts: 2184, direction: -1 } as const;
+
+  it('keeps a zero found by the camera as a version that later fits carry', () => {
+    let h = recordMount(EMPTY_HISTORY, { servo, verdict: 'measured', mount: reversed, reason: '' });
+
+    expect(activeMount(h)).toEqual(reversed);
+    expect(activeCalibration(h)?.rung).toBe('preset');
+    h = recordCalibration(h, calibration('measured', 1.2));
+    expect(activeCalibration(h)).toMatchObject({ version: 2, rung: 'response', mount: reversed });
+    h = rollBack(h);
+    expect(activeMount(h)).toEqual(reversed);
+    h = rollBack(h);
+    expect(activeMount(h)).toBeNull();
+  });
+
+  it('puts a found zero on top of a measured fit without losing the fit', () => {
+    let h = recordCalibration(EMPTY_HISTORY, calibration('measured', 1.3));
+
+    h = recordMount(h, { servo, verdict: 'measured', mount: reversed, reason: '' });
+    expect(activeCalibration(h)).toMatchObject({ version: 2, scales: { gain: 1.3 }, mount: reversed });
+    h = recordMount(h, { servo, verdict: 'cant-tell', mount: { zeroCounts: 2048, direction: 1 }, reason: '' });
+    expect(activeCalibration(h)?.version).toBe(2);
   });
 });

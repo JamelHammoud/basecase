@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { PurchaseRecord } from '../../types/robotics';
+import type { Purchases, StoredPurchase } from '../../types/robotics';
 import { platformBridge } from '../../utils/platformBridge';
-
-type Purchases = Record<string, PurchaseRecord>;
 
 let purchaseCache: Purchases | null = null;
 const purchaseListeners = new Set<(p: Purchases) => void>();
@@ -14,7 +12,15 @@ const publish = (next: Purchases) => {
 
 export const knownPurchases = () => purchaseCache;
 
-export function usePurchases(): [Purchases, (key: string, r: PurchaseRecord | null) => Promise<void>] {
+export async function storePurchase(key: string, record: StoredPurchase | null): Promise<Purchases> {
+  const next = await platformBridge.savePurchase(key, record);
+
+  publish(next);
+
+  return next;
+}
+
+export function usePurchases(): [Purchases, (key: string, r: StoredPurchase | null) => Promise<void>] {
   const [purchases, setPurchases] = useState<Purchases>(purchaseCache ?? {});
 
   useEffect(() => {
@@ -27,8 +33,8 @@ export function usePurchases(): [Purchases, (key: string, r: PurchaseRecord | nu
     };
   }, []);
 
-  const save = async (key: string, record: PurchaseRecord | null) => {
-    publish(await platformBridge.savePurchase(key, record));
+  const save = async (key: string, record: StoredPurchase | null) => {
+    await storePurchase(key, record);
   };
 
   return [purchases, save];

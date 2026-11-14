@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ImageViewerNav } from './ImageViewerNav';
 import { ImageViewerZoomBar } from './ImageViewerZoomBar';
 import { ImageView, useImagePan, useImageViewerKeys, useImageWheel } from './useImageViewerInput';
+import { percent } from '../../electron/percent.mjs';
 
 export interface ImageViewerItem {
   src: string;
@@ -99,7 +100,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ images, index, onIndex
   if (!isOpen || !current) return null;
 
   const zoomed = view.scale > fitS + 0.001;
-  const percent = Math.round(view.scale * 100);
 
   return createPortal(
     <div
@@ -144,7 +144,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ images, index, onIndex
       </div>
 
       <ImageViewerZoomBar
-        percent={percent}
+        zoom={percent(view.scale)}
         onZoomOut={() => zoomAt(1 / 1.5, undefined, undefined, true)}
         onZoomIn={() => zoomAt(1.5, undefined, undefined, true)}
         onFit={() => fit()}

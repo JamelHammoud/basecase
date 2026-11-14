@@ -1,13 +1,14 @@
 import type { CalibrationHistory } from '../reality/history';
 import { jointServo, offTheBus } from '../reality/servoPart';
 import type { RobotJoint, ScenePart } from '../types/robotics';
-import type { JointStatus } from './robotState';
+import { radiansFromCounts, mountOf, type JointStatus, type RobotMount } from './robotState';
 import { servoLayout } from './sceneRobot';
 
 export interface JointRow {
   busId: number;
   joint: RobotJoint | null;
   reading: JointStatus | null;
+  radians: number | null;
   history: CalibrationHistory | null;
 }
 
@@ -15,6 +16,7 @@ export interface RobotConnection {
   ids: readonly number[];
   jointIds: readonly string[] | null;
   readings: readonly JointStatus[];
+  calibration?: readonly RobotMount[];
 }
 
 export interface JointRowsInput {
@@ -37,11 +39,15 @@ function connectedRows({
   return connection.ids.map((busId, i): JointRow => {
     const joint = byId.get(connection.jointIds?.[i] ?? '') ?? null;
     const answers = !offTheBus(jointServo(joint ?? undefined, parts));
+    const reading = (answers && connection.readings.find((r) => r.id === busId)) || null;
+    const position = reading?.position;
 
     return {
       busId,
       joint,
-      reading: (answers && connection.readings.find((r) => r.id === busId)) || null,
+      reading,
+      radians:
+        typeof position === 'number' ? radiansFromCounts(position, mountOf(connection.calibration, busId)) : null,
       history: joint ? recorded(calibrations?.[joint.id]) : null,
     };
   });
@@ -57,6 +63,7 @@ export function jointRows(input: JointRowsInput): JointRow[] {
     busId: layout.ids[i],
     joint,
     reading: null,
+    radians: null,
     history: recorded(calibrations?.[joint.id]),
   }));
 

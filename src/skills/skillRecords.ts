@@ -10,12 +10,14 @@ import {
   type SkillBinding,
   type SkillOrigin,
 } from './artifacts';
+import type { CoachDirection, CoachSignal } from './coachSignals';
 import type { Environment } from './environment';
 import { hashOf } from './hash';
 import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
 import type { SnapshotRef } from './snapshots';
 import { plural } from '../../electron/plural.mjs';
+import { percent } from '../../electron/percent.mjs';
 
 export interface MoveTag {
   animation: string;
@@ -26,6 +28,16 @@ export const moveTag = (animation: string, environment: Environment): MoveTag =>
   animation,
   reference: hashOf(environment.reference ?? null),
 });
+
+export interface CoachTag {
+  words: string;
+  reward: string;
+  signal: CoachSignal;
+  direction: CoachDirection;
+  before: number;
+  after: number;
+  from: string;
+}
 
 export interface CaseTag {
   id: string;
@@ -38,6 +50,7 @@ export interface SkillRecord {
   kit: TrainedEntry | null;
   move?: MoveTag | null;
   case?: CaseTag | null;
+  coach?: CoachTag | null;
   goal: string | null;
   binding: SkillBinding;
   evidence: ArenaEvidence | null;
@@ -53,6 +66,7 @@ export function skillRecord(
     kit: TrainedEntry | null;
     move?: MoveTag;
     case?: CaseTag;
+    coach?: CoachTag;
     goal?: string | null;
     environment?: Environment | null;
   },
@@ -65,6 +79,7 @@ export function skillRecord(
     kit: options.kit,
     ...(options.move ? { move: options.move } : {}),
     ...(options.case ? { case: options.case } : {}),
+    ...(options.coach ? { coach: options.coach } : {}),
     goal: options.goal ?? null,
     binding: skill.binding,
     evidence: skill.evidence,
@@ -133,7 +148,7 @@ const triesLine = (variant: Variant) => `${variant.passes} of ${plural(variant.t
 
 export function arenaLine(evidence: ArenaEvidence): string {
   const worst = worstVariant(evidence);
-  const share = `at least ${Math.floor(evidence.lowerBound * 100)}%`;
+  const share = `at least ${percent(evidence.lowerBound, { down: true })}`;
 
   return worst ? `${triesLine(worst)}, ${share}` : share;
 }

@@ -7,11 +7,14 @@ import { robotFacts } from '../src/cases/robotFit';
 import { DEMO_CONTROL_DT } from '../src/datasets/demos';
 import { obsSize, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from '../src/sim/policy';
 import type { ReferenceCommand } from '../src/cases/schema';
+import type { FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
 import { solveIK } from '../src/utils/kinematicsIk';
 import type { FakeHub } from './fakeHub';
-import { shown } from './harness';
+import type { SimState, Studio } from './driveStudio';
+import { partCount, shown } from './harness';
 
 export async function expectDataset(files: Record<string, Buffer>) {
   const paths = Object.keys(files);
@@ -130,4 +133,54 @@ export function touchingPolicy(): PolicySpec {
     mujoco: 'e2e',
     createdAt: '2026-11-13T00:00:00Z',
   };
+}
+
+export async function endTryAt(page: Page, seconds: number) {
+  await page.evaluate(async (at) => {
+    const clock = () =>
+      [...document.querySelectorAll('[data-testid="try-clock"]')].find((el) => !el.closest('[inert]'));
+    const elapsed = () => Number.parseFloat(clock()?.textContent ?? '') || 0;
+    const deadline = Date.now() + 30000;
+
+    while (elapsed() < at) {
+      if (Date.now() > deadline) throw new Error(`The try clock never reached ${at} s`);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
+    clock()?.parentElement?.querySelector('button')?.click();
+  }, seconds);
+}
+
+export async function datasetFiles(page: Page) {
+  const files = await page.evaluate(() =>
+    (
+      window as unknown as { __studio: { datasetFiles: () => Promise<Record<string, string> | null> } }
+    ).__studio.datasetFiles(),
+  );
+
+  return Object.fromEntries(Object.entries(files ?? {}).map(([path, b64]) => [path, Buffer.from(b64, 'base64')]));
+}
+
+export async function passedDatasetFiles(page: Page) {
+  const triesPassed = () =>
+    page.evaluate(() =>
+      ((window as unknown as { __studio: Studio }).__studio.simState() as SimState).tries.every((t) => t.passed),
+    );
+
+  await page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
+  await expect.poll(triesPassed).toBe(true);
+
+  return datasetFiles(page);
+}
+
+export async function loadFixtureRobot(page: Page, id: string | FixtureRobot) {
+  const robot = typeof id === 'string' ? fixtureRobots().find((r) => r.id === id)! : id;
+
+  await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
+    name: robot.id,
+    parts: robot.parts,
+    project: { ...DEFAULT_PROJECT, joints: robot.joints },
+  });
+  await expect.poll(() => partCount(page)).toBe(robot.parts.length);
 }

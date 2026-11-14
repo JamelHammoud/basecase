@@ -52,9 +52,7 @@ An SVG opens the Import SVG panel with the drawing loaded. Set its width and thi
 
 ![The Import SVG panel with a drawing loaded](/help/import-a-file/svg.png)
 
-A URDF, MJCF or zip, such as an exported Robot Package, opens Import Robot with the file loaded. Click **Import** to insert the robot with its joints.
-
-![Import Robot with a URDF loaded](/help/import-a-file/robot.png)
+A URDF, MJCF or zip, such as an exported Robot Package, comes in as a robot with its joints.
 
 A BVH motion file opens the retarget sheet for the selected robot. Images become reference images, and a `.basecase` file opens in a new tab.
 

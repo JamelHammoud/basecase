@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { SheetProfile } from '../types/sheet';
 
 export function worldTriangles(object: THREE.Object3D): Float32Array {
   const chunks: Float32Array[] = [];
@@ -68,6 +69,7 @@ export function localTriangles(object: THREE.Object3D): Float32Array {
 }
 
 export interface MeshMeasure {
+  sheet?: SheetProfile;
   volumeMm3: number;
   areaMm2: number;
   min: [number, number, number];

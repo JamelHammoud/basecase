@@ -8,6 +8,8 @@ import { newId } from './helpers';
 import { dropToFloor, moveSelectionTo, rotateQuarterTurn, stackedPosition, withHardware } from './partTransforms';
 import type { CommitParts, Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { withSculptMesh } from './sculptEdits';
+import { withPartTransform } from './partTransformEdits';
 
 function applyPatch(p: ScenePart, patch: Partial<ScenePart>): ScenePart {
   const next = { ...p, ...patch };
@@ -140,7 +142,7 @@ export function usePartEdits(core: WorkspaceCore) {
     commitParts(
       patchWhere(
         (p) => p.id === id,
-        (p) => ({ position, rotation, dimensions: dimensions || p.dimensions }),
+        (p) => withPartTransform(p, { position, rotation, dimensions }),
       ),
     );
 
@@ -151,7 +153,7 @@ export function usePartEdits(core: WorkspaceCore) {
       prev.map((p) => {
         const u = map.get(p.id);
 
-        return u ? { ...p, position: u.position, rotation: u.rotation, dimensions: u.dimensions || p.dimensions } : p;
+        return u ? withPartTransform(p, u) : p;
       }),
     );
   };
@@ -193,7 +195,7 @@ export function usePartEdits(core: WorkspaceCore) {
       commitParts(
         patchWhere(
           (p) => p.id === partId,
-          () => ({ sculptMesh, kind: 'sculpt_mesh' as const, csg: undefined }),
+          (part) => withSculptMesh(part, sculptMesh),
         ),
       ),
     changeHardware,

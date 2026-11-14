@@ -42,8 +42,7 @@ To see the robot's total weight and how high its center of mass sits above the f
 | Component | Its catalog weight |
 | Hardware | Its volume and the density of its finish |
 | Printed part | The filament its shell and infill use, at your material and infill settings |
-| CNC aluminum | Its volume at 2.7 g/cm³, an estimate |
-| Laser-cut sheet | Its volume at 1.4 g/cm³, an estimate |
+| [Sheet part](/help/cut-parts-from-sheet) | Its solid volume at 2.7 g/cm³ for 6061 aluminum, 1.6 for carbon fiber or 1.19 for acrylic |
 | Off-the-shelf part or stand-in | Its volume at 1.2 g/cm³, an estimate |
 | Supply | Its listed weight, or its volume at 1.5 g/cm³ if it has none |
 

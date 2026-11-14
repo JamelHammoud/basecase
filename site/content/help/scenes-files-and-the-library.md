@@ -72,4 +72,4 @@ Your chat with the agent also stays on your computer and isn't included in the f
 
 When you open a scene file, Basecase creates a new scene from it. The two scenes are separate, so editing one doesn't change the other.
 
-To move your work into other apps, Basecase exports STL, 3MF, USDZ and robot packages. For the full list, see [Import and export formats](/help/import-and-export-formats).
+To move your work into other apps, Basecase exports STL, 3MF, USDZ, robot packages and DXF cut files for sheet parts. For the full list, see [Import and export formats](/help/import-and-export-formats).

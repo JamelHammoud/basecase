@@ -1,7 +1,14 @@
 import { eulerToMatrix, matrixToEuler } from '../agent/agentFrame';
 import { isBooleanPart, type BooleanPart } from '../booleans/parts';
 import type { CustomModelSubNode, PartKind, ScenePart } from '../types/robotics';
-import { mirrorCad, mirrorContour, mirrorDeformers, mirrorMesh, mirrorSculpt } from './mirrorGeometry';
+import {
+  mirrorCad,
+  mirrorContour,
+  mirrorDeformers,
+  mirrorMesh,
+  mirrorSculpt,
+  mirrorSheetTransform,
+} from './mirrorGeometry';
 import { localMirrorAxis, mirrorByDatum } from './mirrorDatum';
 import { flipAxis, flipMatrix, reflectPoint, type MirrorAxis, type MirrorPlane, type V3 } from './plane';
 
@@ -84,10 +91,12 @@ function withLocalGeometry(part: ScenePart, k: MirrorAxis): Partial<ScenePart> {
 
 function mirrorBoolean(part: BooleanPart, plane: MirrorPlane): ScenePart {
   const operands = part.boolean.operands.map((o) => mirrorPart(o, plane));
+  const axis = localAxis(part.boolean.operands[0], plane.axis);
   const out: ScenePart = {
     ...part,
     position: operands[0].position,
     rotation: operands[0].rotation,
+    ...(part.sheetTransform ? { sheetTransform: mirrorSheetTransform(part.sheetTransform, axis) } : {}),
     boolean: { ...part.boolean, operands },
   };
 
@@ -110,6 +119,7 @@ export function mirrorPart(part: ScenePart, plane: MirrorPlane): ScenePart {
     ...part,
     position: reflectPoint(part.position, plane),
     rotation: mirroredRotation(part.rotation, k, f),
+    ...(part.sheetTransform ? { sheetTransform: mirrorSheetTransform(part.sheetTransform, f) } : {}),
     ...withLocalGeometry(part, f),
   };
 }

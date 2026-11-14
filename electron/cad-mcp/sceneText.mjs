@@ -13,6 +13,7 @@ const links = (p) => [
   p.operands && `operands=[${p.operands.map((o) => o.id).join(',')}]`,
   p.mirrorOf && `mirror-of=${p.mirrorOf}`,
   p.frame && `frame=${p.frame}`,
+  p.sheet && `sheet=${p.sheet.material}:${num(p.sheet.thicknessMm, 3)}mm`,
 ];
 
 export function partLine(p, withNotes = true) {

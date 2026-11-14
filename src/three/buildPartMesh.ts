@@ -27,6 +27,9 @@ export function buildPartGroup(part: ScenePart, isSelected: boolean, options: Bu
   const build = hasSculptMesh(part) ? sculptedPart : BUILDERS[part.kind];
 
   build?.(ctx);
+
+  if (part.sheetTransform) applySheetTransform(ctx.group, part.sheetTransform);
+
   applyPartTransform(ctx.group, part);
   ctx.group.traverse((object) => {
     object.userData.partId = part.id;
@@ -37,4 +40,15 @@ export function buildPartGroup(part: ScenePart, isSelected: boolean, options: Bu
 
 export function convertScenePartToSculptMesh(part: ScenePart): SculptMeshData {
   return convertPartToSculptMesh(part, nestedBuild);
+}
+
+function applySheetTransform(group: THREE.Group, values: number[]): void {
+  const matrix = new THREE.Matrix4().fromArray(values);
+
+  for (const child of group.children) {
+    child.updateMatrix();
+    child.matrix.premultiply(matrix);
+    child.matrixAutoUpdate = false;
+    child.matrixWorldNeedsUpdate = true;
+  }
 }

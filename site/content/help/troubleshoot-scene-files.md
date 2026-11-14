@@ -1,7 +1,7 @@
 ---
 title: Scene file doesn't open
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 keywords:
@@ -41,7 +41,7 @@ The sender's Basecase is newer than yours, and it saved something your version c
 
 ## “The scene’s parts are damaged”
 
-At least one part in the file is missing its id, its kind or its position. Ask the sender to export the scene again.
+At least one part is missing its id, its kind or its position, or has damaged sheet settings. A sheet needs a supported material, a positive thickness and a usable thickness transform. Ask the sender to export the scene again.
 
 ## Double-clicking the file does nothing
 

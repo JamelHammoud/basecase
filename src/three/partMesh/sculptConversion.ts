@@ -2,10 +2,12 @@ import * as THREE from 'three';
 import type { ScenePart, SculptMeshData } from '../../types/robotics';
 import {
   buildBufferGeometryFromSculptData,
+  extractSculptDataFromGeometry,
   tessellateGeometryForSculpting,
   weldAndNormalizeGeometry,
 } from '../sculptEngine';
 import type { GroupBuilder } from './customModel';
+import { releasePartGroup } from './sharedGeometry';
 
 const refineSculpt = (part: ScenePart) => {
   const { width, height, depth } = part.dimensions;
@@ -36,7 +38,7 @@ const worldTriangleSoup = (group: THREE.Group) => {
 };
 
 export function convertPartToSculptMesh(part: ScenePart, build: GroupBuilder): SculptMeshData {
-  if (part.sculptMesh && part.sculptMesh.positions.length >= 9) {
+  if (part.sculptMesh && part.sculptMesh.positions.length >= 9 && !part.sheetTransform) {
     return refineSculpt(part);
   }
 
@@ -45,5 +47,12 @@ export function convertPartToSculptMesh(part: ScenePart, build: GroupBuilder): S
 
   combined.setAttribute('position', new THREE.Float32BufferAttribute(worldTriangleSoup(group), 3));
 
-  return weldAndNormalizeGeometry(combined);
+  const data = part.sheetTransform
+    ? extractSculptDataFromGeometry(combined, part.dimensions.width, part.dimensions.height, part.dimensions.depth)
+    : weldAndNormalizeGeometry(combined);
+
+  combined.dispose();
+  releasePartGroup(group);
+
+  return data;
 }

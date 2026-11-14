@@ -1,4 +1,5 @@
 import { ScenePart } from '../types/robotics';
+import { affineBounds } from './affineBounds';
 
 export type Axis = 0 | 1 | 2;
 export type AlignMode = 'min' | 'center' | 'max';
@@ -6,6 +7,12 @@ export type AlignMode = 'min' | 'center' | 'max';
 const r = (v: number) => Math.round(v * 10) / 10;
 
 export function halfExtents(p: ScenePart): [number, number, number] {
+  if (p.sheetTransform) {
+    const bounds = affineBounds(p);
+
+    return bounds.min.map((value, axis) => (bounds.max[axis] - value) / 2) as [number, number, number];
+  }
+
   const h = [p.dimensions.width / 2, p.dimensions.height / 2, p.dimensions.depth / 2];
   const [x, y, z] = p.rotation.map((d) => (d * Math.PI) / 180);
 
@@ -31,6 +38,8 @@ export function halfExtents(p: ScenePart): [number, number, number] {
 }
 
 export function partBounds(p: ScenePart): { min: [number, number, number]; max: [number, number, number] } {
+  if (p.sheetTransform) return affineBounds(p);
+
   const half = halfExtents(p);
 
   return {
@@ -72,7 +81,7 @@ function alignTarget(sel: ScenePart[], axis: Axis, mode: AlignMode): number {
   return mode === 'max' ? b.max[axis] : (b.min[axis] + b.max[axis]) / 2;
 }
 
-const ALIGN_SIGN: Record<AlignMode, number> = { min: 1, center: 0, max: -1 };
+const ALIGN_FACTOR: Record<AlignMode, number> = { min: 0, center: 0.5, max: 1 };
 
 function unlockedSelection(all: ScenePart[], ids: string[]): ScenePart[] {
   const selected = new Set(ids);
@@ -87,34 +96,46 @@ export function alignParts(all: ScenePart[], ids: string[], axis: Axis, mode: Al
 
   const target = alignTarget(sel, axis, mode);
   const selected = new Set(sel);
+  const precise = sel.some((p) => p.sheetTransform);
 
   return all.map((p) => {
     if (!selected.has(p)) return p;
 
-    const center = target + ALIGN_SIGN[mode] * halfExtents(p)[axis];
+    const bounds = partBounds(p);
+    const anchor = bounds.min[axis] + (bounds.max[axis] - bounds.min[axis]) * ALIGN_FACTOR[mode];
     const position: [number, number, number] = [...p.position];
 
-    position[axis] = r(center);
+    const at = p.position[axis] + target - anchor;
+
+    position[axis] = precise ? at : r(at);
 
     return { ...p, position };
   });
 }
 
 export function distributeParts(all: ScenePart[], ids: string[], axis: Axis): ScenePart[] {
-  const sel = unlockedSelection(all, ids).sort((a, b) => a.position[axis] - b.position[axis]);
+  const sel = unlockedSelection(all, ids);
 
   if (sel.length < 3) return all;
 
-  const size = (p: ScenePart) => halfExtents(p)[axis] * 2;
-  const first = partBounds(sel[0]).min[axis];
-  const last = partBounds(sel[sel.length - 1]).max[axis];
+  const bounds = new Map(sel.map((p) => [p, partBounds(p)]));
+  const center = (p: ScenePart) => bounds.get(p)!.min[axis] + bounds.get(p)!.max[axis];
+  const precise = sel.some((p) => p.sheetTransform);
+
+  sel.sort((a, b) => center(a) - center(b));
+
+  const size = (p: ScenePart) => bounds.get(p)!.max[axis] - bounds.get(p)!.min[axis];
+  const first = bounds.get(sel[0])!.min[axis];
+  const last = bounds.get(sel[sel.length - 1])!.max[axis];
   const total = sel.reduce((sum, p) => sum + size(p), 0);
   const gap = (last - first - total) / (sel.length - 1);
   const next = new Map<string, number>();
   let cursor = first;
 
   for (const p of sel) {
-    next.set(p.id, r(cursor + size(p) / 2));
+    const at = p.position[axis] + cursor - bounds.get(p)!.min[axis];
+
+    next.set(p.id, precise ? at : r(at));
     cursor += size(p) + gap;
   }
 

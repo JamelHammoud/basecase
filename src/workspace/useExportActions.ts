@@ -14,6 +14,8 @@ import { IS_MAC } from '../utils/os';
 import { useRobotPackageExport } from './useRobotPackageExport';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
+import { useCutFileExport } from './useCutFileExport';
+import { isSheetSolid } from './cutFileExport';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
@@ -24,6 +26,7 @@ export function useExportActions(core: WorkspaceCore) {
   const sharingRef = useRef(false);
   const exportStep = useStepExport({ parts, scene, showToast, toasts });
   const exportRobotPackage = useRobotPackageExport(core);
+  const exportCutFiles = useCutFileExport(core);
 
   const exportStl = async () => {
     const viewport = viewportRef.current;
@@ -163,9 +166,11 @@ export function useExportActions(core: WorkspaceCore) {
     airDrop,
     copyBrief,
     exportRobotPackage,
+    exportCutFiles,
     canExportParts: parts.length > 0,
     canExportStep: parts.some(isStepBody),
     canExportRobot: posing.hasRig,
+    canExportCutFiles: parts.some(isSheetSolid),
   };
 }
 

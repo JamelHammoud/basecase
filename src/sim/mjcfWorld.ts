@@ -34,7 +34,7 @@ const boxSize = ({ dimensions: d }: WorldItem) => vec([d.width / 2000, d.depth /
 function primitiveShape(item: WorldItem): string | null {
   const d = item.dimensions;
 
-  if (partEdges(item)) return null;
+  if (partEdges(item) || item.sheetTransform) return null;
 
   if (item.kind === 'sphere') return `type="sphere" size="${f(d.width / 2000)}"`;
 

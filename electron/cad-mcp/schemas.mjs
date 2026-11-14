@@ -34,6 +34,13 @@ export const idSchema = z
   .regex(/^[a-z0-9][a-z0-9_-]{0,63}$/)
   .describe('Stable kebab-case id, unique in the scene, e.g. "left-front-coxa"');
 
+export const sheetSchema = z
+  .object({
+    material: z.enum(['aluminum-6061', 'carbon-fiber', 'acrylic']),
+    thicknessMm: z.number().positive(),
+  })
+  .describe('Flat sheet material and thickness in mm. The geometry changes to the nearest stocked thickness.');
+
 export const common = {
   name: z
     .string()
@@ -63,6 +70,7 @@ export const common = {
     .describe(
       'printed (the project filament, default), pla, petg or asa (a specific filament: parts that hold or touch a servo need petg or asa, since servos run at 60–70 °C and PLA softens at 54 °C), tpu (soles, bumpers), cots (bought part), aluminum, laser_cut',
     ),
+  sheet: sheetSchema.optional(),
   supply: z
     .string()
     .regex(/^supply:[a-z0-9-]+$/)

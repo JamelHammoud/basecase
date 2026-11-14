@@ -1,6 +1,7 @@
 ---
 title: Round or bevel a part's edges
 date: 2026-11-13
+updated: 2026-11-14
 collection: design
 type: task
 order: 18
@@ -40,6 +41,8 @@ The size can't reach half of the part's smallest side. If you type a larger numb
 To make the edges sharp again, set the size to 0. Or press [[⌘Z]] to undo.
 
 Taper, Bend and Twist still work on a part with rounded edges.
+
+Changing **Shape** on a sheet part returns it to printing. To restore its sheet setting and previous shape, press [[⌘Z]].
 
 You can also ask the agent to fillet or chamfer a part, for example “Round the edges by 3 mm.” The agent sets the same field.
 

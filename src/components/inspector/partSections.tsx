@@ -18,6 +18,8 @@ import { imageStance, resizedDimensions, type DimensionKey, type ImageStance } f
 import type { InspectorProps, Phase } from './types';
 import { keyFor } from '../../app/shortcuts';
 import { percent } from '../../../electron/percent.mjs';
+import type { SheetProfile } from '../../types/sheet';
+import { sheetOf } from '../../sheet/materials';
 
 export interface PartSectionProps {
   part: ScenePart;
@@ -100,7 +102,14 @@ export const ImageSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
   </Section>
 );
 
-export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({ part, onUpdate, isImage }) => {
+export const SizeSection: React.FC<PartSectionProps & { isImage: boolean; sheetProfile: SheetProfile | null }> = ({
+  part,
+  onUpdate,
+  isImage,
+  sheetProfile,
+}) => {
+  const sheet = part.sheet ?? (sheetProfile && sheetOf(part, sheetProfile));
+  const disabled = (axis: number) => !!sheet && (!sheetProfile || Math.abs(sheetProfile.normal[axis]) > 0.0001);
   const setDim = (key: DimensionKey, v: number, live?: Phase) =>
     onUpdate({ dimensions: resizedDimensions(part.dimensions, key, v, isImage) }, live);
 
@@ -111,6 +120,7 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({
           label="W"
           title="Width (X)"
           value={part.dimensions.width}
+          disabled={disabled(0)}
           min={1}
           max={2000}
           onChange={(v, l) => setDim('width', v, l)}
@@ -119,6 +129,7 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({
           label="H"
           title="Height (Y)"
           value={part.dimensions.height}
+          disabled={disabled(1)}
           min={1}
           max={2000}
           onChange={(v, l) => setDim('height', v, l)}
@@ -128,6 +139,7 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({
             label="D"
             title="Depth (Z)"
             value={part.dimensions.depth}
+            disabled={disabled(2)}
             min={1}
             max={600}
             onChange={(v, l) => setDim('depth', v, l)}

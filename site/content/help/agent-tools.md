@@ -29,11 +29,11 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 
 | Tool | What it does |
 |---|---|
-| `get_scene` | Lists the scene's parts, one per line, your marks, and each Case's console as you arranged it |
+| `get_scene` | Lists the scene's parts, including sheet material and thickness, your marks, and each Case's console as you arranged it |
 | `find_in_scene` | Finds parts by words, group, kind, region or nearness |
 | `get_part_code` | Reads a modeled part's code |
 | `add_parts` | Adds block-out shapes and real catalog parts |
-| `update_parts` | Moves, resizes, recolors, renames, regroups or re-notes parts, and rounds or bevels their edges |
+| `update_parts` | Moves, resizes, recolors, renames, regroups or re-notes parts, rounds or bevels their edges, and assigns flat parts a sheet material and stock thickness |
 | `delete_parts` | Removes parts |
 | `mirror_parts` | Makes mirrored copies for left and right sides |
 | `find_parts` | Searches the catalog of real parts, with sizes, prices and how many you own |

@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 11. Menus, Palette & Shortcuts
 
+- **Cut Files** in Export and ⌘K writes a zip containing one DXF per sheet solid, in millimeters. It is available in desktop and web scenes with sheet parts. Detection and zip creation run in workers, and `downloadBytes` handles the file. A saved sheet whose geometry no longer qualifies stops export and names the part.
+
 - **Right-click (`ContextMenu` primitive):**
   - **Part:** the part's name heads the menu; clicking it copies the name. Then Rename, Duplicate, Mirror ▸ (Side, Front, Top, the last one picked checked, §7), Save to Library, Quote Part (desktop only: opens the Agent tab with the part quoted in the composer, `partQuote`), Make a Leader (on a part of a fixed-base arm, §8c), Size Arm to Targets (on a Guide part, §8c), Comment Here, Measure from Here, Align ▸, Drop to Floor, Stack on Part Below, Center on Origin, Reset Rotation, Zoom to Selection, Solid/Cutout/Guide, Subtract Overlapping Cutouts, Ungroup, Update from Onshape (a part of a robot imported from Onshape, desktop only, §8c), Select All, Lock, Hide, Delete.
   - **Part moved by a joint, while simulating:** Fault ▸ (Limp, Weak, Stuck, Laggy, Clear; the active one checked) follows the name (§8d).

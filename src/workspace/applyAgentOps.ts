@@ -8,6 +8,7 @@ import { sleep } from './helpers';
 import { twinHints } from './mirrorHints';
 import type { CommitParts, Vec3 } from './types';
 import { errorMessage } from '../utils/errorMessage';
+import { incomingSheetProfile, requestsSheet, sheetSpec } from '../agent/agentSheet';
 
 export interface AgentOpsContext {
   current: () => ScenePart[];
@@ -82,11 +83,11 @@ function claim(ctx: AgentOpsContext, log: OpLog, partId: string) {
   return true;
 }
 
-function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
+async function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
   let part: ScenePart;
 
   try {
-    part = specToPart(op.part);
+    part = specToPart(op.part, await incomingSheetProfile(op.part));
   } catch (err) {
     log.problems.push(errorMessage(err));
 
@@ -104,8 +105,10 @@ function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
   return true;
 }
 
-function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
-  if (!findPartDeep(current, op.part.id)) {
+async function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
+  const part = findPartDeep(current, op.part.id);
+
+  if (!part) {
     log.problems.push(`${op.part.id} not found`);
 
     return true;
@@ -113,8 +116,23 @@ function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
 
   if (!claim(ctx, log, op.part.id)) return false;
 
-  ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? applySpec(p, op.part) : p)), live);
-  log.updated.push(op.part.id);
+  try {
+    const spec = sheetSpec(part, op.part);
+    const needsMeasure = requestsSheet(spec) && !spec.cad && (part.kind === 'cad_part' || !spec.size);
+
+    if (needsMeasure) await ctx.viewport()?.meshesReady();
+
+    const measure = needsMeasure ? (await ctx.viewport()?.measureParts([part.id]))?.[part.id] : undefined;
+    const profile = spec.cad ? await incomingSheetProfile(spec) : measure?.sheet;
+    const next = applySpec(part, spec, profile);
+
+    ctx.commitParts((prev) => prev.map((p) => (p.id === op.part.id ? next : p)), live);
+    log.updated.push(op.part.id);
+  } catch (err) {
+    log.problems.push(errorMessage(err));
+
+    return false;
+  }
 
   return true;
 }

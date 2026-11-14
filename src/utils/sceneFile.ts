@@ -1,6 +1,7 @@
 import type { Skill } from '../skills/artifacts';
 import { readSkillBundle } from '../skills/bundle';
 import type { ProjectSettings, SavedSceneRecord, SceneAnnotation, ScenePart } from '../types/robotics';
+import { validSheetFields } from '../sheet/validation';
 
 export const SCENE_FILE_EXTENSION = 'basecase';
 
@@ -34,7 +35,11 @@ const isVec3 = (value: unknown) =>
   Array.isArray(value) && value.length === 3 && value.every((n) => typeof n === 'number' && Number.isFinite(n));
 
 const isPart = (value: unknown): value is ScenePart =>
-  isObject(value) && typeof value.id === 'string' && typeof value.kind === 'string' && isVec3(value.position);
+  isObject(value) &&
+  typeof value.id === 'string' &&
+  typeof value.kind === 'string' &&
+  isVec3(value.position) &&
+  validSheetFields(value);
 
 function localProject(project: ProjectSettings | undefined): ProjectSettings | undefined {
   if (!isObject(project)) return undefined;

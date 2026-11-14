@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { hardwareColor, hardwareDimensions, hardwareName, hardwareNote, type HardwareSpec } from '../data/hardware';
 import type { ScenePart } from '../types/robotics';
-import { halfExtents, selectionBounds, type Axis } from '../utils/selection';
+import { partBounds, selectionBounds, type Axis } from '../utils/selection';
 import type { Vec3 } from './types';
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
@@ -11,18 +11,20 @@ const MOVE_EPSILON = 1e-6;
 const movable = (ids: Set<string>) => (p: ScenePart) => ids.has(p.id) && !p.locked;
 
 const withY = (p: ScenePart, y: number): ScenePart => ({ ...p, position: [p.position[0], y, p.position[2]] });
+const exact = (value: number) => value;
 
 export function dropToFloor(prev: ScenePart[], ids: Set<string>): ScenePart[] {
   const canMove = movable(ids);
   const sel = prev.filter(canMove);
+  const rounded = sel.some((p) => p.sheetTransform) ? exact : round2;
 
   if (sel.length > 1 && sel.every((p) => p.group)) {
     const lift = -selectionBounds(sel).min[1];
 
-    return prev.map((p) => (canMove(p) ? withY(p, round2(p.position[1] + lift)) : p));
+    return prev.map((p) => (canMove(p) ? withY(p, rounded(p.position[1] + lift)) : p));
   }
 
-  return prev.map((p) => (canMove(p) ? withY(p, round2(halfExtents(p)[1])) : p));
+  return prev.map((p) => (canMove(p) ? withY(p, rounded(p.position[1] - partBounds(p).min[1])) : p));
 }
 
 const axisVector = (axis: Axis) => new THREE.Vector3(axis === 0 ? 1 : 0, axis === 1 ? 1 : 0, axis === 2 ? 1 : 0);
@@ -86,19 +88,22 @@ export function moveSelectionTo(
   );
 }
 
-const overlapsXZ = (part: ScenePart, other: ScenePart) =>
-  Math.abs(part.position[0] - other.position[0]) <= part.dimensions.width / 2 + other.dimensions.width / 2 &&
-  Math.abs(part.position[2] - other.position[2]) <= part.dimensions.depth / 2 + other.dimensions.depth / 2;
+const overlapsXZ = (part: ScenePart, other: ScenePart) => {
+  const a = partBounds(part);
+  const b = partBounds(other);
+
+  return [0, 2].every((axis) => a.min[axis] <= b.max[axis] && b.min[axis] <= a.max[axis]);
+};
 
 const isSupport = (part: ScenePart) => (other: ScenePart) =>
   other.id !== part.id && other.visible && other.role === 'solid' && overlapsXZ(part, other);
 
 export function stackedPosition(part: ScenePart, parts: ScenePart[]): Vec3 {
-  const surface = parts
-    .filter(isSupport(part))
-    .reduce((top, other) => Math.max(top, other.position[1] + other.dimensions.height / 2), 0);
+  const supports = parts.filter(isSupport(part));
+  const surface = supports.reduce((top, other) => Math.max(top, partBounds(other).max[1]), 0);
+  const rounded = part.sheetTransform || supports.some((p) => p.sheetTransform) ? exact : round1;
 
-  return [part.position[0], round1(surface + part.dimensions.height / 2), part.position[2]];
+  return [part.position[0], rounded(surface + part.position[1] - partBounds(part).min[1]), part.position[2]];
 }
 
 export function withHardware(p: ScenePart, spec: HardwareSpec): ScenePart {

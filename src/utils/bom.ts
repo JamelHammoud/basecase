@@ -24,6 +24,8 @@ import { neededSupplyKeys } from './bomNeeds';
 import { wiringNetlist } from '../wiring/netlist';
 import { wiringSupplies } from '../wiring/wiringSupplies';
 import { sceneTether } from './powerSources';
+import { sheetOf } from '../sheet/materials';
+import { describeSheet, sheetKey } from './bomSheet';
 
 export { FILAMENT_MARGIN, STALE_DAYS, localDate } from './bomTypes';
 export type { Bom, BomCategory, BomLine, PriceStatus, PrintedPart } from './bomTypes';
@@ -78,6 +80,7 @@ export function isPrinted(p: ScenePart): boolean {
     p.role === 'solid' &&
     (isImportedMesh(p) || !NOT_PRINTED.has(p.kind)) &&
     !BLOCKOUT_KINDS.has(p.kind) &&
+    !sheetOf(p) &&
     !(p.mechanicalTag && MADE_ELSEWHERE[p.mechanicalTag])
   );
 }
@@ -85,7 +88,7 @@ export function isPrinted(p: ScenePart): boolean {
 export const printMaterialOf = (p: ScenePart, project: ProjectSettings): PrintMaterial =>
   p.printMaterial ?? (p.mechanicalTag === 'TPU Flexible' ? 'TPU' : project.material);
 
-export const isStandIn = (p: ScenePart): boolean => p.role === 'solid' && BLOCKOUT_KINDS.has(p.kind);
+export const isStandIn = (p: ScenePart): boolean => p.role === 'solid' && BLOCKOUT_KINDS.has(p.kind) && !sheetOf(p);
 
 export function filamentGrams(
   m: Pick<MeshMeasure, 'volumeMm3' | 'areaMm2'>,
@@ -187,6 +190,7 @@ const DESCRIBERS: Array<[string, (key: string) => LineInfo | null]> = [
   ['component:', describeComponent],
   ['hardware:', describeHardware],
   ['supply:', describeSupply],
+  ['sheet:', describeSheet],
 ];
 
 export function describeKey(key: string): LineInfo | null {
@@ -217,7 +221,7 @@ function boughtKey(p: ScenePart): string | null {
 export const isMadePart = (p: ScenePart): boolean => p.role === 'solid' && !boughtKey(p) && isPrinted(p);
 
 const madeElsewhereProcess = (p: ScenePart): string | undefined =>
-  p.mechanicalTag && !NOT_PRINTED.has(p.kind) ? MADE_ELSEWHERE[p.mechanicalTag] : undefined;
+  p.mechanicalTag ? MADE_ELSEWHERE[p.mechanicalTag] : undefined;
 
 function printedPart(p: ScenePart, m: MeshMeasure, project: ProjectSettings): PrintedPart {
   const material = printMaterialOf(p, project);
@@ -244,6 +248,10 @@ function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: Mesh
   if (key) return addCount(t.counts, key, 1, [p.id].filter(Boolean));
 
   if (isStandIn(p)) return t.standIns.push({ id: p.id, name: p.name });
+
+  const sheet = sheetKey(p, m);
+
+  if (sheet) return addCount(t.counts, sheet, 1, [p.id]);
 
   const process = madeElsewhereProcess(p);
 

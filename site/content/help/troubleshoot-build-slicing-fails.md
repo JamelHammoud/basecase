@@ -86,7 +86,7 @@ If the message ends with “Update the slicer or pick another printer.”, your 
 
 ## “No plates to print. Add printed parts first.”
 
-None of the parts in your scene are printed. Components, screws and stand-ins are bought, and so are parts whose **Material** in the Inspector is set to **CNC aluminum**, **Laser-cut sheet** or **Off-the-shelf**.
+None of the parts in your scene are printed. Components, screws, stand-ins, [sheet parts](/help/cut-parts-from-sheet) and parts whose **Material** is **Off-the-shelf** stay off the print plates.
 
 ## “The slicer returned no plates. Slice again.”
 

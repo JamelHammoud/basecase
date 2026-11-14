@@ -1,6 +1,7 @@
 ---
 title: Export a STEP file
 date: 2026-11-13
+updated: 2026-11-14
 collection: files-and-sharing
 type: task
 order: 7
@@ -33,6 +34,6 @@ These parts arrive as exact solids, with true curves and flat faces:
 - Most basic shapes
 - Union, Subtract and Intersect results made from those parts
 
-Catalog parts, imported meshes and everything else arrive as faceted solids built from their triangles, each simplified to about 6,000 triangles. A basic shape with filleted or chamfered edges is exported this way too.
+Catalog parts, imported meshes and everything else arrive as faceted solids built from their triangles, each simplified to about 6,000 triangles. A basic shape with filleted or chamfered edges is exported this way too. A sheet part whose thickness was changed along a tilted face also uses its triangles, preserving the stock thickness.
 
 If a part can't be included, a message tells you how many parts were left out.

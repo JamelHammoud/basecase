@@ -12,7 +12,7 @@ export interface PartMass {
   id: string;
   grams: number;
   centroid: V3;
-  source: 'catalog' | 'published' | 'printed' | 'hardware' | 'supply' | 'estimate';
+  source: 'catalog' | 'published' | 'printed' | 'sheet' | 'hardware' | 'supply' | 'estimate';
 }
 
 export interface ServoLine {

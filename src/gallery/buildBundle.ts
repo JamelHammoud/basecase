@@ -3,6 +3,7 @@ import SHIPPED_MESHES from '../data/component-meshes.json';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { GALLERY_FORMAT_VERSION, type GalleryBundle } from './galleryBundle';
 import type { GalleryTrained } from './galleryTrained';
+import { bakedSheet } from './bakedSheet';
 
 export interface BundleSource {
   slug: string;
@@ -62,7 +63,12 @@ function portablePart(part: ScenePart, triangles: BundleSource['triangles']): Sc
 
   if (!shape?.length) return lean;
 
-  const inlined: ScenePart = { ...lean, kind: 'mesh', mesh: inlineMesh(shape, lean.dimensions) };
+  const baked = bakedSheet(lean, shape);
+  const inlined: ScenePart = {
+    ...baked.part,
+    kind: 'mesh',
+    mesh: inlineMesh(baked.triangles, baked.part.dimensions),
+  };
 
   delete inlined.componentId;
   delete inlined.componentVariant;

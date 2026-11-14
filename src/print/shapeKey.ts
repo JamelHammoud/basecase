@@ -8,6 +8,7 @@ export function shapeKey(p: ScenePart): string {
     p.id,
     p.kind,
     JSON.stringify(p.dimensions),
+    JSON.stringify(p.sheetTransform ?? null),
     JSON.stringify(p.deformers ?? null),
     JSON.stringify(p.edges ?? null),
     c ? `${c.language}:${hashText(c.code)}:${numbersHash(c.positions)}` : '',

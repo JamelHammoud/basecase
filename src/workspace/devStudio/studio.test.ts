@@ -91,6 +91,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'selection',
   'setPose',
   'sharedLink',
+  'sheetProfile',
   'shownParts',
   'simState',
   'simTool',

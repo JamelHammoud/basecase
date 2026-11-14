@@ -30,12 +30,20 @@ const quaternionOf = (rotation: readonly number[]) =>
   );
 
 export function meshPiece(
-  part: Pick<ScenePart, 'position' | 'rotation' | 'dimensions'>,
+  part: Pick<ScenePart, 'position' | 'rotation' | 'dimensions' | 'sheetTransform'>,
   src: MeshSource,
 ): OperandPiece {
   const { positions, indices } = packedMesh(src);
   const scale = new THREE.Vector3(...meshScale(part.dimensions, src.baseSize));
-  const matrix = new THREE.Matrix4().compose(new THREE.Vector3(...part.position), quaternionOf(part.rotation), scale);
+  const matrix = new THREE.Matrix4().compose(
+    new THREE.Vector3(...part.position),
+    quaternionOf(part.rotation),
+    new THREE.Vector3(1, 1, 1),
+  );
+
+  if (part.sheetTransform) matrix.multiply(new THREE.Matrix4().fromArray(part.sheetTransform));
+
+  matrix.scale(scale);
 
   return { positions, indices, matrix: matrix.toArray() };
 }
@@ -74,7 +82,7 @@ async function booleanPieces(part: BooleanPart): Promise<OperandPiece[]> {
   const position = base.map((v, i) => v + result.offset[i]) as Vec3;
   const src = { positions: result.positions, indices: result.indices, baseSize: result.size };
 
-  return [meshPiece({ position, rotation: part.rotation, dimensions: part.dimensions }, src)];
+  return [meshPiece({ ...part, position }, src)];
 }
 
 function operandPieces(part: ScenePart): Promise<OperandPiece[]> | OperandPiece[] {

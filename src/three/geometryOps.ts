@@ -8,6 +8,8 @@ import { componentArrays, componentTransfers } from './componentGeometry';
 import { creasedGeometry } from './partMesh/creased';
 import { creaseEdgesOnly } from './partMesh/creaseEdges';
 import { evaluateBooleanJob, type BooleanJob } from '../booleans/csg';
+import { detectSheet } from '../sheet/detectSheet';
+import { cadMeshToScene } from '../agent/cadMesh';
 
 type Vec3 = [number, number, number];
 
@@ -159,6 +161,23 @@ async function parseMesh({ data, path }: ParseMeshJob): Promise<Float32Array | n
 const transferLines = (lines: Float32Array) => reply(lines, [lines.buffer]);
 
 export const geometryHandlers = {
+  sheetProfile: ({ positions, indices }: { positions: Float32Array; indices: Uint32Array }) => {
+    const mesh = cadMeshToScene({
+      language: 'openscad',
+      code: '',
+      positions: Array.from(positions),
+      indices: Array.from(indices),
+    });
+    const triangles = new Float32Array(indices.length * 3);
+
+    for (let i = 0; i < indices.length; i++) {
+      const source = indices[i] * 3;
+
+      triangles.set([mesh.positions[source], mesh.positions[source + 1], mesh.positions[source + 2]], i * 3);
+    }
+
+    return reply(detectSheet(triangles));
+  },
   linkMesh: async (job: LinkMeshJob) => reply(await linkMesh(job)),
   linkSoup: (pieces: SoupPiece[]) => {
     const result = linkSoup(pieces);

@@ -3,10 +3,10 @@ import {
   Button,
   IconButton,
   SegmentedControl,
-  CloseIcon,
   PauseIcon,
   RotateLeftIcon,
   RunIcon,
+  StopIcon,
 } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import { runClock } from '../../utils/duration';
@@ -40,7 +40,7 @@ const RunningControls: React.FC<{ sim: Simulation }> = ({ sim }) => (
       )}
     </div>
     <SegmentedControl size="sm" value={String(sim.speed)} onChange={(v) => sim.setSpeed(Number(v))} options={SPEEDS} />
-    <IconButton icon={<CloseIcon className="w-4 h-4" />} title="Stop simulation" size="sm" onClick={sim.stop} />
+    <IconButton icon={<StopIcon className="w-4 h-4" />} title="Stop simulation" size="sm" onClick={sim.stop} />
   </div>
 );
 

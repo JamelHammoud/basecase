@@ -1,7 +1,7 @@
 ---
 title: Simulation in Basecase
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: concept
 order: 1
@@ -20,6 +20,7 @@ covers:
   - src/sim/servoModel.ts
   - src/sim/mjcfServo.ts
   - src/sim/sim.worker.ts
+  - src/sim/takeRecording.ts
   - src/sim/worldMoves.ts
   - src/utils/engineeringSimModel.ts
   - src/reality/measuredJoints.ts
@@ -62,6 +63,7 @@ Simulating never changes your parts. The canvas shows the simulated pose, and en
 - **Routines** run step by step on the live simulation.
 - **Falls**, in the Build tab, tips a legged robot over from 12 directions to find the servos a fall would strip.
 - **The emulated robot** follows the simulation once it reaches Test.
+- **Operate tries** open on the try timeline in the simulation, which recalculates the effort of any joint the robot didn't report. See [Record a robot session as a try](/help/record-a-robot-session-as-a-try).
 
 ## Limits
 

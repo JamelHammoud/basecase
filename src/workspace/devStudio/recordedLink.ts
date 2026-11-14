@@ -1,8 +1,8 @@
-import type { TakeContext } from '../../../../electron/robot/robotTake.mjs';
-import { TakeTap, type TakeSink } from '../../../../electron/robot/takeTap.mjs';
-import { saveTake } from '../../../cases/tryStore';
-import type { RobotLinkApi } from '../../../robot/robotStore';
-import { statusRadians, type RobotEvent, type RobotMount, type RobotSpec } from '../../../robot/robotState';
+import type { TakeContext } from '../../../electron/robot/robotTake.mjs';
+import { TakeTap, type TakeSink } from '../../../electron/robot/takeTap.mjs';
+import { saveTake } from '../../cases/tryStore';
+import type { RobotLinkApi } from '../../robot/robotStore';
+import { statusRadians, type RobotEvent, type RobotMount, type RobotSpec } from '../../robot/robotState';
 
 type Listener = (event: RobotEvent) => void;
 

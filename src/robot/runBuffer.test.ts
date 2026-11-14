@@ -6,6 +6,7 @@ import {
   receiveRobotEvent,
   robotRunFor,
   robotSnapshot,
+  setTakeScene,
   startRobotStore,
   type RobotLinkApi,
 } from './robotStore';
@@ -13,6 +14,7 @@ import { decodeTake, RobotTake } from '../../electron/robot/robotTake.mjs';
 import { faultReplayable, replayable, runOfTake, RUN_SECONDS } from './runBuffer';
 
 const sent: number[][] = [];
+const scenes: unknown[] = [];
 
 const link: RobotLinkApi = {
   onRobotEvent: () => () => {},
@@ -21,6 +23,11 @@ const link: RobotLinkApi = {
   robotDisconnect: async () => ({ ok: true }),
   robotCommand: async (command: Record<string, unknown>) => {
     if (command.cmd === 'intent') sent.push(command.joints as number[]);
+
+    return { ok: true };
+  },
+  robotTakeScene: async (context) => {
+    scenes.push(context);
 
     return { ok: true };
   },
@@ -57,6 +64,23 @@ function recordedTake() {
 }
 
 const FAULT = { joints: JOINTS, faultJoint: 'elbow', faultAt: 0, message: 'The Elbow joint is stuck.' };
+
+describe('the take scene', () => {
+  it('files a session under the scene it was connected from, whichever tab opens later', async () => {
+    receiveRobotEvent({ event: 'link', state: 'lost', message: 'Lost contact with the robot.' });
+    scenes.length = 0;
+    setTakeScene({ sceneId: 'arm', robot: 'Arm' });
+    await connect();
+    setTakeScene({ sceneId: 'rover', robot: 'Rover' });
+
+    expect(scenes).toEqual([{ sceneId: 'arm', robot: 'Arm', joints: JOINTS }]);
+
+    receiveRobotEvent({ event: 'link', state: 'lost', message: 'Lost contact with the robot.' });
+    await connect();
+
+    expect(scenes.at(-1)).toEqual({ sceneId: 'rover', robot: 'Rover', joints: JOINTS });
+  });
+});
 
 describe('the run buffer', () => {
   it('is a view of the take’s last 20 s of statuses and intents', () => {

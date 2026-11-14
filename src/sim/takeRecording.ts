@@ -63,12 +63,22 @@ function firstFinite(rows: Float32Array | null, width: number): Float64Array {
   return out;
 }
 
-function frameCount(take: Take): number {
-  if (!take.frames) return 0;
+interface Frames {
+  frames: number;
+  dt: number;
+}
+
+export function takeFrames(take: Take): Frames {
+  const dt = 1 / RECORD_HZ;
+
+  if (!take.frames) return { frames: 0, dt };
 
   const span = Math.max(0, take.t[take.frames - 1] - take.t[0]);
+  const frames = Math.floor(span * RECORD_HZ + EARLY) + 1;
 
-  return Math.min(MAX_FRAMES, Math.floor(span * RECORD_HZ + EARLY) + 1);
+  if (frames <= MAX_FRAMES) return { frames, dt };
+
+  return { frames: MAX_FRAMES, dt: span / (MAX_FRAMES - 1) };
 }
 
 interface Plan {
@@ -127,10 +137,9 @@ function setFrame(engine: SimEngine, plan: Plan, time: number) {
   });
 }
 
-function emptyRecording(engine: SimEngine, frames: number): Recording {
+function emptyRecording(engine: SimEngine, { frames, dt }: Frames): Recording {
   const { model } = engine;
   const nbody = engine.sim.bodies.length;
-  const dt = 1 / RECORD_HZ;
 
   return {
     dt,
@@ -179,13 +188,14 @@ function restore(engine: SimEngine, saved: ReturnType<typeof snapshot>) {
 }
 
 export function takeRecording(engine: SimEngine, take: Take): TakeScrub | null {
-  const frames = frameCount(take);
+  const span = takeFrames(take);
+  const { frames } = span;
   const plan = planOf(engine, take);
 
   if (!frames || plan.columns.every((k) => k < 0)) return null;
 
   const saved = snapshot(engine);
-  const r = emptyRecording(engine, frames);
+  const r = emptyRecording(engine, span);
   const measured = measuredLanes(plan, take, frames);
   const poses = new Float64Array(r.nbody * 7);
   const { data } = engine;

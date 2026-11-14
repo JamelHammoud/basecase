@@ -28,45 +28,45 @@ covers:
   - src/sim/inputEvents.ts
 ---
 
-You can control a running Case with your hand, your face, a MIDI keyboard or your voice. Move your hand and an arm follows it like a puppet, or keep a camera head pointed at your face. MIDI notes and spoken words reach the Case's logic as events.
+You can control a running Case with your hand, your face, a MIDI keyboard or your voice. An arm can follow your hand, or a camera head can keep pointing at your face. MIDI notes and spoken words reach the Case's logic as events.
 
-**Note:** These inputs need a running Case, and voice needs the desktop app.
+**Note:** These inputs only work in a running Case. Voice needs the desktop app.
 
-1. In the **Agent** tab, ask for the Case and name the input you want to use. For example, “/case a pan-tilt camera that keeps my face centered”. The Case opens and starts running.
+1. In the **Agent** tab, ask for the Case and name the input you want to use. For example: “/case a pan-tilt camera that keeps my face centered”. The Case opens and starts running.
 
 ![The Puppet the Arm Case open, with You on the left, the arm in the middle and Try It on the right](/help/drive-a-case-with-your-hand-face-midi-or-voice/console.png)
 
 2. Click **Try It**.
-3. On your first try, allow Basecase to use the camera or the microphone.
-4. Use the input the Case names (see the table below).
+3. The first time you try, allow Basecase to use the camera or the microphone.
+4. Use the input the Case names.
 
 ![A try 6.8 seconds in, with the computer's camera under You and the arm bent to the right](/help/drive-a-case-with-your-hand-face-midi-or-voice/hand.png)
 
-For MIDI, plug in a keyboard or controller, or drop a `.mid` file on the canvas.
+To use MIDI, plug in a keyboard or controller, or drop a `.mid` file on the canvas.
 
-Press [[Esc]] to stop. Basecase turns off the camera and the microphone.
+To stop, press [[Esc]]. Basecase turns off the camera and the microphone.
 
-You can add the input to the Case's console in your `.basecase` file, the same way as in [Run a Case](/help/run-a-case).
+You can also add the input to the Case's console in your `.basecase` file, the same way as in [Run a Case](/help/run-a-case).
 
 ## What each input does
 
-| Input | Your move | Result |
+| Input | What you do | What happens |
 |---|---|---|
-| `hand` | Move one hand in front of the camera. Pinch your thumb and index finger. | A fixed arm's hand follows yours, scaled to the arm's reach. Move your hand 10 cm and the arm moves 18% of its reach. Pinch, and its gripper closes. |
+| `hand` | Move one hand in front of the camera. Pinch your thumb and index finger together. | The hand of a fixed arm follows yours, scaled to the arm's reach. If you move your hand 10 cm, the arm moves 18% of its reach. When you pinch, its gripper closes. |
 | `face` | Sit in front of the camera. | A camera head turns its pan and tilt joints toward your face. |
 | `midi` | Play a MIDI keyboard or controller, or drop a `.mid` file. | Each note sends the Case's logic the event `midi` with the note's number. Each knob or slider sends `midi.cc.` followed by its number, with a value from 0 to 1. |
 | `voice` | Say a word the Case's logic listens for, such as “sit”. | The logic gets the event `voice` with that word. |
 
 ![A pan-tilt Case during a try, with the computer's camera under You and the camera head turned and tilted](/help/drive-a-case-with-your-hand-face-midi-or-voice/face.png)
 
-Keep your hand still for a moment at the start. Basecase takes the rest position from your hand the first time the camera sees it, and moves the arm relative to that.
+Keep your hand still for a moment when you start. Basecase sets the rest position from where your hand is the first time the camera sees it, then moves the arm relative to that.
 
-The face input looks for joints named pan and tilt. On a robot without them, it uses the two joints nearest the robot's camera and treats the one nearer the base as pan.
+The face input looks for joints named pan and tilt. If the robot doesn't have them, the face input uses the two joints nearest the robot's camera and turns the one nearer the base as pan.
 
-Basecase plays a dropped MIDI file from the start of each try, on the simulation's clock. Drop another file and it replaces the last one.
+When you drop a MIDI file, Basecase plays it from the start of each try, on the simulation's clock. Dropping another file replaces the last one.
 
-Voice recognizes single English words that the Case's logic names. The logic gets each word about a second after you stop speaking. Voice can mix up words that sound alike, such as “sit” and “set”.
+Voice recognizes single English words that the Case's logic names. Each word reaches the logic about a second after you stop speaking. Voice might confuse words that sound alike, such as “sit” and “set”.
 
-The camera's picture and the microphone's sound stay on your computer, and Basecase never saves them.
+The camera's picture and the microphone's sound stay on your computer. Basecase never saves the sound. It saves the picture only while a robot is connected, as the video of that session's try. For more, see [Record a robot session as a try](/help/record-a-robot-session-as-a-try).
 
 To drive a robot with your whole body, see [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).

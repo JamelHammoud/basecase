@@ -36,7 +36,7 @@ You can drive your robot through an open Case while Basecase records it. When yo
 
 1. Click **Play** in the view rail, then click **Cases**.
 2. Click a Case under **New Case**. The Case and its brief open at the top of the **Simulate** tab.
-3. Under **Try**, click **Try It**. A clock shows how much of the Case's time limit you've used. The keys for your kind of robot appear below the clock.
+3. Under **Try**, click **Try It**. A clock shows how much of the Case's time limit you've used, and the keys for your kind of robot appear below it.
 4. Click the canvas so it receives your key presses.
 5. Drive the robot to the goal with the keys shown under **Try**. To start over, press [[R]].
 
@@ -48,7 +48,9 @@ You can drive your robot through an open Case while Basecase records it. When yo
 
 ![Results with the latest run and one try](/help/try-a-case/results.png)
 
-You can also drive with a gamepad instead of the keys. **Try ⟨Case⟩** is in [[⌘K]] too. To stop driving and end the try, press [[Esc]]. If you don't see a Case under **New Case**, [make a Case](/help/make-a-case) first.
+You can also drive with a gamepad instead of the keys. To stop driving and end the try, press [[Esc]]. **Try ⟨Case⟩** is in [[⌘K]] too.
+
+If you don't see a Case under **New Case**, [make a Case](/help/make-a-case) first.
 
 To drive a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. Learn more in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
@@ -56,7 +58,7 @@ To judge your real wheeled or legged robot on a printed mat, click **Try on Real
 
 If the robot can't drive, **Teach It to Move** appears under **Try It**. Click it to train a **Walk** skill, as described in [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
 
-To teach the robot the Case's task instead of driving it yourself, go to **Train**. Between **Control** and **Results**, type a goal after **Teach it to**. For the steps, see [Teach a robot a skill](/help/teach-a-robot-a-skill).
+If you'd rather teach the robot the Case's task than drive it yourself, go to **Train**, between **Control** and **Results**, and type a goal after **Teach it to**. For the steps, see [Teach a robot a skill](/help/teach-a-robot-a-skill).
 
 ## Whether the robot can do it
 
@@ -79,17 +81,17 @@ If the robot doesn't have what the Case needs, hold your pointer over the row's 
 
 ## Results
 
-After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that is the list of tries, worst first, with misses at the top. Replays include anything the Case's code moved, lit or hid during the try.
+After a run, **Results** shows whether the robot stayed up and which joints worked hardest. Below that, tries are listed worst first, with misses at the top. Replays include anything the Case's code moved, lit or hid during the try.
 
 To delete a try, right-click it, choose **Delete**, then confirm.
 
 Tries from your real robot are marked **Real**. When you click **Replay** on one of them, Basecase draws its path over the path of the best sim try.
 
-A passed try's menu also has **Multiply**, which makes up to 50 varied passing tries from that try. The try's row then shows how many it made, such as **50 variations**. If you delete the try, its variations are deleted with it. For the steps, see [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
+A passed try's menu also has **Multiply**. It makes up to 50 varied passing tries from that try, and the try's row then shows how many it made, such as **50 variations**. If you delete the try, Basecase deletes its variations too. For the steps, see [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 
-When you [compare two robots on a Case](/help/compare-two-robots-on-a-case), the rows for the two robots appear above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) adds its rows there too, below any comparison.
+When you [compare two robots on a Case](/help/compare-two-robots-on-a-case), the rows for the two robots appear above the tries. When you [explore servo versions](/help/explore-servo-versions-on-a-case), its rows appear there too, below any comparison.
 
-Tries are saved on this computer and aren't included in shared `.basecase` files.
+Basecase saves tries on this computer. Shared `.basecase` files don't include them.
 
 - The Library lists tries from every scene. See [Open a try from any scene](/help/open-a-try-from-any-scene).
 - Each session on a connected robot appears in the Library with an **Operate** badge.

@@ -4,7 +4,7 @@ import type { Take } from '../../electron/robot/robotTake.mjs';
 import { fixtureModel } from '../skills/fixtureModels';
 import { SimEngine } from './engine';
 import type { Recording } from './recorder';
-import { openTake, takeEfforts, takeRecording } from './takeRecording';
+import { openTake, takeEfforts, takeFrames, takeRecording } from './takeRecording';
 
 const NaN32 = Number.NaN;
 
@@ -102,5 +102,13 @@ describe('takeRecording', () => {
     expect(openTake(engine, unread, simulated)).toBeNull();
     expect(takeEfforts(takeRecording(engine, sampleTake(a.id, b.id))!, () => [])[0]).toHaveLength(0);
     engine.dispose();
+  });
+
+  it('spreads a take longer than 10 minutes over 30,000 frames, so the timeline reaches its end', () => {
+    const hour = takeOf(['a'], { t: Float64Array.from([5, 1805, 3605]) });
+    const short = takeOf(['a'], { t: Float64Array.from([0, 60]) });
+
+    expect(takeFrames(hour)).toEqual({ frames: 30_000, dt: 3600 / 29_999 });
+    expect(takeFrames(short)).toEqual({ frames: 3001, dt: 0.02 });
   });
 });

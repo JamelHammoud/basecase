@@ -14,8 +14,10 @@ interface RobotSyncInput {
   rig: Rig;
 }
 
+const MAX_ROBOT_NAME = 128;
+
 export function useRobotSync({ active, project, training, sceneId, rig }: RobotSyncInput) {
-  const robot = rig.robots[0]?.name ?? 'Robot';
+  const robot = (rig.robots[0]?.name.trim() || 'Robot').slice(0, MAX_ROBOT_NAME);
 
   useRobotPolicy({
     active,

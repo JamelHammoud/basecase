@@ -68,6 +68,7 @@ let policies: RobotPolicyRef[] | undefined;
 let benchDriving = false;
 let faultHeld = false;
 let takeScene: TakeScene | null = null;
+let sentTakeScene: TakeScene | null = null;
 const runs = new Map<number, FaultRun>();
 const listeners = new Set<() => void>();
 const eventListeners = new Set<(event: RobotEvent) => void>();
@@ -152,8 +153,9 @@ function noteRun(next: RobotState, event: RobotEvent) {
 }
 
 function sendTakeScene() {
-  if (!takeScene || !sceneJoints || state.link !== 'connected') return;
+  if (sentTakeScene || !takeScene || !sceneJoints || state.link !== 'connected') return;
 
+  sentTakeScene = takeScene;
   void api?.robotTakeScene?.({ ...takeScene, joints: sceneJoints });
 }
 
@@ -185,7 +187,10 @@ export function subscribeRobotEvents(listener: (event: RobotEvent) => void) {
 }
 
 export function receiveRobotEvent(event: RobotEvent) {
-  if (event.event === 'link' && event.state !== 'connected') setSceneJoints(null);
+  if (event.event === 'link' && event.state !== 'connected') {
+    setSceneJoints(null);
+    sentTakeScene = null;
+  }
 
   const next = applyRobotEvent(state, event);
 

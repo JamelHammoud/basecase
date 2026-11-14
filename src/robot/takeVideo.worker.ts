@@ -7,6 +7,7 @@ type Picture = VideoFrame | ImageBitmap;
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 const MAX_SECONDS = 30 * 60;
+const MAX_BYTES = 500 * 1024 * 1024;
 
 let writer: Promise<Mp4Writer | null> | null = null;
 let reader: ReadableStreamDefaultReader<VideoFrame> | null = null;
@@ -14,6 +15,7 @@ let encoding: Promise<void> | null = null;
 let firstAt: number | null = null;
 let failed = false;
 let ended = false;
+let full = false;
 
 const secondsOf = (picture: Picture) =>
   picture instanceof VideoFrame ? picture.timestamp / 1e6 : performance.now() / 1000;
@@ -51,6 +53,8 @@ async function encode(picture: Picture, timestamp: number) {
   } finally {
     sample.close();
   }
+
+  full = live.encodedBytes() >= MAX_BYTES;
 }
 
 function take(picture: Picture) {
@@ -60,7 +64,7 @@ function take(picture: Picture) {
 
   const timestamp = at - firstAt;
 
-  if (ended || failed || encoding || timestamp > MAX_SECONDS) return picture.close();
+  if (ended || failed || full || encoding || timestamp > MAX_SECONDS) return picture.close();
 
   encoding = encode(picture, timestamp)
     .catch(() => {

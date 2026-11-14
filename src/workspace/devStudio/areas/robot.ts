@@ -10,7 +10,7 @@ import { robotPreviewImage } from '../../../utils/robotPreview';
 import { robotPackageZip } from '../../robotPackageExport';
 import { base64Files } from '../base64Files';
 import type { Studio, StudioContext } from '../types';
-import { recordedLink } from './recordedLink';
+import { recordedLink } from '../recordedLink';
 
 function robotGhostState(viewport: Viewport3DHandle | null) {
   const twin = twinSnapshot();

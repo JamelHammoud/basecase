@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   cutOperateVideo,
   operateVideoRecording,
+  releaseOperateVideo,
   setOperateVideoWorker,
   startOperateVideo,
   stopOperateVideo,
@@ -43,7 +44,13 @@ class FakeProcessor {
   }
 }
 
-const fakeTrack = () => ({ kind: 'video', clone: () => fakeTrack(), stop: () => {} });
+const stoppedTracks: number[] = [];
+
+const fakeTrack = (n = 0): object => ({
+  kind: 'video',
+  clone: () => fakeTrack(n + 1),
+  stop: () => stoppedTracks.push(n),
+});
 
 const fakeStream = () => ({ getVideoTracks: () => [fakeTrack()] }) as unknown as MediaStream;
 
@@ -51,6 +58,7 @@ let workers: FakeWorker[] = [];
 
 beforeEach(() => {
   workers = [];
+  stoppedTracks.length = 0;
   vi.stubGlobal('MediaStreamTrackProcessor', FakeProcessor);
   vi.stubGlobal('VideoEncoder', class {});
   setOperateVideoWorker(() => {
@@ -110,14 +118,24 @@ describe('operate video', () => {
     expect(workers[0].requests.filter((r) => r.type === 'cut')).toHaveLength(0);
   });
 
-  it('settles a cut in flight with nothing when stopped', async () => {
+  it('finishes a cut in flight before it stops the worker, so a disconnect keeps the last segment', async () => {
     startOperateVideo(fakeStream());
 
     const pending = cutOperateVideo();
 
     stopOperateVideo();
 
-    expect(await pending).toBeNull();
+    expect(workers[0].requests.map((r) => r.type)).toEqual(['start', 'cut']);
+    expect(await pending).toMatchObject({ seconds: 2 });
+    expect(workers[0].requests.at(-1)?.type).toBe('stop');
+  });
+
+  it('stops its own copy of the camera when the camera closes, and still cuts what it took', async () => {
+    startOperateVideo(fakeStream());
+    releaseOperateVideo();
+
+    expect(stoppedTracks).toEqual([1]);
+    expect(await cutOperateVideo()).toMatchObject({ seconds: 2 });
   });
 
   it('refuses without MediaStreamTrackProcessor or VideoEncoder', () => {

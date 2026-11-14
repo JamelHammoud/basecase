@@ -32,6 +32,7 @@ interface Recording {
   segmentAt: number;
   worker: VideoWorker;
   cuts: Map<number, (segment: VideoSegment | null) => void>;
+  stopping: boolean;
 }
 
 const trackProcessor = () =>
@@ -77,6 +78,7 @@ export class OperateVideoRecorder {
       segmentAt: Date.now(),
       worker: this.makeWorker(),
       cuts: new Map(),
+      stopping: false,
     };
     const frames = new Processor({ track: copy }).readable;
 
@@ -103,16 +105,20 @@ export class OperateVideoRecorder {
     });
   }
 
+  release() {
+    this.recording?.track.stop();
+  }
+
   stop() {
     const recording = this.recording;
 
     if (!recording) return;
 
     this.recording = null;
-    recording.worker.postMessage({ type: 'stop', id: recording.id });
     recording.track.stop();
-    recording.cuts.forEach((resolve) => resolve(null));
-    recording.cuts.clear();
+    recording.stopping = true;
+
+    if (!recording.cuts.size) recording.worker.postMessage({ type: 'stop', id: recording.id });
   }
 
   private settle(recording: Recording, reply: VideoReply) {
@@ -122,6 +128,8 @@ export class OperateVideoRecorder {
 
     recording.cuts.delete(reply.cut);
     resolve(reply.segment);
+
+    if (recording.stopping && !recording.cuts.size) recording.worker.postMessage({ type: 'stop', id: recording.id });
   }
 }
 
@@ -137,5 +145,7 @@ export const startOperateVideo = (stream: MediaStream): boolean => recorder.star
 export const cutOperateVideo = (): Promise<VideoSegment | null> => recorder.cut();
 
 export const stopOperateVideo = (): void => recorder.stop();
+
+export const releaseOperateVideo = (): void => recorder.release();
 
 export const operateVideoRecording = () => recorder.active;

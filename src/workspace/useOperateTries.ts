@@ -7,7 +7,13 @@ import { openDataImport } from '../datasets/import/dataImportClient';
 import { connectedFrom } from '../robot/calibrationSession';
 import { readOperateLog } from '../robot/operateLog';
 import { operateEpisode, operatePlan, operateStored } from '../robot/operateTry';
-import { cutOperateVideo, startOperateVideo, stopOperateVideo, type VideoSegment } from '../robot/operateVideo';
+import {
+  cutOperateVideo,
+  releaseOperateVideo,
+  startOperateVideo,
+  stopOperateVideo,
+  type VideoSegment,
+} from '../robot/operateVideo';
 import { recordRobotSample, robotSnapshot, subscribeRobot, subscribeRobotEvents } from '../robot/robotStore';
 import type { RobotEvent } from '../robot/robotState';
 import { useRobot } from '../robot/useRobot';
@@ -90,6 +96,10 @@ export function useOperateTries({ active, sceneId, joints, sim, showToast }: Ope
   useEffect(() => {
     if (stream) startOperateVideo(stream);
   }, [stream]);
+
+  useEffect(() => {
+    if (!camera.stream) releaseOperateVideo();
+  }, [camera.stream]);
 
   useEffect(() => {
     if (active && robot.link !== 'connected') stopOperateVideo();

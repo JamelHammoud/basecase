@@ -54,6 +54,6 @@ If something goes wrong:
 
 To run the robot without Basecase, choose **Export** ▸ **Robot Package**. The package holds the MuJoCo model, a URDF, the joint map and the scene's policies, each with a `spec.json` file that lists its inputs and outputs.
 
-**Note:** Skills you trained in **Train** aren't included in the package.
+**Note:** The package leaves out skills you trained in **Train**.
 
 See [Export a robot package](/help/export-a-robot-package) for more.

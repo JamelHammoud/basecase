@@ -23,15 +23,17 @@ const isPlain = (value) => typeof value === 'object' && value !== null && !Array
 
 const isText = (value, max) => typeof value === 'string' && value.length > 0 && value.length <= max;
 
+const matches = (pattern, value) => typeof value === 'string' && pattern.test(value);
+
 const isNumbers = (value, max) =>
   Array.isArray(value) && value.length <= max && value.every((v) => v === null || Number.isFinite(v));
 
 export const newOperateId = () => `operate-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 export function checkedContext(ask, joints) {
-  if (!isPlain(ask) || !SAFE_ID.test(ask.sceneId ?? '') || !isText(ask.robot, 512)) return null;
+  if (!isPlain(ask) || !matches(SAFE_ID, ask.sceneId) || !isText(ask.robot, 512)) return null;
 
-  if (!HASH.test(ask.modelHash ?? '') || !Array.isArray(ask.joints) || ask.joints.length !== joints) return null;
+  if (!matches(HASH, ask.modelHash) || !Array.isArray(ask.joints) || ask.joints.length !== joints) return null;
 
   if (!ask.joints.every((j) => isText(j, 128))) return null;
 
@@ -41,7 +43,7 @@ export function checkedContext(ask, joints) {
 function checkedInput(input) {
   if (input === undefined) return undefined;
 
-  const fits = isPlain(input) && INPUT_ID.test(input.id ?? '') && isNumbers(input.values, MAX_INPUT_VALUES);
+  const fits = isPlain(input) && matches(INPUT_ID, input.id) && isNumbers(input.values, MAX_INPUT_VALUES);
 
   return fits ? { id: input.id, values: fixedAll(input.values) } : null;
 }
@@ -92,7 +94,7 @@ export class OperateRecorder {
   }
 
   setPolicy(hash) {
-    this.policyHash = typeof hash === 'string' && HASH.test(hash) ? hash : null;
+    this.policyHash = matches(HASH, hash) ? hash : null;
   }
 
   event(event) {

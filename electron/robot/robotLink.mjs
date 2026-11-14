@@ -265,7 +265,7 @@ export class RobotLink {
 
     if (!recorder) return this.session ? { ok: true } : NOT_CONNECTED;
 
-    const scene = ask && typeof ask === 'object' && 'scene' in ask;
+    const scene = ask && typeof ask === 'object' && Object.keys(ask).join() === 'scene';
     const taken = scene ? recorder.setContext(ask.scene) : recorder.sample(ask);
 
     return taken ? { ok: true } : UNDOCUMENTED;

@@ -17,7 +17,7 @@ related:
   - the-robotics-loop
   - design-a-robot-with-the-agent
 covers:
-  - src/components/RobotsPanel.tsx
+  - src/components/parts/robotViews.tsx
   - src/utils/robotImport/presets.ts
   - src/workspace/useRobotInsert.ts
   - src/components/PosePanel.tsx
@@ -34,8 +34,9 @@ By the end, the arm holds a pose you set, then folds under its own weight when y
 ## Add the arm
 
 1. Click **+** after the last tab at the top of the window. A blank scene named Untitled opens.
-2. Click **Robots** in the view rail on the left, the second icon from the top.
-3. Under **Arms**, click **SO-101 Arm**.
+2. Click **Parts** in the view rail on the left, the first icon from the top.
+3. Under **Robots**, click **Arms**.
+4. Click **SO-101 Arm**.
 
 The arm appears on the canvas, selected. A toast at the bottom says how many joints it has.
 

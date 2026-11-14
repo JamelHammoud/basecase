@@ -4,6 +4,7 @@ import { searchCatalog } from '../components/parts/catalogSearch';
 import { ADDED_BY_AGENT, partCategories, searchScope } from '../components/parts/partsViews';
 import { catalogItemFromKey } from './catalog';
 import { COMPONENT_BY_ID } from './components';
+import type { CatalogItem } from '../types/robotics';
 import {
   registerSourced,
   sourcedItem,
@@ -65,11 +66,12 @@ describe('parts the agent sources', () => {
     registerSourced([part()]);
 
     const scope = searchScope({ kind: 'category', id: ADDED_BY_AGENT })!;
-    const found = searchCatalog('flux').filter(scope.has);
+    const inScope = (item: CatalogItem) => scope.has({ kind: 'part', item });
+    const found = searchCatalog('flux').filter(inScope);
 
     expect(scope.label).toBe('parts added by agent');
     expect(found.map((i) => i.componentId)).toEqual(['zzmaker-flux-9']);
-    expect(searchCatalog('servo').filter(scope.has)).toEqual([]);
+    expect(searchCatalog('servo').filter(inScope)).toEqual([]);
   });
 
   it('count a part still waiting for its 3D model, but materials and equipment stay in the BOM', () => {

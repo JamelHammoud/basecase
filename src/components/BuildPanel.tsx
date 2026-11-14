@@ -88,8 +88,6 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   const savePrice = async (line: BomLine, record: Parameters<typeof savePurchase>[1]) => {
     await savePurchase(line.key, record);
     setChecking(null);
-
-    if (record) onToast(`Saved price for ${line.name}`);
   };
 
   return (

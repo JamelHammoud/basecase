@@ -68,6 +68,12 @@ export const MagnetIcon = glyph(
 
 export const CrosshairIcon = glyph('M4.5 12a7.5 7.5 0 1 0 15 0a7.5 7.5 0 1 0 -15 0M12 2V7M12 17V22M2 12H7M17 12H22');
 
+export const GaugeIcon = glyph({
+  d: 'M5.64 19.61A9 9 0 1 1 18.36 19.61M12 13.25L16.21 9.71',
+  dots: 'M12 13.25h0',
+  dotSize: 4.5,
+});
+
 export const HandIcon = glyph(
   'M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15',
 );

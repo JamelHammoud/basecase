@@ -200,11 +200,13 @@ async function startRoutine(msg: Msg<'routine'>) {
 async function startCase(msg: Msg<'case'>) {
   if (!engine) throw new Error('Nothing loaded');
 
+  engine.conditions.clear();
   liveCase = await LiveCase.start(engine, msg, () => driveController);
 }
 
 function setController(c: Controller) {
   driveController = c;
+  engine?.conditions.clear();
 
   if (liveCase && !liveCase.driving) return;
 

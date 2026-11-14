@@ -1,5 +1,5 @@
 import type { Command } from '../components/CommandPalette';
-import { CrosshairIcon, TrainIcon } from '../design-system';
+import { GaugeIcon, TrainIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 import { titleCase } from '../utils/titleCase';
 import { canStress, canTrainFindings } from './useSkillStress';
@@ -16,7 +16,7 @@ export function stressCommands({ core }: CommandInputs): Command[] {
       id: `stress-${row.target}`,
       group: 'Simulate',
       label: titleCase(`Stress ${row.label}`),
-      icon: <CrosshairIcon />,
+      icon: <GaugeIcon />,
       keywords: 'stress test break limits friction mass strength delay robust',
       run: open(() => void skills.stress.start(row)),
     })),

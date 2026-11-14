@@ -221,8 +221,6 @@ export function useSkills(input: SkillsInput) {
 
     if (sim.status === 'off') await sim.start();
 
-    sim.setConditions(null);
-
     const robot = rowEnvironment(row)?.robot ?? model?.robots[0]?.key ?? '';
 
     sim.setController({ kind: 'policy', policy, robot });
@@ -238,7 +236,6 @@ export function useSkills(input: SkillsInput) {
 
     if (sim.status === 'off') await sim.start();
 
-    sim.setConditions(null);
     sim.setController(skill.controller);
     sim.reset();
   };

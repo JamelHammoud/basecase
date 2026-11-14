@@ -41,6 +41,16 @@ export class ActuatorFaults {
     return this.kinds.get(actuator);
   }
 
+  scales(actuator: number): boolean {
+    return this.strength(actuator) !== 1;
+  }
+
+  rebase() {
+    this.saved.clear();
+
+    for (let a = 0; a < this.nu; a++) this.syncRange(a);
+  }
+
   setLimpAll(limp: boolean) {
     if (limp === this.limpAll) return;
 

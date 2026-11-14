@@ -4,12 +4,20 @@ date: 2026-11-14
 image: /changelog/stress-test-a-skill/cover.png
 ---
 
-You can now find where a ready skill breaks. Stress searches friction, payload, servo strength and delay past what Arena checks, and lists each limit as a number.
+You can now find where a ready skill breaks. Stress pushes friction, payload, servo strength and delay past what Arena checks, and gives you each limit as a number.
 
-Arena tells you a skill passes at friction ×0.8 to ×1.2, masses within 10% and delays up to 40 ms. It doesn't tell you what happens on a polished floor or with a payload. On quad-servo, the Kit's Walk passes Arena but falls below 76% servo strength, above about ×1.5 link mass and at 60 ms of delay.
+Arena checks a skill at friction ×0.8 to ×1.2, masses within 10% and delays up to 40 ms, so a polished floor or a payload is outside what it tests. On quad-servo, for example, the Kit's Walk passes Arena, but it falls below 76% servo strength, above about ×1.5 link mass and at 60 ms of delay.
 
-Stress is on a ready row's right-click menu in Simulate. It tries each of the four alone and then together, up to friction ×0.2 to ×1.5, mass ×0.5 to ×2, strength 40% to 120% and delay 150 ms. Every run is judged by the skill's own contract, and 120 runs take about 25 seconds for Walk. Click a finding to replay that run in the simulation.
+## How It Searches
 
-Train on These retrains from the skill on ranges wide enough to cover the findings. The new version is kept only if Arena passes it there. It works on Motor Kit skills. Findings aren't saved with the scene.
+Stress tries each of the four on its own, then all of them together, going as far as friction ×0.2 to ×1.5, mass ×0.5 to ×2, strength 40% to 120% and 150 ms of delay. The skill's own contract judges every run. For Walk, 120 runs take about 25 seconds.
 
-Steps are in [Stress-test a skill to find where it breaks](/help/stress-test-a-skill).
+Each finding replays its run in the simulation, under that finding's physics.
+
+## Train on These
+
+Train on These retrains from the skill on ranges wide enough to cover the findings, and keeps the new version only if Arena passes it on those ranges. It works on Motor Kit skills.
+
+Findings aren't saved with the scene.
+
+Read [Stress-test a skill to find where it breaks](/help/stress-test-a-skill) in the help center for the steps.

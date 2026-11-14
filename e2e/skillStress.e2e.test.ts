@@ -90,16 +90,19 @@ describe('stressing a ready skill', () => {
 
     const point = JSON.parse((await finding.getAttribute('data-point'))!) as Record<string, number>;
 
-    const gap = async () => {
-      const live = await app.page.evaluate(
-        () => (window as unknown as { __studio: Studio }).__studio.simState().conditions,
-      );
+    const live = () =>
+      app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState().conditions);
 
-      return live ? Math.max(...Object.keys(point).map((k) => Math.abs(live[k] - point[k]))) : Infinity;
+    const gap = async () => {
+      const now = await live();
+
+      return now ? Math.max(...Object.keys(point).map((k) => Math.abs(now[k] - point[k]))) : Infinity;
     };
 
     await finding.click();
     await expect.poll(gap, { timeout: 60000 }).toBeLessThan(1e-4);
+    await app.page.locator(visible('button[aria-label="Reset"]')).first().click();
+    await expect.poll(live, { timeout: 30000 }).toBeNull();
 
     await stub(holdPolicy(job, 200));
     await row.locator('button', { hasText: 'Train on These' }).click();

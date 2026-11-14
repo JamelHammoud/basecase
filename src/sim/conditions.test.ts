@@ -37,9 +37,39 @@ describe('live sim conditions', () => {
     engine.reset();
     expect(engine.stats().conditions).toMatchObject({ friction: 1.2, mass: 0.5 });
 
+    engine.conditions.clear();
+    expect(snapshot(engine)).toEqual(before);
+    expect(engine.stats().conditions).toBeNull();
+
+    engine.conditions.apply({ friction: 1.2, mass: 0.5, strength: 1, latencyMs: 0 });
+
     engine.conditions.apply(null);
     expect(snapshot(engine)).toEqual(before);
     expect(engine.stats().conditions).toBeNull();
+    engine.dispose();
+  });
+
+  it('composes with a servo fault, so clearing either one leaves the other as it was', () => {
+    const engine = new SimEngine(mj, fixtureModel('quad-servo'));
+    const before = snapshot(engine);
+    const joint = engine.sim.joints.find((j) => j.actuator >= 0)!;
+    const [low, high] = [joint.actuator * 2, joint.actuator * 2 + 1];
+    const range = () => engine.model.actuator_forcerange;
+
+    engine.setFault(joint.id, 'weak');
+    engine.conditions.apply({ friction: 1, mass: 1, strength: 0.8, latencyMs: 0 });
+    expect(range()[high]).toBeCloseTo(before.actuator_forcerange[high] * 0.4);
+    expect(engine.stats().conditions?.strength).toBeCloseTo(0.8);
+
+    engine.conditions.apply(null);
+    expect(range()[high]).toBeCloseTo(before.actuator_forcerange[high] * 0.5);
+
+    engine.conditions.apply({ friction: 1, mass: 1, strength: 0.8, latencyMs: 0 });
+    engine.setFault(joint.id, null);
+    expect(range()[low]).toBeCloseTo(before.actuator_forcerange[low] * 0.8);
+
+    engine.conditions.apply(null);
+    expect(snapshot(engine)).toEqual(before);
     engine.dispose();
   });
 

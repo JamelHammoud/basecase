@@ -80,7 +80,7 @@ export class SimEngine {
     this.pushes = new PushForce(this.data);
     this.scanner = Scanner.create(mj, this.model, this.data, sim.scans);
     this.faults = new ActuatorFaults(this.model);
-    this.conditions = new LiveConditions(mj, this.model, this.data);
+    this.conditions = new LiveConditions(mj, this.model, this.data, this.faults);
 
     const id = (type: number, name: string) => mj.mj_name2id(this.model, type, name);
     const [BODY, JOINT] = [mj.mjtObj.mjOBJ_BODY.value, mj.mjtObj.mjOBJ_JOINT.value];

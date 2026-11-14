@@ -1,3 +1,4 @@
+import { plural } from '../../electron/plural.mjs';
 import type { SimModel } from '../sim/mjcfTypes';
 import { skillHash, type Skill } from './artifacts';
 import type { Environment } from './environment';
@@ -45,15 +46,17 @@ export const STRESSING = 'Stressing';
 export function stressLines(result: StressResult): string[] {
   const { findings, rollouts } = result;
 
-  if (!findings.length) return [`No break inside the limits in ${rollouts} runs.`];
+  const runs = plural(rollouts, 'run');
 
-  return [`${findings.length} found in ${rollouts} runs:`, ...findings.map((f) => `- ${findingText(f)}`)];
+  if (!findings.length) return [`No break inside the limits in ${runs}.`];
+
+  return [`${findings.length} found in ${runs}:`, ...findings.map((f) => `- ${findingText(f)}`)];
 }
 
 function trainLines(outcome: StressTrainOutcome): string[] {
-  if (outcome.kind === 'refused') return [`Refused before training; the old skill stays. ${outcome.reason}`];
+  if (outcome.kind === 'refused') return [`Refused before training. The old skill stays. ${outcome.reason}`];
 
-  if (outcome.kind === 'dropped') return [`Dropped; the old skill stays. ${outcome.reason}`];
+  if (outcome.kind === 'dropped') return [`Dropped. The old skill stays. ${outcome.reason}`];
 
   return [`Kept, and Arena passed it on the wider ranges. ${outcome.evidence.summary}`];
 }
@@ -75,15 +78,19 @@ export class SkillStress {
 
   start(model: SimModel, subject: StressSubject, row: StressRow): string | null {
     const { skill, environment } = subject;
+    const hash = skillHash(skill);
     const job = { type: 'stress' as const, model, skill, environment, budget: this.budget, seed: this.seed };
-
-    return this.host.startJob({ ...row, message: STRESSING }, async (ports) => {
+    const refused = this.host.startJob({ ...row, message: STRESSING }, async (ports) => {
       const { result } = await this.host.runner(job, ports);
 
-      this.results.set(skillHash(skill), result);
+      this.results.set(hash, result);
       this.host.onStressed(result);
       this.last = { name: row.label, lines: stressLines(result) };
     });
+
+    if (!refused) this.results.delete(hash);
+
+    return refused;
   }
 
   train(model: SimModel, subject: StressTrainSubject, row: StressRow): string | null {

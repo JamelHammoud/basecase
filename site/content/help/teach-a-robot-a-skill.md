@@ -29,12 +29,12 @@ covers:
   - electron/cad-agent-prompt.mjs
 ---
 
-Tell the robot what to do in your own words, then approve the agent's test for it. Basecase trains the skill until it passes Arena.
+Describe what you want the robot to do in your own words, then approve the agent's test for it. Basecase trains the skill until it passes Arena.
 
-Teaching runs in the desktop app and needs Claude, Codex or Gemini connected as the agent. With Offline chosen, **Teach** shows a message instead. You can teach the robot any goal that the simulation can judge, without picking from a list of tasks.
+Teaching runs in the desktop app and needs Claude, Codex or Gemini connected as the agent. If you chose Offline, **Teach** shows a message instead. There's no list of tasks to pick from: you can teach the robot any goal the simulation can judge.
 
 1. Click **Simulate** at the top of the right panel.
-2. Under **Train**, type the goal into **Teach it to**, such as "walk to the box".
+2. Under **Train**, type the goal into **Teach it to**. For example, "walk to the box".
 3. Click **Teach**. The **Agent** tab opens with `/train` and your goal.
 4. Read the contract the agent shows you. It lists what passes and what fails, including a run where the robot holds still, which must fail.
 5. Reply to approve the contract, or tell the agent what to change.
@@ -45,7 +45,7 @@ You can also type `/train` and the goal in the agent's box. To stop training, cl
 
 ## How Basecase trains it
 
-Basecase starts with the cheapest method that could work. For example, Basecase plans a reach to a point with inverse kinematics, so the reach needs no training. To walk somewhere, Basecase trains a policy with reinforcement learning and tries several rewards until one passes. With any method, a skill counts only once it passes [Arena](/help/arena).
+Basecase starts with the cheapest method that could work. For example, it plans a reach to a point with inverse kinematics, so a reach needs no training. To walk somewhere, Basecase trains a policy with reinforcement learning and tries several rewards until one passes. Whichever method Basecase uses, a skill counts only once it passes [Arena](/help/arena).
 
 ## When nothing passes
 
@@ -53,12 +53,12 @@ The agent tells you what each method tried. If a change to the design would make
 
 ## When the design changes
 
-Each skill belongs to the design Basecase trained it on. Changing a color or a name keeps the skill ready. After you change a mass or a size, its row shows **Recheck**, and after you change a joint, the row shows **Train**. Either button sends your words back to the agent.
+Each skill belongs to the design Basecase trained it on. If you change a color or a name, the skill stays ready. If you change a mass or a size, its row shows **Recheck**. If you change a joint, the row shows **Train**. Either button sends your words back to the agent.
 
 A ready skill can also be a step in a Routine. See [Build a Routine](/help/build-a-routine).
 
-To find the friction, payload, servo strength and delay where a ready skill stops passing, see [Stress-test a skill to find where it breaks](/help/stress-test-a-skill).
+To find the friction, payload, servo strength and delay at which a ready skill stops passing, see [Stress-test a skill to find where it breaks](/help/stress-test-a-skill).
 
 To share a skill, right-click its row and choose **Publish to Hugging Face**. Learn more in [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).
 
-You don't need words to teach Stand, Walk, Get up and Settle. See [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit). Once one of them is ready, you can use words to change how it moves. See [Coach how a ready skill moves](/help/coach-a-skill).
+Stand, Walk, Get up and Settle don't need words to teach. See [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit). Once one of them is ready, you can use words to change how it moves. See [Coach how a ready skill moves](/help/coach-a-skill).

@@ -6,6 +6,7 @@ import {
   CrosshairIcon,
   DeleteIcon,
   DuplicateIcon,
+  EditIcon,
   FitIcon,
   FloorIcon,
   GroupIcon,
@@ -24,6 +25,7 @@ import {
   type ContextMenuEntry,
 } from '../design-system';
 import { partQuote } from '../agent/partQuote';
+import { renameTarget } from '../components/layers/layerRows';
 import { keyFor } from '../app/shortcuts';
 import type { ScenePart } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -197,6 +199,12 @@ export function onePartActions({ core, actions }: Omit<PartActionInputs, 'ui'>, 
           run: () => core.tool.requestQuote(partQuote(part)),
         },
   } satisfies Record<string, PartAction | null>;
+}
+
+export function renameAction({ core, ui }: Omit<PartActionInputs, 'actions'>): PartAction | null {
+  const target = core.caseRun.open ? null : renameTarget(core.parts, core.selectedIds);
+
+  return target ? { id: 'rename', label: 'Rename', icon: EditIcon, run: () => ui.renameLayer(target) } : null;
 }
 
 export const isRotated = (part: ScenePart) => part.rotation.some((r) => r !== 0);

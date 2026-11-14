@@ -27,7 +27,7 @@ covers:
   - src/components/library/details.tsx
 ---
 
-Save a part or a group of parts to the Library, then add it to any scene whenever you need it.
+You can save a part or a group of parts to the Library, then add it to any scene when you need it.
 
 1. Select the parts you want to save.
 2. Click **Library** in the view rail on the left.
@@ -36,9 +36,9 @@ Save a part or a group of parts to the Library, then add it to any scene wheneve
 
 ![The New Model menu open at the top right of the Library](/help/save-a-model-to-the-library/new-model-menu.png)
 
-The model's name depends on what you save:
+The saved model's name depends on what you save:
 
-- If you save a single part, the model gets the part's name and its **Notes**.
+- If you save one part, the model gets the part's name and its **Notes**.
 - If you save several parts, the model gets the scene's name.
 
 To save every visible part in the scene, choose **Save Whole Scene** instead. You can also find **Save to Library** in a part's right-click menu and in [[⌘K]].
@@ -53,10 +53,10 @@ Hold your pointer over a model to see where it came from, its size, how many par
 
 ![A model's details beside the Library](/help/save-a-model-to-the-library/model-details.png)
 
-Use the search at the top of the Library to find models by name or notes. It finds tries too. Learn more in [Search tries](/help/search-tries).
+Use the search at the top of the Library to find a model by its name or notes. The search also finds tries (see [Search tries](/help/search-tries)).
 
-Right-click a model to rename, duplicate, or delete it. Basecase asks you to confirm before it deletes a model.
+To rename, duplicate, or delete a model, right-click it. Basecase asks you to confirm before it deletes a model.
 
-To bring in a file, click **+** and choose **Import**. If the file is an SVG, it opens in Import SVG. Click **Add** there to [turn it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). Then click the bookmark in the new part's Inspector header (**Save to Library**) to save it to the Library.
+To bring in a file, click **+** and choose **Import**. An SVG file opens in Import SVG, where you click **Add** to [turn it into a part](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part). Then click the bookmark (**Save to Library**) in the part's Inspector header to save the new part to the Library.
 
 ![The Import SVG panel with a drawing loaded and one Add button under Output](/help/save-a-model-to-the-library/import-svg.png)

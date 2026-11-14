@@ -40,7 +40,8 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
   const searching = query.trim() !== '';
   const matches = matcher(query);
   const models = props.customModels.filter((m) => matches(m.name, modelNote(m)));
-  const tries = tryGroups(useTries() ?? []);
+  const allTries = useTries() ?? [];
+  const tries = tryGroups(allTries);
   const found = useTrySearch(query);
   const hits = found ?? [];
   const state: SectionState = {
@@ -66,7 +67,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
           value={query}
           onChange={setQuery}
           onKeyDown={onSearchKey}
-          placeholder={TRY_SEARCH_EXAMPLE}
+          placeholder={allTries.length > 0 ? TRY_SEARCH_EXAMPLE : 'Search library'}
           aria-label="Search library"
         />
       </div>

@@ -23,14 +23,14 @@ covers:
   - src/cases/trySearch/
 ---
 
-You can search tries from every scene by words, by facts like failed or last week, by a similar motion, or by what a camera saw.
+You can search the tries from every scene at once, by words, by facts such as failed or last week, by a similar motion, or by what a camera saw.
 
 1. Click **Library** in the view rail on the left.
-2. Type what you're looking for in the search at the top. For example, `failed grasp red block leader-arm`.
+2. Type what you're looking for in the search at the top. For example: `failed grasp red block leader-arm`.
 
 ![The Library listing two Grasp the Red Block tries for that search](/help/search-tries/library.png)
 
-3. Click a result. Tries fills the canvas with every result. If the try fits the robot in the open scene, Basecase opens the timeline at the result's start.
+3. Click a result. Tries fills the canvas and shows every result. If the try fits the robot in the open scene, Basecase opens the timeline at the start of the result.
 
 ![Tries showing the two missed Grasp the Red Block tries](/help/search-tries/results.png)
 
@@ -44,11 +44,11 @@ You can also search from the top of Tries.
 
 ## What your words match
 
-Your words match a try's Case, its task, the robot, and the source of its input. To narrow the list, add any of these words:
+Your words match a try's Case, task, robot, source and input. To narrow the list, add any of these words:
 
 - **Outcome:** passed, failed (or missed), and unjudged.
 - **Source and input:** variation, real, keys, gamepad, phone, camera, leader-arm, and the other inputs.
-- **Robot:** any robot's name, such as SO-101.
+- **Robot:** the name of any robot, such as SO-101.
 - **When:** today, yesterday, this week, last week, this month, last month, or last 3 days.
 - **How long:** over 30 s, under 2 min, or at least 10 s.
 - **Faulted:** tries with a servo fault set.
@@ -61,6 +61,6 @@ More Like This compares the path of the part that moves farthest and the speeds 
 
 When you search with words, Basecase also checks what the scene camera saw. The first time you search, it looks at one frame a second of each try in the open scene. If a frame matches, Basecase opens the timeline at that second.
 
-**Note:** Camera search needs tries made with the open Case and the current robot.
+**Note:** Camera search only works on tries made with the open Case and the current robot.
 
 To get here from a robot's tries, see [Open a try from any scene](/help/open-a-try-from-any-scene).

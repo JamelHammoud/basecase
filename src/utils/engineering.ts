@@ -15,6 +15,7 @@ import { rangeChangeRows } from './engineeringRanges';
 import { simModelRows } from './engineeringSimModel';
 import { servoLookup } from './engineeringEnvelope';
 import { jointLoad, peakRow, torqueRow } from './engineeringTorque';
+import { FALLS, fallsRow } from './engineeringFalls';
 import { payloadRows } from './engineeringPayload';
 import { STRENGTH_CHECK, strengthRows } from './engineeringStrength';
 import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport, PartMass } from './engineeringTypes';
@@ -38,6 +39,7 @@ export const ENGINEERING_CHECKS = [
   'Weight',
   'Servo torque',
   'Peak torque',
+  FALLS,
   'Torque estimates',
   'Servo models',
   'Servo alignment',
@@ -146,6 +148,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
       ? [
           withNoFeetNote(torqueRow(loads, env.crouch.share), floating),
           ...peakRow(loads, project, input.walk, servoLookup(ctx.byPart)),
+          ...fallsRow(loads, input.falls),
         ]
       : []),
     ...simModelRows(ctx),

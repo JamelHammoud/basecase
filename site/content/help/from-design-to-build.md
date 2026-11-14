@@ -58,6 +58,6 @@ Print mode lays the printed parts out on your printer's plates, slices them in B
 
 ## What the checks can't promise
 
-Print times and filament are estimates until the plates are sliced. Range of motion is tested every 15°, so a clash thinner than that step can slip through. Peak torque needs a trained walking policy, and stays Not run without one.
+Print times and filament are estimates until the plates are sliced. Range of motion is tested every 15°, so a clash thinner than that step can slip through. Peak torque needs a trained walking policy, and stays Not run without one. Falls stays Not run until the agent tips the robot over in the simulation.
 
 To start, open the Build tab and follow [Get a robot ready to build](/help/get-a-robot-ready-to-build).

@@ -11,6 +11,7 @@ import {
 } from '../src/vision/frameSet';
 import type { MakeImagesJob } from '../src/vision/makeImages';
 import { box } from '../src/sim/fixtures/parts';
+import { exportCoco, importCoco } from '../src/vision/coco';
 import { openApp, type App } from './harness';
 import { resolveImageScene } from '../src/vision/imageScene';
 import {
@@ -177,6 +178,10 @@ describe('training image rendering', () => {
     expect(rover.frames[0].camera.key).toBe('front');
     expect(rover.frames[0].annotations).toHaveLength(1);
     expect(rover.frames[0].annotations[0].partId).toBe('person');
+
+    const restored = { ...rover, frames: rover.frames.map(restoreFrame) };
+
+    expect(importCoco(exportCoco(restored))).toEqual(restored);
 
     const job = hexapodTrainingJob();
     const hexapod = await render(job);

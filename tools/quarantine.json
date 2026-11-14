@@ -1,9 +1,1 @@
-[
-  {
-    "file": "e2e/inputs.e2e.test.ts",
-    "test": "fires one wave event for a wave, and fires a gesture taught from three examples",
-    "issue": 764,
-    "until": "2026-11-28",
-    "reason": "Fails on Windows in every nightly run and sometimes on Linux: its countdowns and real-time pose feeds take about 147 s under CI load, and each 15 s wait fails when the page's main thread stalls while driving with the camera."
-  }
-]
+[]

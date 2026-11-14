@@ -8,7 +8,7 @@ interface HandJointEntry {
   type: HandJointType;
   label: string;
   keywords: string;
-  icon: (className: string) => ReactNode;
+  icon: ReactNode;
 }
 
 const ENTRIES: HandJointEntry[] = [
@@ -16,13 +16,13 @@ const ENTRIES: HandJointEntry[] = [
     type: 'revolute',
     label: 'Add Hinge',
     keywords: 'joint revolute axis pivot rotate',
-    icon: (className) => <RotateIcon className={className} />,
+    icon: <RotateIcon />,
   },
   {
     type: 'prismatic',
     label: 'Add Slider',
     keywords: 'joint prismatic linear slide rail',
-    icon: (className) => <MoveIcon className={className} />,
+    icon: <MoveIcon />,
   },
 ];
 
@@ -31,7 +31,7 @@ export const handJointMenuItems = (joints: HandJoints): ContextMenuEntry[] =>
     ? [
         ...ENTRIES.map((e) => ({
           label: e.label,
-          icon: e.icon('w-3.5 h-3.5'),
+          icon: e.icon,
           onSelect: () => void joints.start(e.type),
         })),
         { divider: true },
@@ -44,7 +44,7 @@ export const handJointCommands = (joints: HandJoints): Command[] =>
         id: `hand-joint-${e.type}`,
         group: 'Selection',
         label: e.label,
-        icon: e.icon('w-4 h-4'),
+        icon: e.icon,
         keywords: e.keywords,
         run: () => void joints.start(e.type),
       }))

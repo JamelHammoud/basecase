@@ -287,10 +287,10 @@ function addFilament(t: PartTally, supportG: Partial<Record<PrintMaterial, numbe
 
 const cents = (v: number) => Math.round(v * 100) / 100;
 
-function priceStatus(record: PurchaseRecord | undefined, ageDays: number | undefined): PriceStatus {
+function priceStatus(record: PurchaseRecord | undefined, ageDays: number | undefined, toBuy: number): PriceStatus {
   if (!record) return 'unchecked';
 
-  return ageDays! > STALE_DAYS ? 'stale' : 'checked';
+  return toBuy > 0 && ageDays! > STALE_DAYS ? 'stale' : 'checked';
 }
 
 interface LineContext {
@@ -336,7 +336,7 @@ function bomLine(key: string, qty: number, partIds: string[], { purchases, now }
     url: record?.url || info.url,
     urlKind: record?.url ? 'product' : info.urlKind,
     record,
-    status: priceStatus(record, ageDays),
+    status: priceStatus(record, ageDays, split.toBuy),
     ageDays,
     ...linePricing(key, split.toBuy, record, filament),
   };

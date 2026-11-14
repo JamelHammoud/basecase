@@ -44,10 +44,10 @@ describe('find_parts prices', () => {
   });
 
   it('says how many more to buy when the scene uses more than are owned', () => {
-    const key = 'hardware:socket_head|M3|10';
+    const key = 'hardware:socket_head|M3|10|black|hex';
     const text = agentCatalog('socket', { purchases: { [key]: { onHand: 10 } }, used: { [key]: 13 } });
 
-    expect(text).toContain('M3|10 10 on hand, 13 in this scene, 3 to buy');
+    expect(text).toContain('M3|10|black|hex 10 on hand, 13 in this scene, 3 to buy');
     expect(text).toContain(`The user owns: ${key} 10 (3 to buy).`);
   });
 

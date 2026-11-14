@@ -5,7 +5,7 @@ import { sizeActuators } from '../utils/actuatorSizing';
 import { sizingJoints } from '../utils/actuatorSizingInput';
 import { sizingText } from '../utils/actuatorSizingText';
 import { storePurchase } from '../components/build/usePurchases';
-import { buildBom, describeKey } from '../utils/bom';
+import { buildBom, describeKey, hardwareKey, specFromHardwareKey } from '../utils/bom';
 import { type OnHandCount, onHandRefusals, withOnHand } from '../utils/onHand';
 import type { Bom } from '../utils/bomTypes';
 import { budgetLine, budgetPlanText } from '../utils/budget';
@@ -81,14 +81,21 @@ function keyRefusal(key: unknown): string | undefined {
   return versions.length ? `${key} needs its version: ${versions.join(', ')}` : undefined;
 }
 
+function lineKey(key: string): string {
+  const spec = specFromHardwareKey(key);
+
+  return spec ? hardwareKey(spec) : key;
+}
+
 export async function recordOnHandRequest(payload: Payload) {
   const given: unknown[] = Array.isArray(payload.counts) ? payload.counts : [];
-  const counts = given.map((c) => ({ key: (c as OnHandCount)?.key, count: (c as OnHandCount)?.count }));
-  const refusals = counts.length ? onHandRefusals(counts, keyRefusal) : ['no counts given'];
+  const asked = given.map((c) => ({ key: (c as OnHandCount)?.key, count: (c as OnHandCount)?.count }));
+  const refusals = asked.length ? onHandRefusals(asked, keyRefusal) : ['no counts given'];
 
   if (refusals.length)
     return { text: `Nothing recorded: ${refusals.join('; ')}. Use keys from find_parts or get_bom.` };
 
+  const counts = asked.map(({ key, count }) => ({ key: lineKey(key), count }));
   let purchases = await platformBridge.listPurchases();
 
   for (const { key, count } of counts) purchases = await storePurchase(key, withOnHand(purchases[key], count));

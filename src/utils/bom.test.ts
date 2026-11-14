@@ -162,6 +162,13 @@ describe('parts on hand', () => {
     expect(bom.totals.estimatedUsd).toBeLessThan(bomWith({}).totals.estimatedUsd);
   });
 
+  it('keeps an old price from flagging a line the user owns in full', () => {
+    const old = { ...checked, checkedAt: '2026-08-01' };
+
+    expect(lineOf(bomWith({ [servoKey]: { ...old, onHand: 8 } }), servoKey).status).toBe('checked');
+    expect(lineOf(bomWith({ [servoKey]: { ...old, onHand: 6 } }), servoKey).status).toBe('stale');
+  });
+
   it('tells the agent what is owned and what is left to buy', () => {
     const text = bomText(bomWith({ [servoKey]: { ...checked, onHand: 6 } }), {});
 

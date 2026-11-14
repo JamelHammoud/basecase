@@ -24,6 +24,7 @@ covers:
   - src/components/ScenesMenu.tsx
   - src/components/LibraryPanel.tsx
   - electron/backend/libraryPaths.mjs
+  - electron/library/datasetStore.mjs
 ---
 
 Basecase saves each scene as you work, so there's no Save command. To share a scene, send it as a single .basecase file.
@@ -44,7 +45,7 @@ Each scene is a JSON file in `library/scenes`. On a Mac, that folder is inside `
 
 ## Scenes and Library models
 
-The Library holds models and tries. Your scenes aren't in it. A model is a part or group of parts you've saved to drop into any scene, such as a servo bracket, a wheel hub or a gripper.
+The Library holds models, tries and datasets. Your scenes aren't in it. A model is a part or group of parts you've saved to drop into any scene, such as a servo bracket, a wheel hub or a gripper.
 
 Build a whole robot in a scene, and keep the pieces you reuse from robot to robot in the Library. To learn how, see [Save a model to the Library](/help/save-a-model-to-the-library).
 
@@ -53,6 +54,8 @@ Build a whole robot in a scene, and keep the pieces you reuse from robot to robo
 Every try you record goes to the Library, whichever scene you recorded it in. Each try gets its own folder in `library/tries`, next to `library/scenes`. A scene keeps a short record of each of its tries, and the recordings themselves stay in the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).
 
 Tries you import from a LeRobot dataset or a ROS 2 recording also go to the Library. See [Import robot data as tries](/help/import-robot-data-as-tries).
+
+A dataset is a named set of tries, and the tries can come from any of your scenes. Each dataset is a single file in `library/datasets`. A dataset lists its tries without copying them, so deleting a dataset leaves its tries in the Library. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 
 ## Scene files
 

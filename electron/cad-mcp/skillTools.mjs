@@ -165,3 +165,20 @@ export const coachSkill = {
   },
   handler: (args) => ask('skill_coach', args, 180000),
 };
+
+export const stressSkill = {
+  name: 'stress_skill',
+  config: {
+    title: 'Stress a skill',
+    description:
+      'Finds where a ready skill breaks, so a question like “will it walk on tile?” gets numbers. ' +
+      'Runs the skill in simulation past its training ranges, up to fixed limits (friction ×0.2 to ×1.5, link mass ×0.5 to ×2, servo strength 40% to 120%, servo delay 0 to 150 ms), one axis at a time and then all together, and judges every run with the skill’s own contract. ' +
+      'Returns each axis’s boundary (the value where the contract’s margin crosses 0) or that it passes the whole range, and the worst combination with its margin. Friction scales the floor’s grip (lower is a slicker floor), link mass is like carrying a load. ' +
+      'The default budget is 48 runs (about 15 seconds for a 6-second Stand). The user can then choose Train on These on the skill’s row to retrain on the failing values.',
+    inputSchema: {
+      skill: z.string().min(1).max(60).describe('The ready skill’s name as the list shows it, e.g. "Walk"'),
+      budget: z.number().int().min(16).max(400).optional().describe('Simulation runs to spend, default 48'),
+    },
+  },
+  handler: (args) => ask('skill_stress', args, 600000),
+};

@@ -7,6 +7,7 @@ import { kitEntries } from './motorKit';
 import { moveAnimations } from './moveEnvironment';
 import { arenaLine, recordFreshness, type SkillRecord } from './skillRecords';
 import type { SnapshotRef } from './snapshots';
+import type { StressReport } from './skillsStress';
 
 export type SkillTarget = `kit:${TrainedEntry}` | `move:${string}` | `goal:${string}`;
 
@@ -33,6 +34,7 @@ export interface SkillRow {
   record: SkillRecord | null;
   state: SkillState;
   drives: boolean;
+  stress?: StressReport;
 }
 
 export const KIT_LABELS: Record<TrainedEntry, string> = {
@@ -58,11 +60,14 @@ export const refusalModel = (model: SimModel) => hashOf(modelHashes(model));
 
 export type SkillRefusals = Partial<Record<SkillTarget, SkillRefusal>>;
 
+export type StressReports = Partial<Record<SkillTarget, StressReport>>;
+
 interface RowInput extends DesignInput {
   records: SkillRecord[];
   jobs: SkillJob[];
   animations?: readonly RobotAnimation[];
   refusals?: SkillRefusals;
+  stress?: StressReports;
 }
 
 function best(records: SkillRecord[], input: DesignInput) {
@@ -195,8 +200,17 @@ function taughtRows(input: RowInput): SkillRow[] {
   return [...known, ...pending];
 }
 
+function withStress(row: SkillRow, reports: StressReports): SkillRow {
+  const report = reports[row.target];
+
+  return report && row.state.kind === 'ready' && row.record?.hash === report.skill ? { ...row, stress: report } : row;
+}
+
 export function skillRows(input: RowInput): SkillRow[] {
-  return [...kitRows(input), ...moveRows(input), ...taughtRows(input)];
+  const rows = [...kitRows(input), ...moveRows(input), ...taughtRows(input)];
+  const { stress } = input;
+
+  return stress ? rows.map((row) => withStress(row, stress)) : rows;
 }
 
 export const readyVelocity = (rows: SkillRow[]) =>

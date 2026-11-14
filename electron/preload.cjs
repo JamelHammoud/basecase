@@ -92,6 +92,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     String(channel).startsWith('tries:')
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown tries call')),
+  datasetsCall: (channel, payload) =>
+    String(channel).startsWith('datasets:')
+      ? ipcRenderer.invoke(channel, payload)
+      : Promise.reject(new Error('Unknown datasets call')),
   onshapeCall: (channel, payload) =>
     String(channel).startsWith('onshape:')
       ? ipcRenderer.invoke(channel, payload)
@@ -106,6 +110,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   robotPolicy: (id) => ipcRenderer.invoke('robot:policy', id),
   robotCalibrate: (joints) => ipcRenderer.invoke('robot:calibration', joints),
   robotState: () => ipcRenderer.invoke('robot:state'),
+  robotRecord: (sample) => ipcRenderer.invoke('robot:record', sample),
   onRobotEvent: (callback) => {
     const handler = (_event, data) => callback(data);
 

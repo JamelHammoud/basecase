@@ -65,7 +65,7 @@ While you drive, Basecase draws the robot's base on the canvas where the camera 
 
 ![The tracked path running from the robot to the spot on the canvas, with the try's clock in the Try section](/help/try-a-case-on-your-real-robot/tracking.png)
 
-Your finished try appears in **Results** with a **Real** mark. Click its **Replay** button to draw its path over the path of the best sim try. Press [[Esc]] to clear both paths.
+Your finished try appears in **Results** with a **Real** mark. Click its row to draw its path over the path of the best sim try. Press [[Esc]] to clear both paths.
 
 ![A passed try marked Real in Results](/help/try-a-case-on-your-real-robot/real-try.png)
 

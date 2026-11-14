@@ -7,9 +7,15 @@ interface Box {
   bottom: number;
 }
 
+interface PanelBox {
+  id: string;
+  top: number;
+  bottom: number;
+}
+
 export interface AreaBox extends Box {
   at: number;
-  panels: Array<{ id: string; top: number; bottom: number }>;
+  panels: PanelBox[];
 }
 
 export interface DropGeometry {
@@ -28,6 +34,13 @@ export const AREA_EDGE = 32;
 export const CANVAS_EDGE = 64;
 
 const MARK = 3;
+
+export const inFlow = (panels: PanelBox[], top: number): PanelBox[] =>
+  panels.reduce<PanelBox[]>((placed, p) => {
+    const flow = placed.at(-1)?.bottom ?? top;
+
+    return [...placed, p.bottom > p.top ? p : { ...p, top: flow, bottom: flow }];
+  }, []);
 
 const within = (box: Box, x: number) => x >= box.left && x <= box.right;
 

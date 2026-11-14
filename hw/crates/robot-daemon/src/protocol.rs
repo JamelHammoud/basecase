@@ -3,7 +3,7 @@ use crate::fault::{daemon_lost_message, g1_lost_message, ros2_lost_message};
 use crate::g1::G1Daemon;
 use crate::ladder::Mode;
 use crate::ros2::Ros2Daemon;
-use crate::safety::Reading;
+use crate::safety::{Reading, Ros2Joint};
 use crate::telemetry::Sample;
 use crate::transport::real_motors_unlocked;
 use serde::{Deserialize, Serialize};
@@ -140,6 +140,14 @@ struct JointStatus {
     volts: Option<f32>,
     torque_on: Option<bool>,
     reply: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    velocity: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    effort: Option<f64>,
+}
+
+fn finite(value: f32) -> Option<f64> {
+    value.is_finite().then_some(f64::from(value))
 }
 
 pub fn event_line(event: &DaemonEvent) -> String {
@@ -224,6 +232,8 @@ fn g1_joints(reading: Option<&Reading>) -> Vec<JointStatus> {
             volts: Some(state.volts),
             torque_on: Some(state.enabled),
             reply: if state.error == 0 { "ok" } else { "missing" },
+            velocity: finite(state.dq),
+            effort: finite(state.tau),
         })
         .collect()
 }
@@ -232,21 +242,25 @@ fn status_counts(rad: f64) -> i32 {
     (2048.0 + rad * f64::from(crate::calibration::COUNTS_PER_TURN) / std::f64::consts::TAU).round() as i32
 }
 
-pub fn ros2_status_line(daemon: &Ros2Daemon) -> String {
-    let torque_on = daemon.run().is_commanding();
-    let joints = daemon
-        .joint_positions()
+fn ros2_joints(joints: Vec<Ros2Joint>, torque_on: bool) -> Vec<JointStatus> {
+    joints
         .into_iter()
         .zip(1..=u8::MAX)
-        .map(|(rad, id)| JointStatus {
+        .map(|(joint, id)| JointStatus {
             id: Some(id),
-            position: rad.map(status_counts),
+            position: joint.position.map(status_counts),
             temp_c: None,
             volts: None,
             torque_on: Some(torque_on),
-            reply: if rad.is_some() { "ok" } else { "missing" },
+            reply: if joint.position.is_some() { "ok" } else { "missing" },
+            velocity: joint.velocity,
+            effort: joint.effort,
         })
-        .collect();
+        .collect()
+}
+
+pub fn ros2_status_line(daemon: &Ros2Daemon) -> String {
+    let joints = ros2_joints(daemon.joints(), daemon.run().is_commanding());
     let outbound = Outbound::Status {
         at_us: daemon.now_us(),
         mode: daemon.mode(),
@@ -290,110 +304,11 @@ fn joint_status(sample: &Sample) -> JointStatus {
         volts: telemetry.map(|t| t.volts),
         torque_on: telemetry.map(|t| t.torque_on),
         reply,
+        velocity: None,
+        effort: None,
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn reads_every_documented_command() {
-        assert!(matches!(
-            parse_line(r#"{"cmd":"enter","mode":"first_run"}"#),
-            Ok(Routed::Command(Command::Enter(Mode::FirstRun)))
-        ));
-        assert!(matches!(parse_line(r#"{"cmd":"heartbeat"}"#), Ok(Routed::Heartbeat)));
-        assert!(matches!(
-            parse_line(r#"{"cmd":"stop"}"#),
-            Ok(Routed::Command(Command::Stop))
-        ));
-        assert!(matches!(
-            parse_line(r#"{"cmd":"release"}"#),
-            Ok(Routed::Command(Command::Release))
-        ));
-        assert!(matches!(
-            parse_line(r#"{"cmd":"assign_id","id":3,"model":777}"#),
-            Ok(Routed::Command(Command::AssignId { id: 3, model: 777 }))
-        ));
-        assert!(matches!(parse_line(r#"{"cmd":"plug_in"}"#), Ok(Routed::PlugIn)));
-    }
-
-    #[test]
-    fn an_assign_id_outside_a_servo_id_is_unreadable() {
-        assert!(parse_line(r#"{"cmd":"assign_id","id":300,"model":777}"#).is_err());
-        assert!(parse_line(r#"{"cmd":"assign_id","id":-1,"model":777}"#).is_err());
-        assert!(parse_line(r#"{"cmd":"assign_id","id":2}"#).is_err());
-    }
-
-    #[test]
-    fn a_null_joint_becomes_nan_so_the_guard_refuses_it() {
-        let Ok(Routed::Intent(values)) = parse_line(r#"{"cmd":"intent","joints":[0.1,null]}"#) else {
-            panic!("expected an intent");
-        };
-
-        assert_eq!(values[0], 0.1);
-        assert!(values[1].is_nan());
-    }
-
-    #[test]
-    fn unknown_commands_are_refused() {
-        assert!(parse_line(r#"{"cmd":"write_register","address":40}"#).is_err());
-        assert!(parse_line("not json").is_err());
-    }
-
-    #[test]
-    fn events_are_single_json_lines() {
-        let line = event_line(&DaemonEvent::Fault {
-            at_us: 5,
-            code: "overheat".into(),
-            message: "Servo 2 is hot.".into(),
-            id: Some(2),
-        });
-
-        assert!(!line.contains('\n'));
-        assert!(line.contains(r#""event":"fault""#));
-        assert!(line.contains(r#""id":2"#));
-
-        let unnamed = event_line(&DaemonEvent::Fault {
-            at_us: 5,
-            code: "client_lost".into(),
-            message: "The app stopped talking to the robot.".into(),
-            id: None,
-        });
-
-        assert!(!unnamed.contains(r#""id""#));
-    }
-
-    #[test]
-    fn the_g1_says_hello_with_its_own_family_and_words() {
-        let hello: serde_json::Value = serde_json::from_str(&g1_hello_line(true)).unwrap();
-
-        assert_eq!(hello["family"], "unitree-g1");
-        assert_eq!(hello["real_transport"], false);
-        assert_eq!(hello["lost_message"], g1_lost_message(true));
-        assert!(!g1_lost_message(true).contains("remote"));
-    }
-
-    #[test]
-    fn a_ros2_robot_says_hello_with_its_own_family_and_words() {
-        let hello: serde_json::Value = serde_json::from_str(&ros2_hello_line(true)).unwrap();
-
-        assert_eq!(hello["family"], "ros2");
-        assert_eq!(hello["emulated"], true);
-        assert_eq!(hello["lost_message"], ros2_lost_message(true));
-        assert_eq!(status_counts(0.0), 2048);
-        assert_eq!(status_counts(std::f64::consts::PI), 4096);
-    }
-
-    #[test]
-    fn hello_names_the_build_and_the_words_for_a_lost_daemon() {
-        let hello: serde_json::Value = serde_json::from_str(&hello_line(Family::Feetech, true)).unwrap();
-
-        assert_eq!(hello["event"], "hello");
-        assert_eq!(hello["family"], "feetech");
-        assert_eq!(hello["emulated"], true);
-        assert_eq!(hello["real_transport"], false);
-        assert_eq!(hello["lost_message"], daemon_lost_message(Family::Feetech));
-    }
-}
+#[path = "protocol_tests.rs"]
+mod tests;

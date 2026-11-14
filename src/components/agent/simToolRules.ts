@@ -4,12 +4,14 @@ import {
   CodeIcon,
   DeleteIcon,
   EditIcon,
+  LibraryIcon,
   LookIcon,
   RoutinesIcon,
   RunIcon,
   SearchIcon,
   SwapIcon,
   CoachIcon,
+  CrosshairIcon,
   TrainIcon,
 } from '../../design-system';
 import { plainRule, type ToolRule } from './toolRule';
@@ -23,6 +25,7 @@ export const SIM_RULES: ToolRule[] = [
   plainRule(['read_case_code'], LookIcon, ['Reading the Case’s code', 'Read the Case’s code']),
   plainRule(['delete_case_code'], DeleteIcon, ['Deleting a code panel', 'Deleted a code panel']),
   plainRule(['explore_case'], SwapIcon, ['Exploring servos', 'Explored servos']),
+  plainRule(['make_dataset'], LibraryIcon, ['Making a dataset', 'Made a dataset']),
   plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
   plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),
   plainRule(['edit_routine'], EditIcon, ['Editing the Routine', 'Edited the Routine']),
@@ -32,5 +35,6 @@ export const SIM_RULES: ToolRule[] = [
   plainRule(['train_skill'], TrainIcon, ['Starting training', 'Started training']),
   plainRule(['list_skills'], TrainIcon, ['Checking skills', 'Checked skills']),
   plainRule(['coach_skill'], CoachIcon, ['Coaching a skill', 'Coached a skill']),
+  plainRule(['stress_skill'], CrosshairIcon, ['Stress testing a skill', 'Stress tested a skill']),
   plainRule(['training_status'], TrainIcon, ['Checking training', 'Checked training']),
 ];

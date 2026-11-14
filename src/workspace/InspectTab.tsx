@@ -1,7 +1,8 @@
 import { Inspector } from '../components/Inspector';
 import { SculptAndDrawStudio } from '../components/SculptAndDrawStudio';
-import type { BoundSketch, SketchOutput } from '../components/studio/SketchPanel';
+import type { BoundSketch } from '../components/studio/SketchPanel';
 import { GROUND_PLANE, sketchSolid, type SketchShape } from '../utils/sketch/placement';
+import { DEFAULT_COLOR } from '../utils/svgTo3DParser';
 import { EMPTY_SKETCH } from '../utils/sketch/types';
 import { solidSketchParams } from './partFactories';
 import type { WorkspaceActions } from './useWorkspaceActions';
@@ -27,12 +28,13 @@ function ModePanel({ core, actions }: InspectTabProps) {
   const studioMode = tool.studioMode!;
   const target = sketching.target;
 
-  const createSketch = async (shape: SketchShape, output: SketchOutput) => {
-    const solid = sketchSolid(target?.plane ?? GROUND_PLANE, shape, { id: `node-sketch-${Date.now()}`, ...output });
+  const createSketch = async (shape: SketchShape, name: string) => {
+    const look = { id: `node-sketch-${Date.now()}`, name, color: DEFAULT_COLOR };
+    const solid = sketchSolid(target?.plane ?? GROUND_PLANE, shape, look);
 
     if (!solid) return;
 
-    await creation.createFromSketch(solidSketchParams(solid, output));
+    await creation.createFromSketch(solidSketchParams(solid));
     tool.setCreator(null);
   };
 
@@ -42,7 +44,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
       sketchStart={target?.start ?? EMPTY_SKETCH}
       boundSketch={boundSketch(core)}
       linkage={{ path: sketching.path, setPath: sketching.setPath, insert: sketching.insertLinkage }}
-      onCreateSketch={(shape, output) => void createSketch(shape, output)}
+      onCreateSketch={(shape, name) => void createSketch(shape, name)}
       selectedPart={selection.selectedPart}
       sculptSettings={tool.sculptSettings}
       mode={studioMode}

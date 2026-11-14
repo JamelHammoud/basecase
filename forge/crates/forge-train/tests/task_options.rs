@@ -112,3 +112,15 @@ fn a_reward_that_does_not_compile_fails_the_job_with_its_line() {
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("reward"));
 }
+
+#[test]
+fn random_ranges_outside_the_limits_fail_the_job_naming_the_field() {
+    let folder = job_folder(
+        "bad-random-ranges",
+        json!({ "randomRanges": { "friction": [0.3, 0.4], "mass": [0.05, 1] } }),
+    );
+    let output = run(&folder);
+
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("randomRanges.mass runs from 0.1 to 10"));
+}

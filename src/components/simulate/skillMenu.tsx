@@ -1,6 +1,7 @@
-import { CoachIcon, CompareIcon, UndoIcon, type ContextMenuEntry } from '../../design-system';
+import { CoachIcon, CompareIcon, CrosshairIcon, TrainIcon, UndoIcon, type ContextMenuEntry } from '../../design-system';
 import type { SkillRow } from '../../skills/skillRows';
 import { canCoach, type SkillCoachState } from '../../workspace/useSkillCoach';
+import { canStress, canTrainOnFindings } from '../../workspace/useSkillStress';
 
 export interface CoachMenuOptions {
   coach: SkillCoachState;
@@ -18,4 +19,19 @@ export function coachMenuItems(row: SkillRow, { coach, coaches }: CoachMenuOptio
     : [];
 
   return [...items, { label: 'Compare', icon: <CompareIcon />, onSelect: () => void coach.replay(row) }, ...undo];
+}
+
+export interface StressMenuOptions {
+  onStress: (row: SkillRow) => void;
+  onTrain: (row: SkillRow) => void;
+}
+
+export function stressMenuItems(row: SkillRow, { onStress, onTrain }: StressMenuOptions): ContextMenuEntry[] {
+  if (!canStress(row)) return [];
+
+  const stress: ContextMenuEntry = { label: 'Stress', icon: <CrosshairIcon />, onSelect: () => onStress(row) };
+
+  if (!canTrainOnFindings(row)) return [stress];
+
+  return [stress, { label: 'Train on These', icon: <TrainIcon />, onSelect: () => onTrain(row) }];
 }

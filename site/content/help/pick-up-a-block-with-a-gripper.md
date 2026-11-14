@@ -30,4 +30,4 @@ You can make a Case where an arm lifts a block off the floor and sets it down on
 
 ![Results with a passed try](/help/pick-up-a-block-with-a-gripper/results.png)
 
-To share passed tries, use Export Dataset or Publish to Hugging Face. The dataset uses the Case's brief as its task.
+To share passed tries, click **Make Dataset** under **Results**, then export or publish the dataset. The dataset uses the Case's brief as its task. See [Make a dataset from tries](/help/make-a-dataset-from-tries).

@@ -3,12 +3,9 @@ import {
   Badge,
   Button,
   ContextMenu,
-  DownloadIcon,
-  IconButton,
   ProgressBar,
-  RunIcon,
   Section,
-  ShareIcon,
+  SpreadsheetIcon,
   Tooltip,
   deleteEntry,
   type ContextMenuEntry,
@@ -24,7 +21,6 @@ import type { CaseExplore } from '../../workspace/useCaseExplore';
 import { CompareRows } from './CompareRows';
 import { ExploreRows } from './ExploreRows';
 import { FAULT_LABEL } from './faultMenu';
-import { FromTries } from './FromTries';
 import type { ShareRobot } from '../../workspace/useShareRobot';
 import { runClock } from '../../utils/duration';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
@@ -62,8 +58,14 @@ const TryRow: React.FC<TryRowProps> = (props) => {
   const film = useFilmstrip(record, model, parts, world);
 
   return (
-    <div className="py-1.5 flex flex-col gap-1.5" onContextMenu={onMenu} data-testid="try-row">
-      <div className="flex items-center gap-2 text-[13px]">
+    <button
+      type="button"
+      className="-mx-1.5 px-1.5 py-1.5 flex flex-col gap-1.5 rounded-[8px] text-left cursor-default hover:bg-white/[0.05] transition-colors"
+      onClick={onReplay}
+      onContextMenu={onMenu}
+      data-testid="try-row"
+    >
+      <span className="w-full flex items-center gap-2 text-[13px]">
         <span className={record.passed ? 'text-white/90' : 'text-red-400'}>{outcome(record)}</span>
         {record.real && (
           <span data-testid="try-real">
@@ -75,11 +77,10 @@ const TryRow: React.FC<TryRowProps> = (props) => {
           {generated > 0 && plural(generated, 'variation')}
         </span>
         <Faults record={record} rig={rig} />
-        <IconButton icon={<RunIcon className="w-4 h-4" />} title="Replay" size="xs" onClick={onReplay} />
-      </div>
-      {progress !== null && <ProgressBar className="mt-1.5" share={progress} />}
+      </span>
+      {progress !== null && <ProgressBar className="w-full mt-1.5" share={progress} />}
       {film && <img src={film} alt="" className="w-full h-14 object-cover rounded-[6px]" draggable={false} />}
-    </div>
+    </button>
   );
 };
 
@@ -103,40 +104,18 @@ interface ResultsProps {
   explore?: { rows: CaseExplore; sceneName: string };
 }
 
-const DatasetActions: React.FC<{ cases: Cases }> = ({ cases }) => (
-  <>
+const MakeDataset: React.FC<{ cases: Cases }> = ({ cases }) =>
+  cases.caseDataset.canMake && (
     <Button
       size="sm"
       fullWidth
       className="mt-2"
-      disabled={cases.dataset.exporting}
-      icon={<DownloadIcon className="w-4 h-4" />}
-      title="Passed tries with camera video, for training GR00T or LeRobot"
-      onClick={cases.dataset.exportDataset}
+      icon={<SpreadsheetIcon className="w-4 h-4" />}
+      onClick={cases.caseDataset.make}
     >
-      Export Dataset
+      Make Dataset
     </Button>
-    {cases.dataset.canPublish && (
-      <Button
-        size="sm"
-        fullWidth
-        className="mt-1.5"
-        disabled={cases.dataset.exporting}
-        icon={<ShareIcon className="w-4 h-4" />}
-        onClick={cases.dataset.publishDataset}
-      >
-        Publish to Hugging Face
-      </Button>
-    )}
-  </>
-);
-
-const TryActions: React.FC<{ cases: Cases }> = ({ cases }) => (
-  <>
-    {cases.dataset.canExport && <DatasetActions cases={cases} />}
-    {cases.fromTries.shown && <FromTries fromTries={cases.fromTries} />}
-  </>
-);
+  );
 
 const comparesCase = (cases: Cases, compare: CaseCompare | undefined) =>
   cases.active && compare && (compare.comparison || compare.running) ? compare : null;
@@ -192,7 +171,7 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
           ))}
         </div>
       )}
-      {cases.active && <TryActions cases={cases} />}
+      {cases.active && <MakeDataset cases={cases} />}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </Section>
   );

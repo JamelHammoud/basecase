@@ -7,7 +7,7 @@ import type { MotionTrace } from './trySearch/types';
 
 export const TRY_FILE_VERSION = 1;
 
-export const TRY_SOURCES = ['case', 'generated', 'real', 'import'] as const;
+export const TRY_SOURCES = ['case', 'generated', 'real', 'import', 'operate'] as const;
 
 export type TrySource = (typeof TRY_SOURCES)[number];
 
@@ -16,6 +16,7 @@ export const TRY_SOURCE_BADGE: Record<TrySource, string | null> = {
   generated: 'Variation',
   real: 'Real',
   import: null,
+  operate: 'Operate',
 };
 
 export type TryVerdict = 'passed' | 'failed' | 'unjudged';
@@ -62,6 +63,9 @@ export interface StoredTry {
   task?: string | null;
   videos?: TryVideo[];
   outOfRange?: number;
+  family?: string;
+  ended?: 'rung' | 'disconnect' | 'fault';
+  policy?: string;
   motion?: MotionTrace;
 }
 

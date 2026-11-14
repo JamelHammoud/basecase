@@ -1,6 +1,7 @@
 ---
 title: Drive a robot with your camera
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 keywords:
@@ -28,7 +29,7 @@ covers:
 
 Move your arms in front of your computer's camera, and a humanoid or a robot arm in the simulation moves its arms the same way.
 
-This works on humanoids and fixed arms. A rover, or a robot with legs and no arms, drives the same way it does with **Drive**, and the camera stays off. The camera's picture stays on your computer, and Basecase never saves it.
+This works on humanoids and fixed arms. A rover, or a robot with legs and no arms, drives the same way it does with **Drive**, and the camera stays off. The camera's picture stays on your computer, and Basecase saves it only as the video of a session on a connected robot. See [Keep a robot session as a try](/help/keep-a-robot-session-as-a-try).
 
 1. Click **Simulate** at the top of the right panel.
 2. In **Control**, click **Drive with Camera**.

@@ -39,7 +39,7 @@ Multiply turns one passed try into as many as 50 varied tries that also pass. Yo
 
 When Multiply finishes, the toast tells you how many variations it kept, for example "Kept 50 of 50". The try's row then shows the count, such as **50 variations**.
 
-![The passed try's row reads 50 variations, above Export Dataset](/help/multiply-a-try-into-demonstrations/results.png)
+![The passed try's row reads 50 variations](/help/multiply-a-try-into-demonstrations/results.png)
 
 You can also find **Multiply** in [[⌘K]]. From there, it multiplies the newest passed try in the open Case.
 
@@ -69,4 +69,4 @@ Deleting a try also deletes its variations. The confirmation shows how many.
 
 ## In the dataset
 
-[Export Dataset](/help/export-a-lerobot-dataset) writes each variation as its own episode. In `meta/basecase.json`, each episode lists its `seed` and its `source`, which is the try it was made from. For a try you drove, `source` is null.
+**Make Dataset** in Results includes the variations along with the try they came from. See [Make a dataset from tries](/help/make-a-dataset-from-tries). [Export Dataset](/help/export-a-lerobot-dataset) writes each variation as its own episode. In `meta/basecase.json`, each episode lists its `seed` and its `source`, which is the try it was made from. For a try you drove, `source` is null.

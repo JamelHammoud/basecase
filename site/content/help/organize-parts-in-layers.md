@@ -37,7 +37,11 @@ See every part in the scene as a list, find one by name, and hide or lock parts 
 
 The lock beside the eye locks the part instead.
 
-The header counts parts and cutouts, and the footer gives the **Overall size** of the visible parts. Double-click a row to rename the part. Shift-click or [[⌘]]-click a row to add or remove that one part. Right-click a row for the same menu as the part on the canvas.
+The header counts parts and cutouts, and the footer gives the **Overall size** of the visible parts. Double-click a row to rename the part. **Rename** in the part's right-click menu or [[⌘K]] opens Layers with that row's name ready to type. Shift-click or [[⌘]]-click a row to add or remove that one part. Right-click a row for the same menu as the part on the canvas.
+
+![The right-click menu of Servo Bracket in Layers, with Rename first](/help/organize-parts-in-layers/part-menu.png)
+
+![The Servo Bracket row in Layers with its name field open, renamed Shoulder Bracket](/help/organize-parts-in-layers/rename.png)
 
 ## What hiding and locking do
 

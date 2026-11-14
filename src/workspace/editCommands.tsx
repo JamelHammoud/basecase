@@ -5,13 +5,14 @@ import type { CommandInputs } from './sceneCommands';
 import { handJointCommands } from './jointCommands';
 import { mirrorCommand } from './mirrorCommands';
 import { keyFor } from '../app/shortcuts';
-import { isRotated, onePartActions, paletteCommand, selectionActions } from './partActions';
+import { isRotated, onePartActions, paletteCommand, renameAction, selectionActions } from './partActions';
 
 const ic = 'w-4 h-4';
 
 function clipboardCommands(inputs: CommandInputs): Command[] {
   const { actions, clipboard } = inputs;
   const act = selectionActions(inputs);
+  const rename = renameAction(inputs);
 
   return [
     paletteCommand(act.selectAll, 'Selection'),
@@ -39,6 +40,7 @@ function clipboardCommands(inputs: CommandInputs): Command[] {
       icon: <PasteIcon className={ic} />,
       run: clipboard.pasteParts,
     },
+    ...(rename ? [paletteCommand(rename, 'Selection')] : []),
     paletteCommand(act.duplicate, 'Selection'),
     paletteCommand(act.group, 'Selection'),
     mirrorCommand(actions.mirror),

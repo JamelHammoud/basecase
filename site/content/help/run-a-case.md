@@ -21,6 +21,7 @@ related:
   - try-a-case
   - make-a-case
   - play-a-try-through-its-console
+  - arrange-a-case-console
   - share-a-robot-as-a-link
 covers:
   - src/cases/console/
@@ -63,9 +64,9 @@ You can run a Case in the whole window, with the layout the Case asks for. The r
 
 7. Click **Done** or press [[Esc]] to go back. The first [[Esc]] stops driving. Your parts, selection and camera stay as you left them.
 
-You can also go back by picking a view in the rail, or by running any [[⌘K]] command except driving, trying, **Multiply** and the dataset commands.
+You can also go back by picking a view in the rail, or by running any [[⌘K]] command except driving, trying, **Add Panel**, **Multiply** and the dataset commands.
 
-A Case can have its own layout, called its console. Basecase saves the console with the Case in your `.basecase` file. To get a console, describe the Case you want to the agent, and it writes the console for you. You can also edit the console in that file yourself. A Case you make with New Case or from a template has no console.
+A Case can have its own layout, called its console. Basecase saves the console with the Case in your `.basecase` file. To get a console, describe the Case you want to the agent, and it writes the console for you. You can also edit the console in that file yourself, or arrange the cards while the Case runs. See [Arrange a Case's console](/help/arrange-a-case-console). A Case you make with New Case or from a template has no console until you change its layout.
 
 A console lists:
 
@@ -83,7 +84,7 @@ If a console lists `camera` among its inputs, **Try It** opens your computer's c
 
 A console can hold the Case's own code in up to 4 panels. Each panel is a small web page in a column or over the canvas. For example, one panel might draw a joystick that drives the robot, and another might show the robot's speed over the canvas.
 
-[[Esc]] and [[⌘K]] work inside a panel. While a Case runs, **Undo** at the top right undoes changes to the code panels and leaves the robot as it is. Outside a panel or a text field, [[⌘Z]] does the same thing, and [[⌘I]] shows the **Agent** tab beside the Case. Clicks on a panel over the canvas go through to the robot, unless the panel uses them.
+[[Esc]] and [[⌘K]] work inside a panel. While a Case runs, **Undo** at the top right undoes changes to the code panels and the layout, and leaves the robot as it is. Outside a panel or a text field, [[⌘Z]] does the same thing, and [[⌘I]] shows the **Agent** tab beside the Case. Clicks on a panel over the canvas go through to the robot, unless the panel uses them.
 
 ![A rover Case running with a joystick in the right column and its speed and tilt over the canvas](/help/run-a-case/code.png)
 

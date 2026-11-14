@@ -72,7 +72,7 @@ afterAll(async () => {
 const itUnlessWindows = it.skipIf(process.platform === 'win32');
 
 describe('Importing robot data as tries', () => {
-  itUnlessWindows('imports a LeRobot folder, an MCAP file and a Hub link, and opens one on the timeline', async () => {
+  itUnlessWindows('imports a LeRobot zip, an MCAP file and a Hub link, and opens one on the timeline', async () => {
     const robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
 
     await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {

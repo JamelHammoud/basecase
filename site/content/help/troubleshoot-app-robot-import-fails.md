@@ -23,11 +23,11 @@ covers:
   - src/utils/robotImport/
 ---
 
-Import Robot needs two things to bring in a robot: a URDF or MJCF description it can reach, and the mesh files that description names. Find the message Basecase shows below, then follow the steps under it.
+To bring in a robot, Import Robot needs two things: a URDF or MJCF description it can reach, and the mesh files that description names. If an import fails, find the message you see below, then follow the steps under it.
 
 ## Import stays grayed out
 
-Basecase can't read the link you pasted. It accepts:
+Basecase can't read the link you pasted. It accepts these links:
 
 - A GitHub repo or folder
 - A Hugging Face link
@@ -38,21 +38,21 @@ Basecase can't read the link you pasted. It accepts:
 
 ## “Couldn’t open … Link to a public repo or folder.”
 
-Basecase shows this when:
+You'll see this message when:
 
 - The repo is private.
 - The link points to a branch or folder that doesn't exist.
-- GitHub turned the request away. GitHub limits how often a computer can list repos without signing in.
+- GitHub turned the request away. It limits how often a computer can list repos without signing in.
 
-1. Open the link in a browser and check that it shows the files.
+1. Open the link in a browser and make sure it shows the files.
 2. Wait a few minutes, then press [[↩]] in **Import Robot** again.
 3. If it still fails, download the repo, click **Choose Folder** and select it.
 
 ## “Couldn’t find a .urdf or MJCF .xml file in …”
 
-The link is public, but it doesn't hold a robot description. Link to the folder that has the `.urdf` or `.xml` file, or to the file itself.
+The link is public, but there's no robot description in it. Link to the folder that has the `.urdf` or `.xml` file, or link to the file itself.
 
-If you chose a folder on your computer, you'll see “Choose a folder with a .urdf or MJCF .xml file.” instead.
+If you chose a folder on your computer, the message reads “Choose a folder with a .urdf or MJCF .xml file.” instead.
 
 ## “Couldn’t load its … meshes. Choose the folder with the robot’s mesh files.”
 
@@ -67,12 +67,12 @@ If only some of the meshes load, the robot still imports, and the toast tells yo
 
 | Message | What to do |
 |---|---|
-| “That zip is too large. Unzip it and choose the folder.” | Basecase can't open a zip over 200 MB, or one over 600 MB once unpacked. Unzip it and use **Choose Folder**. |
+| “That zip is too large. Unzip it and choose the folder.” | Basecase can't open a zip over 200 MB, or one that's over 600 MB once unpacked. Unzip it and use **Choose Folder**. |
 | “Couldn’t open that zip. Unzip it and choose the folder.” | Unzip it on your computer, then use **Choose Folder**. |
 | “Choose a URDF or MJCF file. That one isn’t valid XML.” | The file is damaged. Download it again. |
 | “Choose a URDF or MJCF file.” | The file is XML, but it isn't a robot description. |
 | “Nothing to show: the description has no meshes or shapes.” | The description has joints but no geometry to draw. |
 
-**Note:** A Hugging Face dataset link, or a folder or zip that holds a LeRobot dataset or a ROS 2 recording, comes in as tries instead of a robot. Their messages name the dataset's file and tell you what's wrong with it. See [Import robot data as tries](/help/import-robot-data-as-tries) for what Basecase reads and its limits.
+**Note:** A Hugging Face dataset link comes in as tries instead of a robot. So does a folder or zip that holds a LeRobot dataset or a ROS 2 recording. For these, the message names the dataset's file and tells you what's wrong with it. To learn what Basecase reads and where its limits are, see [Import robot data as tries](/help/import-robot-data-as-tries).
 
 For the usual import steps, see [Import a robot](/help/import-a-robot).

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { plural } from '../../electron/plural.mjs';
 import { sha256 } from '../cases/tries';
 import { keepTries, loadTries } from '../cases/tryStore';
@@ -64,6 +64,15 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
   const [sheet, setSheet] = useState<MatchSheet | null>(null);
   const answer = useRef<((pairs: JointPairs | null) => void) | null>(null);
 
+  useEffect(() => {
+    const pending = answer;
+
+    return () => {
+      pending.current?.(null);
+      pending.current = null;
+    };
+  }, []);
+
   const sceneModel = async (): Promise<SceneModel> => {
     const open = sim.modelNow();
 
@@ -90,6 +99,7 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
   const askMatch = (ask: Omit<MatchSheet, 'targets'> & { targets: TargetJoint[] }) => {
     const labels = jointNames();
 
+    answer.current?.(null);
     toasts.dismissToast();
     setSheet({ ...ask, targets: ask.targets.map((t) => ({ ...t, label: labels[t.id] ?? t.id })) });
 

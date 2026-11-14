@@ -74,7 +74,7 @@ The right panel has a tab for each job:
 - **Pose** moves a robot's joints. It shows while a robot is selected.
 - **Simulate** runs the scene under physics. It shows once the scene has movable joints.
 - **Build** holds the Checks, bill of materials, build guide and printing. A red dot on it means something is left to fix. Its tooltip says how many.
-- **Agent** is where you talk to the agent.
+- **Agent** is where you talk to the agent. While a Case runs, it's the only tab.
 
 Drag the edge of the sidebar or the right panel to resize it. Double-click the edge to put it back to its default width.
 

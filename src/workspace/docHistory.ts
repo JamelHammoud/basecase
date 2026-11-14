@@ -1,4 +1,5 @@
-import type { ScenePart } from '../types/robotics';
+import type { Case } from '../cases/schema';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { RobotUpgrade } from '../utils/robotImport';
 import { patchParts } from '../utils/robotUpgrade';
 import type { DocState, Snapshot } from './types';
@@ -19,6 +20,58 @@ export const pushHistory = (d: DocState, parts: ScenePart[], snapshot: Omit<Snap
 export const liveEdit = (d: DocState, parts: ScenePart[]): DocState => ({ ...d, base: d.base ?? d.parts, parts });
 
 export type HistoryDirection = 'undo' | 'redo';
+
+type Consoles = NonNullable<Snapshot['consoles']>;
+
+export const consolesOf = (cases: Case[] | undefined, ids: string[]): Consoles =>
+  Object.fromEntries(ids.map((id) => [id, cases?.find((c) => c.id === id)?.console]));
+
+export const withCaseConsoles = (cases: Case[] | undefined, consoles: Consoles) =>
+  cases?.map((c) => (c.id in consoles ? { ...c, console: consoles[c.id] } : c));
+
+export const trackedOf = ({ pose, joints, marks, skeleton }: ProjectSettings): Omit<Snapshot, 'parts'> => ({
+  pose,
+  joints,
+  marks,
+  skeleton,
+});
+
+const nextStep = (d: DocState, direction: HistoryDirection) => (direction === 'undo' ? d.past : d.future).at(-1);
+
+function supplyFor(next: Snapshot | undefined, project: ProjectSettings): Partial<Snapshot> {
+  return {
+    ...(next && 'tether' in next ? { tether: project.tether } : {}),
+    ...(next?.consoles ? { consoles: consolesOf(project.cases, Object.keys(next.consoles)) } : {}),
+  };
+}
+
+function restoredProject(to: Snapshot, here: Snapshot, cases: Case[] | undefined): Partial<ProjectSettings> {
+  return {
+    ...(to.joints === here.joints ? {} : { joints: to.joints }),
+    ...(to.marks === here.marks ? {} : { marks: to.marks }),
+    ...(to.skeleton === here.skeleton ? {} : { skeleton: to.skeleton }),
+    ...('tether' in to && to.tether !== here.tether ? { tether: to.tether } : {}),
+    ...(to.consoles ? { cases: withCaseConsoles(cases, to.consoles) } : {}),
+  };
+}
+
+export interface HistoryStep {
+  direction: HistoryDirection;
+  codeOnly?: boolean;
+}
+
+export function travelProject(d: DocState, project: ProjectSettings, { direction, codeOnly = false }: HistoryStep) {
+  const next = nextStep(d, direction);
+
+  if (codeOnly && !next?.consoles) return null;
+
+  const here: Snapshot = { parts: d.parts, ...trackedOf(project), ...supplyFor(next, project) };
+  const moved = stepHistory(d, here, direction);
+
+  if (!moved) return null;
+
+  return { ...moved, here, project: { ...project, ...restoredProject(moved.to, here, project.cases) } };
+}
 
 export function stepHistory(
   d: DocState,

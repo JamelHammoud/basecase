@@ -15,6 +15,7 @@ related:
   - design-a-robot-with-the-agent
   - attach-photos-files-and-sketches
   - make-a-case-pass-with-the-agent
+  - build-a-case-app-with-the-agent
 covers:
   - electron/cad-agent-prompt.mjs
   - electron/backend/promptBlocks.mjs
@@ -43,7 +44,7 @@ After the first design, short follow-ups work best: “Longer legs”, “Thicke
 
 ## Say how you want to drive it
 
-To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad, a phone and the computer's camera. Ask for a joystick, a piano or a readout over the robot, and the agent draws it as a code panel.
+To play with or operate a robot, name the input and the cameras to watch. “Drive this rover with a gamepad while I watch its front camera” gets a Case that opens running. Inputs are keys, a gamepad, a phone and the computer's camera. Ask for a joystick, a piano or a readout over the robot, and the agent draws it as a code panel. Ask for changes to it while the Case runs, one at a time, such as “Add a Spin button”.
 
 ## Ask about Checks instead of hiding them
 

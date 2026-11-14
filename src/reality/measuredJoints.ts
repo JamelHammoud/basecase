@@ -18,6 +18,22 @@ export function calibrationApplies(
   );
 }
 
+export function presetConfirmed(
+  calibration: ServoCalibration | undefined,
+  joint: RobotJoint | undefined,
+  parts: readonly ScenePart[],
+): boolean {
+  const servo = jointServo(joint, parts);
+
+  return (
+    calibration?.verdict === 'consistent' &&
+    calibration.rung === 'preset' &&
+    calibration.evidence.logs > 0 &&
+    servo !== null &&
+    sameServo(servoPartOf(calibration), servo)
+  );
+}
+
 export interface MeasuredJointsInput {
   joints: readonly RobotJoint[];
   parts: readonly ScenePart[];

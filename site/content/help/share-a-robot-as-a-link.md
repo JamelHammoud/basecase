@@ -14,7 +14,7 @@ covers:
 
 Send someone a link that opens your robot and its Case in their browser, where they can drive it and open it in the studio. It works in the desktop app, with a Hugging Face account.
 
-1. Add a Hugging Face access token with write access in Settings ▸ Accounts, as in [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
+1. Add a Hugging Face access token with write access in **Settings** ▸ **Accounts**, as in [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
 2. Open a Case for your robot from the Cases tab in the Play view.
 3. Press [[⌘K]] and choose **Share Robot**.
 

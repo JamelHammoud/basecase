@@ -194,7 +194,13 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
 
   st.actuatorXml.push(
     servo
-      ? fittedActuatorXml({ name, dynamics: servo, ctrlrange, timestep: st.input.timestep ?? DEFAULT_TIMESTEP })
+      ? fittedActuatorXml({
+          name,
+          dynamics: servo,
+          ctrlrange,
+          timestep: st.input.timestep ?? DEFAULT_TIMESTEP,
+          historyS: calibrated?.historyS,
+        })
       : actuatorXml({ name, effort, revolute, range, wheel }),
   );
   st.simJoints.push({
@@ -404,6 +410,12 @@ export function buildMjcf(given: MjcfInput): SimModel {
 
   const xml = mujocoXml(st, input.timestep ?? DEFAULT_TIMESTEP);
   const scans = robotScans(st.bodies, parts);
+  const built = new Set(
+    st.simJoints.filter((j) => j.dynamics === 'measured' && j.drive === 'position').map((j) => j.id),
+  );
+  const servoSpreads = (input.servoSpreads ?? [])
+    .map((s) => ({ ...s, joints: s.joints.filter((j) => built.has(j)) }))
+    .filter((s) => s.joints.length);
 
   return {
     version: SIM_MODEL_VERSION,
@@ -414,5 +426,6 @@ export function buildMjcf(given: MjcfInput): SimModel {
     initial: { values: st.initialValues, roots: st.roots },
     massKg: st.massKg,
     ...(scans.length ? { scans } : {}),
+    ...(servoSpreads.length ? { servoSpreads } : {}),
   };
 }

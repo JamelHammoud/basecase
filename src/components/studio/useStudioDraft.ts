@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { polylineSketch } from '../../utils/sketch/edit';
-import type { Sketch, SketchMode, Vec2 } from '../../utils/sketch/types';
+import type { Sketch, SketchEntity, SketchMode, Vec2 } from '../../utils/sketch/types';
 import { ParsedSvg3DResult, parseSvgTo3DNodes } from '../../utils/svgTo3DParser';
 import { errorMessage } from '../../utils/errorMessage';
 
@@ -15,6 +15,8 @@ interface SketchHistory {
 }
 
 const HISTORY_LIMIT = 100;
+
+export const isDrawn = (entity: SketchEntity) => !(entity.kind === 'line' && entity.ref);
 
 const svgLoops = (outer: Array<[number, number]>, holes: Array<Array<[number, number]>>, span: number): Vec2[][] =>
   [outer, ...holes].map((loop) => loop.map(([x, z]): Vec2 => [x * span, -z * span]));
@@ -83,6 +85,7 @@ export function useStudioDraft(initialSketch: Sketch, initialTool: SketchTool | 
 
   return {
     ...history,
+    drawn: history.sketch.entities.some(isDrawn) || rawSvgText !== '',
     drawMode,
     setDrawMode,
     drawTool,

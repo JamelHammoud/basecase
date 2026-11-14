@@ -63,7 +63,7 @@ describe('Sketch and Import SVG add a part with one button', () => {
   });
 });
 
-describe('Esc leaves Sketch and Import SVG, one step at a time', () => {
+describe('Esc leaves Sketch and Import SVG when nothing is drawn', () => {
   it('drops the Sketch tool first, then leaves Sketch', async () => {
     const line = app.page.getByRole('button', { name: 'Line', exact: true });
 
@@ -77,6 +77,29 @@ describe('Esc leaves Sketch and Import SVG, one step at a time', () => {
     expect(await panelTitle('Sketch').count()).toBe(1);
 
     await app.page.keyboard.press('Escape');
+    await expect.poll(() => panelTitle('Sketch').count()).toBe(0);
+  });
+
+  it('keeps a drawn sketch open on Esc', async () => {
+    const rectangle = app.page.getByRole('button', { name: 'Rectangle', exact: true });
+    const plane = app.page.locator(shown('[data-testid="sketch-plane"]'));
+
+    await openFromShapes('Sketch');
+    await expect.poll(() => panelTitle('Sketch').count()).toBe(1);
+    await drawRectangle();
+    await plane.focus();
+
+    for (let press = 0; press < 4 && (await rectangle.getAttribute('aria-pressed')) === 'true'; press++) {
+      await app.page.keyboard.press('Escape');
+    }
+
+    expect(await rectangle.getAttribute('aria-pressed')).toBeNull();
+
+    await app.page.keyboard.press('Escape');
+    expect(await panelTitle('Sketch').count()).toBe(1);
+    expect(await panelButton('Add').isEnabled()).toBe(true);
+
+    await panelButton('Done').click();
     await expect.poll(() => panelTitle('Sketch').count()).toBe(0);
   });
 

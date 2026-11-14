@@ -109,6 +109,10 @@ function viewKeys({ core, actions, ui }: WorkspaceKeyDeps): ShortcutHandlers {
     if (!viewportRef.current?.cancelMeasure()) tool.toggleMeasure(false);
   };
 
+  const leaveStudio = () => {
+    if (!tool.studioUnsaved) tool.leaveStudio();
+  };
+
   const deselect = () => {
     if (servoSetup()) endServoSetup();
     else if (annotations.draft) annotations.setDraft(null);
@@ -118,7 +122,7 @@ function viewKeys({ core, actions, ui }: WorkspaceKeyDeps): ShortcutHandlers {
     else if (tool.marking && marks.selected) marks.select(null);
     else if (tool.marking) tool.toggleMarking(false);
     else if (joints.picking) joints.cancel();
-    else if (tool.studioMode) tool.leaveStudio();
+    else if (tool.studioMode) leaveStudio();
     else setSelectedIds([]);
   };
 

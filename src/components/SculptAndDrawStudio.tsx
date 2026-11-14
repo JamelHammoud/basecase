@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ModeHeader, useScrollFade } from '../design-system';
 import type { ScenePart, SculptSettings } from '../types/robotics';
 import type { SketchShape } from '../utils/sketch/placement';
@@ -21,6 +21,7 @@ interface SculptAndDrawStudioProps {
   svgFile?: TextFile | null;
   onChangeMode: (mode: StudioSubTab) => void;
   onDone: () => void;
+  onUnsavedChange: (unsaved: boolean) => void;
   onUpdateSculptSettings: (patch: Partial<SculptSettings>) => void;
   onAddClayPreset: (preset: 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule') => void;
   onSubdivideSelectedClay: () => void;
@@ -38,6 +39,7 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
   svgFile = null,
   onChangeMode: setSubTab,
   onDone,
+  onUnsavedChange,
   onUpdateSculptSettings,
   onAddClayPreset,
   onSubdivideSelectedClay,
@@ -50,6 +52,13 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const draft = useStudioDraft(sketchStart, boundSketch ? null : 'line');
   const [loadedSvg, setLoadedSvg] = useState<TextFile | null>(null);
+  const unsaved = subTab !== 'clay' && !boundSketch && (draft.drawn || !!linkage?.path.length);
+
+  useEffect(() => {
+    onUnsavedChange(unsaved);
+
+    return () => onUnsavedChange(false);
+  }, [unsaved, onUnsavedChange]);
 
   if (svgFile && svgFile !== loadedSvg) {
     setLoadedSvg(svgFile);

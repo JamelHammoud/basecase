@@ -49,6 +49,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
       svgFile={tool.creatorSvg}
       onChangeMode={(m) => m !== 'clay' && tool.setCreator(m)}
       onDone={tool.leaveStudio}
+      onUnsavedChange={tool.setStudioUnsaved}
       onUpdateSculptSettings={tool.updateSculptSettings}
       onAddClayPreset={creation.addClayPreset}
       onSubdivideSelectedClay={creation.subdivideSelectedClay}

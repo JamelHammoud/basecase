@@ -1,5 +1,6 @@
 import React from 'react';
 import { THEME_COLORS } from './theme';
+import { negative } from '../../electron/minus.mjs';
 import {
   hasX,
   sampleAt,
@@ -48,7 +49,7 @@ const strokeWidth = (p: TracePath) => {
   return p.tone === 'accent' ? 2 : 1.5;
 };
 
-const figure = (v: number) => String(Number(v.toPrecision(2)));
+const figure = (v: number) => negative(v, (magnitude) => String(Number(magnitude.toPrecision(2))));
 
 const AxisLabels: React.FC<{ units?: TracePlotProps['units']; x?: Range; y: Range }> = ({ units, x, y }) =>
   units && x ? (

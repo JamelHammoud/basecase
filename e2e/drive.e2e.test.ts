@@ -8,11 +8,13 @@ import { DEFAULT_PROJECT } from '../src/types/robotics';
 import type { SimState, Studio } from './driveStudio';
 import { startFakeHub, type FakeHub } from './fakeHub';
 import {
+  datasetFiles,
   endTryAt,
   expectCaseCheckOpensRow,
   expectDataset,
   expectGenerated,
   expectPublished,
+  passedDatasetFiles,
   pickTimeline,
 } from './driveChecks';
 import { openApp, openPlayTab, partCount, type App } from './harness';
@@ -63,16 +65,6 @@ async function holdKey(key: string, ms: number) {
   await app.page.keyboard.down(key);
   await app.page.waitForTimeout(ms);
   await app.page.keyboard.up(key);
-}
-
-async function datasetFiles() {
-  const files = await app.page.evaluate(() =>
-    (
-      window as unknown as { __studio: { datasetFiles: () => Promise<Record<string, string> | null> } }
-    ).__studio.datasetFiles(),
-  );
-
-  return Object.fromEntries(Object.entries(files ?? {}).map(([path, b64]) => [path, Buffer.from(b64, 'base64')]));
 }
 
 async function stopDriving() {
@@ -231,7 +223,7 @@ describe('Cases', () => {
 
       expect(clashes).not.toContain('dot0');
       await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
-      await expectDataset(await datasetFiles());
+      await expectDataset(await passedDatasetFiles(app.page));
 
       const headings = await simHeadings();
 
@@ -404,7 +396,7 @@ describe('Multiply', () => {
       expect(await rows.count()).toBe(1);
       expect(await rows.first().getByTestId('try-generated').innerText()).toBe(plural(kept, 'variation'));
 
-      expectGenerated(await datasetFiles(), kept);
+      expectGenerated(await datasetFiles(app.page), kept);
       expect(app.errors).toEqual([]);
     },
     180000,
@@ -476,7 +468,7 @@ describe('LiDAR', () => {
       await endTryAt(app.page, SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
-      const files = await datasetFiles();
+      const files = await passedDatasetFiles(app.page);
       const at = (end: string) => files[Object.keys(files).find((p) => p.endsWith(end))!];
       const rows = await parquetReadObjects({
         file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer,

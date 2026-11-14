@@ -1,7 +1,7 @@
 import { base64ToBytes } from '../../utils/base64';
 import { MAX_UNPACKED_BYTES, unzipEntries, ZIP_TOO_LARGE } from '../../utils/robotImport/archive';
 import { readLeRobot } from './lerobotRead';
-import { MCAP_TOO_LARGE, readMcap } from './mcapRead';
+import { MCAP_TOO_LARGE, readMcapEach } from './mcapRead';
 import { readRosbag2 } from './rosbag2';
 import { sourceKind } from './sourceKind';
 import { DataImportError, IMPORT_LIMITS, type SourceData, type SourceFile, type SourceFolder } from './types';
@@ -79,7 +79,7 @@ async function readMcapFiles(files: SourceFile[]) {
   const sorted = [...files].sort((a, b) => a.path.localeCompare(b.path));
   const read = await Promise.all(sorted.map(async (f) => ({ name: f.path.split('/').pop()!, bytes: await f.read() })));
 
-  return readMcap(read);
+  return readMcapEach(read);
 }
 
 function sourceFiles(source: ImportSource): Promise<SourceFile[]> | SourceFile[] {

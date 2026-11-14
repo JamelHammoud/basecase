@@ -210,10 +210,12 @@ function jointSeries(samples: JointSample[], index: Map<string, number>, start: 
     const time = seconds(sample.ns - start);
 
     sample.names.forEach((name, i) => {
-      const joint = series[index.get(name) ?? 0];
+      const column = index.get(name);
 
-      joint.times.push(time);
-      joint.values.push(sample.position[i]);
+      if (column === undefined) return;
+
+      series[column].times.push(time);
+      series[column].values.push(sample.position[i]);
     });
   }
 
@@ -258,11 +260,16 @@ function videosOf(recording: Recording, start: bigint): SourceVideo[] {
   }));
 }
 
-function episodeOf(recording: Recording, start: bigint, end: bigint): { names: string[]; episode: SourceEpisode } {
-  const samples = [...recording.joints].sort((a, b) => Number(a.ns - b.ns));
-  const index = jointIndex(samples);
-  const series = jointSeries(samples, index, start);
-  const t = timeGrid(end - start);
+interface Read extends Recording {
+  first: bigint;
+  last: bigint;
+}
+
+const sortedSamples = (recording: Recording) => [...recording.joints].sort((a, b) => Number(a.ns - b.ns));
+
+function episodeOf(recording: Read, index: Map<string, number>, at: number): SourceEpisode {
+  const series = jointSeries(sortedSamples(recording), index, recording.first);
+  const t = timeGrid(recording.last - recording.first);
   const state = new Float64Array(t.length * index.size);
 
   series.forEach((joint, column) => {
@@ -271,19 +278,39 @@ function episodeOf(recording: Recording, start: bigint, end: bigint): { names: s
     });
   });
 
-  const episode = { index: 0, task: null, t, state, action: null, videos: videosOf(recording, start) };
-
-  return { names: [...index.keys()], episode };
+  return { index: at, task: null, t, state, action: null, videos: videosOf(recording, recording.first) };
 }
 
-export async function readMcap(files: McapInput[]): Promise<SourceData> {
+function readRecording(files: McapInput[]): Read {
   const recording: Recording = { joints: [], images: new Map(), first: null, last: null };
 
   for (const file of files) readFile(file, recording);
 
   if (recording.first === null || recording.last === null) throw new DataImportError(MCAP_NO_JOINTS);
 
-  const { names, episode } = episodeOf(recording, recording.first, recording.last);
+  return { ...recording, first: recording.first, last: recording.last };
+}
 
-  return { format: 'mcap', robotType: null, names, episodes: [episode] };
+function sharedJoints(recordings: Read[]) {
+  const [first, ...rest] = recordings.map((r) => [...jointIndex(sortedSamples(r)).keys()]);
+  const names = first.filter((name) => rest.every((other) => other.includes(name)));
+
+  if (names.length === 0) throw new DataImportError(MCAP_NO_JOINTS);
+
+  return new Map(names.map((name, column) => [name, column]));
+}
+
+function sourceOf(recordings: Read[]): SourceData {
+  const index = sharedJoints(recordings);
+  const episodes = recordings.map((recording, at) => episodeOf(recording, index, at));
+
+  return { format: 'mcap', robotType: null, names: [...index.keys()], episodes };
+}
+
+export async function readMcap(files: McapInput[]): Promise<SourceData> {
+  return sourceOf([readRecording(files)]);
+}
+
+export async function readMcapEach(files: McapInput[]): Promise<SourceData> {
+  return sourceOf(files.map((file) => readRecording([file])));
 }

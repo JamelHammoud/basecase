@@ -55,7 +55,7 @@ covers:
   - electron/cadImport/convertPolicy.mjs
 ---
 
-Use Import to bring files from other apps into your scene. One command opens every kind of file Basecase reads, and what you get depends on the kind of file you pick.
+Import brings files from other apps into your scene. One command opens every kind of file Basecase reads, and what you get depends on the kind of file you pick.
 
 1. Right-click an empty spot on the canvas.
 2. Choose **Import**.
@@ -63,7 +63,7 @@ Use Import to bring files from other apps into your scene. One command opens eve
 
 ![The canvas menu with Import](/help/import-a-file/menu.png)
 
-Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. New parts appear selected where you right-clicked, so you can move them right away.
+Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. New parts appear where you right-clicked and are selected, so you can move them.
 
 If you pick an SVG, the Import SVG panel opens with your drawing loaded. Set the width and thickness, then click **Add** to extrude the drawing into a part.
 
@@ -77,11 +77,11 @@ Other files come in like this:
 - A `.basecase` file opens in a new tab.
 - A `.mcap` recording, or a zip that holds a LeRobot dataset, comes in as tries on the robot in the scene. See [Import robot data as tries](/help/import-robot-data-as-tries).
 
-You can also open Import from **File** ▸ **Import**, or press [[⌘K]]. To import files at a specific spot, drop them on the canvas. If you drop a `.mid` file, it plays in a Case's tries instead. To learn how, see [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
+You can also choose **File** ▸ **Import**, or press [[⌘K]]. To import files at a specific spot, drop them on the canvas. If you drop a `.mid` file, it plays in a Case's tries instead. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
 ## Units and axes
 
-Basecase reads each format with these units and this up axis:
+Basecase reads each format with these units and up axis:
 
 | Format | Read as | Up axis |
 |---|---|---|
@@ -91,15 +91,19 @@ Basecase reads each format with these units and this up axis:
 | DAE | Meters | As set in the file |
 | FBX | Centimeters, times the file's unit scale | As set in the file |
 
-If a model measures less than 1 mm across, Basecase reads it as meters instead. Basecase never simplifies a mesh, so your print keeps every triangle. FBX textures don't come in with the model.
+If a model measures less than 1 mm across, Basecase reads it as meters instead.
+
+Basecase never simplifies a mesh, so your print keeps every triangle.
+
+**Note:** FBX textures don't come in with the model.
 
 ## STEP and IGES files
 
 You can open STEP and IGES files in the desktop app. Each body in the file becomes its own part, named from the file's product names and colored with the body's main face color. If the file has more than one body, the parts come in as a group named after the file.
 
-Conversion runs in a sandbox, separate from the rest of the app. Basecase takes the units from the file itself, so every body arrives in millimeters at its real size.
+Basecase converts the file in a sandbox, separate from the rest of the app. It reads the units from the file, so every body comes in at its real size in millimeters.
 
-An imported body counts as a printed part, like any other imported mesh. To mark a body as bought or machined, select it, then under **Appearance** change the material from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Checks will list it among parts without a source until you give it one.
+An imported body counts as a printed part, like any other imported mesh. To mark a body as bought or machined, select it. Then under **Appearance**, change the material from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Checks lists the body among parts without a source until you give it one.
 
 STEP and IGES files have these limits:
 

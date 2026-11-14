@@ -33,7 +33,7 @@ covers:
   - src/utils/robotImport/
 ---
 
-You can import a published robot, with its joints, limits and masses, from a GitHub or Hugging Face link, a zip, or files on your computer.
+You can import a published robot from a GitHub or Hugging Face link, a zip, or files on your computer. The robot comes in with its joints, limits and masses.
 
 1. Press [[⌘K]] and choose **Import Robot**.
 2. Paste a link to a GitHub or Hugging Face repo or folder, a URDF or MJCF file, or a zip.
@@ -45,7 +45,7 @@ Basecase looks for the robot's description in the repo or zip, and prefers MJCF.
 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
-**Import Robot** is also in the **File** menu.
+You can also choose **Import Robot** from the **File** menu.
 
 To import a robot from your computer, take any of these actions:
 
@@ -64,7 +64,7 @@ Parts lists ready-made robots under **Robots**, grouped by kind: **Humanoids**, 
 
 ![Parts on its Robots section, with Imported, Humanoids, Small bipeds, Quadrupeds and Arms](/help/import-a-robot/robots.png)
 
-Robots you've imported are listed first, under **Imported**, so you can insert them again with one click. To remove a robot from this list, right-click it and choose **Delete**. Scenes that already use the robot keep it.
+Robots you've imported appear first, under **Imported**, so you can insert them again with one click. To remove a robot from this list, right-click it and choose **Delete**. Scenes that already use the robot keep it.
 
 ![An imported robot's right-click menu with Insert and Delete](/help/import-a-robot/imported.png)
 
@@ -74,12 +74,12 @@ Robots you've imported are listed first, under **Imported**, so you can insert t
 - Every revolute and prismatic joint keeps its axis, limits and torque limit.
 - Basecase never prints or resizes robot parts.
 
-Robots exported from Fusion 360 with fusion2urdf import the same way, as do ROS description packages written in xacro. Choose the package folder, drop it on the canvas, or paste the link to its repo.
+Robots exported from Fusion 360 with fusion2urdf import the same way. So do ROS description packages written in xacro. To import one, choose the package folder, drop it on the canvas, or paste the link to its repo.
 
-When a xacro package also has a plain `.urdf`, Basecase uses that file. Otherwise it reads the top-level `.xacro` or `.urdf.xacro` file, follows its includes inside the package, and fills in the properties, macros and `xacro:arg` defaults. A xacro that needs something Basecase can't fill in, such as a YAML file or an environment variable, stops the import, and Basecase tells you which file it needs.
+If a xacro package also has a plain `.urdf`, Basecase uses that file. Otherwise, it reads the top-level `.xacro` or `.urdf.xacro` file, follows its includes inside the package, and fills in the properties, macros and `xacro:arg` defaults. When the xacro needs something Basecase can't fill in, such as a YAML file or an environment variable, the import stops and Basecase tells you which file it needs.
 
-Links must use https. A zip link downloads up to 200 MB, and a zip unpacks up to 600 MB and 20,000 files. A link with no robot description shows a single toast that names the link.
+Links must use https. A zip link can download up to 200 MB, and a zip can unpack up to 600 MB and 20,000 files. A link with no robot description gets a single toast that names the link.
 
-If you import a Hugging Face dataset link, or a folder or zip that holds a LeRobot dataset or a ROS 2 recording, Basecase adds tries to the robot in the scene instead. See [Import robot data as tries](/help/import-robot-data-as-tries).
+A Hugging Face dataset link, or a folder or zip that holds a LeRobot dataset or a ROS 2 recording, adds tries to the robot in the scene instead. See [Import robot data as tries](/help/import-robot-data-as-tries).
 
 To learn how the joints work after you import a robot, see [Joints and kinematics](/help/joints-and-kinematics).

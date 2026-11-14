@@ -26,7 +26,7 @@ covers:
   - electron/library/tryStore.mjs
 ---
 
-You can find any try you've recorded, from any scene, and step through it on the timeline.
+You can open any try you've recorded from any scene, then step through it on the timeline.
 
 1. Click **Library** in the view rail on the left.
 2. Under **Tries**, click a robot.
@@ -37,19 +37,19 @@ You can find any try you've recorded, from any scene, and step through it on the
 
 ![Tries over the canvas with a try from each of two scenes](/help/open-a-try-from-any-scene/tries.png)
 
-4. The try plays through its Case's console, with the try timeline under the canvas. Tries stays hidden until you close the try. To step through the try, follow the steps in [Play a try through its console](/help/play-a-try-through-its-console).
+4. The try plays through its Case's console, and the try timeline appears under the canvas. Tries stays hidden until you close the try. To step through the try, follow the steps in [Play a try through its console](/help/play-a-try-through-its-console).
 
 ![A try from Tries playing through the Touch the Dots console, with its timeline under the canvas](/help/open-a-try-from-any-scene/timeline.png)
 
 5. To stop playing, click **Done** or press [[Esc]]. Tries comes back.
 6. To leave Tries, click **Done** or press [[Esc]] again.
 
-You can also open Tries by pressing [[⌘K]] and choosing **Show Tries**.
+Or open Tries from the command menu. Press [[⌘K]], then choose **Show Tries**.
 
-To find a try, use the search at the top of the Library. It matches a try's Case or task, its robot, the Variation or Real label on its tile, and the file or repo an imported try came from.
+The search at the top of the Library also finds tries. It matches a try's Case or task, its robot, the Variation or Real label on its tile, and the file or repo an imported try came from.
 
-To delete tries, select them, press [[⌫]], then click **Delete**. To select more than one try, hold [[⌘]] or [[⇧]] while you click. Deleting a try also deletes any Variations that came from it.
+To delete tries, select them, press [[⌫]], then click **Delete**. Hold [[⌘]] or [[⇧]] while you click to select more than one try. Deleting a try also deletes any Variations that came from it.
 
 **Note:** A try opens on the timeline only if it fits the robot in the open scene. If a try's Case isn't in the open scene, or it's an imported try with no Case, the try plays through the default cards, titled with the robot's name. Clicking a real try selects it but doesn't open the timeline.
 
-If you recorded tries before the Library held them, Basecase moves them in the first time you open their scene. On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`, with one folder per try.
+If you recorded tries before the Library held them, Basecase moves them into the Library the first time you open their scene. On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`, with one folder per try.

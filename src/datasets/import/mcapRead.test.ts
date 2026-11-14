@@ -172,6 +172,18 @@ describe('readMcap', () => {
     await expect(read(bytes)).rejects.toThrow(MCAP_TOO_LARGE);
   });
 
+  it('reads each picked .mcap as its own episode on the joints they share, however far apart', async () => {
+    const later = 1000 + 4 * IMPORT_LIMITS.seconds;
+    const first = await writeMcap([joints(1000, ['a', 'b'], [1, 2]), joints(1001, ['a', 'b'], [1, 2])]);
+    const second = await writeMcap([joints(later, ['c', 'a'], [5, 3]), joints(later + 0.5, ['c', 'a'], [5, 3])]);
+    const source = await readSource({ kind: 'bytes', name: 'arm', files: { 'b.mcap': second, 'a.mcap': first } });
+    const [one, two] = source!.data.episodes;
+
+    expect(source!.data.names).toEqual(['a']);
+    expect([one.index, one.t.length, one.state[0]]).toEqual([0, 51, 1]);
+    expect([two.index, two.t.length, two.state[0]]).toEqual([1, 26, 3]);
+  });
+
   it('refuses a picked .mcap over the size cap before reading any file', async () => {
     const small = { size: 8, arrayBuffer: vi.fn() } as unknown as Blob;
     const huge = { size: IMPORT_LIMITS.fileBytes + 1, arrayBuffer: vi.fn() } as unknown as Blob;

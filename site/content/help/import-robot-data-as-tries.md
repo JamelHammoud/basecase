@@ -57,11 +57,11 @@ To import a LeRobot or rosbag2 folder, drop it on the canvas or click **Choose F
 ## What comes in
 
 - **LeRobot** datasets in v2.0, v2.1 and v3.0. Each try takes the name of its episode's task, and a v3 file with many episodes gives you one try per episode.
-- **ROS 2** recordings, as a `.mcap` file or a rosbag2 folder whose `metadata.yaml` lists MCAP storage. Joint positions from `sensor_msgs/JointState` are resampled to 50 frames per second.
+- **ROS 2** recordings, as a `.mcap` file or a rosbag2 folder whose `metadata.yaml` lists MCAP storage. A rosbag2 folder becomes one try, and each `.mcap` file you pick on its own becomes its own try. Joint positions from `sensor_msgs/JointState` are resampled to 50 frames per second.
 - **Units** in radians, degrees or raw Feetech servo counts. Basecase tells them apart by the range of the values.
 - **Videos** for each camera. A try keeps each camera's file and the time span of its episode, without copying or re-encoding the video. Basecase doesn't decode camera images inside an MCAP file.
 
-Joints are matched by name, so an ALOHA's left and right arms land on two robots in the scene. Any match you make in the Match Joints sheet carries over to the next time you import the same data. If you import the same data twice, the second import adds nothing.
+Joints are matched by name, so an ALOHA's left and right arms land on two robots in the scene. Any match you make in the Match Joints sheet carries over to the next time you import the same data. If you import the same data twice onto the same robot in the same scene, the second import adds nothing.
 
 If no joint matches and the dataset names a robot that isn't in your scene, such as an SO-101 or a Unitree G1, you see a message with **Import Robot**. Add the robot to your scene, then repeat the import.
 

@@ -79,6 +79,8 @@ export interface JointStatus {
   torque_on: boolean | null;
   reply: string;
   link_rad?: number | null;
+  velocity?: number | null;
+  effort?: number | null;
 }
 
 export interface RobotStatus {
@@ -109,6 +111,16 @@ export interface RobotState {
 }
 
 export type RobotEvent = Record<string, unknown> & { event: string };
+
+export interface RobotScene {
+  sceneId: string;
+  robot: string;
+  modelHash: string;
+  joints: string[];
+}
+
+export type RobotSample =
+  { scene: RobotScene } | { input?: { id: string; values: Array<number | null> }; twin?: Array<number | null> };
 
 export interface RobotMount {
   id: number;

@@ -1,6 +1,6 @@
 # src/datasets/
 
-Datasets from Case tries: LeRobot v3.0 for `lerobot-train` and v2.1 for GR00T, camera views rendered and joined in a worker. `import/` reads LeRobot datasets and ROS 2 MCAP recordings back in as tries. Before editing here, read:
+Datasets of tries from any scene, versioned (`datasetFile.ts`, kept by `datasetStore/`), exported as LeRobot v3.0 for `lerobot-train` and v2.1 for GR00T, camera views rendered and joined in a worker. `import/` reads LeRobot datasets and ROS 2 MCAP recordings back in as tries. Before editing here, read:
 
 - [Cases](../../docs/guide/cases.md) (§8h, Datasets and Imported tries)
 - [Security](../../docs/guide/security.md) (§0h), for `import/`: every file there is hostile

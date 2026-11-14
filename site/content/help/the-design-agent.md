@@ -36,9 +36,10 @@ The agent builds in the open scene, so you can watch it work. It reads your word
 
 The agent picks parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) come first. If the catalog doesn't have a part, the agent can add one it found on the web, and the bill of materials lists it as Added by Agent.
 
-The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. For example:
+The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. It can gather tries into a dataset from a search or from a list of tries. For example:
 
 - Ask it to change how a ready Motor Kit skill moves. It keeps the change if Arena passes it and drops it if not.
+- Ask whether a ready skill holds up on a slicker floor or while carrying a load. It answers with the values where the skill starts to fail.
 - For a Routine, it proves each switch between skills and names any that fell.
 - With a Case and two open scenes, it tells you which robot passes more often.
 - Ask what happened in a try. It reads the try's recording and answers with times and values.

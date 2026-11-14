@@ -15,36 +15,39 @@ keywords:
   - parquet
   - imitation learning
 related:
-  - try-a-case
+  - make-a-dataset-from-tries
   - multiply-a-try-into-demonstrations
   - publish-a-dataset-to-hugging-face
 covers:
-  - src/components/simulate/ResultsSection.tsx
+  - src/components/tries/DatasetPane.tsx
   - src/workspace/useDatasetExport.ts
-  - src/workspace/caseCommands.tsx
+  - src/workspace/useDatasetRecords.ts
+  - src/workspace/datasetJob.ts
+  - src/workspace/datasetCommands.tsx
   - src/datasets/
 ---
 
-Export the passed tries from a Case as a LeRobot dataset with camera video. You can then use it to fine-tune LeRobot, GR00T or another robot model.
+Export the passed tries in a dataset as a LeRobot dataset with camera video. You can then use it to fine-tune LeRobot, GR00T or another robot model.
 
-LeRobot is Hugging Face's open library for robot learning, and GR00T is NVIDIA's foundation model for robots. Both learn from demonstrations, which are recordings of a task done right. Each passed try is one demonstration. Its instruction is the one you or the agent wrote, else the Case's brief.
+LeRobot is Hugging Face's open library for robot learning, and GR00T is NVIDIA's foundation model for robots. Both learn from demonstrations, which are recordings of a task done right. Each passed try is one demonstration. Its instruction is the one you or the agent wrote, else the dataset's task.
 
 1. Open a Case and record tries with **Try It** until at least one passes. To learn how, see [Try a Case](/help/try-a-case).
-2. Under **Results**, click **Export Dataset**.
+2. Under **Results**, click **Make Dataset**. The dataset opens over the canvas. To gather tries from other scenes or Cases, see [Make a dataset from tries](/help/make-a-dataset-from-tries).
+3. Click **Export Dataset**.
 
-![Export Dataset under a passed try in Results](/help/publish-a-dataset-to-hugging-face/results.png)
+![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 
-A toast shows "Exporting dataset…" and then tells you how many tries went in. The zip saves to your downloads, named after the Case. For example, Touch the Dots exports as `touch-the-dots-dataset.zip`.
+A toast shows "Exporting dataset…" and then tells you how many tries went in. The zip saves to your downloads, named after the dataset. For example, Touch the Dots exports as `touch-the-dots-dataset.zip`.
 
-You can also find **Export Dataset** in [[⌘K]].
+You can also find **Export Dataset** in [[⌘K]] while a dataset is open. Each export saves the dataset's tries as a version.
 
 ## Which tries go in
 
-The dataset includes only passed tries, and each one has to match the robot as it is now. Tries recorded before the robot's last change stay out, and the toast tells you how many. For example: "Exported 3 tries as a dataset, left out 2 from an earlier design".
+The export includes only passed tries, and each one has to match the robot as it is now. Missed tries stay in the dataset but out of the export. So do tries on another robot and tries recorded before the robot's last change, and the toast tells you how many. For example: "Exported 3 tries as a dataset, left out 2 from another Case or design".
 
-Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each. Tries from your real robot don't go in, because they only record where the robot's base went. [Imported tries](/help/import-robot-data-as-tries) don't go in either, even when a Case judges them, because Export Dataset takes only tries recorded in the Case.
+Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each. Tries from your real robot don't go in, because they only record where the robot's base went. [Imported tries](/help/import-robot-data-as-tries) on the same robot go in as demonstrations, unless a Case judged them failed or you marked them failed.
 
-If every passed try is from an earlier design, the toast says "These tries are from an earlier design. Try It again to record new ones."
+If none of the tries fit, the toast says "Export and training take only passed tries of this Case as it is now. Try It to record more."
 
 ## What's in the zip
 

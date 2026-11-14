@@ -69,8 +69,10 @@ interface Pass {
   staged: Staged | null;
 }
 
+const RECORDED_ON_HARDWARE = new Set<StoredTry['source']>(['real', 'import', 'operate']);
+
 const kindOf = (stored: StoredTry): SegmentRequest['kind'] =>
-  stored.source === 'real' || stored.source === 'import' ? 'real' : 'sim';
+  RECORDED_ON_HARDWARE.has(stored.source) ? 'real' : 'sim';
 
 function traceOf({ recording, staged }: Pass, model: SimModel | null) {
   if (!model || !staged) return null;

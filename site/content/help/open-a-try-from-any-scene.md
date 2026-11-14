@@ -15,6 +15,7 @@ keywords:
 related:
   - try-a-case
   - play-a-try-through-its-console
+  - keep-a-robot-session-as-a-try
 covers:
   - src/workspace/viewCommands.tsx
   - src/components/LibraryPanel.tsx
@@ -33,7 +34,7 @@ You can open any try you've recorded from any scene, then step through it on the
 
 ![The Library with a robot and its two tries under Tries](/help/open-a-try-from-any-scene/library.png)
 
-3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. An imported try shows its task and the file or repo it came from instead. An amber warning mark flags a try with a problem, such as a joint at its limit. Click a try to open it.
+3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. An imported try shows its task and the file or repo it came from instead, and a session on a connected robot shows the time it started. An amber warning mark flags a try with a problem, such as a joint at its limit. Click a try to open it.
 
 ![Tries over the canvas with a try from each of two scenes](/help/open-a-try-from-any-scene/tries.png)
 
@@ -46,7 +47,7 @@ You can open any try you've recorded from any scene, then step through it on the
 
 Or open Tries from the command menu. Press [[⌘K]], then choose **Show Tries**.
 
-The search at the top of the Library also finds tries, by words or by facts such as failed or last week. See [Search tries](/help/search-tries).
+The search at the top of the Library also finds tries, by words or by facts such as failed or last week. See [Search tries](/help/search-tries). To gather the tries a search finds into a dataset, press [[⌘K]] and choose **Make Dataset**. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 
 To tag tries or mark an imported try passed or failed, right-click it. See [Label a try](/help/label-a-try).
 

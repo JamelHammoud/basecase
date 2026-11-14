@@ -5,6 +5,7 @@ import { withVelocity } from '../sim/driveAccess';
 import type { Simulation } from '../sim/useSimulation';
 import type { SkillRow } from '../skills/skillRows';
 import type { SnapshotRef } from '../skills/snapshots';
+import type { StressAxisResult } from '../skills/stress';
 import type { Training } from '../sim/useTraining';
 import type { Rig } from '../utils/kinematics';
 import type { Cases } from '../workspace/useCases';
@@ -20,7 +21,7 @@ import type { CaseCompare } from '../workspace/useCaseCompare';
 import type { CaseExplore } from '../workspace/useCaseExplore';
 import { SimControls } from './simulate/SimControls';
 import { TrainSection, type CoachSend } from './simulate/TrainSection';
-import { coachMenuItems } from './simulate/skillMenu';
+import { coachMenuItems, stressMenuItems } from './simulate/skillMenu';
 
 interface SimulatePanelProps {
   sim: Simulation;
@@ -82,8 +83,13 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
     onDrive: () => void sim.drive.start(),
     onStop: skills.stop,
     onSnapshot: (row: SkillRow, ref: SnapshotRef) => void skills.playSnapshot(row, ref),
+    onFinding: (row: SkillRow, finding: StressAxisResult) => void skills.stress.replay(row, finding),
     onMenu: (e: React.MouseEvent, row: SkillRow) => {
       const items = [
+        ...stressMenuItems(row, {
+          onStress: (r) => toastProblem(skills.stress.run(r), props.onToast),
+          onTrain: (r) => toastProblem(skills.stress.train(r), props.onToast),
+        }),
         ...coachMenuItems(row, { coach: skills.coach, coaches: !!props.onCoach }),
         ...publishEntries(row, props.onPublishSkill),
       ];

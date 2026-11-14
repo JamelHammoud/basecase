@@ -16,8 +16,8 @@ keywords:
   - gr00t
   - groot
 related:
+  - make-a-dataset-from-tries
   - export-a-lerobot-dataset
-  - publish-a-dataset-to-hugging-face
 covers:
   - src/datasets/lerobot.ts
   - src/datasets/lerobotV3.ts
@@ -31,7 +31,7 @@ covers:
 
 Every file in a dataset from Export Dataset or Publish to Hugging Face, and what each column and camera video holds.
 
-Each passed try is one episode. The dataset comes in two layouts: LeRobot v3.0 at the top, and LeRobot v2.1 with GR00T's `meta/modality.json` in a `v2.1` folder. On the Hub, v3.0 is the main branch and v2.1 is the `v2.1` tag.
+Each passed try in the [dataset](/help/make-a-dataset-from-tries) is one episode. The dataset comes in two layouts: LeRobot v3.0 at the top, and LeRobot v2.1 with GR00T's `meta/modality.json` in a `v2.1` folder. On the Hub, v3.0 is the main branch and v2.1 is the `v2.1` tag.
 
 ## Files in v3.0
 
@@ -40,10 +40,10 @@ Each passed try is one episode. The dataset comes in two layouts: LeRobot v3.0 a
 | `data/chunk-000/file-000.parquet` | One row per frame, for many episodes. A new file starts before one passes 100 MB |
 | `videos/observation.images.<camera>/chunk-000/file-000.mp4` | Every episode's video for one camera, one after another. A new file starts before one passes 200 MB |
 | `meta/episodes/chunk-000/file-000.parquet` | One row per episode: its task, length, rows, the file and time span of each camera's video, and its statistics |
-| `meta/tasks.parquet` | Every task: a try's instruction, else the Case's brief, else the Case's name |
+| `meta/tasks.parquet` | Every task: a try's instruction, else the dataset's task |
 | `meta/stats.json` | The minimum, maximum, mean, standard deviation and count of every column across all episodes |
 | `meta/info.json` | The dataset's version (`v3.0`), frame rate, file size limits, columns and cameras |
-| `meta/basecase.json` | The Case, the hash of the model the tries ran on, and each episode's try, margin, `seed` and `source`: the try Multiply made it from, or null for a try you drove |
+| `meta/basecase.json` | The Case, when the dataset has one, the hash of the model the tries ran on, and each episode's try, margin, `seed` and `source`: the try Multiply made it from, or null for a try you drove |
 
 The joined videos aren't encoded again. Basecase copies each episode's frames into the camera's file as they are. An episode encoded with other settings starts a new file.
 

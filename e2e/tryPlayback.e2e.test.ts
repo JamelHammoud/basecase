@@ -134,7 +134,7 @@ describe('Playing a try through its console', () => {
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
       expect(await plot().getAttribute('data-playhead')).toBeNull();
 
-      await panel('tries').getByTestId('try-row').first().locator('button[aria-label="Replay"]').click();
+      await panel('tries').getByTestId('try-row').first().click();
       await expect.poll(async () => (await runState()).playback, { timeout: 30000 }).toBe(true);
       await expect.poll(async () => (await timeline())?.sought, { timeout: 30000 }).not.toBeNull();
       await expect.poll(() => panel('cams').getByTestId('camera-tile').count()).toBeGreaterThan(0);

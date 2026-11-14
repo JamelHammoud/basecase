@@ -11,11 +11,56 @@ pub struct Ros2Reading {
     pub at_us: u64,
     pub names: Vec<String>,
     pub positions: Vec<f64>,
+    pub velocities: Vec<Option<f64>>,
+    pub efforts: Vec<Option<f64>>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct Ros2Joint {
+    pub position: Option<f64>,
+    pub velocity: Option<f64>,
+    pub effort: Option<f64>,
+}
+
+fn measured(values: &[f64], count: usize) -> Vec<Option<f64>> {
+    if values.len() != count {
+        return vec![None; count];
+    }
+
+    values.iter().map(|value| value.is_finite().then_some(*value)).collect()
 }
 
 impl Ros2Reading {
+    pub fn from_state(state: JointState, at_us: u64) -> Self {
+        let count = state.name.len();
+
+        Self {
+            at_us,
+            velocities: measured(&state.velocity, count),
+            efforts: measured(&state.effort, count),
+            names: state.name,
+            positions: state.position,
+        }
+    }
+
     pub fn positions_of(&self, joints: &[String]) -> Vec<Option<f64>> {
         map_joints(joints, &self.names).pick(&self.positions)
+    }
+
+    pub fn joints_of(&self, joints: &[String]) -> Vec<Ros2Joint> {
+        let map = map_joints(joints, &self.names);
+        let velocities = map.pick(&self.velocities);
+        let efforts = map.pick(&self.efforts);
+
+        map.pick(&self.positions)
+            .into_iter()
+            .zip(velocities.into_iter().zip(efforts))
+            .map(|(position, (velocity, effort))| Ros2Joint {
+                position,
+                velocity: velocity.flatten(),
+                effort: effort.flatten(),
+            })
+            .collect()
     }
 
     pub fn names_digest_bytes(&self) -> Vec<u8> {
@@ -69,13 +114,7 @@ impl Ros2Bus {
         }
 
         match JointState::decode(&sample.payload) {
-            Ok(state) => {
-                self.latest = Some(Ros2Reading {
-                    at_us: self.clock.now_micros(),
-                    names: state.name,
-                    positions: state.position,
-                });
-            }
+            Ok(state) => self.latest = Some(Ros2Reading::from_state(state, self.clock.now_micros())),
             Err(_) => self.refused += 1,
         }
     }
@@ -184,11 +223,57 @@ mod tests {
     }
 
     #[test]
+    fn reads_velocity_and_effort_by_name_when_published() {
+        let published = JointState {
+            name: vec!["b".into(), "a".into()],
+            position: vec![2.0, 1.0],
+            velocity: vec![0.5, f64::INFINITY],
+            effort: vec![-1.5, 0.25],
+            ..JointState::default()
+        };
+        let joints = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+        let reading = Ros2Reading::from_state(published.clone(), 0);
+
+        assert_eq!(
+            reading.joints_of(&joints),
+            vec![
+                Ros2Joint {
+                    position: Some(1.0),
+                    velocity: None,
+                    effort: Some(0.25)
+                },
+                Ros2Joint {
+                    position: Some(2.0),
+                    velocity: Some(0.5),
+                    effort: Some(-1.5)
+                },
+                Ros2Joint::default(),
+            ]
+        );
+
+        let bare = Ros2Reading::from_state(
+            JointState {
+                velocity: Vec::new(),
+                effort: vec![1.0],
+                ..published
+            },
+            0,
+        );
+
+        assert!(bare
+            .joints_of(&joints)
+            .iter()
+            .all(|joint| joint.velocity.is_none() && joint.effort.is_none()));
+    }
+
+    #[test]
     fn the_names_digest_ignores_publish_order() {
         let first = Ros2Reading {
             at_us: 0,
             names: vec!["b".into(), "a".into()],
             positions: vec![0.0, 0.0],
+            velocities: vec![None, None],
+            efforts: vec![None, None],
         };
         let second = Ros2Reading {
             names: vec!["a".into(), "b".into()],

@@ -29,7 +29,7 @@ covers:
 
 You can split a try into labeled steps, such as reach, grasp and lift, and tag a try and mark it passed or failed. When you make a dataset from your tries, it can teach each step in words.
 
-1. Click **Replay** on a try in **Results**, or click a try in **Library** ▸ **Tries**.
+1. Click a try in **Results**, or in **Library** ▸ **Tries**.
 
 The try opens on the timeline, with its segments in the lane above the joints. Each segment is named for what the robot did and the object it touched.
 

@@ -13,6 +13,9 @@ export interface TryBackend {
   manifests: (ids: string[]) => Promise<StoredTry[]>;
   index: () => Promise<Uint8Array | null>;
   saveIndex: (bytes: Uint8Array) => Promise<void>;
+  session: (id: string) => Promise<string | null>;
+  saveSession: (stored: StoredTry, session: string) => Promise<void>;
+  saveVideo: (id: string, bytes: Uint8Array) => Promise<void>;
 }
 
 export const TRIES_LABEL = 'tries';

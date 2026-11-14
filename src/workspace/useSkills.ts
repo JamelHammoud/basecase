@@ -17,7 +17,14 @@ import { kitEnvironment } from '../skills/kitEnvironment';
 import { watchPlan } from '../skills/liveWatch';
 import { moveEnvironment } from '../skills/moveEnvironment';
 import type { SnapshotRef } from '../skills/snapshots';
-import { readyVelocity, skillRows, type SkillJob, type SkillRefusals, type SkillRow } from '../skills/skillRows';
+import {
+  readyVelocity,
+  skillRows,
+  type SkillJob,
+  type SkillRefusals,
+  type SkillRow,
+  type StressReports,
+} from '../skills/skillRows';
 import { skillsPlatform, type SkillsPlatform } from '../skills/skillsPlatform';
 import { designOf, SkillsRuntime, type KitInstall } from '../skills/skillsRuntime';
 import { teachExamples } from '../skills/teachExamples';
@@ -27,6 +34,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { platformBridge } from '../utils/platformBridge';
 import { trainHandoff, useRoutineSkills, type HandoffJob } from './useRoutineSkills';
 import { useSkillCoach } from './useSkillCoach';
+import { useSkillStress } from './useSkillStress';
 import { trainingProblem } from './trainingProblem';
 
 const BUILD_DEBOUNCE_MS = 1500;
@@ -43,6 +51,7 @@ interface SkillsInput {
 function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId' | 'setProject'>) {
   const [jobs, setJobs] = useState<SkillJob[]>([]);
   const [refusals, setRefusals] = useState<SkillRefusals>({});
+  const [stress, setStress] = useState<StressReports>({});
   const [platform] = useState(() => skillsPlatform({ web: IS_WEB_DEMO, workspaceId, store: platformBridge }));
   const [runtime] = useState(
     () =>
@@ -55,12 +64,13 @@ function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId'
         onRecord: (record) => setProject((p) => ({ ...p, skills: withRecord(p.skills ?? [], record) })),
         onChange: setJobs,
         onRefused: (target, refusal) => setRefusals((r) => ({ ...r, [target]: refusal ?? undefined })),
+        onStress: (target, report) => setStress((r) => ({ ...r, [target]: report ?? undefined })),
       }),
   );
 
   useEffect(() => () => runtime.dispose(), [runtime]);
 
-  return { runtime, platform, jobs, refusals };
+  return { runtime, platform, jobs, refusals, stress };
 }
 
 function useTabTraining(hasJoints: boolean) {
@@ -159,7 +169,7 @@ export function useSkills(input: SkillsInput) {
   const { sim, project, rig, parts } = input;
   const hasJoints = rig.joints.length > 0;
   const available = useTabTraining(hasJoints) && hasJoints;
-  const { runtime, platform, jobs, refusals } = useRuntime(input);
+  const { runtime, platform, jobs, refusals, stress } = useRuntime(input);
   const records = project.skills ?? [];
   const facts = robotFacts(rig, parts);
   const watch =
@@ -167,7 +177,7 @@ export function useSkills(input: SkillsInput) {
   const model = useSceneModel(input, { runtime, platform, watch });
   const animations = project.animations ?? [];
   const rows: SkillRow[] = model
-    ? skillRows({ model, design: designOf(model), records, jobs, animations, refusals })
+    ? skillRows({ model, design: designOf(model), records, jobs, animations, refusals, stress })
     : [];
   const velocityRecord = readyVelocity(rows);
   const examples = teachExamples(facts, footPoints(rig, parts).length);
@@ -215,6 +225,8 @@ export function useSkills(input: SkillsInput) {
 
     if (sim.status === 'off') await sim.start();
 
+    sim.setPhysics(null);
+
     const robot = rowEnvironment(row)?.robot ?? model?.robots[0]?.key ?? '';
 
     sim.setController({ kind: 'policy', policy, robot });
@@ -230,9 +242,12 @@ export function useSkills(input: SkillsInput) {
 
     if (sim.status === 'off') await sim.start();
 
+    sim.setPhysics(null);
     sim.setController(skill.controller);
     sim.reset();
   };
+
+  const stressing = useSkillStress({ sim, runtime, loadSkill: platform.loadSkill, environmentOf: rowEnvironment });
 
   return {
     runtime,
@@ -256,6 +271,7 @@ export function useSkills(input: SkillsInput) {
     playSnapshot,
     stop: () => runtime.stopUser(),
     coach,
+    stress: stressing,
     routineSkills,
     trainHandoff: (job: HandoffJob) => trainHandoff({ runtime, routineSkills, project, job }),
   };

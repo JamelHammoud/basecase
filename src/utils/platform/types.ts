@@ -1,7 +1,14 @@
 import type { SourcedItem } from '../../data/sourcedItems';
 import type { PairReply, PhoneEvent, PhoneState } from '../../phone/phoneTypes';
 import type { RobotPolicyRef } from '../../robot/robotPolicy';
-import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState, RobotMount } from '../../robot/robotState';
+import type {
+  ConnectReply,
+  ConnectSpec,
+  RobotEvent,
+  RobotLinkState,
+  RobotMount,
+  RobotSample,
+} from '../../robot/robotState';
 import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
   AcpChatMessage,
@@ -247,6 +254,7 @@ declare global {
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       hubCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       triesCall?: (channel: string, payload?: unknown) => Promise<unknown>;
+      datasetsCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       onshapeCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       earthCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       robotConnect?: (spec: ConnectSpec) => Promise<ConnectReply>;
@@ -255,6 +263,7 @@ declare global {
       robotPolicy?: (refs: RobotPolicyRef[]) => Promise<ConnectReply>;
       robotCalibrate?: (joints: RobotMount[]) => Promise<ConnectReply>;
       robotState?: () => Promise<RobotLinkState>;
+      robotRecord?: (sample: RobotSample) => Promise<ConnectReply>;
       onRobotEvent?: (callback: (event: RobotEvent) => void) => () => void;
       phonePair?: () => Promise<PairReply>;
       phoneUnpair?: () => Promise<{ ok: boolean }>;

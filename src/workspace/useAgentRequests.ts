@@ -67,6 +67,20 @@ const partInserter =
     updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));
   };
 
+function authorFor(event: AgentRequestEvent, actors: ActorIndex, cursors: AgentCursors): Author {
+  const laneId = event.workspaceId ? splitLaneKey(event.workspaceId).laneId : MAIN_LANE;
+  const actor = actors.actorOf(laneId, event.toolUseId);
+  const name = actors.nameOf(actor);
+
+  return {
+    laneId,
+    actor,
+    setAction: (action) => cursors.setAction(actor, name, action),
+    setCursor: (target) => cursors.setCursor(actor, name, target),
+    claim: (partId) => cursors.claim(actor, name, partId),
+  };
+}
+
 const tryReadOf = ({ simTraining, posing }: WorkspaceCore, timeline: () => TryTimeline): TryReadSources => ({
   timeline,
   model: simTraining.sim.modelNow,
@@ -147,19 +161,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     return result;
   };
 
-  const authorOf = (event: AgentRequestEvent): Author => {
-    const laneId = event.workspaceId ? splitLaneKey(event.workspaceId).laneId : MAIN_LANE;
-    const actor = actors.actorOf(laneId, event.toolUseId);
-    const name = actors.nameOf(actor);
-
-    return {
-      laneId,
-      actor,
-      setAction: (action) => cursors.setAction(actor, name, action),
-      setCursor: (target) => cursors.setCursor(actor, name, target),
-      claim: (partId) => cursors.claim(actor, name, partId),
-    };
-  };
+  const authorOf = (event: AgentRequestEvent) => authorFor(event, actors, cursors);
 
   const contextFor = (author: Author): RequestContext => ({
     parts: () => partsRef.current,
@@ -184,6 +186,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     caseCompare: core.caseCompare,
     caseExplore: core.caseExplore,
     caseRun: core.caseRun,
+    datasets: core.datasets,
     skills: core.simTraining.skills,
     tryRead: tryReadOf(core, () => timelineRef.current),
   });

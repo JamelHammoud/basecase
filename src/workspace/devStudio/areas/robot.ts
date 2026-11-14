@@ -1,4 +1,5 @@
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { loadRecording } from '../../../cases/tryStore';
 import type { Viewport3DHandle } from '../../../components/Viewport3D';
 import type { Angles } from '../../../robot/robotGap';
 import { robotLinkState, startRobotStore, type RobotLinkApi } from '../../../robot/robotStore';
@@ -8,6 +9,7 @@ import { importRobot } from '../../../utils/robotImport';
 import { robotPreviewImage } from '../../../utils/robotPreview';
 import { robotPackageZip } from '../../robotPackageExport';
 import { base64Files } from '../base64Files';
+import { recordedLink } from '../recordedLink';
 import type { Studio, StudioContext } from '../types';
 
 function robotGhostState(viewport: Viewport3DHandle | null) {
@@ -24,6 +26,19 @@ function robotGhostState(viewport: Viewport3DHandle | null) {
     gaps: byJoint(twin?.gaps),
     largest: twin?.largest ? { joint: twin.largest.joint, degrees: degrees(twin.largest.gap) } : null,
   };
+}
+
+async function tryLanes({ core }: StudioContext, id: string) {
+  const recording = await loadRecording(id);
+  const joints = core.simTraining.sim.modelNow()?.joints ?? [];
+  const address = recording?.jointQpos;
+
+  if (!recording || !address) return null;
+
+  const lane = (i: number) =>
+    Array.from({ length: recording.frames }, (_, n) => recording.qpos[n * recording.nq + address[i]]);
+
+  return Object.fromEntries(joints.map((j, i) => [j.id, lane(i)]));
 }
 
 async function robotPackage({ core }: StudioContext) {
@@ -43,8 +58,9 @@ export default function robotStudio(studio: Studio) {
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),
     robotPackage: () => robotPackage(studio()),
-    attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    attachRobot: (link: RobotLinkApi) => startRobotStore(recordedLink(link)),
     robotCalibration: async () => (await robotLinkState())?.calibration ?? null,
     robotGhost: () => robotGhostState(studio().core.viewportRef.current),
+    tryLanes: (id: string) => tryLanes(studio(), id),
   };
 }

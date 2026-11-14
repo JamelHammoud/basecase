@@ -124,6 +124,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `explore_case` | Runs a Case on each catalog version of the robot's servos and supply voltage |
 | `search_tries` | Searches the tries from every scene with the same words and facts as the Library's search, or by motion |
 | `label_tries` | Reads tries' filmstrips, segments and quality flags, and writes an instruction for each try and segment, and tags |
+| `make_dataset` | Gathers tries from any scene into a dataset, by search or by id, and opens it |
 | `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine, and proves each new switch between skills in it |
 | `test_routine`, `run_routine` | Tests and runs a Routine |
 | `draft_skill` | Writes a skill's contract |
@@ -131,6 +132,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `training_status` | Reports training progress |
 | `list_skills` | Lists the robot's skills |
 | `coach_skill` | Changes how a ready Motor Kit skill moves, and keeps the change only if Arena still passes it |
+| `stress_skill` | Finds the friction, link mass, servo strength or servo delay where a ready skill starts to fail |
 
 ## Build and cost
 

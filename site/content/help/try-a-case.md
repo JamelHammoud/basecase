@@ -44,7 +44,7 @@ You can drive your robot through an open Case while Basecase records the try. Wh
 
 6. To end the try, click **Stop Try** or press [[Esc]]. The try also ends when you choose another controller in **Control** or when the clock runs out.
 7. Find the new try under **Results**. It's marked **Passed** or **Missed**, and shows how long it took and four frames from it.
-8. To watch a try again, click **Replay** (▷) on it. Basecase plays it through the Case's cards, as in [Play a try through its console](/help/play-a-try-through-its-console).
+8. To watch a try again, click its row. Basecase plays it through the Case's cards, as in [Play a try through its console](/help/play-a-try-through-its-console).
 
 ![Results with the latest run and one try](/help/try-a-case/results.png)
 
@@ -83,7 +83,7 @@ After a run, **Results** shows whether the robot stayed up and which joints work
 
 To delete a try, right-click it, choose **Delete**, then confirm. To tag it, choose **Tag…** in the same menu, as in [Label a try](/help/label-a-try).
 
-Tries from your real robot are marked **Real**. When you click **Replay** on one of them, Basecase draws its path over the path of the best sim try.
+Tries from your real robot are marked **Real**. When you click one of them, Basecase draws its path over the path of the best sim try.
 
 The menu for a passed try also has **Multiply**. It makes up to 50 varied passing tries from that try, and the try's row then shows the count, such as **50 variations**. Deleting the try deletes its variations with it. See [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 
@@ -93,5 +93,5 @@ If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their
 
 - Tries are saved on this computer and left out of shared `.basecase` files.
 - The Library lists tries from every scene. See [Open a try from any scene](/help/open-a-try-from-any-scene).
-- Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset).
-- When you have five passed tries, you can train a policy from them. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+- Once a try passes, **Make Dataset** appears under the tries. It gathers the passed tries into a dataset. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
+- You can [export the dataset](/help/export-a-lerobot-dataset), and once five tries have passed, you can [train a policy](/help/train-a-policy-from-your-tries).

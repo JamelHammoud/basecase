@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AcpStatusInfo, AgentChoice, AgentKind } from '../types/robotics';
 import { agentKindOf } from '../agent/agentKinds';
 import { platformBridge } from '../utils/platformBridge';
@@ -12,6 +12,20 @@ const OFFLINE_STATUS: AcpStatusInfo = {
 };
 
 const STARTING_STATUS: AcpStatusInfo = { ...OFFLINE_STATUS, connecting: true };
+
+export const connectingFrom = (status: AcpStatusInfo): AcpStatusInfo => ({
+  ...status,
+  connected: false,
+  connecting: true,
+  error: undefined,
+});
+
+export const failedFrom = (status: AcpStatusInfo): AcpStatusInfo => ({
+  ...status,
+  connected: false,
+  connecting: false,
+  error: `Couldn’t reconnect to ${status.agentName}.`,
+});
 
 type AgentChoices = Partial<Record<AgentKind, AgentChoice>>;
 
@@ -40,13 +54,25 @@ const loadAgentChoices = (): AgentChoices => {
 export function useAgentConnection() {
   const [acpStatus, setAcpStatus] = useState<AcpStatusInfo>(STARTING_STATUS);
   const [agentChoices, setAgentChoices] = useState(loadAgentChoices);
+  const reconnects = useRef(0);
   const kind = agentKindOf(acpStatus);
   const agentChoice = agentChoices[kind] ?? NO_CHOICE;
 
   const setAgentChoice = (choice: AgentChoice) => setAgentChoices((all) => ({ ...all, [kind]: choice }));
 
   const reconnectAcp = async (command?: string) => {
-    setAcpStatus(await platformBridge.connectAcp(command));
+    const attempt = ++reconnects.current;
+    const latest = () => attempt === reconnects.current;
+
+    setAcpStatus(connectingFrom);
+
+    try {
+      const status = await platformBridge.connectAcp(command);
+
+      if (latest()) setAcpStatus(status);
+    } catch {
+      if (latest()) setAcpStatus(failedFrom);
+    }
   };
 
   const signInAcp = async (methodId: string) => {

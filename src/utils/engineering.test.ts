@@ -114,7 +114,7 @@ describe('runEngineering on a two-joint leg', () => {
       ['knee', '26.0', 'pass'],
     ]);
     expect(engineeringText(r, (v) => v)).toContain(
-      '- knee left_knee: carries 26 g; hold 0.01, stance as modeled 0.00, 30° crouch 0.06 → stance load 0.06 N·m vs stall 2.72 / rated 0.98 at 11.1 V (0.02 of stall, heat 0.04× rated) PASS · axis through [0, 67, 0]',
+      '- knee left_knee: carries 26 g; hold 0.01 N·m, stance as modeled 0.00 N·m, 30° crouch 0.06 N·m → stance load 0.06 N·m vs stall 2.72 N·m / rated 0.98 N·m at 11.1 V (0.02 of stall, heat 0.04× rated) PASS · axis through [0, 67, 0]',
     );
   });
 

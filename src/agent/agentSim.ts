@@ -12,6 +12,7 @@ import { TOOL_IMAGE_SIDE } from './agentPoseShared';
 import { errorMessage } from '../utils/errorMessage';
 import { duration, runClock } from '../utils/duration';
 import { weight } from '../utils/weight';
+import { torque } from '../utils/torque';
 import { plural } from '../../electron/plural.mjs';
 import { percent } from '../../electron/percent.mjs';
 
@@ -94,9 +95,9 @@ function robotLine(r: SimRun['stats']['robots'][number], model: SimRun['model'],
 function effortLine(j: SimRun['stats']['joints'][number], model: SimRun['model'], rig: Rig): string {
   const sj = model.joints.find((x) => x.id === j.id);
   const name = rig.byId.get(j.id)?.name ?? j.id;
-  const unit = sj?.type === 'prismatic' ? 'N' : 'N·m';
+  const limit = sj?.type === 'prismatic' ? `${sj.effort.toFixed(2)} N` : sj && torque(sj.effort);
 
-  return `- ${j.id} (${prettyJointName(name)}): ${percent(Math.min(j.peak, 1))} of ${sj ? sj.effort.toFixed(2) : '?'} ${unit} (${sj?.effortSource ?? '?'})${j.saturatedS > 0.02 ? `, ${duration(j.saturatedS)} at the limit` : ''}`;
+  return `- ${j.id} (${prettyJointName(name)}): ${percent(Math.min(j.peak, 1))} of ${limit ?? '?'} (${sj?.effortSource ?? '?'})${j.saturatedS > 0.02 ? `, ${duration(j.saturatedS)} at the limit` : ''}`;
 }
 
 export function simReport(run: SimRun, rig: Rig, seconds: number): string {

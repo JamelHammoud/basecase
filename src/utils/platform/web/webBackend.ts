@@ -5,6 +5,7 @@ import { trainedPolicy, trainedSkill } from './webTrained';
 import { deleteScene, getScene, listScenes, saveScene, saveScenePreview } from './webScenes';
 import { getSkill, saveSkill } from './webSkills';
 import { errorMessage } from '../../errorMessage';
+import { newestModelFirst } from '../../modelList';
 
 type Body = Record<string, unknown>;
 
@@ -21,10 +22,7 @@ const TRAINER: TrainerStatus = { uv: false, ready: false, running: [], desktopOn
 
 const OK = { ok: true };
 
-const newestModel = (a: CustomModelDefinition, b: CustomModelDefinition) =>
-  (b.createdAt || '').localeCompare(a.createdAt || '');
-
-const listModels = async () => (await idbAll<CustomModelDefinition>('models')).sort(newestModel);
+const listModels = async () => (await idbAll<CustomModelDefinition>('models')).sort(newestModelFirst);
 
 async function saveModel(model: CustomModelDefinition) {
   const record = {
@@ -41,7 +39,7 @@ async function saveModel(model: CustomModelDefinition) {
 async function deleteModel(id: string) {
   await idbDelete('models', id);
 
-  return listModels();
+  return OK;
 }
 
 const listPurchases = async () => (await idbGet<Record<string, PurchaseRecord>>('settings', 'purchases')) ?? {};

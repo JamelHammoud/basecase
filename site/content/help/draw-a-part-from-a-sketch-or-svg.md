@@ -62,4 +62,6 @@ The part starts 64 mm wide and 10 mm thick. Width runs from 5 to 500 mm and thic
 
 To paste SVG code from a design app such as Figma or Illustrator, click **Paste Code**. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before adding it.
 
+To leave either panel without adding a part, click **Done**. [[Esc]] leaves only while the panel is empty, so it never throws away a drawing or a loaded SVG. In Sketch, the first Esc drops the tool you're drawing with.
+
 Sketch is also in [[⌘K]] and the canvas's right-click menu. To open Import SVG with a file already loaded, choose **Import** there, in **File** or in the Library's **+** menu, or drop the SVG on the canvas.

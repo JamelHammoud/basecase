@@ -1,8 +1,11 @@
 import type { SavedSceneRecord } from '../types/robotics';
 import { platformBridge } from './platformBridge';
 import { upgradeSceneRecord } from './robotUpgrade';
+import { sceneWritten } from './sceneWrites';
 
 export async function loadSceneRecord(id: string): Promise<SavedSceneRecord | null> {
+  await sceneWritten(id);
+
   const record = await platformBridge.getScene(id);
 
   if (!record) {

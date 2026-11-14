@@ -50,7 +50,9 @@ When a robot follows [your arms](/help/drive-a-robot-with-your-camera) or [your 
 
 Camera tiles draw boxes with each detected object's class and score. The first use downloads the object detector, then keeps it on this computer. Detection runs at up to five frames per second for each camera, independently of the camera's display rate.
 
-![The wrist camera in Pick Up a Block showing the block detection box and score](/help/run-vision-on-a-camera/wrist-block.png)
+![RF-DETR Nano detecting a bus and people in a recorded sample frame](/help/watch-what-the-robots-cameras-see/recorded-detections.png)
+
+This sample video repeats [Ultralytics’ bus image](https://github.com/ultralytics/ultralytics/blob/main/ultralytics/assets/bus.jpg).
 
 The same boxes appear on a running Case's camera panels and on saved camera video at the playhead. Image captures keep the camera's original pixels without the boxes.
 

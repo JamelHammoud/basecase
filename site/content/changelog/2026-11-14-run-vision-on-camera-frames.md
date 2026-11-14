@@ -12,4 +12,6 @@ The detector runs locally in its own worker, at up to five frames per second per
 
 Saved camera videos are analyzed at the playhead. Captured images keep their original pixels without the boxes. Speech and Look and Answer aren't included in this camera runtime.
 
+The cover shows detections on a recorded frame of [Ultralytics’ bus image](https://github.com/ultralytics/ultralytics/blob/main/ultralytics/assets/bus.jpg).
+
 Steps are in [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).

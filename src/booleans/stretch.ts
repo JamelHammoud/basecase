@@ -85,4 +85,4 @@ export function stretchOf(part: BooleanPart): Stretch {
 }
 
 export const resizeReason = (stretch: Stretch | null) =>
-  stretch?.by ? `${stretch.by.name} keeps its shape. Select it in Layers to change it.` : null;
+  stretch?.by ? `${stretch.by.name} keeps its shape. Select it in Layers to move or resize it.` : null;

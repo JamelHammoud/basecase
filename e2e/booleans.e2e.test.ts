@@ -193,7 +193,7 @@ describe('editable booleans', () => {
 
     await expect.poll(() => width.isDisabled()).toBe(true);
     expect(await app.page.locator(shown('[data-testid="size-fixed"]')).innerText()).toBe(
-      'M3 Screw keeps its shape. Select it in Layers to change it.',
+      'M3 Screw keeps its shape. Select it in Layers to move or resize it.',
     );
     expect(app.errors).toEqual([]);
   });

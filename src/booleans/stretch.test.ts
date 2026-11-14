@@ -67,7 +67,7 @@ describe('stretching a boolean', () => {
     expect(edited.dimensions.width).toBe(cut.dimensions.width);
     expect(cut.dimensions.width).toBe(was);
     expect(stretchOf(result)).toEqual({ fixed: [true, true, true], by: expect.objectContaining({ id: 'screw' }) });
-    expect(resizeReason(stretchOf(result))).toBe('M3 Screw keeps its shape. Select it in Layers to change it.');
+    expect(resizeReason(stretchOf(result))).toBe('M3 Screw keeps its shape. Select it in Layers to move or resize it.');
   });
 
   it('stretches a plate with a screw subtracted, keeping the hole the screw’s size', async () => {

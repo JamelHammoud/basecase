@@ -31,6 +31,7 @@ function gateOver(results: Readiness[], autoFixBlockers = true) {
   let i = 0;
   const core = {
     studio: { autoFixBlockers },
+    docs: { partsRef: { current: [] } },
     readiness: { checkNow: async () => results[Math.min(i++, results.length - 1)], startTurn: () => undefined },
   } as unknown as WorkspaceCore;
   const gate = readinessGate(core);
@@ -42,10 +43,10 @@ function gateOver(results: Readiness[], autoFixBlockers = true) {
 
 describe('the follow-up after a turn', () => {
   it('asks the agent to fix blockers its turn added', async () => {
-    const text = await gateOver([verdict('a', ['old']), verdict('b', ['old', 'new'])]).followUp();
+    const request = await gateOver([verdict('a', ['old']), verdict('b', ['old', 'new'])]).followUp();
 
-    expect(text).toContain('[new]');
-    expect(text).not.toContain('[old]');
+    expect(request?.text).toBe('Your last change added 1 problem. Fix it.');
+    expect(request?.quotes.map((q) => q.id)).toEqual(['new']);
   });
 
   it('stays quiet when nothing new appeared', async () => {

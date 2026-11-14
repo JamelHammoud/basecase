@@ -12,7 +12,7 @@ import type { CoachSend } from '../components/simulate/TrainSection';
 import { measuredJoints } from '../reality/measuredJoints';
 import type { ProjectSettings } from '../types/robotics';
 import { caseCheckId, caseCheckOf } from '../readiness/caseChecks';
-import { findingQuote, fixPrompt } from '../readiness/readiness';
+import { findingQuote, fixRequest } from '../readiness/readiness';
 import { showNewCase } from './caseCommands';
 import { calibrateJoints } from './operateCommands';
 import { InspectTab } from './InspectTab';
@@ -66,7 +66,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
           ? undefined
           : (finding) => {
               tool.openRightTab('acp');
-              void agent.send({ text: fixPrompt(finding), ...studio.agentChoice }, 'queue');
+              void agent.send({ ...fixRequest(finding, parts), ...studio.agentChoice }, 'queue');
             }
       }
       onQuoteFinding={IS_WEB_DEMO ? undefined : (finding) => tool.requestQuote(findingQuote(finding, parts))}

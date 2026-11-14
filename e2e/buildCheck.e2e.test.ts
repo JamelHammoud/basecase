@@ -91,10 +91,15 @@ describe('Checks', () => {
     await expect.poll(() => checks().getByRole('button', { name: 'Fix' }).count(), { timeout: 45000 }).toBe(fixes);
     await checks().getByRole('button', { name: 'Fix' }).first().click();
 
-    const prompt = () => promptContaining('Fix this problem from Checks');
+    const prompt = () => promptContaining('Quoted from Checks');
 
-    await expect.poll(prompt, { timeout: 15000 }).toContain('Fix this problem from Checks');
-    expect(prompt()).toContain('dispute_finding');
+    await expect.poll(prompt, { timeout: 15000 }).toContain('Fix this.');
+    expect(prompt()).toMatch(/Check: [a-z]+:[^"]*dispute_finding/);
+
+    const feed = app.page.locator(visible('main, body')).first();
+
+    await expect.poll(() => feed.innerText()).toContain('Fix this.');
+    expect(await feed.innerText()).not.toMatch(/dispute_finding|get_readiness|Check: |library\//);
   }, 120000);
 
   it('send a quote with the message and show it above the text in the chat', async () => {

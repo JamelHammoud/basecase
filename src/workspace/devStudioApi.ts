@@ -12,7 +12,7 @@ import { lastDownload } from '../utils/downloadBytes';
 import { replayErrors } from '../reality/jointReplay';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
-import { degrees } from '../robot/robotGhost';
+import { radiansToDegrees as degrees } from '../utils/angle';
 import { phoneSnapshot } from '../phone/phoneStore';
 import { inputEvents } from '../sim/inputEvents';
 import {

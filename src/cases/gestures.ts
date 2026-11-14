@@ -59,8 +59,13 @@ export const gestureNames = (gestures: readonly CaseGesture[] = []): string[] =>
 
 export const untaught = (gestures: readonly CaseGesture[] = []) => gestures.filter((g) => !g.examples.length);
 
+export const canTeach = (gestures: readonly CaseGesture[] = [], name: string) =>
+  gestures.length < MAX_TAUGHT_GESTURES || gestures.some((g) => g.name === name);
+
 export function withGesture(gestures: readonly CaseGesture[] = [], gesture: CaseGesture): CaseGesture[] {
   const at = gestures.findIndex((g) => g.name === gesture.name);
 
-  return at < 0 ? [...gestures, gesture] : gestures.map((g, i) => (i === at ? gesture : g));
+  if (at >= 0) return gestures.map((g, i) => (i === at ? gesture : g));
+
+  return canTeach(gestures, gesture.name) ? [...gestures, gesture] : [...gestures];
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { isBuiltinGesture } from '../../cameras/gestures/builtinGestures';
-import { EXAMPLES_PER_GESTURE, untaught, type CaseGesture } from '../../cases/gestures';
+import { canTeach, EXAMPLES_PER_GESTURE, untaught, type CaseGesture } from '../../cases/gestures';
 import { CameraIcon, Modal, TextInput } from '../../design-system';
 import { TEACH_GESTURE } from './teachGestureStore';
 import { useTeachGesture } from './useTeachGesture';
@@ -25,7 +25,7 @@ function Progress({ taught }: { taught: number }) {
   return (
     <div className="flex justify-center gap-[8px]">
       {Array.from({ length: EXAMPLES_PER_GESTURE }, (_, i) => (
-        <span key={i} className={`w-[8px] h-[8px] rounded-full ${i < taught ? 'bg-[#0d99ff]' : 'bg-white/[0.16]'}`} />
+        <span key={i} className={`w-[8px] h-[8px] rounded-full ${i < taught ? 'bg-figma-blue' : 'bg-white/20'}`} />
       ))}
     </div>
   );
@@ -34,7 +34,7 @@ function Progress({ taught }: { taught: number }) {
 export function TeachGestureSheet({ gestures, onTaught, onClose }: TeachGestureSheetProps) {
   const [typed, setTyped] = useState(() => untaught(gestures)[0]?.name ?? '');
   const name = asName(typed);
-  const ready = NAME.test(name) && !isBuiltinGesture(name);
+  const ready = NAME.test(name) && !isBuiltinGesture(name) && canTeach(gestures, name);
   const teach = useTeachGesture((gesture) => {
     onTaught(gesture);
     onClose();
@@ -70,7 +70,7 @@ export function TeachGestureSheet({ gestures, onTaught, onClose }: TeachGestureS
           <div className="flex flex-col items-center gap-[16px] py-[8px]">
             <span className="h-[64px] flex items-center text-[48px] font-semibold tabular-nums text-white">
               {teach.phase === 'recording' ? (
-                <span className="w-[24px] h-[24px] rounded-full bg-[#0d99ff] animate-pulse" />
+                <span className="w-[24px] h-[24px] rounded-full bg-figma-blue animate-pulse" />
               ) : (
                 teach.count
               )}

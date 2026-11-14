@@ -4,7 +4,7 @@ import { GESTURE_FEATURES } from '../cameras/gestures/gestureFrame';
 import { exampleFrom } from '../cameras/gestures/gestureRecognizer';
 import { fixtureRobots } from '../sim/fixtures/robots';
 import { createSignalBus } from './console/signalBus';
-import { gestureNames, MAX_TAUGHT_GESTURES, untaught, withGesture, type CaseGesture } from './gestures';
+import { canTeach, gestureNames, MAX_TAUGHT_GESTURES, untaught, withGesture, type CaseGesture } from './gestures';
 import { parseCase, touchTheDots } from './testing';
 
 const plain = () => JSON.parse(JSON.stringify(touchTheDots(fixtureRobots().find((r) => r.id === 'arm-3dof')!)));
@@ -62,6 +62,20 @@ describe('a Case’s gestures', () => {
 
     expect(withGesture(first, salute())).toEqual([salute()]);
     expect(withGesture(first, { name: 'bow', examples: [] }).map((g) => g.name)).toEqual(['salute', 'bow']);
+  });
+
+  it('keeps a Case parseable when a ninth name is taught', () => {
+    const full = Array.from({ length: MAX_TAUGHT_GESTURES }, (_, i) => ({ name: `g${i}`, examples: [] }));
+    const taught = withGesture(full, salute());
+
+    expect(canTeach(full, 'salute')).toBe(false);
+    expect(canTeach(full, 'g0')).toBe(true);
+    expect(taught.map((g) => g.name)).not.toContain('salute');
+    expect(withGestures(taught)).not.toThrow();
+    expect(withGesture(full, { name: 'g0', examples: salute().examples })[0]).toEqual({
+      name: 'g0',
+      examples: salute().examples,
+    });
   });
 });
 

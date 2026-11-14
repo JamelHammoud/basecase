@@ -8,6 +8,7 @@ import {
   images,
   linkText,
   longSentences,
+  menuPaths,
   pageLinks,
   paragraphLength,
   plainKeys,
@@ -20,7 +21,7 @@ import {
 
 const CONTENT_PATH = /(?:^|\/)site\/content\/(changelog|blog|help)\/([^/]+)\.md$/;
 
-const EVERY_PAGE = [bannedWords, spelling, linkText, pageLinks, images, title];
+const EVERY_PAGE = [bannedWords, spelling, linkText, pageLinks, images, title, menuPaths];
 
 export const RULES = {
   changelog: [...EVERY_PAGE, sentenceLength, paragraphLength, summaryLength, helpLink, uiLabels],

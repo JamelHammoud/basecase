@@ -10,7 +10,7 @@ A robot repo rarely holds only the robot. Launch files, configs and test worlds 
 
 ## Where it is
 
-Press ⌘K and choose Import Robot. It's also in File ▸ Import Robot and behind the + at the top of the Robots view. One field takes any of these:
+Press ⌘K and choose Import Robot. It's also in **File** ▸ **Import Robot** and behind the + at the top of the Robots view. One field takes any of these:
 
 - a GitHub repo, a folder in one, or its Download ZIP link, like `github.com/TheRobotStudio/SO-ARM100`
 - a Hugging Face model or dataset repo, a folder, or a single file in one
@@ -40,6 +40,6 @@ Drag a robot's folder, zip, URDF, xacro or MJCF file onto the canvas and the rob
 
 ## After it's in
 
-Each piece of the robot with a shape becomes a mesh part. Each revolute or prismatic joint keeps its axis and limits, ready for the Pose tab, Simulate and Operate. Robots imported from a link are remembered in Robots ▸ Imported with a preview, so they're one click away next time, in any scene.
+Each piece of the robot with a shape becomes a mesh part. Each revolute or prismatic joint keeps its axis and limits, ready for the Pose tab, Simulate and Operate. Robots imported from a link are remembered in **Robots** ▸ **Imported** with a preview, so they're one click away next time, in any scene.
 
 Steps are in [Import a robot](/help/import-a-robot).

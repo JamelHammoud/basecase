@@ -26,7 +26,7 @@ covers:
   - src/utils/robotImport/urdfWriter.ts
 ---
 
-Every file in the zip that Export ▸ Robot Package saves, and what each one holds.
+Every file in the zip that **Export** ▸ **Robot Package** saves, and what each one holds.
 
 The zip unpacks to one folder named `<scene>-robot`. Lengths are in meters and angles in radians, with Z up.
 

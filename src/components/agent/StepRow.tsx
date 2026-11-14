@@ -3,7 +3,7 @@ import { DisclosureChevron } from './Disclosure';
 import { SHIMMER_TEXT } from './shimmer';
 import { ToolIcon } from './toolRules';
 
-const tone = (failed: boolean) => (failed ? 'text-red-400' : 'text-white/50 enabled:hover:text-white/80');
+const tone = (failed: boolean) => (failed ? 'text-red-400' : 'text-white/50 enabled:hover:text-white/90');
 
 export const StepRow: React.FC<{
   icon: ToolIcon;

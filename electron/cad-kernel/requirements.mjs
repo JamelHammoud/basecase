@@ -12,7 +12,7 @@ function holesCheck(spec, ctx) {
   const want = `${spec.count}× through hole Ø${spec.d} along ${axis}`;
 
   if (spec.through === false) {
-    return { name: 'holes', want, pass: null, got: 'blind holes are not measured; declare them as bore ports' };
+    return { name: 'holes', want, pass: null, got: 'blind holes aren’t measured; declare them as bore ports' };
   }
 
   const found = ctx.holesAlong(axis, spec.d);

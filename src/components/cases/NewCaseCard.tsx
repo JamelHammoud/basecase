@@ -97,7 +97,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
           );
         })}
       </div>
-      <p className="text-[12.5px] leading-snug text-white/55" data-testid="new-case-brief">
+      <p className="text-[12.5px] leading-snug text-white/60" data-testid="new-case-brief">
         {preview.ok ? preview.kase.brief : preview.problem}
       </p>
       <div className="flex justify-end gap-2">

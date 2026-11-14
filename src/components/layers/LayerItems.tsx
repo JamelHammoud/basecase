@@ -16,7 +16,7 @@ import { hasPrimaryModifier } from '../../utils/os';
 export const ROW =
   'group relative h-[32px] rounded-lg flex items-center text-[13px] cursor-default [transition-property:color,--layer-row-fill] duration-150 ease-in-out bg-[var(--layer-row-fill)]';
 
-const SELECTED = '[--layer-row-fill:color-mix(in_srgb,#0d99ff_18%,var(--color-panel-bg))] text-white';
+const SELECTED = '[--layer-row-fill:color-mix(in_srgb,#0d99ff_18%,var(--color-panel-bg))]';
 const RESTING =
   '[--layer-row-fill:var(--color-panel-bg)] hover:[--layer-row-fill:color-mix(in_srgb,white_5%,var(--color-panel-bg))]';
 
@@ -25,7 +25,14 @@ export const ACTIONS_PLACE = 'inset-y-0 right-0 pr-1 rounded-r-lg';
 
 const COLLAPSED_UNTIL_REVEAL = 'hidden group-hover:flex group-has-[:focus-visible]:flex';
 
-export const rowTone = (selected: boolean, rest: string) => (selected ? SELECTED : `${RESTING} ${rest}`);
+const rowText = (selected: boolean, dimmed: boolean) => {
+  if (dimmed) return 'text-white/50';
+
+  return selected ? 'text-white' : 'text-white/90';
+};
+
+export const rowTone = (selected: boolean, dimmed = false) =>
+  `${selected ? SELECTED : RESTING} ${rowText(selected, dimmed)}`;
 
 const PartGlyph: React.FC<{ part: ScenePart }> = ({ part }) => {
   if (part.kind === 'image_plane' && part.imageDataUrl) {
@@ -113,7 +120,7 @@ const Chevron: React.FC<{ collapsed: boolean; onToggle: () => void }> = ({ colla
       e.stopPropagation();
       onToggle();
     }}
-    className="w-5 h-5 shrink-0 rounded flex items-center justify-center text-white/50 hover:text-white/80 cursor-default"
+    className="w-5 h-5 shrink-0 rounded flex items-center justify-center text-white/50 hover:text-white/90 cursor-default"
   >
     <ChevronRightIcon className={`w-3.5 h-3.5 transition-transform duration-150 ${collapsed ? '' : 'rotate-90'}`} />
   </button>
@@ -167,7 +174,7 @@ export const PartRow: React.FC<PartRowProps> = ({
         if (topLevel) on.onContextMenu(part, e.clientX, e.clientY);
       }}
       style={{ paddingLeft: rowIndent(depth, collapsed !== undefined) }}
-      className={`${ROW} pr-2.5 gap-2 ${rowTone(selected, 'text-white/80')} ${dimmed ? 'text-white/50' : ''}`}
+      className={`${ROW} pr-2.5 gap-2 ${rowTone(selected, dimmed)}`}
     >
       {collapsed !== undefined && <Chevron collapsed={collapsed} onToggle={() => on.onToggleCollapsed(part.id)} />}
       <PartGlyph part={part} />
@@ -215,7 +222,7 @@ export const GroupRow: React.FC<GroupRowProps> = ({ id, name, memberIds, selecte
       e.preventDefault();
       on.onContextMenu(memberIds, selected, { x: e.clientX, y: e.clientY });
     }}
-    className={`${ROW} pl-1 pr-2 gap-1.5 font-medium ${rowTone(selected, 'text-white/85')}`}
+    className={`${ROW} pl-1 pr-2 gap-1.5 font-medium ${rowTone(selected)}`}
   >
     <Chevron collapsed={collapsed} onToggle={() => on.onToggleCollapsed(id)} />
     <GroupIcon className="w-3.5 h-3.5 text-white/50 shrink-0" />

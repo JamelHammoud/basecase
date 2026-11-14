@@ -37,7 +37,7 @@ export const CameraTile: React.FC<CameraTileProps> = ({ view, large, fill, renam
       <span className={tileLabel}>{view.label}</span>
     )}
     <span
-      className={`pointer-events-none absolute right-1.5 bottom-1.5 text-white/70 tabular opacity-0 group-hover/tile:opacity-100 transition-opacity ${tileChip}`}
+      className={`pointer-events-none absolute right-1.5 bottom-1.5 text-white/60 tabular opacity-0 group-hover/tile:opacity-100 transition-opacity ${tileChip}`}
     >
       {lensLabel(view.lens)}
     </span>

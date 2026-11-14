@@ -125,7 +125,7 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
                   onPointerMove={() => setActive(idx)}
                   onClick={() => run(c)}
                   className={`w-full h-10 px-3 rounded-xl flex items-center gap-3 text-left text-[14px] cursor-default ${
-                    isActive ? 'bg-white/[0.09] text-white' : 'text-white/80'
+                    isActive ? 'bg-white/[0.09] text-white' : 'text-white/90'
                   }`}
                 >
                   <span

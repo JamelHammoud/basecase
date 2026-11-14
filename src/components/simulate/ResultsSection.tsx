@@ -62,7 +62,7 @@ const TryRow: React.FC<TryRowProps> = (props) => {
   return (
     <div className="py-1.5 flex flex-col gap-1.5" onContextMenu={onMenu} data-testid="try-row">
       <div className="flex items-center gap-2 text-[13px]">
-        <span className={record.passed ? 'text-white/85' : 'text-red-400'}>{outcome(record)}</span>
+        <span className={record.passed ? 'text-white/90' : 'text-red-400'}>{outcome(record)}</span>
         {record.real && (
           <span data-testid="try-real">
             <Badge>Real</Badge>

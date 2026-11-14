@@ -36,6 +36,8 @@ const VALUE_KEYS: Array<[string, ParamKey]> = [
   ['stops', 'stops'],
   ['spacing_mm', 'spacingMm'],
   ['seconds', 'seconds'],
+  ['rise_mm', 'riseMm'],
+  ['incline_deg', 'inclineDeg'],
 ];
 
 const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v : undefined);

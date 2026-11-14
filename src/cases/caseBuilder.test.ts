@@ -43,8 +43,8 @@ describe('the Case builder', () => {
 
   it('offers the worlds that suit each goal', () => {
     expect(worldsFor('touch').map((w) => w.kind)).toEqual(['floor', 'shelf']);
-    expect(worldsFor('reach').map((w) => w.kind)).toEqual(['floor', 'corridor', 'block']);
-    expect(worldsFor('walk').map((w) => w.kind)).toEqual(['floor', 'corridor', 'block']);
+    expect(worldsFor('reach').map((w) => w.kind)).toEqual(['floor', 'corridor', 'block', 'rough', 'steps', 'slope']);
+    expect(worldsFor('walk').map((w) => w.kind)).toEqual(['floor', 'corridor', 'block', 'rough', 'steps', 'slope']);
   });
 
   it('builds every goal in every world it suits, and each one passes the Case validator', () => {

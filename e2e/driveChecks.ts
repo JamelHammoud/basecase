@@ -131,3 +131,20 @@ export function touchingPolicy(): PolicySpec {
     createdAt: '2026-11-13T00:00:00Z',
   };
 }
+
+export async function endTryAt(page: Page, seconds: number) {
+  await page.evaluate(async (at) => {
+    const clock = () =>
+      [...document.querySelectorAll('[data-testid="try-clock"]')].find((el) => !el.closest('[inert]'));
+    const elapsed = () => Number.parseFloat(clock()?.textContent ?? '') || 0;
+    const deadline = Date.now() + 30000;
+
+    while (elapsed() < at) {
+      if (Date.now() > deadline) throw new Error(`The try clock never reached ${at} s`);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
+    clock()?.parentElement?.querySelector('button')?.click();
+  }, seconds);
+}

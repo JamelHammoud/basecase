@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { caseName, goalFields, goalValues, worldsFor } from '../../cases/caseBuilder';
+import { caseFields, caseName, goalValues, worldsFor } from '../../cases/caseBuilder';
 import { goalParam, type GoalKind, type GoalValues } from '../../cases/caseGoals';
 import type { WorldKind } from '../../cases/caseWorlds';
 import { Button, ChoiceGrid, FieldRow, NumberInput, TextInput } from '../../design-system';
@@ -60,7 +60,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         />
       )}
       <div className="flex flex-col gap-2">
-        {goalFields(goal, values).map((key) => {
+        {caseFields(goal, values, world).map((key) => {
           const param = goalParam(goal, key);
 
           return (

@@ -18,6 +18,9 @@ keywords:
   - push a box
   - follow a path
   - walk without falling
+  - rough ground
+  - steps
+  - slope
   - touch a point
 related:
   - make-a-case
@@ -30,6 +33,7 @@ covers:
   - src/cases/pickGoal.ts
   - src/cases/handoffGoal.ts
   - src/cases/roomWorld.ts
+  - src/cases/terrain.ts
   - src/cases/contract.ts
   - src/cases/scale.ts
   - src/skills/contract.ts
@@ -67,6 +71,8 @@ The builder starts each number at a default sized to the robot. Its limits:
 | **Spots** | 2 to 8 |
 | **Spacing** | 200 to 3,000 mm; from 50 mm for Pick Up a Block |
 | **Time** | 2 to 120 s |
+| **Height** on Rough Ground or Steps | 2 to 500 mm |
+| **Incline** on Slope | 2 to 40° |
 
 ## Worlds
 
@@ -75,8 +81,13 @@ The builder starts each number at a default sized to the robot. Its limits:
 | **Open Floor** | All | Nothing but the floor |
 | **Corridor** | Wheels and legs | A wall on each side of the route |
 | **Block** | Wheels and legs | A block in the way; tries get 5 s more on wheels and 8 s on legs |
+| **Rough Ground** | Wheels and legs | A grid of tiles up to **Height** tall; tries get 5 s more on wheels and 8 s on legs |
+| **Steps** | Wheels and legs | A platform **Height** tall to climb onto and step off; tries get the same extra time |
+| **Slope** | Wheels and legs | A ramp up at **Incline**, a flat top and a ramp down; tries get the same extra time |
 | **Shelf** | Touch a Point | A box under the point |
 | A room you imported | Reach a Spot, Push a Box, Follow a Path; Touch a Point when a table is in reach | The room's largest walls and furniture, at true size |
+
+Rough Ground, Steps and Slope start their number at a value sized to the robot's legs or wheels. The steps are in [Test a robot on rough ground, steps or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope).
 
 In a room, the robot starts where the scan marked it, turned to the nearest quarter turn of the marked heading. With no mark, or one where the robot doesn't fit, it starts on the open floor nearest the room's middle. The steps are in [Import a scanned room as a Case world](/help/import-a-scanned-room).
 

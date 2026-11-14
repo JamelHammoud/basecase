@@ -25,7 +25,7 @@ Give the agent a size, real parts and a photo, and the robot it builds lands muc
 
 ## Give it a size
 
-Without a size, the agent estimates one from your words and photos. “Open Duck Mini, 40 cm tall” anchors every part to the right scale from the first step. **Target height** in **Settings** ▸ **Agent** does the same for every request.
+Without a size, the agent estimates one from your words and photos. “Open Duck Mini, 40 cm tall” anchors every part to the right scale from the first step.
 
 ## Name the robot or show it
 

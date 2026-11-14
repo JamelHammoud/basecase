@@ -129,8 +129,6 @@ export function Studio({ initial }: { initial: InitialTabs }) {
         onTrackpadMode={prefs.setTrackpadMode}
         acpStatus={agent.acpStatus}
         onReconnectAcp={agent.reconnectAcp}
-        targetHeightMm={agent.agentTargetHeightMm}
-        onTargetHeight={agent.setAgentTargetHeightMm}
         printers={printers}
       />
     </div>

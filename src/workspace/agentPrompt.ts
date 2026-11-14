@@ -7,13 +7,12 @@ export interface AgentSendParams {
   images?: ReferenceImageRecord[];
   folders?: EvidenceFolder[];
   quotes?: MessageQuote[];
-  targetHeightMm?: number;
   model?: string;
   effort?: string;
   note?: string;
 }
 
-export type PromptOptions = Pick<AgentSendParams, 'targetHeightMm' | 'model' | 'effort' | 'note'>;
+export type PromptOptions = Pick<AgentSendParams, 'model' | 'effort' | 'note'>;
 
 const quoteForAgent = (quote: MessageQuote) => {
   const lines = [quote.text, quote.context].filter(Boolean).join('\n').split('\n');
@@ -28,7 +27,6 @@ export function withQuotes(text: string, quotes: MessageQuote[] = []): string {
 const runFields = (text: string, options: PromptOptions) => ({
   action: 'build' as const,
   promptText: options.note ? `${text}\n\n${options.note}` : text,
-  targetHeightMm: options.targetHeightMm || undefined,
   model: options.model,
   effort: options.effort,
 });

@@ -7,7 +7,6 @@ import {
   IconButton,
   modifierName,
   NO_DRAG_REGION,
-  NumberInput,
   SegmentedControl,
   Switch,
   TextInput,
@@ -63,8 +62,6 @@ export interface SettingsWindowProps {
   onTrackpadMode: (mode: TrackpadGestureMode) => void;
   acpStatus: AcpStatusInfo;
   onReconnectAcp: (command?: string) => Promise<void>;
-  targetHeightMm: number;
-  onTargetHeight: (mm: number) => void;
   printers: PrintersState;
 }
 
@@ -299,20 +296,6 @@ const AgentPane: React.FC<PaneProps> = (p) => {
             icon={<RefreshIcon className="w-3.5 h-3.5" />}
             title="Reconnect"
             onClick={() => p.onReconnectAcp(command)}
-          />
-        </div>
-      </Row>
-      <Row label="Target height" hint="Height of what the agent builds. 0 lets it estimate.">
-        <div className="w-[120px]">
-          <NumberInput
-            label="H"
-            aria-label="Target height"
-            value={p.targetHeightMm}
-            onChange={p.onTargetHeight}
-            min={0}
-            max={3000}
-            precision={0}
-            unit="mm"
           />
         </div>
       </Row>

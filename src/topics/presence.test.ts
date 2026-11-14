@@ -56,4 +56,22 @@ describe('recorded field presence', () => {
       TOPIC_LIMITS.cells = cells;
     }
   });
+
+  it('keeps empty vector strings and union strings without inventing missing items', () => {
+    const c = new TopicCollector();
+
+    c.add('/names', 'T', 0n, { names: ['', 'second'] });
+    c.add('/names', 'T', 1n, { names: ['first'] });
+    c.add('/union', 'T', 0n, { choices: [{ name: 'nested' }] });
+    c.add('/union', 'T', 1n, { choices: [''] });
+
+    const bytes = encodeTopicLog(c.finish(0n));
+    const log = decodeTopicLog(bytes)!;
+
+    expect(messageAt(log.topics[0], 0)).toEqual({ names: ['', 'second'] });
+    expect(messageAt(log.topics[0], 1)).toEqual({ names: ['first'] });
+    expect(messageAt(log.topics[1], 0)).toEqual({ choices: [{ name: 'nested' }] });
+    expect(messageAt(log.topics[1], 1)).toEqual({ choices: [''] });
+    expect(encodeTopicLog(log)).toEqual(bytes);
+  });
 });

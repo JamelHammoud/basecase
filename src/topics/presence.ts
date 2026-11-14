@@ -24,8 +24,12 @@ function changesShape(masks: Map<string, number[]>) {
   return false;
 }
 
-export function sortedPresence(masks: Map<string, number[]>, order: number[]): Map<string, Uint8Array> | null {
-  if (!changesShape(masks)) return null;
+export function sortedPresence(
+  masks: Map<string, number[]>,
+  order: number[],
+  required = false,
+): Map<string, Uint8Array> | null {
+  if (!required && !changesShape(masks)) return null;
 
   const out = new Map<string, Uint8Array>();
 

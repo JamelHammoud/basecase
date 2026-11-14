@@ -166,7 +166,9 @@ export class TopicIndex {
     const items = [...topic.lists.keys()].flatMap((path) =>
       Array.from({ length: longestList(topic, path) }, (_, i) => `${path}[${i}]`),
     );
-    const ids = [...topic.numbers.keys(), ...topic.labels.keys(), ...items].map((p) => topicRef(topic.topic, p));
+    const ids = [...new Set([...topic.numbers.keys(), ...topic.labels.keys(), ...items])].map((p) =>
+      topicRef(topic.topic, p),
+    );
 
     this.#ids.set(topic.topic, ids);
 
@@ -183,7 +185,7 @@ export class TopicIndex {
 
   listed(): string[] {
     return this.topics.flatMap((topic) => [
-      ...[...topic.numbers.keys(), ...topic.labels.keys()].map((p) => topicRef(topic.topic, p)),
+      ...[...new Set([...topic.numbers.keys(), ...topic.labels.keys()])].map((p) => topicRef(topic.topic, p)),
       ...[...topic.lists.keys()].map((p) => topicRef(topic.topic, `${p}[:]`)),
     ]);
   }

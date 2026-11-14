@@ -97,6 +97,8 @@ describe('FlatBuffers recording messages', () => {
     expect(index.valueAt(id, 1)).toEqual(['18446744073709551615']);
     expect(index.series(id).v).toEqual([Number.MAX_SAFE_INTEGER, NaN]);
     expect(index.labels(id)?.v).toEqual(['9007199254740991', '18446744073709551615']);
+    expect(index.listed().filter((signal) => signal === id)).toEqual([id]);
+    expect(index.expand('topic./telemetry.*').filter((signal) => signal === id)).toEqual([id]);
   });
 
   it('reads absent references and scalar defaults and string union alternatives', () => {
@@ -119,6 +121,36 @@ describe('FlatBuffers recording messages', () => {
 });
 
 describe('FlatBuffers union payloads across a recording', () => {
+  it('keeps present empty vectors through topic storage', () => {
+    const schema = flatSchema([
+      {
+        name: 'Root',
+        fields: [
+          { name: 'values', id: 0, type: { base: FB.vector, element: FB.double } },
+          { name: 'names', id: 1, type: { base: FB.vector, element: FB.string } },
+        ],
+      },
+    ]);
+    const b = new Builder(64);
+
+    b.startVector(8, 0, 8);
+
+    const empty = b.endVector();
+
+    b.startObject(2);
+    b.addFieldOffset(0, empty, 0);
+    b.addFieldOffset(1, empty, 0);
+    b.finish(b.endObject());
+
+    const collector = new TopicCollector();
+
+    collector.add('/empty', 'Root', 0n, decoder('Root', schema)(b.asUint8Array()));
+
+    const topic = decodeTopicLog(encodeTopicLog(collector.finish(0n)))!.topics[0];
+
+    expect(messageAt(topic, 0)).toEqual({ values: new Float64Array(), names: new Float64Array() });
+  });
+
   it('keeps table, string and empty-string alternatives after storage', () => {
     const collector = new TopicCollector();
 

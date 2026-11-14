@@ -29,6 +29,7 @@ class TopicBuilder {
   readonly lists = new Map<string, Array<Float64Array | null>>();
   readonly blobs = new Map<string, Array<Uint8Array | null>>();
   clipped = false;
+  needsPresence = false;
   blobBytes = 0;
 
   readonly topic: string;
@@ -113,7 +114,7 @@ function mapValues<T, U>(columns: Map<string, T>, make: (value: T) => U): Map<st
 
 function finished(builder: TopicBuilder, startNs: bigint): RecordedTopic {
   const order = builder.ns.map((_, i) => i).sort((a, b) => Number(builder.ns[a] - builder.ns[b]) || a - b);
-  const presence = sortedPresence(builder.presence, order);
+  const presence = sortedPresence(builder.presence, order, builder.needsPresence);
 
   return {
     topic: builder.topic,
@@ -220,6 +221,7 @@ export class TopicCollector {
       this.#budget.cells += backfill;
       column.push(leaf.value);
       markPresent(builder.presence, `${leaf.kind}:${path}`, builder.ns.length - 1);
+      builder.needsPresence ||= leaf.kind === 'label' && leaf.value === '' && path.includes('[');
     }
   }
 

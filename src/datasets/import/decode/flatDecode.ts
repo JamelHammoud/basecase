@@ -120,7 +120,7 @@ function vector(state: State, ctx: Context, at: number): Decoded {
     items.push(decoded);
   }
 
-  return items.length > 0 && items.every((v) => typeof v === 'number') ? Float64Array.from(items as number[]) : items;
+  return items.every((v) => typeof v === 'number') ? Float64Array.from(items as number[]) : items;
 }
 
 function readUnion(state: State, ctx: Context, at: number) {

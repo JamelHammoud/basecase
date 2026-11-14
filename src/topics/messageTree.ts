@@ -54,7 +54,7 @@ export function messageAt(topic: RecordedTopic, message: number): DecodedMessage
 
     if (values[message] === '' && numeric !== undefined && !Number.isNaN(numeric)) return;
 
-    if (values[message] !== '' || !isItem(path)) place(root, path, values[message]);
+    if (topic.presence || values[message] !== '' || !isItem(path)) place(root, path, values[message]);
   });
   topic.lists.forEach((list, path) => {
     if (fieldPresent(topic, path, message, 'list'))

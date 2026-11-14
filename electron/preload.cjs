@@ -92,6 +92,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     String(channel).startsWith('tries:')
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown tries call')),
+  datasetsCall: (channel, payload) =>
+    String(channel).startsWith('datasets:')
+      ? ipcRenderer.invoke(channel, payload)
+      : Promise.reject(new Error('Unknown datasets call')),
   onshapeCall: (channel, payload) =>
     String(channel).startsWith('onshape:')
       ? ipcRenderer.invoke(channel, payload)

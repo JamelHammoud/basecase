@@ -150,8 +150,8 @@ export function syncSearch(): Promise<void> {
   return ready;
 }
 
-export async function searchTries(text: string): Promise<TryHit[]> {
+export async function searchTries(text: string, limit = SEARCH_LIMIT): Promise<TryHit[]> {
   await syncSearch();
 
-  return client.call('search', { text, now: Date.now(), limit: SEARCH_LIMIT });
+  return client.call('search', { text, now: Date.now(), limit });
 }

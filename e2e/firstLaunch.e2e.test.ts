@@ -76,6 +76,19 @@ describe('first launch', () => {
     expect(sceneWrites()).toEqual([]);
   });
 
+  it('names every button in the accessibility tree, the scene tab’s × and the Case’s Run Case among them', async () => {
+    const { page } = app;
+    const tree = await page.locator('body').ariaSnapshot();
+    const sceneTab = page.getByRole('tablist', { name: 'Open scenes' }).getByRole('tab', { selected: true });
+    const tab = await sceneTab.getAttribute('aria-label');
+
+    expect(tree).not.toMatch(/^\s*- button( \[[^\]]*\])*:?$/m);
+    expect(tab).toBe((await sceneTab.innerText()).trim());
+    expect(await sceneTab.ariaSnapshot()).toContain(`tab "${tab}"`);
+    expect(tree).toContain(`button "Close ${tab}"`);
+    expect(tree).toContain('button "Run Case"');
+  });
+
   it('opens the saved scene instead after a relaunch', async () => {
     const { page } = app;
 

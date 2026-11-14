@@ -69,6 +69,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   className = '',
   disabled,
   type = 'button',
+  'aria-label': label,
   ...props
 }) => {
   const chosenVariant = chosenVariantFor({ isActive, isToggled, variant });
@@ -77,7 +78,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
     <Tooltip label={title} shortcut={shortcut} side={tooltipSide}>
       <button
         type={type}
-        aria-label={title}
+        aria-label={label || title}
         aria-pressed={isActive || isToggled || undefined}
         disabled={disabled}
         className={`inline-flex items-center justify-center shrink-0 select-none cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.94] disabled:active:scale-100 disabled:cursor-not-allowed ${variantStyles[chosenVariant]} ${sizeStyles[size]} ${sizeRadius(radiusStyles[size], className)} ${className}`}

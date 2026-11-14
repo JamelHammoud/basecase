@@ -1,5 +1,5 @@
 import React from 'react';
-import { panelName } from '../../cases/console/layoutEdits';
+import { panelName } from '../../cases/console/panelNames';
 import type { PanelKind, PanelOf, PanelSpec } from '../../cases/console/panelKinds';
 import { ErrorBoundary, RenameField } from '../../design-system';
 import type { ConsoleEditor } from './consoleEditor';

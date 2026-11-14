@@ -111,7 +111,7 @@ describe('arranging a running Case’s console by hand', () => {
       .toEqual({
         id: 'value',
         kind: 'value',
-        title: 'Value',
+        title: 'time',
         signal: 'time',
       });
     await expect.poll(() => panel('value').count()).toBe(1);
@@ -123,7 +123,7 @@ describe('arranging a running Case’s console by hand', () => {
     await expect.poll(async () => (await saved())?.panels.find((p) => p.id === 'value')?.title).toBe('Clock');
 
     await menu('servos', 'Delete');
-    await expect.poll(() => dialog().locator('h2').textContent()).toBe('Delete Table?');
+    await expect.poll(() => dialog().locator('h2').textContent()).toBe('Delete Servos?');
     await dialog().locator('button', { hasText: 'Delete' }).click();
     await expect.poll(panelIds).toEqual(['cameras', 'brief', 'tries', 'value']);
     await page.keyboard.press('Meta+z');

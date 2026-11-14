@@ -5,7 +5,16 @@ import { parseCase, touchTheDots } from '../testing';
 import { withCodePanel } from './codeEdits';
 import type { CaseConsole } from './format';
 import { DEFAULT_CONSOLE } from './layout';
-import { addedPanel, checkedConsole, movedPanel, removedPanel, renamedPanel, resizedArea } from './layoutEdits';
+import {
+  addedPanel,
+  checkedConsole,
+  consoleLimit,
+  movedPanel,
+  removedPanel,
+  renamedPanel,
+  resizedArea,
+} from './layoutEdits';
+import { panelName } from './panelNames';
 import { consoleScope } from './format';
 import { newPanel, panelChoices, picked, ready } from './panelChoices';
 
@@ -101,54 +110,6 @@ describe('arranging a console by hand', () => {
     expect(sizes(saved(resizedArea(plotted, 0, 455.6)).console!)).toEqual([456, 0, 328]);
   });
 
-  it('adds a valid plot of joint.*.position through the picker every kind shares', () => {
-    const sources = { scope: consoleScope(DEFAULT_CONSOLE, kase), joints: ['shoulder', 'elbow'], cameras: [] };
-    const choices = panelChoices('plot', sources);
-
-    expect(choices.options).toContain('joint.*.position');
-    expect(choices.options).toContain('joint.elbow.effort');
-    expect(ready(choices, [])).toBe(false);
-
-    const choice = picked(choices, [], 'joint.*.position');
-    const { console: next, id } = addedPanel(DEFAULT_CONSOLE, newPanel('plot', choice));
-    const parsed = saved(next).console!;
-
-    expect(id).toBe('plot');
-    expect(parsed.panels.at(-1)).toEqual({ id: 'plot', kind: 'plot', title: 'Plot', signals: ['joint.*.position'] });
-    expect(areaPanels(parsed).at(-1)).toEqual(['brief', 'failures', 'servos', 'tries', 'plot']);
-    expect(addedPanel(parsed, newPanel('plot', choice), 0).console.layout.areas[0]).toEqual({
-      size: 400,
-      panels: ['cameras', 'plot-2'],
-    });
-  });
-
-  it('offers each kind its own choices, one or many, and builds a panel the format takes', () => {
-    const sources = { scope: consoleScope(DEFAULT_CONSOLE, kase), joints: ['shoulder'], cameras: ['wrist_camera'] };
-    const table = panelChoices('table', sources);
-    const value = panelChoices('value', sources);
-
-    expect(value.options).not.toContain('joint.*.position');
-    expect(picked(value, ['time'], 'robot.speed')).toEqual(['robot.speed']);
-    expect(picked(table, ['time', 'robot.speed'], 'servos')).toEqual(['servos']);
-    expect(picked(table, ['servos'], 'time')).toEqual(['time']);
-    expect(panelChoices('camera', sources).options).toEqual(['camera.*', 'camera.wrist_camera']);
-    expect(ready(panelChoices('map', sources), [])).toBe(true);
-
-    const all = [
-      newPanel('value', ['time']),
-      newPanel('table', ['servos']),
-      newPanel('table', ['time', 'robot.speed']),
-      newPanel('button', ['try']),
-      newPanel('list', ['failures']),
-      newPanel('text', ['brief']),
-      newPanel('map', []),
-      newPanel('camera', ['camera.*']),
-    ];
-    const next = all.reduce((c, p) => addedPanel(c, p).console, DEFAULT_CONSOLE);
-
-    expect(saved(next).console!.panels).toHaveLength(DEFAULT_CONSOLE.panels.length + all.length);
-  });
-
   it('removes a panel from the panels and the layout, and renames one', () => {
     const gone = saved(removedPanel(plotted, 'cameras')).console!;
 
@@ -181,5 +142,101 @@ describe('arranging a console by hand', () => {
 
     expect(areaPanels(next.console!)[0]).toEqual(['cameras', 'tries']);
     expect(JSON.stringify(DEFAULT_CONSOLE)).toBe(before);
+  });
+});
+
+describe('adding and naming panels', () => {
+  it('adds a valid plot of joint.*.position through the picker every kind shares', () => {
+    const sources = { scope: consoleScope(DEFAULT_CONSOLE, kase), joints: ['shoulder', 'elbow'], cameras: [] };
+    const choices = panelChoices('plot', sources);
+
+    expect(choices.options).toContain('joint.*.position');
+    expect(choices.options).toContain('joint.elbow.effort');
+    expect(ready(choices, [])).toBe(false);
+
+    const choice = picked(choices, [], 'joint.*.position');
+    const { console: next, id } = addedPanel(DEFAULT_CONSOLE, newPanel('plot', choice));
+    const parsed = saved(next).console!;
+
+    expect(id).toBe('plot');
+    expect(parsed.panels.at(-1)).toEqual({
+      id: 'plot',
+      kind: 'plot',
+      title: 'joint.*.position',
+      signals: ['joint.*.position'],
+    });
+    expect(areaPanels(parsed).at(-1)).toEqual(['brief', 'failures', 'servos', 'tries', 'plot']);
+    expect(addedPanel(parsed, newPanel('plot', choice), 0).console.layout.areas[0]).toEqual({
+      size: 400,
+      panels: ['cameras', 'plot-2'],
+    });
+  });
+
+  it('offers each kind its own choices, one or many, and builds a panel the format takes', () => {
+    const sources = { scope: consoleScope(DEFAULT_CONSOLE, kase), joints: ['shoulder'], cameras: ['wrist_camera'] };
+    const table = panelChoices('table', sources);
+    const value = panelChoices('value', sources);
+
+    expect(value.options).not.toContain('joint.*.position');
+    expect(picked(value, ['time'], 'robot.speed')).toEqual(['robot.speed']);
+    expect(picked(table, ['time', 'robot.speed'], 'servos')).toEqual(['servos']);
+    expect(picked(table, ['servos'], 'time')).toEqual(['time']);
+    expect(panelChoices('camera', sources).options).toEqual(['camera.*', 'camera.wrist_camera']);
+    expect(ready(panelChoices('map', sources), [])).toBe(true);
+
+    const all = [
+      newPanel('value', ['time']),
+      newPanel('table', ['servos']),
+      newPanel('table', ['time', 'robot.speed']),
+      newPanel('button', ['try']),
+      newPanel('list', ['failures']),
+      newPanel('text', ['brief']),
+      newPanel('map', []),
+      newPanel('camera', ['camera.*']),
+    ];
+    const next = all.reduce((c, p) => addedPanel(c, p).console, DEFAULT_CONSOLE);
+
+    expect(saved(next).console!.panels).toHaveLength(DEFAULT_CONSOLE.panels.length + all.length);
+    expect(next.panels.filter((p) => p.title).map((p) => p.title)).toEqual(['time']);
+  });
+
+  it('names an untitled panel by what it shows', () => {
+    expect(DEFAULT_CONSOLE.panels.map(panelName)).toEqual(['Cameras', 'Brief', 'Failures', 'Servos', 'Results']);
+    expect(panelName({ id: 'go', kind: 'button', action: 'try' })).toBe('Try It');
+    expect(
+      panelName({ id: 'note', kind: 'text', text: 'Lift the cube onto the shelf by its handle\nThen let go' }),
+    ).toBe('Lift the cube onto the shelf by…');
+    expect(panelName({ id: 'plot', kind: 'plot', title: 'Joints', signals: ['joint.*.position'] })).toBe('Joints');
+  });
+
+  it('names the limit a person reaches, instead of the format’s path', () => {
+    const adding = (c: CaseConsole, n: number, area: number) =>
+      Array.from({ length: n }).reduce<CaseConsole>((at) => addedPanel(at, newPanel('map', []), area).console, c);
+    const twelve = adding(plotted, 7, 2);
+    const full = adding(twelve, 11, 0);
+
+    expect(consoleLimit(full)).toBeNull();
+    expect(saved(full).console!.panels).toHaveLength(24);
+    expect(consoleLimit(adding(twelve, 1, 2))).toBe('A column holds up to 12 panels');
+    expect(consoleLimit(adding(full, 1, 2))).toBe('A console holds up to 24 panels');
+  });
+
+  it('adds a panel to the column nearest the canvas’s right when the console has six', () => {
+    const leftOnly: CaseConsole = {
+      ...plotted,
+      layout: {
+        areas: [
+          ...['servos', 'cameras', 'brief', 'failures'].map((id) => ({ size: 240, panels: [id] })),
+          { size: 240, panels: ['tries', 'plot'] },
+          { canvas: true },
+        ],
+      },
+    };
+
+    expect(areaPanels(saved(addedPanel(leftOnly, newPanel('map', [])).console).console!).at(-2)).toEqual([
+      'tries',
+      'plot',
+      'map',
+    ]);
   });
 });

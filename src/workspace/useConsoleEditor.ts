@@ -4,8 +4,8 @@ import { DEFAULT_CONSOLE } from '../cases/console/layout';
 import {
   addedPanel,
   checkedConsole,
+  consoleLimit,
   movedPanel,
-  panelName,
   removedPanel,
   renamedPanel,
   resizedArea,
@@ -13,6 +13,7 @@ import {
   type PanelDrop,
 } from '../cases/console/layoutEdits';
 import type { PanelSpec } from '../cases/console/panelKinds';
+import { panelName } from '../cases/console/panelNames';
 import { confirmAction } from '../design-system';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -38,13 +39,17 @@ export function useConsoleEditor(core: WorkspaceCore): ConsoleEdits {
 
     if (JSON.stringify(next) === JSON.stringify(kase.console ?? DEFAULT_CONSOLE)) return true;
 
-    const checked = checkedConsole(kase, next);
+    const limit = consoleLimit(next);
 
-    if (typeof checked === 'string') {
-      core.showToast(checked);
+    if (limit) {
+      core.showToast(limit);
 
       return false;
     }
+
+    const checked = checkedConsole(kase, next);
+
+    if (typeof checked === 'string') throw new Error(checked);
 
     commitConsole(kase.id, checked.console);
 

@@ -1,18 +1,23 @@
 import { parseCase, type Case } from '../schema';
 import { errorMessage } from '../../utils/errorMessage';
 import { isCanvas, placedOn, withoutPlace } from './codeEdits';
-import { AREA_MAX, AREA_MIN, type CaseConsole, type ConsoleArea } from './format';
+import {
+  AREA_MAX,
+  AREA_MIN,
+  MAX_AREA_PANELS,
+  MAX_AREAS,
+  MAX_PANELS,
+  type CaseConsole,
+  type ConsoleArea,
+} from './format';
 import type { PanelKind, PanelSpec } from './panelKinds';
+import { headed, shownName } from './panelNames';
 
 export type PanelDrop = { area: number; before?: string } | { area: number; column: 'before' | 'after' };
 
 export type NewPanel = { kind: Exclude<PanelKind, 'code'>; title?: string } & Record<string, unknown>;
 
 const LEAVING = '\u0000leaving';
-
-export const kindName = (kind: PanelKind) => kind[0].toUpperCase() + kind.slice(1);
-
-export const panelName = (panel: PanelSpec) => panel.title ?? kindName(panel.kind);
 
 export const snappedSize = (size: number) => Math.round(Math.min(AREA_MAX, Math.max(AREA_MIN, size)));
 
@@ -83,16 +88,42 @@ function freeId(c: CaseConsole, kind: PanelKind) {
   return n === 1 ? kind : `${kind}-${n}`;
 }
 
+function titled(panel: NewPanel, id: string): PanelSpec {
+  const spec = { ...panel, id } as PanelSpec;
+
+  return spec.title || !headed(spec.kind) ? spec : { ...spec, title: shownName(spec) };
+}
+
+function nearestColumn(areas: ConsoleArea[]) {
+  const at = areas.findIndex(isCanvas);
+  const right = areas.findIndex((a, i) => i > at && !isCanvas(a));
+
+  return right < 0 ? areas.findLastIndex((a) => !isCanvas(a)) : right;
+}
+
+function intoArea(areas: ConsoleArea[], id: string, area: number | undefined) {
+  const at = area ?? (areas.length < MAX_AREAS ? undefined : nearestColumn(areas));
+  const into = at === undefined ? undefined : areas[at];
+
+  if (into && !isCanvas(into)) return areas.map((a, i) => (i === at ? landed(a, id, undefined) : a));
+
+  return placedOn(areas, id, { side: 'right' });
+}
+
 export function addedPanel(c: CaseConsole, panel: NewPanel, area?: number): { console: CaseConsole; id: string } {
   const id = freeId(c, panel.kind);
-  const spec = { ...panel, id, title: panel.title ?? kindName(panel.kind) } as PanelSpec;
-  const into = area === undefined ? undefined : c.layout.areas[area];
-  const areas =
-    into && !isCanvas(into)
-      ? c.layout.areas.map((a, i) => (i === area ? landed(a, id, undefined) : a))
-      : placedOn(c.layout.areas, id, { side: 'right' });
+  const spec = titled(panel, id);
+  const areas = intoArea(c.layout.areas, id, area);
 
   return { id, console: { ...c, panels: [...c.panels, spec], layout: { areas } } };
+}
+
+export function consoleLimit(c: CaseConsole): string | null {
+  if (c.panels.length > MAX_PANELS) return `A console holds up to ${MAX_PANELS} panels`;
+
+  return c.layout.areas.some((a) => !isCanvas(a) && a.panels.length > MAX_AREA_PANELS)
+    ? `A column holds up to ${MAX_AREA_PANELS} panels`
+    : null;
 }
 
 export function checkedConsole(kase: Case, next: CaseConsole): Case | string {

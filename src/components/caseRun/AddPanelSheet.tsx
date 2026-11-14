@@ -1,6 +1,7 @@
 import { ADD_PANEL } from './consoleEditor';
 import React, { useState } from 'react';
-import { kindName, type NewPanel } from '../../cases/console/layoutEdits';
+import type { NewPanel } from '../../cases/console/layoutEdits';
+import { kindName } from '../../cases/console/panelNames';
 import {
   ADDABLE_KINDS,
   newPanel,

@@ -40,7 +40,7 @@ export interface CaseConsole {
   layout: { areas: ConsoleArea[] };
 }
 
-const MAX_PANELS = 24;
+export const MAX_PANELS = 24;
 
 export const MAX_CODE_PANELS = 4;
 
@@ -50,6 +50,7 @@ const OVERLAY_MAX = 1600;
 export const AREA_MIN = 200;
 export const AREA_MAX = 720;
 export const MAX_AREAS = 6;
+export const MAX_AREA_PANELS = 12;
 
 const unique = <T>(items: T[], key: (item: T) => string, where: string) => {
   const seen = new Set<string>();
@@ -190,7 +191,7 @@ const readArea: Reader<ConsoleArea> = (value, where) => {
 
   if (size < AREA_MIN || size > AREA_MAX) refuse(`${where}.size`, `must be from ${AREA_MIN} to ${AREA_MAX}`);
 
-  const panels = listOf(asId, 12)(v.panels, `${where}.panels`);
+  const panels = listOf(asId, MAX_AREA_PANELS)(v.panels, `${where}.panels`);
 
   if (!panels.length) refuse(`${where}.panels`, 'must name a panel');
 

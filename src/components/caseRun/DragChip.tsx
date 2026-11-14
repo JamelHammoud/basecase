@@ -1,5 +1,5 @@
 import React from 'react';
-import { panelName } from '../../cases/console/layoutEdits';
+import { panelName } from '../../cases/console/panelNames';
 import type { PanelDrag } from './usePanelDrag';
 
 export function DragChip({

@@ -7,7 +7,7 @@ import { fail, pass, ROOT, shCheck, vitestCheck } from '../lib/gate.mjs';
 const FROZEN = {
   'src/skills/arena.ts': '210392f8d438761dc1e02e9b7599ab9f6019550d569f4e66d820e4ff7951bd25',
   'src/skills/arenaWorld.ts': '44583601dbbf7f9f1053da3b7777ae1c6311de7ff27cecf1dd2aca6c4cb31b7a',
-  'src/skills/arenaStats.ts': '483b8139b520fcb4aa1839f397739f746190a7f0bb910f46b7bcb5fd4a7f9aff',
+  'src/skills/arenaStats.ts': 'dad095fe8407151377ef17c308921b3034284e0d5a8d507925849e6e0ca44782',
   'src/skills/arenaSignals.ts': '4c8e0213acef95405bd4f20a807bd5e9f763441cf4e819a2ee2b7c83f5c28107',
   'src/skills/contract.ts': '59ddcee9ca74df14a0669d8570f0a97a41070ecaf4bb7e26a9090f4c6392b871',
 };

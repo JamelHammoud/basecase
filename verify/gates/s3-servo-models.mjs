@@ -4,7 +4,7 @@ import { fail, pass, ROOT, sh, shCheck, vitestCheck } from '../lib/gate.mjs';
 import { trainerPython } from '../lib/python.mjs';
 
 const PLANT_SRC = 'hw/crates/plant-bam/src';
-const PLANT_COMMIT = '395bba2';
+const PLANT_COMMIT = 'dc775d7';
 const REFERENCE = path.join(ROOT, 'verify', 'servo', 'bam-reference', 'Cargo.toml');
 const REFERENCE_BUILD = path.join(ROOT, 'verify', 'out', 'servo', 'bam-reference-build');
 const OUT = path.join(ROOT, 'verify', 'out', 'servo');

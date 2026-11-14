@@ -83,7 +83,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
       | Bring a new build guide, Case or Routine into being | Make | Create, Generate |
       | Make an out-of-date build guide again | Update | Regenerate |
       | Describe a new skill for the agent to train; Train runs training on a skill row | Teach | — |
-      | A recording of a robot, whatever made it (a Case, a real robot, an import) | Try | Recordings, Episode, Rollout, Demonstration |
+      | A recording of a robot, whatever made it (a Case, a real robot, Multiply) | Try | Recordings, Episode, Rollout, Demonstration |
     - A duplicate is named the way Finder names one: “Bracket copy”, then “Bracket copy 2”, skipping names already taken, through `copyName` (`src/workspace/helpers.ts`). That holds for a part, a group, a scene or tab, and a Library model; a pasted part keeps its name, and several duplicated parts keep theirs while their group is renamed.
 18. **Icon-first.** Our own icons (`src/design-system`, §14) with custom tooltips (the `Tooltip` primitive), never native `title` on buttons. There's no third-party icon set.
     - When the library has nothing that reads clearly, draw a new icon with the `icon-design` skill (`.agents/skills/icon-design/SKILL.md`): 24 grid, 2px round strokes, an outline/filled pair for anything that toggles, previewed beside its neighbors before shipping.

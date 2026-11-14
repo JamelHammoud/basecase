@@ -54,10 +54,9 @@ export function listTries(): Promise<StoredTry[]> {
 
 export async function keepTry(manifest: StoredTry, recording?: Recording, film?: Blob) {
   await backend.save({ manifest, recording, film });
+  await listTries();
 
-  const all = await listTries();
-
-  publish([...all.filter((t) => t.id !== manifest.id), manifest]);
+  if (listed) publish([...listed.filter((t) => t.id !== manifest.id), manifest]);
 }
 
 export async function keepFilm(manifest: StoredTry, film: Blob) {
@@ -74,7 +73,8 @@ export async function deleteTries(ids: readonly string[]): Promise<string[]> {
   const goes = new Set(gone);
 
   await backend.remove(gone);
-  publish(all.filter((t) => !goes.has(t.id)));
+
+  if (listed) publish(listed.filter((t) => !goes.has(t.id)));
 
   return gone;
 }

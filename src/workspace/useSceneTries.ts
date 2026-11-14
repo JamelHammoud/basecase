@@ -5,7 +5,7 @@ import { readCases } from '../cases/schema';
 import { contractHash, legacyRecords, sceneTries, storedTry, tryJoints, type TryRef } from '../cases/storedTry';
 import { sha256, type TryDraft, type TryRecord } from '../cases/tries';
 import { migratedRefs, migrateTries } from '../cases/tryMigration';
-import { deleteTries, keepTry, storedTriesNow } from '../cases/tryStore';
+import { deleteTries, keepTry, listTries, storedTriesNow } from '../cases/tryStore';
 import { dropLegacyRecording, legacyRecording } from '../cases/tryStoreIdb';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Simulation } from '../sim/useSimulation';
@@ -97,16 +97,22 @@ export function useSceneTries(options: SceneTriesOptions) {
     }
   };
 
-  const drop = (goes: (t: TryRecord) => boolean) =>
-    setProject((p) => {
-      const gone = sceneTries(p.tries, storedTriesNow())
-        .filter(goes)
-        .map((t) => t.id);
+  const dropNow = async (goes: (t: TryRecord) => boolean) => {
+    const gone = sceneTries(project.tries, storedTriesNow() ?? (await listTries()))
+      .filter(goes)
+      .map((t) => t.id);
 
-      void deleteTries(gone);
+    if (!gone.length) return;
 
-      return { ...p, tries: withoutRefs(p.tries, new Set(gone)) };
-    });
+    const ids = new Set(gone);
+
+    setProject((p) => ({ ...p, tries: withoutRefs(p.tries, ids) }));
+    await deleteTries(gone);
+  };
+
+  const drop = (goes: (t: TryRecord) => boolean) => {
+    dropNow(goes).catch((err: unknown) => showToast(errorMessage(err), { tone: 'error' }));
+  };
 
   const unlink = (ids: readonly string[]) => {
     const gone = new Set(ids);

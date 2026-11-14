@@ -190,4 +190,18 @@ describe('stored tries', () => {
     expect([...backend.files.keys()]).toEqual(['other']);
     expect((await listTries()).map((t) => t.id)).toEqual(['other']);
   });
+
+  it('reads the store again after a failed list instead of keeping only the newest try', async () => {
+    const backend = memoryBackend();
+    let failures = 2;
+
+    await backend.save({ manifest: storedTry(record('kept'), context) });
+    setTryBackend({
+      ...backend,
+      list: () => (failures-- > 0 ? Promise.reject(new Error('offline')) : backend.list()),
+    });
+    expect(await listTries()).toEqual([]);
+    await keepTry(storedTry(record('new'), context));
+    expect((await listTries()).map((t) => t.id).sort()).toEqual(['kept', 'new']);
+  });
 });

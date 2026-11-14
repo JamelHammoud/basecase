@@ -34,6 +34,12 @@ See the tries from every scene together, grouped by robot, and open any of them 
 5. Press [[←]] or [[→]] to step a frame, or [[Space]] to play it.
 6. Click **Done** to go back to the scene.
 
+![The Library with a Tries section listing one robot, named Robot, with 4 tries](/help/browse-every-try-in-the-library/library.png)
+
+![Tries mode on the canvas with four tiles from two scenes, each marked Passed with its time and Touch the Dots](/help/browse-every-try-in-the-library/tiles.png)
+
+![A selected try with its three joints on the timeline under the tiles, 9.2 s long](/help/browse-every-try-in-the-library/timeline.png)
+
 To select several tries, [[⇧]]-click a range or [[⌘]]-click each one. **Show Tries** in [[⌘K]] opens the same view. The search at the top of the Library also finds tries by Case, robot, scene or source.
 
 ## Delete tries

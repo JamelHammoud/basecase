@@ -48,7 +48,7 @@ async function tryInNewScene(name: string): Promise<{ id: string; robot: string 
 }
 
 beforeAll(async () => {
-  app = await openApp({}, ['tries-']);
+  app = await openApp();
 }, 120000);
 
 afterAll(async () => {

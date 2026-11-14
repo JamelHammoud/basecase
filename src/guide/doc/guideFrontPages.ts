@@ -1,11 +1,12 @@
 import type { GuideItem } from '../guideTypes';
 import { toolIcon } from './guideIcons';
+import { sizeFigures } from '../../utils/size';
 import { plural } from '../../../electron/plural.mjs';
 import { CONTENT_BOTTOM, CONTENT_TOP, esc, imageTag, mm, type GuideDoc } from './guideHtml';
 
 export function coverBody({ plan, drawings, meta }: GuideDoc): string {
   const size = meta.sizeMm
-    ? `<div class="fact"><div class="v">${meta.sizeMm.map((v) => Math.round(v)).join(' × ')}<small>mm</small></div><div class="k">Size</div></div>`
+    ? `<div class="fact"><div class="v">${sizeFigures(meta.sizeMm)}<small>mm</small></div><div class="k">Size</div></div>`
     : '';
   const parts = plan.items.reduce((n, i) => n + i.qty, 0);
   const steps = plan.steps.filter((s) => s.moduleId === 'main').length;

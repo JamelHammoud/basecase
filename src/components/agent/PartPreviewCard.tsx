@@ -3,6 +3,7 @@ import { mountPartPreview, nextPreviewOrder } from '../../three/partPreview';
 import { loadPartMeshes } from '../../three/thumbnailRender';
 import type { ScenePart } from '../../types/robotics';
 import { overallSize } from '../layers/layerRows';
+import { sizeLabel } from '../../utils/size';
 import { Header } from '../PartDetails';
 
 export const PART_PREVIEW_WIDTH = 280;
@@ -67,7 +68,7 @@ export const PartPreviewCard: React.FC<{ parts: ScenePart[]; panScroll: boolean 
           className={`absolute inset-0 cursor-grab active:cursor-grabbing ${ready ? 'animate-fade-in' : ''}`}
         />
       </div>
-      <Header title={titleOf(shown)} subtitle={size ? `${size} mm` : ''} />
+      <Header title={titleOf(shown)} subtitle={size ? sizeLabel(size) : ''} />
     </div>
   );
 };

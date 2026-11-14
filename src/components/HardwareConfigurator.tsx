@@ -151,7 +151,7 @@ export const HardwareSpecs: React.FC<{ spec: HardwareSpec; collapsible?: boolean
       <Section title="Specs" collapsible={collapsible} defaultOpen={!collapsible}>
         <dl className="-my-[5px]">
           <SpecRow label="Size">
-            <SizeLine w={d.width} h={d.height} d={d.depth} />
+            <SizeLine mm={[d.width, d.height, d.depth]} />
           </SpecRow>
           {isMetric(spec.size) && (
             <SpecRow label="Thread">

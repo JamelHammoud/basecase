@@ -26,6 +26,35 @@ export const sizeActuators = {
 
 const XYZ = z.tuple([z.number(), z.number(), z.number()]);
 
+export const sizeArm = {
+  name: 'size_arm',
+  config: {
+    title: 'Size an arm',
+    description:
+      'Sizes a servo arm from the points it must reach and the grams it carries, and places it: base yaw, shoulder, elbow and wrist pitch on STS3215-outline servos with the arm_template links. ' +
+      'It finds the shortest link lengths and base riser on a 5 mm grid (links from 75 mm) where the tool flange reaches every target within 2 mm with every joint at least 10% inside its range, turns the base to face the targets, then picks the cheapest servo per joint that passes the hold check with the payload at the wrist, at the cheapest supply that passes. ' +
+      'It writes the skeleton (as define_skeleton, replacing any), adds one servo per joint and the printed links (the web demo adds no links), and returns the lengths, servos, prices and reach. A target it cannot reach gives no arm and names that target. ' +
+      'Call it first when a person says where an arm must reach and what it carries.',
+    inputSchema: {
+      targets: z
+        .array(z.object({ name: z.string().max(60).optional(), at: XYZ.describe('mm, z up, front −Y') }))
+        .min(1)
+        .max(8),
+      payload_g: z.number().min(0).max(5000).describe('Grams at the wrist: the gripper and what it holds'),
+      base: XYZ.optional().describe('Where the base stands, mm; default the origin'),
+    },
+  },
+  handler: async (args) => {
+    try {
+      const res = await bridge('size_arm', args, 120000);
+
+      return text(res?.text || 'No arm.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
 export const sweepDesign = {
   name: 'sweep_design',
   config: {

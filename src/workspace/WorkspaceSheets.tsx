@@ -1,3 +1,4 @@
+import { ArmSizingSheet } from '../components/ArmSizingSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { platformBridge } from '../utils/platformBridge';
@@ -14,7 +15,7 @@ interface WorkspaceSheetsProps {
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
   const { posing, guide } = core;
   const desktop = platformBridge.isElectron();
-  const { robots, pose } = actions;
+  const { robots, pose, arm } = actions;
   const { motionInputRef } = pose;
   const { importRobotFrom } = robots;
 
@@ -39,6 +40,15 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         onClose={robots.closeImportRobot}
         onImport={(src, at) => void importRobotFrom(src, at)}
       />
+      {arm.targets && (
+        <ArmSizingSheet
+          targets={arm.targets}
+          busy={arm.busy}
+          problem={arm.problem}
+          onClose={arm.close}
+          onSize={arm.size}
+        />
+      )}
       {pose.motion && (
         <RetargetSheet
           motion={pose.motion}

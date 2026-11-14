@@ -78,6 +78,10 @@ function sharedEntries(inputs: ContextInputs) {
   };
 }
 
+function armItems(inputs: ContextInputs): ContextMenuEntry[] {
+  return inputs.actions.arm.canSize ? [menuEntry(selectionActions(inputs).sizeArm)] : [];
+}
+
 function wrapItems(inputs: ContextInputs): ContextMenuEntry[] {
   if (!inputs.actions.wrap.canWrap()) return [];
 
@@ -116,6 +120,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     menuEntry(act.intersect),
     { divider: true },
     ...handJointMenuItems(actions.joints),
+    ...armItems(inputs),
     shared.align,
     shared.drop,
     shared.center,
@@ -172,6 +177,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.saveToLibrary,
     ...(one.quote ? [menuEntry(one.quote)] : []),
     ...leaderMenuItems(actions, part.id),
+    ...armItems(inputs),
     ...commentHere,
     { divider: true },
     shared.align,

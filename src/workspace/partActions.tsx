@@ -11,6 +11,7 @@ import {
   GroupIcon,
   HiddenIcon,
   IntersectIcon,
+  JointsIcon,
   LayersIcon,
   LockIcon,
   LookIcon,
@@ -159,6 +160,13 @@ export function selectionActions({ core, actions, ui }: PartActionInputs) {
       icon: BotIcon,
       keywords: 'shell skin character mesh cover body printable',
       run: actions.wrap.wrapSelected,
+    },
+    sizeArm: {
+      id: 'size-arm',
+      label: 'Size Arm to Targets',
+      icon: JointsIcon,
+      keywords: 'reach payload link lengths servos manipulator design points reference',
+      run: actions.arm.open,
     },
     resetView: { id: 'reset-view', label: 'Reset View', icon: RotateLeftIcon, run: ui.resetView },
   } satisfies Record<string, PartAction>;

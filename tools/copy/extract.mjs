@@ -195,9 +195,14 @@ function nodeStrings(node) {
   return OBJECT_KEYS.has(key) ? tagged(stringsOf(node.initializer), key) : [];
 }
 
-export function extractStrings(source, fileName = 'file.tsx') {
+function parse(source, fileName, parents = true) {
   const scriptKind = fileName.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
-  const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, scriptKind);
+
+  return ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, parents, scriptKind);
+}
+
+export function extractStrings(source, fileName = 'file.tsx') {
+  const file = parse(source, fileName);
   const found = new Map();
 
   const visit = (node) => {
@@ -217,4 +222,32 @@ export function extractStrings(source, fileName = 'file.tsx') {
   return [...found.values()]
     .filter(({ text }) => isUserFacing(text))
     .map(({ text, kind, start }) => ({ text, kind, line: file.getLineAndCharacterOfPosition(start).line + 1 }));
+}
+
+const isModuleLink = (node) => ts.isImportDeclaration(node) || ts.isExportDeclaration(node);
+
+function literalText(node) {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+
+  if (ts.isTemplateExpression(node)) return templateText(node);
+
+  return isJsxParent(node) ? jsxChildrenText(node) : null;
+}
+
+export function literalsOf(source, fileName = 'file.tsx') {
+  const found = new Set();
+
+  const visit = (node) => {
+    if (isModuleLink(node)) return;
+
+    const text = literalText(node);
+
+    if (text) found.add(normalize(text));
+
+    ts.forEachChild(node, visit);
+  };
+
+  visit(parse(source, fileName, false));
+
+  return [...found].filter(Boolean);
 }

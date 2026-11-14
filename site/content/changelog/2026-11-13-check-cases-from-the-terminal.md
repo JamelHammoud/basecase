@@ -7,7 +7,7 @@ date: 2026-11-13
 
 ## How it works
 
-Save the scene with Export ▸ Basecase Scene and point the command at the file. It reads the scene with the same parser Open uses and builds each part's mesh the way the canvas does. Each Case runs through the same runner as the app, with MuJoCo and the Rust contract judge. No window opens, Electron never starts, and nothing goes over the network.
+Save the scene with **Export** ▸ **Scene** and point the command at the file. It reads the scene with the same parser Open uses and builds each part's mesh the way the canvas does. Each Case runs through the same runner as the app, with MuJoCo and the Rust contract judge. No window opens, Electron never starts, and nothing goes over the network.
 
 ```
 Reach a Spot              1 of 1    0.75

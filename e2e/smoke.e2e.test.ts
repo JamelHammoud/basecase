@@ -19,6 +19,19 @@ const sidebarShows = (name: string) =>
     return aside?.style.width !== '0px' && aside?.querySelector('h2')?.textContent === title;
   }, name);
 
+const stlDownload = (page: App['page']) =>
+  page.evaluate(() => {
+    const studio = (window as unknown as { __studio: { lastDownload: () => { name: string; base64: string } | null } })
+      .__studio;
+    const file = studio.lastDownload();
+
+    if (!file) return null;
+
+    const bytes = Uint8Array.from(atob(file.base64), (c) => c.charCodeAt(0));
+
+    return { name: file.name, facets: new DataView(bytes.buffer).getUint32(80, true) };
+  });
+
 const blurFocus = () => (document.activeElement as HTMLElement | null)?.blur();
 
 const fillDiffersFromPanel = (row: Element) => {
@@ -57,7 +70,7 @@ describe('studio smoke test', () => {
     expect(fromSource).toBe(inject('served') === 'dev');
   });
 
-  it('leaves part exports out of ⌘K until the scene has parts', async () => {
+  it('leaves part exports out of ⌘K until the scene has parts, then writes its STL', async () => {
     const command = (name: string) => app.page.getByRole('button', { name, exact: true });
     const searchExports = async () => {
       await app.page.keyboard.press('Meta+k');
@@ -74,9 +87,10 @@ describe('studio smoke test', () => {
     await app.page.keyboard.press('a');
     await app.page.getByRole('button', { name: /^Cube/ }).first().click();
     await searchExports();
-    expect(await command('Export STL').count()).toBe(1);
     expect(await command('Export 3MF Plates').count()).toBe(1);
-    await app.page.keyboard.press('Escape');
+    await command('Export STL').click();
+    await expect.poll(() => stlDownload(app.page)).toMatchObject({ name: expect.stringMatching(/\.stl$/) });
+    expect((await stlDownload(app.page))!.facets).toBeGreaterThanOrEqual(12);
     await app.page.keyboard.press('Meta+z');
     await expect.poll(() => partCount(app.page)).toBe(0);
   });

@@ -3,6 +3,7 @@ import { torque } from './torque';
 import { plural } from '../../electron/plural.mjs';
 import { angle } from './angle';
 import type { CheckRow, FindingFix, JointLoad } from './engineeringTypes';
+import { volts } from './electric';
 
 export type TorqueOffers = (l: JointLoad) => { fix?: FindingFix; why?: string };
 
@@ -26,12 +27,12 @@ export function loadText(l: JointLoad, legs = 'on one leg'): string {
 
   if (isPublished(l)) return `${name}: needs ${torque(l.loadNm)} of its ${torque(l.joint.effortNm!)} limit`;
 
-  const volts = l.volts ? ` at ${Math.round(l.volts * 10) / 10} V` : '';
+  const supply = l.volts ? ` at ${volts(l.volts)}` : '';
   const rated = l.ratedEstimated ? ' (rated taken as 1/4 of stall)' : '';
   const heat = l.kind === 'stance' ? `${share(l.heatShare)}× rated ${heatSource(l)}` : `${share(l.heatShare)}× rated`;
   const what = l.kind === 'stance' ? `${torque(l.loadNm)} ${stanceWords(l, legs)}` : `holds up to ${torque(l.loadNm)}`;
 
-  return `${name}: ${what}, ${share(l.stallShare)} of its ${torque(l.stallNm!)} stall${volts}, ${heat}${rated}`;
+  return `${name}: ${what}, ${share(l.stallShare)} of its ${torque(l.stallNm!)} stall${supply}, ${heat}${rated}`;
 }
 
 interface TorqueSummary {

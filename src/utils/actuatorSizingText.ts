@@ -5,6 +5,7 @@ import { plural } from '../../electron/plural.mjs';
 import { weight } from './weight';
 import { percent } from '../../electron/percent.mjs';
 import { torque } from './torque';
+import { volts } from './electric';
 
 const BUS_NAMES: Record<ActuatorBus, string> = {
   feetech: 'Feetech serial bus',
@@ -17,8 +18,6 @@ const BUS_NAMES: Record<ActuatorBus, string> = {
 };
 
 const ALTERNATIVES = 3;
-
-const volts = (v: number) => `${Math.round(v * 10) / 10} V`;
 
 const fitText = (f: Fit) =>
   `${f.option.name} ${money(f.option.usd)} (${f.stallShare.toFixed(2)} of stall, ${f.heatShare.toFixed(2)}× rated)`;

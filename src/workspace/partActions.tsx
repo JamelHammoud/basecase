@@ -53,7 +53,7 @@ export interface PartAction {
 export const menuEntry = (action: PartAction, extra: { disabled?: boolean } = {}): ContextMenuEntry => ({
   label: action.label,
   shortcut: action.shortcut,
-  icon: <action.icon className="w-3.5 h-3.5" />,
+  icon: <action.icon />,
   ...(action.danger ? { tone: 'danger' as const } : {}),
   onSelect: action.run,
   ...extra,
@@ -65,7 +65,7 @@ export const paletteCommand = (action: PartAction, group: string): Command => ({
   label: action.label,
   shortcut: action.shortcut,
   keywords: action.keywords,
-  icon: <action.icon className="w-4 h-4" />,
+  icon: <action.icon />,
   run: action.run,
 });
 

@@ -43,19 +43,19 @@ export const NewModelMenu: React.FC<{
         className="w-52"
       >
         <MenuItem
-          icon={<BookmarkAddIcon className="w-3.5 h-3.5" />}
+          icon={<BookmarkAddIcon />}
           label="Save to Library"
           disabled={!canSaveSelection}
           onSelect={run(() => onSaveModel('selected'))}
         />
         <MenuItem
-          icon={<LayersIcon className="w-3.5 h-3.5" />}
+          icon={<LayersIcon />}
           label="Save Whole Scene"
           disabled={!canSaveScene}
           onSelect={run(() => onSaveModel('all'))}
         />
         <MenuDivider />
-        <MenuItem icon={<FileImportIcon className="w-3.5 h-3.5" />} label="Import" onSelect={run(onImport)} />
+        <MenuItem icon={<FileImportIcon />} label="Import" onSelect={run(onImport)} />
       </PopoverMenu>
     </div>
   );

@@ -3,6 +3,7 @@ import { bedSizeText, fitOnBed, type Bed } from '../print/bed';
 import { holdVerdict, PEAK_DERATE, ratingAt, stanceVerdict, suitsVolts } from '../utils/actuatorRules';
 import { sizeLabel } from '../utils/size';
 import { torque } from '../utils/torque';
+import { volts } from '../utils/electric';
 import { cycloidalDesign, type CycloidalDesign } from './cycloidal';
 import { cycloidalOptions, cycloidalSpec, cycloidalVariantId } from './generated';
 import { BLDC_MOTORS, type BldcDriver, type BldcMotor } from './motors';
@@ -52,11 +53,11 @@ function choiceOf(option: { motor: BldcMotor; driver: BldcDriver; ratio: number 
   };
 }
 
-function voltsProblem(options: ActuatorChoice[], volts: number): string {
+function voltsProblem(options: ActuatorChoice[], supply: number): string {
   const low = Math.min(...options.map((c) => c.spec.volts[0]));
   const high = Math.max(...options.map((c) => c.spec.volts[1]));
 
-  return `Actuators run on ${low}–${high} V, not the ${volts} V supply`;
+  return `Actuators run on ${low}–${high} V, not the ${volts(supply)} supply`;
 }
 
 const suitsSupply = (c: ActuatorChoice, volts?: number) => volts === undefined || suitsVolts(c.spec, volts);

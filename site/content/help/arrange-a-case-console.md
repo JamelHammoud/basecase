@@ -46,6 +46,6 @@ You can also press [[⌘K]] and choose **Add Panel**. The panel goes to the colu
 
 Each change is one step, so [[⌘Z]] takes it back. Changing the layout doesn't stop a try. The layout is saved with the Case in your `.basecase` file, and a link made with **Share Robot** shows it.
 
-A column is 200 to 720 pixels wide. The canvas and the columns make at most 6, a column holds at most 12 panels, and a console at most 24. At a limit, **Add Panel** is grayed out, and no blue line shows where a panel can't go.
+A column is 200 to 720 pixels wide. The canvas and the columns make at most 6, a column holds at most 12 panels, and a console at most 24. At a limit, **Add Panel** is grayed out in the right-click menu and gone from [[⌘K]]. No blue line shows where a panel can't go.
 
 A Case without its own console starts from the default one the first time you change it. Code panels come from the agent, as in [Build a Case app with the agent](/help/build-a-case-app-with-the-agent). The agent reads your layout, so a change you ask for keeps it.

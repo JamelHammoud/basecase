@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
-import { ADDABLE_KINDS, kindLabel, type AddableKind, type PanelChoice } from '../../../cases/console/consoleEdits';
+import { ADDABLE_KINDS, kindLabel, type PanelChoice } from '../../../cases/console/consoleEdits';
 import { MenuBack, MenuDivider, MenuItem, type ContextMenuEntry } from '../../../design-system';
 import type { ConsoleEditor } from './consoleEditor';
 
-interface AddPanelProps {
-  editor: ConsoleEditor;
-  area?: number;
-  close: () => void;
-}
+type KindEntry = Extract<ContextMenuEntry, { label: string }>;
 
 const ChoiceList: React.FC<{ choices: PanelChoice[]; onPick: (choice: PanelChoice) => void }> = ({
   choices,
@@ -20,40 +16,8 @@ const ChoiceList: React.FC<{ choices: PanelChoice[]; onPick: (choice: PanelChoic
   </div>
 );
 
-export const AddPanelMenu: React.FC<AddPanelProps> = ({ editor, area, close }) => {
-  const [kind, setKind] = useState<AddableKind | null>(null);
-
-  const add = (k: AddableKind, choice: PanelChoice) => {
-    close();
-    editor.add(k, choice, area);
-  };
-
-  if (kind)
-    return (
-      <div data-testid="add-panel-choices">
-        <MenuBack label={kindLabel(kind)} onBack={() => setKind(null)} />
-        <MenuDivider />
-        <ChoiceList choices={editor.choices(kind)} onPick={(choice) => add(kind, choice)} />
-      </div>
-    );
-
-  return ADDABLE_KINDS.map((k) => {
-    const choices = editor.choices(k);
-    const only = choices.length === 1 ? choices[0] : null;
-
-    return (
-      <MenuItem
-        key={k}
-        label={kindLabel(k)}
-        disabled={!choices.length}
-        onSelect={() => (only ? add(k, only) : setKind(k))}
-      />
-    );
-  });
-};
-
-export const addPanelEntries = (editor: ConsoleEditor): ContextMenuEntry[] =>
-  ADDABLE_KINDS.map((kind): ContextMenuEntry => {
+export const addPanelEntries = (editor: ConsoleEditor, area?: number): KindEntry[] =>
+  ADDABLE_KINDS.map((kind): KindEntry => {
     const choices = editor.choices(kind);
     const only = choices.length === 1 ? choices[0] : null;
 
@@ -65,11 +29,46 @@ export const addPanelEntries = (editor: ConsoleEditor): ContextMenuEntry[] =>
             choices={choices}
             onPick={(choice) => {
               close();
-              editor.add(kind, choice);
+              editor.add(kind, choice, area);
             }}
           />
         ),
       };
 
-    return { label: kindLabel(kind), disabled: !only, onSelect: () => only && editor.add(kind, only) };
+    return { label: kindLabel(kind), disabled: !only, onSelect: () => only && editor.add(kind, only, area) };
   });
+
+export const AddPanelMenu: React.FC<{ editor: ConsoleEditor; area: number; close: () => void }> = ({
+  editor,
+  area,
+  close,
+}) => {
+  const [open, setOpen] = useState<string | null>(null);
+  const entries = addPanelEntries(editor, area);
+  const shown = entries.find((entry) => entry.label === open);
+
+  if (shown && 'submenu' in shown)
+    return (
+      <div data-testid="add-panel-choices">
+        <MenuBack label={shown.label} onBack={() => setOpen(null)} />
+        <MenuDivider />
+        {shown.submenu(close)}
+      </div>
+    );
+
+  return entries.map((entry) =>
+    'submenu' in entry ? (
+      <MenuItem key={entry.label} label={entry.label} onSelect={() => setOpen(entry.label)} />
+    ) : (
+      <MenuItem
+        key={entry.label}
+        label={entry.label}
+        disabled={entry.disabled}
+        onSelect={() => {
+          close();
+          entry.onSelect();
+        }}
+      />
+    ),
+  );
+};

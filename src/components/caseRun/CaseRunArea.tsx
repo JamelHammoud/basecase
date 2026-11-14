@@ -38,13 +38,14 @@ function menuItems(
   area: number,
   rename: (id: string) => void,
 ): ContextMenuEntry[] {
-  const add: ContextMenuEntry = editor.canAdd(area)
-    ? {
-        label: 'Add Panel',
-        icon: <PlusIcon />,
-        submenu: (close) => <AddPanelMenu editor={editor} area={area} close={close} />,
-      }
-    : { label: 'Add Panel', icon: <PlusIcon />, disabled: true, onSelect: () => undefined };
+  const full = !editor.canAdd(area);
+  const add: ContextMenuEntry = {
+    label: 'Add Panel',
+    icon: <PlusIcon />,
+    ...(full
+      ? { disabled: true, onSelect: () => undefined }
+      : { submenu: (close: () => void) => <AddPanelMenu editor={editor} area={area} close={close} /> }),
+  };
   const { panel } = menu;
 
   if (!panel) return [add];

@@ -33,7 +33,7 @@ You can open any try you've recorded from any scene, then step through it on the
 
 ![The Library with a robot and its two tries under Tries](/help/open-a-try-from-any-scene/library.png)
 
-3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. Click a try to open it.
+3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. An imported try shows its task and the file or repo it came from instead. Click a try to open it.
 
 ![Tries over the canvas with a try from each of two scenes](/help/open-a-try-from-any-scene/tries.png)
 
@@ -44,12 +44,12 @@ You can open any try you've recorded from any scene, then step through it on the
 5. To stop playing, click **Done** or press [[Esc]]. Tries comes back.
 6. To leave Tries, click **Done** or press [[Esc]] again.
 
-To open Tries from the command menu, press [[⌘K]], then choose **Show Tries**.
+Or open Tries from the command menu. Press [[⌘K]], then choose **Show Tries**.
 
-To find a try, use the search at the top of the Library. It matches the try's Case, its robot, and the Variation or Real label on its tile.
+The search at the top of the Library also finds tries. It matches a try's Case or task, its robot, the Variation or Real label on its tile, and the file or repo an imported try came from.
 
-To delete tries, select them and press [[⌫]], then click **Delete**. To select more than one try, hold [[⌘]] or [[⇧]] while you click. Deleting a try also deletes any Variations that came from it.
+To delete tries, select them, press [[⌫]], then click **Delete**. Hold [[⌘]] or [[⇧]] while you click to select more than one try. Deleting a try also deletes any Variations that came from it.
 
-**Note:** A try opens on the timeline only if it fits the robot in the open scene. If the try's Case isn't in the open scene, the try plays through the default cards, titled with the robot's name. Clicking a real try selects it but doesn't open the timeline.
+**Note:** A try opens on the timeline only if it fits the robot in the open scene. If a try's Case isn't in the open scene, or it's an imported try with no Case, the try plays through the default cards, titled with the robot's name. Clicking a real try selects it but doesn't open the timeline.
 
-If you recorded tries before the Library held them, Basecase moves them into the Library the first time you open their scene. On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`, with one folder for each try.
+If you recorded tries before the Library held them, Basecase moves them into the Library the first time you open their scene. On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`, with one folder per try.

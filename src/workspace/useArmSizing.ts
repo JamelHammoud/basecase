@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { armParts } from '../utils/armParts';
 import { sizeArmInWorker } from '../utils/armSizingClient';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -11,21 +11,36 @@ export function useArmSizing(core: WorkspaceCore) {
   const [sheet, setSheet] = useState<ArmTarget[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const request = useRef(0);
   const targets = armTargetsOf(selection.selectedParts);
 
   const open = (from: ArmTarget[] = targets) => {
     if (!from.length) return;
 
+    request.current += 1;
     setError(null);
     setSheet(from);
+  };
+
+  const close = () => {
+    request.current += 1;
+    setBusy(false);
+    setSheet(null);
   };
 
   const size = async (payloadG: number) => {
     if (!sheet) return;
 
+    const token = request.current;
+
     setBusy(true);
 
-    const result = await sizeArmInWorker({ targets: sheet.map((t) => t.at), payloadG }).finally(() => setBusy(false));
+    const current = () => token === request.current;
+    const result = await sizeArmInWorker({ targets: sheet.map((t) => t.at), payloadG }).finally(
+      () => current() && setBusy(false),
+    );
+
+    if (!current()) return;
 
     if (!result.ok) {
       setError(armFailure(result, sheet, payloadG));
@@ -43,7 +58,7 @@ export function useArmSizing(core: WorkspaceCore) {
     core.viewportRef.current?.frameAll();
   };
 
-  return { targets, sheet, error, busy, open, close: () => setSheet(null), size };
+  return { targets, sheet, error, busy, open, close, size };
 }
 
 export type ArmSizingActions = ReturnType<typeof useArmSizing>;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, FieldRow, Modal, NumberInput, PoseIcon } from '../design-system';
+import { FieldRow, Modal, NumberInput, PoseIcon } from '../design-system';
 import type { ArmTarget } from '../workspace/armTargets';
 
 const DEFAULT_PAYLOAD_G = 100;
@@ -21,13 +21,7 @@ export const SizeArmSheet: React.FC<{
       title="Size Arm to Targets"
       icon={<PoseIcon className="w-4 h-4" />}
       maxWidth="max-w-[440px]"
-      footer={
-        <div className="flex items-center justify-end w-full">
-          <Button variant="primary" size="sm" disabled={busy} onClick={() => onSize(payload)}>
-            Size Arm
-          </Button>
-        </div>
-      }
+      action={{ label: 'Size Arm', onClick: () => onSize(payload), disabled: busy, autoFocus: true }}
     >
       <div className="space-y-4">
         <ul className="space-y-1.5" data-arm-targets>

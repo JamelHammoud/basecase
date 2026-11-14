@@ -53,8 +53,14 @@ export function agentProcessEnv(kind, context) {
 
 const isolatedCwd = (libraryDir) => path.join(libraryDir, 'agent-workspace');
 
-export function agentCwd(kind, { workspaceRoot, libraryDir }) {
-  return kind === 'codex' || kind === 'gemini' ? isolatedCwd(libraryDir) : workspaceRoot;
+const AGENT_CWD = {
+  codex: ({ libraryDir }) => isolatedCwd(libraryDir),
+  gemini: ({ libraryDir }) => isolatedCwd(libraryDir),
+  offline: ({ libraryDir }) => path.dirname(libraryDir),
+};
+
+export function agentCwd(kind, context) {
+  return AGENT_CWD[kind]?.(context) ?? context.workspaceRoot;
 }
 
 export function codexMeta(offline) {

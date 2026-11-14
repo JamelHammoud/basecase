@@ -2,7 +2,7 @@ import type { HandoffResult } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import type { Skill } from './artifacts';
-import type { ForgeRunner, SkillSave } from './forgeRunner';
+import { lastError, type ForgeRunner, type SkillSave } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
 import type { KitWarm } from './motorKit';
 import { errorMessage } from '../utils/errorMessage';
@@ -64,6 +64,7 @@ interface Run {
   target: SkillTarget;
   label: string;
   background: boolean;
+  model?: SimModel;
   work: (forge: ForgeRunner, signal: AbortSignal) => Promise<void>;
 }
 
@@ -83,6 +84,7 @@ export class SkillsRuntime {
   private background: AbortController | null = null;
   private pending: { model: SimModel; tasks: BackgroundTask[] } | null = null;
   private trails = new Map<SkillTarget, SnapshotTrail>();
+  private forgeErrors = new Map<SkillTarget, string>();
 
   private deps: RuntimeDeps;
   readonly coach: SkillCoach;
@@ -117,6 +119,10 @@ export class SkillsRuntime {
     return !!this.user;
   }
 
+  get training(): string | null {
+    return this.user ? this.userLabel : null;
+  }
+
   draftOf(id: string) {
     return this.drafts.get(id) ?? null;
   }
@@ -136,6 +142,7 @@ export class SkillsRuntime {
       target: `kit:${entry}`,
       label: KIT_LABELS[entry],
       background: false,
+      model,
       work: (forge, signal) => this.kitWork(model, entry, { forge, signal }),
     });
 
@@ -151,6 +158,7 @@ export class SkillsRuntime {
       target: `kit:${entry}`,
       label: KIT_LABELS[entry],
       background: false,
+      model,
       work: (forge, signal) => this.kitWork(model, entry, { forge, signal, warm }),
     });
 
@@ -164,6 +172,7 @@ export class SkillsRuntime {
       target: `move:${animation.id}`,
       label: animation.name,
       background: false,
+      model,
       work: (forge, signal) => this.moveWork(model, animation, { forge, signal }),
     });
 
@@ -177,6 +186,7 @@ export class SkillsRuntime {
       target: task.target,
       label: task.label,
       background: false,
+      model,
       work: (forge, signal) => this.recheckWork(model, task, { forge, signal }),
     });
 
@@ -332,10 +342,13 @@ export class SkillsRuntime {
     );
     const { outcome } = reply;
 
-    if (outcome.kind === 'skill') return this.keep(`kit:${entry}`, skillRecord(outcome.skill, { kit: entry }));
+    const target: SkillTarget = `kit:${entry}`;
 
-    if (outcome.evidence)
-      this.deps.onRefused?.(`kit:${entry}`, { line: refusedLine(outcome.evidence), model: refusalModel(model) });
+    if (outcome.kind === 'skill') return this.keep(target, skillRecord(outcome.skill, { kit: entry }));
+
+    const line = outcome.evidence ? refusedLine(outcome.evidence) : (this.forgeErrors.get(target) ?? outcome.reason);
+
+    this.refuse(target, model, { line, signal: ports.signal });
   }
 
   private async moveWork(
@@ -348,12 +361,16 @@ export class SkillsRuntime {
       { ...this.ports(), ...ports },
     );
     const { outcome, environment } = reply.outcome;
+    const target: SkillTarget = `move:${animation.id}`;
 
     if (outcome.kind === 'skill')
-      await this.keep(
-        `move:${animation.id}`,
-        skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }),
-      );
+      return this.keep(target, skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }));
+
+    this.refuse(target, model, { line: this.forgeErrors.get(target) ?? outcome.reason, signal: ports.signal });
+  }
+
+  private refuse(target: SkillTarget, model: SimModel, { line, signal }: { line: string; signal: AbortSignal }) {
+    if (!signal.aborted) this.deps.onRefused?.(target, { line, model: refusalModel(model) });
   }
 
   private retrain(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
@@ -405,6 +422,9 @@ export class SkillsRuntime {
 
       const outcome = await forge(job);
 
+      if (outcome.ok) this.forgeErrors.delete(run.target);
+      else if (!signal.aborted) this.forgeErrors.set(run.target, lastError(outcome));
+
       this.setJob(run.target, { message: 'Checking in Arena', share: null });
 
       return outcome;
@@ -423,10 +443,13 @@ export class SkillsRuntime {
 
     try {
       await run.work(this.forgeFor(run, controller.signal), controller.signal);
-    } catch {
+    } catch (error) {
+      if (run.model) this.refuse(run.target, run.model, { line: errorMessage(error), signal: controller.signal });
+
       controller.abort();
     } finally {
       this.user = null;
+      this.forgeErrors.delete(run.target);
       this.trails.delete(run.target);
       this.setJob(run.target, null);
       void this.drainBackground();
@@ -464,6 +487,7 @@ export class SkillsRuntime {
         controller.abort();
       }
 
+      this.forgeErrors.delete(run.target);
       this.trails.delete(run.target);
       this.setJob(run.target, null);
 

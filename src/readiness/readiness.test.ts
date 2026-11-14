@@ -13,8 +13,8 @@ import {
   restoreRule,
   withDecisions,
   findingSignature,
-  fixPrompt,
-  followUpPrompt,
+  fixRequest,
+  followUpRequest,
   findingQuote,
   newBlockers,
   readinessDelta,
@@ -23,6 +23,8 @@ import {
   restoreFinding,
 } from './readiness';
 import type { Finding } from './types';
+import { messageText } from '../components/agent/messageText';
+import { withQuotes } from '../workspace/agentPrompt';
 
 const part = (id: string, extra: Partial<ScenePart> = {}): ScenePart => ({
   id,
@@ -134,9 +136,31 @@ describe('the verdict', () => {
   it('gives the agent the technical detail and the user plain words', () => {
     const f = { ...blocker('x'), text: 'Too thin to print.', agentText: 'walls under 0.84 mm' };
 
-    expect(fixPrompt(f)).toContain('Too thin to print.');
-    expect(fixPrompt(f)).toContain('walls under 0.84 mm');
+    const request = fixRequest(f, []);
+    const prompt = withQuotes(request.text, request.quotes);
+
+    expect(prompt).toContain('Too thin to print.');
+    expect(prompt).toContain('walls under 0.84 mm');
     expect(readinessText(verdict([f]))).toContain('walls under 0.84 mm');
+  });
+
+  it('shows a Fix request in plain words, with the part names, and keeps ids and tools for the agent', () => {
+    const f = {
+      ...blocker('fit:clash:chassis+part-mwf9a9ai-rgg', ['chassis', 'part-mwf9a9ai-rgg']),
+      text: 'These parts overlap by 3 mm.',
+      agentText: 'chassis and part-mwf9a9ai-rgg overlap by 3 mm.',
+    };
+    const parts = [part('chassis', { name: 'Chassis' }), part('part-mwf9a9ai-rgg', { name: 'Left Wheel' })];
+    const request = fixRequest(f, parts);
+    const seen = messageText({ id: 'u', role: 'user', text: request.text, timestamp: '', quotes: request.quotes });
+    const shown = [seen, ...request.quotes.map((q) => q.text), ...request.quotes.map((q) => q.parts)].join('\n');
+    const sent = withQuotes(request.text, request.quotes);
+
+    expect(shown).toContain('These parts overlap by 3 mm.');
+    expect(request.quotes[0].parts).toBe('Chassis, Left Wheel');
+    expect(shown).not.toMatch(/fit:clash|part-mwf9|dispute_finding|get_readiness/);
+    expect(sent).toContain('Check: fit:clash:chassis+part-mwf9a9ai-rgg');
+    expect(sent).toContain('dispute_finding');
   });
 
   it('quotes a problem in plain words and keeps the detail for the agent', () => {
@@ -155,7 +179,12 @@ describe('what changed in a turn', () => {
 
     expect(newBlockers(before, after).map((f) => f.key)).toEqual(['new']);
     expect(readinessDelta(before, after)).toContain('blockers 1 → 2');
-    expect(followUpPrompt(newBlockers(before, after))).toContain('dispute_finding');
+
+    const followUp = followUpRequest(newBlockers(before, after), []);
+
+    expect(followUp.text).toBe('Fix what the last change added: 1 problem.');
+    expect(withQuotes(followUp.text, followUp.quotes)).toContain('dispute_finding');
+    expect(withQuotes(followUp.text, followUp.quotes)).toContain('Check: new');
   });
 
   it('says nothing when a clean design stays clean', () => {

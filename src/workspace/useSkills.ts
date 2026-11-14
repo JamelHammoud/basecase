@@ -27,6 +27,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { platformBridge } from '../utils/platformBridge';
 import { trainHandoff, useRoutineSkills, type HandoffJob } from './useRoutineSkills';
 import { useSkillCoach } from './useSkillCoach';
+import { trainingProblem } from './trainingProblem';
 
 const BUILD_DEBOUNCE_MS = 1500;
 
@@ -183,11 +184,7 @@ export function useSkills(input: SkillsInput) {
     return { policy: skill.controller.policy, topSpeed: kitTopSpeed(model) };
   };
 
-  const trainKit = async (entry: TrainedEntry) => runtime.trainKit(await sim.buildModel(), entry);
-
-  const train = async (row: SkillRow) => {
-    const built = await sim.buildModel();
-
+  const startTraining = (row: SkillRow, built: SimModel) => {
     if ((row.kit || row.move) && row.record && row.state.kind === 'recheck')
       return runtime.recheck(built, taskOf(row, row.record, 'recheck'));
 
@@ -195,6 +192,11 @@ export function useSkills(input: SkillsInput) {
 
     return row.kit ? runtime.trainKit(built, row.kit) : null;
   };
+
+  const train = (row: SkillRow) => trainingProblem(runtime, async () => startTraining(row, await sim.buildModel()));
+
+  const trainKit = (entry: TrainedEntry) =>
+    trainingProblem(runtime, async () => runtime.trainKit(await sim.buildModel(), entry));
 
   const rowEnvironment = (row: SkillRow): Environment | null => {
     try {

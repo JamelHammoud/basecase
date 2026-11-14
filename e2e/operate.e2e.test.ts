@@ -12,6 +12,7 @@ const ARM_JOINTS = ARM.project.joints.map((joint) => joint.id);
 
 interface FakeLink {
   factory: boolean;
+  horns: Record<number, { offsetDeg: number; direction: 1 | -1 }>;
   intents: number[][];
   plantStall: (id: number) => boolean;
   policy: { kind: string; id?: string; hash?: string }[];
@@ -29,6 +30,7 @@ type StudioWindow = {
     select: (ids: string[]) => void;
     selection: () => string[];
     calibrations: () => RecordedCalibrations;
+    robotCalibration: () => Promise<Array<{ id: number; zero_counts: number; direction: number }> | null>;
   };
   __fakeRobotLink: FakeLink;
 };
@@ -274,7 +276,7 @@ describe('Operate calibration', () => {
       );
 
       expect(Object.keys(moving.layer!.parts).sort()).toEqual(['elbow-servo', 'fore', 'upper']);
-      expect(moving.layer!.label).toMatch(/^[+-]\d+\.\d°$/);
+      expect(moving.layer!.label).toMatch(/^[+−]\d+\.\d°$/);
 
       for (const [id, degrees] of Object.entries(moving.measured!))
         expect(moving.layer!.values[id] ?? 0).toBeCloseTo(degrees ?? 0, 3);
@@ -379,6 +381,31 @@ describe('Operate servo setup', () => {
     },
     60000,
   );
+});
+
+describe('Operate zero and direction', () => {
+  const written = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.robotCalibration());
+  const horns = { 1: { offsetDeg: 12, direction: 1 }, 2: { offsetDeg: 0, direction: -1 } } as const;
+
+  it('finds a reversed elbow and a 12° shoulder horn from the camera in Calibrate Servos', async () => {
+    const { page } = app;
+
+    await loadRecord(ARM);
+    await climbToTest();
+    await page.evaluate((h) => Object.assign((window as unknown as StudioWindow).__fakeRobotLink.horns, h), horns);
+    await expect.poll(() => button('Calibrate Servos').isEnabled()).toBe(true);
+    await page.keyboard.press('ControlOrMeta+k');
+    await page.getByLabel('Search commands').fill('Calibrate Servos');
+    await page.keyboard.press('Enter');
+    await expect.poll(async () => (await written())?.[1].direction, { timeout: 90000 }).toBe(-1);
+
+    const [shoulder] = (await written())!;
+
+    expect([shoulder.direction, Math.abs(((shoulder.zero_counts - 2048) * 360) / 4096 - 12) < 2]).toEqual([1, true]);
+    await expect.poll(calibrating, { timeout: 90000 }).toBe('idle');
+    expect(app.errors).toEqual([]);
+    await page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.robotDisconnect());
+  }, 150000);
 });
 
 describe('Operate policy', () => {

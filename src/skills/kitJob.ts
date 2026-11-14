@@ -1,4 +1,5 @@
 import type { Eye } from '../sim/eyes';
+import type { PolicySpec } from '../sim/policy';
 import type { StartArea } from './environment';
 import type { SimModel } from '../sim/mjcfTypes';
 import { kitCommand, type TrainedEntry } from './kitEnvironment';
@@ -24,6 +25,7 @@ export interface KitJobOptions {
   delaySteps?: DelaySteps;
   delayRamp?: number;
   warmStart?: string | null;
+  warmPolicy?: PolicySpec | null;
   reverse?: boolean;
   eyes?: Eye[];
   startArea?: StartArea;
@@ -119,6 +121,7 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     ...(options.delaySteps ? { delaySteps: options.delaySteps } : {}),
     ...(options.delayRamp ? { delayRamp: options.delayRamp } : {}),
     ...(options.warmStart ? { warmStart: options.warmStart, logStdMin: LOG_STD_MIN } : {}),
+    ...(!options.warmStart && options.warmPolicy ? { warmPolicy: options.warmPolicy, logStdMin: LOG_STD_MIN } : {}),
     ...(options.eyes?.length ? { eyes: options.eyes } : {}),
     ...(options.startArea ? { startArea: options.startArea } : {}),
     ...servoGains(model, { seed: options.seed, joints: robot.joints }),

@@ -4,6 +4,7 @@ import { currentMoney } from './currencyStore';
 import { plural } from '../../electron/plural.mjs';
 import { weight } from './weight';
 import { sizeFigures } from './size';
+import { percent } from '../../electron/percent.mjs';
 
 const STATUS_LABEL: Record<PriceStatus, string> = { checked: 'Checked', stale: 'Stale', unchecked: 'Not checked' };
 const LINK_TYPE: Record<BomLine['urlKind'], string> = { product: 'Listing', search: 'Search', none: '' };
@@ -12,6 +13,7 @@ const csvHead = (code: string) => [
   'Category',
   'Maker / Spec',
   'Qty Needed',
+  'On Hand',
   'Unit',
   'Pack Qty',
   'Packs to Buy',
@@ -58,6 +60,7 @@ const csvRow = (l: BomLine, partNames: Record<string, string>, money: Money) => 
   l.category,
   l.detail,
   l.qty,
+  l.owned || '',
   l.unit,
   l.record?.packQty ?? (l.category === 'Filament' ? 1000 : ''),
   l.packs ?? '',
@@ -104,7 +107,8 @@ function markdownPrice(l: BomLine, money: Money): string {
 }
 
 function markdownRow(l: BomLine, money: Money): string {
-  const qty = l.unit === 'g' ? `${l.qty} g` : String(l.qty);
+  const unit = l.unit === 'g' ? ' g' : '';
+  const qty = `${l.qty}${unit}${l.owned ? ` (${l.owned}${unit} on hand)` : ''}`;
   const link = l.url ? `[${l.urlKind === 'product' ? 'Listing' : 'Search'}](${l.url})` : '';
   const name = `${l.name}${l.detail ? ` <br>${l.detail}` : ''}${l.warning ? ` <br>⚠ ${l.warning}` : ''}`;
   const checked = l.record ? `${l.record.checkedAt}${l.status === 'stale' ? ' (stale)' : ''}` : 'Not checked';
@@ -122,7 +126,7 @@ function markdownPrinted(bom: Bom): string[] {
     '|---|---|---|---:|',
     ...bom.printed.map((p) => `| ${p.name} | ${p.material} | ${sizeFigures(p.size)} | ${weight(p.grams)} |`),
     '',
-    `Filament estimates assume 2 walls, 4 top/bottom layers and the project’s infill; spools include estimated supports and a ${Math.round(FILAMENT_MARGIN * 100)}% margin for brims and reprints.`,
+    `Filament estimates assume 2 walls, 4 top/bottom layers and the project’s infill; spools include estimated supports and a ${percent(FILAMENT_MARGIN)} margin for brims and reprints.`,
     '',
   ];
 }
@@ -174,6 +178,8 @@ function textSummary(t: Bom['totals'], money: Money): string {
 }
 
 function textPrice(l: BomLine, money: Money): string {
+  if (l.toBuy === 0) return `nothing to buy = ${money.format(0)}`;
+
   if (l.record)
     return `${money.format(l.record.priceUsd, l.record.entered)} per ${l.record.packQty}${l.unit === 'g' ? ' g' : ''}, ${l.packs} to buy = ${money.format(l.lineUsd ?? 0, lineEntry(l))} (checked ${l.record.checkedAt}${l.status === 'stale' ? ', stale' : ''})`;
 
@@ -185,8 +191,10 @@ function textPrice(l: BomLine, money: Money): string {
 
 function textLine(l: BomLine, money: Money): string {
   const qty = l.unit === 'g' ? `${l.qty} g` : `${l.qty}×`;
+  const unit = l.unit === 'g' ? ' g' : '';
+  const owned = l.owned ? ` · ${l.owned}${unit} owned, ${l.toBuy}${unit} to buy` : '';
 
-  return `- ${qty} ${l.name} [${l.key}] · ${textPrice(l, money)}${l.warning ? ` · ${l.warning}` : ''}`;
+  return `- ${qty} ${l.name} [${l.key}]${owned} · ${textPrice(l, money)}${l.warning ? ` · ${l.warning}` : ''}`;
 }
 
 function textNotes(bom: Bom, names: Record<string, string>): string[] {
@@ -221,7 +229,7 @@ function textNotes(bom: Bom, names: Record<string, string>): string[] {
 export function bomText(bom: Bom, names: Record<string, string>, money: Money = currentMoney()): string {
   const out: string[] = [
     textSummary(bom.totals, money),
-    'Checked prices are the user’s own Amazon listing checks; estimates are maker or distributor list prices. Never state or guess any other price.',
+    'Checked prices are the user’s own Amazon listing checks; estimates are maker or distributor list prices. Never state or guess any other price. Owned units are parts the user already has; they cost nothing and only the rest is priced.',
     ...currencyNote(money),
   ];
 

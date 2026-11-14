@@ -19,6 +19,7 @@ const TOOL_GUIDES = {
   view_image: ['photos'],
   fasten: ['fasteners'],
   get_bom: ['build'],
+  record_on_hand: ['build'],
   set_build: ['build'],
   check_printability: ['build'],
   slice_plates: ['build'],
@@ -39,6 +40,7 @@ const TOOL_GUIDES = {
   start_drive: ['simulation'],
   draft_skill: ['simulation'],
   train_skill: ['simulation'],
+  coach_skill: ['simulation'],
   find_objects: ['simready'],
   insert_object: ['simready'],
 };

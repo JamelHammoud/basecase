@@ -1,6 +1,7 @@
 import type { MainModule } from '@mujoco/mujoco';
 import { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
+import { lengthLabel } from '../utils/size';
 
 export type V3 = [number, number, number];
 export type BodyClass = 'arm' | 'wheels' | 'legs' | 'other';
@@ -153,7 +154,7 @@ export function describeBody(facts: BodyFacts): string {
 
   return [
     `This robot is ${CLASS_WORDS[facts.cls]}.`,
-    facts.floating ? `At rest its base stands ${Math.round(facts.heightM * 1000)} mm above the floor.` : '',
+    facts.floating ? `At rest its base stands ${lengthLabel(facts.heightM * 1000)} above the floor.` : '',
     `The base part is ${facts.rootPart}. Positions below are where each part sits at rest.`,
     'Parts:',
     ...parts,

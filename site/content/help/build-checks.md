@@ -69,13 +69,13 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Servo version | Servos sold in more than one version | A servo with no version chosen |
 | Servo voltage | The supply's voltage against each servo's range | A voltage outside the servos' range |
 | Current and runtime | The battery's current against the servos' draw | A battery that can't supply enough current |
-| Supply current | A cable supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
+| Supply current | The power supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
 | Regulator input | The battery against each regulator's input range | A battery outside the regulator's range |
 | Servo bus | Each servo's connector against the bus adapters in the build | A servo no adapter plugs into. Shown only when it fails |
 | Standing stability | The center of mass over the feet | “The robot would tip over standing still.” |
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load; amber under 2 times |
-| Budget | The estimated total against your budget | Over budget; amber above 90%. Not run until you set a budget |
+| Budget | The estimated cost of the parts left to buy against your budget | Over budget; amber above 90%. Not run until you set a budget |
 
 Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
 

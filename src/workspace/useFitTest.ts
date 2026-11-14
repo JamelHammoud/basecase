@@ -2,13 +2,13 @@ import { useState } from 'react';
 import * as THREE from 'three';
 import type { PrinterSetup } from '../data/printers';
 import { canFitTest, couponPart, fitTestInput, fitTestReport } from '../print/fitTest';
-import type { ThreeMfFileSpec } from '../three/analysis/analysisOps';
 import { threeMfIn } from '../three/analysis/analysisPool';
 import type { FitCoupon } from '../three/analysis/fitCoupons';
 import { snapshotShapes } from '../three/analysis/sceneShapes';
 import type { Viewport3DHandle } from '../three/viewport/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { printReportOf } from '../utils/printReport';
+import type { PlateFiles, WrittenPlates } from './usePlateWriter';
 
 interface FitTestOptions {
   parts: ScenePart[];
@@ -22,7 +22,7 @@ interface Cut {
   parts: ScenePart[];
 }
 
-async function couponThreeMf(cut: Cut, files: ThreeMfFileSpec[], plateSize: [number, number]) {
+async function couponThreeMf(cut: Cut, plates: PlateFiles) {
   const objects = cut.coupons.map((c, i) => {
     const geometry = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(c.positions, 3));
 
@@ -30,7 +30,7 @@ async function couponThreeMf(cut: Cut, files: ThreeMfFileSpec[], plateSize: [num
   });
 
   try {
-    return await threeMfIn(snapshotShapes(objects), files, plateSize);
+    return (await threeMfIn(snapshotShapes(objects), plates)).files;
   } finally {
     objects.forEach((o) => o.object.geometry.dispose());
   }
@@ -74,7 +74,9 @@ export function useFitTest({ parts, project, printer, viewport }: FitTestOptions
     available: canFitTest(parts),
     start,
     leave: () => setCut(null),
-    threeMf: (files: ThreeMfFileSpec[], plateSize: [number, number]) =>
-      cut ? couponThreeMf(cut, files, plateSize) : Promise.resolve({}),
+    threeMf: async (plates: PlateFiles): Promise<WrittenPlates> => ({
+      files: cut ? await couponThreeMf(cut, plates) : {},
+      labels: '',
+    }),
   };
 }

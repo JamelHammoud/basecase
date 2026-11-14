@@ -9,6 +9,7 @@ import {
   type SignalSource,
 } from './environment';
 import { sha256Hex } from './hash';
+import { angleFromRadians } from '../utils/angle';
 import { FELL } from './kitEnvironment';
 import { KIT_ACTION_SCALE, kitRobot, neutralRad } from './kitModel';
 import { moveReward } from './moveRewards';
@@ -67,7 +68,7 @@ export function moveProblems(model: SimModel, reference: MoveReference): string[
 
   if (zeroPolicyMiss(model, reference) > needed) return [];
 
-  return [`It stays within ${Math.round(MOVE_BARS.canaryShare * MOVE_BARS.toleranceRad * R2D)}° of the rest pose.`];
+  return [`It stays within ${angleFromRadians(MOVE_BARS.canaryShare * MOVE_BARS.toleranceRad)} of the rest pose.`];
 }
 
 function rootPart(model: SimModel): string | null {

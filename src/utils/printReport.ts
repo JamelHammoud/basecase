@@ -2,11 +2,13 @@ import { MATERIAL_DENSITY } from '../data/supplies';
 import type { PrinterSetup } from '../data/printers';
 import { bedOf, bedSizeText } from '../print/bed';
 import { sizeLabel } from './size';
+import { angle } from './angle';
 import { buildPrintPlan, choosePose, type PrintCheck, type PrintPlan } from '../print/plan';
 import type { MeshMeasure } from '../three/meshMeasure';
 import { PRINT_RULES, printHours, type PrintShape, type Vec3 } from '../three/printability';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { hashText } from '../guide/guideItems';
+import { firstSteps, guideStepParts } from '../guide/guideSteps';
 import { filamentGrams, isPrinted, printMaterialOf } from './bom';
 import { duration } from './duration';
 import { weight } from './weight';
@@ -159,6 +161,7 @@ const sum = (parts: PrintedPartReport[], value: (r: PrintedPartReport) => number
 export interface PrintContext {
   project: ProjectSettings;
   printer: PrinterSetup;
+  scene?: ScenePart[];
 }
 
 export async function printReportOf(parts: ScenePart[], ctx: PrintContext, fetchShapes: PrintShapes) {
@@ -179,12 +182,14 @@ export function buildPrintReport(parts: ScenePart[], ctx: PrintContext): PrintRe
       return shape ? [{ part, shape }] : [];
     }),
     ctx,
+    firstSteps(guideStepParts(ctx.scene ?? parts, ctx.project)),
   );
 }
 
 export function reportFromShapes(
   entries: Array<{ part: ScenePart; shape: PartShape }>,
   ctx: PrintContext,
+  firstStep: ReadonlyMap<string, number> = new Map(),
 ): PrintReport {
   const byId = new Map(entries.map(({ part }) => [part.id, part]));
   const out: PrintedPartReport[] = entries.map(({ part, shape }) => ({
@@ -192,7 +197,12 @@ export function reportFromShapes(
     copies: Math.max(1, part.print?.copies ?? 1),
   }));
   const plan = buildPrintPlan(
-    out.map((r) => ({ ...r, shapeKey: shapeKey(byId.get(r.id)!), print: byId.get(r.id)!.print })),
+    out.map((r) => ({
+      ...r,
+      shapeKey: shapeKey(byId.get(r.id)!),
+      print: byId.get(r.id)!.print,
+      firstStep: firstStep.get(r.id),
+    })),
     ctx.printer,
     bedOf(ctx.printer.model),
     printSettingsKey(ctx.project),
@@ -254,7 +264,7 @@ export function printReportText(r: PrintReport): string {
   lines.push(r.totals.failing ? `Issues on ${plural(r.totals.failing, 'part')}:` : 'Every part fits and prints.');
 
   for (const p of r.parts) {
-    const turned = p.check.yaw && p.check.yaw % 90 ? `, turned ${p.check.yaw}° across the plate` : '';
+    const turned = p.check.yaw && p.check.yaw % 90 ? `, turned ${angle(p.check.yaw)} across the plate` : '';
     const head = `- ${p.id} (${p.material}, ${weight(p.grams)}${p.supportG >= 1 ? ` + ${weight(p.supportG)} support` : ''}, ${sizeLabel(p.check.size)}, ${faceText(p.check)}${turned})`;
 
     const said = [...p.issues, ...p.notes];

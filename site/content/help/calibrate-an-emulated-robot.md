@@ -12,6 +12,9 @@ keywords:
   - sysid
   - sim to real
   - roll back
+  - zero
+  - direction
+  - horn offset
   - replay
   - sts3215
   - dynamixel
@@ -28,6 +31,9 @@ covers:
   - src/reality/jointReplay.ts
   - src/robot/calibrationSession.ts
   - src/robot/benchRun.ts
+  - src/robot/mountCapture.ts
+  - src/reality/mountSearch.ts
+  - src/cameras/silhouetteSource.ts
   - src/reality/benchSequence.ts
   - src/reality/history.ts
   - src/reality/calibratedInput.ts
@@ -39,7 +45,7 @@ covers:
   - src/utils/engineeringSimModel.ts
 ---
 
-Fit each emulated servo's model from an 18-second bench run, so the simulation, Cases and training move the way the servos do.
+Find each joint's zero and direction from a camera, then fit each emulated servo's model, so the simulation and training move the way the servos do.
 
 Calibration works on the emulated robot; no real servo has been logged with it. Each joint is fitted against its own servo and variant, and each emulated servo stands in for that part.
 
@@ -52,7 +58,11 @@ The STS3215 C001 and XL330 start from a measured catalog model. Every other Feet
 
 ![Operate in Test, with Calibrate Servos above the emulated servos](/help/calibrate-an-emulated-robot/test.png)
 
-Every joint moves slowly through a bench sequence at once, for about 18 seconds. Then each servo is fitted, one joint at a time.
+First, each joint whose zero and direction were never found wiggles on its own, about 4 seconds each. A camera watches it, and Basecase writes what it finds to the robot.
+
+![The Shoulder wiggling in Operate while Calibrate Servos watches it, with the measured robot drawn in blue](/help/calibrate-an-emulated-robot/wiggle.png)
+
+Then every joint moves slowly through a bench sequence at once, for about 18 seconds. Then each servo is fitted, one joint at a time.
 
 5. Read each joint's row under **Emulated servos**: its name, bus ID, position and temperature. **Measured** beside the name means the simulation now runs on the fit. Under the name is the version in use, after any other verdict.
 
@@ -85,6 +95,20 @@ To see what an older version would do before rolling back, choose it in the same
 
 A joint with no version in use shows **Preset**. On an STS3215 C001 or XL330, such a joint runs on the median of 24 emulated units of its servo, not the catalog model. **Roll Back** steps back one measured version at a time, then to the preset. A joint rolled back to the preset loses its **Measured** mark.
 
+## Zero and direction
+
+A joint's zero is the servo reading where the joint sits at 0°, and its direction says which way the reading grows. A horn pressed on one tooth off a 25-tooth spline sits 14.4° from the joint's 0°. A servo mounted reversed turns the joint the wrong way while its own reading agrees, so the bench can't see it.
+
+While a joint wiggles, it steps 0.1 rad one way, then 0.1 rad the other, and back. Basecase draws the robot's outline from your CAD for both directions and every zero within 20°, and keeps the one that matches the camera. It looks for the joints nearest the base first.
+
+- A zero that changes becomes a new version, marked **Measured**, before the bench sequence starts. The robot stops, then starts **Test** again on the new zero.
+- A joint that already matched records nothing.
+- A joint the camera can't see move reads **Can’t tell** and keeps its zero: one hidden behind the robot's body, or a round wrist rolling on its own axis.
+
+The camera is your scene's first camera view, or the framed scene when you haven't placed one. On the emulated robot, Basecase draws that view at the servos' true angles, so no camera is plugged in. Each emulated servo is mounted with its own hidden offset, and some are reversed.
+
+**Roll Back** undoes a zero like any fit. The robot's calibration follows, and a joint rolled back past its first zero returns to the default.
+
 ## What the bench sequence does
 
 The bench sequence ramps every joint 0.25 rad each way at 0.12 rad/s, holding 0.6 s at each end, for 9 seconds. Then it swings each joint through a 0.15 rad wave at 0.12 Hz for 9 more. It's slow because Test caps each joint at 0.5 rad/s, and a move the servo couldn't follow would read **Can’t tell**.
@@ -110,4 +134,4 @@ Basecase selects those servos and calibrates their joints alone.
 
 ![Servo models after Elbow was rolled back, naming the Elbow servo with Fix on its note](/help/calibrate-an-emulated-robot/checks-rolled-back.png)
 
-**Export** ▸ **Robot Package** carries each joint's active calibration in `joint_map.json`; see [Export a robot package](/help/export-a-robot-package).
+**Export** ▸ **Robot Package** carries each joint's active calibration, zero and direction in `joint_map.json`; see [Export a robot package](/help/export-a-robot-package).

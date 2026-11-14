@@ -2,6 +2,7 @@ import React from 'react';
 import type { LinkageSolution } from '../../utils/linkage';
 import { THEME_COLORS } from '../../design-system';
 import { PATH_MUTED } from './SketchPathLayer';
+import { lengthLabel } from '../../utils/size';
 
 interface LinkageChoicesProps {
   solutions: LinkageSolution[];
@@ -25,7 +26,7 @@ export const LinkageChoices: React.FC<LinkageChoicesProps> = ({ solutions, highl
           className="w-4 h-0.5 rounded-full shrink-0"
           style={{ background: i === highlighted ? THEME_COLORS.figmaBlue : PATH_MUTED }}
         />
-        {`${s.maxErrorMm.toFixed(1)} mm`}
+        {lengthLabel(s.maxErrorMm)}
       </button>
     ))}
   </div>

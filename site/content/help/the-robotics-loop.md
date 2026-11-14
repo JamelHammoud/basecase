@@ -31,7 +31,7 @@ Basecase is a 3D CAD studio for robots, with an agent that designs alongside you
 | Design | Shape parts, place real servos, boards and sensors, or describe the robot to the agent | **Parts** and **Library** in the view rail, and the **Agent** tab |
 | Engineer | Add joints, pose the robot, and check torque, range, stability and printability | The **Pose** and **Build** tabs |
 | Simulate | Run the robot under MuJoCo physics, and try it on Cases | The **Simulate** tab, and **Play** ▸ **Cases** |
-| Train | Teach the robot a skill, such as standing up or walking | The **Train** section of the **Simulate** tab |
+| Train | Teach the robot a skill, such as standing up or walking, or install one from Hugging Face | The **Train** section of the **Simulate** tab, and **Install Skill** in [[⌘K]] |
 | Build | Clear the Checks, price every part and print the plates | The **Build** tab |
 | Operate | Connect a robot, calibrate its servos and run Routines | **Play** ▸ **Operate** and **Play** ▸ **Routines** |
 
@@ -41,7 +41,7 @@ MuJoCo is the physics engine robotics labs use to test robots before they build 
 
 A failure in Engineer, Simulate or Train sends you back to Design. Say a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg. The **Servo torque** check fails in the **Build** tab, and the fix is a stronger servo in Design.
 
-Data from a running robot loops back the other way. Calibrating a servo fits its model from an 18-second bench run, so the simulation moves the way the servo does. Training then runs on that fit. An STS3215 C001 or XL330 you haven’t calibrated runs on the median of 24 emulated units, and training draws it from their spread. A real wheeled or legged robot can also [try a Case](/help/try-a-case-on-your-real-robot) on the Case printed as a floor mat, judged from a camera by the same contract.
+Data from a running robot loops back the other way. Calibrating a robot finds each joint's zero and direction from a camera. Then it fits each servo's model from an 18-second bench run, so the simulation moves the way the servo does. Training then runs on that fit. An STS3215 C001 or XL330 you haven't calibrated runs on the median of 24 emulated units, and training draws it from their spread. A real wheeled or legged robot can also [try a Case](/help/try-a-case-on-your-real-robot) on the Case printed as a floor mat, judged from a camera by the same contract.
 
 ## What works today
 

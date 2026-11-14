@@ -56,7 +56,7 @@ Why these rules exist is in [Parts the agent sources](/help/parts-the-agent-sour
 
 ## “No price for” a part
 
-This is a note, so it never blocks Ready to build. The listed parts have no list price and no price you saved.
+This is a note, so it never blocks Ready to build. The listed parts have no list price and no price you saved. A part you own enough of needs no price.
 
 1. Click **Add Price** on the part's line in **Bill of materials**.
 2. Type the price and click **Save**.

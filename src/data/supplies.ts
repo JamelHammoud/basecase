@@ -110,7 +110,7 @@ export const SUPPLIES: SupplyInfo[] = [
     id: 'dc-bench-supply',
     name: 'DC Power Supply',
     group: 'Power',
-    spec: 'Bench or wall DC supply for a tethered robot, rated for the tether’s voltage and current, with output leads',
+    spec: 'Bench or wall DC supply for a robot with no battery, rated for the voltage and current in Checks, with output leads',
     search: amazon('adjustable DC bench power supply 30V 10A'),
   },
   {

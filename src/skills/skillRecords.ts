@@ -10,12 +10,14 @@ import {
   type SkillBinding,
   type SkillOrigin,
 } from './artifacts';
+import type { CoachDirection, CoachSignal } from './coachSignals';
 import type { Environment } from './environment';
 import { hashOf } from './hash';
 import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
 import type { SnapshotRef } from './snapshots';
 import { plural } from '../../electron/plural.mjs';
+import { percent } from '../../electron/percent.mjs';
 
 export interface MoveTag {
   animation: string;
@@ -26,6 +28,16 @@ export const moveTag = (animation: string, environment: Environment): MoveTag =>
   animation,
   reference: hashOf(environment.reference ?? null),
 });
+
+export interface CoachTag {
+  words: string;
+  reward: string;
+  signal: CoachSignal;
+  direction: CoachDirection;
+  before: number;
+  after: number;
+  from: string;
+}
 
 export interface CaseTag {
   id: string;
@@ -38,6 +50,7 @@ export interface SkillRecord {
   kit: TrainedEntry | null;
   move?: MoveTag | null;
   case?: CaseTag | null;
+  coach?: CoachTag | null;
   goal: string | null;
   binding: SkillBinding;
   evidence: ArenaEvidence | null;
@@ -53,6 +66,7 @@ export function skillRecord(
     kit: TrainedEntry | null;
     move?: MoveTag;
     case?: CaseTag;
+    coach?: CoachTag;
     goal?: string | null;
     environment?: Environment | null;
   },
@@ -65,6 +79,7 @@ export function skillRecord(
     kit: options.kit,
     ...(options.move ? { move: options.move } : {}),
     ...(options.case ? { case: options.case } : {}),
+    ...(options.coach ? { coach: options.coach } : {}),
     goal: options.goal ?? null,
     binding: skill.binding,
     evidence: skill.evidence,
@@ -113,11 +128,35 @@ export function recordFreshness(record: SkillRecord, options: FreshnessInput): F
   return skillFreshness(record, currentDesign({ ...options, environment }));
 }
 
-export function arenaLine(evidence: ArenaEvidence): string {
-  const worst = [...evidence.variants].sort((a, b) => a.passes / a.trials - b.passes / b.trials)[0];
-  const share = `at least ${Math.floor(evidence.lowerBound * 100)}%`;
+type Variant = ArenaEvidence['variants'][number];
 
-  return worst ? `${worst.passes} of ${plural(worst.trials, 'try', 'tries')}, ${share}` : share;
+const passShare = (variant: Variant) => variant.passes / variant.trials;
+
+const worstVariant = (evidence: ArenaEvidence): Variant | undefined =>
+  [...evidence.variants].sort((a, b) => passShare(a) - passShare(b))[0];
+
+const worstShare = (evidence: ArenaEvidence) => {
+  const worst = worstVariant(evidence);
+
+  return worst ? passShare(worst) : Infinity;
+};
+
+export const worstEvidence = (evidence: readonly ArenaEvidence[]): ArenaEvidence | undefined =>
+  [...evidence].sort((a, b) => worstShare(a) - worstShare(b))[0];
+
+const triesLine = (variant: Variant) => `${variant.passes} of ${plural(variant.trials, 'try', 'tries')}`;
+
+export function arenaLine(evidence: ArenaEvidence): string {
+  const worst = worstVariant(evidence);
+  const share = `at least ${percent(evidence.lowerBound, { down: true })}`;
+
+  return worst ? `${triesLine(worst)}, ${share}` : share;
+}
+
+export function refusedLine(evidence: ArenaEvidence): string {
+  const worst = worstVariant(evidence);
+
+  return worst ? `Refused in Arena: ${triesLine(worst)}` : 'Refused in Arena';
 }
 
 export function withRecord(records: SkillRecord[], record: SkillRecord): SkillRecord[] {

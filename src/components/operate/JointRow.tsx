@@ -4,8 +4,8 @@ import type { CalibrationHistory } from '../../reality/history';
 import { benchLogOf } from '../../reality/jointReplay';
 import type { CalibrationVerdict } from '../../reality/types';
 import type { JointRow as JointRowModel } from '../../robot/jointRows';
-import { signedDegrees } from '../../robot/robotGhost';
-import { radiansFromCounts, type JointStatus } from '../../robot/robotState';
+import { radiansToDegrees, readingFigure, signedAngleReading } from '../../utils/angle';
+import type { JointStatus } from '../../robot/robotState';
 import { JointReplayPlot } from './JointReplayPlot';
 import { hasJointRowMenu, JointRowMenu, type ReplayChoice } from './JointRowMenu';
 import type { JointCalibrate } from './RobotJoints';
@@ -17,7 +17,7 @@ const REPLIES: Record<string, string> = {
   wrong_id: 'Wrong ID answered',
 };
 
-const degrees = (counts: number) => ((radiansFromCounts(counts) * 180) / Math.PI).toFixed(1);
+const degrees = (radians: number) => readingFigure(radiansToDegrees(radians));
 
 function versionLabel(history: CalibrationHistory, verdict: CalibrationVerdict | undefined) {
   if (history.active !== null) return `v${history.active}`;
@@ -32,19 +32,24 @@ export interface JointGap {
 
 const answered = (reading: JointStatus | null) => reading?.reply === 'ok' && typeof reading.position === 'number';
 
-function Reading({ reading, gap, showTemp }: { reading: JointStatus | null; gap: number | null; showTemp: boolean }) {
-  const position = reading?.position;
+interface ReadingProps {
+  reading: JointStatus | null;
+  radians: number | null;
+  gap: number | null;
+  showTemp: boolean;
+}
 
-  if (reading?.reply !== 'ok' || typeof position !== 'number')
+function Reading({ reading, radians, gap, showTemp }: ReadingProps) {
+  if (reading?.reply !== 'ok' || radians === null)
     return <span className="shrink-0 text-white/50">{REPLIES[reading?.reply ?? 'missing'] ?? 'No reply'}</span>;
 
   return (
     <span className="shrink-0 flex items-baseline gap-[12px] tabular-nums text-white/90">
       <span>
-        {degrees(position)}
+        {degrees(radians)}
         <span className="text-white/50">°</span>
       </span>
-      {gap !== null && <span className="text-[#0d99ff]">{signedDegrees(gap)}</span>}
+      {gap !== null && <span className="text-[#0d99ff]">{signedAngleReading(radiansToDegrees(gap))}</span>}
       {showTemp && typeof reading.temp_c === 'number' && (
         <span className="text-white/50">
           {reading.temp_c.toFixed(0)}
@@ -172,7 +177,7 @@ export const JointRow: React.FC<JointRowProps> = ({
           className="flex-1 min-w-0 min-h-[32px] px-1 py-1.5 flex items-center justify-between gap-3 text-left cursor-default"
         >
           <JointLabel row={row} measured={measured} />
-          {live && <Reading reading={reading} gap={gap} showTemp={!lagging} />}
+          {live && <Reading reading={reading} radians={row.radians} gap={gap} showTemp={!lagging} />}
         </button>
         {lagging && <CalibrateJoint {...lagging} />}
         {menu && (

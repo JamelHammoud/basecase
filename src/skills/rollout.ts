@@ -11,7 +11,7 @@ export interface Rollout extends ContractResult {
   diverged: boolean;
 }
 
-function nominal(world: ArenaWorld): Instance {
+export function nominal(world: ArenaWorld): Instance {
   return {
     friction: 1,
     masses: Array.from({ length: world.engine.model.nbody - 1 }, () => 1),

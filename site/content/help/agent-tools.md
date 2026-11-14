@@ -36,7 +36,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `update_parts` | Moves, resizes, recolors, renames, regroups or re-notes parts, and rounds or bevels their edges |
 | `delete_parts` | Removes parts |
 | `mirror_parts` | Makes mirrored copies for left and right sides |
-| `find_parts` | Searches the catalog of real parts, with sizes and prices |
+| `find_parts` | Searches the catalog of real parts, with sizes, prices and how many you own |
 | `model_part` | Models one part as code and places it in the scene |
 | `set_status` | Shows a short status line in the app |
 
@@ -127,16 +127,18 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `train_skill` | Trains a skill in the background |
 | `training_status` | Reports training progress |
 | `list_skills` | Lists the robot's skills |
+| `coach_skill` | Changes how a ready Motor Kit skill moves, and keeps the change only if Arena still passes it |
 
 ## Build and cost
 
 | Tool | What it does |
 |---|---|
 | `get_bom` | Reads the bill of materials |
+| `record_on_hand` | Saves how many of a part you own |
 | `check_printability` | Checks each part against your printer |
 | `slice_plates` | Slices plates for print time and grams, without printing |
 | `merge_parts` | Merges printed parts that `check_assembly` lists into one, when you ask |
-| `set_build` | Sets extras, budget and filament |
+| `set_build` | Sets extras, budget, filament and the power supply for a robot with no battery |
 | `build_guide` | Writes the printable assembly guide |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
 | `size_arm` | Sizes and places an arm from the points it must reach and the grams it carries |

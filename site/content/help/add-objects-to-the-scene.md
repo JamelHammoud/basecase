@@ -21,6 +21,7 @@ related:
   - import-a-robot
   - organize-parts-in-layers
 covers:
+  - src/workspace/useRobotInsert.ts
   - src/components/objects/
   - src/components/parts/ObjectsView.tsx
   - src/components/parts/insertSearch.ts
@@ -37,7 +38,7 @@ Place a mug, a box, a shelf or another real object from NVIDIA's SimReady Centra
 
 ![Kitchen objects searched for mug, showing a grid of SimReady mugs from NVIDIA](/help/add-objects-to-the-scene/kitchen.png)
 
-A word that names a category, like `mug`, opens that category with your search in it. When nothing in Parts matches, [[↩]] lists SimReady results instead. A toast shows the download and conversion. You can also drag a result to where it should go on the canvas.
+A word that names a category, like `mug`, opens that category with your search in it. When nothing in Parts matches, [[↩]] lists SimReady results instead. A toast shows the download and conversion, and closes when the object lands on the canvas, selected. You can also drag a result to where it should go on the canvas.
 
 To browse instead of searching, click a category under **Objects** in Parts, such as **Kitchen** or **Boxes and bins**.
 

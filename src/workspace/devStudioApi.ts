@@ -12,7 +12,7 @@ import { lastDownload } from '../utils/downloadBytes';
 import { replayErrors } from '../reality/jointReplay';
 import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
-import { degrees } from '../robot/robotGhost';
+import { radiansToDegrees as degrees } from '../utils/angle';
 import { phoneSnapshot } from '../phone/phoneStore';
 import { inputEvents } from '../sim/inputEvents';
 import {
@@ -28,7 +28,7 @@ import {
 } from '../cameras/operator/operatorCamera';
 import type { PoseSample } from '../cameras/operator/poseFollow';
 import { feedVoice } from '../voice/voiceSession';
-import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
+import { robotLinkState, startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
 import { twinSnapshot } from '../robot/robotTwin';
@@ -75,6 +75,10 @@ export interface DevActions {
   worldAt: () => Record<string, number[]>;
   tryWorld: () => Promise<WorldEvent[]>;
   printPlates: () => unknown;
+  plateFiles: () => Promise<Record<string, Uint8Array>>;
+  labelNotes: () => Record<string, string>;
+  markPlatePrinted: (plate: number) => void;
+  readySteps: () => boolean[];
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   printState: () => unknown;
@@ -178,6 +182,7 @@ function robotGhostState(viewport: Viewport3DHandle | null) {
 }
 
 interface DevRecord {
+  id?: string;
   name?: string;
   parts: ScenePart[];
   project?: ProjectSettings;
@@ -198,6 +203,12 @@ async function rangeClashes(parts: ScenePart[], project: ProjectSettings, viewpo
   return hits.flatMap((list, i) => list.map((hit) => ({ ...hit, joint: turning[i].id })));
 }
 
+function lastDownloadFile() {
+  const file = lastDownload();
+
+  return file && { name: file.name, base64: bytesToBase64(file.bytes) };
+}
+
 function operatorCameraState() {
   const { open, label, estimator, error } = operatorCameraSnapshot();
   const track = operatorTrackState();
@@ -214,6 +225,20 @@ function operatorCameraState() {
   };
 }
 
+const base64Files = (files: Record<string, Uint8Array>) =>
+  Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, bytesToBase64(bytes)]));
+
+function printStudioApi(devRef: RefObject<DevActions>) {
+  return {
+    printPlates: () => devRef.current.printPlates(),
+    printState: () => devRef.current.printState(),
+    plateFiles: async () => base64Files(await devRef.current.plateFiles()),
+    labelNotes: () => devRef.current.labelNotes(),
+    markPlatePrinted: (plate: number) => devRef.current.markPlatePrinted(plate),
+    readySteps: () => devRef.current.readySteps(),
+  };
+}
+
 export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevStudioDeps) {
   return {
     rangeClashes: () => rangeClashes(partsRef.current, projectRef.current, viewportRef.current),
@@ -222,11 +247,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     checkDots: () => viewportRef.current?.checkDotCount() ?? 0,
     sceneRecord: () => ({ parts: partsRef.current, project: projectRef.current, annotations: [] }),
     stlBase64: () => stlBase64(partsRef.current),
-    lastDownload: () => {
-      const file = lastDownload();
-
-      return file && { name: file.name, base64: bytesToBase64(file.bytes) };
-    },
+    lastDownload: () => lastDownloadFile(),
     capture: (views: string[], ids?: string[]) => viewportRef.current?.captureViews(views, ids) ?? [],
     projectPoints: (points: Array<[number, number, number]>) => viewportRef.current?.projectPoints(points) ?? [],
     meshByColor: () => meshByColor(partsRef.current),
@@ -264,7 +285,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     posing: () => devRef.current.posing,
     load: (record: DevRecord) =>
       devRef.current.load({
-        sceneId: newSceneId(),
+        sceneId: record.id ?? newSceneId(),
         sceneName: record.name ?? 'Untitled',
         globalGoal: '',
         parts: record.parts,
@@ -283,14 +304,13 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     feedVoice: (samples: number[], sampleRate: number) => feedVoice(samples, sampleRate),
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),
-    printPlates: () => devRef.current.printPlates(),
+    ...printStudioApi(devRef),
     bomLines: () =>
       buildBom({ parts: partsRef.current, project: projectRef.current, purchases: {}, measures: {} }).lines.map(
         ({ key, qty }) => ({ key, qty }),
       ),
     calibrate: (jointId: string, calibration: ServoCalibration) => devRef.current.calibrate(jointId, calibration),
     routineState: () => devRef.current.routineState(),
-    printState: () => devRef.current.printState(),
     passTries: () => devRef.current.passTries(),
     multiplyRuns: (runs: number) => devRef.current.multiplyRuns(runs),
     addCase: (raw: unknown) => devRef.current.addCase(raw),
@@ -303,6 +323,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     stubHandoffs: (stub: HandoffStub) => devRef.current.stubHandoffs(stub),
     plantHandoff: (from: string, to: string, falls: number) => devRef.current.plantHandoff(from, to, falls),
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    robotCalibration: async () => (await robotLinkState())?.calibration ?? null,
     phone: () => phoneSnapshot(),
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
     feedHand: (samples: HandSample[], fps?: number) => feedOperatorHand(samples, fps),
@@ -323,14 +344,14 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 
-      return files && Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, bytesToBase64(bytes)]));
+      return files && base64Files(files);
     },
     robotPackage: async () => {
       const made = await devRef.current.robotPackage();
 
       return (
         made && {
-          files: Object.fromEntries(Object.entries(made.files).map(([path, bytes]) => [path, bytesToBase64(bytes)])),
+          files: base64Files(made.files),
           simXml: made.simXml,
         }
       );

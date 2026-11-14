@@ -24,10 +24,12 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { caseCommands } from './caseCommands';
+import { skillCommands } from './skillCommands';
 import { skeletonCommands } from './skeletonCommands';
 import { fitTestCommands, mergeCommands } from './printCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
+import { coachCommands } from './coachCommands';
 import { exchangeCommands } from './exchangeCommands';
 import { inputCommands } from './inputCommands';
 import { operateCommands } from './operateCommands';
@@ -319,8 +321,10 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...leaderCommands(inputs),
   ...onshapeCommands(inputs),
   ...caseCommands(inputs),
+  ...skillCommands(inputs),
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),
+  ...coachCommands(inputs),
   ...operateCommands(inputs),
   ...inputCommands(inputs),
 ];

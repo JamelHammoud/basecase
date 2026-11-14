@@ -1,4 +1,5 @@
 import type { ArenaVariantResult } from './artifacts';
+import { percent } from '../../electron/percent.mjs';
 
 const BISECTION_STEPS = 80;
 
@@ -53,8 +54,6 @@ const VARIANT_WORDS: Record<ArenaVariantResult['variant'], string> = {
   latency: 'with random servo delays',
 };
 
-const percent = (p: number) => `${Math.floor(p * 100)}%`;
-
 export function arenaSummary(options: {
   variants: ArenaVariantResult[];
   lowerBound: number;
@@ -65,6 +64,6 @@ export function arenaSummary(options: {
 
   return [
     `Passed ${tries}, in simulation.`,
-    `With ${percent(confidence)} confidence, the pass rate under these conditions is at least ${percent(lowerBound)}.`,
+    `With ${percent(confidence)} confidence, the pass rate under these conditions is at least ${percent(lowerBound, { down: true })}.`,
   ].join(' ');
 }

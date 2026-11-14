@@ -1,6 +1,7 @@
 ---
 title: Watch a skill learn while it trains
 date: 2026-11-13
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 related:
@@ -31,5 +32,7 @@ Snapshots need the desktop app. Training in the browser shows its progress only.
 7. Click a snapshot to run it in the simulation.
 
 ![Stand ready, with six snapshots from 50 to 300 under its Arena line](/help/watch-a-skill-learn/snapshots.png)
+
+A Motor Kit skill that Arena refuses isn't kept, and neither are its snapshots. Its row says how close it came instead, such as "Refused in Arena: 20 of 32 tries".
 
 Stopping training or opening another tab puts back the controller you had before. A skill keeps at most 12 snapshots, spread evenly over its training. [Arena](/help/arena) explains what the contract checks.

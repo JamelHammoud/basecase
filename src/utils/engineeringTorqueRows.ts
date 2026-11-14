@@ -1,5 +1,7 @@
-import { jointLabel, nm } from './engineeringFormat';
+import { jointLabel } from './engineeringFormat';
+import { torque } from './torque';
 import { plural } from '../../electron/plural.mjs';
+import { angle } from './angle';
 import type { CheckRow, JointLoad } from './engineeringTypes';
 
 const share = (v: number | undefined) => (v === undefined ? '?' : v.toFixed(2));
@@ -11,23 +13,23 @@ const isPublished = (l: JointLoad) => !l.joint.actuators?.length && !!l.joint.ef
 function stanceWords(l: JointLoad, legs: string): string {
   const crouch = l.crouchNm !== undefined && l.crouchNm >= l.stanceNm;
 
-  return crouch ? `${legs} at a ${Math.round(l.crouchDeg!)}° crouch` : `${legs} as modeled`;
+  return crouch ? `${legs} at a ${angle(l.crouchDeg!)} crouch` : `${legs} as modeled`;
 }
 
 const heatSource = (l: JointLoad) =>
-  l.simRmsNm === undefined ? 'in walking heat' : `walking (${nm(l.simRmsNm)} N·m RMS in simulation)`;
+  l.simRmsNm === undefined ? 'in walking heat' : `walking (${torque(l.simRmsNm)} RMS in simulation)`;
 
 export function loadText(l: JointLoad, legs = 'on one leg'): string {
   const name = jointLabel(l.joint);
 
-  if (isPublished(l)) return `${name}: needs ${nm(l.loadNm)} N·m of its ${nm(l.joint.effortNm!)} N·m limit`;
+  if (isPublished(l)) return `${name}: needs ${torque(l.loadNm)} of its ${torque(l.joint.effortNm!)} limit`;
 
   const volts = l.volts ? ` at ${Math.round(l.volts * 10) / 10} V` : '';
   const rated = l.ratedEstimated ? ' (rated taken as 1/4 of stall)' : '';
   const heat = l.kind === 'stance' ? `${share(l.heatShare)}× rated ${heatSource(l)}` : `${share(l.heatShare)}× rated`;
-  const what = l.kind === 'stance' ? `${nm(l.loadNm)} N·m ${stanceWords(l, legs)}` : `holds up to ${nm(l.loadNm)} N·m`;
+  const what = l.kind === 'stance' ? `${torque(l.loadNm)} ${stanceWords(l, legs)}` : `holds up to ${torque(l.loadNm)}`;
 
-  return `${name}: ${what}, ${share(l.stallShare)} of its ${nm(l.stallNm!)} N·m stall${volts}, ${heat}${rated}`;
+  return `${name}: ${what}, ${share(l.stallShare)} of its ${torque(l.stallNm!)} stall${volts}, ${heat}${rated}`;
 }
 
 interface TorqueSummary {

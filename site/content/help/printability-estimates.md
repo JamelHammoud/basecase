@@ -17,6 +17,7 @@ related:
   - print-a-robots-parts
   - troubleshoot-build-part-wont-print
   - build-checks
+  - price-printed-parts-from-a-print-service
 covers:
   - src/three/printability.ts
   - src/utils/printReport.ts
@@ -36,7 +37,7 @@ Each printed part tries the 6 ways its axes can point up, plus up to 6 large fla
 - **Support** goes under faces within 30° of flat, the same threshold the stock slicer profiles use.
 - **Thin walls** are found with rays shot inward through the part. A wall under 0.84 mm doesn't print.
 - **Time** comes from the volume of plastic laid down.
-- **Filament** is counted in grams per material, then rounded up to whole spools with 15% to spare.
+- **Filament** is counted in grams per material, then rounded up to whole spools with 15% to spare. With **Made by a Service** chosen, the bill of materials lists each part's quote instead.
 
 A thin area of 100 mm² or more is a panel that would print with holes, and it blocks Ready to build. A smaller one is usually a thin edge from a cut, which the slicer drops, so it's only a note.
 

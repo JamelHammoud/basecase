@@ -17,7 +17,7 @@ const STATES = [
   [/^(starting|connecting|opening|detecting|transferring)/i, 'preparing'],
 ];
 
-const AUTH_MESSAGE = 'Check the API key. Create one in OctoPrint: Settings → Application Keys.';
+const AUTH_MESSAGE = 'Check the API key. Create one in OctoPrint: Settings ▸ Application Keys.';
 
 const OFFLINE_MESSAGE = 'OctoPrint isn’t connected to the printer. Connect it in OctoPrint.';
 

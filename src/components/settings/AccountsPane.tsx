@@ -3,6 +3,7 @@ import { hubBridge, type HubAccountState } from '../../hub/hubBridge';
 import { onshapeBridge, type OnshapeAccountState, type OnshapeKey } from '../../onshape/onshapeBridge';
 import { SettingsGroup as Group } from '../SettingsRows';
 import { SecretField } from './SecretField';
+import { PrintServiceAccount } from './PrintServiceAccount';
 import { errorMessage } from '../../utils/errorMessage';
 import { withoutSettingsPath, type SettingsFocus } from '../../app/settingsPanes';
 import { earthBridge, type EarthAccountState } from '../../earth/earthBridge';
@@ -107,6 +108,7 @@ export const AccountsPane: React.FC<{ focus?: SettingsFocus }> = ({ focus }) => 
           onSecret={saveMapKey}
         />
       </Group>
+      <PrintServiceAccount />
     </>
   );
 };

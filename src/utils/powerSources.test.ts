@@ -22,7 +22,7 @@ const component = (id: string, componentId: string): ScenePart => ({
 const context = (parts: ScenePart[]) => ({ parts, project: {} as ProjectSettings }) as unknown as CheckContext;
 
 describe('findPowerSource', () => {
-  it('reads a LiPo pack from Parts → Power', () => {
+  it('reads a LiPo pack from Parts ▸ Power', () => {
     expect(findPowerSource(context([component('pack', 'ovonic-3s-2200-50c')]))?.battery).toMatchObject({
       nominalV: 11.1,
       fullV: 12.6,

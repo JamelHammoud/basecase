@@ -69,6 +69,7 @@ To open a try from a different scene than the one you recorded it in, see [Open 
 A `.basecase` file is a copy of one scene that you can send to someone. It holds the whole scene except for:
 
 - Print history
+- The print service and its quotes
 - Trained policies
 - Case tries
 - Taught skills

@@ -12,7 +12,7 @@ const STATES = {
 
 const STATUS_ROUTE = '/printer/objects/query?print_stats&virtual_sdcard&display_status';
 
-const AUTH_MESSAGE = 'Check the API key. Find it in Mainsail or Fluidd: Settings → Authorization.';
+const AUTH_MESSAGE = 'Check the API key. Find it in Mainsail or Fluidd: Settings ▸ Authorization.';
 
 function remainingMinutes(progress, duration) {
   const measurable = progress > 0.01 && duration > 0;

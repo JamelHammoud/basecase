@@ -21,3 +21,18 @@ export interface PrintRecord {
   state: 'sent' | 'printing' | 'printed' | 'failed' | 'cancelled';
   note?: string;
 }
+
+export interface PrintQuote {
+  part: string;
+  key: string;
+  material: PrintMaterial;
+  copies: number;
+  usd?: number;
+  refusal?: string;
+  checkedAt: string;
+}
+
+export interface PrintService {
+  madeBy?: 'service';
+  quotes?: PrintQuote[];
+}

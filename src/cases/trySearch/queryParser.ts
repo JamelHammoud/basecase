@@ -68,6 +68,8 @@ const LIKE = /(?:^|\s)like:([\w-]{1,128})(?:\/([\w-]{1,128}))?(?=\s|$)/;
 
 const MINIMUM = new Set(['over', 'longer than', 'more than', 'at least']);
 
+const INCLUSIVE = new Set(['at least', 'at most']);
+
 const emptyFilters = (): QueryFilters => ({
   verdicts: [],
   sources: [],
@@ -110,10 +112,10 @@ function takeLike(text: string, filters: QueryFilters): string {
 
 function takeDurations(text: string, filters: QueryFilters): string {
   return text.replace(DURATION, (_, how: string, amount: string, unit: string) => {
-    const seconds = Number(amount) * UNITS[unit[0]];
+    const bound = { value: Number(amount) * UNITS[unit[0]], inclusive: INCLUSIVE.has(how) };
 
-    if (MINIMUM.has(how)) filters.minSeconds = seconds;
-    else filters.maxSeconds = seconds;
+    if (MINIMUM.has(how)) filters.minSeconds = bound;
+    else filters.maxSeconds = bound;
 
     return ' ';
   });

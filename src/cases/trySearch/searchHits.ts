@@ -1,5 +1,5 @@
 import type { Entry } from './searchDocs';
-import type { HitMatch, QueryFilters, TryHit } from './types';
+import type { Bound, HitMatch, QueryFilters, TryHit } from './types';
 
 export const FRAME_MIN = 0.18;
 
@@ -19,8 +19,18 @@ const oneOf = (list: string[], read: (entry: Entry) => string | null): Check | n
   return list.length ? (e) => wanted.has(read(e)?.toLowerCase() ?? '') : null;
 };
 
-const bounded = (low: number | null, high: number | null, read: (entry: Entry) => number): Check | null =>
-  low === null && high === null ? null : (e) => (low === null || read(e) > low) && (high === null || read(e) < high);
+const above = (value: number, low: Bound | null) =>
+  low === null || value > low.value || (low.inclusive && value === low.value);
+
+const below = (value: number, high: Bound | null) =>
+  high === null || value < high.value || (high.inclusive && value === high.value);
+
+const bounded = (low: Bound | null, high: Bound | null, read: (entry: Entry) => number): Check | null =>
+  low === null && high === null ? null : (e) => above(read(e), low) && below(read(e), high);
+
+const from = (value: number | null): Bound | null => (value === null ? null : { value, inclusive: true });
+
+const until = (value: number | null): Bound | null => (value === null ? null : { value, inclusive: false });
 
 export function factFilter(f: QueryFilters): Check {
   const checks = [
@@ -28,7 +38,7 @@ export function factFilter(f: QueryFilters): Check {
     oneOf(f.sources, (e) => e.source),
     oneOf(f.inputs, (e) => e.input),
     oneOf(f.robots, (e) => e.robot),
-    bounded(f.after === null ? null : f.after - 1, f.before, (e) => e.time),
+    bounded(from(f.after), until(f.before), (e) => e.time),
     bounded(f.minSeconds, f.maxSeconds, (e) => e.length),
     f.faulted === null ? null : (e: Entry) => e.faulted === f.faulted,
   ].filter((c): c is Check => c !== null);

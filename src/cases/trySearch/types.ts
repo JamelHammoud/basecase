@@ -25,6 +25,11 @@ export interface LikeTarget {
   segmentId: string | null;
 }
 
+export interface Bound {
+  value: number;
+  inclusive: boolean;
+}
+
 export interface QueryFilters {
   verdicts: TryVerdict[];
   sources: TrySource[];
@@ -32,8 +37,8 @@ export interface QueryFilters {
   robots: string[];
   after: number | null;
   before: number | null;
-  minSeconds: number | null;
-  maxSeconds: number | null;
+  minSeconds: Bound | null;
+  maxSeconds: Bound | null;
   faulted: boolean | null;
   like: LikeTarget | null;
 }

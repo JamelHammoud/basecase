@@ -1,5 +1,5 @@
 import type { StoredTry } from '../src/cases/tryFile';
-import { MOTION_SAMPLES, type MotionTrace, type TrySegment } from '../src/cases/trySearch/types';
+import { MOTION_SAMPLES, type MotionTrace } from '../src/cases/trySearch/types';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -47,9 +47,7 @@ interface TryFixture {
   input?: string | null;
   daysAgo?: number;
   seconds?: number;
-  segments?: TrySegment[];
   motion?: MotionTrace;
-  tags?: string[];
 }
 
 export function storedFixture(f: TryFixture, now = Date.now()): StoredTry {
@@ -71,40 +69,33 @@ export function storedFixture(f: TryFixture, now = Date.now()): StoredTry {
     seed: 0,
     sourceTry: null,
     faults: [],
-    ...(f.segments ? { segments: f.segments } : {}),
     ...(f.motion ? { motion: f.motion } : {}),
-    ...(f.tags ? { tags: f.tags } : {}),
   };
 }
-
-const segment = (id: string, label: string, start: number): TrySegment => ({ id, label, start, end: start + 3 });
 
 export const SEARCH_FIXTURES: TryFixture[] = [
   {
     id: 'pick-failed-1',
     scene: 'scene-a',
     robot: 'SO-101',
-    caseName: 'Pick the Block',
+    caseName: 'Grasp the Red Block',
     verdict: 'failed',
     input: 'leader-arm',
-    segments: [segment('reach', 'Reach red block', 0), segment('grasp', 'Grasp red block', 3)],
   },
   {
     id: 'pick-failed-2',
     scene: 'scene-b',
     robot: 'SO-101',
-    caseName: 'Pick the Block',
+    caseName: 'Grasp the Red Block',
     verdict: 'failed',
     input: 'leader-arm',
-    segments: [segment('grasp', 'Grasp red block', 4)],
   },
   {
     id: 'pick-passed',
     scene: 'scene-a',
     robot: 'SO-101',
-    caseName: 'Pick the Block',
+    caseName: 'Grasp the Red Block',
     input: 'leader-arm',
-    segments: [segment('grasp', 'Grasp red block', 2)],
   },
   { id: 'grasp-1', scene: 'scene-a', robot: 'Arm', caseName: 'Lift', motion: graspMotion(0.3) },
   { id: 'grasp-2', scene: 'scene-a', robot: 'Arm', caseName: 'Lift', motion: graspMotion(0.31, 0.01) },

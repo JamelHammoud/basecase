@@ -68,6 +68,11 @@ describe('searching tries by words and facts', () => {
     expect(keys(find(build(), 'walk hexapod over 30 s'))).toEqual(['walk-long']);
   });
 
+  it('keeps a try exactly at the limit for at least, and leaves it out for over', () => {
+    expect(sorted(find(build(), 'walk hexapod at least 20 s'))).toEqual(['walk-long', 'walk-short']);
+    expect(keys(find(build(), 'walk hexapod over 20 s'))).toEqual(['walk-long']);
+  });
+
   it('lists the tries from last week, newest first', () => {
     const hits = find(build(), 'last week');
 

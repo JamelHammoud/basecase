@@ -5,12 +5,7 @@ import { SEARCH_FIXTURES, storedFixture } from './trySearchFixtures';
 
 let app: App;
 
-type Studio = {
-  keepStoredTries: (tries: StoredTry[]) => Promise<void>;
-  searchTries: (query: string) => Promise<Array<{ try: string; segment: string | null }>>;
-};
-
-const studio = () => (window as unknown as { __studio: Studio }).__studio;
+type Studio = { keepStoredTries: (tries: StoredTry[]) => Promise<void> };
 
 beforeAll(async () => {
   app = await openApp();
@@ -26,10 +21,13 @@ const tileOrder = () =>
     .evaluateAll((tiles) => tiles.map((t) => t.getAttribute('data-try')));
 
 describe('Searching tries', () => {
-  it('finds the planted segments from the Library and ranks grasps with More Like This', async () => {
+  it('finds failed tries by Case and input from the Library and ranks grasps with More Like This', async () => {
     const tries = SEARCH_FIXTURES.map((f) => storedFixture(f));
 
-    await app.page.evaluate((list) => studio().keepStoredTries(list), tries);
+    await app.page.evaluate(
+      (list) => (window as unknown as { __studio: Studio }).__studio.keepStoredTries(list),
+      tries,
+    );
     await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
     await app.page.locator(shown('input[aria-label="Search library"]')).fill('failed grasp red block leader-arm');
 
@@ -37,8 +35,8 @@ describe('Searching tries', () => {
 
     await expect.poll(() => rows.count()).toBe(2);
     expect(await rows.allInnerTexts()).toEqual([
-      expect.stringContaining('Grasp red block'),
-      expect.stringContaining('Grasp red block'),
+      expect.stringContaining('Grasp the Red Block'),
+      expect.stringContaining('Grasp the Red Block'),
     ]);
 
     await rows.first().click();

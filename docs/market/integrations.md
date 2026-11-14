@@ -28,10 +28,10 @@ Imports, exports and services Basecase connects to, and how far each goes. Entry
 
 - **Link:** https://huggingface.co/docs/lerobot/lerobot-dataset-v3
 - **Checked:** 2026-11-13
-- **Basecase today:** Export Dataset writes a Case's passed tries as a LeRobot v2.1 dataset with GR00T's `meta/modality.json`, and Publish to Hugging Face pushes the same files to a Hub dataset repo tagged `v2.1` ([Cases](../guide/cases.md), [help](../../site/content/help/publish-a-dataset-to-hugging-face.md)).
-- **Better than Basecase:** LeRobotDataset v3.0 ships with `lerobot` 0.4.0 and later. It stores many episodes per Parquet and MP4 file, resolves episodes through metadata, and streams from the Hub or an HF Storage Bucket with `--dataset.streaming=true`. A v3 dataset can also be stored as LanceDB tables, and `lerobot-dataset-viz` opens an episode in Rerun or, with `--display-mode foxglove`, in Foxglove ([LeRobotDataset v3](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)).
+- **Basecase today:** Export Dataset writes a Case's passed tries as a LeRobot v3.0 dataset, with a v2.1 copy and GR00T's `meta/modality.json` in a `v2.1/` folder, and Publish to Hugging Face pushes v3.0 to the Hub repo's `main` tagged `v3.0`, with v2.1 at the `v2.1` tag ([Cases](../guide/cases.md), [help](../../site/content/help/publish-a-dataset-to-hugging-face.md)).
+- **Better than Basecase:** A v3 dataset can also be stored as LanceDB tables, and `lerobot-dataset-viz` opens an episode in Rerun or, with `--display-mode foxglove`, in Foxglove ([LeRobotDataset v3](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)).
 - **Worse than Basecase:** v2.1 datasets need converting first, with `python -m lerobot.scripts.convert_dataset_v21_to_v30` ([LeRobotDataset v3](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)). Basecase's datasets keep only the tries the Case's contract passed ([Cases](../guide/cases.md)).
-- **Basecase should:** match it. Write v3 next to v2.1, which GR00T still reads ([Cases](../guide/cases.md)), and publish both to the Hub, so `lerobot-train` streams a Case's tries with no conversion and Foxglove plays them ([Foxglove](competitors.md#foxglove)).
+- **Basecase should:** let a person play a Case's tries in Foxglove ([Foxglove](competitors.md#foxglove)).
 
 ## Supplier carts
 

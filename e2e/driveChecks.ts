@@ -12,47 +12,72 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
 import { solveIK } from '../src/utils/kinematicsIk';
-import type { FakeHub } from './fakeHub';
+import { filesAtTag, type FakeHub } from './fakeHub';
 import type { SimState, Studio } from './driveStudio';
 import { partCount, shown } from './harness';
 
-export async function expectDataset(files: Record<string, Buffer>) {
-  const paths = Object.keys(files);
-  const at = (end: string) => files[paths.find((p) => p.endsWith(end))!];
-  const rows = await parquetReadObjects({ file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer });
-  const info = JSON.parse(at('meta/info.json').toString());
-  const videos = paths.filter((p) => p.endsWith('.mp4'));
+export const inDataset = (files: Record<string, Buffer>) =>
+  Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path.slice(path.indexOf('/') + 1), bytes]));
 
-  expect(paths.some((p) => p.endsWith('meta/modality.json'))).toBe(true);
+const parquetRows = (bytes: Buffer) => parquetReadObjects({ file: new Uint8Array(bytes).buffer });
+
+async function expectVideo(bytes: Buffer, frames: number) {
+  const input = new Input({ source: new BufferSource(new Uint8Array(bytes)), formats: ALL_FORMATS });
+  const track = (await input.getPrimaryVideoTrack())!;
+  const stats = await track.computePacketStats();
+
+  expect([track.displayWidth, track.displayHeight]).toEqual([640, 480]);
+  expect(stats.packetCount).toBe(frames);
+}
+
+export async function expectDataset(zipped: Record<string, Buffer>) {
+  const files = inDataset(zipped);
+  const rows = await parquetRows(files['data/chunk-000/file-000.parquet']);
+  const legacyRows = await parquetRows(files['v2.1/data/chunk-000/episode_000000.parquet']);
+  const info = JSON.parse(files['meta/info.json'].toString());
+  const videos = Object.keys(files).filter((p) => p.endsWith('.mp4'));
+
+  expect(info.codebase_version).toBe('v3.0');
+  expect(files['v2.1/meta/modality.json']).toBeDefined();
   expect(info.total_frames).toBe(rows.length);
+  expect(legacyRows).toHaveLength(rows.length);
   expect(rows[0]['observation.state']).toHaveLength(3);
-  expect(videos.map((p) => p.split('/').at(-2))).toEqual(['observation.images.scene']);
+  expect(info.features['observation.images.scene'].info['video.codec']).toMatch(/h264|vp9|av1/);
+  expect(videos.sort()).toEqual([
+    'v2.1/videos/chunk-000/observation.images.scene/episode_000000.mp4',
+    'videos/observation.images.scene/chunk-000/file-000.mp4',
+  ]);
 
-  for (const path of videos) {
-    const input = new Input({ source: new BufferSource(new Uint8Array(files[path])), formats: ALL_FORMATS });
-    const track = (await input.getPrimaryVideoTrack())!;
-    const stats = await track.computePacketStats();
-
-    expect([track.displayWidth, track.displayHeight]).toEqual([640, 480]);
-    expect(stats.packetCount).toBe(rows.length);
-    expect(info.features['observation.images.scene'].info['video.codec']).toMatch(/h264|vp9|av1/);
-  }
+  for (const path of videos) await expectVideo(files[path], rows.length);
 }
 
 export async function expectPublished(hub: FakeHub, repo: string) {
   const published = hub.repos.get(repo)!;
   const paths = [...published.files.keys()];
-  const parquet = published.files.get('data/chunk-000/episode_000000.parquet')!;
-  const rows = await parquetReadObjects({ file: new Uint8Array(parquet).buffer });
+
+  await expect.poll(() => published.tags.get('v3.0')).toBe(published.commits.length);
+  expect(published.tags.get('v2.1')).toBe(published.commits.length - 1);
+
+  const legacy = filesAtTag(published, 'v2.1');
+  const rows = await parquetRows(published.files.get('data/chunk-000/file-000.parquet')!);
   const info = JSON.parse(published.files.get('meta/info.json')!.toString());
+  const legacyInfo = JSON.parse(legacy.get('meta/info.json')!.toString());
 
   expect(published.kind).toBe('dataset');
-  expect(paths).toEqual(expect.arrayContaining(['meta/info.json', 'meta/modality.json', 'meta/episodes.jsonl']));
-  expect(paths.filter((p) => p.endsWith('.mp4'))).toEqual([
-    'videos/chunk-000/observation.images.scene/episode_000000.mp4',
-  ]);
+  expect(info.codebase_version).toBe('v3.0');
   expect(info.total_frames).toBe(rows.length);
-  await expect.poll(() => published.tags.get('v2.1')).toBe(published.commits.length);
+  expect(paths).toEqual(expect.arrayContaining(['meta/tasks.parquet', 'meta/episodes/chunk-000/file-000.parquet']));
+  expect(paths.filter((p) => p.endsWith('.jsonl') || p.endsWith('modality.json'))).toEqual([]);
+  expect(paths.filter((p) => p.endsWith('.mp4'))).toEqual(['videos/observation.images.scene/chunk-000/file-000.mp4']);
+  expect(legacyInfo).toMatchObject({ codebase_version: 'v2.1', total_frames: rows.length });
+  expect([...legacy.keys()]).toEqual(
+    expect.arrayContaining([
+      'meta/modality.json',
+      'meta/episodes.jsonl',
+      'data/chunk-000/episode_000000.parquet',
+      'videos/chunk-000/observation.images.scene/episode_000000.mp4',
+    ]),
+  );
   expect(hub.requests.filter((r) => r.method === 'PUT').every((r) => r.auth === undefined)).toBe(true);
 }
 
@@ -79,15 +104,21 @@ export async function expectCaseCheckOpensRow(page: Page, name: string) {
   expect(await page.locator(shown('[id^="case-check-"]')).innerText()).toContain(name);
 }
 
-export function expectGenerated(files: Record<string, Buffer>, kept: number) {
-  const at = (end: string) => JSON.parse(files[Object.keys(files).find((p) => p.endsWith(end))!].toString());
+export function expectGenerated(zipped: Record<string, Buffer>, kept: number) {
+  const files = inDataset(zipped);
+  const at = (path: string) => JSON.parse(files[path].toString());
   const episodes = at('meta/basecase.json').episodes as Array<{ seed: number; source: string | null }>;
   const generated = episodes.filter((e) => e.source !== null);
+  const videos = Object.keys(files).filter((p) => p.endsWith('.mp4'));
 
   expect(at('meta/info.json').total_episodes).toBe(1 + kept);
+  expect(at('v2.1/meta/info.json').total_episodes).toBe(1 + kept);
   expect(generated).toHaveLength(kept);
   expect(new Set(generated.map((e) => e.seed)).size).toBe(kept);
-  expect(Object.keys(files).filter((p) => p.endsWith('.mp4'))).toHaveLength(1 + kept);
+  expect(videos.filter((p) => p.startsWith('v2.1/'))).toHaveLength(1 + kept);
+  expect(videos.filter((p) => !p.startsWith('v2.1/'))).toEqual([
+    'videos/observation.images.scene/chunk-000/file-000.mp4',
+  ]);
 }
 
 export function touchingPolicy(): PolicySpec {

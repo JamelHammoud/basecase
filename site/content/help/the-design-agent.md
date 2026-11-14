@@ -44,7 +44,7 @@ The agent can pose and animate the robot, run it in the simulation, write and ru
 - Ask what happened in a try. It reads the try's recording and answers with times and values.
 - Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
 
-Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges printed parts bolted together on one link into a single print.
+Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. Attach or link a `.bvh` clip of a motion the robot must perform, and it fits the joints and servos to that motion first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges printed parts bolted together on one link into a single print.
 
 Say what you want to do with a robot, such as play a game on a gamepad, and the agent builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
 

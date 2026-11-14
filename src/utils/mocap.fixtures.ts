@@ -279,3 +279,20 @@ export function walkBvh(frames = 16): string {
 
   return `${HIERARCHY}MOTION\nFrames: ${frames}\nFrame Time: 0.0333333\n${rows.join('\n')}\n`;
 }
+
+const STILL_LEFT_ARM = [-70, 0, 0, 0, 0, -20, 0, 0, 0];
+const STILL_LEGS = Array.from({ length: 24 }, () => 0);
+
+function waveChannels(f: number): number[] {
+  const p = (f / 20) * Math.PI * 2;
+  const sin = Math.sin(p);
+  const rightArm = [-50 + 8 * sin, 5 * Math.cos(p), 0, -30 - 25 * sin, 0, 0, 10 * Math.sin(2 * p), 0, 0];
+
+  return [0, 90, 0, 0, 0, 0, ...Array.from({ length: 12 }, () => 0), ...STILL_LEFT_ARM, ...rightArm, ...STILL_LEGS];
+}
+
+export function waveBvh(frames = 60): string {
+  const rows = Array.from({ length: frames }, (_, f) => waveChannels(f).map(r).join(' '));
+
+  return `${HIERARCHY}MOTION\nFrames: ${frames}\nFrame Time: 0.0333333\n${rows.join('\n')}\n`;
+}

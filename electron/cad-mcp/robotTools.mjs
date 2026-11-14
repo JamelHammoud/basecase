@@ -216,7 +216,7 @@ export const animate = {
   },
 };
 
-function readEvidenceText(file) {
+export function readEvidenceText(file) {
   if (!file) return { found: true, body: undefined };
 
   const full = evidencePath(file);

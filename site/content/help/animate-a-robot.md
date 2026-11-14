@@ -1,7 +1,7 @@
 ---
 title: Animate a robot with a walk cycle or motion capture
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: engineer
 type: task
 order: 2
@@ -21,6 +21,7 @@ keywords:
 related:
   - pose-a-robot
   - joints-and-kinematics
+  - design-a-robot-from-a-motion-clip
 covers:
   - src/components/pose/AnimationsSection.tsx
   - src/components/RetargetSheet.tsx
@@ -62,6 +63,8 @@ Basecase matches bones by name, so files from Mixamo, CMU, Daz and Unreal work a
 If the robot can't follow the performer to within 25 mm, a toast names the point that misses the most, for example “Left knee off by 40 mm.”
 
 You can also choose **Import** from the **File** menu or from [[⌘K]], then pick the `.bvh` file.
+
+**Note:** On a scene with no joints, a `.bvh` file opens the sheet to design a robot from it instead. See [Design a robot from a motion clip](/help/design-a-robot-from-a-motion-clip).
 
 ## Play and edit an animation
 

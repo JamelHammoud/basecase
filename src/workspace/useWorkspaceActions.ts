@@ -8,6 +8,7 @@ import { useFixedCameras } from './useFixedCameras';
 import { useHandJoints } from './useHandJoints';
 import { useLibraryActions } from './useLibraryActions';
 import { useMirror } from './useMirror';
+import { useMotionDesign } from './useMotionDesign';
 import { useOnshapeUpdate } from './useOnshapeUpdate';
 import { usePartCreation } from './usePartCreation';
 import { usePartEdits } from './usePartEdits';
@@ -19,6 +20,7 @@ import { useWrapRobot } from './useWrapRobot';
 
 export function useWorkspaceActions(core: WorkspaceCore) {
   const pose = usePoseActions(core);
+  const motion = useMotionDesign(core, pose);
   const robots = useRobotInsert(core, pose.openPose);
   const creation = usePartCreation(core, robots);
   const data = useDataImport(core, robots);
@@ -48,6 +50,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
 
   return {
     pose,
+    motion,
     robots,
     creation,
     files,

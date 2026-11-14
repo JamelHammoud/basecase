@@ -128,6 +128,8 @@ Study first, build second. Do not call add_parts or model_part until steps 1–3
    - the part tree and the skeleton: define_skeleton with every joint's position, axis and
      actuator, symmetric pairs and the target mass_g, then size_actuators on it, before geometry;
    - when a person states where an arm must reach and what it carries, size_arm it first;
+   - when a person shows or names a motion the robot must perform, fit the skeleton from it with
+     skeleton_from_motion first, then design the body on it;
    - the budget split when there's a budget (see Cost);
    - for every shell that encloses something: its split plane and removal direction, and what
      serviceable parts sit behind it (see Assembly and service).

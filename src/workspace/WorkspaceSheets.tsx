@@ -3,6 +3,7 @@ import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { InstallSkillSheet } from '../components/InstallSkillSheet';
 import { MatchJointsSheet } from '../components/MatchJointsSheet';
+import { MotionDesignSheet } from '../components/MotionDesignSheet';
 import { PlaceOnMapSheet } from '../components/PlaceOnMapSheet';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
@@ -39,8 +40,53 @@ function MatchJointsHost({ active, data }: { active: boolean; data: DataImport }
   );
 }
 
+function MotionSheet({ core, actions }: Omit<WorkspaceSheetsProps, 'active'>) {
+  const { pose, motion } = actions;
+  const { posing } = core;
+
+  if (!pose.motion) return null;
+
+  if (pose.designing)
+    return (
+      <MotionDesignSheet
+        name={pose.motion.name}
+        seconds={pose.motion.duration}
+        busy={motion.busy}
+        problem={motion.problem}
+        onClose={motion.close}
+        onDesign={motion.design}
+      />
+    );
+
+  return (
+    <RetargetSheet
+      motion={pose.motion}
+      rig={posing.robot?.rig ?? posing.rig}
+      pointOf={posing.pointOf}
+      onClose={pose.closeMotion}
+      onCreate={pose.createAnimation}
+    />
+  );
+}
+
+function MotionSheets({ core, actions }: Omit<WorkspaceSheetsProps, 'active'>) {
+  const { pose, motion } = actions;
+
+  if (!pose.motion) return null;
+
+  return (
+    <ErrorBoundary
+      key={pose.motion.name}
+      region={`Import ${pose.motion.name}`}
+      onClose={pose.designing ? motion.close : pose.closeMotion}
+    >
+      <MotionSheet core={core} actions={actions} />
+    </ErrorBoundary>
+  );
+}
+
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
-  const { posing, guide } = core;
+  const { guide } = core;
   const desktop = platformBridge.isElectron();
   const { robots, pose, arm, data } = actions;
   const { motionInputRef } = pose;
@@ -87,17 +133,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           />
         </ErrorBoundary>
       )}
-      {pose.motion && (
-        <ErrorBoundary key={pose.motion.name} region={`Import ${pose.motion.name}`} onClose={pose.closeMotion}>
-          <RetargetSheet
-            motion={pose.motion}
-            rig={posing.robot?.rig ?? posing.rig}
-            pointOf={posing.pointOf}
-            onClose={pose.closeMotion}
-            onCreate={pose.createAnimation}
-          />
-        </ErrorBoundary>
-      )}
+      <MotionSheets core={core} actions={actions} />
       <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input
         ref={motionInputRef}

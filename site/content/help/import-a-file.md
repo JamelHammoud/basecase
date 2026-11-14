@@ -72,7 +72,7 @@ If you pick an SVG, the Import SVG panel opens with your drawing loaded. Set the
 Other files come in like this:
 
 - A URDF, MJCF or zip file (such as an exported Robot Package) comes in as a robot with its joints.
-- A BVH motion file opens the retarget sheet for the selected robot.
+- A BVH motion file opens the retarget sheet for the selected robot. In a scene with no robot, it opens the sheet that [designs a robot from the motion](/help/design-a-robot-from-a-motion-clip) instead.
 - An image comes in as a reference image.
 - A `.basecase` file opens in a new tab.
 - A `.mcap` recording, or a zip that holds a LeRobot dataset, comes in as tries on the robot in the scene. See [Import robot data as tries](/help/import-robot-data-as-tries).

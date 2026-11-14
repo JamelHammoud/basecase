@@ -45,7 +45,7 @@ Basecase finds the robot's description in the repo or zip, preferring MJCF, and 
 
 ![The list of robots in a repo](/help/import-a-robot/choose.png)
 
-**Import Robot** is also in **File**. To import from your computer, click **Choose Folder** in the sheet. You can also drag a robot's folder, zip, URDF, xacro or MJCF file onto the canvas, or pick the file with **Import** in the canvas menu. Import Robot opens with it loaded; click **Import** and the robot stands where you dropped it.
+**Import Robot** is also in **File**. To import from your computer, click **Choose Folder** in the sheet. You can also drag a robot's folder, zip, URDF, xacro or MJCF file onto the canvas, or pick the file with **Import** in the canvas menu. The robot comes in at once, where you dropped it or right-clicked.
 
 ## Insert a robot from the shelf
 

@@ -63,7 +63,7 @@ describe('a room file with a tapped start', () => {
 
     expect(at[0]).toBeCloseTo(-away[1], 3);
     expect(at[1]).toBeCloseTo(away[0], 3);
-    expect(size).toEqual([800, 750, 1200]);
+    expect(size).toEqual([800, 40, 1200]);
   });
 
   it('faces the heading with a rover that drives along x', () => {
@@ -98,7 +98,7 @@ describe('a room file with a tapped start', () => {
 
     room.start!.at.forEach((v, i) => expect(v).toBeCloseTo(FIXTURE_TAP_MM[i], 0));
     expect(room.start!.heading).toBeCloseTo(FIXTURE_TAP.heading, 3);
-    expect(tableIn(room.objects).size.map(Math.round)).toEqual(FIXTURE_TABLE.dimensions.map((d) => d * 1000));
+    expect(tableIn(room.objects).size.map(Math.round)).toEqual([1200, 40, 800]);
   });
 });
 

@@ -2,6 +2,7 @@ import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
+import { TeachGestureHost } from './TeachGestureHost';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -32,10 +33,9 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         />
       )}
       <ImportRobotSheet
-        key={robots.robotChoice?.choices.join('\n') ?? robots.robotFiles?.name ?? 'link'}
+        key={robots.robotChoice?.choices.join('\n') ?? 'link'}
         open={robots.importRobotOpen}
         choice={robots.robotChoice}
-        loaded={robots.robotFiles}
         onClose={robots.closeImportRobot}
         onImport={(src, at) => void importRobotFrom(src, at)}
       />
@@ -48,6 +48,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           onCreate={pose.createAnimation}
         />
       )}
+      <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input
         ref={motionInputRef}
         type="file"

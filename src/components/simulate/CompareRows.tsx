@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ComparedRobot } from '../../cases/caseCompare';
 import { Tooltip } from '../../design-system';
-import { fmtG } from '../../utils/engineeringFormat';
+import { weight } from '../../utils/weight';
 import { useMoney } from '../../utils/useMoney';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
 import { PendingRow } from './PendingRow';
@@ -30,7 +30,7 @@ const CompareRow: React.FC<RowProps> = ({ robot, better, onShow }) => {
       </span>
       <span className="flex gap-3 text-[12px] text-white/50 tabular">
         <span>{money.format(robot.costUsd)}</span>
-        <span>{fmtG(robot.massG)}</span>
+        <span>{weight(robot.massG)}</span>
       </span>
     </>
   );

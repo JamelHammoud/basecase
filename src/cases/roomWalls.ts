@@ -1,4 +1,5 @@
 import type { V3 } from '../utils/kinematics';
+import { furniture, type Confidence } from './roomFurniture';
 import { MAX_OBJECTS, type WorldObject } from './schema';
 
 export interface RoomSurface {
@@ -11,6 +12,7 @@ export interface RoomSurface {
 
 export interface RoomItem extends RoomSurface {
   category: string;
+  confidence?: Confidence;
 }
 
 export interface RoomScan {
@@ -32,17 +34,10 @@ type Span = [number, number];
 
 const WALL_THICKNESS_MM = 100;
 const WALL_GREY = '#8c8c8c';
-const FURNITURE_GREY = '#6e6e6e';
 const MIN_PIECE_MM = 1;
-const MIN_SIDE_MM = 10;
 const ON_WALL_MM = 300;
 const PARALLEL = Math.sin((10 * Math.PI) / 180);
 const SNAP_DEG = 1;
-
-const SHOVABLE: Record<string, { massG: number; maxSideMm: number }> = {
-  chair: { massG: 5000, maxSideMm: Infinity },
-  storage: { massG: 8000, maxSideMm: 600 },
-};
 
 const axisOf = (yaw: number): V3 => [Math.cos(yaw), 0, -Math.sin(yaw)];
 
@@ -131,35 +126,6 @@ function wallPieces(wall: RoomSurface, cuts: Cut[], index: number): WorldObject[
   });
 }
 
-const words = (category: string) => category.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
-
-const kebab = (category: string) => category.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-
-function furniture(items: RoomItem[]): WorldObject[] {
-  const counts = new Map<string, number>();
-
-  return items.map((item) => {
-    const n = (counts.get(item.category) ?? 0) + 1;
-    const size = item.size.map((x) => Math.max(x, MIN_SIDE_MM)) as V3;
-    const shove = SHOVABLE[item.category];
-    const moves = !!shove && Math.max(...size) <= shove.maxSideMm;
-
-    counts.set(item.category, n);
-
-    return {
-      id: `${kebab(item.category)}-${n}`,
-      name: words(item.category),
-      kind: 'box',
-      position: item.center,
-      rotation: [0, item.yaw, 0],
-      size,
-      color: FURNITURE_GREY,
-      behavior: moves ? 'dynamic' : 'static',
-      ...(moves ? { massG: shove.massG } : {}),
-    };
-  });
-}
-
 function snapped(o: WorldObject): WorldObject {
   const deg = (((((o.rotation[1] * 180) / Math.PI) % 360) + 540) % 360) - 180;
   const quarter = Math.round(deg / 90);
@@ -221,4 +187,23 @@ export function roomObjects(scan: RoomScan): WorldObject[] {
   });
 
   return largest([...walls, ...furniture(level(scan.objects))].map(snapped), MAX_OBJECTS);
+}
+
+export function roomDoors(scan: RoomScan): WorldObject[] {
+  const frame = roomFrame(scan);
+
+  return scan.doors.slice(0, MAX_OBJECTS).map((door, i) => {
+    const { center, size, yaw } = inRoomFrame(door, frame);
+
+    return snapped({
+      id: `door-${i + 1}`,
+      name: 'Door',
+      kind: 'box',
+      position: center,
+      rotation: [0, yaw, 0],
+      size,
+      color: WALL_GREY,
+      behavior: 'marker',
+    });
+  });
 }

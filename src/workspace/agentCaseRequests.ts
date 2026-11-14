@@ -1,6 +1,8 @@
 import { sceneObjects, type AgentObject } from '../agent/agentDrive';
+import { isBuiltinGesture } from '../cameras/gestures/builtinGestures';
 import type { CaseSpec } from '../cases/caseBuilder';
-import type { GoalKind, GoalValues, ParamKey } from '../cases/caseGoals';
+import { untaught } from '../cases/gestures';
+import { CASE_GOALS, goalParam, type GoalKind, type GoalValues, type ParamKey } from '../cases/caseGoals';
 import type { WorldKind } from '../cases/caseWorlds';
 import type { WorldObject } from '../cases/schema';
 import type { CompileResult } from '../routines/compile';
@@ -36,6 +38,8 @@ const VALUE_KEYS: Array<[string, ParamKey]> = [
   ['stops', 'stops'],
   ['spacing_mm', 'spacingMm'],
   ['seconds', 'seconds'],
+  ['rise_mm', 'riseMm'],
+  ['incline_deg', 'inclineDeg'],
 ];
 
 const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v : undefined);
@@ -50,12 +54,38 @@ export function caseValues(payload: Payload): Partial<GoalValues> {
   );
 }
 
+function caseTargets(payload: Payload): string[] | undefined {
+  const asked = (Array.isArray(payload.target) ? payload.target : [payload.target]).flatMap((t) => text(t) ?? []);
+
+  return asked.length ? asked : undefined;
+}
+
+function targetCountProblem(goal: unknown, targets: string[] | undefined): string | null {
+  const named = CASE_GOALS.find((g) => (g.kind === 'path' || g.kind === 'reach') && g.kind === goal);
+
+  if (!named || !targets) return null;
+
+  if (named.kind === 'reach') return targets.length > 1 ? `Name one spot for ${named.name}.` : null;
+
+  const { min, max } = goalParam(named, 'stops');
+
+  return targets.length < min || targets.length > max ? `Name ${min} to ${max} spots for ${named.name}.` : null;
+}
+
 function extraObjects(payload: Payload): WorldObject[] | string {
   try {
     return sceneObjects(Array.isArray(payload.objects) ? (payload.objects as AgentObject[]) : []);
   } catch (e) {
     return errorMessage(e);
   }
+}
+
+function toTeach(names: unknown) {
+  if (!Array.isArray(names)) return names;
+
+  const taught = names.filter((n) => !(typeof n === 'string' && isBuiltinGesture(n)));
+
+  return taught.length ? taught.map((name) => ({ name, examples: [] })) : undefined;
 }
 
 async function logicProblem(spec: CaseSpec, ctx: CaseContext): Promise<string | null> {
@@ -72,21 +102,27 @@ async function logicProblem(spec: CaseSpec, ctx: CaseContext): Promise<string | 
 
 async function createCase(payload: Payload, ctx: CaseContext) {
   const objects = extraObjects(payload);
+  const targets = caseTargets(payload);
+  const miscounted = targetCountProblem(payload.goal, targets);
 
   if (typeof objects === 'string') return { ok: false, problem: objects };
+
+  if (miscounted) return { ok: false, problem: miscounted };
 
   ctx.setAction('Making a Case');
 
   const spec: CaseSpec = {
     goal: String(payload.goal) as GoalKind,
-    world: (text(payload.world) ?? 'floor') as WorldKind,
-    values: caseValues(payload),
+    world: (text(payload.world) ?? (targets ? 'room' : 'floor')) as WorldKind,
+    values: { ...caseValues(payload), ...(targets && payload.goal === 'path' ? { stops: targets.length } : {}) },
+    ...(targets ? { targets } : {}),
     name: text(payload.name),
     brief: text(payload.brief),
     objects,
     logic: payload.logic,
     score: payload.score,
     console: payload.console,
+    gestures: toTeach(payload.gestures),
   };
   const refused = await logicProblem(spec, ctx);
 
@@ -96,8 +132,17 @@ async function createCase(payload: Payload, ctx: CaseContext) {
 
   if (!built.ok) return built;
 
-  const { id, name, brief, task, world } = built.kase;
-  const reply = { ok: true, id, name, brief, seconds: task.seconds, objects: world.objects.length };
+  const { id, name, brief, task, world, gestures } = built.kase;
+  const teach = untaught(gestures).map((g) => g.name);
+  const reply = {
+    ok: true,
+    id,
+    name,
+    brief,
+    seconds: task.seconds,
+    objects: world.objects.length,
+    ...(teach.length ? { teach } : {}),
+  };
 
   if (!built.kase.console) return reply;
 

@@ -43,13 +43,41 @@ describe('reading a RoomPlan room', () => {
     ]);
   });
 
-  it('puts the table at its size and place, in mm, with the floor at y = 0', () => {
+  it('keeps the table as its top, at its size and place, in mm, with the floor at y = 0', () => {
     const [table] = byName(read().objects, 'Table');
     const [x, y, z] = FIXTURE_TABLE.center;
+    const [width, height, depth] = FIXTURE_TABLE.dimensions.map((d) => d * 1000);
+    const top = (y - FIXTURE_FLOOR_M) * 1000 + height / 2;
 
-    expect(table.position.map((v) => Math.round(v))).toEqual([x * 1000, (y - FIXTURE_FLOOR_M) * 1000, z * 1000]);
-    expect(table.size.map((v) => Math.round(v))).toEqual(FIXTURE_TABLE.dimensions.map((d) => d * 1000));
-    expect(table).toMatchObject({ rotation: [0, 0, 0], behavior: 'static' });
+    expect(table.position.map((v) => Math.round(v))).toEqual([x * 1000, top - 20, z * 1000]);
+    expect(table.size.map((v) => Math.round(v))).toEqual([width, 40, depth]);
+    expect(table).toMatchObject({ rotation: [0, 0, 0], behavior: 'static', jitter: { mm: 50, deg: 5 } });
+  });
+
+  it('jitters static furniture by the scan’s confidence, and never walls or what can be shoved', () => {
+    const room = fixtureRoom();
+    const sure = (level: string) => ({
+      ...room,
+      objects: room.objects.map((o) => ({ ...o, confidence: { [level]: {} } })),
+    });
+    const tableAt = (file: unknown) => byName(read(file).objects, 'Table')[0].jitter;
+    const { objects } = read();
+
+    expect(tableAt(sure('high'))).toEqual({ mm: 50, deg: 5 });
+    expect(tableAt(sure('medium'))).toEqual({ mm: 75, deg: 7.5 });
+    expect(tableAt(sure('low'))).toEqual({ mm: 100, deg: 10 });
+    expect(tableAt(sure('unsure'))).toEqual({ mm: 50, deg: 5 });
+    expect(byName(objects, 'Wall').every((o) => o.jitter === undefined)).toBe(true);
+    expect(byName(objects, 'Chair')[0].jitter).toBeUndefined();
+  });
+
+  it('keeps each door as a place to drive to, out of the world', () => {
+    const { objects, doors } = read();
+
+    expect(doors.map((d) => d.name)).toEqual(['Door']);
+    expect(doors[0].position[0]).toBeCloseTo(FIXTURE_DOOR.center[0] * 1000, 3);
+    expect(doors[0].position[2]).toBeCloseTo(FIXTURE_DOOR.center[1] * 1000, 3);
+    expect(objects.some((o) => o.name === 'Door')).toBe(false);
   });
 
   it('turns a sofa a quarter turn by swapping its sides, and lets the chair be shoved', () => {

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import type { CustomModelDefinition, ScenePart } from '../../types/robotics';
-import { modelToParts } from '../../utils/libraryParts';
+import { modelNote, modelToParts } from '../../utils/libraryParts';
 import { agoPhrase } from '../../utils/timeAgo';
 import { Header, HeroImage, SizeLine, Stat } from '../PartDetails';
 
@@ -29,9 +29,7 @@ export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: strin
       <Header
         title={model.name}
         subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', model.createdAt ? agoPhrase(model.createdAt) : '']}
-        description={
-          model.description && !/^Saved from \d+ parts?\.?$/.test(model.description) ? model.description : undefined
-        }
+        description={modelNote(model) || undefined}
       />
       <div className="px-4 mt-3 pb-4 grid grid-cols-2 gap-1.5">
         <Stat label="Size" wide>

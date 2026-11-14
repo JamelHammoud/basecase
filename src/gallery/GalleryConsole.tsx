@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import type { CaseConsole } from '../cases/console/format';
+import { consoleScope, type CaseConsole } from '../cases/console/format';
 import { consoleLayout, type PlacedArea } from '../cases/console/layout';
 import type { CaseAction } from '../cases/console/panelKinds';
 import type { SignalBus } from '../cases/console/signalBus';
+import { robotFacts } from '../cases/robotFit';
+import { movableWorld } from '../cases/scale';
 import type { Case } from '../cases/schema';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
 import { CodeOverlays } from '../components/caseRun/code/CodeOverlays';
@@ -70,13 +72,10 @@ export const GalleryConsole: GalleryConsoleView = ({ kase, caseConsole, sim, rig
   const ctx: PanelContext = {
     bus,
     signals: caseConsole.signals ?? [],
-    scope: {
-      declared: new Set(caseConsole.signals?.map((s) => s.id)),
-      probes: new Set(kase.task.probes.map((p) => p.signal)),
-      inputs: new Set(caseConsole.input),
-    },
+    scope: consoleScope(caseConsole, kase),
     inputs: caseConsole.input,
     brief: kase.brief,
+    world: movableWorld(kase, robotFacts(rig, parts)),
     sim,
     parts,
     joints,

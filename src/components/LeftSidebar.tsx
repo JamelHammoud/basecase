@@ -101,7 +101,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = (props) => {
               canSaveScene={props.parts.length > 0}
               onSaveModel={props.library.onSaveModel}
               onImport={props.library.onImport}
-              onImageToModel={props.library.onImageToModel}
             />
           )}
         </div>

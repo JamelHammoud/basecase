@@ -3,6 +3,7 @@ import type { ConsoleSignal } from '../../cases/console/format';
 import type { CaseAction, PanelKind, PanelOf } from '../../cases/console/panelKinds';
 import type { SignalBus } from '../../cases/console/signalBus';
 import type { SignalScope } from '../../cases/console/signalNames';
+import type { CaseWorld } from '../../cases/worldSet';
 import type { Simulation } from '../../sim/useSimulation';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
 import type { Cases } from '../../workspace/useCases';
@@ -20,6 +21,7 @@ export interface PanelContext {
   scope: SignalScope;
   inputs: readonly string[];
   brief: string;
+  world: CaseWorld;
   sim: Simulation;
   parts: ScenePart[];
   joints: RobotJoint[];

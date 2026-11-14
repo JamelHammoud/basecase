@@ -10,6 +10,7 @@ import type { CatalogItem, CustomModelDefinition, ScenePart } from '../types/rob
 import { readImageFile } from '../utils/imageFile';
 import { cadPartsFromFile } from './cadImport';
 import { couldntImport, isCadFileName } from './importRoute';
+import { bigCount } from '../../electron/bigCount.mjs';
 import { meshPartFromFile } from './meshImport';
 import { modelToParts } from '../utils/libraryParts';
 import type { SnapPlacement } from '../agent/snap';
@@ -92,7 +93,7 @@ function useSculptCreation(core: WorkspaceCore) {
     commitParts((prev) =>
       prev.map((p) => (p.id === selectedId ? { ...p, kind: 'sculpt_mesh', sculptMesh: subdivided } : p)),
     );
-    showToast(`Subdivided to ${Math.round(subdivided.positions.length / 3).toLocaleString()} vertices`);
+    showToast(`Subdivided to ${bigCount(subdivided.positions.length / 3, 'vertex', 'vertices')}`);
   };
 
   return { addClayPreset, subdivideSelectedClay };

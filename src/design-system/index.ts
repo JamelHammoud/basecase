@@ -31,6 +31,7 @@ export * from './DisclosureRow';
 export * from './Toast';
 export * from './Spinner';
 export * from './EmptyState';
+export * from './DropOverlay';
 export * from './NoMatches';
 export * from './MetaLine';
 export * from './ContextMenu';

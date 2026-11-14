@@ -2,6 +2,7 @@ import { quatToMj, toMj, type SimModel } from './mjcf';
 import type { SimRequest } from './sim.worker';
 import type { Simulation } from './useSimulation';
 import { FALL_PUSH, fallForce } from './fallRuns';
+import { pushRequest as nudgeRequest } from './push';
 
 type GrabHand = Parameters<Simulation['grab']>[1];
 
@@ -23,22 +24,16 @@ function grabRequest(
 }
 
 function pushRequest(m: SimModel | null, robot: string | undefined, fallDeg?: number): SimRequest | null {
+  if (fallDeg === undefined) return nudgeRequest(m, robot, Math.random() * Math.PI * 2);
+
   const key = robot ?? m?.robots.find((r) => r.floating)?.key ?? m?.robots[0]?.key;
 
   if (!m || !key) return null;
 
   const weight = (m.massKg[key] || 1) * 9.81;
+  const { seconds, releaseDeg, share } = FALL_PUSH;
 
-  if (fallDeg !== undefined) {
-    const { seconds, releaseDeg, share } = FALL_PUSH;
-
-    return { type: 'push', robot: key, force: fallForce(fallDeg, weight * share), seconds, releaseDeg };
-  }
-
-  const n = weight * 0.5;
-  const a = Math.random() * Math.PI * 2;
-
-  return { type: 'push', robot: key, force: [Math.cos(a) * n, 0, Math.sin(a) * n] };
+  return { type: 'push', robot: key, force: fallForce(fallDeg, weight * share), seconds, releaseDeg };
 }
 
 export function useSimTouches(

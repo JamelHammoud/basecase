@@ -2,9 +2,9 @@ import type { Command } from '../components/CommandPalette';
 import {
   BotIcon,
   BrushIcon,
+  CheckIcon,
   CloseIcon,
   CommentIcon,
-  ComposeIcon,
   DeleteIcon,
   DuplicateIcon,
   EraserIcon,
@@ -13,6 +13,7 @@ import {
   MarkerIcon,
   MoveIcon,
   PenIcon,
+  PlusIcon,
   PhotoAddIcon,
   PhotoIcon,
   PoseIcon,
@@ -83,7 +84,7 @@ function fileCommands({ core }: CommandInputs): Command[] {
       group: 'Scene',
       label: 'New Scene',
       shortcut: keyFor('new-scene'),
-      icon: <ComposeIcon className={ic} />,
+      icon: <PlusIcon className={ic} />,
       keywords: 'tab open',
       run: () => studio.newScene(),
     },
@@ -145,7 +146,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
       id: 'check-ready',
       group: 'Scene',
       label: 'Run Checks',
-      icon: <PrinterIcon className={ic} />,
+      icon: <CheckIcon className={ic} />,
       keywords: 'ready to build buildable audit blockers build check assemble case fit robot',
       run: () => {
         core.tool.setRightTab('build');

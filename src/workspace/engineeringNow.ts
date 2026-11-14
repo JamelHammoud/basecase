@@ -5,7 +5,7 @@ import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { SweepSpec } from '../three/analysis/sweep';
 import { runEngineering, type ServoOutput } from '../utils/engineering';
 import { SERVO_TOUCH_MM, servoTouchPairs } from '../utils/engineeringHeat';
-import type { EngineeringInputs, ServoLine, WalkSim } from '../utils/engineeringTypes';
+import type { EngineeringInputs, FallSim, ServoLine, WalkSim } from '../utils/engineeringTypes';
 import { jointsWithChains } from '../assembly/rigJoints';
 import { platformBridge } from '../utils/platformBridge';
 import { payloadMapsIn } from '../three/analysis/analysisPool';
@@ -46,6 +46,7 @@ export interface EngineeringNowInput {
   project: ProjectSettings;
   withSweep: boolean;
   walk?: WalkSim | string;
+  falls?: FallSim | string;
   supportG?: EngineeringInputs['supportG'];
   printDowns?: EngineeringInputs['printDowns'];
 }
@@ -127,10 +128,11 @@ export async function engineeringInputs(
 }
 
 export async function runEngineeringNow(options: EngineeringNowInput) {
-  const { viewport, parts, project, withSweep, walk, supportG, printDowns } = options;
+  const { viewport, parts, project, withSweep, walk, falls, supportG, printDowns } = options;
   const input: EngineeringInputs = {
     ...(await engineeringInputs(viewport, parts, project)),
     walk,
+    falls,
     supportG,
     printDowns,
   };

@@ -8,10 +8,11 @@ import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
 import type { ProjectRecords } from './projectRecords';
 import type { CalibrationHistory } from '../reality/history';
-import type { StoredWalk } from '../utils/engineeringTypes';
+import type { StoredFalls, StoredWalk } from '../utils/engineeringTypes';
 import type { BooleanFields } from './booleans';
 import type { SculptMeshData } from './sculpt';
 import type { LoopClosure } from './loopClosure';
+import type { PartDeformers, PartEdges } from './partShape';
 
 export type { BooleanData, BooleanFrame, BooleanOp } from './booleans';
 
@@ -75,12 +76,7 @@ export interface PartDimensions {
   holeDiameter?: number;
 }
 
-export interface PartDeformers {
-  taper?: number;
-  bendDeg?: number;
-  twistDeg?: number;
-  roundness?: number;
-}
+export type { PartDeformers, PartEdges } from './partShape';
 
 export type { SculptBrushKind, SculptMeshData, SculptSettings } from './sculpt';
 
@@ -143,6 +139,7 @@ export interface ScenePart extends PartRelations, BooleanFields {
   visible: boolean;
   locked: boolean;
   deformers?: PartDeformers;
+  edges?: PartEdges;
   sculptMesh?: SculptMeshData;
   customModelId?: string;
   customNodes?: CustomModelSubNode[];
@@ -235,6 +232,7 @@ export interface ProjectSettings extends ProjectRecords {
   animations?: RobotAnimation[];
   policies?: PolicyRecord[];
   walk?: StoredWalk;
+  falls?: StoredFalls;
   marks?: SceneMark[];
   cases?: Case[];
   tries?: TryRecord[];

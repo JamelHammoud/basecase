@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Button, ContextMenu, MenuItem, PlusIcon, deleteEntry, type ContextMenuEntry } from '../../design-system';
+import {
+  Button,
+  CompareIcon,
+  ContextMenu,
+  DownloadIcon,
+  MenuItem,
+  PlusIcon,
+  deleteEntry,
+  type ContextMenuEntry,
+} from '../../design-system';
 import type { Cases } from '../../workspace/useCases';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
 import { CaseRow } from './CaseRow';
@@ -39,6 +48,7 @@ function compareEntry(compare: CasesPanelProps['compare'], onOpen: () => void): 
   return [
     {
       label: 'Compare With',
+      icon: <CompareIcon className="w-3.5 h-3.5" />,
       submenuWidth: 220,
       submenu: (close) =>
         compare.choices.map((choice) => (
@@ -60,7 +70,10 @@ function compareEntry(compare: CasesPanelProps['compare'], onOpen: () => void): 
 function matEntry({ mat }: Cases): ContextMenuEntry[] {
   if (!mat.available) return [];
 
-  return [{ label: 'Export Case Mat', onSelect: mat.exportMat }, { divider: true }];
+  return [
+    { label: 'Export Case Mat', icon: <DownloadIcon className="w-3.5 h-3.5" />, onSelect: mat.exportMat },
+    { divider: true },
+  ];
 }
 
 export const CasesPanel: React.FC<CasesPanelProps> = ({ cases, compare, onOpen, onDescribe }) => {

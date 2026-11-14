@@ -83,8 +83,9 @@ export function jointRating(ctx: CheckContext, j: RobotJoint, volts?: number): R
   }
 
   const rpm = slowest(ratings.map((r) => r.rpm));
+  const peak = specs.every((s) => s.peak) ? { peakNm: total.stallNm } : {};
 
-  return rpm === undefined ? total : { ...total, rpm };
+  return rpm === undefined ? { ...total, ...peak } : { ...total, ...peak, rpm };
 }
 
 function publishedStatus(loadNm: number, effortNm: number): CheckRow['status'] {
@@ -138,6 +139,7 @@ const ratingFields = (j: RobotJoint, rating: Rating | undefined) => ({
   stallNm: rating?.stallNm ?? j.effortNm,
   ratedNm: rating?.ratedNm,
   ratedEstimated: rating?.ratedEstimated,
+  peakNm: rating?.peakNm,
   volts: rating?.volts,
   noLoadRpm: rating?.rpm,
 });

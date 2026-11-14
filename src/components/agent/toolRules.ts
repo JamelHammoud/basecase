@@ -19,6 +19,7 @@ import {
   WebIcon,
 } from '../../design-system';
 import { plural } from '../../../electron/plural.mjs';
+import { duration } from '../../utils/duration';
 import { SIM_RULES } from './simToolRules';
 import { plainRule, type ToolIcon, type ToolRule } from './toolRule';
 
@@ -226,7 +227,7 @@ const REVIEW_RULES: ToolRule[] = [
   plainRule(['get_readiness'], CheckIcon, ['Checking if it can be built', 'Checked if it can be built']),
   plainRule(['dispute_finding'], CheckIcon, ['Disputing a check', 'Disputed a check']),
   plainRule(['add_sourced_item'], SearchIcon, ['Adding a part to the list', 'Added a part to the list']),
-  plainRule(['import_maker_cad'], ShapeIcon, ["Importing the maker's CAD", "Imported the maker's CAD"]),
+  plainRule(['import_maker_cad'], ShapeIcon, ['Importing the maker’s CAD', 'Imported the maker’s CAD']),
   plainRule(['verify_design'], CheckIcon, ['Verifying the design', 'Verified the design']),
   plainRule(['get_bom'], FileIcon, ['Reading the parts list', 'Read the parts list']),
   plainRule(['size_actuators'], JointsIcon, ['Sizing the actuators', 'Sized the actuators']),
@@ -317,7 +318,7 @@ const ROBOT_RULES: ToolRule[] = [
     keys: ['simulate'],
     icon: RunIcon,
     label: ({ input, verb }) => ({
-      title: `${verb('Simulating', 'Simulated')} ${Number(input.seconds ?? 5)} s`,
+      title: `${verb('Simulating', 'Simulated')} ${duration(Number(input.seconds ?? 5))}`,
       detail: controllerName(String(input.controller ?? 'hold')),
     }),
   },
@@ -333,7 +334,7 @@ const ROBOT_RULES: ToolRule[] = [
     keys: ['start_drive'],
     icon: RunIcon,
     label: ({ input, verb }) => ({
-      title: `${verb('Driving', 'Drove')} ${Number(input.seconds ?? 6)} s`,
+      title: `${verb('Driving', 'Drove')} ${duration(Number(input.seconds ?? 6))}`,
       detail: optional(input.live ? 'On the canvas' : ''),
     }),
   },
@@ -341,7 +342,7 @@ const ROBOT_RULES: ToolRule[] = [
     keys: ['operate'],
     icon: RunIcon,
     label: ({ input, verb }) => ({
-      title: `${verb('Operating', 'Operated')} ${Number(input.seconds ?? 1)} s`,
+      title: `${verb('Operating', 'Operated')} ${duration(Number(input.seconds ?? 1))}`,
       detail: optional(input.restart ? 'From the start' : ''),
     }),
   },

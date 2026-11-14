@@ -30,6 +30,12 @@ const bracket: CustomModelDefinition = {
 
 const tile = () => app.page.locator(shown('[data-library-tile]'), { hasText: 'Bracket' }).first();
 
+async function showLibrary() {
+  const rail = app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]'));
+
+  if ((await rail.getAttribute('aria-pressed')) !== 'true') await rail.click();
+}
+
 beforeAll(async () => {
   app = await openApp({ models: [bracket] });
 }, 120000);
@@ -59,7 +65,7 @@ describe('Library', () => {
     await app.page.getByRole('button', { name: /^Cube/ }).first().click();
     expect(await partCount(app.page)).toBe(1);
 
-    await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
+    await showLibrary();
 
     const header = app.page.locator(shown('aside div:has(> h2)'), { hasText: 'Library' });
 
@@ -72,6 +78,8 @@ describe('Library', () => {
   });
 
   it('inserts a model once when its tile is clicked, with no controls on the tile', async () => {
+    await showLibrary();
+
     const before = await partCount(app.page);
 
     expect(await tile().evaluate((el) => el.tagName)).toBe('BUTTON');
@@ -84,6 +92,8 @@ describe('Library', () => {
   });
 
   it('opens the model menu on right-click and inserts from it', async () => {
+    await showLibrary();
+
     const before = await partCount(app.page);
 
     await tile().click({ button: 'right' });
@@ -95,6 +105,38 @@ describe('Library', () => {
     await app.page.getByRole('menuitem', { name: 'Insert' }).click();
 
     await expect.poll(() => partCount(app.page)).toBeGreaterThan(before);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('renames, duplicates and deletes a model at once, without waiting for the Library to reload', async () => {
+    await showLibrary();
+
+    const library = app.page.locator(shown('aside'));
+    const named = (name: string) => library.locator('[data-library-tile]', { hasText: name });
+    const writes = () => app.posts.filter((p) => p.route === 'save-model' || p.route === 'delete-model').length;
+    const reloads = () => app.requests.filter((url) => new URL(url).pathname === '/api/bridge/models').length;
+    const before = { writes: writes(), reloads: reloads() };
+
+    await tile().click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Rename' }).click();
+
+    const rename = library.getByLabel('Name', { exact: true });
+
+    await rename.fill('Base plate');
+    await rename.press('Enter');
+    await named('Base plate').first().waitFor();
+
+    await named('Base plate').first().click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await named('Base plate copy').waitFor();
+
+    await named('Base plate copy').click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Delete' }).click();
+    await app.page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
+
+    await expect.poll(() => named('Base plate copy').count()).toBe(0);
+    expect(await named('Base plate').count()).toBe(1);
+    expect({ writes: writes(), reloads: reloads() }).toEqual({ writes: before.writes + 3, reloads: before.reloads });
     expect(app.errors).toEqual([]);
   });
 });

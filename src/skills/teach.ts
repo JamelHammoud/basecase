@@ -13,6 +13,7 @@ import { planReach } from './raceIk';
 import { judgeRollout, type Rollout } from './rollout';
 import { routeTask, type Route, type TaskAnalysis } from './router';
 import { draftAnalysis, draftEnvironment, draftGoal, draftProblems, type DraftInput } from './teachEnvironment';
+import { duration } from '../utils/duration';
 
 export type { DraftInput } from './teachEnvironment';
 
@@ -143,7 +144,7 @@ export function raceSummary(outcome: RaceOutcome): string[] {
 
   if (outcome.kind === 'skill')
     return [
-      `Found with ${outcome.method} in ${Math.round(outcome.cost.wallS)} s.`,
+      `Found with ${outcome.method} in ${duration(Math.round(outcome.cost.wallS))}.`,
       outcome.skill.evidence?.summary ?? '',
     ];
 

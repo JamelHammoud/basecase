@@ -110,7 +110,7 @@ async function subjectMask({ dataUrl, masks }: ReferenceRequest) {
 }
 
 const cutReason = (cut: string) =>
-  `the photo cuts the subject off at the ${cut}, so heights can't be measured against the whole model; pass ids to compare just the parts it shows`;
+  `the photo cuts the subject off at the ${cut}, so heights can’t be measured against the whole model; pass ids to compare just the parts it shows`;
 
 export interface ReferenceMask {
   mask?: Mask;

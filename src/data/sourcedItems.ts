@@ -175,9 +175,9 @@ export function registerSourced(items: SourcedItem[]) {
 export function unreferencedReason(item: SourcedItem, userChecked = false): string | null {
   const linked = item.link.status === 'confirmed' || (item.link.status === 'store' && userChecked);
 
-  if (!linked) return `its link isn't confirmed (${item.link.note ?? item.url})`;
+  if (!linked) return `its link isn’t confirmed (${item.link.note ?? item.url})`;
 
-  if (item.mesh?.sizeProblem) return `its CAD doesn't match: ${item.mesh.sizeProblem}`;
+  if (item.mesh?.sizeProblem) return `its CAD doesn’t match: ${item.mesh.sizeProblem}`;
 
   if (!item.sources.length) return 'none of its numbers have a source';
 

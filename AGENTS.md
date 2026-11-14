@@ -31,7 +31,7 @@
 | 6, 6a | [Toolbar and Settings](docs/guide/toolbar-and-settings.md) | the bottom toolbar, Measure, Annotate, Settings panes |
 | 7–8 | [Inspector and selection](docs/guide/inspector-and-selection.md) | the Inspector, selection, groups, booleans, Mirror (`src/mirror/`), drag and drop, reference images, Sculpt / Sketch / Import SVG |
 | 8a | [Parts catalog](docs/guide/parts-catalog.md) | real components, meshes, the parts pipeline, parts the agent sources |
-| 8b | [Build](docs/guide/build.md) | Checks, BOM, prices, currency, printability, engineering checks, the build guide |
+| 8b | [Build](docs/guide/build.md) | Checks, BOM, prices, currency, printability, engineering checks, the wiring netlist (`src/wiring/`), the build guide |
 | 8c | [Joints and motion](docs/guide/joints-and-motion.md) | joints, kinematics, the Pose tab, animation, robot import, mocap |
 | 8d | [Simulate and train](docs/guide/simulate.md) | MuJoCo, the MJCF writer, training, policies |
 | 8e | [SimReady](docs/guide/simready.md) | SimReady search, the converter, textures |

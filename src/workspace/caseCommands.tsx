@@ -2,6 +2,7 @@ import type { Command } from '../components/CommandPalette';
 import {
   CameraIcon,
   CasesIcon,
+  CompareIcon,
   DownloadIcon,
   DuplicateIcon,
   ExpandIcon,
@@ -161,7 +162,7 @@ function compareCommands(core: WorkspaceCore): Command[] {
     id: `case-compare-${choice.tabId}`,
     group: 'Simulate',
     label: `Compare with ${choice.name}`,
-    icon: <CasesIcon className={ic} />,
+    icon: <CompareIcon className={ic} />,
     keywords: 'case versus pass rate which better robot scene tab',
     run: () => {
       caseCompare.start(choice.tabId);

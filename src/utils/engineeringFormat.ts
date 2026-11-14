@@ -2,6 +2,7 @@ import { prettyJointName } from './kinematics';
 import type { CheckContext, CheckRow, EngineeringReport } from './engineeringTypes';
 import type { V3 } from './engineeringMath';
 import type { RobotJoint } from '../types/robotics';
+import { wiringText } from '../wiring/wiringText';
 
 export const nm = (v: number) => v.toFixed(2);
 export const fmtG = (g: number) => (g >= 1000 ? `${(g / 1000).toFixed(2)} kg` : `${Math.round(g)} g`);
@@ -51,10 +52,12 @@ export function engineeringText(r: EngineeringReport, toAgent: (v: V3) => V3): s
   if (r.joints.length) {
     lines.push(
       '',
-      "Joints. Leg joints carry the whole robot on one leg at the gait's crouch (at least 30°): PASS at ≤ 0.40 of stall and walking heat (0.67 × that load, or the RMS measured walking the trained policy when the peak test ran) ≤ rated; WARN to 0.60 of stall and 1.6× rated; FAIL above. Other joints hold their limb across the range: PASS at ≤ 0.40 of stall and ≤ rated, FAIL above 0.60 of stall. Stall is taken at the servo supply voltage; rated is the maker's continuous torque, else 1/4 of stall.",
+      'Joints. Leg joints carry the whole robot on one leg at the gait’s crouch (at least 30°): PASS at ≤ 0.40 of stall and walking heat (0.67 × that load, or the RMS measured walking the trained policy when the peak test ran) ≤ rated; WARN to 0.60 of stall and 1.6× rated; FAIL above. Other joints hold their limb across the range: PASS at ≤ 0.40 of stall and ≤ rated, FAIL above 0.60 of stall. Stall is taken at the servo supply voltage; rated is the maker’s continuous torque, else 1/4 of stall.',
       ...r.joints.map((l) => jointTextLine(l, toAgent)),
     );
   }
+
+  if (r.wiring) lines.push(...wiringText(r.wiring));
 
   return lines.join('\n');
 }

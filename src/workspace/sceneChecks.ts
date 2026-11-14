@@ -19,6 +19,8 @@ export function sceneChecks(
         project: docs.projectRef.current,
         setAction,
         keepWalk: (walk) => docs.updateProjectNow((p) => ({ ...p, walk })),
+        keepFalls: (falls) => docs.updateProjectNow((p) => ({ ...p, falls })),
+        falls: opts?.falls ? { sim: simTraining.sim } : undefined,
         peak: opts?.peak
           ? {
               sim: simTraining.sim,

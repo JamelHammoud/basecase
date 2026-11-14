@@ -103,6 +103,7 @@ const primitiveNode = (node: CustomModelSubNode, role: PartRole, selected: boole
       visible: true,
       locked: false,
       deformers: node.deformers,
+      edges: node.part?.edges,
     },
     selected,
   );

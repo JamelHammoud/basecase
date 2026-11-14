@@ -6,7 +6,7 @@ export function watchLibrary({ modelsDir, scenesDir, onModelsChanged, onScenesCh
   let scenesChangedTimer;
 
   try {
-    fs.watch(modelsDir, () => onModelsChanged());
+    fs.watch(modelsDir, (_event, file) => onModelsChanged(file));
     fs.watch(scenesDir, () => {
       clearTimeout(scenesChangedTimer);
       scenesChangedTimer = setTimeout(() => onScenesChanged(), SCENES_DEBOUNCE_MS);

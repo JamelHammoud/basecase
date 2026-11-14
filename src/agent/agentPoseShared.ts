@@ -16,6 +16,7 @@ import { limbOf } from '../utils/robotImport/published';
 import { rigJoints } from '../assembly/rigJoints';
 import { DEEPER_THAN_REST_MM, pairKey } from '../three/interference';
 import { rotToCad, rotToScene, toCad, toScene } from './agentFrame';
+import { runClock } from '../utils/duration';
 import { plural } from '../../electron/plural.mjs';
 
 export interface PoseContext {
@@ -226,7 +227,7 @@ export function previewStates(
   return Array.from({ length: n }, (_, i) => {
     const t = (i / (cyclic ? n : n - 1)) * anim.duration;
 
-    return { label: `${r1(t)} s`, state: sampleAnimation(anim, t) };
+    return { label: runClock(t), state: sampleAnimation(anim, t) };
   });
 }
 

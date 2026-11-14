@@ -193,6 +193,6 @@ function sweepText({ base, rows }: { base: SweepRow; rows: SweepRow[] }): string
   return [
     sweepTable(base, rows),
     '',
-    `Each row is a copy of the scene with one change; nothing in the scene was edited. Servo torque is the static check (leg joints on one leg at the gait's crouch). Servos as chosen is the list price of the scene's servos; cheapest passing set is size_actuators' cheapest servos, battery and regulator that pass. Hold + shoves holds the pose in MuJoCo for ${SWEEP_SECONDS} s with servos limited to 0.7 × stall and shoves of ${SWEEP_SHOVE_SHARE} × body weight forward and sideways; the share is the 99th-percentile torque a leg joint asks for over its stall. Apply the winner yourself.`,
+    `Each row is a copy of the scene with one change; nothing in the scene was edited. Servo torque is the static check (leg joints on one leg at the gait’s crouch). Servos as chosen is the list price of the scene’s servos; cheapest passing set is size_actuators' cheapest servos, battery and regulator that pass. Hold + shoves holds the pose in MuJoCo for ${SWEEP_SECONDS} s with servos limited to 0.7 × stall and shoves of ${SWEEP_SHOVE_SHARE} × body weight forward and sideways; the share is the 99th-percentile torque a leg joint asks for over its stall. Apply the winner yourself.`,
   ].join('\n');
 }

@@ -52,7 +52,7 @@ export default {
     type: 'suggestion',
     docs: {
       description:
-        'Disallow words and separators the copy guide bans (§3c), synonyms of its glossary (§3b-17), British spellings (§3b-20) and placeholders that give instructions (§3b-11) in user-facing strings',
+        'Disallow words and separators the copy guide bans (§3c), synonyms of its glossary (§3b-17), British spellings (§3b-20), straight apostrophes (§3b-21) and placeholders that give instructions (§3b-11) in user-facing strings',
     },
     messages: {
       banned: 'Copy ({{section}}): “{{word}}” is banned. {{fix}}',

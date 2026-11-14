@@ -167,7 +167,7 @@ describe('Case logic', { timeout: 60_000 }, () => {
     const controls = (result.logic?.trace ?? []).flatMap((e) => (e.kind === 'control' ? [e.skill] : []));
     const done = (result.logic?.trace ?? []).flatMap((e) => (e.kind === 'opDone' ? [e.node] : []));
 
-    expect(refused.refusal).toBe("walk to sit isn't proven in simulation. Prove it, or stop first.");
+    expect(refused.refusal).toBe('walk to sit isn’t proven in simulation. Prove it, or stop first.');
     expect(proof.falls).toBe(0);
     expect(result.refusal).toBeUndefined();
     expect(controls.indexOf('sit')).toBeGreaterThan(controls.indexOf('walk'));

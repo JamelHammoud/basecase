@@ -53,7 +53,7 @@ A walk cycle needs leg joints. Without them, **+** offers only **Import BVH**. *
 
 ![The Animations + menu with Walk Cycle and Import BVH](/help/animate-a-robot/menu.png)
 
-![The import sheet matching a recording's legs to the robot's hips, knees and ankles](/help/animate-a-robot/retarget.png)
+![The Import walk sheet for a 2 s recording, matching its arm and leg bones to the robot's joints](/help/animate-a-robot/retarget.png)
 
 Bones are matched by name, so files from Mixamo, CMU, Daz and Unreal work without changes. Each robot limb points the way the performer's limb points, so the robot's proportions can differ from the person's.
 

@@ -25,7 +25,7 @@ import { ExploreRows } from './ExploreRows';
 import { FAULT_LABEL } from './faultMenu';
 import { FromTries } from './FromTries';
 import type { ShareRobot } from '../../workspace/useShareRobot';
-import { fmtTime } from './format';
+import { runClock } from '../../utils/duration';
 import { ProgressBar } from './ProgressBar';
 import { hasRunResult, RunResult, type OnFault } from './RunResult';
 import { useFilmstrip } from './useFilmstrip';
@@ -49,7 +49,7 @@ const Faults: React.FC<{ record: TryRecord; rig: Rig }> = ({ record, rig }) =>
   record.manifest.faults?.map((f) => (
     <Tooltip
       key={`${f.joint}-${f.at}`}
-      label={`${prettyJointName(rig.byId.get(f.joint)?.name ?? f.joint)} at ${fmtTime(f.at)}`}
+      label={`${prettyJointName(rig.byId.get(f.joint)?.name ?? f.joint)} at ${runClock(f.at)}`}
     >
       <span data-testid="try-fault">
         <Badge variant="amber">{FAULT_LABEL[f.kind]}</Badge>
@@ -70,7 +70,7 @@ const TryRow: React.FC<TryRowProps> = (props) => {
             <Badge>Real</Badge>
           </span>
         )}
-        <span className="text-white/50 tabular">{fmtTime(record.seconds)}</span>
+        <span className="text-white/50 tabular">{runClock(record.seconds)}</span>
         <span className="flex-1 text-white/50 tabular" data-testid="try-generated">
           {generated > 0 && plural(generated, 'variation')}
         </span>

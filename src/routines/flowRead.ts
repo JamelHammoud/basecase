@@ -48,7 +48,7 @@ class FlowReader {
   private step(id: string): Data {
     const node = this.byId.get(id);
 
-    if (!node || this.seen.has(id)) throw new Error(`Can't read node ${id}`);
+    if (!node || this.seen.has(id)) throw new Error(`Can’t read node ${id}`);
 
     this.seen.add(id);
 

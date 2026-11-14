@@ -17,7 +17,7 @@ import type { DriveClass } from '../../sim/driveKeys';
 import type { Cases } from '../../workspace/useCases';
 import type { CaseExplore } from '../../workspace/useCaseExplore';
 import { CheckIcon } from '../build/CheckIcon';
-import { fmtTime } from './format';
+import { runClock } from '../../utils/duration';
 
 interface CaseSectionProps {
   cases: Cases;
@@ -116,7 +116,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
         {running ? (
           <div className="flex items-center gap-2">
             <span className="flex-1 text-[13px] tabular text-white/80" data-testid="try-clock">
-              {fmtTime(live.elapsed)} of {fmtTime(active?.task.seconds ?? 0)}
+              {runClock(live.elapsed)} of {runClock(active?.task.seconds ?? 0)}
             </span>
             <Button variant="secondary" size="sm" icon={<StopIcon className="w-4 h-4" />} onClick={live.end}>
               Stop Try

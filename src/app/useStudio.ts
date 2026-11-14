@@ -70,8 +70,7 @@ export function useStudio(sources: StudioSources) {
   const { isLeftOpen, setIsLeftOpen, isRightOpen, setIsRightOpen, panelWidths, setPanelWidths } = layout;
   const { resizingPanel, setResizingPanel, setRightIslandWidth } = layout;
   const { customModels, setCustomModels, uploadedImages, setUploadedImages, chatList, setChatList } = libraries;
-  const { acpStatus, reconnectAcp, signInAcp, saveAgentApiKey, agentTargetHeightMm, agentChoice, setAgentChoice } =
-    agent;
+  const { acpStatus, reconnectAcp, signInAcp, saveAgentApiKey, agentChoice, setAgentChoice } = agent;
   const { register, reportMeta, newScene, selectTab, robotsBeside, handleOf } = core;
   const { renameTab, closeTab, duplicateTab, reopenTab, cycleTab, focusChat, notify } = actions;
   const canReopenTab = core.closed.length > 0;
@@ -97,7 +96,6 @@ export function useStudio(sources: StudioSources) {
       reconnectAcp,
       signInAcp,
       saveAgentApiKey,
-      agentTargetHeightMm,
       agentChoice,
       setAgentChoice,
       settingsOpen: settings.settingsOpen,
@@ -143,7 +141,6 @@ export function useStudio(sources: StudioSources) {
       reconnectAcp,
       signInAcp,
       saveAgentApiKey,
-      agentTargetHeightMm,
       agentChoice,
       setAgentChoice,
       settings.settingsOpen,

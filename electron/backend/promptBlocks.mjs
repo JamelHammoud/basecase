@@ -61,8 +61,6 @@ function promptLines({ payload, imageCount, refNames, folders }) {
     );
   }
 
-  if (payload.targetHeightMm) lines.push(`Target overall height: about ${payload.targetHeightMm} mm.`);
-
   if (folders.length) lines.push('', EVIDENCE_INSTRUCTION, ...folders);
 
   return lines;

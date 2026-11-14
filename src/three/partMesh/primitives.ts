@@ -1,7 +1,27 @@
 import * as THREE from 'three';
+import type { PartEdges } from '../../types/robotics';
+import { hexOutline, partEdges, tubeRadii, wedgeOutline } from '../../utils/partEdges';
 import type { BuildContext } from './context';
+import { edgedLathe, edgedPrism } from './edgedGeometry';
 
 export type PartBuilder = (ctx: BuildContext) => void;
+
+const boxOutline = ({ width, depth }: BuildContext): Array<[number, number]> => [
+  [-width / 2, -depth / 2],
+  [width / 2, -depth / 2],
+  [width / 2, depth / 2],
+  [-width / 2, depth / 2],
+];
+
+const edged =
+  (plain: PartBuilder, build: (ctx: BuildContext, edges: PartEdges) => THREE.BufferGeometry): PartBuilder =>
+  (ctx) => {
+    const edges = partEdges(ctx.part);
+
+    if (!edges) return plain(ctx);
+
+    ctx.add(ctx.deform(build(ctx, edges)));
+  };
 
 const boxShape: PartBuilder = (ctx) => {
   const segments = ctx.deformed ? 16 : 1;
@@ -35,9 +55,7 @@ const pivotAxis: PartBuilder = (ctx) => {
 };
 
 const tube: PartBuilder = (ctx) => {
-  const outerR = Math.min(ctx.width, ctx.depth) / 2;
-  const wall = Math.min(ctx.thickness, outerR * 0.75);
-  const innerR = Math.max(1, outerR - wall);
+  const { outer: outerR, inner: innerR } = tubeRadii(ctx.part.dimensions);
   const shape = new THREE.Shape();
   const hole = new THREE.Path();
 
@@ -133,20 +151,47 @@ const wedge: PartBuilder = (ctx) => {
   ctx.add(ctx.deform(geometry));
 };
 
+const edgedBox = edged(boxShape, (ctx, edges) =>
+  edgedPrism({ outline: boxOutline(ctx), height: ctx.height, edges, deformed: ctx.deformed }),
+);
+
+const edgedCylinder = edged(cylinder, (ctx, edges) => {
+  const rx = ctx.width / 2;
+  const geometry = edgedLathe({ radii: rx, height: ctx.height, edges, deformed: ctx.deformed });
+
+  geometry.scale(1, 1, ctx.depth / 2 / Math.max(rx, 0.001));
+
+  return geometry;
+});
+
+const edgedTube = edged(tube, (ctx, edges) =>
+  edgedLathe({ radii: tubeRadii(ctx.part.dimensions), height: ctx.height, edges, deformed: ctx.deformed }),
+);
+
+const edgedHex = edged(coneLike, (ctx, edges) =>
+  edgedPrism({ outline: hexOutline(ctx.part.dimensions), height: ctx.height, edges, deformed: ctx.deformed }),
+);
+
+const edgedWedge = edged(wedge, (ctx, edges) =>
+  edgedPrism({ outline: wedgeOutline(ctx.part.dimensions), height: ctx.depth, edges, deformed: ctx.deformed }).rotateX(
+    Math.PI / 2,
+  ),
+);
+
 export const PRIMITIVE_BUILDERS: Record<string, PartBuilder> = {
-  box: boxShape,
-  cube: boxShape,
+  box: edgedBox,
+  cube: edgedBox,
   hole_box: boxShape,
-  cylinder,
+  cylinder: edgedCylinder,
   hole_cylinder: cylinder,
   pivot_axis: pivotAxis,
-  tube,
+  tube: edgedTube,
   sphere: scaled(() => new THREE.SphereGeometry(0.5, 32, 24)),
   torus,
   cone: coneLike,
   pyramid: coneLike,
-  hex_prism: coneLike,
+  hex_prism: edgedHex,
   capsule,
   dome,
-  wedge,
+  wedge: edgedWedge,
 };

@@ -11,7 +11,7 @@ export function fitTestCommands({ core }: Pick<CommandInputs, 'core'>): Command[
       id: 'print-fit-test',
       group: 'Scene',
       label: 'Print Fit Test',
-      icon: <PrinterIcon className="w-4 h-4" />,
+      icon: <PrinterIcon />,
       keywords: 'fit test coupon tolerance pocket servo insert bearing screw hole clearance plate',
       run: () => void core.printing.startFitTest(),
     },
@@ -27,7 +27,7 @@ export function mergeCommands({ core }: Pick<CommandInputs, 'core'>): Command[] 
     id: `merge-${g.ids.join('-')}`,
     group: 'Scene',
     label: `Merge ${groupNames(g, nameOf)}`,
-    icon: <PrinterIcon className="w-4 h-4" />,
+    icon: <PrinterIcon />,
     keywords: 'merge combine union consolidate one print fewer parts screws',
     run: () => void merges.merge(g),
   }));

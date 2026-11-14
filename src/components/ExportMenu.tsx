@@ -67,49 +67,23 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         align="end"
         className="w-56"
       >
-        <MenuItem icon={<PhotoIcon className="w-4 h-4" />} label="Image" onSelect={run(onExportImage)} />
-        <MenuItem
-          icon={<DownloadIcon className="w-4 h-4" />}
-          label="STL"
-          disabled={!canExportParts}
-          onSelect={run(onExportStl)}
-        />
-        <MenuItem
-          icon={<PrinterIcon className="w-4 h-4" />}
-          label="3MF Plates"
-          disabled={!canExportParts}
-          onSelect={run(onExport3mf)}
-        />
+        <MenuItem icon={<PhotoIcon />} label="Image" onSelect={run(onExportImage)} />
+        <MenuItem icon={<DownloadIcon />} label="STL" disabled={!canExportParts} onSelect={run(onExportStl)} />
+        <MenuItem icon={<PrinterIcon />} label="3MF Plates" disabled={!canExportParts} onSelect={run(onExport3mf)} />
         {onExportStep && (
-          <MenuItem
-            icon={<ShapeIcon className="w-4 h-4" />}
-            label="STEP"
-            disabled={!canExportStep}
-            onSelect={run(onExportStep)}
-          />
+          <MenuItem icon={<ShapeIcon />} label="STEP" disabled={!canExportStep} onSelect={run(onExportStep)} />
         )}
-        {canExportCutFiles && (
-          <MenuItem icon={<CutIcon className="w-4 h-4" />} label="Cut Files" onSelect={run(onExportCutFiles)} />
-        )}
-        <MenuItem icon={<FileIcon className="w-4 h-4" />} label="Scene" onSelect={run(onExportScene)} />
+        {canExportCutFiles && <MenuItem icon={<CutIcon />} label="Cut Files" onSelect={run(onExportCutFiles)} />}
+        <MenuItem icon={<FileIcon />} label="Scene" onSelect={run(onExportScene)} />
         <MenuItem
-          icon={<RobotsIcon className="w-4 h-4" />}
+          icon={<RobotsIcon />}
           label="Robot Package"
           disabled={!canExportRobot}
           onSelect={run(onExportRobot)}
         />
         <MenuDivider />
-        <MenuItem
-          icon={<ClipboardIcon className="w-4 h-4" />}
-          label="Copy as Markdown"
-          onSelect={run(onCopyMarkdown)}
-        />
-        <MenuItem
-          icon={<ShareIcon className="w-4 h-4" />}
-          label={SHARE_LABEL}
-          disabled={!canExportParts}
-          onSelect={run(onAirDrop)}
-        />
+        <MenuItem icon={<ClipboardIcon />} label="Copy as Markdown" onSelect={run(onCopyMarkdown)} />
+        <MenuItem icon={<ShareIcon />} label={SHARE_LABEL} disabled={!canExportParts} onSelect={run(onAirDrop)} />
       </PopoverMenu>
     </div>
   );

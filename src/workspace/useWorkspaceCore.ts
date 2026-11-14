@@ -18,6 +18,7 @@ import { useCaseCompare } from './useCaseCompare';
 import { useCaseExplore } from './useCaseExplore';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
+import { useDataLayers } from './useDataLayers';
 import { useCaseRun } from './useCaseRun';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
@@ -122,6 +123,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     showReferenceImages: studio.showReferenceImages,
   });
 
+  const dataLayers = useDataLayers({ sim: simTraining.sim, timeline: simTraining.cases.timeline, parts, viewportRef });
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
 
   const { travel } = docs;
@@ -176,6 +178,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     posable,
     skeleton,
     simTraining,
+    dataLayers,
     caseRun,
     guide,
     buildAlong,

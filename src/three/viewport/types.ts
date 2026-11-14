@@ -1,5 +1,7 @@
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { GhostState } from './ghostLayer';
+import type { DataLayerState } from './dataLayers';
+import type { DataLayerInput } from '../../dataLayers/store';
 import type { MatTrackOverlay } from './matTrack';
 import type { RobotGhost } from '../../robot/robotGhost';
 import type { FixedCamera } from '../../cameras/fixed';
@@ -204,6 +206,7 @@ export interface Viewport3DHandle {
   printMeshes: (ids: string[]) => Promise<Record<string, MeshData>>;
   printThreeMf: (plates: PlateFilesInput) => Promise<ThreeMfResult>;
   fitCoupons: (task: FitCouponTask) => Promise<FitCoupon[]>;
+  exportStl: () => Promise<Uint8Array>;
   exportUsdz: () => Promise<Uint8Array>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;
@@ -215,7 +218,8 @@ export interface Viewport3DHandle {
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;
-  setScan: (points: Float32Array | null) => void;
+  setDataLayers: (input: DataLayerInput | null) => DataLayerState[];
+  dataLayerState: () => DataLayerState[];
   scanPointCount: () => number;
   setMatTrack: (track: MatTrackOverlay | null) => void;
   setGhost: (ghost: RobotGhost | null) => void;

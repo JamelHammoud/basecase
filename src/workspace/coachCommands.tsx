@@ -6,8 +6,6 @@ import type { CommandInputs } from './sceneCommands';
 import { titleCase } from '../utils/titleCase';
 import { canCoach } from './useSkillCoach';
 
-const ic = 'w-4 h-4';
-
 export function coachCommands({ core }: CommandInputs): Command[] {
   const { skills } = core.simTraining;
   const { coach } = skills;
@@ -25,12 +23,8 @@ export function coachCommands({ core }: CommandInputs): Command[] {
   const coached = skills.rows.filter((row) => row.record?.coach && row.state.kind === 'ready');
 
   return [
-    ...skills.rows
-      .filter(canCoach)
-      .map((row) => command(row, 'Coach', <CoachIcon className={ic} />, () => coach.start(row))),
-    ...coached.map((row) => command(row, 'Compare', <CompareIcon className={ic} />, () => void coach.replay(row))),
-    ...coached
-      .filter(coach.canUndo)
-      .map((row) => command(row, 'Undo Coach', <UndoIcon className={ic} />, () => coach.undo(row))),
+    ...skills.rows.filter(canCoach).map((row) => command(row, 'Coach', <CoachIcon />, () => coach.start(row))),
+    ...coached.map((row) => command(row, 'Compare', <CompareIcon />, () => void coach.replay(row))),
+    ...coached.filter(coach.canUndo).map((row) => command(row, 'Undo Coach', <UndoIcon />, () => coach.undo(row))),
   ];
 }

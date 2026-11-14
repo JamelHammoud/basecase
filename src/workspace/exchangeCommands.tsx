@@ -15,8 +15,6 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { SHARE_LABEL } from '../utils/os';
 import type { CommandInputs } from './sceneCommands';
 
-const ic = 'w-4 h-4';
-
 export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
   const { studio } = core;
   const { exports, files } = actions;
@@ -24,7 +22,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     id: 'export-robot-package',
     group: 'Scene',
     label: 'Export Robot Package',
-    icon: <RobotsIcon className={ic} />,
+    icon: <RobotsIcon />,
     keywords: 'mujoco mjcf urdf ros lerobot joint map policy zip download',
     run: () => void exports.exportRobotPackage(),
   };
@@ -32,7 +30,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     id: 'export-step',
     group: 'Scene',
     label: 'Export STEP',
-    icon: <ShapeIcon className={ic} />,
+    icon: <ShapeIcon />,
     keywords: 'stp cad assembly fusion onshape solidworks freecad download',
     run: () => void exports.exportStep(),
   };
@@ -40,7 +38,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
     id: 'export-cut-files',
     group: 'Scene',
     label: 'Export Cut Files',
-    icon: <CutIcon className={ic} />,
+    icon: <CutIcon />,
     keywords: 'dxf sheet laser cnc aluminum carbon acrylic sendcutsend plate download',
     run: () => void exports.exportCutFiles(),
   };
@@ -49,7 +47,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'export',
       group: 'Scene',
       label: 'Export STL',
-      icon: <DownloadIcon className={ic} />,
+      icon: <DownloadIcon />,
       keywords: 'print download',
       run: exports.exportStl,
     },
@@ -57,7 +55,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'airdrop',
       group: 'Scene',
       label: SHARE_LABEL,
-      icon: <ShareIcon className={ic} />,
+      icon: <ShareIcon />,
       keywords: 'ar augmented reality iphone ipad usdz quick look share send phone',
       run: () => void exports.airDrop(),
     },
@@ -68,7 +66,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'open-scene-file',
       group: 'Scene',
       label: 'Open Scene File',
-      icon: <FolderOpenIcon className={ic} />,
+      icon: <FolderOpenIcon />,
       keywords: 'import basecase share friend shared received',
       run: () => void studio.openSceneFile(),
     },
@@ -76,7 +74,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'export-scene',
       group: 'Scene',
       label: 'Export Scene',
-      icon: <FileIcon className={ic} />,
+      icon: <FileIcon />,
       keywords: 'share send friend basecase file download save',
       run: () => void exports.exportScene(),
     },
@@ -85,7 +83,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'copy-brief',
       group: 'Scene',
       label: 'Copy as Markdown',
-      icon: <ClipboardIcon className={ic} />,
+      icon: <ClipboardIcon />,
       keywords: 'markdown clipboard export brief spec',
       run: exports.copyBrief,
     },
@@ -96,7 +94,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'export-image',
       group: 'Scene',
       label: 'Export Image',
-      icon: <PhotoIcon className={ic} />,
+      icon: <PhotoIcon />,
       keywords: 'png screenshot render download',
       run: exports.exportImage,
     },
@@ -104,7 +102,7 @@ export function exchangeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'import',
       group: 'Scene',
       label: 'Import',
-      icon: <FileImportIcon className={ic} />,
+      icon: <FileImportIcon />,
       keywords:
         'file mesh stl 3mf obj ply fbx glb gltf dae step stp iges igs cad model print svg extrude urdf mjcf zip robot bvh mocap motion image png jpg',
       run: () => void files.pickImports(),

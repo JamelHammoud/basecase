@@ -20,6 +20,7 @@ keywords:
 related:
   - group-parts
   - add-objects-to-the-scene
+  - replay-a-robots-lidar-scan
 covers:
   - src/components/layers/
   - src/workspace/contextMenuItems.tsx
@@ -51,3 +52,7 @@ The header counts parts and cutouts, and the footer gives the **Overall size** o
 The eye or lock stays on the row while the part is hidden or locked. **Hide** and **Lock** are also in the part's right-click menu and [[⌘K]], as **Show** and **Unlock** once they're on.
 
 An empty scene leaves Layers empty. To bring robots, objects and saved models in, use **Parts** and **Library** in the same view rail.
+
+## Sensor data rows
+
+While a simulation with a LiDAR is loaded, the LiDAR's scan gets its own row under the robot, marked with four blue dots. Its eye hides the scan on the canvas, and clicking the row selects nothing. Steps are in [Replay a robot's LiDAR scan](/help/replay-a-robots-lidar-scan).

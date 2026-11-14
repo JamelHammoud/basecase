@@ -2,6 +2,7 @@ import { ActuatorSpec, BatterySpec, COMPONENT_BY_ID, actuatorOf } from '../data/
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { isLegJoint } from './engineeringBody';
 import { duration } from './duration';
+import { amps } from './electric';
 import { jointLabel } from './engineeringFormat';
 import { plural } from '../../electron/plural.mjs';
 import type { CheckContext, CheckRow } from './engineeringTypes';
@@ -212,13 +213,13 @@ function currentDraw(ctx: CheckContext, source: PowerSource) {
 
 type Draw = ReturnType<typeof currentDraw>;
 
-const amps = ({ avg, peak, hungriest }: Draw) =>
+const drawText = ({ avg, peak, hungriest }: Draw) =>
   hungriest
-    ? `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A average walking`
-    : `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A standing`;
+    ? `About ${amps(peak)} peak and ${amps(avg)} average walking`
+    : `About ${amps(peak)} peak and ${amps(avg)} standing`;
 
 const jointAmps = (h: NonNullable<Draw['hungriest']>) =>
-  `${jointLabel(h.joint)}: ${h.avgA.toFixed(1)} A average, ${h.peakA.toFixed(1)} A peak`;
+  `${jointLabel(h.joint)}: ${amps(h.avgA)} average, ${amps(h.peakA)} peak`;
 
 const hungriestNote = (draw: Draw) => (draw.hungriest ? ` ${jointAmps(draw.hungriest)}.` : '');
 
@@ -227,18 +228,18 @@ const estimated = (draw: Draw) => (draw.hungriest ? '' : ' (estimate)');
 function batteryDetail(source: PowerSource, draw: Draw): string {
   const runtime = ((0.8 * source.battery.capacityAh) / draw.avg) * 60;
 
-  return `${amps(draw)} from the pack${estimated(draw)}; ${source.name} gives about ${duration(runtime * 60, 'min')}. Fuse the pack near ${Math.ceil(draw.peak * 1.4)} A.${hungriestNote(draw)}`;
+  return `${drawText(draw)} from the pack${estimated(draw)}; ${source.name} gives about ${duration(runtime * 60, 'min')}. Fuse the pack near ${Math.ceil(draw.peak * 1.4)} A.${hungriestNote(draw)}`;
 }
 
 const tetherDetail = (tetherA: number, draw: Draw) =>
-  `${amps(draw)}${estimated(draw)}; the power supply gives ${tetherA} A${hungriestNote(draw)}`;
+  `${drawText(draw)}${estimated(draw)}; the power supply gives ${tetherA} A${hungriestNote(draw)}`;
 
 function railWarning({ rail, servoPeak }: Draw): NonNullable<CheckRow['items']> {
   if (!rail || servoPeak <= rail.regulator.ioutA) return [];
 
   return [
     {
-      text: `${rail.name} gives ${rail.regulator.ioutA} A; the servos ask for about ${servoPeak.toFixed(1)} A at peak`,
+      text: `${rail.name} gives ${rail.regulator.ioutA} A; the servos ask for about ${amps(servoPeak)} at peak`,
       ids: [rail.id],
       status: 'warn',
     },

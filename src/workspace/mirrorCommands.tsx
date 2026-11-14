@@ -6,7 +6,7 @@ import type { Mirror } from './useMirror';
 
 export const mirrorMenuEntry = (mirror: Mirror): ContextMenuEntry => ({
   label: 'Mirror',
-  icon: <MirrorIcon className="w-3.5 h-3.5" />,
+  icon: <MirrorIcon />,
   submenuWidth: 180,
   submenu: (close) => (
     <MirrorPlaneItems
@@ -23,7 +23,7 @@ export const mirrorCommand = (mirror: Mirror): Command => ({
   id: 'mirror',
   group: 'Selection',
   label: 'Mirror',
-  icon: <MirrorIcon className="w-4 h-4" />,
+  icon: <MirrorIcon />,
   keywords: 'symmetry symmetric flip opposite side left right twin copy',
   run: () => mirror.mirrorSelected(),
 });

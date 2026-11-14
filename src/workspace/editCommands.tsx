@@ -7,8 +7,6 @@ import { mirrorCommand } from './mirrorCommands';
 import { keyFor } from '../app/shortcuts';
 import { isRotated, onePartActions, paletteCommand, renameAction, selectionActions } from './partActions';
 
-const ic = 'w-4 h-4';
-
 function clipboardCommands(inputs: CommandInputs): Command[] {
   const { actions, clipboard } = inputs;
   const act = selectionActions(inputs);
@@ -21,7 +19,7 @@ function clipboardCommands(inputs: CommandInputs): Command[] {
       group: 'Selection',
       label: 'Copy',
       shortcut: keyFor('copy'),
-      icon: <CopyIcon className={ic} />,
+      icon: <CopyIcon />,
       run: () => clipboard.copyViaCommand(false),
     },
     {
@@ -29,7 +27,7 @@ function clipboardCommands(inputs: CommandInputs): Command[] {
       group: 'Selection',
       label: 'Cut',
       shortcut: keyFor('cut'),
-      icon: <CutIcon className={ic} />,
+      icon: <CutIcon />,
       run: () => clipboard.copyViaCommand(true),
     },
     {
@@ -37,7 +35,7 @@ function clipboardCommands(inputs: CommandInputs): Command[] {
       group: 'Selection',
       label: 'Paste',
       shortcut: keyFor('paste'),
-      icon: <PasteIcon className={ic} />,
+      icon: <PasteIcon />,
       run: clipboard.pasteParts,
     },
     ...(rename ? [paletteCommand(rename, 'Selection')] : []),
@@ -84,7 +82,7 @@ function arrangeCommands(inputs: CommandInputs): Command[] {
       id: 'subtract',
       group: 'Selection',
       label: 'Subtract',
-      icon: <SubtractIcon className={ic} />,
+      icon: <SubtractIcon />,
       keywords: 'boolean cut hole difference',
       run: () => ops.runBoolean('subtract'),
     },
@@ -95,7 +93,7 @@ function arrangeCommands(inputs: CommandInputs): Command[] {
         id: a.id,
         group: 'Selection',
         label: a.label,
-        icon: <a.icon className={ic} />,
+        icon: <a.icon />,
         keywords: a.keywords,
         run: () => edits.align(axis, a.mode),
       })),
@@ -104,7 +102,7 @@ function arrangeCommands(inputs: CommandInputs): Command[] {
       id: spread.id,
       group: 'Selection',
       label: spread.label,
-      icon: <spread.icon className={ic} />,
+      icon: <spread.icon />,
       keywords: 'distribute space evenly',
       run: () => edits.distribute(axis),
     })),

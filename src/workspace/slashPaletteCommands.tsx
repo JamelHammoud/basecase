@@ -5,8 +5,6 @@ import { CasesIcon, ComposeIcon, PenIcon, PhotoAddIcon } from '../design-system'
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { CommandInputs } from './sceneCommands';
 
-const ic = 'w-4 h-4';
-
 const FAILING = new Set(['fail', 'warn']);
 
 function makeItPass({ core }: CommandInputs): Command[] {
@@ -20,7 +18,7 @@ function makeItPass({ core }: CommandInputs): Command[] {
       id: 'agent-make-it-pass',
       group: 'Agent',
       label: 'Make It Pass',
-      icon: <CasesIcon className={ic} />,
+      icon: <CasesIcon />,
       keywords: `/pass ${kase.name} case fix redesign agent`,
       run: () => core.tool.requestCompose(`/pass ${kase.name}`),
     },
@@ -32,7 +30,7 @@ const composerCommands = ({ core, agent }: CommandInputs): Command[] => [
     id: 'agent-new-chat',
     group: 'Agent',
     label: 'New Chat',
-    icon: <ComposeIcon className={ic} />,
+    icon: <ComposeIcon />,
     keywords: 'conversation fresh start clear context agent composer',
     run: () => {
       core.tool.openRightTab('acp');
@@ -43,7 +41,7 @@ const composerCommands = ({ core, agent }: CommandInputs): Command[] => [
     id: 'agent-attach-images',
     group: 'Agent',
     label: 'Attach Images',
-    icon: <PhotoAddIcon className={ic} />,
+    icon: <PhotoAddIcon />,
     keywords: 'model from image photo picture upload composer',
     run: core.tool.requestAttach,
   },
@@ -51,7 +49,7 @@ const composerCommands = ({ core, agent }: CommandInputs): Command[] => [
     id: 'agent-attach-sketch',
     group: 'Agent',
     label: 'Attach Sketch',
-    icon: <PenIcon className={ic} />,
+    icon: <PenIcon />,
     keywords: 'sketch for agent draw drawing reference composer',
     run: core.tool.requestSketch,
   },

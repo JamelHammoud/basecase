@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { appLabels } from './copy/appLabels.mjs';
 import { formatProblem, lintSite } from './site/lint.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -22,7 +23,7 @@ function contentFiles() {
 const exists = (publicPath) => fs.existsSync(path.join(PUBLIC, decodeURIComponent(publicPath.split(/[?#]/)[0])));
 
 const files = contentFiles().map((file) => ({ path: file, source: fs.readFileSync(path.join(root, file), 'utf8') }));
-const problems = lintSite({ files, exists });
+const problems = lintSite({ files, exists, labels: appLabels(root) });
 
 if (problems.length > 0) {
   console.error('Site copy breaks the writing rules (docs/guide/copy.md, §3f):');

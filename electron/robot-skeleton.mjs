@@ -1,4 +1,5 @@
 import { publicFetch, readCapped } from './publicFetch.mjs';
+import { MB } from './fileSize.mjs';
 import { plural } from './plural.mjs';
 
 function parseXml(xml) {
@@ -271,7 +272,7 @@ export async function fetchSkeleton(url, forward) {
 
   if (!res.ok) throw new Error(`Fetch failed: HTTP ${res.status} for ${u}`);
 
-  const xml = (await readCapped(res, 12e6, 'The file')).toString('utf8');
+  const xml = (await readCapped(res, 12 * MB, 'The file')).toString('utf8');
 
   return skeletonFromXml(xml, forward);
 }

@@ -1,3 +1,4 @@
+import { fileSize, KB } from '../../../electron/fileSize.mjs';
 import { asNumber, asString, listOf, oneOf, optional, refuse, type Reader } from '../validate';
 import { JOINT_FIELDS, signalRef, signalShape, type JointField, type SignalScope } from './signalNames';
 
@@ -37,12 +38,13 @@ const readTable = (v: Config, where: string, scope: SignalScope) => {
   return columns ? { of, columns: columns as JointField[] } : { of };
 };
 
-export const CODE_SOURCE_MAX_BYTES = 256 * 1024;
+export const CODE_SOURCE_MAX_BYTES = 256 * KB;
 
 const readSource: Reader<string> = (value, where) => {
   if (typeof value !== 'string' || !value.trim()) return refuse(where, 'must be an HTML document');
 
-  if (new TextEncoder().encode(value).length > CODE_SOURCE_MAX_BYTES) return refuse(where, 'must be at most 256 KB');
+  if (new TextEncoder().encode(value).length > CODE_SOURCE_MAX_BYTES)
+    return refuse(where, `must be at most ${fileSize(CODE_SOURCE_MAX_BYTES)}`);
 
   return value;
 };

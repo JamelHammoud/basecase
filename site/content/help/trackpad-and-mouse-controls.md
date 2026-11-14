@@ -23,6 +23,7 @@ covers:
   - src/three/viewport/keys.ts
   - src/app/storedSettings.ts
   - src/components/SettingsWindow.tsx
+  - src/components/settings/CanvasPane.tsx
   - src/data/cameraViews.ts
 ---
 

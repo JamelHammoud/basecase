@@ -1,5 +1,13 @@
 [
   {
+    "file": "e2e/buildAlong.e2e.test.ts",
+    "test": "marks a step done once every part it prints is printed",
+    "issue": 846,
+    "until": "2026-11-21",
+    "platform": "win32",
+    "reason": "In run 43640254781, both Windows attempts left the first Build Along step unready after confirming the exact plate contents and clicking Mark Printed. Linux passed at the same commit in 41.248 s. Windows passed in the preceding run in 24.130 s with unchanged test, print tracker, printing hook and guide code. The cause is not established."
+  },
+  {
     "file": "e2e/caseCode.e2e.test.ts",
     "test": "drives the rover from a code joystick, shows its speed in a HUD overlay, and leaves on Esc pressed inside",
     "issue": 842,

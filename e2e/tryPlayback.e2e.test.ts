@@ -138,6 +138,12 @@ describe('Playing a try through its console', () => {
       await expect.poll(async () => (await runState()).playback, { timeout: 30000 }).toBe(true);
       await expect.poll(async () => (await timeline())?.sought, { timeout: 30000 }).not.toBeNull();
       await expect.poll(() => panel('cams').getByTestId('camera-tile').count()).toBeGreaterThan(0);
+      expect(
+        await page
+          .getByTestId('try-timeline')
+          .getByRole('button', { name: /^Close/ })
+          .count(),
+      ).toBe(0);
 
       const { frames, dt } = (await timeline())!;
       const box = (await plot().boundingBox())!;

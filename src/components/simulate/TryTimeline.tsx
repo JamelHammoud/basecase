@@ -11,12 +11,13 @@ import { useTimelineKeys } from './useTimelineKeys';
 interface TryTimelineProps {
   timeline: Timeline;
   rig: Rig;
+  closable: boolean;
   onSelectParts: (ids: string[]) => void;
 }
 
 const ic = 'w-4 h-4';
 
-export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelectParts }) => {
+export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closable, onSelectParts }) => {
   useTimelineKeys(timeline);
 
   if (!timeline.open) return null;
@@ -75,13 +76,15 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
         >
           {speedText(timeline.speed)}
         </Button>
-        <IconButton
-          icon={<CloseIcon className={ic} />}
-          title="Close"
-          shortcut={keyFor('timeline:close')}
-          size="sm"
-          onClick={timeline.close}
-        />
+        {closable && (
+          <IconButton
+            icon={<CloseIcon className={ic} />}
+            title="Close"
+            shortcut={keyFor('timeline:close')}
+            size="sm"
+            onClick={timeline.close}
+          />
+        )}
       </div>
     </div>
   );

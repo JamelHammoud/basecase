@@ -1,4 +1,4 @@
-import { box, joint, type FixtureRobot, type JointSpec, type P3 } from './parts';
+import { box, cylinder, joint, type FixtureRobot, type JointSpec, type P3 } from './parts';
 
 const X: P3 = [1, 0, 0];
 const Z: P3 = [0, 0, 1];
@@ -293,13 +293,26 @@ function withGripper(robot: FixtureRobot): FixtureRobot {
   };
 }
 
-function wheel(side: string, x: number, z: number, radius: number) {
+const ACROSS_X: P3 = [0, 0, 90];
+const WHEEL_WIDTH_MM = 20;
+
+type WheelShape = 'box' | 'cylinder';
+
+function wheelPart(id: string, at: P3, shape: WheelShape) {
+  const radius = at[1];
+
+  if (shape === 'box') return box(id, at, [WHEEL_WIDTH_MM, radius * 2, radius * 2], 80);
+
+  return { ...cylinder(id, at, [radius * 2, WHEEL_WIDTH_MM, radius * 2], 80), rotation: ACROSS_X };
+}
+
+function wheel(side: string, at: P3, shape: WheelShape) {
   return {
-    part: box(`${side}_wheel_disc`, [x, radius, z], [20, radius * 2, radius * 2], 80),
+    part: wheelPart(`${side}_wheel_disc`, at, shape),
     joint: joint({
       id: `${side}_wheel`,
       link: ['chassis', `${side}_wheel_disc`],
-      origin: [x, radius, z],
+      origin: at,
       axis: X,
       effortNm: 1.5,
       range: null,
@@ -307,9 +320,15 @@ function wheel(side: string, x: number, z: number, radius: number) {
   };
 }
 
-function rover(id: string, positions: Array<[string, number, number]>): FixtureRobot {
+const DIFF_WHEELS: Array<[string, number, number]> = [
+  ['left', -85, 0],
+  ['right', 85, 0],
+  ['caster', 0, 90],
+];
+
+function rover(id: string, positions: Array<[string, number, number]>, shape: WheelShape = 'box'): FixtureRobot {
   const radius = 35;
-  const wheels = positions.map(([side, x, z]) => wheel(side, x, z, radius));
+  const wheels = positions.map(([side, x, z]) => wheel(side, [x, radius, z], shape));
 
   return {
     id,
@@ -318,6 +337,8 @@ function rover(id: string, positions: Array<[string, number, number]>): FixtureR
     expect: { morphology: 'wheeled', stand: 'n/a', walk: 'n/a' },
   };
 }
+
+export const roundWheelRover = (): FixtureRobot => rover('rover-diff-round', DIFF_WHEELS, 'cylinder');
 
 function wheelLegged(): FixtureRobot {
   const hipY = 170;
@@ -379,11 +400,7 @@ export function fixtureRobots(): FixtureRobot[] {
     biped('biped-tiny', 0.5, 0.6),
     arm('arm-3dof', 3, 3),
     withGripper(arm('arm-6dof', 6, 4)),
-    rover('rover-diff', [
-      ['left', -85, 0],
-      ['right', 85, 0],
-      ['caster', 0, 90],
-    ]),
+    rover('rover-diff', DIFF_WHEELS),
     rover('rover-four', [
       ['fl', -85, -80],
       ['fr', 85, -80],

@@ -7,7 +7,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 Basecase ships for macOS and Windows 11 (x64). Plan, status and the QA list: [docs/Windows plan.md](../../docs/Windows%20plan.md). Every change must keep both working:
 
 - **Spawning:** never spawn `.cmd` / `.bat` (Node refuses them without a shell, and §0h bans shells); spawn `node <script>` or an `.exe`. Find tools with `findOnPath` / `exeName` (`electron/executables.mjs`), never `/bin/sh -lc command -v`. Agent commands are parsed with `splitCommand`, so quoted paths with spaces work (`C:\Program Files\…`).
-- **Stopping:** Windows has no signals; `kill()` is TerminateProcess and runs no handler. A child that must save before stopping watches a stop file too (the trainer writes `<job>/stop`, `train.py` checks it each batch).
+- **Stopping:** Windows has no signals; `kill()` is TerminateProcess and runs no handler. A child that must save before stopping watches a stop file too (the trainer writes `<job>/stop`, `train.py` checks it each batch). `kill()` returns before the child is gone, and Windows refuses to delete a folder that a live process holds as its working directory, so code or a test that removes a child's folder waits for its `exit` first (`acpAgent.test.mjs`).
 - **Paths:** build them with `path.join`, never `'/'` (including Node's `--allow-fs-read`), and keep them short under `%APPDATA%`. File ids refuse device names (`con`, `nul`, `com1`…, `isSafeFileId`).
 - **Symlinks** need Developer Mode on Windows: fall back to a copy (Codex's `auth.json` is kept in sync by newest mtime).
 - **Opening files:** `openFile` (print) or Electron's `shell`; never `open`.

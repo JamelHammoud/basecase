@@ -2,7 +2,8 @@ import React from 'react';
 import { Badge, IconButton, ProgressBar, StopIcon } from '../../design-system';
 import type { Training } from '../../sim/useTraining';
 import type { PolicyRecord } from '../../types/robotics';
-import { fmtSteps, trainingLine } from './format';
+import { trainingLine } from './format';
+import { bigCount } from '../../../electron/bigCount.mjs';
 import { percent } from '../../../electron/percent.mjs';
 
 const share = (training: Training) => {
@@ -67,7 +68,7 @@ const PolicyRow: React.FC<PolicyActions & { policy: PolicyRecord; training: Trai
           onClick={training.stop}
         />
       ) : (
-        <span className="text-[12px] text-white/50 tabular shrink-0">{fmtSteps(policy.trainedSteps)} steps</span>
+        <span className="text-[12px] text-white/50 tabular shrink-0">{bigCount(policy.trainedSteps, 'step')}</span>
       )}
     </li>
   );

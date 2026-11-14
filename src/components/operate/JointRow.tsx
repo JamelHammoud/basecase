@@ -7,7 +7,7 @@ import type { JointRow as JointRowModel } from '../../robot/jointRows';
 import { radiansToDegrees, readingFigure, signedAngleReading } from '../../utils/angle';
 import type { JointStatus } from '../../robot/robotState';
 import { JointReplayPlot } from './JointReplayPlot';
-import { hasJointRowMenu, JointRowMenu, type ReplayChoice } from './JointRowMenu';
+import { hasJointRowMenu, useJointRowMenu, type ReplayChoice } from './JointRowMenu';
 import type { JointCalibrate } from './RobotJoints';
 import { MeasuredBadge, VERDICTS } from '../verdicts';
 
@@ -159,7 +159,17 @@ export const JointRow: React.FC<JointRowProps> = ({
 }) => {
   const { joint, reading, history } = row;
   const { jointId, open, shown, replayable } = replayState(row, replay);
-  const menu = joint && history && onRollBack && hasJointRowMenu(history);
+  const { onContextMenu, menu } = useJointRowMenu(
+    joint && history && onRollBack && hasJointRowMenu(history)
+      ? {
+          name: joint.name,
+          history,
+          drawn: shown ?? history.active,
+          onShow: (version) => onReplay({ jointId, version }),
+          onRollBack: () => onRollBack(jointId),
+        }
+      : null,
+  );
   const lagging = laggingCalibrate(row, twin, calibrate);
   const gap = twin?.gap ?? null;
 
@@ -168,6 +178,7 @@ export const JointRow: React.FC<JointRowProps> = ({
       <div
         {...rowData(row, { calibrated: Boolean(onRollBack), measured, gap })}
         className={`group relative flex items-center rounded-lg text-[13px] hover:bg-[#333333] ${open ? 'bg-[#333333]' : ''}`}
+        onContextMenu={onContextMenu}
       >
         <button
           type="button"
@@ -180,15 +191,7 @@ export const JointRow: React.FC<JointRowProps> = ({
           {live && <Reading reading={reading} radians={row.radians} gap={gap} showTemp={!lagging} />}
         </button>
         {lagging && <CalibrateJoint {...lagging} />}
-        {menu && (
-          <JointRowMenu
-            name={joint.name}
-            history={history}
-            drawn={shown ?? history.active}
-            onShow={(version) => onReplay({ jointId, version })}
-            onRollBack={() => onRollBack(jointId)}
-          />
-        )}
+        {menu}
       </div>
       {open && history && <JointReplayPlot history={history} version={shown} />}
     </>

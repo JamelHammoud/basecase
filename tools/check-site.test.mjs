@@ -121,8 +121,8 @@ describe('lintSite', () => {
     );
 
     expect(lint({ 'site/content/help/import-a-mesh.md': help })).toEqual([
-      'site/content/help/import-a-mesh.md:1: write “does not” as “doesn’t” (§3b-23)',
-      'site/content/help/import-a-mesh.md:8: write “Do not” as “Don’t” (§3b-23)',
+      'site/content/help/import-a-mesh.md:1: write “does not” as “doesn’t” (§3b-24)',
+      'site/content/help/import-a-mesh.md:8: write “Do not” as “Don’t” (§3b-24)',
     ]);
   });
 
@@ -204,6 +204,18 @@ describe('menu paths', () => {
         ),
         ['/help/x/p.png'],
       ),
+    ).toEqual([]);
+  });
+
+  it('fails a menu path joined by an arrow, but not a quoted message, a key cap or a change in numbers', () => {
+    const help = (body) => ({ 'site/content/help/x.md': page('title: Open a scene\ndate: 2026-11-12', body) });
+    const problem =
+      'site/content/help/x.md:6: join the labels of a menu path with ▸, **Settings** ▸ **Accounts** (§3f)';
+
+    expect(lint(help('1. Open **Settings** → **Accounts**.'))).toEqual([problem]);
+    expect(lint(help('1. On the printer, open Settings > Network.'))).toEqual([problem]);
+    expect(
+      lint(help('## “It’s on the printer: Settings → Device.”\n\nPress [[→]] to go on, from 130 → 119 mm.')),
     ).toEqual([]);
   });
 });

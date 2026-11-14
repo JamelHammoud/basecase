@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ExternalLinkIcon, HoverCard, Tooltip } from '../../design-system';
+import { Button, ExternalLinkIcon, HoverCard, REVEAL_ON_HOVER, Tooltip } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
 import { type BomLine, STALE_DAYS } from '../../utils/bom';
 import { scaledEntry } from '../../utils/currency';
@@ -31,7 +31,7 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
   return (
     <Tooltip
       label={linkLabel(l)}
-      className="absolute right-0 top-px opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto transition-opacity duration-150"
+      className={`absolute right-0 top-px transition-opacity ${REVEAL_ON_HOVER}`}
     >
       <a
         href={l.url}

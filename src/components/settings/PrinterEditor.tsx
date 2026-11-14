@@ -201,7 +201,7 @@ const ConnectionRows: React.FC<PrinterEditorProps> = ({ printer, onChange, onSec
       {kind === 'bambu-lan' && (
         <TextRow
           label="Serial number"
-          hint="Printer screen: Settings → Device"
+          hint="Printer screen: Settings ▸ Device"
           value={printer.connection?.serial ?? ''}
           onChange={(serial) => setConnection({ serial })}
         />

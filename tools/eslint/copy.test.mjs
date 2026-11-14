@@ -235,7 +235,7 @@ describe('contractions', () => {
 
       expect(hit?.word).toBe(word);
       expect(hit?.fix).toContain('“isn’t”');
-      expect(hit?.section).toBe('§3b-23');
+      expect(hit?.section).toBe('§3b-24');
     }
   });
 

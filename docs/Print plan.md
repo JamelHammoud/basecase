@@ -8,7 +8,7 @@ All seven milestones are built. docs/guide/printing.md §8f describes how the co
 
 | # | Milestone | State | Verified by |
 |---|---|---|---|
-| P1 | Printers | Done: 103-printer catalog generated from Bambu Studio 2.9.1 and, for Prusa, OrcaSlicer 2.5.0 (each entry records its source), My printers, Settings → Printers, Printer and Quality in Print mode, the agent's text names the scene's printer | `printReport.test.ts` (P1S keep-out, Prusa MINI diagonal, custom bed) |
+| P1 | Printers | Done: 103-printer catalog generated from Bambu Studio 2.9.1 and, for Prusa, OrcaSlicer 2.5.0 (each entry records its source), My printers, Settings ▸ Printers, Printer and Quality in Print mode, the agent's text names the scene's printer | `printReport.test.ts` (P1S keep-out, Prusa MINI diagonal, custom bed) |
 | P2 | Plates as data | Done: poses with flat faces, MaxRects packing, per-part overrides, copies, plate hashes | `plan.test.ts` (transforms fill their rectangle on the bed), `printReport.test.ts` |
 | P3 | Print mode | Done: plate view, drag, Lay on Face, Turn 90°, plate switching, Auto Arrange, Print panel | `e2e/print.e2e.test.ts` (opens, shows the plate, closes, no console errors) |
 | P4 | 3MF handoff | Done: Export ▸ 3MF Plates (one file per material), Open in Bambu Studio / OrcaSlicer from the Print panel's Plate N section as a project of that plate's material with printer, process and filament set | `slice.test.mjs` |
@@ -59,7 +59,7 @@ For the P1S, **P1 + P2 + P4** already turn today's workflow (export STL, split, 
 
 **UI**
 
-- Build → Printed parts gets a **Printer** row above Material: a `Select` of My printers, then Add Printer.
+- Build ▸ Printed parts gets a **Printer** row above Material: a `Select` of My printers, then Add Printer.
 - Settings gets a **Printers** pane (§6a): one row per printer (name, model, nozzle, connection state from P6), Add Printer (model picker with search, grouped by maker, plus Custom), Make Default, Remove.
 - Material lists only what the printer can print well; ASA/ABS on an open printer shows an amber note.
 
@@ -85,7 +85,7 @@ Today orientation and packing are computed, reported as text and thrown away. Ma
 
 A mode, like Measure or Sketch: the canvas shows plates instead of the assembled robot; the inspector shows the Print panel.
 
-- **Opening:** Build → Printing → **Print**; File → Print (⌘P); ⌘K “Print”. Done (Esc) returns to the assembly.
+- **Opening:** Build ▸ Printing ▸ **Print**; File ▸ Print (⌘P); ⌘K “Print”. Done (Esc) returns to the assembly.
 - **Canvas:** one plate at a time, drawn to scale: the bed outline, its keep-outs shaded, the printable height as a faint box. Parts appear in print orientation (`PlateLayer` in `three/viewport/`, reusing `buildPartGroup` with `shareGeometry`, so no geometry is rebuilt; the assembly's `PartLayer` is hidden, not torn down). A strip of plate thumbnails sits above the toolbar, like the marks pill: “Plate 1 PLA”, “Plate 2 PLA”, “Plate 3 TPU”; ←/→ switch.
 - **Adjusting:**
   - Drag a part to move it on the plate; drag it onto another plate's thumbnail to move it there.
@@ -107,7 +107,7 @@ The universal step: every desktop slicer opens 3MF.
 - `src/print/threeMf.ts` writes a 3MF in a worker (three.js's bundled `fflate`): one object per printed shape with its name, each placed by the plan's transforms, units mm. Two flavours:
   - **Project 3MF** for Bambu Studio and OrcaSlicer: adds `Metadata/model_settings.config` (plates, object names, per-object filament) and `Metadata/project_settings.config` naming the printer, process and filament presets, so the file opens with plates, printer and filaments already set. Format checked against files those slicers write, not guessed.
   - **Plain 3MF** (core spec) for PrusaSlicer, Cura and others: one file per plate, already arranged.
-- **Export** menu gains **3MF Project** (beside STL Mesh). Build → Printed parts and the Print panel get **Open in Bambu Studio** (or Orca / PrusaSlicer, whichever the printer's `slicer` names and is installed): write to `library/prints/<scene>/<timestamp>.3mf`, then open it with the app (`open -a`; Bambu Studio also registers `bambustudioopen://`).
+- **Export** menu gains **3MF Project** (beside STL Mesh). Build ▸ Printed parts and the Print panel get **Open in Bambu Studio** (or Orca / PrusaSlicer, whichever the printer's `slicer` names and is installed): write to `library/prints/<scene>/<timestamp>.3mf`, then open it with the app (`open -a`; Bambu Studio also registers `bambustudioopen://`).
 - **Slicer detection** (`electron/printers/slicers.mjs`): find Bambu Studio, OrcaSlicer, PrusaSlicer in `/Applications` and `~/Applications`, read their versions. Not installed: “Get Bambu Studio” opens the maker's download page.
 - STL export stays for the whole assembly; a new **STL per part** zip option names files after parts, in print orientation.
 - Toast: “Opened Robot Arm in Bambu Studio” / “Exported Robot Arm.3mf”.
@@ -144,7 +144,7 @@ Connectors per ecosystem in `electron/printers/connect/`, one interface: `discov
 | **PrusaLink** | MK4S, Core One, MINI+, XL | `PUT /api/v1/files/usb/<file>` with `Print-After-Upload`; `GET /api/v1/status` | Documented API, API key from the printer |
 | **OctoPrint** | Anything running OctoPrint | `POST /api/files/local` with `print=true`; `GET /api/job` | Documented API, API key |
 
-- **Add Printer** (Settings → Printers): Find on Network (Bambu printers answer SSDP on the LAN; Moonraker, OctoPrint and PrusaLink usually advertise over mDNS), or enter an address. Access codes and API keys are stored like agent keys (`safeStorage`, `library/agent-config/printer-keys.json`), never in the scene or in logs.
+- **Add Printer** (Settings ▸ Printers): Find on Network (Bambu printers answer SSDP on the LAN; Moonraker, OctoPrint and PrusaLink usually advertise over mDNS), or enter an address. Access codes and API keys are stored like agent keys (`safeStorage`, `library/agent-config/printer-keys.json`), never in the scene or in logs.
 - **For your P1S:** start with Bambu Connect (works with the cloud account and today's firmware, one extra click in Bambu Connect). Offer LAN Developer Mode as an advanced connection for people who want status and one-click starts in Basecase, with Bambu's own warning repeated plainly.
 - **Starting a print** (Print in the Print panel): a sheet shows the plate thumbnail, printer, material and grams, the AMS slot or loaded filament it maps to (where the printer reports one; a mismatch blocks with the fix: “Load PETG in slot 2 or change the plate to PLA”), and “Clear the bed” as a reminder, then **Start Print**. Never from the agent, never in the background.
 - **Status:** a printing plate shows its progress in the state line of its Plate N section in Print mode, and its layer and time left under Printer; errors (HMS codes on Bambu) are translated to a sentence with the fix where known. A toast says when a plate finishes: “Plate 2 finished on P1S”.
@@ -158,7 +158,7 @@ Connectors per ecosystem in `electron/printers/connect/`, one interface: `discov
 The build is many plates over days. Track them so the user knows what's left, and so design changes only reprint what changed.
 
 - `project.prints`: per plate, the plate hash, printer, when it was sent and its outcome (Printing, Printed, Failed, Cancelled), recorded from P6 status or marked by hand (right-click a plate: Mark Printed).
-- Build → **Prints**: plates with their state. A printed part whose shape changed afterwards shows amber: “Reprint 2 changed parts”, which builds a plate of just those parts.
+- Build ▸ **Prints**: plates with their state. A printed part whose shape changed afterwards shows amber: “Reprint 2 changed parts”, which builds a plate of just those parts.
 - The build guide (§8b) uses it: a step's printed parts can be ticked off as printed.
 - Failed prints feed the fix loop: the agent sees which parts failed and the user's note (“warped at the corners”) in `get_bom` / `check_printability`.
 
@@ -172,7 +172,7 @@ All new strings follow §3. Proposed:
 
 | Where | Text |
 |---|---|
-| Build → Printed parts buttons | Print, Open in Bambu Studio, Slice |
+| Build ▸ Printed parts buttons | Print, Open in Bambu Studio, Slice |
 | Print panel footer | Open in ⟨slicer⟩, Slice, Print |
 | Start sheet | title “Print Plate 2 on P1S?”, Cancel, Start Print |
 | Toasts | Opened Robot Arm in Bambu Studio, Sliced 4 plates, Sent Plate 2 to P1S, Plate 2 finished on P1S |

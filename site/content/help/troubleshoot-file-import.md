@@ -1,7 +1,7 @@
 ---
 title: STEP or mesh file doesn't import
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 1
@@ -29,50 +29,52 @@ covers:
   - electron/cadImport/bodiesPolicy.mjs
 ---
 
-If a file shows “Couldn’t import”, or arrives at the wrong size or lying on its side, check these steps.
+If you see “Couldn’t import” after choosing a file, or the file comes in at the wrong size or lying on its side, use the steps below to find out why.
 
 ## “Couldn’t import” after picking a STEP or IGES file
 
-A toast reading “Couldn’t import ⟨file⟩” means the file is too large or too complex for the built-in converter.
+If you see a toast that reads “Couldn’t import ⟨file⟩”, the file is too large or too complex for the built-in converter.
 
-1. Check that the file is under 200 MB.
-2. In your CAD app, export the part or subassembly you need on its own, so the file has fewer than 1,000 bodies.
+1. Make sure the file is under 200 MB.
+2. In your CAD app, export just the part or subassembly you need, so the file has fewer than 1,000 bodies.
 3. Import the smaller file again.
-4. If that fails, export it from your CAD app as STL or 3MF and import that.
+4. If it still doesn't import, export it from your CAD app as STL or 3MF, then import that file instead.
 
-The converter stops work on a file after 2.5 minutes. A detailed assembly can take that long.
+The converter stops working on a file after 2.5 minutes. A detailed assembly can take that long.
 
 ## “Couldn’t import” after picking a mesh
 
 Either Basecase doesn't read the file's format, or the file is damaged.
 
-1. Check that the file ends in `.stl`, `.3mf`, `.obj`, `.ply`, `.fbx`, `.glb`, `.gltf` or `.dae`.
-2. Open it in the app it came from and export it again as STL or 3MF.
+1. Make sure the file name ends in `.stl`, `.3mf`, `.obj`, `.ply`, `.fbx`, `.glb`, `.gltf` or `.dae`.
+2. Open the file in the app it came from and export it again as STL or 3MF.
 3. Import the new file.
 
 ## The part is far too big or too small
 
-Basecase reads STL, 3MF, OBJ and PLY files in millimeters, so a file you saved in inches comes in 25.4 times too small.
+Basecase reads STL, 3MF, OBJ and PLY files in millimeters. If you saved the file in inches, it comes in 25.4 times too small.
 
 1. Select the part.
 2. In the Inspector, type its real size under **Size**.
 
-Basecase treats a mesh under 1 mm across as meters and scales it up 1,000 times. To avoid both problems, export your files in millimeters.
+Basecase also treats any mesh smaller than 1 mm across as being in meters, and scales it up 1,000 times. To avoid both problems, export your files in millimeters.
 
 ## The part lies on its side
 
-Basecase reads STL, 3MF and PLY files with Z pointing up, the way most CAD and print apps save them. A file your app saved with Y up arrives on its side.
+Basecase reads STL, 3MF and PLY files with Z pointing up, which is how most CAD and print apps save them. If your app saved the file with Y up, it arrives lying on its side.
 
 1. Select the part.
-2. Under **Rotation** in the Inspector, click **90°** under **X**.
-
-## How to tell it worked
-
-After a successful import, Basecase selects the new part on the canvas and closes the “Importing” toast.
+2. In the Inspector, under **Rotation**, click **90°** under **X**.
 
 ## “Couldn’t import” right after you drop a file
 
-If the toast appears the moment you drop a file, Basecase doesn't read that file type. The web studio can't open STEP or IGES files.
+If the toast appears as soon as you drop a file, Basecase doesn't read that file type. The web studio can't open STEP or IGES files.
 
-1. Check that the file ends in one of the extensions listed above.
-2. If it's a STEP or IGES file, open the scene in the desktop app.
+1. Make sure the file name ends in one of the extensions listed above.
+2. If it's a STEP or IGES file, open the scene in the desktop app instead.
+
+A `.mcap` file, or a zip that holds a LeRobot dataset, comes in as tries instead of parts. If one of these doesn't import, the toast tells you what's wrong with it. For more information, see [Import robot data as tries](/help/import-robot-data-as-tries).
+
+## How to tell it worked
+
+When an import succeeds, Basecase selects the new part on the canvas and closes the “Importing” toast.

@@ -38,7 +38,9 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
   const matches = matcher(query);
   const models = props.customModels.filter((m) => matches(m.name, modelNote(m)));
   const tries = tryGroups(
-    (useTries() ?? []).filter((t) => matches(t.caseName ?? '', t.robot, TRY_SOURCE_BADGE[t.source] ?? undefined)),
+    (useTries() ?? []).filter((t) =>
+      matches(t.caseName ?? t.task ?? '', t.robot, TRY_SOURCE_BADGE[t.source] ?? t.origin ?? undefined),
+    ),
   );
   const state: SectionState = {
     renaming,

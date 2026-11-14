@@ -1,3 +1,4 @@
+import type { Case } from '../cases/schema';
 import type { AcpChatMessage, MessageQuote, ReferenceImageRecord } from '../types/robotics';
 import type { EvidenceFolder } from '../utils/evidenceFiles';
 import type { AcpPromptPayload } from '../utils/platformBridge';
@@ -14,9 +15,32 @@ export interface AgentSendParams {
 
 export type PromptOptions = Pick<AgentSendParams, 'model' | 'effort' | 'note'>;
 
-export const runningCaseNote = (kase: { id: string; name: string } | null) =>
+function agentConsole({ console: caseConsole }: Pick<Case, 'console'>) {
+  if (!caseConsole) return undefined;
+
+  const { input, signals, panels, layout } = caseConsole;
+
+  return {
+    input,
+    ...(signals ? { signals } : {}),
+    panels: panels.map((p) =>
+      p.kind === 'code' ? { ...p, source: undefined, bytes: new TextEncoder().encode(p.source).length } : p,
+    ),
+    layout,
+  };
+}
+
+const arrangedConsole = (kase: Pick<Case, 'console'>) => {
+  const arranged = agentConsole(kase);
+
+  return arranged
+    ? `\nIts console as the user arranged it, code sources left out: ${JSON.stringify(arranged)}\nKeep that arrangement when you change the app.`
+    : '';
+};
+
+export const runningCaseNote = (kase: Pick<Case, 'id' | 'name' | 'console'> | null) =>
   kase
-    ? `(The user is running the Case ${kase.name} (${kase.id}) and watching it. This message is about that Case, as with /case: change its app with write_case_code, and leave the design alone unless the words ask.)`
+    ? `(The user is running the Case ${kase.name} (${kase.id}) and watching it. This message is about that Case, as with /case: change its app with write_case_code, and leave the design alone unless the words ask.)${arrangedConsole(kase)}`
     : '';
 
 export const joinNotes = (...notes: string[]) => notes.filter(Boolean).join('\n\n') || undefined;

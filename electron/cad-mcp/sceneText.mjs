@@ -97,31 +97,28 @@ function missingIds(parts, ids) {
   return missing.length ? [`Not in the scene: ${missing.join(', ')}.`] : [];
 }
 
-function summary(snap, picked, extras) {
+function summary(snap, picked, marks) {
   return [
     ...header(snap, [], false).slice(0, 2),
     `${plural(picked.length, 'part')}, by group. Call get_scene with group or ids for full lines (placement, size, box, ports, notes), or find_in_scene to search:`,
     ...groupSummary(picked),
-    ...extras,
+    ...marks,
   ].join('\n');
 }
 
 export function sceneText(snap, filter = {}) {
   const filtered = !!(filter.ids?.length || filter.group);
   const picked = pickParts(snap.parts, filter);
-  const extras = [
-    ...(snap.marks?.length ? ['Marks:', ...snap.marks.map((m) => JSON.stringify(m))] : []),
-    ...(snap.caseConsole ? ['Case console (as the user arranged it):', JSON.stringify(snap.caseConsole)] : []),
-  ];
+  const marks = snap.marks?.length ? ['Marks:', ...snap.marks.map((m) => JSON.stringify(m))] : [];
   const list = (withNotes) =>
     [
       ...header(snap, picked, filtered),
       ...picked.flatMap((p) => partLines(p, withNotes)),
       ...missingIds(snap.parts, filter.ids),
-      ...extras,
+      ...marks,
     ].join('\n');
 
-  if (!filtered && picked.length > FULL_LIST_PARTS) return summary(snap, picked, extras);
+  if (!filtered && picked.length > FULL_LIST_PARTS) return summary(snap, picked, marks);
 
   const full = list(true);
 
@@ -129,5 +126,5 @@ export function sceneText(snap, filter = {}) {
 
   const noNotes = `${list(false)}\nNotes left out to fit. Call get_scene with fewer ids to read them.`;
 
-  return noNotes.length <= MAX_SCENE_CHARS || filtered ? noNotes : summary(snap, picked, extras);
+  return noNotes.length <= MAX_SCENE_CHARS || filtered ? noNotes : summary(snap, picked, marks);
 }

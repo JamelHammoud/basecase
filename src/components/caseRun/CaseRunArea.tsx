@@ -3,7 +3,7 @@ import type { PlacedArea } from '../../cases/console/layout';
 import { LAYOUT, PanelResizer, useScrollFade } from '../../design-system';
 import { AREA_MAX, AREA_MIN } from '../../cases/console/format';
 import { AREA_DEFAULT, type ConsoleEditor } from './consoleEditor';
-import { ConsolePanel, DropLine } from './ConsolePanel';
+import { ConsolePanel, DropLine, type DropEdge } from './ConsolePanel';
 import type { PanelContext } from './panelContext';
 import { useAreaMenu } from './useAreaMenu';
 
@@ -58,6 +58,12 @@ function useLiveSize(area: PlacedArea, editor: ConsoleEditor | null) {
   return { size: live ?? area.size, onResize, onResizingChange };
 }
 
+function panelDrop(before: string | null | undefined, id: string, last: boolean): DropEdge | null {
+  if (before === id) return 'top';
+
+  return before === null && last ? 'bottom' : null;
+}
+
 function dropMarks(editor: ConsoleEditor | null, at: number) {
   const drop = editor?.drag?.drop;
 
@@ -89,8 +95,8 @@ export const CaseRunArea: React.FC<CaseRunAreaProps> = ({ area, side, ctx, heade
       >
         {column && <ColumnLine edge={column} />}
         {area.last && header}
-        <div ref={ref} style={style} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          {area.panels.map((panel) => (
+        <div ref={ref} style={style} className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          {area.panels.map((panel, i) => (
             <ConsolePanel
               key={panel.id}
               panel={panel}
@@ -98,14 +104,10 @@ export const CaseRunArea: React.FC<CaseRunAreaProps> = ({ area, side, ctx, heade
               editor={editor}
               renaming={menu.renaming === panel.id}
               onRenamed={menu.stopRenaming}
-              dropAbove={before === panel.id}
+              drop={panelDrop(before, panel.id, i === area.panels.length - 1)}
             />
           ))}
-          {before === null && (
-            <div className="relative h-[8px]">
-              <DropLine at="top" />
-            </div>
-          )}
+          {before === null && !area.panels.length && <DropLine at="top" />}
         </div>
       </div>
       {editor && (

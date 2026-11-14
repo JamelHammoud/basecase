@@ -46,7 +46,6 @@ import { labelledScreenshot } from './agentLabelRequest';
 import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
 import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
-import { agentConsole } from './agentCaseRun';
 import { CASE_HANDLERS } from './agentCaseRequests';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore } from './useCaseExplore';
@@ -284,9 +283,7 @@ const HANDLERS: Record<string, Handler> = {
     const marks = describeMarks(ctx.project().marks, ctx.parts());
     const measured = await ctx.viewport()?.measureParts();
 
-    const caseConsole = agentConsole(ctx.cases.active);
-
-    return { ...snapshotScene(ctx.parts(), measured), ...(marks.length ? { marks } : {}), caseConsole };
+    return { ...snapshotScene(ctx.parts(), measured), ...(marks.length ? { marks } : {}) };
   },
   focus,
   part_code: (payload, ctx) => partCode(ctx.parts(), String(payload.id)),

@@ -25,7 +25,7 @@ covers:
   - src/components/build/FindingRow.tsx
 ---
 
-The agent doesn't see what you've selected. To show it which part, area or message you mean, quote it or draw on it.
+The agent doesn't see what you've selected. To show it which part, area or message you mean, you can quote it or draw on it.
 
 - Quote a part
 - Draw on the canvas
@@ -35,21 +35,21 @@ The agent doesn't see what you've selected. To show it which part, area or messa
 
 1. Right-click the part on the canvas.
 2. Choose **Quote Part**.
-3. Type what to change, such as “Move this 10 mm forward”, and press [[↩]].
+3. Type what you want to change, such as “Move this 10 mm forward”, then press [[↩]].
 
-The quote goes to the agent with your message and includes the part's name, id and position. You can also find **Quote Part** in [[⌘K]] when the part is selected.
+The agent gets the quote with your message, including the part's name, id and position. When the part is selected, **Quote Part** is also in [[⌘K]].
 
 ## Draw on the canvas
 
 1. Press [[N]] to start **Annotate**.
-2. Draw around the area you mean. To tell marks apart, pick another color from the bar.
+2. Draw around the area you mean. To tell marks apart, pick a different color from the bar.
 3. Click **Done**, then send your message.
 
-The agent reads the color of each mark and the parts it circles. Marks aren't parts, so they never show up in the bill of materials or in a print.
+The agent reads the color of each mark and the parts it circles. Marks aren't parts, so they never appear in the bill of materials or in a print.
 
 ## Quote a message
 
 1. Right-click a message in the chat.
 2. Choose **Quote Message**, then type your reply.
 
-Each Check in the **Build** tab has a **Fix** button that sends the agent a request to fix that problem. To ask the agent about the problem first, choose **Quote** from the button's menu.
+In the **Build** tab, each Check has a **Fix** button that asks the agent to fix that problem. To ask the agent about the problem first, choose **Quote** from the button's menu.

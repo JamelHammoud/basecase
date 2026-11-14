@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MessageQuote } from '../types/robotics';
-import { buildAgentPrompt, resendPayload, withQuotes } from './agentPrompt';
+import { DEFAULT_CONSOLE } from '../cases/console/layout';
+import { buildAgentPrompt, resendPayload, runningCaseNote, withQuotes } from './agentPrompt';
 
 const quote: MessageQuote = {
   id: 'print:wall',
@@ -50,5 +51,30 @@ describe('quotes in a message', () => {
 
     expect(payload.promptText).toBe('Hello');
     expect(userMessage.quotes).toBeUndefined();
+  });
+});
+
+describe('the running-Case note', () => {
+  const kase = { id: 'rover-remote', name: 'Rover Remote' };
+
+  it('names the running Case and leaves the console out when it has none', () => {
+    const note = runningCaseNote(kase);
+
+    expect(note).toContain('running the Case Rover Remote (rover-remote)');
+    expect(note).not.toContain('console');
+  });
+
+  it('carries the console as the user arranged it, with code sizes instead of sources', () => {
+    const source = '<p>é</p>';
+    const console = {
+      ...DEFAULT_CONSOLE,
+      panels: [...DEFAULT_CONSOLE.panels, { id: 'pad', kind: 'code' as const, source }],
+    };
+    const [, json] = runningCaseNote({ ...kase, console }).split('code sources left out: ');
+    const sent = JSON.parse(json.split('\n')[0]);
+
+    expect(sent.layout).toEqual(DEFAULT_CONSOLE.layout);
+    expect(sent.panels.at(-1)).toEqual({ id: 'pad', kind: 'code', bytes: 9 });
+    expect(runningCaseNote(null)).toBe('');
   });
 });

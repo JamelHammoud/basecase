@@ -12,21 +12,23 @@ interface ConsolePanelProps {
   editor: ConsoleEditor | null;
   renaming: boolean;
   onRenamed: () => void;
-  dropAbove: boolean;
+  drop: DropEdge | null;
 }
 
-export function DropLine({ at }: { at: 'top' | 'bottom' }) {
+export type DropEdge = 'top' | 'bottom';
+
+export function DropLine({ at }: { at: DropEdge }) {
   return (
     <span
       data-testid="console-drop"
       className={`pointer-events-none absolute left-[8px] right-[8px] z-20 h-[2px] rounded-full bg-[#0d99ff] ${
-        at === 'top' ? '-top-px' : '-bottom-px'
+        at === 'top' ? '-top-px' : 'bottom-0'
       }`}
     />
   );
 }
 
-export const ConsolePanel: React.FC<ConsolePanelProps> = ({ panel, ctx, editor, renaming, onRenamed, dropAbove }) => {
+export const ConsolePanel: React.FC<ConsolePanelProps> = ({ panel, ctx, editor, renaming, onRenamed, drop }) => {
   const View = PANEL_VIEWS[panel.kind] as React.FC<{ panel: PanelOf<PanelKind>; ctx: PanelContext }>;
   const lifted = editor?.drag?.panel.id === panel.id;
 
@@ -40,8 +42,8 @@ export const ConsolePanel: React.FC<ConsolePanelProps> = ({ panel, ctx, editor, 
         lifted ? 'opacity-40' : ''
       }`}
     >
-      {dropAbove && <DropLine at="top" />}
-      <ErrorBoundary region={panel.title || 'Panel'} className="flex-col py-[24px]">
+      {drop && <DropLine at={drop} />}
+      <ErrorBoundary region={panelName(panel)} className="flex-col py-[24px]">
         <View panel={panel} ctx={ctx} />
       </ErrorBoundary>
       {renaming && editor && (

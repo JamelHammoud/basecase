@@ -7,7 +7,16 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import type { SimState, Studio } from './driveStudio';
 import { startFakeHub, type FakeHub } from './fakeHub';
-import { expectCaseCheckOpensRow, expectDataset, expectGenerated, expectPublished, pickTimeline } from './driveChecks';
+import {
+  datasetFiles,
+  endTryAt,
+  expectCaseCheckOpensRow,
+  expectDataset,
+  expectGenerated,
+  expectPublished,
+  passedDatasetFiles,
+  pickTimeline,
+} from './driveChecks';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 import { plural } from '../electron/plural.mjs';
 
@@ -56,16 +65,6 @@ async function holdKey(key: string, ms: number) {
   await app.page.keyboard.down(key);
   await app.page.waitForTimeout(ms);
   await app.page.keyboard.up(key);
-}
-
-async function datasetFiles() {
-  const files = await app.page.evaluate(() =>
-    (
-      window as unknown as { __studio: { datasetFiles: () => Promise<Record<string, string> | null> } }
-    ).__studio.datasetFiles(),
-  );
-
-  return Object.fromEntries(Object.entries(files ?? {}).map(([path, b64]) => [path, Buffer.from(b64, 'base64')]));
 }
 
 async function stopDriving() {
@@ -191,23 +190,6 @@ async function openTouchTheDots() {
 
 const SHORT_TRY_SECONDS = 0.4;
 
-async function endTryAt(seconds: number) {
-  await app.page.evaluate(async (at) => {
-    const clock = () =>
-      [...document.querySelectorAll('[data-testid="try-clock"]')].find((el) => !el.closest('[inert]'));
-    const elapsed = () => Number.parseFloat(clock()?.textContent ?? '') || 0;
-    const deadline = Date.now() + 30000;
-
-    while (elapsed() < at) {
-      if (Date.now() > deadline) throw new Error(`The try clock never reached ${at} s`);
-
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-
-    clock()?.parentElement?.querySelector('button')?.click();
-  }, seconds);
-}
-
 describe('Cases', () => {
   itUnlessWindows(
     'starts Touch the Dots on an arm, keeps the dots out of parts, records a try and exports it',
@@ -229,7 +211,7 @@ describe('Cases', () => {
       expect(state.bodies.flatMap((b) => b.world)).toContain('dot0');
       expect(await partCount(app.page)).toBe(partsBefore);
 
-      await endTryAt(SHORT_TRY_SECONDS);
+      await endTryAt(app.page, SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
       expect((await simState()).tries[0].passed).toBe(false);
 
@@ -241,7 +223,7 @@ describe('Cases', () => {
 
       expect(clashes).not.toContain('dot0');
       await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
-      await expectDataset(await datasetFiles());
+      await expectDataset(await passedDatasetFiles(app.page));
 
       const headings = await simHeadings();
 
@@ -274,7 +256,7 @@ describe('Cases', () => {
       await openTouchTheDots();
       await button('Try It').click();
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-      await endTryAt(SHORT_TRY_SECONDS);
+      await endTryAt(app.page, SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
       await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
       await expect.poll(() => publish().count()).toBe(1);
@@ -351,6 +333,40 @@ describe('Cases', () => {
   });
 });
 
+describe('terrain', () => {
+  itUnlessWindows(
+    'makes Walk Without Falling on Rough Ground on the quadruped, and its reference try runs',
+    async () => {
+      await loadFixture('quad-servo');
+      await openPlayTab(app.page, 'Cases');
+      await button('New Case').click();
+
+      const card = app.page.locator(visible('[data-testid="new-case"]'));
+
+      await card.locator('[role=radio]', { hasText: 'Walk Without Falling' }).click();
+      await card.locator('[role=radio]', { hasText: 'Rough Ground' }).click();
+      expect(await card.getByLabel('Height').inputValue()).toBe('14');
+
+      const time = card.getByLabel('Time');
+
+      await time.fill('4');
+      await time.press('Enter');
+      await card.locator('button', { hasText: 'Make Case' }).click();
+
+      await expect.poll(async () => (await simState()).activeCase).toBe('walk-without-falling-on-rough-ground');
+
+      const { world } = await simState();
+
+      expect(world.length).toBeGreaterThan(20);
+      expect(world.every((id) => id.startsWith('tile-'))).toBe(true);
+
+      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.referenceTry());
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 60000 }).toBe(1);
+      expect(app.errors).toEqual([]);
+    },
+  );
+});
+
 describe('Multiply', () => {
   itUnlessWindows(
     'multiplies a passed try from ⌘K into generated tries under its row, and exports them with their seeds',
@@ -380,7 +396,7 @@ describe('Multiply', () => {
       expect(await rows.count()).toBe(1);
       expect(await rows.first().getByTestId('try-generated').innerText()).toBe(plural(kept, 'variation'));
 
-      expectGenerated(await datasetFiles(), kept);
+      expectGenerated(await datasetFiles(app.page), kept);
       expect(app.errors).toEqual([]);
     },
     180000,
@@ -449,10 +465,10 @@ describe('LiDAR', () => {
       await button('Try It').click();
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
       await expect.poll(async () => (await simState()).scanPoints, { timeout: 30000 }).toBeGreaterThan(0);
-      await endTryAt(SHORT_TRY_SECONDS);
+      await endTryAt(app.page, SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
-      const files = await datasetFiles();
+      const files = await passedDatasetFiles(app.page);
       const at = (end: string) => files[Object.keys(files).find((p) => p.endsWith(end))!];
       const rows = await parquetReadObjects({
         file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer,

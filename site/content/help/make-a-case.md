@@ -38,7 +38,7 @@ The scene must have a robot with joints. [Cases](/help/cases) explains what a Ca
 
 3. Click **New Case**.
 4. Under **Goal**, choose what the robot must do. It lists only the goals this robot can try, and is hidden when there's one.
-5. Under **World**, choose **Open Floor**, or a world with something in the way.
+5. Under **World**, choose **Open Floor**, a world with something in the way, or ground to cross: [rough ground, steps or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope).
 6. Set the goal's numbers, such as **Distance**, **Radius** and **Time**. For **Touch a Point**, set **Dots** to 2 or 3 to touch that many dots in order; the Case is then called Touch the Dots. In a [scanned room](/help/import-a-scanned-room), **Spot** sends the robot to a door or a piece of furniture.
 7. Read the line under the fields. It's the Case's brief, or what to change when the numbers can't work.
 

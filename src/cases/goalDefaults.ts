@@ -2,6 +2,7 @@ import type { V3 } from '../utils/kinematics';
 import { DOT_MOVE_SECONDS, type BuilderRobot, type GoalKind, type GoalValues } from './caseGoals';
 import type { WorldKind } from './caseWorlds';
 import { pickDefaults } from './pickGoal';
+import { terrainDefaults } from './terrain';
 
 const DOT_SPARE_SECONDS = 0.5;
 const TOUCH_SECONDS = 4;
@@ -37,6 +38,8 @@ function boxFor(robot: BuilderRobot): number {
 
 const AROUND_SECONDS = { legs: 8, wheels: 5 };
 
+const SLOWER: ReadonlySet<WorldKind> = new Set(['block', 'rough', 'steps', 'slope']);
+
 const touchSeconds = (dots: number) =>
   Math.max(TOUCH_SECONDS, Math.ceil(DOT_SPARE_SECONDS + Math.round(dots) * DOT_MOVE_SECONDS));
 
@@ -59,6 +62,7 @@ export function goalDefaults(
     stops: 3,
     spacingMm: 600,
     seconds: legs ? 14 : 8,
+    ...terrainDefaults(robot, world),
   };
   const byKind: Record<GoalKind, Partial<GoalValues>> = {
     reach: {},
@@ -71,7 +75,7 @@ export function goalDefaults(
   };
 
   const values = { ...base, ...byKind[kind] };
-  const around = world === 'block' ? AROUND_SECONDS[legs ? 'legs' : 'wheels'] : 0;
+  const around = SLOWER.has(world) ? AROUND_SECONDS[legs ? 'legs' : 'wheels'] : 0;
 
   return { ...values, seconds: values.seconds + around };
 }

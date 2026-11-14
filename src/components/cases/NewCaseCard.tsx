@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { caseName, goalFields, goalValues, specValues, worldsFor } from '../../cases/caseBuilder';
+import { caseFields, caseName, goalValues, specValues, worldsFor } from '../../cases/caseBuilder';
 import { goalParam, type GoalKind, type GoalValues } from '../../cases/caseGoals';
 import type { WorldKind } from '../../cases/caseWorlds';
 import { Button, ChoiceGrid, FieldRow, NumberInput, TextInput } from '../../design-system';
@@ -33,12 +33,17 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   const values =
     specValues({ ...spec, room: builder.room }, builder.robot) ?? goalValues(goal, builder.robot, given, world);
   const preview = builder.preview(spec);
-  const fields = goalFields(goal, values).filter((key) => !(key === 'distanceMm' && chosen[0]));
+  const fields = caseFields(goal, values, world).filter((key) => !(key === 'distanceMm' && chosen[0]));
 
   const pickGoal = (kind: GoalKind) => {
     setGoalKind(kind);
     setGiven({});
     spots.clear();
+  };
+
+  const pickWorld = (kind: WorldKind) => {
+    setWorld(kind);
+    setGiven((g) => ({ ...g, riseMm: undefined, inclineDeg: undefined }));
   };
 
   const create = () => {
@@ -67,7 +72,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
           label="World"
           columns={worlds.length > MAX_WORLD_COLUMNS ? 2 : worlds.length}
           value={world}
-          onChange={setWorld}
+          onChange={pickWorld}
           options={worlds.map((w) => ({ value: w.kind, label: w.name, title: w.trueSize ? w.name : undefined }))}
         />
       )}

@@ -21,6 +21,7 @@ import { groundRoute } from './groundRoute';
 import type { Room } from './roomPlan';
 import { spotsOf, tripTimed } from './namedSpots';
 import { roomWorld } from './roomWorld';
+import { topOf } from './terrain';
 import { CASE_FORMAT_VERSION, parseCase, type Case, type ReferenceCommand, type WorldObject } from './schema';
 import { dotSpots } from './dotSpots';
 import { CaseFileError } from './validate';
@@ -68,6 +69,20 @@ function driveForward(rig: Rig, facts: RobotFacts): V3 {
   return roverForward(wheelAxes).toArray() as V3;
 }
 
+function footSpacing(rig: Rig): number {
+  const robot = rig.robots[0];
+  const roots = (robot?.joints ?? []).flatMap((id) => {
+    const j = rig.byId.get(id);
+
+    return j && !rig.parentOf.get(id) ? [j.origin] : [];
+  });
+  const gaps = roots.flatMap((a, i) => roots.slice(i + 1).map((b) => Math.hypot(a[0] - b[0], a[2] - b[2])));
+
+  const apart = gaps.filter((g) => g > 1);
+
+  return apart.length ? Math.min(...apart) : 0;
+}
+
 export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
   const robot = rig.robots[0];
   const facts = robotFacts(rig, parts);
@@ -82,6 +97,7 @@ export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
     pivot: robot?.pivot ?? ([0, 0, 0] as V3),
     forward: driveForward(rig, facts),
     footprint: { width: span(xs), depth: span(zs) },
+    footSpacingMm: footSpacing(rig),
     heightMm: tops.length ? Math.max(...tops) : 0,
     armSpots: armSpots(rig, facts),
   };
@@ -121,6 +137,17 @@ export const presetsFor = (robot: BuilderRobot): PresetId[] =>
 
 export const goalFields = (goal: CaseGoal, values: GoalValues): ParamKey[] => goal.fields?.(values) ?? goal.params;
 
+const worldParams = (world: WorldKind): ParamKey[] => {
+  const param = worldOf(world)?.param;
+
+  return param ? [param] : [];
+};
+
+export const caseFields = (goal: CaseGoal, values: GoalValues, world: WorldKind): ParamKey[] => [
+  ...goalFields(goal, values),
+  ...worldParams(world),
+];
+
 export function caseName(goal: GoalKind, world: WorldKind, values?: GoalValues, room?: Room): string {
   const suffix = worldOf(world, room)?.suffix;
   const kind = goalOf(goal);
@@ -154,7 +181,7 @@ export function goalValues(
 ): GoalValues {
   const chosen: Partial<GoalValues> = {};
 
-  for (const key of goal.params) {
+  for (const key of [...goal.params, ...worldParams(world)]) {
     const v = given[key];
     const { min, max } = goalParam(goal, key);
 
@@ -189,7 +216,7 @@ function choose(spec: CaseSpec, robot: BuilderRobot): { goal: CaseGoal; world: C
 
 const ROUTE_START_S = 0.5;
 
-function referenceOf(plan: GoalPlan, scenery: WorldObject[], robot: BuilderRobot): ReferenceCommand[] {
+function referenceOf({ plan, scenery, robot, world }: Draft): ReferenceCommand[] {
   if (!plan.waypoints) return plan.timeline;
 
   const inTheWay = scenery.map((o): WorldObject => (o.behavior === 'dynamic' ? { ...o, behavior: 'static' } : o));
@@ -197,6 +224,7 @@ function referenceOf(plan: GoalPlan, scenery: WorldObject[], robot: BuilderRobot
     start: robot.pivot,
     clearanceMm: routeClearance(robot),
     headroomMm: robot.heightMm || undefined,
+    stepMm: world.ground ? Math.max(0, ...scenery.map(topOf)) : undefined,
   });
 
   return route.map(({ at, speed, push }) => ({
@@ -217,7 +245,8 @@ interface Draft {
   robot: BuilderRobot;
 }
 
-function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): unknown {
+function caseJson(draft: Draft): unknown {
+  const { spec, goal, world, values, plan, scenery, robot } = draft;
   const name = spec.name?.trim().slice(0, MAX_NAME) || caseName(goal.kind, world.kind, values, spec.room);
   const guard = plan.slot.needs.includes('legs') ? fallGuard(robot) : null;
 
@@ -231,7 +260,7 @@ function caseJson({ spec, goal, world, values, plan, scenery, robot }: Draft): u
       : { slot: world.trueSize ? { ...plan.slot, reachMm: undefined, anchor: undefined } : plan.slot }),
     world: { objects: [...plan.objects, ...scenery, ...(spec.objects ?? [])] },
     controls: plan.controls,
-    reference: { timeline: referenceOf(plan, scenery, robot) },
+    reference: { timeline: referenceOf(draft) },
     task: {
       seconds: values.seconds,
       probes: [...plan.probes, ...(guard ? [guard.probe] : [])],
@@ -271,7 +300,7 @@ export function buildCase(spec: CaseSpec, robot: BuilderRobot): BuiltCase {
     robot,
     given: spec.values,
   });
-  const scenery = world.objects(plan, robot);
+  const scenery = world.objects(plan, robot, values);
   const problem =
     (spots.some(Boolean) ? null : goal.problem?.(robot, values)) ??
     (scenery.some((o) => footprintHits(o, robot)) ? `Move the goal farther ahead to fit the ${world.name}.` : null);

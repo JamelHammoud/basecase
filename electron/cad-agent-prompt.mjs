@@ -51,6 +51,8 @@ opens it running.
   panel, in a column or as a canvas overlay, with code in the input when it drives.
 - The world: the goal closest to their words on a plain floor, with only the objects they describe;
   behaviors go in its logic.
+- A body movement they name (a wave, a clap, a nod) is a gesture event, with camera in the input;
+  one that isn't built in comes back in teach: say in one sentence that they teach it with Teach Gesture.
 - Hardware the app can't connect to yet (a robot over ethernet, a MIDI keyboard): say so in one
   sentence and build the sim side anyway.
 

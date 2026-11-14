@@ -1,5 +1,7 @@
 import { sceneObjects, type AgentObject } from '../agent/agentDrive';
+import { isBuiltinGesture } from '../cameras/gestures/builtinGestures';
 import type { CaseSpec } from '../cases/caseBuilder';
+import { untaught } from '../cases/gestures';
 import type { GoalKind, GoalValues, ParamKey } from '../cases/caseGoals';
 import type { WorldKind } from '../cases/caseWorlds';
 import type { WorldObject } from '../cases/schema';
@@ -58,6 +60,14 @@ function extraObjects(payload: Payload): WorldObject[] | string {
   }
 }
 
+function toTeach(names: unknown) {
+  if (!Array.isArray(names)) return names;
+
+  const taught = names.filter((n) => !(typeof n === 'string' && isBuiltinGesture(n)));
+
+  return taught.length ? taught.map((name) => ({ name, examples: [] })) : undefined;
+}
+
 async function logicProblem(spec: CaseSpec, ctx: CaseContext): Promise<string | null> {
   if (spec.logic === undefined) return null;
 
@@ -87,6 +97,7 @@ async function createCase(payload: Payload, ctx: CaseContext) {
     logic: payload.logic,
     score: payload.score,
     console: payload.console,
+    gestures: toTeach(payload.gestures),
   };
   const refused = await logicProblem(spec, ctx);
 
@@ -96,8 +107,17 @@ async function createCase(payload: Payload, ctx: CaseContext) {
 
   if (!built.ok) return built;
 
-  const { id, name, brief, task, world } = built.kase;
-  const reply = { ok: true, id, name, brief, seconds: task.seconds, objects: world.objects.length };
+  const { id, name, brief, task, world, gestures } = built.kase;
+  const teach = untaught(gestures).map((g) => g.name);
+  const reply = {
+    ok: true,
+    id,
+    name,
+    brief,
+    seconds: task.seconds,
+    objects: world.objects.length,
+    ...(teach.length ? { teach } : {}),
+  };
 
   if (!built.kase.console) return reply;
 

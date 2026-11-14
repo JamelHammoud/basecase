@@ -114,7 +114,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |
-| `create_case` | Adds a Case, with the inputs and panels it runs with |
+| `create_case` | Adds a Case, with the inputs, panels and gestures it runs with |
 | `run_case` | Runs a Case 20 times and reports how often it passed and why it failed |
 | `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
 | `explore_case` | Runs a Case on each catalog version of the robot's servos and supply voltage |

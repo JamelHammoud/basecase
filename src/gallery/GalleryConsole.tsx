@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { CaseConsole } from '../cases/console/format';
+import { consoleScope, type CaseConsole } from '../cases/console/format';
 import { consoleLayout, type PlacedArea } from '../cases/console/layout';
 import type { CaseAction } from '../cases/console/panelKinds';
 import type { SignalBus } from '../cases/console/signalBus';
@@ -70,11 +70,7 @@ export const GalleryConsole: GalleryConsoleView = ({ kase, caseConsole, sim, rig
   const ctx: PanelContext = {
     bus,
     signals: caseConsole.signals ?? [],
-    scope: {
-      declared: new Set(caseConsole.signals?.map((s) => s.id)),
-      probes: new Set(kase.task.probes.map((p) => p.signal)),
-      inputs: new Set(caseConsole.input),
-    },
+    scope: consoleScope(caseConsole, kase),
     inputs: caseConsole.input,
     brief: kase.brief,
     sim,

@@ -2,6 +2,7 @@ import { useEffect, useEffectEvent, useState } from 'react';
 import { uniqueCaseId } from '../cases/caseBuilder';
 import { stageCase } from '../cases/caseCast';
 import { robotFacts } from '../cases/robotFit';
+import { withGesture, type CaseGesture } from '../cases/gestures';
 import { readCases, worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import { generatedFrom, worstFirst, type TryRecord } from '../cases/tries';
@@ -44,6 +45,13 @@ const dropTries = (tries: TryRecord[] | undefined, goes: (t: TryRecord) => boole
 
   return all.filter((t) => !goes(t));
 };
+
+function saveGesture(setProject: Setter<ProjectSettings>, { id, gesture }: { id: string; gesture: CaseGesture }) {
+  setProject((p) => ({
+    ...p,
+    cases: (p.cases ?? []).map((c) => (c.id === id ? { ...c, gestures: withGesture(c.gestures, gesture) } : c)),
+  }));
+}
 
 export function useCases(options: CasesOptions) {
   const { parts, project, setProject, rig, sim, showToast, openAccounts, sceneId, partners } = options;
@@ -181,6 +189,7 @@ export function useCases(options: CasesOptions) {
     addAndTry,
     remove,
     removeTry,
+    saveGesture: (gesture: CaseGesture) => active && saveGesture(setProject, { id: active.id, gesture }),
     timeline,
     attempt,
     multiply,

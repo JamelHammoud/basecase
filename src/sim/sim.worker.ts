@@ -3,7 +3,13 @@ import { type MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from './loadMujoco';
 import type { DriveCommand } from './driveTypes';
 import { Recorder, recordingTransfer, type Recording } from './recorder';
-import { fitsRecording, recordedEfforts, setRecordedFrame } from './recordedFrames';
+import {
+  effortsTransfer,
+  fitsRecording,
+  recordedEfforts,
+  setRecordedFrame,
+  type RecordedEfforts,
+} from './recordedFrames';
 import type { Scan } from './scanner';
 import { SimEngine, type Controller } from './engine';
 import type { FaultKind } from './faults';
@@ -68,7 +74,7 @@ export type SimResponse =
   | { type: 'ready'; nq: number; nu: number; nbody: number }
   | { type: 'error'; message: string; id?: number }
   | { type: 'recorded'; recording: Recording | null }
-  | { type: 'scrubbed'; efforts: Float32Array[] | null }
+  | { type: 'scrubbed'; efforts: RecordedEfforts | null }
   | { type: 'sought'; frame: number; qpos: Float64Array }
   | { type: 'world'; looks: WorldLooks }
   | { type: 'watched'; id: number; margin: number }
@@ -289,7 +295,7 @@ async function scrub(msg: Msg<'scrub'>) {
 
   const efforts = engine && scrubbed ? recordedEfforts(mj, engine, scrubbed) : null;
 
-  post({ type: 'scrubbed', efforts }, efforts?.map((e) => e.buffer) ?? []);
+  post({ type: 'scrubbed', efforts }, effortsTransfer(efforts));
 }
 
 function seek(msg: Msg<'seek'>) {

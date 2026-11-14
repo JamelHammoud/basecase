@@ -4,6 +4,7 @@ import type { SimModel } from '../../sim/mjcfTypes';
 import type { Recording } from '../../sim/recorder';
 import type { Simulation } from '../../sim/useSimulation';
 import { linkParts, type Rig } from '../../utils/kinematics';
+import { canvasSelection } from '../canvasSelection';
 import type { TryTimeline } from '../useTryTimeline';
 import type { WorkspaceCore } from '../useWorkspaceCore';
 
@@ -43,6 +44,10 @@ function timelineState(timeline: TryTimeline, sim: Simulation, rig: Rig) {
   return {
     frame: timeline.frame,
     frames: timeline.frames,
+    dt: timeline.dt,
+    playing: timeline.playing,
+    speed: timeline.speed,
+    loop: timeline.loop,
     qpos: sought ? Array.from(sought.qpos) : null,
     sought: sought?.frame ?? null,
     lastQpos: frameQpos(recording, recording.frames - 1),
@@ -91,6 +96,7 @@ export function devSimState(core: WorkspaceCore, joints: Float64Array | null = n
     bodies: sim.model?.bodies.map((b) => ({ parts: b.parts, world: b.world ?? [] })) ?? [],
     ...caseState(core.simTraining),
     selected: core.selectedIds,
+    outlined: canvasSelection(core.caseRun, core.selectedIds),
     timeline: timelineState(core.simTraining.cases.timeline, sim, core.posing.rig),
     conditions: stats?.conditions ?? null,
     faults: Object.fromEntries(stats?.joints.flatMap((j) => (j.fault ? [[j.id, j.fault]] : [])) ?? []),

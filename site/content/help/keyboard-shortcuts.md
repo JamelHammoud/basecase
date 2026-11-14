@@ -1,7 +1,7 @@
 ---
 title: Keyboard shortcuts
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: get-started
 type: reference
 order: 1
@@ -21,6 +21,7 @@ covers:
   - src/components/ShortcutsList.tsx
   - src/workspace/useWorkspaceKeys.ts
   - src/components/tries/useTriesKeys.ts
+  - src/components/simulate/useTimelineKeys.ts
   - src/app/tabShortcuts.ts
   - src/design-system/platformKeys.ts
   - src/components/agent/Composer.tsx
@@ -118,6 +119,22 @@ In [Tries](/help/open-a-try-from-any-scene), [[⌫]] deletes the selected tries 
 | Keyboard shortcuts | [[?]] |
 
 While a Case runs, [[⌘Z]], [[⇧⌘Z]] and [[⌘Y]] undo and redo only changes to its code panels. [[⌘I]] shows or hides the **Agent** tab beside it.
+
+## Try timeline
+
+These keys work while a try plays on the timeline.
+
+| Action | Keys |
+|---|---|
+| Play or pause | [[Space]] |
+| Step a frame | [[←]] or [[→]] |
+| Step a second | [[⇧←]] or [[⇧→]] |
+| Go to start or end | [[Home]] or [[End]] |
+| Slower or faster | [ or ] |
+| Loop a range | [[⇧]] and drag |
+| Close | [[Esc]] |
+
+Speed goes from 0.25× to 4×. A range dragged on a lane plays over and over. Press [[⇧]] and click a lane to drop it.
 
 ## Agent
 

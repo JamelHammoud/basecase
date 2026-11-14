@@ -1,17 +1,55 @@
 import React from 'react';
-import { useBus, type PanelViewProps } from '../panelContext';
+import type { Playhead } from '../../../cases/console/signalBus';
+import { TracePlot, type Trace } from '../../../design-system';
+import { useBus, type PanelContext, type PanelViewProps } from '../panelContext';
 import { Titled } from './PanelTitle';
 import { extent, recent, scaler } from './series';
 
 const W = 300;
 const H = 120;
 const STROKES = ['#0d99ff', 'rgba(255,255,255,0.85)', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.4)'];
+const TONES: Trace['tone'][] = ['accent', 'primary', 'muted'];
+
+interface WholeProps {
+  ids: string[];
+  ctx: PanelContext;
+  head: Playhead;
+}
+
+const WholeTry: React.FC<WholeProps> = ({ ids, ctx, head }) => {
+  const traces: Trace[] = ids.map((id, i) => ({
+    id,
+    values: ctx.bus.series(id).v,
+    tone: TONES[Math.min(i, TONES.length - 1)],
+  }));
+  const times = ctx.bus.series(ids[0] ?? '').t;
+
+  return (
+    <div data-testid="plot" data-lines={ids.length} data-playhead={head.at.toFixed(2)}>
+      <TracePlot
+        traces={traces}
+        height={H}
+        playhead={head.frame}
+        onSeek={ctx.seek && ((sample) => ctx.seek?.(times[sample] ?? 0))}
+      />
+    </div>
+  );
+};
 
 export const PlotPanel: React.FC<PanelViewProps<'plot'>> = ({ panel, ctx }) => {
   useBus(ctx.bus);
 
-  const seconds = 'seconds' in panel && panel.seconds !== undefined ? panel.seconds : 20;
   const ids = panel.signals.flatMap((s) => ctx.bus.expand(s));
+  const head = ctx.bus.playhead();
+
+  if (head)
+    return (
+      <Titled title={panel.title}>
+        <WholeTry ids={ids} ctx={ctx} head={head} />
+      </Titled>
+    );
+
+  const seconds = 'seconds' in panel && panel.seconds !== undefined ? panel.seconds : 20;
   const lines = ids.map((id) => ({ id, s: recent(ctx.bus.series(id), seconds) }));
   const end = Math.max(0, ...lines.map((l) => l.s.t.at(-1) ?? 0));
   const x = scaler([end - seconds, end], [0, W]);

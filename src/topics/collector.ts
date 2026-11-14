@@ -1,3 +1,4 @@
+import { markPresent, sortedPresence } from './presence';
 import { flattenMessage, type Leaf } from './flatten';
 import {
   TOPIC_LIMITS,
@@ -22,6 +23,7 @@ interface Budget {
 
 class TopicBuilder {
   readonly ns: bigint[] = [];
+  readonly presence = new Map<string, number[]>();
   readonly numbers = new Map<string, number[]>();
   readonly labels = new Map<string, string[]>();
   readonly lists = new Map<string, Array<Float64Array | null>>();
@@ -111,6 +113,7 @@ function mapValues<T, U>(columns: Map<string, T>, make: (value: T) => U): Map<st
 
 function finished(builder: TopicBuilder, startNs: bigint): RecordedTopic {
   const order = builder.ns.map((_, i) => i).sort((a, b) => Number(builder.ns[a] - builder.ns[b]) || a - b);
+  const presence = sortedPresence(builder.presence, order);
 
   return {
     topic: builder.topic,
@@ -123,6 +126,7 @@ function finished(builder: TopicBuilder, startNs: bigint): RecordedTopic {
     lists: mapValues(builder.lists, (v) => raggedList(permuted(v, order))),
     blobs: mapValues(builder.blobs, (v) => raggedBlob(permuted(v, order))),
     clipped: builder.clipped,
+    ...(presence ? { presence } : {}),
   };
 }
 
@@ -178,8 +182,27 @@ export class TopicCollector {
     return builder.blobBytes <= TOPIC_LIMITS.topicBlobBytes && budget.blobBytes <= TOPIC_LIMITS.blobBytes;
   }
 
+  #hasColumn(builder: TopicBuilder, path: string, leaf: Leaf) {
+    return {
+      number: builder.numbers,
+      label: builder.labels,
+      list: builder.lists,
+      blob: builder.blobs,
+    }[leaf.kind].has(path);
+  }
+
   #take(builder: TopicBuilder, path: string, leaf: Leaf) {
     if (!this.#fits(builder, leaf)) {
+      builder.clipped = true;
+
+      return;
+    }
+
+    const known = this.#hasColumn(builder, path, leaf);
+    const backfill = known ? 0 : builder.ns.length - 1;
+    const rowCells = builder.columns + (known ? 0 : 1);
+
+    if (this.#budget.cells + backfill + rowCells > TOPIC_LIMITS.cells) {
       builder.clipped = true;
 
       return;
@@ -193,7 +216,11 @@ export class TopicCollector {
     }[leaf.kind] as () => unknown[] | null;
     const column = columns();
 
-    if (column && column.length < builder.ns.length) column.push(leaf.value);
+    if (column && column.length < builder.ns.length) {
+      this.#budget.cells += backfill;
+      column.push(leaf.value);
+      markPresent(builder.presence, `${leaf.kind}:${path}`, builder.ns.length - 1);
+    }
   }
 
   add(topic: string, schema: string, ns: bigint, message: Decoded) {
@@ -201,7 +228,7 @@ export class TopicCollector {
 
     if (!builder) return;
 
-    if (this.#budget.messages >= TOPIC_LIMITS.messages || this.#budget.cells >= TOPIC_LIMITS.cells) {
+    if (this.#budget.messages >= TOPIC_LIMITS.messages || this.#budget.cells + builder.columns > TOPIC_LIMITS.cells) {
       builder.clipped = true;
 
       return;

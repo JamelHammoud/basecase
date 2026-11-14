@@ -40,11 +40,16 @@ Servo torque helps you pick servos that won't stall or overheat. It compares the
 
 ## What a servo can give
 
-Each servo in **Parts** has two torque numbers from its datasheet. Stall torque is the most the servo can hold before it stops. Rated torque is what it can hold all day without overheating.
+Every servo in **Parts** has two torque numbers from its datasheet:
 
-The check reads both at the voltage that reaches your servo. That's the regulator's output, or the battery's nominal voltage if there's no regulator, or the power supply's voltage if there's no battery. If your voltage falls between two points on the datasheet, the check interpolates between them. It never rates torque above what the supply can reach.
+- Stall torque is the most the servo can hold before it stops.
+- Rated torque is what it can hold all day without overheating.
 
-If a datasheet doesn't give a rated torque, the check uses a quarter of stall torque, and the row says so.
+The check reads both numbers at the voltage that reaches your servo. That's the regulator's output. If there's no regulator, it's the battery's nominal voltage, and if there's no battery, it's the power supply's voltage.
+
+If your voltage falls between two points on the datasheet, the check interpolates between them. It never rates torque above what the supply can reach.
+
+If a datasheet doesn't list a rated torque, the check uses a quarter of stall torque and says so in the row.
 
 A servo's page in **Parts** shows its stall torque as a load. For example, the Feetech STS3215 holds “Up to 1.95 kg at 10 cm”.
 
@@ -65,7 +70,7 @@ If you import a robot that has no servos, the check grades its joints against th
 | Other joints, as a share of stall | Up to 0.40, and within rated | Between | Above 0.60 |
 | Imported robot joints, against the torque limit | Up to half | Up to the limit | Above the limit |
 
-These limits come from robots that walk. Under the older rule of a fifth of stall, every walking robot fails at the knee.
+These limits come from robots that walk. Under the older rule, which allowed a fifth of stall, every walking robot fails at the knee.
 
 A failing joint is a blocker. A joint with no servo data turns amber and shows up as “No torque data”.
 
@@ -78,11 +83,11 @@ In the Build tab, click **Servo torque** under **Checks**. Each line shows:
 - Its share of the servo's stall torque at your voltage
 - Its heat against rated torque
 
-Click a line to select the servo.
+Click a line to select its servo.
 
 ## Peak torque, once it walks
 
-Once you have a trained walk policy, the agent can test it in simulation. With each servo capped at 0.7 of stall, the robot walks for 14 seconds and gets shoved twice, each time with a push of 0.3 times its weight.
+Once you have a trained walk policy, the agent can test it in simulation. The robot walks for 14 seconds with each servo capped at 0.7 of stall, and it gets shoved twice along the way, each time with a push of 0.3 times its weight.
 
 **Peak torque** fails if a joint asks for more than stall torque for over 50 ms, or if the robot falls. It warns above 0.8 of stall.
 
@@ -92,7 +97,13 @@ Open **Peak torque** to plot each joint's walk on its servo's line, next to the 
 
 ## Falls, once the legs have servos
 
-A fall hits a leg servo harder than walking does. **Falls** tips the robot over from 12 directions and compares each leg joint's torque with its rated torque. Up to 3× rated passes, up to 5× turns amber, and above 5× fails. If the datasheet gives a peak torque, that replaces the 5× limit.
+A fall hits a leg servo harder than walking does. **Falls** tips the robot over from 12 directions and compares each leg joint's torque with its rated torque:
+
+- Up to 3× rated passes.
+- Up to 5× turns amber.
+- Above 5× fails.
+
+If the datasheet gives a peak torque, that number replaces the 5× limit.
 
 For the steps, see [Check what a fall does to the servos](/help/check-what-a-fall-does-to-the-servos).
 
@@ -105,7 +116,7 @@ If a joint fails, try one of these:
 - **A lighter robot.** Every leg joint carries the full weight.
 - **A higher voltage,** inside the servo's range. The check reads torque at your supply voltage, so raising it can add torque.
 
-To hand the problem to the agent, click **Fix** on a failing line.
+To hand the problem to the agent instead, click **Fix** on a failing line.
 
 ## Learn more
 

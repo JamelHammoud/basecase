@@ -152,6 +152,7 @@ export interface JointRates {
 }
 
 const SMOOTH_S = 0.05;
+const SMOOTH_SHARE = 1 / 30;
 
 function slope(series: number[], dt: number, h: number): number[] {
   const n = series.length;
@@ -167,7 +168,7 @@ function slope(series: number[], dt: number, h: number): number[] {
 export function peakRates(series: number[], dt: number): JointRates {
   if (series.length < 2 || dt <= 0) return { speedDps: 0, accelDps2: 0 };
 
-  const h = Math.max(1, Math.round(SMOOTH_S / dt));
+  const h = Math.max(1, Math.min(Math.round(SMOOTH_S / dt), Math.floor(series.length * SMOOTH_SHARE)));
   const speed = slope(series, dt, h);
   const accel = slope(speed, dt, h);
 

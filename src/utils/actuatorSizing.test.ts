@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { actuatorOptions, type ActuatorOption } from './actuatorCatalog';
+import { ratingAt, suitsVolts } from './actuatorRules';
 import { sizeActuators, type SizingJoint } from './actuatorSizing';
 import { sizingText } from './actuatorSizingText';
 
@@ -52,5 +54,24 @@ describe('sizeActuators', () => {
     expect(sizingText([feetech], 3460)).toMatch(
       /- Knee: needs 2\.\d\d N·m in stance; the strongest, Feetech STS3250, passes if that drops \d+%: shorten the leg segment under it by \d+ mm, or carry \d+ g less in the whole robot/,
     );
+  });
+
+  it('gives a joint faster than every servo the fastest servo on the bus, not the cheapest', () => {
+    const atRest = (o: ActuatorOption) => ratingAt(o.act).rpm ?? 0;
+    const options = actuatorOptions()
+      .filter((o) => o.bus === 'feetech')
+      .map((o) => ({ ...o, usd: atRest(o) }));
+    const joints = [joint('Shoulder', { holdNm: 0.1 }), joint('Wrist', { holdNm: 0.1, speedRpm: 5000 })];
+    const families = sizeActuators({ joints, totalG: 1000, options });
+
+    expect(families.length).toBeGreaterThan(1);
+
+    for (const { rail, picks, failures } of families) {
+      const rpm = (o: ActuatorOption) => ratingAt(o.act, rail.volts).rpm ?? 0;
+      const fits = options.filter((o) => suitsVolts(o.act, rail.fullV) && suitsVolts(o.act, rail.volts));
+
+      expect(failures.map((p) => p.joint.id)).toEqual(['Wrist']);
+      expect(rpm(picks[1].strongest!.option)).toBe(Math.max(...fits.map(rpm)));
+    }
   });
 });

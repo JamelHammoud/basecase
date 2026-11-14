@@ -122,6 +122,15 @@ describe('fitMotion', () => {
     }
   });
 
+  it('keeps the peak speed of a short, high-rate clip instead of smoothing it away', () => {
+    const speeds = (frameTime: number) =>
+      fit(planarArmBvh({ frameTime }), { heightMm: ARM_HEIGHT }).joints.map((j) => j.speedDps);
+    const at300 = speeds(1 / 300);
+    const at1000 = speeds(1 / 1000);
+
+    at300.forEach((s, i) => expect(at1000[i] / s).toBeCloseTo(10 / 3, 0));
+  });
+
   it('fits a right arm to the wave whose wrist follows the clip within tolerance', () => {
     const mocap = parseBvh(waveBvh(), 'Wave');
     const result = fitMotion({ mocap, heightMm: 300, toleranceMm: TOLERANCE });

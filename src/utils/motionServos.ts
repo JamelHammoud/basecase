@@ -54,5 +54,5 @@ export function servoShortfall(servos: MotionServos | null): string | null {
 
   if (!servos.failing.length) return null;
 
-  return `The strongest servo is still too slow or weak for ${servos.failing.join(', ')}.`;
+  return `No servo is fast or strong enough for ${servos.failing.join(', ')}.`;
 }

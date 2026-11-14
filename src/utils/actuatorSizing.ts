@@ -142,12 +142,23 @@ function fitOf(j: SizingJoint, loads: JointLoads, option: ActuatorOption, volts:
   };
 }
 
+const shareOrder = (a: number, b: number) => (a === b ? 0 : a - b);
+
+function strongerFirst(volts: number) {
+  const rated = (f: Fit) => ratingAt(f.option.act, volts);
+
+  return (a: Fit, b: Fit) =>
+    shareOrder(a.stallShare, b.stallShare) ||
+    (rated(b).rpm ?? 0) - (rated(a).rpm ?? 0) ||
+    rated(b).stallNm - rated(a).stallNm;
+}
+
 function pickFor(j: SizingJoint, loads: JointLoads, options: ActuatorOption[], volts: number): JointPick {
   const fits = options.map((o) => fitOf(j, loads, o, volts));
   const passing = fits.filter((f) => f.ok);
   const pick = passing[0];
   const up = pick && passing.find((f) => f.option.act.stallNm > pick.option.act.stallNm * UP_MARGIN);
-  const strongest = [...fits].sort((a, b) => a.stallShare - b.stallShare)[0];
+  const strongest = [...fits].sort(strongerFirst(volts))[0];
 
   return { joint: j, loads, pick, up, strongest };
 }

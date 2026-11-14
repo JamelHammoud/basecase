@@ -77,7 +77,7 @@ describe('skeleton_from_motion', () => {
 
     expect(servoShortfall(servos)).toBeNull();
     expect(servoShortfall({ ...servos, failing: ['Elbow', 'Wrist'] })).toBe(
-      'The strongest servo is still too slow or weak for Elbow, Wrist.',
+      'No servo is fast or strong enough for Elbow, Wrist.',
     );
     expect(servoShortfall(null)).toMatch(/none were placed/);
   });

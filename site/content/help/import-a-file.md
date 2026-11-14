@@ -53,7 +53,7 @@ covers:
   - electron/cadImport/convertPolicy.mjs
 ---
 
-Use Import to bring files from other apps into your scene. The same command opens every file type Basecase reads, and each type comes in differently.
+Use Import to bring files from other apps into your scene. The same command opens every file type Basecase reads.
 
 1. Right-click an empty spot on the canvas.
 2. Choose **Import**.
@@ -61,19 +61,20 @@ Use Import to bring files from other apps into your scene. The same command open
 
 ![The canvas menu with Import](/help/import-a-file/menu.png)
 
-Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS. The new parts appear where you right-clicked and are already selected, so you can move them right away.
+Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS. The new parts appear where you right-clicked, selected and ready to move.
 
 If you choose an SVG file, the Import SVG panel opens with your drawing loaded. Set the width and thickness, then click **Add** to extrude the drawing into a part.
 
 ![The Import SVG panel with a drawing loaded](/help/import-a-file/svg.png)
 
-A URDF, MJCF or zip file (such as an exported Robot Package) comes in as a robot with its joints. A BVH motion file opens the retarget sheet for the selected robot, or [Design From Motion](/help/design-a-robot-from-a-motion) if the scene has no robot. Images come in as reference images, and a `.basecase` file opens in a new tab.
+- A URDF, MJCF or zip file (such as an exported Robot Package) loads as a robot with its joints.
+- A BVH motion file opens the retarget sheet for the selected robot. If the scene has no robot, it opens [Design From Motion](/help/design-a-robot-from-a-motion).
+- An image becomes a reference image.
+- A `.basecase` file opens in a new tab.
 
-You can also open Import from **File** ▸ **Import** or with [[⌘K]]. To import files at a specific spot, drop them on the canvas. If you drop a `.mid` file, it plays in a Case's tries instead. To learn how, see [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
+**File** ▸ **Import** and [[⌘K]] also open Import. To import files at a specific spot, drop them on the canvas. If you drop a `.mid` file, it plays in a Case's tries instead. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
 ## Units and axes
-
-Basecase reads each format in these units, with this up axis:
 
 | Format | Read as | Up axis |
 |---|---|---|
@@ -83,15 +84,15 @@ Basecase reads each format in these units, with this up axis:
 | DAE | Meters | As set in the file |
 | FBX | Centimeters, times the file's unit scale | As set in the file |
 
-If a model measures less than 1 mm across, Basecase reads it as meters. Meshes are never simplified, so your print keeps every triangle. FBX textures aren't imported.
+Basecase reads a model that measures less than 1 mm across as meters. It never simplifies a mesh, so your print keeps every triangle. FBX files import without their textures.
 
 ## STEP and IGES files
 
-You can open STEP and IGES files in the desktop app. Each body in the file becomes its own part, named from the file's product names and colored with its body's main face color. A file with more than one body comes in as a group of parts named after the file.
+In the desktop app, each body in a STEP or IGES file becomes its own part, named from the file's product names and colored with the body's main face color. A file with more than one body comes in as a group of parts named after the file.
 
-The conversion runs in a sandbox, separate from the rest of the app. Units come from the file itself, so each body arrives in millimeters at its real size.
+Basecase converts the file in a sandbox, separate from the rest of the app. It takes units from the file itself, so each body arrives in millimeters at its real size.
 
-Like any imported mesh, an imported body counts as a printed part. To mark a body as bought or machined, select it, then under **Appearance** change the material from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Checks then list it among parts without a source until it has one.
+An imported body counts as a printed part, like any imported mesh. To mark a body as bought or machined, select it, then under **Appearance** change the material from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Checks then list it among parts without a source until it has one.
 
 STEP and IGES imports have these limits:
 

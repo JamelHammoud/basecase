@@ -219,6 +219,13 @@ Stage 5b is judged by `s5b-daemon-app` (§0k); its tests in `verify/hw/` are the
 - **Tests:** `npx vitest run src/reality` takes about a second: the fitter recovers a known gain and delay from synthetic logs, preset logs read consistent and shuffled logs can't tell. `calibrate.test.ts` also checks an STS3215 C046 starts from its own estimate, an XL430 unit with planted gain, damping and friction reads Measured against its estimated model while its shuffled logs can't tell, and a request named by family still works; `measuredJoints.test.ts` loads an old family-named record and rolls it back. `benchCalibration.test.ts` also replays a hidden unit's bench log: the calibrated median error is at least the gate's 25% (`LADDER.passGain`) below the preset's, and a shuffled log stays Can't tell with no gain.
 - **Measured at the gate** (24 hidden units per family, held-out replay and other load): median error down 52% for the STS3215 (bootstrap lower bound 41%) and 65% for the XL330 (55%), below the 90% alarm. Most units stop at the `response` rung, in about 4 s each; shuffled logs read Can't tell and preset logs Consistent. The second-half check overstates the held-out gain (often 80–90%), because held-out logs start mid-motion and the replay starts at rest.
 
+### Real tries (next)
+
+A real try (§8h) tracks only a ground robot's base, from a tag on its root link. The next steps:
+
+- **Arms:** an end-effector tag on the gripper or tool, solved the same way at its tracked height, so a reach or touch Case can judge a real arm.
+- **Calibration from the path:** the tracked base path against the sim try with the same commands fits wheel slip and effective wheel radius, the way the bench fits servos here, and feeds them to the sim.
+
 ### Parked
 
 Setup flows (the torque-off mirror, calibration capture, the plain failure guide, support bundle), signed Mac and Windows bundles, Pi and arm64 builds, rustypot and LeRobot's bus as further conformance clients, bulk read and write, indirect addresses, operating modes other than position, and persisting ladder evidence across restarts (a restart climbs again).

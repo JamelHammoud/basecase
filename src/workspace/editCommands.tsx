@@ -56,6 +56,12 @@ function wrapCommands(inputs: CommandInputs): Command[] {
   return [paletteCommand(selectionActions(inputs).wrap, 'Selection')];
 }
 
+function armCommands(inputs: CommandInputs): Command[] {
+  if (!inputs.actions.arm.canSize) return [];
+
+  return [paletteCommand(selectionActions(inputs).sizeArm, 'Selection')];
+}
+
 function onePartCommands(inputs: CommandInputs): Command[] {
   const [part, ...others] = inputs.core.selection.selectedParts;
 
@@ -110,6 +116,7 @@ function arrangeCommands(inputs: CommandInputs): Command[] {
 
 export const editCommands = (inputs: CommandInputs): Command[] => [
   ...wrapCommands(inputs),
+  ...armCommands(inputs),
   ...clipboardCommands(inputs),
   ...onePartCommands(inputs),
   ...handJointCommands(inputs.actions.joints),

@@ -1,13 +1,14 @@
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useEffectEvent, useState, type RefObject } from 'react';
 import { uniqueCaseId } from '../cases/caseBuilder';
 import { stageCase } from '../cases/caseCast';
 import { robotFacts } from '../cases/robotFit';
 import { withGesture, type CaseGesture } from '../cases/gestures';
 import { readCases, worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
-import { generatedFrom, worstFirst, type TryRecord } from '../cases/tries';
+import { generatedFrom, simTries, worstFirst, type TryRecord } from '../cases/tries';
 import { deleteRecording } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
+import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
@@ -16,9 +17,10 @@ import { useCaseBuilder } from './useCaseBuilder';
 import type { RoutineSkills } from './routineCheck';
 import { useAddAndTry } from './useAddAndTry';
 import { useCaseTry } from './useCaseTry';
+import { useRealRobotTries } from './useRealRobotTries';
 import { useDatasetExport } from './useDatasetExport';
-import { useTryMultiply } from './useTryMultiply';
-import { useTryTimeline } from './useTryTimeline';
+import { useTryMultiply, type TryMultiply } from './useTryMultiply';
+import { useTryTimeline, type TryTimeline } from './useTryTimeline';
 import { useTriesTraining, type TriesTraining } from './useTriesTraining';
 import { plural } from '../../electron/plural.mjs';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
@@ -37,6 +39,7 @@ interface CasesOptions {
   skills?: RoutineSkills;
   skillTraining: { runtime: SkillsRuntime; busy: boolean };
   caseRobot: () => Promise<CaseRobotInput | null>;
+  viewportRef: RefObject<Viewport3DHandle | null>;
 }
 
 const dropTries = (tries: TryRecord[] | undefined, goes: (t: TryRecord) => boolean) => {
@@ -46,6 +49,30 @@ const dropTries = (tries: TryRecord[] | undefined, goes: (t: TryRecord) => boole
 
   return all.filter((t) => !goes(t));
 };
+
+interface TryRemoval {
+  tries: TryRecord[];
+  multiply: TryMultiply;
+  timeline: TryTimeline;
+  setProject: Setter<ProjectSettings>;
+}
+
+function confirmRemoveTry(record: TryRecord, { tries, multiply, timeline, setProject }: TryRemoval) {
+  const generated = generatedFrom(tries, record).length;
+  const goes = (t: TryRecord) => t.id === record.id || (t.generated === true && t.manifest.source === record.id);
+
+  confirmAction({
+    title: `Delete this try?`,
+    ...(generated ? { body: `Deletes its ${plural(generated, 'variation')} too.` } : {}),
+    onConfirm: () => {
+      if (multiply.running?.source === record.id) multiply.stop();
+
+      if (timeline.record && goes(timeline.record)) timeline.close();
+
+      setProject((p) => ({ ...p, tries: dropTries(p.tries, goes) }));
+    },
+  });
+}
 
 function saveGesture(setProject: Setter<ProjectSettings>, { id, gesture }: { id: string; gesture: CaseGesture }) {
   setProject((p) => ({
@@ -61,6 +88,7 @@ export function useCases(options: CasesOptions) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = cases.find((c) => c.id === activeId) ?? null;
   const tries = worstFirst((project.tries ?? []).filter((t) => t.caseId === activeId));
+  const fromSim = simTries(tries);
   const hasRobot = rig.robots.length > 0;
   const fixedBase = hasRobot && robotFacts(rig, parts).morphology === 'fixed';
 
@@ -132,30 +160,15 @@ export function useCases(options: CasesOptions) {
   const timeline = useTryTimeline({ sim, rig, parts, active, partners });
 
   const builder = useCaseBuilder({ rig, parts, add, partners });
-  const dataset = useDatasetExport({ sim, rig, parts, active, tries, showToast, openAccounts, sceneId });
+  const dataset = useDatasetExport({ sim, rig, parts, active, tries: fromSim, showToast, openAccounts, sceneId });
   const addTries = (records: TryRecord[]) => setProject((p) => ({ ...p, tries: [...(p.tries ?? []), ...records] }));
-  const multiply = useTryMultiply({ sim, rig, parts, active, tries, partners, onTries: addTries, showToast });
-  const removeTry = (record: TryRecord) => {
-    const generated = generatedFrom(tries, record).length;
-    const goes = (t: TryRecord) => t.id === record.id || (t.generated === true && t.manifest.source === record.id);
-
-    confirmAction({
-      title: `Delete this try?`,
-      ...(generated ? { body: `Deletes its ${plural(generated, 'variation')} too.` } : {}),
-      onConfirm: () => {
-        if (multiply.running?.source === record.id) multiply.stop();
-
-        if (timeline.record && goes(timeline.record)) timeline.close();
-
-        setProject((p) => ({ ...p, tries: dropTries(p.tries, goes) }));
-      },
-    });
-  };
+  const multiply = useTryMultiply({ sim, rig, parts, active, tries: fromSim, partners, onTries: addTries, showToast });
+  const removeTry = (record: TryRecord) => confirmRemoveTry(record, { tries, multiply, timeline, setProject });
 
   const fromTries: TriesTraining = useTriesTraining({
     sim,
     active,
-    tries,
+    tries: fromSim,
     skills: skillTraining,
     caseRobot,
     showToast,
@@ -173,6 +186,12 @@ export function useCases(options: CasesOptions) {
   });
 
   const addAndTry = useAddAndTry({ add, active, attempt });
+  const real = useRealRobotTries({
+    ...{ sim, rig, parts, active, tries, partners, attempt, timeline },
+    viewportRef: options.viewportRef,
+    onTry: (record) => addTries([record]),
+    onRefuse: (message) => showToast(message),
+  });
 
   return {
     cases,
@@ -192,6 +211,7 @@ export function useCases(options: CasesOptions) {
     timeline,
     attempt,
     multiply,
+    ...real,
   };
 }
 

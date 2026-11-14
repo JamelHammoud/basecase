@@ -16,9 +16,7 @@ Send someone a link that opens your robot and its Case in their browser, where t
 
 1. Add a Hugging Face access token with write access in Settings ▸ Accounts, as in [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
 2. Open a Case for your robot from the Cases tab in the Play view.
-3. In the Simulate tab, click **Share Robot** in Results. It's also in ⌘K.
-
-![Results in the Simulate tab with Share Robot under it](/help/share-a-robot-as-a-link/results.png)
+3. Press [[⌘K]] and choose **Share Robot**.
 
 4. When the toast says Link copied, paste the link wherever you want to send it. It looks like `https://app.basecase.so/r/your-name/desk-rover-e39785`.
 

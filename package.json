@@ -57,6 +57,7 @@
     "test:app": "vitest run --config vitest.app.config.ts",
     "verify": "node verify/gatekeeper.mjs",
     "build:contract": "node tools/build-contract.mjs",
+    "build:apriltag": "node tools/build-apriltag.mjs",
     "build:routines": "node hw/coordinator/build-wasm.mjs",
     "build:forge-web": "node tools/forge/build-web.mjs",
     "check:routines": "node hw/coordinator/build-wasm.mjs --check"

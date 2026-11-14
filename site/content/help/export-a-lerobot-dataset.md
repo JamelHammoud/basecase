@@ -42,6 +42,8 @@ A toast shows "Exporting dataset…", then names how many tries went in. Basecas
 
 Only passed tries go in: a dataset holds the task done right. Each try must also match the robot as it is now. Tries recorded before the robot's last change are left out. The toast counts them: "Exported 3 tries as a dataset, left out 2 from an earlier design".
 
+Tries from your real robot stay out, because they record only where the robot's base went.
+
 Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each.
 
 When every passed try is from an earlier design, the toast says "These tries are from an earlier design. Try It again to record new ones."

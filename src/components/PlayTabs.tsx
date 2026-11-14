@@ -18,7 +18,11 @@ export function PlayTabs({ tab, onChange, cases, routines }: PlayTabsProps) {
   const robot = useRobot();
   const run = routines.view.run;
   const tabs: PanelTab<PlayTab>[] = [
-    { value: 'cases', label: 'Cases', status: live(cases.attempt.phase !== 'idle', 'Trying') },
+    {
+      value: 'cases',
+      label: 'Cases',
+      status: live(cases.attempt.phase !== 'idle' || cases.realTry.phase !== 'idle', 'Trying'),
+    },
     { value: 'routines', label: 'Routines', status: live(!!run && !run.done, 'Running') },
     ...(IS_WEB_DEMO
       ? []

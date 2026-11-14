@@ -1287,6 +1287,15 @@ export type MetricType = Exclude<HardwareType, MotionHardwareType>;
 export const motionOf = (type: HardwareType): MotionHardware | undefined =>
   (MOTION_HARDWARE as Partial<Record<HardwareType, MotionHardware>>)[type];
 
+export function sizeChoices(type: HardwareType) {
+  const motion = motionOf(type);
+
+  return {
+    columns: motion?.sizeColumns ?? 5,
+    options: HARDWARE_BY_TYPE[type].sizes.map((size) => ({ value: size, label: motion?.sizeLabel?.(size) ?? size })),
+  };
+}
+
 const DIMENSIONS: Record<MetricType, (spec: HardwareSpec, size: MetricSize, L: number) => Box> = {
   socket_head: (_spec, size, L) => box(SOCKET_HEAD[size]!.dk, L + SOCKET_HEAD[size]!.k),
   button_head: (_spec, size, L) => box(BUTTON_HEAD[size]!.dk, L + BUTTON_HEAD[size]!.k),

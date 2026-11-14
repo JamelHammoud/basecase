@@ -30,7 +30,7 @@ See where each of a Case's 20 runs in Checks went, and open a failed one on the 
 
    ![Checks with Reach a Spot at 16 of 20 and Missed under it](/help/replay-a-failed-run-of-a-case/checks.png)
 
-2. Click the row. The Case opens in the Simulate tab, and the canvas draws each run as a thin line, green for a pass and red for a failure.
+2. Click the row. The Case opens in the **Simulate** tab, and the canvas draws each run as a thin line, green for a pass and red for a failure.
 
    ![Twenty lines from a rover to its spot, the failed ones short and red beside the rover](/help/replay-a-failed-run-of-a-case/trails.png)
 

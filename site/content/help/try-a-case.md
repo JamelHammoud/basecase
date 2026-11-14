@@ -18,6 +18,7 @@ keywords:
 related:
   - make-a-case
   - export-a-lerobot-dataset
+  - replay-a-failed-run-of-a-case
 covers:
   - src/components/SimulatePanel.tsx
   - src/components/simulate/CaseSections.tsx
@@ -57,6 +58,8 @@ To judge your real wheeled or legged robot on a printed mat, click **Try on Real
 ## Whether the robot can do it
 
 The icon beside the Case's name is its row in **Build** ▸ **Checks**. Hover it for how many of 20 runs passed. Click it to open the row.
+
+In **Checks**, clicking the row draws where each of the 20 runs went. [Replay a failed run of a Case](/help/replay-a-failed-run-of-a-case) opens a failed one on the timeline.
 
 ![The Simulate tab with Touch the Dots open and its Checks icon beside the name](/help/try-a-case/case.png)
 

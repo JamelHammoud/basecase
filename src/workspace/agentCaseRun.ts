@@ -7,6 +7,7 @@ import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { caseVerdict, type CaseVerdict } from './caseChecks';
 import type { Cases } from './useCases';
+import { runClock } from '../utils/duration';
 import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
@@ -61,7 +62,7 @@ const failedRuns = (runs: CaseRuns) => runs.trails.filter((t) => !t.passed).map(
 
 const failedRun = ({ seed, trip }: ReturnType<typeof failedRuns>[number]) =>
   trip
-    ? `seed ${seed} (${trip.label} at frame ${trip.frame}, ${margin(trip.frame * RECORD_DT)} s)`
+    ? `seed ${seed} (${trip.label} at frame ${trip.frame}, ${runClock(trip.frame * RECORD_DT)})`
     : `seed ${seed} (${MISSED})`;
 
 function failedRunsLine(runs: CaseRuns): string {

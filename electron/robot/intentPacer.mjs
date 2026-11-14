@@ -1,6 +1,7 @@
 import { jointRadians } from './robotSpec.mjs';
 
 export const PACE_MS = 30;
+export const SILENT_HOST_MS = 1000;
 
 const CENTERED = { zero_counts: 2048, direction: 1 };
 
@@ -16,21 +17,20 @@ export function measuredRadians(status, ids, calibration = []) {
 }
 
 export class IntentPacer {
-  constructor({ ids, write, measured, calibration = () => [], everyMs = PACE_MS }) {
-    this.ids = ids;
+  constructor({ write, everyMs = PACE_MS, silentHostMs = SILENT_HOST_MS }) {
     this.write = write;
-    this.measured = measured;
-    this.calibration = calibration;
+    this.silentHostMs = silentHostMs;
     this.values = null;
     this.driving = false;
+    this.heardAt = performance.now();
     this.timer = setInterval(() => this.tick(), everyMs);
   }
 
-  drive() {
+  drive(joints) {
     if (this.driving) return;
 
     this.driving = true;
-    this.values = measuredRadians(this.measured(), this.ids, this.calibration());
+    this.values = joints;
   }
 
   idle() {
@@ -42,7 +42,13 @@ export class IntentPacer {
     if (this.driving) this.values = joints;
   }
 
+  alive() {
+    this.heardAt = performance.now();
+  }
+
   tick() {
+    if (performance.now() - this.heardAt > this.silentHostMs) return;
+
     if (this.driving && this.values) this.write({ cmd: 'intent', joints: this.values });
     else this.write({ cmd: 'heartbeat' });
   }

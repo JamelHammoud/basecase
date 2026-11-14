@@ -1,8 +1,6 @@
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import readline from 'node:readline';
 import {
   calibrationMounts,
   checkedCommand,
@@ -15,7 +13,8 @@ import {
   mountedCalibration,
 } from './robotSpec.mjs';
 import { emulatedHorn, statusWithLinkAngles } from './emulatedHorns.mjs';
-import { IntentPacer } from './intentPacer.mjs';
+import { threadPipe, workerPipe } from './daemonPipe.mjs';
+import { measuredRadians } from './intentPacer.mjs';
 import { checkedPolicyRefs } from './robotPolicy.mjs';
 import { UNITS_FILE, unitsJson } from './servoUnits.mjs';
 
@@ -30,6 +29,7 @@ const UNDOCUMENTED = { ok: false, message: 'The robot only takes the documented 
 const POLICY_FILE = 'policy.onnx';
 const MAX_LINE = 64 * 1024;
 const STOP_GRACE_MS = 3000;
+const ALIVE_MS = 100;
 
 function lostMessage(session, error) {
   if (session.hello) return session.hello.lost_message;
@@ -42,8 +42,6 @@ export function daemonBinary({ env = process.env, resources, fromSource, repo })
 
   return fromSource ? path.join(repo, 'hw', 'dist', DAEMON_FILE) : path.join(resources, 'hw', DAEMON_FILE);
 }
-
-const spawnDaemon = (binary, args) => spawn(binary, args, { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
 
 const parseLine = (line) => {
   if (line.length > MAX_LINE) return null;
@@ -86,7 +84,7 @@ export class RobotLink {
   constructor({
     binary,
     emit,
-    spawnFn = spawnDaemon,
+    spawnFn = null,
     tmpDir = os.tmpdir(),
     policyBytes = () => null,
     hornFor = emulatedHorn,
@@ -94,7 +92,7 @@ export class RobotLink {
     this.binary = binary;
     this.hornFor = hornFor;
     this.emit = emit;
-    this.spawnFn = spawnFn;
+    this.openPipe = spawnFn ? (options) => threadPipe({ ...options, spawnFn }) : workerPipe;
     this.tmpDir = tmpDir;
     this.policyBytes = policyBytes;
     this.policyRefs = [];
@@ -138,10 +136,8 @@ export class RobotLink {
 
     if (spec.units) fs.writeFileSync(path.join(artefacts, UNITS_FILE), unitsJson(spec.units));
 
-    const child = this.spawnFn(this.binary, daemonArgs(spec, artefacts));
     const session = {
       spec,
-      child,
       artefacts,
       calibration,
       hello: null,
@@ -151,20 +147,19 @@ export class RobotLink {
       stderr: '',
     };
 
-    session.pacer = new IntentPacer({
-      ids: spec.ids,
-      write: (cmd) => this.write(session, cmd),
-      measured: () => session.status,
-      calibration: () => session.calibration.joints,
-    });
     this.session = session;
-    child.stdin.on('error', () => {});
-    readline.createInterface({ input: child.stdout }).on('line', (line) => this.onLine(session, line));
-    child.stderr.on('data', (chunk) => {
-      session.stderr = `${session.stderr}${chunk}`.slice(-2000);
+    session.pipe = this.openPipe({
+      binary: this.binary,
+      args: daemonArgs(spec, artefacts),
+      on: {
+        line: (line) => this.onLine(session, line),
+        stderr: (chunk) => {
+          session.stderr = `${session.stderr}${chunk}`.slice(-2000);
+        },
+        exit: (error) => this.onExit(session, error),
+      },
     });
-    child.on('error', (err) => this.onExit(session, err.message));
-    child.on('exit', () => this.onExit(session, null));
+    session.aliveTimer = setInterval(() => session.pipe.alive(), ALIVE_MS);
     this.emit({ event: 'link', state: 'connected', spec });
 
     if (isServoFamily(spec)) this.emit({ event: 'calibration', joints: calibrationMounts(calibration) });
@@ -193,12 +188,13 @@ export class RobotLink {
   onMode(session, event) {
     session.mode = event.mode;
 
-    if (motorsRun(event.mode)) session.pacer.drive();
-    else session.pacer.idle();
+    if (motorsRun(event.mode))
+      session.pipe.drive(measuredRadians(session.status, session.spec.ids, session.calibration.joints));
+    else session.pipe.idle();
   }
 
   write(session, command) {
-    if (session.child.stdin.writable) session.child.stdin.write(`${JSON.stringify(command)}\n`);
+    session.pipe.write(command);
   }
 
   command(ask) {
@@ -210,7 +206,7 @@ export class RobotLink {
 
     if (!command) return UNDOCUMENTED;
 
-    if (command.cmd === 'intent') session.pacer.hold(command.joints);
+    if (command.cmd === 'intent') session.pipe.hold(command.joints);
     else this.write(session, command);
 
     return { ok: true };
@@ -277,9 +273,9 @@ export class RobotLink {
     if (!session) return { ok: true };
 
     session.asked = true;
-    session.pacer.stop();
-    session.child.stdin.end();
-    session.killTimer = setTimeout(() => session.child.kill(), STOP_GRACE_MS);
+    clearInterval(session.aliveTimer);
+    session.pipe.end();
+    session.killTimer = setTimeout(() => session.pipe.kill(), STOP_GRACE_MS);
 
     return { ok: true };
   }
@@ -288,7 +284,7 @@ export class RobotLink {
     if (this.session !== session) return;
 
     this.session = null;
-    session.pacer.stop();
+    clearInterval(session.aliveTimer);
     clearTimeout(session.killTimer);
     fs.rmSync(session.artefacts, { recursive: true, force: true });
 

@@ -31,13 +31,15 @@ export const ConsolePanel: React.FC<ConsolePanelProps> = ({ panel, ctx, arrangin
       data-testid="case-run-panel"
       data-panel={panel.id}
       data-kind={panel.kind}
-      className={`relative border-b border-white/[0.06] last:border-b-0 empty:hidden transition-opacity ${
+      className={`relative border-b border-white/[0.06] last:border-b-0 has-[>[data-panel-body]:empty]:hidden transition-opacity ${
         arranging?.dragging ? 'opacity-40' : ''
       }`}
     >
-      <ErrorBoundary region={panel.title || 'Panel'} className="flex-col py-[24px]">
-        <View panel={panel} ctx={ctx} />
-      </ErrorBoundary>
+      <div data-panel-body>
+        <ErrorBoundary region={panel.title || 'Panel'} className="flex-col py-[24px]">
+          <View panel={panel} ctx={ctx} />
+        </ErrorBoundary>
+      </div>
       {arranging && (
         <div
           data-testid="panel-grip"

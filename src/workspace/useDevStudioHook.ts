@@ -51,6 +51,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
       core.skeleton.drag({ ...step, phase: 'move' });
       core.skeleton.drag({ ...step, phase: 'end' });
     },
+    skeletonEditing: () => core.skeleton.editing,
     dropFiles: routeFiles,
     selection: () => core.selectedIds,
     selectFace: core.sketching.selectFace,

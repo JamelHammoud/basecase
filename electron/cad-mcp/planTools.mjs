@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { settledWrites } from './pendingWrites.mjs';
+import { readEvidenceText } from './robotTools.mjs';
 import { vec3 } from './schemas.mjs';
 import { bridge, fail, text } from './shared.mjs';
 
@@ -49,6 +50,48 @@ export const defineSkeleton = {
   handler: async (args) => {
     try {
       return text((await bridge('define_skeleton', args))?.text ?? '');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const skeletonFromMotion = {
+  name: 'skeleton_from_motion',
+  config: {
+    title: 'Fit a skeleton to a motion',
+    description:
+      'Fits the fewest revolute joints that replay a BVH motion clip (an attached evidence file, or a URL), and places them. Per limb it splits each ball joint into the axes it actually turns about, drops axes that move the limb’s end less than half of tolerance_mm (a bone left with none merges into its neighbour), then adds the rest one at a time, biggest mover first, until IK on the chain follows the end’s path through the whole clip within tolerance_mm. ' +
+      'Links scale to height_mm; each range is the clip’s span plus 10%. Then it picks a servo per joint (as size_actuators, with each joint’s peak speed and acceleration from the clip, so a fast joint gets a fast servo) and writes the skeleton as define_skeleton (replacing any) with one servo on each joint axis, as one undo step. ' +
+      'Returns each joint’s range, peak speed and acceleration, the servos with prices, and each limb’s worst miss. A limb no joint set follows within tolerance gives no skeleton and names the limb. ' +
+      'Call it first when a person shows or names a motion the robot must perform.',
+    inputSchema: {
+      file: z.string().optional().describe('Evidence path of a .bvh file'),
+      url: z.string().url().optional().describe('Or a link to one'),
+      name: z.string().max(40).optional(),
+      height_mm: z.number().min(50).max(3000).describe('How tall the robot stands, mm'),
+      tolerance_mm: z
+        .number()
+        .min(0.1)
+        .max(100)
+        .optional()
+        .describe('Largest miss allowed on any limb’s end; default 1% of the height'),
+      limbs: z
+        .array(z.string().max(60))
+        .max(20)
+        .optional()
+        .describe('Only fit these limbs, by the name of their last bone (e.g. "Right hand"); default all'),
+    },
+  },
+  handler: async ({ file, ...rest }) => {
+    try {
+      const evidence = readEvidenceText(file);
+
+      if (!evidence.found) return text(`${file}: not found. Call list_evidence for the exact paths.`);
+
+      if (!evidence.body && !rest.url) return text('Give file (an attached .bvh) or url.');
+
+      return text((await bridge('skeleton_from_motion', { ...rest, file, text: evidence.body }, 120000))?.text ?? '');
     } catch (err) {
       return fail(err);
     }

@@ -61,6 +61,8 @@ When the robot can't follow the performer to within 25 mm, a toast names the poi
 
 You can also choose **Import** in **File** or [[⌘K]] and pick the `.bvh` file.
 
+With no robot in the scene, the `.bvh` file opens **Design From Motion** instead, as in [Design a robot from a motion](/help/design-a-robot-from-a-motion).
+
 ## Play and edit an animation
 
 - Click play on an animation's row, and drag its timeline to scrub.

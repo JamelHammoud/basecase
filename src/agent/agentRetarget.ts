@@ -35,7 +35,7 @@ type Mocap = ReturnType<typeof parseBvh>;
 
 type Retargeted = Exclude<ReturnType<typeof retarget>, string>;
 
-async function bvhText(p: RetargetPayload): Promise<{ text: string } | { error: string }> {
+export async function bvhText(p: Pick<RetargetPayload, 'text' | 'url'>): Promise<{ text: string } | { error: string }> {
   if (p.text) return { text: p.text };
 
   if (!p.url) return { error: 'Give the BVH as an evidence path or a URL.' };
@@ -51,7 +51,7 @@ async function bvhText(p: RetargetPayload): Promise<{ text: string } | { error: 
   return text ? { text } : { error: 'Give the BVH as an evidence path or a URL.' };
 }
 
-function motionName(p: RetargetPayload): string {
+export function motionName(p: Pick<RetargetPayload, 'name' | 'file' | 'url'>): string {
   return (
     p.name ??
     (p.file ?? p.url ?? 'Motion')

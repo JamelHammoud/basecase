@@ -1,15 +1,18 @@
 import { useRef, useState } from 'react';
 import type { RobotAnimation } from '../types/robotics';
 import { buildGait } from '../utils/animation';
-import { parseBvh, type Mocap } from '../utils/mocap';
+import type { Mocap } from '../utils/mocap';
 import { detectFeet } from '../utils/usePosing';
 import { robotPartIds } from './selection';
 import type { WorkspaceCore } from './useWorkspaceCore';
-import { errorMessage } from '../utils/errorMessage';
+import { readBvhFile, type MotionDesign } from './useMotionDesign';
 
 const LEG_JOINT = /hip|knee|ankle|leg|haa|kfe/i;
 
-export function usePoseActions({ posing, parts, project, setSelectedIds, tool, showToast }: WorkspaceCore) {
+export function usePoseActions(
+  { posing, parts, project, setSelectedIds, tool, showToast }: WorkspaceCore,
+  design: Pick<MotionDesign, 'openFile'>,
+) {
   const { setMode } = tool;
   const { addAnimation, play } = posing;
   const motionInputRef = useRef<HTMLInputElement | null>(null);
@@ -64,18 +67,14 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
   const readMotionFile = async (file: File | undefined) => {
     if (!file) return;
 
-    const text = await file.text();
+    const read = await readBvhFile(file, showToast);
 
-    try {
-      setMotion(parseBvh(text, file.name.replace(/\.bvh$/i, '')));
-    } catch (err) {
-      showToast(`Couldn’t read ${file.name}. ${errorMessage(err)}`, { tone: 'error' });
-    }
+    if (read) setMotion(read.mocap);
   };
 
   const importMotionFile = (file: File) => {
     if (posing.hasRig) void readMotionFile(file);
-    else showToast('Add joints to retarget motion onto');
+    else design.openFile(file);
   };
 
   const createAnimation = (anim: RobotAnimation, summary: string) => {

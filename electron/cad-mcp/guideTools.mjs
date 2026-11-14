@@ -31,6 +31,7 @@ const TOOL_GUIDES = {
   pose: ['motion'],
   animate: ['motion'],
   retarget_motion: ['motion'],
+  skeleton_from_motion: ['motion'],
   simulate: ['simulation'],
   set_world: ['simulation'],
   create_case: ['simulation'],

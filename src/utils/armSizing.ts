@@ -40,8 +40,9 @@ export const REACH_MM = 2;
 const LINK_G = 15;
 const LINK_G_PER_MM = 0.35;
 const FLANGE_G = 15;
-const BASE_G = 150;
 const SERVO_G = 55;
+
+export const BASE_G = 150;
 
 const DEG = 180 / Math.PI;
 
@@ -61,9 +62,10 @@ export function facingYaw(base: ZUpVec, targets: ZUpVec[]): number {
   return Math.round(bearings[widest] + arc / 2 + 90);
 }
 
-const linkGrams = (mm: number) => Math.round(LINK_G + LINK_G_PER_MM * mm);
+export const linkGrams = (mm: number) => Math.round(LINK_G + LINK_G_PER_MM * mm);
 
-const servoGrams = (key?: string) => (key && componentWeightG(key.split('|')[0].replace(/^component:/, ''))) || SERVO_G;
+export const servoGrams = (key?: string) =>
+  (key && componentWeightG(key.split('|')[0].replace(/^component:/, ''))) || SERVO_G;
 
 export function armPayload(shape: ArmShape, payloadG: number, actuators: string[] = []): SkeletonPayload {
   const options = { ...shape, servos: actuators };

@@ -32,6 +32,7 @@ export interface SizingJoint {
   servos: number;
   currentG: number;
   riders: string[];
+  speedRpm?: number;
 }
 
 export interface SizingInput {
@@ -102,10 +103,17 @@ export function rails(power = powerOptions()): Rail[] {
 
 const RANK = { pass: 0, warn: 1, fail: 2 };
 
-export function ratingFor(j: Pick<SizingJoint, 'servos'>, act: ActuatorSpec, volts?: number) {
-  const rating = ratingAt(act, volts);
+function speedShare(speedRpm: number | undefined, rpm: number | undefined): number {
+  if (!speedRpm) return 1;
 
-  return { ...rating, stallNm: rating.stallNm * j.servos, ratedNm: rating.ratedNm * j.servos };
+  return rpm ? Math.max(0, 1 - speedRpm / rpm) : 0;
+}
+
+export function ratingFor(j: Pick<SizingJoint, 'servos' | 'speedRpm'>, act: ActuatorSpec, volts?: number) {
+  const rating = ratingAt(act, volts);
+  const share = speedShare(j.speedRpm, rating.rpm);
+
+  return { ...rating, stallNm: rating.stallNm * j.servos * share, ratedNm: rating.ratedNm * j.servos };
 }
 
 export interface JointVerdict extends LoadVerdict {

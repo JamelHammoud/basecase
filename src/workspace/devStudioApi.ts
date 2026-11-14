@@ -63,6 +63,7 @@ export interface DevActions {
   clear: () => void;
   select: (ids: string[]) => void;
   dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => void;
+  skeletonEditing: () => boolean;
   dropFiles: (files: File[]) => void;
   selection: () => string[];
   selectFace: (partId: string, normal: [number, number, number]) => void;
@@ -255,6 +256,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     clear: () => devRef.current.clear(),
     select: (ids: string[]) => devRef.current.select(ids),
     dragSkeleton: (step: Omit<JointDragStep, 'phase'>) => devRef.current.dragSkeleton(step),
+    skeletonEditing: () => devRef.current.skeletonEditing(),
     dropFiles: (files: Array<{ name: string; base64: string }>) =>
       devRef.current.dropFiles(files.map((f) => new File([new Uint8Array(base64ToBytes(f.base64))], f.name))),
     selection: () => devRef.current.selection(),

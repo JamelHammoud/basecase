@@ -53,6 +53,11 @@ export function parseBvh(text: string, name = 'Motion'): Mocap {
 
       return root.getWorldQuaternion(new THREE.Quaternion());
     },
+    turns: (t) => {
+      setTime(t);
+
+      return new Map(bones.map((b) => [b.name, b.quaternion.clone()]));
+    },
     rest,
     root: root.name,
     parentOf,

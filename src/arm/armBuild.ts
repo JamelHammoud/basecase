@@ -59,7 +59,7 @@ function roughBox(code: string): Box {
   ];
 }
 
-function uniqueIds(ids: string[], taken: ReadonlySet<string>): Map<string, string> {
+export function uniqueIds(ids: string[], taken: ReadonlySet<string>): Map<string, string> {
   const used = new Set(taken);
 
   return new Map(

@@ -142,6 +142,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `build_guide` | Writes the printable assembly guide |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
 | `size_arm` | Sizes and places an arm from the points it must reach and the grams it carries |
+| `skeleton_from_motion` | Fits the fewest joints that replay a BVH clip, with a servo on each |
 | `sweep_design` | Tries a value on copies, without changing the scene |
 
 With Claude Code, the agent can also start part designers, which are smaller agents that each model one subassembly. Every agent can also search the web, and Claude Code and Gemini CLI keep a to-do list.

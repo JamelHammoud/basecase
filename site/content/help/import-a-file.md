@@ -69,7 +69,7 @@ An SVG opens the Import SVG panel with the drawing loaded. Set its width and thi
 
 A URDF, MJCF or zip, such as an exported Robot Package, comes in as a robot with its joints.
 
-A BVH motion file opens the retarget sheet for the selected robot. Images become reference images, and a `.basecase` file opens in a new tab.
+A BVH motion file opens the retarget sheet for the selected robot. With no robot in the scene, it opens [Design From Motion](/help/design-a-robot-from-a-motion) instead. Images become reference images, and a `.basecase` file opens in a new tab.
 
 Import is also in File ▸ Import and in [[⌘K]]. Dropping files on the canvas does the same, at the spot where you drop them. A dropped `.mid` file plays in a Case's tries instead, as in [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 

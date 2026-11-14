@@ -177,3 +177,24 @@ export function skeletonSizing(skeleton: RobotSkeleton): SizingInput | string {
 
   return { joints, totalG };
 }
+
+export function jointInertia(skeleton: RobotSkeleton): Map<string, number> {
+  const masses = pointMasses(skeleton, skeleton.massG ?? 0);
+
+  return new Map(
+    skeleton.joints.map((j) => {
+      const ids = new Set([j.id, ...descendants(skeleton, j.id)]);
+      const axis = norm(j.axis);
+      const kgM2 = masses
+        .filter((m) => ids.has(m.joint))
+        .reduce((s, m) => {
+          const d = diff(m.at, j.origin);
+          const along = dot(d, axis);
+
+          return s + ((m.g / 1000) * Math.max(0, dot(d, d) - along * along)) / 1e6;
+        }, 0);
+
+      return [j.id, kgM2];
+    }),
+  );
+}

@@ -59,6 +59,8 @@ import { synthesizeLinkageRequest, type LinkagePayload } from '../linkage/agentL
 import { synthesizeInWorker } from '../linkage/linkageClient';
 import { sizeArmRequest, type ArmPayload } from '../arm/agentArm';
 import { sizeArmInWorker } from '../arm/armSizingClient';
+import { skeletonFromMotionRequest, type MotionPayload } from '../fromMotion/agentMotion';
+import { fitMotionInWorker } from '../fromMotion/motionFitClient';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { RobotSkeleton } from '../types/skeleton';
 import { newId } from './helpers';
@@ -351,6 +353,16 @@ const HANDLERS: Record<string, Handler> = {
       skeleton: () => ctx.project().skeleton,
       place: ctx.commitSkeleton,
       links: !IS_WEB_DEMO,
+    });
+  },
+  skeleton_from_motion: (payload, ctx) => {
+    ctx.setAction('Fitting a skeleton to the motion');
+
+    return skeletonFromMotionRequest(payload as MotionPayload, {
+      solve: fitMotionInWorker,
+      parts: ctx.parts,
+      skeleton: () => ctx.project().skeleton,
+      place: ctx.commitSkeleton,
     });
   },
   sweep_design: (payload, ctx) => {

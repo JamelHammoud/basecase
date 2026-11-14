@@ -21,10 +21,14 @@ const robotOf = (id: string) => {
 
 const room = readRoomPlan(JSON.stringify(fixtureRoom()), 'Fixture Flat.json');
 
-const withTableBeside = () => ({
+const LOW_TABLE_TOP_MM = 400;
+
+const withLowTableBeside = () => ({
   ...room,
   objects: room.objects.map((o) =>
-    o.name === 'Table' ? { ...o, position: [FIXTURE_START_MM[0], o.position[1], FIXTURE_START_MM[2] + 600] as V3 } : o,
+    o.name === 'Table'
+      ? { ...o, position: [FIXTURE_START_MM[0], LOW_TABLE_TOP_MM - o.size[1] / 2, FIXTURE_START_MM[2] + 600] as V3 }
+      : o,
   ),
 });
 
@@ -48,7 +52,7 @@ describe('a room world', () => {
     expect(['reach', 'push', 'path'].map((g) => offered(g as 'reach'))).toEqual([true, true, true]);
     expect(offered('walk')).toBe(false);
     expect(offered('touch', arm)).toBe(false);
-    expect(tableInReach(withTableBeside(), arm)).toBe(true);
+    expect(tableInReach(withLowTableBeside(), arm)).toBe(true);
   });
 
   it('starts the robot on the open floor nearest the middle of the room', () => {
@@ -65,7 +69,7 @@ describe('a room world', () => {
     expect(kase.name).toBe('Reach a Spot in Fixture Flat');
     expect(kase.slot!.reachMm).toBeUndefined();
     expect(scaledToReach(kase, 420, [0, 50, 0])).toBe(kase);
-    expect(wall.size.map(Math.round)).toEqual([1200, 750, 800]);
+    expect(wall.size.map(Math.round)).toEqual([1200, 40, 800]);
     expect(kase.reference.timeline.map((c) => c.target)).toEqual([
       [rover.pivot[0], rover.pivot[1], rover.pivot[2] + 2000],
     ]);

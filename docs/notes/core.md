@@ -252,7 +252,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - Silhouette: photo segmented by flood-filling a plain background from the border; the model render is white-on-black. Both reduce to span width per tenth of height as a fraction of height (scale-free).
 - Image tracing: radial outer boundary in 48 angular sectors around the centroid gives a watertight, self-intersection-free contour; Ramer–Douglas–Peucker simplification; background from the corners; flood-fill exterior from the border, remaining unvisited 0-pixels inside the bbox are holes (up to 6); nearly empty/full-frame photos fall back to a chamfered octagon plate; image Y is flipped.
 - SVG: Y is inverted (SVG Y points down); shapes are normalized into [−0.5, 0.5] of the whole SVG bounding box so multi-path SVGs stay aligned; `fill="none"` paths are skipped unless they are the only paths (stroked-only fallback).
-- Key specs: torque shown as the load held on a 10 cm arm (19.5 kg·cm → "Up to 2 kg at 10 cm"); the torque regex skips constants like "Kt 0.055 N·m/A".
+- Key specs: torque shown as the load held on a 10 cm arm (19.5 kg·cm → "Up to 1.95 kg at 10 cm", read through `weight`); the torque regex skips constants like "Kt 0.055 N·m/A".
 - Reference images are downscaled to JPEG (quality 0.86 default) to keep agent payloads small. Claude reads images at up to 1568 px; larger only costs time.
 
 ## utils/evidenceFiles, platformBridge, misc

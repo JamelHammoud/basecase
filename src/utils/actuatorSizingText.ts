@@ -2,6 +2,7 @@ import type { ActuatorBus } from '../data/components';
 import { formatMoney as money, formatWhole as whole } from './currencyStore';
 import { loadCut, type Family, type Fit, type JointLoads, type JointPick } from './actuatorSizing';
 import { plural } from '../../electron/plural.mjs';
+import { weight } from './weight';
 
 const BUS_NAMES: Record<ActuatorBus, string> = {
   feetech: 'Feetech serial bus',
@@ -76,7 +77,7 @@ function cutLine(p: JointPick, f: Family, totalG: number): string {
   const stance = cut.kind === 'stance';
   const ways = [
     cut.leverMm ? `shorten the leg segment under it by ${Math.ceil(cut.leverMm)} mm` : '',
-    `carry ${Math.ceil(cut.grams)} g less${stance ? ' in the whole robot' : ' beyond it'}`,
+    `carry ${weight(Math.ceil(cut.grams))} less${stance ? ' in the whole robot' : ' beyond it'}`,
   ].filter(Boolean);
 
   return `- ${p.joint.name}: needs ${cut.loadNm.toFixed(2)} N·m ${stance ? 'in stance' : 'holding'}; the strongest, ${p.strongest.option.name}, passes if that drops ${Math.round((1 - cut.shareKept) * 100)}%: ${ways.join(', or ')}`;

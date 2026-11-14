@@ -3,9 +3,9 @@ import type { CheckContext, CheckRow, EngineeringReport } from './engineeringTyp
 import type { V3 } from './engineeringMath';
 import type { RobotJoint } from '../types/robotics';
 import { wiringText } from '../wiring/wiringText';
+import { weight } from './weight';
 
 export const nm = (v: number) => v.toFixed(2);
-export const fmtG = (g: number) => (g >= 1000 ? `${(g / 1000).toFixed(2)} kg` : `${Math.round(g)} g`);
 export const deg = (v: number) => `${Math.round(v) < 0 ? '−' : ''}${Math.abs(Math.round(v))}°`;
 export const jointLabel = (j: RobotJoint) => prettyJointName(j.name);
 export const partLabel = (ctx: CheckContext, id: string) =>
@@ -31,7 +31,7 @@ function jointTextLine(l: EngineeringReport['joints'][number], toAgent: (v: V3) 
   const load = l.kind === 'stance' ? `stance load ${nm(l.loadNm)}` : `holding load ${nm(l.loadNm)}`;
 
   return (
-    `- ${l.joint.id} ${l.joint.name}: carries ${fmtG(l.massG)}; hold ${nm(l.swingNm)}, stance as modeled ${nm(l.stanceNm)}${crouch} → ${load} N·m` +
+    `- ${l.joint.id} ${l.joint.name}: carries ${weight(l.massG)}; hold ${nm(l.swingNm)}, stance as modeled ${nm(l.stanceNm)}${crouch} → ${load} N·m` +
     jointLimits(l) +
     ` · axis through [${o.join(', ')}]`
   );

@@ -32,7 +32,7 @@ covers:
 
 The Weight check adds up every part of the robot and finds its center of mass, which servo torque and standing stability both build on.
 
-Click **Weight** under **Checks** in the Build tab to see the total in grams and how high the center of mass sits above the floor.
+Click **Weight** under **Checks** in the Build tab to see the robot's total weight and how high the center of mass sits above the floor.
 
 ## Where each part's weight comes from
 
@@ -49,7 +49,7 @@ Click **Weight** under **Checks** in the Build tab to see the total in grams and
 
 Printed parts start as PLA at 15% infill; change both in Print mode. Cutouts, guides and reference images weigh nothing.
 
-Weight never fails. It warns when any part is an estimate, with how many and how many grams, so you know how far to trust the total.
+Weight never fails. It warns when any part is an estimate, with how many and what they weigh, so you know how far to trust the total.
 
 ## Which parts are the robot
 

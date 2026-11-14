@@ -1,6 +1,6 @@
 import { classifyRobot } from '../sim/morphology';
 import type { RobotJoint } from '../types/robotics';
-import { fmtG } from './engineeringFormat';
+import { weight } from './weight';
 import { boxCorners, sub, type V3 } from './engineeringMath';
 import { downstreamOf, massOf } from './engineeringMass';
 import { jointRating } from './engineeringTorque';
@@ -106,7 +106,7 @@ function dotsOf(map: PayloadMap): CheckDot[] {
 }
 
 const payloadText = (map: PayloadMap) =>
-  `${fmtG(map.fullReachKg * 1000)} at full reach, ${fmtG(map.closeInKg * 1000)} close in`;
+  `${weight(map.fullReachKg * 1000)} at full reach, ${weight(map.closeInKg * 1000)} close in`;
 
 export function payloadRows(ctx: CheckContext, volts?: number): CheckRow[] {
   const rig = buildRig(ctx.joints, ctx.parts);

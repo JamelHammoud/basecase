@@ -297,8 +297,8 @@ describe('Multiply on a try whose code changes the world', () => {
     for (const seed of seeds) {
       const offsets = worldOffsets(source.kase, seed);
 
-      expect(offsets.get('lit')).toEqual([0, 0, 0]);
-      expect(offsets.get('spot0')?.some((x) => x !== 0)).toBe(true);
+      expect(offsets.get('lit')).toEqual({ move: [0, 0, 0], turnDeg: 0 });
+      expect(offsets.get('spot0')?.move.some((x) => x !== 0)).toBe(true);
       expect(shiftedCommands(source, offsets)).toEqual(source.recording.commands);
     }
 

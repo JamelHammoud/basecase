@@ -10,6 +10,7 @@ import { commentOnIssue, createIssue, issues } from './lib/github.mjs';
 import { firstLine, isBad, LOAD_CHECK, markBad } from './lib/homeGuard.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS, LOOP_DIR } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
+import { quietRequested } from '../quiet/quiet.mjs';
 import { CODEX_EFFORT, CODEX_MODEL } from './lib/codex.mjs';
 import {
   codexPause,
@@ -226,9 +227,14 @@ function announcePause(error) {
     );
 }
 
+const KEEPS_RUNNING_FOR_GATES = new Set(['merge', 'nightly', 'health', 'tidy']);
+
+const gateHold = () =>
+  !KEEPS_RUNNING_FOR_GATES.has(lane) && quietRequested() ? 'a Gatekeeper timed check needs a quiet machine' : null;
+
 async function runOnce() {
   const { default: runLane, schedule } = await laneModule(lane);
-  const held = PRODUCERS.has(lane) ? backpressure(flowCounts(), lane) : null;
+  const held = gateHold() ?? (PRODUCERS.has(lane) ? backpressure(flowCounts(), lane) : null);
 
   if (held) log(`waiting: ${held}`);
   else if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });

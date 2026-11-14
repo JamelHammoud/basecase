@@ -120,7 +120,7 @@ describe('start_drive', () => {
     );
 
     expect(seen.map((c) => c.kind)).toEqual(['policy']);
-    expect(reply.text).toMatch(/^Drove 1\.0 s as a walker/);
+    expect(reply.text).toMatch(/^Drove 1 s as a walker/);
   });
 
   it('reports the end effector of an arm in the agent frame', async () => {

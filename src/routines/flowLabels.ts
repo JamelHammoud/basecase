@@ -1,4 +1,4 @@
-import { describeCondition } from './explainGraph';
+import { describeCondition, span } from './explainGraph';
 import type { FlowNode } from './flowTypes';
 import { findNode } from './nodes';
 import type { Condition, Motion } from './schema';
@@ -28,12 +28,6 @@ const capitalised = (text: string) => text.charAt(0).toUpperCase() + text.slice(
 const quoted = (text: unknown) => `“${String(text ?? '')}”`;
 const rounded = (n: number) => Math.round(n * 100) / 100;
 
-export function seconds(ms: number): string {
-  if (ms >= 60_000) return `${rounded(ms / 60_000)} min`;
-
-  return `${rounded(ms / 1000)} s`;
-}
-
 const sentence = (cond: unknown) => capitalised(describeCondition(cond as Condition));
 const modelLabel = (d: Data) => findNode(String(d.model))?.label ?? String(d.model);
 
@@ -59,7 +53,7 @@ function motionLabel(d: Data): NodeLabel | null {
 }
 
 const TEXT: Record<string, (d: Data) => string> = {
-  base: (d) => `${capitalised(words(String(d.skill)))} for ${seconds(Number(d.timeoutMs ?? 0))}`,
+  base: (d) => `${capitalised(words(String(d.skill)))} for ${span(Number(d.timeoutMs ?? 0))}`,
   do: (d) => capitalised(words(String(d.skill))),
   say: (d) => quoted(d.text),
   infer: modelLabel,
@@ -67,7 +61,7 @@ const TEXT: Record<string, (d: Data) => string> = {
   ask: (d) => quoted(d.prompt),
   if: (d) => sentence(d.test),
   reaction: (d) => sentence(d.when),
-  wait: (d) => (d.until ? sentence(d.until) : seconds(Number(d.ms ?? 0))),
+  wait: (d) => (d.until ? sentence(d.until) : span(Number(d.ms ?? 0))),
   together: (d) => (d.join === 'any' ? 'First to finish' : 'All at once'),
 };
 

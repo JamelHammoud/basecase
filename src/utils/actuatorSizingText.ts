@@ -4,6 +4,7 @@ import { loadCut, type Family, type Fit, type JointLoads, type JointPick } from 
 import { plural } from '../../electron/plural.mjs';
 import { weight } from './weight';
 import { percent } from '../../electron/percent.mjs';
+import { torque } from './torque';
 
 const BUS_NAMES: Record<ActuatorBus, string> = {
   feetech: 'Feetech serial bus',
@@ -41,9 +42,9 @@ function familyHeader(f: Family): string {
 }
 
 function loadWords(loads: JointLoads): string {
-  const hold = `${loads.holdNm.toFixed(2)} N·m holding`;
+  const hold = `${torque(loads.holdNm)} holding`;
 
-  return loads.stanceNm === undefined ? hold : `${loads.stanceNm.toFixed(2)} N·m in stance, ${hold}`;
+  return loads.stanceNm === undefined ? hold : `${torque(loads.stanceNm)} in stance, ${hold}`;
 }
 
 function groupKey(p: JointPick): string {
@@ -81,7 +82,7 @@ function cutLine(p: JointPick, f: Family, totalG: number): string {
     `carry ${weight(Math.ceil(cut.grams))} less${stance ? ' in the whole robot' : ' beyond it'}`,
   ].filter(Boolean);
 
-  return `- ${p.joint.name}: needs ${cut.loadNm.toFixed(2)} N·m ${stance ? 'in stance' : 'holding'}; the strongest, ${p.strongest.option.name}, passes if that drops ${percent(1 - cut.shareKept)}: ${ways.join(', or ')}`;
+  return `- ${p.joint.name}: needs ${torque(cut.loadNm)} ${stance ? 'in stance' : 'holding'}; the strongest, ${p.strongest.option.name}, passes if that drops ${percent(1 - cut.shareKept)}: ${ways.join(', or ')}`;
 }
 
 function alternativeLine(f: Family): string {

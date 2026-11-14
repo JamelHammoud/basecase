@@ -14,7 +14,6 @@ import {
   MoveIcon,
   PenIcon,
   PlusIcon,
-  PhotoAddIcon,
   PhotoIcon,
   PoseIcon,
   PrinterIcon,
@@ -167,7 +166,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
 }
 
 function createCommands({ core, actions, ui }: CommandInputs): Command[] {
-  const { studio, tool } = core;
+  const { studio } = core;
 
   return [
     {
@@ -194,22 +193,6 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       icon: <PenIcon className={ic} />,
       keywords: 'draw extrude revolve outline face dimension constraint',
       run: core.sketching.open,
-    },
-    {
-      id: 'image',
-      group: 'Scene',
-      label: 'Model from Image',
-      icon: <PhotoAddIcon className={ic} />,
-      keywords: 'photo sketch agent ai',
-      run: tool.requestAttach,
-    },
-    {
-      id: 'agent-sketch',
-      group: 'Scene',
-      label: 'Sketch for Agent',
-      icon: <PenIcon className={ic} />,
-      keywords: 'draw drawing reference composer ai',
-      run: tool.requestSketch,
     },
   ];
 }

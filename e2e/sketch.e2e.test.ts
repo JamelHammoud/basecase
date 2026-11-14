@@ -42,7 +42,7 @@ const isFullyRound = (button: Locator) =>
 
 const openFromAttach = async () => {
   await app.page.locator(visible('button[aria-label="Attach"]')).click();
-  await app.page.getByRole('menuitem', { name: 'Sketch' }).click();
+  await app.page.getByRole('menuitem', { name: 'Attach Sketch' }).click();
 };
 
 const drawLine = async (fromX: number, toX: number) => {
@@ -68,7 +68,7 @@ afterAll(async () => {
 describe('sketch in the composer', () => {
   it('opens from the palette even when the Agent tab was never opened', async () => {
     await app.page.keyboard.press('Meta+k');
-    await app.page.keyboard.type('Sketch for Agent');
+    await app.page.keyboard.type('Attach Sketch');
     await app.page.keyboard.press('Enter');
 
     await expect.poll(() => pad().count()).toBe(1);

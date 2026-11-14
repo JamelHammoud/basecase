@@ -13,7 +13,6 @@ export interface LibraryPanelProps {
   onDeleteModel: (model: CustomModelDefinition) => void;
   onSaveModel: (mode: 'selected' | 'all') => void;
   onImport: () => void;
-  onImageToModel: () => void;
 }
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };

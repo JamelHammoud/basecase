@@ -72,12 +72,19 @@ describe('Made by a Service', () => {
   const bom = () => app.page.locator(visible('section'), { hasText: /^Bill of materials/ }).first();
   const group = (name: string) =>
     bom().locator(visible('button[aria-expanded]'), { hasText: new RegExp(`^${name}\\d`) });
+  const budgetRow = () =>
+    app.page
+      .locator(visible('section'), { hasText: /^Checks/ })
+      .first()
+      .locator('li[data-check="Budget"]');
   const budgetTotal = async () => {
-    const text =
-      (await app.page
-        .locator(visible('section'), { hasText: /^Checks/ })
-        .first()
-        .textContent()) ?? '';
+    const toggle = budgetRow()
+      .getByRole('button', { name: /^Budget/ })
+      .first();
+
+    if ((await toggle.count()) && (await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+
+    const text = (await budgetRow().textContent()) ?? '';
 
     return Number(/BOM ≈ \D*([\d,]+) of/.exec(text)?.[1]?.replace(/,/g, '') ?? NaN);
   };

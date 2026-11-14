@@ -34,7 +34,6 @@ export const SizeArmSheet: React.FC<{
         </ul>
         <FieldRow label="Payload">
           <NumberInput
-            aria-label="Payload"
             value={payload}
             min={0}
             max={5000}

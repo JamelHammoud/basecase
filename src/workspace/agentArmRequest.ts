@@ -1,6 +1,6 @@
 import type { ZUpVec } from '../types/skeleton';
 import { armParts } from '../utils/armParts';
-import type { ArmSizing, SizedArm } from '../utils/armSizing';
+import { ARM_GEOMETRY, type ArmSizing, type SizedArm } from '../utils/armSizing';
 import { sizeArmInWorker } from '../utils/armSizingClient';
 import { formatMoney as money, formatWhole as whole } from '../utils/currencyStore';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -12,11 +12,22 @@ type Payload = Record<string, unknown>;
 
 const point = (v: ZUpVec) => `[${v.map((n) => Math.round(n)).join(', ')}]`;
 
-function failureText(result: Exclude<ArmSizing, { ok: true }>, targets: ZUpVec[], payloadG: number): string {
-  if (result.reason === 'reach')
-    return `Target ${result.target + 1} ${point(targets[result.target])} is out of reach: ${result.distanceMm} mm from the base. No arm placed.`;
+function reachText(result: Exclude<ArmSizing, { ok: true } | { reason: 'load' }>): string {
+  const { toolSideMm, yaw } = ARM_GEOMETRY;
 
-  return `No servo in the STS3215 case holds the ${result.joint.toLowerCase()} with ${payloadG} g at the wrist. No arm placed.`;
+  if (result.reason === 'near') return `is within ${toolSideMm} mm of the base axis: move it out from the base`;
+
+  if (result.reason === 'spread')
+    return `is past the base yaw range from the other targets: keep every target within ${yaw[1] - yaw[0]}° around the base`;
+
+  return `is out of reach: ${result.distanceMm} mm from the base`;
+}
+
+function failureText(result: Exclude<ArmSizing, { ok: true }>, targets: ZUpVec[], payloadG: number): string {
+  if (result.reason === 'load')
+    return `No servo in the STS3215 case holds the ${result.joint.toLowerCase()} with ${payloadG} g at the wrist. No arm placed.`;
+
+  return `Target ${result.target + 1} ${point(targets[result.target])} ${reachText(result)}. No arm placed.`;
 }
 
 function closingHint(links: boolean): string {

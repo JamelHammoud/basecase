@@ -70,7 +70,11 @@ export interface SizedArm {
 export type ArmSizing =
   | { ok: true; arm: SizedArm }
   | { ok: false; reason: 'reach'; target: number; distanceMm: number }
+  | { ok: false; reason: 'near'; target: number }
+  | { ok: false; reason: 'spread'; target: number }
   | { ok: false; reason: 'load'; joint: string };
+
+type ArmFailure = Exclude<ArmSizing, { ok: true }>;
 
 type PartPose = { position: number[]; rotation: number[] };
 
@@ -158,25 +162,45 @@ const maxRiserReach = (o: PlaneTarget) => {
   return lo <= 2 * ARM_LINK.max;
 };
 
-function farthest(base: ZUpVec, targets: ZUpVec[]) {
-  const dist = targets.map((t) => Math.hypot(t[0] - base[0], t[1] - base[1], t[2] - base[2]));
-  const target = dist.indexOf(Math.max(...dist));
+function outOfReach(base: ZUpVec, targets: ZUpVec[], target: number): ArmFailure {
+  const [x, y, z] = targets[target];
 
-  return { ok: false as const, reason: 'reach' as const, target, distanceMm: Math.round(dist[target]) };
+  return {
+    ok: false,
+    reason: 'reach',
+    target,
+    distanceMm: Math.round(Math.hypot(x - base[0], y - base[1], z - base[2])),
+  };
 }
 
-function shortestShape(options: PlaneTarget[][]): ArmShape | null {
+const nearAxis = (base: ZUpVec, t: ZUpVec) => Math.hypot(t[0] - base[0], t[1] - base[1]) < ARM_GEOMETRY.toolSideMm;
+
+function unreachable(base: ZUpVec, targets: ZUpVec[], options: PlaneTarget[][]): ArmFailure | null {
+  const near = targets.findIndex((t) => nearAxis(base, t));
+
+  if (near >= 0) return { ok: false, reason: 'near', target: near };
+
+  const spread = options.findIndex((o) => !o.length);
+
+  if (spread >= 0) return { ok: false, reason: 'spread', target: spread };
+
+  const far = options.findIndex((o) => !o.some(maxRiserReach));
+
+  return far >= 0 ? outOfReach(base, targets, far) : null;
+}
+
+function shortestShape(options: PlaneTarget[][]): { shape: ArmShape } | { miss: number } {
   let order = options.map((_, i) => i);
 
   for (const shape of armShapes()) {
     const miss = order.find((i) => !poseFor(options[i], shape));
 
-    if (miss === undefined) return shape;
+    if (miss === undefined) return { shape };
 
     order = [miss, ...order.filter((i) => i !== miss)];
   }
 
-  return null;
+  return { miss: order[0] };
 }
 
 const massOf = (shape: ArmShape) =>
@@ -284,13 +308,19 @@ export function armTargets(input: ArmSizingInput) {
 export function sizeArm(input: ArmSizingInput): ArmSizing {
   const { base, targets, heading, options } = armTargets(input);
 
-  if (options.some((o) => !o.length || !o.some(maxRiserReach))) return farthest(base, targets);
+  const blocked = unreachable(base, targets, options);
 
-  const shape = shortestShape(options);
+  if (blocked) return blocked;
 
-  if (!shape) return farthest(base, targets);
+  const found = shortestShape(options);
 
-  const sized = sizedArm({ base, heading, shape, options }, { ...input, targets });
+  if ('miss' in found) return outOfReach(base, targets, found.miss);
 
-  return sized.ok && sized.arm.errorsMm.some((e) => e > REACH_MM) ? farthest(base, targets) : sized;
+  const sized = sizedArm({ base, heading, shape: found.shape, options }, { ...input, targets });
+
+  if (!sized.ok) return sized;
+
+  const worst = sized.arm.errorsMm.findIndex((e) => e > REACH_MM);
+
+  return worst >= 0 ? outOfReach(base, targets, worst) : sized;
 }

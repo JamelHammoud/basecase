@@ -20,9 +20,15 @@ export function armTargetsOf(parts: ScenePart[]): ArmTarget[] {
   return guides.map((p) => ({ id: p.id, name: p.name, at: toCad(p.position).map(r1) as ZUpVec }));
 }
 
-export function armFailure(result: Exclude<ArmSizing, { ok: true }>, targets: ArmTarget[], payloadG: number): string {
-  if (result.reason === 'reach')
-    return `${targets[result.target]?.name ?? 'A target'} is out of reach. Move it closer to the scene origin.`;
+const REACH_FIX = {
+  reach: 'is out of reach. Move it closer to the scene origin.',
+  near: 'is too close to the base. Move it away from the scene origin.',
+  spread: "is outside the base's turn. Move every target to one side of the scene origin.",
+};
 
-  return `No servo holds the ${result.joint.toLowerCase()} at ${payloadG} g. Lower the payload.`;
+export function armFailure(result: Exclude<ArmSizing, { ok: true }>, targets: ArmTarget[], payloadG: number): string {
+  if (result.reason === 'load')
+    return `No servo holds the ${result.joint.toLowerCase()} at ${payloadG} g. Lower the payload.`;
+
+  return `${targets[result.target]?.name ?? 'A target'} ${REACH_FIX[result.reason]}`;
 }

@@ -105,6 +105,14 @@ describe('sizeArm', () => {
     });
   });
 
+  it('names the target that fails, not a reachable one beside it, with its own reason', () => {
+    const fail = (targets: ZUpVec[]) => sizeArm({ targets, payloadG: 200 });
+
+    expect(fail([DESK[0], [0, -3, 50]])).toEqual({ ok: false, reason: 'near', target: 1 });
+    expect(fail([DESK[0], [0, 260, 0]])).toEqual({ ok: false, reason: 'spread', target: 0 });
+    expect(fail([[0, -2000, 100], DESK[1]])).toMatchObject({ reason: 'reach', target: 0 });
+  });
+
   it('gives the same arm for the same input', () => {
     expect(sized(DESK, 200)).toEqual(arm);
   });

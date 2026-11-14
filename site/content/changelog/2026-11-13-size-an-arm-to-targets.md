@@ -6,7 +6,7 @@ image: /changelog/size-an-arm-to-targets/cover.png
 
 You can now size a desk arm from the points its wrist must reach and the weight it carries. You get its link lengths and a servo for each joint.
 
-Select up to 8 Guide parts and run Size Arm to Targets from ⌘K or the right-click menu. Enter the payload in grams, and the arm appears as one undo step.
+Size Arm to Targets is in ⌘K and the right-click menu when Guide parts are selected.
 
 A first arm starts from its jobs: reach the desk, the shelf and the bin, carrying 200 g. Hobby arms like the SO-101 come in one size, so the choice was guessing link lengths or asking the agent.
 

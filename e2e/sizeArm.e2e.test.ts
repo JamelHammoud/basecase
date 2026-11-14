@@ -5,7 +5,7 @@ import type { ProjectSettings, ScenePart } from '../src/types/robotics';
 import type { ZUpVec } from '../src/types/skeleton';
 import { reachTargets, REACH_MM } from '../src/utils/armReach';
 import { buildBom } from '../src/utils/bom';
-import { openApp, shown, type App } from './harness';
+import { openApp, type App } from './harness';
 
 interface StudioHook {
   load: (record: { parts: ScenePart[]; project: ProjectSettings }) => void;
@@ -60,11 +60,10 @@ describe('Size Arm to Targets', () => {
     await app.page.keyboard.type('Size Arm to Targets');
     await app.page.keyboard.press('Enter');
 
-    const payload = app.page.locator(shown('input[aria-label="Payload"]'));
+    const payload = app.page.getByLabel('Payload', { exact: true });
 
     await expect.poll(() => payload.isVisible(), { timeout: 20000 }).toBe(true);
     await payload.fill('200');
-    await payload.press('Enter');
     await app.page.getByRole('button', { name: 'Size Arm', exact: true }).click();
 
     await expect.poll(async () => (await record()).project.skeleton?.joints.length ?? 0, { timeout: 30000 }).toBe(4);

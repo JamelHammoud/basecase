@@ -210,7 +210,7 @@ const libraryBridge = {
   listModels: (): Promise<CustomModelDefinition[]> => electron()?.listModels() ?? get('/models'),
   saveModel: (model: CustomModelDefinition): Promise<CustomModelDefinition> =>
     electron()?.saveModel(model) ?? post('/save-model', model),
-  deleteModel: (modelId: string): Promise<CustomModelDefinition[]> =>
+  deleteModel: (modelId: string): Promise<{ ok: boolean }> =>
     electron()?.deleteModel(modelId) ?? post('/delete-model', { modelId }),
 
   listScenes: (): Promise<SavedSceneSummary[]> => electron()?.listScenes() ?? get('/scenes'),

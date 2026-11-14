@@ -18,6 +18,7 @@ import { watchLibrary } from './backend/fileWatchers.mjs';
 import { serveKernel, UNAVAILABLE } from './backend/kernelRoutes.mjs';
 import { PART_SOURCE_MS, tuneCadPart } from './backend/cadTune.mjs';
 import { ensureDirectories, libraryPaths } from './backend/libraryPaths.mjs';
+import { ModelChanges } from './backend/modelChanges.mjs';
 import * as models from './backend/models.mjs';
 import { buildPromptBlocks } from './backend/promptBlocks.mjs';
 import * as purchases from './backend/purchases.mjs';
@@ -150,7 +151,11 @@ export class BasecaseBackendService {
     watchLibrary({
       modelsDir: this.modelsDir,
       scenesDir: this.scenesDir,
-      onModelsChanged: () => this.emitEvent({ type: 'library-models-changed', models: this.listModels() }),
+      onModelsChanged: (file) => {
+        const change = this.modelChanges.changeOf(file);
+
+        if (change) this.emitEvent({ type: 'library-model-changed', ...change });
+      },
       onScenesChanged: () => {
         const scenes = this.scenes.changedList();
 
@@ -370,16 +375,27 @@ export class BasecaseBackendService {
     return models.listModels(this.modelsDir);
   }
 
+  get modelChanges() {
+    this.modelChangeLog ??= new ModelChanges(this.modelsDir);
+
+    return this.modelChangeLog;
+  }
+
   saveModel(modelDef) {
     this.ensureDirectories();
 
-    return models.saveModel(this.modelsDir, modelDef);
+    const record = models.saveModel(this.modelsDir, modelDef);
+
+    this.modelChanges.wrote(record.id, JSON.stringify(record));
+
+    return record;
   }
 
   deleteModel(modelId) {
     models.deleteModel(this.modelsDir, modelId);
+    this.modelChanges.wrote(modelId, null);
 
-    return this.listModels();
+    return { ok: true };
   }
 
   get scenes() {

@@ -2,6 +2,7 @@ import { prettyJointName } from './kinematics';
 import type { CheckContext, CheckRow, EngineeringReport } from './engineeringTypes';
 import type { V3 } from './engineeringMath';
 import type { RobotJoint } from '../types/robotics';
+import { wiringText } from '../wiring/wiringText';
 
 export const nm = (v: number) => v.toFixed(2);
 export const fmtG = (g: number) => (g >= 1000 ? `${(g / 1000).toFixed(2)} kg` : `${Math.round(g)} g`);
@@ -55,6 +56,8 @@ export function engineeringText(r: EngineeringReport, toAgent: (v: V3) => V3): s
       ...r.joints.map((l) => jointTextLine(l, toAgent)),
     );
   }
+
+  if (r.wiring) lines.push(...wiringText(r.wiring));
 
   return lines.join('\n');
 }

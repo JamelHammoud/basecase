@@ -84,6 +84,8 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Delete | [[⌫]] |
 | Deselect | [[Esc]] |
 
+[[Esc]] also leaves whichever mode is open, once anything smaller in it has cleared. Sketch and Import SVG stay open while they hold a drawing.
+
 ## Scenes
 
 | Action | Keys |

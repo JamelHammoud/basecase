@@ -55,6 +55,40 @@ function codebaseVersion(entries) {
   }
 }
 
+const VERSION_FOLDER = /^(v\d+\.\d+)\/(.+)$/;
+
+function folderVersions(entries) {
+  const folders = new Map();
+
+  for (const entry of entries) {
+    const [, version, path] = VERSION_FOLDER.exec(entry.path) ?? [];
+
+    if (!version) continue;
+
+    if (!folders.has(version)) folders.set(version, []);
+
+    folders.get(version).push({ ...entry, path });
+  }
+
+  return new Map([...folders].filter(([version, files]) => codebaseVersion(files) === version));
+}
+
+const versionOrder = (a, b) => {
+  const [am, an] = a.slice(1).split('.').map(Number);
+  const [bm, bn] = b.slice(1).split('.').map(Number);
+
+  return am - bm || an - bn;
+};
+
+function revisions(entries) {
+  const older = folderVersions(entries);
+  const inOlder = new Set([...older.keys()].map((version) => `${version}/`));
+  const current = entries.filter((e) => !inOlder.has(e.path.slice(0, e.path.indexOf('/') + 1)));
+  const sorted = [...older.keys()].sort(versionOrder).map((version) => older.get(version));
+
+  return current.length ? [...sorted, current] : sorted;
+}
+
 const chunks = (list, size) =>
   Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, (i + 1) * size));
 
@@ -169,24 +203,35 @@ export function repoUrl(endpoint, repo, kind = 'dataset') {
   return `${new URL(endpoint ?? HUB_ENDPOINT).origin}${repoRoot(kind)}/${repo}`;
 }
 
+async function commitRevision(client, { repo, entries, existing }) {
+  const modes = await uploadModes(client, { repo, entries });
+  const lfs = entries
+    .filter((e) => modes.get(e.path)?.uploadMode === 'lfs' && !modes.get(e.path)?.shouldIgnore)
+    .map((e) => ({ ...e, oid: sha256(e.bytes) }));
+  const stale = staleFiles(existing, entries);
+
+  await uploadLfs(client, { repo, files: lfs });
+  await client.commit(repo, commitLines({ entries, modes, lfs, stale }));
+
+  const version = codebaseVersion(entries);
+
+  if (version) await client.retag(repo, version);
+
+  const gone = new Set(stale);
+
+  return [...new Set([...existing.filter((p) => !gone.has(p)), ...entries.map((e) => e.path)])];
+}
+
 export async function publishRepo(client, { namespace, name, files }) {
   const repo = `${checkedName(namespace)}/${checkedName(name)}`;
   const entries = checkedFiles(files);
 
   await client.createRepo(name);
 
-  const existing = await client.listFiles(repo);
-  const modes = await uploadModes(client, { repo, entries });
-  const lfs = entries
-    .filter((e) => modes.get(e.path)?.uploadMode === 'lfs' && !modes.get(e.path)?.shouldIgnore)
-    .map((e) => ({ ...e, oid: sha256(e.bytes) }));
+  let existing = await client.listFiles(repo);
 
-  await uploadLfs(client, { repo, files: lfs });
-  await client.commit(repo, commitLines({ entries, modes, lfs, stale: staleFiles(existing, entries) }));
-
-  const version = codebaseVersion(entries);
-
-  if (version) await client.retag(repo, version);
+  for (const revision of revisions(entries))
+    existing = await commitRevision(client, { repo, entries: revision, existing });
 
   return { repo, url: repoUrl(client.origin, repo, client.kind) };
 }

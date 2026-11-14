@@ -20,6 +20,9 @@ related:
   - publish-a-dataset-to-hugging-face
 covers:
   - src/datasets/lerobot.ts
+  - src/datasets/lerobotV3.ts
+  - src/datasets/lerobotRows.ts
+  - src/datasets/joinVideos.ts
   - src/datasets/episodes.ts
   - src/datasets/cameras.ts
   - src/datasets/renderVideos.ts
@@ -27,9 +30,23 @@ covers:
 
 Every file in a dataset from Export Dataset or Publish to Hugging Face, and what each column and camera video holds.
 
-The layout is LeRobot v2.1 with GR00T's `meta/modality.json` added. Each passed try is one episode.
+Each passed try is one episode. The dataset comes in two layouts: LeRobot v3.0 at the top, and LeRobot v2.1 with GR00T's `meta/modality.json` in a `v2.1` folder. On the Hub, v3.0 is the main branch and v2.1 is the `v2.1` tag.
 
-## Files
+## Files in v3.0
+
+| File | What it holds |
+|---|---|
+| `data/chunk-000/file-000.parquet` | One row per frame, for many episodes. A new file starts before one passes 100 MB |
+| `videos/observation.images.<camera>/chunk-000/file-000.mp4` | Every episode's video for one camera, one after another. A new file starts before one passes 200 MB |
+| `meta/episodes/chunk-000/file-000.parquet` | One row per episode: its task, length, rows, the file and time span of each camera's video, and its statistics |
+| `meta/tasks.parquet` | The one task: the Case's brief, or its name when it has none |
+| `meta/stats.json` | The minimum, maximum, mean, standard deviation and count of every column across all episodes |
+| `meta/info.json` | The dataset's version (`v3.0`), frame rate, file size limits, columns and cameras |
+| `meta/basecase.json` | The Case, the hash of the model the tries ran on, and each episode's try, margin, `seed` and `source`: the try Multiply made it from, or null for a try you drove |
+
+The joined videos aren't encoded again. Basecase copies each episode's frames into the camera's file as they are. An episode encoded with other settings starts a new file.
+
+## Files in v2.1
 
 | File | What it holds |
 |---|---|
@@ -37,10 +54,10 @@ The layout is LeRobot v2.1 with GR00T's `meta/modality.json` added. Each passed 
 | `videos/chunk-000/observation.images.<camera>/episode_000000.mp4` | One video per camera per episode |
 | `meta/info.json` | The dataset's version (`v2.1`), frame rate, columns and cameras |
 | `meta/episodes.jsonl` | One line per episode, with its length and task |
-| `meta/tasks.jsonl` | The one task: the Case's brief, or its name when it has none |
+| `meta/tasks.jsonl` | The one task |
 | `meta/episodes_stats.jsonl` | Each episode's minimum, maximum, mean, standard deviation and count for every column |
 | `meta/modality.json` | GR00T's map of the columns: one `joints` group for state and action, each camera, and the task annotation |
-| `meta/basecase.json` | The Case, the hash of the model the tries ran on, and each episode's try, margin, `seed` and `source`: the try Multiply made it from, or null for a try you drove |
+| `meta/basecase.json` | The same as in v3.0 |
 
 GR00T works out its own `stats.json` from these.
 
@@ -70,4 +87,4 @@ Camera parts are the ones under **Cameras** and **Depth Cameras** in Parts. A fi
 
 ## Versions
 
-GR00T reads LeRobot v2 datasets only. LeRobot 0.4 and later read v3, and convert v2.1 with their own conversion script.
+LeRobot 0.4 and later read v3.0 and stream it from the Hub. GR00T reads LeRobot v2 only, so it takes the v2.1 copy. Both hold the same rows, so their episode counts, frame counts and statistics match.

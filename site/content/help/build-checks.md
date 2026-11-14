@@ -43,7 +43,7 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Check | What it looks at | Problems it can report |
 |---|---|---|
 | Parts attached | Whether each part is held by something | “These parts aren’t attached to anything, so they’d fall loose.” |
-| Screws | Every screw, insert and the hole it goes into | Screws ending in air, with no hole, too long, too short, off their holes or too deep; empty inserts; holes too small for an insert; thin walls around an insert |
+| Screws | Every screw, insert and the hole it goes into | Screws ending in air, with no hole, too long, too short, off their holes or too deep. Empty inserts. Holes too small for an insert. Thin walls around an insert |
 | Assembly | Whether a build order exists | “A screwdriver can’t reach these screws, in any build order.” and “These parts can’t be put in place, in any build order.” |
 | Fit | Parts that overlap, and room for battery leads | “These parts overlap by … mm.” and “There isn’t enough room for the battery’s wires and connector.” |
 | Printing | Each printed part against your printer | Parts too big for the plate, walls too thin to print, and parts meant to be clear |
@@ -54,13 +54,13 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 
 | Check | What it measures | When it fails |
 |---|---|---|
-| Weight | Total weight and center of mass | Never; it reports the numbers |
-| Servo torque | Each servo's load against its stall and rated torque | Over 0.60 of stall torque, or running too hot; amber from 0.40 of stall |
+| Weight | Total weight and center of mass | Never. It reports the numbers |
+| Servo torque | Each servo's load against its stall and rated torque | Over 0.60 of stall torque, or running too hot. Amber from 0.40 of stall |
 | Peak torque | Torque and speed while a trained policy walks for 14 seconds | Over stall for more than 50 ms, or a fall. Amber when over 5% of a joint's walk is past its servo's torque–speed line. Not run without a walking policy |
-| Falls | Each leg servo's torque as the robot tips over from 12 directions, against its rated torque | Over 5× rated torque in a fall; amber over 3×. Not run until the agent checks falls |
+| Falls | Each leg servo's torque as the robot tips over from 12 directions, against its rated torque | Over 5× rated torque in a fall. Amber over 3×. Not run until the agent checks falls |
 | Torque estimates | Joints with no servo or published torque | A note: the simulation guesses their torque from weight |
 | Servo models | Whether each servo runs on a measured calibration | A note naming the servos that aren't calibrated |
-| Payload | What an arm lifts at full reach and close in | Never; it reports the numbers |
+| Payload | What an arm lifts at full reach and close in | Never. It reports the numbers |
 | Joint parts | The parts each joint names | A joint naming a part that doesn't exist |
 | Servo alignment | Each servo's output against its joint axis | A servo that doesn't line up with its joint |
 | Joint support | What holds each joint on both sides | A note when a joint is held on one side only |
@@ -74,8 +74,8 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Servo bus | Each servo's connector against the bus adapters in the build | A servo no adapter plugs into. Shown only when it fails |
 | Standing stability | The center of mass over the feet | “The robot would tip over standing still.” |
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
-| Strength | Each printed part between a servo and the next joint | Under 1.3 times its load; amber under 2 times |
-| Budget | The estimated cost of the parts left to buy against your budget | Over budget; amber above 90%. Not run until you set a budget |
+| Strength | Each printed part between a servo and the next joint | Under 1.3 times its load. Amber under 2 times |
+| Budget | The estimated cost of the parts left to buy against your budget | Over budget. Amber above 90%. Not run until you set a budget |
 
 Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
 

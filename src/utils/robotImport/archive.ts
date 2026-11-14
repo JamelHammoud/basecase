@@ -1,6 +1,7 @@
+import { MB } from '../../../electron/fileSize.mjs';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 
-export const MAX_UNPACKED_BYTES = 600 * 1024 * 1024;
+export const MAX_UNPACKED_BYTES = 600 * MB;
 export const MAX_ENTRIES = 20_000;
 export const ZIP_TOO_LARGE = 'That zip is too large. Unzip it and choose the folder.';
 

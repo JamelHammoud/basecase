@@ -1,4 +1,5 @@
 import { runClock } from '../utils/duration';
+import { negative } from '../../electron/minus.mjs';
 import { reachableFrom } from './generatePaths';
 import { findNode } from './nodes';
 import type { Plan, PlanOp } from './planTypes';
@@ -10,7 +11,8 @@ import { span } from './explainGraph';
 export { describeRoutine } from './explainGraph';
 
 const at = (ms: number) => runClock(ms / 1000);
-const two = (n: number) => n.toFixed(2);
+const hundredths = (n: number) => n.toFixed(2);
+const two = (n: number) => negative(n, hundredths);
 
 function factLabel(plan: Plan, fact: string): string {
   const op = plan.ops.find((o) => o.node === fact && (o.kind === 'infer' || o.kind === 'ask'));

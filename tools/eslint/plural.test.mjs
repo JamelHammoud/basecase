@@ -14,6 +14,7 @@ const tester = new RuleTester({
 
 const bare = (word) => [{ messageId: 'bare', data: { word } }];
 const ternary = [{ messageId: 'ternary' }];
+const agrees = (verb) => [{ messageId: 'agrees', data: { verb } }];
 
 tester.run('plural', rule, {
   valid: [
@@ -27,6 +28,10 @@ tester.run('plural', rule, {
     'const a = n > 1 ? "one" : "it";',
     'const a = <span>{plural(parts.length, "part")}</span>;',
     'const a = <span>{name} parts</span>;',
+    'const a = `No price on ${plural(lines.length, "line")}`;',
+    'const a = `Driving ${plural(n, "screw")} takes an L-key`;',
+    'const a = `${plural(n, "joint")} overloaded`;',
+    'const a = `${plural(n, "message")} queued`;',
   ],
   invalid: [
     { code: 'const a = `${parts.length} parts`;', errors: bare('parts') },
@@ -39,6 +44,10 @@ tester.run('plural', rule, {
     { code: 'const a = `node${nodes.length > 1 ? "s" : ""}`;', errors: ternary },
     { code: 'const a = `${n} ${n === 1 ? "part" : "parts"}`;', errors: ternary },
     { code: 'const a = <span>{selected.length} parts</span>;', errors: bare('parts') },
+    { code: 'const a = `${plural(n, "screw")} need an L-key`;', errors: agrees('need') },
+    { code: 'const a = `${plural(lines.length, "line")} have no price`;', errors: agrees('have') },
+    { code: 'const a = `${plural(n, "part")} aren’t checked`;', errors: agrees('aren’t') },
+    { code: 'const a = <span>{plural(n, "step")} are left</span>;', errors: agrees('are') },
   ],
 });
 

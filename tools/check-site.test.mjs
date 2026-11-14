@@ -59,11 +59,15 @@ describe('lintSite', () => {
     ).toEqual([]);
   });
 
-  it('fails long sentences, long paragraphs and a long first paragraph in changelog entries', () => {
-    const entry = page('title: Old\ndate: 2026-11-01', `${TOO_LONG}\n\nA. B. C. D. E. F.`);
+  it('fails semicolons, em dashes, long paragraphs and a long first paragraph in changelog entries, not long sentences', () => {
+    const entry = page(
+      'title: Old\ndate: 2026-11-01',
+      `${TOO_LONG}\n\nA. B. C. D. E. F.\n\nOne thing; another — and a third.`,
+    );
 
     expect(lint({ 'site/content/changelog/2026-11-01-old.md': entry })).toEqual([
-      'site/content/changelog/2026-11-01-old.md:6: a sentence of 26 words; split it (§3f): “One two three four five six seven eight nine ten eleven twel…”',
+      'site/content/changelog/2026-11-01-old.md:10: a semicolon: end the sentence or join it with a word (§3f)',
+      'site/content/changelog/2026-11-01-old.md:10: an em dash: use a comma, a full stop or parentheses (§3f)',
       'site/content/changelog/2026-11-01-old.md:8: a paragraph of 6 sentences; keep it to 5 (§3f)',
     ]);
     expect(

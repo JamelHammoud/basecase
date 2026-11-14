@@ -68,7 +68,6 @@ function tileMenu(core: WorkspaceCore, id: string): ContextMenuEntry[] {
   return [
     { label: 'Make Dataset', icon: <SpreadsheetIcon />, onSelect: () => datasets.makeFromView(ids) },
     ...addTo,
-    { divider: true },
     deleteEntry(() => view.remove(id), '⌫'),
   ];
 }

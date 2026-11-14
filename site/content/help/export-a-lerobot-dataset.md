@@ -37,17 +37,22 @@ LeRobot is Hugging Face's open library for robot learning, and GR00T is NVIDIA's
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 
-A toast shows "Exporting dataset…", then tells you how many tries went in. Basecase saves the zip to your downloads and names it after the dataset. For example, Touch a Point exports as `touch-a-point-dataset.zip`.
+A toast shows "Exporting dataset…", then tells you how many tries went in. The zip saves to your downloads with the dataset's name. For example, Touch a Point exports as `touch-a-point-dataset.zip`.
 
-You can also choose **Export Dataset** from [[⌘K]] while a dataset is open. Each time you export, Basecase saves the dataset's tries as a version.
+While a dataset is open, you can also choose **Export Dataset** from [[⌘K]]. Each time you export, Basecase saves the dataset's tries as a version.
 
 ## Which tries go in
 
-A dataset should hold the task done right, so Basecase exports only passed tries. Missed tries stay in the dataset, but the export skips them.
+Basecase exports only passed tries, so the dataset holds the task done right. Missed tries stay in the dataset, but the export skips them.
 
-Each try must also come from the open Case, on the robot as it is now. Basecase leaves out tries from another Case or scene, and tries recorded before the robot's last change. The toast tells you how many it left out, for example: "Exported 3 tries as a dataset, left out 2 from another Case or design".
+Each try must come from the open Case, on the robot as it is now. Basecase leaves out:
 
-Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) also go in, one episode each. A try from your real robot stays out, because it only records where the robot's base went.
+- Tries from another Case or scene
+- Tries recorded before the robot's last change
+
+The toast tells you how many tries it left out. For example: "Exported 3 tries as a dataset, left out 2 from another Case or design".
+
+Tries made by [Multiply](/help/multiply-a-try-into-demonstrations) go in too, one episode each. A try from your real robot stays out, because it records only where the robot's base went.
 
 If none of the passed tries fit, the toast says "Export and training take only passed tries of this Case as it is now. Try It to record more."
 
@@ -59,12 +64,12 @@ Each try becomes one episode, recorded at 25 frames a second. An episode holds:
 - The joint targets
 - A 640 × 480 video from each camera
 
-There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. The export doesn't record camera views you add to the scene.
+There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Basecase doesn't record camera views you add to the scene.
 
 The zip holds two copies of the dataset:
 
-- The top folder is LeRobot v3.0. LeRobot 0.4 and later load it as it is.
-- The `v2.1` folder inside it is LeRobot v2.1, for GR00T. GR00T reads only v2.
+- The top folder is LeRobot v3.0, which LeRobot 0.4 and later load as it is.
+- The `v2.1` folder inside it is LeRobot v2.1, for GR00T, which reads only v2.
 
 For every file and column, see [LeRobot dataset contents](/help/lerobot-dataset-contents).
 

@@ -45,21 +45,21 @@ You can publish the passed tries in a dataset to the Hugging Face Hub as a LeRob
 
 7. When the toast says "Published to" followed by the dataset's name, click **Open** to see the dataset on the Hub.
 
-You can also choose **Publish to Hugging Face** in [[⌘K]] while a dataset is open. To publish a dataset you made earlier, open it under **Datasets** in the Library first.
+You can also choose **Publish to Hugging Face** in [[⌘K]] while a dataset is open. To publish a dataset you made earlier, first open it under **Datasets** in the Library.
 
 If you're signed out, **Publish to Hugging Face** opens **Accounts** instead. If the Hub refuses your token, click **Open** in the message, then paste a new token in **Accounts**.
 
 ## What gets published
 
-Basecase publishes the dataset to a repo on your account. The repo's name is the dataset's name followed by the dataset's own 6-character code, for example `touch-a-point-1a2b3c`. Two datasets with the same name get different codes, so one never replaces the other's repo.
+Basecase publishes the dataset to a repo on your account. The repo is named after the dataset, followed by the dataset's own 6-character code, for example `touch-a-point-1a2b3c`. Two datasets with the same name get different codes, so one never replaces the other's repo.
 
-The repo's main branch holds LeRobot v3.0, tagged `v3.0`. LeRobot 0.4 and later can load it by name without any conversion: `lerobot-train --dataset.repo_id=<account>/touch-a-point-1a2b3c`. To stream it from the Hub instead of downloading it, add `--dataset.streaming=true`.
+The repo's main branch holds LeRobot v3.0, tagged `v3.0`. LeRobot 0.4 and later can load it by name without conversion: `lerobot-train --dataset.repo_id=<account>/touch-a-point-1a2b3c`. To stream it from the Hub instead of downloading it, add `--dataset.streaming=true`.
 
-The `v2.1` tag holds a LeRobot v2.1 copy with GR00T's `meta/modality.json`. GR00T reads only v2, so for GR00T, download that revision: `hf download <account>/touch-a-point-1a2b3c --repo-type dataset --revision v2.1`. For the files in both versions, see [LeRobot dataset contents](/help/lerobot-dataset-contents).
+The `v2.1` tag holds a LeRobot v2.1 copy with GR00T's `meta/modality.json`. GR00T only reads v2, so if you're training with GR00T, download that revision: `hf download <account>/touch-a-point-1a2b3c --repo-type dataset --revision v2.1`. For the files in both versions, see [LeRobot dataset contents](/help/lerobot-dataset-contents).
 
 ## Publishing again
 
-When you publish the same dataset again, Basecase replaces what's in the repo with the dataset's passed tries as they are now. It rewrites the `data/`, `videos/` and `meta/` folders and doesn't touch `README.md` or any other files.
+When you publish the same dataset again, Basecase replaces what's in the repo with the dataset's passed tries as they are now. It rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files alone.
 
 Basecase leaves out these tries:
 
@@ -67,9 +67,9 @@ Basecase leaves out these tries:
 - Tries from another Case or scene
 - Tries from before the robot last changed
 
-The toast shows how many tries it skipped.
+The toast shows how many tries Basecase skipped.
 
-Basecase also tags each publish's commit with the dataset's version, such as `dataset-v2`. If you publish the same tries again, the version stays the same. To download an earlier version, use its tag: `hf download <account>/touch-a-point-1a2b3c --repo-type dataset --revision dataset-v1`. LeRobot ignores these tags and still loads `v3.0`.
+Basecase also tags the commit for each publish with the dataset's version, such as `dataset-v2`. If you publish the same tries again, the version stays the same. To download an earlier version, use its tag: `hf download <account>/touch-a-point-1a2b3c --repo-type dataset --revision dataset-v1`. LeRobot ignores these tags and still loads `v3.0`.
 
 ## Where the token lives
 

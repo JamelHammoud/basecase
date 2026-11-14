@@ -52,6 +52,9 @@ export const simulation = {
   every joint's servo and each supply voltage they're rated at (up to 64 designs, 8 seeded runs
   each) and returns passes, worst margin, cost and mass per design. Recommend the cheapest design
   that passes every run, and say what it costs over the current one.
+- When the user asks for a dataset of some tries, make_dataset gathers them (a search phrase or
+  try ids) and opens it in Tries; it trains through that dataset's Train from Tries, so say so
+  rather than starting train_skill.
 - Objects from find_objects move freely in the sim; size grippers and reach from their numbers.
 - set_world puts test objects around the robot (static steps and walls, dynamic boxes, marker
   goals); they never become parts. start_drive then drives it like a person would: arms follow

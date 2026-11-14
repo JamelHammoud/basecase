@@ -8,6 +8,8 @@ import { buildCase, builderRobot } from '../src/cases/caseBuilder';
 import { runCaseTimes } from '../src/cases/caseRuns';
 import { caseRunner } from '../src/cases/runCase';
 import { caseRobot } from '../src/cases/testing';
+import { newDataset } from '../src/datasets/datasetFile';
+import { splitOf } from '../src/datasets/datasetSplit';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { isPolicySpec } from '../src/sim/policy';
 import { TRIES_JOINT_NOISE_DEG, TRIES_RUNS, triesJob } from '../src/skills/triesTraining';
@@ -45,6 +47,13 @@ async function scriptedTries(mj, kase) {
   }
 
   return { recordings, model };
+}
+
+function datasetOrder(kase, recordings) {
+  const ids = recordings.map((_, i) => `try-${i + 1}`);
+  const dataset = newDataset({ id: 'dataset-touch', name: kase.name, task: kase.brief, members: ids, at: 'now' });
+
+  return splitOf(dataset.members, dataset.seed).order.map((id) => recordings[ids.indexOf(id)]);
 }
 
 function forgeTrain(job) {
@@ -86,11 +95,11 @@ function shuffledActions(job) {
 }
 
 describe.skipIf(!FORGE)('a policy cloned from tries by Forge', () => {
-  it('passes Touch a Point on arm-3dof in 29 or more of 32 randomized runs, and not from shuffled actions', async () => {
+  it('passes Touch a Point on arm-3dof in 29 or more of 32 randomized runs from a dataset of its tries, and not from shuffled actions', async () => {
     const mj = await loadMujoco();
     const kase = touchAPoint();
     const { recordings, model } = await scriptedTries(mj, kase);
-    const job = triesJob(model, kase, recordings);
+    const job = triesJob(model, kase, datasetOrder(kase, recordings));
     const judge = (policy) =>
       runCaseTimes(mj, kase, caseRobot(arm), {
         controller: 'policy',

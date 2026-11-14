@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { summaryRecord, type TrySummary } from '../cases/tryFile';
 import { goingWith } from '../cases/tries';
 import { deleteTries, useTries } from '../cases/tryStore';
+import type { Dataset } from '../datasets/datasetFile';
+import { useDatasets } from '../datasets/datasetStore';
 import { confirmAction } from '../design-system/confirmStore';
 import { plural } from '../../electron/plural.mjs';
 import { errorMessage } from '../utils/errorMessage';
@@ -59,15 +61,48 @@ export const goingTries = (all: TrySummary[], ids: string[]) => {
 
 export const hitOrder = (hits: TryHit[]) => hits.map((h) => h.tryId);
 
-export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
+export interface TriesPlace {
+  open: boolean;
+  robot: string | null;
+  dataset: string | null;
+}
+
+const CLOSED: TriesPlace = { open: false, robot: null, dataset: null };
+
+export function useTriesPlace() {
+  const [place, setPlace] = useState<TriesPlace>(CLOSED);
+
+  return { place, setPlace, showDataset: (id: string) => setPlace({ open: true, robot: null, dataset: id }) };
+}
+
+type Places = ReturnType<typeof useTriesPlace>;
+
+interface TriesViewOptions {
+  places: Places;
+  timeline: TryTimeline;
+  showToast: ShowToast;
+}
+
+const datasetGroups = (dataset: Dataset, all: TrySummary[]) => {
+  const byId = new Map(all.map((t) => [t.id, t]));
+
+  return tryGroups(dataset.members.flatMap((id) => byId.get(id) ?? []));
+};
+
+const groupOrder = (groups: TryGroup[]) => groups.flatMap((g) => g.tries.map((t) => t.id));
+
+export function useTriesView({ places, timeline, showToast }: TriesViewOptions) {
   const all = useTries() ?? [];
-  const [open, setOpen] = useState(false);
-  const [robot, setRobot] = useState<string | null>(null);
+  const datasets = useDatasets() ?? [];
+  const { place, setPlace } = places;
+  const { open, robot } = place;
+  const dataset = (place.dataset && datasets.find((d) => d.id === place.dataset)) || null;
   const [query, setQuery] = useState('');
   const [pick, setPick] = useState<{ selected: string[]; anchor: string | null }>({ selected: [], anchor: null });
   const hits = useTrySearch(query);
-  const groups = tryGroups(all);
-  const order = query.trim() ? hitOrder(hits ?? []) : groups.flatMap((g) => g.tries.map((t) => t.id));
+  const searching = !dataset && query.trim() !== '';
+  const groups = dataset ? datasetGroups(dataset, all) : tryGroups(all);
+  const order = searching ? hitOrder(hits ?? []) : groupOrder(groups);
   const selected = pick.selected.filter((id) => order.includes(id));
 
   const show = (id: string) => {
@@ -79,7 +114,7 @@ export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
   const close = () => {
     if (timeline.open) timeline.close();
 
-    setOpen(false);
+    setPlace(CLOSED);
     setQuery('');
     setPick({ selected: [], anchor: null });
   };
@@ -107,22 +142,31 @@ export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
     query,
     hits,
     selected,
+    order,
+    all,
+    searching,
     setQuery,
+    dataset,
+    datasets,
     openFor: (name: string | null) => {
-      setRobot(name);
+      setPick({ selected: [], anchor: null });
       setQuery('');
-      setOpen(true);
+      setPlace({ open: true, robot: name, dataset: null });
+    },
+    openDataset: (id: string) => {
+      setPick({ selected: [], anchor: null });
+      setQuery('');
+      setPlace({ open: true, robot: null, dataset: id });
     },
     openAt: (text: string, tryId: string) => {
-      setRobot(null);
       setQuery(text);
-      setOpen(true);
+      setPlace({ open: true, robot: null, dataset: null });
       setPick({ selected: [tryId], anchor: tryId });
       show(tryId);
     },
     close,
-    pick: (id: string, keys: PickKeys) => {
-      const next = picked(order, pick, id, keys);
+    pick: (id: string, keys: PickKeys, shown = order) => {
+      const next = picked(shown, pick, id, keys);
 
       setPick(next);
 

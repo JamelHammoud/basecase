@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { ContextMenu, NoMatches, SearchField, useScrollFade, type ContextMenuEntry } from '../design-system';
+import {
+  ContextMenu,
+  NoMatches,
+  SearchField,
+  deleteEntry,
+  useScrollFade,
+  type ContextMenuEntry,
+} from '../design-system';
 import type { CustomModelDefinition, ScenePart } from '../types/robotics';
 import { modelNote } from '../utils/libraryParts';
 import { useTries } from '../cases/tryStore';
+import type { Dataset } from '../datasets/datasetFile';
 import { tryGroups } from '../workspace/useTriesView';
 import { useTrySearch } from '../workspace/useTrySearch';
+import { DatasetsSection } from './library/DatasetsSection';
 import { ModelsSection, type SectionState } from './library/sections';
 import { TriesSection, TryHitsSection } from './library/TriesSection';
 
@@ -20,6 +29,9 @@ export interface LibraryPanelProps {
   onImport: () => void;
   onOpenTries: (robot: string) => void;
   onOpenHit: (query: string, tryId: string) => void;
+  datasets: Dataset[];
+  onOpenDataset: (dataset: Dataset) => void;
+  onDeleteDataset: (dataset: Dataset) => void;
 }
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
@@ -41,6 +53,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
   const allTries = useTries() ?? [];
   const tries = tryGroups(allTries);
   const found = useTrySearch(query);
+  const datasets = props.datasets.filter((d) => matches(d.name, d.task));
   const state: SectionState = {
     renaming,
     setRenaming,
@@ -70,7 +83,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
       </div>
 
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={fadeStyle}>
-        {searching && models.length === 0 && found?.length === 0 ? (
+        {searching && models.length === 0 && datasets.length === 0 && found?.length === 0 ? (
           <NoMatches query={query} />
         ) : (
           <div className="px-[8px] pb-4">
@@ -80,6 +93,11 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
             ) : (
               <TriesSection groups={tries} onOpen={props.onOpenTries} />
             )}
+            <DatasetsSection
+              datasets={datasets}
+              onOpen={props.onOpenDataset}
+              onMenu={(d) => state.showMenu([deleteEntry(() => props.onDeleteDataset(d))])}
+            />
           </div>
         )}
       </div>

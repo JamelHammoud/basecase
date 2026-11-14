@@ -26,6 +26,7 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['run_routine', 180000],
   ['run_case', 300000],
   ['explore_case', 600000],
+  ['make_dataset', 120000],
 ]);
 
 export const rendererTimeout = (kind) => RENDERER_TIMEOUTS_MS.get(kind) ?? DEFAULT_TIMEOUT_MS;

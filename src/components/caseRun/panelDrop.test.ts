@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createSignalBus } from '../../cases/console/signalBus';
 import { busNames, kindLabel, panelChoices } from './panelChoices';
-import { dropMark, dropPlace, type DropGeometry } from './panelDrop';
+import { dropMark, dropPlace, inFlow, type DropGeometry } from './panelDrop';
 
 const GEOMETRY: DropGeometry = {
   areas: [
@@ -32,6 +32,23 @@ describe('dropping a dragged panel', () => {
     expect(dropPlace(GEOMETRY, 420, 300)).toEqual({ column: 1 });
     expect(dropPlace(GEOMETRY, 1080, 300)).toEqual({ column: 2 });
     expect(dropPlace(GEOMETRY, 750, 300)).toBeNull();
+  });
+
+  it('counts a hidden empty panel where it sits in the column, not at the top of the window', () => {
+    const panels = inFlow(
+      [
+        { id: 'brief', top: 60, bottom: 200 },
+        { id: 'failures', top: 0, bottom: 0 },
+        { id: 'tries', top: 200, bottom: 600 },
+      ],
+      0,
+    );
+    const withHidden = { ...GEOMETRY, areas: [GEOMETRY.areas[0], { ...GEOMETRY.areas[1], panels }] };
+
+    expect(panels[1]).toEqual({ id: 'failures', top: 200, bottom: 200 });
+    expect(dropPlace(withHidden, 1250, 100)).toEqual({ area: 2, index: 0 });
+    expect(dropPlace(withHidden, 1250, 150)).toEqual({ area: 2, index: 1 });
+    expect(dropPlace(withHidden, 1250, 300)).toEqual({ area: 2, index: 2 });
   });
 
   it('marks where it lands: a line between panels, or down the column’s edge', () => {

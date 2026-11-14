@@ -3,6 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { inject } from 'vitest';
+import { datasetPostRoutes } from '../electron/library/datasetRoutes.mjs';
+import { DatasetStore } from '../electron/library/datasetStore.mjs';
 import { tryPostRoutes } from '../electron/library/tryRoutes.mjs';
 import { TryStore } from '../electron/library/tryStore.mjs';
 import { TEST_HOOKS_FLAG } from '../src/utils/platform/testHooksFlag';
@@ -61,17 +63,24 @@ interface Backend {
   posts: App['posts'];
   lists: Record<string, unknown>;
   live: string[];
-  triesDir: string;
+  libraryDir: string;
 }
 
 type Reply = (body: unknown) => unknown;
 
-function triesReplies(triesDir: string): Record<string, Reply> {
-  const store = new TryStore({ triesDir, cacheFile: path.join(triesDir, '.try-summaries.json') });
+type PostRoute = [string, (body: { arg?: unknown } | null) => Promise<unknown>];
 
-  return Object.fromEntries(
-    tryPostRoutes(store).map(([route, reply]) => [route.slice(1), (body: unknown) => reply(body as { arg?: unknown })]),
+const repliesOf = (routes: PostRoute[]): Record<string, Reply> =>
+  Object.fromEntries(
+    routes.map(([route, reply]) => [route.slice(1), (body: unknown) => reply(body as { arg?: unknown })]),
   );
+
+function libraryReplies(libraryDir: string): Record<string, Reply> {
+  const triesDir = path.join(libraryDir, 'tries');
+  const tries = new TryStore({ triesDir, cacheFile: path.join(libraryDir, '.try-summaries.json') });
+  const datasets = new DatasetStore({ dir: path.join(libraryDir, 'datasets') });
+
+  return { ...repliesOf(tryPostRoutes(tries)), ...repliesOf(datasetPostRoutes(datasets)) };
 }
 
 type SavedPurchases = Record<string, unknown>;
@@ -85,10 +94,10 @@ function purchasesReply(saved: SavedPurchases, body: { key?: string; record?: un
   return saved;
 }
 
-async function stubBackend(page: Page, { posts, lists, live, triesDir }: Backend): Promise<void> {
+async function stubBackend(page: Page, { posts, lists, live, libraryDir }: Backend): Promise<void> {
   const purchases: SavedPurchases = { ...((lists.purchases as SavedPurchases | undefined) ?? {}) };
   const replies: Record<string, Reply> = {
-    ...triesReplies(triesDir),
+    ...libraryReplies(libraryDir),
     purchases: () => purchases,
     'purchase-save': (body) => purchasesReply(purchases, body as { key?: string; record?: unknown }),
   };
@@ -133,7 +142,7 @@ export async function openApp(
   const errors: string[] = [];
   const posts: App['posts'] = [];
   const requests: string[] = [];
-  const triesDir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-e2e-tries-'));
+  const libraryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-e2e-library-'));
 
   page.on('request', (request) => requests.push(request.url()));
   page.on('pageerror', (e) => errors.push(e.message));
@@ -145,7 +154,7 @@ export async function openApp(
     errors.push(where ? `${m.text()} (${where})` : m.text());
   });
   await exposeTestHooks(page);
-  await stubBackend(page, { posts, lists, live, triesDir });
+  await stubBackend(page, { posts, lists, live, libraryDir });
   await page.goto(inject('appUrl'));
   await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
     timeout: 60000,
@@ -159,7 +168,7 @@ export async function openApp(
     requests,
     close: async () => {
       await browser.close();
-      fs.rmSync(triesDir, { recursive: true, force: true });
+      fs.rmSync(libraryDir, { recursive: true, force: true });
     },
   };
 }

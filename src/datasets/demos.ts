@@ -15,21 +15,39 @@ export interface DemoEpisode {
 
 export type DemoSpec = Pick<PolicySpec, 'defaultPose' | 'actionScale' | 'command'>;
 
+export const differenced = (recording: Recording, model: SimModel) =>
+  recording.nv === 0 || recording.jointDof?.length !== model.joints.length;
+
+const fixedBase = (recording: Recording, model: SimModel) =>
+  !model.robots[0]?.floating && (!recording.root || recording.root[0] < 0);
+
 export const canTrain = (recording: Recording, model: SimModel): boolean =>
-  canExport(recording, model) && recording.jointDof?.length === model.joints.length && !!recording.root;
+  canExport(recording, model) && (differenced(recording, model) ? fixedBase(recording, model) : !!recording.root);
 
 function obsSource(recording: Recording, model: SimModel): ObsSource {
   const index = robotJoints(model).map((j) => model.joints.indexOf(j));
   const [rootQpos, rootDof] = recording.root ?? [-1, -1];
+  const own = differenced(recording, model);
 
   return {
     qpos: [],
     qvel: [],
-    rootQpos,
-    rootDof,
+    rootQpos: own ? -1 : rootQpos,
+    rootDof: own ? -1 : rootDof,
     jointQpos: index.map((i) => recording.jointQpos?.[i] ?? 0),
-    jointDof: index.map((i) => recording.jointDof?.[i] ?? 0),
+    jointDof: own ? index.map((_, k) => k) : index.map((i) => recording.jointDof?.[i] ?? 0),
   };
+}
+
+function differencedVelocity(data: { state: Float32Array }, width: number, row: number): Float32Array {
+  const out = new Float32Array(width);
+
+  if (row === 0) return out;
+
+  for (let k = 0; k < width; k++)
+    out[k] = (data.state[row * width + k] - data.state[(row - 1) * width + k]) * DATASET_FPS;
+
+  return out;
 }
 
 export function demoEpisode(recording: Recording, model: SimModel, spec: DemoSpec): DemoEpisode {
@@ -38,6 +56,7 @@ export function demoEpisode(recording: Recording, model: SimModel, spec: DemoSpe
   const src = obsSource(recording, model);
   const actionAt = (row: number) =>
     Array.from({ length: width }, (_, k) => (data.action[row * width + k] - spec.defaultPose[k]) / spec.actionScale);
+  const own = differenced(recording, model);
   const rows = data.frames.length - 1;
   const obs: number[][] = [];
   const actions: number[][] = [];
@@ -46,7 +65,9 @@ export function demoEpisode(recording: Recording, model: SimModel, spec: DemoSpe
     const f = data.frames[row];
 
     src.qpos = recording.qpos.subarray(f * recording.nq, (f + 1) * recording.nq);
-    src.qvel = recording.qvel.subarray(f * recording.nv, (f + 1) * recording.nv);
+    src.qvel = own
+      ? differencedVelocity(data, width, row)
+      : recording.qvel.subarray(f * recording.nv, (f + 1) * recording.nv);
 
     const last = row ? actionAt(row) : Array<number>(width).fill(0);
 

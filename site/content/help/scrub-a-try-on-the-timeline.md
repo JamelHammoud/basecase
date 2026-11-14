@@ -26,11 +26,11 @@ Step through a Case try frame by frame to see what each joint was asked to do, w
 ![A try in Results with its play button](/help/scrub-a-try-on-the-timeline/results.png)
 
 3. The timeline opens under the canvas with one lane per joint. The top plot is the joint's position in blue over its target in gray; the bottom one is its effort in N·m, with the servo's limit dashed. Red lines mark where the Case's failure checks tripped, and the timeline opens on the first one.
-4. Press → or ← to move one frame (1/50 s), and hold ⇧ to move a second. Home and End go to the start and the end, and Space plays and pauses. The robot on the canvas follows the playhead.
+4. Press [[→]] or [[←]] to move one frame (1/50 s), and hold [[⇧]] to move a second. [[Home]] and [[End]] go to the start and the end, and [[Space]] plays and pauses. The robot on the canvas follows the playhead.
 5. Click a spike in a lane to jump there. The joint's link is selected on the canvas, ready to change.
 
 ![The timeline under the canvas, with the second joint's link selected](/help/scrub-a-try-on-the-timeline/timeline.png)
 
-6. Press Esc to close it.
+6. Press [[Esc]] to close it.
 
 The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open.

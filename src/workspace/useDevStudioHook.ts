@@ -9,6 +9,7 @@ import { loadRecording } from '../cases/tryStore';
 import { withCalibration } from '../reality/projectCalibrations';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
+import { printDevActions } from './devPrintState';
 import { devSimState } from './devSimState';
 import { matDevActions } from './devMatFeed';
 import { printDevActions } from './devPrintActions';
@@ -57,6 +58,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     sketchPath: core.sketching.setPath,
     simState: () => devSimState(core, jointsRef.current),
     drive: (command) => core.simTraining.sim.drive.setKeys(command),
+    driveWith: (inputs) => core.simTraining.sim.drive.start(undefined, { inputs }),
     worldAt: () => {
       const { model, worldParts } = core.simTraining.sim;
       const deltas = model && posesRef.current ? worldDeltas(model, posesRef.current) : new Map();

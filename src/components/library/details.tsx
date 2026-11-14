@@ -33,7 +33,7 @@ export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: strin
       />
       <div className="px-4 mt-3 pb-4 grid grid-cols-2 gap-1.5">
         <Stat label="Size" wide>
-          <SizeLine w={d.width} h={d.height} d={d.depth} />
+          <SizeLine mm={[d.width, d.height, d.depth]} />
         </Stat>
         <Stat label="Parts">{parts.length}</Stat>
         {fromCatalog(parts) > 0 && <Stat label="From catalog">{fromCatalog(parts)}</Stat>}

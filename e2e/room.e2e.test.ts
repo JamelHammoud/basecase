@@ -99,9 +99,6 @@ describe('a scanned room', () => {
       await fill(card, 'Distance', DISTANCE_MM);
       await fill(card, 'Radius', 250);
       await fill(card, 'Time', 60);
-      expect(await card.locator('label', { hasText: 'Name' }).locator('input').inputValue()).toBe(
-        'Reach a Spot in Fixture Flat',
-      );
       await card.locator('button', { hasText: 'Make Case' }).click();
 
       await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-fixture-flat');

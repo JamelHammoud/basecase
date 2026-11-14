@@ -19,6 +19,7 @@ covers:
   - src/workspace/RightPanelTabs.tsx
   - src/components/ChatHistory.tsx
   - src/components/agent/Composer.tsx
+  - src/workspace/slashPaletteCommands.tsx
   - src/workspace/agentLanes.ts
 ---
 
@@ -37,6 +38,8 @@ To delete a chat, hover it in **History** and click **Delete**. Basecase asks fi
 ## Start a new chat
 
 1. Click the **New chat** button beside the composer.
+
+**New Chat** is also in [[⌘K]].
 
 A chat that's still working keeps going in the background. Each scene runs up to 4 chats at once. A new chat starts with a clean memory, which helps once the **Context** bar in the model menu nears full.
 

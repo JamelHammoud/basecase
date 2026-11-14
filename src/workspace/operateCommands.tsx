@@ -2,7 +2,7 @@ import type { Command } from '../components/CommandPalette';
 import { OperateIcon } from '../design-system';
 import { canCalibrate } from '../robot/calibrationSession';
 import { emulatedSpec } from '../robot/emulatedUnits';
-import { connectRobot, robotSnapshot } from '../robot/robotStore';
+import { connectRobot, disconnectRobot, robotSnapshot } from '../robot/robotStore';
 import { servoFamily } from '../robot/robotState';
 import { sceneRobot } from '../robot/sceneRobot';
 import { canSetUpServos, servoSetup, setUpServos } from '../robot/servoSetup';
@@ -63,6 +63,39 @@ function replayCommands(core: WorkspaceCore): Command[] {
   ];
 }
 
+function linkCommands({ core }: CommandInputs, showOperate: () => void): Command[] {
+  const joints = core.project.joints ?? [];
+  const robot = sceneRobot(joints);
+
+  if (robotSnapshot().link === 'connected')
+    return [
+      {
+        id: 'disconnect-robot',
+        group: 'Operate',
+        label: 'Disconnect Robot',
+        icon: <OperateIcon className={ic} />,
+        keywords: 'robot daemon emulated servos stop',
+        run: () => void disconnectRobot(),
+      },
+    ];
+
+  if (!robot.ok) return [];
+
+  return [
+    {
+      id: 'connect-emulated-robot',
+      group: 'Operate',
+      label: 'Connect Emulated Robot',
+      icon: <OperateIcon className={ic} />,
+      keywords: 'robot daemon emulated servos feetech unitree g1',
+      run: () => {
+        showOperate();
+        void connectRobot(emulatedSpec({ choice: robot, joints, parts: core.parts }), robot.joints);
+      },
+    },
+  ];
+}
+
 export function operateCommands(inputs: CommandInputs): Command[] {
   const { core } = inputs;
 
@@ -81,23 +114,7 @@ export function operateCommands(inputs: CommandInputs): Command[] {
       keywords: 'robot daemon emulated servos operate hardware',
       run: showOperate,
     },
-    ...(robot.ok
-      ? [
-          {
-            id: 'connect-emulated-robot',
-            group: 'Operate',
-            label: 'Connect Emulated Robot',
-            icon: <OperateIcon className={ic} />,
-            keywords: 'robot daemon emulated servos feetech unitree g1',
-            run: () => {
-              showOperate();
-
-              if (robotSnapshot().link !== 'connected')
-                void connectRobot(emulatedSpec({ choice: robot, joints, parts: core.parts }), robot.joints);
-            },
-          },
-        ]
-      : []),
+    ...linkCommands(inputs, showOperate),
     ...(robot.ok && servoFamily(robot.spec)
       ? [
           {

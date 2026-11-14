@@ -1,6 +1,6 @@
 export const LIMITS = {
   openWaiting: 12,
-  maxOpenHours: 3,
+  maxOpenHours: 1,
   queuedRuns: 20,
   mainRedHours: 12,
   noMergeHours: 2,

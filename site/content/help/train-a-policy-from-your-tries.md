@@ -32,9 +32,9 @@ covers:
   - forge/crates/forge-train/src/bc/
 ---
 
-Basecase can train a policy from the tries you drive yourself in a Case. It keeps the policy only if the policy passes the Case on its own.
+You can train a policy from the tries you drive yourself in a Case. Basecase keeps the policy only if it passes the Case on its own.
 
-Training runs in the desktop app and uses Forge to train on your computer.
+Training runs in the desktop app, using Forge on your computer.
 
 1. Open a Case and drive it with **Try It** until at least five tries pass. For steps, see [Try a Case](/help/try-a-case).
 2. Under **Results**, click **Make Dataset**. The dataset opens over the canvas. To gather tries from a Library search instead, see [Make a dataset from tries](/help/make-a-dataset-from-tries).
@@ -45,15 +45,15 @@ Training runs in the desktop app and uses Forge to train on your computer.
 4. When a count appears under the buttons, click **Done**.
 5. Under **Train**, click **Try** on the Case's row.
 
-While the policy trains, the Case's row under **Train** shows its progress. On the arm-3dof test robot, training on ten 4-second tries took under 3 seconds, and the 32 runs that judge the policy took about 6 seconds more.
+You can follow the policy's progress in the Case's row under **Train** while it trains. On the arm-3dof test robot, training on ten 4-second tries took under 3 seconds, and the 32 runs that judge the policy took about 6 seconds more.
 
-**Note:** While a dataset is open, you can also find **Train from Tries** in [[⌘K]] once five of the dataset's tries have passed. Basecase uses the dataset's Case to judge the policy, and if another Case is open, it opens the dataset's Case first. If the dataset has no Case in this scene, you see **New Case** instead, so you can make one.
+**Note:** While a dataset is open, you can also find **Train from Tries** in [[⌘K]] once five of the dataset's tries have passed. Basecase judges the policy with the dataset's Case, and opens that Case first if another one is open. If the dataset has no Case in this scene, you see **New Case** instead, so you can make one.
 
 ## When the policy is kept
 
-To judge the policy, Basecase has it run the Case 32 times by itself. In each run, every joint starts up to 5° off its start pose, and the run draws its own friction, link masses, servo strength and servo delay (up to 20 ms).
+To judge the policy, Basecase has it run the Case 32 times by itself. In each run, every joint starts up to 5° off its start pose. Each run also draws its own friction, link masses, servo strength and servo delay (up to 20 ms).
 
-If 29 or more runs pass, Basecase keeps the policy as the Case's skill. The number of runs that passed appears under the dataset's buttons and in the skill's row under **Train**.
+If 29 or more runs pass, Basecase keeps the policy as the Case's skill. You'll see the number of runs that passed under the dataset's buttons and in the skill's row under **Train**.
 
 ![32 of 32 under the dataset's buttons](/help/train-a-policy-from-your-tries/kept.png)
 
@@ -67,11 +67,17 @@ If fewer than 29 runs pass, Basecase saves nothing. The count turns red, and the
 
 ## Which tries it learns from
 
-Train from Tries uses only the dataset's passed tries recorded on the robot as it is now, the same tries that [Export a LeRobot dataset](/help/export-a-lerobot-dataset) uses. It leaves out tries from your real robot. If fewer than five tries count, a toast says "These tries are from an earlier design. Try It again to record new ones."
+Train from Tries uses only the dataset's passed tries from the open Case, recorded on the robot as it is now. These are the same tries that [Export a LeRobot dataset](/help/export-a-lerobot-dataset) uses. Basecase leaves out:
 
-Training sends the tries in the dataset's own order, and Forge holds out every fifth try to check its learning on. Training the same dataset again uses the same tries in the same order. If the tries changed, Basecase saves them as the dataset's next version when you train.
+- Tries from your real robot
+- Tries from another Case or scene
+- Tries recorded before the robot last changed
 
-Some tries, such as those recorded before Train from Tries arrived, have joint positions but no speeds. On a robot with a fixed base, Basecase works out each joint's speed from how far it moved since the previous frame, 25 times a second. A robot whose base moves, such as a rover or a walker, needs tries with speeds.
+If fewer than five tries count, a toast says "Export and training take only passed tries of this Case as it is now. Try It to record more."
+
+Basecase trains on the tries in the dataset's own order, and Forge holds out every fifth try to check what it has learned. Train the same dataset again and it uses the same tries in the same order. If the tries changed, Basecase saves them as the dataset's next version when you train.
+
+Some tries have joint positions but no speeds, such as tries recorded before Train from Tries arrived. On a robot with a fixed base, Basecase works out each joint's speed from how far it moved since the previous frame, 25 times a second. A robot whose base moves, such as a rover or a walker, needs tries with speeds.
 
 Tries that **Multiply** made from a passed try count too, so one try you drove can be enough. For more, see [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 

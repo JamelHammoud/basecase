@@ -45,7 +45,7 @@ const DatasetItems: React.FC<{ datasets: Dataset[]; onPick: (d: Dataset) => void
 function tileMenu(core: WorkspaceCore, id: string): ContextMenuEntry[] {
   const { triesView: view, datasets } = core;
   const ids = view.selected.includes(id) ? view.selected : [id];
-  const others = view.datasets.filter((d) => d.id !== view.dataset?.id);
+  const others = view.datasets.filter((d) => d.id !== view.dataset?.id && ids.some((t) => !d.members.includes(t)));
   const addTo: ContextMenuEntry[] = others.length
     ? [
         {

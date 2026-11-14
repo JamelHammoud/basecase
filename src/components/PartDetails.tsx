@@ -4,13 +4,12 @@ import { COMPONENT_BY_ID, ComponentInfo, SpecValue, specLines } from '../data/co
 import { isSourcedId } from '../data/sourcedItems';
 import { usePartThumbnail } from '../three/partThumbnails';
 import { keySpecs } from '../utils/keySpecs';
+import { sizeFigures } from '../utils/size';
 import { MetaLine, PreviewImage, Tooltip, ArrowUpRightIcon, CartIcon, FileIcon } from '../design-system';
 
-const fmt = (v: number) => String(Math.round(v * 100) / 100);
-
-export const SizeLine: React.FC<{ w: number; h: number; d: number }> = ({ w, h, d }) => (
-  <span className="tabular text-white/85">
-    {fmt(w)} × {fmt(h)} × {fmt(d)}
+export const SizeLine: React.FC<{ mm: readonly number[] }> = ({ mm }) => (
+  <span className="tabular">
+    {sizeFigures(mm)}
     <span className="text-white/50"> mm</span>
   </span>
 );
@@ -106,7 +105,7 @@ export const SpecText: React.FC<{ value: SpecValue }> = ({ value }) => (
 export const SpecRows: React.FC<{ c: ComponentInfo; d: PartDimensions }> = ({ c, d }) => (
   <dl className="-my-[5px]">
     <SpecRow label="Size">
-      <SizeLine w={d.width} h={d.height} d={d.depth} />
+      <SizeLine mm={[d.width, d.height, d.depth]} />
     </SpecRow>
     {c.specs.map(([label, value]) => (
       <SpecRow key={label} label={label}>

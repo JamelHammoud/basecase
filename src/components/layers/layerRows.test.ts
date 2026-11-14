@@ -109,7 +109,7 @@ describe('layerRows', () => {
 
   it('titles and sizes the scene', () => {
     expect(layersTitle(parts)).toEqual(['4 parts', '1 cutout']);
-    expect(overallSize([part('a')])).toBe('10 × 20 × 30');
+    expect(overallSize([part('a')])).toEqual([10, 20, 30]);
     expect(overallSize([])).toBeNull();
   });
 });

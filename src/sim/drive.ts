@@ -54,6 +54,10 @@ const IK_ITERATIONS = 16;
 
 const clampUnit = (x: number) => Math.max(-1, Math.min(1, x));
 
+const SPEED_RAMP_S = 0.25;
+
+const slew = (from: number, to: number, step: number) => from + Math.max(-step, Math.min(step, to - from));
+
 export const zeroCommand = (): DriveCommand => ({ v: [0, 0, 0] });
 
 const isMoving = ({ v, aux }: DriveCommand) => v.some((x) => x !== 0) || !!aux?.[0];
@@ -219,6 +223,10 @@ class RoverDrive implements DriveLoop {
 
   private cmd = zeroCommand();
 
+  private speed = 0;
+
+  private lastTime: number | null = null;
+
   constructor(setup: RoverSetup) {
     this.setup = setup;
   }
@@ -227,9 +235,14 @@ class RoverDrive implements DriveLoop {
     this.cmd = c;
   }
 
-  tick(): DriveOutput {
+  tick(time: number): DriveOutput {
     const { wheels, maxSpeedMmS, maxTurnRadS } = this.setup;
-    const speed = clampUnit(this.cmd.v[0]) * maxSpeedMmS;
+    const elapsed = Math.max(0, time - (this.lastTime ?? time));
+
+    this.lastTime = time;
+    this.speed = slew(this.speed, clampUnit(this.cmd.v[0]) * maxSpeedMmS, (maxSpeedMmS * elapsed) / SPEED_RAMP_S);
+
+    const { speed } = this;
     const turn = clampUnit(this.cmd.v[2]) * maxTurnRadS;
 
     return {

@@ -84,6 +84,8 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Delete | [[⌫]] |
 | Deselect | [[Esc]] |
 
+[[Esc]] also leaves Measure, Annotate, Sculpt, Sketch and Import SVG. A measurement, a selected mark or a picked tool clears first.
+
 ## Scenes
 
 | Action | Keys |

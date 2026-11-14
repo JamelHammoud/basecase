@@ -48,7 +48,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
       mode={studioMode}
       svgFile={tool.creatorSvg}
       onChangeMode={(m) => m !== 'clay' && tool.setCreator(m)}
-      onDone={() => (studioMode === 'clay' ? tool.setMode('translate') : tool.setCreator(null))}
+      onDone={tool.leaveStudio}
       onUpdateSculptSettings={tool.updateSculptSettings}
       onAddClayPreset={creation.addClayPreset}
       onSubdivideSelectedClay={creation.subdivideSelectedClay}

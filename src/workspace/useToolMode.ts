@@ -124,6 +124,8 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
 
   const studioMode: StudioSubTab | null = transformMode === 'sculpt' ? 'clay' : creator;
 
+  const leaveStudio = () => (transformMode === 'sculpt' ? setMode('translate') : setCreator(null));
+
   return {
     transformMode,
     setTransformMode,
@@ -144,6 +146,7 @@ export function useToolMode({ setIsRightOpen, annotations, measure, mark }: Tool
     openCreator,
     creatorSvg,
     studioMode,
+    leaveStudio,
     sculptSettings,
     updateSculptSettings: (patch: Partial<SculptSettings>) => setSculptSettings((s) => ({ ...s, ...patch })),
     attachRequest,

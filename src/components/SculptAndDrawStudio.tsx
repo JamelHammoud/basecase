@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, useScrollFade } from '../design-system';
+import { ModeHeader, useScrollFade } from '../design-system';
 import type { ScenePart, SculptSettings } from '../types/robotics';
 import type { SketchShape } from '../utils/sketch/placement';
 import type { Sketch } from '../utils/sketch/types';
@@ -58,12 +58,7 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="h-[44px] shrink-0 pl-[12px] pr-[8px] flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold text-white/90">{MODE_TITLES[subTab]}</h2>
-        <Button variant="primary" size="sm" onClick={onDone}>
-          Done
-        </Button>
-      </div>
+      <ModeHeader title={MODE_TITLES[subTab]} onDone={onDone} />
 
       <div key={subTab} ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {subTab === 'clay' && (

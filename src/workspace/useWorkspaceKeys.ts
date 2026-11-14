@@ -118,6 +118,7 @@ function viewKeys({ core, actions, ui }: WorkspaceKeyDeps): ShortcutHandlers {
     else if (tool.marking && marks.selected) marks.select(null);
     else if (tool.marking) tool.toggleMarking(false);
     else if (joints.picking) joints.cancel();
+    else if (tool.studioMode) tool.leaveStudio();
     else setSelectedIds([]);
   };
 

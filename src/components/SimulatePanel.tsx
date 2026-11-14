@@ -42,6 +42,7 @@ interface SimulatePanelProps {
   explore: CaseExplore;
   sceneName: string;
   onToast: (message: string) => void;
+  onPublishSkill: ((row: SkillRow) => void) | null;
 }
 
 function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
@@ -77,6 +78,18 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [policyKey, setPolicyKey] = useState<string | null>(null);
   const kase = cases.active;
+  const openSkillMenu = (e: React.MouseEvent, row: SkillRow) => {
+    const publish = props.onPublishSkill;
+
+    if (!publish || row.state.kind !== 'ready') return;
+
+    e.preventDefault();
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: [{ label: 'Publish to Hugging Face', onSelect: () => publish(row) }],
+    });
+  };
   const openPolicyMenu = (e: React.MouseEvent, id: string) => {
     const policy = policies.find((p) => p.id === id);
 
@@ -121,7 +134,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} onToast={props.onToast} />
         <TrainSection
           skills={skills}
-          actions={skillActions}
+          actions={{ ...skillActions, onMenu: openSkillMenu }}
           margin={subject?.key.startsWith('skill:') ? margin : null}
           onTeach={onTeach}
           policies={policies}

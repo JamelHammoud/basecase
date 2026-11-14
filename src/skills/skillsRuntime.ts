@@ -7,12 +7,13 @@ import { retrainedRecord, stressedRecord, type StressRow } from './stressRuns';
 import type { StressTarget } from './stressTraining';
 import { lastError, type ForgeRunner } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
+import type { KitWarm } from './motorKit';
 import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
 import type { RaceOutcome } from './race';
 import type { SkillPorts, SkillsJob } from './skillsJob';
-import { moveTag, recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
-import { KIT_LABELS, type SkillJob, type SkillTarget } from './skillRows';
+import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
+import { KIT_LABELS, refusalModel, type SkillJob, type SkillTarget } from './skillRows';
 import {
   NO_SNAPSHOT_STORE,
   NO_SNAPSHOTS,
@@ -24,7 +25,7 @@ import {
 } from './snapshots';
 import type { DraftInput, DraftReport, DraftResult } from './teach';
 import { raceSummary } from './teach';
-import type { ForgeFactory, RaceReport, RuntimeDeps, TriesPlan } from './skillsRuntimeTypes';
+import type { ForgeFactory, KitInstall, RaceReport, RuntimeDeps, TriesPlan } from './skillsRuntimeTypes';
 import type { Environment } from './environment';
 import { triesSkill } from './triesTraining';
 
@@ -38,6 +39,7 @@ interface Run {
 export type {
   ForgeFactory,
   ForgeFactoryOptions,
+  KitInstall,
   RaceReport,
   RuntimeDeps,
   TriesOutcome,
@@ -84,17 +86,21 @@ export class SkillsRuntime {
     return reply.result;
   }
 
-  trainKit(model: SimModel, entry: TrainedEntry): string | null {
+  trainKit(model: SimModel, entry: TrainedEntry, warm?: KitWarm): string | null {
     if (this.user) return BUSY;
 
     this.running = this.start({
       target: `kit:${entry}`,
       label: KIT_LABELS[entry],
       background: false,
-      work: (forge, signal) => this.kitWork(model, entry, { forge, signal }),
+      work: (forge, signal) => this.kitWork(model, entry, { forge, signal, warm }),
     });
 
     return null;
+  }
+
+  installKit(model: SimModel, { entry, warm }: KitInstall): string | null {
+    return this.trainKit(model, entry, warm);
   }
 
   trainMove(model: SimModel, animation: RobotAnimation): string | null {
@@ -345,14 +351,22 @@ export class SkillsRuntime {
     plan.done({ runs, kept: !!made, problem: runs.refusal });
   }
 
-  private async kitWork(model: SimModel, entry: TrainedEntry, ports: { forge: ForgeRunner; signal: AbortSignal }) {
+  private async kitWork(
+    model: SimModel,
+    entry: TrainedEntry,
+    ports: { forge: ForgeRunner; signal: AbortSignal; warm?: KitWarm },
+  ) {
+    const { warm, ...rest } = ports;
     const reply = await this.deps.runner(
-      { type: 'kit', model, design: designOf(model), entry },
-      { ...this.ports(), ...ports },
+      { type: 'kit', model, design: designOf(model), entry, ...(warm ? { warm } : {}) },
+      { ...this.ports(), ...rest },
     );
+    const { outcome } = reply;
 
-    if (reply.outcome.kind === 'skill')
-      await this.keep(`kit:${entry}`, skillRecord(reply.outcome.skill, { kit: entry }));
+    if (outcome.kind === 'skill') return this.keep(`kit:${entry}`, skillRecord(outcome.skill, { kit: entry }));
+
+    if (outcome.evidence)
+      this.deps.onRefused?.(`kit:${entry}`, { line: refusedLine(outcome.evidence), model: refusalModel(model) });
   }
 
   private async moveWork(
@@ -431,6 +445,7 @@ export class SkillsRuntime {
     this.background?.abort();
     this.user = controller;
     this.userLabel = run.label;
+    this.deps.onRefused?.(run.target, null);
     this.trails.set(run.target, NO_SNAPSHOTS);
     this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting', snapshot: null });
 

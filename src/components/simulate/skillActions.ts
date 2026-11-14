@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import type { SkillRow } from '../../skills/skillRows';
 import type { SnapshotRef } from '../../skills/snapshots';
 import type { StressFinding } from '../../skills/stress';
@@ -15,5 +16,6 @@ export interface SkillActions {
   onDrive: () => void;
   onStop: () => void;
   onSnapshot?: (row: SkillRow, ref: SnapshotRef) => void;
+  onMenu?: (e: MouseEvent, row: SkillRow) => void;
   stress?: StressActions;
 }

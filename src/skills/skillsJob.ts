@@ -6,7 +6,7 @@ import type { Skill } from './artifacts';
 import type { Environment } from './environment';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
-import { trainKitEntry, type KitOutcome } from './motorKit';
+import { trainKitEntry, type KitOutcome, type KitWarm } from './motorKit';
 import { trainMove, type MoveOutcome } from './moves';
 import type { RaceOutcome } from './race';
 import { stressSkill, type StressFinding, type StressResult } from './stress';
@@ -16,7 +16,7 @@ import { draftSkill, raceDraft, recheckSkill, type DraftInput, type DraftResult,
 export type SkillsJob =
   | { type: 'draft'; model: SimModel; design: string; request: DraftInput }
   | { type: 'race'; model: SimModel; draft: SkillDraft; budgetSteps?: number }
-  | { type: 'kit'; model: SimModel; design: string; entry: TrainedEntry }
+  | { type: 'kit'; model: SimModel; design: string; entry: TrainedEntry; warm?: KitWarm }
   | { type: 'move'; model: SimModel; design: string; animation: RobotAnimation }
   | { type: 'recheck'; model: SimModel; design: string; skill: Skill; environment: Environment }
   | ({ type: 'handoff' } & Omit<HandoffTrainInput, 'mj' | 'forge' | 'save'>)

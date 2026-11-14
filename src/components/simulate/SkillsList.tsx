@@ -15,6 +15,8 @@ function stateLine(row: SkillRow): string | null {
 
   if (state.kind === 'ready') return state.arena;
 
+  if (state.kind === 'untrained') return state.refused ?? null;
+
   if (state.kind !== 'training') return null;
 
   return trainingLine(state.message, state.share);
@@ -93,6 +95,7 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
           className="flex flex-col"
           data-testid="skill-row"
           data-skill={row.state.kind === 'ready' ? row.record?.hash : undefined}
+          onContextMenu={actions.onMenu && ((e) => actions.onMenu?.(e, row))}
         >
           <div className="flex items-center gap-2 min-h-[32px]">
             <div className="flex-1 min-w-0">

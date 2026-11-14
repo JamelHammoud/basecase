@@ -12,6 +12,7 @@ import type { ShowToast, StudioShared } from './types';
 import { useCases } from './useCases';
 import { useRoutines } from './useRoutines';
 import { useShareRobot } from './useShareRobot';
+import { useSkillHub } from './useSkillHub';
 import { useSkills } from './useSkills';
 import type { SceneDocument } from './useSceneDocument';
 
@@ -120,6 +121,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     showToast,
     openAccounts: () => studio.openSettings('accounts'),
   });
+  const skillHub = useSkillHub({ skills, showToast, openAccounts: () => studio.openSettings('accounts') });
   const routines = useRoutines({
     parts,
     project,
@@ -132,7 +134,7 @@ export function useSimTraining(options: SimTrainingOptions) {
     trainHandoff: skills.trainHandoff,
   });
 
-  return { sim, training, policies, deletePolicy, cases, routines, skills, share };
+  return { sim, training, policies, deletePolicy, cases, routines, skills, skillHub, share };
 }
 
 export type SimTraining = ReturnType<typeof useSimTraining>;

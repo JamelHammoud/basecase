@@ -6,9 +6,11 @@ import type { Skill } from './artifacts';
 import type { ForgeJob, ForgeRunner, SkillSave } from './forgeRunner';
 import type { SkillRunner } from './skillsClient';
 import type { SkillRecord } from './skillRecords';
-import type { SkillJob } from './skillRows';
+import type { SkillJob, SkillRefusal, SkillTarget } from './skillRows';
 import type { SnapshotRef, Snapshots } from './snapshots';
 import type { ForgeProgress } from './trainerForge';
+import type { TrainedEntry } from './kitEnvironment';
+import type { KitWarm } from './motorKit';
 
 export interface ForgeFactoryOptions {
   background: boolean;
@@ -26,7 +28,13 @@ export interface RuntimeDeps {
   loadSkill: (hash: string) => Promise<Skill | null>;
   onRecord: (record: SkillRecord) => void;
   onChange: (jobs: SkillJob[]) => void;
+  onRefused?: (target: SkillTarget, refusal: SkillRefusal | null) => void;
   snapshots?: Snapshots;
+}
+
+export interface KitInstall {
+  entry: TrainedEntry;
+  warm: KitWarm;
 }
 
 export interface RaceReport {

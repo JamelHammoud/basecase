@@ -1,6 +1,7 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
-import type { Freshness } from './artifacts';
+import { modelHashes, type Freshness } from './artifacts';
+import { hashOf } from './hash';
 import type { TrainedEntry } from './kitEnvironment';
 import { kitEntries } from './motorKit';
 import { moveAnimations } from './moveEnvironment';
@@ -23,7 +24,7 @@ export type SkillState =
   | { kind: 'training'; share: number | null; message: string; background: boolean; snapshot: SnapshotRef | null }
   | { kind: 'ready'; arena: string }
   | { kind: 'recheck' }
-  | { kind: 'untrained' };
+  | { kind: 'untrained'; refused?: string };
 
 export interface SkillRow {
   target: SkillTarget;
@@ -50,10 +51,20 @@ interface DesignInput {
   design: string;
 }
 
+export interface SkillRefusal {
+  line: string;
+  model: string;
+}
+
+export const refusalModel = (model: SimModel) => hashOf(modelHashes(model));
+
+export type SkillRefusals = Partial<Record<SkillTarget, SkillRefusal>>;
+
 interface RowInput extends DesignInput {
   records: SkillRecord[];
   jobs: SkillJob[];
   animations?: readonly RobotAnimation[];
+  refusals?: SkillRefusals;
 }
 
 function best(records: SkillRecord[], input: DesignInput) {
@@ -67,7 +78,7 @@ function best(records: SkillRecord[], input: DesignInput) {
 const readyEvidence = (found: ReturnType<typeof best> | null) =>
   found?.freshness === 'fresh' ? (found.record.evidence ?? null) : null;
 
-function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefined): SkillState {
+function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefined, refused?: string): SkillState {
   if (job)
     return {
       kind: 'training',
@@ -81,17 +92,27 @@ function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefine
 
   if (evidence) return { kind: 'ready', arena: arenaLine(evidence) };
 
-  return found?.freshness === 'rerun-arena' ? { kind: 'recheck' } : { kind: 'untrained' };
+  if (found?.freshness === 'rerun-arena') return { kind: 'recheck' };
+
+  return refused ? { kind: 'untrained', refused } : { kind: 'untrained' };
 }
 
-function rowState(found: ReturnType<typeof best> | null, job: SkillJob | undefined) {
-  const state = stateOf(found, job);
+function rowState(found: ReturnType<typeof best> | null, job: SkillJob | undefined, refused?: string) {
+  const state = stateOf(found, job, refused);
   const findings = state.kind === 'ready' ? (found?.record.stress?.findings ?? []) : [];
 
   return { record: found?.record ?? null, state, findings };
 }
 
 function kitRows(input: RowInput): SkillRow[] {
+  const current = Object.keys(input.refusals ?? {}).length ? refusalModel(input.model) : null;
+
+  const refusalFor = (target: SkillTarget) => {
+    const refusal = input.refusals?.[target];
+
+    return refusal && refusal.model === current ? refusal.line : undefined;
+  };
+
   return kitEntries(input.model).map((entry) => {
     const target: SkillTarget = `kit:${entry}`;
     const found = best(
@@ -107,6 +128,7 @@ function kitRows(input: RowInput): SkillRow[] {
       ...rowState(
         found,
         input.jobs.find((j) => j.target === target),
+        refusalFor(target),
       ),
       drives: entry === 'velocity-tracking',
     };

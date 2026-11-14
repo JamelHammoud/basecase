@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { designLabel, sameDesign, type ExploredDesign } from '../../cases/explore';
-import { Button, ChevronDownIcon, ChevronUpIcon, RowActions, Tooltip } from '../../design-system';
+import { Button, ChevronDownIcon, ChevronUpIcon, ProgressBar, RowActions, Tooltip } from '../../design-system';
 import { weight } from '../../utils/weight';
 import { useMoney } from '../../utils/useMoney';
 import type { CaseExplore, Exploration } from '../../workspace/useCaseExplore';
-import { ProgressBar } from './ProgressBar';
 import { sortRows, type SortKey, type Sorting } from '../../cases/exploreSort';
 
 const GRID = 'grid grid-cols-[minmax(0,1fr)_auto_64px_56px] items-center gap-x-3';
@@ -101,7 +100,7 @@ export const ExploreRows: React.FC<{ explore: CaseExplore; sceneName: string }> 
           onApply={() => explore.apply(row)}
         />
       ))}
-      {shown.running && <ProgressBar share={shown.rows.length / Math.max(1, shown.total)} />}
+      {shown.running && <ProgressBar className="mt-1.5" share={shown.rows.length / Math.max(1, shown.total)} />}
     </div>
   );
 };

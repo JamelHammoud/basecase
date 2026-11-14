@@ -208,6 +208,30 @@ const loadScene = async (record: ReturnType<typeof servoQuad>) => {
   await expect.poll(() => partCount(app.page)).toBe(record.parts.length);
 };
 
+describe('a Kit row the trainer can’t start', () => {
+  it('says why on the row instead of going quiet', async () => {
+    const robot = fixtureRobots().find((r) => r.id === 'quad-servo')!;
+    const reason = 'Training needs uv. Install it with: brew install uv';
+    const trainStart = (url: URL) => url.pathname === '/api/bridge/train-start';
+
+    await loadScene({ name: 'quad', parts: robot.parts, project: { ...DEFAULT_PROJECT, joints: robot.joints } });
+    await clickTab('Simulate');
+
+    const row = app.page.locator(visible('[data-testid="skill-row"]'), { hasText: 'Stand' }).first();
+
+    await expect.poll(() => row.count(), { timeout: 60000 }).toBe(1);
+    await app.page.route(trainStart, (route) =>
+      route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: reason }) }),
+    );
+    await row.locator('button', { hasText: 'Train' }).click();
+    await expect.poll(() => row.innerText(), { timeout: 60000 }).toContain(reason);
+    expect(await row.locator('button', { hasText: 'Train' }).count()).toBe(1);
+    await app.page.unroute(trainStart);
+    app.errors.splice(0, app.errors.length, ...app.errors.filter((e) => !e.includes('/api/bridge/train-start')));
+    expect(app.errors).toEqual([]);
+  }, 120000);
+});
+
 describe('a policy trained before a calibration', () => {
   it('shows Out of date once a joint is calibrated, and Retrain starts the same job', async () => {
     const scene = servoQuad();

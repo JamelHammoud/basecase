@@ -2,6 +2,7 @@ import { Readable, Writable } from 'node:stream';
 import path from 'node:path';
 import { AgentSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclientprotocol/sdk';
 import { synthesizeCustomModelFromRequest } from './acp-3d-model.mjs';
+import { offlineRefusal } from './acp-3d-scope.mjs';
 import { plural } from './plural.mjs';
 
 let sessionCounter = 1;
@@ -92,6 +93,10 @@ class Robotics3DAcpAgent {
 
     const rawText = promptText(prompt);
     const structuredPayload = structuredPayloadOf(rawText);
+    const refusal = offlineRefusal(structuredPayload?.promptText ?? rawText);
+
+    if (refusal) return this.reply(sessionId, refusal);
+
     const analysis = analysisCopy(structuredPayload);
 
     const toolCallId1 = `tc-analyze-${Date.now()}`;
@@ -146,7 +151,7 @@ class Robotics3DAcpAgent {
       update: {
         sessionUpdate: 'tool_call',
         toolCallId: toolCallId2,
-        title: `Saving 3D Model "${modelDef.name}" to ${modelRelPath}`,
+        title: `Saving ${modelDef.name}`,
         kind: 'edit',
         status: 'in_progress',
       },
@@ -167,24 +172,21 @@ class Robotics3DAcpAgent {
       },
     });
 
+    const { width, height, depth } = modelDef.defaultDimensions;
     const summaryMsg =
-      `Made 3D model **${modelDef.name}** (\`${modelDef.defaultDimensions.width} × ${modelDef.defaultDimensions.height} × ${modelDef.defaultDimensions.depth} mm\`, ${plural(modelDef.nodes.length, 'geometry node')}) and saved it to your Individual Models Library (\`${modelRelPath}\`).\n\n` +
+      `Made **${modelDef.name}** (${width} × ${height} × ${depth} mm, ${plural(modelDef.nodes.length, 'shape')}) and saved it to the Library.\n\n` +
       `[MODEL_CREATED:${modelDef.id}]`;
 
+    return this.reply(sessionId, summaryMsg);
+  }
+
+  async reply(sessionId, text) {
     await this.conn.sessionUpdate({
       sessionId,
-      update: {
-        sessionUpdate: 'agent_message_chunk',
-        content: {
-          type: 'text',
-          text: summaryMsg,
-        },
-      },
+      update: { sessionUpdate: 'agent_message_chunk', content: { type: 'text', text } },
     });
 
-    return {
-      stopReason: 'end_turn',
-    };
+    return { stopReason: 'end_turn' };
   }
 }
 

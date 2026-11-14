@@ -8,6 +8,7 @@ import { PairPhoneHost } from './components/phone/PairPhoneHost';
 import { platformPhoneLink } from './phone/phoneLink';
 import { setPhoneLink } from './phone/phoneStore';
 import { startRobotStore } from './robot/robotStore';
+import { startTakeVideo } from './robot/takeVideo';
 import { refreshRates } from './utils/currencyStore';
 
 const electronAPI = window.electronAPI;
@@ -18,6 +19,7 @@ if (electronAPI?.isElectron) {
   electronAPI.isFullScreen().then(setFullScreen);
   electronAPI.onFullScreenChange(setFullScreen);
   startRobotStore(electronAPI);
+  startTakeVideo();
 }
 
 setPhoneLink(platformPhoneLink());

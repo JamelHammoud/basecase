@@ -4,6 +4,8 @@ import { loadMujoco } from './loadMujoco';
 import type { DriveCommand } from './driveTypes';
 import { Recorder, recordingTransfer, type Recording } from './recorder';
 import { fitsRecording, recordedEfforts, setRecordedFrame } from './recordedFrames';
+import { openTake } from './takeRecording';
+import type { Take } from '../../electron/robot/robotTake.mjs';
 import type { Scan } from './scanner';
 import { SimEngine, type Controller } from './engine';
 import type { FaultKind } from './faults';
@@ -36,6 +38,7 @@ export type SimRequest =
   | { type: 'fault'; joint: string; kind: FaultKind | null }
   | { type: 'record'; on: boolean }
   | { type: 'scrub'; recording: Recording | null }
+  | { type: 'scrubTake'; take: Take }
   | { type: 'seek'; frame: number }
   | { type: 'grab'; phase: 'start'; body: number; point: [number, number, number] }
   | { type: 'grab'; phase: 'move'; point: [number, number, number]; turn: [number, number, number, number] | null }
@@ -66,7 +69,7 @@ export type SimResponse =
   | { type: 'ready'; nq: number; nu: number; nbody: number }
   | { type: 'error'; message: string; id?: number }
   | { type: 'recorded'; recording: Recording | null }
-  | { type: 'scrubbed'; efforts: Float32Array[] | null }
+  | { type: 'scrubbed'; efforts: Float32Array[] | null; recording?: Recording }
   | { type: 'sought'; frame: number; qpos: Float64Array }
   | { type: 'world'; looks: WorldLooks }
   | { type: 'watched'; id: number; margin: number }
@@ -288,6 +291,17 @@ async function scrub(msg: Msg<'scrub'>) {
   post({ type: 'scrubbed', efforts }, efforts?.map((e) => e.buffer) ?? []);
 }
 
+async function scrubTake(msg: Msg<'scrubTake'>) {
+  const m = (mj ??= await loadMujoco());
+
+  halt();
+
+  const opened = engine && openTake(engine, msg.take, (e, r) => recordedEfforts(m, e, r));
+
+  scrubbed = opened?.recording ?? null;
+  post({ type: 'scrubbed', efforts: null, ...opened }, opened?.efforts.map((f) => f.buffer) ?? []);
+}
+
 function seek(msg: Msg<'seek'>) {
   if (!engine || !mj || !scrubbed) return;
 
@@ -418,6 +432,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   record,
   scrub,
+  scrubTake,
   seek,
   run,
   falls: (msg) => {

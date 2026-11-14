@@ -1,7 +1,9 @@
+import type { TakeSample } from '../../electron/robot/takeTap.mjs';
+import { relistTries } from '../cases/tryStore';
 import type { ElectronApi } from '../utils/platform/types';
 import type { RobotConnection } from './jointRows';
 import type { RobotPolicyRef } from './robotPolicy';
-import { RunBuffer, statusPositions, type RobotRun } from './runBuffer';
+import type { FaultRun } from './runBuffer';
 import {
   applyRobotEvent,
   INITIAL_ROBOT,
@@ -45,15 +47,28 @@ function setSceneJoints(joints: string[] | null) {
 
 export type RobotLinkApi = Pick<
   ElectronApi,
-  'robotConnect' | 'robotCommand' | 'robotDisconnect' | 'robotState' | 'onRobotEvent' | 'robotPolicy' | 'robotCalibrate'
+  | 'robotConnect'
+  | 'robotCommand'
+  | 'robotDisconnect'
+  | 'robotState'
+  | 'onRobotEvent'
+  | 'robotPolicy'
+  | 'robotCalibrate'
+  | 'robotTakeScene'
+  | 'robotTakeSample'
 >;
+
+export interface TakeScene {
+  sceneId: string;
+  robot: string;
+}
 
 let api: RobotLinkApi | null = null;
 let policies: RobotPolicyRef[] | undefined;
 let benchDriving = false;
 let faultHeld = false;
-const run = new RunBuffer();
-const runs = new Map<number, RobotRun>();
+let takeScene: TakeScene | null = null;
+const runs = new Map<number, FaultRun>();
 const listeners = new Set<() => void>();
 const eventListeners = new Set<(event: RobotEvent) => void>();
 
@@ -103,7 +118,8 @@ function keepFaultRun(next: RobotState, event: RobotEvent) {
 
   faultHeld = true;
   runs.set(message.id, {
-    ...run.kept(),
+    takeId: null,
+    replayable: false,
     joints: [...(sceneJoints ?? [])],
     faultJoint: servoJoint(next, event.id),
     faultAt: Date.now(),
@@ -113,15 +129,43 @@ function keepFaultRun(next: RobotState, event: RobotEvent) {
   for (const id of runs.keys()) if (!next.messages.some((m) => m.id === id)) runs.delete(id);
 }
 
+function noteTake(event: RobotEvent): boolean {
+  if (event.event !== 'take' || event.state !== 'kept' || typeof event.id !== 'string') return false;
+
+  void relistTries();
+
+  const waiting = event.fault ? [...runs.values()].reverse().find((r) => r.takeId === null) : undefined;
+
+  if (!waiting) return false;
+
+  Object.assign(waiting, { takeId: event.id, replayable: event.replayable === true });
+
+  return true;
+}
+
 function noteRun(next: RobotState, event: RobotEvent) {
   if (event.event === 'link' || event.event === 'mode') faultHeld = false;
 
-  if (event.event === 'link' && event.state === 'connected') run.clear();
-
-  if (event.event === 'status' && next.status && next.spec)
-    run.status(performance.now(), statusPositions(next.status, next.spec.ids, next.calibration));
-
   keepFaultRun(next, event);
+
+  return noteTake(event);
+}
+
+function sendTakeScene() {
+  if (!takeScene || !sceneJoints || state.link !== 'connected') return;
+
+  void api?.robotTakeScene?.({ ...takeScene, joints: sceneJoints });
+}
+
+export function setTakeScene(scene: TakeScene | null) {
+  if (scene?.sceneId === takeScene?.sceneId && scene?.robot === takeScene?.robot) return;
+
+  takeScene = scene;
+  sendTakeScene();
+}
+
+export function sendTakeSample(sample: TakeSample) {
+  if (state.link === 'connected') void api?.robotTakeSample?.(sample);
 }
 
 export function subscribeRobot(listener: () => void) {
@@ -145,8 +189,9 @@ export function receiveRobotEvent(event: RobotEvent) {
 
   const next = applyRobotEvent(state, event);
 
-  noteRun(next, event);
-  set(next);
+  set(noteRun(next, event) ? { ...next } : next);
+
+  if (event.event === 'link' && event.state === 'connected') sendTakeScene();
 
   for (const listener of eventListeners) listener(event);
 }
@@ -163,6 +208,7 @@ function adopt(link: RobotLinkState) {
 
   sceneJoints = recalledSceneJoints();
   set(events.reduce<RobotState>((s, e) => (e ? applyRobotEvent(s, e) : s), INITIAL_ROBOT));
+  sendTakeScene();
 }
 
 export function startRobotStore(link: RobotLinkApi) {
@@ -181,7 +227,10 @@ const unavailable: ConnectReply = { ok: false, message: 'Emulated robots run in 
 export async function connectRobot(spec: ConnectSpec, joints: string[]): Promise<ConnectReply> {
   const reply = (await api?.robotConnect?.(spec)) ?? unavailable;
 
-  if (reply.ok) setSceneJoints(joints);
+  if (reply.ok) {
+    setSceneJoints(joints);
+    sendTakeScene();
+  }
 
   return reply;
 }
@@ -193,18 +242,8 @@ export function setRobotPolicy(refs: RobotPolicyRef[]) {
 
 export const disconnectRobot = async () => (await api?.robotDisconnect?.()) ?? unavailable;
 
-export async function sendRobotCommand(command: Record<string, unknown>): Promise<ConnectReply> {
-  const sentAt = performance.now();
-  const reply = (await api?.robotCommand?.(command)) ?? unavailable;
-
-  if (reply.ok && command.cmd === 'intent' && Array.isArray(command.joints) && state.status?.run === 'running')
-    run.intent(
-      sentAt,
-      command.joints.map((v) => (typeof v === 'number' ? v : NaN)),
-    );
-
-  return reply;
-}
+export const sendRobotCommand = async (command: Record<string, unknown>): Promise<ConnectReply> =>
+  (await api?.robotCommand?.(command)) ?? unavailable;
 
 export const robotLinkState = async () => (await api?.robotState?.()) ?? null;
 

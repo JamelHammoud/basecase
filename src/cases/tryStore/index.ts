@@ -1,3 +1,4 @@
+import type { TakeManifest } from '../../../electron/robot/robotTake.mjs';
 import { useEffect, useSyncExternalStore } from 'react';
 import type { Recording } from '../../sim/recorder';
 import { indexedDbStore } from '../../utils/keyValueStore';
@@ -99,3 +100,22 @@ export async function saveStrip(id: string, strip: Blob) {
   await backend.saveStrip(id, strip);
   await update((tries) => tries.map((t) => (t.id === id ? { ...t, strip: true } : t)));
 }
+
+export const loadTryVideo = (id: string) => backend.video(id);
+
+export async function saveTryVideo(id: string, bytes: Uint8Array) {
+  if (IS_WEB_DEMO || !bytes.byteLength) return;
+
+  await backend.saveVideo(id, bytes);
+  await update((tries) => tries.map((t) => (t.id === id ? { ...t, video: true } : t)));
+}
+
+export const loadTake = (id: string) => backend.take(id);
+
+export async function relistTries() {
+  const found = await backend.list().catch(() => null);
+
+  if (found) publish(found);
+}
+
+export const saveTake = (manifest: TakeManifest, bytes: Uint8Array) => backend.saveTake(manifest, bytes);

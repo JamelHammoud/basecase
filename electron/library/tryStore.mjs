@@ -5,11 +5,14 @@ import { checkedFileId, isSafeFileId } from '../backend/constants.mjs';
 export const TRY_MANIFEST = 'try.json';
 export const TRY_RECORDING = 'recording.bin';
 export const TRY_STRIP = 'strip.webp';
+export const TRY_VIDEO = 'video.mp4';
 
 const MAX_MANIFEST = 256 * 1024;
 const MAX_RECORDING = 1024 * 1024 * 1024;
 const MAX_STRIP = 2 * 1024 * 1024;
-const SOURCES = new Set(['case', 'generated', 'real']);
+const MAX_VIDEO = 512 * 1024 * 1024;
+const KEPT_FILES = { strip: TRY_STRIP, video: TRY_VIDEO };
+const SOURCES = new Set(['case', 'generated', 'real', 'operate']);
 const VERDICTS = new Set(['passed', 'failed', 'unjudged']);
 
 const text = (value, fallback = '') => (typeof value === 'string' ? value.slice(0, 512) : fallback);
@@ -26,7 +29,7 @@ function outcomeOf(value) {
   };
 }
 
-export function summarizeTry(manifest, { recording, strip }) {
+export function summarizeTry(manifest, { recording, strip, video }) {
   const robot = isPlain(manifest.robot) ? manifest.robot : {};
   const kase = isPlain(manifest.case) ? manifest.case : null;
 
@@ -47,6 +50,7 @@ export function summarizeTry(manifest, { recording, strip }) {
     sourceTry: idOrNull(manifest.sourceTry),
     recording,
     strip,
+    video,
   };
 }
 
@@ -122,7 +126,7 @@ export class TryStore {
     const stat = fs.statSync(path.join(dir, TRY_MANIFEST));
     const cached = this.summaries.get(id);
 
-    if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) return this.withStrip(id, cached);
+    if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) return this.withKept(id, cached);
 
     const manifest = JSON.parse(fs.readFileSync(path.join(dir, TRY_MANIFEST), 'utf-8'));
 
@@ -131,6 +135,7 @@ export class TryStore {
     const summary = summarizeTry(manifest, {
       recording: fs.existsSync(path.join(dir, TRY_RECORDING)),
       strip: fs.existsSync(path.join(dir, TRY_STRIP)),
+      video: fs.existsSync(path.join(dir, TRY_VIDEO)),
     });
 
     this.summaries.set(id, { mtimeMs: stat.mtimeMs, size: stat.size, summary });
@@ -138,10 +143,15 @@ export class TryStore {
     return { summary, fresh: true };
   }
 
-  withStrip(id, cached) {
-    if (cached.summary.strip || !fs.existsSync(path.join(this.triesDir, id, TRY_STRIP))) return { summary: cached.summary };
+  withKept(id, cached) {
+    const held = Object.entries(KEPT_FILES).flatMap(([key, file]) =>
+      cached.summary[key] === true ? [] : [[key, fs.existsSync(path.join(this.triesDir, id, file))]],
+    );
+    const changed = held.filter(([key, present]) => present !== cached.summary[key]);
 
-    cached.summary = { ...cached.summary, strip: true };
+    if (!changed.length) return { summary: cached.summary };
+
+    cached.summary = { ...cached.summary, ...Object.fromEntries(changed) };
 
     return { summary: cached.summary, fresh: true };
   }
@@ -218,6 +228,21 @@ export class TryStore {
     if (!fs.existsSync(path.join(dir, TRY_MANIFEST))) return { ok: false };
 
     writeAtomic(path.join(dir, TRY_STRIP), checkedBytes(bytes, MAX_STRIP));
+
+    return { ok: true };
+  }
+
+  video(id) {
+    return readOrNull(path.join(this.dirOf(id), TRY_VIDEO));
+  }
+
+  saveVideo({ id, bytes }) {
+    const dir = this.dirOf(id);
+    const video = checkedBytes(bytes, MAX_VIDEO);
+
+    if (!fs.existsSync(path.join(dir, TRY_MANIFEST))) return { ok: false };
+
+    writeAtomic(path.join(dir, TRY_VIDEO), video);
 
     return { ok: true };
   }

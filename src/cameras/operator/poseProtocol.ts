@@ -29,9 +29,9 @@ export type PoseRequest =
   | { type: 'close' };
 
 export type FollowEvent =
-  | { type: 'pose'; follow: PoseFollow | null; image: SkeletonPoint[] | null; seenAt: number }
-  | { type: 'hand'; follow: HandFollow | null; seenAt: number }
-  | { type: 'face'; follow: FaceFollow | null; seenAt: number };
+  | { type: 'pose'; follow: PoseFollow | null; image: SkeletonPoint[] | null; seenAt: number; marks?: number[] }
+  | { type: 'hand'; follow: HandFollow | null; seenAt: number; marks?: number[] }
+  | { type: 'face'; follow: FaceFollow | null; seenAt: number; marks?: number[] };
 
 export type PoseEvent =
   | FollowEvent

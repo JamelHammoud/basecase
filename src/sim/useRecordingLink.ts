@@ -1,8 +1,11 @@
 import { useCallback, useRef } from 'react';
 import type { Recording } from './recorder';
 import type { SimRequest, SimResponse } from './sim.worker';
+import type { ScrubbedTake, Take } from './takeRecording';
 
 export type RecordingReply = Extract<SimResponse, { type: 'recorded' | 'scrubbed' | 'sought' }>;
+
+type Scrubbed = Extract<SimResponse, { type: 'scrubbed' }>;
 
 export interface Sought {
   frame: number;
@@ -11,7 +14,7 @@ export interface Sought {
 
 export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
   const recordWaiter = useRef<((r: Recording | null) => void) | null>(null);
-  const waiter = useRef<((efforts: Float32Array[] | null) => void) | null>(null);
+  const waiter = useRef<((scrubbed: Scrubbed | null) => void) | null>(null);
   const sought = useRef<Sought | null>(null);
 
   const reply = useCallback((msg: RecordingReply) => {
@@ -28,13 +31,13 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
       return;
     }
 
-    waiter.current?.(msg.efforts);
+    waiter.current?.(msg);
     waiter.current = null;
   }, []);
 
-  const scrub = useCallback(
-    (recording: Recording | null) =>
-      new Promise<Float32Array[] | null>((resolve) => {
+  const request = useCallback(
+    (msg: Extract<SimRequest, { type: 'scrub' | 'scrubTake' }>) =>
+      new Promise<Scrubbed | null>((resolve) => {
         const w = workerRef.current;
 
         sought.current = null;
@@ -48,9 +51,25 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
         }
 
         waiter.current = resolve;
-        w.postMessage({ type: 'scrub', recording } satisfies SimRequest);
+        w.postMessage(msg);
       }),
     [workerRef],
+  );
+
+  const scrub = useCallback(
+    async (recording: Recording | null) => (await request({ type: 'scrub', recording }))?.efforts ?? null,
+    [request],
+  );
+
+  const scrubTake = useCallback(
+    async (take: Take): Promise<ScrubbedTake | null> => {
+      const scrubbed = await request({ type: 'scrubTake', take });
+
+      return scrubbed?.recording && scrubbed.efforts
+        ? { recording: scrubbed.recording, efforts: scrubbed.efforts }
+        : null;
+    },
+    [request],
   );
 
   const seek = useCallback(
@@ -73,5 +92,5 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
     [workerRef],
   );
 
-  return { reply, stopRecording, scrub, seek, sought: useCallback(() => sought.current, []) };
+  return { reply, stopRecording, scrub, scrubTake, seek, sought: useCallback(() => sought.current, []) };
 }

@@ -1,6 +1,7 @@
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import type { Viewport3DHandle } from '../../../components/Viewport3D';
 import type { Angles } from '../../../robot/robotGap';
+import { loadTake } from '../../../cases/tryStore';
 import { robotLinkState, startRobotStore, type RobotLinkApi } from '../../../robot/robotStore';
 import { twinSnapshot } from '../../../robot/robotTwin';
 import { radiansToDegrees as degrees } from '../../../utils/angle';
@@ -9,6 +10,7 @@ import { robotPreviewImage } from '../../../utils/robotPreview';
 import { robotPackageZip } from '../../robotPackageExport';
 import { base64Files } from '../base64Files';
 import type { Studio, StudioContext } from '../types';
+import { recordedLink } from './recordedLink';
 
 function robotGhostState(viewport: Viewport3DHandle | null) {
   const twin = twinSnapshot();
@@ -43,7 +45,12 @@ export default function robotStudio(studio: Studio) {
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),
     robotPackage: () => robotPackage(studio()),
-    attachRobot: (link: RobotLinkApi) => startRobotStore(link),
+    attachRobot: (link: RobotLinkApi) => startRobotStore(recordedLink(link)),
+    robotTake: async (id: string) => {
+      const take = await loadTake(id);
+
+      return take && { joints: take.joints, t: Array.from(take.t), position: Array.from(take.position) };
+    },
     robotCalibration: async () => (await robotLinkState())?.calibration ?? null,
     robotGhost: () => robotGhostState(studio().core.viewportRef.current),
   };

@@ -5,13 +5,15 @@ import {
   latestFaceFollow,
   latestFollow,
   latestHandFollow,
+  latestMarks,
   leaveOperatorCamera,
   type LandmarkKind,
 } from './operatorCamera';
 
-const lifecycle = (kind: LandmarkKind): Pick<InputSource, 'open' | 'close'> => ({
+const lifecycle = (kind: LandmarkKind): Pick<InputSource, 'open' | 'close' | 'raw'> => ({
   open: (robot: InputRobot | null) => (robot ? joinOperatorCamera(kind, robot) : Promise.resolve(null)),
   close: () => leaveOperatorCamera(kind),
+  raw: () => latestMarks(kind),
 });
 
 export const cameraInputSource: InputSource = {

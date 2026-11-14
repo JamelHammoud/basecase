@@ -52,6 +52,7 @@ interface Fresh<T> {
   follow: T;
   seenAt: number;
   read: boolean;
+  marks: number[] | null;
 }
 
 interface Follows {
@@ -109,19 +110,19 @@ function example(next: GestureExample | null) {
   resolve?.(next);
 }
 
-const entry = <T>(follow: T | null, seenAt: number): Fresh<T> | undefined =>
-  follow ? { follow, seenAt, read: false } : undefined;
+const entry = <T>(follow: T | null, { seenAt, marks }: FollowEvent): Fresh<T> | undefined =>
+  follow ? { follow, seenAt, read: false, marks: marks ?? null } : undefined;
 
 function keep(event: FollowEvent) {
   if (event.type === 'pose') {
-    fresh.body = entry(event.follow, event.seenAt);
+    fresh.body = entry(event.follow, event);
 
     return setPoints(event.image);
   }
 
-  if (event.type === 'hand') fresh.hand = entry(event.follow, event.seenAt);
+  if (event.type === 'hand') fresh.hand = entry(event.follow, event);
 
-  if (event.type === 'face') fresh.face = entry(event.follow, event.seenAt);
+  if (event.type === 'face') fresh.face = entry(event.follow, event);
 }
 
 function receive(event: PoseEvent) {
@@ -299,6 +300,8 @@ export const latestHandFollow = (): HandFollow | null => latest('hand');
 
 export const latestFaceFollow = (): FaceFollow | null => latest('face');
 
+export const latestMarks = (kind: LandmarkKind): number[] | null => fresh[kind]?.marks ?? null;
+
 export const handGrip = (): number | null => (members.has('hand') ? (fresh.hand?.follow.grip ?? null) : null);
 
 function feedOperator(feed: FeedRequest) {
@@ -365,6 +368,8 @@ const subscribe = (notify: () => void) => {
     listeners.delete(notify);
   };
 };
+
+export const subscribeOperatorCamera = subscribe;
 
 export const operatorCameraSnapshot = () => state;
 

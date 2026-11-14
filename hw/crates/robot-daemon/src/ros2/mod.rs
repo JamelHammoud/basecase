@@ -12,7 +12,7 @@ use crate::calibration::Calibration;
 use crate::control::{DaemonEvent, Inputs};
 use crate::fault::Fault;
 use crate::ladder::{Event, Hash, Ladder, Mode};
-use crate::safety::{Ros2Bus, Ros2Layer, Ros2Reading};
+use crate::safety::{Ros2Bus, Ros2Joint, Ros2Layer, Ros2Reading};
 use crate::session::{IntentFeed, TestProgress};
 use servo_wire::ros2::ControllerKind;
 use servo_wire::{Clock, TopicTransport};
@@ -134,10 +134,10 @@ impl Ros2Daemon {
         self.bus().map_or(0, Ros2Bus::refused)
     }
 
-    pub fn joint_positions(&self) -> Vec<Option<f64>> {
+    pub fn joint_readings(&self) -> Vec<Ros2Joint> {
         self.bus().and_then(|bus| bus.fresh(LOST_STATE_US)).map_or_else(
-            || vec![None; self.spec.joints.len()],
-            |reading| reading.positions_of(&self.spec.joints),
+            || vec![Ros2Joint::default(); self.spec.joints.len()],
+            |reading| reading.joints_of(&self.spec.joints),
         )
     }
 

@@ -29,6 +29,7 @@ import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
 import { robotPolicyBytes } from './robot/robotPolicy.mjs';
 import { registerRobotHandlers } from './robot/robotRoutes.mjs';
+import { TakeFiles } from './robot/takeFiles.mjs';
 import { PhonePairing } from './phone/phonePairing.mjs';
 import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
 import { registerShareHandlers } from './shareFile.mjs';
@@ -265,6 +266,7 @@ const robot = new RobotLink({
   binary: robotBinary,
   emit: sendTo('robot:event'),
   policyBytes: robotPolicyBytes({ libraryDir: backend.libraryDir, trainer: backend.trainer }),
+  takes: new TakeFiles({ store: backend.tries }),
 });
 
 registerRobotHandlers(ipcMain, robot);

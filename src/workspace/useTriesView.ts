@@ -67,7 +67,11 @@ export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
   const show = (id: string) => {
     const summary = all.find((t) => t.id === id);
 
-    if (summary?.recording && summary.source !== 'real') void timeline.show(summaryRecord(summary)).catch(() => {});
+    if (!summary?.recording || summary.source === 'real') return;
+
+    const open = summary.source === 'operate' ? timeline.showTake : timeline.show;
+
+    void open(summaryRecord(summary)).catch(() => {});
   };
 
   const close = () => {

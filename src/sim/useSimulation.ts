@@ -10,6 +10,7 @@ import { buildMjcf, simDeltas, type SimModel, type WorldItem } from './mjcf';
 import type { TorqueSeries } from '../utils/peakTorque';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { Recording } from './recorder';
+import type { ScrubbedTake, Take } from './takeRecording';
 import type { Scan } from './scanner';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
@@ -71,6 +72,7 @@ export interface Simulation {
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
   scrub: (r: Recording | null) => Promise<Float32Array[] | null>;
+  scrubTake: (take: Take) => Promise<ScrubbedTake | null>;
   seek: (frame: number) => void;
   sought: () => Sought | null;
   worldParts: ScenePart[];
@@ -414,6 +416,11 @@ export function useSimulation(props: Inputs): Simulation {
       setPlaying(false);
 
       return sw.scrub(r);
+    },
+    scrubTake: (take) => {
+      setPlaying(false);
+
+      return sw.scrubTake(take);
     },
     seek: sw.seek,
     sought: sw.sought,

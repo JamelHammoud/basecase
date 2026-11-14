@@ -61,7 +61,7 @@ function replayCommands(core: WorkspaceCore): Command[] {
       label: 'Replay in Sim',
       icon: <OperateIcon />,
       keywords: 'fault stall replay robot run case simulate torque',
-      run: () => replayRobotRun(core, messageId),
+      run: () => void replayRobotRun(core, messageId),
     },
   ];
 }

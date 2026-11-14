@@ -4,6 +4,7 @@ import { TRY_SOURCE_BADGE, summaryRecord, type TrySummary } from '../../cases/tr
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import { runClock } from '../../utils/duration';
+import { clockTime } from '../../utils/timeAgo';
 import type { PickKeys } from '../../workspace/useTriesView';
 import { useFilmstrip } from '../simulate/useFilmstrip';
 import { useSeen } from './useSeen';
@@ -14,6 +15,8 @@ const OUTCOME: Record<TrySummary['outcome']['verdict'], string | null> = {
   failed: 'Missed',
   unjudged: null,
 };
+
+const tileTitle = (summary: TrySummary) => summary.caseName ?? clockTime(new Date(summary.startedAt));
 
 export interface TileScene {
   model: SimModel | null;
@@ -61,7 +64,7 @@ export const TryTile: React.FC<TryTileProps> = ({ summary, scene, selected, onPi
         {film && <img src={film} alt="" className="w-full h-full object-cover" draggable={false} />}
       </div>
       <div className="px-0.5 min-w-0">
-        <div className="text-[13px] font-medium text-white/90 truncate">{summary.caseName}</div>
+        <div className="text-[13px] font-medium text-white/90 truncate">{tileTitle(summary)}</div>
         <div className="flex items-center gap-2 text-[12.5px]">
           {outcome && (
             <span className={summary.outcome.verdict === 'passed' ? 'text-white/85' : 'text-[#f87171]'}>{outcome}</span>

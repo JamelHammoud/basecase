@@ -73,6 +73,26 @@ fn an_arm_on_joint_trajectory_follows_intents() {
     }
 }
 
+#[test]
+fn status_carries_each_joints_velocity_and_effort_from_joint_states() {
+    let mut rig = Ros2Rig::arm(ControllerKind::ForwardPosition);
+    let goal = rig.target[ELBOW] + 0.4;
+
+    rig.climb_to_test();
+    rig.target[ELBOW] = goal;
+    rig.ticks(15);
+
+    let status = status(&rig);
+    let joints = status["joints"].as_array().unwrap();
+    let velocity = |joint: &serde_json::Value| joint["velocity"].as_f64().expect("no velocity");
+    let effort = |joint: &serde_json::Value| joint["effort"].as_f64().expect("no effort");
+
+    assert_eq!(joints.len(), 6);
+    assert!(joints.iter().all(|joint| velocity(joint).is_finite() && effort(joint).is_finite()));
+    assert!(velocity(&joints[ELBOW]) > 0.05, "{}", joints[ELBOW]);
+    assert!(joints.iter().any(|joint| effort(joint).abs() > 1e-3), "{joints:?}");
+}
+
 fn twists(rig: &Ros2Rig) -> Vec<(f64, f64)> {
     rig.sent()
         .into_iter()

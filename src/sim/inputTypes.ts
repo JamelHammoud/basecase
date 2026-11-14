@@ -4,6 +4,8 @@ import type { DriveCommand } from './driveTypes';
 
 export type PointTable = Record<string, V3>;
 
+export const RAW_INPUT_CAP = 512;
+
 export interface InputLook {
   pan: string;
   tilt: string | null;
@@ -24,6 +26,7 @@ export interface InputMoment {
 export interface InputSource {
   id: string;
   read: (at: InputMoment) => DriveCommand | null;
+  raw?: () => number[] | null;
   pose?: boolean;
   open?: (robot: InputRobot | null) => Promise<string | null>;
   close?: () => void;

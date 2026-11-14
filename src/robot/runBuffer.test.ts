@@ -6,13 +6,11 @@ import {
   receiveRobotEvent,
   robotRunFor,
   robotSnapshot,
-  sendRobotCommand,
   startRobotStore,
   type RobotLinkApi,
 } from './robotStore';
-import { replayable, RunBuffer, RUN_SECONDS } from './runBuffer';
-
-const counts = (rad: number) => Math.round(2048 + (rad * 4096) / (2 * Math.PI));
+import { decodeTake, RobotTake } from '../../electron/robot/robotTake.mjs';
+import { faultReplayable, replayable, runOfTake, RUN_SECONDS } from './runBuffer';
 
 const sent: number[][] = [];
 
@@ -32,16 +30,6 @@ const JOINTS = ['shoulder', 'elbow', 'wrist'];
 
 const at = (ms: number) => vi.spyOn(performance, 'now').mockReturnValue(ms);
 
-const status = (positions: number[]) =>
-  receiveRobotEvent({
-    event: 'status',
-    mode: 'test',
-    run: 'running',
-    sealed: false,
-    fault_latched: false,
-    joints: positions.map((rad, k) => ({ id: k + 1, position: counts(rad), reply: 'ok' })),
-  });
-
 async function connect() {
   const spec: ServoRobotSpec = { family: 'feetech', ids: [1, 2, 3], class: 'arm', emulated: true };
 
@@ -58,15 +46,21 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+function recordedTake() {
+  const take = new RobotTake({ id: 'try-run', joints: JOINTS, startedAt: '2026-11-14T00:00:00.000Z' });
+
+  for (let ms = 0; ms <= 30_000; ms += 100) take.apply(['s', ms / 1000, [ms / 1000, 0, null]]);
+
+  for (let ms = 0; ms <= 30_000; ms += 25) take.apply(['i', ms / 1000, [ms / 1000, 0, 0]]);
+
+  return decodeTake(take.bytes())!;
+}
+
+const FAULT = { joints: JOINTS, faultJoint: 'elbow', faultAt: 0, message: 'The Elbow joint is stuck.' };
+
 describe('the run buffer', () => {
-  it('keeps exactly the last 20 s of status events and intents', () => {
-    const buffer = new RunBuffer();
-
-    for (let ms = 0; ms <= 30_000; ms += 100) buffer.status(ms, [ms / 1000]);
-
-    for (let ms = 0; ms <= 30_000; ms += 25) buffer.intent(ms, [ms / 1000]);
-
-    const { statuses, intents } = buffer.kept();
+  it('is a view of the take’s last 20 s of statuses and intents', () => {
+    const { statuses, intents } = runOfTake(recordedTake(), FAULT);
 
     for (const kept of [statuses, intents]) {
       expect(kept[0].at).toBe(30_000 - RUN_SECONDS * 1000);
@@ -75,27 +69,27 @@ describe('the run buffer', () => {
 
     expect(statuses).toHaveLength(201);
     expect(intents).toHaveLength(801);
+    expect(statuses[0].positions).toEqual([10, 0, null]);
   });
 
-  it('keeps the run when a servo faults, names its joint, and stops mirroring the sim until the next rung', async () => {
+  it('links a fault to the take it closed, names its joint, and stops mirroring the sim until the next rung', async () => {
     await connect();
-
-    for (let k = 0; k < 10; k++) {
-      at(1000 + k * 100);
-      status([0.1 * k, 0.2, 0]);
-      await sendRobotCommand({ cmd: 'intent', joints: [0.1 * k + 0.05, 0.2, 0] });
-    }
-
     receiveRobotEvent({ event: 'fault', code: 'stall', id: 2, message: 'The Elbow joint is stuck.' });
 
     const message = robotSnapshot().messages[0];
-    const run = robotRunFor(message.id);
 
-    expect(replayable(run)).toBe(true);
-    expect(run).toMatchObject({ joints: JOINTS, faultJoint: 'elbow', message: 'The Elbow joint is stuck.' });
-    expect(run!.statuses).toHaveLength(10);
-    expect(run!.statuses[3].positions[0]).toBeCloseTo(0.3, 2);
-    expect(run!.intents.map((i) => i.joints[0])).toEqual([...Array(10).keys()].map((k) => 0.1 * k + 0.05));
+    expect(faultReplayable(robotRunFor(message.id))).toBe(false);
+
+    const shown = robotSnapshot();
+
+    receiveRobotEvent({ event: 'take', state: 'kept', id: 'try-run', fault: true, replayable: true });
+
+    const fault = robotRunFor(message.id);
+
+    expect(robotSnapshot()).not.toBe(shown);
+    expect(faultReplayable(fault)).toBe(true);
+    expect(fault).toMatchObject({ takeId: 'try-run', joints: JOINTS, faultJoint: 'elbow' });
+    expect(replayable(runOfTake(recordedTake(), fault!))).toBe(true);
 
     const before = sent.length;
 

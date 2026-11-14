@@ -92,7 +92,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
         },
         onSetUpServos: () =>
           void setUpServos({ joints: core.project.joints ?? [], parts, select: core.setSelectedIds }),
-        onReplay: canReplayRuns(core) ? (messageId) => replayRobotRun(core, messageId) : undefined,
+        onReplay: canReplayRuns(core) ? (messageId) => void replayRobotRun(core, messageId) : undefined,
       }}
       tab={tool.leftTab}
       onTabChange={tool.setLeftTab}

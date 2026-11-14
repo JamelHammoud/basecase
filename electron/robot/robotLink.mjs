@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,6 +12,7 @@ import {
   daemonArgs,
   emulatedCalibration,
   isServoFamily,
+  jointRadians,
   LADDER,
   mountedCalibration,
 } from './robotSpec.mjs';
@@ -18,6 +20,8 @@ import { emulatedHorn, statusWithLinkAngles } from './emulatedHorns.mjs';
 import { IntentPacer } from './intentPacer.mjs';
 import { checkedPolicyRefs } from './robotPolicy.mjs';
 import { UNITS_FILE, unitsJson } from './servoUnits.mjs';
+import { checkedTakeContext, checkedTakeSample } from './takeChecks.mjs';
+import { TakeTap } from './takeTap.mjs';
 
 export const DAEMON_ENV = 'BASECASE_ROBOT_DAEMON';
 export const DAEMON_FILE = process.platform === 'win32' ? 'robot-daemon.exe' : 'robot-daemon';
@@ -77,9 +81,36 @@ function written(bytes, target) {
 function placePolicy(artefacts, bytes) {
   const target = path.join(artefacts, POLICY_FILE);
 
-  if (bytes && written(bytes, target)) return;
+  if (bytes && written(bytes, target)) return bytes;
 
   fs.rmSync(target, { force: true });
+
+  return null;
+}
+
+const policyHash = (bytes) => (bytes ? createHash('sha256').update(bytes).digest('hex').slice(0, 16) : null);
+
+const NO_TAKES = { open: () => {}, append: () => {}, finish: () => {} };
+
+const CENTERED = { zero_counts: 2048, direction: 1 };
+
+function statusRadians(status, session) {
+  const joints = Array.isArray(status?.joints) ? status.joints : [];
+
+  return session.spec.ids.map((id) => {
+    const position = joints.find((j) => j?.id === id)?.position;
+    const mount = session.calibration.joints.find((j) => j.id === id) ?? CENTERED;
+
+    return typeof position === 'number' ? jointRadians(position, mount) : null;
+  });
+}
+
+function takeJoints(session, context) {
+  const named = context?.joints;
+
+  return named?.length === session.spec.ids.length
+    ? named
+    : session.spec.ids.map((id, k) => session.calibration.joints[k]?.name ?? `servo ${id}`);
 }
 
 export class RobotLink {
@@ -90,6 +121,8 @@ export class RobotLink {
     tmpDir = os.tmpdir(),
     policyBytes = () => null,
     hornFor = emulatedHorn,
+    takes = null,
+    now = () => performance.now(),
   }) {
     this.binary = binary;
     this.hornFor = hornFor;
@@ -99,6 +132,10 @@ export class RobotLink {
     this.policyBytes = policyBytes;
     this.policyRefs = [];
     this.session = null;
+    this.takes = takes;
+    this.now = now;
+    this.takeContext = null;
+    takes?.recover();
   }
 
   state() {
@@ -130,7 +167,8 @@ export class RobotLink {
     const calibration = emulatedCalibration(spec);
 
     fs.writeFileSync(path.join(artefacts, CALIBRATION_FILE), JSON.stringify(calibration));
-    placePolicy(artefacts, this.currentPolicy());
+
+    const policy = placePolicy(artefacts, this.currentPolicy());
 
     if (spec.units) fs.writeFileSync(path.join(artefacts, UNITS_FILE), unitsJson(spec.units));
 
@@ -147,9 +185,11 @@ export class RobotLink {
       stderr: '',
     };
 
+    session.tap = this.tapFor(session);
+    session.tap.setPolicy(policyHash(policy));
     session.pacer = new IntentPacer({
       ids: spec.ids,
-      write: (cmd) => this.write(session, cmd),
+      write: (cmd) => this.writeIntent(session, cmd),
       measured: () => session.status,
       calibration: () => session.calibration.joints,
     });
@@ -166,6 +206,48 @@ export class RobotLink {
     if (isServoFamily(spec)) this.emit({ event: 'calibration', joints: calibrationMounts(calibration) });
   }
 
+  tapFor(session) {
+    const tap = new TakeTap({
+      sink: this.takes?.sink() ?? NO_TAKES,
+      emit: (event) => this.emit(event),
+      now: this.now,
+      joints: () => takeJoints(session, this.takeContext),
+      positionsOf: (status) => statusRadians(status, session),
+      ids: session.spec.ids,
+    });
+
+    if (this.takeContext) tap.setContext(this.takeContext);
+
+    return tap;
+  }
+
+  writeIntent(session, command) {
+    this.write(session, command);
+
+    if (command.cmd === 'intent') session.tap.intent(command.joints);
+  }
+
+  takeScene(ask) {
+    const context = checkedTakeContext(ask);
+
+    if (!context) return UNDOCUMENTED;
+
+    this.takeContext = context;
+    this.session?.tap.setContext(context);
+
+    return { ok: true };
+  }
+
+  takeSample(ask) {
+    const sample = checkedTakeSample(ask);
+
+    if (!sample) return UNDOCUMENTED;
+
+    this.session?.tap.sample(sample);
+
+    return { ok: true };
+  }
+
   onLine(session, line) {
     const parsed = parseLine(line);
 
@@ -179,6 +261,7 @@ export class RobotLink {
 
     if (typeof event.mode === 'string' && event.event !== 'completed') this.onMode(session, event);
 
+    session.tap.event(event);
     this.emit(event);
   }
 
@@ -241,7 +324,7 @@ export class RobotLink {
 
     if (!session) return { ok: true };
 
-    placePolicy(session.artefacts, this.currentPolicy());
+    session.tap.setPolicy(policyHash(placePolicy(session.artefacts, this.currentPolicy())));
     this.write(session, { cmd: 'recheck' });
 
     return { ok: true };
@@ -285,6 +368,7 @@ export class RobotLink {
 
     this.session = null;
     session.pacer.stop();
+    session.tap.close(null);
     clearTimeout(session.killTimer);
     fs.rmSync(session.artefacts, { recursive: true, force: true });
 

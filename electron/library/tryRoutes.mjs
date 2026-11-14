@@ -10,10 +10,12 @@ export const TRY_CALLS = {
   'tries:recording': (store, id) => store.recording(id),
   'tries:strip': (store, id) => store.strip(id),
   'tries:keep-strip': (store, payload) => store.saveStrip({ id: payload?.id, bytes: fromBase64(payload?.bytes) }),
+  'tries:video': (store, id) => store.video(id),
+  'tries:keep-video': (store, payload) => store.saveVideo({ id: payload?.id, bytes: fromBase64(payload?.bytes) }),
   'tries:delete': (store, ids) => store.delete(ids),
 };
 
-const OVER_HTTP = { 'tries:recording': asBase64, 'tries:strip': asBase64 };
+const OVER_HTTP = { 'tries:recording': asBase64, 'tries:strip': asBase64, 'tries:video': asBase64 };
 
 export const registerTryHandlers = (ipcMain, store) => registerCalls(ipcMain, TRY_CALLS, store);
 

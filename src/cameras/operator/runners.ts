@@ -1,4 +1,4 @@
-import type { InputRobot } from '../../sim/inputTypes';
+import { RAW_INPUT_CAP, type InputRobot } from '../../sim/inputTypes';
 import { createFaceFollower } from './faceFollow';
 import { createHandFollower } from './handFollow';
 import {
@@ -34,6 +34,9 @@ export interface Playback {
 
 const skeleton = (marks: PoseLandmark[]): SkeletonPoint[] => marks.map((p) => [p.x, p.y, isSeen(p)]);
 
+export const flatMarks = (marks: PoseLandmark[]): number[] =>
+  marks.slice(0, Math.floor(RAW_INPUT_CAP / 3)).flatMap((p) => [p.x, p.y, p.z]);
+
 function sighting() {
   let seen = false;
 
@@ -62,7 +65,13 @@ function bodyRunner(landmarker: PoseLandmarker, robot: InputRobot, watch: WorldW
 
       lost(true);
 
-      return { type: 'pose', follow: follower.step({ t: timestamp, world, image }), image: skeleton(image), seenAt };
+      return {
+        type: 'pose',
+        follow: follower.step({ t: timestamp, world, image }),
+        image: skeleton(image),
+        seenAt,
+        marks: flatMarks(world),
+      };
     },
     close: () => landmarker.close(),
   };
@@ -82,7 +91,7 @@ function handRunner(landmarker: HandLandmarker, robot: InputRobot): Runner {
 
       lost(true);
 
-      return { type: 'hand', follow: follower.step({ t: timestamp, image, world }), seenAt };
+      return { type: 'hand', follow: follower.step({ t: timestamp, image, world }), seenAt, marks: flatMarks(world) };
     },
     close: () => landmarker.close(),
   };
@@ -103,7 +112,7 @@ function faceRunner(landmarker: FaceLandmarker, robot: InputRobot): Runner {
 
       const matrix = result.facialTransformationMatrixes?.[0]?.data ?? [];
 
-      return { type: 'face', follow: follower.step({ t: timestamp, image, matrix }), seenAt };
+      return { type: 'face', follow: follower.step({ t: timestamp, image, matrix }), seenAt, marks: flatMarks(image) };
     },
     close: () => landmarker.close(),
   };
@@ -136,6 +145,7 @@ export function playback(feed: FeedRequest, robot: InputRobot): Playback {
           follow: follower.step(sample),
           image: sample.image ? skeleton(sample.image) : null,
           seenAt,
+          marks: flatMarks(sample.world),
         };
       },
     };
@@ -146,7 +156,12 @@ export function playback(feed: FeedRequest, robot: InputRobot): Playback {
 
     return {
       count: feed.samples.length,
-      at: (i, seenAt) => ({ type: 'hand', follow: follower.step(feed.samples[i]), seenAt }),
+      at: (i, seenAt) => ({
+        type: 'hand',
+        follow: follower.step(feed.samples[i]),
+        seenAt,
+        marks: flatMarks(feed.samples[i].world),
+      }),
     };
   }
 
@@ -154,6 +169,11 @@ export function playback(feed: FeedRequest, robot: InputRobot): Playback {
 
   return {
     count: feed.samples.length,
-    at: (i, seenAt) => ({ type: 'face', follow: follower.step(feed.samples[i]), seenAt }),
+    at: (i, seenAt) => ({
+      type: 'face',
+      follow: follower.step(feed.samples[i]),
+      seenAt,
+      marks: flatMarks(feed.samples[i].image),
+    }),
   };
 }

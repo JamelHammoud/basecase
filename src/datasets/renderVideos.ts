@@ -1,14 +1,5 @@
 import * as THREE from 'three';
-import {
-  BufferTarget,
-  getFirstEncodableVideoCodec,
-  Mp4OutputFormat,
-  Output,
-  QUALITY_HIGH,
-  VideoSample,
-  VideoSampleSource,
-  type VideoCodec,
-} from 'mediabunny';
+import { QUALITY_HIGH, VideoSample, type VideoCodec } from 'mediabunny';
 import { buildPartGroup, releasePartGroup } from '../three/buildPartMesh';
 import { provideMeshFiles, type MeshFiles } from '../three/componentMeshes';
 import { loadPartMeshes } from '../three/thumbnailRender';
@@ -20,6 +11,7 @@ import type { ScenePart } from '../types/robotics';
 import { LensRenderer, type Viewport } from '../cameras/lensRender';
 import { FRAME_HEIGHT, FRAME_WIDTH, placeCamera, type DatasetCamera } from './cameras';
 import { DATASET_FPS, type FeatureStats } from './episodes';
+import { encodableCodec, mp4Writer } from '../utils/mp4Writer';
 
 export const BACKGROUND = 0x262626;
 
@@ -177,7 +169,7 @@ class ChannelStats {
 }
 
 export async function videoCodec(): Promise<VideoCodec> {
-  const codec = await getFirstEncodableVideoCodec(['avc', 'vp9', 'av1'], { width: FRAME_WIDTH, height: FRAME_HEIGHT });
+  const codec = await encodableCodec({ width: FRAME_WIDTH, height: FRAME_HEIGHT });
 
   if (!codec) throw new Error('This computer can’t encode video.');
 
@@ -187,13 +179,9 @@ export async function videoCodec(): Promise<VideoCodec> {
 export const codecName = (codec: VideoCodec) => CODEC_NAMES[codec] ?? codec;
 
 function cameraTrack(camera: DatasetCamera, codec: VideoCodec) {
-  const target = new BufferTarget();
-  const output = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target });
-  const source = new VideoSampleSource({ codec, quality: QUALITY_HIGH, keyFrameInterval: 1 });
+  const writer = mp4Writer({ codec, quality: QUALITY_HIGH, keyFrameInterval: 1, frameRate: DATASET_FPS });
 
-  output.addVideoTrack(source, { frameRate: DATASET_FPS });
-
-  return { camera, target, output, source, stats: new ChannelStats() };
+  return { camera, writer, stats: new ChannelStats() };
 }
 
 export interface EpisodeRender {
@@ -208,7 +196,7 @@ export async function renderEpisode(stage: RenderStage, job: EpisodeRender): Pro
   const tracks = job.cameras.map((c) => cameraTrack(c, job.codec));
   const canvas = stage.renderer.domElement as unknown as OffscreenCanvas;
 
-  await Promise.all(tracks.map((t) => t.output.start()));
+  await Promise.all(tracks.map((t) => t.writer.start()));
 
   for (const [row, frame] of job.frames.entries()) {
     const poses = framePoses(job.recording, frame);
@@ -224,17 +212,15 @@ export async function renderEpisode(stage: RenderStage, job: EpisodeRender): Pro
 
       const sample = new VideoSample(canvas, { timestamp: row / DATASET_FPS, duration: 1 / DATASET_FPS });
 
-      await track.source.add(sample);
+      await track.writer.add(sample);
       sample.close();
     }
   }
 
-  await Promise.all(tracks.map((t) => t.output.finalize()));
+  const videos = await Promise.all(tracks.map(async (t) => [t.camera.key, await t.writer.finish()] as const));
 
   return {
-    videos: Object.fromEntries(
-      tracks.map((t) => [t.camera.key, new Uint8Array(t.target.buffer ?? new ArrayBuffer(0))]),
-    ),
+    videos: Object.fromEntries(videos),
     imageStats: Object.fromEntries(tracks.map((t) => [t.camera.key, t.stats.done(job.frames.length)])),
   };
 }

@@ -12,5 +12,5 @@ pub use bus::{BusGone, Census, Exchange, ReadBus, Reply};
 pub use g1_bus::{G1Bus, MotorReading, Reading};
 pub use guard::{hold_at, next_goal, next_speed, torque_fraction_within, CountBounds, SafeGoal, StepRule};
 pub use layer::{ArmGrant, SafetyLayer, WriteError};
-pub use ros2_bus::{Ros2Bus, Ros2Reading, MAX_SAMPLES_PER_POLL};
+pub use ros2_bus::{Ros2Bus, Ros2Joint, Ros2Reading, MAX_SAMPLES_PER_POLL};
 pub use ros2_layer::{BaseTwist, Ros2Layer, Ros2Plan, BASE_INTENTS};

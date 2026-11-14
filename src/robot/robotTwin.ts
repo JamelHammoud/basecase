@@ -10,7 +10,8 @@ import {
   type Angles,
 } from './robotGap';
 import { motorsCanRun, type RobotSpec, type RobotStatus } from './robotState';
-import { robotBenchDriving, robotSceneJoints, robotSnapshot, subscribeRobot } from './robotStore';
+import { liveInput } from '../sim/inputSources';
+import { robotBenchDriving, robotSceneJoints, robotSnapshot, sendTakeSample, subscribeRobot } from './robotStore';
 
 export interface RobotTwin {
   joints: readonly string[];
@@ -46,6 +47,19 @@ function forConnection(spec: RobotSpec | null) {
   watch.clear();
 }
 
+const finiteOrNull = (v: number | null) => (v !== null && Number.isFinite(v) ? v : null);
+
+function sendSample(sim: Angles | null) {
+  const input = liveInput();
+
+  if (!sim && !input) return;
+
+  sendTakeSample({
+    ...(sim ? { twin: Array.from(sim, finiteOrNull) } : {}),
+    ...(input ? { input: { id: input.id, values: input.values.map(finiteOrNull) } } : {}),
+  });
+}
+
 function onRobot() {
   const state = robotSnapshot();
   const joints = robotSceneJoints();
@@ -68,6 +82,8 @@ function onRobot() {
   const gaps = jointGaps(measured, sim);
 
   if (sim && state.mode !== 'rehearse') watch.note({ atMs, joints, measured, gaps });
+
+  sendSample(sim);
 
   publish({ joints, measured, sim, gaps, largest: largestGap(joints, gaps), lagging: new Set(watch.lagging) });
 }

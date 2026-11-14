@@ -150,6 +150,7 @@ export function useSimWorker(
   return {
     stopRecording: recordingLink.stopRecording,
     scrub: recordingLink.scrub,
+    scrubTake: recordingLink.scrubTake,
     seek: recordingLink.seek,
     sought: recordingLink.sought,
     status,

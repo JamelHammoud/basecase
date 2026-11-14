@@ -1,10 +1,11 @@
+import { decodeTake } from '../../../electron/robot/robotTake.mjs';
 import type { Recording } from '../../sim/recorder';
 import { base64ToBytes, bytesToBase64 } from '../../utils/base64';
 import { channelCall } from '../../utils/platform/channelCall';
 import { electron } from '../../utils/platform/transport';
 import { decodeRecording, encodeRecording } from '../recordingFile';
 import type { StoredTry, TrySummary } from '../tryFile';
-import type { TryBackend } from './types';
+import { VIDEO_TYPE, type TryBackend } from './types';
 
 type Bytes = Uint8Array | { data?: string | null } | null | undefined;
 
@@ -50,6 +51,22 @@ export const desktopTries: TryBackend = {
   },
   saveStrip: async (id, strip) => {
     await call('tries:keep-strip', { id, bytes: new Uint8Array(await strip.arrayBuffer()) });
+  },
+  video: async (id) => {
+    const bytes = bytesOf(await call<Bytes>('tries:video', id));
+
+    return bytes && new Blob([bytes as Uint8Array<ArrayBuffer>], { type: VIDEO_TYPE });
+  },
+  saveVideo: async (id, bytes) => {
+    await call('tries:keep-video', { id, bytes });
+  },
+  take: async (id) => {
+    const bytes = bytesOf(await call<Bytes>('tries:recording', id));
+
+    return bytes && decodeTake(bytes);
+  },
+  saveTake: async (manifest, bytes) => {
+    await call('tries:save', { manifest, recording: bytes });
   },
   delete: async (ids) => {
     await call('tries:delete', ids);

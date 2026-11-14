@@ -5,8 +5,9 @@ import type { SlotRobot } from '../cases/slots';
 import { timelineLanes } from '../cases/timelineLanes';
 import { trySignals, type TryRecord } from '../cases/tries';
 import { tripFrames, type Trip } from '../cases/tripFrames';
-import { loadRecording } from '../cases/tryStore';
+import { loadRecording, loadTake } from '../cases/tryStore';
 import type { Recording } from '../sim/recorder';
+import type { ScrubbedTake } from '../sim/takeRecording';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
@@ -67,28 +68,38 @@ export function useTryTimeline(options: TimelineOptions) {
   const playback = useTimelinePlayback({ frames, dt: opened?.recording.dt ?? 1, seek: sim.seek });
   const lanes = opened && sim.model ? timelineLanes(sim.model, opened.recording, opened.efforts) : [];
 
-  const show = async (record: TryRecord) => {
-    const ticket = ++opening.current;
-    const recording = await loadRecording(record.id);
-    const before = simBefore(sim);
+  const opener =
+    <T>(load: (id: string) => Promise<T | null>, scrub: (loaded: T) => Promise<ScrubbedTake | null>) =>
+    async (record: TryRecord) => {
+      const ticket = ++opening.current;
+      const loaded = await load(record.id);
+      const before = simBefore(sim);
 
-    if (!recording || ticket !== opening.current) return;
+      if (!loaded || ticket !== opening.current) return;
 
-    if (sim.drive.active) sim.drive.stop();
+      if (sim.drive.active) sim.drive.stop();
 
-    if (!sim.modelNow()) await sim.start();
+      if (!sim.modelNow()) await sim.start();
 
+      const scrubbed = await scrub(loaded);
+
+      if (!scrubbed || ticket !== opening.current) return;
+
+      const { recording, efforts } = scrubbed;
+      const trips = await tripsOf(options, record, recording);
+
+      if (ticket !== opening.current) return;
+
+      setOpened({ record, recording, efforts, trips, before: opened?.before ?? before });
+      playback.jump(trips[0]?.frame ?? 0, recording.frames);
+    };
+
+  const show = opener(loadRecording, async (recording: Recording) => {
     const efforts = await sim.scrub(recording);
 
-    if (!efforts || ticket !== opening.current) return;
-
-    const trips = await tripsOf(options, record, recording);
-
-    if (ticket !== opening.current) return;
-
-    setOpened({ record, recording, efforts, trips, before: opened?.before ?? before });
-    playback.jump(trips[0]?.frame ?? 0, recording.frames);
-  };
+    return efforts && { recording, efforts };
+  });
+  const showTake = opener(loadTake, sim.scrubTake);
 
   const close = () => {
     if (!opened) return;
@@ -121,6 +132,7 @@ export function useTryTimeline(options: TimelineOptions) {
     frame: playback.frame,
     playing: playback.playing,
     show,
+    showTake,
     close,
     seek: (frame: number) => playback.jump(frame),
     step: playback.step,

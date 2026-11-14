@@ -1,14 +1,7 @@
+import { packArrays, unpackArrays, type ArrayKind } from '../../electron/library/arrayFile.mjs';
 import type { Recording } from '../sim/recorder';
 
-const MAGIC = 0x52544342;
-const VERSION = 1;
-const PREAMBLE = 12;
-const MAX_HEADER = 16 * 1024 * 1024;
 const MAX_FRAMES = 3_600_000;
-
-type ArrayKind = 'f32' | 'f64' | 'i32';
-
-type Typed = Float32Array | Float64Array | Int32Array;
 
 const ARRAYS = {
   t: 'f32',
@@ -24,15 +17,9 @@ const ARRAYS = {
 
 type ArrayKey = keyof typeof ARRAYS;
 
+type Typed = Float32Array | Float64Array | Int32Array;
+
 const REQUIRED: ArrayKey[] = ['t', 'ctrl', 'qpos', 'qvel', 'poses'];
-
-const MAKERS: Record<ArrayKind, (buffer: ArrayBuffer) => Typed> = {
-  f32: (b) => new Float32Array(b),
-  f64: (b) => new Float64Array(b),
-  i32: (b) => new Int32Array(b),
-};
-
-const SIZE: Record<ArrayKind, number> = { f32: 4, f64: 8, i32: 4 };
 
 const TYPED_TAG = '$typed';
 
@@ -58,8 +45,6 @@ function restoreTyped(_key: string, value: unknown) {
   return make && Array.isArray(values) ? make(values as number[]) : null;
 }
 
-const align8 = (n: number) => Math.ceil(n / 8) * 8;
-
 type Header = Omit<Recording, ArrayKey> & { arrays: Array<[ArrayKey, number]> };
 
 function splitRecording(recording: Recording) {
@@ -76,44 +61,8 @@ function splitRecording(recording: Recording) {
 
 export function encodeRecording(recording: Recording): Uint8Array {
   const { arrays, rest } = splitRecording(recording);
-  const header = new TextEncoder().encode(
-    JSON.stringify({ ...rest, arrays: arrays.map(([key, a]) => [key, a.length]) }, keepTyped),
-  );
-  const start = align8(PREAMBLE + header.length);
-  const total = arrays.reduce((at, [, a]) => align8(at + a.byteLength), start);
-  const out = new Uint8Array(total);
-  const view = new DataView(out.buffer);
 
-  view.setUint32(0, MAGIC, true);
-  view.setUint32(4, VERSION, true);
-  view.setUint32(8, header.length, true);
-  out.set(header, PREAMBLE);
-
-  let at = start;
-
-  for (const [, a] of arrays) {
-    out.set(new Uint8Array(a.buffer, a.byteOffset, a.byteLength), at);
-    at = align8(at + a.byteLength);
-  }
-
-  return out;
-}
-
-function readHeader(bytes: Uint8Array): Header | null {
-  if (bytes.byteLength < PREAMBLE) return null;
-
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const length = view.getUint32(8, true);
-
-  if (view.getUint32(0, true) !== MAGIC || view.getUint32(4, true) !== VERSION) return null;
-
-  if (length > MAX_HEADER || PREAMBLE + length > bytes.byteLength) return null;
-
-  try {
-    return JSON.parse(new TextDecoder().decode(bytes.subarray(PREAMBLE, PREAMBLE + length)), restoreTyped) as Header;
-  } catch {
-    return null;
-  }
+  return packArrays(rest, arrays, keepTyped);
 }
 
 const isCount = (v: unknown, max = Number.MAX_SAFE_INTEGER) =>
@@ -144,47 +93,18 @@ function expectedLength(key: ArrayKey, h: Header): number | null {
 }
 
 const arraysFit = (h: Header) =>
-  Array.isArray(h.arrays) &&
-  h.arrays.every(
-    (entry) =>
-      Array.isArray(entry) &&
-      entry[0] in ARRAYS &&
-      isCount(entry[1]) &&
-      (expectedLength(entry[0], h) ?? entry[1]) === entry[1],
-  ) &&
-  REQUIRED.every((key) => h.arrays.some(([k]) => k === key)) &&
-  new Set(h.arrays.map(([k]) => k)).size === h.arrays.length;
-
-function sliceArrays(bytes: Uint8Array, header: Header): Partial<Record<ArrayKey, Typed>> | null {
-  const out: Partial<Record<ArrayKey, Typed>> = {};
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  let at = align8(PREAMBLE + view.getUint32(8, true));
-
-  for (const [key, length] of header.arrays) {
-    const kind = ARRAYS[key];
-    const size = length * SIZE[kind];
-
-    if (at + size > bytes.byteLength) return null;
-
-    out[key] = MAKERS[kind](bytes.slice(at, at + size).buffer);
-    at = align8(at + size);
-  }
-
-  return out;
-}
+  h.arrays.every(([key, length]) => (expectedLength(key, h) ?? length) === length) &&
+  REQUIRED.every((key) => h.arrays.some(([k]) => k === key));
 
 export function decodeRecording(bytes: Uint8Array): Recording | null {
-  const header = readHeader(bytes);
+  const unpacked = unpackArrays(bytes, ARRAYS, restoreTyped);
+  const header = unpacked?.header as Header | undefined;
 
-  if (!header || typeof header !== 'object' || !sizesFit(header) || !arraysFit(header)) return null;
-
-  const arrays = sliceArrays(bytes, header);
-
-  if (!arrays) return null;
+  if (!unpacked || !header || !sizesFit(header) || !arraysFit(header)) return null;
 
   const rest: Record<string, unknown> = { ...header };
 
   delete rest.arrays;
 
-  return { ...rest, ...arrays } as Recording;
+  return { ...rest, ...unpacked.arrays } as unknown as Recording;
 }

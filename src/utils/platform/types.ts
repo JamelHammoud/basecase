@@ -2,6 +2,8 @@ import type { SourcedItem } from '../../data/sourcedItems';
 import type { PairReply, PhoneEvent, PhoneState } from '../../phone/phoneTypes';
 import type { RobotPolicyRef } from '../../robot/robotPolicy';
 import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState, RobotMount } from '../../robot/robotState';
+import type { TakeContext } from '../../../electron/robot/robotTake.mjs';
+import type { TakeSample } from '../../../electron/robot/takeTap.mjs';
 import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
   AcpChatMessage,
@@ -255,6 +257,8 @@ declare global {
       robotPolicy?: (refs: RobotPolicyRef[]) => Promise<ConnectReply>;
       robotCalibrate?: (joints: RobotMount[]) => Promise<ConnectReply>;
       robotState?: () => Promise<RobotLinkState>;
+      robotTakeScene?: (context: TakeContext) => Promise<ConnectReply>;
+      robotTakeSample?: (sample: TakeSample) => Promise<ConnectReply>;
       onRobotEvent?: (callback: (event: RobotEvent) => void) => () => void;
       phonePair?: () => Promise<PairReply>;
       phoneUnpair?: () => Promise<{ ok: boolean }>;

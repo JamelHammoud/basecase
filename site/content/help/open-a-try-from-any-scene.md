@@ -24,29 +24,31 @@ covers:
   - electron/library/tryStore.mjs
 ---
 
-You can find a try you recorded in any scene, grouped by robot, and step through it on the timeline.
+The Library keeps the tries you record in every scene, grouped by robot. You can open any of them and step through it on the timeline.
 
 1. Click **Library** in the view rail on the left.
 2. Under **Tries**, click a robot.
 
 ![The Library with a robot and its two tries under Tries](/help/open-a-try-from-any-scene/library.png)
 
-3. Tries fills the canvas and shows every try grouped by robot, newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. Click a try.
+3. Tries fills the canvas and shows every try, grouped by robot with the newest first. Each tile shows the Case, whether the try Passed or Missed, and how long it ran. Click a try.
 
 ![Tries over the canvas with a try from each of two scenes](/help/open-a-try-from-any-scene/tries.png)
 
-4. The try timeline opens under the tiles, with one lane per joint. Step through it the same way as in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
+4. The try timeline opens below the tiles, with one lane for each joint. Step through it the same way you would in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
 
 ![A selected try with its timeline open](/help/open-a-try-from-any-scene/timeline.png)
 
-5. Press [[Esc]] to close the timeline. To leave Tries, press [[Esc]] again or click **Done**.
+5. To close the timeline, press [[Esc]]. To leave Tries, press [[Esc]] again or click **Done**.
 
-You can also press [[⌘K]] and choose **Show Tries**.
+You can also press [[⌘K]], then choose **Show Tries**.
 
-To delete tries, hold [[⌘]] or [[⇧]] while you click to select more than one. Then press [[⌫]] and click **Delete**. Deleting a try also deletes any Variations that came from it.
+To delete tries, select them, press [[⌫]], then click **Delete**. To select more than one try, hold [[⌘]] or [[⇧]] while you click. Deleting a try also deletes any Variations that came from it.
 
-**Note:** A try opens on the timeline only if it fits the robot in the open scene. Clicking a real try selects it but doesn't open the timeline.
+**Note:** A try opens on the timeline only if it fits the robot in the open scene. If you click a real try, Basecase selects it but doesn't open the timeline.
 
-The search at the top of the Library matches a try's Case, its robot, and the Variation or Real label on its tile.
+A try with an **Operate** badge is a session on a connected robot, named for the time the session started. See [Record a robot session as a try](/help/record-a-robot-session-as-a-try).
 
-If you recorded tries before the Library held them, Basecase moves them in the first time you open their scene. On a Mac, Basecase stores them in `library/tries` inside `~/Library/Application Support/Basecase`, with one folder per try.
+The search at the top of the Library matches a try's Case and robot, and the Variation, Real or Operate label on its tile.
+
+If you recorded tries before the Library held them, Basecase moves them into the Library the first time you open their scene. On a Mac, Basecase stores tries in `library/tries` inside `~/Library/Application Support/Basecase`, one folder for each try.

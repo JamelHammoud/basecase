@@ -5,6 +5,8 @@ export const ROBOT_CALLS = {
   'robot:policy': (link, id) => link.policy(id),
   'robot:calibration': (link, joints) => link.calibrate(joints),
   'robot:state': (link) => link.state(),
+  'robot:take-scene': (link, context) => link.takeScene(context),
+  'robot:take-sample': (link, sample) => link.takeSample(sample),
 };
 
 export function registerRobotHandlers(ipcMain, link) {

@@ -68,6 +68,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'robotGhost',
   'robotPackage',
   'robotPreview',
+  'robotTake',
   'routineState',
   'runCase',
   'saveMapKey',

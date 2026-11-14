@@ -5,7 +5,7 @@ import type { TryRecord } from './tries';
 
 export const TRY_FILE_VERSION = 1;
 
-export const TRY_SOURCES = ['case', 'generated', 'real'] as const;
+export const TRY_SOURCES = ['case', 'generated', 'real', 'operate'] as const;
 
 export type TrySource = (typeof TRY_SOURCES)[number];
 
@@ -13,6 +13,7 @@ export const TRY_SOURCE_BADGE: Record<TrySource, string | null> = {
   case: null,
   generated: 'Variation',
   real: 'Real',
+  operate: 'Operate',
 };
 
 export type TryVerdict = 'passed' | 'failed' | 'unjudged';
@@ -40,6 +41,8 @@ export interface StoredTry {
   faults: RecordedFault[];
   commands?: number;
   world?: number;
+  policy?: string;
+  fault?: string;
 }
 
 export interface TrySummary {
@@ -59,6 +62,7 @@ export interface TrySummary {
   sourceTry: string | null;
   recording: boolean;
   strip: boolean;
+  video: boolean;
 }
 
 export interface TryContext {
@@ -204,7 +208,9 @@ const hasIds = (v: Raw) =>
   isId(v.sceneId) &&
   TRY_SOURCES.includes(v.source as TrySource) &&
   (v.input === null || isText(v.input, 64)) &&
-  (v.sourceTry === null || isId(v.sourceTry));
+  (v.sourceTry === null || isId(v.sourceTry)) &&
+  (v.policy === undefined || isText(v.policy, 64)) &&
+  (v.fault === undefined || isText(v.fault));
 
 const hasNumbers = (v: Raw) =>
   isText(v.startedAt, 64) &&
@@ -236,7 +242,10 @@ export function readStoredTry(value: unknown): StoredTry | null {
   };
 }
 
-export const summaryOf = (stored: StoredTry, held: { recording: boolean; strip: boolean }): TrySummary => ({
+export const summaryOf = (
+  stored: StoredTry,
+  held: { recording: boolean; strip: boolean; video?: boolean },
+): TrySummary => ({
   id: stored.id,
   sceneId: stored.sceneId,
   robot: stored.robot.name,
@@ -252,4 +261,5 @@ export const summaryOf = (stored: StoredTry, held: { recording: boolean; strip: 
   seed: stored.seed,
   sourceTry: stored.sourceTry,
   ...held,
+  video: held.video ?? false,
 });

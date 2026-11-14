@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TRY_CALLS, tryPostRoutes } from './tryRoutes.mjs';
-import { TRY_MANIFEST, TRY_RECORDING, TRY_STRIP, TryStore } from './tryStore.mjs';
+import { TRY_MANIFEST, TRY_RECORDING, TRY_STRIP, TRY_VIDEO, TryStore } from './tryStore.mjs';
 
 let dir;
 let store;
@@ -135,6 +135,11 @@ describe('TryStore', () => {
     await post('/tries-save', { manifest: manifest('try-1'), recording: null });
     await post('/tries-keep-strip', { id: 'try-1', bytes: Buffer.from([9, 9]).toString('base64') });
     expect(await post('/tries-strip', 'try-1')).toEqual({ data: Buffer.from([9, 9]).toString('base64') });
+    expect(await post('/tries-keep-video', { id: 'try-1', bytes: Buffer.from([4, 2]).toString('base64') })).toEqual({
+      ok: true,
+    });
+    expect(await post('/tries-video', 'try-1')).toEqual({ data: Buffer.from([4, 2]).toString('base64') });
+    expect(await post('/tries-strip', 'try-1')).toEqual({ data: Buffer.from([9, 9]).toString('base64') });
   });
 
   it('never reads, writes or deletes a try outside its own folder', () => {
@@ -152,6 +157,8 @@ describe('TryStore', () => {
       expect(() => store.recording(id), String(id)).toThrow('Not a valid id');
       expect(() => store.strip(id), String(id)).toThrow('Not a valid id');
       expect(() => store.saveStrip({ id, bytes }), String(id)).toThrow('Not a valid id');
+      expect(() => store.video(id), String(id)).toThrow('Not a valid id');
+      expect(() => store.saveVideo({ id, bytes }), String(id)).toThrow('Not a valid id');
       expect(() => store.delete(['ok', id]), String(id)).toThrow('Not a valid id');
     }
 
@@ -159,5 +166,47 @@ describe('TryStore', () => {
     expect(() => store.delete('../auth')).toThrow();
     expect(fs.readFileSync(secret, 'utf-8')).toBe('{"token":"x"}');
     expect(fs.existsSync(triesDir) ? fs.readdirSync(triesDir) : []).toEqual([]);
+  });
+});
+
+describe('TryStore videos', () => {
+  it('keeps a video only beside a saved try, within its size cap, and lists it', () => {
+    class Huge extends Uint8Array {
+      get byteLength() {
+        return 512 * 1024 * 1024 + 1;
+      }
+    }
+
+    store.save({ manifest: manifest('try-1'), recording: new Uint8Array(8) });
+    store.list();
+
+    const cache = path.join(dir, '.try-summaries.json');
+    const listedOnce = fs.readFileSync(cache, 'utf-8');
+
+    expect(store.list()[0].video).toBe(false);
+    expect(store.saveVideo({ id: 'try-1', bytes: new Uint8Array([7, 7, 7]) })).toEqual({ ok: true });
+    expect(store.saveVideo({ id: 'missing', bytes: new Uint8Array([7]) })).toEqual({ ok: false });
+    expect(() => store.saveVideo({ id: 'try-1', bytes: new Huge(1) })).toThrow('Too large to keep');
+    expect(() => store.saveVideo({ id: 'try-1', bytes: 'not bytes' })).toThrow('Expected bytes');
+    expect(fs.existsSync(path.join(dir, 'tries', 'missing'))).toBe(false);
+    expect(fs.readFileSync(cache, 'utf-8')).toBe(listedOnce);
+    expect(store.list()[0].video).toBe(true);
+    expect(open().list()[0]).toMatchObject({ video: true, strip: false });
+    expect([...store.video('try-1')]).toEqual([7, 7, 7]);
+    expect(fs.readdirSync(path.join(dir, 'tries', 'try-1'))).toContain(TRY_VIDEO);
+  });
+
+  it('lists a video for a summary cached before videos were kept', () => {
+    store.save({ manifest: manifest('try-1'), recording: new Uint8Array(8) });
+    store.list();
+
+    const cache = path.join(dir, '.try-summaries.json');
+    const cached = JSON.parse(fs.readFileSync(cache, 'utf-8'));
+
+    delete cached['try-1'].summary.video;
+    fs.writeFileSync(cache, JSON.stringify(cached));
+
+    expect(open().list()[0].video).toBe(false);
+    expect(JSON.parse(fs.readFileSync(cache, 'utf-8'))['try-1'].summary.video).toBe(false);
   });
 });

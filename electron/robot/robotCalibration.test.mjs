@@ -97,7 +97,7 @@ describe('robot link calibration', () => {
     link.connect(ROS2_ARM);
     spawned[0].child.say(statusOf([{ id: 1, position: 3000 }]));
     await settle();
-    expect(events.map((e) => e.event)).toEqual(['link', 'status']);
+    expect(events.map((e) => e.event)).toEqual(['link', 'take', 'status']);
     expect(events.at(-1).joints[0]).toEqual({ id: 1, position: 3000 });
     expect(link.state().calibration).toBeNull();
     expect(link.calibrate([{ id: 1, zero_counts: 2048, direction: 1 }])).toEqual(UNDOCUMENTED);

@@ -136,6 +136,10 @@ pub fn ros2_hello_line(emulated: bool) -> String {
 struct JointStatus {
     id: Option<u8>,
     position: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    velocity: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    effort: Option<f64>,
     temp_c: Option<f32>,
     volts: Option<f32>,
     torque_on: Option<bool>,
@@ -220,6 +224,8 @@ fn g1_joints(reading: Option<&Reading>) -> Vec<JointStatus> {
             position: Some(
                 (2048.0 + state.q * crate::calibration::COUNTS_PER_TURN / std::f32::consts::TAU).round() as i32,
             ),
+            velocity: None,
+            effort: None,
             temp_c: Some(state.temp_c),
             volts: Some(state.volts),
             torque_on: Some(state.enabled),
@@ -235,16 +241,18 @@ fn status_counts(rad: f64) -> i32 {
 pub fn ros2_status_line(daemon: &Ros2Daemon) -> String {
     let torque_on = daemon.run().is_commanding();
     let joints = daemon
-        .joint_positions()
+        .joint_readings()
         .into_iter()
         .zip(1..=u8::MAX)
-        .map(|(rad, id)| JointStatus {
+        .map(|(joint, id)| JointStatus {
             id: Some(id),
-            position: rad.map(status_counts),
+            position: joint.position.map(status_counts),
+            velocity: joint.velocity,
+            effort: joint.effort,
             temp_c: None,
             volts: None,
             torque_on: Some(torque_on),
-            reply: if rad.is_some() { "ok" } else { "missing" },
+            reply: if joint.position.is_some() { "ok" } else { "missing" },
         })
         .collect();
     let outbound = Outbound::Status {
@@ -286,6 +294,8 @@ fn joint_status(sample: &Sample) -> JointStatus {
     JointStatus {
         id: telemetry.map(|t| t.id),
         position: telemetry.map(|t| t.position),
+        velocity: None,
+        effort: None,
         temp_c: telemetry.map(|t| t.temp_c),
         volts: telemetry.map(|t| t.volts),
         torque_on: telemetry.map(|t| t.torque_on),

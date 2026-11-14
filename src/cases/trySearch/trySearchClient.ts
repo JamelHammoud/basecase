@@ -64,7 +64,11 @@ async function backfillMotion(tries: StoredTry[], summaries: Map<string, TrySumm
     const recording = await loadRecording(stored.id).catch(() => null);
     const motion = recording && motionTrace(recording);
 
-    if (motion) await saveManifest({ ...stored, motion }).catch(() => {});
+    if (!motion) continue;
+
+    const [current] = await loadManifests([stored.id]).catch(() => []);
+
+    if (current && !current.motion) await saveManifest({ ...current, motion }).catch(() => {});
   }
 }
 

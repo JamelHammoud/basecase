@@ -4,16 +4,26 @@ date: 2026-11-14
 image: /changelog/search-every-try/cover.png
 ---
 
-You can now search every try from every scene by words and facts. More Like This finds tries that moved the same way.
+You can now search every try from every scene, by words and by facts. More Like This finds tries that moved the same way.
 
-The Library's search and a new field at the top of Tries take the same query. Thirty tries from a leader arm are easy to scroll. A thousand from five scenes aren't, and the failed grasps on the red block are the ones worth fixing.
+Scrolling works for thirty tries from a leader arm. It stops working at a thousand tries from five scenes, when the ones you want to fix are the failed grasps on the red block.
 
-A search for "failed grasp red block leader-arm" reads failed and leader-arm as filters. It matches the other words against each try's Case, task, robot, source and input. Dates, durations, robots and servo faults filter the same way. On 10,000 tries, a search took a median of 7 ms.
+## Search
 
-More Like This is on a try's right-click menu. It compares the path of the part that moves farthest and the joints' speeds, and took 31 ms on the same 10,000 tries.
+Type in the Library's search, or in the new field at the top of Tries. Both take the same query.
 
-Words also match what the scene camera saw, through a MobileCLIP model bundled with the app. Basecase embeds about four frames a second in the background. That only covers tries in the open scene, made with its open Case and current robot.
+Search for "failed grasp red block leader-arm" and Basecase reads failed and leader-arm as filters. It matches the other words against each try's Case, task, robot, source and input. Dates, durations, robots and servo faults work as filters too.
 
-The agent searches the same way with its `search_tries` tool.
+On 10,000 tries, a search took a median of 7 ms.
 
-Steps are in [Search tries](/help/search-tries).
+## More Like This
+
+More Like This is on a try's right-click menu. It compares the path of the part that moves farthest and the speeds of the joints. On the same 10,000 tries, it took 31 ms.
+
+## What the Camera Saw
+
+Words also match what the scene camera saw, through a MobileCLIP model bundled with the app. Basecase embeds about four frames a second in the background. It only embeds tries from the open scene that were made with its open Case and current robot.
+
+The agent searches the same way, with its `search_tries` tool.
+
+Read [Search tries](/help/search-tries) for the steps.

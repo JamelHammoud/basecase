@@ -30,22 +30,22 @@ You can step through a Case try one frame at a time. The timeline shows each joi
    - The top plot shows the joint's position in blue, over its target in gray.
    - The bottom plot shows the joint's effort in N·m (or N for a sliding joint). A dashed line marks the servo's limit.
 
-   Red lines mark where the Case's failure checks tripped. The timeline opens at the first one.
-4. Use the keyboard to move the playhead. The robot on the canvas moves with it.
+   Red lines mark the points where the Case's failure checks tripped. The timeline opens at the first red line.
+4. Use the keyboard to move the playhead. The robot on the canvas moves along with it.
    - To move one frame (1/50 s), press [[→]] or [[←]].
    - To move one second, press and hold [[⇧]] while you press [[→]] or [[←]].
-   - To go to the start or end, press [[Home]] or [[End]].
+   - To go to the start or the end, press [[Home]] or [[End]].
    - To play or pause, press [[Space]].
-5. To jump to a spike, click it in a lane. Basecase selects the joint's link on the canvas so you can change it.
+5. To jump to a spike, click it in a lane. Basecase selects the joint's link on the canvas, so you can change it.
 
 ![The timeline under the canvas, with the second joint's link selected](/help/scrub-a-try-on-the-timeline/timeline.png)
 
 6. To close the timeline, press [[Esc]].
 
-When the timeline opens, Basecase recalculates effort from the recording, so its peaks match Peak torque in Results.
+Basecase recalculates effort from the recording when the timeline opens. Its peaks match Peak torque in Results.
 
-If you added or removed a joint after you recorded a try, that try won't open.
+If you added or removed a joint after you recorded a try, you can't open that try.
 
-To open a try from another scene, use the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).
+You can also open a try from another scene in the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).
 
-If you open a try from a search result, it opens at the result's start instead of at the first red line. See [Search tries](/help/search-tries).
+A try you open from a search result starts at the beginning of the result instead of at the first red line. See [Search tries](/help/search-tries).

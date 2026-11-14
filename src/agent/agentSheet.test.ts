@@ -34,6 +34,15 @@ describe('the agent and sheet parts', () => {
     expect(snapshotScene([cube], lumpy).parts[0]).toMatchObject({ sheet: { material: 'aluminum', flat: false } });
   });
 
+  it('turns down sheet on a part that can’t be cut', () => {
+    const washer = { ...plate, id: 'washer', kind: 'hardware' as const };
+
+    expect(() => applySpec(washer, { id: 'washer', sheet: 'aluminum' })).toThrow("can't be cut from sheet");
+    expect(() => specToPart({ id: 'bat', shape: 'box', supply: 'supply:lipo-3s-2200', sheet: 'carbon' })).toThrow(
+      "can't be cut from sheet",
+    );
+  });
+
   it('turns down a sheet it doesn’t know', () => {
     expect(() => applySpec(plate, { id: 'chest', sheet: 'steel' as 'aluminum' })).toThrow('Unknown sheet "steel"');
   });

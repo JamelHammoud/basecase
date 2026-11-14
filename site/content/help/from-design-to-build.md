@@ -48,7 +48,7 @@ Only you can set a blocker aside, with **Ignore**. The agent can say it disagree
 
 ## What you buy
 
-The **Bill of materials** is built from the scene. Components count by part, screws and nuts by their exact size, and printed parts become grams of filament per material. Parts cut from sheet are listed by material and thickness. Filament rounds up to whole spools with 15% to spare.
+The **Bill of materials** is built from the scene. Components count by part, screws and nuts by their exact size, and printed parts become grams of filament per material. Parts cut from sheet are listed by material, thickness and shape. Filament rounds up to whole spools with 15% to spare.
 
 What the build needs but the model doesn't show joins the list too. A battery brings a switch, fuse, wire and charger. Bus servos bring one cable per hop of their bus, of the type they plug into, and each battery plug or barrel jack on the power path brings a pigtail. Prices you check in a store are exact; the rest are list prices, marked ≈. Parts you own cost nothing.
 

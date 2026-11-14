@@ -65,7 +65,11 @@ function ModePanel({ core, actions }: InspectTabProps) {
 function SceneInspector({ core, actions }: InspectTabProps) {
   const { scene, parts, studio, selection, annotations } = core;
   const { edits, ops, library, tuning } = actions;
-  const sheetMm = useSheetThickness(selection.selectedPart, core.viewportRef);
+  const sheetMm = useSheetThickness({
+    part: selection.selectedPart,
+    viewportRef: core.viewportRef,
+    editing: core.docs.doc.base !== null,
+  });
   const { saveAsModel } = library;
   const { toggleCommentMode } = annotations;
 

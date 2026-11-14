@@ -2,13 +2,8 @@ import type { SceneAnnotation, ScenePart } from '../../types/robotics';
 import type { HardwareSpec } from '../../data/hardware';
 import type { AlignMode, Axis } from '../../utils/selection';
 import type { PlaneView } from '../../mirror/plane';
-import {
-  SHEET_MATERIALS,
-  SHEET_MATERIAL_IDS,
-  isSheetMaterial,
-  sheetChoice,
-  snapThickness,
-} from '../../sheet/materials';
+import { SHEET_MATERIALS, SHEET_MATERIAL_IDS, isSheetMaterial, snapThickness } from '../../sheet/materials';
+import { sheetOf } from '../../utils/bom';
 import type { SelectOption } from '../../design-system';
 
 export type Phase = boolean | undefined;
@@ -23,7 +18,7 @@ const PRINTED_TAG = MATERIALS[0].value;
 const SHEET_PREFIX = 'sheet:';
 
 export function materialValue(part: ScenePart): string {
-  const sheet = sheetChoice(part);
+  const sheet = sheetOf(part);
 
   if (sheet) return `${SHEET_PREFIX}${sheet}`;
 

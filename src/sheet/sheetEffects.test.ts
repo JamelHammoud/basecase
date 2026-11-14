@@ -6,7 +6,7 @@ import { measuresIn, printReportsIn } from '../three/analysis/analysisPool';
 import { snapshotShapes } from '../three/analysis/sceneShapes';
 import type { MeshMeasure } from '../three/meshMeasure';
 import { DEFAULT_PROJECT, type ProjectSettings, type RobotJoint, type ScenePart } from '../types/robotics';
-import { buildBom } from '../utils/bom';
+import { buildBom, canCutFromSheet } from '../utils/bom';
 import { runEngineering, type EngineeringInputs } from '../utils/engineering';
 import { printReportOf } from '../utils/printReport';
 import { cutFiles } from './cutFiles';
@@ -72,7 +72,7 @@ describe('a plate cut from sheet, measured in the analysis worker', () => {
     expect(bom.printed.map((p) => p.id)).toEqual(['block']);
     expect(filamentIds).toEqual(['block']);
     expect(bom.lines.find((l) => l.category === 'Sheet')).toMatchObject({
-      key: 'sheet:aluminum|3',
+      key: expect.stringMatching(/^sheet:aluminum\|3\|/),
       name: '6061 aluminum',
       detail: '3 mm',
       qty: 1,
@@ -115,7 +115,9 @@ describe('a part tagged with an old made-elsewhere tag', () => {
 
     expect(bom.madeElsewhere).toEqual([]);
     expect(bomFindings(bom).filter((f) => f.level === 'blocker')).toEqual([]);
-    expect(bom.lines.map((l) => [l.category, l.key])).toEqual([['Sheet', 'sheet:aluminum|4']]);
+    expect(bom.lines.map((l) => [l.category, l.key])).toEqual([
+      ['Sheet', expect.stringMatching(/^sheet:aluminum\|4\|/)],
+    ]);
   });
 
   it('blocks a cube set to sheet, with no Sheet line and no cut file', () => {
@@ -211,5 +213,52 @@ describe('a shin plate cut from sheet on a two-joint leg', () => {
     expect(metal.knee.massG - printed.knee.massG).toBeCloseTo(metal.weight - printed.weight, -1);
     expect(metal.knee.massG).toBeGreaterThan(printed.knee.massG + 20);
     expect(metal.knee.loadNm).toBeGreaterThan(printed.knee.loadNm);
+  });
+});
+
+describe('Sheet lines and their prices', () => {
+  const rect = (w: number, h: number): Array<[number, number]> => [
+    [0, 0],
+    [w, 0],
+    [w, h],
+    [0, h],
+  ];
+  const plateMeasure = (w: number, h: number): MeshMeasure => ({
+    volumeMm3: w * h * 3,
+    areaMm2: 2 * w * h,
+    min: [0, 0, 0],
+    max: [w, 3, h],
+    centroid: [w / 2, 1.5, h / 2],
+    triangles: 12,
+    sheet: { thicknessMm: 3, areaMm2: w * h, outline: rect(w, h), holes: [] },
+  });
+  const chest = part({ id: 'chest', ...aluminum });
+  const back = part({ id: 'back', ...aluminum });
+  const foot = part({ id: 'foot', ...aluminum });
+  const measures = { chest: plateMeasure(80, 60), back: plateMeasure(80, 60), foot: plateMeasure(40, 30) };
+  const sheetLines = (purchases = {}) =>
+    buildBom({ parts: [chest, back, foot], project: DEFAULT_PROJECT, purchases, measures }).lines.filter(
+      (l) => l.category === 'Sheet',
+    );
+
+  it('gives each outline its own line, so one quote never prices another shape', () => {
+    const lines = sheetLines();
+    const big = lines.find((l) => l.partIds.includes('chest'))!;
+    const quoted = sheetLines({
+      [big.key]: { priceUsd: 24, packQty: 1, checkedAt: '2026-11-13T00:00:00.000Z', url: '' },
+    });
+
+    expect(lines.map((l) => [l.partIds, l.qty])).toEqual([
+      [['chest', 'back'], 2],
+      [['foot'], 1],
+    ]);
+    expect(quoted.map((l) => l.lineUsd)).toEqual([48, undefined]);
+  });
+
+  it('never offers hardware, components or stand-ins', () => {
+    expect(canCutFromSheet(chest)).toBe(true);
+    expect(canCutFromSheet(part({ id: 'washer', kind: 'hardware' }))).toBe(false);
+    expect(canCutFromSheet(part({ id: 'servo', kind: 'component' }))).toBe(false);
+    expect(canCutFromSheet(part({ id: 'battery', supplyId: 'lipo-3s-2200' }))).toBe(false);
   });
 });

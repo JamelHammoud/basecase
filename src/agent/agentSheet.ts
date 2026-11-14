@@ -1,7 +1,7 @@
 import { isSheetMaterial, sheetChoice, type SheetMaterial } from '../sheet/materials';
 import { sheetThickness } from '../sheet/stock';
 import type { ScenePart } from '../types/robotics';
-import { sheetOf } from '../utils/bom';
+import { canCutFromSheet, sheetOf } from '../utils/bom';
 import type { PartBoxes } from './sceneBounds';
 
 export function sheetField(sheet: SheetMaterial | null | undefined): Pick<ScenePart, 'sheet'> {
@@ -18,6 +18,14 @@ export function applySheet(next: ScenePart, sheet: SheetMaterial | null | undefi
   next.sheet = sheetField(sheet).sheet;
 
   if (sheetChoice({ mechanicalTag: next.mechanicalTag })) next.mechanicalTag = undefined;
+}
+
+export function cuttable(part: ScenePart, sheet: SheetMaterial | null | undefined): ScenePart {
+  if (!sheet || canCutFromSheet(part)) return part;
+
+  throw new Error(
+    `"${part.id}" can't be cut from sheet: only solid parts you make can. Leave out sheet for catalog parts, stand-ins and supplies.`,
+  );
 }
 
 export function sheetEntry(p: ScenePart, measured: PartBoxes[string]) {

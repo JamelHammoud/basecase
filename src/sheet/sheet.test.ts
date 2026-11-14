@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { detectSheet } from './detect';
 import { cutFileName, safeName, sheetDxf } from './dxf';
 import { sheetChoice, snapThickness } from './materials';
+import { profileHash } from './stock';
 import { FOUR_HOLES, plateTriangles, pocketedBoxTriangles, turned } from './sheet.fixtures';
 
 const plate = () => plateTriangles({ width: 60, height: 40, thickness: 3, holes: FOUR_HOLES });
@@ -117,5 +118,18 @@ describe('sheetChoice', () => {
     expect(sheetChoice({ mechanicalTag: tag, name: 'Hip Plate' })).toBe('carbon');
     expect(sheetChoice({ mechanicalTag: 'CNC Aluminum', name: 'Clear Cover' })).toBe('aluminum');
     expect(sheetChoice({ sheet: { material: 'carbon' }, mechanicalTag: tag, name: 'Clear Cover' })).toBe('carbon');
+  });
+});
+
+describe('profileHash', () => {
+  it('matches the same plate turned and moved, and no other shape', () => {
+    const hash = profileHash(detectSheet(plate())!);
+    const moved = detectSheet(turned(plate(), new THREE.Euler(0.4, -1.1, 0.7), new THREE.Vector3(120, -30, 55)))!;
+    const bigger = detectSheet(plateTriangles({ width: 80, height: 40, thickness: 3, holes: FOUR_HOLES }))!;
+    const plain = detectSheet(plateTriangles({ width: 60, height: 40, thickness: 3 }))!;
+
+    expect(profileHash(moved)).toBe(hash);
+    expect(profileHash(bigger)).not.toBe(hash);
+    expect(profileHash(plain)).not.toBe(hash);
   });
 });

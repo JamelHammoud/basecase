@@ -28,7 +28,7 @@ import {
 import { plural } from '../../electron/plural.mjs';
 import type { SheetMaterial } from '../sheet/materials';
 import { sheetOf } from '../utils/bom';
-import { applySheet, sheetEntry, sheetField } from './agentSheet';
+import { applySheet, cuttable, sheetEntry, sheetField } from './agentSheet';
 
 export { agentCatalog } from './agentCatalog';
 export type { AgentCadPayload } from './cadMesh';
@@ -254,11 +254,11 @@ export function specToPart(spec: AgentPartSpec): ScenePart {
     ...(spec.frame ? { frame: spec.frame } : {}),
   };
 
-  if (spec.catalog) return catalogPart(spec, spec.catalog, base);
+  if (spec.catalog) return cuttable(catalogPart(spec, spec.catalog, base), spec.sheet);
 
-  if (spec.shape === 'cad_part' && spec.cad) return cadPart(spec, spec.cad, base);
+  if (spec.shape === 'cad_part' && spec.cad) return cuttable(cadPart(spec, spec.cad, base), spec.sheet);
 
-  return primitivePart(spec, base);
+  return cuttable(primitivePart(spec, base), spec.sheet);
 }
 
 export function placementPoint(part: ScenePart): V3 {
@@ -335,6 +335,7 @@ export function applySpec(part: ScenePart, spec: AgentPartSpec): ScenePart {
   const next: ScenePart = { ...part };
 
   applyLooks(next, spec);
+  cuttable(next, spec.sheet);
 
   if (spec.thickness !== undefined) next.dimensions = { ...next.dimensions, thickness: spec.thickness };
 

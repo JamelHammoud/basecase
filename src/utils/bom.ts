@@ -74,8 +74,9 @@ const isImportedMesh = (p: ScenePart) => p.kind === 'mesh' && !!p.mesh?.file;
 const isMade = (p: ScenePart) =>
   p.role === 'solid' && (isImportedMesh(p) || !NOT_PRINTED.has(p.kind)) && !BLOCKOUT_KINDS.has(p.kind);
 
-export const sheetOf = (p: ScenePart): SheetMaterial | undefined =>
-  isMade(p) && !p.supplyId ? sheetChoice(p) : undefined;
+export const canCutFromSheet = (p: ScenePart): boolean => isMade(p) && !p.supplyId;
+
+export const sheetOf = (p: ScenePart): SheetMaterial | undefined => (canCutFromSheet(p) ? sheetChoice(p) : undefined);
 
 export function isPrinted(p: ScenePart): boolean {
   return isMade(p) && !sheetOf(p) && !(p.mechanicalTag && MADE_ELSEWHERE[p.mechanicalTag]);
@@ -251,7 +252,7 @@ function tallySheet(t: PartTally, p: ScenePart, sheet: SheetMaterial, m: MeshMea
 
   if (!m.sheet) return t.notFlat.push({ id: p.id, name: p.name });
 
-  addCount(t.counts, sheetKey(sheet, sheetThickness(sheet, m)), 1, [p.id]);
+  addCount(t.counts, sheetKey(sheet, sheetThickness(sheet, m), m.sheet), 1, [p.id]);
 }
 
 function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: MeshMeasure | undefined) {

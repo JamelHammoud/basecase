@@ -1,6 +1,7 @@
 import { useEffect, useState, type RefObject } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { ScenePart } from '../types/robotics';
+import { canCutFromSheet } from '../utils/bom';
 
 const found = new WeakMap<ScenePart, number | null>();
 
@@ -14,13 +15,19 @@ async function measuredThickness(part: ScenePart, viewport: Viewport3DHandle): P
   }
 }
 
-export function useSheetThickness(part: ScenePart | null, viewportRef: RefObject<Viewport3DHandle | null>) {
+interface SheetThicknessInput {
+  part: ScenePart | null;
+  viewportRef: RefObject<Viewport3DHandle | null>;
+  editing: boolean;
+}
+
+export function useSheetThickness({ part, viewportRef, editing }: SheetThicknessInput) {
   const [last, setLast] = useState<{ id: string; mm: number | null } | null>(null);
 
   useEffect(() => {
     const viewport = viewportRef.current;
 
-    if (!part || part.role !== 'solid' || found.has(part) || !viewport) return;
+    if (!part || editing || !canCutFromSheet(part) || found.has(part) || !viewport) return;
 
     let stopped = false;
 
@@ -33,9 +40,9 @@ export function useSheetThickness(part: ScenePart | null, viewportRef: RefObject
     return () => {
       stopped = true;
     };
-  }, [part, viewportRef]);
+  }, [part, viewportRef, editing]);
 
-  if (!part) return null;
+  if (!part || !canCutFromSheet(part)) return null;
 
   if (found.has(part)) return found.get(part)!;
 

@@ -27,6 +27,7 @@ import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
 import { materialOptions, materialPatch, materialValue, type InspectorProps } from './types';
 import { sheetChoice } from '../../sheet/materials';
+import { canCutFromSheet } from '../../utils/bom';
 import { keyFor } from '../../app/shortcuts';
 
 const isWholeGroup = (selectedParts: ScenePart[], parts: ScenePart[]): boolean => {
@@ -180,7 +181,7 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
   const allSolid = selectedParts.every((p) => p.role === 'solid');
   const materials = new Set(selectedParts.map(materialValue));
   const shown = materialOptions(
-    selectedParts.some((p) => !!sheetChoice(p)),
+    selectedParts.every(canCutFromSheet) && selectedParts.some((p) => !!sheetChoice(p)),
     null,
   );
 

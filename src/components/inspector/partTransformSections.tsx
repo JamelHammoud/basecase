@@ -19,6 +19,7 @@ import { QuarterTurns } from './QuarterTurns';
 import type { PartSectionProps } from './partSections';
 import { materialOptions, materialPatch, materialValue, type InspectorProps, type Phase } from './types';
 import { sheetChoice } from '../../sheet/materials';
+import { canCutFromSheet } from '../../utils/bom';
 import { keyFor } from '../../app/shortcuts';
 import { percent } from '../../../electron/percent.mjs';
 
@@ -211,7 +212,7 @@ export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[]
         aria-label="Material"
         value={materialValue(part)}
         onChange={(e) => onUpdate(materialPatch(e.target.value))}
-        options={materialOptions(sheetMm !== null || !!sheetChoice(part), sheetMm)}
+        options={materialOptions(canCutFromSheet(part) && (sheetMm !== null || !!sheetChoice(part)), sheetMm)}
       />
     )}
   </Section>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NoMatches, IconButton, PhotoIcon, PhotoOffIcon, SearchField, SectionHeader } from '../../design-system';
 import type { ScenePart } from '../../types/robotics';
 import { GroupRow, PartRow } from './LayerItems';
-import { layerRows, layersTitle, overallSize } from './layerRows';
+import { layerRows, layersTitle, openFor, overallSize } from './layerRows';
 import { useRevealSelection } from './useRevealSelection';
 import { keyFor } from '../../app/shortcuts';
 
@@ -18,6 +18,8 @@ export interface LayersViewProps {
   onTogglePartFlag: (id: string, flag: 'visible' | 'locked') => void;
   onRenamePart: (id: string, name: string) => void;
   onPartContextMenu: (id: string, x: number, y: number) => void;
+  renamingLayer: string | null;
+  onRenamingLayer: (id: string | null) => void;
 }
 
 const ReferenceImagesToggle: React.FC<{ props: LayersViewProps }> = ({ props }) => {
@@ -47,8 +49,7 @@ const SizeFooter: React.FC<{ size: string }> = ({ size }) => (
 );
 
 export const LayersView: React.FC<LayersViewProps> = (props) => {
-  const { parts, selectedIds } = props;
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const { parts, selectedIds, renamingLayer: editingId, onRenamingLayer: setEditingId } = props;
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const [query, setQuery] = useState('');
   const scrollerRef = useRevealSelection(parts, selectedIds[0], props.open ?? true);
@@ -59,7 +60,8 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
 
   const selected = new Set(selectedIds);
   const searching = query.trim() !== '';
-  const rows = layerRows(parts, collapsed, query);
+  const closed = openFor(collapsed, parts, editingId);
+  const rows = layerRows(parts, closed, query);
   const size = overallSize(parts);
   const hasImages = parts.some((p) => p.kind === 'image_plane');
   const toggleCollapsed = (id: string) =>
@@ -113,7 +115,7 @@ export const LayersView: React.FC<LayersViewProps> = (props) => {
                 name={row.name}
                 memberIds={row.members.map((m) => m.id)}
                 selected={row.members.every((m) => selected.has(m.id))}
-                collapsed={!searching && collapsed.has(row.id)}
+                collapsed={!searching && closed.has(row.id)}
                 editing={editingId === row.id}
                 onSelect={props.onSelectIds}
                 onToggleCollapsed={toggleCollapsed}

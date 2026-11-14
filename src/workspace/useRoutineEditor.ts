@@ -19,7 +19,12 @@ const insertedId = (edits: readonly RoutineEdit[]) => {
   return insert?.op === 'insert' ? (insert.step.id ?? null) : null;
 };
 
-export function useRoutineEditor(store: RoutineStore, showToast: ShowToast) {
+interface EditorFeedback {
+  showToast: ShowToast;
+  undo: () => void;
+}
+
+export function useRoutineEditor(store: RoutineStore, { showToast, undo }: EditorFeedback) {
   const [picked, setPicked] = useState<string | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const routine = store.active;
@@ -35,7 +40,7 @@ export function useRoutineEditor(store: RoutineStore, showToast: ShowToast) {
     if (!store.edit([{ op: 'remove', id }]).changed) return;
 
     setPicked(null);
-    showToast(`Deleted ${name}`, { action: { label: 'Undo', onClick: () => store.undo() } });
+    showToast(`Deleted ${name}`, { action: { label: 'Undo', onClick: undo } });
   };
 
   const add = (edits: readonly RoutineEdit[]) => {

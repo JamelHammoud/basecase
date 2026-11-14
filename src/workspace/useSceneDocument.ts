@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_PROJECT,
   type ProjectSettings,
@@ -12,6 +12,8 @@ import type { RobotSkeleton } from '../types/skeleton';
 import { editWithOperands } from '../booleans/operands';
 import { jointsWithoutParts } from '../utils/kinematics';
 import type { CaseConsole } from '../cases/console/format';
+import type { Routine } from '../routines/schema';
+import { routinesView, writeRoutines } from './caseLogicRoutines';
 import {
   EMPTY_DOC,
   consolesOf,
@@ -47,6 +49,26 @@ function useProjectState(seed?: WorkspaceSeed) {
   const updateProjectNow = (patch: (p: ProjectSettings) => ProjectSettings) => setProjectNow(patch(projectRef.current));
 
   return { project, setProject, projectRef, setProjectNow, updateProjectNow };
+}
+
+type CommitProject = (before: Partial<Snapshot>, patch: ProjectPatch, parts?: ScenePart[]) => void;
+
+function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<ProjectSettings>) {
+  'use memo';
+
+  return {
+    commitDesign: (parts: ScenePart[], tether: Tether | undefined) =>
+      commitProject({ tether: projectRef.current.tether }, (p) => ({ ...p, tether }), parts),
+    commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton | undefined) =>
+      commitProject({ skeleton: projectRef.current.skeleton }, (p) => ({ ...p, skeleton }), parts),
+    commitConsole: (caseId: string, console: CaseConsole | undefined) =>
+      commitProject({ consoles: consolesOf(projectRef.current.cases, [caseId]) }, (p) => ({
+        ...p,
+        cases: withCaseConsoles(p.cases, { [caseId]: console }),
+      })),
+    commitRoutines: (list: readonly Routine[]) =>
+      commitProject({ routines: routinesView(projectRef.current) }, (p) => writeRoutines(p, list)),
+  };
 }
 
 export function useSceneDocument(seed?: WorkspaceSeed) {
@@ -156,14 +178,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     lastPoseEditRef.current = 0;
   };
 
-  const commitDesign = (parts: ScenePart[], tether: Tether | undefined) =>
-    commitProject({ tether: projectRef.current.tether }, (p) => ({ ...p, tether }), parts);
-
-  const commitConsole = (caseId: string, console: CaseConsole | undefined) =>
-    commitProject({ consoles: consolesOf(projectRef.current.cases, [caseId]) }, (p) => ({
-      ...p,
-      cases: withCaseConsoles(p.cases, { [caseId]: console }),
-    }));
+  const commits = useProjectCommits(commitProject, projectRef);
 
   const travel = (step: HistoryStep, restorePose: (pose: RobotPoseState | undefined) => void) => {
     settleLiveJoints();
@@ -195,10 +210,7 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     commitParts,
     commitMarks,
     commitJoints,
-    commitDesign,
-    commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton | undefined) =>
-      commitProject({ skeleton: projectRef.current.skeleton }, (p) => ({ ...p, skeleton }), parts),
-    commitConsole,
+    ...commits,
     recordPoseEdit,
     recordSkeletonEdit,
     resetDoc: (parts: ScenePart[]) => writeDoc(docFromParts(parts)),

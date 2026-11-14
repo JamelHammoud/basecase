@@ -17,7 +17,7 @@ import type { Routines } from '../../workspace/useRoutines';
 import { keyFor } from '../../app/shortcuts';
 
 export function RoutineHeader({ routines }: { routines: Routines }) {
-  const { store, editor, view, showToast } = routines;
+  const { store, editor, view, showToast, undo } = routines;
   const routine = view.routine;
   const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -36,7 +36,7 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
       onConfirm: () => {
         if (!store.remove(routine.id)) return;
 
-        showToast(`Deleted ${routine.name}`, { action: { label: 'Undo', onClick: () => store.undo() } });
+        showToast(`Deleted ${routine.name}`, { action: { label: 'Undo', onClick: undo } });
       },
     });
   const rename = (name: string | null) => {

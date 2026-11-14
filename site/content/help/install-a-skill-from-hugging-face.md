@@ -36,7 +36,7 @@ Install Skill works in the desktop app, on legged robots. It takes Motor Kit ski
 
 ![Install Skill in the command palette](/help/install-a-skill-from-hugging-face/command.png)
 
-3. Paste the skill's Hugging Face link into **Skill link**, and press Enter.
+3. Paste the skill's Hugging Face link into the field, and press [[↩]].
 
 ![The Install Skill sheet with a repo link](/help/install-a-skill-from-hugging-face/link.png)
 

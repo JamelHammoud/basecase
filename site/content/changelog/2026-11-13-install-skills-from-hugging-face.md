@@ -4,7 +4,7 @@ date: 2026-11-13
 image: /changelog/install-skills-from-hugging-face/cover.png
 ---
 
-You can now publish a ready skill to Hugging Face and install it on another robot, where Arena proves it again. It works in the desktop app, for Motor Kit skills on legged robots.
+You can now publish a ready skill to Hugging Face and install it on another robot, where Arena proves it again. It works in the desktop app; Install Skill takes Motor Kit skills on legged robots.
 
 Publish to Hugging Face is in a ready skill's right-click menu under Train. Install Skill is in ⌘K and takes the repo's link.
 

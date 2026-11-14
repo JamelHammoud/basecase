@@ -3,6 +3,7 @@ import { ARM, JOINT_NAMES, MIXED_ARM, THREE_JOINT_ARM } from './armFixture';
 import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, type App } from './harness';
+import { driveRecordableMotion } from './operateMotion';
 
 let app: App;
 
@@ -454,10 +455,7 @@ describe('Operate replay', () => {
       await page.locator(visible('[role=tab]'), { hasText: 'Simulate' }).first().click();
       await button(/^Drive$/).click();
       await expect.poll(simDrive, { timeout: 60000 }).toBe('on');
-      await page.mouse.click(720, 450);
-      await page.keyboard.down('w');
-      await expect.poll(link, { timeout: 20000 }).toBeGreaterThan(20);
-      await page.keyboard.up('w');
+      await driveRecordableMotion(page);
 
       const moved = await link();
 

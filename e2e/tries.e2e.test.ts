@@ -1,6 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { endTryAt } from './driveChecks';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
 
 let app: App;
@@ -35,12 +36,7 @@ async function openLibrary() {
 
 async function driveOneTry() {
   await button('Try It').click();
-  await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-  await app.page.mouse.click(720, 450);
-  await app.page.keyboard.down('w');
-  await app.page.waitForTimeout(600);
-  await app.page.keyboard.up('w');
-  await button('Stop Try').click();
+  await endTryAt(app.page, 0.4);
 }
 
 async function tryAgain(): Promise<string> {
@@ -78,15 +74,16 @@ async function recordTry(): Promise<string> {
   await expect.poll(async () => (await simState()).activeCase).not.toBeNull();
   await driveOneTry();
   await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
+  await expect.poll(async () => (await simState()).drive, { timeout: 30000 }).toBe('off');
 
   return (await simState()).tries[0].id;
 }
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
@@ -125,6 +122,7 @@ describe('Tries and datasets in the Library', () => {
   itUnlessWindows('makes a dataset from a search, adds a try to it, updates it and deletes it', async () => {
     const pane = app.page.getByTestId('dataset-pane');
 
+    await recordTry();
     await openLibrary();
     await triesRow().click();
     await app.page.locator(shown('input[aria-label="Search tries"]')).fill('Touch a Point');

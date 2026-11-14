@@ -28,7 +28,7 @@ As you draw, points snap onto points and lines snap level or upright, the way Fi
 
 The sketch is saved on the part it made. Double-click the part to reopen it, click a dimension and type a new one. The part re-extrudes in place, even if you've moved it, and ⌘Z undoes each change in one step.
 
-Steps are in [Sketch a part to exact dimensions](/help/sketch-a-part-to-exact-dimensions).
+Steps are in [Draw a part from a sketch or SVG](/help/draw-a-part-from-a-sketch-or-svg).
 
 ## What it doesn't do yet
 

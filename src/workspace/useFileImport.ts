@@ -32,7 +32,7 @@ export function useFileImport(core: WorkspaceCore, { creation, robots, pose }: F
     const name = [...folders.map((f) => f.name), ...files.map((f) => f.name)].join(', ');
     const local = [...folders.flatMap((f) => f.files), ...files.map((blob) => ({ path: blob.name, blob }))];
 
-    robots.openRobotFiles({ name, files: local, at });
+    void robots.importRobotFrom({ kind: 'files', files: local, name }, at);
   };
 
   const openSvg = async (file: File) => tool.openCreator('svg', { name: file.name, text: await file.text() });

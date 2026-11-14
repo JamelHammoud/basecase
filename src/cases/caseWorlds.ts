@@ -1,16 +1,26 @@
 import type { V3 } from '../utils/kinematics';
-import { BLOCK_DEPTH_MM, type BuilderRobot, type GoalKind, type GoalPlan } from './caseGoals';
+import {
+  BLOCK_DEPTH_MM,
+  type BuilderRobot,
+  type GoalKind,
+  type GoalPlan,
+  type GoalValues,
+  type ParamKey,
+} from './caseGoals';
+import { roughGround, slope, steps } from './terrain';
 import type { WorldObject } from './schema';
 
-export type WorldKind = 'floor' | 'corridor' | 'block' | 'shelf' | 'room';
+export type WorldKind = 'floor' | 'corridor' | 'block' | 'shelf' | 'rough' | 'steps' | 'slope' | 'room';
 
 export interface CaseWorld {
   kind: WorldKind;
   name: string;
   suffix: string;
   trueSize?: boolean;
+  param?: ParamKey;
+  ground?: boolean;
   fits: (goal: GoalKind, robot?: BuilderRobot) => boolean;
-  objects: (plan: GoalPlan, robot: BuilderRobot) => WorldObject[];
+  objects: (plan: GoalPlan, robot: BuilderRobot, values: GoalValues) => WorldObject[];
 }
 
 const WALL_GREY = '#6e6e6e';
@@ -20,6 +30,10 @@ const WALL_OVERHANG_MM = 300;
 const BLOCK_HEIGHT_MM = 150;
 const MIN_SHELF_MM = 10;
 const GROUND_GOALS: ReadonlySet<GoalKind> = new Set(['reach', 'push', 'path', 'walk']);
+
+const TERRAIN_GOALS: ReadonlySet<GoalKind> = new Set(['reach', 'path', 'walk']);
+
+const ground = { ground: true, fits: (g: GoalKind) => TERRAIN_GOALS.has(g) };
 
 const solid = (id: string, name: string, position: V3, size: V3): WorldObject => ({
   id,
@@ -67,4 +81,7 @@ export const CASE_WORLDS: CaseWorld[] = [
   { kind: 'corridor', name: 'Corridor', suffix: 'in a Corridor', fits: (g) => GROUND_GOALS.has(g), objects: corridor },
   { kind: 'block', name: 'Block', suffix: 'past a Block', fits: (g) => GROUND_GOALS.has(g), objects: block },
   { kind: 'shelf', name: 'Shelf', suffix: 'on a Shelf', fits: (g) => g === 'touch', objects: shelf },
+  { kind: 'rough', name: 'Rough Ground', suffix: 'on Rough Ground', param: 'riseMm', ...ground, objects: roughGround },
+  { kind: 'steps', name: 'Steps', suffix: 'over Steps', param: 'riseMm', ...ground, objects: steps },
+  { kind: 'slope', name: 'Slope', suffix: 'over a Slope', param: 'inclineDeg', ...ground, objects: slope },
 ];

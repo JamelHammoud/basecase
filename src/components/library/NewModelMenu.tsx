@@ -7,7 +7,6 @@ import {
   PopoverMenu,
   FileImportIcon,
   LayersIcon,
-  PhotoAddIcon,
   PlusIcon,
 } from '../../design-system';
 
@@ -16,8 +15,7 @@ export const NewModelMenu: React.FC<{
   canSaveScene: boolean;
   onSaveModel: (mode: 'selected' | 'all') => void;
   onImport: () => void;
-  onImageToModel: () => void;
-}> = ({ canSaveSelection, canSaveScene, onSaveModel, onImport, onImageToModel }) => {
+}> = ({ canSaveSelection, canSaveScene, onSaveModel, onImport }) => {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const run = (fn: () => void) => () => {
@@ -58,7 +56,6 @@ export const NewModelMenu: React.FC<{
         />
         <MenuDivider />
         <MenuItem icon={<FileImportIcon className="w-3.5 h-3.5" />} label="Import" onSelect={run(onImport)} />
-        <MenuItem icon={<PhotoAddIcon className="w-3.5 h-3.5" />} label="From Image" onSelect={run(onImageToModel)} />
       </PopoverMenu>
     </div>
   );

@@ -2,11 +2,12 @@ import type { V3 } from '../utils/kinematics';
 import { caseSignalNames } from './caseFacts';
 import { scaledFormula } from './contract';
 import { caseSlots, type Case, type RobotSlot, type WorldObject } from './schema';
+import type { CaseWorld } from './worldSet';
 
 const SAME_SCALE = 1e-3;
 const UP = 1;
 
-export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
+function reachFrame(kase: Case, reachMm: number, anchor: V3) {
   const [lead] = caseSlots(kase);
   const authored = lead.reachMm;
   const from = lead.anchor ?? anchor;
@@ -14,16 +15,29 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
   const fromFloor = lead.needs.includes('gripper');
   const pinned = (i: number) => fromFloor && i === UP;
   const place = (p: V3): V3 => p.map((x, i) => (pinned(i) ? x * s : anchor[i] + (x - from[i]) * s)) as V3;
+  const same = Math.abs(s - 1) < SAME_SCALE && from.every((x, i) => pinned(i) || x === anchor[i]);
+
+  return { s, place, same };
+}
+
+const unmoved = (p: V3): V3 => p;
+
+export function movableWorld(kase: Case | null, facts: { reachMm: number; anchor: V3 }): CaseWorld {
+  const frame = kase && reachFrame(kase, facts.reachMm, facts.anchor);
+
+  return { objects: kase?.world.objects ?? [], place: !frame || frame.same ? unmoved : frame.place };
+}
+
+export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
+  const { s, place, same } = reachFrame(kase, reachMm, anchor);
+
+  if (same) return kase;
+
   const onFloor = (p: V3): V3 => {
     const [x, , z] = place(p);
 
     return [x, p[1], z];
   };
-  const sameScale = Math.abs(s - 1) < SAME_SCALE;
-  const sameAnchor = from.every((x, i) => pinned(i) || x === anchor[i]);
-
-  if (sameScale && sameAnchor) return kase;
-
   const unitless = caseSignalNames(kase);
 
   const object = (o: WorldObject): WorldObject => ({

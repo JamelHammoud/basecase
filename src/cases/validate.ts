@@ -30,6 +30,9 @@ export const asNumber: Reader<number> = (value, where) => {
   return value;
 };
 
+export const asBoolean: Reader<boolean> = (value, where) =>
+  typeof value === 'boolean' ? value : refuse(where, 'must be true or false');
+
 export const oneOf =
   <T extends string>(options: readonly T[]): Reader<T> =>
   (value, where) =>

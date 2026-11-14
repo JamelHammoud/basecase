@@ -92,6 +92,18 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     ],
   },
   {
+    title: 'Try timeline',
+    rows: [
+      ['Play or pause', 'timeline:play'],
+      ['Step a frame', 'timeline:frame'],
+      ['Step a second', 'timeline:second'],
+      ['Go to start or end', 'timeline:ends'],
+      ['Slower or faster', 'timeline:speed'],
+      ['Loop a range', ['⇧', 'drag']],
+      ['Close', 'timeline:close'],
+    ],
+  },
+  {
     title: 'Agent',
     desktopOnly: true,
     rows: [

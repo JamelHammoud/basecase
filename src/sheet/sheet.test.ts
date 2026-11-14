@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { detectSheet } from './detect';
 import { cutFileName, safeName, sheetDxf } from './dxf';
-import { snapThickness } from './materials';
+import { sheetChoice, snapThickness } from './materials';
 import { FOUR_HOLES, plateTriangles, pocketedBoxTriangles, turned } from './sheet.fixtures';
 
 const plate = () => plateTriangles({ width: 60, height: 40, thickness: 3, holes: FOUR_HOLES });
@@ -105,5 +105,17 @@ describe('snapThickness', () => {
     expect(snapThickness('carbon', 2.3)).toBe(2.5);
     expect(snapThickness('acrylic', 0.8)).toBe(2);
     expect(snapThickness('aluminum', 20)).toBe(12);
+  });
+});
+
+describe('sheetChoice', () => {
+  it('reads the old laser-cut tag as acrylic for a clear or acrylic part, else carbon fiber', () => {
+    const tag = 'Laser-Cut Acrylic/Carbon';
+
+    expect(sheetChoice({ mechanicalTag: tag, name: 'Clear Cover' })).toBe('acrylic');
+    expect(sheetChoice({ mechanicalTag: tag, name: 'Lid', note: '3 mm acrylic' })).toBe('acrylic');
+    expect(sheetChoice({ mechanicalTag: tag, name: 'Hip Plate' })).toBe('carbon');
+    expect(sheetChoice({ mechanicalTag: 'CNC Aluminum', name: 'Clear Cover' })).toBe('aluminum');
+    expect(sheetChoice({ sheet: { material: 'carbon' }, mechanicalTag: tag, name: 'Clear Cover' })).toBe('carbon');
   });
 });

@@ -27,6 +27,13 @@ describe('the agent and sheet parts', () => {
     ).toBeUndefined();
   });
 
+  it('reports a sheet part that isn’t flat', () => {
+    const cube = applySpec(plate, { id: 'chest', sheet: 'aluminum' });
+    const lumpy = { chest: { min: measured.chest.min, max: [20, 20, 20] as [number, number, number] } };
+
+    expect(snapshotScene([cube], lumpy).parts[0]).toMatchObject({ sheet: { material: 'aluminum', flat: false } });
+  });
+
   it('turns down a sheet it doesn’t know', () => {
     expect(() => applySpec(plate, { id: 'chest', sheet: 'steel' as 'aluminum' })).toThrow('Unknown sheet "steel"');
   });

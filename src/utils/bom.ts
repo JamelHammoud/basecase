@@ -242,7 +242,17 @@ function printedPart(p: ScenePart, m: MeshMeasure, project: ProjectSettings): Pr
   };
 }
 
-type PartTally = Pick<Bom, 'printed' | 'standIns' | 'unmeasured' | 'madeElsewhere' | 'filamentG'> & { counts: Counts };
+type PartTally = Pick<Bom, 'printed' | 'standIns' | 'unmeasured' | 'madeElsewhere' | 'notFlat' | 'filamentG'> & {
+  counts: Counts;
+};
+
+function tallySheet(t: PartTally, p: ScenePart, sheet: SheetMaterial, m: MeshMeasure | undefined) {
+  if (!m) return t.unmeasured.push(p.id);
+
+  if (!m.sheet) return t.notFlat.push({ id: p.id, name: p.name });
+
+  addCount(t.counts, sheetKey(sheet, sheetThickness(sheet, m)), 1, [p.id]);
+}
 
 function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: MeshMeasure | undefined) {
   const key = boughtKey(p);
@@ -253,9 +263,7 @@ function tallyPart(t: PartTally, p: ScenePart, project: ProjectSettings, m: Mesh
 
   const sheet = sheetOf(p);
 
-  if (sheet && m) return addCount(t.counts, sheetKey(sheet, sheetThickness(sheet, m)), 1, [p.id]);
-
-  if (sheet) return t.unmeasured.push(p.id);
+  if (sheet) return tallySheet(t, p, sheet, m);
 
   const process = madeElsewhereProcess(p);
 
@@ -282,6 +290,7 @@ function tallyParts(
     standIns: [],
     unmeasured: [],
     madeElsewhere: [],
+    notFlat: [],
     filamentG: {},
   };
 
@@ -435,6 +444,7 @@ export function buildBom({ parts, project, purchases, measures, now = new Date()
     standIns: tally.standIns,
     unmeasured: tally.unmeasured,
     madeElsewhere: tally.madeElsewhere,
+    notFlat: tally.notFlat,
     filamentG: tally.filamentG,
     totals: bomTotals(lines, project),
   };

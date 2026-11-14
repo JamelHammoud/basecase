@@ -25,5 +25,9 @@ export function sheetEntry(p: ScenePart, measured: PartBoxes[string]) {
 
   if (!material) return {};
 
-  return { sheet: { material, ...(measured ? { mm: sheetThickness(material, measured) } : {}) } };
+  if (!measured) return { sheet: { material } };
+
+  if (!measured.sheet) return { sheet: { material, flat: false } };
+
+  return { sheet: { material, mm: sheetThickness(material, measured) } };
 }

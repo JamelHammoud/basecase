@@ -76,6 +76,10 @@ export const RULES = {
   unprintable: printing('Clear Parts', 'This part is meant to be clear, which a printer can’t make.'),
   'stand-in': sourcing('Placeholders', 'This is a placeholder, not a real part.'),
   'no-source': sourcing('Parts Without a Source', 'Nothing says where to get this part.'),
+  'not-flat': sourcing(
+    'Sheet Parts That Aren’t Flat',
+    'These parts can’t be cut from sheet. Make each one flat, or set its Material to Printed PLA / PETG.',
+  ),
   unreferenced: sourcing('Unconfirmed Parts', 'Its link and numbers aren’t checked.'),
   'no-price': sourcing('Missing Prices', 'These parts have no price.'),
   unfinished: assembly('Unfinished Checks', 'Some checks didn’t finish, so this answer isn’t complete.'),

@@ -68,7 +68,7 @@ export const common = {
     .nullable()
     .optional()
     .describe(
-      'Cut this flat part from sheet instead of printing it: aluminum (6061), carbon (carbon fiber plate) or acrylic. The part needs two parallel faces with only through holes between them; its thickness snaps to the nearest stock size, its mass uses the sheet’s density, it leaves the print plates and gets a DXF in Cut Files. null prints it again.',
+      'Cut this flat part from sheet instead of printing it: aluminum (6061), carbon (carbon fiber plate) or acrylic. The part needs two parallel faces with only through holes between them; its thickness snaps to the nearest stock size, its mass uses the sheet’s density, it leaves the print plates and gets a DXF in Cut Files. A part that isn’t flat gets no DXF, shows as sheet=<material>:not-flat in get_scene and blocks Checks until you flatten it or print it. null prints it again.',
     ),
   supply: z
     .string()

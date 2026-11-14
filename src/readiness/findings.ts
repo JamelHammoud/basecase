@@ -96,6 +96,12 @@ export function bomFindings(bom: Bom): Finding[] {
       ids: [m.id],
     }),
   );
+  const notFlat = bom.notFlat.map((m) =>
+    ruleFinding('not-flat', 'blocker', {
+      agentText: `${m.name} is set to sheet but isn't flat. Make it a flat plate with through holes only, or set its material to printed.`,
+      ids: [m.id],
+    }),
+  );
   const standIns = bom.standIns.map((m) =>
     ruleFinding('stand-in', 'blocker', { agentText: `${m.name} is a stand-in, not a real part.`, ids: [m.id] }),
   );
@@ -103,6 +109,7 @@ export function bomFindings(bom: Bom): Finding[] {
 
   return [
     ...elsewhere,
+    ...notFlat,
     ...standIns,
     ...(unpriced.length
       ? [

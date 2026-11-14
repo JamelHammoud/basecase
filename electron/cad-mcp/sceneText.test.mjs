@@ -36,6 +36,12 @@ describe('sceneText', () => {
     expect(
       sceneText({ ...scene(0), parts: [{ ...part(0), material: undefined, sheet: { material: 'aluminum', mm: 3 } }] }),
     ).toMatch(/ #c9a14a sheet=aluminum:3mm note=/);
+    expect(
+      sceneText({
+        ...scene(0),
+        parts: [{ ...part(0), material: undefined, sheet: { material: 'acrylic', flat: false } }],
+      }),
+    ).toMatch(/ sheet=acrylic:not-flat /);
   });
 
   it('filters by group and ids, and names ids it can’t find', () => {

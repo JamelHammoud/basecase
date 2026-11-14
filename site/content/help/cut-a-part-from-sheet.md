@@ -24,7 +24,7 @@ covers:
 
 Make a flat plate from aluminum, carbon fiber or acrylic instead of printing it, and save DXF files a laser or waterjet shop can cut.
 
-A part qualifies when it has two parallel flat faces with only through holes and cutouts between them. A pocket, a chamfer or a fillet across the thickness rules it out.
+A part qualifies when it has two parallel flat faces with only through holes and cutouts between them. A pocket, a chamfer or a fillet across the thickness rules it out. A part set to sheet that isn't flat gets no cut file and blocks Checks.
 
 1. Select the flat part on the canvas.
 2. In the Inspector, under **Appearance**, open the material menu.

@@ -47,7 +47,7 @@ What a part is made from decides whether you can resize it, whether it's printed
 | Imported mesh | Import, including STEP and IGES bodies | Yes |
 | Robot link | Import Robot or **Parts** ▸ **Robots** | No |
 
-A shape, agent part or imported mesh is printed until you change its material under **Appearance**. Components keep the maker's exact size, so they can't be resized. Hardware changes size through its own **Size** and **Length** choices.
+A shape, agent part or imported mesh is printed until you change its **Material** under **Appearance**. A flat one can be [cut from sheet](/help/cut-a-part-from-sheet) instead. Components keep the maker's exact size, so they can't be resized. Hardware changes size through its own **Size** and **Length** choices.
 
 ## Real components are never estimates
 

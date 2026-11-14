@@ -57,6 +57,7 @@ export interface Bom {
   standIns: Array<{ id: string; name: string }>;
   unmeasured: string[];
   madeElsewhere: Array<{ id: string; name: string; process: string }>;
+  notFlat: Array<{ id: string; name: string }>;
   filamentG: Partial<Record<PrintMaterial, number>>;
   totals: {
     checkedUsd: number;

@@ -47,7 +47,7 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Assembly | Whether a build order exists | “A screwdriver can’t reach these screws, in any build order.” and “These parts can’t be put in place, in any build order.” |
 | Fit | Parts that overlap, and room for battery leads | “These parts overlap by … mm.” and “There isn’t enough room for the battery’s wires and connector.” |
 | Printing | Each printed part against your printer | Parts too big for the plate, walls too thin to print, and parts meant to be clear |
-| Real parts | Where every part comes from | Placeholders, parts with nothing saying where to get them, and parts whose link and numbers aren't checked |
+| Real parts | Where every part comes from | Placeholders, parts with nothing saying where to get them, parts set to sheet that aren't flat, and parts whose link and numbers aren't checked |
 | Repairs | How much comes apart to replace a part | “Replacing these means taking a lot apart.” as a note |
 
 ## Engineering checks

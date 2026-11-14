@@ -95,16 +95,37 @@ describe('a part tagged with an old made-elsewhere tag', () => {
     mechanicalTag: 'CNC Aluminum',
     dimensions: { width: 50, height: 4, depth: 30 },
   });
+  const cube = part({ id: 'cube', name: 'Motor Block', mechanicalTag: 'CNC Aluminum' });
+  const flat = { thicknessMm: 4, areaMm2: 1500, outline: [], holes: [] };
   const measures: Record<string, MeshMeasure> = {
-    bracket: { volumeMm3: 6000, areaMm2: 3640, min: [0, 0, 0], max: [50, 4, 30], centroid: [25, 2, 15], triangles: 12 },
+    bracket: {
+      volumeMm3: 6000,
+      areaMm2: 3640,
+      min: [0, 0, 0],
+      max: [50, 4, 30],
+      centroid: [25, 2, 15],
+      triangles: 12,
+      sheet: flat,
+    },
+    cube: { volumeMm3: 8000, areaMm2: 2400, min: [0, 0, 0], max: [20, 20, 20], centroid: [10, 10, 10], triangles: 12 },
   };
 
-  it('no longer blocks: it is listed as aluminum sheet instead', () => {
+  it('no longer blocks when flat: it is listed as aluminum sheet instead', () => {
     const bom = buildBom({ parts: [tagged], project: DEFAULT_PROJECT, purchases: {}, measures });
 
     expect(bom.madeElsewhere).toEqual([]);
     expect(bomFindings(bom).filter((f) => f.level === 'blocker')).toEqual([]);
     expect(bom.lines.map((l) => [l.category, l.key])).toEqual([['Sheet', 'sheet:aluminum|4']]);
+  });
+
+  it('blocks a cube set to sheet, with no Sheet line and no cut file', () => {
+    const bom = buildBom({ parts: [cube], project: DEFAULT_PROJECT, purchases: {}, measures });
+
+    expect(bom.lines).toEqual([]);
+    expect(bom.printed).toEqual([]);
+    expect(bom.notFlat).toEqual([{ id: 'cube', name: 'Motor Block' }]);
+    expect(bomFindings(bom)).toMatchObject([{ rule: 'not-flat', level: 'blocker', ids: ['cube'] }]);
+    expect(cutFiles([cube], measures)).toEqual({ files: [], skipped: ['cube'] });
   });
 });
 

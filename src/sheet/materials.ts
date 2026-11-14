@@ -36,16 +36,27 @@ export const SHEET_MATERIAL_IDS = Object.keys(SHEET_MATERIALS) as SheetMaterial[
 
 export const MAX_STOCK_MM = Math.max(...SHEET_MATERIAL_IDS.flatMap((m) => SHEET_MATERIALS[m].stockMm));
 
-const LEGACY_TAGS: Record<string, SheetMaterial> = {
-  'CNC Aluminum': 'aluminum',
-  'Laser-Cut Acrylic/Carbon': 'carbon',
-};
+const ACRYLIC_WORDS = /acrylic|clear|perspex|plexi/i;
+
+interface LegacyTagged {
+  mechanicalTag?: string;
+  name?: string;
+  note?: string;
+}
+
+function legacySheet({ mechanicalTag, name = '', note = '' }: LegacyTagged): SheetMaterial | undefined {
+  if (mechanicalTag === 'CNC Aluminum') return 'aluminum';
+
+  if (mechanicalTag !== 'Laser-Cut Acrylic/Carbon') return undefined;
+
+  return ACRYLIC_WORDS.test(`${name} ${note}`) ? 'acrylic' : 'carbon';
+}
 
 export const isSheetMaterial = (value: unknown): value is SheetMaterial =>
   typeof value === 'string' && value in SHEET_MATERIALS;
 
-export const sheetChoice = (p: { sheet?: PartSheet; mechanicalTag?: string }): SheetMaterial | undefined =>
-  p.sheet?.material ?? (p.mechanicalTag ? LEGACY_TAGS[p.mechanicalTag] : undefined);
+export const sheetChoice = (p: LegacyTagged & { sheet?: PartSheet }): SheetMaterial | undefined =>
+  p.sheet?.material ?? legacySheet(p);
 
 export function snapThickness(material: SheetMaterial, mm: number): number {
   return SHEET_MATERIALS[material].stockMm.reduce((best, s) => (Math.abs(s - mm) < Math.abs(best - mm) ? s : best));

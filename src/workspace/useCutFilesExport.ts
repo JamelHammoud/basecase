@@ -1,4 +1,5 @@
 import { plural } from '../../electron/plural.mjs';
+import { RULES } from '../readiness/wording';
 import { cutFiles, cutFilesZip, sheetParts } from '../sheet/cutFiles';
 import { downloadBytes } from '../utils/downloadBytes';
 import { errorMessage } from '../utils/errorMessage';
@@ -25,7 +26,7 @@ export function useCutFilesExport({
       const left = skipped.length ? ` without ${plural(skipped.length, 'part')}` : '';
 
       if (!files.length) {
-        showToast('Only flat parts can be cut from sheet', { tone: 'error' });
+        showToast(RULES['not-flat'].text, { tone: 'error' });
 
         return;
       }

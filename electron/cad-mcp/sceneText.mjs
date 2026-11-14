@@ -15,7 +15,13 @@ const links = (p) => [
   p.frame && `frame=${p.frame}`,
 ];
 
-const sheetText = (sheet) => sheet && `sheet=${sheet.material}${sheet.mm ? `:${sheet.mm}mm` : ''}`;
+function sheetSize(sheet) {
+  if (sheet.flat === false) return ':not-flat';
+
+  return sheet.mm ? `:${sheet.mm}mm` : '';
+}
+
+const sheetText = (sheet) => sheet && `sheet=${sheet.material}${sheetSize(sheet)}`;
 
 export function partLine(p, withNotes = true) {
   return [

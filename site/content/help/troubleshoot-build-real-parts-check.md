@@ -13,6 +13,8 @@ keywords:
   - unconfirmed
   - added by agent
   - missing price
+  - not flat
+  - sheet
 related:
   - parts-the-agent-sources
   - troubleshoot-build-check-blocks-ready-to-build
@@ -39,10 +41,20 @@ It worked when **Real parts** shows a green mark and the **Replace** row is gone
 
 ## “Nothing says where to get this part.”
 
-The part's **Material** is **Off-the-shelf**, and nothing says where to buy it. Parts cut from sheet don't get this problem.
+The part's **Material** is **Off-the-shelf**, and nothing says where to buy it.
 
 1. Click **Fix** on the problem to have the agent find a maker for it.
 2. Or set the part's **Material** in the Inspector to **Printed PLA / PETG**, if you'll print it.
+
+## “These parts can’t be cut from sheet.”
+
+The part's **Material** is a choice under **Cut from Sheet**, but the part isn't flat. It might be a thick block, or have a pocket or a chamfer. Older scenes tag machined parts this way too.
+
+1. Click the part's name under the problem to select it.
+2. Make it a plate with two parallel faces and only through holes between them.
+3. Or set its **Material** in the Inspector to **Printed PLA / PETG**.
+
+It worked when the material menu shows the stock thickness, like **6061 aluminum, 3 mm**. Steps are in [Cut a part from sheet](/help/cut-a-part-from-sheet).
 
 ## “Its link and numbers aren’t checked.”
 

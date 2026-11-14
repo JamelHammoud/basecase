@@ -219,6 +219,12 @@ function textNotes(bom: Bom, names: Record<string, string>): string[] {
       `Need a source (no listing): ${bom.madeElsewhere.map((m) => `${m.id} (${m.process})`).join(', ')}. Prefer catalog parts or printed parts.`,
     );
 
+  if (bom.notFlat.length)
+    out.push(
+      '',
+      `Set to sheet but not flat, so no cut file or Sheet line: ${bom.notFlat.map((m) => m.id).join(', ')}. Make each a flat plate with through holes only, or set its material to printed.`,
+    );
+
   if (bom.unmeasured.length)
     out.push('', `Not measured yet: ${bom.unmeasured.map((id) => names[id] ?? id).join(', ')}`);
 

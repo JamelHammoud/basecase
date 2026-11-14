@@ -73,7 +73,7 @@ Basecase releases the keys when its window loses focus, so the robot stops when 
 
 On Windows, the same switch is in **Settings** ▸ **Privacy & security** ▸ **Camera**. In the web studio, allow the camera in your browser's site settings.
 
-You'll also see this message when pose estimation can't start, even if the camera is allowed. In that case the camera's tile shows for a moment, then closes. Quit and reopen Basecase, then click **Drive with Camera** again.
+You'll also see this message when pose estimation can't start, even if the camera is allowed. Quit and reopen Basecase, then click **Drive with Camera** again.
 
 ## “Couldn’t open the microphone. Allow Basecase to use it in Privacy & Security.”
 

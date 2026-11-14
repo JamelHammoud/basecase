@@ -179,7 +179,7 @@ describe('what changed in a turn', () => {
 
     const followUp = followUpRequest(newBlockers(before, after), []);
 
-    expect(followUp.text).toBe('Your last change added 1 problem. Fix it.');
+    expect(followUp.text).toBe('The last change added 1 problem. Fix it.');
     expect(withQuotes(followUp.text, followUp.quotes)).toContain('dispute_finding');
     expect(withQuotes(followUp.text, followUp.quotes)).toContain('Check: new');
   });

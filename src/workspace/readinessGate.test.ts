@@ -45,7 +45,7 @@ describe('the follow-up after a turn', () => {
   it('asks the agent to fix blockers its turn added', async () => {
     const request = await gateOver([verdict('a', ['old']), verdict('b', ['old', 'new'])]).followUp();
 
-    expect(request?.text).toBe('Your last change added 1 problem. Fix it.');
+    expect(request?.text).toBe('The last change added 1 problem. Fix it.');
     expect(request?.quotes.map((q) => q.id)).toEqual(['new']);
   });
 

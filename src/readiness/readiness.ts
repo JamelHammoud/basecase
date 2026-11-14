@@ -290,7 +290,7 @@ export function fixRequest(f: Finding, parts: ScenePart[]): FindingRequest {
 
 export function followUpRequest(added: Finding[], parts: ScenePart[]): FindingRequest {
   return {
-    text: `Your last change added ${plural(added.length, 'problem')}. Fix ${added.length > 1 ? 'them' : 'it'}.`,
+    text: `The last change added ${plural(added.length, 'problem')}. Fix ${added.length > 1 ? 'them' : 'it'}.`,
     quotes: added.slice(0, 10).map((f) => quoteOf(f, parts, FIX_NOTE)),
   };
 }

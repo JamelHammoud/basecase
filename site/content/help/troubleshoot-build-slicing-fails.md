@@ -29,6 +29,7 @@ covers:
   - src/components/print/PrinterFleet.tsx
   - src/print/fleet.ts
   - src/components/settings/PrintersPane.tsx
+  - src/print/labels/partLabels.ts
 ---
 
 Basecase slices with Bambu Studio or OrcaSlicer on your computer, so most slicing errors mean a missing slicer, profile or printer.
@@ -78,3 +79,13 @@ The slicer finished without a result Basecase could read. The same goes for a me
 
 1. Press [[⌘K]] and choose **Slice Plates**.
 2. If it fails again, read the slicer's own message under the plate. Basecase shows it as the slicer wrote it.
+
+## “Couldn’t cut the guide letters. Turn off Label parts to print without them.”
+
+Basecase couldn't load the tool that cuts each part's build guide letter, so no plate was written.
+
+1. Press [[⌘P]] to open Print mode.
+2. Under **Printer**, turn off **Label parts**.
+3. Slice again with **Slice Plates** in [[⌘K]].
+
+The parts then print without letters. [Label printed parts with their guide letters](/help/label-printed-parts) explains them.

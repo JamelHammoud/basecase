@@ -51,10 +51,12 @@ function combine(wasm: ManifoldToplevel, op: BooleanOp, solids: Manifold[]): Man
   return result;
 }
 
-export async function manifoldCsg(op: BooleanOp, operands: WeldedMesh[]): Promise<WeldedMesh | null> {
+export type ManifoldRun = { mesh: WeldedMesh } | { failed: 'kernel' } | { failed: 'operand'; index: number };
+
+export async function manifoldRun(op: BooleanOp, operands: WeldedMesh[]): Promise<ManifoldRun> {
   const wasm = await loadManifold();
 
-  if (!wasm) return null;
+  if (!wasm) return { failed: 'kernel' };
 
   const solids = operands.map((m) => solidOf(wasm, m));
   const made = solids.filter((s): s is Manifold => !!s);
@@ -62,7 +64,7 @@ export async function manifoldCsg(op: BooleanOp, operands: WeldedMesh[]): Promis
   if (made.length !== solids.length) {
     made.forEach((s) => s.delete());
 
-    return null;
+    return { failed: 'operand', index: solids.indexOf(null) };
   }
 
   const result = combine(wasm, op, made);
@@ -72,5 +74,11 @@ export async function manifoldCsg(op: BooleanOp, operands: WeldedMesh[]): Promis
   result.delete();
   made.forEach((s) => s.delete());
 
-  return out;
+  return { mesh: out };
+}
+
+export async function manifoldCsg(op: BooleanOp, operands: WeldedMesh[]): Promise<WeldedMesh | null> {
+  const run = await manifoldRun(op, operands);
+
+  return 'mesh' in run ? run.mesh : null;
 }

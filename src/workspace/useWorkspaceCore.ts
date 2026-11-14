@@ -22,7 +22,7 @@ import { useCaseRun } from './useCaseRun';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
-import { useRobotPolicy } from '../robot/robotPolicy';
+import { useRobotSync } from './useRobotSync';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -110,12 +110,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
 
-  useRobotPolicy({
-    active,
-    policies: project.policies,
-    isStale: simTraining.training.isStale,
-    skillRows: simTraining.skills.rows,
-  });
+  useRobotSync({ active, project, training: simTraining });
 
   const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });
   const selection = useSelectionActions({
@@ -134,7 +129,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const undo = () => travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
-  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo });
+  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
 
   const readiness = useReadiness({ parts, project, printer, partsRef: docs.partsRef, projectRef, viewportRef });
   const caseCompare = useCaseCompare({

@@ -27,6 +27,11 @@ export type CalibrationVerdict = 'measured' | 'consistent' | 'cant-tell';
 
 export type RungName = 'preset' | 'response' | 'friction-force';
 
+export interface JointMount {
+  zeroCounts: number;
+  direction: 1 | -1;
+}
+
 export interface CalibrationEvidence {
   logs: number;
   presetErrorRad: number;
@@ -46,6 +51,7 @@ export interface CalibrationRecord {
   conditions: { volts: number; temperatureC: number };
   evidence: CalibrationEvidence;
   logId?: string;
+  mount?: JointMount;
 }
 
 export type ServoCalibration = CalibrationRecord & ({ servo: ServoPart } | { family: FamilyName });

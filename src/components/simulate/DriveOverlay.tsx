@@ -1,5 +1,5 @@
 import React from 'react';
-import { Kbd } from '../../design-system';
+import { Button, Kbd } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import { useDriveKeys } from '../../workspace/useDriveKeys';
 
@@ -35,10 +35,11 @@ export const DriveOverlay: React.FC<{ sim: Simulation }> = ({ sim }) => {
             </span>
           </Banner>
         )}
-        <Banner>
-          <Kbd>Esc</Kbd>
-          Stop Driving
-        </Banner>
+        <div className="glass rounded-lg pointer-events-auto">
+          <Button variant="secondary" size="sm" icon={<Kbd>Esc</Kbd>} onClick={drive.stop}>
+            Stop Driving
+          </Button>
+        </div>
       </div>
     </div>
   );

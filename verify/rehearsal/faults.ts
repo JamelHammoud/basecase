@@ -15,6 +15,8 @@ export const FAULT_KINDS = Object.freeze([
 
 export type FaultKind = (typeof FAULT_KINDS)[number];
 
+export const MISLEADING_LABEL = 'Delete Everything';
+
 export interface FaultSpec {
   kind: FaultKind;
   name: string;
@@ -26,6 +28,13 @@ export interface Rect {
   width: number;
   height: number;
 }
+
+export interface Held extends Rect {
+  from: number;
+  to: number;
+}
+
+export const HELD = Object.freeze({ tickMs: 250, max: 400 });
 
 export const TARGETS =
   'button:not(nav[aria-label="Sidebar views"] *), [role=tab], [role=menuitem], [role=switch], [role=checkbox]';
@@ -46,17 +55,59 @@ export function namedControls(page: Page): Promise<string[]> {
 
 export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
   return page.evaluate(
-    ({ list, selector }) => {
+    ({ list, selector, misleading, held: limits }) => {
       const label = (el: Element) => (el.getAttribute('aria-label') ?? el.textContent ?? '').trim();
       const done = new WeakSet<Element>();
-      const rects: Record<string, unknown> = {};
+      const places: Record<string, Held[]> = {};
+      const sameRect = (a: Rect, b: Rect) =>
+        Math.abs(a.x - b.x) < 4 && Math.abs(a.y - b.y) < 4 && Math.abs(a.width - b.width) < 4;
+      const open = new Set<string>();
+      const remember = (name: string, rect: DOMRect | undefined) => {
+        const timeline = (places[name] ??= []);
+        const last = timeline.at(-1);
+        const now = Date.now();
+
+        if (!rect || rect.width <= 0) return void open.delete(name);
+
+        const stays = !!last && open.has(name) && sameRect(last, rect);
+
+        if (last && stays) last.to = now;
+
+        if (stays) return;
+
+        open.delete(name);
+
+        if (timeline.length >= limits.max) return;
+
+        timeline.push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height, from: now, to: now });
+        open.add(name);
+      };
       const swallow = (el: HTMLElement) =>
         el.addEventListener('click', (e) => (e.stopImmediatePropagation(), e.preventDefault()), true);
+      const texts = (el: HTMLElement) => {
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        const found: Text[] = [];
+
+        while (walker.nextNode()) found.push(walker.currentNode as Text);
+
+        return found.filter((t) => t.data.trim());
+      };
+      const retext = (el: HTMLElement, text: string) =>
+        texts(el).forEach((t, i) => {
+          const want = i === 0 ? text : '';
+
+          if (t.data !== want) t.data = want;
+        });
+      const unlabel = (el: HTMLElement) => {
+        retext(el, '');
+        el.setAttribute('aria-label', '');
+        el.querySelectorAll<HTMLElement>('svg, img').forEach((icon) => (icon.style.visibility = 'hidden'));
+      };
       const apply: Record<string, (el: HTMLElement) => void> = {
-        'label-removed': (el) => ((el.textContent = ''), el.setAttribute('aria-label', '')),
+        'label-removed': unlabel,
         tiny: (el) => Object.assign(el.style, { height: '14px', fontSize: '9px', minHeight: '0' }),
         'dead-click': swallow,
-        'misleading-label': (el) => (el.textContent = 'Delete Everything'),
+        'misleading-label': (el) => retext(el, misleading),
         'low-contrast': (el) => Object.assign(el.style, { color: '#262626', background: '#222222' }),
         'slow-response': (el) => {
           el.addEventListener(
@@ -103,6 +154,7 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
         flicker: (el) =>
           setInterval(() => (el.style.visibility = el.style.visibility === 'hidden' ? '' : 'hidden'), 700),
       };
+      const RELABELLED = new Set(['label-removed', 'misleading-label']);
       const held = new Map<string, HTMLElement>();
       const locate = (name: string) => {
         const known = held.get(name);
@@ -115,9 +167,11 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
         for (const spec of list) {
           const el = locate(spec.name);
 
+          remember(spec.name, el?.getBoundingClientRect());
+
           if (!el) continue;
 
-          rects[spec.name] = el.getBoundingClientRect().toJSON();
+          if (done.has(el) && RELABELLED.has(spec.kind)) apply[spec.kind](el);
 
           if (!done.has(el)) {
             done.add(el);
@@ -127,13 +181,13 @@ export function plantFaults(page: Page, specs: FaultSpec[]): Promise<void> {
         }
       };
 
-      (window as unknown as { __gateFaultRects: unknown }).__gateFaultRects = rects;
+      (window as unknown as { __gateFaultPlaces: unknown }).__gateFaultPlaces = places;
       tick();
-      setInterval(tick, 250);
+      setInterval(tick, limits.tickMs);
     },
-    { list: specs, selector: TARGETS },
+    { list: specs, selector: TARGETS, misleading: MISLEADING_LABEL, held: HELD },
   );
 }
 
-export const faultRects = (page: Page): Promise<Record<string, Rect>> =>
-  page.evaluate(() => (window as unknown as { __gateFaultRects?: Record<string, Rect> }).__gateFaultRects ?? {});
+export const faultPlaces = (page: Page): Promise<Record<string, Held[]>> =>
+  page.evaluate(() => (window as unknown as { __gateFaultPlaces?: Record<string, Held[]> }).__gateFaultPlaces ?? {});

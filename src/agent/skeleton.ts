@@ -3,6 +3,7 @@ import type { RobotSkeleton, SkeletonJoint, SkeletonLimb, ZUpVec } from '../type
 import { r1, r3 } from './agentFrame';
 import { swapWords } from '../mirror/mirrorNames';
 import { plural } from '../../electron/plural.mjs';
+import { weight } from '../utils/weight';
 
 export interface SkeletonJointInput {
   id: string;
@@ -203,7 +204,7 @@ export function skeletonText(build: SkeletonBuild): string {
   const pairs = skeleton.pairs.map((p) => `${p[0]} / ${p[1]}`);
 
   return [
-    `Skeleton: ${plural(skeleton.joints.length, 'joint')}${skeleton.massG ? `, ${r1(skeleton.massG / 1000)} kg estimated` : ''}.`,
+    `Skeleton: ${plural(skeleton.joints.length, 'joint')}${skeleton.massG ? `, ${weight(skeleton.massG)} estimated` : ''}.`,
     ...skeleton.joints.map((j) => jointLine(skeleton, j)),
     pairs.length ? `Symmetric pairs: ${pairs.join(', ')}.` : '',
     problems.length ? `Problems:\n- ${problems.join('\n- ')}` : '',

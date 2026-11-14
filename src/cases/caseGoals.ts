@@ -6,9 +6,8 @@ import type { WorldKind } from './caseWorlds';
 import type { RoutePoint } from './groundRoute';
 import { DOT_COUNT } from './dotSpots';
 import type { GoalParam, GoalValues, ParamKey } from './goalParams';
-import { pickDefaults, pickGoalWith } from './pickGoal';
+import { pickGoalWith } from './pickGoal';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
-import { terrainDefaults } from './terrain';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
 
 export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff';
@@ -62,13 +61,20 @@ export interface GoalPlan {
   target?: { at: V3; radius: number };
 }
 
+export interface GoalSpot {
+  at: V3;
+  phrase: string;
+}
+
+export type GoalSpots = Array<GoalSpot | null>;
+
 export interface CaseGoal {
   kind: GoalKind;
   name: string;
   needs: Capability[];
   pair?: boolean;
   params: ParamKey[];
-  plan: (robot: BuilderRobot, values: GoalValues, world: WorldKind) => GoalPlan;
+  plan: (robot: BuilderRobot, values: GoalValues, world: WorldKind, spots?: GoalSpots) => GoalPlan;
   fields?: (values: GoalValues) => ParamKey[];
   title?: (values: GoalValues) => string;
   problem?: (robot: BuilderRobot, values: GoalValues) => string | null;
@@ -86,9 +92,9 @@ const PATH_SWAY = 0.4;
 const GROUND_HOLD_SECONDS = 0.3;
 const SPOT_HOLD_SECONDS = 0.2;
 const DOT_START_SECONDS = 0.2;
-const DOT_MOVE_SECONDS = 1.8;
-const DOT_SPARE_SECONDS = 0.5;
-const TOUCH_SECONDS = 4;
+
+export const DOT_MOVE_SECONDS = 1.8;
+
 const STAND_SHARE = 0.5;
 const MIN_WALK_MM = 100;
 
@@ -107,8 +113,6 @@ const WALK_PAST_SHARE = 1.25;
 export const BLOCK_DEPTH_MM = 120;
 
 const PUSH_SPEED = 0.3;
-
-const SLOWER: ReadonlySet<WorldKind> = new Set(['block', 'rough', 'steps', 'slope']);
 
 export const groundOf = (facts: RobotFacts): Capability | null => {
   if (facts.capabilities.includes('legs')) return 'legs';
@@ -167,19 +171,20 @@ const reachGoal: CaseGoal = {
   name: 'Reach a Spot',
   needs: ['legs', 'wheels'],
   params: ['distanceMm', 'radiusMm', 'seconds'],
-  plan: (robot, v) => {
-    const z = robot.pivot[2] + v.distanceMm;
+  plan: (robot, v, _world, [named] = []) => {
+    const [x, z] = named ? [named.at[0], named.at[2]] : [robot.pivot[0], robot.pivot[2] + v.distanceMm];
+    const where = named ? named.phrase : `${mm(v.distanceMm)} ahead`;
 
     return {
-      brief: `Reach the spot ${mm(v.distanceMm)} ahead and stop on it.`,
+      brief: `Reach the spot ${where} and stop on it.`,
       slot: groundSlot(robot),
-      objects: [spot('spot', 'Spot', { x: robot.pivot[0], z, radius: v.radiusMm }, robot)],
+      objects: [spot('spot', 'Spot', { x, z, radius: v.radiusMm }, robot)],
       probes: [{ signal: 'spot', from: 'base', to: { object: 'spot' } }],
       success: holdNear('spot', v.radiusMm, GROUND_HOLD_SECONDS),
       timeline: [],
       controls: ROLL,
       route: routeAlong(robot, z - v.radiusMm),
-      waypoints: [{ at: [robot.pivot[0], robot.pivot[1], z] }],
+      waypoints: [{ at: [x, robot.pivot[1], z] }],
     };
   },
   problem: (robot, v) =>
@@ -314,9 +319,13 @@ const pathGoal: CaseGoal = {
   name: 'Follow a Path',
   needs: ['legs', 'wheels'],
   params: ['stops', 'spacingMm', 'radiusMm', 'seconds'],
-  plan: (robot, v) => {
+  plan: (robot, v, _world, spots = []) => {
     const count = Math.round(v.stops);
-    const stops = Array.from({ length: count }, (_, i) => pathStop(robot, v, i));
+    const stops = Array.from({ length: count }, (_, i) => {
+      const named = spots[i];
+
+      return named ? { x: named.at[0], z: named.at[2], radius: v.radiusMm } : pathStop(robot, v, i);
+    });
 
     return {
       brief: `Pass the ${count} spots in order.`,
@@ -383,74 +392,3 @@ export function fallGuard(robot: BuilderRobot): { probe: CaseProbe; failure: Con
 const pickGoal = pickGoalWith([...REACH, { id: 'grip', label: 'Grip', input: 'grip' }]);
 
 export const CASE_GOALS: CaseGoal[] = [reachGoal, pushGoal, pathGoal, walkGoal, touchGoal, pickGoal];
-
-export const touchRadius = (reachMm: number) => Math.max(12, reachMm * 0.08);
-
-function touchSpot({ facts, armSpots }: BuilderRobot): Partial<GoalValues> {
-  const [x, y, z] = facts.anchor;
-  const armSpot = armSpots
-    .filter((s) => s[2] >= z)
-    .reduce<V3 | null>((low, s) => (!low || s[1] < low[1] ? s : low), null);
-
-  if (!armSpot) return { distanceMm: Math.round(facts.reachMm * 0.6), heightMm: Math.round(y) };
-
-  return {
-    distanceMm: Math.round(armSpot[2] - z),
-    heightMm: Math.round(armSpot[1]),
-    sideMm: Math.round(armSpot[0] - x),
-  };
-}
-
-const BOX_SHARE = 0.5;
-const BOX_OVER_BODY = 1.3;
-const MIN_BOX_MM = 60;
-const MAX_BOX_MM = 300;
-
-function boxFor(robot: BuilderRobot): number {
-  const legs = robot.facts.capabilities.includes('legs');
-  const size = Math.max(robot.footprint.width * BOX_SHARE, legs ? robot.pivot[1] * BOX_OVER_BODY : 0);
-
-  return Math.min(MAX_BOX_MM, Math.max(MIN_BOX_MM, Math.round(size / 10) * 10));
-}
-
-const AROUND_SECONDS = { legs: 8, wheels: 5 };
-
-const touchSeconds = (dots: number) =>
-  Math.max(TOUCH_SECONDS, Math.ceil(DOT_SPARE_SECONDS + Math.round(dots) * DOT_MOVE_SECONDS));
-
-export function goalDefaults(
-  kind: GoalKind,
-  robot: BuilderRobot,
-  world: WorldKind = 'floor',
-  chosen: Partial<GoalValues> = {},
-): GoalValues {
-  const legs = robot.facts.capabilities.includes('legs');
-  const reach = robot.facts.reachMm;
-  const base: GoalValues = {
-    dots: 1,
-    distanceMm: 900,
-    heightMm: 0,
-    sideMm: 0,
-    radiusMm: 160,
-    pushMm: 500,
-    boxMm: 150,
-    stops: 3,
-    spacingMm: 600,
-    seconds: legs ? 14 : 8,
-    ...terrainDefaults(robot, world),
-  };
-  const byKind: Record<GoalKind, Partial<GoalValues>> = {
-    reach: {},
-    push: { radiusMm: 150, boxMm: boxFor(robot), seconds: legs ? 18 : 10 },
-    path: { seconds: legs ? 22 : 13 },
-    walk: { distanceMm: 500 },
-    touch: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: touchSeconds(chosen.dots ?? 1) },
-    pick: pickDefaults(robot),
-    handoff: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: 7 },
-  };
-
-  const values = { ...base, ...byKind[kind] };
-  const around = SLOWER.has(world) ? AROUND_SECONDS[legs ? 'legs' : 'wheels'] : 0;
-
-  return { ...values, seconds: values.seconds + around };
-}

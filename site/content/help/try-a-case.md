@@ -36,9 +36,9 @@ Drive the robot through an open Case while Basecase records it, then see whether
 
 1. Click **Play** in the view rail, then **Cases**.
 2. Click a Case under **New Case**. It opens at the top of the **Simulate** tab, with its brief.
-3. Under **Try**, click **Try It**. The clock counts down the Case's time, and the keys for your kind of robot show under it.
+3. Under **Try**, click **Try It**. The clock shows the time used against the Case's limit, and the keys for your kind of robot show under it.
 4. Click the canvas so it gets the keys.
-5. Drive the robot to the goal with the keys under **Try**, or with a gamepad. [[R]] starts over.
+5. Drive the robot to the goal with the keys under **Try**. [[R]] starts over.
 
 ![A try running, with the clock, Stop Try and the keys](/help/try-a-case/trying.png)
 
@@ -48,7 +48,7 @@ Drive the robot through an open Case while Basecase records it, then see whether
 
 ![Results with the latest run and one try](/help/try-a-case/results.png)
 
-**Try ⟨Case⟩** is also in [[⌘K]]. Pressing [[Esc]] stops driving, which ends the try too. With no Case under **New Case**, [make a Case](/help/make-a-case) first.
+A gamepad drives the robot too. **Try ⟨Case⟩** is also in [[⌘K]]. Pressing [[Esc]] stops driving, which ends the try too. With no Case under **New Case**, [make a Case](/help/make-a-case) first.
 
 To drive a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
@@ -75,7 +75,7 @@ When the robot lacks what the Case needs, point at the row's note and click **Ne
 
 ## Results
 
-After a run, **Results** first shows how it went: whether the robot stayed up, and the joints that worked hardest. Tries are listed under it worst first, so the misses to look at are on top. A replay shows what the Case's code moved, lit or hid during the try. To delete a try, right-click it and choose **Delete**, then confirm.
+After a run, **Results** shows how it went: whether the robot stayed up, and the joints that worked hardest. Tries are listed under it worst first, so the misses to look at are on top. A replay shows what the Case's code moved, lit or hid during the try. To delete a try, right-click it and choose **Delete**, then confirm.
 
 A try from your real robot has a **Real** mark. Its **Replay** draws its path over the best sim try's path.
 

@@ -7,6 +7,7 @@ export const SIGNAL_INTERVAL_MS = 50;
 export const PING_MS = 500;
 export const SILENT_MS = 2000;
 export const HELLO_MS = 10_000;
+export const FRAME_END_MS = 1000;
 export const MESSAGES_PER_SECOND = 240;
 export const ERROR_MAX_CHARS = 500;
 export const LOG_MAX_CHARS = 300;

@@ -32,25 +32,25 @@ The agent is Claude Code, Codex or Gemini CLI, running on your computer with you
 
 ## What it does
 
-The agent builds in the open scene, so you can watch it work. It reads your words, photos, sketches and files, and looks up the robot's published model when there is one. Before it shapes any part, it plans where the joints go. Then it blocks out the robot, models each part as code, and checks its work.
+The agent builds in the open scene, so you can watch it work. It reads your words, photos, sketches and files, and looks up the robot's published model if there is one. Before it shapes any part, it plans where the joints go. Then it blocks out the robot, models each part as code, and checks its work.
 
-Parts come from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) come first. For a part the catalog doesn't have, the agent can add one it found on the web. The bill of materials shows that part as Added by Agent.
+Parts come from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) come first. When the catalog doesn't have a part, the agent can add one it found on the web, and the bill of materials shows that part as Added by Agent.
 
-The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, or teach the robot a skill.
+The agent can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, or teach the robot a skill.
 
-Ask it to change how a ready Motor Kit skill moves, and it keeps the change only if Arena still passes it. For a Routine, it proves each switch between skills and tells you which ones failed. With a Case and two open scenes, it tells you which robot passes more often. To answer which servo to buy, it runs the Case on each catalog version and reports passes, cost and mass. It searches tries across every scene the same way the Library's search does, for example to find last week's failed grasps.
+When you ask it to change how a ready Motor Kit skill moves, it keeps the change only if Arena still passes it. For a Routine, it proves each switch between skills and tells you which ones failed. With a Case and two open scenes, it tells you which robot passes more often. To help you decide which servo to buy, it runs the Case on each catalog version and reports passes, cost and mass. Like the Library's search, it can search tries across every scene, for example to find last week's failed grasps.
 
-Tell the agent where an arm needs to reach and what it carries, and it sizes the arm's links and servos first. If you give it the path a leg or finger should trace, it fits a four-bar linkage to that path. To use fewer parts, it merges printed parts that bolt together on the same link into a single print.
+Tell the agent where an arm needs to reach and what it carries, and it sizes the arm's links and servos first. Given the path a leg or finger should trace, it fits a four-bar linkage to that path. To use fewer parts, it merges printed parts that bolt together on the same link into a single print.
 
-Describe what you want a robot to do, like play a game on a gamepad, and the agent builds a Case for that. The Case opens already running, as described in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
+Describe what you want a robot to do, like play a game on a gamepad, and the agent builds a Case for it. The Case opens already running, as described in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
 
-When the Case needs a control its panels don't have, like a joystick or a piano, the agent draws one as a code panel. Any object that code moves, such as a target to whack, gets marked as movable. After each write, the agent reads the panel's errors and a capture of the window, then fixes anything that broke.
+When a Case needs a control its panels don't have, like a joystick or a piano, the agent draws one as a code panel. Any object the code moves, such as a target to whack, is marked as movable. After each write, the agent reads the panel's errors and a capture of the window, then fixes anything that broke.
 
-Name a movement, such as a wave, and the Case reacts to it as a gesture. For a movement that isn't built in, the agent asks you to teach it. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
+You can name a movement, such as a wave, and the Case reacts to it as a gesture. If the movement isn't built in, the agent asks you to teach it. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
 
 ## What it cares about
 
-In design choices, the agent puts these first, in this order:
+When it makes design choices, the agent puts these first, in this order:
 
 1. You can put the robot together and service it. You can pull a battery or board out of the torso without taking the robot apart.
 2. Each part costs no more than the job needs.
@@ -60,11 +60,11 @@ Matching the silhouette in a photo matters less than any of these.
 
 ## How it checks its work
 
-After each edit, the agent sees the same Checks as the **Build** tab. It never passes a check by narrowing a joint's range, hiding or deleting a part, or editing a Case. If a check seems wrong, it tells you instead.
+After each edit, the agent sees the same Checks as the **Build** tab. It never passes a check by narrowing a joint's range, hiding or deleting a part, or editing a Case. If it thinks a check is wrong, it tells you instead.
 
 When a new blocker appears, the agent follows up on its own, up to twice per message. To turn this off, go to **Settings** ▸ **Build**.
 
-In a scene with Cases, the agent runs each one and keeps going until they all pass. For the steps, see [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
+In a scene with Cases, the agent runs each Case and keeps going until they all pass. For the steps, see [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 
 ## What you keep control of
 

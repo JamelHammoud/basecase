@@ -19,7 +19,7 @@ covers:
   - src/cases/tripFrames.ts
 ---
 
-You can step through a Case try one frame at a time. The timeline shows each joint's target, where the joint went, and how hard its servo worked.
+You can step through a Case try one frame at a time. The timeline shows the target for each joint, where the joint went, and how hard its servo worked.
 
 1. Open a Case, then record a try with **Try It** in the Simulate tab.
 2. In Results, click the play button on the try's row.
@@ -30,8 +30,8 @@ You can step through a Case try one frame at a time. The timeline shows each joi
    - The top plot shows the joint's position in blue, over its target in gray.
    - The bottom plot shows the joint's effort in N·m (or N for a sliding joint). A dashed line marks the servo's limit.
 
-   Red lines mark the points where the Case's failure checks tripped. The timeline opens at the first red line.
-4. Use the keyboard to move the playhead. The robot on the canvas moves along with it.
+   Red lines mark where the Case's failure checks tripped. The timeline opens at the first red line.
+4. To move the playhead, use the keyboard. The robot on the canvas moves with it.
    - To move one frame (1/50 s), press [[→]] or [[←]].
    - To move one second, press and hold [[⇧]] while you press [[→]] or [[←]].
    - To go to the start or the end, press [[Home]] or [[End]].
@@ -42,10 +42,10 @@ You can step through a Case try one frame at a time. The timeline shows each joi
 
 6. To close the timeline, press [[Esc]].
 
-Basecase recalculates effort from the recording when the timeline opens. Its peaks match Peak torque in Results.
+When the timeline opens, Basecase recalculates effort from the recording. The effort peaks match Peak torque in Results.
 
 If you added or removed a joint after you recorded a try, you can't open that try.
 
 You can also open a try from another scene in the Library. See [Open a try from any scene](/help/open-a-try-from-any-scene).
 
-A try you open from a search result starts at the beginning of the result instead of at the first red line. See [Search tries](/help/search-tries).
+If you open a try from a search result, the timeline starts at the beginning of the result instead of at the first red line. See [Search tries](/help/search-tries).

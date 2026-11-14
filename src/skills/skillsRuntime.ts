@@ -3,6 +3,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import type { Skill } from './artifacts';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
+import { RunFailures } from './runFailures';
 import type { TrainedEntry } from './kitEnvironment';
 import type { KitWarm } from './motorKit';
 import { errorMessage } from '../utils/errorMessage';
@@ -12,7 +13,7 @@ import type { SkillRunner } from './skillsClient';
 import type { SkillPorts, SkillsJob } from './skillsJob';
 import { SkillCoach } from './skillsCoach';
 import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
-import { KIT_LABELS, refusalModel, type SkillJob, type SkillRefusal, type SkillTarget } from './skillRows';
+import { KIT_LABELS, type SkillJob, type SkillRefusal, type SkillTarget } from './skillRows';
 import {
   NO_SNAPSHOT_STORE,
   NO_SNAPSHOTS,
@@ -64,6 +65,7 @@ interface Run {
   target: SkillTarget;
   label: string;
   background: boolean;
+  model?: SimModel;
   work: (forge: ForgeRunner, signal: AbortSignal) => Promise<void>;
 }
 
@@ -72,6 +74,8 @@ export const designOf = (model: SimModel) => model.robots[0]?.key ?? 'scene';
 const refused = (reason: string): HandoffResult => ({ skill: null, proof: null, reason });
 
 const BUSY = 'Training is running. Check list_skills, or wait for it to finish.';
+
+const MOVE_REFUSED = 'No policy passed Arena within the training budget.';
 
 export class SkillsRuntime {
   jobs: SkillJob[] = [];
@@ -83,6 +87,7 @@ export class SkillsRuntime {
   private background: AbortController | null = null;
   private pending: { model: SimModel; tasks: BackgroundTask[] } | null = null;
   private trails = new Map<SkillTarget, SnapshotTrail>();
+  private failures = new RunFailures((target, refusal) => this.deps.onRefused?.(target, refusal));
 
   private deps: RuntimeDeps;
   readonly coach: SkillCoach;
@@ -117,6 +122,10 @@ export class SkillsRuntime {
     return !!this.user;
   }
 
+  get training(): string | null {
+    return this.user ? this.userLabel : null;
+  }
+
   draftOf(id: string) {
     return this.drafts.get(id) ?? null;
   }
@@ -136,6 +145,7 @@ export class SkillsRuntime {
       target: `kit:${entry}`,
       label: KIT_LABELS[entry],
       background: false,
+      model,
       work: (forge, signal) => this.kitWork(model, entry, { forge, signal }),
     });
 
@@ -151,6 +161,7 @@ export class SkillsRuntime {
       target: `kit:${entry}`,
       label: KIT_LABELS[entry],
       background: false,
+      model,
       work: (forge, signal) => this.kitWork(model, entry, { forge, signal, warm }),
     });
 
@@ -164,6 +175,7 @@ export class SkillsRuntime {
       target: `move:${animation.id}`,
       label: animation.name,
       background: false,
+      model,
       work: (forge, signal) => this.moveWork(model, animation, { forge, signal }),
     });
 
@@ -177,6 +189,7 @@ export class SkillsRuntime {
       target: task.target,
       label: task.label,
       background: false,
+      model,
       work: (forge, signal) => this.recheckWork(model, task, { forge, signal }),
     });
 
@@ -334,8 +347,11 @@ export class SkillsRuntime {
 
     if (outcome.kind === 'skill') return this.keep(`kit:${entry}`, skillRecord(outcome.skill, { kit: entry }));
 
-    if (outcome.evidence)
-      this.deps.onRefused?.(`kit:${entry}`, { line: refusedLine(outcome.evidence), model: refusalModel(model) });
+    const target: SkillTarget = `kit:${entry}`;
+
+    const line = outcome.evidence ? refusedLine(outcome.evidence) : this.failures.lineOr(target, outcome.reason);
+
+    this.failures.refuse(target, model, line);
   }
 
   private async moveWork(
@@ -348,12 +364,12 @@ export class SkillsRuntime {
       { ...this.ports(), ...ports },
     );
     const { outcome, environment } = reply.outcome;
+    const target: SkillTarget = `move:${animation.id}`;
 
     if (outcome.kind === 'skill')
-      await this.keep(
-        `move:${animation.id}`,
-        skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }),
-      );
+      return this.keep(target, skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }));
+
+    this.failures.refuse(target, model, this.failures.lineOr(target, MOVE_REFUSED));
   }
 
   private retrain(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
@@ -405,6 +421,8 @@ export class SkillsRuntime {
 
       const outcome = await forge(job);
 
+      this.failures.note(run.target, outcome, signal.aborted);
+
       this.setJob(run.target, { message: 'Checking in Arena', share: null });
 
       return outcome;
@@ -417,16 +435,19 @@ export class SkillsRuntime {
     this.background?.abort();
     this.user = controller;
     this.userLabel = run.label;
-    this.deps.onRefused?.(run.target, null);
+    this.failures.clear(run.target);
     this.trails.set(run.target, NO_SNAPSHOTS);
     this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting', snapshot: null });
 
     try {
       await run.work(this.forgeFor(run, controller.signal), controller.signal);
-    } catch {
+    } catch (error) {
+      if (run.model && !controller.signal.aborted) this.failures.refuse(run.target, run.model, errorMessage(error));
+
       controller.abort();
     } finally {
       this.user = null;
+      this.failures.forget(run.target);
       this.trails.delete(run.target);
       this.setJob(run.target, null);
       void this.drainBackground();
@@ -464,6 +485,7 @@ export class SkillsRuntime {
         controller.abort();
       }
 
+      this.failures.forget(run.target);
       this.trails.delete(run.target);
       this.setJob(run.target, null);
 

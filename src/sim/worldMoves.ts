@@ -94,8 +94,8 @@ export class WorldMoves {
   }
 
   state(): WorldChange[] {
-    return [...this.movers.keys()].flatMap((id) => {
-      const pose = this.placed.get(id);
+    return [...this.movers.values()].flatMap(({ id, kind }) => {
+      const pose = kind === 'mocap' ? this.placed.get(id) : undefined;
       const look = this.shown[id];
 
       return pose || look ? [{ id, ...(pose ? { pose } : {}), ...look }] : [];

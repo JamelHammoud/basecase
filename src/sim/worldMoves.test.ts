@@ -157,6 +157,7 @@ describe('movable world objects', () => {
     const { engine, moves } = open();
 
     moves.apply({ id: 'target', color: '#00ff00' });
+    moves.apply({ id: 'crate', pose: { position: [120, 20, 220] } });
 
     const recorder = new Recorder(engine, { kind: 'hold' }, moves);
 
@@ -168,6 +169,7 @@ describe('movable world objects', () => {
     const recording = recorder.finish();
 
     expect(recording.world?.[0]).toEqual({ at: 0, id: 'target', color: '#00ff00' });
+    expect(recording.world?.some((e) => e.id === 'crate')).toBe(false);
     expect(recording.world?.[1].id).toBe('gate');
     expect(recording.world?.[1].at).toBeCloseTo(0.5, 2);
     engine.dispose();

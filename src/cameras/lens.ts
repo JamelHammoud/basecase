@@ -1,3 +1,5 @@
+import { angle } from '../utils/angle';
+
 export type Lens = { model: 'pinhole'; hfovDeg: number } | { model: 'fisheye'; fovDeg: number };
 
 export type Dir = [number, number, number];
@@ -98,4 +100,4 @@ export function gridPoints(cols: number, rows: number): ImagePoint[] {
 }
 
 export const lensLabel = (lens: Lens) =>
-  lens.model === 'fisheye' ? `Fisheye ${Math.round(lens.fovDeg)}°` : `${Math.round(lens.hfovDeg)}°`;
+  lens.model === 'fisheye' ? `Fisheye ${angle(lens.fovDeg)}` : angle(lens.hfovDeg);

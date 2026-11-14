@@ -146,7 +146,7 @@ describe('runEngineering on a two-joint leg', () => {
     expect(r.joints.map((l) => l.status)).toEqual(['fail', 'warn']);
     expect(row('Servo alignment')).toMatchObject({
       status: 'fail',
-      detail: 'Servo output not on the joint axis: left_knee (0.0°, 5 mm off)',
+      detail: 'Servo output not on the joint axis: left_knee (0°, 5 mm off)',
     });
     expect(row('Joint support').status).toBe('warn');
     expect(row('Joint support').detail).toMatch(/: left_hip_pitch$/);

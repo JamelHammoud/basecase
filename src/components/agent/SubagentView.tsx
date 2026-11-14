@@ -9,8 +9,9 @@ import { usePartSelect } from './PartLinksProvider';
 import { SubagentFeed } from './SubagentFeed';
 import { OpenImages } from './types';
 import { feedMask, useFeedFollow } from './useFeedFollow';
+import { plural } from '../../../electron/plural.mjs';
 
-const selectLabel = (count: number) => (count === 1 ? 'Select Part' : `Select ${count} Parts`);
+const selectLabel = (count: number) => (count === 1 ? 'Select Part' : `Select ${plural(count, 'Part')}`);
 
 export const SubagentView: React.FC<{ call: AcpToolCallEvent; onClose: () => void; onOpenImages: OpenImages }> = ({
   call,

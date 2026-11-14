@@ -276,7 +276,7 @@ describe('Operate calibration', () => {
       );
 
       expect(Object.keys(moving.layer!.parts).sort()).toEqual(['elbow-servo', 'fore', 'upper']);
-      expect(moving.layer!.label).toMatch(/^[+-]\d+\.\d°$/);
+      expect(moving.layer!.label).toMatch(/^[+−]\d+\.\d°$/);
 
       for (const [id, degrees] of Object.entries(moving.measured!))
         expect(moving.layer!.values[id] ?? 0).toBeCloseTo(degrees ?? 0, 3);

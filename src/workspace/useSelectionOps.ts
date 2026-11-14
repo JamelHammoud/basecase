@@ -7,6 +7,7 @@ import { boundsOverlap } from '../utils/selection';
 import { copyName, newId, partLabel } from './helpers';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { plural } from '../../electron/plural.mjs';
 
 export type { BooleanOp } from '../types/robotics';
 
@@ -163,7 +164,7 @@ export function useSelectionOps({ docs, parts, selection, setSelectedIds, showTo
 
     commitParts((prev) => [...prev, ...created]);
     setSelectedIds(created.map((c) => c.id));
-    showToast(created.length === 1 ? `Added ${created[0].name}` : `Added ${created.length} cutouts`, {
+    showToast(created.length === 1 ? `Added ${created[0].name}` : `Added ${plural(created.length, 'cutout')}`, {
       action: undoAction,
     });
   };

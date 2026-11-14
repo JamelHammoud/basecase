@@ -6,7 +6,7 @@ import type { Sketch } from '../utils/sketch/types';
 import type { SketchParams } from '../workspace/partFactories';
 import type { TextFile } from '../workspace/types';
 import { SculptPanel } from './studio/SculptPanel';
-import { SketchPanel, type BoundSketch, type SketchLinkage, type SketchOutput } from './studio/SketchPanel';
+import { SketchPanel, type BoundSketch, type SketchLinkage } from './studio/SketchPanel';
 import { SvgImportPanel } from './studio/SvgImportPanel';
 import { useStudioDraft } from './studio/useStudioDraft';
 
@@ -29,7 +29,7 @@ interface SculptAndDrawStudioProps {
   sketchStart: Sketch;
   boundSketch: BoundSketch | null;
   linkage?: SketchLinkage;
-  onCreateSketch: (shape: SketchShape, output: SketchOutput) => void;
+  onCreateSketch: (shape: SketchShape, name: string) => void;
 }
 
 export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({

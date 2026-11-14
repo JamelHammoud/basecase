@@ -65,7 +65,7 @@ Draw an outline with typed lengths, or load an SVG file, and turn it into a soli
 
 ![A rectangle being drawn with 40 and 20 typed in its fields](/help/draw-a-part-from-a-sketch-or-svg/typed.png)
 
-6. Under **Output**, type a name. For an extrusion, set **T** to the thickness in millimeters.
+6. For an extrusion, set **T** under **Output** to the thickness in millimeters.
 7. Click **Add**. Basecase places the new part on the face at the size you typed and selects it.
 
 ![The 40 × 20 × 5 mm part on the box, with its size in the Inspector](/help/draw-a-part-from-a-sketch-or-svg/extruded.png)
@@ -78,7 +78,7 @@ More ways to draw:
 
 While you draw, a point snaps onto an existing point and a line snaps level or upright. A small glyph by the pointer shows which snap applies, and the sketch keeps it as a constraint. Points also snap to the grid until you turn off **Snap to grid**.
 
-Click **Save to Library**, the bookmark in the part's Inspector header, to keep a copy in the Library as well.
+The new part is called Sketch. Rename it and pick its color in the Inspector. Click **Save to Library**, the bookmark in the part's Inspector header, to keep a copy in the Library as well.
 
 ## Change a sketched part
 
@@ -95,8 +95,8 @@ You can hold two lines parallel, perpendicular or equal. Click the active tool t
 1. Click **Shapes** in the bottom toolbar, then choose **Import SVG**.
 2. Click **Choose or drop an SVG**, then pick the file.
 3. Check the preview, which counts the shapes and holes it found.
-4. Under **Output**, type a name, the width (**W**) and the thickness (**T**).
-5. Click **Add**.
+4. Under **Output**, type the width (**W**) and the thickness (**T**).
+5. Click **Add**. The part takes the file's name, and the Inspector renames it.
 
 Or drag the SVG onto **Choose or drop an SVG**, which turns blue while the file is over it.
 

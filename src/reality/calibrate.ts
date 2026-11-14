@@ -15,6 +15,7 @@ import type {
   ServoPart,
 } from './types';
 import { conditionsOf, ENCODER_RAD, EVIDENCE, explainedShare, preflight } from './verdict';
+import { percent } from '../../electron/percent.mjs';
 
 let mujoco: Promise<MainModule> | null = null;
 
@@ -125,7 +126,7 @@ function climb(ctx: FitContext, logs: ServoLog[], base: Partial<CalibrationEvide
 
   return {
     verdict: 'measured',
-    reason: `Check segments predicted ${(best.gain * 100).toFixed(0)}% better`,
+    reason: `Check segments predicted ${percent(best.gain)} better`,
     best: { ...best, ...final },
     evidence,
   };

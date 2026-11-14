@@ -12,6 +12,7 @@ import {
   SparklesIcon,
 } from '../../design-system';
 import type { SculptBrushKind, SculptSettings } from '../../types/robotics';
+import { percent } from '../../../electron/percent.mjs';
 
 export type ClayPreset = 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule';
 
@@ -64,7 +65,7 @@ export const SculptPanel: React.FC<{
         max={1}
         step={0.05}
         value={sculptSettings.strength}
-        format={(v) => `${Math.round(v * 100)}%`}
+        format={percent}
         onChange={(v) => onUpdateSculptSettings({ strength: v })}
       />
       <Switch

@@ -2,8 +2,9 @@ import React from 'react';
 import { Badge, IconButton, StopIcon } from '../../design-system';
 import type { Training } from '../../sim/useTraining';
 import type { PolicyRecord } from '../../types/robotics';
-import { fmtSteps, pct, trainingLine } from './format';
+import { fmtSteps, trainingLine } from './format';
 import { ProgressBar } from './ProgressBar';
+import { percent } from '../../../electron/percent.mjs';
 
 const share = (training: Training) => {
   const p = training.progress;
@@ -15,7 +16,7 @@ const Retraining: React.FC<{ training: Training }> = ({ training }) => {
   if (training.status === 'error') return <div className="text-[12px] text-white/50">{training.error}</div>;
 
   const done = share(training);
-  const line = training.message ? trainingLine(training.message, done) : done !== null && pct(done);
+  const line = training.message ? trainingLine(training.message, done) : done !== null && percent(Math.min(done, 1));
 
   return (
     <>

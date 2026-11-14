@@ -26,6 +26,7 @@ import {
 } from './feasibilityStance';
 import { seededRandom } from '../utils/seededRandom';
 import { HOLD_LIMIT, holdTorque } from '../utils/holdingTorque';
+import { percent } from '../../electron/percent.mjs';
 
 export type Basis = 'exact' | 'estimate' | 'sampled';
 
@@ -155,14 +156,14 @@ function holdingVerdict(kin: Kin, worst: ReturnType<typeof worstJoint>, what: st
   const common = { id: 'holding-torque' as const, joint: joint.id, ratio };
 
   const basis = kin.robot.floating ? 'estimate' : 'exact';
-  const share = `${Math.round(ratio * 100)}% of its servo’s ${nm(joint.effort)} N·m`;
+  const share = `${percent(ratio)} of its servo’s ${nm(joint.effort)} N·m`;
 
   if (ratio > HOLD_LIMIT)
     return {
       ...common,
       passed: false,
       basis,
-      message: `Too weak to ${what}: ${joint.id} needs ${nm(torque)} N·m, ${share}. A servo holds for long only up to ${HOLD_LIMIT * 100}%.`,
+      message: `Too weak to ${what}: ${joint.id} needs ${nm(torque)} N·m, ${share}. A servo holds for long only up to ${percent(HOLD_LIMIT)}.`,
     };
 
   return {

@@ -17,6 +17,7 @@ import {
 import { imageStance, resizedDimensions, type DimensionKey, type ImageStance } from './partMath';
 import type { InspectorProps, Phase } from './types';
 import { keyFor } from '../../app/shortcuts';
+import { percent } from '../../../electron/percent.mjs';
 
 export interface PartSectionProps {
   part: ScenePart;
@@ -74,7 +75,7 @@ export const ImageSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
       step={0.05}
       defaultValue={1}
       value={part.opacity ?? 1}
-      format={(v) => `${Math.round(v * 100)}%`}
+      format={percent}
       onChange={(v, l) => onUpdate({ opacity: v }, l)}
     />
     <SegmentedControl<ImageStance>

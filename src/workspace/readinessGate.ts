@@ -1,4 +1,4 @@
-import { followUpPrompt, newBlockers } from '../readiness/readiness';
+import { followUpRequest, newBlockers, type FindingRequest } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -14,7 +14,7 @@ export function readinessGate(core: WorkspaceCore) {
       before = readiness.checkNow();
       void before.then(() => readiness.startTurn());
     },
-    followUp: async (): Promise<string | null> => {
+    followUp: async (): Promise<FindingRequest | null> => {
       if (!studio.autoFixBlockers || rounds >= MAX_FOLLOW_UPS) return null;
 
       const [was, now] = [await before, await readiness.checkNow()];
@@ -29,7 +29,7 @@ export function readinessGate(core: WorkspaceCore) {
 
       rounds++;
 
-      return followUpPrompt(added);
+      return followUpRequest(added, core.docs.partsRef.current);
     },
   };
 }

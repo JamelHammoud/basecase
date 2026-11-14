@@ -38,32 +38,37 @@ You can drag a part with the gizmo, or type its exact position in millimeters an
 ## Drag with the gizmo
 
 1. Click a part on the canvas to select it.
-2. Press [[V]] for **Move**, [[E]] for **Rotate** or [[R]] for **Scale**.
+2. Press [[V]] for **Move**, [[E]] for **Rotate**, or [[R]] for **Scale**.
 3. Drag one of the gizmo's arrows, rings or handles.
 
-Moves snap to 5 mm and turns to 15°. To move or turn freely, hold [[⇧]] while you drag. The canvas shows **Snapping off** while you hold it.
+Moves snap to 5 mm and turns snap to 15°. To move or turn a part freely, hold [[⇧]] while you drag. The canvas shows **Snapping off** while you hold it.
 
-To change the steps, open **Settings** ▸ **Canvas** ▸ **Snapping**. You can set **Move** to Off, 1, 2, 5 or 10 mm, and **Rotate** to Off, 5°, 15°, 45° or 90°.
+To change these steps, open **Settings** ▸ **Canvas** ▸ **Snapping**, then set **Move** to Off, 1, 2, 5 or 10 mm and **Rotate** to Off, 5°, 15°, 45° or 90°.
 
-When you select several parts, the gizmo appears at their shared center and moves them together. Locked parts stay where they are. A real component keeps its size when you use **Scale**.
+If you select several parts, the gizmo appears at their shared center and moves them all together. Locked parts stay where they are. A real component keeps its size when you use **Scale**.
 
 ## Type an exact position or angle
 
 1. Select the part.
 2. In the Inspector, click the **X**, **Y** or **Z** field under **Position** or **Rotation**.
-3. Type the value and press [[↩]].
+3. Type the value, then press [[↩]].
 
-Position is the part's center, in millimeters. Y points up.
+Position is measured from the part's center, in millimeters. Y points up.
 
-You can type math in a field, such as `40/2` or `12+3.5`. To step the value up or down, press [[↑]] or [[↓]]. Hold [[⇧]] to step 10 times as far, or [[⌥]] to step a tenth as far. You can also scrub the value by dragging the field's label left or right. To restore the value you started with, press [[Esc]].
+In a field, you can also take any of these actions:
 
-Other fields are labeled with a letter too, such as **W** under **Size**. To see what a letter stands for, hold the pointer over it.
+- Type math, such as `40/2` or `12+3.5`.
+- Press [[↑]] or [[↓]] to step the value up or down. Hold [[⇧]] to step 10 times as far, or hold [[⌥]] to step a tenth as far.
+- Drag the field's label left or right to scrub the value.
+- Press [[Esc]] to go back to the value you started with.
 
-To turn the part a quarter turn around X, Y or Z, click a **90°** button under **Rotation**. To set all three angles back to 0, click **Reset rotation** in the section's header. You can also choose **Reset Rotation** from the part's right-click menu or from [[⌘K]].
+Other fields also have a one-letter label, such as **W** under **Size**. To see what a letter stands for, hold the pointer over it.
+
+To turn the part a quarter turn around X, Y or Z, click a **90°** button under **Rotation**. To set all three angles back to 0, click **Reset rotation** in the section's header. Or choose **Reset Rotation** from the part's right-click menu or from [[⌘K]].
 
 ## Place a part against the floor or another part
 
-- **Drop to floor** ([[F]]) sets the part on the floor.
+- **Drop to floor** ([[F]]) sets the part down on the floor.
 - **Stack on part below** ([[S]]) sets the part on top of the part underneath it.
 - **Center on origin** sets the part's X and Z to 0.
 

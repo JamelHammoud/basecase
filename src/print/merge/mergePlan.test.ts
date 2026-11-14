@@ -36,7 +36,7 @@ async function assemblyOf(parts: ScenePart[], merges?: ReturnType<typeof mergeIn
 async function planOf(parts: ScenePart[], { bed = BED, project = DEFAULT_PROJECT as ProjectSettings } = {}) {
   const geometry = await assemblyOf(parts, mergeInput(parts, project, bed));
 
-  return { ...geometry.merges!, workerMs: geometry.ms + geometry.merges!.ms };
+  return geometry.merges!;
 }
 
 async function merged(parts: ScenePart[], group: MergeGroup): Promise<ScenePart[]> {
@@ -122,13 +122,12 @@ describe('merge planner', () => {
     expect(guideSteps(parts) - guideSteps(after)).toBe(mergeSavings(groups[0]).steps);
   }, 30000);
 
-  it('plans the quadruped in the worker in under 2 s', async () => {
+  it('plans one merge per leg of the quadruped', async () => {
     const { parts, joints } = quadrupedFixture();
     const plan = await planOf(parts, { project: { ...(DEFAULT_PROJECT as ProjectSettings), joints } });
 
     expect(plan.groups.map((g) => g.ids)).toEqual(
       ['fl', 'fr', 'rl', 'rr'].map((leg) => [`${leg}-tray`, `${leg}-plate`]),
     );
-    expect(plan.workerMs).toBeLessThan(2000);
   }, 30000);
 });

@@ -30,7 +30,7 @@ export default function simStudio(studio: Studio) {
     drive: (command: DriveCommand) => sim().drive.setKeys(command),
     driveWith: (inputs: string[]) => sim().drive.start(undefined, { inputs }),
     worldAt: () => worldAt(studio()),
-    inputEvents: () => inputEvents().map(({ name, value }) => ({ name, value })),
+    inputEvents: () => inputEvents().map(({ at, name, value }) => ({ at, name, value })),
     feedVoice: (samples: number[], sampleRate: number) => feedVoice(samples, sampleRate),
   };
 }

@@ -2,9 +2,6 @@
 import { FRAME_MS, type FeedEvent, type FeedRequest } from './feedProtocol';
 import { LiveStage, type LiveJob, type LiveTarget } from './liveStage';
 import { afterDraw, dueIds, nextDue, startPace, streamSize, type Pace } from './streamPace';
-import { GpuFence } from '../three/gpuFence';
-
-const FENCE_POLL_MS = 4;
 
 interface Stream {
   key: string;
@@ -14,7 +11,7 @@ interface Stream {
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 const stage = new LiveStage();
-const fence = new GpuFence(stage.renderer.getContext() as WebGL2RenderingContext);
+const gl = stage.renderer.getContext();
 const targets = new Map<string, LiveTarget>();
 const streams = new Map<number, Stream>();
 
@@ -84,7 +81,7 @@ function render(tiles: LiveJob[], due: StreamJob[]) {
   const drawn = stage.draw(poses, [...tiles, ...due]);
   const tilesDrawn = tiles.filter((job) => drawn.includes(job));
 
-  if (drawn.length) fence.mark();
+  if (drawn.length) gl.finish();
 
   if (tilesDrawn.length) postTiles(tilesDrawn);
 
@@ -94,8 +91,6 @@ function render(tiles: LiveJob[], due: StreamJob[]) {
 function draw() {
   timer = null;
   timerAt = Infinity;
-
-  if (fence.full()) return wake(performance.now() + FENCE_POLL_MS);
 
   const tiles: LiveJob[] = dirty ? [...targets].map(([key, target]) => ({ key, target })) : [];
   const due = dueStreams(performance.now());

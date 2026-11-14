@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { blocksOf, sentencesOf, wordCount } from './site/blocks.mjs';
+import { labelIndex } from './copy/labels.mjs';
 import { formatProblem, lintSite } from './site/lint.mjs';
 
 const page = (front, body) => `---\n${front}\n---\n\n${body}\n`;
@@ -152,5 +153,20 @@ describe('lintSite', () => {
         '/help/x/menu.png',
       ]),
     ).toEqual([]);
+  });
+
+  it('fails a label the app lacks in help and changelog pages, not in blog posts', () => {
+    const labels = labelIndex({ strings: ['Import Mesh', 'Delete Marks'], keys: ['⌘K'] });
+    const body =
+      'You can now clear them.\n\nClick **Clear Marks**.\n\nSteps are in [Import a mesh](/help/import-a-mesh).';
+    const files = Object.entries({
+      'site/content/help/import-a-mesh.md': HELP,
+      'site/content/changelog/2026-11-12-marks.md': page('title: Clear marks\ndate: 2026-11-12', body),
+      'site/content/blog/marks.md': page('title: Marks\ndate: 2026-11-12', body),
+    }).map(([path, source]) => ({ path, source }));
+
+    expect(lintSite({ files, exists: () => true, labels }).map(formatProblem)).toEqual([
+      'site/content/changelog/2026-11-12-marks.md:8: **Clear Marks** names no label in the app; the closest is “Delete Marks” (§3f)',
+    ]);
   });
 });

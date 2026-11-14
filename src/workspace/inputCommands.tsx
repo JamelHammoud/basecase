@@ -7,8 +7,6 @@ import { CameraIcon, OperateIcon } from '../design-system';
 import { canPairPhone, pairPhone, phoneSnapshot, unpairPhone } from '../phone/phoneStore';
 import type { CommandInputs } from './sceneCommands';
 
-const ic = 'w-4 h-4';
-
 export const INPUT_COMMANDS = ['pair-phone', 'unpair-phone', 'drive-camera', 'teach-gesture'];
 
 function phoneCommands({ core }: CommandInputs): Command[] {
@@ -20,7 +18,7 @@ function phoneCommands({ core }: CommandInputs): Command[] {
         id: 'pair-phone',
         group: 'Simulate',
         label: PAIR_PHONE,
-        icon: <OperateIcon className={ic} />,
+        icon: <OperateIcon />,
         keywords: 'phone mobile iphone android tilt touch qr code drive steer remote controller',
         run: async () => {
           const reply = await pairPhone();
@@ -35,7 +33,7 @@ function phoneCommands({ core }: CommandInputs): Command[] {
       id: 'unpair-phone',
       group: 'Simulate',
       label: 'Unpair Phone',
-      icon: <OperateIcon className={ic} />,
+      icon: <OperateIcon />,
       keywords: 'phone mobile disconnect stop',
       run: () => void unpairPhone(),
     },
@@ -52,7 +50,7 @@ function cameraCommands({ core }: CommandInputs): Command[] {
       id: 'drive-camera',
       group: 'Simulate',
       label: DRIVE_WITH_CAMERA,
-      icon: <CameraIcon className={ic} />,
+      icon: <CameraIcon />,
       keywords: 'webcam mac camera arms hands pose body mirror teleop puppet motion capture mocap follow',
       run: () => {
         core.tool.setRightTab('sim');
@@ -70,7 +68,7 @@ function gestureCommands({ core }: CommandInputs): Command[] {
       id: 'teach-gesture',
       group: 'Simulate',
       label: TEACH_GESTURE,
-      icon: <CameraIcon className={ic} />,
+      icon: <CameraIcon />,
       keywords: 'gesture wave pose sign signal record example train camera body movement',
       run: openTeachGesture,
     },

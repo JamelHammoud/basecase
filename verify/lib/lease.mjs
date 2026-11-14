@@ -6,7 +6,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 export const LEASE_FILE = path.join(os.tmpdir(), 'basecase-gatekeeper.lease');
 
 const POLL_MS = 5000;
-const QUIET_WAIT_MS = 15 * 60 * 1000;
+const QUIET_WAIT_MS = 60 * 60 * 1000;
 const QUIET_SHARE = 0.35;
 
 function holderAlive(file) {

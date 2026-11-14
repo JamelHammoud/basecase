@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ROOT, VERIFY_DIR } from './gate.mjs';
+import { requestQuiet } from '../../tools/quiet/quiet.mjs';
 import { waitForQuiet } from './lease.mjs';
 
 export const STATUS_FILE = path.join(VERIFY_DIR, 'status.json');
@@ -90,7 +91,17 @@ async function runOne(item) {
   }
 }
 
-async function runTimed(item, { quiet, log }) {
+async function runTimed(item, opts) {
+  const release = requestQuiet();
+
+  try {
+    return await runQuietly(item, opts);
+  } finally {
+    release();
+  }
+}
+
+async function runQuietly(item, { quiet, log }) {
   const before = await quiet({ log });
 
   if (!before.quiet) {

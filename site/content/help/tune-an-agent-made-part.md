@@ -11,18 +11,18 @@ covers:
   - electron/backend/cadTune.mjs
 ---
 
-Change a number in a part the agent designed, such as its wall thickness, and the part is rebuilt from its own code, with the parts mated to it following.
+You can change a number in a part the agent designed, such as its wall thickness. The part rebuilds from its own code, and the parts mated to it follow.
 
-1. Select a part the agent made, in the canvas or in Layers.
-2. Find Dimensions in the Inspector, under Size. Each row is a number the part's code names, like `wall` or `clearance`.
-3. Type a new value and press [[↩]], or use [[↑]] and [[↓]] to step it. When the code gives a range, such as `// [1.2:0.4:4]` after the number, the value stays inside it.
-4. Wait a moment while the part compiles. It changes in place, and a servo or bracket mated to it moves with it.
-5. Press [[⌘Z]] to undo the change. The part, its Dimensions values and everything that moved with it go back together.
+1. Select a part the agent made, either in the canvas or in Layers.
+2. In the Inspector, find Dimensions under Size. Each row is a number that the part's code names, like `wall` or `clearance`.
+3. Type a new value and press [[↩]]. Or press [[↑]] and [[↓]] to step the value up or down. If the code gives a range after the number, such as `// [1.2:0.4:4]`, the value stays inside that range.
+4. Wait a moment while the part compiles. The part changes in place, and a servo or bracket mated to it moves with it.
+5. To undo the change, press [[⌘Z]]. The part, its Dimensions values and everything that moved with it go back together.
 
 ![Dimensions in the Inspector, with wall at 2 on a servo mount](/help/tune-an-agent-made-part/dimensions.png)
 
 ![The servo mount after wall is set to 5, with the servo raised on top of it](/help/tune-an-agent-made-part/tuned.png)
 
-If the new value breaks a requirement the agent set for the part, such as a minimum wall or a number of through holes, the part stays as it was and a message names the requirement and what was measured.
+The agent can set requirements for a part, such as a minimum wall or a number of through holes. If your new value breaks one of them, the part stays as it was, and a message tells you which requirement failed and what was measured.
 
-Dimensions appears only on OpenSCAD parts whose code sets its numbers at the top level, and only in the desktop app. Size, above it, still scales the whole part instead of rebuilding it.
+Dimensions appears only in the desktop app, and only on OpenSCAD parts whose code sets its numbers at the top level. Size, above it, still scales the whole part instead of rebuilding it.

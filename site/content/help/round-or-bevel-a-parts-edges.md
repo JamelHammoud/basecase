@@ -18,7 +18,7 @@ covers:
   - src/three/partMesh/edgedProfile.ts
 ---
 
-Fillet or chamfer every edge of a basic shape by a size in millimeters, so a printed bracket is stronger and kinder to hold.
+You can fillet or chamfer every edge of a basic shape by a size in millimeters. Rounded or beveled edges make a printed bracket stronger and more comfortable to hold.
 
 1. Select a box, cube, cylinder, tube, hex prism or wedge, in the canvas or in **Layers**.
 2. In the Inspector, click **Shape** to open it.
@@ -27,15 +27,23 @@ Fillet or chamfer every edge of a basic shape by a size in millimeters, so a pri
 
 ![The Shape section with Fillet chosen and the size at 4 mm](/help/round-or-bevel-a-parts-edges/fillet.png)
 
-The part keeps its size. Its edges and corners are cut inward, so it still fits where it did.
+The part keeps its size. Its edges and corners are cut inward, so it still fits where it did before.
 
 ![A 60 × 12 × 40 mm plate with 4 mm fillets on every edge, beside a chamfered spacer](/help/round-or-bevel-a-parts-edges/filleted.png)
 
-The size can't reach half the part's smallest side. A larger number stops at 98% of that: 5.88 mm on a plate 12 mm thick. On a tube the wall sets the limit, and on a hex prism or wedge the largest circle inside its outline. On an oval cylinder, the size holds across its width and scales by depth ÷ width along its depth. Set the size to 0 to make the edges sharp again, or press [[⌘Z]] to undo.
+The size can't reach half of the part's smallest side. If you type a larger number, it stops at 98% of that. For example, on a plate 12 mm thick, the largest size is 5.88 mm. A few shapes work differently:
 
-Taper, Bend and Twist still work on a part with rounded edges. You can also ask the agent, as in “Round the edges by 3 mm”, and it sets the same field.
+- A tube's wall sets the limit.
+- For a hex prism or wedge, the limit is the largest circle that fits inside its outline.
+- On an oval cylinder, the size holds across its width and scales by depth ÷ width along its depth.
 
-A part from an older scene may show **Round**, a percentage that pulls the shape toward an ellipsoid. It stays until you set it to 0.
+To make the edges sharp again, set the size to 0. Or press [[⌘Z]] to undo.
+
+Taper, Bend and Twist still work on a part with rounded edges.
+
+You can also ask the agent to fillet or chamfer a part, for example “Round the edges by 3 mm.” The agent sets the same field.
+
+A part from an older scene may show **Round** instead. Round is a percentage that pulls the shape toward an ellipsoid. It stays on the part until you set it to 0.
 
 Only basic shapes have Fillet and Chamfer. Parts the agent models round their edges in their own code. In a STEP file, a part with rounded edges arrives as a faceted solid.
 

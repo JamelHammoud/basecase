@@ -28,20 +28,20 @@ covers:
   - src/three/viewport/scaleFigures.ts
 ---
 
-Check the distance between two points in the scene, or stand a person or a dog beside your robot to judge its real size.
+You can check the distance between two points in the scene, or stand a person or a dog beside your robot to judge its real size.
 
 1. Press [[D]] to start **Measure**.
-2. Click the first point, then the second.
+2. Click the first point, then click the second.
 3. Read the distance on the label in the middle of the line.
 4. Click **Done** to go back to the usual toolbar.
 
 ![A measurement across the front of a cube](/help/measure-a-part/ruler.png)
 
-Points snap to a part's corners, then its edges. Hold [[⇧]] to place a point anywhere on a surface, or [[⌥]] to keep the second point straight above or below the first. A click on empty space measures on the floor.
+Points snap to a part's corners first, then to its edges. To place a point anywhere on a surface, hold [[⇧]] while you click. To keep the second point straight above or below the first, hold [[⌥]]. Click empty space to measure on the floor.
 
-A third click starts a new measurement. [[Esc]] clears the line, and a second [[Esc]] leaves Measure.
+To start a new measurement, click a third time. Press [[Esc]] to clear the line, then press [[Esc]] again to leave Measure.
 
-Measure is also under **Shapes** in the bottom toolbar and in [[⌘K]]. To start from a spot on a part, right-click it and choose **Measure from Here**.
+You can also find Measure under **Shapes** in the bottom toolbar, or in [[⌘K]]. To start from a spot on a part, right-click it and choose **Measure from Here**.
 
 ## Compare with a person or a dog
 
@@ -51,8 +51,12 @@ Measure is also under **Shapes** in the bottom toolbar and in [[⌘K]]. To start
 
 ![A person placed beside the cube, with their height in the toolbar](/help/measure-a-part/human.png)
 
-The person starts at 175.3 cm, or 5 ft 9 in where heights are given in feet. **Dog** places a Labrador Retriever at its real size, 57 cm at the shoulder. Each can be placed once; click again to move it.
+The person starts at 175.3 cm, or 5 ft 9 in if heights show in feet. **Dog** places a Labrador Retriever at its real size, 57 cm at the shoulder.
+
+You can place each figure once. To move it, click again.
 
 ## Units
 
-Distances show in millimeters and meters until you choose **Imperial** in **Settings** ▸ **Canvas** ▸ **Measure**. Imperial shows inches to the nearest sixteenth, then feet and inches. Measurements and figures are never saved with the scene or exported.
+Distances show in millimeters and meters. To use inches instead, choose **Imperial** in **Settings** ▸ **Canvas** ▸ **Measure**. Imperial shows inches to the nearest sixteenth, then feet and inches.
+
+**Note:** Measurements and figures stay out of the saved scene and out of every export.

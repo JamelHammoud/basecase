@@ -27,9 +27,9 @@ covers:
   - electron/cad-agent-prompt.mjs
 ---
 
-The six commands you can start a message with to give the agent a job other than designing.
+Slash commands give the agent a job other than designing. There are six of them, and you use one by starting a message with it.
 
-Type / at the start of a message to list them, each with its name, then press [[↩]] or [[Tab]] to pick one and add what you want after it. They're also under **Commands** in the composer's **+** menu, and in [[⌘K]] by their names.
+To see the commands and their names, type / at the start of a message. Press [[↩]] or [[Tab]] to pick one, then add what you want after it. You can also find the commands under **Commands** in the composer's **+** menu, or search for them by name in [[⌘K]].
 
 | Command | Name | What the agent does |
 |---|---|---|
@@ -38,12 +38,12 @@ Type / at the start of a message to list them, each with its name, then press [[
 | `/case` | **Make a Case** | Adds a Case: a world and a goal for the robot to try |
 | `/simulate` | **Simulate the Scene** | Runs the scene in the simulation and reports what happened |
 | `/operate` | **Operate the Robot** | Does a task by watching the robot's cameras, one step at a time in the simulation |
-| `/check` | **Run Checks** | Checks the design is ready to build |
+| `/check` | **Run Checks** | Checks whether the design is ready to build |
 
-None of them changes the design unless your words ask for it. For example, `/case reach the cup on the shelf` adds a Case and leaves the robot alone.
+These commands change the design only when your words ask for it. For example, `/case reach the cup on the shelf` adds a Case and leaves the robot alone.
 
-`/pass` followed by a Case's name is the one that does change the design: the agent changes the robot until that Case passes. It isn't in the list; [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent) shows how to start it.
+`/pass` is the one command that does change the design. Follow it with a Case's name, and the agent changes the robot until that Case passes. You won't find `/pass` in the list. To learn how to start it, see [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 
-`/coach` followed by a ready skill's name and your words changes how that skill moves. It isn't in the list either; [Coach how a ready skill moves](/help/coach-a-skill) shows how to start it.
+`/coach` changes how a ready skill moves. Follow it with the skill's name and your words. Like `/pass`, it doesn't appear in the list. Learn how to start it in [Coach how a ready skill moves](/help/coach-a-skill).
 
-**Ask the Agent** in **Play** ▸ **Cases** starts a message with `/case`, and **Teach** in the Simulate tab's **Train** section sends `/train` with your goal.
+Some buttons start a command for you. In **Play** ▸ **Cases**, **Ask the Agent** starts a message with `/case`. In the Simulate tab's **Train** section, **Teach** sends `/train` with your goal.

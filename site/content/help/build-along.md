@@ -11,21 +11,21 @@ covers:
   - src/three/viewport/buildStep.ts
 ---
 
-Build Along plays your robot's build guide on the canvas, one step at a time, so you can follow it with the parts on your desk.
+Build Along plays your robot's build guide on the canvas one step at a time, so you can follow along with the parts on your desk.
 
-1. Open [[⌘K]] and choose Build Along, or click Build Along in the build guide's toolbar.
-2. Read the counts under the bar, like 4 × M3 × 6 Socket Head Screw. They're what this step uses.
-3. Watch the step's parts and screws fly in along the blue arrows. Orbit to see the step from any side.
-4. Put each servo into the joint its label names, like Shoulder lift, ID 2. Set the servo to that bus ID first, so Operate and the sim drive the right joint.
-5. Press [[→]] for the next step and [[←]] to go back.
-6. Press [[Esc]] to return to your scene. Nothing in it changes.
+1. Open [[⌘K]] and choose Build Along. Or click Build Along in the build guide's toolbar.
+2. Check the parts this step uses. They're listed under the bar with their counts, for example 4 × M3 × 6 Socket Head Screw.
+3. Watch the step's parts and screws fly in along the blue arrows. You can orbit to see the step from any side.
+4. Put each servo into the joint named on its label, for example Shoulder lift, ID 2. First set the servo to that bus ID, so that Operate and the sim drive the right joint.
+5. To go to the next step, press [[→]]. To go back, press [[←]].
+6. To return to your scene, press [[Esc]]. Nothing in your scene changes.
 
 ![A step with four screws flying into the base along blue arrows, and 4 × M3 × 6 Socket Head Screw listed under the bar](/help/build-along/step.png)
 
-If you changed the design since the guide was last made, Build Along makes it again first, and the bar shows its progress.
+If you changed the design since the guide was last made, Build Along makes the guide again first and shows its progress in the bar.
 
 ![Three servos labeled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/help/build-along/servos.png)
 
-When every printed part a step uses is marked printed, a green check appears beside the step count. The build guide shows a check beside the step number too. [Print plates on several printers](/help/print-plates-on-several-printers) prints them in this order.
+A green check appears beside the step count when every printed part the step uses is marked printed. The build guide also shows a check beside the step number. When you [print plates on several printers](/help/print-plates-on-several-printers), the parts print in this order.
 
 ![Step 1 of 2 with a green check beside the count](/help/build-along/parts-ready.png)

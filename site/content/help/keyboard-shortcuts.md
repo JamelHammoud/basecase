@@ -26,9 +26,9 @@ covers:
   - electron/app-menu.mjs
 ---
 
-Every keyboard shortcut in Basecase, grouped by what you're doing, as the **Shortcuts** pane in Settings lists them.
+Every keyboard shortcut in Basecase is listed below, grouped by what you're doing, the same way the **Shortcuts** pane in Settings groups them.
 
-Press [[?]] while you're not typing to open the **Shortcuts** pane.
+To open the **Shortcuts** pane, press [[?]] when you're not typing.
 
 ## Navigate
 
@@ -63,7 +63,7 @@ Press [[?]] while you're not typing to open the **Shortcuts** pane.
 | Stack on part below | [[S]] |
 | Move or rotate without snapping | [[⇧]] and drag |
 
-The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
+**Note:** To use the two Sculpt shortcuts, turn on **Sculpt** in **Settings** ▸ **Canvas**.
 
 ## Edit
 
@@ -84,7 +84,7 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Delete | [[⌫]] |
 | Deselect | [[Esc]] |
 
-[[Esc]] also leaves whichever mode is open, once anything smaller in it has cleared. Sketch and Import SVG stay open while they hold a drawing.
+To leave the open mode, clear anything smaller inside it, then press [[Esc]]. Sketch and Import SVG stay open as long as they hold a drawing.
 
 ## Scenes
 
@@ -96,7 +96,7 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Reopen closed scene | [[⇧⌘T]] |
 | Next scene | [[⌃Tab]], or [[⇧⌘]] and ] |
 | Previous scene | [[⌃⇧Tab]], or [[⇧⌘]] and [ |
-| Go to scene 1–8 | [[⌘1]] to [[⌘8]] |
+| Go to scenes 1 to 8 | [[⌘1]] to [[⌘8]] |
 | Go to last scene | [[⌘9]] |
 
 ## App
@@ -114,11 +114,11 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Settings | [[⌘,]] |
 | Keyboard shortcuts | [[?]] |
 
-While a Case runs, [[⌘Z]], [[⇧⌘Z]] and [[⌘Y]] undo and redo only changes to its code panels. [[⌘I]] shows or hides the **Agent** tab beside it.
+While a Case is running, [[⌘Z]], [[⇧⌘Z]], and [[⌘Y]] undo and redo changes to its code panels and nothing else. In a running Case, [[⌘I]] shows or hides the **Agent** tab next to it.
 
 ## Agent
 
-These keys work in the message field of the **Agent** tab.
+These shortcuts work in the message field of the **Agent** tab.
 
 | Action | Keys |
 |---|---|
@@ -128,6 +128,6 @@ These keys work in the message field of the **Agent** tab.
 | Stop | [[Esc]] |
 | Slash commands | [[/]] |
 
-Queue sends the message once the agent finishes its current work. [[Esc]] stops the agent only while the message field is empty. A slash at the start of a message opens the slash commands.
+When you queue a message, it goes out as soon as the agent finishes what it's working on. To stop the agent with [[Esc]], clear the message field first. To open the slash commands, type a slash at the start of a message.
 
 For the trackpad and mouse, see [Trackpad and mouse controls](/help/trackpad-and-mouse-controls).

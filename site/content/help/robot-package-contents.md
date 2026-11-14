@@ -26,43 +26,41 @@ covers:
   - src/utils/robotImport/urdfWriter.ts
 ---
 
-Every file in the zip that **Export** ▸ **Robot Package** saves, and what each one holds.
-
-The zip unpacks to one folder named `<scene>-robot`. Lengths are in meters and angles in radians, with Z up.
+**Export** ▸ **Robot Package** saves your robot as a zip file that unpacks to a single folder named `<scene>-robot`. Lengths are in meters and angles in radians, with Z up.
 
 ## Files
 
 | File | What it holds |
 |---|---|
-| `robot.xml` | The MuJoCo model the Simulate tab runs, unchanged. Collision shapes are written inside it, so it needs no other file. It holds everything the simulation holds, scenery included. |
-| `urdf/robot.urdf` | One link per body of the robot and one joint per link, named as in `robot.xml`. Each link has the mass of its parts, its center of mass and its inertia. The root is a massless `base_link`. A `ros2_control` block lists each movable joint with a position command and its limits, on ROS 2's mock hardware. |
-| `meshes/<part>.stl` | One binary STL per part, already placed in its link's frame. The URDF uses each one for both looks and collisions, by `package://` path. |
-| `joint_map.json` | One entry per movable joint: servo id, joint name, type, servo bus, servo part, zero offset, direction, limits and the active calibration. |
-| `policies/<id>/policy.json` | A trained policy as Basecase runs it, weights included. |
-| `policies/<id>/spec.json` | What the policy reads and drives: its inputs and their sizes, the joints it moves by name, the default pose, the action scale and the control step. |
-| `package.xml` | The ROS 2 package manifest, named after the robot with `_description` added, such as `arm_description`. Its maintainer and license are placeholders to fill in. |
+| `robot.xml` | The same MuJoCo model the Simulate tab runs, with everything in the simulation, including scenery. Basecase writes the collision shapes into this file, so it needs no other file. |
+| `urdf/robot.urdf` | One link for each body of the robot and one joint for each link, with the same names as in `robot.xml`. Each link carries the mass of its parts, its center of mass and its inertia. The root link is a massless `base_link`. A `ros2_control` block lists every movable joint with a position command and its limits, using ROS 2's mock hardware. |
+| `meshes/<part>.stl` | One binary STL for each part, placed in its link's frame. The URDF points to each mesh by its `package://` path and uses it for both visuals and collisions. |
+| `joint_map.json` | One entry for each movable joint, with its servo id, joint name, type, servo bus, servo part, zero offset, direction, limits and active calibration. |
+| `policies/<id>/policy.json` | A trained policy, including its weights, in the form Basecase runs it. |
+| `policies/<id>/spec.json` | The policy's inputs and their sizes, the names of the joints it moves, the default pose, the action scale and the control step. |
+| `package.xml` | The ROS 2 package manifest, named after the robot with `_description` added, for example `arm_description`. The export leaves placeholders for the maintainer and license, so fill those in yourself. |
 | `CMakeLists.txt` | Installs `urdf/`, `meshes/`, `launch/`, `rviz/`, `robot.xml` and `joint_map.json` when colcon builds the package. |
-| `launch/display.launch.py` | Starts `robot_state_publisher`, the Joint State Publisher window and RViz on the installed URDF. |
-| `rviz/display.rviz` | The RViz layout the launch file opens: a grid and the robot model. |
+| `launch/display.launch.py` | Starts `robot_state_publisher`, the Joint State Publisher window and RViz, using the installed URDF. |
+| `rviz/display.rviz` | The RViz layout the launch file opens, with a grid and the robot model. |
 
 ## joint_map.json
 
 | Key | Meaning |
 |---|---|
-| `id` | The servo id, from 1 in joint order |
+| `id` | The servo id, numbered from 1 in joint order |
 | `name` | The joint's name in `robot.xml` and `urdf/robot.urdf` |
 | `joint` | The joint's label in the scene |
 | `type` | `revolute`, `continuous` or `prismatic` |
 | `family` | The servo's bus: `feetech`, `dynamixel`, or null for other servos |
 | `servo` | The servo from Parts, as `componentId` and `variant`, or null |
-| `zero_counts` | The servo reading at the joint's 0°: 2048 until **Calibrate Servos** finds it |
-| `direction` | 1, or -1 when **Calibrate Servos** finds the servo turns the joint the other way |
-| `min_rad`, `max_rad` | Limits of a joint that turns |
-| `min_m`, `max_m` | Limits of a joint that slides |
+| `zero_counts` | The servo reading at the joint's 0°. This is 2048 until **Calibrate Servos** finds the real value. |
+| `direction` | 1, or -1 if **Calibrate Servos** finds the servo turns the joint the other way |
+| `min_rad`, `max_rad` | The limits of a joint that turns |
+| `min_m`, `max_m` | The limits of a joint that slides |
 | `calibration` | The servo's active calibration, or null |
 
 ## What's left out
 
-Scenes with no trained policy have no `policies` folder. A policy whose file can't be found is left out. ONNX copies of policies aren't included.
+If your scene has no trained policy, the zip has no `policies` folder. If Basecase can't find a policy's file, it skips that policy. The zip doesn't include ONNX copies of policies.
 
 To make the zip, follow [Export a robot package](/help/export-a-robot-package).

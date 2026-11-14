@@ -11,17 +11,17 @@ covers:
   - hw/crates/robot-daemon/src/control/assign.rs
 ---
 
-Give each servo the ID its joint has in the scene, one servo at a time, so the robot's servos match its joint map before the first move.
+Give each servo the ID its joint has in the scene, one servo at a time, so the robot's servos match its joint map before its first move.
 
-New servos all answer at ID 1. Basecase numbers the movable joints 1, 2, 3 and so on, and Set Up Servos writes those numbers onto the servos. Real motors stay locked in this build, so it runs on emulated servos, which start as a bag of new ones.
+New servos all answer at ID 1. Basecase numbers the robot's movable joints from 1 up, and Set Up Servos writes those numbers onto the servos. This build keeps real motors locked, so Set Up Servos runs on emulated servos, and each one starts out as a new servo.
 
-1. Open a scene with a robot and open Operate in the Play view.
-2. Click Set Up Servos, or choose Set Up Servos in [[⌘K]]. The robot connects with its servos still at ID 1 and goes to Set Up, with the motors off.
-3. Look at the highlighted row under Motors off: it shows the joint and the ID it gets, starting with the highest ID. The canvas selects that joint's moving parts.
-4. Plug in that joint's servo next to the ones already done. With emulated servos, Basecase plugs it in for you. Once it answers at its new ID, the next joint lights up.
-5. When the last joint, ID 1, is done, every servo answers under Emulated servos. Click Test on the Ladder to go on.
+1. Open a scene with a robot, then open Operate in the Play view.
+2. Click Set Up Servos, or choose Set Up Servos in [[⌘K]]. The robot connects with its servos still at ID 1 and goes to Set Up with the motors off.
+3. Under Motors off, find the highlighted row. It shows the joint and the ID it gets, starting with the highest ID, and Basecase selects that joint's moving parts on the canvas.
+4. Plug in that joint's servo next to the servos you've already numbered. With emulated servos, Basecase plugs it in for you. Once the servo answers at its new ID, Basecase highlights the next joint.
+5. After the last joint (ID 1), all the servos answer under Emulated servos. Click Test on the Ladder to continue.
 
-A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply, because the daemon can't read it.
+If a joint uses a motor outside the Feetech and Dynamixel servos, such as the DS3218, it reads No reply because the daemon can't read that motor.
 
 ![Operate before the robot connects, with Set Up Servos under Connect Emulated Robot](/help/number-a-robots-servos/operate.png)
 
@@ -31,6 +31,6 @@ A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, read
 
 ![Every servo answering in Set up once all three are numbered](/help/number-a-robots-servos/numbered.png)
 
-The highest ID goes first because a new servo arrives at ID 1, the first joint's number. Numbering ID 1 last means the servos already done can stay plugged in.
+Basecase starts at the highest ID because a new servo arrives at ID 1, which is the first joint's number. When ID 1 comes last, the servos you've already numbered can stay plugged in.
 
-Press [[Esc]] to stop. The IDs already written stay on the servos, and Set Up Servos picks up at the first joint that doesn't answer. If two new servos are plugged in at once, or another servo already has the ID, the robot refuses and says why under the servo count.
+To stop, press [[Esc]]. The servos keep the IDs you've written, and Set Up Servos picks up again at the first joint that doesn't answer. If you plug in two new servos at once, or if another servo already has that ID, the robot refuses and shows the reason under the servo count.

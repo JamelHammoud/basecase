@@ -34,53 +34,55 @@ covers:
   - docs/guide/joints-and-motion.md
 ---
 
-Once a design has joints, you can pose it, simulate it, and check every servo's load and every joint's range.
+Once a design has joints, you can pose it and simulate it. You can also check the load on every servo and the range of every joint.
 
 ## What a joint holds
 
+Each joint has these fields:
+
 | Field | What it says |
 |---|---|
-| Type | Revolute turns, measured in degrees. Prismatic slides, measured in millimeters. |
-| Parent and child | The parts that stay, and the parts that move. |
-| Pivot and axis | Where it turns and around which line. With a servo, both come from the servo's real output. |
-| Range | How far it can turn or slide each way. |
-| Limb | Head, torso, left arm and so on. The Pose tab groups joints by limb. |
-| Servo | The actuator that drives it, which Checks size against the load. |
+| Type | A revolute joint turns, measured in degrees. A prismatic joint slides, measured in millimeters. |
+| Parent and child | Which parts stay still, and which parts move. |
+| Pivot and axis | The point the joint turns around, and the line it turns along. If the joint has a servo, both come from the servo's real output. |
+| Range | How far the joint can turn or slide in each direction. |
+| Limb | Head, torso, left arm, and so on. The Pose tab groups joints by limb. |
+| Servo | The actuator that drives the joint. Checks sizes it against the load. |
 
 ## Where joints come from
 
-Joints arrive with a robot, a hand or the agent's design, or you add them yourself:
+Joints come with a robot, a hand, or a design from the agent. You can also add them yourself:
 
-- [Import a robot](/help/import-a-robot) brings every joint in its URDF or MJCF, with axis, limits and torque limit.
-- **Parts** ▸ **Hands** has posable hands whose makers publish their joints, such as LEAP, ORCA and Allegro.
-- The agent declares joints when it designs a robot, and adds or changes them when you ask.
-- [Design a linkage from a path](/help/design-a-linkage-from-a-path) adds a four-bar whose crank joint a servo drives.
+- [Import a robot](/help/import-a-robot) brings in every joint from its URDF or MJCF file, including the axis, limits, and torque limit.
+- **Parts** ▸ **Hands** lists posable hands whose makers publish their joints, such as LEAP, ORCA, and Allegro.
+- The agent declares joints when it designs a robot. It also adds or changes joints when you ask it to.
+- [Design a linkage from a path](/help/design-a-linkage-from-a-path) adds a four-bar linkage with a crank joint driven by a servo.
 - [Join two parts with a hinge or slider](/help/join-two-parts-with-a-hinge) adds a joint between two parts you select.
 
-Once the scene has a joint, the **Simulate** tab appears in the right panel.
+As soon as the scene has a joint, the **Simulate** tab appears in the right panel.
 
 ## How parts follow their joints
 
-Joints form a tree from the robot's base outward. Each part moves with the deepest joint that lists it as moving. A hand moves with the wrist, and so with the elbow and the shoulder too.
+Joints form a tree that starts at the robot's base and branches outward. Each part moves with the deepest joint that lists it as moving. For example, a hand moves with the wrist, and so it also moves with the elbow and the shoulder.
 
-A part that no joint lists still moves when its whole group moves with one joint. Screws, nuts and inserts follow whatever they clamp, so joints never need to list them.
+If no joint lists a part, the part still moves when its whole group moves with a joint. Screws, nuts, and inserts follow the parts they clamp, so you don't need to list them in any joint.
 
-Each joint is anchored to the part it's mounted on. Moving the whole robot, or undoing a change, keeps the joints in place.
+Each joint is anchored to the part it's mounted on. If you move the whole robot or undo a change, the joints stay in place.
 
-A four-bar linkage closes a loop. You pose only its crank, and the coupler and rocker turn with it so the loop stays closed. Closed loops aren't simulated: in Simulate the coupler rides the crank as one rigid arm.
+A four-bar linkage forms a closed loop. You pose only its crank, and the coupler and rocker turn along with it so the loop stays closed. Simulate doesn't simulate closed loops. Instead, the coupler moves with the crank as a single rigid arm.
 
-Deleting a joint's moving parts deletes the joint too. Undo brings both back together.
+If you delete all of a joint's moving parts, Basecase deletes the joint too. Undo restores both.
 
 ## A pose never edits the design
 
-The pose you modeled is the design. Posing only changes what the canvas shows, and you can return to it with **Rest pose**.
+The design keeps the pose you modeled the robot in. Posing changes only what you see on the canvas. To go back to the modeled pose, click **Rest pose**.
 
-Measurements, clash checks and range sweeps always run in the modeled pose. If you move a part while the robot is posed, the move is mapped back to the modeled pose.
+Measurements, clash checks, and range sweeps always use the modeled pose. If you move a part while the robot is posed, Basecase maps the move back to the modeled pose.
 
 ## Inverse kinematics
 
-Walk cycles and the agent's poses set targets for hands and feet rather than angles. Inverse kinematics finds joint angles that reach each target within every joint's range. Torso joints are stiffer, so the limbs reach first.
+Walk cycles and poses from the agent set targets for hands and feet instead of angles. Inverse kinematics finds joint angles that reach each target while staying within every joint's range. Torso joints are stiffer, so the limbs move first to reach a target.
 
 ## Several robots in one scene
 
-Each robot is found on its own, with its own joints, weight and feet. The Pose tab, walk cycles and Import BVH work on the selected robot only.
+Basecase finds each robot in the scene separately, with its own joints, weight, and feet. The Pose tab, walk cycles, and Import BVH work only on the selected robot.

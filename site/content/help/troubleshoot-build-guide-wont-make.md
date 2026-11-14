@@ -20,33 +20,33 @@ covers:
   - src/components/settings/BuildPane.tsx
 ---
 
-Most build guide problems come from a scene with nothing to build, or a run that stopped with an error.
+Two things stop most build guides: the scene has nothing to build, or the last run stopped with an error.
 
 ## Make Guide is grayed out
 
-The guide shows only parts you'd build: visible parts that aren't cutouts. A scene of hidden parts or cutouts has nothing to draw.
+The guide shows the parts you'd build, which are the visible parts that aren't cutouts. If your scene has only hidden parts and cutouts, the guide has nothing to draw.
 
 1. Show the parts you want in the guide.
-2. Check that they are solid parts, not cutouts.
+2. Check that none of them are cutouts.
 
-It worked when **Make Guide** turns blue.
+Once you've fixed the scene, **Make Guide** turns blue.
 
 ## “Couldn’t make the guide.”
 
-The run stopped with an error, shown after the message. A failed run leaves the last guide alone until the scene changes again.
+This message means the run stopped with an error. Basecase shows the error right after the message. After a failed run, your last guide stays as it was until you change the scene again.
 
-1. Click the card's button again: **Make Guide** or **Update**.
-2. If the same error comes back, read the reason after the message. It names what stopped the run.
+1. Click the button on the card again: **Make Guide** or **Update**.
+2. If the same error comes back, read the reason after the message to see what stopped the run.
 
 ## The guide stays Out of date
 
-Basecase updates the guide on its own 15 seconds after the last change, but waits while the agent is working. A guide you stopped also stays as it was until the scene changes again.
+Basecase updates the guide on its own 15 seconds after your last change, but not while the agent is working. If you stopped a guide, it stays as it was until you change the scene again.
 
-A guide whose order check stopped at its 20-second limit reads Out of date too. An automatic update tries once more, and **Update** tries again whenever you click it.
+A guide also shows Out of date if its order check hit the 20-second limit. The next automatic update tries once more, and **Update** tries again each time you click it.
 
 1. Click **Update** in **Build guide**.
-2. To have it update on its own, press [[⌘,]], choose **Build** and turn on **Update automatically**.
+2. To have Basecase update the guide for you, press [[⌘,]], choose **Build**, then turn on **Update automatically**.
 
 ## Show in Finder and Open PDF are missing
 
-Those buttons are in the desktop app only. The web studio keeps guides in your browser and opens them in the guide viewer.
+These buttons are only in the desktop app. In the web studio, guides stay in your browser and open in the guide viewer.

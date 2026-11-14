@@ -23,7 +23,7 @@ describe('a robot on a tether', () => {
     expect(row(r, 'Battery')).toBeUndefined();
     expect(row(r, 'Servo voltage')).toMatchObject({
       status: 'pass',
-      detail: 'The 12 V 10 A tether is inside every servo’s 10–14.8 V range',
+      detail: 'The 12 V 10 A power supply is inside every servo’s 10–14.8 V range',
     });
     expect(row(r, 'Supply current')?.status).toBe('pass');
     expect(row(r, 'Current and runtime')).toBeUndefined();
@@ -33,7 +33,7 @@ describe('a robot on a tether', () => {
     const r = run(servos(XM430));
 
     expect(row(r, 'Battery')).toBeUndefined();
-    expect(row(r, 'Servo voltage')?.detail).toBe('The 12 V 10 A tether is inside every servo’s 10–14.8 V range');
+    expect(row(r, 'Servo voltage')?.detail).toBe('The 12 V 10 A power supply is inside every servo’s 10–14.8 V range');
   });
 
   it('runs on the battery once one is in the build, whatever tether was set', () => {
@@ -48,7 +48,7 @@ describe('a robot on a tether', () => {
   it('fails a tether above the servos’ maximum', () => {
     expect(row(tethered({ volts: 24, amps: 10 }), 'Servo voltage')).toMatchObject({
       status: 'fail',
-      detail: 'The 24 V 10 A tether gives 24 V, above the 14.8 V maximum of 4 servos',
+      detail: 'The 24 V 10 A power supply gives 24 V, above the 14.8 V maximum of 4 servos',
     });
   });
 
@@ -56,7 +56,7 @@ describe('a robot on a tether', () => {
     const r = tethered({ volts: 12, amps: 1 }, XM430, 12);
 
     expect(row(r, 'Supply current')?.status).toBe('fail');
-    expect(row(r, 'Supply current')?.detail).toMatch(/the tether gives 1 A$/);
+    expect(row(r, 'Supply current')?.detail).toMatch(/the power supply gives 1 A$/);
   });
 
   it('counts a motor build on a tether the same way', () => {

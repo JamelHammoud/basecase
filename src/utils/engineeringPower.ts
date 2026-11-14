@@ -232,7 +232,7 @@ function batteryDetail(source: PowerSource, draw: Draw): string {
 }
 
 const tetherDetail = (tetherA: number, draw: Draw) =>
-  `${drawText(draw)}${estimated(draw)}; the tether gives ${tetherA} A${hungriestNote(draw)}`;
+  `${drawText(draw)}${estimated(draw)}; the power supply gives ${tetherA} A${hungriestNote(draw)}`;
 
 function railWarning({ rail, servoPeak }: Draw): NonNullable<CheckRow['items']> {
   if (!rail || servoPeak <= rail.regulator.ioutA) return [];

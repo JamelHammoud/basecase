@@ -51,6 +51,7 @@ function pointMasses(skeleton: RobotSkeleton, totalG: number): PointMass[] {
   return joints.flatMap((j) => [
     { g: linkG(j), at: linkCentre(skeleton, j), joint: j.id },
     { g: actuatorGrams(j), at: j.origin, joint: j.id },
+    { g: j.payloadG ?? 0, at: j.tip ?? j.origin, joint: j.id },
   ]);
 }
 

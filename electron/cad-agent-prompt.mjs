@@ -121,6 +121,7 @@ Study first, build second. Do not call add_parts or model_part until steps 1–3
 4. Plan the architecture before geometry (write it out; use TodoWrite when you have it):
    - the part tree and the skeleton: define_skeleton with every joint's position, axis and
      actuator, symmetric pairs and the target mass_g, then size_actuators on it, before geometry;
+   - when a person states where an arm must reach and what it carries, size_arm it first;
    - the budget split when there's a budget (see Cost);
    - for every shell that encloses something: its split plane and removal direction, and what
      serviceable parts sit behind it (see Assembly and service).

@@ -14,6 +14,7 @@ export interface SkeletonJoint {
   actuator?: string;
   tip?: ZUpVec;
   linkMassG?: number;
+  payloadG?: number;
 }
 
 export interface RobotSkeleton {

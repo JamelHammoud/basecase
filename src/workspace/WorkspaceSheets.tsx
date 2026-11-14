@@ -1,6 +1,7 @@
 import { ArmSizingSheet } from '../components/ArmSizingSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
+import { InstallSkillSheet } from '../components/InstallSkillSheet';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
 import { TeachGestureHost } from './TeachGestureHost';
@@ -19,6 +20,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
   const { robots, pose, arm } = actions;
   const { motionInputRef } = pose;
   const { importRobotFrom } = robots;
+  const { skillHub } = core.simTraining;
 
   return (
     <>
@@ -40,6 +42,11 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
         choice={robots.robotChoice}
         onClose={robots.closeImportRobot}
         onImport={(src, at) => void importRobotFrom(src, at)}
+      />
+      <InstallSkillSheet
+        open={active && skillHub.installOpen}
+        onClose={skillHub.closeInstall}
+        onInstall={skillHub.install}
       />
       {arm.targets && (
         <ArmSizingSheet

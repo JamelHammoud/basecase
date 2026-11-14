@@ -90,6 +90,8 @@ To hold two lines parallel, perpendicular or equal, click the active tool to put
 4. Under **Output**, type a name, the width (**W**) and the thickness (**T**).
 5. Click **Add**.
 
+You can also drag the SVG onto **Choose or drop an SVG**, which turns blue while the file is over it.
+
 The part starts 64 mm wide and 10 mm thick. Width runs from 5 to 500 mm and thickness from 1 to 250 mm. **Bevel**, on by default, softens the edges.
 
 To paste SVG code from a design app such as Figma or Illustrator, click **Paste Code**. **Edit in Sketch**, beside the preview, opens the outline in Sketch so you can change it before adding it.

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button, MetaLine, Section, TextArea, FileImportIcon, PlusIcon } from '../../design-system';
 import { parseSvgTo3DNodes, type ParsedSvg3DResult } from '../../utils/svgTo3DParser';
 import { OutputFields } from './OutputFields';
@@ -10,6 +10,7 @@ import { plural } from '../../../electron/plural.mjs';
 
 const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
   const svgFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const { processSvgString, showPasteSvg, svgError } = draft;
 
   const handleSvgFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,16 +47,25 @@ const SvgSource: React.FC<{ draft: StudioDraft }> = ({ draft }) => {
         onDragOver={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          setDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOver(false);
         }}
         onDrop={async (e) => {
           e.preventDefault();
           e.stopPropagation();
+          setDragOver(false);
 
           const file = e.dataTransfer?.files?.[0];
 
           if (file) processSvgString(await file.text(), file.name);
         }}
-        className="w-full rounded-xl border border-dashed border-white/[0.14] hover:border-[#0d99ff]/60 hover:bg-[#0d99ff]/[0.04] py-6 flex flex-col items-center gap-2 cursor-default transition-colors"
+        className={`w-full rounded-xl border border-dashed py-6 flex flex-col items-center gap-2 cursor-default transition-colors ${
+          dragOver
+            ? 'border-[#0d99ff]/70 bg-[#0d99ff]/[0.06]'
+            : 'border-white/[0.14] hover:border-[#0d99ff]/60 hover:bg-[#0d99ff]/[0.04]'
+        }`}
       >
         <FileImportIcon className="w-5 h-5 text-white/50" />
         <span className="text-[13.5px] text-white/85">Choose or drop an SVG</span>

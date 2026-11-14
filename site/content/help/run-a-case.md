@@ -76,12 +76,14 @@ A code panel can also change the Case's world while it runs. It can move, light 
 
 It can watch the Scene view, a camera view you placed or one of the robot's cameras at up to 640 × 480 and 15 frames a second. It can't see through your computer's camera.
 
+It can keep a value of up to 64 KB, such as a high score, on this computer. The value lasts through **Reset** and reopening the scene, and goes when you delete the Case. It isn't saved in the Case, so a Case you share or open elsewhere starts without it.
+
 ![A rover Case running, with a code panel showing the Scene camera and the target its code moved and lit red](/help/run-a-case/world.png)
 
 A code panel closes when it stops answering for 2 seconds, or doesn't start within 10 seconds. In its place you see “Couldn’t run” with the panel's name and “It didn’t answer.” A panel whose script fails while it loads shows its error there instead.
 
 The agent can write these panels and change them while the Case runs. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
 
-A link made with **Share Robot** opens the same console in the browser, as in [Share a robot as a link](/help/share-a-robot-as-a-link). Camera panels, the servos table and the tries stay in the studio. In the browser, code panels get no camera frames.
+A link made with **Share Robot** opens the same console in the browser, as in [Share a robot as a link](/help/share-a-robot-as-a-link). Camera panels, the servos table and the tries stay in the studio. In the browser, code panels get no camera frames and keep no values.
 
 Picking a view in the rail also takes you back, and so does any [[⌘K]] command other than driving, trying, **Multiply** and the dataset ones.

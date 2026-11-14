@@ -18,6 +18,7 @@ interface PortMessage {
   ok?: boolean;
   problem?: string;
   bitmap?: ImageBitmap;
+  json?: string | null;
 }
 
 interface WorldSet {
@@ -26,10 +27,43 @@ interface WorldSet {
   color?: string;
 }
 
-export function installCodeClient(win: ClientWindow) {
+type ConsoleForwarder = (win: ClientWindow, send: (message: unknown) => void) => void;
+
+export function forwardConsole(win: ClientWindow, send: (message: unknown) => void) {
+  const lineText = (value: unknown) => {
+    if (typeof value === 'string') return value;
+
+    if (value instanceof Error) return value.message;
+
+    try {
+      return JSON.stringify(value) ?? String(value);
+    } catch {
+      return String(value);
+    }
+  };
+
+  let logged = 0;
+
+  const forward = (level: string) => {
+    const original = win.console?.[level];
+
+    if (!win.console || typeof original !== 'function') return;
+
+    win.console[level] = (...args: unknown[]) => {
+      if (logged++ < 20)
+        send({ type: 'log', text: `${level === 'log' ? '' : `${level}: `}${args.map(lineText).join(' ')}` });
+
+      (original as (...a: unknown[]) => void).apply(win.console, args);
+    };
+  };
+
+  ['log', 'info', 'warn', 'error', 'debug'].forEach(forward);
+}
+
+export function installCodeClient(win: ClientWindow, forwardLogs: ConsoleForwarder) {
   const pending: unknown[] = [];
   const subs = new Map<number, (values: Values, time: number) => void>();
-  const replies = new Map<number, (reply: Reply) => void>();
+  const replies = new Map<number, (m: PortMessage) => void>();
   const streams = new Map<number, (bitmap: ImageBitmap) => void>();
   let port: MessagePort | null = null;
   let next = 1;
@@ -53,10 +87,34 @@ export function installCodeClient(win: ClientWindow) {
 
     if (m.type === 'frame') deliver(m);
 
-    if (m.type !== 'action') return;
+    if (m.type !== 'action' && m.type !== 'store') return;
 
-    replies.get(m.id ?? 0)?.({ ok: m.ok === true, ...(m.problem ? { problem: m.problem } : {}) });
+    replies.get(m.id ?? 0)?.(m);
     replies.delete(m.id ?? 0);
+  };
+
+  const replyOf = (m: PortMessage): Reply => ({ ok: m.ok === true, ...(m.problem ? { problem: m.problem } : {}) });
+
+  const ask = <T>(message: Record<string, unknown>, settle: (m: PortMessage) => T) => {
+    const id = next++;
+
+    send({ ...message, id });
+
+    return new Promise<T>((resolve, reject) =>
+      replies.set(id, (m) => {
+        try {
+          resolve(settle(m));
+        } catch (error) {
+          reject(error as Error);
+        }
+      }),
+    );
+  };
+
+  const storedValue = (m: PortMessage): unknown => {
+    if (m.ok !== true) throw new Error(String(m.problem));
+
+    return typeof m.json === 'string' ? JSON.parse(m.json) : null;
   };
 
   const adopt = (e: MessageEvent) => {
@@ -81,34 +139,7 @@ export function installCodeClient(win: ClientWindow) {
     send({ type: 'key', key: k === 'k' ? 'k' : 'Escape', meta: e.metaKey, ctrl: e.ctrlKey, shift: e.shiftKey });
   };
 
-  const lineText = (value: unknown) => {
-    if (typeof value === 'string') return value;
-
-    if (value instanceof Error) return value.message;
-
-    try {
-      return JSON.stringify(value) ?? String(value);
-    } catch {
-      return String(value);
-    }
-  };
-
-  let logged = 0;
-
-  const forwardConsole = (level: string) => {
-    const original = win.console?.[level];
-
-    if (!win.console || typeof original !== 'function') return;
-
-    win.console[level] = (...args: unknown[]) => {
-      if (logged++ < 20)
-        send({ type: 'log', text: `${level === 'log' ? '' : `${level}: `}${args.map(lineText).join(' ')}` });
-
-      (original as (...a: unknown[]) => void).apply(win.console, args);
-    };
-  };
-
-  ['log', 'info', 'warn', 'error', 'debug'].forEach(forwardConsole);
+  forwardLogs(win, send);
   win.addEventListener('message', adopt);
   win.addEventListener('error', (e: ErrorEvent) =>
     send({
@@ -143,16 +174,17 @@ export function installCodeClient(win: ClientWindow) {
       send({ type: 'event', name, value });
     },
     action(name: string) {
-      const id = next++;
-
-      send({ type: 'action', id, name });
-
-      return new Promise<Reply>((resolve) => replies.set(id, resolve));
+      return ask({ type: 'action', name }, replyOf);
     },
     world: Object.freeze({
       set(name: string, change: WorldSet = {}) {
         send({ type: 'world', name, pose: change.pose, visible: change.visible, color: change.color });
       },
+    }),
+    store: Object.freeze({
+      get: () => ask({ type: 'store-get' }, storedValue),
+      set: (value: unknown) =>
+        ask({ type: 'store-set', json: value == null ? null : (JSON.stringify(value) ?? null) }, replyOf),
     }),
     frames(camera: string, options: { width?: number; fps?: number }, onFrame: (bitmap: ImageBitmap) => void) {
       const id = next++;

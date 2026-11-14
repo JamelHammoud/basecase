@@ -114,6 +114,46 @@ document.querySelector('[data-light]').addEventListener('click', () => {
 });
 </script>`;
 
+const SCORE = `<p data-best style="margin:8px"></p>
+<button data-score style="margin:8px">Score</button>
+<script>
+let best = 0;
+const show = () => { document.querySelector('[data-best]').textContent = String(best); };
+basecase.store.get().then((kept) => { best = kept ? kept.best : 0; show(); });
+document.querySelector('[data-score]').addEventListener('click', () => {
+  best += 1;
+  show();
+  basecase.store.set({ best });
+});
+</script>`;
+
+const SCORE_CONSOLE = {
+  input: ['keys'],
+  panels: [{ id: 'score', kind: 'code', title: 'Score', height: 120, source: SCORE }],
+  layout: { areas: [{ canvas: true }, { size: 320, panels: ['score'] }] },
+};
+
+const keptOnDisk = (caseId: string) =>
+  app.page.evaluate(
+    (id) =>
+      new Promise<string | null>((done) => {
+        const request = indexedDB.open('basecase-case-stores', 1);
+
+        request.onupgradeneeded = () => request.result.createObjectStore('values');
+        request.onerror = () => done(null);
+        request.onsuccess = () => {
+          const db = request.result;
+          const read = db.transaction('values').objectStore('values').get(id);
+
+          read.onsuccess = () => {
+            db.close();
+            done(typeof read.result === 'string' ? read.result : null);
+          };
+        };
+      }),
+    caseId,
+  );
+
 const rover = () => fixtureRobots().find((r) => r.id === 'rover-diff')!;
 
 async function loadRover(cases: unknown[] = []) {
@@ -342,5 +382,34 @@ describe('Case code that shapes its world', () => {
         }),
     );
     expect((await streams()).frames).toBe(stopped);
+  });
+});
+
+describe('Case code that keeps a score', () => {
+  it('keeps the score its code stores on this computer through a reload', async () => {
+    const { page } = app;
+    const best = () => frameOf('score').locator('[data-best]').textContent();
+
+    await openCase(SCORE_CONSOLE);
+    await expect.poll(best, { timeout: 30000 }).toBe('0');
+    await expect
+      .poll(
+        async () => {
+          if (Number(await best()) < 3) await frameOf('score').locator('[data-score]').click();
+
+          return best();
+        },
+        { timeout: 30000 },
+      )
+      .toBe('3');
+    await expect.poll(() => keptOnDisk('rover-code'), { timeout: 10000 }).toBe('{"best":3}');
+
+    await page.reload();
+    await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
+      timeout: 60000,
+    });
+    await openCase(SCORE_CONSOLE);
+    await expect.poll(best, { timeout: 30000 }).toBe('3');
+    expect(app.errors).toEqual([]);
   });
 });

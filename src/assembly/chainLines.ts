@@ -99,7 +99,7 @@ export function orphanLines(sleeves: SleeveHost[]): ReportLine[] {
         {
           rank: RANK.orphan,
           code: 'orphan',
-          text: `${listIds(ids)}: no screw threads into ${ids.length === 1 ? 'this insert' : 'these inserts'}. Add the screw, or remove the insert.`,
+          text: `${listIds(ids)}: no screw threads into the insert. Add the screw, or remove the insert.`,
           ids,
         },
       ]

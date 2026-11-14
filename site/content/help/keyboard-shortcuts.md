@@ -20,6 +20,7 @@ covers:
   - src/components/shortcutGroups.ts
   - src/components/ShortcutsList.tsx
   - src/workspace/useWorkspaceKeys.ts
+  - src/components/tries/useTriesKeys.ts
   - src/app/tabShortcuts.ts
   - src/design-system/platformKeys.ts
   - src/components/agent/Composer.tsx
@@ -85,6 +86,8 @@ To open the **Shortcuts** pane, press [[?]] when you're not typing.
 | Deselect | [[Esc]] |
 
 To leave the open mode, clear anything smaller inside it, then press [[Esc]]. Sketch and Import SVG stay open as long as they hold a drawing.
+
+In [Tries](/help/open-a-try-from-any-scene), [[⌫]] deletes the selected tries once you confirm. Keys without [[⌘]] leave the scene alone there.
 
 ## Scenes
 

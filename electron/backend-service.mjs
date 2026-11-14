@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
+import { TryStore } from './library/tryStore.mjs';
 import { EarthTiles } from './earth/index.mjs';
 import { HubAccount } from './hub/index.mjs';
 import { OnshapeAccount } from './onshape/index.mjs';
@@ -408,6 +409,15 @@ export class BasecaseBackendService {
     });
 
     return this.sceneLibrary;
+  }
+
+  get tries() {
+    this.tryStore ??= new TryStore({
+      triesDir: path.join(this.libraryDir, 'tries'),
+      cacheFile: path.join(this.libraryDir, '.try-summaries.json'),
+    });
+
+    return this.tryStore;
   }
 
   listScenes() {

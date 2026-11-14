@@ -39,6 +39,7 @@
     "perf:agent": "node tools/perf/agentBench.mjs",
     "perf:viewport": "node tools/perf/viewportBench.mjs",
     "perf:gallery": "node tools/perf/galleryBench.mjs",
+    "perf:tries": "node tools/perf/triesBench.mjs",
     "perf:booleans": "vitest run --config vitest.perf.config.ts",
     "gallery": "node tools/gallery/build.mjs",
     "basecase": "node tools/cli/basecase.mjs",

@@ -23,8 +23,8 @@ function stuckLines(plan: RemovalPlan): ReportLine[] {
 
   return grouped(entries, (key, ids) =>
     key
-      ? `${listIds(ids)}: no driver reaches them, in any build order (in the way: ${key}). Turn them to face an opening, or cut a driver hole.`
-      : `${listIds(ids)}: no driver reaches them, in any build order. Turn them to face an opening.`,
+      ? `${listIds(ids)}: out of every driver’s reach, in any build order (in the way: ${key}). Turn each to face an opening, or cut a driver hole.`
+      : `${listIds(ids)}: out of every driver’s reach, in any build order. Turn each to face an opening.`,
   ).slice(0, 2);
 }
 
@@ -86,7 +86,7 @@ function toolLine(plan: RemovalPlan): ReportLine[] {
         {
           rank: RANK.tool,
           code: 'tool',
-          text: `${plural(ids.length, 'screw')} need an L-key or ball-end driver: ${listIds(ids, 3)}. A straight driver line makes assembly easier.`,
+          text: `Driving ${plural(ids.length, 'screw')} takes an L-key or ball-end driver: ${listIds(ids, 3)}. A straight driver line makes assembly easier.`,
           ids,
         },
       ]
@@ -98,7 +98,7 @@ function serviceText(r: ServiceResult, target: number): string {
     return `${r.id} can’t come out of the robot (in the way: ${listIds(r.blockedBy, 3)}). Give it a bay or tray behind a cover`;
   }
 
-  return `${r.id} takes ${plural(r.steps, 'step')} to replace (target ${target}): ${listIds(r.partsOut, 3)} come out first`;
+  return `${r.id} takes ${plural(r.steps, 'step')} to replace (target ${target}), with ${listIds(r.partsOut, 3)} out first`;
 }
 
 export function serviceLines(results: ServiceResult[]): ReportLine[] {

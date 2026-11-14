@@ -9,6 +9,7 @@ const REDIRECT_CODES = new Set([301, 302, 303, 307, 308]);
 const ERROR_TEXT_MAX = 300;
 const TREE_PAGES_MAX = 50;
 const LFS_JSON = 'application/vnd.git-lfs+json';
+const COMMIT_SHA = /^[0-9a-f]{40}$/;
 
 export const DATASETS = '/datasets';
 
@@ -67,7 +68,7 @@ export class HubClient {
     const detail = errorDetail((await res.text().catch(() => '')).slice(0, ERROR_TEXT_MAX * 4));
 
     const message =
-      res.status === 401
+      res.status === 401 && this.token
         ? TOKEN_REFUSED
         : serviceRefusal('Hugging Face', { status: res.status, detail: plainDetail(detail), again: this.again });
 
@@ -83,7 +84,7 @@ export class HubClient {
       headers: {
         ...(json === undefined ? {} : { 'Content-Type': 'application/json' }),
         ...headers,
-        Authorization: `Bearer ${this.token}`,
+        ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
       },
     });
 
@@ -106,21 +107,48 @@ export class HubClient {
     });
   }
 
-  async listFiles(repo) {
-    const paths = [];
-    let next = `${this.apiRoot}/${repo}/tree/main?recursive=true`;
+  sameListing(link, path) {
+    if (!link) return null;
+
+    const url = new URL(link, this.origin);
+
+    return url.origin === this.origin && url.pathname === path ? `${url.pathname}${url.search}` : null;
+  }
+
+  async listTree(repo, rev = 'main') {
+    const entries = [];
+    const path = `${this.apiRoot}/${repo}/tree/${encodeURIComponent(rev)}`;
+    let next = `${path}?recursive=true`;
 
     for (let page = 0; next && page < TREE_PAGES_MAX; page += 1) {
       const res = await this.api(next, { allow: [404] });
 
-      if (res.status === 404) return paths;
+      if (res.status === 404) return entries;
 
-      for (const entry of await res.json()) if (entry?.type === 'file') paths.push(String(entry.path));
+      const listed = await res.json();
 
-      next = nextLink(res.headers.get('link'));
+      for (const entry of Array.isArray(listed) ? listed : []) {
+        if (entry?.type === 'file')
+          entries.push({ path: String(entry.path), size: Number(entry.lfs?.size ?? entry.size) || 0 });
+      }
+
+      next = this.sameListing(nextLink(res.headers.get('link')), path);
     }
 
-    return paths;
+    return entries;
+  }
+
+  async listFiles(repo, rev = 'main') {
+    return (await this.listTree(repo, rev)).map((entry) => entry.path);
+  }
+
+  async revisionSha(repo, rev) {
+    const res = await this.api(`${this.apiRoot}/${repo}/revision/${encodeURIComponent(rev)}`);
+    const sha = String((await res.json().catch(() => null))?.sha ?? '');
+
+    if (!COMMIT_SHA.test(sha)) throw new Error('Hugging Face didn’t name a commit for that revision.');
+
+    return sha;
   }
 
   async preupload(repo, files) {

@@ -21,8 +21,8 @@ import { MATERIALS, type InspectorProps, type Phase } from './types';
 import { keyFor } from '../../app/shortcuts';
 
 export const PositionSection: React.FC<
-  PartSectionProps & Pick<InspectorProps, 'snapStepMm' | 'onDropToFloor' | 'onStack'>
-> = ({ part, onUpdate, snapStepMm, onDropToFloor, onStack }) => {
+  PartSectionProps & Pick<InspectorProps, 'snapStepMm' | 'onDropToFloor' | 'onStack' | 'onCenter'>
+> = ({ part, onUpdate, snapStepMm, onDropToFloor, onStack, onCenter }) => {
   const setPos = (idx: number, v: number, live?: Phase) => {
     const next: [number, number, number] = [...part.position];
 
@@ -53,7 +53,7 @@ export const PositionSection: React.FC<
             icon={<CrosshairIcon className="w-3.5 h-3.5" />}
             title="Center on origin"
             size="xs"
-            onClick={() => onUpdate({ position: [0, part.position[1], 0] })}
+            onClick={onCenter}
           />
         </>
       }

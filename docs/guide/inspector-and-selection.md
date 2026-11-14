@@ -24,7 +24,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 - **Several parts selected (`MultiInspector`), like a multi-selection in Figma:**
   - Title: the group name (renamed in place, one undo step on Enter or blur), or “N parts”. Under it, the part count and the selection's overall size (`39 × 50 × 39 mm`). Group/Ungroup, Duplicate, Mirror (a menu of Side, Front and Top, below), Save to Library and Delete sit beside it.
   - **Align:** one icon strip per axis (min · center · max) with Spread beside it (`AlignBar`; Spread shows from 3 parts).
-  - **Position:** X/Y/Z of the selection's bounds center. Typing, scrubbing and math move every unlocked part together (`handleMoveSelection` takes an absolute target computed from the latest parts, so Enter + blur can't move it twice). Drop to floor and Center on origin in the header.
+  - **Position:** X/Y/Z of the selection's bounds center. Typing, scrubbing and math move every unlocked part together (`handleMoveSelection` takes an absolute target computed from the latest parts, so Enter + blur can't move it twice). Drop to floor and Center on origin in the header run the same edits as ⌘K and the right-click menu (`dropToGround` and `centerOnOrigin` in `workspace/usePartEdits.ts`); Center on Origin moves the bounds center to X 0, Z 0 and leaves the height alone.
   - **Rotation:** the single part's `QuarterTurns` strip; X / Y / Z 90° turns the selection as one piece about its center (`handleRotateSelection`).
   - **Combine:** Union / Subtract / Intersect on one strip; Subtract's tooltip names the part it keeps.
   - **Appearance:** `ColorField` and material, each showing “Mixed” when the parts differ.

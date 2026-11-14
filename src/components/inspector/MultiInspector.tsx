@@ -131,6 +131,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
   onAlign,
   onDistribute,
   onDropToFloor,
+  onCenter,
   onMoveSelection,
   onRotateSelection,
 }) => (
@@ -154,7 +155,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
             icon={<CrosshairIcon className="w-3.5 h-3.5" />}
             title="Center on origin"
             size="xs"
-            onClick={() => onMoveSelection({ 0: 0, 2: 0 })}
+            onClick={onCenter}
           />
         </>
       }

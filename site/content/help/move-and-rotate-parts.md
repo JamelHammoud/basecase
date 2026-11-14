@@ -61,6 +61,6 @@ The **90°** buttons under **Rotation** turn the part a quarter turn around X, Y
 - **Stack on part below** ([[S]]) sets it on top of the part underneath.
 - **Center on origin** puts its X and Z at 0.
 
-The three are in the header of **Position**. The first two are also in the part's right-click menu and [[⌘K]].
+The three are in the header of **Position**, the part's right-click menu and [[⌘K]].
 
 To line up several parts with each other, follow [Align and spread parts](/help/align-and-spread-parts).

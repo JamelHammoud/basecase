@@ -13,8 +13,6 @@ import type { CommandInputs } from './sceneCommands';
 import { showLeftTab } from './showView';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-const ic = 'w-4 h-4';
-
 const showOperateOf = (core: WorkspaceCore) => () => showLeftTab(core, 'operate');
 
 export function calibrateJoints(core: WorkspaceCore, only?: readonly string[]) {
@@ -41,7 +39,7 @@ function setUpServosCommands({ core }: CommandInputs, showOperate: () => void): 
       id: 'set-up-servos',
       group: 'Operate',
       label: 'Set Up Servos',
-      icon: <OperateIcon className={ic} />,
+      icon: <OperateIcon />,
       keywords: 'servo ids number assign factory plug emulated robot',
       run: () => {
         showOperate();
@@ -61,7 +59,7 @@ function replayCommands(core: WorkspaceCore): Command[] {
       id: 'replay-in-sim',
       group: 'Operate',
       label: 'Replay in Sim',
-      icon: <OperateIcon className={ic} />,
+      icon: <OperateIcon />,
       keywords: 'fault stall replay robot run case simulate torque',
       run: () => replayRobotRun(core, messageId),
     },
@@ -78,7 +76,7 @@ function linkCommands({ core }: CommandInputs, showOperate: () => void): Command
         id: 'disconnect-robot',
         group: 'Operate',
         label: 'Disconnect Robot',
-        icon: <OperateIcon className={ic} />,
+        icon: <OperateIcon />,
         keywords: 'robot daemon emulated servos stop',
         run: () => void disconnectRobot(),
       },
@@ -91,7 +89,7 @@ function linkCommands({ core }: CommandInputs, showOperate: () => void): Command
       id: 'connect-emulated-robot',
       group: 'Operate',
       label: 'Connect Emulated Robot',
-      icon: <OperateIcon className={ic} />,
+      icon: <OperateIcon />,
       keywords: 'robot daemon emulated servos feetech unitree g1',
       run: () => {
         showOperate();
@@ -115,7 +113,7 @@ export function operateCommands(inputs: CommandInputs): Command[] {
       id: 'show-operate',
       group: 'Panels',
       label: 'Show Operate',
-      icon: <OperateIcon className={ic} />,
+      icon: <OperateIcon />,
       keywords: 'robot daemon emulated servos operate hardware',
       run: showOperate,
     },
@@ -126,7 +124,7 @@ export function operateCommands(inputs: CommandInputs): Command[] {
             id: 'calibrate-robot',
             group: 'Operate',
             label: 'Calibrate Servos',
-            icon: <OperateIcon className={ic} />,
+            icon: <OperateIcon />,
             keywords: 'calibration fit servos emulated robot sim twin',
             run: () => calibrateJoints(core),
           },

@@ -59,10 +59,8 @@ const RobotTile: React.FC<{
   );
 };
 
-const icon = 'w-3.5 h-3.5';
-
 const importedMenu = (robot: RobotEntry, onInsert: () => void): ContextMenuEntry[] => [
-  { label: 'Insert', icon: <PlusIcon className={icon} />, onSelect: onInsert },
+  { label: 'Insert', icon: <PlusIcon />, onSelect: onInsert },
   { divider: true },
   deleteEntry(() =>
     confirmAction({

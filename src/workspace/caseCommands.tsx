@@ -21,8 +21,6 @@ import { showLeftTab } from './showView';
 import type { CommandInputs } from './sceneCommands';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-const ic = 'w-4 h-4';
-
 const showCases = (core: WorkspaceCore) => showLeftTab(core, 'cases');
 
 export const showNewCase = (core: WorkspaceCore) => {
@@ -51,7 +49,7 @@ const runCaseCommand = (core: WorkspaceCore): Command => ({
   id: 'case-run',
   group: 'Simulate',
   label: 'Run Case',
-  icon: <ExpandIcon className={ic} />,
+  icon: <ExpandIcon />,
   keywords: 'case app console teleop cameras joints tries operator dashboard',
   run: core.caseRun.enter,
 });
@@ -63,7 +61,7 @@ function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Co
     id: 'case-export-dataset',
     group: 'Simulate',
     label: 'Export Dataset',
-    icon: <DownloadIcon className={ic} />,
+    icon: <DownloadIcon />,
     keywords: 'lerobot gr00t groot demonstrations training data video parquet',
     run: dataset.exportDataset,
   };
@@ -71,7 +69,7 @@ function datasetCommands({ dataset }: WorkspaceCore['simTraining']['cases']): Co
     id: 'case-publish-dataset',
     group: 'Simulate',
     label: 'Publish to Hugging Face',
-    icon: <ShareIcon className={ic} />,
+    icon: <ShareIcon />,
     keywords: 'hub upload share dataset lerobot gr00t groot hf',
     run: dataset.publishDataset,
   };
@@ -89,7 +87,7 @@ function multiplyCommands({ multiply }: WorkspaceCore['simTraining']['cases']): 
       id: 'case-multiply',
       group: 'Simulate',
       label: 'Multiply',
-      icon: <DuplicateIcon className={ic} />,
+      icon: <DuplicateIcon />,
       keywords: 'try variations demonstrations dataset augment generate jitter',
       run: () => multiply.multiply(latest),
     },
@@ -104,7 +102,7 @@ function fromTriesCommands({ fromTries }: WorkspaceCore['simTraining']['cases'])
       id: 'case-train-from-tries',
       group: 'Simulate',
       label: 'Train from Tries',
-      icon: <TrainIcon className={ic} />,
+      icon: <TrainIcon />,
       keywords: 'policy imitation behaviour behavior cloning learn demonstrations demos act lerobot skill',
       run: fromTries.train,
     },
@@ -121,7 +119,7 @@ function matCommands({ simTraining, tool }: WorkspaceCore): Command[] {
     id: 'case-export-mat',
     group: 'Simulate',
     label: 'Export Case Mat',
-    icon: <DownloadIcon className={ic} />,
+    icon: <DownloadIcon />,
     keywords: 'print pdf floor apriltag tags camera track real robot',
     run: mat.exportMat,
   };
@@ -129,7 +127,7 @@ function matCommands({ simTraining, tool }: WorkspaceCore): Command[] {
     id: 'case-try-real',
     group: 'Simulate',
     label: `Try ${active.name} on Real Robot`,
-    icon: <CameraIcon className={ic} />,
+    icon: <CameraIcon />,
     keywords: 'case camera mat apriltag tags track physical hardware attempt',
     run: () => {
       tool.setRightTab('sim');
@@ -151,7 +149,7 @@ function renameCommands(core: WorkspaceCore): Command[] {
       id: 'case-rename',
       group: 'Simulate',
       label: 'Rename Case',
-      icon: <EditIcon className={ic} />,
+      icon: <EditIcon />,
       keywords: 'case name title',
       run: () => {
         showCases(core);
@@ -169,7 +167,7 @@ function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
       id: 'share-robot',
       group: 'Simulate',
       label: 'Share Robot',
-      icon: <ShareIcon className={ic} />,
+      icon: <ShareIcon />,
       keywords: 'link url web browser gallery hub hugging face publish drive',
       run: share.share,
     },
@@ -183,7 +181,7 @@ function compareCommands(core: WorkspaceCore): Command[] {
     id: `case-compare-${choice.tabId}`,
     group: 'Simulate',
     label: `Compare with ${choice.name}`,
-    icon: <CompareIcon className={ic} />,
+    icon: <CompareIcon />,
     keywords: 'case versus pass rate which better robot scene tab',
     run: () => {
       caseCompare.start(choice.tabId);
@@ -200,7 +198,7 @@ function exploreCommands({ caseExplore, tool }: WorkspaceCore): Command[] {
       id: 'case-explore',
       group: 'Simulate',
       label: 'Explore',
-      icon: <SwapIcon className={ic} />,
+      icon: <SwapIcon />,
       keywords: 'case servo version variant voltage supply sweep which buy cheaper stronger compare',
       run: () => {
         caseExplore.start();
@@ -222,14 +220,14 @@ export function caseCommands({ core }: CommandInputs): Command[] {
         group: 'Simulate',
         label: 'Stop Driving',
         shortcut: 'Esc',
-        icon: <StopIcon className={ic} />,
+        icon: <StopIcon />,
         run: sim.drive.stop,
       }
     : {
         id: 'drive-start',
         group: 'Simulate',
         label: 'Drive',
-        icon: <RunIcon className={ic} />,
+        icon: <RunIcon />,
         keywords: 'keyboard gamepad play joystick',
         run: () => {
           tool.setRightTab('sim');
@@ -243,7 +241,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
           group: 'Simulate',
           label: 'Start Over',
           shortcut: 'R',
-          icon: <RotateLeftIcon className={ic} />,
+          icon: <RotateLeftIcon />,
           keywords: 'respawn reset fell',
           run: sim.drive.respawn,
         },
@@ -256,7 +254,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
             id: 'case-try',
             group: 'Simulate',
             label: `Try ${cases.active.name}`,
-            icon: <RunIcon className={ic} />,
+            icon: <RunIcon />,
             keywords: 'case attempt play',
             run: () => {
               tool.setRightTab('sim');
@@ -274,7 +272,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
           id: 'new-case',
           group: 'Simulate',
           label: 'New Case',
-          icon: <PlusIcon className={ic} />,
+          icon: <PlusIcon />,
           keywords: 'case challenge world goal level make create',
           run: () => showNewCase(core),
         },
@@ -286,7 +284,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
       id: 'show-cases',
       group: 'Panels',
       label: 'Show Cases',
-      icon: <CasesIcon className={ic} />,
+      icon: <CasesIcon />,
       keywords: 'challenge world goal level',
       run: () => showCases(core),
     },

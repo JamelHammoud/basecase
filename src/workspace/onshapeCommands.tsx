@@ -14,7 +14,7 @@ export function onshapeCommands({ core, actions }: CommandInputs): Command[] {
       id: 'update-from-onshape',
       group: 'Scene',
       label: 'Update from Onshape',
-      icon: <RefreshIcon className="w-4 h-4" />,
+      icon: <RefreshIcon />,
       keywords: `onshape refresh reload sync cad assembly ${target.group.name}`,
       run: () => void actions.onshape.update(target.group.id),
     },

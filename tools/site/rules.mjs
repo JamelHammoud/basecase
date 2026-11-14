@@ -1,3 +1,4 @@
+import { missingLabels } from '../copy/labels.mjs';
 import { findBritish } from '../copy/spelling.mjs';
 import { SITE_BANNED, VAGUE_ALT, VAGUE_LINK_TEXT } from './banned.mjs';
 import { IMAGE, KEYS, LINK, plainText, prose, sentencesOf, wordCount } from './blocks.mjs';
@@ -185,3 +186,5 @@ export function plainKeys(page) {
     .filter(({ found }) => found)
     .map(({ line, found }) => problem(line, found));
 }
+
+export const uiLabels = (page, site) => (site.labels ? missingLabels(page.source, site.labels) : []);

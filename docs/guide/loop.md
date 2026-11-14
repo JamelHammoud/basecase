@@ -150,7 +150,7 @@ The table shows this week, last week and the change. Last week comes from the pr
 
 ### Writing posts and help
 
-basecase.so's `/changelog`, `/blog` and `/help` are built from markdown in `site/content/` by `npm run build:site` ([Running and testing](running-and-testing.md), §0d). To add one, write a file; nothing else needs registering. How to write each one, from the first sentence to the help link, is [Copy](copy.md), §3f; `npm run check:site` (`tools/check-site.mjs`, part of `npm run check` and of `check:changed` for files under `site/`) fails the rules a script can check.
+basecase.so's `/changelog`, `/blog` and `/help` are built from markdown in `site/content/` by `npm run build:site` ([Running and testing](running-and-testing.md), §0d). To add one, write a file; nothing else needs registering. How to write each one, from the first sentence to the help link, is [Copy](copy.md), §3f; `npm run check:site` (`tools/check-site.mjs`, part of `npm run check`, and of `check:changed` for files under `site/` and for app code whose labels articles name) fails the rules a script can check, a label, menu path or shortcut the app doesn't have among them (Copy, §3f).
 
 | Folder | File name | Front matter |
 |---|---|---|

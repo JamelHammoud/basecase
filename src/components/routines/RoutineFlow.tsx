@@ -64,7 +64,7 @@ export function RoutineFlow({ flow, states, errors }: RoutineFlowProps) {
       items: [
         {
           label: 'Add Step After',
-          icon: <PlusIcon className="w-3.5 h-3.5" />,
+          icon: <PlusIcon />,
           onSelect: () => editor.addAfter(node.id),
         },
         ...(kind === 'base' ? [] : [{ divider: true as const }, deleteEntry(() => editor.remove(node.id), '⌫')]),

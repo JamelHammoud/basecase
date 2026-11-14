@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { floorIn, interferenceIn, sweepsIn } from './analysisPool';
+import { floorIn, interferenceIn, stlIn, sweepsIn } from './analysisPool';
 import { snapshotShapes } from './sceneShapes';
 
 const box = (id: string, x: number, size = 20) => {
@@ -188,6 +188,28 @@ describe('the lowest point of a posed robot', () => {
 
   it('has no lowest point without meshes', async () => {
     expect(await floorIn(snapshotShapes([]))).toBeNull();
+  });
+});
+
+describe('the scene as an STL', () => {
+  it('writes every part in one binary STL, turned so Z points up', async () => {
+    const raised = box('raised', 40);
+
+    raised.object.position.y = 60;
+
+    const bytes = await stlIn(snapshotShapes([box('floor', 0), raised]));
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const count = view.getUint32(80, true);
+    const heights = Array.from({ length: count * 3 }, (_, k) => {
+      const at = 84 + Math.floor(k / 3) * 50 + 12 + (k % 3) * 12;
+
+      return view.getFloat32(at + 8, true);
+    });
+
+    expect(count).toBe(24);
+    expect(bytes.byteLength).toBe(84 + count * 50);
+    expect(Math.min(...heights)).toBeCloseTo(-10, 3);
+    expect(Math.max(...heights)).toBeCloseTo(70, 3);
   });
 });
 

@@ -4,10 +4,12 @@ import { actuatorOptions, type ActuatorOption } from './actuatorCatalog';
 import { isLegJoint } from './engineeringBody';
 import { jointEnvelope, outsideShare, type ServoLookup } from './engineeringEnvelope';
 import { plural } from '../../electron/plural.mjs';
-import { jointLabel, nm } from './engineeringFormat';
+import { jointLabel } from './engineeringFormat';
+import { torque } from './torque';
 import type { CheckRow, JointEnvelope, JointLoad, WalkJoint, WalkSim } from './engineeringTypes';
 import { PEAK_LIMITS, peakStatus } from './peakTorque';
 import { duration, runClock } from './duration';
+import { percent } from '../../electron/percent.mjs';
 
 interface PeakLine {
   load: JointLoad;
@@ -28,9 +30,9 @@ const pastLine = (outside: number) => outside > PEAK_LIMITS.outside;
 
 function peakLineText(p: PeakLine): string {
   const over = p.walk.overS > 0 ? `, above stall for ${duration(p.walk.overS)}` : '';
-  const past = pastLine(p.outside) ? `, ${Math.round(p.outside * 100)}% of the walk past its torque–speed line` : '';
+  const past = pastLine(p.outside) ? `, ${percent(p.outside)} of the walk past its torque–speed line` : '';
 
-  return `${jointLabel(p.load.joint)}: asks for ${nm(p.walk.p99Nm)} N·m at the 99th percentile, ${shareOf(p).toFixed(2)} of its ${nm(p.stallNm)} N·m stall${over}${past}`;
+  return `${jointLabel(p.load.joint)}: asks for ${torque(p.walk.p99Nm)} at the 99th percentile, ${shareOf(p).toFixed(2)} of its ${torque(p.stallNm)} stall${over}${past}`;
 }
 
 function lineStatus(walk: WalkJoint, stallNm: number, outside: number): CheckRow['status'] {

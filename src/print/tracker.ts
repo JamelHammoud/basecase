@@ -1,4 +1,5 @@
 import type { PrintRecord, ScenePart } from '../types/robotics';
+import { isPrinted } from '../utils/bom';
 import type { Plate } from './plan';
 
 export type PlateState = 'new' | 'sent' | 'printing' | 'printed' | 'failed';
@@ -36,6 +37,27 @@ export function splitPrinted(parts: ScenePart[], records: PrintRecord[] = [], ke
   const printed = parts.filter((p) => keys.get(p.id) === keyOf(p));
 
   return { printed, remaining: parts.filter((p) => keys.get(p.id) !== keyOf(p)) };
+}
+
+interface PrintedScene {
+  parts: ScenePart[];
+  records?: PrintRecord[];
+  keyOf: (p: ScenePart) => string;
+}
+
+export function readySteps(steps: string[][], { parts, records, keyOf }: PrintedScene): boolean[] {
+  const keys = printedKeys(records);
+  const byId = new Map(parts.map((p) => [p.id, p]));
+
+  return steps.map((ids) => {
+    const printed = ids.flatMap((id) => {
+      const part = byId.get(id);
+
+      return part && isPrinted(part) && !part.print?.skip ? [part] : [];
+    });
+
+    return printed.length > 0 && printed.every((p) => keys.get(p.id) === keyOf(p));
+  });
 }
 
 export function printRecordFor(

@@ -188,6 +188,7 @@ import type { OnshapeMate, PartGroup, RobotLinkRef } from './robotLink';
 import type { PartSketch } from '../utils/sketch/types';
 
 import type { PartPrint, PrintQuote, PrintRecord } from './print';
+import type { EnteredPrice } from './purchases';
 
 export type PrintMaterial = 'PLA' | 'PETG' | 'ABS' | 'ASA' | 'TPU';
 
@@ -218,6 +219,7 @@ export interface ProjectSettings extends ProjectRecords {
   material: PrintMaterial;
   infillPct: number;
   printProcess?: string;
+  labelParts?: boolean;
   prints?: PrintRecord[];
   madeBy?: 'service';
   quotes?: PrintQuote[];
@@ -311,21 +313,7 @@ export interface RobotAnimation {
 
 export const DEFAULT_PROJECT: ProjectSettings = { printer: 'default', material: 'PLA', infillPct: 15 };
 
-export interface EnteredPrice {
-  amount: number;
-  currency: string;
-}
-
-export interface PurchaseRecord {
-  url?: string;
-  asin?: string;
-  title?: string;
-  packQty: number;
-  priceUsd: number;
-  entered?: EnteredPrice;
-  checkedAt: string;
-  note?: string;
-}
+export type { EnteredPrice, PurchaseRecord, Purchases, StoredPurchase } from './purchases';
 
 export interface ReferenceImageRecord {
   id: string;

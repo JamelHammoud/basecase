@@ -27,7 +27,7 @@ function splitKeys(s: string): string[] {
   if (/^[A-Za-z]{2,}$/.test(s)) return [s];
 
   const out: string[] = [];
-  const re = /(Space|Esc|Tab|Enter|Shift|Drag|↩︎|[⌘⇧⌥⌃⌫]|.)/g;
+  const re = /(Space|Esc|Tab|Enter|Shift|Drag|↩\uFE0E?|[⌘⇧⌥⌃⌫]|.)/g;
   let m: RegExpExecArray | null;
 
   while ((m = re.exec(s))) {

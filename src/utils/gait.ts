@@ -1,6 +1,7 @@
 import type { AnimationKeyframe, JointValues, RobotPoseState, RootOffset } from '../types/robotics';
 import { goalParts, goalTargets, roundTo, type BuiltAnimation, type PointOf } from './animationGoals';
 import { clampJoint, isMovable, preBend, solveIK, type IkTarget, type Rig, type V3 } from './kinematics';
+import { lengthLabel } from './size';
 
 export interface GaitSpec {
   feet: string[];
@@ -261,8 +262,7 @@ function gaitNotes(plan: GaitPlan, ikError: Record<string, number>, keyframes: A
   if (unknown.length) notes.push(`No joints ${unknown.join(', ')}`);
 
   for (const [f, e] of Object.entries(ikError))
-    if (e > 3)
-      notes.push(`${f} misses its path by up to ${roundTo(e, 1)} mm: shorten the stride or lift, or add crouch`);
+    if (e > 3) notes.push(`${f} misses its path by up to ${lengthLabel(e)}: shorten the stride or lift, or add crouch`);
 
   const nearLimit = (v: number, limit: number) => Math.abs(v - limit) < 0.05;
   const atLimit = plan.free.filter((id) => {

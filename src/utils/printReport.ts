@@ -6,6 +6,7 @@ import { buildPrintPlan, choosePose, type PrintCheck, type PrintPlan } from '../
 import type { MeshMeasure } from '../three/meshMeasure';
 import { PRINT_RULES, printHours, type PrintShape, type Vec3 } from '../three/printability';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
+import { firstSteps, guideStepParts } from '../guide/guideSteps';
 import { filamentGrams, isPrinted, printMaterialOf } from './bom';
 import { duration } from './duration';
 import { weight } from './weight';
@@ -141,6 +142,7 @@ const sum = (parts: PrintedPartReport[], value: (r: PrintedPartReport) => number
 export interface PrintContext {
   project: ProjectSettings;
   printer: PrinterSetup;
+  scene?: ScenePart[];
 }
 
 export async function printReportOf(parts: ScenePart[], ctx: PrintContext, fetchShapes: PrintShapes) {
@@ -161,12 +163,14 @@ export function buildPrintReport(parts: ScenePart[], ctx: PrintContext): PrintRe
       return shape ? [{ part, shape }] : [];
     }),
     ctx,
+    firstSteps(guideStepParts(ctx.scene ?? parts, ctx.project)),
   );
 }
 
 export function reportFromShapes(
   entries: Array<{ part: ScenePart; shape: PartShape }>,
   ctx: PrintContext,
+  firstStep: ReadonlyMap<string, number> = new Map(),
 ): PrintReport {
   const byId = new Map(entries.map(({ part }) => [part.id, part]));
   const out: PrintedPartReport[] = entries.map(({ part, shape }) => ({
@@ -174,7 +178,12 @@ export function reportFromShapes(
     copies: Math.max(1, part.print?.copies ?? 1),
   }));
   const plan = buildPrintPlan(
-    out.map((r) => ({ ...r, shapeKey: shapeKey(byId.get(r.id)!), print: byId.get(r.id)!.print })),
+    out.map((r) => ({
+      ...r,
+      shapeKey: shapeKey(byId.get(r.id)!),
+      print: byId.get(r.id)!.print,
+      firstStep: firstStep.get(r.id),
+    })),
     ctx.printer,
     bedOf(ctx.printer.model),
     printSettingsKey(ctx.project),

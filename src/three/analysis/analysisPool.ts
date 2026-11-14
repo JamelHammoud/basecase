@@ -10,8 +10,9 @@ import {
   MISSING_SHAPE,
   type AnalysisTask,
   type Instance,
+  type PlateFilesInput,
   type StlItem,
-  type ThreeMfFileSpec,
+  type ThreeMfResult,
 } from './analysisOps';
 import { copyGeometries, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
@@ -134,12 +135,8 @@ export function printMeshesIn(scene: SceneShapes): Promise<Record<string, MeshDa
   return analyze(leastBusy(), scene, { kind: 'meshes', instances: scene.instances });
 }
 
-export function threeMfIn(
-  scene: SceneShapes,
-  files: ThreeMfFileSpec[],
-  plateSize: [number, number],
-): Promise<Record<string, Uint8Array>> {
-  return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, files, plateSize });
+export function threeMfIn(scene: SceneShapes, plates: PlateFilesInput): Promise<ThreeMfResult> {
+  return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, ...plates });
 }
 
 export function stlIn(scene: SceneShapes, items: StlItem[]): Promise<Record<string, Uint8Array>> {

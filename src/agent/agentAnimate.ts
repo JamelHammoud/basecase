@@ -15,7 +15,6 @@ import {
   pointOfFor,
   poseCheck,
   previewStates,
-  r1,
   render,
   restore,
   restPairs,
@@ -27,6 +26,7 @@ import {
 } from './agentPoseShared';
 import { plural } from '../../electron/plural.mjs';
 import { duration, runClock } from '../utils/duration';
+import { lengthLabel } from '../utils/size';
 
 export interface AnimatePayload {
   robot?: string;
@@ -126,7 +126,15 @@ function keyframeAnimation(scope: Scope, p: AnimatePayload, pointOf: PointOf): B
 
 const COLLISION_SAMPLES = 8;
 
-const SIZE_OF_PROBLEM = /[\d.]+ mm|\d+ more/;
+const SIZE_OF_PROBLEM = /([\d.]+) (mm|m)\b|(\d+) more/;
+
+function problemSize(line: string): number {
+  const [, length, unit, count] = SIZE_OF_PROBLEM.exec(line) ?? [];
+
+  if (length) return parseFloat(length) * (unit === 'm' ? 1000 : 1);
+
+  return count ? parseFloat(count) : 0;
+}
 
 export function checkedTimes(anim: Pick<RobotAnimation, 'duration' | 'loop'>): number[] {
   const spans = anim.loop ? COLLISION_SAMPLES : COLLISION_SAMPLES - 1;
@@ -140,7 +148,7 @@ export function worstProblems(sampled: Array<{ time: number; lines: string[] }>)
   for (const { time, lines } of sampled) {
     for (const line of lines) {
       const key = line.replace(SIZE_OF_PROBLEM, '');
-      const size = parseFloat(SIZE_OF_PROBLEM.exec(line)?.[0] ?? '0');
+      const size = problemSize(line);
 
       if (size > (worst.get(key)?.size ?? -1)) worst.set(key, { size, text: `${line} at ${runClock(time)}` });
     }
@@ -197,7 +205,7 @@ function speedProblems(scope: Scope, anim: RobotAnimation, problems: Map<string,
 
 function animateText(made: RobotAnimation, p: AnimatePayload, built: Built, problems: Map<string, string>): string {
   const joints = new Set(made.keyframes.flatMap((k) => Object.keys(k.values)));
-  const ik = Object.entries(built.ikError).map(([k, v]) => `${k} within ${r1(v)} mm`);
+  const ik = Object.entries(built.ikError).map(([k, v]) => `${k} within ${lengthLabel(v)}`);
 
   return (
     `${made.name}: ${duration(made.duration)}, ${plural(made.keyframes.length, 'keyframe')}, ${plural(joints.size, 'joint')}${made.loop ? ', loops' : ''}${p.play !== false ? ', playing' : ''}.` +

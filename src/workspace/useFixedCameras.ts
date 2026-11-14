@@ -57,7 +57,6 @@ export function useFixedCameras({ project, updateProjectNow, viewportRef, showTo
 
       updateProjectNow((p) => withCameras(p, [...(p.cameras ?? []), camera]));
       expandCameraViews();
-      showToast(`Added ${camera.name}`);
     },
     reframe: (id: string) => {
       const view = viewportRef.current?.currentView();

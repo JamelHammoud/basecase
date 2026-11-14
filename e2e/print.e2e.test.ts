@@ -1,6 +1,6 @@
-import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
-import { fakeUnitUsd, startFakeSlant, type FakeSlant } from '../electron/print/services/testService.mjs';
-import { fixtureRobots } from '../src/sim/fixtures/robots';
+import { strFromU8, unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { labelFixture } from '../src/print/labels/label.fixtures';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -12,9 +12,14 @@ interface Studio {
     project: unknown;
   };
   printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
-  printState: () => { madeBy: string | null };
-  chooseService: () => Promise<void>;
-  bomLines: () => Array<{ key: string; category: string; qty: number; lineUsd?: number; estUsd?: number }>;
+  plateFiles: () => Promise<Record<string, string>>;
+  labelNotes: () => Record<string, string>;
+}
+
+interface PlateMesh {
+  triangles: number;
+  volume: number;
+  xml: string;
 }
 
 const printed = (id: string, position: number[], dimensions: Record<string, number>) => ({
@@ -73,6 +78,32 @@ const sceneParts = () =>
       .sceneRecord()
       .parts.map(({ id, kind, position, rotation, print }) => ({ id, kind, position, rotation, print: print ?? null })),
   );
+
+function meshOf(xml: string): PlateMesh {
+  const v = [...xml.matchAll(/<vertex x="([^"]+)" y="([^"]+)" z="([^"]+)"/g)].map((m) => m.slice(1, 4).map(Number));
+  const t = [...xml.matchAll(/<triangle v1="(\d+)" v2="(\d+)" v3="(\d+)"/g)].map((m) => m.slice(1, 4).map(Number));
+  const volume = t.reduce((sum, [a, b, c]) => {
+    const [p, q, r] = [v[a], v[b], v[c]];
+
+    return (
+      sum +
+      (p[0] * (q[1] * r[2] - q[2] * r[1]) - p[1] * (q[0] * r[2] - q[2] * r[0]) + p[2] * (q[0] * r[1] - q[1] * r[0])) / 6
+    );
+  }, 0);
+
+  return { triangles: t.length, volume, xml };
+}
+
+async function plateMeshes(): Promise<Record<string, PlateMesh>> {
+  const files = await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.plateFiles());
+  const objects = Object.values(files).flatMap((b64) =>
+    strFromU8(unzipSync(Buffer.from(b64, 'base64'))['3D/3dmodel.model'])
+      .split('<object ')
+      .slice(1),
+  );
+
+  return Object.fromEntries(objects.map((o) => [/name="([^"]+)"/.exec(o)![1], meshOf(o)]));
+}
 
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
@@ -176,6 +207,60 @@ describe('print layout', () => {
   });
 });
 
+describe('part labels', () => {
+  const LABEL_FIXTURE = labelFixture();
+
+  it('debosses the guide letter into the tray’s hidden floor, and Label parts off writes plain meshes', async () => {
+    await app.page.evaluate((parts) => {
+      const studio = (window as unknown as { __studio: Studio }).__studio;
+
+      studio.load({ parts, project: studio.sceneRecord().project });
+    }, LABEL_FIXTURE);
+    await expect.poll(() => partCount(app.page)).toBe(LABEL_FIXTURE.length);
+    await app.page
+      .locator('main')
+      .first()
+      .click({ position: { x: 20, y: 20 } });
+    await app.page.keyboard.press('Meta+p');
+    await expect.poll(async () => (await printPlates()).plates.flat().length, { timeout: 60000 }).toBe(5);
+
+    const labelSwitch = app.page.locator(visible('[role=switch][aria-label="Label parts"]'));
+
+    expect(await labelSwitch.getAttribute('aria-checked')).toBe('true');
+
+    const labeled = await plateMeshes();
+    const notedParts = async () =>
+      Object.keys(
+        await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.labelNotes()),
+      ).sort();
+
+    await expect.poll(notedParts).toEqual(['bracket-left', 'bracket-right', 'lid', 'tag']);
+    await app.page.locator(visible('button'), { hasText: /^Parts/ }).click();
+    await expect
+      .poll(() => app.page.locator(visible('li'), { hasText: 'Spare Tag' }).textContent())
+      .toMatch(/Letter [A-Z]+ left off: no flat face is hidden, free and big enough/);
+
+    await labelSwitch.click();
+    await expect.poll(() => labelSwitch.getAttribute('aria-checked')).toBe('false');
+
+    const plain = await plateMeshes();
+    const changed = Object.keys(plain).filter((name) => labeled[name].xml !== plain[name].xml);
+
+    expect(changed).toEqual(['Body Tray']);
+
+    for (const name of changed) {
+      expect(labeled[name].triangles).toBeGreaterThan(plain[name].triangles);
+      expect(labeled[name].volume).toBeLessThan(plain[name].volume - 1);
+    }
+
+    for (const part of LABEL_FIXTURE.filter((p) => ['tray', 'lid', 'tag'].includes(p.id)))
+      expect(plain[part.name].triangles).toBe(part.cad!.positions.length / 9);
+
+    await app.page.keyboard.press('Escape');
+    expect(app.errors).toEqual([]);
+  }, 180000);
+});
+
 describe('a Prusa printer', () => {
   it('lays out plates on the CORE One’s bed once it’s added in Settings ▸ Printers', async () => {
     await app.page.route('**/api/bridge/print-save-printers', (route) =>
@@ -221,110 +306,106 @@ describe('a Prusa printer', () => {
   });
 });
 
-describe('Made by a Service', () => {
-  const KEY = 'sl-e2e-key';
-  const BUDGET_USD = 30;
-  const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
-  const parts = rover.parts.map((p) => (p.id === 'caster_wheel_disc' ? { ...p, print: { copies: 2 } } : p));
-  const sizeOf = (id: string) => {
-    const { width, height, depth } = rover.parts.find((p) => p.id === id)!.dimensions;
+const ROBOT = [
+  printed('base', [0, 300, 0], { width: 140, height: 120, depth: 140 }),
+  printed('front-leg', [0, 220, 0], { width: 150, height: 40, depth: 150 }),
+  printed('back-leg', [0, 180, 0], { width: 150, height: 40, depth: 150 }),
+];
 
-    return [width, height, depth] as [number, number, number];
-  };
-  const quotedUsd = parts.reduce((sum, p) => sum + fakeUnitUsd(sizeOf(p.id)) * (p.print?.copies ?? 1), 0);
-  let service: FakeSlant;
+const FOUND = [
+  { name: 'Voron A', host: '127.0.0.1:7125', kind: 'moonraker', modelId: 'prusa-core-one' },
+  { name: 'Voron B', host: '127.0.0.1:7126', kind: 'moonraker', modelId: 'prusa-mk4s' },
+];
 
-  const bomLines = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.bomLines());
-  const chooseService = () =>
-    app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.chooseService());
-  const madeBy = () =>
-    app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.printState().madeBy);
-  const bom = () => app.page.locator(visible('section'), { hasText: /^Bill of materials/ }).first();
-  const group = (name: string) =>
-    bom().locator(visible('button[aria-expanded]'), { hasText: new RegExp(`^${name}\\d`) });
-  const budgetTotal = async () => {
-    const text =
-      (await app.page
-        .locator(visible('section'), { hasText: /^Checks/ })
-        .first()
-        .textContent()) ?? '';
+interface BuildStudio extends Studio {
+  markPlatePrinted: (plate: number) => void;
+  readySteps: () => boolean[];
+}
 
-    return Number(/BOM ≈ \D*([\d,]+) of/.exec(text)?.[1]?.replace(/,/g, '') ?? NaN);
-  };
+interface Send {
+  plate: number;
+  printerId: string;
+}
 
-  beforeAll(async () => {
-    service = await startFakeSlant({ key: KEY, port: inject('servicePort') });
+const sends: Send[] = [];
+
+const readySteps = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: BuildStudio }).__studio.readySteps());
+
+async function stubPrinters() {
+  await app.page.route('**/api/bridge/print-save-printers', (route) =>
+    route.fulfill({ json: (route.request().postDataJSON() as { arg: unknown }).arg }),
+  );
+  await app.page.route('**/api/bridge/print-discover', (route) => route.fulfill({ json: FOUND }));
+  await app.page.route('**/api/bridge/print-printer-status', (route) => route.fulfill({ json: { state: 'idle' } }));
+  await app.page.route('**/api/bridge/print-slice', (route) =>
+    route.fulfill({ json: { slicer: { name: 'OrcaSlicer', version: null }, slicedAt: '', plates: [] } }),
+  );
+  await app.page.route('**/api/bridge/print-send', (route) => {
+    sends.push((route.request().postDataJSON() as { arg: Send }).arg);
+
+    return route.fulfill({ json: { started: true, message: 'Started' } });
   });
+}
 
-  afterAll(async () => {
-    await service?.close();
-  });
+async function addFoundPrinters() {
+  await app.page.keyboard.press('Meta+,');
 
-  it('asks for the service’s key in Settings ▸ Accounts before it can be chosen', async () => {
-    await app.page.evaluate(
-      ({ parts, budgetUsd }) => {
-        const s = (window as unknown as { __studio: Studio }).__studio;
+  const settings = app.page.getByRole('dialog', { name: 'Settings' });
 
-        s.load({ parts, project: { ...(s.sceneRecord().project as object), budgetUsd } });
-      },
-      { parts, budgetUsd: BUDGET_USD },
-    );
-    await expect.poll(() => partCount(app.page)).toBe(parts.length);
-    await chooseService();
+  await settings.getByRole('navigation').getByRole('button', { name: 'Printers' }).click();
+  await settings.getByRole('button', { name: 'Find on Network' }).click();
+  await expect.poll(() => settings.getByRole('button', { name: 'Add', exact: true }).count()).toBe(FOUND.length);
 
-    const settings = app.page.getByRole('dialog', { name: 'Settings' });
+  for (const found of FOUND) {
+    const before = await settings.getByText(found.name, { exact: true }).count();
 
-    await expect.poll(() => settings.locator(visible('h3')).first().textContent()).toBe('Accounts');
-    expect(await madeBy()).toBeNull();
+    await settings.getByRole('button', { name: 'Add', exact: true }).nth(FOUND.indexOf(found)).click();
+    await expect.poll(() => settings.getByText(found.name, { exact: true }).count()).toBe(before + 1);
+  }
 
-    const key = settings.getByLabel('API key');
+  await app.page.keyboard.press('Escape');
+  await expect.poll(() => settings.count()).toBe(0);
+}
 
-    await key.fill(KEY);
-    await key.press('Enter');
-    await expect.poll(() => key.getAttribute('placeholder')).toBe('••••••••');
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => settings.count()).toBe(0);
-  });
+describe('printing in build order on every printer', () => {
+  it('puts the base on plate 1 and gives two idle printers different plates with Start Next', async () => {
+    await stubPrinters();
+    await app.page.evaluate((parts) => {
+      const studio = (window as unknown as { __studio: Studio }).__studio;
 
-  it('quotes one Printed parts line per shape and counts the quote in Budget', async () => {
-    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-    await chooseService();
-    await expect.poll(madeBy).toBe('service');
+      studio.load({ parts, project: studio.sceneRecord().project });
+    }, ROBOT);
+    await expect.poll(() => partCount(app.page)).toBe(ROBOT.length);
+    await addFoundPrinters();
 
-    const printed = async () => (await bomLines()).filter((l) => l.category === 'Printed parts');
-
-    await expect
-      .poll(async () => (await printed()).filter((l) => l.lineUsd !== undefined).length, { timeout: 45000 })
-      .toBe(4);
-    expect((await printed()).reduce((sum, l) => sum + l.lineUsd!, 0)).toBeCloseTo(quotedUsd, 2);
-    expect(service.state.requests.filter((r) => r.method === 'PUT')).toHaveLength(4);
-    expect((await bomLines()).some((l) => l.category === 'Filament')).toBe(false);
-    await expect.poll(() => group('Printed parts').textContent(), { timeout: 15000 }).toMatch(/^Printed parts4/);
-
-    const estimated = (await bomLines())
-      .filter((l) => l.category !== 'Equipment')
-      .reduce((sum, l) => sum + (l.lineUsd ?? l.estUsd ?? 0), 0);
-
-    await expect.poll(budgetTotal, { timeout: 30000 }).toBe(Math.round(estimated));
-    expect(app.errors).toEqual([]);
-  }, 90000);
-
-  it('brings the Filament section back when a printer is chosen again', async () => {
     await app.page
       .locator('main')
       .first()
       .click({ position: { x: 20, y: 20 } });
     await app.page.keyboard.press('Meta+p');
+    await expect
+      .poll(async () => (await printPlates()).plates, { timeout: 30000 })
+      .toEqual([['base'], ['front-leg'], ['back-leg']]);
 
-    const select = app.page.locator(visible('select[aria-label="Printer"]'));
+    for (const [i, found] of FOUND.entries()) {
+      await app.page
+        .locator(visible('[data-printer]'), { hasText: found.name })
+        .getByRole('button', { name: 'Start Next' })
+        .click();
+      await app.page.getByRole('button', { name: 'Start Print' }).click();
+      await expect.poll(() => sends.length).toBe(i + 1);
+    }
 
-    await expect.poll(() => select.inputValue()).toBe('__service');
-    await select.selectOption({ index: 0 });
-    await expect.poll(madeBy).toBeNull();
+    expect(sends.map((s) => s.plate)).toEqual([1, 2]);
+    expect(new Set(sends.map((s) => s.printerId)).size).toBe(2);
+    expect(await readySteps()).not.toContain(true);
+
+    await app.page.evaluate(() => (window as unknown as { __studio: BuildStudio }).__studio.markPlatePrinted(1));
+    await expect.poll(async () => (await readySteps())[0]).toBe(true);
+    expect((await readySteps()).slice(1)).not.toContain(true);
+
     await app.page.keyboard.press('Escape');
-    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-    await expect.poll(() => group('Filament').count(), { timeout: 30000 }).toBe(1);
-    expect(await group('Printed parts').count()).toBe(0);
     expect(app.errors).toEqual([]);
-  }, 60000);
+  }, 120000);
 });

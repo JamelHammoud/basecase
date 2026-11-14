@@ -1,6 +1,7 @@
 import { actuatorOf } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { deg, jointLabel, partLabel } from './engineeringFormat';
+import { lengthLabel } from './size';
 import { plural } from '../../electron/plural.mjs';
 import { isLegJoint } from './engineeringBody';
 import { V3, boxCorners, dot, lineDistance, norm, rotateEuler, sub } from './engineeringMath';
@@ -34,7 +35,7 @@ function misalignments(ctx: CheckContext, j: RobotJoint): string[] {
   return (j.actuators ?? []).flatMap((id) => {
     const o = outputOffset(ctx, j, id);
 
-    return o && isOffAxis(o) ? [`${j.name} (${o.angle.toFixed(1)}°, ${o.off.toFixed(1)} mm off)`] : [];
+    return o && isOffAxis(o) ? [`${j.name} (${o.angle.toFixed(1)}°, ${lengthLabel(o.off)} off)`] : [];
   });
 }
 

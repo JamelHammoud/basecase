@@ -230,6 +230,7 @@ const REVIEW_RULES: ToolRule[] = [
   plainRule(['import_maker_cad'], ShapeIcon, ['Importing the maker’s CAD', 'Imported the maker’s CAD']),
   plainRule(['verify_design'], CheckIcon, ['Verifying the design', 'Verified the design']),
   plainRule(['get_bom'], FileIcon, ['Reading the parts list', 'Read the parts list']),
+  plainRule(['record_on_hand'], FileIcon, ['Recording parts on hand', 'Recorded parts on hand']),
   plainRule(['size_actuators'], JointsIcon, ['Sizing the actuators', 'Sized the actuators']),
   plainRule(['size_arm'], JointsIcon, ['Sizing an arm', 'Sized an arm']),
   plainRule(['synthesize_linkage'], JointsIcon, ['Fitting a four-bar', 'Fitted a four-bar']),
@@ -359,7 +360,7 @@ const SOURCE_RULES: ToolRule[] = [
       const paths = list(input.paths).map((p) => String(p).split('/').pop() ?? '');
 
       return {
-        title: `${verb('Studying', 'Studied')} ${paths.length > 1 ? `${paths.length} attached files` : 'an attached file'}`,
+        title: `${verb('Studying', 'Studied')} ${paths.length > 1 ? plural(paths.length, 'attached file') : 'an attached file'}`,
         detail: optional(names(paths)),
       };
     },
@@ -378,7 +379,9 @@ const SOURCE_RULES: ToolRule[] = [
     label: ({ input, verb }) => {
       const urls = list(input.urls);
 
-      return { title: `${verb('Looking at', 'Looked at')} ${urls.length > 1 ? `${urls.length} photos` : 'a photo'}` };
+      return {
+        title: `${verb('Looking at', 'Looked at')} ${urls.length > 1 ? plural(urls.length, 'photo') : 'a photo'}`,
+      };
     },
   },
   {

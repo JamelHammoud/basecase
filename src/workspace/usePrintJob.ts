@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { PrinterSetup } from '../data/printers';
-import { jobSpec, type JobSpec } from '../print/job';
+import { bedOf } from '../print/bed';
+import { plateOnBed } from '../print/fleet';
+import { jobSpec } from '../print/job';
+import type { Plate } from '../print/plan';
 import { printBridge, type JobPayload, type SliceRecord } from '../print/printBridge';
-import type { Viewport3DHandle } from '../three/viewport/types';
 import type { PrintMaterial, ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { PrintReport } from '../utils/printReport';
 import type { ShowToast } from './types';
+import type { PlateFiles, WrittenPlates } from './usePlateWriter';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
 
@@ -16,13 +19,10 @@ interface PrintJobOptions {
   report: PrintReport | null;
   printer: PrinterSetup;
   project: ProjectSettings;
-  viewport: () => Viewport3DHandle | null;
-  threeMf?: Viewport3DHandle['printThreeMf'];
+  write: (plates: PlateFiles) => Promise<WrittenPlates>;
+  labels: string;
   showToast: ShowToast;
 }
-
-const threeMfOf = async (options: PrintJobOptions, spec: JobSpec): Promise<Record<string, Uint8Array>> =>
-  (await (options.threeMf ?? options.viewport()?.printThreeMf)?.(spec.files, spec.plateSize)) ?? {};
 
 async function buildPayload(options: PrintJobOptions, material?: PrintMaterial): Promise<JobPayload> {
   const { report, printer, project, jobId, sceneName } = options;
@@ -34,7 +34,7 @@ async function buildPayload(options: PrintJobOptions, material?: PrintMaterial):
   if (!spec.printer)
     throw new Error(`${printer.label} has no slicer profile. Export the 3MF and set it up in your slicer.`);
 
-  const files = await threeMfOf(options, spec);
+  const { files, labels } = await options.write(spec);
 
   return {
     jobId,
@@ -42,19 +42,9 @@ async function buildPayload(options: PrintJobOptions, material?: PrintMaterial):
     infillPct: project.infillPct,
     printer: spec.printer,
     material,
+    labels,
     groups: spec.groups.map((g) => ({ ...g, bytes: files[g.material] })),
   };
-}
-
-export async function threeMfFiles(options: PrintJobOptions): Promise<Array<{ name: string; bytes: Uint8Array }>> {
-  const { report, printer, project } = options;
-
-  if (!report?.plan.plates.length) return [];
-
-  const spec = jobSpec(report.plan, printer, project);
-  const files = await threeMfOf(options, spec);
-
-  return spec.groups.map((g) => ({ name: g.material, bytes: files[g.material] })).filter((f) => f.bytes);
 }
 
 function useSliceProgress(jobId: string, busy: boolean) {
@@ -112,8 +102,39 @@ export function usePrintJob(options: PrintJobOptions) {
 
   const stopSlice = () => void printBridge.stopSlice(jobId);
 
+  const slicingToast = (job: string) =>
+    showToast('Slicing…', {
+      tone: 'progress',
+      action: { label: 'Stop', onClick: () => void printBridge.stopSlice(job) },
+    });
+
+  const sliceOn = async (plate: Plate, target: PrinterSetup): Promise<string | null> => {
+    const { report } = options;
+    const bed = bedOf(target.model);
+    const moved = report && plateOnBed(plate, report.plan.bed, bed);
+
+    if (!report || !moved) return null;
+
+    const targetJob = `${jobId}-${target.id}`;
+    const plan = { ...report.plan, bed, plates: [moved] };
+
+    slicingToast(targetJob);
+
+    try {
+      await printBridge.slice(
+        await buildPayload({ ...options, jobId: targetJob, printer: target, report: { ...report, plan } }),
+      );
+
+      return targetJob;
+    } catch (e) {
+      showToast(errorMessage(e), { tone: 'error' });
+
+      return null;
+    }
+  };
+
   const runSlice = async () => {
-    showToast('Slicing…', { tone: 'progress', action: { label: 'Stop', onClick: stopSlice } });
+    slicingToast(jobId);
 
     try {
       const record = await sliceReport(options.report);
@@ -142,13 +163,21 @@ export function usePrintJob(options: PrintJobOptions) {
     }
   };
 
+  const freshSlice = (plate: Plate) =>
+    (slice?.labels ?? '') === options.labels
+      ? slice?.plates.find((p) => p.number === plate.number && p.hash === plate.hash)
+      : undefined;
+
   return {
+    jobId,
     slice,
+    freshSlice,
     slicing,
     progress,
     error,
     runSlice,
     sliceReport,
+    sliceOn,
     stopSlice,
     openInSlicer,
     reveal: () => void printBridge.reveal(jobId),

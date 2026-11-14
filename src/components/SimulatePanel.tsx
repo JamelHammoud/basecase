@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ContextMenu, ContextMenuEntry, deleteEntry, useScrollFade } from '../design-system';
+import { ContextMenu, ContextMenuEntry, deleteEntry, ShareIcon, useScrollFade } from '../design-system';
 import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
 import { withVelocity } from '../sim/driveAccess';
 import type { Simulation } from '../sim/useSimulation';
@@ -19,7 +19,8 @@ import { ResultsSection } from './simulate/ResultsSection';
 import type { CaseCompare } from '../workspace/useCaseCompare';
 import type { CaseExplore } from '../workspace/useCaseExplore';
 import { SimControls } from './simulate/SimControls';
-import { TrainSection } from './simulate/TrainSection';
+import { TrainSection, type CoachSend } from './simulate/TrainSection';
+import { coachMenuItems } from './simulate/skillMenu';
 
 interface SimulatePanelProps {
   sim: Simulation;
@@ -36,11 +37,13 @@ interface SimulatePanelProps {
   onOpenCaseCheck: () => void;
   skills: SceneSkills;
   onTeach: ((goal: string) => void) | null;
+  onCoach: CoachSend | null;
   onRunCase: () => void;
   compare: CaseCompare;
   explore: CaseExplore;
   sceneName: string;
   onToast: (message: string) => void;
+  onPublishSkill: ((row: SkillRow) => void) | null;
 }
 
 function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTeach']): WalkTeaching {
@@ -51,12 +54,19 @@ function useWalkTeaching(skills: SceneSkills, onTeach: SimulatePanelProps['onTea
   return { velocityReady: skills.velocityReady, teachWalk, walkTraining: walkRow?.state.kind === 'training' };
 }
 
+function publishEntries(row: SkillRow, publish: ((row: SkillRow) => void) | null): ContextMenuEntry[] {
+  if (!publish || row.state.kind !== 'ready') return [];
+
+  return [{ label: 'Publish to Hugging Face', icon: <ShareIcon className="w-4 h-4" />, onSelect: () => publish(row) }];
+}
+
 export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const { sim, training, cases, rig, parts, animations, policies, onSelectParts, onDeletePolicy } = props;
   const { skills, onTeach, share } = props;
   const walk = useWalkTeaching(skills, onTeach);
   const subject = watchSubject(skills, training);
   const margin = useTrainingWatch(sim, subject);
+  const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const skillActions = {
     onTrain: (row: SkillRow) =>
       row.kit || row.move ? void skills.train(row) : onTeach?.(row.record?.goal ?? row.label),
@@ -64,10 +74,19 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
     onDrive: () => void sim.drive.start(),
     onStop: skills.stop,
     onSnapshot: (row: SkillRow, ref: SnapshotRef) => void skills.playSnapshot(row, ref),
+    onMenu: (e: React.MouseEvent, row: SkillRow) => {
+      const items = [
+        ...coachMenuItems(row, { coach: skills.coach, coaches: !!props.onCoach }),
+        ...publishEntries(row, props.onPublishSkill),
+      ];
+
+      e.preventDefault();
+
+      if (items.length) setMenu({ x: e.clientX, y: e.clientY, items });
+    },
   };
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const on = sim.status !== 'off';
-  const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [policyKey, setPolicyKey] = useState<string | null>(null);
   const kase = cases.active;
   const openPolicyMenu = (e: React.MouseEvent, id: string) => {
@@ -117,6 +136,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
           actions={skillActions}
           margin={subject?.key.startsWith('skill:') ? margin : null}
           onTeach={onTeach}
+          onCoach={props.onCoach}
           policies={policies}
           training={training}
           policyActions={{ onChoose: (id) => void choose(`policy:${id}`), onMenu: openPolicyMenu }}

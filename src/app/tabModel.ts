@@ -3,6 +3,7 @@ import type { RobotJoint, SavedSceneRecord, ScenePart } from '../types/robotics'
 import { newSceneId } from '../utils/sceneIds';
 import { moveItem } from '../utils/moveItem';
 import { copyName } from '../workspace/helpers';
+import { plural } from '../../electron/plural.mjs';
 
 export const MAX_TABS = 8;
 export const CLOSED_LIMIT = 10;
@@ -122,7 +123,7 @@ export function nextActiveAfterClose({ list, ids, activeId, remaining }: NextAct
 }
 
 export function closedMessage(remember: ClosedTab[], stoppedAgent: boolean): string {
-  const name = remember.length === 1 ? remember[0].seed.sceneName : `${remember.length} scenes`;
+  const name = remember.length === 1 ? remember[0].seed.sceneName : plural(remember.length, 'scene');
 
   return stoppedAgent ? `Closed ${name} and stopped its agent` : `Closed ${name}`;
 }

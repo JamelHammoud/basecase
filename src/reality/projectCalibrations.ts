@@ -1,5 +1,12 @@
 import type { ProjectSettings } from '../types/robotics';
-import { EMPTY_HISTORY, recordCalibration, rollBack, type CalibrationHistory } from './history';
+import {
+  EMPTY_HISTORY,
+  recordCalibration,
+  recordMount,
+  rollBack,
+  type CalibrationHistory,
+  type FoundMount,
+} from './history';
 import type { ServoCalibration } from './types';
 
 function withHistory(
@@ -16,3 +23,6 @@ export const withCalibration = (project: ProjectSettings, jointId: string, calib
   withHistory(project, jointId, (history) => recordCalibration(history, calibration));
 
 export const withRollBack = (project: ProjectSettings, jointId: string) => withHistory(project, jointId, rollBack);
+
+export const withMount = (project: ProjectSettings, jointId: string, found: FoundMount) =>
+  withHistory(project, jointId, (history) => recordMount(history, found));

@@ -3,6 +3,7 @@ import { toolIcon } from './guideIcons';
 import { sizeFigures } from '../../utils/size';
 import { plural } from '../../../electron/plural.mjs';
 import { CONTENT_BOTTOM, CONTENT_TOP, esc, imageTag, mm, type GuideDoc } from './guideHtml';
+import { percent } from '../../../electron/percent.mjs';
 
 export function coverBody({ plan, drawings, meta }: GuideDoc): string {
   const size = meta.sizeMm
@@ -53,7 +54,7 @@ function tips(doc: GuideDoc, catalogue: [number, number]): Tip[] {
       ? {
           art: toolIcon('printer'),
           title: `Print ${plural(printed, 'part')} in ${esc(doc.meta.material)}`,
-          note: `${doc.meta.infillPct}% infill. Print every part before you start.`,
+          note: `${percent(doc.meta.infillPct / 100)} infill. Print every part before you start.`,
         }
       : null,
     {

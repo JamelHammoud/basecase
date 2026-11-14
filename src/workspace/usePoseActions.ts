@@ -57,7 +57,6 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
     const made = addAnimation({ ...built.animation, robot: robot.group.key });
 
     play(made.id, 0);
-    showToast(`Added ${made.name}`);
   };
 
   const importMotion = () => motionInputRef.current?.click();
@@ -86,7 +85,8 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
 
     openPose();
     play(made.id, 0);
-    showToast(summary ? `Added ${made.name}. ${summary}` : `Added ${made.name}`);
+
+    if (summary) showToast(summary);
   };
 
   return {

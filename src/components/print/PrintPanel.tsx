@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Button, MetaLine, ModeHeader, NumberInput, Section, Switch, useScrollFade } from '../../design-system';
 import { slicerOrder } from '../../data/printers';
+import { sameMachine } from '../../print/fleet';
 import type { Plate } from '../../print/plan';
 import type { PrintToolsStatus, SavedPrinter } from '../../print/printBridge';
+import { labelsOn } from '../../print/labels/partLetters';
 import { plateStatus } from '../../print/tracker';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
@@ -13,6 +15,7 @@ import { weight } from '../../utils/weight';
 import { plateNumbers, plateStateText } from './plateFacts';
 import { MergeSection } from './MergeSection';
 import { PrintedSection } from './PrintedSection';
+import { PrinterFleet, type PlateSend } from './PrinterFleet';
 import { PrinterLive } from './PrinterLive';
 import { PrintSettings } from './PrintSettings';
 import { StartPrintSheet } from './StartPrintSheet';
@@ -44,10 +47,14 @@ function showPart(printing: Printing, id: string) {
   printing.selectPart(id);
 }
 
-const SkipPrinted: React.FC<{ printing: Printing }> = ({ printing }) => (
+const SwitchRow: React.FC<{ label: string; checked: boolean; onChange: (on: boolean) => void }> = ({
+  label,
+  checked,
+  onChange,
+}) => (
   <div className="flex items-center justify-between gap-3">
-    <span className="text-[13px] text-white/60">Skip {plural(printing.printedCount, 'printed part')}</span>
-    <Switch aria-label="Skip printed parts" checked={printing.skipPrinted} onChange={printing.setSkipPrinted} />
+    <span className="text-[13px] text-white/60">{label}</span>
+    <Switch aria-label={label} checked={checked} onChange={onChange} />
   </div>
 );
 
@@ -189,10 +196,11 @@ const PlateDetail: React.FC<PlateHandlers & { printing: Printing; plate: Plate; 
   );
 };
 
-const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plate[] }> = ({
+const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plate[]; labels: boolean }> = ({
   printing,
   part,
   plates,
+  labels,
 }) => {
   const plate = plates.find((p) => p.items.some((it) => it.id === part.id));
   const sameMaterial = plates.filter((p) => p.material === plate?.material);
@@ -247,29 +255,53 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
           />
         </div>
       </div>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] text-white/60">Don’t print</span>
-        <Switch
-          aria-label="Don’t print"
-          checked={!!part.print?.skip}
-          onChange={(skip) => set({ skip: skip || undefined })}
+      <SwitchRow
+        label="Don’t print"
+        checked={!!part.print?.skip}
+        onChange={(skip) => set({ skip: skip || undefined })}
+      />
+      {labels && (
+        <SwitchRow
+          label="Don’t label"
+          checked={!!part.print?.noLabel}
+          onChange={(noLabel) => set({ noLabel: noLabel || undefined })}
         />
-      </div>
+      )}
     </Section>
   );
 };
 
 function usePlateSend(printing: Printing) {
-  const [confirming, setConfirming] = useState<Plate | null>(null);
+  const [confirming, setConfirming] = useState<PlateSend | null>(null);
 
   const send = (plate: Plate) => {
     if (throughStudio(printing) || printing.printer.mine?.connection?.kind === 'bambu-connect')
       void printing.sendPlate(plate);
-    else setConfirming(plate);
+    else setConfirming({ plate, printer: printing.printer });
   };
 
   return { confirming, setConfirming, send };
 }
+
+const PrintHeader: React.FC<{ printing: Printing; onDone: () => void }> = ({ printing, onDone }) => (
+  <ModeHeader
+    title={printing.fitTest ? 'Print Fit Test' : 'Print'}
+    onDone={onDone}
+    actions={
+      !printing.fitTest &&
+      printing.canFitTest && (
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={printing.fitCutting}
+          onClick={() => void printing.startFitTest()}
+        >
+          Print Fit Test
+        </Button>
+      )
+    }
+  />
+);
 
 export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
   const { printing, parts, onDone } = props;
@@ -281,23 +313,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <ModeHeader
-        title={printing.fitTest ? 'Print Fit Test' : 'Print'}
-        onDone={onDone}
-        actions={
-          !printing.fitTest &&
-          printing.canFitTest && (
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={printing.fitCutting}
-              onClick={() => void printing.startFitTest()}
-            >
-              Print Fit Test
-            </Button>
-          )
-        }
-      />
+      <PrintHeader printing={printing} onDone={onDone} />
       <div ref={ref} style={style} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <Section title="Printer">
           <PrintSettings
@@ -308,10 +324,31 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
             onAddPrinter={props.onAddPrinter}
             onChooseService={() => void printing.service.choose()}
           />
-          {printing.printedCount > 0 && !printing.fitTest && <SkipPrinted printing={printing} />}
+          {!printing.fitTest && (
+            <SwitchRow
+              label="Label parts"
+              checked={labelsOn(props.project)}
+              onChange={(labelParts) => props.onChangeProject({ labelParts })}
+            />
+          )}
+          {printing.printedCount > 0 && !printing.fitTest && (
+            <SwitchRow
+              label={`Skip ${plural(printing.printedCount, 'printed part')}`}
+              checked={printing.skipPrinted}
+              onChange={printing.setSkipPrinted}
+            />
+          )}
           <PrinterLive printing={printing} />
+          <PrinterFleet printing={printing} onStartNext={sending.setConfirming} />
         </Section>
-        {selected && <PartControls printing={printing} part={selected} plates={plates} />}
+        {selected && (
+          <PartControls
+            printing={printing}
+            part={selected}
+            plates={plates}
+            labels={!printing.fitTest && labelsOn(props.project)}
+          />
+        )}
         {plate && (
           <PlateDetail
             printing={printing}
@@ -325,23 +362,30 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
         <PrintedSection
           report={printing.report}
           project={props.project}
+          notes={printing.fitTest ? {} : printing.plates.notes}
           onSelectParts={([id]) => id && showPart(printing, id)}
         />
       </div>
-      <StartPrintSheet
-        plate={sending.confirming}
-        sliced={sending.confirming ? printing.freshSlice(sending.confirming) : undefined}
-        printer={printing.printer}
-        live={printing.status}
-        onClose={() => sending.setConfirming(null)}
-        onStart={() => {
-          const target = sending.confirming;
+      {sending.confirming && (
+        <StartPrintSheet
+          plate={sending.confirming.plate}
+          sliced={
+            sameMachine(sending.confirming.printer, printing.printer)
+              ? printing.freshSlice(sending.confirming.plate)
+              : undefined
+          }
+          printer={sending.confirming.printer}
+          live={printing.statusOf(sending.confirming.printer)}
+          onClose={() => sending.setConfirming(null)}
+          onStart={() => {
+            const target = sending.confirming;
 
-          sending.setConfirming(null);
+            sending.setConfirming(null);
 
-          if (target) void printing.sendPlate(target);
-        }}
-      />
+            if (target) void printing.sendPlate(target.plate, target.printer);
+          }}
+        />
+      )}
     </div>
   );
 };

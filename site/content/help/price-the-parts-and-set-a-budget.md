@@ -47,6 +47,7 @@ The bar under the total shows how much is left, or how far over budget you are. 
 
 - A price you saved shows in white. It counts in every scene that uses the part.
 - A price marked ≈ is the maker's or a distributor's list price. The total is marked ≈ while any line uses one.
+- Parts you [already own](/help/count-the-parts-you-already-own) are left out of a line's price and the total.
 - A price saved more than 60 days ago turns amber. Hover it to see the date, then save the price you see now.
 - **Equipment**, such as tools, is left out of the budget.
 - **Printed parts** quoted by Slant 3D count at the quoted price, and have no **Add Price**. [Price printed parts from a print service](/help/price-printed-parts-from-a-print-service) has the steps.

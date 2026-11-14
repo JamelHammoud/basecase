@@ -115,7 +115,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
           studio: {
             cases,
             cameras,
-            onBrowseRobots: () => {
+            onShowRobots: () => {
               caseRun.leave();
               showPartsSection(core, 'Robots');
             },

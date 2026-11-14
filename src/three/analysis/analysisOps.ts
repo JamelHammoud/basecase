@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { weld, writeThreeMf } from '../../print/threeMf';
+import { weld } from '../../print/threeMf';
 import { posedStl } from '../../print/posedStl';
 import { reply } from '../../utils/workerRpc';
 import { collide, place, type CollideOptions, type Placed } from './collide';
@@ -18,6 +18,9 @@ import { payloadMap, type ArmModel } from '../../utils/payload';
 import type { StrengthJob } from '../../strength/types';
 import { strengthOf } from './strengthPart';
 import { planMerges } from '../../print/merge/mergePlan';
+import { plateFiles, type ThreeMfResult, type ThreeMfTask } from './plateFiles';
+
+export type { PlateFilesInput, ThreeMfFileSpec, ThreeMfResult } from './plateFiles';
 
 export interface GeometryPayload {
   id: string;
@@ -45,17 +48,11 @@ export type AnalysisTask =
   | { kind: 'gaps'; instances: Instance[]; pairs: PairIds[]; withinMm: number }
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
-  | { kind: 'threeMf'; instances: Instance[]; files: ThreeMfFileSpec[]; plateSize: [number, number] }
+  | ({ kind: 'threeMf' } & ThreeMfTask)
   | { kind: 'stl'; instances: Instance[]; items: StlItem[] }
   | ({ kind: 'jointAxis'; instances: Instance[] } & JointAxisQuery)
   | { kind: 'jointAxes'; instances: Instance[]; ids: string[] }
   | ({ kind: 'fitCoupons'; instances: Instance[] } & FitCouponTask);
-
-export interface ThreeMfFileSpec {
-  key: string;
-  plates: Array<{ number: number; name: string }>;
-  items: Array<{ id: string; name: string; matrix: number[]; plate: number }>;
-}
 
 export interface StlItem {
   id: string;
@@ -140,7 +137,7 @@ function runPlaced(
     case 'gaps':
       return pairsWithin(placeAll(task.instances), task.pairs, task.withinMm);
     case 'threeMf':
-      return threeMfFiles(task);
+      return plateFiles(task, { solidOf, placeAll: () => placeAll(task.instances) });
     case 'stl':
       return stlFiles(task);
     case 'jointAxis':
@@ -178,25 +175,6 @@ function strengthJobs(task: Extract<AnalysisTask, { kind: 'strength' }>) {
   });
 }
 
-function threeMfFiles(task: Extract<AnalysisTask, { kind: 'threeMf' }>) {
-  const keyOf = new Map(task.instances.map((i) => [i.id, i.key]));
-  const meshes = new Map<string, ReturnType<typeof weld>>();
-  const meshOf = (key: string) => meshes.get(key) ?? meshes.set(key, weld(solidOf(key).positions)).get(key)!;
-
-  return Object.fromEntries(
-    task.files.map((file) => {
-      const usable = file.items.filter((it) => keyOf.has(it.id));
-      const objects = usable.map((it, i) => ({ id: i + 1, name: it.name, mesh: meshOf(keyOf.get(it.id)!) }));
-      const items = usable.map((it, i) => ({ objectId: i + 1, matrix: it.matrix, plate: it.plate }));
-
-      return [
-        file.key,
-        writeThreeMf({ layout: 'grid', plateSize: task.plateSize, plates: file.plates, objects, items }),
-      ];
-    }),
-  );
-}
-
 function stlFiles(task: Extract<AnalysisTask, { kind: 'stl' }>) {
   const keyOf = new Map(task.instances.map((i) => [i.id, i.key]));
 
@@ -208,8 +186,9 @@ function stlFiles(task: Extract<AnalysisTask, { kind: 'stl' }>) {
 }
 
 const transferOf = (kind: AnalysisTask['kind'], result: unknown): Transferable[] => {
-  if (kind === 'threeMf' || kind === 'stl')
-    return Object.values(result as Record<string, Uint8Array>).map((b) => b.buffer as ArrayBuffer);
+  if (kind === 'threeMf') return Object.values((result as ThreeMfResult).files).map((b) => b.buffer as ArrayBuffer);
+
+  if (kind === 'stl') return Object.values(result as Record<string, Uint8Array>).map((b) => b.buffer as ArrayBuffer);
 
   if (kind === 'fitCoupons') return (result as FitCoupon[]).map((c) => c.positions.buffer as ArrayBuffer);
 
@@ -233,11 +212,11 @@ const meshBuffers = (result: unknown) =>
   ]);
 
 export const analysisHandlers = {
-  analyze: ({ geometries: newGeometries, shapes, task }: AnalyzePayload) => {
+  analyze: async ({ geometries: newGeometries, shapes, task }: AnalyzePayload) => {
     newGeometries.forEach((g) => geometries.set(g.id, g));
     shapes.forEach((s) => specs.set(s.key, s));
 
-    const result = task.kind === 'strength' ? strengthJobs(task) : run(task);
+    const result = await (task.kind === 'strength' ? strengthJobs(task) : run(task));
 
     return reply(result, transferOf(task.kind, result));
   },

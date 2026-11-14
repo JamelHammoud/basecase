@@ -121,7 +121,11 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
       />
       <SkeletonServoMenu skeleton={core.skeleton} />
       <DriveOverlay sim={sim} />
-      <BuildAlongBar buildAlong={core.buildAlong} active={active} />
+      <BuildAlongBar
+        buildAlong={core.buildAlong}
+        active={active}
+        ready={core.printing.readySteps(core.buildAlong.stepParts)}
+      />
       {!core.caseRun.open && (
         <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
       )}

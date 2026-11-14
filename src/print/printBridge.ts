@@ -57,6 +57,7 @@ export interface JobPayload {
   printer: JobPrinter;
   groups: JobGroup[];
   material?: PrintMaterial;
+  labels?: string;
 }
 
 export interface SlicedPlate {
@@ -75,6 +76,7 @@ export interface SliceRecord {
   slicer: { name: string; version: string | null };
   slicedAt: string;
   cached?: boolean;
+  labels?: string;
   plates: SlicedPlate[];
 }
 

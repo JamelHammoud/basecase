@@ -30,7 +30,13 @@ import { findJointAxes } from './agentJointAxes';
 import { PORT_HANDLERS } from './agentPortRequests';
 import { PLAN_HANDLERS, prepareOps } from './agentPlanRequests';
 import { costByClass } from '../utils/budget';
-import { budgetPlanNote, catalogRequest, costNotes, sizeActuatorsRequest } from './agentCostRequests';
+import {
+  budgetPlanNote,
+  catalogRequest,
+  costNotes,
+  recordOnHandRequest,
+  sizeActuatorsRequest,
+} from './agentCostRequests';
 import { POSE_TOOL_KINDS, SIM_TOOL_KINDS } from './agentRobotTools';
 import type { SweepPayload } from './agentSweepRequest';
 import type { Vec3 } from './types';
@@ -102,7 +108,7 @@ const toolReply = ({ text, images }: PoseReply) => ({ text, images });
 function inspectLabel(ids: string[] | undefined, parts: ScenePart[]) {
   if (!ids?.length) return 'Looking';
 
-  if (ids.length > 1) return `Inspecting ${ids.length} parts`;
+  if (ids.length > 1) return `Inspecting ${plural(ids.length, 'part')}`;
 
   return `Inspecting ${parts.find((p) => p.id === ids[0])?.name ?? ids[0]}`;
 }
@@ -334,6 +340,7 @@ const HANDLERS: Record<string, Handler> = {
   import_cad: (payload, ctx) => importCad(payload, ctx),
   build_guide: buildGuide,
   catalog: catalogRequest,
+  record_on_hand: recordOnHandRequest,
   size_actuators: sizeActuatorsRequest,
   size_arm: (payload, ctx) => {
     ctx.setAction('Sizing an arm');

@@ -6,6 +6,7 @@ import {
   checkPrintability,
   slicePlates,
   getBom,
+  recordOnHand,
   setBuild,
   simulate,
   trainingStatus,
@@ -53,7 +54,7 @@ import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
 import { operate, setWorld, startDrive } from './cad-mcp/worldTools.mjs';
 import { compareCase, createCase, exploreCase, runCase } from './cad-mcp/caseTools.mjs';
 import { deleteCaseCode, readCaseCode, writeCaseCode } from './cad-mcp/caseCodeTools.mjs';
-import { draftSkill, listSkills, trainSkill } from './cad-mcp/skillTools.mjs';
+import { coachSkill, draftSkill, listSkills, trainSkill } from './cad-mcp/skillTools.mjs';
 import { editRoutine, makeRoutine, readRoutine, runRoutine, testRoutine } from './cad-mcp/routineTools.mjs';
 import { checkSkeleton, findImages, findRobotDescription, robotSkeleton, viewImage } from './cad-mcp/webTools.mjs';
 import {
@@ -130,9 +131,11 @@ const TOOLS = [
   draftSkill,
   trainSkill,
   listSkills,
+  coachSkill,
   trainingStatus,
   verifyDesign,
   getBom,
+  recordOnHand,
   sizeActuators,
   sizeArm,
   sweepDesign,

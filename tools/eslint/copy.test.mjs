@@ -55,6 +55,7 @@ const GLOSSARY_SAMPLES = [
   ['Dismiss', 'Dismiss', 'Close'],
   ['Reveal in Finder', 'Reveal', 'Show'],
   ['Toggle Grid', 'Toggle', 'Show'],
+  ['Browse Robots', 'Browse', 'Show'],
   ['Clone Scene', 'Clone', 'Duplicate'],
   ['Launch Routine', 'Launch', 'Run'],
   ['Execute Case', 'Execute', 'Run'],

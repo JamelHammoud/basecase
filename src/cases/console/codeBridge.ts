@@ -15,6 +15,7 @@ import {
   type StudioMessage,
 } from './codeProtocol';
 import { REAL_CLOCK, signalFeed, type BridgeClock } from './codeSignals';
+import { STORE_CALLS_PER_SECOND, storeRefusal, type CaseStore } from './codeStore';
 import { dropFrame, frameStreams, type FrameSource } from './codeStreams';
 import { CASE_ACTIONS, type CaseAction } from './panelKinds';
 import type { SignalBus } from './signalBus';
@@ -28,6 +29,7 @@ export interface BridgeStudio {
   key: (key: FrameKey) => void;
   world: (change: WorldChange) => string | null;
   frames: FrameSource;
+  store: CaseStore | null;
 }
 
 export interface CodeBridgeOptions {
@@ -120,6 +122,48 @@ function worldGate({ clock, studio, note }: { clock: BridgeClock; studio: Bridge
   };
 }
 
+interface GateInput {
+  clock: BridgeClock;
+  studio: BridgeStudio;
+  note: (e: string) => void;
+  post: (message: StudioMessage) => void;
+}
+
+function storeGate({ clock, studio, note, post }: GateInput) {
+  const spend = budget(clock, STORE_CALLS_PER_SECOND);
+
+  const refuse = (id: number, problem: string) => {
+    note(`store refused: ${problem}`);
+    post({ type: 'store', id, ok: false, problem });
+  };
+
+  const allowed = (id: number) => {
+    const over = spend() > 0;
+
+    if (over) refuse(id, `more than ${STORE_CALLS_PER_SECOND} calls a second`);
+
+    return !over;
+  };
+
+  return {
+    get(id: number) {
+      if (!allowed(id)) return;
+
+      void (studio.store?.get() ?? Promise.resolve(null)).then((json) => post({ type: 'store', id, ok: true, json }));
+    },
+    set(id: number, json: string | null) {
+      if (!allowed(id)) return;
+
+      const problem = studio.store ? storeRefusal(json) : 'the store works only in the studio';
+
+      if (problem) return refuse(id, problem);
+
+      studio.store?.set(json);
+      post({ type: 'store', id, ok: true });
+    },
+  };
+}
+
 function reportLog(firstLine: number) {
   const errors: CodeError[] = [];
   const logs: string[] = [];
@@ -165,6 +209,7 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
 
   const streams = frameStreams({ source: o.studio.frames, clock, post: postFrame, note });
   const world = worldGate({ clock, studio: o.studio, note });
+  const store = storeGate({ clock, studio: o.studio, note, post });
 
   const close = () => {
     if (closed) return;
@@ -212,6 +257,8 @@ export function openCodeBridge(o: CodeBridgeOptions): CodeBridge {
     world: (m) => world(m.change),
     frames: (m) => streams.open(m),
     unframes: (m) => streams.stop(m.id),
+    'store-get': (m) => store.get(m.id),
+    'store-set': (m) => store.set(m.id, m.json),
   };
 
   const onPortMessage = (e: MessageEvent) => {

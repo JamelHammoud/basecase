@@ -29,6 +29,8 @@ export function printedLine({ part, material, quotes, now }: PrintedLineInput): 
     name: part.name,
     detail: material,
     qty: copiesOf(part),
+    owned: 0,
+    toBuy: copiesOf(part),
     unit: 'pcs',
     partIds: [part.id],
     urlKind: 'none',

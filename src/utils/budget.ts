@@ -3,6 +3,7 @@ import { SUPPLY_BY_ID } from '../data/supplies';
 import type { EnteredPrice } from '../types/robotics';
 import type { Bom, BomLine } from './bomTypes';
 import { formatWhole } from './currencyStore';
+import { percent } from '../../electron/percent.mjs';
 
 export type CostClass = 'actuators' | 'compute' | 'power' | 'other';
 
@@ -82,7 +83,7 @@ export function budgetPlanText(budgetUsd: number, bom?: Bom, entered?: EnteredPr
     const so = bom ? `, ${formatWhole(p.spentUsd)} so far${mark}` : '';
     const cap = PLAN_SHARES[p.cls].hard ? 'up to' : 'about';
 
-    return `- ${p.label}: ${cap} ${Math.round(PLAN_SHARES[p.cls].share * 100)}% = ${formatWhole(p.capUsd)}${so}`;
+    return `- ${p.label}: ${cap} ${percent(PLAN_SHARES[p.cls].share)} = ${formatWhole(p.capUsd)}${so}`;
   });
   const broken = plan.filter((p) => p.over);
   const verdict = broken.length

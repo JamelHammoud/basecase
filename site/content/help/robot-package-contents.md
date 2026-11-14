@@ -55,8 +55,8 @@ The zip unpacks to one folder named `<scene>-robot`. Lengths are in meters and a
 | `type` | `revolute`, `continuous` or `prismatic` |
 | `family` | The servo's bus: `feetech`, `dynamixel`, or null for other servos |
 | `servo` | The servo from Parts, as `componentId` and `variant`, or null |
-| `zero_counts` | 2048, the default zero until calibration |
-| `direction` | 1, the default until calibration |
+| `zero_counts` | The servo reading at the joint's 0°: 2048 until **Calibrate Servos** finds it |
+| `direction` | 1, or -1 when **Calibrate Servos** finds the servo turns the joint the other way |
 | `min_rad`, `max_rad` | Limits of a joint that turns |
 | `min_m`, `max_m` | Limits of a joint that slides |
 | `calibration` | The servo's active calibration, or null |

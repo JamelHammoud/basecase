@@ -105,9 +105,7 @@ describe('check_scene', () => {
       box('bracket', [40, 0, 0], [50, 10, 10], { kind: 'boolean (subtract)' }),
     ]);
 
-    expect(text).toContain(
-      '1 solid parts are still block-out primitives (replace each with model_part or a catalog part): stand-in',
-    );
+    expect(text).toContain('Replace 1 block-out primitive with model_part or a catalog part: stand-in');
   });
 
   it('leaves the share out when no sampled point sat inside', async () => {

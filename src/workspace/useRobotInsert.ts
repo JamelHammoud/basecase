@@ -133,9 +133,8 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
 
     if (source.kind === 'url') rememberPreview(robot, robot.parts[0]?.robotLink?.url ?? source.url);
 
-    showToast(isObject ? `Inserted ${robot.name}` : insertedMessage(robot, placed.joints), {
-      action: poseAction(placed.joints),
-    });
+    if (isObject) toasts.dismissToast();
+    else showToast(insertedMessage(robot, placed.joints), { action: poseAction(placed.joints) });
 
     return { ...robot, ...placed };
   };

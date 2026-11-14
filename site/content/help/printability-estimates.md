@@ -42,7 +42,7 @@ A thin area of 100 mm² or more is a panel that would print with holes, and it b
 
 ## From estimate to slice
 
-Plates are packed per material, around the bed's clear areas. Until a plate is sliced, its time and weight show with ≈. Once Bambu Studio or OrcaSlicer slices it, the plate shows the slicer's own time, grams, supports and warnings.
+Plates are packed per material, around the bed's clear areas. Parts the build guide needs first go on the first plates, and parts no step uses go last. Until a plate is sliced, its time and weight show with ≈. Once Bambu Studio or OrcaSlicer slices it, the plate shows the slicer's own time, grams, supports and warnings.
 
 ## What Basecase won't print
 

@@ -1,7 +1,9 @@
 import React from 'react';
-import { Button, FloatingIsland, IslandDivider } from '../../design-system';
+import { Button, FloatingIsland, IslandDivider, PackageIcon } from '../../design-system';
 import type { Plate } from '../../print/plan';
 import type { Printing } from '../../workspace/usePrinting';
+
+const plateNote = (active: boolean) => (active ? 'text-white/80' : 'text-white/50');
 
 const plateCell = (active: boolean) =>
   `h-[36px] px-3 rounded-[12px] text-[13px] tabular-nums cursor-default transition-colors duration-150 ${
@@ -27,8 +29,16 @@ export const PlateBar: React.FC<{ printing: Printing; plates: Plate[] }> = ({ pr
             className={plateCell(p.number === plate?.number)}
             onClick={() => printing.setModePlate(p.number)}
           >
-            {p.number}{' '}
-            <span className={p.number === plate?.number ? 'text-white/80' : 'text-white/50'}>{p.material}</span>
+            {p.number} <span className={plateNote(p.number === plate?.number)}>{p.material}</span>
+            {p.step !== undefined && (
+              <span
+                data-step={p.step + 1}
+                className={`inline-flex items-center gap-1 ml-2 ${plateNote(p.number === plate?.number)}`}
+              >
+                <PackageIcon className="w-3.5 h-3.5" />
+                {p.step + 1}
+              </span>
+            )}
           </button>
         ))}
       </div>

@@ -30,6 +30,8 @@ interface BuyListProps {
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   onCheck: (line: BomLine) => void;
+  onHandOf: (key: string) => number;
+  onOnHand: (line: BomLine, count: number) => void;
   onSelectParts: (ids: string[]) => void;
   onExportCsv: () => void;
   onExportMarkdown: () => void;
@@ -115,6 +117,8 @@ export const BuyList: React.FC<BuyListProps> = ({
   project,
   onChangeProject,
   onCheck,
+  onHandOf,
+  onOnHand,
   onSelectParts,
   onExportCsv,
   onExportMarkdown,
@@ -137,6 +141,8 @@ export const BuyList: React.FC<BuyListProps> = ({
     panScroll,
     onCheck,
     onSelectParts,
+    onHandOf,
+    onOnHand,
     extraOf: (key) => extras.find((x) => x.key === key),
     onExtraQty: (key, qty) => onChangeExtras(withQty(extras, key, qty)),
     onDeleteExtra: (line) =>

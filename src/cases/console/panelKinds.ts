@@ -1,6 +1,9 @@
-import { fileSize, KB } from '../../../electron/fileSize.mjs';
+import { CODE_SOURCE_MAX_BYTES } from '../../../electron/caseCodeLimits.mjs';
+import { fileSize } from '../../../electron/fileSize.mjs';
 import { asNumber, asString, listOf, oneOf, optional, refuse, type Reader } from '../validate';
 import { JOINT_FIELDS, signalRef, signalShape, type JointField, type SignalScope } from './signalNames';
+
+export { CODE_SOURCE_MAX_BYTES };
 
 export const CASE_ACTIONS = ['try', 'end-try', 'drive', 'stop', 'start-over', 'reset'] as const;
 
@@ -37,8 +40,6 @@ const readTable = (v: Config, where: string, scope: SignalScope) => {
 
   return columns ? { of, columns: columns as JointField[] } : { of };
 };
-
-export const CODE_SOURCE_MAX_BYTES = 256 * KB;
 
 const readSource: Reader<string> = (value, where) => {
   if (typeof value !== 'string' || !value.trim()) return refuse(where, 'must be an HTML document');

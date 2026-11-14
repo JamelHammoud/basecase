@@ -65,6 +65,7 @@ export function skillRecord(
     case?: CaseTag;
     goal?: string | null;
     environment?: Environment | null;
+    randomization?: Randomization;
   },
 ): SkillRecord {
   const rebuilt = !!options.kit || !!options.move;
@@ -75,6 +76,7 @@ export function skillRecord(
     kit: options.kit,
     ...(options.move ? { move: options.move } : {}),
     ...(options.case ? { case: options.case } : {}),
+    ...(options.randomization ? { randomization: options.randomization } : {}),
     goal: options.goal ?? null,
     binding: skill.binding,
     evidence: skill.evidence,

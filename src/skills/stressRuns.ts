@@ -2,7 +2,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import type { Skill } from './artifacts';
 import type { Environment } from './environment';
-import { kitEnvironment } from './kitEnvironment';
+import { kitEnvironment, type TrainedEntry } from './kitEnvironment';
 import { moveEnvironment } from './moveEnvironment';
 import { moveTag, recordEnvironment, skillRecord, withRecordRanges, type SkillRecord } from './skillRecords';
 import type { SkillRow, SkillTarget } from './skillRows';
@@ -62,3 +62,13 @@ export const retrainedRecord = (skill: Skill, kind: StressTarget, widened: Envir
   ...retrainedTag(skill, kind, widened),
   randomization: widened.randomization,
 });
+
+export function recheckedRecord(
+  skill: Skill,
+  task: { entry: TrainedEntry | null; move: RobotAnimation | null; record: SkillRecord },
+  environment: Environment,
+): SkillRecord {
+  const move = task.move ? moveTag(task.move.id, environment) : undefined;
+
+  return skillRecord(skill, { kit: task.entry, move, randomization: task.record.randomization });
+}

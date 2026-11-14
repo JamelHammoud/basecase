@@ -47,7 +47,7 @@ function usePolicyRows(rows: SkillRow[], load: Load) {
   return policies;
 }
 
-const missing = (row: SkillRow) => `${row.label}’s saved skill is missing.`;
+const missing = (row: SkillRow) => `${row.label}’s saved skill is missing. Train it again.`;
 
 export function useSkillStress(input: StressInput) {
   const { runtime, sim, load, showToast } = input;

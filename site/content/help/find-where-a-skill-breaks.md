@@ -23,6 +23,8 @@ covers:
   - src/skills/stressBench.ts
   - src/skills/stressTraining.ts
   - src/components/simulate/SkillsList.tsx
+  - src/components/simulate/ReadyActions.tsx
+  - src/components/simulate/StressFindings.tsx
   - src/workspace/useSkillStress.ts
 ---
 

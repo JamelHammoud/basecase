@@ -8,6 +8,7 @@ import { NOMINAL_PHYSICS } from '../sim/physicsScales';
 import { recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
 import type { SkillJob } from './skillRows';
 import type { SnapshotRef } from './snapshots';
+import type { Skill } from './artifacts';
 import type { SkillRunner } from './skillsClient';
 import type { SkillsJob } from './skillsJob';
 import type { StressFinding, StressResult } from './stress';
@@ -138,7 +139,7 @@ describe('stressing a skill in the skills runtime', () => {
   };
   const stand = { target: 'kit:stand', label: 'Stand', record, skill, environment } as const;
 
-  function stubbed(reply: (job: SkillsJob) => unknown) {
+  function stubbed(reply: (job: SkillsJob) => unknown, saved: Skill | null = null) {
     const records: SkillRecord[] = [];
     const messages: string[] = [];
     const jobs: SkillsJob[] = [];
@@ -150,7 +151,7 @@ describe('stressing a skill in the skills runtime', () => {
       }) as SkillRunner,
       forge: () => () => Promise.resolve<ForgeOutcome>({ ok: false, policy: null, events: [], stderr: '' }),
       save: () => Promise.resolve(),
-      loadSkill: () => Promise.resolve(null),
+      loadSkill: () => Promise.resolve(saved),
       onRecord: (r) => records.push(r),
       onChange: (list) => messages.push(...list.map((j) => j.message)),
     });
@@ -200,6 +201,20 @@ describe('stressing a skill in the skills runtime', () => {
     expect(records[0]).toMatchObject({ name: 'Stand again', kit: 'stand' });
     expect(records[0].stress).toBeUndefined();
     expect(recordEnvironment(records[0], model)?.randomization.mass).toEqual([0.9, 1.8]);
+  });
+
+  it('keeps the widened ranges when a Recheck passes a retrained skill', async () => {
+    const mass: Range = [0.9, 1.8];
+    const retrained = { ...record, randomization: { ...environment.randomization, mass } };
+    const { runtime, records, jobs } = stubbed(() => ({ type: 'recheck', skill }), skill);
+    const task = { target: 'kit:stand', label: 'Stand', entry: 'stand', move: null, kind: 'recheck' } as const;
+
+    expect(runtime.recheck(model, { ...task, record: retrained })).toBeNull();
+    await runtime.settled();
+
+    expect(jobs[0]).toMatchObject({ type: 'recheck', environment: { randomization: { mass } } });
+    expect(records).toHaveLength(1);
+    expect(recordEnvironment(records[0], model)?.randomization.mass).toEqual(mass);
   });
 
   it('answers with Arena’s reason and keeps the old record when the retrained skill fails', async () => {

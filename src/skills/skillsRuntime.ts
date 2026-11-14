@@ -3,7 +3,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import { skillFiles, skillHash, type Skill } from './artifacts';
 import type { StressResult } from './stress';
-import { retrainedRecord, stressedRecord, type StressRow } from './stressRuns';
+import { recheckedRecord, retrainedRecord, stressedRecord, type StressRow } from './stressRuns';
 import type { StressTarget } from './stressTraining';
 import { lastError, type ForgeRunner } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
@@ -404,9 +404,7 @@ export class SkillsRuntime {
 
     if (!reply.skill) return this.retrain(model, task, ports);
 
-    const move = task.move ? moveTag(task.move.id, environment) : undefined;
-
-    await this.keep(task.target, skillRecord(reply.skill, { kit: task.entry, move }));
+    await this.keep(task.target, recheckedRecord(reply.skill, task, environment));
   }
 
   private setJob(target: SkillTarget, patch: Partial<SkillJob> | null) {

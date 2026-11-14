@@ -88,7 +88,7 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots, files }: 
   };
 
   const routeAll = async (all: File[], at?: Vec3, folders?: Awaited<ReturnType<typeof droppedFolders>['folders']>) => {
-    const { world, rest } = await splitWorldDrop(all);
+    const { world, rest } = await splitWorldDrop(core, all);
 
     if (world.length) void openDroppedWorld(core, world);
 

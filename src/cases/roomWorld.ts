@@ -27,7 +27,7 @@ function boundsOf(objects: WorldObject[]): Bounds {
   return { min: [Math.min(...xs), Math.min(...zs)], max: [Math.max(...xs), Math.max(...zs)] };
 }
 
-export function floorSpots({ min, max }: Bounds, clearanceMm: number): V3[] {
+function floorSpots({ min, max }: Bounds, clearanceMm: number): V3[] {
   const step = Math.max(MIN_STEP_MM, Math.max(max[0] - min[0], max[1] - min[1]) / STEPS_ACROSS);
   const centre = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2];
   const spots: V3[] = [];

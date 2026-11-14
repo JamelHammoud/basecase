@@ -55,7 +55,7 @@ covers:
   - electron/cadImport/convertPolicy.mjs
 ---
 
-Import brings files from other apps into your scene. One command opens every kind of file Basecase reads, and what you get depends on the kind of file you pick.
+You can bring files from other apps into your scene with Import. The same command opens every kind of file Basecase reads.
 
 1. Right-click an empty spot on the canvas.
 2. Choose **Import**.
@@ -63,13 +63,13 @@ Import brings files from other apps into your scene. One command opens every kin
 
 ![The canvas menu with Import](/help/import-a-file/menu.png)
 
-Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. New parts appear where you right-clicked and are selected, so you can move them.
+Meshes and CAD files become parts. Basecase reads STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE files, and the desktop app also reads STEP, STP, IGES and IGS files. New parts appear where you right-clicked and are already selected, so you can move them right away.
 
 If you pick an SVG, the Import SVG panel opens with your drawing loaded. Set the width and thickness, then click **Add** to extrude the drawing into a part.
 
 ![The Import SVG panel with a drawing loaded](/help/import-a-file/svg.png)
 
-Other files come in like this:
+Here's how other kinds of files come in:
 
 - A URDF, MJCF or zip file (such as an exported Robot Package) comes in as a robot with its joints.
 - A BVH motion file opens the retarget sheet for the selected robot.
@@ -79,11 +79,11 @@ Other files come in like this:
 
 You can also choose **File** ▸ **Import**, or press [[⌘K]]. To import files at a specific spot, drop them on the canvas.
 
-If you drop a GLB or glTF file that's at least 2 m across, or a Gaussian splat, it opens as a Case world instead. See [Import a captured 3D world as a Case world](/help/import-a-captured-3d-world). If you drop a `.mid` file, it plays in a Case's tries. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
+When you drop a GLB or glTF file that's at least 2 m across, or a Gaussian splat, it opens as a Case world instead. See [Import a captured 3D world as a Case world](/help/import-a-captured-3d-world). If you drop a `.mid` file, it plays in a Case's tries. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
 ## Units and axes
 
-Basecase reads each format with these units and up axis:
+Basecase reads each format in these units, with this axis pointing up:
 
 | Format | Read as | Up axis |
 |---|---|---|
@@ -101,11 +101,11 @@ Basecase never simplifies a mesh, so your print keeps every triangle.
 
 ## STEP and IGES files
 
-You can open STEP and IGES files in the desktop app. Each body in the file becomes its own part, named from the file's product names and colored with the body's main face color. If the file has more than one body, the parts come in as a group named after the file.
+You can open STEP and IGES files in the desktop app. Each body in the file becomes its own part, named after the file's product names and colored with the body's main face color. If the file has more than one body, the parts come in as a group named after the file.
 
 Basecase converts the file in a sandbox, separate from the rest of the app. It reads the units from the file, so every body comes in at its real size in millimeters.
 
-An imported body counts as a printed part, like any other imported mesh. To mark a body as bought or machined, select it. Then under **Appearance**, change the material from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Checks lists the body among parts without a source until you give it one.
+Like any other imported mesh, an imported body counts as a printed part. To mark a body as bought or machined, select it. Then under **Appearance**, change the material from **Printed PLA / PETG** to **Off-the-shelf** or **CNC aluminum**. Until you give the body a source, Checks lists it among parts without a source.
 
 STEP and IGES files have these limits:
 

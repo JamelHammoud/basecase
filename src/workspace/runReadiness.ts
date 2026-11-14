@@ -27,6 +27,7 @@ import { jsonHash } from '../utils/geometryHash';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
 import { caseFindings } from '../readiness/caseChecks';
+import { piecesOf } from '../cases/worldPieces';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
 import { freshFalls, freshWalk } from './storedWalk';
@@ -72,6 +73,7 @@ export const projectFingerprint = (
     printProcess: project.printProcess,
     animations: jsonHash(project.animations),
     cases: jsonHash(project.cases),
+    hulls: (project.cases ?? []).map((c) => Boolean(piecesOf(c.world.mesh?.hash))),
     walks: (project.skills ?? []).map((s) => s.hash),
     walk: jsonHash(project.walk),
     falls: jsonHash(project.falls),

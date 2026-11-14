@@ -3,6 +3,7 @@ import type { FilmShot } from '../cases/filmstrip';
 import { caseCheckPool } from '../cases/caseChecksClient';
 import { CASE_RUNS, seedBatches, summarizeRuns, type CaseRuns } from '../cases/caseRuns';
 import { readCases, type Case } from '../cases/schema';
+import { piecesOf } from '../cases/worldPieces';
 import { readinessFingerprint } from '../readiness/readiness';
 import { caseRow, replacedRow, stoppedRow } from '../readiness/caseChecks';
 import type { VelocityDrive } from '../sim/driveAccess';
@@ -14,6 +15,7 @@ import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { SkillRecord } from '../skills/skillRecords';
 import type { CheckRow } from '../utils/engineeringTypes';
 import { platformBridge } from '../utils/platformBridge';
+import { loadWorlds } from './worldStore';
 
 export interface CaseRobotInput {
   parts: ScenePart[];
@@ -209,7 +211,18 @@ function verdictOf(judging: Judging): Promise<CaseRuns> {
   return running;
 }
 
-const verdictKey = (kase: Case, reading: RobotReading) => `${hashOf(kase)}|${reading.modelHash}|${reading.walkHash}`;
+const hullsKey = (kase: Case) => {
+  const hash = kase.world.mesh?.hash;
+
+  if (!hash) return '';
+
+  return piecesOf(hash) ? '|hulls' : '|boxes';
+};
+
+const verdictKey = (kase: Case, reading: RobotReading) =>
+  `${hashOf(kase)}|${reading.modelHash}|${reading.walkHash}${hullsKey(kase)}`;
+
+const worldsOf = (cases: Case[]) => loadWorlds(cases.map((c) => c.world.mesh?.hash));
 
 const controlKey = (control: CaseControl | null | undefined) =>
   control ? `|${hashOf(control.policy)}|${control.jointNoiseDeg ?? 0}` : '';
@@ -261,6 +274,8 @@ export async function caseCheckRows(input: CaseChecksInput): Promise<CheckRow[]>
 
   if (!reading) return cases.map(isNewest(input.turn) ? stoppedRow : replacedRow);
 
+  await worldsOf(cases);
+
   const keyed = await Promise.all(
     cases.map(async (kase) => {
       const control = await caseSkillControl(input.project, kase, reading);
@@ -294,6 +309,9 @@ export async function caseVerdict(
   let wired: WireRobot | null = null;
   const robot = () => (wired ??= wireRobot(input));
   const reading = await readRobot(input, robot, null);
+
+  await worldsOf([kase]);
+
   const control = given ?? (await caseSkillControl(input.project, kase, reading));
   const base = `${verdictKey(kase, reading)}${controlKey(control)}`;
   const key = runs === CASE_RUNS ? base : `${base}|${runs}`;

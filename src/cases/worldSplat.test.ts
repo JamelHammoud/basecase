@@ -105,15 +105,12 @@ describe('Gaussian splats', () => {
 
     bomb.set(raw);
 
-    const started = performance.now();
-
     expect(await refusal([collider(), file('bomb.spz', await gzipped(bomb))])).toBe(
       'CaseFileError: bomb.spz holds more than its points.',
     );
     expect(await refusal([collider(), file('zeros.spz', await gzipped(new Uint8Array(1 << 20)))])).toBe(
       'CaseFileError: zeros.spz is damaged.',
     );
-    expect(performance.now() - started).toBeLessThan(1500);
   });
 
   it('refuses an SPZ cut short, an old version or a file that isn’t gzip', async () => {

@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
 import { keepPieces } from '../cases/worldPieces';
 import type { StoredWorld } from '../cases/worldTypes';
 import { indexedDbStore } from '../utils/keyValueStore';
 
-const stored = indexedDbStore<StoredWorld>({ database: 'basecase-worlds', store: 'worlds', label: 'worlds' });
+const stored = indexedDbStore<StoredWorld>({ database: 'basecase-worlds', store: 'worlds' });
 const loaded = new Map<string, Promise<StoredWorld | null>>();
 
 export async function keepWorld(world: StoredWorld): Promise<void> {
@@ -35,24 +34,4 @@ export function loadWorld(hash: string): Promise<StoredWorld | null> {
 
 export async function loadWorlds(hashes: Array<string | undefined>): Promise<void> {
   await Promise.all([...new Set(hashes)].flatMap((h) => (h ? [loadWorld(h)] : [])));
-}
-
-export function useStoredWorld(hash: string | undefined): StoredWorld | null {
-  const [world, setWorld] = useState<{ hash: string; world: StoredWorld | null } | null>(null);
-
-  useEffect(() => {
-    if (!hash) return;
-
-    let live = true;
-
-    void loadWorld(hash).then((found) => {
-      if (live) setWorld({ hash, world: found });
-    });
-
-    return () => {
-      live = false;
-    };
-  }, [hash]);
-
-  return hash && world?.hash === hash ? world.world : null;
 }

@@ -10,13 +10,17 @@ import { fixtureRobots } from '../sim/fixtures/robots';
 import type { Case } from '../cases/schema';
 import type { ProjectSettings } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
+import { keepPieces } from '../cases/worldPieces';
 import { caseCheckRows, caseVerdict, forgetCaseModels, nextCaseTurn } from './caseChecks';
+import { loadWorlds } from './worldStore';
 
 vi.mock('../cases/caseChecksClient', () => ({
   caseCheckPool: { size: 2, run: vi.fn(), keepOnly: vi.fn() },
 }));
 
 vi.mock('../utils/platformBridge', () => ({ platformBridge: { getSkill: vi.fn() } }));
+
+vi.mock('./worldStore', () => ({ loadWorlds: vi.fn(() => Promise.resolve()) }));
 
 const run = vi.mocked(caseCheckPool.run);
 const getSkill = vi.mocked(platformBridge.getSkill);
@@ -165,5 +169,42 @@ describe('Case rows in Checks', () => {
     expect(keepOnly).not.toHaveBeenCalled();
     expect((await caseCheckRows({ ...scene, turn: nextCaseTurn() }))[0]).toMatchObject({ detail: '20 of 20' });
     expect(run.mock.calls).toHaveLength(calls);
+  });
+});
+
+describe('a Case in a dropped world', () => {
+  beforeEach(() => {
+    run.mockReset();
+    forgetCaseModels();
+  });
+
+  it('wait for a dropped world’s hulls, and judge its Case again once they arrive', async () => {
+    const outcomes = Array.from({ length: 10 }, () => ({ passed: true, margin: 1, failed: [] }));
+    const hash = 'ab'.repeat(32);
+    const scene = sceneWith('rover-diff', 'reach-the-flag');
+    const [kase] = scene.project.cases as Case[];
+    const inWorld = { ...kase, world: { ...kase.world, mesh: { hash, name: 'Garage', at: [0, 0, 0] } } };
+    const project = { ...scene.project, cases: [inWorld] } as unknown as ProjectSettings;
+    const judged = () => run.mock.calls.filter(([, job]) => job.type === 'runs').length;
+
+    run.mockImplementation((_index, job: CaseCheckJob) =>
+      job.type === 'model'
+        ? Promise.resolve({ ...modelReply, modelHash: 'hulls' })
+        : (Promise.resolve({ type: 'runs', result: { outcomes } }) as never),
+    );
+
+    await caseCheckRows({ ...scene, project, turn: nextCaseTurn() });
+
+    expect(vi.mocked(loadWorlds)).toHaveBeenCalledWith([hash]);
+    expect(judged()).toBe(2);
+
+    await caseCheckRows({ ...scene, project, turn: nextCaseTurn() });
+
+    expect(judged()).toBe(2);
+
+    keepPieces(hash, [{ center: [0, 0, 0], vertices: [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1], ground: false }]);
+    await caseCheckRows({ ...scene, project, turn: nextCaseTurn() });
+
+    expect(judged()).toBe(4);
   });
 });

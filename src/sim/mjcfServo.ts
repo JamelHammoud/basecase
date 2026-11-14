@@ -31,10 +31,12 @@ export interface FittedActuator {
   dynamics: ServoDynamics;
   ctrlrange: string;
   timestep: number;
+  historyS?: number;
 }
 
-export function fittedActuatorXml({ name, dynamics: d, ctrlrange, timestep }: FittedActuator): string {
-  const delay = `delay="${f(d.delayS)}" nsample="${historySamples(d.delayS, timestep)}" interp="linear"`;
+export function fittedActuatorXml({ name, dynamics: d, ctrlrange, timestep, historyS = 0 }: FittedActuator): string {
+  const samples = historySamples(Math.max(d.delayS, historyS), timestep);
+  const delay = `delay="${f(d.delayS)}" nsample="${samples}" interp="linear"`;
 
   return `    <position name="${name}" joint="${name}" kp="${f(d.kp)}" kv="0" forcerange="${f(-d.forceNm)} ${f(d.forceNm)}"${ctrlrange} ${delay}/>`;
 }

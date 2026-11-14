@@ -43,6 +43,19 @@ export function activeCalibrations(histories: Record<string, CalibrationHistory>
   return out;
 }
 
+export function simCalibrations(histories: Record<string, CalibrationHistory> | undefined) {
+  const out: Record<string, ServoCalibration> = {};
+
+  for (const [jointId, history] of Object.entries(histories ?? {})) {
+    const latest = history.versions.at(-1);
+    const chosen = activeCalibration(history) ?? (latest?.verdict === 'consistent' ? latest : null);
+
+    if (chosen) out[jointId] = chosen;
+  }
+
+  return out;
+}
+
 export const activeMount = (history: CalibrationHistory | undefined): JointMount | null =>
   (history && activeCalibration(history)?.mount) ?? null;
 

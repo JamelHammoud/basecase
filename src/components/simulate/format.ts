@@ -12,14 +12,6 @@ export const trainingLine = (message: string, share: number | null): string => {
   return /[.!?…]$/.test(message) ? message : `${message}…`;
 };
 
-export const fmtSteps = (n: number): string => {
-  if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M`;
-
-  if (n >= 1e3) return `${Math.round(n / 1e3)}K`;
-
-  return String(n);
-};
-
 export const controllerValue = (controller: Controller, policyKey: string | null): string => {
   if (controller.kind === 'policy') return policyKey ? `policy:${policyKey}` : '';
 

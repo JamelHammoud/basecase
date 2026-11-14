@@ -34,6 +34,8 @@ See the tries from every scene together, grouped by robot, and open any of them 
 5. Press [[←]] or [[→]] to step a frame, or [[Space]] to play it.
 6. Click **Done** to go back to the scene.
 
+The timeline here shows each joint's target and position. To see effort and watch the robot move, open the try from **Results** in its own scene; see [Try a Case](/help/try-a-case).
+
 ![The Library with a Tries section listing one robot, named Robot, with 4 tries](/help/browse-every-try-in-the-library/library.png)
 
 ![Tries mode on the canvas with four tiles from two scenes, each marked Passed with its time and Touch the Dots](/help/browse-every-try-in-the-library/tiles.png)
@@ -49,5 +51,3 @@ Select the tries and press [[⌫]], or right-click one and choose **Delete**. Ba
 ## Where tries are kept
 
 The desktop app keeps each try in its own folder in `library/tries/` on this computer, with its recording and filmstrip. A scene only points at its tries, so they aren't in shared `.basecase` files. In the web studio, tries stay in the browser.
-
-The timeline here shows each joint's target and position. To see effort and watch the robot move, open the try from **Results** in its own scene; see [Try a Case](/help/try-a-case).

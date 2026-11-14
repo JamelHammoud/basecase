@@ -9,6 +9,7 @@ let backend: TryBackend = IS_WEB_DEMO ? idbTries : bridgeTries;
 let listed: StoredTry[] | null = null;
 let loading: Promise<StoredTry[]> | null = null;
 const listeners = new Set<() => void>();
+const deletedListeners = new Set<(ids: readonly string[]) => void>();
 
 const publish = (next: StoredTry[]) => {
   listed = next;
@@ -28,6 +29,14 @@ export function subscribeTries(listener: () => void) {
 
   return () => {
     listeners.delete(listener);
+  };
+}
+
+export function onTriesDeleted(listener: (ids: readonly string[]) => void) {
+  deletedListeners.add(listener);
+
+  return () => {
+    deletedListeners.delete(listener);
   };
 }
 
@@ -75,6 +84,8 @@ export async function deleteTries(ids: readonly string[]): Promise<string[]> {
   await backend.remove(gone);
 
   if (listed) publish(listed.filter((t) => !goes.has(t.id)));
+
+  deletedListeners.forEach((l) => l(gone));
 
   return gone;
 }

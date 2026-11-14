@@ -23,7 +23,6 @@ import { useTriesKeys } from './useTriesKeys';
 interface TriesModeProps {
   active: boolean;
   mode: Mode;
-  onForget: (ids: readonly string[]) => void;
   showToast: ShowToast;
 }
 
@@ -40,7 +39,7 @@ const keepMenuHere = (e: React.MouseEvent) => {
   e.stopPropagation();
 };
 
-export const TriesMode: React.FC<TriesModeProps> = ({ active, mode, onForget, showToast }) => {
+export const TriesMode: React.FC<TriesModeProps> = ({ active, mode, showToast }) => {
   const all = useStoredTries() ?? [];
   const scenes = useSavedScenes();
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -60,10 +59,7 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, mode, onForget, sh
     confirmDeleteTries({
       ids,
       all,
-      onDeleted: (gone) => {
-        onForget(gone);
-        mode.clear();
-      },
+      onDeleted: mode.clear,
       onFailed: (err) => showToast(errorMessage(err), { tone: 'error' }),
     });
 

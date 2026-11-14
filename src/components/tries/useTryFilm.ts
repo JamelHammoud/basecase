@@ -32,21 +32,23 @@ export function useTryFilm<T extends Element>(id: string) {
     if (!onScreen) return;
 
     let live = true;
-    let url: string | null = null;
 
     void loadFilm(id).then((blob) => {
-      if (!live) return;
-
-      url = blob ? URL.createObjectURL(blob) : null;
-      setFilm({ id, url: url ?? '' });
+      if (live) setFilm({ id, url: blob ? URL.createObjectURL(blob) : '' });
     });
 
     return () => {
       live = false;
-
-      if (url) URL.revokeObjectURL(url);
+      setFilm(null);
     };
   }, [onScreen, id]);
+
+  useEffect(
+    () => () => {
+      if (film?.url) URL.revokeObjectURL(film.url);
+    },
+    [film],
+  );
 
   return { ref, src: onScreen && film?.id === id ? film.url : undefined };
 }

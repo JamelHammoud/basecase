@@ -16,7 +16,7 @@ import type { TryRecord } from './tries';
 import type { TryBackend } from './tryBackend';
 import { migratedRefs, migrateTries } from './tryMigration';
 import { bridgeTries } from './tryBridge';
-import { deleteTries, keepTry, listTries, setTryBackend } from './tryStore';
+import { deleteTries, keepTry, listTries, onTriesDeleted, setTryBackend } from './tryStore';
 
 const record = (id: string, extra: Partial<TryRecord> = {}): TryRecord => ({
   id,
@@ -185,10 +185,19 @@ describe('stored tries', () => {
 
     for (const r of [source, variation(1), variation(2), record('other')]) await keepTry(storedTry(r, context));
 
+    const told: string[][] = [];
+    const stop = onTriesDeleted((ids) => told.push([...ids]));
+
     expect(withGenerated(await listTries(), ['src'])).toEqual(['src', 'src-1', 'src-2']);
     expect(await deleteTries(['src'])).toEqual(['src', 'src-1', 'src-2']);
     expect([...backend.files.keys()]).toEqual(['other']);
     expect((await listTries()).map((t) => t.id)).toEqual(['other']);
+    expect(told).toEqual([['src', 'src-1', 'src-2']]);
+
+    setTryBackend({ ...backend, remove: () => Promise.reject(new Error('disk full')) });
+    await expect(deleteTries(['other'])).rejects.toThrow('disk full');
+    stop();
+    expect(told).toHaveLength(1);
   });
 
   it('reads the store again after a failed list instead of keeping only the newest try', async () => {

@@ -5,7 +5,7 @@ import { readCases } from '../cases/schema';
 import { contractHash, legacyRecords, sceneTries, storedTry, tryJoints, type TryRef } from '../cases/storedTry';
 import { sha256, type TryDraft, type TryRecord } from '../cases/tries';
 import { migratedRefs, migrateTries } from '../cases/tryMigration';
-import { deleteTries, keepTry, listTries, storedTriesNow } from '../cases/tryStore';
+import { deleteTries, keepTry, listTries, onTriesDeleted, storedTriesNow } from '../cases/tryStore';
 import { dropLegacyRecording, legacyRecording } from '../cases/tryStoreIdb';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Simulation } from '../sim/useSimulation';
@@ -102,26 +102,23 @@ export function useSceneTries(options: SceneTriesOptions) {
       .filter(goes)
       .map((t) => t.id);
 
-    if (!gone.length) return;
-
-    const ids = new Set(gone);
-
-    setProject((p) => ({ ...p, tries: withoutRefs(p.tries, ids) }));
-    await deleteTries(gone);
+    if (gone.length) await deleteTries(gone);
   };
 
   const drop = (goes: (t: TryRecord) => boolean) => {
     dropNow(goes).catch((err: unknown) => showToast(errorMessage(err), { tone: 'error' }));
   };
 
-  const unlink = (ids: readonly string[]) => {
+  const unlink = useEffectEvent((ids: readonly string[]) => {
     const gone = new Set(ids);
 
     if ((project.tries ?? []).some((t) => gone.has(t.id)))
       setProject((p) => ({ ...p, tries: withoutRefs(p.tries, gone) }));
-  };
+  });
 
-  return { all: sceneTries(project.tries, stored), add, drop, unlink };
+  useEffect(() => onTriesDeleted((ids) => unlink(ids)), []);
+
+  return { all: sceneTries(project.tries, stored), add, drop };
 }
 
 export type SceneTries = ReturnType<typeof useSceneTries>;

@@ -6,6 +6,13 @@ import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
 import { gestureNames, readGestures, type CaseGesture } from './gestures';
 import {
+  readImageColors,
+  readImagePoints,
+  readImageRandomization,
+  type ImageRandomization,
+  type WorldColor,
+} from './imageRandomization';
+import {
   asBoolean,
   asId,
   asNumber,
@@ -21,6 +28,8 @@ import {
 } from './validate';
 
 export const CASE_FORMAT_VERSION = 1;
+
+export type { ImageRandomization, WorldColor } from './imageRandomization';
 
 const WORLD_KINDS = ['box', 'cube', 'sphere', 'cylinder', 'wedge', 'cone', 'custom_model'] as const;
 const CAPABILITIES = ['arm', 'gripper', 'wheels', 'legs'] as const;
@@ -73,6 +82,8 @@ export interface WorldObject {
   friction?: number;
   jitter?: ObjectJitter;
   movable?: boolean;
+  points?: Record<string, V3>;
+  colors?: WorldColor[];
 }
 
 export interface ObjectJitter {
@@ -130,6 +141,7 @@ export interface Case {
   console?: CaseConsole;
   logic?: Routine;
   gestures?: CaseGesture[];
+  imageRandomization?: ImageRandomization;
 }
 
 const v3 = vector(3) as unknown as Reader<V3>;
@@ -218,6 +230,8 @@ const readObject: Reader<WorldObject> = (value, where) => {
     friction: optional(asNumber, v.friction, `${where}.friction`),
     jitter: optional(readJitter, v.jitter, `${where}.jitter`),
     ...(v.movable === undefined ? {} : { movable: asBoolean(v.movable, `${where}.movable`) }),
+    ...(v.points === undefined ? {} : { points: readImagePoints(v.points, `${where}.points`) }),
+    ...(v.colors === undefined ? {} : { colors: readImageColors(v.colors, `${where}.colors`) }),
   };
 };
 
@@ -363,6 +377,9 @@ export function parseCase(input: unknown): Case {
     ...(caseConsole ? { console: caseConsole } : {}),
     ...(v.logic !== undefined ? { logic: readLogic(v.logic, 'logic') } : {}),
     ...(gestures ? { gestures } : {}),
+    ...(v.imageRandomization === undefined
+      ? {}
+      : { imageRandomization: readImageRandomization(v.imageRandomization, objects, readObject) }),
   };
 
   checkSlotNames(kase);

@@ -142,6 +142,34 @@ describe('create_case', () => {
     expect(movable).toMatchObject({ lit: true, still: false });
   });
 
+  it('keeps training classes and converts points and distractors from the agent frame', async () => {
+    const fruit = {
+      id: 'fruit',
+      name: 'Fruit',
+      kind: 'sphere',
+      position: [100, 200, 300],
+      size: [20, 30, 40],
+      behavior: 'static',
+      points: { stem: [1, 2, 3] },
+      colors: [{ name: 'ripe tomato', color: '#ff0000' }],
+    };
+    const { reply, added } = create({
+      goal: 'reach',
+      objects: [fruit],
+      imageRandomization: {
+        cameraTolerance: { mm: 15, deg: 5 },
+        distractors: [{ ...fruit, id: 'leaf', name: 'Leaf' }],
+      },
+    });
+
+    expect(await reply).toMatchObject({ ok: true });
+    expect(added[0].world.objects.find((object) => object.id === 'fruit')?.points).toEqual({ stem: [1, 3, -2] });
+    expect(added[0].imageRandomization).toMatchObject({
+      cameraTolerance: { mm: 15, deg: 5 },
+      distractors: [{ id: 'leaf', position: [100, 300, -200], size: [20, 40, 30], points: { stem: [1, 3, -2] } }],
+    });
+  });
+
   it('answers a goal the robot cannot try, or hostile objects, with what to change', async () => {
     expect(await create({ goal: 'touch' }).reply).toEqual({ ok: false, problem: expect.stringMatching(/reach/) });
     expect(await create({ goal: 'nope' }).reply).toMatchObject({ ok: false });

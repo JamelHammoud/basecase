@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { checkedFileId, isSafeFileId } from '../backend/constants.mjs';
 import { writeAtomic } from './atomicFile.mjs';
+import { FrameSetStore } from './frameSetStore.mjs';
 
 export const MAX_DATASET_BYTES = 16 * 1024 * 1024;
 
@@ -26,6 +27,7 @@ const idOfFile = (name) => (name.endsWith(EXTENSION) ? name.slice(0, -EXTENSION.
 export class DatasetStore {
   constructor({ dir }) {
     this.dir = dir;
+    this.images = new FrameSetStore({ dir: path.join(dir, '..', 'frame-sets') });
   }
 
   fileOf(id) {

@@ -3,6 +3,8 @@ import type { TryRecord } from '../cases/tries';
 import type { Dataset } from './datasetFile';
 
 export const totalSeconds = (members: TrySummary[]) => members.reduce((sum, t) => sum + t.seconds, 0);
+export const imageCount = (dataset: Pick<Dataset, 'imageMembers'>) =>
+  (dataset.imageMembers ?? []).reduce((count, member) => count + member.frameIds.length, 0);
 
 export function membersOf(dataset: Dataset, tries: TrySummary[]): TrySummary[] {
   const byId = new Map(tries.map((t) => [t.id, t]));

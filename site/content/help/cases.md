@@ -44,6 +44,7 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 - **A time limit.** How long a try can last.
 - **A console**, if the Case has one: the inputs that drive the Case and the panels around the canvas when you [run it](/help/run-a-case).
 - **Gestures**, if you taught it any: movements you make at the camera that the Case reacts to. See [Teach a robot a gesture](/help/teach-a-robot-a-gesture).
+- **Image variation**, if declared: named object points, color classes, camera mount tolerance and distractors for rendered training images.
 
 Each Case comes with a reference route that passes it, so you know a pass is possible. To see each goal and how the contract judges it, read [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).
 
@@ -66,6 +67,8 @@ Basecase keeps your tries on this computer, along with any value the Case's code
 ## A Case is the test, a skill is the answer
 
 When you train a skill in the **Train** section, Basecase judges it in [Arena](/help/arena) with the same contract code. Passed tries also work as demonstration data. [Export a LeRobot dataset](/help/export-a-lerobot-dataset) turns them into a dataset you can train other models on.
+
+A Case can also supply labeled images without a recorded try. **Make Training Images** renders its camera views with boxes, masks, keypoints and depth, then opens the saved dataset. See [Make training images from a Case](/help/make-training-images).
 
 ## Where Cases come from
 

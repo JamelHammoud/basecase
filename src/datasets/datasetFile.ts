@@ -15,6 +15,13 @@ export interface DatasetVersion {
   hash: string;
   at: string;
   members: string[];
+  imageMembers?: ImageMembers[];
+}
+
+export interface ImageMembers {
+  frameSetId: string;
+  frameIds: string[];
+  hash: string;
 }
 
 export interface Dataset {
@@ -26,6 +33,7 @@ export interface Dataset {
   caseId: string | null;
   query: string | null;
   members: string[];
+  imageMembers?: ImageMembers[];
   seed: number;
   versions: DatasetVersion[];
   createdAt: string;
@@ -39,6 +47,7 @@ export interface NewDataset {
   caseId?: string | null;
   query?: string | null;
   members: string[];
+  imageMembers?: ImageMembers[];
   at: string;
 }
 
@@ -64,6 +73,7 @@ export function newDataset(made: NewDataset): Dataset {
     caseId: safeIdOrNull(made.caseId),
     query: made.query?.trim().slice(0, MAX_QUERY) || null,
     members: unique(made.members),
+    ...(made.imageMembers ? { imageMembers: made.imageMembers } : {}),
     seed: seedOf(made.id),
     versions: [],
     createdAt: made.at,
@@ -78,7 +88,7 @@ export const addMembers = (dataset: Dataset, ids: string[]): Dataset => ({
 export const withMembers = (dataset: Dataset, ids: string[]): Dataset => ({ ...dataset, members: unique(ids) });
 
 export async function versionHash(
-  dataset: Pick<Dataset, 'task' | 'members'>,
+  dataset: Pick<Dataset, 'task' | 'members' | 'imageMembers'>,
   tries: TrySummary[],
   modelHash: string,
 ): Promise<string> {
@@ -89,7 +99,14 @@ export async function versionHash(
     return t ? [id, t.modelHash, t.frames, t.outcome.verdict] : [id];
   });
 
-  return sha256(JSON.stringify({ task: dataset.task, model: modelHash, members }));
+  return sha256(
+    JSON.stringify({
+      task: dataset.task,
+      model: modelHash,
+      members,
+      ...(dataset.imageMembers ? { images: dataset.imageMembers } : {}),
+    }),
+  );
 }
 
 export const newestVersion = (dataset: Dataset): DatasetVersion | null => dataset.versions.at(-1) ?? null;
@@ -103,7 +120,13 @@ export function freezeVersion(
 
   if (last?.hash === hash) return { dataset, version: last };
 
-  const version = { n: (last?.n ?? 0) + 1, hash, at, members: [...dataset.members] };
+  const version = {
+    n: (last?.n ?? 0) + 1,
+    hash,
+    at,
+    members: [...dataset.members],
+    ...(dataset.imageMembers ? { imageMembers: structuredClone(dataset.imageMembers) } : {}),
+  };
 
   return { dataset: { ...dataset, versions: [...dataset.versions, version].slice(-MAX_VERSIONS) }, version };
 }
@@ -117,9 +140,30 @@ const isIdOrNull = (v: unknown) => v === null || isId(v);
 const isIds = (v: unknown): v is string[] => Array.isArray(v) && v.length <= MAX_MEMBERS && v.every(isId);
 const isCount = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0;
 
+const isImages = (v: unknown): v is ImageMembers[] =>
+  Array.isArray(v) &&
+  v.length <= MAX_MEMBERS &&
+  v.every(
+    (member) =>
+      isObject(member) &&
+      isId(member.frameSetId) &&
+      isIds(member.frameIds) &&
+      typeof member.hash === 'string' &&
+      /^[a-f0-9]{64}$/.test(member.hash),
+  );
+
+const imageFields = (v: Raw) => v.imageMembers === undefined || isImages(v.imageMembers);
+const imagesOf = (v: Raw) => (isImages(v.imageMembers) ? { imageMembers: v.imageMembers } : {});
+
 const readVersion = (v: unknown): DatasetVersion | null =>
-  isObject(v) && isCount(v.n) && v.n > 0 && isText(v.hash, 128) && isText(v.at, 64) && isIds(v.members)
-    ? { n: v.n, hash: v.hash, at: v.at, members: v.members }
+  isObject(v) &&
+  isCount(v.n) &&
+  v.n > 0 &&
+  isText(v.hash, 128) &&
+  isText(v.at, 64) &&
+  isIds(v.members) &&
+  imageFields(v)
+    ? { n: v.n, hash: v.hash, at: v.at, members: v.members, ...imagesOf(v) }
     : null;
 
 const hasFields = (v: Raw) =>
@@ -132,6 +176,7 @@ const hasFields = (v: Raw) =>
   isIdOrNull(v.caseId) &&
   (v.query === null || isText(v.query, MAX_QUERY)) &&
   isIds(v.members) &&
+  imageFields(v) &&
   isCount(v.seed) &&
   isText(v.createdAt, 64) &&
   Array.isArray(v.versions) &&
@@ -153,6 +198,7 @@ export function readDataset(value: unknown): Dataset | null {
     caseId: value.caseId as string | null,
     query: value.query as string | null,
     members: unique(value.members as string[]),
+    ...imagesOf(value),
     seed: value.seed as number,
     versions: versions as DatasetVersion[],
     createdAt: value.createdAt as string,

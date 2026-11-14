@@ -27,6 +27,16 @@ export const worldObject = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
     .optional(),
+  points: z
+    .record(z.string().regex(/^[\w.-]{1,80}$/), vec3)
+    .optional()
+    .describe('Named local points in mm for image keypoints'),
+  colors: z
+    .array(z.object({ name: z.string().min(1).max(80), color: z.string().regex(/^#[0-9a-fA-F]{6}$/) }))
+    .min(1)
+    .max(32)
+    .optional()
+    .describe('Named color variants for training image classes'),
   movable: z
     .boolean()
     .optional()

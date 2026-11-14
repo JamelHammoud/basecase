@@ -102,7 +102,7 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
   const { cases, sim } = simTraining;
   const dataset = view.open ? view.dataset : null;
   const modelHash = useModelHash(sim.buildModel, {
-    id: dataset ? `${dataset.id}:${cases.active?.id ?? ''}` : null,
+    id: dataset?.members.length ? `${dataset.id}:${cases.active?.id ?? ''}` : null,
     robot: core.posing.rig,
   });
   const members = dataset ? membersOf(dataset, view.all) : [];

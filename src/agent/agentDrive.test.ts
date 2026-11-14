@@ -11,7 +11,7 @@ import type { Simulation } from '../sim/useSimulation';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
 import { runSimTool } from '../workspace/agentRobotTools';
-import { setWorldRequest, startDriveRequest } from './agentDrive';
+import { sceneObjects, setWorldRequest, startDriveRequest } from './agentDrive';
 
 const robot = (id: string) => fixtureRobots().find((r) => r.id === id)!;
 
@@ -59,6 +59,26 @@ async function fakeContext(id: string) {
 }
 
 describe('set_world', () => {
+  it('keeps visual classes and converts named local points without translating them', () => {
+    const colors = [{ name: 'ripe tomato', color: '#ff0000' }];
+    const [object] = sceneObjects([
+      {
+        id: 'fruit',
+        name: 'Fruit',
+        kind: 'sphere',
+        position: [100, 200, 300],
+        size: [20, 30, 40],
+        behavior: 'static',
+        points: { stem: [1, 2, 3] },
+        colors,
+      },
+    ]);
+
+    expect(object.position).toEqual([100, 300, -200]);
+    expect(object.points).toEqual({ stem: [1, 3, -2] });
+    expect(object.colors).toEqual(colors);
+  });
+
   it('converts the agent frame and keeps objects out of parts', async () => {
     const { ctx, world } = await fakeContext('rover-diff');
     const reply = setWorldRequest(ctx, {

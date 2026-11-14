@@ -3,6 +3,7 @@ import type { HardwareSpec } from '../../data/hardware';
 import type { AlignMode, Axis } from '../../utils/selection';
 import type { PlaneView } from '../../mirror/plane';
 import { sheetOf } from '../../sheet/sheetStock';
+import type { SheetThicknessOf } from '../../sheet/sheetThickness';
 
 export type Phase = boolean | undefined;
 
@@ -52,4 +53,5 @@ export interface InspectorProps {
   onChangeHardware: (spec: HardwareSpec, live?: Phase) => void;
   onAddClearanceHole: () => void;
   onTuneDimensions: (id: string, values: Record<string, number>) => Promise<void>;
+  sheetThicknessOf: SheetThicknessOf | null;
 }

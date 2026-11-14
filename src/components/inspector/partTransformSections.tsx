@@ -193,13 +193,18 @@ export const ShapeSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
   );
 };
 
-export const AppearanceSection: React.FC<PartSectionProps & { parts: ScenePart[] }> = ({ part, onUpdate, parts }) => (
+export const AppearanceSection: React.FC<PartSectionProps & Pick<InspectorProps, 'parts' | 'sheetThicknessOf'>> = ({
+  part,
+  onUpdate,
+  parts,
+  sheetThicknessOf,
+}) => (
   <Section title="Appearance">
     <ColorField
       value={part.color}
       suggestions={parts.map((p) => p.color)}
       onChange={(color, live) => onUpdate({ color }, live)}
     />
-    {part.role === 'solid' && <MaterialField part={part} onUpdate={onUpdate} />}
+    {part.role === 'solid' && <MaterialField part={part} onUpdate={onUpdate} sheetThicknessOf={sheetThicknessOf} />}
   </Section>
 );

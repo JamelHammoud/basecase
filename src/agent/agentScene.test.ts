@@ -91,6 +91,7 @@ describe('specToPart and applySpec', () => {
       thickness: 2,
     });
     expect(applySpec(metal, { id: 'chest', sheet: null }).sheet).toBeUndefined();
+    expect(applySpec(metal, { id: 'chest', material: 'petg' }).sheet).toBeUndefined();
     expect(specToPart({ id: 'hip', size: [60, 40, 4], sheet: { material: 'acrylic' } }).sheet).toEqual({
       material: 'acrylic',
       thickness: 4.5,

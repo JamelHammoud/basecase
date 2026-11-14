@@ -18,6 +18,8 @@ import type { ShapeReport } from '../analysis/shapeReports';
 import type { SweepSpec } from '../analysis/sweep';
 import type { SceneShapes } from '../analysis/sceneShapes';
 import type { MeshMeasure } from '../meshMeasure';
+import type { SheetProfile } from '../../sheet/detectSheet';
+import type { CutFilesResult, CutFilesTask } from '../../sheet/cutFiles';
 import type { FoundAxis } from '../../joints/axisFinder';
 import type { JointAxes } from '../../joints/jointCandidates';
 import type { JointAxisQuery } from '../analysis/jointAxis';
@@ -207,6 +209,8 @@ export interface Viewport3DHandle {
   printThreeMf: (plates: PlateFilesInput) => Promise<ThreeMfResult>;
   fitCoupons: (task: FitCouponTask) => Promise<FitCoupon[]>;
   exportStl: () => Promise<Uint8Array>;
+  sheetProfiles: (ids: string[]) => Promise<Record<string, SheetProfile | null>>;
+  exportCutFiles: (task: CutFilesTask) => Promise<CutFilesResult>;
   exportUsdz: () => Promise<Uint8Array>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;

@@ -2,6 +2,7 @@ import type { ScenePart } from '../types/robotics';
 import type { SheetProfile } from './detectSheet';
 import { sheetDxf } from './sheetDxf';
 import { SHEET_STOCK, sheetOf, type PartSheet } from './sheetStock';
+import { zipFolder } from '../utils/zipFolder';
 
 const slug = (text: string) =>
   text
@@ -31,26 +32,44 @@ function unique(name: string, taken: Set<string>): string {
   return out;
 }
 
-export interface CutFiles {
-  files: Record<string, Uint8Array>;
-  skipped: ScenePart[];
+export interface CutFile {
+  id: string;
+  name: string;
 }
 
-export function cutFiles(parts: ScenePart[], profileOf: (p: ScenePart) => SheetProfile | null): CutFiles {
-  const files: Record<string, Uint8Array> = {};
-  const taken = new Set<string>();
-  const skipped: ScenePart[] = [];
+export interface CutFilesTask {
+  folder: string;
+  files: CutFile[];
+}
 
-  for (const part of parts) {
+export interface CutFilesResult {
+  zip: Uint8Array | null;
+  count: number;
+  skipped: string[];
+}
+
+export function cutFileList(parts: ScenePart[]): CutFile[] {
+  const taken = new Set<string>();
+
+  return parts.flatMap((part) => {
     const sheet = sheetOf(part);
 
-    if (!sheet || !part.visible) continue;
+    return sheet && part.visible ? [{ id: part.id, name: unique(cutFileName(part.name, sheet), taken) }] : [];
+  });
+}
 
-    const profile = profileOf(part);
+export function cutFilesZip(task: CutFilesTask, profileOf: (id: string) => SheetProfile | null): CutFilesResult {
+  const files: Record<string, Uint8Array> = {};
+  const skipped: string[] = [];
 
-    if (!profile) skipped.push(part);
-    else files[unique(cutFileName(part.name, sheet), taken)] = new TextEncoder().encode(sheetDxf(profile));
+  for (const { id, name } of task.files) {
+    const profile = profileOf(id);
+
+    if (profile) files[name] = new TextEncoder().encode(sheetDxf(profile));
+    else skipped.push(id);
   }
 
-  return { files, skipped };
+  const count = Object.keys(files).length;
+
+  return { zip: count ? zipFolder(task.folder, files) : null, count, skipped };
 }

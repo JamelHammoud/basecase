@@ -35,6 +35,8 @@ export const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'printThreeMf',
   'fitCoupons',
   'exportStl',
+  'sheetProfiles',
+  'exportCutFiles',
   'exportUsdz',
   'partTriangles',
   'servoOutput',

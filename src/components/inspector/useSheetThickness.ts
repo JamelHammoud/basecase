@@ -1,26 +1,33 @@
 import { useEffect, useEffectEvent, useState } from 'react';
-import { mayBeSheet, sheetProfileOf } from '../../three/sheetProfile';
+import { mayBeSheet, type SheetThicknessOf } from '../../sheet/sheetThickness';
 import type { ScenePart } from '../../types/robotics';
 import { shapeKey } from '../../utils/printReport';
 
-export function useSheetThickness(part: ScenePart): number | null {
+export function useSheetThickness(part: ScenePart, thicknessOf: SheetThicknessOf | null): number | null {
   const key = `${shapeKey(part)}|${mayBeSheet(part)}`;
   const [found, setFound] = useState<{ key: string; thickness: number | null } | null>(null);
-  const current = useEffectEvent(() => part);
+  const current = useEffectEvent(() => ({ part, thicknessOf }));
+  const editing = !thicknessOf;
 
   useEffect(() => {
+    const lookup = current();
     let live = true;
 
-    void sheetProfileOf(current())
+    if (!lookup.thicknessOf) return;
+
+    void lookup
+      .thicknessOf(lookup.part)
       .catch(() => null)
-      .then((profile) => {
-        if (live) setFound({ key, thickness: profile?.thickness ?? null });
+      .then((thickness) => {
+        if (live) setFound({ key, thickness });
       });
 
     return () => {
       live = false;
     };
-  }, [key]);
+  }, [key, editing]);
 
-  return found?.key === key ? found.thickness : null;
+  if (editing || found?.key === key) return found?.thickness ?? null;
+
+  return null;
 }

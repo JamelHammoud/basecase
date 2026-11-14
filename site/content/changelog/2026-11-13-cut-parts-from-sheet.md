@@ -12,7 +12,7 @@ A PLA hip plate that flexes is often the first part to outgrow printing. Before 
 
 Weight follows the metal. A 100 × 60 × 3 mm plate is 16.3 g printed in PLA at 20% infill and 48.6 g in 6061 aluminum. Servo torque and the simulation carry the same mass.
 
-The thickness snaps to the nearest stock size, so 3 mm aluminum becomes 3.18 mm. The bill of materials lists sheet by material and thickness. Export ▸ Cut Files zips one DXF per part, in millimeters.
+The thickness snaps to the nearest stock size, so 3 mm aluminum becomes 3.18 mm. The bill of materials lists sheet by material and thickness. **Export** ▸ **Cut Files** zips one DXF per part, in millimeters.
 
 Bends, press-in hardware and the shop's rules on hole size aren't checked. Sheet has no price.
 

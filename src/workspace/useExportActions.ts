@@ -25,7 +25,7 @@ export function useExportActions(core: WorkspaceCore) {
   const sharingRef = useRef(false);
   const exportStep = useStepExport({ parts, scene, showToast, toasts });
   const exportRobotPackage = useRobotPackageExport(core);
-  const exportCutFiles = useCutFilesExport({ parts, scene, showToast });
+  const exportCutFiles = useCutFilesExport({ parts, scene, showToast, viewportRef });
 
   const exportStl = async () => {
     const viewport = viewportRef.current;

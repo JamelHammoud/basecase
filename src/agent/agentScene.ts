@@ -282,6 +282,7 @@ function applyLooks(next: ScenePart, spec: AgentPartSpec) {
 
     next.mechanicalTag = m.mechanicalTag;
     next.printMaterial = m.printMaterial;
+    delete next.sheet;
   }
 
   if (spec.supply !== undefined)

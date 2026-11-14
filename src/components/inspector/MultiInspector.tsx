@@ -214,13 +214,11 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
           <Select
             aria-label="Material"
             value={materials.size > 1 ? '' : [...materials][0]}
-            onChange={(e) =>
-              e.target.value && e.target.value !== SHEET_OPTION.value && onUpdateMany(materialPatch(e.target.value))
-            }
+            onChange={(e) => e.target.value && onUpdateMany(materialPatch(e.target.value))}
             options={[
               ...(materials.size > 1 ? [{ value: '', label: 'Mixed' }] : []),
               ...MATERIALS,
-              ...(materials.has(SHEET_OPTION.value) ? [SHEET_OPTION] : []),
+              ...(materials.has(SHEET_OPTION.value) ? [{ ...SHEET_OPTION, disabled: true }] : []),
             ]}
           />
         )}

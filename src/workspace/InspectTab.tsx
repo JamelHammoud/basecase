@@ -3,6 +3,8 @@ import { SculptAndDrawStudio } from '../components/SculptAndDrawStudio';
 import type { BoundSketch, SketchOutput } from '../components/studio/SketchPanel';
 import { GROUND_PLANE, sketchSolid, type SketchShape } from '../utils/sketch/placement';
 import { EMPTY_SKETCH } from '../utils/sketch/types';
+import { sheetThickness } from '../sheet/sheetThickness';
+import type { ScenePart } from '../types/robotics';
 import { solidSketchParams } from './partFactories';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -62,7 +64,7 @@ function ModePanel({ core, actions }: InspectTabProps) {
 }
 
 function SceneInspector({ core, actions }: InspectTabProps) {
-  const { scene, parts, studio, selection, annotations } = core;
+  const { scene, parts, studio, selection, annotations, docs, viewportRef } = core;
   const { edits, ops, library, tuning } = actions;
   const { saveAsModel } = library;
   const { toggleCommentMode } = annotations;
@@ -100,6 +102,12 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       onChangeHardware={edits.changeHardware}
       onAddClearanceHole={ops.addClearanceHole}
       onTuneDimensions={tuning.tune}
+      sheetThicknessOf={
+        docs.doc.base
+          ? null
+          : (part: ScenePart) =>
+              sheetThickness(part, async (ids) => (await viewportRef.current?.sheetProfiles(ids)) ?? {})
+      }
     />
   );
 }

@@ -45,6 +45,7 @@ import { ScaleFigures } from './scaleFigures';
 import { StageOverlays } from './stageOverlays';
 import { samePose } from './samePose';
 import { SelectionOutline } from './selectionOutline';
+import { sheetQueries } from './sheetQueries';
 import { StressOverlay } from './stressOverlay';
 import { warmShaders } from './shaderWarmup';
 import { changed, FIGURE_KEYS, GIZMO_KEYS, NEEDS_WHOLE_SCENE, shownPropsChanged, steadyProps } from './engineKeys';
@@ -359,6 +360,7 @@ export class ViewportEngine {
           task,
         ),
       exportStl: () => stlIn(restSolids(true)),
+      ...sheetQueries(restShapes),
       exportUsdz: () => exportUsdz(measure.solidObjects(ctx, { visibleOnly: true })),
       partTriangles: (id) => measure.partTriangles(ctx, id),
       servoOutput: (id) => withRest(() => measure.servoOutput(ctx, id)),

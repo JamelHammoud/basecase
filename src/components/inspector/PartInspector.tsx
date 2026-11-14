@@ -69,7 +69,14 @@ const PartInspectorBody: React.FC<PartInspectorProps & { partComments: SceneAnno
 
       {styled && !hw && <ShapeSection part={part} onUpdate={onUpdate} />}
 
-      {styled && <AppearanceSection part={part} onUpdate={onUpdate} parts={props.parts} />}
+      {styled && (
+        <AppearanceSection
+          part={part}
+          onUpdate={onUpdate}
+          parts={props.parts}
+          sheetThicknessOf={props.sheetThicknessOf}
+        />
+      )}
 
       {hw && <HardwareHoles hw={hw} onAddClearanceHole={props.onAddClearanceHole} />}
 

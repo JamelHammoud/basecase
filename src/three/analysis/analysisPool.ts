@@ -25,6 +25,8 @@ import type { JointAxisQuery } from './jointAxis';
 import type { ArmModel, PayloadMap } from '../../utils/payload';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
 import { errorMessage } from '../../utils/errorMessage';
+import type { SheetProfile } from '../../sheet/detectSheet';
+import type { CutFilesResult, CutFilesTask } from '../../sheet/cutFiles';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -140,6 +142,14 @@ export function threeMfIn(scene: SceneShapes, plates: PlateFilesInput): Promise<
 
 export function stlIn(scene: SceneShapes): Promise<Uint8Array> {
   return analyze(leastBusy(), scene, { kind: 'stl', instances: scene.instances });
+}
+
+export function sheetProfilesIn(scene: SceneShapes): Promise<Record<string, SheetProfile | null>> {
+  return analyze(leastBusy(), scene, { kind: 'sheet', instances: scene.instances });
+}
+
+export function cutFilesIn(scene: SceneShapes, task: CutFilesTask): Promise<CutFilesResult> {
+  return analyze(leastBusy(), scene, { kind: 'cutFiles', instances: scene.instances, ...task });
 }
 
 export function visibilityIn(scene: SceneShapes): Promise<Record<string, number>> {

@@ -9,7 +9,7 @@ import {
   type PartSheet,
 } from '../../sheet/sheetStock';
 import type { PartSectionProps } from './partSections';
-import { MATERIALS, SHEET_OPTION, materialPatch, materialTag } from './types';
+import { MATERIALS, SHEET_OPTION, materialPatch, materialTag, type InspectorProps } from './types';
 import { useSheetThickness } from './useSheetThickness';
 
 const MATERIAL_OPTIONS = SHEET_MATERIALS.map((m) => ({ value: m, label: SHEET_STOCK[m].label }));
@@ -34,8 +34,12 @@ const SheetFields: React.FC<{ sheet: PartSheet; onChange: (sheet: PartSheet) => 
   </div>
 );
 
-export const MaterialField: React.FC<PartSectionProps> = ({ part, onUpdate }) => {
-  const thickness = useSheetThickness(part);
+export const MaterialField: React.FC<PartSectionProps & Pick<InspectorProps, 'sheetThicknessOf'>> = ({
+  part,
+  onUpdate,
+  sheetThicknessOf,
+}) => {
+  const thickness = useSheetThickness(part, sheetThicknessOf);
   const sheet = sheetOf(part);
   const options = sheet || thickness !== null ? [...MATERIALS, SHEET_OPTION] : MATERIALS;
   const choose = (value: string) => {

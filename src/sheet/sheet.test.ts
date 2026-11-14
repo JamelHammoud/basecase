@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import type { ScenePart } from '../types/robotics';
-import { cutFileName, cutFiles } from './cutFiles';
+import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { cutFileList, cutFileName, cutFilesZip } from './cutFiles';
 import { detectSheet } from './detectSheet';
 import { dxfLoops, sheetDxf } from './sheetDxf';
 import { sheetOf, snapThickness } from './sheetStock';
@@ -155,12 +156,32 @@ describe('cut files', () => {
   it('writes one DXF per sheet part and names the ones that aren’t flat', () => {
     const part = (id: string, name: string) =>
       ({ id, name, kind: 'box', role: 'solid', visible: true, sheet, dimensions: {} }) as ScenePart;
-    const { files, skipped } = cutFiles(
-      [part('a', 'Plate'), part('b', 'Plate'), part('c', 'Block'), { ...part('d', 'Bracket'), sheet: undefined }],
-      (p) => (p.id === 'c' ? null : detectSheet(plate())),
+    const files = cutFileList([
+      part('a', 'Plate'),
+      part('b', 'Plate'),
+      part('c', 'Block'),
+      { ...part('d', 'Bracket'), sheet: undefined },
+      { ...part('e', 'Hidden'), visible: false },
+    ]);
+    const { zip, count, skipped } = cutFilesZip({ folder: 'robot', files }, (id) =>
+      id === 'c' ? null : detectSheet(plate()),
     );
 
-    expect(Object.keys(files)).toEqual(['plate-6061-aluminum-3.18mm.dxf', 'plate-6061-aluminum-3.18mm-2.dxf']);
-    expect(skipped.map((p) => p.id)).toEqual(['c']);
+    expect(files.map((f) => f.name)).toEqual([
+      'plate-6061-aluminum-3.18mm.dxf',
+      'plate-6061-aluminum-3.18mm-2.dxf',
+      'block-6061-aluminum-3.18mm.dxf',
+    ]);
+    expect(Object.keys(unzipSync(zip!))).toEqual([
+      'robot/plate-6061-aluminum-3.18mm.dxf',
+      'robot/plate-6061-aluminum-3.18mm-2.dxf',
+    ]);
+    expect(count).toBe(2);
+    expect(skipped).toEqual(['c']);
+    expect(cutFilesZip({ folder: 'robot', files: files.slice(2) }, () => null)).toEqual({
+      zip: null,
+      count: 0,
+      skipped: ['c'],
+    });
   });
 });

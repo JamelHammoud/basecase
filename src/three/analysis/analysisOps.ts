@@ -19,6 +19,8 @@ import { strengthOf } from './strengthPart';
 import { planMerges } from '../../print/merge/mergePlan';
 import { plateFiles, type ThreeMfResult, type ThreeMfTask } from './plateFiles';
 import { sceneStl } from './sceneStl';
+import { sceneCutFiles, sheetProfile } from './sheetShapes';
+import type { CutFilesResult, CutFilesTask } from '../../sheet/cutFiles';
 
 export type { PlateFilesInput, ThreeMfFileSpec, ThreeMfResult } from './plateFiles';
 
@@ -45,6 +47,8 @@ export type AnalysisTask =
   | { kind: 'strength'; instances: Instance[]; jobs: StrengthJob[] }
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
   | { kind: 'measure' | 'meshes' | 'visibility' | 'floor' | 'stl'; instances: Instance[] }
+  | { kind: 'sheet'; instances: Instance[] }
+  | ({ kind: 'cutFiles'; instances: Instance[] } & CutFilesTask)
   | { kind: 'gaps'; instances: Instance[]; pairs: PairIds[]; withinMm: number }
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
@@ -126,10 +130,17 @@ function run(task: Exclude<AnalysisTask, { kind: 'strength' }>) {
 function runPlaced(
   task: Extract<
     AnalysisTask,
-    { kind: 'gaps' | 'threeMf' | 'fasteners' | 'assembly' | 'jointAxis' | 'jointAxes' | 'fitCoupons' }
+    {
+      kind:
+        'gaps' | 'threeMf' | 'fasteners' | 'assembly' | 'jointAxis' | 'jointAxes' | 'fitCoupons' | 'sheet' | 'cutFiles';
+    }
   >,
 ) {
   switch (task.kind) {
+    case 'sheet':
+      return byId(task.instances, (i) => sheetProfile(solidOf(i.key)));
+    case 'cutFiles':
+      return sceneCutFiles(task, solidOf);
     case 'gaps':
       return pairsWithin(placeAll(task.instances), task.pairs, task.withinMm);
     case 'threeMf':
@@ -177,6 +188,8 @@ const transferOf = (kind: AnalysisTask['kind'], result: unknown): Transferable[]
   if (kind === 'strength') return fieldBuffers(result);
 
   if (kind === 'stl') return [(result as Uint8Array).buffer as ArrayBuffer];
+
+  if (kind === 'cutFiles') return [(result as CutFilesResult).zip?.buffer].filter((b) => !!b) as ArrayBuffer[];
 
   return kind === 'meshes' ? meshBuffers(result) : [];
 };

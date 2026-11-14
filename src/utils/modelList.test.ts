@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CustomModelDefinition } from '../types/robotics';
-import { withModel } from './libraryModels';
+import { withModel } from './modelList';
 
 const model = (id: string, createdAt: string, name = id) => ({ id, name, createdAt }) as CustomModelDefinition;
 

@@ -5,6 +5,7 @@ import { errorMessage } from '../utils/errorMessage';
 import { decodeSceneFile, SCENE_FILE_EXTENSION } from '../utils/sceneFile';
 import { newSceneId } from '../utils/sceneIds';
 import { sceneStore } from '../utils/sceneStore';
+import { queueSceneWrite } from '../utils/sceneWrites';
 import { findSceneTab, sceneCopyName } from './tabModel';
 import type { useTabActions } from './useTabActions';
 import type { TabsCore } from './useTabs';
@@ -19,7 +20,13 @@ async function rewrite(id: string, changes: Partial<SavedSceneRecord> & { keepUp
 
 const reloadScenes = async () => sceneStore.set(await platformBridge.listScenes());
 
-const keep = (saved: SavedSceneSummary | null) => (saved ? sceneStore.upsert(saved) : reloadScenes());
+const listed = (id: string) => sceneStore.get().some((s) => s.id === id);
+
+const keep = (saved: SavedSceneSummary | null) => {
+  if (!saved) return reloadScenes();
+
+  if (listed(saved.id)) sceneStore.upsert(saved);
+};
 
 export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTabActions>) {
   'use memo';
@@ -44,10 +51,10 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
       return;
     }
 
-    rewrite(scene.id, { name, keepUpdatedAt: true }).then(keep, reloadScenes);
+    queueSceneWrite(scene.id, () => rewrite(scene.id, { name, keepUpdatedAt: true })).then(keep, reloadScenes);
   };
 
-  const duplicateScene = async (scene: SavedSceneSummary) => {
+  const duplicateScene = (scene: SavedSceneSummary) => {
     const tab = tabFor(scene.id);
     const id = newSceneId();
     const name = sceneCopyName(
@@ -59,9 +66,11 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
     sceneStore.upsert({ ...scene, id, name, updatedAt: new Date().toISOString() });
     toastInFront(`Duplicated ${scene.name}`);
 
-    if (tab) await handles.current.get(tab.id)?.flush();
+    queueSceneWrite(id, async () => {
+      if (tab) await handles.current.get(tab.id)?.flush();
 
-    rewrite(scene.id, { id, name, chatId: null }).then(keep, reloadScenes);
+      return rewrite(scene.id, { id, name, chatId: null });
+    }).then(keep, reloadScenes);
   };
 
   const deleteScene = (scene: SavedSceneSummary) => {
@@ -71,7 +80,7 @@ export function useSceneLibrary(core: TabsCore, actions: ReturnType<typeof useTa
 
     setClosed((prev) => prev.filter((c) => c.seed.sceneId !== scene.id));
     sceneStore.remove(scene.id);
-    platformBridge.deleteScene(scene.id).catch(reloadScenes);
+    queueSceneWrite(scene.id, () => platformBridge.deleteScene(scene.id)).catch(reloadScenes);
     window.setTimeout(() => toastInFront(`Deleted ${scene.name}`), 0);
   };
 

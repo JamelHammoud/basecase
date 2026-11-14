@@ -1,8 +1,10 @@
 import { confirmAction } from '../design-system/confirmStore';
 import type { CustomModelDefinition } from '../types/robotics';
+import { errorMessage } from '../utils/errorMessage';
+import { withModel, withoutModel } from '../utils/modelList';
 import { platformBridge } from '../utils/platformBridge';
 import { copyName, modelId, stamp } from './helpers';
-import { sceneModel, withModel } from './libraryModels';
+import { sceneModel } from './libraryModels';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 function useLibraryModels({ studio, showToast }: WorkspaceCore) {
@@ -10,19 +12,16 @@ function useLibraryModels({ studio, showToast }: WorkspaceCore) {
 
   const { setCustomModels } = studio;
 
-  const write = (
-    change: (models: CustomModelDefinition[]) => CustomModelDefinition[],
-    save: () => Promise<unknown>,
-  ) => {
-    setCustomModels(change);
-    save().catch(async () => setCustomModels(await platformBridge.listModels()));
-  };
+  const write = (save: () => Promise<unknown>, failed: string) =>
+    save().catch(async (err: unknown) => {
+      showToast(`${failed} ${errorMessage(err)}`, { tone: 'error' });
+      setCustomModels(await platformBridge.listModels());
+    });
 
-  const resaveModel = (model: CustomModelDefinition) =>
-    write(
-      (models) => withModel(models, model),
-      () => platformBridge.saveModel(model),
-    );
+  const resaveModel = (model: CustomModelDefinition) => {
+    setCustomModels((models) => withModel(models, model));
+    void write(() => platformBridge.saveModel(model), `Couldn’t save ${model.name}.`);
+  };
 
   const renameModel = (model: CustomModelDefinition, name: string) => {
     resaveModel({ ...model, name });
@@ -40,10 +39,8 @@ function useLibraryModels({ studio, showToast }: WorkspaceCore) {
   };
 
   const removeModel = (model: CustomModelDefinition) => {
-    write(
-      (models) => models.filter((m) => m.id !== model.id),
-      () => platformBridge.deleteModel(model.id),
-    );
+    setCustomModels((models) => withoutModel(models, model.id));
+    void write(() => platformBridge.deleteModel(model.id), `Couldn’t delete ${model.name}.`);
     showToast(`Deleted ${model.name}`, {
       tone: 'neutral',
       action: { label: 'Undo', onClick: () => resaveModel(model) },

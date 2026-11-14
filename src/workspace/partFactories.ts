@@ -3,7 +3,6 @@ import { hardwareName, hardwareNote } from '../data/hardware';
 import type { CatalogItem, CustomModelSubNode, ScenePart, SculptMeshData } from '../types/robotics';
 import type { SketchSolid } from '../utils/sketch/placement';
 import type { Vec3 } from './types';
-import { plural } from '../../electron/plural.mjs';
 
 export type ClayPreset = 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule';
 
@@ -132,20 +131,12 @@ export function clayPart(preset: ClayPreset, id: string, sculptMesh: SculptMeshD
     rotation: [0, 0, 0],
     dimensions: { ...dims },
     color: '#f4f4f5',
-    note: 'Hand-sculpted clay geometry',
+    note: '',
     mechanicalTag: PRINTED_TAG,
     visible: true,
     locked: false,
     sculptMesh,
   };
-}
-
-function sketchDescription(params: Pick<SketchParams, 'mode' | 'nodes'>) {
-  if (params.mode === 'svg') {
-    return `Imported SVG (${plural(params.nodes.length, 'path')})`;
-  }
-
-  return params.mode === 'extrude' ? 'Sketch extrusion' : 'Sketch revolve';
 }
 
 const sketchDimensions = (params: SketchParams) => ({
@@ -175,7 +166,7 @@ function flatSketchPart(params: SketchParams, id: string): ScenePart {
     rotation: [0, 0, 0],
     dimensions: sketchDimensions(params),
     color: params.color,
-    note: sketchDescription(params),
+    note: '',
     mechanicalTag: PRINTED_TAG,
     visible: true,
     locked: false,

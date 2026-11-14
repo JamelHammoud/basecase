@@ -147,15 +147,6 @@ function modelContext(payload) {
   };
 }
 
-function modelDescription(payload, features) {
-  const holeCount = features?.contour?.holes?.length || 0;
-
-  return (
-    payload.promptText?.trim() ||
-    `3D model generated via ACP from reference image (${features?.contour?.outerLoop?.length || 8} contour vertices, ${holeCount} internal holes).`
-  );
-}
-
 function modelSource(payload) {
   return {
     sourceType: payload.imageDataUrl ? 'image-to-3d-acp' : 'agent-acp',
@@ -175,7 +166,7 @@ export function synthesizeCustomModelFromRequest(payload) {
   return {
     id: ctx.id,
     name: ctx.rawName,
-    description: modelDescription(payload, ctx.features),
+    description: payload.promptText?.trim() || '',
     createdAt: new Date().toISOString(),
     ...modelSource(payload),
     defaultDimensions: {

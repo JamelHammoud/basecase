@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -48,7 +49,13 @@ export function shCheck(name, command, args, options = {}) {
   };
 }
 
+const opensApp = (file) =>
+  fs.existsSync(path.join(ROOT, file)) && /\bopenApp\(/.test(fs.readFileSync(path.join(ROOT, file), 'utf8'));
+
+export const vitestConfig = (files) =>
+  files.some(opensApp) ? 'verify/vitest.app.config.ts' : 'verify/vitest.config.ts';
+
 export const vitestCheck = (name, ...files) =>
-  shCheck(name, 'npx', ['vitest', 'run', '--config', 'verify/vitest.config.ts', ...files]);
+  shCheck(name, 'npx', ['vitest', 'run', '--config', vitestConfig(files), ...files]);
 
 export const cargoCheck = (name, ...args) => shCheck(name, 'cargo', ['test', '--quiet', ...args]);

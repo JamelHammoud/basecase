@@ -1,5 +1,3 @@
-// AprilTag 36h11 detector for wasm32. The codebook comes from TypeScript at init.
-
 mod decode;
 mod detect;
 mod geometry;
@@ -47,7 +45,6 @@ pub unsafe extern "C" fn tags_free(ptr: *mut u8, len: usize) {
     drop(Box::from_raw(std::ptr::slice_from_raw_parts_mut(ptr, len)));
 }
 
-/// `codes` holds `count` little-endian u64 codes; `bit_x` / `bit_y` hold 36 bytes each.
 #[no_mangle]
 pub unsafe extern "C" fn tags_init(codes: *const u8, count: usize, bit_x: *const u8, bit_y: *const u8) {
     let bytes = std::slice::from_raw_parts(codes, count * 8);

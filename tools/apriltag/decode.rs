@@ -52,7 +52,6 @@ impl Codebook {
     }
 }
 
-/// Mean intensity of cell (cx, cy) of the 8x8 black square; cells -1 and 8 are the white margin.
 fn cell(img: &Image, h: &Homography, cx: i32, cy: i32) -> f64 {
     let mut sum = 0.0;
 

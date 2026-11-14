@@ -8,7 +8,6 @@ fn turn(o: [i32; 2], a: [i32; 2], b: [i32; 2]) -> i64 {
     (a[0] - o[0]) as i64 * (b[1] - o[1]) as i64 - (a[1] - o[1]) as i64 * (b[0] - o[0]) as i64
 }
 
-/// Convex hull by monotone chain of points sorted by (y, x), without collinear points.
 pub fn hull(points: &[[i32; 2]], out: &mut Vec<Pt>, chain: &mut Vec<[i32; 2]>) {
     chain.clear();
 
@@ -119,7 +118,6 @@ fn well_shaped(q: &Quad) -> bool {
     true
 }
 
-/// The largest quad inscribed in the hull, ordered so its signed area (x right, y down) is positive.
 pub fn fit(hull: &[Pt]) -> Option<Quad> {
     if hull.len() < 4 {
         return None;

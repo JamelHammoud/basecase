@@ -66,7 +66,7 @@ function context(caseConsole: CaseConsole): PanelContext {
       cases: {
         active: kase,
         attempt: { phase: 'idle', elapsed: 0, start: async () => undefined, end: () => undefined },
-        realTry: { phase: 'idle', elapsed: 0, start: async () => undefined, end: () => undefined },
+        realTry: { phase: 'idle', elapsed: 0, canStart: false, start: async () => undefined, end: () => undefined },
         mat: { available: false },
         tries: [],
         dataset: { canExport: false, canPublish: false, exporting: false },

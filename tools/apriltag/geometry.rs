@@ -35,7 +35,6 @@ pub struct Line {
     pub d: Pt,
 }
 
-/// Weighted total least squares line through `points` (x, y, weight).
 pub fn fit_line(points: &[[f64; 3]]) -> Option<Line> {
     let mut sw = 0.0;
     let mut sx = 0.0;
@@ -92,7 +91,6 @@ pub fn intersect(a: &Line, b: &Line) -> Option<Pt> {
     Some([a.p[0] + t * a.d[0], a.p[1] + t * a.d[1]])
 }
 
-/// Homography mapping the square (-1,-1), (1,-1), (1,1), (-1,1) onto `quad`.
 pub struct Homography([f64; 8]);
 
 impl Homography {

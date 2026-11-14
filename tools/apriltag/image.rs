@@ -1,4 +1,3 @@
-/// A gray image. Pixel (i, j) covers [i, i + 1) x [j, j + 1), so its centre is (i + 0.5, j + 0.5).
 pub struct Image<'a> {
     pub data: &'a [u8],
     pub w: usize,

@@ -135,7 +135,7 @@ function matCommands({ simTraining, tool }: WorkspaceCore): Command[] {
       void realTry.start();
     },
   };
-  const idle = realTry.phase === 'idle' && attempt.phase === 'idle';
+  const idle = realTry.canStart && attempt.phase === 'idle';
 
   return [exportMat, ...(idle ? [tryReal] : [])];
 }

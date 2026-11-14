@@ -27,8 +27,6 @@ Give your robot a task in a simulated world, drive it through, and keep the trie
 
 A humanoid or an arm can follow your own arms instead of the keys: press ⌘K and choose **Drive with Camera** before step 4. Steps are in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
-A Case for a wheeled or legged robot also shows **Try on Real Robot** under **Try It**. It judges your real robot's run from the computer's camera, as in [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
-
 ![A try running, with the clock, Stop Try and the keys](/help/try-a-robot-on-a-case/trying.png)
 
 6. Click **Stop Try**, or let the time run out.
@@ -37,6 +35,8 @@ A Case for a wheeled or legged robot also shows **Try on Real Robot** under **Tr
 9. Once five tries pass, click **Train from Tries** to teach the robot from them. Steps are in [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
 ![Results with the latest run and one try](/help/try-a-robot-on-a-case/results.png)
+
+A wheeled or legged robot can also try a Case for real; see [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
 While you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their two rows sit at the top of Results, above the latest run. [Explore servo versions](/help/explore-servo-versions-on-a-case) puts its rows next.
 

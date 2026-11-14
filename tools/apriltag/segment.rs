@@ -23,7 +23,6 @@ struct Stats {
 
 const EMPTY: Stats = Stats { count: 0, x0: i32::MAX, y0: i32::MAX, x1: i32::MIN, y1: i32::MIN };
 
-/// Connected components of dark pixels, as outline points (pixel corners) per component.
 #[derive(Default)]
 pub struct Segmenter {
     tile_min: Vec<u8>,
@@ -236,7 +235,6 @@ impl Segmenter {
         }
     }
 
-    /// Each picked component's widest extent per row, as rows of [left, right) pixel edges.
     fn extents(&mut self) {
         let mut offset = 0;
 
@@ -267,7 +265,6 @@ impl Segmenter {
         }
     }
 
-    /// Outline points per component, sorted by (y, x): the extreme pixel edges on every row boundary.
     fn gather(&mut self) {
         self.extents();
         self.points.clear();

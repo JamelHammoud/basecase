@@ -49,7 +49,7 @@ It works for Cases with a wheeled or legged robot, in the desktop app. Basecase 
 ![The base tag page, with the arrow above the tag](/help/try-a-case-on-your-real-robot/base-tag.png)
 
 6. Put the robot in the start box, facing the path.
-7. Point the computer's camera at the mat from above and to one side, so it sees at least two corner tags and the robot.
+7. Point the computer's camera at the mat from above and to one side, so it sees at least two of the mat's tags and the robot.
 8. In the **Simulate** tab's **Try** section, click **Try on Real Robot**.
 
 ![Try on Real Robot under Try It in the Try section](/help/try-a-case-on-your-real-robot/try-on-real-robot.png)
@@ -67,6 +67,6 @@ The try appears in **Results** with a **Real** mark. Click its **Replay** button
 
 ![The real try's path drawn over the best sim try's path on the canvas](/help/try-a-case-on-your-real-robot/replay.png)
 
-You can also start it from ⌘K: type the Case's name and choose **Try ⟨Case⟩ on Real Robot**.
+If the camera loses the robot's tag for more than 0.15 s, that stretch can't count toward a pass. A legged robot's Case then reads it as a fall. A camera looking straight down can't measure its own lens, so tilt it.
 
-If the camera loses the robot's tag for more than 0.15 s, that stretch can't count toward a pass. A legged robot's Case then reads it as a fall. A camera looking straight down can't measure its own lens, so tilt it. Arms aren't tracked yet.
+You can also start it from ⌘K: type the Case's name and choose **Try ⟨Case⟩ on Real Robot**.

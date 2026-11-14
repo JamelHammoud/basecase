@@ -17,7 +17,6 @@ struct Pass {
 const COARSE: Pass = Pass { range: 3.5, spacing: 4.0, max_points: 12.0 };
 const FINE: Pass = Pass { range: 1.5, spacing: 2.5, max_points: 40.0 };
 
-/// Offset along `n` (pointing from dark to light) of the strongest dark-to-light edge near `p`.
 fn edge_offset(img: &Image, p: Pt, n: Pt, range: f64) -> Option<(f64, f64)> {
     let m = (range / STEP) as i32;
     let mut v = [0.0f64; MAX_STEPS];
@@ -114,7 +113,6 @@ fn refine_pass(img: &Image, quad: &Quad, pass: Pass, points: &mut Vec<[f64; 3]>)
     Some(out)
 }
 
-/// Moves each edge of `quad` (positive orientation, dark inside) onto the image's edge, with sub-pixel accuracy.
 pub fn refine(img: &Image, quad: &Quad, points: &mut Vec<[f64; 3]>) -> Option<Quad> {
     let coarse = refine_pass(img, quad, COARSE, points)?;
 

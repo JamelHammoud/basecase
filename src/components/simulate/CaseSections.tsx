@@ -140,7 +140,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
             size="md"
             fullWidth
             icon={<CameraIcon className="w-4 h-4" />}
-            disabled={busy}
+            disabled={busy || !realTry.canStart}
             onClick={() => void realTry.start()}
           >
             Try on Real Robot

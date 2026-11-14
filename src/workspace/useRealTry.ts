@@ -5,6 +5,7 @@ import type { Case } from '../cases/schema';
 import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
 import { saveRecording } from '../cases/tryStore';
 import {
+  claimMatTracking,
   closeMatTracking,
   MAT_TRACKING_STOPPED,
   matTrackingSnapshot,
@@ -37,12 +38,14 @@ interface RealTryOptions {
 export interface RealTry {
   phase: TryPhase;
   elapsed: number;
+  canStart: boolean;
   samples: () => number;
   start: () => Promise<void>;
   end: () => void;
 }
 
 interface Running extends StagedMat {
+  owner: number;
   kase: Case;
   t0: number | null;
   samples: RealSample[];
@@ -54,8 +57,8 @@ const END_SLACK = 1e-6;
 
 const newTryId = () => `try-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-function lostTo(tracking: ReturnType<typeof useMatTracking>, running: boolean): string | null {
-  if (!running) return null;
+function lostTo(tracking: ReturnType<typeof useMatTracking>, owner: number): string | null {
+  if (!owner || tracking.owner !== owner) return null;
 
   return tracking.refusal ?? (tracking.error ? MAT_TRACKING_STOPPED : null);
 }
@@ -65,12 +68,14 @@ export function useRealTry(options: RealTryOptions): RealTry {
   const tracking = useMatTracking();
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [elapsed, setElapsed] = useState(0);
+  const [owner, setOwner] = useState(0);
   const run = useRef<Running | null>(null);
   const finishing = useRef(false);
 
   const settle = () => {
     run.current = null;
     finishing.current = false;
+    setOwner(0);
     setElapsed(0);
     setPhase('idle');
   };
@@ -110,7 +115,7 @@ export function useRealTry(options: RealTryOptions): RealTry {
     if (!current || finishing.current) return;
 
     finishing.current = true;
-    closeMatTracking();
+    closeMatTracking(current.owner);
     viewportRef.current?.setMatTrack(null);
     setPhase('scoring');
 
@@ -142,24 +147,24 @@ export function useRealTry(options: RealTryOptions): RealTry {
   const takeFromEffect = useEffectEvent(take);
 
   useEffect(() => {
-    if (!listening) return;
+    if (!listening || !owner) return;
 
-    return onMatSample((sample) => takeFromEffect(sample));
-  }, [listening]);
+    return onMatSample(owner, (sample) => takeFromEffect(sample));
+  }, [listening, owner]);
 
   useEffect(() => {
-    if (!listening) return;
+    if (!listening || !owner) return;
 
     return () => {
-      if (!finishing.current) closeMatTracking();
+      if (!finishing.current) closeMatTracking(owner);
     };
-  }, [listening]);
+  }, [listening, owner]);
 
-  const lost = lostTo(tracking, phase === 'running');
+  const lost = lostTo(tracking, phase === 'running' ? owner : 0);
   const dropFromEffect = useEffectEvent((message: string) => {
     if (!run.current || finishing.current) return;
 
-    closeMatTracking();
+    closeMatTracking(run.current.owner);
     viewportRef.current?.setMatTrack(null);
     onRefuse(message);
     settle();
@@ -173,28 +178,35 @@ export function useRealTry(options: RealTryOptions): RealTry {
     return () => clearTimeout(soon);
   }, [lost]);
 
-  const start = async () => {
-    const made = active && phase === 'idle' && !blocked ? matOf() : null;
+  const canStart = phase === 'idle' && !blocked && !tracking.owner;
 
-    if (!active || !made) return;
+  const start = async () => {
+    const made = active && canStart ? matOf() : null;
+    const claimed = made ? claimMatTracking() : 0;
+
+    if (!active || !made || !claimed) return;
 
     onStart();
-    run.current = { ...made, kase: active, t0: null, samples: [], path: [] };
+    run.current = { ...made, owner: claimed, kase: active, t0: null, samples: [], path: [] };
+    setOwner(claimed);
     setElapsed(0);
     setPhase('starting');
 
-    const refusal = await openMatTracking(made.mat);
+    const refusal = await openMatTracking(claimed, made.mat);
+    const { owner: holder, open } = matTrackingSnapshot();
 
-    if (!refusal && matTrackingSnapshot().open) return setPhase('running');
+    if (!refusal && open && holder === claimed) return setPhase('running');
 
     if (refusal) onRefuse(refusal);
 
+    closeMatTracking(claimed);
     settle();
   };
 
   return {
     phase,
     elapsed,
+    canStart,
     samples: () => run.current?.samples.length ?? 0,
     start,
     end: () => void finish(),

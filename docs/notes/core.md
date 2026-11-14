@@ -282,3 +282,11 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - First run of a 60-part scene under SwiftShader: about 80 s with no main-thread long tasks; the same scene unchanged: about 2 s.
 - Guide viewer: turn scroll snapping off before any flight. Chrome treats a page's transformed box as its snap area, so a page flying back to the thumbnail made the viewer re-snap mid-flight and the page landed in the wrong place (only when scrolled past page 1). Zooming above 100% also turns snapping off.
 - Guide viewer flights measure the thumbnail at open with its hover lift and tilt (it's under the pointer), and at close as it rests (hidden, untilted).
+
+## cases/trySearch/clip (the bundled frame search model)
+
+- Source: Hugging Face `Xenova/mobileclip_s0`, revision `757d59c9c6870a76a4b0306f05f5061bca15c39f` (an ONNX export of Apple's MobileCLIP-S0, `github.com/apple/ml-mobileclip`). Licence: Apple's sample-code licence (the repo's `LICENSE`, `license: other` on the Hub), which allows use and redistribution with or without changes.
+- `public/models/mobileclip-s0/vision.onnx` is `onnx/vision_model_fp16.onnx` (22.9 MB, sha256 `22b1d36e…59dc`). The int8 `vision_model_quantized.onnx` loads but its embeddings are wrong: on three photos, "a red mug" scored 0.11 / 0.10 / 0.08 against a mug, a box and a robot arm, where fp32 and fp16 give 0.33 / 0.06 / 0.05.
+- `text.onnx.1` and `text.onnx.2` are `onnx/text_model_quantized.onnx` (42.8 MB, sha256 `b8557b10…4a16` once joined) cut in two, because the web build can't serve a file over 25 MiB. `clipFiles.ts` fetches both and joins them. The int8 text model matches fp32 to within 0.01.
+- `merges.txt` is the BPE merge list from the repo's `tokenizer.json`, one merge a line. The vocabulary isn't shipped: CLIP's is the 256 byte characters in code-point order, the same 256 with `</w>`, then each merge's result in order, then `<|startoftext|>` (49406) and `<|endoftext|>` (49407). `clipTokenizer.test.ts` holds ids from the Hugging Face tokenizer.
+- Preprocessing (`preprocessor_config.json`): shortest edge to 256, centre crop 256 × 256, scale to 0–1, no mean or std normalisation. Text pads with id 0 (`!`) to 77 tokens.

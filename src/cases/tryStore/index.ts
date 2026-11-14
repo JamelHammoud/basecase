@@ -3,6 +3,7 @@ import type { Recording } from '../../sim/recorder';
 import { indexedDbStore } from '../../utils/keyValueStore';
 import { IS_WEB_DEMO } from '../../utils/platform/webDemo';
 import { summaryOf, type StoredTry, type TrySummary } from '../tryFile';
+import { motionTrace } from '../trySearch/motion';
 import { desktopTries } from './desktopTries';
 import { TRIES_LABEL, type TryBackend } from './types';
 import { webTries } from './webTries';
@@ -10,6 +11,11 @@ import { webTries } from './webTries';
 export interface KeptTry {
   stored: StoredTry;
   recording: Recording | null;
+}
+
+export interface TriesChange {
+  kept: StoredTry[];
+  deleted: string[];
 }
 
 const backend: TryBackend = IS_WEB_DEMO ? webTries : desktopTries;
@@ -23,6 +29,15 @@ export const legacyRecordings = indexedDbStore<Recording>({
 let listed: TrySummary[] | null = null;
 let loading: Promise<TrySummary[]> | null = null;
 const listeners = new Set<() => void>();
+const changeListeners = new Set<(change: TriesChange) => void>();
+
+export function onTriesChanged(listener: (change: TriesChange) => void): () => void {
+  changeListeners.add(listener);
+
+  return () => changeListeners.delete(listener);
+}
+
+const changed = (change: TriesChange) => changeListeners.forEach((listener) => listener(change));
 
 function publish(next: TrySummary[]) {
   listed = next;
@@ -70,8 +85,16 @@ async function update(change: (tries: TrySummary[]) => TrySummary[]) {
   if (listed) publish(change(listed));
 }
 
-export async function keepTries(kept: KeptTry[]) {
-  if (!kept.length) return;
+const withMotion = ({ stored, recording }: KeptTry): KeptTry => {
+  const motion = stored.motion ?? (recording && motionTrace(recording));
+
+  return { stored: motion ? { ...stored, motion } : stored, recording };
+};
+
+export async function keepTries(given: KeptTry[]) {
+  if (!given.length) return;
+
+  const kept = given.map(withMotion);
 
   for (const { stored, recording } of kept) await backend.save(stored, recording);
 
@@ -79,7 +102,19 @@ export async function keepTries(kept: KeptTry[]) {
   const summaries = kept.map((k) => summaryOf(k.stored, { recording: !!k.recording, strip: false }));
 
   await update((tries) => [...tries.filter((t) => !ids.has(t.id)), ...summaries]);
+  changed({ kept: kept.map((k) => k.stored), deleted: [] });
 }
+
+export async function saveManifest(stored: StoredTry) {
+  await backend.save(stored, null);
+  changed({ kept: [stored], deleted: [] });
+}
+
+export const loadManifests = (ids: string[]) => backend.manifests(ids);
+
+export const loadSearchIndex = () => backend.index();
+
+export const saveSearchIndex = (bytes: Uint8Array) => backend.saveIndex(bytes);
 
 export async function deleteTries(ids: string[]) {
   if (!ids.length) return;
@@ -89,6 +124,7 @@ export async function deleteTries(ids: string[]) {
   const gone = new Set(ids);
 
   await update((tries) => tries.filter((t) => !gone.has(t.id)));
+  changed({ kept: [], deleted: ids });
 }
 
 export const loadRecording = (id: string) => backend.recording(id);

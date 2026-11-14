@@ -7,6 +7,8 @@ import { plural } from '../../electron/plural.mjs';
 import { errorMessage } from '../utils/errorMessage';
 import type { ShowToast } from './types';
 import type { TryTimeline } from './useTryTimeline';
+import type { TryHit } from '../cases/trySearch/types';
+import { likeQuery, useTrySearch } from './useTrySearch';
 
 export interface TryGroup {
   robot: string;
@@ -55,26 +57,39 @@ export const goingTries = (all: TrySummary[], ids: string[]) => {
   return all.filter((t) => going(t.id, t.source === 'generated' ? t.sourceTry : null)).map((t) => t.id);
 };
 
+export const hitOrder = (hits: TryHit[]) => [...new Set(hits.map((h) => h.tryId))];
+
 export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
   const all = useTries() ?? [];
   const [open, setOpen] = useState(false);
   const [robot, setRobot] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const [pick, setPick] = useState<{ selected: string[]; anchor: string | null }>({ selected: [], anchor: null });
+  const hits = useTrySearch(query);
   const groups = tryGroups(all);
-  const order = groups.flatMap((g) => g.tries.map((t) => t.id));
+  const order = query.trim() ? hitOrder(hits ?? []) : groups.flatMap((g) => g.tries.map((t) => t.id));
   const selected = pick.selected.filter((id) => order.includes(id));
 
-  const show = (id: string) => {
+  const show = (id: string, at?: number) => {
     const summary = all.find((t) => t.id === id);
 
-    if (summary?.recording && summary.source !== 'real') void timeline.show(summaryRecord(summary)).catch(() => {});
+    if (summary?.recording && summary.source !== 'real') void timeline.show(summaryRecord(summary), at).catch(() => {});
   };
 
   const close = () => {
     if (timeline.open) timeline.close();
 
     setOpen(false);
+    setQuery('');
     setPick({ selected: [], anchor: null });
+  };
+
+  const choose = (id: string, keys: PickKeys, at?: number) => {
+    const next = picked(order, pick, id, keys);
+
+    setPick(next);
+
+    if (next.selected.includes(id)) show(id, at);
   };
 
   const remove = (ids: string[]) => {
@@ -97,19 +112,25 @@ export function useTriesView(timeline: TryTimeline, showToast: ShowToast) {
     open,
     robot,
     groups,
+    query,
+    hits,
     selected,
+    setQuery,
     openFor: (name: string | null) => {
       setRobot(name);
+      setQuery('');
       setOpen(true);
     },
-    close,
-    pick: (id: string, keys: PickKeys) => {
-      const next = picked(order, pick, id, keys);
-
-      setPick(next);
-
-      if (next.selected.includes(id)) show(id);
+    openAt: (text: string, hit: TryHit) => {
+      setRobot(null);
+      setQuery(text);
+      setOpen(true);
+      setPick({ selected: [hit.tryId], anchor: hit.tryId });
+      show(hit.tryId, hit.at);
     },
+    close,
+    pick: choose,
+    like: (hit: Pick<TryHit, 'tryId' | 'segmentId'>) => setQuery(likeQuery(hit)),
     remove: (id?: string) => remove(id && !selected.includes(id) ? [id] : selected),
   };
 }

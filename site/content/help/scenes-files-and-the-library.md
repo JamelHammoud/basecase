@@ -1,7 +1,7 @@
 ---
 title: Scenes, files and the Library
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: files-and-sharing
 type: concept
 order: 1
@@ -50,7 +50,7 @@ Use a scene for a whole robot, and the Library for pieces you reuse across robot
 
 ## Tries
 
-Every try you record lands in the Library, whichever scene it came from. Each one is a folder in `library/tries`, beside `library/scenes`. A scene keeps a short record of each of its tries, and the recordings stay in the Library. Steps are in [Open a try from any scene](/help/open-a-try-from-any-scene).
+Every try you record lands in the Library, whichever scene it came from. Each one is a folder in `library/tries`, beside `library/scenes`. A scene keeps a short record of each of its tries, and the recordings stay in the Library. Steps are in [Open a try from any scene](/help/open-a-try-from-any-scene). The Library's search finds tries by words, facts and motion, as [Search tries](/help/search-tries) shows.
 
 ## Scene files
 

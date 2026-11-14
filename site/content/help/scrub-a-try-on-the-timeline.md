@@ -1,6 +1,7 @@
 ---
 title: Scrub a try on the timeline
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 5
@@ -33,4 +34,4 @@ Step through a Case try frame by frame to see what each joint was asked to do, w
 
 6. Press [[Esc]] to close it.
 
-The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open. A try from another scene opens from the Library, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows.
+The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open. A try from another scene opens from the Library, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows. A try opened from a search result opens at the result's start instead of the first red line, as [Search tries](/help/search-tries) shows.

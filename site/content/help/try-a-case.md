@@ -1,7 +1,7 @@
 ---
 title: Try a Case
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 4
@@ -87,4 +87,4 @@ When the robot can't drive, **Teach It to Move** shows under **Try It**. It trai
 
 To teach the robot the Case's task instead of driving it, type a goal after **Teach it to** in **Train**, between **Control** and **Results**. Steps are in [Teach a robot a skill](/help/teach-a-robot-a-skill).
 
-Tries are kept on this computer, not in shared `.basecase` files. The Library lists them from every scene, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows. Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset). Once five pass, you can train a policy from them; see [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+Tries are kept on this computer, not in shared `.basecase` files. The Library lists them from every scene, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows, and its search finds them, as [Search tries](/help/search-tries) shows. Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset). Once five pass, you can train a policy from them; see [Train a policy from your tries](/help/train-a-policy-from-your-tries).

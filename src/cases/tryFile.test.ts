@@ -3,6 +3,7 @@ import type { Recording } from '../sim/recorder';
 import { decodeRecording, encodeRecording } from './recordingFile';
 import { readStoredTry, storedTryOf, summaryOf, summaryRecord, tryRecordOf } from './tryFile';
 import { goingWith, sourceTryOf, type TryRecord } from './tries';
+import { MOTION_SAMPLES } from './trySearch/types';
 
 const record = (extra: Partial<TryRecord> = {}): TryRecord => ({
   id: 'try-abc',
@@ -112,6 +113,51 @@ describe('a try’s manifest', () => {
       [],
     ])
       expect(readStoredTry(bad)).toBeNull();
+  });
+});
+
+describe('what a try’s manifest keeps for search', () => {
+  const motion = {
+    body: 'fixed' as const,
+    joints: 6,
+    path: new Array(MOTION_SAMPLES * 3).fill(0.1),
+    speed: new Array(MOTION_SAMPLES).fill(1),
+  };
+  const searched = {
+    ...storedTryOf(record(), { ...context, task: 'Touch each dot in order' }),
+    instruction: 'Touch the red dot first',
+    tags: ['wobbly', 'demo'],
+    segments: [
+      { id: 'reach', label: 'reach red dot', start: 0, end: 1.5, tags: ['slow'], outcome: 'failed' as const },
+      { id: 'touch', label: 'touch', start: 1.5, end: 2 },
+    ],
+    motion,
+  };
+
+  it('keeps the Case brief, instruction, tags, segments and motion', () => {
+    expect(searched.task).toBe('Touch each dot in order');
+    expect(readStoredTry(JSON.parse(JSON.stringify(searched)))).toEqual(searched);
+    expect(storedTryOf(record(), context)).not.toHaveProperty('task');
+  });
+
+  it('refuses search fields of the wrong shape or size', () => {
+    for (const bad of [
+      { tags: ['x'.repeat(65)] },
+      { tags: new Array(65).fill('t') },
+      { instruction: 7 },
+      { task: 'x'.repeat(5000) },
+      { segments: [{ id: '../x', label: 'reach', start: 0, end: 1 }] },
+      { segments: [{ id: 'a', label: 'reach', start: 2, end: 1 }] },
+      { segments: [{ id: 'a', label: 'reach', start: 0, end: 1, outcome: 'won' }] },
+      { segments: new Array(513).fill({ id: 'a', label: 'reach', start: 0, end: 1 }) },
+      { motion: { ...motion, path: motion.path.slice(1) } },
+      { motion: { ...motion, speed: [...motion.speed.slice(1), Number.NaN] } },
+      { motion: { ...motion, body: 'floating' } },
+    ])
+      expect(
+        readStoredTry({ ...JSON.parse(JSON.stringify(searched)), ...bad }),
+        JSON.stringify(bad).slice(0, 80),
+      ).toBeNull();
   });
 });
 

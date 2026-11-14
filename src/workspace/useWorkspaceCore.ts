@@ -1,5 +1,6 @@
 import { useScenePrinting } from './usePrinting';
 import { useTriesView } from './useTriesView';
+import { useTryFrames } from './useTryFrames';
 import { useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { newSceneId } from '../utils/sceneIds';
@@ -127,6 +128,8 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const dataLayers = useDataLayers({ sim: simTraining.sim, timeline: simTraining.cases.timeline, parts, viewportRef });
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
   const triesView = useTriesView(simTraining.cases.timeline, showToast);
+
+  useTryFrames({ sceneId: scene.sceneId, sim: simTraining.sim, parts, caseId: simTraining.cases.active?.id ?? null });
 
   const { travel } = docs;
   const { restorePose } = posing;

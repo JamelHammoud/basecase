@@ -1,7 +1,7 @@
 ---
 title: The design agent
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: concept
 order: 1
@@ -36,7 +36,7 @@ The agent builds in the open scene, in front of you. It reads your words, photos
 
 It chooses parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. It uses parts you [own](/help/count-the-parts-you-already-own) first. When a part isn't in the catalog, it can add one it found on the web. Those show as Added by Agent in the bill of materials.
 
-It can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach it a skill. Asked to change how a ready Motor Kit skill moves, it keeps the change only if Arena still passes it. When it writes a Routine, it proves each switch between skills and names any that fell. Given a Case and two open scenes, it says which robot passes more often. Asked which servo to buy, it runs the Case on each catalog version and answers with passes, cost and mass.
+It can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach it a skill. Asked to change how a ready Motor Kit skill moves, it keeps the change only if Arena still passes it. When it writes a Routine, it proves each switch between skills and names any that fell. Given a Case and two open scenes, it says which robot passes more often. Asked which servo to buy, it runs the Case on each catalog version and answers with passes, cost and mass. Asked for tries, such as the failed grasps from last week, it searches every scene's tries the way the Library's search does.
 
 Told where an arm must reach and what it carries, it sizes the arm's links and servos first. Given the path a leg or finger should trace, it fits a four-bar linkage to it. Asked for fewer parts, it merges printed parts bolted together on one link into one print.
 

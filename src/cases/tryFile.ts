@@ -2,6 +2,7 @@ import { FAULT_KINDS, type RecordedFault } from '../sim/faults';
 import { RECORD_HZ } from '../sim/recorder';
 import { CASE_FORMAT_VERSION } from './schema';
 import type { TryRecord } from './tries';
+import { readSearchFields, type SearchFields } from './trySearch/readSearchFields';
 
 export const TRY_FILE_VERSION = 1;
 
@@ -22,7 +23,7 @@ export interface TryOutcome {
   margin: number | null;
 }
 
-export interface StoredTry {
+export interface StoredTry extends SearchFields {
   version: typeof TRY_FILE_VERSION;
   id: string;
   sceneId: string;
@@ -59,6 +60,7 @@ export interface TrySummary {
   sourceTry: string | null;
   recording: boolean;
   strip: boolean;
+  stamp?: number;
 }
 
 export interface TryContext {
@@ -66,6 +68,7 @@ export interface TryContext {
   caseName: string;
   joints: string[];
   input?: string | null;
+  task?: string;
 }
 
 const sourceOf = (record: TryRecord): TrySource => {
@@ -103,6 +106,7 @@ export function storedTryOf(record: TryRecord, context: TryContext): StoredTry {
     faults: manifest.faults ?? [],
     ...(manifest.commands !== undefined ? { commands: manifest.commands } : {}),
     ...(manifest.world !== undefined ? { world: manifest.world } : {}),
+    ...(context.task ? { task: context.task } : {}),
   };
 }
 
@@ -224,11 +228,13 @@ export function readStoredTry(value: unknown): StoredTry | null {
   const kase = readCase(value.case);
   const outcome = readOutcome(value.outcome);
   const faults = (value.faults as unknown[]).map(readFault);
+  const search = readSearchFields(value);
 
-  if (!robot || kase === undefined || !outcome || faults.some((f) => !f)) return null;
+  if (!robot || kase === undefined || !outcome || !search || faults.some((f) => !f)) return null;
 
   return {
     ...(value as unknown as StoredTry),
+    ...search,
     robot,
     case: kase,
     outcome,

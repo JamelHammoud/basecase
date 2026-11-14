@@ -15,6 +15,10 @@ const recordings = indexedDbStore<Recording>({
 });
 const strips = indexedDbStore<Blob>({ database: 'basecase-try-strips', store: 'strips', label: TRIES_LABEL });
 
+const indexes = indexedDbStore<Uint8Array>({ database: 'basecase-try-index', store: 'index', label: TRIES_LABEL });
+
+const SEARCH_INDEX = 'search';
+
 export const webTries: TryBackend = {
   list: async () => {
     const [stored, recorded, stripped] = await Promise.all([manifests.values(), recordings.keys(), strips.keys()]);
@@ -39,5 +43,14 @@ export const webTries: TryBackend = {
   },
   delete: async (ids) => {
     await Promise.all(ids.flatMap((id) => [manifests.delete(id), recordings.delete(id), strips.delete(id)]));
+  },
+  manifests: async (ids) => {
+    const found = await Promise.all(ids.map((id) => manifests.get(id)));
+
+    return found.flatMap((raw) => readStoredTry(raw) ?? []);
+  },
+  index: async () => (await indexes.get(SEARCH_INDEX)) ?? null,
+  saveIndex: async (bytes) => {
+    await indexes.put(SEARCH_INDEX, bytes);
   },
 };

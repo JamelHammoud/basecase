@@ -1,7 +1,7 @@
 ---
 title: Cases
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: concept
 order: 2
@@ -59,7 +59,7 @@ A wheeled or legged robot can also try a Case for real, on the Case printed as a
 
 [Multiply](/help/multiply-a-try-into-demonstrations) turns a passed try into up to 50 varied passing tries. Results count them on that try's row.
 
-Tries stay on this computer, and so does a value the Case's code keeps, such as a high score. A `.basecase` file you share carries the Case but neither of these. The Library lists the tries from every scene, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows.
+Tries stay on this computer, and so does a value the Case's code keeps, such as a high score. A `.basecase` file you share carries the Case but neither of these. The Library lists the tries from every scene, as [Open a try from any scene](/help/open-a-try-from-any-scene) shows. Its search finds them by words, facts and motion, as [Search tries](/help/search-tries) shows.
 
 ## A Case is the test, a skill is the answer
 

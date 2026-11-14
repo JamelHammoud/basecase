@@ -2,18 +2,23 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ContextMenu,
   ModeHeader,
+  SearchField,
   SectionHeader,
   deleteEntry,
+  moreLikeThisEntry,
   useScrollFade,
   type ContextMenuEntry,
 } from '../../design-system';
+import type { TryHit } from '../../cases/trySearch/types';
 import type { TriesView } from '../../workspace/useTriesView';
+import { TRY_SEARCH_EXAMPLE } from './trySearchExample';
+import { TRIES_GRID, TryResults } from './TryResults';
 import { TryTile, type TileScene } from './TryTile';
 import { useTriesKeys } from './useTriesKeys';
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
 
-const GRID = 'grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2';
+type Target = Pick<TryHit, 'tryId' | 'segmentId'>;
 
 interface TriesModeProps {
   active: boolean;
@@ -36,10 +41,17 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
     body.current?.querySelector(`[data-robot="${CSS.escape(view.robot)}"]`)?.scrollIntoView({ block: 'start' });
   }, [view.robot]);
 
-  const showMenu = (id: string) => (e: React.MouseEvent) => {
+  const searching = view.query.trim() !== '';
+  const summaries = new Map(view.groups.flatMap((g) => g.tries.map((t) => [t.id, t] as const)));
+
+  const showMenu = (target: Target) => (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setMenu({ x: e.clientX, y: e.clientY, entries: [deleteEntry(() => view.remove(id), '⌫')] });
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      entries: [moreLikeThisEntry(() => view.like(target)), deleteEntry(() => view.remove(target.tryId), '⌫')],
+    });
   };
 
   return (
@@ -51,26 +63,57 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, timelineOpen
         e.stopPropagation();
       }}
     >
-      <ModeHeader title="Tries" onDone={view.close} />
+      <ModeHeader
+        title="Tries"
+        onDone={view.close}
+        actions={
+          <SearchField
+            value={view.query}
+            onChange={view.setQuery}
+            onKeyDown={(e) => {
+              if (e.key !== 'Escape') return;
+
+              if (view.query) view.setQuery('');
+              else e.currentTarget.blur();
+            }}
+            placeholder={TRY_SEARCH_EXAMPLE}
+            aria-label="Search tries"
+            className="w-[300px]"
+          />
+        }
+      />
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto" style={fadeStyle}>
         <div ref={body} className={`px-[12px] flex flex-col gap-4 ${timelineOpen ? 'pb-[50vh]' : 'pb-6'}`}>
-          {view.groups.map((g) => (
-            <section key={g.robot} data-robot={g.robot}>
-              <SectionHeader title={g.robot} />
-              <div className={GRID}>
-                {g.tries.map((t) => (
-                  <TryTile
-                    key={t.id}
-                    summary={t}
-                    scene={t.sceneId === sceneId ? scene : null}
-                    selected={view.selected.includes(t.id)}
-                    onPick={(keys) => view.pick(t.id, keys)}
-                    onMenu={showMenu(t.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
+          {searching && (
+            <TryResults
+              query={view.query}
+              hits={view.hits}
+              summaries={summaries}
+              selected={view.selected}
+              sceneId={sceneId}
+              scene={scene}
+              onPick={(hit, keys) => view.pick(hit.tryId, keys, hit.at)}
+              onMenu={showMenu}
+            />
+          )}
+          {!searching &&
+            view.groups.map((g) => (
+              <section key={g.robot} data-robot={g.robot}>
+                <SectionHeader title={g.robot} />
+                <div className={TRIES_GRID}>
+                  {g.tries.map((t) => (
+                    <TryTile
+                      key={t.id}
+                      summary={t}
+                      scene={t.sceneId === sceneId ? scene : null}
+                      selected={view.selected.includes(t.id)}
+                      onPick={(keys) => view.pick(t.id, keys)}
+                      onMenu={showMenu({ tryId: t.id, segmentId: null })}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
         </div>
       </div>
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.entries} onClose={() => setMenu(null)} />}

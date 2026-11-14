@@ -67,7 +67,7 @@ export function useTryTimeline(options: TimelineOptions) {
   const playback = useTimelinePlayback({ frames, dt: opened?.recording.dt ?? 1, seek: sim.seek });
   const lanes = opened && sim.model ? timelineLanes(sim.model, opened.recording, opened.efforts) : [];
 
-  const show = async (record: TryRecord) => {
+  const show = async (record: TryRecord, at?: number) => {
     const ticket = ++opening.current;
     const recording = await loadRecording(record.id);
     const before = simBefore(sim);
@@ -87,7 +87,7 @@ export function useTryTimeline(options: TimelineOptions) {
     if (ticket !== opening.current) return;
 
     setOpened({ record, recording, efforts, trips, before: opened?.before ?? before });
-    playback.jump(trips[0]?.frame ?? 0, recording.frames);
+    playback.jump(at === undefined ? (trips[0]?.frame ?? 0) : at / recording.dt, recording.frames);
   };
 
   const close = () => {

@@ -11,3 +11,5 @@
 *.zip binary
 *.wav binary
 *.gz binary
+*.onnx binary
+*.onnx.* binary

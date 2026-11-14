@@ -41,7 +41,7 @@ describe('explanations come from the trace, never from a model', () => {
   it('describes the graph in plain English', () => {
     const lines = describeRoutine(greetingRoutine());
 
-    expect(lines[0]).toBe("Keeps doing walk for up to 5 min, then say “I'm done walking”, then stops with settle.");
+    expect(lines[0]).toBe('Keeps doing walk for up to 5 min, then say “I’m done walking”, then stops with settle.');
     expect(lines.at(-1)).toMatch(/^When person is seen: check face/);
   });
 });

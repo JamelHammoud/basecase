@@ -42,7 +42,7 @@ function stuckPartLine(plan: RemovalPlan, g: AssemblyGeometry): ReportLine[] {
     {
       rank: RANK.stuck,
       code: 'stuck-part',
-      text: `${listIds(plan.stuckParts)} can't go together or come apart in any order, with straight moves (in the way: ${listIds([...new Set(inTheWay)], 3)}). Widen the opening or split the part.`,
+      text: `${listIds(plan.stuckParts)} can’t go together or come apart in any order, with straight moves (in the way: ${listIds([...new Set(inTheWay)], 3)}). Widen the opening or split the part.`,
       ids: plan.stuckParts,
     },
   ];
@@ -95,7 +95,7 @@ function toolLine(plan: RemovalPlan): ReportLine[] {
 
 function serviceText(r: ServiceResult, target: number): string {
   if (r.steps === null) {
-    return `${r.id} can't come out of the robot (in the way: ${listIds(r.blockedBy, 3)}). Give it a bay or tray behind a cover`;
+    return `${r.id} can’t come out of the robot (in the way: ${listIds(r.blockedBy, 3)}). Give it a bay or tray behind a cover`;
   }
 
   return `${r.id} takes ${plural(r.steps, 'step')} to replace (target ${target}): ${listIds(r.partsOut, 3)} come out first`;
@@ -137,8 +137,8 @@ export function splitLines(
     const part = byId.get(id);
     const text =
       part && isCover(part)
-        ? `${id} wraps its contents (${inside}) and can't come off: split it ${PLANE_NAMES[best.axis]} (the halves are blocked by ${plural(best.blockers[0].length, 'part')} and ${plural(best.blockers[1].length, 'part')}).`
-        : `${id} encloses ${inside}: keep a load-bearing part whole and move them to a bay or tray outside it, or split it ${PLANE_NAMES[best.axis]} if it's a cover.`;
+        ? `${id} wraps its contents (${inside}) and can’t come off: split it ${PLANE_NAMES[best.axis]} (the halves are blocked by ${plural(best.blockers[0].length, 'part')} and ${plural(best.blockers[1].length, 'part')}).`
+        : `${id} encloses ${inside}: keep a load-bearing part whole and move them to a bay or tray outside it, or split it ${PLANE_NAMES[best.axis]} if it’s a cover.`;
 
     return { rank: RANK.split, code: 'split', text, ids: [id] };
   });

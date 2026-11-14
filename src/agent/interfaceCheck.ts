@@ -196,7 +196,7 @@ function ownershipLines(
 
   if (outside.length)
     out.problems.push(
-      `Ownership: edited ${outside.join(', ')}, which ${contract.owner} doesn't own. Undo those edits, or ask the lead to move them into this contract.`,
+      `Ownership: edited ${outside.join(', ')}, which ${contract.owner} doesn’t own. Undo those edits, or ask the lead to move them into this contract.`,
     );
   else out.passed.push(seams.length ? `ownership (holes cut across seams in ${seams.join(', ')})` : 'ownership');
 }

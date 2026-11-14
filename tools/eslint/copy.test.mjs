@@ -70,7 +70,9 @@ const GLOSSARY_SAMPLES = [
 
 const SPELLING_SAMPLES = Object.keys(SPELLING).map((british) => [`The ${british} one`, british]);
 
-const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES, ...SPELLING_SAMPLES];
+const APOSTROPHE_SAMPLES = [["Couldn't load the model", "n't"]];
+
+const SAMPLES_WITH_GLOSSARY = [...SAMPLES, ...GLOSSARY_SAMPLES, ...SPELLING_SAMPLES, ...APOSTROPHE_SAMPLES];
 
 const errors = (text) => [{ messageId: 'banned', data: findBannedCopy(text) }];
 
@@ -178,6 +180,23 @@ describe('spelling', () => {
       'robot.travelled',
       'Greyhound',
     ])
+      expect(findBannedCopy(text)).toBeNull();
+  });
+});
+
+describe('apostrophes', () => {
+  it('flags a straight apostrophe between letters', () => {
+    for (const [text, word] of APOSTROPHE_SAMPLES) {
+      const hit = findBannedCopy(text);
+
+      expect(hit?.word).toBe(word);
+      expect(hit?.fix).toContain('“can’t”');
+      expect(hit?.section).toBe('§3b-21');
+    }
+  });
+
+  it('allows ’ and quotes around a word', () => {
+    for (const text of ['Couldn’t load the model', "Name it 'Arm'", "The robots' joints"])
       expect(findBannedCopy(text)).toBeNull();
   });
 });

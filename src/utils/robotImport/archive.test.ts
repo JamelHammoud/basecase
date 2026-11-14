@@ -61,7 +61,7 @@ describe('zip entry paths', () => {
 
     const robot = await importRobot({ kind: 'files', files: [localFile('arm.zip', zip)] });
 
-    expect(robot.notes).toEqual(["Couldn't read secret.stl"]);
+    expect(robot.notes).toEqual(['Couldn’t read secret.stl']);
     expect(robot.joints.map((j) => j.id)).toEqual(['hinge']);
   });
 });

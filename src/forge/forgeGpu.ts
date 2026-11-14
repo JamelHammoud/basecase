@@ -102,7 +102,7 @@ export class ForgeGpu {
     const info = await module.getCompilationInfo();
     const errors = info.messages.filter((m) => m.type === 'error');
 
-    if (errors.length) throw new Error(`WebGPU couldn't compile Forge's kernels: ${errors[0].message}`);
+    if (errors.length) throw new Error(`WebGPU couldn’t compile Forge’s kernels: ${errors[0].message}`);
 
     const layout = this.device.createBindGroupLayout({
       entries: KINDS.map((type, binding) => ({ binding, visibility: COMPUTE_STAGE, buffer: { type } })),

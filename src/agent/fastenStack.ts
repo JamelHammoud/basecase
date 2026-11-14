@@ -72,7 +72,7 @@ function nextAfter(layers: Layer[]): number {
 function missText(part: ScenePart, layers: Layer[]): string {
   const after = layers.length ? ` after ${layers.at(-1)!.part.id}` : '';
 
-  return `The screw axis misses ${part.id}${after}. Move the point onto the hole's center line, or check the direction in from.`;
+  return `The screw axis misses ${part.id}${after}. Move the point onto the hole’s center line, or check the direction in from.`;
 }
 
 export function stackLayers(

@@ -47,6 +47,6 @@ export function compileRoutine(input: unknown, options: CompileOptions): Compile
   try {
     return compileValid(input, options);
   } catch {
-    return { ok: false, errors: [{ code: 'unreadable', message: "This Routine can't be read." }] };
+    return { ok: false, errors: [{ code: 'unreadable', message: 'This Routine can’t be read.' }] };
   }
 }

@@ -2,6 +2,7 @@ import { readHelpArticle, type HelpArticle } from '../help/helpArticle';
 import { buildHelpCenter, checkHelpSources, type HelpCenter } from '../help/helpCenter';
 import { parseFrontMatter, type FrontMatterValue } from './frontMatter';
 import type { ContentKind } from './sections';
+import { typeset, typesetMarkdown } from './typeset';
 
 export interface Entry {
   kind: ContentKind;
@@ -61,7 +62,8 @@ function entryFrom(path: string, source: string): Draft {
 
   if (!SLUG.test(slug)) throw new Error(`${path}: name the file in lowercase words joined by dashes`);
 
-  const { data, body } = parseFrontMatter(source, path);
+  const { data, body: written } = parseFrontMatter(source, path);
+  const body = typesetMarkdown(written);
   const date = required(data, 'date', path);
 
   if (!DATE.test(date)) throw new Error(`${path}: write the date as YYYY-MM-DD`);
@@ -70,7 +72,7 @@ function entryFrom(path: string, source: string): Draft {
   const entry: Entry = {
     kind: kind as ContentKind,
     slug,
-    title: required(data, 'title', path),
+    title: typeset(required(data, 'title', path)),
     date,
     body,
     summary: firstParagraph(body),

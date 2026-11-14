@@ -16,7 +16,7 @@ export function useRobotUpgrade(docs: SceneDocument, showToast: ShowToast) {
     up?.missingIds.forEach((id) => missingRef.current.add(id));
 
     if (up?.missing.length)
-      showToast(`Insert ${listNames(up.missing)} again from Robots to get the maker’s masses and joint limits`);
+      showToast(`Insert ${listNames(up.missing)} again from Parts to get the maker’s masses and joint limits`);
 
     if (!up || (!up.parts.size && !up.joints.size)) return;
 

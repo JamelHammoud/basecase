@@ -246,6 +246,7 @@ declare global {
       onBackendEvent: (callback: (event: Record<string, unknown>) => void) => () => void;
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       hubCall?: (channel: string, payload?: unknown) => Promise<unknown>;
+      triesCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       onshapeCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       earthCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       robotConnect?: (spec: ConnectSpec) => Promise<ConnectReply>;

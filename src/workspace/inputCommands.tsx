@@ -1,13 +1,15 @@
 import type { Command } from '../components/CommandPalette';
 import { PAIR_PHONE } from '../components/phone/pairPhoneLabel';
+import { openTeachGesture, TEACH_GESTURE } from '../components/gestures/teachGestureStore';
 import { DRIVE_WITH_CAMERA, driveWithCamera } from '../components/simulate/driveWithCamera';
+import { operatorCameraSnapshot } from '../cameras/operator/operatorCamera';
 import { CameraIcon, OperateIcon } from '../design-system';
 import { canPairPhone, pairPhone, phoneSnapshot, unpairPhone } from '../phone/phoneStore';
 import type { CommandInputs } from './sceneCommands';
 
 const ic = 'w-4 h-4';
 
-export const INPUT_COMMANDS = ['pair-phone', 'unpair-phone', 'drive-camera'];
+export const INPUT_COMMANDS = ['pair-phone', 'unpair-phone', 'drive-camera', 'teach-gesture'];
 
 function phoneCommands({ core }: CommandInputs): Command[] {
   if (!canPairPhone()) return [];
@@ -60,7 +62,23 @@ function cameraCommands({ core }: CommandInputs): Command[] {
   ];
 }
 
+function gestureCommands({ core }: CommandInputs): Command[] {
+  if (!operatorCameraSnapshot().open || !core.simTraining.cases.active) return [];
+
+  return [
+    {
+      id: 'teach-gesture',
+      group: 'Simulate',
+      label: TEACH_GESTURE,
+      icon: <CameraIcon className={ic} />,
+      keywords: 'gesture wave pose sign signal record example train camera body movement',
+      run: openTeachGesture,
+    },
+  ];
+}
+
 export const inputCommands = (inputs: CommandInputs): Command[] => [
   ...cameraCommands(inputs),
+  ...gestureCommands(inputs),
   ...phoneCommands(inputs),
 ];

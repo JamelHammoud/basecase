@@ -17,7 +17,7 @@ import {
   type VelocityDrive,
 } from './driveAccess';
 import type { DriveSetup, RobotDrive } from './drive';
-import { onPhonePress } from '../phone/phoneStore';
+import { onInputEvent } from './inputEvents';
 import { isIdle, sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
@@ -258,7 +258,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     };
   }, [active, frameHookRef, push]);
 
-  useEffect(() => onPhonePress((button) => send({ type: 'input', name: 'phone', value: button })), [send]);
+  useEffect(() => onInputEvent(({ name, value }) => send({ type: 'input', name, value })), [send]);
 
   useEffect(() => {
     if (simStatus !== 'off') return;

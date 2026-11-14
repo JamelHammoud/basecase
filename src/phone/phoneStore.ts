@@ -1,4 +1,5 @@
-import { pressedButtons, type PhoneButton, type PhoneReading } from './phoneDrive';
+import { emitInputEvent } from '../sim/inputEvents';
+import { pressedButtons, type PhoneReading } from './phoneDrive';
 import type { PairReply, PhoneEvent, PhoneLinkApi, PhoneState } from './phoneTypes';
 
 export type { PhoneState } from './phoneTypes';
@@ -13,7 +14,6 @@ let stopEvents: (() => void) | null = null;
 let pairing = false;
 let latest: { reading: PhoneReading; at: number } | null = null;
 const listeners = new Set<() => void>();
-const pressListeners = new Set<(button: PhoneButton) => void>();
 
 function set(next: PhoneState) {
   state = next;
@@ -33,7 +33,7 @@ function onInput(reading: PhoneReading) {
 
   latest = { reading, at: performance.now() };
 
-  for (const button of pressedButtons(before, reading.buttons)) for (const listener of pressListeners) listener(button);
+  for (const button of pressedButtons(before, reading.buttons)) emitInputEvent('phone', button);
 }
 
 function readInput({ tilt, pad, buttons }: PhoneReading) {
@@ -65,14 +65,6 @@ export function subscribePhone(listener: () => void) {
 
   return () => {
     listeners.delete(listener);
-  };
-}
-
-export function onPhonePress(listener: (button: PhoneButton) => void) {
-  pressListeners.add(listener);
-
-  return () => {
-    pressListeners.delete(listener);
   };
 }
 

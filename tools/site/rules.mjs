@@ -1,3 +1,4 @@
+import { findLongForms } from '../copy/contraction.mjs';
 import { missingLabels } from '../copy/labels.mjs';
 import { arrowPathIn } from '../copy/menuPath.mjs';
 import { findBritish } from '../copy/spelling.mjs';
@@ -66,6 +67,14 @@ export function spelling(page) {
     findBritish(readText(text)).map(({ word, use }) =>
       problem(line, `“${word}” is British; spell it “${use}” (§3b-20)`),
     ),
+  );
+}
+
+export function contractions(page) {
+  const lines = [{ line: 1, text: String(page.data.title ?? '') }, ...page.blocks];
+
+  return lines.flatMap(({ line, text }) =>
+    findLongForms(readText(text)).map(({ word, use }) => problem(line, `write “${word}” as “${use}” (§3b-24)`)),
   );
 }
 

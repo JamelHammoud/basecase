@@ -18,6 +18,7 @@ import type { StrengthJob } from '../../strength/types';
 import { strengthOf } from './strengthPart';
 import { planMerges } from '../../print/merge/mergePlan';
 import { plateFiles, type ThreeMfResult, type ThreeMfTask } from './plateFiles';
+import { sceneStl } from './sceneStl';
 
 export type { PlateFilesInput, ThreeMfFileSpec, ThreeMfResult } from './plateFiles';
 
@@ -43,7 +44,7 @@ export type AnalysisTask =
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
   | { kind: 'strength'; instances: Instance[]; jobs: StrengthJob[] }
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
-  | { kind: 'measure' | 'meshes' | 'visibility' | 'floor'; instances: Instance[] }
+  | { kind: 'measure' | 'meshes' | 'visibility' | 'floor' | 'stl'; instances: Instance[] }
   | { kind: 'gaps'; instances: Instance[]; pairs: PairIds[]; withinMm: number }
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
@@ -115,6 +116,8 @@ function run(task: Exclude<AnalysisTask, { kind: 'strength' }>) {
       );
     case 'floor':
       return lowestPart(placeAll(task.instances))?.y ?? null;
+    case 'stl':
+      return sceneStl(task.instances, solidOf);
     default:
       return runPlaced(task);
   }
@@ -172,6 +175,8 @@ const transferOf = (kind: AnalysisTask['kind'], result: unknown): Transferable[]
   if (kind === 'fitCoupons') return (result as FitCoupon[]).map((c) => c.positions.buffer as ArrayBuffer);
 
   if (kind === 'strength') return fieldBuffers(result);
+
+  if (kind === 'stl') return [(result as Uint8Array).buffer as ArrayBuffer];
 
   return kind === 'meshes' ? meshBuffers(result) : [];
 };

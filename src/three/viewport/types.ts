@@ -204,6 +204,7 @@ export interface Viewport3DHandle {
   printMeshes: (ids: string[]) => Promise<Record<string, MeshData>>;
   printThreeMf: (plates: PlateFilesInput) => Promise<ThreeMfResult>;
   fitCoupons: (task: FitCouponTask) => Promise<FitCoupon[]>;
+  exportStl: () => Promise<Uint8Array>;
   exportUsdz: () => Promise<Uint8Array>;
   partTriangles: (id: string) => Float32Array | null;
   servoOutput: (id: string) => { point: Vec3; axis: Vec3 } | null;

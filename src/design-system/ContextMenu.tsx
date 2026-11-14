@@ -3,6 +3,7 @@ import { ChevronRightIcon } from './glyphs';
 import { createPortal } from 'react-dom';
 import { MenuDivider, MenuItem, MenuLabel } from './PopoverMenu';
 import { MenuGutterPad, MenuGutterScope, MenuIconSlot, useMenuGutter } from './menuGutter';
+import { arrangeMenu } from './menuOrder';
 
 export type ContextMenuEntry =
   | {
@@ -161,7 +162,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, minWidth 
       }
     >
       <MenuGutterScope shown={items.some(leadsWithColumn)}>
-        {items.map((item, i) => {
+        {arrangeMenu(items).map((item, i) => {
           if ('divider' in item) return <MenuDivider key={i} />;
 
           if ('heading' in item)

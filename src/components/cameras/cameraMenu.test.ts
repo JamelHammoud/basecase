@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CameraView } from '../../cameras/views';
 import type { ContextMenuEntry } from '../../design-system';
+import { arrangeMenu } from '../../design-system/menuOrder';
 import { cameraMenu, type CameraMenuActions } from './cameraMenu';
 
 const view = (patch: Partial<CameraView>): CameraView => ({
@@ -31,7 +32,7 @@ const entryName = (entry: ContextMenuEntry) => {
   return 'heading' in entry ? entry.heading : '—';
 };
 
-const labels = (v: CameraView) => cameraMenu(v, actions).map(entryName);
+const labels = (v: CameraView) => arrangeMenu(cameraMenu(v, actions)).map(entryName);
 
 describe('cameraMenu', () => {
   it('offers only Look Through on the framed Scene view, which has no name or lens to change', () => {

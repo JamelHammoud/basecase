@@ -57,4 +57,4 @@ A skill belongs to the design it was trained on. A color or name change keeps it
 
 A ready skill is also a step in a Routine; see [Build a Routine](/help/build-a-routine).
 
-Stand, Walk, Get up and Settle don't need words; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
+Stand, Walk, Get up and Settle don't need words; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit). Once one is ready, words can change how it moves; see [Coach how a ready skill moves](/help/coach-a-skill).

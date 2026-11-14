@@ -11,7 +11,8 @@ import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
 import type { RaceOutcome } from './race';
 import type { SkillRunner } from './skillsClient';
-import type { SkillsJob } from './skillsJob';
+import type { SkillPorts, SkillsJob } from './skillsJob';
+import { SkillCoach } from './skillsCoach';
 import { moveTag, recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, type SkillJob, type SkillTarget } from './skillRows';
 import {
@@ -99,9 +100,32 @@ export class SkillsRuntime {
   private trails = new Map<SkillTarget, SnapshotTrail>();
 
   private deps: RuntimeDeps;
+  readonly coach: SkillCoach;
 
   constructor(deps: RuntimeDeps) {
     this.deps = deps;
+    this.coach = new SkillCoach({
+      runner: deps.runner,
+      ports: () => this.ports(),
+      startJob: (row, work) => this.startJob(row, work),
+      keep: (target, record) => this.keep(target, record),
+    });
+  }
+
+  loadSkill(hash: string) {
+    return this.deps.loadSkill(hash);
+  }
+
+  startJob(row: { target: SkillTarget; label: string }, work: (ports: SkillPorts) => Promise<void>): string | null {
+    if (this.user) return BUSY;
+
+    this.running = this.start({
+      ...row,
+      background: false,
+      work: (forge, signal) => work({ ...this.ports(), forge, signal }),
+    });
+
+    return null;
   }
 
   get busy() {

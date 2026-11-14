@@ -19,7 +19,8 @@ import { ResultsSection } from './simulate/ResultsSection';
 import type { CaseCompare } from '../workspace/useCaseCompare';
 import type { CaseExplore } from '../workspace/useCaseExplore';
 import { SimControls } from './simulate/SimControls';
-import { TrainSection } from './simulate/TrainSection';
+import { TrainSection, type CoachSend } from './simulate/TrainSection';
+import { skillMenuItems } from './simulate/skillMenu';
 
 interface SimulatePanelProps {
   sim: Simulation;
@@ -36,6 +37,7 @@ interface SimulatePanelProps {
   onOpenCaseCheck: () => void;
   skills: SceneSkills;
   onTeach: ((goal: string) => void) | null;
+  onCoach: CoachSend | null;
   onRunCase: () => void;
   compare: CaseCompare;
   explore: CaseExplore;
@@ -57,6 +59,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
   const walk = useWalkTeaching(skills, onTeach);
   const subject = watchSubject(skills, training);
   const margin = useTrainingWatch(sim, subject);
+  const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const skillActions = {
     onTrain: (row: SkillRow) =>
       row.kit || row.move ? void skills.train(row) : onTeach?.(row.record?.goal ?? row.label),
@@ -64,10 +67,16 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
     onDrive: () => void sim.drive.start(),
     onStop: skills.stop,
     onSnapshot: (row: SkillRow, ref: SnapshotRef) => void skills.playSnapshot(row, ref),
+    onMenu: (e: React.MouseEvent, row: SkillRow) => {
+      const items = skillMenuItems(row, skills.coach, !!props.onCoach);
+
+      e.preventDefault();
+
+      if (items.length) setMenu({ x: e.clientX, y: e.clientY, items });
+    },
   };
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const on = sim.status !== 'off';
-  const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const [policyKey, setPolicyKey] = useState<string | null>(null);
   const kase = cases.active;
   const openPolicyMenu = (e: React.MouseEvent, id: string) => {
@@ -117,6 +126,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
           actions={skillActions}
           margin={subject?.key.startsWith('skill:') ? margin : null}
           onTeach={onTeach}
+          onCoach={props.onCoach}
           policies={policies}
           training={training}
           policyActions={{ onChoose: (id) => void choose(`policy:${id}`), onMenu: openPolicyMenu }}

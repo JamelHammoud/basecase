@@ -6,6 +6,7 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
 import { fixtureModel } from '../src/skills/fixtureModels';
 import { kitJob } from '../src/skills/kitJob';
+import { kitReward } from '../src/skills/kitRewards';
 import { moveEnvironment } from '../src/skills/moveEnvironment';
 import { clockPolicy, quadSit } from '../src/skills/moveFixtures';
 import { DEFAULT_PROJECT, type PolicyRecord, type ProjectSettings, type ScenePart } from '../src/types/robotics';
@@ -24,6 +25,8 @@ type Studio = {
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   stubTrainer: (policy: unknown, snapshots?: unknown[]) => void;
   releaseTrainer: () => void;
+  agentRequest: (kind: string, payload: Record<string, unknown>) => Promise<{ text: string }>;
+  sceneRecord: () => { project: ProjectSettings };
 };
 
 const trainedSteps = () =>
@@ -326,4 +329,114 @@ describe('watching Stand learn', () => {
     await expect.poll(steps, { timeout: 60000 }).toBe(100);
     expect(app.errors).toEqual([]);
   }, 240000);
+});
+
+describe('coaching a ready skill', () => {
+  const model = fixtureModel('quad-servo');
+  const job = kitJob(model, 'stand', { minutes: 1, seed: 0 });
+  const legSign = [1, -1, 1, -1];
+  const crouched = (rad: number) => {
+    const policy = holdPolicy(job, 100);
+    const joints = (job.joints as Array<{ id: string }>).map((j) => j.id);
+
+    return {
+      ...policy,
+      defaultPose: policy.defaultPose.map((d, i) =>
+        joints[i].includes('swing') ? d + rad * legSign[Number(joints[i][3])] : d,
+      ),
+    };
+  };
+  const stub = (policy: unknown) =>
+    app.page.evaluate((p) => (window as unknown as { __studio: Studio }).__studio.stubTrainer(p), policy);
+  const records = () =>
+    app.page.evaluate(
+      () => (window as unknown as { __studio: Studio }).__studio.sceneRecord().project.skills ?? [],
+    ) as Promise<Array<{ hash: string; binding: { contract: string } }>>;
+  const coach = (payload: Record<string, unknown>) =>
+    app.page.evaluate(
+      (p) => (window as unknown as { __studio: Studio }).__studio.agentRequest('skill_coach', p),
+      payload,
+    );
+  const listed = () =>
+    app.page.evaluate(
+      async () => (await (window as unknown as { __studio: Studio }).__studio.agentRequest('skill_list', {})).text,
+    );
+  const revised = (term: string) => `${kitReward(model, 'stand')}\n\ndef style(state):\n    return ${term}\n`;
+
+  it('coaches Stand from the row’s menu, keeps a crouch that passes, and keeps it when a slump fails Arena', async () => {
+    const robot = fixtureRobots().find((r) => r.id === 'quad-servo')!;
+
+    await loadScene({ name: 'quad', parts: robot.parts, project: { ...DEFAULT_PROJECT, joints: robot.joints } });
+    await clickTab('Simulate');
+    await app.page.route(
+      (url) => url.pathname === '/api/bridge/skill',
+      (route) => {
+        const hash = new URL(route.request().url()).searchParams.get('hash');
+        const saved = app.posts
+          .filter((p) => p.route === 'skill-save')
+          .map((p) => p.body as { hash: string; text: string })
+          .find((b) => b.hash === hash);
+
+        return route.fulfill({ status: 200, contentType: 'application/json', body: saved?.text ?? 'null' });
+      },
+    );
+
+    const row = app.page.locator(visible('[data-testid="skill-row"]'), { hasText: 'Stand' }).first();
+
+    await expect.poll(() => row.count(), { timeout: 60000 }).toBe(1);
+    await stub(holdPolicy(job, 100));
+    await row.locator('button', { hasText: 'Train' }).click();
+    await expect.poll(() => row.innerText(), { timeout: 150000 }).toContain('of 32 tries');
+
+    const ready = (await row.getAttribute('data-skill'))!;
+    const contract = (await records()).find((r) => r.hash === ready)!.binding.contract;
+
+    await row.click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Coach' }).click();
+
+    const field = app.page.locator(visible('[data-testid="teach-field"]'));
+
+    await expect.poll(() => field.getAttribute('data-coach')).toBe('kit:stand');
+    await expect
+      .poll(() => app.page.evaluate(() => document.activeElement?.getAttribute('data-testid')))
+      .toBe('teach-field');
+    await app.page.keyboard.type('crouch lower');
+    await app.page.keyboard.press('Enter');
+
+    const prompt = () =>
+      app.posts
+        .filter((p) => p.route === 'acp-prompt')
+        .map((p) => (p.body as { promptText?: string }).promptText ?? '');
+
+    await expect.poll(() => prompt().some((t) => t.includes('/coach Stand: crouch lower'))).toBe(true);
+
+    const words = 'crouch lower';
+
+    expect((await coach({ skill: 'Stand', words })).text).toContain('- base_height: ');
+    await stub(crouched(0.5));
+    expect(
+      (await coach({ skill: 'Stand', words, reward: revised('state.z'), signal: 'base_height', direction: 'down' }))
+        .text,
+    ).toMatch(/^Coaching Stand/);
+    await clickTab('Simulate');
+    await expect.poll(() => row.getAttribute('data-skill'), { timeout: 150000 }).not.toBe(ready);
+    await expect.poll(() => row.innerText(), { timeout: 60000 }).toContain('of 32 tries');
+
+    const coached = (await row.getAttribute('data-skill'))!;
+
+    expect((await records()).find((r) => r.hash === coached)?.binding.contract).toBe(contract);
+
+    await stub(crouched(0.8));
+    await coach({
+      skill: 'Stand',
+      words: 'crouch much lower',
+      reward: revised('-state.z'),
+      signal: 'base_height',
+      direction: 'down',
+    });
+    await expect.poll(listed, { timeout: 150000 }).toContain('- Dropped; the old skill stays.');
+    await expect.poll(() => row.innerText(), { timeout: 60000 }).toContain('of 32 tries');
+    expect(await row.getAttribute('data-skill')).toBe(coached);
+    expect(app.errors).toEqual([]);
+  }, 400000);
 });

@@ -28,6 +28,7 @@ import { skeletonCommands } from './skeletonCommands';
 import { fitTestCommands, mergeCommands } from './printCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
+import { coachCommands } from './coachCommands';
 import { exchangeCommands } from './exchangeCommands';
 import { inputCommands } from './inputCommands';
 import { operateCommands } from './operateCommands';
@@ -317,6 +318,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...caseCommands(inputs),
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),
+  ...coachCommands(inputs),
   ...operateCommands(inputs),
   ...inputCommands(inputs),
 ];

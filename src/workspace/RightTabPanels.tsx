@@ -8,6 +8,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { BuildPanel } from '../components/BuildPanel';
 import { PosePanel } from '../components/PosePanel';
 import { SimulatePanel } from '../components/SimulatePanel';
+import type { CoachSend } from '../components/simulate/TrainSection';
 import { measuredJoints } from '../reality/measuredJoints';
 import type { ProjectSettings } from '../types/robotics';
 import { caseCheckId, caseCheckOf } from '../readiness/caseChecks';
@@ -170,10 +171,20 @@ function useTeach(core: WorkspaceCore, agent: AgentSession) {
   };
 }
 
+function useCoach(core: WorkspaceCore, agent: AgentSession): CoachSend | null {
+  if (IS_WEB_DEMO) return null;
+
+  return (scope, words) => {
+    core.tool.openRightTab('acp');
+    void agent.send({ text: `/coach ${scope.label}: ${words}`, ...core.studio.agentChoice }, 'queue');
+  };
+}
+
 export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
   const { tool, posing, posable, project, setSelectedIds, simTraining } = core;
   const { pose } = actions;
   const onTeach = useTeach(core, agent);
+  const onCoach = useCoach(core, agent);
   const current = tool.rightTab;
   const visited = useVisitedTabs(current);
 
@@ -211,6 +222,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           onOpenCaseCheck={() => simTraining.cases.active && openCaseCheck(core, simTraining.cases.active.id)}
           skills={simTraining.skills}
           onTeach={onTeach}
+          onCoach={onCoach}
           onRunCase={core.caseRun.enter}
           compare={core.caseCompare}
           explore={core.caseExplore}

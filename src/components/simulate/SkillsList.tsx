@@ -11,6 +11,7 @@ export interface SkillActions {
   onDrive: () => void;
   onStop: () => void;
   onSnapshot?: (row: SkillRow, ref: SnapshotRef) => void;
+  onMenu?: (e: React.MouseEvent, row: SkillRow) => void;
 }
 
 function stateLine(row: SkillRow): string | null {
@@ -101,7 +102,13 @@ export const SkillsList: React.FC<{ rows: SkillRow[]; actions: SkillActions; mar
       const shown = watchedMargin(row, margin);
 
       return (
-        <li key={row.target} className="flex flex-col" data-testid="skill-row">
+        <li
+          key={row.target}
+          className="flex flex-col"
+          data-testid="skill-row"
+          data-skill={row.record?.hash}
+          onContextMenu={actions.onMenu && ((e) => actions.onMenu?.(e, row))}
+        >
           <div className="flex items-center gap-2 min-h-[32px]">
             <div className="flex-1 min-w-0">
               <div className="text-[13px] text-white/85 truncate">{row.label}</div>

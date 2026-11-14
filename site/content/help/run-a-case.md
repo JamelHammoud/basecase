@@ -76,6 +76,8 @@ A console lists:
 
 A card can hold a camera, a big number such as a timer or a score, a table of joints, or a button such as Reset. It can show the tries, the failures, some text, or a map of the world from above. A plot draws signals over time, or one signal against another. A states card draws a signal, such as a mode, as colored spans. A try imported from a ROS recording can also show its log, its diagnostics and the newest message on a topic.
 
+Camera cards show detection boxes with class names and scores. A console can also use detection counts and box positions as signals. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
 For example, a game Case can put its time and score on the left, and Try It, Reset and the tries on the right. The time counts down as you play. Between tries, Reset puts the robot, the blocks and the score back where they started.
 
 If a console lists `camera` among its inputs, **Try It** opens your computer's camera, and you drive a humanoid or an arm with your arms. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera). The Case's logic receives the gestures you make, and the Case can set a button to press when you make one. See [Teach a robot a gesture](/help/teach-a-robot-a-gesture). A console can list `hand`, `face`, `midi` and `voice` as well. To learn more, see [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).

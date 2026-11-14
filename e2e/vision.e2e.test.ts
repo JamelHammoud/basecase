@@ -72,7 +72,14 @@ describe('camera vision', () => {
       (scene) => (window as unknown as { __studio: VisionStudio }).__studio.load(scene),
       visionScene('#000000'),
     );
-    await expect.poll(() => app.page.getByTestId('vision-box').count()).toBe(0);
+    await expect
+      .poll(() =>
+        app.page.evaluate(
+          () => (window as unknown as { __studio: VisionStudio }).__studio.visionState().results[0]?.detections,
+        ),
+      )
+      .toEqual([]);
+    expect(await app.page.getByTestId('vision-box').count()).toBe(0);
     expect(app.errors).toEqual([]);
   });
 });

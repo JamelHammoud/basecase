@@ -1,7 +1,7 @@
 ---
 title: Simulate tab is missing or the simulation stops
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 12
@@ -44,7 +44,9 @@ The simulation crashed in the background, but your scene is safe.
 1. Click **Stop simulation** beside the speed buttons.
 2. Click **Simulate** to start it again.
 
-Any other red text under **Simulate** comes from MuJoCo and means it can't load the model. Stop the simulation, change the part the message names, and start the simulation again.
+If MuJoCo can't load the robot, red text under **Simulate** names the problem. Stop the simulation, change the part the message names, and start the simulation again.
+
+A Case's camera logic can also report a model that couldn't load or isn't available for live runs. The message names the perception step and model. Camera model requirements are in [Build a Routine](/help/build-a-routine).
 
 ## “This policy was trained on joints this robot no longer has. Train it again.”
 

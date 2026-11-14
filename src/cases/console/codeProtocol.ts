@@ -8,8 +8,10 @@ export const SILENT_MS = 2000;
 export const HELLO_MS = 10_000;
 export const MESSAGES_PER_SECOND = 240;
 export const ERROR_MAX_CHARS = 500;
+export const LOG_MAX_CHARS = 300;
 
-const MAX_NAMES = 32;
+export const MAX_NAMES = 32;
+
 const MAX_ID = 1_000_000;
 
 export type FrameKey = { key: 'Escape' | 'k'; meta: boolean; ctrl: boolean; shift: boolean };
@@ -22,7 +24,8 @@ export type FrameMessage =
   | { type: 'drive'; command: DriveCommand | null }
   | { type: 'event'; name: string; value: FactValue }
   | { type: 'action'; id: number; name: string }
-  | { type: 'error'; message: string }
+  | { type: 'error'; message: string; line?: number }
+  | { type: 'log'; text: string }
   | ({ type: 'key' } & FrameKey);
 
 export type SignalValues = Record<string, number | string[]>;
@@ -39,6 +42,9 @@ const isData = (value: unknown): value is Data => typeof value === 'object' && v
 export const isHello = (value: unknown) => isData(value) && value.bc === BRIDGE_VERSION && value.type === 'hello';
 
 const isId = (value: unknown): value is number =>
+  Number.isInteger(value) && Number(value) > 0 && Number(value) < MAX_ID;
+
+const isLine = (value: unknown): value is number =>
   Number.isInteger(value) && Number(value) > 0 && Number(value) < MAX_ID;
 
 const isUnit = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1;
@@ -100,7 +106,12 @@ const READERS: Record<string, (m: Data) => FrameMessage | undefined> = {
     return isName(m.name) && value !== undefined ? { type: 'event', name: m.name, value } : undefined;
   },
   action: (m) => (isId(m.id) && typeof m.name === 'string' ? { type: 'action', id: m.id, name: m.name } : undefined),
-  error: (m) => ({ type: 'error', message: String(m.message).slice(0, ERROR_MAX_CHARS) }),
+  error: (m) => ({
+    type: 'error',
+    message: String(m.message).slice(0, ERROR_MAX_CHARS),
+    ...(isLine(m.line) ? { line: m.line } : {}),
+  }),
+  log: (m) => ({ type: 'log', text: String(m.text).slice(0, LOG_MAX_CHARS) }),
   key: (m) =>
     m.key === 'Escape' || m.key === 'k'
       ? { type: 'key', key: m.key, meta: m.meta === true, ctrl: m.ctrl === true, shift: m.shift === true }

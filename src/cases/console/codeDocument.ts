@@ -20,8 +20,12 @@ const BASE_STYLE =
 
 export const codeClientScript = () => `(${installCodeClient.toString()})(window);`;
 
-export const codePanelDocument = (source: string) =>
+const documentHead = () =>
   '<!doctype html><meta charset="utf-8">' +
   `<meta http-equiv="Content-Security-Policy" content="${CODE_PANEL_CSP}">` +
   `<style>${codePanelTokenCss()}${BASE_STYLE}</style>` +
-  `<script>${codeClientScript()}</script>${source}`;
+  `<script>${codeClientScript()}</script>`;
+
+export const codePanelDocument = (source: string) => documentHead() + source;
+
+export const codeSourceFirstLine = () => documentHead().split('\n').length;

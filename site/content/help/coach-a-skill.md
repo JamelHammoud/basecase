@@ -33,7 +33,7 @@ Coaching works on Stand, Walk, Get up and Settle once they're ready, in the desk
 
 ![The right-click menu of a ready Stand row with Coach](/help/coach-a-skill/menu.png)
 
-3. Type how it should move into the field, which now shows the skill's name, and press Enter. The **Agent** tab opens with your words.
+3. Type how it should move into the field, which now shows the skill's name, and press [[↩]]. The **Agent** tab opens with your words.
 
 ![The Teach field scoped to Stand, with crouch lower typed in](/help/coach-a-skill/field.png)
 
@@ -45,6 +45,6 @@ Coaching works on Stand, Walk, Get up and Settle once they're ready, in the desk
 
 The new version is kept only if Arena passes the same contract and the measurement the agent named moved by its minimum. Otherwise the old skill stays, and the agent says why.
 
-To go back to the version before, right-click the row and choose **Undo Coach**. Press Esc in the field to teach a new skill instead. In ⌘K, **Coach Walk** and the other ready skills do the same as step 2.
+To go back to the version before, right-click the row and choose **Undo Coach**. Press [[Esc]] in the field to teach a new skill instead. In [[⌘K]], **Coach Walk** and the other ready skills do the same as step 2.
 
 The five measurements are foot clearance, contact impulse, joint jerk, base height and speed. A design change that retrains the skill in the background drops its coaching. How Arena judges a skill is in [Arena](/help/arena).

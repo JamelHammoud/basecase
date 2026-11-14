@@ -3,8 +3,9 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { Simulation } from '../sim/useSimulation';
 import type { Skill } from '../skills/artifacts';
 import { kitEnvironment } from '../skills/kitEnvironment';
-import { withRecord, type SkillRecord } from '../skills/skillRecords';
+import { recordFreshness, withRecord, type SkillRecord } from '../skills/skillRecords';
 import type { SkillRow, SkillTarget } from '../skills/skillRows';
+import { designOf } from '../skills/skillsRuntime';
 import type { ProjectSettings } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 
@@ -23,8 +24,13 @@ interface CoachInput {
 
 export const canCoach = (row: SkillRow) => !IS_WEB_DEMO && !!row.kit && row.state.kind === 'ready' && !!row.record;
 
-const previousOf = (row: SkillRow, records: SkillRecord[]) =>
-  records.find((r) => r.hash === row.record?.coach?.from) ?? null;
+function previousOf(row: SkillRow, records: SkillRecord[], model: SimModel | null) {
+  const previous = records.find((r) => r.hash === row.record?.coach?.from);
+
+  if (!previous || !model) return null;
+
+  return recordFreshness(previous, { model, design: designOf(model) }) === 'fresh' ? previous : null;
+}
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -56,7 +62,7 @@ export function useSkillCoach({ sim, model, records, loadSkill, setProject }: Co
   };
 
   const undo = (row: SkillRow) => {
-    const previous = previousOf(row, records);
+    const previous = previousOf(row, records, model);
 
     if (!previous) return;
 
@@ -74,7 +80,7 @@ export function useSkillCoach({ sim, model, records, loadSkill, setProject }: Co
     stopReplay: () => {
       replaying.current += 1;
     },
-    canUndo: (row: SkillRow) => !!previousOf(row, records),
+    canUndo: (row: SkillRow) => !!previousOf(row, records, model),
     undo,
   };
 }

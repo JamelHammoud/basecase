@@ -1,6 +1,7 @@
 import type { Command } from '../components/CommandPalette';
 import { CoachIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
+import { titleCase } from '../utils/titleCase';
 import { canCoach } from './useSkillCoach';
 
 export function coachCommands({ core }: CommandInputs): Command[] {
@@ -9,7 +10,7 @@ export function coachCommands({ core }: CommandInputs): Command[] {
   return skills.rows.filter(canCoach).map((row) => ({
     id: `coach-${row.target}`,
     group: 'Simulate',
-    label: `Coach ${row.label}`,
+    label: titleCase(`Coach ${row.label}`),
     icon: <CoachIcon className="w-4 h-4" />,
     keywords: 'coach skill style reward teach train',
     run: () => {

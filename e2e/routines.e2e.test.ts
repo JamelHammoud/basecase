@@ -90,6 +90,26 @@ describe('Routines by hand', () => {
       .poll(async () => (await routineState()).routine?.base.onTimeout[0])
       .toMatchObject({ move: { distance: 1 } });
 
+    const titleUndo = page.locator('button[aria-label="Undo"]');
+    const titleRedo = page.locator('button[aria-label="Redo"]');
+    const firstDistance = async () => {
+      const step = (await routineState()).routine?.base.onTimeout[0];
+
+      return step && 'move' in step ? step.move?.distance : undefined;
+    };
+
+    await distance.fill('0.9');
+    await distance.press('Enter');
+    await expect.poll(firstDistance).toBe(0.9);
+    await expect.poll(() => titleUndo.isEnabled()).toBe(true);
+    await titleUndo.click();
+    await expect.poll(firstDistance).toBe(1);
+    await titleRedo.click();
+    await expect.poll(firstDistance).toBe(0.9);
+    await inFlow('[data-flow-node="drive"]').click();
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect.poll(firstDistance).toBe(1);
+
     await inFlow('button[aria-label="Add step"]:not([data-insert])').click();
     await expect.poll(() => page.evaluate(() => document.activeElement?.textContent)).toBe('Drive');
     await page.keyboard.press('ArrowDown');

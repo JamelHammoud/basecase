@@ -83,7 +83,7 @@ export class PhonePairing {
 
       return { ok: true, ...pairingOf(run) };
     } catch {
-      return { ok: false, message: "Couldn't start pairing" };
+      return { ok: false, message: 'Couldn’t start pairing' };
     }
   }
 

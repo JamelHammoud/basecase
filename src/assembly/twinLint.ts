@@ -71,7 +71,7 @@ export function twinDifferences(input: TwinInputs): string[] {
 
     return diffs.length
       ? [
-          `${pair[0].id} / ${pair[1].id} aren't mirror twins: ${diffs.join(', ')}. Mirror the side that's right onto the other, or fix the one that changed.`,
+          `${pair[0].id} / ${pair[1].id} aren’t mirror twins: ${diffs.join(', ')}. Mirror the side that’s right onto the other, or fix the one that changed.`,
         ]
       : [];
   });

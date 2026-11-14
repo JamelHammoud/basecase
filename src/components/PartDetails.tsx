@@ -79,7 +79,7 @@ export const DetailBlock: React.FC<{ label: string; children: React.ReactNode }>
 );
 
 const modelOrigin = (c: ComponentInfo): string => {
-  if (c.model.source === 'manufacturer') return `From ${c.model.by}'s CAD files`;
+  if (c.model.source === 'manufacturer') return `From ${c.model.by}’s CAD files`;
 
   if (c.model.source === 'checked') return `By ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`;
 

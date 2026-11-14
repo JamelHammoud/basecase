@@ -22,7 +22,7 @@ export function describeCondition(cond: Condition): string {
 
   if (cond.is === true) return `${cond.fact} is seen`;
 
-  if (cond.is === false) return `${cond.fact} isn't seen`;
+  if (cond.is === false) return `${cond.fact} isn’t seen`;
 
   return `${cond.fact} is ${cond.is}`;
 }

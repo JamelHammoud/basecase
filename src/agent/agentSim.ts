@@ -116,14 +116,14 @@ export function simReport(run: SimRun, rig: Rig, seconds: number): string {
   const worst = stats.joints.filter((j) => j.peak > 0.05).sort((a, b) => b.peak - a.peak);
 
   if (worst.length) {
-    lines.push("Peak actuator effort (share of the joint's torque limit):");
+    lines.push('Peak actuator effort (share of the joint’s torque limit):');
 
     for (const j of worst.slice(0, 10)) lines.push(effortLine(j, model, rig));
   }
 
   if (worst.some((j) => j.peak >= 0.99)) {
     lines.push(
-      "A joint at its limit for long can't hold its load: a stronger servo, two servos, a shorter lever or less weight beyond it.",
+      'A joint at its limit for long can’t hold its load: a stronger servo, two servos, a shorter lever or less weight beyond it.',
     );
   }
 
@@ -158,7 +158,7 @@ export async function simulateRequest(ctx: SimContext, p: SimulatePayload): Prom
       frames: requestedFrames(p, seconds),
     });
   } catch (e) {
-    return { text: `The simulation didn't run: ${errorMessage(e)}` };
+    return { text: `The simulation didn’t run: ${errorMessage(e)}` };
   }
 
   const text = simReport(run, ctx.rig, seconds);

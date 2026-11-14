@@ -247,9 +247,9 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
         </div>
       </div>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] text-white/60">Don't print</span>
+        <span className="text-[13px] text-white/60">Don’t print</span>
         <Switch
-          aria-label="Don't print"
+          aria-label="Don’t print"
           checked={!!part.print?.skip}
           onChange={(skip) => set({ skip: skip || undefined })}
         />

@@ -32,13 +32,13 @@ interface RealTryOptions {
   viewportRef: RefObject<Viewport3DHandle | null>;
   onStart: () => void;
   onTry: (record: TryRecord, recording: Recording, input: string | null) => Promise<void>;
-  onRefuse: (message: string) => void;
 }
 
 export interface RealTry {
   phase: TryPhase;
   elapsed: number;
   canStart: boolean;
+  note: string | null;
   samples: () => number;
   start: () => Promise<void>;
   end: () => void;
@@ -52,6 +52,8 @@ interface Running extends StagedMat {
   path: Array<FloorPoint | null>;
 }
 
+export const NO_FRAMES = 'The camera sent no frames, so nothing was recorded.';
+
 const CLOCK_STEP = 0.1;
 const END_SLACK = 1e-6;
 
@@ -63,12 +65,44 @@ function lostTo(tracking: ReturnType<typeof useMatTracking>, owner: number): str
   return tracking.refusal ?? (tracking.error ? MAT_TRACKING_STOPPED : null);
 }
 
+async function realTryRecord(
+  current: Running,
+  { sim, rig, parts }: Pick<RealTryOptions, 'sim' | 'rig' | 'parts'>,
+): Promise<{ record: TryRecord; recording: Recording }> {
+  const { staged, mat, kase, samples } = current;
+  const seconds = Math.min(kase.task.seconds, samples.at(-1)?.t ?? 0);
+  const model = sim.modelNow() ?? (await sim.buildModel());
+  const recording = realRecording({ samples, seconds }, { model, rig, base: mat.base });
+  const verdict = await scoreTry({
+    kase: staged.kase,
+    model,
+    recording,
+    rig,
+    ...stagedEffectors(staged, { rig, parts }),
+  });
+  const id = newTryId();
+  const record: TryRecord = {
+    id,
+    caseId: kase.id,
+    robot: rig.robots[0]?.name ?? 'Robot',
+    at: new Date().toISOString(),
+    passed: verdict.passed,
+    margin: verdict.margin,
+    seconds: recording.frames * recording.dt,
+    manifest: await tryManifest(staged.kase, model, recording),
+    real: true,
+  };
+
+  return { record, recording };
+}
+
 export function useRealTry(options: RealTryOptions): RealTry {
-  const { sim, rig, parts, active, blocked, matOf, viewportRef, onStart, onTry, onRefuse } = options;
+  const { sim, rig, parts, active, blocked, matOf, viewportRef, onStart, onTry } = options;
   const tracking = useMatTracking();
   const [phase, setPhase] = useState<TryPhase>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [owner, setOwner] = useState(0);
+  const [noted, setNoted] = useState<{ caseId: string; text: string } | null>(null);
   const run = useRef<Running | null>(null);
   const finishing = useRef(false);
 
@@ -78,34 +112,6 @@ export function useRealTry(options: RealTryOptions): RealTry {
     setOwner(0);
     setElapsed(0);
     setPhase('idle');
-  };
-
-  const recordOf = async (current: Running): Promise<{ record: TryRecord; recording: Recording }> => {
-    const { staged, mat, kase, samples } = current;
-    const seconds = Math.min(kase.task.seconds, samples.at(-1)?.t ?? 0);
-    const model = sim.modelNow() ?? (await sim.buildModel());
-    const recording = realRecording({ samples, seconds }, { model, rig, base: mat.base });
-    const verdict = await scoreTry({
-      kase: staged.kase,
-      model,
-      recording,
-      rig,
-      ...stagedEffectors(staged, { rig, parts }),
-    });
-    const id = newTryId();
-    const record: TryRecord = {
-      id,
-      caseId: kase.id,
-      robot: rig.robots[0]?.name ?? 'Robot',
-      at: new Date().toISOString(),
-      passed: verdict.passed,
-      margin: verdict.margin,
-      seconds: recording.frames * recording.dt,
-      manifest: await tryManifest(staged.kase, model, recording),
-      real: true,
-    };
-
-    return { record, recording };
   };
 
   const finish = async () => {
@@ -119,8 +125,9 @@ export function useRealTry(options: RealTryOptions): RealTry {
     setPhase('scoring');
 
     try {
-      if (current.samples.length) {
-        const { record, recording } = await recordOf(current);
+      if (!current.samples.length) setNoted({ caseId: current.kase.id, text: NO_FRAMES });
+      else {
+        const { record, recording } = await realTryRecord(current, { sim, rig, parts });
 
         await onTry(record, recording, 'mat');
       }
@@ -169,7 +176,7 @@ export function useRealTry(options: RealTryOptions): RealTry {
 
     closeMatTracking(run.current.owner);
     viewportRef.current?.setMatTrack(null);
-    onRefuse(message);
+    setNoted({ caseId: run.current.kase.id, text: message });
     settle();
   });
 
@@ -190,6 +197,7 @@ export function useRealTry(options: RealTryOptions): RealTry {
     if (!active || !made || !claimed) return;
 
     onStart();
+    setNoted(null);
     run.current = { ...made, owner: claimed, kase: active, t0: null, samples: [], path: [] };
     setOwner(claimed);
     setElapsed(0);
@@ -200,8 +208,7 @@ export function useRealTry(options: RealTryOptions): RealTry {
 
     if (!refusal && open && holder === claimed) return setPhase('running');
 
-    if (refusal) onRefuse(refusal);
-
+    setNoted({ caseId: active.id, text: refusal ?? MAT_TRACKING_STOPPED });
     closeMatTracking(claimed);
     settle();
   };
@@ -210,6 +217,7 @@ export function useRealTry(options: RealTryOptions): RealTry {
     phase,
     elapsed,
     canStart,
+    note: noted && noted.caseId === active?.id ? noted.text : null,
     samples: () => run.current?.samples.length ?? 0,
     start,
     end: () => void finish(),

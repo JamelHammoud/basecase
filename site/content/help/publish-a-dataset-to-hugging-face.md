@@ -55,3 +55,5 @@ Publishing the same Case from the same scene replaces the dataset with the tries
 ## Where the token lives
 
 The token stays in the app's main process, sealed on disk. The page you work in never sees it; it learns only whether you're signed in and your account name.
+
+A ready skill publishes with the same token; see [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).

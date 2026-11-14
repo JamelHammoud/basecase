@@ -17,9 +17,9 @@ import { kitEnvironment } from '../skills/kitEnvironment';
 import { watchPlan } from '../skills/liveWatch';
 import { moveEnvironment } from '../skills/moveEnvironment';
 import type { SnapshotRef } from '../skills/snapshots';
-import { readyVelocity, skillRows, type SkillJob, type SkillRow } from '../skills/skillRows';
+import { readyVelocity, skillRows, type SkillJob, type SkillRefusals, type SkillRow } from '../skills/skillRows';
 import { skillsPlatform, type SkillsPlatform } from '../skills/skillsPlatform';
-import { designOf, SkillsRuntime } from '../skills/skillsRuntime';
+import { designOf, SkillsRuntime, type KitInstall } from '../skills/skillsRuntime';
 import { teachExamples } from '../skills/teachExamples';
 import type { ProjectSettings, RobotAnimation, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
@@ -40,6 +40,7 @@ interface SkillsInput {
 
 function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId' | 'setProject'>) {
   const [jobs, setJobs] = useState<SkillJob[]>([]);
+  const [refusals, setRefusals] = useState<SkillRefusals>({});
   const [platform] = useState(() => skillsPlatform({ web: IS_WEB_DEMO, workspaceId, store: platformBridge }));
   const [runtime] = useState(
     () =>
@@ -51,12 +52,13 @@ function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId'
         snapshots: platform.snapshots,
         onRecord: (record) => setProject((p) => ({ ...p, skills: withRecord(p.skills ?? [], record) })),
         onChange: setJobs,
+        onRefused: (target, line) => setRefusals((r) => ({ ...r, [target]: line ?? undefined })),
       }),
   );
 
   useEffect(() => () => runtime.dispose(), [runtime]);
 
-  return { runtime, platform, jobs };
+  return { runtime, platform, jobs, refusals };
 }
 
 function useTabTraining(hasJoints: boolean) {
@@ -155,14 +157,16 @@ export function useSkills(input: SkillsInput) {
   const { sim, project, rig, parts } = input;
   const hasJoints = rig.joints.length > 0;
   const available = useTabTraining(hasJoints) && hasJoints;
-  const { runtime, platform, jobs } = useRuntime(input);
+  const { runtime, platform, jobs, refusals } = useRuntime(input);
   const records = project.skills ?? [];
   const facts = robotFacts(rig, parts);
   const watch =
     available && (facts.morphology === 'legged' || records.length > 0 || jobs.length > 0 || !!project.policies?.length);
   const model = useSceneModel(input, { runtime, platform, watch });
   const animations = project.animations ?? [];
-  const rows: SkillRow[] = model ? skillRows({ model, design: designOf(model), records, jobs, animations }) : [];
+  const rows: SkillRow[] = model
+    ? skillRows({ model, design: designOf(model), records, jobs, animations, refusals })
+    : [];
   const velocityRecord = readyVelocity(rows);
   const examples = teachExamples(facts, footPoints(rig, parts).length);
 
@@ -229,6 +233,9 @@ export function useSkills(input: SkillsInput) {
     buildModel: sim.buildModel,
     rows,
     examples,
+    loadSkill: load,
+    environmentOf: rowEnvironment,
+    install: (built: SimModel, install: KitInstall) => runtime.installKit(built, install),
     velocity,
     velocityReady: !!velocityRecord,
     busy: jobs.some((j) => !j.background),

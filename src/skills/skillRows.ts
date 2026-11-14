@@ -22,7 +22,7 @@ export type SkillState =
   | { kind: 'training'; share: number | null; message: string; background: boolean; snapshot: SnapshotRef | null }
   | { kind: 'ready'; arena: string }
   | { kind: 'recheck' }
-  | { kind: 'untrained' };
+  | { kind: 'untrained'; refused?: string };
 
 export interface SkillRow {
   target: SkillTarget;
@@ -48,10 +48,13 @@ interface DesignInput {
   design: string;
 }
 
+export type SkillRefusals = Partial<Record<SkillTarget, string>>;
+
 interface RowInput extends DesignInput {
   records: SkillRecord[];
   jobs: SkillJob[];
   animations?: readonly RobotAnimation[];
+  refusals?: SkillRefusals;
 }
 
 function best(records: SkillRecord[], input: DesignInput) {
@@ -65,7 +68,7 @@ function best(records: SkillRecord[], input: DesignInput) {
 const readyEvidence = (found: ReturnType<typeof best> | null) =>
   found?.freshness === 'fresh' ? (found.record.evidence ?? null) : null;
 
-function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefined): SkillState {
+function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefined, refused?: string): SkillState {
   if (job)
     return {
       kind: 'training',
@@ -79,7 +82,9 @@ function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefine
 
   if (evidence) return { kind: 'ready', arena: arenaLine(evidence) };
 
-  return found?.freshness === 'rerun-arena' ? { kind: 'recheck' } : { kind: 'untrained' };
+  if (found?.freshness === 'rerun-arena') return { kind: 'recheck' };
+
+  return refused ? { kind: 'untrained', refused } : { kind: 'untrained' };
 }
 
 function kitRows(input: RowInput): SkillRow[] {
@@ -99,6 +104,7 @@ function kitRows(input: RowInput): SkillRow[] {
       state: stateOf(
         found,
         input.jobs.find((j) => j.target === target),
+        input.refusals?.[target],
       ),
       drives: entry === 'velocity-tracking',
     };

@@ -113,6 +113,12 @@ class FakeHubServer {
         handle: (c) => this.batch(c),
         auth: true,
       },
+      {
+        method: 'GET',
+        pattern: /^\/(datasets\/)?([^/]+)\/([^/]+)\/resolve\/main\/(.+)$/,
+        handle: (c) => this.resolve(c),
+        auth: false,
+      },
       { method: 'PUT', pattern: /^\/lfs\/([0-9a-f]{64})$/, handle: (c) => this.putObject(c), auth: false },
       { method: 'PUT', pattern: /^\/lfs\/([0-9a-f]{64})\/part\/(\d+)$/, handle: (c) => this.putPart(c), auth: false },
       { method: 'POST', pattern: /^\/lfs\/([0-9a-f]{64})\/complete$/, handle: (c) => this.complete(c), auth: false },
@@ -187,6 +193,17 @@ class FakeHubServer {
     };
 
     handlers[ctx.match[4]](repo);
+  }
+
+  private resolve(ctx: Ctx) {
+    const [, datasets, owner, name, path] = ctx.match;
+    const repo = this.repos.get(`${owner}/${name}`);
+    const bytes = repo && (repo.kind === 'dataset') === !!datasets ? repo.files.get(decodeURIComponent(path)) : null;
+
+    if (!bytes) return send(ctx.res, 404, { error: 'Entry not found' });
+
+    ctx.res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': String(bytes.length) });
+    ctx.res.end(bytes);
   }
 
   private preupload(ctx: Ctx) {

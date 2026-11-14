@@ -7,12 +7,13 @@ import type { PolicySpec } from '../sim/policy';
 import { skillFiles, skillHash, type Skill } from './artifacts';
 import { lastError, type ForgeJob, type ForgeRunner, type SkillSave } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
+import type { KitWarm } from './motorKit';
 import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
 import type { RaceOutcome } from './race';
 import type { SkillRunner } from './skillsClient';
 import type { SkillsJob } from './skillsJob';
-import { moveTag, recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
+import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
 import { KIT_LABELS, type SkillJob, type SkillTarget } from './skillRows';
 import {
   NO_SNAPSHOT_STORE,
@@ -45,7 +46,13 @@ export interface RuntimeDeps {
   loadSkill: (hash: string) => Promise<Skill | null>;
   onRecord: (record: SkillRecord) => void;
   onChange: (jobs: SkillJob[]) => void;
+  onRefused?: (target: SkillTarget, line: string | null) => void;
   snapshots?: Snapshots;
+}
+
+export interface KitInstall {
+  entry: TrainedEntry;
+  warm: KitWarm;
 }
 
 export interface RaceReport {
@@ -128,6 +135,21 @@ export class SkillsRuntime {
       label: KIT_LABELS[entry],
       background: false,
       work: (forge, signal) => this.kitWork(model, entry, { forge, signal }),
+    });
+
+    return null;
+  }
+
+  installKit(model: SimModel, install: KitInstall): string | null {
+    if (this.user) return BUSY;
+
+    const { entry, warm } = install;
+
+    this.running = this.start({
+      target: `kit:${entry}`,
+      label: KIT_LABELS[entry],
+      background: false,
+      work: (forge, signal) => this.kitWork(model, entry, { forge, signal, warm }),
     });
 
     return null;
@@ -325,14 +347,21 @@ export class SkillsRuntime {
     plan.done({ runs, kept: !!made, problem: runs.refusal });
   }
 
-  private async kitWork(model: SimModel, entry: TrainedEntry, ports: { forge: ForgeRunner; signal: AbortSignal }) {
+  private async kitWork(
+    model: SimModel,
+    entry: TrainedEntry,
+    ports: { forge: ForgeRunner; signal: AbortSignal; warm?: KitWarm },
+  ) {
+    const { warm, ...rest } = ports;
     const reply = await this.deps.runner(
-      { type: 'kit', model, design: designOf(model), entry },
-      { ...this.ports(), ...ports },
+      { type: 'kit', model, design: designOf(model), entry, ...(warm ? { warm } : {}) },
+      { ...this.ports(), ...rest },
     );
+    const { outcome } = reply;
 
-    if (reply.outcome.kind === 'skill')
-      await this.keep(`kit:${entry}`, skillRecord(reply.outcome.skill, { kit: entry }));
+    if (outcome.kind === 'skill') return this.keep(`kit:${entry}`, skillRecord(outcome.skill, { kit: entry }));
+
+    if (outcome.evidence) this.deps.onRefused?.(`kit:${entry}`, refusedLine(outcome.evidence));
   }
 
   private async moveWork(
@@ -411,6 +440,7 @@ export class SkillsRuntime {
     this.background?.abort();
     this.user = controller;
     this.userLabel = run.label;
+    this.deps.onRefused?.(run.target, null);
     this.trails.set(run.target, NO_SNAPSHOTS);
     this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting', snapshot: null });
 

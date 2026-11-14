@@ -62,6 +62,6 @@ You can also tell the agent what you want to do with a robot, such as "drive thi
 
 The **Name** field sets the name before you click **Make Case**. To delete a Case, right-click it in the **Cases** tab and choose **Delete**. Its tries go with it, so Basecase asks first.
 
-The open Case's menu also has **Compare With**, which runs it on another open scene's robot. See [Compare two robots on a Case](/help/compare-two-robots-on-a-case).
+The open Case's menu also has **Compare With**, which runs it on another open scene's robot. See [Compare two robots on a Case](/help/compare-two-robots-on-a-case). A wheeled or legged robot's Case also has **Export Case Mat**, which saves it as a floor mat to print; see [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 
 Every goal, world and number is listed in [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).

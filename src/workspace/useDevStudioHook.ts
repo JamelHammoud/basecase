@@ -9,7 +9,9 @@ import { loadRecording } from '../cases/tryStore';
 import { withCalibration } from '../reality/projectCalibrations';
 import { exposesTestHooks } from '../utils/platform/testHooks';
 import { useLatestRef } from '../utils/useLatestRef';
+import { printDevActions } from './devPrintState';
 import { devSimState } from './devSimState';
+import { matDevActions } from './devMatFeed';
 import { devStudioApi, type DevActions } from './devStudioApi';
 import { robotPackageZip } from './robotPackageExport';
 import { trainerStub } from './trainerStub';
@@ -75,16 +77,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
     },
     calibrate: (jointId, calibration) => docs.setProject((p) => withCalibration(p, jointId, calibration)),
     routineState: () => core.simTraining.routines.state(),
-    printState: () => ({
-      open: !!core.printing.mode,
-      printer: core.printing.printer.model.id,
-      bed: core.printing.report?.plan.bed ?? null,
-    }),
-    printPlates: () => ({
-      open: !!core.printing.mode,
-      fitTest: !!core.printing.fitTest,
-      plates: (core.printing.report?.plan.plates ?? []).map((p) => p.items.map((it) => it.id)),
-    }),
+    ...printDevActions(core),
     datasetFiles: async () => {
       const { cases } = core.simTraining;
       const zip = await cases.dataset.zip(cases.tries);
@@ -127,6 +120,7 @@ export function useDevStudioHook({ active, core, actions, agent, routeFiles }: D
       return made && { html: made.html, pages: made.record.pages, steps: made.record.steps };
     },
     buildAlongSteps: () => core.buildAlong.steps,
+    mat: matDevActions(core),
   });
 
   useEffect(() => {

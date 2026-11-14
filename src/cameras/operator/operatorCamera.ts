@@ -143,15 +143,17 @@ function receive(event: PoseEvent) {
   set({ estimator: state.estimator ?? event.delegate });
 }
 
-const stopTracks = (stream: MediaStream) => stream.getTracks().forEach((track) => track.stop());
+const OPERATOR_SIZE = { width: 640, height: 480 };
 
-async function requestStream(): Promise<MediaStream | null> {
+export async function requestCameraStream(size = OPERATOR_SIZE): Promise<MediaStream | null> {
   const devices = typeof navigator === 'undefined' ? undefined : navigator.mediaDevices;
 
   if (!devices?.getUserMedia) return null;
 
-  return devices.getUserMedia({ video: { width: 640, height: 480 }, audio: false }).catch(() => null);
+  return devices.getUserMedia({ video: size, audio: false }).catch(() => null);
 }
+
+export const stopCameraStream = (stream: MediaStream) => stream.getTracks().forEach((track) => track.stop());
 
 function start(stream: MediaStream): Session {
   const [track] = stream.getVideoTracks();
@@ -174,12 +176,12 @@ function start(stream: MediaStream): Session {
 }
 
 async function openSession(): Promise<Session | null> {
-  const stream = await requestStream();
+  const stream = await requestCameraStream();
 
   if (!stream) return null;
 
   if (!members.size) {
-    stopTracks(stream);
+    stopCameraStream(stream);
 
     return null;
   }
@@ -210,7 +212,7 @@ function endSession() {
   live.frames.stop();
   live.worker.postMessage({ type: 'close' } satisfies PoseRequest);
   live.worker.terminate();
-  stopTracks(live.stream);
+  stopCameraStream(live.stream);
   setPoints(null);
   set(CLOSED);
 }

@@ -45,7 +45,7 @@ async function startDriving(id: string) {
   await clickTab('Simulate');
   await button(/^Drive$/).click();
   await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-  await expect.poll(() => app.page.getByTestId('drive-banner').count()).toBeGreaterThan(0);
+  await expect.poll(() => button('Stop Driving').count()).toBeGreaterThan(0);
 }
 
 async function holdKey(key: string, ms: number) {

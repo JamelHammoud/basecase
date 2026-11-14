@@ -1,10 +1,9 @@
+use crate::options::TaskOptions;
 use crate::physics::Physics;
 use crate::rng::Rng;
 use crate::robot::ModelRef;
 use crate::servo_gains;
 
-const FRICTION_RANGE: (f64, f64) = (0.6, 1.3);
-const MASS_RANGE: (f64, f64) = (0.85, 1.15);
 const SERVO_RANGE: (f64, f64) = (0.85, 1.15);
 
 pub const RANDOMIZED_FIELDS: [&str; 4] = ["geom_friction", "body_mass", "actuator_gainprm", "actuator_biasprm"];
@@ -24,13 +23,17 @@ pub fn servo_scales(nu: usize, gains: &[Vec<Option<f64>>], rngs: &mut [Rng]) -> 
     rngs.iter_mut().flat_map(|rng| servo_draw(nu, gains, rng)).collect()
 }
 
-pub fn randomize(batch: &mut Physics, nu: usize, gains: &[Vec<Option<f64>>], rngs: &mut [Rng]) -> Result<(), String> {
+pub fn randomize(batch: &mut Physics, nu: usize, options: &TaskOptions, rngs: &mut [Rng]) -> Result<(), String> {
+    let gains = &options.servo_gains;
+    let [friction_low, friction_high] = options.random_ranges.friction;
+    let [mass_low, mass_high] = options.random_ranges.mass;
+
     servo_gains::check(gains, nu)?;
 
     let (friction, width) = batch.expand("geom_friction")?;
 
     for (row, rng) in friction.chunks_exact_mut(width).zip(rngs.iter_mut()) {
-        let scale = rng.uniform(FRICTION_RANGE.0, FRICTION_RANGE.1);
+        let scale = rng.uniform(friction_low, friction_high);
 
         row.iter_mut().step_by(3).for_each(|f| *f *= scale);
     }
@@ -38,9 +41,7 @@ pub fn randomize(batch: &mut Physics, nu: usize, gains: &[Vec<Option<f64>>], rng
     let (mass, width) = batch.expand("body_mass")?;
 
     for (row, rng) in mass.chunks_exact_mut(width).zip(rngs.iter_mut()) {
-        row[1..]
-            .iter_mut()
-            .for_each(|m| *m *= rng.uniform(MASS_RANGE.0, MASS_RANGE.1));
+        row[1..].iter_mut().for_each(|m| *m *= rng.uniform(mass_low, mass_high));
     }
 
     let servo = servo_scales(nu, gains, rngs);

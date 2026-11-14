@@ -85,6 +85,11 @@ registerInputSource({
 
     return reading ? phoneCommand(reading, cls) : null;
   },
+  raw: () => {
+    const reading = phoneReading();
+
+    return reading && [...reading.tilt, ...(reading.pad ?? [0, 0]), ...reading.buttons.map((b) => (b ? 1 : 0))];
+  },
 });
 registerInputSource({
   id: 'gamepad',
@@ -93,7 +98,35 @@ registerInputSource({
 
     return pad ? commandFromPad(pad, cls) : null;
   },
+  raw: () => {
+    const pad = firstPad();
+
+    return pad && [...pad.axes, ...pad.buttons.map((b) => b.value)];
+  },
 });
+
+const commandValues = (c: DriveCommand) => [
+  ...c.v,
+  ...(c.target ?? []),
+  ...(c.aux ?? []),
+  ...Object.values(c.joints ?? {}),
+];
+
+export interface RawInput {
+  id: string;
+  values: number[];
+}
+
+export function drivingInput(ids: readonly string[], readings: Record<string, DriveCommand | null>): RawInput | null {
+  const id = ids.find((k) => {
+    const reading = readings[k];
+
+    return !!reading && !isIdle(reading);
+  });
+  const command = id && readings[id];
+
+  return id && command ? { id, values: sources.get(id)?.raw?.() ?? commandValues(command) } : null;
+}
 
 export interface InputReadings {
   command: DriveCommand;

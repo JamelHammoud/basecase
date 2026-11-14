@@ -82,6 +82,22 @@ function storedImport({ id, model, target, episode }: StoredInput, replayed: Ret
   return stored;
 }
 
+export interface ReplayJob {
+  model: SimModel;
+  episode: SourceEpisode;
+  plan: ReplayPlan;
+}
+
+export function replayedRecording(mj: MainModule, { model, episode, plan }: ReplayJob): Recording {
+  const engine = new SimEngine(mj, model);
+
+  try {
+    return kinematicRecording(engine, episode, plan).recording;
+  } finally {
+    engine.dispose();
+  }
+}
+
 export interface BuildInput {
   model: SimModel;
   data: SourceData;

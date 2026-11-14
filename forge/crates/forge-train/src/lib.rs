@@ -40,6 +40,7 @@ pub mod physics;
 pub mod platform;
 pub mod pool;
 pub mod ppo;
+pub mod random_ranges;
 pub mod randomize;
 pub mod rewarder;
 pub mod rng;

@@ -4,6 +4,7 @@ import { TRY_SOURCE_BADGE, summaryRecord, type TrySummary } from '../../cases/tr
 import type { SimModel } from '../../sim/mjcfTypes';
 import type { ScenePart } from '../../types/robotics';
 import { runClock } from '../../utils/duration';
+import { clockTime } from '../../utils/timeAgo';
 import type { PickKeys } from '../../workspace/useTriesView';
 import { useFilmstrip } from '../simulate/useFilmstrip';
 import { useSeen } from './useSeen';
@@ -34,7 +35,9 @@ interface TryTileProps {
 const TileCaption: React.FC<{ summary: TrySummary }> = ({ summary }) => {
   const outcome = OUTCOME[summary.outcome.verdict];
   const badge = TRY_SOURCE_BADGE[summary.source];
-  const title = summary.caseName ?? summary.task ?? summary.origin;
+  const started = Date.parse(summary.startedAt);
+  const title =
+    summary.caseName ?? summary.task ?? summary.origin ?? (Number.isFinite(started) ? clockTime(started) : null);
   const origin = summary.origin !== title ? summary.origin : null;
 
   return (

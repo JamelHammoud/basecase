@@ -19,6 +19,7 @@ related:
   - the-motor-lock-and-safety-ladder
   - calibrate-an-emulated-robot
   - connect-an-emulated-ros-2-robot
+  - keep-a-robot-session-as-a-try
 covers:
   - src/components/operate/OperatePanel.tsx
   - src/components/operate/RobotLadder.tsx

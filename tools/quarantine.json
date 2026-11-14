@@ -1,9 +1,1 @@
-[
-  {
-    "file": "e2e/caseCode.e2e.test.ts",
-    "test": "unloads a panel that never answers with its error, while the page keeps drawing frames",
-    "issue": 747,
-    "until": "2026-11-28",
-    "reason": "On Windows the test passes, then browser.close() hangs until the 120 s hook timeout on both attempts in every nightly run, and leaves Chrome busy for the rest of the shard. Passes on Linux and macOS."
-  }
-]
+[]

@@ -56,14 +56,16 @@ function caseTargets(payload: Payload): string[] | undefined {
   return asked.length ? asked : undefined;
 }
 
-function pathProblem(goal: unknown, targets: string[] | undefined): string | null {
-  const path = CASE_GOALS.find((g) => g.kind === 'path' && g.kind === goal);
+function targetCountProblem(goal: unknown, targets: string[] | undefined): string | null {
+  const named = CASE_GOALS.find((g) => (g.kind === 'path' || g.kind === 'reach') && g.kind === goal);
 
-  if (!path || !targets) return null;
+  if (!named || !targets) return null;
 
-  const { min, max } = goalParam(path, 'stops');
+  if (named.kind === 'reach') return targets.length > 1 ? `Name one spot for ${named.name}.` : null;
 
-  return targets.length < min || targets.length > max ? `Name ${min} to ${max} spots for ${path.name}.` : null;
+  const { min, max } = goalParam(named, 'stops');
+
+  return targets.length < min || targets.length > max ? `Name ${min} to ${max} spots for ${named.name}.` : null;
 }
 
 function extraObjects(payload: Payload): WorldObject[] | string {
@@ -89,11 +91,11 @@ async function logicProblem(spec: CaseSpec, ctx: CaseContext): Promise<string | 
 async function createCase(payload: Payload, ctx: CaseContext) {
   const objects = extraObjects(payload);
   const targets = caseTargets(payload);
-  const unpathed = pathProblem(payload.goal, targets);
+  const miscounted = targetCountProblem(payload.goal, targets);
 
   if (typeof objects === 'string') return { ok: false, problem: objects };
 
-  if (unpathed) return { ok: false, problem: unpathed };
+  if (miscounted) return { ok: false, problem: miscounted };
 
   ctx.setAction('Making a Case');
 

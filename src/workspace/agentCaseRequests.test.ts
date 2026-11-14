@@ -179,11 +179,13 @@ describe('create_case in a scanned room', () => {
     ).toEqual(['Sofa', 'Door', 'Table'].map((name) => targetAt(name)[2]));
   });
 
-  it('refuses a path with fewer names than it has spots', async () => {
-    const { reply, added } = create({ goal: 'path', target: ['table'] }, 'rover-diff', room);
+  it('refuses a path with one name and a reach with two, adding nothing', async () => {
+    const path = create({ goal: 'path', target: ['table'] }, 'rover-diff', room);
+    const reach = create({ goal: 'reach', target: ['table', 'door'] }, 'rover-diff', room);
 
-    expect(await reply).toEqual({ ok: false, problem: 'Name 2 to 8 spots for Follow a Path.' });
-    expect(added).toEqual([]);
+    expect(await path.reply).toEqual({ ok: false, problem: 'Name 2 to 8 spots for Follow a Path.' });
+    expect(await reach.reply).toEqual({ ok: false, problem: 'Name one spot for Reach a Spot.' });
+    expect([...path.added, ...reach.added]).toEqual([]);
   });
 
   it('refuses a name the room lacks, and a target with no room open, with the names it has', async () => {

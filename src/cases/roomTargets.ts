@@ -119,17 +119,21 @@ function targetsOf({ object, name }: Named, floor: Floor): RoomTarget[] {
   ];
 }
 
-const found = new WeakMap<Room, WeakMap<BuilderRobot, RoomTarget[]>>();
+const found = new WeakMap<Room, Map<string, RoomTarget[]>>();
+
+const standing = ({ pivot, forward, footprint, heightMm }: BuilderRobot) =>
+  [...pivot, ...forward, footprint.width, footprint.depth, heightMm].join();
 
 export function roomTargets(room: Room, robot: BuilderRobot): RoomTarget[] {
-  const byRobot = found.get(room) ?? new WeakMap<BuilderRobot, RoomTarget[]>();
-  const known = byRobot.get(robot);
+  const byRobot = found.get(room) ?? new Map<string, RoomTarget[]>();
+  const key = standing(robot);
+  const known = byRobot.get(key);
 
   if (known) return known;
 
   const targets = searchedTargets(room, robot);
 
-  found.set(room, byRobot.set(robot, targets));
+  found.set(room, byRobot.set(key, targets));
 
   return targets;
 }

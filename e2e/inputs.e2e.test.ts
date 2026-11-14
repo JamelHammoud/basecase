@@ -27,6 +27,7 @@ interface SimState {
 type Phone = { status: 'off' } | { status: 'pairing'; url: string; token: string; cert: string } | { status: string };
 
 interface InputEvent {
+  at: number;
   name: string;
   value: string | number | boolean;
 }
@@ -99,6 +100,11 @@ const phoneState = () => app.page.evaluate(() => (window as unknown as StudioWin
 
 const inputEvents = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.inputEvents());
 
+const pageNow = () => app.page.evaluate(() => performance.now());
+
+const eventsSince = async (name: string, since: number) =>
+  (await inputEvents()).filter((e) => e.name === name && e.at >= since).map((e) => e.value);
+
 const driveWith = (inputs: string[]) =>
   app.page.evaluate((ids) => (window as unknown as StudioWindow).__studio.driveWith(ids), inputs);
 
@@ -152,7 +158,7 @@ const fed = () =>
     })
     .toBe(false);
 
-const gestures = async () => (await inputEvents()).filter((e) => e.name === 'gesture').map((e) => e.value);
+const gestures = (since: number) => eventsSince('gesture', since);
 
 const teachSheet = (phase: string, taught: number) =>
   app.page.locator(`[data-testid="teach-gesture"][data-phase="${phase}"][data-taught="${taught}"]`);
@@ -175,6 +181,13 @@ async function startDriving() {
 
 async function stopDriving() {
   if ((await studio()).drive === 'off') return;
+
+  const sheet = app.page.getByTestId('teach-gesture');
+
+  if (await sheet.count()) {
+    await app.page.keyboard.press('Escape');
+    await sheet.waitFor({ state: 'detached' });
+  }
 
   await app.page.mouse.click(720, 450);
   await app.page.keyboard.press('Escape');
@@ -297,6 +310,7 @@ describe('live inputs', () => {
 
   it('hears a recorded “sit” in a Case whose logic listens for it', async () => {
     const { samples, sampleRate } = readWav(new URL('../src/voice/fixtures/sit.wav', import.meta.url));
+    const since = await pageNow();
 
     await runCase(sitScene(fixture('rover-diff')));
     await app.page.evaluate(
@@ -304,11 +318,7 @@ describe('live inputs', () => {
       { samples: Array.from(samples), sampleRate },
     );
     await tryIt();
-    await expect
-      .poll(async () => (await inputEvents()).filter((e) => e.name === 'voice').map((e) => e.value), {
-        timeout: 30000,
-      })
-      .toEqual([HEARD_WORD]);
+    await expect.poll(() => eventsSince('voice', since), { timeout: 30000 }).toEqual([HEARD_WORD]);
     await leaveCase();
     expect(app.errors).toEqual([]);
   });
@@ -317,6 +327,7 @@ describe('live inputs', () => {
 describe('gestures', () => {
   it('fires one wave event for a wave, and fires a gesture taught from three examples', async () => {
     const g1 = g1Humanoid();
+    const since = await pageNow();
 
     await app.page.evaluate((record) => (window as unknown as StudioWindow).__studio.load(record), g1);
     await expect.poll(() => partCount(app.page), { timeout: 10000 }).toBe(g1.parts.length);
@@ -325,7 +336,7 @@ describe('gestures', () => {
     await feedPose(wave({ waveS: 3 }));
     await command('Drive with Camera');
     await fed();
-    expect(await gestures()).toEqual(['wave']);
+    expect(await gestures(since)).toEqual(['wave']);
 
     await command('Teach Gesture');
     await app.page.getByRole('textbox', { name: 'Name' }).fill('salute');
@@ -343,7 +354,7 @@ describe('gestures', () => {
 
     await feedPose(saluteMotion(3));
     await fed();
-    expect(await gestures()).toEqual(['wave', 'salute']);
+    expect(await gestures(since)).toEqual(['wave', 'salute']);
     expect(app.errors).toEqual([]);
   });
 });

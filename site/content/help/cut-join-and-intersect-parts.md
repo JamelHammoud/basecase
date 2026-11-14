@@ -51,7 +51,7 @@ The first part keeps its name and material, and the parts cut from it sit under 
 2. Right-click the shape and choose **Cutout**.
 3. Right-click the part and choose **Subtract Overlapping Cutouts**.
 
-Every visible Cutout that overlaps the part is cut out of it in one step. **Hole** and **Slot**, in [[⌘K]], start as Cutouts, so they skip step 2. **Guide**, beside **Cutout** in the menu, keeps a part as a reference that's never printed.
+Every visible Cutout that overlaps the part is cut out of it in one step. **Hole** and **Slot**, in [[⌘K]], start as Cutouts, so they skip step 2. **Guide**, beside **Cutout** in the menu, keeps a part as a reference that's never printed. A Cutout or Guide has no **Material** under **Appearance**, since nothing builds it.
 
 **Union**, **Subtract** and **Intersect** are also in the right-click menu and [[⌘K]] while several parts are selected. If one shows an error instead, see [Union, Subtract or Intersect shows an error](/help/troubleshoot-booleans).
 

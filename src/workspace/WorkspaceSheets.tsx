@@ -2,12 +2,14 @@ import { ArmSizingSheet } from '../components/ArmSizingSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { InstallSkillSheet } from '../components/InstallSkillSheet';
+import { MatchJointsSheet } from '../components/MatchJointsSheet';
 import { MotionDesignSheet } from '../components/MotionDesignSheet';
 import { PlaceOnMapSheet } from '../components/PlaceOnMapSheet';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
 import { ErrorBoundary } from '../design-system';
 import { TeachGestureHost } from './TeachGestureHost';
+import type { DataImport } from './useDataImport';
 import type { EarthPlace } from './useEarthPlace';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
@@ -24,6 +26,16 @@ function PlaceOnMapHost({ active, earth }: { active: boolean; earth: EarthPlace 
   return (
     <ErrorBoundary region="Place on Map" onClose={earth.close}>
       <PlaceOnMapSheet origin={earth.origin} onClose={earth.close} onPlace={earth.place} />
+    </ErrorBoundary>
+  );
+}
+
+function MatchJointsHost({ active, data }: { active: boolean; data: DataImport }) {
+  if (!active || !data.sheet) return null;
+
+  return (
+    <ErrorBoundary key={data.sheet.source} region="Match Joints" onClose={() => data.settle(null)}>
+      <MatchJointsSheet sheet={data.sheet} onDone={data.settle} />
     </ErrorBoundary>
   );
 }
@@ -76,9 +88,8 @@ function MotionSheets({ core, actions }: Omit<WorkspaceSheetsProps, 'active'>) {
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
   const { guide } = core;
   const desktop = platformBridge.isElectron();
-  const { robots, pose, arm } = actions;
+  const { robots, pose, arm, data } = actions;
   const { motionInputRef } = pose;
-  const { importRobotFrom } = robots;
   const { skillHub } = core.simTraining;
   const installing = active && skillHub.installOpen;
 
@@ -103,9 +114,10 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           open={robots.importRobotOpen}
           choice={robots.robotChoice}
           onClose={robots.closeImportRobot}
-          onImport={(src, at) => void importRobotFrom(src, at)}
+          onImport={(src, at) => void data.importOrRobot(src, at)}
         />
       </ErrorBoundary>
+      <MatchJointsHost active={active} data={data} />
       <ErrorBoundary region="Install Skill" resetKey={installing} onClose={skillHub.closeInstall}>
         <InstallSkillSheet open={installing} onClose={skillHub.closeInstall} onInstall={skillHub.install} />
       </ErrorBoundary>

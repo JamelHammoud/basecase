@@ -2,6 +2,7 @@ import path from 'node:path';
 import { AgentKeys } from '../backend/agentKeys.mjs';
 import { publicFetch } from '../publicFetch.mjs';
 import { policyOnnx } from '../robot/policyOnnx.mjs';
+import { downloadDataset } from './datasetRepo.mjs';
 import { HUB_ENDPOINT, HubClient } from './hubClient.mjs';
 import { checkedName, publishRepo } from './publishRepo.mjs';
 import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from './skillRepo.mjs';
@@ -111,5 +112,13 @@ export class HubAccount {
     }
 
     return { repo: id, files };
+  }
+
+  async datasetFiles({ owner, repo, rev } = {}) {
+    const id = `${checkedName(owner)}/${checkedName(repo)}`;
+    const revision = checkedRevision(rev);
+    const client = this.client(this.keys.get(TOKEN) ?? undefined, 'Import again', 'dataset');
+
+    return downloadDataset(client, { id, rev: revision });
   }
 }

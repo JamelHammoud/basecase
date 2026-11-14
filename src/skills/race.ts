@@ -1,4 +1,5 @@
 import { proveSkill } from './prove';
+import { lengthLabel } from '../utils/size';
 import { planReach } from './raceIk';
 import { rewardSearch } from './raceRewardSearch';
 import { playMove, trackMotion } from './raceTracking';
@@ -53,7 +54,7 @@ async function ikPlan(input: RaceInput, clock: RaceClock): Promise<SolveResult> 
     save: input.save,
     origin: () => ({ method: 'ik-or-motion-plan', cost: elapsedOf(clock) }),
   });
-  const reason = `${proof.evidence.summary} Planned within ${(plan.missM * 1000).toFixed(1)} mm.`;
+  const reason = `${proof.evidence.summary} Planned within ${lengthLabel(plan.missM * 1000)}.`;
 
   return {
     skill: proof.skill,

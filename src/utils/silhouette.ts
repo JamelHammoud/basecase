@@ -1,5 +1,6 @@
 import { checkMask, decodeVisionMasks, pickSubject, trimToModelWidth, type VisionMasks } from './photoMask';
 import { maskProfileOf, type Mask, type Profile } from './silhouetteProfile';
+import { percent } from '../../electron/percent.mjs';
 
 export type { Profile } from './silhouetteProfile';
 
@@ -135,7 +136,7 @@ export async function referenceMask(request: ReferenceRequest): Promise<Referenc
   const { mask, trimmed } = trimToModelWidth(found.mask, request.modelAspect ?? 0);
 
   if (trimmed > 0.02) {
-    notes.push(`left out ${Math.round(trimmed * 100)}% of the mask: thin slivers wider than the model`);
+    notes.push(`left out ${percent(trimmed)} of the mask: thin slivers wider than the model`);
   }
 
   return { mask, source: found.source, notes };

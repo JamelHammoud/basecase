@@ -1,6 +1,7 @@
 import { COMPONENT_BY_ID, COMPONENTS, actuatorOf, type BatterySpec } from '../data/components';
 import { actuatorOptions, unitUsd } from './actuatorCatalog';
 import { formatMoney } from './currencyStore';
+import { torque } from './torque';
 
 const PREMIUM = 2;
 
@@ -30,7 +31,7 @@ function actuatorPremium(id: string, variant?: string): PremiumPick | undefined 
     name: COMPONENT_BY_ID[id].name,
     usd,
     cheaper: { key: cheaper.key, name: cheaper.name, usd: cheaper.usd },
-    why: `at least its stall torque (${cheaper.act.stallNm.toFixed(2)} vs ${act.stallNm.toFixed(2)} N·m)`,
+    why: `at least its stall torque (${torque(cheaper.act.stallNm)} vs ${torque(act.stallNm)})`,
   };
 }
 

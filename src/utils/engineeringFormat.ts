@@ -4,8 +4,9 @@ import type { V3 } from './engineeringMath';
 import type { RobotJoint } from '../types/robotics';
 import { wiringText } from '../wiring/wiringText';
 import { weight } from './weight';
+import { percent } from '../../electron/percent.mjs';
+import { torque } from './torque';
 
-export const nm = (v: number) => v.toFixed(2);
 export const deg = (v: number) => `${Math.round(v) < 0 ? '−' : ''}${Math.abs(Math.round(v))}°`;
 export const jointLabel = (j: RobotJoint) => prettyJointName(j.name);
 export const partLabel = (ctx: CheckContext, id: string) =>
@@ -17,21 +18,21 @@ function jointLimits(l: EngineeringReport['joints'][number]): string {
   if (l.stallShare === undefined) return ' (no actuator data)';
 
   if (l.ratedNm === undefined)
-    return ` vs maker limit ${nm(l.stallNm!)} (${Math.round(l.stallShare * 100)}%) ${MARK[l.status]}`;
+    return ` vs maker limit ${torque(l.stallNm!)} (${percent(l.stallShare)}) ${MARK[l.status]}`;
 
-  const sim = l.simRmsNm === undefined ? '' : ` from ${nm(l.simRmsNm)} N·m RMS in the walk sim`;
+  const sim = l.simRmsNm === undefined ? '' : ` from ${torque(l.simRmsNm)} RMS in the walk sim`;
   const heat = l.heatShare === undefined ? '' : `, heat ${l.heatShare.toFixed(2)}× rated${sim}`;
 
-  return ` vs stall ${nm(l.stallNm!)} / rated ${nm(l.ratedNm)}${l.ratedEstimated ? ' (estimated)' : ''}${l.volts ? ` at ${l.volts} V` : ''} (${l.stallShare.toFixed(2)} of stall${heat}) ${MARK[l.status]}`;
+  return ` vs stall ${torque(l.stallNm!)} / rated ${torque(l.ratedNm)}${l.ratedEstimated ? ' (estimated)' : ''}${l.volts ? ` at ${l.volts} V` : ''} (${l.stallShare.toFixed(2)} of stall${heat}) ${MARK[l.status]}`;
 }
 
 function jointTextLine(l: EngineeringReport['joints'][number], toAgent: (v: V3) => V3): string {
   const o = toAgent(l.joint.origin).map((v) => Math.round(v));
-  const crouch = l.crouchNm === undefined ? '' : `, ${l.crouchDeg?.toFixed(0)}° crouch ${nm(l.crouchNm)}`;
-  const load = l.kind === 'stance' ? `stance load ${nm(l.loadNm)}` : `holding load ${nm(l.loadNm)}`;
+  const crouch = l.crouchNm === undefined ? '' : `, ${l.crouchDeg?.toFixed(0)}° crouch ${torque(l.crouchNm)}`;
+  const load = l.kind === 'stance' ? `stance load ${torque(l.loadNm)}` : `holding load ${torque(l.loadNm)}`;
 
   return (
-    `- ${l.joint.id} ${l.joint.name}: carries ${weight(l.massG)}; hold ${nm(l.swingNm)}, stance as modeled ${nm(l.stanceNm)}${crouch} → ${load} N·m` +
+    `- ${l.joint.id} ${l.joint.name}: carries ${weight(l.massG)}; hold ${torque(l.swingNm)}, stance as modeled ${torque(l.stanceNm)}${crouch} → ${load}` +
     jointLimits(l) +
     ` · axis through [${o.join(', ')}]`
   );

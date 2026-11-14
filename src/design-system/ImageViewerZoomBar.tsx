@@ -4,7 +4,7 @@ import { IconButton } from './IconButton';
 import { IslandDivider } from './FloatingIsland';
 
 interface ImageViewerZoomBarProps {
-  percent: number;
+  zoom: string;
   onZoomOut: () => void;
   onZoomIn: () => void;
   onFit: () => void;
@@ -12,7 +12,7 @@ interface ImageViewerZoomBarProps {
 }
 
 export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
-  percent,
+  zoom,
   onZoomOut,
   onZoomIn,
   onFit,
@@ -34,7 +34,7 @@ export const ImageViewerZoomBar: React.FC<ImageViewerZoomBarProps> = ({
         className="h-[32px] min-w-14 px-1.5 rounded-lg text-[13px] text-white/80 tabular hover:bg-white/[0.07] cursor-default"
         aria-label="Zoom to fit"
       >
-        {percent}%
+        {zoom}
       </button>
       <IconButton
         icon={<PlusIcon className="w-4 h-4" />}

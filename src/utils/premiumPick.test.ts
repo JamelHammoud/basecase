@@ -7,7 +7,7 @@ describe('premiumPick', () => {
 
     expect(pick.cheaper.key).toBe('component:feetech-sts3250');
     expect(premiumText(pick)).toBe(
-      'Premium pick: DYNAMIXEL XM430-W350-T at $310.39 costs over 2× Feetech STS3250 ($73.99, component:feetech-sts3250), which has at least its stall torque (4.90 vs 4.10 N·m).',
+      'Premium pick: DYNAMIXEL XM430-W350-T at $310.39 costs over 2× Feetech STS3250 ($73.99, component:feetech-sts3250), which has at least its stall torque (4.90 N·m vs 4.10 N·m).',
     );
   });
 

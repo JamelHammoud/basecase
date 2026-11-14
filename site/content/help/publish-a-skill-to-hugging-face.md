@@ -35,7 +35,7 @@ Publishing works in the desktop app. The repo is always public, and only a skill
 2. In the **Simulate** tab, find the ready skill under **Train**. A ready row shows its Arena result, such as "32 of 32 tries".
 3. Right-click the row and choose **Publish to Hugging Face**.
 
-![The Stand row's right-click menu with Publish to Hugging Face](/help/publish-a-skill-to-hugging-face/menu.png)
+![The Stand row's right-click menu with Coach and Publish to Hugging Face](/help/publish-a-skill-to-hugging-face/menu.png)
 
 4. When the toast says "Published to" and the repo's name, click **Open** to see it on the Hub.
 

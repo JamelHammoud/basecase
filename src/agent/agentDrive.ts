@@ -21,6 +21,7 @@ import type { Rig, V3 } from '../utils/kinematics';
 import { toCad, toScene } from './agentFrame';
 import { plural } from '../../electron/plural.mjs';
 import { duration, runClock } from '../utils/duration';
+import { lengthLabel, signedLengthLabel } from '../utils/size';
 
 export interface DriveToolContext {
   sim: Simulation;
@@ -104,7 +105,7 @@ function liveDrive(ctx: DriveToolContext, commands: AgentCommand[]) {
   });
 
   return {
-    text: `Driving on the canvas: ${commands.length} commands over ${duration(Math.max(...commands.map((c) => c.at)))}.`,
+    text: `Driving on the canvas: ${plural(commands.length, 'command')} over ${duration(Math.max(...commands.map((c) => c.at)))}.`,
   };
 }
 
@@ -193,7 +194,7 @@ function driveReport({ ctx, run, cls, seconds }: ReportInput): string {
 
   if (r && cls !== 'arm') {
     lines.push(
-      `Moved ${(r.travelled * 1000).toFixed(0)} mm, ${(r.forward * 1000).toFixed(0)} mm of it forward; tilt ${r.tilt.toFixed(0)}°.`,
+      `Moved ${lengthLabel(r.travelled * 1000)}, ${signedLengthLabel(r.forward * 1000)} of it forward; tilt ${r.tilt.toFixed(0)}°.`,
     );
     lines.push(r.fellAt === null ? 'Stayed up.' : `Fell at ${runClock(r.fellAt)}.`);
   }

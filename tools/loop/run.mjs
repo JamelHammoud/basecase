@@ -10,7 +10,18 @@ import { commentOnIssue, createIssue, issues } from './lib/github.mjs';
 import { firstLine, isBad, LOAD_CHECK, markBad } from './lib/homeGuard.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
-import { pause, probe, probeDue, resume, startPause, UsageLimit } from './lib/usage.mjs';
+import { CODEX_EFFORT, CODEX_MODEL } from './lib/codex.mjs';
+import {
+  codexPause,
+  isActive,
+  markAnnounced,
+  pause,
+  probe,
+  probeDue,
+  resume,
+  startPause,
+  UsageLimit,
+} from './lib/usage.mjs';
 
 const LANES = laneNames();
 const [lane, slot = '1'] = process.argv.slice(2);
@@ -123,11 +134,13 @@ function depsCurrent() {
 
 const localTime = (at) => new Date(at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
-function agentsMayRun() {
-  const paused = pause();
+function tellDirection(text) {
+  const direction = issues('loop:direction')[0];
 
-  if (!paused || Date.now() >= paused.until) return true;
+  if (direction) commentOnIssue(direction.number, text);
+}
 
+function claudeIsBack() {
   const release = probeDue() ? claim('usage-probe') : null;
 
   if (!release) return false;
@@ -135,35 +148,56 @@ function agentsMayRun() {
   try {
     const limit = probe();
 
-    if (!limit) {
-      resume();
-      log('usage is back; agent lanes resume');
+    if (limit) {
+      startPause(limit.until);
 
-      return true;
+      return false;
     }
 
-    startPause(limit.until);
-    log(`still at the usage limit; paused until ${localTime(Math.max(limit.until, paused.until))}`);
+    resume();
 
-    return false;
+    return true;
   } finally {
     release();
   }
 }
 
-function announcePause(error) {
-  log(`usage limit reached; agent lanes paused until ${localTime(error.until)}`);
+function agentsMayRun() {
+  const claude = pause();
 
-  if (!error.started) return;
+  if (!claude) return true;
 
-  const direction = issues('loop:direction')[0];
+  if (claudeIsBack()) {
+    log('Claude is back; agent lanes run on Claude again');
+    tellDirection('Claude is back, so the agent lanes run on Claude again.');
 
-  if (!direction) return;
+    return true;
+  }
 
-  commentOnIssue(
-    direction.number,
-    `The loop hit the Claude usage limit, so its agent lanes are paused until ${localTime(error.until)}. Merging and tidying keep running. They resume on their own when the limit resets, or within 15 minutes of a manual reset; \`node tools/loop/usage.mjs resume\` restarts them at once.`,
+  return !(isActive(claude) && isActive(codexPause()));
+}
+
+function announceCodex() {
+  const claude = pause();
+
+  if (!claude || claude.announced) return;
+
+  markAnnounced();
+  log(
+    `Claude hit its usage limit; agent lanes run on Codex (${CODEX_MODEL}, ${CODEX_EFFORT}) until ${localTime(claude.until)}`,
   );
+  tellDirection(
+    `Claude hit its usage limit, so the agent lanes run on Codex (${CODEX_MODEL}, ${CODEX_EFFORT} effort) until ${localTime(claude.until)}, when Claude's limit resets. A manual reset is picked up within 15 minutes.`,
+  );
+}
+
+function announcePause(error) {
+  log(`Claude and Codex are both at their usage limits; agent lanes paused until ${localTime(error.until)}`);
+
+  if (error.started)
+    tellDirection(
+      `Claude and Codex both hit their usage limits, so the agent lanes are paused until ${localTime(error.until)}. Merging and tidying keep running. They resume on their own, or within 15 minutes of a manual reset; \`node tools/loop/usage.mjs resume\` restarts them at once.`,
+    );
 }
 
 async function runOnce() {
@@ -197,6 +231,8 @@ try {
     process.exitCode = 1;
   }
 }
+
+announceCodex();
 
 const minutes = Math.round((Date.now() - startedAt) / 60_000);
 

@@ -1,5 +1,6 @@
 import { sameServo, servoName } from './servoPart';
 import type { ServoLog, ServoPart } from './types';
+import { plural } from '../../electron/plural.mjs';
 
 export const ENCODER_RAD = (2 * Math.PI) / 4096;
 
@@ -21,7 +22,7 @@ function logProblem(log: ServoLog, servo: ServoPart): string | null {
 
   if (!Number.isFinite(log.dt) || log.dt <= 0) return 'A log has no sample period';
 
-  if (n < EVIDENCE.minSamples) return `A log has only ${n} samples`;
+  if (n < EVIDENCE.minSamples) return `A log has only ${plural(n, 'sample')}`;
 
   if (log.positionRad.length !== n) return 'A log has more goals than positions';
 

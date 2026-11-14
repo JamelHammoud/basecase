@@ -6,6 +6,7 @@ import {
   type RobotPoseState,
   type SceneMark,
   type ScenePart,
+  type Tether,
 } from '../types/robotics';
 import type { RobotSkeleton } from '../types/skeleton';
 import { editWithOperands } from '../booleans/operands';
@@ -191,6 +192,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     commitParts,
     commitMarks,
     commitJoints,
+    commitDesign: (parts: ScenePart[], tether: Tether | undefined) =>
+      commitProject({ tether: projectRef.current.tether }, (p) => ({ ...p, tether }), parts),
     commitProject,
     commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton | undefined) =>
       commitProject({ skeleton: projectRef.current.skeleton }, (p) => ({ ...p, skeleton }), parts),

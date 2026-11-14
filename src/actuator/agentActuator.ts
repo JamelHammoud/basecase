@@ -14,13 +14,15 @@ const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().t
 export const findJoint = (joints: RobotJoint[], wanted: string) =>
   joints.find((j) => j.id === wanted) ?? joints.find((j) => sameName(j.name, wanted));
 
+const rated = (nm: number | undefined) => (nm === undefined ? '' : `${torque(nm)} rated, `);
+
 function madeText(made: Extract<MadeActuator, { added: ScenePart[] }>): string {
   const { added } = made;
   const motor = added.find((p) => p.componentId && actuatorOf(p.componentId, p.componentVariant));
   const spec = motor && actuatorOf(motor.componentId!, motor.componentVariant)!;
   const printed = added.filter((p) => p.cad).map((p) => `${p.id} (${p.name})`);
   const rating = spec
-    ? `${motor!.name} ${motor!.componentVariant}: ${torque(spec.stallNm)} peak, ${torque(spec.ratedNm)} rated, ${spec.rpm} rpm at ${spec.atVolts} V, armature ${spec.armature} kg·m² (estimates). `
+    ? `${motor!.name} ${motor!.componentVariant}: ${torque(spec.stallNm)} peak, ${rated(spec.ratedNm)}${spec.rpm} rpm at ${spec.atVolts} V, armature ${spec.armature} kg·m² (estimates). `
     : '';
 
   return `Made ${made.name} (one undo step): ${rating}Printed: ${printed.join(', ')}. The joint's actuator is ${motor?.id}; Checks re-run on their own.`;

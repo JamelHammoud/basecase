@@ -46,7 +46,7 @@ You can open any try you've recorded from any scene, then step through it on the
 
 Or open Tries from the command menu. Press [[⌘K]], then choose **Show Tries**.
 
-The search at the top of the Library also finds tries. It matches a try's Case or task, its robot, the Variation or Real label on its tile, and the file or repo an imported try came from.
+The search at the top of the Library also finds tries, by words or by facts such as failed or last week. See [Search tries](/help/search-tries).
 
 To delete tries, select them, press [[⌫]], then click **Delete**. Hold [[⌘]] or [[⇧]] while you click to select more than one try. Deleting a try also deletes any Variations that came from it.
 

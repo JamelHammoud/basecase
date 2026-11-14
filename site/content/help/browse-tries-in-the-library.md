@@ -27,15 +27,16 @@ See every try you've recorded, from every scene, in one place, and open or delet
 
 ![The Library with a Tries section listing one robot and its 4 tries](/help/browse-tries-in-the-library/library.png)
 
-3. The canvas fills with your tries, grouped by robot. Each tile shows the try's filmstrip, its Case, Passed or Missed, and how long it ran. A try made by [Multiply](/help/multiply-a-try-into-demonstrations) has a **Variation** badge, and a [try on your real robot](/help/try-a-case-on-your-real-robot) has a **Real** badge.
-4. Click a tile. Its timeline opens under the tiles, one lane per joint, and works as in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
+3. Click a tile. Its timeline opens under the tiles, with each joint's position over its target. The keys from [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline) move the playhead.
 
 ![Tries from two scenes, with the second one selected and its timeline open](/help/browse-tries-in-the-library/tries.png)
 
-5. ⌘-click a tile to add it to the selection or take it out. ⇧-click adds every tile from the last one you clicked.
-6. To delete, right-click a selected tile and choose **Delete**, or press ⌫. Then click **Delete**. Deleting a try deletes its variations too.
-7. Press Esc to clear the selection, and Esc again or **Done** to leave.
+4. ⌘-click a tile to add it to the selection or take it out. ⇧-click adds every tile from the last one you clicked.
+5. To delete, right-click a selected tile and choose **Delete**, or press ⌫. Then click **Delete**. Deleting a try deletes its variations too.
+6. Press Esc to clear the selection, and Esc again or **Done** to leave.
+
+The canvas shows your tries grouped by robot. Each tile shows the try's filmstrip, its Case, Passed or Missed, and how long it ran. A try made by [Multiply](/help/multiply-a-try-into-demonstrations) has a **Variation** badge, and a [try on your real robot](/help/try-a-case-on-your-real-robot) has a **Real** badge.
+
+Tries stay on this computer. The timeline here has no effort plot or failure marks, and no robot follows it; open the try's Case for those. A tile shows its filmstrip once the try has appeared in a Case's Results; a try on your real robot has none. Tries recorded before this update move into the Library the first time you open their scene.
 
 Type in **Search library** first to narrow the tries by robot, Case, "variation" or "real". ⌘K's **Show Tries** opens the same view.
-
-A tile shows its filmstrip once the try has appeared in a Case's Results. A try on your real robot has none. Tries recorded before this update move into the Library the first time you open their scene. Tries stay on this computer.

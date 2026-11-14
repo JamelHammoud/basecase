@@ -78,7 +78,7 @@ export const TriesCanvas: React.FC<TriesCanvasProps> = ({ active, mode, onDelete
           </div>
         ))}
       </div>
-      {timeline.view.open && (
+      {active && timeline.view.open && (
         <div className="shrink-0 flex justify-center px-3 pb-3">
           <TryTimeline timeline={timeline.view} nameOf={timeline.nameOf} />
         </div>

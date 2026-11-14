@@ -6,7 +6,7 @@ import { withGesture, type CaseGesture } from '../cases/gestures';
 import { readCases, worldItem, type Case } from '../cases/schema';
 import type { SlotRobot } from '../cases/slots';
 import { simTries, tryRefs, withGenerated, worstFirst, type TryRecord } from '../cases/tries';
-import { deleteTries, storedTries } from '../cases/tryStore';
+import { deleteTries, onTriesDeleted, storedTries } from '../cases/tryStore';
 import { confirmAction } from '../design-system/confirmStore';
 import { confirmTriesDelete } from '../components/tries/confirmTriesDelete';
 import type { Viewport3DHandle } from '../components/Viewport3D';
@@ -60,6 +60,12 @@ function saveGesture(setProject: Setter<ProjectSettings>, { id, gesture }: { id:
     ...p,
     cases: (p.cases ?? []).map((c) => (c.id === id ? { ...c, gestures: withGesture(c.gestures, gesture) } : c)),
   }));
+}
+
+function useDeletedTries(forget: (gone: Set<string>) => void) {
+  const onDeleted = useEffectEvent(forget);
+
+  useEffect(() => onTriesDeleted(onDeleted), []);
 }
 
 export function useCases(options: CasesOptions) {
@@ -144,15 +150,16 @@ export function useCases(options: CasesOptions) {
     setProject((p) => ({ ...p, tries: [...(p.tries ?? []), ...tryRefs(records)] }));
   const multiply = useTryMultiply({ sim, rig, parts, active, tries: fromSim, partners, onTries: addTries, showToast });
 
-  function dropTries(ids: string[]) {
-    const gone = withGenerated(storedTries(), ids);
-
+  useDeletedTries((gone) => {
     if (multiply.running && gone.has(multiply.running.source)) multiply.stop();
 
     if (timeline.record && gone.has(timeline.record.id)) timeline.close();
 
-    setProject((p) => withoutRefs(p, gone));
-    void deleteTries([...gone]);
+    setProject((p) => ((p.tries ?? []).some((t) => gone.has(t.id)) ? withoutRefs(p, gone) : p));
+  });
+
+  function dropTries(ids: string[]) {
+    void deleteTries([...withGenerated(storedTries(), ids)]);
   }
 
   const removeTry = (record: TryRecord) => confirmTriesDelete([record.id], dropTries);

@@ -33,4 +33,6 @@ Step through a Case try frame by frame to see what each joint was asked to do, w
 
 6. Press Esc to close it.
 
+Library ▸ **Tries** opens the timeline of any try from any scene, without the effort plot, as in [Browse tries in the Library](/help/browse-tries-in-the-library).
+
 The effort is worked out again from the recording when the timeline opens, so its peaks match Peak torque in Results. A try recorded before you added or removed a joint doesn't open.

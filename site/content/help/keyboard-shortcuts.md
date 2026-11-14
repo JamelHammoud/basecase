@@ -20,6 +20,7 @@ covers:
   - src/components/shortcutGroups.ts
   - src/components/ShortcutsList.tsx
   - src/workspace/useWorkspaceKeys.ts
+  - src/components/tries/useTriesKeys.ts
   - src/app/tabShortcuts.ts
   - src/design-system/platformKeys.ts
   - src/components/agent/Composer.tsx
@@ -113,6 +114,8 @@ The two Sculpt keys work once **Sculpt** is on in **Settings** ▸ **Canvas**.
 | Run Routine | [[⌘↩]] |
 | Settings | [[⌘,]] |
 | Keyboard shortcuts | [[?]] |
+
+In Library ▸ **Tries** and in Print mode, single keys such as [[V]] do nothing. In Tries, [[⌫]] deletes the selected tries and [[Esc]] clears the selection, then leaves.
 
 While a Case runs, [[⌘Z]], [[⇧⌘Z]] and [[⌘Y]] undo and redo only changes to its code panels. [[⌘I]] shows or hides the **Agent** tab beside it.
 

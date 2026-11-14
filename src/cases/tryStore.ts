@@ -30,6 +30,7 @@ const EMPTY: TryRecord[] = [];
 let listed: TryRecord[] | null = null;
 let loading: Promise<TryRecord[]> | null = null;
 const listeners = new Set<() => void>();
+const deletions = new Set<(gone: Set<string>) => void>();
 
 function publish(next: TryRecord[]) {
   listed = next;
@@ -86,7 +87,19 @@ export async function updateTry(id: string, change: (record: TryRecord) => TryRe
   if (opened) await saveTry(change(opened.record), null);
 }
 
+export function onTriesDeleted(listener: (gone: Set<string>) => void) {
+  deletions.add(listener);
+
+  return () => {
+    deletions.delete(listener);
+  };
+}
+
 export async function deleteTries(ids: string[]) {
+  const asked = new Set(ids);
+
+  if (asked.size) deletions.forEach((listener) => listener(asked));
+
   const deleted = ids.length ? await backend.remove(ids) : [];
   const gone = new Set(deleted);
 

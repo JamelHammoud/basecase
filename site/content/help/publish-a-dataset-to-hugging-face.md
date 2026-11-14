@@ -14,19 +14,20 @@ keywords:
   - access token
   - sign in
 related:
+  - make-a-dataset-from-tries
   - export-a-lerobot-dataset
   - lerobot-dataset-contents
 covers:
   - src/components/settings/AccountsPane.tsx
-  - src/components/simulate/ResultsSection.tsx
+  - src/components/tries/DatasetPane.tsx
   - src/workspace/useDatasetExport.ts
-  - src/workspace/caseCommands.tsx
+  - src/workspace/datasetCommands.tsx
   - src/hub/hubBridge.ts
   - src/workspace/useDataImport.ts
   - electron/hub/
 ---
 
-You can publish a Case's passed tries to the Hugging Face Hub as a LeRobot dataset. Once it's on the Hub, LeRobot and GR00T training can load it by name.
+You can publish the passed tries in a dataset to the Hugging Face Hub as a LeRobot dataset. Once it's on the Hub, LeRobot and GR00T training can load it by name.
 
 **Note:** Publishing works in the desktop app. The dataset is always public.
 
@@ -37,17 +38,15 @@ You can publish a Case's passed tries to the Hugging Face Hub as a LeRobot datas
 ![The Accounts pane with a token saved](/help/publish-a-dataset-to-hugging-face/accounts.png)
 
 4. Open a Case and use **Try It** to record tries until at least one passes. See [Try a Case](/help/try-a-case) for the steps.
-5. Under **Results**, click **Publish to Hugging Face**.
+5. Under **Results**, click **Make Dataset**. The dataset opens over the canvas. To gather tries from other scenes or Cases, see [Make a dataset from tries](/help/make-a-dataset-from-tries).
+6. Click **Publish to Hugging Face**.
+7. When the toast says "Published to" followed by the dataset's name, click **Open** to see the dataset on the Hub.
 
-![Publish to Hugging Face under Export Dataset in Results](/help/publish-a-dataset-to-hugging-face/results.png)
-
-6. When the toast says "Published to" followed by the dataset's name, click **Open** to see the dataset on the Hub.
-
-You can also find **Publish to Hugging Face** in [[⌘K]]. If you're signed out, it opens **Accounts** instead. If the Hub refuses your token, click **Open** in the message, then paste a new token in **Accounts**.
+You can also find **Publish to Hugging Face** in [[⌘K]] while a dataset is open. If you're signed out, it opens **Accounts** instead. If the Hub refuses your token, click **Open** in the message, then paste a new token in **Accounts**.
 
 ## What gets published
 
-Basecase publishes the dataset to a repo on your account. The repo is named after the Case, plus a 6-character code for the scene, for example `touch-the-dots-1a2b3c`. Each scene gets its own code, so if you publish Touch the Dots from two scenes, you get two datasets.
+Basecase publishes the dataset to a repo on your account. The repo is named after the dataset, plus a 6-character code for it, for example `touch-the-dots-1a2b3c`. Each dataset gets its own code, so two datasets named Touch the Dots publish to two repos.
 
 The repo's main branch holds LeRobot v3.0, tagged `v3.0`. LeRobot 0.4 and later can load it by name without converting it: `lerobot-train --dataset.repo_id=<account>/touch-the-dots-1a2b3c`. To stream the dataset from the Hub instead of downloading it, add `--dataset.streaming=true`.
 
@@ -55,9 +54,11 @@ The `v2.1` tag holds a LeRobot v2.1 copy that includes GR00T's `meta/modality.js
 
 ## Publishing again
 
-If you publish the same Case from the same scene again, Basecase replaces the dataset with the tries that pass now. It rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files alone.
+If you publish the same dataset again, Basecase replaces the repo's files with the dataset's passed tries. It rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files alone.
 
-Tries from your real robot are left out, and so are tries recorded before the robot last changed. The toast shows how many of those older tries were skipped.
+Tries from your real robot are left out, and so are tries on another robot and tries recorded before the robot last changed. The toast shows how many tries were skipped.
+
+Each publish tags its commit with the dataset's version, such as `dataset-v2`. Publishing the same tries again keeps the same version. To download an earlier version, use its tag: `hf download <account>/touch-the-dots-1a2b3c --repo-type dataset --revision dataset-v1`. LeRobot ignores these tags and keeps loading `v3.0`.
 
 ## Where the token lives
 

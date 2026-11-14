@@ -26,6 +26,8 @@ interface RoutineOptions {
   sim: Simulation;
   commitParts: CommitParts;
   updateProjectNow: (patch: (p: ProjectSettings) => ProjectSettings) => void;
+  commitRoutines: (list: readonly Routine[]) => void;
+  undo: () => void;
   showToast: ShowToast;
   skills: SceneRoutineSkills;
   trainHandoff: (job: HandoffJob) => Promise<HandoffTraining | null>;
@@ -47,8 +49,9 @@ export function useRoutines(options: RoutineOptions) {
   const [view, setView] = useState<RoutineView>(EMPTY_VIEW);
   const sceneRef = useLatestRef({ parts, joints: project.joints ?? [] });
   const capabilities = () => sceneCapabilities(sceneRef.current);
-  const store = useRoutineStore({ project, projectRef: options.projectRef, updateProjectNow, capabilities });
-  const editor = useRoutineEditor(store, showToast);
+  const { commitRoutines, undo } = options;
+  const store = useRoutineStore({ project, projectRef: options.projectRef, commitRoutines, capabilities });
+  const editor = useRoutineEditor(store, { showToast, undo });
   const active = store.active;
   const activeRef = useLatestRef(active);
   const pending = useRef<Promise<SceneCheck | null>>(Promise.resolve(null));
@@ -180,6 +183,7 @@ export function useRoutines(options: RoutineOptions) {
     runHeadless,
     addCapability,
     showToast,
+    undo,
     state: () => snapshotOf(shownFor(activeRef.current)),
   };
 }

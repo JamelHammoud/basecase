@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Button, MetaLine, Section, TextArea, FileImportIcon, PlusIcon } from '../../design-system';
-import { parseSvgTo3DNodes, type ParsedSvg3DResult } from '../../utils/svgTo3DParser';
+import { DEFAULT_COLOR, parseSvgTo3DNodes, type ParsedSvg3DResult } from '../../utils/svgTo3DParser';
 import { OutputFields } from './OutputFields';
 import { SAMPLE_ROBOTICS_SVGS } from './samples';
 import type { SketchParams as CreateFrom2DDrawingParams } from '../../workspace/partFactories';
@@ -109,27 +109,27 @@ const SvgOutput: React.FC<{
   onEditInSketch: () => void;
   onCreateFrom2DDrawing: (params: CreateFrom2DDrawingParams) => void;
 }> = ({ draft, parsedSvg, onEditInSketch, onCreateFrom2DDrawing }) => {
-  const { rawSvgText, drawName, svgFileName, drawSpanMm, drawHeightMm, drawBevel, drawColor } = draft;
+  const { rawSvgText, svgFileName, drawSpanMm, drawHeightMm, drawBevel } = draft;
 
   const handleBuildSvg3D = () => {
     if (!rawSvgText.trim()) return;
 
     try {
       const freshParsed = parseSvgTo3DNodes(rawSvgText, {
-        fileName: drawName || svgFileName,
+        fileName: svgFileName,
         targetSpanMm: drawSpanMm,
         extrudeHeightMm: drawHeightMm,
         bevel: drawBevel,
-        overrideColor: drawColor,
+        overrideColor: DEFAULT_COLOR,
       });
 
       onCreateFrom2DDrawing({
-        name: drawName.trim() || freshParsed.name,
+        name: freshParsed.name,
         mode: 'svg',
         widthMm: freshParsed.suggestedDimensions.width,
         heightMm: freshParsed.suggestedDimensions.height,
         depthMm: freshParsed.suggestedDimensions.depth,
-        color: drawColor,
+        color: DEFAULT_COLOR,
         bevel: drawBevel,
         nodes: freshParsed.nodes,
         svgDataUrl: freshParsed.svgDataUrl,

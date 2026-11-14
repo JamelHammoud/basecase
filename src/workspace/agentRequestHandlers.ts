@@ -5,6 +5,7 @@ import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
+import { caseConsoles } from '../cases/console/consoleForAgent';
 import type { CaseConsole } from '../cases/console/format';
 import { bomText, buildBom } from '../utils/bom';
 import { engineeringText, type EngineeringReport } from '../utils/engineering';
@@ -47,6 +48,8 @@ import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
 import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
 import { CASE_HANDLERS } from './agentCaseRequests';
+import { DATASET_HANDLERS } from './agentDatasetRequests';
+import type { Datasets } from './useDatasets';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore } from './useCaseExplore';
 import type { CaseRun } from './useCaseRun';
@@ -92,6 +95,7 @@ export interface RequestContext {
   caseCompare: CaseCompare;
   caseExplore: CaseExplore;
   caseRun: CaseRun;
+  datasets: Pick<Datasets, 'make'>;
   skills: SceneSkills;
   tryRead: TryReadSources;
   mergeParts: (ids: string[]) => Promise<string | null>;
@@ -285,7 +289,13 @@ const HANDLERS: Record<string, Handler> = {
     const marks = describeMarks(ctx.project().marks, ctx.parts());
     const measured = await ctx.viewport()?.measureParts();
 
-    return { ...snapshotScene(ctx.parts(), measured), ...(marks.length ? { marks } : {}) };
+    const consoles = caseConsoles(ctx.cases.cases);
+
+    return {
+      ...snapshotScene(ctx.parts(), measured),
+      ...(marks.length ? { marks } : {}),
+      ...(consoles.length ? { consoles } : {}),
+    };
   },
   focus,
   part_code: (payload, ctx) => partCode(ctx.parts(), String(payload.id)),
@@ -376,6 +386,7 @@ const HANDLERS: Record<string, Handler> = {
   ...CASE_HANDLERS,
   ...CASE_CODE_HANDLERS,
   ...TRY_HANDLERS,
+  ...DATASET_HANDLERS,
   ...SKILL_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [

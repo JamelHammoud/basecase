@@ -56,7 +56,7 @@ function context(bus: PanelContext['bus'], seek?: (time: number) => void): Panel
 const draw = (ctx: PanelContext) =>
   renderToStaticMarkup(
     createElement(CaseRunArea, {
-      area: { key: 'right', size: 320, panels: PANELS, last: false },
+      area: { key: 'right', at: 1, size: 320, panels: PANELS, last: false },
       side: 'after',
       ctx,
       header: null,

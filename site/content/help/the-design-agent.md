@@ -36,14 +36,15 @@ The agent builds in the scene you have open, so you can watch it work. It reads 
 
 Parts come from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) come first. If a part isn't in the catalog, the agent can add one it found on the web, and the bill of materials lists that part as Added by Agent.
 
-The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. For example:
+The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. It can gather tries into a dataset from a search or from a list of tries. For example:
 
-- Ask it to change how a ready Motor Kit skill moves. The agent keeps the change if Arena passes it and drops it if not.
-- Ask whether a ready skill holds up on a slicker floor or while carrying a load. The agent answers with the values where the skill starts to fail.
-- For a Routine, the agent proves each switch between skills and names any that fell.
-- With a Case and two scenes open, it tells you which robot passes more often.
-- Ask what happened in a try. The agent reads the try's recording and answers with times and values.
-- Ask which servo to buy. The agent runs the Case on each catalog version and answers with passes, cost and mass.
+- Ask it to change how a ready Motor Kit skill moves. It keeps the change if Arena passes it and drops it if not.
+- Ask whether a ready skill holds up on a slicker floor or while carrying a load. It answers with the values where the skill starts to fail.
+- For a Routine, it proves each switch between skills and names any that fell.
+- With a Case and two open scenes, it tells you which robot passes more often.
+- Ask what happened in a try. It reads the try's recording and answers with times and values.
+- Ask for tries, such as failed grasps from last week. It searches the tries from every scene and names the ones that match.
+- Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
 
 If you tell the agent where an arm must reach and what it carries, it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges printed parts bolted together on one link into a single print.
 

@@ -137,7 +137,7 @@ describe('Build Along', () => {
     await app.page.keyboard.press('ArrowRight');
     expect(await stepShown()).toBe(String(steps.length));
 
-    await app.page.keyboard.press('Escape');
+    await toolbar().getByRole('button', { name: /^Done/ }).click();
     await expect.poll(() => toolbar().count()).toBe(0);
     expect(await sceneParts()).toEqual(before);
     await expect.poll(shownParts).toEqual(sorted(parts.map((p) => p.id)));

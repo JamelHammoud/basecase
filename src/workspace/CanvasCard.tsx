@@ -2,6 +2,7 @@ import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
 import { TryTimeline } from '../components/simulate/TryTimeline';
 import { TriesMode } from '../components/tries/TriesMode';
+import { useDatasetMode } from './useDatasetMode';
 import { ViewportToolbar } from '../components/ViewportToolbar';
 import { DropOverlay, ErrorBoundary, FileImportIcon, PhotoIcon, Toast } from '../design-system';
 import { CaseRunOverlays } from './CaseRunProvider';
@@ -79,6 +80,7 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
         <TryTimeline
           timeline={core.simTraining.cases.timeline}
           rig={core.posing.rig}
+          closable={!core.caseRun.doneClosesTimeline}
           onSelectParts={core.setSelectedIds}
         />
       )}
@@ -96,9 +98,11 @@ export function CanvasCard(props: CanvasCardProps) {
   const { active, core, actions, agent, pointerHandlers, drop } = props;
   const { creation } = actions;
   const { imageInputRef } = creation;
+  const datasetMode = useDatasetMode(core);
 
   return (
     <main
+      data-canvas-card
       className="relative flex-1 min-w-0 h-full overflow-hidden bg-[#1b1b1b] rounded-[12px]"
       {...pointerHandlers}
       {...drop.dropHandlers}
@@ -132,6 +136,7 @@ export function CanvasCard(props: CanvasCardProps) {
         <TriesMode
           active={active}
           view={core.triesView}
+          mode={datasetMode}
           timelineOpen={core.simTraining.cases.timeline.open}
           sceneId={core.scene.sceneId}
           scene={{ model: core.simTraining.sim.model, parts: core.parts, world: core.simTraining.sim.worldParts }}

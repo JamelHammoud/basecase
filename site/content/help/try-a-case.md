@@ -93,5 +93,5 @@ If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their
 
 - Tries are saved on this computer and left out of shared `.basecase` files.
 - The Library lists tries from every scene. See [Open a try from any scene](/help/open-a-try-from-any-scene).
-- Once a try passes, you can [export the passed tries as a dataset](/help/export-a-lerobot-dataset).
-- When you have five passed tries, you can train a policy from them. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+- Once a try passes, **Make Dataset** appears under the tries. It gathers the passed tries into a dataset. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
+- You can [export the dataset](/help/export-a-lerobot-dataset), and once five tries have passed, you can [train a policy](/help/train-a-policy-from-your-tries).

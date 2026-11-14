@@ -72,7 +72,7 @@ describe('demonstration rows from a try', () => {
     expect(demo.actions.flat().some((a) => Math.abs(a) > 0.05)).toBe(true);
   }, 30000);
 
-  it('leave out a try recorded on an older model, and one without joint velocities', async () => {
+  it('leave out a try recorded on an older model, and keep one without joint velocities on a fixed arm', async () => {
     const { recording, model } = await scriptedTry(2);
     const hash = await sha256(model.xml);
     const recordings = new Map([
@@ -86,6 +86,26 @@ describe('demonstration rows from a try', () => {
       load: (id) => Promise.resolve(recordings.get(id)),
     });
 
-    expect(usable.map((u) => u.record.id)).toEqual(['now']);
+    expect(usable.map((u) => u.record.id)).toEqual(['now', 'no-dofs']);
+    expect(
+      canTrain({ ...recording, jointDof: undefined }, { ...model, robots: [{ ...model.robots[0], floating: true }] }),
+    ).toBe(false);
+  }, 30000);
+
+  it('take joint velocities by differencing 25 Hz rows when a recording has only states', async () => {
+    const { kase, recording, model } = await scriptedTry(3);
+    const job = trainingJob(model, model.robots[0].key, { task: 'stand', minutes: 1, command: [0, 0, 0] }, 'demo');
+    const spec = { defaultPose: job.defaultPose, actionScale: 1, command: caseCommand(kase) };
+    const states = { ...recording, nv: 0, qvel: new Float32Array(0), jointDof: undefined, root: undefined };
+    const demo = demoEpisode(states, model, spec);
+    const data = episodeData(recording, model, '');
+    const n = robotJoints(model).length;
+
+    expect(canTrain(states, model)).toBe(true);
+    expect(demo.obs[0].slice(12 + n, 12 + 2 * n)).toEqual(Array<number>(n).fill(0));
+    demo.obs.slice(1).forEach((row, i) => {
+      for (let k = 0; k < n; k++)
+        expect(row[12 + n + k]).toBeCloseTo((data.state[(i + 1) * n + k] - data.state[i * n + k]) * DATASET_FPS, 3);
+    });
   }, 30000);
 });

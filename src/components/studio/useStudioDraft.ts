@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { polylineSketch } from '../../utils/sketch/edit';
 import type { Sketch, SketchEntity, SketchMode, Vec2 } from '../../utils/sketch/types';
-import { ParsedSvg3DResult, parseSvgTo3DNodes } from '../../utils/svgTo3DParser';
+import { DEFAULT_COLOR, ParsedSvg3DResult, parseSvgTo3DNodes } from '../../utils/svgTo3DParser';
 import { errorMessage } from '../../utils/errorMessage';
 
 export type SketchTool = 'line' | 'rect' | 'circle' | 'arc';
@@ -45,11 +45,9 @@ export function useStudioDraft(initialSketch: Sketch, initialTool: SketchTool | 
   const [drawMode, setDrawMode] = useState<SketchPanelMode>('extrude');
   const [drawTool, setDrawTool] = useState<SketchTool | null>(initialTool);
   const [snap2D, setSnap2D] = useState(true);
-  const [drawName, setDrawName] = useState('Sketch');
   const [drawSpanMm, setDrawSpanMm] = useState(64);
   const [drawHeightMm, setDrawHeightMm] = useState(10);
   const [drawBevel, setDrawBevel] = useState(true);
-  const [drawColor, setDrawColor] = useState('#e4e4e7');
   const [rawSvgText, setRawSvgText] = useState<string>('');
   const [svgFileName, setSvgFileName] = useState<string>('Imported.svg');
   const [parsedSvg, setParsedSvg] = useState<ParsedSvg3DResult | null>(null);
@@ -67,12 +65,11 @@ export function useStudioDraft(initialSketch: Sketch, initialTool: SketchTool | 
         targetSpanMm: drawSpanMm,
         extrudeHeightMm: drawHeightMm,
         bevel: drawBevel,
-        overrideColor: drawColor,
+        overrideColor: DEFAULT_COLOR,
       });
       const contour = parsed.nodes.length > 0 ? parsed.nodes[0].contour : undefined;
 
       setParsedSvg(parsed);
-      setDrawName(parsed.name);
 
       if (!contour) return;
 
@@ -92,16 +89,12 @@ export function useStudioDraft(initialSketch: Sketch, initialTool: SketchTool | 
     setDrawTool,
     snap2D,
     setSnap2D,
-    drawName,
-    setDrawName,
     drawSpanMm,
     setDrawSpanMm,
     drawHeightMm,
     setDrawHeightMm,
     drawBevel,
     setDrawBevel,
-    drawColor,
-    setDrawColor,
     rawSvgText,
     svgFileName,
     parsedSvg,

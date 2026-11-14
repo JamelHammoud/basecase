@@ -1,5 +1,5 @@
 import { useScenePrinting } from './usePrinting';
-import { useTriesView } from './useTriesView';
+import { useTriesWork } from './useDatasets';
 import { useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { newSceneId } from '../utils/sceneIds';
@@ -15,11 +15,11 @@ import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
-import { useCaseCompare } from './useCaseCompare';
-import { useCaseExplore } from './useCaseExplore';
+import { useCaseStudies } from './useCaseStudies';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
 import { useDataLayers } from './useDataLayers';
+import { useConsoleEditing } from './useConsoleEditing';
 import { useCaseRun } from './useCaseRun';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
@@ -126,7 +126,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const dataLayers = useDataLayers({ sim: simTraining.sim, timeline: simTraining.cases.timeline, parts, viewportRef });
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
-  const triesView = useTriesView(simTraining.cases.timeline, showToast);
+  const { triesView, datasets } = useTriesWork(simTraining, showToast);
 
   const { travel } = docs;
   const { restorePose } = posing;
@@ -136,19 +136,14 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
 
   const readiness = useReadiness({ parts, project, printer, partsRef: docs.partsRef, projectRef, viewportRef });
-  const caseCompare = useCaseCompare({
+  const { caseCompare, caseExplore } = useCaseStudies({
     inFront: active,
     kase: simTraining.cases.active,
     fingerprint: readiness.fingerprint,
     studio,
     source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
-    showToast,
-  });
-  const caseExplore = useCaseExplore({
-    kase: simTraining.cases.active,
     parts,
     project,
-    source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
     showToast,
   });
 
@@ -161,6 +156,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     caseExplore,
     printing,
     triesView,
+    datasets,
     viewportRef,
     scene,
     docs,
@@ -183,6 +179,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     simTraining,
     dataLayers,
     caseRun,
+    consoleEditing: useConsoleEditing({ caseRun, docs, showToast }),
     guide,
     buildAlong,
     undo,

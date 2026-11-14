@@ -30,6 +30,6 @@ The second arm stands facing the first, the same distance from the point but on 
 
 The try passes when the first arm held the point and the second arm then held it while the first was clear.
 
-**Export Dataset** puts both arms' joints in one `observation.state` and one `action`. It names each joint after its arm (`a.` or `b.`), and `modality.json` has one group per arm.
+From **Results**, click **Make Dataset**. **Export Dataset** in the dataset puts both arms' joints in one `observation.state` and one `action`. It names each joint after its arm (`a.` or `b.`), and `modality.json` has one group per arm.
 
 **Note:** If you close the second arm's tab, the Case stays. Tries fail until you open an arm in another tab.

@@ -245,6 +245,45 @@ describe('publishing to the Hub', () => {
   });
 });
 
+describe('publishing a dataset version', () => {
+  it('tags the dataset version on the last commit beside the codebase versions', async () => {
+    hub = await startFakeHub({ token: TOKEN });
+
+    const hubAccount = account();
+
+    await hubAccount.signIn(TOKEN);
+    await hubAccount.publish({ name: 'versioned', files: bothVersions(2), tag: 'dataset-v2' });
+
+    const repo = hub.repos.get('tester/versioned');
+
+    expect(repo.tags).toEqual(
+      new Map([
+        ['v2.1', 1],
+        ['v3.0', 2],
+        ['dataset-v2', 2],
+      ]),
+    );
+  });
+
+  it.each(['v9.9', '../x', 'dataset-v', 'dataset-v1234567', 'dataset-v2/main', 7])(
+    'refuses the version tag %j before any request',
+    async (tag) => {
+      hub = await startFakeHub({ token: TOKEN });
+
+      const hubAccount = account();
+
+      await hubAccount.signIn(TOKEN);
+
+      const before = hub.requests.length;
+
+      await expect(hubAccount.publish({ name: 'versioned', files: dataset(1), tag })).rejects.toThrow(
+        /can’t tag a dataset version/,
+      );
+      expect(hub.requests).toHaveLength(before);
+    },
+  );
+});
+
 describe('publishing refuses crafted names and addresses', () => {
   const CRAFTED = [
     '../../api/repos/delete',

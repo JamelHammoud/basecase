@@ -2,11 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { readIndex } from '../../../bench/archive.mjs';
 import { cachedRuns } from '../../../bench/compare/cache.mjs';
+import { historicalRunCost } from '../../../bench/compare/plan.mjs';
 import { runnable, selectTasks } from '../../../bench/micro/tasks/index.mjs';
 import { activeLessons, parsePlaybook, PLAYBOOK } from '../../../bench/playbook.mjs';
 import { HOME_CHECKOUT, WORKTREES } from './paths.mjs';
 import { run } from './sh.mjs';
 import { clearPath, linkModules } from './worktree.mjs';
+import { settleCost } from './harnessVerdict.mjs';
 import { shortfall } from './weakness.mjs';
 
 export const BENCH_RUNS = process.env.BASECASE_BENCH_RUNS || path.join(HOME_CHECKOUT, 'bench', 'runs');
@@ -144,7 +146,7 @@ export const spentOn = (name) =>
     .filter((entry) => entry.run === name && typeof entry.costUsd === 'number')
     .reduce((sum, entry) => sum + entry.costUsd, 0);
 
-export const compareArgs = ({ against, split, budget, name }) => [
+export const compareArgs = ({ against, split, budget, name, port = SETTINGS.port }) => [
   'bench/compare.mjs',
   '--against',
   against,
@@ -158,12 +160,23 @@ export const compareArgs = ({ against, split, budget, name }) => [
   '--parallel',
   String(SETTINGS.parallel),
   '--port',
-  String(SETTINGS.port),
+  String(port),
   '--budget',
   budget.toFixed(2),
   '--run',
   name,
 ];
+
+export function settleEstimate(mainHarness) {
+  const ids = taskMeta().tune;
+  const cached = cachedFor(mainHarness);
+
+  return settleCost({
+    perRun: historicalRunCost(readIndex(BENCH_RUNS), ids),
+    tasks: ids.length,
+    mainCached: ids.filter((id) => cached.get(id)?.length).length,
+  });
+}
 
 const readIfThere = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null);
 

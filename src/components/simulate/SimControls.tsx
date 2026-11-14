@@ -9,13 +9,9 @@ import {
   StopIcon,
 } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
-import { runClock } from '../../utils/duration';
+import { runClock, speedLabel } from '../../utils/duration';
 
-const SPEEDS = [
-  { value: '0.25', label: '¼×' },
-  { value: '0.5', label: '½×' },
-  { value: '1', label: '1×' },
-];
+const SPEEDS = [0.25, 0.5, 1].map((rate) => ({ value: String(rate), label: speedLabel(rate) }));
 
 const RunningControls: React.FC<{ sim: Simulation }> = ({ sim }) => (
   <div className="flex items-center gap-1.5 h-[32px]">

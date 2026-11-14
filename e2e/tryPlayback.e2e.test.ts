@@ -17,7 +17,20 @@ type Studio = {
   load: (r: unknown) => void;
   runCase: (id: string) => void;
   referenceTry: () => Promise<void>;
+  agentRequest: (kind: string, payload: unknown) => Promise<ReadTryReply>;
 };
+
+interface ReadTryReply {
+  text: string;
+  images: Array<{ view: string; dataUrl: string }>;
+}
+
+interface TryReadingText {
+  ok: boolean;
+  window: { from: number; to: number };
+  samples: Record<string, Array<number | null>>;
+  capture: number;
+}
 
 const simState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
 const timeline = async () => (await simState()).timeline;
@@ -102,4 +115,25 @@ describe('Try playback', () => {
     expect(await areaCount()).toBe(1);
     expect(app.errors).toEqual([]);
   }, 180000);
+
+  it('reads the try for the agent and leaves it open on the timeline at the captured moment', async () => {
+    const reply = await app.page.evaluate(
+      (payload) => (window as unknown as { __studio: Studio }).__studio.agentRequest('read_try', payload),
+      { signals: ['joint.*.position'], to: 1 },
+    );
+    const reading = JSON.parse(reply.text) as TryReadingText;
+    const elbowColumn = reading.samples[`joint.${elbow}.position`];
+
+    expect(reading.ok).toBe(true);
+    expect(reading.window).toMatchObject({ from: 0, to: 1 });
+    expect(reading.samples.time.length).toBeGreaterThan(1);
+    expect(elbowColumn).toHaveLength(reading.samples.time.length);
+    expect(elbowColumn.every((v) => typeof v === 'number')).toBe(true);
+    expect(reply.images).toHaveLength(1);
+    expect(reply.images[0].dataUrl).toMatch(/^data:image\//);
+    expect(await app.page.getByTestId('try-timeline').count()).toBe(1);
+    expect((await timeline())?.sought).toBe(Math.round(reading.capture * 50));
+    expect(await areaCount()).toBe(1);
+    expect(app.errors).toEqual([]);
+  }, 120000);
 });

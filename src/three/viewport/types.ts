@@ -147,6 +147,7 @@ export interface ViewportProps {
   axisPick?: { parts: string[]; ready: boolean } | null;
   onAxisPick?: (hit: AxisPickHit | null, click: boolean) => void;
   buildStep?: BuildStepView | null;
+  noGizmo?: boolean;
   skeleton?: SkeletonView | null;
   onSkeletonDrag?: (drag: SkeletonDragEvent) => void;
   onSkeletonPick?: (id: string, at: { x: number; y: number }) => void;
@@ -234,6 +235,7 @@ export interface Viewport3DHandle {
   measureFrom: (clientX: number, clientY: number) => void;
   cancelMeasure: () => boolean;
   shownPartIds: () => string[];
+  gizmoAttached: () => boolean;
   checkDotCount: () => number;
 }
 

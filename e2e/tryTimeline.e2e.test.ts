@@ -11,6 +11,7 @@ interface SimState {
   tries: Array<{ passed: boolean; margin: number }>;
   selected: string[];
   canvasSelected: string[];
+  gizmo: boolean;
   timeline: {
     frame: number;
     frames: number;
@@ -114,12 +115,14 @@ describe('Try timeline', () => {
       .click({ position: { x: 1, y: 10 } });
     await expect.poll(async () => (await simState()).selected).toEqual(lane.link);
     expect((await simState()).canvasSelected).toEqual(lane.link);
+    expect((await simState()).gizmo).toBe(false);
     await expect.poll(async () => (await timeline())?.sought).toBe(0);
 
     await app.page.keyboard.press('Escape');
     await expect.poll(() => app.page.getByTestId('try-timeline').count()).toBe(0);
     expect(await areaCount()).toBe(1);
     expect((await simState()).canvasSelected).toEqual(lane.link);
+    expect((await simState()).gizmo).toBe(false);
     await expect.poll(async () => (await simState()).drive).toBe('off');
 
     await app.page.keyboard.press('Escape');

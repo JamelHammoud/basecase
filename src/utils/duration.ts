@@ -2,6 +2,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
 export const runClock = (seconds: number) => `${seconds.toFixed(1)} s`;
 
+const FRACTIONS: Record<number, string> = { 0.25: '¼', 0.5: '½' };
+
+export const speedLabel = (rate: number) => `${FRACTIONS[rate] ?? rate}×`;
+
 const shortSpan = (seconds: number) =>
   seconds > 0 && seconds < 0.095 ? Math.max(0.01, Math.round(seconds * 100) / 100) : Math.round(seconds * 10) / 10;
 

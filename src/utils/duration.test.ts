@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { runClock, duration } from './duration';
+import { runClock, duration, speedLabel } from './duration';
 
 describe('duration', () => {
+  it('writes playback rates the way every speed control shows them', () => {
+    expect([0.25, 0.5, 1, 2, 4].map(speedLabel)).toEqual(['¼×', '½×', '1×', '2×', '4×']);
+  });
+
   it('reads seconds to a tenth under a minute', () => {
     expect(duration(0.5)).toBe('0.5 s');
     expect(duration(45)).toBe('45 s');

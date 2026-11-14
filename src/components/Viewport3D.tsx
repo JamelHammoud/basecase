@@ -63,6 +63,7 @@ const DETACHED: Viewport3DHandle = {
   measureFrom: () => {},
   cancelMeasure: () => false,
   shownPartIds: () => [],
+  gizmoAttached: () => false,
   checkDotCount: () => 0,
 };
 

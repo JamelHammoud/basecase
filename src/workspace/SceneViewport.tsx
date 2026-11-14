@@ -62,7 +62,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         ref={viewportRef}
         sceneKey={scene.sceneId}
         parts={shownParts}
-        selectedPartIds={core.caseRun.canvasSelection}
+        {...core.caseRun.canvas}
         transformMode={tool.transformMode}
         sculptSettings={tool.sculptSettings}
         snapStepMm={studio.snapStepMm}

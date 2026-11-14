@@ -3,7 +3,7 @@ import { Button, CloseIcon, IconButton, PauseIcon, RunIcon, Slider } from '../..
 import { PLAYBACK_SPEEDS } from '../../workspace/useTimelinePlayback';
 import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
 import type { TryTimeline as Timeline } from '../../workspace/useTryTimeline';
-import { runClock } from '../../utils/duration';
+import { runClock, speedLabel } from '../../utils/duration';
 import { TimelineLane } from './TimelineLane';
 import { useTimelineKeys } from './useTimelineKeys';
 
@@ -70,7 +70,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, onSelec
           data-testid="timeline-speed"
           onClick={() => timeline.faster(timeline.speed === PLAYBACK_SPEEDS.at(-1) ? -PLAYBACK_SPEEDS.length : 1)}
         >
-          {timeline.speed}×
+          {speedLabel(timeline.speed)}
         </Button>
         <IconButton
           icon={<CloseIcon className={ic} />}

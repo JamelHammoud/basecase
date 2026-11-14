@@ -64,7 +64,8 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
     if (open) setBack((saved) => saved && { ...saved, selection: ids, picked: true });
   };
 
-  const canvasSelection = open && !back?.picked ? NO_SELECTION : selectedIds;
+  const casePick = back?.picked ? back.selection : NO_SELECTION;
+  const canvas = { selectedPartIds: open ? casePick : selectedIds, noGizmo: open };
 
   const stale = back !== null && !open;
   const leaveStale = useEffectEvent(() => {
@@ -109,7 +110,7 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
 
   const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO, studio: true });
 
-  return { open, caseConsole, layout, canvasSelection, enter, enterCase, leave, pick };
+  return { open, caseConsole, layout, canvas, enter, enterCase, leave, pick };
 }
 
 export type CaseRun = ReturnType<typeof useCaseRun>;

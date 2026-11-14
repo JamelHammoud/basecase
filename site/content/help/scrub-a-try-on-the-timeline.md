@@ -34,24 +34,27 @@ covers:
 Play a recorded try through its Case's panels, and step through it frame by frame to see what each joint did.
 
 1. Open a Case and record a try with **Try It** in the Simulate tab.
-2. In Results, click the play button on the try's row.
+2. In Results, click the play button on the try's row. The Case opens running, with every panel showing the try and the timeline under the canvas.
 
 ![A try in Results with its play button](/help/scrub-a-try-on-the-timeline/results.png)
 
-3. The Case opens running, with its panels around the canvas and the timeline under it. Every panel now shows the try: plots draw the whole try with a line at the playhead, and the map draws the robot's whole path.
-4. Click or drag on a plot to go to that moment. The numbers, the map, the cameras and the robot on the canvas follow.
+3. Click or drag on a plot to go to that moment. The numbers, the map, the cameras and the robot on the canvas follow.
 
-5. Press [[Space]] to play and pause, and [[→]] or [[←]] to move one frame (1/50 s). Press [[[]] or [[]]] to play slower or faster, from 0.25× to 4×.
-6. Hold [[⇧]] and drag across a lane of the timeline to play that range over and over. [[⇧]]-click a lane to stop.
+![Touch the Dots running a try at 2.7 s, with the playhead on the Joints plot and on each lane of the timeline](/help/scrub-a-try-on-the-timeline/playing.png)
 
-![The timeline under the canvas, with the second joint's link selected](/help/scrub-a-try-on-the-timeline/timeline.png)
+4. Press [[Space]] to play the try from there.
+5. Hold [[⇧]] and drag across a lane of the timeline to play that range over and over.
 
-7. Click **Done** or press [[Esc]] to go back to the live robot. The Case keeps running.
+![The timeline with a looped range shaded on every lane](/help/scrub-a-try-on-the-timeline/loop.png)
+
+6. Click **Done** or press [[Esc]] to go back to the live robot. The Case keeps running.
+
+Plots draw the whole try with a line at the playhead, and the map draws the robot's whole path. Press [[[]] or [[]]] to play slower or faster, from ¼× to 4×. [[→]] or [[←]] moves one frame (1/50 s), and [[⇧]] with them moves a second. [[Home]] and [[End]] go to the start and the end. [[⇧]]-click a lane to stop looping.
 
 Each lane is one joint. Its top plot is the joint's position in blue over its target in gray, and its bottom one is its effort, with the servo's limit dashed. Effort reads in N·m, or in N for a sliding joint. Red lines mark where the Case's failure checks tripped, and the timeline opens on the first one.
 
 Click in a lane to select the joint's link on the canvas. It stays selected when you leave the Case, ready to change in the Inspector.
 
-In a running Case, the play button on a try in its tries panel does the same. [[⇧]] with [[→]] or [[←]] moves a second, and [[Home]] and [[End]] go to the start and the end.
+In a running Case, the play button on a try in its tries panel does the same.
 
 A try recorded before you added or removed a joint doesn't open. The agent can read a try the same way and answer questions about it; see [Agent tools](/help/agent-tools).

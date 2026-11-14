@@ -378,6 +378,7 @@ export class ViewportEngine {
       measureFrom: (x, y) => this.measureTool.startAt(x, y),
       cancelMeasure: () => this.measureTool.clear(),
       shownPartIds: () => this.buildStep.shownIds(),
+      gizmoAttached: () => Boolean(this.gizmo.controls.object),
     };
   }
 

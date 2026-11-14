@@ -54,11 +54,13 @@ Run a Case in the whole window, laid out the way the Case asks: the robot on the
 
 ![A try running, with the clock and Stop Try](/help/run-a-case/trying.png)
 
-6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train from Tries joins them once five pass. Click the play button on a try to play it through the panels, as in [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
+6. Click **Stop Try**, or let the clock run out. The try joins Results, with Replay, Export Dataset and Publish to Hugging Face once one passes. Train from Tries joins them once five pass.
 
 ![Results with the recorded try](/help/run-a-case/tries.png)
 
 7. Click **Done** or press [[Esc]] to go back. The first [[Esc]] stops driving. Your parts, selection and camera are as you left them.
+
+To play a try through the panels, see [Scrub a try on the timeline](/help/scrub-a-try-on-the-timeline).
 
 A Case can bring its own layout, called its console, saved with the Case in your `.basecase` file. Ask the agent for a Case in words and it writes one, or edit that file. New Case and the templates make Cases without one.
 

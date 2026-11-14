@@ -82,11 +82,11 @@ export class Gizmo {
   }
 
   refresh(): void {
-    const { transformMode, measureMode, markMode, axisPick, buildStep } = this.ctx.props();
+    const { transformMode, measureMode, markMode, axisPick, buildStep, noGizmo } = this.ctx.props();
 
     this.ctx.stage.brushCursor.visible = false;
 
-    if (transformMode === 'sculpt' || measureMode || markMode || axisPick || buildStep) {
+    if (noGizmo || transformMode === 'sculpt' || measureMode || markMode || axisPick || buildStep) {
       this.controls.detach();
     } else if (transformMode === 'pose') {
       this.attachJoint();

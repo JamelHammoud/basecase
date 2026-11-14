@@ -25,7 +25,7 @@ export function tetherSource(ctx: PowerContext): PowerSource | undefined {
   if (!tether) return undefined;
 
   return {
-    name: `The ${tether.volts} V ${tether.amps} A tether`,
+    name: `The ${tether.volts} V ${tether.amps} A power supply`,
     battery: { nominalV: tether.volts, fullV: tether.volts, capacityAh: 0, cRating: 0 },
     tetherA: tether.amps,
   };

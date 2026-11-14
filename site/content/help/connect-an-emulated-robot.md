@@ -47,7 +47,7 @@ Every servo is emulated: no released build of Basecase can drive real motors. Op
 8. Click the **Simulate** button. The emulated servos follow the simulation.
 9. Click **Disconnect** when you're done.
 
-**Show Operate**, **Connect Emulated Robot** and **Show Simulate** are also in [[⌘K]]. A blue dot on the **Operate** tab shows a robot is connected.
+**Show Operate**, **Connect Emulated Robot**, **Simulate**, **Show Simulate** and **Disconnect Robot** are also in [[⌘K]]. A blue dot on the **Operate** tab shows a robot is connected.
 
 ## What you're connected to
 

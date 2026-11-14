@@ -6,6 +6,7 @@ import { fullDate } from '../utils/timeAgo';
 import { workerClient, type Reply } from '../utils/workerRpc';
 import { guideFingerprint } from './guideFingerprint';
 import { isBuilt } from './guidePlan';
+import { stepPartsOf } from './guideSteps';
 import type { GuidePortMessage } from './guidePort';
 import type { GuidePlan } from './guideTypes';
 import type { GuideJob, GuideProgress, RenderedGuide } from './renderGuide';
@@ -106,6 +107,7 @@ function recordOf({ id, rendered, input, order }: RecordInput): BuildGuideRecord
     fingerprint: guideFingerprint(input.title, input.parts, input.project),
     ...(order?.timedOut && { orderTimedOut: true }),
     coverDataUrl: rendered.coverDataUrl,
+    stepParts: stepPartsOf(rendered.plan, input.parts, input.project),
   };
 }
 

@@ -24,6 +24,7 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { caseCommands } from './caseCommands';
+import { skillCommands } from './skillCommands';
 import { skeletonCommands } from './skeletonCommands';
 import { fitTestCommands, mergeCommands } from './printCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
@@ -36,12 +37,15 @@ import { leaderCommands } from './leaderCommands';
 import { onshapeCommands } from './onshapeCommands';
 import { keyFor } from '../app/shortcuts';
 import { fileCommands } from './fileCommands';
+import { simCommands } from './simCommands';
+import type { AgentSession } from './useAgentSession';
 
 export interface CommandInputs {
   core: WorkspaceCore;
   actions: WorkspaceActions;
   ui: WorkspaceUi;
   clipboard: { copyViaCommand: (cut: boolean) => void; pasteParts: () => void };
+  agent: Pick<AgentSession, 'chat'>;
 }
 
 const ic = 'w-4 h-4';
@@ -307,6 +311,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...exchangeCommands(inputs),
   ...printCommands(inputs),
   ...buildCommands(inputs),
+  ...simCommands(inputs),
   ...createCommands(inputs),
   ...toolCommands(inputs),
   ...poseCommands(inputs),
@@ -315,6 +320,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...leaderCommands(inputs),
   ...onshapeCommands(inputs),
   ...caseCommands(inputs),
+  ...skillCommands(inputs),
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),
   ...operateCommands(inputs),

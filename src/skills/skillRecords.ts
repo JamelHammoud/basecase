@@ -113,11 +113,35 @@ export function recordFreshness(record: SkillRecord, options: FreshnessInput): F
   return skillFreshness(record, currentDesign({ ...options, environment }));
 }
 
+type Variant = ArenaEvidence['variants'][number];
+
+const passShare = (variant: Variant) => variant.passes / variant.trials;
+
+const worstVariant = (evidence: ArenaEvidence): Variant | undefined =>
+  [...evidence.variants].sort((a, b) => passShare(a) - passShare(b))[0];
+
+const worstShare = (evidence: ArenaEvidence) => {
+  const worst = worstVariant(evidence);
+
+  return worst ? passShare(worst) : Infinity;
+};
+
+export const worstEvidence = (evidence: readonly ArenaEvidence[]): ArenaEvidence | undefined =>
+  [...evidence].sort((a, b) => worstShare(a) - worstShare(b))[0];
+
+const triesLine = (variant: Variant) => `${variant.passes} of ${plural(variant.trials, 'try', 'tries')}`;
+
 export function arenaLine(evidence: ArenaEvidence): string {
-  const worst = [...evidence.variants].sort((a, b) => a.passes / a.trials - b.passes / b.trials)[0];
+  const worst = worstVariant(evidence);
   const share = `at least ${Math.floor(evidence.lowerBound * 100)}%`;
 
-  return worst ? `${worst.passes} of ${plural(worst.trials, 'try', 'tries')}, ${share}` : share;
+  return worst ? `${triesLine(worst)}, ${share}` : share;
+}
+
+export function refusedLine(evidence: ArenaEvidence): string {
+  const worst = worstVariant(evidence);
+
+  return worst ? `Refused in Arena: ${triesLine(worst)}` : 'Refused in Arena';
 }
 
 export function withRecord(records: SkillRecord[], record: SkillRecord): SkillRecord[] {

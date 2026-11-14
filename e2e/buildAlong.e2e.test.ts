@@ -9,6 +9,8 @@ interface BuildAlongStudio {
   parts: () => Array<{ id: string; visible: boolean }>;
   shownParts: () => string[];
   buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
+  markPlatePrinted: (plate: number) => void;
+  readySteps: () => boolean[];
 }
 
 let app: App;
@@ -139,6 +141,37 @@ describe('Build Along', () => {
     await expect.poll(shownParts).toEqual(sorted(parts.map((p) => p.id)));
     expect(await app.page.locator('[data-build-label]').count()).toBe(0);
   }, 300000);
+
+  it('marks a step done once every part it prints is printed', async () => {
+    const firstReady = (mark: boolean) =>
+      app.page.evaluate((markFirst) => {
+        const s = (window as unknown as { __studio: BuildAlongStudio }).__studio;
+
+        if (markFirst) s.markPlatePrinted(1);
+
+        return s.readySteps()[0];
+      }, mark);
+
+    expect(await firstReady(false)).toBe(false);
+
+    await app.page
+      .locator('main')
+      .first()
+      .click({ position: { x: 20, y: 20 } });
+    await app.page.keyboard.press('Meta+p');
+    await expect.poll(() => firstReady(true), { timeout: 30000, interval: 1000 }).toBe(true);
+    await app.page.keyboard.press('Escape');
+
+    await app.page.keyboard.press('Meta+k');
+    await app.page.keyboard.type('Build Along');
+    await app.page.keyboard.press('Enter');
+    await expect.poll(stepShown, { timeout: 180000 }).toBe('1');
+    await expect.poll(() => toolbar().getAttribute('data-ready')).toBe('true');
+
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => toolbar().count()).toBe(0);
+    expect(app.errors).toEqual([]);
+  }, 240000);
 });
 
 describe('Buy All', () => {

@@ -44,6 +44,8 @@ A skill passes when, in every variant, the share of passing tries is at least 75
 
 The skill's row shows its weakest variant, such as "31 of 32 tries, at least 86%". The percentage is that confidence bound, not the raw share.
 
+A Motor Kit skill that fails isn't kept. Its row shows the weakest variant of its best try, such as "Refused in Arena: 20 of 32 tries". For Walk, that includes the runs at half speed and standing still.
+
 A policy trained from a Case's tries is judged by its Case instead. It runs the Case 32 times, each from joints up to 5° off, with friction, masses, servo strength and delays up to 20 ms drawn as in **Checks**. The bar is the same: 29 of 32. Steps are in [Train a policy from your tries](/help/train-a-policy-from-your-tries).
 
 ## Why the reward can't cheat
@@ -62,6 +64,6 @@ A skill is tied to the design it passed on. For Motor Kit skills, **Recheck** ru
 | A mass, a size or a joint's range | The row shows **Recheck** |
 | A joint added or removed, or its type or axis changed | The row shows **Train**: the skill must be trained again |
 
-A skill moved to another design starts its training from the old one, but never carries its Arena result with it.
+A skill moved to another design starts its training from the old one, but never carries its Arena result with it. The same holds for a skill you [install from Hugging Face](/help/install-a-skill-from-hugging-face): Arena judges it again on your robot.
 
 The same contract code judges Case tries; [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts) explains how a contract reads.

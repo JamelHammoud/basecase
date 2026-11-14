@@ -63,7 +63,11 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
         </CaseRunProvider>
         <CanvasContextMenu menu={canvasMenu.menu} inputs={inputs} onClose={canvasMenu.closeMenu} />
       </div>
-      <WorkspacePalette open={ui.paletteOpen} inputs={{ ...inputs, clipboard }} onClose={() => setPaletteOpen(false)} />
+      <WorkspacePalette
+        open={ui.paletteOpen}
+        inputs={{ ...inputs, clipboard, agent }}
+        onClose={() => setPaletteOpen(false)}
+      />
       <WorkspaceSheets active={props.active} core={core} actions={actions} />
     </div>
   );

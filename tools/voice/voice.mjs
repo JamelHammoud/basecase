@@ -187,6 +187,9 @@ export function rewriteFile(file, { cwd = process.cwd(), run } = {}) {
 
   const full = path.join(cwd, file);
   const before = fs.readFileSync(full, 'utf8');
+
+  if (/^type: reference$/m.test(frontMatter(before))) return false;
+
   const after = voiceText(before, { kind, run });
 
   if (!after || after.trim() === before.trim()) return false;

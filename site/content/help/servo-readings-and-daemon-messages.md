@@ -31,7 +31,7 @@ covers:
   - hw/crates/robot-daemon/src/ladder/mod.rs
 ---
 
-Operate shows the rung the robot is on, the motor state, each servo's angle and temperature, and every message the robot daemon sends.
+What each line in Operate means: the rung, the motor state, each servo's angle and temperature, and every message the robot daemon sends.
 
 The daemon reports every servo 10 times a second, and the app shows the newest reading.
 
@@ -39,7 +39,7 @@ The daemon reports every servo 10 times a second, and the app shows the newest r
 
 ## The header
 
-The first line names the servos, for example "2 emulated Feetech servos", followed by the motor state. **Disconnect** is at the end of the line. Below it, the **Ladder** marks the rung the robot is on, from **Look** to **Longer Runs**.
+The first line names the servos, such as "2 emulated Feetech servos", then the motor state, with **Disconnect** at its end. The **Ladder** below it marks the rung the robot is on, from **Look** to **Longer Runs**.
 
 | Motor state | What it means |
 |---|---|
@@ -48,27 +48,27 @@ The first line names the servos, for example "2 emulated Feetech servos", follow
 | Motors running | Motors follow the app's commands |
 | Rehearsing, motors off | A policy runs with no motor writes |
 | Stopping… | The robot is coming to rest |
-| Stopped | The robot has stopped. It takes no more commands until you go back to **Look** |
+| Stopped | The robot has stopped, and takes no more commands until you go back to **Look** |
 
-**Stop** shows while the motors run. In **Look**, **Clear Fault** shows while a fault is active.
+**Stop** shows while motors run. **Clear Fault** shows in **Look** while a fault is active.
 
 ## Servo rows
 
-Under **Emulated servos**, each joint gets one row with its name and bus ID. IDs start at 1 and follow the order of the scene's moving joints. If a joint is calibrated, its verdict shows under its name.
+Under **Emulated servos**, each joint has one row with its name and bus ID. IDs run from 1 upward in the order of the scene's moving joints. A calibrated joint shows its verdict under its name.
 
 | Reading | What it means |
 |---|---|
-| An angle, such as 12.5° | The joint's position. 0° is its zero, which is count 2048 of 4096 until **Calibrate Servos** finds it |
-| A temperature, such as 30 °C | The servo's temperature. The servo is switched off at 50 °C |
-| No reply | The servo didn't answer this reading. Or its motor isn't a Feetech or Dynamixel servo (the DS3218, for example), so the daemon can't read it |
+| An angle, such as 12.5° | The joint's position. 0° is its zero, count 2048 of 4096 until **Calibrate Servos** finds it |
+| A temperature, such as 30 °C | The servo's temperature. It's switched off at 50 °C |
+| No reply | The servo didn't answer this reading, or its motor isn't a Feetech or Dynamixel servo, such as the DS3218, so the daemon can't read it |
 | Garbled reply | The servo's answer was corrupted |
 | Wrong ID answered | Another servo answered for this one |
 
 ## Messages from the daemon
 
-The six newest messages show under the first line. Each one is labeled by kind: **Stopped by a fault**, **Refused**, **Stopped** or **Daemon lost**. A new connection clears them.
+The newest six messages show under the first line, each labeled by kind: **Stopped by a fault**, **Refused**, **Stopped** or **Daemon lost**. A new connection clears them.
 
-If the daemon refuses a rung, you'll see one of these messages:
+When the daemon refuses a rung:
 
 | Message | Why |
 |---|---|
@@ -80,7 +80,7 @@ If the daemon refuses a rung, you'll see one of these messages:
 | "Test every joint with the current calibration first." | **Test** hasn't finished with this calibration |
 | "Rehearse the current policy first." | **Rehearse** hasn't finished with this policy |
 
-If a fault stops the robot, the message names the servo or joint. For example:
+When a fault stops the robot, the message names the servo or joint, such as:
 
 | Message | What stopped |
 |---|---|
@@ -92,8 +92,8 @@ If a fault stops the robot, the message names the servo or joint. For example:
 | "The app stopped talking to the robot, so the robot is holding still." | The robot holds |
 | "Commands stopped arriving, so the robot is holding still." | The robot holds |
 
-On an arm, a fault that stops the robot has **Replay in Sim** under it. Click it to play the 20 seconds before the fault in the simulation. See [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation). After a fault, the simulation sends the robot no commands until you climb the **Ladder** again.
+On an arm, a fault that stops the robot has **Replay in Sim** under it, which plays the 20 seconds before it in the simulation: [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation). From a fault until you climb the **Ladder** again, the simulation sends the robot no commands.
 
-If the daemon exits without being asked, **Daemon lost** shows this message: "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."
+When the daemon itself exits without being asked, **Daemon lost** shows "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."
 
 To clear a fault, see [Emulated robot refuses a rung or stops](/help/troubleshoot-emulated-robot).

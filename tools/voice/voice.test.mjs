@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   keepsMarkers,
@@ -6,6 +9,7 @@ import {
   plainPunctuation,
   punctuationProblems,
   restoreMenuPaths,
+  rewriteFile,
   voiceText,
 } from './voice.mjs';
 
@@ -74,5 +78,15 @@ describe('the voice pipeline', () => {
     );
     expect(keepsMarkers('Click **Add Printer**.', 'Click Add Printer.', 'help')).toBe(false);
     expect(keepsMarkers('Click **Add Printer**.', 'Click Add Printer.', 'changelog')).toBe(true);
+  });
+
+  it('leaves a reference article alone, since its lists must match the app exactly', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'voice-'));
+    const file = 'site/content/help/keyboard-shortcuts.md';
+
+    fs.mkdirSync(path.join(dir, 'site/content/help'), { recursive: true });
+    fs.writeFileSync(path.join(dir, file), '---\ntitle: Keyboard shortcuts\ntype: reference\n---\n\n| Key | Does |');
+
+    expect(rewriteFile(file, { cwd: dir, run: () => ({ status: 1 }) })).toBe(false);
   });
 });

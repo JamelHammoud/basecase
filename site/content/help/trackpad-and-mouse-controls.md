@@ -26,7 +26,7 @@ covers:
   - src/data/cameraViews.ts
 ---
 
-You can orbit, pan and zoom the 3D view with a trackpad or a mouse. Two-finger scrolling follows the scroll mode you choose.
+How to orbit, pan and zoom the 3D view with a trackpad or mouse, and what two-finger scrolling does in each mode.
 
 ## Gestures
 
@@ -41,7 +41,7 @@ You can orbit, pan and zoom the 3D view with a trackpad or a mouse. Two-finger s
 
 ## Scrolling
 
-A two-finger scroll or a mouse wheel follows the mode you pick in **Settings** ▸ **Canvas** ▸ **Two-finger scroll**. On Windows, this row is called **Scroll**.
+What a two-finger scroll or mouse wheel does depends on the mode in **Settings** ▸ **Canvas** ▸ **Two-finger scroll**. On Windows, the row is called **Scroll**.
 
 | Mode | Scroll | [[⇧]] and scroll |
 |---|---|---|
@@ -49,7 +49,7 @@ A two-finger scroll or a mouse wheel follows the mode you pick in **Settings** �
 | **Pan** | Pans | Pans |
 | **Zoom**, the Windows default | Zooms | Pans |
 
-You can also change the mode in **View** ▸ **Two-Finger Scroll**, or from [[⌘K]] by choosing **Scroll to Orbit**, **Scroll to Pan** or **Scroll to Zoom**.
+The same choice is in **View** ▸ **Two-Finger Scroll**, and in [[⌘K]] as **Scroll to Orbit**, **Scroll to Pan** or **Scroll to Zoom**.
 
 ## Views
 
@@ -61,12 +61,8 @@ You can also change the mode in **View** ▸ **Two-Finger Scroll**, or from [[�
 | [[4]] | Side, from the right |
 | [[Z]] | Centers the orbit on the selection, or goes back to the home view with nothing selected |
 
-To deselect everything and go back to the home view, choose **View** ▸ **Camera** ▸ **Reset View**.
-
-You can zoom in as close as 25 mm to what you're looking at, and out as far as 12 m.
+**View** ▸ **Camera** ▸ **Reset View** deselects everything and goes back to the home view. The view zooms between 25 mm and 12 m from what it's looking at.
 
 ## Snapping
 
-By default, moving snaps to 5 mm and rotating snaps to 15°. You can change these in **Settings** ▸ **Canvas** ▸ **Snapping**.
-
-To move or rotate freely, hold [[⇧]] while you drag.
+Moving snaps to 5 mm and rotating to 15° until you change them in **Settings** ▸ **Canvas** ▸ **Snapping**. Hold [[⇧]] while you drag to move or rotate freely.

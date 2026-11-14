@@ -77,6 +77,8 @@ export interface DevActions {
   printPlates: () => unknown;
   plateFiles: () => Promise<Record<string, Uint8Array>>;
   labelNotes: () => Record<string, string>;
+  markPlatePrinted: (plate: number) => void;
+  readySteps: () => boolean[];
   calibrate: (jointId: string, calibration: ServoCalibration) => void;
   routineState: () => unknown;
   printState: () => unknown;
@@ -225,6 +227,8 @@ function printStudioApi(devRef: RefObject<DevActions>) {
     printState: () => devRef.current.printState(),
     plateFiles: async () => base64Files(await devRef.current.plateFiles()),
     labelNotes: () => devRef.current.labelNotes(),
+    markPlatePrinted: (plate: number) => devRef.current.markPlatePrinted(plate),
+    readySteps: () => devRef.current.readySteps(),
   };
 }
 

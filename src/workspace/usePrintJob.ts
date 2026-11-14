@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { PrinterSetup } from '../data/printers';
+import { bedOf } from '../print/bed';
+import { plateOnBed } from '../print/fleet';
 import { jobSpec } from '../print/job';
 import type { Plate } from '../print/plan';
 import { printBridge, type JobPayload, type SliceRecord } from '../print/printBridge';
@@ -100,8 +102,39 @@ export function usePrintJob(options: PrintJobOptions) {
 
   const stopSlice = () => void printBridge.stopSlice(jobId);
 
+  const slicingToast = (job: string) =>
+    showToast('Slicing…', {
+      tone: 'progress',
+      action: { label: 'Stop', onClick: () => void printBridge.stopSlice(job) },
+    });
+
+  const sliceOn = async (plate: Plate, target: PrinterSetup): Promise<string | null> => {
+    const { report } = options;
+    const bed = bedOf(target.model);
+    const moved = report && plateOnBed(plate, report.plan.bed, bed);
+
+    if (!report || !moved) return null;
+
+    const targetJob = `${jobId}-${target.id}`;
+    const plan = { ...report.plan, bed, plates: [moved] };
+
+    slicingToast(targetJob);
+
+    try {
+      await printBridge.slice(
+        await buildPayload({ ...options, jobId: targetJob, printer: target, report: { ...report, plan } }),
+      );
+
+      return targetJob;
+    } catch (e) {
+      showToast(errorMessage(e), { tone: 'error' });
+
+      return null;
+    }
+  };
+
   const runSlice = async () => {
-    showToast('Slicing…', { tone: 'progress', action: { label: 'Stop', onClick: stopSlice } });
+    slicingToast(jobId);
 
     try {
       const record = await sliceReport(options.report);
@@ -136,6 +169,7 @@ export function usePrintJob(options: PrintJobOptions) {
       : undefined;
 
   return {
+    jobId,
     slice,
     freshSlice,
     slicing,
@@ -143,6 +177,7 @@ export function usePrintJob(options: PrintJobOptions) {
     error,
     runSlice,
     sliceReport,
+    sliceOn,
     stopSlice,
     openInSlicer,
     reveal: () => void printBridge.reveal(jobId),

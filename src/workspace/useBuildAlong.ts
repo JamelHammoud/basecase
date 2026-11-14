@@ -13,6 +13,7 @@ interface BuildAlongOptions {
 
 interface Session {
   steps: BuildAlongStep[];
+  stepParts: string[][];
   views: BuildStepView[];
   index: number;
   camera: ViewShot;
@@ -48,7 +49,13 @@ export function useBuildAlong({ guide, projectRef, viewportRef }: BuildAlongOpti
 
     const steps = buildAlongSteps(plan, projectRef.current.joints ?? []);
 
-    setSession({ steps, views: steps.map(stepView), index: 0, camera });
+    setSession({
+      steps,
+      stepParts: plan.steps.map((s) => s.partIds),
+      views: steps.map(stepView),
+      index: 0,
+      camera,
+    });
     viewportRef.current?.frameAll();
   };
 
@@ -73,6 +80,7 @@ export function useBuildAlong({ guide, projectRef, viewportRef }: BuildAlongOpti
     index: session?.index ?? 0,
     count: session?.steps.length ?? 0,
     steps: session?.steps ?? [],
+    stepParts: session?.stepParts ?? [],
     open,
     close,
     next: () => go(1),

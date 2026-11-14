@@ -33,6 +33,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           onReveal={desktop ? () => void guide.reveal() : undefined}
           onOpenPdf={desktop ? () => void guide.openPdf() : undefined}
           onBuildAlong={() => void core.buildAlong.open()}
+          ready={core.printing.readySteps(guide.record?.stepParts?.ids ?? [])}
         />
       )}
       <ImportRobotSheet

@@ -16,6 +16,7 @@ keywords:
   - build plate
 related:
   - add-a-printer
+  - print-plates-on-several-printers
   - printability-estimates
   - troubleshoot-build-slicing-fails
   - export-plates-as-3mf
@@ -64,10 +65,13 @@ Print mode also opens from **File** ▸ **Print**, from **Print** in the Build t
 - Press [[←]] or [[→]] to go to the previous or next plate.
 - **Copies** prints more than one of the selected part. **Don't print** leaves it off the plates.
 - **Label parts** cuts each part's build guide letter into a hidden face. [Label printed parts with their guide letters](/help/label-printed-parts) has the details.
+- Plates follow the build guide's order. The number beside the box icon in the bottom bar is the step that first needs the plate.
 - **Auto Arrange** in the bottom bar packs the plates of that material again.
 - **Parts** lists every part with its size, time and plate. Parts with problems come first.
 - **Merge** lists printed parts bolted together on one link that could print as one. [Merge printed parts into one print](/help/merge-printed-parts-into-one-print) has the steps.
 
 After a print, a switch under **Printer**, such as Skip 3 printed parts, leaves the parts you printed off the plates. It starts on. Edit one bracket, and the next plate holds only that bracket.
+
+With two or more printers that report their state, each idle one gets **Start Next**. [Print plates on several printers](/help/print-plates-on-several-printers) has the steps.
 
 Press [[Esc]] or click **Done** to go back to the scene. Next, [make a build guide](/help/make-a-build-guide) for putting the parts together.

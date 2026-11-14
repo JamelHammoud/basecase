@@ -15,5 +15,5 @@ export function shopLinkLabel(kind: ShopLinkKind, url?: string) {
 
   if (kind === 'search' || path === '/s') return 'Find on Amazon';
 
-  return path === null ? 'Open listing' : 'Buy on Amazon';
+  return path === null ? 'Open Listing' : 'Buy on Amazon';
 }

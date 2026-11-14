@@ -1,7 +1,7 @@
 ---
 title: Agent limits
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: agent
 type: concept
 order: 3
@@ -38,7 +38,7 @@ The agent sees only the files you attach. It can't see your selection, your othe
 
 Each agent runs on your computer and uses your Claude, ChatGPT or Google login, so its usage counts against your own plan. You need an internet connection to use it. The web studio has no agent.
 
-Offline works without AI. It makes a single extruded model, either by tracing one outline from an image or by building it from what you describe. It can't edit the scene or use tools.
+Offline works without AI. It traces one outline from an image, or works from your words, to make a single extruded model. It can't edit the scene or use tools. If you send it a slash command or a problem from **Checks**, it answers in one line that points to **Settings** ▸ **Agent**.
 
 ## It reaches only the public web
 

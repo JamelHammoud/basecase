@@ -1,6 +1,7 @@
 import { Activity, useState, type ReactNode } from 'react';
 import { AcpStudioPanel } from '../components/AcpStudioPanel';
 import { DesktopDownload } from '../components/agent/DesktopDownload';
+import { ErrorBoundary } from '../design-system';
 import { DesignersProvider } from '../components/agent/DesignersContext';
 import { PartLinksProvider } from '../components/agent/PartLinksProvider';
 import { canRevertLane } from './agentLanes';
@@ -12,7 +13,7 @@ import type { CoachSend } from '../components/simulate/TrainSection';
 import { measuredJoints } from '../reality/measuredJoints';
 import type { ProjectSettings } from '../types/robotics';
 import { caseCheckId, caseCheckOf } from '../readiness/caseChecks';
-import { findingQuote, fixPrompt } from '../readiness/readiness';
+import { findingQuote, fixRequest } from '../readiness/readiness';
 import { showNewCase } from './caseCommands';
 import { calibrateJoints } from './operateCommands';
 import { InspectTab } from './InspectTab';
@@ -22,12 +23,22 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { replayFall } from './fallReplay';
 import { makeActuator } from './makeActuator';
+import { coachRequest, teachRequest, type TeachRequest } from './teachRequest';
+import { agentKindOf } from '../agent/agentKinds';
 
 interface RightTabPanelsProps {
   core: WorkspaceCore;
   actions: WorkspaceActions;
   agent: AgentSession;
 }
+
+const TAB_NAMES: Record<RightTab, string> = {
+  inspector: 'Inspect',
+  pose: 'Pose',
+  sim: 'Simulate',
+  build: 'Build',
+  acp: 'Agent',
+};
 
 interface TabActivityProps {
   tab: RightTab;
@@ -40,7 +51,11 @@ interface TabActivityProps {
 function TabActivity({ tab, current, visited, available = true, children }: TabActivityProps) {
   if (!available || !visited.has(tab)) return null;
 
-  return <Activity mode={tab === current ? 'visible' : 'hidden'}>{children}</Activity>;
+  return (
+    <Activity mode={tab === current ? 'visible' : 'hidden'}>
+      <ErrorBoundary region={TAB_NAMES[tab]}>{children}</ErrorBoundary>
+    </Activity>
+  );
 }
 
 function useVisitedTabs(tab: RightTab) {
@@ -67,7 +82,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
           ? undefined
           : (finding) => {
               tool.openRightTab('acp');
-              void agent.send({ text: fixPrompt(finding), ...studio.agentChoice }, 'queue');
+              void agent.send({ ...fixRequest(finding, parts), ...studio.agentChoice }, 'queue');
             }
       }
       onQuoteFinding={IS_WEB_DEMO ? undefined : (finding) => tool.requestQuote(findingQuote(finding, parts))}
@@ -164,22 +179,28 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
   );
 }
 
+function sendTeaching(core: WorkspaceCore, agent: AgentSession, request: TeachRequest) {
+  if (request.kind === 'refused') {
+    core.showToast(request.message);
+
+    return;
+  }
+
+  core.tool.openRightTab('acp');
+  void agent.send({ text: request.text, ...core.studio.agentChoice }, 'queue');
+}
+
 function useTeach(core: WorkspaceCore, agent: AgentSession) {
   if (IS_WEB_DEMO) return null;
 
-  return (goal: string) => {
-    core.tool.openRightTab('acp');
-    void agent.send({ text: `/train ${goal}`, ...core.studio.agentChoice }, 'queue');
-  };
+  return (goal: string) => sendTeaching(core, agent, teachRequest(goal, agentKindOf(core.studio.acpStatus)));
 }
 
 function useCoach(core: WorkspaceCore, agent: AgentSession): CoachSend | null {
   if (IS_WEB_DEMO) return null;
 
-  return (scope, words) => {
-    core.tool.openRightTab('acp');
-    void agent.send({ text: `/coach ${scope.label}: ${words}`, ...core.studio.agentChoice }, 'queue');
-  };
+  return (scope, words) =>
+    sendTeaching(core, agent, coachRequest(scope.label, words, agentKindOf(core.studio.acpStatus)));
 }
 
 export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {

@@ -1,7 +1,7 @@
 ---
 title: Checks and blockers
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: engineer
 type: concept
 order: 2
@@ -51,9 +51,7 @@ If a check stops on an error or runs out of time, it counts as a blocker. The he
 
 The same goes for the agent. If it tells you a servo is strong enough, Servo torque still measures the load at a 30° crouch.
 
-The agent sees the same problems you do, and it hears about new blockers after each change. To have it try to fix them, turn on **Have the agent fix new blockers** in **Settings** ▸ **Build**. The agent makes up to 2 follow-ups per message.
-
-If the agent thinks a check is wrong, it can dispute it. Its reason appears on the row, but the blocker still counts.
+The agent sees the same problems you do, and it hears about new blockers after each change. To have it try to fix them, turn on **Have the agent fix new blockers** in **Settings** ▸ **Build**. It makes up to 2 follow-ups per message. Each follow-up reads like "Fix what the last change added: 2 problems.", with the problems quoted from **Checks**. If the agent thinks a check is wrong, it can dispute it. Its reason appears on the row, and the blocker still counts.
 
 ## Only you can set a blocker aside
 

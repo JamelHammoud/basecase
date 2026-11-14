@@ -54,6 +54,10 @@ const IK_ITERATIONS = 16;
 
 const clampUnit = (x: number) => Math.max(-1, Math.min(1, x));
 
+const SPEED_RAMP_S = 0.25;
+
+const slew = (from: number, to: number, step: number) => from + Math.max(-step, Math.min(step, to - from));
+
 export const zeroCommand = (): DriveCommand => ({ v: [0, 0, 0] });
 
 const isMoving = ({ v, aux }: DriveCommand) => v.some((x) => x !== 0) || !!aux?.[0];
@@ -83,6 +87,8 @@ class ArmDrive implements DriveLoop {
 
   private side: V3 = [1, 0, 0];
 
+  private held = true;
+
   constructor(setup: ArmSetup) {
     this.setup = setup;
     this.hand = { part: setup.part, point: setup.point };
@@ -106,8 +112,7 @@ class ArmDrive implements DriveLoop {
 
     if (measured) this.values = Object.fromEntries(this.setup.joints.map((id) => [id, measured[id] ?? 0]));
 
-    this.goal = tipOf(this.setup, this.values);
-    this.aim = [...this.goal];
+    this.hold();
   }
 
   private follow(c: DriveCommand) {
@@ -115,8 +120,13 @@ class ArmDrive implements DriveLoop {
 
     this.cmd = c;
     this.values = { ...this.values, ...Object.fromEntries(given) };
+    this.hold();
+  }
+
+  private hold() {
     this.goal = tipOf(this.setup, this.values);
     this.aim = [...this.goal];
+    this.held = true;
   }
 
   private speed() {
@@ -126,7 +136,7 @@ class ArmDrive implements DriveLoop {
   private moveAim() {
     const { v, aux, target } = this.cmd;
 
-    if (target) return;
+    if (target || !isMoving(this.cmd)) return;
 
     const step = this.speed() * CONTROL_DT;
 
@@ -148,7 +158,7 @@ class ArmDrive implements DriveLoop {
     this.aim = offset.map((x, i) => anchor[i] + x * scale) as V3;
   }
 
-  private moveGoal() {
+  private moveGoal(): boolean {
     const offset = this.aim.map((x, i) => x - this.goal[i]);
     const length = Math.hypot(...offset);
     const step = this.speed() * CONTROL_DT;
@@ -156,10 +166,12 @@ class ArmDrive implements DriveLoop {
     if (length <= step) {
       this.goal = [...this.aim];
 
-      return;
+      return length > 0;
     }
 
     this.goal = this.goal.map((x, i) => x + (offset[i] / length) * step) as V3;
+
+    return true;
   }
 
   tick(time: number): DriveOutput {
@@ -167,7 +179,10 @@ class ArmDrive implements DriveLoop {
 
     this.nextAt = time + CONTROL_DT;
     this.moveAim();
-    this.moveGoal();
+
+    if (this.moveGoal()) this.held = false;
+
+    if (this.held) return { values: this.output() };
 
     const { rig, joints } = this.setup;
     const solved = solveIK(rig, this.values, this.targets(), {
@@ -208,6 +223,10 @@ class RoverDrive implements DriveLoop {
 
   private cmd = zeroCommand();
 
+  private speed = 0;
+
+  private lastTime: number | null = null;
+
   constructor(setup: RoverSetup) {
     this.setup = setup;
   }
@@ -216,9 +235,14 @@ class RoverDrive implements DriveLoop {
     this.cmd = c;
   }
 
-  tick(): DriveOutput {
+  tick(time: number): DriveOutput {
     const { wheels, maxSpeedMmS, maxTurnRadS } = this.setup;
-    const speed = clampUnit(this.cmd.v[0]) * maxSpeedMmS;
+    const elapsed = Math.max(0, time - (this.lastTime ?? time));
+
+    this.lastTime = time;
+    this.speed = slew(this.speed, clampUnit(this.cmd.v[0]) * maxSpeedMmS, (maxSpeedMmS * elapsed) / SPEED_RAMP_S);
+
+    const { speed } = this;
     const turn = clampUnit(this.cmd.v[2]) * maxTurnRadS;
 
     return {

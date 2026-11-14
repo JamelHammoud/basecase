@@ -1,6 +1,7 @@
 ---
 title: Train an animation as a move
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 covers:
@@ -20,6 +21,8 @@ You can teach a legged robot to perform one of its animations under physics, suc
 4. Wait while the row shows Checking in Arena… Arena runs the move 96 times with randomized friction, masses, servo strength and delays. The move passes only if the joints stay with the animation and the robot doesn't fall or wander off.
 5. When the row shows its Arena result, such as 32 of 32 tries, click Try. The move plays in the sim from the start.
 
-A move that doesn't loop holds its last pose for 2 s. A looping move is judged over two rounds. If you edit the animation, its row goes back to Train. Robots fixed to the ground don't get these rows, so their animations play as they are.
+If a move fails Arena, Basecase discards it. Its row says why, and you can click Train again. Only one skill trains at a time. If you click Train on another row while one trains, a message names the one to stop first.
+
+A move that doesn't loop holds its last pose for 2 s, and a looping move is judged over two rounds. If you edit the animation, its row goes back to Train. Robots fixed to the ground don't get these rows, so their animations play as they are.
 
 You can also use a ready move as a step in a Routine. In the desktop app, you can right-click the move and choose **Publish to Hugging Face**. See [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face). To switch into the move from Walk, you first need a proof. See [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills).

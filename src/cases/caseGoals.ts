@@ -10,6 +10,7 @@ import { pickGoalWith } from './pickGoal';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
 import { lengthLabel } from '../utils/size';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
+import { plural } from '../../electron/plural.mjs';
 
 export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff';
 
@@ -329,7 +330,7 @@ const pathGoal: CaseGoal = {
     });
 
     return {
-      brief: `Pass the ${count} spots in order.`,
+      brief: `Pass the ${plural(count, 'spot')} in order.`,
       slot: groundSlot(robot),
       objects: stops.map((s, i) => spot(`spot${i}`, `Spot ${i + 1}`, s, robot)),
       probes: stops.map((_, i) => ({ signal: `spot${i}`, from: 'base', to: { object: `spot${i}` } })),

@@ -93,7 +93,7 @@ export function buildInterfaces(
   return {
     plan,
     text: [
-      `${plan.contracts.length} interface contracts.`,
+      `${plural(plan.contracts.length, 'interface contract')}.`,
       ...lines,
       problems.length ? `Problems:\n- ${problems.join('\n- ')}` : '',
       'Each part designer runs check_interfaces with its owner name before it hands back.',

@@ -98,7 +98,9 @@ export const addParts = {
       noteBlockOut();
 
       return text(
-        (res.summary || `Added ${parts.length} blocks.`) + notice + (real.length ? await clashText(real) : ''),
+        (res.summary || `Added ${plural(parts.length, 'block')}.`) +
+          notice +
+          (real.length ? await clashText(real) : ''),
       );
     } catch (err) {
       return fail(err);

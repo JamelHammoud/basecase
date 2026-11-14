@@ -85,6 +85,7 @@ These rules hold for every human and agent, on every machine. They're enforced b
 |---|---|---|
 | No comments (`basecase/no-comments`) | none, except `@vite-ignore` / `#__PURE__` pragmas | Name things so the code reads on its own. Lasting context (why a value is what it is, platform quirks, bugs avoided) goes in the area's guide (`docs/guide/`) or `docs/notes/` (`ui.md`, `core.md`, `node.md`) |
 | Banned copy (`basecase/copy`) | none in user-facing strings in `src/` and the app menu | Cut the word or the line (§3c); the list is `BANNED_COPY` in `verify/rehearsal/uiRules.ts`, linted through `tools/copy/banned.mjs` with the verb glossary (§3b-17) |
+| Counts (`basecase/plural`) | no bare `${n} parts` or `n === 1` ternary in `src/` and `electron/` | `plural(n, 'part')` from `electron/plural.mjs` (§3b-15) |
 | No nested `if` in one function (`basecase/no-nested-if`) | 0 | Guard clauses and early returns, combined conditions, lookup tables, or extract a named predicate / function |
 | Blank line between statements of different kinds (`@stylistic/padding-line-between-statements`) | — | Auto-fixed. Consecutive declarations or expression statements may group; every `if`, loop, block and `return` is set off by blank lines |
 | `max-lines` per file | 400 (blank lines not counted) | Split by responsibility into sibling modules. Data catalogs (`src/data/`) and the agent prompt are exempt |

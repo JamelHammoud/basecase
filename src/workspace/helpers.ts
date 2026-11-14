@@ -1,5 +1,6 @@
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../types/robotics';
 import { uniqueJointIds } from '../utils/kinematics';
+import { plural } from '../../electron/plural.mjs';
 
 export const normalizeProject = (p: ProjectSettings): ProjectSettings => {
   const joints = p.joints ? uniqueJointIds(p.joints) : p.joints;
@@ -46,7 +47,7 @@ export const isTextEntry = (el: Element | null) =>
 export const selectableIds = (parts: ScenePart[], showReferenceImages: boolean) =>
   parts.filter((p) => p.visible && (showReferenceImages || p.kind !== 'image_plane')).map((p) => p.id);
 
-export const partLabel = (parts: ScenePart[]) => (parts.length === 1 ? parts[0].name : `${parts.length} parts`);
+export const partLabel = (parts: ScenePart[]) => (parts.length === 1 ? parts[0].name : plural(parts.length, 'part'));
 
 export type Attempt<T> = { ok: true; value: T } | { ok: false; error: unknown };
 

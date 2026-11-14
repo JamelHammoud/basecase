@@ -2,6 +2,7 @@ import type { PoseReply } from '../agent/agentPose';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { agentWrapTarget } from '../wrap/wrapPlan';
 import type { WrapRobot } from './useWrapRobot';
+import { plural } from '../../electron/plural.mjs';
 
 export interface WrapRequestContext {
   parts: ScenePart[];
@@ -29,7 +30,7 @@ export async function wrapRobotRequest(
 
   return {
     text:
-      `Wrapped ${target.robot.name} in ${made.shells.length} shells, one per link: ${shells}. ` +
+      `Wrapped ${target.robot.name} in ${plural(made.shells.length, 'shell')}, one per link: ${shells}. ` +
       `${target.mesh.id} is hidden. Each shell is a printed part that moves with its link.`,
   };
 }

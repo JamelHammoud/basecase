@@ -85,7 +85,7 @@ function collapse(lines: ReportLine[]): ReportLine[] {
     {
       rank: lines[0].rank,
       code: lines[0].code,
-      text: `${lines[0].text} ${lines[1].text} The same for ${plural(rest, 'more group')} (${ids.length} screws in all).`,
+      text: `${lines[0].text} ${lines[1].text} The same for ${plural(rest, 'more group')} (${plural(ids.length, 'screw')} in all).`,
       ids,
     },
   ];

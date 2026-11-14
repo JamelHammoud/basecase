@@ -1,4 +1,5 @@
 import { MAX_PROMPT_IMAGES } from './constants.mjs';
+import { plural } from '../plural.mjs';
 
 const EVIDENCE_INSTRUCTION =
   'The user attached evidence files. Study ALL of them with read_evidence before you plan: every image, every text file and every mesh summary.';
@@ -53,7 +54,7 @@ function promptLines({ payload, imageCount, refNames, folders }) {
   const lines = [openingLine(payload, imageCount + folders.length)];
 
   if (imageCount > 1)
-    lines.push(`(${imageCount} reference images of the same object, from different angles or details.)`);
+    lines.push(`(${plural(imageCount, 'reference image')} of the same object, from different angles or details.)`);
 
   if (refNames.length) {
     lines.push(

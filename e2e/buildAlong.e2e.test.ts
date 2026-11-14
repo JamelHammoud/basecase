@@ -185,6 +185,12 @@ describe('Parts on hand', () => {
     const total = bom.getByText(/^≈?\s*\$[\d,]+\.\d\d$/).first();
     const servos = bom.locator('li ul > li').filter({ hasText: 'Feetech STS3215' });
     const price = () => servos.first().getByRole('button').last();
+    const onHand = app.page.getByRole('textbox', { name: 'On hand' });
+    const setOnHand = async (shownQty: string, count: string) => {
+      await servos.first().getByRole('button', { name: shownQty }).click();
+      await onHand.fill(count);
+      await onHand.press('Enter');
+    };
 
     await studioLoad(app.page, so101());
     await app.page.locator(shown('[role=tab]'), { hasText: 'Build' }).first().click();
@@ -202,15 +208,13 @@ describe('Parts on hand', () => {
     const servoUsd = dollars(await price().textContent());
 
     expect(servoUsd).toBeGreaterThan(0);
-    await servos.first().getByRole('button', { name: '6×' }).click();
-    await app.page.getByRole('textbox', { name: 'On hand' }).fill('6');
-    await app.page.getByRole('textbox', { name: 'On hand' }).press('Enter');
+    await setOnHand('6×', '6');
     await expect.poll(() => servos.first().innerText(), { timeout: 10000 }).toMatch(/^0×[\s\S]*6 on hand/);
     await expect.poll(async () => dollars(await total.textContent())).toBeCloseTo(before - servoUsd, 2);
     expect(dollars(await price().textContent())).toBe(0);
 
     await app.page.keyboard.press('Escape');
-    await app.page.getByRole('status').getByRole('button', { name: 'Undo' }).click();
+    await setOnHand('0×', '0');
     await expect.poll(() => servos.first().innerText(), { timeout: 10000 }).toMatch(/^6×/);
     await expect.poll(async () => dollars(await total.textContent())).toBeCloseTo(before, 2);
     expect(app.errors).toEqual([]);

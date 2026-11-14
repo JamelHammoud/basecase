@@ -66,6 +66,7 @@ export interface EngineOptions {
   buildLabels: () => HTMLElement | null;
   ghostLabel: () => HTMLElement | null;
   frameLabel: () => HTMLElement | null;
+  attribution: () => HTMLElement | null;
   ui: ViewportUi;
   props: ViewportProps;
   meshVersion: number;
@@ -146,6 +147,7 @@ export class ViewportEngine {
     this.overlays = new StageOverlays(this.ctx, options.props, {
       ghost: options.ghostLabel,
       frame: options.frameLabel,
+      attribution: options.attribution,
     });
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
     this.buildStep = new BuildStepLayer(this.ctx, options.buildLabels);

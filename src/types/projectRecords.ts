@@ -1,3 +1,4 @@
+import type { EarthOrigin } from '../earth/earthOrigin';
 import type { InterfacePlan } from './interfaces';
 import type { RobotSkeleton } from './skeleton';
 
@@ -23,4 +24,5 @@ export interface ProjectRecords {
   leads?: LeaderLink;
   skeleton?: RobotSkeleton;
   interfaces?: InterfacePlan;
+  earth?: EarthOrigin;
 }

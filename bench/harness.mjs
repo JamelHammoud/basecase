@@ -254,7 +254,7 @@ export async function openStudio({ label, port, env = {}, givenApp, source, log 
 
   page.on('pageerror', (e) => log('page error', e.message));
   page.on('crash', () => log('PAGE CRASHED (out of memory?) — the model is lost'));
-  await page.goto(base);
+  await page.goto(base, { waitUntil: 'commit' });
   await waitFor(() => page.evaluate(() => !!window.__studio), 180000, 'app');
 
   const onEvent = { current: null };

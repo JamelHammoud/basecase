@@ -49,7 +49,7 @@
 | — | [Benchmark](docs/guide/bench.md) | `bench/`, scoring, micro-evals |
 | 10 | [Annotations](docs/guide/annotations.md) | comments in 3D |
 | 11 | [Menus and shortcuts](docs/guide/menus-and-shortcuts.md) | right-click menus, ⌘K, shortcuts, copy and paste |
-| 12 | [3D canvas](docs/guide/canvas.md) | lighting, the grid, edges, selection outline, cursors, zoom, gizmo |
+| 12 | [3D canvas](docs/guide/canvas.md) | lighting, the grid, edges, selection outline, cursors, zoom, gizmo, the Earth layer (`src/earth/`, `electron/earth/`) |
 | 14 | [Design system](docs/guide/design-system.md) | `src/design-system` primitives and icons |
 
 Plans and research live beside them in `docs/` ([Robotics loop](docs/Robotics%20loop.md), [Performance plan](docs/Performance%20plan.md), [Print plan](docs/Print%20plan.md), [Windows plan](docs/Windows%20plan.md)); engineering facts kept from removed code comments are in `docs/notes/`.

@@ -1,5 +1,6 @@
 import { useArmSizing } from './useArmSizing';
 import { useCadTune } from './useCadTune';
+import { useEarthPlace } from './useEarthPlace';
 import { useExportActions } from './useExportActions';
 import { useFileImport } from './useFileImport';
 import { useFixedCameras } from './useFixedCameras';
@@ -36,6 +37,12 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     viewportRef: core.viewportRef,
     showToast: core.showToast,
   });
+  const earth = useEarthPlace({
+    project: core.project,
+    updateProjectNow: core.docs.updateProjectNow,
+    openSettings: core.studio.openSettings,
+    showToast: core.showToast,
+  });
 
   return {
     pose,
@@ -49,6 +56,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     library,
     exports,
     cameras,
+    earth,
     joints,
     wrap,
     onshape,

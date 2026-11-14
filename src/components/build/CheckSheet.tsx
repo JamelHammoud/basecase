@@ -30,7 +30,7 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
   </label>
 );
 
-const needed = (line: BomLine) => (line.unit === 'g' ? `${line.qty.toLocaleString('en-US')} g` : line.qty);
+const needed = (line: BomLine) => (line.unit === 'g' ? `${line.qty.toLocaleString('en-US')} g` : line.toBuy);
 
 const ListingLink: React.FC<{ line: BomLine }> = ({ line }) => {
   const { url } = line;

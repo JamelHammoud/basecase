@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeSpec } from '../data/hardware';
 import type { ProjectSettings, Purchases, ScenePart } from '../types/robotics';
-import { bomText, buildBom, hardwareKey } from './bom';
+import { bomText, bomToCsv, bomToMarkdown, buildBom, hardwareKey } from './bom';
 import { lineUsd } from './budget';
 import { budgetRow } from './engineeringBudget';
 import { withOnHand, withPrice } from './purchases';
@@ -75,6 +75,17 @@ describe('parts on hand', () => {
 
   it('tells the agent what is owned and what is left to buy', () => {
     expect(bomText(owned, {})).toContain(`8× Feetech STS3215 7.4 V (C001) [${SERVO}] · 6 owned, 2 to buy`);
+  });
+
+  it('exports what is owned beside what is left to buy', () => {
+    const [head, ...rows] = bomToCsv(owned, {}).split('\n');
+    const cols = head.split(',');
+    const servo = rows.find((r) => r.includes('STS3215'))!.split(',');
+    const cell = (name: string) => servo[cols.indexOf(name)];
+
+    expect([cell('Qty Needed'), cell('On Hand'), cell('To Buy'), cell('Packs to Buy')]).toEqual(['8', '6', '2', '2']);
+    expect(bomToMarkdown(owned, 'Arm')).toContain('| 2 to buy, 6 on hand | 2 |');
+    expect(bomToMarkdown(none, 'Arm')).toMatch(/STS3215[^|]*\| 8 \| 8 \|/);
   });
 
   it('lowers the Budget check by the owned units', () => {

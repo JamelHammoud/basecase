@@ -10,6 +10,8 @@ const csvHead = (code: string) => [
   'Category',
   'Maker / Spec',
   'Qty Needed',
+  'On Hand',
+  'To Buy',
   'Unit',
   'Pack Qty',
   'Packs to Buy',
@@ -56,6 +58,8 @@ const csvRow = (l: BomLine, partNames: Record<string, string>, money: Money) => 
   l.category,
   l.detail,
   l.qty,
+  l.onHand,
+  l.toBuy,
   l.unit,
   l.record?.packQty ?? (l.category === 'Filament' ? 1000 : ''),
   l.packs ?? '',
@@ -101,8 +105,14 @@ function markdownPrice(l: BomLine, money: Money): string {
   return l.estUsd !== undefined ? `~${money.format(l.estUsd)} ([list](${l.estimate!.url}))` : '';
 }
 
+function markdownQty(l: BomLine): string {
+  if (l.unit === 'g') return `${l.qty} g`;
+
+  return l.onHand ? `${l.toBuy} to buy, ${l.onHand} on hand` : String(l.qty);
+}
+
 function markdownRow(l: BomLine, money: Money): string {
-  const qty = l.unit === 'g' ? `${l.qty} g` : String(l.qty);
+  const qty = markdownQty(l);
   const link = l.url ? `[${l.urlKind === 'product' ? 'Listing' : 'Search'}](${l.url})` : '';
   const name = `${l.name}${l.detail ? ` <br>${l.detail}` : ''}${l.warning ? ` <br>⚠ ${l.warning}` : ''}`;
   const checked = l.record ? `${l.record.checkedAt}${l.status === 'stale' ? ' (stale)' : ''}` : 'Not checked';

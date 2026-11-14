@@ -1,4 +1,4 @@
-const MAX_ON_HAND = 100_000;
+export const MAX_ON_HAND = 100_000;
 
 const isOnHand = (n) => Number.isInteger(n) && n >= 0 && n <= MAX_ON_HAND;
 
@@ -7,7 +7,8 @@ export function storedPurchase(record, today) {
 
   const { onHand, ...price } = record;
 
-  if (onHand !== undefined && !isOnHand(onHand)) throw new Error('On hand must be a whole number from 0 to 100,000');
+  if (onHand !== undefined && !isOnHand(onHand))
+    throw new Error(`On hand must be a whole number from 0 to ${MAX_ON_HAND.toLocaleString('en-US')}`);
 
   const count = onHand ? { onHand } : {};
 

@@ -29,6 +29,7 @@ covers:
   - src/components/build/QtyEditor.tsx
   - src/components/PartDetails.tsx
   - src/utils/bomNeeds.ts
+  - src/utils/bomFormat.ts
 ---
 
 Fill an Amazon cart from the bill of materials, open the other stores' listings, add the supplies a build needs, and export the list.
@@ -49,7 +50,7 @@ The cart counts packs from the price you checked. Six servos sold in pairs go in
 
 Other stores take no shared cart, so their lines open one listing at a time. A line with no store link keeps its own link: hover it and click the link at its right end for an Amazon search.
 
-Basecase saves `<scene>-bom.csv` or `<scene>-bom.md` to your downloads, to order from in any store.
+Basecase saves `<scene>-bom.csv` or `<scene>-bom.md` to your downloads, to order from in any store. A line with parts you own lists how many are on hand beside how many to buy.
 
 Some lines arrive on their own. A battery brings a switch, fuse, connector, wire and charger, and servos bring their cables. Filament comes from the printed parts, in grams, so it isn't in the **+** menu.
 

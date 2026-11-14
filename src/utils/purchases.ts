@@ -1,6 +1,6 @@
 import type { PurchaseRecord, StoredPurchase } from '../types/robotics';
 
-export const MAX_ON_HAND = 100_000;
+export { MAX_ON_HAND } from '../../electron/purchaseRecord.mjs';
 
 export const pricedRecord = (stored: StoredPurchase | undefined): PurchaseRecord | undefined =>
   stored && 'priceUsd' in stored ? stored : undefined;

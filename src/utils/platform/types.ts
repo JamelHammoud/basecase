@@ -1,5 +1,7 @@
 import type { SourcedItem } from '../../data/sourcedItems';
-import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState } from '../../robot/robotState';
+import type { PairReply, PhoneEvent, PhoneState } from '../../phone/phoneTypes';
+import type { RobotPolicyRef } from '../../robot/robotPolicy';
+import type { ConnectReply, ConnectSpec, RobotEvent, RobotLinkState, RobotMount } from '../../robot/robotState';
 import type { CadAudit, CadPort } from '../../types/cadAudit';
 import {
   AcpChatMessage,
@@ -7,7 +9,8 @@ import {
   AgentConversation,
   AgentConversationSummary,
   CustomModelDefinition,
-  PurchaseRecord,
+  Purchases,
+  StoredPurchase,
   ReferenceImageRecord,
   SavedSceneRecord,
   SavedSceneSummary,
@@ -56,7 +59,6 @@ export interface RenderedCad {
 export interface AcpPromptPayload {
   action: 'image-to-3d' | 'generate-part' | 'build';
   workspaceId?: string;
-  targetHeightMm?: number;
   model?: string;
   effort?: string;
   imageDataUrls?: string[];
@@ -85,6 +87,18 @@ export interface LiveRun {
   stopReason?: string;
   error?: string;
   entries: LiveRunEntry[];
+}
+
+export interface SnapshotRef {
+  run: string;
+  iteration: number;
+  skill?: string;
+}
+
+export interface KeptSnapshot {
+  run: string;
+  iteration: number;
+  steps: number;
 }
 
 export interface TrainerStatus {
@@ -171,7 +185,7 @@ declare global {
       saveEvidenceFile: (payload: EvidenceFilePayload) => Promise<{ ok: boolean; path: string }>;
       resumeAcp: (sessionId: string, workspaceId?: string) => Promise<AcpStatusInfo>;
       listChats: () => Promise<AgentConversationSummary[]>;
-      listPurchases: () => Promise<Record<string, PurchaseRecord>>;
+      listPurchases: () => Promise<Purchases>;
       trainStatus: () => Promise<TrainerStatus>;
       simreadyStatus: () => Promise<SimReadyStatus>;
       simreadyFetch: (payload: { url: string; requestId: string }) => Promise<SimReadyFetched>;
@@ -184,6 +198,8 @@ declare global {
       getSkill: (hash: string) => Promise<unknown>;
       getPolicy: (id: string) => Promise<unknown>;
       deletePolicy: (id: string) => Promise<boolean>;
+      getSnapshot: (ref: SnapshotRef) => Promise<unknown>;
+      keepSnapshots: (payload: { hash: string; snapshots: KeptSnapshot[] }) => Promise<KeptSnapshot[]>;
       listSourced: () => Promise<SourcedItem[]>;
       saveSourced: (payload: unknown) => Promise<SourcedItem>;
       removeSourced: (id: string) => Promise<SourcedItem[]>;
@@ -193,10 +209,7 @@ declare global {
       exportStep: (job: StepJob) => Promise<ExportedStep>;
       tuneCadPart: (payload: CadTuneRequest) => Promise<CadTuneAnswer>;
       renderCad: (payload: { language: CadLanguage; code: string }) => Promise<Uint8Array>;
-      savePurchase: (payload: {
-        key: string;
-        record: PurchaseRecord | null;
-      }) => Promise<Record<string, PurchaseRecord>>;
+      savePurchase: (payload: { key: string; record: StoredPurchase | null }) => Promise<Purchases>;
       getChat: (id: string) => Promise<AgentConversation | null>;
       saveChat: (conv: AgentConversation) => Promise<AgentConversationSummary[]>;
       deleteChat: (id: string) => Promise<AgentConversationSummary[]>;
@@ -217,7 +230,7 @@ declare global {
       listImages: () => Promise<ReferenceImageRecord[]>;
       listModels: () => Promise<CustomModelDefinition[]>;
       saveModel: (modelDef: CustomModelDefinition) => Promise<CustomModelDefinition>;
-      deleteModel: (modelId: string) => Promise<CustomModelDefinition[]>;
+      deleteModel: (modelId: string) => Promise<{ ok: boolean }>;
       listScenes: () => Promise<SavedSceneSummary[]>;
       getScene: (sceneId: string) => Promise<SavedSceneRecord | null>;
       saveScenePreview: (payload: ScenePreviewPayload) => Promise<SavedSceneSummary | null>;
@@ -237,8 +250,14 @@ declare global {
       robotConnect?: (spec: ConnectSpec) => Promise<ConnectReply>;
       robotCommand?: (command: Record<string, unknown>) => Promise<ConnectReply>;
       robotDisconnect?: () => Promise<ConnectReply>;
+      robotPolicy?: (refs: RobotPolicyRef[]) => Promise<ConnectReply>;
+      robotCalibrate?: (joints: RobotMount[]) => Promise<ConnectReply>;
       robotState?: () => Promise<RobotLinkState>;
       onRobotEvent?: (callback: (event: RobotEvent) => void) => () => void;
+      phonePair?: () => Promise<PairReply>;
+      phoneUnpair?: () => Promise<{ ok: boolean }>;
+      phoneState?: () => Promise<PhoneState>;
+      onPhoneEvent?: (callback: (event: PhoneEvent) => void) => () => void;
       setMenuState: (state: Partial<AppMenuState>) => void;
       onMenuCommand: (callback: (id: string) => void) => () => void;
     };

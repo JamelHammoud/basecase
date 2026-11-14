@@ -1,13 +1,10 @@
+import { duration } from '../utils/duration';
 import { findNode } from './nodes';
 import type { Condition, Reaction, Routine, Step } from './schema';
 
 const quote = (text: string) => `“${text}”`;
 
-function duration(ms: number): string {
-  if (ms >= 60_000) return `${Math.round(ms / 60_000)} min`;
-
-  return `${Math.round(ms / 100) / 10} s`;
-}
+export const span = (ms: number) => (ms < 60_000 ? `${ms / 1000} s` : duration(ms / 1000));
 
 export function describeCondition(cond: Condition): string {
   if ('all' in cond) return cond.all.map(describeCondition).join(' and ');
@@ -22,7 +19,7 @@ export function describeCondition(cond: Condition): string {
 
   if (cond.is === true) return `${cond.fact} is seen`;
 
-  if (cond.is === false) return `${cond.fact} isn't seen`;
+  if (cond.is === false) return `${cond.fact} isn’t seen`;
 
   return `${cond.fact} is ${cond.is}`;
 }
@@ -33,7 +30,7 @@ function describeSteps(steps: Step[]): string {
 
 function failure(step: Extract<Step, { timeoutMs: number }>): string {
   const parts = [
-    step.onTimeout.length ? `if it takes over ${duration(step.timeoutMs)}, ${describeSteps(step.onTimeout)}` : '',
+    step.onTimeout.length ? `if it takes over ${span(step.timeoutMs)}, ${describeSteps(step.onTimeout)}` : '',
     step.onFail.length ? `if it fails, ${describeSteps(step.onFail)}` : '',
   ].filter(Boolean);
 
@@ -61,7 +58,7 @@ function describeStep(step: Step): string {
     case 'ask':
       return `ask ${quote(step.prompt)} (${step.answers.join(' or ')})${failure(step)}`;
     case 'wait':
-      return `wait ${step.until ? `until ${describeCondition(step.until)}` : duration(step.ms ?? 0)}`;
+      return `wait ${step.until ? `until ${describeCondition(step.until)}` : span(step.ms ?? 0)}`;
     case 'if':
       return [
         `if ${describeCondition(step.test)}, ${describeSteps(step.then) || 'carry on'}`,
@@ -76,7 +73,7 @@ function describeStep(step: Step): string {
 
 function describeReaction(r: Reaction): string {
   const body = r.body === 'stopFirst' ? 'stop first, then ' : '';
-  const rest = r.cooldownMs > 0 ? ` Waits ${duration(r.cooldownMs)} before doing it again.` : '';
+  const rest = r.cooldownMs > 0 ? ` Waits ${span(r.cooldownMs)} before doing it again.` : '';
 
   return `When ${describeCondition(r.when)}: ${body}${describeSteps(r.steps)}.${rest}`;
 }
@@ -86,7 +83,7 @@ export function describeRoutine(routine: Routine): string[] {
   const ending = base.onTimeout.length ? `, then ${describeSteps(base.onTimeout)}` : '';
 
   return [
-    `Keeps doing ${base.skill} for up to ${duration(base.timeoutMs)}${ending}, then stops with ${routine.safeStop}.`,
+    `Keeps doing ${base.skill} for up to ${span(base.timeoutMs)}${ending}, then stops with ${routine.safeStop}.`,
     ...routine.watchers.map((w) => `Watches for ${w.id} ${w.rateHz} times a second.`),
     ...routine.reactions.map(describeReaction),
   ];

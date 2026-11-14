@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { cameraShots, type CameraShot } from '../cameras/cameraShots';
 import type { FixedCamera } from '../cameras/fixed';
 import { robotFacts } from '../cases/robotFit';
+import { angle } from '../utils/angle';
 import { isCameraPart } from '../routines/capabilities';
 import { simDeltas } from '../sim/mjcfFrames';
 import type { DriveCommand } from '../sim/driveTypes';
@@ -10,6 +11,7 @@ import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import { toCad, toScene } from './agentFrame';
+import { duration, runClock } from '../utils/duration';
 
 export interface OperateAction {
   forward?: number;
@@ -82,9 +84,7 @@ function stateLine(ctx: OperateContext, poses: Float64Array | null): string {
   const lines: string[] = [];
 
   if (robot)
-    lines.push(
-      robot.fellAt !== null ? `Fell at ${robot.fellAt.toFixed(1)} s.` : `Upright, tilt ${robot.tilt.toFixed(0)}°.`,
-    );
+    lines.push(robot.fellAt !== null ? `Fell at ${runClock(robot.fellAt)}.` : `Upright, tilt ${angle(robot.tilt)}.`);
 
   const facts = robotFacts(ctx.rig, ctx.parts);
   const model = ctx.sim.model;
@@ -157,9 +157,7 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
   const calibration = (await ctx.calibrationErrors?.().catch(() => '')) ?? '';
 
   return {
-    text: [`Ran ${seconds.toFixed(1)} s.`, stateLine(ctx, poses), missing.trim(), calibration]
-      .filter(Boolean)
-      .join(' '),
+    text: [`Ran ${duration(seconds)}.`, stateLine(ctx, poses), missing.trim(), calibration].filter(Boolean).join(' '),
     images: seen.shots,
   };
 }

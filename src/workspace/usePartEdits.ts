@@ -3,6 +3,7 @@ import type { HardwareSpec } from '../data/hardware';
 import type { PartPlacement, PartTransformUpdate } from '../three/viewport/types';
 import type { PartRole, ScenePart, SculptMeshData } from '../types/robotics';
 import { alignParts, distributeParts, type AlignMode, type Axis } from '../utils/selection';
+import { plural } from '../../electron/plural.mjs';
 import { newId } from './helpers';
 import { dropToFloor, moveSelectionTo, rotateQuarterTurn, stackedPosition, withHardware } from './partTransforms';
 import type { CommitParts, Vec3 } from './types';
@@ -42,21 +43,26 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
         () => ({ group: next }),
       ),
     );
-    showToast(`Grouped ${ids.size} parts`);
+    showToast(`Grouped ${plural(ids.size, 'part')}`);
   };
 
   const ungroup = () => {
-    const groupIds = new Set(selection.selectedParts.map((p) => p.group?.id).filter(Boolean));
+    const groups = new Map(
+      selection.selectedParts.flatMap((p) => (p.group ? [[p.group.id, p.group.name] as const] : [])),
+    );
 
-    if (groupIds.size === 0) return;
+    if (groups.size === 0) return;
 
     commitParts(
       patchWhere(
-        (p) => !!p.group && groupIds.has(p.group.id),
+        (p) => !!p.group && groups.has(p.group.id),
         () => ({ group: undefined }),
       ),
     );
-    showToast('Ungrouped');
+
+    const [only] = groups.values();
+
+    showToast(`Ungrouped ${groups.size === 1 ? only : plural(groups.size, 'group')}`);
   };
 
   const renameGroup = (groupId: string, name: string) =>
@@ -109,6 +115,9 @@ function useSelectionMoves({ docs, selectedIds, selection, parts }: WorkspaceCor
     if (part) updateSelectedPart({ position: stackedPosition(part, parts) });
   };
 
+  const moveSelection = (target: Partial<Record<Axis, number>>, live?: boolean) =>
+    commitParts((prev) => moveSelectionTo(prev, new Set(selectedIds), target, live), live);
+
   return {
     updateSelectedPart,
     align,
@@ -116,8 +125,8 @@ function useSelectionMoves({ docs, selectedIds, selection, parts }: WorkspaceCor
     dropToGround,
     stackOnBelow,
     rotateSelection: (axis: Axis) => commitParts((prev) => rotateQuarterTurn(prev, new Set(selectedIds), axis)),
-    moveSelection: (target: Partial<Record<Axis, number>>, live?: boolean) =>
-      commitParts((prev) => moveSelectionTo(prev, new Set(selectedIds), target, live), live),
+    moveSelection,
+    centerOnOrigin: () => moveSelection({ 0: 0, 2: 0 }),
   };
 }
 

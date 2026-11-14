@@ -20,8 +20,10 @@ related:
   - the-motor-lock-and-safety-ladder
 covers:
   - src/components/operate/OperatePanel.tsx
+  - src/components/operate/RobotHeader.tsx
   - src/components/operate/RobotJoints.tsx
   - src/components/operate/RobotMessages.tsx
+  - src/robot/intentMirror.ts
   - src/components/operate/JointRow.tsx
   - src/robot/jointRows.ts
   - src/robot/robotState.ts
@@ -42,10 +44,10 @@ The first line names the servos, such as "2 emulated Feetech servos", then the m
 | Motor state | What it means |
 |---|---|
 | Motors off | No motor is powered |
-| Starting motors | Torque is ramping up from 5% over 1 second |
+| Starting motors… | Torque is ramping up from 5% over 1 second |
 | Motors running | Motors follow the app's commands |
 | Rehearsing, motors off | A policy runs with no motor writes |
-| Stopping | The robot is coming to rest |
+| Stopping… | The robot is coming to rest |
 | Stopped | The robot has stopped, and takes no more commands until you go back to **Look** |
 
 **Stop** shows while motors run. **Clear Fault** shows in **Look** while a fault is active.
@@ -56,15 +58,15 @@ Under **Emulated servos**, each joint has one row with its name and bus ID. IDs 
 
 | Reading | What it means |
 |---|---|
-| An angle, such as 12.5° | The servo's position; 0° is its centre, count 2048 of 4096 |
+| An angle, such as 12.5° | The joint's position; 0° is its zero, count 2048 of 4096 until **Calibrate Servos** finds it |
 | A temperature, such as 30 °C | The servo's temperature; it's switched off at 50 °C |
-| No reply | The servo didn't answer this reading |
+| No reply | The servo didn't answer this reading, or its motor isn't a Feetech or Dynamixel servo, such as the DS3218, so the daemon can't read it |
 | Garbled reply | The servo's answer was corrupted |
 | Wrong ID answered | Another servo answered for this one |
 
 ## Messages from the daemon
 
-The newest six messages show under the first line, each labelled by kind: **Stopped by a fault**, **Refused**, **Stopped** or **Daemon lost**. A new connection clears them.
+The newest six messages show under the first line, each labeled by kind: **Stopped by a fault**, **Refused**, **Stopped** or **Daemon lost**. A new connection clears them.
 
 When the daemon refuses a rung:
 
@@ -74,7 +76,7 @@ When the daemon refuses a rung:
 | "A fault is still active. Go back to Look and clear it first." | A fault is latched |
 | "Check the servos first: every servo must answer with the right model." | **Set Up** hasn't passed |
 | "Calibrate the robot first." | There's no calibration |
-| "Load a policy first." | The daemon has no policy; Basecase doesn't load one |
+| "Load a policy first." | The scene has no ready skill or up-to-date policy |
 | "Test every joint with the current calibration first." | **Test** hasn't finished with this calibration |
 | "Rehearse the current policy first." | **Rehearse** hasn't finished with this policy |
 
@@ -89,6 +91,8 @@ When a fault stops the robot, the message names the servo or joint, such as:
 | "The servo 2 joint is outside its calibrated range, so the motors stay off. Move it back by hand, then start again." | Every motor |
 | "The app stopped talking to the robot, so the robot is holding still." | The robot holds |
 | "Commands stopped arriving, so the robot is holding still." | The robot holds |
+
+On an arm, a fault that stops the robot has **Replay in Sim** under it, which plays the 20 seconds before it in the simulation: [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation). From a fault until you climb the **Ladder** again, the simulation sends the robot no commands.
 
 When the daemon itself exits without being asked, **Daemon lost** shows "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."
 

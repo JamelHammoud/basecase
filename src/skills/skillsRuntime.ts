@@ -1,20 +1,41 @@
+import type { HandoffResult } from '../routines/handoffTraining';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation } from '../types/robotics';
 import type { Skill } from './artifacts';
 import type { ForgeRunner, SkillSave } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
+import type { KitWarm } from './motorKit';
+import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
 import type { RaceOutcome } from './race';
 import type { SkillRunner } from './skillsClient';
-import { moveTag, recordEnvironment, skillRecord, type SkillRecord } from './skillRecords';
-import { KIT_LABELS, type SkillJob, type SkillTarget } from './skillRows';
+import type { SkillPorts, SkillsJob } from './skillsJob';
+import { SkillCoach } from './skillsCoach';
+import { moveTag, recordEnvironment, refusedLine, skillRecord, type SkillRecord } from './skillRecords';
+import { KIT_LABELS, refusalModel, type SkillJob, type SkillRefusal, type SkillTarget } from './skillRows';
+import {
+  NO_SNAPSHOT_STORE,
+  NO_SNAPSHOTS,
+  trailRefs,
+  withSnapshot,
+  type SnapshotRef,
+  type Snapshots,
+  type SnapshotTrail,
+} from './snapshots';
 import type { DraftInput, DraftReport, DraftResult } from './teach';
 import { raceSummary } from './teach';
 import type { ForgeProgress } from './trainerForge';
+import type { Environment } from './environment';
+import { runTries, type TriesPlan } from './triesRun';
 
-export interface ForgeFactory {
-  (options: { background: boolean; onProgress: (p: ForgeProgress) => void; signal: AbortSignal }): ForgeRunner;
+export interface ForgeFactoryOptions {
+  background: boolean;
+  onProgress: (p: ForgeProgress) => void;
+  onSnapshot?: (ref: SnapshotRef) => void;
+  signal: AbortSignal;
 }
+
+export type ForgeFactory = (options: ForgeFactoryOptions) => ForgeRunner;
 
 export interface RuntimeDeps {
   runner: SkillRunner;
@@ -23,6 +44,13 @@ export interface RuntimeDeps {
   loadSkill: (hash: string) => Promise<Skill | null>;
   onRecord: (record: SkillRecord) => void;
   onChange: (jobs: SkillJob[]) => void;
+  onRefused?: (target: SkillTarget, refusal: SkillRefusal | null) => void;
+  snapshots?: Snapshots;
+}
+
+export interface KitInstall {
+  entry: TrainedEntry;
+  warm: KitWarm;
 }
 
 export interface RaceReport {
@@ -41,6 +69,8 @@ interface Run {
 
 export const designOf = (model: SimModel) => model.robots[0]?.key ?? 'scene';
 
+const refused = (reason: string): HandoffResult => ({ skill: null, proof: null, reason });
+
 const BUSY = 'Training is running. Check list_skills, or wait for it to finish.';
 
 export class SkillsRuntime {
@@ -48,14 +78,39 @@ export class SkillsRuntime {
   lastRace: RaceReport | null = null;
   private drafts = new Map<string, DraftReport>();
   private user: AbortController | null = null;
+  private userLabel = '';
   private running: Promise<void> = Promise.resolve();
   private background: AbortController | null = null;
   private pending: { model: SimModel; tasks: BackgroundTask[] } | null = null;
+  private trails = new Map<SkillTarget, SnapshotTrail>();
 
   private deps: RuntimeDeps;
+  readonly coach: SkillCoach;
 
   constructor(deps: RuntimeDeps) {
     this.deps = deps;
+    this.coach = new SkillCoach({
+      runner: deps.runner,
+      ports: () => this.ports(),
+      startJob: (row, work) => this.startJob(row, work),
+      keep: (target, record) => this.keep(target, record),
+    });
+  }
+
+  loadSkill(hash: string) {
+    return this.deps.loadSkill(hash);
+  }
+
+  startJob(row: { target: SkillTarget; label: string }, work: (ports: SkillPorts) => Promise<void>): string | null {
+    if (this.user) return BUSY;
+
+    this.running = this.start({
+      ...row,
+      background: false,
+      work: (forge, signal) => work({ ...this.ports(), forge, signal }),
+    });
+
+    return null;
   }
 
   get busy() {
@@ -87,6 +142,21 @@ export class SkillsRuntime {
     return null;
   }
 
+  installKit(model: SimModel, install: KitInstall): string | null {
+    if (this.user) return BUSY;
+
+    const { entry, warm } = install;
+
+    this.running = this.start({
+      target: `kit:${entry}`,
+      label: KIT_LABELS[entry],
+      background: false,
+      work: (forge, signal) => this.kitWork(model, entry, { forge, signal, warm }),
+    });
+
+    return null;
+  }
+
   trainMove(model: SimModel, animation: RobotAnimation): string | null {
     if (this.user) return BUSY;
 
@@ -113,8 +183,65 @@ export class SkillsRuntime {
     return null;
   }
 
-  replaceForge(forge: ForgeFactory) {
-    this.deps = { ...this.deps, forge };
+  learnFromTries(plan: TriesPlan): string | null {
+    if (this.user) return BUSY;
+
+    this.running = this.start({
+      target: `goal:${plan.kase.name}`,
+      label: plan.kase.name,
+      background: false,
+      work: (forge) =>
+        runTries(plan, {
+          forge,
+          design: designOf(plan.model),
+          save: this.deps.save,
+          onRecord: this.deps.onRecord,
+        }).catch((e: unknown) => plan.done({ runs: null, kept: false, problem: errorMessage(e) })),
+    });
+
+    return null;
+  }
+
+  async trainHandoff(
+    job: Omit<Extract<SkillsJob, { type: 'handoff' }>, 'type'>,
+    row: { target: SkillTarget; label: string },
+  ): Promise<HandoffResult | null> {
+    if (this.user) return refused(`${this.userLabel} is training.`);
+
+    let result: HandoffResult | null = null;
+
+    this.running = this.start({
+      ...row,
+      background: false,
+      work: async (forge, signal) => {
+        try {
+          const reply = await this.deps.runner({ type: 'handoff', ...job }, { ...this.ports(), forge, signal });
+
+          result = reply.result;
+        } catch (error) {
+          if (!signal.aborted) result = refused(errorMessage(error));
+
+          throw error;
+        }
+      },
+    });
+    await this.running;
+
+    return result;
+  }
+
+  replaceForge(forge: ForgeFactory, snapshots?: Snapshots) {
+    this.deps = { ...this.deps, forge, ...(snapshots ? { snapshots } : {}) };
+  }
+
+  loadSnapshot(ref: SnapshotRef, skill?: string) {
+    return (this.deps.snapshots ?? NO_SNAPSHOT_STORE).load(ref, skill);
+  }
+
+  environmentOf(target: SkillTarget): Environment | null {
+    const report = [...this.drafts.values()].find((r) => `goal:${r.draft.name}` === target);
+
+    return report?.draft.environment ?? null;
   }
 
   race(model: SimModel, draftId: string, budgetSteps?: number): string | null {
@@ -136,7 +263,7 @@ export class SkillsRuntime {
           { ...this.ports(), forge, signal },
         );
 
-        this.finishRace(report, reply.outcome);
+        await this.finishRace(report, reply.outcome);
       },
     });
 
@@ -169,11 +296,19 @@ export class SkillsRuntime {
     return { forge: failForge, save: this.deps.save };
   }
 
-  private finishRace(report: DraftReport, outcome: RaceOutcome) {
+  private async keep(target: SkillTarget, record: SkillRecord) {
+    const refs = trailRefs(this.trails.get(target) ?? NO_SNAPSHOTS);
+    const kept = refs.length ? await (this.deps.snapshots ?? NO_SNAPSHOT_STORE).keep(record.hash, refs) : [];
+
+    this.deps.onRecord(kept.length ? { ...record, snapshots: kept } : record);
+  }
+
+  private async finishRace(report: DraftReport, outcome: RaceOutcome) {
     const { draft } = report;
 
     if (outcome.kind === 'skill')
-      this.deps.onRecord(
+      await this.keep(
+        `goal:${draft.name}`,
         skillRecord(outcome.skill, { kit: null, goal: draft.request, environment: draft.environment }),
       );
 
@@ -185,13 +320,22 @@ export class SkillsRuntime {
     };
   }
 
-  private async kitWork(model: SimModel, entry: TrainedEntry, ports: { forge: ForgeRunner; signal: AbortSignal }) {
+  private async kitWork(
+    model: SimModel,
+    entry: TrainedEntry,
+    ports: { forge: ForgeRunner; signal: AbortSignal; warm?: KitWarm },
+  ) {
+    const { warm, ...rest } = ports;
     const reply = await this.deps.runner(
-      { type: 'kit', model, design: designOf(model), entry },
-      { ...this.ports(), ...ports },
+      { type: 'kit', model, design: designOf(model), entry, ...(warm ? { warm } : {}) },
+      { ...this.ports(), ...rest },
     );
+    const { outcome } = reply;
 
-    if (reply.outcome.kind === 'skill') this.deps.onRecord(skillRecord(reply.outcome.skill, { kit: entry }));
+    if (outcome.kind === 'skill') return this.keep(`kit:${entry}`, skillRecord(outcome.skill, { kit: entry }));
+
+    if (outcome.evidence)
+      this.deps.onRefused?.(`kit:${entry}`, { line: refusedLine(outcome.evidence), model: refusalModel(model) });
   }
 
   private async moveWork(
@@ -206,7 +350,10 @@ export class SkillsRuntime {
     const { outcome, environment } = reply.outcome;
 
     if (outcome.kind === 'skill')
-      this.deps.onRecord(skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }));
+      await this.keep(
+        `move:${animation.id}`,
+        skillRecord(outcome.skill, { kit: null, move: moveTag(animation.id, environment) }),
+      );
   }
 
   private retrain(model: SimModel, task: BackgroundTask, ports: { forge: ForgeRunner; signal: AbortSignal }) {
@@ -228,7 +375,10 @@ export class SkillsRuntime {
 
     const move = task.move ? moveTag(task.move.id, environment) : undefined;
 
-    this.deps.onRecord(skillRecord(reply.skill, { kit: task.entry, move }));
+    await this.keep(
+      task.target,
+      skillRecord(reply.skill, { kit: task.entry, move, coach: task.record.coach ?? undefined }),
+    );
   }
 
   private setJob(target: SkillTarget, patch: Partial<SkillJob> | null) {
@@ -244,6 +394,10 @@ export class SkillsRuntime {
       background: run.background,
       signal,
       onProgress: (p) => this.setJob(run.target, { share: p.share, message: p.message }),
+      onSnapshot: (ref) => {
+        this.trails.set(run.target, withSnapshot(this.trails.get(run.target) ?? NO_SNAPSHOTS, ref));
+        this.setJob(run.target, { snapshot: ref });
+      },
     });
 
     return async (job) => {
@@ -262,7 +416,10 @@ export class SkillsRuntime {
 
     this.background?.abort();
     this.user = controller;
-    this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting' });
+    this.userLabel = run.label;
+    this.deps.onRefused?.(run.target, null);
+    this.trails.set(run.target, NO_SNAPSHOTS);
+    this.setJob(run.target, { label: run.label, background: false, share: null, message: 'Starting', snapshot: null });
 
     try {
       await run.work(this.forgeFor(run, controller.signal), controller.signal);
@@ -270,6 +427,7 @@ export class SkillsRuntime {
       controller.abort();
     } finally {
       this.user = null;
+      this.trails.delete(run.target);
       this.setJob(run.target, null);
       void this.drainBackground();
     }
@@ -291,7 +449,14 @@ export class SkillsRuntime {
       };
 
       this.background = controller;
-      this.setJob(run.target, { label: task.label, background: true, share: null, message: 'Starting' });
+      this.trails.set(run.target, NO_SNAPSHOTS);
+      this.setJob(run.target, {
+        label: task.label,
+        background: true,
+        share: null,
+        message: 'Starting',
+        snapshot: null,
+      });
 
       try {
         await run.work(this.forgeFor(run, controller.signal), controller.signal);
@@ -299,6 +464,7 @@ export class SkillsRuntime {
         controller.abort();
       }
 
+      this.trails.delete(run.target);
       this.setJob(run.target, null);
 
       if (controller.signal.aborted) return;

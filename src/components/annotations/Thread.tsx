@@ -177,7 +177,7 @@ export const Thread: React.FC<ThreadActions & { annotation: SceneAnnotation; num
       <div className="border-t border-white/[0.08]">
         <CommentComposer
           autoFocus
-          placeholder="Reply"
+          placeholder="e.g. Moved it 2 mm"
           onSubmit={(t) => onReply(a.id, t)}
           onEscape={() => onOpen(null)}
         />

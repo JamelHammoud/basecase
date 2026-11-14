@@ -5,10 +5,12 @@ import type { ScenePart } from '../types/robotics';
 import type { ZUpVec } from '../types/skeleton';
 import { dot, lineDistance, norm, sub } from '../utils/engineeringMath';
 import { r1, toCad } from './agentFrame';
+import { lengthLabel } from '../utils/size';
 import { partBoundsCad, type PartBoxes } from './agentScene';
 import { contractOf } from './interfaces';
 import { portsOf, worldPort } from './ports';
 import type { ZUpFrame } from './skeletonFrames';
+import { plural } from '../../electron/plural.mjs';
 
 export const DATUM_MM = 0.2;
 export const ENVELOPE_MM = 0.5;
@@ -75,11 +77,11 @@ function envelopeLines(
     const b = partBoundsCad(p, input.measured);
     const worst = Math.min(...contract.envelopes.map((box) => overshoot(b, box)));
 
-    return worst > ENVELOPE_MM ? [`${p.id} is ${r1(worst)} mm outside its envelope`] : [];
+    return worst > ENVELOPE_MM ? [`${p.id} is ${lengthLabel(worst)} outside its envelope`] : [];
   });
 
   if (outside.length) out.problems.push(...outside.map((l) => `Envelope: ${l}.`));
-  else out.passed.push(`envelope (${solids.length} parts)`);
+  else out.passed.push(`envelope (${plural(solids.length, 'part')})`);
 }
 
 function worldPorts(parts: ScenePart[]): WorldPortZ[] {
@@ -126,7 +128,7 @@ function datumMiss(d: InterfaceDatum, line: Line, best: { p: WorldPortZ; off: nu
 
   if (!best) return `Datum ${d.name}: no port lies parallel to the ${where}. Add one, or mate a part to it.`;
 
-  return `Datum ${d.name}: nearest port ${best.p.part}:${best.p.name} is ${r1(best.off)} mm off the ${where}.`;
+  return `Datum ${d.name}: nearest port ${best.p.part}:${best.p.name} is ${lengthLabel(best.off)} off the ${where}.`;
 }
 
 function chainLine(c: FastenerChain): Line {
@@ -150,8 +152,8 @@ function boltLines(contract: InterfaceContract, ports: WorldPortZ[], chains: Fas
     if (!missing.length) out.passed.push(`bolt pattern ${pattern.name} (${pattern.points.length} ${pattern.size})`);
     else
       out.problems.push(
-        `Bolt pattern ${pattern.name}: ${pattern.points.length - missing.length} of ${pattern.points.length} ` +
-          `${pattern.size} holes found; none at ${missing.map(fmt).join(', ')}.`,
+        `Bolt pattern ${pattern.name}: ${pattern.points.length - missing.length} of ${plural(pattern.points.length, `${pattern.size} hole`)} ` +
+          `found; none at ${missing.map(fmt).join(', ')}.`,
       );
   }
 }
@@ -170,7 +172,7 @@ function seamLines(contract: InterfaceContract, input: InterfaceCheckInput, out:
     if (crossing.length >= seam.count) out.passed.push(`seam with ${seam.with} (${crossing.length} ${seam.size})`);
     else
       out.problems.push(
-        `Seam with ${seam.with}: ${crossing.length} of ${seam.count} ${seam.size} screws cross it. Use fasten through both sides.`,
+        `Seam with ${seam.with} needs ${plural(seam.count, `${seam.size} screw`)} across it, and ${crossing.length} found. Use fasten through both sides.`,
       );
   }
 }
@@ -195,7 +197,7 @@ function ownershipLines(
 
   if (outside.length)
     out.problems.push(
-      `Ownership: edited ${outside.join(', ')}, which ${contract.owner} doesn't own. Undo those edits, or ask the lead to move them into this contract.`,
+      `Ownership: edited ${outside.join(', ')}, which ${contract.owner} doesn’t own. Undo those edits, or ask the lead to move them into this contract.`,
     );
   else out.passed.push(seams.length ? `ownership (holes cut across seams in ${seams.join(', ')})` : 'ownership');
 }
@@ -230,7 +232,7 @@ export function checkInterfaces(input: InterfaceCheckInput): InterfaceCheck | st
 export function interfaceText(owner: string, check: InterfaceCheck): string {
   const head = check.pass
     ? `Interfaces for ${owner}: pass. You can hand back.`
-    : `Interfaces for ${owner}: ${check.problems.length} problems. Fix them before you hand back.`;
+    : `Interfaces for ${owner}: ${plural(check.problems.length, 'problem')}. Fix them before you hand back.`;
 
   return [
     head,

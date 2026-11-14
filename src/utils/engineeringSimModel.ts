@@ -1,13 +1,15 @@
 import { listIds } from '../assembly/reportText';
 import { COMPONENT_BY_ID } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
+import { measuredJoints } from '../reality/measuredJoints';
+import { calibratable } from '../reality/servoPart';
 import { jointServos } from '../sim/mjcfEffort';
 import { isWheelJoint } from '../sim/morphology';
-import { measuredServos } from '../sim/servoModel';
-import { count, jointLabel } from './engineeringFormat';
+import { jointLabel } from './engineeringFormat';
+import { plural } from '../../electron/plural.mjs';
 import { isMovable } from './kinematics';
 import { buildRig } from './kinematicsRig';
-import type { CheckContext, CheckRow } from './engineeringTypes';
+import type { CheckContext, CheckRow, FindingFix } from './engineeringTypes';
 
 const NAMED = 3;
 
@@ -24,15 +26,21 @@ const servoParts = (ctx: CheckContext, j: RobotJoint) =>
 function torqueEstimateRow(ctx: CheckContext, movable: RobotJoint[]): CheckRow {
   const estimated = movable.filter((j) => !hasTorque(ctx, j));
 
-  if (!estimated.length)
-    return { check: 'Torque estimates', status: 'pass', detail: 'Every joint has a servo or a published limit' };
+  if (!estimated.length) return { check: 'Torque estimates', status: 'pass', detail: '' };
 
   return {
     check: 'Torque estimates',
     status: 'warn',
-    detail: `${count(estimated.length, 'joint')} without a servo`,
+    detail: `${plural(estimated.length, 'joint')} without a servo`,
+    detailInItems: true,
     items: [{ text: `No servo on ${labels(estimated)}`, ids: estimated.flatMap((j) => j.child), status: 'warn' }],
   };
+}
+
+function calibrateFix(ctx: CheckContext, guessed: RobotJoint[]): FindingFix | undefined {
+  const joints = guessed.filter((j) => calibratable(j, ctx.parts)).map((j) => j.id);
+
+  return joints.length ? { kind: 'calibrate', joints } : undefined;
 }
 
 function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
@@ -45,19 +53,29 @@ function servoModelRows(ctx: CheckContext, movable: RobotJoint[]): CheckRow[] {
 
   if (!modelled.length) return [];
 
-  const guessed = modelled.filter((j) => !measuredServos(jointServos(j, ctx.byPart)));
+  const measured = measuredJoints({ joints: modelled, parts: ctx.parts, calibrations: ctx.project.servoCalibrations });
+  const guessed = modelled.filter((j) => !measured.has(j.id));
 
-  if (!guessed.length) return [{ check: 'Servo models', status: 'pass', detail: 'Every servo has a measured model' }];
+  if (!guessed.length) return [{ check: 'Servo models', status: 'pass', detail: '' }];
 
   const servos = guessed.flatMap((j) => servoParts(ctx, j));
   const names = listIds([...new Set(servos.map((p) => p.name))], NAMED);
+  const fix = calibrateFix(ctx, guessed);
 
   return [
     {
       check: 'Servo models',
       status: 'warn',
-      detail: `${count(guessed.length, 'joint')} without a measured model`,
-      items: [{ text: `${names} on ${labels(guessed)}`, ids: servos.map((p) => p.id), status: 'warn' }],
+      detail: `${plural(guessed.length, 'joint')} without a measured model`,
+      detailInItems: true,
+      items: [
+        {
+          text: `${names} on ${labels(guessed)}`,
+          ids: servos.map((p) => p.id),
+          status: 'warn',
+          ...(fix ? { fix } : {}),
+        },
+      ],
     },
   ];
 }

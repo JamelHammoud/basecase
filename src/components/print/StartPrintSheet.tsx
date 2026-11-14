@@ -1,9 +1,10 @@
 import React from 'react';
-import { Button, MetaLine, Modal } from '../../design-system';
+import { MetaLine, Modal } from '../../design-system';
 import type { PrinterSetup } from '../../data/printers';
 import type { Plate } from '../../print/plan';
 import type { PrinterStatus, SlicedPlate } from '../../print/printBridge';
-import { hm } from '../build/format';
+import { duration } from '../../utils/duration';
+import { weight } from '../../utils/weight';
 import { plateNumbers } from './plateFacts';
 
 interface StartPrintSheetProps {
@@ -24,7 +25,7 @@ function trayNote(plate: Plate, live: PrinterStatus | null) {
 
   return match
     ? `Prints with ${plate.material} from slot ${match.slot + 1}.`
-    : `Load ${plate.material} in the AMS or change the plate's material. Loaded: ${[...new Set(trays.map((t) => t.type))].join(', ')}.`;
+    : `Load ${plate.material} in the AMS or change the plate’s material. Loaded: ${[...new Set(trays.map((t) => t.type))].join(', ')}.`;
 }
 
 export const StartPrintSheet: React.FC<StartPrintSheetProps> = ({ plate, sliced, printer, live, onStart, onClose }) => {
@@ -39,16 +40,7 @@ export const StartPrintSheet: React.FC<StartPrintSheetProps> = ({ plate, sliced,
       onClose={onClose}
       title={`Print plate ${plate.number} on ${printer.label}?`}
       maxWidth="max-w-[420px]"
-      footer={
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={onStart} disabled={!!busy} autoFocus>
-            Start Print
-          </Button>
-        </div>
-      }
+      action={{ label: 'Start Print', disabled: !!busy, autoFocus: true, onClick: onStart }}
     >
       <div className="flex gap-4">
         {sliced?.thumbnail && (
@@ -57,7 +49,7 @@ export const StartPrintSheet: React.FC<StartPrintSheetProps> = ({ plate, sliced,
         <div className="min-w-0 flex flex-col gap-2 text-[13px] text-white/80">
           <MetaLine
             className="text-[12.5px] text-white/50 tabular-nums"
-            items={[`${exact ? '' : '≈ '}${hm(hours)}`, `${Math.round(grams)} g`]}
+            items={[`${exact ? '' : '≈ '}${duration(hours * 3600, 'min')}`, weight(grams)]}
           />
           <p>{trayNote(plate, live)}</p>
           <p>

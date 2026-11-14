@@ -1,8 +1,11 @@
 import { ComponentInfo, specLines } from '../data/components';
+import { weight } from './weight';
+import { sizeLabel } from './size';
 
 export interface KeySpec {
   label: string;
   value: string;
+  mm?: number[];
 }
 
 const spec = (c: ComponentInfo, ...labels: string[]) => {
@@ -43,10 +46,7 @@ function strength(v: string | undefined): string | undefined {
 
   if (!kgcm) return undefined;
 
-  const kg = kgcm / 10;
-  const load = kg >= 1 ? `${Math.round(kg * 10) / 10} kg` : `${Math.max(10, Math.round(kg * 100) * 10)} g`;
-
-  return `Up to ${load} at 10 cm`;
+  return `Up to ${weight(kgcm * 100)} at 10 cm`;
 }
 
 const amount = (v: string) => v.match(/^(Up to )?[<≈~]?\s*[\d.,]+(?:–[\d.,]+)?\s*(kg|g|mm|m)\b/i)?.[0];
@@ -56,8 +56,6 @@ const widest = (v: string) => {
 
   return m ? m[m.length - 1].replace(/\s*mm/, ' mm') : undefined;
 };
-
-const round = (v: number) => (v < 10 ? Math.round(v * 10) / 10 : Math.round(v));
 
 type Add = (label: string, value: string | undefined) => void;
 
@@ -141,9 +139,8 @@ const GROUP_SPECS: Partial<Record<ComponentInfo['group'], (c: ComponentInfo, add
   };
 
 export function keySpecs(c: ComponentInfo, size: { width: number; height: number; depth: number }): KeySpec[] {
-  const out: KeySpec[] = [
-    { label: 'Size', value: `${round(size.width)} × ${round(size.height)} × ${round(size.depth)} mm` },
-  ];
+  const mm = [size.width, size.height, size.depth];
+  const out: KeySpec[] = [{ label: 'Size', value: sizeLabel(mm), mm }];
   const weight = spec(c, 'Weight');
 
   if (weight) out.push({ label: 'Weight', value: plainValue(weight) });

@@ -10,26 +10,20 @@ import {
   CylinderIcon,
   ShapeIcon,
   SparklesIcon,
-  modifierName,
 } from '../../design-system';
 import type { SculptBrushKind, SculptSettings } from '../../types/robotics';
+import { percent } from '../../../electron/percent.mjs';
 
 export type ClayPreset = 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule';
 
-const BRUSH_OPTIONS: Array<{
-  id: SculptBrushKind;
-  label: string;
-  desc: string;
-}> = [
-  { id: 'inflate', label: 'Inflate', desc: 'Build volume outward' },
-  { id: 'carve', label: 'Carve', desc: 'Push the surface inward' },
-  { id: 'grab', label: 'Grab', desc: 'Pull the shape' },
-  { id: 'flatten', label: 'Flatten', desc: 'Make a flat face' },
-  { id: 'smooth', label: 'Smooth', desc: 'Relax the surface' },
-  { id: 'pinch', label: 'Pinch', desc: 'Sharpen a crease' },
+const BRUSH_CHOICES: Array<{ value: SculptBrushKind; label: string }> = [
+  { value: 'inflate', label: 'Inflate' },
+  { value: 'carve', label: 'Carve' },
+  { value: 'grab', label: 'Grab' },
+  { value: 'flatten', label: 'Flatten' },
+  { value: 'smooth', label: 'Smooth' },
+  { value: 'pinch', label: 'Pinch' },
 ];
-
-const BRUSH_CHOICES = BRUSH_OPTIONS.map((b) => ({ value: b.id, label: b.label, title: b.desc }));
 
 const CLAY_PRESETS = [
   { id: 'clay_sphere', label: 'Sphere', icon: <CircleDotIcon className="w-4 h-4" /> },
@@ -71,7 +65,7 @@ export const SculptPanel: React.FC<{
         max={1}
         step={0.05}
         value={sculptSettings.strength}
-        format={(v) => `${Math.round(v * 100)}%`}
+        format={percent}
         onChange={(v) => onUpdateSculptSettings({ strength: v })}
       />
       <Switch
@@ -84,7 +78,6 @@ export const SculptPanel: React.FC<{
         checked={sculptSettings.symmetryZ}
         onChange={(v) => onUpdateSculptSettings({ symmetryZ: v })}
       />
-      <p className="text-[12.5px] text-white/50">{`Drag on a part to sculpt. Hold ${modifierName('⌥')} to invert.`}</p>
       {canSubdivide && (
         <Button size="md" fullWidth icon={<SparklesIcon className="w-4 h-4" />} onClick={onSubdivideSelectedClay}>
           Subdivide

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Kbd, ReturnIcon, SearchIcon } from '../design-system';
+import { NoMatches, Kbd, ReturnIcon, SearchIcon } from '../design-system';
 
 export interface Command {
   id: string;
@@ -11,6 +11,8 @@ export interface Command {
   keywords?: string;
   run: () => void;
 }
+
+const SEARCH_LABEL = 'Search commands';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -101,14 +103,15 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
                 onClose();
               }
             }}
-            placeholder="e.g. servo, Top View, Group"
+            placeholder={SEARCH_LABEL}
+            aria-label={SEARCH_LABEL}
             className="flex-1 h-full bg-transparent text-[16px] text-white outline-none"
           />
           <Kbd>Esc</Kbd>
         </div>
 
         <div ref={listRef} className="overflow-y-auto p-2">
-          {results.length === 0 && <div className="py-10 text-center text-[14px] text-white/50">No results</div>}
+          {results.length === 0 && <NoMatches query={query} />}
           {results.map((c, idx) => {
             const header = idx === 0 || results[idx - 1].group !== c.group ? c.group : null;
             const isActive = idx === active;
@@ -125,7 +128,9 @@ const PaletteBody: React.FC<Omit<CommandPaletteProps, 'open'>> = ({ onClose, com
                     isActive ? 'bg-white/[0.09] text-white' : 'text-white/80'
                   }`}
                 >
-                  <span className={`w-5 flex justify-center shrink-0 ${isActive ? 'text-white' : 'text-white/50'}`}>
+                  <span
+                    className={`w-5 flex justify-center shrink-0 [&>svg]:size-4 ${isActive ? 'text-white' : 'text-white/50'}`}
+                  >
                     {c.icon}
                   </span>
                   <span className="flex-1 truncate">{c.label}</span>

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PolicyRecord } from '../types/robotics';
+import { errorMessage } from '../utils/errorMessage';
 import { platformBridge, type TrainerStatus } from '../utils/platformBridge';
 import type { SimModel } from './mjcf';
 import { isPolicySpec, type PolicySpec } from './policy';
 import { isStalePolicy, type RobotFingerprints } from './policyFreshness';
 import { handleTrainEvent, NEEDS_LEGS, trainingBlocker, type TrainJob } from './trainEvents';
 import { trainingJob, type TrainOptions } from './trainingJob';
+import type { SnapshotRef } from '../skills/snapshots';
 
 export { trainingJob, type TrainOptions };
 
@@ -35,10 +37,8 @@ export interface Training {
   stop: () => void;
   loadPolicy: (id: string) => Promise<PolicySpec | null>;
   isStale: (record: PolicyRecord) => boolean;
+  watched: { snapshot: SnapshotRef; robot: string } | null;
 }
-
-const errorText = (e: unknown) =>
-  e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e);
 
 const nextName = (policies: PolicyRecord[], task: TrainOptions['task'], robotKey: string) =>
   `${task === 'walk' ? 'Walk' : 'Stand'} ${policies.filter((p) => p.task === task && p.robot === robotKey).length + 1}`;
@@ -65,6 +65,8 @@ export function useTraining({
   const [curve, setCurve] = useState<number[]>([]);
   const [trainer, setTrainer] = useState<TrainerStatus | null>(null);
   const [replacing, setReplacing] = useState<string | null>(null);
+  const [snapshot, setSnapshot] = useState<{ snapshot: SnapshotRef; robot: string } | null>(null);
+  const watchRobot = useRef<string | null>(null);
   const job = useRef<TrainJob | null>(null);
   const onPolicyRef = useRef(onPolicy);
 
@@ -89,6 +91,7 @@ export function useTraining({
             setCurve,
             setError,
             setTrainer,
+            onSnapshot: (ref) => watchRobot.current && setSnapshot({ snapshot: ref, robot: watchRobot.current }),
           },
           workspaceId,
           ev,
@@ -107,6 +110,8 @@ export function useTraining({
       setProgress(null);
       setCurve([]);
       setStatus('setup');
+      setSnapshot(null);
+      watchRobot.current = key;
       setMessage('Starting');
       setReplacing(replacing?.id ?? null);
 
@@ -130,10 +135,10 @@ export function useTraining({
         return null;
       } catch (e) {
         job.current = null;
-        setError(errorText(e));
+        setError(errorMessage(e));
         setStatus('error');
 
-        return errorText(e);
+        return errorMessage(e);
       }
     },
     [buildModel, robotKey, policies, workspaceId],
@@ -170,5 +175,6 @@ export function useTraining({
     stop,
     loadPolicy,
     isStale: (record) => isStalePolicy(record, fingerprints),
+    watched: status === 'running' ? snapshot : null,
   };
 }

@@ -4,6 +4,7 @@ import { jsonIn, type Ask } from './anythingClaude';
 import { INTENT_SYSTEM, intentPrompt, revisionPrompt } from './anythingPrompt';
 import { lowerSpec } from './anythingSignals';
 import type { IntentKey, IntentVerdict, SpecFormula, TaskSpec } from './anythingTypes';
+import { errorMessage } from '../utils/errorMessage';
 
 const MAX_SECONDS = 60;
 
@@ -60,7 +61,7 @@ export async function specProblems(spec: TaskSpec, facts: BodyFacts): Promise<st
 
     return spec.intent.length ? [] : ['The intent has no keyframes.'];
   } catch (error) {
-    return [`The contract can't be used: ${(error as Error).message}`];
+    return [`The contract can’t be used: ${errorMessage(error)}`];
   }
 }
 
@@ -105,7 +106,7 @@ async function askVerdict(session: IntentSession, prompt: string): Promise<{ ver
 
       note = `\n\nYour previous answer had problems: ${problems.join(' ')} Fix them.`;
     } catch (error) {
-      note = `\n\nYour previous answer could not be read: ${(error as Error).message} Answer with the JSON object only.`;
+      note = `\n\nYour previous answer could not be read: ${errorMessage(error)} Answer with the JSON object only.`;
     }
   }
 

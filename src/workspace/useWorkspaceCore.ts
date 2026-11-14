@@ -14,12 +14,16 @@ import { useRobotUpgrade } from './useRobotUpgrade';
 import { useSceneDocument } from './useSceneDocument';
 import { useSelectionActions } from './useSelectionActions';
 import { useSimTraining } from './useSimTraining';
+import { useCaseCompare } from './useCaseCompare';
+import { useCaseExplore } from './useCaseExplore';
 import { useToast } from './useToast';
 import { useToolMode } from './useToolMode';
+import { useDataLayers } from './useDataLayers';
 import { useCaseRun } from './useCaseRun';
 import { useSceneGuide } from './useSceneGuide';
 import { useReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
+import { useRobotSync } from './useRobotSync';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -56,12 +60,12 @@ const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) 
   if (message) to.showToast(message);
 };
 
-export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorkspaceProps, 'active'>) {
+export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
   const docs = useSceneDocument(seed);
   const { parts, project, projectRef } = docs;
-  const toasts = useToast();
+  const toasts = useToast(studio.openSettings);
   const { showToast } = toasts;
 
   useRobotUpgrade(docs, showToast);
@@ -106,6 +110,9 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
   });
 
   const simTraining = useSimTraining({ workspaceId, scene, docs, posing, viewportRef, showToast, studio });
+
+  useRobotSync({ active, project, training: simTraining });
+
   const { guide, buildAlong } = useSceneGuide({ sceneName: scene.sceneName, docs, showToast, viewportRef });
   const selection = useSelectionActions({
     parts,
@@ -116,21 +123,40 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     showReferenceImages: studio.showReferenceImages,
   });
 
+  const dataLayers = useDataLayers({ sim: simTraining.sim, timeline: simTraining.cases.timeline, parts, viewportRef });
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
 
   const { travel } = docs;
   const { restorePose } = posing;
+  const undo = () => travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
-  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast });
+  const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
 
   const readiness = useReadiness({ parts, project, printer, partsRef: docs.partsRef, projectRef, viewportRef });
+  const caseCompare = useCaseCompare({
+    inFront: active,
+    kase: simTraining.cases.active,
+    fingerprint: readiness.fingerprint,
+    studio,
+    source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
+    showToast,
+  });
+  const caseExplore = useCaseExplore({
+    kase: simTraining.cases.active,
+    parts,
+    project,
+    source: { workspaceId, sceneName: scene.sceneName, docs, viewportRef },
+    showToast,
+  });
 
   return {
     workspaceId,
     studio,
     printer,
     readiness,
+    caseCompare,
+    caseExplore,
     printing,
     viewportRef,
     scene,
@@ -152,11 +178,12 @@ export function useWorkspaceCore({ workspaceId, seed, studio }: Omit<SceneWorksp
     posable,
     skeleton,
     simTraining,
+    dataLayers,
     caseRun,
     guide,
     buildAlong,
-    undo: () => travel('undo', restorePose),
-    redo: () => travel('redo', restorePose),
+    undo,
+    redo: () => travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
     loadSeed,
   };
 }

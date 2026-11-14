@@ -1,11 +1,12 @@
 import type { MeshMeasure } from '../three/meshMeasure';
-import type { ProjectSettings, PurchaseRecord, RobotJoint, ScenePart } from '../types/robotics';
+import type { ProjectSettings, Purchases, RobotJoint, ScenePart } from '../types/robotics';
 import type { BomInput } from './bom';
 import type { RobotBody } from './engineeringBody';
 import type { V3 } from './engineeringMath';
 import type { ArmModel, PayloadMap } from './payload';
 import type { ChainResult } from '../assembly/assemblyTypes';
 import type { StrengthJob, StrengthReading } from '../strength/types';
+import type { Netlist } from '../wiring/netlist';
 
 export interface PartMass {
   id: string;
@@ -28,21 +29,23 @@ export interface CheckDot {
   shade: number;
 }
 
-export interface FindingFix {
-  kind: 'print-face';
-  part: string;
-  down: V3;
-}
+export type FindingFix =
+  | { kind: 'print-face'; part: string; down: V3 }
+  | { kind: 'calibrate'; joints: string[] }
+  | { kind: 'new-case' }
+  | { kind: 'replay-fall'; deg: number };
 
 export interface CheckRow {
   check: string;
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
   ids?: string[];
-  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix }>;
+  items?: Array<{ text: string; ids?: string[]; status?: 'warn' | 'fail'; fix?: FindingFix; joint?: string }>;
   itemsAreContext?: boolean;
+  detailInItems?: boolean;
   caseId?: string;
   dots?: CheckDot[];
+  envelopes?: JointEnvelope[];
 }
 
 export interface JointLoad {
@@ -58,7 +61,9 @@ export interface JointLoad {
   stallNm?: number;
   ratedNm?: number;
   ratedEstimated?: boolean;
+  peakNm?: number;
   volts?: number;
+  noLoadRpm?: number;
   stallShare?: number;
   heatShare?: number;
   simRmsNm?: number;
@@ -69,6 +74,22 @@ export interface WalkJoint {
   p99Nm: number;
   rmsNm: number;
   overS: number;
+  samples?: Array<[rpm: number, nm: number]>;
+}
+
+export interface ServoCurve {
+  stallNm: number;
+  ratedNm: number;
+  rpm: number;
+}
+
+export interface JointEnvelope {
+  joint: string;
+  label: string;
+  samples: Array<[rpm: number, nm: number]>;
+  servo: ServoCurve & { name: string };
+  up?: ServoCurve & { name: string };
+  outside: number;
 }
 
 export interface WalkAmps {
@@ -92,15 +113,31 @@ export interface StoredWalk extends WalkSim {
   key: string;
 }
 
+export interface FallJoint {
+  p99Nm: number;
+  deg: number;
+}
+
+export interface FallSim {
+  directions: number;
+  tipped: number;
+  joints: Record<string, FallJoint>;
+}
+
+export interface StoredFalls extends FallSim {
+  key: string;
+}
+
 export interface EngineeringInputs {
   parts: ScenePart[];
   project: ProjectSettings;
   measures: Record<string, MeshMeasure | undefined>;
   servoOutputs: Record<string, ServoOutput>;
-  purchases?: Record<string, PurchaseRecord>;
+  purchases?: Purchases;
   supportG?: BomInput['supportG'];
   sweep?: (request: SweepRequest) => Array<{ a: string; b: string; depthMm: number; angle: number }>;
   walk?: WalkSim | string;
+  falls?: FallSim | string;
   servoTouches?: string[];
   payload?: (arm: ArmModel) => PayloadMap | null;
   chains?: ChainResult | null;
@@ -130,6 +167,7 @@ export interface EngineeringReport {
   com: V3;
   masses: PartMass[];
   stability?: Stability;
+  wiring?: Netlist;
 }
 
 export interface CheckContext {

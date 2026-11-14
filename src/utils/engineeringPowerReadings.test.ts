@@ -8,6 +8,7 @@ import type { WalkSim } from './engineeringTypes';
 import { TorqueRecorder } from './peakTorque';
 import { ampsAt, jointAmpModel, walkAmpModels, walkPower } from './servoAmps';
 import { runEngineering } from './engineering';
+import { amps } from './electric';
 import { biped, box, component, joint, part, project, row, run, XM430, type Measures } from './engineering.fixtures';
 
 describe('Servo voltage and current', () => {
@@ -148,9 +149,7 @@ describe('Servo alignment and joint support', () => {
     );
 
     expect(row(none, 'Servo alignment')).toMatchObject({ status: 'not run', detail: 'No output known for 1 servo' });
-    expect(row(some, 'Servo alignment')?.detail).toBe(
-      'Every measured servo output lies on its joint axis; no output known for 1',
-    );
+    expect(row(some, 'Servo alignment')).toMatchObject({ status: 'pass', detail: 'No output known for 1 servo' });
   });
 
   it('counts a flanged bearing on the axis as support', () => {
@@ -288,14 +287,13 @@ describe('Current and runtime from the simulated walk', () => {
     };
   };
   const numbers = (detail: string) => {
-    const [, peak, avg, minutes] = /^About ([\d.]+) A peak and ([\d.]+) A average walking .* about (\d+) min/.exec(
-      detail,
-    )!;
+    const [, peak, avg, hours, minutes] =
+      /^About ([\d.]+) A peak and ([\d.]+) A average walking .* about (?:(\d+) h )?(\d+) min/.exec(detail)!;
 
-    return { peak: Number(peak), avg: Number(avg), minutes: Number(minutes) };
+    return { peak: Number(peak), avg: Number(avg), minutes: Number(hours ?? 0) * 60 + Number(minutes) };
   };
   const ESTIMATE =
-    'About 1.8 A peak and 0.8 A standing from the pack (estimate); Ovonic 2S 2200 mAh 50C LiPo gives about 128 min. Fuse the pack near 3 A.';
+    'About 1.8 A peak and 0.8 A standing from the pack (estimate); Ovonic 2S 2200 mAh 50C LiPo gives about 2 h 08 min. Fuse the pack near 3 A.';
 
   it('reads τ ÷ kt plus idle per servo, and runtime from the pack’s capacity over that', () => {
     const s = scene();
@@ -315,7 +313,7 @@ describe('Current and runtime from the simulated walk', () => {
     expect(read.avg).toBeCloseTo(packAvg, 1);
     expect(read.minutes).toBe(Math.round(((0.8 * 2.2) / packAvg) * 60));
     expect(current.detail).not.toContain('estimate');
-    expect(current.detail).toContain(`Left knee: ${knee.toFixed(1)} A average`);
+    expect(current.detail).toContain(`Left knee: ${amps(knee)} average`);
     expect(current.items).toEqual([{ text: expect.stringMatching(/^Left knee: /), ids: ['a'] }]);
     expect(current).toMatchObject({ status: 'pass', itemsAreContext: true, ids: [] });
   });

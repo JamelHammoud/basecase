@@ -10,7 +10,7 @@ While an emulated robot follows the simulation, the canvas draws it the way its 
 
 Connect an emulated robot from Operate, climb the Ladder to Test, then drive the robot in Simulate or start a Case try. The blue robot appears on the canvas of the scene you connected from, and goes away when you click Disconnect. It's never in screenshots or thumbnails, and clicks pass through it. Steps are in [Compare the robot with the simulation](/help/compare-the-robot-with-the-simulation).
 
-![An arm driven with W, the measured robot trailing the simulated one, the largest gap labelled at the shoulder](/changelog/the-measured-robot-on-the-canvas/cover.png)
+![An arm driven with W, the measured robot trailing the simulated one, the largest gap labeled at the shoulder](/changelog/the-measured-robot-on-the-canvas/cover.png)
 
 ## How the gap is measured
 

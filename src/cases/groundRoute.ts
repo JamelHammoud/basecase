@@ -1,5 +1,6 @@
 import type { V3 } from '../utils/kinematics';
 import type { WorldObject } from './schema';
+import { topOf } from './terrain';
 
 interface Rect {
   minX: number;
@@ -95,6 +96,7 @@ export interface RouteRobot {
   start: V3;
   clearanceMm: number;
   headroomMm?: number;
+  stepMm?: number;
 }
 
 export interface RoutePoint {
@@ -105,7 +107,8 @@ export interface RoutePoint {
 
 export function groundRoute(waypoints: RoutePoint[], objects: WorldObject[], robot: RouteRobot): RoutePoint[] {
   const headroom = robot.headroomMm ?? Infinity;
-  const obstacles = objects.filter((o) => o.behavior === 'static' && below(o, headroom));
+  const step = robot.stepMm ?? -Infinity;
+  const obstacles = objects.filter((o) => o.behavior === 'static' && below(o, headroom) && topOf(o) > step);
   const scene: Leg = { obstacles, clearanceMm: robot.clearanceMm };
   const route: RoutePoint[] = [];
   let from = robot.start;

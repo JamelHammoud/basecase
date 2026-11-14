@@ -2,9 +2,10 @@ import React, { useLayoutEffect } from 'react';
 import { AcpStatusInfo, AgentChoice, ContextUsage, MessageQuote, ReferenceImageRecord } from '../../types/robotics';
 import { EvidenceFolder, evidenceKind } from '../../utils/evidenceFiles';
 import { IconButton, ComposeIcon, CloseIcon, useScrollFade } from '../../design-system';
-import { hasPrimaryModifier } from '../../utils/os';
+import { shortcutFor } from '../../app/shortcuts';
 import { AttachMenu } from './AttachMenu';
 import { AttachmentTray } from './AttachmentTray';
+import { composerKeyHandlers } from './composerKeys';
 import { CyclingPlaceholder } from './CyclingPlaceholder';
 import { DraftQuotes } from './DraftQuotes';
 import { ModelMenu } from './ModelMenu';
@@ -41,8 +42,6 @@ function exampleSetFor(isBusy: boolean, hasAttachments: boolean, hasQuotes: bool
 
   return hasAttachments ? 'attached' : 'idle';
 }
-
-const isSendKey = (e: React.KeyboardEvent) => e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing;
 
 const EditingBar: React.FC<{ onCancel: () => void }> = ({ onCancel }) => (
   <div className="flex items-center gap-2 pl-4 pr-2 pt-2 animate-fade-in">
@@ -134,18 +133,19 @@ export const Composer: React.FC<{
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (slash.onKeyDown(e)) return;
+    if (slash.onKeyDown(e) || e.nativeEvent.isComposing) return;
 
-    if (isSendKey(e)) {
-      e.preventDefault();
-      submit(hasPrimaryModifier(e) ? 'queue' : 'default');
-    } else if (e.key === 'Escape' && editing) {
-      e.preventDefault();
-      draft.cancelEdit();
-    } else if (e.key === 'Escape' && isBusy && !hasDraft) {
-      e.preventDefault();
-      onStop();
-    }
+    const id = shortcutFor(e.nativeEvent, 'composer');
+    const handlers = composerKeyHandlers({
+      editing: !!editing,
+      isBusy,
+      hasDraft,
+      submit: (intent) => void submit(intent),
+      cancelEdit: draft.cancelEdit,
+      stop: onStop,
+    });
+
+    if (id && handlers[id]?.(e.nativeEvent)) e.preventDefault();
   };
 
   const onPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {

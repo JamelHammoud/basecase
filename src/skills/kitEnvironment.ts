@@ -1,6 +1,12 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import type { Cmp, Contract, Expr, Formula, State } from './contract';
-import { policyObservation, type Environment, type ResetDistribution, type SignalSource } from './environment';
+import {
+  policyObservation,
+  withServoSpreads,
+  type Environment,
+  type ResetDistribution,
+  type SignalSource,
+} from './environment';
 import { sha256Hex } from './hash';
 import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, neutralRad, offsetPose, rootHeight, type V3 } from './kitModel';
 import { kitReward, type KitRewardOptions } from './kitRewards';
@@ -191,7 +197,7 @@ export function kitEnvironment(model: SimModel, entry: KitEntry, options: KitRew
   const trained = trainedEntry(entry);
   const robot = kitRobot(model);
 
-  return {
+  return withServoSpreads(model, {
     version: 1,
     robot: robot.key,
     horizonS: HORIZON[trained],
@@ -203,5 +209,5 @@ export function kitEnvironment(model: SimModel, entry: KitEntry, options: KitRew
     reward: { kind: 'rewardlang', hash: kitRewardHash(model, trained, options) },
     contract: kitContract(model, trained),
     signals: signalsFor(model, trained),
-  };
+  });
 }

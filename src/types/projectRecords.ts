@@ -7,7 +7,9 @@ export interface BuildGuideRecord {
   steps: number;
   generatedAt: string;
   fingerprint: string;
+  orderTimedOut?: boolean;
   coverDataUrl?: string;
+  stepParts?: { fingerprint: string; ids: string[][] };
 }
 
 export interface LeaderLink {

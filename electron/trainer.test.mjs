@@ -46,10 +46,10 @@ function trainer(options) {
 
       return c;
     },
-    null,
+    options?.forge ?? null,
   );
 
-  if (options) t.useGateLease(options.leaseFile, options.leasePollMs);
+  if (options?.leaseFile) t.useGateLease(options.leaseFile, options.leasePollMs);
 
   return { t, events, children };
 }
@@ -58,6 +58,31 @@ const leaseFile = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'lease-'
 
 const job = (name) => ({ name, task: 'walk' });
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+describe('a job with demonstrations', () => {
+  it('writes them to their own file beside job.json, which names it', () => {
+    const { t, children } = trainer();
+    const demos = { episodes: [{ obs: [[0.1]], actions: [[0.2]] }] };
+
+    t.forge = '/fake/forge-train';
+    t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Touch a Point'), algo: 'bc', demos } });
+
+    const { dir } = children[0];
+    const written = JSON.parse(fs.readFileSync(path.join(dir, 'job.json'), 'utf8'));
+
+    expect(written).toMatchObject({ name: 'Touch a Point', algo: 'bc', demos: 'demos.json' });
+    expect(JSON.parse(fs.readFileSync(path.join(dir, 'demos.json'), 'utf8'))).toEqual(demos);
+  });
+
+  it('refuses them without Forge, since train.py would train something else', () => {
+    const { t, children } = trainer();
+
+    expect(() => t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Touch'), demos: { episodes: [] } } })).toThrow(
+      /Forge/,
+    );
+    expect(children).toHaveLength(0);
+  });
+});
 
 describe('the training queue', () => {
   it('runs one job at a time and starts the next when it ends', async () => {
@@ -246,6 +271,48 @@ describe('continuing from an earlier run', () => {
     expect(children).toHaveLength(0);
   });
 
+  it('writes a saved policy into the new run and points the job at it', () => {
+    const { t, children } = trainer({ forge: 'forge' });
+    const policy = { format: 'basecase-policy', layers: [], obsMean: [], obsStd: [] };
+
+    t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Hand-off'), warmPolicy: policy } });
+
+    const dir = children[0].dir;
+    const written = JSON.parse(fs.readFileSync(path.join(dir, 'job.json'), 'utf8'));
+
+    expect(written.warmStart).toBe('warm-policy.json');
+    expect(written).not.toHaveProperty('warmPolicy');
+    expect(JSON.parse(fs.readFileSync(path.join(dir, 'warm-policy.json'), 'utf8'))).toEqual(policy);
+  });
+
+  it('refuses a saved policy together with an earlier run, or one that is not an object', async () => {
+    const { t, children } = trainer({ forge: 'forge' });
+    const { jobId } = t.start({ workspaceId: 'a', xml: '<m/>', job: job('Stand') });
+
+    finishRun(children[0], ['policy.json']);
+    await tick();
+    expect(() =>
+      t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Walk'), warmStart: jobId, warmPolicy: { layers: [] } } }),
+    ).toThrow('A warm start takes an earlier run or a saved policy, not both.');
+
+    for (const warmPolicy of ['policy-a', 7, [1, 2], true]) {
+      expect(() => t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Walk'), warmPolicy } })).toThrow(
+        'A warm start policy is a policy object.',
+      );
+    }
+
+    expect(children).toHaveLength(1);
+  });
+
+  it('refuses a saved policy when only the Python trainer is there', () => {
+    const { t, children } = trainer();
+
+    expect(() =>
+      t.start({ workspaceId: 'a', xml: '<m/>', job: { ...job('Walk'), warmPolicy: { layers: [] } } }),
+    ).toThrow('Starting from a saved policy needs the Forge trainer.');
+    expect(children).toHaveLength(0);
+  });
+
   it('keeps only the newest finished runs', async () => {
     const { t, children } = trainer();
 
@@ -265,5 +332,63 @@ describe('continuing from an earlier run', () => {
     expect(left).toHaveLength(8);
     expect(left).toContain(path.basename(children[10].dir));
     expect(left).not.toContain(path.basename(children[0].dir));
+  });
+});
+
+describe('snapshots while training', () => {
+  const writeSnapshot = (dir, iteration, body) => {
+    fs.mkdirSync(path.join(dir, 'snapshots'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'snapshots', `${iteration}.json`), JSON.stringify(body));
+  };
+
+  it('forwards each snapshot line with the run id', () => {
+    const { t, events, children } = trainer({ forge: 'forge' });
+    const { jobId } = t.start({ workspaceId: 'a', xml: '<m/>', job: job('Walk') });
+    const lines = [
+      { type: 'snapshot', iteration: 40, steps: 98304, file: 'snapshots/40.json' },
+      { type: 'snapshot', iteration: 1.5, steps: 10 },
+      { type: 'snapshot', iteration: '../x', steps: 10 },
+      { type: 'snapshot', iteration: 41 },
+    ];
+
+    children[0].stdout.emit('data', Buffer.from(lines.map((l) => JSON.stringify(l)).join('\n') + '\n'));
+
+    const snapshots = events.filter((e) => e.kind === 'snapshot');
+
+    expect(snapshots).toEqual([
+      { type: 'train-progress', workspaceId: 'a', jobId, kind: 'snapshot', iteration: 40, steps: 98304 },
+    ]);
+  });
+
+  it('reads a snapshot of a run', () => {
+    const { t, children } = trainer({ forge: 'forge' });
+    const { jobId } = t.start({ workspaceId: 'a', xml: '<m/>', job: job('Walk') });
+
+    writeSnapshot(children[0].dir, 40, { format: 'basecase-policy', layers: [] });
+    expect(t.getSnapshot({ run: jobId, iteration: 40 })).toEqual({ format: 'basecase-policy', layers: [] });
+    expect(t.getSnapshot({ run: jobId, iteration: 41 })).toBeNull();
+  });
+
+  it('refuses a snapshot that is a path rather than a run and an iteration', () => {
+    const { t, children } = trainer({ forge: 'forge' });
+    const { jobId } = t.start({ workspaceId: 'a', xml: '<m/>', job: job('Walk') });
+
+    writeSnapshot(children[0].dir, 40, { layers: [] });
+    fs.writeFileSync(path.join(t.jobsDir, 'secret.json'), '{"secret":true}');
+
+    const bad = [
+      { run: '..', iteration: 40 },
+      { run: `${jobId}/..`, iteration: 40 },
+      { run: '../training', iteration: 40 },
+      { run: jobId, iteration: '40' },
+      { run: jobId, iteration: 40.5 },
+      { run: jobId, iteration: -1 },
+      { run: jobId, iteration: '../../secret' },
+      { run: 'policy-unknown', iteration: 40 },
+      null,
+      undefined,
+    ];
+
+    bad.forEach((ref) => expect(t.getSnapshot(ref)).toBeNull());
   });
 });

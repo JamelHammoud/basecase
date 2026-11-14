@@ -7,6 +7,7 @@ import type { MeshGeometry, Model, ModelJoint } from './model';
 import { catalogFrame, limbOf, publishedData, round, S, type PublishedData } from './published';
 import { readModel } from './readModel';
 import type { Resolver, Source } from './sources';
+import { plural } from '../../../electron/plural.mjs';
 
 export interface ImportOptions {
   onProgress?: (message: string) => void;
@@ -47,11 +48,11 @@ async function loadMeshFiles(model: Model, resolver: Resolver, say: Say, notes: 
       const got = await resolver.read(file).catch(() => null);
       const geo = got ? await parseMeshFile(got.data, got.path).catch(() => null) : null;
 
-      if (!geo) notes.push(`Couldn't read ${file.split('/').pop()}`);
+      if (!geo) notes.push(`Couldn’t read ${file.split('/').pop()}`);
 
       files.set(file, geo);
       done++;
-      say(`Loading meshes ${done}/${unique.length}`);
+      say(`Loading meshes ${done}/${unique.length}…`);
     }
   };
 
@@ -175,13 +176,13 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
   const say = opts.onProgress ?? (() => {});
   const notes: string[] = [];
 
-  say('Reading the description');
+  say('Reading the description…');
 
   const { model, resolver, origin } = await readModel(source);
   const name = opts.name ?? prettyJointName(model.name);
   const files = await loadMeshFiles(model, resolver, say, notes);
 
-  say('Building parts');
+  say('Building parts…');
 
   const frame = opts.rotate ? catalogFrame(opts.rotate) : S;
   const linkGeo = await linkGeometries(model, files, frame, opts.color);
@@ -189,7 +190,7 @@ export async function importRobot(source: Source, opts: ImportOptions = {}): Pro
   if (!linkGeo.size)
     throw new Error(
       notes.length
-        ? `Couldn’t load any of its ${notes.length} meshes. Choose the folder that has them.`
+        ? `Couldn’t load its ${plural(notes.length, 'mesh', 'meshes')}. Choose the folder with the robot’s mesh files.`
         : 'Nothing to show: the description has no meshes or shapes.',
     );
 

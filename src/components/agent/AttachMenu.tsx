@@ -86,30 +86,18 @@ export const AttachMenu: React.FC<{
             />
           ) : (
             <>
+              <MenuItem icon={<PhotoAddIcon />} label="Attach Images" onSelect={() => pick(fileInputRef.current)} />
+              <MenuItem icon={<FolderAddIcon />} label="Attach Folder" onSelect={() => pick(folderInputRef.current)} />
               <MenuItem
-                icon={<PhotoAddIcon className="w-4 h-4" />}
-                label="Attach Images"
-                onSelect={() => pick(fileInputRef.current)}
-              />
-              <MenuItem
-                icon={<FolderAddIcon className="w-4 h-4" />}
-                label="Attach Folder"
-                onSelect={() => pick(folderInputRef.current)}
-              />
-              <MenuItem
-                icon={<PenIcon className="w-4 h-4" />}
-                label="Sketch"
+                icon={<PenIcon />}
+                label="Attach Sketch"
                 onSelect={() => {
                   close();
                   onSketch();
                 }}
               />
               <MenuDivider />
-              <MenuItem
-                icon={<SlashIcon className="w-4 h-4" />}
-                label="Commands"
-                onSelect={() => setShowCommands(true)}
-              />
+              <MenuItem icon={<SlashIcon />} label="Commands" onSelect={() => setShowCommands(true)} />
             </>
           )}
         </PopoverMenu>

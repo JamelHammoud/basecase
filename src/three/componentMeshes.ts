@@ -8,6 +8,7 @@ import { componentArrays, type ComponentArrays } from './componentGeometry';
 import { geometryWorker } from './geometryWorker';
 import { geometryFromArrays } from './partMesh/creased';
 import { linesGeometry } from './partMesh/lateEdges';
+import { errorMessage } from '../utils/errorMessage';
 
 export interface ComponentPiece {
   geometry: THREE.BufferGeometry;
@@ -39,7 +40,7 @@ export const componentMeshUrl = (id: string) => `${import.meta.env.BASE_URL}part
 async function sourcedBytes(id: string): Promise<ArrayBuffer> {
   const bytes = await platformBridge.sourcedMesh(id);
 
-  if (!bytes) throw new Error(`Couldn't load the ${id} model.`);
+  if (!bytes) throw new Error(`Couldn’t load the ${id} model.`);
 
   return bytes;
 }
@@ -82,7 +83,7 @@ async function meshBytes(id: string): Promise<ArrayBuffer> {
 
   const res = await fetch(componentMeshUrl(id));
 
-  if (!res.ok) throw new Error(`Couldn't load the ${id} model (${res.status}).`);
+  if (!res.ok) throw new Error(`Couldn’t load the ${id} model (${res.status}).`);
 
   return res.arrayBuffer();
 }
@@ -129,7 +130,7 @@ export function loadComponentMesh(id: string): Promise<LoadedComponent> {
 
     return mesh;
   })().catch((err: unknown) => {
-    entries.set(id, { status: 'error', error: String((err as Error)?.message ?? err) });
+    entries.set(id, { status: 'error', error: errorMessage(err) });
     pending.delete(id);
     notify();
 

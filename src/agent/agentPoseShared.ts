@@ -16,6 +16,9 @@ import { limbOf } from '../utils/robotImport/published';
 import { rigJoints } from '../assembly/rigJoints';
 import { DEEPER_THAN_REST_MM, pairKey } from '../three/interference';
 import { rotToCad, rotToScene, toCad, toScene } from './agentFrame';
+import { runClock } from '../utils/duration';
+import { lengthLabel } from '../utils/size';
+import { plural } from '../../electron/plural.mjs';
 
 export interface PoseContext {
   parts: ScenePart[];
@@ -49,11 +52,11 @@ export function scopeOf(ctx: PoseContext, wanted?: string): Scope | string {
     : (robotOfParts(full, ctx.selectedIds) ?? (full.robots.length === 1 ? full.robots[0] : null));
 
   if (!group) {
-    const list = full.robots.map((r) => `"${r.name}" (${r.joints.length} joints)`).join(', ');
+    const list = full.robots.map((r) => `"${r.name}" (${plural(r.joints.length, 'joint')})`).join(', ');
 
     return w
       ? `No robot "${wanted}". Robots: ${list}.`
-      : `${full.robots.length} robots in the scene: ${list}. Pass robot to say which.`;
+      : `${plural(full.robots.length, 'robot')} in the scene: ${list}. Pass robot to say which.`;
   }
 
   return {
@@ -164,13 +167,13 @@ export async function poseCheck(
       f.depthMm > (rest.get(pairKey(f.a, f.b)) ?? -DEEPER_THAN_REST_MM) + DEEPER_THAN_REST_MM,
   );
 
-  for (const c of clashes.slice(0, CLASHES_SHOWN)) lines.push(`${c.a} passes ${r1(c.depthMm)} mm into ${c.b}`);
+  for (const c of clashes.slice(0, CLASHES_SHOWN)) lines.push(`${c.a} passes ${lengthLabel(c.depthMm)} into ${c.b}`);
 
   if (clashes.length > CLASHES_SHOWN) lines.push(`…and ${clashes.length - CLASHES_SHOWN} more clashes`);
 
-  if (floor !== null && floor < -1) lines.push(`${r1(-floor)} mm below the floor`);
+  if (floor !== null && floor < -1) lines.push(`${lengthLabel(-floor)} below the floor`);
   else if (floor !== null && floor > 5 && rig.joints.some((j) => (j.limb ?? limbOf(j.name)) === 'leg'))
-    lines.push(`Lowest point ${r1(floor)} mm above the floor`);
+    lines.push(`Lowest point ${lengthLabel(floor)} above the floor`);
 
   return lines;
 }
@@ -225,7 +228,7 @@ export function previewStates(
   return Array.from({ length: n }, (_, i) => {
     const t = (i / (cyclic ? n : n - 1)) * anim.duration;
 
-    return { label: `${r1(t)} s`, state: sampleAnimation(anim, t) };
+    return { label: runClock(t), state: sampleAnimation(anim, t) };
   });
 }
 

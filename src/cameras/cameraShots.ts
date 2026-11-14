@@ -1,6 +1,7 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
-import { blobToDataUrl } from '../utils/imageEncode';
+import { runClock } from '../utils/duration';
+import { encodeBitmap } from '../utils/imageEncode';
 import type { FixedCamera } from './fixed';
 import { cameraViews, findView, type CameraView } from './views';
 import { cameraFeed } from './viewsClient';
@@ -30,14 +31,7 @@ export interface CameraShots {
   available: string[];
 }
 
-async function encode(bitmap: ImageBitmap): Promise<string> {
-  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-
-  canvas.getContext('2d')!.drawImage(bitmap, 0, 0);
-  bitmap.close();
-
-  return blobToDataUrl(await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.85 }));
-}
+const encode = (bitmap: ImageBitmap) => encodeBitmap({ bitmap, type: 'image/jpeg', quality: 0.85 });
 
 export function pickViews(all: CameraView[], names: string[]): { views: CameraView[]; missing: string[] } {
   const views: CameraView[] = [];
@@ -54,7 +48,7 @@ export function pickViews(all: CameraView[], names: string[]): { views: CameraVi
 }
 
 export const shotLabel = (view: CameraView, t: number | null) =>
-  t === null ? view.label : `${view.label} at ${t.toFixed(1)} s`;
+  t === null ? view.label : `${view.label} at ${runClock(t)}`;
 
 export async function cameraShots(input: CameraShotInput): Promise<CameraShots> {
   const solid = input.parts.filter((p) => p.visible && p.role === 'solid');

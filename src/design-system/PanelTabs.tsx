@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDownIcon } from './glyphs';
-import { THEME_COLORS } from './theme';
 import { PopoverMenu } from './PopoverMenu';
+import { StatusDot, type Status } from './StatusDot';
 import { Tooltip } from './Tooltip';
 import { useScrollFade } from './useScrollFade';
 
@@ -11,6 +11,7 @@ export interface PanelTab<T extends string> {
   value: T;
   label: string;
   indicator?: React.ReactNode;
+  status?: Status;
   menu?: {
     title: string;
     content: (close: () => void) => React.ReactNode;
@@ -121,6 +122,7 @@ export function PanelTabs<T extends string>({ tabs, value, onChange, label }: Pa
               }`}
             >
               {tab.indicator}
+              {tab.status && <StatusDot {...tab.status} />}
               {tab.label}
             </button>
           );
@@ -171,6 +173,7 @@ function TabWithMenu<T extends string>({
         >
           <span className="flex items-center gap-1.5">
             {tab.indicator}
+            {tab.status && <StatusDot {...tab.status} />}
             {tab.label}
           </span>
           <span
@@ -191,17 +194,3 @@ function TabWithMenu<T extends string>({
     </div>
   );
 }
-
-export const AgentSpinner: React.FC<{ className?: string; color?: string }> = ({
-  className = 'w-3 h-3',
-  color = THEME_COLORS.textPrimary,
-}) => (
-  <svg
-    viewBox="0 0 16 16"
-    className={`${className} shrink-0 motion-safe:animate-spin [animation-duration:900ms]`}
-    aria-label="Agent working"
-  >
-    <circle cx="8" cy="8" r="6" fill="none" stroke={color} strokeOpacity="0.3" strokeWidth="2.25" />
-    <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke={color} strokeWidth="2.25" strokeLinecap="round" />
-  </svg>
-);

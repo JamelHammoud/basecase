@@ -4,6 +4,7 @@ import type { SavedSceneSummary } from '../types/robotics';
 import { useSavedScenes } from '../utils/sceneStore';
 import { SceneList } from './scenes/SceneList';
 import { sceneMenu } from './scenes/sceneMenu';
+import { keyFor } from '../app/shortcuts';
 
 export interface ScenesMenuProps {
   open: boolean;
@@ -68,7 +69,7 @@ export const ScenesMenu: React.FC<ScenesMenuProps> = (props) => {
       <IconButton
         icon={<MenuIcon className="w-[18px] h-[18px]" />}
         title="Scenes"
-        shortcut="⌘O"
+        shortcut={keyFor('open-scenes')}
         isToggled={open}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -92,7 +93,7 @@ export const ScenesMenu: React.FC<ScenesMenuProps> = (props) => {
           onRename={(scene, name) => {
             setRenaming(null);
 
-            if (name && name !== scene.name) props.onRenameScene(scene, name);
+            if (name) props.onRenameScene(scene, name);
           }}
           onMenu={showMenu}
         />

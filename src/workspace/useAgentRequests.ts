@@ -17,6 +17,8 @@ import type { LaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
 import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import type { SceneDocument } from './useSceneDocument';
+import { errorMessage } from '../utils/errorMessage';
 
 type Payload = Record<string, unknown>;
 
@@ -55,9 +57,16 @@ function firstDelivery(requestId: string) {
   return true;
 }
 
+const partInserter =
+  ({ commitParts, updateProjectNow }: SceneDocument): RequestContext['insertParts'] =>
+  (parts, joints) => {
+    commitParts((prev) => [...prev, ...parts]);
+    updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));
+  };
+
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
-  const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts } = docs;
+  const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole, commitSkeleton } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
 
   const poseTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
@@ -92,10 +101,8 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       setAction,
     });
 
-  const laneBusy = (id: string) => lanes.isBusy(id);
-
   const guard = (author: Author, partId: string) => {
-    const holder = actors.holderOf(partId, author.actor, laneBusy);
+    const holder = actors.holderOf(partId, author.actor, lanes.isBusy);
 
     if (holder) return conflictText(partId, holder, actors);
 
@@ -142,47 +149,57 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     };
   };
 
+  const contextFor = (author: Author): RequestContext => ({
+    parts: () => partsRef.current,
+    project: () => projectRef.current,
+    printer: () => resolvePrinter(projectRef.current.printer, core.studio.printers.printers),
+    slice: (report) => core.printing.job.sliceReport(report),
+    viewport: () => viewportRef.current,
+    setProjectNow,
+    commitConsole,
+    insertParts: partInserter(docs),
+    commitSkeleton,
+    setAction: author.setAction,
+    setCursor: author.setCursor,
+    poseTool: (kind, payload) => poseTool(kind, payload, author.setAction),
+    simTool: (kind, payload) => simTool(kind, payload, author.setAction),
+    ...sceneChecks(core, author.setAction),
+    applyOps: (ops) => applyOps(ops, author),
+    edits: (owner) => actors.editsFor(author.actor, owner),
+    buildGuide: core.guide.generate,
+    routines: core.simTraining.routines,
+    cases: core.simTraining.cases,
+    caseCompare: core.caseCompare,
+    caseExplore: core.caseExplore,
+    caseRun: core.caseRun,
+    skills: core.simTraining.skills,
+  });
+
+  const runRequest = async (event: Pick<AgentRequestEvent, 'kind' | 'payload'>, author: Author) => {
+    const handler = requestHandler(event.kind);
+
+    if (!handler) throw new Error(`Unknown request "${event.kind}"`);
+
+    await awaitPartModels(event.kind, viewportRef.current);
+
+    return handler(event.payload, contextFor(author), event.kind);
+  };
+
   const handleAgentRequest = async (event: AgentRequestEvent) => {
     if (!firstDelivery(event.requestId)) return;
 
     const respond = (result?: unknown, error?: string) =>
       platformBridge.respondToAgent({ requestId: event.requestId, result, error });
-    const author = authorOf(event);
-    const ctx: RequestContext = {
-      parts: () => partsRef.current,
-      project: () => projectRef.current,
-      printer: () => resolvePrinter(projectRef.current.printer, core.studio.printers.printers),
-      slice: (report) => core.printing.job.sliceReport(report),
-      viewport: () => viewportRef.current,
-      setProjectNow,
-      setAction: author.setAction,
-      setCursor: author.setCursor,
-      poseTool: (kind, payload) => poseTool(kind, payload, author.setAction),
-      simTool: (kind, payload) => simTool(kind, payload, author.setAction),
-      ...sceneChecks(core, author.setAction),
-      applyOps: (ops) => applyOps(ops, author),
-      edits: (owner) => actors.editsFor(author.actor, owner),
-      buildGuide: core.guide.generate,
-      routines: core.simTraining.routines,
-      cases: core.simTraining.cases,
-      skills: core.simTraining.skills,
-    };
 
     try {
-      const handler = requestHandler(event.kind);
-
-      if (!handler) {
-        await respond(undefined, `Unknown request "${event.kind}"`);
-
-        return;
-      }
-
-      await awaitPartModels(event.kind, viewportRef.current);
-      await respond(await handler(event.payload, ctx, event.kind));
+      await respond(await runRequest(event, authorOf(event)));
     } catch (err) {
-      await respond(undefined, String((err as Error).message ?? err));
+      await respond(undefined, errorMessage(err));
     }
   };
 
-  return { handleAgentRequest, poseTool, simTool };
+  const request = (kind: string, payload: Payload) =>
+    runRequest({ kind, payload }, authorOf({ requestId: kind, kind, payload }));
+
+  return { handleAgentRequest, request, poseTool, simTool };
 }

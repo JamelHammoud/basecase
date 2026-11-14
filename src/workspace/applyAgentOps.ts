@@ -7,6 +7,7 @@ import type { ScenePart } from '../types/robotics';
 import { sleep } from './helpers';
 import { twinHints } from './mirrorHints';
 import type { CommitParts, Vec3 } from './types';
+import { errorMessage } from '../utils/errorMessage';
 
 export interface AgentOpsContext {
   current: () => ScenePart[];
@@ -41,7 +42,7 @@ interface OpStep<T extends AgentOp['op']> {
 const VERBS: Record<AgentOp['op'], string> = {
   add: 'Adding',
   update: 'Adjusting',
-  delete: 'Removing',
+  delete: 'Deleting',
   mirror: 'Mirroring',
 };
 
@@ -87,7 +88,7 @@ function applyAdd({ op, current, live, ctx, log }: OpStep<'add'>) {
   try {
     part = specToPart(op.part);
   } catch (err) {
-    log.problems.push(String((err as Error).message ?? err));
+    log.problems.push(errorMessage(err));
 
     return false;
   }

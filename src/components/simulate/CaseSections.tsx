@@ -1,61 +1,42 @@
 import React from 'react';
 import {
   Button,
+  CameraIcon,
   CloseIcon,
   ExpandIcon,
   IconButton,
   Kbd,
-  PlusIcon,
   RunIcon,
   Section,
   StopIcon,
+  SwapIcon,
   TrainIcon,
 } from '../../design-system';
-import type { FitRow } from '../../cases/fitCheck';
+import type { CaseCheck } from '../../readiness/caseChecks';
 import type { DriveClass } from '../../sim/driveKeys';
 import type { Cases } from '../../workspace/useCases';
-import { fmtTime } from './format';
-
-const FIT_TONE: Record<FitRow['state'], string> = {
-  pass: 'text-white/70',
-  fail: 'text-[#f87171]',
-  skip: 'text-white/50',
-};
-
-const FitRows: React.FC<{ cases: Cases; onNewCase: () => void }> = ({ cases, onNewCase }) => {
-  const fit = cases.fit;
-
-  if (!fit) return null;
-
-  if (fit.checking) return <p className="mt-2 text-[13px] text-white/50">Checking</p>;
-
-  const rows = fit.rows.filter((row) => row.state !== 'skip');
-  const misfit = rows.some((row) => row.id === 'slot' && row.state === 'fail') && cases.builder.goals.length > 0;
-
-  return (
-    <div className="mt-2 flex flex-col" data-testid="robot-fit">
-      {rows.map((row) => (
-        <div key={row.id} className="min-h-8 py-1 flex items-baseline justify-between gap-3 text-[13px]">
-          <span className="text-white/85 shrink-0">{row.label}</span>
-          <span className={`text-right ${FIT_TONE[row.state]}`}>{row.detail}</span>
-        </div>
-      ))}
-      {misfit && (
-        <Button variant="secondary" size="sm" icon={<PlusIcon className="w-4 h-4" />} onClick={onNewCase}>
-          New Case
-        </Button>
-      )}
-    </div>
-  );
-};
+import type { CaseExplore } from '../../workspace/useCaseExplore';
+import { CheckIcon } from '../build/CheckIcon';
+import { runClock } from '../../utils/duration';
 
 interface CaseSectionProps {
   cases: Cases;
-  onNewCase: () => void;
+  check: CaseCheck | null;
+  onOpenCheck: () => void;
   onRun: () => void;
+  explore: CaseExplore;
 }
 
-export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onRun }) => {
+const ExploreButton: React.FC<{ explore: CaseExplore }> = ({ explore }) => {
+  if (explore.running)
+    return <IconButton icon={<StopIcon className="w-4 h-4" />} title="Stop" size="xs" onClick={explore.stop} />;
+
+  return explore.available ? (
+    <IconButton icon={<SwapIcon className="w-4 h-4" />} title="Explore" size="xs" onClick={explore.start} />
+  ) : null;
+};
+
+export const CaseSection: React.FC<CaseSectionProps> = ({ cases, check, onOpenCheck, onRun, explore }) => {
   const kase = cases.active!;
 
   return (
@@ -63,9 +44,17 @@ export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onRu
       title={kase.name}
       actions={
         <>
-          <Button variant="ghost" size="sm" disabled={cases.fit?.checking} onClick={() => void cases.runFit()}>
-            Check Fit
-          </Button>
+          {check && (
+            <IconButton
+              icon={<CheckIcon status={check.status} />}
+              title={check.text}
+              size="xs"
+              data-testid="case-check"
+              data-status={check.status}
+              onClick={onOpenCheck}
+            />
+          )}
+          <ExploreButton explore={explore} />
           <IconButton icon={<ExpandIcon className="w-4 h-4" />} title="Run Case" size="xs" onClick={onRun} />
           <IconButton
             icon={<CloseIcon className="w-4 h-4" />}
@@ -79,7 +68,6 @@ export const CaseSection: React.FC<CaseSectionProps> = ({ cases, onNewCase, onRu
       <p className="text-[13px] leading-snug text-white/70" data-testid="case-brief">
         {kase.brief}
       </p>
-      <FitRows cases={cases} onNewCase={onNewCase} />
     </Section>
   );
 };
@@ -94,12 +82,13 @@ const KEYS: Record<DriveClass, Array<[string, string]>> = {
     ['Walk and turn', 'W A S D'],
     ['Step sideways', 'Q E'],
   ],
+  pose: [],
 };
 
 export const DriveKeys: React.FC<{ cls: DriveClass }> = ({ cls }) => (
   <div className="flex flex-col">
     {[...KEYS[cls], ['Start over', 'R'] as [string, string]].map(([label, keys]) => (
-      <div key={label} className="h-8 flex items-center justify-between text-[13px] text-white/70">
+      <div key={label} className="h-[28px] flex items-center justify-between text-[13px] text-white/70">
         <span>{label}</span>
         <span className="flex gap-1">
           {keys.split(' ').map((k) => (
@@ -116,8 +105,10 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
   teachWalk,
   cls,
 }) => {
-  const { attempt, active } = cases;
-  const running = attempt.phase === 'running';
+  const { attempt, realTry, active } = cases;
+  const live = realTry.phase === 'running' ? realTry : attempt;
+  const running = live.phase === 'running';
+  const busy = attempt.phase !== 'idle' || realTry.phase !== 'idle';
 
   return (
     <Section title="Try">
@@ -125,10 +116,10 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
         {running ? (
           <div className="flex items-center gap-2">
             <span className="flex-1 text-[13px] tabular text-white/80" data-testid="try-clock">
-              {fmtTime(attempt.elapsed)} of {fmtTime(active?.task.seconds ?? 0)}
+              {runClock(live.elapsed)} of {runClock(active?.task.seconds ?? 0)}
             </span>
-            <Button variant="secondary" size="sm" icon={<StopIcon className="w-4 h-4" />} onClick={attempt.end}>
-              End Try
+            <Button variant="secondary" size="sm" icon={<StopIcon className="w-4 h-4" />} onClick={live.end}>
+              Stop Try
             </Button>
           </div>
         ) : (
@@ -137,10 +128,22 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
             size="md"
             fullWidth
             icon={<RunIcon className="w-4 h-4" />}
-            disabled={attempt.phase !== 'idle'}
+            disabled={busy}
             onClick={() => void attempt.start()}
           >
             Try It
+          </Button>
+        )}
+        {cases.mat.available && !running && (
+          <Button
+            variant="secondary"
+            size="md"
+            fullWidth
+            icon={<CameraIcon className="w-4 h-4" />}
+            disabled={busy || !realTry.canStart}
+            onClick={() => void realTry.start()}
+          >
+            Try on Real Robot
           </Button>
         )}
         {teachWalk && !running && (
@@ -148,7 +151,7 @@ export const TrySection: React.FC<{ cases: Cases; teachWalk: (() => void) | null
             Teach It to Move
           </Button>
         )}
-        {running && cls && <DriveKeys cls={cls} />}
+        {attempt.phase === 'running' && cls && <DriveKeys cls={cls} />}
       </div>
     </Section>
   );

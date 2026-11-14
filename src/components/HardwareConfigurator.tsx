@@ -27,7 +27,15 @@ import {
 } from '../data/hardware';
 import { PART_CATALOG, hardwareVariant } from '../data/catalog';
 import { usePartThumbnail } from '../three/partThumbnails';
-import { CHOICE_TRACK, ChoiceGrid, DriveIcon, NumberInput, Section, choiceCellClass } from '../design-system';
+import {
+  CHOICE_TRACK,
+  ChoiceGrid,
+  DriveIcon,
+  NumberInput,
+  PreviewImage,
+  Section,
+  choiceCellClass,
+} from '../design-system';
 import { SizeLine, SpecRow } from './PartDetails';
 import { InsertLengthSection } from './InsertLengthSection';
 
@@ -144,7 +152,7 @@ export const HardwareSpecs: React.FC<{ spec: HardwareSpec; collapsible?: boolean
       <Section title="Specs" collapsible={collapsible} defaultOpen={!collapsible}>
         <dl className="-my-[5px]">
           <SpecRow label="Size">
-            <SizeLine w={d.width} h={d.height} d={d.depth} />
+            <SizeLine mm={[d.width, d.height, d.depth]} />
           </SpecRow>
           {isMetric(spec.size) && (
             <SpecRow label="Thread">
@@ -214,16 +222,7 @@ const TypeTile: React.FC<{
           selected ? 'ring-[1.5px] ring-inset ring-[#0d99ff]/70' : ''
         }`}
       >
-        {thumb ? (
-          <img
-            src={thumb}
-            alt=""
-            draggable={false}
-            className="w-full h-full object-contain p-1 animate-fade-in transition-transform duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-hover:scale-[1.06]"
-          />
-        ) : (
-          <span className="block w-full h-full shimmer" />
-        )}
+        <PreviewImage src={thumb} zoom className="p-1 animate-fade-in" />
       </span>
       <span
         className={`block mt-[6px] text-center text-[12.5px] font-medium truncate transition-colors duration-150 ${
@@ -354,7 +353,7 @@ const StockStrip: React.FC<{ lengths: number[]; value: number; onPick: (l: numbe
           role="radio"
           aria-checked={l === value}
           onClick={() => onPick(l)}
-          className={`shrink-0 min-w-[40px] h-7 px-1.5 text-[12.5px] ${choiceCellClass(l === value)}`}
+          className={`shrink-0 min-w-[40px] h-[32px] px-1.5 text-[12.5px] ${choiceCellClass(l === value)}`}
         >
           {l}
         </button>

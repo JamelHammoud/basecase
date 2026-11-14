@@ -86,7 +86,7 @@ export const CommentComposer: React.FC<{
       <IconButton
         icon={<ArrowUpIcon className="w-[18px] h-[18px]" strokeWidth={2.25} />}
         title="Post"
-        shortcut="↩︎"
+        shortcut="↩"
         tooltipSide="top"
         variant="send"
         className="rounded-full"

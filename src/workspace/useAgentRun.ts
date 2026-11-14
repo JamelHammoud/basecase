@@ -1,10 +1,17 @@
 import type { AcpChatMessage, CustomModelDefinition } from '../types/robotics';
-import { ipcErrorText } from '../utils/ipcError';
 import { platformBridge, type AcpPromptPayload } from '../utils/platformBridge';
+import { errorMessage } from '../utils/errorMessage';
 import { clearFailedReply, emptyAgentMessage, markLastAgentFailed, markLastAgentStopped } from './acpTranscript';
 import { marksNote } from '../agent/agentMarks';
 import type { ActorIndex } from './agentActors';
-import { buildAgentPrompt, resendPayload, type AgentSendParams, type PromptOptions } from './agentPrompt';
+import {
+  buildAgentPrompt,
+  joinNotes,
+  resendPayload,
+  runningCaseNote,
+  type AgentSendParams,
+  type PromptOptions,
+} from './agentPrompt';
 import { newId } from './helpers';
 import { readinessGate } from './readinessGate';
 import { STOPPED_REASONS } from './liveRuns';
@@ -32,18 +39,20 @@ type PromptResult = Awaited<ReturnType<typeof platformBridge.sendAcpPrompt>>;
 
 export type SendMode = 'now' | 'queue';
 
-const failureReason = (err: unknown) => ipcErrorText(err) || 'The agent stopped responding.';
+const failureReason = (err: unknown) => errorMessage(err).trim() || 'It stopped responding.';
+
+const promptNote = ({ docs, caseRun, simTraining }: WorkspaceCore) =>
+  joinNotes(
+    marksNote(docs.projectRef.current.marks, docs.partsRef.current),
+    runningCaseNote(caseRun.open ? simTraining.cases.active : null),
+  );
 
 export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomModel }: AgentRunOptions) {
-  const { docs, showToast } = core;
+  const { showToast } = core;
   const { setCustomModels } = core.studio;
   const { updateLane, setMessages, setQueue, flagsOf, keyOf } = lanes;
 
-  const build = (params: AgentSendParams) => {
-    const note = marksNote(docs.projectRef.current.marks, docs.partsRef.current);
-
-    return buildAgentPrompt({ ...params, note }, new Date());
-  };
+  const build = (params: AgentSendParams) => buildAgentPrompt({ ...params, note: promptNote(core) }, new Date());
 
   const setSession = (id: string, sessionId: string) => updateLane(id, (l) => ({ ...l, acpSessionId: sessionId }));
 
@@ -92,7 +101,7 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
       const reason = failureReason(err);
 
       setMessages(id, markLastAgentFailed(reason));
-      showToast(reason, { tone: 'error' });
+      showToast(`The agent couldn’t finish. ${reason}`, { tone: 'error' });
 
       return false;
     }
@@ -188,9 +197,8 @@ export function useAgentRun({ core, lanes, actors, cursors, alive, placeCustomMo
 
     if (flagsOf(id).busy || !user) return;
 
-    const note = marksNote(docs.projectRef.current.marks, docs.partsRef.current);
     const fresh = emptyAgentMessage(new Date());
-    const payload = resendPayload(user, { ...options, note });
+    const payload = resendPayload(user, { ...options, note: promptNote(core) });
 
     setMessages(id, (prev) => [...clearFailedReply(prev), fresh]);
     await runAgentPrompt(id, chatId ? { ...payload, run: { chatId, messages: [fresh] } } : payload);

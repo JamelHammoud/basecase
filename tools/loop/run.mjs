@@ -6,10 +6,22 @@ import { backpressure, PRODUCERS } from './lib/flow.mjs';
 import { flowCounts } from './lib/flowCounts.mjs';
 import { laneNames, laneModule } from './lib/lanes.mjs';
 import { claim } from './lib/claim.mjs';
-import { commentOnIssue, issues } from './lib/github.mjs';
+import { commentOnIssue, createIssue, issues } from './lib/github.mjs';
+import { firstLine, isBad, LOAD_CHECK, markBad } from './lib/homeGuard.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
-import { pause, probe, probeDue, resume, startPause, UsageLimit } from './lib/usage.mjs';
+import { CODEX_EFFORT, CODEX_MODEL } from './lib/codex.mjs';
+import {
+  codexPause,
+  isActive,
+  markAnnounced,
+  pause,
+  probe,
+  probeDue,
+  resume,
+  startPause,
+  UsageLimit,
+} from './lib/usage.mjs';
 
 const LANES = laneNames();
 const [lane, slot = '1'] = process.argv.slice(2);
@@ -64,14 +76,50 @@ function updateHome() {
   }).ok;
   const ref = exists ? HOME_REF : 'main';
 
-  run('git', ['fetch', '-q', 'origin', ref], { cwd: HOME_CHECKOUT });
-  run('git', ['reset', '-q', '--hard', `origin/${ref}`], { cwd: HOME_CHECKOUT });
+  const before = run('git', ['rev-parse', 'HEAD'], { cwd: HOME_CHECKOUT }).out.trim();
 
+  run('git', ['fetch', '-q', 'origin', ref], { cwd: HOME_CHECKOUT });
+
+  const target = run('git', ['rev-parse', `origin/${ref}`], { cwd: HOME_CHECKOUT }).out.trim();
+
+  if (target === before || isBad(target)) return false;
+
+  run('git', ['reset', '-q', '--hard', target], { cwd: HOME_CHECKOUT });
+
+  if (depsCurrent()) keepIfLoads({ before, target });
+
+  return true;
+}
+
+function keepIfLoads({ before, target }) {
+  const loads = run(process.execPath, ['--input-type=module', '-e', LOAD_CHECK], {
+    cwd: HOME_CHECKOUT,
+    timeout: 2 * 60 * 1000,
+    allowFail: true,
+  });
+
+  if (loads.ok) return;
+
+  const why = firstLine(loads.err || loads.out);
+
+  run('git', ['reset', '-q', '--hard', before], { cwd: HOME_CHECKOUT });
+  markBad(target);
+  log(`main at ${target.slice(0, 7)} breaks the loop's own code (${why}); staying on ${before.slice(0, 7)}`);
+  createIssue({
+    title: `Fix: The loop's code on main fails to load: ${why.slice(0, 120)}`,
+    body: `Kind: fix\n\nThe merge lane updated its checkout to ${target} and loading tools/loop failed, so the loop stays on ${before} until main has a commit that loads.\n\n\`\`\`\n${(loads.err || loads.out).slice(0, 4000)}\n\`\`\``,
+    labels: ['loop:next', 'loop:fix', 'loop:priority'],
+  });
+}
+
+function depsCurrent() {
   const stampFile = path.join(HOME_CHECKOUT, 'node_modules', '.loop-lock-hash');
   const hash = lockHash(HOME_CHECKOUT);
   const current = fs.existsSync(stampFile) ? fs.readFileSync(stampFile, 'utf8') : '';
 
-  if (current === hash || othersRunning()) return;
+  if (current === hash) return true;
+
+  if (othersRunning()) return false;
 
   log('package-lock.json changed; installing');
   run('npm', ['ci', '--no-audit', '--no-fund'], {
@@ -80,15 +128,19 @@ function updateHome() {
     env: { ELECTRON_SKIP_BINARY_DOWNLOAD: '1' },
   });
   fs.writeFileSync(stampFile, hash);
+
+  return true;
 }
 
 const localTime = (at) => new Date(at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
-function agentsMayRun() {
-  const paused = pause();
+function tellDirection(text) {
+  const direction = issues('loop:direction')[0];
 
-  if (!paused || Date.now() >= paused.until) return true;
+  if (direction) commentOnIssue(direction.number, text);
+}
 
+function claudeIsBack() {
   const release = probeDue() ? claim('usage-probe') : null;
 
   if (!release) return false;
@@ -96,35 +148,64 @@ function agentsMayRun() {
   try {
     const limit = probe();
 
-    if (!limit) {
-      resume();
-      log('usage is back; agent lanes resume');
+    if (limit) {
+      startPause(limit.until);
 
-      return true;
+      return false;
     }
 
-    startPause(limit.until);
-    log(`still at the usage limit; paused until ${localTime(Math.max(limit.until, paused.until))}`);
+    resume();
 
-    return false;
+    return true;
   } finally {
     release();
   }
 }
 
-function announcePause(error) {
-  log(`usage limit reached; agent lanes paused until ${localTime(error.until)}`);
+function agentsMayRun() {
+  const claude = pause();
 
-  if (!error.started) return;
+  if (!claude) return true;
 
-  const direction = issues('loop:direction')[0];
+  if (claudeIsBack()) {
+    log('Claude is back; agent lanes run on Claude again');
+    tellDirection('Claude is back, so the agent lanes run on Claude again.');
 
-  if (!direction) return;
+    return true;
+  }
 
-  commentOnIssue(
-    direction.number,
-    `The loop hit the Claude usage limit, so its agent lanes are paused until ${localTime(error.until)}. Merging and tidying keep running. They resume on their own when the limit resets, or within 15 minutes of a manual reset; \`node tools/loop/usage.mjs resume\` restarts them at once.`,
+  return !(isActive(claude) && isActive(codexPause()));
+}
+
+function announceCodex() {
+  const claude = pause();
+
+  if (!claude || claude.announced) return;
+
+  markAnnounced();
+  log(
+    `Claude hit its usage limit; agent lanes run on Codex (${CODEX_MODEL}, ${CODEX_EFFORT}) until ${localTime(claude.until)}`,
   );
+  tellDirection(
+    `Claude hit its usage limit, so the agent lanes run on Codex (${CODEX_MODEL}, ${CODEX_EFFORT} effort) until ${localTime(claude.until)}, when Claude's limit resets. A manual reset is picked up within 15 minutes.`,
+  );
+}
+
+function announcePause(error) {
+  log(`Claude and Codex are both at their usage limits; agent lanes paused until ${localTime(error.until)}`);
+
+  if (error.started)
+    tellDirection(
+      `Claude and Codex both hit their usage limits, so the agent lanes are paused until ${localTime(error.until)}. Merging and tidying keep running. They resume on their own, or within 15 minutes of a manual reset; \`node tools/loop/usage.mjs resume\` restarts them at once.`,
+    );
+}
+
+async function runOnce() {
+  const { default: runLane, schedule } = await laneModule(lane);
+  const held = PRODUCERS.has(lane) ? backpressure(flowCounts(), lane) : null;
+
+  if (held) log(`waiting: ${held}`);
+  else if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });
 }
 
 const runsFromHome = path.resolve(import.meta.dirname, '..', '..') === path.resolve(HOME_CHECKOUT);
@@ -132,20 +213,17 @@ const startedAt = Date.now();
 const LONG_RUN_MINUTES = 2;
 
 try {
-  if (runsFromHome && lane === 'merge') {
-    updateHome();
+  const updated = runsFromHome && lane === 'merge' && updateHome();
+
+  if (updated) {
     spawn(process.execPath, [path.join(HOME_CHECKOUT, 'tools', 'loop', 'install.mjs'), 'sync', String(process.pid)], {
       detached: true,
       stdio: 'ignore',
     }).unref();
   }
 
-  const { default: runLane, schedule } = await laneModule(lane);
-
-  const held = PRODUCERS.has(lane) ? backpressure(flowCounts()) : null;
-
-  if (held) log(`waiting: ${held}`);
-  else if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });
+  if (updated) log('updated to the latest main; the next run uses it');
+  else await runOnce();
 } catch (error) {
   if (error instanceof UsageLimit) announcePause(error);
   else {
@@ -153,6 +231,8 @@ try {
     process.exitCode = 1;
   }
 }
+
+announceCodex();
 
 const minutes = Math.round((Date.now() - startedAt) / 60_000);
 

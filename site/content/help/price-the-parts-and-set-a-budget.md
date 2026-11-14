@@ -47,13 +47,18 @@ The bar under the total shows how much is left, or how far over budget you are. 
 
 - A price you saved shows in white. It counts in every scene that uses the part.
 - A price marked ≈ is the maker's or a distributor's list price. The total is marked ≈ while any line uses one.
+- Parts you [already own](/help/count-the-parts-you-already-own) are left out of a line's price and the total.
 - A price saved more than 60 days ago turns amber. Hover it to see the date, then save the price you see now.
 - **Equipment**, such as tools, is left out of the budget.
 
 To keep the store page with a price, open **Listing** in the same sheet and paste the link into **Listing link**.
 
+To delete a saved price, click it, click **Delete Price**, then **Delete**. The line goes back to its ≈ list price, or to **Add Price** where it has none.
+
+![Delete price for Feetech STS3215 7.4 V (C001)? over the price sheet](/help/price-the-parts-and-set-a-budget/delete-price.png)
+
 ## Show prices in your currency
 
-Press ⌘, (Ctrl+, on Windows), choose **Build** and pick one of 30 currencies in **Currency** under **Prices**. Basecase converts at European Central Bank rates, updated once a day when the app starts. A price you type in your currency reads back exactly as you typed it.
+Press [[⌘,]], choose **Build** and pick one of 30 currencies in **Currency** under **Prices**. Basecase converts at European Central Bank rates, updated once a day when the app starts. A price you type in your currency reads back exactly as you typed it.
 
 Next, [buy the parts for a robot](/help/buy-the-parts-for-a-robot).

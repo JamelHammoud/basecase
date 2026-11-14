@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { caseName, goalFields, goalValues, worldsFor } from '../../cases/caseBuilder';
+import { caseFields, goalValues, specValues, worldsFor } from '../../cases/caseBuilder';
 import { goalParam, type GoalKind, type GoalValues } from '../../cases/caseGoals';
 import type { WorldKind } from '../../cases/caseWorlds';
-import { Button, ChoiceGrid, FieldRow, NumberInput, TextInput } from '../../design-system';
+import { Button, ChoiceGrid, FieldRow, NumberInput } from '../../design-system';
 import type { CaseBuilder } from '../../workspace/useCaseBuilder';
+import { RoomTargetPicker } from './RoomTargetPicker';
+import { useRoomTargetPick } from './useRoomTargetPick';
 
 const MAX_WORLD_COLUMNS = 3;
 
@@ -16,17 +18,31 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   const [goalKind, setGoalKind] = useState<GoalKind>(builder.goals[0].kind);
   const [chosenWorld, setWorld] = useState<WorldKind>(builder.room ? 'room' : 'floor');
   const [given, setGiven] = useState<Partial<GoalValues>>({});
-  const [name, setName] = useState<string | null>(null);
   const goal = builder.goals.find((g) => g.kind === goalKind) ?? builder.goals[0];
   const worlds = worldsFor(goal.kind, builder.robot, builder.room);
   const world = worlds.some((w) => w.kind === chosenWorld) ? chosenWorld : 'floor';
-  const values = goalValues(goal, builder.robot, given, world);
-  const spec = { goal: goal.kind, world, values: given, name: name ?? undefined };
+  const spots = useRoomTargetPick({
+    builder,
+    goal: goal.kind,
+    world,
+    values: goalValues(goal, builder.robot, given, world),
+  });
+  const chosen = spots.chosen;
+  const spec = { goal: goal.kind, world, values: given, targets: chosen };
+  const values =
+    specValues({ ...spec, room: builder.room }, builder.robot) ?? goalValues(goal, builder.robot, given, world);
   const preview = builder.preview(spec);
+  const fields = caseFields(goal, values, world).filter((key) => !(key === 'distanceMm' && chosen[0]));
 
   const pickGoal = (kind: GoalKind) => {
     setGoalKind(kind);
     setGiven({});
+    spots.clear();
+  };
+
+  const pickWorld = (kind: WorldKind) => {
+    setWorld(kind);
+    setGiven((g) => ({ ...g, riseMm: undefined, inclineDeg: undefined }));
   };
 
   const create = () => {
@@ -55,12 +71,15 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
           label="World"
           columns={worlds.length > MAX_WORLD_COLUMNS ? 2 : worlds.length}
           value={world}
-          onChange={setWorld}
+          onChange={pickWorld}
           options={worlds.map((w) => ({ value: w.kind, label: w.name, title: w.trueSize ? w.name : undefined }))}
         />
       )}
       <div className="flex flex-col gap-2">
-        {goalFields(goal, values).map((key) => {
+        {spots.targets.length > 0 && (
+          <RoomTargetPicker count={spots.count} targets={spots.targets} picked={chosen} onPick={spots.pick} />
+        )}
+        {fields.map((key) => {
           const param = goalParam(goal, key);
 
           return (
@@ -77,15 +96,6 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
             </FieldRow>
           );
         })}
-        <FieldRow label="Name">
-          <TextInput
-            value={name ?? caseName(goal.kind, world, values, builder.room)}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') create();
-            }}
-          />
-        </FieldRow>
       </div>
       <p className="text-[12.5px] leading-snug text-white/55" data-testid="new-case-brief">
         {preview.ok ? preview.kase.brief : preview.problem}
@@ -94,8 +104,16 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         <Button variant="ghost" size="sm" title="Cancel" shortcut="Esc" onClick={builder.cancel}>
           Cancel
         </Button>
-        <Button variant="primary" size="sm" title="Create" shortcut="↩" disabled={!preview.ok} onClick={create}>
-          Create
+        <Button
+          autoFocus
+          variant="primary"
+          size="sm"
+          title="Make Case"
+          shortcut="↩"
+          disabled={!preview.ok}
+          onClick={create}
+        >
+          Make Case
         </Button>
       </div>
     </div>

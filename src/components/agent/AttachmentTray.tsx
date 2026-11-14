@@ -1,7 +1,8 @@
 import React from 'react';
-import { MetaLine, Tooltip, CloseIcon, FolderIcon, SpinnerIcon } from '../../design-system';
+import { MetaLine, Tooltip, CloseIcon, FolderIcon, Spinner } from '../../design-system';
 import { Attachments, FolderChip } from './useAttachments';
 import { OpenImages } from './types';
+import { plural } from '../../../electron/plural.mjs';
 
 const RemoveChip: React.FC<{ label: string; onClick: () => void }> = ({ label, onClick }) => (
   <button
@@ -17,7 +18,7 @@ const RemoveChip: React.FC<{ label: string; onClick: () => void }> = ({ label, o
 function folderMeta(f: FolderChip): string[] {
   if (!f.ready) return [`${f.done} of ${f.total}`];
 
-  const files = `${f.fileCount} file${f.fileCount === 1 ? '' : 's'}`;
+  const files = plural(f.fileCount ?? 0, 'file');
 
   return f.skipped ? [files, `${f.skipped} skipped`] : [files];
 }
@@ -25,12 +26,8 @@ function folderMeta(f: FolderChip): string[] {
 const FolderTile: React.FC<{ folder: FolderChip; onRemove: () => void }> = ({ folder: f, onRemove }) => (
   <div className="relative animate-pop-up min-w-0 max-w-full">
     <div className="h-14 max-w-[220px] pl-2.5 pr-3.5 rounded-xl bg-white/[0.06] ring-1 ring-white/10 flex items-center gap-2.5">
-      <span className="w-8 h-8 rounded-lg bg-white/[0.07] flex items-center justify-center shrink-0">
-        {f.ready ? (
-          <FolderIcon className="w-4 h-4 text-white/75" />
-        ) : (
-          <SpinnerIcon className="w-4 h-4 animate-spin text-white/50" />
-        )}
+      <span className="w-[28px] h-[28px] rounded-lg bg-white/[0.07] flex items-center justify-center shrink-0">
+        {f.ready ? <FolderIcon className="w-4 h-4 text-white/75" /> : <Spinner className="w-4 h-4 text-white/50" />}
       </span>
       <span className="min-w-0">
         <span className="block text-[13px] text-white/90 truncate">{f.name}</span>
@@ -57,7 +54,7 @@ export const AttachmentTray: React.FC<{ attachments: Attachments; onOpenImages: 
           <Tooltip label={img.name} side="top">
             <button
               type="button"
-              aria-label={`View ${img.name}`}
+              aria-label={`Open ${img.name}`}
               onClick={() =>
                 onOpenImages(
                   images.map((a) => ({ src: a.dataUrl, name: a.name })),
@@ -74,7 +71,7 @@ export const AttachmentTray: React.FC<{ attachments: Attachments; onOpenImages: 
       ))}
       {Array.from({ length: uploadingCount }).map((_, i) => (
         <span key={`up-${i}`} className="w-14 h-14 rounded-xl bg-white/[0.06] flex items-center justify-center">
-          <SpinnerIcon className="w-4 h-4 animate-spin text-white/50" />
+          <Spinner className="w-4 h-4 text-white/50" />
         </span>
       ))}
     </div>

@@ -33,6 +33,9 @@ import {
   type PoseReply,
   type Scope,
 } from './agentPoseShared';
+import { duration } from '../utils/duration';
+import { lengthLabel } from '../utils/size';
+import { plural } from '../../electron/plural.mjs';
 
 export { animateRequest, type AnimatePayload } from './agentAnimate';
 export type { PoseContext, PoseReply } from './agentPoseShared';
@@ -89,7 +92,7 @@ function libraryLines(ctx: PoseContext, scope: Scope): string[] {
 
   if (animations.length)
     lines.push(
-      `Animations: ${animations.map((a) => `${a.name} (${a.duration}s${a.loop ? ', loops' : ''})`).join(', ')}`,
+      `Animations: ${animations.map((a) => `${a.name} (${duration(a.duration)}${a.loop ? ', loops' : ''})`).join(', ')}`,
     );
 
   return lines;
@@ -121,7 +124,7 @@ export function getRig(ctx: PoseContext, wanted?: string): PoseReply {
   const names = new Map(ctx.parts.map((p) => [p.id, p.name]));
   const lines = [
     ...robotsHeader(full, scope),
-    `${scope.name}: ${movable.length} joints (values from the modeled pose; agent frame, mm):`,
+    `${scope.name}: ${plural(movable.length, 'joint')} (values from the modeled pose; agent frame, mm):`,
     ...movable.map((j) => jointLine(rig, j, names)),
     '',
     canvasPoseLine(scope.local),
@@ -260,7 +263,7 @@ function applyIk(rig: Rig, state: RobotPoseState, p: PosePayload, setup: IkSetup
   for (const g of goals) {
     const e = res.errors[i] ?? 0;
 
-    if (e > 2) setup.notes.push(`${g.part} ends ${r1(e)} mm from its target (out of reach or a joint limit)`);
+    if (e > 2) setup.notes.push(`${g.part} ends ${lengthLabel(e)} from its target (out of reach or a joint limit)`);
 
     i += g.keepOrientation ? 4 : 1;
   }

@@ -17,6 +17,7 @@ related:
 covers:
   - electron/cad-mcp-server.mjs
   - electron/cad-mcp/
+  - src/linkage/agentLinkage.ts
   - electron/backend/sessionParams.mjs
 ---
 
@@ -32,10 +33,10 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `find_in_scene` | Finds parts by words, group, kind, region or nearness |
 | `get_part_code` | Reads a modeled part's code |
 | `add_parts` | Adds block-out shapes and real catalog parts |
-| `update_parts` | Moves, recolors, renames, regroups or re-notes parts |
+| `update_parts` | Moves, resizes, recolors, renames, regroups or re-notes parts, and rounds or bevels their edges |
 | `delete_parts` | Removes parts |
 | `mirror_parts` | Makes mirrored copies for left and right sides |
-| `find_parts` | Searches the catalog of real parts, with sizes and prices |
+| `find_parts` | Searches the catalog of real parts, with sizes, prices and how many you own |
 | `model_part` | Models one part as code and places it in the scene |
 | `set_status` | Shows a short status line in the app |
 
@@ -53,9 +54,9 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 |---|---|
 | `look` | Renders the model from one or more views |
 | `check_scene` | Finds parts that overlap, float or sit below the floor |
-| `check_assembly` | Checks the robot can be put together and serviced |
+| `check_assembly` | Checks the robot can be put together and serviced, and lists printed parts that could print as one |
 | `craft_review` | Flags parts that look plain or unfinished |
-| `verify_design` | Runs the engineering checks: pass, warn or fail |
+| `verify_design` | Runs the engineering checks: pass, warn or fail. It ends with what plugs where |
 | `get_readiness` | Reads the Build tab's verdict |
 | `dispute_finding` | Records why a blocker might be wrong |
 | `get_guide` | Opens one of the agent's design guides |
@@ -95,11 +96,15 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_interfaces` | Sets what each part designer must connect to |
 | `check_interfaces` | Checks a subassembly against those connections |
 | `define_joints` | Declares the robot's joints |
+| `synthesize_linkage` | Fits a four-bar linkage to a path, and can add it with a servo on its crank |
+| `find_joint_axes` | Finds the hinges in imported parts: each shaft or pin in a bore |
 | `get_rig` | Lists joints, poses and animations |
 | `pose` | Poses the robot without changing parts |
 | `animate` | Makes keyframes or a walking gait |
 | `retarget_motion` | Turns BVH motion capture into an animation |
 | `import_robot` | Inserts a published URDF or MJCF robot |
+| `make_leader` | Makes a leader arm you move by hand, in a new scene tab |
+| `wrap_robot` | Wraps a robot in an imported mesh, cut into printed shells |
 
 ## Simulation, Cases, Routines and skills
 
@@ -109,24 +114,34 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |
-| `create_case` | Adds a Case |
-| `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine |
+| `create_case` | Adds a Case, with the inputs, panels and gestures it runs with, and marks which objects its code can move. In a scanned room, it aims at a door or furniture by name |
+| `write_case_code` | Writes or replaces one of a Case's code panels, and replies with its errors, its console lines, its refused calls and a picture of the window |
+| `read_case_code` | Reads a code panel's source, or lists a Case's code panels |
+| `delete_case_code` | Takes a code panel out of a Case |
+| `run_case` | Runs a Case 20 times and reports how often it passed and why it failed |
+| `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
+| `explore_case` | Runs a Case on each catalog version of the robot's servos and supply voltage |
+| `make_routine`, `read_routine`, `edit_routine` | Writes, reads and edits a Routine, and proves each new switch between skills in it |
 | `test_routine`, `run_routine` | Tests and runs a Routine |
 | `draft_skill` | Writes a skill's contract |
 | `train_skill` | Trains a skill in the background |
 | `training_status` | Reports training progress |
 | `list_skills` | Lists the robot's skills |
+| `coach_skill` | Changes how a ready Motor Kit skill moves, and keeps the change only if Arena still passes it |
 
 ## Build and cost
 
 | Tool | What it does |
 |---|---|
 | `get_bom` | Reads the bill of materials |
+| `record_on_hand` | Saves how many of a part you own |
 | `check_printability` | Checks each part against your printer |
 | `slice_plates` | Slices plates for print time and grams, without printing |
-| `set_build` | Sets extras, budget and filament |
+| `merge_parts` | Merges printed parts that `check_assembly` lists into one, when you ask |
+| `set_build` | Sets extras, budget, filament and the power supply for a robot with no battery |
 | `build_guide` | Writes the printable assembly guide |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
+| `size_arm` | Sizes and places an arm from the points it must reach and the grams it carries |
 | `sweep_design` | Tries a value on copies, without changing the scene |
 
 With Claude Code, the agent can also start part designers, which are smaller agents that each model one subassembly. Every agent can also search the web, and Claude Code and Gemini CLI keep a to-do list.

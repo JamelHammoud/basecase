@@ -132,6 +132,9 @@ export function uniqueJointIds(joints: RobotJoint[], taken: Iterable<string> = [
               ...j,
               id,
               parentJoint: j.parentJoint && rename.has(j.parentJoint) ? rename.get(j.parentJoint) : j.parentJoint,
+              ...(j.loop && rename.has(j.loop.driver)
+                ? { loop: { ...j.loop, driver: rename.get(j.loop.driver)! } }
+                : {}),
             }
           : j,
       );

@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Button, useScrollFade } from '../design-system';
+import React, { useEffect, useState } from 'react';
+import { ModeHeader, useScrollFade } from '../design-system';
 import type { ScenePart, SculptSettings } from '../types/robotics';
 import type { SketchShape } from '../utils/sketch/placement';
 import type { Sketch } from '../utils/sketch/types';
 import type { SketchParams } from '../workspace/partFactories';
 import type { TextFile } from '../workspace/types';
 import { SculptPanel } from './studio/SculptPanel';
-import { SketchPanel, type BoundSketch, type SketchOutput } from './studio/SketchPanel';
+import { SketchPanel, type BoundSketch, type SketchLinkage, type SketchOutput } from './studio/SketchPanel';
 import { SvgImportPanel } from './studio/SvgImportPanel';
 import { useStudioDraft } from './studio/useStudioDraft';
 
@@ -21,12 +21,14 @@ interface SculptAndDrawStudioProps {
   svgFile?: TextFile | null;
   onChangeMode: (mode: StudioSubTab) => void;
   onDone: () => void;
+  onUnsavedChange: (unsaved: boolean) => void;
   onUpdateSculptSettings: (patch: Partial<SculptSettings>) => void;
   onAddClayPreset: (preset: 'clay_sphere' | 'clay_box' | 'clay_cylinder' | 'clay_capsule') => void;
   onSubdivideSelectedClay: () => void;
   onCreateFrom2DDrawing: (params: SketchParams) => void;
   sketchStart: Sketch;
   boundSketch: BoundSketch | null;
+  linkage?: SketchLinkage;
   onCreateSketch: (shape: SketchShape, output: SketchOutput) => void;
 }
 
@@ -37,17 +39,26 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
   svgFile = null,
   onChangeMode: setSubTab,
   onDone,
+  onUnsavedChange,
   onUpdateSculptSettings,
   onAddClayPreset,
   onSubdivideSelectedClay,
   onCreateFrom2DDrawing,
   sketchStart,
   boundSketch,
+  linkage,
   onCreateSketch,
 }) => {
   const { ref: setFadeEl, style: fadeStyle } = useScrollFade();
   const draft = useStudioDraft(sketchStart, boundSketch ? null : 'line');
   const [loadedSvg, setLoadedSvg] = useState<TextFile | null>(null);
+  const unsaved = subTab !== 'clay' && !boundSketch && (draft.drawn || !!linkage?.path.length);
+
+  useEffect(() => {
+    onUnsavedChange(unsaved);
+
+    return () => onUnsavedChange(false);
+  }, [unsaved, onUnsavedChange]);
 
   if (svgFile && svgFile !== loadedSvg) {
     setLoadedSvg(svgFile);
@@ -56,12 +67,7 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="h-[44px] shrink-0 pl-[12px] pr-[8px] flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold text-white/90">{MODE_TITLES[subTab]}</h2>
-        <Button variant="primary" size="sm" onClick={onDone}>
-          Done
-        </Button>
-      </div>
+      <ModeHeader title={MODE_TITLES[subTab]} onDone={onDone} />
 
       <div key={subTab} ref={setFadeEl} style={fadeStyle} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         {subTab === 'clay' && (
@@ -73,7 +79,9 @@ export const SculptAndDrawStudio: React.FC<SculptAndDrawStudioProps> = ({
             onSubdivideSelectedClay={onSubdivideSelectedClay}
           />
         )}
-        {subTab === 'draw2d' && <SketchPanel draft={draft} bound={boundSketch} onCreate={onCreateSketch} />}
+        {subTab === 'draw2d' && (
+          <SketchPanel draft={draft} bound={boundSketch} linkage={linkage} onCreate={onCreateSketch} />
+        )}
         {subTab === 'svg' && (
           <SvgImportPanel
             draft={draft}

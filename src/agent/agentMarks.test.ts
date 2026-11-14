@@ -43,7 +43,7 @@ describe('agent marks', () => {
     );
 
     expect(note).toContain(
-      'drew 2 marks on the canvas: yellow around Head, labelled "this is right"; orange around Head, Left Arm.',
+      'drew 2 marks on the canvas: yellow around Head, labeled "this is right"; orange around Head, Left Arm.',
     );
     expect(marksNote([mark([])], parts)).toContain('drew 1 mark on the canvas: red.');
   });

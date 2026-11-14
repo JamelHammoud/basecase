@@ -2,18 +2,13 @@ import type { Command } from '../components/CommandPalette';
 import {
   BotIcon,
   BrushIcon,
-  CloseIcon,
+  CheckIcon,
   CommentIcon,
-  ComposeIcon,
   DeleteIcon,
-  DuplicateIcon,
   EraserIcon,
-  FolderOpenIcon,
-  HistoryIcon,
   MarkerIcon,
   MoveIcon,
   PenIcon,
-  PhotoAddIcon,
   PhotoIcon,
   PoseIcon,
   PrinterIcon,
@@ -23,97 +18,35 @@ import {
   RulerIcon,
   RunIcon,
   ScaleIcon,
-  SwapIcon,
 } from '../design-system';
 import { ROBOT_PRESETS } from '../utils/robotImport';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { caseCommands } from './caseCommands';
+import { skillCommands } from './skillCommands';
 import { skeletonCommands } from './skeletonCommands';
-import { fitTestCommands } from './fitTestCommands';
+import { fitTestCommands, mergeCommands } from './printCommands';
 import { slashPaletteCommands } from './slashPaletteCommands';
 import { routineCommands } from './routineCommands';
+import { coachCommands } from './coachCommands';
 import { exchangeCommands } from './exchangeCommands';
+import { inputCommands } from './inputCommands';
 import { operateCommands } from './operateCommands';
 import { buildCommands } from './buildCommands';
 import { leaderCommands } from './leaderCommands';
 import { onshapeCommands } from './onshapeCommands';
+import { keyFor } from '../app/shortcuts';
+import { fileCommands } from './fileCommands';
+import { simCommands } from './simCommands';
+import type { AgentSession } from './useAgentSession';
 
 export interface CommandInputs {
   core: WorkspaceCore;
   actions: WorkspaceActions;
   ui: WorkspaceUi;
   clipboard: { copyViaCommand: (cut: boolean) => void; pasteParts: () => void };
-}
-
-const ic = 'w-4 h-4';
-
-function fileCommands({ core }: CommandInputs): Command[] {
-  const { studio, workspaceId } = core;
-  const reopen: Command[] = studio.canReopenTab
-    ? [
-        {
-          id: 'reopen-scene',
-          group: 'Scene',
-          label: 'Reopen Closed Scene',
-          shortcut: '⇧⌘T',
-          icon: <HistoryIcon className={ic} />,
-          keywords: 'tab undo restore',
-          run: studio.reopenTab,
-        },
-      ]
-    : [];
-
-  return [
-    {
-      id: 'open-scenes',
-      group: 'Scene',
-      label: 'Show Scenes',
-      shortcut: '⌘O',
-      icon: <FolderOpenIcon className={ic} />,
-      keywords: 'open saved files browse recent history delete rename',
-      run: studio.openSceneList,
-    },
-    {
-      id: 'new',
-      group: 'Scene',
-      label: 'New Scene',
-      shortcut: '⌘T',
-      icon: <ComposeIcon className={ic} />,
-      keywords: 'tab open',
-      run: () => studio.newScene(),
-    },
-    {
-      id: 'duplicate-scene',
-      group: 'Scene',
-      label: 'Duplicate Scene',
-      icon: <DuplicateIcon className={ic} />,
-      keywords: 'tab copy',
-      run: () => studio.duplicateTab(workspaceId),
-    },
-    {
-      id: 'close-scene',
-      group: 'Scene',
-      label: 'Close Scene',
-      shortcut: '⌘W',
-      icon: <CloseIcon className={ic} />,
-      keywords: 'tab',
-      run: () => studio.closeTab(workspaceId),
-    },
-    ...reopen,
-    ...studio.tabs
-      .filter((t) => t.id !== workspaceId)
-      .map((t) => ({
-        id: `tab-${t.id}`,
-        group: 'Open Scenes',
-        label: t.name || 'Untitled',
-        shortcut: studio.tabs.indexOf(t) < 9 ? `⌘${studio.tabs.indexOf(t) + 1}` : undefined,
-        icon: <SwapIcon className={ic} />,
-        keywords: 'tab switch go to',
-        run: () => studio.selectTab(t.id),
-      })),
-  ];
+  agent: Pick<AgentSession, 'chat'>;
 }
 
 function printCommands({ core, actions }: CommandInputs): Command[] {
@@ -122,7 +55,7 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
     id: 'export-3mf',
     group: 'Scene',
     label: 'Export 3MF Plates',
-    icon: <PrinterIcon className={ic} />,
+    icon: <PrinterIcon />,
     keywords: 'print plates slicer bambu prusa orca download',
     run: () => void exports.export3mf(),
   };
@@ -132,29 +65,30 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
     {
       id: 'lay-out-plates',
       group: 'Scene',
-      label: 'Lay Out Plates',
-      shortcut: '⌘P',
-      icon: <PrinterIcon className={ic} />,
-      keywords: 'print plates bed printer slice',
+      label: 'Print',
+      shortcut: keyFor('print'),
+      icon: <PrinterIcon />,
+      keywords: 'lay out plates bed printer slice',
       run: () => core.printing.openMode(1),
     },
     {
       id: 'check-ready',
       group: 'Scene',
       label: 'Run Checks',
-      icon: <PrinterIcon className={ic} />,
-      keywords: 'ready to build buildable audit blockers build check assemble',
+      icon: <CheckIcon />,
+      keywords: 'ready to build buildable audit blockers build check assemble case fit robot',
       run: () => {
         core.tool.setRightTab('build');
         void core.readiness.checkNow();
       },
     },
     ...fitTestCommands({ core }),
+    ...mergeCommands({ core }),
     {
       id: 'slice-plates',
       group: 'Scene',
       label: 'Slice Plates',
-      icon: <PrinterIcon className={ic} />,
+      icon: <PrinterIcon />,
       keywords: 'print slicer bambu studio orca gcode',
       run: () => void core.printing.job.runSlice(),
     },
@@ -162,15 +96,15 @@ function printCommands({ core, actions }: CommandInputs): Command[] {
 }
 
 function createCommands({ core, actions, ui }: CommandInputs): Command[] {
-  const { studio, tool } = core;
+  const { studio } = core;
 
   return [
     {
       id: 'toggle-ref-images',
       group: 'View',
       label: studio.showReferenceImages ? 'Hide Reference Images' : 'Show Reference Images',
-      shortcut: '⇧I',
-      icon: <PhotoIcon className={ic} />,
+      shortcut: keyFor('toggle-reference-images'),
+      icon: <PhotoIcon />,
       keywords: 'photo picture',
       run: ui.toggleReferenceImages,
     },
@@ -178,7 +112,7 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       id: 'ref-image',
       group: 'Scene',
       label: 'Add Reference Image',
-      icon: <PhotoIcon className={ic} />,
+      icon: <PhotoIcon />,
       keywords: 'photo picture paste plane',
       run: () => actions.creation.pickReferenceImage(),
     },
@@ -186,25 +120,9 @@ function createCommands({ core, actions, ui }: CommandInputs): Command[] {
       id: 'sketch',
       group: 'Scene',
       label: 'Sketch',
-      icon: <PenIcon className={ic} />,
+      icon: <PenIcon />,
       keywords: 'draw extrude revolve outline face dimension constraint',
       run: core.sketching.open,
-    },
-    {
-      id: 'image',
-      group: 'Scene',
-      label: 'Model from Image',
-      icon: <PhotoAddIcon className={ic} />,
-      keywords: 'photo sketch agent ai',
-      run: tool.requestAttach,
-    },
-    {
-      id: 'agent-sketch',
-      group: 'Scene',
-      label: 'Sketch for Agent',
-      icon: <PenIcon className={ic} />,
-      keywords: 'draw drawing reference composer ai',
-      run: tool.requestSketch,
     },
   ];
 }
@@ -217,8 +135,8 @@ function toolCommands({ core }: CommandInputs): Command[] {
           id: 'tool-sculpt',
           group: 'Tools',
           label: 'Sculpt',
-          shortcut: 'C',
-          icon: <BrushIcon className={ic} />,
+          shortcut: keyFor('sculpt'),
+          icon: <BrushIcon />,
           run: () => tool.setMode('sculpt'),
         },
       ]
@@ -229,24 +147,24 @@ function toolCommands({ core }: CommandInputs): Command[] {
       id: 'tool-move',
       group: 'Tools',
       label: 'Move',
-      shortcut: 'V',
-      icon: <MoveIcon className={ic} />,
+      shortcut: keyFor('move'),
+      icon: <MoveIcon />,
       run: () => tool.setMode('translate'),
     },
     {
       id: 'tool-rotate',
       group: 'Tools',
       label: 'Rotate',
-      shortcut: 'E',
-      icon: <RotateIcon className={ic} />,
+      shortcut: keyFor('rotate'),
+      icon: <RotateIcon />,
       run: () => tool.setMode('rotate'),
     },
     {
       id: 'tool-scale',
       group: 'Tools',
       label: 'Scale',
-      shortcut: 'R',
-      icon: <ScaleIcon className={ic} />,
+      shortcut: keyFor('scale'),
+      icon: <ScaleIcon />,
       run: () => tool.setMode('scale'),
     },
     ...sculpt,
@@ -265,7 +183,7 @@ function poseCommands({ core, actions }: CommandInputs): Command[] {
           id: 'walk-cycle',
           group: 'Pose',
           label: 'New Walk Cycle',
-          icon: <WalkIcon className={ic} />,
+          icon: <WalkIcon />,
           keywords: 'gait animation legs',
           run: pose.walkCycle,
         },
@@ -277,8 +195,8 @@ function poseCommands({ core, actions }: CommandInputs): Command[] {
       id: 'tool-pose',
       group: 'Panels',
       label: 'Show Pose',
-      shortcut: 'P',
-      icon: <PoseIcon className={ic} />,
+      shortcut: keyFor('show-pose'),
+      icon: <PoseIcon />,
       keywords: 'joints posing animate dof tab',
       run: pose.openPose,
     },
@@ -286,7 +204,7 @@ function poseCommands({ core, actions }: CommandInputs): Command[] {
       id: 'rest-pose',
       group: 'Pose',
       label: 'Rest Pose',
-      icon: <RotateLeftIcon className={ic} />,
+      icon: <RotateLeftIcon />,
       keywords: 'reset zero home',
       run: () => posing.setRobotPose({ values: {} }),
     },
@@ -295,7 +213,7 @@ function poseCommands({ core, actions }: CommandInputs): Command[] {
       id: `play-${a.id}`,
       group: 'Pose',
       label: `Play ${a.name}`,
-      icon: <RunIcon className={ic} />,
+      icon: <RunIcon />,
       keywords: 'animation',
       run: () => {
         pose.openPose();
@@ -306,7 +224,7 @@ function poseCommands({ core, actions }: CommandInputs): Command[] {
       id: `pose-${p.id}`,
       group: 'Pose',
       label: `Apply ${p.name}`,
-      icon: <PoseIcon className={ic} />,
+      icon: <PoseIcon />,
       keywords: 'pose',
       run: () => posing.applySavedPose(p.id),
     })),
@@ -321,7 +239,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
       id: 'import-robot',
       group: 'Scene',
       label: 'Import Robot',
-      icon: <BotIcon className={ic} />,
+      icon: <BotIcon />,
       keywords: 'urdf mjcf mujoco ros unitree g1 humanoid description',
       run: robots.openImportRobot,
     },
@@ -329,7 +247,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
       id: `robot-${r.id}`,
       group: 'Robots',
       label: `Insert ${r.title}`,
-      icon: <BotIcon className={ic} />,
+      icon: <BotIcon />,
       keywords: `${r.maker} urdf robot ${r.description}`,
       run: () => void robots.pickRobot(r),
     })),
@@ -337,8 +255,8 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
       id: 'tool-comment',
       group: 'Tools',
       label: 'Comment',
-      shortcut: 'M',
-      icon: <CommentIcon className={ic} />,
+      shortcut: keyFor('comment'),
+      icon: <CommentIcon />,
       keywords: 'annotation note pin',
       run: () => core.annotations.toggleCommentMode(true),
     },
@@ -346,8 +264,8 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
       id: 'tool-measure',
       group: 'Tools',
       label: 'Measure',
-      shortcut: 'D',
-      icon: <RulerIcon className={ic} />,
+      shortcut: keyFor('measure'),
+      icon: <RulerIcon />,
       keywords: 'distance ruler dimension tape length',
       run: () => core.tool.toggleMeasure(true),
     },
@@ -355,8 +273,8 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
       id: 'tool-annotate',
       group: 'Tools',
       label: 'Annotate',
-      shortcut: 'N',
-      icon: <MarkerIcon className={ic} />,
+      shortcut: keyFor('annotate'),
+      icon: <MarkerIcon />,
       keywords: 'mark draw circle pen markup highlight red line',
       run: () => core.tool.toggleMarking(true),
     },
@@ -365,10 +283,10 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
           {
             id: 'tool-erase-marks',
             group: 'Tools',
-            label: 'Erase Marks',
-            shortcut: 'E',
-            icon: <EraserIcon className={ic} />,
-            keywords: 'annotate eraser remove delete one mark rub out',
+            label: 'Eraser',
+            shortcut: keyFor('eraser'),
+            icon: <EraserIcon />,
+            keywords: 'annotate erase marks remove delete one mark rub out',
             run: () => {
               core.tool.toggleMarking(true);
               core.marks.setTool('eraser');
@@ -378,7 +296,7 @@ function robotCommands({ core, actions }: CommandInputs): Command[] {
             id: 'tool-delete-marks',
             group: 'Tools',
             label: 'Delete Marks',
-            icon: <DeleteIcon className={ic} />,
+            icon: <DeleteIcon />,
             keywords: 'annotate erase remove clear red lines',
             run: core.marks.deleteAll,
           },
@@ -392,6 +310,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...exchangeCommands(inputs),
   ...printCommands(inputs),
   ...buildCommands(inputs),
+  ...simCommands(inputs),
   ...createCommands(inputs),
   ...toolCommands(inputs),
   ...poseCommands(inputs),
@@ -400,7 +319,10 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...leaderCommands(inputs),
   ...onshapeCommands(inputs),
   ...caseCommands(inputs),
+  ...skillCommands(inputs),
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),
+  ...coachCommands(inputs),
   ...operateCommands(inputs),
+  ...inputCommands(inputs),
 ];

@@ -37,6 +37,20 @@ function useFindParts({ studio, tool }: WorkspaceCore) {
   return { partsSearchRef, findParts };
 }
 
+function useLayerRename({ studio, tool }: WorkspaceCore) {
+  const [renamingLayer, setRenamingLayer] = useState<string | null>(null);
+  const { setIsLeftOpen } = studio;
+  const { setLeftTab } = tool;
+
+  const renameLayer = (id: string) => {
+    setIsLeftOpen(true);
+    setLeftTab('layers');
+    setRenamingLayer(id);
+  };
+
+  return { renamingLayer, setRenamingLayer, renameLayer };
+}
+
 function useKeyEditClock() {
   const lastKeyEditRef = useRef(0);
 
@@ -57,7 +71,13 @@ function usePanelToggles({ studio, tool, caseRun }: WorkspaceCore) {
 
   return {
     toggleLeft: () => setIsLeftOpen((v) => !v),
-    toggleRight: () => setIsRightOpen((v) => !v),
+    toggleRight: () => {
+      if (!caseRun.open || tool.rightTab === 'acp') setIsRightOpen((v) => !v);
+      else {
+        tool.setRightTab('acp');
+        setIsRightOpen(true);
+      }
+    },
     toggleGrid: () => setShowGrid((v) => !v),
     toggleReferenceImages: () => setShowReferenceImages((v) => !v),
     toggleTrackpad: () => setTrackpadMode((m) => NEXT_SCROLL_MODE[m]),
@@ -92,6 +112,7 @@ export function useWorkspaceUi(core: WorkspaceCore) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shapesOpen, setShapesOpen] = useState(false);
   const find = useFindParts(core);
+  const layerRename = useLayerRename(core);
   const clock = useKeyEditClock();
   const panels = usePanelToggles(core);
 
@@ -99,6 +120,7 @@ export function useWorkspaceUi(core: WorkspaceCore) {
 
   return {
     ...find,
+    ...layerRename,
     ...clock,
     ...panels,
     paletteOpen,

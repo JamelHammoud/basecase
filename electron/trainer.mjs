@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isCount, isSnapshotRef, readJsonOrNull, RUN_ID, snapshotFile } from './backend/trainingSnapshots.mjs';
 import { IS_WINDOWS } from './executables.mjs';
 import { findUv, UV_INSTALL } from './uv.mjs';
 
@@ -66,7 +67,7 @@ function spawnTrainer({ uv, dir, envDir, forge }) {
 
 const newId = () => `policy-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-const RUN_ID = /^policy-[a-z0-9-]+$/;
+const DEMOS_FILE = 'demos.json';
 const RUNS_KEPT = 8;
 const WARM_DIR = 'warm';
 const WARM_FILES = ['resume.json', 'policy.json'];
@@ -80,6 +81,54 @@ function copyWarmStart(from, dir) {
   files.forEach((name) => fs.copyFileSync(path.join(from, name), path.join(dir, WARM_DIR, name)));
 
   return WARM_DIR;
+}
+
+export function writeJobFolder(dir, { xml, job }) {
+  const { demos, ...rest } = job;
+  const runJob = demos === undefined ? rest : { ...rest, demos: DEMOS_FILE };
+
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'model.xml'), xml);
+
+  if (demos !== undefined) fs.writeFileSync(path.join(dir, DEMOS_FILE), JSON.stringify(demos));
+
+  fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(runJob, null, 2));
+
+  return runJob;
+}
+
+const WARM_POLICY_FILE = 'warm-policy.json';
+const WARM_POLICY_MAX_BYTES = 64 * 1024 * 1024;
+
+function warmPolicyText(policy, forge) {
+  if (policy === undefined || policy === null) return null;
+
+  if (typeof policy !== 'object' || Array.isArray(policy)) throw new Error('A warm start policy is a policy object.');
+
+  if (!forge) throw new Error('Starting from a saved policy needs the Forge trainer.');
+
+  const text = JSON.stringify(policy);
+
+  if (Buffer.byteLength(text) > WARM_POLICY_MAX_BYTES) throw new Error('The policy to start from is over 64 MB.');
+
+  return text;
+}
+
+function warmStartIn(dir, { from, policyText }) {
+  if (policyText) {
+    fs.writeFileSync(path.join(dir, WARM_POLICY_FILE), policyText);
+
+    return WARM_POLICY_FILE;
+  }
+
+  return from ? copyWarmStart(from, dir) : undefined;
+}
+
+function forward(msg, send) {
+  if (msg.type === 'progress') send({ kind: 'progress', progress: msg });
+  else if (msg.type === 'status') send({ kind: 'status', message: msg.message });
+  else if (msg.type === 'snapshot' && isCount(msg.iteration) && isCount(msg.steps))
+    send({ kind: 'snapshot', iteration: msg.iteration, steps: msg.steps });
 }
 
 export const PRIORITY = { user: 0, kit: 1 };
@@ -133,16 +182,22 @@ export class Trainer {
 
     if (!this.forge && !uv) throw new Error(`Training needs uv. Install it with: ${UV_INSTALL}`);
 
+    const { warmPolicy, ...plainJob } = job;
+
+    if (warmPolicy != null && job.warmStart != null)
+      throw new Error('A warm start takes an earlier run or a saved policy, not both.');
+
+    if (!this.forge && job.demos !== undefined) throw new Error('Training from tries needs Forge.');
+
+    const policyText = warmPolicyText(warmPolicy, this.forge);
     const warmFrom = this.warmSource(job.warmStart);
     const id = newId();
     const dir = path.join(this.jobsDir, id);
 
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'model.xml'), xml);
 
-    const runJob = { ...job, warmStart: warmFrom ? copyWarmStart(warmFrom, dir) : undefined };
-
-    fs.writeFileSync(path.join(dir, 'job.json'), JSON.stringify(runJob, null, 2));
+    const warmStart = warmStartIn(dir, { from: warmFrom, policyText });
+    const runJob = writeJobFolder(dir, { xml, job: { ...plainJob, warmStart } });
 
     const entry = { workspaceId, job: runJob, id, dir, priority, uv };
     const send = this.sender(entry);
@@ -291,19 +346,18 @@ export class Trainer {
         try {
           const msg = JSON.parse(line);
 
-          if (msg.type === 'progress') send({ kind: 'progress', progress: msg });
-          else if (msg.type === 'status') send({ kind: 'status', message: msg.message });
-          else if (msg.type === 'done') done = msg;
+          if (msg.type === 'done') done = msg;
+          else forward(msg, send);
         } catch {}
       }
     });
     child.stderr.on('data', (chunk) => {
       err = (err + chunk.toString()).slice(-8000);
     });
-    child.on('close', (code, signal) => this.closed(running, { code, signal, done, err }));
+    child.on('close', (code) => this.closed(running, { code, done, err }));
   }
 
-  closed(running, { code, signal, done, err }) {
+  closed(running, { code, done, err }) {
     const { entry } = running;
     const send = this.sender(entry);
 
@@ -319,31 +373,31 @@ export class Trainer {
 
     this.wake(entry.workspaceId);
     queueMicrotask(() => this.launchNext());
-    send(this.outcome(running, { code, signal, done, err }));
+    send(this.outcome(running, { code, done, err }));
     this.pruneRuns();
   }
 
-  outcome(running, { code, signal, done, err }) {
+  outcome(running, { code, done, err }) {
     const { id, dir, job } = running;
 
     if (done) {
       try {
         return { kind: 'done', record: this.storePolicy(id, dir, job, done), eval: done.eval, stopped: done.stopped };
       } catch (e) {
-        return { kind: 'error', message: `Couldn't save the policy: ${e.message}` };
+        return { kind: 'error', message: `Couldn’t save the policy: ${e.message}` };
       }
     }
 
     if (running.stopping) return { kind: 'error', message: 'Training stopped.' };
 
-    if (code === null) return { kind: 'error', message: `The trainer crashed (${signal ?? 'killed'}).` };
+    if (code === null) return { kind: 'error', message: 'The trainer crashed. Train again.' };
 
     const lines = err
       .trim()
       .split('\n')
       .filter((l) => l.trim() && !l.startsWith(' '));
 
-    return { kind: 'error', message: lines.at(-1) || `The trainer exited with code ${code}.` };
+    return { kind: 'error', message: lines.at(-1) || 'The trainer stopped without saying why. Train again.' };
   }
 
   stop(workspaceId = 'main') {
@@ -428,6 +482,18 @@ export class Trainer {
     const file = path.join(this.policiesDir, id, 'policy.json');
 
     return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+  }
+
+  getSnapshot(ref) {
+    return isSnapshotRef(ref) ? readJsonOrNull(snapshotFile(this.jobsDir, ref)) : null;
+  }
+
+  policyOnnx(id) {
+    if (typeof id !== 'string' || !RUN_ID.test(id)) return null;
+
+    const file = path.join(this.policiesDir, id, 'policy.onnx');
+
+    return fs.existsSync(file) ? file : null;
   }
 
   deletePolicy(id) {

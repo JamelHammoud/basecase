@@ -11,7 +11,7 @@ const FLOOR_SLACK_MM = 5;
 const UP = new THREE.Vector3(0, 1, 0);
 const D2R = Math.PI / 180;
 
-export const CASE_SIGNALS = ['score', 'elapsed', 'timer'] as const;
+export const CASE_SIGNALS = ['score', 'elapsed', 'timer', 'torque'] as const;
 
 export const countFact = (spot: string) => `${spot}-count`;
 
@@ -27,6 +27,9 @@ const restMatrix = (o: WorldObject) =>
     new THREE.Quaternion().setFromEuler(new THREE.Euler(...o.rotation.map((r) => r * D2R))),
     new THREE.Vector3(1, 1, 1),
   );
+
+const movedSpot = (spot: Spot, delta: THREE.Matrix4 | undefined): Spot =>
+  delta ? { ...spot, inverse: delta.clone().multiply(restMatrix(spot.object)).invert() } : spot;
 
 function inside(spot: Spot, item: WorldObject, at: THREE.Vector3): boolean {
   const local = at.clone().applyMatrix4(spot.inverse);
@@ -47,7 +50,7 @@ function score(rule: ScoreRule | undefined, inSpot: Map<string, string>, started
 }
 
 export interface CaseFactReader {
-  read(poses: Float64Array, seconds: number): CaseFacts;
+  read(poses: Float64Array, seconds: number, torque?: number): CaseFacts;
 }
 
 export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
@@ -56,12 +59,13 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
     .filter((o) => o.behavior === 'marker')
     .map((o) => ({ id: o.id, object: o, inverse: restMatrix(o).invert() }));
   const movers = objects.filter((o) => o.behavior === 'dynamic');
-  const spotOf = (o: WorldObject, at: THREE.Vector3) => spots.find((s) => inside(s, o, at))?.id ?? '';
+  const spotOf = (o: WorldObject, at: THREE.Vector3, among = spots) => among.find((s) => inside(s, o, at))?.id ?? '';
   const startedIn = new Map(movers.map((o) => [o.id, spotOf(o, new THREE.Vector3(...o.position))]));
 
   return {
-    read(poses, seconds) {
+    read(poses, seconds, torque) {
       const deltas = worldDeltas(model, poses);
+      const placed = spots.map((s) => movedSpot(s, deltas.get(s.id)));
       const facts: CaseFacts = { elapsed: seconds, timer: Math.max(0, kase.task.seconds - seconds) };
       const inSpot = new Map<string, string>();
 
@@ -69,7 +73,7 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
         const delta = deltas.get(o.id) ?? new THREE.Matrix4();
         const at = new THREE.Vector3(...o.position).applyMatrix4(delta);
         const up = UP.clone().transformDirection(delta);
-        const spot = spotOf(o, at);
+        const spot = spotOf(o, at, placed);
 
         inSpot.set(o.id, spot);
         Object.assign(facts, {
@@ -87,6 +91,8 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
       const points = score(kase.task.score, inSpot, startedIn);
 
       if (points !== undefined) facts.score = points;
+
+      if (torque !== undefined) facts.torque = torque;
 
       return facts;
     },

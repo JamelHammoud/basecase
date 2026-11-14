@@ -1,39 +1,14 @@
 import React, { useMemo } from 'react';
 import type { CustomModelDefinition, ScenePart } from '../../types/robotics';
-import { modelToParts } from '../../utils/libraryParts';
-import { timeAgo } from '../../utils/timeAgo';
-import { Header, SizeLine, Stat } from '../PartDetails';
-
-function savedAgo(iso: string | undefined): string {
-  if (!iso) return '';
-
-  const t = timeAgo(iso);
-
-  if (t === 'now') return 'just now';
-
-  return /^\d+[mhd]$/.test(t) ? `${t} ago` : t;
-}
+import { modelNote, modelToParts } from '../../utils/libraryParts';
+import { agoPhrase } from '../../utils/timeAgo';
+import { Header, HeroImage, SizeLine, Stat } from '../PartDetails';
 
 export function modelParts(m: CustomModelDefinition): ScenePart[] {
   let n = 0;
 
   return modelToParts(m, [0, 0, 0], () => `preview-${n++}`).parts;
 }
-
-const DetailsHero: React.FC<{ thumb: string | undefined }> = ({ thumb }) => (
-  <div className="relative h-[168px] bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.13),rgba(255,255,255,0.02)_60%,transparent_100%)]">
-    {thumb ? (
-      <img
-        src={thumb}
-        alt=""
-        draggable={false}
-        className="absolute inset-0 w-full h-full object-contain p-3 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]"
-      />
-    ) : (
-      <div className="absolute inset-0 flex items-center justify-center text-[12.5px] text-white/50">No preview</div>
-    )}
-  </div>
-);
 
 const fromCatalog = (parts: ScenePart[]) => parts.filter((p) => p.kind === 'component' || p.hardware).length;
 
@@ -50,17 +25,15 @@ export const ModelDetails: React.FC<{ model: CustomModelDefinition; thumb: strin
 
   return (
     <div>
-      <DetailsHero thumb={thumb} />
+      <HeroImage src={thumb} className="h-[168px]" />
       <Header
         title={model.name}
-        subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', savedAgo(model.createdAt)]}
-        description={
-          model.description && !/^Saved from \d+ parts?\.?$/.test(model.description) ? model.description : undefined
-        }
+        subtitle={[MODEL_SOURCE[model.sourceType] ?? 'Model', model.createdAt ? agoPhrase(model.createdAt) : '']}
+        description={modelNote(model) || undefined}
       />
       <div className="px-4 mt-3 pb-4 grid grid-cols-2 gap-1.5">
         <Stat label="Size" wide>
-          <SizeLine w={d.width} h={d.height} d={d.depth} />
+          <SizeLine mm={[d.width, d.height, d.depth]} />
         </Stat>
         <Stat label="Parts">{parts.length}</Stat>
         {fromCatalog(parts) > 0 && <Stat label="From catalog">{fromCatalog(parts)}</Stat>}

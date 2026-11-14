@@ -45,6 +45,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSkill: (hash) => ipcRenderer.invoke('skill:get', hash),
   getPolicy: (id) => ipcRenderer.invoke('policy:get', id),
   deletePolicy: (id) => ipcRenderer.invoke('policy:delete', id),
+  getSnapshot: (ref) => ipcRenderer.invoke('snapshot:get', ref),
+  keepSnapshots: (payload) => ipcRenderer.invoke('snapshot:keep', payload),
   savePurchase: (payload) => ipcRenderer.invoke('purchases:save', payload),
   listSourced: () => ipcRenderer.invoke('sourced:list'),
   saveSourced: (payload) => ipcRenderer.invoke('sourced:save', payload),
@@ -93,6 +95,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   robotConnect: (spec) => ipcRenderer.invoke('robot:connect', spec),
   robotCommand: (command) => ipcRenderer.invoke('robot:command', command),
   robotDisconnect: () => ipcRenderer.invoke('robot:disconnect'),
+  robotPolicy: (id) => ipcRenderer.invoke('robot:policy', id),
+  robotCalibrate: (joints) => ipcRenderer.invoke('robot:calibration', joints),
   robotState: () => ipcRenderer.invoke('robot:state'),
   onRobotEvent: (callback) => {
     const handler = (_event, data) => callback(data);
@@ -100,6 +104,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('robot:event', handler);
 
     return () => ipcRenderer.removeListener('robot:event', handler);
+  },
+  phonePair: () => ipcRenderer.invoke('phone:pair'),
+  phoneUnpair: () => ipcRenderer.invoke('phone:unpair'),
+  phoneState: () => ipcRenderer.invoke('phone:state'),
+  onPhoneEvent: (callback) => {
+    const handler = (_event, data) => callback(data);
+
+    ipcRenderer.on('phone:event', handler);
+
+    return () => ipcRenderer.removeListener('phone:event', handler);
   },
   setMenuState: (state) => ipcRenderer.send('menu:state', state),
   popupAppMenu: (at) => ipcRenderer.invoke('menu:popup', at),

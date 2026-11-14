@@ -25,11 +25,18 @@ covers:
   - src/utils/engineeringPower.ts
   - src/utils/engineeringBudget.ts
   - src/components/build/ChecksSection.tsx
+  - src/utils/engineeringSimModel.ts
+  - src/utils/engineeringStrength.ts
+  - src/utils/engineeringEnvelope.ts
+  - src/components/build/EnvelopeRows.tsx
+  - src/readiness/caseChecks.ts
+  - src/utils/engineeringFalls.ts
+  - src/wiring/wiringChecks.ts
 ---
 
 Every check the Build tab runs, with the problems each one reports in the words the app uses.
 
-Checks list the worst first: red, then amber, then green, then grey for Not run. A red row holds at least one blocker, which stops Ready to build. An amber row holds only notes.
+Checks list the worst first: red, then amber, then green, then gray for Not run. A red row holds at least one blocker, which stops Ready to build. An amber row holds only notes.
 
 ## Build checks
 
@@ -47,20 +54,38 @@ Checks list the worst first: red, then amber, then green, then grey for Not run.
 
 | Check | What it measures | When it fails |
 |---|---|---|
-| Weight | Total mass and centre of mass | Never; it reports the numbers |
+| Weight | Total weight and center of mass | Never; it reports the numbers |
 | Servo torque | Each servo's load against its stall and rated torque | Over 0.60 of stall torque, or running too hot; amber from 0.40 of stall |
-| Peak torque | Torque while a trained policy walks for 14 seconds | Over stall for more than 50 ms, or a fall. Not run without a walking policy |
+| Peak torque | Torque and speed while a trained policy walks for 14 seconds | Over stall for more than 50 ms, or a fall. Amber when over 5% of a joint's walk is past its servo's torque–speed line. Not run without a walking policy |
+| Falls | Each leg servo's torque as the robot tips over from 12 directions, against its rated torque | Over 5× rated torque in a fall; amber over 3×. Not run until the agent checks falls |
+| Torque estimates | Joints with no servo or published torque | A note: the simulation guesses their torque from weight |
+| Servo models | Whether each servo runs on a measured calibration | A note naming the servos that aren't calibrated |
+| Payload | What an arm lifts at full reach and close in | Never; it reports the numbers |
+| Joint parts | The parts each joint names | A joint naming a part that doesn't exist |
 | Servo alignment | Each servo's output against its joint axis | A servo that doesn't line up with its joint |
 | Joint support | What holds each joint on both sides | A note when a joint is held on one side only |
 | Range of motion | Each joint swept every 15° through its range | A part hit before the end of the range |
 | Range changes | Joints narrower than when first defined | A note with the old range |
+| Servo version | Servos sold in more than one version | A servo with no version chosen |
 | Servo voltage | The supply's voltage against each servo's range | A voltage outside the servos' range |
 | Current and runtime | The battery's current against the servos' draw | A battery that can't supply enough current |
-| Supply current | A cable supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
+| Supply current | The power supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
 | Regulator input | The battery against each regulator's input range | A battery outside the regulator's range |
-| Standing stability | The centre of mass over the feet | “The robot would tip over standing still.” |
+| Servo bus | Each servo's connector against the bus adapters in the build | A servo no adapter plugs into. Shown only when it fails |
+| Standing stability | The center of mass over the feet | “The robot would tip over standing still.” |
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
-| Budget | The estimated total against your budget | Over budget; amber above 90%. Not run until you set a budget |
+| Strength | Each printed part between a servo and the next joint | Under 1.3 times its load; amber under 2 times |
+| Budget | The estimated cost of the parts left to buy against your budget | Over budget; amber above 90%. Not run until you set a budget |
+
+Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
+
+A servo can't give full torque and full speed at once, so the blue line falls from stall at 0 rpm to no torque at top speed. Each dot is 25 ms of the walk, and a white dot above the line asks for more than the servo gives at that speed.
+
+![Peak torque's warning for Left knee, with its walk plotted against the STS3215's line and the next servo up](/help/build-checks/peak-torque-plot.png)
+
+Gray dots are moments the joint was braking, which the line doesn't limit. The dashed line is the servo's rated torque. The gray line is the next stronger servo in the catalog for the same bus and voltage, named under the plot.
+
+Each Case in the scene also gets a row, named after it. It runs the Case 20 times with randomized physics and passes at 18. A Case that misses more adds a note, never a blocker. A robot that can't run the Case fails its row with the reason, such as an arm on a Case that needs driven wheels, or a fall on hold. [Try a Case](/help/try-a-case) lists each reason.
 
 ## Problems every check can show
 

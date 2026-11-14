@@ -1,7 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { app, BrowserWindow, ipcMain as electronIpc, nativeTheme, safeStorage, session, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain as electronIpc,
+  nativeTheme,
+  safeStorage,
+  session,
+  shell,
+  systemPreferences,
+} from 'electron';
 import { isAppUrl, isExternalWebUrl, trustedIpc } from './appOrigin.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { SandboxKernel } from './cad-kernel/sandbox/sandboxKernel.mjs';
@@ -11,11 +20,15 @@ import { installAppMenu, popupAppMenu, updateAppMenuState } from './app-menu.mjs
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { APP_DISPLAY_NAME, DEV_MODE } from './appName.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
+import { installPermissions } from './permissions.mjs';
 import { registerHubHandlers } from './hub/routes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { daemonBinary, RobotLink } from './robot/robotLink.mjs';
+import { robotPolicyBytes } from './robot/robotPolicy.mjs';
 import { registerRobotHandlers } from './robot/robotRoutes.mjs';
+import { PhonePairing } from './phone/phonePairing.mjs';
+import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
 import { registerShareHandlers } from './shareFile.mjs';
 import { adoptShellPath } from './shellPath.mjs';
 import { storageMigration } from './storageMigration.mjs';
@@ -40,6 +53,8 @@ const ipcMain = trustedIpc(electronIpc, APP_ORIGIN);
 app.setName('Basecase');
 
 if (DEV_MODE) app.setAboutPanelOptions({ applicationName: APP_DISPLAY_NAME });
+
+app.commandLine.appendSwitch('enable-features', 'IsolateSandboxedIframes');
 
 if (process.env.BASECASE_USER_DATA && process.env.STUDIO_AGENT_OFFLINE === '1')
   app.commandLine.appendSwitch('use-mock-keychain');
@@ -151,6 +166,17 @@ function createWindow() {
   });
 }
 
+const CAPTURE_WIDTH = 1568;
+
+backend.bridge.serve('capture_window', async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) throw new Error('The app window is not open.');
+
+  const image = await mainWindow.webContents.capturePage();
+  const fitted = image.getSize().width > CAPTURE_WIDTH ? image.resize({ width: CAPTURE_WIDTH }) : image;
+
+  return { dataUrl: `data:image/jpeg;base64,${fitted.toJPEG(82).toString('base64')}` };
+});
+
 backend.onEvent((event) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('backend:event', event);
@@ -182,6 +208,8 @@ ipcMain.handle('simready:fetch', (_e, payload) => backend.simreadyFetch(payload)
 ipcMain.handle('simready:file', (_e, payload) => backend.simreadyFile(payload));
 ipcMain.handle('policy:get', (_e, id) => backend.getPolicy(id));
 ipcMain.handle('policy:delete', (_e, id) => backend.deletePolicy(id));
+ipcMain.handle('snapshot:get', (_e, ref) => backend.getSnapshot(ref));
+ipcMain.handle('snapshot:keep', (_e, payload) => backend.keepSnapshots(payload));
 ipcMain.handle('purchases:save', (_e, payload) => backend.savePurchase(payload));
 ipcMain.handle('sourced:list', () => backend.listSourced());
 ipcMain.handle('sourced:save', (_e, payload) => backend.saveSourced(payload));
@@ -223,25 +251,23 @@ registerHubHandlers(ipcMain, backend.hub);
 registerOnshapeHandlers(ipcMain, backend.onshape);
 registerShareHandlers(ipcMain);
 
+const robotBinary = daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot });
+
+const sendTo = (channel) => (event) => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, event);
+};
+
 const robot = new RobotLink({
-  binary: daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot }),
-  emit: (event) => {
-    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('robot:event', event);
-  },
+  binary: robotBinary,
+  emit: sendTo('robot:event'),
+  policyBytes: robotPolicyBytes({ libraryDir: backend.libraryDir, trainer: backend.trainer }),
 });
 
 registerRobotHandlers(ipcMain, robot);
 
-const ALLOWED_PERMISSIONS = new Set(['clipboard-sanitized-write', 'fullscreen']);
+const phone = new PhonePairing({ emit: sendTo('phone:event') });
 
-function limitPermissions() {
-  const allowed = (permission, origin) => ALLOWED_PERMISSIONS.has(permission) && isAppUrl(origin ?? '', APP_ORIGIN);
-
-  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) =>
-    callback(allowed(permission, details.requestingUrl)),
-  );
-  session.defaultSession.setPermissionCheckHandler((_contents, permission, origin) => allowed(permission, origin));
-}
+registerPhoneHandlers(ipcMain, phone);
 
 const selfTestFile = process.env.BASECASE_KERNEL_SELFTEST;
 const cadImportSelfTestSpec = process.env.BASECASE_CADIMPORT_SELFTEST;
@@ -268,7 +294,7 @@ app.whenReady().then(async () => {
   }
 
   nativeTheme.themeSource = 'dark';
-  limitPermissions();
+  installPermissions(session.defaultSession, { appOrigin: APP_ORIGIN, platform: process.platform, systemPreferences });
   installAppMenu(() => mainWindow, {
     onCheckForUpdates: fromSource ? null : () => updates.checkNow(),
     betaUpdates: fromSource ? null : { get: () => updates.wantsBeta(), set: (beta) => updates.setBeta(beta) },
@@ -293,6 +319,7 @@ app.whenReady().then(async () => {
 
 app.on('before-quit', () => {
   robot.dispose();
+  phone.dispose();
   kernel.stop();
   updates.dispose();
   backend.kit.dispose();

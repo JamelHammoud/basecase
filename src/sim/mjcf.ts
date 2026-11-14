@@ -184,18 +184,23 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
   const toUnit = (v: number) => (revolute ? THREE.MathUtils.degToRad(v) : v / 1000);
   const range = j.range ? ([Math.min(...j.range), Math.max(...j.range)] as [number, number]) : null;
   const wheel = isWheelJoint(j, st.byId, st.input.rig);
+  const scene = { byId: st.byId, rig: st.input.rig, masses: st.masses, volts: st.input.servoVolts };
   const calibrated = st.input.servoFits?.[j.id];
-  const servo = wheel ? null : fittedServo({ j, byId: st.byId, rig: st.input.rig, masses: st.masses, calibrated });
-  const { effort, source } = servo
-    ? { effort: servo.forceNm, source: 'servo' as const }
-    : effortOf(j, st.byId, st.input.rig, st.masses);
+  const servo = wheel ? null : fittedServo({ j, ...scene, calibrated });
+  const { effort, source } = servo ? { effort: servo.forceNm, source: 'servo' as const } : effortOf(j, scene);
   const rangeAttr = range ? ` range="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
   const jointLine = `<joint name="${name}" type="${revolute ? 'hinge' : 'slide'}" axis="${vec(axis)}"${rangeAttr} ${servo ? fittedJointAttrs(servo) : estimatedJointAttrs(effort, revolute)}/>`;
   const ctrlrange = range ? ` ctrlrange="${f(toUnit(range[0]))} ${f(toUnit(range[1]))}"` : '';
 
   st.actuatorXml.push(
     servo
-      ? fittedActuatorXml({ name, dynamics: servo, ctrlrange, timestep: st.input.timestep ?? DEFAULT_TIMESTEP })
+      ? fittedActuatorXml({
+          name,
+          dynamics: servo,
+          ctrlrange,
+          timestep: st.input.timestep ?? DEFAULT_TIMESTEP,
+          historyS: calibrated?.historyS,
+        })
       : actuatorXml({ name, effort, revolute, range, wheel }),
   );
   st.simJoints.push({
@@ -405,6 +410,12 @@ export function buildMjcf(given: MjcfInput): SimModel {
 
   const xml = mujocoXml(st, input.timestep ?? DEFAULT_TIMESTEP);
   const scans = robotScans(st.bodies, parts);
+  const built = new Set(
+    st.simJoints.filter((j) => j.dynamics === 'measured' && j.drive === 'position').map((j) => j.id),
+  );
+  const servoSpreads = (input.servoSpreads ?? [])
+    .map((s) => ({ ...s, joints: s.joints.filter((j) => built.has(j)) }))
+    .filter((s) => s.joints.length);
 
   return {
     version: SIM_MODEL_VERSION,
@@ -415,5 +426,6 @@ export function buildMjcf(given: MjcfInput): SimModel {
     initial: { values: st.initialValues, roots: st.roots },
     massKg: st.massKg,
     ...(scans.length ? { scans } : {}),
+    ...(servoSpreads.length ? { servoSpreads } : {}),
   };
 }

@@ -17,7 +17,7 @@ What you've done with the design on your own machine stays there. The chat, prin
 
 ## Opening one
 
-Press ⌘K and choose Open Scene File, or pick File ▸ Open Scene File, then choose the `.basecase` file. You can also drag the file straight onto the canvas. Either way the scene opens in a new tab beside the one you were in, or in the current tab if it's empty. It saves to your Library, so it's there after a restart.
+Press ⌘K and choose Open Scene File, or pick **File** ▸ **Open Scene File**, then choose the `.basecase` file. You can also drag the file straight onto the canvas. Either way the scene opens in a new tab beside the one you were in, or in the current tab if it's empty. It saves to your Library, so it's there after a restart.
 
 A file that isn't a Basecase scene, or is damaged, says so in a toast and opens nothing. A file from a newer Basecase asks you to update before it opens.
 
@@ -25,7 +25,7 @@ A file that isn't a Basecase scene, or is damaged, says so in a toast and opens 
 
 ## Bringing in meshes
 
-Models from other apps come in as parts. Right-click an empty spot on the canvas and choose Import Mesh, or find it in ⌘K and in File ▸ Import Mesh. Then pick one or more files. Each file becomes its own part, selected and ready to move. It's tagged as a printed PLA or PETG part, so it counts toward filament in the Build tab.
+Models from other apps come in as parts. Right-click an empty spot on the canvas and choose Import Mesh, or find it in ⌘K and in **File** ▸ **Import Mesh**. Then pick one or more files. Each file becomes its own part, selected and ready to move. It's tagged as a printed PLA or PETG part, so it counts toward filament in the Build tab.
 
 Dropping mesh files on the canvas does the same.
 

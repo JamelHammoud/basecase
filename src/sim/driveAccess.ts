@@ -1,9 +1,11 @@
+import { lookJoints } from '../cameras/operator/lookJoints';
 import { robotFacts } from '../cases/robotFit';
 import type { JointValues, ScenePart } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { rigForWorker, type RobotDrive } from './drive';
 import type { DriveClass } from './driveKeys';
 import { footPoints } from './driveLegs';
+import { hasArms, poseSetup, type PoseSetup } from './drivePose';
 import { armSetup, roverSetup } from './driveSetup';
 import type { DriveCommand } from './driveTypes';
 import type { SimStats } from './engine';
@@ -27,8 +29,22 @@ export interface VelocityDrive {
 }
 
 export type DriveAccess =
-  | { kind: 'ready'; cls: DriveClass; setup: RobotDrive; needsFallCheck: boolean; followPart: string | null }
-  | { kind: 'policy'; cls: 'legs'; velocity: VelocityDrive; robot: string; followPart: string | null }
+  | {
+      kind: 'ready';
+      cls: DriveClass;
+      setup: RobotDrive;
+      needsFallCheck: boolean;
+      followPart: string | null;
+      pin?: string;
+    }
+  | {
+      kind: 'policy';
+      cls: 'legs';
+      velocity: VelocityDrive;
+      robot: string;
+      followPart: string | null;
+      pose?: PoseSetup;
+    }
   | { kind: 'teach' }
   | { kind: 'none' };
 
@@ -41,6 +57,7 @@ export interface DriveInput {
   robotKey?: string;
   start?: JointValues;
   velocity?: VelocityDrive | null;
+  pose?: boolean;
 }
 
 function basePart(rig: Rig, parts: ScenePart[], key: string): string | null {
@@ -79,6 +96,37 @@ function armAccess(input: DriveInput, robot: string): DriveAccess {
   return { kind: 'ready', cls: 'arm', setup, needsFallCheck: false, followPart: null };
 }
 
+function fixedArmlessAccess(input: DriveInput, robot: string): DriveAccess {
+  const { rig, parts, start } = input;
+  const facts = robotFacts(rig, parts, robot);
+  const look = lookJoints(rig, parts, robot);
+  const aimsCamera = !!look && facts.armJoints.every((id) => id === look.pan || id === look.tilt);
+
+  if (!aimsCamera && (facts.endEffector || !look)) return armAccess(input, robot);
+
+  return {
+    kind: 'ready',
+    cls: 'pose',
+    setup: poseSetup(rig, { robot, start }),
+    needsFallCheck: false,
+    followPart: null,
+  };
+}
+
+function poseAccess(input: DriveInput, robot: SimModel['robots'][number], followPart: string | null): DriveAccess {
+  const { rig, velocity, start } = input;
+
+  if (!hasArms(rig)) return fixedArmlessAccess(input, robot.key);
+
+  const pose = poseSetup(rig, { robot: robot.key, start });
+
+  if (velocity && robot.floating) return { kind: 'policy', cls: 'legs', velocity, robot: robot.key, followPart, pose };
+
+  const pin = robot.floating ? { pin: robot.key } : {};
+
+  return { kind: 'ready', cls: 'pose', setup: pose, needsFallCheck: false, followPart: null, ...pin };
+}
+
 export function driveAccess(input: DriveInput): DriveAccess {
   const { rig, parts, model, robotKey, velocity } = input;
   const robot = model.robots.find((r) => r.key === robotKey) ?? model.robots[0];
@@ -86,6 +134,10 @@ export function driveAccess(input: DriveInput): DriveAccess {
   if (!robot) return { kind: 'none' };
 
   const followPart = robot.floating ? basePart(rig, parts, robot.key) : null;
+
+  const posable = hasArms(rig) || robot.morphology === 'fixed';
+
+  if (input.pose && posable) return poseAccess(input, robot, followPart);
 
   if (velocity && robot.floating) return { kind: 'policy', cls: 'legs', velocity, robot: robot.key, followPart };
 
@@ -125,13 +177,34 @@ export function driveOffer(options: {
   return facts.morphology === 'wheeled' || facts.endEffector ? 'drive' : 'none';
 }
 
+export function poseOffer(options: { rig: Rig; parts: ScenePart[]; robotKey?: string }): boolean {
+  const { rig, parts, robotKey } = options;
+
+  if (!rig.robots.length) return false;
+
+  const facts = robotFacts(rig, parts, robotKey);
+
+  return hasArms(rig) || (facts.morphology === 'fixed' && !!facts.endEffector);
+}
+
+export function posePin(options: { rig: Rig; parts: ScenePart[]; robotKey?: string }): string | null {
+  const { rig, parts, robotKey } = options;
+  const robot = rig.robots.find((r) => r.key === robotKey) ?? rig.robots[0];
+
+  if (!robot || !hasArms(rig)) return null;
+
+  return robotFacts(rig, parts, robot.key).morphology === 'fixed' ? null : robot.key;
+}
+
 export const withVelocity = (offer: DriveOffer, velocityReady: boolean): DriveOffer =>
   offer === 'teach' && velocityReady ? 'drive' : offer;
 
 export function policyCommand(command: DriveCommand, topSpeed: number): DriveCommand {
   const [forward, left, turn] = command.v;
 
-  return { v: [Math.max(0, forward) * topSpeed, left * STRAFE_SHARE * topSpeed, turn * TURN_RAD_S] };
+  const v: DriveCommand['v'] = [Math.max(0, forward) * topSpeed, left * STRAFE_SHARE * topSpeed, turn * TURN_RAD_S];
+
+  return command.joints ? { v, joints: command.joints } : { v };
 }
 
 export function fallCheckPassed(stats: SimStats, restHeightM: number, robotKey?: string): boolean {

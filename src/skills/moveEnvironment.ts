@@ -1,8 +1,15 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotAnimation, RobotPoseState } from '../types/robotics';
 import type { Cmp, Contract, Expr, Formula, NamedFailure, State } from './contract';
-import { policyObservation, type Environment, type MoveReference, type SignalSource } from './environment';
+import {
+  policyObservation,
+  withServoSpreads,
+  type Environment,
+  type MoveReference,
+  type SignalSource,
+} from './environment';
 import { sha256Hex } from './hash';
+import { angleFromRadians } from '../utils/angle';
 import { FELL } from './kitEnvironment';
 import { KIT_ACTION_SCALE, kitRobot, neutralRad } from './kitModel';
 import { moveReward } from './moveRewards';
@@ -61,7 +68,7 @@ export function moveProblems(model: SimModel, reference: MoveReference): string[
 
   if (zeroPolicyMiss(model, reference) > needed) return [];
 
-  return [`It stays within ${Math.round(MOVE_BARS.canaryShare * MOVE_BARS.toleranceRad * R2D)}° of the rest pose.`];
+  return [`It stays within ${angleFromRadians(MOVE_BARS.canaryShare * MOVE_BARS.toleranceRad)} of the rest pose.`];
 }
 
 function rootPart(model: SimModel): string | null {
@@ -138,7 +145,7 @@ export function moveEnvironment(model: SimModel, animation: RobotAnimation): Env
   const robot = kitRobot(model);
   const reference = moveReference(model, animation);
 
-  return {
+  return withServoSpreads(model, {
     version: 1,
     robot: robot.key,
     horizonS: moveHorizonS(reference),
@@ -156,7 +163,7 @@ export function moveEnvironment(model: SimModel, animation: RobotAnimation): Env
     contract: moveContract(model, reference),
     signals: moveSignals(model, reference),
     reference,
-  };
+  });
 }
 
 export function moveAnalysis(model: SimModel): TaskAnalysis {

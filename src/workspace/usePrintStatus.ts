@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useState } from 'react';
-import type { PrinterSetup } from '../data/printers';
+import type { MyPrinter } from '../data/printers';
 import { printBridge, type PrinterStatus } from '../print/printBridge';
 import { updateRecord } from '../print/tracker';
 import type { PrintRecord } from '../types/robotics';
@@ -15,21 +15,27 @@ const NEXT_STATE: Partial<Record<PrinterStatus['state'], PrintRecord['state']>> 
 };
 
 interface StatusOptions {
-  printer: PrinterSetup;
+  printers: MyPrinter[];
   records: PrintRecord[];
   setRecords: (update: (prev: PrintRecord[]) => PrintRecord[]) => void;
   active: boolean;
 }
 
-export function usePrintStatus({ printer, records, setRecords, active }: StatusOptions) {
-  const [status, setStatus] = useState<PrinterStatus | null>(null);
-  const id = printer.mine?.connection && printer.mine.connection.kind !== 'bambu-studio' ? printer.mine.id : null;
-  const open = records.find((r) => r.printer === printer.label && (r.state === 'sent' || r.state === 'printing'));
-  const polling = !!id && (active || !!open);
+export const reportsStatus = (printer: MyPrinter) => !!printer.connection && printer.connection.kind !== 'bambu-studio';
 
-  const apply = useEffectEvent((next: PrinterStatus | null) => {
-    setStatus(next);
+const openRecord = (records: PrintRecord[], printer: MyPrinter) =>
+  records.find((r) => r.printer === printer.nickname && (r.state === 'sent' || r.state === 'printing'));
 
+export function usePrintStatus({ printers, records, setRecords, active }: StatusOptions) {
+  const [statuses, setStatuses] = useState<Record<string, PrinterStatus | null>>({});
+  const polled = printers.filter((p) => reportsStatus(p) && (active || !!openRecord(records, p)));
+  const ids = polled.map((p) => p.id).join('\n');
+
+  const apply = useEffectEvent((id: string, next: PrinterStatus | null) => {
+    setStatuses((prev) => (JSON.stringify(prev[id]) === JSON.stringify(next) ? prev : { ...prev, [id]: next }));
+
+    const printer = printers.find((p) => p.id === id);
+    const open = printer && openRecord(records, printer);
     const state = next && NEXT_STATE[next.state];
 
     if (!open || !state || state === open.state) return;
@@ -38,21 +44,22 @@ export function usePrintStatus({ printer, records, setRecords, active }: StatusO
   });
 
   useEffect(() => {
-    if (!polling || !id) return;
+    if (!ids) return;
 
     let stopped = false;
 
-    const tick = async () => {
+    const poll = async (id: string) => {
       try {
         const next = await printBridge.printerStatus(id);
 
-        if (!stopped) apply(next);
+        if (!stopped) apply(id, next);
       } catch {
-        if (!stopped) apply({ state: 'offline' });
+        if (!stopped) apply(id, { state: 'offline' });
       }
     };
+    const tick = () => ids.split('\n').forEach((id) => void poll(id));
 
-    void tick();
+    tick();
 
     const timer = window.setInterval(tick, POLL_MS);
 
@@ -60,7 +67,7 @@ export function usePrintStatus({ printer, records, setRecords, active }: StatusO
       stopped = true;
       window.clearInterval(timer);
     };
-  }, [polling, id]);
+  }, [ids]);
 
-  return polling ? status : null;
+  return Object.fromEntries(polled.map((p) => [p.id, statuses[p.id] ?? null]));
 }

@@ -1,6 +1,7 @@
 ---
 title: Check your robot in CI
 date: 2026-11-13
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 covers:
@@ -12,8 +13,8 @@ covers:
 
 Run your robot's Cases on every push, so a change that stops one passing fails the build.
 
-1. Add the Cases the robot should keep passing in Play ▸ Cases, with New Case or an example.
-2. Choose Export ▸ Basecase Scene and commit the `.basecase` file to your robot's repo.
+1. Add the Cases the robot should keep passing in **Play** ▸ **Cases**, with **New Case**.
+2. Choose **Export** ▸ **Scene** and commit the `.basecase` file to your robot's repo.
 3. Add the workflow below as `.github/workflows/cases.yml`, with your file's name in the last line.
 4. Push. The job runs every Case in the scene and fails when one misses.
 
@@ -47,8 +48,8 @@ The command exits 0 when every Case passes, 1 when any misses, and 2 when it can
 
 - `--case reach-a-spot` runs only that Case, by its id.
 - `--json` prints `{ "cases": [{ "id", "name", "runs", "passes", "margin", "failed" }] }` instead of lines.
-- `basecase export robot.basecase --package robot` writes the same Robot Package Export ▸ Robot Package saves, as a folder.
+- `basecase export robot.basecase --package robot` writes the same Robot Package that **Export** ▸ **Robot Package** saves, as a folder.
 
 In a clone of Basecase, `npx basecase check robot.basecase` runs the same command.
 
-Catalog parts and parts the agent modelled use their real meshes. A part the agent sourced that isn't in the catalog yet runs as its box, because its mesh stays on the computer that sourced it.
+Catalog parts and parts the agent modeled use their real meshes. A part the agent sourced that isn't in the catalog yet runs as its box, because its mesh stays on the computer that sourced it.

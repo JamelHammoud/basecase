@@ -37,7 +37,7 @@ covers:
 
 Save your printer once, so Print mode lays parts out on its real bed and sends sliced plates to it from the desktop app.
 
-1. Press ⌘, (Ctrl+, on Windows) to open Settings, then choose **Printers**.
+1. Press [[⌘,]] to open Settings, then choose **Printers**.
 2. Click **Add Printer**.
 3. Type a name in **Name**.
 4. Pick your printer in **Model**. For a printer that isn't listed, pick **Custom printer** and type its **Build volume** in millimeters.
@@ -73,11 +73,11 @@ Bambu printers offer the three Bambu connections, and every other printer offers
 
 ## Where to find codes and keys
 
-- **Bambu access code:** on the printer, in Settings ▸ LAN Only.
-- **Bambu serial number:** on the printer, in Settings ▸ Device.
-- **Klipper API key:** in Mainsail or Fluidd, under Settings ▸ Authorization.
-- **PrusaLink API key:** on the printer, in Settings ▸ Network ▸ PrusaLink.
-- **OctoPrint API key:** in OctoPrint, under Settings ▸ Application Keys.
+- **Bambu access code:** on the printer, in **Settings** ▸ **LAN Only**.
+- **Bambu serial number:** on the printer, in **Settings** ▸ **Device**.
+- **Klipper API key:** in Mainsail or Fluidd, under **Settings** ▸ **Authorization**.
+- **PrusaLink API key:** on the printer, in **Settings** ▸ **Network** ▸ **PrusaLink**.
+- **OctoPrint API key:** in OctoPrint, under **Settings** ▸ **Application Keys**.
 
 Codes and keys are encrypted on your computer and never saved in a scene. One printer is marked **Default**, and every scene that hasn't picked a printer uses it. **Make Default** on another printer changes it.
 

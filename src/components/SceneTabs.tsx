@@ -7,6 +7,7 @@ import { tabMenuItems } from './sceneTabs/tabMenu';
 import { useTabDrag } from './sceneTabs/useTabDrag';
 import { useTabPreview } from './sceneTabs/useTabPreview';
 import { useTabsFade } from './sceneTabs/useTabsFade';
+import { keyFor } from '../app/shortcuts';
 
 export interface SceneTabInfo {
   id: string;
@@ -28,6 +29,8 @@ export interface SceneTabsProps {
   onCloseRight: (id: string) => void;
   onDuplicate: (id: string) => void;
   onRename: (id: string, name: string) => void;
+  renaming: string | null;
+  onRenaming: (id: string | null) => void;
   onReorder: (from: number, to: number) => void;
   onReopen: () => void;
   onPreview?: (id: string) => void;
@@ -49,7 +52,7 @@ const NewSceneButton: React.FC<{ onNew: () => void }> = ({ onNew }) => (
     <IconButton
       icon={<PlusIcon className="w-4 h-4" />}
       title="New scene"
-      shortcut="⌘T"
+      shortcut={keyFor('new-scene')}
       className="w-[28px]! h-[28px]!"
       onClick={onNew}
     />
@@ -68,13 +71,14 @@ export const SceneTabs: React.FC<SceneTabsProps> = ({
   onCloseRight,
   onDuplicate,
   onRename,
+  renaming,
+  onRenaming: setRenaming,
   onReorder,
   onReopen,
   onPreview,
 }) => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const tabEls = useRef(new Map<string, HTMLDivElement>());
-  const [renaming, setRenaming] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [initialIds] = useState(() => new Set(tabs.map((t) => t.id)));
   const { drag, startPress, movePress, endPress, isPressing } = useTabDrag({
@@ -118,7 +122,7 @@ export const SceneTabs: React.FC<SceneTabsProps> = ({
     onPointerLeave: hidePreview,
     onStartRename: () => setRenaming(tab.id),
     onFinishRename: (name) => {
-      if (name && name !== tab.name) onRename(tab.id, name);
+      if (name) onRename(tab.id, name);
 
       setRenaming(null);
     },

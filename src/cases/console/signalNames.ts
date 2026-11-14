@@ -1,10 +1,14 @@
+import { BUILTIN_GESTURES } from '../../cameras/gestures/builtinGestures';
 import { refuse, type Reader } from '../validate';
+
+const BUILTIN: ReadonlySet<string> = new Set(BUILTIN_GESTURES);
 
 export const JOINT_FIELDS = ['target', 'position', 'effort'] as const;
 export const ROBOT_FIELDS = ['height', 'tilt', 'speed', 'travelled', 'x', 'z'] as const;
 export const INPUT_AXES = ['forward', 'left', 'turn', 'lift', 'grip'] as const;
 export const GOAL_FIELDS = ['passed', 'margin', 'failed'] as const;
-export const NAMESPACES = ['time', 'joint', 'robot', 'probe', 'input', 'goal', 'camera'] as const;
+export const NAMESPACES = ['time', 'joint', 'robot', 'probe', 'input', 'goal', 'camera', 'gesture'] as const;
+export const OPERATOR_INPUTS = ['camera', 'hand', 'face'];
 
 export type JointField = (typeof JOINT_FIELDS)[number];
 export type RobotField = (typeof ROBOT_FIELDS)[number];
@@ -15,6 +19,7 @@ export interface SignalScope {
   declared: ReadonlySet<string>;
   probes: ReadonlySet<string>;
   inputs: ReadonlySet<string>;
+  gestures?: ReadonlySet<string>;
 }
 
 type Shaper = (parts: string[], scope: SignalScope) => SignalShape | string;
@@ -36,8 +41,14 @@ const SHAPERS: Record<string, Shaper> = {
 
     return has(INPUT_AXES, axis) ? 'number' : `must be input.${source}.${INPUT_AXES.join(' or ')}`;
   },
+  gesture: ([name], scope) => {
+    if (!scope.inputs.has('camera')) return 'needs the camera input';
+
+    return name && (scope.gestures ?? BUILTIN).has(name) ? 'number' : 'names no gesture of this Case';
+  },
   camera: ([key], scope) => {
-    if (key === 'operator' && !scope.inputs.has('camera')) return 'needs the camera input';
+    if (key === 'operator' && !OPERATOR_INPUTS.some((id) => scope.inputs.has(id)))
+      return 'needs the camera, hand or face input';
 
     return key ? 'camera' : 'must be camera.<name or *>';
   },

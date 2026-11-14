@@ -1,25 +1,34 @@
 import React from 'react';
 import { MetaLine, Section } from '../../design-system';
 import type { PrintMaterial, ProjectSettings } from '../../types/robotics';
-import { type PrintReport, fmtSize } from '../../utils/printReport';
-import { hm } from '../build/format';
+import type { PrintReport } from '../../utils/printReport';
+import { SizeLine } from '../PartDetails';
+import { duration } from '../../utils/duration';
+import { weight } from '../../utils/weight';
 
 type PrintedPart = PrintReport['parts'][number];
 
 interface PrintedSectionProps {
   report: PrintReport | null;
   project: ProjectSettings;
+  notes: Record<string, string>;
   onSelectParts: (ids: string[]) => void;
 }
 
-const issuesFirst = (parts: PrintedPart[]) =>
-  [...parts].sort((a, b) => Number(b.issues.length > 0) - Number(a.issues.length > 0));
+const issuesFirst = (parts: PrintedPart[], notes: Record<string, string>) => {
+  const flagged = (p: PrintedPart) => Number(p.issues.length > 0 || p.id in notes);
 
-const PrintedRow: React.FC<{ part: PrintedPart; material: PrintMaterial; onSelectParts: (ids: string[]) => void }> = ({
-  part: p,
-  material,
-  onSelectParts,
-}) => (
+  return [...parts].sort((a, b) => flagged(b) - flagged(a));
+};
+
+interface PrintedRowProps {
+  part: PrintedPart;
+  material: PrintMaterial;
+  note?: string;
+  onSelectParts: (ids: string[]) => void;
+}
+
+const PrintedRow: React.FC<PrintedRowProps> = ({ part: p, material, note, onSelectParts }) => (
   <li>
     <button
       type="button"
@@ -34,29 +43,35 @@ const PrintedRow: React.FC<{ part: PrintedPart; material: PrintMaterial; onSelec
         <MetaLine
           className="text-[12px] text-white/50 tabular-nums"
           items={[
-            `${fmtSize(p.check.size)} mm`,
-            hm(p.hours),
+            <SizeLine mm={p.check.size} />,
+            duration(p.hours * 3600, 'min'),
             p.check.fits && `Plate ${p.plate}`,
             p.material !== material && p.material,
           ]}
         />
-        {p.issues.map((issue) => (
+        {[...p.issues, ...(note ? [note] : [])].map((issue) => (
           <div key={issue} className={`text-[12px] mt-0.5 ${p.check.fits ? 'text-amber-400' : 'text-red-400'}`}>
             {issue}
           </div>
         ))}
       </div>
-      <span className="text-[12px] text-white/50 tabular-nums pt-[1px]">{Math.round(p.grams + p.supportG)} g</span>
+      <span className="text-[12px] text-white/50 tabular-nums pt-[1px]">{weight(p.grams + p.supportG)}</span>
     </button>
   </li>
 );
 
-export const PrintedSection: React.FC<PrintedSectionProps> = ({ report, project, onSelectParts }) =>
+export const PrintedSection: React.FC<PrintedSectionProps> = ({ report, project, notes, onSelectParts }) =>
   report && report.parts.length > 0 ? (
     <Section title="Parts" summary={report.parts.length} collapsible defaultOpen={false}>
       <ul className="-mx-[7px]">
-        {issuesFirst(report.parts).map((p) => (
-          <PrintedRow key={p.id} part={p} material={project.material} onSelectParts={onSelectParts} />
+        {issuesFirst(report.parts, notes).map((p) => (
+          <PrintedRow
+            key={p.id}
+            part={p}
+            material={project.material}
+            note={notes[p.id]}
+            onSelectParts={onSelectParts}
+          />
         ))}
       </ul>
     </Section>

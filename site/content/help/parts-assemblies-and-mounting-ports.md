@@ -26,6 +26,7 @@ related:
 covers:
   - src/data/components.ts
   - src/data/componentPorts.ts
+  - src/data/connectorPorts.ts
   - src/types/ports.ts
   - src/agent/ports.ts
   - src/utils/bom.ts
@@ -44,7 +45,7 @@ What a part is made from decides whether you can resize it, whether it's printed
 | Shape | **Shapes**, Sketch, Import SVG, Sculpt | Yes |
 | Agent part | Modeled by the agent in CAD code | Yes |
 | Imported mesh | Import, including STEP and IGES bodies | Yes |
-| Robot link | Import Robot or **Robots** | No |
+| Robot link | Import Robot or **Parts** ▸ **Robots** | No |
 
 A shape, agent part or imported mesh is printed until you change its material under **Appearance**. Components keep the maker's exact size, so they can't be resized. Hardware changes size through its own **Size** and **Length** choices.
 
@@ -71,6 +72,8 @@ The Feetech STS3215 servo, for example, has:
 - an output horn 19.95 mm across, with four M3 holes 3 mm deep on a 14 mm circle;
 - an idler horn with the same pattern on the underside;
 - four M2 holes on the top of the case and four on the bottom.
+
+Bus servos, servo adapters, batteries and regulators also carry connector ports where a cable plugs in. Each has a type, such as 5264 or XT60. Connectors never mate; the bill of materials counts cables from them.
 
 Hardware has ports too, and parts the agent models declare their own in their code.
 

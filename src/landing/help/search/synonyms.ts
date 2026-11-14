@@ -51,4 +51,10 @@ export const SYNONYMS: string[][] = [
   ['mirror', 'symmetry'],
   ['hide', 'lock', 'layers'],
   ['torque', 'stall'],
+  ['color', 'colour'],
+  ['gray', 'grey', 'grayed', 'greyed'],
+  ['center', 'centre', 'centered', 'centred'],
+  ['behavior', 'behaviour'],
+  ['meter', 'metre', 'millimeter', 'millimetre'],
+  ['labeled', 'labelled'],
 ];

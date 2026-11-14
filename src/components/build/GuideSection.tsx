@@ -3,10 +3,11 @@ import { Button, FolderOpenIcon, IconButton, Section, settleTilt, tiltToward } f
 import type { GuidePages } from '../../guide/viewer/guidePages';
 import type { BuildGuideRecord } from '../../types/robotics';
 import { platformBridge } from '../../utils/platformBridge';
-import { timeAgo } from '../../utils/timeAgo';
+import { duration } from '../../utils/duration';
+import { agoPhrase } from '../../utils/timeAgo';
 import { REVEAL_LABEL } from '../../utils/os';
 import type { BuildGuide, GuideRunProgress } from '../../workspace/useBuildGuide';
-import { plural } from './format';
+import { plural } from '../../../electron/plural.mjs';
 import { GuideCoverPage } from './GuideCoverPage';
 import { useGuidePages } from './useGuidePages';
 
@@ -21,9 +22,7 @@ function timeLeft(seconds: number | undefined): string {
 
   if (seconds < 10) return 'A few seconds left';
 
-  if (seconds < 60) return `About ${Math.round(seconds / 5) * 5} s left`;
-
-  return `About ${Math.round(seconds / 60)} min left`;
+  return `About ${seconds < 60 ? duration(Math.round(seconds / 5) * 5) : duration(seconds, 'min')} left`;
 }
 
 const THUMB_W_PX = 64;
@@ -40,7 +39,7 @@ const CoverThumb: React.FC<CoverThumbProps> = ({ cover, page, sceneName, onOpen 
     type="button"
     onClick={onOpen}
     disabled={!onOpen}
-    aria-label="Open guide"
+    aria-label="Open Build Guide"
     data-guide-cover
     onPointerMove={tiltToward}
     onPointerLeave={(e) => settleTilt(e.currentTarget)}
@@ -82,34 +81,24 @@ const Progress: React.FC<{ progress: GuideRunProgress; onStop: () => void }> = (
   </>
 );
 
-const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord; canOpen: boolean }> = ({
-  guide,
-  record,
-  canOpen,
-}) => {
-  const ago = timeAgo(record.generatedAt);
-
+const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord }> = ({ guide, record }) => {
   return (
     <>
       <div className="text-[13px] text-white/90 tabular-nums truncate">
-        {plural(record.pages, '1 page', `${record.pages} pages`)}
+        {plural(record.pages, 'page')}
       </div>
       <div className={`text-[12.5px] mt-0.5 ${guide.stale ? 'text-amber-400' : 'text-white/50'}`}>
-        {guide.stale ? 'Out of date' : `Made ${ago === 'now' ? 'just now' : `${ago} ago`}`}
+        {guide.stale ? 'Out of date' : `Made ${agoPhrase(record.generatedAt)}`}
       </div>
       <div className="flex gap-2 mt-2.5">
-        {canOpen && (
-          <Button size="sm" variant={guide.stale ? 'secondary' : 'primary'} onClick={() => void guide.open()}>
-            Open
+        <Button size="sm" variant={guide.stale ? 'secondary' : 'primary'} onClick={() => void guide.open()}>
+          Open
+        </Button>
+        {guide.stale && (
+          <Button size="sm" variant="primary" onClick={() => void guide.generate()}>
+            Update
           </Button>
         )}
-        <Button
-          size="sm"
-          variant={guide.stale || !canOpen ? 'primary' : 'secondary'}
-          onClick={() => void guide.generate()}
-        >
-          {guide.stale ? 'Update' : 'Regenerate'}
-        </Button>
       </div>
     </>
   );
@@ -128,7 +117,7 @@ const GuideCard: React.FC<{ guide: BuildGuide; sceneName: string }> = ({ guide, 
         onOpen={canOpen ? () => void guide.open() : undefined} />
       <div className="min-w-0 flex-1">
         {guide.progress && <Progress progress={guide.progress} onStop={guide.cancel} />}
-        {!guide.progress && guide.record && <Made guide={guide} record={guide.record} canOpen={canOpen} />}
+        {!guide.progress && guide.record && <Made guide={guide} record={guide.record} />}
       </div>
     </div>
   );
@@ -147,7 +136,7 @@ export const GuideSection: React.FC<GuideSectionProps> = ({ guide, sceneName, ca
         {(progress || record) && <GuideCard guide={guide} sceneName={sceneName} />}
         {!progress && !record && (
           <Button variant="primary" fullWidth disabled={!canGenerate} onClick={() => void guide.generate()}>
-            Generate Guide
+            Make Guide
           </Button>
         )}
       </div>

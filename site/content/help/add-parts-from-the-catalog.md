@@ -52,6 +52,16 @@ The part lands on the floor at the origin, selected. You can also click **+** on
 
 **Search parts** finds a part by name, maker or part number from anywhere in Parts, and [[⌘F]] opens it ready to type.
 
+![Parts searched for servo, with the matching servos listed under the field and the + showing on the highlighted DSServo DS3218](/help/add-parts-from-the-catalog/search.png)
+
+The same field finds robots and objects. A robot named in the search comes before the parts named after it, and clicking its row inserts it. [[⌘↩]] adds the highlighted part or robot.
+
+![Parts searched for so-101, with the SO-101 Arm robot above the SO-101 Gripper and the STS3215 servo](/help/add-parts-from-the-catalog/robot-first.png)
+
+Press [[↩]] on a robot, or on a search with no match, to also search SimReady Central. Its arms, grippers and props come in a **SimReady** section under the local results.
+
+![Parts searched for franka, with the Franka Panda row above a SimReady section of Franka arms and hands](/help/add-parts-from-the-catalog/simready.png)
+
 A component keeps the maker's exact size, so its Inspector has no **Size** section. [Parts, assemblies and mounting ports](/help/parts-assemblies-and-mounting-ports) explains where the meshes come from.
 
 ## Add a screw, nut or other hardware

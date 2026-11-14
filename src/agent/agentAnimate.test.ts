@@ -18,7 +18,16 @@ describe('animate problem report', () => {
       { time: 1, lines: ['arm passes 40 mm into hip'] },
     ]);
 
-    expect([...problems.values()]).toEqual(['arm passes 40 mm into hip at 1 s', 'arm passes 3 mm into leg at 0 s']);
+    expect([...problems.values()]).toEqual(['arm passes 40 mm into hip at 1.0 s', 'arm passes 3 mm into leg at 0.0 s']);
+  });
+
+  it('ranks a reading in meters above one in mm', () => {
+    const problems = worstProblems([
+      { time: 0, lines: ['1.2 m below the floor'] },
+      { time: 1, lines: ['845 mm below the floor'] },
+    ]);
+
+    expect([...problems.values()]).toEqual(['1.2 m below the floor at 0.0 s']);
   });
 
   it('keeps one line for clashes left off the list', () => {
@@ -27,7 +36,7 @@ describe('animate problem report', () => {
       { time: 1, lines: ['…and 5 more clashes'] },
     ]);
 
-    expect([...problems.values()]).toEqual(['…and 5 more clashes at 1 s']);
+    expect([...problems.values()]).toEqual(['…and 5 more clashes at 1.0 s']);
   });
 
   it('checks the final pose of a motion that ends', () => {

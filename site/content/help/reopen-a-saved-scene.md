@@ -31,13 +31,13 @@ Find a scene you worked on before by name or goal, and open it in a tab.
 
 The scene opens in a new tab. If the front tab is a blank scene you haven't touched, the scene opens there instead. If the scene is already open, Basecase switches to its tab.
 
-The **Scenes** menu is also the button next to the sidebar button in the title bar, and **File** ▸ **Open Scene…**.
+The **Scenes** menu is also the button next to the sidebar button in the title bar, and **File** ▸ **Show Scenes**.
 
 ## Rename, duplicate or delete a scene
 
 1. In the **Scenes** menu, right-click the scene.
 2. Choose **Rename**, **Duplicate** or **Delete**.
 
-Delete asks first, and you can't undo it. Duplicate makes a copy with “copy” after the name.
+Delete asks first, and you can't undo it. Duplicate adds “copy” to the name, and “copy 2” to the next one.
 
 To keep several scenes open at once, see [Open, rename and close scene tabs](/help/open-rename-and-close-tabs).

@@ -3,12 +3,13 @@ import { loadOnshape } from '../onshape/loadOnshape';
 import { fetchOnshapeUpdate } from '../onshape/onshapeTarget';
 import type { OnshapeUpdate } from '../onshape/onshapeUpdate';
 import { prepareParts } from '../three/partMesh/prepare';
+import { errorMessage } from '../utils/errorMessage';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
-import { attempt, plural } from './helpers';
+import { plural } from '../../electron/plural.mjs';
+import { attempt } from './helpers';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
-export const updatedMessage = (changes: number) =>
-  `${changes ? plural(changes, 'change', 'changes') : 'No changes'} from Onshape`;
+export const updatedMessage = (changes: number) => `${changes ? plural(changes, 'change') : 'No changes'} from Onshape`;
 
 export function useOnshapeUpdate(core: WorkspaceCore) {
   const { docs, showToast } = core;
@@ -41,7 +42,7 @@ export function useOnshapeUpdate(core: WorkspaceCore) {
     busyRef.current = false;
 
     if (!outcome.ok) {
-      showToast(outcome.error instanceof Error ? outcome.error.message : String(outcome.error), { tone: 'error' });
+      showToast(errorMessage(outcome.error), { tone: 'error' });
 
       return;
     }

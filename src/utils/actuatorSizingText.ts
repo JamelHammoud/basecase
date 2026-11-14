@@ -1,6 +1,11 @@
 import type { ActuatorBus } from '../data/components';
 import { formatMoney as money, formatWhole as whole } from './currencyStore';
 import { loadCut, type Family, type Fit, type JointLoads, type JointPick } from './actuatorSizing';
+import { plural } from '../../electron/plural.mjs';
+import { weight } from './weight';
+import { percent } from '../../electron/percent.mjs';
+import { torque } from './torque';
+import { volts } from './electric';
 
 const BUS_NAMES: Record<ActuatorBus, string> = {
   feetech: 'Feetech serial bus',
@@ -14,8 +19,6 @@ const BUS_NAMES: Record<ActuatorBus, string> = {
 
 const ALTERNATIVES = 3;
 
-const volts = (v: number) => `${Math.round(v * 10) / 10} V`;
-
 const fitText = (f: Fit) =>
   `${f.option.name} ${money(f.option.usd)} (${f.stallShare.toFixed(2)} of stall, ${f.heatShare.toFixed(2)}× rated)`;
 
@@ -28,7 +31,7 @@ function supplyText(f: Family): string {
 
 function familyHeader(f: Family): string {
   const what = f.failures.length
-    ? `Cheapest set, but ${f.failures.length} joints pass with nothing in it`
+    ? `Cheapest set, but nothing in it passes on ${plural(f.failures.length, 'joint')}`
     : 'Cheapest set where every joint passes Stance and Heat';
 
   return (
@@ -38,9 +41,9 @@ function familyHeader(f: Family): string {
 }
 
 function loadWords(loads: JointLoads): string {
-  const hold = `${loads.holdNm.toFixed(2)} N·m holding`;
+  const hold = `${torque(loads.holdNm)} holding`;
 
-  return loads.stanceNm === undefined ? hold : `${loads.stanceNm.toFixed(2)} N·m in stance, ${hold}`;
+  return loads.stanceNm === undefined ? hold : `${torque(loads.stanceNm)} in stance, ${hold}`;
 }
 
 function groupKey(p: JointPick): string {
@@ -75,14 +78,14 @@ function cutLine(p: JointPick, f: Family, totalG: number): string {
   const stance = cut.kind === 'stance';
   const ways = [
     cut.leverMm ? `shorten the leg segment under it by ${Math.ceil(cut.leverMm)} mm` : '',
-    `carry ${Math.ceil(cut.grams)} g less${stance ? ' in the whole robot' : ' beyond it'}`,
+    `carry ${weight(Math.ceil(cut.grams))} less${stance ? ' in the whole robot' : ' beyond it'}`,
   ].filter(Boolean);
 
-  return `- ${p.joint.name}: needs ${cut.loadNm.toFixed(2)} N·m ${stance ? 'in stance' : 'holding'}; the strongest, ${p.strongest.option.name}, passes if that drops ${Math.round((1 - cut.shareKept) * 100)}%: ${ways.join(', or ')}`;
+  return `- ${p.joint.name}: needs ${torque(cut.loadNm)} ${stance ? 'in stance' : 'holding'}; the strongest, ${p.strongest.option.name}, passes if that drops ${percent(1 - cut.shareKept)}: ${ways.join(', or ')}`;
 }
 
 function alternativeLine(f: Family): string {
-  const fails = f.failures.length ? `, ${f.failures.length} joints don’t pass` : '';
+  const fails = f.failures.length ? `, fails ${plural(f.failures.length, 'joint')}` : '';
 
   return `- ${BUS_NAMES[f.bus]} at ${volts(f.rail.volts)} (${f.rail.name}): ≈ ${whole(f.costUsd)}${fails}`;
 }

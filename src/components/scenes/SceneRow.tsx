@@ -1,8 +1,9 @@
 import React from 'react';
 import type { SavedSceneSummary } from '../../types/robotics';
+import { PreviewImage, RenameField } from '../../design-system';
+import { plural } from '../../../electron/plural.mjs';
 import { timeAgo } from '../../utils/timeAgo';
-import { RenameField } from '../library/Tile';
-import { partCount } from './partCount';
+import { TILE_RENAME } from '../library/Tile';
 import { useScenePreview } from './useScenePreview';
 
 export interface SceneRowProps {
@@ -11,7 +12,7 @@ export interface SceneRowProps {
   highlighted: boolean;
   renaming: boolean;
   onOpen: () => void;
-  onRename: (name: string) => void;
+  onRename: (name: string | null) => void;
   onMenu: (e: React.MouseEvent) => void;
   onHover: () => void;
 }
@@ -52,14 +53,12 @@ export const SceneRow: React.FC<SceneRowProps> = ({
         />
       )}
       <span className="preview preview-sm relative pointer-events-none shrink-0 w-[53px] h-[40px]">
-        {thumb && (
-          <img src={thumb} alt="" draggable={false} className="absolute inset-0 w-full h-full object-contain p-[3px]" />
-        )}
+        <PreviewImage src={thumb} className="absolute inset-0 p-[3px]" />
       </span>
       <span className="relative flex-1 min-w-0 pointer-events-none">
         {renaming ? (
           <span className="block pointer-events-auto">
-            <RenameField name={scene.name} onDone={onRename} />
+            <RenameField name={scene.name} onDone={onRename} className={TILE_RENAME} />
           </span>
         ) : (
           <span
@@ -69,7 +68,7 @@ export const SceneRow: React.FC<SceneRowProps> = ({
           </span>
         )}
         <span className="block text-[12px] leading-[17px] text-white/50 tabular-nums truncate">
-          {partCount(scene.partCount)}
+          {plural(scene.partCount, 'part')}
         </span>
       </span>
       <span className="relative pointer-events-none shrink-0 text-[12px] tabular-nums text-white/50">

@@ -25,6 +25,8 @@ covers:
   - src/readiness/wording.ts
   - src/readiness/readiness.ts
   - src/utils/engineeringBudget.ts
+  - src/utils/engineeringFalls.ts
+  - src/wiring/wiringChecks.ts
   - src/components/settings/BuildPane.tsx
 ---
 
@@ -40,13 +42,13 @@ A blocker remains somewhere in the list, often in a check you haven't opened.
 4. Change the part, or click **Fix** to hand the problem to the agent.
 5. Wait a moment after your last edit. The header reads **Checking…**, then the new verdict.
 
-It worked when the header reads **Ready to build** and the dot on the **Build** tab turns green.
+It worked when the header reads **Ready to build** and the red dot on the **Build** tab is gone.
 
 ## “Some checks didn’t finish, so this answer isn’t complete.”
 
 A check stopped at its time limit or with an error. Basecase counts that as a blocker, so a half-finished run never passes a design.
 
-1. Press ⌘K and choose **Run Checks**.
+1. Press [[⌘K]] and choose **Run Checks**.
 2. If the message comes back, quit Basecase and open it again.
 3. Run **Run Checks** once more.
 
@@ -58,9 +60,29 @@ The estimated total is over your budget. Lines marked ≈ count at their list pr
 
 1. Open **Budget** in Checks to see the total against your budget.
 2. Save the prices you really pay with **Add Price** in **Bill of materials**. List prices can be higher than what you pay.
-3. Swap expensive parts, or raise the budget in the field beside the total.
+3. Click a line's quantity and type how many you already own in **On hand**. Parts you own cost nothing.
+4. Swap expensive parts, or raise the budget in the field beside the total.
 
 Budget turns amber above 90% of the budget and red over it. [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget) has the steps.
+
+## “This servo could strip its gears when the robot falls.”
+
+In a fall, this leg joint asks for more than 5 times its servo's rated torque, or more than the peak its datasheet gives. The item names the joint and the direction of its worst fall.
+
+1. Click **Replay in Sim** on the joint to watch that fall.
+2. Ask the agent for a stronger servo at that joint, or a lower stance.
+3. Ask the agent to verify the design with falls again.
+
+It worked when **Falls** in Checks has no red mark.
+
+## Servo bus is red
+
+The build has a bus adapter, but none takes these servos' connector. DYNAMIXEL X servos on a Waveshare Bus Servo Adapter (A) are one case.
+
+1. Open **Servo bus** in Checks. It names the adapter to add, such as **Add a JST EH 3-pin bus adapter for 2 servos.**
+2. Open **Parts** and place that adapter in the robot. For JST EH 3-pin, that's the **ROBOTIS U2D2** or **ROBOTIS OpenRB-150**. For 5264 3-pin, it's the **Waveshare Bus Servo Adapter (A)**.
+
+It worked when **Servo bus** leaves the list.
 
 ## You know a blocker is wrong
 
@@ -75,7 +97,7 @@ The problem moves to **Ignored**, under the list, where **Restore** brings it ba
 
 Basecase sends new blockers to the agent after each message, up to 2 times.
 
-1. Press ⌘, (Ctrl+, on Windows) and choose **Build**.
+1. Press [[⌘,]] and choose **Build**.
 2. Turn off **Have the agent fix new blockers**.
 
 Every check and what it measures is in [Checks in the Build tab](/help/build-checks).

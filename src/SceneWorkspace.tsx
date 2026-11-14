@@ -58,12 +58,16 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
             pointerHandlers={canvasMenu.pointerHandlers}
             drop={drop}
           />
-          <RightPanel core={core} actions={actions} ui={ui} agent={agent} />
           <CaseRunAreas side="after" />
+          <RightPanel core={core} actions={actions} ui={ui} agent={agent} />
         </CaseRunProvider>
         <CanvasContextMenu menu={canvasMenu.menu} inputs={inputs} onClose={canvasMenu.closeMenu} />
       </div>
-      <WorkspacePalette open={ui.paletteOpen} inputs={{ ...inputs, clipboard }} onClose={() => setPaletteOpen(false)} />
+      <WorkspacePalette
+        open={ui.paletteOpen}
+        inputs={{ ...inputs, clipboard, agent }}
+        onClose={() => setPaletteOpen(false)}
+      />
       <WorkspaceSheets active={props.active} core={core} actions={actions} />
     </div>
   );

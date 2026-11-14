@@ -27,7 +27,14 @@ class FakeWorker implements WorkerLike {
 
 const robot = { id: 'scene', parts: [], joints: [], measures: {}, triangles: {} } as WireRobot;
 const kase = { id: 'flag' } as Case;
-const runs = (seeds: number[], modelHash = 'm1') => ({ type: 'runs' as const, kase, modelHash, seeds, walk: null });
+const runs = (seeds: number[], modelHash = 'm1') => ({
+  type: 'runs' as const,
+  kase,
+  modelHash,
+  seeds,
+  walk: null,
+  stop: null,
+});
 const ran = { type: 'runs', result: { outcomes: [] } } as CaseCheckReply;
 
 function pool() {
@@ -76,12 +83,28 @@ describe('the Case checks pool', () => {
     workers[0].answer(ran);
     await running;
     expect(workers[0].posted[1].job.type).toBe('model');
-    workers[0].answer({ type: 'model', modelHash: 'm1', walk: null });
+    workers[0].answer({ type: 'model', modelHash: 'm1', walk: null, stop: null });
     await model;
     expect(workers[0].posted[2].job).toMatchObject({ seeds: [3] });
     expect(workers[0].posted[2].job).not.toHaveProperty('robot');
     workers[0].answer(ran);
     await wanted;
+  });
+
+  it('keeps another group’s queued jobs when a check drops its own', async () => {
+    const { pool: p, workers } = pool();
+    const running = p.run(0, runs([1]), { tag: 'old', robot: () => robot });
+    const stale = p.run(0, runs([2]), { tag: 'old', robot: () => robot });
+    const other = p.run(0, runs([3]), { tag: 'multiply', group: 'multiply', robot: () => robot });
+
+    p.keepOnly(new Set());
+    await expect(stale).rejects.toThrow();
+    workers[0].answer(ran);
+    await running;
+    expect(workers[0].posted[1].job).toMatchObject({ seeds: [3] });
+    p.keepOnly(new Set(), 'multiply');
+    workers[0].answer(ran);
+    await other;
   });
 
   it('rejects every job when a worker dies, and the next job starts a fresh worker', async () => {

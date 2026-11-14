@@ -2,7 +2,9 @@ import { HOLES, isMetric, stockLengths } from '../data/hardware';
 import type { ScenePart } from '../types/robotics';
 import type { ChainProblem, FastenerChain, SleeveHost } from './assemblyTypes';
 import type { HeldBy } from './heldBy';
-import { grouped, listIds, mm, type ReportLine } from './reportText';
+import { grouped, listIds, type ReportLine } from './reportText';
+import { lengthLabel } from '../utils/size';
+import { plural } from '../../electron/plural.mjs';
 
 export const RANK = {
   air: 1,
@@ -51,15 +53,15 @@ function problemKey(c: FastenerChain, p: ChainProblem, byId: ById): string {
     case 'air':
       return 'end in air with no insert, nut or material at the tip. Add an insert or nut there, or move the screw onto a hole that has one';
     case 'uncut':
-      return `run ${mm(p.mm ?? 0)} through solid ${p.part}. Cut ${clearance(self)} mm clearance hole on the axis, or move the screw onto its hole`;
+      return `run ${lengthLabel(p.mm ?? 0)} through solid ${p.part}. Cut ${clearance(self)} mm clearance hole on the axis, or move the screw onto its hole`;
     case 'unseated':
       return 'have nothing under the head. Add a boss or counterbore floor under it, or move the screw onto its seat';
     case 'sunk':
       return `have their head buried in ${p.part}. Cut a counterbore for the head, or move the screw out to its seat`;
     case 'bottoms':
-      return `run ${mm(p.mm ?? 0)} into ${p.part} past their insert. Use a screw ${Math.ceil((p.mm ?? 0) + 0.5)} mm shorter, or deepen the hole`;
+      return `run ${lengthLabel(p.mm ?? 0)} into ${p.part} past their insert. Use a screw ${Math.ceil((p.mm ?? 0) + 0.5)} mm shorter, or deepen the hole`;
     case 'short':
-      return `engage ${mm(c.engagementMm)} of the ${mm(c.needMm ?? 0)} they need in ${c.endsIn.kind === 'insert' ? 'their insert' : (c.endsIn.id ?? 'the part')}. Use ${longerScrew(c, self)}`;
+      return `engage ${lengthLabel(c.engagementMm)} of the ${lengthLabel(c.needMm ?? 0)} they need in ${c.endsIn.kind === 'insert' ? 'their insert' : (c.endsIn.id ?? 'the part')}. Use ${longerScrew(c, self)}`;
   }
 }
 
@@ -83,7 +85,7 @@ function collapse(lines: ReportLine[]): ReportLine[] {
     {
       rank: lines[0].rank,
       code: lines[0].code,
-      text: `${lines[0].text} ${lines[1].text} The same for ${rest} more group${rest === 1 ? '' : 's'} (${ids.length} screws in all).`,
+      text: `${lines[0].text} ${lines[1].text} The same for ${plural(rest, 'more group')} (${plural(ids.length, 'screw')} in all).`,
       ids,
     },
   ];

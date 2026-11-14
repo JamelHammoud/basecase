@@ -64,7 +64,7 @@ impl Plant {
 
     pub fn step(&mut self, input: DriveInput, dt: f64) {
         let polarity = if self.faults.inverted_drive { -1.0 } else { 1.0 };
-        let volts = polarity * input.duty * input.bus_volts;
+        let volts = polarity * input.duty * (input.bus_volts * self.unit.supply_scale);
         let params = self.unit.m6;
         let (motor_torque, current) = if input.enabled {
             let current = (volts - params.kt * self.velocity) / params.resistance;
@@ -200,6 +200,20 @@ mod tests {
 
         assert_eq!(plant.encoder_position(), 0.0);
         assert!((plant.current() - 0.5 * 7.4 / STS3215_7V4.0.resistance).abs() < 1e-9);
+    }
+
+    #[test]
+    fn a_unit_rated_above_the_bus_drives_at_its_own_supply() {
+        let mut unit = UnitParams::nominal(STS3215_7V4);
+
+        unit.supply_scale = 1.5;
+
+        let mut plant = Plant::new(unit, Load::default(), 0.0);
+
+        plant.faults.stuck = true;
+        plant.step(drive(0.5), 0.001);
+
+        assert!((plant.current() - 0.5 * 7.4 * 1.5 / STS3215_7V4.0.resistance).abs() < 1e-9);
     }
 
     #[test]

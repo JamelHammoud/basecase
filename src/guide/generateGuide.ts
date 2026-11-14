@@ -2,14 +2,18 @@ import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import type { BuildGuideRecord, ProjectSettings, ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
+import { fullDate } from '../utils/timeAgo';
 import { workerClient, type Reply } from '../utils/workerRpc';
 import { guideFingerprint } from './guideFingerprint';
 import { isBuilt } from './guidePlan';
+import { stepPartsOf } from './guideSteps';
 import type { GuidePortMessage } from './guidePort';
 import type { GuidePlan } from './guideTypes';
 import type { GuideJob, GuideProgress, RenderedGuide } from './renderGuide';
 
 export type { GuideProgress } from './renderGuide';
+
+export type CheckedOrder = NonNullable<GuideJob['order']> & { timedOut: boolean };
 
 export interface GenerateGuideInput {
   title: string;
@@ -18,7 +22,7 @@ export interface GenerateGuideInput {
   onProgress?: (p: GuideProgress) => void;
   onCover?: (dataUrl: string) => void;
   signal?: AbortSignal;
-  order?: () => Promise<GuideJob['order'] | null>;
+  order?: () => Promise<CheckedOrder | null>;
 }
 
 export interface GeneratedGuide {
@@ -70,8 +74,6 @@ async function brandMark(): Promise<string> {
 
 const newId = () => `guide-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
-const today = () => new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
 function render(job: GuideJob, input: GenerateGuideInput): Promise<RenderedGuide | null> {
   const { port1, port2 } = new MessageChannel();
   const cancel = () => port1.postMessage({ type: 'cancel' } satisfies GuidePortMessage);
@@ -87,6 +89,26 @@ function render(job: GuideJob, input: GenerateGuideInput): Promise<RenderedGuide
     input.signal?.removeEventListener('abort', cancel);
     port1.close();
   });
+}
+
+interface RecordInput {
+  id: string;
+  rendered: RenderedGuide;
+  input: GenerateGuideInput;
+  order?: CheckedOrder;
+}
+
+function recordOf({ id, rendered, input, order }: RecordInput): BuildGuideRecord {
+  return {
+    id,
+    pages: rendered.pages,
+    steps: rendered.plan.steps.length,
+    generatedAt: new Date().toISOString(),
+    fingerprint: guideFingerprint(input.title, input.parts, input.project),
+    ...(order?.timedOut && { orderTimedOut: true }),
+    coverDataUrl: rendered.coverDataUrl,
+    stepParts: stepPartsOf(rendered.plan, input.parts, input.project),
+  };
 }
 
 export async function generateGuide(input: GenerateGuideInput): Promise<GeneratedGuide | null> {
@@ -107,9 +129,9 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
     parts: packParts(parts),
     partKeys: Object.fromEntries(parts.map((p) => [p.id, identityOf(p)])),
     project,
-    date: today(),
+    date: fullDate(),
     mark: await brandMark(),
-    order,
+    order: order && { assembly: order.assembly, unproven: order.unproven },
     meshes: await sourcedMeshFiles(parts),
   };
   const rendered = await render(job, input);
@@ -119,14 +141,7 @@ export async function generateGuide(input: GenerateGuideInput): Promise<Generate
   input.onProgress?.({ share: 0.97, label: 'Saving PDF' });
 
   const saved = await platformBridge.saveGuide({ id, html: rendered.html });
-  const record: BuildGuideRecord = {
-    id,
-    pages: rendered.pages,
-    steps: rendered.plan.steps.length,
-    generatedAt: new Date().toISOString(),
-    fingerprint: guideFingerprint(title, input.parts, project),
-    coverDataUrl: rendered.coverDataUrl,
-  };
+  const record = recordOf({ id, rendered, input, order });
 
   return { record, plan: rendered.plan, saved: saved.ok, html: rendered.html };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { act, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from './policy';
+import { act, observe, POLICY_FORMAT, POLICY_VERSION, type PolicySpec } from './policy';
 
 const spec = (extra: Partial<PolicySpec> = {}): PolicySpec => ({
   format: POLICY_FORMAT,
@@ -34,5 +34,16 @@ describe('policy actions', () => {
 
     expect(a[0]).toBeCloseTo(Math.tanh(0.5));
     expect(a[1]).toBeCloseTo(Math.tanh(3));
+  });
+});
+
+describe('policy observations', () => {
+  it('read a fixed base as upright and still', () => {
+    const src = { qpos: [0.3, -0.2], qvel: [1.5, -2], rootQpos: -1, rootDof: -1, jointQpos: [0, 1], jointDof: [0, 1] };
+    const out = observe(src, { defaultPose: [0.1, 0.1], command: [0.2, 0.05, 0.3] }, [0.5, -0.5], new Float32Array(18));
+
+    expect([...out.slice(0, 9)]).toEqual([0, 0, -1, 0, 0, 0, 0, 0, 0]);
+    expect([...out.slice(9, 12)].map((v) => +v.toFixed(3))).toEqual([0.2, 0.05, 0.3]);
+    expect([...out.slice(12)].map((v) => +v.toFixed(3))).toEqual([0.2, -0.3, 1.5, -2, 0.5, -0.5]);
   });
 });

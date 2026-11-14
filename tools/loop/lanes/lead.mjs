@@ -14,6 +14,7 @@ import {
   ownerComments,
   setIssueBody,
 } from '../lib/github.mjs';
+import { topConflictsSection, weekConflicts } from '../lib/conflicts.mjs';
 import { copyTrend, copyTrendLine, mergedThisWeek } from '../lib/copy.mjs';
 import { digestWorst } from '../lib/history.mjs';
 import { LOOP_DIR, OWNER_LOGIN } from '../lib/paths.mjs';
@@ -174,6 +175,7 @@ const progressOf = () => ({
   recentSteps: mergedSteps(),
   mergedTitles: mergedTitles(),
   worst: digestWorst(),
+  conflicts: weekConflicts(),
   copyLine: copyTrendLine(copyTrend(mergedThisWeek())),
 });
 
@@ -221,7 +223,7 @@ function arcListing(world) {
     .join('\n\n');
 }
 
-export function leadPrompt(world, { merged, copyLine, worst }) {
+export function leadPrompt(world, { merged, copyLine, worst, conflicts = [] }) {
   const direction = [world.direction?.body, ...world.comments.map((c) => c.body)].filter(Boolean).join('\n\n---\n\n');
 
   return [
@@ -233,11 +235,17 @@ export function leadPrompt(world, { merged, copyLine, worst }) {
     listing('Steps waiting or in progress', world.steps),
     `## Recently merged\n\n${merged}\n\n${copyLine}`,
     ...worstSection(worst, 'When a step would move it back, plan that step ahead of a new one.'),
+    ...topConflictsSection(conflicts),
   ].join('\n\n');
 }
 
 export const prompt = (world) =>
-  leadPrompt(world, { merged: world.mergedTitles, copyLine: world.copyLine, worst: world.worst });
+  leadPrompt(world, {
+    merged: world.mergedTitles,
+    copyLine: world.copyLine,
+    worst: world.worst,
+    conflicts: world.conflicts,
+  });
 
 const github = { closeIssue, commentOnIssue, createIssue, editIssueLabels, findOpenIssue, setIssueBody };
 

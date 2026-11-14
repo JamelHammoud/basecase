@@ -1,6 +1,9 @@
 import type { SceneRobot } from '../app/tabModel';
+import type { CompareRobot } from '../cases/caseCompare';
+import type { CaseConsole } from '../cases/console/format';
+import type { Case } from '../cases/schema';
 import type { PrintersState } from '../app/usePrinters';
-import type { SettingsPane } from '../components/SettingsWindow';
+import type { SettingsPane } from '../app/settingsPanes';
 import type { ToastData } from '../design-system';
 import type { RobotSkeleton } from '../types/skeleton';
 import type { LaneChat } from './agentLanes';
@@ -17,6 +20,7 @@ import type {
   SceneMark,
   ScenePart,
   MeasureUnit,
+  Tether,
   TrackpadGestureMode,
 } from '../types/robotics';
 
@@ -61,6 +65,9 @@ export interface WorkspaceHandle {
   flush: () => Promise<void>;
   discard: () => void;
   stopAgent: () => void;
+  fingerprint: () => string;
+  caseRobot: () => Promise<CompareRobot | null>;
+  openCase: (kase: Case) => void;
 }
 
 export interface Preferences {
@@ -108,7 +115,6 @@ export interface StudioShared {
   reconnectAcp: (command?: string) => Promise<void>;
   signInAcp: (methodId: string) => Promise<void>;
   saveAgentApiKey: (key: string) => Promise<void>;
-  agentTargetHeightMm: number;
   agentChoice: AgentChoice;
   setAgentChoice: (choice: AgentChoice) => void;
   settingsOpen: boolean;
@@ -116,6 +122,7 @@ export interface StudioShared {
   printers: PrintersState;
   tabs: Array<{ id: string; name: string; sceneId: string }>;
   robotsBeside: (except: string) => SceneRobot[];
+  handleOf: (id: string) => WorkspaceHandle | null;
   canReopenTab: boolean;
   register: (id: string, handle: WorkspaceHandle | null) => void;
   reportMeta: (id: string, meta: WorkspaceMeta) => void;
@@ -126,6 +133,7 @@ export interface StudioShared {
   importSceneFile: (file: File) => Promise<void>;
   selectTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
+  startRenameTab: (id: string) => void;
   closeTab: (id: string) => void;
   duplicateTab: (id: string) => void;
   reopenTab: () => void;
@@ -156,6 +164,8 @@ export interface Snapshot {
   joints: RobotJoint[] | undefined;
   marks: SceneMark[] | undefined;
   skeleton: RobotSkeleton | undefined;
+  tether?: Tether;
+  consoles?: Record<string, CaseConsole | undefined>;
 }
 
 export interface DocState {

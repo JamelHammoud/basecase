@@ -1,6 +1,8 @@
 import { isRobotUrl, knownAsset, searchSimReady, type SimReadyAsset } from '../simready/search';
 import type { ImportRobotResult, RobotSource } from './useRobotInsert';
 import type { Vec3 } from './types';
+import { plural } from '../../electron/plural.mjs';
+import { weight } from '../utils/weight';
 
 type Payload = Record<string, unknown>;
 
@@ -13,7 +15,7 @@ const MAX_RESULTS = 20;
 
 function assetLine(a: SimReadyAsset, i: number): string {
   const size = a.sizeMm ? `W ${a.sizeMm[0]} × D ${a.sizeMm[2]} × H ${a.sizeMm[1]} mm` : 'size unknown';
-  const mass = a.massKg ? ` · ${Math.round(a.massKg * 1000) / 1000} kg` : '';
+  const mass = a.massKg ? ` · ${weight(a.massKg * 1000)}` : '';
   const caption = a.caption ? `\n   ${a.caption}` : '';
 
   return `${i + 1}. ${a.name} — ${a.maker || 'unknown maker'} · ${size}${mass} · ${a.license || 'license not stated'}${caption}\n   url: ${a.url}`;
@@ -28,7 +30,7 @@ export async function findObjects(ctx: SimReadyToolContext, payload: Payload) {
 
   const found = await searchSimReady({ query, shelf, limit }).catch(() => null);
 
-  if (!found) return { text: 'Couldn’t reach SimReady Central. Try again later.' };
+  if (!found) return { text: 'Couldn’t reach SimReady Central. Call find_objects again in a minute.' };
 
   if (!found.length) return { text: `No SimReady ${shelf} match "${query}".` };
 
@@ -56,12 +58,14 @@ export async function insertObject(ctx: SimReadyToolContext, payload: Payload) {
 
   if (typeof got === 'string') return { text: got };
 
-  const kg = got.parts.reduce((s, p) => s + (p.massG ?? 0), 0) / 1000;
+  const grams = got.parts.reduce((s, p) => s + (p.massG ?? 0), 0);
   const ids = got.parts.map((p) => p.id).join(', ');
   const kind =
-    isRobotUrl(url) || got.joints.length ? `${got.joints.length} joints (call get_rig)` : 'moves freely in simulate';
+    isRobotUrl(url) || got.joints.length
+      ? `${plural(got.joints.length, 'joint')} (call get_rig)`
+      : 'moves freely in simulate';
 
   return {
-    text: `Inserted ${got.name}: ${got.parts.length} parts (group "${got.name}"), ${Math.round(kg * 1000) / 1000} kg, ${kind}.\nPart ids: ${ids}`,
+    text: `Inserted ${got.name}: ${plural(got.parts.length, 'part')} (group "${got.name}"), ${weight(grams)}, ${kind}.\nPart ids: ${ids}`,
   };
 }

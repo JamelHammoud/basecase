@@ -1,5 +1,8 @@
 import { BANNED_COPY } from '../../verify/rehearsal/uiRules.ts';
+import { APOSTROPHE_COPY } from './apostrophe.mjs';
 import { isUserFacing } from './extract.mjs';
+import { GLOSSARY_COPY } from './glossary.mjs';
+import { SPELLING_COPY } from './spelling.mjs';
 
 export const FIXES = {
   '\\byet\\b': 'Cut it: “No parts”, not “No parts yet”.',
@@ -18,20 +21,26 @@ export const FIXES = {
   ' [·•|] ': 'Separate items with layout (§3b-16).',
 };
 
-export const LINTED_COPY = BANNED_COPY.filter(([source]) => source in FIXES).map(([source, flags]) => ({
-  pattern: new RegExp(source, flags),
-  fix: FIXES[source],
-}));
+export const LINTED_COPY = [
+  ...BANNED_COPY.filter(([source]) => source in FIXES).map(([source, flags]) => ({
+    pattern: new RegExp(source, flags),
+    fix: FIXES[source],
+    section: '§3c',
+  })),
+  ...GLOSSARY_COPY,
+  ...SPELLING_COPY,
+  ...APOSTROPHE_COPY,
+];
 
 const isId = (text) => /\p{L}{2,}/u.test(text) && !isUserFacing(text);
 
 export function findBannedCopy(text) {
   if (isId(text)) return null;
 
-  for (const { pattern, fix } of LINTED_COPY) {
+  for (const { pattern, fix, section } of LINTED_COPY) {
     const match = pattern.exec(text) ?? pattern.exec(text.trim());
 
-    if (match) return { word: match[0].trim(), fix };
+    if (match) return { word: match[0].trim(), fix, section };
   }
 
   return null;

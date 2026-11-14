@@ -3,23 +3,25 @@ import { scaledToReach } from '../cases/scale';
 import { robotFacts } from '../cases/robotFit';
 import { worldItem } from '../cases/schema';
 import { DriveOverlay } from '../components/simulate/DriveOverlay';
-import { DriveKeys } from '../components/simulate/CaseSections';
 import { Viewport3D, type Viewport3DHandle } from '../components/Viewport3D';
-import { Button, RunIcon, StopIcon } from '../design-system';
 import { forgeHook } from '../forge/forgeHook';
-import type { SimModel } from '../sim/mjcfTypes';
 import { useSimulation } from '../sim/useSimulation';
 import { DEFAULT_PROJECT, type ProjectSettings, type SculptSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
+import { GalleryCard } from './GalleryCard';
 import type { GalleryBundle } from './galleryBundle';
-import { seeInside } from './seeInside';
+import type { GalleryConsoleView } from './GalleryConsole';
+import { openGalleryScene } from './openGalleryScene';
+import { useGalleryTraining } from './useGalleryTraining';
 
 const SCULPT: SculptSettings = { brush: 'inflate', radiusMm: 10, strength: 0.5, symmetryX: false, symmetryZ: false };
 const NO_POSE = new Map();
 
-export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) => {
+export const GalleryStage: React.FC<{ bundle: GalleryBundle; Console: GalleryConsoleView | null }> = ({
+  bundle,
+  Console,
+}) => {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
-  const modelRef = useRef<SimModel | null>(null);
   const { parts, joints } = bundle.robot;
   const project: ProjectSettings = { ...DEFAULT_PROJECT, joints };
   const rig = buildRig(joints, parts);
@@ -27,6 +29,7 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) =>
   const { drive } = sim;
   const kase = bundle.case;
   const facts = robotFacts(rig, parts);
+  const training = useGalleryTraining({ slug: bundle.slug, morphology: facts.morphology, sim });
   const world = scaledToReach(kase, facts.reachMm, facts.anchor).world.objects.map(worldItem);
   const begin = useEffectEvent(() => {
     sim.setWorld(world);
@@ -46,62 +49,63 @@ export const GalleryStage: React.FC<{ bundle: GalleryBundle }> = ({ bundle }) =>
         drive: drive.status,
         offer: drive.offer,
         stats: sim.latestStats() ?? sim.stats,
+        controller: sim.controller.kind,
+        skill: training.running,
+        rows: training.rows.map((row) => ({ label: row.label, state: row.state.kind })),
       }),
+      stubTabEngine: training.stubTabEngine,
     };
+    (window as unknown as { __forge?: unknown }).__forge = forgeHook(training);
   });
 
-  useEffect(() => {
-    modelRef.current = sim.model;
-  });
+  const canvas = (
+    <div className="absolute inset-0">
+      <Viewport3D
+        ref={viewportRef}
+        parts={parts}
+        worldParts={sim.worldParts}
+        selectedPartIds={[]}
+        transformMode="translate"
+        sculptSettings={SCULPT}
+        snapStepMm={1}
+        snapAngleDeg={15}
+        trackpadMode="orbit-scroll"
+        showGrid
+        onCommitSculptMesh={() => {}}
+        onSelectPart={() => {}}
+        onUpdatePartTransform={() => {}}
+      />
+      <DriveOverlay sim={sim} />
+    </div>
+  );
+  const card = (docked: boolean) => (
+    <GalleryCard
+      kase={kase}
+      sim={sim}
+      training={training}
+      docked={docked}
+      onOpenScene={() => void training.carried().then((trained) => openGalleryScene(bundle, trained ?? bundle.trained))}
+    />
+  );
 
-  useEffect(() => {
-    (window as unknown as { __forge?: unknown }).__forge = forgeHook(bundle.slug, () => modelRef.current);
-  }, [bundle.slug]);
+  if (Console && kase.console)
+    return (
+      <Console
+        kase={kase}
+        caseConsole={kase.console}
+        sim={sim}
+        rig={rig}
+        parts={parts}
+        joints={joints}
+        canvas={canvas}
+        card={card}
+      />
+    );
 
   return (
     <div className="fixed inset-0 bg-[#1b1b1b] text-white">
-      <div className="absolute inset-0">
-        <Viewport3D
-          ref={viewportRef}
-          parts={parts}
-          worldParts={sim.worldParts}
-          selectedPartIds={[]}
-          transformMode="translate"
-          sculptSettings={SCULPT}
-          snapStepMm={1}
-          snapAngleDeg={15}
-          trackpadMode="orbit-scroll"
-          showGrid
-          onCommitSculptMesh={() => {}}
-          onSelectPart={() => {}}
-          onUpdatePartTransform={() => {}}
-        />
-        <DriveOverlay sim={sim} />
-      </div>
-      <aside
-        className="glass absolute left-4 top-4 w-[300px] rounded-[12px] p-4 flex flex-col gap-3"
-        data-testid="gallery-card"
-      >
-        <div>
-          <h1 className="text-[15px] font-semibold text-white/90">{kase.name}</h1>
-          <p className="mt-1 text-[13px] leading-snug text-white/70">{kase.brief}</p>
-        </div>
-        <Button
-          variant="primary"
-          size="md"
-          fullWidth
-          icon={drive.active ? <StopIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
-          disabled={sim.status !== 'ready' || drive.status === 'checking'}
-          onClick={() => (drive.active ? drive.stop() : void drive.start())}
-        >
-          {drive.active ? 'Stop Driving' : 'Drive'}
-        </Button>
-        {drive.status === 'checking' && <p className="text-[12.5px] text-white/50">Checking it stays up</p>}
-        {drive.active && drive.cls && <DriveKeys cls={drive.cls} />}
-        <Button variant="secondary" size="md" fullWidth onClick={() => void seeInside(bundle)}>
-          See Inside
-        </Button>
-      </aside>
+      {canvas}
+      {card(false)}
     </div>
   );
 };

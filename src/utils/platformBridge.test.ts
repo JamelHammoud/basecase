@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { platformBridge } from './platformBridge';
 
-const message = 'The STEP export took longer than 5 minutes. Hide the largest parts and try again.';
+const message = 'The STEP export took longer than 5 minutes. Hide the largest parts and export again.';
 
 afterEach(() => {
   vi.unstubAllGlobals();

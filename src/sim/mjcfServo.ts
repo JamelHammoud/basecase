@@ -11,12 +11,13 @@ interface FittedInput {
   rig: Rig;
   masses: Map<string, { grams: number; centroid: V3 }>;
   calibrated?: JointServoFit;
+  volts?: number;
 }
 
-export function fittedServo({ j, byId, rig, masses, calibrated }: FittedInput): ServoDynamics | null {
+export function fittedServo({ j, byId, rig, masses, calibrated, volts }: FittedInput): ServoDynamics | null {
   if (j.type !== 'revolute') return null;
 
-  const specs = jointServos(j, byId);
+  const specs = jointServos(j, byId, volts);
   const used = calibrated ? specs.map((s) => ({ ...s, fit: calibrated.fit, atVolts: calibrated.volts })) : specs;
 
   return servoDynamics(used, holdingLoad(j, rig, masses).momentNm);
@@ -30,10 +31,12 @@ export interface FittedActuator {
   dynamics: ServoDynamics;
   ctrlrange: string;
   timestep: number;
+  historyS?: number;
 }
 
-export function fittedActuatorXml({ name, dynamics: d, ctrlrange, timestep }: FittedActuator): string {
-  const delay = `delay="${f(d.delayS)}" nsample="${historySamples(d.delayS, timestep)}" interp="linear"`;
+export function fittedActuatorXml({ name, dynamics: d, ctrlrange, timestep, historyS = 0 }: FittedActuator): string {
+  const samples = historySamples(Math.max(d.delayS, historyS), timestep);
+  const delay = `delay="${f(d.delayS)}" nsample="${samples}" interp="linear"`;
 
   return `    <position name="${name}" joint="${name}" kp="${f(d.kp)}" kv="0" forcerange="${f(-d.forceNm)} ${f(d.forceNm)}"${ctrlrange} ${delay}/>`;
 }

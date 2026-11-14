@@ -1,18 +1,23 @@
 export const LIMITS = {
   openWaiting: 12,
-  maxOpenHours: 6,
+  maxOpenHours: 3,
   queuedRuns: 20,
-  mainRedHours: 2,
+  mainRedHours: 12,
   noMergeHours: 2,
   readyWaitingHours: 2,
   oldestQueuedMinutes: 60,
+  idlePullMinutes: 30,
 };
 
 export const PRODUCERS = new Set(['build', 'refine', 'market', 'learn', 'update', 'lead', 'ideas']);
 
+export const LANE_SHARE = { refine: 3 };
+
 const hoursSince = (iso, now) => (iso ? (now - Date.parse(iso)) / 3_600_000 : null);
 
-export function expired({ pulls, inBatch, now = Date.now() }) {
+const free = () => false;
+
+export function expired({ pulls, inBatch, now = Date.now(), busy = free }) {
   const limitMs = LIMITS.maxOpenHours * 3_600_000;
 
   return pulls.filter(
@@ -20,17 +25,30 @@ export function expired({ pulls, inBatch, now = Date.now() }) {
       !pull.headRefName.startsWith('loop/batch/') &&
       !pull.headRefName.startsWith('loop/repair/') &&
       !inBatch.includes(pull.number) &&
+      !busy(pull) &&
       now - Date.parse(pull.createdAt) > limitMs,
   );
 }
 
-export const backpressure = ({ openWaiting, queuedRuns }) => {
+export function idle({ pulls, now = Date.now(), busy = free }) {
+  const since = now - LIMITS.idlePullMinutes * 60_000;
+
+  return pulls.filter((pull) => Date.parse(pull.updatedAt) < since && !busy(pull));
+}
+
+export const laneOf = (branch) => /^loop\/([^/]+)\//.exec(branch)?.[1] ?? null;
+
+export function backpressure({ openWaiting, queuedRuns, byLane = {} }, lane = null) {
   if (openWaiting >= LIMITS.openWaiting) return `${openWaiting} pull requests are waiting to land`;
 
   if (queuedRuns >= LIMITS.queuedRuns) return `${queuedRuns} CI runs are queued`;
 
+  const own = byLane[lane] ?? 0;
+
+  if (own >= (LANE_SHARE[lane] ?? Infinity)) return `${own} of its own pull requests are waiting to land`;
+
   return null;
-};
+}
 
 export function breaches(m, now = Date.now()) {
   const found = [];
@@ -46,6 +64,9 @@ export function breaches(m, now = Date.now()) {
 
   if (ready !== null && ready > LIMITS.readyWaitingHours)
     found.push(`a reviewed, green pull request has waited ${ready.toFixed(1)} h`);
+
+  if (m.idlePulls?.length > 0)
+    found.push(`${m.idlePulls.map((n) => `#${n}`).join(', ')} untouched for over ${LIMITS.idlePullMinutes} min`);
 
   if (m.queuedRuns >= LIMITS.queuedRuns) found.push(`${m.queuedRuns} CI runs are queued`);
 

@@ -1,5 +1,5 @@
 import { asNumber, asString, listOf, oneOf, optional, refuse, type Reader } from '../validate';
-import { JOINT_FIELDS, signalRef, type JointField, type SignalScope } from './signalNames';
+import { JOINT_FIELDS, signalRef, signalShape, type JointField, type SignalScope } from './signalNames';
 
 export const CASE_ACTIONS = ['try', 'end-try', 'drive', 'stop', 'start-over', 'reset'] as const;
 
@@ -10,6 +10,7 @@ type Config = Record<string, unknown>;
 interface PanelKindSpec<C extends Config> {
   read: (v: Config, where: string, scope: SignalScope) => C;
   desktopOnly?: (config: C) => boolean;
+  studioOnly?: (config: C) => boolean;
 }
 
 const kind = <C extends Config>(spec: PanelKindSpec<C>) => spec;
@@ -36,6 +37,34 @@ const readTable = (v: Config, where: string, scope: SignalScope) => {
   return columns ? { of, columns: columns as JointField[] } : { of };
 };
 
+export const CODE_SOURCE_MAX_BYTES = 256 * 1024;
+
+const readSource: Reader<string> = (value, where) => {
+  if (typeof value !== 'string' || !value.trim()) return refuse(where, 'must be an HTML document');
+
+  if (new TextEncoder().encode(value).length > CODE_SOURCE_MAX_BYTES) return refuse(where, 'must be at most 256 KB');
+
+  return value;
+};
+
+const readCode = (v: Config, where: string) => {
+  const source = readSource(v.source, `${where}.source`);
+  const height = optional(between(80, 900), v.height, `${where}.height`);
+
+  return height === undefined ? { source } : { source, height };
+};
+
+const readButton = (v: Config, where: string, scope: SignalScope): { action: CaseAction; gesture?: string } => {
+  const action = oneOf(CASE_ACTIONS)(v.action, `${where}.action`);
+
+  if (v.gesture === undefined) return { action };
+
+  const gesture = asString(v.gesture, `${where}.gesture`);
+  const shape = signalShape(`gesture.${gesture}`, scope);
+
+  return shape === 'number' ? { action, gesture } : refuse(`${where}.gesture`, `${gesture} ${shape}`);
+};
+
 const readText = (v: Config, where: string) =>
   v.of === undefined
     ? { text: asString(v.text, `${where}.text`) }
@@ -44,6 +73,7 @@ const readText = (v: Config, where: string) =>
 export const PANEL_KINDS = {
   camera: kind({
     read: (v, where, scope) => ({ signal: signalRef(scope, ['camera'], true)(v.signal, `${where}.signal`) }),
+    studioOnly: () => true,
   }),
   value: kind({ read: (v, where, scope) => ({ signal: numbers(scope)(v.signal, `${where}.signal`) }) }),
   plot: kind({
@@ -57,8 +87,11 @@ export const PANEL_KINDS = {
     },
   }),
   table: kind({ read: readTable, desktopOnly: (c) => c.of === 'servos' }),
-  button: kind({ read: (v, where) => ({ action: oneOf(CASE_ACTIONS)(v.action, `${where}.action`) }) }),
-  list: kind({ read: (v, where) => ({ of: oneOf(['tries', 'failures'] as const)(v.of, `${where}.of`) }) }),
+  button: kind({ read: readButton }),
+  list: kind({
+    read: (v, where) => ({ of: oneOf(['tries', 'failures'] as const)(v.of, `${where}.of`) }),
+    studioOnly: (c) => c.of === 'tries',
+  }),
   text: kind({ read: readText }),
   map: kind({
     read: (v, where) => {
@@ -67,6 +100,7 @@ export const PANEL_KINDS = {
       return trail === undefined ? {} : { trail };
     },
   }),
+  code: kind({ read: readCode }),
 };
 
 export type PanelKind = keyof typeof PANEL_KINDS;
@@ -82,5 +116,17 @@ export type PanelSpec = { [K in PanelKind]: PanelOf<K> }[PanelKind];
 export const readPanelConfig = (k: PanelKind, v: Config, where: string, scope: SignalScope) =>
   (PANEL_KINDS[k].read as PanelKindSpec<Config>['read'])(v, where, scope);
 
-export const panelOnDesktopOnly = (panel: PanelSpec) =>
-  (PANEL_KINDS[panel.kind] as PanelKindSpec<Config>).desktopOnly?.(panel as unknown as Config) ?? false;
+export interface PanelSurface {
+  desktop: boolean;
+  studio: boolean;
+}
+
+export function panelShows(panel: PanelSpec, { desktop, studio }: PanelSurface) {
+  const spec = PANEL_KINDS[panel.kind] as PanelKindSpec<Config>;
+  const config = panel as unknown as Config;
+
+  return (desktop || !spec.desktopOnly?.(config)) && (studio || !spec.studioOnly?.(config));
+}
+
+export const gestureActions = (panels: readonly PanelSpec[], gesture: string): CaseAction[] =>
+  panels.flatMap((p) => (p.kind === 'button' && p.gesture === gesture ? [p.action] : []));

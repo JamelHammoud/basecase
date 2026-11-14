@@ -6,8 +6,7 @@ import { thinWallOf, type PrintReport } from '../utils/printReport';
 import type { FitInterference } from '../utils/designedFits';
 import type { Finding, FindingLevel } from './types';
 import { engineeringFinding, ruleFinding } from './wording';
-
-const round1 = (v: number) => Math.round(v * 10) / 10;
+import { lengthLabel } from '../utils/size';
 
 export function assemblyFindings(report: AssemblyReport): Finding[] {
   return report.lines.map((l) =>
@@ -27,6 +26,7 @@ export function engineeringFindings(report: EngineeringReport): Finding[] {
           detail: item.text,
           ids: item.ids,
           fix: item.fix,
+          joint: item.joint,
         }),
       );
 
@@ -40,7 +40,7 @@ function partPrintFindings(p: PrintReport['parts'][number]): Finding[] {
 
   if (!p.check.fits)
     out.push(
-      ruleFinding('bed', 'blocker', { agentText: `${p.name}: ${p.check.fitNote ?? "doesn't fit the plate"}`, ids }),
+      ruleFinding('bed', 'blocker', { agentText: `${p.name}: ${p.check.fitNote ?? 'doesn’t fit the plate'}`, ids }),
     );
 
   if (thinWallOf(p.check) === 'panel')
@@ -65,12 +65,12 @@ export function printFindings(report: PrintReport | null): Finding[] {
 
 export function fitFindings(items: FitInterference[]): Finding[] {
   return items.map((i) => {
-    const depth = round1(i.depthMm);
+    const depth = lengthLabel(i.depthMm);
     const ids = [i.a, i.b];
 
     if (i.screw)
       return ruleFinding('screw-in-part', 'note', {
-        agentText: `${i.screw.id} goes ${depth} mm into ${i.screw.into}. Check it lands in a tapped hole.`,
+        agentText: `${i.screw.id} goes ${depth} into ${i.screw.into}. Check it lands in a tapped hole.`,
         ids,
       });
 
@@ -81,8 +81,8 @@ export function fitFindings(items: FitInterference[]): Finding[] {
       });
 
     return ruleFinding('clash', 'blocker', {
-      text: `These parts overlap by ${depth} mm.`,
-      agentText: `${i.a} and ${i.b} overlap by ${depth} mm.`,
+      text: `These parts overlap by ${depth}.`,
+      agentText: `${i.a} and ${i.b} overlap by ${depth}.`,
       ids,
     });
   });
@@ -98,7 +98,7 @@ export function bomFindings(bom: Bom): Finding[] {
   const standIns = bom.standIns.map((m) =>
     ruleFinding('stand-in', 'blocker', { agentText: `${m.name} is a stand-in, not a real part.`, ids: [m.id] }),
   );
-  const unpriced = bom.lines.filter((l) => l.status === 'unchecked' && l.estUsd === undefined);
+  const unpriced = bom.lines.filter((l) => l.status === 'unchecked' && l.toBuy > 0 && l.estUsd === undefined);
 
   return [
     ...elsewhere,

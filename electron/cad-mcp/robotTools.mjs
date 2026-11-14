@@ -67,6 +67,26 @@ export const defineJoints = {
   },
 };
 
+export const findJointAxes = {
+  name: 'find_joint_axes',
+  config: {
+    title: 'Find joint axes',
+    description:
+      "Reads the parts' meshes for joints: every shaft or pin that turns in a bore on another part, with its axis, a point on it, the parent (the side nearer the base) and child, the slide travel along it and a confidence; pairs held by two or more pins as fixed; and round faces with no partner. " +
+      'Use it on imported parts (STEP, meshes) before define_joints, since they carry no joint data. Defaults to every visible solid part.',
+    inputSchema: {
+      ids: z.array(z.string()).max(120).optional().describe('Parts to read; all visible solid parts when left out'),
+    },
+  },
+  handler: async ({ ids }) => {
+    try {
+      return text((await bridge('find_joint_axes', { ids }, 120000))?.text || 'No joint axes.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
 export const getRig = {
   name: 'get_rig',
   config: {
@@ -313,7 +333,7 @@ export const wrapRobot = {
   config: {
     title: 'Wrap a robot in a mesh',
     description:
-      'Wraps a jointed robot in a character mesh the user imported (an owl, a droid body): fits the mesh around the robot by uniform scale and centring, hollows it to a 2 mm wall, cuts it at each joint into one shell per link, and cuts away whatever a servo, a link or another shell would hit across each joint’s range. ' +
+      'Wraps a jointed robot in a character mesh the user imported (an owl, a droid body): fits the mesh around the robot by uniform scale and centering, hollows it to a 2 mm wall, cuts it at each joint into one shell per link, and cuts away whatever a servo, a link or another shell would hit across each joint’s range. ' +
       'Each shell is a printed part attached to its link, so it poses, animates and simulates with it; the mesh is hidden, and one undo restores everything. Takes a few seconds to a minute. ' +
       'mesh = the imported mesh part (default: the only one); robot = its name or key from get_rig (default: the selected robot, or the only one).',
     inputSchema: {

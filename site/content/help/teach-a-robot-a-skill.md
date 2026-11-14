@@ -38,10 +38,10 @@ Teaching runs in the desktop app, with Claude, Codex or Gemini connected as the 
 3. Click **Teach**. The **Agent** tab opens with `/train` and your goal.
 4. Read the contract the agent shows: what passes, what fails, and a run where the robot holds still, which must fail.
 5. Reply to approve the contract, or say what to change.
-6. Watch the skill's row under **Train**, which shows the trainer's progress.
+6. Watch the skill's row under **Train**, which shows the trainer's progress. The robot on the canvas runs the newest snapshot of the skill.
 7. When the row shows its Arena line, such as "31 of 32 tries, at least 86%", click **Try**.
 
-The skill runs in the simulation, on the canvas. You can also type `/train` and the goal straight into the agent's box. To stop training, click **Stop training** (■) on the row.
+The skill runs in the simulation, on the canvas. You can also type `/train` and the goal straight into the agent's box. To stop training, click **Stop training** (■) on the row. [Watch a skill learn while it trains](/help/watch-a-skill-learn) explains the snapshots.
 
 ## How Basecase trains it
 
@@ -53,6 +53,8 @@ The agent says what each method tried. When a design change would make the skill
 
 ## When the design changes
 
-A skill belongs to the design it was trained on. A colour or name change keeps it ready. A change to a mass or size shows **Recheck** on its row, and a change to a joint shows **Train**. Either button sends your words back to the agent.
+A skill belongs to the design it was trained on. A color or name change keeps it ready. A change to a mass or size shows **Recheck** on its row, and a change to a joint shows **Train**. Either button sends your words back to the agent.
 
-Stand, Walk, Get up and Settle don't need words; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
+A ready skill is also a step in a Routine; see [Build a Routine](/help/build-a-routine). To share it, right-click its row and choose **Publish to Hugging Face**; see [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).
+
+Stand, Walk, Get up and Settle don't need words; see [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit). Once one is ready, words can change how it moves; see [Coach how a ready skill moves](/help/coach-a-skill).

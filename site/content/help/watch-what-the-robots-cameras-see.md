@@ -21,6 +21,7 @@ related:
 covers:
   - src/components/cameras/CameraStrip.tsx
   - src/components/cameras/CameraTile.tsx
+  - src/components/cameras/OperatorTile.tsx
   - src/components/cameras/cameraMenu.tsx
   - src/cameras/views.ts
   - src/cameras/lens.ts
@@ -37,9 +38,11 @@ Put a camera part on the robot and see its live view beside the canvas, through 
 4. Find its live view under **Cameras** at the top left of the canvas.
 5. Click **Simulate** in the **Simulate** tab to see the view move with the robot.
 6. Click the view to enlarge it to 640 × 480.
-7. To change the lens, right-click the view and choose **Lens** ▸ an angle, such as **Fisheye 180°**.
+7. To change the lens, right-click the view and choose **Lens**, then an angle such as **Fisheye 180°**.
 
-**Collapse Camera Views** and **Expand Camera Views** are in [[⌘K]], and [[⇧V]] toggles them. Collapsed, the views stop drawing.
+**Show Simulate**, **Collapse Camera Views** and **Expand Camera Views** are in [[⌘K]], and [[⇧V]] toggles the views. Collapsed, the views stop drawing.
+
+While a robot follows [your arms](/help/drive-a-robot-with-your-camera) or [your hand or face](/help/drive-a-case-with-your-hand-face-midi-or-voice), the computer's camera is the first tile. It's mirrored. When it follows your arms, your skeleton is drawn over it.
 
 ## Make the camera move with the robot
 

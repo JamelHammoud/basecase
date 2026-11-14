@@ -4,7 +4,9 @@ import type { V3 } from '../utils/kinematics';
 import { consoleReader, type CaseConsole } from './console/format';
 import { validateRoutine, type Routine } from '../routines/schema';
 import { readContract, type Contract } from './contract';
+import { gestureNames, readGestures, type CaseGesture } from './gestures';
 import {
+  asBoolean,
   asId,
   asNumber,
   asRecord,
@@ -28,6 +30,7 @@ const CONTROL_INPUTS = ['move', 'turn', 'lift', 'grip'] as const;
 export const MAX_OBJECTS = 256;
 
 const MAX_COMMANDS = 4096;
+const MAX_COMMAND_JOINTS = 64;
 const MAX_SECONDS = 600;
 const SCORE_COUNTS = ['in', 'out'] as const;
 
@@ -68,6 +71,13 @@ export interface WorldObject {
   behavior: WorldBehavior;
   massG?: number;
   friction?: number;
+  jitter?: ObjectJitter;
+  movable?: boolean;
+}
+
+export interface ObjectJitter {
+  mm: number;
+  deg: number;
 }
 
 export interface CaseControl {
@@ -83,6 +93,7 @@ export interface ReferenceCommand {
   target?: V3;
   push?: string;
   aux?: number[];
+  joints?: Record<string, number>;
 }
 
 export type ProbeEnd = 'end-effector' | 'base' | { effector: string } | { object: string } | { point: V3 };
@@ -118,6 +129,7 @@ export interface Case {
   task: CaseTask;
   console?: CaseConsole;
   logic?: Routine;
+  gestures?: CaseGesture[];
 }
 
 const v3 = vector(3) as unknown as Reader<V3>;
@@ -172,6 +184,23 @@ function readCast(v: Record<string, unknown>): Pick<Case, 'slot' | 'slots'> {
   return { slots: readSlots(v.slots, 'slots') };
 }
 
+const MAX_JITTER_MM = 500;
+const MAX_JITTER_DEG = 45;
+
+const within =
+  (max: number): Reader<number> =>
+  (value, where) => {
+    const n = asNumber(value, where);
+
+    return n >= 0 && n <= max ? n : refuse(where, `must be from 0 to ${max}`);
+  };
+
+const readJitter: Reader<ObjectJitter> = (value, where) => {
+  const v = asRecord(value, where);
+
+  return { mm: within(MAX_JITTER_MM)(v.mm, `${where}.mm`), deg: within(MAX_JITTER_DEG)(v.deg, `${where}.deg`) };
+};
+
 const readObject: Reader<WorldObject> = (value, where) => {
   const v = asRecord(value, where);
 
@@ -187,6 +216,8 @@ const readObject: Reader<WorldObject> = (value, where) => {
     behavior: oneOf(BEHAVIORS)(v.behavior, `${where}.behavior`),
     massG: optional(asNumber, v.massG, `${where}.massG`),
     friction: optional(asNumber, v.friction, `${where}.friction`),
+    jitter: optional(readJitter, v.jitter, `${where}.jitter`),
+    ...(v.movable === undefined ? {} : { movable: asBoolean(v.movable, `${where}.movable`) }),
   };
 };
 
@@ -208,6 +239,14 @@ const readControl: Reader<CaseControl> = (value, where) => {
   };
 };
 
+const readJoints: Reader<Record<string, number>> = (value, where) => {
+  const entries = Object.entries(asRecord(value, where));
+
+  if (entries.length > MAX_COMMAND_JOINTS) return refuse(where, `holds more than ${MAX_COMMAND_JOINTS} joints`);
+
+  return Object.fromEntries(entries.map(([id, v]) => [asId(id, where), asNumber(v, `${where}.${id}`)]));
+};
+
 const readCommand: Reader<ReferenceCommand> = (value, where) => {
   const v = asRecord(value, where);
 
@@ -218,6 +257,7 @@ const readCommand: Reader<ReferenceCommand> = (value, where) => {
     target: optional(v3, v.target, `${where}.target`),
     push: optional(asId, v.push, `${where}.push`),
     aux: optional(listOf(asNumber, 8), v.aux, `${where}.aux`),
+    joints: optional(readJoints, v.joints, `${where}.joints`),
   };
 };
 
@@ -306,7 +346,9 @@ export function parseCase(input: unknown): Case {
 
   checkScore(task, objects);
 
-  const caseConsole = optional(consoleReader(task.probes.map((p) => p.signal)), v.console, 'console');
+  const gestures = optional(readGestures, v.gestures, 'gestures');
+  const signals = { probes: task.probes.map((p) => p.signal), gestures: gestureNames(gestures) };
+  const caseConsole = optional(consoleReader(signals), v.console, 'console');
 
   const kase: Case = {
     formatVersion: CASE_FORMAT_VERSION,
@@ -320,6 +362,7 @@ export function parseCase(input: unknown): Case {
     task,
     ...(caseConsole ? { console: caseConsole } : {}),
     ...(v.logic !== undefined ? { logic: readLogic(v.logic, 'logic') } : {}),
+    ...(gestures ? { gestures } : {}),
   };
 
   checkSlotNames(kase);
@@ -356,5 +399,5 @@ export function worldItem(o: WorldObject): WorldItem {
     ...(o.friction !== undefined ? { physics: { dynamic: o.behavior === 'dynamic', friction: o.friction } } : {}),
   };
 
-  return { ...part, behavior: o.behavior };
+  return { ...part, behavior: o.behavior, ...(o.movable ? { movable: true } : {}) };
 }

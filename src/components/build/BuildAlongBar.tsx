@@ -2,19 +2,27 @@ import React from 'react';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  CircleCheckIcon,
   CloseIcon,
   FloatingIsland,
   IconButton,
   IslandDivider,
-  SpinnerIcon,
+  Spinner,
 } from '../../design-system';
 import type { BuildAlong } from '../../workspace/useBuildAlong';
 import { useBuildAlongKeys } from '../../workspace/useBuildAlongKeys';
 
-const chip = 'glass rounded-full h-8 px-3.5 flex items-center text-[13px] text-white/85 tabular-nums whitespace-nowrap';
+const chip = 'glass rounded-full h-[28px] px-3.5 flex items-center text-[13px] text-white/85 tabular-nums whitespace-nowrap';
 
-export const BuildAlongBar: React.FC<{ buildAlong: BuildAlong; active: boolean }> = ({ buildAlong, active }) => {
+interface BuildAlongBarProps {
+  buildAlong: BuildAlong;
+  active: boolean;
+  ready: boolean[];
+}
+
+export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready }) => {
   const { step, index, count, opening, progress } = buildAlong;
+  const partsReady = !!step && ready[index];
 
   useBuildAlongKeys(buildAlong, active && buildAlong.active);
 
@@ -26,12 +34,13 @@ export const BuildAlongBar: React.FC<{ buildAlong: BuildAlong; active: boolean }
         role="toolbar"
         aria-label="Build Along"
         data-step={step ? index + 1 : undefined}
+        data-ready={partsReady || undefined}
         className="pointer-events-auto h-[40px]"
       >
         {opening ? (
           <div className="flex items-center gap-2 px-[8px] text-[12.5px] text-white/60 whitespace-nowrap">
-            <SpinnerIcon className="w-4 h-4 animate-spin" />
-            {progress?.label}
+            <Spinner className="w-4 h-4" />
+            {progress && `${progress.label}…`}
           </div>
         ) : (
           <>
@@ -44,8 +53,9 @@ export const BuildAlongBar: React.FC<{ buildAlong: BuildAlong; active: boolean }
               icon={<ChevronLeftIcon className="w-4 h-4" />}
               onClick={buildAlong.previous}
             />
-            <div className="text-[12.5px] text-white/60 tabular-nums whitespace-nowrap px-[6px] min-w-[64px] text-center">
+            <div className="flex items-center justify-center gap-1.5 text-[12.5px] text-white/60 tabular-nums whitespace-nowrap px-[6px] min-w-[64px]">
               {index + 1} of {count}
+              {partsReady && <CircleCheckIcon className="w-4 h-4 text-emerald-400" />}
             </div>
             <IconButton
               size="sm"

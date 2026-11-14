@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backpressure, expired, breaches, lastMergeAt, readySince, redSince, syncPlan } from './flow.mjs';
+import { backpressure, expired, idle, laneOf, breaches, lastMergeAt, readySince, redSince, syncPlan } from './flow.mjs';
 
 const now = Date.parse('2026-11-13T12:00:00Z');
 const hoursAgo = (h) => new Date(now - h * 3_600_000).toISOString();
@@ -10,13 +10,27 @@ describe('backpressure', () => {
     expect(backpressure({ openWaiting: 5, queuedRuns: 20 })).toMatch(/20 CI runs/);
     expect(backpressure({ openWaiting: 11, queuedRuns: 19 })).toBeNull();
   });
+
+  it('holds a lane back once its own share of the queue is waiting', () => {
+    const counts = { openWaiting: 5, queuedRuns: 0, byLane: { refine: 3, build: 2 } };
+
+    expect(backpressure(counts, 'refine')).toMatch(/3 of its own/);
+    expect(backpressure({ ...counts, byLane: { refine: 2 } }, 'refine')).toBeNull();
+    expect(backpressure({ ...counts, byLane: { build: 9 } }, 'build')).toBeNull();
+    expect(backpressure(counts)).toBeNull();
+  });
+
+  it('reads the lane from a loop branch', () => {
+    expect(laneOf('loop/refine/fit-20261113-1')).toBe('refine');
+    expect(laneOf('feature/x')).toBeNull();
+  });
 });
 
 describe('breaches', () => {
   it('reports a red main, a stalled merge queue and a backed-up CI', () => {
     const found = breaches(
       {
-        mainRedSince: hoursAgo(3),
+        mainRedSince: hoursAgo(13),
         lastMergeAt: hoursAgo(2.5),
         readyCount: 12,
         oldestReadyAt: hoursAgo(2.2),
@@ -27,6 +41,10 @@ describe('breaches', () => {
     );
 
     expect(found).toHaveLength(5);
+  });
+
+  it('reports pull requests nobody has touched for an hour', () => {
+    expect(breaches({ idlePulls: [461, 473] }, now)).toEqual(['#461, #473 untouched for over 30 min']);
   });
 
   it('is quiet when the loop flows', () => {
@@ -150,12 +168,25 @@ describe('pull requests open too long', () => {
   it('expires work open over six hours, except batches, repairs and pull requests riding in a batch', () => {
     const pulls = [
       pull(1, 'loop/refine/a', '2026-11-13T09:00:00Z'),
-      pull(2, 'loop/refine/b', '2026-11-13T11:00:00Z'),
+      pull(2, 'loop/refine/b', '2026-11-13T14:00:00Z'),
       pull(3, 'loop/batch/x', '2026-11-13T08:00:00Z'),
       pull(4, 'loop/repair/y', '2026-11-13T08:00:00Z'),
       pull(5, 'loop/build/z', '2026-11-13T08:00:00Z'),
     ];
 
     expect(expired({ pulls, inBatch: [5], now: at }).map((p) => p.number)).toEqual([1]);
+  });
+
+  it('spares a pull request a lane holds, such as one under micro-evals, from closing and from the idle count', () => {
+    const pulls = [
+      { ...pull(1, 'loop/build/a', '2026-11-13T09:00:00Z'), updatedAt: '2026-11-13T15:00:00Z' },
+      { ...pull(2, 'loop/build/b', '2026-11-13T09:00:00Z'), updatedAt: '2026-11-13T15:00:00Z' },
+      { ...pull(3, 'loop/build/c', '2026-11-13T15:00:00Z'), updatedAt: '2026-11-13T15:50:00Z' },
+    ];
+    const busy = (p) => p.number === 2;
+
+    expect(expired({ pulls, inBatch: [], now: at, busy }).map((p) => p.number)).toEqual([1]);
+    expect(idle({ pulls, now: at, busy }).map((p) => p.number)).toEqual([1]);
+    expect(idle({ pulls, now: at }).map((p) => p.number)).toEqual([1, 2]);
   });
 });

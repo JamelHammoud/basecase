@@ -46,7 +46,10 @@ const PRICE = z.object({
   per: z.number().int().min(1).describe('Units the price buys'),
   store: z.string().max(80),
   url: z.string().url(),
-  seen: z.string().describe('The date you saw it, YYYY-MM-DD'),
+  seen: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .describe('The date you saw it, YYYY-MM-DD'),
 });
 
 export const addSourcedItem = {
@@ -90,7 +93,7 @@ export const importMakerCad = {
   config: {
     title: 'Import maker CAD',
     description:
-      "Turns the maker's CAD file into a real part you can design around: exact mesh, size and mounting holes. Always try this before modelling a bought part yourself. Give a direct link to a STEP or IGES file, or a zip holding one. The file is converted in a sandbox and its size checked against expect_mm from the datasheet. Add the item first with add_sourced_item. Run it again with rotate to fix the part's orientation; the download is kept. Y is up in the catalog frame. Very large files may be too big for the built-in reader: then say so and model it from the maker's drawing with model_part.",
+      "Turns the maker's CAD file into a real part you can design around: exact mesh, size and mounting holes. Always try this before modeling a bought part yourself. Give a direct link to a STEP or IGES file, or a zip holding one. The file is converted in a sandbox and its size checked against expect_mm from the datasheet. Add the item first with add_sourced_item. Run it again with rotate to fix the part's orientation; the download is kept. Y is up in the catalog frame. Very large files may be too big for the built-in reader: then say so and model it from the maker's drawing with model_part.",
     inputSchema: {
       id: z.string().describe('The add_sourced_item id'),
       url: z.string().url().describe('Direct link to the STEP, IGES or zip'),
@@ -112,17 +115,21 @@ const EDITS = new Set([
   'update_parts',
   'delete_parts',
   'mirror_parts',
+  'merge_parts',
   'model_part',
   'fasten',
   'mate',
   'define_joints',
+  'size_arm',
   'set_build',
   'add_sourced_item',
   'import_maker_cad',
 ]);
 
-export async function withBuildCheck(name, result) {
-  if (!EDITS.has(name) || result?.isError) return result;
+const editsScene = (name, args) => EDITS.has(name) || (name === 'synthesize_linkage' && !!args?.insert);
+
+export async function withBuildCheck({ name, args }, result) {
+  if (!editsScene(name, args) || result?.isError) return result;
 
   try {
     const res = await bridge('readiness_line', {}, 5000);

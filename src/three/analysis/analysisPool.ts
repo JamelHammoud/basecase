@@ -5,7 +5,14 @@ import type { MeshData } from '../../print/threeMf';
 import type { ShapeReport } from './shapeReports';
 import type { CollideOptions } from './collide';
 import type { OutputRiders } from './outputRiders';
-import { analysisHandlers, MISSING_SHAPE, type AnalysisTask, type Instance, type ThreeMfFileSpec } from './analysisOps';
+import {
+  analysisHandlers,
+  MISSING_SHAPE,
+  type AnalysisTask,
+  type Instance,
+  type PlateFilesInput,
+  type ThreeMfResult,
+} from './analysisOps';
 import { copyGeometries, type SceneShapes } from './sceneShapes';
 import type { SweepHit, SweepSpec } from './sweep';
 import type { PairIds } from './gaps';
@@ -13,9 +20,11 @@ import type { FitCoupon, FitCouponTask } from './fitCoupons';
 import type { ChainResult, FastenerInput } from '../../assembly/assemblyTypes';
 import type { AssemblyGeometry, AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
 import type { FoundAxis } from '../../joints/axisFinder';
+import type { JointAxes } from '../../joints/jointCandidates';
 import type { JointAxisQuery } from './jointAxis';
 import type { ArmModel, PayloadMap } from '../../utils/payload';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
+import { errorMessage } from '../../utils/errorMessage';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -95,7 +104,7 @@ async function analyze<R>(client: Client, scene: SceneShapes, task: AnalysisTask
       client.shapes.clear();
       client.geometries.clear();
 
-      if (!String((error as Error)?.message ?? error).includes(MISSING_SHAPE)) throw error;
+      if (!errorMessage(error).includes(MISSING_SHAPE)) throw error;
 
       return send();
     });
@@ -125,12 +134,12 @@ export function printMeshesIn(scene: SceneShapes): Promise<Record<string, MeshDa
   return analyze(leastBusy(), scene, { kind: 'meshes', instances: scene.instances });
 }
 
-export function threeMfIn(
-  scene: SceneShapes,
-  files: ThreeMfFileSpec[],
-  plateSize: [number, number],
-): Promise<Record<string, Uint8Array>> {
-  return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, files, plateSize });
+export function threeMfIn(scene: SceneShapes, plates: PlateFilesInput): Promise<ThreeMfResult> {
+  return analyze(leastBusy(), scene, { kind: 'threeMf', instances: scene.instances, ...plates });
+}
+
+export function stlIn(scene: SceneShapes): Promise<Uint8Array> {
+  return analyze(leastBusy(), scene, { kind: 'stl', instances: scene.instances });
 }
 
 export function visibilityIn(scene: SceneShapes): Promise<Record<string, number>> {
@@ -217,6 +226,10 @@ export function assemblyIn(scene: SceneShapes, input: AssemblyGeometryInput): Pr
 
 export function jointAxisIn(scene: SceneShapes, query: JointAxisQuery): Promise<FoundAxis | null> {
   return analyze(pool()[0], scene, { kind: 'jointAxis', instances: scene.instances, ...query });
+}
+
+export function jointAxesIn(scene: SceneShapes, ids: string[]): Promise<JointAxes> {
+  return analyze(leastBusy(), scene, { kind: 'jointAxes', instances: scene.instances, ids });
 }
 
 export function fitCouponsIn(scene: SceneShapes, task: FitCouponTask): Promise<FitCoupon[]> {

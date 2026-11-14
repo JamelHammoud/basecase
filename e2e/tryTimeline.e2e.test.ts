@@ -59,7 +59,7 @@ async function openTouchTheDots() {
 
   await dots.fill('3');
   await dots.press('Enter');
-  await card.locator('button', { hasText: 'Create' }).click();
+  await card.locator('button', { hasText: 'Make Case' }).click();
   await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
 }
 
@@ -81,7 +81,7 @@ describe('Try timeline', () => {
     await button('Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
     await holdKey('w', 800);
-    await button('End Try').click();
+    await button('Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
     const scene = await sceneParts();

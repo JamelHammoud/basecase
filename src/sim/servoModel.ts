@@ -9,6 +9,15 @@ export interface ServoDynamics {
   delayS: number;
 }
 
+export const DYNAMICS_TERMS = [
+  'kp',
+  'damping',
+  'armature',
+  'frictionloss',
+  'forceNm',
+  'delayS',
+] as const satisfies Array<keyof ServoDynamics>;
+
 export function fitDynamics(fit: ServoFit, volts: number, holdingNm: number): ServoDynamics {
   const voltsPerRad = fit.firmwareKp * fit.errorGain * fit.errorGainRatio * volts;
   const torquePerVolt = fit.kt / fit.resistance;
@@ -23,7 +32,7 @@ export function fitDynamics(fit: ServoFit, volts: number, holdingNm: number): Se
   };
 }
 
-export const measuredServos = (specs: ActuatorSpec[]): specs is Array<ActuatorSpec & { fit: ServoFit }> =>
+const measuredServos = (specs: ActuatorSpec[]): specs is Array<ActuatorSpec & { fit: ServoFit }> =>
   specs.length > 0 && specs.every((s) => !!s.fit);
 
 export function servoDynamics(specs: ActuatorSpec[], holdingNm: number): ServoDynamics | null {

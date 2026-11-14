@@ -25,11 +25,12 @@ covers:
   - src/components/ViewportToolbar.tsx
   - src/components/LeftSidebar.tsx
   - src/components/PlayTabs.tsx
+  - src/design-system/PanelResizer.tsx
 ---
 
 Find your way around the studio: views on the left, the canvas in the middle, and the panel for what you've selected on the right.
 
-![The Basecase window: the view rail and Parts on the left, the canvas in the middle and the right panel](/help/export-a-robot-package/exported.png)
+![The Basecase window: the view rail with Parts, Play, Layers and Library, Parts open beside it, the canvas in the middle and the right panel](/help/the-basecase-window/window.png)
 
 ## The title bar
 
@@ -50,9 +51,7 @@ The column of icons on the left is the view rail. Each icon opens a view in the 
 
 | View | What it holds |
 |---|---|
-| **Parts** | Real servos, motors, boards, sensors and cameras, and ISO hardware such as screws and nuts |
-| **Robots** | Published robots to insert, and robots you've imported |
-| **Objects** | SimReady objects to put in a robot's world, such as furniture and props |
+| **Parts** | Real servos, motors, boards, sensors and cameras, ISO hardware such as screws and nuts, published robots, and SimReady objects such as furniture and props |
 | **Play** | **Cases**, **Routines** and **Operate** |
 | **Layers** | Every part in the scene, as a tree |
 | **Library** | Models you've saved to use in any scene |
@@ -72,8 +71,10 @@ The right panel has a tab for each job:
 - **Inspect** edits the selected part's size, position, rotation and look.
 - **Pose** moves a robot's joints. It shows while a robot is selected.
 - **Simulate** runs the scene under physics. It shows once the scene has movable joints.
-- **Build** holds the Checks, bill of materials, build guide and printing. Its dot is green when the design is ready to build, and red when something needs fixing.
-- **Agent** is where you talk to the agent.
+- **Build** holds the Checks, bill of materials, build guide and printing. A red dot on it means something is left to fix. Its tooltip says how many.
+- **Agent** is where you talk to the agent. While a Case runs, it's the only tab.
+
+Drag the edge of the sidebar or the right panel to resize it. Double-click the edge to put it back to its default width.
 
 ## The command menu
 

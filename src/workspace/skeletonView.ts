@@ -3,6 +3,7 @@ import type { SkeletonView, Vec3 } from '../three/viewport/types';
 import type { RobotSkeleton } from '../types/skeleton';
 import type { LoadStatus } from '../utils/actuatorRules';
 import type { JointMargin } from '../utils/skeletonMargins';
+import { percent } from '../../electron/percent.mjs';
 
 export const MARGIN_COLORS: Record<LoadStatus | 'none', string> = {
   pass: '#34d399',
@@ -11,7 +12,7 @@ export const MARGIN_COLORS: Record<LoadStatus | 'none', string> = {
   none: '#d4d4d4',
 };
 
-export const marginPercent = (m: JointMargin) => `${Math.round(m.margin * 100)}%`;
+export const marginPercent = (m: JointMargin) => percent(m.margin);
 
 export const marginColor = (m: JointMargin | undefined) => MARGIN_COLORS[m?.status ?? 'none'];
 

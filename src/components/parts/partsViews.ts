@@ -3,12 +3,17 @@ import { COMPONENT_BY_ID, ComponentGroup } from '../../data/components';
 import { HARDWARE_FAMILIES, HardwareFamily, HardwareSpec, familyOf, makeSpec } from '../../data/hardware';
 import { isSourcedId, sourcedItems, type SourcedItem } from '../../data/sourcedItems';
 import type { CatalogItem } from '../../types/robotics';
+import type { ObjectCategory } from '../objects/objectCategories';
+import type { Hit } from './insertSearch';
+import type { RobotGroup } from './robotEntries';
 
 export type View =
   | { kind: 'home' }
   | { kind: 'category'; id: string }
   | { kind: 'item'; ref: string }
-  | { kind: 'hardware'; spec: HardwareSpec };
+  | { kind: 'hardware'; spec: HardwareSpec }
+  | { kind: 'robots'; group: RobotGroup }
+  | { kind: 'objects'; category: ObjectCategory };
 
 export interface Category {
   id: string;
@@ -141,10 +146,10 @@ const viewGroup = (view: View): string | undefined => {
 
 export interface SearchScope {
   label: string;
-  has: (item: CatalogItem) => boolean;
+  has: (hit: Hit) => boolean;
 }
 
-const scopeFilter = (view: View): SearchScope['has'] | null => {
+const scopeFilter = (view: View): ((item: CatalogItem) => boolean) | null => {
   const group = viewGroup(view);
 
   if (group === ADDED_BY_AGENT) return isSourcedItem;
@@ -154,10 +159,20 @@ const scopeFilter = (view: View): SearchScope['has'] | null => {
   return (i) => groupOf(i) === group;
 };
 
+function partScope(view: View): SearchScope | null {
+  const has = scopeFilter(view);
+
+  return has ? { label: lowerTitle(viewTitle(view)), has: (hit) => hit.kind === 'part' && has(hit.item) } : null;
+}
+
 export function searchScope(view: View): SearchScope | null {
   if (view.kind === 'home') return null;
 
-  const has = scopeFilter(view);
+  if (view.kind === 'robots') {
+    return { label: view.group.toLowerCase(), has: (hit) => hit.kind === 'robot' && hit.robot.group === view.group };
+  }
 
-  return has ? { label: lowerTitle(viewTitle(view)), has } : null;
+  if (view.kind === 'objects') return { label: view.category.title.toLowerCase(), has: () => false };
+
+  return partScope(view);
 }

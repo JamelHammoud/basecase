@@ -1,4 +1,6 @@
 const DAY = 86_400_000;
+const MONTH = new Intl.DateTimeFormat('en-US', { month: 'long' });
+const MONTH_YEAR = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
 
 export function dateGroupLabel(iso: string, now: Date): string {
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -12,10 +14,7 @@ export function dateGroupLabel(iso: string, now: Date): string {
 
   const d = new Date(t);
 
-  return d.toLocaleDateString(
-    undefined,
-    d.getFullYear() === now.getFullYear() ? { month: 'long' } : { month: 'long', year: 'numeric' },
-  );
+  return (d.getFullYear() === now.getFullYear() ? MONTH : MONTH_YEAR).format(d);
 }
 
 export function groupByDate<T extends { updatedAt: string }>(items: T[], now: Date) {

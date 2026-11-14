@@ -1,5 +1,6 @@
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ScenePart } from '../types/robotics';
+import { percent } from '../../electron/percent.mjs';
 
 const TOLERANCE = 0.1;
 const SIDE_SWAPS: Array<[RegExp, string]> = [
@@ -29,7 +30,7 @@ export function twinPairs(parts: ScenePart[]): Array<[ScenePart, ScenePart]> {
 const differs = (a: number, b: number, floor = 0) =>
   Math.abs(a - b) > Math.max(floor, TOLERANCE * Math.max(Math.abs(a), Math.abs(b)));
 
-const pct = (a: number, b: number) => `${Math.round(((b - a) / Math.max(Math.abs(a), 1e-9)) * 100)}%`;
+const pct = (a: number, b: number) => percent((b - a) / Math.max(Math.abs(a), 1e-9));
 
 const sizeOf = (m: MeshMeasure) => m.max.map((v, k) => v - m.min[k]);
 
@@ -71,7 +72,7 @@ export function twinDifferences(input: TwinInputs): string[] {
 
     return diffs.length
       ? [
-          `${pair[0].id} / ${pair[1].id} aren't mirror twins: ${diffs.join(', ')}. Mirror the side that's right onto the other, or fix the one that changed.`,
+          `${pair[0].id} / ${pair[1].id} aren’t mirror twins: ${diffs.join(', ')}. Mirror the side that’s right onto the other, or fix the one that changed.`,
         ]
       : [];
   });

@@ -8,7 +8,7 @@ import {
   ReferenceImageRecord,
 } from '../types/robotics';
 import { AnalyzedImageFeatures } from '../utils/imageTo3DAnalyzer';
-import { ImageViewer, ImageViewerItem, Tooltip, ChevronDownIcon, PhotoIcon } from '../design-system';
+import { DropOverlay, ImageViewer, ImageViewerItem, Tooltip, ChevronDownIcon, PlusIcon } from '../design-system';
 import { agentKindOf, agentProfileOf } from '../agent/agentKinds';
 import { Composer } from './agent/Composer';
 import { ConnectionBanner } from './agent/ConnectionBanner';
@@ -33,7 +33,6 @@ interface AcpStudioPanelProps {
   sketchRequest?: number;
   quote: { request: MessageQuote | null; onRequest: (quote: MessageQuote) => void; onDone: () => void };
   compose?: ComposeRequest;
-  targetHeightMm?: number;
   choice: AgentChoice;
   onChoiceChange: (choice: AgentChoice) => void;
   onReconnectAcp: (command?: string) => Promise<void>;
@@ -42,7 +41,7 @@ interface AcpStudioPanelProps {
   onUploadImage: (file: File) => Promise<{ record: ReferenceImageRecord; features: AnalyzedImageFeatures }>;
   queue: QueueControls;
   onSend: SendToAgent;
-  onRetry: (options: { targetHeightMm?: number; model?: string; effort?: string }) => Promise<void>;
+  onRetry: (options: { model?: string; effort?: string }) => Promise<void>;
   onStop: () => void;
   onNewChat: () => void;
   onRevert: () => void;
@@ -57,18 +56,11 @@ const JumpToBottom: React.FC<{ onClick: () => void }> = ({ onClick }) => (
         type="button"
         aria-label="Scroll to bottom"
         onClick={onClick}
-        className="w-8 h-8 rounded-full bg-[#2a2a2f] ring-1 ring-white/[0.1] shadow-[0_4px_14px_rgba(0,0,0,0.45)] text-white/80 hover:text-white hover:bg-[#323238] flex items-center justify-center cursor-default transition-[transform,background-color] duration-150 active:scale-[0.94]"
+        className="w-[28px] h-[28px] rounded-full glass text-white/80 hover:text-white hover:bg-[#2e2e2e] flex items-center justify-center cursor-default transition-[transform,background-color] duration-150 active:scale-[0.94]"
       >
         <ChevronDownIcon className="w-4 h-4 translate-y-[1px]" />
       </button>
     </Tooltip>
-  </div>
-);
-
-const DropOverlay: React.FC = () => (
-  <div className="absolute inset-2 rounded-2xl border-2 border-dashed border-[#0d99ff]/70 bg-[#0d99ff]/[0.06] flex flex-col items-center justify-center gap-2 pointer-events-none animate-fade-in">
-    <PhotoIcon className="w-6 h-6 text-[#5cb8ff]" />
-    <span className="text-[14px] text-white/80">Drop images, files or folders to attach</span>
   </div>
 );
 
@@ -83,7 +75,6 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
   sketchRequest = 0,
   quote,
   compose,
-  targetHeightMm = 0,
   choice,
   onChoiceChange,
   onReconnectAcp,
@@ -115,13 +106,13 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
     queue,
     isBusy,
     onSend,
-    extras: { targetHeightMm, choice },
+    choice,
     scrollToBottom,
   });
 
   const retry = async () => {
     scrollToBottom();
-    await onRetry({ targetHeightMm: targetHeightMm || undefined, ...choice });
+    await onRetry(choice);
   };
 
   return (
@@ -175,7 +166,7 @@ export const AcpStudioPanel: React.FC<AcpStudioPanelProps> = ({
         above={<QueuedMessages queue={queue} onEdit={draft.edit} />}
       />
 
-      {isDragOver && <DropOverlay />}
+      {isDragOver && <DropOverlay icon={<PlusIcon className="w-5 h-5" />} label="Drop to attach" />}
 
       <OpenedSubagent messages={messages} onOpenImages={openImages} />
 

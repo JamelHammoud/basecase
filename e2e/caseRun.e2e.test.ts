@@ -97,7 +97,7 @@ describe('Run Case', () => {
 
     await openPlayTab(page, 'Cases');
     await page.locator(shown('button'), { hasText: 'New Case' }).first().click();
-    await page.locator(shown('[data-testid="new-case"] button'), { hasText: 'Create' }).click();
+    await page.locator(shown('[data-testid="new-case"] button'), { hasText: 'Make Case' }).click();
     await expect.poll(async () => (await simState()).activeCase).toMatch(/^touch-a-point/);
 
     const partsBefore = await sceneParts();
@@ -132,7 +132,7 @@ describe('Run Case', () => {
 
     await inPanel('tries', 'Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-    await inPanel('tries', 'End Try').click();
+    await inPanel('tries', 'Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
     const ended = await simState();
@@ -140,6 +140,11 @@ describe('Run Case', () => {
     expect(ended.tries[0].seconds).toBeLessThan(ended.caseSeconds! - 1);
 
     await expect.poll(() => panel('tries').getByTestId('try-row').count()).toBe(1);
+
+    const strip = panel('tries').getByTestId('try-row').locator('img');
+
+    await expect.poll(() => strip.count()).toBe(1);
+    await expect.poll(() => strip.evaluate((img: HTMLImageElement) => (img.complete ? img.naturalWidth : 0))).toBe(288);
     await expect.poll(async () => (await simState()).drive).toBe('off');
 
     await page.keyboard.press('Escape');
@@ -199,7 +204,7 @@ describe('Run Case', () => {
       Number.parseFloat((await panel('score').locator('[data-signal="score"]').textContent()) ?? ''),
     ).toBeGreaterThan(0);
 
-    await inPanel('tries', 'End Try').click();
+    await inPanel('tries', 'Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
     const ended = await simState();

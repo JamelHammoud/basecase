@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use faultbox::{decode_writes, FaultyBus, Schedule, Tap, WriteRecord};
-use robot_daemon::artefacts::MemoryArtefacts;
+use robot_daemon::artefacts::{ArtefactSource, DirectoryArtefacts, MemoryArtefacts};
 use robot_daemon::caps::TICK_US;
 use robot_daemon::intent::IntentWriter;
 use robot_daemon::ladder::Mode;
@@ -49,7 +49,29 @@ impl Rig {
         Self::on_bus(ServoBus::factory(family, BusOptions::default()), schedule, 0)
     }
 
+    pub fn in_folder(family: Family, folder: std::path::PathBuf) -> Self {
+        let servos = ServoBus::new(family, &IDS, BusOptions::default());
+
+        Self::build(
+            servos,
+            (Schedule::new(), 0),
+            Box::new(DirectoryArtefacts::new(folder)),
+            MemoryArtefacts::default(),
+        )
+    }
+
     fn on_bus(servos: ServoBus, schedule: Schedule, latency_us: u64) -> Self {
+        let artefacts = MemoryArtefacts::new(Some(CALIBRATION.as_bytes().to_vec()), Some(b"policy v1".to_vec()));
+
+        Self::build(servos, (schedule, latency_us), Box::new(artefacts.clone()), artefacts)
+    }
+
+    fn build(
+        servos: ServoBus,
+        (schedule, latency_us): (Schedule, u64),
+        source: Box<dyn ArtefactSource>,
+        artefacts: MemoryArtefacts,
+    ) -> Self {
         let family = servos.family();
         let clock = VirtualClock::new();
         let shared_clock: Arc<dyn Clock> = Arc::new(clock.clone());
@@ -57,13 +79,12 @@ impl Rig {
         let inner = InProcessBus::new(bus.clone(), shared_clock.clone(), latency_us);
         let faulty = FaultyBus::new(inner, schedule, 7);
         let tap = faulty.tap();
-        let artefacts = MemoryArtefacts::new(Some(CALIBRATION.as_bytes().to_vec()), Some(b"policy v1".to_vec()));
         let config = DaemonConfig {
             family,
             ids: IDS.to_vec(),
             class: robot_daemon::calibration::RobotClass::Arm,
         };
-        let daemon = Daemon::new(config, Box::new(faulty), shared_clock, Box::new(artefacts.clone()));
+        let daemon = Daemon::new(config, Box::new(faulty), shared_clock, source);
         let inputs = daemon.inputs();
         let writer = IntentWriter::new(inputs.intents.clone(), inputs.heartbeat.clone());
 
@@ -201,7 +222,7 @@ impl Rig {
 
     pub fn first_fault(&self) -> Option<(u64, String, String)> {
         self.events.iter().find_map(|event| match event {
-            DaemonEvent::Fault { at_us, code, message } => Some((*at_us, code.clone(), message.clone())),
+            DaemonEvent::Fault { at_us, code, message, .. } => Some((*at_us, code.clone(), message.clone())),
             _ => None,
         })
     }

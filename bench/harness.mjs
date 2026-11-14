@@ -99,21 +99,46 @@ export const viteCacheOf = (app) => path.join(app, '.vite-cache');
 function linkNodeModules(app) {
   const deps = path.join(root, 'node_modules', '.vite', 'deps');
 
-  fs.symlinkSync(path.join(root, 'node_modules'), path.join(app, 'node_modules'), 'dir');
+  fs.symlinkSync(fs.realpathSync(path.join(root, 'node_modules')), path.join(app, 'node_modules'), 'dir');
 
   if (fs.existsSync(deps)) fs.cpSync(deps, path.join(viteCacheOf(app), 'deps'), { recursive: true });
 }
 
-export function snapshotApp(label) {
+const BENCH_VITE_CONFIG = 'vite.bench.config.mjs';
+
+function writeBenchConfig(app) {
+  const modules = fs.realpathSync(path.join(app, 'node_modules'));
+  const body = [
+    "import { mergeConfig, searchForWorkspaceRoot } from 'vite';",
+    "import appConfig from './vite.config.ts';",
+    `const allow = [searchForWorkspaceRoot(process.cwd()), ${JSON.stringify(modules)}];`,
+    'export default async (env) => mergeConfig(await appConfig(env), { server: { fs: { allow } } });',
+  ];
+
+  fs.writeFileSync(path.join(app, BENCH_VITE_CONFIG), `${body.join('\n')}\n`);
+}
+
+export function snapshotApp(label, source = root) {
   const app = fs.mkdtempSync(path.join(os.tmpdir(), `studio-bench-${label}-`));
 
-  for (const f of APP_FILES.filter((x) => fs.existsSync(path.join(root, x))))
-    fs.cpSync(path.join(root, f), path.join(app, f), { recursive: true });
+  for (const f of APP_FILES.filter((x) => fs.existsSync(path.join(source, x))))
+    fs.cpSync(path.join(source, f), path.join(app, f), { recursive: true });
 
   linkNodeModules(app);
+  writeBenchConfig(app);
 
   return app;
 }
+
+const viteArgs = (app, port) => [
+  path.join(app, 'node_modules/vite/bin/vite.js'),
+  ...(fs.existsSync(path.join(app, BENCH_VITE_CONFIG)) ? ['--config', BENCH_VITE_CONFIG] : []),
+  '--port',
+  String(port),
+  '--strictPort',
+  '--host',
+  '127.0.0.1',
+];
 
 const PREFLIGHT = [
   "const { renderPart } = await import('./electron/cad-kernel/nodeHost/client.mjs');",
@@ -147,15 +172,11 @@ export async function preflightKernel(app) {
 }
 
 async function startVite({ app, port, env, base }) {
-  const vite = spawn(
-    process.execPath,
-    [path.join(app, 'node_modules/vite/bin/vite.js'), '--port', String(port), '--strictPort', '--host', '127.0.0.1'],
-    {
-      cwd: app,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, ...env, BASECASE_NODE_KERNEL: '1', BASECASE_VITE_CACHE: viteCacheOf(app) },
-    },
-  );
+  const vite = spawn(process.execPath, viteArgs(app, port), {
+    cwd: app,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, ...env, BASECASE_NODE_KERNEL: '1', BASECASE_VITE_CACHE: viteCacheOf(app) },
+  });
   let exited = false;
   let out = '';
 
@@ -203,8 +224,8 @@ function stopper({ vite, app, givenApp }) {
   };
 }
 
-export async function openStudio({ label, port, env = {}, givenApp, log = console.log, agent = true }) {
-  const app = givenApp ? path.resolve(givenApp) : snapshotApp(label);
+export async function openStudio({ label, port, env = {}, givenApp, source, log = console.log, agent = true }) {
+  const app = givenApp ? path.resolve(givenApp) : snapshotApp(label, source);
   const base = `http://127.0.0.1:${port}`;
   const ctx = { app, givenApp };
   const cleanup = stopper(ctx);

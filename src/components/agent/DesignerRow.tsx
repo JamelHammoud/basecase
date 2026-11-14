@@ -27,7 +27,7 @@ export const DesignerRow: React.FC<{ call: AcpToolCallEvent }> = ({ call }) => {
       <button
         type="button"
         onClick={() => designers.open(call.toolCallId)}
-        className="group w-full h-8 px-2 flex items-center gap-2.5 rounded-lg text-left text-[13px] cursor-default transition-colors duration-150 hover:bg-white/[0.05]"
+        className="group w-full h-[32px] px-2 flex items-center gap-2.5 rounded-lg text-left text-[13px] cursor-default transition-colors duration-150 hover:bg-white/[0.05]"
       >
         <DesignerGlyph color={color} running={running} />
         <span className={`shrink-0 max-w-[60%] truncate font-medium ${running ? 'text-white/90' : 'text-white/65'}`}>

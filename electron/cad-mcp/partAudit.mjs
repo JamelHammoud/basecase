@@ -1,9 +1,11 @@
+import { plural } from '../plural.mjs';
+import { percent } from '../percent.mjs';
+
 const HULL_COLLAPSE = 0.5;
 const FUSE_FIX = 'Fuse them with at least 0.2 mm overlap';
 
 const kmm3 = (v) => (v >= 10000 ? `${Math.round(v / 1000)}k` : `${Math.round(v)}`);
 const at = (p) => `[${p.join(', ')}]`;
-const pct = (v) => `${Math.round(v * 100)}%`;
 
 function topologyLines(audit) {
   const lines = [];
@@ -37,7 +39,7 @@ function revisionWarnings(before, audit) {
 
   if (hullShare < HULL_COLLAPSE) {
     lines.push(
-      `Warning: the outline collapsed (convex hull down to ${pct(hullShare)} of the last revision). Check for a boolean that removed most of the part.`,
+      `Warning: the outline collapsed (convex hull down to ${percent(hullShare)} of the last revision). Check for a boolean that removed most of the part.`,
     );
   }
 
@@ -54,7 +56,7 @@ export function revisionLines(previous, audit, volume) {
   const before = previous.audit;
   const change = previous.volume ? (volume - previous.volume) / previous.volume : 0;
   const facts = [
-    `volume ${kmm3(previous.volume)} → ${kmm3(volume)} mm³ (${change >= 0 ? '+' : ''}${pct(change)})`,
+    `volume ${kmm3(previous.volume)} → ${kmm3(volume)} mm³ (${change >= 0 ? '+' : ''}${percent(change)})`,
     before?.hullVolume && audit.hullVolume && `hull ${kmm3(before.hullVolume)} → ${kmm3(audit.hullVolume)} mm³`,
     before?.bodies && `bodies ${before.bodies} → ${audit.bodies}`,
   ].filter(Boolean);
@@ -70,11 +72,11 @@ function sharpLine(craft, size, share) {
 
   if (!shows || Math.max(...size) <= 20 || (craft.envelopeSharp ?? 0) <= 0.6) return [];
 
-  const seen = share == null ? '' : ` It's ${pct(share)} of the robot's visible surface.`;
+  const seen = share == null ? '' : ` It's ${percent(share)} of the robot's visible surface.`;
   const box = craft.boxiness > 0.92 ? ' and it fills its bounding box' : '';
 
   return [
-    `Craft: ${pct(craft.envelopeSharp)} of the outer edge turning is sharper than 60°${box}.${seen} Round the visible envelope with one radius and keep functional edges sharp, unless the design language is faceted.`,
+    `Craft: ${percent(craft.envelopeSharp)} of the outer edge turning is sharper than 60°${box}.${seen} Round the visible envelope with one radius and keep functional edges sharp, unless the design language is faceted.`,
   ];
 }
 
@@ -87,19 +89,19 @@ function craftLines(craft, size, share) {
 
   if (craft.solidity > 0.85 && craft.thicknessMm > 8 && minSide > 15) {
     lines.push(
-      `Craft: a printed brick (fills ${pct(craft.solidity)} of its hull). Shell or pocket it with 2.4–3.2 mm walls, unless it's a grip.`,
+      `Craft: a printed brick (fills ${percent(craft.solidity)} of its hull). Shell or pocket it with 2.4–3.2 mm walls, unless it's a grip.`,
     );
   }
 
   if (craft.walls?.thinShare > 0.02) {
     lines.push(
-      `Walls under 0.9 mm on ${pct(craft.walls.thinShare)} of the surface (thinnest ${craft.walls.thinnest.mm} mm at ${at(craft.walls.thinnest.at)}). Make them at least 0.9 mm (two perimeters).`,
+      `Walls under 0.9 mm on ${percent(craft.walls.thinShare)} of the surface (thinnest ${craft.walls.thinnest.mm} mm at ${at(craft.walls.thinnest.at)}). Make them at least 0.9 mm (two perimeters).`,
     );
   }
 
   if (shell && craft.walls && craft.walls.consistent < 0.7) {
     lines.push(
-      `Shell walls vary: modal ${craft.walls.modalMm} mm, ${pct(craft.walls.consistent)} within ±0.6 mm. Keep one wall thickness.`,
+      `Shell walls vary: modal ${craft.walls.modalMm} mm, ${percent(craft.walls.consistent)} within ±0.6 mm. Keep one wall thickness.`,
     );
   }
 
@@ -113,7 +115,7 @@ function craftLines(craft, size, share) {
 function summaryLine(audit) {
   const c = audit.craft;
   const facts = [
-    `${audit.bodies} ${audit.bodies === 1 ? 'body' : 'bodies'}`,
+    plural(audit.bodies, 'body', 'bodies'),
     audit.genus != null && `genus ${audit.genus}`,
     c?.solidity != null && `solidity ${c.solidity}`,
     c?.envelopeSharp != null && `envelope sharp ${c.envelopeSharp}`,

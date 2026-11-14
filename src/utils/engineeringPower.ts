@@ -1,7 +1,10 @@
 import { ActuatorSpec, BatterySpec, COMPONENT_BY_ID, actuatorOf } from '../data/components';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { isLegJoint } from './engineeringBody';
-import { count, jointLabel } from './engineeringFormat';
+import { duration } from './duration';
+import { amps } from './electric';
+import { jointLabel } from './engineeringFormat';
+import { plural } from '../../electron/plural.mjs';
 import type { CheckContext, CheckRow } from './engineeringTypes';
 import { PowerSource, drivesJoint, findPowerSources, sceneRegulators, tetherSource } from './powerSources';
 import { IDLE_A, STALL_A } from './servoAmps';
@@ -18,13 +21,15 @@ export const servoParts = (parts: ScenePart[]): ScenePart[] => parts.filter(driv
 
 const actuatorFor = (p: ScenePart) => actuatorOf(p.componentId!, p.componentVariant);
 
-const actuatorsIn = (ctx: CheckContext) => [...new Set(ctx.servos.map(actuatorFor).filter(Boolean) as ActuatorSpec[])];
+type PowerScene = Pick<CheckContext, 'parts' | 'project' | 'servos'>;
+
+const actuatorsIn = (ctx: PowerScene) => [...new Set(ctx.servos.map(actuatorFor).filter(Boolean) as ActuatorSpec[])];
 
 const isOver = (b: BatterySpec, a: ActuatorSpec) => b.fullV > a.volts[1] + 1e-6;
 const isUnder = (b: BatterySpec, a: ActuatorSpec) => b.fullV < a.volts[0] - 1e-6;
 const sagsUnder = (b: BatterySpec, a: ActuatorSpec) => b.nominalV < a.volts[0] - 1e-6;
 
-function servoRail(ctx: CheckContext, acts: ActuatorSpec[], source: PowerSource) {
+function servoRail(ctx: PowerScene, acts: ActuatorSpec[], source: PowerSource) {
   const fits = sceneRegulators(ctx.parts).filter(
     ({ regulator: r }) =>
       acts.every((a) => r.vout >= a.volts[0] && r.vout <= a.volts[1]) &&
@@ -35,14 +40,14 @@ function servoRail(ctx: CheckContext, acts: ActuatorSpec[], source: PowerSource)
   return fits.sort((x, y) => y.regulator.vout - x.regulator.vout || y.regulator.ioutA - x.regulator.ioutA)[0];
 }
 
-function railOf(ctx: CheckContext, source: PowerSource) {
+function railOf(ctx: PowerScene, source: PowerSource) {
   const acts = actuatorsIn(ctx);
   const outOfRange = acts.some((a) => isOver(source.battery, a) || isUnder(source.battery, a));
 
   return outOfRange ? servoRail(ctx, acts, source) : undefined;
 }
 
-function sourceRank(ctx: CheckContext, source: PowerSource): number {
+function sourceRank(ctx: PowerScene, source: PowerSource): number {
   const acts = actuatorsIn(ctx);
 
   if (acts.every((a) => !isOver(source.battery, a) && !isUnder(source.battery, a))) return 0;
@@ -50,14 +55,20 @@ function sourceRank(ctx: CheckContext, source: PowerSource): number {
   return servoRail(ctx, acts, source) ? 1 : 2;
 }
 
-export function servoSource(ctx: CheckContext): PowerSource | undefined {
+export function servoSource(ctx: PowerScene): PowerSource | undefined {
   const ranked = findPowerSources(ctx).map((source) => ({ source, rank: sourceRank(ctx, source) }));
   const best = ranked.sort((x, y) => x.rank - y.rank || x.source.name.localeCompare(y.source.name))[0]?.source;
 
   return best ?? tetherSource(ctx);
 }
 
-export function servoSupplyVolts(ctx: CheckContext): number | undefined {
+export function servoRegulator(ctx: PowerScene) {
+  const source = servoSource(ctx);
+
+  return source ? railOf(ctx, source) : undefined;
+}
+
+export function servoSupplyVolts(ctx: PowerScene): number | undefined {
   const source = servoSource(ctx);
 
   if (!source) return undefined;
@@ -71,8 +82,8 @@ const reaches = (s: PowerSource, only = '') =>
 const levels = (s: PowerSource) => (s.tetherA ? '' : ` (${s.battery.nominalV} V, ${s.battery.fullV} V charged)`);
 
 function outOfRangeRow(source: PowerSource, over: ScenePart[], under: ScenePart[]): CheckRow {
-  const high = `${source.name} ${reaches(source)}, above the ${Math.min(...over.map((p) => actuatorFor(p)!.volts[1]))} V maximum of ${count(over.length, 'servo')}`;
-  const low = `${source.name} ${reaches(source, 'only ')}, below the ${Math.max(...under.map((p) => actuatorFor(p)!.volts[0]))} V minimum of ${count(under.length, 'servo')}`;
+  const high = `${source.name} ${reaches(source)}, above the ${Math.min(...over.map((p) => actuatorFor(p)!.volts[1]))} V maximum of ${plural(over.length, 'servo')}`;
+  const low = `${source.name} ${reaches(source, 'only ')}, below the ${Math.max(...under.map((p) => actuatorFor(p)!.volts[0]))} V minimum of ${plural(under.length, 'servo')}`;
 
   return {
     check: POWER_CHECK.servoVoltage,
@@ -112,7 +123,7 @@ function voltageRow(ctx: CheckContext, source: PowerSource): CheckRow {
     check: POWER_CHECK.servoVoltage,
     status: sagging.length ? 'warn' : 'pass',
     detail: sagging.length
-      ? `${source.name} sits at ${b.nominalV} V for most of its charge, under the ${ranges} range of ${count(sagging.length, 'servo')}`
+      ? `${source.name} sits at ${b.nominalV} V for most of its charge, under the ${ranges} range of ${plural(sagging.length, 'servo')}`
       : `${source.name}${levels(source)} is inside every servo’s ${ranges} range`,
     ids: sagging.map((p) => p.id),
   };
@@ -202,13 +213,13 @@ function currentDraw(ctx: CheckContext, source: PowerSource) {
 
 type Draw = ReturnType<typeof currentDraw>;
 
-const amps = ({ avg, peak, hungriest }: Draw) =>
+const drawText = ({ avg, peak, hungriest }: Draw) =>
   hungriest
-    ? `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A average walking`
-    : `About ${peak.toFixed(1)} A peak and ${avg.toFixed(1)} A standing`;
+    ? `About ${amps(peak)} peak and ${amps(avg)} average walking`
+    : `About ${amps(peak)} peak and ${amps(avg)} standing`;
 
 const jointAmps = (h: NonNullable<Draw['hungriest']>) =>
-  `${jointLabel(h.joint)}: ${h.avgA.toFixed(1)} A average, ${h.peakA.toFixed(1)} A peak`;
+  `${jointLabel(h.joint)}: ${amps(h.avgA)} average, ${amps(h.peakA)} peak`;
 
 const hungriestNote = (draw: Draw) => (draw.hungriest ? ` ${jointAmps(draw.hungriest)}.` : '');
 
@@ -217,18 +228,18 @@ const estimated = (draw: Draw) => (draw.hungriest ? '' : ' (estimate)');
 function batteryDetail(source: PowerSource, draw: Draw): string {
   const runtime = ((0.8 * source.battery.capacityAh) / draw.avg) * 60;
 
-  return `${amps(draw)} from the pack${estimated(draw)}; ${source.name} gives about ${Math.round(runtime)} min. Fuse the pack near ${Math.ceil(draw.peak * 1.4)} A.${hungriestNote(draw)}`;
+  return `${drawText(draw)} from the pack${estimated(draw)}; ${source.name} gives about ${duration(runtime * 60, 'min')}. Fuse the pack near ${Math.ceil(draw.peak * 1.4)} A.${hungriestNote(draw)}`;
 }
 
 const tetherDetail = (tetherA: number, draw: Draw) =>
-  `${amps(draw)}${estimated(draw)}; the tether gives ${tetherA} A${hungriestNote(draw)}`;
+  `${drawText(draw)}${estimated(draw)}; the power supply gives ${tetherA} A${hungriestNote(draw)}`;
 
 function railWarning({ rail, servoPeak }: Draw): NonNullable<CheckRow['items']> {
   if (!rail || servoPeak <= rail.regulator.ioutA) return [];
 
   return [
     {
-      text: `${rail.name} gives ${rail.regulator.ioutA} A; the servos ask for about ${servoPeak.toFixed(1)} A at peak`,
+      text: `${rail.name} gives ${rail.regulator.ioutA} A; the servos ask for about ${amps(servoPeak)} at peak`,
       ids: [rail.id],
       status: 'warn',
     },
@@ -267,7 +278,7 @@ export function powerRows(ctx: CheckContext): CheckRow[] {
     rows.push({
       check: 'Servo version',
       status: 'fail',
-      detail: `${noVariant.length} servos have no version chosen (voltage and torque differ)`,
+      detail: `No version chosen for ${plural(noVariant.length, 'servo')} (voltage and torque differ)`,
       ids: noVariant.map((p) => p.id),
     });
 

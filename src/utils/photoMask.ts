@@ -1,5 +1,6 @@
 import { maskArea, maskBounds, thresholdMask, type Mask, type MaskBox } from './silhouetteProfile';
 import { base64ToBytes } from './base64';
+import { percent } from '../../electron/percent.mjs';
 
 export interface VisionMasks {
   width: number;
@@ -94,16 +95,15 @@ function cutEdges(contact: EdgeContact): MaskCheck['cut'] {
 export function checkMask(mask: Mask): MaskCheck {
   const share = maskArea(mask) / (mask.width * mask.height);
   const contact = edgeContact(mask);
-  const percent = Math.round(share * 100);
 
   if (share > MAX_SUBJECT_SHARE) {
-    return { share, refused: `the mask covers ${percent}% of the photo, so it has taken in background` };
+    return { share, refused: `the mask covers ${percent(share)} of the photo, so it has taken in background` };
   }
 
   if (share < MIN_SUBJECT_SHARE) return { share, refused: 'the subject is too small in the photo to measure' };
 
   if (contact.border > MAX_BORDER_SHARE) {
-    return { share, refused: `the mask touches ${Math.round(contact.border * 100)}% of the photo's edge` };
+    return { share, refused: `the mask touches ${percent(contact.border)} of the photo’s edge` };
   }
 
   return { share, cut: cutEdges(contact) };

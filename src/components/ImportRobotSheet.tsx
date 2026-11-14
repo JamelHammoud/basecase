@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Button, ChoiceGrid, Modal, TextInput, FileImportIcon, FolderImportIcon } from '../design-system';
+import { Button, ChoiceGrid, Modal, TextInput, FolderImportIcon } from '../design-system';
 import { isOnshapeLink } from '../onshape/onshapeLink';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { isRobotLink, pickedFiles } from '../utils/robotImport';
-import type { RobotChoice, RobotFiles, RobotSource } from '../workspace/useRobotInsert';
+import type { RobotChoice, RobotSource } from '../workspace/useRobotInsert';
 
 type ImportSource = Exclude<RobotSource, { kind: 'simready' }>;
 
@@ -17,13 +17,6 @@ function commonDir(paths: string[]): string {
   return first.slice(0, n).join('/');
 }
 
-const LoadedFile: React.FC<{ name: string }> = ({ name }) => (
-  <div className="h-[32px] px-[10px] flex items-center gap-[8px] rounded-lg bg-white/[0.06] text-[13.5px] text-white/90">
-    <FileImportIcon className="w-4 h-4 text-white/50 shrink-0" />
-    <span className="min-w-0 truncate">{name}</span>
-  </div>
-);
-
 function choiceOptions(choices: string[]) {
   const dir = commonDir(choices);
 
@@ -33,23 +26,21 @@ function choiceOptions(choices: string[]) {
 export const ImportRobotSheet: React.FC<{
   open: boolean;
   choice: RobotChoice | null;
-  loaded: RobotFiles | null;
   onClose: () => void;
   onImport: (source: ImportSource, at?: RobotChoice['at']) => void;
-}> = ({ open, choice, loaded, onClose, onImport }) => {
+}> = ({ open, choice, onClose, onImport }) => {
   const [url, setUrl] = useState('');
   const [picked, setPicked] = useState<string | undefined>(undefined);
   const folderRef = useRef<HTMLInputElement | null>(null);
   const link = /^https?:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`;
   const ready = choice
     ? !!picked && choice.choices.includes(picked)
-    : !!loaded || isRobotLink(link) || (!IS_WEB_DEMO && isOnshapeLink(link));
+    : isRobotLink(link) || (!IS_WEB_DEMO && isOnshapeLink(link));
 
   const submit = () => {
     if (!ready) return;
 
     if (choice) onImport({ ...choice.source, entry: picked }, choice.at);
-    else if (loaded) onImport({ kind: 'files', files: loaded.files }, loaded.at);
     else onImport({ kind: 'url', url: link });
 
     onClose();
@@ -62,24 +53,13 @@ export const ImportRobotSheet: React.FC<{
       title="Import Robot"
       icon={<FolderImportIcon className="w-4 h-4" />}
       maxWidth="max-w-[520px]"
-      footer={
-        <div className="flex items-center justify-between w-full">
-          {choice ? (
-            <span />
-          ) : (
-            <Button variant="secondary" size="sm" onClick={() => folderRef.current?.click()}>
-              Choose Folder
-            </Button>
-          )}
-          <div className="flex gap-[8px]">
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" disabled={!ready} autoFocus={!!loaded} onClick={submit}>
-              Import
-            </Button>
-          </div>
-        </div>
+      action={{ label: 'Import', disabled: !ready, onClick: submit }}
+      footerStart={
+        !choice && (
+          <Button variant="secondary" onClick={() => folderRef.current?.click()}>
+            Choose Folder
+          </Button>
+        )
       }
     >
       {choice && (
@@ -92,15 +72,11 @@ export const ImportRobotSheet: React.FC<{
           className="max-h-[320px] overflow-y-auto"
         />
       )}
-      {!choice && loaded && <LoadedFile name={loaded.name} />}
-      {!choice && !loaded && (
+      {!choice && (
         <TextInput
           autoFocus
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') submit();
-          }}
           aria-label="Robot link"
           placeholder="e.g. github.com/unitreerobotics/unitree_ros"
         />
@@ -118,7 +94,7 @@ export const ImportRobotSheet: React.FC<{
 
           if (!files.length) return;
 
-          onImport({ kind: 'files', files: pickedFiles(files) });
+          onImport({ kind: 'files', files: pickedFiles(files), name: files[0].webkitRelativePath.split('/')[0] });
           onClose();
         }}
       />

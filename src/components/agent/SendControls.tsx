@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { ContextMenu, ContextMenuEntry, IconButton, ArrowUpIcon, StopSolidIcon, TickIcon } from '../../design-system';
 import { hasPrimaryModifier } from '../../utils/os';
 import { SendIntent } from './types';
+import { keyFor } from '../../app/shortcuts';
+
+const SEND_KEY = keyFor('send');
+const QUEUE_KEY = keyFor('queue');
 
 interface SendMenuOptions {
   isBusy: boolean;
@@ -13,13 +17,13 @@ interface SendMenuOptions {
 const sendMenu = ({ isBusy, canSend, editing, onSend }: SendMenuOptions): ContextMenuEntry[] => [
   {
     label: 'Send Now',
-    shortcut: editing && isBusy ? undefined : '↩︎',
+    shortcut: editing && isBusy ? undefined : SEND_KEY,
     disabled: !canSend,
     onSelect: () => onSend('now'),
   },
   {
     label: 'Queue',
-    shortcut: editing ? '↩︎' : '⌘↩︎',
+    shortcut: editing ? SEND_KEY : QUEUE_KEY,
     disabled: !canSend || !isBusy,
     onSelect: () => onSend('queue'),
   },
@@ -41,7 +45,7 @@ export const SendControls: React.FC<{
       <IconButton
         icon={<StopSolidIcon className="w-3.5 h-3.5" />}
         title="Stop"
-        shortcut="Esc"
+        shortcut={keyFor('stop')}
         tooltipSide="top"
         variant="send"
         className="rounded-full"
@@ -60,7 +64,7 @@ export const SendControls: React.FC<{
           )
         }
         title={updating ? 'Update' : 'Send'}
-        shortcut="↩︎"
+        shortcut={SEND_KEY}
         tooltipSide="top"
         variant="send"
         className="rounded-full"

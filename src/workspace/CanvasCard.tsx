@@ -2,7 +2,8 @@ import { MeasureToolbar } from '../components/MeasureToolbar';
 import { PlateBar } from '../components/print/PlateBar';
 import { TryTimeline } from '../components/simulate/TryTimeline';
 import { ViewportToolbar } from '../components/ViewportToolbar';
-import { ErrorBoundary, FileImportIcon, PhotoIcon, Toast } from '../design-system';
+import { DropOverlay, ErrorBoundary, FileImportIcon, PhotoIcon, Toast } from '../design-system';
+import { CaseRunOverlays } from './CaseRunProvider';
 import { MarkBar } from './MarkBar';
 import { PlateCanvas } from './PlateCanvas';
 import { SceneViewport } from './SceneViewport';
@@ -26,19 +27,6 @@ interface CanvasCardProps {
 const CANVAS_FALLBACK = 'absolute inset-0 flex-col';
 
 const TOOLBAR_FALLBACK = 'absolute bottom-5 inset-x-0 z-20';
-
-function DropOverlay({ imagesOnly }: { imagesOnly: boolean }) {
-  const Icon = imagesOnly ? PhotoIcon : FileImportIcon;
-
-  return (
-    <div className="absolute inset-3 z-40 rounded-3xl border-2 border-dashed border-[#0d99ff]/70 bg-[#0d99ff]/[0.06] flex items-center justify-center pointer-events-none animate-fade-in">
-      <div className="glass rounded-2xl px-5 py-3 flex items-center gap-2.5 text-[14px] text-white/90">
-        <Icon className="w-5 h-5 text-[#5cb8ff]" />
-        {imagesOnly ? 'Drop to add a reference image' : 'Drop to import'}
-      </div>
-    </div>
-  );
-}
 
 function CanvasToolbar({ core, actions, ui }: Pick<CanvasCardProps, 'core' | 'actions' | 'ui'>) {
   const { tool, annotations, studio, measure, printing } = core;
@@ -129,7 +117,12 @@ export function CanvasCard(props: CanvasCardProps) {
           e.target.value = '';
         }}
       />
-      {drop.isDraggingFile && <DropOverlay imagesOnly={drop.imagesOnly} />}
+      {drop.isDraggingFile && (
+        <DropOverlay
+          icon={drop.imagesOnly ? <PhotoIcon className="w-5 h-5" /> : <FileImportIcon className="w-5 h-5" />}
+          label={drop.imagesOnly ? 'Drop to add a reference image' : 'Drop to import'}
+        />
+      )}
       <ErrorBoundary region="Canvas" className={CANVAS_FALLBACK}>
         <SceneViewport active={active} core={core} actions={actions} agent={agent} />
         {core.printing.mode && (
@@ -137,6 +130,7 @@ export function CanvasCard(props: CanvasCardProps) {
         )}
       </ErrorBoundary>
       <div className="canvas-vignette absolute inset-0 pointer-events-none" />
+      <CaseRunOverlays />
       <div
         aria-hidden
         className="absolute inset-0 z-10 rounded-[12px] pointer-events-none shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"

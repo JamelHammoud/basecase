@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { servoLayout } from '../src/robot/sceneRobot';
 import type { RobotJoint } from '../src/types/robotics';
+import { so101 } from '../src/wiring/fixtures';
+import { studioLoad } from './buildCheckFixtures';
 import { openApp, shown, type App } from './harness';
 
 interface BuildAlongStudio {
@@ -9,6 +11,8 @@ interface BuildAlongStudio {
   parts: () => Array<{ id: string; visible: boolean }>;
   shownParts: () => string[];
   buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
+  markPlatePrinted: (plate: number) => void;
+  readySteps: () => boolean[];
 }
 
 let app: App;
@@ -139,4 +143,113 @@ describe('Build Along', () => {
     await expect.poll(shownParts).toEqual(sorted(parts.map((p) => p.id)));
     expect(await app.page.locator('[data-build-label]').count()).toBe(0);
   }, 300000);
+
+  it('marks a step done once every part it prints is printed', async () => {
+    const firstReady = (mark: boolean) =>
+      app.page.evaluate((markFirst) => {
+        const s = (window as unknown as { __studio: BuildAlongStudio }).__studio;
+
+        if (markFirst) s.markPlatePrinted(1);
+
+        return s.readySteps()[0];
+      }, mark);
+
+    expect(await firstReady(false)).toBe(false);
+
+    await app.page
+      .locator('main')
+      .first()
+      .click({ position: { x: 20, y: 20 } });
+    await app.page.keyboard.press('Meta+p');
+    await expect.poll(() => firstReady(true), { timeout: 30000, interval: 1000 }).toBe(true);
+    await app.page.keyboard.press('Escape');
+
+    await app.page.keyboard.press('Meta+k');
+    await app.page.keyboard.type('Build Along');
+    await app.page.keyboard.press('Enter');
+    await expect.poll(stepShown, { timeout: 180000 }).toBe('1');
+    await expect.poll(() => toolbar().getAttribute('data-ready')).toBe('true');
+
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => toolbar().count()).toBe(0);
+    expect(app.errors).toEqual([]);
+  }, 240000);
+});
+
+describe('Buy All', () => {
+  const opened = () => app.page.evaluate(() => (window as unknown as { opened: string[] }).opened);
+
+  it('fills the Amazon cart from the bill of materials, from ⌘K and the list’s menu', async () => {
+    const arm = Array.from({ length: 6 }, (_, i) => ({ ...servo(`buy${i}`, i * 40), componentVariant: undefined }));
+
+    await app.page.evaluate((list) => {
+      const s = (window as unknown as { __studio: BuildAlongStudio }).__studio;
+      const urls: string[] = [];
+
+      s.load({ name: 'Arm', parts: list, project: s.sceneRecord().project });
+      (window as unknown as { opened: string[] }).opened = urls;
+      window.open = (url) => (urls.push(String(url)), null);
+    }, arm);
+    await app.page.keyboard.press('Meta+k');
+    await app.page.getByLabel('Search commands').fill('Buy All');
+    await expect.poll(() => app.page.getByText(/^Buy All$/).count(), { timeout: 15000 }).toBe(1);
+    await app.page.keyboard.press('Enter');
+    await expect.poll(async () => (await opened()).length).toBe(1);
+
+    const cart = new URL((await opened())[0]);
+
+    expect(`${cart.origin}${cart.pathname}`).toBe('https://www.amazon.com/gp/aws/cart/add.html');
+    expect(cart.searchParams.get('ASIN.1')).toBe('B0G39SM9HZ');
+    expect(cart.searchParams.get('Quantity.1')).toBe('6');
+
+    await app.page.locator(shown('[role=tab]'), { hasText: 'Build' }).first().click();
+    await app.page.locator(shown('button[aria-label="Export bill of materials"]')).click();
+    await app.page.getByRole('menuitem', { name: /^Buy All/ }).click();
+    await expect.poll(opened).toEqual([cart.href, cart.href]);
+    expect(app.errors).toEqual([]);
+  }, 90000);
+});
+
+describe('Parts on hand', () => {
+  const dollars = (text: string | null) => Number((text ?? '').replace(/[^\d.]/g, ''));
+
+  it('buy only what the drawer lacks: 6 STS3215s on hand take the servos and their price off the total', async () => {
+    const bom = app.page.locator(shown('section'), { hasText: /^Bill of materials/ }).first();
+    const total = bom.getByText(/^≈?\s*\$[\d,]+\.\d\d$/).first();
+    const servos = bom.locator('li ul > li').filter({ hasText: 'Feetech STS3215' });
+    const price = () => servos.first().getByRole('button').last();
+    const onHand = app.page.getByRole('textbox', { name: 'On hand' });
+    const setOnHand = async (shownQty: string, count: string) => {
+      await servos.first().getByRole('button', { name: shownQty }).click();
+      await onHand.fill(count);
+      await onHand.press('Enter');
+    };
+
+    await studioLoad(app.page, so101());
+    await app.page.locator(shown('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const components = bom.getByRole('button', { name: /^Components/ }).first();
+
+    await expect.poll(() => components.getAttribute('aria-expanded'), { timeout: 45000 }).not.toBeNull();
+
+    if ((await components.getAttribute('aria-expanded')) !== 'true') await components.click();
+
+    await expect.poll(() => servos.count(), { timeout: 45000 }).toBe(1);
+    expect(await servos.first().innerText()).toMatch(/^6×/);
+
+    const before = dollars(await total.textContent());
+    const servoUsd = dollars(await price().textContent());
+
+    expect(servoUsd).toBeGreaterThan(0);
+    await setOnHand('6×', '6');
+    await expect.poll(() => servos.first().innerText(), { timeout: 10000 }).toMatch(/^0×[\s\S]*6 on hand/);
+    await expect.poll(async () => dollars(await total.textContent())).toBeCloseTo(before - servoUsd, 2);
+    expect(dollars(await price().textContent())).toBe(0);
+
+    await app.page.keyboard.press('Escape');
+    await setOnHand('0×', '0');
+    await expect.poll(() => servos.first().innerText(), { timeout: 10000 }).toMatch(/^6×/);
+    await expect.poll(async () => dollars(await total.textContent())).toBeCloseTo(before, 2);
+    expect(app.errors).toEqual([]);
+  }, 90000);
 });

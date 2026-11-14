@@ -70,6 +70,7 @@ function modelSummary(model, runs, tasks) {
     costUsd: round(sum(costs), 2),
     spentUsd: round(sum(numbers(runs.filter((r) => !r.cached).map((r) => r.costUsd))), 2),
     reused: runs.filter((r) => r.cached).length,
+    passes,
     costPerRun: round(mean(costs), 3),
     passesPerDollar: sum(costs) ? round(passes / sum(costs), 2) : null,
     meanSeconds: round(mean(numbers(runs.map((r) => r.seconds))), 0),

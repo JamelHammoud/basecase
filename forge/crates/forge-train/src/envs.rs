@@ -7,6 +7,7 @@ use crate::randomize::{randomize, RANDOMIZED_FIELDS};
 use crate::rewarder::Rewarder;
 use crate::rng::Rng;
 use crate::robot::{quat_multiply, rotate_into_frame, Robot};
+use crate::start_states;
 use crate::threads::ThreadTuner;
 use forge_reward::{handwritten, RewardState};
 
@@ -82,7 +83,7 @@ impl<'a> Envs<'a> {
         let mut rngs: Vec<Rng> = (0..count).map(|i| Rng::new(seed, i as u64)).collect();
 
         if randomized {
-            randomize(&mut batch, robot.nu, &mut rngs)?;
+            randomize(&mut batch, robot.nu, &robot.job.options.servo_gains, &mut rngs)?;
         }
 
         for sim in 0..count {
@@ -146,6 +147,7 @@ impl<'a> Envs<'a> {
 
         row.copy_from_slice(&robot.start_row);
 
+        let placed = start_states::place_one(robot, rng, row);
         let qpos = &mut row[layout.qpos..];
         let noise = robot.job.options.reset_noise;
 
@@ -161,6 +163,11 @@ impl<'a> Envs<'a> {
         let turned = quat_multiply([half_yaw.cos(), 0.0, 0.0, half_yaw.sin()], start);
 
         qpos[quat_at..quat_at + 4].copy_from_slice(&turned);
+
+        if placed {
+            start_states::turn_velocity(robot, row, 2.0 * half_yaw);
+        }
+
         self.steps_taken[sim] = 0;
         self.ticks[sim] = 0;
         self.last_action[sim * robot.nact..(sim + 1) * robot.nact].fill(0.0);
@@ -187,6 +194,12 @@ impl<'a> Envs<'a> {
         let row = self.batch.row(sim);
 
         [row[layout.qpos + adr], row[layout.qpos + adr + 1]]
+    }
+
+    pub fn root_height(&mut self, sim: usize) -> f64 {
+        let at = self.robot.layout.qpos + self.robot.root_qpos + 2;
+
+        self.batch.row(sim)[at]
     }
 
     pub fn forward_speed(&mut self, sim: usize) -> f64 {

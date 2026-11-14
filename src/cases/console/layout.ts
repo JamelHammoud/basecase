@@ -1,6 +1,6 @@
 import { STUDIO_INPUTS } from '../../sim/inputSources';
-import type { CaseConsole } from './format';
-import { panelOnDesktopOnly, type PanelSpec } from './panelKinds';
+import type { CanvasOverlay, CaseConsole } from './format';
+import { panelShows, type PanelOf, type PanelSpec, type PanelSurface } from './panelKinds';
 
 export const DEFAULT_CONSOLE: CaseConsole = {
   input: STUDIO_INPUTS,
@@ -27,19 +27,29 @@ export interface PlacedArea {
   last: boolean;
 }
 
+export interface PlacedOverlay extends CanvasOverlay {
+  spec: PanelOf<'code'>;
+}
+
 export interface ConsoleLayout {
   before: PlacedArea[];
   after: PlacedArea[];
+  overlays: PlacedOverlay[];
 }
 
-export function consoleLayout(caseConsole: CaseConsole | undefined, { desktop }: { desktop: boolean }): ConsoleLayout {
+export function consoleLayout(caseConsole: CaseConsole | undefined, surface: PanelSurface): ConsoleLayout {
   const { panels, layout } = caseConsole ?? DEFAULT_CONSOLE;
   const byId = new Map(panels.map((p) => [p.id, p]));
   const canvasAt = layout.areas.findIndex((a) => 'canvas' in a);
+  const canvas = layout.areas[canvasAt];
+  const overlays = ('overlays' in canvas ? (canvas.overlays ?? []) : []).map((o) => ({
+    ...o,
+    spec: byId.get(o.panel) as PanelOf<'code'>,
+  }));
   const placed = layout.areas.flatMap((area, i) => {
     if (!('panels' in area)) return [];
 
-    const shown = area.panels.map((id) => byId.get(id)!).filter((p) => desktop || !panelOnDesktopOnly(p));
+    const shown = area.panels.map((id) => byId.get(id)!).filter((p) => panelShows(p, surface));
 
     return shown.length ? [{ key: `area-${i}`, at: i, size: area.size, panels: shown }] : [];
   });
@@ -54,5 +64,6 @@ export function consoleLayout(caseConsole: CaseConsole | undefined, { desktop }:
   return {
     before: placed.filter((a) => a.at < canvasAt).map(area),
     after: placed.filter((a) => a.at > canvasAt).map(area),
+    overlays,
   };
 }

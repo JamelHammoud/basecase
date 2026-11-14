@@ -28,7 +28,7 @@ covers:
 
 The agent edits the scene you're in and nothing else: it can't run commands, open your files or move real motors.
 
-## It only edits the model
+## It only edits the scene
 
 The agent has the CAD tools, a to-do list and web search, and no others. It can't run shell commands, read or write files on your computer, or change Basecase's settings. When it tries another tool, Basecase blocks it and a toast says “Blocked”, with the tool's name.
 

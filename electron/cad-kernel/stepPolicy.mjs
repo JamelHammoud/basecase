@@ -1,8 +1,8 @@
 export const STEP_EXPORT_MS = 300_000;
 export const STEP_MESSAGES = {
-  timeout: 'The STEP export took longer than 5 minutes. Hide the largest parts and try again.',
+  timeout: 'The STEP export took longer than 5 minutes. Hide the largest parts and export again.',
   stopped:
-    'The CAD kernel stopped (time or memory limit) during the STEP export. Hide the largest parts and try again.',
+    'The CAD kernel stopped (time or memory limit) during the STEP export. Hide the largest parts and export again.',
 };
 export const MAX_STEP_BODIES = 2000;
 export const MAX_STEP_CHARS = 60_000_000;
@@ -115,7 +115,7 @@ function checkedBody(body, budget) {
 
   return {
     name: shortText(body.name, 'part name'),
-    color: typeof body.color === 'string' && HEX.test(body.color) ? body.color.toLowerCase() : fail('colour'),
+    color: typeof body.color === 'string' && HEX.test(body.color) ? body.color.toLowerCase() : fail('color'),
     group: body.group === undefined ? undefined : shortText(body.group, 'group name'),
     place: checkedMatrix(body.place, { rigid: true }),
     solid: checkedSolid(body.solid, budget),

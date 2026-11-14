@@ -33,6 +33,8 @@ Pick which agent designs with you: Claude Code, Codex or Gemini CLI with your ow
 
 ![The Agent pane in Settings](/help/choose-the-agent/agent-pane.png)
 
+**Agent Settings** in [[⌘K]] opens the same pane.
+
 The first time you pick an agent, Basecase downloads it: 263 MB for Claude Code, 340 MB for Codex and 95 MB for Gemini CLI. The Agent tab shows the progress.
 
 ## Sign in
@@ -42,12 +44,6 @@ Each agent uses your own account: Claude Code your Claude login, Codex your Chat
 1. If Settings says to sign in, open the **Agent** tab.
 2. Click the sign-in button in the banner at the top, and finish signing in in your browser.
 
-Google no longer signs personal accounts in to Gemini CLI. With a personal account, click **Add API Key** in the banner, paste a Gemini API key, and press Enter. Basecase keeps the key encrypted on your computer.
-
-## Set a height
-
-1. In **Target height**, type how tall the agent's designs should be, in millimeters.
-
-Leave it at 0 to let the agent estimate. Basecase resets it to 0 each time it starts.
+Google no longer signs personal accounts in to Gemini CLI. With a personal account, click **Add API Key** in the banner, paste a Gemini API key, and press [[↩]]. Basecase keeps the key encrypted on your computer.
 
 To pick a model within the agent, see [Choose a model and effort](/help/choose-a-model).

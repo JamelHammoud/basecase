@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { weld, writeThreeMf } from '../../print/threeMf';
+import { weld } from '../../print/threeMf';
 import { reply } from '../../utils/workerRpc';
-import { collide, place, type CollideOptions } from './collide';
+import { collide, place, type CollideOptions, type Placed } from './collide';
 import { collideRiding, type OutputRiders } from './outputRiders';
 import { printReportOf, worldMeasure } from './shapeReports';
 import { mergeMeshes, solidFromPositions, type ShapeSolid } from './shapeSolid';
@@ -12,10 +12,15 @@ import { fitCoupons, type FitCoupon, type FitCouponTask } from './fitCoupons';
 import { traceFasteners } from '../../assembly/fastenerChain';
 import type { FastenerInput } from '../../assembly/assemblyTypes';
 import { assemblyGeometry, type AssemblyGeometryInput } from '../../assembly/assemblyGeometry';
-import { jointAxisOf, type JointAxisQuery } from './jointAxis';
+import { jointAxesOf, jointAxisOf, type JointAxisQuery } from './jointAxis';
 import { payloadMap, type ArmModel } from '../../utils/payload';
 import type { StrengthJob } from '../../strength/types';
 import { strengthOf } from './strengthPart';
+import { planMerges } from '../../print/merge/mergePlan';
+import { plateFiles, type ThreeMfResult, type ThreeMfTask } from './plateFiles';
+import { sceneStl } from './sceneStl';
+
+export type { PlateFilesInput, ThreeMfFileSpec, ThreeMfResult } from './plateFiles';
 
 export interface GeometryPayload {
   id: string;
@@ -39,19 +44,14 @@ export type AnalysisTask =
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
   | { kind: 'strength'; instances: Instance[]; jobs: StrengthJob[] }
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
-  | { kind: 'measure' | 'meshes' | 'visibility' | 'floor'; instances: Instance[] }
+  | { kind: 'measure' | 'meshes' | 'visibility' | 'floor' | 'stl'; instances: Instance[] }
   | { kind: 'gaps'; instances: Instance[]; pairs: PairIds[]; withinMm: number }
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
-  | { kind: 'threeMf'; instances: Instance[]; files: ThreeMfFileSpec[]; plateSize: [number, number] }
+  | ({ kind: 'threeMf' } & ThreeMfTask)
   | ({ kind: 'jointAxis'; instances: Instance[] } & JointAxisQuery)
+  | { kind: 'jointAxes'; instances: Instance[]; ids: string[] }
   | ({ kind: 'fitCoupons'; instances: Instance[] } & FitCouponTask);
-
-export interface ThreeMfFileSpec {
-  key: string;
-  plates: Array<{ number: number; name: string }>;
-  items: Array<{ id: string; name: string; matrix: number[]; plate: number }>;
-}
 
 export interface AnalyzePayload {
   geometries: GeometryPayload[];
@@ -116,21 +116,28 @@ function run(task: Exclude<AnalysisTask, { kind: 'strength' }>) {
       );
     case 'floor':
       return lowestPart(placeAll(task.instances))?.y ?? null;
+    case 'stl':
+      return sceneStl(task.instances, solidOf);
     default:
       return runPlaced(task);
   }
 }
 
 function runPlaced(
-  task: Extract<AnalysisTask, { kind: 'gaps' | 'threeMf' | 'fasteners' | 'assembly' | 'jointAxis' | 'fitCoupons' }>,
+  task: Extract<
+    AnalysisTask,
+    { kind: 'gaps' | 'threeMf' | 'fasteners' | 'assembly' | 'jointAxis' | 'jointAxes' | 'fitCoupons' }
+  >,
 ) {
   switch (task.kind) {
     case 'gaps':
       return pairsWithin(placeAll(task.instances), task.pairs, task.withinMm);
     case 'threeMf':
-      return threeMfFiles(task);
+      return plateFiles(task, { solidOf, placeAll: () => placeAll(task.instances) });
     case 'jointAxis':
       return jointAxisOf(task, (key) => solidOf(key).positions);
+    case 'jointAxes':
+      return jointAxesOf(task, (key) => solidOf(key).positions);
     default:
       return runOnPlaced(task);
   }
@@ -141,7 +148,15 @@ function runOnPlaced(task: Extract<AnalysisTask, { kind: 'fasteners' | 'assembly
 
   if (task.kind === 'fasteners') return traceFasteners(placed, task);
 
-  return task.kind === 'assembly' ? assemblyGeometry(placed, task) : fitCoupons(placed, task);
+  return task.kind === 'assembly' ? assemblyWithMerges(placed, task) : fitCoupons(placed, task);
+}
+
+function assemblyWithMerges(placed: Placed[], task: Extract<AnalysisTask, { kind: 'assembly' }>) {
+  const geometry = assemblyGeometry(placed, task);
+
+  if (!task.merges) return geometry;
+
+  return { ...geometry, merges: planMerges({ placed, geometry, roles: task.roles }, task.merges) };
 }
 
 function strengthJobs(task: Extract<AnalysisTask, { kind: 'strength' }>) {
@@ -154,32 +169,14 @@ function strengthJobs(task: Extract<AnalysisTask, { kind: 'strength' }>) {
   });
 }
 
-function threeMfFiles(task: Extract<AnalysisTask, { kind: 'threeMf' }>) {
-  const keyOf = new Map(task.instances.map((i) => [i.id, i.key]));
-  const meshes = new Map<string, ReturnType<typeof weld>>();
-  const meshOf = (key: string) => meshes.get(key) ?? meshes.set(key, weld(solidOf(key).positions)).get(key)!;
-
-  return Object.fromEntries(
-    task.files.map((file) => {
-      const usable = file.items.filter((it) => keyOf.has(it.id));
-      const objects = usable.map((it, i) => ({ id: i + 1, name: it.name, mesh: meshOf(keyOf.get(it.id)!) }));
-      const items = usable.map((it, i) => ({ objectId: i + 1, matrix: it.matrix, plate: it.plate }));
-
-      return [
-        file.key,
-        writeThreeMf({ layout: 'grid', plateSize: task.plateSize, plates: file.plates, objects, items }),
-      ];
-    }),
-  );
-}
-
 const transferOf = (kind: AnalysisTask['kind'], result: unknown): Transferable[] => {
-  if (kind === 'threeMf')
-    return Object.values(result as Record<string, Uint8Array>).map((b) => b.buffer as ArrayBuffer);
+  if (kind === 'threeMf') return Object.values((result as ThreeMfResult).files).map((b) => b.buffer as ArrayBuffer);
 
   if (kind === 'fitCoupons') return (result as FitCoupon[]).map((c) => c.positions.buffer as ArrayBuffer);
 
   if (kind === 'strength') return fieldBuffers(result);
+
+  if (kind === 'stl') return [(result as Uint8Array).buffer as ArrayBuffer];
 
   return kind === 'meshes' ? meshBuffers(result) : [];
 };
@@ -199,11 +196,11 @@ const meshBuffers = (result: unknown) =>
   ]);
 
 export const analysisHandlers = {
-  analyze: ({ geometries: newGeometries, shapes, task }: AnalyzePayload) => {
+  analyze: async ({ geometries: newGeometries, shapes, task }: AnalyzePayload) => {
     newGeometries.forEach((g) => geometries.set(g.id, g));
     shapes.forEach((s) => specs.set(s.key, s));
 
-    const result = task.kind === 'strength' ? strengthJobs(task) : run(task);
+    const result = await (task.kind === 'strength' ? strengthJobs(task) : run(task));
 
     return reply(result, transferOf(task.kind, result));
   },

@@ -1,4 +1,5 @@
-import type { ServoCalibration } from './types';
+import { presetServo } from './servoEstimate';
+import type { CalibrationVerdict, JointMount, ServoCalibration, ServoPart } from './types';
 
 export interface CalibrationHistory {
   versions: ServoCalibration[];
@@ -9,7 +10,8 @@ export const EMPTY_HISTORY: CalibrationHistory = Object.freeze({ versions: [], a
 
 export function recordCalibration(history: CalibrationHistory, calibration: ServoCalibration): CalibrationHistory {
   const version = (history.versions.at(-1)?.version ?? 0) + 1;
-  const recorded = { ...calibration, version };
+  const mount = calibration.mount ?? activeCalibration(history)?.mount;
+  const recorded = { ...calibration, version, ...(mount ? { mount } : {}) };
 
   return {
     versions: [...history.versions, recorded],
@@ -39,4 +41,74 @@ export function activeCalibrations(histories: Record<string, CalibrationHistory>
   }
 
   return out;
+}
+
+export function simCalibrations(histories: Record<string, CalibrationHistory> | undefined) {
+  const out: Record<string, ServoCalibration> = {};
+
+  for (const [jointId, history] of Object.entries(histories ?? {})) {
+    const latest = history.versions.at(-1);
+    const chosen = activeCalibration(history) ?? (latest?.verdict === 'consistent' ? latest : null);
+
+    if (chosen) out[jointId] = chosen;
+  }
+
+  return out;
+}
+
+export const activeMount = (history: CalibrationHistory | undefined): JointMount | null =>
+  (history && activeCalibration(history)?.mount) ?? null;
+
+export function activeMounts(histories: Record<string, CalibrationHistory> | undefined) {
+  const out: Record<string, JointMount> = {};
+
+  for (const [jointId, history] of Object.entries(histories ?? {})) {
+    const mount = activeMount(history);
+
+    if (mount) out[jointId] = mount;
+  }
+
+  return out;
+}
+
+function presetRecord(servo: ServoPart): ServoCalibration {
+  const preset = presetServo(servo);
+
+  return {
+    verdict: 'consistent',
+    servo,
+    version: 0,
+    rung: 'preset',
+    fit: preset.fit,
+    volts: preset.volts,
+    scales: {},
+    conditions: { volts: preset.volts, temperatureC: Number.NaN },
+    evidence: {
+      logs: 0,
+      presetErrorRad: Number.NaN,
+      fittedErrorRad: Number.NaN,
+      gain: 0,
+      explained: Number.NaN,
+      reason: '',
+    },
+  };
+}
+
+export interface FoundMount {
+  servo: ServoPart;
+  verdict: CalibrationVerdict;
+  mount: JointMount;
+  reason: string;
+}
+
+export function recordMount(history: CalibrationHistory, found: FoundMount): CalibrationHistory {
+  const base = activeCalibration(history) ?? presetRecord(found.servo);
+  const mount = found.verdict === 'measured' ? found.mount : base.mount;
+
+  return recordCalibration(history, {
+    ...base,
+    verdict: found.verdict,
+    evidence: { ...base.evidence, reason: found.reason },
+    ...(mount ? { mount } : {}),
+  });
 }

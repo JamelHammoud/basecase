@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ContextMenu, ContextMenuEntry, Section, useScrollFade } from '../design-system';
+import { ContextMenu, ContextMenuEntry, Section, deleteEntry, useScrollFade } from '../design-system';
 import type { RobotJoint } from '../types/robotics';
 import { jointGroups, nameWords, prettyJointName, sideOf } from '../utils/kinematics';
 import type { Posing } from '../utils/usePosing';
@@ -23,6 +23,7 @@ interface PosePanelProps {
   onImportMotion: () => void;
   onWalkCycle: () => void;
   canWalk: boolean;
+  measured: ReadonlySet<string>;
 }
 
 function rowLabel(j: RobotJoint, group: string): string {
@@ -49,7 +50,7 @@ const jointMenu = (j: RobotJoint, edits: JointEdits): ContextMenuEntry[] => [
     submenu: () => <JointRangeFields joint={j} onChange={(range, live) => edits.setRange(j.id, range, live)} />,
   },
   { divider: true },
-  { label: 'Delete', tone: 'danger', onSelect: () => edits.remove(j.id) },
+  deleteEntry(() => edits.remove(j.id)),
 ];
 
 export const PosePanel: React.FC<PosePanelProps> = ({
@@ -60,6 +61,7 @@ export const PosePanel: React.FC<PosePanelProps> = ({
   onImportMotion,
   onWalkCycle,
   canWalk,
+  measured,
 }) => {
   const { activeJointId } = posing;
   const rig = posing.robot?.rig ?? null;
@@ -144,18 +146,21 @@ export const PosePanel: React.FC<PosePanelProps> = ({
             open={isOpen(g.label)}
             onOpenChange={(open) => setToggled((t) => ({ ...t, [g.label]: { open, joint: activeJointId } }))}
           >
-            {g.joints.map((j) => (
-              <JointRow
-                key={j.id}
-                joint={j}
-                label={rowLabel(j, g.label)}
-                value={pose?.values[j.id] ?? 0}
-                active={j.id === activeJointId}
-                onSelect={() => select(j)}
-                onChange={(v) => posing.setJointValue(j.id, v)}
-                onContextMenu={(e) => openMenu(e, jointMenu(j, jointEdits))}
-              />
-            ))}
+            <div className="grid grid-cols-[fit-content(60%)_minmax(0,1fr)_52px] gap-2.5">
+              {g.joints.map((j) => (
+                <JointRow
+                  key={j.id}
+                  joint={j}
+                  label={rowLabel(j, g.label)}
+                  value={pose?.values[j.id] ?? 0}
+                  active={j.id === activeJointId}
+                  measured={measured.has(j.id)}
+                  onSelect={() => select(j)}
+                  onChange={(v) => posing.setJointValue(j.id, v)}
+                  onContextMenu={(e) => openMenu(e, jointMenu(j, jointEdits))}
+                />
+              ))}
+            </div>
           </Section>
         ))}
       </div>

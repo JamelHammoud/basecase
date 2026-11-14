@@ -4,7 +4,8 @@ import { partCode, partRecord, partSource } from '../agent/agentPartRecord';
 import { snapshotScene, toCad, toScene, type AgentOp } from '../agent/agentScene';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { PrinterSetup } from '../data/printers';
-import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
+import type { CaseConsole } from '../cases/console/format';
 import { bomText, buildBom } from '../utils/bom';
 import { engineeringText, type EngineeringReport } from '../utils/engineering';
 import { downscaleDataUrl } from '../utils/imageFile';
@@ -25,10 +26,17 @@ import {
   type DefineJointsPayload,
 } from './agentBuildRequests';
 import { craftScene, partMeshes, visibleShare } from './agentCraftRequests';
+import { findJointAxes } from './agentJointAxes';
 import { PORT_HANDLERS } from './agentPortRequests';
 import { PLAN_HANDLERS, prepareOps } from './agentPlanRequests';
 import { costByClass } from '../utils/budget';
-import { budgetPlanNote, catalogRequest, costNotes, sizeActuatorsRequest } from './agentCostRequests';
+import {
+  budgetPlanNote,
+  catalogRequest,
+  costNotes,
+  recordOnHandRequest,
+  sizeActuatorsRequest,
+} from './agentCostRequests';
 import { POSE_TOOL_KINDS, SIM_TOOL_KINDS } from './agentRobotTools';
 import type { SweepPayload } from './agentSweepRequest';
 import type { Vec3 } from './types';
@@ -37,12 +45,24 @@ import { fitView } from './agentFitView';
 import { labelledScreenshot } from './agentLabelRequest';
 import { targetCompare } from './agentTargetRequest';
 import { scaleRequest, traceRequest } from './agentTraceRequest';
+import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
 import { CASE_HANDLERS } from './agentCaseRequests';
+import type { CaseCompare } from './useCaseCompare';
+import type { CaseExplore } from './useCaseExplore';
+import type { CaseRun } from './useCaseRun';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
 import { SKILL_HANDLERS } from './agentSkillRequests';
 import type { Cases } from './useCases';
 import type { Routines } from './useRoutines';
 import type { SceneSkills } from './useSkills';
+import { synthesizeLinkageRequest, type LinkagePayload } from '../linkage/agentLinkage';
+import { synthesizeInWorker } from '../linkage/linkageClient';
+import { sizeArmRequest, type ArmPayload } from '../arm/agentArm';
+import { sizeArmInWorker } from '../arm/armSizingClient';
+import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import type { RobotSkeleton } from '../types/skeleton';
+import { newId } from './helpers';
+import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
 
@@ -53,11 +73,14 @@ export interface RequestContext {
   slice: (report: PrintReport) => Promise<SliceRecord>;
   viewport: () => Viewport3DHandle | null;
   setProjectNow: (next: ProjectSettings) => void;
+  commitConsole: (caseId: string, console: CaseConsole | undefined) => void;
+  insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
+  commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton) => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
-  verify: (opts?: { peak?: boolean }) => Promise<EngineeringReport>;
+  verify: (opts?: { peak?: boolean; falls?: boolean }) => Promise<EngineeringReport>;
   readiness: ReadinessHandle;
   sweep: (payload: SweepPayload) => Promise<{ text: string }>;
   applyOps: (ops: AgentOp[]) => Promise<string>;
@@ -65,7 +88,11 @@ export interface RequestContext {
   buildGuide: () => Promise<GeneratedGuide | null>;
   routines: Routines;
   cases: Cases;
+  caseCompare: CaseCompare;
+  caseExplore: CaseExplore;
+  caseRun: CaseRun;
   skills: SceneSkills;
+  mergeParts: (ids: string[]) => Promise<string | null>;
 }
 
 type Handler = (payload: Payload, ctx: RequestContext, kind: string) => unknown;
@@ -81,7 +108,7 @@ const toolReply = ({ text, images }: PoseReply) => ({ text, images });
 function inspectLabel(ids: string[] | undefined, parts: ScenePart[]) {
   if (!ids?.length) return 'Looking';
 
-  if (ids.length > 1) return `Inspecting ${ids.length} parts`;
+  if (ids.length > 1) return `Inspecting ${plural(ids.length, 'part')}`;
 
   return `Inspecting ${parts.find((p) => p.id === ids[0])?.name ?? ids[0]}`;
 }
@@ -229,7 +256,7 @@ async function buildGuide(_payload: Payload, ctx: RequestContext) {
 
   return {
     text:
-      `${where}: ${record.pages} pages, ${record.steps} steps, ${plan.items.length} kinds of parts, ${plan.tools.length} tools.` +
+      `${where}: ${plural(record.pages, 'page')}, ${plural(record.steps, 'step')}, ${plural(plan.items.length, 'kind of part', 'kinds of parts')}, ${plural(plan.tools.length, 'tool')}.` +
       (subs.length ? ` Sub-assemblies: ${subs.join(', ')}.` : '') +
       ' Tell the user and link it as [build guide](#build-guide).',
   };
@@ -268,6 +295,17 @@ const HANDLERS: Record<string, Handler> = {
   screenshot,
   interference: (payload, ctx) => sceneFits({ ids: idsOf(payload), twins: payload.twins === true }, ctx),
   assembly: (_payload, ctx) => assemblyCheck(ctx),
+  merge: async (payload, ctx) => {
+    ctx.setAction('Merging parts');
+
+    const done = await ctx.mergeParts((payload.ids as string[] | undefined) ?? []);
+
+    return {
+      text: done
+        ? `${done}.`
+        : 'check_assembly doesn’t offer that merge now. Run it again and pass one listed ids array.',
+    };
+  },
   silhouette_compare: silhouetteCompare,
   target_compare: (payload, ctx) => targetCompare(payload, ctx),
   fit_view: (payload, ctx) => fitView(payload, ctx),
@@ -277,10 +315,18 @@ const HANDLERS: Record<string, Handler> = {
   printability,
   slice: slicePlates,
   define_joints: defineJoints,
+  find_joint_axes: (payload, ctx) =>
+    findJointAxes(payload, {
+      parts: ctx.parts,
+      joints: () => ctx.project().joints ?? [],
+      jointAxes: async (ids) => (await ctx.viewport()?.jointAxes(ids)) ?? { candidates: [], fastened: [], faces: [] },
+    }),
   verify: async (payload, ctx) => {
     ctx.setAction('Checking the design');
 
-    return { text: engineeringText(await ctx.verify({ peak: payload.peak === true }), toCad) };
+    return {
+      text: engineeringText(await ctx.verify({ peak: payload.peak === true, falls: payload.falls === true }), toCad),
+    };
   },
   set_build: setBuild,
   readiness: (_payload, ctx) => readinessRequest(ctx),
@@ -294,7 +340,19 @@ const HANDLERS: Record<string, Handler> = {
   import_cad: (payload, ctx) => importCad(payload, ctx),
   build_guide: buildGuide,
   catalog: catalogRequest,
+  record_on_hand: recordOnHandRequest,
   size_actuators: sizeActuatorsRequest,
+  size_arm: (payload, ctx) => {
+    ctx.setAction('Sizing an arm');
+
+    return sizeArmRequest(payload as ArmPayload, {
+      solve: sizeArmInWorker,
+      parts: ctx.parts,
+      skeleton: () => ctx.project().skeleton,
+      place: ctx.commitSkeleton,
+      links: !IS_WEB_DEMO,
+    });
+  },
   sweep_design: (payload, ctx) => {
     ctx.setAction('Comparing design options');
 
@@ -304,10 +362,17 @@ const HANDLERS: Record<string, Handler> = {
     dataUrl: await downscaleDataUrl(String(payload.dataUrl), Number(payload.maxSide) || EVIDENCE_IMAGE_SIDE, 0.88),
   }),
   apply: applyWithCost,
+  synthesize_linkage: (payload, ctx) =>
+    synthesizeLinkageRequest(payload as LinkagePayload, {
+      solve: synthesizeInWorker,
+      insert: ctx.insertParts,
+      newBase: () => newId('linkage'),
+    }),
   ...PORT_HANDLERS,
   ...PLAN_HANDLERS,
   ...ROUTINE_HANDLERS,
   ...CASE_HANDLERS,
+  ...CASE_CODE_HANDLERS,
   ...SKILL_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [

@@ -1,12 +1,24 @@
 import { parquetReadObjects } from 'hyparquet';
+import { plural } from '../electron/plural.mjs';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import type { ReferenceCommand } from '../src/cases/schema';
 import type { DriveCommand } from '../src/sim/driveTypes';
 import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
-import { DEFAULT_PROJECT } from '../src/types/robotics';
+import type { SimState, Studio } from './driveStudio';
 import { startFakeHub, type FakeHub } from './fakeHub';
-import { expectDataset, expectPublished, pickTimeline } from './driveChecks';
+import {
+  datasetFiles,
+  endTryAt,
+  expectCaseCheckOpensRow,
+  expectDataset,
+  expectGenerated,
+  expectPublished,
+  loadFixtureRobot,
+  passedDatasetFiles,
+  pickTimeline,
+} from './driveChecks';
+import { expectRealTry } from './driveMat';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
 const HUB_TOKEN = 'hf_e2eFakeHubToken';
@@ -14,43 +26,12 @@ const HUB_TOKEN = 'hf_e2eFakeHubToken';
 let app: App;
 let hub: FakeHub;
 
-interface SimState {
-  status: string;
-  drive: string;
-  driveClass: string | null;
-  offer: string;
-  stats: { time: number; robots: Array<{ forward: number; travelled: number; fellAt: number | null }> } | null;
-  world: string[];
-  bodies: Array<{ parts: string[]; world: string[] }>;
-  activeCase: string | null;
-  effector: number[] | null;
-  scanPoints: number;
-  tries: Array<{ passed: boolean; margin: number }>;
-}
-
-type Studio = {
-  simState: () => SimState;
-  load: (r: unknown) => void;
-  passTries: () => void;
-  drive: (c: DriveCommand) => void;
-  worldAt: () => Record<string, number[]>;
-};
-
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
 const simState = () =>
   app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState() as SimState);
 
-async function loadFixture(id: string | FixtureRobot) {
-  const robot = typeof id === 'string' ? fixtureRobots().find((r) => r.id === id)! : id;
-
-  await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
-    name: robot.id,
-    parts: robot.parts,
-    project: { ...DEFAULT_PROJECT, joints: robot.joints },
-  });
-  await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
-}
+const loadFixture = (id: string | FixtureRobot) => loadFixtureRobot(app.page, id);
 
 const clickTab = (name: string) => app.page.locator(visible('[role=tab]'), { hasText: name }).first().click();
 
@@ -76,16 +57,6 @@ async function holdKey(key: string, ms: number) {
   await app.page.keyboard.down(key);
   await app.page.waitForTimeout(ms);
   await app.page.keyboard.up(key);
-}
-
-async function datasetFiles() {
-  const files = await app.page.evaluate(() =>
-    (
-      window as unknown as { __studio: { datasetFiles: () => Promise<Record<string, string> | null> } }
-    ).__studio.datasetFiles(),
-  );
-
-  return Object.fromEntries(Object.entries(files ?? {}).map(([path, b64]) => [path, Buffer.from(b64, 'base64')]));
 }
 
 async function stopDriving() {
@@ -205,28 +176,11 @@ async function openTouchTheDots() {
     .poll(() => card.getByTestId('new-case-brief').innerText())
     .toBe('Touch each dot in order with the end effector.');
   expect(await card.getByLabel('Distance').count()).toBe(0);
-  await card.locator('button', { hasText: 'Create' }).click();
+  await card.locator('button', { hasText: 'Make Case' }).click();
   await expect.poll(async () => (await simState()).activeCase).toBe('touch-the-dots');
 }
 
 const SHORT_TRY_SECONDS = 0.4;
-
-async function endTryAt(seconds: number) {
-  await app.page.evaluate(async (at) => {
-    const clock = () =>
-      [...document.querySelectorAll('[data-testid="try-clock"]')].find((el) => !el.closest('[inert]'));
-    const elapsed = () => Number.parseFloat(clock()?.textContent ?? '') || 0;
-    const deadline = Date.now() + 30000;
-
-    while (elapsed() < at) {
-      if (Date.now() > deadline) throw new Error(`The try clock never reached ${at} s`);
-
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-
-    clock()?.parentElement?.querySelector('button')?.click();
-  }, seconds);
-}
 
 describe('Cases', () => {
   itUnlessWindows(
@@ -249,7 +203,7 @@ describe('Cases', () => {
       expect(state.bodies.flatMap((b) => b.world)).toContain('dot0');
       expect(await partCount(app.page)).toBe(partsBefore);
 
-      await endTryAt(SHORT_TRY_SECONDS);
+      await endTryAt(app.page, SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
       expect((await simState()).tries[0].passed).toBe(false);
 
@@ -261,7 +215,7 @@ describe('Cases', () => {
 
       expect(clashes).not.toContain('dot0');
       await expect.poll(() => app.page.getByTestId('try-row').count()).toBe(1);
-      await expectDataset(await datasetFiles());
+      await expectDataset(await passedDatasetFiles(app.page));
 
       const headings = await simHeadings();
 
@@ -273,8 +227,7 @@ describe('Cases', () => {
         headings.filter((h) => ['Brief', 'Robot fit', 'Result', 'Model', 'Emulated robot', 'Policies'].includes(h)),
       ).toEqual([]);
 
-      await button('Check Fit').click();
-      await expect.poll(() => app.page.getByTestId('robot-fit').innerText(), { timeout: 60000 }).toContain('Compiles');
+      await expectCaseCheckOpensRow(app.page, 'Touch the Dots');
       expect(app.errors).toEqual([]);
     },
   );
@@ -295,7 +248,7 @@ describe('Cases', () => {
       await openTouchTheDots();
       await button('Try It').click();
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-      await endTryAt(SHORT_TRY_SECONDS);
+      await endTryAt(app.page, SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
       await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
       await expect.poll(() => publish().count()).toBe(1);
@@ -350,12 +303,12 @@ describe('Cases', () => {
     await card.locator('[role=radio]', { hasText: 'Push a Box' }).click();
     await card.locator('[role=radio]', { hasText: 'Corridor' }).click();
     expect(await card.getByTestId('new-case-brief').innerText()).toBe('Push the box 500 mm onto the spot.');
-    await card.locator('button', { hasText: 'Create' }).click();
+    await card.locator('button', { hasText: 'Make Case' }).click();
 
     await expect.poll(async () => (await simState()).activeCase).toBe('push-a-box-in-a-corridor');
     await expect.poll(async () => (await simHeadings())[0]).toBe('Push a Box in a Corridor');
     expect((await simState()).world).toEqual(['box', 'goal', 'wall-left', 'wall-right']);
-    expect(await panel.innerText()).toContain('In this scene');
+    expect(await panel.innerText()).toContain('Push a Box in a Corridor');
 
     await button('Ask the Agent').click();
     await expect.poll(() => app.page.locator(visible('textarea')).last().inputValue()).toBe('/case ');
@@ -372,6 +325,89 @@ describe('Cases', () => {
   });
 });
 
+describe('terrain', () => {
+  itUnlessWindows(
+    'makes Walk Without Falling on Rough Ground on the quadruped, and its reference try runs',
+    async () => {
+      await loadFixture('quad-servo');
+      await openPlayTab(app.page, 'Cases');
+      await button('New Case').click();
+
+      const card = app.page.locator(visible('[data-testid="new-case"]'));
+
+      await card.locator('[role=radio]', { hasText: 'Walk Without Falling' }).click();
+      await card.locator('[role=radio]', { hasText: 'Rough Ground' }).click();
+      expect(await card.getByLabel('Height').inputValue()).toBe('14');
+
+      const time = card.getByLabel('Time');
+
+      await time.fill('4');
+      await time.press('Enter');
+      await card.locator('button', { hasText: 'Make Case' }).click();
+
+      await expect.poll(async () => (await simState()).activeCase).toBe('walk-without-falling-on-rough-ground');
+
+      const { world } = await simState();
+
+      expect(world.length).toBeGreaterThan(20);
+      expect(world.every((id) => id.startsWith('tile-'))).toBe(true);
+
+      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.referenceTry());
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 60000 }).toBe(1);
+      expect(app.errors).toEqual([]);
+    },
+  );
+});
+
+describe('a real robot', () => {
+  itUnlessWindows(
+    'exports a Case mat and records a passing try on the real robot from the camera',
+    async () => {
+      await loadFixture('rover-diff');
+      await openPlayTab(app.page, 'Cases');
+      await expectRealTry(app.page);
+      expect(app.errors).toEqual([]);
+    },
+    120000,
+  );
+});
+
+describe('Multiply', () => {
+  itUnlessWindows(
+    'multiplies a passed try from ⌘K into generated tries under its row, and exports them with their seeds',
+    async () => {
+      await openTouchTheDots();
+      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.referenceTry());
+      await expect.poll(async () => (await simState()).tries.length, { timeout: 60000 }).toBe(1);
+      expect((await simState()).tries[0].passed).toBe(true);
+
+      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.multiplyRuns(5));
+      await app.page.keyboard.press('Meta+k');
+      await app.page.getByLabel('Search commands').fill('Multiply');
+      await expect.poll(() => app.page.getByText(/^Multiply$/).count(), { timeout: 15000 }).toBe(1);
+      await app.page.keyboard.press('Enter');
+
+      const done = app.page.getByRole('status').filter({ hasText: /^Kept \d+ of 5\b/ });
+
+      await done.first().waitFor({ timeout: 120000 });
+
+      const kept = Number(/Kept (\d+)/.exec(await done.first().innerText())![1]);
+      const rows = app.page.locator(visible('[data-testid="try-row"]'));
+
+      expect(kept).toBeGreaterThan(0);
+      await expect.poll(async () => (await simState()).tries.filter((t) => t.generated).length).toBe(kept);
+      expect((await simState()).multiplying).toBe(false);
+      expect((await simState()).tries.every((t) => t.passed)).toBe(true);
+      expect(await rows.count()).toBe(1);
+      expect(await rows.first().getByTestId('try-generated').innerText()).toBe(plural(kept, 'variation'));
+
+      expectGenerated(await datasetFiles(app.page), kept);
+      expect(app.errors).toEqual([]);
+    },
+    180000,
+  );
+});
+
 describe('a gripper', () => {
   it('makes Pick Up a Block with New Case, carries the block with Space closing the gripper, and passes', async () => {
     await loadFixture('arm-6dof');
@@ -383,7 +419,7 @@ describe('a gripper', () => {
     await card.locator('[role=radio]', { hasText: 'Pick Up a Block' }).click();
     await card.locator('label', { hasText: 'Time' }).locator('input').fill('40');
     await card.locator('label', { hasText: 'Time' }).locator('input').press('Tab');
-    await card.locator('button', { hasText: 'Create' }).click();
+    await card.locator('button', { hasText: 'Make Case' }).click();
     await expect.poll(async () => (await simState()).activeCase).toBe('pick-up-a-block');
     await button('Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
@@ -404,7 +440,7 @@ describe('a gripper', () => {
     await app.page.keyboard.up(' ');
     await waitSim(1);
     await handAt(away);
-    await button('End Try').click();
+    await button('Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
     expect((await simState()).tries[0].passed).toBe(true);
     expect(app.errors).toEqual([]);
@@ -415,7 +451,12 @@ describe('LiDAR', () => {
   itUnlessWindows(
     'scans a corridor with a rover’s LiDAR, draws the hits and exports them as observation.scan',
     async () => {
-      await loadFixture(withLidar(fixtureRobots().find((r) => r.id === 'rover-diff')!));
+      await loadFixture(
+        withLidar(
+          fixtureRobots().find((r) => r.id === 'rover-diff')!,
+          'slamtec-rplidar-s2',
+        ),
+      );
       await openPlayTab(app.page, 'Cases');
       await button('New Case').click();
 
@@ -423,25 +464,24 @@ describe('LiDAR', () => {
 
       await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
       await card.locator('[role=radio]', { hasText: 'Corridor' }).click();
-      await card.locator('button', { hasText: 'Create' }).click();
+      await card.locator('button', { hasText: 'Make Case' }).click();
       await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-a-corridor');
 
       await button('Try It').click();
       await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-      await holdKey('w', 1000);
       await expect.poll(async () => (await simState()).scanPoints, { timeout: 30000 }).toBeGreaterThan(0);
-      await button('End Try').click();
+      await endTryAt(app.page, SHORT_TRY_SECONDS);
       await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
-      const files = await datasetFiles();
+      const files = await passedDatasetFiles(app.page);
       const at = (end: string) => files[Object.keys(files).find((p) => p.endsWith(end))!];
       const rows = await parquetReadObjects({
         file: new Uint8Array(at('data/chunk-000/episode_000000.parquet')).buffer,
       });
       const info = JSON.parse(at('meta/info.json').toString());
 
-      expect(info.features['observation.scan'].shape).toEqual([500]);
-      expect(rows[0]['observation.scan']).toHaveLength(500);
+      expect(info.features['observation.scan'].shape).toEqual([720]);
+      expect(rows[0]['observation.scan']).toHaveLength(720);
       expect(JSON.parse(at('meta/modality.json').toString()).state.scan.original_key).toBe('observation.scan');
       expect(app.errors).toEqual([]);
     },

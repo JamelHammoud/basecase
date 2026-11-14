@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
-import { CaseCheckSession, type CaseCheckJob } from './caseCheckJob';
+import { CaseCheckSession, replyTransfer, type CaseCheckJob } from './caseCheckJob';
+import { errorMessage } from '../utils/errorMessage';
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 let mj: Promise<MainModule> | null = null;
@@ -10,9 +11,12 @@ let queue: Promise<unknown> = Promise.resolve();
 async function answer(id: number, job: CaseCheckJob) {
   try {
     mj ??= loadMujoco();
-    ctx.postMessage({ id, reply: await session.run(await mj, job) });
+
+    const reply = await session.run(await mj, job);
+
+    ctx.postMessage({ id, reply }, replyTransfer(reply));
   } catch (e) {
-    ctx.postMessage({ id, error: e instanceof Error ? e.message : String(e) });
+    ctx.postMessage({ id, error: errorMessage(e) });
   }
 }
 

@@ -5,9 +5,11 @@ import { COMPONENT_BY_ID } from '../data/components';
 const MEASURING = new Set([
   'interference',
   'assembly',
+  'merge',
   'verify',
   'sweep_design',
   'define_joints',
+  'find_joint_axes',
   'simulate',
   'set_world',
   'start_drive',
@@ -28,6 +30,6 @@ export async function awaitPartModels(kind: string, viewport: Viewport3DHandle |
   const names = failed.map((id) => COMPONENT_BY_ID[id]?.name ?? id);
 
   throw new Error(
-    `Couldn't load the 3D model of ${joinAnd(names)}, so this check would measure a box in its place. Restart Basecase, then run it again.`,
+    `Couldn’t load the 3D model of ${joinAnd(names)}, so this check would measure a box in its place. Restart Basecase, then run it again.`,
   );
 }

@@ -1,14 +1,17 @@
 import type { RobotJoint } from '../types/robotics';
-import { count, jointLabel } from './engineeringFormat';
+import { jointLabel } from './engineeringFormat';
+import { plural } from '../../electron/plural.mjs';
 import type { CheckContext, CheckRow } from './engineeringTypes';
+import { angle } from './angle';
 
 const SLACK_DEG = 0.5;
 
 const sorted = (r: [number, number]): [number, number] => [Math.min(...r), Math.max(...r)];
 
+const millimeters = (v: number) => `${v < 0 ? '−' : ''}${Math.abs(Math.round(v))} mm`;
+
 const show = (j: RobotJoint, [lo, hi]: [number, number]) => {
-  const unit = j.type === 'prismatic' ? ' mm' : '°';
-  const fmt = (v: number) => `${v < 0 ? '−' : ''}${Math.abs(Math.round(v))}${unit}`;
+  const fmt = j.type === 'prismatic' ? millimeters : angle;
 
   return `${fmt(lo)} to ${fmt(hi)}`;
 };
@@ -38,9 +41,8 @@ export function rangeChangeRows(ctx: CheckContext): CheckRow[] {
     {
       check: 'Range changes',
       status: items.length ? 'warn' : 'pass',
-      detail: items.length
-        ? `${count(items.length, 'joint')} narrower than first defined`
-        : 'Every joint keeps the range it was first defined with',
+      detail: items.length ? `${plural(items.length, 'joint')} narrower than first defined` : '',
+      detailInItems: true,
       items,
     },
   ];

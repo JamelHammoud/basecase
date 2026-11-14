@@ -62,3 +62,52 @@ describe('Sketch and Import SVG add a part with one button', () => {
     await addAndExpectPart('Import SVG');
   });
 });
+
+describe('Esc leaves Sketch and Import SVG when nothing is drawn', () => {
+  it('drops the Sketch tool first, then leaves Sketch', async () => {
+    const line = app.page.getByRole('button', { name: 'Line', exact: true });
+
+    await openFromShapes('Sketch');
+    await expect.poll(() => panelTitle('Sketch').count()).toBe(1);
+    await app.page.locator(shown('[data-testid="sketch-plane"]')).focus();
+    expect(await line.getAttribute('aria-pressed')).toBe('true');
+
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => line.getAttribute('aria-pressed')).toBeNull();
+    expect(await panelTitle('Sketch').count()).toBe(1);
+
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => panelTitle('Sketch').count()).toBe(0);
+  });
+
+  it('keeps a drawn sketch open on Esc', async () => {
+    const rectangle = app.page.getByRole('button', { name: 'Rectangle', exact: true });
+    const plane = app.page.locator(shown('[data-testid="sketch-plane"]'));
+
+    await openFromShapes('Sketch');
+    await expect.poll(() => panelTitle('Sketch').count()).toBe(1);
+    await drawRectangle();
+    await plane.focus();
+
+    for (let press = 0; press < 4 && (await rectangle.getAttribute('aria-pressed')) === 'true'; press++) {
+      await app.page.keyboard.press('Escape');
+    }
+
+    expect(await rectangle.getAttribute('aria-pressed')).toBeNull();
+
+    await app.page.keyboard.press('Escape');
+    expect(await panelTitle('Sketch').count()).toBe(1);
+    expect(await panelButton('Add').isEnabled()).toBe(true);
+
+    await panelButton('Done').click();
+    await expect.poll(() => panelTitle('Sketch').count()).toBe(0);
+  });
+
+  it('leaves Import SVG', async () => {
+    await openFromShapes('Import SVG');
+    await expect.poll(() => panelTitle('Import SVG').count()).toBe(1);
+
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => panelTitle('Import SVG').count()).toBe(0);
+  });
+});

@@ -130,7 +130,7 @@ function panelHtml(doc: GuideDoc, index: number, area: Rect): { html: string; le
 
   return {
     html:
-      `<div class="num" style="left:${mm(area.x)};top:${mm(area.y)}">${step.number}</div>` +
+      `<div class="num" data-step="${index}" style="left:${mm(area.x)};top:${mm(area.y)}">${step.number}</div>` +
       header.html +
       turn +
       artHtml(drawing.main, rect) +

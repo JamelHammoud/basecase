@@ -82,21 +82,11 @@ export function AddStepMenu({ choices, onPick }: AddStepMenuProps) {
               const Icon = STEP_ICONS[c.icon];
 
               return (
-                <MenuItem
-                  key={c.key}
-                  icon={<Icon className="w-4 h-4" />}
-                  label={c.label}
-                  detail={c.detail}
-                  onSelect={() => onPick(c)}
-                />
+                <MenuItem key={c.key} icon={<Icon />} label={c.label} detail={c.detail} onSelect={() => onPick(c)} />
               );
             })}
             {group === 'Skills' && (
-              <MenuItem
-                icon={<SparklesIcon className="w-4 h-4" />}
-                label="Any Skill"
-                onSelect={() => setNaming(true)}
-              />
+              <MenuItem icon={<SparklesIcon />} label="Any Skill" onSelect={() => setNaming(true)} />
             )}
           </React.Fragment>
         );

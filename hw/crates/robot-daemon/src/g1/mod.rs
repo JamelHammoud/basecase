@@ -5,12 +5,11 @@ pub use entry::{writable_joint, POLICY_RUNGS_OUT};
 
 use crate::artefacts::ArtefactSource;
 use crate::calibration::Calibration;
-use crate::caps::WATCHDOG_US;
 use crate::control::{DaemonEvent, Inputs};
 use crate::fault::Fault;
 use crate::ladder::{Event, Hash, Ladder, Mode};
 use crate::safety::{ArmSdkLayer, G1Bus, Reading};
-use crate::watchdog::Watchdog;
+use crate::session::{IntentFeed, TestProgress};
 use servo_wire::unitree::g1::motor_of;
 use servo_wire::{Clock, TopicTransport};
 use std::sync::Arc;
@@ -54,14 +53,9 @@ pub struct G1Daemon {
     calibration: Option<Calibration>,
     firmware: Option<Hash>,
     run: G1Run,
-    inputs: Inputs,
-    intent_watchdog: Watchdog,
-    heartbeat_watchdog: Watchdog,
-    applied_version: u64,
+    feed: IntentFeed,
     refused_at_last_state: u64,
-    start: Vec<Option<i32>>,
-    travel: Vec<i32>,
-    stage_ticks: u32,
+    progress: TestProgress,
     events: Vec<DaemonEvent>,
 }
 
@@ -75,20 +69,15 @@ impl G1Daemon {
             calibration: None,
             firmware: None,
             run: G1Run::Idle,
-            inputs: Inputs::default(),
-            intent_watchdog: Watchdog::new(WATCHDOG_US),
-            heartbeat_watchdog: Watchdog::new(WATCHDOG_US),
-            applied_version: 0,
+            feed: IntentFeed::new(),
             refused_at_last_state: 0,
-            start: Vec::new(),
-            travel: Vec::new(),
-            stage_ticks: 0,
+            progress: TestProgress::default(),
             events: Vec::new(),
         }
     }
 
     pub fn inputs(&self) -> Inputs {
-        self.inputs.clone()
+        self.feed.inputs()
     }
 
     pub fn mode(&self) -> Mode {
@@ -156,6 +145,7 @@ impl G1Daemon {
             at_us,
             code: fault.code().into(),
             message: fault.g1_message(),
+            id: None,
         });
     }
 

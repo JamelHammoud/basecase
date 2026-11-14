@@ -15,6 +15,8 @@ export interface Rating {
   ratedNm: number;
   ratedEstimated: boolean;
   volts: number;
+  rpm?: number;
+  peakNm?: number;
 }
 
 export interface LoadVerdict {
@@ -26,7 +28,7 @@ export interface LoadVerdict {
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 function pointsOf(a: ActuatorSpec): ActuatorPoint[] {
-  const base: ActuatorPoint = { volts: a.atVolts, stallNm: a.stallNm, ratedNm: a.ratedNm };
+  const base: ActuatorPoint = { volts: a.atVolts, stallNm: a.stallNm, ratedNm: a.ratedNm, rpm: a.rpm };
 
   return [base, ...(a.curve ?? [])].sort((x, y) => x.volts - y.volts);
 }
@@ -53,6 +55,17 @@ function ratedAt(points: ActuatorPoint[], volts: number): number | undefined {
   return lerp(a.ratedNm!, b.ratedNm!, t);
 }
 
+function rpmAt(points: ActuatorPoint[], volts: number): number | undefined {
+  const known = points.filter((p) => p.rpm !== undefined);
+
+  if (!known.length) return undefined;
+
+  const [a, b, t] = between(known, volts);
+  const below = volts < known[0].volts ? volts / known[0].volts : 1;
+
+  return lerp(a.rpm!, b.rpm!, t) * below;
+}
+
 export function ratingAt(a: ActuatorSpec, supplyVolts?: number): Rating {
   const points = pointsOf(a);
   const top = Math.min(a.volts[1], points[points.length - 1].volts);
@@ -61,12 +74,14 @@ export function ratingAt(a: ActuatorSpec, supplyVolts?: number): Rating {
   const below = volts < points[0].volts ? volts / points[0].volts : 1;
   const stallNm = lerp(p.stallNm, q.stallNm, t) * below;
   const rated = ratedAt(points, volts);
+  const rpm = rpmAt(points, volts);
 
   return {
     stallNm,
     ratedNm: rated ?? RATED_OF_STALL * stallNm,
     ratedEstimated: rated === undefined,
     volts,
+    ...(rpm === undefined ? {} : { rpm }),
   };
 }
 

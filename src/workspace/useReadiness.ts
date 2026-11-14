@@ -25,6 +25,7 @@ interface ReadinessOptions {
 
 export interface ReadinessHandle {
   current: Readiness | null;
+  fingerprint: string;
   checking: boolean;
   checkNow: () => Promise<Readiness | null>;
   latest: () => Readiness | null;
@@ -122,6 +123,7 @@ export function useReadiness({
 
   return {
     current: measured && withDecisions(measured, parts, project.readiness),
+    fingerprint,
     checking,
     checkNow,
     latest,

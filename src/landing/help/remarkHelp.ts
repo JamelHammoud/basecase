@@ -14,11 +14,11 @@ const MODIFIERS = /[⌘⇧⌥⌃]|[^⌘⇧⌥⌃\s+]+/g;
 
 const text = (value: string): MdNode => ({ type: 'text', value });
 
-export const keyCaps = (combo: string) => combo.match(MODIFIERS) ?? [];
+export const keyCaps = (combo: string) => combo.match(MODIFIERS) ?? [combo.trim()];
 
 const keysNode = (combo: string): MdNode => ({
   type: 'keys',
-  data: { hName: 'span' },
+  data: { hName: 'span', hProperties: { dataKeys: '' } },
   children: keyCaps(combo).map((key) => ({ type: 'key', data: { hName: 'kbd' }, children: [text(key)] })),
 });
 

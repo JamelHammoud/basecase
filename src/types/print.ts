@@ -7,6 +7,7 @@ export interface PartPrint {
   turned?: boolean;
   copies?: number;
   skip?: boolean;
+  noLabel?: boolean;
 }
 
 export interface PrintRecord {

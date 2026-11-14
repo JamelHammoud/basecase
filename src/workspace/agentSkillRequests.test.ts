@@ -1,12 +1,16 @@
 import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
-import { skillFiles, type Skill } from '../skills/artifacts';
+import walk from '../routines/kit/quad-servo-velocity-tracking.skill.json';
+import { currentDesign, skillFiles, skillFromTraining, skillHash, type Skill } from '../skills/artifacts';
+import { environmentHash } from '../skills/environment';
+import { kitEnvironment } from '../skills/kitEnvironment';
+import { kitReward } from '../skills/kitRewards';
 import { fixtureModel } from '../skills/fixtureModels';
 import type { ForgeJob } from '../skills/forgeRunner';
 import type { SkillRunner } from '../skills/skillsClient';
 import { runSkillsJob } from '../skills/skillsJob';
-import type { SkillRecord } from '../skills/skillRecords';
-import { SkillsRuntime, type ForgeFactory } from '../skills/skillsRuntime';
+import { skillRecord, type SkillRecord } from '../skills/skillRecords';
+import { designOf, SkillsRuntime, type ForgeFactory } from '../skills/skillsRuntime';
 import { SKILL_HANDLERS } from './agentSkillRequests';
 
 async function rig(fixture: string) {
@@ -40,7 +44,23 @@ async function rig(fixture: string) {
     setAction: () => {},
   };
 
-  return { ctx, runtime, jobs, records };
+  return { ctx, runtime, jobs, records, saved };
+}
+
+function readyWalk(saved: Map<string, Skill>, records: SkillRecord[]) {
+  const model = fixtureModel('quad-servo');
+  const environment = kitEnvironment(model, 'velocity-tracking');
+  const current = currentDesign({ design: designOf(model), model, environment });
+  const controller = { ...(walk as unknown as Skill).controller, robot: environment.robot } as Skill['controller'];
+  const trained = skillFromTraining({ name: 'Velocity tracking', start: null, current, environment, controller });
+  const evidence = {
+    ...(walk as unknown as Skill).evidence!,
+    binding: { ...trained.binding, environment: environmentHash(environment) },
+  };
+  const skill: Skill = { ...trained, evidence };
+
+  saved.set(skillFiles(skillHash(skill)).skill, skill);
+  records.push(skillRecord(skill, { kit: 'velocity-tracking' }));
 }
 
 const bend = {
@@ -118,4 +138,38 @@ describe('agent skill tools', () => {
 
     expect((await SKILL_HANDLERS.skill_train({ kit: 'walk' }, ctx)).text).toMatch(/Teach this robot with draft_skill/);
   });
+
+  it('coaches a ready Walk in two calls, and keeps the old skill when Forge returns nothing', async () => {
+    const { ctx, runtime, jobs, records, saved } = await rig('quad-servo');
+
+    readyWalk(saved, records);
+
+    const words = 'lift your feet higher';
+    const brief = (await SKILL_HANDLERS.skill_coach({ skill: 'walk', words }, ctx)).text;
+
+    expect(brief).toContain('- foot_clearance: ');
+    expect(brief).toContain('Call coach_skill again');
+
+    const bad = await SKILL_HANDLERS.skill_coach(
+      { skill: 'Walk', words, reward: 'x = 1', signal: 'speed', direction: 'up' },
+      ctx,
+    );
+
+    expect(bad.text).toMatch(/^Change the revision: The reward doesn’t parse/);
+
+    const reward = `${kitReward(fixtureModel('quad-servo'), 'velocity-tracking')}\n\ndef lift(state):\n    return 1.0\n`;
+    const started = await SKILL_HANDLERS.skill_coach(
+      { skill: 'Walk', words, reward, signal: 'foot_clearance', direction: 'up' },
+      ctx,
+    );
+
+    expect(started.text).toMatch(/^Coaching Walk in Forge/);
+    await runtime.settled();
+    expect(jobs.map((j) => j.job.name)).toEqual(['Coach: Velocity tracking']);
+    expect((jobs[0].job.job as { warmPolicy?: unknown }).warmPolicy).toBeTruthy();
+    expect(records).toHaveLength(1);
+    expect((await SKILL_HANDLERS.skill_list({}, ctx)).text).toContain(
+      '- Dropped; the old skill stays. stub forge: no policy',
+    );
+  }, 60_000);
 });

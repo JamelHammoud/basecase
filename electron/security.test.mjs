@@ -17,9 +17,10 @@ import { importMakerCad } from './cadImport/importMakerCad.mjs';
 import { openCadFile } from './cadImport/openCadFile.mjs';
 import { encodeReply, decodeReply } from './cadImport/reply.mjs';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
+import { registerPhoneHandlers } from './phone/phoneRoutes.mjs';
 import { assertPublicUrl, isPublicAddress, publicFetch, readCapped } from './publicFetch.mjs';
 import { RobotLink } from './robot/robotLink.mjs';
-import { registerRobotHandlers } from './robot/robotRoutes.mjs';
+import { registerRobotHandlers, ROBOT_CALLS } from './robot/robotRoutes.mjs';
 import { checkedRobotSpec } from './robot/robotSpec.mjs';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -381,6 +382,12 @@ describe('tuning a part’s dimensions', () => {
 
 describe('robot daemon', () => {
   const ARM = { family: 'feetech', ids: [1, 2], class: 'arm', emulated: true };
+  const ROS2_ARM = {
+    family: 'ros2',
+    emulated: true,
+    controller: { kind: 'forward_position', topic: '/forward_position_controller/commands' },
+    joints: ['shoulder', 'elbow'],
+  };
 
   it('refuses any port, real robot or smuggled argument, and starts nothing', () => {
     const spawnFn = vi.fn();
@@ -397,6 +404,12 @@ describe('robot daemon', () => {
       { ...ARM, ids: ['1 --port /dev/null'] },
       { ...ARM, ids: Array.from({ length: 33 }, (_, i) => i + 1) },
       Object.assign(Object.create({ port: '/dev/ttyUSB0' }), ARM),
+      { ...ROS2_ARM, controller: { kind: 'forward_position', topic: '/x/../commands' } },
+      { ...ROS2_ARM, controller: { kind: 'forward_position', topic: '/x;rm -rf/commands' } },
+      { ...ROS2_ARM, joints: ['--port', '/dev/ttyUSB0'] },
+      { ...ROS2_ARM, joints: ['a,b'] },
+      { ...ROS2_ARM, interface: 'en0' },
+      { ...ROS2_ARM, emulated: false },
       null,
       '--port /dev/ttyUSB0',
     ];
@@ -415,16 +428,38 @@ describe('robot daemon', () => {
   it('answers robot channels only from the app frame', () => {
     const handlers = new Map();
     const ipcMain = { handle: (channel, fn) => handlers.set(channel, fn), on: () => {} };
-    const link = { connect: vi.fn(), command: vi.fn(), disconnect: vi.fn(), state: vi.fn() };
+    const link = { connect: vi.fn(), command: vi.fn(), disconnect: vi.fn(), state: vi.fn(), policy: vi.fn() };
 
+    link.calibrate = vi.fn();
     registerRobotHandlers(trustedIpc(ipcMain, 'app://basecase'), link);
 
-    for (const channel of ['robot:connect', 'robot:command', 'robot:disconnect', 'robot:state']) {
+    for (const channel of Object.keys(ROBOT_CALLS)) {
       const evil = { senderFrame: { parent: null, url: 'https://example.com/' } };
 
       expect(() => handlers.get(channel)(evil, ARM), channel).toThrow('Refused');
     }
 
     expect(link.connect).not.toHaveBeenCalled();
+    expect(link.policy).not.toHaveBeenCalled();
+    expect(link.calibrate).not.toHaveBeenCalled();
+  });
+});
+
+describe('phone pairing', () => {
+  it('answers phone channels only from the app frame', () => {
+    const handlers = new Map();
+    const ipcMain = { handle: (channel, fn) => handlers.set(channel, fn), on: () => {} };
+    const phone = { pair: vi.fn(), unpair: vi.fn(), state: vi.fn() };
+
+    registerPhoneHandlers(trustedIpc(ipcMain, 'app://basecase'), phone);
+
+    for (const channel of ['phone:pair', 'phone:unpair', 'phone:state']) {
+      const evil = { senderFrame: { parent: null, url: 'https://example.com/' } };
+
+      expect(() => handlers.get(channel)(evil), channel).toThrow('Refused');
+    }
+
+    expect(phone.pair).not.toHaveBeenCalled();
+    expect(phone.unpair).not.toHaveBeenCalled();
   });
 });

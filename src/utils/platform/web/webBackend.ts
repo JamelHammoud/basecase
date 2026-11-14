@@ -1,9 +1,12 @@
-import type { AcpStatusInfo, CustomModelDefinition, PurchaseRecord } from '../../../types/robotics';
+import type { AcpStatusInfo, CustomModelDefinition, Purchases, StoredPurchase } from '../../../types/robotics';
+import { checkedPrice, isOnHandCount } from '../../onHand';
 import type { TrainerStatus } from '../types';
 import { idbAll, idbDelete, idbGet, idbPut } from './idb';
 import { trainedPolicy, trainedSkill } from './webTrained';
 import { deleteScene, getScene, listScenes, saveScene, saveScenePreview } from './webScenes';
 import { getSkill, saveSkill } from './webSkills';
+import { errorMessage } from '../../errorMessage';
+import { newestModelFirst } from '../../modelList';
 
 type Body = Record<string, unknown>;
 
@@ -20,10 +23,7 @@ const TRAINER: TrainerStatus = { uv: false, ready: false, running: [], desktopOn
 
 const OK = { ok: true };
 
-const newestModel = (a: CustomModelDefinition, b: CustomModelDefinition) =>
-  (b.createdAt || '').localeCompare(a.createdAt || '');
-
-const listModels = async () => (await idbAll<CustomModelDefinition>('models')).sort(newestModel);
+const listModels = async () => (await idbAll<CustomModelDefinition>('models')).sort(newestModelFirst);
 
 async function saveModel(model: CustomModelDefinition) {
   const record = {
@@ -40,15 +40,27 @@ async function saveModel(model: CustomModelDefinition) {
 async function deleteModel(id: string) {
   await idbDelete('models', id);
 
-  return listModels();
+  return OK;
 }
 
-const listPurchases = async () => (await idbGet<Record<string, PurchaseRecord>>('settings', 'purchases')) ?? {};
+const listPurchases = async () => (await idbGet<Purchases>('settings', 'purchases')) ?? {};
 
-async function savePurchase({ key, record }: { key: string; record: PurchaseRecord | null }) {
+function storedRecord(record: StoredPurchase): StoredPurchase | null {
+  if (record.onHand !== undefined && !isOnHandCount(record.onHand)) throw new Error('On hand must be a whole count');
+
+  const price = checkedPrice(record);
+
+  if (price) return { ...price, checkedAt: price.checkedAt || new Date().toLocaleDateString('en-CA') };
+
+  return record.onHand ? { onHand: record.onHand } : null;
+}
+
+async function savePurchase({ key, record }: { key: string; record: StoredPurchase | null }) {
   const all = await listPurchases();
 
-  if (record) all[key] = { ...record, checkedAt: record.checkedAt || new Date().toLocaleDateString('en-CA') };
+  const stored = record && storedRecord(record);
+
+  if (stored) all[key] = stored;
   else delete all[key];
 
   await idbPut('settings', 'purchases', all);
@@ -87,7 +99,7 @@ const ROUTES: Record<string, Route> = {
   'save-model': (b) => saveModel(b as unknown as CustomModelDefinition),
   'delete-model': (b) => deleteModel(String(b.modelId)),
   purchases: listPurchases,
-  'purchase-save': (b) => savePurchase(b as { key: string; record: PurchaseRecord | null }),
+  'purchase-save': (b) => savePurchase(b as { key: string; record: StoredPurchase | null }),
   scenes: listScenes,
   scene: (_, params) => getScene(params.get('id') ?? ''),
   'save-scene': (b) => saveScene(b),
@@ -98,6 +110,8 @@ const ROUTES: Record<string, Route> = {
   'policy-delete': () => false,
   skill: async (_, params) => (await getSkill(params.get('hash'))) ?? trainedSkill(params.get('hash') ?? ''),
   'skill-save': (b) => saveSkill(b),
+  snapshot: () => null,
+  'snapshot-keep': () => [],
   'simready-status': () => ({ uv: false, ready: false }),
   'simready-file': () => ({ data: null }),
   'print-status': () => ({ slicers: [], downloads: {}, bambuConnect: false }),
@@ -133,7 +147,7 @@ export async function webRequest(path: string, init?: RequestInit): Promise<Resp
   try {
     return json(await route(parsed(init?.body), url.searchParams));
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
+    return json({ error: errorMessage(e) }, 500);
   }
 }
 

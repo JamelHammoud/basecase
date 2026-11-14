@@ -11,9 +11,9 @@ import {
   Select,
   useScrollFade,
   BookmarkAddIcon,
-  CopyIcon,
   CrosshairIcon,
   DeleteIcon,
+  DuplicateIcon,
   FloorIcon,
   GroupIcon,
   IntersectIcon,
@@ -21,11 +21,13 @@ import {
   UngroupIcon,
   UnionIcon,
 } from '../../design-system';
+import { SizeLine } from '../PartDetails';
 import { GroupName } from './GroupName';
+import { MirrorButton } from './MirrorButton';
 import { QuarterTurns } from './QuarterTurns';
-import { MATERIALS, type InspectorProps } from './types';
-
-const fmt = (v: number) => String(Math.round(v * 10) / 10);
+import { MATERIALS, materialTag, type InspectorProps } from './types';
+import { keyFor } from '../../app/shortcuts';
+import { plural } from '../../../electron/plural.mjs';
 
 const isWholeGroup = (selectedParts: ScenePart[], parts: ScenePart[]): boolean => {
   const base = selectedParts[0];
@@ -44,6 +46,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
   onUngroup,
   onGroup,
   onDuplicate,
+  onMirror,
   onSaveAsModel,
   onDelete,
 }) => {
@@ -63,8 +66,8 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
               />
             </div>
           ) : (
-            <div className="text-[14px] font-semibold text-white/95 truncate h-8 flex items-center">
-              {selectedParts.length} parts
+            <div className="text-[14px] font-semibold text-white/95 truncate h-[32px] flex items-center">
+              {plural(selectedParts.length, 'part')}
             </div>
           )}
         </div>
@@ -72,7 +75,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
           <IconButton
             icon={<UngroupIcon className="w-3.5 h-3.5" />}
             title="Ungroup"
-            shortcut="⇧⌘G"
+            shortcut={keyFor('ungroup')}
             size="xs"
             onClick={onUngroup}
           />
@@ -81,18 +84,19 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
           <IconButton
             icon={<GroupIcon className="w-3.5 h-3.5" />}
             title="Group"
-            shortcut="⌘G"
+            shortcut={keyFor('group')}
             size="xs"
             onClick={onGroup}
           />
         )}
         <IconButton
-          icon={<CopyIcon className="w-3.5 h-3.5" />}
+          icon={<DuplicateIcon className="w-3.5 h-3.5" />}
           title="Duplicate"
-          shortcut="⌘D"
+          shortcut={keyFor('duplicate')}
           size="xs"
           onClick={onDuplicate}
         />
+        <MirrorButton onMirror={onMirror} />
         <IconButton
           icon={<BookmarkAddIcon className="w-3.5 h-3.5" />}
           title="Save to Library"
@@ -102,7 +106,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
         <IconButton
           icon={<DeleteIcon className="w-3.5 h-3.5" />}
           title="Delete"
-          shortcut="⌫"
+          shortcut={keyFor('delete')}
           size="xs"
           variant="danger"
           onClick={onDelete}
@@ -110,12 +114,7 @@ const MultiHeader: React.FC<InspectorProps & { wholeGroup: boolean; size: number
       </div>
       <MetaLine
         className="text-[12.5px] text-white/50 tabular mt-0.5"
-        items={[
-          wholeGroup && `${selectedParts.length} parts`,
-          <>
-            {fmt(size[0])} × {fmt(size[1])} × {fmt(size[2])} <span className="text-white/50">mm</span>
-          </>,
-        ]}
+        items={[wholeGroup && plural(selectedParts.length, 'part'), <SizeLine mm={size} />]}
       />
     </div>
   );
@@ -127,6 +126,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
   onAlign,
   onDistribute,
   onDropToFloor,
+  onCenter,
   onMoveSelection,
   onRotateSelection,
 }) => (
@@ -142,7 +142,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
           <IconButton
             icon={<FloorIcon className="w-3.5 h-3.5" />}
             title="Drop to floor"
-            shortcut="F"
+            shortcut={keyFor('drop-to-floor')}
             size="xs"
             onClick={onDropToFloor}
           />
@@ -150,7 +150,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
             icon={<CrosshairIcon className="w-3.5 h-3.5" />}
             title="Center on origin"
             size="xs"
-            onClick={() => onMoveSelection({ 0: 0, 2: 0 })}
+            onClick={onCenter}
           />
         </>
       }
@@ -160,7 +160,7 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
           <NumberInput
             key={axis}
             label={axis}
-            title={`Center ${axis}`}
+            aria-label={`Center ${axis}`}
             value={center[idx]}
             onChange={(v, l) => onMoveSelection({ [idx]: v }, l)}
           />
@@ -177,13 +177,14 @@ const MultiTransformSections: React.FC<InspectorProps & { center: number[] }> = 
 const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoolean, onUpdateMany }) => {
   const base = selectedParts[0];
   const colors = new Set(selectedParts.map((p) => p.color.toLowerCase()));
-  const materials = new Set(selectedParts.map((p) => p.mechanicalTag || '3D Printed PLA/PETG'));
+  const allSolid = selectedParts.every((p) => p.role === 'solid');
+  const materials = new Set(selectedParts.map(materialTag));
 
   return (
     <>
       <Section title="Combine">
         <StripGroup>
-          <StripButton title="Merge into one solid" onClick={() => onBoolean('union')}>
+          <StripButton onClick={() => onBoolean('union')}>
             <UnionIcon className="w-4 h-4" />
             Union
           </StripButton>
@@ -195,7 +196,7 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
             <SubtractIcon className="w-4 h-4" />
             Subtract
           </StripButton>
-          <StripButton title="Keep only the shared volume" onClick={() => onBoolean('intersect')}>
+          <StripButton onClick={() => onBoolean('intersect')}>
             <IntersectIcon className="w-4 h-4" />
             Intersect
           </StripButton>
@@ -209,12 +210,14 @@ const MultiAppearance: React.FC<InspectorProps> = ({ selectedParts, parts, onBoo
           suggestions={parts.map((p) => p.color)}
           onChange={(color) => onUpdateMany({ color })}
         />
-        <Select
-          aria-label="Material"
-          value={materials.size > 1 ? '' : [...materials][0]}
-          onChange={(e) => e.target.value && onUpdateMany({ mechanicalTag: e.target.value })}
-          options={materials.size > 1 ? [{ value: '', label: 'Mixed' }, ...MATERIALS] : MATERIALS}
-        />
+        {allSolid && (
+          <Select
+            aria-label="Material"
+            value={materials.size > 1 ? '' : [...materials][0]}
+            onChange={(e) => e.target.value && onUpdateMany({ mechanicalTag: e.target.value })}
+            options={materials.size > 1 ? [{ value: '', label: 'Mixed' }, ...MATERIALS] : MATERIALS}
+          />
+        )}
       </Section>
     </>
   );

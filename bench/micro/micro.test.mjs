@@ -3,37 +3,58 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { specToPart } from '../../src/agent/agentScene';
+import { buildCase, builderRobot } from '../../src/cases/caseBuilder';
+import { buildRig } from '../../src/utils/kinematics';
 import { parseBomTotal, parseCheckRows } from './adapters.mjs';
-import { gradeTask } from './grade.mjs';
-import { recordFromFixture } from './materialize.mjs';
+import { bomChange } from './caseChecks.mjs';
+import { robotsIn } from './caseAppChecks.mjs';
+import { gradeTask, startFacts } from './grade.mjs';
+import { keepStartCases, recordFromFixture } from './materialize.mjs';
 import { passHatK, suiteStats, statsMarkdown } from './stats.mjs';
-import { SEED_TASKS, selectTasks, stubTasks } from './tasks/index.mjs';
+import { ALL_TASKS, HARVESTED_TASKS, SEED_TASKS, selectTasks, stubTasks } from './tasks/index.mjs';
 
-const build = (fixture) => recordFromFixture(fixture, specToPart);
+const build = (fixture) => recordFromFixture(fixture, specToPart, { buildCase, builderRobot, buildRig });
+const APP_GRADED = new Set([
+  'D1',
+  ...SEED_TASKS.filter((t) => ['case-apps', 'case-code'].includes(t.category)).map((t) => t.id),
+]);
 const task = (id) => SEED_TASKS.find((t) => t.id === id);
 
+async function solved(t, start) {
+  if (t.solutionScene) return t.solutionScene();
+
+  return t.solution ? keepStartCases(await build(t.solution()), start) : start;
+}
+
 describe('seed tasks', () => {
-  it('covers the 29 seed tasks with a held-out third', () => {
-    expect(SEED_TASKS).toHaveLength(29);
-    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(29);
-    expect(selectTasks({ split: 'heldout' })).toHaveLength(10);
+  it('covers the 56 seed tasks with a held-out third', () => {
+    expect(SEED_TASKS).toHaveLength(56);
+    expect(new Set(SEED_TASKS.map((t) => t.id)).size).toBe(56);
+    expect(selectTasks({ split: 'heldout' })).toHaveLength(18);
     expect(selectTasks({ split: 'tune' }).some((t) => t.heldOut)).toBe(false);
   });
 
+  it('keeps harvested tasks valid: unique ids, numbered H1 to Hn, each a planted fault', () => {
+    expect(new Set(ALL_TASKS.map((t) => t.id)).size).toBe(ALL_TASKS.length);
+    expect(selectTasks()).toHaveLength(ALL_TASKS.length);
+    expect(HARVESTED_TASKS.map((t) => t.id)).toEqual(HARVESTED_TASKS.map((_, i) => `H${i + 1}`));
+    expect(HARVESTED_TASKS.every((t) => t.fixture && t.solution && t.harvested)).toBe(true);
+  });
+
   it('never passes a broken start scene, and passes every known fix', async () => {
-    for (const t of SEED_TASKS.filter((x) => x.fixture)) {
-      const start = await build(t.fixture());
+    for (const t of ALL_TASKS.filter((x) => x.fixture || x.startScene)) {
+      const start = t.startScene ? await t.startScene() : await build(t.fixture());
       const atStart = await gradeTask(t, { before: start, after: start });
 
       expect([t.id, atStart.status]).not.toEqual([t.id, 'pass']);
       expect([t.id, atStart.status]).not.toEqual([t.id, 'error']);
 
-      if (!t.solution && !t.solutionAnswer) continue;
+      if (!t.solution && !t.solutionAnswer && !t.solutionScene) continue;
 
-      const fixed = t.solution ? await build(t.solution()) : start;
+      const fixed = await solved(t, start);
       const graded = await gradeTask(t, { before: start, after: fixed, answer: t.solutionAnswer });
 
-      expect([t.id, graded.status]).toEqual([t.id, 'pass']);
+      expect([t.id, graded.status]).toEqual([t.id, APP_GRADED.has(t.id) ? 'unavailable' : 'pass']);
     }
   }, 60000);
 });
@@ -101,6 +122,147 @@ describe('graders', () => {
     });
 
     expect(wired.status).toBe('fail');
+  });
+});
+
+describe('the Case task', () => {
+  const CASE_ID = 'reach-a-spot-past-a-block';
+  const START_USD = 57.6;
+  const ran = (passes) => ({
+    data: {
+      id: CASE_ID,
+      name: 'Reach a Spot past a Block',
+      runs: 20,
+      passes,
+      status: passes >= 18 ? 'pass' : 'fail',
+      medianMargin: passes >= 18 ? 0.84 : -0.83,
+      failures: passes < 20 ? [{ label: 'Missed', runs: 20 - passes }] : [],
+      refusal: null,
+      cached: false,
+    },
+  });
+  const appWith = ({ run = ran(20), bomUsd = START_USD } = {}) => ({
+    call: async (kind, payload) => {
+      if (kind === 'bom') return { data: { estimatedUsd: bomUsd, budgetUsd: null, actuatorsUsd: 49.9 } };
+
+      return kind === 'run_case' && payload.id === CASE_ID ? run : { error: `Unknown request "${kind}"` };
+    },
+  });
+
+  async function graded({ after, run, bomUsd, startUsd = START_USD }) {
+    const start = await build(task('D1').fixture());
+    const facts = await startFacts(task('D1'), appWith({ bomUsd: startUsd }));
+
+    return gradeTask(task('D1'), {
+      before: start,
+      after: after?.(start) ?? start,
+      app: appWith({ run, bomUsd }),
+      ...facts,
+    });
+  }
+
+  it('builds the Case into the start scene and keeps it in the fix', async () => {
+    const start = await build(task('D1').fixture());
+    const fixed = keepStartCases(await build(task('D1').solution()), start);
+
+    expect(start.project.cases.map((c) => [c.id, c.task.seconds])).toEqual([[CASE_ID, 8]]);
+    expect(fixed.project.cases).toBe(start.project.cases);
+  });
+
+  it('fails the start on its Checks row and passes a fix within 20% of its BOM', async () => {
+    expect((await graded({ run: ran(0) })).status).toBe('fail');
+    expect((await graded({ run: ran(20), bomUsd: 59.9 })).status).toBe('pass');
+    expect((await graded({ run: ran(17), bomUsd: 59.9 })).status).toBe('fail');
+  });
+
+  it('fails a fix that costs over 20% more, or edits the Case, or deletes it', async () => {
+    const costly = await graded({ run: ran(20), bomUsd: 72.45 });
+    const edited = await graded({
+      after: (s) => ({
+        ...s,
+        project: { ...s.project, cases: s.project.cases.map((c) => ({ ...c, task: { ...c.task, seconds: 13 } })) },
+      }),
+    });
+    const gone = await graded({
+      after: (s) => ({ ...s, project: { ...s.project, cases: [] } }),
+      run: { ok: false, problem: `No Case ${CASE_ID} in this scene.` },
+    });
+
+    expect(costly.checks.find((c) => /BOM/.test(c.name))).toMatchObject({
+      pass: false,
+      detail: '~$72.45 from ~$57.6 (+26%)',
+    });
+    expect(edited.checks.find((c) => /left as it was/.test(c.name))).toMatchObject({ pass: false, detail: 'Edited' });
+    expect(gone.checks.map((c) => c.pass)).toEqual([false, false, true]);
+  });
+
+  it('is unavailable, never a pass, without the start BOM or run_case', async () => {
+    const start = await build(task('D1').fixture());
+    const noStartBom = await gradeTask(task('D1'), { before: start, after: start, app: appWith() });
+    const noRunCase = await graded({ run: { error: 'Unknown request "run_case"' } });
+
+    expect(noStartBom).toMatchObject({ status: 'unavailable', needs: ['bom'] });
+    expect(noRunCase).toMatchObject({ status: 'unavailable', needs: ['runCase'] });
+    expect(bomChange(50, 60)).toBeCloseTo(0.2);
+    expect(bomChange(0, 60)).toBeNull();
+    expect(bomChange(50, null)).toBeNull();
+  });
+});
+
+describe('the Case app tasks', () => {
+  const ran = (data) => ({ call: async (kind) => (kind === 'run_case' ? { data } : { error: kind }) });
+  const RAN = { id: 'reach-a-spot', runs: 20, passes: 3, status: 'fail', failures: [], refusal: null };
+  const rover = async () => build(task('E3').solution());
+  const withConsole = (scene, patch) => ({
+    ...scene,
+    project: {
+      ...scene.project,
+      cases: scene.project.cases.map((c) => ({ ...c, console: { ...c.console, ...patch } })),
+    },
+  });
+
+  it('scores the robot, the console, the fit and the run apart', async () => {
+    const after = await rover();
+    const grade = await gradeTask(task('E3'), { before: after, after, app: ran(RAN) });
+
+    expect(grade.status).toBe('pass');
+    expect(grade.checks.map((c) => c.pass)).toEqual([true, true, true, true]);
+  });
+
+  it('fails a console without the panel the sentence names, and a robot the Case refuses', async () => {
+    const after = await rover();
+    const blind = withConsole(after, {
+      panels: [{ id: 'tries', kind: 'list', of: 'tries' }],
+      layout: { areas: [{ canvas: true }, { size: 300, panels: ['tries'] }] },
+    });
+    const grade = await gradeTask(task('E3'), {
+      before: after,
+      after: blind,
+      app: ran({ ...RAN, refusal: 'No wheels' }),
+    });
+
+    expect(grade.checks.map((c) => c.pass)).toEqual([true, false, false, false]);
+    expect(grade.checks[1].detail).toBe('Lacks camera panel (has list)');
+  });
+
+  it('scores an input the app lacks as named, not built, instead of a pass or a fail', async () => {
+    const after = withConsole(await rover(), { input: ['keys'] });
+    const graded = (built) =>
+      gradeTask({ ...task('E3'), grade: task('E1').grade }, { before: after, after, app: ran(RAN), adapters: built });
+
+    expect((await graded({ inputBuilt: () => false })).checks[1]).toMatchObject({
+      pass: null,
+      detail: 'camera named, not built',
+    });
+    expect((await graded({ inputBuilt: () => true })).checks[1]).toMatchObject({ pass: false });
+  });
+
+  it('counts each joint chain as one robot', async () => {
+    const one = await rover();
+    const [a, b] = [one.project.joints, one.project.joints.map((j) => ({ ...j, parent: ['x'], child: ['y'] }))];
+
+    expect(robotsIn(one)).toEqual([{ joints: 2, spinning: 2, names: ['Rover'], camera: false }]);
+    expect(robotsIn({ ...one, project: { joints: [...a, b[0]] } })).toHaveLength(2);
   });
 });
 

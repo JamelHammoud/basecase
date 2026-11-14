@@ -1,14 +1,9 @@
-import { motorsCanRun, radiansFromCounts, type RobotState } from './robotState';
-import { robotBenchDriving, robotSceneJoints, robotSnapshot, sendRobotCommand } from './robotStore';
+import { measuredRadians, motorsCanRun, type RobotState } from './robotState';
+import { robotBenchDriving, robotFaultHeld, robotSceneJoints, robotSnapshot, sendRobotCommand } from './robotStore';
 
 export const MIRROR_EVERY_MS = 25;
 
-function measured(state: RobotState, k: number): number {
-  const id = state.spec?.ids[k];
-  const position = state.status?.joints.find((j) => j.id === id)?.position;
-
-  return typeof position === 'number' ? radiansFromCounts(position) : 0;
-}
+const measured = (state: RobotState, k: number): number => measuredRadians(state, state.spec?.ids[k]) ?? 0;
 
 export function intentFromSim(
   state: RobotState,
@@ -29,7 +24,8 @@ export function offerSimTargets(ids: readonly string[], targets: ArrayLike<numbe
   const state = robotSnapshot();
   const joints = robotSceneJoints();
 
-  if (state.link !== 'connected' || !motorsCanRun(state.mode) || !joints || robotBenchDriving()) return;
+  if (state.link !== 'connected' || !motorsCanRun(state.mode) || !joints || robotBenchDriving() || robotFaultHeld())
+    return;
 
   if (joints.length !== state.spec?.ids.length) return;
 

@@ -20,9 +20,11 @@ keywords:
 related:
   - group-parts
   - add-objects-to-the-scene
+  - replay-a-robots-lidar-scan
 covers:
   - src/components/layers/
   - src/workspace/contextMenuItems.tsx
+  - src/workspace/partActions.tsx
   - src/three/viewport/picking.ts
   - src/readiness/buildChecks.ts
 ---
@@ -36,13 +38,21 @@ See every part in the scene as a list, find one by name, and hide or lock parts 
 
 The lock beside the eye locks the part instead.
 
-The header counts parts and cutouts, and the footer gives the **Overall size** of the visible parts. Double-click a row to rename the part. Shift-click or [[⌘]]-click a row to add or remove that one part. Right-click a row for the same menu as the part on the canvas.
+The header counts parts and cutouts, and the footer gives the **Overall size** of the visible parts. Double-click a row to rename the part. **Rename** in the part's right-click menu or [[⌘K]] opens Layers with that row's name ready to type. Shift-click or [[⌘]]-click a row to add or remove that one part. Right-click a row for the same menu as the part on the canvas.
+
+![The right-click menu of Servo Bracket in Layers, with Rename first](/help/organize-parts-in-layers/part-menu.png)
+
+![The Servo Bracket row in Layers with its name field open, renamed Shoulder Bracket](/help/organize-parts-in-layers/rename.png)
 
 ## What hiding and locking do
 
 - **Hide** takes the part off the canvas. Checks leave hidden parts out of clash, fit and assembly checks and say how many they skipped.
 - **Lock** keeps the part from being clicked or dragged on the canvas, so you can work on what's behind it. [[⌘]]-click still selects a locked part, and so does its row.
 
-The eye or lock stays on the row while the part is hidden or locked. **Hide** and **Lock** are also in the part's right-click menu, as **Show** and **Unlock** once they're on.
+The eye or lock stays on the row while the part is hidden or locked. **Hide** and **Lock** are also in the part's right-click menu and [[⌘K]], as **Show** and **Unlock** once they're on.
 
-An empty scene leaves Layers empty. To bring robots, objects and saved models in, use **Robots**, **Objects** and **Library** in the same view rail.
+An empty scene leaves Layers empty. To bring robots, objects and saved models in, use **Parts** and **Library** in the same view rail.
+
+## Sensor data rows
+
+While a simulation with a LiDAR is loaded, the LiDAR's scan gets its own row under the robot, marked with four blue dots. Its eye hides the scan on the canvas, and clicking the row selects nothing. Steps are in [Replay a robot's LiDAR scan](/help/replay-a-robots-lidar-scan).

@@ -2,6 +2,7 @@ import { Readable, Writable } from 'node:stream';
 import path from 'node:path';
 import { AgentSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclientprotocol/sdk';
 import { synthesizeCustomModelFromRequest } from './acp-3d-model.mjs';
+import { plural } from './plural.mjs';
 
 let sessionCounter = 1;
 const sessions = new Map();
@@ -167,7 +168,7 @@ class Robotics3DAcpAgent {
     });
 
     const summaryMsg =
-      `Created 3D model **${modelDef.name}** (\`${modelDef.defaultDimensions.width} × ${modelDef.defaultDimensions.height} × ${modelDef.defaultDimensions.depth} mm\`, ${modelDef.nodes.length} geometry node${modelDef.nodes.length > 1 ? 's' : ''}) and saved it to your Individual Models Library (\`${modelRelPath}\`).\n\n` +
+      `Made 3D model **${modelDef.name}** (\`${modelDef.defaultDimensions.width} × ${modelDef.defaultDimensions.height} × ${modelDef.defaultDimensions.depth} mm\`, ${plural(modelDef.nodes.length, 'geometry node')}) and saved it to your Individual Models Library (\`${modelRelPath}\`).\n\n` +
       `[MODEL_CREATED:${modelDef.id}]`;
 
     await this.conn.sessionUpdate({

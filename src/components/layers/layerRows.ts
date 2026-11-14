@@ -1,6 +1,7 @@
 import { isBooleanPart, operandsOf } from '../../booleans/parts';
 import type { ScenePart } from '../../types/robotics';
 import { selectionBounds } from '../../utils/selection';
+import { plural } from '../../../electron/plural.mjs';
 
 export interface PartLayerRow {
   type: 'part';
@@ -73,7 +74,7 @@ export function layerRows(parts: ScenePart[], collapsed: ReadonlySet<string>, qu
   return rows;
 }
 
-export function overallSize(parts: ScenePart[]): string | null {
+export function overallSize(parts: ScenePart[]): number[] | null {
   const solid = parts.filter((p) => p.visible && p.role !== 'reference');
 
   if (solid.length === 0) {
@@ -82,13 +83,40 @@ export function overallSize(parts: ScenePart[]): string | null {
 
   const { min, max } = selectionBounds(solid);
 
-  return [0, 1, 2].map((i) => Math.round(max[i] - min[i])).join(' × ');
+  return [0, 1, 2].map((i) => max[i] - min[i]);
 }
-
-const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
 
 export function layersTitle(parts: ScenePart[]): string[] {
   const cutouts = parts.filter((p) => p.role === 'cutout').length;
 
   return cutouts > 0 ? [plural(parts.length, 'part'), plural(cutouts, 'cutout')] : [plural(parts.length, 'part')];
+}
+
+const wholeGroup = (selected: ScenePart[], parts: ScenePart[]) => {
+  const id = selected[0]?.group?.id;
+
+  if (!id || selected.some((p) => p.group?.id !== id)) return null;
+
+  return parts.filter((p) => p.group?.id === id).length === selected.length ? id : null;
+};
+
+export function renameTarget(parts: ScenePart[], selectedIds: string[]): string | null {
+  const ids = new Set(selectedIds);
+  const selected = parts.filter((p) => ids.has(p.id));
+
+  if (selected.length === 0 || selected.length !== ids.size) return null;
+
+  return selected.length === 1 ? selected[0].id : wholeGroup(selected, parts);
+}
+
+export function openFor(collapsed: ReadonlySet<string>, parts: ScenePart[], id: string | null): ReadonlySet<string> {
+  const group = parts.find((p) => p.id === id)?.group?.id;
+
+  if (!group || !collapsed.has(group)) return collapsed;
+
+  const next = new Set(collapsed);
+
+  next.delete(group);
+
+  return next;
 }

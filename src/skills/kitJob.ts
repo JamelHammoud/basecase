@@ -1,10 +1,12 @@
 import type { Eye } from '../sim/eyes';
+import type { PolicySpec } from '../sim/policy';
 import type { StartArea } from './environment';
 import type { SimModel } from '../sim/mjcfTypes';
 import { kitCommand, type TrainedEntry } from './kitEnvironment';
 import { KIT_ACTION_SCALE, kitRobot, kitTopSpeed, rootHeight } from './kitModel';
 import { kitReward } from './kitRewards';
 import { NEAR_DELAYS, type DelaySteps } from './kitSchedule';
+import { servoGains } from './servoDraws';
 
 const D2R = Math.PI / 180;
 const LOG_STD_MIN = -2.5;
@@ -23,6 +25,7 @@ export interface KitJobOptions {
   delaySteps?: DelaySteps;
   delayRamp?: number;
   warmStart?: string | null;
+  warmPolicy?: PolicySpec | null;
   reverse?: boolean;
   eyes?: Eye[];
   startArea?: StartArea;
@@ -118,7 +121,9 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     ...(options.delaySteps ? { delaySteps: options.delaySteps } : {}),
     ...(options.delayRamp ? { delayRamp: options.delayRamp } : {}),
     ...(options.warmStart ? { warmStart: options.warmStart, logStdMin: LOG_STD_MIN } : {}),
+    ...(!options.warmStart && options.warmPolicy ? { warmPolicy: options.warmPolicy, logStdMin: LOG_STD_MIN } : {}),
     ...(options.eyes?.length ? { eyes: options.eyes } : {}),
     ...(options.startArea ? { startArea: options.startArea } : {}),
+    ...servoGains(model, { seed: options.seed, joints: robot.joints }),
   };
 }

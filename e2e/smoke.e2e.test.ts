@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { box } from '../src/sim/fixtures/parts';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -16,6 +18,19 @@ const sidebarShows = (name: string) =>
 
     return aside?.style.width !== '0px' && aside?.querySelector('h2')?.textContent === title;
   }, name);
+
+const stlDownload = (page: App['page']) =>
+  page.evaluate(() => {
+    const studio = (window as unknown as { __studio: { lastDownload: () => { name: string; base64: string } | null } })
+      .__studio;
+    const file = studio.lastDownload();
+
+    if (!file) return null;
+
+    const bytes = Uint8Array.from(atob(file.base64), (c) => c.charCodeAt(0));
+
+    return { name: file.name, facets: new DataView(bytes.buffer).getUint32(80, true) };
+  });
 
 const blurFocus = () => (document.activeElement as HTMLElement | null)?.blur();
 
@@ -55,7 +70,7 @@ describe('studio smoke test', () => {
     expect(fromSource).toBe(inject('served') === 'dev');
   });
 
-  it('leaves part exports out of ⌘K until the scene has parts', async () => {
+  it('leaves part exports out of ⌘K until the scene has parts, then writes its STL', async () => {
     const command = (name: string) => app.page.getByRole('button', { name, exact: true });
     const searchExports = async () => {
       await app.page.keyboard.press('Meta+k');
@@ -72,9 +87,10 @@ describe('studio smoke test', () => {
     await app.page.keyboard.press('a');
     await app.page.getByRole('button', { name: /^Cube/ }).first().click();
     await searchExports();
-    expect(await command('Export STL').count()).toBe(1);
     expect(await command('Export 3MF Plates').count()).toBe(1);
-    await app.page.keyboard.press('Escape');
+    await command('Export STL').click();
+    await expect.poll(() => stlDownload(app.page)).toMatchObject({ name: expect.stringMatching(/\.stl$/) });
+    expect((await stlDownload(app.page))!.facets).toBeGreaterThanOrEqual(12);
     await app.page.keyboard.press('Meta+z');
     await expect.poll(() => partCount(app.page)).toBe(0);
   });
@@ -107,7 +123,7 @@ describe('studio smoke test', () => {
   it('switches every panel without errors', async () => {
     for (const tab of ['Build', 'Agent', 'Inspect']) await clickTab(tab);
 
-    for (const view of ['Parts', 'Robots', 'Library', 'Layers']) await clickRail(view);
+    for (const view of ['Parts', 'Library', 'Layers']) await clickRail(view);
 
     await app.page.keyboard.press('Meta+b');
     await app.page.keyboard.press('Meta+i');
@@ -149,6 +165,34 @@ describe('Layers rows', () => {
     const hide = row.getByRole('button', { name: 'Hide' });
 
     await expect.poll(() => hide.evaluate((el) => el.checkVisibility({ opacityProperty: true }))).toBe(false);
+  });
+});
+
+describe('command menu', () => {
+  it('names the query when nothing matches', async () => {
+    await app.page.keyboard.press('Meta+k');
+    await app.page.getByLabel('Search commands').fill('zzqx');
+    await expect.poll(() => app.page.getByText('No matches for “zzqx”').count()).toBe(1);
+    await app.page.keyboard.press('Escape');
+    await expect.poll(() => app.page.getByLabel('Search commands').count()).toBe(0);
+  });
+
+  it('duplicates and deletes the selection, like its right-click menu', async () => {
+    const run = async (name: string) => {
+      await app.page.keyboard.press('Meta+k');
+      await app.page.getByLabel('Search commands').fill(name);
+      await app.page.keyboard.press('Enter');
+    };
+
+    await app.page.keyboard.press('a');
+    await app.page.getByRole('button', { name: /^Cube/ }).first().click();
+
+    const before = await partCount(app.page);
+
+    await run('Duplicate');
+    await expect.poll(() => partCount(app.page)).toBe(before + 1);
+    await run('Delete');
+    await expect.poll(() => partCount(app.page)).toBe(before);
   });
 });
 
@@ -203,9 +247,9 @@ describe('studio commands', () => {
 
     await app.page.keyboard.press('m');
     await app.page.mouse.click(box.x + box.width * 0.7, box.y + box.height * 0.75);
-    await app.page.getByPlaceholder('Add a comment').fill('First note');
+    await app.page.getByPlaceholder('e.g. Move this hole 2 mm left').fill('First note');
     await app.page.keyboard.press('Enter');
-    await app.page.getByPlaceholder('Reply').fill('Second note');
+    await app.page.getByPlaceholder('e.g. Moved it 2 mm').fill('Second note');
     await app.page.keyboard.press('Enter');
 
     await comment('First note').hover();
@@ -357,5 +401,33 @@ describe('studio import', () => {
       ['Post', 'mesh'],
     ]);
     expect(app.errors).toEqual([]);
+  });
+});
+
+interface PlacingStudio {
+  load: (record: unknown) => void;
+  sceneRecord: () => { parts: Array<{ position: number[] }> };
+}
+
+describe('placing parts', () => {
+  it('centers a part on the origin from the context menu', async () => {
+    const xz = () =>
+      app.page.evaluate(() => {
+        const [part] = (window as unknown as { __studio: PlacingStudio }).__studio.sceneRecord().parts;
+
+        return [part.position[0], part.position[2]];
+      });
+
+    await app.page.evaluate((record) => (window as unknown as { __studio: PlacingStudio }).__studio.load(record), {
+      name: 'Centering',
+      parts: [box('bracket', [40, 10, 30], [20, 20, 20], 10)],
+      project: DEFAULT_PROJECT,
+    });
+    await expect.poll(() => partCount(app.page)).toBe(1);
+    await clickRail('Layers');
+    await app.page.locator(visible('li'), { hasText: 'bracket' }).first().click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Center on Origin' }).click();
+
+    await expect.poll(xz).toEqual([0, 0]);
   });
 });

@@ -1,7 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useEffectEvent, useRef } from 'react';
 import { CloseIcon } from './glyphs';
 import { createPortal } from 'react-dom';
+import { Button } from './Button';
 import { IconButton } from './IconButton';
+import { runsSheetAction } from './sheetKeys';
+
+export interface ModalAction {
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  tone?: 'primary' | 'danger';
+  autoFocus?: boolean;
+}
 
 export interface ModalProps {
   isOpen: boolean;
@@ -10,7 +20,8 @@ export interface ModalProps {
   subtitle?: React.ReactNode;
   icon?: React.ReactNode;
   children: React.ReactNode;
-  footer?: React.ReactNode;
+  action?: ModalAction;
+  footerStart?: React.ReactNode;
   headerActions?: React.ReactNode;
   maxWidth?: string;
 }
@@ -22,21 +33,37 @@ export const Modal: React.FC<ModalProps> = ({
   subtitle,
   icon,
   children,
-  footer,
+  action,
+  footerStart,
   headerActions,
   maxWidth = 'max-w-2xl',
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+    const dialog = dialogRef.current;
+
+    if (!dialog || [...document.querySelectorAll('[aria-modal="true"]')].at(-1) !== dialog) return;
+
+    if (e.key === 'Escape') {
+      onClose();
+
+      return;
+    }
+
+    if (!action || action.disabled || !runsSheetAction(e, dialog)) return;
+
+    e.preventDefault();
+    action.onClick?.();
+  });
+
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    window.addEventListener('keydown', onKeyDown);
 
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -49,10 +76,11 @@ export const Modal: React.FC<ModalProps> = ({
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`w-full ${maxWidth} max-h-[82vh] flex flex-col rounded-2xl bg-[#222222] ring-1 ring-white/[0.1] shadow-[0_24px_64px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.06)] overflow-hidden animate-sheet-in`}
+        className={`w-full ${maxWidth} max-h-[82vh] flex flex-col rounded-2xl sheet overflow-hidden animate-sheet-in`}
       >
         <div className="flex items-center justify-between gap-[12px] min-h-[60px] px-[20px] py-[16px] shrink-0">
           <div className="flex items-center gap-[12px] min-w-0">
@@ -68,21 +96,36 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
           <div className="flex items-center gap-[4px] shrink-0">
             {headerActions}
-            <IconButton
-              icon={<CloseIcon className="w-4 h-4" />}
-              title="Close"
-              shortcut="Esc"
-              onClick={onClose}
-              size="sm"
-            />
+            {!action && (
+              <IconButton
+                icon={<CloseIcon className="w-4 h-4" />}
+                title="Close"
+                shortcut="Esc"
+                onClick={onClose}
+                size="sm"
+              />
+            )}
           </div>
         </div>
 
         <div className="px-[20px] pb-[20px] overflow-y-auto flex-1">{children}</div>
 
-        {footer && (
-          <div className="px-[20px] py-[12px] border-t border-white/[0.06] flex items-center justify-end gap-[8px] shrink-0">
-            {footer}
+        {action && (
+          <div className="px-[20px] py-[12px] border-t border-white/[0.06] flex items-center gap-[8px] shrink-0">
+            <div className="flex-1 min-w-0 flex items-center gap-[8px]">{footerStart}</div>
+            <Button variant="ghost" title="Cancel" shortcut="Esc" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              variant={action.tone ?? 'primary'}
+              title={action.label}
+              shortcut="↩"
+              disabled={action.disabled}
+              autoFocus={action.autoFocus}
+              onClick={action.onClick}
+            >
+              {action.label}
+            </Button>
           </div>
         )}
       </div>

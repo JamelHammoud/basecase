@@ -18,9 +18,11 @@ related:
 covers:
   - src/workspace/usePartEdits.ts
   - src/workspace/selection.ts
+  - src/workspace/useSelectionOps.ts
   - src/components/inspector/MultiInspector.tsx
   - src/components/inspector/GroupName.tsx
   - src/components/layers/LayerItems.tsx
+  - src/workspace/partActions.tsx
 ---
 
 Keep parts that belong together, such as a leg or a servo bracket, selecting and moving as one.
@@ -38,7 +40,9 @@ A toast says how many parts were grouped, and the group is called “Group 1” 
 - Once you're inside a group, a click selects another of its parts.
 - Shift-click adds or removes a whole group from outside it, or one part from inside it.
 
-In **Layers**, a group is one row you can collapse. Click the row to select every part in it, or double-click it to rename the group.
+Press [[⌘D]] to duplicate a group. The copy of “Leg” is called “Leg copy”, and its parts keep their names.
+
+In **Layers**, a group is one row you can collapse. Click the row to select every part in it, or double-click it to rename the group. **Rename** in the group's right-click menu and in [[⌘K]] opens the same field.
 
 ## Ungroup
 

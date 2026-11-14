@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { createServer } from 'vite';
 import { root } from '../harness.mjs';
-import { recordFromFixture } from './materialize.mjs';
+import { keepStartCases, recordFromFixture } from './materialize.mjs';
 import { startSceneFile } from './tasks/index.mjs';
 
 let server = null;
@@ -28,18 +28,37 @@ export async function specToPartFn() {
   return (await appModule('/src/agent/agentScene.ts')).specToPart;
 }
 
+export async function caseKitFn() {
+  const [builder, kinematics] = await Promise.all([
+    appModule('/src/cases/caseBuilder.ts'),
+    appModule('/src/utils/kinematics.ts'),
+  ]);
+
+  return { buildCase: builder.buildCase, builderRobot: builder.builderRobot, buildRig: kinematics.buildRig };
+}
+
+async function fixtureRecord(fixture, { specToPart, caseKit }) {
+  const kit = fixture.cases?.length ? (caseKit ?? (await caseKitFn())) : null;
+
+  return recordFromFixture(fixture, specToPart ?? (await specToPartFn()), kit);
+}
+
 export const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 
-export async function startRecord(task, { specToPart, dataDir } = {}) {
-  const file = startSceneFile(task, dataDir);
+export async function startRecord(task, ctx = {}) {
+  const file = startSceneFile(task, ctx.dataDir);
 
   if (file) return readJson(file);
 
-  return recordFromFixture(task.fixture(), specToPart ?? (await specToPartFn()));
+  if (task.startScene) return task.startScene();
+
+  return fixtureRecord(task.fixture(), ctx);
 }
 
-export async function solutionRecord(task, { specToPart } = {}) {
+export async function solutionRecord(task, ctx = {}, start = null) {
+  if (task.solutionScene) return task.solutionScene();
+
   if (!task.solution) return null;
 
-  return recordFromFixture(task.solution(), specToPart ?? (await specToPartFn()));
+  return keepStartCases(await fixtureRecord(task.solution(), ctx), start);
 }

@@ -3,7 +3,7 @@ use basecase_coordinator::{ControlReader, IntentSlot, NO_SKILL};
 use robot_daemon::artefacts::MemoryArtefacts;
 use robot_daemon::calibration::RobotClass;
 use robot_daemon::intent::IntentWriter;
-use robot_daemon::transport::{open, Target};
+use robot_daemon::transport::{open, ServoRobot, Target};
 use robot_daemon::{Daemon, DaemonConfig};
 use servo_wire::{Clock, Family, SystemClock};
 use std::collections::BTreeMap;
@@ -36,7 +36,7 @@ fn daemon() -> Result<Daemon, String> {
         seed: 1,
         factory: false,
     };
-    let transport = open(&target, Family::Feetech, &SERVO_IDS, clock.clone())?.transport;
+    let transport = open(&target, ServoRobot::plain(Family::Feetech, &SERVO_IDS), clock.clone())?.transport;
     let config = DaemonConfig {
         family: Family::Feetech,
         ids: SERVO_IDS.to_vec(),

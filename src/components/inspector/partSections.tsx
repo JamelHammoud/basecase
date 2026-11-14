@@ -11,11 +11,13 @@ import {
   Slider,
   TextInput,
   BookmarkAddIcon,
-  CopyIcon,
   DeleteIcon,
+  DuplicateIcon,
 } from '../../design-system';
 import { imageStance, resizedDimensions, type DimensionKey, type ImageStance } from './partMath';
 import type { InspectorProps, Phase } from './types';
+import { keyFor } from '../../app/shortcuts';
+import { percent } from '../../../electron/percent.mjs';
 
 export interface PartSectionProps {
   part: ScenePart;
@@ -38,9 +40,9 @@ export const PartHeader: React.FC<
       />
     </div>
     <IconButton
-      icon={<CopyIcon className="w-3.5 h-3.5" />}
+      icon={<DuplicateIcon className="w-3.5 h-3.5" />}
       title="Duplicate"
-      shortcut="⌘D"
+      shortcut={keyFor('duplicate')}
       size="xs"
       onClick={onDuplicate}
     />
@@ -53,7 +55,7 @@ export const PartHeader: React.FC<
     <IconButton
       icon={<DeleteIcon className="w-3.5 h-3.5" />}
       title="Delete"
-      shortcut="⌫"
+      shortcut={keyFor('delete')}
       size="xs"
       variant="danger"
       onClick={onDelete}
@@ -73,7 +75,7 @@ export const ImageSection: React.FC<PartSectionProps> = ({ part, onUpdate }) => 
       step={0.05}
       defaultValue={1}
       value={part.opacity ?? 1}
-      format={(v) => `${Math.round(v * 100)}%`}
+      format={percent}
       onChange={(v, l) => onUpdate({ opacity: v }, l)}
     />
     <SegmentedControl<ImageStance>
@@ -137,7 +139,7 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean }> = ({
           <span className="col-span-2 text-[13px] text-white/50">Wall thickness</span>
           <NumberInput
             label="T"
-            title="Wall thickness"
+            aria-label="Wall thickness"
             value={part.dimensions.thickness}
             min={1}
             max={50}

@@ -1,10 +1,13 @@
 import type { GuideItem } from '../guideTypes';
 import { toolIcon } from './guideIcons';
-import { CONTENT_BOTTOM, CONTENT_TOP, esc, imageTag, mm, plural, type GuideDoc } from './guideHtml';
+import { sizeFigures } from '../../utils/size';
+import { plural } from '../../../electron/plural.mjs';
+import { CONTENT_BOTTOM, CONTENT_TOP, esc, imageTag, mm, type GuideDoc } from './guideHtml';
+import { percent } from '../../../electron/percent.mjs';
 
 export function coverBody({ plan, drawings, meta }: GuideDoc): string {
   const size = meta.sizeMm
-    ? `<div class="fact"><div class="v">${meta.sizeMm.map((v) => Math.round(v)).join(' × ')}<small>mm</small></div><div class="k">Size</div></div>`
+    ? `<div class="fact"><div class="v">${sizeFigures(meta.sizeMm)}<small>mm</small></div><div class="k">Size</div></div>`
     : '';
   const parts = plan.items.reduce((n, i) => n + i.qty, 0);
   const steps = plan.steps.filter((s) => s.moduleId === 'main').length;
@@ -50,8 +53,8 @@ function tips(doc: GuideDoc, catalogue: [number, number]): Tip[] {
     printed
       ? {
           art: toolIcon('printer'),
-          title: `Print ${plural(printed, 'part', 'parts')} in ${esc(doc.meta.material)}`,
-          note: `${doc.meta.infillPct}% infill. Print every part before you start.`,
+          title: `Print ${plural(printed, 'part')} in ${esc(doc.meta.material)}`,
+          note: `${percent(doc.meta.infillPct / 100)} infill. Print every part before you start.`,
         }
       : null,
     {
@@ -62,7 +65,7 @@ function tips(doc: GuideDoc, catalogue: [number, number]): Tip[] {
     inserts
       ? {
           art: toolIcon('soldering-iron'),
-          title: `Press ${plural(inserts, 'insert', 'inserts')} in with a soldering iron`,
+          title: `Press ${plural(inserts, 'insert')} in with a soldering iron`,
           note: 'Push straight down and stop when flush.',
         }
       : null,
@@ -191,12 +194,11 @@ export function catalogueBodies(doc: GuideDoc): string[] {
   const hardware = doc.plan.items.filter((i) => i.kind === 'hardware');
   const printedQty = printed.reduce((n, i) => n + i.qty, 0);
   const blocks = [
-    ...cardBlocks(doc, printed, 'Printed parts', [plural(printedQty, 'part', 'parts'), esc(doc.meta.material)]),
+    ...cardBlocks(doc, printed, 'Printed parts', [plural(printedQty, 'part'), esc(doc.meta.material)]),
     ...cardBlocks(doc, bought, 'Bought parts', [
       plural(
         bought.reduce((n, i) => n + i.qty, 0),
         'part',
-        'parts',
       ),
     ]),
   ];

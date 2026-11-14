@@ -12,7 +12,9 @@ import { fixtureRobots } from '../../sim/fixtures/robots';
 import type { Simulation } from '../../sim/useSimulation';
 import type { Cases } from '../../workspace/useCases';
 import type { CameraTiles } from '../cameras/useCameraTiles';
+import { ModeHeader } from '../../design-system';
 import { CaseRunArea } from './CaseRunArea';
+import { CodeOverlays } from './code/CodeOverlays';
 import type { PanelContext } from './panelContext';
 
 const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
@@ -47,12 +49,10 @@ function context(caseConsole: CaseConsole): PanelContext {
   return {
     bus,
     signals: caseConsole.signals ?? [],
-    cases: {
-      active: kase,
-      attempt: { phase: 'idle', elapsed: 0, start: async () => undefined, end: () => undefined },
-      tries: [],
-      dataset: { canExport: false, canPublish: false, exporting: false },
-    } as unknown as Cases,
+    scope: { declared: new Set(), probes: new Set(), inputs: new Set(caseConsole.input) },
+    inputs: caseConsole.input,
+    brief: kase.brief,
+    world: { objects: kase.world.objects, place: (p) => p },
     sim: {
       drive: { cls: null },
       model: null,
@@ -60,33 +60,49 @@ function context(caseConsole: CaseConsole): PanelContext {
     } as unknown as Simulation,
     parts: arm.parts,
     joints: arm.joints,
-    cameras: {
-      views,
-      tile: (view) => ({
-        view,
-        large: false,
-        renaming: false,
-        onRename: () => undefined,
-        canvasRef: () => undefined,
-        onToggleSize: () => undefined,
-        onMenu: () => undefined,
-      }),
-      menu: null,
-    } satisfies CameraTiles,
     fire: () => undefined,
     can: () => true,
-    onBrowseRobots: () => undefined,
+    studio: {
+      cases: {
+        active: kase,
+        attempt: { phase: 'idle', elapsed: 0, start: async () => undefined, end: () => undefined },
+        realTry: { phase: 'idle', elapsed: 0, canStart: false, start: async () => undefined, end: () => undefined },
+        mat: { available: false },
+        tries: [],
+        dataset: { canExport: false, canPublish: false, exporting: false },
+      } as unknown as Cases,
+      cameras: {
+        views,
+        tile: (view) => ({
+          view,
+          large: false,
+          renaming: false,
+          onRename: () => undefined,
+          canvasRef: () => undefined,
+          onToggleSize: () => undefined,
+          onMenu: () => undefined,
+        }),
+        menu: null,
+        stream: () => () => undefined,
+      } satisfies CameraTiles,
+      onShowRobots: () => undefined,
+    },
   };
 }
 
 function render(caseConsole: CaseConsole) {
   const ctx = context(caseConsole);
-  const layout = consoleLayout(caseConsole, { desktop: true });
+  const layout = consoleLayout(caseConsole, { desktop: true, studio: true });
   const html = (side: 'before' | 'after') =>
     layout[side]
       .map((area) =>
         renderToStaticMarkup(
-          createElement(CaseRunArea, { area, side, ctx, title: kase.name, onDone: () => undefined }),
+          createElement(CaseRunArea, {
+            area,
+            side,
+            ctx,
+            header: createElement(ModeHeader, { title: kase.name, onDone: () => undefined }),
+          }),
         ),
       )
       .join('');
@@ -138,6 +154,45 @@ describe('a running Case renders any console', () => {
     expect(game).toMatch(/data-signal="score">60</);
     expect(game).toContain('Reset');
     expect(midi).toContain(`data-lines="${arm.joints.length}"`);
+  });
+});
+
+describe('a running Case renders code panels', () => {
+  const source = '<canvas></canvas><script>basecase.drive({ v: [0, 0, 0] })</script>';
+  const coded = parseCase({
+    ...JSON.parse(JSON.stringify(kase)),
+    console: {
+      input: ['code', 'keys'],
+      panels: [
+        { id: 'stick', kind: 'code', title: 'Stick', height: 240, source },
+        { id: 'hud', kind: 'code', source },
+      ],
+      layout: {
+        areas: [
+          { canvas: true, overlays: [{ panel: 'hud', anchor: 'bottom', height: 64 }] },
+          { size: 320, panels: ['stick'] },
+        ],
+      },
+    },
+  }).console!;
+
+  it('as a sandboxed frame in its area, and as an overlay that lets clicks through', () => {
+    const { after } = render(coded);
+    const overlays = renderToStaticMarkup(
+      createElement(CodeOverlays, {
+        overlays: consoleLayout(coded, { desktop: true, studio: true }).overlays,
+        ctx: context(coded),
+      }),
+    );
+
+    expect(panelsIn(after)).toEqual(['stick:code']);
+    expect(after).toContain('sandbox="allow-scripts"');
+    expect(after).not.toContain('allow-same-origin');
+    expect(after).toContain('height:240px');
+    expect(after).toContain('pointer-events:auto');
+    expect(overlays).toContain('data-panel="hud"');
+    expect(overlays).toMatch(/style="bottom:12px;left:12px;right:12px;height:64px"/);
+    expect(overlays).toContain('pointer-events:none');
   });
 });
 

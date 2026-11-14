@@ -1,6 +1,6 @@
 import { AdapterMissing } from './adapters.mjs';
 import { connected, heldByEdges } from './fasteners.mjs';
-import { add, dot, frameOf, len, meshStats, scale, sub } from './geometry.mjs';
+import { add, dot, frameOf, len, meshStats, scale, sub, toScene } from './geometry.mjs';
 
 const probeOf = (ctx) => (ctx.probe ??= ctx.adapters.fasteners(ctx, ctx.after));
 const listed = (ids, max = 6) =>
@@ -12,7 +12,7 @@ const verdict = (bad, okText, badText) => ({
 const screwsOf = (ctx, ids) => probeOf(ctx).screws.filter((s) => !ids || ids.includes(s.id));
 
 export function check(name, fn) {
-  return async (ctx) => {
+  const run = async (ctx) => {
     try {
       return { name, ...(await fn(ctx)) };
     } catch (err) {
@@ -21,7 +21,12 @@ export function check(name, fn) {
       throw err;
     }
   };
+
+  return Object.assign(run, { checkName: name });
 }
+
+export const neededEngagementMm = (screw) =>
+  Math.min(1.5 * Number(screw.size.slice(1)), screw.engaged?.lengthMm ?? Infinity) - 0.2;
 
 export function allOf(...checks) {
   return async (ctx) => {
@@ -52,11 +57,7 @@ export const screwsEngaged = (ids) =>
 
 export const engagementDepth = (ids) =>
   check('Thread engagement ≥ 1.5 × D or the insert length', (ctx) => {
-    const short = screwsOf(ctx, ids).filter((s) => {
-      const need = Math.min(1.5 * Number(s.size.slice(1)), s.engaged?.lengthMm ?? Infinity) - 0.2;
-
-      return s.engagementMm < need;
-    });
+    const short = screwsOf(ctx, ids).filter((s) => s.engagementMm < neededEngagementMm(s));
 
     return verdict(
       short.map((s) => `${s.id} (${s.engagementMm} mm)`),
@@ -189,6 +190,33 @@ export const rolesKept = (filter) =>
       'Roles kept',
       'Dodged',
     );
+  });
+
+const DEG = Math.PI / 180;
+const unitOf = (v) => scale(v, 1 / len(v));
+
+function lineMiss(j, want) {
+  const axis = unitOf(toScene(want.axis));
+  const rel = sub(j.origin, toScene(want.origin));
+  const deg = Math.acos(Math.min(1, Math.abs(dot(unitOf(j.axis), axis)))) / DEG;
+
+  return { deg, mm: len(sub(rel, scale(axis, dot(rel, axis)))) };
+}
+
+export const hingesOn = (wanted, { maxDeg, maxMm }) =>
+  check(`${wanted.length} hinges, each within ${maxDeg}° and ${maxMm} mm of its axis`, (ctx) => {
+    const hinges = (ctx.after?.project?.joints ?? []).filter((j) => (j.type ?? 'revolute') === 'revolute');
+    const misses = wanted.map((w) => {
+      const near = hinges.map((j) => lineMiss(j, w)).filter((m) => m.deg <= maxDeg && m.mm <= maxMm);
+
+      return near.length ? null : w.id;
+    });
+    const missing = misses.filter(Boolean);
+
+    return {
+      pass: hinges.length === wanted.length && !missing.length,
+      detail: missing.length ? `No hinge on ${missing.join(', ')}` : `${hinges.length} hinges`,
+    };
   });
 
 const PARALLEL_COS = Math.cos((2 * Math.PI) / 180);

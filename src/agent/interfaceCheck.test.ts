@@ -136,7 +136,7 @@ describe('check_interfaces', () => {
     expect(check.problems).toEqual([]);
     expect(interfaceText('Left leg', check)).toBe(
       'Interfaces for Left leg: pass. You can hand back.\n' +
-        'Passed: envelope (1 parts), datum hip axis (hip-bracket:hip), bolt pattern hip mount (2 M3), seam with Torso (1 M3), ' +
+        'Passed: envelope (1 part), datum hip axis (hip-bracket:hip), bolt pattern hip mount (2 M3), seam with Torso (1 M3), ' +
         'ownership (holes cut across seams in torso-shell).',
     );
   });
@@ -155,8 +155,8 @@ describe('check_interfaces', () => {
       'Envelope: hip-bracket is 5 mm outside its envelope.',
       'Datum hip axis: nearest port hip-bracket:hip is 10 mm off the axis at [60, 0, 290] along [1, 0, 0].',
       'Bolt pattern hip mount: 0 of 2 M3 holes found; none at [30, 0, 300], [50, 0, 300].',
-      'Seam with Torso: 0 of 1 M3 screws cross it. Use fasten through both sides.',
-      "Ownership: edited battery, which Left leg doesn't own. Undo those edits, or ask the lead to move them into this contract.",
+      'Seam with Torso needs 1 M3 screw across it, and 0 found. Use fasten through both sides.',
+      'Ownership: edited battery, which Left leg doesn’t own. Undo those edits, or ask the lead to move them into this contract.',
     ]);
   });
 

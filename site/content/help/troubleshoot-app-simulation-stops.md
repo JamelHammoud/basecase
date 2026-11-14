@@ -19,7 +19,7 @@ related:
 covers:
   - src/workspace/RightPanelTabs.tsx
   - src/components/simulate/SimControls.tsx
-  - src/components/simulate/ModelSection.tsx
+  - src/utils/engineeringSimModel.ts
   - src/sim/useSimulation.ts
   - src/sim/useSimWorker.ts
   - src/sim/sim.worker.ts
@@ -41,10 +41,10 @@ It worked when **Simulate** appears beside **Inspect**.
 
 The simulation crashed in the background. Your scene is safe; only the running simulation stopped.
 
-1. Click × beside the speed buttons to end the simulation.
+1. Click **Stop simulation** beside the speed buttons.
 2. Click **Simulate** to start it again.
 
-Any other red text under **Simulate** is MuJoCo's own message about a model it couldn't load. End the simulation, change the part it names, and start again.
+Any other red text under **Simulate** is MuJoCo's own message about a model it couldn't load. Stop the simulation, change the part it names, and start again.
 
 ## “This policy was trained on joints this robot no longer has. Train it again.”
 
@@ -54,6 +54,6 @@ You changed the robot's joints after training. A policy only drives the joints i
 
 The figure shows how fast the simulation runs against the clock. At **1×**, a figure under 1 means your computer can't keep up with the model. At **½×** or **¼×**, it shows the speed you chose, and nothing is wrong.
 
-## The panel says torque is estimated
+## Checks says the simulation guesses torque
 
-“Torque for 3 joints is estimated from weight. Assign servos for exact limits.” means those joints have no servo. Assign a servo from **Parts** to each of those joints, and the simulation uses the servo's datasheet limits. When the message says servo response is estimated, those servos have no measured model yet. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) measures one.
+In the **Build** tab, Checks may say “These joints have no servo, so the simulation guesses their torque from weight.” Assign a servo from **Parts** to each of those joints, and the simulation uses the servo's datasheet limits. When Checks says “These servos aren’t calibrated on this robot.”, those servos have no measured model yet. [Calibrate an emulated robot](/help/calibrate-an-emulated-robot) measures any Feetech or Dynamixel servo. Any other servo stays on its estimate.

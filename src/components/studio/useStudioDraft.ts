@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { polylineSketch } from '../../utils/sketch/edit';
-import type { Sketch, SketchMode, Vec2 } from '../../utils/sketch/types';
+import type { Sketch, SketchEntity, SketchMode, Vec2 } from '../../utils/sketch/types';
 import { ParsedSvg3DResult, parseSvgTo3DNodes } from '../../utils/svgTo3DParser';
+import { errorMessage } from '../../utils/errorMessage';
 
 export type SketchTool = 'line' | 'rect' | 'circle' | 'arc';
+
+export type SketchPanelMode = SketchMode | 'path';
 
 interface SketchHistory {
   past: Sketch[];
@@ -12,6 +15,8 @@ interface SketchHistory {
 }
 
 const HISTORY_LIMIT = 100;
+
+export const isDrawn = (entity: SketchEntity) => !(entity.kind === 'line' && entity.ref);
 
 const svgLoops = (outer: Array<[number, number]>, holes: Array<Array<[number, number]>>, span: number): Vec2[][] =>
   [outer, ...holes].map((loop) => loop.map(([x, z]): Vec2 => [x * span, -z * span]));
@@ -37,7 +42,7 @@ function useSketchHistory(initial: Sketch) {
 
 export function useStudioDraft(initialSketch: Sketch, initialTool: SketchTool | null) {
   const history = useSketchHistory(initialSketch);
-  const [drawMode, setDrawMode] = useState<SketchMode>('extrude');
+  const [drawMode, setDrawMode] = useState<SketchPanelMode>('extrude');
   const [drawTool, setDrawTool] = useState<SketchTool | null>(initialTool);
   const [snap2D, setSnap2D] = useState(true);
   const [drawName, setDrawName] = useState('Sketch');
@@ -73,13 +78,14 @@ export function useStudioDraft(initialSketch: Sketch, initialTool: SketchTool | 
 
       history.apply(polylineSketch(svgLoops(contour.outerLoop, contour.holes ?? [], drawSpanMm)));
     } catch (err) {
-      setSvgError(String(err));
+      setSvgError(errorMessage(err));
       setParsedSvg(null);
     }
   };
 
   return {
     ...history,
+    drawn: history.sketch.entities.some(isDrawn) || rawSvgText !== '',
     drawMode,
     setDrawMode,
     drawTool,

@@ -15,8 +15,8 @@ covers:
 Run two arms in one simulation, where one touches a point and the other takes over, and record the tries as one dataset.
 
 1. Open each arm's scene in its own tab. The second arm can be a copy of the first: right-click its tab and choose **Duplicate**.
-2. In the first arm's tab, open Play ▸ **Cases** and click **New Case**.
-3. Choose **Hand Off to a Spot**. Set how far ahead and how high the point sits, and how close counts, then click **Create**.
+2. In the first arm's tab, open **Play** ▸ **Cases** and click **New Case**.
+3. Choose **Hand Off to a Spot**. Set how far ahead and how high the point sits, and how close counts, then click **Make Case**.
 
 ![The New Case card with Hand Off to a Spot chosen](/help/put-two-robots-in-one-case/new-case.png)
 
@@ -24,7 +24,7 @@ The second arm now stands facing the first, the same distance from the point on 
 
 ![Both arms on the canvas with the point between them](/help/put-two-robots-in-one-case/case.png)
 
-4. Click **Try It** in the Simulate tab. You drive the first arm with W A S D, Q and E. Touch the point within the first 3 seconds and pull away: at 3 seconds the second arm reaches for it.
+4. Click **Try It** in the Simulate tab. You drive the first arm with [[W A S D]], [[Q]] and [[E]]. Touch the point within the first 3 seconds and pull away: at 3 seconds the second arm reaches for it.
 
 ![The second arm on the point after the first pulled away](/help/put-two-robots-in-one-case/try.png)
 

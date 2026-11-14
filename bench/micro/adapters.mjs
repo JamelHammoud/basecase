@@ -1,5 +1,6 @@
 import { AdapterMissing } from './adapterMissing.mjs';
 import { craft, enclosures, removalOrder, serviceDepth, servoSolver } from './appAdapters.mjs';
+import { runCodeApp } from './caseCodeApp.mjs';
 import { probeFasteners } from './fasteners.mjs';
 
 export const missing = (name, what) => () => {
@@ -30,6 +31,22 @@ export function parseCheckRows(text) {
     .map(([, status, check, detail]) => ({ check, status: STATUS[status], detail }));
 }
 
+export async function runCase(ctx, id) {
+  const reply = await needApp(ctx, 'runCase', 'run_case').call('run_case', { id });
+
+  if (reply?.data) return reply.data;
+
+  if (reply?.ok === false) return { problem: reply.problem ?? `No Case ${id}` };
+
+  throw new AdapterMissing('runCase', `run_case data from the running app (${reply?.error ?? 'no data'})`);
+}
+
+async function inputBuilt(_ctx, id) {
+  const { appModule } = await import('./scenes.mjs');
+
+  return (await appModule('/src/sim/inputSources.ts')).hasInputSource(id);
+}
+
 export const STS3215_OUTPUT = { point: [-12.66, 18.9, -0.16], axis: [0, 1, 0] };
 
 export const DEFAULT_ADAPTERS = {
@@ -46,6 +63,9 @@ export const DEFAULT_ADAPTERS = {
 
     return res.data ?? parseBomTotal(res.text);
   },
+  runCase,
+  inputBuilt,
+  codeApp: runCodeApp,
   checkRows: async (ctx) =>
     parseCheckRows((await needApp(ctx, 'checkRows', 'the engineering checks').call('verify')).text),
 };

@@ -16,9 +16,12 @@ keywords:
   - build plate
 related:
   - add-a-printer
+  - print-plates-on-several-printers
   - printability-estimates
   - troubleshoot-build-slicing-fails
   - export-plates-as-3mf
+  - merge-printed-parts-into-one-print
+  - label-printed-parts
 covers:
   - src/components/print/PrintPanel.tsx
   - src/components/print/PrintSettings.tsx
@@ -33,7 +36,7 @@ covers:
 
 Lay the printed parts out on your printer's plates, slice them with Bambu Studio or OrcaSlicer, and send each plate to the printer.
 
-1. Press ⌘P (Ctrl+P on Windows) to open Print mode.
+1. Press [[⌘P]] to open Print mode.
 2. Under **Printer**, pick your printer in **Printer**.
 3. Set **Quality**, **Material** and **Infill**.
 4. To change how a part sits, select it, click **Lay on Face**, then click the face it should rest on.
@@ -42,7 +45,7 @@ Lay the printed parts out on your printer's plates, slice them with Bambu Studio
 
 ![Print mode with the printer settings, Plate 1 with Add Printer, and Parts](/help/get-a-robot-ready-to-build/print-mode.png)
 
-If you haven't saved a printer, the plate's button reads **Add Printer** and opens Settings ▸ Printers. [Add a printer](/help/add-a-printer) covers the rest.
+If you haven't saved a printer, the plate's button reads **Add Printer** and opens **Settings** ▸ **Printers**. [Add a printer](/help/add-a-printer) covers the rest.
 
 ![Settings open at Printers after clicking Add Printer](/help/get-a-robot-ready-to-build/add-printer.png)
 
@@ -54,16 +57,21 @@ If you haven't saved a printer, the plate's button reads **Add Printer** and ope
 
 With Bambu Studio, the plate opens there and you start the print in Bambu Studio. Bambu Connect works the same way.
 
-Print mode also opens from **File** ▸ **Print**, from **Lay Out Plates** in the Build tab, and from ⌘K. **Slice Plates** in ⌘K slices every plate at once; a toast shows the progress, with **Stop**.
+Print mode also opens from **File** ▸ **Print**, from **Print** in the Build tab, and from [[⌘K]]. **Slice Plates** in [[⌘K]] slices every plate at once; a toast shows the progress, with **Stop**.
 
 ## On the plate
 
-- Drag a part to move it. Press F to lay it on a face, or R to turn it 90°.
-- Press ← or → to go to the previous or next plate.
+- Drag a part to move it. Press [[F]] to lay it on a face, or [[R]] to turn it 90°.
+- Press [[←]] or [[→]] to go to the previous or next plate.
 - **Copies** prints more than one of the selected part. **Don't print** leaves it off the plates.
+- **Label parts** cuts each part's build guide letter into a hidden face. [Label printed parts with their guide letters](/help/label-printed-parts) has the details.
+- Plates follow the build guide's order. The number beside the box icon in the bottom bar is the step that first needs the plate.
 - **Auto Arrange** in the bottom bar packs the plates of that material again.
 - **Parts** lists every part with its size, time and plate. Parts with problems come first.
+- **Merge** lists printed parts bolted together on one link that could print as one. [Merge printed parts into one print](/help/merge-printed-parts-into-one-print) has the steps.
 
 After a print, a switch under **Printer**, such as Skip 3 printed parts, leaves the parts you printed off the plates. It starts on. Edit one bracket, and the next plate holds only that bracket.
 
-Press Esc or click **Done** to go back to the scene. Next, [make a build guide](/help/make-a-build-guide) for putting the parts together.
+With two or more printers that report their state, each idle one gets **Start Next**. [Print plates on several printers](/help/print-plates-on-several-printers) has the steps.
+
+Press [[Esc]] or click **Done** to go back to the scene. Next, [make a build guide](/help/make-a-build-guide) for putting the parts together.

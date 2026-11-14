@@ -1,5 +1,6 @@
 import type { ScenePart } from '../types/robotics';
 import { scanAngles } from './lidar';
+import { angle } from '../utils/angle';
 import type { SimModel } from './mjcfTypes';
 import type { Scan } from './scanner';
 
@@ -10,7 +11,7 @@ function bearing(deg: number): string {
 
   if (Math.abs(a) >= 180) return 'behind';
 
-  return `${Math.abs(a)}° ${a > 0 ? 'left' : 'right'}`;
+  return `${angle(Math.abs(a))} ${a > 0 ? 'left' : 'right'}`;
 }
 
 export function scanSummary(model: SimModel | null, scan: Scan | null, parts: ScenePart[]): string[] {

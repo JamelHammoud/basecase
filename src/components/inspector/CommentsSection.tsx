@@ -3,6 +3,7 @@ import type { SceneAnnotation } from '../../types/robotics';
 import { timeAgo } from '../../utils/timeAgo';
 import { IconButton, Section, CommentIcon, PlusIcon } from '../../design-system';
 import type { InspectorProps } from './types';
+import { keyFor } from '../../app/shortcuts';
 
 const CommentRow: React.FC<{ annotation: SceneAnnotation; n: number; active: boolean; onOpen: () => void }> = ({
   annotation: a,
@@ -58,8 +59,8 @@ export const CommentsSection: React.FC<InspectorProps & { list: SceneAnnotation[
     actions={
       <IconButton
         icon={<PlusIcon className="w-3.5 h-3.5" />}
-        title="Add comment"
-        shortcut="M"
+        title="Comment"
+        shortcut={keyFor('comment')}
         size="xs"
         onClick={onAddComment}
       />

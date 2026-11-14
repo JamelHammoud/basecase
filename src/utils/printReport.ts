@@ -1,13 +1,19 @@
 import { MATERIAL_DENSITY } from '../data/supplies';
 import type { PrinterSetup } from '../data/printers';
 import { bedOf, bedSizeText } from '../print/bed';
+import { sizeLabel } from './size';
+import { angle } from './angle';
 import { buildPrintPlan, choosePose, type PrintCheck, type PrintPlan } from '../print/plan';
 import type { MeshMeasure } from '../three/meshMeasure';
 import { PRINT_RULES, printHours, type PrintShape, type Vec3 } from '../three/printability';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { hashText } from '../guide/guideItems';
+import { firstSteps, guideStepParts } from '../guide/guideSteps';
 import { filamentGrams, isPrinted, printMaterialOf } from './bom';
+import { duration } from './duration';
+import { weight } from './weight';
 import { jsonHash, numbersHash } from './geometryHash';
+import { plural } from '../../electron/plural.mjs';
 
 const SUPPORT_FILL = 0.2;
 const SHELL_MM = 0.9;
@@ -36,9 +42,6 @@ export interface PrintReport {
   totals: { grams: number; supportG: number; hours: number; failing: number };
 }
 
-export const fmtSize = (size: number[]) =>
-  size.map((v) => (v < 10 ? String(Math.round(v * 10) / 10) : String(Math.round(v)))).join(' × ');
-
 export interface PartShape {
   check: PrintShape;
   measure: MeshMeasure;
@@ -55,6 +58,7 @@ export function shapeKey(p: ScenePart): string {
     p.kind,
     JSON.stringify(p.dimensions),
     JSON.stringify(p.deformers ?? null),
+    JSON.stringify(p.edges ?? null),
     c ? `${c.language}:${hashText(c.code)}:${numbersHash(c.positions)}` : '',
     numbersHash(p.sculptMesh?.positions),
     numbersHash(p.mesh?.positions),
@@ -115,7 +119,7 @@ function issuesFor(check: PrintCheck, grams: number, supportG: number): string[]
     );
 
   if (supportG > Math.max(2, grams * 0.25))
-    issues.push(`Add 45° chamfers or split it flat (needs about ${Math.round(supportG)} g of support)`);
+    issues.push(`Add 45° chamfers or split it flat (needs about ${weight(supportG)} of support)`);
 
   return issues;
 }
@@ -157,6 +161,7 @@ const sum = (parts: PrintedPartReport[], value: (r: PrintedPartReport) => number
 export interface PrintContext {
   project: ProjectSettings;
   printer: PrinterSetup;
+  scene?: ScenePart[];
 }
 
 export async function printReportOf(parts: ScenePart[], ctx: PrintContext, fetchShapes: PrintShapes) {
@@ -177,12 +182,14 @@ export function buildPrintReport(parts: ScenePart[], ctx: PrintContext): PrintRe
       return shape ? [{ part, shape }] : [];
     }),
     ctx,
+    firstSteps(guideStepParts(ctx.scene ?? parts, ctx.project)),
   );
 }
 
 export function reportFromShapes(
   entries: Array<{ part: ScenePart; shape: PartShape }>,
   ctx: PrintContext,
+  firstStep: ReadonlyMap<string, number> = new Map(),
 ): PrintReport {
   const byId = new Map(entries.map(({ part }) => [part.id, part]));
   const out: PrintedPartReport[] = entries.map(({ part, shape }) => ({
@@ -190,7 +197,12 @@ export function reportFromShapes(
     copies: Math.max(1, part.print?.copies ?? 1),
   }));
   const plan = buildPrintPlan(
-    out.map((r) => ({ ...r, shapeKey: shapeKey(byId.get(r.id)!), print: byId.get(r.id)!.print })),
+    out.map((r) => ({
+      ...r,
+      shapeKey: shapeKey(byId.get(r.id)!),
+      print: byId.get(r.id)!.print,
+      firstStep: firstStep.get(r.id),
+    })),
     ctx.printer,
     bedOf(ctx.printer.model),
     printSettingsKey(ctx.project),
@@ -242,21 +254,18 @@ export function printReportText(r: PrintReport): string {
   const bed = r.plan.bed;
   const lines: string[] = [];
   const plates = Object.entries(r.plates)
-    .map(([m, n]) => `${n} ${m} plate${n === 1 ? '' : 's'}`)
+    .map(([m, n]) => plural(n, `${m} plate`))
     .join(', ');
-  const keepOut = bed.keepOut.length
-    ? `, ${bed.keepOut.map((k) => `${Math.round(k.w)} × ${Math.round(k.d)} mm`).join(' and ')} keep-out`
-    : '';
+  const keepOut = bed.keepOut.length ? `, ${bed.keepOut.map((k) => sizeLabel([k.w, k.d])).join(' and ')} keep-out` : '';
 
   lines.push(
-    `${r.parts.length} printed parts on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${Math.round(r.totals.grams)} g + ${Math.round(r.totals.supportG)} g support, ${r.totals.hours.toFixed(1)} h, ${plates}. Estimates without a slicer.`,
+    `${plural(r.parts.length, 'printed part')} on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${weight(r.totals.grams)} + ${weight(r.totals.supportG)} support, ${duration(r.totals.hours * 3600, 'min')}, ${plates}. Estimates without a slicer.`,
   );
-  lines.push(r.totals.failing ? `${r.totals.failing} parts have issues:` : 'Every part fits and prints.');
+  lines.push(r.totals.failing ? `Issues on ${plural(r.totals.failing, 'part')}:` : 'Every part fits and prints.');
 
   for (const p of r.parts) {
-    const s = fmtSize(p.check.size);
-    const turned = p.check.yaw && p.check.yaw % 90 ? `, turned ${p.check.yaw}° across the plate` : '';
-    const head = `- ${p.id} (${p.material}, ${Math.round(p.grams)} g${p.supportG >= 1 ? ` + ${Math.round(p.supportG)} g support` : ''}, ${s} mm, ${faceText(p.check)}${turned})`;
+    const turned = p.check.yaw && p.check.yaw % 90 ? `, turned ${angle(p.check.yaw)} across the plate` : '';
+    const head = `- ${p.id} (${p.material}, ${weight(p.grams)}${p.supportG >= 1 ? ` + ${weight(p.supportG)} support` : ''}, ${sizeLabel(p.check.size)}, ${faceText(p.check)}${turned})`;
 
     const said = [...p.issues, ...p.notes];
 

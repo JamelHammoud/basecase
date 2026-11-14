@@ -10,15 +10,16 @@ import {
   PauseIcon,
   PlusIcon,
   RunIcon,
+  RenameField,
   confirmAction,
+  deleteEntry,
+  renameEntry,
 } from '../../design-system';
 import type { RobotAnimation } from '../../types/robotics';
+import { runClock } from '../../utils/duration';
 import type { Posing } from '../../utils/usePosing';
-import { RenameField } from './RenameField';
 
 export type OpenMenu = (e: React.MouseEvent, items: ContextMenuEntry[]) => void;
-
-const fmtTime = (t: number) => `${t.toFixed(t < 10 ? 1 : 0)} s`;
 
 interface AddAnimationProps {
   canWalk: boolean;
@@ -50,7 +51,7 @@ const AddAnimationMenu: React.FC<Omit<AddAnimationProps, 'canWalk'>> = ({ onWalk
         className="w-[210px]"
       >
         <MenuItem
-          icon={<WalkIcon className="w-4 h-4" />}
+          icon={<WalkIcon />}
           label="Walk Cycle"
           onSelect={() => {
             setAddOpen(false);
@@ -58,7 +59,7 @@ const AddAnimationMenu: React.FC<Omit<AddAnimationProps, 'canWalk'>> = ({ onWalk
           }}
         />
         <MenuItem
-          icon={<FileImportIcon className="w-4 h-4" />}
+          icon={<FileImportIcon />}
           label="Import BVH"
           onSelect={() => {
             setAddOpen(false);
@@ -100,17 +101,14 @@ const AnimationRow: React.FC<{
           },
           { label: 'Loop', checked: a.loop, onSelect: () => posing.setAnimationLoop(a.id, !a.loop) },
           { divider: true },
-          { label: 'Rename', onSelect: () => setRenaming(a.id) },
-          {
-            label: 'Delete',
-            tone: 'danger',
-            onSelect: () =>
-              confirmAction({ title: `Delete ${a.name}?`, onConfirm: () => posing.deleteAnimation(a.id) }),
-          },
+          renameEntry(() => setRenaming(a.id)),
+          deleteEntry(() =>
+            confirmAction({ title: `Delete ${a.name}?`, onConfirm: () => posing.deleteAnimation(a.id) }),
+          ),
         ])
       }
     >
-      <div className="h-9 flex items-center gap-1.5">
+      <div className="h-[32px] flex items-center gap-1.5">
         <IconButton
           icon={playing ? <PauseIcon className="w-4 h-4" /> : <RunIcon className="w-4 h-4" />}
           title={playing ? 'Pause' : 'Play'}
@@ -123,7 +121,7 @@ const AnimationRow: React.FC<{
             onDone={(name) => {
               setRenaming(null);
 
-              if (name && name !== a.name) posing.renameAnimation(a.id, name);
+              if (name) posing.renameAnimation(a.id, name);
             }}
           />
         ) : (
@@ -131,12 +129,11 @@ const AnimationRow: React.FC<{
             type="button"
             className="flex-1 min-w-0 text-left text-[13px] text-white/85 truncate cursor-default"
             onClick={() => posing.scrub(a.id, t)}
-            onDoubleClick={() => setRenaming(a.id)}
           >
             {a.name}
           </button>
         )}
-        <span className="text-[12px] text-white/50 tabular shrink-0">{fmtTime(a.duration)}</span>
+        <span className="text-[12px] text-white/50 tabular shrink-0">{runClock(a.duration)}</span>
       </div>
       {isCurrent && (
         <div className="flex items-center gap-2.5 pl-1">
@@ -151,7 +148,7 @@ const AnimationRow: React.FC<{
             style={{ '--fill': `${(t / a.duration) * 100}%` } as React.CSSProperties}
             onChange={(e) => posing.scrub(a.id, Number(e.target.value))}
           />
-          <span className="w-[44px] text-right text-[12px] text-white/50 tabular">{fmtTime(t)}</span>
+          <span className="w-[52px] text-right text-[12px] text-white/50 tabular">{runClock(t)}</span>
         </div>
       )}
     </div>

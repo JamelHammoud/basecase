@@ -5,33 +5,41 @@ import type { RobotFacts } from './robotFit';
 import type { WorldKind } from './caseWorlds';
 import type { RoutePoint } from './groundRoute';
 import { DOT_COUNT } from './dotSpots';
-import { pickDefaults, pickGoalWith } from './pickGoal';
+import type { GoalParam, GoalValues, ParamKey } from './goalParams';
+import { pickGoalWith } from './pickGoal';
 import { FLOOR_PROBE_DEPTH_MM } from './probes';
+import { lengthLabel } from '../utils/size';
 import type { CaseControl, CaseProbe, Capability, ReferenceCommand, RobotSlot, WorldObject } from './schema';
+import { plural } from '../../electron/plural.mjs';
 
 export type GoalKind = 'reach' | 'touch' | 'push' | 'path' | 'walk' | 'pick' | 'handoff';
 
-export type ParamKey =
-  'dots' | 'distanceMm' | 'heightMm' | 'sideMm' | 'radiusMm' | 'pushMm' | 'boxMm' | 'stops' | 'spacingMm' | 'seconds';
+export type { GoalParam, GoalValues, ParamKey } from './goalParams';
 
-export type GoalValues = Record<ParamKey, number>;
+const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
+  dots: { key: 'dots', label: 'Dots', unit: '', min: 1, max: DOT_COUNT, step: 1 },
+  distanceMm: { key: 'distanceMm', label: 'Distance', unit: 'mm', min: 0, max: 5000, step: 50 },
+  heightMm: { key: 'heightMm', label: 'Height', unit: 'mm', min: 0, max: 2000, step: 10 },
+  sideMm: { key: 'sideMm', label: 'Side', unit: 'mm', min: -2000, max: 2000, step: 10 },
+  radiusMm: { key: 'radiusMm', label: 'Radius', unit: 'mm', min: 5, max: 1000, step: 10 },
+  pushMm: { key: 'pushMm', label: 'Push', unit: 'mm', min: 100, max: 5000, step: 50 },
+  boxMm: { key: 'boxMm', label: 'Box', unit: 'mm', min: 40, max: 600, step: 10 },
+  stops: { key: 'stops', label: 'Spots', unit: '', min: 2, max: 8, step: 1 },
+  spacingMm: { key: 'spacingMm', label: 'Spacing', unit: 'mm', min: 200, max: 3000, step: 50 },
+  seconds: { key: 'seconds', label: 'Time', unit: 's', min: 2, max: 120, step: 1 },
+  riseMm: { key: 'riseMm', label: 'Height', unit: 'mm', min: 2, max: 500, step: 2 },
+  inclineDeg: { key: 'inclineDeg', label: 'Incline', unit: '°', min: 2, max: 40, step: 1 },
+};
 
 export interface BuilderRobot {
   facts: RobotFacts;
   pivot: V3;
+  forward: V3;
   footprint: { width: number; depth: number };
+  footSpacingMm: number;
   armSpots: V3[];
   partner?: BuilderRobot;
   heightMm: number;
-}
-
-export interface GoalParam {
-  key: ParamKey;
-  label: string;
-  unit: string;
-  min: number;
-  max: number;
-  step: number;
 }
 
 export interface Route {
@@ -55,31 +63,25 @@ export interface GoalPlan {
   target?: { at: V3; radius: number };
 }
 
+export interface GoalSpot {
+  at: V3;
+  phrase: string;
+}
+
+export type GoalSpots = Array<GoalSpot | null>;
+
 export interface CaseGoal {
   kind: GoalKind;
   name: string;
   needs: Capability[];
   pair?: boolean;
   params: ParamKey[];
-  plan: (robot: BuilderRobot, values: GoalValues, world: WorldKind) => GoalPlan;
+  plan: (robot: BuilderRobot, values: GoalValues, world: WorldKind, spots?: GoalSpots) => GoalPlan;
   fields?: (values: GoalValues) => ParamKey[];
   title?: (values: GoalValues) => string;
   problem?: (robot: BuilderRobot, values: GoalValues) => string | null;
   bounds?: Partial<Record<ParamKey, Pick<GoalParam, 'min'>>>;
 }
-
-const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
-  dots: { key: 'dots', label: 'Dots', unit: '', min: 1, max: DOT_COUNT, step: 1 },
-  distanceMm: { key: 'distanceMm', label: 'Distance', unit: 'mm', min: 0, max: 5000, step: 50 },
-  heightMm: { key: 'heightMm', label: 'Height', unit: 'mm', min: 0, max: 2000, step: 10 },
-  sideMm: { key: 'sideMm', label: 'Side', unit: 'mm', min: -2000, max: 2000, step: 10 },
-  radiusMm: { key: 'radiusMm', label: 'Radius', unit: 'mm', min: 5, max: 1000, step: 10 },
-  pushMm: { key: 'pushMm', label: 'Push', unit: 'mm', min: 100, max: 5000, step: 50 },
-  boxMm: { key: 'boxMm', label: 'Box', unit: 'mm', min: 40, max: 600, step: 10 },
-  stops: { key: 'stops', label: 'Spots', unit: '', min: 2, max: 8, step: 1 },
-  spacingMm: { key: 'spacingMm', label: 'Spacing', unit: 'mm', min: 200, max: 3000, step: 50 },
-  seconds: { key: 'seconds', label: 'Time', unit: 's', min: 2, max: 120, step: 1 },
-};
 
 export const goalParam = (goal: CaseGoal, key: ParamKey): GoalParam => ({ ...GOAL_PARAMS[key], ...goal.bounds?.[key] });
 
@@ -92,9 +94,9 @@ const PATH_SWAY = 0.4;
 const GROUND_HOLD_SECONDS = 0.3;
 const SPOT_HOLD_SECONDS = 0.2;
 const DOT_START_SECONDS = 0.2;
-const DOT_MOVE_SECONDS = 1.8;
-const DOT_SPARE_SECONDS = 0.5;
-const TOUCH_SECONDS = 4;
+
+export const DOT_MOVE_SECONDS = 1.8;
+
 const STAND_SHARE = 0.5;
 const MIN_WALK_MM = 100;
 
@@ -164,26 +166,27 @@ export const routeClearance = (robot: BuilderRobot) =>
 const blockRunUp = (robot: BuilderRobot) =>
   2 * (BLOCK_DEPTH_MM + routeClearance(robot) * 1.2 + robot.footprint.depth + robot.footprint.width);
 
-export const mm = (x: number) => `${Math.round(x)} mm`;
+const setLength = (x: number) => `${Math.round(x)} mm`;
 
 const reachGoal: CaseGoal = {
   kind: 'reach',
   name: 'Reach a Spot',
   needs: ['legs', 'wheels'],
   params: ['distanceMm', 'radiusMm', 'seconds'],
-  plan: (robot, v) => {
-    const z = robot.pivot[2] + v.distanceMm;
+  plan: (robot, v, _world, [named] = []) => {
+    const [x, z] = named ? [named.at[0], named.at[2]] : [robot.pivot[0], robot.pivot[2] + v.distanceMm];
+    const where = named ? named.phrase : `${setLength(v.distanceMm)} ahead`;
 
     return {
-      brief: `Reach the spot ${mm(v.distanceMm)} ahead and stop on it.`,
+      brief: `Reach the spot ${where} and stop on it.`,
       slot: groundSlot(robot),
-      objects: [spot('spot', 'Spot', { x: robot.pivot[0], z, radius: v.radiusMm }, robot)],
+      objects: [spot('spot', 'Spot', { x, z, radius: v.radiusMm }, robot)],
       probes: [{ signal: 'spot', from: 'base', to: { object: 'spot' } }],
       success: holdNear('spot', v.radiusMm, GROUND_HOLD_SECONDS),
       timeline: [],
       controls: ROLL,
       route: routeAlong(robot, z - v.radiusMm),
-      waypoints: [{ at: [robot.pivot[0], robot.pivot[1], z] }],
+      waypoints: [{ at: [x, robot.pivot[1], z] }],
     };
   },
   problem: (robot, v) =>
@@ -194,7 +197,7 @@ export function pointProblem(arm: Pick<RobotFacts, 'anchor' | 'reachMm'>, at: V3
   const { anchor, reachMm } = arm;
   const far = Math.hypot(at[0] - anchor[0], at[1] - anchor[1], at[2] - anchor[2]);
 
-  if (far > reachMm) return `Bring the point within ${mm(reachMm)} of the arm.`;
+  if (far > reachMm) return `Bring the point within ${lengthLabel(reachMm)} of the arm.`;
 
   return v.heightMm < v.radiusMm ? 'Raise the point off the floor.' : null;
 }
@@ -274,7 +277,7 @@ const pushGoal: CaseGoal = {
     const behind = half + robot.footprint.depth / 2;
 
     return {
-      brief: `Push the box ${mm(v.pushMm)} onto the spot.`,
+      brief: `Push the box ${setLength(v.pushMm)} onto the spot.`,
       slot: groundSlot(robot),
       objects: [
         {
@@ -318,12 +321,16 @@ const pathGoal: CaseGoal = {
   name: 'Follow a Path',
   needs: ['legs', 'wheels'],
   params: ['stops', 'spacingMm', 'radiusMm', 'seconds'],
-  plan: (robot, v) => {
+  plan: (robot, v, _world, spots = []) => {
     const count = Math.round(v.stops);
-    const stops = Array.from({ length: count }, (_, i) => pathStop(robot, v, i));
+    const stops = Array.from({ length: count }, (_, i) => {
+      const named = spots[i];
+
+      return named ? { x: named.at[0], z: named.at[2], radius: v.radiusMm } : pathStop(robot, v, i);
+    });
 
     return {
-      brief: `Pass the ${count} spots in order.`,
+      brief: `Pass the ${plural(count, 'spot')} in order.`,
       slot: groundSlot(robot),
       objects: stops.map((s, i) => spot(`spot${i}`, `Spot ${i + 1}`, s, robot)),
       probes: stops.map((_, i) => ({ signal: `spot${i}`, from: 'base', to: { object: `spot${i}` } })),
@@ -342,7 +349,7 @@ const walkGoal: CaseGoal = {
   needs: ['legs'],
   params: ['distanceMm', 'seconds'],
   plan: (robot, v) => ({
-    brief: `Walk ${mm(v.distanceMm)} without falling.`,
+    brief: `Walk ${setLength(v.distanceMm)} without falling.`,
     slot: { needs: ['legs'], binding: {} },
     objects: [],
     probes: [{ signal: 'travel', from: 'base', to: { point: robot.pivot } }],
@@ -357,7 +364,7 @@ const walkGoal: CaseGoal = {
     route: routeAlong(robot, robot.pivot[2] + v.distanceMm),
     waypoints: [{ at: [robot.pivot[0], robot.pivot[1], robot.pivot[2] + v.distanceMm * WALK_PAST_SHARE] }],
   }),
-  problem: (_robot, v) => (v.distanceMm < MIN_WALK_MM ? `Walk at least ${mm(MIN_WALK_MM)}.` : null),
+  problem: (_robot, v) => (v.distanceMm < MIN_WALK_MM ? `Walk at least ${setLength(MIN_WALK_MM)}.` : null),
 };
 
 export function fallGuard(robot: BuilderRobot): { probe: CaseProbe; failure: Contract['failures'][number] } {
@@ -387,73 +394,3 @@ export function fallGuard(robot: BuilderRobot): { probe: CaseProbe; failure: Con
 const pickGoal = pickGoalWith([...REACH, { id: 'grip', label: 'Grip', input: 'grip' }]);
 
 export const CASE_GOALS: CaseGoal[] = [reachGoal, pushGoal, pathGoal, walkGoal, touchGoal, pickGoal];
-
-export const touchRadius = (reachMm: number) => Math.max(12, reachMm * 0.08);
-
-function touchSpot({ facts, armSpots }: BuilderRobot): Partial<GoalValues> {
-  const [x, y, z] = facts.anchor;
-  const armSpot = armSpots
-    .filter((s) => s[2] >= z)
-    .reduce<V3 | null>((low, s) => (!low || s[1] < low[1] ? s : low), null);
-
-  if (!armSpot) return { distanceMm: Math.round(facts.reachMm * 0.6), heightMm: Math.round(y) };
-
-  return {
-    distanceMm: Math.round(armSpot[2] - z),
-    heightMm: Math.round(armSpot[1]),
-    sideMm: Math.round(armSpot[0] - x),
-  };
-}
-
-const BOX_SHARE = 0.5;
-const BOX_OVER_BODY = 1.3;
-const MIN_BOX_MM = 60;
-const MAX_BOX_MM = 300;
-
-function boxFor(robot: BuilderRobot): number {
-  const legs = robot.facts.capabilities.includes('legs');
-  const size = Math.max(robot.footprint.width * BOX_SHARE, legs ? robot.pivot[1] * BOX_OVER_BODY : 0);
-
-  return Math.min(MAX_BOX_MM, Math.max(MIN_BOX_MM, Math.round(size / 10) * 10));
-}
-
-const AROUND_SECONDS = { legs: 8, wheels: 5 };
-
-const touchSeconds = (dots: number) =>
-  Math.max(TOUCH_SECONDS, Math.ceil(DOT_SPARE_SECONDS + Math.round(dots) * DOT_MOVE_SECONDS));
-
-export function goalDefaults(
-  kind: GoalKind,
-  robot: BuilderRobot,
-  world: WorldKind = 'floor',
-  chosen: Partial<GoalValues> = {},
-): GoalValues {
-  const legs = robot.facts.capabilities.includes('legs');
-  const reach = robot.facts.reachMm;
-  const base: GoalValues = {
-    dots: 1,
-    distanceMm: 900,
-    heightMm: 0,
-    sideMm: 0,
-    radiusMm: 160,
-    pushMm: 500,
-    boxMm: 150,
-    stops: 3,
-    spacingMm: 600,
-    seconds: legs ? 14 : 8,
-  };
-  const byKind: Record<GoalKind, Partial<GoalValues>> = {
-    reach: {},
-    push: { radiusMm: 150, boxMm: boxFor(robot), seconds: legs ? 18 : 10 },
-    path: { seconds: legs ? 22 : 13 },
-    walk: { distanceMm: 500 },
-    touch: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: touchSeconds(chosen.dots ?? 1) },
-    pick: pickDefaults(robot),
-    handoff: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: 7 },
-  };
-
-  const values = { ...base, ...byKind[kind] };
-  const around = world === 'block' ? AROUND_SECONDS[legs ? 'legs' : 'wheels'] : 0;
-
-  return { ...values, seconds: values.seconds + around };
-}

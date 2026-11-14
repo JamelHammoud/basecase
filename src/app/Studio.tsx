@@ -3,7 +3,6 @@ import { SettingsWindow } from '../components/SettingsWindow';
 import { ErrorBoundary } from '../design-system';
 import { SceneWorkspace, type StudioShared } from '../SceneWorkspace';
 import { useScenePersistence, type InitialTabs } from './openScenes';
-import { DEFAULT_PANEL_WIDTHS } from './storedSettings';
 import { tabListOf, type TabEntry } from './tabModel';
 import { TitleBarTabs } from './TitleBarTabs';
 import { useAgentConnection } from './useAgentConnection';
@@ -145,28 +144,16 @@ export function Studio({ initial }: { initial: InitialTabs }) {
           pane={settings.pane}
           onPaneChange={settings.changePane}
           onClose={settings.closeSettings}
-          showGrid={prefs.showGrid}
-          onShowGrid={prefs.setShowGrid}
           snapStepMm={prefs.snapStepMm}
           onSnapStep={prefs.setSnapStepMm}
           snapAngleDeg={prefs.snapAngleDeg}
           onSnapAngle={prefs.setSnapAngleDeg}
           measureUnit={prefs.measureUnit}
           onMeasureUnit={prefs.setMeasureUnit}
-          showReferenceImages={prefs.showReferenceImages}
-          onShowReferenceImages={prefs.setShowReferenceImages}
           trackpadMode={prefs.trackpadMode}
           onTrackpadMode={prefs.setTrackpadMode}
-          isLeftOpen={layout.isLeftOpen}
-          onLeftOpen={layout.setIsLeftOpen}
-          isRightOpen={layout.isRightOpen}
-          onRightOpen={layout.setIsRightOpen}
-          panelWidths={layout.panelWidths}
-          onResetPanelWidths={() => layout.setPanelWidths({ ...DEFAULT_PANEL_WIDTHS })}
           acpStatus={agent.acpStatus}
           onReconnectAcp={agent.reconnectAcp}
-          targetHeightMm={agent.agentTargetHeightMm}
-          onTargetHeight={agent.setAgentTargetHeightMm}
           printers={printers}
         />
       </ErrorBoundary>

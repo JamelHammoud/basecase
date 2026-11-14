@@ -1,6 +1,7 @@
 use crate::deployed::Squash;
 use crate::eyes::{self, EyeSpec};
 use crate::options::{self, TaskOptions};
+use crate::start_states;
 use serde_json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -23,6 +24,7 @@ pub enum Algo {
     FastSac,
     FlashSac,
     Shac,
+    Bc,
 }
 
 impl Algo {
@@ -32,13 +34,14 @@ impl Algo {
             Some("fastsac") => Ok(Algo::FastSac),
             Some("flashsac") => Ok(Algo::FlashSac),
             Some("shac") => Ok(Algo::Shac),
+            Some("bc") => Ok(Algo::Bc),
             Some(other) => Err(format!("job.json asks for an unknown algo {other}")),
         }
     }
 
     fn default_envs(self) -> usize {
         match self {
-            Algo::Ppo | Algo::Shac => 64,
+            Algo::Ppo | Algo::Shac | Algo::Bc => 64,
             Algo::FastSac | Algo::FlashSac => 256,
         }
     }
@@ -92,6 +95,7 @@ pub struct Job {
     pub seed: u64,
     pub max_iterations: Option<usize>,
     pub gate_every: Option<usize>,
+    pub snapshot_every_s: Option<f64>,
     pub eval_seeds: Option<usize>,
     pub gate_speed: f64,
     pub envs: usize,
@@ -103,6 +107,8 @@ pub struct Job {
     pub options: TaskOptions,
     pub eyes: Vec<EyeSpec>,
     pub eyes_json: Option<Value>,
+    pub demos: Option<String>,
+    pub state_noise: f32,
 }
 
 fn required<'a>(root: &'a Value, key: &str) -> Result<&'a Value, String> {
@@ -145,12 +151,69 @@ fn optional_count(root: &Value, key: &str) -> Option<usize> {
     root.get(key).and_then(Value::as_u64).map(|v| v as usize)
 }
 
+fn seconds(root: &Value, key: &str) -> Result<Option<f64>, String> {
+    let Some(value) = root.get(key).filter(|v| !v.is_null()) else {
+        return Ok(None);
+    };
+
+    value
+        .as_f64()
+        .filter(|s| s.is_finite() && *s > 0.0)
+        .map(Some)
+        .ok_or_else(|| format!("job.json needs a number of seconds above 0 in {key}"))
+}
+
 fn warm_start(root: &Value) -> Result<Option<PathBuf>, String> {
     match root.get("warmStart") {
         None | Some(Value::Null) => Ok(None),
         Some(Value::String(path)) if !path.trim().is_empty() => Ok(Some(PathBuf::from(path))),
         Some(_) => Err("job.json needs a path in warmStart".to_owned()),
     }
+}
+
+fn plain_file_name(name: &str) -> bool {
+    !name.is_empty() && !name.contains(['/', '\\', ':']) && !name.contains("..")
+}
+
+fn demos(root: &Value, algo: Algo) -> Result<Option<String>, String> {
+    let name = match root.get("demos") {
+        None | Some(Value::Null) => None,
+        Some(Value::String(name)) => Some(name.clone()),
+        Some(_) => return Err("job.json needs a file name in demos".to_owned()),
+    };
+
+    match (algo, name) {
+        (Algo::Bc, None) => Err("job.json trains from demos but names no demos file".to_owned()),
+        (_, Some(name)) if !plain_file_name(&name) => {
+            Err(format!("demos must be a file in the job folder, not {name}"))
+        }
+        (_, name) => Ok(name),
+    }
+}
+
+const MAX_STATE_NOISE: f64 = 5.0;
+
+fn state_noise(root: &Value) -> Result<f32, String> {
+    match root.get("stateNoise") {
+        None | Some(Value::Null) => Ok(0.0),
+        Some(value) => value
+            .as_f64()
+            .filter(|v| (0.0..=MAX_STATE_NOISE).contains(v))
+            .map(|v| v as f32)
+            .ok_or_else(|| format!("job.json's stateNoise must be from 0 to {MAX_STATE_NOISE}")),
+    }
+}
+
+fn check_cloning(job: &Job) -> Result<(), String> {
+    if job.algo != Algo::Bc {
+        return Ok(());
+    }
+
+    if job.sees() || job.options.reference.is_some() {
+        return Err("Training from demos takes no eyes and no reference".to_owned());
+    }
+
+    Ok(())
 }
 
 fn joints(root: &Value) -> Result<Vec<JointSpec>, String> {
@@ -192,8 +255,9 @@ pub fn parse(root: &Value) -> Result<Job, String> {
     let options = options::parse(root)?;
 
     options::check_reference(&options, joints.len())?;
+    start_states::check(&options.start_states, joints.len())?;
 
-    Ok(Job {
+    let job = Job {
         algo,
         backend: Backend::parse(root.get("backend").and_then(Value::as_str))?,
         task,
@@ -216,6 +280,7 @@ pub fn parse(root: &Value) -> Result<Job, String> {
         seed: root.get("seed").and_then(Value::as_u64).unwrap_or(0),
         max_iterations: optional_count(root, "maxIterations"),
         gate_every: optional_count(root, "gateEvery"),
+        snapshot_every_s: seconds(root, "snapshotEveryS")?,
         eval_seeds: optional_count(root, "evalSeeds"),
         gate_speed: root.get("gateSpeed").and_then(Value::as_f64).unwrap_or(0.2),
         envs: optional_count(root, "envs").unwrap_or(algo.default_envs()),
@@ -234,7 +299,13 @@ pub fn parse(root: &Value) -> Result<Job, String> {
             .get("eyes")
             .filter(|v| v.as_array().is_some_and(|l| !l.is_empty()))
             .cloned(),
-    })
+        demos: demos(root, algo)?,
+        state_noise: state_noise(root)?,
+    };
+
+    check_cloning(&job)?;
+
+    Ok(job)
 }
 
 impl Job {
@@ -337,6 +408,9 @@ mod tests {
 
         job["algo"] = json!("flashsac");
         assert_eq!(parse(&job).expect("job parses").algo, super::Algo::FlashSac);
+        job["algo"] = json!("bc");
+        job["demos"] = json!("demos.json");
+        assert_eq!(parse(&job).expect("job parses").algo, super::Algo::Bc);
         job["algo"] = json!("dqn");
         assert!(parse(&job).expect_err("must fail").contains("dqn"));
     }
@@ -351,6 +425,20 @@ mod tests {
         assert!(parse(&job)
             .expect_err("must fail")
             .contains("reference frames need 3 numbers"));
+    }
+
+    #[test]
+    fn reads_the_snapshot_interval() {
+        let mut job = sample();
+
+        assert_eq!(parse(&job).expect("job parses").snapshot_every_s, None);
+        job["snapshotEveryS"] = json!(2.5);
+        assert_eq!(parse(&job).expect("job parses").snapshot_every_s, Some(2.5));
+
+        for bad in [json!(0), json!(-1), json!("often")] {
+            job["snapshotEveryS"] = bad;
+            assert!(parse(&job).expect_err("must fail").contains("snapshotEveryS"));
+        }
     }
 
     #[test]

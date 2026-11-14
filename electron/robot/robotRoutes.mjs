@@ -2,6 +2,8 @@ export const ROBOT_CALLS = {
   'robot:connect': (link, spec) => link.connect(spec),
   'robot:command': (link, command) => link.command(command),
   'robot:disconnect': (link) => link.disconnect(),
+  'robot:policy': (link, id) => link.policy(id),
+  'robot:calibration': (link, joints) => link.calibrate(joints),
   'robot:state': (link) => link.state(),
 };
 

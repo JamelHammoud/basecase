@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useScrollFade } from '../design-system';
-import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
+import type { PrintMaterial, ProjectSettings, PurchaseRecord, ScenePart } from '../types/robotics';
+import { onHandOf, withOnHand, withPrice } from '../utils/onHand';
+import type { ShowToast } from '../workspace/types';
 import { type BomLine, buildBom, bomToCsv, bomToMarkdown } from '../utils/bom';
 import { useMoney } from '../utils/useMoney';
 import type { PrintReport } from '../utils/printReport';
@@ -8,6 +10,7 @@ import type { Printing } from '../workspace/usePrinting';
 import { isBuilt } from '../guide/guidePlan';
 import type { BuildGuide } from '../workspace/useBuildGuide';
 import { BuyList } from './build/BuyList';
+import { onHandAmount } from './build/buyLine';
 import { CheckSheet } from './build/CheckSheet';
 import { ChecksSection } from './build/ChecksSection';
 import { GuideSection } from './build/GuideSection';
@@ -26,10 +29,13 @@ interface BuildPanelProps {
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   printing: Printing;
   onSelectParts: (ids: string[]) => void;
-  onToast: (message: string) => void;
+  onToast: ShowToast;
   onFixFinding?: (finding: ReadinessFinding) => void;
   onQuoteFinding?: (finding: ReadinessFinding) => void;
   onOpenCase?: (id: string) => void;
+  onNewCase?: () => void;
+  onCalibrate?: (jointIds: string[]) => void;
+  onReplayFall?: (deg: number) => void;
   panScroll: boolean;
   guide: BuildGuide;
   readiness: ReadinessHandle;
@@ -56,6 +62,9 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   onFixFinding,
   onQuoteFinding,
   onOpenCase,
+  onNewCase,
+  onCalibrate,
+  onReplayFall,
   panScroll,
   guide,
   readiness,
@@ -79,10 +88,17 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
     download(`${file}-bom.md`, bomToMarkdown(bom, sceneName, money), 'text/markdown');
     onToast('Exported bill of materials');
   };
-  const savePrice = async (line: BomLine, record: Parameters<typeof savePurchase>[1]) => {
-    await savePurchase(line.key, record);
+  const savePrice = async (line: BomLine, record: PurchaseRecord | null) => {
+    await savePurchase(line.key, withPrice(purchases[line.key], record));
     setChecking(null);
-    onToast(record ? `Saved price for ${line.name}` : `Removed price for ${line.name}`);
+  };
+  const saveOnHand = async (line: BomLine, count: number) => {
+    const before = purchases[line.key];
+
+    await savePurchase(line.key, withOnHand(before, count));
+    onToast(`Saved ${onHandAmount(count, line.unit)} for ${line.name}`, {
+      action: { label: 'Undo', onClick: () => void savePurchase(line.key, before ?? null) },
+    });
   };
 
   return (
@@ -96,8 +112,26 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
             panScroll,
             actions: {
               onFix: onFixFinding,
-              onApplyFix: ({ fix }) =>
-                fix && printing.setPartPrint([fix.part], { down: fix.down, at: undefined, turned: undefined }),
+              onApplyFix: {
+                'print-face': ({ fix }) =>
+                  fix?.kind === 'print-face' &&
+                  printing.setPartPrint([fix.part], { down: fix.down, at: undefined, turned: undefined }),
+                ...(onNewCase && { 'new-case': onNewCase }),
+                ...(onCalibrate && {
+                  calibrate: ({ fix, ids }: ReadinessFinding) => {
+                    onSelectParts(ids);
+
+                    if (fix?.kind === 'calibrate') onCalibrate(fix.joints);
+                  },
+                }),
+                ...(onReplayFall && {
+                  'replay-fall': ({ fix, ids }: ReadinessFinding) => {
+                    onSelectParts(ids);
+
+                    if (fix?.kind === 'replay-fall') onReplayFall(fix.deg);
+                  },
+                }),
+              },
               onQuote: onQuoteFinding,
               onIgnore: (finding) => onChangeProject({ readiness: ignoreFinding(project.readiness, finding) }),
               onIgnoreRule: (finding) => onChangeProject({ readiness: ignoreRule(project.readiness, finding) }),
@@ -119,6 +153,8 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
           project={project}
           onChangeProject={onChangeProject}
           onCheck={setChecking}
+          onHandOf={(key) => onHandOf(purchases[key])}
+          onOnHand={saveOnHand}
           onSelectParts={onSelectParts}
           onExportCsv={exportCsv}
           onExportMarkdown={exportMarkdown}

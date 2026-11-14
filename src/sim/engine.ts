@@ -4,7 +4,9 @@ import { controlValues } from './controlValues';
 import { primeCtrlHistory } from './ctrlHistory';
 import * as THREE from 'three';
 import { createDrive, type DriveCommand, type DriveHand, type DriveLoop, type DriveSetup } from './drive';
+import { PoseDrive, type PoseSetup } from './drivePose';
 import { GrabForce } from './grabForce';
+import { PushForce, type PushTiming } from './pushForce';
 import type { SimModel } from './mjcf';
 import { simDeltas } from './mjcfFrames';
 import type { SimStats } from './engineStats';
@@ -19,7 +21,7 @@ import { Scanner } from './scanner';
 export type Controller =
   | { kind: 'hold'; values?: Record<string, number> }
   | { kind: 'animation'; animation: RobotAnimation }
-  | { kind: 'policy'; policy: PolicySpec; robot: string; hold?: Record<string, number> }
+  | { kind: 'policy'; policy: PolicySpec; robot: string; hold?: Record<string, number>; pose?: PoseSetup }
   | { kind: 'drive'; setup: DriveSetup }
   | RouteController
   | { kind: 'limp' };
@@ -49,12 +51,15 @@ export class SimEngine {
   }>;
   private controller: Controller = { kind: 'hold' };
   private drive: DriveLoop | null = null;
+  private arms: PoseDrive | null = null;
   private route: RouteRunner | null = null;
   stepHook: (() => void) | null = null;
+  commandHook: ((c: DriveCommand) => void) | null = null;
+  private given = new Map<number, DriveCommand>();
   private peaks: Float64Array;
   private saturated: Float64Array;
   private fellAt = new Map<string, number>();
-  private push: { body: number; force: [number, number, number]; until: number } | null = null;
+  private pushes: PushForce;
   private grab: GrabForce;
   private faults: ActuatorFaults;
   private policyState: PolicyState | null = null;
@@ -70,6 +75,7 @@ export class SimEngine {
     this.data = new mj.MjData(this.model);
     this.dt = this.model.opt.timestep;
     this.grab = new GrabForce(this.model, this.data, this.dt);
+    this.pushes = new PushForce(this.data);
     this.scanner = Scanner.create(mj, this.model, this.data, sim.scans);
     this.faults = new ActuatorFaults(this.model);
 
@@ -124,7 +130,7 @@ export class SimEngine {
     this.peaks.fill(0);
     this.saturated.fill(0);
     this.fellAt.clear();
-    this.push = null;
+    this.pushes.forget();
     this.grab.forget();
     this.faults.reprime();
     this.setController(this.controller);
@@ -165,7 +171,7 @@ export class SimEngine {
     }
 
     this.fellAt.delete(r.key);
-    this.push = null;
+    this.pushes.forget();
     this.grab.forget();
     this.setController(this.controller);
     mj.mj_forward(model, data);
@@ -187,9 +193,11 @@ export class SimEngine {
 
   setController(c: Controller) {
     this.controller = c;
+    this.given.clear();
     this.policyState?.eyes?.dispose();
     this.policyState = null;
     this.drive = c.kind === 'drive' ? createDrive(c.setup) : null;
+    this.arms = c.kind === 'policy' && c.pose ? new PoseDrive(c.pose) : null;
     this.faults.setLimpAll(c.kind === 'limp');
     this.route = c.kind === 'route' ? this.routeRunner(c) : null;
 
@@ -200,7 +208,7 @@ export class SimEngine {
     const r = this.robots.find((x) => x.key === pc.robot) ?? this.robots.find((x) => x.floating);
     const idx = pc.policy.joints.map((id) => this.sim.joints.findIndex((j) => j.id === id));
 
-    if (!r || r.rootQpos < 0 || idx.some((i) => i < 0))
+    if (!r || idx.some((i) => i < 0))
       throw new Error('This policy was trained on joints this robot no longer has. Train it again.');
 
     this.policyState = {
@@ -229,9 +237,16 @@ export class SimEngine {
   }
 
   command(c: DriveCommand) {
+    this.given.set(c.slot ?? 0, c);
+    this.commandHook?.(c);
     this.drive?.command(c, this.drive.hand ? this.holdValues() : undefined);
+    this.arms?.command(c);
 
     if (this.policyState) this.policyState.command = [c.v[0], c.v[1], c.v[2]];
+  }
+
+  givenCommands(): DriveCommand[] {
+    return [...this.given.values()];
   }
 
   grabStart(body: number, point: [number, number, number]) {
@@ -252,12 +267,10 @@ export class SimEngine {
     this.grab.end();
   }
 
-  pushRobot(key: string, force: [number, number, number], seconds = 0.15) {
+  pushRobot(key: string, force: [number, number, number], timing: PushTiming = {}) {
     const r = this.robots.find((x) => x.key === key) ?? this.robots[0];
 
-    if (!r) return;
-
-    this.push = { body: r.rootBody, force: [force[0], -force[2], force[1]], until: this.data.time + seconds };
+    if (r) this.pushes.start(r.rootBody, force, { ...timing, tilt: () => this.tiltOf(r) });
   }
 
   private targetFor(i: number, values: Record<string, number> | undefined): number {
@@ -307,6 +320,17 @@ export class SimEngine {
     this.route?.apply(data, ps);
 
     if (pc && ps) this.applyPolicy(pc.policy, ps);
+
+    if (this.arms) this.applyArms(this.arms);
+  }
+
+  private applyArms(arms: PoseDrive) {
+    const { values } = arms.tick(this.data.time);
+
+    this.sim.joints.forEach((j, i) => {
+      if (j.actuator >= 0 && j.drive === 'position' && values?.[j.id] !== undefined)
+        this.data.ctrl[j.actuator] = this.targetFor(i, values);
+    });
   }
 
   private applyDrive(drive: DriveLoop) {
@@ -331,19 +355,6 @@ export class SimEngine {
     });
   }
 
-  private applyPush() {
-    if (!this.push) return;
-
-    const xf = this.data.xfrc_applied;
-    const b = this.push.body * 6;
-
-    if (this.data.time < this.push.until) [xf[b], xf[b + 1], xf[b + 2]] = this.push.force;
-    else {
-      xf[b] = xf[b + 1] = xf[b + 2] = 0;
-      this.push = null;
-    }
-  }
-
   step(seconds: number, afterStep?: () => void) {
     const { mj, model, data } = this;
     const steps = Math.max(1, Math.round(seconds / this.dt));
@@ -353,7 +364,7 @@ export class SimEngine {
     for (let s = 0; s < steps; s++) {
       this.applyControl();
       this.faults.apply(data.ctrl);
-      this.applyPush();
+      this.pushes.apply();
       this.grab.apply();
       mj.mj_step(model, data);
       afterStep?.();
@@ -445,6 +456,16 @@ export class SimEngine {
 
   jointAddresses(): Int32Array {
     return Int32Array.from(this.jointQpos);
+  }
+
+  dofAddresses(): Int32Array {
+    return Int32Array.from(this.jointDof);
+  }
+
+  rootAddresses(): [number, number] {
+    const r = this.robots[0];
+
+    return r ? [r.rootQpos, r.rootDof] : [-1, -1];
   }
 
   refreshKinematics() {

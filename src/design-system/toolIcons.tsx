@@ -52,6 +52,12 @@ export const RunIcon = glyph('M6 5Q6 3 7.7 4.05L18.8 10.95Q20.5 12 18.8 13.05L7.
 
 export const TrainIcon = glyph('M17.48 7.27A7.75 7.75 0 1 1 12 5L14.25 5M11.6 2.35L14.25 5L11.6 7.65');
 
+export const CoachIcon = glyph({
+  d: 'M9.5 6H20A1.5 1.5 0 0 1 21.5 7.5V9.5A1.5 1.5 0 0 1 20 11H15.82A6.5 6.5 0 1 1 9.5 6Z',
+  dots: 'M9.5 12.5h0',
+  dotSize: 4.5,
+});
+
 export const ToolIcon = glyph('M4 6.5L9.5 12L4 17.5M12.5 18H20');
 
 export const ThoughtIcon = glyph(

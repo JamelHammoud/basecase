@@ -3,7 +3,8 @@ import { LAYERED } from '../strength/material';
 import { FACTOR_PASS, FACTOR_WARN, type ScrewLine, type StrengthJob, type StrengthReading } from '../strength/types';
 import type { ScenePart } from '../types/robotics';
 import { isPrinted, printMaterialOf } from './bom';
-import { jointLabel, nm } from './engineeringFormat';
+import { jointLabel } from './engineeringFormat';
+import { torque } from './torque';
 import { dot, norm, sub, type V3 } from './engineeringMath';
 import type { CheckContext, CheckRow, JointLoad, ServoLine } from './engineeringTypes';
 
@@ -171,7 +172,7 @@ function itemOf(ctx: CheckContext, { plan, reading }: PartVerdict) {
   const better = reading.best.factor > reading.factor * BETTER_BY;
 
   return {
-    text: `${name}: ${fmtFactor(reading.factor)}×, ${nm(plan.torqueNm)} N·m (${jointLabel(plan.load.joint)})`,
+    text: `${name}: ${fmtFactor(reading.factor)}×, ${torque(plan.torqueNm)} (${jointLabel(plan.load.joint)})`,
     ids: [plan.job.part],
     status: statusOf(reading.factor) === 'fail' ? ('fail' as const) : ('warn' as const),
     fix: better ? { kind: 'print-face' as const, part: plan.job.part, down: reading.best.down } : undefined,
@@ -194,6 +195,7 @@ export function strengthRows(ctx: CheckContext, loads: JointLoad[]): CheckRow[] 
       check: STRENGTH_CHECK,
       status: statusOf(verdicts[0].reading.factor),
       detail: `${fmtFactor(verdicts[0].reading.factor)}×`,
+      detailInItems: true,
       items: flagged.map((v) => itemOf(ctx, v)),
       ids: verdicts.map((v) => v.plan.job.part),
     },

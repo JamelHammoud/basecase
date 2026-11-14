@@ -27,6 +27,7 @@ related:
 covers:
   - src/types/robotics.ts
   - src/utils/kinematics.ts
+  - src/utils/kinematicsLoop.ts
   - src/assembly/followers.ts
   - src/data/articulatedParts.ts
   - src/utils/robotImport/
@@ -48,11 +49,13 @@ Once a design has joints, you can pose it, simulate it, and check every servo's 
 
 ## Where joints come from
 
-You can't draw a joint by hand. Joints arrive with a robot, a hand or the agent's design:
+Joints arrive with a robot, a hand or the agent's design, or you add them yourself:
 
 - [Import a robot](/help/import-a-robot) brings every joint in its URDF or MJCF, with axis, limits and torque limit.
 - **Parts** ▸ **Hands** has posable hands whose makers publish their joints, such as LEAP, ORCA and Allegro.
 - The agent declares joints when it designs a robot, and adds or changes them when you ask.
+- [Design a linkage from a path](/help/design-a-linkage-from-a-path) adds a four-bar whose crank joint a servo drives.
+- [Join two parts with a hinge or slider](/help/join-two-parts-with-a-hinge) adds a joint between two parts you select.
 
 Once the scene has a joint, the **Simulate** tab appears in the right panel.
 
@@ -63,6 +66,8 @@ Joints form a tree from the robot's base outward. Each part moves with the deepe
 A part that no joint lists still moves when its whole group moves with one joint. Screws, nuts and inserts follow whatever they clamp, so joints never need to list them.
 
 Each joint is anchored to the part it's mounted on. Moving the whole robot, or undoing a change, keeps the joints in place.
+
+A four-bar linkage closes a loop. You pose only its crank, and the coupler and rocker turn with it so the loop stays closed. Closed loops aren't simulated: in Simulate the coupler rides the crank as one rigid arm.
 
 Deleting a joint's moving parts deletes the joint too. Undo brings both back together.
 

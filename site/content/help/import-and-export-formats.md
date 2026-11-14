@@ -24,6 +24,7 @@ covers:
   - src/workspace/meshImport.ts
   - src/components/ExportMenu.tsx
   - src/workspace/useExportActions.ts
+  - src/workspace/useStepExport.ts
   - src/utils/robotImport/readModel.ts
   - src/utils/robotImport/archive.ts
   - electron/cadImport/convertPolicy.mjs
@@ -41,7 +42,7 @@ Every file type Basecase opens and saves, with the units it assumes and its size
 | GLB, glTF, DAE | Import a mesh | Meters |
 | FBX | Import a mesh | Centimeters |
 | STEP, STP, IGES, IGS | Import a mesh, in the desktop app only | The file's own units |
-| SVG | [Turn an SVG drawing into a part](/help/turn-an-svg-into-a-part) | The width you type |
+| SVG | [Draw a part from a sketch or SVG](/help/draw-a-part-from-a-sketch-or-svg#turn-an-svg-into-a-part) | The width you type |
 | URDF, MJCF, zip | [Import a robot](/help/import-a-robot), with its joints | The file's own units |
 | `.basecase` | [Open a shared scene](/help/open-a-shared-scene) | — |
 | PNG, JPEG and other images | Dropped on the canvas, as a flat reference image | — |
@@ -62,7 +63,8 @@ Every export is in the **Export** menu at the top right of the window.
 |---|---|---|
 | **Image** | `<scene>.png` | The canvas as you see it, without the grid, gizmos and other helpers |
 | **STL** | `<scene>.stl` | Every visible solid part as one binary mesh, in millimeters, Z up |
-| **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates |
+| **3MF Plates** | `<scene>.3mf`, or one file per material | The printed parts laid out on plates, each with its [guide letter](/help/label-printed-parts) while **Label parts** is on |
+| **STEP**, in the desktop app only | `<scene>.step` | Every visible solid part as its own body, in millimeters, Z up, as [Export a STEP file](/help/export-a-step-file) explains |
 | **Scene** | `<scene>.basecase` | The scene, to open in Basecase |
 | **Robot Package** | `<scene>-robot.zip` | MJCF, URDF, meshes, joint map, policies and ROS 2 package files, listed in [Robot package contents](/help/robot-package-contents) |
 | **Copy as Markdown** | The clipboard | The scene as a Markdown spec: its goal and every part with its size |

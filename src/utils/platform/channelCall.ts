@@ -1,5 +1,5 @@
-import { ipcErrorText } from '../ipcError';
 import { post } from './transport';
+import { errorMessage } from '../errorMessage';
 
 type Invoke = ((channel: string, payload?: unknown) => Promise<unknown>) | undefined;
 
@@ -18,6 +18,6 @@ export async function channelCall<T>(
 
     return res;
   } catch (e) {
-    throw new Error(ipcErrorText(e), { cause: e });
+    throw new Error(errorMessage(e), { cause: e });
   }
 }

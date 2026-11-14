@@ -5,7 +5,7 @@ import type { PanelViewProps } from '../panelContext';
 
 const LABELS: Record<CaseAction, string> = {
   try: 'Try It',
-  'end-try': 'End Try',
+  'end-try': 'Stop Try',
   drive: 'Drive',
   stop: 'Stop Driving',
   'start-over': 'Start Over',

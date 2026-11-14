@@ -4,6 +4,7 @@ import path from 'node:path';
 import { safeFileId } from '../backend/constants.mjs';
 import { flattenPresets, readSliced, runSlicer } from './slice.mjs';
 import { SLICERS, slicerFor, slicerOrder } from './slicers.mjs';
+import { plural } from '../plural.mjs';
 
 export const fileStem = (name) =>
   String(name ?? 'robot')
@@ -48,7 +49,7 @@ function needsSlicer(printer) {
 }
 
 const groupHash = (job, group) =>
-  JSON.stringify([group.material, group.plates.map((p) => p.hash), job.printer, job.infillPct]);
+  JSON.stringify([group.material, group.plates.map((p) => p.hash), job.printer, job.infillPct, job.labels]);
 
 export function jobDir(root, jobId) {
   const id = safeFileId(jobId);
@@ -79,6 +80,7 @@ export function writeJob(root, payload) {
     stem,
     printer: payload.printer,
     infillPct: payload.infillPct,
+    labels: typeof payload.labels === 'string' ? payload.labels : '',
     groups,
   };
 
@@ -182,7 +184,7 @@ export async function sliceJob({ dir, job }, { signal, progress, wanted }) {
   for (const group of job.groups) {
     const count = group.plates.length;
 
-    progress(`Slicing ${count} ${group.material} ${count === 1 ? 'plate' : 'plates'} in ${slicer.name}`);
+    progress(`Slicing ${plural(count, `${group.material} plate`)} in ${slicer.name}`);
     records.push(await sliceGroup({ dir, job, group, slicer, signal }));
   }
 
@@ -190,6 +192,7 @@ export async function sliceJob({ dir, job }, { signal, progress, wanted }) {
     slicer: { name: slicer.name, version: slicer.version },
     slicedAt: new Date().toISOString(),
     cached: records.every((r) => r.cached),
+    labels: job.labels,
     files: Object.fromEntries(records.map((r) => [r.material, r.file])),
     plates: records.flatMap((r) => r.plates).sort((a, b) => a.number - b.number),
   };

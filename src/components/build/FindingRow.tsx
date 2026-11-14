@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { Button, IconButton, MenuItem, MoreIcon, PopoverMenu, RowActions } from '../../design-system';
-import type { ReadinessFinding } from '../../readiness/types';
+import type { FindingFix, ReadinessFinding } from '../../readiness/types';
 import type { ScenePart } from '../../types/robotics';
 import { PartLinks } from './PartLinks';
 import type { TetherControl } from './TetherFields';
 
 export interface FindingActions {
   onFix?: (finding: ReadinessFinding) => void;
-  onApplyFix?: (finding: ReadinessFinding) => void;
+  onApplyFix?: Partial<Record<FindingFix['kind'], (finding: ReadinessFinding) => void>>;
   onQuote?: (finding: ReadinessFinding) => void;
   onIgnore: (finding: ReadinessFinding) => void;
   onIgnoreRule: (finding: ReadinessFinding) => void;
@@ -22,6 +22,8 @@ export interface FindingContext {
   onOpenCase?: (id: string) => void;
   showDots?: (check: string | null) => void;
 }
+
+const FIX_LABELS: Record<string, string> = { 'new-case': 'New Case', 'replay-fall': 'Replay in Sim' };
 
 const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {
   const [open, setOpen] = useState(false);
@@ -52,13 +54,13 @@ const MoreMenu: React.FC<{ finding: ReadinessFinding; actions: FindingActions }>
 };
 
 const FindingButtons: React.FC<{ finding: ReadinessFinding; actions: FindingActions }> = ({ finding, actions }) => {
-  const fix = finding.fix ? actions.onApplyFix : actions.onFix;
+  const fix = finding.fix ? actions.onApplyFix?.[finding.fix.kind] : actions.onFix;
 
   return (
     <>
       {fix && (
         <Button variant="secondary" size="xs" onClick={() => fix(finding)}>
-          Fix
+          {FIX_LABELS[finding.fix?.kind ?? ''] ?? 'Fix'}
         </Button>
       )}
       <MoreMenu finding={finding} actions={actions} />
@@ -66,11 +68,13 @@ const FindingButtons: React.FC<{ finding: ReadinessFinding; actions: FindingActi
   );
 };
 
-const FindingText: React.FC<{ finding: ReadinessFinding; context: FindingContext; muted?: boolean }> = ({
-  finding,
-  context,
-  muted,
-}) => (
+interface FindingRowProps {
+  finding: ReadinessFinding;
+  context: FindingContext;
+  children?: React.ReactNode;
+}
+
+const FindingText: React.FC<FindingRowProps & { muted?: boolean }> = ({ finding, context, muted, children }) => (
   <div className="min-w-0 flex-1">
     <p className={`text-[13px] leading-[18px] ${muted ? 'text-white/65' : 'text-white/85'}`}>{finding.text}</p>
     {finding.detail && <p className="text-[12px] leading-[16px] text-white/50">{finding.detail}</p>}
@@ -83,21 +87,26 @@ const FindingText: React.FC<{ finding: ReadinessFinding; context: FindingContext
     {finding.dispute && (
       <p className="mt-0.5 text-[12px] leading-[16px] text-white/50">The agent disagrees: {finding.dispute.reason}</p>
     )}
+    {children}
   </div>
 );
 
-export const BlockerRow: React.FC<{ finding: ReadinessFinding; context: FindingContext }> = ({ finding, context }) => (
+export const BlockerRow: React.FC<FindingRowProps> = ({ finding, context, children }) => (
   <li className="flex items-start gap-2 py-1.5 pl-[31px] pr-[7px]">
-    <FindingText finding={finding} context={context} />
+    <FindingText finding={finding} context={context}>
+      {children}
+    </FindingText>
     <div className="flex items-center gap-1 shrink-0">
       <FindingButtons finding={finding} actions={context.actions} />
     </div>
   </li>
 );
 
-export const NoteRow: React.FC<{ finding: ReadinessFinding; context: FindingContext }> = ({ finding, context }) => (
+export const NoteRow: React.FC<FindingRowProps> = ({ finding, context, children }) => (
   <li className="group relative py-1.5 pl-[31px] pr-[7px] rounded-lg hover:bg-[#333333]">
-    <FindingText finding={finding} context={context} muted />
+    <FindingText finding={finding} context={context} muted>
+      {children}
+    </FindingText>
     <RowActions fill="#333333" className="right-0 top-0.5 gap-1 pr-1 rounded-r-lg">
       <FindingButtons finding={finding} actions={context.actions} />
     </RowActions>

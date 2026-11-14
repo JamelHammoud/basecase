@@ -22,7 +22,7 @@ export function jointProblem(j: Sides, ids: Set<string>): string | null {
 
   const both = j.parent.filter((id) => j.child.includes(id));
 
-  return both.length ? `${j.id}: ${both.join(', ')} can't be on both sides` : null;
+  return both.length ? `${j.id}: ${both.join(', ')} can’t be on both sides` : null;
 }
 
 export const jointFrom = (draft: JointDraft, parts: ScenePart[]): RobotJoint => anchorJoint(draft, parts);

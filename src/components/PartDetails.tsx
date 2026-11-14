@@ -4,13 +4,12 @@ import { COMPONENT_BY_ID, ComponentInfo, SpecValue, specLines } from '../data/co
 import { isSourcedId } from '../data/sourcedItems';
 import { usePartThumbnail } from '../three/partThumbnails';
 import { keySpecs } from '../utils/keySpecs';
-import { MetaLine, Tooltip, ArrowUpRightIcon, CartIcon, FileIcon } from '../design-system';
+import { sizeFigures } from '../utils/size';
+import { MetaLine, PreviewImage, Tooltip, ArrowUpRightIcon, CartIcon, FileIcon } from '../design-system';
 
-const fmt = (v: number) => String(Math.round(v * 100) / 100);
-
-export const SizeLine: React.FC<{ w: number; h: number; d: number }> = ({ w, h, d }) => (
-  <span className="tabular text-white/85">
-    {fmt(w)} × {fmt(h)} × {fmt(d)}
+export const SizeLine: React.FC<{ mm: readonly number[] }> = ({ mm }) => (
+  <span className="tabular">
+    {sizeFigures(mm)}
     <span className="text-white/50"> mm</span>
   </span>
 );
@@ -27,7 +26,7 @@ export const LinkButton: React.FC<{
     target="_blank"
     rel="noreferrer"
     aria-label={label}
-    className={`inline-flex items-center justify-center gap-1.5 h-8 ${children ? 'px-3' : 'w-8'} rounded-lg text-[13px] font-medium whitespace-nowrap cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
+    className={`inline-flex items-center justify-center gap-1.5 h-[32px] ${children ? 'px-3' : 'w-[32px]'} rounded-lg text-[13px] font-medium whitespace-nowrap cursor-default transition-[background-color,color,transform] duration-150 active:scale-[0.97] ${
       primary
         ? 'bg-figma-blue-fill hover:bg-figma-blue-fill-hover text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]'
         : 'bg-white/[0.07] hover:bg-white/[0.11] text-white/90'
@@ -79,7 +78,7 @@ export const DetailBlock: React.FC<{ label: string; children: React.ReactNode }>
 );
 
 const modelOrigin = (c: ComponentInfo): string => {
-  if (c.model.source === 'manufacturer') return `From ${c.model.by}'s CAD files`;
+  if (c.model.source === 'manufacturer') return `From ${c.model.by}’s CAD files`;
 
   if (c.model.source === 'checked') return `By ${c.model.by}, checked against the ${c.model.checkedAgainst} drawing`;
 
@@ -106,7 +105,7 @@ export const SpecText: React.FC<{ value: SpecValue }> = ({ value }) => (
 export const SpecRows: React.FC<{ c: ComponentInfo; d: PartDimensions }> = ({ c, d }) => (
   <dl className="-my-[5px]">
     <SpecRow label="Size">
-      <SizeLine w={d.width} h={d.height} d={d.depth} />
+      <SizeLine mm={[d.width, d.height, d.depth]} />
     </SpecRow>
     {c.specs.map(([label, value]) => (
       <SpecRow key={label} label={label}>
@@ -134,32 +133,27 @@ export const Stat: React.FC<{ label: string; children: React.ReactNode; wide?: b
   </div>
 );
 
-export const Hero: React.FC<
-  {
-    item: CatalogItem;
-    className?: string;
-  } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>
-> = ({ item, className = 'h-[136px]', ...rest }) => {
-  const thumb = usePartThumbnail(item);
+type HeroFrameProps = { className?: string } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className'>;
 
-  return (
-    <div
-      {...rest}
-      className={`relative bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.13),rgba(255,255,255,0.02)_60%,transparent_100%)] ${className}`}
-    >
-      {thumb ? (
-        <img
-          src={thumb}
-          alt=""
-          draggable={false}
-          className="absolute inset-0 w-full h-full object-contain p-2.5 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]"
-        />
-      ) : (
-        <div className="absolute inset-0 shimmer" />
-      )}
-    </div>
-  );
-};
+export const HeroImage: React.FC<HeroFrameProps & { src: string | undefined }> = ({
+  src,
+  className = 'h-[136px]',
+  ...rest
+}) => (
+  <div
+    {...rest}
+    className={`relative bg-[radial-gradient(ellipse_at_50%_45%,rgba(255,255,255,0.13),rgba(255,255,255,0.02)_60%,transparent_100%)] ${className}`}
+  >
+    <PreviewImage
+      src={src}
+      className="absolute inset-0 p-2.5 animate-fade-in drop-shadow-[0_10px_14px_rgba(0,0,0,0.45)]"
+    />
+  </div>
+);
+
+export const Hero: React.FC<HeroFrameProps & { item: CatalogItem }> = ({ item, ...rest }) => (
+  <HeroImage src={usePartThumbnail(item)} {...rest} />
+);
 
 export const Header: React.FC<{
   title: string;
@@ -219,7 +213,7 @@ export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
       <Header title={item.name} subtitle={makerSubtitle(c)} description={c.description} />
       <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
         <Stat label={size.label} wide>
-          {size.value}
+          {size.mm ? <SizeLine mm={size.mm} /> : size.value}
         </Stat>
         {rest.map((k) => (
           <Stat key={k.label} label={k.label} wide={rest.length === 1}>

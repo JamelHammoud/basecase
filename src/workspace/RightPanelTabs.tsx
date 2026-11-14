@@ -1,6 +1,6 @@
 import type { Readiness } from '../readiness/types';
 import { ChatHistory } from '../components/ChatHistory';
-import { AgentSpinner, PanelTabs, type PanelTab } from '../design-system';
+import { AGENT_WORKING, PanelTabs, Spinner, type PanelTab } from '../design-system';
 import { runningChats } from './agentLanes';
 import type { RightTab } from './types';
 import type { AgentSession } from './useAgentSession';
@@ -13,31 +13,23 @@ interface RightPanelTabsProps {
 
 const HISTORY_INSET = 16;
 
-const ReadinessDot = ({ readiness }: { readiness: Readiness | null }) => {
-  if (!readiness || readiness.status === 'empty' || readiness.status === 'blockout') return null;
-
-  return (
-    <span
-      title={readiness.status === 'ready' ? 'Ready to build' : `${readiness.blockers.length} to fix`}
-      className={`inline-block w-1.5 h-1.5 rounded-full ${readiness.status === 'ready' ? 'bg-emerald-400' : 'bg-red-400'}`}
-    />
-  );
-};
+const toFix = (readiness: Readiness | null) =>
+  readiness?.blockers.length ? { tone: 'problem' as const, label: `${readiness.blockers.length} to fix` } : undefined;
 
 export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
   const { studio, tool, posable, posing } = core;
   const { chat, current, lanes } = agent;
   const running = runningChats(lanes.lanes, new Date());
   const hasChats = studio.chatList.length > 0 || running.length > 0;
-  const tabs: PanelTab<RightTab>[] = [
+  const all: PanelTab<RightTab>[] = [
     { value: 'inspector', label: 'Inspect' },
     ...(posable ? [{ value: 'pose' as const, label: 'Pose' }] : []),
     ...(posing.hasRig ? [{ value: 'sim' as const, label: 'Simulate' }] : []),
-    { value: 'build', label: 'Build', indicator: <ReadinessDot readiness={core.readiness.current} /> },
+    { value: 'build', label: 'Build', status: toFix(core.readiness.current) },
     {
       value: 'acp',
       label: 'Agent',
-      indicator: agent.busy ? <AgentSpinner /> : undefined,
+      indicator: agent.busy ? <Spinner label={AGENT_WORKING} /> : undefined,
       menu: hasChats
         ? {
             title: 'History',
@@ -57,6 +49,7 @@ export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
         : undefined,
     },
   ];
+  const tabs = core.caseRun.open ? all.filter((t) => t.value === 'acp') : all;
 
   return (
     <div className="h-[44px] shrink-0 flex items-center px-[8px]">

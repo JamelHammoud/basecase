@@ -1,16 +1,25 @@
-import React, { createContext, use } from 'react';
-import type { PlacedArea } from '../cases/console/layout';
-import type { CaseAction } from '../cases/console/panelKinds';
+import React, { createContext, use, useEffect, useEffectEvent } from 'react';
+import { consoleScope } from '../cases/console/format';
+import type { ConsoleLayout } from '../cases/console/layout';
+import { gestureActions, type CaseAction } from '../cases/console/panelKinds';
+import { GESTURE_EVENT } from '../cases/gestures';
+import { robotFacts } from '../cases/robotFit';
+import { movableWorld } from '../cases/scale';
+import { onInputEvent } from '../sim/inputEvents';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
+import { CodeOverlays } from '../components/caseRun/code/CodeOverlays';
+import { startDriving } from '../components/simulate/driveWithCamera';
+import { ModeHeader } from '../design-system';
 import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useConsoleSignals } from './useConsoleSignals';
+import { showPartsSection } from './showView';
 
 interface CenterValue {
   ctx: PanelContext;
-  areas: { before: PlacedArea[]; after: PlacedArea[] };
+  areas: ConsoleLayout;
   title: string;
   onDone: () => void;
 }
@@ -24,7 +33,7 @@ function useActions(core: WorkspaceCore) {
 
   const can = (action: CaseAction) =>
     ({
-      try: attempt.phase === 'idle',
+      try: attempt.phase === 'idle' && cases.realTry.phase === 'idle',
       'end-try': attempt.phase === 'running',
       drive: !driving,
       stop: driving,
@@ -42,7 +51,7 @@ interface ProviderProps {
 }
 
 export function CaseRunProvider({ core, actions, children }: ProviderProps) {
-  const { caseRun, simTraining, posing, parts, tool, studio } = core;
+  const { caseRun, simTraining, posing, parts } = core;
   const { sim, cases } = simTraining;
   const { open, caseConsole, layout } = caseRun;
   const wantsCameras = caseConsole.panels.some((p) => p.kind === 'camera');
@@ -70,7 +79,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
 
     if (action === 'try') void run.attempt.start();
     else if (action === 'end-try') run.attempt.end();
-    else if (action === 'drive') void run.sim.drive.start();
+    else if (action === 'drive') void startDriving(run.sim.drive, core.showToast);
     else if (action === 'stop') run.sim.drive.stop();
     else if (action === 'start-over') run.sim.drive.respawn();
     else {
@@ -79,22 +88,37 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     }
   };
 
+  const pressed = useEffectEvent((gesture: string) => gestureActions(caseConsole.panels, gesture).forEach(fire));
+
+  useEffect(() => {
+    if (!open) return;
+
+    return onInputEvent(({ name, value }) => {
+      if (name === GESTURE_EVENT) pressed(String(value));
+    });
+  }, [open]);
+
   const value: CenterValue | null = open
     ? {
         ctx: {
           bus,
           signals: caseConsole.signals ?? [],
-          cases,
+          scope: consoleScope(caseConsole, cases.active),
+          inputs: caseConsole.input,
+          brief: cases.active?.brief ?? '',
+          world: movableWorld(cases.active, robotFacts(posing.rig, parts)),
           sim,
           parts,
           joints: core.project.joints ?? [],
-          cameras,
           fire,
           can,
-          onBrowseRobots: () => {
-            caseRun.leave();
-            tool.setLeftTab('robots');
-            studio.setIsLeftOpen(true);
+          studio: {
+            cases,
+            cameras,
+            onShowRobots: () => {
+              caseRun.leave();
+              showPartsSection(core, 'Robots');
+            },
           },
         },
         areas: layout,
@@ -122,8 +146,15 @@ export function CaseRunAreas({ side }: { side: 'before' | 'after' }) {
       area={area}
       side={side}
       ctx={running.ctx}
-      title={running.title}
-      onDone={running.onDone}
+      header={<ModeHeader title={running.title} onDone={running.onDone} />}
     />
   ));
+}
+
+export function CaseRunOverlays() {
+  const running = use(CaseRunContext);
+
+  if (!running?.areas.overlays.length) return null;
+
+  return <CodeOverlays overlays={running.areas.overlays} ctx={running.ctx} />;
 }

@@ -84,14 +84,23 @@ function lineOffset(c: Cylinder, from: V3, axis: V3) {
   return Math.hypot(...sub(d, scale(axis, dot(d, axis))));
 }
 
-interface Pairing {
+export interface Pairing {
   score: number;
   origin: V3;
   axis: V3;
   radius: number;
+  shaft: Cylinder;
+  bore: Cylinder;
+  shaftOn: 'a' | 'b';
+  fit: number;
+  engaged: number;
 }
 
-function pairing(shaft: Cylinder, bore: Cylinder): Pairing | null {
+export const lineTolerance = (radius: number) => Math.max(0.5, radius * 0.05);
+
+const clearanceTolerance = (radius: number) => Math.max(1, radius * 0.2);
+
+function pairing(shaft: Cylinder, bore: Cylinder): Omit<Pairing, 'shaftOn'> | null {
   const radius = Math.max(shaft.radius, bore.radius);
 
   if (shaft.convex === bore.convex || Math.abs(dot(shaft.axis, bore.axis)) < PARALLEL_COS) return null;
@@ -99,7 +108,7 @@ function pairing(shaft: Cylinder, bore: Cylinder): Pairing | null {
   const offset = lineOffset(bore, shaft.center, shaft.axis);
   const clearance = Math.abs(shaft.radius - bore.radius);
 
-  if (offset > Math.max(0.5, radius * 0.05) || clearance > Math.max(1, radius * 0.2)) return null;
+  if (offset > lineTolerance(radius) || clearance > clearanceTolerance(radius)) return null;
 
   const [a0, a1] = extent(shaft, shaft.axis, shaft.center);
   const [b0, b1] = extent(bore, shaft.axis, shaft.center);
@@ -113,6 +122,10 @@ function pairing(shaft: Cylinder, bore: Cylinder): Pairing | null {
     origin: add(shaft.center, scale(shaft.axis, (from + to) / 2)),
     axis: shaft.axis,
     radius: shaft.convex ? shaft.radius : bore.radius,
+    shaft,
+    bore,
+    fit: 1 - offset / lineTolerance(radius) / 2 - clearance / clearanceTolerance(radius) / 2,
+    engaged: to - from,
   };
 }
 
@@ -123,7 +136,7 @@ export function coaxialPair(a: Cylinder[], b: Cylinder[]): Pairing | null {
     for (const y of b) {
       const found = x.convex ? pairing(x, y) : pairing(y, x);
 
-      if (found && (!best || found.score < best.score)) best = found;
+      if (found && (!best || found.score < best.score)) best = { ...found, shaftOn: x.convex ? 'a' : 'b' };
     }
   }
 

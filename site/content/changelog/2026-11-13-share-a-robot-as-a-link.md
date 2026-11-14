@@ -8,7 +8,7 @@ Share Robot turns the robot and its open Case into a link, app.basecase.so/r/you
 
 ## Where it is
 
-Open a Case in the Simulate tab. Share Robot sits in Results, under Export Dataset and Publish to Hugging Face when a try has passed, and on its own before that. The same command is in ⌘K. It's in the desktop app, and it uses the Hugging Face account in Settings ▸ Accounts. The first time, it opens that pane for a token with write access.
+Open a Case in the Simulate tab. Share Robot sits in Results, under Export Dataset and Publish to Hugging Face when a try has passed, and on its own before that. The same command is in ⌘K. It's in the desktop app, and it uses the Hugging Face account in **Settings** ▸ **Accounts**. The first time, it opens that pane for a token with write access.
 
 Steps are in [Share a robot as a link](/help/share-a-robot-as-a-link).
 
@@ -24,9 +24,15 @@ Basecase saves the robot's parts and joints, the Case and the newest policy or s
 
 ## What the link opens
 
-The link opens a page with the robot in its Case's world, the Case's name and brief, Drive and See Inside. Drive runs the simulation in the tab with the keyboard, the same as the example Cases on app.basecase.so. See Inside opens the robot as a scene in the browser studio, with the Case and the trained policy or skill.
+The link opens a page with the robot in its Case's world, the Case's name and brief, Drive and Open Scene. Drive runs the simulation in the tab with the keyboard, the same as the example Cases on app.basecase.so. Open Scene opens the robot in the browser studio, with the Case and the trained policy or skill.
 
-![The shared rover in the browser with Drive and See Inside](/changelog/share-a-robot-as-a-link/browser.png)
+A Case with its own console opens as that Case's app, the way Run Case shows it in the studio. Its panels sit around the robot and its code panels work, so a shared joystick drives the rover. Camera panels, the servos table and the tries list stay in the studio. Steps are in [Run a Case](/help/run-a-case).
+
+![A shared rover Case in the browser, with speed and tilt over the robot and a joystick on the right](/changelog/share-a-robot-as-a-link/app.png)
+
+A legged robot's link also shows Train in Chrome and Edge. It trains Stand on the visitor's GPU, and Open Scene then opens the robot with Stand ready. Steps are in [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit).
+
+![The shared rover in the browser with Drive and Open Scene](/changelog/share-a-robot-as-a-link/browser.png)
 
 ## Limits
 

@@ -1,4 +1,5 @@
 import type { PrintMaterial } from '../types/robotics';
+import type { ConnectorType } from '../types/ports';
 
 export type SupplyGroup = 'Power' | 'Wiring' | 'Electronics' | 'Filament' | 'Tools';
 
@@ -11,6 +12,7 @@ export interface SupplyInfo {
   weightG?: number;
   typicalPack?: string;
   battery?: { nominalV: number; fullV: number; capacityAh: number; cRating: number };
+  connector?: ConnectorType;
 }
 
 const amazon = (q: string) => `https://www.amazon.com/s?k=${encodeURIComponent(q)}`;
@@ -24,6 +26,7 @@ export const SUPPLIES: SupplyInfo[] = [
     search: amazon('2S 7.4V 2200mAh LiPo battery XT60'),
     weightG: 120,
     battery: { nominalV: 7.4, fullV: 8.4, capacityAh: 2.2, cRating: 25 },
+    connector: 'xt60',
   },
   {
     id: 'lipo-3s-2200',
@@ -33,6 +36,7 @@ export const SUPPLIES: SupplyInfo[] = [
     search: amazon('3S 11.1V 2200mAh LiPo battery XT60'),
     weightG: 172,
     battery: { nominalV: 11.1, fullV: 12.6, capacityAh: 2.2, cRating: 25 },
+    connector: 'xt60',
   },
   {
     id: 'liion-2s-18650-pack',
@@ -73,6 +77,21 @@ export const SUPPLIES: SupplyInfo[] = [
     typicalPack: '5 pairs',
   },
   {
+    id: 'ec5-pigtail',
+    name: 'EC5 Pigtail Pair',
+    group: 'Power',
+    spec: 'Male and female EC5 with 10 AWG silicone leads',
+    search: amazon('EC5 male female pigtail 10AWG silicone'),
+  },
+  {
+    id: 'dc-barrel-pigtail',
+    name: 'DC Barrel Plug Pigtail',
+    group: 'Power',
+    spec: '5.5 × 2.1 mm male DC plug with bare leads',
+    search: amazon('5.5x2.1mm male DC plug pigtail cable'),
+    typicalPack: '10 pieces',
+  },
+  {
     id: 'rocker-switch-20a',
     name: 'Power Switch',
     group: 'Power',
@@ -91,7 +110,7 @@ export const SUPPLIES: SupplyInfo[] = [
     id: 'dc-bench-supply',
     name: 'DC Power Supply',
     group: 'Power',
-    spec: 'Bench or wall DC supply for a tethered robot, rated for the tether’s voltage and current, with output leads',
+    spec: 'Bench or wall DC supply for a robot with no battery, rated for the voltage and current in Checks, with output leads',
     search: amazon('adjustable DC bench power supply 30V 10A'),
   },
   {
@@ -124,6 +143,14 @@ export const SUPPLIES: SupplyInfo[] = [
     group: 'Wiring',
     spec: '3-pin 5264 (Molex 2.5 mm) daisy-chain cable for Feetech STS / SCS servos',
     search: amazon('Feetech servo cable 3 pin 5264 extension'),
+    typicalPack: '10 pieces',
+  },
+  {
+    id: 'robot-cable-x3p',
+    name: 'ROBOTIS Robot Cable-X3P',
+    group: 'Wiring',
+    spec: '3-pin JST EH (EHR-03) daisy-chain cable for DYNAMIXEL X servos, 180 mm',
+    search: amazon('ROBOTIS Robot Cable-X3P 180mm'),
     typicalPack: '10 pieces',
   },
   {

@@ -35,6 +35,7 @@ describe('scenes menu', () => {
     await expect.poll(() => row.count()).toBe(1);
 
     await askToDelete();
+    expect(await dialog.getByRole('button', { name: /^Close/ }).count()).toBe(0);
     await page.keyboard.press('Escape');
     await expect.poll(() => dialog.count()).toBe(0);
     expect(await row.count()).toBe(1);
@@ -46,5 +47,41 @@ describe('scenes menu', () => {
     expect(app.posts.filter((p) => p.route === 'delete-scene').map((p) => p.body)).toEqual([{ sceneId: SCENE.id }]);
     expect(await search.count()).toBe(1);
     expect(app.errors).toEqual([]);
+  });
+
+  it('lines up every label in a menu whose other items lead with an icon', async () => {
+    const { page } = app;
+    const tab = page.locator('[role="tab"]:has([data-tab-close])').first();
+
+    await tab.click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Close Other Scenes' }).waitFor();
+
+    const lefts = await page
+      .getByRole('menu')
+      .getByRole('menuitem')
+      .evaluateAll((items) => items.map((item) => item.querySelector('.flex-1')?.getBoundingClientRect().left));
+
+    expect(lefts.length).toBeGreaterThan(4);
+    expect(new Set(lefts).size).toBe(1);
+    await page.keyboard.press('Escape');
+  });
+
+  it('runs a background tab’s name to its edge until hover shows its close button', async () => {
+    const { page } = app;
+    const background = page.locator('[role="tab"][aria-selected="false"]:has([data-tab-close])').first();
+    const close = background.locator('[data-tab-close]');
+    const clickable = () => close.evaluate((el) => getComputedStyle(el).pointerEvents);
+
+    await page.getByRole('button', { name: 'New scene', exact: true }).first().click();
+    await expect.poll(() => background.count()).toBe(1);
+    await page.mouse.move(400, 400);
+    await expect.poll(clickable).toBe('none');
+
+    const tab = await background.boundingBox();
+    const name = await background.locator('.truncate').boundingBox();
+
+    expect(tab && name && tab.x + tab.width - (name.x + name.width)).toBeCloseTo(10, 0);
+    await background.hover();
+    await expect.poll(clickable).toBe('auto');
   });
 });

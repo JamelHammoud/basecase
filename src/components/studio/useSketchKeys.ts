@@ -4,6 +4,7 @@ import { OWN_EDIT_EVENT } from '../routines/useRoutineKeys';
 import { dimensionLabels } from './sketchMarks';
 import { formatMm } from './sketchView';
 import type { SketchDrawing, SketchEditor } from './useSketchDrawing';
+import type { SketchPath } from './useSketchPath';
 import type { SketchSelection } from './useSketchSelection';
 import type { SketchTool } from './useStudioDraft';
 
@@ -17,6 +18,7 @@ interface KeyOptions {
   tool: SketchTool | null;
   onTool: (tool: SketchTool | null) => void;
   rootRef: React.RefObject<HTMLDivElement | null>;
+  path: SketchPath | null;
 }
 
 function useRefocus(rootRef: React.RefObject<HTMLDivElement | null>, fieldOpen: boolean) {
@@ -28,7 +30,7 @@ function useRefocus(rootRef: React.RefObject<HTMLDivElement | null>, fieldOpen: 
   }, [rootRef, fieldOpen]);
 }
 
-export function useSketchKeys({ editor, drawing, selection, tool, onTool, rootRef }: KeyOptions) {
+export function useSketchKeys({ editor, drawing, selection, tool, onTool, rootRef, path }: KeyOptions) {
   const lastKey = useRef(0);
 
   useRefocus(rootRef, !!selection.editing || !!drawing.typed);
@@ -54,13 +56,19 @@ export function useSketchKeys({ editor, drawing, selection, tool, onTool, rootRe
     return true;
   };
 
-  const actions: Record<string, () => boolean> = {
+  const sketchActions: Record<string, () => boolean> = {
     undo: () => (editor.undo?.(), true),
     redo: () => (editor.redo?.(), true),
     delete: () => (selection.remove(), true),
     escape,
     enter: () => editSelected(),
   };
+
+  const pathActions: Record<string, () => boolean> = path
+    ? { undo: () => (path.undo(), true), redo: () => (path.redo(), true), delete: () => (path.dropLast(), true) }
+    : {};
+
+  const actions = path ? pathActions : sketchActions;
 
   const onMenu = useEffectEvent((e: Event) => {
     const action = String((e as CustomEvent).detail);
@@ -95,7 +103,7 @@ export function useSketchKeys({ editor, drawing, selection, tool, onTool, rootRe
     if (e.target !== e.currentTarget) return;
 
     const action = actionFor(e);
-    const typed = DIGIT.test(e.key) && (drawing.startTyping(e.key) || editSelected(e.key));
+    const typed = !path && DIGIT.test(e.key) && (drawing.startTyping(e.key) || editSelected(e.key));
     const handled = typed || (!!action && Object.hasOwn(actions, action) && actions[action]());
 
     if (!handled) return;

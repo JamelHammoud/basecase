@@ -34,7 +34,3 @@ export function grouped(
 
   return [...groups].map(([key, g]) => ({ rank: g.rank, text: render(key, g.ids), ids: g.ids, code: g.code }));
 }
-
-export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
-
-export const mm = (v: number) => `${Math.round(v * 10) / 10} mm`;

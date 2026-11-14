@@ -2,10 +2,16 @@ use robot_daemon::artefacts::DirectoryArtefacts;
 use robot_daemon::calibration::RobotClass;
 use robot_daemon::g1::G1Daemon;
 use robot_daemon::intent::IntentWriter;
-use robot_daemon::protocol::{g1_hello_line, hello_line, parse_line, refused_line, Routed, G1_FAMILY};
+use robot_daemon::protocol::{
+    g1_hello_line, hello_line, parse_line, refused_line, ros2_hello_line, Routed, G1_FAMILY, ROS2_FAMILY,
+};
+use robot_daemon::ros2::{Ros2Daemon, Ros2Parts, Ros2Spec};
 use robot_daemon::runner::{Controller, Runner};
-use robot_daemon::transport::{open, open_g1, NewServos, Target, NO_MORE_SERVOS};
+use robot_daemon::transport::{open, open_g1, open_ros2, NewServos, Ros2Link, ServoRobot, Target, NO_MORE_SERVOS};
+use robot_daemon::units::parse_units;
 use robot_daemon::{Command, Daemon, DaemonConfig, Inputs};
+use servo_emu::PartModel;
+use servo_wire::ros2::{checked_joints, checked_topic, ControllerKind};
 use servo_wire::{Clock, Family, SystemClock};
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
@@ -18,8 +24,24 @@ enum Robot {
         family: Family,
         ids: Vec<u8>,
         class: RobotClass,
+        units: Vec<Option<PartModel>>,
     },
     G1,
+    Ros2 {
+        spec: Ros2Spec,
+        topic: String,
+    },
+}
+
+#[derive(Default)]
+struct Flags {
+    family: Option<String>,
+    ids: Vec<u8>,
+    class: Option<RobotClass>,
+    controller: Option<String>,
+    topic: Option<String>,
+    joints: Option<String>,
+    units: Option<PathBuf>,
 }
 
 struct Options {
@@ -43,8 +65,35 @@ fn main() {
             say_hello(&g1_hello_line(emulated));
             serve(daemon.inputs(), daemon, clock, None);
         }
-        Robot::Servos { family, ids, class } => {
-            let opened = open(&options.target, family, &ids, clock.clone()).unwrap_or_else(|message| quit(3, &message));
+        Robot::Ros2 { spec, topic } => {
+            let link = Ros2Link {
+                kind: spec.kind,
+                topic: &topic,
+                joints: &spec.joints,
+            };
+            let transport = open_ros2(&options.target, link).unwrap_or_else(|message| quit(3, &message));
+            let daemon = Ros2Daemon::new(Ros2Parts {
+                spec,
+                transport,
+                clock: clock.clone(),
+                artefacts,
+            });
+
+            say_hello(&ros2_hello_line(emulated));
+            serve(daemon.inputs(), daemon, clock, None);
+        }
+        Robot::Servos {
+            family,
+            ids,
+            class,
+            units,
+        } => {
+            let robot = ServoRobot {
+                family,
+                ids: &ids,
+                units: &units,
+            };
+            let opened = open(&options.target, robot, clock.clone()).unwrap_or_else(|message| quit(3, &message));
             let config = DaemonConfig { family, ids, class };
             let mut daemon = Daemon::new(config, opened.transport, clock.clone(), artefacts);
             let _policy = attach_policy(&mut daemon, &options.artefacts);
@@ -165,9 +214,7 @@ fn spawn_reader(mut reader: Reader, client_gone: Arc<AtomicBool>) {
 }
 
 fn parse(args: &[String]) -> Result<Options, String> {
-    let mut family = None;
-    let mut ids = Vec::new();
-    let mut class = None;
+    let mut flags = Flags::default();
     let mut artefacts = PathBuf::from(".");
     let mut target = None;
     let mut latency_us = 0;
@@ -178,9 +225,13 @@ fn parse(args: &[String]) -> Result<Options, String> {
         let mut value = || rest.next().cloned().ok_or(format!("{flag} needs a value"));
 
         match flag.as_str() {
-            "--family" => family = Some(value()?),
-            "--ids" => ids = parse_ids(&value()?)?,
-            "--class" => class = Some(parse_class(&value()?)?),
+            "--family" => flags.family = Some(value()?),
+            "--ids" => flags.ids = parse_ids(&value()?)?,
+            "--class" => flags.class = Some(parse_class(&value()?)?),
+            "--controller" => flags.controller = Some(value()?),
+            "--topic" => flags.topic = Some(value()?),
+            "--joints" => flags.joints = Some(value()?),
+            "--units" => flags.units = Some(PathBuf::from(value()?)),
             "--artefacts" => artefacts = PathBuf::from(value()?),
             "--latency-ms" => latency_us = value()?.parse::<u64>().map_err(|_| "Bad latency")? * 1000,
             "--emulated" => {
@@ -209,18 +260,79 @@ fn parse(args: &[String]) -> Result<Options, String> {
             factory,
         },
         _ if factory => Err("--factory needs --emulated")?,
+        _ if flags.units.is_some() => Err("--units needs --emulated")?,
         real => real,
     };
-    let family = family.ok_or("--family is required: feetech, dynamixel or unitree-g1")?;
+    let units = flags.units.take();
 
     Ok(Options {
-        robot: robot_of(&family, ids, class)?,
+        robot: with_units(robot_of(flags)?, units)?,
         artefacts,
         target,
     })
 }
 
-fn robot_of(family: &str, ids: Vec<u8>, class: Option<RobotClass>) -> Result<Robot, String> {
+fn with_units(robot: Robot, path: Option<PathBuf>) -> Result<Robot, String> {
+    let Some(path) = path else {
+        return Ok(robot);
+    };
+    let Robot::Servos { family, ids, class, .. } = robot else {
+        return Err("--units is for --family feetech or dynamixel only".into());
+    };
+    let bytes = std::fs::read(&path).map_err(|error| format!("The servo models file can't be read: {error}"))?;
+    let units = parse_units(&bytes, &ids)?;
+
+    Ok(Robot::Servos {
+        family,
+        ids,
+        class,
+        units,
+    })
+}
+
+fn ros2_robot(flags: Flags) -> Result<Robot, String> {
+    if !flags.ids.is_empty() || flags.class.is_some() {
+        return Err("A ROS 2 robot names its own joints: leave out --ids and --class".into());
+    }
+
+    let controller = flags
+        .controller
+        .ok_or("--controller is required: forward_position, joint_trajectory or diff_drive")?;
+    let kind = ControllerKind::parse(&controller)
+        .ok_or("Choose a forward_position, joint_trajectory or diff_drive controller")?;
+    let topic = flags.topic.unwrap_or_else(|| kind.default_topic().to_string());
+    let joints: Vec<String> = flags
+        .joints
+        .ok_or("--joints is required")?
+        .split(',')
+        .map(str::to_string)
+        .collect();
+
+    checked_topic(kind, &topic)?;
+    checked_joints(kind, &joints)?;
+
+    Ok(Robot::Ros2 {
+        spec: Ros2Spec { kind, joints },
+        topic,
+    })
+}
+
+fn robot_of(flags: Flags) -> Result<Robot, String> {
+    let family = flags
+        .family
+        .clone()
+        .ok_or("--family is required: feetech, dynamixel, unitree-g1 or ros2")?;
+
+    if family == ROS2_FAMILY {
+        return ros2_robot(flags);
+    }
+
+    if flags.controller.is_some() || flags.topic.is_some() || flags.joints.is_some() {
+        return Err("--controller, --topic and --joints are for --family ros2 only".into());
+    }
+
+    let Flags { ids, class, .. } = flags;
+
     if family == G1_FAMILY {
         return match (ids.is_empty(), class) {
             (true, None) => Ok(Robot::G1),
@@ -233,9 +345,10 @@ fn robot_of(family: &str, ids: Vec<u8>, class: Option<RobotClass>) -> Result<Rob
     }
 
     Ok(Robot::Servos {
-        family: parse_family(family)?,
+        family: parse_family(&family)?,
         ids,
         class: class.unwrap_or(RobotClass::Arm),
+        units: Vec::new(),
     })
 }
 

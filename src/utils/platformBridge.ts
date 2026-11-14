@@ -4,7 +4,8 @@ import type {
   AgentConversation,
   AgentConversationSummary,
   CustomModelDefinition,
-  PurchaseRecord,
+  Purchases,
+  StoredPurchase,
   ReferenceImageRecord,
   SavedSceneRecord,
   SavedSceneSummary,
@@ -13,7 +14,6 @@ import type { ExportedStep, StepJob } from '../types/step';
 import { base64ToBytes, bytesToBase64 } from './base64';
 import { electron, get, post, postJson, postOrThrow, query, quietly } from './platform/transport';
 import { checkedRender, parsedReply } from './platform/renderedCad';
-import { ipcErrorText } from './ipcError';
 import type {
   AcpPromptPayload,
   AppMenuState,
@@ -21,18 +21,21 @@ import type {
   CadTuneAnswer,
   CadTuneRequest,
   EvidenceFilePayload,
+  KeptSnapshot,
   LiveRun,
   OpenedCad,
   RenderedCad,
   ScenePreviewPayload,
   SimReadyFetched,
   SimReadyStatus,
+  SnapshotRef,
   SteerOutcome,
   TrainerStatus,
   TrainStartPayload,
 } from './platform/types';
 import { webGuides } from './platform/web/webBackend';
 import { IS_WEB_DEMO } from './platform/webDemo';
+import { errorMessage } from './errorMessage';
 
 export type * from './platform/types';
 
@@ -68,7 +71,7 @@ const acpBridge = {
   sendAcpPrompt: (payload: AcpPromptPayload): Promise<PromptResult> =>
     electron()?.sendAcpPrompt(payload) ??
     postOrThrow('/acp-prompt', payload, (body, res) =>
-      !res.ok || body.error ? String(body.error || 'The agent stopped responding.') : null,
+      !res.ok || body.error ? String(body.error || 'Couldn’t reach the agent. Send the message again.') : null,
     ),
 
   steerAcp: (payload: AcpPromptPayload): Promise<SteerOutcome> =>
@@ -138,9 +141,9 @@ const libraryBridge = {
   deleteChat: (id: string): Promise<AgentConversationSummary[]> =>
     electron()?.deleteChat(id) ?? post('/chat-delete', { id }),
 
-  listPurchases: (): Promise<Record<string, PurchaseRecord>> =>
+  listPurchases: (): Promise<Purchases> =>
     quietly(async () => (await electron()?.listPurchases()) ?? get('/purchases'), {}),
-  savePurchase: (key: string, record: PurchaseRecord | null): Promise<Record<string, PurchaseRecord>> =>
+  savePurchase: (key: string, record: StoredPurchase | null): Promise<Purchases> =>
     electron()?.savePurchase({ key, record }) ?? post('/purchase-save', { key, record }),
 
   listSourced: (): Promise<SourcedItem[]> =>
@@ -184,7 +187,7 @@ const libraryBridge = {
     try {
       return await api.exportStep(job);
     } catch (e) {
-      throw new Error(ipcErrorText(e), { cause: e });
+      throw new Error(errorMessage(e), { cause: e });
     }
   },
   renderCad: (language: CadLanguage, code: string): Promise<RenderedCad> =>
@@ -208,7 +211,7 @@ const libraryBridge = {
   listModels: (): Promise<CustomModelDefinition[]> => electron()?.listModels() ?? get('/models'),
   saveModel: (model: CustomModelDefinition): Promise<CustomModelDefinition> =>
     electron()?.saveModel(model) ?? post('/save-model', model),
-  deleteModel: (modelId: string): Promise<CustomModelDefinition[]> =>
+  deleteModel: (modelId: string): Promise<{ ok: boolean }> =>
     electron()?.deleteModel(modelId) ?? post('/delete-model', { modelId }),
 
   listScenes: (): Promise<SavedSceneSummary[]> => electron()?.listScenes() ?? get('/scenes'),
@@ -258,6 +261,9 @@ const libraryBridge = {
   },
 };
 
+const snapshotQuery = ({ run, iteration, skill }: SnapshotRef) =>
+  new URLSearchParams({ run, iteration: String(iteration), ...(skill ? { skill } : {}) }).toString();
+
 const trainingBridge = {
   trainStatus: (): Promise<TrainerStatus> => electron()?.trainStatus() ?? get('/train-status'),
   trainStart: (payload: TrainStartPayload): Promise<{ jobId: string }> =>
@@ -277,6 +283,11 @@ const trainingBridge = {
   getSkill: (hash: string): Promise<unknown> => electron()?.getSkill(hash) ?? get(`/skill${query('hash', hash)}`),
   getPolicy: (id: string): Promise<unknown> => electron()?.getPolicy(id) ?? get(`/policy${query('id', id)}`),
   deletePolicy: (id: string): Promise<boolean> => electron()?.deletePolicy(id) ?? post('/policy-delete', { id }),
+  getSnapshot: (ref: SnapshotRef): Promise<unknown> =>
+    electron()?.getSnapshot(ref) ?? get(`/snapshot?${snapshotQuery(ref)}`),
+  keepSnapshots: (payload: { hash: string; snapshots: KeptSnapshot[] }): Promise<KeptSnapshot[]> =>
+    electron()?.keepSnapshots(payload) ??
+    postOrThrow('/snapshot-keep', payload, (body, res) => (res.ok ? null : String(body.error))),
 };
 
 const simreadyBridge = {
@@ -286,13 +297,13 @@ const simreadyBridge = {
 
     if (!api)
       return postOrThrow('/simready-fetch', payload, (body, res) =>
-        res.ok ? null : ipcErrorText(String(body.error ?? 'Couldn’t download the asset.')),
+        res.ok ? null : errorMessage(body.error ?? 'Couldn’t download the asset.'),
       );
 
     try {
       return await api.simreadyFetch(payload);
     } catch (e) {
-      throw new Error(ipcErrorText(e), { cause: e });
+      throw new Error(errorMessage(e), { cause: e });
     }
   },
 };

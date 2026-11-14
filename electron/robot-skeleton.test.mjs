@@ -72,7 +72,7 @@ describe('robot skeleton', () => {
       ]
     `);
     expect(describeSkeleton(sk)).toMatchInlineSnapshot(`
-      "URDF "tiny": 2 links, 1 moving joints, zero pose.
+      "URDF "tiny": 2 links, 1 moving joint, zero pose.
       Studio frame: mm, Z up, front −Y, left +X (assuming the source faces +x; if the photo disagrees, call again with another forward).
       z = 0 is the lowest joint/frame; soles and covers usually extend a little below it and the shells above the top joints.
       A joint's coordinate ALONG its own axis marks where its frame sits on the axis line. When the left and right joints agree in magnitude (e.g. ±160), it is real geometry: build to it (stance and hip width). When they disagree (e.g. 109 vs −72), the CAD export put the frames on different faces; take that coordinate from the photo instead.
@@ -150,13 +150,13 @@ describe('robot skeleton', () => {
     ];
 
     expect(checkAgainstSkeleton(sk, parts)).toMatchInlineSnapshot(`
-      "1 joints and frames checked; the lowest joint fits best 10 mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.
+      "1 joint and their frames checked; the lowest joint fits best 10 mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.
       Every joint sits inside the model.
       Joint span X 20…20, Y -100…-100, Z 10…10; model span X -40…40, Y -120…40, Z 0…80.
       Model top is 70 mm above the highest joint; check that against the photo (shells above the top joint, e.g. a head or cap)."
     `);
     expect(checkAgainstSkeleton(sk, parts, 5)).toMatchInlineSnapshot(`
-      "1 joints and frames checked; the lowest joint fits best 5 mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.
+      "1 joint and their frames checked; the lowest joint fits best 5 mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.
       Joints outside the model. Each one means that link is in the wrong place or too small: move or resize it until no joint is listed (residuals of 5–10 mm still put a whole leg or arm in the wrong place):
       - shoulder at (20, -100, 5) is 5 mm outside the model (nearest: arm)
       Joint span X 20…20, Y -100…-100, Z 5…5; model span X -40…40, Y -120…40, Z 0…80.
@@ -176,9 +176,9 @@ describe('check_skeleton placement notes', () => {
     const centred = [{ id: 'leg', bounds: { min: [-10, -10, 0], max: [10, 10, 200] } }];
     const near = [{ id: 'leg', bounds: { min: [15, -10, 0], max: [35, 10, 200] } }];
 
-    expect(checkAgainstSkeleton(sk, away, 100)).toContain("The joints' centre is 1000 mm from the model's along X");
+    expect(checkAgainstSkeleton(sk, away, 100)).toContain("The joints' center is 1000 mm from the model's along X");
     expect(checkAgainstSkeleton(sk, centred, 100)).toContain('Every joint sits inside the model.');
-    expect(checkAgainstSkeleton(sk, near, 100)).not.toContain("The joints' centre");
+    expect(checkAgainstSkeleton(sk, near, 100)).not.toContain("The joints' center");
   });
 
   it('counts the joints it leaves off the list', () => {

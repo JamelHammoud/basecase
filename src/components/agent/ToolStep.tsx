@@ -24,7 +24,7 @@ const PhotoGrid: React.FC<{ urls: string[]; onOpenImages: OpenImages }> = ({ url
         <button
           key={u}
           type="button"
-          aria-label={`View ${u}`}
+          aria-label={`Open ${u}`}
           onClick={() => onOpenImages(items, i)}
           className="block aspect-[4/3] rounded-lg overflow-hidden bg-black/30 ring-1 ring-inset ring-white/[0.06] cursor-zoom-in"
         >

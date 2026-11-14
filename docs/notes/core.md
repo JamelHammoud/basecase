@@ -49,7 +49,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - Actuator model: position actuator like a servo. `kp = effort / 0.17` rad (about 10°) for revolute, `effort / 0.005` m (5 mm) for prismatic, so full torque is reached about 10° or 5 mm off target.
 - Joint `armature = max(0.002, effort × 0.004)` for revolute (0.05 for prismatic). Reflected gearbox inertia keeps light links stable at the 2 ms step.
 - Effort source order: servo stall torque, then the maker's published limit (`effortNm`), else an estimate: the weight below the joint held out level from the pivot at about 3× margin. `effortSource` records which.
-- Start height: lift above the floor by `−posedFloor + 2` mm so feet clear the floor wherever the canvas pose puts them. The lift goes in the initial state (body `pos` stays the rest place) so Reset lands the same way.
+- Start height: lift above the floor by `−posedFloor + 2` mm so feet clear the floor wherever the canvas pose puts them. `buildModel` measures it at the canvas pose (`posedFloor(ids, restDeltas)`), never where a running sim has moved the parts, so a model built mid-run hashes the same as one built at rest and a skill trained on it stays ready. The lift goes in the initial state (body `pos` stays the rest place) so Reset lands the same way.
 - Robots with legs float (free root); others are welded to the floor unless `fixedBase` says otherwise. Non-robot solid parts are fixed scenery.
 
 ## sim/engine
@@ -252,7 +252,7 @@ Knowledge preserved from code comments before they were removed. AGENTS.md cover
 - Silhouette: photo segmented by flood-filling a plain background from the border; the model render is white-on-black. Both reduce to span width per tenth of height as a fraction of height (scale-free).
 - Image tracing: radial outer boundary in 48 angular sectors around the centroid gives a watertight, self-intersection-free contour; Ramer–Douglas–Peucker simplification; background from the corners; flood-fill exterior from the border, remaining unvisited 0-pixels inside the bbox are holes (up to 6); nearly empty/full-frame photos fall back to a chamfered octagon plate; image Y is flipped.
 - SVG: Y is inverted (SVG Y points down); shapes are normalized into [−0.5, 0.5] of the whole SVG bounding box so multi-path SVGs stay aligned; `fill="none"` paths are skipped unless they are the only paths (stroked-only fallback).
-- Key specs: torque shown as the load held on a 10 cm arm (19.5 kg·cm → "Up to 2 kg at 10 cm"); the torque regex skips constants like "Kt 0.055 N·m/A".
+- Key specs: torque shown as the load held on a 10 cm arm (19.5 kg·cm → "Up to 1.95 kg at 10 cm", read through `weight`); the torque regex skips constants like "Kt 0.055 N·m/A".
 - Reference images are downscaled to JPEG (quality 0.86 default) to keep agent payloads small. Claude reads images at up to 1568 px; larger only costs time.
 
 ## utils/evidenceFiles, platformBridge, misc

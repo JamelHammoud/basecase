@@ -3,6 +3,7 @@ import { photoMasks } from './photoMask.mjs';
 import { loadReference } from './references.mjs';
 import { bridge, fail } from './shared.mjs';
 import { maskSource, smallReference } from './silhouetteMeasure.mjs';
+import { plural } from '../plural.mjs';
 
 const AXES = { front: '[x, z]', side: '[y, z] (front = −y)', top: '[x, y]' };
 const KEYS = { front: 'front', side: 'side', top: 'top' };
@@ -32,7 +33,7 @@ function traceText(name, res) {
     res.scaledFrom === 'height' ? 'scaled to the height you gave' : "scaled to the model's height for these parts";
 
   return [
-    `Outline of ${name}, ${view} view, ${traced.points.length} points ${AXES[view] ?? AXES.front} in mm (${scale}):`,
+    `Outline of ${name}, ${view} view, ${plural(traced.points.length, 'point')} ${AXES[view] ?? AXES.front} in mm (${scale}):`,
     `${KEYS[view] ?? 'front'}: ${JSON.stringify(traced.points)}`,
     `Size: ${traced.widthMm} × ${traced.heightMm} mm.`,
     res.model

@@ -16,15 +16,17 @@ import {
 import { rememberImportedRobot, robotPreviewImage } from '../utils/robotPreview';
 import { useLatestRef } from '../utils/useLatestRef';
 import { whenIdle } from '../utils/whenIdle';
-import { attempt, plural } from './helpers';
+import { plural } from '../../electron/plural.mjs';
+import { attempt } from './helpers';
 import { articulatedShift, importOffset, palmOf, placeRobot } from './robotPlacement';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useLeader } from './useLeader';
+import { errorMessage } from '../utils/errorMessage';
 
 export type RobotSource =
   | { kind: 'url'; url: string; name?: string; entry?: string }
-  | { kind: 'files'; files: LocalFile[]; entry?: string }
+  | { kind: 'files'; files: LocalFile[]; name?: string; entry?: string }
   | { kind: 'simready'; asset: Pick<SimReadyAsset, 'url' | 'name' | 'maker' | 'license'> };
 
 export type ImportRobotResult = ImportedRobot | string;
@@ -32,12 +34,6 @@ export type ImportRobotResult = ImportedRobot | string;
 interface PlacedRig {
   parts: ScenePart[];
   joints: RobotJoint[];
-}
-
-export interface RobotFiles {
-  name: string;
-  files: LocalFile[];
-  at?: Vec3;
 }
 
 export interface RobotChoice {
@@ -69,7 +65,7 @@ function savePreview(robot: ImportedRobot, url: string) {
 const sourceName = (source: RobotSource) => {
   if (source.kind === 'simready') return source.asset.name;
 
-  return source.kind === 'url' && source.name ? source.name : 'robot';
+  return source.name ?? 'robot';
 };
 
 async function loadRobot(source: RobotSource, say: (m: string) => void): Promise<SimReadyImport> {
@@ -84,7 +80,7 @@ async function loadRobot(source: RobotSource, say: (m: string) => void): Promise
 }
 
 const insertedMessage = (robot: ImportedRobot, joints: RobotJoint[]) =>
-  `Inserted ${robot.name} with ${plural(joints.length, 'joint', 'joints')}${robot.notes.length ? `. Missing ${plural(robot.notes.length, 'file', 'files')}` : ''}`;
+  `Inserted ${robot.name} with ${plural(joints.length, 'joint')}${robot.notes.length ? `. Missing ${plural(robot.notes.length, 'file')}` : ''}`;
 
 async function downloadArticulated(item: CatalogItem) {
   const src = ARTICULATED_PARTS[item.componentId!];
@@ -103,7 +99,6 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
   const leader = useLeader(core);
   const [importRobotOpen, setImportRobotOpen] = useState(false);
   const [robotChoice, setRobotChoice] = useState<RobotChoice | null>(null);
-  const [robotFiles, setRobotFiles] = useState<RobotFiles | null>(null);
 
   useEffect(() => {
     if (!frameNextRef.current) return;
@@ -138,9 +133,8 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
 
     if (source.kind === 'url') rememberPreview(robot, robot.parts[0]?.robotLink?.url ?? source.url);
 
-    showToast(isObject ? `Inserted ${robot.name}` : insertedMessage(robot, placed.joints), {
-      action: poseAction(placed.joints),
-    });
+    if (isObject) toasts.dismissToast();
+    else showToast(insertedMessage(robot, placed.joints), { action: poseAction(placed.joints) });
 
     return { ...robot, ...placed };
   };
@@ -150,7 +144,6 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
 
     if (!ask) return;
 
-    setRobotFiles(null);
     setRobotChoice(choice);
     setImportRobotOpen(true);
   };
@@ -168,7 +161,7 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
       return `Several robots here. Pass one as entry: ${error.choices.join(', ')}`;
     }
 
-    const message = error instanceof Error ? error.message : String(error);
+    const message = errorMessage(error);
 
     showToast(message, { tone: 'error' });
 
@@ -198,7 +191,7 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
 
     await prepareParts(placed.parts);
     insertRig(placed, true);
-    showToast(`Added ${item.name} with ${plural(placed.joints.length, 'joint', 'joints')}`, {
+    showToast(`Added ${item.name} with ${plural(placed.joints.length, 'joint')}`, {
       action: poseAction(placed.joints),
     });
   };
@@ -213,17 +206,10 @@ export function useRobotInsert(core: WorkspaceCore, openPose: () => void) {
     pickRobot,
     importRobotOpen,
     robotChoice,
-    robotFiles,
     openImportRobot: () => setImportRobotOpen(true),
-    openRobotFiles: (loaded: RobotFiles) => {
-      setRobotChoice(null);
-      setRobotFiles(loaded);
-      setImportRobotOpen(true);
-    },
     closeImportRobot: () => {
       setImportRobotOpen(false);
       setRobotChoice(null);
-      setRobotFiles(null);
     },
   };
 }

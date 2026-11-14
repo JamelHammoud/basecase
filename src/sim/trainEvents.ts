@@ -1,8 +1,11 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { PolicyRecord } from '../types/robotics';
+import type { SnapshotRef } from '../skills/snapshots';
 import type { TrainerStatus } from '../utils/platformBridge';
 import type { TrainTask } from './policy';
 import type { TrainProgress, Training } from './useTraining';
+import { duration, runClock } from '../utils/duration';
+import { lengthLabel } from '../utils/size';
 
 export interface TrainJob {
   id: string | null;
@@ -19,6 +22,7 @@ export interface TrainEventContext {
   setCurve: Dispatch<SetStateAction<number[]>>;
   setError: Dispatch<SetStateAction<string | null>>;
   setTrainer: Dispatch<SetStateAction<TrainerStatus | null>>;
+  onSnapshot: (ref: SnapshotRef) => void;
 }
 
 export const NEEDS_LEGS = 'Training needs a robot that stands on its own legs.';
@@ -29,11 +33,12 @@ export function savedPolicyMessage(record: PolicyRecord, task: TrainTask): strin
   if (!e) return `Saved ${record.name}`;
 
   if (e.fellAt !== null)
-    return `Saved ${record.name}. Falls after ${e.fellAt.toFixed(1)} s. Train longer, or fix what the simulation shows.`;
+    return `Saved ${record.name}. Falls after ${runClock(e.fellAt)}. Train longer, or fix what the simulation shows.`;
 
-  if (task === 'walk') return `Saved ${record.name}. Walked ${Math.max(0, e.forward).toFixed(2)} m in ${e.seconds} s.`;
+  if (task === 'walk')
+    return `Saved ${record.name}. Walked ${lengthLabel(e.forward * 1000)} in ${duration(e.seconds)}.`;
 
-  return `Saved ${record.name}. Stood ${e.seconds} s without falling.`;
+  return `Saved ${record.name}. Stood ${duration(e.seconds)} without falling.`;
 }
 
 export function trainingBlocker(robotKey: string | null, trainer: TrainerStatus | null): string | null {
@@ -78,11 +83,20 @@ function onError(ctx: TrainEventContext, message: string) {
   ctx.job.current = null;
 }
 
+function onSnapshot(ctx: TrainEventContext, ev: Record<string, unknown>) {
+  const { iteration, steps } = ev;
+
+  if (!Number.isSafeInteger(iteration) || !Number.isSafeInteger(steps)) return;
+
+  ctx.onSnapshot({ run: String(ev.jobId), iteration: iteration as number, steps: steps as number });
+}
+
 const HANDLERS: Record<string, (ctx: TrainEventContext, ev: Record<string, unknown>) => void> = {
   status: (ctx, ev) => onStatusMessage(ctx, String(ev.message)),
   progress: (ctx, ev) => onProgress(ctx, ev.progress as TrainProgress),
   done: (ctx, ev) => onDone(ctx, ev.record as PolicyRecord),
   error: (ctx, ev) => onError(ctx, String(ev.message)),
+  snapshot: onSnapshot,
 };
 
 export function handleTrainEvent(ctx: TrainEventContext, workspaceId: string, ev: Record<string, unknown>) {

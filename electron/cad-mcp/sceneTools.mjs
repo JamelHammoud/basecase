@@ -1,18 +1,19 @@
 import { noteBlockOut } from './autoCompare.mjs';
 import { z } from 'zod';
-import { catalogSchema, common, idSchema, primitiveSchema, vec3 } from './schemas.mjs';
+import { catalogSchema, common, edgesSchema, idSchema, primitiveSchema, vec3 } from './schemas.mjs';
 import { clipTexts } from './textLimits.mjs';
 import { findInScene } from './sceneQuery.mjs';
 import { sceneText } from './sceneText.mjs';
 import { settledWrites } from './pendingWrites.mjs';
 import { bridge, clashText, fail, text } from './shared.mjs';
+import { plural } from '../plural.mjs';
 
 export const getScene = {
   name: 'get_scene',
   config: {
     title: 'Read scene',
     description:
-      'Lists the parts, one per line: id, name, kind, group, pos (placement), rot, size (or vol for CAD parts), box (world bounding box min..max), color, role, material, catalog or supply key, note. All in mm, z up. A boolean shows its operation as its kind (boolean(subtract), union or intersect) and operands=[base, tools…]; each operand follows on its own indented line marked operand-of. Move, resize or rotate an operand by id with update_parts and the result re-cuts, instead of redoing the cut. `Marks` (when present) lists the strokes the user drew on the canvas: colour, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). ' +
+      'Lists the parts, one per line: id, name, kind, group, pos (placement), rot, size (or vol for CAD parts), edges (fillet:mm or chamfer:mm, when rounded or beveled), box (world bounding box min..max), color, role, material, catalog or supply key, note. All in mm, z up. A boolean shows its operation as its kind (boolean(subtract), union or intersect) and operands=[base, tools…]; each operand follows on its own indented line marked operand-of. Move, resize or rotate an operand by id with update_parts and the result re-cuts, instead of redoing the cut. `Marks` (when present) lists the strokes the user drew on the canvas: color, label (what the user means by it), the parts each one circles or crosses, its bounds, and seenFrom (the look view it was drawn from). ' +
       'Over 20 parts, the whole scene comes back as a summary per group (box and ids); pass group or ids for the full lines, or use find_in_scene. Call first, and whenever the user may have edited the scene.',
     inputSchema: {
       ids: z.array(idSchema).optional().describe('Only these parts'),
@@ -97,7 +98,9 @@ export const addParts = {
       noteBlockOut();
 
       return text(
-        (res.summary || `Added ${parts.length} blocks.`) + notice + (real.length ? await clashText(real) : ''),
+        (res.summary || `Added ${plural(parts.length, 'block')}.`) +
+          notice +
+          (real.length ? await clashText(real) : ''),
       );
     } catch (err) {
       return fail(err);
@@ -110,7 +113,7 @@ export const updateParts = {
   config: {
     title: 'Move or restyle parts',
     description:
-      "Changes placement (position, rotation), color, name, group, role, material or note of existing parts by id. For primitives you can also change size. Ids may be a boolean's operands; the boolean re-cuts. To change a CAD part's geometry, call model_part again.",
+      "Changes placement (position, rotation), color, name, group, role, material or note of existing parts by id. For primitives you can also change size, and round or bevel the edges of a box, cube, cylinder, tube, hex_prism or wedge with edges { kind: fillet or chamfer, mm }. Ids may be a boolean's operands; the boolean re-cuts. To change a CAD part's geometry, call model_part again.",
     inputSchema: {
       updates: z
         .array(
@@ -118,6 +121,7 @@ export const updateParts = {
             id: z.string(),
             position: vec3.optional(),
             size: vec3.optional(),
+            edges: edgesSchema,
             ...Object.fromEntries(Object.entries(common).map(([k, v]) => [k, v.optional()])),
           }),
         )
@@ -130,7 +134,7 @@ export const updateParts = {
       const { parts: updates, notice } = clipTexts(given);
       const res = await bridge('apply', { ops: updates.map((u) => ({ op: 'update', part: u })) });
 
-      return text((res.summary || `Updated ${updates.length} parts.`) + notice);
+      return text((res.summary || `Updated ${plural(updates.length, 'part')}.`) + notice);
     } catch (err) {
       return fail(err);
     }
@@ -148,7 +152,7 @@ export const deleteParts = {
     try {
       const res = await bridge('apply', { ops: ids.map((id) => ({ op: 'delete', id })) });
 
-      return text(res.summary || `Deleted ${ids.length} parts.`);
+      return text(res.summary || `Deleted ${plural(ids.length, 'part')}.`);
     } catch (err) {
       return fail(err);
     }
@@ -175,7 +179,7 @@ export const mirrorParts = {
 
       const res = await bridge('apply', { ops: [{ op: 'mirror', ids, axis, rename: rename ?? {} }] });
 
-      return text(res.summary || `Mirrored ${ids.length} parts.`);
+      return text(res.summary || `Mirrored ${plural(ids.length, 'part')}.`);
     } catch (err) {
       return fail(err);
     }

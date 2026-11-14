@@ -14,19 +14,22 @@ keywords:
   - /simulate
   - /routine
   - /operate
+  - /pass
+  - /coach
 related:
   - design-a-robot-with-the-agent
   - agent-tools
 covers:
   - src/agent/slashCommands.ts
   - src/components/agent/useSlashMenu.ts
+  - src/components/agent/CommandList.tsx
   - src/workspace/slashPaletteCommands.tsx
   - electron/cad-agent-prompt.mjs
 ---
 
 The six commands you can start a message with to give the agent a job other than designing.
 
-Type / at the start of a message to list them, then press Enter or Tab to pick one and add what you want after it. They're also under **Commands** in the composer's **+** menu, and in ⌘K by their names.
+Type / at the start of a message to list them, each with its name, then press [[↩]] or [[Tab]] to pick one and add what you want after it. They're also under **Commands** in the composer's **+** menu, and in [[⌘K]] by their names.
 
 | Command | Name | What the agent does |
 |---|---|---|
@@ -38,5 +41,9 @@ Type / at the start of a message to list them, then press Enter or Tab to pick o
 | `/check` | **Run Checks** | Checks the design is ready to build |
 
 None of them changes the design unless your words ask for it. For example, `/case reach the cup on the shelf` adds a Case and leaves the robot alone.
+
+`/pass` followed by a Case's name is the one that does change the design: the agent changes the robot until that Case passes. It isn't in the list; [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent) shows how to start it.
+
+`/coach` followed by a ready skill's name and your words changes how that skill moves. It isn't in the list either; [Coach how a ready skill moves](/help/coach-a-skill) shows how to start it.
 
 **Ask the Agent** in **Play** ▸ **Cases** starts a message with `/case`, and **Teach** in the Simulate tab's **Train** section sends `/train` with your goal.

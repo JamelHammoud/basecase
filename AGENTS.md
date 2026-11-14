@@ -8,13 +8,11 @@
 
 **Keep this file a map.** It's loaded into every agent session: under 200 lines and 32 KiB (Codex stops reading there), checked by `npm run check:docs`. Area detail goes in its guide; add here only what applies to every change. Write rules plainly, without IMPORTANT or capitals, and only what the code can't tell; a rule that must never bend becomes a lint, hook or test. Why it's laid out this way: [Agent instructions](docs/research/Agent%20instructions.md).
 
-**Writing any code?** Follow §0. It's mandatory, and the tooling enforces it: `npm run check:changed -- <your files>` must pass before you finish. Test only your change: never run the whole suite (`npm run check`, `npm test`) for one change; CI runs it on every push (§0a). Throwaway scripts, debug tests and local outputs go in the gitignored `scratch/` folder, never in `src/` (§0g).
+**Writing any code?** Follow §0. It's mandatory, and the tooling enforces it: `npm run check:changed -- <your files>` must pass before you finish. Test only your change: never run the whole suite (`npm run check`, `npm test`) for one change; a pull request's Check runs the same thing on what it changed, and the full suite runs nightly on `main` (§0a). Throwaway scripts, debug tests and local outputs go in the gitignored `scratch/` folder, never in `src/` (§0g).
 
 **Writing any user-facing text** (labels, buttons, headers, captions, empty states, toasts, errors, tooltips, agent-facing UI)? Follow [Copy](docs/guide/copy.md) (§3; changelog, blog and help center pages §3f), and run its checklist (§3d, repeated below) on every string you add or change.
 
-**Adding a part** (a servo, board, sensor or any product, often from an Amazon or store link)? Follow [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md) step by step, whichever agent you are.
-
-**Security audit, vulnerable package or toolchain update?** Follow [.agents/skills/security-audit/SKILL.md](.agents/skills/security-audit/SKILL.md) (`npm run security` scans). Code that touches IPC, the HTTP bridge, file ids, outbound fetches or the CAD kernel follows [Security](docs/guide/security.md) (§0h).
+**Adding a part** (a servo, board, sensor or any product, often from an Amazon or store link)? Follow [.agents/skills/add-part/SKILL.md](.agents/skills/add-part/SKILL.md) step by step, whichever agent you are. **Security audit, vulnerable package or toolchain update?** Follow [.agents/skills/security-audit/SKILL.md](.agents/skills/security-audit/SKILL.md) (`npm run security` scans). Code that touches IPC, the HTTP bridge, file ids, outbound fetches or the CAD kernel follows [Security](docs/guide/security.md) (§0h).
 
 ## Guide index
 
@@ -28,12 +26,12 @@
 | 2 | [Window framing](docs/guide/window-chrome.md) | the title bar, view rail, card grid, vibrancy, boot screen, app icon, menu bar |
 | 3 | [Copy](docs/guide/copy.md) | any user-facing text |
 | 4 | [Visual system](docs/guide/visual-system.md) | type, sizes, radii, surfaces, dividers, motion, hover controls, loading, scrollbars |
-| 5 | [Layout and sidebar views](docs/guide/layout.md) | the side panels, Parts, Robots, Objects, Layers, Library, panel resizing |
+| 5 | [Layout and sidebar views](docs/guide/layout.md) | the side panels, Parts (with its robots and objects), Play, Layers, Library, panel resizing |
 | 5a | [Scene tabs](docs/guide/scene-tabs.md) | tabs, opening and closing scenes, `.basecase` files |
 | 6, 6a | [Toolbar and Settings](docs/guide/toolbar-and-settings.md) | the bottom toolbar, Measure, Annotate, Settings panes |
-| 7–8 | [Inspector and selection](docs/guide/inspector-and-selection.md) | the Inspector, selection, groups, booleans, drag and drop, reference images, Sculpt / Sketch / Import SVG |
+| 7–8 | [Inspector and selection](docs/guide/inspector-and-selection.md) | the Inspector, selection, groups, booleans, Mirror (`src/mirror/`), drag and drop, reference images, Sculpt / Sketch / Import SVG |
 | 8a | [Parts catalog](docs/guide/parts-catalog.md) | real components, meshes, the parts pipeline, parts the agent sources |
-| 8b | [Build](docs/guide/build.md) | Checks, BOM, prices, currency, printability, engineering checks, the build guide |
+| 8b | [Build](docs/guide/build.md) | Checks, BOM, prices, currency, printability, engineering checks, the wiring netlist (`src/wiring/`), the build guide |
 | 8c | [Joints and motion](docs/guide/joints-and-motion.md) | joints, kinematics, the Pose tab, animation, robot import, mocap |
 | 8d | [Simulate and train](docs/guide/simulate.md) | MuJoCo, the MJCF writer, training, policies |
 | 8e | [SimReady](docs/guide/simready.md) | SimReady search, the converter, textures |
@@ -44,6 +42,7 @@
 | 8j | [Routines](docs/guide/routines.md) | `src/routines/`, the coordinator, ML nodes, scenario tests |
 | 8l | [Cameras](docs/guide/cameras.md) | `src/cameras/`, camera parts and lenses, stationary camera views, live views, fisheye, the agent's `operate`, the depth eye |
 | 8k | [Robot runtime](docs/guide/robot-runtime.md) | `hw/`, the daemon, servo emulators, the motor lock, calibration (`src/reality/`) |
+| 8m | [Scan app](docs/guide/scan-app.md) | `ios/`, Basecase Scan for iPhone, the room file it shares |
 | 0k | [Proof](docs/guide/proof.md) | `verify/`, Gatekeeper, gates, the hidden twin, the Stage 8 session |
 | 0l | [Loop](docs/guide/loop.md) | `tools/loop/`, how agents open, review and merge pull requests, CI repair, nightly releases |
 | 9 | [Agent](docs/guide/agent.md) | the ACP agent, its profiles, lanes, CAD tools and kernel, the agent panel and composer |
@@ -72,7 +71,7 @@ These rules hold for every human and agent, on every machine. They're enforced b
 ### 0a. Tooling
 
 - **Prettier** formats (`.prettierrc.json`: single quotes, 120 columns). **ESLint** (`eslint.config.mjs`) enforces everything else. Custom rules live in `tools/eslint/`.
-- `npm run check` = `check:tracked` (§0g) + `check:docs` (this file's size, the guide index, links and § references in every `AGENTS.md` and guide) + `format:check` + `lint` + `lint:py` (Ruff, `ruff.toml`, run through `uvx`) + `typecheck` + `test`: the full run, which CI does on every push. For your own change run `npm run check:changed -- <files you changed>` (`tools/check-changed.mjs`, seconds): Prettier and ESLint on those files, Ruff on Python, `check:docs` when Markdown changed, `tsc -b` when TypeScript changed, and only the tests that import them (`vitest related`). Name your files: with none it takes everything `git diff HEAD` and untracked files show, other agents' work included. Run the full `npm run check` only when a maintainer asks or you change tooling, configs or dependencies, and never rerun a long suite to confirm a small change. `npm run lint:fix` and `npm run format` fix what they can. `npm run test:e2e` drives the real app headless (see §0e); run it after UI or viewport changes. `npm run security` (`tools/security/`) scans dependencies, Node, Electron, the Python locks, secrets and risky code, writes `scratch/security/<date>.md` and fails on any critical or high finding (§0h).
+- `npm run check` = `check:tracked` (§0g) + `check:docs` (this file's size, the guide index, links and § references in every `AGENTS.md` and guide) + `format:check` + `lint` + `lint:py` (Ruff, `ruff.toml`, run through `uvx`) + `typecheck` + `test`: the full run, which CI does nightly on `main`; a pull request's Check runs `check:changed` on its own files. For your own change run `npm run check:changed -- <files you changed>` (`tools/check-changed.mjs`, seconds): Prettier and ESLint on those files, Ruff on Python, `check:docs` when Markdown changed, `tsc -b` when TypeScript changed, and only the tests that import them (`vitest related`). Name your files: with none it takes everything `git diff HEAD` and untracked files show, other agents' work included. Run the full `npm run check` only when a maintainer asks or you change tooling, configs or dependencies, and never rerun a long suite to confirm a small change. `npm run lint:fix` and `npm run format` fix what they can. `npm run test:e2e` drives the real app headless (see §0e); run it after UI or viewport changes. `npm run security` (`tools/security/`) scans dependencies, Node, Electron, the Python locks, secrets and risky code, writes `scratch/security/<date>.md` and fails on any critical or high finding (§0h).
 - **Node** is pinned in `.nvmrc` (CI reads it) and `engines.node`: the latest release of the active LTS. npm runs dependency install scripts only for packages approved in `allowScripts` (`npm install-scripts ls`).
 - **Hooks run automatically:**
   - Git pre-commit (`simple-git-hooks` + `lint-staged`, installed by `npm install`): formats and lints staged files, then runs `check:tracked`; a commit with lint errors or internal files fails.
@@ -85,7 +84,8 @@ These rules hold for every human and agent, on every machine. They're enforced b
 | Rule | Limit | How to comply |
 |---|---|---|
 | No comments (`basecase/no-comments`) | none, except `@vite-ignore` / `#__PURE__` pragmas | Name things so the code reads on its own. Lasting context (why a value is what it is, platform quirks, bugs avoided) goes in the area's guide (`docs/guide/`) or `docs/notes/` (`ui.md`, `core.md`, `node.md`) |
-| Banned copy (`basecase/copy`) | none in user-facing strings in `src/` and the app menu | Cut the word or the line (§3c); the list is `BANNED_COPY` in `verify/rehearsal/uiRules.ts`, linted through `tools/copy/banned.mjs` |
+| Banned copy (`basecase/copy`) | none in user-facing strings in `src/` and the app menu | Cut the word or the line (§3c); the list is `BANNED_COPY` in `verify/rehearsal/uiRules.ts`, linted through `tools/copy/banned.mjs` with the verb glossary (§3b-17) |
+| Counts (`basecase/plural`) | no bare `${n} parts` or `n === 1` ternary in `src/` and `electron/` | `plural(n, 'part')` from `electron/plural.mjs` (§3b-15) |
 | No nested `if` in one function (`basecase/no-nested-if`) | 0 | Guard clauses and early returns, combined conditions, lookup tables, or extract a named predicate / function |
 | Blank line between statements of different kinds (`@stylistic/padding-line-between-statements`) | — | Auto-fixed. Consecutive declarations or expression statements may group; every `if`, loop, block and `return` is set off by blank lines |
 | `max-lines` per file | 400 (blank lines not counted) | Split by responsibility into sibling modules. Data catalogs (`src/data/`) and the agent prompt are exempt |
@@ -129,7 +129,7 @@ Anything that only serves this session or this machine stays out of git. Put it 
 - **Internal notes go in `internal/`** (gitignored, skipped by ESLint and Prettier): research, plans, chat and session analyses, design explorations, anything written for the maintainers rather than for contributors. `docs/` holds only what a contributor needs: the guides (`docs/guide/`), the plans this file links to, `docs/notes/`, the lessons playbook, `docs/market/` (the market lane's research, read by the lead), and the research the code cites. If a doc in `docs/` cites something in `internal/`, move the source into `docs/` or drop the citation.
 - **Local data stays where it is:** `library/` (scenes, chats, references, prices, agent config and keys), `ai-reference/`, `bench/data/` and `bench/runs/`, `tools/parts/cad/`, `tools/parts/generated/*.log`, `electron/trainer/.venv/`. Code and committed tests never read from `library/` or `ai-reference/`: a test that needs a scene builds its fixture in code, so it runs on a clean clone.
 - **Never commit** secrets (`.env*`, API keys, tokens, `auth.json`), per-machine settings (`.claude/settings.local.json`, `.claude/launch.json`), caches (`__pycache__/`, `.ruff_cache/`, `node_modules/.cache/`), build output (`dist/`, `release/`, `electron/native/*/build/`), logs, stray tool outputs (`result.json` from the Bambu Studio CLI), or absolute paths to someone's home or temp folder (a record that points at a downloaded file stores its URL, not where it landed).
-- **Deliberately committed outputs:** `public/parts/*.glb` and `tools/parts/generated/<id>/` (the part pipeline's results, §8a), `public/figures/*.glb` and `tools/figures/generated/<id>/` (the Measure tool's scale figures, §6), `build/icon/compiled/` and `build/icon/compiled-dev/`, `public/robots/*.webp`, `src/skills/contract.wasm` (`npm run build:contract`, §8i), `src/routines/coordinator.wasm` and `coordinator.build.json` (`npm run build:routines`, §8j), `src/routines/kit/` (Motor Kit policies with their manifest, §8j), `src/forge/forge.wasm` and `forge.build.json` (`npm run build:forge-web`, §8g), and help and changelog screenshots in `site/public/help/` and `site/public/changelog/` (§0l).
+- **Deliberately committed outputs:** `public/parts/*.glb` and `tools/parts/generated/<id>/` (the part pipeline's results, §8a), `public/figures/*.glb` and `tools/figures/generated/<id>/` (the Measure tool's scale figures, §6), `build/icon/compiled/` and `build/icon/compiled-dev/`, `public/robots/*.webp`, `src/skills/contract.wasm` (`npm run build:contract`, §8i), `src/routines/coordinator.wasm` and `coordinator.build.json` (`npm run build:routines`, §8j), `src/routines/kit/` (Motor Kit policies with their manifest, §8j), `src/forge/forge.wasm` and `forge.build.json` (`npm run build:forge-web`, §8g), `public/apriltag/apriltag.wasm` (`npm run build:apriltag`, §8l), and help and changelog screenshots in `site/public/help/` and `site/public/changelog/` (§0l).
 - **`npm run check:tracked`** (`tools/check-tracked.mjs`, run by `check` and the pre-commit hook) fails on tracked files that `.gitignore` excludes (untrack them with `git rm --cached`) and on absolute paths into a home folder, `/private/tmp` or `/var/folders` in any tracked text file. Placeholder homes in tests (`me`, `user`, `name`, `example`, `runner`) are allowed.
 - **Before committing**, read `git status` and the staged list (`git diff --cached --stat`). Anything not in the categories above that you didn't mean to write gets moved to `scratch/` or deleted. When a new tool writes local output, add its folder to `.gitignore` (and to the ESLint / Prettier ignores if it holds code) in the same change.
 
@@ -187,7 +187,7 @@ Run it on every string you add or change:
 
 ## 15. Verification Checklist
 
-- [ ] `npm run check:changed -- <your files>` passes (format, ESLint, Ruff, types, related tests). The full `npm run check` and `npm run build` run in CI.
+- [ ] `npm run check:changed -- <your files>` passes (format, ESLint, Ruff, types, related tests). The full `npm run check` and `npm run build` run nightly in CI.
 - [ ] Changes to IPC, the HTTP bridge, file ids, outbound fetches, the CAD kernel or dependencies follow §0h; `npm run security` reports no critical or high finding.
 - [ ] `npm run test:e2e` passes after UI or viewport changes.
 - [ ] Visual changes: no dev servers, previews or screenshots to check the look (see Working agreements); say what changed and what to look at.

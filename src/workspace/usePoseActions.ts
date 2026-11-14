@@ -5,6 +5,7 @@ import { parseBvh, type Mocap } from '../utils/mocap';
 import { detectFeet } from '../utils/usePosing';
 import { robotPartIds } from './selection';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { errorMessage } from '../utils/errorMessage';
 
 const LEG_JOINT = /hip|knee|ankle|leg|haa|kfe/i;
 
@@ -56,7 +57,6 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
     const made = addAnimation({ ...built.animation, robot: robot.group.key });
 
     play(made.id, 0);
-    showToast(`Added ${made.name}`);
   };
 
   const importMotion = () => motionInputRef.current?.click();
@@ -69,7 +69,7 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
     try {
       setMotion(parseBvh(text, file.name.replace(/\.bvh$/i, '')));
     } catch (err) {
-      showToast(`Couldn’t read ${file.name}: ${err instanceof Error ? err.message : String(err)}`);
+      showToast(`Couldn’t read ${file.name}. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 
@@ -85,7 +85,8 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
 
     openPose();
     play(made.id, 0);
-    showToast(summary ? `Added ${made.name}. ${summary}` : `Added ${made.name}`);
+
+    if (summary) showToast(summary);
   };
 
   return {

@@ -1,6 +1,7 @@
 pub mod adam;
 pub mod adam_vector;
 pub mod algorithm;
+pub mod bc;
 pub mod blocks;
 pub mod clock;
 pub mod conditions;
@@ -46,8 +47,12 @@ pub mod robot;
 #[cfg(feature = "native")]
 mod robot_load;
 pub mod sac;
+pub mod servo_gains;
 #[cfg(feature = "native")]
 pub mod shac;
+#[cfg(feature = "native")]
+pub mod snapshots;
+pub mod start_states;
 pub mod threads;
 #[cfg(feature = "native")]
 pub mod trainer;

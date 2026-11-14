@@ -23,6 +23,7 @@ import {
   ScaleIcon,
   ShapesIcon,
 } from '../design-system';
+import { keyFor } from '../app/shortcuts';
 
 const BASIC_SHAPES = PART_CATALOG.filter((c) => c.category === 'primitives');
 const ICON = 'w-[22px] h-[22px]';
@@ -62,11 +63,11 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
   const [draggingShape, setDraggingShape] = useState(false);
 
   const tools: Array<{ mode: TransformMode; icon: React.ReactNode; label: string; key: string }> = [
-    { mode: 'translate', icon: <MoveIcon className={ICON} />, label: 'Move', key: 'V' },
-    { mode: 'rotate', icon: <RotateIcon className={ICON} />, label: 'Rotate', key: 'E' },
-    { mode: 'scale', icon: <ScaleIcon className={ICON} />, label: 'Scale', key: 'R' },
+    { mode: 'translate', icon: <MoveIcon className={ICON} />, label: 'Move', key: keyFor('move') },
+    { mode: 'rotate', icon: <RotateIcon className={ICON} />, label: 'Rotate', key: keyFor('rotate') },
+    { mode: 'scale', icon: <ScaleIcon className={ICON} />, label: 'Scale', key: keyFor('scale') },
     ...(showSculpt
-      ? [{ mode: 'sculpt' as const, icon: <BrushIcon className={ICON} />, label: 'Sculpt', key: 'C' }]
+      ? [{ mode: 'sculpt' as const, icon: <BrushIcon className={ICON} />, label: 'Sculpt', key: keyFor('sculpt') }]
       : []),
   ];
 
@@ -87,7 +88,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
       <IconButton
         icon={<CommentIcon className={ICON} />}
         title="Comment"
-        shortcut="M"
+        shortcut={keyFor('comment')}
         tooltipSide="top"
         size="lg"
         isActive={commentMode}
@@ -99,7 +100,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
       <div className="relative" ref={shapesRef}>
         <MenuTrigger
           title="Shapes"
-          shortcut="A"
+          shortcut={keyFor('shapes')}
           open={shapesOpen}
           onClick={() => onShapesOpenChange(!shapesOpen)}
           icon={<ShapesIcon className={ICON} />}
@@ -124,7 +125,7 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
           />
           <MenuDivider />
           <MenuItem
-            icon={<PenIcon className="w-4 h-4" />}
+            icon={<PenIcon />}
             label="Sketch"
             onSelect={() => {
               onShapesOpenChange(false);
@@ -132,25 +133,25 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
             }}
           />
           <MenuItem
-            icon={<RulerIcon className="w-4 h-4" />}
+            icon={<RulerIcon />}
             label="Measure"
-            shortcut="D"
+            shortcut={keyFor('measure')}
             onSelect={() => {
               onShapesOpenChange(false);
               onMeasure();
             }}
           />
           <MenuItem
-            icon={<MarkerIcon className="w-4 h-4" />}
+            icon={<MarkerIcon />}
             label="Annotate"
-            shortcut="N"
+            shortcut={keyFor('annotate')}
             onSelect={() => {
               onShapesOpenChange(false);
               onAnnotate();
             }}
           />
           <MenuItem
-            icon={<FileImportIcon className="w-4 h-4" />}
+            icon={<FileImportIcon />}
             label="Import SVG"
             onSelect={() => {
               onShapesOpenChange(false);
@@ -197,7 +198,7 @@ const ShapeGrid: React.FC<{
                 src={thumbs[item.kind]}
                 alt=""
                 draggable={false}
-                className="w-full h-full object-contain scale-[1.15] transition-transform duration-300 group-hover:scale-[1.25]"
+                className="w-full h-full object-contain scale-[1.15] transition-transform duration-150 group-hover:scale-[1.25]"
               />
             )}
           </span>
@@ -231,7 +232,7 @@ const MenuTrigger: React.FC<{
       {icon}
       {size === 'lg' && (
         <ChevronUpIcon
-          className={`w-3.5 h-3.5 opacity-50 transition-transform duration-200 ${open ? '' : 'rotate-180'}`}
+          className={`w-3.5 h-3.5 opacity-50 transition-transform duration-150 ${open ? '' : 'rotate-180'}`}
         />
       )}
     </button>

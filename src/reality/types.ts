@@ -1,6 +1,11 @@
 import type { ServoFit } from '../data/components';
 
-export type ServoFamily = 'sts3215' | 'xl330';
+export interface ServoPart {
+  componentId: string;
+  variant?: string;
+}
+
+export type FamilyName = 'sts3215' | 'xl330';
 
 export interface BenchPayload {
   massKg: number;
@@ -8,7 +13,7 @@ export interface BenchPayload {
 }
 
 export interface ServoLog {
-  family: ServoFamily;
+  servo: ServoPart;
   dt: number;
   goalRad: number[];
   positionRad: number[];
@@ -22,6 +27,11 @@ export type CalibrationVerdict = 'measured' | 'consistent' | 'cant-tell';
 
 export type RungName = 'preset' | 'response' | 'friction-force';
 
+export interface JointMount {
+  zeroCounts: number;
+  direction: 1 | -1;
+}
+
 export interface CalibrationEvidence {
   logs: number;
   presetErrorRad: number;
@@ -31,9 +41,8 @@ export interface CalibrationEvidence {
   reason: string;
 }
 
-export interface ServoCalibration {
+export interface CalibrationRecord {
   verdict: CalibrationVerdict;
-  family: ServoFamily;
   version: number;
   rung: RungName;
   fit: ServoFit;
@@ -42,4 +51,7 @@ export interface ServoCalibration {
   conditions: { volts: number; temperatureC: number };
   evidence: CalibrationEvidence;
   logId?: string;
+  mount?: JointMount;
 }
+
+export type ServoCalibration = CalibrationRecord & ({ servo: ServoPart } | { family: FamilyName });

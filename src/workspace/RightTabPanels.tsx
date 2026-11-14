@@ -9,14 +9,19 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { BuildPanel } from '../components/BuildPanel';
 import { PosePanel } from '../components/PosePanel';
 import { SimulatePanel } from '../components/SimulatePanel';
+import type { CoachSend } from '../components/simulate/TrainSection';
+import { measuredJoints } from '../reality/measuredJoints';
 import type { ProjectSettings } from '../types/robotics';
+import { caseCheckId, caseCheckOf } from '../readiness/caseChecks';
 import { findingQuote, fixPrompt } from '../readiness/readiness';
 import { showNewCase } from './caseCommands';
+import { calibrateJoints } from './operateCommands';
 import { InspectTab } from './InspectTab';
 import type { RightTab } from './types';
 import type { AgentSession } from './useAgentSession';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { replayFall } from './fallReplay';
 
 interface RightTabPanelsProps {
   core: WorkspaceCore;
@@ -82,9 +87,12 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
         simTraining.cases.open(id);
         tool.setRightTab('sim');
       }}
+      onNewCase={simTraining.cases.builder.goals.length ? () => showNewCase(core) : undefined}
+      onCalibrate={IS_WEB_DEMO ? undefined : (jointIds) => calibrateJoints(core, jointIds)}
+      onReplayFall={(deg) => void replayFall(core, deg)}
       panScroll={studio.trackpadMode === 'pan-scroll'}
       onSelectParts={(ids) => setSelectedIds(ids)}
-      onToast={(m) => showToast(m)}
+      onToast={showToast}
       guide={guide}
       readiness={core.readiness}
     />
@@ -104,6 +112,16 @@ function useOpenGuide(core: WorkspaceCore) {
       if (ready) window.requestAnimationFrame(() => void guide.open());
     });
   };
+}
+
+function openCaseCheck(core: WorkspaceCore, caseId: string) {
+  core.tool.setRightTab('build');
+  window.requestAnimationFrame(() => {
+    const row = document.getElementById(caseCheckId(caseId));
+
+    row?.scrollIntoView({ block: 'center' });
+    row?.focus({ preventScroll: true });
+  });
 }
 
 function AgentTab(props: Omit<RightTabPanelsProps, 'actions'>) {
@@ -139,7 +157,6 @@ function AgentConversationTab({ core, agent }: Omit<RightTabPanelsProps, 'action
           sketchRequest={tool.sketchRequest}
           quote={{ request: tool.quoteRequest, onRequest: tool.requestQuote, onDone: tool.clearQuote }}
           compose={{ request: tool.composeRequest, onDone: tool.clearCompose }}
-          targetHeightMm={studio.agentTargetHeightMm}
           choice={studio.agentChoice}
           onChoiceChange={studio.setAgentChoice}
           onReconnectAcp={studio.reconnectAcp}
@@ -167,10 +184,20 @@ function useTeach(core: WorkspaceCore, agent: AgentSession) {
   };
 }
 
+function useCoach(core: WorkspaceCore, agent: AgentSession): CoachSend | null {
+  if (IS_WEB_DEMO) return null;
+
+  return (scope, words) => {
+    core.tool.openRightTab('acp');
+    void agent.send({ text: `/coach ${scope.label}: ${words}`, ...core.studio.agentChoice }, 'queue');
+  };
+}
+
 export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
   const { tool, posing, posable, project, setSelectedIds, simTraining } = core;
   const { pose } = actions;
   const onTeach = useTeach(core, agent);
+  const onCoach = useCoach(core, agent);
   const current = tool.rightTab;
   const visited = useVisitedTabs(current);
 
@@ -185,6 +212,11 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           onImportMotion={pose.importMotion}
           onWalkCycle={pose.walkCycle}
           canWalk={pose.canWalk}
+          measured={measuredJoints({
+            joints: project.joints ?? [],
+            parts: core.parts,
+            calibrations: project.servoCalibrations,
+          })}
         />
       </TabActivity>
       <TabActivity tab="sim" current={current} visited={visited} available={posing.hasRig}>
@@ -199,10 +231,17 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           policies={simTraining.policies}
           onSelectParts={setSelectedIds}
           onDeletePolicy={simTraining.deletePolicy}
-          onNewCase={() => showNewCase(core)}
+          caseCheck={simTraining.cases.active && caseCheckOf(core.readiness.current, simTraining.cases.active.id)}
+          onOpenCaseCheck={() => simTraining.cases.active && openCaseCheck(core, simTraining.cases.active.id)}
           skills={simTraining.skills}
           onTeach={onTeach}
+          onCoach={onCoach}
           onRunCase={core.caseRun.enter}
+          compare={core.caseCompare}
+          explore={core.caseExplore}
+          sceneName={core.scene.sceneName}
+          onToast={core.showToast}
+          onPublishSkill={simTraining.skillHub.publishable.length ? simTraining.skillHub.publish : null}
         />
       </TabActivity>
       <TabActivity tab="inspector" current={current} visited={visited}>

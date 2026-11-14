@@ -4,19 +4,35 @@ import { compileCaseLogic } from '../cases/caseLogic';
 import type { Case } from '../cases/schema';
 import type { Routine } from '../routines/schema';
 import { fixtureRobots } from '../sim/fixtures/robots';
+import type { ProjectSettings } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
+import type { CaseRuns } from '../cases/caseRuns';
+import { designChanges, designKey, exploreSpace, type Design } from '../cases/explore';
+import { servoArm } from '../sim/fixtures/servoArm';
+import { DEFAULT_PROJECT } from '../types/robotics';
 import { CASE_HANDLERS, caseValues } from './agentCaseRequests';
 import type { Cases } from './useCases';
+import { fixtureRoom } from '../cases/roomFixture';
+import { readRoomPlan, type Room } from '../cases/roomPlan';
+import { roomTargets } from '../cases/roomTargets';
 
-function contextFor(id: string) {
+const scene = { parts: () => [], project: () => ({}) as ProjectSettings, viewport: () => null };
+
+const robotOf = (id: string) => {
   const r = fixtureRobots().find((f) => f.id === id)!;
-  const robot = builderRobot(buildRig(r.joints, r.parts), r.parts);
+
+  return builderRobot(buildRig(r.joints, r.parts), r.parts);
+};
+
+function contextFor(id: string, room?: Room) {
+  const robot = robotOf(id);
   const added: Case[] = [];
+  const inRoom = (spec: CaseSpec): CaseSpec => (room ? { ...spec, room } : spec);
   const cases = {
     builder: {
-      preview: (spec: CaseSpec) => buildCase(spec, robot),
+      preview: (spec: CaseSpec) => buildCase(inRoom(spec), robot),
       add: (spec: CaseSpec) => {
-        const built = buildCase(spec, robot);
+        const built = buildCase(inRoom(spec), robot);
 
         if (built.ok) added.push(built.kase);
 
@@ -26,13 +42,29 @@ function contextFor(id: string) {
   } as unknown as Cases;
   const routines = { checkLogic: async (logic: unknown) => compileCaseLogic(logic as Routine, { skills: [] }) };
 
-  return { ctx: { cases, routines, setAction: () => {} }, added };
+  const caseCompare = { choicesFor: () => [], compareNow: async () => null as never, start: () => {} };
+  const running: string[] = [];
+  const caseRun = { enterCase: (caseId: string) => void running.push(caseId) };
+
+  const caseExplore = { explore: async () => 'unused' };
+
+  return { ctx: { cases, routines, caseCompare, caseExplore, caseRun, setAction: () => {}, ...scene }, added, running };
 }
 
-const create = (payload: Record<string, unknown>, id = 'rover-diff') => {
-  const { ctx, added } = contextFor(id);
+const create = (payload: Record<string, unknown>, id = 'rover-diff', room?: Room) => {
+  const { ctx, added, running } = contextFor(id, room);
 
-  return { reply: CASE_HANDLERS.create_case(payload, ctx), added };
+  return { reply: CASE_HANDLERS.create_case(payload, ctx), added, running };
+};
+
+const ROVER_APP = {
+  input: ['gamepad', 'keys'],
+  panels: [
+    { id: 'front', kind: 'camera', signal: 'camera.*' },
+    { id: 'speed', kind: 'value', title: 'Speed', signal: 'robot.speed' },
+    { id: 'tries', kind: 'list', of: 'tries' },
+  ],
+  layout: { areas: [{ size: 480, panels: ['front'] }, { canvas: true }, { size: 300, panels: ['speed', 'tries'] }] },
 };
 
 describe('create_case', () => {
@@ -67,6 +99,18 @@ describe('create_case', () => {
     });
   });
 
+  it('builds a terrain world at the agent’s height or incline', async () => {
+    const steps = create({ goal: 'walk', world: 'steps', rise_mm: 12 }, 'hexapod');
+
+    expect(await steps.reply).toMatchObject({ ok: true, name: 'Walk Without Falling over Steps' });
+    expect(steps.added[0].world.objects.find((o) => o.id === 'platform')?.size[1]).toBe(12);
+
+    const slope = create({ goal: 'reach', world: 'slope', incline_deg: 20 });
+
+    expect(await slope.reply).toMatchObject({ ok: true, name: 'Reach a Spot over a Slope' });
+    expect(slope.added[0].world.objects.find((o) => o.id === 'ramp-up')?.rotation[0]).toBeCloseTo(-20);
+  });
+
   it('adds the agent’s own objects in the agent frame', async () => {
     const { reply, added } = create({
       goal: 'reach',
@@ -79,6 +123,23 @@ describe('create_case', () => {
       position: [0, 20, 500],
       size: [300, 40, 200],
     });
+  });
+
+  it('keeps an object the agent marks movable movable, and only that one', async () => {
+    const target = { kind: 'cylinder', position: [300, 0, 1], size: [120, 120, 2], behavior: 'marker' };
+    const { reply, added } = create({
+      goal: 'reach',
+      objects: [
+        { ...target, id: 'lit', name: 'Lit', movable: true },
+        { ...target, id: 'still', name: 'Still' },
+      ],
+    });
+
+    expect(await reply).toMatchObject({ ok: true, objects: 3 });
+
+    const movable = Object.fromEntries(added[0].world.objects.map((o) => [o.id, o.movable ?? false]));
+
+    expect(movable).toMatchObject({ lit: true, still: false });
   });
 
   it('answers a goal the robot cannot try, or hostile objects, with what to change', async () => {
@@ -116,5 +177,254 @@ describe('create_case', () => {
     expect(compiled.ok).toBe(false);
     expect(await refused.reply).toEqual({ ok: false, problem: compiled.errors![0].message });
     expect(refused.added).toEqual([]);
+  });
+});
+
+describe('create_case in a scanned room', () => {
+  const room = readRoomPlan(JSON.stringify(fixtureRoom()), 'Fixture Flat.json');
+  const spotOf = (kase: Case) => kase.world.objects.find((o) => o.id === 'spot')!.position;
+  const targetAt = (name: string) => roomTargets(room, robotOf('rover-diff')).find((t) => t.name === name)!.at;
+
+  it('picks the table by name, and the floor under it from the way a person says it', async () => {
+    const table = create({ goal: 'reach', target: 'table' }, 'rover-diff', room);
+    const under = create({ goal: 'reach', target: 'under the kitchen table' }, 'rover-diff', room);
+
+    expect(await table.reply).toMatchObject({ ok: true, brief: 'Reach the spot at the Table and stop on it.' });
+    expect(await under.reply).toMatchObject({ ok: true, brief: 'Reach the spot under the Table and stop on it.' });
+    expect(spotOf(table.added[0])).toEqual([targetAt('Table')[0], expect.any(Number), targetAt('Table')[2]]);
+    expect(spotOf(under.added[0])).toEqual([
+      targetAt('Under Table')[0],
+      expect.any(Number),
+      targetAt('Under Table')[2],
+    ]);
+  });
+
+  it('passes a path’s spots in the order named', async () => {
+    const { reply, added } = create({ goal: 'path', target: ['sofa', 'door', 'table'] }, 'rover-diff', room);
+
+    expect(await reply).toMatchObject({ ok: true, brief: 'Pass the 3 spots in order.' });
+    expect(
+      ['spot0', 'spot1', 'spot2'].map((id) => added[0].world.objects.find((o) => o.id === id)!.position[2]),
+    ).toEqual(['Sofa', 'Door', 'Table'].map((name) => targetAt(name)[2]));
+  });
+
+  it('refuses a path with one name and a reach with two, adding nothing', async () => {
+    const path = create({ goal: 'path', target: ['table'] }, 'rover-diff', room);
+    const reach = create({ goal: 'reach', target: ['table', 'door'] }, 'rover-diff', room);
+
+    expect(await path.reply).toEqual({ ok: false, problem: 'Name 2 to 8 spots for Follow a Path.' });
+    expect(await reach.reply).toEqual({ ok: false, problem: 'Name one spot for Reach a Spot.' });
+    expect([...path.added, ...reach.added]).toEqual([]);
+  });
+
+  it('refuses a name the room lacks, and a target with no room open, with the names it has', async () => {
+    expect(await create({ goal: 'reach', target: 'fridge' }, 'rover-diff', room).reply).toEqual({
+      ok: false,
+      problem: 'Pick a target in Fixture Flat: Door, Sofa, Table, Under Table.',
+    });
+    expect(await create({ goal: 'reach', target: 'table' }).reply).toEqual({
+      ok: false,
+      problem: 'Pick a world for Reach a Spot: floor, corridor, block, rough, steps, slope.',
+    });
+  });
+});
+
+describe('create_case with a console', () => {
+  it('keeps the console on the Case and opens the new Case running', async () => {
+    const { reply, added, running } = create({ goal: 'reach', name: 'Drive to the Dock', console: ROVER_APP });
+
+    expect(await reply).toMatchObject({ ok: true, id: 'drive-to-the-dock', running: true });
+    expect(added[0].console).toEqual(ROVER_APP);
+    expect(running).toEqual(['drive-to-the-dock']);
+  });
+
+  it('refuses a panel the format refuses, by its path, and adds and opens nothing', async () => {
+    const radar = { ...ROVER_APP, panels: [...ROVER_APP.panels.slice(0, 2), { id: 'tries', kind: 'radar' }] };
+    const { reply, added, running } = create({ goal: 'reach', console: radar });
+
+    expect(await reply).toEqual({ ok: false, problem: expect.stringMatching(/^console\.panels\[2\]\.kind /) });
+    expect(added).toEqual([]);
+    expect(running).toEqual([]);
+  });
+
+  it('refuses an input this version lacks with the words the agent passes on', async () => {
+    const leader = { ...ROVER_APP, input: ['leader-arm'] };
+
+    expect(await create({ goal: 'reach', console: leader }).reply).toEqual({
+      ok: false,
+      problem: 'console.input[0] leader-arm can’t drive a Case in this version',
+    });
+  });
+
+  it('keeps code panels in a column and over the canvas, driving through the code source', async () => {
+    const joystickApp = {
+      input: ['code', 'keys'],
+      panels: [
+        {
+          id: 'stick',
+          kind: 'code',
+          title: 'Joystick',
+          source: '<canvas></canvas><script>basecase.drive(null)</script>',
+        },
+        { id: 'hud', kind: 'code', source: '<p id="v"></p>', height: 120 },
+      ],
+      layout: {
+        areas: [
+          { canvas: true, overlays: [{ panel: 'hud', anchor: 'top-left', width: 220, height: 80 }] },
+          { size: 320, panels: ['stick'] },
+        ],
+      },
+    };
+    const { reply, added, running } = create({ goal: 'reach', name: 'Joystick Rover', console: joystickApp });
+
+    expect(await reply).toMatchObject({ ok: true, running: true });
+    expect(added[0].console).toEqual(joystickApp);
+    expect(running).toEqual(['joystick-rover']);
+  });
+
+  it('leaves a Case without a console in the studio', async () => {
+    const { reply, running } = create({ goal: 'reach' });
+
+    expect(await reply).not.toHaveProperty('running');
+    expect(running).toEqual([]);
+  });
+});
+
+describe('compare_case', () => {
+  const rover = fixtureRobots().find((f) => f.id === 'rover-diff')!;
+  const made = buildCase(
+    { goal: 'reach', world: 'floor' },
+    builderRobot(buildRig(rover.joints, rover.parts), rover.parts),
+  );
+  const kase = made.ok ? made.kase : null!;
+  const runs = (passes: number): CaseRuns => ({
+    runs: 20,
+    passes,
+    medianMargin: 0.1234,
+    worstMargin: 0.05,
+    commonFailure: null,
+    failures: [],
+    worstSeed: null,
+    refusal: null,
+    misfit: false,
+  });
+  const started: string[] = [];
+  const ctxWith = (choices: Array<{ tabId: string; name: string }>, active: Case | null = kase) => ({
+    cases: { cases: [kase], active } as unknown as Cases,
+    routines: { checkLogic: async () => ({ ok: true }) as never },
+    setAction: () => {},
+    ...scene,
+    caseRun: { enterCase: () => {} },
+    caseExplore: { explore: async () => 'unused' },
+    caseCompare: {
+      choicesFor: () => choices,
+      start: (tabId: string) => void started.push(tabId),
+      compareNow: async (_: Case, tabId: string) => ({
+        caseId: kase.id,
+        robots: [
+          { tabId: 'mine', name: 'Rover', runs: runs(19), costUsd: 120.5, massG: 1234.4 },
+          { tabId, name: 'Rover copy', runs: runs(4), costUsd: 98, massG: 1100 },
+        ],
+        better: 'mine',
+      }),
+    },
+  });
+
+  it('runs the open Case against the first robot that fits, and names the better scene', async () => {
+    const reply = await CASE_HANDLERS.compare_case({}, ctxWith([{ tabId: 'tab-2', name: 'Rover copy' }]));
+
+    expect(reply).toEqual({
+      ok: true,
+      case: kase.name,
+      robots: [
+        { scene: 'Rover', passes: 19, runs: 20, median_margin: 0.123, cost_usd: 120.5, mass_g: 1234 },
+        { scene: 'Rover copy', passes: 4, runs: 20, median_margin: 0.123, cost_usd: 98, mass_g: 1100 },
+      ],
+      better: 'Rover',
+    });
+    expect(started).toEqual(['tab-2']);
+  });
+
+  it('says why when no other open scene fits, or none is open', async () => {
+    expect(await CASE_HANDLERS.compare_case({}, ctxWith([]))).toMatchObject({ ok: false, scenes: [] });
+    expect(await CASE_HANDLERS.compare_case({}, ctxWith([], null))).toMatchObject({ ok: false });
+    expect(
+      await CASE_HANDLERS.compare_case({ scene: 'Arm' }, ctxWith([{ tabId: 'tab-2', name: 'Rover copy' }])),
+    ).toMatchObject({ ok: false, scenes: ['Rover copy'] });
+  });
+});
+
+describe('explore_case', () => {
+  const arm = servoArm();
+  const made = buildCase(
+    { goal: 'touch', world: 'floor', values: { dots: 3 } },
+    builderRobot(buildRig(arm.joints, arm.parts), arm.parts),
+  );
+  const kase = made.ok ? made.kase : null!;
+  const space = exploreSpace(arm.parts, { ...DEFAULT_PROJECT, joints: arm.joints })!;
+  const weaker: Design = { variants: ['c046', 'c044', 'c044'], volts: space.current.volts };
+  const runs = (passes: number, worstMargin: number): CaseRuns => ({
+    runs: 8,
+    passes,
+    medianMargin: 0,
+    worstMargin,
+    commonFailure: null,
+    failures: [],
+    worstSeed: null,
+    refusal: null,
+    misfit: false,
+  });
+  const row = (design: Design, passes: number, costUsd: number) => ({
+    key: designKey(design),
+    design,
+    changes: designChanges(space, design),
+    runs: runs(passes, passes === 8 ? 0.10351 : -0.02),
+    costUsd,
+    massG: 1234.4,
+  });
+  const ctxWith = (explored: unknown, active: Case | null = kase) => ({
+    cases: { cases: [kase], active } as unknown as Cases,
+    routines: { checkLogic: async () => ({ ok: true }) as never },
+    setAction: () => {},
+    ...scene,
+    caseRun: { enterCase: () => {} },
+    caseCompare: { choicesFor: () => [], start: () => {}, compareNow: async () => null as never },
+    caseExplore: { explore: async () => explored as never },
+  });
+
+  it('lists each design with its servos, passes, worst margin, cost and mass, the best first', async () => {
+    const explored = { space, rows: [row(weaker, 1, 62), row(space.current, 8, 63.98)] };
+    const reply = await CASE_HANDLERS.explore_case({}, ctxWith(explored));
+
+    expect(reply).toMatchObject({
+      ok: true,
+      case: kase.name,
+      runs: 8,
+      current: {
+        servos: [
+          { joint: 'Shoulder', mpn: 'ST-3215-C001' },
+          { joint: 'Elbow', mpn: 'ST-3215-C044' },
+          { joint: 'Wrist', mpn: 'ST-3215-C044' },
+        ],
+      },
+      designs: [
+        { servos: 'current design', passes: 8, worst_margin: 0.104, cost_usd: 63.98, mass_g: 1234, current: true },
+        {
+          servos: 'Shoulder C046',
+          passes: 1,
+          worst_margin: -0.02,
+          changes: [{ joints: ['Shoulder'], mpn: 'ST-3215-C046' }],
+        },
+      ],
+    });
+  });
+
+  it('says why it can’t explore', async () => {
+    expect(await CASE_HANDLERS.explore_case({}, ctxWith('No joint has a catalog servo.'))).toEqual({
+      ok: false,
+      problem: 'No joint has a catalog servo.',
+    });
+    expect(await CASE_HANDLERS.explore_case({}, ctxWith(null, null))).toMatchObject({ ok: false });
+    expect(await CASE_HANDLERS.explore_case({ case: 'Nope' }, ctxWith(null))).toMatchObject({ ok: false });
   });
 });

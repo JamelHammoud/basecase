@@ -32,6 +32,13 @@ describe('sourced items', () => {
     expect(listSourced(dir).map((x) => x.id)).toEqual(['maker-thing']);
   });
 
+  it('refuses a price date that is not YYYY-MM-DD', async () => {
+    const price = { usd: 4, per: 1, store: 'Maker', url: 'https://maker.example/t-1', seen: '2026-11-04' };
+
+    await expect(saveSourced(dir, { ...item, price: { ...price, seen: 'today' } }, fetcher)).rejects.toThrow();
+    expect((await saveSourced(dir, { ...item, price }, fetcher)).price.seen).toBe('2026-11-04');
+  });
+
   it('refuses an id that could leave the folder', async () => {
     await expect(saveSourced(dir, { ...item, id: '../../evil' }, fetcher)).rejects.toThrow();
     expect(() => sourcedDir(dir, '../evil')).toThrow();

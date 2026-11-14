@@ -3,9 +3,12 @@ import type { JointValues } from '../types/robotics';
 import { forwardKinematics, solveIK, type IkTarget, type Rig, type V3 } from '../utils/kinematics';
 import { gripValues, restSide, sideFor, topDownTargets, type ArmGrip } from './driveGrip';
 import { LegsDrive, type LegsSetup } from './driveLegs';
+import { PoseDrive, type PoseSetup } from './drivePose';
+import { CONTROL_DT } from './driveTiming';
 import type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
 
 export type { DriveCommand, DriveHand, DriveLoop, DriveOutput } from './driveTypes';
+export { CONTROL_DT } from './driveTiming';
 
 export interface ArmSetup {
   kind: 'arm';
@@ -35,7 +38,7 @@ export interface RoverSetup {
   maxTurnRadS: number;
 }
 
-export type RobotDrive = ArmSetup | RoverSetup | LegsSetup;
+export type RobotDrive = ArmSetup | RoverSetup | LegsSetup | PoseSetup;
 
 export interface TeamSetup {
   kind: 'team';
@@ -43,8 +46,6 @@ export interface TeamSetup {
 }
 
 export type DriveSetup = RobotDrive | TeamSetup;
-
-export const CONTROL_DT = 0.02;
 
 export const REACH_PER_SECOND = 0.9;
 
@@ -57,7 +58,7 @@ export const zeroCommand = (): DriveCommand => ({ v: [0, 0, 0] });
 
 const isMoving = ({ v, aux }: DriveCommand) => v.some((x) => x !== 0) || !!aux?.[0];
 
-function tipOf({ rig, part, point }: ArmSetup, values: JointValues): V3 {
+export function tipOf({ rig, part, point }: ArmSetup, values: JointValues): V3 {
   const posed = forwardKinematics(rig, { values });
   const owner = rig.ownerOf.get(part);
   const p = new THREE.Vector3(...point).applyMatrix4((owner && posed.joint.get(owner)) || posed.root);
@@ -93,6 +94,8 @@ class ArmDrive implements DriveLoop {
   }
 
   command(c: DriveCommand, measured?: JointValues) {
+    if (c.joints) return this.follow(c);
+
     const released = isMoving(this.cmd) && !isMoving(c) && !c.target;
 
     this.cmd = c;
@@ -103,6 +106,15 @@ class ArmDrive implements DriveLoop {
 
     if (measured) this.values = Object.fromEntries(this.setup.joints.map((id) => [id, measured[id] ?? 0]));
 
+    this.goal = tipOf(this.setup, this.values);
+    this.aim = [...this.goal];
+  }
+
+  private follow(c: DriveCommand) {
+    const given = Object.entries(c.joints ?? {}).filter(([, v]) => Number.isFinite(v));
+
+    this.cmd = c;
+    this.values = { ...this.values, ...Object.fromEntries(given) };
     this.goal = tipOf(this.setup, this.values);
     this.aim = [...this.goal];
   }
@@ -151,7 +163,7 @@ class ArmDrive implements DriveLoop {
   }
 
   tick(time: number): DriveOutput {
-    if (time < this.nextAt - 1e-9) return { values: this.output() };
+    if (this.cmd.joints || time < this.nextAt - 1e-9) return { values: this.output() };
 
     this.nextAt = time + CONTROL_DT;
     this.moveAim();
@@ -185,7 +197,7 @@ class ArmDrive implements DriveLoop {
   private output(): JointValues {
     const { grip, start } = this.setup;
 
-    if (!grip) return this.values;
+    if (!grip || this.cmd.joints) return this.values;
 
     return { ...this.values, ...gripValues(grip, this.cmd.aux?.[1] ?? 0, start) };
   }
@@ -252,6 +264,8 @@ export function createDrive(setup: DriveSetup): DriveLoop {
   if (setup.kind === 'team') return new TeamDrive(setup);
 
   if (setup.kind === 'arm') return new ArmDrive(setup);
+
+  if (setup.kind === 'pose') return new PoseDrive(setup);
 
   return setup.kind === 'rover' ? new RoverDrive(setup) : new LegsDrive(setup);
 }

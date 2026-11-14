@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { serviceRefusal } from '../refusal.mjs';
+import { percent } from '../percent.mjs';
 
 const HF = 'https://huggingface.co';
 const SHA = /^[0-9a-f]{40}$/;
@@ -10,6 +12,9 @@ const NOT_ALBEDO =
   /(^|[_.-])(normal|nrm|n|orm|rough(ness)?|metal(lic|ness)?|ao|occlusion|height|disp(lacement)?|bump|mask|opacity|emissive|spec(ular)?|gloss)([_.-]|$)/i;
 const MAX_FILE = 200 * 1024 * 1024;
 const MAX_TOTAL = 600 * 1024 * 1024;
+
+const refused = (res) =>
+  new Error(serviceRefusal('SimReady Central', { status: res.status, again: 'Insert it again' }));
 
 export function parseAssetUrl(url) {
   const u = new URL(String(url));
@@ -40,7 +45,7 @@ async function listTree(a) {
   for (let page = 0; next && page < 50; page++) {
     const res = await fetch(next);
 
-    if (!res.ok) throw new Error(`Couldn’t list the asset’s files (${res.status}).`);
+    if (!res.ok) throw refused(res);
 
     files.push(...(await res.json()).filter((e) => e.type === 'file'));
 
@@ -77,14 +82,14 @@ async function downloadOne(a, entry, dir) {
 
   const res = await fetch(fileUrl(a, entry.path));
 
-  if (!res.ok) throw new Error(`Couldn’t download ${path.basename(entry.path)} (${res.status}).`);
+  if (!res.ok) throw refused(res);
 
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, Buffer.from(await res.arrayBuffer()));
 }
 
 export async function downloadAsset(a, dir, say) {
-  say('Listing files');
+  say('Listing files…');
 
   const files = neededFiles(await listTree(a));
   const total = files.reduce((s, f) => s + (f.size ?? 0), 0);
@@ -101,7 +106,7 @@ export async function downloadAsset(a, dir, say) {
       await downloadOne(a, f, dir);
       done++;
       bytes += f.size ?? 0;
-      say(`Downloading ${Math.round((bytes / Math.max(total, 1)) * 100)}%`, { done, total: files.length });
+      say(`Downloading ${percent(bytes / Math.max(total, 1))}`, { done, total: files.length });
     }
   };
 

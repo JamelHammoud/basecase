@@ -61,17 +61,27 @@ const STOPS = {
   rounds: 'ran every round',
 };
 
-function setupLine({ git, effort, plan }) {
-  const commit = `${git.commit ?? '—'}${git.dirty ? ' (uncommitted changes)' : ''}`;
+const commitOf = (git) => `${git?.commit ?? '—'}${git?.dirty ? ' (uncommitted changes)' : ''}`;
 
-  return `Commit ${commit}, harness ${plan.harness}, effort ${effort ?? 'agent default'}. ${plan.rounds} of ${plan.maxRounds} rounds over ${plan.tasks} tasks, ${plan.parallel} at a time, ${STOPS[plan.stop] ?? plan.stop}.`;
+const harnessesText = ({ git, plan }) =>
+  plan.arms
+    ? `${plan.arms.map((arm) => `${arm.label} at commit ${commitOf(arm.git)}, harness ${arm.harness}`).join('; ')}.`
+    : `Commit ${commitOf(git)}, harness ${plan.harness}.`;
+
+function setupLine({ git, effort, plan }) {
+  return `${harnessesText({ git, plan })} Effort ${effort ?? 'agent default'}. ${plan.rounds} of ${plan.maxRounds} rounds over ${plan.tasks} tasks, ${plan.parallel} at a time, ${STOPS[plan.stop] ?? plan.stop}.`;
 }
+
+const askedLine = (models, plan) =>
+  plan.arms
+    ? `Both harnesses ran ${models[0].arg} (agent option “${models[0].id}”).`
+    : `Asked for ${models.map((m) => `${m.arg} (agent option “${m.id}”)`).join(' and ')}.`;
 
 function spendLine(stats) {
   const spent = stats.models.reduce((s, m) => s + (m.spentUsd ?? 0), 0);
   const reused = stats.models.filter((m) => m.reused).map((m) => `${m.reused} ${m.model} runs`);
 
-  return `Spent ${money(spent)}${reused.length ? `; reused ${reused.join(' and ')} from earlier comparisons on the same harness` : ''}.`;
+  return `Spent ${money(spent)}${reused.length ? `; reused ${reused.join(' and ')} from earlier runs on the same harness` : ''}.`;
 }
 
 export function compareMarkdown({ stats, models, labels, effort, plan, git }) {
@@ -82,7 +92,7 @@ export function compareMarkdown({ stats, models, labels, effort, plan, git }) {
     `# ${a} vs ${b}`,
     '',
     setupLine({ git, effort, plan }),
-    `Asked for ${models.map((m) => `${m.arg} (agent option “${m.id}”)`).join(' and ')}. ${spendLine(stats)}`,
+    `${askedLine(models, plan)} ${spendLine(stats)}`,
     '',
     `**${verdict(stats, labels, { margin: plan.margin })}**`,
     '',

@@ -1,5 +1,15 @@
 import React, { useRef, useState } from 'react';
-import { IconButton, MenuItem, PopoverMenu, Section, SpreadsheetIcon, confirmAction } from '../../design-system';
+import {
+  IconButton,
+  MenuDivider,
+  MenuItem,
+  MenuLabel,
+  PopoverMenu,
+  Section,
+  SpreadsheetIcon,
+  confirmAction,
+} from '../../design-system';
+import { openLink } from '../../utils/openLink';
 import type { ProjectSettings, ScenePart } from '../../types/robotics';
 import { describeKey } from '../../utils/bom';
 import type { Bom, BomCategory, BomLine } from '../../utils/bomTypes';
@@ -9,8 +19,9 @@ import { BuyTotal } from './BuyTotal';
 import { BuyGroup } from './BuyGroup';
 import { bomGroups } from './buyLine';
 import type { BuyContext } from './BuyRow';
+import { type Cart, bomCart } from './cart';
 import { CheckIcon } from './CheckIcon';
-import { plural } from './format';
+import { plural } from '../../../electron/plural.mjs';
 
 interface BuyListProps {
   bom: Bom;
@@ -19,17 +30,41 @@ interface BuyListProps {
   project: ProjectSettings;
   onChangeProject: (patch: Partial<ProjectSettings>) => void;
   onCheck: (line: BomLine) => void;
+  onHandOf: (key: string) => number;
+  onOnHand: (line: BomLine, count: number) => void;
   onSelectParts: (ids: string[]) => void;
   onExportCsv: () => void;
   onExportMarkdown: () => void;
 }
 
-const ExportBomMenu: React.FC<Pick<BuyListProps, 'onExportCsv' | 'onExportMarkdown'>> = ({
-  onExportCsv,
-  onExportMarkdown,
-}) => {
+interface ExportBomMenuProps {
+  cart: Cart;
+  onExportCsv: () => void;
+  onExportMarkdown: () => void;
+}
+
+const StoreLinks: React.FC<{ cart: Cart; onOpen: (url: string) => void }> = ({ cart, onOpen }) => (
+  <>
+    {cart.stores.map(({ store, links }) => (
+      <React.Fragment key={store}>
+        <MenuLabel>{store}</MenuLabel>
+        {links.map((link) => (
+          <MenuItem key={link.key} label={link.name} onSelect={() => onOpen(link.url)} />
+        ))}
+      </React.Fragment>
+    ))}
+  </>
+);
+
+const ExportBomMenu: React.FC<ExportBomMenuProps> = ({ cart, onExportCsv, onExportMarkdown }) => {
   const [menu, setMenu] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
+  const run = (action: () => void) => {
+    setMenu(false);
+    action();
+  };
+  const open = (url: string) => run(() => openLink(url));
+  const { amazonUrl } = cart;
 
   return (
     <div className="relative" ref={ref}>
@@ -48,10 +83,13 @@ const ExportBomMenu: React.FC<Pick<BuyListProps, 'onExportCsv' | 'onExportMarkdo
         ignoreRef={ref}
         position="bottom"
         align="end"
-        className="w-48"
+        className="w-64 max-h-[60vh] overflow-y-auto"
       >
-        <MenuItem label="CSV Spreadsheet" onSelect={() => (setMenu(false), onExportCsv())} />
-        <MenuItem label="Markdown" onSelect={() => (setMenu(false), onExportMarkdown())} />
+        <MenuItem label="CSV Spreadsheet" onSelect={() => run(onExportCsv)} />
+        <MenuItem label="Markdown" onSelect={() => run(onExportMarkdown)} />
+        {(amazonUrl || cart.stores.length > 0) && <MenuDivider />}
+        {amazonUrl && <MenuItem label="Buy All" detail="amazon.com" onSelect={() => open(amazonUrl)} />}
+        <StoreLinks cart={cart} onOpen={open} />
       </PopoverMenu>
     </div>
   );
@@ -66,7 +104,7 @@ const StandInsRow: React.FC<{ count: number; onClick: () => void }> = ({ count, 
     >
       <CheckIcon status="warn" />
       <span className="min-w-0 flex-1 text-[13px] leading-[18px] text-white/90">
-        Replace {count} {plural(count, 'stand-in', 'stand-ins')} with real parts
+        Replace {plural(count, 'stand-in')} with real parts
       </span>
     </button>
   </li>
@@ -79,6 +117,8 @@ export const BuyList: React.FC<BuyListProps> = ({
   project,
   onChangeProject,
   onCheck,
+  onHandOf,
+  onOnHand,
   onSelectParts,
   onExportCsv,
   onExportMarkdown,
@@ -101,6 +141,8 @@ export const BuyList: React.FC<BuyListProps> = ({
     panScroll,
     onCheck,
     onSelectParts,
+    onHandOf,
+    onOnHand,
     extraOf: (key) => extras.find((x) => x.key === key),
     onExtraQty: (key, qty) => onChangeExtras(withQty(extras, key, qty)),
     onDeleteExtra: (line) =>
@@ -116,7 +158,9 @@ export const BuyList: React.FC<BuyListProps> = ({
       actions={
         <>
           <AddSupplyMenu onAdd={addSupply} />
-          {groups.length > 0 && <ExportBomMenu onExportCsv={onExportCsv} onExportMarkdown={onExportMarkdown} />}
+          {groups.length > 0 && (
+            <ExportBomMenu cart={bomCart(bom.lines)} onExportCsv={onExportCsv} onExportMarkdown={onExportMarkdown} />
+          )}
         </>
       }
     >

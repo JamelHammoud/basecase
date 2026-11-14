@@ -1,8 +1,16 @@
 import React from 'react';
-import { IconButton, Section, BookmarkAddIcon, RotateLeftIcon, confirmAction } from '../../design-system';
+import {
+  IconButton,
+  Section,
+  BookmarkAddIcon,
+  RotateLeftIcon,
+  RenameField,
+  confirmAction,
+  deleteEntry,
+  renameEntry,
+} from '../../design-system';
 import { isRestPose } from '../../utils/kinematics';
 import type { Posing } from '../../utils/usePosing';
-import { RenameField } from './RenameField';
 import type { OpenMenu } from './AnimationsSection';
 
 export const PosesSection: React.FC<{
@@ -41,17 +49,15 @@ export const PosesSection: React.FC<{
       {posing.poses.map((p) => (
         <div
           key={p.id}
-          className="-mx-[6px] px-[6px] h-8 rounded-lg flex items-center hover:bg-white/[0.04]"
+          className="-mx-[6px] px-[6px] h-[32px] rounded-lg flex items-center hover:bg-white/[0.04]"
           onContextMenu={(e) =>
             openMenu(e, [
               { label: 'Apply', onSelect: () => posing.applySavedPose(p.id) },
-              { label: 'Rename', onSelect: () => setRenaming(p.id) },
+              renameEntry(() => setRenaming(p.id)),
               { divider: true },
-              {
-                label: 'Delete',
-                tone: 'danger',
-                onSelect: () => confirmAction({ title: `Delete ${p.name}?`, onConfirm: () => posing.deletePose(p.id) }),
-              },
+              deleteEntry(() =>
+                confirmAction({ title: `Delete ${p.name}?`, onConfirm: () => posing.deletePose(p.id) }),
+              ),
             ])
           }
         >
@@ -61,15 +67,14 @@ export const PosesSection: React.FC<{
               onDone={(name) => {
                 setRenaming(null);
 
-                if (name && name !== p.name) posing.renamePose(p.id, name);
+                if (name) posing.renamePose(p.id, name);
               }}
             />
           ) : (
             <button
               type="button"
-              className="flex-1 min-w-0 h-8 text-left text-[13px] text-white/85 truncate cursor-default"
+              className="flex-1 min-w-0 h-[32px] text-left text-[13px] text-white/85 truncate cursor-default"
               onClick={() => posing.applySavedPose(p.id)}
-              onDoubleClick={() => setRenaming(p.id)}
             >
               {p.name}
             </button>

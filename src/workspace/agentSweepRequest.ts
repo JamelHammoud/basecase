@@ -23,6 +23,7 @@ import { buildRig } from '../utils/kinematicsRig';
 import type { V3 } from '../utils/kinematics';
 import { yieldToMain } from '../utils/yieldToMain';
 import { engineeringInputs } from './engineeringNow';
+import { errorMessage } from '../utils/errorMessage';
 
 export const SWEEP_SECONDS = 4.5;
 export const SWEEP_SHOVE_SHARE = 0.3;
@@ -141,9 +142,7 @@ async function measure(ctx: SweepRun, scene: Scene): Promise<SweepMetrics> {
     servosUsd: servosUsd(scene.input.parts, joints),
     sizedUsd: cheapestUsd(report, scene.input),
   });
-  const sim = await holdAndShove(ctx, scene, report).catch((e: unknown) =>
-    e instanceof Error ? e.message : String(e),
-  );
+  const sim = await holdAndShove(ctx, scene, report).catch((e: unknown) => errorMessage(e));
 
   return { ...metrics, sim };
 }
@@ -194,6 +193,6 @@ function sweepText({ base, rows }: { base: SweepRow; rows: SweepRow[] }): string
   return [
     sweepTable(base, rows),
     '',
-    `Each row is a copy of the scene with one change; nothing in the scene was edited. Servo torque is the static check (leg joints on one leg at the gait's crouch). Servos as chosen is the list price of the scene's servos; cheapest passing set is size_actuators' cheapest servos, battery and regulator that pass. Hold + shoves holds the pose in MuJoCo for ${SWEEP_SECONDS} s with servos limited to 0.7 × stall and shoves of ${SWEEP_SHOVE_SHARE} × body weight forward and sideways; the share is the 99th-percentile torque a leg joint asks for over its stall. Apply the winner yourself.`,
+    `Each row is a copy of the scene with one change; nothing in the scene was edited. Servo torque is the static check (leg joints on one leg at the gait’s crouch). Servos as chosen is the list price of the scene’s servos; cheapest passing set is size_actuators' cheapest servos, battery and regulator that pass. Hold + shoves holds the pose in MuJoCo for ${SWEEP_SECONDS} s with servos limited to 0.7 × stall and shoves of ${SWEEP_SHOVE_SHARE} × body weight forward and sideways; the share is the 99th-percentile torque a leg joint asks for over its stall. Apply the winner yourself.`,
   ].join('\n');
 }

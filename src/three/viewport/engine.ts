@@ -8,10 +8,12 @@ import {
   gapsIn,
   interferenceIn,
   jointAxisIn,
+  jointAxesIn,
   measuresIn,
   visibilityIn,
   printMeshesIn,
   printReportsIn,
+  stlIn,
   strengthIn,
   sweepsIn,
   threeMfIn,
@@ -41,10 +43,11 @@ import { PointerInput } from './pointerInput';
 import { RenderLoop } from './renderLoop';
 import { ScaleFigures } from './scaleFigures';
 import { StageOverlays } from './stageOverlays';
+import { samePose } from './samePose';
 import { SelectionOutline } from './selectionOutline';
 import { StressOverlay } from './stressOverlay';
 import { warmShaders } from './shaderWarmup';
-import { changed, FIGURE_KEYS, GIZMO_KEYS, NEEDS_WHOLE_SCENE } from './engineKeys';
+import { changed, FIGURE_KEYS, GIZMO_KEYS, NEEDS_WHOLE_SCENE, shownPropsChanged, steadyProps } from './engineKeys';
 import { createStage, disposeStage } from './stage';
 import type { Viewport3DHandle, ViewportProps } from './types';
 import type { ViewportContext, ViewportUi } from './viewportContext';
@@ -61,6 +64,7 @@ export interface EngineOptions {
   markField: () => HTMLElement | null;
   buildLabels: () => HTMLElement | null;
   ghostLabel: () => HTMLElement | null;
+  frameLabel: () => HTMLElement | null;
   ui: ViewportUi;
   props: ViewportProps;
   meshVersion: number;
@@ -138,7 +142,10 @@ export class ViewportEngine {
     this.markField = new MarkFieldAnchor(this.ctx, this.markLayer, options.markField);
     this.skeleton = new SkeletonOverlay(this.ctx);
     this.skeleton.sync(options.props.skeleton);
-    this.overlays = new StageOverlays(this.ctx, options.props, options.ghostLabel);
+    this.overlays = new StageOverlays(this.ctx, options.props, {
+      ghost: options.ghostLabel,
+      frame: options.frameLabel,
+    });
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
     this.buildStep = new BuildStepLayer(this.ctx, options.buildLabels);
     this.stress = new StressOverlay(this.ctx);
@@ -185,7 +192,19 @@ export class ViewportEngine {
     this.cleanups.push(warmShaders(stage, loop.invalidate));
   }
 
-  update(props: ViewportProps, meshVersion: number): void {
+  update(next: ViewportProps, meshVersion: number): void {
+    const props = steadyProps(this.props, next);
+
+    if (meshVersion === this.meshVersion && !shownPropsChanged(this.props, props)) {
+      this.props = props;
+
+      return;
+    }
+
+    this.show(props, meshVersion);
+  }
+
+  private show(props: ViewportProps, meshVersion: number): void {
     const previous = this.props;
     const meshChanged = meshVersion !== this.meshVersion;
 
@@ -261,6 +280,13 @@ export class ViewportEngine {
     const unbatched = <T>(run: () => T) => ctx.batches.unbatched(run);
     const solidShapes = (visibleOnly: boolean) => snapshotShapes(measure.solidObjects(ctx, { visibleOnly }));
     const restSolids = (visibleOnly: boolean) => withRest(() => solidShapes(visibleOnly));
+    const restSolidsWith = (ids: string[]) =>
+      withRest(() => {
+        const solids = measure.solidObjects(ctx, { visibleOnly: true });
+        const known = new Set(solids.map((s) => s.id));
+
+        return snapshotShapes([...solids, ...measure.partObjects(ctx, ids).filter((o) => !known.has(o.id))]);
+      });
     const restShapes = (ids?: string[]) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids)));
     const camera = <T>(run: () => T) => {
       ctx.loop.frameAnimation = null;
@@ -297,7 +323,7 @@ export class ViewportEngine {
       frameAll: () => this.frameAll(),
       animateSpawn: (ids) => ids.forEach((id) => ctx.loop.spawns.set(id, performance.now())),
       setPose: (deltas, worldDeltas) => this.setPose(deltas, worldDeltas),
-      ...this.overlays.handle(camera),
+      ...this.overlays.handle(ctx.loop.redraw),
       followPart: (partId) => {
         this.follow.follow(partId);
         ctx.loop.following = this.follow.active;
@@ -307,7 +333,12 @@ export class ViewportEngine {
       assembly: (options) => assemblyIn(restSolids(false), { ...fastenerInput(this.props.parts), ...options }),
       posedInterference: (onlyIds, riders) =>
         interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),
-      posedFloor: (ids) => floorIn(snapshotShapes(measure.floorObjects(ctx, ids))),
+      posedFloor: (ids, pose) =>
+        ctx.layer.withPose(
+          pose ?? ctx.layer.pose,
+          () => floorIn(snapshotShapes(measure.floorObjects(ctx, ids))),
+          () => this.applyPose(),
+        ),
       meshGaps: (pairs, withinMm) => gapsIn(restShapes([...new Set(pairs.flat())]), pairs, withinMm),
       restBounds: (ids) => withRest(() => measure.boundsOf(ctx, ids)),
       restShapes: (ids) => withRest(() => snapshotShapes(measure.partObjects(ctx, ids))),
@@ -317,17 +348,17 @@ export class ViewportEngine {
       visibleShares: () => visibilityIn(restSolids(true)),
       printShapes: (ids, faces) => printReportsIn(snapshotShapes(measure.partObjects(ctx, ids)), faces),
       printMeshes: (ids) => printMeshesIn(snapshotShapes(measure.partObjects(ctx, ids))),
-      printThreeMf: (files, plateSize) =>
-        threeMfIn(
-          snapshotShapes(measure.partObjects(ctx, [...new Set(files.flatMap((f) => f.items.map((i) => i.id)))])),
-          files,
-          plateSize,
-        ),
+      printThreeMf: (plates) => {
+        const ids = [...new Set(plates.files.flatMap((f) => f.items.map((i) => i.id)))];
+
+        return threeMfIn(plates.labels ? restSolidsWith(ids) : snapshotShapes(measure.partObjects(ctx, ids)), plates);
+      },
       fitCoupons: (task) =>
         fitCouponsIn(
           withRest(() => snapshotShapes(measure.partObjects(ctx, [...task.hosts, ...task.fits.map((f) => f.id)]))),
           task,
         ),
+      exportStl: () => stlIn(restSolids(true)),
       exportUsdz: () => exportUsdz(measure.solidObjects(ctx, { visibleOnly: true })),
       partTriangles: (id) => measure.partTriangles(ctx, id),
       servoOutput: (id) => withRest(() => measure.servoOutput(ctx, id)),
@@ -338,6 +369,7 @@ export class ViewportEngine {
             ? { ...query, pick: { ...query.pick, point: ctx.layer.pointAtRest(query.pick.part, query.pick.point) } }
             : query,
         ),
+      jointAxes: (ids) => jointAxesIn(restShapes(ids), ids),
       meshesReady: () => componentMeshesReady(this.props.parts.flatMap((p) => p.componentId ?? [])),
       sweepClashes: (sweeps) => sweepsIn(restSolids(false), sweeps),
       strength: (jobs) => strengthIn(restShapes([...new Set(jobs.map((j) => j.part))]), jobs),
@@ -358,8 +390,13 @@ export class ViewportEngine {
   }
 
   private setPose(deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null): void {
-    this.ctx.layer.pose = deltas ?? new Map();
-    this.ctx.world.pose = worldDeltas ?? new Map();
+    const robot = deltas ?? new Map<string, THREE.Matrix4>();
+    const world = worldDeltas ?? new Map<string, THREE.Matrix4>();
+
+    if (samePose(robot, this.ctx.layer.pose) && samePose(world, this.ctx.world.pose)) return;
+
+    this.ctx.layer.pose = robot;
+    this.ctx.world.pose = world;
     this.ctx.world.applyPose();
     this.applyPose();
     this.gizmo.syncHandToPose();

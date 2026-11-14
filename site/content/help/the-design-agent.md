@@ -19,6 +19,7 @@ related:
   - agent-limits
 covers:
   - docs/guide/agent.md
+  - electron/cad-mcp/caseTools.mjs
   - electron/cad-agent-prompt.mjs
   - electron/cad-mcp-server.mjs
   - electron/backend/sessionParams.mjs
@@ -33,9 +34,13 @@ The agent is Claude Code, Codex or Gemini CLI, running on your computer with you
 
 The agent builds in the open scene, in front of you. It reads your words, photos, sketches and files, and looks up the robot's published model when there is one. It plans where the joints go before it shapes any part. Then it blocks the robot out, models each part as code, and checks its work.
 
-It chooses parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. When a part isn't in the catalog, it can add one it found on the web. Those show as Added by Agent in the bill of materials.
+It chooses parts from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. It uses parts you [own](/help/count-the-parts-you-already-own) first. When a part isn't in the catalog, it can add one it found on the web. Those show as Added by Agent in the bill of materials.
 
-It can also pose and animate the robot, run it in the simulation, write a Case or a Routine, and teach it a skill.
+It can also pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach it a skill. Asked to change how a ready Motor Kit skill moves, it keeps the change only if Arena still passes it. When it writes a Routine, it proves each switch between skills and names any that fell. Given a Case and two open scenes, it says which robot passes more often. Asked which servo to buy, it runs the Case on each catalog version and answers with passes, cost and mass.
+
+Told where an arm must reach and what it carries, it sizes the arm's links and servos first. Given the path a leg or finger should trace, it fits a four-bar linkage to it. Asked for fewer parts, it merges printed parts bolted together on one link into one print.
+
+Tell it what you want to do with a robot, such as play a game on a gamepad, and it builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), it aims the Case at a door or a piece of furniture you name, such as under the table. It draws a control the Case's panels lack, such as a joystick or a piano, as a code panel. When that code moves an object, such as a target to whack, it marks the object movable. After each write it reads the panel's errors and a capture of the window, and fixes what broke. A movement you name, such as a wave, becomes a gesture the Case reacts to; one that isn't built in, it asks you to teach. [Build a Case app with the agent](/help/build-a-case-app-with-the-agent) has the steps.
 
 ## What it cares about
 
@@ -49,7 +54,9 @@ Matching a photo's silhouette matters less than these three.
 
 ## How it checks its work
 
-After each edit, the agent sees the same Checks as the **Build** tab. To pass a check, the agent never narrows a joint's range, hides a part or deletes one. It tells you about a check that seems wrong instead. When a new blocker appears, it follows up on its own, up to twice per message. You can turn that off in **Settings** ▸ **Build**.
+After each edit, the agent sees the same Checks as the **Build** tab. To pass a check, the agent never narrows a joint's range, hides a part, deletes one or edits a Case. It tells you about a check that seems wrong instead. When a new blocker appears, it follows up on its own, up to twice per message. You can turn that off in **Settings** ▸ **Build**.
+
+When the scene has Cases, the agent runs each one and isn't done until they pass. [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent) has the steps.
 
 ## What you keep control of
 

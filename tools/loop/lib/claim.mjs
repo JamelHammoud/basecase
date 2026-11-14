@@ -42,6 +42,12 @@ function clearStale(file, stalePid) {
   fs.rmSync(aside, { force: true });
 }
 
+export const held = (key) => {
+  const pid = readPid(path.join(LOCKS, `${key}.claim`));
+
+  return pid > 0 && isAlive(pid);
+};
+
 export function claim(key) {
   fs.mkdirSync(LOCKS, { recursive: true });
 
@@ -61,4 +67,18 @@ export function claim(key) {
   return () => {
     if (readPid(file) === process.pid) fs.rmSync(file, { force: true });
   };
+}
+
+const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+export function claimWithin(key, { ms, every = 30_000 }) {
+  const until = Date.now() + ms;
+
+  for (;;) {
+    const release = claim(key);
+
+    if (release || Date.now() >= until) return release;
+
+    sleep(every);
+  }
 }

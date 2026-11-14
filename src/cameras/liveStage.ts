@@ -6,6 +6,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import { releasePartGroup } from '../three/buildPartMesh';
 import { provideMeshFiles, type MeshFiles } from '../three/componentMeshes';
 import { loadPartMeshes } from '../three/thumbnailRender';
+import { softwareGl } from '../three/softwareGl';
 import { createStudioScene } from '../three/thumbnailStage';
 import type { ScenePart } from '../types/robotics';
 import { LensRenderer } from './lensRender';
@@ -17,6 +18,11 @@ export const LARGE_SIZE: [number, number] = [640, 480];
 export interface LiveTarget {
   canvas: OffscreenCanvas;
   ctx: OffscreenCanvasRenderingContext2D;
+}
+
+export interface LiveJob {
+  key: string;
+  target: LiveTarget;
 }
 
 interface Built {
@@ -91,7 +97,7 @@ export class LiveStage {
   constructor([width, height]: [number, number] = LARGE_SIZE) {
     this.renderer = new THREE.WebGLRenderer({
       canvas: new OffscreenCanvas(width, height),
-      antialias: true,
+      antialias: !softwareGl(),
       preserveDrawingBuffer: true,
       powerPreference: 'low-power',
     });
@@ -132,25 +138,24 @@ export class LiveStage {
     this.views = views;
   }
 
-  draw(poses: Float64Array | null, targets: Map<string, LiveTarget>): number {
+  draw(poses: Float64Array | null, jobs: LiveJob[]): LiveJob[] {
+    const byKey = new Map(this.views.map((v) => [v.key, v]));
+    const ready = jobs.filter((job) => byKey.has(job.key));
+
+    if (!ready.length) return ready;
+
     const parts = this.pose(poses);
     const gl = this.canvas;
-    let drawn = 0;
 
-    for (const view of this.views) {
-      const target = targets.get(view.key);
-
-      if (!target) continue;
-
+    for (const { key, target } of ready) {
       const width = Math.min(target.canvas.width, gl.width);
       const height = Math.min(target.canvas.height, gl.height);
 
-      this.render(view, parts, { width, height });
+      this.render(byKey.get(key)!, parts, { width, height });
       target.ctx.drawImage(gl, 0, gl.height - height, width, height, 0, 0, width, height);
-      drawn++;
     }
 
-    return drawn;
+    return ready;
   }
 
   shoot(poses: Float64Array | null, keys: string[]): Record<string, ImageBitmap> {

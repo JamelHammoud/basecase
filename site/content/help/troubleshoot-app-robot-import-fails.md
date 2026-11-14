@@ -24,7 +24,7 @@ covers:
 
 Import Robot needs a URDF or MJCF description it can reach, and the mesh files that description names.
 
-## Import stays greyed out
+## Import stays grayed out
 
 The link isn't one Basecase can read. It takes a GitHub repo or folder, a Hugging Face link, or an `https` link ending in `.urdf`, `.xml`, `.mjcf` or `.zip`.
 
@@ -36,14 +36,14 @@ The link isn't one Basecase can read. It takes a GitHub repo or folder, a Huggin
 The repo is private, the link points at a branch or folder that doesn't exist, or GitHub turned the request away. GitHub limits how often a computer can list repos without a sign-in.
 
 1. Open the link in a browser and check it shows the files.
-2. Wait a few minutes, then press Enter in **Import Robot** again.
+2. Wait a few minutes, then press [[↩]] in **Import Robot** again.
 3. If it still fails, download the repo, then click **Choose Folder** and pick it.
 
 ## “Couldn’t find a .urdf or MJCF .xml file in …”
 
 The link is public, but there's no robot description in it. Link to the folder that holds the `.urdf` or `.xml` file, or to the file itself. From a folder on your computer, the message reads “Choose a folder with a .urdf or MJCF .xml file.”
 
-## “Couldn’t load any of its … meshes. Choose the folder that has them.”
+## “Couldn’t load its … meshes. Choose the folder with the robot’s mesh files.”
 
 The description names mesh files that aren't beside it. Many repos keep meshes in a separate folder.
 

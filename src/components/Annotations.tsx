@@ -50,11 +50,11 @@ const Pin: React.FC<{
         aria-label={`Comment ${number}`}
         onClick={onClick}
         style={{ cursor: CURSORS.arrow }}
-        className={`group pointer-events-auto absolute bottom-0 left-0 flex items-center h-8 min-w-8 rounded-[16px_16px_16px_4px] shadow-[0_4px_14px_rgba(0,0,0,0.45),0_0_0_1.5px_rgba(255,255,255,0.9)] transition-[background-color,transform] duration-150 hover:scale-[1.04] origin-bottom-left animate-pop-up ${pinColors(isActive, a.resolved)}`}
+        className={`group pointer-events-auto absolute bottom-0 left-0 flex items-center h-[32px] min-w-[32px] rounded-[16px_16px_16px_4px] shadow-[0_4px_14px_rgba(0,0,0,0.45),0_0_0_1.5px_rgba(255,255,255,0.9)] transition-[background-color,transform] duration-150 hover:scale-[1.04] origin-bottom-left animate-pop-up ${pinColors(isActive, a.resolved)}`}
       >
-        <span className="w-8 shrink-0 text-center text-[13px] font-semibold tabular">{number}</span>
+        <span className="w-[32px] shrink-0 text-center text-[13px] font-semibold tabular">{number}</span>
         {!isActive && first && (
-          <span className="max-w-0 group-hover:max-w-[220px] overflow-hidden transition-[max-width] duration-200 ease-[cubic-bezier(0.2,0,0,1)]">
+          <span className="max-w-0 group-hover:max-w-[220px] overflow-hidden transition-[max-width] duration-150 ease-[cubic-bezier(0.2,0,0,1)]">
             <span className="flex items-center gap-2 pr-3 whitespace-nowrap text-[13px]">
               <span className="truncate max-w-[170px]">{first}</span>
               {replies > 0 && <span className="opacity-50 tabular">{replies}</span>}
@@ -111,7 +111,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = (props) => {
 
       {draft && (
         <div ref={(el) => trackPin(DRAFT_KEY, el)} className="absolute left-0 top-0" style={{ visibility: 'hidden' }}>
-          <span className="absolute bottom-0 left-0 w-8 h-8 rounded-[16px_16px_16px_4px] bg-[#0d99ff] shadow-[0_4px_14px_rgba(0,0,0,0.45),0_0_0_1.5px_rgba(255,255,255,0.9)] animate-pop-up" />
+          <span className="absolute bottom-0 left-0 w-[32px] h-[32px] rounded-[16px_16px_16px_4px] bg-[#0d99ff] shadow-[0_4px_14px_rgba(0,0,0,0.45),0_0_0_1.5px_rgba(255,255,255,0.9)] animate-pop-up" />
         </div>
       )}
 
@@ -126,7 +126,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = (props) => {
             {draft ? (
               <CommentComposer
                 autoFocus
-                placeholder="Add a comment"
+                placeholder="e.g. Move this hole 2 mm left"
                 onSubmit={props.onCreate}
                 onEscape={onCancelDraft}
               />

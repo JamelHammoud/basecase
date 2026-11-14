@@ -1,6 +1,10 @@
 import { BOM_CATEGORIES, Bom, BomLine, FILAMENT_MARGIN, PriceStatus, STALE_DAYS, localDate } from './bomTypes';
 import { currencyNote, type Money, scaledEntry } from './currency';
 import { currentMoney } from './currencyStore';
+import { plural } from '../../electron/plural.mjs';
+import { weight } from './weight';
+import { sizeFigures } from './size';
+import { percent } from '../../electron/percent.mjs';
 
 const STATUS_LABEL: Record<PriceStatus, string> = { checked: 'Checked', stale: 'Stale', unchecked: 'Not checked' };
 const LINK_TYPE: Record<BomLine['urlKind'], string> = { product: 'Listing', search: 'Search', none: '' };
@@ -9,6 +13,7 @@ const csvHead = (code: string) => [
   'Category',
   'Maker / Spec',
   'Qty Needed',
+  'On Hand',
   'Unit',
   'Pack Qty',
   'Packs to Buy',
@@ -55,6 +60,7 @@ const csvRow = (l: BomLine, partNames: Record<string, string>, money: Money) => 
   l.category,
   l.detail,
   l.qty,
+  l.owned || '',
   l.unit,
   l.record?.packQty ?? (l.category === 'Filament' ? 1000 : ''),
   l.packs ?? '',
@@ -75,17 +81,17 @@ export function bomToCsv(bom: Bom, partNames: Record<string, string>, money: Mon
 }
 
 function markdownTotals(t: Bom['totals'], money: Money): string[] {
-  const out = [`- **Checked total:** ${money.format(t.checkedUsd)} (${t.checked} lines)`];
+  const out = [`- **Checked total:** ${money.format(t.checkedUsd)} (${plural(t.checked, 'line')})`];
 
   if (t.stale)
     out.push(
-      `- **Stale checks** (over ${STALE_DAYS} days): ${t.stale} lines, ${money.format(t.pricedUsd - t.checkedUsd)}`,
+      `- **Stale checks** (over ${STALE_DAYS} days): ${plural(t.stale, 'line')}, ${money.format(t.pricedUsd - t.checkedUsd)}`,
     );
 
-  if (t.unchecked) out.push(`- **Not checked:** ${t.unchecked} lines, not in the checked total`);
+  if (t.unchecked) out.push(`- **Not checked:** ${plural(t.unchecked, 'line')}, not in the checked total`);
 
   out.push(
-    `- **Estimated total:** ~${money.format(t.estimatedUsd)}, using maker and distributor list prices (marked ~) for unchecked lines${t.unpriced ? `; ${t.unpriced} lines have no price` : ''}`,
+    `- **Estimated total:** ~${money.format(t.estimatedUsd)}, using maker and distributor list prices (marked ~) for unchecked lines${t.unpriced ? `; no price on ${plural(t.unpriced, 'line')}` : ''}`,
   );
 
   if (t.budgetUsd !== undefined)
@@ -101,7 +107,8 @@ function markdownPrice(l: BomLine, money: Money): string {
 }
 
 function markdownRow(l: BomLine, money: Money): string {
-  const qty = l.unit === 'g' ? `${l.qty} g` : String(l.qty);
+  const unit = l.unit === 'g' ? ' g' : '';
+  const qty = `${l.qty}${unit}${l.owned ? ` (${l.owned}${unit} on hand)` : ''}`;
   const link = l.url ? `[${l.urlKind === 'product' ? 'Listing' : 'Search'}](${l.url})` : '';
   const name = `${l.name}${l.detail ? ` <br>${l.detail}` : ''}${l.warning ? ` <br>⚠ ${l.warning}` : ''}`;
   const checked = l.record ? `${l.record.checkedAt}${l.status === 'stale' ? ' (stale)' : ''}` : 'Not checked';
@@ -117,11 +124,9 @@ function markdownPrinted(bom: Bom): string[] {
     '',
     '| Part | Material | Size (mm) | Filament |',
     '|---|---|---|---:|',
-    ...bom.printed.map(
-      (p) => `| ${p.name} | ${p.material} | ${p.size.map((v) => v.toFixed(0)).join(' × ')} | ${p.grams.toFixed(0)} g |`,
-    ),
+    ...bom.printed.map((p) => `| ${p.name} | ${p.material} | ${sizeFigures(p.size)} | ${weight(p.grams)} |`),
     '',
-    `Filament estimates assume 2 walls, 4 top/bottom layers and the project's infill; spools include estimated supports and a ${Math.round(FILAMENT_MARGIN * 100)}% margin for brims and reprints.`,
+    `Filament estimates assume 2 walls, 4 top/bottom layers and the project’s infill; spools include estimated supports and a ${percent(FILAMENT_MARGIN)} margin for brims and reprints.`,
     '',
   ];
 }
@@ -130,7 +135,7 @@ export function bomToMarkdown(bom: Bom, sceneName: string, money: Money = curren
   const out: string[] = [
     `# ${sceneName}: bill of materials`,
     '',
-    `Generated ${localDate(today)} from the scene. Prices are what was seen on each listing on its check date; Amazon prices change, so recheck before ordering.`,
+    `Made ${localDate(today)} from the scene. Prices are what was seen on each listing on its check date; Amazon prices change, so recheck before ordering.`,
     '',
     ...markdownTotals(bom.totals, money),
     '',
@@ -167,12 +172,14 @@ function textSummary(t: Bom['totals'], money: Money): string {
   const over = t.budgetUsd !== undefined && t.estimatedUsd > t.budgetUsd ? ' The estimate is OVER BUDGET.' : '';
 
   return (
-    `${budget}. Checked prices total ${money.format(t.pricedUsd)} (${t.checked} checked, ${t.stale} stale). With list-price estimates for the rest: ~${money.format(t.estimatedUsd)}${t.unpriced ? `, plus ${t.unpriced} lines with no price known` : ''}.` +
+    `${budget}. Checked prices total ${money.format(t.pricedUsd)} (${t.checked} checked, ${t.stale} stale). With list-price estimates for the rest: ~${money.format(t.estimatedUsd)}${t.unpriced ? `, plus ${plural(t.unpriced, 'line')} with no price known` : ''}.` +
     over
   );
 }
 
 function textPrice(l: BomLine, money: Money): string {
+  if (l.toBuy === 0) return `nothing to buy = ${money.format(0)}`;
+
   if (l.record)
     return `${money.format(l.record.priceUsd, l.record.entered)} per ${l.record.packQty}${l.unit === 'g' ? ' g' : ''}, ${l.packs} to buy = ${money.format(l.lineUsd ?? 0, lineEntry(l))} (checked ${l.record.checkedAt}${l.status === 'stale' ? ', stale' : ''})`;
 
@@ -184,8 +191,10 @@ function textPrice(l: BomLine, money: Money): string {
 
 function textLine(l: BomLine, money: Money): string {
   const qty = l.unit === 'g' ? `${l.qty} g` : `${l.qty}×`;
+  const unit = l.unit === 'g' ? ' g' : '';
+  const owned = l.owned ? ` · ${l.owned}${unit} owned, ${l.toBuy}${unit} to buy` : '';
 
-  return `- ${qty} ${l.name} [${l.key}] · ${textPrice(l, money)}${l.warning ? ` · ${l.warning}` : ''}`;
+  return `- ${qty} ${l.name} [${l.key}]${owned} · ${textPrice(l, money)}${l.warning ? ` · ${l.warning}` : ''}`;
 }
 
 function textNotes(bom: Bom, names: Record<string, string>): string[] {
@@ -196,10 +205,7 @@ function textNotes(bom: Bom, names: Record<string, string>): string[] {
       .map(([m, g]) => `${m} ${Math.round(g ?? 0)} g`)
       .join(', ');
 
-    out.push(
-      '',
-      `Printed: ${bom.printed.length} ${bom.printed.length === 1 ? 'part' : 'parts'}, ${fil} (estimate, no supports).`,
-    );
+    out.push('', `Printed: ${plural(bom.printed.length, 'part')}, ${fil} (estimate, no supports).`);
   }
 
   if (bom.standIns.length)
@@ -223,7 +229,7 @@ function textNotes(bom: Bom, names: Record<string, string>): string[] {
 export function bomText(bom: Bom, names: Record<string, string>, money: Money = currentMoney()): string {
   const out: string[] = [
     textSummary(bom.totals, money),
-    "Checked prices are the user's own Amazon listing checks; estimates are maker or distributor list prices. Never state or guess any other price.",
+    'Checked prices are the user’s own Amazon listing checks; estimates are maker or distributor list prices. Never state or guess any other price. Owned units are parts the user already has; they cost nothing and only the rest is priced.',
     ...currencyNote(money),
   ];
 

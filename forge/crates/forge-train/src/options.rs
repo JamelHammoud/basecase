@@ -1,3 +1,5 @@
+use crate::servo_gains::{self, ServoGains};
+use crate::start_states::{self, StartState};
 use forge_ir::task::Reference;
 use serde_json::Value;
 
@@ -28,6 +30,8 @@ pub struct TaskOptions {
     pub episode_s: Option<f64>,
     pub start_area: Option<[[f64; 2]; 2]>,
     pub reference: Option<Reference>,
+    pub start_states: Vec<StartState>,
+    pub servo_gains: ServoGains,
 }
 
 impl Default for TaskOptions {
@@ -47,6 +51,8 @@ impl Default for TaskOptions {
             episode_s: None,
             start_area: None,
             reference: None,
+            start_states: Vec::new(),
+            servo_gains: Vec::new(),
         }
     }
 }
@@ -222,6 +228,8 @@ pub fn parse(root: &Value) -> Result<TaskOptions, String> {
         episode_s: root.get("episodeS").and_then(Value::as_f64).filter(|s| *s > 0.0),
         start_area: start_area(root)?,
         reference: reference(root)?,
+        start_states: start_states::parse(root)?,
+        servo_gains: servo_gains::parse(root)?,
     })
 }
 
@@ -286,6 +294,20 @@ mod tests {
             .expect_err("one joint short")
             .contains("need 5 numbers"));
         assert!(check_reference(&TaskOptions::default(), 3).is_ok());
+    }
+
+    #[test]
+    fn reads_start_states_from_another_skill() {
+        let state = json!({
+            "joints": [0.1, -0.2], "jointVels": [0, 0], "height": 0.1,
+            "quat": [1, 0, 0, 0], "linear": [0, 0, 0], "angular": [0, 0, 0]
+        });
+        let options = parse(&json!({ "startStates": [state.clone(), state] })).expect("parses");
+
+        assert_eq!(options.start_states.len(), 2);
+        assert!(parse(&json!({ "startStates": [] }))
+            .expect_err("empty")
+            .contains("startStates"));
     }
 
     #[test]

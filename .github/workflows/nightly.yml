@@ -26,7 +26,7 @@ jobs:
         run: |
           [ "$PAUSED" = true ] && { echo "The loop is paused (LOOP_PAUSED)."; exit 0; }
           last=$(gh release list -R "$REPO" --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName')
-          green=$(gh run list -R "$REPO" --workflow check.yml --branch main --event push --status success --limit 1 --json headSha --jq '.[0].headSha // ""')
+          green=$(gh run list -R "$REPO" --workflow check.yml --branch main --status success --limit 1 --json headSha --jq '.[0].headSha // ""')
           if [ -z "$green" ]; then echo "No push to main has passed Check, so no release tonight."; exit 0; fi
           ahead=$(gh api "repos/$REPO/compare/$last...$green" --jq .status)
           if [ "$ahead" != ahead ]; then echo "Nothing that passed Check has merged since $last."; exit 0; fi

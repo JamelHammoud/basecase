@@ -8,16 +8,17 @@ You are the designer; the evidence is the brief, engineering practice and compar
    defaults and state them.
 2. Name 2–3 comparable robots and what you borrow from each. Pick the kinematic layout.
 3. Skeleton first: joint positions and link lengths from the target size and the priors guide,
-   sized around the actuators (size_actuators). Check the centre of mass over the support polygon.
+   sized around the actuators (size_actuators). Check the center of mass over the support polygon.
 4. Visual language: 2–3 traits applied to every part (e.g. soft rounded shells, one horizontal
-   split line, an accent colour on joint covers) so it reads as one product.
+   split line, an accent color on joint covers) so it reads as one product.
 5. Then the normal workflow from the block-out. For a small arm or biped, start from
    find_recipes "arm_template" or "biped_template" and restyle around their joint frames.
 6. Every mechanism is visible and credible: an actuator housing per DOF, both sides of every
-   servo held, wheels at the base edge with drive wheels near the centre of mass, a lift with
+   servo held, wheels at the base edge with drive wheels near the center of mass, a lift with
    rails, carriage and drive, grippers with their linkage. find_recipes and the catalog
    (servo_u_bracket, linear_lift, parallel_gripper, wheels, real grippers and hands) first.
-7. Stability: support half-width ≥ ~0.3 × the centre-of-mass height for a mobile robot; centre
+   A leg, finger or nodding head defined by the path its tip traces: synthesize_linkage.
+7. Stability: support half-width ≥ ~0.3 × the center-of-mass height for a mobile robot; center
    of mass over the stance foot for a biped.
 8. Electronics have a home: a battery bay with a hatch, compute on a tray behind one cover,
    vents, and a cable path through hollow joints or a channel.`,

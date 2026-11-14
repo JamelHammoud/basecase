@@ -1,6 +1,7 @@
 ---
 title: Edit a cut after you make it
 date: 2026-11-13
+updated: 2026-11-13
 collection: design
 type: task
 covers:
@@ -10,23 +11,17 @@ covers:
   - src/components/layers/layerRows.ts
 ---
 
-Cut pockets and holes with Subtract, then move, resize or turn the part that made a hole, and the cut follows.
+Move, resize or turn the part that made a hole, and the cut in the result follows.
 
-1. Place a Cutout, or any part, where the hole goes, overlapping the part you're cutting.
-2. Select the part to keep. Shift-click the parts to cut with, or leave it alone and Subtract uses every visible Cutout that overlaps it.
-3. Press ⌘K and choose Subtract. It's also in the right-click menu and under Combine in the Inspector, next to Union and Intersect, which work the same way.
-
-![A plate selected, with a red Servo Pocket and Cable Hole overlapping it](/help/edit-a-cut/before.png)
-
-The result keeps the plate's name. In Layers, the parts it was made from sit under it, the plate first.
+The part must already be cut with **Subtract**, as in [Cut, join and intersect parts](/help/cut-join-and-intersect-parts). In Layers, the parts it was made from sit under it, the first part on top.
 
 ![Layers with Servo Mount, and Servo Mount, Servo Pocket and Cable Hole nested under it](/help/edit-a-cut/result.png)
 
-4. Double-click a hole on the canvas, or ⌘-click it, to select the part that cut it. Clicking its row in Layers does the same. It shows over the result, with the gizmo on it.
+1. Double-click a hole on the canvas, or [[⌘]]-click it, to select the part that cut it. Clicking its row in Layers does the same. It shows over the result, with the gizmo on it.
 
 ![The Cable Hole selected inside the plate, drawn in red with the gizmo on it](/help/edit-a-cut/drilled.png)
 
-5. Move it with the gizmo or the Position fields, or change its Size or Rotation. The cut moves with it, and ⌘Z undoes each change on its own.
+2. Move it with the gizmo or the Position fields, or change its Size or Rotation. The cut moves with it, and [[⌘Z]] undoes each change on its own.
 
 ![The Servo Pocket moved 8 mm to the left, with the pocket in the plate following it](/help/edit-a-cut/moved.png)
 

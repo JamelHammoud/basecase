@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Button,
   IconButton,
@@ -9,6 +9,8 @@ import {
   ChevronDownIcon,
   ExternalLinkIcon,
 } from '../../design-system';
+import { confirmAction } from '../../design-system/confirmStore';
+import { openLink } from '../../utils/openLink';
 import type { PurchaseRecord } from '../../types/robotics';
 import type { BomLine } from '../../utils/bom';
 import { useMoney } from '../../utils/useMoney';
@@ -40,7 +42,7 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line }) => {
       icon={<ExternalLinkIcon className="w-4 h-4" />}
       title={linkLabel(line)}
       size="sm"
-      onClick={() => window.open(url, '_blank', 'noopener')}
+      onClick={() => openLink(url)}
     />
   );
 };
@@ -125,11 +127,11 @@ const SheetFields: React.FC<{
         type="button"
         aria-expanded={showListing}
         onClick={() => setShowListing((v) => !v)}
-        className="flex items-center gap-1 h-7 -ml-1 px-1 rounded-md text-[13px] text-white/60 hover:text-white/90 cursor-default"
+        className="flex items-center gap-1 h-[32px] -ml-1 px-1 rounded-md text-[13px] text-white/60 hover:text-white/90 cursor-default"
       >
         Listing
         <ChevronDownIcon
-          className={`w-3.5 h-3.5 transition-transform duration-200 ${showListing ? 'rotate-180' : ''}`}
+          className={`w-3.5 h-3.5 transition-transform duration-150 ${showListing ? 'rotate-180' : ''}`}
         />
       </button>
       {showListing && <ListingFields {...props} />}
@@ -139,7 +141,6 @@ const SheetFields: React.FC<{
 
 export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave }) => {
   const money = useMoney();
-  const formId = useId();
   const [form, setForm] = useState(() => initialPurchaseForm(line, money));
   const valid = canSave(form);
   const update = (patch: Partial<PurchaseForm>) => setForm((f) => ({ ...f, ...patch }));
@@ -152,33 +153,22 @@ export const CheckSheet: React.FC<CheckSheetProps> = ({ line, onClose, onSave })
       subtitle={<MetaLine items={[`Need ${needed(line)}`, line.detail]} />}
       headerActions={<ListingLink line={line} />}
       maxWidth="max-w-[440px]"
-      footer={
+      action={{ label: 'Save', disabled: !valid, onClick: () => onSave(purchaseRecord(form, money)) }}
+      footerStart={
         <>
           {line.record && (
-            <Button variant="ghost" size="sm" onClick={() => onSave(null)}>
-              Remove Price
+            <Button
+              variant="ghost"
+              onClick={() => confirmAction({ title: `Delete price for ${line.name}?`, onConfirm: () => onSave(null) })}
+            >
+              Delete Price
             </Button>
           )}
-          <div className="flex-1 text-[12.5px] text-white/50 truncate">{linkError(form.url)}</div>
-          <Button variant="secondary" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" form={formId} variant="primary" size="sm" disabled={!valid}>
-            Save
-          </Button>
+          <div className="flex-1 min-w-0 text-[12.5px] text-white/50 truncate">{linkError(form.url)}</div>
         </>
       }
     >
-      <form
-        id={formId}
-        onSubmit={(e) => {
-          e.preventDefault();
-
-          if (valid) onSave(purchaseRecord(form, money));
-        }}
-      >
-        <SheetFields line={line} form={form} onChange={update} />
-      </form>
+      <SheetFields line={line} form={form} onChange={update} />
     </Modal>
   );
 };

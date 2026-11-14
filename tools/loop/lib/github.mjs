@@ -95,7 +95,7 @@ export const commentOnPull = (number, body) =>
   run('gh', ['pr', 'comment', String(number), '--body-file', '-'], { input: withMark(body) });
 
 export const mergePull = (number, method = 'squash') =>
-  run('gh', ['pr', 'merge', String(number), `--${method}`, '--delete-branch'], { allowFail: true });
+  run('gh', ['pr', 'merge', String(number), `--${method}`, '-R', repo()], { allowFail: true });
 
 const MISSING_LABEL = /'(loop:[a-z-]+)' not found/;
 
@@ -144,7 +144,7 @@ const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 const jobConclusions = (run) =>
   cached(
-    `jobs-${run.databaseId}`,
+    `jobs-${run.databaseId}-${run.status}`,
     { ttlMs: run.status === 'completed' ? WEEK_MS : 60_000 },
     () =>
       json('gh', ['api', `repos/${repo()}/actions/runs/${run.databaseId}/jobs`, '--jq', '[.jobs[].conclusion]']) ?? [],
@@ -173,8 +173,6 @@ export const lastFinishedMainCheck = () =>
         'check.yml',
         '--branch',
         'main',
-        '--event',
-        'push',
         '--limit',
         '100',
         '--json',
@@ -205,8 +203,9 @@ const failedJobLogs = (runId) =>
 export const failedLog = (runId) =>
   run('gh', ['run', 'view', String(runId), '--log-failed'], { allowFail: true }).out || failedJobLogs(runId);
 
-export const isPaused = () =>
-  run('gh', ['variable', 'get', 'LOOP_PAUSED'], { allowFail: true }).out.trim().toLowerCase() === 'true';
+export const repoVariable = (name) => run('gh', ['variable', 'get', name], { allowFail: true }).out.trim();
+
+export const isPaused = () => repoVariable('LOOP_PAUSED').toLowerCase() === 'true';
 
 export const issues = (label) =>
   cached(
@@ -312,8 +311,15 @@ export const pullComments = (number) =>
     '--json',
     'comments',
     '--jq',
-    '[.comments[] | {body, createdAt, author: .author.login}]',
+    '[.comments[] | {body, createdAt, author: .author.login, url}]',
   ]) ?? [];
+
+const COMMENT_ID = /#issuecomment-(\d+)$/;
+
+export const editComment = (url, body) =>
+  run('gh', ['api', '-X', 'PATCH', `repos/${repo()}/issues/comments/${COMMENT_ID.exec(url)[1]}`, '--input', '-'], {
+    input: JSON.stringify({ body: withMark(body) }),
+  });
 
 export const isLoopComment = (comment) => comment.body.includes(LOOP_MARK) || comment.body.startsWith('### Review:');
 

@@ -1,4 +1,5 @@
-const STOPPED_ERROR = 'The CAD kernel stopped (time or memory limit). Simplify the part and try again.';
+const STOPPED_ERROR =
+  'The CAD kernel stopped (time or memory limit). Simplify the part (fewer booleans, lower $fn, fewer hull() pieces).';
 const CLOSED_ERROR = 'The CAD kernel closed with the app window.';
 const BAD_RESULT_ERROR = 'The CAD kernel sent a bad result, so it was stopped.';
 
@@ -6,7 +7,7 @@ const timeoutError = (timeoutMs) =>
   `Rendering took longer than ${Math.round(timeoutMs / 1000)} s. Simplify the part (fewer booleans, lower $fn, fewer hull() pieces).`;
 
 export const startError = (reason) =>
-  `The CAD kernel sandbox couldn't start: ${reason}. Restart Basecase. Parts can't compile until it starts.`;
+  `The CAD kernel sandbox couldn’t start: ${reason}. Restart Basecase. Parts can’t compile until it starts.`;
 
 export const MAX_RESULT_BYTES = 64_000_000;
 

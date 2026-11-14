@@ -2,6 +2,8 @@ import { isPolicySpec } from '../sim/policy';
 import type { PolicyRecord } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
 import type { ForgeJob, ForgeOutcome, ForgeRunner } from './forgeRunner';
+import { SNAPSHOT_EVERY_S, type SnapshotRef } from './snapshots';
+import { errorMessage } from '../utils/errorMessage';
 
 export interface ForgeProgress {
   share: number | null;
@@ -12,6 +14,7 @@ export interface TrainerForgeOptions {
   workspaceId: string;
   background: boolean;
   onProgress: (progress: ForgeProgress) => void;
+  onSnapshot?: (ref: SnapshotRef) => void;
   signal?: AbortSignal;
 }
 
@@ -52,8 +55,22 @@ export function trainingProgress(kind: unknown, event: ProgressEvent): ForgeProg
 
 const progressOf = (ev: TrainEvent) => trainingProgress(ev.kind, ev as ProgressEvent);
 
+export function snapshotOf(ev: TrainEvent): SnapshotRef | null {
+  const { kind, jobId, iteration, steps } = ev;
+
+  if (kind !== 'snapshot' || typeof jobId !== 'string') return null;
+
+  if (!Number.isSafeInteger(iteration) || !Number.isSafeInteger(steps)) return null;
+
+  return { run: jobId, iteration: iteration as number, steps: steps as number };
+}
+
 function start(options: TrainerForgeOptions, job: ForgeJob): Promise<{ jobId: string | null }> {
-  const payload = { workspaceId: options.workspaceId, xml: job.xml, job: job.job };
+  const payload = {
+    workspaceId: options.workspaceId,
+    xml: job.xml,
+    job: { ...job.job, snapshotEveryS: SNAPSHOT_EVERY_S },
+  };
 
   if (options.background) return platformBridge.kitRequest(payload);
 
@@ -77,8 +94,11 @@ export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
       };
       const handle = (ev: TrainEvent) => {
         const progress = progressOf(ev);
+        const snapshot = snapshotOf(ev);
 
         if (progress) options.onProgress(progress);
+
+        if (snapshot) options.onSnapshot?.(snapshot);
 
         if (ev.kind === 'done' || ev.kind === 'error') settle(finished(ev));
       };
@@ -100,7 +120,7 @@ export function trainerForge(options: TrainerForgeOptions): ForgeRunner {
           jobId = res.jobId;
           early.filter((ev) => ev.jobId === jobId).forEach(handle);
         },
-        (e: unknown) => settle(failure(e instanceof Error ? e.message : String(e))),
+        (e: unknown) => settle(failure(errorMessage(e))),
       );
     });
 }

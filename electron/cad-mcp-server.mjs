@@ -6,27 +6,29 @@ import {
   checkPrintability,
   slicePlates,
   getBom,
+  recordOnHand,
   setBuild,
   simulate,
   trainingStatus,
   verifyDesign,
 } from './cad-mcp/buildTools.mjs';
-import { checkAssembly } from './cad-mcp/assemblyTools.mjs';
+import { checkAssembly, mergeParts } from './cad-mcp/assemblyTools.mjs';
 import { compare } from './cad-mcp/compareTool.mjs';
 import { craftReview } from './cad-mcp/craftReview.mjs';
 import { fitView } from './cad-mcp/fitViewTool.mjs';
 import { photoScale } from './cad-mcp/photoScaleTool.mjs';
 import { scoreFit } from './cad-mcp/scoreFitTool.mjs';
 import { traceOutline } from './cad-mcp/traceTool.mjs';
-import { sizeActuators, sweepDesign } from './cad-mcp/costTools.mjs';
+import { sizeActuators, sizeArm, sweepDesign } from './cad-mcp/costTools.mjs';
 import { listEvidence, readEvidence } from './cad-mcp/evidenceTools.mjs';
 import { createGuidePusher, getGuide } from './cad-mcp/guideTools.mjs';
 import { checkScene, look } from './cad-mcp/inspectTools.mjs';
 import { fasten, getPorts, mate } from './cad-mcp/portTools.mjs';
-import { findRecipes } from './cad-mcp/recipeTools.mjs';
+import { findRecipes, synthesizeLinkage } from './cad-mcp/recipeTools.mjs';
 import {
   animate,
   defineJoints,
+  findJointAxes,
   getRig,
   importRobot,
   makeLeader,
@@ -50,8 +52,9 @@ import {
 import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
 import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
 import { operate, setWorld, startDrive } from './cad-mcp/worldTools.mjs';
-import { createCase } from './cad-mcp/caseTools.mjs';
-import { draftSkill, listSkills, trainSkill } from './cad-mcp/skillTools.mjs';
+import { compareCase, createCase, exploreCase, runCase } from './cad-mcp/caseTools.mjs';
+import { deleteCaseCode, readCaseCode, writeCaseCode } from './cad-mcp/caseCodeTools.mjs';
+import { coachSkill, draftSkill, listSkills, trainSkill } from './cad-mcp/skillTools.mjs';
 import { editRoutine, makeRoutine, readRoutine, runRoutine, testRoutine } from './cad-mcp/routineTools.mjs';
 import { checkSkeleton, findImages, findRobotDescription, robotSkeleton, viewImage } from './cad-mcp/webTools.mjs';
 import {
@@ -81,6 +84,7 @@ const TOOLS = [
   look,
   findParts,
   findRecipes,
+  synthesizeLinkage,
   compare,
   fitView,
   traceOutline,
@@ -96,6 +100,8 @@ const TOOLS = [
   checkScene,
   craftReview,
   checkAssembly,
+  mergeParts,
+  findJointAxes,
   defineJoints,
   getRig,
   pose,
@@ -111,6 +117,12 @@ const TOOLS = [
   startDrive,
   operate,
   createCase,
+  runCase,
+  compareCase,
+  exploreCase,
+  writeCaseCode,
+  readCaseCode,
+  deleteCaseCode,
   makeRoutine,
   readRoutine,
   editRoutine,
@@ -119,10 +131,13 @@ const TOOLS = [
   draftSkill,
   trainSkill,
   listSkills,
+  coachSkill,
   trainingStatus,
   verifyDesign,
   getBom,
+  recordOnHand,
   sizeActuators,
+  sizeArm,
   sweepDesign,
   checkPrintability,
   slicePlates,
@@ -147,7 +162,7 @@ for (const tool of TOOLS.filter((t) => !(NO_WEB && t.web))) {
     pushGuides(
       tool.name,
       args,
-      await withBuildCheck(tool.name, await withToolCall(extra, () => tool.handler(args, extra))),
+      await withBuildCheck({ name: tool.name, args }, await withToolCall(extra, () => tool.handler(args, extra))),
     ),
   );
 }

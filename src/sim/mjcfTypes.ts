@@ -17,12 +17,14 @@ export interface SimBody {
   robot?: string;
   parent?: string;
   joint?: string;
+  moves?: { kind: 'mocap' | 'free'; rotation: V3 };
 }
 
 export type WorldBehavior = 'static' | 'dynamic' | 'marker';
 
 export interface WorldItem extends ScenePart {
   behavior: WorldBehavior;
+  movable?: boolean;
 }
 
 export interface SimJoint {
@@ -57,6 +59,13 @@ export interface SimModel {
   initial: RobotPoseState;
   massKg: Record<string, number>;
   scans?: Eye[];
+  servoSpreads?: ServoSpread[];
+}
+
+export interface ServoSpread {
+  servo: string;
+  joints: string[];
+  covariance: number[][];
 }
 
 export interface MjcfInput {
@@ -72,9 +81,12 @@ export interface MjcfInput {
   world?: WorldItem[];
   worldTriangles?: (id: string) => Float32Array | null;
   servoFits?: Record<string, JointServoFit>;
+  servoVolts?: number;
+  servoSpreads?: ServoSpread[];
 }
 
 export interface JointServoFit {
   fit: ServoFit;
   volts: number;
+  historyS?: number;
 }

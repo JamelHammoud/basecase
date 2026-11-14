@@ -20,6 +20,7 @@ import {
 } from './actuatorRules';
 
 const ITERATIONS = 3;
+const UP_MARGIN = 1.05;
 
 export interface SizingJoint {
   id: string;
@@ -137,10 +138,19 @@ function pickFor(j: SizingJoint, loads: JointLoads, options: ActuatorOption[], v
   const fits = options.map((o) => fitOf(j, loads, o, volts));
   const passing = fits.filter((f) => f.ok);
   const pick = passing[0];
-  const up = pick && passing.find((f) => f.option.act.stallNm > pick.option.act.stallNm * 1.05);
+  const up = pick && passing.find((f) => f.option.act.stallNm > pick.option.act.stallNm * UP_MARGIN);
   const strongest = [...fits].sort((a, b) => a.stallShare - b.stallShare)[0];
 
   return { joint: j, loads, pick, up, strongest };
+}
+
+export function servoUp(act: ActuatorSpec, volts: number, options = actuatorOptions()): ActuatorOption | undefined {
+  const stall = (a: ActuatorSpec) => ratingAt(a, volts).stallNm;
+  const floor = stall(act) * UP_MARGIN;
+
+  return options
+    .filter((o) => o.bus === act.bus && suitsVolts(o.act, volts) && o.act.rpm !== undefined && stall(o.act) > floor)
+    .sort((a, b) => stall(a.act) - stall(b.act) || a.usd - b.usd)[0];
 }
 
 function deltaG(j: SizingJoint, p: JointPick | undefined): number {

@@ -1,24 +1,24 @@
 import React from 'react';
 import { Button } from '../../design-system';
 import { disconnectRobot, sendRobotCommand } from '../../robot/robotStore';
-import type { RobotFamily, RobotState } from '../../robot/robotState';
+import { FAMILY_NAMES } from '../../robot/robotFamilies';
+import type { RobotState } from '../../robot/robotState';
+import { plural } from '../../../electron/plural.mjs';
 
 const RUN: Record<string, string> = {
   idle: 'Motors off',
-  soft_start: 'Starting motors',
+  soft_start: 'Starting motors…',
   running: 'Motors running',
   rehearsing: 'Rehearsing, motors off',
-  stopping: 'Stopping',
+  stopping: 'Stopping…',
   stopped: 'Stopped',
 };
 
-const FAMILY: Record<RobotFamily, string> = { feetech: 'Feetech', dynamixel: 'Dynamixel', 'unitree-g1': 'G1' };
-
 function servoCount(robot: RobotState) {
   const n = robot.spec?.ids.length ?? 0;
-  const family = FAMILY[robot.spec?.family ?? 'feetech'];
+  const family = FAMILY_NAMES[robot.spec?.family ?? 'feetech'];
 
-  return `${n} emulated ${family} ${n === 1 ? 'servo' : 'servos'}`;
+  return plural(n, `emulated ${family} servo`);
 }
 
 function RobotAction({ robot }: { robot: RobotState }) {
@@ -45,7 +45,7 @@ export const RobotHeader: React.FC<{ robot: RobotState }> = ({ robot }) => {
   const run = robot.status?.run ?? 'idle';
 
   return (
-    <div className="flex items-center justify-between gap-2 min-h-8 px-1 py-1 mb-1">
+    <div className="flex items-center justify-between gap-2 min-h-[32px] px-1 py-1 mb-1">
       <span className="min-w-0 flex flex-wrap gap-x-[12px] text-[12.5px] text-white/50">
         <span>{servoCount(robot)}</span>
         <span>{RUN[run] ?? run}</span>

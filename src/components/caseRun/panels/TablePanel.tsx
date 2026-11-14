@@ -20,7 +20,7 @@ const JointsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
   return (
     <Titled title={panel.title}>
       <div className="flex flex-col text-[13px]" data-testid="joint-table">
-        <div className="h-8 flex items-center gap-2 text-white/50">
+        <div className="h-[28px] flex items-center gap-2 text-white/50">
           <span className="flex-1" />
           {columns.map((c) => (
             <span key={c} className={cell}>
@@ -29,7 +29,7 @@ const JointsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
           ))}
         </div>
         {ids.map((id) => (
-          <div key={id} className="h-8 flex items-center gap-2" data-joint={id}>
+          <div key={id} className="h-[28px] flex items-center gap-2" data-joint={id}>
             <span className="flex-1 min-w-0 truncate text-white/80">{names.get(id) ?? id}</span>
             {columns.map((c) => (
               <span key={c} className={`${cell} text-white/90`}>
@@ -52,7 +52,7 @@ const SignalsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
     <Titled title={panel.title}>
       <div className="flex flex-col text-[13px]">
         {ids.map((id) => (
-          <div key={id} className="h-8 flex items-center justify-between gap-3" data-signal={id}>
+          <div key={id} className="h-[28px] flex items-center justify-between gap-3" data-signal={id}>
             <span className="min-w-0 truncate text-white/80">{id}</span>
             <span className="tabular-nums text-white/90">{signalText(id, ctx.bus.read(id), ctx.signals)}</span>
           </div>
@@ -65,7 +65,8 @@ const SignalsTable: React.FC<PanelViewProps<'table'>> = ({ panel, ctx }) => {
 export const TablePanel: React.FC<PanelViewProps<'table'>> = (props) => {
   const { panel, ctx } = props;
 
-  if (panel.of === 'servos') return <CaseRunJoints joints={ctx.joints} onBrowseRobots={ctx.onBrowseRobots} />;
+  if (panel.of === 'servos')
+    return ctx.studio && <CaseRunJoints joints={ctx.joints} parts={ctx.parts} onShowRobots={ctx.studio.onShowRobots} />;
 
   return panel.of === 'joints' ? <JointsTable {...props} /> : <SignalsTable {...props} />;
 };

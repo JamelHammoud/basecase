@@ -58,7 +58,8 @@ export const makeRoutine = {
     title: 'Make a Routine',
     description:
       'Turns a sentence into a Routine: a flowchart the robot runs as one background skill plus reactions to what it sees and hears. ' +
-      'Write the Routine as JSON from the sentence and pass both. The app compiles it against the robot in the scene (its sensors, its Motor Kit skills and their proven transitions) and draws it in the Routines view. ' +
+      'Write the Routine as JSON from the sentence and pass both. The app compiles it against the robot in the scene (its sensors, its Motor Kit skills, its trained moves and skills, and their proven transitions) and draws it in the Routines view. ' +
+      'A switch between two body skills that has no proof yet is proved in simulation first (8 tries); one that fell stays an unproven-transition error with its fall count, so tell the user, or stop first. ' +
       'A Routine with the id of one in the scene replaces it, so read_routine first and keep what the user built by hand; prefer edit_routine for small changes. ' +
       'Returns { ok, errors, nodes }; each error has a code, a plain message and the node it names. missing-capability means the robot lacks a sensor (the user can add it in one click); needs-training means a skill isn’t ready on this robot. ' +
       ROUTINE_SHAPE,
@@ -132,7 +133,7 @@ export const editRoutine = {
   config: {
     title: 'Edit the Routine',
     description:
-      'Applies edits to the open Routine (or the one with id) the same way the user’s hand edits do, so both keep each other’s changes, and recompiles it. ' +
+      'Applies edits to the open Routine (or the one with id) the same way the user’s hand edits do, so both keep each other’s changes, and recompiles it, proving any new switch between body skills the way make_routine does. ' +
       'insert puts a step at a path index, remove deletes a step, watcher or reaction by id, move takes a step to another place, update sets fields on a step, watcher or reaction (never its paths), addWatcher adds a watcher, rename names the Routine. ' +
       'Edits that leave the Routine unreadable are refused whole. Returns { ok, changed, errors, nodes }.',
     inputSchema: {

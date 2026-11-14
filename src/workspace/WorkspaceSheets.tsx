@@ -1,8 +1,11 @@
+import { ArmSizingSheet } from '../components/ArmSizingSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
-import { ErrorBoundary } from '../design-system';
+import { InstallSkillSheet } from '../components/InstallSkillSheet';
 import { platformBridge } from '../utils/platformBridge';
 import { RetargetSheet } from '../components/RetargetSheet';
+import { ErrorBoundary } from '../design-system';
+import { TeachGestureHost } from './TeachGestureHost';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -15,9 +18,10 @@ interface WorkspaceSheetsProps {
 export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps) {
   const { posing, guide } = core;
   const desktop = platformBridge.isElectron();
-  const { robots, pose } = actions;
+  const { robots, pose, arm } = actions;
   const { motionInputRef } = pose;
   const { importRobotFrom } = robots;
+  const { skillHub } = core.simTraining;
 
   return (
     <>
@@ -30,19 +34,37 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
             onReveal={desktop ? () => void guide.reveal() : undefined}
             onOpenPdf={desktop ? () => void guide.openPdf() : undefined}
             onBuildAlong={() => void core.buildAlong.open()}
+            ready={core.printing.readySteps(guide.record?.stepParts?.ids ?? [])}
           />
         </ErrorBoundary>
       )}
       <ErrorBoundary region="Import robot" resetKey={robots.importRobotOpen} onClose={robots.closeImportRobot}>
         <ImportRobotSheet
-          key={robots.robotChoice?.choices.join('\n') ?? robots.robotFiles?.name ?? 'link'}
+          key={robots.robotChoice?.choices.join('\n') ?? 'link'}
           open={robots.importRobotOpen}
           choice={robots.robotChoice}
-          loaded={robots.robotFiles}
           onClose={robots.closeImportRobot}
           onImport={(src, at) => void importRobotFrom(src, at)}
         />
       </ErrorBoundary>
+      <ErrorBoundary region="Install skill" resetKey={skillHub.installOpen} onClose={skillHub.closeInstall}>
+        <InstallSkillSheet
+          open={active && skillHub.installOpen}
+          onClose={skillHub.closeInstall}
+          onInstall={skillHub.install}
+        />
+      </ErrorBoundary>
+      {arm.targets && (
+        <ErrorBoundary region="Arm sizing" onClose={arm.close}>
+          <ArmSizingSheet
+            targets={arm.targets}
+            busy={arm.busy}
+            problem={arm.problem}
+            onClose={arm.close}
+            onSize={arm.size}
+          />
+        </ErrorBoundary>
+      )}
       {pose.motion && (
         <ErrorBoundary key={pose.motion.name} region="Motion import" onClose={pose.closeMotion}>
           <RetargetSheet
@@ -54,6 +76,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           />
         </ErrorBoundary>
       )}
+      <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input
         ref={motionInputRef}
         type="file"

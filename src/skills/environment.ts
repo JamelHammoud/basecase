@@ -1,10 +1,18 @@
-import type { SimModel } from '../sim/mjcfTypes';
+import type { ServoSpread, SimModel } from '../sim/mjcfTypes';
 import type { RobotPoseState } from '../types/robotics';
 import { contractSignals, type Contract } from './contract';
-import { hashOf, isHash } from './hash';
+import { canonicalJson, hashOf, isHash } from './hash';
 import { eyeProblems, eyeRays, type Eye } from '../sim/eyes';
+import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../../electron/plural.mjs';
+import { robotSpreads } from './servoDraws';
 
-export const ENVIRONMENT_VERSION = 1;
+export type { ServoSpread } from '../sim/mjcfTypes';
+
+export const ENVIRONMENT_VERSION = 2;
+export const ENVIRONMENT_VERSIONS = [1, ENVIRONMENT_VERSION] as const;
+
+export type EnvironmentVersion = (typeof ENVIRONMENT_VERSIONS)[number];
 
 export type Range = [number, number];
 export type Axis = 'x' | 'y' | 'z';
@@ -32,19 +40,38 @@ export interface StartArea {
   sideM: Range;
 }
 
+export interface SkillState {
+  joints: number[];
+  jointVels: number[];
+  height: number;
+  quat: [number, number, number, number];
+  linear: [number, number, number];
+  angular: [number, number, number];
+}
+
+export interface SkillStates {
+  skill: string;
+  joints: string[];
+  samples: SkillState[];
+}
+
 export interface ResetDistribution {
   pose?: RobotPoseState;
   jointNoiseDeg: number;
   baseYawDeg: number;
   baseOffsetMm: number;
   startArea?: StartArea;
+  states?: SkillStates;
 }
+
+export const MAX_START_STATES = 256;
 
 export interface Randomization {
   friction: Range;
   mass: Range;
   strength: Range;
   latencyMs: Range;
+  servos?: ServoSpread[];
 }
 
 export type RewardRef = { kind: 'contract-robustness' } | { kind: 'rewardlang'; hash: string };
@@ -70,7 +97,7 @@ export interface MoveReference {
 export const MAX_REFERENCE_FRAMES = 30000;
 
 export interface Environment {
-  version: typeof ENVIRONMENT_VERSION;
+  version: EnvironmentVersion;
   robot: string;
   horizonS: number;
   traceDt: number;
@@ -116,20 +143,28 @@ export function policyObservation(joints: string[]): ObservationTerm[] {
 
 export const environmentHash = (env: Environment) => hashOf(env);
 
+export function withServoSpreads(model: Pick<SimModel, 'servoSpreads'>, env: Environment): Environment {
+  const kept = robotSpreads(model.servoSpreads, env.action.joints);
+
+  if (!kept.length) return env;
+
+  return { ...env, version: ENVIRONMENT_VERSION, randomization: { ...env.randomization, servos: kept } };
+}
+
 const finiteIn = (v: unknown, min: number, max: number) =>
   typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
 
 const rangeIn = (r: unknown, min: number, max: number) =>
   Array.isArray(r) && r.length === 2 && finiteIn(r[0], min, max) && finiteIn(r[1], min, max) && r[0] <= r[1];
 
-interface ModelIndex {
+export interface ModelIndex {
   joints: Set<string>;
   parts: Set<string>;
   robots: Set<string>;
   bodies: Set<string>;
 }
 
-const indexOf = (model: SimModel, robot: string): ModelIndex => ({
+export const modelIndex = (model: SimModel, robot: string): ModelIndex => ({
   joints: new Set(model.joints.filter((j) => j.robot === robot).map((j) => j.id)),
   parts: new Set(model.bodies.flatMap((b) => b.parts)),
   robots: new Set(model.robots.map((r) => r.key)),
@@ -196,9 +231,57 @@ function randomizationProblems(r: Randomization): string[] {
   return out;
 }
 
+function servoProblems(env: Environment, model: SimModel): string[] {
+  const spreads = env.randomization.servos;
+
+  if (spreads === undefined) return [];
+
+  const own = robotSpreads(model.servoSpreads, env.action.joints);
+  const matches = own.length > 0 && canonicalJson(spreads) === canonicalJson(own);
+
+  return env.version === ENVIRONMENT_VERSION && matches
+    ? []
+    : ['Servo spreads need environment version 2 and must match the robot’s servos.'];
+}
+
 export const MAX_START_M = 5;
 
-function resetProblems(reset: ResetDistribution): string[] {
+const finiteList = (v: unknown, length: number) =>
+  Array.isArray(v) && v.length === length && v.every((x) => typeof x === 'number' && Number.isFinite(x));
+
+function sampleFits(sample: SkillState, joints: number): boolean {
+  const lists =
+    finiteList(sample.joints, joints) &&
+    finiteList(sample.jointVels, joints) &&
+    finiteList(sample.quat, 4) &&
+    finiteList(sample.linear, 3) &&
+    finiteList(sample.angular, 3);
+
+  return lists && finiteIn(sample.height, 1e-4, 100) && Math.abs(Math.hypot(...sample.quat) - 1) < 1e-3;
+}
+
+function statesProblems(states: SkillStates | undefined, index: ModelIndex): string[] {
+  if (!states) return [];
+
+  if (typeof states.skill !== 'string' || !states.skill) return ['Start states name the skill they come from.'];
+
+  const joints = jointProblems(states.joints, index, 'A start state');
+
+  if (joints.length) return joints;
+
+  const { samples } = states;
+
+  if (!Array.isArray(samples) || samples.length < 1 || samples.length > MAX_START_STATES)
+    return [`Start states hold 1 to ${MAX_START_STATES} states.`];
+
+  return samples.every((s) => sampleFits(s, states.joints.length))
+    ? []
+    : [
+        `Each start state has a finite position and speed for each of its ${plural(states.joints.length, 'joint')}, a height above 0 and a unit quaternion.`,
+      ];
+}
+
+export function resetProblems(reset: ResetDistribution, index: ModelIndex): string[] {
   const ok = finiteIn(reset.jointNoiseDeg, 0, 90) && finiteIn(reset.baseYawDeg, 0, 180);
   const out = ok && finiteIn(reset.baseOffsetMm, 0, 10000) ? [] : ['Reset noise must be finite and not negative.'];
   const area = reset.startArea;
@@ -206,7 +289,7 @@ function resetProblems(reset: ResetDistribution): string[] {
   if (area && !(rangeIn(area.forwardM, -MAX_START_M, MAX_START_M) && rangeIn(area.sideM, -MAX_START_M, MAX_START_M)))
     out.push(`A start area runs ${-MAX_START_M} to ${MAX_START_M} m each way, low to high.`);
 
-  return out;
+  return [...out, ...statesProblems(reset.states, index)];
 }
 
 const SOURCE_KINDS = new Set([
@@ -262,7 +345,7 @@ async function contractProblems(env: Environment): Promise<string[]> {
 
     return needed.filter((s) => !(s in env.signals)).map((s) => `The contract reads ${s}, which no signal provides.`);
   } catch (error) {
-    return [`The contract is refused: ${(error as Error).message}`];
+    return [`The contract is refused: ${errorMessage(error)}`];
   }
 }
 
@@ -275,7 +358,7 @@ function rewardProblems(reward: RewardRef): string[] {
 function shapeProblems(env: Environment, index: ModelIndex): string[] {
   const out: string[] = [];
 
-  if (env.version !== ENVIRONMENT_VERSION) out.push('This environment version is not supported.');
+  if (!ENVIRONMENT_VERSIONS.includes(env.version)) out.push('This environment version is not supported.');
 
   if (!index.robots.has(env.robot)) out.push('The environment names a robot this scene lacks.');
 
@@ -287,14 +370,15 @@ function shapeProblems(env: Environment, index: ModelIndex): string[] {
 }
 
 export async function validateEnvironment(env: Environment, model: SimModel): Promise<string[]> {
-  const index = indexOf(model, env.robot);
+  const index = modelIndex(model, env.robot);
 
   return [
     ...shapeProblems(env, index),
     ...env.observation.flatMap((term) => termProblems(term, index)),
     ...actionProblems(env.action, index),
     ...randomizationProblems(env.randomization),
-    ...resetProblems(env.reset),
+    ...servoProblems(env, model),
+    ...resetProblems(env.reset, index),
     ...rewardProblems(env.reward),
     ...referenceProblems(env.reference, env.action.joints),
     ...Object.entries(env.signals).flatMap(([name, source]) => sourceProblems(name, source, index)),

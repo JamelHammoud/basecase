@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { robotFacts } from '../cases/robotFit';
+import { angle } from '../utils/angle';
 import { readWorldObjects, worldItem, type WorldObject } from '../cases/schema';
 import { kitEntries } from '../skills/motorKit';
 import {
@@ -19,6 +20,9 @@ import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
 import { toCad, toScene } from './agentFrame';
+import { plural } from '../../electron/plural.mjs';
+import { duration, runClock } from '../utils/duration';
+import { lengthLabel, signedLengthLabel } from '../utils/size';
 
 export interface DriveToolContext {
   sim: Simulation;
@@ -37,6 +41,7 @@ export interface AgentObject {
   mass_g?: number;
   friction?: number;
   color?: string;
+  movable?: boolean;
 }
 
 interface AgentCommand {
@@ -69,6 +74,7 @@ export function sceneObjects(objects: AgentObject[]): WorldObject[] {
     behavior: o.behavior,
     ...(o.mass_g !== undefined ? { massG: o.mass_g } : {}),
     ...(o.friction !== undefined ? { friction: o.friction } : {}),
+    ...(o.movable ? { movable: true } : {}),
   }));
 
   return readWorldObjects(raw);
@@ -82,7 +88,7 @@ export function setWorldRequest(ctx: DriveToolContext, payload: { objects?: Agen
   if (!objects.length) return { text: 'Cleared the world.' };
 
   return {
-    text: `The world holds ${objects.length} objects: ${objects.map((o) => `${o.name} (${o.behavior})`).join(', ')}.`,
+    text: `The world holds ${plural(objects.length, 'object')}: ${objects.map((o) => `${o.name} (${o.behavior})`).join(', ')}.`,
   };
 }
 
@@ -100,7 +106,7 @@ function liveDrive(ctx: DriveToolContext, commands: AgentCommand[]) {
   });
 
   return {
-    text: `Driving on the canvas: ${commands.length} commands over ${Math.max(...commands.map((c) => c.at)).toFixed(1)} s.`,
+    text: `Driving on the canvas: ${plural(commands.length, 'command')} over ${duration(Math.max(...commands.map((c) => c.at)))}.`,
   };
 }
 
@@ -184,14 +190,14 @@ interface ReportInput {
 function driveReport({ ctx, run, cls, seconds }: ReportInput): string {
   const r = run.stats.robots[0];
   const lines = [
-    `Drove ${seconds.toFixed(1)} s as ${cls === 'legs' ? 'a walker' : `a${cls === 'arm' ? 'n' : ''} ${cls}`}.`,
+    `Drove ${duration(seconds)} as ${cls === 'legs' ? 'a walker' : `a${cls === 'arm' ? 'n' : ''} ${cls}`}.`,
   ];
 
   if (r && cls !== 'arm') {
     lines.push(
-      `Moved ${(r.travelled * 1000).toFixed(0)} mm, ${(r.forward * 1000).toFixed(0)} mm of it forward; tilt ${r.tilt.toFixed(0)}°.`,
+      `Moved ${lengthLabel(r.travelled * 1000)}, ${signedLengthLabel(r.forward * 1000)} of it forward; tilt ${angle(r.tilt)}.`,
     );
-    lines.push(r.fellAt === null ? 'Stayed up.' : `Fell at ${r.fellAt.toFixed(1)} s.`);
+    lines.push(r.fellAt === null ? 'Stayed up.' : `Fell at ${runClock(r.fellAt)}.`);
   }
 
   const facts = robotFacts(ctx.rig, ctx.parts);

@@ -1,30 +1,40 @@
 import path from 'node:path';
 import { harnessKey } from '../../../bench/compare/cache.mjs';
+import { appendExperiment, readExperiments } from '../../../bench/experiments.mjs';
 import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
 import {
+  agentLessons,
   BENCH_RUNS,
-  cachedFor,
   ensureRuns,
   failedChecks,
-  harnessLessons,
   openDetached,
+  runCompare,
   runDir,
-  runMicro,
   SETTINGS,
+  spentOn,
   taskMeta,
   unlinkRuns,
 } from '../lib/benchRuns.mjs';
-import { decide, lessonFields, measure, measuredMarkdown } from '../lib/harnessVerdict.mjs';
+import { openPulls, repoVariable } from '../lib/github.mjs';
+import {
+  budgetFrom,
+  confirmHeldout,
+  decide,
+  experimentFields,
+  measuredMarkdown,
+  skipReason,
+} from '../lib/harnessVerdict.mjs';
 import { publish } from '../lib/pull.mjs';
 import { run } from '../lib/sh.mjs';
 import { store } from '../lib/store.mjs';
-import { pickWeakness, recentCategories, runsOf, weaknessMarkdown } from '../lib/weakness.mjs';
+import { pause } from '../lib/usage.mjs';
+import { pickWeakness, recentCategories, weaknessMarkdown } from '../lib/weakness.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
 export const schedule = {
   agent: true,
   slots: 1,
-  everySeconds: 12 * 60 * 60,
+  everySeconds: 24 * 60 * 60,
   does: "Finds where the CAD agent does worst on the micro-evals, changes its harness, and keeps it only if it's measured better",
 };
 
@@ -52,10 +62,7 @@ const failureLine = (entry) => {
     : `- ${entry.task} seed ${entry.seed} (run ${entry.run}): its folder is gone`;
 };
 
-const lessonLines = () =>
-  harnessLessons()
-    .map((lesson) => `- ${lesson.id}: ${lesson.title}`)
-    .join('\n') || 'None.';
+const listOr = (lines) => lines.join('\n') || 'None.';
 
 const promptFor = ({ weakness, meta, harness }) =>
   [
@@ -65,71 +72,75 @@ const promptFor = ({ weakness, meta, harness }) =>
       .slice(0, MAX_FAILURES)
       .map(failureLine)
       .join('\n')}`,
-    `## Harness changes already tried (docs/Lessons playbook.md)\n\n${lessonLines()}`,
-    "Diagnose why the agent fails these tasks and change its harness to fix the cause, following your brief. The runner measures your change on the whole tune set and the held-out set against main's numbers above.",
+    `## Lessons about the agent (docs/Lessons playbook.md)\n\n${listOr(agentLessons().map((l) => `- ${l.id}: ${l.title}`))}`,
+    `## Changes already measured (bench/experiments.md)\n\n${listOr(
+      readExperiments().map((e) => `- ${e.id}: ${e.title} [${e.tags.join(', ')}]`),
+    )}`,
+    "Diagnose why the agent fails these tasks and change its harness to fix the cause, following your brief. The runner measures your change on the tune set and then the held-out set against main's numbers above.",
   ].join('\n\n');
 
-function measureBranch({ worktree, base, meta, harness, baseline, log }) {
+const usagePaused = () => skipReason({ paused: pause(), pulls: [] });
+
+function measureBranch({ worktree, mainSha, budget, log }) {
   const name = `harness-${stamp()}`;
+  const compare = (split) => {
+    const measured = runCompare({
+      dir: worktree.dir,
+      log,
+      against: mainSha,
+      split,
+      budget: budget.left,
+      name: `${name}-${split}`,
+    });
 
-  runMicro({ dir: worktree.dir, log, split: 'tune', seeds: SETTINGS.seeds, name: `${name}-tune` });
+    budget.left -= measured?.spent ?? 0;
 
-  const tune = measure({ main: baseline, branch: cachedFor(harness.branch), ids: meta.tune, seeds: SETTINGS.seeds });
-  const first = decide({ tune });
+    return measured;
+  };
+  const tune = compare('tune');
+  const first = decide({ tune: tune?.stats });
 
   if (first.verdict !== 'confirm') return { tune, decision: first };
 
-  log(`${first.reason}; confirming on the held-out set`);
+  if (usagePaused() || budget.left <= 0)
+    return { tune, decision: { verdict: 'inconclusive', reason: 'no usage or budget left for the held-out set' } };
 
-  const mainHeld = ensureRuns({
-    dir: base.dir,
-    harness: harness.main,
-    split: 'heldout',
-    ids: meta.heldout,
-    name: `${name}-main-heldout`,
-    log,
-  });
+  log(`${first.reason}; confirming on the held-out set with $${budget.left.toFixed(2)} left`);
 
-  runMicro({ dir: worktree.dir, log, split: 'heldout', seeds: SETTINGS.seeds, name: `${name}-heldout` });
+  const heldout = compare('heldout');
 
-  const branchRuns = cachedFor(harness.branch);
-  const heldout = measure({ main: mainHeld, branch: branchRuns, ids: meta.heldout, seeds: SETTINGS.seeds });
-
-  return { tune, heldout, decision: decide({ tune, heldout }) };
+  return { tune, heldout, decision: confirmHeldout({ tune: tune.stats, heldout: heldout?.stats }) };
 }
 
-const usedRuns = (harness) =>
-  [...new Set([...runsOf(cachedFor(harness.main)), ...runsOf(cachedFor(harness.branch))])].sort();
+const usedRuns = ({ tune, heldout }) => [...new Set([...(tune?.runs ?? []), ...(heldout?.runs ?? [])])].sort();
 
-function recordLesson({ worktree, weakness, change, decision, runs, log }) {
+function recordExperiment({ worktree, weakness, change, decision, runs }) {
+  appendExperiment(
+    path.join(worktree.dir, 'bench', 'experiments.md'),
+    experimentFields({ weakness, change, decision, runs }),
+  );
+}
+
+function recordNull({ worktree, weakness, change, decision, runs, log }) {
   git(worktree.dir, ['reset', '-q', '--hard', 'HEAD']);
   git(worktree.dir, ['clean', '-fdq']);
-
-  const fields = lessonFields({ weakness, change, decision, runs });
-  const add = ['add', '--title', fields.title, '--lesson', fields.lesson];
-
-  run(
-    process.execPath,
-    ['bench/playbook.mjs', ...add, '--evidence', fields.evidence.join(','), '--tags', fields.tags.join(',')],
-    { cwd: worktree.dir },
-  );
+  recordExperiment({ worktree, weakness, change, decision, runs });
 
   const url = publish(
     {
       changed: true,
       kind: 'lesson',
       title: `Record a harness change for ${weakness.category} that didn't measure better`,
-      summary: fields.lesson,
+      summary: experimentFields({ weakness, change, decision, runs }).lesson,
       why: `The harness lane tried it against ${weakness.category}, the agent's weakest micro-eval category, and the bench didn't keep it.`,
       cause: '',
-      checked: `Measured by the harness lane on the micro-eval tune set; runs: ${runs.join(', ')}.`,
-      changelog: '',
+      checked: `Measured by the harness lane with bench/compare.mjs --against; runs: ${runs.join(', ')}.`,
       screenshots: [],
     },
     worktree,
   );
 
-  log(url ? `discarded (${decision.reason}); lesson ${url}` : `discarded (${decision.reason}); no lesson opened`);
+  log(url ? `discarded (${decision.reason}); recorded in ${url}` : `discarded (${decision.reason}); nothing opened`);
 }
 
 function sessionChange({ worktree, weakness, meta, harness, log }) {
@@ -159,25 +170,22 @@ function sessionChange({ worktree, weakness, meta, harness, log }) {
   return result.output;
 }
 
-function attempt({ worktree, base, log }) {
+function pickAndChange({ worktree, base, log }) {
   const meta = taskMeta();
   const harness = { main: harnessKey(base.dir) };
+  const baselineRun = `harness-${stamp()}-main-tune`;
   const baseline = ensureRuns({
     dir: base.dir,
     harness: harness.main,
     split: 'tune',
     ids: meta.tune,
-    name: `harness-${stamp()}-main-tune`,
+    name: baselineRun,
     log,
   });
   const recent = recentCategories(tried.get('recent').tried, { now: Date.now() });
   const weakness = pickWeakness({ entries: [...baseline.values()].flat(), categoryOf: meta.categoryOf, recent });
 
-  if (!weakness) {
-    log(`no tune task fails on main's harness ${harness.main}`);
-
-    return;
-  }
+  if (!weakness) return log(`no tune task fails on main's harness ${harness.main}`);
 
   log(`weakest: ${weakness.category} at ${Math.round(weakness.rate * 100)}%`);
   tried.update('recent', (state) => ({
@@ -186,26 +194,40 @@ function attempt({ worktree, base, log }) {
 
   const change = sessionChange({ worktree, weakness, meta, harness, log });
 
-  if (!change) return;
+  if (!change) return null;
 
   harness.branch = harnessKey(worktree.dir);
 
-  if (harness.branch === harness.main) {
-    log('the change touches nothing the agent depends on (HARNESS_PATHS); nothing measured');
+  if (harness.branch === harness.main)
+    return log('the change touches nothing the agent depends on (HARNESS_PATHS); nothing measured');
 
-    return;
-  }
+  return { meta, harness, weakness, change, baselineRun };
+}
 
-  const measured = measureBranch({ worktree, base, meta, harness, baseline, log });
-  const runs = usedRuns(harness);
+function attempt({ worktree, base, budget, log }) {
+  const picked = pickAndChange({ worktree, base, log });
+
+  if (!picked) return;
+
+  const { meta, harness, weakness, change, baselineRun } = picked;
+
+  budget.left -= spentOn(baselineRun);
+
+  if (usagePaused() || budget.left <= 0)
+    return log(`stopping before measuring: ${usagePaused() ?? 'the budget is spent'}`);
+
+  const mainSha = git(base.dir, ['rev-parse', 'HEAD']);
+  const measured = measureBranch({ worktree, mainSha, budget, log });
+  const runs = usedRuns(measured);
+  const { decision } = measured;
 
   unlinkRuns(worktree.dir);
 
-  if (measured.decision.verdict !== 'keep') {
-    recordLesson({ worktree, weakness, change, decision: measured.decision, runs, log });
+  if (decision.verdict === 'discard') return recordNull({ worktree, weakness, change, decision, runs, log });
 
-    return;
-  }
+  if (decision.verdict !== 'keep') return log(`nothing recorded: ${decision.reason}`);
+
+  recordExperiment({ worktree, weakness, change, decision, runs });
 
   const extra = {
     weakness: weaknessMarkdown(weakness, { titleOf: meta.titleOf, settings: SETTINGS, harness: harness.main }),
@@ -213,15 +235,20 @@ function attempt({ worktree, base, log }) {
   };
   const url = publish({ ...change, kind: 'harness' }, { ...worktree, extra });
 
-  log(url ? `kept (${measured.decision.reason}); opened ${url}` : 'kept, but nothing was published');
+  log(url ? `kept (${decision.reason}); opened ${url}` : 'kept, but nothing was published');
 }
 
 export default function harness({ log }) {
+  const skip = skipReason({ paused: pause(), pulls: openPulls({ fresh: true }) });
+
+  if (skip) return log(skip);
+
+  const budget = { left: budgetFrom(repoVariable('LOOP_BENCH_BUDGET')) };
   const worktree = openBranch('harness', 'weakness');
   const base = openDetached(`harness-main-${process.pid}`, git(worktree.dir, ['rev-parse', 'HEAD']));
 
   try {
-    attempt({ worktree, base, log });
+    attempt({ worktree, base, budget, log });
   } finally {
     unlinkRuns(worktree.dir);
     unlinkRuns(base.dir);

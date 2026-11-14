@@ -8,21 +8,25 @@ import {
   images,
   linkText,
   longSentences,
+  menuPaths,
   pageLinks,
   paragraphLength,
+  plainKeys,
   sentenceLength,
+  spelling,
   summaryLength,
   title,
+  uiLabels,
 } from './rules.mjs';
 
 const CONTENT_PATH = /(?:^|\/)site\/content\/(changelog|blog|help)\/([^/]+)\.md$/;
 
-const EVERY_PAGE = [bannedWords, linkText, pageLinks, images, title];
+const EVERY_PAGE = [bannedWords, spelling, linkText, pageLinks, images, title, menuPaths];
 
 export const RULES = {
-  changelog: [...EVERY_PAGE, sentenceLength, paragraphLength, summaryLength, helpLink],
+  changelog: [...EVERY_PAGE, sentenceLength, paragraphLength, summaryLength, helpLink, uiLabels],
   blog: [...EVERY_PAGE, sentenceLength, paragraphLength, copiedFromChangelog],
-  help: [...EVERY_PAGE, helpTitle],
+  help: [...EVERY_PAGE, helpTitle, plainKeys, uiLabels],
 };
 
 function pageOf({ path, source }) {
@@ -33,22 +37,23 @@ function pageOf({ path, source }) {
   const [, kind, slug] = match;
   const { data } = parseFrontMatter(source, path);
 
-  return { path, kind, slug, data, blocks: blocksOf(source) };
+  return { path, kind, slug, data, source, blocks: blocksOf(source) };
 }
 
-function siteOf(pages, exists) {
+function siteOf(pages, { exists, labels }) {
   const changelog = pages.filter((page) => page.kind === 'changelog');
 
   return {
     exists,
+    labels,
     pages: new Set(pages.map((page) => `${page.kind}/${page.slug}`)),
     changelogSentences: new Set(changelog.flatMap(longSentences).map(({ sentence }) => sentence)),
   };
 }
 
-export function lintSite({ files, exists }) {
+export function lintSite({ files, exists, labels = null }) {
   const pages = files.map(pageOf).filter(Boolean);
-  const site = siteOf(pages, exists);
+  const site = siteOf(pages, { exists, labels });
 
   return pages.flatMap((page) =>
     RULES[page.kind].flatMap((rule) => rule(page, site)).map((found) => ({ file: page.path, ...found })),

@@ -17,7 +17,7 @@ related:
   - the-robotics-loop
   - design-a-robot-with-the-agent
 covers:
-  - src/components/RobotsPanel.tsx
+  - src/components/parts/robotViews.tsx
   - src/utils/robotImport/presets.ts
   - src/workspace/useRobotInsert.ts
   - src/components/PosePanel.tsx
@@ -34,8 +34,9 @@ By the end, the arm holds a pose you set, then folds under its own weight when y
 ## Add the arm
 
 1. Click **+** after the last tab at the top of the window. A blank scene named Untitled opens.
-2. Click **Robots** in the view rail on the left, the second icon from the top.
-3. Under **Arms**, click **SO-101 Arm**.
+2. Click **Parts** in the view rail on the left, the first icon from the top.
+3. Under **Robots**, click **Arms**.
+4. Click **SO-101 Arm**.
 
 The arm appears on the canvas, selected. A toast at the bottom says how many joints it has.
 
@@ -43,7 +44,7 @@ The arm appears on the canvas, selected. A toast at the bottom says how many joi
 
 1. Click **Pose** at the top of the right panel.
 2. Drag the slider in the first joint's row. The arm turns on the canvas as you drag.
-3. Click the number at the end of another joint's row, type `45`, and press Enter.
+3. Click the number at the end of another joint's row, type `45`, and press [[↩]].
 
 Double-click a slider to send its joint back to 0. Posing never changes the parts; it only moves them on the canvas.
 
@@ -53,7 +54,7 @@ Double-click a slider to send its joint back to 0. Posing never changes the part
 2. Click the blue **Simulate** button. The arm starts under physics and holds the pose you set, while the clock beside the controls counts up.
 3. Under **Control**, choose **Limp**. The motors let go, and the arm folds down.
 4. Click **Reset** to start again from your pose.
-5. Click **End simulation** to go back to editing.
+5. Click **Stop simulation** to go back to editing.
 
 Your scene saves itself as you work. Press [[⌘O]] to find it again later in the Scenes menu.
 

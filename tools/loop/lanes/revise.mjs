@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
 import { conflictsWithMain, fetchAll } from '../lib/branches.mjs';
-import { CHANGE_SCHEMA, runAgent } from '../lib/agent.mjs';
+import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
   checkRunFor,
@@ -9,14 +9,15 @@ import {
   editPullLabels,
   failedLog,
   isLoopComment,
-  lastFinishedMainCheck,
   openPulls,
   pullCheck,
   pullComments,
   pullReview,
 } from '../lib/github.mjs';
 import { HOME_CHECKOUT, OWNER_LOGIN, WORKTREES } from '../lib/paths.mjs';
+import { checkedRun } from '../lib/preflight.mjs';
 import { protectedIn, protectedList } from '../lib/protected.mjs';
+import { landedIn } from '../lib/landed.mjs';
 import { kindOf, pullTitle, REVISED_FIELDS, revisedBody } from '../lib/pull.mjs';
 import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
@@ -58,13 +59,11 @@ const git = (args, cwd, opts = {}) => run('git', args, { cwd, ...opts });
 const jamelComments = (comments) =>
   comments.filter((comment) => comment.author === OWNER_LOGIN && !isLoopComment(comment));
 
-function needFor(pull, mainGreen) {
+function needFor(pull) {
   if (!pull.headRefName.startsWith('loop/')) return null;
 
   const entry = entryFor(pull.number);
-  const failing =
-    pullReview(pull) === 'failure' ||
-    ((mainGreen || pull.headRefName.startsWith('loop/repair/')) && pullCheck(pull) === 'failure');
+  const failing = pullReview(pull) === 'failure' || pullCheck(pull) === 'failure';
   const newHead = !entry.heads.includes(pull.headRefOid);
 
   if (failing && newHead && !conflictsWithMain(pull))
@@ -112,7 +111,8 @@ function publishRevision(pull, { dir, output }) {
   git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
 
   const kind = kindOf(pull.title);
-  const restated = kind ? revisedBody(pull.body, { ...output, kind }, { branch: pull.headRefName }) : pull.body;
+  const landed = landedIn('origin/main...HEAD', dir);
+  const restated = kind ? revisedBody(pull.body, { ...output, kind }, { branch: pull.headRefName, landed }) : pull.body;
   const heading = restated.includes('\n## Revisions\n') ? '' : '\n\n## Revisions\n';
   const touched = protectedIn('HEAD~1..HEAD', dir);
   const line =
@@ -136,7 +136,15 @@ function revisePull(pull, { reason, comments, jamelAt }, log) {
     }
 
     const prompt = `Revise pull request #${pull.number}: ${pull.title}\n\n${pull.body}\n\n${evidence(pull, reason, comments)}`;
-    const result = runAgent({ cwd: worktree.dir, name: 'revise', prompt, schema: SCHEMA, hours: 4 });
+    const result = checkedRun({
+      cwd: worktree.dir,
+      name: 'revise',
+      prompt,
+      schema: SCHEMA,
+      hours: 4,
+      kind: kindOf(pull.title),
+      log,
+    });
 
     recordAttempt(pull.number, { head: pull.headRefOid, jamelAt });
 
@@ -178,12 +186,10 @@ function handle(pull, need, log) {
 }
 
 export default function revise({ log }) {
-  const mainGreen = lastFinishedMainCheck()?.conclusion === 'success';
-
   fetchAll();
 
   for (const pull of openPulls()) {
-    const need = needFor(pull, mainGreen);
+    const need = needFor(pull);
     const release = need ? claim(`pull-${pull.number}`) : null;
 
     if (!release) continue;

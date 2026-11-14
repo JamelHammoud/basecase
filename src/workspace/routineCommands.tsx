@@ -1,23 +1,22 @@
 import type { Command } from '../components/CommandPalette';
 import { PlusIcon, RoutinesIcon, RunIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
+import { showLeftTab } from './showView';
+import { keyFor } from '../app/shortcuts';
 
 const KEYWORDS = 'routine flow flowchart behaviour behavior reaction sentence';
 
 export function routineCommands({ core }: CommandInputs): Command[] {
   const routines = core.simTraining.routines;
   const { store, editor, view } = routines;
-  const show = () => {
-    core.tool.setLeftTab('routines');
-    core.studio.setIsLeftOpen(true);
-  };
+  const show = () => showLeftTab(core, 'routines');
   const editing: Command[] = view.routine
     ? [
         {
           id: 'add-routine-step',
           group: 'Routines',
           label: 'Add Step',
-          icon: <PlusIcon className="w-4 h-4" />,
+          icon: <PlusIcon />,
           keywords: `${KEYWORDS} step drive turn say wait if`,
           run: () => {
             show();
@@ -32,8 +31,8 @@ export function routineCommands({ core }: CommandInputs): Command[] {
           id: 'run-routine',
           group: 'Routines',
           label: 'Run Routine',
-          icon: <RunIcon className="w-4 h-4" />,
-          shortcut: '⌘↩',
+          icon: <RunIcon />,
+          shortcut: keyFor('run-routine'),
           keywords: `${KEYWORDS} play simulate`,
           run: () => {
             show();
@@ -48,7 +47,7 @@ export function routineCommands({ core }: CommandInputs): Command[] {
       id: 'show-routines',
       group: 'Panels',
       label: 'Show Routines',
-      icon: <RoutinesIcon className="w-4 h-4" />,
+      icon: <RoutinesIcon />,
       keywords: KEYWORDS,
       run: show,
     },
@@ -56,7 +55,7 @@ export function routineCommands({ core }: CommandInputs): Command[] {
       id: 'new-routine',
       group: 'Routines',
       label: 'New Routine',
-      icon: <PlusIcon className="w-4 h-4" />,
+      icon: <PlusIcon />,
       keywords: KEYWORDS,
       run: () => {
         show();

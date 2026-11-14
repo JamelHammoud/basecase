@@ -48,11 +48,23 @@ describe('a Case console', () => {
     expect(parseCase(JSON.parse(JSON.stringify(parsed)))).toEqual(parsed);
   });
 
+  it('lays out only what each surface can show: servos need the desktop, cameras and tries the studio', () => {
+    const shown = (surface: { desktop: boolean; studio: boolean }) => {
+      const layout = consoleLayout(DEFAULT_CONSOLE, surface);
+
+      return [...ids(layout.before), ...ids(layout.after)];
+    };
+
+    expect(shown({ desktop: true, studio: true })).toEqual([['cameras'], ['brief', 'failures', 'servos', 'tries']]);
+    expect(shown({ desktop: false, studio: true })).toEqual([['cameras'], ['brief', 'failures', 'tries']]);
+    expect(shown({ desktop: false, studio: false })).toEqual([['brief', 'failures']]);
+  });
+
   it('refuses inputs no source registers, naming the ones arc #184 plans apart from unknown ones', () => {
     const base = DEFAULT_CONSOLE;
 
-    expect(withConsole({ ...base, input: ['camera'] })).toThrow(/console.input\[0\] camera can’t drive a Case/);
-    expect(withConsole({ ...base, input: ['midi'] })).toThrow(/console.input\[0\] midi can’t drive/);
+    expect(withConsole({ ...base, input: ['leader-arm'] })).toThrow(/console.input\[0\] leader-arm can’t drive a Case/);
+    expect(withConsole({ ...base, input: ['policy'] })).toThrow(/console.input\[0\] policy can’t drive/);
     expect(withConsole({ ...base, input: ['mind'] })).toThrow(/console.input\[0\] mind is no input source/);
     expect(withConsole({ ...base, input: ['keys', 'keys'] })).toThrow(/console.input\[1\] repeats keys/);
     expect(withConsole({ ...base, input: [] })).toThrow(/console.input must name an input source/);
@@ -76,7 +88,15 @@ describe('a Case console', () => {
       /joint.\*.position can’t be shown here/,
     );
     expect(one({ id: 'a', kind: 'plot', signals: ['joint.*.position'] })).not.toThrow();
-    expect(one({ id: 'a', kind: 'camera', signal: 'camera.operator' })).toThrow(/needs the camera input/);
+    expect(one({ id: 'a', kind: 'camera', signal: 'camera.operator' })).toThrow(/needs the camera, hand or face input/);
+
+    for (const input of ['camera', 'hand', 'face']) {
+      const operator = { id: 'you', kind: 'camera', signal: 'camera.operator' };
+      const layout = { areas: [{ canvas: true }, { size: 300, panels: ['you'] }] };
+
+      expect(withConsole({ input: [input], panels: [operator], layout }), input).not.toThrow();
+    }
+
     expect(one({ id: 'a', kind: 'plot', signals: [] })).toThrow(/must name a signal/);
     expect(one({ id: 'a', kind: 'plot', signals: ['time'], seconds: 900 })).toThrow(/seconds must be from 2 to 120/);
     expect(one({ id: 'a', kind: 'button', action: 'launch' })).toThrow(/action must be one of try/);
@@ -126,6 +146,85 @@ describe('a Case console', () => {
   });
 });
 
+describe('code panels', () => {
+  const STICK = '<canvas></canvas><script>basecase.drive({ v: [0, 0, 0] })</script>';
+  const code = (id: string, source = STICK) => ({ id, kind: 'code', source });
+  const coded = (panels: unknown[], areas: unknown[]) =>
+    withConsole({ input: ['code', 'keys'], panels, layout: { areas } });
+
+  it('parse in an area and as canvas overlays, and lay out with the overlays apart', () => {
+    const parsed = coded(
+      [{ ...code('stick'), title: 'Stick', height: 240 }, code('hud'), { id: 'clock', kind: 'value', signal: 'time' }],
+      [
+        { canvas: true, overlays: [{ panel: 'hud', anchor: 'top-left', width: 240, height: 120 }] },
+        { size: 320, panels: ['stick', 'clock'] },
+      ],
+    )();
+    const layout = consoleLayout(parsed.console!, { desktop: false, studio: true });
+
+    expect(parsed.console!.panels[0]).toEqual({
+      id: 'stick',
+      kind: 'code',
+      title: 'Stick',
+      source: STICK,
+      height: 240,
+    });
+    expect(ids(layout.after)).toEqual([['stick', 'clock']]);
+    expect(layout.overlays.map((o) => [o.panel, o.anchor, o.pointer, o.spec.source])).toEqual([
+      ['hud', 'top-left', undefined, STICK],
+    ]);
+    expect(parseCase(JSON.parse(JSON.stringify(parsed)))).toEqual(parsed);
+  });
+
+  it('keep the pointer flag and need the sides their anchor uses', () => {
+    const overlay = (o: Record<string, unknown>) =>
+      coded([code('hud')], [{ canvas: true, overlays: [{ panel: 'hud', ...o }] }]);
+
+    expect(overlay({ anchor: 'fill', pointer: true })().console!.layout.areas[0]).toEqual({
+      canvas: true,
+      overlays: [{ panel: 'hud', anchor: 'fill', pointer: true }],
+    });
+    expect(overlay({ anchor: 'bottom', height: 90 })).not.toThrow();
+    expect(overlay({ anchor: 'bottom' })).toThrow(/overlays\[0\].height is needed for this anchor/);
+    expect(overlay({ anchor: 'left', height: 90 })).toThrow(/overlays\[0\].width is needed/);
+    expect(overlay({ anchor: 'middle' })).toThrow(/overlays\[0\].anchor must be one of top-left/);
+    expect(overlay({ anchor: 'fill', pointer: 'yes' })).toThrow(/overlays\[0\].pointer must be true or false/);
+    expect(overlay({ anchor: 'top-left', width: 20, height: 90 })).toThrow(/width must be from 40 to 1600/);
+  });
+
+  it('refuse a 300 KB source and a fifth code panel by path', () => {
+    const big = `<script>const pad = '${'x'.repeat(300 * 1024)}';</script>`;
+    const five = ['a', 'b', 'c', 'd', 'e'].map((id) => code(id));
+
+    expect(coded([code('stick', big)], [{ canvas: true }, { size: 300, panels: ['stick'] }])).toThrow(
+      /^console.panels\[0\].source must be at most 256 KB$/,
+    );
+    expect(coded([code('stick', ' ')], [{ canvas: true }, { size: 300, panels: ['stick'] }])).toThrow(
+      /panels\[0\].source must be an HTML document/,
+    );
+    expect(coded(five, [{ canvas: true }, { size: 300, panels: five.map((p) => p.id) }])).toThrow(
+      /^console.panels\[4\] is a fifth code panel; a Case runs at most 4$/,
+    );
+  });
+
+  it('refuse an overlay that isn’t a code panel, or a code panel placed twice', () => {
+    const clock = { id: 'clock', kind: 'value', signal: 'time' };
+
+    expect(coded([clock], [{ canvas: true, overlays: [{ panel: 'clock', anchor: 'fill' }] }])).toThrow(
+      /areas\[0\].overlays\[0\].panel clock isn’t a code panel/,
+    );
+    expect(
+      coded(
+        [code('hud')],
+        [
+          { canvas: true, overlays: [{ panel: 'hud', anchor: 'fill' }] },
+          { size: 300, panels: ['hud'] },
+        ],
+      ),
+    ).toThrow(/repeats hud/);
+  });
+});
+
 describe('five consoles from arc #184', () => {
   it('names the inputs this version lacks and refuses them by path', () => {
     const refused = ARC_CONSOLES.flatMap(({ name, console }) => {
@@ -138,16 +237,12 @@ describe('five consoles from arc #184', () => {
       }
     });
 
-    expect(refused).toEqual([
-      ['G1 arm teleop', 'console.input[0] camera can’t drive a Case in this version'],
-      ['Sorting cell', 'console.input[0] policy can’t drive a Case in this version'],
-      ['MIDI hexapod', 'console.input[0] midi can’t drive a Case in this version'],
-    ]);
+    expect(refused).toEqual([['Sorting cell', 'console.input[0] policy can’t drive a Case in this version']]);
   });
 
   it('parses each once keys stand in for the missing input, and lays out its own areas', () => {
     const laid = ARC_CONSOLES.map(({ console }) => {
-      const layout = consoleLayout(withConsole(runnable(console))().console!, { desktop: true });
+      const layout = consoleLayout(withConsole(runnable(console))().console!, { desktop: true, studio: true });
 
       return [ids(layout.before), ids(layout.after)];
     });

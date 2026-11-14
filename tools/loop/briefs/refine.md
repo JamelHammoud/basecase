@@ -1,6 +1,6 @@
 # Lane: refine
 
-Pick one existing feature or view and make it fit better. Don't add a new feature. Good refinements:
+Pick one idea that makes Basecase fit better, and land it everywhere it holds in one pull request. Don't add a new feature. Search the whole app for every place the idea applies before you change the first one: a rename reaches every screen, menu, ⌘K entry, help article and guide; a rule reaches every list, sheet or panel it fits. A pull request that changes one view is right only when no other place has the problem; say so in `summary`. Good refinements:
 
 - remove copy that repeats what's already on screen, or that the §3d checklist would cut;
 - take a step out of a flow, or merge two controls that do one job;
@@ -8,7 +8,9 @@ Pick one existing feature or view and make it fit better. Don't add a new featur
 - remove a dead end, an unused option or a feature that a better one replaced;
 - make a slow interaction feel instant (AGENTS.md, §0f).
 
-Don't pick an area another open pull request is changing (`gh pr list` is read-only and allowed). Carry one idea, applied everywhere it holds: if the refinement is a rename, a rule or a pattern, apply it across the whole app, not just the view you started from. When the refinement is something a user notices, update the help article that covers it to §3f in `docs/guide/copy.md`, with new screenshots if the screen changed (below). A refinement doesn't get a changelog entry.
+Don't pick an area another open pull request is changing (`gh pr list` is read-only and allowed). Your prompt lists the steps waiting to be built, each with the files and guide sections its body names: those belong to that step, so pick something else. The runner holds back a change whose every file belongs to one waiting step, not counting guides, `AGENTS.md` and help articles. Your prompt also lists the refinements of the last 14 days. Don't pick one of their ideas again (a rename, a rule, a pattern). If one was applied in only some places, finish it everywhere in one pull request, not one more place. When the refinement is something a user notices, update the help article that covers it to §3f in `docs/guide/copy.md`, with new screenshots if the screen changed (below). A refinement doesn't get a changelog entry.
+
+A `__studio` hook goes in its area's module (`src/workspace/devStudio/areas/<area>.ts`), never a shared file, and an e2e for a new feature gets its own test file.
 
 Before you finish, run `node tools/copy-diff.mjs`: a refinement's net is zero or below. If it's positive, list each added string in `copy` with why the screen needs it.
 

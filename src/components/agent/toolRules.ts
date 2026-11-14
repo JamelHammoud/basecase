@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   CheckIcon,
   CodeIcon,
@@ -14,31 +13,17 @@ import {
   RobotsIcon,
   RunIcon,
   CasesIcon,
-  RoutinesIcon,
   SearchIcon,
   ShapeIcon,
   ToolIcon as ToolPromptIcon,
-  TrainIcon,
   WebIcon,
 } from '../../design-system';
+import { plural } from '../../../electron/plural.mjs';
+import { duration } from '../../utils/duration';
+import { SIM_RULES } from './simToolRules';
+import { plainRule, type ToolIcon, type ToolRule } from './toolRule';
 
-export type ToolIcon = React.FC<{ className?: string }>;
-
-export interface ToolLabel {
-  title: string;
-  detail?: string;
-}
-
-export interface LabelContext {
-  input: Record<string, unknown>;
-  verb: (ing: string, ed: string) => string;
-}
-
-export interface ToolRule {
-  keys: string[];
-  icon: ToolIcon;
-  label: (ctx: LabelContext) => ToolLabel | null;
-}
+export type { LabelContext, ToolIcon, ToolLabel, ToolRule } from './toolRule';
 
 const list = (arr: unknown): unknown[] => (Array.isArray(arr) ? arr : []);
 
@@ -61,11 +46,7 @@ const hostOf = (url: unknown) => {
   }
 };
 
-const counted = (count: number, noun: string) => {
-  if (count === 0) return `${noun}s`;
-
-  return `${count} ${noun}${count === 1 ? '' : 's'}`;
-};
+const counted = (count: number, noun: string) => (count === 0 ? `${noun}s` : plural(count, noun));
 
 const partGroups = (parts: unknown[]) =>
   Array.from(new Set(parts.map((p) => (p as { group?: string }).group).filter(Boolean))) as string[];
@@ -88,12 +69,6 @@ const partsRule = (key: string, icon: ToolIcon, [ing, ed]: [string, string]): To
 
     return { title: `${verb(ing, ed)} ${counted(ids.length, 'part')}`, detail: optional(names(ids)) };
   },
-});
-
-const plainRule = (keys: string[], icon: ToolIcon, [ing, ed]: [string, string]): ToolRule => ({
-  keys,
-  icon,
-  label: ({ verb }) => ({ title: verb(ing, ed) }),
 });
 
 const PART_RULES: ToolRule[] = [
@@ -136,8 +111,9 @@ const PART_RULES: ToolRule[] = [
       };
     },
   },
-  partsRule('delete_parts', DeleteIcon, ['Removing', 'Removed']),
+  partsRule('delete_parts', DeleteIcon, ['Deleting', 'Deleted']),
   partsRule('mirror_parts', EditIcon, ['Mirroring', 'Mirrored']),
+  partsRule('merge_parts', EditIcon, ['Merging', 'Merged']),
   {
     keys: ['fasten'],
     icon: ToolPromptIcon,
@@ -224,11 +200,11 @@ const REVIEW_RULES: ToolRule[] = [
       return {
         title: ids.length
           ? `${verb('Inspecting', 'Inspected')} ${names(ids)}`
-          : verb('Looking at the model', 'Looked at the model'),
+          : verb('Looking at the scene', 'Looked at the scene'),
       };
     },
   },
-  plainRule(['check_scene'], CheckIcon, ['Checking the model', 'Checked the model']),
+  plainRule(['check_scene'], CheckIcon, ['Checking the scene', 'Checked the scene']),
   plainRule(['craft_review'], CheckIcon, ['Reviewing the craft', 'Reviewed the craft']),
   plainRule(['check_assembly'], CheckIcon, ['Checking the assembly', 'Checked the assembly']),
   plainRule(['set_interfaces'], FileIcon, ['Writing interface contracts', 'Wrote interface contracts']),
@@ -251,10 +227,13 @@ const REVIEW_RULES: ToolRule[] = [
   plainRule(['get_readiness'], CheckIcon, ['Checking if it can be built', 'Checked if it can be built']),
   plainRule(['dispute_finding'], CheckIcon, ['Disputing a check', 'Disputed a check']),
   plainRule(['add_sourced_item'], SearchIcon, ['Adding a part to the list', 'Added a part to the list']),
-  plainRule(['import_maker_cad'], ShapeIcon, ["Importing the maker's CAD", "Imported the maker's CAD"]),
+  plainRule(['import_maker_cad'], ShapeIcon, ['Importing the maker’s CAD', 'Imported the maker’s CAD']),
   plainRule(['verify_design'], CheckIcon, ['Verifying the design', 'Verified the design']),
   plainRule(['get_bom'], FileIcon, ['Reading the parts list', 'Read the parts list']),
+  plainRule(['record_on_hand'], FileIcon, ['Recording parts on hand', 'Recorded parts on hand']),
   plainRule(['size_actuators'], JointsIcon, ['Sizing the actuators', 'Sized the actuators']),
+  plainRule(['size_arm'], JointsIcon, ['Sizing an arm', 'Sized an arm']),
+  plainRule(['synthesize_linkage'], JointsIcon, ['Fitting a four-bar', 'Fitted a four-bar']),
   plainRule(['sweep_design'], RunIcon, ['Comparing design options', 'Compared design options']),
   plainRule(['set_build'], FileIcon, ['Updating the build', 'Updated the build']),
   plainRule(['build_guide'], FileIcon, ['Making the build guide', 'Made the build guide']),
@@ -341,7 +320,7 @@ const ROBOT_RULES: ToolRule[] = [
     keys: ['simulate'],
     icon: RunIcon,
     label: ({ input, verb }) => ({
-      title: `${verb('Simulating', 'Simulated')} ${Number(input.seconds ?? 5)} s`,
+      title: `${verb('Simulating', 'Simulated')} ${duration(Number(input.seconds ?? 5))}`,
       detail: controllerName(String(input.controller ?? 'hold')),
     }),
   },
@@ -350,14 +329,14 @@ const ROBOT_RULES: ToolRule[] = [
     icon: CasesIcon,
     label: ({ input, verb }) => ({
       title: verb('Setting the world', 'Set the world'),
-      detail: optional(Array.isArray(input.objects) ? `${input.objects.length} objects` : ''),
+      detail: optional(Array.isArray(input.objects) ? plural(input.objects.length, 'object') : ''),
     }),
   },
   {
     keys: ['start_drive'],
     icon: RunIcon,
     label: ({ input, verb }) => ({
-      title: `${verb('Driving', 'Drove')} ${Number(input.seconds ?? 6)} s`,
+      title: `${verb('Driving', 'Drove')} ${duration(Number(input.seconds ?? 6))}`,
       detail: optional(input.live ? 'On the canvas' : ''),
     }),
   },
@@ -365,20 +344,11 @@ const ROBOT_RULES: ToolRule[] = [
     keys: ['operate'],
     icon: RunIcon,
     label: ({ input, verb }) => ({
-      title: `${verb('Operating', 'Operated')} ${Number(input.seconds ?? 1)} s`,
+      title: `${verb('Operating', 'Operated')} ${duration(Number(input.seconds ?? 1))}`,
       detail: optional(input.restart ? 'From the start' : ''),
     }),
   },
-  plainRule(['create_case'], CasesIcon, ['Making a Case', 'Made a Case']),
-  plainRule(['make_routine'], RoutinesIcon, ['Making a Routine', 'Made a Routine']),
-  plainRule(['read_routine'], LookIcon, ['Reading the Routine', 'Read the Routine']),
-  plainRule(['edit_routine'], EditIcon, ['Editing the Routine', 'Edited the Routine']),
-  plainRule(['test_routine'], CheckIcon, ['Testing the Routine', 'Tested the Routine']),
-  plainRule(['run_routine'], RunIcon, ['Running the Routine', 'Ran the Routine']),
-  plainRule(['draft_skill'], TrainIcon, ['Drafting a skill', 'Drafted a skill']),
-  plainRule(['train_skill'], TrainIcon, ['Starting training', 'Started training']),
-  plainRule(['list_skills'], TrainIcon, ['Checking skills', 'Checked skills']),
-  plainRule(['training_status'], TrainIcon, ['Checking training', 'Checked training']),
+  ...SIM_RULES,
 ];
 
 const SOURCE_RULES: ToolRule[] = [
@@ -390,7 +360,7 @@ const SOURCE_RULES: ToolRule[] = [
       const paths = list(input.paths).map((p) => String(p).split('/').pop() ?? '');
 
       return {
-        title: `${verb('Studying', 'Studied')} ${paths.length > 1 ? `${paths.length} attached files` : 'an attached file'}`,
+        title: `${verb('Studying', 'Studied')} ${paths.length > 1 ? plural(paths.length, 'attached file') : 'an attached file'}`,
         detail: optional(names(paths)),
       };
     },
@@ -409,7 +379,9 @@ const SOURCE_RULES: ToolRule[] = [
     label: ({ input, verb }) => {
       const urls = list(input.urls);
 
-      return { title: `${verb('Looking at', 'Looked at')} ${urls.length > 1 ? `${urls.length} photos` : 'a photo'}` };
+      return {
+        title: `${verb('Looking at', 'Looked at')} ${urls.length > 1 ? plural(urls.length, 'photo') : 'a photo'}`,
+      };
     },
   },
   {

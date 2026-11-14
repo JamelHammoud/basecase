@@ -41,13 +41,15 @@ function ModePanel({ core, actions }: InspectTabProps) {
       key={target?.key ?? 0}
       sketchStart={target?.start ?? EMPTY_SKETCH}
       boundSketch={boundSketch(core)}
+      linkage={{ path: sketching.path, setPath: sketching.setPath, insert: sketching.insertLinkage }}
       onCreateSketch={(shape, output) => void createSketch(shape, output)}
       selectedPart={selection.selectedPart}
       sculptSettings={tool.sculptSettings}
       mode={studioMode}
       svgFile={tool.creatorSvg}
       onChangeMode={(m) => m !== 'clay' && tool.setCreator(m)}
-      onDone={() => (studioMode === 'clay' ? tool.setMode('translate') : tool.setCreator(null))}
+      onDone={tool.leaveStudio}
+      onUnsavedChange={tool.setStudioUnsaved}
       onUpdateSculptSettings={tool.updateSculptSettings}
       onAddClayPreset={creation.addClayPreset}
       onSubdivideSelectedClay={creation.subdivideSelectedClay}
@@ -75,10 +77,12 @@ function SceneInspector({ core, actions }: InspectTabProps) {
       snapStepMm={studio.snapStepMm}
       onUpdate={edits.updateSelectedPart}
       onDuplicate={ops.duplicateSelected}
+      onMirror={actions.mirror.mirrorSelected}
       onSaveAsModel={() => void saveAsModel('selected')}
       onDelete={ops.deleteSelected}
       onDropToFloor={edits.dropToGround}
       onStack={edits.stackOnBelow}
+      onCenter={edits.centerOnOrigin}
       annotations={annotations.annotations}
       activeAnnotationId={annotations.activeId}
       onOpenAnnotation={annotations.setActiveId}

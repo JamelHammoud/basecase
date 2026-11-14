@@ -32,7 +32,14 @@ const sharedComponents: Components = {
       </aside>
     );
   },
-  span: ({ children }) => <span className="inline-flex items-center gap-[3px] align-[1px]">{children}</span>,
+  span: ({ children, ...props }) => (
+    <span
+      data-keys={(props as Record<string, string>)['data-keys']}
+      className="inline-flex items-center gap-[3px] align-[1px]"
+    >
+      {children}
+    </span>
+  ),
   kbd: ({ children }) => (
     <kbd className="min-w-[22px] h-[22px] px-[6px] inline-flex items-center justify-center rounded-[6px] bg-white/[0.1] font-sans text-[13px] font-medium leading-none text-white/90">
       {children}

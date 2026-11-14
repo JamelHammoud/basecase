@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { RobotJoint, RobotPoseState, RootOffset, ScenePart } from '../types/robotics';
+import { loopValue } from './kinematicsLoop';
 import { isMovable, type Rig, type V3 } from './kinematicsRig';
 
 export function partMatrix(p: ScenePart): THREE.Matrix4 {
@@ -83,6 +84,16 @@ function jointBase(rig: Rig, posed: PosedRig, j: RobotJoint): THREE.Matrix4 {
   return (parent && posed.joint.get(parent)) || posed.roots.get(rig.robotOf.get(j.id) ?? '') || posed.root;
 }
 
+function posedMotion(rig: Rig, j: RobotJoint, pose: RobotPoseState | null | undefined, out: THREE.Matrix4) {
+  const driver = j.loop && rig.byId.get(j.loop.driver);
+
+  if (!driver) return jointMotion(j, clampJoint(j, pose?.values[j.id] ?? 0), out);
+
+  const turned = loopValue(j, clampJoint(driver, pose?.values[driver.id] ?? 0));
+
+  return jointMotion({ ...j, type: 'revolute' }, turned, out);
+}
+
 export function forwardKinematics(rig: Rig, pose: RobotPoseState | null | undefined): PosedRig {
   const roots = new Map<string, THREE.Matrix4>();
 
@@ -93,13 +104,11 @@ export function forwardKinematics(rig: Rig, pose: RobotPoseState | null | undefi
   const tmp = new THREE.Matrix4();
 
   for (const j of rig.joints) {
-    const v = clampJoint(j, pose?.values[j.id] ?? 0);
-
     posed.joint.set(
       j.id,
       jointBase(rig, posed, j)
         .clone()
-        .multiply(jointMotion(j, v, tmp)),
+        .multiply(posedMotion(rig, j, pose, tmp)),
     );
   }
 

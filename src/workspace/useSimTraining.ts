@@ -12,6 +12,7 @@ import type { ShowToast, StudioShared } from './types';
 import { useCases } from './useCases';
 import { useRoutines } from './useRoutines';
 import { useShareRobot } from './useShareRobot';
+import { useSkillHub } from './useSkillHub';
 import { useSkills } from './useSkills';
 import type { SceneDocument } from './useSceneDocument';
 
@@ -89,6 +90,23 @@ export function useSimTraining(options: SimTrainingOptions) {
     openAccounts: () => studio.openSettings('accounts'),
     sceneId: scene.sceneId,
     partners: () => studio.robotsBeside(workspaceId),
+    skills: skills.routineSkills,
+    skillTraining: skills,
+    viewportRef,
+    caseRobot: async () => {
+      const viewport = viewportRef.current;
+
+      if (!viewport) return null;
+
+      await viewport.meshesReady();
+
+      return {
+        parts: docs.partsRef.current,
+        project: docs.projectRef.current,
+        measures: await viewport.measureParts(),
+        partTriangles: viewport.partTriangles,
+      };
+    },
   });
   const share = useShareRobot({
     scene: { sceneId: scene.sceneId, sceneName: scene.sceneName },
@@ -103,9 +121,20 @@ export function useSimTraining(options: SimTrainingOptions) {
     showToast,
     openAccounts: () => studio.openSettings('accounts'),
   });
-  const routines = useRoutines({ parts, project, projectRef, sim, commitParts, updateProjectNow, showToast });
+  const skillHub = useSkillHub({ skills, showToast, openAccounts: () => studio.openSettings('accounts') });
+  const routines = useRoutines({
+    parts,
+    project,
+    projectRef,
+    sim,
+    commitParts,
+    updateProjectNow,
+    showToast,
+    skills: skills.routineSkills,
+    trainHandoff: skills.trainHandoff,
+  });
 
-  return { sim, training, policies, deletePolicy, cases, routines, skills, share };
+  return { sim, training, policies, deletePolicy, cases, routines, skills, skillHub, share };
 }
 
 export type SimTraining = ReturnType<typeof useSimTraining>;

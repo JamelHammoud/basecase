@@ -41,7 +41,7 @@ A toast shows the progress, then names the package when it's saved. Basecase sav
 
 ![The toast after the package is saved](/help/export-a-robot-package/exported.png)
 
-**Export Robot Package** is also in ⌘K. Until the scene has a joint that turns or slides, the menu item is greyed out and the command is hidden.
+**Export Robot Package** is also in [[⌘K]]. Until the scene has a joint that turns or slides, the menu item is grayed out and the command is hidden.
 
 ## Open it in ROS 2
 
@@ -57,7 +57,7 @@ RViz opens with the robot, and the Joint State Publisher window has a slider per
 
 - **MuJoCo** loads `robot.xml` as it is. It's the model the Simulate tab runs, and needs no other file.
 - **ROS 2** builds the folder with `colcon build`. The URDF is in `urdf/` and finds its meshes by `package://` path.
-- `joint_map.json` uses the same keys as the calibration file Basecase's robot daemon reads, with servo ids, limits and calibration.
+- `joint_map.json` uses the same keys as the calibration file Basecase's robot daemon reads, with servo ids, zeros, directions, limits and calibration.
 
 The package isn't a LeRobot dataset, and the policies are in Basecase's own JSON format. To give LeRobot data it can load, [publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face) from a Case. Joint names match across the package and those datasets.
 

@@ -6,6 +6,7 @@ import { IS_WINDOWS } from '../utils/os';
 import { useCaptionInset } from '../utils/useCaptionInset';
 import { useStoplights } from '../utils/useStoplights';
 import { idsAfter, idsExcept, sceneTabsOf, type Metas, type TabEntry } from './tabModel';
+import { keyFor } from './shortcuts';
 
 const AFTER_LIGHTS = LAYOUT.lightsX + LAYOUT.lightsWidth + 8;
 const RAIL_SLOT_LEFT = 26 - 14;
@@ -37,6 +38,8 @@ export interface TitleBarTabActions {
   closeTabs: (ids: string[]) => void;
   duplicateTab: (id: string) => void;
   renameTab: (id: string, name: string) => void;
+  renamingTab: string | null;
+  setRenamingTab: (id: string | null) => void;
   reorderTab: (from: number, to: number) => void;
   reopenTab: () => void;
   capturePreview: (id: string) => void;
@@ -105,7 +108,7 @@ export function TitleBarTabs({
         <IconButton
           icon={<PanelLeftIcon className="w-[18px] h-[18px]" />}
           title={isLeftOpen ? 'Hide sidebar' : 'Show sidebar'}
-          shortcut="⌘B"
+          shortcut={keyFor('toggle-sidebar')}
           onClick={onToggleLeft}
         />
         <ScenesMenu {...scenes} />
@@ -127,6 +130,8 @@ export function TitleBarTabs({
           onCloseRight={(id) => actions.closeTabs(idsAfter(tabs, id))}
           onDuplicate={actions.duplicateTab}
           onRename={actions.renameTab}
+          renaming={actions.renamingTab}
+          onRenaming={actions.setRenamingTab}
           onReorder={actions.reorderTab}
           onReopen={actions.reopenTab}
           onPreview={actions.capturePreview}

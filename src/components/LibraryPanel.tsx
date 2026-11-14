@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ContextMenu, EmptyState, SearchField, useScrollFade, type ContextMenuEntry } from '../design-system';
+import { ContextMenu, NoMatches, SearchField, useScrollFade, type ContextMenuEntry } from '../design-system';
 import type { CustomModelDefinition, ScenePart } from '../types/robotics';
+import { modelNote } from '../utils/libraryParts';
 import { ModelsSection, type SectionState } from './library/sections';
 
 export interface LibraryPanelProps {
@@ -13,7 +14,6 @@ export interface LibraryPanelProps {
   onDeleteModel: (model: CustomModelDefinition) => void;
   onSaveModel: (mode: 'selected' | 'all') => void;
   onImport: () => void;
-  onImageToModel: () => void;
 }
 
 type Menu = { x: number; y: number; entries: ContextMenuEntry[] };
@@ -31,7 +31,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
   const { ref: fadeRef, style: fadeStyle } = useScrollFade();
   const searching = query.trim() !== '';
   const matches = matcher(query);
-  const models = props.customModels.filter((m) => matches(m.name, m.description));
+  const models = props.customModels.filter((m) => matches(m.name, modelNote(m)));
   const state: SectionState = {
     renaming,
     setRenaming,
@@ -62,7 +62,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = (props) => {
 
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={fadeStyle}>
         {searching && models.length === 0 ? (
-          <EmptyState title={`No matches for “${query.trim()}”`} />
+          <NoMatches query={query} />
         ) : (
           <div className="px-[8px] pb-4">
             <ModelsSection props={props} models={models} state={state} />

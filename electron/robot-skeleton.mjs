@@ -1,4 +1,5 @@
 import { publicFetch, readCapped } from './publicFetch.mjs';
+import { plural } from './plural.mjs';
 
 function parseXml(xml) {
   const root = { tag: '#root', attrs: {}, children: [] };
@@ -239,7 +240,7 @@ export function describeSkeleton(sk, max = 150) {
   const all = sk.joints;
   const ext = [0, 1, 2].map((k) => [Math.min(...all.map((j) => j.pos[k])), Math.max(...all.map((j) => j.pos[k]))]);
   const lines = [
-    `${sk.kind} "${sk.name ?? 'robot'}": ${sk.links} ${sk.kind === 'URDF' ? 'links' : 'bodies'}, ${moving.length} moving joints, zero pose.`,
+    `${sk.kind} "${sk.name ?? 'robot'}": ${sk.kind === 'URDF' ? plural(sk.links, 'link') : plural(sk.links, 'body', 'bodies')}, ${plural(moving.length, 'moving joint')}, zero pose.`,
     `Studio frame: mm, Z up, front −Y, left +X (assuming the source faces ${sk.forward}; if the photo disagrees, call again with another forward).`,
     `z = 0 is the lowest joint/frame; soles and covers usually extend a little below it and the shells above the top joints.`,
     `A joint's coordinate ALONG its own axis marks where its frame sits on the axis line. When the left and right joints agree in magnitude (e.g. ±160), it is real geometry: build to it (stance and hip width). When they disagree (e.g. 109 vs −72), the CAD export put the frames on different faces; take that coordinate from the photo instead.`,
@@ -302,7 +303,7 @@ function originOffsets(parts, joints) {
 
     return outside > OFF_ORIGIN_MM
       ? [
-          `The joints' centre is ${Math.round(Math.abs((lo + hi) / 2 - joint))} mm from the model's along ${'XY'[k]}, outside it. Joints are checked at their published X and Y, so centre the model on the origin first.\n`,
+          `The joints' center is ${Math.round(Math.abs((lo + hi) / 2 - joint))} mm from the model's along ${'XY'[k]}, outside it. Joints are checked at their published X and Y, so center the model on the origin first.\n`,
         ]
       : [];
   });
@@ -398,7 +399,7 @@ export function checkAgainstSkeleton(sk, parts, floorOffset) {
   const jzMax = Math.max(...joints.map((j) => j.p[2]));
 
   return [
-    `${joints.length} joints and frames checked; the lowest joint fits best ${Math.round(lift)} mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.`,
+    `${plural(joints.length, 'joint')} and their frames checked; the lowest joint fits best ${Math.round(lift)} mm above the model's floor (pass floorOffset to fix it). Joints whose left/right frames disagree along their axis are checked as axis lines.`,
     missesText(misses, offCentre),
     `Joint span X ${span(joints.map((j) => j.p[0]))}, Y ${span(joints.map((j) => j.p[1]))}, Z ${span(joints.map((j) => j.p[2]))}; model span X ${span(parts.flatMap((p) => [p.bounds.min[0], p.bounds.max[0]]))}, Y ${span(parts.flatMap((p) => [p.bounds.min[1], p.bounds.max[1]]))}, Z ${span(parts.flatMap((p) => [p.bounds.min[2], p.bounds.max[2]]))}.`,
     `Model top is ${Math.round(mzMax - jzMax)} mm above the highest joint; check that against the photo (shells above the top joint, e.g. a head or cap).`,

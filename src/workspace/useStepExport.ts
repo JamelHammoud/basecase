@@ -1,9 +1,11 @@
 import { useRef } from 'react';
 import { downloadBytes } from '../utils/downloadBytes';
 import { platformBridge } from '../utils/platformBridge';
-import { fileSafe, plural } from './helpers';
+import { plural } from '../../electron/plural.mjs';
+import { fileSafe } from './helpers';
 import { isStepBody, stepJob } from './stepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { errorMessage } from '../utils/errorMessage';
 
 export function useStepExport({
   parts,
@@ -34,10 +36,10 @@ export function useStepExport({
 
       downloadBytes(new TextEncoder().encode(step), `${fileSafe(scene.sceneName)}.step`, 'model/step');
 
-      if (left + skipped > 0) showToast(`Exported STEP without ${plural(left + skipped, 'part', 'parts')}`);
+      if (left + skipped > 0) showToast(`Exported STEP without ${plural(left + skipped, 'part')}`);
       else toasts.dismissToast();
     } catch (err) {
-      showToast(String((err as Error)?.message ?? err), { tone: 'error' });
+      showToast(errorMessage(err), { tone: 'error' });
     } finally {
       exportingRef.current = false;
     }

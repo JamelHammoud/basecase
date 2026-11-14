@@ -1,10 +1,18 @@
+import type { ControllerKind } from '../../electron/robot/ros2.mjs';
+import type { M6Friction } from '../data/servoFits';
+
 export const LADDER = ['look', 'set_up', 'test', 'rehearse', 'first_run', 'policy', 'longer_runs'] as const;
 
 export type RobotMode = (typeof LADDER)[number];
 
 export type ServoFamily = 'feetech' | 'dynamixel';
 
-export type RobotFamily = ServoFamily | 'unitree-g1';
+export type RobotFamily = ServoFamily | 'unitree-g1' | 'ros2';
+
+export interface Ros2Controller {
+  kind: ControllerKind;
+  topic: string;
+}
 
 export interface RobotSpec {
   family: RobotFamily;
@@ -12,16 +20,39 @@ export interface RobotSpec {
   class: 'arm' | 'legged';
   emulated: true;
   factory?: true;
+  controller?: Ros2Controller;
+  joints?: string[];
 }
 
-export type ServoRobotSpec = RobotSpec & { family: ServoFamily };
+export interface EmulatedUnit {
+  volts: number;
+  kt: number;
+  resistance: number;
+  armature: number;
+  friction: M6Friction;
+  firmwareKp: number;
+  errorGain: number;
+  errorGainRatio: number;
+  maxDuty: number;
+  maxVelocity: number;
+  delayS: number;
+}
+
+export type ServoRobotSpec = RobotSpec & { family: ServoFamily; units?: Array<EmulatedUnit | null> };
 
 export interface UnitreeG1Ask {
   family: 'unitree-g1';
   emulated: true;
 }
 
-export type ConnectSpec = ServoRobotSpec | UnitreeG1Ask;
+export interface Ros2Ask {
+  family: 'ros2';
+  emulated: true;
+  controller: Ros2Controller;
+  joints: string[];
+}
+
+export type ConnectSpec = ServoRobotSpec | UnitreeG1Ask | Ros2Ask;
 
 export function servoFamily(spec: { family: RobotFamily } | null | undefined): ServoFamily | null {
   const family = spec?.family;
@@ -29,10 +60,14 @@ export function servoFamily(spec: { family: RobotFamily } | null | undefined): S
   return family === 'feetech' || family === 'dynamixel' ? family : null;
 }
 
-export const G1_TOP_RUNG: RobotMode = 'test';
+export const isServoAsk = (spec: ConnectSpec): spec is ServoRobotSpec => servoFamily(spec) !== null;
+
+export const TEST_TOP_FAMILIES: readonly RobotFamily[] = ['unitree-g1', 'ros2'];
+
+const TEST_LADDER = LADDER.slice(0, LADDER.indexOf('test') + 1);
 
 export const ladderFor = (spec: { family: RobotFamily } | null | undefined): readonly RobotMode[] =>
-  spec?.family === 'unitree-g1' ? LADDER.slice(0, LADDER.indexOf(G1_TOP_RUNG) + 1) : LADDER;
+  spec && TEST_TOP_FAMILIES.includes(spec.family) ? TEST_LADDER : LADDER;
 
 export type ConnectReply = { ok: true } | { ok: false; message: string };
 
@@ -43,6 +78,7 @@ export interface JointStatus {
   volts: number | null;
   torque_on: boolean | null;
   reply: string;
+  link_rad?: number | null;
 }
 
 export interface RobotStatus {
@@ -69,15 +105,23 @@ export interface RobotState {
   status: RobotStatus | null;
   pending: RobotMode | null;
   messages: RobotMessage[];
+  calibration: RobotMount[];
 }
 
 export type RobotEvent = Record<string, unknown> & { event: string };
+
+export interface RobotMount {
+  id: number;
+  zero_counts: number;
+  direction: 1 | -1;
+}
 
 export interface RobotLinkState {
   connected: boolean;
   spec: RobotSpec | null;
   hello: RobotEvent | null;
   status: RobotEvent | null;
+  calibration?: RobotMount[] | null;
 }
 
 export const MAX_MESSAGES = 6;
@@ -91,6 +135,7 @@ export const INITIAL_ROBOT: RobotState = {
   status: null,
   pending: null,
   messages: [],
+  calibration: [],
 };
 
 const isMode = (value: unknown): value is RobotMode => LADDER.includes(value as RobotMode);
@@ -118,7 +163,16 @@ function onMode(state: RobotState, mode: unknown): RobotState {
   return isMode(mode) ? { ...state, mode, pending: state.pending === mode ? null : state.pending } : state;
 }
 
+const isMount = (value: unknown): value is RobotMount => {
+  const m = value as RobotMount;
+
+  return Boolean(m) && typeof m.id === 'number' && typeof m.zero_counts === 'number' && Math.abs(m.direction) === 1;
+};
+
+const mountsOf = (joints: unknown): RobotMount[] => (Array.isArray(joints) ? joints.filter(isMount) : []);
+
 const EVENTS: Record<string, (state: RobotState, event: RobotEvent) => RobotState> = {
+  calibration: (state, event) => ({ ...state, calibration: mountsOf(event.joints) }),
   link: onLink,
   hello: (state, event) => ({ ...state, emulated: event.emulated === true, lostMessage: String(event.lost_message) }),
   status: (state, event) => ({ ...onMode(state, event.mode), status: event as unknown as RobotStatus }),
@@ -144,4 +198,23 @@ export function rungEnabled(state: RobotState, rung: RobotMode): boolean {
   return rungIndex(rung) === rungIndex(state.mode) + 1;
 }
 
-export const radiansFromCounts = (counts: number) => ((counts - 2048) * 2 * Math.PI) / 4096;
+export type CountsMount = Pick<RobotMount, 'zero_counts' | 'direction'>;
+
+export const radiansFromCounts = (counts: number, mount?: CountsMount) =>
+  ((mount?.direction ?? 1) * (counts - (mount?.zero_counts ?? 2048)) * 2 * Math.PI) / 4096;
+
+export const mountOf = (calibration: readonly RobotMount[] | undefined, id: number | null | undefined) =>
+  calibration?.find((m) => m.id === id);
+
+export function statusRadians(
+  status: Pick<RobotStatus, 'joints'> | null | undefined,
+  calibration: readonly RobotMount[] | undefined,
+  id: number | null | undefined,
+): number | null {
+  const position = status?.joints.find((j) => j.id === id)?.position;
+
+  return typeof position === 'number' ? radiansFromCounts(position, mountOf(calibration, id)) : null;
+}
+
+export const measuredRadians = (state: Pick<RobotState, 'status' | 'calibration'>, id: number | null | undefined) =>
+  statusRadians(state.status, state.calibration, id);

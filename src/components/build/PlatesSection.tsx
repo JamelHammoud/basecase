@@ -3,8 +3,10 @@ import { Button, MetaLine, Section } from '../../design-system';
 import type { Plate } from '../../print/plan';
 import type { SlicedPlate } from '../../print/printBridge';
 import type { Printing } from '../../workspace/usePrinting';
-import { hm, plural } from './format';
+import { plural } from '../../../electron/plural.mjs';
+import { duration } from '../../utils/duration';
 import { plateNumbers } from '../print/plateFacts';
+import { keyFor } from '../../app/shortcuts';
 
 interface PlateTotals {
   hours: number;
@@ -38,12 +40,12 @@ export const PlatesSection: React.FC<{ printing: Printing }> = ({ printing }) =>
         <MetaLine
           className="text-[13px] text-white/90 tabular-nums"
           items={[
-            `${plates.length} ${plural(plates.length, 'plate', 'plates')}`,
-            `${totals.exact ? '' : '≈ '}${hm(totals.hours)}`,
+            plural(plates.length, 'plate'),
+            `${totals.exact ? '' : '≈ '}${duration(totals.hours * 3600, 'min')}`,
           ]}
         />
-        <Button size="sm" variant="secondary" title="Lay out plates" shortcut="⌘P" onClick={() => printing.openMode(1)}>
-          Lay Out Plates
+        <Button size="sm" variant="secondary" title="Print" shortcut={keyFor('print')} onClick={() => printing.openMode(1)}>
+          Print
         </Button>
       </div>
     </Section>

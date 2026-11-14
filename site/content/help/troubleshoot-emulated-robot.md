@@ -22,6 +22,7 @@ covers:
   - src/components/operate/RobotCalibration.tsx
   - src/components/operate/RobotMessages.tsx
   - src/robot/sceneRobot.ts
+  - src/robot/robotPolicy.ts
   - hw/crates/robot-daemon/src/ladder/mod.rs
   - hw/crates/robot-daemon/src/fault.rs
   - electron/robot/robotLink.mjs
@@ -33,8 +34,9 @@ Fixes for Operate when Connect is missing, a rung is refused, a fault stops the 
 
 Operate shows "No robot" when the scene has no joint that moves. With more than 32 moving joints, it shows nothing to connect. Operate isn't in the browser version of Basecase.
 
-1. Click **Browse Robots** under "No robot" to insert a robot.
-2. Click **Operate** again.
+1. Click **Show Robots** under "No robot".
+2. Click a robot in **Parts** to insert it.
+3. Click **Operate** again.
 
 ## "This copy of Basecase can’t run robots"
 
@@ -46,7 +48,11 @@ Your copy of Basecase lacks the robot daemon, the program that drives the emulat
 
 ## "Load a policy first"
 
-**Rehearse** and every rung above it run a policy on the robot. Basecase doesn't load a policy into the robot daemon, so these rungs stay refused. To see a skill on the servos, run it in the simulation from **Test**; steps are in [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).
+**Rehearse** and every rung above it need a trained policy, and the scene in front has none the robot can take. Basecase hands over the newest ready skill or up-to-date policy. A policy marked **Out of date** doesn't count; [Retrain an out-of-date policy](/help/retrain-an-out-of-date-policy) fixes it. A skill that replays an animation has no policy to hand over.
+
+1. Click **Simulate** at the top of the right panel.
+2. Under **Train**, click **Train** on a skill, and wait until it's ready.
+3. Click **Rehearse** in **Operate** again. You don't need to reconnect.
 
 ## "A fault is still active"
 
@@ -57,6 +63,8 @@ The daemon says "A fault is still active. Go back to Look and clear it first." A
 3. Click **Clear Fault**.
 4. Click **Set Up**.
 5. Click **Test**.
+
+From the fault until you climb again, the simulation sends the robot no commands. On an arm, **Replay in Sim** under the fault plays the 20 seconds before it in the simulation. Steps are in [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation).
 
 ## "The app stopped talking to the robot"
 

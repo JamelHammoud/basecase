@@ -1,6 +1,3 @@
-import * as THREE from 'three';
-import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
-import { buildPartGroup } from '../three/buildPartMesh';
 import { ProjectSummaryForAI, SceneAnnotation, ScenePart } from '../types/robotics';
 import { hardwareName } from '../data/hardware';
 import { COMPONENT_BY_ID } from '../data/components';
@@ -186,7 +183,7 @@ function hardwareBomLines(parts: ScenePart[]): string[] {
     ``,
     ...[...bom.entries()].sort().map(([name, count]) => `- ${count} × ${name}`),
     ``,
-    `Model clearance holes, counterbores, nut traps and insert holes from each hardware part's note (ISO 273 medium clearance + 0.2 mm for printing).`,
+    `Model clearance holes, counterbores, nut traps and insert holes from each hardware part’s note (ISO 273 medium clearance + 0.2 mm for printing).`,
   ];
 }
 
@@ -311,43 +308,4 @@ export function buildAIHandoffPayload(
     spec,
     markdown: mdLines.join('\n'),
   };
-}
-
-export function sceneToStl(parts: ScenePart[]): DataView {
-  const exportScene = new THREE.Scene();
-  const rootGroup = new THREE.Group();
-
-  rootGroup.rotation.x = Math.PI / 2;
-
-  for (const part of parts) {
-    if (!part.visible || part.role !== 'solid') continue;
-
-    const g = buildPartGroup(part, false);
-    const toRemove: THREE.Object3D[] = [];
-
-    g.traverse((child) => {
-      if (child instanceof THREE.LineSegments) {
-        toRemove.push(child);
-      }
-    });
-    toRemove.forEach((c) => c.parent?.remove(c));
-    rootGroup.add(g);
-  }
-
-  exportScene.add(rootGroup);
-  exportScene.updateMatrixWorld(true);
-
-  return new STLExporter().parse(exportScene, { binary: true });
-}
-
-export function exportSceneToSTL(parts: ScenePart[], filename = 'robotics-concept.stl') {
-  const result = sceneToStl(parts);
-  const blob = new Blob([result.buffer as ArrayBuffer], { type: 'application/octet-stream' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
 }

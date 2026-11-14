@@ -12,14 +12,35 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
   const LAG = 1 - Math.exp(-TICK_US / 1e6 / LAG_S);
   const G1_STANDING = [-0.1, 0, 0, 0.3, -0.2, 0, -0.1, 0, 0, 0.3, -0.2, 0];
   const G1_SPEC = { family: 'unitree-g1', ids: Array.from({ length: 17 }, (_, k) => k + 13), class: 'legged', emulated: true };
-  const counts = (rad) => Math.round(2048 + (rad * 4096) / (2 * Math.PI));
+  const COUNTS_PER_RAD = 4096 / (2 * Math.PI);
+  const counts = (rad) => Math.round(2048 + rad * COUNTS_PER_RAD);
+  const isServoSpec = (spec) => spec.family === 'feetech' || spec.family === 'dynamixel';
+  const hornOf = (id) => link.horns[id] ?? { offsetDeg: 0, direction: 1 };
+  const linkRad = (id, position) => {
+    const horn = hornOf(id);
+    return (horn.direction * (counts(position) - 2048 - (horn.offsetDeg * 4096) / 360)) / COUNTS_PER_RAD;
+  };
+  const shaftOf = (k, rad) => {
+    const mount = robot.calibration[k];
+    return (mount.zero_counts - 2048) / COUNTS_PER_RAD + mount.direction * rad;
+  };
+  const mountsEvent = () => ({ event: 'calibration', joints: robot.ids.map((id, k) => ({ id, ...robot.calibration[k] })) });
   const listeners = new Set();
   const emit = (event) => listeners.forEach((l) => l(event));
   let robot = null;
 
   const isG1Ask = (spec) => spec && spec.family === 'unitree-g1' && spec.emulated === true && Object.keys(spec).length === 2;
 
+  const isRos2Ask = (spec) => spec && spec.family === 'ros2' && spec.emulated === true && Array.isArray(spec.joints);
+
+  const ros2Layout = (ask) => {
+    const ids = ask.joints.map((_, k) => k + 1);
+    const spec = { family: 'ros2', ids, class: 'arm', emulated: true, controller: { ...ask.controller }, joints: [...ask.joints] };
+    return { spec, ids, start: ids.map(() => 0), writable: ids.map((_, k) => k), lastRung: 'test' };
+  };
+
   const layout = (spec) => {
+    if (isRos2Ask(spec)) return ros2Layout(spec);
     if (!isG1Ask(spec)) return { spec, ids: spec.ids, start: spec.ids.map(() => 0), writable: spec.ids.map((_, k) => k), lastRung: 'longer_runs' };
     const ids = Array.from({ length: 29 }, (_, k) => k + 1);
     const start = ids.map((id) => G1_STANDING[id - 1] ?? 0);
@@ -39,7 +60,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     fault_latched: false,
     joints: robot.ids.map((id, k) =>
       holds(id)
-        ? { id, position: counts(robot.position[k]), temp_c: 30, volts: 7.4, torque_on: robot.run === 'running' && robot.writable.includes(k), reply: 'ok' }
+        ? { id, position: counts(robot.position[k]), temp_c: robot.servos ? 30 : null, volts: robot.servos ? 7.4 : null, torque_on: robot.run === 'running' && robot.writable.includes(k) && id !== robot.stalled, reply: 'ok', ...(robot.mounted ? { link_rad: linkRad(id, robot.position[k]) } : {}) }
         : { id, position: null, temp_c: null, volts: null, torque_on: null, reply: 'missing' },
     ),
   });
@@ -84,7 +105,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     if (robot.run === 'running') {
       const held = goalAt(robot.atUs);
       robot.goal = robot.goal.map((g, k) => g + Math.max(-REACH, Math.min(REACH, held[k] - g)));
-      robot.position = mix(robot.position, robot.goal, LAG);
+      robot.position = mix(robot.position, robot.goal, LAG).map((p, k) => (robot.ids[k] === robot.stalled ? robot.position[k] : p));
     }
     if (robot.ticks % STATUS_TICKS === 0) emit(status());
   };
@@ -111,20 +132,29 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
   const intent = (joints) => {
     if (!Array.isArray(joints) || joints.length !== robot.writable.length) return { ok: false, message: 'The robot only takes the documented commands.' };
     if (robot.run !== 'running') return { ok: true };
+    link.intents.push([...joints]);
     const full = [...(robot.queue.at(-1) ?? robot.held).joints];
     robot.writable.forEach((k, i) => {
       if (typeof joints[i] !== 'number') return;
-      full[k] = joints[i];
+      full[k] = robot.mounted ? shaftOf(k, joints[i]) : joints[i];
       robot.writes[robot.ids[k]] = (robot.writes[robot.ids[k]] ?? 0) + 1;
     });
     intend(full);
     return { ok: true };
   };
 
+  const plantStall = (id) => {
+    robot.stalled = id;
+    emit({ event: 'fault', at_us: robot.atUs, code: 'stall', id, message: 'The joint on servo ' + id + ' is stuck: its motor is pushing but nothing moves. Its motor was switched off.' });
+    return true;
+  };
+
   const enter = (mode) => {
     const next = LADDER.indexOf(mode);
     if (next > LADDER.indexOf(robot.lastRung)) return refuse('This robot stops at Test.');
-    if (mode !== 'look' && next !== LADDER.indexOf(robot.mode) + 1) return refuse('One rung at a time.');
+    const again = mode === 'test' && robot.mode === 'test';
+    if (mode !== 'look' && !again && next !== LADDER.indexOf(robot.mode) + 1) return refuse('One rung at a time.');
+    if (next >= LADDER.indexOf('rehearse') && !link.policy.length) return refuse('Load a policy first.');
     const silent = robot.ids.find((id) => !holds(id));
     if (mode === 'test' && silent !== undefined) return refuse('Servo ' + silent + " doesn't answer.");
     robot.mode = mode;
@@ -137,17 +167,47 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     robot.runningAtUs = robot.atUs + SOFT_START_US;
   };
 
+  const calibrate = (joints) => {
+    if (!robot?.mounted) return { ok: false, message: 'The robot only takes the documented commands.' };
+    const known = Array.isArray(joints) && joints.every((j) => robot.ids.includes(j.id) && Number.isInteger(j.zero_counts) && Math.abs(j.direction) === 1);
+    if (!known) return { ok: false, message: 'The robot only takes the documented commands.' };
+    joints.forEach((j) => (robot.calibration[robot.ids.indexOf(j.id)] = { zero_counts: j.zero_counts, direction: j.direction }));
+    link.written = JSON.parse(JSON.stringify(mountsEvent().joints));
+    emit(mountsEvent());
+    if (robot.run === 'running' || robot.run === 'soft_start') {
+      robot.run = 'idle';
+      emit({ event: 'mode', at_us: robot.atUs, mode: robot.mode });
+    }
+    return { ok: true };
+  };
+
   const link = (window.__fakeRobotLink = {
     factory: false,
+    horns: {},
+    written: null,
+    policy: [],
+    lastAsk: null,
+    intents: [],
+    asked: () => link.lastAsk,
     plugIn,
+    plantStall: (id) => (robot ? plantStall(id) : false),
     onRobotEvent: (callback) => {
       listeners.add(callback);
       return () => listeners.delete(callback);
     },
-    robotState: async () => ({ connected: false, spec: null, hello: null, status: null }),
+    robotState: async () => ({ connected: false, spec: null, hello: null, status: null, calibration: link.written }),
+    robotCalibrate: async (joints) => calibrate(joints),
+    robotPolicy: async (refs) => {
+      link.policy = refs;
+      return { ok: true };
+    },
     robotConnect: async (ask) => {
       const { spec, ids, start, writable, lastRung } = layout(ask);
-      robot = { ids, writable, lastRung, mode: 'look', run: 'idle', startedAt: performance.now(), atUs: 0, ticks: 0 };
+      robot = { ids, writable, lastRung, servos: spec.family !== 'ros2', mounted: isServoSpec(spec), mode: 'look', run: 'idle', startedAt: performance.now(), atUs: 0, ticks: 0, stalled: null };
+      robot.calibration = ids.map(() => ({ zero_counts: 2048, direction: 1 }));
+      link.written = robot.mounted ? mountsEvent().joints : null;
+      link.intents = [];
+      link.lastAsk = JSON.parse(JSON.stringify(ask));
       const factory = ask.factory === true || link.factory === true;
       robot.bus = factory ? [] : ids.map((id) => ({ id }));
       robot.plugRequested = false;
@@ -156,6 +216,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
       robot.timer = setInterval(step, TICK_US / 1000);
       emit({ event: 'link', state: 'connected', spec });
       emit({ event: 'hello', family: spec.family, emulated: true, real_transport: false, lost_message: 'Lost the emulated robot.' });
+      if (robot.mounted) emit(mountsEvent());
       return { ok: true };
     },
     robotCommand: async (command) => {
@@ -169,6 +230,7 @@ export const FAKE_DAEMON_SCRIPT = String.raw`
     robotDisconnect: async () => {
       clearInterval(robot?.timer);
       robot = null;
+      link.horns = {};
       emit({ event: 'link', state: 'closed' });
       return { ok: true };
     },

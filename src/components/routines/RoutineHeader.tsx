@@ -3,38 +3,18 @@ import {
   Button,
   ChevronDownIcon,
   confirmAction,
-  DeleteIcon,
-  EditIcon,
+  deleteEntry,
   IconButton,
   MenuDivider,
   MenuItem,
   PlusIcon,
   PopoverMenu,
+  RenameField,
+  renameEntry,
   RunIcon,
-  TextInput,
 } from '../../design-system';
 import type { Routines } from '../../workspace/useRoutines';
-
-function RenameField({ name, onDone }: { name: string; onDone: (name: string | null) => void }) {
-  const [draft, setDraft] = useState(name);
-
-  return (
-    <TextInput
-      bare
-      autoFocus
-      aria-label="Routine name"
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onFocus={(e) => e.target.select()}
-      onBlur={() => onDone(draft)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') onDone(draft);
-        else if (e.key === 'Escape') onDone(null);
-      }}
-      className="h-8 text-[14px] font-medium"
-    />
-  );
-}
+import { keyFor } from '../../app/shortcuts';
 
 export function RoutineHeader({ routines }: { routines: Routines }) {
   const { store, editor, view, showToast } = routines;
@@ -62,7 +42,7 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
   const rename = (name: string | null) => {
     setRenaming(false);
 
-    if (name !== null) store.rename(routine.id, name);
+    if (name) store.rename(routine.id, name);
   };
   const runnable = !!view.compiled?.ok && !(view.run && !view.run.done);
 
@@ -70,7 +50,12 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
     <div className="px-[12px] pb-1 flex items-center gap-1">
       <div className="relative flex-1 min-w-0">
         {renaming ? (
-          <RenameField name={routine.name} onDone={rename} />
+          <RenameField
+            name={routine.name}
+            label="Routine name"
+            onDone={rename}
+            className="w-full h-[32px]! text-[14px]! font-medium"
+          />
         ) : (
           <Button
             variant="ghost"
@@ -94,13 +79,9 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
             />
           ))}
           <MenuDivider />
-          <MenuItem icon={<PlusIcon className="w-4 h-4" />} label="New Routine" onSelect={closing(store.create)} />
-          <MenuItem
-            icon={<EditIcon className="w-4 h-4" />}
-            label="Rename"
-            onSelect={closing(() => setRenaming(true))}
-          />
-          <MenuItem icon={<DeleteIcon className="w-4 h-4" />} label="Delete" tone="danger" onSelect={closing(remove)} />
+          <MenuItem icon={<PlusIcon />} label="New Routine" onSelect={closing(store.create)} />
+          <MenuItem {...renameEntry(closing(() => setRenaming(true)))} />
+          <MenuItem {...deleteEntry(closing(remove))} />
         </PopoverMenu>
       </div>
       <IconButton size="sm" icon={<PlusIcon className="w-4 h-4" />} title="Add step" onClick={editor.addHere} />
@@ -109,8 +90,8 @@ export function RoutineHeader({ routines }: { routines: Routines }) {
           size="sm"
           variant="primary"
           icon={<RunIcon className="w-4 h-4" />}
-          title="Run routine"
-          shortcut="⌘↩"
+          title="Run Routine"
+          shortcut={keyFor('run-routine')}
           onClick={() => void routines.run()}
         >
           Run

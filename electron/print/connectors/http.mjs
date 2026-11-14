@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { asSentence } from '../../refusal.mjs';
 import { unreachableMessage } from './shared.mjs';
 
 const REQUEST_TIMEOUT_MS = 8000;
@@ -38,21 +39,16 @@ export function errorDetail(data, text) {
   return error?.message ?? data?.message ?? data?.title ?? (data === undefined ? plainText(text) : undefined);
 }
 
-function sentence(text) {
-  return /[.!?]$/.test(text) ? text : `${text}.`;
-}
-
 export function refusalMessage(status, detail) {
-  if (status === 409 && detail) return `The printer is busy: ${sentence(detail)}`;
+  if (status === 409 && detail) return `The printer is busy: ${asSentence(detail)}`;
 
-  if (status === 409) return 'The printer is busy. Wait for it to finish, then try again.';
+  if (status === 409) return 'The printer is busy. Wait for it to finish.';
 
-  if (status === 413 || status === 507)
-    return 'The printer is out of storage. Delete some files on it, then try again.';
+  if (status === 413 || status === 507) return 'The printer is out of storage. Delete some files on it.';
 
-  if (detail) return `The printer refused the request: ${sentence(detail)}`;
+  if (detail) return `The printer refused the request: ${asSentence(detail)}`;
 
-  return 'The printer refused the request. Check it’s ready, then try again.';
+  return 'The printer refused the request. Check it’s ready.';
 }
 
 async function fetchOrExplain(url, { host, init, timeoutMs }) {

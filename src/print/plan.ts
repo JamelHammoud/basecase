@@ -3,6 +3,7 @@ import type { PrinterSetup } from '../data/printers';
 import { sameDirection, type PrintPose, type PrintShape, type Vec3 } from '../three/printability';
 import type { PartPrint, PrintMaterial } from '../types/robotics';
 import { bedSizeText, fitOnBed, type Bed } from './bed';
+import { sizeLabel } from '../utils/size';
 import { packPlates, type PackItem } from './pack';
 
 export interface PrintCheck {
@@ -29,6 +30,7 @@ export interface PlanInput {
   grams: number;
   supportG: number;
   hours: number;
+  firstStep?: number;
 }
 
 export interface PlanItem {
@@ -39,6 +41,7 @@ export interface PlanItem {
   y: number;
   w: number;
   d: number;
+  h: number;
   yaw: number;
   matrix: number[];
 }
@@ -51,6 +54,7 @@ export interface Plate {
   grams: number;
   hours: number;
   hash: string;
+  step?: number;
 }
 
 export interface PrintPlan {
@@ -71,7 +75,7 @@ function splitNote(size: Vec3, bed: Bed) {
   const sorted = [...size].sort((a, b) => b - a);
   const pieces = Math.max(2, Math.ceil(sorted[0] / (Math.max(bed.width, bed.depth, bed.height) * 0.94)));
 
-  return `${sorted.map((v) => Math.round(v)).join(' × ')} mm is larger than the ${bed.name} plate (${bedSizeText(bed)}). Split it into ${pieces} pieces along its longest side, joined with dowels or screws.`;
+  return `${sizeLabel(sorted)} is larger than the ${bed.name} plate (${bedSizeText(bed)}). Split it into ${pieces} pieces along its longest side, joined with dowels or screws.`;
 }
 
 export function choosePose(shape: PrintShape, bed: Bed, print?: PartPrint): PrintCheck {
@@ -154,10 +158,15 @@ function packItems(inputs: PlanInput[]): PackItem[] {
         diagonalYaw: diagonal ? input.check.yaw : undefined,
         fixed,
         startPlate: input.print?.plate,
+        step: input.firstStep,
       };
     }),
   );
 }
+
+const earliest = (a?: number, b?: number) => (a === undefined ? b : Math.min(a, b ?? a));
+
+const stepRank = (plate: Plate) => plate.step ?? Number.MAX_SAFE_INTEGER;
 
 interface MaterialPlan {
   material: PrintMaterial;
@@ -182,9 +191,17 @@ function materialPlates(group: MaterialPlan, bed: Bed, first: number, settings: 
     const input = byId.get(id)!;
     const plate = out[place.plate - 1];
 
-    plate.items.push({ id, copy, name: input.name, ...place, matrix: itemMatrix(input.check.pose, place, bed) });
+    plate.items.push({
+      id,
+      copy,
+      name: input.name,
+      ...place,
+      h: input.check.size[2],
+      matrix: itemMatrix(input.check.pose, place, bed),
+    });
     plate.grams += input.grams + input.supportG;
     plate.hours += input.hours;
+    plate.step = earliest(plate.step, input.firstStep);
   }
 
   for (const plate of out) {
@@ -212,6 +229,7 @@ export function buildPrintPlan(inputs: PlanInput[], setup: PrinterSetup, bed: Be
     plates.push(...materialPlates(group, bed, plates.length + 1, `${setup.model.id}|${setup.nozzle}|${settings}`));
   }
 
+  plates.sort((a, b) => stepRank(a) - stepRank(b) || a.number - b.number);
   plates.forEach((p, i) => (p.number = i + 1));
 
   const plateOf: Record<string, number> = {};

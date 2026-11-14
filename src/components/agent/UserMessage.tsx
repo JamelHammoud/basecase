@@ -20,7 +20,7 @@ const ImageGrid: React.FC<{ images: string[]; onOpenImages: OpenImages }> = ({ i
         <button
           key={i}
           type="button"
-          aria-label={`View image ${i + 1}`}
+          aria-label={`Open image ${i + 1}`}
           onClick={() =>
             onOpenImages(
               images.map((s, n) => ({ src: s, name: `Image ${n + 1}` })),
@@ -43,7 +43,10 @@ const ImageGrid: React.FC<{ images: string[]; onOpenImages: OpenImages }> = ({ i
 const FolderChips: React.FC<{ folders: FolderAttachment[] }> = ({ folders }) => (
   <div className="flex flex-wrap gap-1.5">
     {folders.map((f) => (
-      <span key={f.id} className="h-8 max-w-full px-2.5 rounded-lg bg-white/[0.06] flex items-center gap-1.5 min-w-0">
+      <span
+        key={f.id}
+        className="h-[28px] max-w-full px-2.5 rounded-lg bg-white/[0.06] flex items-center gap-1.5 min-w-0"
+      >
         <FolderIcon className="w-3.5 h-3.5 text-white/60 shrink-0" />
         <span className="text-[13px] text-white/85 truncate">{f.name}</span>
         <span className="text-[12px] text-white/50 tabular shrink-0">{f.fileCount}</span>
@@ -96,7 +99,7 @@ const ClampedText: React.FC<{ text: string }> = ({ text }) => {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-1 -ml-1 h-7 px-1.5 rounded-md text-[13px] font-medium text-white/60 hover:text-white hover:bg-white/[0.06] cursor-default transition-colors"
+          className="mt-1 -ml-1 h-[32px] px-1.5 rounded-md text-[13px] font-medium text-white/60 hover:text-white hover:bg-white/[0.06] cursor-default transition-colors"
         >
           {expanded ? 'Show Less' : 'Show More'}
         </button>

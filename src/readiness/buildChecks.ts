@@ -8,6 +8,8 @@ import type { Bom } from '../utils/bomTypes';
 import { isPrinted } from '../utils/bom';
 import type { Finding } from './types';
 import { ruleFinding } from './wording';
+import { lengthLabel } from '../utils/size';
+import { plural } from '../../electron/plural.mjs';
 
 const MIN_INSERT_WALL_MM = 0.8;
 const MIN_LEAD_ROOM_MM = 10;
@@ -34,7 +36,7 @@ export function sourcingFindings(bom: Bom): Finding[] {
 
     return [
       ruleFinding('unreferenced', 'blocker', {
-        agentText: `${item.name} isn't referenceable: ${reason}.`,
+        agentText: `${item.name} isn’t referenceable: ${reason}.`,
         ids: line.partIds,
         subject: item.id,
       }),
@@ -47,7 +49,7 @@ export function unprintableFindings(parts: ScenePart[]): Finding[] {
     .filter((p) => isPrinted(p) && isMarkedClear(p))
     .map((p) =>
       ruleFinding('unprintable', 'blocker', {
-        agentText: `${p.name} is marked as clear or glass, which can't be printed. Buy it (add_sourced_item) or leave the opening empty.`,
+        agentText: `${p.name} is marked as clear or glass, which can’t be printed. Buy it (add_sourced_item) or leave the opening empty.`,
         ids: [p.id],
       }),
     );
@@ -60,7 +62,7 @@ export function hiddenFindings(parts: ScenePart[]): Finding[] {
 
   return [
     ruleFinding('hidden', 'note', {
-      agentText: `${hidden.length} hidden part${hidden.length === 1 ? '' : 's'} left out of the clash, fit and assembly checks: ${hidden.map((p) => p.id).join(', ')}. Show them to check them.`,
+      agentText: `${plural(hidden.length, 'hidden part')} left out of the clash, fit and assembly checks: ${hidden.map((p) => p.id).join(', ')}. Show them to check them.`,
       ids: hidden.map((p) => p.id),
       subject: 'parts',
     }),
@@ -105,7 +107,7 @@ export function fitProbeFindings(g: AssemblyGeometry, parts: ScenePart[]): Findi
     .filter(([, w]) => w.minMm < MIN_INSERT_WALL_MM)
     .map(([id, w]) =>
       ruleFinding('insert-wall', 'blocker', {
-        agentText: `${id} has only ${w.minMm.toFixed(1)} mm of ${name(w.host)} around it; it would break through when pressed in. Keep at least ${MIN_INSERT_WALL_MM} mm.`,
+        agentText: `${id} has only ${lengthLabel(w.minMm)} of ${name(w.host)} around it; it would break through when pressed in. Keep at least ${MIN_INSERT_WALL_MM} mm.`,
         ids: [id, w.host],
         subject: id,
       }),
@@ -114,7 +116,7 @@ export function fitProbeFindings(g: AssemblyGeometry, parts: ScenePart[]): Findi
     .filter(([, mm]) => mm < MIN_LEAD_ROOM_MM)
     .map(([id, mm]) =>
       ruleFinding('lead-room', 'blocker', {
-        agentText: `${name(id)} has ${Math.round(mm)} mm free past its ends; its leads and connector need at least ${MIN_LEAD_ROOM_MM} mm.`,
+        agentText: `${name(id)} has ${lengthLabel(mm)} free past its ends; its leads and connector need at least ${MIN_LEAD_ROOM_MM} mm.`,
         ids: [id],
         subject: id,
       }),
@@ -156,7 +158,7 @@ function threadFinding(c: FastenerChain, target: ScenePart): Finding | null {
     const nearest = Math.min(...ranked.map((h) => h.off));
 
     return ruleFinding('misses-hole', 'blocker', {
-      agentText: `${c.id} is ${nearest.toFixed(1)} mm from the nearest hole in ${target.name}. The pattern is off or turned.`,
+      agentText: `${c.id} is ${lengthLabel(nearest)} from the nearest hole in ${target.name}. The pattern is off or turned.`,
       ids: [c.id, target.id],
       subject: c.id,
     });
@@ -170,7 +172,7 @@ function threadFinding(c: FastenerChain, target: ScenePart): Finding | null {
   if (depth === undefined || reach <= depth + DEPTH_MARGIN_MM) return null;
 
   return ruleFinding('too-deep', 'blocker', {
-    agentText: `${c.id} reaches ${reach.toFixed(1)} mm into ${target.name}, whose hole is ${depth} mm deep. It can damage the part; use a shorter screw.`,
+    agentText: `${c.id} reaches ${lengthLabel(reach)} into ${target.name}, whose hole is ${depth} mm deep. It can damage the part; use a shorter screw.`,
     ids: [c.id, target.id],
     subject: c.id,
   });

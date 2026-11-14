@@ -26,8 +26,6 @@ const IMAGE_SIDE = 120;
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
-export const catalogItemLabel = (item: CatalogItem) => (item.hardware ? hardwareName(item.hardware) : item.name);
-
 function catalogPartName(item: CatalogItem, prev: ScenePart[]) {
   if (item.hardware) return hardwareName(item.hardware);
 
@@ -131,20 +129,12 @@ export function clayPart(preset: ClayPreset, id: string, sculptMesh: SculptMeshD
     rotation: [0, 0, 0],
     dimensions: { ...dims },
     color: '#f4f4f5',
-    note: 'Hand-sculpted clay geometry',
+    note: '',
     mechanicalTag: PRINTED_TAG,
     visible: true,
     locked: false,
     sculptMesh,
   };
-}
-
-function sketchDescription(params: Pick<SketchParams, 'mode' | 'nodes'>) {
-  if (params.mode === 'svg') {
-    return `Imported SVG (${params.nodes.length} path${params.nodes.length === 1 ? '' : 's'})`;
-  }
-
-  return params.mode === 'extrude' ? 'Sketch extrusion' : 'Sketch revolve';
 }
 
 const sketchDimensions = (params: SketchParams) => ({
@@ -174,7 +164,7 @@ function flatSketchPart(params: SketchParams, id: string): ScenePart {
     rotation: [0, 0, 0],
     dimensions: sketchDimensions(params),
     color: params.color,
-    note: sketchDescription(params),
+    note: '',
     mechanicalTag: PRINTED_TAG,
     visible: true,
     locked: false,

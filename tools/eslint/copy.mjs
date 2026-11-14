@@ -1,5 +1,6 @@
 import { CALL_KEYS, CALLS, JSX_PROPS, OBJECT_KEYS } from '../copy/surfaces.mjs';
 import { findBannedCopy } from '../copy/banned.mjs';
+import { PLACEHOLDER_FIX, isInstructionPlaceholder } from '../copy/placeholder.mjs';
 
 const calleeName = (callee) => {
   if (callee.type === 'Identifier') return callee.name;
@@ -44,11 +45,19 @@ const callArgumentTexts = (node) =>
 
 const JSX_PARENTS = new Set(['JSXElement', 'JSXFragment']);
 
+const startsTheText = (node) => node.type !== 'TemplateElement' || node.parent?.quasis?.[0] === node;
+
 export default {
   meta: {
     type: 'suggestion',
-    docs: { description: 'Disallow words and separators the copy guide bans (§3c) in user-facing strings' },
-    messages: { banned: 'Copy (§3c): “{{word}}” is banned. {{fix}}' },
+    docs: {
+      description:
+        'Disallow words and separators the copy guide bans (§3c), synonyms of its glossary (§3b-17), British spellings (§3b-20), straight apostrophes (§3b-21) and placeholders that give instructions (§3b-11) in user-facing strings',
+    },
+    messages: {
+      banned: 'Copy ({{section}}): “{{word}}” is banned. {{fix}}',
+      placeholder: 'Copy (§3b-11): the placeholder “{{text}}” gives an instruction. {{fix}}',
+    },
     schema: [],
   },
   create(context) {
@@ -61,7 +70,16 @@ export default {
         if (!hit) continue;
 
         reported.add(node);
-        context.report({ node, messageId: 'banned', data: { word: hit.word, fix: hit.fix } });
+        context.report({ node, messageId: 'banned', data: { word: hit.word, fix: hit.fix, section: hit.section } });
+      }
+    };
+
+    const checkPlaceholder = (entries) => {
+      for (const { node, text } of entries) {
+        if (reported.has(node) || !startsTheText(node) || !isInstructionPlaceholder(text)) continue;
+
+        reported.add(node);
+        context.report({ node, messageId: 'placeholder', data: { text: text.trim(), fix: PLACEHOLDER_FIX } });
       }
     };
 
@@ -76,11 +94,15 @@ export default {
         const name = node.name.type === 'JSXIdentifier' ? node.name.name : null;
 
         if (JSX_PROPS.has(name)) check(textsOf(node.value));
+
+        if (name === 'placeholder') checkPlaceholder(textsOf(node.value));
       },
       Property(node) {
-        if (node.parent?.type === 'ObjectExpression' && OBJECT_KEYS.has(propertyName(node))) {
-          check(textsOf(node.value));
-        }
+        if (node.parent?.type !== 'ObjectExpression' || !OBJECT_KEYS.has(propertyName(node))) return;
+
+        check(textsOf(node.value));
+
+        if (propertyName(node) === 'placeholder') checkPlaceholder(textsOf(node.value));
       },
       CallExpression(node) {
         if (CALLS.has(calleeName(node.callee))) check(node.arguments.flatMap(callArgumentTexts));

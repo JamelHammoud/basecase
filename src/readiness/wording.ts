@@ -1,3 +1,4 @@
+import { titleCase } from '../utils/titleCase';
 import type { Finding, FindingArea, FindingFix, FindingLevel } from './types';
 
 interface Rule {
@@ -24,7 +25,7 @@ const printing = (name: string, text: string): Rule => ({ area: 'printing', chec
 const sourcing = (name: string, text: string): Rule => ({ area: 'parts', check: REAL_PARTS, name, text });
 
 export const RULES = {
-  air: screw('Screws Ending in Air', "These screws don't grip anything. Each needs an insert, a nut or more material."),
+  air: screw('Screws Ending in Air', 'These screws don’t grip anything. Each needs an insert, a nut or more material.'),
   uncut: screw('Screws Without Holes', 'These screws run through solid material, so they need a hole cut for them.'),
   unseated: screw('Loose Screw Heads', 'Nothing sits under these screw heads, so they can’t tighten.'),
   sunk: screw('Buried Screw Heads', 'These screw heads are buried inside another part.'),
@@ -37,9 +38,9 @@ export const RULES = {
     'Thin Walls Around Inserts',
     'The wall around this insert could break when it’s pressed in.',
   ),
-  'misses-hole': fit(SCREWS, 'Screws Off Their Holes', 'This screw doesn’t line up with a mounting hole.'),
+  'misses-hole': fit(SCREWS, 'Screws off Their Holes', 'This screw doesn’t line up with a mounting hole.'),
   'too-deep': fit(SCREWS, 'Screws Too Deep', 'This screw goes too deep and could damage the part.'),
-  'screw-in-part': fit(SCREWS, 'Screws Into Parts', 'Check there’s a threaded hole where this screw lands.'),
+  'screw-in-part': fit(SCREWS, 'Screws into Parts', 'Check there’s a threaded hole where this screw lands.'),
   unheld: {
     area: 'assembly',
     check: ATTACHED,
@@ -119,8 +120,12 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
     blocker: 'This servo gets pushed past its limit while walking.',
     note: 'This servo has little to spare while walking.',
   },
+  Falls: {
+    blocker: 'This servo could strip its gears when the robot falls.',
+    note: 'This servo has little to spare when the robot falls.',
+  },
   'Torque estimates': { note: 'These joints have no servo, so the simulation guesses their torque from weight.' },
-  'Servo models': { note: 'These servos have no measured model, so the simulation guesses how they respond.' },
+  'Servo models': { note: 'These servos aren’t calibrated on this robot.' },
   'Servo alignment': { blocker: 'These servos don’t line up with their joints.' },
   'Joint support': { note: 'These joints are held on one side only, which strains the servo.' },
   'Range of motion': {
@@ -129,7 +134,8 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
   },
   'Servo voltage': { blocker: 'The supply voltage doesn’t suit these servos.' },
   'Current and runtime': { blocker: 'The battery can’t supply enough current for the servos.' },
-  'Supply current': { blocker: 'The tether can’t supply enough current for the servos.' },
+  'Supply current': { blocker: 'The power supply can’t give enough current for the servos.' },
+  'Servo bus': { blocker: 'These servos need an adapter for their bus.' },
   'Heat near servos': { note: 'Some parts touching servos are PLA, which softens from servo heat.' },
   'Standing stability': {
     blocker: 'The robot would tip over standing still.',
@@ -137,12 +143,10 @@ const PLAIN_ENGINEERING: Record<string, Partial<Record<FindingLevel, string>>> =
   },
 };
 
-const titleCase = (text: string) => text.replace(/\b[a-z]/g, (c) => c.toUpperCase());
-
 export function engineeringFinding(
   check: string,
   level: FindingLevel,
-  f: { detail: string; ids?: string[]; fix?: FindingFix },
+  f: { detail: string; ids?: string[]; fix?: FindingFix; joint?: string },
 ): Finding {
   const code = slug(check);
   const plain = PLAIN_ENGINEERING[check]?.[level];
@@ -161,5 +165,6 @@ export function engineeringFinding(
     detail: plain ? f.detail : undefined,
     ids,
     ...(f.fix ? { fix: f.fix } : {}),
+    ...(f.joint ? { joint: f.joint } : {}),
   };
 }

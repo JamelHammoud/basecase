@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { jobSpec } from '../print/job';
-import { buildAIHandoffPayload, exportSceneToSTL } from '../utils/aiHandoff';
+import { buildAIHandoffPayload } from '../utils/aiHandoff';
 import { downloadBytes as download } from '../utils/downloadBytes';
 import { platformBridge } from '../utils/platformBridge';
 import { printReportOf } from '../utils/printReport';
@@ -12,22 +12,30 @@ import { useStepExport } from './useStepExport';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { IS_MAC } from '../utils/os';
 import { useRobotPackageExport } from './useRobotPackageExport';
+import { errorMessage } from '../utils/errorMessage';
+import { plural } from '../../electron/plural.mjs';
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 
 export function useExportActions(core: WorkspaceCore) {
   'use memo';
 
-  const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing } = core;
+  const { parts, scene, annotations, showToast, toasts, viewportRef, project, printer, posing, printing } = core;
   const sharingRef = useRef(false);
   const exportStep = useStepExport({ parts, scene, showToast, toasts });
   const exportRobotPackage = useRobotPackageExport(core);
 
-  const exportStl = () => {
-    if (parts.length === 0) return;
+  const exportStl = async () => {
+    const viewport = viewportRef.current;
 
-    exportSceneToSTL(parts, `${fileSafe(scene.sceneName)}.stl`);
-    showToast('Exported STL');
+    if (!viewport || parts.length === 0) return;
+
+    try {
+      download(await viewport.exportStl(), `${fileSafe(scene.sceneName)}.stl`, 'model/stl');
+      showToast('Exported STL');
+    } catch (err) {
+      showToast(errorMessage(err), { tone: 'error' });
+    }
   };
 
   const exportImage = () => {
@@ -50,7 +58,7 @@ export function useExportActions(core: WorkspaceCore) {
       await navigator.clipboard.writeText(markdown);
       showToast('Copied as Markdown');
     } catch (err) {
-      showToast(`Couldn’t copy. ${String(err)}`, { tone: 'error' });
+      showToast(`Couldn’t copy. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 
@@ -68,7 +76,7 @@ export function useExportActions(core: WorkspaceCore) {
       return;
     }
 
-    const files = await viewport.printThreeMf(spec.files, spec.plateSize);
+    const { files } = await printing.plates.write(spec);
     const single = spec.files.length === 1;
 
     for (const file of spec.files) {
@@ -77,7 +85,7 @@ export function useExportActions(core: WorkspaceCore) {
       if (bytes) download(bytes, `${fileSafe(scene.sceneName)}${single ? '' : `-${file.key}`}.3mf`, 'model/3mf');
     }
 
-    showToast(`Exported ${report.plan.plates.length} ${report.plan.plates.length === 1 ? 'plate' : 'plates'} as 3MF`);
+    showToast(`Exported ${plural(report.plan.plates.length, 'plate')} as 3MF`);
   };
 
   const exportScene = async () => {
@@ -97,7 +105,7 @@ export function useExportActions(core: WorkspaceCore) {
       download(bytes, `${fileSafe(scene.sceneName)}.${SCENE_FILE_EXTENSION}`, 'application/gzip');
       showToast(`Exported ${scene.sceneName}`);
     } catch (err) {
-      showToast(`Couldn’t export the scene. ${String(err)}`, { tone: 'error' });
+      showToast(`Couldn’t export the scene. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 
@@ -134,7 +142,7 @@ export function useExportActions(core: WorkspaceCore) {
 
       showToast(`Exported ${scene.sceneName} as USDZ`);
     } catch (err) {
-      showToast(`Couldn’t export USDZ. ${String(err)}`, { tone: 'error' });
+      showToast(`Couldn’t export USDZ. ${errorMessage(err)}`, { tone: 'error' });
     } finally {
       sharingRef.current = false;
     }

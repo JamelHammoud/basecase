@@ -1,5 +1,6 @@
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../types/robotics';
 import { uniqueJointIds } from '../utils/kinematics';
+import { plural } from '../../electron/plural.mjs';
 
 export const normalizeProject = (p: ProjectSettings): ProjectSettings => {
   const joints = p.joints ? uniqueJointIds(p.joints) : p.joints;
@@ -11,7 +12,7 @@ export const projectFromSeed = (project?: ProjectSettings): ProjectSettings =>
   normalizeProject({ ...DEFAULT_PROJECT, ...project });
 
 export function copyName(name: string, taken: string[]): string {
-  const stem = `${name.replace(/ copy( \d+)?$/, '')} copy`;
+  const stem = `${name.replace(/ copy( \d+)?$/i, '')} copy`;
   let n = 1;
   let next = stem;
 
@@ -38,8 +39,6 @@ export const stamp = () => new Date().toISOString();
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
 export const isTextEntry = (el: Element | null) =>
   el instanceof HTMLInputElement ||
   el instanceof HTMLTextAreaElement ||
@@ -48,7 +47,7 @@ export const isTextEntry = (el: Element | null) =>
 export const selectableIds = (parts: ScenePart[], showReferenceImages: boolean) =>
   parts.filter((p) => p.visible && (showReferenceImages || p.kind !== 'image_plane')).map((p) => p.id);
 
-export const partLabel = (parts: ScenePart[]) => (parts.length === 1 ? parts[0].name : `${parts.length} parts`);
+export const partLabel = (parts: ScenePart[]) => (parts.length === 1 ? parts[0].name : plural(parts.length, 'part'));
 
 export type Attempt<T> = { ok: true; value: T } | { ok: false; error: unknown };
 

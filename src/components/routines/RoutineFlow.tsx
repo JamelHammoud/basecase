@@ -1,11 +1,11 @@
 import '@xyflow/react/dist/style.css';
 import { type Connection, type Node, ReactFlow } from '@xyflow/react';
 import { useState } from 'react';
-import { ContextMenu, type ContextMenuEntry, DeleteIcon, PlusIcon } from '../../design-system';
+import { ContextMenu, type ContextMenuEntry, PlusIcon, deleteEntry } from '../../design-system';
 import type { Flow, NodeState } from '../../routines/flowTypes';
 import type { RoutineError } from '../../routines/schema';
 import { AddNode } from './AddNode';
-import { canvasEdges, canvasNodes } from './canvasModel';
+import { canvasEdges, canvasNodes, nodeHeights } from './canvasModel';
 import { useEditorContext } from './editorContext';
 import { layoutFlow, nearestSpot, pointSpots } from './flowLayout';
 import { RoutineEdge } from './RoutineEdge';
@@ -29,11 +29,11 @@ interface Dragged {
 }
 
 export function RoutineFlow({ flow, states, errors }: RoutineFlowProps) {
-  const { editor, points } = useEditorContext();
+  const { editor, points, trainable } = useEditorContext();
   const [dragged, setDragged] = useState<Dragged | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const list = [...points.values()];
-  const placed = layoutFlow(flow, list);
+  const placed = layoutFlow(flow, list, nodeHeights(flow, errors, trainable));
   const baseId = flow.nodes.find((n) => n.kind === 'base')?.id ?? '';
   const kindOf = (id: string) => flow.nodes.find((n) => n.id === id)?.kind ?? '';
   const nodes = canvasNodes({ flow, placed, points: list, states, errors }).map((n) =>
@@ -62,19 +62,12 @@ export function RoutineFlow({ flow, states, errors }: RoutineFlowProps) {
       x: e.clientX,
       y: e.clientY,
       items: [
-        { label: 'Add Step After', icon: <PlusIcon className="w-4 h-4" />, onSelect: () => editor.addAfter(node.id) },
-        ...(kind === 'base'
-          ? []
-          : [
-              { divider: true as const },
-              {
-                label: 'Delete',
-                shortcut: '⌫',
-                tone: 'danger' as const,
-                icon: <DeleteIcon className="w-4 h-4" />,
-                onSelect: () => editor.remove(node.id),
-              },
-            ]),
+        {
+          label: 'Add Step After',
+          icon: <PlusIcon />,
+          onSelect: () => editor.addAfter(node.id),
+        },
+        ...(kind === 'base' ? [] : [{ divider: true as const }, deleteEntry(() => editor.remove(node.id), '⌫')]),
       ],
     });
   };

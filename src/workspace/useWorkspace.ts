@@ -3,7 +3,7 @@ import { useAgentSession } from './useAgentSession';
 import { useCanvasDrop } from './useCanvasDrop';
 import { useCanvasMenu } from './useCanvasMenu';
 import { useClipboard } from './useClipboard';
-import { useDevStudioHook } from './useDevStudioHook';
+import { useDevStudioHook } from './devStudio/useDevStudioHook';
 import { useGuideAutoUpdate } from './useGuideAutoUpdate';
 import { useMenuCommands } from './useMenuCommands';
 import { useRobotGhost } from './useRobotGhost';
@@ -15,7 +15,7 @@ import { useWorkspaceKeys } from './useWorkspaceKeys';
 import { useWorkspaceUi } from './useWorkspaceUi';
 
 export function useWorkspace({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
-  const core = useWorkspaceCore({ workspaceId, seed, studio });
+  const core = useWorkspaceCore({ workspaceId, active, seed, studio });
   const actions = useWorkspaceActions(core);
   const ui = useWorkspaceUi(core);
   const clipboard = useClipboard({

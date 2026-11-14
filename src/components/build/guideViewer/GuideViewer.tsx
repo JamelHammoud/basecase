@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ChevronLeftIcon,
@@ -16,6 +16,7 @@ import {
   PlusIcon,
 } from '../../../design-system';
 import type { GuidePages } from '../../../guide/viewer/guidePages';
+import { markReadySteps } from '../../../guide/viewer/readyMarks';
 import { REVEAL_LABEL } from '../../../utils/os';
 import { useCaptionInset } from '../../../utils/useCaptionInset';
 import { useGuideViewer } from './useGuideViewer';
@@ -27,12 +28,18 @@ interface GuideViewerProps {
   onReveal?: () => void;
   onOpenPdf?: () => void;
   onBuildAlong?: () => void;
+  ready?: boolean[];
 }
 
 const hidden: React.CSSProperties = { opacity: 0 };
 
-export const GuideViewer: React.FC<GuideViewerProps> = ({ pages, title, onClosed, onReveal, onOpenPdf, onBuildAlong }) => {
+export const GuideViewer: React.FC<GuideViewerProps> = (props) => {
+  const { pages, title, onClosed, onReveal, onOpenPdf, onBuildAlong, ready } = props;
   const viewer = useGuideViewer(pages, onClosed);
+  const readyKey = (ready ?? []).join();
+
+  useEffect(() => markReadySteps(pages, readyKey.split(',').map((v) => v === 'true')), [pages, readyKey]);
+
   const captionInset = useCaptionInset();
   const { scrollerRef, columnRef, backdropRef, chromeRef } = viewer.refs;
 

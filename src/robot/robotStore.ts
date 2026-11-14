@@ -1,5 +1,7 @@
 import type { ElectronApi } from '../utils/platform/types';
 import type { RobotConnection } from './jointRows';
+import type { RobotPolicyRef } from './robotPolicy';
+import { RunBuffer, statusPositions, type RobotRun } from './runBuffer';
 import {
   applyRobotEvent,
   INITIAL_ROBOT,
@@ -8,6 +10,7 @@ import {
   type RobotEvent,
   type RobotLinkState,
   type RobotMode,
+  type RobotMount,
   type RobotState,
 } from './robotState';
 
@@ -42,11 +45,15 @@ function setSceneJoints(joints: string[] | null) {
 
 export type RobotLinkApi = Pick<
   ElectronApi,
-  'robotConnect' | 'robotCommand' | 'robotDisconnect' | 'robotState' | 'onRobotEvent'
+  'robotConnect' | 'robotCommand' | 'robotDisconnect' | 'robotState' | 'onRobotEvent' | 'robotPolicy' | 'robotCalibrate'
 >;
 
 let api: RobotLinkApi | null = null;
+let policies: RobotPolicyRef[] | undefined;
 let benchDriving = false;
+let faultHeld = false;
+const run = new RunBuffer();
+const runs = new Map<number, RobotRun>();
 const listeners = new Set<() => void>();
 const eventListeners = new Set<(event: RobotEvent) => void>();
 
@@ -65,13 +72,56 @@ export const robotSceneJoints = () => sceneJoints;
 export function robotConnection(robot: RobotState): RobotConnection | null {
   if (robot.link !== 'connected') return null;
 
-  return { ids: robot.spec?.ids ?? [], jointIds: sceneJoints, readings: robot.status?.joints ?? [] };
+  return {
+    ids: robot.spec?.ids ?? [],
+    jointIds: sceneJoints,
+    readings: robot.status?.joints ?? [],
+    calibration: robot.calibration,
+  };
 }
 
 export const robotBenchDriving = () => benchDriving;
 
 export function setBenchDriving(driving: boolean) {
   benchDriving = driving;
+}
+
+export const robotFaultHeld = () => faultHeld;
+
+export const robotRunFor = (messageId: number) => runs.get(messageId) ?? null;
+
+function servoJoint(next: RobotState, id: unknown): string | null {
+  const k = typeof id === 'number' ? (next.spec?.ids.indexOf(id) ?? -1) : -1;
+
+  return k >= 0 ? (sceneJoints?.[k] ?? null) : null;
+}
+
+function keepFaultRun(next: RobotState, event: RobotEvent) {
+  const message = next.messages[0];
+
+  if (event.event !== 'fault' || !message || message === state.messages[0]) return;
+
+  faultHeld = true;
+  runs.set(message.id, {
+    ...run.kept(),
+    joints: [...(sceneJoints ?? [])],
+    faultJoint: servoJoint(next, event.id),
+    faultAt: Date.now(),
+    message: message.text,
+  });
+
+  for (const id of runs.keys()) if (!next.messages.some((m) => m.id === id)) runs.delete(id);
+}
+
+function noteRun(next: RobotState, event: RobotEvent) {
+  if (event.event === 'link' || event.event === 'mode') faultHeld = false;
+
+  if (event.event === 'link' && event.state === 'connected') run.clear();
+
+  if (event.event === 'status' && next.status && next.spec)
+    run.status(performance.now(), statusPositions(next.status, next.spec.ids, next.calibration));
+
+  keepFaultRun(next, event);
 }
 
 export function subscribeRobot(listener: () => void) {
@@ -93,7 +143,10 @@ export function subscribeRobotEvents(listener: (event: RobotEvent) => void) {
 export function receiveRobotEvent(event: RobotEvent) {
   if (event.event === 'link' && event.state !== 'connected') setSceneJoints(null);
 
-  set(applyRobotEvent(state, event));
+  const next = applyRobotEvent(state, event);
+
+  noteRun(next, event);
+  set(next);
 
   for (const listener of eventListeners) listener(event);
 }
@@ -101,7 +154,12 @@ export function receiveRobotEvent(event: RobotEvent) {
 function adopt(link: RobotLinkState) {
   if (!link.connected || state.link === 'connected') return;
 
-  const events = [{ event: 'link', state: 'connected', spec: link.spec }, link.hello, link.status];
+  const events = [
+    { event: 'link', state: 'connected', spec: link.spec },
+    link.hello,
+    link.status,
+    link.calibration ? { event: 'calibration', joints: link.calibration } : null,
+  ];
 
   sceneJoints = recalledSceneJoints();
   set(events.reduce<RobotState>((s, e) => (e ? applyRobotEvent(s, e) : s), INITIAL_ROBOT));
@@ -112,6 +170,9 @@ export function startRobotStore(link: RobotLinkApi) {
 
   api = link;
   link.onRobotEvent(receiveRobotEvent);
+
+  if (policies) void link.robotPolicy?.(policies);
+
   void link.robotState?.().then(adopt);
 }
 
@@ -125,11 +186,29 @@ export async function connectRobot(spec: ConnectSpec, joints: string[]): Promise
   return reply;
 }
 
+export function setRobotPolicy(refs: RobotPolicyRef[]) {
+  policies = refs;
+  void api?.robotPolicy?.(refs);
+}
+
 export const disconnectRobot = async () => (await api?.robotDisconnect?.()) ?? unavailable;
 
 export async function sendRobotCommand(command: Record<string, unknown>): Promise<ConnectReply> {
-  return (await api?.robotCommand?.(command)) ?? unavailable;
+  const sentAt = performance.now();
+  const reply = (await api?.robotCommand?.(command)) ?? unavailable;
+
+  if (reply.ok && command.cmd === 'intent' && Array.isArray(command.joints) && state.status?.run === 'running')
+    run.intent(
+      sentAt,
+      command.joints.map((v) => (typeof v === 'number' ? v : NaN)),
+    );
+
+  return reply;
 }
+
+export const robotLinkState = async () => (await api?.robotState?.()) ?? null;
+
+export const setRobotMounts = async (joints: RobotMount[]) => (await api?.robotCalibrate?.(joints)) ?? unavailable;
 
 export async function enterRung(mode: RobotMode) {
   set({ ...state, pending: mode });

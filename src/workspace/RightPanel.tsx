@@ -16,12 +16,13 @@ interface RightPanelProps {
 
 export function RightPanel({ core, actions, ui, agent }: RightPanelProps) {
   const { panelWidths, resizingPanel } = core.studio;
-  const isRightOpen = core.studio.isRightOpen && !core.caseRun.open;
+  const hidden = core.caseRun.open && core.tool.rightTab !== 'acp';
+  const isRightOpen = core.studio.isRightOpen && !hidden;
 
   return (
     <aside
       aria-hidden={!isRightOpen}
-      inert={core.caseRun.open}
+      inert={hidden}
       className={`relative h-full shrink-0 overflow-hidden ${
         resizingPanel === 'right' ? '' : 'transition-[width] duration-[240ms] ease-[cubic-bezier(0.2,0,0,1)]'
       }`}

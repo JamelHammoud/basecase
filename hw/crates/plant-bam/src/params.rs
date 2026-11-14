@@ -80,9 +80,18 @@ pub const XL330: (M6Params, ControlGains) = (
 );
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PartModel {
+    pub m6: M6Params,
+    pub gains: ControlGains,
+    pub firmware_kp: f64,
+    pub volts: f64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct UnitParams {
     pub m6: M6Params,
     pub gains: ControlGains,
+    pub supply_scale: f64,
     pub thermal_resistance: f64,
     pub thermal_capacity: f64,
     pub ambient_c: f64,
@@ -96,6 +105,7 @@ impl UnitParams {
         Self {
             m6: base.0,
             gains: base.1,
+            supply_scale: 1.0,
             thermal_resistance: 11.0,
             thermal_capacity: 12.0,
             ambient_c: 25.0,

@@ -241,6 +241,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
       return part ? posedPort(rig, pose, { part, port }) : null;
     },
     triangleCount: (id: string) => (viewportRef.current?.partTriangles(id)?.length ?? 0) / 9,
+    partTriangles: (id: string) => Array.from(viewportRef.current?.partTriangles(id) ?? []),
     importRobot: (url: string, name?: string) => devRef.current.importRobot({ kind: 'url', url, name }),
     robotPreview: async (url: string, width = 480) =>
       robotPreviewImage((await importRobot({ kind: 'url', url })).parts, width),

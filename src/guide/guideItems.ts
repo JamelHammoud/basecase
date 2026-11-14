@@ -56,7 +56,9 @@ function shapeSignature(p: ScenePart): string {
   const verts = p.cad?.positions ?? p.mesh?.positions ?? p.sculptMesh?.positions;
   const sample = verts ? verts.slice(0, 600).map(round).join(',') + `#${verts.length}` : '';
 
-  return hashText(`${p.kind}|${dims}|${p.color}|${JSON.stringify(p.deformers ?? {})}|${sample}`);
+  return hashText(
+    `${p.kind}|${dims}|${p.color}|${JSON.stringify(p.deformers ?? {})}|${JSON.stringify(p.edges ?? {})}|${sample}`,
+  );
 }
 
 export function itemKeyOf(p: ScenePart): string {

@@ -6,7 +6,7 @@ import { saveDataset } from '../datasets/datasetStore';
 
 export interface DatasetRecords {
   of: (dataset: Dataset) => TryRecord[];
-  freeze: (dataset: Dataset) => Promise<DatasetVersion>;
+  freeze: (dataset: Dataset, modelHash: string) => Promise<DatasetVersion>;
 }
 
 export function useDatasetRecords(sceneTries: TryRecord[]): DatasetRecords {
@@ -23,8 +23,9 @@ export function useDatasetRecords(sceneTries: TryRecord[]): DatasetRecords {
         return scene.get(id) ?? (summary ? [summaryRecord(summary)] : []);
       });
     },
-    freeze: async (dataset) => {
-      const frozen = freezeVersion(dataset, await versionHash(dataset, summaries), new Date().toISOString());
+    freeze: async (dataset, modelHash) => {
+      const hash = await versionHash(dataset, summaries, modelHash);
+      const frozen = freezeVersion(dataset, hash, new Date().toISOString());
 
       if (frozen.dataset !== dataset) await saveDataset(frozen.dataset);
 

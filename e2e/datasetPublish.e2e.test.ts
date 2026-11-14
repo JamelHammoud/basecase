@@ -59,7 +59,7 @@ describe('Publish a dataset', () => {
       const ours = () => [...hub.repos.keys()].filter((name) => /^tester\/touch-a-point-[0-9a-f]{6}$/.test(name));
       const token = app.page.locator(visible('input[aria-label="Access token"]'));
       const toast = (text: RegExp) => app.page.getByRole('status').filter({ hasText: text });
-      const outcome = toast(/Published to|Couldn’t publish|earlier design/);
+      const outcome = toast(/Published to|Couldn’t publish|as it is now/);
 
       await passedTry();
       await expect.poll(() => button('Make Dataset').count()).toBe(1);

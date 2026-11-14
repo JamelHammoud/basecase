@@ -32,6 +32,7 @@ export interface PreparedDataset {
   name: string;
   used: number;
   left: number;
+  modelHash: string;
 }
 
 const REPO_STEM_MAX = 80;
@@ -91,5 +92,5 @@ export async function prepareDataset(input: DatasetJobInput): Promise<PreparedDa
     source: sourceOf(kase, modelHash),
   };
 
-  return { job, name, used: episodes.length, left: passed.length - episodes.length };
+  return { job, name, used: episodes.length, left: passed.length - episodes.length, modelHash };
 }

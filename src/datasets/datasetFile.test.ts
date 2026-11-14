@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TrySummary } from '../cases/tryFile';
 import { addMembers, freezeVersion, newDataset, readDataset, versionHash, withMembers } from './datasetFile';
 import { heldOut, splitOf } from './datasetSplit';
-import { datasetStats, memberGroups, membersOf, queryMembers } from './datasetView';
+import { memberGroups, membersOf, queryMembers, totalSeconds } from './datasetView';
 
 const summary = (id: string, over: Partial<TrySummary> = {}): TrySummary => ({
   id,
@@ -41,20 +41,19 @@ describe('a dataset file', () => {
     expect(readDataset({ ...dataset, version: 2 })).toBeNull();
   });
 
-  it('keeps one version hash while its members are unchanged, and a new one when they change', async () => {
+  it('keeps one version hash while its members and the model are unchanged, and a new one when either changes', async () => {
     const tries = ids(4).map((id) => summary(id));
     const dataset = made(ids(3));
-    const first = await versionHash(dataset, tries);
+    const first = await versionHash(dataset, tries, 'model-a');
 
-    expect(await versionHash(made(ids(3)), tries)).toBe(first);
-    expect(await versionHash(made([...ids(3)].reverse()), tries)).not.toBe(first);
-    expect(await versionHash(made(ids(4)), tries)).not.toBe(first);
-    expect(
-      await versionHash(
-        dataset,
-        tries.map((t) => ({ ...t, outcome: { verdict: 'failed', margin: 0 } })),
-      ),
-    ).not.toBe(first);
+    expect(await versionHash(made(ids(3)), tries, 'model-a')).toBe(first);
+    expect(await versionHash(made([...ids(3)].reverse()), tries, 'model-a')).not.toBe(first);
+    expect(await versionHash(made(ids(4)), tries, 'model-a')).not.toBe(first);
+    expect(await versionHash(dataset, tries, 'model-b')).not.toBe(first);
+
+    const failed = tries.map((t) => ({ ...t, outcome: { verdict: 'failed' as const, margin: 0 } }));
+
+    expect(await versionHash(dataset, failed, 'model-a')).not.toBe(first);
   });
 
   it('freezes version 1 once, then version 2 with the failed runs added to it', async () => {
@@ -62,15 +61,15 @@ describe('a dataset file', () => {
     const failed = ids(2, 'run').map((id) => summary(id, { outcome: { verdict: 'failed', margin: -0.1 } }));
     const tries = [...passed, ...failed];
     const start = made(ids(5));
-    const one = freezeVersion(start, await versionHash(start, tries), 'train');
-    const again = freezeVersion(one.dataset, await versionHash(one.dataset, tries), 'export');
+    const one = freezeVersion(start, await versionHash(start, tries, 'model-a'), 'train');
+    const again = freezeVersion(one.dataset, await versionHash(one.dataset, tries, 'model-a'), 'export');
 
     expect(one.version.n).toBe(1);
     expect(again.dataset).toBe(one.dataset);
     expect(again.version).toBe(one.version);
 
     const grown = addMembers(one.dataset, ['run1', 'run2', 't1']);
-    const two = freezeVersion(grown, await versionHash(grown, tries), 'publish');
+    const two = freezeVersion(grown, await versionHash(grown, tries, 'model-a'), 'publish');
 
     expect(two.version.n).toBe(2);
     expect(two.version.members).toEqual([...ids(5), 'run1', 'run2']);
@@ -94,16 +93,22 @@ describe('a dataset’s split', () => {
 });
 
 describe('a dataset’s members', () => {
-  it('lists tries from another model apart', () => {
-    const tries = [summary('a'), summary('b', { modelHash: 'model-b', robot: 'SO-100' }), summary('c')];
-    const dataset = made(['a', 'b', 'c', 'gone']);
-    const members = membersOf(dataset, tries);
-    const groups = memberGroups(members, 'model-a');
+  it('tells tries from an earlier design apart from tries of another Case or scene', () => {
+    const tries = [
+      summary('a'),
+      summary('b', { modelHash: 'model-old' }),
+      summary('c', { modelHash: 'model-push', caseId: 'push', caseName: 'Push the Box' }),
+      summary('d', { modelHash: 'model-other', sceneId: 'scene-2', robot: 'SO-100' }),
+    ];
+    const members = membersOf(made(['a', 'b', 'c', 'd', 'gone']), tries);
+    const here = { modelHash: 'model-a', sceneId: 'scene-1', caseId: 'grasp' };
+    const groups = memberGroups(members, here);
 
-    expect(members.map((t) => t.id)).toEqual(['a', 'b', 'c']);
-    expect(groups.fitting.map((t) => t.id)).toEqual(['a', 'c']);
-    expect(groups.apart.map((t) => t.id)).toEqual(['b']);
-    expect(memberGroups(members, null).apart).toEqual([]);
+    expect(members.map((t) => t.id)).toEqual(['a', 'b', 'c', 'd']);
+    expect(groups.fitting.map((t) => t.id)).toEqual(['a']);
+    expect(groups.earlier.map((t) => t.id)).toEqual(['b']);
+    expect(groups.elsewhere.map((t) => t.id)).toEqual(['c', 'd']);
+    expect(memberGroups(members, { ...here, modelHash: null }).fitting).toEqual(members);
   });
 
   it('reruns its query on Update, picking up tries recorded since', () => {
@@ -116,13 +121,13 @@ describe('a dataset’s members', () => {
     expect(queryMembers('real', after)).toEqual(['d']);
   });
 
-  it('counts episodes and their total time', () => {
-    const stats = datasetStats([
+  it('adds up its total time', () => {
+    const seconds = totalSeconds([
       summary('a'),
       summary('b', { source: 'generated', seconds: 4 }),
       summary('c', { robot: 'SO-100', outcome: { verdict: 'failed', margin: 0 } }),
     ]);
 
-    expect(stats).toEqual({ episodes: 3, seconds: 16 });
+    expect(seconds).toBe(16);
   });
 });

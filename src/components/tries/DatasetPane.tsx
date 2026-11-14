@@ -2,12 +2,11 @@ import React from 'react';
 import { Button, DownloadIcon, MetaLine, RefreshIcon, ShareIcon, TrainIcon } from '../../design-system';
 import type { TrySummary } from '../../cases/tryFile';
 import { newestVersion, type Dataset } from '../../datasets/datasetFile';
-import { datasetStats } from '../../datasets/datasetView';
+import { totalSeconds } from '../../datasets/datasetView';
 import { duration } from '../../utils/duration';
 import type { TriesResult } from '../../workspace/useTriesTraining';
 import { PendingRow } from '../simulate/PendingRow';
 import { TriesResultRow } from './TriesResultRow';
-import { plural } from '../../../electron/plural.mjs';
 
 export interface DatasetActions {
   exporting: boolean;
@@ -23,10 +22,9 @@ export interface DatasetActions {
 }
 
 function statItems(dataset: Dataset, members: TrySummary[]): React.ReactNode[] {
-  const stats = datasetStats(members);
   const version = newestVersion(dataset);
 
-  return [plural(stats.episodes, 'episode'), duration(stats.seconds), version && `Version ${version.n}`];
+  return [duration(totalSeconds(members)), version && `Version ${version.n}`];
 }
 
 interface DatasetPaneProps {

@@ -2,15 +2,7 @@ import type { TrySummary } from '../cases/tryFile';
 import { tryMatches } from '../cases/tryQuery';
 import type { Dataset } from './datasetFile';
 
-export interface DatasetStats {
-  episodes: number;
-  seconds: number;
-}
-
-export const datasetStats = (members: TrySummary[]): DatasetStats => ({
-  episodes: members.length,
-  seconds: members.reduce((sum, t) => sum + t.seconds, 0),
-});
+export const totalSeconds = (members: TrySummary[]) => members.reduce((sum, t) => sum + t.seconds, 0);
 
 export function membersOf(dataset: Dataset, tries: TrySummary[]): TrySummary[] {
   const byId = new Map(tries.map((t) => [t.id, t]));
@@ -20,15 +12,26 @@ export function membersOf(dataset: Dataset, tries: TrySummary[]): TrySummary[] {
 
 export interface MemberGroups {
   fitting: TrySummary[];
-  apart: TrySummary[];
+  earlier: TrySummary[];
+  elsewhere: TrySummary[];
 }
 
-export function memberGroups(members: TrySummary[], modelHash: string | null): MemberGroups {
-  if (!modelHash) return { fitting: members, apart: [] };
+export interface OpenModel {
+  modelHash: string | null;
+  sceneId: string;
+  caseId: string | null;
+}
+
+export function memberGroups(members: TrySummary[], here: OpenModel): MemberGroups {
+  if (!here.modelHash) return { fitting: members, earlier: [], elsewhere: [] };
+
+  const apart = members.filter((t) => t.modelHash !== here.modelHash);
+  const sameCase = (t: TrySummary) => t.sceneId === here.sceneId && t.caseId === here.caseId;
 
   return {
-    fitting: members.filter((t) => t.modelHash === modelHash),
-    apart: members.filter((t) => t.modelHash !== modelHash),
+    fitting: members.filter((t) => t.modelHash === here.modelHash),
+    earlier: apart.filter(sameCase),
+    elsewhere: apart.filter((t) => !sameCase(t)),
   };
 }
 

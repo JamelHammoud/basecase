@@ -147,8 +147,8 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
       setPlace({ open: true, robot: null, dataset: id });
     },
     close,
-    pick: (id: string, keys: PickKeys) => {
-      const next = picked(order, pick, id, keys);
+    pick: (id: string, keys: PickKeys, shown = order) => {
+      const next = picked(shown, pick, id, keys);
 
       setPick(next);
 

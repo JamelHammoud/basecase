@@ -39,6 +39,11 @@ export interface DatasetExport {
 
 export const EARLIER_TRIES = 'These tries are from an earlier design. Try It again to record new ones.';
 
+export const OTHER_TRIES = 'These tries are from another Case or scene.';
+
+export const FITTING_TRIES =
+  'Export and training take only passed tries of this Case as it is now. Try It to record more.';
+
 interface Made {
   dataset: Dataset;
   prepared: PreparedDataset;
@@ -50,13 +55,13 @@ interface Delivery {
   deliver: (made: Made, records: DatasetRecords) => Promise<{ message: string; options?: ToastOptions }>;
 }
 
-const leftOut = (made: PreparedDataset) => (made.left ? `, left out ${made.left} from an earlier design` : '');
+const leftOut = (made: PreparedDataset) => (made.left ? `, left out ${made.left} from another Case or design` : '');
 
 const EXPORT: Delivery = {
   busy: 'Exporting dataset…',
   failed: 'Couldn’t export the dataset.',
   deliver: async ({ dataset, prepared }, records) => {
-    await records.freeze(dataset);
+    await records.freeze(dataset, prepared.modelHash);
     downloadBytes(await exportDatasetZip(prepared.job), `${prepared.name}.zip`, 'application/zip');
 
     return { message: `Exported ${plural(prepared.used, 'try', 'tries')} as a dataset${leftOut(prepared)}` };
@@ -67,7 +72,7 @@ const PUBLISH: Delivery = {
   busy: 'Publishing dataset…',
   failed: 'Couldn’t publish the dataset.',
   deliver: async ({ dataset, prepared }, records) => {
-    const version = await records.freeze(dataset);
+    const version = await records.freeze(dataset, prepared.modelHash);
     const files = await exportDatasetFiles(prepared.job);
     const name = await repoName(dataset.name, dataset.id);
     const published = await hubBridge.publish({ name, files, tag: `dataset-v${version.n}` });
@@ -110,7 +115,7 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
       const prepared = await prepareFor(dataset);
 
       if (!prepared) {
-        showToast(EARLIER_TRIES, { tone: 'error' });
+        showToast(FITTING_TRIES, { tone: 'error' });
 
         return;
       }
@@ -158,7 +163,7 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
     zipDataset: async (dataset) => {
       const made = await prepareFor(dataset);
 
-      if (made) await records.freeze(dataset);
+      if (made) await records.freeze(dataset, made.modelHash);
 
       return made ? exportDatasetZip(made.job) : null;
     },

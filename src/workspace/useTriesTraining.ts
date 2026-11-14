@@ -12,7 +12,7 @@ import { TRIES_JOINT_NOISE_DEG, TRIES_RUNS, TRIES_TO_TRAIN, triesJob } from '../
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import { caseVerdict, type CaseRobotInput, type CaseVerdict } from './caseChecks';
 import type { ShowToast } from './types';
-import { EARLIER_TRIES } from './useDatasetExport';
+import { FITTING_TRIES } from './useDatasetExport';
 import type { DatasetRecords } from './useDatasetRecords';
 
 export interface TriesResult {
@@ -72,16 +72,16 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
     const robot = await caseRobot();
     const model = await sim.buildModel();
     const passed = records.of(dataset).filter((t) => t.passed);
-    const { usable } = await usableTries(passed, model, { accepts: canTrain });
+    const { usable, modelHash } = await usableTries(passed, model, { accepts: canTrain });
 
     if (!robot || usable.length < TRIES_TO_TRAIN) {
       setTraining(null);
-      showToast(EARLIER_TRIES, { tone: 'error' });
+      showToast(FITTING_TRIES, { tone: 'error' });
 
       return;
     }
 
-    await records.freeze(dataset);
+    await records.freeze(dataset, modelHash);
 
     const byId = new Map(usable.map((u) => [u.record.id, u.recording]));
     const ordered = splitOf([...byId.keys()], dataset.seed).order.map((id) => byId.get(id)!);

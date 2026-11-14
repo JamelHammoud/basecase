@@ -24,9 +24,9 @@ covers:
   - electron/main.mjs
 ---
 
-The agent, slicing, printing and training all run in the Basecase desktop app. To install it, you need one of these:
+The agent, slicing, printing and training all run in the Basecase desktop app. You can install it on either of these:
 
-- A Mac with Apple silicon. There isn't a build for Intel Macs.
+- A Mac with Apple silicon. Basecase doesn't have a build for Intel Macs.
 - A PC running 64-bit Windows 11.
 
 ## On a Mac
@@ -42,19 +42,19 @@ The agent, slicing, printing and training all run in the Basecase desktop app. T
 2. Open `Basecase-Setup.exe`.
 3. If Windows SmartScreen stops the installer, click **More info**, then click **Run anyway**.
 
-You don't need administrator rights to run the installer. It installs Basecase for your Windows account and adds a Basecase shortcut.
+The installer doesn't need administrator rights. It installs Basecase for your Windows account and adds a Basecase shortcut.
 
 ## The first launch
 
-Basecase opens with a two-wheel rover in the simulator, and the agent connects while the app starts. To learn more, see [Drive your first robot](/help/drive-your-first-robot).
+Basecase opens with a two-wheel rover in the simulator. The agent connects while the app starts. Learn more in [Drive your first robot](/help/drive-your-first-robot).
 
 The first time you open Basecase, it downloads Claude Code (263 MB). You can follow the download in the Agent tab. If you choose Codex (340 MB) or Gemini CLI (95 MB) in Settings, Basecase downloads that one instead.
 
-Basecase saves your scenes, saved models, tries and datasets in these folders:
+Basecase saves your scenes, saved models, tries and datasets here:
 
 - On a Mac: `~/Library/Application Support/Basecase`
 - On Windows: `%APPDATA%\Basecase`
 
-Uninstalling Basecase on Windows doesn't remove these files.
+**Note:** Uninstalling Basecase on Windows doesn't remove these files.
 
 Next, [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot), or [choose the agent](/help/choose-the-agent) you'll design with.

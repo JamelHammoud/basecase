@@ -26,27 +26,27 @@ covers:
   - src/workspace/applyAgentOps.ts
 ---
 
-Describe a robot or show the agent a photo, and it models that robot in your scene with real servos, boards and screws you can buy.
+Describe a robot or show the agent a photo, and it models that robot in your scene using real servos, boards and screws you can buy.
 
-The agent is Claude Code, Codex or Gemini CLI, running on your computer under your own login. It works in the desktop app. If you're in the web studio, download the desktop app to use it.
+The agent is Claude Code, Codex or Gemini CLI, running on your computer under your own login. It works in the desktop app. If you're using the web studio, download the desktop app to use the agent.
 
 ## What it does
 
-The agent builds in the open scene, and you can watch it work. It reads your words, photos, sketches and files, and looks up the robot's published model if one exists. Before it shapes any part, it plans where the joints go. Then it blocks out the robot, models each part as code, and checks its work.
+The agent builds in the open scene, so you can watch it work. It reads your words, photos, sketches and files, and looks up the robot's published model if there is one. Before it shapes any part, it plans where the joints go. Then it blocks out the robot, models each part as code, and checks its work.
 
-Parts come from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) come first. If the catalog lacks a part, the agent can add one it found on the web, and the bill of materials shows that part as Added by Agent.
+Parts come from the same catalog as the **Parts** view, with their real sizes, mounting holes and prices. Parts you [own](/help/count-the-parts-you-already-own) come first. If a part isn't in the catalog, the agent can add one it found on the web, and the bill of materials shows that part as Added by Agent.
 
-The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. It can gather tries into a dataset from a search or from a list of tries.
+The agent can pose and animate the robot, run it in the simulation, write and run a Case, write a Routine, and teach the robot a skill. It can also gather tries into a dataset, either from a search or from a list of tries.
 
-If you ask it to change how a ready Motor Kit skill moves, it keeps the change only if Arena still passes it. For a Routine, it proves each switch between skills and names any that fell. To compare two robots, give it a Case and two open scenes, and it tells you which one passes more often. To choose a servo, ask the agent which one to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
+If you ask it to change how a ready Motor Kit skill moves, it keeps the change only if Arena still passes it. For a Routine, it proves each switch between skills and names any that fell. Give it a Case and two open scenes, and it tells you which robot passes more often. Ask which servo to buy, and it runs the Case on each catalog version and answers with passes, cost and mass.
 
 For an arm, tell the agent where the arm must reach and what it carries, and it starts by sizing the links and servos. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. For fewer parts, it merges printed parts that bolt together on one link into a single print.
 
-To use a robot for something, such as playing a game on a gamepad, tell the agent what you want and it builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
+To use a robot for something, like playing a game on a gamepad, tell the agent what you want. The agent builds a Case for it, and the Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
 
-If the Case's panels lack a control the agent needs, like a joystick or a piano, it draws one as a code panel. If that code moves an object, say a target to whack, the agent marks the object as movable. After each write, it reads the panel's errors and a capture of the window, then fixes what broke.
+If the Case's panels don't have a control the agent needs, like a joystick or a piano, it draws one as a code panel. If that code moves an object, like a target to whack, the agent marks the object as movable. After each write, it reads the panel's errors and a capture of the window, then fixes what broke.
 
-You can also name a movement, such as a wave, and the Case reacts to it as a gesture. If the movement isn't built in, the agent asks you to teach it. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
+You can also name a movement, like a wave, and the Case reacts to it as a gesture. If the movement isn't built in, the agent asks you to teach it. For the steps, see [Build a Case app with the agent](/help/build-a-case-app-with-the-agent).
 
 ## What it cares about
 
@@ -56,7 +56,7 @@ The agent weighs its work in this order:
 2. Each part costs no more than the job needs.
 3. Parts look like an expert designed them.
 
-Matching the silhouette in a photo ranks below all three.
+Matching the silhouette in a photo matters less than all three.
 
 ## How it checks its work
 
@@ -70,6 +70,6 @@ If the scene has Cases, the agent runs each one and keeps working until they pas
 
 Each change the agent makes is one undo step. To take changes back, see [Undo what the agent changed](/help/undo-agent-changes).
 
-While the agent works, you can steer it, queue your next request, or stop it. Your own edits win, and the agent never blocks you from changing a part.
+While the agent works, you can steer it, queue your next request, or stop it. Your own edits take priority over the agent's, and it never blocks you from changing a part.
 
 The agent can't run commands, open files you haven't attached, or reach your hardware. For everything else it can't do, see [Agent limits](/help/agent-limits).

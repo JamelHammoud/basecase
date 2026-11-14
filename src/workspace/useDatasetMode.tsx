@@ -77,7 +77,8 @@ export interface DatasetMode {
   dataset: Dataset | null;
   members: TrySummary[];
   fitting: TrySummary[];
-  apart: TrySummary[];
+  earlier: TrySummary[];
+  elsewhere: TrySummary[];
   actions: DatasetActions | null;
   menu: (id: string) => ContextMenuEntry[];
 }
@@ -88,14 +89,19 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
   const dataset = view.open ? view.dataset : null;
   const modelHash = useModelHash(sim.buildModel, dataset ? `${dataset.id}:${cases.active?.id ?? ''}` : null);
   const members = dataset ? membersOf(dataset, view.all) : [];
-  const { fitting, apart } = memberGroups(members, modelHash);
+  const { fitting, earlier, elsewhere } = memberGroups(members, {
+    modelHash,
+    sceneId: cases.sceneId,
+    caseId: cases.active?.id ?? null,
+  });
   const { fromTries } = cases;
 
   return {
     dataset,
     members,
     fitting,
-    apart,
+    earlier,
+    elsewhere,
     actions: dataset && {
       exporting: cases.dataset.exporting,
       canPublish: cases.dataset.canPublish,

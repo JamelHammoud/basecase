@@ -74,7 +74,11 @@ export const addMembers = (dataset: Dataset, ids: string[]): Dataset => ({
 
 export const withMembers = (dataset: Dataset, ids: string[]): Dataset => ({ ...dataset, members: unique(ids) });
 
-export async function versionHash(dataset: Pick<Dataset, 'task' | 'members'>, tries: TrySummary[]): Promise<string> {
+export async function versionHash(
+  dataset: Pick<Dataset, 'task' | 'members'>,
+  tries: TrySummary[],
+  modelHash: string,
+): Promise<string> {
   const byId = new Map(tries.map((t) => [t.id, t]));
   const members = dataset.members.map((id) => {
     const t = byId.get(id);
@@ -82,7 +86,7 @@ export async function versionHash(dataset: Pick<Dataset, 'task' | 'members'>, tr
     return t ? [id, t.modelHash, t.frames, t.outcome.verdict] : [id];
   });
 
-  return sha256(JSON.stringify({ task: dataset.task, members }));
+  return sha256(JSON.stringify({ task: dataset.task, model: modelHash, members }));
 }
 
 export const newestVersion = (dataset: Dataset): DatasetVersion | null => dataset.versions.at(-1) ?? null;

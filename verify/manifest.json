@@ -59,7 +59,7 @@
   "verify/gates/s3-anythingzoo.mjs": "1c1cc288203b3779a4f1a2a7c0beec1a298f25b08ceb80f6e42718681067add3",
   "verify/gates/s3-contract.mjs": "fee57e69ca986ad5cbbe9e95dc3443dd316c5608479085fa1a6a7b84f9f55c1c",
   "verify/gates/s3-servo-models.mjs": "2466660d494515b4bf9f7e1a34e5a5d13aa24b674ca58f0002dbaa18870a1421",
-  "verify/gates/s3a-motor-kit.mjs": "bbd7aedd1b01897231e533e2c1c4e65d01555b3ef0337b335677db83afc654fb",
+  "verify/gates/s3a-motor-kit.mjs": "bb15b1daa9f03f87748f020edf0fa5a31b432e70152a2696882dbda09868cbbf",
   "verify/gates/s3b-moves.mjs": "f103deeaf5430d7f4006473484333485cdf4a34b394997b3b9e509dc8352e046",
   "verify/gates/s4-routines-core.mjs": "f2e032c49ac768561aca4d58857db8511b067df629a37f33f282c8d685ac446f",
   "verify/gates/s4b-routines-flow.mjs": "0096f9d979f87719588972cd6bf3314ddcb100d11a500edecaa23ddbe1c11ff3",

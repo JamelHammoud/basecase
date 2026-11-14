@@ -1,6 +1,7 @@
 import type { V3 } from '../../../utils/kinematics';
 import type { PoseSample } from '../poseFollow';
 import { POSE, POSE_LANDMARK_COUNT, toHuman, type PoseLandmark } from '../poseLandmarks';
+import { seeded } from '../../../utils/seeded';
 
 export const RAISE_FPS = 30;
 export const UPPER_ARM_M = 0.29;
@@ -109,21 +110,6 @@ function rightArm(raise: number, bend: number): Body {
     rightIndex: add(add(wrist, along, 0.085), [0.015, 0, 0]),
     rightPinky: add(add(wrist, along, 0.075), [-0.03, 0, 0]),
     rightThumb: add(add(wrist, along, 0.05), [0.04, 0, 0.02]),
-  };
-}
-
-function seeded(seed: number) {
-  let s = seed >>> 0;
-
-  return () => {
-    s = (s + 0x6d2b79f5) >>> 0;
-
-    let t = s;
-
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
 

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { caseFields, caseName, goalValues, specValues, worldsFor } from '../../cases/caseBuilder';
+import { caseFields, goalValues, specValues, worldsFor } from '../../cases/caseBuilder';
 import { goalParam, type GoalKind, type GoalValues } from '../../cases/caseGoals';
 import type { WorldKind } from '../../cases/caseWorlds';
-import { Button, ChoiceGrid, FieldRow, NumberInput, TextInput } from '../../design-system';
+import { Button, ChoiceGrid, FieldRow, NumberInput } from '../../design-system';
 import type { CaseBuilder } from '../../workspace/useCaseBuilder';
 import { RoomTargetPicker } from './RoomTargetPicker';
 import { useRoomTargetPick } from './useRoomTargetPick';
@@ -18,7 +18,6 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
   const [goalKind, setGoalKind] = useState<GoalKind>(builder.goals[0].kind);
   const [chosenWorld, setWorld] = useState<WorldKind>(builder.room ? 'room' : 'floor');
   const [given, setGiven] = useState<Partial<GoalValues>>({});
-  const [name, setName] = useState<string | null>(null);
   const goal = builder.goals.find((g) => g.kind === goalKind) ?? builder.goals[0];
   const worlds = worldsFor(goal.kind, builder.robot, builder.room);
   const world = worlds.some((w) => w.kind === chosenWorld) ? chosenWorld : 'floor';
@@ -29,7 +28,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
     values: goalValues(goal, builder.robot, given, world),
   });
   const chosen = spots.chosen;
-  const spec = { goal: goal.kind, world, values: given, name: name ?? undefined, targets: chosen };
+  const spec = { goal: goal.kind, world, values: given, targets: chosen };
   const values =
     specValues({ ...spec, room: builder.room }, builder.robot) ?? goalValues(goal, builder.robot, given, world);
   const preview = builder.preview(spec);
@@ -97,15 +96,6 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
             </FieldRow>
           );
         })}
-        <FieldRow label="Name">
-          <TextInput
-            value={name ?? caseName(goal.kind, world, values, builder.room)}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') create();
-            }}
-          />
-        </FieldRow>
       </div>
       <p className="text-[12.5px] leading-snug text-white/55" data-testid="new-case-brief">
         {preview.ok ? preview.kase.brief : preview.problem}
@@ -114,7 +104,15 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         <Button variant="ghost" size="sm" title="Cancel" shortcut="Esc" onClick={builder.cancel}>
           Cancel
         </Button>
-        <Button variant="primary" size="sm" title="Make Case" shortcut="↩" disabled={!preview.ok} onClick={create}>
+        <Button
+          autoFocus
+          variant="primary"
+          size="sm"
+          title="Make Case"
+          shortcut="↩"
+          disabled={!preview.ok}
+          onClick={create}
+        >
           Make Case
         </Button>
       </div>

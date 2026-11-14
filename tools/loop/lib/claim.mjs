@@ -68,3 +68,17 @@ export function claim(key) {
     if (readPid(file) === process.pid) fs.rmSync(file, { force: true });
   };
 }
+
+const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+export function claimWithin(key, { ms, every = 30_000 }) {
+  const until = Date.now() + ms;
+
+  for (;;) {
+    const release = claim(key);
+
+    if (release || Date.now() >= until) return release;
+
+    sleep(every);
+  }
+}

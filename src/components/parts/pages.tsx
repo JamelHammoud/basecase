@@ -11,6 +11,7 @@ import {
   LinkButton,
   ModelOrigin,
   makerSubtitle,
+  SizeLine,
   SpecRow,
   SpecRows,
 } from '../PartDetails';
@@ -39,7 +40,7 @@ const ComponentSpecs: React.FC<{ c: ComponentInfo; d: PartDimensions }> = ({ c, 
       <dl className="-my-[5px]">
         {keySpecs(c, d).map((k) => (
           <SpecRow key={k.label} label={k.label}>
-            {k.value}
+            {k.mm ? <SizeLine mm={k.mm} /> : k.value}
           </SpecRow>
         ))}
       </dl>

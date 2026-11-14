@@ -42,7 +42,7 @@ Put a camera part on the robot and see its live view beside the canvas, through 
 
 **Show Simulate**, **Collapse Camera Views** and **Expand Camera Views** are in [[⌘K]], and [[⇧V]] toggles the views. Collapsed, the views stop drawing.
 
-While you [drive a robot with your camera](/help/drive-a-robot-with-your-camera), the computer's camera is the first tile. It's mirrored, with your skeleton drawn over it.
+While a robot follows [your arms](/help/drive-a-robot-with-your-camera) or [your hand or face](/help/drive-a-case-with-your-hand-face-midi-or-voice), the computer's camera is the first tile. It's mirrored. When it follows your arms, your skeleton is drawn over it.
 
 ## Make the camera move with the robot
 

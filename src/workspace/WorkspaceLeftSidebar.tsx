@@ -8,6 +8,7 @@ import { canReplayRuns, replayRobotRun } from './robotReplay';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
+import { showPartsSection } from './showView';
 
 interface WorkspaceLeftSidebarProps {
   core: WorkspaceCore;
@@ -20,7 +21,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
   const { studio, tool, parts, selectedIds, selection } = core;
   const { library, creation, edits, robots, files } = actions;
   const { panelWidths } = studio;
-  const browseRobots = () => tool.setLeftTab('robots');
+  const browseRobots = () => showPartsSection(core, 'Robots');
   const libraryProps = {
     customModels: studio.customModels,
     onInsertModel: creation.placeCustomModel,
@@ -36,7 +37,9 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       open={studio.isLeftOpen && !core.caseRun.open}
       inert={core.caseRun.open}
       partsSearchRef={ui.partsSearchRef}
-      onImportRobot={robots.pickRobot}
+      partsReveal={tool.partsReveal}
+      onPartsRevealed={tool.clearPartsReveal}
+      onInsertRobot={robots.pickRobot}
       onInsertSimReady={(asset) => robots.importRobotFrom({ kind: 'simready', asset })}
       width={panelWidths.left}
       resizing={studio.resizingPanel === 'left'}
@@ -96,6 +99,8 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       onToggleReferenceImages={ui.toggleReferenceImages}
       onTogglePartFlag={edits.togglePartFlag}
       onRenamePart={edits.renamePart}
+      renamingLayer={ui.renamingLayer}
+      onRenamingLayer={ui.setRenamingLayer}
       onPartContextMenu={onPartContextMenu}
       onAddCatalogItem={creation.addCatalogItem}
       library={libraryProps}

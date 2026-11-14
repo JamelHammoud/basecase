@@ -36,13 +36,15 @@ export interface CaseSpec {
   logic?: unknown;
   score?: unknown;
   console?: unknown;
+  gestures?: unknown;
   room?: Room;
   targets?: Array<string | null>;
 }
 
 export type BuiltCase = { ok: true; kase: Case } | { ok: false; problem: string };
 
-const MAX_NAME = 80;
+export const MAX_CASE_NAME = 80;
+
 const MAX_ID = 60;
 
 function armSpots(rig: Rig, facts: RobotFacts): V3[] {
@@ -247,7 +249,7 @@ interface Draft {
 
 function caseJson(draft: Draft): unknown {
   const { spec, goal, world, values, plan, scenery, robot } = draft;
-  const name = spec.name?.trim().slice(0, MAX_NAME) || caseName(goal.kind, world.kind, values, spec.room);
+  const name = spec.name?.trim().slice(0, MAX_CASE_NAME) || caseName(goal.kind, world.kind, values, spec.room);
   const guard = plan.slot.needs.includes('legs') ? fallGuard(robot) : null;
 
   return {
@@ -269,6 +271,7 @@ function caseJson(draft: Draft): unknown {
     },
     ...(spec.logic !== undefined ? { logic: spec.logic } : {}),
     ...(spec.console !== undefined ? { console: spec.console } : {}),
+    ...(spec.gestures !== undefined ? { gestures: spec.gestures } : {}),
   };
 }
 

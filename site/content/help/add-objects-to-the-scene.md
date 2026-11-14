@@ -22,18 +22,26 @@ related:
   - organize-parts-in-layers
 covers:
   - src/components/objects/
+  - src/components/parts/ObjectsView.tsx
+  - src/components/parts/insertSearch.ts
   - src/simready/
   - electron/simready/
 ---
 
 Place a mug, a box, a shelf or another real object from NVIDIA's SimReady Central next to your robot, at true size and weight.
 
-1. Click **Objects** in the view rail on the left.
-2. Type what you want in **Search objects**, such as `mug`, and wait for the results.
+1. Click **Parts** in the view rail on the left.
+2. Type what you want in **Search parts**, such as `mug`, and press [[↩]].
 3. Hover a result to see its size, weight and moving parts.
 4. Click the result to insert it.
 
-A toast shows the download and conversion. You can also drag a result to where it should go on the canvas. To browse instead of searching, click a category under the field, such as **Kitchen** or **Boxes and bins**.
+![Kitchen objects searched for mug, showing a grid of SimReady mugs from NVIDIA](/help/add-objects-to-the-scene/kitchen.png)
+
+A word that names a category, like `mug`, opens that category with your search in it. When nothing in Parts matches, [[↩]] lists SimReady results instead. A toast shows the download and conversion. You can also drag a result to where it should go on the canvas.
+
+To browse instead of searching, click a category under **Objects** in Parts, such as **Kitchen** or **Boxes and bins**.
+
+![Parts scrolled to its Objects section, listing Kitchen, Food, Boxes and bins and the other categories](/help/add-objects-to-the-scene/objects.png)
 
 Objects whose maker gave a mass move freely in Simulate, and the rest stay fixed. Checks treat a free object as scenery, so its weight stays out of the robot's.
 

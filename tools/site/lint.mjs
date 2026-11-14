@@ -10,6 +10,7 @@ import {
   longSentences,
   pageLinks,
   paragraphLength,
+  plainKeys,
   sentenceLength,
   spelling,
   summaryLength,
@@ -23,7 +24,7 @@ const EVERY_PAGE = [bannedWords, spelling, linkText, pageLinks, images, title];
 export const RULES = {
   changelog: [...EVERY_PAGE, sentenceLength, paragraphLength, summaryLength, helpLink],
   blog: [...EVERY_PAGE, sentenceLength, paragraphLength, copiedFromChangelog],
-  help: [...EVERY_PAGE, helpTitle],
+  help: [...EVERY_PAGE, helpTitle, plainKeys],
 };
 
 function pageOf({ path, source }) {

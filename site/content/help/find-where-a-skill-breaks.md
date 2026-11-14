@@ -40,4 +40,4 @@ Train on These needs the desktop app, and only retrains Motor Kit skills and mov
 
 A row with no findings held across every limit: friction 0.2 to 1.5 times, weight 0.5 to 2 times, servo strength 40% to 120% and servo latency up to 150 ms.
 
-You can also press ⌘K and run **Stress Stand**, or ask the agent whether the skill holds on tile. For what Arena already checks, see [Arena](/help/arena).
+You can also press [[⌘K]] and run **Stress Stand**, or ask the agent whether the skill holds on tile. For what Arena already checks, see [Arena](/help/arena).

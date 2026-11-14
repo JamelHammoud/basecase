@@ -17,6 +17,8 @@ Fail it, with a finding for each, when it:
 - credits a model or tool anywhere;
 - has a bug you can point to: wrong logic, a missed case, a race, a security hole.
 
+Don't judge whether a change to the agent's prompt, guides, tools or checks makes the agent better or worse: when you pass a pull request that changes them, the runner measures it on the micro-evals and fails it itself if it measures worse.
+
 Pass it when none of those hold. Style preferences that no guide states are not failures. Mention them as `minor` findings at most.
 
 Size is never a failure. A large pull request that carries one idea everywhere it applies is what the loop wants; a pull request that mixes unrelated ideas is a `minor` finding, never a blocker.

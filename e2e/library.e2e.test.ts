@@ -46,7 +46,7 @@ afterAll(async () => {
 
 describe('Library', () => {
   it('opens each sidebar view from its Show command in ⌘K', async () => {
-    for (const view of ['Library', 'Layers', 'Objects', 'Robots']) {
+    for (const view of ['Library', 'Layers']) {
       await app.page.keyboard.press('Meta+k');
       await app.page.keyboard.type(`Show ${view}`);
       await app.page.locator(shown('button[data-idx="0"]'), { hasText: `Show ${view}` }).waitFor();

@@ -31,7 +31,7 @@ Publishing works in the desktop app. The dataset is always public.
 
 1. On huggingface.co, make an access token with write access, under Settings ▸ Access Tokens.
 2. In Basecase, press [[⌘,]] and choose **Accounts**.
-3. Paste the token into **Access token** and press Enter. The account name shows under it once the Hub accepts the token.
+3. Paste the token into **Access token** and press [[↩]]. The account name shows under it once the Hub accepts the token.
 
 ![The Accounts pane with a token saved](/help/publish-a-dataset-to-hugging-face/accounts.png)
 
@@ -50,7 +50,7 @@ The files are the ones **Export Dataset** makes; [LeRobot dataset contents](/hel
 
 ## Publishing again
 
-Publishing the same Case from the same scene replaces the dataset with the tries that pass now. Basecase rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files alone. Tries recorded before the robot last changed are left out, and the toast says how many.
+Publishing the same Case from the same scene replaces the dataset with the tries that pass now. Basecase rewrites the `data/`, `videos/` and `meta/` folders and leaves `README.md` and any other files alone. Tries recorded before the robot last changed are left out, and the toast says how many. Tries from your real robot are left out too.
 
 ## Where the token lives
 

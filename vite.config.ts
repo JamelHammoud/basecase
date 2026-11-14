@@ -1,10 +1,12 @@
 import tailwindcss from '@tailwindcss/vite';
 import babel from '@rolldown/plugin-babel';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+import fs from 'node:fs';
 import path from 'node:path';
 import { defineConfig, type ResolvedConfig } from 'vite';
 import { bridgeMiddlewarePlugin } from './electron/vite-bridge-middleware.mjs';
 import { buildKernelBundle } from './tools/kernelBundle.mjs';
+import { VOICE_MODEL_PATH } from './src/voice/voiceModelPath.ts';
 
 const ISOLATION_HEADERS = {
   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -37,6 +39,23 @@ const kernelBundlePlugin = () => {
   };
 };
 
+const DESKTOP_ONLY_ASSETS = [VOICE_MODEL_PATH];
+
+const desktopOnlyAssetsPlugin = () => {
+  let distDir = '';
+
+  return {
+    name: 'basecase-desktop-only-assets',
+    apply: 'build' as const,
+    configResolved: (config: ResolvedConfig) => {
+      distDir = path.resolve(config.root, config.build.outDir);
+    },
+    closeBundle: () => {
+      for (const file of DESKTOP_ONLY_ASSETS) fs.rmSync(path.join(distDir, file), { force: true });
+    },
+  };
+};
+
 export default defineConfig(({ mode }) => ({
   cacheDir: process.env.BASECASE_VITE_CACHE || 'node_modules/.vite',
   server: {
@@ -49,6 +68,8 @@ export default defineConfig(({ mode }) => ({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
-    ...(mode === 'web' ? [webEntryPlugin()] : [bridgeMiddlewarePlugin(), kernelBundlePlugin()]),
+    ...(mode === 'web'
+      ? [webEntryPlugin(), desktopOnlyAssetsPlugin()]
+      : [bridgeMiddlewarePlugin(), kernelBundlePlugin()]),
   ],
 }));

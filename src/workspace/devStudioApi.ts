@@ -14,13 +14,20 @@ import { base64ToBytes, bytesToBase64 } from '../utils/base64';
 import type { Angles } from '../robot/robotGap';
 import { degrees } from '../robot/robotGhost';
 import { phoneSnapshot } from '../phone/phoneStore';
+import { inputEvents } from '../sim/inputEvents';
 import {
+  feedOperatorFace,
+  feedOperatorHand,
   feedOperatorPose,
+  type FaceSample,
+  type HandSample,
   operatorCameraSnapshot,
+  operatorFeeding,
   operatorLatency,
   operatorTrackState,
 } from '../cameras/operator/operatorCamera';
 import type { PoseSample } from '../cameras/operator/poseFollow';
+import { feedVoice } from '../voice/voiceSession';
 import { startRobotStore, type RobotLinkApi } from '../robot/robotStore';
 import { stubTabEngine } from '../skills/skillsPlatform';
 import { pickNextFiles } from '../utils/pickFiles';
@@ -43,6 +50,7 @@ import { streamCost } from '../cameras/liveFeed';
 import type { CodeReport } from '../cases/console/codeBridge';
 import { limitExplore } from './useCaseExplore';
 import { setStressBudget } from './useSkillStress';
+import { matStudioApi, type MatDevActions } from './devMatFeed';
 
 type Payload = Record<string, unknown>;
 
@@ -64,6 +72,7 @@ export interface DevActions {
   buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
   simState: () => unknown;
   drive: (command: DriveCommand) => void;
+  driveWith: (inputs: string[]) => Promise<boolean>;
   worldAt: () => Record<string, number[]>;
   tryWorld: () => Promise<WorldEvent[]>;
   printPlates: () => unknown;
@@ -83,6 +92,7 @@ export interface DevActions {
   stubHandoffs: (stub: HandoffStub) => void;
   plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   robotPackage: () => Promise<{ files: Record<string, Uint8Array>; simXml: string } | null>;
+  mat: MatDevActions;
 }
 
 export interface DevStudioDeps {
@@ -201,6 +211,7 @@ function operatorCameraState() {
     estimator,
     error,
     latency: operatorLatency(),
+    feeding: operatorFeeding(),
   };
 }
 
@@ -269,6 +280,8 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     shownParts: () => viewportRef.current?.shownPartIds() ?? [],
     simState: () => devRef.current.simState(),
     drive: (command: DriveCommand) => devRef.current.drive(command),
+    driveWith: (inputs: string[]) => devRef.current.driveWith(inputs),
+    feedVoice: (samples: number[], sampleRate: number) => feedVoice(samples, sampleRate),
     worldAt: () => devRef.current.worldAt(),
     tryWorld: () => devRef.current.tryWorld(),
     printPlates: () => devRef.current.printPlates(),
@@ -293,6 +306,9 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     attachRobot: (link: RobotLinkApi) => startRobotStore(link),
     phone: () => phoneSnapshot(),
     feedPose: (samples: PoseSample[], fps?: number) => feedOperatorPose(samples, fps),
+    feedHand: (samples: HandSample[], fps?: number) => feedOperatorHand(samples, fps),
+    feedFace: (samples: FaceSample[], fps?: number) => feedOperatorFace(samples, fps),
+    inputEvents: () => inputEvents().map(({ name, value }) => ({ name, value })),
     operatorCamera: () => operatorCameraState(),
     cameraStreams: () => ({ ...streamCost }),
     stubTabEngine,
@@ -305,6 +321,7 @@ export function devStudioApi({ partsRef, projectRef, viewportRef, devRef }: DevS
     calibrationReplay: (jointId: string) => replayErrors(projectRef.current.servoCalibrations?.[jointId]),
     calibrations: () => projectRef.current.servoCalibrations ?? {},
     robotGhost: () => robotGhostState(viewportRef.current),
+    ...matStudioApi(() => devRef.current.mat),
     datasetFiles: async () => {
       const files = await devRef.current.datasetFiles();
 

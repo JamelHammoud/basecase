@@ -60,6 +60,7 @@ describe('redHours', () => {
 describe('weekStats', () => {
   const pull = (number, label, createdAt, mergedAt) => ({
     number,
+    title: `Pull ${number}`,
     labels: label ? [{ name: label }] : [],
     createdAt,
     mergedAt,
@@ -81,6 +82,20 @@ describe('weekStats', () => {
     review(blocked('ddddddd'), '2026-11-06T00:00:00Z', 'outsider'),
     { author: OWNER, body: blocked('eeeeeee'), createdAt: '2026-11-06T00:00:00Z' },
     { author: OWNER, body: 'Ship it.', createdAt: '2026-11-06T00:00:00Z' },
+    {
+      ...review(
+        '### Micro-evals: no worse (aaaaaaa)\n\nGap +3.\n\n<!-- micro-evals {"sha":"aaaaaaa","verdict":"no worse","gap":0.03,"ci":[-0.02,0.08],"costRise":0.05} -->',
+        '2026-11-06T00:00:00Z',
+      ),
+      number: 2,
+    },
+    {
+      ...review(
+        '### Micro-evals: not measured (bbbbbbb)\n\nNot measured: usage is paused.\n\n<!-- micro-evals {"sha":"bbbbbbb","verdict":"skipped","skip":"pause"} -->',
+        '2026-11-07T00:00:00Z',
+      ),
+      number: 3,
+    },
   ];
   const stats = weekStats({
     pulls,
@@ -113,6 +128,13 @@ describe('weekStats', () => {
     expect(table).toContain('| Merged: `loop:feature` | 2 |');
     expect(table).toContain("| Hours `main`'s Check was red | 0.0 |");
     expect(table).toContain('| Median hours from opened to merged | 4.0 |');
+  });
+
+  it('lists the merged pull requests the review measured on the micro-evals, with their delta, and not the skipped', () => {
+    expect(stats.measured).toEqual([
+      { number: 2, title: 'Pull 2', delta: 'no worse: +3 points (95% interval −2 to +8), cost per pass +5%' },
+    ]);
+    expect(digestBody(stats)).toContain('- #2 Pull 2: no worse: +3 points (95% interval −2 to +8), cost per pass +5%');
   });
 
   it('sorts kinds by count, then name', () => {

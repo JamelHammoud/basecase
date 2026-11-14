@@ -34,7 +34,7 @@ The **Simulate** tab appears in the right panel once the scene has a joint. [Sim
 2. Click the **Simulate** button at the top of the tab. The robot drops onto the floor and the clock starts.
 3. In **Control**, choose what drives the joints: **Hold pose**, one of the robot's animations, a trained policy, or **Limp**.
 4. To shove the robot sideways with half its weight, click **Push**.
-5. To lift or fling the robot, select one of its parts, press V and drag the Move gizmo.
+5. To lift or fling the robot, select one of its parts, press [[V]] and drag the Move gizmo.
 6. Read **Results**: **Standing**, or the moment the robot fell, with its tilt and how far it moved.
 7. Click a joint under **Peak torque** to select the parts it moves.
 8. Click **Stop simulation** to put the canvas back.

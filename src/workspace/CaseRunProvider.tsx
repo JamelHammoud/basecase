@@ -1,8 +1,11 @@
-import React, { createContext, use } from 'react';
+import React, { createContext, use, useEffect, useEffectEvent } from 'react';
+import { consoleScope } from '../cases/console/format';
 import type { ConsoleLayout } from '../cases/console/layout';
+import { gestureActions, type CaseAction } from '../cases/console/panelKinds';
+import { GESTURE_EVENT } from '../cases/gestures';
 import { robotFacts } from '../cases/robotFit';
 import { movableWorld } from '../cases/scale';
-import type { CaseAction } from '../cases/console/panelKinds';
+import { onInputEvent } from '../sim/inputEvents';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
 import { CodeOverlays } from '../components/caseRun/code/CodeOverlays';
@@ -12,6 +15,7 @@ import type { PanelContext } from '../components/caseRun/panelContext';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { useConsoleSignals } from './useConsoleSignals';
+import { showPartsSection } from './showView';
 
 interface CenterValue {
   ctx: PanelContext;
@@ -29,7 +33,7 @@ function useActions(core: WorkspaceCore) {
 
   const can = (action: CaseAction) =>
     ({
-      try: attempt.phase === 'idle',
+      try: attempt.phase === 'idle' && cases.realTry.phase === 'idle',
       'end-try': attempt.phase === 'running',
       drive: !driving,
       stop: driving,
@@ -47,7 +51,7 @@ interface ProviderProps {
 }
 
 export function CaseRunProvider({ core, actions, children }: ProviderProps) {
-  const { caseRun, simTraining, posing, parts, tool, studio } = core;
+  const { caseRun, simTraining, posing, parts } = core;
   const { sim, cases } = simTraining;
   const { open, caseConsole, layout } = caseRun;
   const wantsCameras = caseConsole.panels.some((p) => p.kind === 'camera');
@@ -84,16 +88,22 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
     }
   };
 
+  const pressed = useEffectEvent((gesture: string) => gestureActions(caseConsole.panels, gesture).forEach(fire));
+
+  useEffect(() => {
+    if (!open) return;
+
+    return onInputEvent(({ name, value }) => {
+      if (name === GESTURE_EVENT) pressed(String(value));
+    });
+  }, [open]);
+
   const value: CenterValue | null = open
     ? {
         ctx: {
           bus,
           signals: caseConsole.signals ?? [],
-          scope: {
-            declared: new Set(caseConsole.signals?.map((s) => s.id)),
-            probes: new Set(cases.active?.task.probes.map((p) => p.signal)),
-            inputs: new Set(caseConsole.input),
-          },
+          scope: consoleScope(caseConsole, cases.active),
           inputs: caseConsole.input,
           brief: cases.active?.brief ?? '',
           world: movableWorld(cases.active, robotFacts(posing.rig, parts)),
@@ -107,8 +117,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
             cameras,
             onBrowseRobots: () => {
               caseRun.leave();
-              tool.setLeftTab('robots');
-              studio.setIsLeftOpen(true);
+              showPartsSection(core, 'Robots');
             },
           },
         },

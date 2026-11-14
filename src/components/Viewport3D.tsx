@@ -48,6 +48,7 @@ const DETACHED: Viewport3DHandle = {
   setPose: () => {},
   setScan: () => {},
   scanPointCount: () => 0,
+  setMatTrack: () => {},
   setGhost: () => {},
   ghostState: () => null,
   followPart: () => {},

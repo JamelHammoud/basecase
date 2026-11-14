@@ -1,9 +1,11 @@
 import type { Command } from '../components/CommandPalette';
 import {
+  CameraIcon,
   CasesIcon,
   CompareIcon,
   DownloadIcon,
   DuplicateIcon,
+  EditIcon,
   ExpandIcon,
   PlusIcon,
   RotateLeftIcon,
@@ -109,6 +111,56 @@ function fromTriesCommands({ fromTries }: WorkspaceCore['simTraining']['cases'])
   ];
 }
 
+function matCommands({ simTraining, tool }: WorkspaceCore): Command[] {
+  const { cases } = simTraining;
+  const { active, mat, realTry, attempt } = cases;
+
+  if (!active || !mat.available) return [];
+
+  const exportMat: Command = {
+    id: 'case-export-mat',
+    group: 'Simulate',
+    label: 'Export Case Mat',
+    icon: <DownloadIcon className={ic} />,
+    keywords: 'print pdf floor apriltag tags camera track real robot',
+    run: mat.exportMat,
+  };
+  const tryReal: Command = {
+    id: 'case-try-real',
+    group: 'Simulate',
+    label: `Try ${active.name} on Real Robot`,
+    icon: <CameraIcon className={ic} />,
+    keywords: 'case camera mat apriltag tags track physical hardware attempt',
+    run: () => {
+      tool.setRightTab('sim');
+      void realTry.start();
+    },
+  };
+  const idle = realTry.canStart && attempt.phase === 'idle';
+
+  return [exportMat, ...(idle ? [tryReal] : [])];
+}
+
+function renameCommands(core: WorkspaceCore): Command[] {
+  const { active, naming } = core.simTraining.cases;
+
+  if (!active || core.caseRun.open) return [];
+
+  return [
+    {
+      id: 'case-rename',
+      group: 'Simulate',
+      label: 'Rename Case',
+      icon: <EditIcon className={ic} />,
+      keywords: 'case name title',
+      run: () => {
+        showCases(core);
+        naming.start(active.id);
+      },
+    },
+  ];
+}
+
 function shareCommands({ share }: WorkspaceCore['simTraining']): Command[] {
   if (!share.canShare || share.sharing) return [];
 
@@ -197,21 +249,22 @@ export function caseCommands({ core }: CommandInputs): Command[] {
         },
       ]
     : [];
-  const tryIt: Command[] = cases.active
-    ? [
-        {
-          id: 'case-try',
-          group: 'Simulate',
-          label: `Try ${cases.active.name}`,
-          icon: <RunIcon className={ic} />,
-          keywords: 'case attempt play',
-          run: () => {
-            tool.setRightTab('sim');
-            void cases.attempt.start();
+  const tryIt: Command[] =
+    cases.active && cases.realTry.phase === 'idle'
+      ? [
+          {
+            id: 'case-try',
+            group: 'Simulate',
+            label: `Try ${cases.active.name}`,
+            icon: <RunIcon className={ic} />,
+            keywords: 'case attempt play',
+            run: () => {
+              tool.setRightTab('sim');
+              void cases.attempt.start();
+            },
           },
-        },
-      ]
-    : [];
+        ]
+      : [];
 
   const caseRun: Command[] = cases.active && !core.caseRun.open && !core.printing.mode ? [runCaseCommand(core)] : [];
 
@@ -242,8 +295,10 @@ export function caseCommands({ core }: CommandInputs): Command[] {
     ...respawn,
     ...tryIt,
     ...caseRun,
+    ...renameCommands(core),
     ...(cases.active ? compareCommands(core) : []),
     ...exploreCommands(core),
+    ...matCommands(core),
     ...(cases.active ? multiplyCommands(cases) : []),
     ...datasetCommands(cases),
     ...fromTriesCommands(cases),

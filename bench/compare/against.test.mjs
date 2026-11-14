@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { checkoutRef, refFromArgs, refLabel } from './against.mjs';
 import { againstArms, armCache, modelArms, TREE_LABEL } from './arms.mjs';
+import { harnessKey, harnessKeyAt } from './cache.mjs';
 import { liveRunsPlanned, splitSlots } from './plan.mjs';
 
 const git = (cwd, ...args) =>
@@ -68,6 +69,13 @@ describe('compare --against', () => {
     write(tree, 'bench/micro/tasks/a1.mjs', 'export const grade = () => false;\n');
 
     expect(armsNow).toThrow('different tasks and graders (bench/micro)');
+  });
+
+  it("hashes a commit's harness without checking it out, the same as its checkout", () => {
+    write(tree, 'electron/cad-agent-prompt.mjs', 'export default "Changed.";\n');
+
+    expect(harnessKeyAt(tree, 'main')).toBe(harnessKey(ref.dir));
+    expect(harnessKeyAt(tree, 'main')).not.toBe(harnessKey(tree));
   });
 
   it('reads the ref from the flag, defaulting to main, and shortens a full commit', () => {

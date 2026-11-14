@@ -31,14 +31,22 @@ import type { TrackpadGestureMode } from '../types/robotics';
 import { NEXT_SCROLL_MODE } from '../utils/scrollModes';
 import type { CommandInputs } from './sceneCommands';
 import { paletteCommand, selectionActions } from './partActions';
-import { showLeftTab } from './showView';
+import { showLeftTab, showPartsSection } from './showView';
 import { keyFor } from '../app/shortcuts';
 
 const ic = 'w-4 h-4';
 
+const PARTS_SECTIONS = [
+  {
+    section: 'Robots',
+    label: 'Show Robots',
+    icon: <RobotsIcon className={ic} />,
+    keywords: 'import urdf humanoid arm',
+  },
+  { section: 'Objects', label: 'Show Objects', icon: <ObjectsIcon className={ic} />, keywords: 'simready props world' },
+] as const;
+
 const SIDEBAR_VIEWS = [
-  { tab: 'robots', label: 'Show Robots', icon: <RobotsIcon className={ic} />, keywords: 'import urdf humanoid arm' },
-  { tab: 'objects', label: 'Show Objects', icon: <ObjectsIcon className={ic} />, keywords: 'simready props world' },
   { tab: 'layers', label: 'Show Layers', icon: <LayersIcon className={ic} />, keywords: 'outline tree groups hide' },
   { tab: 'library', label: 'Show Library', icon: <LibraryIcon className={ic} />, keywords: 'saved models reuse' },
 ] as const;
@@ -84,6 +92,14 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       icon: <PanelRightIcon className={ic} />,
       run: ui.toggleRight,
     },
+    ...PARTS_SECTIONS.map((v) => ({
+      id: `show-${v.section.toLowerCase()}`,
+      group: 'Panels',
+      label: v.label,
+      icon: v.icon,
+      keywords: v.keywords,
+      run: () => showPartsSection(core, v.section),
+    })),
     ...SIDEBAR_VIEWS.map((v) => ({
       id: `show-${v.tab}`,
       group: 'Panels',

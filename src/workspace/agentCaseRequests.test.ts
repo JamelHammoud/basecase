@@ -248,11 +248,11 @@ describe('create_case with a console', () => {
   });
 
   it('refuses an input this version lacks with the words the agent passes on', async () => {
-    const midi = { ...ROVER_APP, input: ['midi'] };
+    const leader = { ...ROVER_APP, input: ['leader-arm'] };
 
-    expect(await create({ goal: 'reach', console: midi }).reply).toEqual({
+    expect(await create({ goal: 'reach', console: leader }).reply).toEqual({
       ok: false,
-      problem: 'console.input[0] midi can’t drive a Case in this version',
+      problem: 'console.input[0] leader-arm can’t drive a Case in this version',
     });
   });
 

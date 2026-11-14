@@ -196,6 +196,8 @@ export function useSceneDocument(seed?: WorkspaceSeed) {
     commitMarks,
     commitJoints,
     commitDesign,
+    commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton | undefined) =>
+      commitProject({ skeleton: projectRef.current.skeleton }, (p) => ({ ...p, skeleton }), parts),
     commitConsole,
     recordPoseEdit,
     recordSkeletonEdit,

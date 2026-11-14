@@ -9,3 +9,5 @@
 *.node binary
 *.wasm binary
 *.zip binary
+*.wav binary
+*.gz binary

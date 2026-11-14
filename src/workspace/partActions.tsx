@@ -6,11 +6,13 @@ import {
   CrosshairIcon,
   DeleteIcon,
   DuplicateIcon,
+  EditIcon,
   FitIcon,
   FloorIcon,
   GroupIcon,
   HiddenIcon,
   IntersectIcon,
+  JointsIcon,
   LayersIcon,
   LockIcon,
   LookIcon,
@@ -24,6 +26,7 @@ import {
   type ContextMenuEntry,
 } from '../design-system';
 import { partQuote } from '../agent/partQuote';
+import { renameTarget } from '../components/layers/layerRows';
 import { keyFor } from '../app/shortcuts';
 import type { ScenePart } from '../types/robotics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
@@ -160,6 +163,13 @@ export function selectionActions({ core, actions, ui }: PartActionInputs) {
       keywords: 'shell skin character mesh cover body printable',
       run: actions.wrap.wrapSelected,
     },
+    sizeArm: {
+      id: 'size-arm',
+      label: 'Size Arm to Targets',
+      icon: JointsIcon,
+      keywords: 'reach payload link lengths servos manipulator design points reference',
+      run: actions.arm.open,
+    },
     resetView: { id: 'reset-view', label: 'Reset View', icon: RotateLeftIcon, run: ui.resetView },
   } satisfies Record<string, PartAction>;
 }
@@ -197,6 +207,12 @@ export function onePartActions({ core, actions }: Omit<PartActionInputs, 'ui'>, 
           run: () => core.tool.requestQuote(partQuote(part)),
         },
   } satisfies Record<string, PartAction | null>;
+}
+
+export function renameAction({ core, ui }: Omit<PartActionInputs, 'actions'>): PartAction | null {
+  const target = core.caseRun.open ? null : renameTarget(core.parts, core.selectedIds);
+
+  return target ? { id: 'rename', label: 'Rename', icon: EditIcon, run: () => ui.renameLayer(target) } : null;
 }
 
 export const isRotated = (part: ScenePart) => part.rotation.some((r) => r !== 0);

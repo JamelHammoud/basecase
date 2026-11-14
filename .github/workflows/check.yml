@@ -136,6 +136,10 @@ jobs:
 
   e2e-windows:
     if: ${{ github.event_name != 'pull_request' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     runs-on: windows-latest
     timeout-minutes: 25
     defaults:
@@ -152,10 +156,10 @@ jobs:
       - run: npm ci
       - run: npx vite build
       - run: npx vite build --mode web --outDir dist-web
-      - run: npm run test:e2e
+      - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/3
 
       - name: Run quarantined tests
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && matrix.shard == 1 }}
         continue-on-error: true
         run: npm run test:quarantine
 

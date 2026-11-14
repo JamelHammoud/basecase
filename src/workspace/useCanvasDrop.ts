@@ -3,6 +3,7 @@ import type { Snap } from '../agent/snap';
 import { catalogItemFromKey } from '../data/catalog';
 import { MODEL_DRAG_TYPE, PART_DRAG_TYPE, ROBOT_DRAG_TYPE, SIMREADY_DRAG_TYPE, isSceneDrag } from '../data/dnd';
 import { isRoomFileName } from '../cases/roomPlan';
+import { isMidiFileName, loadMidiSong } from '../midi/midiSource';
 import { hasPrimaryModifier } from '../utils/os';
 import { showRoomCase } from './caseCommands';
 import { droppedPart } from './dropPreview';
@@ -74,26 +75,29 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots, files }: 
     return true;
   };
 
-  const openRoom = async (file: File) => {
+  const opensItself = (file: File) => isRoomFileName(file.name) || isMidiFileName(file.name);
+
+  const openItself = async (file: File) => {
     try {
-      showRoomCase(core, await readRoomFile(file));
+      if (isMidiFileName(file.name)) loadMidiSong(new Uint8Array(await file.arrayBuffer()));
+      else showRoomCase(core, await readRoomFile(file));
     } catch {
       showToast(`Couldn’t import ${file.name}.`, { tone: 'error' });
     }
   };
 
   const routeFiles = (all: File[], at?: Vec3) => {
-    all.filter((f) => isRoomFileName(f.name)).forEach((f) => void openRoom(f));
-    files.importFiles({ files: all.filter((f) => !isRoomFileName(f.name)), at });
+    all.filter(opensItself).forEach((f) => void openItself(f));
+    files.importFiles({ files: all.filter((f) => !opensItself(f)), at });
   };
 
   const dropFiles = async (e: React.DragEvent) => {
     const at = dropPoint(viewportRef.current?.pickAt(e.clientX, e.clientY), studio.snapStepMm);
     const { folders, plain } = droppedFolders(e.dataTransfer.items);
-    const rooms = plain.filter((f) => isRoomFileName(f.name));
+    const own = plain.filter(opensItself);
 
-    rooms.forEach((f) => void openRoom(f));
-    files.importFiles({ files: plain.filter((f) => !rooms.includes(f)), at, folders: await folders });
+    own.forEach((f) => void openItself(f));
+    files.importFiles({ files: plain.filter((f) => !own.includes(f)), at, folders: await folders });
   };
 
   const previewSnap = (e: React.DragEvent | null) => {

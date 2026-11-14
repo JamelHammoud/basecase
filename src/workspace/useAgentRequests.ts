@@ -17,6 +17,7 @@ import type { LaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
 import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import type { SceneDocument } from './useSceneDocument';
 import { errorMessage } from '../utils/errorMessage';
 
 type Payload = Record<string, unknown>;
@@ -56,9 +57,16 @@ function firstDelivery(requestId: string) {
   return true;
 }
 
+const partInserter =
+  ({ commitParts, updateProjectNow }: SceneDocument): RequestContext['insertParts'] =>
+  (parts, joints) => {
+    commitParts((prev) => [...prev, ...parts]);
+    updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));
+  };
+
 export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
-  const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole } = docs;
+  const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole, commitSkeleton } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
 
   const poseTool = (kind: string, payload: Payload, setAction: SetAction = quiet) =>
@@ -149,10 +157,8 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     viewport: () => viewportRef.current,
     setProjectNow,
     commitConsole,
-    insertParts: (parts, joints) => {
-      commitParts((prev) => [...prev, ...parts]);
-      updateProjectNow((p) => ({ ...p, joints: [...(p.joints ?? []), ...joints] }));
-    },
+    insertParts: partInserter(docs),
+    commitSkeleton,
     setAction: author.setAction,
     setCursor: author.setCursor,
     poseTool: (kind, payload) => poseTool(kind, payload, author.setAction),

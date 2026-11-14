@@ -28,7 +28,7 @@ Basecase is a 3D CAD studio for robots, with an agent that designs alongside you
 
 | Stage | What you do | Where it is |
 |---|---|---|
-| Design | Shape parts, place real servos, boards and sensors, or describe the robot to the agent | **Parts**, **Robots**, **Objects** and **Library** in the view rail, and the **Agent** tab |
+| Design | Shape parts, place real servos, boards and sensors, or describe the robot to the agent | **Parts** and **Library** in the view rail, and the **Agent** tab |
 | Engineer | Add joints, pose the robot, and check torque, range, stability and printability | The **Pose** and **Build** tabs |
 | Simulate | Run the robot under MuJoCo physics, and try it on Cases | The **Simulate** tab, and **Play** ▸ **Cases** |
 | Train | Teach the robot a skill, such as standing up or walking | The **Train** section of the **Simulate** tab |
@@ -41,12 +41,12 @@ MuJoCo is the physics engine robotics labs use to test robots before they build 
 
 A failure in Engineer, Simulate or Train sends you back to Design. Say a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg. The **Servo torque** check fails in the **Build** tab, and the fix is a stronger servo in Design.
 
-Data from a running robot loops back the other way. Calibrating a servo fits its model from an 18-second bench run, so the simulation moves the way the servo does. Training then runs on that fit.
+Data from a running robot loops back the other way. Calibrating a servo fits its model from an 18-second bench run, so the simulation moves the way the servo does. Training then runs on that fit. A real wheeled or legged robot can also [try a Case](/help/try-a-case-on-your-real-robot) on the Case printed as a floor mat, judged from a camera by the same contract.
 
 ## What works today
 
 Design and Engineer are complete. Simulate and Train are in active development. Build covers the Checks, the bill of materials, the build guide and slicing.
 
-Operate works against the simulation and an emulated robot. Basecase doesn't drive real motors.
+Operate works against the simulation and an emulated robot. Basecase doesn't drive real motors, but it can watch a real robot through a camera.
 
 The quickest way to see the loop is to [pose and simulate your first robot](/help/pose-and-simulate-your-first-robot).

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { WorkspaceHandle, WorkspaceSeed } from '../SceneWorkspace';
 import type { SavedSceneSummary } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
@@ -61,6 +62,7 @@ export function useTabActions(core: TabsCore) {
 
   const { latestRef, handles, setTabs, setActiveId, setMetas, setThumbs, setClosed } = core;
   const { selectTab, openTab, toastInFront, snapshotOf } = core;
+  const [renamingTab, setRenamingTab] = useState<string | null>(null);
 
   const openSeed = (seed: WorkspaceSeed) => {
     const { tabs, metas, activeId } = latestRef.current;
@@ -202,6 +204,8 @@ export function useTabActions(core: TabsCore) {
     cycleTab,
     reorderTab,
     renameTab,
+    renamingTab,
+    setRenamingTab,
     focusChat,
     notify,
   };

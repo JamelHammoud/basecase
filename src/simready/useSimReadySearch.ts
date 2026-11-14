@@ -35,9 +35,15 @@ function uniqueByUrl(list: SimReadyAsset[]): SimReadyAsset[] {
   return list.filter((a) => !seen.has(a.url) && !!seen.add(a.url));
 }
 
-export function useSimReadySearch(query: string, shelf: SimReadyShelf, enabled = true): SimReadySearch {
+export function useSimReadySearch(
+  query: string,
+  shelf: SimReadyShelf,
+  enabled = true,
+  immediate = false,
+): SimReadySearch {
   const q = query.trim();
-  const [debounced, setDebounced] = useState(q);
+  const [typed, setTyped] = useState(q);
+  const debounced = immediate ? q : typed;
   const [paging, setPaging] = useState({ base: '', wanted: 1 });
   const [attempt, setAttempt] = useState(0);
   const [, setLoadedAt] = useState(0);
@@ -50,13 +56,13 @@ export function useSimReadySearch(query: string, shelf: SimReadyShelf, enabled =
   const error = failure && failure.key === nextKey ? failure.message : null;
 
   useEffect(() => {
-    const t = window.setTimeout(() => setDebounced(q), q ? DEBOUNCE_MS : 0);
+    const t = window.setTimeout(() => setTyped(q), q ? DEBOUNCE_MS : 0);
 
     return () => window.clearTimeout(t);
   }, [q]);
 
   useEffect(() => {
-    if (!enabled || next === null || !nextKey || pages.has(nextKey)) return;
+    if (!enabled || debounced !== q || next === null || !nextKey || pages.has(nextKey)) return;
 
     const ctrl = new AbortController();
 
@@ -70,7 +76,7 @@ export function useSimReadySearch(query: string, shelf: SimReadyShelf, enabled =
       });
 
     return () => ctrl.abort();
-  }, [enabled, next, nextKey, debounced, shelf, attempt]);
+  }, [enabled, next, nextKey, debounced, q, shelf, attempt]);
 
   const last = loaded[loaded.length - 1];
 
@@ -80,7 +86,7 @@ export function useSimReadySearch(query: string, shelf: SimReadyShelf, enabled =
     error,
     hasMore: next === null && !!last && last.length >= PAGE,
     showMore: () => setPaging({ base, wanted: loaded.length + 1 }),
-    searchNow: () => setDebounced(q),
+    searchNow: () => setTyped(q),
     retry: () => {
       setFailure(null);
       setAttempt((n) => n + 1);

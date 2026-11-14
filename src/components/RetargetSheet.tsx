@@ -45,7 +45,7 @@ const MappingGrid: React.FC<{
     <span className="text-[12px] font-medium text-white/50">Robot</span>
     {SHOWN.map((k) => (
       <React.Fragment key={k}>
-        <span className="text-[13px] text-white/70">{KEYPOINT_LABELS[k]}</span>
+        <span className="text-[13px] text-white/60">{KEYPOINT_LABELS[k]}</span>
         <Select
           aria-label={`${KEYPOINT_LABELS[k]} bone`}
           options={boneOptions}
@@ -131,7 +131,7 @@ export const RetargetSheet: React.FC<{
         <div className="grid grid-cols-2 gap-x-6 gap-y-1">
           <Switch label="In place" checked={inPlace} onChange={setInPlace} />
           <div className="col-span-2 grid grid-cols-[110px_1fr] items-center gap-3 pt-1">
-            <span className="text-[13px] text-white/70">Frame rate</span>
+            <span className="text-[13px] text-white/60">Frame rate</span>
             <Select
               aria-label="Frame rate"
               options={[

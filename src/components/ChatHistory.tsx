@@ -22,8 +22,8 @@ const ROW_FILL: Record<RowState, string> = {
 };
 
 const ROW_TEXT: Record<RowState, string> = {
-  current: 'text-white/95 font-medium',
-  idle: 'text-white/75 group-hover/chat:text-white/95',
+  current: 'text-white/90 font-medium',
+  idle: 'text-white/60 group-hover/chat:text-white/90',
 };
 
 const ChatRow: React.FC<{

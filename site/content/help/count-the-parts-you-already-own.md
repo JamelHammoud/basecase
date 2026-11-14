@@ -46,8 +46,9 @@ To put the old count back, click **Undo** in the toast. To clear a count, type 0
 
 ## How counts work
 
-- Count single pieces, even if you bought them in packs. If you have 100 M3 screws on hand and a robot uses 13, Basecase doesn't list any to buy.
-- Count filament in grams.
+- Count single pieces, even if you bought them in packs. If you have 100 M3 screws on hand and a robot uses 13, none are listed to buy.
+- Filament is counted in grams.
+- Printed parts from a print service have no **On hand**. Their quoted price covers every copy.
 - A count belongs to the part, so every scene that uses the part takes your count off what's left to buy.
 - Basecase doesn't lower your count when you build a robot. After a build, update the count.
 - The Budget check and **Buy All** leave out the parts you own.

@@ -2774,7 +2774,7 @@ export const COMPONENTS: ComponentInfo[] = [
     manufacturer: 'ROBOTIS',
     mpn: 'U2D2 (902-0132-000)',
     group: 'Drivers',
-    description: 'USB to DYNAMIXEL bus adapter (TTL, RS-485 and UART) up to 6 Mbps. It does not power the servos.',
+    description: 'USB to DYNAMIXEL bus adapter (TTL, RS-485 and UART) up to 6 Mbps. It doesn’t power the servos.',
     specs: [
       ['Interface', 'USB-C, FTDI virtual COM port, up to 6 Mbps'],
       ['Ports', 'TTL 3-pin, RS-485 4-pin, UART 4-pin'],
@@ -5904,7 +5904,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '118 g'],
     ],
     mounting:
-      'Soft shrink-wrapped pack 87 × 33 × 18 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance, not a tight pocket (Ovonic spec list).',
+      'Soft shrink-wrapped pack 87 × 33 × 18 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points aren’t published. Hold it with a strap or a tray with clearance, not a tight pocket (Ovonic spec list).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Ovonic+2S+2200mAh+50C+LiPo+XT60+TRX', kind: 'search' },
       product: 'https://us.ovonicshop.com/products/ovonic-50c-7-4v-2200mah-2s1p-xt60-and-trx-lipo-battery',
@@ -5935,7 +5935,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '179 g (US store: 168 g)'],
     ],
     mounting:
-      'Soft shrink-wrapped pack 105 × 33 × 21 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance (Ovonic spec list).',
+      'Soft shrink-wrapped pack 105 × 33 × 21 mm (±5 mm length, ±2 mm width and height), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points aren’t published. Hold it with a strap or a tray with clearance (Ovonic spec list).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Ovonic+3S+2200mAh+50C+LiPo+XT60', kind: 'search' },
       product: 'https://us.ovonicshop.com/products/ovonic-50c-2200mah-3s1p-11-1v-xt60-2pcs-lipo-battery',
@@ -5966,7 +5966,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '182 g'],
     ],
     mounting:
-      'Soft shrink-wrapped pack 77 × 34 × 34 mm (±5 mm length, ±2 mm width and height; Ovonic’s US dimension photo shows 76 × 35 × 33), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points are not published. Hold it with a strap or a tray with clearance (Ovonic spec list).',
+      'Soft shrink-wrapped pack 77 × 34 × 34 mm (±5 mm length, ±2 mm width and height; Ovonic’s US dimension photo shows 76 × 35 × 33), long edges rounded. Main and balance leads leave one short end; lead lengths and exit points aren’t published. Hold it with a strap or a tray with clearance (Ovonic spec list).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Ovonic+4S+2200mAh+35C+LiPo+XT60', kind: 'search' },
       product: 'https://us.ovonicshop.com/products/ovonic-35c-14-8v-2200mah-4s1p-xt60-lipo-battery',
@@ -5997,7 +5997,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '683 g'],
     ],
     mounting:
-      'Soft shrink-wrapped pack 156 × 44 × 48 mm (L × W × H, ±5 mm length, ±2 mm width and height), label face 156 × 44 on top, edges rounded. Main and balance leads leave one short end; exit points are not published. Size a tray for up to 161 × 46 × 50 mm and strap it down (Ovonic spec list).',
+      'Soft shrink-wrapped pack 156 × 44 × 48 mm (L × W × H, ±5 mm length, ±2 mm width and height), label face 156 × 44 on top, edges rounded. Main and balance leads leave one short end; exit points aren’t published. Size a tray for up to 161 × 46 × 50 mm and strap it down (Ovonic spec list).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Ovonic+6S+5000mAh+120C+LiPo+EC5', kind: 'search' },
       product:
@@ -6030,7 +6030,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '70 g max'],
     ],
     mounting:
-      'Flat-top cylinder Ø21.55 × 70.15 mm max, steel can, positive cap inside an insulating ring. No tabs or leads: spot-weld nickel strip or use a 21700 holder. Cap size is not published (Molicel P42A data sheet v1.7).',
+      'Flat-top cylinder Ø21.55 × 70.15 mm max, steel can, positive cap inside an insulating ring. No tabs or leads: spot-weld nickel strip or use a 21700 holder. Cap size isn’t published (Molicel P42A data sheet v1.7).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Molicel+P42A+21700', kind: 'search' },
       product: 'https://www.molicel.com/product/inr-21700-p42a/',
@@ -6062,7 +6062,7 @@ export const COMPONENTS: ComponentInfo[] = [
       ['Weight', '46 g'],
     ],
     mounting:
-      'Flat-top cylinder Ø18.6 × 65.2 mm max, steel can, positive cap inside an insulating ring. No tabs or leads: spot-weld nickel strip or use an 18650 holder (MPD holders want 65–68 mm cells, so a bare 65.2 mm flat top sits at the short end). Cap size is not published (Molicel P28A data sheet v1.3).',
+      'Flat-top cylinder Ø18.6 × 65.2 mm max, steel can, positive cap inside an insulating ring. No tabs or leads: spot-weld nickel strip or use an 18650 holder (MPD holders want 65–68 mm cells, so a bare 65.2 mm flat top sits at the short end). Cap size isn’t published (Molicel P28A data sheet v1.3).',
     links: {
       amazon: { url: 'https://www.amazon.com/s?k=Molicel+P28A+18650', kind: 'search' },
       product: 'https://www.molicel.com/product/inr-18650-p28a/',

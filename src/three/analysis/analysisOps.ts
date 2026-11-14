@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { weld } from '../../print/threeMf';
+import { posedStl } from '../../print/posedStl';
 import { reply } from '../../utils/workerRpc';
 import { collide, place, type CollideOptions, type Placed } from './collide';
 import { collideRiding, type OutputRiders } from './outputRiders';
@@ -49,9 +50,15 @@ export type AnalysisTask =
   | ({ kind: 'fasteners'; instances: Instance[] } & FastenerInput)
   | ({ kind: 'assembly'; instances: Instance[] } & AssemblyGeometryInput)
   | ({ kind: 'threeMf' } & ThreeMfTask)
+  | { kind: 'partStls'; instances: Instance[]; items: StlItem[] }
   | ({ kind: 'jointAxis'; instances: Instance[] } & JointAxisQuery)
   | { kind: 'jointAxes'; instances: Instance[]; ids: string[] }
   | ({ kind: 'fitCoupons'; instances: Instance[] } & FitCouponTask);
+
+export interface StlItem {
+  id: string;
+  matrix: number[];
+}
 
 export interface AnalyzePayload {
   geometries: GeometryPayload[];
@@ -126,7 +133,7 @@ function run(task: Exclude<AnalysisTask, { kind: 'strength' }>) {
 function runPlaced(
   task: Extract<
     AnalysisTask,
-    { kind: 'gaps' | 'threeMf' | 'fasteners' | 'assembly' | 'jointAxis' | 'jointAxes' | 'fitCoupons' }
+    { kind: 'gaps' | 'threeMf' | 'partStls' | 'fasteners' | 'assembly' | 'jointAxis' | 'jointAxes' | 'fitCoupons' }
   >,
 ) {
   switch (task.kind) {
@@ -134,6 +141,8 @@ function runPlaced(
       return pairsWithin(placeAll(task.instances), task.pairs, task.withinMm);
     case 'threeMf':
       return plateFiles(task, { solidOf, placeAll: () => placeAll(task.instances) });
+    case 'partStls':
+      return stlFiles(task);
     case 'jointAxis':
       return jointAxisOf(task, (key) => solidOf(key).positions);
     case 'jointAxes':
@@ -169,8 +178,21 @@ function strengthJobs(task: Extract<AnalysisTask, { kind: 'strength' }>) {
   });
 }
 
+function stlFiles(task: Extract<AnalysisTask, { kind: 'partStls' }>) {
+  const keyOf = new Map(task.instances.map((i) => [i.id, i.key]));
+
+  return Object.fromEntries(
+    task.items
+      .filter((it) => keyOf.has(it.id))
+      .map((it) => [it.id, posedStl(solidOf(keyOf.get(it.id)!).positions, it.matrix)]),
+  );
+}
+
 const transferOf = (kind: AnalysisTask['kind'], result: unknown): Transferable[] => {
   if (kind === 'threeMf') return Object.values((result as ThreeMfResult).files).map((b) => b.buffer as ArrayBuffer);
+
+  if (kind === 'partStls')
+    return Object.values(result as Record<string, Uint8Array>).map((b) => b.buffer as ArrayBuffer);
 
   if (kind === 'fitCoupons') return (result as FitCoupon[]).map((c) => c.positions.buffer as ArrayBuffer);
 

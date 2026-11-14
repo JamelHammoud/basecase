@@ -56,7 +56,7 @@ const ReferenceImagesToggle: React.FC<{ props: LayersViewProps }> = ({ props }) 
 const SizeFooter: React.FC<{ size: number[] }> = ({ size }) => (
   <div className="h-[32px] shrink-0 px-[12px] flex items-center justify-between border-t border-white/[0.06] text-[12.5px] select-none">
     <span className="text-white/50">Overall size</span>
-    <span className="text-white/70">
+    <span className="text-white/60">
       <SizeLine mm={size} />
     </span>
   </div>

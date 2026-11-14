@@ -17,6 +17,7 @@ related:
   - print-a-robots-parts
   - troubleshoot-build-part-wont-print
   - build-checks
+  - price-printed-parts-from-a-print-service
 covers:
   - src/three/printability.ts
   - src/utils/printReport.ts
@@ -36,9 +37,9 @@ If you chose a face with **Lay on Face**, Basecase rests the part on that face.
 
 - **Overhangs** are faces that lean more than 45° from upright.
 - **Support** goes under faces within 30° of flat, the same threshold the stock slicer profiles use.
-- **Thin walls** are walls under 0.84 mm thick, which don't print. Basecase finds them by shooting rays inward through the part.
-- **Time** comes from the volume of plastic the printer lays down.
-- **Filament** is counted in grams for each material, then rounded up to whole spools with 15% to spare.
+- **Thin walls** are found with rays shot inward through the part. A wall under 0.84 mm doesn't print.
+- **Time** comes from the volume of plastic laid down.
+- **Filament** is counted in grams per material, then rounded up to whole spools with 15% to spare. With **Made by a Service** chosen, the bill of materials lists each part's quote instead.
 
 A thin area of 100 mm² or more is a panel that would print with holes in it, so it blocks Ready to build. Smaller thin areas tend to be edges left behind by a cut. The slicer drops those, so Basecase shows a note and doesn't block.
 

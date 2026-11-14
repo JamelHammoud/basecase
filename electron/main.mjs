@@ -171,7 +171,7 @@ function createWindow() {
 const CAPTURE_WIDTH = 1568;
 
 backend.bridge.serve('capture_window', async () => {
-  if (!mainWindow || mainWindow.isDestroyed()) throw new Error('The app window is not open.');
+  if (!mainWindow || mainWindow.isDestroyed()) throw new Error('The app window isn’t open.');
 
   const image = await mainWindow.webContents.capturePage();
   const fitted = image.getSize().width > CAPTURE_WIDTH ? image.resize({ width: CAPTURE_WIDTH }) : image;

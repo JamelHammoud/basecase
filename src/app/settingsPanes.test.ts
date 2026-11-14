@@ -13,7 +13,7 @@ describe('settingsPaneIn', () => {
   });
 
   it('leaves a printer’s own settings and unknown panes alone', () => {
-    expect(settingsPaneIn('Check the access code on the printer: Settings → LAN Only.')).toBeNull();
+    expect(settingsPaneIn('Check the access code on the printer: Settings ▸ LAN Only.')).toBeNull();
     expect(settingsPaneIn('Find it in Settings ▸ Network.')).toBeNull();
   });
 });

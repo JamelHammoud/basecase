@@ -60,7 +60,7 @@ function mqttMessage(error, host) {
 }
 
 function noReportMessage(serial) {
-  return `The printer didn’t answer as ${serial}. Check the serial number on the printer: Settings → Device.`;
+  return `The printer didn’t answer as ${serial}. Check the serial number on the printer: Settings ▸ Device.`;
 }
 
 function parseReport(payload) {
@@ -92,11 +92,11 @@ class BambuLanConnector {
   }
 
   requireSetup() {
-    if (!this.host) throw new Error('Add the printer’s IP address. It’s on the printer: Settings → Network.');
+    if (!this.host) throw new Error('Add the printer’s IP address. It’s on the printer: Settings ▸ Network.');
 
-    if (!this.serial) throw new Error('Add the printer’s serial number. It’s on the printer: Settings → Device.');
+    if (!this.serial) throw new Error('Add the printer’s serial number. It’s on the printer: Settings ▸ Device.');
 
-    if (!this.secret) throw new Error('Add the printer’s access code. It’s on the printer: Settings → LAN Only.');
+    if (!this.secret) throw new Error('Add the printer’s access code. It’s on the printer: Settings ▸ LAN Only.');
   }
 
   connect() {

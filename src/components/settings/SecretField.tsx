@@ -21,7 +21,7 @@ export const SecretField: React.FC<SecretFieldProps> = ({ label, saved, onSecret
   }, [focusAsk]);
 
   return (
-    <Row label={label} hint={error ? <span className="text-amber-200/80">{error}</span> : quiet}>
+    <Row label={label} hint={error ? <span className="text-amber-400">{error}</span> : quiet}>
       <div className="w-[200px]">
         <TextInput
           ref={input}

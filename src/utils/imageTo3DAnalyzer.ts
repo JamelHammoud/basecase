@@ -30,7 +30,7 @@ export async function analyzeImageFor3D(
       const ctx = canvas.getContext('2d');
 
       if (!ctx) {
-        reject(new Error('Could not acquire 2D canvas context'));
+        reject(new Error('Couldn’t acquire 2D canvas context'));
 
         return;
       }

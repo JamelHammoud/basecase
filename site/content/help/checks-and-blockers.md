@@ -62,6 +62,6 @@ An ignored problem stays ignored when the parts change. The agent can see what y
 
 Checks measure the design as you modeled it. Something you'll add by hand, like a strap or a zip tie, isn't in the model. Its row is a note, and you'll need to check it yourself.
 
-Range of motion samples each joint every 15°, so a clash thinner than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits for the agent to tip the robot over. Prices are estimates until you add the ones you see.
+Range of motion samples each joint every 15°, so a clash thinner than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits for the agent to tip the robot over. Prices are estimates until you add the ones you see, or a print service quotes the printed parts.
 
 For every check and what makes it fail, see [Build tab checks](/help/build-checks).

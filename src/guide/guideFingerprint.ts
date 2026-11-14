@@ -1,6 +1,7 @@
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { isBuilt } from './guidePlan';
-import { hashText, itemKeyOf } from './guideItems';
+import { itemKeyOf } from './guideItems';
+import { hashText } from '../utils/geometryHash';
 
 export const GUIDE_VERSION = 1;
 

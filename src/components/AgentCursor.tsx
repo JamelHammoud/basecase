@@ -71,7 +71,7 @@ export const AgentCursor: React.FC<AgentCursorProps> = ({
         style={{ background: color }}
       >
         <span>{name}</span>
-        {action && <span className="text-white/80 font-normal max-w-[220px] truncate">{action}</span>}
+        {action && <span className="text-white/90 font-normal max-w-[220px] truncate">{action}</span>}
       </div>
     </div>
   );

@@ -45,7 +45,7 @@ You can lay out a robot's printed parts on your printer's plates, slice them wit
 
 ![Print mode with the printer settings, Plate 1 with Add Printer, and Parts](/help/get-a-robot-ready-to-build/print-mode.png)
 
-If you haven't saved a printer, the plate's button reads **Add Printer**. Click it to open **Settings** ▸ **Printers**. To finish setting up your printer, see [Add a printer](/help/add-a-printer).
+If you haven't saved a printer, the plate's button reads **Add Printer**. Clicking it opens **Settings** ▸ **Printers**. To finish setting up your printer, see [Add a printer](/help/add-a-printer). If you don't have a printer at all, choose **Made by a Service** in **Printer** to [price printed parts from a print service](/help/price-printed-parts-from-a-print-service).
 
 ![Settings open at Printers after clicking Add Printer](/help/get-a-robot-ready-to-build/add-printer.png)
 

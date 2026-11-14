@@ -5,6 +5,7 @@ import { checkedPrice, onHandOf } from '../utils/onHand';
 import { holdVerdict, ratingAt, stanceVerdict } from '../utils/actuatorRules';
 import { currentMoney, formatMoney, formatWhole } from '../utils/currencyStore';
 import { torque } from '../utils/torque';
+import { volts } from '../utils/electric';
 
 export interface CatalogNeed {
   nm: number;
@@ -83,7 +84,7 @@ function marginText(act: ActuatorSpec, ctx: CatalogContext): string {
     parts.push(`${ctx.hold.joint} holding ${v.stallShare.toFixed(2)} of stall ${verdictWord[v.status]}`);
   }
 
-  return parts.length ? `; at ${Math.round(rating.volts * 10) / 10} V: ${parts.join(', ')}` : '';
+  return parts.length ? `; at ${volts(rating.volts)}: ${parts.join(', ')}` : '';
 }
 
 export function actuatorValue(act: ActuatorSpec, key: string, ctx?: CatalogContext): string {

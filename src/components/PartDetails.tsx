@@ -213,7 +213,7 @@ export const CatalogDetails: React.FC<{ item: CatalogItem }> = ({ item }) => {
       <Header title={item.name} subtitle={makerSubtitle(c)} description={c.description} />
       <div className="px-4 mt-3 grid grid-cols-2 gap-1.5">
         <Stat label={size.label} wide>
-          {size.value}
+          {size.mm ? <SizeLine mm={size.mm} /> : size.value}
         </Stat>
         {rest.map((k) => (
           <Stat key={k.label} label={k.label} wide={rest.length === 1}>

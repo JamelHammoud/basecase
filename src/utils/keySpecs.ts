@@ -5,6 +5,7 @@ import { sizeLabel } from './size';
 export interface KeySpec {
   label: string;
   value: string;
+  mm?: number[];
 }
 
 const spec = (c: ComponentInfo, ...labels: string[]) => {
@@ -138,7 +139,8 @@ const GROUP_SPECS: Partial<Record<ComponentInfo['group'], (c: ComponentInfo, add
   };
 
 export function keySpecs(c: ComponentInfo, size: { width: number; height: number; depth: number }): KeySpec[] {
-  const out: KeySpec[] = [{ label: 'Size', value: sizeLabel([size.width, size.height, size.depth]) }];
+  const mm = [size.width, size.height, size.depth];
+  const out: KeySpec[] = [{ label: 'Size', value: sizeLabel(mm), mm }];
   const weight = spec(c, 'Weight');
 
   if (weight) out.push({ label: 'Weight', value: plainValue(weight) });

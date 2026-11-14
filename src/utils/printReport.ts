@@ -246,9 +246,7 @@ export function printReportText(r: PrintReport): string {
   const plates = Object.entries(r.plates)
     .map(([m, n]) => plural(n, `${m} plate`))
     .join(', ');
-  const keepOut = bed.keepOut.length
-    ? `, ${bed.keepOut.map((k) => `${Math.round(k.w)} × ${Math.round(k.d)} mm`).join(' and ')} keep-out`
-    : '';
+  const keepOut = bed.keepOut.length ? `, ${bed.keepOut.map((k) => sizeLabel([k.w, k.d])).join(' and ')} keep-out` : '';
 
   lines.push(
     `${plural(r.parts.length, 'printed part')} on a ${r.printer.model.name} (${bedSizeText(bed)}${keepOut}): about ${weight(r.totals.grams)} + ${weight(r.totals.supportG)} support, ${duration(r.totals.hours * 3600, 'min')}, ${plates}. Estimates without a slicer.`,

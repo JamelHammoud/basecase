@@ -78,10 +78,11 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
     stress: {
       onFinding: (row: SkillRow, finding: StressFinding) => void skills.stress.replay(row, finding),
       onTrainOn: (row: SkillRow) => void skills.stress.train(row),
+      canTrainOn: skills.stress.canTrain,
     },
     onMenu: (e: React.MouseEvent, row: SkillRow) => {
       const items = [
-        ...stressMenuItems(row, (r) => void skills.stress.stress(r)),
+        ...stressMenuItems(row, skills.stress),
         ...coachMenuItems(row, { coach: skills.coach, coaches: !!props.onCoach }),
         ...publishEntries(row, props.onPublishSkill),
       ];

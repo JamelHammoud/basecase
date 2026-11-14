@@ -45,9 +45,9 @@ const ratio = (now: ArrayLike<number>, base: Float64Array, stride = 1) => {
   return 1;
 };
 
-export const liveConditions = (c: LiveConditions): Conditions => ({ ...c, masses: [c.mass] });
+const liveConditions = (c: LiveConditions): Conditions => ({ ...c, masses: [c.mass] });
 
-export const NOMINAL_CONDITIONS: Conditions = Object.freeze({ friction: 1, masses: [1], strength: 1, latencyMs: 0 });
+const NOMINAL_CONDITIONS: Conditions = Object.freeze({ friction: 1, masses: [1], strength: 1, latencyMs: 0 });
 
 export class ConditionedPhysics {
   readonly module: MainModule;
@@ -55,6 +55,7 @@ export class ConditionedPhysics {
   private delay: Delay = { steps: 0, history: [] };
   private baseline: Baseline | null = null;
   private dt = 0;
+  private live = false;
 
   constructor(mj: MainModule) {
     this.mj = mj;
@@ -93,6 +94,19 @@ export class ConditionedPhysics {
     this.mj.mj_setConst(model, data);
     this.delay.steps = Math.round(conditions.latencyMs / 1000 / this.dt);
     this.delay.history = [];
+  }
+
+  get conditioned() {
+    return this.live;
+  }
+
+  set(model: MjModel, data: MjData, conditions: LiveConditions | null): boolean {
+    if (!conditions && !this.live) return false;
+
+    this.apply(model, data, conditions ? liveConditions(conditions) : NOMINAL_CONDITIONS);
+    this.live = !!conditions;
+
+    return true;
   }
 
   clearDelay() {

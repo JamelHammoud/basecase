@@ -6,7 +6,7 @@ import { Recorder, recordingTransfer, type Recording } from './recorder';
 import { fitsRecording, recordedEfforts, setRecordedFrame } from './recordedFrames';
 import type { Scan } from './scanner';
 import { SimEngine, type Controller } from './engine';
-import { ConditionedPhysics, liveConditions, NOMINAL_CONDITIONS, type LiveConditions } from './conditions';
+import { ConditionedPhysics, type LiveConditions } from './conditions';
 import type { FaultKind } from './faults';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
@@ -29,13 +29,12 @@ export type SimRequest =
   | { type: 'pause' }
   | { type: 'reset'; initial?: RobotPoseState }
   | { type: 'speed'; value: number }
-  | { type: 'controller'; controller: Controller }
+  | { type: 'controller'; controller: Controller; conditions?: LiveConditions }
   | { type: 'push'; robot: string; force: [number, number, number]; seconds?: number; releaseDeg?: number }
   | ({ type: 'command' } & DriveCommand)
   | { type: 'script'; commands: Array<{ at: number; command: DriveCommand }> }
   | { type: 'respawn'; robot?: string }
   | { type: 'fault'; joint: string; kind: FaultKind | null }
-  | { type: 'conditions'; conditions: LiveConditions | null }
   | { type: 'record'; on: boolean }
   | { type: 'scrub'; recording: Recording | null }
   | { type: 'seek'; frame: number }
@@ -94,7 +93,6 @@ const ctx = self as unknown as DedicatedWorkerGlobalScope;
 let mj: MainModule | null = null;
 let engine: SimEngine | null = null;
 let physics: ConditionedPhysics | null = null;
-let conditioned = false;
 let world: WorldMoves | null = null;
 let looksShown = -1;
 let playing = false;
@@ -133,8 +131,9 @@ const frame = (force = false) => {
 
   scanShown = scanner?.version ?? -1;
 
-  const stats =
-    conditioned && physics ? { ...engine.stats(rtf), conditions: physics.reading(engine.model) } : engine.stats(rtf);
+  const stats = physics?.conditioned
+    ? { ...engine.stats(rtf), conditions: physics.reading(engine.model) }
+    : engine.stats(rtf);
 
   post({ type: 'frame', poses, joints, stats, playing, facts, ...(scan ? { scan } : {}) }, [
     poses.buffer,
@@ -199,6 +198,8 @@ async function startRoutine(msg: Msg<'routine'>) {
 
   if (!engine) throw new Error('Nothing loaded');
 
+  setConditions(null);
+
   live = await LiveRoutine.start(mj, engine, msg);
   play();
 }
@@ -206,7 +207,13 @@ async function startRoutine(msg: Msg<'routine'>) {
 async function startCase(msg: Msg<'case'>) {
   if (!engine) throw new Error('Nothing loaded');
 
+  setConditions(null);
+
   liveCase = await LiveCase.start(engine, msg, () => driveController);
+}
+
+function setConditions(conditions: LiveConditions | null) {
+  if (engine && physics?.set(engine.model, engine.data, conditions)) frame();
 }
 
 function setController(c: Controller) {
@@ -228,6 +235,7 @@ type Msg<K extends SimRequest['type']> = Extract<SimRequest, { type: K }>;
 async function watch(msg: Msg<'watch'>) {
   mj ??= await loadMujoco();
   watching = null;
+  setConditions(null);
 
   if (!engine || !msg.watch) return;
 
@@ -248,7 +256,6 @@ async function load(msg: Msg<'load'>) {
   script = null;
   playing = false;
   physics = new ConditionedPhysics(mj);
-  conditioned = false;
   engine = new SimEngine(physics.module, msg.model);
   physics.attach(engine.model);
   world = new WorldMoves(mj, engine);
@@ -407,6 +414,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   controller: (msg) => {
     script = null;
+    setConditions(msg.conditions ?? null);
     setController(msg.controller);
   },
   grab,
@@ -426,13 +434,6 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   fault: (msg) => {
     engine?.setFault(msg.joint, msg.kind);
     recorder?.fault(msg.joint, msg.kind);
-    frame();
-  },
-  conditions: (msg) => {
-    if (!engine || !physics) return;
-
-    physics.apply(engine.model, engine.data, msg.conditions ? liveConditions(msg.conditions) : NOMINAL_CONDITIONS);
-    conditioned = !!msg.conditions;
     frame();
   },
   record,

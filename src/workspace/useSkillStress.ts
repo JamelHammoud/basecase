@@ -16,6 +16,7 @@ interface StressInput {
   load: (row: SkillRow) => Promise<Skill | null>;
   environmentOf: (row: SkillRow, model: SimModel) => Environment | null;
   stopReplay: () => void;
+  busy: boolean;
 }
 
 export const canStress = (row: SkillRow) => row.state.kind === 'ready' && !!row.record;
@@ -23,7 +24,7 @@ export const canStress = (row: SkillRow) => row.state.kind === 'ready' && !!row.
 export const canTrainOnStress = (row: SkillRow) =>
   !IS_WEB_DEMO && canStress(row) && !!row.kit && !!row.stress?.result.findings.length;
 
-export function useSkillStress({ runtime, sim, model, load, environmentOf, stopReplay }: StressInput) {
+export function useSkillStress({ runtime, sim, model, load, environmentOf, stopReplay, busy }: StressInput) {
   const [, setVersion] = useState(0);
 
   useEffect(() => runtime.stress.subscribe(() => setVersion((v) => v + 1)), [runtime]);
@@ -67,13 +68,14 @@ export function useSkillStress({ runtime, sim, model, load, environmentOf, stopR
 
     if (sim.status === 'off') await sim.start();
 
-    sim.setConditions(finding.replay);
-    sim.setController(skill.controller);
+    sim.setController(skill.controller, finding.replay);
     sim.reset(stressStartPose(model, { environment, start }));
   };
 
   return {
     of: (row: SkillRow) => runtime.stress.of(row.target, row.record?.hash),
+    canStress: (row: SkillRow) => !busy && canStress(row),
+    canTrain: (row: SkillRow) => !busy && canTrainOnStress(row),
     stress,
     train,
     replay,

@@ -41,7 +41,6 @@ export function useSkillCoach({ sim, model, records, loadSkill, setProject }: Co
   const play = async (skill: Skill) => {
     if (sim.status === 'off') await sim.start();
 
-    sim.setConditions(null);
     sim.setController(skill.controller);
     sim.reset();
   };

@@ -23,6 +23,7 @@ covers:
   - src/skills/stressText.ts
   - src/skills/skillsStress.ts
   - src/sim/conditions.ts
+  - src/sim/sim.worker.ts
   - src/components/simulate/StressFindings.tsx
   - src/components/simulate/skillMenu.tsx
   - src/workspace/useSkillStress.ts
@@ -50,6 +51,8 @@ Find the friction, weight, servo strength or servo delay where a ready skill sto
 
 ![Stand replaying on the canvas at 150 ms of servo delay, its finding highlighted under the row](/help/find-where-a-skill-fails/replay.png)
 
+The conditions last until something else runs in the sim, such as Try, Drive, training or a Case.
+
 6. Click **Train on These** to retrain the skill with those conditions added to its training.
 
 The row keeps the new skill only if Arena passes it. Otherwise the old skill stays, and the row shows Arena's count under the findings.
@@ -58,6 +61,6 @@ The row keeps the new skill only if Arena passes it. Otherwise the old skill sta
 
 Stress tries one condition at a time, then all four together, in at most 96 runs. Its limits are friction ×0.2 to ×1.5, weight ×0.5 to ×2, servo strength 40% to 120% and servo delay 0 to 150 ms. Friction and weight are multiples of the robot's own. Each run is judged by the same contract [Arena](/help/arena) uses. A skill with no finding held everywhere in those limits.
 
-Train on These works on Stand, Walk, Get up and Settle in the desktop app. Findings aren't saved with the scene, so they clear when the skill changes or the app restarts.
+Train on These works on Stand, Walk, Get up and Settle in the desktop app. Neither it nor Stress shows while another skill trains. Findings aren't saved with the scene, so they clear when the skill changes or the app restarts.
 
 In [[⌘K]], **Stress Stand** does the same as the menu item. You can also ask the agent whether a skill will hold, such as "Will Walk hold on a slippery floor?". It stresses the skill and answers with the numbers.

@@ -95,6 +95,6 @@ One training job runs at a time across the whole app, and others wait their turn
 
 In the desktop app, 1.5 seconds after an edit, Basecase checks each Motor Kit skill you've trained against the new design. A color or name change keeps it ready. A mass or size change runs Arena again in the background, with no training. A joint change trains it again. Skills you never trained don't start on their own.
 
-To change how a ready skill moves, such as a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). To share a ready skill, follow [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face). To start from someone else's, follow [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
+To change how a ready skill moves, such as a Walk that drags its feet, see [Coach how a ready skill moves](/help/coach-a-skill). To find the friction, weight, strength or delay where one stops passing, see [Find where a skill fails](/help/find-where-a-skill-fails). To share a ready skill, follow [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face). To start from someone else's, follow [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).
 
 To see what Arena checks, read [Arena](/help/arena). To teach anything else, see [Teach a robot a skill](/help/teach-a-robot-a-skill). To run a ready skill on the emulated robot, see [Run a trained skill on the emulated robot](/help/run-a-trained-skill-on-the-emulated-robot).

@@ -1,6 +1,5 @@
 import type { Command } from '../components/CommandPalette';
-import { CrosshairIcon, DownloadIcon, ShareIcon } from '../design-system';
-import { canStress } from './useSkillStress';
+import { StressIcon, DownloadIcon, ShareIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 
 export function skillCommands({ core }: CommandInputs): Command[] {
@@ -22,11 +21,11 @@ export function skillCommands({ core }: CommandInputs): Command[] {
     run: () => skillHub.publish(row),
   }));
 
-  const stress = skills.rows.filter(canStress).map((row): Command => ({
+  const stress = skills.rows.filter(skills.stress.canStress).map((row): Command => ({
     id: `skill-stress-${row.target}`,
     group: 'Simulate',
     label: `Stress ${row.label}`,
-    icon: <CrosshairIcon />,
+    icon: <StressIcon />,
     keywords: 'stress test robust friction weight strength delay latency break fail limits skill',
     run: () => void skills.stress.stress(row),
   }));

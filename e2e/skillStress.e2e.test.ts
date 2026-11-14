@@ -89,6 +89,8 @@ describe('stressing a ready skill', () => {
     await expect.poll(() => row.getAttribute('data-skill'), { timeout: 200000 }).not.toBe(stiff);
     await expect.poll(() => row.innerText(), { timeout: 60000 }).toContain('of 32 tries');
     expect(await row.getByTestId('stress-finding').count()).toBe(0);
+    await row.locator('button', { hasText: 'Try' }).click();
+    await expect.poll(conditions, { timeout: 60000 }).toBeNull();
     expect(app.errors).toEqual([]);
   }, 480000);
 });

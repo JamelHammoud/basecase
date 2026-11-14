@@ -60,7 +60,7 @@ export interface Simulation {
   reset: (initial?: RobotPoseState) => void;
   stop: () => void;
   setSpeed: (s: number) => void;
-  setController: (c: Controller) => void;
+  setController: (c: Controller, conditions?: LiveConditions) => void;
   grab: (
     partIds: string[],
     hand: { position: THREE.Vector3; turn: THREE.Quaternion | null } | null,
@@ -68,7 +68,6 @@ export interface Simulation {
   ) => void;
   push: (robot?: string, fallDeg?: number) => void;
   setFault: (jointId: string, kind: FaultKind | null) => void;
-  setConditions: (conditions: LiveConditions | null) => void;
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
@@ -264,9 +263,9 @@ function useStopOnEdit({
 function useController(send: (msg: SimRequest) => void) {
   const [controller, setControllerState] = useState<Controller>({ kind: 'hold' });
   const setController = useCallback(
-    (c: Controller) => {
+    (c: Controller, conditions?: LiveConditions) => {
       setControllerState(c);
-      send({ type: 'controller', controller: c });
+      send({ type: 'controller', controller: c, conditions });
     },
     [send],
   );
@@ -409,7 +408,6 @@ export function useSimulation(props: Inputs): Simulation {
     buildModel: (options) => buildModel({ alone: options?.alone }),
     ...touch,
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
-    setConditions: (conditions) => send({ type: 'conditions', conditions }),
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,

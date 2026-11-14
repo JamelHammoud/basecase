@@ -153,6 +153,7 @@ export function useSkills(input: SkillsInput) {
   const model = useSceneModel(input, { runtime, platform, watch });
   const animations = project.animations ?? [];
   const load = (record: SkillRecord) => platform.loadSkill(record.hash);
+  const busy = jobs.some((j) => !j.background);
   const coach = useSkillCoach({ sim, model, records, loadSkill: platform.loadSkill, setProject: input.setProject });
   const stress = useSkillStress({
     runtime,
@@ -161,6 +162,7 @@ export function useSkills(input: SkillsInput) {
     load: async (row) => (row.record ? load(row.record) : null),
     environmentOf: (row, built) => skillEnvironment(row, { model: built, runtime, animations }),
     stopReplay: coach.stopReplay,
+    busy,
   });
   const rows: SkillRow[] = model
     ? skillRows({ model, design: designOf(model), records, jobs, animations, refusals }).map((row) => ({
@@ -212,7 +214,6 @@ export function useSkills(input: SkillsInput) {
 
     const robot = rowEnvironment(row)?.robot ?? model?.robots[0]?.key ?? '';
 
-    sim.setConditions(null);
     sim.setController({ kind: 'policy', policy, robot });
     sim.reset();
   };
@@ -226,7 +227,6 @@ export function useSkills(input: SkillsInput) {
 
     if (sim.status === 'off') await sim.start();
 
-    sim.setConditions(null);
     sim.setController(skill.controller);
     sim.reset();
   };
@@ -243,7 +243,7 @@ export function useSkills(input: SkillsInput) {
     install: (built: SimModel, install: KitInstall) => runtime.installKit(built, install),
     velocity,
     velocityReady: !!velocityRecord,
-    busy: jobs.some((j) => !j.background),
+    busy,
     canKit: (entry: TrainedEntry) => !!model && kitEntries(model).includes(entry),
     trainKit,
     train,

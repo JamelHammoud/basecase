@@ -58,6 +58,12 @@ export const CoachIcon = glyph({
   dotSize: 4.5,
 });
 
+export const StressIcon = glyph({
+  d: 'M5.11 20.14A9.75 9.75 0 1 1 18.89 20.14M12 13.25L16.24 9.01',
+  dots: 'M12 13.25h0',
+  dotSize: 4.5,
+});
+
 export const ToolIcon = glyph('M4 6.5L9.5 12L4 17.5M12.5 18H20');
 
 export const ThoughtIcon = glyph(

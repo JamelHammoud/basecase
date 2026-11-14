@@ -3,12 +3,12 @@ import { Button, TrainIcon } from '../../design-system';
 import type { SkillRow } from '../../skills/skillRows';
 import type { StressFinding } from '../../skills/stress';
 import { findingLabel } from '../../skills/stressText';
-import { canTrainOnStress } from '../../workspace/useSkillStress';
 import { fmtMargin } from './format';
 
 export interface StressActions {
   onFinding: (row: SkillRow, finding: StressFinding) => void;
-  onTrainOn: ((row: SkillRow) => void) | null;
+  onTrainOn: (row: SkillRow) => void;
+  canTrainOn: (row: SkillRow) => boolean;
 }
 
 export const StressFindings: React.FC<{ row: SkillRow; actions: StressActions }> = ({ row, actions }) => {
@@ -16,7 +16,7 @@ export const StressFindings: React.FC<{ row: SkillRow; actions: StressActions }>
 
   if (!stress?.result.findings.length) return null;
 
-  const { onTrainOn } = actions;
+  const { onTrainOn, canTrainOn } = actions;
 
   return (
     <div className="flex flex-col gap-1 pt-1" data-testid="stress-findings">
@@ -36,7 +36,7 @@ export const StressFindings: React.FC<{ row: SkillRow; actions: StressActions }>
         </Button>
       ))}
       {stress.refused && <div className="text-[12px] text-white/50 tabular">{stress.refused}</div>}
-      {onTrainOn && canTrainOnStress(row) && (
+      {canTrainOn(row) && (
         <Button
           variant="secondary"
           size="xs"

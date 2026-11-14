@@ -179,5 +179,6 @@ Judge it by asking:
 | `PoseIcon` | Agent feed: posing and retargeting | Stick figure mid-stride, solid head (stroke 5), neck 1.4 clear of it |
 | `RunIcon` | Agent feed: simulating and animating | Play triangle, corners r 2 |
 | `TrainIcon` | Agent feed: training policies | Clockwise loop r 7.75 centered on x 12 (optical), straight tail 2.25, head arms 3.75 at 45° (§4b) |
+| `StressIcon` | Stress a skill: the right-click entry, ⌘K and the agent feed's `stress_skill` | A gauge: a 270° arc r 9.75 around (12, 13.25), open at the bottom (ends at (5.11, 20.14) and (18.89, 20.14)), a needle 6 long toward the upper right, ending 1.75 clear of the arc, from a solid hub dot (4.5). Drawn without a preview sheet; in line for the Stage 8 review. `CrosshairIcon` stays Center on Origin's |
 | `ToolIcon` | Agent feed: any other tool, subagents | Prompt: chevron and underscore |
 | `ThoughtIcon` | Agent feed: Thought / Thinking rows | Light bulb: arc r 6.5, neck at 17.5, base bar |

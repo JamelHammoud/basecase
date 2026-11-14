@@ -98,7 +98,7 @@ export const AttachMenu: React.FC<{
               />
               <MenuItem
                 icon={<PenIcon className="w-4 h-4" />}
-                label="Sketch"
+                label="Attach Sketch"
                 onSelect={() => {
                   close();
                   onSketch();

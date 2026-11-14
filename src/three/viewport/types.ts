@@ -236,6 +236,7 @@ export interface Viewport3DHandle {
   posedFloor: (ids?: string[], pose?: Map<string, THREE.Matrix4> | null) => Promise<number | null>;
   meshGaps: (pairs: Array<[string, string]>, withinMm: number) => Promise<Array<[string, string]>>;
   projectPoints: (points: Vec3[]) => Array<{ x: number; y: number; visible: boolean }>;
+  onRender: (listener: () => void) => () => void;
   measureFrom: (clientX: number, clientY: number) => void;
   cancelMeasure: () => boolean;
   shownPartIds: () => string[];

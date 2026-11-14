@@ -74,7 +74,9 @@ Every field of every topic is also a signal. Its name is `topic.` followed by th
 
 ## Limits
 
-- Basecase reads ROS 1, ROS 2, Protobuf and JSON channels. It skips FlatBuffers channels.
+- Basecase reads ROS 1, ROS 2, Protobuf, JSON and FlatBuffers channels. FlatBuffers requires an embedded binary reflection schema.
+- Custom topics open with a message tree, a scalar plot and a text field as states when those fields exist.
+- Large 64-bit integers stay exact in Message and States. Values outside JavaScript’s safe integer range leave gaps in numeric plots.
 - A recording can be up to 10 minutes long. Each file can be up to 512 MB.
 - The scene must have a robot in it, even if the recording has no joints.
 - Basecase keeps camera images, but the cards don't show them.

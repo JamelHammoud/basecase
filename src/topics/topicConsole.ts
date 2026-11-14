@@ -2,7 +2,16 @@ import { MAX_PANELS, type CaseConsole } from '../cases/console/format';
 import type { PanelSpec } from '../cases/console/panelKinds';
 import { isDiagnosticTopic } from './diagnostics';
 import { isLogTopic } from './logs';
-import { IMAGE_SCHEMAS, IMU_SCHEMAS, isSchema, ODOMETRY_SCHEMAS, STATE_SCHEMAS } from './schemas';
+import {
+  DATA_LAYER_SCHEMAS,
+  JOINT_SCHEMAS,
+  schemaKey,
+  IMAGE_SCHEMAS,
+  IMU_SCHEMAS,
+  isSchema,
+  ODOMETRY_SCHEMAS,
+  STATE_SCHEMAS,
+} from './schemas';
 import { topicRef, type TopicIndex } from './topicIndex';
 import type { RecordedTopic } from './topicLog';
 
@@ -16,12 +25,44 @@ const ofSchema = (index: TopicIndex, schemas: ReadonlySet<string>) =>
 const isPlain = (topic: RecordedTopic) =>
   !isLogTopic(topic) && !isDiagnosticTopic(topic) && !isSchema(IMAGE_SCHEMAS, topic.schema);
 
+const KNOWN_SCHEMAS = new Set([
+  ...IMAGE_SCHEMAS,
+  ...IMU_SCHEMAS,
+  ...ODOMETRY_SCHEMAS,
+  ...STATE_SCHEMAS,
+  ...JOINT_SCHEMAS,
+]);
+
+const columnCount = (t: RecordedTopic) => t.numbers.size + t.labels.size + t.lists.size + t.blobs.size;
+
+function customMessage(index: TopicIndex) {
+  const topics = index.topics.filter(
+    (t) => isPlain(t) && !isSchema(KNOWN_SCHEMAS, t.schema) && !DATA_LAYER_SCHEMAS.has(schemaKey(t.schema)),
+  );
+
+  return topics.toSorted((a, b) => columnCount(b) - columnCount(a))[0];
+}
+
+function customStates(topic: RecordedTopic | undefined): PanelSpec[] {
+  const labels = [...(topic?.labels.keys() ?? [])];
+  const path = labels.find((p) => /(^|\.)(mode|state|status)$/u.test(p)) ?? labels[0];
+
+  return topic && path ? [{ id: 'states', kind: 'states', signal: topicRef(topic.topic, path) }] : [];
+}
+
+function customPlot(topic: RecordedTopic | undefined): PanelSpec[] {
+  const field = topic && [...topic.numbers.keys()].find((path) => !path.includes('[') && !topic.labels.has(path));
+
+  return topic && field ? [{ id: 'plot', kind: 'plot', signals: [topicRef(topic.topic, field)] }] : [];
+}
+
 function recordingPanels(index: TopicIndex): PanelSpec[] {
   const states = ofSchema(index, STATE_SCHEMAS).slice(0, STATE_PANELS);
   const [imu] = ofSchema(index, IMU_SCHEMAS);
   const [odometry] = ofSchema(index, ODOMETRY_SCHEMAS);
   const used = new Set([...states, imu, odometry]);
-  const message = index.topics.find((t) => isPlain(t) && !used.has(t));
+  const custom = customMessage(index);
+  const message = custom ?? index.topics.find((t) => isPlain(t) && !used.has(t));
   const panels: PanelSpec[] = [];
 
   if (index.topics.some(isLogTopic)) panels.push({ id: 'log', kind: 'log' });
@@ -30,6 +71,8 @@ function recordingPanels(index: TopicIndex): PanelSpec[] {
 
   for (const t of states) panels.push({ id: 'states', kind: 'states', signal: topicRef(t.topic, 'data') });
 
+  if (!states.length) panels.push(...customStates(custom));
+
   if (imu) panels.push({ id: 'imu', kind: 'plot', signals: [topicRef(imu.topic, 'angular_velocity.*')] });
 
   if (odometry) {
@@ -37,6 +80,8 @@ function recordingPanels(index: TopicIndex): PanelSpec[] {
 
     panels.push({ id: 'odometry', kind: 'plot', signals: [position('y')], x: position('x') });
   }
+
+  if (!imu && !odometry) panels.push(...customPlot(custom));
 
   if (message) panels.push({ id: 'message', kind: 'message', topic: topicRef(message.topic) });
 

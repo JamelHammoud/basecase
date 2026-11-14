@@ -61,7 +61,7 @@ export class SimEngine {
   private fellAt = new Map<string, number>();
   private pushes: PushForce;
   private grab: GrabForce;
-  private faults: ActuatorFaults;
+  readonly faults: ActuatorFaults;
   private policyState: PolicyState | null = null;
   readonly dt: number;
   readonly scanner: Scanner | null;

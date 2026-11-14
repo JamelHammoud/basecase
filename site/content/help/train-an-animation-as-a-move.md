@@ -1,6 +1,7 @@
 ---
 title: Train an animation as a move
 date: 2026-11-13
+updated: 2026-11-13
 collection: simulate-and-train
 type: task
 covers:
@@ -22,4 +23,4 @@ Teach a legged robot to perform one of its animations, a sit, a bow or a dance s
 
 A move that doesn't loop holds its last pose for 2 s, and a looping one is judged over two rounds. Editing the animation puts its row back to Train. Robots fixed to the ground don't get these rows: their animations play as they are.
 
-A ready move is also a step in a Routine. In the desktop app, its right-click menu has **Publish to Hugging Face**; see [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face). Switching into it from Walk needs a proof first; see [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills).
+A ready move is also a step in a Routine. Its right-click menu has **Stress**, which finds the friction, weight or servo limits where it fails; see [Find where a skill fails](/help/find-where-a-skill-fails). In the desktop app, the menu also has **Publish to Hugging Face**; see [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face). Switching into it from Walk needs a proof first; see [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills).

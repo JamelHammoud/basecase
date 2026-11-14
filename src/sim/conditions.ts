@@ -89,13 +89,16 @@ export class ConditionedPhysics {
   private baseline: Baseline | null = null;
   private dt = 0;
   private live = false;
+  private strength = 1;
+  private applied: () => void = () => {};
 
   constructor(mj: MainModule) {
     this.mj = mj;
     this.module = delayedModule(mj, this.delay);
   }
 
-  attach(model: MjModel) {
+  attach(model: MjModel, applied: () => void) {
+    this.applied = applied;
     this.dt = model.opt.timestep;
     this.baseline = Object.fromEntries(
       SNAPSHOT.map((field) => [field, Float64Array.from(model[field] as ArrayLike<number>)]),
@@ -126,6 +129,8 @@ export class ConditionedPhysics {
 
     for (const servo of servos) scaleServo(model, servo);
 
+    this.applied();
+    this.strength = conditions.strength;
     this.mj.mj_setConst(model, data);
     this.delay.steps = Math.round(conditions.latencyMs / 1000 / this.dt);
     this.delay.history = [];
@@ -154,7 +159,7 @@ export class ConditionedPhysics {
     return {
       friction: ratio(model.geom_friction, base.geom_friction, 3),
       mass: ratio(model.body_mass, base.body_mass),
-      strength: ratio(model.actuator_forcerange, base.actuator_forcerange),
+      strength: this.strength,
       latencyMs: Number((this.delay.steps * this.dt * 1000).toFixed(3)),
     };
   }

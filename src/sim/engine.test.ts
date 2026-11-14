@@ -1,6 +1,7 @@
 import loadMujoco, { type MainModule } from '@mujoco/mujoco';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { fixtureModel } from '../skills/fixtureModels';
+import { ConditionedPhysics } from './conditions';
 import { SimEngine } from './engine';
 import { Recorder } from './recorder';
 
@@ -79,6 +80,33 @@ describe('servo faults', () => {
     expect(engine.stats().joints.some((j) => j.fault)).toBe(false);
     engine.setFault('no-such-joint', 'limp');
     expect(range()).toEqual(before);
+    engine.dispose();
+  });
+
+  it('keeps Limp and faults on a finding’s strength, and the finding’s strength through them', () => {
+    const physics = new ConditionedPhysics(mj);
+    const engine = new SimEngine(physics.module, fixtureModel('quad-servo'));
+    const before: number[] = Array.from(engine.model.actuator_forcerange);
+    const knee = engine.sim.joints.find((j) => j.id === 'leg0_bend')!.actuator;
+    const hip = engine.sim.joints.find((j) => j.id === 'leg1_swing')!.actuator;
+    const at = (actuator: number) => engine.model.actuator_forcerange[actuator * 2 + 1] / before[actuator * 2 + 1];
+    const finding = { friction: 1, mass: 1, strength: 0.4, latencyMs: 0 };
+
+    physics.attach(engine.model, () => engine.faults.rebase());
+    engine.setController({ kind: 'limp' });
+    physics.set(engine.model, engine.data, finding);
+    expect(at(hip)).toBe(0);
+    engine.setController({ kind: 'hold' });
+    expect(at(hip)).toBeCloseTo(0.4, 9);
+    expect(physics.reading(engine.model).strength).toBeCloseTo(0.4, 9);
+    engine.setFault('leg0_bend', 'weak');
+    expect(at(knee)).toBeCloseTo(0.2, 9);
+    physics.set(engine.model, engine.data, null);
+    expect(at(knee)).toBeCloseTo(0.5, 9);
+    expect(at(hip)).toBe(1);
+    expect(engine.stats().joints.find((j) => j.id === 'leg0_bend')?.fault).toBe('weak');
+    engine.setFault('leg0_bend', null);
+    expect(Array.from(engine.model.actuator_forcerange)).toEqual(before);
     engine.dispose();
   });
 

@@ -94,7 +94,7 @@ export class ArenaWorld {
     this.physics = new ConditionedPhysics(mj);
     this.engine = new SimEngine(this.physics.module, model);
     this.engine.model.opt.disableflags |= mj.mjtDisableBit.mjDSBL_AUTORESET.value;
-    this.physics.attach(this.engine.model);
+    this.physics.attach(this.engine.model, () => this.engine.faults.rebase());
     this.slots = new Map(
       this.engine.sim.joints.map((j) => {
         const id = mj.mj_name2id(this.engine.model, mj.mjtObj.mjOBJ_JOINT.value, j.name);

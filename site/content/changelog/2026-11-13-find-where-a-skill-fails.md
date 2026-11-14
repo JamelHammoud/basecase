@@ -8,7 +8,7 @@ You can now stress a ready skill to find the friction, weight, servo strength or
 
 Right-click a ready skill in Simulate's Train section and choose Stress, or use ⌘K. The agent's `stress_skill` tool runs the same search when you ask whether a skill will hold.
 
-Arena tries servo delays up to 40 ms. On our test quadruped, a Stand with stiff feedback passed all 96 of Arena's tries. Stress found that it shakes itself over past 74 ms of delay. A full stress of that Stand is 96 runs at most and took 13 seconds on a laptop.
+Arena tries servo delays up to 40 ms. On our test quadruped, a Stand with stiff feedback passed all 96 of Arena's tries. Stress found that it shakes itself over past 74 ms of delay.
 
 It tries one condition at a time, then all four together, in at most 96 runs. The limits are friction ×0.2 to ×1.5, weight ×0.5 to ×2, servo strength 40% to 120% and servo delay 0 to 150 ms. Every run is judged by the contract Arena uses. Each finding reads like Delay > 74 ms, with its margin, and clicking it replays that run on the canvas.
 

@@ -26,7 +26,7 @@ Break one servo while the simulation runs, to see whether the robot still stands
 
 5. To mend the servo, right-click it again and choose **Fault** ▸ **Clear**. Ending the simulation clears every fault.
 
-A fault stays through Reset and Start over (R), the way a broken servo would.
+A fault stays through Reset and Start over (R), the way a broken servo would. It also stays while you replay a finding from [Find where a skill fails](/help/find-where-a-skill-fails). **Weak** during a 40% servo strength finding leaves that servo 20% of its torque.
 
 During a Case try, the faults you set are saved on the try. Its row in Results shows each one, and hovering a fault shows the joint and when it failed, counted from the start of the try.
 

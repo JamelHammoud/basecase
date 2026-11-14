@@ -63,6 +63,14 @@ export class ActuatorFaults {
     this.syncRange(actuator);
   }
 
+  rebase() {
+    const held = [...this.saved.keys()];
+
+    this.saved.clear();
+
+    for (const a of held) this.syncRange(a);
+  }
+
   reprime() {
     for (const lag of this.lags.values()) lag.primed = false;
   }

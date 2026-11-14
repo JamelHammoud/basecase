@@ -256,8 +256,11 @@ async function load(msg: Msg<'load'>) {
   script = null;
   playing = false;
   physics = new ConditionedPhysics(mj);
-  engine = new SimEngine(physics.module, msg.model);
-  physics.attach(engine.model);
+
+  const loaded = new SimEngine(physics.module, msg.model);
+
+  engine = loaded;
+  physics.attach(loaded.model, () => loaded.faults.rebase());
   world = new WorldMoves(mj, engine);
   looksShown = -1;
   post({ type: 'world', looks: {} });

@@ -31,12 +31,12 @@ export interface BusChain {
   connector: ConnectorType;
   adapter: string | null;
   servos: BusServo[];
-  protocols: string[];
   nets: Net[];
 }
 
 export interface PowerTree {
   source: NetEnd | null;
+  battery: boolean;
   nets: Net[];
 }
 

@@ -1,3 +1,4 @@
+import { plural } from '../../electron/plural.mjs';
 import { CONNECTOR_NAMES, type BusChain, type NetEnd, type Netlist } from './connectors';
 
 const endText = (e: NetEnd) => `${e.name}${e.id ? ` [${e.id}]` : ''} (${CONNECTOR_NAMES[e.connector]})`;
@@ -10,7 +11,7 @@ function busLine(bus: BusChain, i: number): string {
     return `${endText(net.to)}${id ? ` servo id ${id}` : ''}`;
   });
 
-  return `- Bus ${i + 1}: ${[endText(bus.nets[0].from), ...hops].join(' → ')}; ${bus.nets.length} ${CONNECTOR_NAMES[bus.connector]} cables`;
+  return `- Bus ${i + 1}: ${[endText(bus.nets[0].from), ...hops].join(' → ')}; ${plural(bus.nets.length, `${CONNECTOR_NAMES[bus.connector]} cable`)}`;
 }
 
 export function wiringText(netlist: Netlist): string[] {

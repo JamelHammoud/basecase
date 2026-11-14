@@ -56,7 +56,7 @@ function sceneFacts(parts: ScenePart[], { tether, netlist }: WiringFacts): Scene
   const hardware = parts.flatMap((p) => (p.kind === 'hardware' && p.hardware ? [p.hardware.type] : []));
 
   return {
-    battery: comps.some((c) => !!c.battery),
+    battery: netlist.power.battery || comps.some((c) => !!c.battery),
     plugged: netlist.power.source !== null,
     tether,
     unwiredServos: parts.some((p) => componentOf(p)?.group === 'Servos' && !wired.has(p.id)),

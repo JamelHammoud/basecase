@@ -23,10 +23,16 @@ function suppliedBattery(id: string | null, supplyId: string): NetEnd | null {
   return s?.battery && s.connector ? { id, name: s.name, connector: s.connector } : null;
 }
 
-function batteryEnd({ parts, project }: WiringScene): NetEnd | null {
+interface Source {
+  end: NetEnd;
+  battery: boolean;
+}
+
+function batterySource({ parts, project }: WiringScene): Source | null {
   const pack = parts.find((p) => isPack(p) && portOf(p, 'power-out'));
 
-  if (pack) return endOf(pack, portOf(pack, 'power-out')!);
+  if (pack)
+    return { end: endOf(pack, portOf(pack, 'power-out')!), battery: !!COMPONENT_BY_ID[pack.componentId!].battery };
 
   const supplied = [
     ...parts.flatMap((p) => (p.supplyId ? [suppliedBattery(p.id, p.supplyId)] : [])),
@@ -35,7 +41,9 @@ function batteryEnd({ parts, project }: WiringScene): NetEnd | null {
     ),
   ];
 
-  return supplied.find((e) => e !== null) ?? null;
+  const end = supplied.find((e) => e !== null);
+
+  return end ? { end, battery: true } : null;
 }
 
 const regulatorParts = (parts: ScenePart[]) =>
@@ -50,9 +58,10 @@ function busFeed(scene: WiringScene, regulators: ScenePart[]): NetEnd {
 }
 
 export function powerTree(scene: WiringScene): PowerTree {
-  const source = batteryEnd(scene) ?? (sceneTether(scene) ? TETHER : null);
+  const pack = batterySource(scene);
+  const source = pack?.end ?? (sceneTether(scene) ? TETHER : null);
 
-  if (!source) return { source: null, nets: [] };
+  if (!source) return { source: null, battery: false, nets: [] };
 
   const regulators = regulatorParts(scene.parts);
   const feed = busFeed(scene, regulators);
@@ -64,5 +73,5 @@ export function powerTree(scene: WiringScene): PowerTree {
     ...adapters.map((a) => ({ from: feed, to: endOf(a, portOf(a, 'power-in')!) })),
   ];
 
-  return { source, nets };
+  return { source, battery: !!pack?.battery, nets };
 }

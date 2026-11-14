@@ -386,7 +386,11 @@ export function buildBom({ parts, project, purchases, measures, now = new Date()
   const netlist = wiringNetlist({ parts, project });
   const listed = listedText(tally.counts);
 
-  for (const [key, qty] of wiringSupplies(netlist)) addCount(tally.counts, key, qty);
+  for (const [key, qty] of wiringSupplies(netlist)) {
+    const missing = qty - (tally.counts.get(key)?.qty ?? 0);
+
+    if (missing > 0) addCount(tally.counts, key, missing);
+  }
 
   for (const key of neededSupplyKeys(parts, listed, { tether: !!sceneTether({ parts, project }), netlist }))
     addCount(tally.counts, key, 1);

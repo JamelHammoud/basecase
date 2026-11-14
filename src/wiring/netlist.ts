@@ -1,4 +1,3 @@
-import { actuatorOf } from '../data/components';
 import { servoLayout } from '../robot/sceneRobot';
 import type { ConnectorType } from '../types/ports';
 import type { RobotJoint, ScenePart } from '../types/robotics';
@@ -17,8 +16,6 @@ import { powerTree } from './powerTree';
 
 export type { BusChain, BusServo, Net, NetEnd, Netlist, PowerTree, WiringScene } from './connectors';
 
-const protocolOf = (p: ScenePart) => actuatorOf(p.componentId!, p.componentVariant)?.bus ?? p.componentId!;
-
 export function busOrder(parts: readonly ScenePart[], joints: readonly RobotJoint[]): BusServo[] {
   const servos = new Map(parts.filter((p) => busIn(p)).map((p) => [p.id, p]));
   const { movable, ids } = servoLayout(joints);
@@ -32,9 +29,9 @@ export function busOrder(parts: readonly ScenePart[], joints: readonly RobotJoin
 }
 
 function runs<T>(list: T[], count: number): T[][] {
-  const size = Math.ceil(list.length / count);
+  const start = (i: number) => Math.round((i * list.length) / count);
 
-  return Array.from({ length: count }, (_, i) => list.slice(i * size, (i + 1) * size)).filter((run) => run.length);
+  return Array.from({ length: count }, (_, i) => list.slice(start(i), start(i + 1))).filter((run) => run.length);
 }
 
 interface ChainInput {
@@ -55,7 +52,6 @@ function chain({ adapter, servos, connector, byId }: ChainInput): BusChain {
     connector,
     adapter: adapter?.id ?? null,
     servos,
-    protocols: [...new Set(parts.map(protocolOf))],
     nets: parts.map((p, i) => ({ from: i === 0 ? head : outOf(parts[i - 1]), to: endOf(p, busIn(p)!) })),
   };
 }
@@ -88,5 +84,3 @@ export function wiringNetlist(scene: WiringScene): Netlist {
 
   return { buses, power: powerTree(scene), unmatched };
 }
-
-export const mixedBuses = (n: Netlist) => n.buses.filter((b) => b.protocols.length > 1);

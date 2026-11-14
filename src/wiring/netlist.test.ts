@@ -3,7 +3,17 @@ import { servoLayout } from '../robot/sceneRobot';
 import { buildBom } from '../utils/bom';
 import { engineeringText, runEngineering } from '../utils/engineering';
 import { engineeringFindings } from '../readiness/findings';
-import { component, hexapod, mixedArm, rover, so101, xl330Arm, type WiringFixture } from './fixtures';
+import {
+  component,
+  hexapod,
+  mixedArm,
+  rover,
+  sceneOf,
+  servoJoints,
+  so101,
+  xl330Arm,
+  type WiringFixture,
+} from './fixtures';
 import { wiringNetlist } from './netlist';
 import { wiringSupplies } from './wiringSupplies';
 
@@ -52,6 +62,22 @@ describe('wiringNetlist', () => {
       ['back', 9],
     ]);
     expect(supplies(hexapod())).toMatchObject({ 'supply:servo-cable-5264-3pin': 18 });
+  });
+
+  it('spreads four servos over three adapters so each carries a bus', () => {
+    const arm = servoJoints({ prefix: 'servo', componentId: 'feetech-sts3215', variant: 'c001', count: 4 });
+    const adapters = ['a', 'b', 'c'].map((id) => component(id, 'waveshare-bus-servo-adapter-a'));
+    const scene = sceneOf([...adapters, ...arm.parts], arm.joints);
+    const net = wiringNetlist(scene);
+
+    expect(net.buses.map((b) => [b.adapter, b.servos.length])).toEqual([
+      ['a', 1],
+      ['b', 2],
+      ['c', 1],
+    ]);
+    expect(engineeringText(runEngineering({ ...scene, measures: {}, servoOutputs: {} }), (v) => v)).toContain(
+      '; 1 5264 3-pin cable\n',
+    );
   });
 
   it('runs an XL330 arm on a U2D2 with JST EH cables', () => {

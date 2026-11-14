@@ -255,4 +255,18 @@ describe('mate', () => {
       { port: 'output', target: 'bracket', targetPort: 'bore', type: 'fastened', turns: 1 },
     ]);
   });
+
+  it("refuses a servo's cable socket", () => {
+    const bracket = plate('bracket', [30, 30, 3], [10, 20, 50]);
+    const servo = specToPart({ id: 'servo', catalog: 'component:feetech-sts3215|c001', position: [0, 0, 0] });
+    const plan = planMate([servo, bracket], {
+      part: 'servo',
+      port: 'bus-in',
+      target: 'bracket',
+      targetPort: 'face-1',
+      type: 'face',
+    });
+
+    expect(plan).toBe("bus-in is a connector; connectors don't mate.");
+  });
 });

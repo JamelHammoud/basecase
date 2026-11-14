@@ -44,7 +44,9 @@ function lookup(parts: ScenePart[], id: string, port: string) {
 
   if (!part) return `${id} not found.`;
 
-  return found ? { part, port: found } : `${id} has no port "${port}". get_ports lists its ports.`;
+  if (!found) return `${id} has no port "${port}". get_ports lists its ports.`;
+
+  return found.kind === 'connector' ? `${port} is a connector; connectors don't mate.` : { part, port: found };
 }
 
 function solve(part: ScenePart, args: MateArgs, target: WorldPort) {

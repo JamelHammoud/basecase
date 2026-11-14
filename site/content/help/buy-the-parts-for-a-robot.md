@@ -55,7 +55,7 @@ Basecase saves `<scene>-bom.csv` or `<scene>-bom.md` to your downloads, to order
 
 Some lines arrive on their own. A battery brings a switch, fuse, wire and charger. Filament comes from the printed parts, in grams, so it isn't in the **+** menu.
 
-Cables are counted from the wiring: one per hop of each servo bus, adapter first. An SO-101 with six STS3215s on a Waveshare adapter lists 6 **Bus Servo Cable**. DYNAMIXEL X servos get **ROBOTIS Robot Cable-X3P** instead. A pigtail comes with each battery plug and barrel jack on the power path, such as the XT60 on a LiPo.
+Cables are counted from the wiring: one per hop of each servo bus, adapter first. An SO-101 with six STS3215s on a Waveshare adapter lists 6 **Bus Servo Cable**. DYNAMIXEL X servos get **ROBOTIS Robot Cable-X3P** instead. Cables you add yourself count toward that number. A pigtail comes with each battery plug and barrel jack on the power path, such as the XT60 on a LiPo.
 
 A selected part's **Product** section in the Inspector has **Buy on Amazon** or **Find on Amazon**, **Datasheet** and **Product Page**. Basecase never places an order or reads store pages; you buy in the store.
 

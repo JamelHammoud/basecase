@@ -25,6 +25,7 @@ covers:
   - src/readiness/wording.ts
   - src/readiness/readiness.ts
   - src/utils/engineeringBudget.ts
+  - src/utils/engineeringFalls.ts
   - src/components/settings/BuildPane.tsx
 ---
 
@@ -61,6 +62,16 @@ The estimated total is over your budget. Lines marked ≈ count at their list pr
 3. Swap expensive parts, or raise the budget in the field beside the total.
 
 Budget turns amber above 90% of the budget and red over it. [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget) has the steps.
+
+## “This servo could strip its gears when the robot falls.”
+
+In a fall, this leg joint asks for more than 5 times its servo's rated torque, or more than the peak its datasheet gives. The item names the joint and the direction of its worst fall.
+
+1. Click **Replay in Sim** on the joint to watch that fall.
+2. Ask the agent for a stronger servo at that joint, or a lower stance.
+3. Ask the agent to verify the design with falls again.
+
+It worked when **Falls** in Checks has no red mark.
 
 ## You know a blocker is wrong
 

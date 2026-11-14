@@ -29,7 +29,10 @@ export interface CheckDot {
 }
 
 export type FindingFix =
-  { kind: 'print-face'; part: string; down: V3 } | { kind: 'calibrate'; joints: string[] } | { kind: 'new-case' };
+  | { kind: 'print-face'; part: string; down: V3 }
+  | { kind: 'calibrate'; joints: string[] }
+  | { kind: 'new-case' }
+  | { kind: 'replay-fall'; deg: number };
 
 export interface CheckRow {
   check: string;
@@ -57,6 +60,7 @@ export interface JointLoad {
   stallNm?: number;
   ratedNm?: number;
   ratedEstimated?: boolean;
+  peakNm?: number;
   volts?: number;
   noLoadRpm?: number;
   stallShare?: number;
@@ -108,6 +112,21 @@ export interface StoredWalk extends WalkSim {
   key: string;
 }
 
+export interface FallJoint {
+  p99Nm: number;
+  deg: number;
+}
+
+export interface FallSim {
+  directions: number;
+  tipped: number;
+  joints: Record<string, FallJoint>;
+}
+
+export interface StoredFalls extends FallSim {
+  key: string;
+}
+
 export interface EngineeringInputs {
   parts: ScenePart[];
   project: ProjectSettings;
@@ -117,6 +136,7 @@ export interface EngineeringInputs {
   supportG?: BomInput['supportG'];
   sweep?: (request: SweepRequest) => Array<{ a: string; b: string; depthMm: number; angle: number }>;
   walk?: WalkSim | string;
+  falls?: FallSim | string;
   servoTouches?: string[];
   payload?: (arm: ArmModel) => PayloadMap | null;
   chains?: ChainResult | null;

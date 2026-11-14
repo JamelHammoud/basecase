@@ -8,6 +8,8 @@ export interface StudioHook {
   load: (record: { parts: unknown[]; project: unknown }) => void;
   sceneRecord: () => { parts: ScenePart[]; project: ProjectSettings };
   simState: () => { activeCase: string | null };
+  selection: () => string[];
+  agentRequest: (kind: string, payload: object) => Promise<unknown>;
 }
 
 export const standIn = (id: string, x: number) => ({
@@ -45,10 +47,10 @@ export const armWithEstimates = () => {
   return { name: 'arm', parts: [...arm.parts, servo], project: { ...DEFAULT_PROJECT, joints } };
 };
 
-const studioLoad = (page: Page, record: { parts: unknown[]; project: unknown }) =>
+export const studioLoad = (page: Page, record: { parts: unknown[]; project: unknown }) =>
   page.evaluate((r) => (window as unknown as { __studio: StudioHook }).__studio.load(r), record);
 
-const sceneRecord = (page: Page) =>
+export const sceneRecord = (page: Page) =>
   page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.sceneRecord());
 
 export async function loadKnees(page: Page) {

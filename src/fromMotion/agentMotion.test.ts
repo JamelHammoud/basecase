@@ -4,6 +4,7 @@ import { portsOf, worldPort } from '../agent/ports';
 import type { ScenePart } from '../types/robotics';
 import type { RobotSkeleton } from '../types/skeleton';
 import { waveBvh } from '../utils/mocap.fixtures';
+import { servoShortfall } from '../utils/motionServos';
 import { planarArmBvh } from '../utils/motionSkeleton.fixtures';
 import { skeletonFromMotionRequest, type MotionPayload } from './agentMotion';
 import { fitBvh } from './motionFitOps';
@@ -62,6 +63,23 @@ describe('skeleton_from_motion', () => {
 
     expect(text).toMatch(/^No skeleton: Tip can’t follow the clip within/);
     expect(placed).toEqual([]);
+  });
+
+  it('lists the clip’s limbs when no name in limbs matches one', async () => {
+    const { text, placed } = await run({ text: waveBvh(), name: 'wave', height_mm: 300, limbs: ['Tail'] });
+
+    expect(text).toMatch(/^No skeleton: No limb in wave is named Tail\. Its limbs are .*Right hand/);
+    expect(placed).toEqual([]);
+  });
+
+  it('names the joints no servo carries, and says when no servo set fits', () => {
+    const servos = { keys: {}, names: {}, volts: 7.4, rail: '2S', servosUsd: 0, costUsd: 0, failing: [] };
+
+    expect(servoShortfall(servos)).toBeNull();
+    expect(servoShortfall({ ...servos, failing: ['Elbow', 'Wrist'] })).toBe(
+      'The strongest servo is still too slow or weak for Elbow, Wrist.',
+    );
+    expect(servoShortfall(null)).toMatch(/none were placed/);
   });
 
   it('asks for a height, a tolerance and a clip it can read', async () => {

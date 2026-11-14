@@ -175,14 +175,24 @@ function withMasses(payload: SkeletonPayload, actuators: Record<string, string> 
 const wanted = (limb: Limb, names?: string[]) =>
   !names?.length || names.some((n) => n.trim().toLowerCase() === limb.name.toLowerCase());
 
+function unmatchedLimbs(limbs: Limb[], req: MotionRequest): string | null {
+  if (!req.limbs?.length || limbs.some((l) => wanted(l, req.limbs))) return null;
+
+  return `No limb in ${req.mocap.name} is named ${req.limbs.join(', ')}. Its limbs are ${limbs.map((l) => l.name).join(', ')}.`;
+}
+
 function fitLimbs(
   f: Frame,
   turns: ReturnType<typeof frameOf>['turns'],
   req: MotionRequest,
-): { placed: Placed[] } | { limb: Limb } {
+): { placed: Placed[] } | { limb: Limb } | { problem: string } {
   const placed: Placed[] = [];
+  const limbs = limbsOf(f.clip.bones, f.clip.extent);
+  const unmatched = unmatchedLimbs(limbs, req);
 
-  for (const limb of limbsOf(f.clip.bones, f.clip.extent).filter((l) => wanted(l, req.limbs))) {
+  if (unmatched) return { problem: unmatched };
+
+  for (const limb of limbs.filter((l) => wanted(l, req.limbs))) {
     const track = limbTrack(f, limb);
     const nodes = limb.joints.map((n) => ({ node: n, origin: world(f, f.pos[n]), frame: f.rot[n], turns: turns[n] }));
     const fit = fitLimb(candidatesOf(nodes, track.rest, req.toleranceMm), track, {
@@ -205,6 +215,8 @@ export function fitMotion(req: MotionRequest): MotionSkeleton {
 
   const { frame, turns } = frameOf(clip, req.heightMm);
   const fitted = fitLimbs(frame, turns, req);
+
+  if ('problem' in fitted) return fitted;
 
   if ('limb' in fitted)
     return {

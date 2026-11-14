@@ -48,3 +48,11 @@ export function motionServos(skeleton: RobotSkeleton, rates: Map<string, JointRa
     failing: family.failures.map((p) => p.joint.name),
   };
 }
+
+export function servoShortfall(servos: MotionServos | null): string | null {
+  if (!servos) return 'No servo set fits these joints, so none were placed.';
+
+  if (!servos.failing.length) return null;
+
+  return `The strongest servo is still too slow or weak for ${servos.failing.join(', ')}.`;
+}

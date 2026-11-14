@@ -3,6 +3,7 @@ import { placeMotion } from '../fromMotion/motionBuild';
 import { fitMotionInWorker } from '../fromMotion/motionFitClient';
 import { errorMessage } from '../utils/errorMessage';
 import { readBvh, type Mocap } from '../utils/mocap';
+import { servoShortfall } from '../utils/motionServos';
 import { pickFiles } from '../utils/pickFiles';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
@@ -80,6 +81,10 @@ export function useMotionDesign(core: WorkspaceCore) {
     close();
     skeleton.setEditing(true);
     tool.setMode('pose');
+
+    const shortfall = servoShortfall(result.fit.servos);
+
+    if (shortfall) showToast(shortfall, { tone: 'error' });
   };
 
   return {

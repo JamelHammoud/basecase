@@ -1,5 +1,6 @@
 import { bvhText, motionName } from '../agent/agentRetarget';
 import { angle } from '../utils/angle';
+import { servoShortfall } from '../utils/motionServos';
 import { TOLERANCE_SHARE, type MotionFit, type MotionSkeleton } from '../utils/motionSkeleton';
 import { lengthLabel } from '../utils/size';
 import { plural } from '../../electron/plural.mjs';
@@ -43,18 +44,16 @@ function jointLines(fit: MotionFit): string {
 
 function servoLines(fit: MotionFit): string[] {
   const s = fit.servos;
+  const shortfall = servoShortfall(s);
 
-  if (!s) return ['No catalog servo set fits these joints; pick actuators with size_actuators.'];
+  if (!s) return [`${shortfall} Pick actuators with size_actuators.`];
 
   const picks = fit.joints.map((j) => `${j.id} ${s.names[j.id]}`).join('; ');
   const lines = [
     `Servos at ${s.volts} V from ${s.rail}, each picked for its joint's load at its peak speed: ${picks}. Servos ${usd(s.servosUsd)}, ${usd(s.costUsd)} with the battery, regulator and bus adapter.`,
   ];
 
-  if (s.failing.length)
-    lines.push(`No catalog servo carries ${s.failing.join(', ')} at its speed; each got the strongest one on the bus.`);
-
-  return lines;
+  return shortfall ? [...lines, shortfall] : lines;
 }
 
 function motionText(fit: MotionFit, name: string, heightMm: number, toleranceMm: number): string {

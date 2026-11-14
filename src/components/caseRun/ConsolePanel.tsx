@@ -21,6 +21,8 @@ interface ConsolePanelProps {
 const TITLED_GRIP = 48;
 const EDGE_GRIP = 12;
 
+const headed = (panel: PanelSpec) => !!panel.title && panel.kind !== 'button';
+
 export const ConsolePanel: React.FC<ConsolePanelProps> = ({ panel, ctx, arranging }) => {
   const View = PANEL_VIEWS[panel.kind] as React.FC<{ panel: PanelOf<PanelKind>; ctx: PanelContext }>;
 
@@ -41,7 +43,7 @@ export const ConsolePanel: React.FC<ConsolePanelProps> = ({ panel, ctx, arrangin
           data-testid="panel-grip"
           onPointerDown={arranging.onGrab}
           className="absolute top-0 inset-x-0 z-10 cursor-grab"
-          style={{ height: panel.title ? TITLED_GRIP : EDGE_GRIP }}
+          style={{ height: headed(panel) ? TITLED_GRIP : EDGE_GRIP }}
         />
       )}
       {arranging?.renaming && (

@@ -11,13 +11,14 @@ import {
   type PanelPlace,
 } from '../cases/console/consoleEdits';
 import type { CaseConsole } from '../cases/console/format';
+import type { ConsoleLayout } from '../cases/console/layout';
 import { panelLabel } from '../components/caseRun/panelChoices';
 import { confirmAction } from '../design-system/confirmStore';
 import type { ShowToast } from './types';
 import type { CaseRun } from './useCaseRun';
 
 interface EditingInput {
-  caseRun: Pick<CaseRun, 'live' | 'kase'>;
+  caseRun: Pick<CaseRun, 'live' | 'playback' | 'kase' | 'layout'>;
   docs: { commitConsole: (caseId: string, console: CaseConsole | undefined) => void };
   showToast: ShowToast;
 }
@@ -36,11 +37,22 @@ export interface ConsoleEditing {
   finishRename: (id: string, title: string | null) => void;
 }
 
+function placeInConsole(c: CaseConsole, layout: ConsoleLayout, to: PanelPlace): PanelPlace {
+  const area = 'area' in to ? c.layout.areas[to.area] : undefined;
+
+  if (!('area' in to) || !area || !('panels' in area)) return to;
+
+  const shown = [...layout.before, ...layout.after].find((a) => a.at === to.area)?.panels ?? [];
+  const before = shown[to.index]?.id;
+
+  return { area: to.area, index: before ? area.panels.indexOf(before) : area.panels.length };
+}
+
 export function useConsoleEditing({ caseRun, docs, showToast }: EditingInput): ConsoleEditing | null {
   const [adding, setAdding] = useState<{ area?: number } | null>(null);
   const [renaming, setRenaming] = useState<string | null>(null);
 
-  const kase = caseRun.live ? caseRun.kase : null;
+  const kase = caseRun.live && !caseRun.playback ? caseRun.kase : null;
 
   if (!kase) return null;
 
@@ -74,7 +86,7 @@ export function useConsoleEditing({ caseRun, docs, showToast }: EditingInput): C
     canvasAt: current.layout.areas.findIndex((a) => 'canvas' in a),
     adding,
     renaming,
-    move: (id, to) => apply((c) => movePanel(c, id, to)),
+    move: (id, to) => apply((c) => movePanel(c, id, placeInConsole(c, caseRun.layout, to))),
     resize: (area, size) => apply((c) => resizeArea(c, area, size)),
     startAdd: (area) => setAdding({ area }),
     add: (draft) => {

@@ -64,7 +64,7 @@ export function sceneModel({ sourceParts, single, sceneName, screenshot }: Scene
   return {
     id: modelId(),
     name: single ? single.name : sceneName,
-    description: single ? single.note || `Saved from scene (${single.kind})` : `Saved from ${sourceParts.length} parts`,
+    description: single?.note ?? '',
     createdAt: stamp(),
     sourceType: 'scene-selection',
     sourceImageDataUrl: single ? single.sourceImageDataUrl : screenshot(),

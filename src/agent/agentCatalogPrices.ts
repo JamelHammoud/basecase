@@ -4,6 +4,7 @@ import type { Purchases } from '../types/robotics';
 import { checkedPrice, onHandOf } from '../utils/onHand';
 import { holdVerdict, ratingAt, stanceVerdict } from '../utils/actuatorRules';
 import { currentMoney, formatMoney, formatWhole } from '../utils/currencyStore';
+import { angle } from '../utils/angle';
 
 export interface CatalogNeed {
   nm: number;
@@ -131,7 +132,7 @@ export function catalogHeader(ctx?: CatalogContext, listed: (key: string) => boo
 
   const needs = [
     ctx.stance &&
-      `${ctx.stance.nm.toFixed(2)} N·m in stance at ${ctx.stance.joint}${ctx.stance.crouchDeg ? ` (${Math.round(ctx.stance.crouchDeg)}° crouch)` : ''}`,
+      `${ctx.stance.nm.toFixed(2)} N·m in stance at ${ctx.stance.joint}${ctx.stance.crouchDeg ? ` (${angle(ctx.stance.crouchDeg)} crouch)` : ''}`,
     ctx.hold && `${ctx.hold.nm.toFixed(2)} N·m holding at ${ctx.hold.joint}`,
   ].filter(Boolean);
 

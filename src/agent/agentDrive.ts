@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { robotFacts } from '../cases/robotFit';
+import { angle } from '../utils/angle';
 import { readWorldObjects, worldItem, type WorldObject } from '../cases/schema';
 import { kitEntries } from '../skills/motorKit';
 import {
@@ -193,7 +194,7 @@ function driveReport({ ctx, run, cls, seconds }: ReportInput): string {
 
   if (r && cls !== 'arm') {
     lines.push(
-      `Moved ${(r.travelled * 1000).toFixed(0)} mm, ${(r.forward * 1000).toFixed(0)} mm of it forward; tilt ${r.tilt.toFixed(0)}°.`,
+      `Moved ${(r.travelled * 1000).toFixed(0)} mm, ${(r.forward * 1000).toFixed(0)} mm of it forward; tilt ${angle(r.tilt)}.`,
     );
     lines.push(r.fellAt === null ? 'Stayed up.' : `Fell at ${runClock(r.fellAt)}.`);
   }

@@ -1,5 +1,6 @@
 import { jointLabel, nm } from './engineeringFormat';
 import { plural } from '../../electron/plural.mjs';
+import { angle } from './angle';
 import type { CheckRow, JointLoad } from './engineeringTypes';
 
 const share = (v: number | undefined) => (v === undefined ? '?' : v.toFixed(2));
@@ -11,7 +12,7 @@ const isPublished = (l: JointLoad) => !l.joint.actuators?.length && !!l.joint.ef
 function stanceWords(l: JointLoad, legs: string): string {
   const crouch = l.crouchNm !== undefined && l.crouchNm >= l.stanceNm;
 
-  return crouch ? `${legs} at a ${Math.round(l.crouchDeg!)}° crouch` : `${legs} as modeled`;
+  return crouch ? `${legs} at a ${angle(l.crouchDeg!)} crouch` : `${legs} as modeled`;
 }
 
 const heatSource = (l: JointLoad) =>

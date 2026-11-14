@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { cameraShots, type CameraShot } from '../cameras/cameraShots';
 import type { FixedCamera } from '../cameras/fixed';
 import { robotFacts } from '../cases/robotFit';
+import { angle } from '../utils/angle';
 import { isCameraPart } from '../routines/capabilities';
 import { simDeltas } from '../sim/mjcfFrames';
 import type { DriveCommand } from '../sim/driveTypes';
@@ -83,9 +84,7 @@ function stateLine(ctx: OperateContext, poses: Float64Array | null): string {
   const lines: string[] = [];
 
   if (robot)
-    lines.push(
-      robot.fellAt !== null ? `Fell at ${runClock(robot.fellAt)}.` : `Upright, tilt ${robot.tilt.toFixed(0)}°.`,
-    );
+    lines.push(robot.fellAt !== null ? `Fell at ${runClock(robot.fellAt)}.` : `Upright, tilt ${angle(robot.tilt)}.`);
 
   const facts = robotFacts(ctx.rig, ctx.parts);
   const model = ctx.sim.model;

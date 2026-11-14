@@ -4,9 +4,9 @@ import type { V3 } from './engineeringMath';
 import type { RobotJoint } from '../types/robotics';
 import { wiringText } from '../wiring/wiringText';
 import { weight } from './weight';
+import { angle } from './angle';
 
 export const nm = (v: number) => v.toFixed(2);
-export const deg = (v: number) => `${Math.round(v) < 0 ? '−' : ''}${Math.abs(Math.round(v))}°`;
 export const jointLabel = (j: RobotJoint) => prettyJointName(j.name);
 export const partLabel = (ctx: CheckContext, id: string) =>
   `the ${(ctx.byPart.get(id)?.name ?? id).replace(/^\w/, (c) => c.toLowerCase())}`;
@@ -27,7 +27,7 @@ function jointLimits(l: EngineeringReport['joints'][number]): string {
 
 function jointTextLine(l: EngineeringReport['joints'][number], toAgent: (v: V3) => V3): string {
   const o = toAgent(l.joint.origin).map((v) => Math.round(v));
-  const crouch = l.crouchNm === undefined ? '' : `, ${l.crouchDeg?.toFixed(0)}° crouch ${nm(l.crouchNm)}`;
+  const crouch = l.crouchNm === undefined ? '' : `, ${angle(l.crouchDeg!)} crouch ${nm(l.crouchNm)}`;
   const load = l.kind === 'stance' ? `stance load ${nm(l.loadNm)}` : `holding load ${nm(l.loadNm)}`;
 
   return (

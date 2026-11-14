@@ -1,6 +1,7 @@
 import React from 'react';
 import { TracePlot, type Trace } from '../../design-system';
 import type { TimelineLane as Lane } from '../../cases/timelineLanes';
+import { angleReading } from '../../utils/angle';
 
 interface TimelineLaneProps {
   lane: Lane;
@@ -13,7 +14,9 @@ interface TimelineLaneProps {
 
 const PLOT = 28;
 
-const reading = (v: number, digits: number, unit: string) => (Number.isFinite(v) ? `${v.toFixed(digits)}${unit}` : '');
+const reading = (v: number, format: (v: number) => string) => (Number.isFinite(v) ? format(v) : '');
+const millimeters = (v: number) => `${v.toFixed(1)} mm`;
+const torque = (v: number) => `${v.toFixed(2)} N·m`;
 
 export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, markers, onSeek, onSelect }) => {
   const motion: Trace[] = [
@@ -21,7 +24,7 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, m
     { id: 'position', values: lane.position, tone: 'accent' },
   ];
   const effort: Trace[] = [{ id: 'effort', values: lane.effort, tone: 'primary' }];
-  const unit = lane.unit === 'mm' ? ' mm' : '°';
+  const position = lane.unit === 'mm' ? millimeters : angleReading;
 
   return (
     <div
@@ -32,8 +35,8 @@ export const TimelineLane: React.FC<TimelineLaneProps> = ({ lane, name, frame, m
     >
       <div className="w-[112px] shrink-0 flex flex-col gap-0.5 min-w-0">
         <span className="text-[13px] text-white/85 truncate">{name}</span>
-        <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.position[frame], 1, unit)}</span>
-        <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.effort[frame], 2, ' N·m')}</span>
+        <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.position[frame], position)}</span>
+        <span className="text-[12px] text-white/50 tabular truncate">{reading(lane.effort[frame], torque)}</span>
       </div>
       <div className="flex-1 min-w-0 flex flex-col gap-1">
         <TracePlot traces={motion} height={PLOT} playhead={frame} markers={markers} onSeek={onSeek} />

@@ -2,6 +2,7 @@ import type { ScenePart } from '../types/robotics';
 import type { RobotBody } from './engineeringBody';
 import { convexHull, lineDistance, norm, polygonMargin, type V3 } from './engineeringMath';
 import type { CheckContext, CheckRow, Stability } from './engineeringTypes';
+import { angle } from './angle';
 
 function stabilityStatus({ marginMm, tipDeg, onALine }: Stability): CheckRow['status'] {
   if (onALine) return 'warn';
@@ -88,7 +89,7 @@ function stabilityDetail({ marginMm, heightMm, tipDeg, onALine }: Stability): st
 
   return marginMm <= 0
     ? `Center of mass is ${Math.abs(Math.round(marginMm))} mm outside the feet: it falls over`
-    : `Center of mass ${Math.round(marginMm)} mm inside the outline of the feet, ${Math.round(heightMm)} mm up: tips past ${tipDeg.toFixed(1)}°`;
+    : `Center of mass ${Math.round(marginMm)} mm inside the outline of the feet, ${Math.round(heightMm)} mm up: tips past ${angle(tipDeg)}`;
 }
 
 function stabilityRow(s: Stability): CheckRow {

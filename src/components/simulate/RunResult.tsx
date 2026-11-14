@@ -5,6 +5,7 @@ import type { Simulation } from '../../sim/useSimulation';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
 import { FAULT_LABEL, faultSubmenu } from './faultMenu';
 import { runClock } from '../../utils/duration';
+import { angle } from '../../utils/angle';
 import { pct } from './format';
 
 type SimStats = NonNullable<Simulation['stats']>;
@@ -28,7 +29,7 @@ const RobotResult: React.FC<{ result: SimStats['robots'][number]; model: SimMode
       </div>
       <MetaLine
         className="text-[12px] text-white/50 tabular"
-        items={[`Tilt ${Math.round(r.tilt)}°`, `Moved ${(r.travelled * 100).toFixed(0)} cm`]}
+        items={[`Tilt ${angle(r.tilt)}`, `Moved ${(r.travelled * 100).toFixed(0)} cm`]}
       />
     </div>
   );

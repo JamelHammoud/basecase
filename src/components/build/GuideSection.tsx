@@ -1,5 +1,14 @@
 import React from 'react';
-import { Button, FolderOpenIcon, IconButton, ProgressBar, Section, settleTilt, tiltToward } from '../../design-system';
+import {
+  Button,
+  FolderOpenIcon,
+  IconButton,
+  ProgressBar,
+  Section,
+  settleTilt,
+  tiltToward,
+  Tooltip,
+} from '../../design-system';
 import type { GuidePages } from '../../guide/viewer/guidePages';
 import type { BuildGuideRecord } from '../../types/robotics';
 import { platformBridge } from '../../utils/platformBridge';
@@ -26,6 +35,7 @@ function timeLeft(seconds: number | undefined): string {
 }
 
 const THUMB_W_PX = 64;
+const OPEN_GUIDE = 'Open Build Guide';
 
 interface CoverThumbProps {
   cover?: string;
@@ -35,11 +45,12 @@ interface CoverThumbProps {
 }
 
 const CoverThumb: React.FC<CoverThumbProps> = ({ cover, page, sceneName, onOpen }) => (
+  <Tooltip label={OPEN_GUIDE} disabled={!onOpen} className="shrink-0">
   <button
     type="button"
     onClick={onOpen}
     disabled={!onOpen}
-    aria-label="Open Build Guide"
+    aria-label={OPEN_GUIDE}
     data-guide-cover
     onPointerMove={tiltToward}
     onPointerLeave={(e) => settleTilt(e.currentTarget)}
@@ -59,6 +70,7 @@ const CoverThumb: React.FC<CoverThumbProps> = ({ cover, page, sceneName, onOpen 
     )}
     {page && <GuideCoverPage guide={page} widthPx={THUMB_W_PX} heroSrc={cover} />}
   </button>
+  </Tooltip>
 );
 
 const Progress: React.FC<{ progress: GuideRunProgress; onStop: () => void }> = ({ progress, onStop }) => (
@@ -85,16 +97,13 @@ const Made: React.FC<{ guide: BuildGuide; record: BuildGuideRecord }> = ({ guide
       <div className={`text-[12.5px] mt-0.5 ${guide.stale ? 'text-amber-400' : 'text-white/50'}`}>
         {guide.stale ? 'Out of date' : `Made ${agoPhrase(record.generatedAt)}`}
       </div>
-      <div className="flex gap-2 mt-2.5">
-        <Button size="sm" variant={guide.stale ? 'secondary' : 'primary'} onClick={() => void guide.open()}>
-          Open
-        </Button>
-        {guide.stale && (
+      {guide.stale && (
+        <div className="flex gap-2 mt-2.5">
           <Button size="sm" variant="primary" onClick={() => void guide.generate()}>
             Update
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 };

@@ -1,27 +1,13 @@
 import { plural } from '../../../electron/plural.mjs';
-import { DataImportError, IMPORT_LIMITS } from './types';
+import { IMPORT_LIMITS } from './types';
 
-export const MCAP_DAMAGED = 'This MCAP file is damaged.';
-export const MCAP_TOO_MANY_JOINTS = `This MCAP file has more than ${plural(IMPORT_LIMITS.joints, 'joint')}.`;
+export const MCAP_DAMAGED = 'This recording is damaged.';
+export const MCAP_TOO_MANY_JOINTS = `This recording has more than ${plural(IMPORT_LIMITS.joints, 'joint')}.`;
 
 const ENCAPSULATION_BYTES = 4;
 const CDR_BIG_ENDIAN = 0;
 const CDR_LITTLE_ENDIAN = 1;
-const NAME_CHARS = 256;
-const FRAME_ID_CHARS = 1024;
 const NS_PER_SECOND = 1_000_000_000;
-
-export interface RosStamp {
-  stamp: number;
-  stampNs: bigint;
-}
-
-export interface JointStateMessage extends RosStamp {
-  name: string[];
-  position: Float64Array;
-  velocity: Float64Array;
-  effort: Float64Array;
-}
 
 export interface JointStateInput {
   stamp: number;
@@ -37,110 +23,6 @@ export interface CompressedImageInput {
   stamp: number;
   format: string;
   data: Uint8Array;
-}
-
-const damaged = () => new DataImportError(MCAP_DAMAGED);
-
-class CdrReader {
-  readonly #view: DataView;
-  readonly #little: boolean;
-  readonly #text = new TextDecoder();
-  #offset = ENCAPSULATION_BYTES;
-
-  constructor(bytes: Uint8Array) {
-    const known = bytes[1] === CDR_BIG_ENDIAN || bytes[1] === CDR_LITTLE_ENDIAN;
-
-    if (bytes.byteLength < ENCAPSULATION_BYTES || bytes[0] !== 0 || !known) throw damaged();
-
-    this.#view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    this.#little = bytes[1] === CDR_LITTLE_ENDIAN;
-  }
-
-  get #remaining() {
-    return this.#view.byteLength - this.#offset;
-  }
-
-  #take(size: number, align: number): number {
-    const body = this.#offset - ENCAPSULATION_BYTES;
-    const start = ENCAPSULATION_BYTES + Math.ceil(body / align) * align;
-
-    if (start + size > this.#view.byteLength) throw damaged();
-
-    this.#offset = start + size;
-
-    return start;
-  }
-
-  int32() {
-    return this.#view.getInt32(this.#take(4, 4), this.#little);
-  }
-
-  uint32() {
-    return this.#view.getUint32(this.#take(4, 4), this.#little);
-  }
-
-  count(cap: number, itemBytes: number) {
-    const size = this.uint32();
-
-    if (size > cap) throw new DataImportError(MCAP_TOO_MANY_JOINTS);
-
-    if (size * itemBytes > this.#remaining) throw damaged();
-
-    return size;
-  }
-
-  string(maxChars: number) {
-    const length = this.uint32();
-
-    if (length > maxChars + 1) throw damaged();
-
-    const start = this.#take(length, 1);
-    const bytes = new Uint8Array(this.#view.buffer, this.#view.byteOffset + start, length);
-    const end = length > 0 && bytes[length - 1] === 0 ? length - 1 : length;
-
-    return this.#text.decode(bytes.subarray(0, end));
-  }
-
-  float64s() {
-    const size = this.count(IMPORT_LIMITS.joints, 8);
-    const values = new Float64Array(size);
-
-    if (size === 0) return values;
-
-    const start = this.#take(size * 8, 8);
-
-    for (let i = 0; i < size; i++) values[i] = this.#view.getFloat64(start + i * 8, this.#little);
-
-    return values;
-  }
-}
-
-function readStamp(reader: CdrReader): RosStamp {
-  const sec = reader.int32();
-  const nanosec = reader.uint32();
-
-  if (nanosec >= NS_PER_SECOND) throw damaged();
-
-  reader.string(FRAME_ID_CHARS);
-
-  return { stamp: sec + nanosec / NS_PER_SECOND, stampNs: BigInt(sec) * BigInt(NS_PER_SECOND) + BigInt(nanosec) };
-}
-
-export function decodeImageStamp(bytes: Uint8Array): RosStamp {
-  return readStamp(new CdrReader(bytes));
-}
-
-export function decodeJointState(bytes: Uint8Array): JointStateMessage {
-  const reader = new CdrReader(bytes);
-  const stamp = readStamp(reader);
-  const name = Array.from({ length: reader.count(IMPORT_LIMITS.joints, 4) }, () => reader.string(NAME_CHARS));
-  const position = reader.float64s();
-  const velocity = reader.float64s();
-  const effort = reader.float64s();
-
-  if (position.length > 0 && position.length !== name.length) throw damaged();
-
-  return { ...stamp, name, position, velocity, effort };
 }
 
 class CdrWriter {

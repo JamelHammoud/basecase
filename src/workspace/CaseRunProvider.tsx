@@ -159,7 +159,14 @@ function Adding({ value }: { value: CenterValue }) {
 
   if (!editing?.adding) return null;
 
-  return <AddPanelPicker editing={editing} names={busNames(ctx.bus, ctx.inputs)} scope={ctx.scope} />;
+  return (
+    <AddPanelPicker
+      editing={editing}
+      names={busNames(ctx.bus, ctx.inputs)}
+      scope={ctx.scope}
+      topics={ctx.bus.topics?.() ?? null}
+    />
+  );
 }
 
 export function CaseRunAreas({ side }: { side: 'before' | 'after' }) {

@@ -1,7 +1,9 @@
+import { loadSession } from '../cases/tryStore';
 import type { ElectronApi } from '../utils/platform/types';
 import type { RobotConnection } from './jointRows';
+import { readOperateLog } from './operateLog';
 import type { RobotPolicyRef } from './robotPolicy';
-import { RunBuffer, statusPositions, type RobotRun } from './runBuffer';
+import { runOf, type RobotRun, type RunFault } from './runBuffer';
 import {
   applyRobotEvent,
   INITIAL_ROBOT,
@@ -11,6 +13,7 @@ import {
   type RobotLinkState,
   type RobotMode,
   type RobotMount,
+  type RobotSample,
   type RobotState,
 } from './robotState';
 
@@ -45,14 +48,21 @@ function setSceneJoints(joints: string[] | null) {
 
 export type RobotLinkApi = Pick<
   ElectronApi,
-  'robotConnect' | 'robotCommand' | 'robotDisconnect' | 'robotState' | 'onRobotEvent' | 'robotPolicy' | 'robotCalibrate'
+  | 'robotConnect'
+  | 'robotCommand'
+  | 'robotDisconnect'
+  | 'robotState'
+  | 'onRobotEvent'
+  | 'robotPolicy'
+  | 'robotCalibrate'
+  | 'robotRecord'
 >;
 
 let api: RobotLinkApi | null = null;
 let policies: RobotPolicyRef[] | undefined;
 let benchDriving = false;
 let faultHeld = false;
-const run = new RunBuffer();
+let pendingFault: (RunFault & { messageId: number }) | null = null;
 const runs = new Map<number, RobotRun>();
 const listeners = new Set<() => void>();
 const eventListeners = new Set<(event: RobotEvent) => void>();
@@ -96,32 +106,50 @@ function servoJoint(next: RobotState, id: unknown): string | null {
   return k >= 0 ? (sceneJoints?.[k] ?? null) : null;
 }
 
-function keepFaultRun(next: RobotState, event: RobotEvent) {
+function noteFault(next: RobotState, event: RobotEvent) {
   const message = next.messages[0];
 
   if (event.event !== 'fault' || !message || message === state.messages[0]) return;
 
   faultHeld = true;
-  runs.set(message.id, {
-    ...run.kept(),
+  pendingFault = {
+    messageId: message.id,
     joints: [...(sceneJoints ?? [])],
     faultJoint: servoJoint(next, event.id),
     faultAt: Date.now(),
     message: message.text,
-  });
+  };
 
   for (const id of runs.keys()) if (!next.messages.some((m) => m.id === id)) runs.delete(id);
+}
+
+async function readFaultRun(id: string, fault: RunFault & { messageId: number }) {
+  const text = await loadSession(id).catch(() => null);
+
+  if (!text || !state.messages.some((m) => m.id === fault.messageId)) return;
+
+  const { messageId, ...run } = fault;
+
+  runs.set(messageId, runOf(readOperateLog(text), run));
+  set({ ...state });
+}
+
+function noteRecorded(event: RobotEvent) {
+  const manifest = event.manifest as { id?: unknown } | null;
+  const fault = pendingFault;
+
+  if (event.event !== 'recorded' || event.reason !== 'fault') return;
+
+  pendingFault = null;
+
+  if (fault && typeof manifest?.id === 'string') void readFaultRun(manifest.id, fault);
 }
 
 function noteRun(next: RobotState, event: RobotEvent) {
   if (event.event === 'link' || event.event === 'mode') faultHeld = false;
 
-  if (event.event === 'link' && event.state === 'connected') run.clear();
-
-  if (event.event === 'status' && next.status && next.spec)
-    run.status(performance.now(), statusPositions(next.status, next.spec.ids, next.calibration));
-
-  keepFaultRun(next, event);
+  noteFault(next, event);
+  noteRecorded(event);
 }
 
 export function subscribeRobot(listener: () => void) {
@@ -193,17 +221,11 @@ export function setRobotPolicy(refs: RobotPolicyRef[]) {
 
 export const disconnectRobot = async () => (await api?.robotDisconnect?.()) ?? unavailable;
 
-export async function sendRobotCommand(command: Record<string, unknown>): Promise<ConnectReply> {
-  const sentAt = performance.now();
-  const reply = (await api?.robotCommand?.(command)) ?? unavailable;
+export const sendRobotCommand = async (command: Record<string, unknown>): Promise<ConnectReply> =>
+  (await api?.robotCommand?.(command)) ?? unavailable;
 
-  if (reply.ok && command.cmd === 'intent' && Array.isArray(command.joints) && state.status?.run === 'running')
-    run.intent(
-      sentAt,
-      command.joints.map((v) => (typeof v === 'number' ? v : NaN)),
-    );
-
-  return reply;
+export function recordRobotSample(sample: RobotSample) {
+  if (state.link === 'connected') void api?.robotRecord?.(sample);
 }
 
 export const robotLinkState = async () => (await api?.robotState?.()) ?? null;

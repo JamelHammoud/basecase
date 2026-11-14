@@ -7,6 +7,7 @@ import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { CaseFacts } from '../cases/caseFacts';
 import type { Scan } from './scanner';
+import type { SimPhysics } from './livePhysics';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
 import { useRecordingLink } from './useRecordingLink';
@@ -17,12 +18,14 @@ interface LatestFrame {
   stats: SimStats | null;
   facts: CaseFacts | null;
   scan: Scan | null;
+  physics: SimPhysics | null;
 }
 
 function noteFrame(latest: LatestFrame, msg: Extract<SimResponse, { type: 'frame' }>) {
   latest.stats = msg.stats;
   latest.facts = msg.facts ?? null;
   latest.scan = msg.scan ?? latest.scan;
+  latest.physics = msg.physics ?? null;
 }
 
 const NO_LOOKS: WorldLooks = {};
@@ -45,7 +48,7 @@ export function useSimWorker(
   const [error, setError] = useState<string | null>(null);
   const [worldLooks, setWorldLooks] = useState<WorldLooks>({});
   const [watched, setWatched] = useState<{ id: number; margin: number } | null>(null);
-  const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null });
+  const ui = useRef<LatestFrame>({ at: 0, stats: null, facts: null, scan: null, physics: null });
   const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
@@ -160,6 +163,7 @@ export function useSimWorker(
     latestStats: () => (status === 'off' ? null : ui.current.stats),
     latestFacts: () => (status === 'off' ? null : ui.current.facts),
     latestScan: () => (status === 'off' ? null : ui.current.scan),
+    latestPhysics: () => (status === 'off' ? null : ui.current.physics),
     worldLooks: status === 'off' ? NO_LOOKS : worldLooks,
     setStats,
     error,

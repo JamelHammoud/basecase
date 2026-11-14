@@ -73,7 +73,7 @@ A toast that appears as soon as you drop a file means Basecase doesn't read that
 1. Make sure the file name ends in one of the extensions listed above.
 2. If it's a STEP or IGES file, open the scene in the desktop app instead.
 
-Basecase brings in a `.mcap` file, or a zip that holds a LeRobot dataset, as tries rather than parts. If one of these doesn't import, the toast tells you what's wrong with it. See [Import robot data as tries](/help/import-robot-data-as-tries).
+Basecase brings in a `.mcap` or `.bag` file, or a zip that holds a LeRobot dataset, as tries rather than parts. If one of these doesn't import, the toast tells you what's wrong with it. See [Import robot data as tries](/help/import-robot-data-as-tries).
 
 ## How to tell it worked
 

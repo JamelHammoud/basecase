@@ -33,13 +33,19 @@ export async function importedTryId(
   const head = new TextEncoder().encode(
     JSON.stringify([target.sceneId, target.modelHash, data.names, episode.task, episode.t.length]),
   );
-  const parts = [head, new Uint8Array(episode.t.buffer, episode.t.byteOffset, episode.t.byteLength)];
-  const state = new Uint8Array(episode.state.buffer, episode.state.byteOffset, episode.state.byteLength);
-  const whole = new Uint8Array(parts[0].length + parts[1].length + state.length);
+  const parts = [
+    head,
+    new Uint8Array(episode.t.buffer, episode.t.byteOffset, episode.t.byteLength),
+    new Uint8Array(episode.state.buffer, episode.state.byteOffset, episode.state.byteLength),
+    episode.topics ?? new Uint8Array(),
+  ];
+  const whole = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
 
-  whole.set(parts[0]);
-  whole.set(parts[1], parts[0].length);
-  whole.set(state, parts[0].length + parts[1].length);
+  parts.reduce((at, p) => {
+    whole.set(p, at);
+
+    return at + p.length;
+  }, 0);
 
   return `import-${hex(await crypto.subtle.digest('SHA-256', whole)).slice(0, 32)}`;
 }
@@ -82,6 +88,22 @@ function storedImport({ id, model, target, episode }: StoredInput, replayed: Ret
   return stored;
 }
 
+export interface ReplayJob {
+  model: SimModel;
+  episode: SourceEpisode;
+  plan: ReplayPlan;
+}
+
+export function replayedRecording(mj: MainModule, { model, episode, plan }: ReplayJob): Recording {
+  const engine = new SimEngine(mj, model);
+
+  try {
+    return kinematicRecording(engine, episode, plan).recording;
+  } finally {
+    engine.dispose();
+  }
+}
+
 export interface BuildInput {
   model: SimModel;
   data: SourceData;
@@ -106,7 +128,9 @@ export async function importedTries(mj: MainModule, { model, data, plan, target 
 
       const id = await importedTryId(target, data, episode);
 
-      kept.push({ stored: storedImport({ id, model, target, episode }, replayed), recording: replayed.recording });
+      const recording = episode.topics ? { ...replayed.recording, topics: episode.topics } : replayed.recording;
+
+      kept.push({ stored: storedImport({ id, model, target, episode }, replayed), recording });
     }
   } finally {
     engine.dispose();

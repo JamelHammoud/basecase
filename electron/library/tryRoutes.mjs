@@ -6,9 +6,16 @@ const asBase64 = (bytes) => ({ data: bytes ? Buffer.from(bytes).toString('base64
 
 export const TRY_CALLS = {
   'tries:list': (store) => store.list(),
-  'tries:save': (store, payload) => store.save({ manifest: payload?.manifest, recording: fromBase64(payload?.recording) }),
+  'tries:save': (store, payload) =>
+    store.save({
+      manifest: payload?.manifest,
+      recording: fromBase64(payload?.recording),
+      session: fromBase64(payload?.session),
+    }),
   'tries:update': (store, payload) => store.update({ manifest: payload?.manifest }),
   'tries:recording': (store, id) => store.recording(id),
+  'tries:session': (store, id) => store.session(id),
+  'tries:keep-video': (store, payload) => store.saveVideo({ id: payload?.id, bytes: fromBase64(payload?.bytes) }),
   'tries:strip': (store, id) => store.strip(id),
   'tries:keep-strip': (store, payload) => store.saveStrip({ id: payload?.id, bytes: fromBase64(payload?.bytes) }),
   'tries:delete': (store, ids) => store.delete(ids),
@@ -17,7 +24,12 @@ export const TRY_CALLS = {
   'tries:keep-index': (store, payload) => store.saveIndex(fromBase64(payload?.bytes)),
 };
 
-const OVER_HTTP = { 'tries:recording': asBase64, 'tries:strip': asBase64, 'tries:index': asBase64 };
+const OVER_HTTP = {
+  'tries:recording': asBase64,
+  'tries:strip': asBase64,
+  'tries:session': asBase64,
+  'tries:index': asBase64,
+};
 
 export const registerTryHandlers = (ipcMain, store) => registerCalls(ipcMain, TRY_CALLS, store);
 

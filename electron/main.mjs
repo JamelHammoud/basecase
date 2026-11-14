@@ -23,6 +23,7 @@ import { registerGuideHandlers } from './guidePdf.mjs';
 import { installPermissions } from './permissions.mjs';
 import { registerHubHandlers } from './hub/routes.mjs';
 import { registerTryHandlers } from './library/tryRoutes.mjs';
+import { sessionSink } from './library/tryStore.mjs';
 import { registerDatasetHandlers } from './library/datasetRoutes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
 import { registerEarthHandlers } from './earth/routes.mjs';
@@ -267,6 +268,7 @@ const robot = new RobotLink({
   binary: robotBinary,
   emit: sendTo('robot:event'),
   policyBytes: robotPolicyBytes({ libraryDir: backend.libraryDir, trainer: backend.trainer }),
+  tries: sessionSink(backend.tries),
 });
 
 registerRobotHandlers(ipcMain, robot);

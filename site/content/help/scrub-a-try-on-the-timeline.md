@@ -27,9 +27,9 @@ covers:
 You can step through a Case try one frame at a time. For each joint, you can see what it was asked to do, where it went, and how hard its servo worked.
 
 1. Open a Case, then record a try with **Try It** in the Simulate tab.
-2. In Results, click **Replay** on the try's row.
+2. In Results, click the try's row.
 
-![A try in Results with its play button](/help/scrub-a-try-on-the-timeline/results.png)
+![A try's row in Results](/help/scrub-a-try-on-the-timeline/results.png)
 
 3. The Case's console fills the window, and its cards show the try at the playhead. The timeline opens below the canvas, with a lane for each joint. Each lane has two plots:
    - The top plot shows the joint's position in blue over its target in gray.

@@ -21,7 +21,8 @@ import { isIdle, sameCommand, type DriveClass } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { Controller, SimStats } from './engine';
 import { onInputEvent } from './inputEvents';
-import { closeInputs, openInputs, posesInputs, readInputs, STUDIO_INPUTS } from './inputSources';
+import { feedInput } from '../robot/operateFeed';
+import { closeInputs, drivingInput, openInputs, posesInputs, readInputs, STUDIO_INPUTS } from './inputSources';
 import { inputRobot, pinFor } from './driveSession';
 import type { SimModel } from './mjcfTypes';
 import type { SimRequest } from './sim.worker';
@@ -159,10 +160,12 @@ function useDriveCommand(send: DriveInputs['send'], session: React.RefObject<rea
       if (!current) return;
 
       const moment = { cls: current, keys: keysCommand.current, ...(frame ? { time: frame.time } : {}) };
-      const read = readInputs(session.current ?? inputIds.current, moment);
+      const ids = session.current ?? inputIds.current;
+      const read = readInputs(ids, moment);
       const merged = steered(autopilot, read.command, frame);
 
       readings.current = read.readings;
+      feedInput(() => drivingInput(ids, read.readings));
 
       if (!merged || sameCommand(merged, sent.current)) return;
 

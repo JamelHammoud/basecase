@@ -1,4 +1,5 @@
 import { BUILTIN_GESTURES } from '../../cameras/gestures/builtinGestures';
+import { hasWildcard, isTopicSignal } from '../../topics/topicIndex';
 import { refuse, type Reader } from '../validate';
 
 const BUILTIN: ReadonlySet<string> = new Set(BUILTIN_GESTURES);
@@ -7,13 +8,13 @@ export const JOINT_FIELDS = ['target', 'position', 'effort'] as const;
 export const ROBOT_FIELDS = ['height', 'tilt', 'speed', 'travelled', 'x', 'z'] as const;
 export const INPUT_AXES = ['forward', 'left', 'turn', 'lift', 'grip'] as const;
 export const GOAL_FIELDS = ['passed', 'margin', 'failed'] as const;
-export const NAMESPACES = ['time', 'joint', 'robot', 'probe', 'input', 'goal', 'camera', 'gesture'] as const;
+export const NAMESPACES = ['time', 'joint', 'robot', 'probe', 'input', 'goal', 'camera', 'gesture', 'topic'] as const;
 export const OPERATOR_INPUTS = ['camera', 'hand', 'face'];
 
 export type JointField = (typeof JOINT_FIELDS)[number];
 export type RobotField = (typeof ROBOT_FIELDS)[number];
 export type InputAxis = (typeof INPUT_AXES)[number];
-export type SignalShape = 'number' | 'labels' | 'camera';
+export type SignalShape = 'number' | 'labels' | 'camera' | 'topic';
 
 export interface SignalScope {
   declared: ReadonlySet<string>;
@@ -21,6 +22,13 @@ export interface SignalScope {
   inputs: ReadonlySet<string>;
   gestures?: ReadonlySet<string>;
 }
+
+const SIGNAL_NAME = /^[\w.*-]{1,120}$/u;
+const TOPIC_SIGNAL_NAME = /^topic\.[\w./~[\]:*-]{1,234}$/u;
+const TOPIC_NAME = /^topic\.[\w./~-]{1,234}$/u;
+const TOPIC_REFUSAL = 'must be topic.<name>';
+const SHAPES: readonly string[] = ['number', 'labels', 'camera', 'topic'];
+const TOPIC_TAKERS: readonly SignalShape[] = ['number', 'labels', 'topic'];
 
 type Shaper = (parts: string[], scope: SignalScope) => SignalShape | string;
 
@@ -52,6 +60,7 @@ const SHAPERS: Record<string, Shaper> = {
 
     return key ? 'camera' : 'must be camera.<name or *>';
   },
+  topic: ([name]) => (name ? 'topic' : TOPIC_REFUSAL),
 };
 
 export function signalShape(id: string, scope: SignalScope): SignalShape | string {
@@ -65,19 +74,27 @@ export function signalShape(id: string, scope: SignalScope): SignalShape | strin
   return shaper(rest, scope);
 }
 
+const wellNamed = (value: string) => (isTopicSignal(value) ? TOPIC_SIGNAL_NAME : SIGNAL_NAME).test(value);
+
+const shapeFits = (shape: SignalShape, shapes: readonly SignalShape[]) =>
+  shape === 'topic' ? shapes.some((s) => TOPIC_TAKERS.includes(s)) : shapes.includes(shape);
+
 export const signalRef =
   (scope: SignalScope, shapes: readonly SignalShape[], many = false): Reader<string> =>
   (value, where) => {
-    if (typeof value !== 'string' || !/^[\w.*-]{1,120}$/.test(value)) return refuse(where, 'must be a signal name');
+    if (typeof value !== 'string' || !wellNamed(value)) return refuse(where, 'must be a signal name');
 
     const shape = signalShape(value, scope);
 
-    if (!['number', 'labels', 'camera'].includes(shape)) return refuse(where, `${value} ${shape}`);
+    if (!SHAPES.includes(shape)) return refuse(where, `${value} ${shape}`);
 
-    const fits = shapes.includes(shape as SignalShape) && (many || !value.includes('*'));
+    const fits = shapeFits(shape as SignalShape, shapes) && (many || !hasWildcard(value));
 
     return fits ? value : refuse(where, `${value} can’t be shown here`);
   };
+
+export const readTopicRef: Reader<string> = (value, where) =>
+  typeof value === 'string' && TOPIC_NAME.test(value) ? value : refuse(where, TOPIC_REFUSAL);
 
 export const matches = (pattern: string, id: string) => {
   if (!pattern.includes('*')) return pattern === id;

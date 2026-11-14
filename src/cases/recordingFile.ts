@@ -6,9 +6,9 @@ const PREAMBLE = 12;
 const MAX_HEADER = 16 * 1024 * 1024;
 const MAX_FRAMES = 3_600_000;
 
-type ArrayKind = 'f32' | 'f64' | 'i32';
+type ArrayKind = 'f32' | 'f64' | 'i32' | 'u8';
 
-type Typed = Float32Array | Float64Array | Int32Array;
+type Typed = Float32Array | Float64Array | Int32Array | Uint8Array;
 
 const ARRAYS = {
   t: 'f32',
@@ -20,6 +20,7 @@ const ARRAYS = {
   jointQpos: 'i32',
   jointDof: 'i32',
   scan: 'f32',
+  topics: 'u8',
 } as const satisfies Record<string, ArrayKind>;
 
 type ArrayKey = keyof typeof ARRAYS;
@@ -30,9 +31,10 @@ const MAKERS: Record<ArrayKind, (buffer: ArrayBuffer) => Typed> = {
   f32: (b) => new Float32Array(b),
   f64: (b) => new Float64Array(b),
   i32: (b) => new Int32Array(b),
+  u8: (b) => new Uint8Array(b),
 };
 
-const SIZE: Record<ArrayKind, number> = { f32: 4, f64: 8, i32: 4 };
+const SIZE: Record<ArrayKind, number> = { f32: 4, f64: 8, i32: 4, u8: 1 };
 
 const TYPED_TAG = '$typed';
 

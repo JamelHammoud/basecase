@@ -19,7 +19,7 @@ const EXPECTED: Record<ImportKind, string[]> = {
   motion: ['bvh'],
   scene: ['basecase'],
   image: ['png', 'jpg', 'jpeg', 'webp', 'gif'],
-  data: ['mcap'],
+  data: ['mcap', 'bag'],
 };
 
 const cases = Object.entries(EXPECTED).flatMap(([kind, exts]) => exts.map((ext) => [ext, kind] as const));
@@ -45,7 +45,7 @@ describe('import route', () => {
   });
 
   it('sorts a mixed pick into its flows, keeping unknown files for the error toast', () => {
-    const names = ['a.stl', 'b.svg', 'c.urdf', 'd.bvh', 'e.basecase', 'f.png', 'g.step', 'h.txt', 'i.mcap'];
+    const names = ['a.stl', 'b.svg', 'c.urdf', 'd.bvh', 'e.basecase', 'f.png', 'g.step', 'h.txt', 'i.mcap', 'j.bag'];
     const sorted = sortImports(
       names.map((name) => ({ name })),
       DESKTOP,
@@ -58,7 +58,7 @@ describe('import route', () => {
       motion: ['d.bvh'],
       scene: ['e.basecase'],
       image: ['f.png'],
-      data: ['i.mcap'],
+      data: ['i.mcap', 'j.bag'],
       unknown: ['h.txt'],
     });
   });

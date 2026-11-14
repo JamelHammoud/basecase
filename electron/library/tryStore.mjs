@@ -6,13 +6,17 @@ import { writeAtomic } from './atomicFile.mjs';
 export const TRY_MANIFEST = 'try.json';
 export const TRY_RECORDING = 'recording.bin';
 export const TRY_STRIP = 'strip.webp';
+export const TRY_SESSION = 'session.jsonl';
+export const TRY_VIDEO = 'operator.mp4';
 
 const MAX_MANIFEST = 256 * 1024;
 const MAX_RECORDING = 1024 * 1024 * 1024;
 const MAX_STRIP = 2 * 1024 * 1024;
+const MAX_SESSION = 256 * 1024 * 1024;
+const MAX_VIDEO = 2 * 1024 * 1024 * 1024;
 const MAX_INDEX = 512 * 1024 * 1024;
 const MAX_MANIFEST_BATCH = 500;
-const SOURCES = new Set(['case', 'generated', 'real', 'import']);
+const SOURCES = new Set(['case', 'generated', 'real', 'import', 'operate']);
 const VERDICTS = new Set(['passed', 'failed', 'unjudged']);
 
 const text = (value, fallback = '') => (typeof value === 'string' ? value.slice(0, 512) : fallback);
@@ -97,6 +101,7 @@ export class TryStore {
     this.cacheFile = cacheFile;
     this.indexFile = indexFile ?? path.join(path.dirname(cacheFile), '.try-index.bin');
     this.cache = null;
+    this.appended = new Map();
   }
 
   readCache() {
@@ -196,16 +201,20 @@ export class TryStore {
 
   forget(id) {
     this.summaries.delete(id);
+    this.appended.delete(id);
   }
 
-  save({ manifest, recording }) {
+  save({ manifest, recording, session }) {
     const json = checkedManifest(manifest);
     const bytes = recording === undefined || recording === null ? null : checkedBytes(recording, MAX_RECORDING);
+    const log = session === undefined || session === null ? null : checkedBytes(session, MAX_SESSION);
     const dir = this.dirOf(manifest.id);
 
     fs.mkdirSync(dir, { recursive: true });
 
     if (bytes) writeAtomic(path.join(dir, TRY_RECORDING), bytes);
+
+    if (log) writeAtomic(path.join(dir, TRY_SESSION), log);
 
     writeAtomic(path.join(dir, TRY_MANIFEST), json);
     this.forget(manifest.id);
@@ -231,6 +240,34 @@ export class TryStore {
 
   strip(id) {
     return readOrNull(path.join(this.dirOf(id), TRY_STRIP));
+  }
+
+  session(id) {
+    return readOrNull(path.join(this.dirOf(id), TRY_SESSION));
+  }
+
+  appendSession(id, text) {
+    const dir = this.dirOf(id);
+    const size = this.appended.get(id) ?? 0;
+
+    if (typeof text !== 'string' || size + text.length > MAX_SESSION) return { ok: false };
+
+    if (!this.appended.has(id)) fs.mkdirSync(dir, { recursive: true });
+
+    fs.appendFileSync(path.join(dir, TRY_SESSION), text, 'utf-8');
+    this.appended.set(id, size + text.length);
+
+    return { ok: true };
+  }
+
+  saveVideo({ id, bytes }) {
+    const dir = this.dirOf(id);
+
+    if (!fs.existsSync(path.join(dir, TRY_MANIFEST))) return { ok: false };
+
+    writeAtomic(path.join(dir, TRY_VIDEO), checkedBytes(bytes, MAX_VIDEO));
+
+    return { ok: true };
   }
 
   saveStrip({ id, bytes }) {
@@ -284,3 +321,15 @@ export class TryStore {
     return { deleted: ids };
   }
 }
+
+function quietly(work) {
+  try {
+    work();
+  } catch {}
+}
+
+export const sessionSink = (store) => ({
+  append: (id, text) => quietly(() => store.appendSession(id, text)),
+  keep: (manifest) => quietly(() => store.save({ manifest })),
+  drop: (id) => quietly(() => store.delete([id])),
+});

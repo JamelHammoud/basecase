@@ -283,6 +283,11 @@ describe('Case code panels', () => {
   it('unloads a panel that never answers with its error, while the page keeps drawing frames', async () => {
     const { page } = app;
     const failed = '[data-panel="spin"] [data-testid="code-failed"]';
+    const panelUrls: string[] = [];
+
+    page.on('framenavigated', (frame) => {
+      if (frame.parentFrame()) panelUrls.push(frame.url());
+    });
 
     await openCase({
       input: ['keys'],
@@ -293,6 +298,7 @@ describe('Case code panels', () => {
     expect(await framesUntil(failed)).toBeGreaterThan(3);
     expect(await page.locator(failed).textContent()).toBe('Couldn’t run Spin. It didn’t answer.');
     expect(await page.locator('[data-panel="spin"] iframe').count()).toBe(0);
+    expect(panelUrls).toContain('about:blank');
 
     await page.keyboard.press('Escape');
     await expect.poll(areaCount).toBe(0);

@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { recordGestureExample } from '../../cameras/operator/operatorCamera';
-import type { GestureExample } from '../../cameras/gestures/gestureMatch';
-import { EXAMPLES_PER_GESTURE, type CaseGesture } from '../../cases/gestures';
-
-export const COUNTDOWN = 3;
-export const RECORD_MS = 3000;
+import { COUNTDOWN, teachExamples } from '../../cameras/gestures/teachExamples';
+import type { CaseGesture } from '../../cases/gestures';
 
 export type TeachPhase = 'name' | 'countdown' | 'recording';
 
@@ -23,38 +20,21 @@ export function useTeachGesture(onTaught: (gesture: CaseGesture) => void) {
     [],
   );
 
-  const countDown = async (mine: number) => {
-    setPhase('countdown');
-
-    for (let n = COUNTDOWN; n > 0; n--) {
-      if (run.current !== mine) return false;
-
-      setCount(n);
-      await wait(1000);
-    }
-
-    return run.current === mine;
-  };
-
   const start = async (name: string) => {
     const mine = ++run.current;
-    const examples: GestureExample[] = [];
+    const examples = await teachExamples({
+      wait,
+      record: recordGestureExample,
+      live: () => run.current === mine,
+      onCount: (n) => {
+        setPhase('countdown');
+        setCount(n);
+      },
+      onRecording: () => setPhase('recording'),
+      onTaught: setTaught,
+    });
 
-    while (examples.length < EXAMPLES_PER_GESTURE) {
-      if (!(await countDown(mine))) return;
-
-      setPhase('recording');
-
-      const example = await recordGestureExample(RECORD_MS);
-
-      if (run.current !== mine) return;
-
-      if (example) examples.push(example);
-
-      setTaught(examples.length);
-    }
-
-    onTaught({ name, examples });
+    if (examples) onTaught({ name, examples });
   };
 
   return { phase, count, taught, start: (name: string) => void start(name) };

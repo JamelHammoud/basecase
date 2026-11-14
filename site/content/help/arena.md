@@ -18,6 +18,7 @@ related:
   - teach-a-robot-a-skill
   - case-goals-worlds-and-contracts
   - coach-a-skill
+  - stress-a-skill
 covers:
   - src/skills/arena.ts
   - src/skills/artifacts.ts
@@ -56,6 +57,8 @@ Training follows a reward, a score that guides the policy toward the goal. A rew
 Arena never reads the reward. It judges the contract, the written rules for what passes and what fails, and the trainer can't change those rules. The random draw for each try is sealed, so the trainer never learns which conditions Arena will use.
 
 [Coaching](/help/coach-a-skill) rewrites only a skill's reward. A coached skill must still pass the same contract to be kept.
+
+Arena tells you whether a skill passes. To find where it starts to fail, see [Stress a skill to find where it breaks](/help/stress-a-skill).
 
 ## When a skill goes stale
 

@@ -1,3 +1,4 @@
+import type { OperateLog } from './operateLog';
 import { statusRadians, type RobotMount, type RobotStatus } from './robotState';
 
 export const RUN_SECONDS = 20;
@@ -21,47 +22,23 @@ export interface RobotRun {
   message: string;
 }
 
+export type RunFault = Pick<RobotRun, 'joints' | 'faultJoint' | 'faultAt' | 'message'>;
+
 export const statusPositions = (
   status: RobotStatus,
   ids: readonly number[],
   calibration?: readonly RobotMount[],
 ): Array<number | null> => ids.map((id) => statusRadians(status, calibration, id));
 
-function trimmed<T extends { at: number }>(entries: T[], newest: number): T[] {
-  const from = newest - RUN_SECONDS * 1000;
-  const keep = entries.findIndex((e) => e.at >= from);
+export function runOf(log: OperateLog, fault: RunFault): RobotRun {
+  const newest = Math.max(log.statuses.at(-1)?.t ?? 0, log.intents.at(-1)?.t ?? 0);
+  const from = newest - RUN_SECONDS;
 
-  return keep <= 0 ? entries : entries.slice(keep);
-}
-
-export class RunBuffer {
-  private statuses: RunStatus[] = [];
-
-  private intents: RunIntent[] = [];
-
-  status(at: number, positions: Array<number | null>) {
-    this.statuses.push({ at, positions });
-    this.trim(at);
-  }
-
-  intent(at: number, joints: number[]) {
-    this.intents.push({ at, joints: [...joints] });
-    this.trim(at);
-  }
-
-  clear() {
-    this.statuses = [];
-    this.intents = [];
-  }
-
-  kept(): Pick<RobotRun, 'statuses' | 'intents'> {
-    return { statuses: [...this.statuses], intents: [...this.intents] };
-  }
-
-  private trim(newest: number) {
-    this.statuses = trimmed(this.statuses, newest);
-    this.intents = trimmed(this.intents, newest);
-  }
+  return {
+    ...fault,
+    statuses: log.statuses.filter((s) => s.t >= from).map((s) => ({ at: s.t * 1000, positions: s.q })),
+    intents: log.intents.filter((i) => i.t >= from).map((i) => ({ at: i.t * 1000, joints: i.q })),
+  };
 }
 
 export const replayable = (run: RobotRun | null | undefined): run is RobotRun =>

@@ -11,6 +11,8 @@ keywords:
   - mcap
   - ros 2
   - rosbag2
+  - ros 1
+  - bag
   - ros bag
   - teleop data
   - episodes
@@ -31,11 +33,11 @@ covers:
   - electron/hub/datasetRepo.mjs
 ---
 
-You can import teleop recordings from LeRobot or ROS 2. Basecase turns each episode into a try on the robot in your scene.
+You can import teleop recordings from LeRobot, ROS 1 or ROS 2. Basecase turns each episode into a try on the robot in your scene.
 
 1. Open the scene with the robot from the recording.
 2. Right-click an empty spot on the canvas, then choose **Import**.
-3. Pick a `.mcap` file, or a zip of a LeRobot dataset.
+3. Pick one or more `.mcap` or `.bag` files, or a zip of a LeRobot dataset.
 4. If the data's joint names differ from your robot's, the **Match Joints** sheet opens with a guess for each joint. Fix any wrong guesses, then click **Import**.
 
 ![The Match Joints sheet pairing joint1 to joint6 from an MCAP file with the arm's joints](/help/import-robot-data-as-tries/match.png)
@@ -57,7 +59,7 @@ To import a LeRobot or rosbag2 folder, drop it on the canvas or click **Choose F
 ## What comes in
 
 - **LeRobot** datasets in v2.0, v2.1 and v3.0. Each try takes the name of its episode's task, and a v3 file with many episodes gives you one try per episode.
-- **ROS 2** recordings, as a `.mcap` file or a rosbag2 folder whose `metadata.yaml` lists MCAP storage. A rosbag2 folder becomes one try, and each `.mcap` file you pick on its own becomes its own try. Joint positions from `sensor_msgs/JointState` are resampled to 50 frames per second.
+- **ROS 1 and ROS 2** recordings, as `.mcap` files, ROS 1 `.bag` files, or a rosbag2 folder whose `metadata.yaml` lists MCAP storage. A rosbag2 folder becomes one try, and so do several files you pick together, on one timeline. Joint positions from `sensor_msgs/JointState` are resampled to 50 frames per second. Every other topic comes in too (see [Play a ROS recording's topics in the console](/help/play-a-ros-recordings-topics-in-the-console)).
 - **Units** in radians, degrees or raw Feetech servo counts. Basecase tells them apart by the range of the values.
 - **Videos** for each camera. A try keeps each camera's file and the time span of its episode, without copying or re-encoding the video. Basecase doesn't decode camera images inside an MCAP file.
 
@@ -71,6 +73,6 @@ An episode that breaks your robot's joint limits on every frame is skipped. One 
 
 - A Hugging Face dataset can be up to 1 GB and 2,000 files, with each file up to 256 MB. For a larger dataset, download it and import its folder.
 - Files on your computer can be up to 512 MB, and episodes up to 10 minutes long.
-- Basecase opens uncompressed and zstd MCAP files, but not LZ4.
+- Basecase opens uncompressed, zstd and LZ4 MCAP files, and uncompressed and LZ4 ROS 1 bags. It doesn't open bz2 bags.
 - Because units are guessed from their range, the guess can be wrong. SO-101 data in LeRobot's −100 to 100 range reads as degrees, and degrees that all stay within 6.6 of zero read as radians. Either way, the try replays at the wrong angles.
-- If any value in a file isn't a number, Basecase rejects the whole file.
+- If a joint position in a file isn't a number, Basecase rejects the whole file.

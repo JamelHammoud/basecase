@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { lerobotDataset } from '../src/datasets/import/fixtures';
 import { JOINT_STATE_SCHEMA, writeMcap } from '../src/datasets/import/mcapFixtures';
 import { encodeJointState } from '../src/datasets/import/ros2Cdr';
+import { imuAt, ROS2_LEVEL, rosoutAt } from '../src/datasets/import/topicFixtures';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { startFakeHub, type FakeHub } from './fakeHub';
@@ -15,7 +16,13 @@ const JOINTS = ['arm0', 'arm1', 'arm2'];
 const MOTORS = ['motor_1', 'motor_2', 'motor_3'];
 const HUB_REPO = 'tester/arm_pick';
 
-type Studio = { load: (r: unknown) => void; pickFiles: (f: Array<{ name: string; base64: string }>) => void };
+type PanelReport = { id: string; kind: string; samples?: number[]; entries?: Array<{ level: string; text: string }> };
+
+type Studio = {
+  load: (r: unknown) => void;
+  pickFiles: (f: Array<{ name: string; base64: string }>) => void;
+  recordingPanels: () => PanelReport[] | null;
+};
 
 const base64 = (bytes: Uint8Array) => Buffer.from(bytes).toString('base64');
 
@@ -55,7 +62,33 @@ async function armMcap() {
   return writeMcap(messages);
 }
 
+const IMU_SAMPLES = 151;
+
+async function robotMcap() {
+  const start = 1_700_000_000;
+  const joints = Array.from({ length: 151 }, (_, i) => {
+    const stamp = start + i / 50;
+
+    return {
+      topic: '/joint_states',
+      schema: JOINT_STATE_SCHEMA,
+      logTime: BigInt(Math.round(stamp * 1e9)),
+      data: encodeJointState({ stamp, name: JOINTS, position: JOINTS.map((_, j) => 0.3 * Math.sin(i / 25 + j)) }),
+    };
+  });
+  const imu = Array.from({ length: IMU_SAMPLES }, (_, i) => imuAt(start, i / 50));
+  const logs = [
+    rosoutAt(start + 0.5, ROS2_LEVEL.info, 'Arm homed'),
+    rosoutAt(start + 2, ROS2_LEVEL.warn, 'Wrist torque near limit'),
+  ];
+
+  return writeMcap([...joints, ...imu, ...logs], { chunked: true, compression: 'zstd' });
+}
+
 const tiles = () => app.page.locator(shown('[data-testid="try-tile"]'));
+
+const recordingPanels = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.recordingPanels());
 
 const toast = (text: string) => app.page.getByText(text, { exact: true }).count();
 
@@ -80,25 +113,34 @@ afterAll(async () => {
   await hub?.close();
 });
 
+async function loadArm() {
+  const robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
+
+  await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
+    name: robot.id,
+    parts: robot.parts,
+    project: { ...DEFAULT_PROJECT, joints: robot.joints },
+  });
+  await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
+}
+
+async function showTries() {
+  if (!(await app.page.locator(shown('[data-testid="library-tries"]')).count()))
+    await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
+
+  await app.page.locator(shown('[data-testid="library-tries"] button')).first().click();
+}
+
 const itUnlessWindows = it.skipIf(process.platform === 'win32');
 
 describe('Importing robot data as tries', () => {
   itUnlessWindows(
     'imports a LeRobot zip, an MCAP file through Match Joints and a Hub link, and opens one on the timeline',
     async () => {
-      const robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
-
-      await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
-        name: robot.id,
-        parts: robot.parts,
-        project: { ...DEFAULT_PROJECT, joints: robot.joints },
-      });
-      await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
-
+      await loadArm();
       await importFromPalette('arm_pick.zip', zipSync(armDataset([24, 18], 0)));
       await expect.poll(() => toast('Imported 2 tries'), { timeout: 60000 }).toBeGreaterThan(0);
-      await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Library"]')).click();
-      await app.page.locator(shown('[data-testid="library-tries"] button')).first().click();
+      await showTries();
       await expect.poll(() => tiles().count()).toBe(2);
 
       const mcap = await armMcap();
@@ -129,4 +171,32 @@ describe('Importing robot data as tries', () => {
       expect(app.errors).toEqual([]);
     },
   );
+
+  itUnlessWindows('opens an MCAP with every topic and shows its log and IMU plot in the console', async () => {
+    await loadArm();
+    await importFromPalette('robot.mcap', await robotMcap());
+    await expect.poll(() => toast('Imported 1 try'), { timeout: 60000 }).toBeGreaterThan(0);
+    await showTries();
+    await tiles().filter({ hasText: 'robot.mcap' }).click();
+    await expect.poll(() => recordingPanels(), { timeout: 30000 }).not.toBeNull();
+
+    const panels = (await recordingPanels())!;
+    const log = panels.find((p) => p.kind === 'log')!;
+    const imu = panels.find((p) => p.id === 'imu')!;
+
+    expect(log.entries).toContainEqual({ level: 'warn', text: 'Wrist torque near limit' });
+    expect(imu.samples).toEqual([IMU_SAMPLES, IMU_SAMPLES, IMU_SAMPLES]);
+
+    await app.page.keyboard.press('End');
+
+    const warning = app.page.locator(shown('[data-kind="log"] [data-testid="log-entry"][data-level="warn"]'));
+
+    await expect.poll(() => warning.count(), { timeout: 30000 }).toBe(1);
+    expect(await warning.textContent()).toContain('Wrist torque near limit');
+    expect(await app.page.locator(shown('[data-panel="imu"] [data-testid="plot"]')).getAttribute('data-samples')).toBe(
+      String(3 * IMU_SAMPLES),
+    );
+    await app.page.keyboard.press('Escape');
+    expect(app.errors).toEqual([]);
+  });
 });

@@ -99,7 +99,7 @@ In a room, a spot can be a door or a piece of furniture, picked by name. A furni
 
 Each run in Checks moves the room's fixed furniture by up to 50 mm and turns it up to 5°, or 100 mm and 10° where RoomPlan was less sure. Walls and doors never move. The steps are in [Import a scanned room as a Case world](/help/import-a-scanned-room).
 
-A Case's name defaults to its goal and world, such as "Push a Box in a Corridor". A world that would put a solid object where the robot stands is refused, with what to change.
+A Case is named after its goal and world, such as "Push a Box in a Corridor", and you [rename it](/help/make-a-case#rename-or-delete-a-case) from its right-click menu. A world that would put a solid object where the robot stands is refused, with what to change.
 
 ## How a try is judged
 

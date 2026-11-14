@@ -31,32 +31,42 @@ covers:
 
 Describe what you want the robot to do in your own words, then approve the test the agent writes for it. Basecase trains the skill until it passes Arena.
 
-Teaching works in the desktop app when Claude, Codex or Gemini is connected as the agent. With Offline chosen, **Teach** shows a message instead. You can teach the robot any goal the simulation can judge, so there's no list of tasks to pick from.
+Teaching works in the desktop app when Claude, Codex or Gemini is connected as the agent. If you chose Offline, **Teach** shows a message instead. You can teach the robot any goal the simulation can judge, in your own words.
 
 1. Click **Simulate** at the top of the right panel.
-2. Under **Train**, type the goal into **Teach it to**. For example, "walk to the box".
+2. Under **Train**, type your goal into **Teach it to**. For example, "walk to the box".
 3. Click **Teach**. The **Agent** tab opens with `/train` and your goal.
 4. Read the contract the agent shows you. It lists what passes, what fails, and a run where the robot holds still, which must fail.
 5. Reply to approve the contract, or tell the agent what to change.
 6. To follow the trainer's progress, watch the skill's row under **Train**. The robot on the canvas runs the newest snapshot of the skill.
 7. When the row shows its Arena line, such as "31 of 32 tries, at least 86%", click **Try**. The skill runs in the simulation, on the canvas.
 
-You can also type `/train` and the goal in the agent's box. To stop training, click **Stop training** (■) on the row. To learn more about snapshots, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).
+You can also type `/train` and your goal in the agent's box.
+
+To stop training, click **Stop training** (■) on the skill's row.
+
+To learn more about snapshots, see [Watch a skill learn while it trains](/help/watch-a-skill-learn).
 
 ## How Basecase trains it
 
-Basecase starts with the cheapest method that could work. A reach to a point needs no training, for example, because Basecase plans it with inverse kinematics. To walk somewhere, Basecase trains a policy with reinforcement learning and tries several rewards until one passes. Whatever the method, a skill counts only once it passes [Arena](/help/arena).
+Basecase starts with the cheapest method that could work. For example, a reach to a point needs no training, because Basecase plans it with inverse kinematics. To walk somewhere, Basecase trains a policy with reinforcement learning and tries several rewards until one passes. Any method has to pass [Arena](/help/arena) before the skill counts.
 
 ## When nothing passes
 
-The agent tells you what each method tried. If a design change would make the skill possible, the agent names it, such as servos twice as strong or links 20% longer. Change the design, then teach the goal again in **Teach it to**.
+The agent tells you what each method tried. If a change to the design would make the skill possible, the agent names it, such as servos twice as strong or links 20% longer. Change the design, then teach the goal again in **Teach it to**.
 
 ## When the design changes
 
-A skill belongs to the design it was trained on. Changing a color or a name leaves the skill ready. After you change a mass or a size, its row shows **Recheck**, and after you change a joint, the row shows **Train**. Either button sends your words back to the agent.
+A skill belongs to the design you trained it on. What happens to it depends on what you change:
 
-You can also use a ready skill as a step in a Routine. See [Build a Routine](/help/build-a-routine).
+- If you change a color or a name, the skill stays ready.
+- If you change a mass or a size, its row shows **Recheck**.
+- If you change a joint, the row shows **Train**.
+
+Either button sends your words back to the agent.
+
+A ready skill can be a step in a Routine. See [Build a Routine](/help/build-a-routine).
 
 To share a skill, right-click its row and choose **Publish to Hugging Face**. Learn more in [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face).
 
-Stand, Walk, Get up and Settle don't need a description. See [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit). Once one of them is ready, you can use words to change how it moves. See [Coach how a ready skill moves](/help/coach-a-skill).
+Stand, Walk, Get up and Settle don't need a description. See [Train Stand and Walk with the Motor Kit](/help/train-stand-and-walk-with-the-motor-kit). Once one of them is ready, you can describe in words how you want it to move differently. See [Coach how a ready skill moves](/help/coach-a-skill).

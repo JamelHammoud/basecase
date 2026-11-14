@@ -17,7 +17,7 @@ export const SHEET_VALUE = 'sheet';
 const PRINTED_TAG = MATERIALS[0].value;
 
 export const materialOptions = (canCut: boolean) =>
-  canCut ? [...MATERIALS, { value: SHEET_VALUE, label: 'Cut from Sheet' }] : MATERIALS;
+  canCut ? [...MATERIALS, { value: SHEET_VALUE, label: 'Cut from sheet' }] : MATERIALS;
 
 export function materialTag(part: ScenePart): string {
   if (partSheet(part)) return SHEET_VALUE;

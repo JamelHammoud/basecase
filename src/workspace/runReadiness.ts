@@ -12,14 +12,17 @@ import {
   goneMateFindings,
   goneMateIds,
   hiddenFindings,
+  sheetPartIds,
   sourcingFindings,
   threadFindings,
+  unflatSheetFindings,
   unprintableFindings,
 } from '../readiness/buildChecks';
 import { assemblyFindings, bomFindings, engineeringFindings, fitFindings, printFindings } from '../readiness/findings';
 import { activeVersions } from '../reality/measuredJoints';
 import { readinessFingerprint, readinessOf, UNSETTLED_FINGERPRINT } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
+import type { SheetProfile } from '../sheet/detect';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { buildBom } from '../utils/bom';
 import { designedFits } from '../utils/designedFits';
@@ -83,6 +86,12 @@ export const projectFingerprint = (
     money: [world.money.code, world.money.ratesDate],
   });
 
+function sheetProfilesOf(viewport: Viewport3DHandle, parts: ScenePart[]): Promise<Record<string, SheetProfile | null>> {
+  const ids = sheetPartIds(parts);
+
+  return ids.length ? viewport.sheetProfiles(ids) : Promise.resolve({});
+}
+
 function supportOf(print: { parts: Array<{ material: PrintMaterial; supportG: number }> }) {
   const supportG: Partial<Record<PrintMaterial, number>> = {};
 
@@ -121,13 +130,14 @@ export async function runReadiness({
   const casesRun = measuring.then((measures) =>
     caseCheckRows({ parts, project, measures, partTriangles: viewport.partTriangles, turn }),
   );
-  const [engineering, geometry, print, purchases, measures, cases] = await Promise.all([
+  const [engineering, geometry, print, purchases, measures, cases, sheets] = await Promise.all([
     engineeringRun,
     viewport.assembly({ serviceable: serviceableIds(parts), budgetMs: BUDGET_MS, batteries: batteriesIn(parts) }),
     printing,
     platformBridge.listPurchases(),
     measuring,
     casesRun,
+    sheetProfilesOf(viewport, parts),
   ]);
 
   rememberClamps(parts, clampsOf(geometry.chains));
@@ -144,6 +154,7 @@ export async function runReadiness({
       ...bomFindings(bom),
       ...sourcingFindings(bom),
       ...unprintableFindings(parts),
+      ...unflatSheetFindings(parts, sheets),
       ...fitProbeFindings(geometry, parts),
       ...threadFindings(geometry, parts),
       ...hiddenFindings(parts),

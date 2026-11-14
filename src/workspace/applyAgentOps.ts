@@ -116,7 +116,7 @@ async function applyUpdate({ op, current, live, ctx, log }: OpStep<'update'>) {
 
   if (!claim(ctx, log, op.part.id)) return false;
 
-  const sheet = await sheetUpdate(found, op.part.sheet, ctx.viewport());
+  const sheet = await sheetUpdate(found, op.part, ctx.viewport());
 
   if (sheet.problem) log.problems.push(sheet.problem);
 

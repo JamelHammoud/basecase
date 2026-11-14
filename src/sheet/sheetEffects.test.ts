@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { resolvePrinter } from '../data/printers';
+import { unflatSheetFindings } from '../readiness/buildChecks';
 import { bomFindings } from '../readiness/findings';
 import { printReportsIn } from '../three/analysis/analysisPool';
 import { snapshotShapes } from '../three/analysis/sceneShapes';
@@ -10,8 +11,9 @@ import { buildBom, filamentGrams, isPrinted } from '../utils/bom';
 import { runEngineering, type EngineeringInputs } from '../utils/engineering';
 import { partMasses } from '../utils/engineeringMass';
 import { printReportOf } from '../utils/printReport';
+import { sheetProfile } from './detect';
 import type { PartSheet } from './materials';
-import { platePart, solidPart, trianglesOf } from './sheet.fixtures';
+import { platePart, pocketedBox, solidPart, trianglesOf } from './sheet.fixtures';
 
 type V3 = [number, number, number];
 
@@ -224,5 +226,31 @@ describe('an old scene tagged CNC Aluminum', () => {
       detail: '',
     });
     expect(bom.printed).toEqual([]);
+  });
+});
+
+describe('a sheet part that is not flat', () => {
+  const blockersOf = (parts: ScenePart[]) =>
+    unflatSheetFindings(parts, Object.fromEntries(parts.map((p) => [p.id, sheetProfile(trianglesOf(p))])))
+      .filter((f) => f.level === 'blocker')
+      .flatMap((f) => f.ids);
+
+  it('blocks a pocketed box set to aluminum sheet', async () => {
+    expect(blockersOf([{ ...(await pocketedBox()), sheet: ALUMINUM }])).toEqual(['block-result']);
+  });
+
+  it('blocks a 40 mm block from an old scene tagged CNC Aluminum', () => {
+    const block = solidPart({
+      id: 'block',
+      kind: 'box',
+      mechanicalTag: 'CNC Aluminum',
+      dimensions: { width: 60, height: 40, depth: 60 },
+    });
+
+    expect(blockersOf([block])).toEqual(['block']);
+  });
+
+  it('passes the flat plate and leaves printed parts alone', async () => {
+    expect(blockersOf([{ ...(await platePart()), sheet: ALUMINUM }, await pocketedBox()])).toEqual([]);
   });
 });

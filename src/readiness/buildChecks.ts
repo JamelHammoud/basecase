@@ -5,7 +5,8 @@ import { worldPort, portsOf } from '../agent/ports';
 import type { Port } from '../types/ports';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import type { Bom } from '../utils/bomTypes';
-import { isPrinted } from '../utils/bom';
+import { cutSheet, isPrinted } from '../utils/bom';
+import { MAX_SHEET_MM, type SheetProfile } from '../sheet/detect';
 import type { Finding } from './types';
 import { ruleFinding } from './wording';
 import { lengthLabel } from '../utils/size';
@@ -50,6 +51,19 @@ export function unprintableFindings(parts: ScenePart[]): Finding[] {
     .map((p) =>
       ruleFinding('unprintable', 'blocker', {
         agentText: `${p.name} is marked as clear or glass, which can’t be printed. Buy it (add_sourced_item) or leave the opening empty.`,
+        ids: [p.id],
+      }),
+    );
+}
+
+export const sheetPartIds = (parts: ScenePart[]) => parts.filter((p) => !!cutSheet(p)).map((p) => p.id);
+
+export function unflatSheetFindings(parts: ScenePart[], profiles: Record<string, SheetProfile | null>): Finding[] {
+  return parts
+    .filter((p) => cutSheet(p) && !profiles[p.id])
+    .map((p) =>
+      ruleFinding('not-flat', 'blocker', {
+        agentText: `${p.name} (${p.id}) is set to be cut from sheet, but it isn’t a flat plate: it needs two parallel faces at most ${MAX_SHEET_MM} mm apart with only through-cuts between them. Make it flat again, or print it with update_parts sheet: null.`,
         ids: [p.id],
       }),
     );

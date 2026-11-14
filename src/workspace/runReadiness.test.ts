@@ -99,6 +99,7 @@ describe('running the checks', () => {
       printShapes: vi.fn(() => new Promise(() => {})),
       measureParts: vi.fn(() => new Promise(() => {})),
       interference: vi.fn(() => new Promise(() => {})),
+      sheetProfiles: vi.fn(() => new Promise(() => {})),
     } as unknown as Viewport3DHandle;
 
     void runReadiness({

@@ -30,9 +30,9 @@ covers:
   - src/data/supplies.ts
 ---
 
-The Weight check adds up every part of your robot and finds its center of mass. Servo torque and standing stability both depend on these results.
+The Weight check adds up every part of your robot and finds its center of mass. The servo torque and standing stability checks both use these results.
 
-To see your robot's total weight and how high its center of mass sits above the floor, click **Weight** under **Checks** in the Build tab.
+To see your robot's total weight and how high its center of mass sits above the floor, open the Build tab and click **Weight** under **Checks**.
 
 ## Where each part's weight comes from
 
@@ -46,19 +46,19 @@ To see your robot's total weight and how high its center of mass sits above the 
 | Off-the-shelf part or stand-in | Its volume at 1.2 g/cm³, an estimate |
 | Supply | Its listed weight, or its volume at 1.5 g/cm³ if it has none |
 
-Printed parts start as PLA at 15% infill. You can change both in Print mode. Cutouts, guides and reference images don't add any weight.
+By default, printed parts are PLA at 15% infill. You can change the material and infill in Print mode. Cutouts, guides and reference images don't add any weight.
 
-The Weight check never fails. If the weight of any part is an estimate, the check shows a warning with how many parts are estimated and what they weigh.
+The Weight check never fails. If the weight of any part is an estimate, the check shows a warning with how many parts are estimated and how much they weigh.
 
 ## Which parts are the robot
 
-Each robot counts its own parts, plus any solid within 50 mm of them. For example, a battery tucked inside the torso counts toward the robot. The check treats anything farther away as scenery, along with every object that moves freely in Simulate.
+Each robot counts its own parts, plus any solid within 50 mm of them. For example, a battery tucked inside the torso counts toward the robot. Anything farther away counts as scenery, and so does every object that moves freely in Simulate.
 
-Scenery doesn't count toward the weight, the leg loads or the footprint, and the Weight row shows how much it left out. Adding a table or a second robot to the scene doesn't change the results.
+Scenery doesn't count toward the weight, the leg loads or the footprint. The Weight row shows how much weight it left out. You can add a table or a second robot to the scene, and the results stay the same.
 
 ## Standing stability
 
-Standing stability checks that the center of mass sits over the outline of the robot's feet. It reports how far inside the outline the center of mass is, and how far the robot can tilt before it tips over.
+This check tests whether the center of mass sits over the outline of the robot's feet. It reports how far inside the outline the center of mass is, and how far the robot can tilt before it tips over.
 
 | Result | When |
 |---|---|
@@ -66,6 +66,6 @@ Standing stability checks that the center of mass sits over the outline of the r
 | Warn | The robot tips between 2° and 5° of tilt, or rests on a line with no third contact |
 | Fail | The center of mass is outside the feet, or the robot tips at under 2° of tilt |
 
-A foot touches the ground wherever its mesh does. A ball touches at a single point, and a wheel touches along a line under its axle. If a robot stands on two wheels and nothing else, the check warns that the robot has to balance itself.
+A foot touches the ground wherever its mesh does, a ball at a single point, and a wheel along a line under its axle. If a robot stands on two wheels and nothing else, the check warns that the robot has to balance itself.
 
 To make a robot more stable, widen its stance, or move heavy parts like the battery lower and over the feet.

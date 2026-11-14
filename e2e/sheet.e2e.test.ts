@@ -83,9 +83,9 @@ describe('cut from sheet', () => {
     const material = app.page.locator(shown('select[aria-label="Material"]'));
 
     await expect
-      .poll(() => material.locator('option', { hasText: /^Cut from Sheet$/ }).count(), { timeout: 20000 })
+      .poll(() => material.locator('option', { hasText: /^Cut from sheet$/ }).count(), { timeout: 20000 })
       .toBe(1);
-    await material.selectOption({ label: 'Cut from Sheet' });
+    await material.selectOption({ label: 'Cut from sheet' });
     await app.page.locator(shown('select[aria-label="Sheet"]')).selectOption('aluminum');
 
     await expect.poll(async () => (await plate())?.sheet).toEqual({ material: 'aluminum', thicknessMm: 3.18 });

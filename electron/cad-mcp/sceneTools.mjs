@@ -127,7 +127,7 @@ export const updateParts = {
               .nullable()
               .optional()
               .describe(
-                'Cut this part from sheet instead of printing it: aluminum (6061), carbon (carbon fiber plate) or acrylic. Only a flat plate qualifies (two parallel faces, only through holes and cuts between them); its thickness snaps to the nearest stock size. It leaves the print plates, weighs what the material does, and lists under Sheet in the BOM. null prints it again.',
+                'Cut this part from sheet instead of printing it: aluminum (6061), carbon (carbon fiber plate) or acrylic. Only a flat plate qualifies (two parallel faces, only through holes and cuts between them); its thickness snaps to the nearest stock size, measured on the shape before this update, so send sheet in a call of its own, never with size, thickness or edges. It leaves the print plates, weighs what the material does, and lists under Sheet in the BOM. null prints it again.',
               ),
             ...Object.fromEntries(Object.entries(common).map(([k, v]) => [k, v.optional()])),
           }),

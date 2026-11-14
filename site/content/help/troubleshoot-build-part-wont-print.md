@@ -28,14 +28,14 @@ covers:
   - src/components/inspector/types.ts
 ---
 
-The Printing check flags parts that your printer can't make as drawn. It measures each part against the printer you chose in Print mode. If you've chosen **Made by a Service**, the check uses the printer you chose before that.
+The Printing check flags parts that your printer can't make as drawn. It measures each part against the printer you chose in Print mode. If you've chosen **Made by a Service**, it uses the printer you chose before that.
 
 ## “This part is too big for your printer’s plate.”
 
 The part is larger than your printer's bed in every way it could lie, including across the diagonal.
 
 1. Press [[⌘P]] to open Print mode.
-2. Under **Printer**, make sure **Printer** shows the printer you'll use. A printer with a larger bed may fit the part.
+2. Under **Printer**, check that **Printer** shows the printer you'll use. A printer with a larger bed may fit the part.
 3. Open **Parts** and find the part's row. It tells you how many pieces to split the part into.
 4. In the Build tab, click **Fix** on the problem. The agent splits the part into pieces that join with dowels or screws.
 
@@ -46,7 +46,7 @@ You'll know it worked when the part sits on a plate and **Printing** in Checks n
 A wall on this part is less than 0.84 mm thick over an area of 100 mm² or more.
 
 1. Click the part name under the problem to select it.
-2. Thicken the wall to at least 0.84 mm. Or click **Fix** and the agent does it for you.
+2. Thicken the wall to at least 0.84 mm. Or click **Fix**, and the agent does it for you.
 
 ## “A thin edge here may not print cleanly. It’s usually fine.”
 
@@ -62,22 +62,22 @@ This is a note. Some faces are close to flat and hang over air, so they need sup
 
 ## “This part is meant to be clear, which a printer can’t make.”
 
-The part is set to print, but its name ends in a word like Glass, or its note starts with clear acrylic.
+The part is set to print, but its name ends in a word like Glass, or its note starts with “clear acrylic.”
 
 1. Select the part.
-2. In the Inspector, set **Material** to **Cut from Sheet**, then choose acrylic in the menu below it. Basecase offers **Cut from Sheet** only for flat parts. If the part isn't flat, set it to **Off-the-shelf** instead.
+2. In the Inspector, set **Material** to **Cut from sheet**, then choose acrylic in the menu below it. Basecase offers **Cut from sheet** only for flat parts. If the part isn't flat, set it to **Off-the-shelf** instead.
 3. For a sheet part, click **Export** and choose **Cut Files**, then send the DXF to a cutting service. For an off-the-shelf part, **Real parts** asks where to get it, and **Fix** hands that job to the agent.
 
 ## “Letter ⟨letter⟩ left off: no flat face is hidden, free and big enough”
 
-You'll see this note in **Parts** in Print mode, next to the part's build guide letter. It means that with **Label parts** on, every flat face of this part shows from outside, touches another part, rests on the bed, or is too small. The letter has nowhere to go, so the part prints plain.
+You'll see this note in **Parts** in Print mode, next to the part's build guide letter. With **Label parts** on, every flat face of this part either shows from outside, touches another part, rests on the bed, or is too small. The letter has nowhere to go, so the part prints plain.
 
 1. Select the part and click **Lay on Face** to rest it on a different face. The face it rested on before may then take the letter.
 2. To print the part plain on purpose, select it and turn on **Don't label**.
 
 ## “Letter ⟨letter⟩ left off: its mesh has open edges”
 
-The part's mesh has gaps, so Basecase can't cut the letter into it, and the part prints plain. Close the gaps in the part, or turn on **Don't label** for it.
+The part's mesh has gaps, so Basecase can't cut the letter into it, and the part prints plain. To fix this, close the gaps in the part. Or turn on **Don't label** for it.
 
 ## The plate shows warnings after slicing
 

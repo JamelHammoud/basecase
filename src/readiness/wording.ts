@@ -74,6 +74,7 @@ export const RULES = {
   edge: printing('Thin Edges', 'A thin edge here may not print cleanly. It’s usually fine.'),
   support: printing('Heavy Supports', 'This part needs a lot of support material to print.'),
   unprintable: printing('Clear Parts', 'This part is meant to be clear, which a printer can’t make.'),
+  'not-flat': sourcing('Sheet Parts That Aren’t Flat', 'This part isn’t a flat plate, so it can’t be cut from sheet.'),
   'stand-in': sourcing('Placeholders', 'This is a placeholder, not a real part.'),
   'no-source': sourcing('Parts Without a Source', 'Nothing says where to get this part.'),
   unreferenced: sourcing('Unconfirmed Parts', 'Its link and numbers aren’t checked.'),

@@ -183,8 +183,13 @@ export function installCodeClient(win: ClientWindow, forwardLogs: ConsoleForward
     }),
     store: Object.freeze({
       get: () => ask({ type: 'store-get' }, storedValue),
-      set: (value: unknown) =>
-        ask({ type: 'store-set', json: value == null ? null : (JSON.stringify(value) ?? null) }, replyOf),
+      set: async (value: unknown): Promise<Reply> => {
+        const json: unknown = value === null ? null : JSON.stringify(value);
+
+        if (json !== null && typeof json !== 'string') return { ok: false, problem: 'the store takes JSON' };
+
+        return ask({ type: 'store-set', json }, replyOf);
+      },
     }),
     frames(camera: string, options: { width?: number; fps?: number }, onFrame: (bitmap: ImageBitmap) => void) {
       const id = next++;

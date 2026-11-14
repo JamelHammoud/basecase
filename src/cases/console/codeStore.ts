@@ -4,11 +4,14 @@ export const STORE_MAX_BYTES = 64 * 1024;
 export const STORE_CALLS_PER_SECOND = 10;
 
 export interface CaseStores {
-  get: (caseId: string) => Promise<string | null>;
-  set: (caseId: string, json: string | null) => void;
-  delete: (caseId: string) => void;
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, json: string | null) => void;
+  delete: (key: string) => void;
+  deleteScene: (sceneId: string) => void;
   saved: () => Promise<void>;
 }
+
+export const caseStoreKey = (sceneId: string, caseId: string) => `${sceneId}/${caseId}`;
 
 export interface CaseStore {
   get: () => Promise<string | null>;
@@ -20,61 +23,78 @@ export function caseStores(backend: KeyValueStore<string>): CaseStores {
   const queued = new Map<string, string | null>();
   const writing = new Map<string, Promise<void>>();
 
-  const write = (caseId: string, json: string | null) =>
-    (json === null ? backend.delete(caseId) : backend.put(caseId, json)).then(
+  const write = (key: string, json: string | null) =>
+    (json === null ? backend.delete(key) : backend.put(key, json)).then(
       () => undefined,
       () => undefined,
     );
 
-  const save = (caseId: string) => {
-    if (writing.has(caseId) || !queued.has(caseId)) return;
+  const save = (key: string) => {
+    if (writing.has(key) || !queued.has(key)) return;
 
-    const json = queued.get(caseId) ?? null;
+    const json = queued.get(key) ?? null;
 
-    queued.delete(caseId);
+    queued.delete(key);
     writing.set(
-      caseId,
-      write(caseId, json).then(() => {
-        writing.delete(caseId);
-        save(caseId);
+      key,
+      write(key, json).then(() => {
+        writing.delete(key);
+        save(key);
       }),
     );
   };
 
-  const set = (caseId: string, json: string | null) => {
-    values.set(caseId, Promise.resolve(json));
-    queued.set(caseId, json);
-    save(caseId);
+  const set = (key: string, json: string | null) => {
+    values.set(key, Promise.resolve(json));
+    queued.set(key, json);
+    save(key);
+  };
+
+  const clearing = new Set<Promise<void>>();
+
+  const deleteScene = (sceneId: string) => {
+    const prefix = caseStoreKey(sceneId, '');
+    const cleared = backend.deletePrefix(prefix).then(
+      () => undefined,
+      () => undefined,
+    );
+
+    [...values.keys()].filter((key) => key.startsWith(prefix)).forEach((key) => set(key, null));
+    clearing.add(cleared);
+    void cleared.then(() => clearing.delete(cleared));
   };
 
   const saved = async (): Promise<void> => {
-    while (writing.size) await Promise.all(writing.values());
+    while (writing.size || clearing.size) await Promise.all([...writing.values(), ...clearing]);
   };
 
   return {
-    get(caseId) {
-      if (!values.has(caseId))
+    get(key) {
+      if (!values.has(key))
         values.set(
-          caseId,
-          backend.get(caseId).then(
+          key,
+          backend.get(key).then(
             (json) => (typeof json === 'string' ? json : null),
             () => null,
           ),
         );
 
-      return values.get(caseId) as Promise<string | null>;
+      return values.get(key) as Promise<string | null>;
     },
     set,
-    delete: (caseId) => set(caseId, null),
+    delete: (key) => set(key, null),
+    deleteScene,
     saved,
   };
 }
 
-export const CASE_STORES = caseStores(indexedDbStore<string>('basecase-case-stores', 'values'));
+export const CASE_STORES = caseStores(
+  indexedDbStore<string>({ database: 'basecase-case-stores', store: 'values', label: 'Case values' }),
+);
 
-export const storeOf = (stores: CaseStores, caseId: string): CaseStore => ({
-  get: () => stores.get(caseId),
-  set: (json) => stores.set(caseId, json),
+export const storeOf = (stores: CaseStores, key: string): CaseStore => ({
+  get: () => stores.get(key),
+  set: (json) => stores.set(key, json),
 });
 
 const utf8Bytes = (text: string) => new TextEncoder().encode(text).length;

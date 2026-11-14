@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { KeyValueStore } from '../../utils/keyValueStore';
 import { readFrameMessage } from './codeProtocol';
-import { caseStores, storeOf, storeRefusal, type CaseStore } from './codeStore';
+import { caseStoreKey, caseStores, storeOf, storeRefusal, type CaseStore } from './codeStore';
 import { fakeClock, openTestFrame, type FrameOptions, type TestFrame } from './fixtures/codeFrames';
 import { createSignalBus } from './signalBus';
 
@@ -39,6 +39,10 @@ function disk() {
       writes.push(null);
       saved.delete(key);
     },
+    deletePrefix: async (prefix) => {
+      await hold;
+      [...saved.keys()].filter((key) => key.startsWith(prefix)).forEach((key) => saved.delete(key));
+    },
   };
 
   const pause = () => {
@@ -70,11 +74,14 @@ window.score = (points) => {
 
 const panelFor = (store: CaseStore | null) => open(HIGH_SCORE, { store });
 
+const WHACK = caseStoreKey('scene-a', 'whack');
+const CONVEYOR = caseStoreKey('scene-a', 'conveyor');
+
 describe('a Case’s store from its code', () => {
   it('keeps a high score through a scene reload and through Reset', async () => {
     const { saved, backend } = disk();
     const before = caseStores(backend);
-    const first = panelFor(storeOf(before, 'whack'));
+    const first = panelFor(storeOf(before, WHACK));
 
     await vi.waitFor(() => expect(first.body.dataset.best).toBe('0'));
     first.run('score(12)');
@@ -83,23 +90,23 @@ describe('a Case’s store from its code', () => {
     await vi.waitFor(() => expect(first.log.fired).toEqual(['reset']));
     await before.saved();
     first.close();
-    expect(saved.get('whack')).toBe('{"best":12}');
+    expect(saved.get(WHACK)).toBe('{"best":12}');
 
-    const reloaded = panelFor(storeOf(caseStores(backend), 'whack'));
+    const reloaded = panelFor(storeOf(caseStores(backend), WHACK));
 
     await vi.waitFor(() => expect(reloaded.body.dataset.best).toBe('12'));
   });
 
   it('shares a store between one Case’s panels and keeps Cases apart', async () => {
     const stores = caseStores(disk().backend);
-    const scorer = panelFor(storeOf(stores, 'whack'));
+    const scorer = panelFor(storeOf(stores, WHACK));
 
     await vi.waitFor(() => expect(scorer.body.dataset.best).toBe('0'));
     scorer.run('score(5)');
     await vi.waitFor(() => expect(scorer.window.saved).toEqual({ ok: true }));
 
-    const sibling = panelFor(storeOf(stores, 'whack'));
-    const other = panelFor(storeOf(stores, 'conveyor'));
+    const sibling = panelFor(storeOf(stores, WHACK));
+    const other = panelFor(storeOf(stores, CONVEYOR));
 
     await vi.waitFor(() => expect(sibling.body.dataset.best).toBe('5'));
     await vi.waitFor(() => expect(other.body.dataset.best).toBe('0'));
@@ -110,25 +117,53 @@ describe('a Case’s store from its code', () => {
     const stores = caseStores(backend);
     const release = pause();
 
-    [1, 2, 3, 4, 5].forEach((best) => stores.set('whack', JSON.stringify({ best })));
+    [1, 2, 3, 4, 5].forEach((best) => stores.set(WHACK, JSON.stringify({ best })));
     release();
     await stores.saved();
     expect(writes).toEqual(['{"best":1}', '{"best":5}']);
-    expect(await stores.get('whack')).toBe('{"best":5}');
+    expect(await stores.get(WHACK)).toBe('{"best":5}');
 
     const panel = open('<script>basecase.store.set(null).then((r) => { window.cleared = r; });</script>', {
-      store: storeOf(stores, 'whack'),
+      store: storeOf(stores, WHACK),
     });
 
     await vi.waitFor(() => expect(panel.window.cleared).toEqual({ ok: true }));
     await stores.saved();
-    expect(saved.has('whack')).toBe(false);
+    expect(saved.has(WHACK)).toBe(false);
 
-    stores.set('conveyor', '{"next":3}');
-    stores.delete('conveyor');
+    stores.set(CONVEYOR, '{"next":3}');
+    stores.delete(CONVEYOR);
     await stores.saved();
-    expect(saved.has('conveyor')).toBe(false);
-    expect(await stores.get('conveyor')).toBeNull();
+    expect(saved.has(CONVEYOR)).toBe(false);
+    expect(await stores.get(CONVEYOR)).toBeNull();
+  });
+
+  it('keeps same-named Cases in different scenes apart and clears a scene’s values with the scene', async () => {
+    const { saved, backend } = disk();
+    const stores = caseStores(backend);
+    const otherScene = caseStoreKey('scene-b', 'whack');
+    const scorer = panelFor(storeOf(stores, WHACK));
+
+    await vi.waitFor(() => expect(scorer.body.dataset.best).toBe('0'));
+    scorer.run('score(7)');
+    await vi.waitFor(() => expect(scorer.window.saved).toEqual({ ok: true }));
+    stores.set(CONVEYOR, '{"next":2}');
+
+    const elsewhere = panelFor(storeOf(stores, otherScene));
+
+    await vi.waitFor(() => expect(elsewhere.body.dataset.best).toBe('0'));
+    elsewhere.run('score(2)');
+    await vi.waitFor(() => expect(elsewhere.window.saved).toEqual({ ok: true }));
+
+    stores.delete(otherScene);
+    await stores.saved();
+    expect(saved.get(WHACK)).toBe('{"best":7}');
+
+    stores.deleteScene('scene-a');
+    await stores.saved();
+    expect([...saved.keys()]).toEqual([]);
+    expect(await stores.get(WHACK)).toBeNull();
+    expect(await caseStores(backend).get(CONVEYOR)).toBeNull();
   });
 
   it('answers null and keeps nothing where there’s no studio, as in the web gallery', async () => {
@@ -153,18 +188,42 @@ describe('store exploits', () => {
         basecase.store.set('x'.repeat(1 << 20)).then((r) => { window.big = r; });
         basecase.store.set('€'.repeat(30000)).then((r) => { window.wide = r; });
       </script>`,
-      { store: storeOf(stores, 'whack') },
+      { store: storeOf(stores, WHACK) },
     );
     const tooBig = { ok: false, problem: 'the store takes at most 64 KB' };
 
     await vi.waitFor(() => expect(panel.window.wide).toEqual(tooBig));
     expect(panel.window.big).toEqual(tooBig);
     await stores.saved();
-    expect(saved.get('whack')).toBe('{"best":3}');
+    expect(saved.get(WHACK)).toBe('{"best":3}');
     expect(panel.bridge.report().refused).toEqual([
       'store refused: the store takes at most 64 KB',
       'store refused: the store takes at most 64 KB',
     ]);
+  });
+
+  it('refuses a value JSON can’t hold, rejects a circular one, and keeps the last value', async () => {
+    const { saved, backend } = disk();
+    const stores = caseStores(backend);
+    const panel = open(
+      `<script>
+        const loop = {};
+        loop.self = loop;
+        basecase.store.set({ best: 3 });
+        basecase.store.set(() => 1).then((r) => { window.fn = r; });
+        basecase.store.set(loop).catch((e) => { window.loop = e.name; });
+        basecase.store.set(undefined).then((r) => { window.none = r; });
+      </script>`,
+      { store: storeOf(stores, WHACK) },
+    );
+    const notJson = { ok: false, problem: 'the store takes JSON' };
+
+    await vi.waitFor(() => expect(panel.window.none).toEqual(notJson));
+    expect(panel.window.fn).toEqual(notJson);
+    expect(panel.window.loop).toBe('TypeError');
+    await stores.saved();
+    expect(saved.get(WHACK)).toBe('{"best":3}');
+    expect(panel.log.failed).toEqual([]);
   });
 
   it('takes the value as a JSON string, so a shared-reference graph is never walked in the studio', () => {
@@ -192,14 +251,14 @@ describe('store exploits', () => {
         window.replies = [];
         for (let i = 1; i <= 50; i++) basecase.store.set({ best: i }).then((r) => window.replies.push(r.ok));
       </script>`,
-      { clock, store: storeOf(stores, 'whack') },
+      { clock, store: storeOf(stores, WHACK) },
     );
     const replies = () => panel.window.replies as boolean[];
 
     await vi.waitFor(() => expect(replies()).toHaveLength(50));
     expect(replies().filter(Boolean)).toHaveLength(10);
     await stores.saved();
-    expect(saved.get('whack')).toBe('{"best":10}');
+    expect(saved.get(WHACK)).toBe('{"best":10}');
 
     clock.tick(1000);
     panel.run('basecase.store.set({ best: 99 }).then((r) => { window.later = r; })');

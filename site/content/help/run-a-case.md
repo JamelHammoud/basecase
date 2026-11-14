@@ -76,7 +76,7 @@ A code panel can also change the Case's world while it runs. It can move, light 
 
 It can watch the Scene view, a camera view you placed or one of the robot's cameras at up to 640 × 480 and 15 frames a second. It can't see through your computer's camera.
 
-It can keep a value of up to 64 KB, such as a high score, on this computer. The value lasts through **Reset** and reopening the scene, and goes when you delete the Case. It isn't saved in the Case, so a Case you share or open elsewhere starts without it.
+It can keep a value of up to 64 KB, such as a high score, on this computer. The value lasts through **Reset** and reopening the scene, and goes when you delete the Case or the scene. It isn't saved in the Case, so a Case you share, open elsewhere or copy with **Duplicate Scene** starts without it.
 
 ![A rover Case running, with a code panel showing the Scene camera and the target its code moved and lit red](/help/run-a-case/world.png)
 

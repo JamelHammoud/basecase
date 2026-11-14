@@ -133,7 +133,7 @@ const SCORE_CONSOLE = {
   layout: { areas: [{ canvas: true }, { size: 320, panels: ['score'] }] },
 };
 
-const keptOnDisk = (caseId: string) =>
+const keptOnDisk = (key: string) =>
   app.page.evaluate(
     (id) =>
       new Promise<string | null>((done) => {
@@ -151,15 +151,17 @@ const keptOnDisk = (caseId: string) =>
           };
         };
       }),
-    caseId,
+    key,
   );
+
+const ROVER_SCENE = 'scene-rover-code';
 
 const rover = () => fixtureRobots().find((r) => r.id === 'rover-diff')!;
 
 async function loadRover(cases: unknown[] = []) {
   const { page } = app;
   const { parts, joints } = rover();
-  const scene = { name: 'rover-code', parts, project: { ...DEFAULT_PROJECT, joints, cases } };
+  const scene = { id: ROVER_SCENE, name: 'rover-code', parts, project: { ...DEFAULT_PROJECT, joints, cases } };
 
   await page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
   await expect.poll(() => partCount(page)).toBe(parts.length);
@@ -402,7 +404,7 @@ describe('Case code that keeps a score', () => {
         { timeout: 30000 },
       )
       .toBe('3');
-    await expect.poll(() => keptOnDisk('rover-code'), { timeout: 10000 }).toBe('{"best":3}');
+    await expect.poll(() => keptOnDisk(`${ROVER_SCENE}/rover-code`), { timeout: 10000 }).toBe('{"best":3}');
 
     await page.reload();
     await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {

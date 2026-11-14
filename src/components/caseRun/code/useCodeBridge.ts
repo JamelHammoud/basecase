@@ -3,7 +3,7 @@ import { openCodeBridge } from '../../../cases/console/codeBridge';
 import { codeSourceFirstLine } from '../../../cases/console/codeDocument';
 import { setCodeDrive } from '../../../cases/console/codeDrive';
 import type { FrameKey } from '../../../cases/console/codeProtocol';
-import { CASE_STORES, storeOf } from '../../../cases/console/codeStore';
+import { CASE_STORES, caseStoreKey, storeOf } from '../../../cases/console/codeStore';
 import { codePanelKey, watchCodeReport } from '../../../cases/console/codeReports';
 import type { FrameSize } from '../../../cases/console/codeStreams';
 import type { CaseAction, PanelOf } from '../../../cases/console/panelKinds';
@@ -20,7 +20,7 @@ interface BridgeInput {
 
 const stopNothing = () => undefined;
 
-const storeFor = (caseId: string | null) => (caseId ? storeOf(CASE_STORES, caseId) : null);
+const storeFor = (key: string | null) => (key ? storeOf(CASE_STORES, key) : null);
 
 export const pressStudioKey = ({ key, meta, ctrl, shift }: FrameKey) =>
   window.dispatchEvent(
@@ -53,7 +53,11 @@ export function useCodeBridge({ frameRef, panel, ctx, onFail }: BridgeInput) {
 
     return null;
   });
-  const caseId = useEffectEvent(() => (ctx.studio ? (ctx.studio.cases.active?.id ?? null) : null));
+  const storeKey = useEffectEvent(() => {
+    const cases = ctx.studio?.cases;
+
+    return cases?.active ? caseStoreKey(cases.sceneId, cases.active.id) : null;
+  });
   const frames = useEffectEvent((camera: string, size: FrameSize, onFrame: (bitmap: ImageBitmap) => void) =>
     ctx.studio ? ctx.studio.cameras.stream(camera, size, onFrame) : stopNothing,
   );
@@ -71,7 +75,7 @@ export function useCodeBridge({ frameRef, panel, ctx, onFail }: BridgeInput) {
         key: pressStudioKey,
         world,
         frames,
-        store: storeFor(caseId()),
+        store: storeFor(storeKey()),
       },
       onFail: failed,
       firstLine: codeSourceFirstLine(),

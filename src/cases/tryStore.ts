@@ -1,7 +1,7 @@
 import type { Recording } from '../sim/recorder';
 import { indexedDbStore } from '../utils/keyValueStore';
 
-const recordings = indexedDbStore<Recording>('basecase-tries', 'recordings');
+const recordings = indexedDbStore<Recording>({ database: 'basecase-tries', store: 'recordings', label: 'tries' });
 
 export const saveRecording = (id: string, recording: Recording) => recordings.put(id, recording);
 

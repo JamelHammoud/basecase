@@ -2,9 +2,16 @@ export interface KeyValueStore<T> {
   get: (key: string) => Promise<T | undefined | null>;
   put: (key: string, value: T) => Promise<unknown>;
   delete: (key: string) => Promise<unknown>;
+  deletePrefix: (prefix: string) => Promise<unknown>;
 }
 
-export function indexedDbStore<T>(database: string, store: string): KeyValueStore<T> {
+interface IndexedDbStoreOptions {
+  database: string;
+  store: string;
+  label: string;
+}
+
+export function indexedDbStore<T>({ database, store, label }: IndexedDbStoreOptions): KeyValueStore<T> {
   const open = (): Promise<IDBDatabase> | null => {
     if (typeof indexedDB === 'undefined') return null;
 
@@ -13,7 +20,7 @@ export function indexedDbStore<T>(database: string, store: string): KeyValueStor
 
       request.onupgradeneeded = () => request.result.createObjectStore(store);
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error ?? new Error(`The ${database} store didn’t open.`));
+      request.onerror = () => reject(request.error ?? new Error(`The ${label} store didn’t open.`));
     });
   };
 
@@ -26,7 +33,7 @@ export function indexedDbStore<T>(database: string, store: string): KeyValueStor
       const request = act(db.transaction(store, mode).objectStore(store));
 
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error ?? new Error(`The ${database} store failed.`));
+      request.onerror = () => reject(request.error ?? new Error(`The ${label} store failed.`));
     });
   };
 
@@ -34,5 +41,6 @@ export function indexedDbStore<T>(database: string, store: string): KeyValueStor
     get: (key) => run<T | undefined>('readonly', (s) => s.get(key)),
     put: (key, value) => run('readwrite', (s) => s.put(value, key)),
     delete: (key) => run('readwrite', (s) => s.delete(key)),
+    deletePrefix: (prefix) => run('readwrite', (s) => s.delete(IDBKeyRange.bound(prefix, `${prefix}￿`))),
   };
 }

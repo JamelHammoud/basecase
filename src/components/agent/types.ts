@@ -34,7 +34,6 @@ export interface QueueControls {
 }
 
 export interface AgentDraftParams extends QueuedDraft {
-  targetHeightMm?: number;
   model?: string;
   effort?: string;
 }

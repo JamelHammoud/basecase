@@ -39,7 +39,6 @@ const loadAgentChoices = (): AgentChoices => {
 
 export function useAgentConnection() {
   const [acpStatus, setAcpStatus] = useState<AcpStatusInfo>(STARTING_STATUS);
-  const [agentTargetHeightMm, setAgentTargetHeightMm] = useState(0);
   const [agentChoices, setAgentChoices] = useState(loadAgentChoices);
   const kind = agentKindOf(acpStatus);
   const agentChoice = agentChoices[kind] ?? NO_CHOICE;
@@ -75,8 +74,6 @@ export function useAgentConnection() {
     reconnectAcp,
     signInAcp,
     saveAgentApiKey,
-    agentTargetHeightMm,
-    setAgentTargetHeightMm,
     agentChoice,
     setAgentChoice,
   };

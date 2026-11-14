@@ -10,6 +10,8 @@ import type { Scan } from './scanner';
 import type { SimPhysics } from './livePhysics';
 import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
+import { useVisionLink } from './useVisionLink';
+import type { VisionLink } from './visionLink';
 import { useRecordingLink } from './useRecordingLink';
 import type { WorldLooks } from '../cases/worldSet';
 
@@ -52,16 +54,17 @@ export function useSimWorker(
   const frameHookRef = useRef<FrameHook | null>(null);
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
-  const routines = useRoutineLink(workerRef, modelRef);
+  const { link: visionLink, send } = useVisionLink(workerRef, setError);
+  const routines = useRoutineLink(workerRef, modelRef, visionLink);
   const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
   const recordingLink = useRecordingLink(workerRef);
   const recordingReply = recordingLink.reply;
 
-  const send = useCallback((msg: SimRequest) => workerRef.current?.postMessage(msg), []);
-
   const handle = useCallback(
     (ev: MessageEvent<SimResponse>) => {
       const msg = ev.data;
+
+      visionLink.current.note(msg);
 
       if (msg.type === 'ready') {
         setStatus('ready');
@@ -121,7 +124,7 @@ export function useSimWorker(
       setStats(msg.stats);
       setPlaying(msg.playing);
     },
-    [viewportRef, modelRef, poseListeners.listeners, recordingReply, routines.hookRef],
+    [viewportRef, modelRef, poseListeners.listeners, recordingReply, routines.hookRef, visionLink],
   );
 
   const worker = useCallback(() => {
@@ -179,18 +182,24 @@ export function useSimWorker(
   };
 }
 
-function useRoutineLink(workerRef: React.RefObject<Worker | null>, modelRef: React.RefObject<SimModel | null>) {
+function useRoutineLink(
+  workerRef: React.RefObject<Worker | null>,
+  modelRef: React.RefObject<SimModel | null>,
+  visionLink: React.RefObject<VisionLink>,
+) {
   const hookRef = useRef<((update: LiveUpdate) => void) | null>(null);
   const start = useCallback(
-    (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => {
+    async (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => {
       if (!modelRef.current || !workerRef.current) return false;
+
+      if (!(await visionLink.current.start(input.plan))) return false;
 
       hookRef.current = onUpdate;
       workerRef.current.postMessage({ type: 'routine', ...input } satisfies SimRequest);
 
       return true;
     },
-    [workerRef, modelRef],
+    [workerRef, modelRef, visionLink],
   );
 
   return { hookRef, start };

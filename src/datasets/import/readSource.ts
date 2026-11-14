@@ -20,6 +20,7 @@ export type ImportSource =
 export interface ReadSource {
   data: SourceData;
   hash: string;
+  videos: SourceFile[];
 }
 
 const hex = (bytes: ArrayBuffer) => [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -113,5 +114,8 @@ export async function readSource(source: ImportSource): Promise<ReadSource | nul
   };
   const data = await readers[kind]();
 
-  return data && { data, hash: await hashed.hash() };
+  const paths = new Set(data?.episodes.flatMap((episode) => episode.videos.map((video) => video.path)));
+  const videos = files.filter((file) => paths.has(file.path) && /\.(mp4|webm|mov|mkv)$/iu.test(file.path));
+
+  return data && { data, hash: await hashed.hash(), videos };
 }

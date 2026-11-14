@@ -126,7 +126,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
         ready={core.printing.readySteps(core.buildAlong.stepParts)}
       />
       {!core.caseRun.open && (
-        <CameraStrip parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
+        <CameraStrip eligible={active} parts={parts} sim={sim} cameras={actions.cameras} patchPart={edits.patchPart} />
       )}
       <AnnotationLayer
         annotations={annotations.annotations}

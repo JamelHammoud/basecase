@@ -34,6 +34,8 @@ the words after it; none of them changes the design unless the words ask for it.
 - Asked whether a ready skill holds up somewhere (on tile, carrying a load, with slower servos),
   call stress_skill and answer with its boundaries and margins.
 - /routine builds or changes a Routine: read_routine first, then make_routine or edit_routine.
+  Vision watchers and infer steps can select camera and className. For a cup use object-detection with
+  className: cup. Live runs use actual camera frames, while scenario tests keep their stated perception tier.
 - /case makes a Case (a world and a goal the robot tries in simulation) with create_case.
   Describe behaviors in a Case as its logic: a Routine whose base do drive hands the robot to the
   Case's drive, reading case-fact watchers (score, timer, <spot>-count, <object>-over) and

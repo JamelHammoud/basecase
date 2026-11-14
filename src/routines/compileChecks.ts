@@ -1,6 +1,6 @@
 import type { CompileContext } from './compileContext';
 import { checkCondition, leaves } from './compileConditions';
-import { findNode } from './nodes';
+import { findNode, type ModelNode } from './nodes';
 import type { AskStep, InferStep, Reaction, Resource, Step, TogetherStep, WaitStep } from './schema';
 import { childSequences, forEachStep } from './schema';
 
@@ -10,6 +10,14 @@ const INFER_MAX_MS = 30_000;
 const ASK_MIN_COOLDOWN_MS = 5000;
 const MAX_ASKS_PER_REACTION = 4;
 const MAX_FIBERS = 16;
+
+function checkModelAvailable(ctx: CompileContext, model: ModelNode | undefined, node: string) {
+  const available = ctx.options.availableModels;
+
+  if (!model || model.tier !== 'perception' || !available || available.includes(model.id)) return;
+
+  ctx.fail('missing-model', `${model.label} needs ${model.model} to run.`, node);
+}
 
 function checkDo(ctx: CompileContext, step: Extract<Step, { kind: 'do' }>) {
   const node = ctx.nodeOf(step);
@@ -33,6 +41,8 @@ function checkInfer(ctx: CompileContext, step: InferStep) {
   if (!model || model.tier !== 'perception') {
     return ctx.fail('unknown-model', `There’s no ${step.model} model to check with.`, node);
   }
+
+  checkModelAvailable(ctx, model, node);
 
   if (!model.outputs.includes(step.output.type)) {
     ctx.fail('type-mismatch', `${model.label} doesn’t return ${step.output.type}.`, node);
@@ -106,6 +116,8 @@ function checkWatchers(ctx: CompileContext) {
     else if (!model.outputs.includes(w.publishes.type)) {
       ctx.fail('type-mismatch', `${model.label} doesn’t publish ${w.publishes.type}.`, w.id);
     }
+
+    checkModelAvailable(ctx, model, w.id);
 
     if (w.rateHz < PERCEPTION_HZ.min || w.rateHz > PERCEPTION_HZ.max) {
       ctx.fail('rate-out-of-range', 'Watchers run between 1 and 30 times a second.', w.id);

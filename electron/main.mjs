@@ -17,6 +17,8 @@ import { SandboxKernel } from './cad-kernel/sandbox/sandboxKernel.mjs';
 import { kernelSelfTest } from './cad-kernel/sandbox/selfTest.mjs';
 import { cadImportSelfTest } from './cadImport/selfTest.mjs';
 import { installAppMenu, popupAppMenu, updateAppMenuState } from './app-menu.mjs';
+import { modelAsset } from './hub/modelAsset.mjs';
+import { tryVideoAsset } from './library/tryVideo.mjs';
 import { APP_ORIGIN, registerAppScheme, serveApp } from './appProtocol.mjs';
 import { APP_DISPLAY_NAME, DEV_MODE } from './appName.mjs';
 import { registerGuideHandlers } from './guidePdf.mjs';
@@ -314,7 +316,12 @@ app.whenReady().then(async () => {
     preload: path.join(__dirname, 'storagePreload.cjs'),
   });
 
-  serveApp({ distDir: path.join(workspaceRoot, 'dist'), devServer, transformHtml: migration.transformHtml });
+  serveApp({
+    distDir: path.join(workspaceRoot, 'dist'),
+    devServer,
+    transformHtml: migration.transformHtml,
+    asset: (request) => modelAsset(backend.hub.models, request) ?? tryVideoAsset(backend.tries, request),
+  });
   createWindow();
   migration.close();
 

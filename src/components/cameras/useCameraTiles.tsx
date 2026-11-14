@@ -17,6 +17,7 @@ export interface CameraTilesInput {
   patchPart: (id: string, patch: Partial<ScenePart>) => void;
   active: (views: CameraView[]) => boolean;
   onFrames?: (frames: number) => void;
+  eligible?: boolean;
 }
 
 export interface CameraTiles {
@@ -38,6 +39,7 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
   const views = cameraViews(solid, sim.worldParts, cameras.cameras);
   const feed = useCameraFeed({
     active: active(views),
+    eligible: input.eligible,
     parts: solid,
     world: shownWorld(sim.worldParts),
     model: sim.model,

@@ -74,6 +74,15 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 
 ## Robot data
 
+### Roboflow
+
+- **Link:** https://roboflow.com
+- **Checked:** 2026-11-14
+- **Better than Basecase:** its platform labels images, trains models, manages datasets and deploys models through Workflows and hosted or self-hosted Inference. The Free Tier includes 10 monthly credits, Core starts at $39 per month with 20 total monthly credits, and Enterprise has custom pricing. Private workspaces and model weights downloads are available on every plan ([pricing](https://roboflow.com/pricing)).
+- **Worse than Basecase:** Roboflow Inference runs vision models on supplied images, video and camera streams ([Inference](https://github.com/roboflow/inference)). Basecase connects detections to the robot's simulated cameras, camera tiles, Case signals and Routine reactions within its CAD studio ([Cameras](../guide/cameras.md), [Routines](../guide/routines.md)). Self-hosted inference is free in both products, so local inference cost alone is no advantage ([Roboflow pricing](https://roboflow.com/pricing)).
+- **Basecase today:** See Objects, See Person, Find Faces and Obstacle Ahead use camera frames through a local inference worker. The model manifest records the file's hash and input contract, and detections feed the same signal bus as the Case's other sensors ([Cameras](../guide/cameras.md), [Cases](../guide/cases.md)).
+- **Basecase should:** compete on the connection between the robot's design, its cameras and its behavior. Image labeling, detector training and evaluation against held-out real frames remain gaps beside Roboflow's existing tools ([Roboflow pricing](https://roboflow.com/pricing)).
+
 ### Foxglove
 
 - **Link:** https://foxglove.dev

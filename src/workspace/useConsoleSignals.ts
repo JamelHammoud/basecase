@@ -2,6 +2,8 @@ import { useEffect, useEffectEvent, useState } from 'react';
 import type { CaseConsole } from '../cases/console/format';
 import { GESTURE_EVENT, gestureNames } from '../cases/gestures';
 import { lastInputEvent } from '../sim/inputEvents';
+import { onVisionResults, visionResults } from '../vision/resultStore';
+import { visionSignalValues } from '../cases/console/visionSignals';
 import { liveSample } from '../cases/console/liveSample';
 import { createSignalBus, type SignalBus, type SignalSample } from '../cases/console/signalBus';
 import { workerJudge, type GoalJudge } from '../cases/goalJudge';
@@ -49,6 +51,7 @@ function caseWorld({ kase, model, rig, parts }: { kase: Case; model: SimModel; r
 
 export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
   const { open, kase, caseConsole, sim } = input;
+
   const defs = caseConsole.signals;
   const key = `${kase?.id ?? ''}:${JSON.stringify([caseConsole.input, defs ?? []])}`;
   const [held, setHeld] = useState(() => ({ key, bus: createSignalBus(defs) }));
@@ -58,6 +61,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
 
   const live = useEffectEvent(() => ({
     running: input.running,
+    vision: visionSignalValues(visionResults(), performance.timeOrigin + performance.now()),
     cameras: input.cameras,
     gestures: caseConsole.input.includes('camera') ? gesturePulses(gestureNames(input.kase?.gestures)) : undefined,
     inputs: Object.fromEntries(caseConsole.input.map((id) => [id, sim.drive.inputs()[id] ?? null])),
@@ -74,6 +78,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
     let judging = false;
     let judged: SignalSample['goal'] = null;
     let lastPush = -Infinity;
+    let sample: SignalSample | null = null;
 
     const endGoal = () => {
       judge?.dispose();
@@ -101,18 +106,23 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
 
       lastPush = now.time;
 
-      target.push(
-        liveSample({
-          ...now,
-          model,
-          joints: frame.joints,
-          poses,
-          robot: frame.stats.robots[0],
-          world,
-          reader,
-          goal: now.running ? judged : null,
-        }),
-      );
+      sample = liveSample({
+        ...now,
+        model,
+        joints: frame.joints,
+        poses,
+        robot: frame.stats.robots[0],
+        world,
+        reader,
+        goal: now.running ? judged : null,
+      });
+      target.push(sample);
+    });
+    const stopVision = onVisionResults(() => {
+      if (!sample) return;
+
+      sample = { ...sample, vision: visionSignalValues(visionResults(), performance.timeOrigin + performance.now()) };
+      target.push(sample);
     });
     const timer = setInterval(() => {
       const asked = goal;
@@ -130,6 +140,7 @@ export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
 
     return () => {
       stop();
+      stopVision();
       clearInterval(timer);
       endGoal();
     };

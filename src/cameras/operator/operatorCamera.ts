@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from 'react';
+import { connectVisionSource } from '../../vision/client';
+import { operatorPoseVision } from '../../vision/poseResult';
 import { GESTURE_EVENT } from '../../cases/gestures';
 import { emitInputEvent } from '../../sim/inputEvents';
 import type { InputRobot } from '../../sim/inputTypes';
@@ -37,15 +39,17 @@ export const OPERATOR_KEY = 'operator';
 export const CAMERA_REFUSAL = 'Couldn’t open the camera.';
 
 interface Member {
-  robot: InputRobot;
+  robot: InputRobot | null;
   joined: boolean;
   settle: ((refusal: string | null) => void) | null;
+  ready: Promise<string | null>;
 }
 
 interface Session {
   worker: Worker;
   frames: FrameSource;
   stream: MediaStream;
+  stopVision: () => void;
 }
 
 interface Fresh<T> {
@@ -72,6 +76,8 @@ let fresh: { [K in LandmarkKind]?: Fresh<Follows[K]> } = {};
 let taught: TaughtGesture[] = [];
 let settleExample: ((example: GestureExample | null) => void) | null = null;
 const members = new Map<LandmarkKind, Member>();
+const driving = new Set<LandmarkKind>();
+const poseObservers = new Set<symbol>();
 const standIns = new Map<LandmarkKind, FeedRequest>();
 const feeding = new Set<LandmarkKind>();
 const listeners = new Set<() => void>();
@@ -114,6 +120,7 @@ const entry = <T>(follow: T | null, seenAt: number): Fresh<T> | undefined =>
 
 function keep(event: FollowEvent) {
   if (event.type === 'pose') {
+    operatorPoseVision(event.image, event.seenAt);
     fresh.body = entry(event.follow, event.seenAt);
 
     return setPoints(event.image);
@@ -167,7 +174,12 @@ function start(stream: MediaStream): Session {
 
   worker.postMessage(open, frames.frames ? [frames.frames] : []);
   worker.postMessage({ type: 'gestures', taught } satisfies PoseRequest);
-  session = { worker, frames, stream };
+
+  const stopVision = connectVisionSource((port, cameras) =>
+    worker.postMessage({ type: 'vision', port, cameras } satisfies PoseRequest, [port]),
+  );
+
+  session = { worker, frames, stream, stopVision };
   lastTrack = track ?? null;
   latency.clear();
   set({ open: true, stream, label: track?.label || null, estimator: null, error: null });
@@ -209,6 +221,8 @@ function endSession() {
 
   if (!live) return;
 
+  live.stopVision();
+  operatorPoseVision(null, performance.timeOrigin + performance.now());
   live.frames.stop();
   live.worker.postMessage({ type: 'close' } satisfies PoseRequest);
   live.worker.terminate();
@@ -230,7 +244,64 @@ function enter(live: Session, kind: LandmarkKind, member: Member) {
   settle(kind, null);
 }
 
+function newMember(robot: InputRobot | null): Member {
+  const member: Member = { robot, joined: false, settle: null, ready: Promise.resolve(null) };
+
+  member.ready = new Promise((resolve) => {
+    member.settle = resolve;
+  });
+
+  return member;
+}
+
+export async function ensureOperatorPoseVision(): Promise<() => void> {
+  const token = Symbol();
+
+  poseObservers.add(token);
+
+  const release = () => {
+    if (!poseObservers.delete(token)) return;
+
+    if (!poseObservers.size && !driving.has('body')) leaveOperatorCamera('body');
+  };
+
+  try {
+    const member = members.get('body') ?? (await observingMember());
+    const refusal = await member.ready;
+
+    if (refusal) throw new Error(refusal);
+
+    return release;
+  } catch (error) {
+    release();
+
+    throw error;
+  }
+}
+
+async function observingMember(): Promise<Member> {
+  const member = newMember(null);
+
+  members.set('body', member);
+
+  const live = await liveSession();
+
+  if (!live || members.get('body') !== member) {
+    settle('body', CAMERA_REFUSAL);
+
+    throw new Error(CAMERA_REFUSAL);
+  }
+
+  enter(live, 'body', member);
+
+  return member;
+}
+
 export function leaveOperatorCamera(kind: LandmarkKind) {
+  driving.delete(kind);
+
+  if (kind === 'body' && poseObservers.size) return;
+
   const member = members.get(kind);
 
   if (!member) return;
@@ -246,30 +317,29 @@ export function leaveOperatorCamera(kind: LandmarkKind) {
 }
 
 export async function joinOperatorCamera(kind: LandmarkKind, robot: InputRobot): Promise<string | null> {
+  settle(kind, null);
   leaveOperatorCamera(kind);
 
-  const member: Member = { robot, joined: false, settle: null };
+  const member = newMember(robot);
   const current = () => members.get(kind) === member;
 
   members.set(kind, member);
+  driving.add(kind);
 
   const live = await liveSession();
 
   if (!current()) return null;
 
   if (!live) {
+    settle(kind, CAMERA_REFUSAL);
     members.delete(kind);
 
     return CAMERA_REFUSAL;
   }
 
-  const ready = new Promise<string | null>((resolve) => {
-    member.settle = resolve;
-  });
-
   enter(live, kind, member);
 
-  const refusal = await ready;
+  const refusal = await member.ready;
 
   if (refusal && current()) leaveOperatorCamera(kind);
 
@@ -277,6 +347,7 @@ export async function joinOperatorCamera(kind: LandmarkKind, robot: InputRobot):
 }
 
 export function closeOperatorCamera() {
+  poseObservers.clear();
   [...members.keys()].forEach(leaveOperatorCamera);
   endSession();
 }

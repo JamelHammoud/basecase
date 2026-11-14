@@ -13,6 +13,7 @@ export interface SignalSample {
   goal: { passed: boolean; margin: number; failed: string[] } | null;
   cameras: string[];
   gestures?: Record<string, number>;
+  vision?: Record<string, number>;
 }
 
 export type SignalValue = number | string[];
@@ -78,6 +79,8 @@ export function baseValues(s: SignalSample): Map<string, SignalValue> {
   for (const key of s.cameras) out.set(`camera.${key}`, [key]);
 
   for (const [name, value] of Object.entries(s.gestures ?? {})) out.set(`gesture.${name}`, value);
+
+  for (const [name, value] of Object.entries(s.vision ?? {})) out.set(name, value);
 
   return out;
 }

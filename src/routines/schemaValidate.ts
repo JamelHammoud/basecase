@@ -140,7 +140,15 @@ function checkDo(c: Checker, step: Record_, path: string) {
   if (step.move !== undefined) checkMotion(c, step.move, `${path}.move`);
 }
 
+function checkVisionSelector(c: Checker, value: Record_, path: string) {
+  if (value.camera !== undefined) c.field(isText(value.camera, 64), `${path}.camera`, 'Name the camera.');
+
+  if (value.className !== undefined)
+    c.field(isText(value.className, 64), `${path}.className`, 'Name the detector class.');
+}
+
 function checkInfer(c: Checker, step: Record_, path: string) {
+  checkVisionSelector(c, step, path);
   c.field(isText(step.model, 64), `${path}.model`, 'Name the model to run.');
   c.field(isText(step.input, 64), `${path}.input`, 'Name what the model looks at.');
 
@@ -240,6 +248,7 @@ function checkSteps(c: Checker, steps: unknown, path: string, depth: number) {
 function checkWatcher(c: Checker, w: unknown, path: string) {
   if (!isRecord(w)) return c.add('invalid-field', path, 'A watcher is an object.');
 
+  checkVisionSelector(c, w, path);
   c.field(typeof w.id === 'string' && ID.test(w.id), `${path}.id`, 'Give the watcher a short id.');
   c.field(isText(w.model, 64), `${path}.model`, 'Name the model the watcher runs.');
   c.field(isNumber(w.rateHz), `${path}.rateHz`, 'Set how often the watcher runs.');

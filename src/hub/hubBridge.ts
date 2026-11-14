@@ -1,4 +1,5 @@
 import { bytesToBase64 } from '../utils/base64';
+import type { ModelRef } from '../../electron/hub/modelPolicy.mjs';
 import { channelCall } from '../utils/platform/channelCall';
 import { electron } from '../utils/platform/transport';
 
@@ -65,4 +66,5 @@ export const hubBridge = {
   publish: (payload: HubPublish) => call<HubPublished>('hub:publish', payload),
   skillFiles: (ref: HubRepoRef) => call<HubSkillFiles>('hub:skill-files', ref),
   datasetFiles: (ref: HubRepoRef) => call<HubDatasetFiles>('hub:dataset-files', ref),
+  modelFile: (ref: ModelRef) => call<{ url: string }>('hub:model-file', ref),
 };

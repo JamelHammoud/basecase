@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
-import { FRAME_MS, type FeedEvent, type FeedRequest } from './feedProtocol';
+import { nextFeedDraw } from '../vision/feedPace';
+import { VisionFrameTap } from '../vision/frameTap';
+import { type FeedEvent, type FeedRequest } from './feedProtocol';
 import { LiveStage, type LiveJob, type LiveTarget } from './liveStage';
 import { afterDraw, dueIds, nextDue, startPace, streamSize, type Pace } from './streamPace';
 
@@ -14,6 +16,8 @@ const stage = new LiveStage();
 const gl = stage.renderer.getContext();
 const targets = new Map<string, LiveTarget>();
 const streams = new Map<number, Stream>();
+const vision = new VisionFrameTap();
+const visionTargets = new Map<string, LiveTarget>();
 
 let poses: Float64Array | null = null;
 let dirty = false;
@@ -32,8 +36,13 @@ function wake(at: number) {
 }
 
 function plan() {
-  const tilesAt = dirty && targets.size ? drewAt + FRAME_MS : Infinity;
-  const at = Math.min(tilesAt, nextDue([...streams.values()].map((s) => s.pace)));
+  const at = nextFeedDraw({
+    dirty,
+    tiles: targets.size,
+    vision: visionTargets.size,
+    drewAt,
+    streamsAt: nextDue([...streams.values()].map((s) => s.pace)),
+  });
 
   if (at < Infinity) wake(at);
 }
@@ -78,7 +87,14 @@ function postStream({ id, target }: StreamJob) {
 function render(tiles: LiveJob[], due: StreamJob[]) {
   drewAt = performance.now();
 
-  const drawn = stage.draw(poses, [...tiles, ...due]);
+  const byKey = new Map([...tiles, ...due].map((job) => [job.key, job]));
+
+  for (const [key, target] of visionTargets) if (!byKey.has(key) && vision.wants(key)) byKey.set(key, { key, target });
+
+  const drawn = stage.draw(poses, [...new Set([...tiles, ...due, ...byKey.values()])]);
+
+  for (const { key, target } of drawn) vision.send(key, target.canvas, performance.timeOrigin + drewAt);
+
   const tilesDrawn = tiles.filter((job) => drawn.includes(job));
 
   if (drawn.length) gl.finish();
@@ -97,7 +113,7 @@ function draw() {
 
   dirty = false;
 
-  if (tiles.length || due.length) render(tiles, due);
+  if (tiles.length || due.length || visionTargets.size) render(tiles, due);
 
   plan();
 }
@@ -137,6 +153,18 @@ const handlers: { [K in FeedRequest['type']]: (msg: Extract<FeedRequest, { type:
   views: ({ views, sizes }) => {
     stage.setViews(views);
     setTargets(sizes);
+    schedule();
+  },
+  vision: ({ port, cameras }) => {
+    vision.configure(port, cameras);
+    visionTargets.clear();
+
+    for (const key of cameras) {
+      const made = target([320, 240]);
+
+      if (made) visionTargets.set(key, made);
+    }
+
     schedule();
   },
   port: ({ port }) => {

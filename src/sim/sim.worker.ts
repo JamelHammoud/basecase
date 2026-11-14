@@ -16,6 +16,7 @@ import type { FaultKind } from './faults';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
 import { applyDueCommands, runFor, type RunRequest, type RunResult } from './simRun';
+import type { VisionResult } from '../vision/protocol';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
@@ -50,6 +51,7 @@ export type SimRequest =
   | ({ type: 'routine' } & LiveRoutineInput)
   | ({ type: 'case' } & LiveCaseInput)
   | { type: 'caseEnd' }
+  | { type: 'vision'; result: VisionResult; ageMs: number }
   | { type: 'watch'; watch: WatchInput | null }
   | { type: 'input'; name: string; value: FactValue }
   | { type: 'world'; change: WorldChange }
@@ -368,6 +370,10 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
   },
   routine: startRoutine,
   case: startCase,
+  vision: (msg) => {
+    live?.see(msg.result, msg.ageMs);
+    liveCase?.see(msg.result, msg.ageMs);
+  },
   caseEnd: () => {
     liveCase = null;
   },

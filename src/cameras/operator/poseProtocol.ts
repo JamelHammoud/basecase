@@ -19,8 +19,9 @@ export type FeedRequest =
   | { type: 'feed'; kind: 'face'; samples: FaceSample[]; fps?: number };
 
 export type PoseRequest =
+  | { type: 'vision'; port: MessagePort; cameras: string[] }
   | { type: 'open'; frames?: ReadableStream<VideoFrame> }
-  | { type: 'join'; kind: LandmarkKind; robot: InputRobot; standIn?: boolean }
+  | { type: 'join'; kind: LandmarkKind; robot: InputRobot | null; standIn?: boolean }
   | { type: 'leave'; kind: LandmarkKind }
   | { type: 'frame'; bitmap: ImageBitmap }
   | FeedRequest

@@ -3,6 +3,7 @@ import { AgentKeys } from '../backend/agentKeys.mjs';
 import { publicFetch } from '../publicFetch.mjs';
 import { policyOnnx } from '../robot/policyOnnx.mjs';
 import { downloadDataset } from './datasetRepo.mjs';
+import { ModelStore } from './modelRepo.mjs';
 import { HUB_ENDPOINT, HubClient } from './hubClient.mjs';
 import { checkedName, checkedTag, publishRepo } from './publishRepo.mjs';
 import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from './skillRepo.mjs';
@@ -55,6 +56,10 @@ export class HubAccount {
     this.keys = new AgentKeys({ dir: path.join(libraryDir, 'agent-config'), secrets, file: 'hub-keys.json' });
     this.endpoint = endpoint;
     this.outbound = outbound;
+    this.models = new ModelStore({
+      dir: path.join(libraryDir, 'models'),
+      client: () => this.client(undefined, 'Download again', 'model'),
+    });
   }
 
   client(token, again, kind) {
@@ -114,6 +119,10 @@ export class HubAccount {
     }
 
     return { repo: id, files };
+  }
+
+  modelFile(ref) {
+    return this.models.prepare(ref);
   }
 
   async datasetFiles({ owner, repo, rev } = {}) {

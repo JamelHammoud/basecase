@@ -1,6 +1,7 @@
 import type { CoordinatorRun, RawEvent } from './coordinator';
 import type { Plan, PlanOp, PlanWatcher } from './planTypes';
-import type { Motion } from './schema';
+import type { DataType, Motion } from './schema';
+import { VISION_MODELS, type RoutinePerception } from './routineVision';
 import { ORDER, type VirtualClock } from './scenarioClock';
 import {
   activeFault,
@@ -34,6 +35,7 @@ export class ScenarioHost {
   skillLatency: (skill: string) => number = () => SKILL_MS;
   motion: MotionHost | null = null;
   feed: FactFeed | null = null;
+  perception: RoutinePerception | null = null;
   private readonly decoder: TraceDecoder;
   private readonly cancelled = new Set<number>();
   private readonly doNodes = new Map<number, string>();
@@ -105,6 +107,8 @@ export class ScenarioHost {
 
     if (!enabled || fault?.kind === 'hang' || fault?.kind === 'fail') return;
 
+    if (this.perception && VISION_MODELS.has(watcher.model)) return this.sampleVision(watcher, t);
+
     const { value: raw, at } = this.reading(watcher.id, t);
     const value = { num: worldNum(raw), sym: typeof raw === 'string' ? this.intern(raw) : -1 };
 
@@ -113,6 +117,15 @@ export class ScenarioHost {
     if (this.run.publish(watcher.fact, value, Math.floor(at))) {
       this.values.set(watcher.fact, { num: value.num, name: typeof raw === 'string' ? raw : null });
     }
+  }
+
+  private sampleVision(watcher: PlanWatcher, t: number) {
+    const type = this.plan.facts[watcher.fact]?.type as DataType;
+    const reading = this.perception?.read(watcher.model, type, t, watcher);
+
+    if (!reading || !this.run.publish(watcher.fact, { num: reading.num, sym: -1 }, Math.floor(reading.at))) return;
+
+    this.values.set(watcher.fact, { num: reading.num, name: null });
   }
 
   handle(events: RawEvent[]) {
@@ -215,6 +228,8 @@ export class ScenarioHost {
   }
 
   private infer(op: PlanOp, token: number, t: number) {
+    if (this.perception && VISION_MODELS.has(op.model ?? '')) return this.perceive(op, token, t);
+
     const mock = this.scenario.mocks[op.node] ?? this.scenario.mocks[op.model ?? ''];
     const result = inferResult(this.plan, op, mock);
     const finish = Object.assign(
@@ -231,6 +246,32 @@ export class ScenarioHost {
     );
 
     this.settle([op.node, op.model ?? ''], t, mockLatency(mock, INFER_MS), finish);
+  }
+
+  private inferReading(op: PlanOp, t: number) {
+    const type = this.plan.facts[op.fact ?? 0]?.type as DataType;
+
+    return this.perception?.read(op.model ?? '', type, t, { ...op, maxAgeMs: op.timeoutMs });
+  }
+
+  private perceive(op: PlanOp, token: number, started: number) {
+    const poll = (t: number) => {
+      const fault = this.fault([op.node, op.model ?? ''], t);
+
+      if (this.isCancelled(token) || t >= started + op.timeoutMs || fault?.kind === 'hang') return;
+
+      if (fault?.kind === 'fail' || fault?.kind === 'garbage') return this.run.complete(token, false);
+
+      const reading = this.inferReading(op, t);
+
+      if (!reading) return this.clock.at(t + 20, ORDER.reply, poll);
+
+      this.run.complete(token, true, { num: reading.num, sym: -1 });
+      this.values.set(op.fact ?? 0, { num: reading.num, name: null });
+      this.record({ t, kind: 'result', node: op.node, value: reading.num, name: null });
+    };
+
+    this.clock.at(started, ORDER.reply, poll);
   }
 
   private ask(op: PlanOp, token: number, t: number) {

@@ -271,6 +271,10 @@ export class TryStore {
     return { ok: true };
   }
 
+  videoFile(id) {
+    return path.join(this.dirOf(id), TRY_VIDEO);
+  }
+
   saveVideo({ id, bytes }) {
     const dir = this.dirOf(id);
 

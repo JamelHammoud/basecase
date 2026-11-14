@@ -31,7 +31,14 @@ export interface Motion {
 
 export type DoStep = { kind: 'do'; skill: string; holds: Resource[]; move?: Motion } & Guarded & Named;
 export type SayStep = { kind: 'say'; text: string } & Guarded & Named;
-export type InferStep = { kind: 'infer'; model: string; input: string; output: { type: DataType } } & Guarded & Named;
+export interface VisionSelector {
+  camera?: string;
+  className?: string;
+}
+
+export type InferStep = { kind: 'infer'; model: string; input: string; output: { type: DataType } } & Guarded &
+  Named &
+  VisionSelector;
 export type AskStep = { kind: 'ask'; prompt: string; input?: string; answers: string[] } & Guarded & Named;
 export type IfStep = { kind: 'if'; test: Condition; then: Step[]; else: Step[] } & Named;
 export type WaitStep = { kind: 'wait'; until?: Condition; ms?: number } & Guarded & Named;
@@ -40,7 +47,7 @@ export type TogetherStep = { kind: 'together'; branches: Step[][]; join: 'all' |
 export type Step = DoStep | SayStep | InferStep | AskStep | IfStep | WaitStep | TogetherStep;
 export type GuardedStep = DoStep | SayStep | InferStep | AskStep | WaitStep;
 
-export interface Watcher {
+export interface Watcher extends VisionSelector {
   id: string;
   model: string;
   rateHz: number;

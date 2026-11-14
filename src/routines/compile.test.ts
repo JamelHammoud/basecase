@@ -43,6 +43,33 @@ describe('compileRoutine', () => {
     expect(compile(changed).plan!.hash).not.toBe(a.hash);
   });
 
+  it('preserves camera and class selectors for numeric detector counts', () => {
+    const routine = greetingRoutine();
+
+    routine.watchers[1] = {
+      ...routine.watchers[1],
+      model: 'object-detection',
+      camera: 'front',
+      className: 'cup',
+      publishes: { type: 'number' },
+    };
+    routine.reactions[1].when = { fact: 'person', atLeast: 2 };
+
+    const result = compile(routine);
+
+    expect(result.ok).toBe(true);
+    expect(result.plan?.watchers[1]).toMatchObject({ camera: 'front', className: 'cup', model: 'object-detection' });
+  });
+
+  it('names unavailable models when compiling a real run', () => {
+    const result = compile(greetingRoutine(), { availableModels: [] });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({ code: 'missing-model', message: expect.stringContaining('YOLO11n') }),
+    );
+  });
+
   it('never throws on hostile input', () => {
     const throwing = new Proxy(
       {},

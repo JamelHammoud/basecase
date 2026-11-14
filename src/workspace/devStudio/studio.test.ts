@@ -66,6 +66,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'projectPoints',
   'rangeClashes',
   'readySteps',
+  'recordingPanels',
   'referenceTry',
   'releaseTrainer',
   'robotCalibration',
@@ -96,6 +97,8 @@ const NAMES_BEFORE_THE_SPLIT = [
   'tryLabels',
   'tryLanes',
   'tryWorld',
+  'visionState',
+  'visionTestModel',
   'worldAt',
 ];
 

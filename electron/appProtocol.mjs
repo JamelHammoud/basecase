@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { net, protocol } from 'electron';
+import { isAppUrl } from './appOrigin.mjs';
 import { KERNEL_SCHEME } from './cad-kernel/sandbox/policy.mjs';
 
 export const APP_ORIGIN = 'app://basecase';
@@ -118,5 +119,11 @@ async function fromDevServer(request, { devServer, transformHtml }) {
 export function serveApp(options) {
   const handle = options.devServer ? fromDevServer : fromDist;
 
-  protocol.handle('app', (request) => handle(request, options));
+  protocol.handle('app', (request) => {
+    if (!isAppUrl(request.url, APP_ORIGIN)) return new Response(null, { status: 403 });
+
+    const asset = options.asset?.(request);
+
+    return asset ? respond(asset) : handle(request, options);
+  });
 }

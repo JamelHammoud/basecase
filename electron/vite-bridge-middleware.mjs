@@ -1,3 +1,6 @@
+import { binaryAssetMiddleware } from './binaryAsset.mjs';
+import { modelAsset } from './hub/modelAsset.mjs';
+import { tryVideoAsset } from './library/tryVideo.mjs';
 import { BasecaseBackendService } from './backend-service.mjs';
 import { guardBridge } from './bridgeGuard.mjs';
 import { earthPostRoutes } from './earth/routes.mjs';
@@ -209,6 +212,14 @@ function installBridge(server) {
   server.httpServer?.once('close', stopAgent);
   server.httpServer?.once('close', () => phone.dispose());
   process.once('exit', stopAgent);
+  server.middlewares.use(
+    '/api',
+    guardBridge(
+      binaryAssetMiddleware(
+        (request) => modelAsset(backend.hub.models, request) ?? tryVideoAsset(backend.tries, request),
+      ),
+    ),
+  );
   server.middlewares.use('/api/events', guardBridge(eventsMiddleware(backend)));
   server.middlewares.use('/api/bridge', guardBridge(phoneBridgeMiddleware(phone)));
   server.middlewares.use('/api/bridge', guardBridge(bridgeMiddleware(backend)));

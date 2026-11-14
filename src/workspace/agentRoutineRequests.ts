@@ -34,6 +34,7 @@ export function scenarioFrom(input: unknown): Scenario {
   const seconds = typeof s.seconds === 'number' && s.seconds > 0 ? Math.min(s.seconds, MAX_SECONDS) : 20;
 
   return {
+    ...(s.tier === 'L0' || s.tier === 'L1' || s.tier === 'L2' ? { tier: s.tier } : {}),
     covers: typeof s.covers === 'string' ? s.covers : 'run',
     world: Array.isArray(s.world) ? (s.world as Scenario['world']) : [],
     mocks: isRecord(s.mocks) ? (s.mocks as Scenario['mocks']) : {},
@@ -100,7 +101,9 @@ const runRoutine: Handler = async (payload, ctx) => {
 
   ctx.setAction('Running the Routine');
 
-  return payload.live === true ? ctx.routines.runLive(scenario) : ctx.routines.runHeadless(scenario);
+  return payload.live === true || scenario.tier === 'L2'
+    ? ctx.routines.runLive(scenario)
+    : ctx.routines.runHeadless(scenario);
 };
 
 export const ROUTINE_HANDLERS: Record<string, Handler> = {

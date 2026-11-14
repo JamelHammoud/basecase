@@ -1,6 +1,6 @@
 # electron/hub/
 
-The Hugging Face account, Publish and Install Skill's downloads: the sealed token, the Hub's HTTP commit API and the checks on every name and address. Before editing here, read:
+The Hugging Face account, Publish, Install Skill and vision model downloads: the sealed token, the Hub's HTTP commit API and the checks on every name and address. Before editing here, read:
 
 - [Cases](../../docs/guide/cases.md) (§8h, Publishing to Hugging Face)
 - [Skills](../../docs/guide/skills.md) (§8i, Publishing and installing)

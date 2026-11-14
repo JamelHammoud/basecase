@@ -148,16 +148,26 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
     model: ctx.sim.model,
     fixed: ctx.fixedCameras,
     names,
+    inspect: true,
     frames: [{ t: 0, poses }],
   });
   const missing = seen.missing.length
     ? ` No camera ${seen.missing.join(', ')}; cameras: ${seen.available.join(', ')}.`
     : '';
 
+  const detections = seen.shots.map((shot) => ({ camera: shot.view, detections: shot.detections ?? [] }));
   const calibration = (await ctx.calibrationErrors?.().catch(() => '')) ?? '';
 
   return {
-    text: [`Ran ${duration(seconds)}.`, stateLine(ctx, poses), missing.trim(), calibration].filter(Boolean).join(' '),
+    text: [
+      `Ran ${duration(seconds)}.`,
+      stateLine(ctx, poses),
+      missing.trim(),
+      `Vision: ${JSON.stringify(detections)}`,
+      calibration,
+    ]
+      .filter(Boolean)
+      .join(' '),
     images: seen.shots,
   };
 }

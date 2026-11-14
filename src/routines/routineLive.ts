@@ -4,6 +4,8 @@ import type { RobotJoint } from '../types/robotics';
 import type { RoutineKit } from './physicsKit';
 import { PhysicsRun } from './physicsRun';
 import type { Plan } from './planTypes';
+import type { VisionResult } from '../vision/protocol';
+import { RoutineVision } from './routineVision';
 import type { Scenario, TraceEvent } from './scenarioTypes';
 
 export interface LiveRoutineInput {
@@ -22,15 +24,24 @@ export interface LiveUpdate {
 
 export class LiveRoutine {
   private readonly run: PhysicsRun;
+  private readonly vision: RoutineVision;
   private sentEvents = 0;
   private sentSaid = 0;
 
-  private constructor(run: PhysicsRun) {
+  private constructor(run: PhysicsRun, vision: RoutineVision) {
     this.run = run;
+    this.vision = vision;
   }
 
   static async start(mj: MainModule, engine: SimEngine, input: LiveRoutineInput): Promise<LiveRoutine> {
-    return new LiveRoutine(await PhysicsRun.start({ mj, engine, model: engine.sim, ...input }));
+    const vision = new RoutineVision();
+    const run = await PhysicsRun.start({ mj, engine, model: engine.sim, ...input, perception: vision });
+
+    return new LiveRoutine(run, vision);
+  }
+
+  see(result: VisionResult, ageMs = 0) {
+    this.vision.push({ ...result, timestamp: this.run.t - ageMs });
   }
 
   advance(seconds: number): LiveUpdate {

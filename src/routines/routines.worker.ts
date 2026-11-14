@@ -11,7 +11,7 @@ import { runPhysics, type PhysicsScenarioResult } from './physicsRun';
 import type { Plan } from './planTypes';
 import type { Handoff, TransitionProof } from './schema';
 import { runScenario } from './scenario';
-import type { Scenario } from './scenarioTypes';
+import type { Scenario, ScenarioResult } from './scenarioTypes';
 import { errorMessage } from '../utils/errorMessage';
 
 export interface ScenarioOutcome {
@@ -31,12 +31,14 @@ export type RoutinesRequest =
   | ({ type: 'kit' } & SceneRequest)
   | ({ type: 'prove'; pair: Handoff } & SceneRequest)
   | { type: 'test'; plan: Plan }
+  | { type: 'scenario'; plan: Plan; scenario: Scenario }
   | { type: 'physics'; plan: Plan; scenario: Scenario; model: SimModel; joints: RobotJoint[]; kit: RoutineKit };
 
 export type RoutinesResponse =
   | { type: 'kit'; kit: RoutineKit }
   | { type: 'prove'; proof: TransitionProof | null }
   | { type: 'test'; scenarios: ScenarioOutcome[] }
+  | { type: 'scenario'; result: ScenarioResult }
   | { type: 'physics'; result: PhysicsScenarioResult }
   | { type: 'error'; message: string };
 
@@ -56,6 +58,8 @@ async function testPlan(plan: Plan): Promise<ScenarioOutcome[]> {
 }
 
 async function handle(msg: RoutinesRequest): Promise<RoutinesResponse> {
+  if (msg.type === 'scenario') return { type: 'scenario', result: await runScenario(msg.plan, msg.scenario) };
+
   if (msg.type === 'test') return { type: 'test', scenarios: await testPlan(msg.plan) };
 
   mj ??= await loadMujoco();

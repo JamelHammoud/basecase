@@ -5,6 +5,7 @@ export class TryStore {
   strip(id: string): Uint8Array | null;
   session(id: string): Uint8Array | null;
   appendSession(id: string, text: string): { ok: boolean };
+  videoFile(id: string): string;
   saveVideo(payload: { id: string; bytes: Uint8Array }): { ok: boolean };
   save(payload: { manifest: unknown; recording?: Uint8Array | null; session?: Uint8Array | null }): { ok: true };
   saveStrip(payload: { id: string; bytes: Uint8Array }): { ok: boolean };

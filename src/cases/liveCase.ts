@@ -6,6 +6,8 @@ import type { Plan } from '../routines/planTypes';
 import type { RobotJoint } from '../types/robotics';
 import { caseFactReader, caseSignalNames, sampleSignals, type CaseFactReader, type CaseFacts } from './caseFacts';
 import { CaseLogicRun, judgeSoFar, usesBodySkills } from './caseLogic';
+import type { VisionResult } from '../vision/protocol';
+import { RoutineVision } from '../routines/routineVision';
 import type { Case } from './schema';
 
 export interface LiveCaseInput {
@@ -19,6 +21,7 @@ const STEP_S = 0.02;
 const JUDGE_EVERY_S = 0.25;
 
 export class LiveCase {
+  private readonly vision: RoutineVision;
   private readonly engine: SimEngine;
   private readonly kase: Case;
   private readonly reader: CaseFactReader;
@@ -31,7 +34,8 @@ export class LiveCase {
   private t = 0;
   private owed = 0;
 
-  private constructor(engine: SimEngine, kase: Case, logic: CaseLogicRun | null) {
+  private constructor(engine: SimEngine, kase: Case, logic: CaseLogicRun | null, vision: RoutineVision) {
+    this.vision = vision;
     this.engine = engine;
     this.kase = kase;
     this.logic = logic;
@@ -41,8 +45,9 @@ export class LiveCase {
 
   static async start(engine: SimEngine, input: LiveCaseInput, drive: () => Controller): Promise<LiveCase> {
     const { kase, plan, kit } = input;
+    const vision = new RoutineVision();
 
-    if (!plan) return new LiveCase(engine, kase, null);
+    if (!plan) return new LiveCase(engine, kase, null, vision);
 
     const options = { skills: kit?.policies ?? [], drive: kit?.drive };
     const body = usesBodySkills(plan) ? routineBody(engine.sim, input.joints, options) : null;
@@ -50,9 +55,16 @@ export class LiveCase {
     if (usesBodySkills(plan) && !body) throw new Error(NO_BODY);
 
     const handBack = () => engine.setController(drive());
-    const logic = await CaseLogicRun.start({ plan, seconds: kase.task.seconds, engine, body, handBack });
+    const logic = await CaseLogicRun.start({
+      plan,
+      seconds: kase.task.seconds,
+      engine,
+      body,
+      handBack,
+      perception: vision,
+    });
 
-    return new LiveCase(engine, kase, logic);
+    return new LiveCase(engine, kase, logic, vision);
   }
 
   get facts(): CaseFacts {
@@ -61,6 +73,10 @@ export class LiveCase {
 
   get driving(): boolean {
     return this.logic?.driving ?? true;
+  }
+
+  see(result: VisionResult, ageMs = 0) {
+    this.vision.push({ ...result, timestamp: this.t * 1000 - ageMs });
   }
 
   input(name: string, value: CaseFacts[string]) {

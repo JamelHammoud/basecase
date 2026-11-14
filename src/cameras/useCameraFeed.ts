@@ -1,4 +1,6 @@
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from 'react';
+import { sceneCamera } from '../datasets/cameras';
+import { onVisionCameras, visionCameras } from '../vision/client';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { CameraLink } from '../sim/useSimWorker';
 import type { ScenePart } from '../types/robotics';
@@ -8,6 +10,7 @@ import type { CameraView } from './views';
 
 export interface CameraFeedInput {
   active: boolean;
+  eligible?: boolean;
   parts: ScenePart[];
   world: ScenePart[];
   model: SimModel | null;
@@ -22,13 +25,31 @@ export interface CameraFeed {
   stream: (stream: FeedStream) => () => void;
 }
 
+function inferenceViews(input: {
+  parts: ScenePart[];
+  world: ScenePart[];
+  views: CameraView[];
+  inferred: readonly string[];
+}) {
+  const { parts, world, views, inferred } = input;
+
+  if (inferred.includes('scene') && !views.some((view) => view.key === 'scene'))
+    return [...views, sceneCamera(parts, world)];
+
+  return views;
+}
+
 export function useCameraFeed(input: CameraFeedInput): CameraFeed {
   const canvases = useRef<Canvases>(new Map());
   const streams = useRef(new Set<FeedStream>());
   const feedRef = useRef<LiveFeed | null>(null);
   const [streaming, setStreaming] = useState(0);
   const { parts, world, model, views, enlarged, connectCameras } = input;
-  const active = input.active || streaming > 0;
+  const inferred = useSyncExternalStore(onVisionCameras, visionCameras, visionCameras);
+  const drawnViews = inferenceViews({ parts, world, views, inferred });
+  const active =
+    input.eligible !== false &&
+    (input.active || streaming > 0 || drawnViews.some((view) => inferred.includes(view.key)));
   const onFrames = useEffectEvent((frames: number) => input.onFrames(frames));
 
   useEffect(() => {
@@ -57,8 +78,8 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
   }, [active, model]);
 
   useEffect(() => {
-    if (active) feedRef.current?.views(views, input.active ? { enlarged } : null);
-  }, [active, input.active, views, enlarged]);
+    if (active) feedRef.current?.views(drawnViews, input.active ? { enlarged } : null);
+  }, [active, input.active, drawnViews, enlarged]);
 
   return {
     canvasRef: (key) => (canvas) => {

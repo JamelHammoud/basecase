@@ -11,7 +11,12 @@ describe('the ML node catalogue', () => {
     for (const node of MODEL_NODES) {
       expect(node.model && node.licence && node.label).toBeTruthy();
       expect(node.runsOn.length).toBeGreaterThan(0);
-      expect(node.measuredMs).toEqual({});
+
+      for (const [device, milliseconds] of Object.entries(node.measuredMs)) {
+        expect(node.runsOn).toContain(device);
+        expect(Number.isFinite(milliseconds)).toBe(true);
+        expect(milliseconds).toBeGreaterThan(0);
+      }
     }
   });
 

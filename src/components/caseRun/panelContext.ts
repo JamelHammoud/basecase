@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import type { ConsoleSignal } from '../../cases/console/format';
 import type { CaseAction, PanelKind, PanelOf } from '../../cases/console/panelKinds';
+import type { StoredTry } from '../../cases/tryFile';
 import type { SignalBus } from '../../cases/console/signalBus';
 import type { SignalScope } from '../../cases/console/signalNames';
 import type { CaseWorld } from '../../cases/worldSet';
@@ -12,6 +13,7 @@ import type { CameraTiles } from '../cameras/useCameraTiles';
 export interface StudioPanelContext {
   cases: Cases;
   cameras: CameraTiles;
+  recorded?: StoredTry | null;
   onShowRobots: () => void;
 }
 

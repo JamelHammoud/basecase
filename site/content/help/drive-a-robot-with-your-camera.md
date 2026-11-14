@@ -43,7 +43,7 @@ This works on humanoids and fixed arms. A rover, or a robot with legs and no arm
 
 ![The camera's tile with your skeleton drawn over it, and the robot raising its right arm](/help/drive-a-robot-with-your-camera/driving.png)
 
-To stop, press [[Esc]]. The camera turns off.
+To stop driving, press [[Esc]]. The camera turns off when nothing else is using it.
 
 You can also press [[⌘K]] and choose **Drive with Camera**.
 

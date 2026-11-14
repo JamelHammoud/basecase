@@ -1,4 +1,4 @@
-import type { Capability, Condition, DataType, Motion, Resource, Step } from './schema';
+import type { Capability, Condition, DataType, Motion, Resource, Step, VisionSelector } from './schema';
 import type { NodeInput } from './nodes';
 
 export const PLAN_SCHEMA = 1;
@@ -38,7 +38,7 @@ export interface PlanText {
   slots: TextSlot[];
 }
 
-export interface PlanOp {
+export interface PlanOp extends VisionSelector {
   kind: Step['kind'];
   node: string;
   owner: number;
@@ -74,7 +74,7 @@ export interface PlanReaction {
   entry: number;
 }
 
-export interface PlanWatcher {
+export interface PlanWatcher extends VisionSelector {
   id: string;
   model: string;
   rateHz: number;

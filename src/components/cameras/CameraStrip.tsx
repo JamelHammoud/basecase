@@ -23,7 +23,7 @@ export const CameraStrip: React.FC<Omit<CameraTilesInput, 'active'>> = (props) =
     },
   });
 
-  if (!present) return null;
+  if (!present || props.eligible === false) return null;
 
   return (
     <div

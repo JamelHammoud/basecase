@@ -1,7 +1,7 @@
 ---
 title: Watch what the robot's cameras see
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 10
@@ -28,6 +28,8 @@ covers:
   - src/cameras/optics.ts
   - src/workspace/viewCommands.tsx
   - src/agent/agentOperate.ts
+  - src/vision/client.ts
+  - src/components/cameras/VisionOverlay.tsx
 ---
 
 You can put a camera part on your robot and watch its live view beside the canvas while the simulation runs. The view is drawn through the camera's real lens.
@@ -43,6 +45,16 @@ You can put a camera part on your robot and watch its live view beside the canva
 You can also find **Show Simulate**, **Collapse Camera Views** and **Expand Camera Views** in [[⌘K]]. To show or hide the views, press [[⇧V]]. Collapsed views stop drawing.
 
 When a robot follows [your arms](/help/drive-a-robot-with-your-camera) or [your hand or face](/help/drive-a-case-with-your-hand-face-midi-or-voice), your computer's camera is the first tile, mirrored. If the robot follows your arms, your skeleton is drawn over the image.
+
+## Read detections
+
+Camera tiles draw boxes with each detected object's class and score. The first use downloads the object detector, then keeps it on this computer. Detection runs at up to five frames per second for each camera, independently of the camera's display rate.
+
+![The wrist camera in Pick Up a Block showing the block detection box and score](/help/run-vision-on-a-camera/wrist-block.png)
+
+The same boxes appear on a running Case's camera panels and on saved camera video at the playhead. Image captures keep the camera's original pixels without the boxes.
+
+A [Routine](/help/build-a-routine) can use a detection to start a reaction. The agent can select a camera and class, such as a cup, when you describe the Routine.
 
 ## Make the camera move with the robot
 
@@ -70,6 +82,8 @@ The right-click menu on a camera view also has these options:
 ## Let the agent look
 
 In the agent's box, type `/operate` followed by a task, such as "drive up to the box and stop." The agent drives the robot in the simulation, one short step at a time. Before each step, it looks at the scene view and every camera view, the same way you would at the controls.
+
+Each camera read also gives the agent the detections from that frame.
 
 Trained policies can't see camera images, but they can sense depth through a camera as a grid of distances. The agent sets this up when a skill needs it.
 

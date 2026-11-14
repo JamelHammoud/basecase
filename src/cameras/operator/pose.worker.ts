@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import { VisionFrameTap } from '../../vision/frameTap';
 import type { InputRobot } from '../../sim/inputTypes';
 import { createGestureTap } from '../gestures/gestureTap';
 import {
@@ -13,7 +14,7 @@ import { playback, RUNNERS, type Picture, type Runner } from './runners';
 import { createFrameQueue } from './workerFrames';
 
 interface Lane {
-  robot: InputRobot;
+  robot: InputRobot | null;
   runner: Runner | null;
   fed: boolean;
   feedTimer: ReturnType<typeof setTimeout> | null;
@@ -21,6 +22,7 @@ interface Lane {
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 const lanes = new Map<LandmarkKind, Lane>();
+const vision = new VisionFrameTap();
 
 let lastTimestamp = 0;
 let closed = false;
@@ -36,6 +38,7 @@ const fail = (e: unknown, kind?: LandmarkKind) =>
 const detecting = (lane: Lane): lane is Lane & { runner: Runner } => !!lane.runner && !lane.fed;
 
 function detect(picture: Picture, seenAt: number) {
+  vision.send('operator', picture, seenAt);
   lastTimestamp = Math.max(performance.now(), lastTimestamp + 1);
 
   for (const [kind, lane] of lanes) {
@@ -52,7 +55,7 @@ function detect(picture: Picture, seenAt: number) {
 }
 
 const frames = createFrameQueue({
-  wanted: () => !closed && [...lanes.values()].some(detecting),
+  wanted: () => !closed && (vision.keys.includes('operator') || [...lanes.values()].some(detecting)),
   detect,
   fail: (e) => fail(e),
 });
@@ -154,6 +157,7 @@ function close() {
 }
 
 const handlers: { [K in PoseRequest['type']]: (msg: Extract<PoseRequest, { type: K }>) => void } = {
+  vision: ({ port, cameras }) => vision.configure(port, cameras),
   open: ({ frames: stream }) => {
     if (stream) frames.pump(stream).catch((e: unknown) => fail(e));
   },

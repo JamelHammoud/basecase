@@ -7,6 +7,7 @@ import { SKILL_MS } from '../routines/scenarioMocks';
 import type { TraceEvent } from '../routines/scenarioTypes';
 import type { Capability, Routine, SkillContract } from '../routines/schema';
 import { evaluateContract, type Contract, type Trace } from '../skills/contract';
+import type { RoutinePerception } from '../routines/routineVision';
 import type { CaseFacts, FactValue } from './caseFacts';
 
 export const DRIVE_SKILL = 'drive';
@@ -75,6 +76,7 @@ export interface CaseLogicInput {
   engine: SimEngine;
   handBack: () => void;
   body: RoutineBody | null;
+  perception?: RoutinePerception;
 }
 
 type Skills = { body: string | null; head: string | null };
@@ -92,6 +94,7 @@ export class CaseLogicRun {
 
   private constructor(input: CaseLogicInput, rig: ScenarioRig) {
     this.rig = rig;
+    rig.host.perception = input.perception ?? null;
     this.engine = input.engine;
     this.body = input.body;
     this.handBack = input.handBack;

@@ -41,7 +41,7 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
         onOpenSettings={() => openSettings()}
       />
       <div className="absolute top-[44px] left-[52px] right-[8px] bottom-[8px] flex">
-        <CaseRunProvider core={core} actions={actions}>
+        <CaseRunProvider active={props.active} core={core} actions={actions}>
           <WorkspaceLeftSidebar
             core={core}
             actions={actions}

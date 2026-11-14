@@ -8,6 +8,8 @@ import {
   type RecordedScene,
   type Verdict,
 } from '../cases/console/recordedSignals';
+import { recordedVisionBus, type RecordedVisionBus } from '../cases/console/recordedVision';
+import { onVisionResults, visionResults } from '../vision/resultStore';
 import { workerJudge } from '../cases/goalJudge';
 import type { ProbeWorld } from '../cases/probes';
 import { caseProbeWorld } from '../cases/tries';
@@ -27,7 +29,7 @@ interface RecordedInput {
 
 interface Held {
   key: string;
-  bus: RecordedBus;
+  bus: RecordedVisionBus;
 }
 
 const bareWorld = (model: SimModel, rig: Rig): ProbeWorld => ({
@@ -63,10 +65,13 @@ const consoleOf = ({ caseConsole, cameras }: RecordedInput) => ({
   cameras,
 });
 
-function busOf(scene: RecordedScene, input: RecordedInput): RecordedBus {
+function busOf(scene: RecordedScene, input: RecordedInput): RecordedVisionBus {
   const topics = recordingTopics(scene.recording);
 
-  return topicBus(recordedBus(withMeaning(recordedTrack(scene, consoleOf(input)), topics)), topics);
+  return recordedVisionBus(
+    topicBus(recordedBus(withMeaning(recordedTrack(scene, consoleOf(input)), topics)), topics),
+    input.timeline.record?.id,
+  );
 }
 
 export function useRecordedSignals(input: RecordedInput): RecordedBus | null {
@@ -120,6 +125,16 @@ export function useRecordedSignals(input: RecordedInput): RecordedBus | null {
   useEffect(() => {
     bus?.seek(frame);
   }, [bus, frame]);
+
+  useEffect(() => {
+    if (!bus || !timeline.open) return;
+
+    const receive = () => visionResults().forEach((result) => bus.see(result));
+
+    receive();
+
+    return onVisionResults(receive);
+  }, [bus, timeline.open]);
 
   return timeline.open ? bus : null;
 }

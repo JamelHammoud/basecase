@@ -13,6 +13,7 @@ export const HUB_CALLS = {
   'hub:publish': (hub, payload) => hub.publish(withBytes(payload)),
   'hub:skill-files': (hub, payload) => hub.skillFiles(payload),
   'hub:dataset-files': (hub, payload) => hub.datasetFiles(payload),
+  'hub:model-file': (hub, payload) => hub.modelFile(payload),
 };
 
 export const registerHubHandlers = (ipcMain, hub) => registerCalls(ipcMain, HUB_CALLS, hub);

@@ -80,6 +80,7 @@ const uploadedImage = (body: Body) => ({
 
 const ROUTES: Record<string, Route> = {
   'acp-status': () => WEB_AGENT_STATUS,
+  'try-video': () => null,
   'sourced-parts': () => [],
   'sourced-mesh': () => ({ data: null }),
   'acp-live-runs': () => [],

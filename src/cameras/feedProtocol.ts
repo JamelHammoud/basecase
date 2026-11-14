@@ -8,6 +8,7 @@ export type FeedRequest =
   | { type: 'model'; model: SimModel | null }
   | { type: 'views'; views: CameraView[]; sizes: Record<string, [number, number]> }
   | { type: 'port'; port: MessagePort }
+  | { type: 'vision'; port: MessagePort; cameras: string[] }
   | { type: 'stream'; id: number; key: string; size: [number, number]; fps: number }
   | { type: 'unstream'; id: number };
 

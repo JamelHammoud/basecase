@@ -7,6 +7,9 @@ import { GESTURE_EVENT } from '../cases/gestures';
 import { robotFacts } from '../cases/robotFit';
 import { movableWorld } from '../cases/scale';
 import { onInputEvent } from '../sim/inputEvents';
+import { RecordedCameraSources } from '../components/cameras/RecordedCameraSources';
+import { useConsoleVision } from './useConsoleVision';
+import { recordedFeedEligible, recordedVideoKeys, useRecordedVideos } from '../components/cameras/useRecordedVideos';
 import { useCameraTiles } from '../components/cameras/useCameraTiles';
 import { AddPanelPicker } from '../components/caseRun/AddPanelPicker';
 import { CaseRunArea } from '../components/caseRun/CaseRunArea';
@@ -52,40 +55,53 @@ function useActions(core: WorkspaceCore) {
 }
 
 interface ProviderProps {
+  active: boolean;
   core: WorkspaceCore;
   actions: WorkspaceActions;
   children: React.ReactNode;
 }
 
-export function CaseRunProvider({ core, actions, children }: ProviderProps) {
+function consoleActivity(active: boolean, caseRun: WorkspaceCore['caseRun']) {
+  return { visible: active && caseRun.open, live: active && caseRun.live && !caseRun.playback };
+}
+
+export function CaseRunProvider({ active, core, actions, children }: ProviderProps) {
   const { caseRun, simTraining, posing, parts } = core;
   const { sim, cases } = simTraining;
-  const { open, caseConsole, layout, kase } = caseRun;
+  const { caseConsole, layout, kase } = caseRun;
   const { timeline } = cases;
+  const { visible, live: liveSignals } = consoleActivity(active, caseRun);
+
+  useConsoleVision(caseConsole, visible);
+
+  const recordedTry = useRecordedVideos(timeline);
+  const videoKeys = recordedVideoKeys(recordedTry);
   const wantsCameras = caseConsole.panels.some((p) => p.kind === 'camera');
   const cameras = useCameraTiles({
     parts,
     sim,
     cameras: actions.cameras,
     patchPart: actions.edits.patchPart,
-    active: () => open && wantsCameras,
+    active: () => visible && wantsCameras,
+    eligible: recordedFeedEligible(visible, caseRun.playback, videoKeys),
   });
+  const cameraKeys = [...new Set([...cameras.views.map((view) => view.key), ...videoKeys])];
   const live = useConsoleSignals({
-    open: caseRun.live && !caseRun.playback,
+    open: liveSignals,
     kase: cases.active,
     caseConsole,
     sim,
     running: cases.attempt.phase === 'running',
     rig: posing.rig,
     parts,
-    cameras: cameras.views.map((v) => v.key),
+    cameras: cameraKeys,
   });
   const recorded = useRecordedSignals({
     timeline,
     model: sim.model,
     rig: posing.rig,
     caseConsole,
-    cameras: cameras.views.map((v) => v.key),
+    cameras: cameraKeys,
   });
   const bus = recorded ?? live;
   const { can, run } = useActions(core);
@@ -107,14 +123,14 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
   const pressed = useEffectEvent((gesture: string) => gestureActions(caseConsole.panels, gesture).forEach(fire));
 
   useEffect(() => {
-    if (!open) return;
+    if (!visible) return;
 
     return onInputEvent(({ name, value }) => {
       if (name === GESTURE_EVENT) pressed(String(value));
     });
-  }, [open]);
+  }, [visible]);
 
-  const value: CenterValue | null = open
+  const value: CenterValue | null = visible
     ? {
         ctx: {
           bus,
@@ -132,6 +148,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
           studio: {
             cases,
             cameras,
+            recorded: recordedTry,
             onShowRobots: () => {
               caseRun.leave();
               showPartsSection(core, 'Robots');
@@ -148,7 +165,8 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
   return (
     <CaseRunContext value={value}>
       {children}
-      {open && cameras.menu}
+      <RecordedCameraSources active={visible} recorded={recordedTry} console={caseConsole} timeline={timeline} />
+      {visible && cameras.menu}
       {value && <Adding value={value} />}
     </CaseRunContext>
   );

@@ -1,4 +1,5 @@
 import type { RefObject } from 'react';
+import { liveModelErrors, RoutineModelError } from '../routines/liveModels';
 import type { LiveUpdate } from '../routines/routineLive';
 import { inRoutinesWorker } from '../routines/routinesClient';
 import type { Scenario } from '../routines/scenarioTypes';
@@ -33,12 +34,29 @@ export function useRoutineRuns({ pending, sim, sceneRef, setRun }: RunsInput) {
 
     if (!found?.compiled.ok) return { started: false, message: NOT_COMPILED, errors: found?.compiled.errors };
 
+    const errors = liveModelErrors(found.compiled.plan);
+
+    if (errors.length) return { started: false, message: errors[0].message, errors };
+
     setRun(() => ({ live: true, done: false, trace: [], said: [], failures: [] }));
 
     const input = { plan: found.compiled.plan, scenario, joints: joints(), kit: found.kit };
-    const started = await sim.runRoutine(input, (u) => setRun((run) => appendUpdate(run, u)));
+    const refusal: { message?: string; errors?: RoutineModelError['errors'] } = {};
+    const started = await sim
+      .runRoutine(input, (u) => setRun((run) => appendUpdate(run, u)))
+      .catch((reason: unknown) => {
+        const message = reason instanceof Error ? reason.message : String(reason);
 
-    return started ? { started: true } : { started: false, message: sim.error ?? 'The simulator didn’t start.' };
+        Object.assign(refusal, { message, ...(reason instanceof RoutineModelError ? { errors: reason.errors } : {}) });
+
+        setRun(() => ({ live: true, done: true, trace: [], said: [], failures: [message] }));
+
+        return false;
+      });
+
+    return started
+      ? { started: true }
+      : { started: false, message: sim.error ?? 'The simulator didn’t start.', ...refusal };
   };
 
   const runHeadless = async (scenario: Scenario) => {
@@ -46,8 +64,17 @@ export function useRoutineRuns({ pending, sim, sceneRef, setRun }: RunsInput) {
 
     if (!found?.compiled.ok) return { started: false, message: NOT_COMPILED, errors: found?.compiled.errors };
 
-    const model = await sim.buildModel();
     const { plan } = found.compiled;
+
+    if (scenario.tier === 'L0') {
+      const { result } = await inRoutinesWorker({ type: 'scenario', plan, scenario });
+
+      setRun(() => ({ live: false, done: true, trace: result.trace, said: result.said, failures: result.failures }));
+
+      return { started: true, passed: result.passed, said: result.said, failures: result.failures, fellAt: null };
+    }
+
+    const model = await sim.buildModel();
     const { result } = await inRoutinesWorker({
       type: 'physics',
       plan,

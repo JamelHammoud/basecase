@@ -3,9 +3,10 @@ import { bridge, fail, text } from './shared.mjs';
 
 const ROUTINE_SHAPE =
   'A Routine is plain JSON: { schema: 1, id, name, sentence, requires: [camera|microphone|speaker|legs|wheels|arms|head|depth], ' +
-  'base: a do step that loops (walk), watchers: [{ id, model, rateHz, maxAgeMs, publishes: { type } }], ' +
+  'base: a do step that loops (walk), watchers: [{ id, model, rateHz, maxAgeMs, publishes: { type }, camera?, className? }], ' +
   'reactions: [{ id, when: condition, cooldownMs, onRetrigger: ignore|restart|queue, body: keepGoing|stopFirst, steps }], safeStop: settle }. ' +
-  'Steps: do { skill, holds }, say { text }, infer { model, input, output: { type } }, ask { prompt, input?, answers }, ' +
+  'Steps: do { skill, holds }, say { text }, infer { model, input, output: { type }, camera?, className? }, ask { prompt, input?, answers }, ' +
+  'For a named object use object-detection with className, such as cup, and camera for the camera key. Without className any detected object counts. ' +
   'if { test, then, else }, wait { until? ms? }, together { branches, join }. Every do, say, infer, ask and wait has timeoutMs, onTimeout and onFail; ' +
   'an empty path ends the reaction. Give steps short ids (recognize, lookAt) so traces and faults can name them. ' +
   'Conditions: { fact, is | atLeast | atMost }, { all }, { any }, { not }. {name} in a Say needs an If on the face check above it. ' +
@@ -14,6 +15,10 @@ const ROUTINE_SHAPE =
 
 const scenario = z
   .object({
+    tier: z
+      .enum(['L0', 'L1', 'L2'])
+      .optional()
+      .describe('L0 uses scenario mocks, L1 adds physics, L2 runs live with rendered camera detections'),
     covers: z.string().max(200).optional(),
     world: z
       .array(
@@ -88,7 +93,7 @@ export const runRoutine = {
   config: {
     title: 'Run the Routine',
     description:
-      'Runs the Routine in MuJoCo with the robot’s Motor Kit skills, while the scenario feeds what the robot sees and hears. ' +
+      'Runs the Routine in MuJoCo with the robot’s Motor Kit skills. Headless runs use scenario perception. Live runs read actual camera detections. ' +
       'With live: true it runs on the canvas, lighting each node of the flow as it runs, and returns { started } at once. ' +
       'Otherwise it runs headless and returns { passed, said, failures, fellAt }. A Routine that doesn’t compile never runs.',
     inputSchema: { scenario, live: z.boolean().optional() },

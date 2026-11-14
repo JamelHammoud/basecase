@@ -19,6 +19,7 @@ import { type ScenarioRig, scenarioResult, startScenario } from './scenario';
 import { CONTROL_PERIOD_MS, SKILL_MS } from './scenarioMocks';
 import type { Scenario, ScenarioResult } from './scenarioTypes';
 import type { Motion } from './schema';
+import type { RoutinePerception } from './routineVision';
 import { runClock } from '../utils/duration';
 
 export interface PhysicsSample {
@@ -41,6 +42,7 @@ export interface PhysicsRunInput {
   joints: RobotJoint[];
   kit: RoutineKit;
   engine?: SimEngine;
+  perception?: RoutinePerception;
 }
 
 const SAMPLE_EVERY_MS = 50;
@@ -85,6 +87,7 @@ export class PhysicsRun {
 
   private constructor(input: PhysicsRunInput, rig: ScenarioRig, body: RoutineBody) {
     this.rig = rig;
+    rig.host.perception = input.perception ?? null;
     this.body = body;
     this.ownsEngine = !input.engine;
     this.engine = input.engine ?? new SimEngine(input.mj, input.model);

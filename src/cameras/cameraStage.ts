@@ -17,6 +17,7 @@ export interface CameraStageJob {
 export interface CameraFrameRequest {
   poses: Float64Array | null;
   keys: string[];
+  inspect?: boolean;
 }
 
 let stage: LiveStage | null = null;
@@ -31,3 +32,13 @@ export async function loadCameraStage(job: CameraStageJob): Promise<boolean> {
 
 export const renderCameraFrame = (request: CameraFrameRequest): Record<string, ImageBitmap> =>
   stage?.shoot(request.poses, request.keys) ?? {};
+
+export async function inspectedCameraFrame(request: CameraFrameRequest): Promise<Record<string, ImageBitmap>> {
+  const images = renderCameraFrame(request);
+
+  if (!request.inspect) return images;
+
+  for (const [key, image] of Object.entries(images)) images[`vision:${key}`] = await createImageBitmap(image);
+
+  return images;
+}

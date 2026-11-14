@@ -46,8 +46,8 @@ function sighting() {
   };
 }
 
-function bodyRunner(landmarker: PoseLandmarker, robot: InputRobot, watch: WorldWatch): Runner {
-  const follower = createPoseFollower(robot);
+function bodyRunner(landmarker: PoseLandmarker, robot: InputRobot | null, watch: WorldWatch): Runner {
+  const follower = robot ? createPoseFollower(robot) : null;
   const lost = sighting();
 
   return {
@@ -62,7 +62,12 @@ function bodyRunner(landmarker: PoseLandmarker, robot: InputRobot, watch: WorldW
 
       lost(true);
 
-      return { type: 'pose', follow: follower.step({ t: timestamp, world, image }), image: skeleton(image), seenAt };
+      return {
+        type: 'pose',
+        follow: follower?.step({ t: timestamp, world, image }) ?? null,
+        image: skeleton(image),
+        seenAt,
+      };
     },
     close: () => landmarker.close(),
   };
@@ -109,21 +114,33 @@ function faceRunner(landmarker: FaceLandmarker, robot: InputRobot): Runner {
   };
 }
 
-export const RUNNERS: Record<LandmarkKind, (robot: InputRobot, watch: WorldWatch) => Promise<Started>> = {
+const drivingRobot = (robot: InputRobot | null): InputRobot => {
+  if (!robot) throw new Error('Choose a robot to drive.');
+
+  return robot;
+};
+
+export const RUNNERS: Record<LandmarkKind, (robot: InputRobot | null, watch: WorldWatch) => Promise<Started>> = {
   body: (robot, watch) =>
     loadPoseLandmarker().then(({ landmarker, delegate }) => ({
       runner: bodyRunner(landmarker, robot, watch),
       delegate,
     })),
   hand: (robot) =>
-    loadHandLandmarker().then(({ landmarker, delegate }) => ({ runner: handRunner(landmarker, robot), delegate })),
+    loadHandLandmarker().then(({ landmarker, delegate }) => ({
+      runner: handRunner(landmarker, drivingRobot(robot)),
+      delegate,
+    })),
   face: (robot) =>
-    loadFaceLandmarker().then(({ landmarker, delegate }) => ({ runner: faceRunner(landmarker, robot), delegate })),
+    loadFaceLandmarker().then(({ landmarker, delegate }) => ({
+      runner: faceRunner(landmarker, drivingRobot(robot)),
+      delegate,
+    })),
 };
 
-export function playback(feed: FeedRequest, robot: InputRobot): Playback {
+export function playback(feed: FeedRequest, robot: InputRobot | null): Playback {
   if (feed.kind === 'body') {
-    const follower = createPoseFollower(robot);
+    const follower = robot ? createPoseFollower(robot) : null;
     const { samples } = feed;
 
     return {
@@ -133,7 +150,7 @@ export function playback(feed: FeedRequest, robot: InputRobot): Playback {
 
         return {
           type: 'pose',
-          follow: follower.step(sample),
+          follow: follower?.step(sample) ?? null,
           image: sample.image ? skeleton(sample.image) : null,
           seenAt,
         };
@@ -142,7 +159,7 @@ export function playback(feed: FeedRequest, robot: InputRobot): Playback {
   }
 
   if (feed.kind === 'hand') {
-    const follower = createHandFollower(robot);
+    const follower = createHandFollower(drivingRobot(robot));
 
     return {
       count: feed.samples.length,
@@ -150,7 +167,7 @@ export function playback(feed: FeedRequest, robot: InputRobot): Playback {
     };
   }
 
-  const follower = createFaceFollower(robot);
+  const follower = createFaceFollower(drivingRobot(robot));
 
   return {
     count: feed.samples.length,

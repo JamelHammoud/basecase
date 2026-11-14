@@ -1,9 +1,10 @@
+import { keepSharedVideoBlob } from '../../cameras/recorded/videoStore';
 import { loadMujoco } from '../../sim/loadMujoco';
 import type { SimModel } from '../../sim/mjcfTypes';
 import { importedTries, replayedRecording, type BuiltTries, type ImportTarget, type ReplayJob } from './importedTries';
 import type { ReplayPlan } from './kinematicRecording';
 import { readSource, type ImportSource } from './readSource';
-import { DataImportError, type SourceData, type SourceFormat } from './types';
+import { DataImportError, type SourceData, type SourceFormat, type SourceFile, IMPORT_LIMITS } from './types';
 import { columnSpans, mergedSpans, type ColumnSpan } from './units';
 
 export interface SourceSummary {
@@ -26,12 +27,14 @@ export const sourceSpans = (data: SourceData) =>
 
 export function importHandlers() {
   let read: SourceData | null = null;
+  let videos: SourceFile[] = [];
 
   return {
     read: async (source: ImportSource): Promise<SourceSummary | null> => {
       const found = await readSource(source);
 
       read = found?.data ?? null;
+      videos = found?.videos ?? [];
 
       if (!found) return null;
 
@@ -46,8 +49,36 @@ export function importHandlers() {
 
       read = null;
 
-      return importedTries(await loadMujoco(), { model: job.model, data, plan: job.plan, target: job.target });
+      const built = await importedTries(await loadMujoco(), {
+        model: job.model,
+        data,
+        plan: job.plan,
+        target: job.target,
+      });
+
+      await keepImportedVideos(built, videos);
+      videos = [];
+
+      return built;
     },
     replay: async (job: ReplayJob) => replayedRecording(await loadMujoco(), job),
   };
+}
+
+async function keepImportedVideos(built: BuiltTries, files: SourceFile[]) {
+  for (const file of files) {
+    if (file.size > IMPORT_LIMITS.fileBytes) continue;
+
+    const bytes = await file.read();
+    const blob = new Blob([bytes as Uint8Array<ArrayBuffer>]);
+    const tries = built.kept.filter(({ stored }) => stored.videos?.some((video) => video.path === file.path));
+
+    const key = JSON.stringify([tries[0]?.stored.origin, file.path]);
+
+    await keepSharedVideoBlob(
+      key,
+      blob,
+      tries.map(({ stored }) => ({ id: stored.id, path: file.path })),
+    );
+  }
 }

@@ -1,7 +1,7 @@
 ---
 title: Build a Routine
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 9
@@ -77,4 +77,6 @@ If a step needs a part the robot doesn't have, a button above the flow adds one,
 
 A run lasts as long as the Routine's worst case: each step's time limit plus 3 seconds, up to 60 seconds.
 
-Perception models don't run in Basecase. In the simulation, senses give stand-in answers instead of looking at the scene, and **Ask** takes its first answer.
+In a live run, **See Person**, **See Objects**, **Find Faces**, **Obstacle Ahead** and **Body Pose** read camera frames. Detection and depth models download on first use and stay cached on this computer. **Obstacle Ahead** estimates indoor depth in meters.
+
+Scenario tests use stand-in perception unless they run at the rendered-frame tier. **Ask** takes its first answer in scenario tests. Speech and **Look and Answer** aren't part of camera inference.

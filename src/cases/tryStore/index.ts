@@ -1,3 +1,4 @@
+import { deleteVideoBlobs } from '../../cameras/recorded/videoStore';
 import { useEffect, useSyncExternalStore } from 'react';
 import type { Recording } from '../../sim/recorder';
 import { indexedDbStore } from '../../utils/keyValueStore';
@@ -147,6 +148,7 @@ export async function deleteTries(ids: string[]) {
   if (!ids.length) return;
 
   await backend.delete(ids);
+  await deleteVideoBlobs(ids);
 
   const gone = new Set(ids);
 

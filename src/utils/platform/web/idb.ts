@@ -1,7 +1,7 @@
-export type WebStore = 'scenes' | 'models' | 'guides' | 'settings' | 'skills' | 'trained';
+export type WebStore = 'scenes' | 'models' | 'guides' | 'settings' | 'skills' | 'trained' | 'vision-models';
 
-const STORES: WebStore[] = ['scenes', 'models', 'guides', 'settings', 'skills', 'trained'];
-const VERSION = 3;
+const STORES: WebStore[] = ['scenes', 'models', 'guides', 'settings', 'skills', 'trained', 'vision-models'];
+const VERSION = 4;
 
 let opening: Promise<IDBDatabase> | null = null;
 

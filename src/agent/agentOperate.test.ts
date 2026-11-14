@@ -51,7 +51,13 @@ describe('operate', () => {
   it('holds the action, stops, pauses and shows the cameras at the last pose', async () => {
     const sim = fakeSim(true);
     const shoot = vi.fn(async (input: CameraShotInput) => ({
-      shots: [{ view: input.names[0], dataUrl: 'data:image/jpeg;base64,' }],
+      shots: [
+        {
+          view: input.names[0],
+          dataUrl: 'data:image/jpeg;base64,',
+          detections: [{ classId: 41, label: 'cup', score: 0.9, box: [0.1, 0.2, 0.3, 0.4] }],
+        },
+      ],
       missing: [],
       available: ['Scene'],
     }));
@@ -63,6 +69,9 @@ describe('operate', () => {
     expect([...shoot.mock.calls[0][0].frames[0].poses!]).toEqual([1, 2, 3]);
     expect(reply.text).toMatch(/Ran 2 s\. Upright/);
     expect(reply.images).toHaveLength(1);
+    expect(shoot.mock.calls[0][0].inspect).toBe(true);
+    expect(reply.text).toContain('"label":"cup"');
+    expect(reply.images?.[0].detections?.[0].label).toBe('cup');
   });
 
   it('ends with the bench replay errors per joint when a servo was calibrated', async () => {

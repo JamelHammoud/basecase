@@ -1,3 +1,4 @@
+import { VISION_BOX_FIELDS } from './visionSignals';
 import { BUILTIN_GESTURES } from '../../cameras/gestures/builtinGestures';
 import { hasWildcard, isTopicSignal } from '../../topics/topicIndex';
 import { refuse, type Reader } from '../validate';
@@ -8,7 +9,18 @@ export const JOINT_FIELDS = ['target', 'position', 'effort'] as const;
 export const ROBOT_FIELDS = ['height', 'tilt', 'speed', 'travelled', 'x', 'z'] as const;
 export const INPUT_AXES = ['forward', 'left', 'turn', 'lift', 'grip'] as const;
 export const GOAL_FIELDS = ['passed', 'margin', 'failed'] as const;
-export const NAMESPACES = ['time', 'joint', 'robot', 'probe', 'input', 'goal', 'camera', 'gesture', 'topic'] as const;
+export const NAMESPACES = [
+  'time',
+  'joint',
+  'robot',
+  'probe',
+  'input',
+  'goal',
+  'camera',
+  'gesture',
+  'vision',
+  'topic',
+] as const;
 export const OPERATOR_INPUTS = ['camera', 'hand', 'face'];
 
 export type JointField = (typeof JOINT_FIELDS)[number];
@@ -59,6 +71,13 @@ const SHAPERS: Record<string, Shaper> = {
       return 'needs the camera, hand or face input';
 
     return key ? 'camera' : 'must be camera.<name or *>';
+  },
+  vision: ([camera, label, field, ...extra]) => {
+    const valid = camera && label && !extra.length && (!field || field === 'count' || has(VISION_BOX_FIELDS, field));
+
+    return valid
+      ? 'number'
+      : 'must be vision.<camera>.<class> with count, score, x, y, width, height, timestamp or ageMs';
   },
   topic: ([name]) => (name ? 'topic' : TOPIC_REFUSAL),
 };

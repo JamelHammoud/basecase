@@ -1,3 +1,4 @@
+import { connectVisionSource } from '../vision/client';
 import type { SimModel } from '../sim/mjcfTypes';
 import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
@@ -14,6 +15,10 @@ export interface FeedStream {
   fps: number;
   onFrame: (bitmap: ImageBitmap) => void;
 }
+
+let feeds = 0;
+
+export const liveCameraFeeds = () => feeds;
 
 export const streamCost = { frames: 0, ms: 0 };
 
@@ -60,6 +65,10 @@ export class LiveFeed {
 
   private readonly ids = new Map<FeedStream, number>();
 
+  private readonly stopVision: () => void;
+
+  private disposed = false;
+
   private streamId = 0;
 
   private sceneTicket = 0;
@@ -72,7 +81,9 @@ export class LiveFeed {
   constructor(canvases: Canvases, onFrames: (frames: number) => void) {
     const receive = feedReceiver(canvases, this.streams, onFrames);
 
+    feeds++;
     this.worker.onmessage = ({ data }: MessageEvent<FeedEvent>) => receive(data);
+    this.stopVision = connectVisionSource((port, cameras) => this.post({ type: 'vision', port, cameras }, [port]));
   }
 
   link(): MessagePort {
@@ -133,6 +144,11 @@ export class LiveFeed {
   }
 
   dispose(): void {
+    if (this.disposed) return;
+
+    this.disposed = true;
+    feeds--;
+    this.stopVision();
     this.worker.terminate();
     this.streams.clear();
     this.ids.clear();

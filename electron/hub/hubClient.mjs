@@ -231,7 +231,7 @@ export class HubClient {
     });
   }
 
-  async download(path, { maxBytes, label }) {
+  async downloadResponse(path) {
     let url = this.url(path);
 
     for (let hop = 0; hop <= REDIRECTS_MAX; hop += 1) {
@@ -247,9 +247,13 @@ export class HubClient {
 
       if (!res.ok) throw await this.failure(res);
 
-      return readCapped(res, maxBytes, label);
+      return res;
     }
 
     throw new Error('Hugging Face sent too many redirects.');
+  }
+
+  async download(path, { maxBytes, label }) {
+    return readCapped(await this.downloadResponse(path), maxBytes, label);
   }
 }

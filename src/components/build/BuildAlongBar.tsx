@@ -1,9 +1,9 @@
 import React from 'react';
 import {
+  Button,
   ChevronLeftIcon,
   ChevronRightIcon,
   CircleCheckIcon,
-  CloseIcon,
   FloatingIsland,
   IconButton,
   IslandDivider,
@@ -69,14 +69,9 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
           </>
         )}
         <IslandDivider />
-        <IconButton
-          size="sm"
-          title="Close"
-          shortcut="Esc"
-          tooltipSide="bottom"
-          icon={<CloseIcon className="w-4 h-4" />}
-          onClick={buildAlong.close}
-        />
+        <Button size="sm" variant="ghost" onClick={buildAlong.close} title="Done" shortcut="Esc">
+          Done
+        </Button>
       </FloatingIsland>
       {!!step?.callout.length && (
         <ul className="flex flex-wrap justify-center gap-2 max-w-[720px]">

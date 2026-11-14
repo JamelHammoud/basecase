@@ -99,8 +99,21 @@ export function useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraini
   }, [logic]);
 
   const layout = consoleLayout(caseConsole, { desktop: !IS_WEB_DEMO, studio: true });
+  const headed = layout.before.length + layout.after.length > 0;
 
-  return { open: live || playback, live, playback, kase, caseConsole, layout, enter, enterCase, leave, done };
+  return {
+    open: live || playback,
+    live,
+    playback,
+    doneClosesTimeline: playback && headed,
+    kase,
+    caseConsole,
+    layout,
+    enter,
+    enterCase,
+    leave,
+    done,
+  };
 }
 
 export type CaseRun = ReturnType<typeof useCaseRun>;

@@ -79,6 +79,7 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
         <TryTimeline
           timeline={core.simTraining.cases.timeline}
           rig={core.posing.rig}
+          closable={!core.caseRun.doneClosesTimeline}
           onSelectParts={core.setSelectedIds}
         />
       )}

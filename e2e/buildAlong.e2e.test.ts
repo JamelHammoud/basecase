@@ -170,7 +170,7 @@ describe('Build Along', () => {
     await expect.poll(stepShown, { timeout: 180000 }).toBe('1');
     await expect.poll(() => toolbar().getAttribute('data-ready')).toBe('true');
 
-    await app.page.keyboard.press('Escape');
+    await toolbar().getByRole('button', { name: /^Done/ }).click();
     await expect.poll(() => toolbar().count()).toBe(0);
     expect(app.errors).toEqual([]);
   }, 240000);

@@ -61,7 +61,7 @@ The canvas draws the robot's base where the camera sees it, and its path so far.
 
 ![The tracked path running from the robot to the spot on the canvas, with the try's clock in the Try section](/help/try-a-case-on-your-real-robot/tracking.png)
 
-The try appears in **Results** with a **Real** mark. Click its **Replay** button to draw its path over the best sim try's path. Press Esc to clear them.
+The try appears in **Results** with a **Real** mark. Click its **Replay** button to draw its path over the best sim try's path. Press [[Esc]] to clear them.
 
 ![A passed try marked Real in Results](/help/try-a-case-on-your-real-robot/real-try.png)
 
@@ -69,4 +69,4 @@ The try appears in **Results** with a **Real** mark. Click its **Replay** button
 
 If the camera loses the robot's tag for more than 0.15 s, that stretch can't count toward a pass. A legged robot's Case then reads it as a fall. A camera looking straight down can't measure its own lens, so tilt it.
 
-You can also start it from ⌘K: type the Case's name and choose **Try ⟨Case⟩ on Real Robot**.
+You can also start it from [[⌘K]]: type the Case's name and choose **Try ⟨Case⟩ on Real Robot**.

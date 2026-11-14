@@ -14,7 +14,7 @@ covers:
 See what a LiDAR on your robot would see before you buy it. A catalog LiDAR scans in the simulator with the range, rate and sample count from its datasheet, and its scans go into the datasets you export.
 
 1. In Parts, search for LiDAR and add one, such as the Slamtec RPLIDAR C1.
-2. Place it on the robot's body and group the two with ⌘G, so it rides on the robot instead of standing in the scene.
+2. Place it on the robot's body and group the two with [[⌘G]], so it rides on the robot instead of standing in the scene.
 3. Open the Simulate tab and start the robot, with Drive or with Try It in a Case. The canvas draws each return as a blue point, refreshed at the LiDAR's scan rate: ten times a second for the C1, with 500 rays reaching 12 m.
 
 ![A rover with an RPLIDAR C1 in a corridor Case, its returns drawn along both walls](/help/simulate-a-lidar/scan.png)

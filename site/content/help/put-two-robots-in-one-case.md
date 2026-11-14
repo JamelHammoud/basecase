@@ -24,7 +24,7 @@ The second arm now stands facing the first, the same distance from the point on 
 
 ![Both arms on the canvas with the point between them](/help/put-two-robots-in-one-case/case.png)
 
-4. Click **Try It** in the Simulate tab. You drive the first arm with W A S D, Q and E. Touch the point within the first 3 seconds and pull away: at 3 seconds the second arm reaches for it.
+4. Click **Try It** in the Simulate tab. You drive the first arm with [[W A S D]], [[Q]] and [[E]]. Touch the point within the first 3 seconds and pull away: at 3 seconds the second arm reaches for it.
 
 ![The second arm on the point after the first pulled away](/help/put-two-robots-in-one-case/try.png)
 

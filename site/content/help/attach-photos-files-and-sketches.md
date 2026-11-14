@@ -33,9 +33,9 @@ Give the agent photos, a folder of files or a quick drawing, so it builds what y
 
 1. In the **Agent** tab, click **+** at the left of the composer.
 2. Choose **Attach Images**, and pick up to 20 images.
-3. Type your message and press Enter.
+3. Type your message and press [[↩]].
 
-You can also paste an image into the composer, drop it on the Agent tab, or choose **Attach Images** in ⌘K. Basecase shrinks each image to 1,568 pixels on its longest side before sending it.
+You can also paste an image into the composer, drop it on the Agent tab, or choose **Attach Images** in [[⌘K]]. Basecase shrinks each image to 1,568 pixels on its longest side before sending it.
 
 ## Attach a folder
 
@@ -50,6 +50,6 @@ The agent can read text files such as URDF, Markdown, CSV, JSON and code, and ST
 2. Draw on the canvas. Click **Color** to change the pen.
 3. Click **Done**.
 
-The drawing attaches as `Sketch.png`. Click **Back** to leave without attaching it; Basecase doesn't ask first. ⌘K has **Attach Sketch** too.
+The drawing attaches as `Sketch.png`. Click **Back** to leave without attaching it; Basecase doesn't ask first. [[⌘K]] has **Attach Sketch** too.
 
 To point at something already in the scene instead, see [Point the agent at a part](/help/point-the-agent-at-a-part).

@@ -28,13 +28,13 @@ covers:
 Bring a robot you modeled in Onshape into Basecase, with its revolute and slider mates as joints you can pose.
 
 1. In Onshape's developer portal, create an API key that can read your documents, and copy its access key and secret key.
-2. Open Settings with ⌘, and choose **Accounts**.
+2. Open Settings with [[⌘,]] and choose **Accounts**.
 3. Paste the access key into **Access key** and the secret key into **Secret key**. Once both are saved, your Onshape account name shows under Secret key.
 
 ![The Accounts pane with both Onshape keys saved](/help/import-an-onshape-assembly/accounts.png)
 
 4. In Onshape, open the assembly's tab and copy the link from the address bar.
-5. Press ⌘K, choose **Import Robot**, paste the link and press Enter.
+5. Press [[⌘K]], choose **Import Robot**, paste the link and press [[↩]].
 
 ![Import Robot with an Onshape assembly link](/help/import-an-onshape-assembly/link.png)
 
@@ -50,11 +50,11 @@ Any other mate, like a cylindrical, ball or pin slot mate, is held fixed. The Bu
 
 When the assembly changes in Onshape, bring the changes in without importing it again:
 
-7. Right-click the robot's group in Layers, or any of its parts, and choose **Update from Onshape**. It's in ⌘K too.
+7. Right-click the robot's group in Layers, or any of its parts, and choose **Update from Onshape**. It's in [[⌘K]] too.
 
 ![The right-click menu of the Desk Arm group with Update from Onshape](/help/import-an-onshape-assembly/update.png)
 
-Parts you changed in Onshape are replaced where they sit, new parts and mates come in as parts and joints, and parts you deleted there are removed. The servo on each joint, colors, parts you added like screws or cameras, poses and calibrations stay. A message counts the changes, and ⌘Z undoes the whole update.
+Parts you changed in Onshape are replaced where they sit, new parts and mates come in as parts and joints, and parts you deleted there are removed. The servo on each joint, colors, parts you added like screws or cameras, poses and calibrations stay. A message counts the changes, and [[⌘Z]] undoes the whole update.
 
 ![The arm after the update, longer and with a new Wrist part, and the message 3 changes from Onshape](/help/import-an-onshape-assembly/updated.png)
 

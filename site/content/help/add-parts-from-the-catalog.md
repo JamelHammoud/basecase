@@ -58,7 +58,7 @@ The same field finds robots and objects. A robot named in the search comes befor
 
 ![Parts searched for so-101, with the SO-101 Arm robot above the SO-101 Gripper and the STS3215 servo](/help/add-parts-from-the-catalog/robot-first.png)
 
-Press Enter on a robot, or on a search with no match, to also search SimReady Central. Its arms, grippers and props come in a **SimReady** section under the local results.
+Press [[↩]] on a robot, or on a search with no match, to also search SimReady Central. Its arms, grippers and props come in a **SimReady** section under the local results.
 
 ![Parts searched for franka, with the Franka Panda row above a SimReady section of Franka arms and hands](/help/add-parts-from-the-catalog/simready.png)
 

@@ -34,6 +34,7 @@ export interface SourceEpisode {
   state: Float64Array;
   action: Float64Array | null;
   videos: SourceVideo[];
+  topics?: Uint8Array | null;
 }
 
 export type SourceFormat = 'lerobot-v2.1' | 'lerobot-v3.0' | 'mcap';

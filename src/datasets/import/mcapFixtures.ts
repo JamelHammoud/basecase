@@ -7,12 +7,18 @@ export const COMPRESSED_IMAGE_SCHEMA = 'sensor_msgs/msg/CompressedImage';
 const ZSTD_MAGIC = [0x28, 0xb5, 0x2f, 0xfd];
 const ZSTD_SINGLE_SEGMENT_FOUR_BYTE_SIZE = 0xa0;
 const ZSTD_RAW_BLOCK_BYTES = 128 * 1024;
+const LZ4_FRAME_HEADER = [0x04, 0x22, 0x4d, 0x18, 0x60, 0x40, 0x82];
+const LZ4_STORED_BLOCK_BYTES = 64 * 1024;
+const LZ4_STORED_BIT = 0x80000000;
 
 export interface FixtureMessage {
   topic: string;
   schema: string;
   logTime: bigint;
   data: Uint8Array;
+  schemaData?: Uint8Array;
+  schemaEncoding?: string;
+  encoding?: string;
 }
 
 export interface FixtureOptions {
@@ -68,9 +74,27 @@ export function zstdStored(data: Uint8Array): Uint8Array {
   return Uint8Array.from(out);
 }
 
+const littleWord = (value: number) => [value & 0xff, (value >>> 8) & 0xff, (value >>> 16) & 0xff, value >>> 24];
+
+export function lz4FrameStored(data: Uint8Array): Uint8Array {
+  const out: number[] = [...LZ4_FRAME_HEADER];
+
+  for (let offset = 0; offset < data.length; offset += LZ4_STORED_BLOCK_BYTES) {
+    const block = data.subarray(offset, offset + LZ4_STORED_BLOCK_BYTES);
+
+    out.push(...littleWord((LZ4_STORED_BIT | block.length) >>> 0));
+
+    for (const byte of block) out.push(byte);
+  }
+
+  out.push(...littleWord(0));
+
+  return Uint8Array.from(out);
+}
+
 const compressors = {
   zstd: (chunkData: Uint8Array) => ({ compression: 'zstd', compressedData: zstdStored(chunkData) }),
-  lz4: (chunkData: Uint8Array) => ({ compression: 'lz4', compressedData: chunkData }),
+  lz4: (chunkData: Uint8Array) => ({ compression: 'lz4', compressedData: lz4FrameStored(chunkData) }),
 };
 
 async function channelFor(writer: McapWriter, message: FixtureMessage, channels: Map<string, number>) {
@@ -78,11 +102,15 @@ async function channelFor(writer: McapWriter, message: FixtureMessage, channels:
 
   if (known !== undefined) return known;
 
-  const schemaId = await writer.registerSchema({ name: message.schema, encoding: 'ros2msg', data: new Uint8Array() });
+  const schemaId = await writer.registerSchema({
+    name: message.schema,
+    encoding: message.schemaEncoding ?? 'ros2msg',
+    data: message.schemaData ?? new Uint8Array(),
+  });
   const id = await writer.registerChannel({
     topic: message.topic,
     schemaId,
-    messageEncoding: 'cdr',
+    messageEncoding: message.encoding ?? 'cdr',
     metadata: new Map(),
   });
 

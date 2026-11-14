@@ -4,6 +4,10 @@ import type { PanelViewProps } from './panelContext';
 import { ButtonPanel } from './panels/ButtonPanel';
 import { CameraPanel } from './panels/CameraPanel';
 import { CodePanel } from './panels/CodePanel';
+import { DiagnosticsPanel } from './panels/DiagnosticsPanel';
+import { LogPanel } from './panels/LogPanel';
+import { MessagePanel } from './panels/MessagePanel';
+import { StatesPanel } from './panels/StatesPanel';
 import { ListPanel } from './panels/ListPanel';
 import { MapPanel } from './panels/MapPanel';
 import { PlotPanel } from './panels/PlotPanel';
@@ -21,4 +25,8 @@ export const PANEL_VIEWS: { [K in PanelKind]: React.FC<PanelViewProps<K>> } = {
   text: TextPanel,
   map: MapPanel,
   code: CodePanel,
+  log: LogPanel,
+  diagnostics: DiagnosticsPanel,
+  message: MessagePanel,
+  states: StatesPanel,
 };

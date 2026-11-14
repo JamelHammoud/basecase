@@ -6,6 +6,8 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
+import { recordingTopics } from '../topics/recordingTopics';
+import { isTopicLayer, topicTracks } from '../topics/topicTracks';
 import type { TryTimeline } from './useTryTimeline';
 
 interface DataLayerOptions {
@@ -85,6 +87,18 @@ function useRecordedScans(store: DataLayerStore, timeline: TryTimeline, { model,
   useEffect(() => store.setPlayhead(at), [store, at]);
 }
 
+function useRecordedTopics(store: DataLayerStore, timeline: TryTimeline) {
+  const topics = timeline.open ? recordingTopics(timeline.recording) : null;
+
+  useEffect(() => {
+    if (!topics) return;
+
+    for (const track of topicTracks(topics)) store.setTrack(track);
+
+    return () => store.removeTracks((t) => isTopicLayer(t.id));
+  }, [store, topics]);
+}
+
 export function useDataLayers({ sim, timeline, parts, viewportRef }: DataLayerOptions): DataLayerStore {
   const [store] = useState(() => new DataLayerStore());
   const scene = { model: sim.model, parts };
@@ -93,6 +107,7 @@ export function useDataLayers({ sim, timeline, parts, viewportRef }: DataLayerOp
   useViewportDraw(store, viewportRef);
   useLiveScans(store, sim.subscribePoses, scene);
   useRecordedScans(store, timeline, scene);
+  useRecordedTopics(store, timeline);
 
   useEffect(() => {
     if (loaded) return;

@@ -1,4 +1,5 @@
-import { MCAP_TOO_LARGE, readMcap } from './mcapRead';
+import { MCAP_TOO_LARGE } from './mcapRead';
+import { readMcap } from './recordingFiles';
 import { BAG_METADATA_FILE, isRosbag2Folder } from './sourceKind';
 import { DataImportError, IMPORT_LIMITS, type SourceData, type SourceFile, type SourceFolder } from './types';
 

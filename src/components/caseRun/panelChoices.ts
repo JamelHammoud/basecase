@@ -8,6 +8,9 @@ import {
 } from '../../cases/console/panelKinds';
 import type { SignalBus } from '../../cases/console/signalBus';
 import { JOINT_FIELDS, type SignalScope } from '../../cases/console/signalNames';
+import { isDiagnosticTopic } from '../../topics/diagnostics';
+import { isLogTopic } from '../../topics/logs';
+import { topicRef, type TopicIndex } from '../../topics/topicIndex';
 import { BUTTON_LABELS } from './panels/buttonLabels';
 
 export interface PanelChoice {
@@ -25,7 +28,7 @@ export const panelLabel = (panel: PanelSpec) => panel.title ?? kindLabel(panel.k
 
 const WILDCARDS = [...JOINT_FIELDS.map((f) => `joint.*.${f}`), 'camera.*'];
 
-export function busNames(bus: Pick<SignalBus, 'expand'>, inputs: readonly string[]): string[] {
+export function busNames(bus: Pick<SignalBus, 'expand' | 'listed'>, inputs: readonly string[]): string[] {
   const patterns = [
     '*',
     ...WILDCARDS,
@@ -36,7 +39,7 @@ export function busNames(bus: Pick<SignalBus, 'expand'>, inputs: readonly string
     ...inputs.map((s) => `input.${s}.*`),
   ];
 
-  return [...new Set([...WILDCARDS, ...patterns.flatMap((p) => bus.expand(p))])];
+  return [...new Set([...WILDCARDS, ...patterns.flatMap((p) => bus.expand(p)), ...(bus.listed?.() ?? [])])];
 }
 
 const SIGNAL_DRAFTS: Partial<Record<PanelKind, (signal: string) => PanelDraft>> = {
@@ -44,6 +47,7 @@ const SIGNAL_DRAFTS: Partial<Record<PanelKind, (signal: string) => PanelDraft>> 
   value: (signal) => ({ kind: 'value', signal }),
   plot: (signal) => ({ kind: 'plot', signals: [signal] }),
   table: (signal) => ({ kind: 'table', of: 'signals', signals: [signal] }),
+  states: (signal) => ({ kind: 'states', signal }),
 };
 
 const option = (kind: PanelKind, label: string, config: Record<string, unknown> = {}): PanelChoice => ({
@@ -69,9 +73,23 @@ const fits = ({ kind, ...config }: PanelDraft, scope: SignalScope) => {
   }
 };
 
-export function panelChoices(kind: PanelKind, names: readonly string[], scope: SignalScope): PanelChoice[] {
-  const toDraft = SIGNAL_DRAFTS[kind];
-  const signals = toDraft ? names.map((name) => ({ label: name, draft: toDraft(name) })) : [];
+const TOPIC_OPTIONS: Partial<Record<PanelKind, (topics: TopicIndex) => PanelChoice[]>> = {
+  log: (topics) => (topics.topics.some(isLogTopic) ? [option('log', 'log')] : []),
+  diagnostics: (topics) => (topics.topics.some(isDiagnosticTopic) ? [option('diagnostics', 'diagnostics')] : []),
+  message: (topics) =>
+    topics.topics.map((t) => ({ label: topicRef(t.topic), draft: { kind: 'message', topic: topicRef(t.topic) } })),
+};
 
-  return [...signals, ...(OPTIONS[kind] ?? [])].filter((c) => fits(c.draft, scope));
+export function panelChoices(
+  kind: PanelKind,
+  names: readonly string[],
+  scope: SignalScope,
+  topics: TopicIndex | null = null,
+): PanelChoice[] {
+  const toDraft = SIGNAL_DRAFTS[kind];
+  const drawn = kind === 'plot' && topics ? names.filter((name) => !topics.labels(name)) : names;
+  const signals = toDraft ? drawn.map((name) => ({ label: name, draft: toDraft(name) })) : [];
+  const fromTopics = topics ? (TOPIC_OPTIONS[kind]?.(topics) ?? []) : [];
+
+  return [...signals, ...(OPTIONS[kind] ?? []), ...fromTopics].filter((c) => fits(c.draft, scope));
 }

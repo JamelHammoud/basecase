@@ -19,6 +19,8 @@ import type { Viewport3DHandle } from '../three/viewport/types';
 import type { ProjectSettings } from '../types/robotics';
 import type { Rig } from '../utils/kinematics';
 import { timelineScene } from './useRecordedSignals';
+import { recordingTopics } from '../topics/recordingTopics';
+import { topicSignalIds, withMeaning, withTopicSignals } from '../topics/topicBus';
 import type { TryTimeline } from './useTryTimeline';
 
 type Payload = Record<string, unknown>;
@@ -166,14 +168,17 @@ async function readOpened({ record, caseName }: Found, payload: Payload, ctx: Tr
     return { ok: false, problem: `${record.id}’s recording is missing or doesn’t fit this robot as it is now.` };
 
   const kase = ctx.cases.cases.find((c) => c.id === record.caseId);
-  const track = recordedTrack({ ...scene, verdicts: await verdictsOf(timeline) }, consoleOf(kase));
+  const topics = recordingTopics(timeline.recording);
+  const recorded = recordedTrack({ ...scene, verdicts: await verdictsOf(timeline) }, consoleOf(kase));
+  const signals = topicSignalIds(topics, strings(payload.signals));
+  const track = withTopicSignals(withMeaning(recorded, topics), topics, signals);
   const reading = tryReading({
     track,
     trips: timeline.trips,
     dt: timeline.recording.dt,
     from: num(payload.from),
     to: num(payload.to),
-    signals: strings(payload.signals),
+    signals,
   });
   const at = captureTime(reading, num(payload.at));
 

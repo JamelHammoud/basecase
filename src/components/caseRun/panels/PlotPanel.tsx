@@ -3,6 +3,8 @@ import type { Playhead, SignalBus } from '../../../cases/console/signalBus';
 import { TracePlot, type Trace } from '../../../design-system';
 import { useBus, type PanelContext, type PanelViewProps } from '../panelContext';
 import { Titled } from './PanelTitle';
+import { PlotXY } from './PlotXY';
+import { frameTimes, onFrames, sampleTotal } from './plotSeries';
 import { extent, recent, scaler } from './series';
 
 const W = 300;
@@ -20,13 +22,19 @@ interface WholeProps {
 const WholeTry: React.FC<WholeProps> = ({ ids, bus, seek, head }) => {
   const traces: Trace[] = ids.map((id, i) => ({
     id,
-    values: bus.series(id).v,
+    values: onFrames(bus, id),
     tone: TONES[Math.min(i, TONES.length - 1)],
   }));
-  const times = bus.series(ids[0] ?? '').t;
+  const frames = frameTimes(bus);
+  const times = frames.length ? frames : bus.series(ids[0] ?? '').t;
 
   return (
-    <div data-testid="plot" data-lines={ids.length} data-playhead={head.at.toFixed(2)}>
+    <div
+      data-testid="plot"
+      data-lines={ids.length}
+      data-samples={sampleTotal(bus, ids)}
+      data-playhead={head.at.toFixed(2)}
+    >
       <TracePlot
         traces={traces}
         height={H}
@@ -42,6 +50,14 @@ export const PlotPanel: React.FC<PanelViewProps<'plot'>> = ({ panel, ctx }) => {
 
   const ids = panel.signals.flatMap((s) => bus.expand(s));
   const head = bus.playhead();
+  const seconds = panel.seconds ?? 20;
+
+  if (panel.x)
+    return (
+      <Titled title={panel.title}>
+        <PlotXY ids={ids} x={panel.x} bus={bus} seconds={seconds} />
+      </Titled>
+    );
 
   if (head)
     return (
@@ -50,7 +66,6 @@ export const PlotPanel: React.FC<PanelViewProps<'plot'>> = ({ panel, ctx }) => {
       </Titled>
     );
 
-  const seconds = 'seconds' in panel && panel.seconds !== undefined ? panel.seconds : 20;
   const lines = ids.map((id) => ({ id, s: recent(bus.series(id), seconds) }));
   const end = Math.max(0, ...lines.map((l) => l.s.t.at(-1) ?? 0));
   const x = scaler([end - seconds, end], [0, W]);
@@ -58,7 +73,13 @@ export const PlotPanel: React.FC<PanelViewProps<'plot'>> = ({ panel, ctx }) => {
 
   return (
     <Titled title={panel.title}>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[120px] block" data-testid="plot" data-lines={lines.length}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full h-[120px] block"
+        data-testid="plot"
+        data-lines={lines.length}
+        data-samples={sampleTotal(bus, ids)}
+      >
         {lines.map((l, i) => (
           <polyline
             key={l.id}

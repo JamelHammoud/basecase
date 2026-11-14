@@ -26,6 +26,6 @@ A try keeps each camera's video file and its time span, and leaves the file wher
 
 ## Limits
 
-Hub datasets can be up to 1 GB, and Import doesn't open LZ4-compressed MCAP files. SO-101 data saved in LeRobot's −100 to 100 range is read as degrees.
+Hub datasets can be up to 1 GB. SO-101 data saved in LeRobot's −100 to 100 range is read as degrees.
 
 Read [Import robot data as tries](/help/import-robot-data-as-tries) in the help center for the steps.

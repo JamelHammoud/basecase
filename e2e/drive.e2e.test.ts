@@ -1,10 +1,10 @@
 import { parquetReadObjects } from 'hyparquet';
+import { plural } from '../electron/plural.mjs';
 import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import type { ReferenceCommand } from '../src/cases/schema';
 import type { DriveCommand } from '../src/sim/driveTypes';
 import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
-import { DEFAULT_PROJECT } from '../src/types/robotics';
 import type { SimState, Studio } from './driveStudio';
 import { startFakeHub, type FakeHub } from './fakeHub';
 import {
@@ -14,11 +14,12 @@ import {
   expectDataset,
   expectGenerated,
   expectPublished,
+  loadFixtureRobot,
   passedDatasetFiles,
   pickTimeline,
 } from './driveChecks';
+import { expectRealTry } from './driveMat';
 import { openApp, openPlayTab, partCount, type App } from './harness';
-import { plural } from '../electron/plural.mjs';
 
 const HUB_TOKEN = 'hf_e2eFakeHubToken';
 
@@ -30,16 +31,7 @@ const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 const simState = () =>
   app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState() as SimState);
 
-async function loadFixture(id: string | FixtureRobot) {
-  const robot = typeof id === 'string' ? fixtureRobots().find((r) => r.id === id)! : id;
-
-  await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
-    name: robot.id,
-    parts: robot.parts,
-    project: { ...DEFAULT_PROJECT, joints: robot.joints },
-  });
-  await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
-}
+const loadFixture = (id: string | FixtureRobot) => loadFixtureRobot(app.page, id);
 
 const clickTab = (name: string) => app.page.locator(visible('[role=tab]'), { hasText: name }).first().click();
 
@@ -364,6 +356,19 @@ describe('terrain', () => {
       await expect.poll(async () => (await simState()).tries.length, { timeout: 60000 }).toBe(1);
       expect(app.errors).toEqual([]);
     },
+  );
+});
+
+describe('a real robot', () => {
+  itUnlessWindows(
+    'exports a Case mat and records a passing try on the real robot from the camera',
+    async () => {
+      await loadFixture('rover-diff');
+      await openPlayTab(app.page, 'Cases');
+      await expectRealTry(app.page);
+      expect(app.errors).toEqual([]);
+    },
+    120000,
   );
 });
 

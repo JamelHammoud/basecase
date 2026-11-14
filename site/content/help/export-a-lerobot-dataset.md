@@ -39,7 +39,7 @@ LeRobot is Hugging Face's open library for robot learning, and GR00T is NVIDIA's
 
 A toast shows "Exporting dataset…" and then tells you how many tries went in. The zip saves to your downloads, named after the dataset. For example, Touch the Dots exports as `touch-the-dots-dataset.zip`.
 
-You can also find **Export Dataset** in [[⌘K]] while a dataset is open. Each export saves the dataset's tries as a version.
+You can also find **Export Dataset** in [[⌘K]] while a dataset is open. Each export saves the dataset's tries and image references as a version.
 
 ## Which tries go in
 
@@ -54,5 +54,7 @@ If none of the tries fit, the toast says "Export and training take only passed t
 Each try becomes one episode, recorded at 25 frames a second. An episode holds the joint positions, the joint targets, and a 640 × 480 video from each camera. A try's segments go in as subtasks, each with its instruction or label. There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Camera views you add to the scene aren't part of the dataset.
 
 The zip holds two copies of the dataset. The top folder is LeRobot v3.0, which LeRobot 0.4 and later can load as is. The `v2.1` folder inside it is LeRobot v2.1, for GR00T, which only reads v2. For a list of every file and column, see [LeRobot dataset contents](/help/lerobot-dataset-contents).
+
+If the dataset also holds rendered training images, the zip includes `coco/` and `yolo/` alongside the LeRobot files. An image-only dataset exports those two folders without LeRobot episodes. See [Make training images from a Case](/help/make-training-images).
 
 To put the dataset on the Hugging Face Hub instead of in a zip, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face). To train on the same tries inside Basecase, see [Train a policy from your tries](/help/train-a-policy-from-your-tries).

@@ -15,6 +15,7 @@ import { plural } from '../../electron/plural.mjs';
 import { prepareDataset, repoName, type PreparedDataset } from './datasetJob';
 import { useDatasetRecords, type DatasetRecords } from './useDatasetRecords';
 import type { ShowToast, ToastOptions } from './types';
+import { deliverImageDataset, imageDatasetDownload } from './deliverImageDataset';
 
 interface DatasetExportOptions {
   sim: Simulation;
@@ -112,6 +113,14 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
     showToast(delivery.busy, { tone: 'progress' });
 
     try {
+      if (dataset.imageMembers?.length && !dataset.members.length) {
+        const done = await deliverImageDataset(dataset, records, delivery === PUBLISH);
+
+        showToast(done.message, done.options);
+
+        return;
+      }
+
       const prepared = await prepareFor(dataset);
 
       if (!prepared) {
@@ -120,7 +129,9 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
         return;
       }
 
-      const done = await delivery.deliver({ dataset, prepared }, records);
+      const done = dataset.imageMembers?.length
+        ? await deliverImageDataset(dataset, records, delivery === PUBLISH, prepared)
+        : await delivery.deliver({ dataset, prepared }, records);
 
       showToast(done.message, done.options);
     } catch (err) {
@@ -161,7 +172,11 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
       return made ? exportDatasetZip(made.job) : null;
     },
     zipDataset: async (dataset) => {
+      if (dataset.imageMembers?.length && !dataset.members.length) return imageDatasetDownload(dataset, records);
+
       const made = await prepareFor(dataset);
+
+      if (made && dataset.imageMembers?.length) return imageDatasetDownload(dataset, records, made);
 
       if (made) await records.freeze(dataset, made.modelHash);
 

@@ -69,6 +69,7 @@ function context(caseConsole: CaseConsole): PanelContext {
         realTry: { phase: 'idle', elapsed: 0, canStart: false, start: async () => undefined, end: () => undefined },
         mat: { available: false },
         tries: [],
+        images: { canMake: false, running: null },
         dataset: { canExport: false, canPublish: false, exporting: false },
       } as unknown as Cases,
       cameras: {

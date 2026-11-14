@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { robotFacts } from '../cases/robotFit';
 import { angle } from '../utils/angle';
 import { readWorldObjects, worldItem, type WorldObject } from '../cases/schema';
+import { readImagePoints, readImageRandomization } from '../cases/imageRandomization';
 import { kitEntries } from '../skills/motorKit';
 import {
   driveAccess,
@@ -42,6 +43,8 @@ export interface AgentObject {
   friction?: number;
   color?: string;
   movable?: boolean;
+  points?: WorldObject['points'];
+  colors?: WorldObject['colors'];
 }
 
 interface AgentCommand {
@@ -61,8 +64,8 @@ const slug = (name: string, i: number) =>
     .replace(/^-|-$/g, '')
     .slice(0, 60) || `object-${i}`;
 
-export function sceneObjects(objects: AgentObject[]): WorldObject[] {
-  const raw = objects.map((o, i) => ({
+function sceneObject(o: AgentObject, i: number) {
+  return {
     id: o.id ?? `${slug(o.name, i)}-${i}`,
     name: o.name,
     kind: o.kind,
@@ -75,9 +78,36 @@ export function sceneObjects(objects: AgentObject[]): WorldObject[] {
     ...(o.mass_g !== undefined ? { massG: o.mass_g } : {}),
     ...(o.friction !== undefined ? { friction: o.friction } : {}),
     ...(o.movable ? { movable: true } : {}),
-  }));
+    ...(o.points === undefined
+      ? {}
+      : {
+          points: Object.fromEntries(
+            Object.entries(readImagePoints(o.points, `objects[${i}].points`)).map(([name, point]) => [
+              name,
+              toScene(point),
+            ]),
+          ),
+        }),
+    ...(o.colors === undefined ? {} : { colors: o.colors }),
+  };
+}
 
-  return readWorldObjects(raw);
+export function sceneObjects(objects: AgentObject[]): WorldObject[] {
+  return readWorldObjects(objects.map(sceneObject));
+}
+
+export function sceneImageRandomization(value: unknown, objects: WorldObject[]) {
+  if (value === undefined) return undefined;
+
+  let index = 0;
+
+  return readImageRandomization(value, objects, (object) => {
+    const converted = sceneObject(object as AgentObject, index);
+
+    index++;
+
+    return readWorldObjects([converted])[0];
+  });
 }
 
 export function setWorldRequest(ctx: DriveToolContext, payload: { objects?: AgentObject[] }): { text: string } {

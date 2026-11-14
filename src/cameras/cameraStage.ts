@@ -3,6 +3,7 @@ import type { MeshFiles } from '../three/componentMeshes';
 import type { ScenePart } from '../types/robotics';
 import { LiveStage } from './liveStage';
 import type { CameraView } from './views';
+import type { CameraTrainingFrame, CameraTrainingRequest } from './trainingTypes';
 
 export { LARGE_SIZE, TILE_SIZE } from './liveStage';
 
@@ -31,3 +32,9 @@ export async function loadCameraStage(job: CameraStageJob): Promise<boolean> {
 
 export const renderCameraFrame = (request: CameraFrameRequest): Record<string, ImageBitmap> =>
   stage?.shoot(request.poses, request.keys) ?? {};
+
+export function renderTrainingFrame(request: CameraTrainingRequest): Promise<CameraTrainingFrame> {
+  if (!stage) throw new Error('Load the scene before rendering training images.');
+
+  return stage.training(request);
+}

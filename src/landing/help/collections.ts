@@ -13,7 +13,8 @@ export const HELP_COLLECTIONS: CollectionInfo[] = [
   {
     slug: 'design',
     title: 'Design',
-    description: 'Place real parts, shape and combine your own, and bring in CAD, meshes and robots.',
+    description:
+      'Place real parts, shape and combine your own, bring in CAD, meshes and robots, and set them on a real place.',
   },
   {
     slug: 'engineer',

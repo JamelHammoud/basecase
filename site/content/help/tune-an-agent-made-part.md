@@ -17,7 +17,7 @@ Change a number in a part the agent designed, such as its wall thickness, and th
 2. Find Dimensions in the Inspector, under Size. Each row is a number the part's code names, like `wall` or `clearance`.
 3. Type a new value and press [[↩]], or use [[↑]] and [[↓]] to step it. When the code gives a range, such as `// [1.2:0.4:4]` after the number, the value stays inside it.
 4. Wait a moment while the part compiles. It changes in place, and a servo or bracket mated to it moves with it.
-5. Press [[⌘Z]] to undo the change. The part and everything that moved with it go back together.
+5. Press [[⌘Z]] to undo the change. The part, its Dimensions values and everything that moved with it go back together.
 
 ![Dimensions in the Inspector, with wall at 2 on a servo mount](/help/tune-an-agent-made-part/dimensions.png)
 

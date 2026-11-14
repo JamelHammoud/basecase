@@ -72,3 +72,19 @@ export function shownPropsChanged(previous: ViewportProps, next: ViewportProps):
 
   return [...keys].some((key) => previous[key] !== next[key] && !bothCallbacks(previous[key], next[key]));
 }
+
+export function completingWholeScene(api: Viewport3DHandle, complete: () => void): Viewport3DHandle {
+  const wrapped = { ...api } as Record<string, (...args: never[]) => unknown>;
+
+  for (const key of NEEDS_WHOLE_SCENE) {
+    const run = api[key] as (...args: never[]) => unknown;
+
+    wrapped[key] = (...args) => {
+      complete();
+
+      return run(...args);
+    };
+  }
+
+  return wrapped as unknown as Viewport3DHandle;
+}

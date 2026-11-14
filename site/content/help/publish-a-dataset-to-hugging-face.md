@@ -46,7 +46,11 @@ Publishing works in the desktop app. The dataset is always public.
 
 ## What gets published
 
-The files are the ones **Export Dataset** makes; [LeRobot dataset contents](/help/lerobot-dataset-contents) lists them. They go to a dataset repo on your account, named after the Case plus a 6-character code for the scene, such as `touch-the-dots-1a2b3c`. Each scene gets its own code, so publishing Touch the Dots from two scenes makes two datasets. Basecase tags the dataset v2.1, the version LeRobot loads it by.
+The dataset goes to a repo on your account, named after the Case plus a 6-character code for the scene, such as `touch-the-dots-1a2b3c`. Each scene gets its own code, so publishing Touch the Dots from two scenes makes two datasets.
+
+The repo's main branch holds LeRobot v3.0, tagged `v3.0`. LeRobot 0.4 and later load it by name with no conversion: `lerobot-train --dataset.repo_id=<account>/touch-the-dots-1a2b3c`. Add `--dataset.streaming=true` to stream it from the Hub instead of downloading it.
+
+The LeRobot v2.1 copy, with GR00T's `meta/modality.json`, sits at the `v2.1` tag. GR00T reads only v2, so download that revision for it: `hf download <account>/touch-the-dots-1a2b3c --repo-type dataset --revision v2.1`. [LeRobot dataset contents](/help/lerobot-dataset-contents) lists the files in both.
 
 ## Publishing again
 

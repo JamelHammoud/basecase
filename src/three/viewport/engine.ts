@@ -47,7 +47,7 @@ import { samePose } from './samePose';
 import { SelectionOutline } from './selectionOutline';
 import { StressOverlay } from './stressOverlay';
 import { warmShaders } from './shaderWarmup';
-import { changed, FIGURE_KEYS, GIZMO_KEYS, NEEDS_WHOLE_SCENE, shownPropsChanged, steadyProps } from './engineKeys';
+import { changed, completingWholeScene, FIGURE_KEYS, GIZMO_KEYS, shownPropsChanged, steadyProps } from './engineKeys';
 import { createStage, disposeStage } from './stage';
 import type { Viewport3DHandle, ViewportProps } from './types';
 import type { ViewportContext, ViewportUi } from './viewportContext';
@@ -65,6 +65,7 @@ export interface EngineOptions {
   buildLabels: () => HTMLElement | null;
   ghostLabel: () => HTMLElement | null;
   frameLabel: () => HTMLElement | null;
+  attribution: () => HTMLElement | null;
   ui: ViewportUi;
   props: ViewportProps;
   meshVersion: number;
@@ -145,6 +146,7 @@ export class ViewportEngine {
     this.overlays = new StageOverlays(this.ctx, options.props, {
       ghost: options.ghostLabel,
       frame: options.frameLabel,
+      attribution: options.attribution,
     });
     this.follow = new FollowCamera(stage, (id) => layer.get(id));
     this.buildStep = new BuildStepLayer(this.ctx, options.buildLabels);
@@ -185,7 +187,7 @@ export class ViewportEngine {
       () => outline.dispose(),
     ];
     this.cleanups.push(this.skeleton.install());
-    this.api = this.completing(this.handle());
+    this.api = completingWholeScene(this.handle(), () => this.complete());
     this.syncWorld();
     this.syncScene();
     frameScene(stage, options.props.parts);
@@ -442,22 +444,6 @@ export class ViewportEngine {
 
       this.scheduleBuilds();
     });
-  }
-
-  private completing(api: Viewport3DHandle): Viewport3DHandle {
-    const wrapped = { ...api } as Record<string, (...args: never[]) => unknown>;
-
-    for (const key of NEEDS_WHOLE_SCENE) {
-      const run = api[key] as (...args: never[]) => unknown;
-
-      wrapped[key] = (...args) => {
-        this.complete();
-
-        return run(...args);
-      };
-    }
-
-    return wrapped as unknown as Viewport3DHandle;
   }
 
   private complete(): void {

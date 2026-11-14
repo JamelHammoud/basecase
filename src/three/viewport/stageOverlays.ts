@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { AgentFrames } from './agentFrames';
 import { CameraGlyphs } from './cameraGlyphs';
 import { CaseTrails } from './caseTrails';
@@ -7,6 +8,7 @@ import { GhostLayer } from './ghostLayer';
 import { MatTrack } from './matTrack';
 import { DataLayers } from './dataLayers';
 import { FrameLabel } from './frameLabel';
+import { EarthLayer } from './earthLayer';
 import type { Viewport3DHandle, ViewportProps } from './types';
 
 type OverlayHandle = Pick<
@@ -19,11 +21,20 @@ type OverlayHandle = Pick<
   | 'ghostState'
   | 'checkDotCount'
   | 'caseTrailEnds'
+  | 'earthState'
 >;
 
 export interface OverlayLabels {
   ghost: () => HTMLElement | null;
   frame: () => HTMLElement | null;
+  attribution: () => HTMLElement | null;
+}
+
+function showAttribution(label: HTMLElement | null, text: string): void {
+  if (!label) return;
+
+  label.textContent = text;
+  label.style.display = text ? 'block' : 'none';
 }
 
 export class StageOverlays {
@@ -42,9 +53,11 @@ export class StageOverlays {
   private readonly checkDots: CheckDots;
 
   readonly caseTrails: CaseTrails;
+  private readonly earth: EarthLayer;
 
   constructor(ctx: ViewportContext, props: ViewportProps, labels: OverlayLabels) {
-    const { overlays } = ctx.stage;
+    const { overlays, camera, renderer } = ctx.stage;
+    const size = new THREE.Vector2();
 
     this.cameraGlyphs = new CameraGlyphs(overlays);
     this.cameraGlyphs.sync(props.fixedCameras);
@@ -58,6 +71,15 @@ export class StageOverlays {
     this.ghost = new GhostLayer(ctx, labels.ghost);
     this.agentFrames = new AgentFrames(ctx);
     this.agentFrames.sync(props.agentFrames ?? []);
+    this.earth = new EarthLayer(overlays, {
+      redraw: ctx.loop.redraw,
+      attribution: (text) => showAttribution(labels.attribution(), text),
+    });
+    void this.earth.set(props.earth ?? null);
+    ctx.loop.beforeRender.add(() => {
+      renderer.getDrawingBufferSize(size);
+      this.earth.update(camera, size.x, size.y);
+    });
   }
 
   sync(previous: ViewportProps, props: ViewportProps): void {
@@ -68,6 +90,8 @@ export class StageOverlays {
     if (previous.checkDots !== props.checkDots) this.checkDots.sync(props.checkDots);
 
     if (previous.caseTrails !== props.caseTrails) this.caseTrails.sync(props.caseTrails);
+
+    if (previous.earth !== props.earth) void this.earth.set(props.earth ?? null);
   }
 
   handle(redraw: () => void): OverlayHandle {
@@ -90,6 +114,7 @@ export class StageOverlays {
       ghostState: () => this.ghost.state(),
       checkDotCount: () => this.checkDots.count,
       caseTrailEnds: () => this.caseTrails.ends(),
+      earthState: () => this.earth.state(),
     };
   }
 
@@ -102,5 +127,6 @@ export class StageOverlays {
     this.caseTrails.dispose();
     this.ghost.dispose();
     this.agentFrames.dispose();
+    this.earth.dispose();
   }
 }

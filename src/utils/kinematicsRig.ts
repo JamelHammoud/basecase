@@ -95,15 +95,33 @@ function jointTree(joints: RobotJoint[]): JointTree {
   return tree;
 }
 
-function adoptGroupedPart(p: ScenePart, parts: ScenePart[], ownerOf: Map<string, string>, mounts: Set<string>) {
-  const owners = new Set(
-    parts
-      .filter((q) => q.group?.id === p.group!.id && q.id !== p.id && (ownerOf.has(q.id) || mounts.has(q.id)))
-      .map((q) => ownerOf.get(q.id) ?? 'base'),
-  );
-  const only = owners.size === 1 ? [...owners][0] : 'base';
+function groupValues(parts: ScenePart[], valueOf: (part: ScenePart) => string | undefined) {
+  const values = new Map<string, string | null>();
 
-  if (only !== 'base') ownerOf.set(p.id, only);
+  for (const p of parts) {
+    const group = p.group?.id;
+    const value = valueOf(p);
+
+    if (group === undefined || value === undefined) continue;
+
+    const previous = values.get(group);
+
+    values.set(group, previous === undefined || previous === value ? value : null);
+  }
+
+  return values;
+}
+
+function adoptGroupedParts(parts: ScenePart[], ownerOf: Map<string, string>, mounts: Set<string>) {
+  const groupedOwners = groupValues(parts, (p) => ownerOf.get(p.id) ?? (mounts.has(p.id) ? 'base' : undefined));
+
+  for (const p of parts) {
+    if (ownerOf.has(p.id) || mounts.has(p.id) || !p.group) continue;
+
+    const owner = groupedOwners.get(p.group.id);
+
+    if (typeof owner === 'string' && owner !== 'base') ownerOf.set(p.id, owner);
+  }
 }
 
 function partOwners(joints: RobotJoint[], parts: ScenePart[], tree: JointTree): Map<string, string> {
@@ -129,11 +147,7 @@ function partOwners(joints: RobotJoint[], parts: ScenePart[], tree: JointTree): 
     }
   }
 
-  for (const p of parts) {
-    if (ownerOf.has(p.id) || mounts.has(p.id) || !p.group) continue;
-
-    adoptGroupedPart(p, parts, ownerOf, mounts);
-  }
+  adoptGroupedParts(parts, ownerOf, mounts);
 
   return ownerOf;
 }
@@ -204,15 +218,14 @@ function joinJointsAndParts(joints: RobotJoint[], parentOf: Map<string, string |
 
 function adoptGroupedRobotParts(parts: ScenePart[], { up, find }: UnionFind) {
   const robotParts = new Set([...up.keys()].filter((k) => k.startsWith('p:')).map((k) => k.slice(2)));
+  const groupedRobots = groupValues(parts, (p) => (robotParts.has(p.id) ? find(`p:${p.id}`) : undefined));
 
   for (const p of parts) {
     if (robotParts.has(p.id) || !p.group || p.role === 'reference') continue;
 
-    const comps = new Set(
-      parts.filter((q) => q.group?.id === p.group!.id && robotParts.has(q.id)).map((q) => find(`p:${q.id}`)),
-    );
+    const component = groupedRobots.get(p.group.id);
 
-    if (comps.size === 1) up.set(`p:${p.id}`, [...comps][0]);
+    if (typeof component === 'string') up.set(`p:${p.id}`, component);
   }
 }
 

@@ -57,6 +57,7 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   draft_skill: ['Drafting # skills', 'Drafted # skills'],
   train_skill: ['Starting # training runs', 'Started # training runs'],
   list_skills: ['Checking skills # times', 'Checked skills # times'],
+  coach_skill: ['Coaching skills # times', 'Coached skills # times'],
   training_status: ['Checking training # times', 'Checked training # times'],
   list_evidence: ['Listing attached files # times', 'Listed attached files # times'],
   read_evidence: ['Studying attached files in # steps', 'Studied attached files in # steps'],

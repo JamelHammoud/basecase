@@ -97,7 +97,7 @@ export const SketchPad: React.FC<{
         <Button
           variant="contrast"
           title="Done"
-          shortcut="↩︎"
+          shortcut="↩"
           tooltipSide="top"
           className="rounded-full"
           disabled={isEmpty}

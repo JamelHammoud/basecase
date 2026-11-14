@@ -1,4 +1,9 @@
+import { installRobot } from './robotInstall.mjs';
+
 export const ROBOT_CALLS = {
+  'robot:install': (_fleet, request) => installRobot(request),
+  'robot:discover': (fleet) => fleet.discover(),
+  'robot:network-connect': (fleet, ask, unit) => fleet.connectNetwork(ask, unit),
   'robot:connect': (fleet, spec, unit) => fleet.connect(spec, unit),
   'robot:command': (fleet, command, unit) => fleet.command(command, unit),
   'robot:disconnect': (fleet, unit) => fleet.disconnect(unit),

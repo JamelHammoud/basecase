@@ -1,3 +1,6 @@
+import { NetworkCredentials } from './networkCredentials.mjs';
+import { discoverRobots } from './networkDiscovery.mjs';
+import { NetworkRobotLink } from './networkRobotLink.mjs';
 import { disconnectedState, NOT_CONNECTED, RobotLink, UNDOCUMENTED } from './robotLink.mjs';
 import { checkedPolicyRefs } from './robotPolicy.mjs';
 import { DEFAULT_UNIT, MAX_UNITS, unitOf, versionOf } from './units.mjs';
@@ -25,6 +28,7 @@ export class RobotFleet {
   constructor(options) {
     this.options = options;
     this.emit = options.emit;
+    this.credentials = new NetworkCredentials(options.networkStoreDir);
     this.candidates = [];
     this.fleet = new Map();
   }
@@ -66,6 +70,39 @@ export class RobotFleet {
 
     if (!reply.ok) this.fleet.delete(name);
     else this.announcePolicy(name, entry);
+
+    return reply;
+  }
+
+  discover() {
+    return discoverRobots();
+  }
+
+  async connectNetwork(ask, unit) {
+    const name = unitOf(unit);
+
+    if (!name) return UNDOCUMENTED;
+
+    if (this.fleet.has(name)) return { ok: false, message: 'A robot is connected. Disconnect it first.' };
+
+    if (this.fleet.size >= MAX_UNITS) return FLEET_FULL;
+
+    const link = new NetworkRobotLink({
+      ...this.options,
+      credentials: this.credentials,
+      emit: (event) => this.onEvent(name, link, event),
+    });
+    const entry = { link, pin: null, history: [] };
+
+    this.fleet.set(name, entry);
+
+    const reply = await link.connect(ask);
+
+    if (!reply.ok && this.fleet.get(name) === entry) this.fleet.delete(name);
+
+    if (reply.ok && this.candidates.length) link.policy(this.candidates);
+
+    if (reply.ok) this.announcePolicy(name, entry);
 
     return reply;
   }

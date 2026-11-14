@@ -49,7 +49,7 @@ Hover a unit's row to find **Roll Back** when it has a previous policy. This res
 
 ## The header
 
-Below the fleet rows, the header names the servos, such as "2 emulated Feetech servos", then the motor state. **Disconnect** sits at its end. The **Ladder** below it marks the rung the robot is on, from **Look** to **Longer Runs**.
+Below the fleet rows, the header names the servos, such as "2 emulated Feetech servos", then the motor state. A network connection also shows the robot's announced name in its fleet row and header. **Disconnect** sits at its end. The **Ladder** below it marks the rung the robot is on, from **Look** to **Longer Runs**.
 
 | Motor state | What it means |
 |---|---|
@@ -104,6 +104,8 @@ When a fault stops the robot, the message names the servo or joint, such as:
 
 On an arm, a fault that stops the robot has **Replay in Sim** under it, which plays the 20 seconds before it in the simulation: [Replay a robot fault in the simulation](/help/replay-a-robot-fault-in-the-simulation). From a fault until you climb the **Ladder** again, the simulation sends the robot no commands.
 
-When the daemon itself exits without being asked, **Daemon lost** shows "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."
+When the daemon exits or the network connection drops, **Daemon lost** shows the daemon's lost-contact message. For Feetech, it reads "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."
+
+A lost network connection leaves the daemon running on the robot computer. Its watchdog starts the stop plan after 100 ms without a heartbeat. Reconnect through the robot list and climb from **Look** again, as shown in [Connect a robot computer](/help/connect-a-robot-computer).
 
 To clear a fault, see [Emulated robot refuses a rung or stops](/help/troubleshoot-emulated-robot).

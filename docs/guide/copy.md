@@ -85,6 +85,7 @@ Every word in the UI is product copy. Write it to the standard below, and check 
       | Start a Case, Routine, Checks or a policy | Run | Launch, Execute |
       | Put a part in the scene | Add | Insert Part |
       | Put a model or robot in the scene | Insert | Add Model, Add Robot |
+      | Install the daemon on a Linux computer | Add a Robot Computer | This names the computer setup flow, so the Insert rule for scene robots does not apply |
       | Bring a new build guide, Case or Routine into being | Make | Create, Generate |
       | Make an out-of-date build guide again | Update | Regenerate |
       | Name a recording of a robot, whatever made it (a driven try, a variation, a real try) | Try | Recording, Episode, Demo, Demonstration |

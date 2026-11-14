@@ -53,7 +53,9 @@ You can also find **Show Operate**, **Connect Emulated Robot**, **Simulate**, **
 
 ## What you're connected to
 
-When you connect, Basecase starts its robot daemon on this computer. The daemon is the program that owns every motor command, and it talks to the app directly, with no network port.
+When you choose **Connect Emulated Robot**, Basecase starts its robot daemon on this computer. The daemon owns every motor command and talks to the app directly, without opening a network port.
+
+To run the daemon on a Linux computer instead, see [Connect a robot computer](/help/connect-a-robot-computer). That connection uses your local network and keeps real motors locked.
 
 The daemon runs the emulated servos on the Feetech bus, numbered from 1 upward in the order of the scene's moving joints. Each Feetech or Dynamixel servo behaves like the servo from Parts on its joint. Any other joint gets an STS3215. A joint whose motor isn't a Feetech or Dynamixel servo, such as the DS3218, reads No reply.
 

@@ -31,7 +31,7 @@ export interface JointMap {
   joints: JointMapEntry[];
 }
 
-interface JointMapInput {
+export interface JointMapInput {
   model: Pick<SimModel, 'joints' | 'robots'>;
   project: ProjectSettings;
   parts: ScenePart[];

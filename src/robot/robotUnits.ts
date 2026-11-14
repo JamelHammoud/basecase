@@ -54,6 +54,7 @@ export function rowKey({ state, version, previous, hasPrevious }: UnitEntry): st
 
   return [
     state.link,
+    state.name,
     state.mode,
     state.pending,
     status?.run,

@@ -58,7 +58,7 @@ function UnitRow({ unit, selected, rollOut }: UnitRowProps) {
       className={`group relative px-2.5 py-1.5 mb-[2px] rounded-lg cursor-default ${selected ? 'bg-white/[0.07]' : 'hover:bg-white/[0.05]'}`}
     >
       <span className="flex items-center gap-2 min-w-0">
-        <span className="min-w-0 truncate text-[13.5px] text-white/90">{unit.unit}</span>
+        <span className="min-w-0 truncate text-[13.5px] text-white/90">{unit.state.name ?? unit.unit}</span>
         {problem && <StatusDot tone="problem" label={problem} />}
       </span>
       <MetaLine

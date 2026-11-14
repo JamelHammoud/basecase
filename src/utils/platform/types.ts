@@ -1,6 +1,7 @@
 import type { SourcedItem } from '../../data/sourcedItems';
 import type { PairReply, PhoneEvent, PhoneState } from '../../phone/phoneTypes';
 import type { RobotPolicyRef } from '../../robot/robotPolicy';
+import type { NetworkRobot, NetworkRobotAsk, RobotInstallAsk, RobotInstallReply } from '../../robot/networkTypes';
 import type {
   ConnectReply,
   ConnectSpec,
@@ -259,6 +260,9 @@ declare global {
       onshapeCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       earthCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       robotConnect?: (spec: ConnectSpec, unit?: string) => Promise<ConnectReply>;
+      robotDiscover?: () => Promise<NetworkRobot[]>;
+      robotNetworkConnect?: (ask: NetworkRobotAsk, unit?: string) => Promise<ConnectReply>;
+      robotInstall?: (ask: RobotInstallAsk) => Promise<RobotInstallReply>;
       robotCommand?: (command: Record<string, unknown>, unit?: string) => Promise<ConnectReply>;
       robotDisconnect?: (unit?: string) => Promise<ConnectReply>;
       robotPolicy?: (refs: RobotPolicyRef[], unit?: string) => Promise<ConnectReply>;

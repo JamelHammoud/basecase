@@ -11,6 +11,7 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { showPartsSection } from './showView';
+import { addRobotComputer } from './robotComputer';
 
 interface WorkspaceLeftSidebarProps {
   core: WorkspaceCore;
@@ -97,6 +98,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
             }),
           onRollBack: (jointId) => rollBackCalibration(core.docs.updateProjectNow, jointId),
         },
+        onAddRobotComputer: IS_WEB_DEMO ? undefined : () => addRobotComputer(core),
         onSetUpServos: () =>
           void setUpServos({ joints: core.project.joints ?? [], parts, select: core.setSelectedIds }),
         onReplay: canReplayRuns(core) ? (messageId) => replayRobotRun(core, messageId) : undefined,

@@ -1,7 +1,7 @@
 ---
 title: Web studio asks you to download Basecase
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 11
@@ -38,6 +38,7 @@ You tried to use something only the desktop app can do. The rest of the message 
 | “Download Basecase to slice and print.” | Slicing, sending plates and testing printers |
 | “Download Basecase to train policies.” | Training a robot to walk or do a skill |
 | “Download Basecase to insert SimReady models.” | Inserting SimReady models |
+| “Download Basecase to connect a robot.” | Connecting emulated robots locally or on a Linux robot computer |
 | “Download Basecase to use this.” | Anything else that runs on your computer, such as importing a maker's CAD |
 
 1. Click **Download for Mac** or **Download for Windows** in the banner above the studio, or in the **Agent** tab.

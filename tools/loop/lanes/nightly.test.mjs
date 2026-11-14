@@ -1,10 +1,14 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as github from '../lib/github.mjs';
 import * as sh from '../lib/sh.mjs';
 import nightly from './nightly.mjs';
 
+const releaseState = vi.hoisted(() => ({ pending: null, save: vi.fn() }));
+
 vi.mock('../lib/store.mjs', () => ({
-  store: () => ({ get: () => ({ tried: [], pending: null }) }),
+  store: () => ({ get: () => ({ tried: [], pending: releaseState.pending }), save: releaseState.save }),
 }));
 
 const failed = {
@@ -24,6 +28,8 @@ beforeEach(() => {
   mainRuns = [failed];
   repairs = [{ mergedAt: '2026-11-14T12:51:54Z' }];
   head = 'bbb';
+  releaseState.pending = null;
+  releaseState.save.mockClear();
   vi.spyOn(github, 'isPaused').mockReturnValue(false);
   vi.spyOn(sh, 'json').mockImplementation((_cmd, args) => {
     if (args[0] === 'pr') return repairs;
@@ -33,6 +39,63 @@ beforeEach(() => {
     return [];
   });
   vi.spyOn(sh, 'run').mockImplementation(() => ({ ok: true, out: head, err: '' }));
+});
+
+const RELEASE_ARTIFACTS = {
+  mac: ['Basecase.dmg'],
+  windows: ['Basecase-Setup.exe'],
+  'robot-daemon-linux-arm64': ['robot-daemon-linux-arm64', 'robot-daemon-linux-arm64.sha256'],
+  'robot-daemon-linux-x64': ['robot-daemon-linux-x64', 'robot-daemon-linux-x64.sha256'],
+};
+
+function pendingRelease(failedJob) {
+  releaseState.pending = { version: '0.2.1', ref: 'bbb', dispatchedAt: '2026-11-14T13:00:00Z' };
+  sh.json.mockImplementation((_cmd, args) => {
+    if (args.includes('check.yml')) return [{ ...failed, conclusion: 'success' }];
+
+    if (args.includes('release.yml'))
+      return [{ databaseId: 42, status: 'completed', createdAt: '2026-11-14T13:01:00Z' }];
+
+    return {
+      jobs: ['mac', 'windows', 'daemon-linux-arm64', 'daemon-linux-x64'].map((name) => ({
+        name,
+        conclusion: name === failedJob ? 'failure' : 'success',
+      })),
+    };
+  });
+  sh.run.mockImplementation((_cmd, args) => {
+    if (args[0] === 'run' && args[1] === 'download') {
+      const dir = args.at(-1);
+
+      for (const [artifact, files] of Object.entries(RELEASE_ARTIFACTS)) {
+        fs.mkdirSync(path.join(dir, artifact));
+
+        for (const file of files) fs.writeFileSync(path.join(dir, artifact, file), 'fixture');
+      }
+    }
+
+    return { ok: true, out: '', err: '' };
+  });
+}
+
+describe('nightly daemon releases', () => {
+  it('publishes both Linux binaries and their checksums with the desktop downloads', () => {
+    pendingRelease();
+    nightly({ log: vi.fn() });
+
+    const args = sh.run.mock.calls.find(([, argv]) => argv[0] === 'release')[1];
+    const assets = args.slice(args.indexOf('--generate-notes') + 1).map((file) => path.basename(file));
+
+    expect(assets.sort()).toEqual(Object.values(RELEASE_ARTIFACTS).flat().sort());
+    expect(args).toContain('bbb');
+  });
+
+  it.each(['daemon-linux-arm64', 'daemon-linux-x64'])('refuses publication when %s fails', (job) => {
+    pendingRelease(job);
+    nightly({ log: vi.fn() });
+    expect(sh.run.mock.calls.some(([, args]) => args[0] === 'release' || args[1] === 'download')).toBe(false);
+    expect(releaseState.save).toHaveBeenCalledWith('state', { tried: [], pending: null });
+  });
 });
 
 afterEach(() => {

@@ -4,6 +4,8 @@ import type { ElectronApi } from '../utils/platform/types';
 import type { RobotConnection } from './jointRows';
 import { readOperateLog } from './operateLog';
 import type { RobotPolicyRef } from './robotPolicy';
+import type { NetworkRobotAsk } from './networkTypes';
+import { NETWORK_ROBOT_MISMATCH, networkRobotMatches } from './networkRobot';
 import { recalledSceneJoints, rememberSceneJoints } from './sceneJointsMemory';
 import { runOf, type RobotRun, type RunFault } from './runBuffer';
 import {
@@ -48,6 +50,8 @@ export type RobotLinkApi = Pick<
   | 'robotRecord'
   | 'robotUnits'
   | 'robotRollBack'
+  | 'robotDiscover'
+  | 'robotNetworkConnect'
 >;
 
 let api: RobotLinkApi | null = null;
@@ -294,6 +298,46 @@ const unavailable: ConnectReply = { ok: false, message: 'Emulated robots run in 
 
 const takenUnits = () => connectedUnits(fleet).map((u) => u.unit);
 
+export const discoverRobots = async () => (await api?.robotDiscover?.()) ?? [];
+
+function rememberConnectedJoints(name: string, joints: string[]) {
+  rememberSceneJoints(name, joints);
+  units.set(name, { ...(units.get(name) ?? unitEntry(name)), joints });
+
+  if (name === selected) sceneJoints = joints;
+
+  notify();
+}
+
+export async function connectNetworkRobot(
+  ask: NetworkRobotAsk,
+  joints: string[],
+  spec: ConnectSpec,
+): Promise<ConnectReply> {
+  const name = nextUnitName(takenUnits());
+
+  if (state.link !== 'connected') {
+    show(name);
+    notify();
+  }
+
+  const reply = (await api?.robotNetworkConnect?.(ask, name)) ?? unavailable;
+
+  if (!reply.ok) return reply;
+
+  const actual = api?.robotState ? (await api.robotState(name))?.spec : units.get(name)?.state.spec;
+
+  if (!networkRobotMatches(actual, { spec, joints })) {
+    await api?.robotDisconnect?.(name);
+
+    return { ok: false, message: NETWORK_ROBOT_MISMATCH };
+  }
+
+  rememberConnectedJoints(name, joints);
+
+  return reply;
+}
+
 export async function connectRobot(spec: ConnectSpec, joints: string[], unit?: string): Promise<ConnectReply> {
   const name = unit ?? nextUnitName(takenUnits());
 
@@ -306,12 +350,7 @@ export async function connectRobot(spec: ConnectSpec, joints: string[], unit?: s
 
   if (!reply.ok) return reply;
 
-  rememberSceneJoints(name, joints);
-  units.set(name, { ...(units.get(name) ?? unitEntry(name)), joints });
-
-  if (name === selected) sceneJoints = joints;
-
-  notify();
+  rememberConnectedJoints(name, joints);
 
   return reply;
 }

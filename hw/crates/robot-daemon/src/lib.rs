@@ -9,6 +9,7 @@ pub mod g1;
 pub mod intent;
 pub mod ladder;
 pub mod monitor;
+pub mod network;
 pub mod policy;
 pub mod protocol;
 pub mod ros2;

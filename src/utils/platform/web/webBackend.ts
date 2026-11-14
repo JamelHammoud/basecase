@@ -119,6 +119,7 @@ const ROUTES: Record<string, Route> = {
   'print-save-printers': () => [],
   'print-discover': () => [],
   'print-last-slice': () => null,
+  'robot-discover': () => [],
   'print-printer-status': () => null,
 };
 
@@ -127,6 +128,7 @@ const DESKTOP_ONLY: Array<[string, string]> = [
   ['simready-', 'Download Basecase to insert SimReady models.'],
   ['train-', 'Download Basecase to train policies.'],
   ['print-', 'Download Basecase to slice and print.'],
+  ['robot-', 'Download Basecase to connect a robot.'],
 ];
 
 const desktopOnly = (name: string) =>

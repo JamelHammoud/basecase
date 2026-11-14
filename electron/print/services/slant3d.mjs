@@ -8,6 +8,8 @@ const PLATFORM = { name: 'Basecase', url: 'https://basecase.so' };
 
 const UNREADABLE = 'Slant 3D sent a reply Basecase can’t read. Quote again in a minute.';
 
+class PartFailure extends Error {}
+
 const fileName = (name) =>
   `${
     String(name ?? '')
@@ -19,7 +21,8 @@ const fileName = (name) =>
 function bytesOf(stl) {
   const bytes = typeof stl === 'string' ? Buffer.from(stl, 'base64') : Buffer.from(stl ?? []);
 
-  if (bytes.byteLength < 84 || bytes.byteLength > MAX_STL_BYTES) throw new Error('A part’s STL couldn’t be written.');
+  if (bytes.byteLength < 84 || bytes.byteLength > MAX_STL_BYTES)
+    throw new PartFailure('A part’s STL couldn’t be written.');
 
   return bytes;
 }
@@ -27,9 +30,9 @@ function bytesOf(stl) {
 function checkedPrice(data, copies) {
   const total = data?.total;
 
-  if (typeof total !== 'number' || !Number.isFinite(total) || total < 0) throw new Error(UNREADABLE);
+  if (typeof total !== 'number' || !Number.isFinite(total) || total < 0) throw new PartFailure(UNREADABLE);
 
-  if (data.quantity !== undefined && data.quantity !== copies) throw new Error(UNREADABLE);
+  if (data.quantity !== undefined && data.quantity !== copies) throw new PartFailure(UNREADABLE);
 
   return Math.round(total * 100) / 100;
 }
@@ -86,16 +89,18 @@ export class Slant3dQuotes {
       json: { name: fileName(shape.name), platformId },
     });
 
-    if (typeof ticket?.presignedUrl !== 'string' || !ticket.filePlaceholder) throw new Error(UNREADABLE);
+    if (typeof ticket?.presignedUrl !== 'string' || !ticket.filePlaceholder) throw new PartFailure(UNREADABLE);
 
-    await this.client.upload(ticket.presignedUrl, bytesOf(shape.stl));
+    await this.client.upload(ticket.presignedUrl, bytesOf(shape.stl)).catch((e) => {
+      throw e instanceof PartFailure ? e : new PartFailure(e.message);
+    });
 
     const file = await this.client.call('/files/confirm-upload', {
       method: 'POST',
       json: { filePlaceholder: ticket.filePlaceholder },
     });
 
-    if (!isUuid(file?.publicFileServiceId)) throw new Error(UNREADABLE);
+    if (!isUuid(file?.publicFileServiceId)) throw new PartFailure(UNREADABLE);
 
     return file.publicFileServiceId;
   }
@@ -126,13 +131,20 @@ export class Slant3dQuotes {
     const list = Array.isArray(shapes) ? shapes.slice(0, MAX_SHAPES) : [];
     const platformId = await this.platform();
     const replies = [];
+    let error;
 
-    for (const shape of list) {
-      if (typeof shape?.part !== 'string') continue;
+    for (const shape of list.filter((s) => typeof s?.part === 'string')) {
+      try {
+        replies.push(await this.quoteOne(shape, platformId));
+      } catch (e) {
+        error = e;
 
-      replies.push(await this.quoteOne(shape, platformId));
+        if (!(e instanceof PartFailure)) break;
+      }
     }
 
-    return replies;
+    if (error && !replies.length) throw error;
+
+    return error ? { replies, error: error.message } : { replies };
   }
 }

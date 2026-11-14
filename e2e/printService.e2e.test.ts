@@ -9,7 +9,6 @@ interface Studio {
   load: (record: { parts: unknown[]; project: unknown }) => void;
   sceneRecord: () => { project: unknown };
   printState: () => { madeBy: string | null };
-  chooseService: () => Promise<void>;
   bomLines: () => Array<{ key: string; category: string; qty: number; lineUsd?: number; estUsd?: number }>;
 }
 
@@ -53,8 +52,21 @@ describe('Made by a Service', () => {
   let service: FakeSlant;
 
   const bomLines = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.bomLines());
-  const chooseService = () =>
-    app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.chooseService());
+  const printer = () => app.page.locator(visible('select[aria-label="Printer"]'));
+  const openPrintMode = async () => {
+    if (await printer().count()) return;
+
+    await app.page
+      .locator('main')
+      .first()
+      .click({ position: { x: 20, y: 20 } });
+    await app.page.keyboard.press('Meta+p');
+    await expect.poll(() => printer().count()).toBe(1);
+  };
+  const choosePrinter = async (option: { label: string } | { index: number }) => {
+    await openPrintMode();
+    await printer().selectOption(option);
+  };
   const madeBy = () =>
     app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.printState().madeBy);
   const bom = () => app.page.locator(visible('section'), { hasText: /^Bill of materials/ }).first();
@@ -88,7 +100,7 @@ describe('Made by a Service', () => {
       { parts, budgetUsd: BUDGET_USD },
     );
     await expect.poll(() => partCount(app.page)).toBe(parts.length);
-    await chooseService();
+    await choosePrinter({ label: 'Made by a Service' });
 
     const settings = app.page.getByRole('dialog', { name: 'Settings' });
 
@@ -105,9 +117,11 @@ describe('Made by a Service', () => {
   });
 
   it('quotes one Printed parts line per shape and counts the quote in Budget', async () => {
-    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-    await chooseService();
+    await choosePrinter({ label: 'Made by a Service' });
     await expect.poll(madeBy).toBe('service');
+    await expect.poll(() => printer().inputValue()).toBe('__service');
+    await app.page.keyboard.press('Escape');
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
 
     const printed = async () => (await bomLines()).filter((l) => l.category === 'Printed parts');
 
@@ -128,16 +142,9 @@ describe('Made by a Service', () => {
   }, 90000);
 
   it('brings the Filament section back when a printer is chosen again', async () => {
-    await app.page
-      .locator('main')
-      .first()
-      .click({ position: { x: 20, y: 20 } });
-    await app.page.keyboard.press('Meta+p');
-
-    const select = app.page.locator(visible('select[aria-label="Printer"]'));
-
-    await expect.poll(() => select.inputValue()).toBe('__service');
-    await select.selectOption({ index: 0 });
+    await openPrintMode();
+    await expect.poll(() => printer().inputValue()).toBe('__service');
+    await choosePrinter({ index: 0 });
     await expect.poll(madeBy).toBeNull();
     await app.page.keyboard.press('Escape');
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();

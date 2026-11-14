@@ -113,6 +113,37 @@ describe('quoting printed parts from Slant 3D', () => {
     expect(replies[1].usd).toBe(fakeUnitUsd([20, 20, 2]));
   });
 
+  it('keeps every price it got when one part fails, and stops at a failure every part would share', async () => {
+    const s = await keyed();
+    let estimates = 0;
+
+    override = (record) =>
+      record.path.endsWith('/estimate') && (estimates += 1) === 1
+        ? [200, '{"success":true,"data":{"total":-1}}']
+        : undefined;
+
+    const partly = await s.quote({ shapes: [shape('lid', [20, 20, 2]), shape('plate', [80, 60, 4])] });
+
+    expect(partly).toEqual({
+      service: 'Slant 3D',
+      replies: [{ part: 'plate', usd: fakeUnitUsd([80, 60, 4]) }],
+      error: expect.stringMatching(/can’t read/),
+    });
+
+    let uploads = 0;
+
+    override = (record) =>
+      record.path.endsWith('/direct-upload') && (uploads += 1) === 2 ? [503, '{"success":false}'] : undefined;
+
+    const stopped = await s.quote({
+      shapes: [shape('lid', [20, 20, 2]), shape('plate', [80, 60, 4]), shape('wheel', [30, 30, 20])],
+    });
+
+    expect(stopped.replies).toEqual([{ part: 'lid', usd: fakeUnitUsd([20, 20, 2]) }]);
+    expect(stopped.error).toMatch(/couldn’t finish/);
+    expect(uploads).toBe(2);
+  });
+
   it('refuses a material the service doesn’t print without uploading it', async () => {
     const s = await keyed();
     const { replies } = await s.quote({ shapes: [shape('duct', [30, 30, 30], { material: 'ABS' })] });

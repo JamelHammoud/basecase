@@ -128,6 +128,12 @@ const asReplies = (value: unknown): QuoteReply[] =>
       (r.refusal === undefined || typeof r.refusal === 'string'),
   );
 
+const asQuoted = (value: unknown) => {
+  const error = (value as { error?: unknown } | null)?.error;
+
+  return { replies: asReplies(value), error: typeof error === 'string' ? error : undefined };
+};
+
 const asSlice = (value: unknown): SliceRecord | null =>
   value && Array.isArray((value as SliceRecord).plates) ? (value as SliceRecord) : null;
 
@@ -164,5 +170,5 @@ export const printBridge = {
   openLink: (url: string) => call<boolean>('print:open-link', url),
   service: async () => asService(await call('print:service')),
   setServiceKey: async (key: string) => asService(await call('print:set-service-key', key)),
-  quote: async (shapes: QuoteShape[]) => asReplies(await call('print:quote', { shapes })),
+  quote: async (shapes: QuoteShape[]) => asQuoted(await call('print:quote', { shapes })),
 };

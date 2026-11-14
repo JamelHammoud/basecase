@@ -56,7 +56,7 @@ It worked when the message is gone from **Assembly**.
 
 ## Budget is red
 
-The estimated total is over your budget. Lines marked ≈ count at their list price.
+The estimated total is over your budget. Lines marked ≈ count at their list price. With **Made by a Service** chosen, printed parts count at their Slant 3D quotes.
 
 1. Open **Budget** in Checks to see the total against your budget.
 2. Save the prices you really pay with **Add Price** in **Bill of materials**. List prices can be higher than what you pay.

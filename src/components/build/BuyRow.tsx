@@ -46,18 +46,27 @@ const ListingLink: React.FC<{ line: BomLine }> = ({ line: l }) => {
   );
 };
 
-const QuotedPrice: React.FC<{ line: BomLine }> = ({ line: l }) => {
-  const money = useMoney();
-
-  if (!l.quote || l.lineUsd === undefined) return null;
+const CheckedPrice: React.FC<{
+  checkedAt: string;
+  stale: boolean;
+  old: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}> = ({ checkedAt, stale, old, onClick, children }) => {
+  const className = `${PRICE_CLASS} ${stale ? 'text-amber-400' : 'text-white/90'}`;
 
   return (
-    <Tooltip label={`Checked ${dayLabel(l.quote.checkedAt)}`} className="shrink-0 -my-[5px]">
-      <span
-        className={`${PRICE_CLASS} inline-flex items-center ${l.status === 'stale' ? 'text-amber-400' : 'text-white/90'}`}
-      >
-        {money.format(l.lineUsd)}
-      </span>
+    <Tooltip
+      label={`Checked ${dayLabel(checkedAt)}${old ? `, over ${STALE_DAYS} days ago` : ''}`}
+      className="shrink-0 -my-[5px]"
+    >
+      {onClick ? (
+        <button type="button" onClick={onClick} className={className}>
+          {children}
+        </button>
+      ) : (
+        <span className={`${className} inline-flex items-center`}>{children}</span>
+      )}
     </Tooltip>
   );
 };
@@ -66,7 +75,12 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
   const stale = l.status === 'stale';
   const money = useMoney();
 
-  if (l.category === 'Printed parts') return <QuotedPrice line={l} />;
+  if (l.category === 'Printed parts')
+    return l.quote && l.lineUsd !== undefined ? (
+      <CheckedPrice checkedAt={l.quote.checkedAt} stale={stale} old={false}>
+        {money.format(l.lineUsd)}
+      </CheckedPrice>
+    ) : null;
 
   if (l.toBuy === 0 && !l.record)
     return (
@@ -77,15 +91,9 @@ const PriceControl: React.FC<{ line: BomLine; onCheck: () => void }> = ({ line: 
 
   if (l.record)
     return (
-      <Tooltip label={`Checked ${dayLabel(l.record.checkedAt)}${stale ? `, over ${STALE_DAYS} days ago` : ''}`} className="shrink-0 -my-[5px]">
-        <button
-          type="button"
-          onClick={onCheck}
-          className={`${PRICE_CLASS} ${stale ? 'text-amber-400' : 'text-white/90'}`}
-        >
-          {money.format(l.lineUsd ?? l.record.priceUsd, scaledEntry(l.record.entered, l.packs ?? 1))}
-        </button>
-      </Tooltip>
+      <CheckedPrice checkedAt={l.record.checkedAt} stale={stale} old={stale} onClick={onCheck}>
+        {money.format(l.lineUsd ?? l.record.priceUsd, scaledEntry(l.record.entered, l.packs ?? 1))}
+      </CheckedPrice>
     );
 
   if (l.estimate && l.estUsd !== undefined)

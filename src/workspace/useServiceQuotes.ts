@@ -29,7 +29,7 @@ async function quoteShapes(asked: QuoteRequest[], options: ServiceQuotesOptions)
     stls[a.part] ? [{ part: a.part, name: a.name, material: a.material, copies: a.copies, stl: stls[a.part] }] : [],
   );
 
-  return shapes.length ? printBridge.quote(shapes) : [];
+  return shapes.length ? printBridge.quote(shapes) : { replies: [], error: undefined };
 }
 
 export function useServiceQuotes(options: ServiceQuotesOptions) {
@@ -54,12 +54,14 @@ export function useServiceQuotes(options: ServiceQuotesOptions) {
     busy.current = true;
 
     try {
-      const replies = await quoteShapes(asked, options);
+      const { replies, error } = await quoteShapes(asked, options);
       const answered = new Set(replies.map((r) => r.part));
       const unanswered = asked.filter((a) => !answered.has(a.part)).map((a) => a.key);
 
       setProject((p) => ({ ...p, quotes: withQuotes(p.quotes, asked, { replies, checkedAt: localDate(), parts }) }));
       setFailed((prev) => (unanswered.length ? new Set([...prev, ...unanswered]) : prev));
+
+      if (error) options.showToast(error, { tone: 'error' });
     } catch (e) {
       setFailed((prev) => new Set([...prev, ...asked.map((a) => a.key)]));
       options.showToast(errorMessage(e), { tone: 'error' });

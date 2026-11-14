@@ -60,6 +60,6 @@ export class PrintServices {
 
     if (!key) throw new Error(NO_KEY);
 
-    return { service: SERVICE_NAME, replies: await this.quoter(key).quote(shapes) };
+    return { service: SERVICE_NAME, ...(await this.quoter(key).quote(shapes)) };
   }
 }

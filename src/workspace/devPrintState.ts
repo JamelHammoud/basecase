@@ -13,7 +13,6 @@ export function printDevActions(core: WorkspaceCore) {
       madeBy: project.madeBy ?? null,
       bed: printing.report?.plan.bed ?? null,
     }),
-    chooseService: () => printing.service.choose(),
     printPlates: () => ({
       open: !!printing.mode,
       fitTest: !!printing.fitTest,

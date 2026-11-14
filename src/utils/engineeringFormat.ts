@@ -4,6 +4,7 @@ import type { V3 } from './engineeringMath';
 import type { RobotJoint } from '../types/robotics';
 import { wiringText } from '../wiring/wiringText';
 import { weight } from './weight';
+import { percent } from '../../electron/percent.mjs';
 
 export const nm = (v: number) => v.toFixed(2);
 export const deg = (v: number) => `${Math.round(v) < 0 ? '−' : ''}${Math.abs(Math.round(v))}°`;
@@ -16,8 +17,7 @@ const MARK: Record<CheckRow['status'], string> = { pass: 'PASS', warn: 'WARN', f
 function jointLimits(l: EngineeringReport['joints'][number]): string {
   if (l.stallShare === undefined) return ' (no actuator data)';
 
-  if (l.ratedNm === undefined)
-    return ` vs maker limit ${nm(l.stallNm!)} (${Math.round(l.stallShare * 100)}%) ${MARK[l.status]}`;
+  if (l.ratedNm === undefined) return ` vs maker limit ${nm(l.stallNm!)} (${percent(l.stallShare)}) ${MARK[l.status]}`;
 
   const sim = l.simRmsNm === undefined ? '' : ` from ${nm(l.simRmsNm)} N·m RMS in the walk sim`;
   const heat = l.heatShare === undefined ? '' : `, heat ${l.heatShare.toFixed(2)}× rated${sim}`;

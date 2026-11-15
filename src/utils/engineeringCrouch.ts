@@ -23,11 +23,11 @@ const KNEE_WORD = /^[lr]?(knee|kfe|calf|shin)[lr]?\d*$/;
 const isKnee = (j: RobotJoint) => nameWords(j.name).some((w) => KNEE_WORD.test(w));
 
 function pitchJoints(chain: RobotJoint[]): RobotJoint[] {
-  const sets = chain
-    .filter((j) => Math.abs(norm(j.axis)[1]) < LEVEL_AXIS)
-    .map((j) => {
-      const axis = norm(j.axis);
-      const members = chain.filter((k) => Math.abs(dot(norm(k.axis), axis)) >= PITCH_AXIS);
+  const axes = chain.map((joint) => ({ joint, axis: norm(joint.axis) }));
+  const sets = axes
+    .filter(({ axis }) => Math.abs(axis[1]) < LEVEL_AXIS)
+    .map(({ axis }) => {
+      const members = axes.filter((other) => Math.abs(dot(other.axis, axis)) >= PITCH_AXIS).map(({ joint }) => joint);
 
       return { members, score: members.length * 4 + (members.some(isKnee) ? 2 : 0) + Math.abs(axis[0]) };
     });

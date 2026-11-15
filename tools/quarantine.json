@@ -204,14 +204,6 @@
     "reason": "Run 43687018679 left Drive off for 60 s on Linux in both attempts and on Windows after a separate failed panel drag. The unchanged test and drag hook passed on Windows in run 43642970706, where the test took 9.2 s. The cause is not established."
   },
   {
-    "file": "e2e/caseCode.e2e.test.ts",
-    "test": "drives the rover from a code joystick, shows its speed in a HUD overlay, and leaves on Esc pressed inside",
-    "issue": 842,
-    "until": "2026-11-21",
-    "platform": "win32",
-    "reason": "In run 43637620265 on Windows, the first attempt drove only 0.0294 m and the retry left Drive off for 60 s. The test passed on Linux at the same commit in 26.4 s and on Windows in the preceding run in 19.3 s, with unchanged joystick test, bridge, frame and drive hook. The cause is not established."
-  },
-  {
     "file": "e2e/firstLaunch.e2e.test.ts",
     "test": "opens on the rover driving to its flag",
     "issue": 794,

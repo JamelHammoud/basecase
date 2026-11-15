@@ -5,7 +5,7 @@ import {
   couplerCurve,
   couplerOffset,
   couplerSampler,
-  distanceToCurve,
+  curveDistance,
   grashofClass,
   minTransmission,
   toDegrees,
@@ -146,13 +146,13 @@ function scored(l: PlacedFourBar & { thetas: number[] }, targets: Vec2[]): Linka
   const from = l.thetas[0];
   const to = l.thetas[l.thetas.length - 1];
   const samples = Math.max(8, Math.ceil((Math.abs(to - from) / 360) * CURVE_SAMPLES));
-  const curve = couplerCurve(l, from, to, samples);
+  const distance = curveDistance(couplerCurve(l, from, to, samples));
   const sample = couplerSampler(l);
   const errors = targets.map((t, i) => {
     const at = sample(l.thetas[i]);
     const direct = at ? Math.hypot(at[0] - t[0], at[1] - t[1]) : Infinity;
 
-    return Math.min(direct, distanceToCurve(t, curve));
+    return Math.min(direct, distance(t));
   });
   const linkage: PlacedFourBar = {
     origin: l.origin,
@@ -243,16 +243,17 @@ function reach(s: LinkageSolution, center: Vec2): number {
 
 const REACH_WEIGHT = 0.02;
 
-function follows(s: LinkageSolution, points: Vec2[]): number {
+function follows(s: LinkageSolution, distance: (point: Vec2) => number): number {
   const traced = couplerCurve(s.linkage, s.crank[0], s.crank[1], CURVE_SAMPLES / 8);
 
-  return Math.max(...traced.map((p) => distanceToCurve(p, points)));
+  return Math.max(...traced.map(distance));
 }
 
 function ranking(points: Vec2[], center: Vec2) {
   const score = new Map<LinkageSolution, number>();
+  const distance = curveDistance(points);
   const of = (s: LinkageSolution) => {
-    if (!score.has(s)) score.set(s, follows(s, points) + REACH_WEIGHT * reach(s, center));
+    if (!score.has(s)) score.set(s, follows(s, distance) + REACH_WEIGHT * reach(s, center));
 
     return score.get(s)!;
   };

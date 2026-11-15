@@ -1,4 +1,5 @@
 import type { StoredTry } from '../../cases/tryFile';
+import type { TryVideoUpload } from '../../cases/tryStore/videoUploadTypes';
 import type { ImportedTry } from './importedTries';
 import { DataImportError } from './types';
 
@@ -6,6 +7,7 @@ interface ImportStore {
   manifests: (ids: string[]) => Promise<StoredTry[]>;
   keep: (tries: ImportedTry[]) => Promise<void>;
   update: (stored: StoredTry[]) => Promise<StoredTry[]>;
+  videos: (videos: TryVideoUpload[]) => Promise<void>;
 }
 
 async function existingImports(incoming: ImportedTry[], load: ImportStore['manifests']) {
@@ -54,13 +56,43 @@ async function updateSplits(updated: StoredTry[], store: ImportStore) {
   if (saved.length !== updated.length) throw new DataImportError('Import the files again.');
 }
 
+function importVideos(incoming: ImportedTry[], targets: Map<string, StoredTry>): TryVideoUpload[] {
+  const uploads = new Map<string, TryVideoUpload>();
+
+  for (const { stored, videos } of incoming) {
+    const saved = targets.get(stored.id);
+
+    for (const video of videos ?? []) {
+      const source = stored.videos?.find((entry) => entry.camera === video.camera);
+      const matching = saved?.videos?.some(
+        (entry) =>
+          entry.camera === video.camera &&
+          entry.path === source?.path &&
+          entry.from === source?.from &&
+          entry.to === source?.to,
+      );
+
+      if (matching) uploads.set(JSON.stringify([stored.id, video.camera]), { ...video, id: stored.id });
+    }
+  }
+
+  return [...uploads.values()];
+}
+
 export async function keepImportedTries(incoming: ImportedTry[], store: ImportStore): Promise<number> {
   const existing = await existingImports(incoming, store.manifests);
   const { fresh, updated } = importPlan(incoming, existing);
+  const targets = new Map(existing);
+
+  for (const { stored } of fresh) targets.set(stored.id, stored);
+
+  const videos = importVideos(incoming, targets);
 
   await updateSplits(updated, store);
 
-  if (fresh.length) await store.keep(fresh);
+  if (fresh.length) await store.keep(fresh.map(({ stored, recording }) => ({ stored, recording })));
+
+  if (videos.length) await store.videos(videos);
 
   return fresh.length;
 }

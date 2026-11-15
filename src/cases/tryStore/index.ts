@@ -167,6 +167,8 @@ export const loadSession = (id: string) => backend.session(id);
 
 export const saveTryVideo = (id: string, bytes: Uint8Array) => backend.saveVideo(id, bytes);
 
+export const saveTryVideos = (videos: Parameters<TryBackend['saveVideos']>[0]) => backend.saveVideos(videos);
+
 export async function keepSession(stored: StoredTry, session: string) {
   await backend.saveSession(stored, session);
   await update((tries) => [

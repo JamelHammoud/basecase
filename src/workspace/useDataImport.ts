@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { plural } from '../../electron/plural.mjs';
 import { sha256 } from '../cases/tries';
-import { keepTries, loadManifests, updateManifests } from '../cases/tryStore';
+import { keepTries, loadManifests, saveTryVideos, updateManifests } from '../cases/tryStore';
 import { TRIES_LABEL } from '../cases/tryStore/types';
 import type { TryOrigin } from '../cases/tryFile';
 import { openDataImport, type DataImportRun } from '../datasets/import/dataImportClient';
@@ -182,6 +182,7 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
       manifests: loadManifests,
       keep: keepTries,
       update: updateManifests,
+      videos: saveTryVideos,
     });
 
     showToast(importedMessage(built, added));

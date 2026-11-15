@@ -67,6 +67,8 @@ A dataset with image annotations adds labeled images to the Library. If it also 
 
 Joints are matched by name, so an ALOHA's left and right arms land on two robots in the scene. Any match you make in the Match Joints sheet carries over to the next time you import the same data. If you import the same data twice onto the same robot in the same scene, the second import adds no tries. It can attach a split assignment to a try that had none. Conflicting assignments for an existing try stop the import with an error.
 
+To restore a missing camera video, import the same dataset with its camera files again. Your labels and verdicts stay saved.
+
 Saved camera videos follow the timeline's playhead. Their tiles show detections from that image, as in [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
 
 If no joint matches and the dataset names a robot that isn't in your scene, such as an SO-101 or a Unitree G1, you see a message with **Import Robot**. Add the robot to your scene, then repeat the import.

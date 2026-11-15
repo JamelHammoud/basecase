@@ -8,6 +8,7 @@ import { LARGE_SIZE, TILE_SIZE } from './liveStage';
 import type { CameraView } from './views';
 import * as defaultVision from './visionSession';
 import type { CameraVision } from './scopedVision';
+import { errorMessage } from '../utils/errorMessage';
 
 export type Canvases = Map<string, HTMLCanvasElement>;
 
@@ -85,19 +86,32 @@ export class LiveFeed {
   constructor(
     canvases: Canvases,
     onFrames: (frames: number) => void,
-    vision: Pick<CameraVision, 'connectVisionFrames' | 'onVisionAssignments' | 'visionAssignments'> = defaultVision,
+    vision: Pick<
+      CameraVision,
+      | 'connectVisionFrames'
+      | 'onVisionAssignments'
+      | 'visionAssignments'
+      | 'availableVisionCameras'
+      | 'setCameraVisionError'
+    > = defaultVision,
   ) {
     const { connectVisionFrames, onVisionAssignments, visionAssignments } = vision;
     const receive = feedReceiver(canvases, this.streams, onFrames);
 
     this.worker.onmessage = ({ data }: MessageEvent<FeedEvent>) => receive(data);
     this.stopVision = onVisionAssignments(() => this.post({ type: 'vision', assignments: visionAssignments() }));
-    void connectVisionFrames().then((port) => {
-      if (this.stopped) return port.close();
+    void connectVisionFrames()
+      .then((port) => {
+        if (this.stopped) return port.close();
 
-      this.post({ type: 'vision-port', port, timeOrigin: performance.timeOrigin }, [port]);
-      this.post({ type: 'vision', assignments: visionAssignments() });
-    });
+        this.post({ type: 'vision-port', port, timeOrigin: performance.timeOrigin }, [port]);
+        this.post({ type: 'vision', assignments: visionAssignments() });
+      })
+      .catch((error: unknown) => {
+        if (this.stopped) return;
+
+        for (const camera of vision.availableVisionCameras()) vision.setCameraVisionError(camera, errorMessage(error));
+      });
   }
 
   link(): MessagePort {

@@ -31,6 +31,7 @@ function portsFor(existing: StoredTry[] = []) {
     manifests: vi.fn(async (ids: string[]) => existing.filter((stored) => ids.includes(stored.id))),
     keep: vi.fn<(tries: ImportedTry[]) => Promise<void>>().mockResolvedValue(undefined),
     update: vi.fn(async (stored: StoredTry[]) => stored),
+    videos: vi.fn<(videos: unknown[]) => Promise<void>>().mockResolvedValue(undefined),
   };
 }
 
@@ -107,4 +108,60 @@ describe('keeping imported source splits', () => {
     expect(ports.manifests.mock.calls.map(([ids]) => ids.length)).toEqual([500, 1]);
     expect(ports.manifests.mock.calls.flatMap(([ids]) => ids)).toEqual(inputs.map(({ stored }) => stored.id));
   });
+});
+
+it('restores matching clips on reimport and transfers shared sources once across new and saved episodes', async () => {
+  const camera = { camera: 'front', path: 'shared.mp4', from: 0, to: 1 };
+  const bytes = new Uint8Array([1, 2, 3]);
+  const previous = { ...imported('same').stored, videos: [camera], labels: emptyLabels() };
+  const ports = portsFor([previous]);
+  const incoming = ['same', 'new'].map((id) => ({
+    ...imported(id),
+    stored: { ...imported(id).stored, videos: [camera] },
+    videos: [{ camera: 'front', bytes }],
+  }));
+
+  expect(await keepImportedTries(incoming, ports)).toBe(1);
+  expect(ports.keep).toHaveBeenCalledExactlyOnceWith([
+    { stored: incoming[1].stored, recording: incoming[1].recording },
+  ]);
+  expect(ports.videos).toHaveBeenCalledExactlyOnceWith([
+    { id: 'same', camera: 'front', bytes },
+    { id: 'new', camera: 'front', bytes },
+  ]);
+  expect(ports.keep.mock.invocationCallOrder[0]).toBeLessThan(ports.videos.mock.invocationCallOrder[0]);
+  expect(ports.update).not.toHaveBeenCalled();
+});
+
+it('preserves saved camera bindings when a duplicate motion has different video metadata', async () => {
+  const camera = { camera: 'front', path: 'shared.mp4', from: 0, to: 1 };
+  const ports = portsFor([{ ...imported('same').stored, videos: [camera] }]);
+  const incoming = {
+    ...imported('same'),
+    stored: { ...imported('same').stored, videos: [{ ...camera, from: 2, to: 3 }] },
+    videos: [{ camera: 'front', bytes: new Uint8Array([9]) }],
+  };
+
+  expect(await keepImportedTries([incoming], ports)).toBe(0);
+  expect(ports.videos).not.toHaveBeenCalled();
+  expect(ports.keep).not.toHaveBeenCalled();
+  expect(ports.update).not.toHaveBeenCalled();
+});
+
+it('binds a repeated fresh episode only to the camera metadata kept in its manifest', async () => {
+  const ports = portsFor();
+  const bytes = new Uint8Array([1]);
+  const first = {
+    ...imported('same'),
+    stored: { ...imported('same').stored, videos: [{ camera: 'front', path: 'first.mp4', from: 0, to: 1 }] },
+    videos: [{ camera: 'front', bytes }],
+  };
+  const repeated = {
+    ...first,
+    stored: { ...first.stored, videos: [{ camera: 'front', path: 'second.mp4', from: 0, to: 1 }] },
+    videos: [{ camera: 'front', bytes: new Uint8Array([2]) }],
+  };
+
+  expect(await keepImportedTries([first, repeated], ports)).toBe(1);
+  expect(ports.videos).toHaveBeenCalledExactlyOnceWith([{ id: 'same', camera: 'front', bytes }]);
 });

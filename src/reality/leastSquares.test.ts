@@ -2,6 +2,39 @@ import { describe, expect, it, vi } from 'vitest';
 import { levenbergMarquardt, solveLinear } from './leastSquares';
 
 describe('least squares', () => {
+  it.each([
+    [7, 300],
+    [14, 600],
+  ])('forms each column pair once for %i parameters and %i residuals', (parameters, samples) => {
+    const truth = Array.from({ length: parameters }, (_, i) => (i + 1) / parameters);
+    const problem = {
+      residual: (x: number[]) =>
+        Float64Array.from({ length: samples }, (_, i) => x[i % parameters] - truth[i % parameters]),
+      x0: truth.map(() => 0),
+      lower: truth.map(() => -2),
+      upper: truth.map(() => 2),
+      maxIterations: 1,
+    };
+    const before = structuredClone({ x0: problem.x0, lower: problem.lower, upper: problem.upper });
+    const reductions = vi.spyOn(Float64Array.prototype, 'reduce');
+    let result: ReturnType<typeof levenbergMarquardt>;
+    let count: number;
+
+    try {
+      result = levenbergMarquardt(problem);
+      count = reductions.mock.calls.length;
+    } finally {
+      reductions.mockRestore();
+    }
+
+    expect(count).toBe((parameters * (parameters + 1)) / 2 + parameters + 2);
+    expect(result.evaluations).toBe(parameters + 2);
+    expect(result.iterations).toBe(1);
+    expect(result.x).toEqual(truth.map((value) => expect.closeTo(value / 1.01, 12)));
+    expect({ x0: problem.x0, lower: problem.lower, upper: problem.upper }).toEqual(before);
+    expect(levenbergMarquardt(problem)).toEqual(result);
+  });
+
   it('pivots a dense system without copying tails or changing its inputs', () => {
     const n = 16;
     const solution = Array.from({ length: n }, (_, i) => i - 4);

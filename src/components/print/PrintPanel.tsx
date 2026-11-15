@@ -212,13 +212,12 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
         <Button
           size="sm"
           variant={printing.mode?.face ? 'primary' : 'secondary'}
-          title="Lay on face"
           shortcut="F"
           onClick={() => printing.setFaceMode(!printing.mode?.face)}
         >
           Lay on Face
         </Button>
-        <Button size="sm" variant="secondary" title="Turn 90°" shortcut="R" onClick={() => printing.turnPart(part.id)}>
+        <Button size="sm" variant="secondary" shortcut="R" onClick={() => printing.turnPart(part.id)}>
           Turn 90°
         </Button>
         {part.print?.down && (

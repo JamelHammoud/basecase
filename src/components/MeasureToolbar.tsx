@@ -114,7 +114,7 @@ export const MeasureToolbar: React.FC<MeasureToolbarProps> = ({
       </>
     )}
     <IslandDivider />
-    <Button size="sm" variant="ghost" onClick={onDone} title="Done" shortcut="Esc" tooltipSide="top">
+    <Button size="sm" variant="ghost" onClick={onDone} shortcut="Esc" tooltipSide="top">
       Done
     </Button>
   </FloatingIsland>

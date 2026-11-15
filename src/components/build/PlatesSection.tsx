@@ -44,7 +44,7 @@ export const PlatesSection: React.FC<{ printing: Printing }> = ({ printing }) =>
             `${totals.exact ? '' : '≈ '}${duration(totals.hours * 3600, 'min')}`,
           ]}
         />
-        <Button size="sm" variant="secondary" title="Print" shortcut={keyFor('print')} onClick={() => printing.openMode(1)}>
+        <Button size="sm" variant="secondary" shortcut={keyFor('print')} onClick={() => printing.openMode(1)}>
           Print
         </Button>
       </div>

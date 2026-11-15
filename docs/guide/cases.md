@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 8h. Cases
 
+In New Case, world choices have no tooltip repeating their visible name. Cancel and Make Case show only Esc and ↩ in their tooltips.
+
 A Case is a world with one to four robot slots, controls and goals that any compatible robots can enter. It lives in `src/cases/`.
 
 - **A Case is the test.** A Skill (§8i) is a solution to it.

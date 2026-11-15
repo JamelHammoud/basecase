@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { ShapeSolid } from './shapeSolid';
+import { surfaceSampleIndex } from '../../utils/surfaceSampleIndex';
 
 const SAMPLES_PER_PART = 4000;
 const GRID = 160;
@@ -53,7 +54,7 @@ function surfaceSamples(solid: ShapeSolid): Float32Array {
   const out = new Float32Array(triangles && sum > 0 ? SAMPLES_PER_PART * 3 : 0);
 
   for (let s = 0; s < out.length / 3; s++) {
-    const t = Math.min(triangles - 1, lowerBound(cumulative, random() * sum));
+    const t = Math.min(triangles - 1, surfaceSampleIndex(cumulative, random() * sum));
     let u = random();
     let v = random();
 
@@ -69,20 +70,6 @@ function surfaceSamples(solid: ShapeSolid): Float32Array {
   solid.samples.set(SAMPLE_KEY, out);
 
   return out;
-}
-
-function lowerBound(values: Float64Array, target: number): number {
-  let lo = 0;
-  let hi = values.length - 1;
-
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1;
-
-    if (values[mid] < target) lo = mid + 1;
-    else hi = mid;
-  }
-
-  return lo;
 }
 
 function worldSamples(parts: VisibilityInput[]) {

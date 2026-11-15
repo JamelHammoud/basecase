@@ -16,14 +16,6 @@
     "reason": "In run 43637620265 on Windows, the first attempt drove only 0.0294 m and the retry left Drive off for 60 s. The test passed on Linux at the same commit in 26.4 s and on Windows in the preceding run in 19.3 s, with unchanged joystick test, bridge, frame and drive hook. The cause is not established."
   },
   {
-    "file": "e2e/buildAlong.e2e.test.ts",
-    "test": "buy only what the drawer lacks: 6 STS3215s on hand take the servos and their price off the total",
-    "issue": 836,
-    "until": "2026-11-21",
-    "platform": "win32",
-    "reason": "On Windows in run 43637620265, both attempts left 6 servos to buy at about $120 after entering 6 on hand. Linux passed at the same commit, and the previous two Windows runs passed with unchanged input and purchase code. The save failure's cause is not established."
-  },
-  {
     "file": "e2e/webTrain.e2e.test.ts",
     "test": "trains Stand on the tab engine, passes Arena, and keeps it through a reload",
     "issue": 794,

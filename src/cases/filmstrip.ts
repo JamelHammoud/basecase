@@ -1,3 +1,4 @@
+import { convexHull } from '../utils/convexHull';
 import * as THREE from 'three';
 import { simDeltas, worldDeltas } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -56,24 +57,6 @@ function project(p: THREE.Vector3): [number, number] {
   return [p.dot(right), -p.dot(up)];
 }
 
-function hull(points: Polygon): Polygon {
-  const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const cross = (o: number[], a: number[], b: number[]) =>
-    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-  const half = (list: Polygon) =>
-    list.reduce<Polygon>((out, p) => {
-      while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
-
-      out.push(p);
-
-      return out;
-    }, []);
-  const lower = half(sorted);
-  const upper = half([...sorted].reverse());
-
-  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
-}
-
 function boxPolygon(box: FilmBox, delta: THREE.Matrix4 | undefined): Polygon {
   const place = new THREE.Matrix4().compose(
     new THREE.Vector3(...box.position),
@@ -83,7 +66,7 @@ function boxPolygon(box: FilmBox, delta: THREE.Matrix4 | undefined): Polygon {
 
   if (delta) place.premultiply(delta);
 
-  return hull(CORNERS.map((c) => project(new THREE.Vector3(...c).applyMatrix4(place))));
+  return convexHull(CORNERS.map((c) => project(new THREE.Vector3(...c).applyMatrix4(place))));
 }
 
 export function filmFrames(input: Omit<FilmstripInput, 'width' | 'height'>): FilmFrame[] {

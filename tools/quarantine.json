@@ -1,5 +1,29 @@
 [
   {
+    "file": "e2e/firstLaunch.e2e.test.ts",
+    "test": "says why Try on Real Robot didn’t start, and keeps saying it under the button",
+    "issue": 1127,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43728033376 timed out in openApp navigation at harness.ts:197 on the first Windows attempt, before camera refusal was tested. The retry logged studio readiness after 113411 ms and exceeded the unchanged 180000 ms test budget. Linux passed at the same commit in 14089 ms. Commit d84a7f5e0 had supplied camera denial and isolated this test in a second app while the beforeAll rover app remains running. The navigation or resource bottleneck is not established."
+  },
+  {
+    "file": "e2e/linkage.e2e.test.ts",
+    "test": "",
+    "issue": 1128,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43728033376 inserted and undid the linkage but failed to restore five parts after redo at line 142 on the first Windows attempt. Its retry could not find the Sketch solution button because the first attempt had closed Sketch. Linux passed insertion at the same commit in 1213 ms. Windows passed the unchanged test in run 43721538732 in 1384 ms. The redo dispatch, focus or document-state cause is not established. The whole file is listed because insertion depends on the preceding path test and the coupler sweep depends on insertion. Selective observation would omit those prerequisites."
+  },
+  {
+    "file": "e2e/visionTraining.e2e.test.ts",
+    "test": "freezes real image sources, compares ONNX models, saves the result and applies the retained model",
+    "issue": 1129,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43728033376 observed zero saved training runs after Train at line 58 on both Windows attempts. Each attempt opens a fresh app and Library. Linux passed the complete pipeline at the same commit in 12825 ms, and both controlled training-and-stop tests passed on Windows. Commit 899e7069c introduced the walkthrough after the last green nightly. The snapshot preparation, ONNX evaluation or persistence stage responsible is not established."
+  },
+  {
     "file": "e2e/trainFromTries.e2e.test.ts",
     "test": "starts the dataset job from its button and command, freezes it once and recovers when training stops",
     "issue": 995,

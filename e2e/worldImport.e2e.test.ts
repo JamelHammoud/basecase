@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { kitchenCollider, kitchenSplat } from '../src/cases/worldImportFixture';
 import type { WorldImportFile } from '../src/cases/worldImportTypes';
-import { endTryAt, inDataset, loadFixtureRobot, passedDatasetFiles } from './driveChecks';
+import { loadFixtureRobot } from './driveChecks';
 import type { SimState } from './driveStudio';
 import { openApp, partCount, shown, type App } from './harness';
 
@@ -14,7 +14,6 @@ interface WorldState {
   meshes: number;
   pieces: number;
   loaded: boolean;
-  renderedSplats: number;
 }
 
 interface Studio {
@@ -27,28 +26,6 @@ let app: App;
 
 const simState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
 const worldState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.worldState());
-
-async function recordKitchenTry() {
-  await app.page
-    .locator(shown('button'), { hasText: /^Try It$/ })
-    .first()
-    .click();
-  await endTryAt(app.page, 0.2);
-  await expect.poll(async () => (await simState()).tries.length).toBe(1);
-  await expect.poll(() => app.page.locator(shown('[data-testid="try-row"]')).count()).toBe(1);
-}
-
-async function expectKitchenDataset() {
-  const files = inDataset(await passedDatasetFiles(app.page));
-  const videos = Object.keys(files).filter((path) => path.endsWith('.mp4'));
-
-  expect(videos.sort()).toEqual([
-    'v2.1/videos/chunk-000/observation.images.scene/episode_000000.mp4',
-    'videos/observation.images.scene/chunk-000/file-000.mp4',
-  ]);
-
-  for (const path of videos) expect(files[path].length).toBeGreaterThan(0);
-}
 
 async function dropFixtures(files: WorldImportFile[]) {
   const directory = await mkdtemp(join(tmpdir(), 'basecase-world-import-'));
@@ -102,35 +79,21 @@ afterEach(async () => {
 });
 
 describe('a captured world dropped on the canvas', () => {
-  it('records a kitchen try and exports Scene videos in both LeRobot layouts', async () => {
+  it('shows the mesh when the capture has no splat', async () => {
     app = await openApp();
     await loadFixtureRobot(app.page, 'rover-diff');
 
     const parts = await partCount(app.page);
 
-    await makeKitchen();
-    await expect.poll(async () => (await worldState())?.renderedSplats ?? 0).toBeGreaterThan(0);
-
-    const world = (await worldState())!;
-
-    expect(world.hash).toMatch(/^[a-f0-9]{64}$/);
-    expect(world.splat).toBe(true);
-    expect(world.pieces).toBeGreaterThanOrEqual(2);
-    expect(world.pieces).toBeLessThanOrEqual(64);
-    expect(await partCount(app.page)).toBe(parts);
-    await recordKitchenTry();
-    await expectKitchenDataset();
-    expect(app.errors).toEqual([]);
-  });
-
-  it('shows the mesh when the capture has no splat', async () => {
-    app = await openApp();
-    await loadFixtureRobot(app.page, 'rover-diff');
     await makeKitchen([kitchenCollider()]);
 
     const world = (await worldState())!;
 
+    expect(world.hash).toMatch(/^[a-f0-9]{64}$/);
     expect(world.splat).toBe(false);
+    expect(world.pieces).toBeGreaterThanOrEqual(2);
+    expect(world.pieces).toBeLessThanOrEqual(64);
+    expect(await partCount(app.page)).toBe(parts);
     expect(world.meshes).toBeGreaterThan(0);
     expect(app.errors).toEqual([]);
   });

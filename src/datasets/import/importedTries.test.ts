@@ -61,6 +61,17 @@ describe('detecting units by range', () => {
 });
 
 describe('importing episodes as tries', () => {
+  it('stores an explicit source split without changing recording identity', async () => {
+    const model = sceneModel([namedArm(SO101_JOINTS)]);
+    const episode = episodeOf({ names: SO101_JOINTS, frames: 10, value: sweepDeg });
+    const original = (await build(sourceOf(SO101_JOINTS, [episode]), model)).kept[0].stored;
+    const assigned = (await build(sourceOf(SO101_JOINTS, [{ ...episode, split: 'validation' }]), model)).kept[0].stored;
+
+    expect(original).not.toHaveProperty('split');
+    expect(assigned).toEqual({ ...original, split: 'validation' });
+    expect(readStoredTry(JSON.parse(JSON.stringify(assigned)))).toEqual(assigned);
+  });
+
   it('replays an SO-101 dataset in degrees on the scene’s SO-101, joint by joint', async () => {
     const model = sceneModel([namedArm(SO101_JOINTS)]);
     const names = SO101_JOINTS.map((n) => `${n}.pos`);

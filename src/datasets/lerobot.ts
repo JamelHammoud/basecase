@@ -15,6 +15,7 @@ import {
   type DatasetSpec,
 } from './lerobotRows';
 import { legacyTaskList, subtaskColumns } from './segmentRows';
+import { lerobotSplits } from './lerobotSplits';
 
 export const CODEBASE_VERSION = 'v2.1';
 
@@ -40,7 +41,7 @@ function info(spec: DatasetSpec) {
     total_chunks: Math.max(1, Math.ceil(spec.episodes.length / CHUNK_SIZE)),
     chunks_size: CHUNK_SIZE,
     fps: DATASET_FPS,
-    splits: { train: `0:${spec.episodes.length}` },
+    splits: lerobotSplits(spec.episodes),
     data_path: 'data/chunk-{episode_chunk:03d}/episode_{episode_index:06d}.parquet',
     video_path: 'videos/chunk-{episode_chunk:03d}/{video_key}/episode_{episode_index:06d}.mp4',
     features: features(spec, subtaskColumns(spec)),

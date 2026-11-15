@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button, DownloadIcon, MetaLine, RefreshIcon, ShareIcon, TrainIcon } from '../../design-system';
+import { Button, DownloadIcon, MetaLine, RefreshIcon, Select, ShareIcon, TrainIcon } from '../../design-system';
 import type { TrySummary } from '../../cases/tryFile';
-import { newestVersion, type Dataset } from '../../datasets/datasetFile';
+import type { Dataset } from '../../datasets/datasetFile';
 import { imageCount, totalSeconds } from '../../datasets/datasetView';
 import { duration } from '../../utils/duration';
 import type { TriesResult } from '../../workspace/useTriesTraining';
@@ -20,17 +20,13 @@ export interface DatasetActions {
   publishDataset: () => void;
   train: () => void;
   update: () => void;
+  selectVersion: (n: number | null) => void;
 }
 
 function statItems(dataset: Dataset, members: TrySummary[]): React.ReactNode[] {
-  const version = newestVersion(dataset);
   const images = imageCount(dataset);
 
-  return [
-    members.length > 0 && duration(totalSeconds(members)),
-    images > 0 && plural(images, 'image'),
-    version && `Version ${version.n}`,
-  ];
+  return [members.length > 0 && duration(totalSeconds(members)), images > 0 && plural(images, 'image')];
 }
 
 interface DatasetPaneProps {
@@ -42,8 +38,23 @@ interface DatasetPaneProps {
 export const DatasetPane: React.FC<DatasetPaneProps> = ({ dataset, members, actions }) => (
   <div className="px-[12px] pb-3 flex flex-col gap-2.5" data-testid="dataset-pane">
     <MetaLine className="flex-wrap text-[12.5px] text-white/60 tabular" items={statItems(dataset, members)} />
+    {dataset.versions.length > 0 && (
+      <Select
+        aria-label="Dataset version"
+        value={dataset.selectedVersion?.toString() ?? 'working'}
+        options={[
+          { value: 'working', label: 'Working Dataset' },
+          ...[...dataset.versions]
+            .reverse()
+            .map((version) => ({ value: String(version.n), label: `Version ${version.n}` })),
+        ]}
+        onChange={(event) =>
+          actions.selectVersion(event.target.value === 'working' ? null : Number(event.target.value))
+        }
+      />
+    )}
     <div className="flex flex-wrap gap-1.5">
-      {dataset.query && (
+      {dataset.query && !dataset.selectedVersion && (
         <Button size="sm" icon={<RefreshIcon className="w-4 h-4" />} onClick={actions.update}>
           Update
         </Button>

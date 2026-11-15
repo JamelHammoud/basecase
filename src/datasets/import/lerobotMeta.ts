@@ -10,6 +10,7 @@ import {
   type Row,
 } from './lerobotSource';
 import { IMPORT_LIMITS, type SourceFormat } from './types';
+import { readEpisodeSplits, type EpisodeSplitRange } from './lerobotSplits';
 
 export const INFO_PATH = 'meta/info.json';
 export const STATE_KEY = 'observation.state';
@@ -39,6 +40,7 @@ export interface LeRobotInfo {
   videoPath: string;
   chunksSize: number;
   videos: VideoFeature[];
+  splits: EpisodeSplitRange[];
 }
 
 const flatNames = (names: unknown): unknown[] => {
@@ -129,5 +131,6 @@ export function readInfo(info: Row): LeRobotInfo {
     ...templatesOf(info, videos),
     chunksSize: chunksSizeOf(info),
     videos,
+    splits: readEpisodeSplits(info.splits),
   };
 }

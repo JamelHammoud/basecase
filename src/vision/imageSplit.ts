@@ -1,7 +1,15 @@
 import { splitOf } from '../datasets/datasetSplit';
 import type { FrameSet } from './frameSet';
 
-export function imageSplit(set: Pick<FrameSet, 'seed' | 'frames'>) {
+export function imageSplit(set: Pick<FrameSet, 'seed' | 'frames' | 'splits'>) {
+  if (set.splits) {
+    return {
+      train: set.frames.filter((frame) => set.splits?.[frame.id] === 'train').map((frame) => frame.id),
+      validation: set.frames.filter((frame) => set.splits?.[frame.id] === 'validation').map((frame) => frame.id),
+      test: set.frames.filter((frame) => set.splits?.[frame.id] === 'test').map((frame) => frame.id),
+    };
+  }
+
   const first = splitOf(
     set.frames.map((f) => f.id),
     set.seed,

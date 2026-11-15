@@ -58,9 +58,13 @@ Image datasets put COCO files in `coco/` and YOLO files in `yolo/` on the main b
 
 If you publish the same dataset again, Basecase updates the folders included in the export. Tries rewrite `data/`, `videos/` and `meta/`, while images rewrite `coco/` and `yolo/`. It leaves `README.md` and folders outside that export alone.
 
-Tries from your real robot are left out, and so are tries on another robot and tries recorded before the robot last changed. The toast shows how many tries were skipped.
+The working dataset leaves out real-robot tries, failed tries, tries with quality flags and tries on another robot model. The toast shows how many samples were left out. A saved version uses its original samples, robot and scene.
 
-Each publish tags its commit with the dataset's version, such as `dataset-v2`. Publishing the same members and content again keeps the same version. To download an earlier version, use its tag: `hf download <account>/touch-the-dots-1a2b3c --repo-type dataset --revision dataset-v1`. LeRobot ignores these tags and keeps loading `v3.0`.
+Each publish tags its commit with the dataset's version, such as `dataset-v2`. Publishing freezes the selected frames, labels, recording and image content, exclusions and split assignments. Editing an instruction or segment boundary creates a new version on the next publish. Publishing unchanged samples keeps the same version.
+
+To publish an earlier saved version, choose it in **Dataset version**, then click **Publish to Hugging Face**. Its saved export supplies the files. A version without saved samples can't restore historical labels. Missing saved content stops publishing with an error.
+
+To download an earlier published version, use its tag: `hf download <account>/touch-the-dots-1a2b3c --repo-type dataset --revision dataset-v1`. LeRobot ignores these tags and keeps loading `v3.0`.
 
 ## Where the token lives
 

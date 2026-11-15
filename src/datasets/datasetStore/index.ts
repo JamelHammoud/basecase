@@ -4,8 +4,12 @@ import { readDataset, type Dataset } from '../datasetFile';
 import { desktopDatasets } from './desktopDatasets';
 import type { DatasetBackend } from './types';
 import { webDatasets } from './webDatasets';
+import { mergeDatasetVersions } from '../../../electron/library/datasetVersions.mjs';
+import { datasetWrites } from './datasetWrites';
 
 const backend: DatasetBackend = IS_WEB_DEMO ? webDatasets : desktopDatasets;
+
+const writeDataset = datasetWrites();
 
 let listed: Dataset[] | null = null;
 let loading: Promise<Dataset[]> | null = null;
@@ -62,8 +66,18 @@ async function update(change: (datasets: Dataset[]) => Dataset[]) {
 }
 
 export async function saveDataset(dataset: Dataset): Promise<void> {
-  await backend.save(dataset);
-  await update((datasets) => [...datasets.filter((d) => d.id !== dataset.id), dataset]);
+  const incoming = structuredClone(dataset);
+
+  await writeDataset(dataset.id, async () => {
+    const datasets = await loadDatasets();
+    const merged = mergeDatasetVersions(
+      incoming,
+      datasets.find((stored) => stored.id === incoming.id),
+    );
+
+    await backend.save(merged);
+    await update((current) => [...current.filter((stored) => stored.id !== merged.id), merged]);
+  });
 }
 
 export async function deleteDatasets(ids: string[]): Promise<void> {

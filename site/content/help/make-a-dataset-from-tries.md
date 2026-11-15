@@ -29,6 +29,11 @@ covers:
   - src/workspace/useTriesView.ts
   - src/datasets/datasetFile.ts
   - src/datasets/datasetView.ts
+  - src/datasets/datasetSnapshot.ts
+  - src/datasets/snapshotTypes.ts
+  - src/datasets/snapshotSplits.ts
+  - src/datasets/snapshotImages.ts
+  - src/workspace/datasetVersionView.ts
   - src/datasets/datasetStore/
   - electron/library/datasetStore.mjs
 ---
@@ -55,13 +60,15 @@ Or press [[⌘K]] while the Case is open and choose **Make Dataset**.
 3. In the search field at the top of Tries, type what you're after, such as a Case's name or failed last week. See [Search tries](/help/search-tries).
 4. Press [[⌘K]] and choose **Make Dataset**.
 
-The dataset holds every try the search finds and keeps your search. If the scene has the Case those tries came from, the dataset takes that Case's name. If it doesn't, the dataset takes the name of your search.
+The dataset keeps your search and its matching samples. A segment match includes that segment's exact frame range. A whole-try match includes the entire recording.
 
-To make a dataset from only some of the tries, hold [[⌘]] or [[⇧]] as you select them, then right-click one and choose **Make Dataset**.
+If the scene has the Case those tries came from, the dataset takes that Case's name. Otherwise, it takes the name of your search.
+
+To gather only selected tries, hold [[⌘]] or [[⇧]] as you select them. Right-click one and choose **Make Dataset**. Within a search, those tries contribute only their matching frame ranges.
 
 ## The dataset
 
-Above its tries, the dataset shows their total running time and its newest version. If it also holds images, it shows their count and an **Images** section.
+Above its tries, the dataset shows their total running time. After saving a version, use **Dataset version** to choose **Working Dataset** or a saved version. Image datasets also show their image count and an **Images** section.
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 
@@ -71,7 +78,9 @@ Above its tries, the dataset shows their total running time and its newest versi
 
 **Note:** Publish to Hugging Face and Train from Tries are available in the desktop app.
 
-Missed tries stay in the dataset, but export, publishing and training leave them out. A try with no verdict, such as an [imported try](/help/import-robot-data-as-tries) that no Case judged, counts as a demonstration. To leave one out, mark it failed, as in [Label a try](/help/label-a-try). Export, publishing and training also leave out the tries listed under [Tries that export leaves out](#tries-that-export-leaves-out).
+Failed tries stay in the dataset, while export, publishing and training leave them out. A try without a verdict, such as an [imported try](/help/import-robot-data-as-tries), counts as a demonstration. To exclude one, mark it failed in [Label a try](/help/label-a-try).
+
+Any quality flag excludes its selected samples from export, publishing and training. The same actions leave out the tries listed under [Tries that export leaves out](#tries-that-export-leaves-out).
 
 Each try keeps its segments and tags, and export writes the segments as subtasks. To step through one try, see [Open a try from any scene](/help/open-a-try-from-any-scene).
 
@@ -85,7 +94,7 @@ To render an image dataset from a Case without recording tries, see [Make traini
 
 ## Update and Add to Dataset
 
-A dataset you made from a search has an **Update** button. Click it to run the search again and refill the dataset with the tries that match at that moment.
+Choose **Working Dataset** to edit the current collection. A dataset made from a search has an **Update** button. Click it to replace the collection with the search's current matching samples. Saved versions keep their original samples.
 
 ![A dataset made from a search, with Update beside Export Dataset](/help/make-a-dataset-from-tries/searched.png)
 
@@ -95,13 +104,26 @@ To add tries to another dataset, right-click a try, choose **Add to Dataset** an
 
 ## Versions
 
-Each time you export, publish or train, Basecase saves the dataset's tries and image references as a version. If the task, members, image content and robot model stay the same, they keep their version. A change to any of these starts the next version.
+Export, publishing and training save the working dataset as a version. Each version keeps its selected frames, recordings, labels, tags, quality flags, images, image annotations and split assignments.
 
-The newest version shows above the tries, for example Version 2. If you publish Version 2, the Hub tags it `dataset-v2`.
+Changing an instruction, label boundary, tag, quality flag or recording creates a new version. Changing the robot, task, selected samples or image references also creates a version. Unchanged content keeps its version.
+
+To export an earlier version:
+
+1. In **Dataset version** above the tries, choose **Version 1** or another saved version.
+2. Click **Export Dataset**.
+
+The export uses that version's saved samples and labels. Repeating an export of that version returns the same saved zip bytes. Publishing Version 2 tags the Hub dataset `dataset-v2`.
+
+Choose **Working Dataset** to return to the current collection. Editing its original tries leaves saved versions unchanged.
+
+Samples from the same source run or recording stay in one training, validation or test group. Generated variations and identical content stay together too. Imported split assignments remain attached to their samples.
+
+Versions saved before frozen samples were supported can’t restore historical labels. Choose **Working Dataset** and export again to save current samples. Missing saved recordings or images stop export and training with an error.
 
 ## Tries that export leaves out
 
-Export, publishing and training use only tries recorded on the robot as it is now, because one export holds the joints of one robot. Tries on any other design of the robot move to the end of the dataset, and export, publishing and training leave them out.
+Saving a new version leaves out tries recorded on a different robot model. Those tries move to the end of the working dataset. Exporting a saved version uses its saved robot and scene. Training requires the current robot to match that version.
 
 - A try from this Case recorded before the robot last changed shows under "These tries are from an earlier design. Try It again to record new ones."
 - A try on another robot, from another Case or scene, shows under "These tries are from another Case or scene."

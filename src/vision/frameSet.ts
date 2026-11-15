@@ -1,6 +1,7 @@
 import { decodeMask, maskBox, maskPolygons } from './imageMasks';
 import { sha256 } from '../cases/tries';
 import { depthBytes } from './imageBytes';
+import type { ImageSplit } from './imageSplit';
 
 export interface ImageClass {
   id: number;
@@ -50,6 +51,7 @@ export interface FrameSet {
   classes: ImageClass[];
   frames: TrainingFrame[];
   createdAt: string;
+  splits?: Record<string, ImageSplit>;
 }
 
 const object = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
@@ -208,6 +210,14 @@ export function validateFrameSet(value: unknown): asserts value is FrameSet {
   const set = value as FrameSet;
 
   if (!Array.isArray(set.frames) || set.frames.length > 100_000 || !unique(set.frames.map((f) => f?.id))) refuse();
+
+  if (
+    set.splits !== undefined &&
+    (!object(set.splits) ||
+      Object.keys(set.splits).length !== set.frames.length ||
+      !set.frames.every((frame) => ['train', 'validation', 'test'].includes(set.splits?.[frame.id] ?? '')))
+  )
+    refuse();
 
   set.frames.forEach((f) => validateTrainingFrame(f, set.classes));
 }

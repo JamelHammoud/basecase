@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { plural } from '../../electron/plural.mjs';
 import { sha256 } from '../cases/tries';
-import { keepTries, loadTries } from '../cases/tryStore';
+import { keepTries, loadManifests, updateManifests } from '../cases/tryStore';
 import { TRIES_LABEL } from '../cases/tryStore/types';
 import type { TryOrigin } from '../cases/tryFile';
 import { openDataImport, type DataImportRun } from '../datasets/import/dataImportClient';
 import type { SourceSummary } from '../datasets/import/dataImportJobs';
 import type { BuiltTries } from '../datasets/import/importedTries';
+import { keepImportedTries } from '../datasets/import/keepImportedTries';
 import { importStep, matchInput, robotTypePreset } from '../datasets/import/importPlan';
 import { matchKey, type JointPairs, type TargetJoint } from '../datasets/import/jointMatch';
 import type { ImportSource } from '../datasets/import/readSource';
@@ -121,11 +122,13 @@ export function useDataImport(core: WorkspaceCore, robots: RobotInsert) {
   };
 
   const keep = async (built: BuiltTries) => {
-    const have = new Set((await loadTries()).map((t) => t.id));
-    const fresh = built.kept.filter((k) => !have.has(k.stored.id));
+    const added = await keepImportedTries(built.kept, {
+      manifests: loadManifests,
+      keep: keepTries,
+      update: updateManifests,
+    });
 
-    await keepTries(fresh);
-    showToast(importedMessage(built, fresh.length));
+    showToast(importedMessage(built, added));
   };
 
   const build = async (run: DataImportRun, loaded: Loaded, summary: SourceSummary, model: SimModel) => {

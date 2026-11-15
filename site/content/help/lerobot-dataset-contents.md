@@ -31,7 +31,7 @@ covers:
 
 Every file in a dataset from Export Dataset or Publish to Hugging Face, and what each column and camera video holds.
 
-Each passed try in the [dataset](/help/make-a-dataset-from-tries) is one episode. The dataset comes in two layouts: LeRobot v3.0 at the top, and LeRobot v2.1 with GR00T's `meta/modality.json` in a `v2.1` folder. On the Hub, v3.0 is the main branch and v2.1 is the `v2.1` tag.
+Each included recording range in the [dataset](/help/make-a-dataset-from-tries) is one episode. Whole-try selections include the whole recording, while segment selections include only their selected frames. The dataset comes in two layouts: LeRobot v3.0 at the top, and LeRobot v2.1 with GR00T's `meta/modality.json` in a `v2.1` folder. On the Hub, v3.0 is the main branch and v2.1 is the `v2.1` tag.
 
 ## Files in v3.0
 
@@ -42,8 +42,8 @@ Each passed try in the [dataset](/help/make-a-dataset-from-tries) is one episode
 | `meta/episodes/chunk-000/file-000.parquet` | One row per episode: its task, length, rows, the file and time span of each camera's video, and its statistics |
 | `meta/tasks.parquet` | Every task: a try's instruction, else the dataset's task |
 | `meta/stats.json` | The minimum, maximum, mean, standard deviation and count of every column across all episodes |
-| `meta/info.json` | The dataset's version (`v3.0`), frame rate, file size limits, columns and cameras |
-| `meta/basecase.json` | The Case, when the dataset has one, the hash of the model the tries ran on, and each episode's try, margin, `seed` and `source`: the try Multiply made it from, or null for a try you drove |
+| `meta/info.json` | The dataset's version (`v3.0`), frame rate, file size limits, columns, cameras and episode ranges for each split |
+| `meta/basecase.json` | The Case, model hash and each episode's try, margin, `seed` and `source`. Frozen episodes also include `recording_hash`, `source_run`, `from_frame`, `to_frame` and `split`. Frame bounds refer to the source recording, with the end excluded |
 
 The joined videos aren't encoded again. Basecase copies each episode's frames into the camera's file as they are. An episode encoded with other settings starts a new file.
 
@@ -53,7 +53,7 @@ The joined videos aren't encoded again. Basecase copies each episode's frames in
 |---|---|
 | `data/chunk-000/episode_000000.parquet` | One row per frame of one episode, one file per episode |
 | `videos/chunk-000/observation.images.<camera>/episode_000000.mp4` | One video per camera per episode |
-| `meta/info.json` | The dataset's version (`v2.1`), frame rate, columns and cameras |
+| `meta/info.json` | The dataset's version (`v2.1`), frame rate, columns, cameras and episode ranges for each split |
 | `meta/episodes.jsonl` | One line per episode, with its length and task |
 | `meta/tasks.jsonl` | Every task, then each segment's instruction once |
 | `meta/episodes_stats.jsonl` | Each episode's minimum, maximum, mean, standard deviation and count for every column |
@@ -91,5 +91,7 @@ Frames are 25 a second: every second frame of the try's 50 Hz recording. Joints 
 Camera parts are the ones under **Cameras** and **Depth Cameras** in Parts. A fisheye lens records as a fisheye. Every video is 640 × 480, encoded as H.264, or VP9 or AV1 where H.264 isn't available, with a key frame each second.
 
 ## Versions
+
+Both layouts use the saved dataset version's training, validation and test assignments. Episodes are grouped in that order, with each split expressed as a half-open episode range in `meta/info.json`. Segments, variations and camera frames sharing a source stay in one split.
 
 LeRobot 0.4 and later read v3.0 and stream it from the Hub. GR00T reads LeRobot v2 only, so it takes the v2.1 copy. Both hold the same rows, so their episode counts, frame counts and statistics match.

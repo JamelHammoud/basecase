@@ -249,6 +249,7 @@ export async function readTry(payload: Payload, ctx: TryReadContext) {
 
 export const hitPayload = (hit: TryHit) => ({
   try: hit.tryId,
+  ...(hit.from !== undefined ? { from: hit.from, to: hit.to } : {}),
   label: hit.label,
   robot: hit.robot,
   scene: hit.sceneId,

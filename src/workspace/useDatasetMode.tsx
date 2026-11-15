@@ -11,7 +11,8 @@ import {
   type ContextMenuEntry,
 } from '../design-system';
 import type { Dataset } from '../datasets/datasetFile';
-import { memberGroups, membersOf } from '../datasets/datasetView';
+import { memberGroups } from '../datasets/datasetView';
+import { datasetVersionMembers } from './datasetVersionView';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { DatasetActions } from '../components/tries/DatasetPane';
 import { showNewCase } from './caseCommands';
@@ -105,7 +106,7 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
     id: dataset?.members.length ? `${dataset.id}:${cases.active?.id ?? ''}` : null,
     robot: core.posing.rig,
   });
-  const members = dataset ? membersOf(dataset, view.all) : [];
+  const members = dataset ? datasetVersionMembers(dataset, view.all) : [];
   const { fitting, earlier, elsewhere } = memberGroups(members, {
     modelHash,
     sceneId: cases.sceneId,
@@ -130,6 +131,7 @@ export function useDatasetMode(core: WorkspaceCore): DatasetMode {
       publishDataset: () => datasets.publishDataset(dataset),
       train: () => datasets.train(dataset, () => showNewCase(core)),
       update: () => datasets.update(dataset),
+      selectVersion: view.selectVersion,
     },
     menu: (id) => tileMenu(core, id),
   };

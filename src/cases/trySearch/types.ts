@@ -47,6 +47,8 @@ export type HitMatch = 'words' | 'facts' | 'motion';
 
 export interface TryHit {
   tryId: string;
+  from?: number;
+  to?: number;
   label: string;
   robot: string;
   sceneId: string;
@@ -70,6 +72,7 @@ export interface IndexedTry {
   time: number;
   faulted: boolean;
   terms: Array<[term: string, weight: number]>;
+  segments: Array<{ from: number; to: number; terms: Array<[term: string, weight: number]> }>;
   named: string[];
   motionKey: string | null;
   signature: number[] | null;

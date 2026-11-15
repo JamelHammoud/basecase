@@ -1,13 +1,20 @@
 import { parquetReadObjects } from 'hyparquet';
 import type { Dataset } from '../src/datasets/datasetFile';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, inject, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, inject, it } from 'vitest';
+import type { VisionManifest } from '../src/vision/manifest';
+import { inputSensitiveDetectionOnnx } from '../src/vision/onnxFixture';
 import type { SimState, Studio } from './driveStudio';
 import { startFakeHub, type FakeHub } from './fakeHub';
 import { datasetFiles, endTryAt, expectPublished, inDataset, loadFixtureRobot } from './driveChecks';
 import { openApp, openPlayTab, type App } from './harness';
+import { visionManifest } from './visionFixtures';
 
 const HUB_TOKEN = 'hf_e2eFakeHubToken';
 const SHORT_TRY_SECONDS = 0.4;
+
+type PublishStudio = Studio & {
+  configureVision: (manifest: VisionManifest, bytes: number[], cameras: string[]) => Promise<unknown>;
+};
 
 let app: App;
 let hub: FakeHub;
@@ -42,19 +49,21 @@ async function passedTry() {
   await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
 }
 
-beforeAll(async () => {
-  hub = await startFakeHub({ token: HUB_TOKEN, port: inject('hubPort') });
-}, 120000);
-
 beforeEach(async () => {
+  hub = await startFakeHub({ token: HUB_TOKEN, port: inject('hubPort') });
   app = await openApp({}, ['hub-']);
+
+  const bytes = inputSensitiveDetectionOnnx();
+
+  await app.page.evaluate(
+    ({ manifest, data }) =>
+      (window as unknown as { __studio: PublishStudio }).__studio.configureVision(manifest, data, []),
+    { manifest: visionManifest(bytes), data: [...bytes] },
+  );
 }, 120000);
 
 afterEach(async () => {
   await app?.close();
-});
-
-afterAll(async () => {
   await hub?.close();
 });
 
@@ -107,6 +116,7 @@ describe('Publish a dataset', () => {
       await expect.poll(() => hub.repos.get(repo)!.tags.get('dataset-v1')).toBe(commitsOf(repo));
       expect(JSON.stringify(await app.page.evaluate(() => localStorage))).not.toContain(HUB_TOKEN);
       expect(JSON.stringify(app.posts)).not.toContain(HUB_TOKEN);
+      expect(app.requests.filter((url) => url.includes('/api/bridge/hub-model-file'))).toEqual([]);
       expect(app.errors).toEqual([]);
     },
     180000,

@@ -3,7 +3,7 @@ import type { ScenePart } from '../types/robotics';
 import type { FixedCamera } from './fixed';
 import { horizontalDeg } from './lens';
 
-export type CameraView = DatasetCamera & { fixed?: string };
+export type CameraView = DatasetCamera & { fixed?: string; recorded?: boolean };
 
 export function fixedView(camera: FixedCamera, taken: Set<string>): CameraView {
   return {

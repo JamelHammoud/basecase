@@ -1,3 +1,4 @@
+import { withVisionSignals } from '../cameras/visionBus';
 import { useEffect, useEffectEvent, useState } from 'react';
 import type { CaseConsole } from '../cases/console/format';
 import {
@@ -66,7 +67,10 @@ const consoleOf = ({ caseConsole, cameras }: RecordedInput) => ({
 function busOf(scene: RecordedScene, input: RecordedInput): RecordedBus {
   const topics = recordingTopics(scene.recording);
 
-  return topicBus(recordedBus(withMeaning(recordedTrack(scene, consoleOf(input)), topics)), topics);
+  return withVisionSignals(
+    topicBus(recordedBus(withMeaning(recordedTrack(scene, consoleOf(input)), topics)), topics),
+    input.cameras,
+  );
 }
 
 export function useRecordedSignals(input: RecordedInput): RecordedBus | null {

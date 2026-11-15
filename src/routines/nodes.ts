@@ -50,7 +50,7 @@ export const MODEL_NODES: readonly ModelNode[] = [
     model: 'YOLO11n',
     licence: 'AGPL-3.0',
     source: 'https://github.com/ultralytics/ultralytics',
-    measuredMs: {},
+    measuredMs: { mac: 1574.73 },
   },
   {
     id: 'object-detection',
@@ -62,7 +62,7 @@ export const MODEL_NODES: readonly ModelNode[] = [
     model: 'RF-DETR Nano',
     licence: 'Apache-2.0',
     source: 'https://github.com/roboflow/rf-detr',
-    measuredMs: {},
+    measuredMs: { mac: 3614.1 },
   },
   {
     id: 'obstacle-near',
@@ -74,7 +74,7 @@ export const MODEL_NODES: readonly ModelNode[] = [
     model: 'Depth Anything V2 Small',
     licence: 'Apache-2.0',
     source: 'https://github.com/DepthAnything/Depth-Anything-V2',
-    measuredMs: {},
+    measuredMs: { mac: 18285.59 },
   },
   {
     id: 'face-detection',
@@ -86,7 +86,7 @@ export const MODEL_NODES: readonly ModelNode[] = [
     model: 'YuNet',
     licence: 'MIT',
     source: 'https://github.com/opencv/opencv_zoo',
-    measuredMs: {},
+    measuredMs: { mac: 259.49 },
   },
   {
     id: 'face-embedding',
@@ -119,9 +119,9 @@ export const MODEL_NODES: readonly ModelNode[] = [
     outputs: ['pose'],
     tier: 'perception',
     runsOn: ['mac', 'pi5', 'browser'],
-    model: 'RTMPose-m',
+    model: 'MediaPipe Pose Landmarker Lite',
     licence: 'Apache-2.0',
-    source: 'https://github.com/open-mmlab/mmpose',
+    source: 'https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker',
     measuredMs: {},
   },
   {

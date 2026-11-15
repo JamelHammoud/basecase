@@ -5,7 +5,8 @@ import type { SlotRobot } from '../cases/slots';
 import { timelineLanes } from '../cases/timelineLanes';
 import { trySignals, type TryRecord, type TryScoring } from '../cases/tries';
 import { tripFrames, type Trip } from '../cases/tripFrames';
-import { loadRecording } from '../cases/tryStore';
+import { loadManifests, loadRecording } from '../cases/tryStore';
+import { closeRecordedCameras, openRecordedCameras, seekRecordedCameras } from '../cameras/recordedCameras';
 import type { RecordedEfforts } from '../sim/recordedFrames';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
@@ -102,9 +103,15 @@ export function useTryTimeline(options: TimelineOptions) {
     }),
   });
 
+  useEffect(() => {
+    if (opened) seekRecordedCameras(playback.frame * opened.recording.dt, !playback.playing);
+  }, [opened, playback.frame, playback.playing]);
+
+  useEffect(() => () => closeRecordedCameras(), []);
+
   const show = async (record: TryRecord, at?: number) => {
     const ticket = ++opening.current;
-    const recording = await loadRecording(record.id);
+    const [recording, manifests] = await Promise.all([loadRecording(record.id), loadManifests([record.id])]);
     const before = simBefore(sim);
 
     if (!recording || ticket !== opening.current) return false;
@@ -122,6 +129,7 @@ export function useTryTimeline(options: TimelineOptions) {
 
     if (ticket !== opening.current) return false;
 
+    openRecordedCameras(manifests[0] ?? null);
     setOpened({ record, recording, efforts, trips, scene, before: opened?.before ?? before });
     playback.reset(at ?? trips[0]?.frame ?? 0, recording.frames);
 
@@ -133,6 +141,7 @@ export function useTryTimeline(options: TimelineOptions) {
 
     opening.current++;
     playback.stop();
+    closeRecordedCameras();
     setOpened(null);
     void sim.scrub(null);
 
@@ -145,6 +154,7 @@ export function useTryTimeline(options: TimelineOptions) {
   useSimGone(opened, sim, () => {
     opening.current++;
     playback.stop();
+    closeRecordedCameras();
     setOpened(null);
   });
 

@@ -40,6 +40,7 @@ export type Expectation =
   | EventMatch;
 
 export interface Scenario {
+  tier?: 'L0' | 'L1' | 'L2';
   covers: string;
   world: WorldChange[];
   mocks: Record<string, MockValue>;

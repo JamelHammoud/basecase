@@ -12,10 +12,14 @@ serve({
   build: async (job: BuildJob) => {
     const built = await handlers.build(job);
 
-    return reply(
-      built,
-      built.kept.flatMap((k) => recordingTransfer(k.recording)),
-    );
+    return reply(built, [
+      ...new Set(
+        built.kept.flatMap((k) => [
+          ...recordingTransfer(k.recording),
+          ...(k.videos ?? []).map((v) => v.bytes.buffer as ArrayBuffer),
+        ]),
+      ),
+    ]);
   },
   replay: async (job: ReplayJob) => {
     const recording = await handlers.replay(job);

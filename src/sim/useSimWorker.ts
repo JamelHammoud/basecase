@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { offerSimTargets } from '../robot/intentMirror';
 import { noteSimAngles } from '../robot/robotTwin';
-import type { Controller, SimStats } from './engine';
+import type { SimStats } from './engine';
 import { simDeltas, worldDeltas, type SimModel } from './mjcf';
 import type { LiveRoutineInput, LiveUpdate } from '../routines/routineLive';
 import type { CaseFacts } from '../cases/caseFacts';
@@ -12,6 +12,8 @@ import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
 import { useRecordingLink } from './useRecordingLink';
 import type { WorldLooks } from '../cases/worldSet';
+import { subscribeVisionResult } from '../cameras/visionSession';
+import { createModelLoadLink } from './modelLoad';
 
 interface LatestFrame {
   at: number;
@@ -53,7 +55,7 @@ export function useSimWorker(
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
   const routines = useRoutineLink(workerRef, modelRef);
-  const loadWaiter = useRef<{ resolve: () => void; reject: (e: Error) => void } | null>(null);
+  const [loading] = useState(createModelLoadLink);
   const recordingLink = useRecordingLink(workerRef);
   const recordingReply = recordingLink.reply;
 
@@ -64,9 +66,7 @@ export function useSimWorker(
       const msg = ev.data;
 
       if (msg.type === 'ready') {
-        setStatus('ready');
-        loadWaiter.current?.resolve();
-        loadWaiter.current = null;
+        noteReady(loading.ready(msg.loadId), setStatus);
 
         return;
       }
@@ -99,8 +99,7 @@ export function useSimWorker(
         setError(msg.message);
         setStatus('error');
         setPlaying(false);
-        loadWaiter.current?.reject(new Error(msg.message));
-        loadWaiter.current = null;
+        loading.cancel();
 
         return;
       }
@@ -121,7 +120,7 @@ export function useSimWorker(
       setStats(msg.stats);
       setPlaying(msg.playing);
     },
-    [viewportRef, modelRef, poseListeners.listeners, recordingReply, routines.hookRef],
+    [viewportRef, modelRef, poseListeners.listeners, recordingReply, routines.hookRef, loading],
   );
 
   const worker = useCallback(() => {
@@ -139,16 +138,14 @@ export function useSimWorker(
     return w;
   }, [handle, attachCameras]);
 
-  useEffect(() => () => workerRef.current?.terminate(), []);
-
-  const load = useCallback(
-    (w: Worker, model: SimModel, controller: Controller) =>
-      new Promise<boolean>((resolve) => {
-        loadWaiter.current = { resolve: () => resolve(true), reject: () => resolve(false) };
-        w.postMessage({ type: 'load', model, controller } satisfies SimRequest);
-      }),
-    [],
+  useEffect(
+    () => () => {
+      loading.cancel();
+      workerRef.current?.terminate();
+    },
+    [loading],
   );
+  useVisionLink(workerRef);
 
   return {
     stopRecording: recordingLink.stopRecording,
@@ -171,12 +168,29 @@ export function useSimWorker(
     watched,
     send,
     worker,
-    load,
+    load: loading.load,
+    cancelLoad: loading.cancel,
     frameHookRef,
     startRoutine: routines.start,
     subscribePoses: poseListeners.subscribe,
     connectCameras,
   };
+}
+
+function noteReady(loaded: boolean, setStatus: (status: SimStatus) => void) {
+  if (loaded) setStatus('ready');
+}
+
+function useVisionLink(workerRef: React.RefObject<Worker | null>) {
+  useEffect(
+    () =>
+      subscribeVisionResult((result) => {
+        const ageMs = Math.max(0, performance.now() - result.timestamp);
+
+        workerRef.current?.postMessage({ type: 'vision', result, ageMs } satisfies SimRequest);
+      }),
+    [workerRef],
+  );
 }
 
 function useRoutineLink(workerRef: React.RefObject<Worker | null>, modelRef: React.RefObject<SimModel | null>) {

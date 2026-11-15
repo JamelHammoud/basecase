@@ -4,6 +4,7 @@ import type { TaughtGesture } from '../gestures/gestureRecognizer';
 import type { FaceFollow, FaceSample } from './faceFollow';
 import type { HandFollow, HandSample } from './handFollow';
 import type { PoseFollow, PoseSample } from './poseFollow';
+import type { VisionAssignment } from '../visionFrames';
 
 export type SkeletonPoint = [x: number, y: number, visible: boolean];
 
@@ -23,6 +24,8 @@ export type PoseRequest =
   | { type: 'join'; kind: LandmarkKind; robot: InputRobot; standIn?: boolean }
   | { type: 'leave'; kind: LandmarkKind }
   | { type: 'frame'; bitmap: ImageBitmap }
+  | { type: 'vision-port'; port: MessagePort; timeOrigin: number }
+  | { type: 'vision-assignments'; assignments: VisionAssignment[] }
   | FeedRequest
   | { type: 'gestures'; taught: TaughtGesture[] }
   | { type: 'record'; ms: number }

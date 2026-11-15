@@ -1,3 +1,5 @@
+import { cameraVisionSignals } from '../cameras/visionSession';
+import { withVisionSignals } from '../cameras/visionBus';
 import { useEffect, useEffectEvent, useState } from 'react';
 import type { CaseConsole } from '../cases/console/format';
 import { GESTURE_EVENT, gestureNames } from '../cases/gestures';
@@ -50,15 +52,16 @@ function caseWorld({ kase, model, rig, parts }: { kase: Case; model: SimModel; r
 export function useConsoleSignals(input: ConsoleSignalsInput): SignalBus {
   const { open, kase, caseConsole, sim } = input;
   const defs = caseConsole.signals;
-  const key = `${kase?.id ?? ''}:${JSON.stringify([caseConsole.input, defs ?? []])}`;
-  const [held, setHeld] = useState(() => ({ key, bus: createSignalBus(defs) }));
+  const key = `${kase?.id ?? ''}:${JSON.stringify([caseConsole.input, defs ?? [], input.cameras])}`;
+  const [held, setHeld] = useState(() => ({ key, bus: withVisionSignals(createSignalBus(defs), input.cameras) }));
   const bus = held.key === key ? held.bus : null;
 
-  if (!bus) setHeld({ key, bus: createSignalBus(defs) });
+  if (!bus) setHeld({ key, bus: withVisionSignals(createSignalBus(defs), input.cameras) });
 
   const live = useEffectEvent(() => ({
     running: input.running,
     cameras: input.cameras,
+    vision: cameraVisionSignals(input.cameras),
     gestures: caseConsole.input.includes('camera') ? gesturePulses(gestureNames(input.kase?.gestures)) : undefined,
     inputs: Object.fromEntries(caseConsole.input.map((id) => [id, sim.drive.inputs()[id] ?? null])),
   }));

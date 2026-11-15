@@ -42,6 +42,7 @@ export type Autopilot = (frame: SimFrame) => DriveCommand;
 
 export interface DriveStartOptions {
   inputs?: readonly string[];
+  current?: () => boolean;
 }
 
 export interface SimDrive {
@@ -72,7 +73,7 @@ interface DriveInputs {
   viewportRef: React.RefObject<Viewport3DHandle | null>;
   modelRef: React.RefObject<SimModel | null>;
   frameHookRef: React.RefObject<FrameHook | null>;
-  startSim: (pin: string | null) => Promise<void>;
+  startSim: (pin: string | null, current?: () => boolean) => Promise<void>;
   pinned: () => string | null;
   setController: (c: Controller) => void;
   runOn: (model: SimModel, opts: RunOptions) => Promise<SimRun>;
@@ -213,13 +214,16 @@ function closeSession(session: React.RefObject<readonly string[] | null>) {
 async function grantedModel(
   inputs: DriveInputs,
   modelRef: React.RefObject<SimModel | null>,
-  want: { pose: boolean; velocity: VelocityDrive | null },
+  want: { pose: boolean; velocity: VelocityDrive | null; current?: () => boolean },
 ): Promise<DriveAccess | null> {
   const { rig, parts, pose, robotKey, startSim, pinned } = inputs;
 
   const poseOnly = want.pose && !want.velocity;
 
-  if (!modelRef.current || (pinned() && !poseOnly)) await startSim(poseOnly ? posePin({ rig, parts, robotKey }) : null);
+  if (!modelRef.current || (pinned() && !poseOnly))
+    await startSim(poseOnly ? posePin({ rig, parts, robotKey }) : null, want.current);
+
+  if (want.current && !want.current()) return null;
 
   const access = (model: SimModel) =>
     driveAccess({ rig, parts, model, robotKey, start: pose?.values, velocity: want.velocity, pose: want.pose });
@@ -228,7 +232,7 @@ async function grantedModel(
 
   if (!first || !pin) return first;
 
-  await startSim(pin);
+  await startSim(pin, want.current);
 
   return modelRef.current && access(modelRef.current);
 }
@@ -317,31 +321,22 @@ export function useDrive(inputs: DriveInputs): SimDrive {
 
   const start = useCallback(
     async (team?: DriveTeam, options?: DriveStartOptions) => {
-      const { runOn, velocity } = latest.current;
+      const current = options?.current ?? (() => true);
+
+      if (!current()) return false;
+
       const ids = options?.inputs ?? session.current ?? inputIds.current;
-      const ready = (await velocity?.current?.()) ?? null;
-      const access = await grantedModel(latest.current, modelRef, { pose: posesInputs(ids), velocity: ready });
-      const model = modelRef.current;
+      const access = await preparedDrive({ scene: latest.current, modelRef, ids, current, setStatus: setDriveStatus });
+
+      if (!current() || !access) return false;
 
       refused.current = null;
 
-      if (!access || !model) return false;
+      const opened = await openSession(ids, access);
 
-      if (access.kind === 'teach' || access.kind === 'none') {
-        setDriveStatus(access.kind);
+      if (!current()) return false;
 
-        return false;
-      }
-
-      if (access.kind === 'ready' && access.needsFallCheck) setDriveStatus('checking');
-
-      if (!(await passesFallCheck(runOn, model, access, robotKey))) {
-        setDriveStatus('teach');
-
-        return false;
-      }
-
-      if (!(await openSession(ids, access))) {
+      if (!opened) {
         setDriveStatus('off');
 
         return false;
@@ -351,7 +346,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
 
       return true;
     },
-    [modelRef, robotKey, begin, inputIds, session, openSession],
+    [modelRef, begin, inputIds, session, openSession],
   );
 
   const stop = useCallback(() => {
@@ -383,4 +378,48 @@ export function useDrive(inputs: DriveInputs): SimDrive {
     inputs: readInputsNow,
     follow,
   };
+}
+
+interface PrepareDriveInput {
+  scene: DriveInputs;
+  modelRef: React.RefObject<SimModel | null>;
+  ids: readonly string[];
+  current: () => boolean;
+  setStatus: (status: DriveStatus) => void;
+}
+
+async function preparedDrive(input: PrepareDriveInput) {
+  const { scene, modelRef, current, setStatus } = input;
+  const access = await grantedDrive(input);
+  const model = modelRef.current;
+
+  if (!current() || !access || !model) return null;
+
+  if (access.kind === 'teach' || access.kind === 'none') {
+    setStatus(access.kind);
+
+    return null;
+  }
+
+  if (access.kind === 'ready' && access.needsFallCheck) setStatus('checking');
+
+  const passed = await passesFallCheck(scene.runOn, model, access, scene.robotKey);
+
+  if (!current()) return null;
+
+  if (!passed) {
+    setStatus('teach');
+
+    return null;
+  }
+
+  return access;
+}
+
+async function grantedDrive({ scene, modelRef, ids, current }: PrepareDriveInput) {
+  const velocity = (await scene.velocity?.current?.()) ?? null;
+
+  if (!current()) return null;
+
+  return grantedModel(scene, modelRef, { pose: posesInputs(ids), velocity, current });
 }

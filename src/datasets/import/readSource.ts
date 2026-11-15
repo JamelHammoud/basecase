@@ -20,6 +20,7 @@ export type ImportSource =
 export interface ReadSource {
   data: SourceData;
   hash: string;
+  files: SourceFile[];
 }
 
 const hex = (bytes: ArrayBuffer) => [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -113,5 +114,5 @@ export async function readSource(source: ImportSource): Promise<ReadSource | nul
   };
   const data = await readers[kind]();
 
-  return data && { data, hash: await hashed.hash() };
+  return data && { data, hash: await hashed.hash(), files };
 }

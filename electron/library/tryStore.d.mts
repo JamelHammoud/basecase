@@ -5,7 +5,10 @@ export class TryStore {
   strip(id: string): Uint8Array | null;
   session(id: string): Uint8Array | null;
   appendSession(id: string, text: string): { ok: boolean };
-  saveVideo(payload: { id: string; bytes: Uint8Array }): { ok: boolean };
+  saveVideo(payload: { id: string; camera?: string; bytes: Uint8Array }): { ok: boolean };
+  triesDir: string;
+  videoTarget(payload: { id: string; camera: string }): string | null;
+  videoFile(payload: { id: string; camera: string }): { file: string; size: number } | null;
   save(payload: { manifest: unknown; recording?: Uint8Array | null; session?: Uint8Array | null }): { ok: true };
   saveStrip(payload: { id: string; bytes: Uint8Array }): { ok: boolean };
   manifests(ids: string[]): Array<Record<string, unknown>>;

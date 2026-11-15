@@ -21,6 +21,7 @@ import type { LiveCaseInput } from '../cases/liveCase';
 import type { WatchPlan } from '../skills/liveWatch';
 import { useDrive, type SimDrive, type VelocitySource } from './useDrive';
 import { useWatch } from './useWatch';
+import { useSimStart } from './useSimStart';
 import { useSimTouches } from './useSimTouches';
 import type { CalibrationHistory } from '../reality/history';
 import { calibratedModel } from './calibratedModel';
@@ -28,7 +29,6 @@ import { newSimWorker, useSimWorker, type CameraLink, type SimFrameMessage } fro
 import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
 import type { AmpModel } from '../utils/servoAmps';
-import { errorMessage } from '../utils/errorMessage';
 import type { FallPlan, FallRun } from './fallRuns';
 
 export interface SimFrame {
@@ -61,6 +61,7 @@ export interface Simulation {
   pause: () => void;
   reset: () => void;
   stop: () => void;
+  subscribeStop: (listen: () => void) => () => void;
   setSpeed: (s: number) => void;
   setController: (c: Controller) => void;
   grab: (
@@ -84,7 +85,11 @@ export interface Simulation {
   connectCameras: (link: CameraLink | null) => void;
   setWorld: (items: WorldItem[], guests?: SimGuests) => void;
   buildModel: (options?: SceneModelOptions) => Promise<SimModel>;
-  runRoutine: (input: LiveRoutineInput, onUpdate: (update: LiveUpdate) => void) => Promise<boolean>;
+  runRoutine: (
+    input: LiveRoutineInput,
+    onUpdate: (update: LiveUpdate) => void,
+    current?: () => boolean,
+  ) => Promise<boolean>;
   runCase: (input: LiveCaseInput | null) => void;
   watch: (plan: WatchPlan | null) => void;
   watchMargin: number | null;
@@ -278,65 +283,6 @@ function useController(send: (msg: SimRequest) => void) {
   return [controller, setController] as const;
 }
 
-interface SimStartInputs {
-  sw: ReturnType<typeof useSimWorker>;
-  buildModel: (options?: SceneModelOptions) => Promise<SimModel>;
-  modelRef: React.RefObject<SimModel | null>;
-  setModel: (m: SimModel) => void;
-  controller: Controller;
-  speed: number;
-}
-
-function useSimStart({ sw, buildModel, modelRef, setModel, controller, speed }: SimStartInputs) {
-  const { setError, setStatus, worker, load, setPlaying } = sw;
-  const pinned = useRef<string | null>(null);
-
-  const startModel = useCallback(async () => {
-    setError(null);
-    setStatus('loading');
-
-    let m: SimModel;
-
-    try {
-      m = await buildModel({ pin: pinned.current });
-    } catch (e) {
-      setError(errorMessage(e));
-      setStatus('error');
-
-      return;
-    }
-
-    modelRef.current = m;
-    setModel(m);
-
-    const w = worker();
-    const loaded = await load(w, m, controller);
-
-    if (!loaded) return;
-
-    w.postMessage({ type: 'speed', value: speed } satisfies SimRequest);
-    w.postMessage({ type: 'play' } satisfies SimRequest);
-    setPlaying(true);
-  }, [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying, modelRef, setModel]);
-
-  const start = useCallback(() => {
-    pinned.current = null;
-
-    return startModel();
-  }, [startModel]);
-
-  const startPinned = useCallback(
-    (pin: string | null) => {
-      pinned.current = pin;
-
-      return startModel();
-    },
-    [startModel],
-  );
-
-  return { start, startPinned, pinned: () => (modelRef.current ? pinned.current : null) };
-}
-
 export function useSimulation(props: Inputs): Simulation {
   const { parts, project, rig, pose, viewportRef } = props;
   const [model, setModel] = useState<SimModel | null>(null);
@@ -350,9 +296,17 @@ export function useSimulation(props: Inputs): Simulation {
   const touch = useSimTouches(modelRef, send);
   const watching = useWatch(send, sw.watched);
 
-  const { start, startPinned, pinned } = useSimStart({ sw, buildModel, modelRef, setModel, controller, speed });
+  const { start, startGuarded, startPinned, pinned, cancelStart, subscribeStop } = useSimStart({
+    sw,
+    buildModel,
+    modelRef,
+    setModel,
+    controller,
+    speed,
+  });
 
   const stop = useCallback(() => {
+    cancelStart();
     send({ type: 'dispose' });
     modelRef.current = null;
     setModel(null);
@@ -360,7 +314,7 @@ export function useSimulation(props: Inputs): Simulation {
     setPlaying(false);
     setStats(null);
     viewportRef.current?.setPose(inputs.current.restDeltas);
-  }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
+  }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs, cancelStart]);
 
   useStopOnEdit({ parts, joints: project.joints, modelRef, stop });
 
@@ -406,6 +360,7 @@ export function useSimulation(props: Inputs): Simulation {
     pause: () => send({ type: 'pause' }),
     reset: () => send({ type: 'reset' }),
     stop,
+    subscribeStop,
     setSpeed: (s) => {
       setSpeedState(s);
       send({ type: 'speed', value: s });
@@ -416,7 +371,7 @@ export function useSimulation(props: Inputs): Simulation {
     setFault: (joint, kind) => send({ type: 'fault', joint, kind }),
     setPhysics: (physics) => send({ type: 'physics', physics }),
     resetTo: (initial) => send({ type: 'reset', initial }),
-    drive,
+    drive: stoppedDrive(drive, cancelStart),
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,
     scrub: (r) => {
@@ -431,10 +386,10 @@ export function useSimulation(props: Inputs): Simulation {
     subscribePoses: sw.subscribePoses,
     connectCameras: sw.connectCameras,
     setWorld,
-    runRoutine: async (input, onUpdate) => {
-      await start();
+    runRoutine: async (input, onUpdate, current = () => true) => {
+      const started = await startGuarded(current);
 
-      return sw.startRoutine(input, onUpdate);
+      return started && current() && sw.startRoutine(input, onUpdate);
     },
     runCase: (input) => send(input ? { type: 'case', ...input } : { type: 'caseEnd' }),
     ...watching,
@@ -451,6 +406,16 @@ export function useSimulation(props: Inputs): Simulation {
       const m = await buildModel();
 
       return { model: m, runs: await fallsOn(m, plan, ++runSeq.current) };
+    },
+  };
+}
+
+function stoppedDrive(drive: SimDrive, cancel: () => void): SimDrive {
+  return {
+    ...drive,
+    stop: () => {
+      cancel();
+      drive.stop();
     },
   };
 }

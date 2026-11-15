@@ -316,7 +316,13 @@ app.whenReady().then(async () => {
     preload: path.join(__dirname, 'storagePreload.cjs'),
   });
 
-  serveApp({ distDir: path.join(workspaceRoot, 'dist'), devServer, transformHtml: migration.transformHtml });
+  serveApp({
+    distDir: path.join(workspaceRoot, 'dist'),
+    devServer,
+    transformHtml: migration.transformHtml,
+    tries: backend.tries,
+    libraryDir: backend.libraryDir,
+  });
   createWindow();
   migration.close();
 

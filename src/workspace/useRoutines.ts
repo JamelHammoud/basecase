@@ -47,7 +47,7 @@ export const plainRun = (routine: Routine): Scenario => ({
 export function useRoutines(options: RoutineOptions) {
   const { parts, project, sim, commitParts, updateProjectNow, showToast } = options;
   const [view, setView] = useState<RoutineView>(EMPTY_VIEW);
-  const sceneRef = useLatestRef({ parts, joints: project.joints ?? [] });
+  const sceneRef = useLatestRef({ parts, joints: project.joints ?? [], cameras: project.cameras ?? [] });
   const capabilities = () => sceneCapabilities(sceneRef.current);
   const { commitRoutines, undo } = options;
   const store = useRoutineStore({ project, projectRef: options.projectRef, commitRoutines, capabilities });
@@ -151,6 +151,7 @@ export function useRoutines(options: RoutineOptions) {
   };
 
   const { runLive, runHeadless } = useRoutineRuns({
+    scope: active,
     pending,
     sim,
     sceneRef,

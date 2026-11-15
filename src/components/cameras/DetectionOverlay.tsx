@@ -1,0 +1,30 @@
+import React, { useSyncExternalStore } from 'react';
+import { cameraVision, cameraVisionError, onCameraVision } from '../../cameras/visionSession';
+import { DetectionBoxes } from './DetectionBoxes';
+
+export const DetectionOverlay: React.FC<{ camera: string; mirrorText?: boolean }> = ({ camera, mirrorText }) => {
+  const result = useSyncExternalStore(
+    onCameraVision,
+    () => cameraVision(camera),
+    () => null,
+  );
+  const error = useSyncExternalStore(
+    onCameraVision,
+    () => cameraVisionError(camera),
+    () => null,
+  );
+
+  return (
+    <>
+      <DetectionBoxes result={result} mirrorText={mirrorText} />
+      {error && (
+        <span
+          role="status"
+          className={`pointer-events-none absolute left-1.5 right-1.5 bottom-1.5 rounded-md bg-black/80 px-1.5 text-[12px] leading-6 text-white ${mirrorText ? '-scale-x-100' : ''}`}
+        >
+          {error}
+        </span>
+      )}
+    </>
+  );
+};

@@ -52,6 +52,8 @@ You can also play a try by clicking its row in the Simulate tab's Results, or it
 
 Plots show the whole try, with a line at the playhead. The map draws the whole path the robot took, with a dot where the robot is at the playhead. If a try's Case isn't in this scene, the try plays through the default cards: the cameras, the brief, the failures, the servos and the tries. A try imported from a ROS recording adds a column of cards for its topics, as in [Play a ROS recording's topics in the console](/help/play-a-ros-recordings-topics-in-the-console).
 
+If a try has saved camera videos, their tiles show the recorded images at the playhead. Basecase runs detection on those images during playback, so the boxes and detection signals are computed again. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
 **Note:** A try plays only if it fits the robot as it is now. If you've added or removed a joint since the try was recorded, it won't open. Tries from a real robot don't play.
 
 While a try plays, the buttons in the cards turn off and Try It disappears. A try records the drive's command but not which input sent it, so every input shows the same command.

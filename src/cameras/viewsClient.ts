@@ -1,25 +1,39 @@
 import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import { workerClient } from '../utils/workerRpc';
-import type { CameraFrameRequest, CameraStageJob } from './cameraStage';
+import { connectVisionFrames, ensureVisionCamera, visionAssignments } from './visionSession';
+import type { VisionAssignment } from './visionFrames';
+import type { CameraFrameRequest, CameraFrameOutput, CameraStageJob } from './cameraStage';
 
 type ViewHandlers = {
+  vision: (input: {
+    port: MessagePort;
+    assignments: VisionAssignment[];
+    timeOrigin: number;
+  }) => Promise<{ result: boolean }>;
+  close: (input: null) => Promise<{ result: boolean }>;
   load: (job: CameraStageJob) => Promise<{ result: boolean }>;
-  frame: (request: CameraFrameRequest) => Promise<{ result: Record<string, ImageBitmap> }>;
+  frame: (request: CameraFrameRequest) => Promise<{ result: CameraFrameOutput }>;
 };
 
 const localHandlers = async (): Promise<ViewHandlers> => {
   const stage = await import('./cameraStage');
 
   return {
+    vision: async ({ port }) => {
+      port.close();
+
+      return { result: false };
+    },
+    close: async () => ({ result: true }),
     load: async (job) => ({ result: await stage.loadCameraStage(job) }),
-    frame: async (request) => ({ result: stage.renderCameraFrame(request) }),
+    frame: async (request) => ({ result: { bitmaps: stage.renderCameraFrame(request), vision: {} } }),
   };
 };
 
 export interface CameraFeed {
   load: (job: Omit<CameraStageJob, 'meshes'>) => Promise<void>;
-  frame: (request: CameraFrameRequest) => Promise<Record<string, ImageBitmap>>;
+  frame: (request: CameraFrameRequest) => Promise<CameraFrameOutput>;
   dispose: () => void;
 }
 
@@ -29,9 +43,22 @@ export function cameraFeed(): CameraFeed {
     localHandlers,
   );
 
+  let connected = false;
+
   return {
     load: async (job) => {
       const all = [...job.parts, ...job.world];
+
+      if (typeof Worker !== 'undefined' && !connected) {
+        await Promise.all(job.views.map((view) => ensureVisionCamera(view.key).catch(() => undefined)));
+
+        const port = await connectVisionFrames();
+
+        await client.call('vision', { port, assignments: visionAssignments(), timeOrigin: performance.timeOrigin }, [
+          port,
+        ]);
+        connected = true;
+      }
 
       await client.call('load', {
         ...job,
@@ -41,6 +68,11 @@ export function cameraFeed(): CameraFeed {
       });
     },
     frame: (request) => client.call('frame', request, request.poses ? [request.poses.buffer] : []),
-    dispose: () => client.dispose(),
+    dispose: () => {
+      void client.call('close', null).then(
+        () => client.dispose(),
+        () => client.dispose(),
+      );
+    },
   };
 }

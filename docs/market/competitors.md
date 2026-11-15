@@ -82,6 +82,17 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 - **Worse than Basecase:** it visualizes and manages data a robot already recorded ([pricing](https://foxglove.dev/pricing)). Basecase makes the robot and its data ([Cases](../guide/cases.md)). Basecase also opens the same MCAP files and ROS 1 bags, with ROS 1, ROS 2, Protobuf and JSON channels, keeps every field of every topic as a signal, and plays them through Log, Diagnostics, Message and States panels and XY plots on one timeline beside the robot's own design, its joints replayed on it ([Cases](../guide/cases.md#imported-tries)). Its Map layer fuses an imported run's laser scans, point clouds or depth images into a height-colored 5 cm voxel map, with optional scan matching, and also maps simulated LiDAR runs. The result is a viewing overlay without collision geometry or a Case handoff ([Scan maps](../guide/cases.md#scan-maps)). It reads no FlatBuffers channels or live ROS streams.
 - **Basecase should:** integrate through LeRobot: `lerobot-dataset-viz --display-mode foxglove` serves a v3 dataset's episode to Foxglove over WebSocket, fetching only the frames on screen ([LeRobotDataset v3](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)). Basecase's datasets are v2.1 ([Cases](../guide/cases.md)), so writing v3 ([integrations](integrations.md#lerobot)) is what puts a Case's tries in Foxglove.
 
+## Vision
+
+### Roboflow
+
+- **Link:** https://roboflow.com
+- **Checked:** 2026-11-14
+- **Better than Basecase:** Inference runs detection, classification and segmentation on camera streams, with tracking, counting and composable Workflows. It hosts fine-tuned and foundation models, monitors predictions and connects results to external systems ([Inference](https://github.com/roboflow/inference)). Basecase does not label image datasets or train custom detectors ([Routines](../guide/routines.md#ml-nodes)).
+- **Plans:** Free includes 10 monthly credits, private projects and unlimited admin seats. Core starts at $39 monthly for 20 total monthly credits. Enterprise has custom pricing. Self-hosted inference is included on every plan, while hosted inference, training and labelling consume credits ([pricing](https://roboflow.com/pricing)).
+- **Worse than Basecase:** its quickstart installs an inference server and connects cameras to it ([Inference quickstart](https://github.com/roboflow/inference#-quickstart)). Basecase already holds the robot's camera mounts, lenses and Case world, and renders those camera views inside the simulation ([Cameras](../guide/cameras.md)).
+- **Basecase should:** connect local detections to the same cameras, signals and Routines that drive the robot. Extend that runtime with labelled renders, held-out real frames and trained models that improve on the current detector.
+
 ## Operate
 
 ### Viam

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { enlargeCameraView } from '../../cameras/cameraViewsStore';
 import { OPERATOR_KEY, onOperatorPoints, operatorPoints } from '../../cameras/operator/operatorCamera';
 import { drawSkeleton } from '../../cameras/operator/skeletonOverlay';
+import { DetectionOverlay } from './DetectionOverlay';
 import { tileFrame, tileLabel } from './tileStyle';
 
 interface OperatorTileProps {
@@ -39,6 +40,7 @@ export const OperatorTile: React.FC<OperatorTileProps> = ({ stream, label, large
       >
         <video ref={video} muted playsInline autoPlay className="absolute inset-0 w-full h-full block object-cover" />
         <canvas ref={canvas} className="absolute inset-0 w-full h-full block" />
+        <DetectionOverlay camera={OPERATOR_KEY} mirrorText />
       </button>
       {label && <span className={tileLabel}>{label}</span>}
     </div>

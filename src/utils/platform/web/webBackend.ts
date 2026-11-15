@@ -79,6 +79,7 @@ const uploadedImage = (body: Body) => ({
 });
 
 const ROUTES: Record<string, Route> = {
+  'hub-model-file': () => ({ web: true }),
   'acp-status': () => WEB_AGENT_STATUS,
   'sourced-parts': () => [],
   'sourced-mesh': () => ({ data: null }),

@@ -154,10 +154,20 @@ export async function operateRequest(ctx: OperateContext, p: OperatePayload): Pr
     ? ` No camera ${seen.missing.join(', ')}; cameras: ${seen.available.join(', ')}.`
     : '';
 
+  const vision = seen.shots
+    .filter((shot) => shot.detections !== undefined)
+    .map((shot) => ({
+      camera: shot.view,
+      detections: shot.detections,
+      ...(shot.visionError ? { error: shot.visionError } : {}),
+    }));
+  const detections = vision.length ? `Detections: ${JSON.stringify(vision)}.` : '';
   const calibration = (await ctx.calibrationErrors?.().catch(() => '')) ?? '';
 
   return {
-    text: [`Ran ${duration(seconds)}.`, stateLine(ctx, poses), missing.trim(), calibration].filter(Boolean).join(' '),
+    text: [`Ran ${duration(seconds)}.`, stateLine(ctx, poses), missing.trim(), detections, calibration]
+      .filter(Boolean)
+      .join(' '),
     images: seen.shots,
   };
 }

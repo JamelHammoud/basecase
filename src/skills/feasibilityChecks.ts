@@ -6,7 +6,6 @@ import {
   bodyPoint,
   chainOf,
   clampJoint,
-  isUnder,
   norm,
   reachPoint,
   refresh,
@@ -117,7 +116,7 @@ function loadTorques(kin: Kin, loads: PointLoad[]): number[] {
     const axis = jointAxis(kin, j);
 
     return loads
-      .filter((load) => isUnder({ model: kin.model, root: j.body }, load.body))
+      .filter((load) => kin.bodies.contains(load.body, j.body))
       .reduce((total, load) => total + holdTorque(axis, bodyPoint(kin, load.body, load.local), [0, 0, load.force]), 0);
   });
 }

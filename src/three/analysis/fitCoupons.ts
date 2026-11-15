@@ -54,12 +54,19 @@ function holds(host: Placed, fit: Placed): boolean {
 }
 
 function hostOf(fit: Placed, hosts: Placed[]): Placed | null {
-  const near = hosts
-    .map((host) => ({ host, overlap: overlapVolume(host.box, fit.box) }))
-    .filter((h) => h.overlap > 0 && holds(h.host, fit))
-    .sort((a, b) => b.overlap - a.overlap);
+  let best: Placed | null = null;
+  let bestOverlap = 0;
 
-  return near[0]?.host ?? null;
+  for (const host of hosts) {
+    const overlap = overlapVolume(host.box, fit.box);
+
+    if (overlap > bestOverlap && holds(host, fit)) {
+      best = host;
+      bestOverlap = overlap;
+    }
+  }
+
+  return best;
 }
 
 function brushOf(geometry: THREE.BufferGeometry) {

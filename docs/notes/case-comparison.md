@@ -1,6 +1,6 @@
 # Case comparison under Linux load
 
-This records the fixture investigation before the browser walkthrough was removed in [#1086](https://github.com/JamelHammoud/basecase/issues/1086). Current comparison coverage is listed in [Running and testing](../guide/running-and-testing.md).
+This records the earlier simulation walkthrough’s fixture investigation. [#1086](https://github.com/JamelHammoud/basecase/issues/1086) replaces its repeated simulation with deterministic worker replies while retaining the command-to-results browser path. These measurements apply to the earlier test. Current comparison coverage is listed in [Running and testing](../guide/running-and-testing.md).
 
 ## Scope
 

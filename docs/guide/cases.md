@@ -304,6 +304,8 @@ Evaluation compares the candidate with the incumbent on the same frozen held-out
 
 Average precision samples 101 recall thresholds through `metricsPrecision.ts`. Each overlap threshold walks ranked matches backward once, retaining the best precision so far instead of rescanning the whole curve for every sample. Samples sum in ascending recall order, preserving exact scores. No curve or cursor survives an evaluation.
 
+Classification evaluation accumulates support, correct predictions and predicted-label totals in one pass through `metricsClassification.ts`. Per-class reports derive misses and false positives from those counters, without retaining image pairs or rescanning them for each class. Prediction ranking, first score ties, class order, label rejection and score arithmetic stay unchanged. Counters end with each evaluation, so candidate and incumbent comparisons read current images, predictions and task classes independently.
+
 Job setup failures leave a failed status with the setup error and release the single trainer slot, including failures after image staging while saving the immutable specification or preparing the runtime. Stopping during setup leaves a stopped status and starts no child process.
 
 **Stop Training** stops the active job without applying its result. Only a retained model exposes **Apply Model** for a compatible camera and ML node. Training history and model artifacts stay local. Help: [Train a vision model](../../site/content/help/train-a-vision-model.md).

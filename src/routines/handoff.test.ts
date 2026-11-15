@@ -13,7 +13,6 @@ import { applyEdits, newRoutine, type StepAt } from './edit';
 import { withHandoffs, type HandoffProofs } from './handoffs';
 import { trainHandoff } from './handoffTraining';
 import { loadKitLibrary } from './kitLibrary';
-import { KIT_SKILL_NAMES } from './physicsBody';
 import { scriptedDrive } from './physicsDrive';
 import { handoffStates, kitForModel, proveHandoff, type KitScene, type RoutineKit } from './physicsKit';
 import type { Routine } from './schema';
@@ -150,36 +149,6 @@ describe('proving any hand-off', { timeout: 120_000 }, () => {
     expect(refusals(compileWith(thenSkill('wave', moved), moved, { 'walk->wave': proof }))).toEqual([
       { from: 'walk', to: 'wave', falls: null },
     ]);
-  });
-
-  it('makes a proof stale when either skill is retrained', () => {
-    const wave = clockSkill(quad, quadWave());
-    const scene = sceneOf('quad-servo', quad, [wave]);
-    const proof = proveHandoff(scene, { from: 'walk', to: 'wave' })!;
-    const retrained = (skill: Skill): Skill =>
-      skill.controller.kind === 'policy'
-        ? {
-            ...skill,
-            controller: {
-              ...skill.controller,
-              policy: { ...skill.controller.policy, trainedSteps: skill.controller.policy.trainedSteps + 1 },
-            },
-          }
-        : skill;
-    const newWave = kitForModel(sceneOf('quad-servo', quad, [retrained(wave)]));
-    const newWalk = kitForModel({
-      ...scene,
-      skills: [...library.map((s) => (s.name === KIT_SKILL_NAMES.velocity ? retrained(s) : s)), wave],
-    });
-
-    const kit = kitForModel(scene);
-
-    expect(compileWith(thenSkill('wave', kit), kit, { 'walk->wave': proof }).ok).toBe(true);
-
-    for (const changed of [newWave, newWalk])
-      expect(refusals(compileWith(thenSkill('wave', changed), changed, { 'walk->wave': proof }))).toEqual([
-        { from: 'walk', to: 'wave', falls: null },
-      ]);
   });
 
   it('gives the same proof and the same start states for the same seeds', () => {

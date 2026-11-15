@@ -1,4 +1,5 @@
 import type { ChainResult, FastenerChain } from '../../assembly/assemblyTypes';
+import { componentRoot } from '../componentRoot';
 import type { MergeCandidate } from './mergeTypes';
 
 export type Pair = [string, string];
@@ -45,7 +46,7 @@ export function joinedPairs(chains: ChainResult, candidates: MergeCandidate[]): 
 
 export function connectedGroups(ids: string[], pairs: Pair[]): string[][] {
   const root = new Map(ids.map((id) => [id, id]));
-  const find = (id: string): string => (root.get(id) === id ? id : find(root.get(id)!));
+  const find = (id: string) => componentRoot(root, id);
 
   for (const [a, b] of pairs) {
     const [ra, rb] = [find(a), find(b)].sort(byId);
@@ -55,7 +56,13 @@ export function connectedGroups(ids: string[], pairs: Pair[]): string[][] {
 
   const groups = new Map<string, string[]>();
 
-  for (const id of [...ids].sort(byId)) groups.set(find(id), [...(groups.get(find(id)) ?? []), id]);
+  for (const id of [...ids].sort(byId)) {
+    const key = find(id);
+    const group = groups.get(key) ?? [];
+
+    group.push(id);
+    groups.set(key, group);
+  }
 
   return [...groups.values()].filter((g) => g.length > 1);
 }

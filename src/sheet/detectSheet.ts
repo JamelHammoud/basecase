@@ -2,6 +2,7 @@ import { Vector3 } from 'three';
 import type { SheetProfile } from '../types/sheet';
 import { canonicalLoop, inside, loopsOf } from './profileLoops';
 import { CapBoundary } from './capBoundary';
+import { pairKey } from '../../electron/cad-kernel/pairKey.mjs';
 
 const TOLERANCE_MM = 0.002;
 const ANGLE_TOLERANCE = 0.003;
@@ -194,7 +195,7 @@ function closedSolid(faces: Face[]): boolean {
     const points = face.vertices.map(keyOf);
 
     for (let i = 0; i < 3; i++) {
-      const edge = [points[i], points[(i + 1) % 3]].sort().join('|');
+      const edge = pairKey(points[i], points[(i + 1) % 3]);
 
       edges.set(edge, (edges.get(edge) ?? 0) + 1);
     }

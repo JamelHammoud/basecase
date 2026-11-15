@@ -1,5 +1,6 @@
 import type { Cell } from './hexElement';
 import type { V3 } from './material';
+import { voxelNeighbours } from './voxelNeighbours';
 
 export interface VoxelGrid {
   origin: V3;
@@ -127,61 +128,40 @@ export function voxelize(tris: ArrayLike<number>, cellMm = CELL_MM): VoxelGrid {
 
 export const cellIndex = (g: Pick<VoxelGrid, 'n'>, i: number, j: number, k: number) => (k * g.n[1] + j) * g.n[0] + i;
 
-export function neighbours(g: Pick<VoxelGrid, 'n'>, c: number): number[] {
-  const [nx, ny, nz] = g.n;
-  const i = c % nx;
-  const j = Math.floor(c / nx) % ny;
-  const k = Math.floor(c / (nx * ny));
-  const out: number[] = [];
-
-  if (i > 0) out.push(c - 1);
-
-  if (i < nx - 1) out.push(c + 1);
-
-  if (j > 0) out.push(c - nx);
-
-  if (j < ny - 1) out.push(c + nx);
-
-  if (k > 0) out.push(c - nx * ny);
-
-  if (k < nz - 1) out.push(c + nx * ny);
-
-  return out;
-}
-
-const isEdge = (g: VoxelGrid, c: number) => {
-  const near = neighbours(g, c);
+const isEdge = (g: VoxelGrid, c: number, neighbours: (cell: number) => number[]) => {
+  const near = neighbours(c);
 
   return near.length < 6 || near.some((m) => !g.solid[m]);
 };
 
+function nextDepth(g: VoxelGrid, depth: Int32Array, frontier: number[], neighbours: (cell: number) => number[]) {
+  const next: number[] = [];
+
+  for (const c of frontier) {
+    for (const m of neighbours(c)) {
+      if (!g.solid[m] || depth[m] >= 0) continue;
+
+      depth[m] = depth[c] + 1;
+      next.push(m);
+    }
+  }
+
+  return next;
+}
+
 export function surfaceDepth(g: VoxelGrid): Int32Array {
   const depth = new Int32Array(g.solid.length).fill(-1);
+  const neighbours = voxelNeighbours(g);
   let frontier: number[] = [];
 
   for (let c = 0; c < g.solid.length; c++) {
-    if (!g.solid[c] || !isEdge(g, c)) continue;
+    if (!g.solid[c] || !isEdge(g, c, neighbours)) continue;
 
     depth[c] = 0;
     frontier.push(c);
   }
 
-  let d = 0;
-
-  while (frontier.length) {
-    d++;
-
-    const next: number[] = [];
-
-    for (const c of frontier) {
-      const fresh = neighbours(g, c).filter((m) => g.solid[m] && depth[m] < 0);
-
-      fresh.forEach((m) => (depth[m] = d));
-      next.push(...fresh);
-    }
-
-    frontier = next;
-  }
+  while (frontier.length) frontier = nextDepth(g, depth, frontier, neighbours);
 
   return depth;
 }

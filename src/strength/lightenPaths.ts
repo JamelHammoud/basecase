@@ -1,7 +1,7 @@
 import { frozenQuery } from './lightenFrozen';
 import type { LightenFrozen } from './lightenTypes';
 import { cellCenter, type HexMesh } from './mesh';
-import { neighbours } from './voxels';
+import { voxelNeighbours } from './voxelNeighbours';
 
 interface Entry {
   cell: number;
@@ -68,6 +68,7 @@ export function interfacePaths(mesh: HexMesh, density: Float64Array, regions: Li
   const distance = new Float64Array(grid.solid.length).fill(Infinity);
   const previous = new Int32Array(grid.solid.length).fill(-1);
   const queue = new CostQueue();
+  const neighbours = voxelNeighbours(grid);
 
   mesh.cells.forEach((cell, e) => (resistance[cell] = 1 / (0.001 + density[e] ** 3)));
   distance[root] = 0;
@@ -76,7 +77,7 @@ export function interfacePaths(mesh: HexMesh, density: Float64Array, regions: Li
   for (let entry = queue.pop(); entry; entry = queue.pop()) {
     if (entry.cost > distance[entry.cell]) continue;
 
-    for (const other of neighbours(grid, entry.cell)) {
+    for (const other of neighbours(entry.cell)) {
       const cost = entry.cost + (resistance[entry.cell] + resistance[other]) / 2;
 
       if (!grid.solid[other] || cost >= distance[other]) continue;

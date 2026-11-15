@@ -1,6 +1,7 @@
 import type { Cell } from './hexElement';
 import type { V3 } from './material';
-import { cellIndex, neighbours, type VoxelGrid } from './voxels';
+import { cellIndex, type VoxelGrid } from './voxels';
+import { voxelNeighbours } from './voxelNeighbours';
 import { screwRegion } from './screwRegion';
 
 export interface ScrewLine {
@@ -73,25 +74,32 @@ export function nodesNear(mesh: HexMesh, lines: ScrewLine[], slack: number): Uin
   return out;
 }
 
+function labelComponent(grid: VoxelGrid, label: Int32Array, start: number, neighbours: (cell: number) => number[]) {
+  const stack = [start];
+  const component = label[start];
+
+  while (stack.length) {
+    const at = stack.pop()!;
+
+    for (const m of neighbours(at)) {
+      if (!grid.solid[m] || label[m] >= 0) continue;
+
+      label[m] = component;
+      stack.push(m);
+    }
+  }
+}
+
 export function components(grid: VoxelGrid): Int32Array {
   const label = new Int32Array(grid.solid.length).fill(-1);
+  const neighbours = voxelNeighbours(grid);
   let next = 0;
 
   for (let c = 0; c < grid.solid.length; c++) {
     if (!grid.solid[c] || label[c] >= 0) continue;
 
-    const stack = [c];
-
     label[c] = next;
-
-    while (stack.length) {
-      const at = stack.pop()!;
-
-      for (const m of neighbours(grid, at).filter((x) => grid.solid[x] && label[x] < 0)) {
-        label[m] = next;
-        stack.push(m);
-      }
-    }
+    labelComponent(grid, label, c, neighbours);
 
     next++;
   }

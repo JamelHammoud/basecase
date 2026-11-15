@@ -8,6 +8,8 @@ Drive input declarations and defaults live in `src/sim/inputRegistry.ts`. The Ca
 
 Each simulation worker subscribes only to its workspace’s simulated and operator camera inference. Recorded playback results stay in that workspace’s playback console and never reach live Routine facts. `subscribeLiveSceneVision` supplies this boundary and `src/cameras/sceneVision.test.ts` checks opposing detections in two scenes.
 
+Depth eyes and simulated LiDARs share reusable world-ray buffers in `src/sim/eyes.ts`, described in [Cameras](cameras.md). Buffers belong to each compact sensor and refresh from the current pose on every cast. LiDAR hit callbacks write directly into their slot's existing point buffer. Published scan snapshots keep independent copies.
+
 Robot Computer installation reuses the Robot Package worker's joint-map generation. `robotJointMapJob` prepares only the model's joints and robots, scene parts and project calibrations. `exportRobotJointMap` strips embedded CAD and mesh payloads before sending that input to the worker, and returns the map without measuring geometry, loading policy files or generating a ZIP. The installer derives the daemon's `calibration.json` from that checked map. Full package export reuses the same metadata input before adding its meshes, measurements and policies in `src/workspace/robotPackageExport.ts`.
 
 Stages 3 and 4 of the robotics loop (§1); milestones in [docs/Robotics loop.md](../../docs/Robotics%20loop.md). The **Simulate** tab (right panel, shown while the scene has parts) runs the scene's robots under MuJoCo physics and trains policies for them. It also holds Study (§8b) for scenes with or without joints. Physics needs movable joints.

@@ -32,18 +32,30 @@ export function place(id: string, solid: ShapeSolid, matrix: THREE.Matrix4): Pla
 
 const ray = new THREE.Ray();
 
+function oddCrossings(solid: ShapeSolid): boolean {
+  let count = 0;
+
+  for (const hit of solid.bvh.raycast(ray, THREE.DoubleSide)) {
+    if (hit.distance > 1e-4) count++;
+  }
+
+  return count % 2 === 1;
+}
+
 export function isInside(solid: ShapeSolid, p: THREE.Vector3, dirs: THREE.Vector3[] = RAY_DIRS): boolean {
   let votes = 0;
 
-  for (const dir of dirs) {
-    ray.set(p, dir);
+  for (let i = 0; i < dirs.length; i++) {
+    ray.set(p, dirs[i]);
 
-    const hits = solid.bvh.raycast(ray, THREE.DoubleSide).filter((h) => h.distance > 1e-4);
+    if (oddCrossings(solid)) votes++;
 
-    if (hits.length % 2 === 1) votes++;
+    if (votes >= 2) return true;
+
+    if (votes + dirs.length - i - 1 < 2) return false;
   }
 
-  return votes >= 2;
+  return false;
 }
 
 function penetration(inner: Placed, outer: Placed, { toleranceMm, maxSamples }: CollideOptions) {

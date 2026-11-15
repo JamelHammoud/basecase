@@ -1,5 +1,6 @@
 import type { PortVec } from '../types/ports';
 import {
+  AXES,
   clearSegment,
   corners,
   crossesBox,
@@ -7,6 +8,7 @@ import {
   EPSILON,
   expanded,
   finite,
+  transformed,
   validBox,
   type RelativeBound,
   type RoutePoint,
@@ -31,12 +33,37 @@ interface RouteInput {
 const EXIT_MM = 8;
 const noMotion: RelativeBound = () => 0;
 
-function exit(endpoint: RouteEndpoint): PortVec | null {
+function ownerExitDistance(endpoint: RouteEndpoint, start: PortVec, owner: RouteObstacle): number {
+  const origin = transformed(endpoint.position, owner.inverse);
+  const localStart = transformed(start, owner.inverse);
+
+  if (AXES.some((axis) => localStart[axis] < owner.min[axis] || localStart[axis] > owner.max[axis])) return EXIT_MM;
+
+  const distances = AXES.flatMap((axis) => {
+    const direction = (localStart[axis] - origin[axis]) / EXIT_MM;
+
+    if (Math.abs(direction) < EPSILON) return [];
+
+    const edge = direction > 0 ? owner.max[axis] : owner.min[axis];
+
+    return [(edge - origin[axis]) / direction];
+  });
+
+  return Math.max(EXIT_MM, Math.min(...distances));
+}
+
+function exit(endpoint: RouteEndpoint, boxes: RouteObstacle[]): PortVec | null {
   const magnitude = Math.hypot(...endpoint.axis);
 
-  if (!finite(endpoint.position) || !finite(endpoint.axis) || magnitude < EPSILON) return null;
+  if (!finite(endpoint.position) || !finite(endpoint.axis) || !Number.isFinite(magnitude) || magnitude < EPSILON)
+    return null;
 
-  return endpoint.position.map((v, axis) => v + (endpoint.axis[axis] * EXIT_MM) / magnitude) as PortVec;
+  const start = endpoint.position.map((v, axis) => v + (endpoint.axis[axis] * EXIT_MM) / magnitude) as PortVec;
+  const owner = boxes.find((box) => box.id === endpoint.obstacleId);
+  const length = owner ? ownerExitDistance(endpoint, start, owner) : EXIT_MM;
+  const outside = endpoint.position.map((v, axis) => v + (endpoint.axis[axis] * length) / magnitude) as PortVec;
+
+  return finite(outside) ? outside : null;
 }
 
 function clearExit(
@@ -97,14 +124,14 @@ function shortestPath(input: {
   start: RoutePoint;
   end: RoutePoint;
   obstacles: RouteObstacle[];
-  vertices: RoutePoint[];
+  vertices: () => RoutePoint[];
   bound: RelativeBound;
 }): RoutePoint[] | null {
   const { start, end, obstacles, vertices, bound } = input;
 
   if (clearSegment(start, end, obstacles, bound)) return [start, end];
 
-  const points = [start, end, ...vertices];
+  const points = [start, end, ...vertices()];
   const distances = points.map(() => Infinity);
   const previous = new Int32Array(points.length).fill(-1);
   const visited = new Uint8Array(points.length);
@@ -144,12 +171,14 @@ export function routePath({
   anchorIds = [],
   bound = noMotion,
 }: RouteInput): RoutePoint[] | null {
-  const start = exit(from);
-  const end = exit(to);
-
-  if (!start || !end || !obstacles.every(validBox) || !anchors.every(finite)) return null;
+  if (!obstacles.every(validBox) || !anchors.every(finite)) return null;
 
   const boxes = obstacles.map(expanded);
+  const start = exit(from, boxes);
+  const end = exit(to, boxes);
+
+  if (!start || !end) return null;
+
   const startPoint = { position: start, obstacleId: from.obstacleId };
   const endPoint = { position: end, obstacleId: to.obstacleId };
   const stops = [startPoint, ...anchors.map((position, i) => ({ position, obstacleId: anchorIds[i] })), endPoint];
@@ -158,7 +187,8 @@ export function routePath({
 
   if (!clearExit(from, startPoint, boxes, bound) || !clearExit(to, endPoint, boxes, bound)) return null;
 
-  const vertices = routeCorners(boxes, bound);
+  let routeVertices: RoutePoint[] | undefined;
+  const vertices = () => (routeVertices ??= routeCorners(boxes, bound));
   const result: RoutePoint[] = [from, startPoint];
 
   for (let index = 1; index < stops.length; index++) {

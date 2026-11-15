@@ -328,7 +328,7 @@ export class ViewportEngine {
       },
       interference: (onlyIds) => interferenceIn(restSolids(true), interferenceOptions(onlyIds)),
       fastenerChains: () => fastenersIn(restSolids(false), fastenerInput(this.props.parts)),
-      wiring: (scene) => wiringSnapshot(scene, () => restSolids(false)),
+      wiring: (scene) => wiringSnapshot(scene, ctx, () => this.complete()),
       assembly: (options) => assemblyIn(restSolids(false), { ...fastenerInput(this.props.parts), ...options }),
       posedInterference: (onlyIds, riders) =>
         interferenceIn(solidShapes(true), { ...interferenceOptions(onlyIds), riders }).then((r) => r.interferences),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Box3, BoxGeometry, Mesh } from 'three';
+import { Box3, BoxGeometry, Matrix4, Mesh } from 'three';
 import type { PortVec } from '../types/ports';
 import { routePolyline, routeTopology, type RouteObstacle } from './routeGeometry';
 
@@ -100,18 +100,6 @@ describe('routePolyline', () => {
     expect(routePolyline({ from, to, obstacles: [near] })).toBeNull();
   });
 
-  it('allows only the mandatory exit through the connector owner', () => {
-    const owner: RouteObstacle = { id: 'owner', min: [-20, -10, -10], max: [1, 10, 10] };
-    const endpoint = { ...from, obstacleId: owner.id };
-    const behind = { ...to, position: [-100, 0, 0] as PortVec, axis: [1, 0, 0] as PortVec };
-    const route = routePolyline({ from: endpoint, to: behind, obstacles: [owner] });
-
-    expect(route).not.toBeNull();
-    assertClearance(route!.slice(1), [owner]);
-    expect(routePolyline({ from, to: behind, obstacles: [owner] })).toBeNull();
-    expect(routePolyline({ from: endpoint, to, obstacles: [{ ...owner, max: [6, 10, 10] }] })).toBeNull();
-  });
-
   it('never exempts a neighbouring solid during the owner exit', () => {
     const owner: RouteObstacle = { id: 'owner', min: [-20, -10, -10], max: [1, 10, 10] };
     const neighbour: RouteObstacle = { id: 'neighbour', min: [5, -1, -1], max: [6, 1, 1] };
@@ -176,4 +164,79 @@ describe('routePolyline', () => {
     expect(routePolyline({ from, to, obstacles: [], anchors: [[NaN, 0, 0]] })).toBeNull();
     expect(routePolyline({ from, to, obstacles: [{ id: 'bad', min: [5, 0, 0], max: [4, 1, 1] }] })).toBeNull();
   });
+});
+
+it('checks neighbouring solids along an exit extended beyond eight millimeters', () => {
+  const owner: RouteObstacle = { id: 'owner', min: [-20, -10, -10], max: [20, 10, 10] };
+  const neighbour: RouteObstacle = { id: 'neighbour', min: [17, -1, -1], max: [18, 1, 1] };
+  const endpoint = { ...from, obstacleId: owner.id };
+
+  expect(routePolyline({ from: endpoint, to, obstacles: [owner] })![1]).toEqual([23, 0, 0]);
+  expect(routePolyline({ from: endpoint, to, obstacles: [owner, neighbour] })).toBeNull();
+});
+
+it('extends the connector exit through a rotated owner in its local frame', () => {
+  const transform = new Matrix4().makeRotationZ(Math.PI / 4);
+  const owner: RouteObstacle = {
+    id: 'owner',
+    min: [-20, -10, -10],
+    max: [20, 10, 10],
+    transform,
+    inverse: transform.clone().invert(),
+  };
+  const route = routePolyline({
+    from: { ...from, axis: [Math.SQRT1_2, Math.SQRT1_2, 0], obstacleId: owner.id },
+    to,
+    obstacles: [owner],
+  });
+
+  expect(route).not.toBeNull();
+  expect(route![1][0]).toBeCloseTo(23 * Math.SQRT1_2, 10);
+  expect(route![1][1]).toBeCloseTo(23 * Math.SQRT1_2, 10);
+});
+
+it('keeps direct routing work linear in obstacles, including ordered anchors', () => {
+  const counts = [100, 200].map((count) => {
+    const obstacles: RouteObstacle[] = Array.from({ length: count }, (_, i) => ({
+      id: `box-${i}`,
+      min: [i * 30, 100, 100],
+      max: [i * 30 + 10, 110, 110],
+    }));
+    let boundCalls = 0;
+    const route = routePolyline({
+      from,
+      to,
+      obstacles,
+      anchors: [[50, 0, 0]],
+      bound: () => {
+        boundCalls++;
+
+        return 0;
+      },
+    });
+
+    expect(route).toEqual([from.position, [8, 0, 0], [50, 0, 0], [92, 0, 0], to.position]);
+    expect(boundCalls).toBeLessThanOrEqual(count * 20);
+
+    return boundCalls;
+  });
+
+  expect(counts[1]).toBe(counts[0] * 2);
+});
+
+it('allows only the mandatory exit through the connector owner', () => {
+  const owner: RouteObstacle = { id: 'owner', min: [-20, -10, -10], max: [1, 10, 10] };
+  const endpoint = { ...from, obstacleId: owner.id };
+  const behind = { ...to, position: [-100, 0, 0] as PortVec, axis: [1, 0, 0] as PortVec };
+  const route = routePolyline({ from: endpoint, to: behind, obstacles: [owner] });
+
+  expect(route).not.toBeNull();
+  assertClearance(route!.slice(1), [owner]);
+  expect(routePolyline({ from, to: behind, obstacles: [owner] })).toBeNull();
+
+  const extendedOwner = { ...owner, max: [6, 10, 10] as PortVec };
+  const extended = routePolyline({ from: endpoint, to, obstacles: [extendedOwner] });
+
+  expect(extended![1]).toEqual([9, 0, 0]);
+  assertClearance(extended!.slice(1), [extendedOwner]);
 });

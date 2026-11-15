@@ -28,7 +28,7 @@ If you changed the design since the guide was last made, Build Along makes the g
 
 ![Three servos labeled Shoulder pan, ID 1, Shoulder lift, ID 2 and Elbow, ID 3](/help/build-along/servos.png)
 
-Each connection appears once, at the first step that has both endpoints. A callout can name a cable that is too short. Resolve [Troubleshoot wiring checks](/help/troubleshoot-servo-bus) before using the guide to build.
+Each connection appears once, at the first step that has both endpoints. A callout can name a cable that is too short. Check [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) before using the guide to build.
 
 ![The Wrist ID 3 step with its incoming Elbow ID 2 cable and 180 mm stock callout](/help/build-along/cable-route.png)
 

@@ -25,6 +25,7 @@ import { plural } from '../../../electron/plural.mjs';
 
 interface BuyListProps {
   bom: Bom;
+  measuring?: boolean;
   parts: ScenePart[];
   panScroll: boolean;
   project: ProjectSettings;
@@ -39,6 +40,7 @@ interface BuyListProps {
 
 interface ExportBomMenuProps {
   cart: Cart;
+  measuring: boolean;
   onExportCsv: () => void;
   onExportMarkdown: () => void;
 }
@@ -56,9 +58,12 @@ const StoreLinks: React.FC<{ cart: Cart; onOpen: (url: string) => void }> = ({ c
   </>
 );
 
-const ExportBomMenu: React.FC<ExportBomMenuProps> = ({ cart, onExportCsv, onExportMarkdown }) => {
+const ExportBomMenu: React.FC<ExportBomMenuProps> = ({ cart, measuring, onExportCsv, onExportMarkdown }) => {
   const [menu, setMenu] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
+
+  if (measuring && menu) setMenu(false);
+
   const run = (action: () => void) => {
     setMenu(false);
     action();
@@ -72,13 +77,14 @@ const ExportBomMenu: React.FC<ExportBomMenuProps> = ({ cart, onExportCsv, onExpo
         icon={<SpreadsheetIcon className="w-4 h-4" />}
         title="Export bill of materials"
         size="xs"
+        disabled={measuring}
         isToggled={menu}
         aria-haspopup="menu"
         aria-expanded={menu}
         onClick={() => setMenu((v) => !v)}
       />
       <PopoverMenu
-        isOpen={menu}
+        isOpen={menu && !measuring}
         onClose={() => setMenu(false)}
         ignoreRef={ref}
         position="bottom"
@@ -112,6 +118,7 @@ const StandInsRow: React.FC<{ count: number; onClick: () => void }> = ({ count, 
 
 export const BuyList: React.FC<BuyListProps> = ({
   bom,
+  measuring = false,
   parts,
   panScroll,
   project,
@@ -159,7 +166,12 @@ export const BuyList: React.FC<BuyListProps> = ({
         <>
           <AddSupplyMenu onAdd={addSupply} />
           {groups.length > 0 && (
-            <ExportBomMenu cart={bomCart(bom.lines)} onExportCsv={onExportCsv} onExportMarkdown={onExportMarkdown} />
+            <ExportBomMenu
+              cart={bomCart(bom.lines)}
+              measuring={measuring}
+              onExportCsv={onExportCsv}
+              onExportMarkdown={onExportMarkdown}
+            />
           )}
         </>
       }

@@ -1,5 +1,5 @@
 ---
-title: Troubleshoot wiring checks
+title: Servo bus or Cable reach is red
 date: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
@@ -23,7 +23,7 @@ hub_troubleshoot_build_check_blocks_ready_to_build: |
 
   In **Checks**, open **Cable reach** to see the cable's endpoints, required length and the joint position that needs it. A route that is blocked, too short or unresolved keeps the build from passing.
 
-  [Troubleshoot wiring checks](/help/troubleshoot-servo-bus) explains the cable stock and routing limits.
+  [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains the cable stock and routing limits.
 ---
 
 Find the adapter mismatch or cable route that keeps your build from passing Checks.

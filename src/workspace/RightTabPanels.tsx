@@ -97,6 +97,7 @@ function BuildTab({ core, agent }: Pick<RightTabPanelsProps, 'core' | 'agent'>) 
       onToast={showToast}
       guide={guide}
       readiness={core.readiness}
+      viewportRef={core.viewportRef}
     />
   );
 }

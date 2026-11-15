@@ -56,7 +56,7 @@ Some lines are added for you. If your design has a battery, you get a switch, fu
 
 Cables come from the wiring, one for each hop of each servo bus, starting at the adapter. Once routes are measured, Basecase chooses the shortest compatible stock cable that covers the route through joint motion, including slack. Waveshare 5264 cables come in 300 mm and 900 mm lengths. DYNAMIXEL X servos use the 180 mm **ROBOTIS Robot Cable-X3P**.
 
-Each product and length has its own line, price and on-hand count. Extra cables you add count toward the required quantity only on the same product's line. The remaining pieces round up to whole packs. A route without a suitable known length stays blocked in **Cable reach**, even if a cable appears in the list. [Troubleshoot wiring checks](/help/troubleshoot-servo-bus) explains unresolved routes.
+Each product and length has its own line, price and on-hand count. Extra cables you add count toward the required quantity only on the same product's line. The remaining pieces round up to whole packs. A route without a suitable known length stays blocked in **Cable reach**, even if a cable appears in the list. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains unresolved routes.
 
 Power connections use the same routing check. Without a selected compatible cable, the list keeps a pigtail for each battery plug and barrel jack on the power path, such as the XT60 on a LiPo.
 

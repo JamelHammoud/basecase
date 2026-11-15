@@ -133,3 +133,20 @@ it('refuses a finite range beyond safe numeric precision', () => {
 
   expect(routed(scene, [])).toMatchObject({ status: 'unresolved', reason: 'Range coverage exceeds routing limit' });
 });
+
+it('routes an OpenRB-150 connector beyond its taller board bounds', () => {
+  const adapter = component('adapter', 'robotis-openrb-150');
+  const servo = { ...component('servo', 'dynamixel-xl330-m288'), position: [80, 0, 0] as PortVec };
+  const scene = sceneOf([adapter, servo], []);
+  const obstacles: RouteObstacle[] = [
+    { id: 'adapter', min: [-33.445, -9.520000457763672, -12.7], max: [33.445, 9.520000457763672, 12.7] },
+    { id: 'servo', min: [70, -14.5, -17], max: [90, 14.5, 17] },
+  ];
+  const netlist = analyzeWiring(scene, obstacles);
+  const route = netlist.buses[0].nets[0].route!;
+
+  expect(route.status).toBe('pass');
+  expect(route.points[0]).toEqual([-29.3, 4.1, 0]);
+  expect(route.points[1][1]).toBeCloseTo(obstacles[0].max[1] + 3, 10);
+  expect(route.requiredMm).toBeGreaterThan(analyzeWiring(scene, []).buses[0].nets[0].route!.requiredMm!);
+});

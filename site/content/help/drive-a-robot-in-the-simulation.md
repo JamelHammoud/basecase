@@ -41,6 +41,8 @@ Before you build a robot, you can drive it in MuJoCo to see how it moves. Steer 
 
 While you drive, the controller under **Control** reads **Drive**. You can also stop by clicking **Stop Driving** or by choosing another controller, such as **Hold pose**. **Drive** is in [[⌘K]] as well. If a Case is open, **Try It** starts driving instead. See [Try a Case](/help/try-a-case).
 
+Editing a part, joint or stationary camera stops driving, including a start still in progress. Click **Drive** again after the edit.
+
 A humanoid or an arm can follow your own arms. Click **Drive with Camera** under **Control**, then follow the steps in [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 ## Keys

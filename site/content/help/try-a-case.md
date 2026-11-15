@@ -49,6 +49,10 @@ You can drive your robot through an open Case while Basecase records the try. Wh
 
 You can also start a try by pressing [[⌘K]] and choosing **Try ⟨Case⟩**.
 
+If the Case uses vision, Basecase loads its required models before driving starts. If a model can't load, the try stays stopped and shows an error. Click **Try It** again to load it again.
+
+Editing a part, joint or stationary camera cancels a try that's still preparing to start. After the edit, click **Try It** again.
+
 To steer a humanoid or an arm with your own arms, press [[⌘K]] and choose **Drive with Camera** before you click **Try It**. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera).
 
 To judge your real wheeled or legged robot on a printed mat, click **Try on Real Robot** instead of **Try It**. See [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).

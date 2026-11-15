@@ -6,9 +6,9 @@ import type { PoseSample } from '../src/cameras/operator/poseFollow';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import type { VisionManifest } from '../src/vision/manifest';
-import { inputSensitiveDetectionOnnx } from '../src/vision/onnxFixture';
+import { inputSensitiveDetectionOnnx, tinyDetectionOnnx } from '../src/vision/onnxFixture';
 import type { VisionResult } from '../src/vision/types';
-import { FAKE_CAMERA, openApp, partCount, shown, type App } from './harness';
+import { FAKE_CAMERA, openApp, shown, type App } from './harness';
 import {
   armWithWristCamera,
   blackWhiteVideo,
@@ -28,7 +28,6 @@ interface Studio {
   load: (record: unknown) => void;
   configureVision: (manifest: VisionManifest, bytes: number[], cameras: string[]) => Promise<VisionState>;
   cameraVisionState: () => VisionState;
-  runCase: (id: string) => void;
   playCameraTry: (input: { stored: StoredTry; recording: number[]; video: number[] }) => Promise<boolean>;
   feedPose: (samples: PoseSample[]) => void;
   operatorCamera: () => { live: boolean };
@@ -44,42 +43,6 @@ afterEach(async () => {
 describe('desktop camera inference', () => {
   beforeEach(async () => {
     app = await openApp({}, [], { args: FAKE_CAMERA });
-  });
-
-  it('runs a real ONNX model on the Pick Up a Block wrist camera and publishes its box and signal', async () => {
-    const bytes = inputSensitiveDetectionOnnx();
-
-    await app.page.evaluate(
-      async ({ model, data }) => {
-        await (window as unknown as { __studio: Studio }).__studio.configureVision(model, data, [
-          'scene',
-          'wrist_camera',
-        ]);
-      },
-      { model: manifest(bytes, 'block'), data: [...bytes] },
-    );
-
-    const scene = armWithWristCamera();
-
-    await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
-    await expect.poll(() => partCount(app.page)).toBe(scene.parts.length);
-    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.runCase('pick-up-a-block'));
-    await expect.poll(async () => (await state()).signals['vision.wrist_camera.block']).toBe(1);
-
-    const tile = app.page.locator(shown('[data-camera="wrist_camera"]')).first();
-    const box = tile.getByTestId('vision-box');
-
-    await expect.poll(() => box.count()).toBe(1);
-    expect(await box.getAttribute('data-label')).toBe('block');
-    expect(Number(await box.getAttribute('data-score'))).toBeGreaterThan(0.25);
-    expect(Number(await box.getAttribute('data-score'))).toBeLessThanOrEqual(1);
-
-    const result = (await state()).results.wrist_camera!;
-
-    expect(result.width).toBeGreaterThan(0);
-    expect(result.height).toBeGreaterThan(0);
-    result.detections[0].box.forEach((value, index) => expect(value).toBeCloseTo([0.1, 0.2, 0.3, 0.4][index]));
-    expect(app.errors).toEqual([]);
   });
 
   it('seeks a persisted camera MP4 through black and white frames and reruns ORT at the playhead', async () => {
@@ -174,10 +137,10 @@ describe('desktop camera inference', () => {
   });
 });
 
-it('runs See Objects in the web build through the same inference worker', async () => {
-  app = await openApp({}, [], { web: true });
+async function renderedCameraVision(web: boolean) {
+  app = await openApp({}, [], { web });
 
-  const bytes = inputSensitiveDetectionOnnx();
+  const bytes = tinyDetectionOnnx();
 
   await app.page.evaluate(
     async ({ model, data }) => {
@@ -190,9 +153,26 @@ it('runs See Objects in the web build through the same inference worker', async 
     armWithWristCamera(),
   );
   await expect.poll(async () => (await state()).signals['vision.wrist_camera.block']).toBe(1);
-  await expect
-    .poll(() => app.page.locator(shown('[data-camera="wrist_camera"] [data-testid="vision-box"]')).count())
-    .toBe(1);
-  expect((await state()).models['wrist_camera:rfdetr-nano']?.modelId).toBe('rfdetr-nano');
+
+  const box = app.page.locator(shown('[data-camera="wrist_camera"] [data-testid="vision-box"]'));
+
+  await expect.poll(() => box.count()).toBe(1);
+  expect(await box.getAttribute('data-label')).toBe('block');
+  expect(Number(await box.getAttribute('data-score'))).toBeCloseTo(0.9);
+
+  const result = (await state()).models['wrist_camera:rfdetr-nano']!;
+
+  expect(result.modelId).toBe('rfdetr-nano');
+  expect(result.width).toBe(320);
+  expect(result.height).toBe(240);
+  result.detections[0].box.forEach((value, index) => expect(value).toBeCloseTo([0.1, 0.2, 0.3, 0.4][index]));
   expect(app.errors).toEqual([]);
+}
+
+it('publishes rendered camera boxes and signals through ONNX in the desktop build', async () => {
+  await renderedCameraVision(false);
+});
+
+it('publishes rendered camera boxes and signals through ONNX in the web build', async () => {
+  await renderedCameraVision(true);
 });

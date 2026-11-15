@@ -87,7 +87,7 @@ Tries from your real robot are marked **Real**. When you click one of them, Base
 
 The menu for a passed try also has **Multiply**. It makes up to 50 varied passing tries from that try, and the try's row then shows the count, such as **50 variations**. Deleting the try deletes its variations with it. See [Multiply a try into demonstrations](/help/multiply-a-try-into-demonstrations).
 
-If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their rows appear above the tries. [Explore servo versions](/help/explore-servo-versions-on-a-case) adds its rows in the same place, below any comparison.
+If you [compare two robots on a Case](/help/compare-two-robots-on-a-case), their rows appear above the tries. [Study designs](/help/study-design-options) opens its plot and design table in the same tab.
 
 ## Where tries go
 

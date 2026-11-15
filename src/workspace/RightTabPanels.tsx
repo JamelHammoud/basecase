@@ -227,7 +227,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           })}
         />
       </TabActivity>
-      <TabActivity tab="sim" current={current} visited={visited} available={posing.hasRig}>
+      <TabActivity tab="sim" current={current} visited={visited} available={posing.hasRig || core.study.available}>
         <SimulatePanel
           sim={simTraining.sim}
           training={simTraining.training}
@@ -246,7 +246,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           onCoach={onCoach}
           onRunCase={core.caseRun.enter}
           compare={core.caseCompare}
-          explore={core.caseExplore}
+          study={core.study}
           sceneName={core.scene.sceneName}
           onToast={core.showToast}
           onPublishSkill={simTraining.skillHub.publishable.length ? simTraining.skillHub.publish : null}

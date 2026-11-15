@@ -7,7 +7,7 @@ const MEASURING = new Set([
   'assembly',
   'merge',
   'verify',
-  'sweep_design',
+  'study_design',
   'define_joints',
   'find_joint_axes',
   'simulate',

@@ -29,7 +29,7 @@ covers:
 
 You can run MuJoCo physics on the canvas to find out whether your robot stays standing and which servos work hardest.
 
-The **Simulate** tab appears in the right panel once your scene has a joint. To learn what the model includes, see [Simulation in Basecase](/help/simulation-in-basecase).
+Your scene must have a movable joint to run physics. The **Simulate** tab also appears for parts without joints, where you can compare designs with [Study](/help/study-design-options). To learn what the model includes, see [Simulation in Basecase](/help/simulation-in-basecase).
 
 1. Click **Simulate** at the top of the right panel.
 2. Click the **Simulate** button at the top of the tab. The robot drops onto the floor and the clock starts.

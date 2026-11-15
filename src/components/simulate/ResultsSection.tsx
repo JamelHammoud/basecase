@@ -18,10 +18,8 @@ import type { Simulation } from '../../sim/useSimulation';
 import { prettyJointName, type Rig } from '../../utils/kinematics';
 import type { Cases } from '../../workspace/useCases';
 import type { CaseCompare } from '../../workspace/useCaseCompare';
-import type { CaseExplore } from '../../workspace/useCaseExplore';
 import { TrainingImagesButton } from './TrainingImagesButton';
 import { CompareRows } from './CompareRows';
-import { ExploreRows } from './ExploreRows';
 import { FAULT_LABEL } from './faultMenu';
 import type { ShareRobot } from '../../workspace/useShareRobot';
 import { runClock } from '../../utils/duration';
@@ -105,7 +103,6 @@ interface ResultsProps {
   world: ScenePart[];
   run: LatestRun | null;
   compare?: CaseCompare;
-  explore?: { rows: CaseExplore; sceneName: string };
 }
 
 const MakeDataset: React.FC<{ cases: Cases }> = ({ cases }) =>
@@ -125,7 +122,7 @@ const comparesCase = (cases: Cases, compare: CaseCompare | undefined) =>
   cases.active && compare && (compare.comparison || compare.running) ? compare : null;
 
 export const ResultsSection: React.FC<ResultsProps> = (props) => {
-  const { cases, rig, share, model, parts, world, run, compare, explore } = props;
+  const { cases, rig, share, model, parts, world, run, compare } = props;
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
   const tagging = useTagTries(cases.showError);
   const all = cases.active ? cases.tries : [];
@@ -136,7 +133,6 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
   const showRun = !!run && hasRunResult(run.stats, run.model);
 
   const comparing = comparesCase(cases, compare);
-  const exploring = cases.active && explore?.rows.shown ? explore : null;
   const shows = [
     cases.images.canMake,
     !!cases.images.running,
@@ -144,7 +140,6 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
     showRun,
     !!share?.canShare,
     !!comparing,
-    !!exploring,
   ];
 
   if (!shows.some(Boolean)) return null;
@@ -165,7 +160,6 @@ export const ResultsSection: React.FC<ResultsProps> = (props) => {
   return (
     <Section title="Results">
       {comparing && <CompareRows compare={comparing} />}
-      {exploring && <ExploreRows explore={exploring.rows} sceneName={exploring.sceneName} />}
       {run && showRun && <RunResult {...run} />}
       {tries.length > 0 && (
         <div className="flex flex-col">

@@ -39,7 +39,7 @@ import {
   sizeActuatorsRequest,
 } from './agentCostRequests';
 import { POSE_TOOL_KINDS, SIM_TOOL_KINDS } from './agentRobotTools';
-import type { SweepPayload } from './agentSweepRequest';
+import { studyRequest } from './agentStudyRequest';
 import type { Vec3 } from './types';
 import type { GeneratedGuide } from '../guide/generateGuide';
 import { fitView } from './agentFitView';
@@ -52,7 +52,7 @@ import { DATASET_HANDLERS } from './agentDatasetRequests';
 import { IMAGE_HANDLERS } from './agentImageRequests';
 import type { Datasets } from './useDatasets';
 import type { CaseCompare } from './useCaseCompare';
-import type { CaseExplore } from './useCaseExplore';
+import type { Study } from './useStudy';
 import type { CaseRun } from './useCaseRun';
 import { ROUTINE_HANDLERS } from './agentRoutineRequests';
 import { SKILL_HANDLERS } from './agentSkillRequests';
@@ -88,14 +88,13 @@ export interface RequestContext {
   simTool: (kind: string, payload: Payload) => Promise<PoseReply>;
   verify: (opts?: { peak?: boolean; falls?: boolean }) => Promise<EngineeringReport>;
   readiness: ReadinessHandle;
-  sweep: (payload: SweepPayload) => Promise<{ text: string }>;
   applyOps: (ops: AgentOp[]) => Promise<string>;
   edits?: (owner: string) => string[] | null;
   buildGuide: () => Promise<GeneratedGuide | null>;
   routines: Routines;
   cases: Cases;
   caseCompare: CaseCompare;
-  caseExplore: CaseExplore;
+  study: Study;
   caseRun: CaseRun;
   datasets: Pick<Datasets, 'make'>;
   skills: SceneSkills;
@@ -367,11 +366,7 @@ const HANDLERS: Record<string, Handler> = {
       links: !IS_WEB_DEMO,
     });
   },
-  sweep_design: (payload, ctx) => {
-    ctx.setAction('Comparing design options');
-
-    return ctx.sweep(payload as SweepPayload);
-  },
+  study_design: studyRequest,
   downscale_image: async (payload) => ({
     dataUrl: await downscaleDataUrl(String(payload.dataUrl), Number(payload.maxSide) || EVIDENCE_IMAGE_SIDE, 0.88),
   }),

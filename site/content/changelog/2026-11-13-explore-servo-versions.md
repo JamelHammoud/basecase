@@ -6,7 +6,7 @@ image: /changelog/explore-servo-versions/cover.png
 
 You can now run a Case on every catalog version of your robot's servos and supply voltage, then apply the winner in one undo step.
 
-Open a Case in the Simulate tab and click **Explore** in its header, or find it in ⌘K. Results shows a row for each design with its passes, cost and mass, and you can sort by any of them.
+This sweep added a row per design with its passes, cost and weight. Study now includes these servo and supply choices alongside other design knobs.
 
 Until now, picking a servo meant swapping a version by hand and trying the Case again. On a three-joint test arm with a 500 g hand on Touch the Dots, the STS3215 C001 shoulder passed 8 of 8 runs, and a C046 shoulder, geared 1:147 for speed, passed 1. With C018 servos on every joint, the arm passed none at 7.4 V and all 8 at 12 V.
 
@@ -18,4 +18,4 @@ Explore only works on Cases with one robot. A robot on a battery keeps the batte
 
 Ask the agent "which servo should I buy" and it answers with the same runs.
 
-Read [Explore servo versions on a Case](/help/explore-servo-versions-on-a-case) in the help center for the steps.
+Read [Study design options](/help/study-design-options) in the help center for the steps.

@@ -1,3 +1,4 @@
+import { withValidStudy } from '../study/record';
 import type { Skill } from '../skills/artifacts';
 import { readSkillBundle } from '../skills/bundle';
 import type { ProjectSettings, SavedSceneRecord, SceneAnnotation, ScenePart } from '../types/robotics';
@@ -62,7 +63,7 @@ function localProject(project: ProjectSettings | undefined): ProjectSettings | u
   delete rest.skills;
   delete rest.buildGuide;
 
-  return rest;
+  return withValidStudy(rest);
 }
 
 function cleanPart(part: ScenePart): ScenePart {

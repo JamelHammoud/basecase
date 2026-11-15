@@ -57,7 +57,7 @@ export function provideMeshFiles(files: MeshFiles = {}) {
   }
 }
 
-export async function sourcedMeshFiles(parts: ScenePart[]): Promise<MeshFiles> {
+export async function sourcedMeshFiles(parts: Pick<ScenePart, 'componentId'>[]): Promise<MeshFiles> {
   await loadSourced();
 
   const ids = new Set(parts.flatMap((p) => (p.componentId && isSourcedId(p.componentId) ? [p.componentId] : [])));
@@ -77,7 +77,7 @@ async function meshBytes(id: string): Promise<ArrayBuffer> {
 
   if (given) return given.slice(0);
 
-  await loadSourced();
+  if (typeof document !== 'undefined') await loadSourced();
 
   if (isSourcedId(id)) return sourcedBytes(id);
 

@@ -61,6 +61,17 @@ const seedLoader = (to: SeedTargets) => (next: WorkspaceSeed, message?: string) 
   if (message) to.showToast(message);
 };
 
+const resetStudyBeforeLoad =
+  (study: { reset: () => void }, load: ReturnType<typeof seedLoader>) => (next: WorkspaceSeed, message?: string) => {
+    study.reset();
+    load(next, message);
+  };
+
+const showStudyPanel = (tool: ReturnType<typeof useToolMode>, studio: SceneWorkspaceProps['studio']) => () => {
+  tool.setRightTab('sim');
+  studio.setIsRightOpen(true);
+};
+
 export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWorkspaceProps) {
   const viewportRef = useRef<Viewport3DHandle | null>(null);
   const scene = useSceneMeta(seed);
@@ -136,8 +147,10 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
 
   const readiness = useSceneReadiness(docs, printing, studio, viewportRef);
-  const { caseCompare, caseExplore } = useCaseStudies({
+  const { caseCompare, study } = useCaseStudies({
     inFront: active,
+    sim: simTraining.sim,
+    onShow: showStudyPanel(tool, studio),
     kase: simTraining.cases.active,
     fingerprint: readiness.fingerprint,
     studio,
@@ -153,7 +166,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     printer,
     readiness,
     caseCompare,
-    caseExplore,
+    study,
     printing,
     triesView,
     datasets,
@@ -184,7 +197,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     buildAlong,
     undo,
     redo: () => travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
-    loadSeed,
+    loadSeed: resetStudyBeforeLoad(study, loadSeed),
   };
 }
 

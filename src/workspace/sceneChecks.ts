@@ -1,4 +1,3 @@
-import { sweepRequest } from './agentSweepRequest';
 import type { RequestContext } from './agentRequestHandlers';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { verifyDesign } from './verifyDesign';
@@ -6,8 +5,8 @@ import { verifyDesign } from './verifyDesign';
 export function sceneChecks(
   core: WorkspaceCore,
   setAction: (action: string) => void,
-): Pick<RequestContext, 'verify' | 'sweep' | 'readiness' | 'mergeParts'> {
-  const { docs, viewportRef, posing, simTraining } = core;
+): Pick<RequestContext, 'verify' | 'readiness' | 'mergeParts'> {
+  const { docs, viewportRef, simTraining } = core;
 
   return {
     readiness: core.readiness,
@@ -31,16 +30,5 @@ export function sceneChecks(
             }
           : undefined,
       }),
-    sweep: (payload) =>
-      sweepRequest(
-        {
-          sim: simTraining.sim,
-          parts: docs.partsRef.current,
-          project: docs.projectRef.current,
-          pose: posing.pose,
-          viewport: viewportRef.current,
-        },
-        payload,
-      ),
   };
 }

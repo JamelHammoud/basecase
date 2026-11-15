@@ -72,7 +72,7 @@ The right panel has a tab for each job:
 
 - **Inspect** edits the selected part's size, position, rotation and look.
 - **Pose** moves a robot's joints. It appears while a robot is selected.
-- **Simulate** runs the scene under physics. It appears once the scene has movable joints.
+- **Simulate** runs physics and holds [Study](/help/study-design-options) for comparing designs. It appears once the scene has parts, while running physics needs movable joints.
 - **Build** holds the Checks, the bill of materials, the build guide and printing. A red dot on the tab means something is left to fix, and the tab's tooltip tells you how many.
 - **Agent** is where you talk to the agent. While a Case runs, it's the only tab.
 

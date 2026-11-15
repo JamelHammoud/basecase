@@ -39,9 +39,7 @@ export function contextFor(id: string, room?: Room) {
   const running: string[] = [];
   const caseRun = { enterCase: (caseId: string) => void running.push(caseId) };
 
-  const caseExplore = { explore: async () => 'unused' };
-
-  return { ctx: { cases, routines, caseCompare, caseExplore, caseRun, setAction: () => {}, ...scene }, added, running };
+  return { ctx: { cases, routines, caseCompare, caseRun, setAction: () => {}, ...scene }, added, running };
 }
 
 export const create = (payload: Record<string, unknown>, id = 'rover-diff', room?: Room) => {

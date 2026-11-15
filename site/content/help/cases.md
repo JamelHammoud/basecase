@@ -32,7 +32,7 @@ covers:
 
 A Case tests whether your robot can do a task. Each try ends in a pass or a miss, and Basecase judges it the same way on any robot that fits.
 
-Watching a robot stand in the simulation won't tell you whether it can reach a shelf or push a box. A Case holds every try to the same rules, so results from different runs mean the same thing. Use one to [compare two designs](/help/compare-two-robots-on-a-case), [explore servo versions](/help/explore-servo-versions-on-a-case), or check one design before and after a change.
+Watching a robot stand in the simulation won't tell you whether it can reach a shelf or push a box. A Case holds every try to the same rules, so results from different runs mean the same thing. Use one to [compare two designs](/help/compare-two-robots-on-a-case), [study design choices](/help/study-design-options), or check one design before and after a change.
 
 ## What a Case holds
 

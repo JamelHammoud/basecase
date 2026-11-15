@@ -47,7 +47,7 @@ The agent can pose and animate the robot, run it in the simulation, write and ru
 - Ask it to label tries. It watches each try's filmstrip and writes the task in plain words for the try and each segment.
 - Ask it to make training images from a Case. You can name the cameras, classes, image count and seed. It opens the saved dataset, as in [Make training images from a Case](/help/make-training-images).
 - Ask it to roll a ready skill out to named emulated robots, with canaries first. It proves each unit's twin before sending the policy.
-- Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
+- Ask it to compare design choices. It runs [Study](/help/study-design-options) on combinations of servos, power supplies and part sizes, with Checks, cost, mass and optional Case passes.
 
 Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges printed parts bolted together on one link into a single print.
 

@@ -30,12 +30,14 @@ The Simulate tab runs your robot in MuJoCo once the robot has at least one joint
 
 ## There's no Simulate tab
 
-The tab appears only when the scene has a movable joint. If your parts are joined rigidly, MuJoCo has nothing to simulate.
+The tab appears when the scene has parts, including parts without joints, so you can compare designs with [Study](/help/study-design-options). Running physics still needs a movable joint.
 
-1. Add a joint that turns or slides between two parts, or ask the agent to define the robot's joints.
+1. Add parts to the scene.
 2. Check the tabs at the top of the right panel again.
 
 When the fix works, **Simulate** appears beside **Inspect**.
+
+If your parts are joined rigidly, add a joint that turns or slides between two parts before running physics, or ask the agent to define the robot's joints.
 
 ## “The simulator stopped.”
 

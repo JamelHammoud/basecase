@@ -190,14 +190,14 @@ const libraryBridge = {
       throw new Error(errorMessage(e), { cause: e });
     }
   },
-  renderCad: (language: CadLanguage, code: string): Promise<RenderedCad> =>
+  renderCad: (language: CadLanguage, code: string, expect?: Record<string, unknown>): Promise<RenderedCad> =>
     quietly(async () => {
       const api = electron();
       const raw = api
-        ? parsedReply(await api.renderCad({ language, code }))
-        : await post('/cad-render', { language, code });
+        ? parsedReply(await api.renderCad({ language, code, expect }))
+        : await post('/cad-render', { language, code, expect });
 
-      return checkedRender(raw);
+      return checkedRender(raw, expect !== undefined);
     }, checkedRender(null)),
 
   tuneCadPart: (payload: CadTuneRequest): Promise<CadTuneAnswer> =>

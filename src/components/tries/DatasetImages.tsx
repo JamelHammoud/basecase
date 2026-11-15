@@ -5,9 +5,12 @@ import { DatasetImageTile } from './DatasetImageTile';
 import { TRIES_GRID } from './TryResults';
 
 export const DatasetImages: React.FC<{ dataset: Dataset }> = ({ dataset }) => {
-  const frames = (dataset.imageMembers ?? []).flatMap((member) =>
-    member.frameIds.map((frameId) => ({ setId: member.frameSetId, frameId })),
-  );
+  const snapshot = dataset.versions.find((version) => version.n === dataset.selectedVersion)?.snapshot;
+  const frames = snapshot
+    ? snapshot.images.map((frozen) => ({ setId: frozen.frameSetId, frameId: frozen.frameId, frozen }))
+    : (dataset.imageMembers ?? []).flatMap((member) =>
+        member.frameIds.map((frameId) => ({ setId: member.frameSetId, frameId, frozen: undefined })),
+      );
 
   if (!frames.length) return null;
 
@@ -16,7 +19,7 @@ export const DatasetImages: React.FC<{ dataset: Dataset }> = ({ dataset }) => {
       <SectionHeader title="Images" />
       <div className={TRIES_GRID}>
         {frames.map((frame) => (
-          <DatasetImageTile key={`${frame.setId}:${frame.frameId}`} {...frame} />
+          <DatasetImageTile key={`${frame.setId}:${frame.frameId}:${frame.frozen?.content ?? ''}`} {...frame} />
         ))}
       </div>
     </section>

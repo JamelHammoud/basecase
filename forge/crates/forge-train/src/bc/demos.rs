@@ -50,6 +50,45 @@ pub fn held_out(index: usize, episodes: usize) -> bool {
     index % HOLD_OUT_EVERY == HOLD_OUT_EVERY - 1
 }
 
+enum Split {
+    Train,
+    Validation,
+    Test,
+}
+
+fn splits(list: &[Value]) -> Result<Vec<Split>, String> {
+    let explicit = list.iter().any(|value| value.get("split").is_some());
+
+    list.iter()
+        .enumerate()
+        .map(|(index, value)| split(value, index, list.len(), explicit))
+        .collect()
+}
+
+fn split(value: &Value, index: usize, count: usize, explicit: bool) -> Result<Split, String> {
+    if !explicit {
+        return Ok(if held_out(index, count) {
+            Split::Validation
+        } else {
+            Split::Train
+        });
+    }
+
+    let assigned = value
+        .get("split")
+        .ok_or_else(|| format!("demos.json needs a split on every episode, episode {} has none", index + 1))?;
+
+    match assigned.as_str() {
+        Some("train") => Ok(Split::Train),
+        Some("validation") => Ok(Split::Validation),
+        Some("test") => Ok(Split::Test),
+        _ => Err(format!(
+            "demos.json episode {} split must be train, validation or test",
+            index + 1
+        )),
+    }
+}
+
 fn finite(value: &Value) -> Option<f32> {
     value.as_f64().map(|v| v as f32).filter(|v| v.is_finite())
 }
@@ -101,12 +140,8 @@ fn table(episode: &Value, place: &Place, out: &mut Vec<f32>) -> Result<usize, St
     Ok(rows.len())
 }
 
-fn episode(value: &Value, index: usize, demos: &mut Demos) -> Result<(), String> {
-    let target = if held_out(index, demos.episodes) {
-        &mut demos.held
-    } else {
-        &mut demos.train
-    };
+fn episode(value: &Value, index: usize, demos: &Demos) -> Result<Rows, String> {
+    let mut target = Rows::default();
     let obs_rows = table(
         value,
         &Place {
@@ -137,9 +172,15 @@ fn episode(value: &Value, index: usize, demos: &mut Demos) -> Result<(), String>
         return Err(format!("demos.json episode {} has no rows", index + 1));
     }
 
-    target.count += obs_rows;
+    target.count = obs_rows;
 
-    Ok(())
+    Ok(target)
+}
+
+fn append(target: &mut Rows, mut rows: Rows) {
+    target.obs.append(&mut rows.obs);
+    target.actions.append(&mut rows.actions);
+    target.count += rows.count;
 }
 
 fn episode_list(root: &Value) -> Result<&Vec<Value>, String> {
@@ -171,6 +212,7 @@ pub fn parse(root: &Value, nact: usize) -> Result<Demos, String> {
     }
 
     let list = episode_list(root)?;
+    let assignments = splits(list)?;
     let mut demos = Demos {
         nobs: obs_width(nact),
         nact,
@@ -179,12 +221,30 @@ pub fn parse(root: &Value, nact: usize) -> Result<Demos, String> {
         held: Rows::default(),
     };
 
-    for (index, value) in list.iter().enumerate() {
-        episode(value, index, &mut demos)?;
+    let mut total_rows = 0;
 
-        if demos.rows() > MAX_ROWS {
+    for (index, (value, assigned)) in list.iter().zip(assignments).enumerate() {
+        let rows = episode(value, index, &demos)?;
+
+        total_rows += rows.count;
+
+        if total_rows > MAX_ROWS {
             return Err(format!("demos.json holds more than {MAX_ROWS} rows"));
         }
+
+        match assigned {
+            Split::Train => append(&mut demos.train, rows),
+            Split::Validation => append(&mut demos.held, rows),
+            Split::Test => (),
+        }
+    }
+
+    if demos.train.count == 0 {
+        return Err("demos.json needs at least one train episode".to_owned());
+    }
+
+    if demos.held.count == 0 {
+        return Err("demos.json needs at least one validation episode".to_owned());
     }
 
     demos.train.actions.iter_mut().for_each(|a| *a = a.clamp(-1.0, 1.0));

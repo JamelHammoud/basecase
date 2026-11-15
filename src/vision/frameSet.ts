@@ -2,6 +2,7 @@ import { decodeMask, maskBox, maskPolygons } from './imageMasks';
 import { MB } from '../../electron/fileSize.mjs';
 import { sha256 } from '../cases/tries';
 import { depthBytes } from './imageBytes';
+import type { ImageSplit } from './imageSplit';
 
 export interface ImageClass {
   id: number;
@@ -41,6 +42,7 @@ export interface TrainingFrame {
   annotations: ImageAnnotation[];
   depth: Float32Array;
   split?: 'train' | 'validation' | 'test';
+  source?: 'import';
 }
 
 export interface FrameSet {
@@ -53,6 +55,7 @@ export interface FrameSet {
   classes: ImageClass[];
   frames: TrainingFrame[];
   createdAt: string;
+  splits?: Record<string, ImageSplit>;
 }
 
 const object = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
@@ -147,6 +150,7 @@ function frameFields(value: unknown): boolean {
     uint(value.seed) &&
     text(value.camera) &&
     frameDimensions(value) &&
+    (value.source === undefined || value.source === 'import') &&
     (value.split === undefined ||
       (typeof value.split === 'string' && ['train', 'validation', 'test'].includes(value.split)))
   );
@@ -215,6 +219,16 @@ export function validateFrameSetHeader(value: unknown): asserts value is Omit<Fr
     refuse();
 }
 
+export function validateFrameSplits(set: Pick<FrameSet, 'splits'> & { frames: { id: string }[] }): void {
+  if (
+    set.splits !== undefined &&
+    (!object(set.splits) ||
+      Object.keys(set.splits).length !== set.frames.length ||
+      !set.frames.every((frame) => ['train', 'validation', 'test'].includes(set.splits?.[frame.id] ?? '')))
+  )
+    refuse();
+}
+
 export function validateFrameSet(value: unknown): asserts value is FrameSet {
   validateFrameSetHeader(value);
 
@@ -222,6 +236,7 @@ export function validateFrameSet(value: unknown): asserts value is FrameSet {
 
   if (!Array.isArray(set.frames) || set.frames.length > 100_000 || !unique(set.frames.map((f) => f?.id))) refuse();
 
+  validateFrameSplits(set);
   set.frames.forEach((f) => validateTrainingFrame(f, set.classes));
 }
 
@@ -251,6 +266,7 @@ export async function frameHash(frame: Omit<TrainingFrame, 'id'> | TrainingFrame
       jpeg: await byteHash(frame.jpeg),
       depth: await byteHash(depthBytes(frame.depth)),
       ...(frame.split ? { split: frame.split } : {}),
+      ...(frame.source ? { source: frame.source } : {}),
     }),
   );
 }
@@ -272,6 +288,7 @@ export async function frameSetManifestHash(set: Omit<FrameSet, 'frames'>, frames
         ...(category.objectId ? { objectId: category.objectId } : {}),
       })),
       frames,
+      ...(set.splits ? { splits: Object.entries(set.splits).sort(([a], [b]) => (a < b ? -1 : 1)) } : {}),
     }),
   );
 }

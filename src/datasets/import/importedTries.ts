@@ -84,6 +84,7 @@ function storedImport({ id, model, target, episode }: StoredInput, replayed: Ret
     task: episode.task,
     videos: episode.videos.map(({ camera, path, from, to }) => ({ camera, path, from, to })),
     ...(outOfRange ? { outOfRange } : {}),
+    ...(episode.split ? { split: episode.split } : {}),
   };
 
   return stored;

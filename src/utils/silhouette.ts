@@ -1,6 +1,7 @@
 import { checkMask, decodeVisionMasks, pickSubject, trimToModelWidth, type VisionMasks } from './photoMask';
 import { maskProfileOf, type Mask, type Profile } from './silhouetteProfile';
 import { percent } from '../../electron/percent.mjs';
+import { borderPixels, floodPixels } from './pixelFlood';
 
 export type { Profile } from './silhouetteProfile';
 
@@ -30,39 +31,21 @@ export async function imageData(dataUrl: string, maxSide = 900, background?: str
   return ctx.getImageData(0, 0, w, h);
 }
 
-function borderPixels(w: number, h: number): number[] {
-  const border: number[] = [];
-
-  for (let x = 0; x < w; x++) border.push(x, (h - 1) * w + x);
-
-  for (let y = 0; y < h; y++) border.push(y * w, y * w + w - 1);
-
-  return border;
-}
-
 function floodBackground(border: number[], w: number, h: number, isSubject: (i: number) => boolean): Uint8Array {
-  const bg = new Uint8Array(w * h);
-  const stack = [...border];
+  const mask = new Uint8Array(w * h).fill(1);
 
-  while (stack.length) {
-    const i = stack.pop()!;
+  floodPixels({
+    width: w,
+    height: h,
+    starts: border,
+    visited: new Uint8Array(w * h),
+    blocked: isSubject,
+    visit: (i) => {
+      mask[i] = 0;
+    },
+  });
 
-    if (bg[i] || isSubject(i)) continue;
-
-    bg[i] = 1;
-
-    const x = i % w;
-
-    if (x > 0) stack.push(i - 1);
-
-    if (x < w - 1) stack.push(i + 1);
-
-    if (i >= w) stack.push(i - w);
-
-    if (i < w * (h - 1)) stack.push(i + w);
-  }
-
-  return bg;
+  return mask;
 }
 
 export function floodMaskOf({ data, width: w, height: h }: ImageData): { mask?: Mask; reason?: string } {
@@ -73,10 +56,7 @@ export function floodMaskOf({ data, width: w, height: h }: ImageData): { mask?: 
 
   if (spread > 14) return { reason: 'the background isn’t plain (busy scene or gradient)' };
 
-  const bg = floodBackground(border, w, h, (i) => dist(i) > 12);
-  const mask = new Uint8Array(w * h);
-
-  for (let i = 0; i < w * h; i++) mask[i] = bg[i] ? 0 : 1;
+  const mask = floodBackground(border, w, h, (i) => dist(i) > 12);
 
   return { mask: { data: mask, width: w, height: h } };
 }

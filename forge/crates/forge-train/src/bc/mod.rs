@@ -1,6 +1,8 @@
 pub mod demos;
 pub mod fit;
 #[cfg(test)]
+mod split_tests;
+#[cfg(test)]
 mod tests;
 
 use crate::deployed::Deployed;

@@ -21,6 +21,7 @@ export const TRY_SOURCE_BADGE: Record<TrySource, string | null> = {
 };
 
 export type TryVerdict = 'passed' | 'failed' | 'unjudged';
+export type TrySplit = 'train' | 'validation' | 'test';
 
 export interface TryOutcome {
   verdict: TryVerdict;
@@ -70,6 +71,7 @@ export interface StoredTry {
   policy?: string;
   motion?: MotionTrace;
   labels?: TryLabels;
+  split?: TrySplit;
 }
 
 export interface TrySummary {
@@ -284,6 +286,7 @@ const isVideo = (v: unknown): v is TryVideo =>
 const hasImportFields = (v: Raw) =>
   (v.videos === undefined || (Array.isArray(v.videos) && v.videos.length <= MAX_VIDEOS && v.videos.every(isVideo))) &&
   optionalCount(v.outOfRange) &&
+  (v.split === undefined || v.split === 'train' || v.split === 'validation' || v.split === 'test') &&
   readOrigin(v.origin) !== null;
 
 const hasSearchFields = (v: Raw) =>

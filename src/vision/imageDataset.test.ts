@@ -80,7 +80,7 @@ describe('image dataset delivery', () => {
     ).toEqual([0, 1]);
   });
 
-  it('exports all 20 labelled images once in each training format with a COCO label per image', async () => {
+  it('exports all 20 labelled images once in each training format with a label per image', async () => {
     const set = fixture();
     const annotation = annotationFromInstances({
       instanceIds: new Uint32Array([1]),
@@ -125,6 +125,21 @@ describe('image dataset delivery', () => {
       expect(labels.map((entry: { bbox: number[] }) => entry.bbox)).toEqual(
         Array.from({ length: split.images.length }, () => [0, 0, 1, 1]),
       );
+    }
+
+    const images: { file_name: string }[] = coco.flatMap((split) => split.images);
+
+    expect(names.filter((name) => name.startsWith('coco/images/')).sort()).toEqual(
+      images.map((image) => `coco/${image.file_name}`).sort(),
+    );
+    expect(names.filter((name) => name.startsWith('yolo/images/')).sort()).toEqual(
+      images.map((image) => `yolo/${image.file_name}`).sort(),
+    );
+
+    for (const image of images) {
+      const label = image.file_name.replace(/^images\//, 'yolo/labels/').replace(/\.jpg$/, '.txt');
+
+      expect(new TextDecoder().decode(files[label])).toBe('0 0.5 0.5 1 1\n');
     }
   });
 

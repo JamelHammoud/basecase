@@ -17,8 +17,8 @@ vi.mock('./renderVideos', () => ({
   disposeRenderStage: vi.fn(),
 }));
 
-describe('dataset worker split assignments', () => {
-  it('preserves each job episode split through sampling and export', async () => {
+describe('dataset worker exports', () => {
+  it('preserves episode splits, seeds and source tries through sampling and export', async () => {
     const mj = await loadMujoco();
     const robot = fixtureRobots().find((candidate) => candidate.id === 'arm-3dof')!;
     const rig = buildRig(robot.joints, robot.parts);
@@ -45,7 +45,7 @@ describe('dataset worker split assignments', () => {
       episodes: splits.map((split, index) => ({
         recording,
         task: 'Reach the point.',
-        source: { try: `try-${index}` },
+        source: { try: `try-${index}`, seed: [0, 7, 8][index], source: index === 0 ? null : 'try-0' },
         split,
       })),
     });
@@ -55,9 +55,12 @@ describe('dataset worker split assignments', () => {
       const source = JSON.parse(strFromU8(files[`${prefix}meta/basecase.json`]));
 
       expect(info.splits).toEqual({ train: '0:1', validation: '1:2', test: '2:3' });
-      expect(source.episodes).toEqual(
-        splits.map((split, episode_index) => ({ episode_index, try: `try-${episode_index}`, split })),
-      );
+      expect(info.total_episodes).toBe(3);
+      expect(source.episodes).toEqual([
+        { episode_index: 0, try: 'try-0', seed: 0, source: null, split: 'train' },
+        { episode_index: 1, try: 'try-1', seed: 7, source: 'try-0', split: 'validation' },
+        { episode_index: 2, try: 'try-2', seed: 8, source: 'try-0', split: 'test' },
+      ]);
     }
   });
 });

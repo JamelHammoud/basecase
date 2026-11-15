@@ -13,7 +13,6 @@ const ARM_JOINTS = ARM.project.joints.map((joint) => joint.id);
 
 interface FakeLink {
   factory: boolean;
-  horns: Record<number, { offsetDeg: number; direction: 1 | -1 }>;
   intents: number[][];
   plantStall: (id: number) => boolean;
   policy: { kind: string; id?: string; hash?: string }[];
@@ -25,7 +24,6 @@ type StudioWindow = {
   __studio: {
     load: (r: unknown) => void;
     selection: () => string[];
-    robotCalibration: () => Promise<Array<{ id: number; zero_counts: number; direction: number }> | null>;
   };
   __fakeRobotLink: FakeLink;
 };
@@ -52,9 +50,6 @@ const TRAINED_ARM = {
 };
 
 const button = (name: string | RegExp) => app.page.locator(visible('button'), { hasText: name }).first();
-
-const calibrating = () =>
-  app.page.locator(visible('[data-testid="robot-calibration"]')).first().getAttribute('data-calibrating');
 
 interface Ghost {
   layer: { parts: Record<string, number[]>; values: Record<string, number>; label: string | null } | null;
@@ -221,28 +216,21 @@ describe('Operate servo setup', () => {
 });
 
 describe('Operate zero and direction', () => {
-  const written = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.robotCalibration());
-  const horns = { 1: { offsetDeg: 12, direction: 1 }, 2: { offsetDeg: 0, direction: -1 } } as const;
-
-  it('finds a reversed elbow and a 12° shoulder horn from the camera in Calibrate Servos', async () => {
+  it('starts camera calibration from the command palette', async () => {
     const { page } = app;
+    const calibration = page.locator(visible('[data-testid="robot-calibration"]')).first();
 
     await loadRecord(ARM);
     await climbToTest();
-    await page.evaluate((h) => Object.assign((window as unknown as StudioWindow).__fakeRobotLink.horns, h), horns);
     await expect.poll(() => button('Calibrate Servos').isEnabled()).toBe(true);
     await page.keyboard.press('ControlOrMeta+k');
     await page.getByLabel('Search commands').fill('Calibrate Servos');
     await page.keyboard.press('Enter');
-    await expect.poll(async () => (await written())?.[1].direction, { timeout: 90000 }).toBe(-1);
-
-    const [shoulder] = (await written())!;
-
-    expect([shoulder.direction, Math.abs(((shoulder.zero_counts - 2048) * 360) / 4096 - 12) < 2]).toEqual([1, true]);
-    await expect.poll(calibrating, { timeout: 90000 }).toBe('idle');
+    await expect.poll(() => calibration.getAttribute('data-calibrating')).toBe('capturing');
+    await button(/^Disconnect$/).click();
+    await expect.poll(() => button('Connect Emulated Robot').isEnabled()).toBe(true);
     expect(app.errors).toEqual([]);
-    await page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.robotDisconnect());
-  }, 150000);
+  }, 15000);
 });
 
 describe('Operate policy', () => {

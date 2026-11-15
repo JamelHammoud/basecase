@@ -1,6 +1,6 @@
 import { conjugateGradient } from './cg';
 import { densityFilter, filteredSensitivity, optimalityUpdate } from './lightenFilter';
-import { frozenAt } from './lightenFrozen';
+import { frozenQuery } from './lightenFrozen';
 import type { LightenFrozen, LightenInput } from './lightenTypes';
 import { hexElement } from './hexElement';
 import { tangentialForces } from './loads';
@@ -84,7 +84,8 @@ export function optimizeDensity(
   volumeShare = input.targetShare,
 ) {
   const mesh = hexMesh(grid);
-  const frozen = Uint8Array.from(mesh.cells, (cell) => (frozenAt(regions, cellCenter(grid, cell)) ? 1 : 0));
+  const isFrozen = frozenQuery(regions);
+  const frozen = Uint8Array.from(mesh.cells, (cell) => (isFrozen(cellCenter(grid, cell)) ? 1 : 0));
   const fixedCount = frozen.reduce((sum, value) => sum + value, 0);
   const budget = Math.max(mesh.cells.length * volumeShare, fixedCount + (mesh.cells.length - fixedCount) * 0.05);
 

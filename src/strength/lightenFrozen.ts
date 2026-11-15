@@ -1,5 +1,5 @@
 import { unit } from './loads';
-import { nearLine } from './mesh';
+import { screwRegion } from './screwRegion';
 import type { LightenFrozen, LightenInput } from './lightenTypes';
 import type { V3 } from './types';
 
@@ -16,20 +16,24 @@ export function frozenRegions(input: LightenInput): LightenFrozen {
   };
 }
 
-export function frozenAt(regions: LightenFrozen, p: V3, slack = 0): boolean {
-  if (regions.lines?.some((line) => nearLine(p, { ...line, radius: line.radius + slack }, slack))) return true;
+export function frozenQuery(regions: LightenFrozen, slack = 0): (p: V3) => boolean {
+  const lines = regions.lines?.map((line) => screwRegion({ ...line, radius: line.radius + slack }, slack));
+  const planes = regions.planes?.map((plane) => ({ ...plane, normal: unit(plane.normal) }));
 
-  if (
-    regions.boxes?.some((box) =>
-      p.every((value, axis) => value >= box.min[axis] - slack && value <= box.max[axis] + slack),
+  return (p) => {
+    if (lines?.some((contains) => contains(p))) return true;
+
+    if (
+      regions.boxes?.some((box) =>
+        p.every((value, axis) => value >= box.min[axis] - slack && value <= box.max[axis] + slack),
+      )
     )
-  )
-    return true;
+      return true;
 
-  return !!regions.planes?.some((plane) => {
-    const normal = unit(plane.normal);
-    const distance = p.reduce((sum, value, axis) => sum + (value - plane.point[axis]) * normal[axis], 0);
+    return !!planes?.some((plane) => {
+      const distance = p.reduce((sum, value, axis) => sum + (value - plane.point[axis]) * plane.normal[axis], 0);
 
-    return Math.abs(distance) <= plane.halfThickness + slack;
-  });
+      return Math.abs(distance) <= plane.halfThickness + slack;
+    });
+  };
 }

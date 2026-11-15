@@ -5,7 +5,7 @@ import type { StrengthJob, V3 } from './types';
 import { loadManifold, solidOfMesh } from '../wrap/manifold';
 import { weld } from '../print/threeMf';
 import { optimizeDensity } from './lightenOptimize';
-import { frozenAt, frozenRegions } from './lightenFrozen';
+import { frozenQuery, frozenRegions } from './lightenFrozen';
 import { voxelizeAt } from './voxels';
 import { bvhOf } from '../three/printability';
 import { validateLighten } from './lightenValidate';
@@ -92,7 +92,7 @@ describe('lightening a loaded printed bracket', () => {
     const input = fixture();
     const result = await lightenPart(input);
     const bvh = bvhOf(result.positions);
-    const regions = frozenRegions(input);
+    const isFrozen = frozenQuery(frozenRegions(input), 0.1);
     const a = new THREE.Vector3();
     const b = new THREE.Vector3();
     const c = new THREE.Vector3();
@@ -118,7 +118,7 @@ describe('lightening a loaded printed bracket', () => {
         .addScaledVector(n, -0.001);
       ray.direction.copy(n).negate();
 
-      if (frozenAt(regions, ray.origin.toArray() as V3, 0.1)) continue;
+      if (isFrozen(ray.origin.toArray() as V3)) continue;
 
       const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
 

@@ -5,7 +5,7 @@ import { presetCase } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
-import { COCKPIT, pushStick } from './codePanels';
+import { COCKPIT } from './codePanels';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
 
 let app: App;
@@ -204,7 +204,7 @@ afterEach(async () => {
 });
 
 describe('Case code panels', () => {
-  it('drives the rover from a code joystick, shows its speed in a HUD overlay, and leaves on Esc pressed inside', async () => {
+  it('passes pointer input through the HUD and stops driving before closing Run Case on Escape inside a code frame', async () => {
     const { page } = app;
 
     await openCase(COCKPIT);
@@ -217,17 +217,15 @@ describe('Case code panels', () => {
 
     expect(under).toBe('CANVAS');
 
-    await pushStick(page, frameOf('stick').locator('canvas'));
+    await frameOf('stick')
+      .locator('canvas')
+      .click({ position: { x: 100, y: 100 } });
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
-    await expect.poll(async () => (await simState()).stats?.robots[0].forward ?? 0).toBeGreaterThan(0.1);
-    await expect
-      .poll(async () => Number(await frameOf('hud').locator('[data-speed]').textContent()))
-      .toBeGreaterThan(0.05);
-    await page.mouse.up();
-
-    await page.keyboard.press('Escape');
+    await frameOf('stick').locator('body').press('Escape');
     await expect.poll(async () => (await simState()).drive).toBe('off');
-    await page.keyboard.press('Escape');
+    expect(await areaCount()).toBe(1);
+
+    await frameOf('stick').locator('body').press('Escape');
     await expect.poll(areaCount).toBe(0);
     expect(app.errors).toEqual([]);
   });

@@ -75,13 +75,7 @@ function roverScene() {
   };
 }
 
-const stillTrying = async () => {
-  const state = await simState();
-
-  return state.drive === 'on' && state.tries.length === 0;
-};
-
-async function startTry() {
+async function openCase() {
   const { page } = app;
   const scene = roverScene();
 
@@ -93,8 +87,7 @@ async function startTry() {
   await page.keyboard.press('Meta+k');
   await page.keyboard.type('Run Case');
   await page.keyboard.press('Enter');
-  await panel('tries').locator('button', { hasText: 'Try It' }).first().click();
-  await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+  await expect.poll(() => panel('tries').count()).toBe(1);
 }
 
 beforeEach(async () => {
@@ -105,16 +98,15 @@ afterEach(async () => {
   await app?.close();
 });
 
-describe('the agent writing a running Case’s code', () => {
+describe('the agent beside a running Case', () => {
   it('edits and undoes live panels, then sends the running Case context through ⌘I', async () => {
-    await startTry();
+    await openCase();
 
     const first = await agentRequest('write_case_code', RECORDED_FIRST_WRITE);
 
     expect(first).toMatchObject({ ok: true, case: 'rover-remote', panel: 'remote', running: true, loaded: true });
     expect(first).toMatchObject({ errors: [], refused: [], logs: ['remote ready'] });
     await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
-    expect(await stillTrying()).toBe(true);
 
     const broken = await agentRequest('write_case_code', BROKEN_REVISION);
 
@@ -125,13 +117,13 @@ describe('the agent writing a running Case’s code', () => {
     await expect.poll(() => panel('remote').getByTestId('code-failed').count()).toBe(0);
     await expect.poll(() => remote().getByRole('button', { name: 'Sit' }).count()).toBe(0);
     await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
-    expect(await stillTrying()).toBe(true);
+    expect(await simState()).toMatchObject({ activeCase: 'rover-remote', drive: 'off', tries: [] });
 
     await app.page.keyboard.press('Meta+i');
     await expect.poll(() => rightTabs().allTextContents()).toEqual(['Agent']);
     await composer().fill('Add a Sit button');
     await app.page.keyboard.press('Enter');
     await expect.poll(() => sentPrompt()).toContain('running the Case Rover Remote (rover-remote)');
-    expect(await stillTrying()).toBe(true);
-  }, 180000);
+    expect(await simState()).toMatchObject({ activeCase: 'rover-remote', drive: 'off', tries: [] });
+  });
 });

@@ -1,18 +1,11 @@
 import { conjugateGradient, type ElasticSystem } from './cg';
 import { elasticPattern } from './elasticPattern';
-import { tangentialForces, unit } from './loads';
+import { tangentialForces } from './loads';
 import { hexElement, type HexElement } from './hexElement';
-import {
-  failureIndex,
-  solidShare,
-  stiffnessFor,
-  stressShare,
-  type LayeredMaterial,
-  type PrintFill,
-  type V3,
-} from './material';
+import { solidShare, stiffnessFor, stressShare, type LayeredMaterial, type PrintFill, type V3 } from './material';
 import { components, hexMesh, nodesNear, type HexMesh, type ScrewLine } from './mesh';
 import { surfaceDepth, voxelize, type VoxelGrid } from './voxels';
+import { stressIndices, stressRatios } from './stressIndices';
 
 export interface TorqueLoad {
   origin: V3;
@@ -190,31 +183,6 @@ function readableNodes(solved: Solved): Uint8Array {
   return counted;
 }
 
-function worstIndex(solved: Solved, nodal: Float64Array, read: Uint8Array, opts: { model: StrengthModel; normal: V3 }) {
-  const n = unit(opts.normal);
-  const { mesh } = solved;
-  const atNode = new Float32Array(mesh.positions.length / 3);
-  let worst = 0;
-  let worstNode = 0;
-
-  for (let k = 0; k < atNode.length; k++) {
-    if (!read[k]) continue;
-
-    atNode[k] = failureIndex(nodal.subarray(k * 6, k * 6 + 6), n, opts.model.material);
-
-    if (atNode[k] <= worst) continue;
-
-    worst = atNode[k];
-    worstNode = k;
-  }
-
-  const perCell = Float32Array.from(mesh.cells, (_, e) =>
-    Math.max(...Array.from(mesh.nodes.subarray(e * 8, e * 8 + 8), (k) => atNode[k])),
-  );
-
-  return { worst, worstNode, perCell };
-}
-
 const factorOf = (index: number) => (index > 0 ? 1 / Math.sqrt(index) : Infinity);
 
 export function solveStrength(model: StrengthModel): StrengthResult | null {
@@ -225,9 +193,12 @@ export function solveStrength(model: StrengthModel): StrengthResult | null {
 
   const stresses = sampleStresses(solved, stiffnessFor(model.material, model.normal));
   const read = readableNodes(solved);
-  const chosen = worstIndex(solved, stresses, read, { model, normal: model.normal });
+  const indices = new Float32Array(solved.mesh.positions.length / 3);
+  const material = model.material;
+  const chosen = stressIndices(stresses, read, { material, normal: model.normal, indices });
+  const ratio = stressRatios(solved.mesh.nodes, indices);
   const factors = (model.normals ?? []).map((normal) =>
-    factorOf(worstIndex(solved, stresses, read, { model, normal }).worst),
+    factorOf(stressIndices(stresses, read, { material, normal, indices }).worst),
   );
   const w = chosen.worstNode * 3;
 
@@ -240,7 +211,7 @@ export function solveStrength(model: StrengthModel): StrengthResult | null {
       h: grid.h,
       n: grid.n,
       cells: solved.mesh.cells,
-      ratio: chosen.perCell.map(Math.sqrt),
+      ratio,
     },
     cells: solved.mesh.cells.length,
     iterations: solved.iterations,

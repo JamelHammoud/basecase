@@ -13,7 +13,7 @@ import {
 } from './kinematics';
 import { autoMapRobot, KEYPOINTS, type Keypoint } from './mocapBones';
 import { bodyBasis, calibrator, restBody, type Human, type RestBody } from './retargetBody';
-import { carrierOf, robotLandmarks, segmentLength, type KeyMap, type RobotLandmarks } from './retargetRobot';
+import { robotLandmarks, segmentLength, type KeyMap, type RobotLandmarks } from './retargetRobot';
 
 export type HumanFrame = Readonly<Partial<Record<string, V3>>>;
 
@@ -135,7 +135,7 @@ function lowestAnkle(raw: Human): number {
 }
 
 function posedLandmark(robot: RobotLandmarks, k: Keypoint, posed: PosedRig): THREE.Vector3 | null {
-  const c = carrierOf(robot, k);
+  const c = robot.carriers.get(k);
 
   if (!c) return null;
 
@@ -174,7 +174,7 @@ function torsoTargets(st: Stream, human: Human, values: JointValues, root: Frame
     if (!held) joints.push(...js);
 
     const d = !held && humanDir(human, a, b);
-    const c = carrierOf(robot, b);
+    const c = robot.carriers.get(b);
     const from =
       d && c && (a === 'hips' ? hipsPosed : posedLandmark(robot, a, forwardKinematics(robot.rig, { values, root })));
 
@@ -200,7 +200,7 @@ function chainTargets(robot: RobotLandmarks, human: Human, limb: Limb, start: TH
     const a = limb.chain[i - 1],
       b = limb.chain[i];
     const d = humanDir(human, a, b);
-    const c = carrierOf(robot, b);
+    const c = robot.carriers.get(b);
     const len = segmentLength(robot, a, b);
 
     if (!d || !c || !len) break;

@@ -45,13 +45,13 @@ interface Placement {
   mmPerPx: number;
 }
 
-function rasterize(grid: { width: number; height: number; cellMm: number }, place: Placement, dx = 0, dy = 0) {
+function rasterize(grid: { width: number; height: number; cellMm: number }, place: Placement) {
   const out = new Uint8Array(grid.width * grid.height);
   const { w, h } = sizeOf(place.box);
   const cellsW = (w * place.mmPerPx) / grid.cellMm;
   const cellsH = (h * place.mmPerPx) / grid.cellMm;
-  const left = Math.round((grid.width - cellsW) / 2) + dx;
-  const top = Math.round((grid.height - cellsH) / 2) + dy;
+  const left = Math.round((grid.width - cellsW) / 2);
+  const top = Math.round((grid.height - cellsH) / 2);
   const pxPerCell = grid.cellMm / place.mmPerPx;
 
   for (let gy = Math.max(0, top); gy < Math.min(grid.height, top + Math.ceil(cellsH)); gy++) {
@@ -67,30 +67,45 @@ function rasterize(grid: { width: number; height: number; cellMm: number }, plac
   return out;
 }
 
-function iouOf(a: Uint8Array, b: Uint8Array): number {
-  let both = 0,
-    any = 0;
+function shiftScorer(target: Uint8Array, model: Uint8Array) {
+  const occupied: number[] = [];
+  let total = 0;
 
-  for (let i = 0; i < a.length; i++) {
-    both += a[i] & b[i];
-    any += a[i] | b[i];
+  for (let i = 0; i < target.length; i++) {
+    total += target[i] + model[i];
+
+    if (target[i]) occupied.push(i);
   }
 
-  return any ? both / any : 0;
+  const score = (offset: number) => {
+    let both = 0;
+
+    for (const i of occupied) both += target[i] & model[i + offset];
+
+    return total ? both / (total - both) : 0;
+  };
+
+  return { occupied, score };
 }
 
 function bestShift(grid: { width: number; height: number; cellMm: number }, target: Placement, model: Uint8Array) {
-  let best = { iou: -1, cells: model };
+  const source = rasterize(grid, target);
+  const { occupied, score } = shiftScorer(source, model);
+  let best = { iou: -1, offset: 0 };
 
   for (let dy = -SHIFT; dy <= SHIFT; dy++)
     for (let dx = -SHIFT; dx <= SHIFT; dx++) {
-      const cells = rasterize(grid, target, dx, dy);
-      const iou = iouOf(cells, model);
+      const offset = dy * grid.width + dx;
+      const iou = score(offset);
 
-      if (iou > best.iou) best = { iou, cells };
+      if (iou > best.iou) best = { iou, offset };
     }
 
-  return best;
+  const cells = new Uint8Array(source.length);
+
+  for (const i of occupied) cells[i + best.offset] = source[i];
+
+  return { iou: best.iou, cells };
 }
 
 function rowSpan(cells: Uint8Array, width: number, y: number): number {

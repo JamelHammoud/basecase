@@ -8,6 +8,7 @@ export class ShapeSolid {
   readonly samples = new Map<number, Float32Array>();
   private tree: MeshBVH | null = null;
   private faceData: Faces | null = null;
+  private sampledArea: number | null = null;
 
   readonly positions: Float32Array;
 
@@ -35,7 +36,9 @@ export class ShapeSolid {
   }
 
   get surfaceArea(): number {
-    return this.faces.areas.reduce((s, x) => s + x, 0);
+    this.sampledArea ??= this.faces.areas.reduce((s, x) => s + x, 0);
+
+    return this.sampledArea;
   }
 
   dispose(): void {

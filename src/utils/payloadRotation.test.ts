@@ -187,3 +187,76 @@ describe('prepared payload rotations', () => {
     }
   });
 });
+
+describe('prepared payload gravity loads', () => {
+  it('preserves complete maps through mass, limit, geometry and floor edits', () => {
+    for (let trial = 0; trial < 30; trial++) {
+      const arm = armOf(1 + (trial % 8), trial + 200);
+      const before = structuredClone(arm);
+      const result = payloadMap(arm, 64);
+      const saved = structuredClone(result);
+
+      expect(result).toEqual(formerMap(arm, 64));
+      expect(arm).toEqual(before);
+      arm.links.forEach((link, i) => {
+        link.massKg = [0, -0, 0.7, Infinity, NaN][(trial + i) % 5];
+        link.stallNm = [0, -0, 2, Infinity, NaN][(trial + i * 2) % 5];
+        link.com[0] += 50;
+      });
+      arm.floorY = 450;
+      expect(payloadMap(arm, 64)).toEqual(formerMap(arm, 64));
+      expect(result).toEqual(saved);
+    }
+  });
+
+  it.each([
+    [6, 300],
+    [12, 600],
+  ])('reads each mass and limit once for %i links and %i samples', (links, samples) => {
+    const arm = armOf(links);
+    let massReads = 0;
+    let stallReads = 0;
+
+    arm.floorY = -Infinity;
+    arm.links.forEach((link) => {
+      const { massKg, stallNm } = link;
+
+      Object.defineProperties(link, {
+        massKg: {
+          get: () => {
+            massReads++;
+
+            return massKg;
+          },
+        },
+        stallNm: {
+          get: () => {
+            stallReads++;
+
+            return stallNm;
+          },
+        },
+      });
+    });
+
+    const expected = formerMap(arm, samples);
+
+    expect(massReads).toBe((samples * links * (links + 1)) / 2);
+    expect(stallReads).toBe(samples * links);
+    massReads = 0;
+    stallReads = 0;
+    expect(payloadMap(arm, samples)).toEqual(expected);
+    expect(massReads).toBe(links);
+    expect(stallReads).toBe(links);
+    massReads = 0;
+    stallReads = 0;
+    arm.floorY = Infinity;
+    expect(payloadMap(arm, samples)).toBeNull();
+    expect(massReads).toBe(0);
+    expect(stallReads).toBe(0);
+    arm.floorY = -Infinity;
+    expect(payloadMap(arm, 0)).toBeNull();
+    expect(massReads).toBe(0);
+    expect(stallReads).toBe(0);
+  });
+});

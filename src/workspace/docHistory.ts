@@ -1,5 +1,5 @@
 import type { Case } from '../cases/schema';
-import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import type { RobotUpgrade } from '../utils/robotImport';
 import { patchParts } from '../utils/robotUpgrade';
 import { routinesView, writeRoutines } from './caseLogicRoutines';
@@ -100,9 +100,26 @@ export function stepHistory(
 export const patchJoints = (up: RobotUpgrade, js: Snapshot['joints']) =>
   up.joints.size && js ? js.map((j) => (up.joints.has(j.id) ? { ...j, ...up.joints.get(j.id) } : j)) : js;
 
+function cachedPatch<T extends object>(patch: (value: T) => T) {
+  const patched = new WeakMap<T, T>();
+
+  return (value: T): T => {
+    const known = patched.get(value);
+
+    if (known) return known;
+
+    const next = patch(value);
+
+    patched.set(value, next);
+
+    return next;
+  };
+}
+
 export function patchEveryState(d: DocState, patch: (parts: ScenePart[]) => ScenePart[]): DocState {
+  const patchPartsOnce = cachedPatch(patch);
   const snap = (sn: Snapshot) => {
-    const parts = patch(sn.parts);
+    const parts = patchPartsOnce(sn.parts);
 
     return parts === sn.parts ? sn : { ...sn, parts };
   };
@@ -113,10 +130,10 @@ export function patchEveryState(d: DocState, patch: (parts: ScenePart[]) => Scen
     return next.every((sn, i) => sn === list[i]) ? list : next;
   };
   const next = {
-    parts: patch(d.parts),
+    parts: patchPartsOnce(d.parts),
     past: states(d.past),
     future: states(d.future),
-    base: d.base ? patch(d.base) : d.base,
+    base: d.base ? patchPartsOnce(d.base) : d.base,
   };
   const same = (Object.keys(next) as Array<keyof DocState>).every((key) => next[key] === d[key]);
 
@@ -124,8 +141,9 @@ export function patchEveryState(d: DocState, patch: (parts: ScenePart[]) => Scen
 }
 
 export function upgradeDoc(d: DocState, up: RobotUpgrade): DocState {
-  const patch = (ps: ScenePart[]) => patchParts(ps, up);
-  const snap = (sn: Snapshot) => ({ ...sn, parts: patch(sn.parts), joints: patchJoints(up, sn.joints) });
+  const patch = cachedPatch((ps: ScenePart[]) => patchParts(ps, up));
+  const joints = cachedPatch((js: RobotJoint[]) => patchJoints(up, js)!);
+  const snap = (sn: Snapshot) => ({ ...sn, parts: patch(sn.parts), joints: sn.joints ? joints(sn.joints) : sn.joints });
 
   return {
     ...d,

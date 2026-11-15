@@ -6,6 +6,7 @@ const MEASURING = new Set([
   'interference',
   'assembly',
   'merge',
+  'repair_part',
   'verify',
   'sweep_design',
   'define_joints',

@@ -4,6 +4,7 @@ import { buildAlongSteps, type BuildAlongStep } from '../guide/buildAlong';
 import type { BuildStepView, ViewShot } from '../three/viewport/types';
 import type { ProjectSettings } from '../types/robotics';
 import type { BuildGuide } from './useBuildGuide';
+import type { GuidePlan } from '../guide/guideTypes';
 
 interface BuildAlongOptions {
   guide: BuildGuide;
@@ -23,6 +24,7 @@ const stepView = (step: BuildAlongStep): BuildStepView => ({
   shown: step.shown,
   moves: step.moves,
   arrows: step.arrows,
+  removing: step.repairPhase === 'remove',
   labels: step.servos.map((s) => ({ partId: s.partId, text: `${s.joint}, ID ${s.id}` })),
 });
 
@@ -31,21 +33,20 @@ export function useBuildAlong({ guide, projectRef, viewportRef }: BuildAlongOpti
   const [opening, setOpening] = useState(false);
   const openingRef = useRef(0);
 
-  const open = async () => {
-    if (session || opening) return;
-
+  const openPlan = async (source: () => Promise<GuidePlan | null>) => {
     const run = ++openingRef.current;
-    const camera = viewportRef.current?.currentView();
+    const camera = session?.camera ?? viewportRef.current?.currentView();
 
+    setSession(null);
     setOpening(true);
 
-    const plan = await guide.currentPlan().catch(() => null);
+    const plan = await source().catch(() => null);
 
-    if (run !== openingRef.current) return;
+    if (run !== openingRef.current) return null;
 
     setOpening(false);
 
-    if (!plan?.steps.length || !camera) return;
+    if (!plan?.steps.length || !camera) return null;
 
     const steps = buildAlongSteps(plan, projectRef.current.joints ?? []);
 
@@ -57,7 +58,11 @@ export function useBuildAlong({ guide, projectRef, viewportRef }: BuildAlongOpti
       camera,
     });
     viewportRef.current?.frameAll();
+
+    return plan;
   };
+
+  const open = () => (session || opening ? Promise.resolve(null) : openPlan(guide.currentPlan));
 
   const close = () => {
     openingRef.current++;
@@ -82,6 +87,7 @@ export function useBuildAlong({ guide, projectRef, viewportRef }: BuildAlongOpti
     steps: session?.steps ?? [],
     stepParts: session?.stepParts ?? [],
     open,
+    openPlan,
     close,
     next: () => go(1),
     previous: () => go(-1),

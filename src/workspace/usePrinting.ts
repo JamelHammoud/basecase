@@ -1,7 +1,16 @@
 import { useState, type RefObject } from 'react';
 import { resolvePrinter, type MyPrinter, type PrinterSetup } from '../data/printers';
 import { turnedPrint, type Plate } from '../print/plan';
-import { printRecordFor, readySteps, splitPrinted, updateRecord, withRecord } from '../print/tracker';
+import {
+  markForReprint,
+  plateStatus,
+  printRecordFor,
+  readySteps,
+  splitPrinted,
+  updateRecord,
+  withRecord,
+} from '../print/tracker';
+import { printScopeParts } from '../print/repairPlate';
 import type { Viewport3DHandle } from '../three/viewport/types';
 import type { PartPrint, PrintRecord, ProjectSettings, ScenePart } from '../types/robotics';
 import { useBuildReport } from '../components/build/useBuildReport';
@@ -15,6 +24,9 @@ import { usePrintFleet } from './usePrintFleet';
 import { usePrintJob } from './usePrintJob';
 import { usePlateWriter } from './usePlateWriter';
 import type { GuidePlan } from '../guide/guideTypes';
+import { usePrintMode } from './usePrintMode';
+
+export type { PrintMode } from './usePrintMode';
 
 interface PrintingOptions {
   jobId: string;
@@ -51,7 +63,7 @@ interface MarkerContext {
 const plateMarker =
   ({ records, setRecords, parts, printer }: MarkerContext) =>
   (plate: Plate, state: PrintRecord['state']) => {
-    const existing = records.find((r) => r.hash === plate.hash);
+    const existing = plateStatus(plate, records).record;
 
     if (existing) return setRecords((prev) => updateRecord(prev, existing.id, { state }));
 
@@ -60,20 +72,22 @@ const plateMarker =
     setRecords((prev) => withRecord(prev, { ...record, state }));
   };
 
-export interface PrintMode {
-  plate: number;
-  selected: string | null;
-  face: boolean;
-}
-
 export function usePrinting(options: PrintingOptions) {
   const { parts, printer, project, setProject, commitParts, showToast, viewport } = options;
-  const [mode, setMode] = useState<PrintMode | null>(null);
+  const fit = useFitTest({ parts, project, printer, viewport });
+  const printingMode = usePrintMode({ jobId: options.jobId, parts, fit });
+  const { mode, repairId } = printingMode;
   const [skipPrinted, setSkipPrinted] = useState(true);
   const split = splitPrinted(parts, project.prints, shapeKey);
   const reporting = options.buildOpen || !!mode;
+  const printParts = printScopeParts(parts, split.remaining, {
+    repairId,
+    skipPrinted,
+    repairPrint: printingMode.repairPrint,
+  });
   const { measures, print: report } = useBuildReport({
-    printParts: skipPrinted ? split.remaining : parts,
+    printParts,
+    printScope: `${options.jobId}:${repairId ?? ''}`,
     parts,
     project,
     printer,
@@ -81,14 +95,13 @@ export function usePrinting(options: PrintingOptions) {
     printShapes: async (ids, faces) => (await viewport()?.printShapes(ids, faces)) ?? {},
     enabled: reporting,
   });
-  const fit = useFitTest({ parts, project, printer, viewport });
   const service = useServiceQuotes({
     ...options,
     plates: report?.plan.plates ?? [],
     enabled: reporting,
   });
   const merges = useMerges({
-    active: !!mode && !fit.active,
+    active: printingMode.canMerge,
     parts,
     partsRef: options.partsRef,
     project,
@@ -99,7 +112,9 @@ export function usePrinting(options: PrintingOptions) {
     undo: options.undo,
   });
   const shown = fit.active ? fit.report : report;
-  const plates = usePlateWriter(options);
+  const plates = usePlateWriter(
+    repairId ? { ...options, parts: printParts, partsRef: { current: printParts } } : options,
+  );
   const job = usePrintJob({
     ...options,
     report: shown,
@@ -112,7 +127,7 @@ export function usePrinting(options: PrintingOptions) {
     setProject((p) => ({ ...p, prints: update(p.prints ?? []) }));
 
   const setPartPrint = (ids: string[], patch: Partial<PartPrint>) => {
-    if (fit.active) return;
+    if (fit.active || printingMode.editRepairPrint(ids, patch)) return;
 
     commitParts((prev) =>
       prev.map((p) => (ids.includes(p.id) ? { ...p, print: cleanPrint({ ...p.print, ...patch }) } : p)),
@@ -140,18 +155,8 @@ export function usePrinting(options: PrintingOptions) {
 
   const markPlate = plateMarker({ records, setRecords, parts, printer });
 
-  const startFitTest = async () => {
-    if (await fit.start()) setMode({ plate: 1, selected: null, face: false });
-  };
-
-  const closeMode = () => {
-    if (!fit.active) return setMode(null);
-
-    fit.leave();
-    setMode({ plate: 1, selected: null, face: false });
-  };
-
   return {
+    ...printingMode,
     report: shown,
     measures,
     printedCount: split.printed.length,
@@ -164,16 +169,10 @@ export function usePrinting(options: PrintingOptions) {
     fleet: fit.active ? [] : fleet.fleet,
     nextFor: fleet.nextFor,
     records,
-    mode,
-    openMode: (plate = 1) => setMode({ plate, selected: null, face: false }),
-    setModePlate: (plate: number) => setMode({ plate, selected: null, face: false }),
-    selectPart: (selected: string | null) => setMode((m) => m && { ...m, selected, face: false }),
-    setFaceMode: (face: boolean) => setMode((m) => m && { ...m, face }),
-    closeMode,
+    markForReprint: (id: string) => setRecords((prev) => markForReprint(prev, id)),
     fitTest: fit.parts && { parts: fit.parts },
     canFitTest: fit.available,
     fitCutting: fit.cutting,
-    startFitTest,
     merges,
     service,
     plates,

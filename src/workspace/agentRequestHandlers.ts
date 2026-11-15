@@ -50,6 +50,7 @@ import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
 import { CASE_HANDLERS } from './agentCaseRequests';
 import { DATASET_HANDLERS } from './agentDatasetRequests';
 import { IMAGE_HANDLERS } from './agentImageRequests';
+import { REPAIR_HANDLERS, type RepairContext } from './agentRepairRequests';
 import type { Datasets } from './useDatasets';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore } from './useCaseExplore';
@@ -71,7 +72,7 @@ import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
 
-export interface RequestContext {
+export interface RequestContext extends RepairContext {
   parts: () => ScenePart[];
   project: () => ProjectSettings;
   printer: () => PrinterSetup;
@@ -390,6 +391,7 @@ const HANDLERS: Record<string, Handler> = {
   ...TRY_HANDLERS,
   ...DATASET_HANDLERS,
   ...IMAGE_HANDLERS,
+  ...REPAIR_HANDLERS,
   ...SKILL_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [

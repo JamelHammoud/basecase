@@ -209,7 +209,7 @@ function addCount(counts: Counts, key: string, qty: number, partIds: string[] = 
   counts.set(key, e);
 }
 
-function boughtKey(p: ScenePart): string | null {
+export function boughtKey(p: ScenePart): string | null {
   if ((p.kind === 'component' || p.kind === 'mesh') && p.componentId)
     return `component:${p.componentId}${p.componentVariant ? `|${p.componentVariant}` : ''}`;
 

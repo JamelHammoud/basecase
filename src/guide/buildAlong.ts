@@ -1,6 +1,6 @@
 import { servoLayout } from '../robot/sceneRobot';
 import type { RobotJoint } from '../types/robotics';
-import type { GuideArrow, GuideMove, GuidePlan } from './guideTypes';
+import type { GuideArrow, GuideMove, GuidePlan, GuideStep } from './guideTypes';
 
 export interface BuildAlongServo {
   partId: string;
@@ -14,6 +14,9 @@ export interface BuildAlongStep {
   arrows: GuideArrow[];
   callout: Array<{ qty: number; name: string }>;
   servos: BuildAlongServo[];
+  repairPhase?: GuideStep['repairPhase'];
+  printPartId?: string;
+  tools: string[];
 }
 
 const MODULE_KEY = 'module:';
@@ -35,20 +38,29 @@ export function buildAlongSteps(plan: GuidePlan, joints: readonly RobotJoint[]):
   const built = new Set<string>();
 
   return plan.steps.map((step) => {
-    const fresh = step.partIds.filter((id) => !built.has(id));
+    const fresh = step.partIds.filter((id) => !built.has(id) || step.repairPhase === 'reassemble');
 
     fresh.forEach((id) => built.add(id));
 
     return {
-      shown: [...new Set([...built, ...step.contextIds])],
+      shown: step.shownIds ?? [...new Set([...built, ...step.contextIds])],
       moves: step.moves,
       arrows: step.arrows,
-      callout: step.callout.map((c) => ({ qty: c.qty, name: calloutName(plan, c.key) })).filter((c) => c.name),
-      servos: fresh.flatMap((partId) => {
-        const servo = busIds.get(partId);
+      repairPhase: step.repairPhase,
+      printPartId: step.repairPhase === 'swap' && plan.repair?.printed ? plan.repair.partId : undefined,
+      tools: step.tools.flatMap((id) => {
+        const tool = plan.tools.find((entry) => entry.id === id);
 
-        return servo ? [{ partId, ...servo }] : [];
+        return tool ? [tool.name] : [];
       }),
+      callout: step.callout.map((c) => ({ qty: c.qty, name: calloutName(plan, c.key) })).filter((c) => c.name),
+      servos: fresh
+        .filter(() => step.repairPhase !== 'remove')
+        .flatMap((partId) => {
+          const servo = busIds.get(partId);
+
+          return servo ? [{ partId, ...servo }] : [];
+        }),
     };
   });
 }

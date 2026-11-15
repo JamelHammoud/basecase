@@ -1,7 +1,6 @@
 ---
 title: Export a robot package
 date: 2026-11-12
-updated: 2026-11-14
 collection: build-and-print
 type: task
 order: 8

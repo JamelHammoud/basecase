@@ -1,7 +1,6 @@
 ---
 title: Make a build guide
 date: 2026-11-13
-updated: 2026-11-14
 collection: build-and-print
 type: task
 order: 7

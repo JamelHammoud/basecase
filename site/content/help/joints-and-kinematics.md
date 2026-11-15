@@ -1,7 +1,6 @@
 ---
 title: Joints and kinematics
 date: 2026-11-13
-updated: 2026-11-14
 collection: engineer
 type: concept
 order: 1

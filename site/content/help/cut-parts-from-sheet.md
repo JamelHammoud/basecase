@@ -8,6 +8,9 @@ covers:
   - src/sheet/materials.ts
   - src/sheet/cutFiles.ts
   - src/workspace/useCutFileExport.ts
+hub_the_design_agent_order: 130
+hub_the_design_agent: |
+  Ask it to make a flat chest plate aluminum, carbon fiber or acrylic, and it assigns a sheet material and snaps the geometry to stock thickness. Checks and simulation use that material's density. To export the cutting outlines, see [Cut parts from sheet](/help/cut-parts-from-sheet).
 ---
 
 Choose aluminum, carbon fiber or acrylic for a flat part, then export its outline and holes for cutting.

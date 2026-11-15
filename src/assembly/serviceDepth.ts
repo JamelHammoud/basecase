@@ -2,6 +2,7 @@ import { COMPONENT_BY_ID, type ComponentGroup } from '../data/components';
 import { SUPPLY_BY_ID } from '../data/supplies';
 import type { ScenePart } from '../types/robotics';
 import type { AssemblyGeometry } from './assemblyGeometry';
+import { minimumTeardown } from './minimumTeardown';
 import type { RemovalPlan } from './removalOrder';
 
 export type ServiceClass = 'battery' | 'electronics' | 'servo';
@@ -115,7 +116,9 @@ function nearestBlockers(g: AssemblyGeometry, id: string): string[] {
   return [...(m.exit ?? m.local)].sort((a, b) => a.length - b.length)[0]?.filter((x) => g.moves[x]) ?? [];
 }
 
-function teardownTo(plan: RemovalPlan, id: string): Set<string> | null {
+export function teardownTo(plan: RemovalPlan, id: string, geometry?: AssemblyGeometry): Set<string> | null {
+  if (geometry) return minimumTeardown(geometry, plan, id);
+
   if (plan.stuckParts.includes(id)) return null;
 
   const before = new Set<string>();

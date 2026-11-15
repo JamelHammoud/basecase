@@ -36,6 +36,9 @@ covers:
   - src/workspace/datasetVersionView.ts
   - src/datasets/datasetStore/
   - electron/library/datasetStore.mjs
+hub_open_a_try_from_any_scene_order: 30
+hub_open_a_try_from_any_scene: |
+  In a dataset, saved versions show their frozen samples. If a saved version is selected, choose **Working Dataset** in **Dataset version** before opening or editing a try. Saved versions don't open the try timeline or its right-click menu.
 ---
 
 You can gather tries from any scene into a named dataset, then export it, publish it or train a policy on it.

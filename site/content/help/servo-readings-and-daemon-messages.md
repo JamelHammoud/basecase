@@ -1,7 +1,6 @@
 ---
 title: Servo readings and daemon messages
 date: 2026-11-13
-updated: 2026-11-14
 collection: operate
 type: reference
 order: 1

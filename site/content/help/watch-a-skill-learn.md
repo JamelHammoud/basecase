@@ -1,7 +1,6 @@
 ---
 title: Watch a skill learn while it trains
 date: 2026-11-13
-updated: 2026-11-13
 collection: simulate-and-train
 type: task
 related:

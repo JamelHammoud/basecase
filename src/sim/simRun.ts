@@ -3,6 +3,7 @@ import type { SimEngine } from './engine';
 import { TorqueRecorder, type TorqueSeries } from '../utils/peakTorque';
 import type { AmpModel } from '../utils/servoAmps';
 import { demandedTorques, jointForces, jointSpeeds, limitForces } from './simForces';
+import { TimelineCursor } from '../utils/timelineCursor';
 
 export interface RunRequest {
   id: number;
@@ -22,17 +23,12 @@ export interface RunResult {
   trace?: TorqueSeries;
 }
 
-function applyDuePushes(sim: SimEngine, pushes: NonNullable<RunRequest['pushes']>, t: number) {
-  while (pushes.length && pushes[0].at <= t + 1e-9) {
-    const p = pushes.shift()!;
-
-    sim.pushRobot(p.robot, p.force);
-  }
-}
-
-export function applyDueCommands(sim: SimEngine, commands: NonNullable<RunRequest['commands']>, t: number) {
-  while (commands.length && commands[0].at <= t + 1e-9) sim.command(commands.shift()!.command);
-}
+export const commandTimeline = (sim: SimEngine, commands: NonNullable<RunRequest['commands']>) =>
+  new TimelineCursor(
+    commands,
+    (c) => c.at,
+    (c) => sim.command(c.command),
+  );
 
 function tracer(sim: SimEngine, currents: Record<string, AmpModel> = {}) {
   const n = sim.sim.joints.length;
@@ -53,10 +49,18 @@ function tracer(sim: SimEngine, currents: Record<string, AmpModel> = {}) {
 }
 
 export function runFor(sim: SimEngine, msg: RunRequest): RunResult {
-  const pushes = [...(msg.pushes ?? [])].sort((a, b) => a.at - b.at);
-  const commands = [...(msg.commands ?? [])].sort((a, b) => a.at - b.at);
-  const wanted = [...(msg.frames ?? [])].sort((a, b) => a - b);
   const frames: Array<{ t: number; poses: Float64Array }> = [];
+  const pushes = new TimelineCursor(
+    msg.pushes ?? [],
+    (p) => p.at,
+    (p) => sim.pushRobot(p.robot, p.force),
+  );
+  const commands = commandTimeline(sim, msg.commands ?? []);
+  const wanted = new TimelineCursor(
+    msg.frames ?? [],
+    (t) => t,
+    (t) => frames.push({ t, poses: sim.poses() }),
+  );
   const start = sim.data.time;
   const end = start + msg.seconds;
 
@@ -67,15 +71,14 @@ export function runFor(sim: SimEngine, msg: RunRequest): RunResult {
   while (sim.data.time < end - 1e-9) {
     const t = sim.data.time - start;
 
-    applyDuePushes(sim, pushes, t);
-    applyDueCommands(sim, commands, t);
-
-    while (wanted.length && wanted[0] <= t + 1e-9) frames.push({ t: wanted.shift()!, poses: sim.poses() });
+    pushes.advance(t);
+    commands.advance(t);
+    wanted.advance(t);
 
     sim.step(Math.min(0.02, end - sim.data.time), trace?.afterStep);
   }
 
-  if (wanted.length) frames.push({ t: msg.seconds, poses: sim.poses() });
+  if (wanted.remaining) frames.push({ t: msg.seconds, poses: sim.poses() });
 
   return { id: msg.id, stats: sim.stats(), frames, trace: trace?.recorder.series() };
 }

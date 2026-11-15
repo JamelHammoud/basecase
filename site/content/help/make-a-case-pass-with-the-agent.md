@@ -1,7 +1,6 @@
 ---
 title: Make a Case pass with the agent
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 12
@@ -21,6 +20,9 @@ covers:
   - src/workspace/caseChecks.ts
   - electron/cad-mcp/caseTools.mjs
   - electron/cad-agent-prompt.mjs
+hub_the_design_agent_order: 180
+hub_the_design_agent: |
+  If the scene has Cases, the agent runs each one and isn't done until they all pass. For the steps, see [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).
 ---
 
 You can ask the agent to change your robot until a Case that fails in Checks passes at least 18 of its 20 runs.

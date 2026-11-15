@@ -1,7 +1,6 @@
 ---
 title: Install a skill from Hugging Face
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 15

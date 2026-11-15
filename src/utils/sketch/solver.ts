@@ -1,4 +1,5 @@
-import { rank, solveSquare, type Matrix } from './linalg';
+import { rank, type Matrix } from './linalg';
+import { prepareLeastNorm } from './leastNorm';
 import { allResiduals, type Geometry } from './residuals';
 import type { Sketch, SketchArc, SketchCircle, SketchEntity, Vec2 } from './types';
 
@@ -116,37 +117,14 @@ function jacobian(sketch: Sketch, lay: Layout, x: number[], rows: number): Matri
   return j;
 }
 
-function dampedStep(j: Matrix, w: number[], r: number[], damping: number): number[] | null {
-  const rows = j.length;
-  const a: Matrix = Array.from({ length: rows }, (_, p) =>
-    Array.from({ length: rows }, (_, q) => {
-      let s = p === q ? damping : 0;
-
-      for (let c = 0; c < w.length; c++) s += j[p][c] * w[c] * j[q][c];
-
-      return s;
-    }),
-  );
-  const y = solveSquare(a, r);
-
-  if (!y) return null;
-
-  return w.map((wc, c) => {
-    let s = 0;
-
-    for (let p = 0; p < rows; p++) s += j[p][c] * y[p];
-
-    return -wc * s;
-  });
-}
-
 function improve(sketch: Sketch, lay: Layout, x: number[], state: { damping: number }): number[] | null {
   const r = residualsAt(sketch, lay, x);
   const j = jacobian(sketch, lay, x, r.length);
   const before = sumSquares(r);
+  const step = prepareLeastNorm(j, lay.weights, r);
 
   for (let t = 0; t < MAX_DAMPING_TRIES; t++) {
-    const dx = dampedStep(j, lay.weights, r, state.damping);
+    const dx = step(state.damping);
     const next = dx && x.map((v, i) => v + dx[i]);
 
     if (next && sumSquares(residualsAt(sketch, lay, next)) < before) {

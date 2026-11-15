@@ -9,6 +9,7 @@ import { GroundSteer } from './groundSteer';
 import { boundEffector, robotFacts, type EndEffector, type RobotFacts } from './robotFit';
 import { toCommand } from './caseDrives';
 import { caseSlots, type Case, type ReferenceCommand } from './schema';
+import { TimelineCursor } from '../utils/timelineCursor';
 
 export interface CaseBase {
   part: string | null;
@@ -95,20 +96,24 @@ export function steerFor({ setup, model, rig, parts, kase }: SteerFor): GroundSt
 }
 
 export class ReferencePlayer {
-  private readonly timeline: ReferenceCommand[];
+  private readonly timeline: TimelineCursor<ReferenceCommand>;
 
   private readonly steer: GroundSteer | null;
 
   private readonly send: (command: DriveCommand) => void;
 
   constructor(timeline: ReferenceCommand[], steer: GroundSteer | null, send: (command: DriveCommand) => void) {
-    this.timeline = [...timeline].sort((a, b) => a.at - b.at);
+    this.timeline = new TimelineCursor(
+      timeline,
+      (c) => c.at,
+      (c) => this.follow(c),
+    );
     this.steer = steer;
     this.send = send;
   }
 
   tick(t: number, poses: Float64Array) {
-    while (this.timeline.length && this.timeline[0].at <= t + 1e-9) this.follow(this.timeline.shift()!);
+    this.timeline.advance(t);
 
     if (this.steer?.steering) this.send(this.steer.command(poses));
   }

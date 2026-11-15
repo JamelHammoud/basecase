@@ -25,6 +25,7 @@ import { useSceneGuide } from './useSceneGuide';
 import { useSceneReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
 import { useRobotSync } from './useRobotSync';
+import { useRepair } from './useRepair';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -134,6 +135,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const loadSeed = seedLoader({ guide, buildAlong, scene, docs, annotations, setSelectedIds, tool, showToast });
 
   const { printer, printing } = useScenePrinting({ scene, docs, studio, tool, viewportRef, showToast, undo, guide });
+  const repair = useRepair({ ...docs, viewportRef, guide, buildAlong, printing });
 
   const readiness = useSceneReadiness(docs, printing, studio, viewportRef);
   const { caseCompare, caseExplore } = useCaseStudies({
@@ -182,6 +184,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     consoleEditing: useConsoleEditing({ caseRun, docs, showToast }),
     guide,
     buildAlong,
+    repair,
     undo,
     redo: () => travel({ direction: 'redo', codeOnly: caseRun.open }, restorePose),
     loadSeed,

@@ -1,7 +1,6 @@
 ---
 title: Price the parts and set a budget
 date: 2026-11-13
-updated: 2026-11-13
 collection: build-and-print
 type: task
 order: 2
@@ -27,6 +26,18 @@ covers:
   - src/utils/bom.ts
   - src/utils/currencyStore.ts
   - electron/backend/purchases.mjs
+hub_troubleshoot_build_check_blocks_ready_to_build_order: 10
+hub_troubleshoot_build_check_blocks_ready_to_build: |
+  ## Budget is red
+
+  The estimated total is over your budget. Basecase counts lines marked ≈ at their list price. If you choose **Made by a Service**, Basecase counts printed parts at their Slant 3D quotes.
+
+  1. Open **Budget** in Checks to see the total next to your budget.
+  2. List prices can be higher than what you pay. To save the prices you pay, use **Add Price** in **Bill of materials**.
+  3. Click a line's quantity, then type how many you already own in **On hand**. Parts you own cost nothing.
+  4. Swap out expensive parts, or raise the budget in the field next to the total.
+
+  Budget turns amber above 90% of the budget, and red when the total goes over it. For the full steps, see [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget).
 ---
 
 You can add the prices you see in a store to the bill of materials, then set a budget for your robot. The Budget check checks the design against that budget.

@@ -51,6 +51,7 @@ export interface JobGroup {
 }
 
 export interface JobPayload {
+  project?: boolean;
   jobId: string;
   name: string;
   infillPct: number;

@@ -77,15 +77,30 @@ describe('first launch', () => {
   });
 
   it('says why Try on Real Robot didn’t start, and keeps saying it under the button', async () => {
-    const { page } = app;
-    const button = page.locator(shown('button'), { hasText: 'Try on Real Robot' }).first();
-    const status = page.locator(shown('[data-testid="real-try-status"]'));
+    const cameraApp = await openApp({ scenes: [] });
+    const { page } = cameraApp;
 
-    await button.click();
-    await expect.poll(() => status.count(), { timeout: 15000 }).toBe(1);
-    await expect.poll(() => status.innerText(), { timeout: 15000 }).toBe('Couldn’t open the camera.');
-    expect(await button.isEnabled()).toBe(true);
-    expect(sceneWrites()).toEqual([]);
+    try {
+      await page.evaluate(() => {
+        Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+          configurable: true,
+          value: () => Promise.reject(new DOMException('Camera access denied', 'NotAllowedError')),
+        });
+      });
+
+      const button = page.locator(shown('button'), { hasText: 'Try on Real Robot' }).first();
+      const status = page.locator(shown('[data-testid="real-try-status"]'));
+
+      await button.click();
+      await expect.poll(() => status.count(), { timeout: 15000 }).toBe(1);
+      await expect.poll(() => status.innerText(), { timeout: 15000 }).toBe('Couldn’t open the camera.');
+      expect(await button.isEnabled()).toBe(true);
+      await showLayers(page);
+      expect(await status.innerText()).toBe('Couldn’t open the camera.');
+      expect(cameraApp.posts.filter((p) => p.route.startsWith('save-scene'))).toEqual([]);
+    } finally {
+      await cameraApp.close();
+    }
   });
 
   it('opens the saved scene instead after a relaunch', async () => {

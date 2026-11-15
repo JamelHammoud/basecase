@@ -28,6 +28,14 @@ function crossed(points: Vector2[], i: number, j: number): boolean {
   const c = points[j];
   const d = points[(j + 1) % points.length];
 
+  if (
+    Math.max(a.x, b.x) < Math.min(c.x, d.x) ||
+    Math.max(c.x, d.x) < Math.min(a.x, b.x) ||
+    Math.max(a.y, b.y) < Math.min(c.y, d.y) ||
+    Math.max(c.y, d.y) < Math.min(a.y, b.y)
+  )
+    return false;
+
   return turn(a, b, c) * turn(a, b, d) <= 0 && turn(c, d, a) * turn(c, d, b) <= 0;
 }
 

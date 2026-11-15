@@ -42,8 +42,11 @@ function topFaces(piece: WorldHull): Triangle[] {
 
   if (known) return known;
 
-  const { min, max } = hullBounds(piece.positions);
-  const centre = min.map((v, axis) => (v + max[axis]) / 2);
+  const centre = [0, 0, 0];
+  const vertices = piece.positions.length / 3;
+
+  for (let i = 0; i < piece.positions.length; i++) centre[i % 3] += piece.positions[i] / vertices;
+
   const triangles: Triangle[] = [];
 
   for (let i = 0; i < piece.indices.length; i += 3) {

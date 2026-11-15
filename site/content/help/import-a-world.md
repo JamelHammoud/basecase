@@ -27,8 +27,8 @@ Bring a captured or generated place into a Case so your robot can drive through 
 The capture must have a GLB, glTF or OBJ collider mesh. A splat alone can't supply the floor or walls.
 
 1. Open a scene with a robot.
-2. Drop the world's GLB, glTF or OBJ collider onto the canvas, together with its SPZ or PLY splat if it has one. Include any separate buffers, materials and textures in the same drop.
-3. In New Case, choose a goal for the robot. The world is already picked under **World**, named after the collider file.
+2. Drop the world's GLB, glTF or OBJ collider onto the canvas, together with its SPZ or PLY splat if it has one. Include any separate buffers, materials and texture folders in the same drop.
+3. In **New Case**, choose a goal for the robot. The world is already picked under **World**, named after the collider file.
 
 ![New Case with Kitchen picked as the World and Reach a Spot chosen](/help/import-a-world/new-case.png)
 

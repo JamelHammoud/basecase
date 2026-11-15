@@ -95,6 +95,9 @@ export function normalizeMesh(mesh: WorldMesh, options: WorldImportOptions): Imp
   const translation: [number, number, number] = [0, -plane.point.clone().applyQuaternion(rotation).y * scale, 0];
   const point = new Vector3();
 
+  if (translation.some((value) => Math.abs(value) > MAX_WORLD_COORDINATE))
+    return refuse('World transform', 'extends beyond 500 m');
+
   for (let i = 0; i < mesh.positions.length; i += 3) {
     point.fromArray(mesh.positions, i).applyQuaternion(rotation).multiplyScalar(scale);
     point.y += translation[1];

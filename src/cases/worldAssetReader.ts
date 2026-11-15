@@ -128,6 +128,9 @@ function readBounds(value: unknown, positions: Float32Array): WorldMesh['bounds'
   const min = vector(3)(bounds.min, 'World minimum') as [number, number, number];
   const max = vector(3)(bounds.max, 'World maximum') as [number, number, number];
 
+  if ([...min, ...max].some((value) => Math.abs(value) > MAX_COORDINATE) || min.some((value, i) => value > max[i]))
+    refuse('World bounds', 'must be ordered and within 500 m');
+
   if (positions.some((n, i) => n < min[i % 3] - 0.1 || n > max[i % 3] + 0.1))
     refuse('World bounds', 'must contain every vertex');
 
@@ -146,7 +149,7 @@ function readMesh(value: unknown, budget: Budget): WorldMesh {
   const mesh = asRecord(value, 'World mesh');
   const { positions, indices } = geometry(mesh, budget);
   const normals = attribute(mesh.normals, budget, positions.length);
-  const materials = listOf((m) => readMaterial(m, budget), 128)(mesh.materials, 'World materials');
+  const materials = listOf((m) => readMaterial(m, budget), 129)(mesh.materials, 'World materials');
 
   if (!normals || !materials.length) return refuse('World mesh', 'needs normals and materials');
 

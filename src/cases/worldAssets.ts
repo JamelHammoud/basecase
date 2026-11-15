@@ -1,8 +1,8 @@
 import type { ProjectSettings } from '../types/robotics';
-import { asRecord, refuse } from './validate';
-import { serializeWorldAsset, type SerializedWorldAssets } from './worldAssetCodec';
-import { MAX_WORLD_ASSET_BYTES, MAX_WORLD_DATA_BYTES, readWorldAsset } from './worldAssetReader';
-import { validateWorldAssetPayloads } from './worldAssetPayloads';
+import { refuse } from './validate';
+import type { SerializedWorldAssets } from './worldAssetCodec';
+import { cacheWorldAssetJson, isWorldAssetHash, worldAssetJson } from './worldAssetHash';
+import { restoreWorldAssetsInWorker } from './worldAssetRestoreClient';
 import type { WorldHull } from './worldDecomposition';
 import type { ImportedMeshWorld } from './worldImportTypes';
 
@@ -13,52 +13,14 @@ export interface WorldAsset {
 
 export type WorldAssets = Record<string, WorldAsset>;
 export type { SerializedWorldAsset, SerializedWorldAssets } from './worldAssetCodec';
+export { hashWorldAsset, isWorldAssetHash, worldAssetJson } from './worldAssetHash';
 
 const assets = new Map<string, WorldAsset>();
-const json = new WeakMap<WorldAsset, string>();
-
-export const isWorldAssetHash = (hash: string) => /^[a-f0-9]{64}$/.test(hash);
-
-export function worldAssetJson(asset: WorldAsset): string {
-  const known = json.get(asset);
-
-  if (known) return known;
-
-  const result = JSON.stringify(serializeWorldAsset(asset));
-
-  json.set(asset, result);
-
-  return result;
-}
-
-export async function hashWorldAsset(asset: WorldAsset): Promise<string> {
-  assertWorldAssetBudget(asset);
-
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(worldAssetJson(asset)));
-
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
-function assertWorldAssetBudget({ world, pieces }: WorldAsset): void {
-  const { mesh } = world;
-  const arrays = [mesh.positions, mesh.indices, mesh.normals, mesh.colors, mesh.uvs];
-  const geometryBytes = [...arrays, ...pieces.flatMap((piece) => [piece.positions, piece.indices])].reduce(
-    (total, array) => total + (array?.byteLength ?? 0),
-    0,
-  );
-  const dataBytes = mesh.materials.reduce(
-    (total, material) => total + (material.image?.bytes.byteLength ?? 0),
-    world.splat?.bytes.byteLength ?? 0,
-  );
-
-  if (geometryBytes + dataBytes > MAX_WORLD_ASSET_BYTES || dataBytes > MAX_WORLD_DATA_BYTES)
-    refuse('World asset', 'is too large');
-}
 
 export function registerWorldAsset(hash: string, asset: WorldAsset, serializedJson?: string): void {
   if (!isWorldAssetHash(hash)) refuse('World asset hash', 'must be SHA-256');
 
-  if (serializedJson !== undefined) json.set(asset, serializedJson);
+  if (serializedJson !== undefined) cacheWorldAssetJson(asset, serializedJson);
 
   assets.set(hash, asset);
 }
@@ -84,23 +46,13 @@ export const serializeWorldAssets = (table: WorldAssets): SerializedWorldAssets 
 export async function restoreWorldAssets(value: unknown): Promise<WorldAssets> {
   if (value === undefined) return {};
 
-  const entries = Object.entries(asRecord(value, 'World assets'));
-
+  const entries = await restoreWorldAssetsInWorker(value);
   const restored: WorldAssets = {};
 
-  for (const [hash, raw] of entries) {
-    if (!isWorldAssetHash(hash)) refuse('World asset hash', 'must be SHA-256');
-
-    const asset = readWorldAsset(raw);
-
-    if ((await hashWorldAsset(asset)) !== hash) refuse('World asset hash', 'does not match its content');
-
-    await validateWorldAssetPayloads(asset);
-
+  for (const { hash, asset, serializedJson } of entries) {
+    registerWorldAsset(hash, asset, serializedJson);
     restored[hash] = asset;
   }
-
-  for (const [hash, asset] of Object.entries(restored)) registerWorldAsset(hash, asset);
 
   return restored;
 }

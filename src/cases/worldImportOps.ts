@@ -1,5 +1,5 @@
 import { reply } from '../utils/workerRpc';
-import { hashWorldAsset, worldAssetJson } from './worldAssets';
+import { hashWorldAsset, worldAssetJson } from './worldAssetHash';
 import { decomposeWorld, type WorldHull } from './worldDecomposition';
 import { readWorldFiles } from './worldImport';
 import type { ImportedMeshWorld, ImportedWorld, WorldImportFile, WorldImportOptions } from './worldImportTypes';

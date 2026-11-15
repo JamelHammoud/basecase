@@ -18,6 +18,10 @@ interface ObjState {
   material: number;
 }
 
+function lineTokens(line: string): string[] {
+  return line.split('#', 1)[0].trim().split(/\s+/);
+}
+
 function objIndex(text: string, length: number): number {
   const n = Number(text);
   const index = n < 0 ? length + n : n - 1;
@@ -77,7 +81,7 @@ function readMaterials(text: string, context: { name: string; files: Map<string,
   const materials: WorldMaterial[] = [];
 
   for (const line of text.split(/\r?\n/)) {
-    const [key, ...tokens] = line.trim().split(/\s+/);
+    const [key, ...tokens] = lineTokens(line);
 
     if (key === 'newmtl') materials.push({ ...DEFAULT_MATERIAL, name: tokens.join(' ') });
 
@@ -97,7 +101,7 @@ function readMaterials(text: string, context: { name: string; files: Map<string,
 }
 
 function parseLine(line: string, state: ObjState, context: { name: string; files: Map<string, Uint8Array> }) {
-  const [key, ...tokens] = line.trim().split(/\s+/);
+  const [key, ...tokens] = lineTokens(line);
 
   if (key === 'v') {
     state.points.push(numbers(tokens, 3));

@@ -8,7 +8,7 @@ import { showRoomCase, showWorldCase } from './caseCommands';
 import { droppedPart } from './dropPreview';
 import { droppedFolders, type DroppedFolder } from './droppedFolders';
 import { isImageType } from './importRoute';
-import { hasWorldFile, readDroppedWorld } from './worldImport';
+import { readDroppedWorld, splitWorldDrop } from './worldImport';
 import { registerWorldAsset } from '../cases/worldAssets';
 import { errorMessage } from '../utils/errorMessage';
 import type { Vec3 } from './types';
@@ -76,9 +76,9 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots, files }: 
     return true;
   };
 
-  const openWorld = async (all: File[]) => {
+  const openWorld = async (all: File[], folders?: DroppedFolder[]) => {
     try {
-      const prepared = await readDroppedWorld(all);
+      const prepared = await readDroppedWorld(all, folders);
 
       if (prepared.kind === 'room') return showRoomCase(core, prepared.room);
 
@@ -105,8 +105,10 @@ export function useCanvasDrop(core: WorkspaceCore, { creation, robots, files }: 
       }),
     );
 
-    if (hasWorldFile(remaining)) await openWorld(remaining);
-    else files.importFiles({ files: remaining, at, folders });
+    const dropped = splitWorldDrop(remaining);
+
+    await Promise.all(dropped.worlds.map((world) => openWorld(world, dropped.worldFolders ? folders : undefined)));
+    files.importFiles({ files: dropped.remaining, at, folders: dropped.worldFolders ? [] : folders });
   };
 
   const dropFiles = async (e: React.DragEvent) => {

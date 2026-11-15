@@ -14,6 +14,7 @@ interface WorldState {
   meshes: number;
   pieces: number;
   loaded: boolean;
+  renderedSplats: number;
 }
 
 interface Studio {
@@ -91,6 +92,7 @@ describe('a captured world dropped on the canvas', () => {
 
     expect(world.hash).toMatch(/^[a-f0-9]{64}$/);
     expect(world.splat).toBe(true);
+    await expect.poll(async () => (await worldState())?.renderedSplats ?? 0).toBeGreaterThan(0);
     expect(world.pieces).toBeGreaterThanOrEqual(2);
     expect(world.pieces).toBeLessThanOrEqual(64);
     expect(await partCount(app.page)).toBe(parts);

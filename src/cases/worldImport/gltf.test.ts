@@ -37,6 +37,13 @@ describe('world geometry validation', () => {
     await expect(readWorldFiles(fileSet(compressed, bin))).rejects.toThrow(/uncompressed/);
   });
 
+  it('refuses floor-level transforms beyond the saved asset coordinate limit', async () => {
+    const { document, bin } = gltfWorld();
+    const source = { ...document, nodes: [{ mesh: 0, translation: [0, 1000, 0] }] };
+
+    await expect(readWorldFiles(fileSet(source, bin))).rejects.toThrow('500 m');
+  });
+
   it('triangulates a concave OBJ floor without filling its missing corner', async () => {
     const text = 'v 0 0 0\nv 0 0 3\nv 1 0 3\nv 1 0 1\nv 3 0 1\nv 3 0 0\nf 1 2 3 4 5 6';
     const world = await readWorldFiles([{ name: 'floor.obj', bytes: new TextEncoder().encode(text) }]);

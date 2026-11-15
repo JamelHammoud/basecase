@@ -85,7 +85,22 @@ export function glbFile(): WorldImportFile {
 }
 
 export function splatPly(value = '0', count = 1): WorldImportFile {
-  const properties = ['x', 'y', 'z', 'opacity', 'scale_0', 'scale_1', 'scale_2', 'rot_0', 'rot_1', 'rot_2', 'rot_3'];
+  const properties = [
+    'x',
+    'y',
+    'z',
+    'opacity',
+    'scale_0',
+    'scale_1',
+    'scale_2',
+    'rot_0',
+    'rot_1',
+    'rot_2',
+    'rot_3',
+    'f_dc_0',
+    'f_dc_1',
+    'f_dc_2',
+  ];
   const text =
     [
       'ply',
@@ -93,19 +108,20 @@ export function splatPly(value = '0', count = 1): WorldImportFile {
       `element vertex ${count}`,
       ...properties.map((name) => `property float ${name}`),
       'end_header',
-      `${value} 0 0 1 0 0 0 1 0 0 0`,
+      `${value} 0 0 1 0 0 0 1 0 0 0 0 0 0`,
     ].join('\n') + '\n';
 
   return { name: 'capture.ply', bytes: new TextEncoder().encode(text) };
 }
 
-export async function splatSpz(count = 1): Promise<WorldImportFile> {
-  const bytes = new Uint8Array(16 + 20);
+export async function splatSpz(count = 1, degree = 0): Promise<WorldImportFile> {
+  const bytes = new Uint8Array(16 + 20 + [0, 9, 24, 45, 72][degree]);
   const view = new DataView(bytes.buffer);
 
   view.setUint32(0, 0x5053474e, true);
   view.setUint32(4, 3, true);
   view.setUint32(8, count, true);
+  bytes[12] = degree;
   bytes[13] = 12;
 
   const compressed = await new Response(
@@ -122,24 +138,26 @@ function rawZstd(length: number): Uint8Array {
   view.setUint32(0, 0xfd2fb528, true);
   bytes[4] = 32;
   bytes[5] = length;
-  bytes[6] = (length << 3) | 1;
+  view.setUint16(6, (length << 3) | 1, true);
 
   return bytes;
 }
 
-export function splatSpz4(): WorldImportFile {
-  const streams = [9, 1, 3, 3, 4].map(rawZstd);
-  const bytes = new Uint8Array(32 + 5 * 16 + streams.reduce((sum, stream) => sum + stream.length, 0));
+export function splatSpz4(degree = 0): WorldImportFile {
+  const lengths = [9, 1, 3, 3, 4, ...(degree ? [[0, 9, 24, 45, 72][degree]] : [])];
+  const streams = lengths.map(rawZstd);
+  const bytes = new Uint8Array(32 + streams.length * 16 + streams.reduce((sum, stream) => sum + stream.length, 0));
   const view = new DataView(bytes.buffer);
 
   view.setUint32(0, 0x5053474e, true);
   view.setUint32(4, 4, true);
   view.setUint32(8, 1, true);
+  bytes[12] = degree;
   bytes[13] = 12;
-  bytes[15] = 5;
+  bytes[15] = streams.length;
   view.setUint32(16, 32, true);
 
-  let offset = 112;
+  let offset = 32 + streams.length * 16;
 
   for (let i = 0; i < streams.length; i++) {
     view.setBigUint64(32 + i * 16, BigInt(streams[i].length), true);

@@ -9,9 +9,36 @@ import {
 } from './worldAssets';
 import { meshWorldAsset } from './worldAssets.fixtures';
 import { base64ToBytes } from '../utils/base64';
-import { splatSpz } from './worldImport/fixtures';
+import { gltfWorld, splatSpz } from './worldImport/fixtures';
+import { readWorldFiles } from './worldImport';
+import { decomposeWorld } from './worldDecomposition';
 
 describe('world asset persistence', () => {
+  it('restores an imported glTF with 128 authored materials and its fallback material', async () => {
+    const { document, bin } = gltfWorld();
+    const source = {
+      ...document,
+      materials: Array.from({ length: 128 }, (_, index) => ({ ...document.materials[0], name: `Paint ${index}` })),
+      meshes: [{ primitives: [{ ...document.meshes[0].primitives[0], material: 127 }] }],
+    };
+    const world = await readWorldFiles([
+      { name: 'garage.gltf', bytes: new TextEncoder().encode(JSON.stringify(source)) },
+      { name: 'floor.bin', bytes: bin },
+    ]);
+
+    if (world.kind !== 'mesh') throw new Error('Mesh missing');
+
+    const asset = { world, pieces: await decomposeWorld(world.mesh) };
+    const hash = await hashWorldAsset(asset);
+    const restored = await restoreWorldAssets(serializeWorldAssets({ [hash]: asset }));
+
+    expect(restored[hash].world.mesh.materials).toHaveLength(129);
+    expect(restored[hash].world.mesh.materials[127].name).toBe('Paint 127');
+    expect(restored[hash].world.mesh.materials[128].name).toBe('World');
+    expect(restored[hash].world.mesh.groups[0].material).toBe(127);
+    expect(await hashWorldAsset(restored[hash])).toBe(hash);
+  });
+
   it('restores scenes with more than sixteen individually bounded worlds', async () => {
     const table: Record<string, ReturnType<typeof meshWorldAsset>> = {};
 
@@ -113,5 +140,15 @@ describe('world asset persistence', () => {
     const badHash = await hashWorldAsset(broken);
 
     await expect(restoreWorldAssets(serializeWorldAssets({ [badHash]: broken }))).rejects.toThrow();
+  });
+
+  it('refuses oversized saved bounds even when their matching hash encloses valid vertices', async () => {
+    const asset = meshWorldAsset();
+
+    asset.world.mesh.bounds = { min: [-1e308, -1e308, -1e308], max: [1e308, 1e308, 1e308] };
+
+    const hash = await hashWorldAsset(asset);
+
+    await expect(restoreWorldAssets(serializeWorldAssets({ [hash]: asset }))).rejects.toThrow('500 m');
   });
 });

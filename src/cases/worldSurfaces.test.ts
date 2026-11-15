@@ -64,4 +64,16 @@ describe('world support surfaces', () => {
     expect([...terrainPieces([floor, ramp])]).toEqual([0, 1]);
     expect(terrainPieces([floor, box([-500, 0, 0], [500, 750, 500])]).has(1)).toBe(false);
   });
+
+  it('recognizes sloping hull tops when their bounding box centre lies outside the convex hull', () => {
+    const ramp = {
+      positions: new Float32Array([0, 0, 0, 2000, 0, 0, 0, 0, 2000, 0, 200, 0]),
+      indices: new Uint32Array([0, 1, 2, 0, 3, 1, 0, 2, 3, 1, 3, 2]),
+    };
+    const reversed = { ...ramp, indices: new Uint32Array(ramp.indices).reverse() };
+
+    expect([...terrainPieces([floor, ramp])]).toEqual([0, 1]);
+    expect([...terrainPieces([floor, reversed])]).toEqual([0, 1]);
+    expect(floorSupport([ramp])([500, 0, 500])).toBe(false);
+  });
 });

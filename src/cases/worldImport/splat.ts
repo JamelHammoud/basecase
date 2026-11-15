@@ -2,6 +2,7 @@ import { refuse } from '../validate';
 import type { ImportedMeshWorld, WorldImportFile } from '../worldImportTypes';
 import { integer, MAX_WORLD_BYTES, MAX_WORLD_SPLATS } from './limits';
 import { validateZstd } from './zstd';
+import { readPly } from './ply';
 
 async function gunzip(bytes: Uint8Array): Promise<Uint8Array> {
   const reader = new Blob([bytes.slice().buffer]).stream().pipeThrough(new DecompressionStream('gzip')).getReader();
@@ -41,7 +42,9 @@ function spzHeader(bytes: Uint8Array): { view: DataView; version: number; count:
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const version = view.getUint32(4, true);
   const count = integer(view.getUint32(8, true), MAX_WORLD_SPLATS);
-  const degree = integer(bytes[12], 4);
+  const degree = bytes[12];
+
+  if (degree > 3) return refuse('SPZ', 'needs spherical harmonic degree 0–3');
 
   if (view.getUint32(0, true) !== 0x5053474e || !count || ![1, 2, 3, 4].includes(version) || bytes[13] > 24)
     return refuse('SPZ', 'has an unsupported header');
@@ -105,106 +108,10 @@ async function spzCount(bytes: Uint8Array): Promise<number> {
   return count;
 }
 
-interface PlyProperty {
-  name: string;
-  size: number;
-  read: (view: DataView, offset: number) => number;
-}
-
-const PLY_TYPES: Record<string, Omit<PlyProperty, 'name'>> = {
-  float: { size: 4, read: (v, o) => v.getFloat32(o, true) },
-  float32: { size: 4, read: (v, o) => v.getFloat32(o, true) },
-  double: { size: 8, read: (v, o) => v.getFloat64(o, true) },
-  float64: { size: 8, read: (v, o) => v.getFloat64(o, true) },
-  uchar: { size: 1, read: (v, o) => v.getUint8(o) },
-  uint8: { size: 1, read: (v, o) => v.getUint8(o) },
-};
-
-function plyHeader(bytes: Uint8Array) {
-  const prefix = new TextDecoder().decode(bytes.subarray(0, 16384));
-  const match = /end_header\r?\n/.exec(prefix);
-
-  if (!prefix.startsWith('ply\n') && !prefix.startsWith('ply\r\n')) return refuse('PLY', 'needs a PLY header');
-
-  if (!match) return refuse('PLY', 'has an oversized or truncated header');
-
-  const header = prefix.slice(0, match.index);
-  const countMatch = /^element vertex (\d+)\r?$/m.exec(header);
-  const count = integer(Number(countMatch?.[1]), MAX_WORLD_SPLATS);
-  const properties = [...header.matchAll(/^property (\w+) (\w+)\r?$/gm)].map((match) => {
-    const type = PLY_TYPES[match[1]];
-
-    return type ? { name: match[2], ...type } : refuse('PLY', 'has an unsupported property type');
-  });
-
-  if (
-    !count ||
-    properties.length > 128 ||
-    /^property list /m.test(header) ||
-    [...header.matchAll(/^element /gm)].length !== 1 ||
-    !['x', 'y', 'z', 'opacity', 'scale_0', 'scale_1', 'scale_2', 'rot_0', 'rot_1', 'rot_2', 'rot_3'].every((name) =>
-      properties.some((p) => p.name === name),
-    )
-  )
-    return refuse('PLY', 'needs Gaussian splat properties');
-
-  return {
-    header,
-    count,
-    properties,
-    offset: new TextEncoder().encode(prefix.slice(0, match.index + match[0].length)).length,
-  };
-}
-
-function asciiPlyCount(bytes: Uint8Array, meta: ReturnType<typeof plyHeader>): number {
-  const text = new TextDecoder().decode(bytes.subarray(meta.offset));
-  const expected = meta.count * meta.properties.length;
-  const tokens = /\S+/g;
-  let count = 0;
-  let token = tokens.exec(text);
-
-  while (token !== null) {
-    count++;
-
-    if (count > expected || !Number.isFinite(Number(token[0])))
-      return refuse('PLY', 'has excess or nonfinite properties');
-
-    token = tokens.exec(text);
-  }
-
-  if (count !== expected) return refuse('PLY', 'has truncated properties');
-
-  return meta.count;
-}
-
-function plyCount(bytes: Uint8Array): number {
-  const { header, count, properties, offset } = plyHeader(bytes);
-
-  if (/^format ascii 1\.0\r?$/m.test(header)) return asciiPlyCount(bytes, { header, count, properties, offset });
-
-  if (!/^format binary_little_endian 1\.0\r?$/m.test(header)) return refuse('PLY', 'needs ASCII or little-endian data');
-
-  const stride = properties.reduce((sum, p) => sum + p.size, 0);
-
-  if (offset + count * stride !== bytes.length) return refuse('PLY', 'has a truncated payload');
-
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  let cursor = offset;
-
-  for (let i = 0; i < count * properties.length; i++) {
-    const property = properties[i % properties.length];
-
-    if (!Number.isFinite(property.read(view, cursor))) return refuse('PLY', 'has nonfinite properties');
-
-    cursor += property.size;
-  }
-
-  return count;
-}
-
 export async function readSplat(file: WorldImportFile): Promise<NonNullable<ImportedMeshWorld['splat']>> {
   const format = file.name.toLowerCase().endsWith('.spz') ? 'spz' : 'ply';
-  const count = format === 'spz' ? await spzCount(file.bytes) : plyCount(file.bytes);
+  const result =
+    format === 'spz' ? { count: await spzCount(file.bytes), bytes: file.bytes.slice() } : readPly(file.bytes);
 
-  return { name: file.name, bytes: file.bytes.slice(), format, count };
+  return { name: file.name, format, ...result };
 }

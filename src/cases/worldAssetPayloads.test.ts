@@ -3,6 +3,7 @@ import { bytesToBase64 } from '../utils/base64';
 import { getWorldAsset, hashWorldAsset, restoreWorldAssets, serializeWorldAssets } from './worldAssets';
 import { meshWorldAsset } from './worldAssets.fixtures';
 import { splatPly, splatSpz } from './worldImport/fixtures';
+import { readSplat } from './worldImport/splat';
 
 function imageHeader(width: number, height: number): Uint8Array {
   const bytes = new Uint8Array(24);
@@ -18,6 +19,27 @@ function imageHeader(width: number, height: number): Uint8Array {
 }
 
 describe('restored world payloads', () => {
+  it('refuses matching-hash ASCII PLY that Spark cannot decode and restores imported binary PLY', async () => {
+    const file = splatPly();
+    const asset = meshWorldAsset();
+
+    asset.world.splat = { ...file, count: 1, format: 'ply' };
+
+    const rawHash = await hashWorldAsset(asset);
+
+    await expect(restoreWorldAssets(serializeWorldAssets({ [rawHash]: asset }))).rejects.toThrow('binary PLY');
+    expect(getWorldAsset(rawHash)).toBeUndefined();
+
+    const imported = meshWorldAsset();
+
+    imported.world.splat = await readSplat(file);
+
+    const importedHash = await hashWorldAsset(imported);
+    const restored = await restoreWorldAssets(serializeWorldAssets({ [importedHash]: imported }));
+
+    expect(restored[importedHash].world.splat).toEqual(imported.world.splat);
+  });
+
   it('refuses oversized and nonfinite splat bytes even under their correct content hashes', async () => {
     const files = [splatPly('0', 1_000_001), splatPly('NaN'), await splatSpz(1_000_001)];
 

@@ -2,13 +2,15 @@ import { useRef, useState, type RefObject } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { buildAlongSteps, type BuildAlongStep } from '../guide/buildAlong';
 import type { BuildStepView, ViewShot } from '../three/viewport/types';
-import type { ProjectSettings } from '../types/robotics';
+import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { BuildGuide } from './useBuildGuide';
 import type { GuidePlan } from '../guide/guideTypes';
+import type { WiringScene } from '../wiring/netlist';
 
 interface BuildAlongOptions {
   guide: BuildGuide;
   projectRef: RefObject<ProjectSettings>;
+  partsRef: RefObject<ScenePart[]>;
   viewportRef: RefObject<Viewport3DHandle | null>;
 }
 
@@ -26,9 +28,22 @@ const stepView = (step: BuildAlongStep): BuildStepView => ({
   arrows: step.arrows,
   removing: step.repairPhase === 'remove',
   labels: step.servos.map((s) => ({ partId: s.partId, text: `${s.joint}, ID ${s.id}` })),
+  routes: step.routes.flatMap((net) => (net.route?.points.length ? [{ points: net.route.points }] : [])),
 });
 
-export function useBuildAlong({ guide, projectRef, viewportRef }: BuildAlongOptions) {
+const sameRoutingProject = (before: ProjectSettings, after: ProjectSettings) =>
+  before.joints === after.joints &&
+  before.wiring === after.wiring &&
+  before.extras === after.extras &&
+  before.tether === after.tether;
+
+async function planWiring(viewport: Viewport3DHandle | null, plan: GuidePlan | null, scene: WiringScene) {
+  if (!viewport || !plan || plan.repair) return null;
+
+  return viewport.wiring(scene).catch(() => null);
+}
+
+export function useBuildAlong({ guide, partsRef, projectRef, viewportRef }: BuildAlongOptions) {
   const [session, setSession] = useState<Session | null>(null);
   const [opening, setOpening] = useState(false);
   const openingRef = useRef(0);
@@ -40,15 +55,28 @@ export function useBuildAlong({ guide, projectRef, viewportRef }: BuildAlongOpti
     setSession(null);
     setOpening(true);
 
+    const parts = partsRef.current;
+    const project = projectRef.current;
     const plan = await source().catch(() => null);
+
+    if (run !== openingRef.current) return null;
+
+    const wiring = await planWiring(viewportRef.current, plan, { parts, project });
 
     if (run !== openingRef.current) return null;
 
     setOpening(false);
 
-    if (!plan?.steps.length || !camera) return null;
+    if (
+      !plan?.steps.length ||
+      !camera ||
+      parts !== partsRef.current ||
+      !sameRoutingProject(project, projectRef.current)
+    )
+      return null;
 
-    const steps = buildAlongSteps(plan, projectRef.current.joints ?? []);
+    const nets = wiring ? [...wiring.buses.flatMap((bus) => bus.nets), ...wiring.power.nets] : [];
+    const steps = buildAlongSteps(plan, project.joints ?? [], nets);
 
     setSession({
       steps,

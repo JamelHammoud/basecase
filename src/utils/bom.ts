@@ -22,6 +22,7 @@ import { printedLine } from './bomPrinted';
 
 import { neededSupplyKeys } from './bomNeeds';
 import { wiringNetlist } from '../wiring/netlist';
+import type { Netlist } from '../wiring/connectors';
 import { wiringSupplies } from '../wiring/wiringSupplies';
 import { sceneTether } from './powerSources';
 import { sheetOf } from '../sheet/materials';
@@ -387,6 +388,7 @@ export interface BomInput {
   measures: Record<string, MeshMeasure | undefined>;
   now?: Date;
   supportG?: Partial<Record<PrintMaterial, number>>;
+  wiring?: Netlist;
 }
 
 function listedText(counts: Counts): string {
@@ -399,7 +401,15 @@ function listedText(counts: Counts): string {
     .join('\n');
 }
 
-export function buildBom({ parts, project, purchases, measures, now = new Date(), supportG = {} }: BomInput): Bom {
+export function buildBom({
+  parts,
+  project,
+  purchases,
+  measures,
+  now = new Date(),
+  supportG = {},
+  wiring,
+}: BomInput): Bom {
   const tally = tallyParts(parts, project, measures);
   const byService = project.madeBy === 'service';
 
@@ -407,7 +417,7 @@ export function buildBom({ parts, project, purchases, measures, now = new Date()
 
   for (const x of project.extras ?? []) if (x.qty > 0) addCount(tally.counts, x.key, x.qty);
 
-  const netlist = wiringNetlist({ parts, project });
+  const netlist = wiring ?? wiringNetlist({ parts, project });
   const listed = listedText(tally.counts);
 
   for (const [key, qty] of wiringSupplies(netlist)) {

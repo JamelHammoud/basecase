@@ -72,6 +72,15 @@ export class BuildStepLayer {
 
   private readonly arrows = new THREE.Group();
 
+  private readonly routes = new THREE.Group();
+
+  private readonly routeMaterial = new THREE.LineBasicMaterial({
+    color: ARROW_COLOR,
+    depthTest: false,
+    depthWrite: false,
+    toneMapped: false,
+  });
+
   private readonly material = new THREE.MeshBasicMaterial({
     color: ARROW_COLOR,
     depthTest: false,
@@ -87,7 +96,8 @@ export class BuildStepLayer {
     this.ctx = ctx;
     this.labelRoot = labelRoot;
     this.arrows.name = 'build-step-arrows';
-    ctx.stage.overlays.add(this.arrows);
+    this.routes.name = 'build-step-routes';
+    ctx.stage.overlays.add(this.arrows, this.routes);
     ctx.loop.animators.add(this.animate);
     ctx.loop.afterRender.add(this.placeLabels);
   }
@@ -119,6 +129,13 @@ export class BuildStepLayer {
 
     this.started = performance.now();
     view.arrows.forEach((a) => this.arrows.add(arrowObject(a.from, a.to, this.material)));
+    view.routes?.forEach(({ points }) => {
+      const geometry = new THREE.BufferGeometry().setFromPoints(points.map((p) => new THREE.Vector3(...p)));
+      const line = new THREE.Line(geometry, this.routeMaterial);
+
+      line.renderOrder = ARROW_ORDER;
+      this.routes.add(line);
+    });
     this.labels = view.labels.map((l) => ({ partId: l.partId, element: labelElement(l.text) }));
     this.ctx.applyPose();
   }
@@ -149,7 +166,9 @@ export class BuildStepLayer {
   dispose(): void {
     this.clearOverlay();
     this.arrows.removeFromParent();
+    this.routes.removeFromParent();
     this.material.dispose();
+    this.routeMaterial.dispose();
     this.ctx.loop.animators.delete(this.animate);
     this.ctx.loop.afterRender.delete(this.placeLabels);
   }
@@ -167,6 +186,8 @@ export class BuildStepLayer {
   private clearOverlay(): void {
     this.arrows.children.forEach((arrow) => arrow.traverse((o) => (o as THREE.Mesh).geometry?.dispose()));
     this.arrows.clear();
+    this.routes.children.forEach((line) => (line as THREE.Line).geometry.dispose());
+    this.routes.clear();
     this.labels.forEach((l) => l.element.remove());
     this.labels = [];
   }

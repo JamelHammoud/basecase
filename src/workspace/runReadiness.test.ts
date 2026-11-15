@@ -54,6 +54,7 @@ describe('what makes checks run again', () => {
 
   it.each<[string, Partial<ProjectSettings>]>([
     ['time budget', { budgetHours: 6 }],
+    ['cable routing', { wiring: [{ from: { partId: 'p', port: 'in' }, to: { partId: 'q', port: 'out' } }] }],
     ['infill', { infillPct: 100 }],
     ['gait', { animations: [{ id: 'a', name: 'walk' }] as ProjectSettings['animations'] }],
     ['first ranges', { firstRanges: { j: [-90, 90] } }],

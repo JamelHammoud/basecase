@@ -1,5 +1,6 @@
 import { servoLayout } from '../robot/sceneRobot';
 import type { RobotJoint } from '../types/robotics';
+import type { Net, NetEnd } from '../wiring/netlist';
 import type { GuideArrow, GuideMove, GuidePlan, GuideStep } from './guideTypes';
 
 export interface BuildAlongServo {
@@ -14,6 +15,7 @@ export interface BuildAlongStep {
   arrows: GuideArrow[];
   callout: Array<{ qty: number; name: string }>;
   servos: BuildAlongServo[];
+  routes: Net[];
   repairPhase?: GuideStep['repairPhase'];
   printPartId?: string;
   tools: string[];
@@ -33,9 +35,31 @@ function calloutName(plan: GuidePlan, key: string): string {
   return plan.items.find((i) => i.key === key)?.name ?? '';
 }
 
-export function buildAlongSteps(plan: GuidePlan, joints: readonly RobotJoint[]): BuildAlongStep[] {
+function namedEnd(end: NetEnd, busIds: ReturnType<typeof servoBusIds>): NetEnd {
+  const servo = end.id ? busIds.get(end.id) : null;
+
+  return servo ? { ...end, name: `${servo.joint}, ID ${servo.id}` } : end;
+}
+
+function readyNets(nets: readonly Net[], built: Set<string>, routed: Set<Net>): Net[] {
+  return nets.filter((net) => {
+    const ends = [net.from.id, net.to.id].filter((id): id is string => !!id);
+    const ready = ends.length > 0 && ends.every((id) => built.has(id)) && !routed.has(net);
+
+    if (ready) routed.add(net);
+
+    return ready;
+  });
+}
+
+export function buildAlongSteps(
+  plan: GuidePlan,
+  joints: readonly RobotJoint[],
+  nets: readonly Net[] = [],
+): BuildAlongStep[] {
   const busIds = servoBusIds(joints);
   const built = new Set<string>();
+  const routed = new Set<Net>();
 
   return plan.steps.map((step) => {
     const fresh = step.partIds.filter((id) => !built.has(id) || step.repairPhase === 'reassemble');
@@ -54,6 +78,11 @@ export function buildAlongSteps(plan: GuidePlan, joints: readonly RobotJoint[]):
         return tool ? [tool.name] : [];
       }),
       callout: step.callout.map((c) => ({ qty: c.qty, name: calloutName(plan, c.key) })).filter((c) => c.name),
+      routes: readyNets(plan.repair ? [] : nets, built, routed).map((net) => ({
+        ...net,
+        from: namedEnd(net.from, busIds),
+        to: namedEnd(net.to, busIds),
+      })),
       servos: fresh
         .filter(() => step.repairPhase !== 'remove')
         .flatMap((partId) => {

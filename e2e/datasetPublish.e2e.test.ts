@@ -125,6 +125,7 @@ describe('Publish a dataset', () => {
 
 type DatasetStudio = {
   seedDatasetTry: (id: string) => Promise<void>;
+  datasetInstruction: (id: string, instruction: string) => Promise<void>;
   datasets: () => Dataset[];
 };
 
@@ -167,6 +168,23 @@ describe('Dataset versions', () => {
       Math.fround(0.08),
       Math.fround(0.1),
     ]);
+    await app.page.evaluate(() =>
+      (window as unknown as { __studio: DatasetStudio }).__studio.datasetInstruction(
+        'freeze-try',
+        'Changed instruction',
+      ),
+    );
+    await app.page.getByLabel('Dataset version', { exact: true }).selectOption('1');
+
+    const older = inDataset(await datasetFiles(app.page));
+
+    expect(Object.keys(older).sort()).toEqual(Object.keys(files).sort());
+
+    for (const [path, bytes] of Object.entries(files)) expect(older[path], path).toEqual(bytes);
+
+    expect((await datasets())[0].versions).toHaveLength(1);
+    await app.page.getByLabel('Dataset version', { exact: true }).selectOption('working');
+    expect(await button('Export Dataset').isEnabled()).toBe(true);
     expect(app.errors).toEqual([]);
   });
 

@@ -3,6 +3,7 @@ import type { VisionDetection, VisionResult } from '../types';
 import type { ClassEvaluation, TrainingTask } from './types';
 import { annotationBox, boxOverlap, maskOverlap } from './metricsGeometry';
 import { classFailureRate } from './metricsFailures';
+import { averagePrecision } from './metricsPrecision';
 
 export interface EvaluatedFrame {
   frame: TrainingFrame;
@@ -59,21 +60,6 @@ function matchDetections(ranked: RankedDetection[], rows: EvaluatedFrame[], clas
 
     return { ...item, match };
   });
-}
-
-function averagePrecision(matches: MatchedDetection[], support: number): number {
-  let correct = 0;
-  const curve = matches.map((item, index) => {
-    correct += Number(item.match >= 0);
-
-    return { recall: correct / support, precision: correct / (index + 1) };
-  });
-
-  return mean(
-    Array.from({ length: 101 }, (_, index) =>
-      curve.reduce((best, point) => (point.recall >= index / 100 ? Math.max(best, point.precision) : best), 0),
-    ),
-  );
 }
 
 function keypointCounts(

@@ -1,5 +1,6 @@
 import { encodeMask } from './imageMasks';
 import type { ImageMask } from './frameSet';
+import { bilinearMaskPixels } from './maskSampling';
 
 export interface SegmentationPoint {
   x: number;
@@ -38,23 +39,6 @@ export function segmentationPoints(points: SegmentationPoint[], width: number, h
   };
 }
 
-function maskValue(data: Float32Array, size: number[], x: number, y: number) {
-  const [height, width] = size;
-  const left = Math.max(0, Math.min(width - 1, Math.floor(x)));
-  const top = Math.max(0, Math.min(height - 1, Math.floor(y)));
-  const right = Math.min(width - 1, left + 1);
-  const bottom = Math.min(height - 1, top + 1);
-  const dx = Math.max(0, x - left);
-  const dy = Math.max(0, y - top);
-
-  return (
-    data[top * width + left] * (1 - dx) * (1 - dy) +
-    data[top * width + right] * dx * (1 - dy) +
-    data[bottom * width + left] * (1 - dx) * dy +
-    data[bottom * width + right] * dx * dy
-  );
-}
-
 export function segmentationMask(
   tensor: { data: Float32Array; dims: readonly number[] },
   width: number,
@@ -75,17 +59,7 @@ export function segmentationMask(
   )
     throw new Error('The segmentation model returned an unsupported mask.');
 
-  const pixels = new Uint8Array(width * height);
-
-  for (let i = 0; i < pixels.length; i++)
-    pixels[i] = Number(
-      maskValue(
-        tensor.data,
-        [h, w],
-        (((i % width) + 0.5) * w) / width - 0.5,
-        ((Math.floor(i / width) + 0.5) * h) / height - 0.5,
-      ) > 0,
-    );
+  const pixels = bilinearMaskPixels(tensor.data, { width: w, height: h }, { width, height });
 
   return encodeMask(pixels, width, height);
 }

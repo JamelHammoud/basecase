@@ -19,6 +19,7 @@ import { isSmall } from '../lib/smallChange.mjs';
 import { run } from '../lib/sh.mjs';
 import { voiceNewPages } from '../lib/voiceHook.mjs';
 import { close, openPullHead } from '../lib/worktree.mjs';
+import { hasPendingDelivery } from '../lib/deliveryState.mjs';
 
 export const schedule = {
   agent: true,
@@ -197,6 +198,7 @@ export default function review({ log }) {
   fetchAll();
 
   const waiting = openPulls()
+    .filter((pull) => !hasPendingDelivery(pull.headRefName))
     .filter((pull) => {
       const state = pullReview(pull);
 

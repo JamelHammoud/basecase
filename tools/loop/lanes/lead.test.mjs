@@ -155,6 +155,17 @@ describe('lead: opening arcs', () => {
 });
 
 describe('lead: linking steps to arcs', () => {
+  it('keeps a blocked step as the existing owner instead of creating the same task again', () => {
+    const blocked = { ...step(30, 'Add a fisheye', '#13'), labels: label('loop:blocked'), url: 'https://x/30' };
+    const w = world({ arcs: fourArcs(), steps: [blocked] });
+    const github = fakeGitHub([...w.arcs, ...w.steps]);
+
+    github.gh.findOpenIssue = ({ similarAmong }) => (similarAmong.includes('loop:blocked') ? blocked : null);
+    applyPlan(plan({ steps: [newStep(blocked.title, 13)] }), w, { log: () => {}, gh: github.gh });
+
+    expect(github.calls.filter(([kind]) => kind === 'create')).toEqual([]);
+  });
+
   it('gives a step the number of an arc opened in the same plan', () => {
     const output = plan({
       newArcs: [{ title: 'Print on a farm', body: 'Why.', bigBet: false }],

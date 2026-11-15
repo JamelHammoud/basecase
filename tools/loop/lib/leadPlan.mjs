@@ -1,15 +1,16 @@
 import { arcOf, BIG_BET, MAX_ARCS, planArcs, resolveArc, withArc, withTask } from './arcs.mjs';
+import { acceptTask, withRequirements } from './capabilities.mjs';
 
 const issueNumber = (url) => Number(/\/issues\/(\d+)/.exec(url ?? '')?.[1]) || null;
 
 const numbers = (list) => new Set(list.map((issue) => issue.number));
 
-const STEP_LABELS = ['loop:next', 'loop:building'];
+const STEP_LABELS = ['loop:next', 'loop:building', 'loop:blocked'];
 
 function openStep(gh, title) {
   const match = gh.findOpenIssue?.({ title, similarAmong: STEP_LABELS });
 
-  return match?.labels.some((label) => STEP_LABELS.includes(label)) ? match : null;
+  return match?.labels.some((label) => STEP_LABELS.includes(label.name ?? label)) ? match : null;
 }
 
 function tracker(issues, gh) {
@@ -88,7 +89,9 @@ function stepBody(s, { request, promotes, arc }) {
     .filter(Boolean)
     .join('\n');
 
-  return `${head ? `${head}\n` : ''}Kind: ${s.kind}\n\n${s.body}`;
+  const inputs = s.inputs?.length ? `Inputs: ${s.inputs.map((file) => `\`${file}\``).join(', ')}\n` : '';
+
+  return withRequirements(`${head ? `${head}\n` : ''}Kind: ${s.kind}\n${inputs}\n${s.body}`, s.requires);
 }
 
 function stepLog({ owner, url, title, arc }) {
@@ -102,6 +105,12 @@ function notePlanned(ctx, request, url) {
 }
 
 function fileStep(ctx, s) {
+  if (!acceptTask(s)) {
+    ctx.log(`skipped step, unavailable execution capability: ${s.title}`);
+
+    return;
+  }
+
   const target = resolveArc(s.arc, ctx);
 
   if (target.refused) {

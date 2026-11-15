@@ -1,24 +1,35 @@
-import { CODEX_EFFORT, CODEX_MODEL } from './lib/codex.mjs';
+import { policyFor } from './lib/agentPolicy.mjs';
+import { quotaSnapshot } from './lib/quota.mjs';
 import { codexPause, isActive, pause, resume, resumeCodex } from './lib/usage.mjs';
-
-const [command = 'status'] = process.argv.slice(2);
-const until = (state) => new Date(state.until).toLocaleString();
+import { usageReport } from './lib/usageReport.mjs';
 
 function status() {
-  const claude = pause();
-  const codex = codexPause();
+  quotaSnapshot('codex');
 
-  if (!isActive(claude)) return 'Agent lanes run on Claude.';
+  const report = usageReport();
+  const policy = policyFor('build');
 
-  if (isActive(codex))
-    return `Claude and Codex are both at their limits; agent lanes are paused until ${until(codex)}.`;
+  console.log(`Default: ${policy.provider} (${policy.model}, ${policy.effort}). Claude is protected overflow.`);
+  console.log(
+    `Weekly target: ${report.weeklyTarget}%, emergency reserve: ${report.emergencyReserve}%. No scheduled slow periods.`,
+  );
+  console.log(`Codex limited: ${isActive(codexPause())}. Claude limited: ${isActive(pause())}.`);
+  console.log(`Recorded sessions in 24 h: ${report.sessions}.`);
 
-  return `Claude is at its limit until ${until(claude)}; agent lanes run on Codex (${CODEX_MODEL}, ${CODEX_EFFORT}).`;
+  for (const window of report.quota.codex.windows)
+    console.log(
+      `Codex ${window.minutes} min window: ${window.used}% used, resets ${new Date(window.reset).toISOString()}.`,
+    );
 }
+
+const [command = 'status'] = process.argv.slice(2);
 
 if (command === 'resume') {
   resume();
   resumeCodex();
-  console.log('Agent lanes go back to Claude on their next run.');
-} else if (command === 'status') console.log(status());
-else console.log('Usage: node tools/loop/usage.mjs <status|resume>');
+  console.log('Provider limit holds cleared. Codex remains the default.');
+} else if (command === 'status') status();
+else if (command === 'json') {
+  quotaSnapshot('codex');
+  console.log(JSON.stringify(usageReport(), null, 2));
+} else console.log('Usage: node tools/loop/usage.mjs <status|json|resume>');

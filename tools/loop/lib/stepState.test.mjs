@@ -28,4 +28,24 @@ describe('step backoff', () => {
     expect(stepWaiting(entry, { now: later, openNumbers: new Set() })).toBe(false);
     expect(stepWaiting(stepEntry(9), { now: 0, openNumbers: new Set([52]) })).toBe(false);
   });
+
+  it('does not spend another session declining unchanged source inputs', () => {
+    const entry = recordDecline(10, { now: 0, waitFor: [], inputSignature: 'source-a' });
+
+    expect(stepWaiting(entry, { now: 9e9, openNumbers: new Set(), inputSignature: 'source-a' })).toBe(true);
+    expect(stepWaiting(entry, { now: 1, openNumbers: new Set(), inputSignature: 'source-b' })).toBe(false);
+  });
+
+  it('reconsiders a named dependency when it closes without requiring a source edit', () => {
+    const entry = recordDecline(11, { now: 0, waitFor: [42], inputSignature: 'source-a' });
+
+    expect(stepWaiting(entry, { now: 1, openNumbers: new Set([42]), inputSignature: 'source-a' })).toBe(true);
+    expect(stepWaiting(entry, { now: 1, openNumbers: new Set(), inputSignature: 'source-a' })).toBe(false);
+  });
+
+  it('reconsiders changed inputs before applying dependencies from an earlier decline', () => {
+    const entry = recordDecline(12, { now: 0, waitFor: [42], inputSignature: 'source-a' });
+
+    expect(stepWaiting(entry, { now: 1, openNumbers: new Set([42]), inputSignature: 'source-b' })).toBe(false);
+  });
 });

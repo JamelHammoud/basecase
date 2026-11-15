@@ -26,6 +26,7 @@ const searchPath = () =>
     ...new Set([
       path.dirname(process.execPath),
       where('claude'),
+      where('codex'),
       where('gh'),
       where('git'),
       '/opt/homebrew/bin',
@@ -134,6 +135,7 @@ const envFor = () => ({
   PATH: searchPath(),
   HOME: os.homedir(),
   CLAUDE_BIN: run('which', ['claude']).out,
+  CODEX_BIN: run('which', ['codex']).out,
   BASECASE_LOOP_REF: HOME_REF,
 });
 

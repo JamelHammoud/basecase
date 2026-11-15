@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { creditProblems } from '../credit.mjs';
-import { createPull, openPulls, repo } from './github.mjs';
+import { openPulls, repo } from './github.mjs';
 import { landedIn, NOTHING_LANDED } from './landed.mjs';
 import { sameTitle } from './titles.mjs';
 import { voiceNewPages, voiced } from './voiceHook.mjs';
@@ -9,6 +9,8 @@ import { CODE_ROOT } from './paths.mjs';
 import { protectedIn, protectedList } from './protected.mjs';
 import { run } from './sh.mjs';
 import { keepStepLinks } from './stepLinks.mjs';
+import { saveDelivery } from './deliveryState.mjs';
+import { deliver } from './deliver.mjs';
 
 export const KINDS = {
   feature: { prefix: 'Feature', template: 'feature' },
@@ -159,7 +161,6 @@ export function publish(change, { dir, branch, extra, onDuplicate }) {
   if (git(['status', '--porcelain'], dir).out !== '') git(['commit', '-q', '-F', '-'], dir, { input: message });
 
   run('node', [path.join(CODE_ROOT, 'tools', 'check-credit.mjs'), 'origin/main..HEAD'], { cwd: dir });
-  git(['push', '-q', '-u', 'origin', branch], dir);
 
   const title = pullTitle(change);
   const body = pullBody(change, {
@@ -169,11 +170,16 @@ export function publish(change, { dir, branch, extra, onDuplicate }) {
     landed: landedIn('origin/main...HEAD', dir),
   });
 
-  try {
-    return createPull({ branch, title, body: voiced(body, 'pull'), label: `loop:${change.kind}` });
-  } catch (error) {
-    git(['push', '-q', 'origin', '--delete', branch], dir, { allowFail: true });
+  const entry = saveDelivery({
+    dir,
+    branch,
+    title,
+    body: voiced(body, 'pull'),
+    label: `loop:${change.kind}`,
+    sha: git(['rev-parse', 'HEAD'], dir).out.trim(),
+    createdAt: Date.now(),
+    attempts: 0,
+  });
 
-    throw error;
-  }
+  return deliver(entry);
 }

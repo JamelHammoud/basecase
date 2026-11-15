@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { HOME_CHECKOUT, WORKTREES } from './paths.mjs';
 import { run } from './sh.mjs';
+import { hasPendingDelivery, hasPendingWorktree } from './deliveryState.mjs';
+import { hasRecovery } from './workRecovery.mjs';
 
 const git = (args, opts = {}) => run('git', args, { cwd: HOME_CHECKOUT, ...opts });
 
@@ -15,6 +17,8 @@ const safeSlug = (text) =>
     .slice(0, 48) || 'change';
 
 export function clearPath(dir) {
+  if (hasPendingWorktree(dir) || hasRecovery(dir)) throw new Error('Worktree has retained work');
+
   git(['worktree', 'remove', '--force', dir], { allowFail: true });
   fs.rmSync(dir, { recursive: true, force: true });
   git(['worktree', 'prune'], { allowFail: true });
@@ -52,6 +56,8 @@ export function openPullHead(number, sha) {
 }
 
 export function close({ dir, branch }) {
+  if (hasPendingDelivery(branch) || hasPendingWorktree(dir) || hasRecovery(dir)) return;
+
   git(['worktree', 'remove', '--force', dir], { allowFail: true });
 
   if (branch) git(['branch', '-D', branch], { allowFail: true });

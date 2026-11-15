@@ -2,12 +2,17 @@ import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import { closeIssue, commentOnIssue, editIssueLabels, hasLabel, issues, openPulls } from '../lib/github.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
-import { buildOrder, STUCK_DECLINES } from '../lib/dependsOn.mjs';
+import { buildOrder } from '../lib/dependsOn.mjs';
 import { checkedRun } from '../lib/preflight.mjs';
 import { publish } from '../lib/pull.mjs';
 import { stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
-import { recordDecline, stepEntry, stepWaiting } from '../lib/stepState.mjs';
+import { recordDecline } from '../lib/stepState.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
+import { eligibleTask, unavailableCapabilities } from '../lib/capabilities.mjs';
+import { pendingSteps } from '../lib/deliveryState.mjs';
+import { taskInputSignature } from '../lib/taskInputs.mjs';
+import { clearRecovery, recoveryFor, refreshRecovery, saveRecovery } from '../lib/workRecovery.mjs';
+import { inputsReady, recoverySignature } from '../lib/taskReadiness.mjs';
 
 export const schedule = {
   agent: true,
@@ -21,7 +26,10 @@ const BUILDING = 'loop:building';
 const PRIORITY = 'loop:priority';
 
 const byPriorityThenAge = (a, b) =>
-  Number(hasLabel(b, PRIORITY)) - Number(hasLabel(a, PRIORITY)) || a.createdAt.localeCompare(b.createdAt);
+  Number(hasLabel(b, PRIORITY)) - Number(hasLabel(a, PRIORITY)) ||
+  Number(hasLabel(b, 'loop:feature') || hasLabel(b, 'loop:integration')) -
+    Number(hasLabel(a, 'loop:feature') || hasLabel(a, 'loop:integration')) ||
+  a.createdAt.localeCompare(b.createdAt);
 
 const openPullNumbers = () => new Set(openPulls().map((pull) => pull.number));
 
@@ -47,26 +55,33 @@ const waitingSteps = () => {
   const openNumbers = openPullNumbers();
   const queued = issues(NEXT).filter((issue) => !hasLabel(issue, BUILDING));
   const stale = issues(BUILDING).filter((issue) => now - Date.parse(issue.updatedAt) > ORPHAN_AFTER_MS);
+  const blocked = issues('loop:blocked');
 
-  const openSteps = [...issues(NEXT), ...issues(BUILDING)];
-  const candidates = unbuilt([...queued, ...stale], index)
+  const openSteps = [...issues(NEXT), ...issues(BUILDING), ...blocked];
+  const delivering = pendingSteps();
+  const candidates = unbuilt([...queued, ...stale, ...blocked], index)
     .filter((issue) => issue.author?.login === OWNER_LOGIN)
-    .filter((issue) => !stepWaiting(stepEntry(issue.number), { now, openNumbers }));
-  const stuck = (number) => stepEntry(number).declines >= STUCK_DECLINES;
+    .filter(eligibleTask)
+    .filter((issue) => !delivering.has(issue.number))
+    .filter((issue) => inputsReady(issue, { now, openNumbers }));
 
-  return buildOrder(candidates, { compare: byPriorityThenAge, openSteps, stuck });
+  return buildOrder(candidates, { compare: byPriorityThenAge, openSteps });
 };
 
-function decline(step, reason) {
+function decline(step, reason, inputSignature) {
   const openNumbers = openPullNumbers();
   const waitFor = [...reason.matchAll(/#(\d+)/g)].map((m) => Number(m[1])).filter((n) => openNumbers.has(n));
-  const entry = recordDecline(step.number, { now: Date.now(), waitFor });
+  const missing = unavailableCapabilities({ body: reason });
+  const entry = recordDecline(step.number, { now: Date.now(), waitFor, inputSignature, missing });
   const until = waitFor.length > 0 ? `until ${waitFor.map((n) => `#${n}`).join(', ')} close` : '';
   const retry = new Date(entry.until).toISOString().slice(0, 16).replace('T', ' ');
 
+  if (inputSignature && waitFor.length === 0)
+    editIssueLabels(step.number, { add: ['loop:blocked'], remove: [NEXT, BUILDING] });
+
   commentOnIssue(
     step.number,
-    `Not built this time: ${reason}\n\nA builder picks it up again ${until ? `${until}, and ` : ''}after ${retry} UTC at the earliest.`,
+    `Not built this time: ${reason}\n\n${inputSignature ? 'A builder reconsiders this when its declared source inputs, requirements or available capabilities change, or its named dependencies close.' : `A builder picks it up again ${until ? `${until}, and ` : ''}after ${retry} UTC at the earliest.`}`,
   );
 }
 
@@ -80,19 +95,56 @@ function claimNextStep() {
   return null;
 }
 
-function buildStep(step, { log, slot }) {
-  editIssueLabels(step.number, { add: [BUILDING], remove: [NEXT] });
+function recoveryContext(step, inputSignature, recovery) {
+  if (!recovery || recovery.inputSignature === recoverySignature(step, inputSignature)) return '';
 
-  const worktree = openBranch('build', `${step.number}-${slot}-${step.title}`);
+  return refreshRecovery(recovery);
+}
+
+function retainFailedSession(step, inputSignature, worktree, session) {
+  if (!session) return;
+
+  saveRecovery(step.number, {
+    worktree,
+    inputSignature: recoverySignature(step, inputSignature),
+    session,
+  });
+}
+
+function buildStep(step, { log, slot }) {
+  editIssueLabels(step.number, { add: [BUILDING], remove: [NEXT, 'loop:blocked'] });
+
+  const inputSignature = taskInputSignature(step);
+  const recovery = recoveryFor(step.number);
+  const worktree = recovery ?? openBranch('build', `${step.number}-${slot}-${step.title}`);
   const giveBack = (result) => {
     editIssueLabels(step.number, { add: [NEXT], remove: [BUILDING] });
 
-    if (result?.ok) decline(step, result.output.notes);
+    if (result?.ok) decline(step, result.output.notes, inputSignature);
   };
 
   try {
-    const prompt = `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`;
-    const result = checkedRun({ cwd: worktree.dir, name: 'build', prompt, schema: CHANGE_SCHEMA, hours: 12, log });
+    const prompt = [
+      `Build this step, issue #${step.number}: ${step.title}\n\n${step.body}`,
+      recoveryContext(step, inputSignature, recovery),
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+    const result = checkedRun({
+      cwd: worktree.dir,
+      name: 'build',
+      prompt,
+      schema: CHANGE_SCHEMA,
+      hours: 12,
+      log,
+      continuation: recovery?.session,
+    });
+
+    const failedSession = result.session ?? recovery?.session;
+
+    if (!result.ok) retainFailedSession(step, inputSignature, worktree, failedSession);
+
+    if (result.ok) clearRecovery(step.number);
 
     if (!result.ok || !result.output.changed) {
       giveBack(result);
@@ -119,6 +171,7 @@ function buildStep(step, { log, slot }) {
 
     if (url) log(`#${step.number}: opened ${url}`);
   } catch (error) {
+    retainFailedSession(step, inputSignature, worktree, error.session);
     giveBack();
 
     throw error;
@@ -128,6 +181,11 @@ function buildStep(step, { log, slot }) {
 }
 
 export default function build({ log, slot }) {
+  for (const step of issues(NEXT).filter((issue) => issue.author?.login === OWNER_LOGIN && !eligibleTask(issue))) {
+    editIssueLabels(step.number, { add: ['loop:blocked'], remove: [NEXT, BUILDING] });
+    log(`#${step.number}: removed from execution queue, unavailable ${unavailableCapabilities(step).join(', ')}`);
+  }
+
   const next = claimNextStep();
 
   if (!next) {

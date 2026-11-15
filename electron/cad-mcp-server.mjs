@@ -21,7 +21,8 @@ import { fitView } from './cad-mcp/fitViewTool.mjs';
 import { photoScale } from './cad-mcp/photoScaleTool.mjs';
 import { scoreFit } from './cad-mcp/scoreFitTool.mjs';
 import { traceOutline } from './cad-mcp/traceTool.mjs';
-import { sizeActuators, sizeArm, sweepDesign } from './cad-mcp/costTools.mjs';
+import { studyDesign } from './cad-mcp/studyTools.mjs';
+import { sizeActuators, sizeArm } from './cad-mcp/costTools.mjs';
 import { listEvidence, readEvidence } from './cad-mcp/evidenceTools.mjs';
 import { createGuidePusher, getGuide } from './cad-mcp/guideTools.mjs';
 import { checkScene, look } from './cad-mcp/inspectTools.mjs';
@@ -56,7 +57,7 @@ import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
 import { operate, setWorld, startDrive } from './cad-mcp/worldTools.mjs';
 import { rollBack, rollOut } from './cad-mcp/fleetTools.mjs';
 import { fitBody } from './cad-mcp/bodyTools.mjs';
-import { compareCase, createCase, exploreCase, readTry, runCase } from './cad-mcp/caseTools.mjs';
+import { compareCase, createCase, readTry, runCase } from './cad-mcp/caseTools.mjs';
 import { deleteCaseCode, readCaseCode, writeCaseCode } from './cad-mcp/caseCodeTools.mjs';
 import { makeDataset } from './cad-mcp/datasetTools.mjs';
 import { makeImages } from './cad-mcp/imageTools.mjs';
@@ -128,7 +129,6 @@ const TOOLS = [
   runCase,
   readTry,
   compareCase,
-  exploreCase,
   makeDataset,
   makeImages,
   writeCaseCode,
@@ -156,7 +156,7 @@ const TOOLS = [
   recordOnHand,
   sizeActuators,
   sizeArm,
-  sweepDesign,
+  studyDesign,
   checkPrintability,
   slicePlates,
   setBuild,

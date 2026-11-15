@@ -3,6 +3,12 @@ import type { ConnectorType } from '../types/ports';
 
 export type SupplyGroup = 'Power' | 'Wiring' | 'Electronics' | 'Filament' | 'Tools';
 
+export interface CableStock {
+  connectors: [ConnectorType, ConnectorType];
+  lengthMm?: number;
+  source?: string;
+}
+
 export interface SupplyInfo {
   id: string;
   name: string;
@@ -13,6 +19,7 @@ export interface SupplyInfo {
   typicalPack?: string;
   battery?: { nominalV: number; fullV: number; capacityAh: number; cRating: number };
   connector?: ConnectorType;
+  cable?: CableStock;
 }
 
 const amazon = (q: string) => `https://www.amazon.com/s?k=${encodeURIComponent(q)}`;
@@ -144,6 +151,33 @@ export const SUPPLIES: SupplyInfo[] = [
     spec: '3-pin 5264 (Molex 2.5 mm) daisy-chain cable for Feetech STS / SCS servos',
     search: amazon('Feetech servo cable 3 pin 5264 extension'),
     typicalPack: '10 pieces',
+    cable: { connectors: ['5264-3', '5264-3'] },
+  },
+  {
+    id: 'waveshare-servo-cable-5264-300',
+    name: 'Waveshare 5264 Servo Cable 300 mm',
+    group: 'Wiring',
+    spec: 'SR-Cable-5264-3PIN-300mm-6PCS (34171), 3-pin 5264 cable for ST / SC / CF servos, 300 mm',
+    search: amazon('Waveshare SR-Cable-5264-3PIN-300mm-6PCS 34171'),
+    typicalPack: '6 pieces',
+    cable: {
+      connectors: ['5264-3', '5264-3'],
+      lengthMm: 300,
+      source: 'https://www.waveshare.com/sr-cable-5264-3pin.htm?sku=34171',
+    },
+  },
+  {
+    id: 'waveshare-servo-cable-5264-900',
+    name: 'Waveshare 5264 Servo Cable 900 mm',
+    group: 'Wiring',
+    spec: 'SR-Cable-5264-3PIN-900mm-6PCS (34172), 3-pin 5264 cable for ST / SC / CF servos, 900 mm',
+    search: amazon('Waveshare SR-Cable-5264-3PIN-900mm-6PCS 34172'),
+    typicalPack: '6 pieces',
+    cable: {
+      connectors: ['5264-3', '5264-3'],
+      lengthMm: 900,
+      source: 'https://www.waveshare.com/sr-cable-5264-3pin.htm?sku=34172',
+    },
   },
   {
     id: 'robot-cable-x3p',
@@ -152,6 +186,11 @@ export const SUPPLIES: SupplyInfo[] = [
     spec: '3-pin JST EH (EHR-03) daisy-chain cable for DYNAMIXEL X servos, 180 mm',
     search: amazon('ROBOTIS Robot Cable-X3P 180mm'),
     typicalPack: '10 pieces',
+    cable: {
+      connectors: ['jst-eh-3', 'jst-eh-3'],
+      lengthMm: 180,
+      source: 'https://robotis.us/products/robot-cable-x3p-180mm-10pcs',
+    },
   },
   {
     id: 'stemma-qt-cable',

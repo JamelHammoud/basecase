@@ -9,7 +9,6 @@ import { noRuns, runCaseTimes } from './caseRuns';
 import {
   designLabel,
   designScene,
-  exploreCase,
   exploreDesigns,
   exploreSpace,
   EXPLORE_RUNS,
@@ -20,6 +19,7 @@ import {
   type ExploreBase,
   type ExploreRobot,
 } from './explore';
+import { referenceExploreCase as exploreCase } from '../study/parityReference.testSupport';
 import { touchTheDots } from './testing';
 
 const SIM_MS = 60_000;

@@ -24,7 +24,7 @@ export function RightPanelTabs({ core, agent }: RightPanelTabsProps) {
   const all: PanelTab<RightTab>[] = [
     { value: 'inspector', label: 'Inspect' },
     ...(posable ? [{ value: 'pose' as const, label: 'Pose' }] : []),
-    ...(posing.hasRig ? [{ value: 'sim' as const, label: 'Simulate' }] : []),
+    ...(posing.hasRig || core.study.available ? [{ value: 'sim' as const, label: 'Simulate' }] : []),
     { value: 'build', label: 'Build', status: toFix(core.readiness.current) },
     {
       value: 'acp',

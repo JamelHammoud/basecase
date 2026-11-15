@@ -16,7 +16,6 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['roll_out', 600000],
   ['roll_back', 60000],
   ['verify', 290000],
-  ['sweep_design', 290000],
   ['import_robot', 300000],
   ['wrap_robot', 300000],
   ['insert_object', 300000],
@@ -28,7 +27,7 @@ const RENDERER_TIMEOUTS_MS = new Map([
   ['test_routine', 180000],
   ['run_routine', 180000],
   ['run_case', 300000],
-  ['explore_case', 600000],
+  ['study_design', 600000],
   ['make_dataset', 120000],
   ['make_images', 600000],
 ]);

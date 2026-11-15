@@ -22,6 +22,8 @@ import { plateFiles, type ThreeMfResult, type ThreeMfTask } from './plateFiles';
 import { sceneStl } from './sceneStl';
 import { lightenPart, type LightenResult } from '../../strength/lighten';
 import { lightenInFrame, lightenResultInFrame, type LightenTask } from './lightenFrame';
+import type { WiringScene } from '../../wiring/netlist';
+import { wiringOf } from './analysisWiring';
 
 export type { PlateFilesInput, ThreeMfFileSpec, ThreeMfResult } from './plateFiles';
 
@@ -45,6 +47,7 @@ export interface Instance {
 export type AnalysisTask =
   | ({ kind: 'interference'; instances: Instance[]; riders?: OutputRiders } & CollideOptions)
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
+  | { kind: 'wiring'; instances: Instance[]; scene: WiringScene }
   | { kind: 'strength'; instances: Instance[]; jobs: StrengthJob[] }
   | ({ kind: 'lighten'; instances: Instance[] } & LightenTask)
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
@@ -100,6 +103,8 @@ const byId = <T>(instances: Instance[], value: (i: Instance) => T) =>
 
 function run(task: Exclude<AnalysisTask, { kind: 'strength' | 'lighten' }>) {
   switch (task.kind) {
+    case 'wiring':
+      return wiringOf(placeAll(task.instances), task.scene);
     case 'interference': {
       const { instances, riders, ...options } = task;
 

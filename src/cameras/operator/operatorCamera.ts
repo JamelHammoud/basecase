@@ -231,7 +231,6 @@ function endSession() {
   live.frames.stop();
   live.stopVision();
   live.worker.postMessage({ type: 'close' } satisfies PoseRequest);
-  live.worker.terminate();
   stopCameraStream(live.stream);
   setPoints(null);
   set(CLOSED);

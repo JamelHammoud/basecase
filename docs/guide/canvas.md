@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 12. 3D Canvas
 
+Screw recess construction shares `three/hardwareRecessGeometry.ts` across socket, pan, button, countersunk and set screws. Cleanup reads indexed triangles directly and reloads three vectors per triangle, preserving the strict squared-cross-product cutoff of `1e-12`. Material groups write positions and normals directly into their own Float32 buffers. Cleanup disposes its input geometry without modifying source attributes. Recess materials, edge flags and triangle order stay unchanged.
+
 Imported mesh files and robot-link visuals share `linkSoup` in `three/geometryOps.ts`. The geometry worker transforms each source vertex directly into the combined triangle buffer and accumulates bounds in the same pass. Bounds use float32-rounded coordinates, matching the stored triangles. Source arrays stay unchanged, and each call owns its output and transform workspace.
 
 Recorded map fusion and world reconstruction share chronological sensor ordering in `dataLayers/mapFeed.ts`. Each call indexes sensor ranks once for timestamp ties, preserving scan, cloud and depth order, then message order within each sensor. No rank index survives the call.

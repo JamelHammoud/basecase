@@ -173,6 +173,7 @@ export function readinessOf(
     decisions?: ReadinessDecisions;
     fingerprint: string;
     rows?: CheckRow[];
+    wiring?: Readiness['wiring'];
     now?: Date;
   },
 ): Readiness {
@@ -200,13 +201,14 @@ export function readinessOf(
     ignoredRules: ignoredRuleSummaries(findings, rules),
     findings,
     rows: ctx.rows ?? [],
+    wiring: ctx.wiring,
     fingerprint: ctx.fingerprint,
     checkedAt: (ctx.now ?? new Date()).toISOString(),
   };
 }
 
 export const withDecisions = (r: Readiness, parts: ScenePart[], decisions?: ReadinessDecisions): Readiness =>
-  readinessOf(r.findings, { parts, decisions, fingerprint: r.fingerprint, rows: r.rows });
+  readinessOf(r.findings, { parts, decisions, fingerprint: r.fingerprint, rows: r.rows, wiring: r.wiring });
 
 function statusOf(s: { built: boolean; blockout: boolean; blocked: boolean }): Readiness['status'] {
   if (!s.built) return 'empty';

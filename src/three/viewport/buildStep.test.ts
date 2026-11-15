@@ -59,6 +59,7 @@ function fixture() {
     scenePose,
     animators,
     afterRender,
+    overlays: ctx.stage.overlays,
     tick: (time: number) => {
       now = time;
 
@@ -82,6 +83,32 @@ afterEach(() => {
 });
 
 describe('Build step motion', () => {
+  it('draws the worker route points once and disposes the route when the step changes', () => {
+    const f = fixture();
+    const points: [number, number, number][] = [
+      [1, 2, 3],
+      [20, 2, 3],
+      [20, 40, 3],
+    ];
+
+    f.layer.show({ ...removal(), moves: [], routes: [{ points }] });
+
+    const routes = f.overlays.getObjectByName('build-step-routes')!;
+    const line = routes.children[0] as THREE.Line;
+    const dispose = vi.spyOn(line.geometry, 'dispose');
+
+    expect(routes.children).toHaveLength(1);
+    expect([...line.geometry.getAttribute('position').array]).toEqual(points.flat());
+    expect((line.material as THREE.LineBasicMaterial).depthTest).toBe(false);
+    expect(f.tick(2000)).toEqual([false]);
+    f.layer.show(removal());
+    expect(routes.children).toHaveLength(0);
+    expect(dispose).toHaveBeenCalledOnce();
+    f.layer.show({ ...removal(), moves: [], routes: [{ points }] });
+    f.layer.show(null);
+    expect(routes.children).toHaveLength(0);
+  });
+
   it('starts removal seated, moves only the removed part outward, and stops at the offset', () => {
     const f = fixture();
 

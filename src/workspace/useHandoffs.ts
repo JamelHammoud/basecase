@@ -5,10 +5,10 @@ import { scriptedDrive } from '../routines/physicsDrive';
 import { PROOF_SEEDS } from '../routines/physicsProver';
 import { inRoutinesWorker } from '../routines/routinesClient';
 import type { Handoff, TransitionProof } from '../routines/schema';
-import { pairStamp } from '../routines/skillStamps';
+import { pairStamp, physicsStamp } from '../routines/skillStamps';
 import type { DriveSetup } from '../sim/drive';
 import type { SimModel } from '../sim/mjcfTypes';
-import { modelHashes, type Skill } from '../skills/artifacts';
+import type { Skill } from '../skills/artifacts';
 import { errorMessage } from '../utils/errorMessage';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { stubbedPorts, type HandoffPorts, type HandoffStub } from './handoffStub';
@@ -58,7 +58,7 @@ export function useHandoffs(input: HandoffsInput) {
   const proved = async (pair: Handoff): Promise<TransitionProof | null> => {
     const scene = await setup();
 
-    if (stub) return { ...stub.prove(modelHashes(scene.model).physics), skills: await stamped(pair, scene.drive) };
+    if (stub) return { ...stub.prove(physicsStamp(scene.model)), skills: await stamped(pair, scene.drive) };
 
     const all = await sceneSkills(await skills.own());
 
@@ -69,7 +69,7 @@ export function useHandoffs(input: HandoffsInput) {
     const scene = await setup();
 
     if (stub) {
-      const done = await stub.train(pair.to, modelHashes(scene.model).physics);
+      const done = await stub.train(pair.to, physicsStamp(scene.model));
 
       return done && { ...done, proof: { ...done.proof, skills: await stamped(pair, scene.drive) } };
     }
@@ -142,7 +142,7 @@ export function useHandoffs(input: HandoffsInput) {
     const scene = await setup();
     const stamp = await stamped(pair, scene.drive);
 
-    store(pair, { seeds: PROOF_SEEDS, falls, modelHash: modelHashes(scene.model).physics, skills: stamp });
+    store(pair, { seeds: PROOF_SEEDS, falls, modelHash: physicsStamp(scene.model), skills: stamp });
   };
 
   return {

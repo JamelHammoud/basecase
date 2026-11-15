@@ -27,10 +27,14 @@ export function registerWorldAsset(hash: string, asset: WorldAsset, serializedJs
 
 export const getWorldAsset = (hash: string): WorldAsset | undefined => assets.get(hash);
 
-export function sceneWorldAssets(project?: Pick<ProjectSettings, 'cases'>, available?: WorldAssets): WorldAssets {
-  const hashes = new Set(
-    (project?.cases ?? []).flatMap((kase) => (kase.world.imported ? [kase.world.imported.hash] : [])),
-  );
+export function sceneWorldAssets(
+  project?: Pick<ProjectSettings, 'cases' | 'study'>,
+  available?: WorldAssets,
+): WorldAssets {
+  const baseline = project?.study?.base?.project?.cases;
+  const captured = Array.isArray(baseline) ? baseline : [];
+  const cases = [...(project?.cases ?? []), ...captured];
+  const hashes = new Set(cases.flatMap((kase) => (kase?.world?.imported ? [kase.world.imported.hash] : [])));
 
   return Object.fromEntries(
     [...hashes].map((hash) => [

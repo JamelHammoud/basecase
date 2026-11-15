@@ -30,7 +30,7 @@ Basecase saves each scene as you work, so there's no Save command. To share a sc
 
 ## Scenes save themselves
 
-A scene is one design. It holds your parts, joints, poses, comments and goal, plus its Cases and Routines.
+A scene is one design. It holds your parts, joints, poses, comments and goal, plus its Cases, Routines and [Study](/help/study-design-options) settings and results.
 
 Each imported world is stored once per scene, including its mesh, colliders, textures and optional splat. Cases in that scene share the same world data.
 

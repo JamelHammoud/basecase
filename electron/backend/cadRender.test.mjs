@@ -44,10 +44,15 @@ describe('renderCad', () => {
   it('passes the sandbox reply bytes through unparsed with a fixed timeout and only the checked fields', async () => {
     const reply = Buffer.from('{"ok":true,"positions":[]}');
     const kernel = recordingKernel(reply);
-    const out = await renderCad(kernel, { language: 'replicad', code: 'return 1;', timeoutMs: 1e9, expect: { x: 1 } });
+    const out = await renderCad(kernel, {
+      language: 'replicad',
+      code: 'return 1;',
+      timeoutMs: 1e9,
+      expect: { bodies: 1 },
+    });
 
     expect(out).toBe(reply);
-    expect(kernel.jobs).toEqual([{ language: 'replicad', code: 'return 1;', timeoutMs: 90000 }]);
+    expect(kernel.jobs).toEqual([{ language: 'replicad', code: 'return 1;', expect: { bodies: 1 }, timeoutMs: 90000 }]);
   });
 
   it('serialises an object reply and turns a thrown kernel error into a failure', async () => {

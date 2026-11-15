@@ -20,6 +20,9 @@ const DETACHED: Viewport3DHandle = {
   captureViews: async () => [],
   interference: async () => ({ interferences: [], coplanar: [] }),
   fastenerChains: async () => ({ screws: [], sleeves: [] }),
+  wiring: async () => {
+    throw new Error('Open the scene to measure cable routes.');
+  },
   assembly: async () => ({
     chains: { screws: [], sleeves: [] },
     fits: { insertWalls: {}, leadRoomMm: {} },

@@ -21,6 +21,10 @@ import { ignoreFinding, ignoreRule, restoreFinding, restoreRule } from '../readi
 import type { ReadinessHandle } from '../workspace/useReadiness';
 import { usePurchases } from './build/usePurchases';
 import { sceneTether } from '../utils/powerSources';
+import { currentWiring } from '../readiness/currentWiring';
+import type { RefObject } from 'react';
+import type { Viewport3DHandle } from './Viewport3D';
+import { useBomWiring } from './build/useBomWiring';
 
 interface BuildPanelProps {
   parts: ScenePart[];
@@ -39,6 +43,7 @@ interface BuildPanelProps {
   panScroll: boolean;
   guide: BuildGuide;
   readiness: ReadinessHandle;
+  viewportRef: RefObject<Viewport3DHandle | null>;
 }
 
 function supportByMaterial(print: PrintReport | null) {
@@ -68,12 +73,15 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
   panScroll,
   guide,
   readiness,
+  viewportRef,
 }) => {
   const [purchases, savePurchase] = usePurchases();
   const { measures, report: print } = printing;
   const [checking, setChecking] = useState<BomLine | null>(null);
   const { ref: setScroller, style: fadeStyle } = useScrollFade();
-  const bom = buildBom({ parts, project, purchases, measures, supportG: supportByMaterial(print) });
+  const measuredWiring = useBomWiring({ parts, project }, viewportRef, onToast);
+  const wiring = measuredWiring ?? currentWiring(readiness);
+  const bom = buildBom({ parts, project, purchases, measures, supportG: supportByMaterial(print), wiring });
   const file = fileStem(sceneName);
   const money = useMoney();
   const tether = sceneTether({ parts, project });
@@ -148,6 +156,7 @@ export const BuildPanel: React.FC<BuildPanelProps> = ({
         />
         <BuyList
           bom={bom}
+          measuring={!wiring}
           parts={parts}
           panScroll={panScroll}
           project={project}

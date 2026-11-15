@@ -5,6 +5,7 @@ import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { buildAlongSteps } from './buildAlong';
 import { buildGuidePlan, isBuilt } from './guidePlan';
 import { approximateScene } from './guideScene';
+import type { Net } from '../wiring/netlist';
 
 type V3 = [number, number, number];
 
@@ -72,6 +73,59 @@ const project: ProjectSettings = { printer: 'bambu-p1s', material: 'PETG', infil
 const plan = () => buildGuidePlan(approximateScene('Arm', parts, joints), 'PETG');
 
 describe('Build Along', () => {
+  it('draws each incoming hop once when its later endpoint is installed, preserving its worker route', () => {
+    const p = plan();
+    const route = {
+      points: [
+        [0, 0, 0],
+        [0, 40, 0],
+        [40, 40, 0],
+      ] as V3[],
+      requiredMm: 105,
+      cableSupplyId: 'robot-cable-x3p',
+      lengthMm: 180,
+      status: 'pass' as const,
+      reason: null,
+      limitingPose: {},
+    };
+    const net: Net = {
+      from: { id: 'lift-servo', name: 'Feetech STS3215', connector: '5264-3' },
+      to: { id: 'elbow-servo', name: 'Feetech STS3215', connector: '5264-3' },
+      route,
+    };
+    const steps = buildAlongSteps(p, joints, [net]);
+    const incoming = steps.flatMap((s) => s.routes);
+    const installed = p.steps.findIndex((s) => s.partIds.includes('elbow-servo'));
+
+    expect(incoming).toHaveLength(1);
+    expect(steps[installed].routes).toEqual(incoming);
+    expect(incoming[0].route).toBe(route);
+    expect(incoming[0].from.name).toBe('Shoulder lift, ID 2');
+    expect(incoming[0].to.name).toBe('Elbow, ID 3');
+    expect(incoming[0].from.id).toBe('lift-servo');
+    expect(incoming[0].to.id).toBe('elbow-servo');
+  });
+
+  it('waits for both endpoints, includes power leads, and leaves absent endpoints out', () => {
+    const p = plan();
+    const net = (from: string | null, to: string | null): Net => ({
+      from: { id: from, name: from ?? 'Switch', connector: 'wire' },
+      to: { id: to, name: to ?? 'Fuse', connector: 'wire' },
+    });
+    const steps = buildAlongSteps(p, joints, [
+      net('wrist', 'base'),
+      net(null, 'pan-servo'),
+      net('missing', 'base'),
+      net(null, null),
+    ]);
+    const wrist = p.steps.findIndex((s) => s.partIds.includes('wrist'));
+    const pan = p.steps.findIndex((s) => s.partIds.includes('pan-servo'));
+
+    expect(steps.flatMap((s) => s.routes)).toHaveLength(2);
+    expect(steps[wrist].routes.map((n) => [n.from.id, n.to.id])).toContainEqual(['wrist', 'base']);
+    expect(steps[pan].routes.map((n) => [n.from.id, n.to.id])).toContainEqual([null, 'pan-servo']);
+  });
+
   it('only adds parts from step to step and ends with every built part', () => {
     const steps = buildAlongSteps(plan(), joints);
 

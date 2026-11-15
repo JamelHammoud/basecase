@@ -7,10 +7,12 @@ import { isBuilt } from '../guide/guidePlan';
 import { buildBom } from '../utils/bom';
 import { openLink } from '../utils/openLink';
 import type { CommandInputs } from './sceneCommands';
+import { currentWiring } from '../readiness/currentWiring';
 
 function buyAllCommand({ core }: CommandInputs): Command[] {
   const { parts, project, printing } = core;
-  const bom = buildBom({ parts, project, purchases: knownPurchases() ?? {}, measures: printing.measures });
+  const input = { parts, project, purchases: knownPurchases() ?? {}, measures: printing.measures };
+  const bom = buildBom({ ...input, wiring: currentWiring(core.readiness) });
   const { amazonUrl } = bomCart(bom.lines);
 
   if (!amazonUrl) return [];
@@ -22,7 +24,15 @@ function buyAllCommand({ core }: CommandInputs): Command[] {
       label: 'Buy All',
       icon: <ExternalLinkIcon />,
       keywords: 'amazon cart order shop purchase bill of materials bom parts store',
-      run: () => openLink(amazonUrl),
+      run: async () => {
+        const wiring = await core.viewportRef.current?.wiring({ parts, project });
+
+        if (parts !== core.docs.partsRef.current || project !== core.docs.projectRef.current) return;
+
+        const cart = bomCart(buildBom({ ...input, wiring }).lines);
+
+        if (cart.amazonUrl) openLink(cart.amazonUrl);
+      },
     },
   ];
 }

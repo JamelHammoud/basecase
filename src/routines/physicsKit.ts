@@ -1,13 +1,16 @@
 import type { MainModule } from '@mujoco/mujoco';
-import { modelHashes, type Skill } from '../skills/artifacts';
+import type { Skill } from '../skills/artifacts';
 import type { SkillStates } from '../skills/environment';
 import type { DriveSetup } from '../sim/drive';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { LOOK_DEG, routineBody, type RoutineBody } from './physicsBody';
-import { atKitPhase, atRandomPhase, PROOF_SEEDS, Prover, type Sampled } from './physicsProver';
+import { atRandomPhase, PROOF_SEEDS, Prover } from './physicsProver';
+import { isKitPair, KIT_PAIRS as PAIRS, proveKitPair } from './kitPairProof';
 import type { Resource, SkillContract, TransitionProof } from './schema';
-import { controllerStamp, pairStamp, type StampScene } from './skillStamps';
+import { controllerStamp, pairStamp, physicsStamp, type StampScene } from './skillStamps';
+import { hashOf } from '../skills/hash';
+import type { KitTransitionProof } from './kitBehavior';
 
 export interface KitRobot {
   id: string;
@@ -36,36 +39,15 @@ export interface KitScene {
   drive?: DriveSetup | null;
 }
 
-const MIN_WALK_M = 0.08;
-const MIN_TURN_RAD = 0.3;
-const MAX_STILL_M = 0.02;
 const LOOK_TOLERANCE_DEG = 6;
 const D2R = Math.PI / 180;
 const BODY_SKILLS = ['walk', 'settle', 'turn-away'] as const;
-const PAIRS: Array<[string, string]> = [
-  ['walk', 'settle'],
-  ['settle', 'walk'],
-  ['settle', 'turn-away'],
-  ['turn-away', 'walk'],
-  ['turn-away', 'settle'],
-];
 const HANDOFF_STATES = 32;
 
-const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
-const travel = (a: Sampled['start'], b: Sampled['start']) => Math.hypot(b.base[0] - a.base[0], b.base[1] - a.base[1]);
-
-const DOES: Record<string, (s: Sampled) => boolean> = {
-  walk: (s) => travel(s.start, s.end) >= MIN_WALK_M,
-  'turn-away': (s) => Math.abs(wrap(s.end.yaw - s.start.yaw)) >= MIN_TURN_RAD,
-  settle: (s) => travel(s.late, s.end) <= MAX_STILL_M,
-};
-
 interface KitProof {
-  falls: Map<string, number>;
+  pairs: Map<string, ReturnType<typeof proveKitPair>>;
   failed: Set<string>;
 }
-
-const isKitPair = (from: string, to: string) => PAIRS.some(([a, b]) => a === from && b === to);
 
 const contract = (id: string, holds: Resource[], rest: Partial<SkillContract>): SkillContract => ({
   id,
@@ -128,11 +110,11 @@ function kitContracts({ body, proof, modelHash, stamped }: KitFacts): Omit<Routi
   const skills = [...BODY_SKILLS, 'look-at'].map((id) => {
     const reason = body ? reasonFor(body, id, proof) : 'Only a robot that walks on legs runs the Motor Kit.';
     const proofs: Record<string, TransitionProof> = Object.fromEntries(
-      PAIRS.filter(([from]) => from === id && !reason).map(([, to]) => [
+      PAIRS.filter(([from, to]) => from === id && !reason && proof?.pairs.has(`${from}->${to}`)).map(([, to]) => [
         to,
         {
           seeds: PROOF_SEEDS,
-          falls: proof?.falls.get(`${id}->${to}`) ?? 0,
+          ...proof!.pairs.get(`${id}->${to}`)!,
           modelHash,
           skills: pairStamp(stamped, { from: id, to }),
         },
@@ -168,15 +150,11 @@ function proveKit(mj: MainModule, body: RoutineBody): KitProof | null {
   if (!drivable(body)) return null;
 
   const prover = new Prover(mj, body);
-  const proof: KitProof = { falls: new Map(), failed: new Set() };
+  const proof: KitProof = { pairs: new Map(), failed: new Set() };
 
   try {
     for (const [from, to] of PAIRS) {
-      const run = prover.run(from, to, atKitPhase);
-
-      if (run.falls) proof.falls.set(`${from}->${to}`, run.falls);
-
-      if (!run.sampled.every(DOES[to])) proof.failed.add(to);
+      proof.pairs.set(`${from}->${to}`, proveKitPair(prover, { from, to }));
     }
 
     if (lookFailed(prover)) proof.failed.add('look-at');
@@ -195,8 +173,8 @@ const libraryKey = (skills: readonly Skill[]) =>
 export function kitForModel(options: KitScene): RoutineKit {
   const { mj, model, joints, skills } = options;
   const drive = options.drive ?? null;
-  const modelHash = modelHashes(model).physics;
-  const key = `${modelHash}#${libraryKey(skills)}#${drive?.kind ?? ''}`;
+  const modelHash = physicsStamp(model);
+  const key = `${modelHash}#${libraryKey(skills)}#${hashOf(drive)}`;
   const known = cache.get(key);
 
   if (known) return known;
@@ -221,18 +199,19 @@ function runnable(scene: KitScene, skills: string[]): { prover: Prover; joints: 
   return { prover: new Prover(scene.mj, body), joints: body.model.joints.map((j) => j.id) };
 }
 
-export function proveHandoff(scene: KitScene, pair: { from: string; to: string }): TransitionProof | null {
+export function proveHandoff(scene: KitScene, pair: { from: string; to: string }): KitTransitionProof | null {
   const { prover } = runnable(scene, [pair.from, pair.to]) ?? {};
 
   if (!prover) return null;
 
   try {
-    const run = prover.run(pair.from, pair.to, isKitPair(pair.from, pair.to) ? atKitPhase : atRandomPhase);
+    const run = isKitPair(pair) ? proveKitPair(prover, pair) : prover.run(pair.from, pair.to, atRandomPhase);
 
     return {
       seeds: PROOF_SEEDS,
       falls: run.falls,
-      modelHash: modelHashes(scene.model).physics,
+      ...(isKitPair(pair) ? (run as ReturnType<typeof proveKitPair>) : {}),
+      modelHash: physicsStamp(scene.model),
       skills: pairStamp(scene, pair),
     };
   } finally {

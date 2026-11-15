@@ -1,5 +1,5 @@
 import { PROOF_SEEDS } from '../routines/physicsProver';
-import type { TransitionProof } from '../routines/schema';
+import type { SkillContract, TransitionProof } from '../routines/schema';
 import { skillHash, type Skill } from '../skills/artifacts';
 import { ownId, type OwnSkill } from './routineCheck';
 import type { SceneRoutineSkills } from './useRoutineSkills';
@@ -7,6 +7,7 @@ import type { SceneRoutineSkills } from './useRoutineSkills';
 export interface HandoffStub {
   skills: Skill[];
   falls: number;
+  kit?: readonly SkillContract[];
 }
 
 export interface HandoffPorts {
@@ -25,6 +26,7 @@ export function stubbedPorts(stub: HandoffStub, project: SceneRoutineSkills): Ha
     handoffs: project.handoffs,
     trainable: (found) => found.map(ownId),
     replace: (old, skill) => list.splice(list.indexOf(old), 1, owned(skill)),
+    ...(stub.kit ? { kit: stub.kit } : {}),
   };
 
   return {

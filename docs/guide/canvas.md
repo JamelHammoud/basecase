@@ -4,7 +4,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 12. 3D Canvas
 
-Analysis face sampling (`three/analysis/shapeSolid.ts`) writes subdivided centers through one reusable vector into each shape’s cached buffers. Coplanar collision comparisons read those centers, normals and area weights. Sampling retains its barycentric order, minimum area, stride and subdivision cap (§0f).
+Coplanar collision face sampling (`three/analysis/shapeSolid.ts`) writes subdivided centers through one reusable vector into each shape’s cached buffers. Those buffers hold centers, normals and area weights. Sampling retains its barycentric order, minimum area, stride and subdivision cap (§0f).
 
 Imported Case visuals (`three/viewport/importedWorld.ts`) attach to `stage.worldRoot` alongside the world PartLayer. Embedded mesh textures use the imported sampler settings. Spark receives splat bytes directly and schedules redraws through `onDirty` after worker loading or sorting completes. Moving the same world retains its buffers. Closing or replacing it disposes textures, splats and the renderer, and rejects stale asynchronous loads. Collision pieces stay hidden.
 

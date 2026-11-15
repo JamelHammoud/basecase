@@ -19,6 +19,7 @@ interface DataState {
 interface Studio {
   pickFiles: (files: Array<{ name: string; base64: string }>) => void;
   simState: () => DataState;
+  mapMatching: () => boolean;
   mapWorldVerdict: () => Promise<{ seed: number; runs: number; passes: number } | null>;
   mapWorldState: () => Promise<{
     imported: { hash: string } | null;
@@ -32,6 +33,8 @@ interface Studio {
 const state = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
 
 const mapLayer = async () => (await state()).dataLayers.find((layer) => layer.id === 'map');
+
+const matching = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.mapMatching());
 
 const mapRow = () => app.page.locator(shown('[data-layer-row="data:map"]')).first();
 
@@ -61,6 +64,21 @@ afterEach(async () => {
 });
 
 describe('A robot run’s map', () => {
+  it('rebuilds the displayed map when Scan Matching is turned off in Layers', async () => {
+    await loadFixtureRobot(app.page, 'rover-diff');
+    await importCorridor();
+
+    const points = (await mapLayer())!.points;
+
+    expect(await matching()).toBe(true);
+    await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).click();
+    await mapRow().click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Scan Matching', exact: true }).click();
+    await expect.poll(matching).toBe(false);
+    await expect.poll(async () => (await mapLayer())?.points ?? 0).toBeGreaterThan(points);
+    expect(app.errors).toEqual([]);
+  });
+
   it('makes a saved corridor world through Layers and New Case and passes a seeded reference try', async () => {
     await loadFixtureRobot(app.page, 'rover-diff');
     await importCorridor();

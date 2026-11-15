@@ -227,6 +227,7 @@ export class SimEngine {
         jointDof: idx.map((i) => this.jointDof[i]),
       },
       targets: new Float64Array(idx.length),
+      actuators: idx.map((i) => this.sim.joints[i].actuator),
       command: [...pc.policy.command],
       eyes: this.eyesFor(pc.policy),
     };
@@ -350,9 +351,7 @@ export class SimEngine {
 
     stepPolicy(policy, ps, data);
 
-    policy.joints.forEach((id, k) => {
-      const actuator = this.sim.joints.find((j) => j.id === id)?.actuator ?? -1;
-
+    ps.actuators.forEach((actuator, k) => {
       if (actuator >= 0) data.ctrl[actuator] = ps.targets[k];
     });
   }

@@ -139,6 +139,7 @@ export function declareJoints(
 export interface BuildSettingsPayload {
   extras?: Array<{ key: string; qty: number; note?: string }>;
   budget?: number;
+  budget_hours?: number;
   material?: ProjectSettings['material'];
   tether?: Tether;
 }
@@ -174,6 +175,9 @@ export function applyBuildSettings(project: ProjectSettings, pl: BuildSettingsPa
   if (pl.extras) next.extras = mergeExtras(next.extras, pl.extras, bad);
 
   if (pl.budget !== undefined) withBudget(next, pl.budget, money);
+
+  if (pl.budget_hours !== undefined)
+    next.budgetHours = Number.isFinite(pl.budget_hours) && pl.budget_hours > 0 ? pl.budget_hours : undefined;
 
   if (pl.material) next.material = pl.material;
 

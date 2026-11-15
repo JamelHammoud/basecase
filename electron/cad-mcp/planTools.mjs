@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { settledWrites } from './pendingWrites.mjs';
 import { vec3 } from './schemas.mjs';
 import { bridge, fail, text } from './shared.mjs';
+import { motionSkeletonSource } from './motionSkeletonSource.mjs';
 
 const jointId = z.string().regex(/^[a-z0-9_-]+$/);
 const box = z.object({ min: vec3, max: vec3 });
@@ -49,6 +50,39 @@ export const defineSkeleton = {
   handler: async (args) => {
     try {
       return text((await bridge('define_skeleton', args))?.text ?? '');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const skeletonFromMotion = {
+  name: 'skeleton_from_motion',
+  config: {
+    title: 'Fit skeleton to motion',
+    description:
+      'Fits a robot skeleton to an attached BVH motion clip or a public URL before designing its body. ' +
+      'Give the robot height and endpoint tolerance in mm, optionally limiting the fit to named limbs. ' +
+      'Selects catalog servos for the fitted motion, inserts them with the skeleton in one undo step and opens Edit Skeleton. ' +
+      'Returns joint frames, ranges, servo choices and endpoint errors. A clip that cannot meet the tolerance leaves the scene unchanged and names the limb.',
+    inputSchema: {
+      file: z.string().min(1).max(500).optional().describe('Evidence path of an attached .bvh file'),
+      url: z
+        .url({ protocol: /^https?$/ })
+        .optional()
+        .describe('Public URL of a BVH file'),
+      name: z.string().min(1).max(60).optional(),
+      height_mm: z.number().positive().describe('Robot height in mm'),
+      tolerance_mm: z.number().positive().describe('Maximum endpoint error in mm'),
+      limbs: z.array(z.string().min(1).max(60)).min(1).max(60).optional(),
+    },
+  },
+  handler: async ({ file, url, ...args }) => {
+    try {
+      const body = await motionSkeletonSource({ file, url });
+      const reply = await bridge('skeleton_from_motion', { ...args, text: body }, 120000);
+
+      return text(reply?.text ?? '');
     } catch (err) {
       return fail(err);
     }

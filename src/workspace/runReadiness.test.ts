@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { COMPONENT_BY_ID } from '../data/components';
-import type { PrinterSetup } from '../data/printers';
+import { customModel, resolvePrinter, type PrinterSetup } from '../data/printers';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { batteriesIn, projectFingerprint, runReadiness, type ReadinessWorld } from './runReadiness';
 
@@ -21,8 +21,9 @@ const part: ScenePart = {
 };
 const project = { printer: 'default', material: 'PLA', infillPct: 15, joints: [], budgetUsd: 100 } as ProjectSettings;
 const world: ReadinessWorld = { purchases: {}, money: { code: 'USD', ratesDate: '2026-01-01' } };
+const printer = resolvePrinter('default', []);
 const print = (of: ScenePart[] = [part], settings = project, around = world) =>
-  projectFingerprint(of, settings, 'p1s', around);
+  projectFingerprint(of, settings, printer, around);
 const edited = (change: Partial<ScenePart>) => print([{ ...part, ...change }]);
 const sculpt = (value: number) =>
   edited({ sculptMesh: { positions: Array.from({ length: 900 }, (_, i) => (i === 800 ? value : i)) } });
@@ -38,6 +39,9 @@ describe('what makes checks run again', () => {
     ['weight', { massG: 900 }],
     ['skip printing', { print: { skip: true } }],
     ['print face', { print: { down: [1, 0, 0] } }],
+    ['print plate', { print: { plate: 2 } }],
+    ['plate position', { print: { at: [10, 20] } }],
+    ['plate turn', { print: { turned: true } }],
     ['imported mesh', { mesh: { positions: [0, 0, 0], indices: [], baseSize: [1, 1, 1] } }],
     ['move', { position: [1, 0, 0] }],
   ])('a part’s %s', (_name, change) => {
@@ -49,6 +53,7 @@ describe('what makes checks run again', () => {
   });
 
   it.each<[string, Partial<ProjectSettings>]>([
+    ['time budget', { budgetHours: 6 }],
     ['infill', { infillPct: 100 }],
     ['gait', { animations: [{ id: 'a', name: 'walk' }] as ProjectSettings['animations'] }],
     ['first ranges', { firstRanges: { j: [-90, 90] } }],
@@ -58,8 +63,45 @@ describe('what makes checks run again', () => {
     expect(print([part], { ...project, ...change })).not.toBe(print());
   });
 
+  it('printer count and sliced times', () => {
+    expect(print([part], project, { ...world, printerCount: 2 })).not.toBe(print());
+    expect(print([part], project, { ...world, slices: [{ number: 1, hash: 'plate', seconds: 600 }] })).not.toBe(
+      print(),
+    );
+  });
+
   it('a saved price', () => {
     expect(print([part], project, { ...world, purchases: { key: { usd: 3 } } })).not.toBe(print());
+  });
+
+  it('the nozzle or custom printer bed', () => {
+    expect(projectFingerprint([part], project, { ...printer, nozzle: 0.6 }, world)).not.toBe(print());
+
+    const custom = { ...printer, model: customModel({ width: 100, depth: 100, height: 100 }) };
+    const resized = { ...custom, model: customModel({ width: 200, depth: 100, height: 100 }) };
+
+    expect(projectFingerprint([part], project, custom, world)).not.toBe(
+      projectFingerprint([part], project, resized, world),
+    );
+  });
+
+  it('saved assembly steps', () => {
+    const buildGuide = {
+      id: 'guide',
+      pages: 1,
+      steps: 1,
+      generatedAt: '2026-11-14',
+      fingerprint: 'guide',
+      stepParts: { fingerprint: 'parts', ids: [['p']] },
+    };
+    const saved = { ...project, buildGuide };
+    const revised = {
+      ...project,
+      buildGuide: { ...buildGuide, stepParts: { ...buildGuide.stepParts, ids: [[], ['p']] } },
+    };
+
+    expect(print([part], saved)).not.toBe(print());
+    expect(print([part], revised)).not.toBe(print([part], saved));
   });
 
   it('the currency or its rates', () => {

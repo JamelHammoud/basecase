@@ -27,7 +27,7 @@ covers:
   - src/guide/
 ---
 
-Basecase measures a design against real parts, your printer and your budget. If it marks a design Ready to build, you can make it.
+Basecase measures a design against real parts, your printer, your money budget and your time budget. Checks decide whether it is Ready to build.
 
 ## Real parts, not guesses
 
@@ -68,8 +68,12 @@ For flat structural parts, [Cut parts from sheet](/help/cut-parts-from-sheet) ex
 
 The build guide is a PDF of assembly steps. Basecase checks that the parts can go together in that order. The guide names each printed part with a letter, and Print mode cuts that letter into a hidden face of the part.
 
+To fit a weekend build into the hours available, [set a time budget](/help/set-a-time-budget) beside the money budget. The Time check adds printing, estimated assembly and servo setup. It fails over budget, warns above 90%, and remains a note without a budget.
+
 ## What the checks can't promise
 
 Print times and filament amounts are estimates until Print mode slices the plates. Basecase tests range of motion every 15°, so it can miss a clash narrower than that. Peak torque needs a trained walking policy and stays Not run without one. Falls stays Not run until the agent tips the robot over in the simulation.
+
+Time keeps assembly and servo setup as estimates after slicing. It excludes delivery, failed prints and print service lead times.
 
 Open the Build tab and follow [Get a robot ready to build](/help/get-a-robot-ready-to-build).

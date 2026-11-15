@@ -53,6 +53,8 @@ With `/operate`, the agent also receives each available camera detection's class
 
 Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges printed parts bolted together on one link into a single print.
 
+Give the agent a BVH motion clip, the robot's height and a path tolerance in mm. It fits the skeleton before designing the body, places a catalog servo per joint and opens Edit Skeleton. The clip can be an attachment or a public URL. This creates the skeleton and servos, without body parts or physics playback. See [Design a robot from a motion clip](/help/design-a-robot-from-motion).
+
 Ask it to make a flat chest plate aluminum, carbon fiber or acrylic, and it assigns a sheet material and snaps the geometry to stock thickness. Checks and simulation use that material's density. To export the cutting outlines, see [Cut parts from sheet](/help/cut-parts-from-sheet).
 
 Say what you want to do with a robot, such as play a game on a gamepad, and the agent builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
@@ -74,6 +76,8 @@ Matching the silhouette in a photo matters less than any of these.
 ## How it checks its work
 
 After each edit, the agent sees the same Checks as the **Build** tab. It never passes a check by narrowing a joint's range, hiding a part, deleting a part or editing a Case. If a check seems wrong, it tells you.
+
+Give the agent a budget in hours, or [set a time budget](/help/set-a-time-budget) in the Build tab. On the Time row, **Fix** sends it the longest print plate, the assembly step with the most fasteners and the servo count. It can merge compatible printed parts or replace a printed part with a catalog part.
 
 If an edit adds a blocker, the agent follows up on its own, up to twice per message. The follow-up shows in the chat as “Fix what the last change added: 2 problems.” above the new problems. To turn this off, go to **Settings** ▸ **Build**.
 

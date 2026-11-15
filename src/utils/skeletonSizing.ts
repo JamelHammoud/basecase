@@ -15,6 +15,7 @@ interface PointMass {
   g: number;
   at: ZUpVec;
   joint: string;
+  radiusMm: number;
 }
 
 const toScene = ([x, y, z]: ZUpVec): V3 => [x, z, -y];
@@ -49,10 +50,37 @@ function pointMasses(skeleton: RobotSkeleton, totalG: number): PointMass[] {
   const linkG = (j: SkeletonJoint) => j.linkMassG ?? (freeLength ? (spread * linkLength(skeleton, j)) / freeLength : 0);
 
   return joints.flatMap((j) => [
-    { g: linkG(j), at: linkCentre(skeleton, j), joint: j.id },
-    { g: actuatorGrams(j), at: j.origin, joint: j.id },
-    { g: j.payloadG ?? 0, at: j.tip ?? j.origin, joint: j.id },
+    { g: linkG(j), at: linkCentre(skeleton, j), joint: j.id, radiusMm: linkLength(skeleton, j) },
+    { g: actuatorGrams(j), at: j.origin, joint: j.id, radiusMm: 0 },
+    {
+      g: j.payloadG ?? 0,
+      at: j.tip ?? j.origin,
+      joint: j.id,
+      radiusMm: Math.hypot(...diff(j.tip ?? j.origin, j.origin)),
+    },
   ]);
+}
+
+function inertiaBound(skeleton: RobotSkeleton, joint: SkeletonJoint, masses: PointMass[]) {
+  const radii = new Map([[joint.id, 0]]);
+  const queue = [joint];
+
+  while (queue.length) {
+    const parent = queue.shift()!;
+
+    for (const child of childrenOf(skeleton, parent.id)) {
+      radii.set(child.id, radii.get(parent.id)! + Math.hypot(...diff(child.origin, parent.origin)));
+      queue.push(child);
+    }
+  }
+
+  const inertiaKgM2 = masses.reduce((sum, mass) => {
+    const radius = radii.get(mass.joint);
+
+    return radius === undefined ? sum : sum + (mass.g / 1000) * ((radius + mass.radiusMm) / 1000) ** 2;
+  }, 0);
+
+  return { inertiaKgM2, riderRadiusMm: Object.fromEntries(radii) };
 }
 
 function descendants(skeleton: RobotSkeleton, id: string): string[] {
@@ -172,6 +200,7 @@ export function skeletonSizing(skeleton: RobotSkeleton): SizingInput | string {
       servos: 1,
       currentG: actuatorGrams(j),
       riders: riders.filter((id) => skeleton.joints.some((k) => k.id === id)),
+      ...inertiaBound(skeleton, j, masses),
     };
   });
 

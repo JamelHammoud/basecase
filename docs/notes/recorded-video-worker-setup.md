@@ -111,6 +111,8 @@ It also checks the remaining Chrome launch budget, initial-page use, ownership a
 `src/vision/tryFrameMedia.test.ts` retains clip offsets, boundaries, sample drawing and disposal checks.
 `src/vision/tryFrames.test.ts` retains saved-try extraction, MCAP timestamps, labels and source validation.
 
-`tools/quarantine.json` had no entry for `tryFrameVideo.test.ts` on the base commit, so no entry needed removal.
+`tools/quarantine.json` had no entry for `tryFrameVideo.test.ts` on the measurement base commit.
+Main added a Linux-only entry in #1071 while this fix was being measured.
+That entry is removed because the ten loaded rounds before and after meet its restoration requirement.
 The video test has no platform exclusion.
 No help article or changelog entry is needed because this changes test setup rather than a product workflow.

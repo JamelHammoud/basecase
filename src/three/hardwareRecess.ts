@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
 import { CROSS_RECESS, HardwareSpec, ScrewRecess, TORX_RECESS } from '../data/hardware';
 import { hexRadius, polygonShape, prism } from './hardwarePrimitives';
+import { cleanRecessGeometry, recessGroupGeometry } from './hardwareRecessGeometry';
 
 type CrossRecess = Extract<ScrewRecess, { kind: 'phillips' | 'pozidriv' }>;
 
@@ -148,71 +149,14 @@ export function recessDepth(type: HardwareSpec['type'], recess: ScrewRecess, k: 
   return k * (isHex ? 0.6 : 0.55);
 }
 
-function clean(g: THREE.BufferGeometry): THREE.BufferGeometry {
-  const src = g.index ? g.toNonIndexed() : g;
-  const pos = src.attributes.position;
-  const nor = src.attributes.normal;
-  const p: number[] = [];
-  const n: number[] = [];
-  const a = new THREE.Vector3();
-  const b = new THREE.Vector3();
-  const c = new THREE.Vector3();
-
-  for (let i = 0; i < pos.count; i += 3) {
-    a.fromBufferAttribute(pos, i);
-    b.fromBufferAttribute(pos, i + 1);
-    c.fromBufferAttribute(pos, i + 2);
-
-    if (b.clone().sub(a).cross(c.clone().sub(a)).lengthSq() < 1e-12) continue;
-
-    for (let j = 0; j < 3; j++) {
-      p.push(pos.getX(i + j), pos.getY(i + j), pos.getZ(i + j));
-      n.push(nor.getX(i + j), nor.getY(i + j), nor.getZ(i + j));
-    }
-  }
-
-  if (src !== g) src.dispose();
-
-  g.dispose();
-
-  const out = new THREE.BufferGeometry();
-
-  out.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
-  out.setAttribute('normal', new THREE.Float32BufferAttribute(n, 3));
-
-  return out;
-}
-
 const csg = new Evaluator();
 
 csg.attributes = ['position', 'normal'];
 csg.useGroups = true;
 
-function groupGeometry(geo: THREE.BufferGeometry, group: { start: number; count: number }): THREE.BufferGeometry {
-  const idx = geo.index;
-  const pos = geo.attributes.position;
-  const nor = geo.attributes.normal;
-  const p = new Float32Array(group.count * 3);
-  const n = new Float32Array(group.count * 3);
-
-  for (let i = 0; i < group.count; i++) {
-    const v = idx ? idx.getX(group.start + i) : group.start + i;
-
-    p.set([pos.getX(v), pos.getY(v), pos.getZ(v)], i * 3);
-    n.set([nor.getX(v), nor.getY(v), nor.getZ(v)], i * 3);
-  }
-
-  const piece = new THREE.BufferGeometry();
-
-  piece.setAttribute('position', new THREE.BufferAttribute(p, 3));
-  piece.setAttribute('normal', new THREE.BufferAttribute(n, 3));
-
-  return piece;
-}
-
 export function cutRecess(add: AddPiece, m: RecessMaterials, { head, cutter, edges = true }: RecessCut): void {
-  const a = new Brush(clean(head), m.main);
-  const b = new Brush(clean(cutter), m.dark);
+  const a = new Brush(cleanRecessGeometry(head), m.main);
+  const b = new Brush(cleanRecessGeometry(cutter), m.dark);
 
   a.updateMatrixWorld();
   b.updateMatrixWorld();
@@ -227,7 +171,7 @@ export function cutRecess(add: AddPiece, m: RecessMaterials, { head, cutter, edg
   for (const group of groups) {
     const isRecess = mats[group.materialIndex ?? 0] === m.dark;
 
-    add(groupGeometry(geo, group), isRecess ? m.dark : m.main, edges && !isRecess);
+    add(recessGroupGeometry(geo, group), isRecess ? m.dark : m.main, edges && !isRecess);
   }
 
   a.geometry.dispose();

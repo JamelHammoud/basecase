@@ -5,23 +5,6 @@ type Point = SheetProfile['outline'][number];
 export type Edge = [Point, Point];
 
 export const pointKey = ([x, y]: Point) => `${Math.round(x * 10000)},${Math.round(y * 10000)}`;
-export const edgeKey = ([a, b]: Edge) => [pointKey(a), pointKey(b)].sort().join('|');
-
-export function boundaryEdges(edges: Edge[]): Edge[] | undefined {
-  const counts = new Map<string, { edge: Edge; count: number }>();
-
-  for (const edge of edges) {
-    const key = edgeKey(edge);
-    const found = counts.get(key) ?? { edge, count: 0 };
-
-    found.count++;
-    counts.set(key, found);
-  }
-
-  if ([...counts.values()].some(({ count }) => count > 2)) return undefined;
-
-  return [...counts.values()].filter(({ count }) => count === 1).map(({ edge }) => edge);
-}
 
 export function polygonArea(loop: Point[]): number {
   return (

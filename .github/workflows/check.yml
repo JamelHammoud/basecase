@@ -144,9 +144,9 @@ jobs:
       - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/${{ strategy.job-total }}
 
       - name: Run quarantined tests
-        if: ${{ !cancelled() && matrix.shard == 1 }}
+        if: ${{ !cancelled() }}
         continue-on-error: true
-        run: npm run test:quarantine
+        run: npm run test:quarantine -- ${{ matrix.shard }}/${{ strategy.job-total }}
 
   e2e-changed:
     if: ${{ github.event_name == 'pull_request' }}
@@ -222,9 +222,9 @@ jobs:
       - run: npx vitest run --config vitest.e2e.config.ts --shard ${{ matrix.shard }}/${{ strategy.job-total }}
 
       - name: Run quarantined tests
-        if: ${{ !cancelled() && matrix.shard == 1 }}
+        if: ${{ !cancelled() }}
         continue-on-error: true
-        run: npm run test:quarantine
+        run: npm run test:quarantine -- ${{ matrix.shard }}/${{ strategy.job-total }}
 
   app:
     needs: changes

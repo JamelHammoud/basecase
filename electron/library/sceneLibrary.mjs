@@ -41,6 +41,7 @@ function sceneRecord(id, payload, previous) {
     parts,
     annotations: payload.annotations || [],
     project: payload.project,
+    worldAssets: payload.worldAssets,
   };
 }
 

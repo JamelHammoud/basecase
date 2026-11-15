@@ -78,11 +78,13 @@ Other files come in like this:
 - A `.mcap` or `.bag` recording, or a zip that holds a LeRobot dataset, comes in as tries on the robot in the scene. See [Import robot data as tries](/help/import-robot-data-as-tries).
 - A COCO, YOLO or Pascal VOC dataset folder or zip adds labeled images to the Library. See [Import an image dataset](/help/import-an-image-dataset).
 
-You can also choose **File** ▸ **Import**, or press [[⌘K]]. To import files at a specific spot, drop them on the canvas. If you drop a `.mid` file, it plays in a Case's tries instead. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
+You can also choose **File** ▸ **Import**, or press [[⌘K]]. Dropping GLB, glTF or OBJ files on the canvas opens them as [Case worlds](/help/import-a-world). A dropped SPZ or PLY splat needs a collider mesh in the same drop. To bring these meshes in as parts, use **Import** instead.
+
+Other part files dropped on the canvas appear at the drop point. If you drop a `.mid` file, it plays in a Case's tries instead. See [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 
 ## Units and axes
 
-Basecase reads each format with these units and up axis:
+For meshes brought in as parts with **Import**, Basecase reads each format with these units and up axis:
 
 | Format | Read as | Up axis |
 |---|---|---|

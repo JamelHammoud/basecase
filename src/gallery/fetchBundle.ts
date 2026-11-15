@@ -1,4 +1,5 @@
 import { GALLERY_BUNDLE_MAX_BYTES, readGalleryBundleBytes, type GalleryBundle } from './galleryBundle';
+import { restoreWorldAssets, sceneWorldAssets } from '../cases/worldAssets';
 
 async function cappedBytes(res: Response, max: number): Promise<Uint8Array> {
   if (Number(res.headers.get('content-length') ?? 0) > max || !res.body) throw new Error('Too large');
@@ -35,5 +36,10 @@ export async function fetchGalleryBundle(url: string): Promise<GalleryBundle> {
 
   if (!res.ok) throw new Error(String(res.status));
 
-  return readGalleryBundleBytes(await cappedBytes(res, GALLERY_BUNDLE_MAX_BYTES));
+  const bundle = readGalleryBundleBytes(await cappedBytes(res, GALLERY_BUNDLE_MAX_BYTES));
+  const assets = await restoreWorldAssets(bundle.worldAssets);
+
+  sceneWorldAssets({ cases: [bundle.case] }, assets);
+
+  return bundle;
 }

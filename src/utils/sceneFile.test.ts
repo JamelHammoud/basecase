@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import { decodeSceneFile, encodeSceneFile, sharedScene } from './sceneFile';
+import { meshWorldAsset } from '../cases/worldAssets.fixtures';
+import { getWorldAsset, hashWorldAsset, registerWorldAsset } from '../cases/worldAssets';
 
 const part = (id: string, extra: Partial<ScenePart> = {}): ScenePart => ({
   id,
@@ -32,6 +34,41 @@ const project = {
 const encode = (text: string) => new TextEncoder().encode(text);
 
 describe('scene files', () => {
+  it('stores one portable world for repeated Case references and restores its typed geometry', async () => {
+    const asset = meshWorldAsset();
+    const hash = await hashWorldAsset(asset);
+    const imported = { hash, position: [0, 0, 0] };
+    const settings = {
+      ...project,
+      cases: [{ world: { objects: [], imported } }, { world: { objects: [], imported } }],
+    } as unknown as ProjectSettings;
+
+    registerWorldAsset(hash, asset);
+
+    const shared = sharedScene({ name: 'Room', globalGoal: '', parts: [part('rover')], project: settings });
+    const decoded = await decodeSceneFile(await encodeSceneFile(shared));
+
+    expect(Object.keys(decoded.worldAssets ?? {})).toEqual([hash]);
+    expect(decoded.project?.cases?.map((kase) => kase.world.imported?.hash)).toEqual([hash, hash]);
+    expect(getWorldAsset(hash)?.world.mesh.positions).toEqual(asset.world.mesh.positions);
+    expect(getWorldAsset(hash)?.pieces[0].indices).toBeInstanceOf(Uint32Array);
+  });
+
+  it('refuses missing world assets even when the registry already holds them', async () => {
+    const asset = meshWorldAsset();
+    const hash = await hashWorldAsset(asset);
+
+    registerWorldAsset(hash, asset);
+
+    const file = {
+      format: 'basecase-scene',
+      version: 1,
+      scene: { parts: [], project: { cases: [{ world: { objects: [], imported: { hash, position: [0, 0, 0] } } }] } },
+    };
+
+    await expect(decodeSceneFile(encode(JSON.stringify(file)))).rejects.toThrow('missing');
+  });
+
   it('round-trips a scene and leaves out what belongs to the sender', async () => {
     const shared = sharedScene({
       name: 'Gripper',

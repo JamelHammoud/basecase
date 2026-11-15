@@ -1,4 +1,4 @@
-import type { Sketch, SketchArc, SketchCircle, SketchConstraint, SketchEntity, SketchLine, Vec2 } from './types';
+import type { SketchArc, SketchCircle, SketchConstraint, SketchEntity, SketchLine, Vec2 } from './types';
 
 export interface Geometry {
   point: (id: string) => Vec2;
@@ -170,14 +170,12 @@ export function arcResiduals(g: Geometry, arc: SketchArc): number[] {
   return [len(sub(g.point(arc.a), c)) - len(sub(g.point(arc.b), c))];
 }
 
-export function allResiduals(g: Geometry, sketch: Sketch): number[] {
+export function allResiduals(g: Geometry, arcs: SketchArc[], constraints: SketchConstraint[]): number[] {
   const out: number[] = [];
 
-  for (const e of sketch.entities) {
-    if (e.kind === 'arc') out.push(...arcResiduals(g, e));
-  }
+  for (const arc of arcs) out.push(...arcResiduals(g, arc));
 
-  for (const c of sketch.constraints) out.push(...constraintResiduals(g, c));
+  for (const c of constraints) out.push(...constraintResiduals(g, c));
 
   return out;
 }

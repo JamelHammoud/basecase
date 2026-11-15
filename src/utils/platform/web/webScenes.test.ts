@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { meshWorldAsset } from '../../../cases/worldAssets.fixtures';
+import { hashWorldAsset, serializeWorldAssets } from '../../../cases/worldAssets';
 import type { SavedSceneRecord } from '../../../types/robotics';
 import { idbAll, idbGet, idbWrite } from './idb';
 import { summarizeScene } from './sceneSummary';
@@ -93,5 +95,32 @@ describe('web scene summaries', () => {
 
     expect(await getScene('arm')).toBe(record);
     expect(idbGet).toHaveBeenCalledExactlyOnceWith('scenes', 'arm');
+  });
+});
+
+describe('web scene world persistence', () => {
+  it('keeps one portable asset table through a save and preview refresh without adding it to summaries', async () => {
+    const data = new Map<string, unknown>();
+    const asset = meshWorldAsset();
+    const hash = await hashWorldAsset(asset);
+    const worldAssets = serializeWorldAssets({ [hash]: asset });
+
+    vi.mocked(idbGet).mockImplementation(async (store, key) => data.get(`${store}:${key}`));
+    vi.mocked(idbAll).mockImplementation(async (store) =>
+      [...data.entries()].filter(([key]) => key.startsWith(`${store}:`)).map(([, value]) => value),
+    );
+    vi.mocked(idbWrite).mockImplementation(async (changes) => {
+      for (const change of changes) {
+        if (change.kind === 'put') data.set(`${change.store}:${change.key}`, change.value);
+        else data.delete(`${change.store}:${change.key}`);
+      }
+    });
+
+    await saveScene({ id: 'world', name: 'Room', parts: [], worldAssets });
+    await saveScenePreview({ id: 'world', previewDataUrl: 'data:image/png;base64,AA' });
+
+    expect((await getScene('world'))?.worldAssets).toEqual(worldAssets);
+    expect(await listScenes()).toEqual([expect.objectContaining({ id: 'world' })]);
+    expect((await listScenes())[0]).not.toHaveProperty('worldAssets');
   });
 });

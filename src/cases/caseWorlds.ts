@@ -10,7 +10,7 @@ import {
 import { roughGround, slope, steps } from './terrain';
 import type { WorldObject } from './schema';
 
-export type WorldKind = 'floor' | 'corridor' | 'block' | 'shelf' | 'rough' | 'steps' | 'slope' | 'room';
+export type WorldKind = 'floor' | 'corridor' | 'block' | 'shelf' | 'rough' | 'steps' | 'slope' | 'room' | 'imported';
 
 export interface CaseWorld {
   kind: WorldKind;

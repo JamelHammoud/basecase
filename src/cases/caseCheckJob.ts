@@ -2,7 +2,7 @@ import type { MainModule } from '@mujoco/mujoco';
 import type { VelocityDrive } from '../sim/driveAccess';
 import type { PolicySpec } from '../sim/policy';
 import { buildMjcf } from '../sim/mjcf';
-import type { SimModel } from '../sim/mjcfTypes';
+import type { SimModel, WorldItem } from '../sim/mjcfTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
 import { modelHashes } from '../skills/artifacts';
 import { kitTopSpeed } from '../skills/kitModel';
@@ -40,6 +40,7 @@ interface Controlled {
   walk: VelocityDrive | null;
   policy?: PolicySpec | null;
   jointNoiseDeg?: number;
+  worldColliders?: WorldItem[];
 }
 
 export interface RunsJob extends Controlled {
@@ -96,8 +97,8 @@ function walkPick(records: SkillRecord[], model: SimModel | null): WalkPick | nu
 
 const controlOf = (job: Controlled): RunOptions =>
   job.policy
-    ? { controller: 'policy', policy: job.policy, jointNoiseDeg: job.jointNoiseDeg }
-    : { controller: 'reference', walk: job.walk, jointNoiseDeg: job.jointNoiseDeg };
+    ? { controller: 'policy', policy: job.policy, jointNoiseDeg: job.jointNoiseDeg, worldColliders: job.worldColliders }
+    : { controller: 'reference', walk: job.walk, jointNoiseDeg: job.jointNoiseDeg, worldColliders: job.worldColliders };
 
 function modelHashOf(model: SimModel) {
   const { physics, actuators } = modelHashes(model);

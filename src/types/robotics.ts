@@ -376,6 +376,7 @@ export interface SavedSceneRecord extends SavedSceneSummary {
   referenceImages?: ReferenceImageRecord[];
   annotations?: SceneAnnotation[];
   project?: ProjectSettings;
+  worldAssets?: import('../cases/worldAssets').SerializedWorldAssets;
 }
 
 export interface CatalogItem {

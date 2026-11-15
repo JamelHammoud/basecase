@@ -68,12 +68,12 @@ export interface Mocap {
   parentOf: Map<string, string | null>;
 }
 
-function segment(name: string): string {
+function segment(name: string, sided: boolean): string {
   const words = nameWords(name).filter(
     (w) => !['left', 'right', 'l', 'r', 'joint', 'jnt', 'bone', 'link', 'bip01', 'bip001'].includes(w),
   );
 
-  if (words.length && /^[lr][a-z]{3,}$/.test(words[0]) && sideOf(name)) words[0] = words[0].slice(1);
+  if (words.length && /^[lr][a-z]{3,}$/.test(words[0]) && sided) words[0] = words[0].slice(1);
 
   return words
     .map((w) => w.replace(/^left|^right|left$|right$/g, ''))
@@ -93,13 +93,30 @@ const HUMAN_NAMES: Partial<Record<string, string[]>> = {
 
 const compact = (s: string) => s.replace(/\s+/g, '');
 
+function prepareBones(bones: string[]) {
+  const named: Array<{ bone: string; segment: string }> = [];
+  const limbs = new Map<string, string>();
+
+  for (const bone of bones) {
+    const side = sideOf(bone);
+    const label = segment(bone, !!side);
+    const key = `${side}:${compact(label)}`;
+
+    named.push({ bone, segment: label });
+
+    if (side && !limbs.has(key)) limbs.set(key, bone);
+  }
+
+  return { named, limbs };
+}
+
 export function autoMapBones(m: Mocap): Partial<Record<Keypoint, string>> {
   const out: Partial<Record<Keypoint, string>> = {};
+  const { named, limbs } = prepareBones(m.bones);
+  const first = (re: RegExp) => named.find((entry) => re.test(entry.segment))?.bone;
   const find = (side: 'left' | 'right', kind: string) => {
     for (const want of HUMAN_NAMES[kind] ?? []) {
-      const hit = m.bones.find(
-        (b) => sideOf(b) === side && (segment(b) === want || compact(segment(b)) === compact(want)),
-      );
+      const hit = limbs.get(`${side}:${compact(want)}`);
 
       if (hit) return hit;
     }
@@ -115,9 +132,9 @@ export function autoMapBones(m: Mocap): Partial<Record<Keypoint, string>> {
     }
   }
 
-  out.hips = m.bones.find((b) => /^(hips?|pelvis|root)$/.test(segment(b))) ?? m.root;
-  out.neck = m.bones.find((b) => /^neck( ?1)?$/.test(segment(b)));
-  out.head = m.bones.find((b) => /^head$/.test(segment(b)));
+  out.hips = first(/^(hips?|pelvis|root)$/) ?? m.root;
+  out.neck = first(/^neck( ?1)?$/);
+  out.head = first(/^head$/);
 
   const ancestors = (b?: string) => {
     const list: string[] = [];
@@ -129,8 +146,7 @@ export function autoMapBones(m: Mocap): Partial<Record<Keypoint, string>> {
   const l = ancestors(out.leftShoulder),
     r = new Set(ancestors(out.rightShoulder));
 
-  out.chest =
-    l.find((b) => r.has(b) && b !== out.hips) ?? m.bones.find((b) => /^(chest|spine ?2|spine ?1)$/.test(segment(b)));
+  out.chest = l.find((b) => r.has(b) && b !== out.hips) ?? first(/^(chest|spine ?2|spine ?1)$/);
 
   return out;
 }

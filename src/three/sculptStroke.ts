@@ -30,17 +30,17 @@ const INVERTED_BRUSH: Partial<Record<SculptBrushKind, SculptBrushKind>> = { infl
 
 const BRUSHES: Record<SculptBrushKind, (step: BrushStep) => void> = {
   inflate: ({ v, n, stroke, amp, w }) => {
-    const pushDir = n.clone().lerp(stroke.normal, 0.5).normalize();
+    const pushDir = n.lerp(stroke.normal, 0.5).normalize();
 
     v.addScaledVector(pushDir, amp * w);
   },
   carve: ({ v, n, stroke, amp, w }) => {
-    const carveDir = n.clone().lerp(stroke.normal, 0.5).normalize();
+    const carveDir = n.lerp(stroke.normal, 0.5).normalize();
 
     v.addScaledVector(carveDir, -amp * w);
   },
-  flatten: ({ v, stroke, w, strength }) => {
-    const toVert = v.clone().sub(stroke.center);
+  flatten: ({ v, n, stroke, w, strength }) => {
+    const toVert = n.copy(v).sub(stroke.center);
     const signedDist = toVert.dot(stroke.normal);
 
     v.addScaledVector(stroke.normal, -signedDist * w * Math.min(1, strength * 0.65));
@@ -48,8 +48,8 @@ const BRUSHES: Record<SculptBrushKind, (step: BrushStep) => void> = {
   smooth: ({ v, avgPos, w, strength }) => {
     v.lerp(avgPos, w * Math.min(0.75, strength * 0.45));
   },
-  pinch: ({ v, stroke, amp, w, strength }) => {
-    const toCenter = stroke.center.clone().sub(v);
+  pinch: ({ v, n, stroke, amp, w, strength }) => {
+    const toCenter = n.copy(stroke.center).sub(v);
 
     v.addScaledVector(toCenter, w * Math.min(0.5, strength * 0.3));
     v.addScaledVector(stroke.normal, amp * 0.25 * w);
@@ -121,7 +121,7 @@ function applyStroke(
 
   avgPos.divideScalar(affectedIndices.length);
 
-  const amp = strength * radius * 0.14;
+  const step: BrushStep = { v, n, stroke, w: 0, amp: strength * radius * 0.14, avgPos, strength };
   const move = BRUSHES[brush.kind];
 
   for (let k = 0; k < affectedIndices.length; k++) {
@@ -129,7 +129,8 @@ function applyStroke(
 
     v.fromBufferAttribute(posAttr, idx);
     n.fromBufferAttribute(normAttr, idx);
-    move({ v, n, stroke, w: falloffs[k], amp, avgPos, strength });
+    step.w = falloffs[k];
+    move(step);
     posAttr.setXYZ(idx, v.x, v.y, v.z);
   }
 }

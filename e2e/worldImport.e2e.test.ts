@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
 import { kitchenCollider, kitchenSplat } from '../src/cases/worldImportFixture';
 import type { WorldImportFile } from '../src/cases/worldImportTypes';
-import { loadFixtureRobot } from './driveChecks';
+import { endTryAt, inDataset, loadFixtureRobot, passedDatasetFiles } from './driveChecks';
 import type { SimState } from './driveStudio';
 import { openApp, partCount, shown, type App } from './harness';
 
@@ -74,7 +74,28 @@ async function expectKitchenCamera() {
   const baseline = await framePixels(floor!);
 
   await expect.poll(() => tileDifference(baseline)).toBeGreaterThan(0.05);
-  expect((await simState()).tries).toHaveLength(0);
+}
+
+async function recordKitchenTry() {
+  await app.page
+    .locator(shown('button'), { hasText: /^Try It$/ })
+    .first()
+    .click();
+  await endTryAt(app.page, 0.2);
+  await expect.poll(async () => (await simState()).tries.length).toBe(1);
+  await expect.poll(() => app.page.locator(shown('[data-testid="try-row"]')).count()).toBe(1);
+}
+
+async function expectKitchenDataset() {
+  const files = inDataset(await passedDatasetFiles(app.page));
+  const videos = Object.keys(files).filter((path) => path.endsWith('.mp4'));
+
+  expect(videos.sort()).toEqual([
+    'v2.1/videos/chunk-000/observation.images.scene/episode_000000.mp4',
+    'videos/observation.images.scene/chunk-000/file-000.mp4',
+  ]);
+
+  for (const path of videos) expect(files[path].length).toBeGreaterThan(0);
 }
 
 async function dropFixtures(files: WorldImportFile[]) {
@@ -129,7 +150,7 @@ afterEach(async () => {
 });
 
 describe('a captured world dropped on the canvas', () => {
-  it('opens an imported Case with splats and colliders and shows its world in the live camera', async () => {
+  it('imports a kitchen, saves a try, shows its world in the live camera and exports Scene videos', async () => {
     app = await openApp();
     await loadFixtureRobot(app.page, 'rover-diff');
 
@@ -146,7 +167,9 @@ describe('a captured world dropped on the canvas', () => {
     expect(world.pieces).toBeLessThanOrEqual(64);
     expect(await partCount(app.page)).toBe(parts);
 
+    await recordKitchenTry();
     await expectKitchenCamera();
+    await expectKitchenDataset();
     expect(app.errors).toEqual([]);
   });
 

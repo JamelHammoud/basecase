@@ -1,107 +1,142 @@
-import type { V3 } from '../utils/kinematics';
-import {
-  holdNear,
-  marker,
-  near,
-  pointProblem,
-  REACH,
-  touchTarget,
-  type BuilderRobot,
-  type CaseGoal,
-  type GoalPlan,
-  type GoalValues,
-} from './caseGoals';
-import type { RobotSlot, SlotPose } from './schema';
+import type { Formula, State } from '../skills/contract';
+import type { BuilderRobot, CaseGoal, GoalPlan, GoalValues } from './caseGoals';
+import { marker, near, REACH } from './caseGoals';
+import { handoffLayout, handoffProblem, type HandoffLayout } from './handoffLayout';
+import { handoffReference } from './handoffReference';
+import { FLOOR_PROBE_DEPTH_MM } from './probes';
+import type { CaseProbe, RobotSlot, WorldObject } from './schema';
 
 export const LEAD_SLOT = 'a';
 export const PARTNER_SLOT = 'b';
 
-const HANDOFF_AT_S = 3;
-const HOLD_SECONDS = 0.2;
-const FACING_DEG = 180;
+const HOLD_S = 0.2;
+const FINAL_HOLD_S = 0.3;
+const FINAL_SLACK_MM = 4;
+const BLOCK_DENSITY_G_PER_CM3 = 0.15;
 
-interface PartnerPlace {
-  pose: SlotPose;
-  anchor: V3;
-}
-
-function partnerPlace(robot: BuilderRobot, partner: BuilderRobot, at: V3): PartnerPlace {
-  const lead = robot.facts.anchor;
-  const own = partner.facts.anchor;
-  const anchor: V3 = [2 * at[0] - lead[0], own[1], 2 * at[2] - lead[2]];
-  const position: V3 = [anchor[0] + own[0] - partner.pivot[0], partner.pivot[1], anchor[2] + own[2] - partner.pivot[2]];
-
-  return { pose: { position, yawDeg: FACING_DEG }, anchor };
-}
-
-const armSlot = (id: string, robot: BuilderRobot): RobotSlot => ({
+const gripperSlot = (id: string, robot: BuilderRobot): RobotSlot => ({
   id,
-  needs: ['arm'],
+  needs: ['arm', 'gripper'],
   minJoints: 2,
   binding: robot.facts.endEffector ? { endEffector: robot.facts.endEffector } : {},
   reachMm: robot.facts.reachMm,
   anchor: robot.facts.anchor,
 });
 
-function handoffPlan(robot: BuilderRobot, v: GoalValues): GoalPlan {
-  const partner = robot.partner ?? robot;
-  const at = touchTarget(robot, v);
-  const { pose, anchor } = partnerPlace(robot, partner, at);
-  const rest = (r: BuilderRobot) => r.facts.endEffector?.point ?? r.facts.anchor;
-  const lead = armSlot(LEAD_SLOT, robot);
+const present = (signal: string): State => ({ atom: { expr: { signal }, cmp: '>', value: 0.5, scale: 1 } });
+const absent = (signal: string): State => ({ atom: { expr: { signal }, cmp: '<', value: 0.5, scale: 1 } });
+const hold = (state: State): Formula => ({ hold_for: { seconds: HOLD_S, within: 'whole', state } });
+
+function transferContract(layout: HandoffLayout, radius: number): Formula {
+  const { size } = layout;
+  const raised: State = {
+    atom: { expr: { delta: { signal: 'lift' } }, cmp: '>', value: size[1], scale: size[1] },
+  };
+  const placed: State = {
+    all: [
+      near('spot', radius),
+      { atom: { expr: { delta: { signal: 'lift' } }, cmp: '<', value: FINAL_SLACK_MM, scale: size[1] } },
+    ],
+  };
+  const separated: State = {
+    atom: { expr: { signal: 'donorGap' }, cmp: '>', value: layout.gap, scale: layout.gap },
+  };
 
   return {
-    brief: 'Touch the point with one arm, then the other.',
-    slot: lead,
-    slots: [lead, { ...armSlot(PARTNER_SLOT, partner), anchor, pose }],
-    objects: [
+    sequence: [
+      hold({ all: [present('donorGrip'), absent('recipientContact'), raised] }),
       {
-        ...marker('point', 'Point', at, [v.radiusMm * 2, v.radiusMm * 2, v.radiusMm * 2]),
-        kind: 'sphere',
-        opacity: 0.6,
+        all: [
+          { always: { window: 'whole', state: { any: [present('donorGrip'), present('recipientGrip'), placed] } } },
+          {
+            sequence: [
+              hold({ all: [present('donorGrip'), present('recipientGrip'), raised] }),
+              hold({ all: [present('recipientGrip'), absent('donorContact'), raised, separated] }),
+              {
+                always: {
+                  window: { last: FINAL_HOLD_S },
+                  state: { all: [placed, absent('donorContact'), absent('recipientContact'), separated] },
+                },
+              },
+            ],
+          },
+        ],
       },
     ],
-    probes: [
-      { signal: LEAD_SLOT, from: { effector: LEAD_SLOT }, to: { object: 'point' } },
-      { signal: PARTNER_SLOT, from: { effector: PARTNER_SLOT }, to: { object: 'point' } },
-    ],
-    success: {
-      sequence: [
-        holdNear(LEAD_SLOT, v.radiusMm, HOLD_SECONDS),
-        {
-          hold_for: {
-            seconds: HOLD_SECONDS,
-            within: 'whole',
-            state: { all: [near(PARTNER_SLOT, v.radiusMm), { not: near(LEAD_SLOT, v.radiusMm) }] },
-          },
-        },
-      ],
-    },
-    timeline: [
-      { at: 0.2, slot: LEAD_SLOT, target: at },
-      { at: HANDOFF_AT_S, slot: LEAD_SLOT, target: rest(robot) },
-      { at: HANDOFF_AT_S, slot: PARTNER_SLOT, target: at },
-    ],
-    controls: REACH,
-    route: { from: [at[0], 0, robot.pivot[2]], to: [at[0], 0, at[2]], halfWidth: v.radiusMm },
-    target: { at, radius: v.radiusMm },
   };
+}
+
+function transferObjects(layout: HandoffLayout, radius: number): WorldObject[] {
+  const { size, block, spot } = layout;
+
+  return [
+    {
+      id: 'block',
+      name: 'Block',
+      kind: 'box',
+      position: block,
+      rotation: [0, 0, 0],
+      size,
+      color: '#c8a26a',
+      behavior: 'dynamic',
+      massG: Math.max(1, Math.round((size[0] * size[1] * size[2] * BLOCK_DENSITY_G_PER_CM3) / 1000)),
+      points: { donor: [0, 0, -layout.gap / 2], recipient: [0, 0, layout.gap / 2] },
+    },
+    marker('spot', 'Spot', spot, [radius * 2, size[1], radius * 2]),
+  ];
+}
+
+function transferProbes({ block }: HandoffLayout): CaseProbe[] {
+  const pairs = [
+    ['donor', LEAD_SLOT],
+    ['recipient', PARTNER_SLOT],
+  ];
+  const evidence = pairs.flatMap(([role, slot]): CaseProbe[] => [
+    { signal: `${role}Grip`, kind: 'grip', from: { effector: slot }, to: { object: 'block' } },
+    { signal: `${role}Contact`, kind: 'contact', from: { effector: slot }, to: { object: 'block' } },
+    { signal: `${role}Gap`, from: { effector: slot }, to: { object: 'block' } },
+  ]);
+
+  return [
+    ...evidence,
+    { signal: 'spot', from: { object: 'block' }, to: { object: 'spot' } },
+    { signal: 'lift', from: { object: 'block' }, to: { point: [block[0], -FLOOR_PROBE_DEPTH_MM, block[2]] } },
+  ];
+}
+
+function handoffPlan(robot: BuilderRobot, v: GoalValues): GoalPlan {
+  const partner = robot.partner ?? robot;
+  const layout = handoffLayout(robot, v);
+  const lead = gripperSlot(LEAD_SLOT, robot);
+
+  return {
+    brief: 'Lift the block, pass it to the other gripper, and set it on the spot.',
+    slot: lead,
+    slots: [lead, { ...gripperSlot(PARTNER_SLOT, partner), anchor: layout.anchor, pose: layout.pose }],
+    objects: transferObjects(layout, v.radiusMm),
+    probes: transferProbes(layout),
+    success: transferContract(layout, v.radiusMm),
+    timeline: handoffReference(robot, layout),
+    controls: [...REACH, { id: 'grip', label: 'Grip', input: 'grip' }],
+    route: { from: layout.block, to: layout.spot, halfWidth: v.radiusMm },
+  };
+}
+
+export function handoffDefaults(robot: BuilderRobot): Partial<GoalValues> {
+  const reach = Math.min(robot.facts.reachMm, robot.partner?.facts.reachMm ?? robot.facts.reachMm);
+  const values = { distanceMm: Math.round(reach * 0.45), heightMm: Math.round(reach * 0.3) };
+  const layout = handoffLayout(robot, values);
+  const last = handoffReference(robot, layout).at(-1)!;
+
+  return { ...values, radiusMm: Math.max(12, Math.round(layout.size[0] / 2)), seconds: Math.ceil(last.at + 3) };
 }
 
 export const handoffGoal: CaseGoal = {
   kind: 'handoff',
   name: 'Hand Off to a Spot',
-  needs: ['arm'],
+  needs: ['gripper'],
   pair: true,
   params: ['distanceMm', 'heightMm', 'radiusMm', 'seconds'],
   plan: handoffPlan,
-  problem: (robot, v) => {
-    const at = touchTarget(robot, v);
-    const partner = robot.partner ?? robot;
-
-    return (
-      pointProblem(robot.facts, at, v) ??
-      pointProblem({ anchor: partnerPlace(robot, partner, at).anchor, reachMm: partner.facts.reachMm }, at, v)
-    );
-  },
+  problem: handoffProblem,
 };

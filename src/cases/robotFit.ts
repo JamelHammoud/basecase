@@ -203,8 +203,13 @@ function onPart(point: V3, part: ScenePart | undefined): boolean {
 export function boundEffector(binding: SlotBinding, facts: RobotFacts, rig: Rig): EndEffector | null {
   const bound = binding.endEffector;
   const owner = bound && rig.ownerOf.get(bound.part);
+  const robot = facts.armJoints.length ? rig.robotOf.get(facts.armJoints[0]) : null;
   const jaws = new Set(facts.gripper?.jaws.map((j) => j.joint));
-  const isLeaf = owner && !rig.joints.some((j) => rig.parentOf.get(j.id) === owner && !jaws.has(j.id));
+  const isLeaf =
+    owner &&
+    robot &&
+    rig.robotOf.get(owner) === robot &&
+    !rig.joints.some((j) => rig.parentOf.get(j.id) === owner && !jaws.has(j.id));
   const fits =
     bound &&
     isLeaf &&

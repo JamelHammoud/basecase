@@ -133,6 +133,7 @@ describe('isStalePolicy', () => {
     expect(isStalePolicy(trained, current)).toBe(false);
     expect(isStalePolicy(trained, changed)).toBe(true);
     expect(isStalePolicy({ ...trained, modelVersion: 0 }, current)).toBe(true);
+    expect(isStalePolicy({ ...trained, modelVersion: 1 }, current)).toBe(true);
   });
 
   it('falls back to the sim version for records with no fingerprint, or when the model isn’t built', () => {

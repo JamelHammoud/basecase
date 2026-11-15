@@ -150,10 +150,12 @@ export function castOf(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[]
 }
 
 export function stagedEffectors(staged: StagedCase, scene: { rig: Rig; parts: ScenePart[] }) {
-  const { slots } = castOf(staged, scene);
+  const { rig, slots } = castOf(staged, scene);
 
   return {
+    rig,
     effector: slots[0]?.effector ?? null,
     effectors: Object.fromEntries(slots.map((s) => [s.id, s.effector])),
+    grippers: Object.fromEntries(slots.map((s) => [s.id, s.facts.gripper?.jaws.map((jaw) => jaw.joint) ?? []])),
   };
 }

@@ -86,7 +86,6 @@ export function useCaseTry(options: TryOptions): CaseTry {
       kase: staged.kase,
       model,
       recording,
-      rig,
       ...stagedEffectors(staged, { rig, parts }),
     });
 

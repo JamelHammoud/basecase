@@ -114,6 +114,7 @@ export interface CaseProbe {
   signal: string;
   from: ProbeEnd;
   to: ProbeEnd;
+  kind?: 'contact' | 'grip';
 }
 
 export interface ScoreRule {
@@ -286,6 +287,19 @@ const readProbeEnd: Reader<ProbeEnd> = (value, where) => {
   return v.object !== undefined ? { object: asId(v.object, `${where}.object`) } : { point: v3(v.point, where) };
 };
 
+const readProbe: Reader<CaseProbe> = (value, where) => {
+  const v = asRecord(value, where);
+  const kind = optional(oneOf(['contact', 'grip'] as const), v.kind, `${where}.kind`);
+  const from = readProbeEnd(v.from, `${where}.from`);
+  const to = readProbeEnd(v.to, `${where}.to`);
+  const hand = from === 'end-effector' || (typeof from === 'object' && 'effector' in from);
+  const object = typeof to === 'object' && 'object' in to;
+
+  if (kind && (!hand || !object)) refuse(where, 'must probe from an end effector to an object');
+
+  return { signal: asId(v.signal, `${where}.signal`), from, to, ...(kind ? { kind } : {}) };
+};
+
 const readScore: Reader<ScoreRule> = (value, where) => {
   const v = asRecord(value, where);
 
@@ -300,15 +314,7 @@ const readTask: Reader<CaseTask> = (value, where) => {
 
   return {
     seconds,
-    probes: listOf<CaseProbe>((p, at) => {
-      const probe = asRecord(p, at);
-
-      return {
-        signal: asId(probe.signal, `${at}.signal`),
-        from: readProbeEnd(probe.from, `${at}.from`),
-        to: readProbeEnd(probe.to, `${at}.to`),
-      };
-    }, 64)(v.probes, `${where}.probes`),
+    probes: listOf(readProbe, 64)(v.probes, `${where}.probes`),
     contract: readContract(v.contract, `${where}.contract`),
     ...(v.score !== undefined ? { score: readScore(v.score, `${where}.score`) } : {}),
   };

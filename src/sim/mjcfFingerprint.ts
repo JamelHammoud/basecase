@@ -25,7 +25,10 @@ export interface RobotXml {
 }
 
 export function robotFingerprint({ timestep, assets, body, actuators }: RobotXml): string {
-  const text = [`timestep ${timestep}`, ...assets.map(sortedVertices), ...body.slice(1), ...actuators].join('\n');
+  const stableBody = body
+    .slice(1)
+    .map((line) => line.replace(/contype="-?\d+" conaffinity="-?\d+"/g, 'contype="1" conaffinity="0"'));
+  const text = [`timestep ${timestep}`, ...assets.map(sortedVertices), ...stableBody, ...actuators].join('\n');
 
   return hashText(SCENE_INDEXED.reduce((s, [pattern, plain]) => s.replace(pattern, plain), text));
 }

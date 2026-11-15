@@ -39,6 +39,8 @@ You don't write a model file. Each time you start a simulation, Basecase writes 
 
 An [imported world](/help/import-a-world) collides as up to 64 separate convex pieces, keeping gaps such as doorways and the space under a table. Its collider supplies the floor too, so holes stay open. The world's visible mesh or splat is separate from those hidden colliders.
 
+Separate robots collide with each other, the floor, scenery and loose objects. In [Hand Off to a Spot](/help/put-two-robots-in-one-case), the grippers hold and pass the block through physical contact.
+
 If the robot misbehaves in the simulation, fix the design. Basecase writes your changes into the model on your next run.
 
 ## Servos, measured or estimated

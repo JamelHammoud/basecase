@@ -106,6 +106,7 @@ export function builderRobot(rig: Rig, parts: ScenePart[]): BuilderRobot {
   const tops = own.map((b) => b.max[1]);
 
   return {
+    rig,
     facts,
     pivot: robot?.pivot ?? ([0, 0, 0] as V3),
     forward: driveForward(rig, facts),

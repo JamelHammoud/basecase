@@ -129,7 +129,7 @@ function stagedOf(kase: Case, context: LabelContext): Staged {
   const scene = { rig: context.rig, parts: context.parts };
   const staged = stageCase(kase, scene, context.partners());
 
-  return { kase: staged.kase, rig: context.rig, ...stagedEffectors(staged, scene) };
+  return { kase: staged.kase, ...stagedEffectors(staged, scene) };
 }
 
 export async function labelPass(

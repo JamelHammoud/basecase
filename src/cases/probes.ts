@@ -14,10 +14,11 @@ export interface ProbeWorld {
   basePart: string | null;
   basePoint: V3;
   objectAt: Map<string, V3>;
+  grippers?: Record<string, string[]>;
 }
 
 export interface ProbeReader {
-  sample(poses: Float64Array, out: Record<string, number[]>): void;
+  sample(poses: Float64Array, out: Record<string, number[]>, contacts?: ArrayLike<number>): void;
 }
 
 function handAt(effector: EndEffector | null, model: SimModel, poses: Float64Array): THREE.Vector3 {
@@ -49,10 +50,14 @@ export function endPoint(end: ProbeEnd, world: ProbeWorld, poses: Float64Array):
 }
 
 export function probeReader(probes: CaseProbe[], world: ProbeWorld): ProbeReader {
+  const readers = probes.map((probe) => contactProbe(probe, world));
+
   return {
-    sample(poses, out) {
-      for (const p of probes) {
-        const distance = endPoint(p.from, world, poses).distanceTo(endPoint(p.to, world, poses));
+    sample(poses, out, contacts) {
+      for (const [index, p] of probes.entries()) {
+        const distance = readers[index]
+          ? readers[index](contacts)
+          : endPoint(p.from, world, poses).distanceTo(endPoint(p.to, world, poses));
 
         const series = out[p.signal] ?? [];
 
@@ -60,5 +65,42 @@ export function probeReader(probes: CaseProbe[], world: ProbeWorld): ProbeReader
         out[p.signal] = series;
       }
     },
+  };
+}
+
+const objectEnd = (end: ProbeEnd) => (typeof end === 'object' && 'object' in end ? end.object : null);
+
+function contactProbe(probe: CaseProbe, world: ProbeWorld) {
+  if (!probe.kind) return null;
+
+  const hand = typeof probe.from === 'object' && 'effector' in probe.from ? probe.from.effector : null;
+  const object = objectEnd(probe.to);
+  const effector = hand ? world.effectors?.[hand] : world.effector;
+  const carrier = world.model.bodies.find((body) => body.parts.includes(effector?.part ?? ''));
+  const jaws = hand ? (world.grippers?.[hand] ?? []) : (Object.values(world.grippers ?? {})[0] ?? []);
+  const own = world.model.bodies.flatMap((body, index) => {
+    const belongs = probe.kind === 'grip' ? jaws.includes(body.joint ?? '') : body.robot === carrier?.robot;
+
+    return belongs && carrier?.robot ? [index] : [];
+  });
+  const target = new Set(
+    world.model.bodies.flatMap((body, index) => (body.world?.includes(object ?? '') ? [index] : [])),
+  );
+
+  return (contacts?: ArrayLike<number>) => {
+    const touched = new Set<number>();
+
+    for (let i = 0; i + 1 < (contacts?.length ?? 0); i += 2) {
+      const a = contacts![i];
+      const b = contacts![i + 1];
+
+      if (target.has(a)) touched.add(b);
+
+      if (target.has(b)) touched.add(a);
+    }
+
+    if (probe.kind === 'grip') return Number(own.length === 2 && own.every((body) => touched.has(body)));
+
+    return Number(own.some((body) => touched.has(body)));
   };
 }

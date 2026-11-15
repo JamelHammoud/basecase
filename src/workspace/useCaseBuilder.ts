@@ -19,7 +19,7 @@ interface CaseBuilderOptions {
 function partnerOf(partners: SlotRobot[]): BuilderRobot | undefined {
   const robots = partners.map((r) => builderRobot(buildRig(r.joints, r.parts), r.parts));
 
-  return robots.find((r) => r.facts.endEffector) ?? robots[0];
+  return robots.find((r) => r.facts.gripper) ?? robots.find((r) => r.facts.endEffector) ?? robots[0];
 }
 
 interface Dropped {

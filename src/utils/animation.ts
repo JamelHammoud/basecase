@@ -10,6 +10,7 @@ import type {
 import { goalTargets, roundTo, type IkGoal, type PointOf } from './animationGoals';
 import { clampJoint, isMovable, preBend, solveIK, type IkTarget, type Rig, type V3 } from './kinematics';
 import { lengthLabel } from './size';
+import { timeIndex } from './timeIndex';
 
 export { goalParts, goalTargets, type BuiltAnimation, type IkGoal, type PointOf } from './animationGoals';
 export { buildGait, defaultPhases, type GaitSpec } from './gait';
@@ -67,9 +68,7 @@ function spanAt(anim: RobotAnimation, t: number): Span {
       wraps,
     };
 
-  let i = ks.findIndex((k, idx) => idx < ks.length - 1 && time >= k.t && time < ks[idx + 1].t);
-
-  if (i < 0) i = time < ks[0].t ? 0 : ks.length - 2;
+  const i = Math.min(Math.max(timeIndex(ks, time, 'after') - 1, 0), ks.length - 2);
 
   return { i, a: ks[i], b: ks[i + 1], span: ks[i + 1].t - ks[i].t, time, wraps };
 }

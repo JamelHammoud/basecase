@@ -18,7 +18,7 @@ Playwright starts enabling file-dialog interception asynchronously when `waitFor
 
 The activated file-input click occurred during Enter handling, and no `Page.fileChooserOpened` event arrived. In passing runs, interception acknowledgment preceded key-up and a chooser event followed.
 
-The test now registers its chooser listener before opening the palette. Opening the palette and typing the query precede Enter, so interception setup no longer starts alongside picker activation. The command, hidden input, typed query, Enter key, selected malformed file, refusal checks and scene assertions are unchanged. No deadline, retry or quarantine was added. This checkout already had no matching entry in `tools/quarantine.json`.
+The test now registers its chooser listener before opening the palette. Opening the palette and typing the query precede Enter, so interception setup no longer starts alongside picker activation. The command, hidden input, typed query, Enter key, selected malformed file, refusal checks and scene assertions are unchanged. No deadline or retry was added. The matching Linux quarantine entry for #994 is removed from `tools/quarantine.json`, restoring the test to normal CI coverage.
 
 ## Measurement setup
 

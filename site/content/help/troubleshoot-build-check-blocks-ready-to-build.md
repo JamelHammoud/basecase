@@ -25,6 +25,7 @@ covers:
   - src/readiness/wording.ts
   - src/readiness/readiness.ts
   - src/utils/engineeringBudget.ts
+  - src/utils/engineeringTime.ts
   - src/utils/engineeringFalls.ts
   - src/wiring/wiringChecks.ts
   - src/components/settings/BuildPane.tsx
@@ -64,6 +65,17 @@ The estimated total is over your budget. Basecase counts lines marked ≈ at the
 4. Swap out expensive parts, or raise the budget in the field next to the total.
 
 Budget turns amber above 90% of the budget, and red when the total goes over it. For the full steps, see [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget).
+
+## Time is red
+
+Estimated printing, assembly and servo setup exceed your budget in hours.
+
+1. In **Checks**, open **Time** to read the three contributions.
+2. Click **Fix** to ask the agent to reduce printing or assembly time.
+
+![The Time check failing with a one-hour budget on Weekend rover](/help/set-a-time-budget/over-budget.png)
+
+If you have more time available, change **Time** under **Bill of materials** and press [[↩]]. The row passes at 90% of the budget or below, turns amber above 90% and red above 100%. Entering 0 clears the budget and leaves the estimate as a note. [Set a time budget](/help/set-a-time-budget) explains what the estimate includes.
 
 ## “This servo could strip its gears when the robot falls.”
 

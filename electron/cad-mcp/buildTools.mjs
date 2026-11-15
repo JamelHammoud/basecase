@@ -206,6 +206,12 @@ export const setBuild = {
         .max(1e9)
         .optional()
         .describe("In the user's currency, the one get_bom and find_parts show prices in"),
+      budget_hours: z
+        .number()
+        .min(0)
+        .max(1e6)
+        .optional()
+        .describe('Build time budget in hours. Only set when the user gives one. Zero clears it.'),
       material: z.enum(['PLA', 'PETG', 'ABS', 'ASA']).optional(),
       tether: z
         .object({ volts: z.number().min(0).max(100), amps: z.number().min(0).max(200) })
@@ -213,9 +219,9 @@ export const setBuild = {
         .describe('The supply the robot runs from on a cable: its output voltage and rated current'),
     },
   },
-  handler: async ({ extras, budget, material, tether }) => {
+  handler: async ({ extras, budget, budget_hours, material, tether }) => {
     try {
-      const res = await bridge('set_build', { extras, budget, material, tether });
+      const res = await bridge('set_build', { extras, budget, budget_hours, material, tether });
       const unknown = res?.unknown?.length
         ? ` Unknown keys (not added): ${res.unknown.join(', ')}. Use keys from find_parts.`
         : '';

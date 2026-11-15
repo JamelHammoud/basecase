@@ -20,6 +20,7 @@ import { assemblyFindings, bomFindings, engineeringFindings, fitFindings, printF
 import { activeVersions } from '../reality/measuredJoints';
 import { readinessFingerprint, readinessOf, UNSETTLED_FINGERPRINT } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
+import type { TimeInput } from '../utils/engineeringTime';
 import type { PrintMaterial, ProjectSettings, ScenePart } from '../types/robotics';
 import { buildBom } from '../utils/bom';
 import { designedFits } from '../utils/designedFits';
@@ -33,7 +34,7 @@ import { freshFalls, freshWalk } from './storedWalk';
 
 const BUDGET_MS = 30000;
 
-export interface ReadinessInput {
+export interface ReadinessInput extends Pick<TimeInput, 'printerCount' | 'slices'> {
   viewport: Viewport3DHandle;
   parts: ScenePart[];
   project: ProjectSettings;
@@ -43,6 +44,8 @@ export interface ReadinessInput {
 
 export interface ReadinessWorld {
   purchases: object | null;
+  printerCount?: number;
+  slices?: TimeInput['slices'];
   money: { code: string; ratesDate: string };
 }
 
@@ -58,12 +61,17 @@ export const batteriesIn = (parts: ScenePart[]) =>
 export const projectFingerprint = (
   parts: ScenePart[],
   project: ProjectSettings,
-  printerId: string,
+  printer: Pick<PrinterSetup, 'model' | 'nozzle'>,
   world: ReadinessWorld,
 ) =>
   readinessFingerprint(parts, {
     joints: project.joints,
     budget: project.budgetUsd,
+    budgetHours: project.budgetHours,
+    printerCount: world.printerCount ?? 1,
+    slices: world.slices?.map(({ number, hash, seconds }) => [number, hash, seconds]),
+    plates: parts.map((p) => [p.id, p.print?.plate, p.print?.at, p.print?.turned]),
+    guideSteps: jsonHash(project.buildGuide?.stepParts),
     tether: project.tether,
     extras: project.extras,
     sourced: jsonHash(project.sourced),
@@ -78,7 +86,7 @@ export const projectFingerprint = (
     firstRanges: project.firstRanges,
     calibrations: activeVersions(project.servoCalibrations),
     goneMates: goneMateIds(project.joints),
-    printerId,
+    printer: [printer.model.id, printer.nozzle, printer.model.bed, printer.model.height, printer.model.keepOut],
     purchases: jsonHash(world.purchases ?? {}),
     money: [world.money.code, world.money.ratesDate],
   });
@@ -97,6 +105,8 @@ export async function runReadiness({
   project,
   printer,
   fingerprint,
+  printerCount,
+  slices,
 }: ReadinessInput): Promise<Readiness> {
   const turn = nextCaseTurn();
 
@@ -114,6 +124,9 @@ export async function runReadiness({
       walk: freshWalk(parts, project),
       falls: freshFalls(parts, project),
       supportG: supportOf(report),
+      print: report,
+      printerCount,
+      slices,
       printDowns: Object.fromEntries(report.parts.map((r) => [r.id, r.check.pose.down])),
     }),
   );

@@ -73,6 +73,8 @@ Matching the silhouette in a photo matters less than any of these.
 
 After each edit, the agent sees the same Checks as the **Build** tab. It never passes a check by narrowing a joint's range, hiding a part, deleting a part or editing a Case. If a check seems wrong, it tells you.
 
+Give the agent a budget in hours, or [set a time budget](/help/set-a-time-budget) in the Build tab. On the Time row, **Fix** sends it the longest print plate, the assembly step with the most fasteners and the servo count. It can merge compatible printed parts or replace a printed part with a catalog part.
+
 If an edit adds a blocker, the agent follows up on its own, up to twice per message. The follow-up shows in the chat as “Fix what the last change added: 2 problems.” above the new problems. To turn this off, go to **Settings** ▸ **Build**.
 
 If the scene has Cases, the agent runs each one and isn't done until they all pass. For the steps, see [Make a Case pass with the agent](/help/make-a-case-pass-with-the-agent).

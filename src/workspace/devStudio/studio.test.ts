@@ -9,6 +9,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'attachRobot',
   'bomLines',
   'buildAlongSteps',
+  'buildTime',
   'cadSources',
   'calibrate',
   'calibrationReplay',

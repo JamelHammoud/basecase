@@ -6,6 +6,7 @@ import type { V3 } from './engineeringMath';
 import type { ArmModel, PayloadMap } from './payload';
 import type { ChainResult } from '../assembly/assemblyTypes';
 import type { StrengthJob, StrengthReading } from '../strength/types';
+import type { TimeInput } from './engineeringTime';
 import type { Netlist } from '../wiring/netlist';
 
 export interface PartMass {
@@ -37,6 +38,8 @@ export type FindingFix =
 
 export interface CheckRow {
   check: string;
+  hours?: number;
+  agentText?: string;
   status: 'pass' | 'warn' | 'fail' | 'not run';
   detail: string;
   ids?: string[];
@@ -128,7 +131,7 @@ export interface StoredFalls extends FallSim {
   key: string;
 }
 
-export interface EngineeringInputs {
+export interface EngineeringInputs extends Pick<TimeInput, 'print' | 'slices' | 'printerCount' | 'assemblySteps'> {
   parts: ScenePart[];
   project: ProjectSettings;
   measures: Record<string, MeshMeasure | undefined>;

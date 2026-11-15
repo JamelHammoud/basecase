@@ -76,8 +76,10 @@ export function jointGroups(rig: Rig): Array<{ label: string; joints: RobotJoint
     if (!isMovable(j)) continue;
 
     const l = jointGroupLabel(j);
+    const members = groups.get(l) ?? [];
 
-    groups.set(l, [...(groups.get(l) ?? []), j]);
+    members.push(j);
+    groups.set(l, members);
   }
 
   return [...groups].sort((a, b) => groupRank(a[0]) - groupRank(b[0])).map(([label, joints]) => ({ label, joints }));

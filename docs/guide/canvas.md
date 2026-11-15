@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 12. 3D Canvas
 
+Imported mesh files and robot-link visuals share `linkSoup` in `three/geometryOps.ts`. The geometry worker transforms each source vertex directly into the combined triangle buffer and accumulates bounds in the same pass. Bounds use float32-rounded coordinates, matching the stored triangles. Source arrays stay unchanged, and each call owns its output and transform workspace.
+
 Recorded map fusion and world reconstruction share chronological sensor ordering in `dataLayers/mapFeed.ts`. Each call indexes sensor ranks once for timestamp ties, preserving scan, cloud and depth order, then message order within each sensor. No rank index survives the call.
 
 Coplanar collision face sampling (`three/analysis/shapeSolid.ts`) writes subdivided centers through one reusable vector into each shape’s cached buffers. Those buffers hold centers, normals and area weights. Sampling retains its barycentric order, minimum area, stride and subdivision cap (§0f).

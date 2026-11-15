@@ -31,7 +31,14 @@ export interface Motion {
 
 export type DoStep = { kind: 'do'; skill: string; holds: Resource[]; move?: Motion } & Guarded & Named;
 export type SayStep = { kind: 'say'; text: string } & Guarded & Named;
-export type InferStep = { kind: 'infer'; model: string; input: string; output: { type: DataType } } & Guarded & Named;
+export type InferStep = {
+  kind: 'infer';
+  model: string;
+  input: string;
+  label?: string;
+  output: { type: DataType };
+} & Guarded &
+  Named;
 export type AskStep = { kind: 'ask'; prompt: string; input?: string; answers: string[] } & Guarded & Named;
 export type IfStep = { kind: 'if'; test: Condition; then: Step[]; else: Step[] } & Named;
 export type WaitStep = { kind: 'wait'; until?: Condition; ms?: number } & Guarded & Named;
@@ -46,6 +53,7 @@ export interface Watcher {
   rateHz: number;
   maxAgeMs: number;
   publishes: { type: DataType };
+  label?: string;
   when?: Condition;
 }
 

@@ -4,6 +4,7 @@ import { channelCall } from '../../utils/platform/channelCall';
 import { electron } from '../../utils/platform/transport';
 import { decodeRecording, encodeRecording } from '../recordingFile';
 import { readStoredTry, type StoredTry, type TrySummary } from '../tryFile';
+import { saveTryCameraVideo, saveTryVideos } from './videoUploadClient';
 import type { TryBackend } from './types';
 
 type Bytes = Uint8Array | { data?: string | null } | null | undefined;
@@ -75,7 +76,6 @@ export const desktopTries: TryBackend = {
   saveSession: async (stored, session) => {
     await call('tries:save', { manifest: stored, session: new TextEncoder().encode(session) });
   },
-  saveVideo: async (id, bytes) => {
-    await call('tries:keep-video', { id, bytes });
-  },
+  saveVideo: saveTryCameraVideo,
+  saveVideos: saveTryVideos,
 };

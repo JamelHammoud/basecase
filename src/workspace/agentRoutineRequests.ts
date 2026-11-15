@@ -34,6 +34,7 @@ export function scenarioFrom(input: unknown): Scenario {
   const seconds = typeof s.seconds === 'number' && s.seconds > 0 ? Math.min(s.seconds, MAX_SECONDS) : 20;
 
   return {
+    ...(s.tier === 'L0' || s.tier === 'L1' || s.tier === 'L2' ? { tier: s.tier } : {}),
     covers: typeof s.covers === 'string' ? s.covers : 'run',
     world: Array.isArray(s.world) ? (s.world as Scenario['world']) : [],
     mocks: isRecord(s.mocks) ? (s.mocks as Scenario['mocks']) : {},

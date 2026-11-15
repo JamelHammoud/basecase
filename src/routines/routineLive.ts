@@ -1,3 +1,4 @@
+import type { VisionResult } from '../vision/types';
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimEngine } from '../sim/engine';
 import type { RobotJoint } from '../types/robotics';
@@ -11,6 +12,7 @@ export interface LiveRoutineInput {
   scenario: Scenario;
   joints: RobotJoint[];
   kit: RoutineKit;
+  vision?: boolean;
 }
 
 export interface LiveUpdate {
@@ -31,6 +33,10 @@ export class LiveRoutine {
 
   static async start(mj: MainModule, engine: SimEngine, input: LiveRoutineInput): Promise<LiveRoutine> {
     return new LiveRoutine(await PhysicsRun.start({ mj, engine, model: engine.sim, ...input }));
+  }
+
+  acceptVision(result: VisionResult, ageMs = 0) {
+    this.run.setVision(result, ageMs);
   }
 
   advance(seconds: number): LiveUpdate {

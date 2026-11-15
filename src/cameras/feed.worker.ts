@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 import { FRAME_MS, type FeedEvent, type FeedRequest } from './feedProtocol';
+import { visionBitmapCopier, visionFrameSender, type VisionAssignment } from './visionFrames';
+import { visionCameraPaces } from './visionPace';
 import { LiveStage, type LiveJob, type LiveTarget } from './liveStage';
 import { afterDraw, dueIds, nextDue, startPace, streamSize, type Pace } from './streamPace';
 
@@ -14,6 +16,23 @@ const stage = new LiveStage();
 const gl = stage.renderer.getContext();
 const targets = new Map<string, LiveTarget>();
 const streams = new Map<number, Stream>();
+const visionTargets = new Map<string, LiveTarget>();
+const copyVision = visionBitmapCopier();
+const visionSources = new Map<string, OffscreenCanvas>();
+let assignments: VisionAssignment[] = [];
+let viewKeys = new Set<string>();
+let visionPaces = new Map<string, Pace>();
+const vision = visionFrameSender(async (camera) => {
+  const canvas =
+    visionSources.get(camera) ??
+    targets.get(camera)?.canvas ??
+    visionTargets.get(camera)?.canvas ??
+    [...streams.values()].find((stream) => stream.key === camera)?.target.canvas;
+
+  if (!canvas) throw new Error('Camera frame unavailable.');
+
+  return copyVision(camera, canvas);
+});
 
 let poses: Float64Array | null = null;
 let dirty = false;
@@ -33,8 +52,8 @@ function wake(at: number) {
 }
 
 function plan() {
-  const tilesAt = dirty && targets.size ? drewAt + FRAME_MS : Infinity;
-  const at = Math.min(tilesAt, nextDue([...streams.values()].map((s) => s.pace)));
+  const tilesAt = dirty && (targets.size || visionTargets.size) ? drewAt + FRAME_MS : Infinity;
+  const at = Math.min(tilesAt, nextDue([...streams.values()].map((s) => s.pace)), nextDue([...visionPaces.values()]));
 
   if (at < Infinity) wake(at);
 }
@@ -76,17 +95,44 @@ function postStream({ id, target }: StreamJob) {
   scope.postMessage({ type: 'stream', id, bitmap } satisfies FeedEvent, [bitmap]);
 }
 
-async function render(tiles: LiveJob[], due: StreamJob[]) {
+async function render(tiles: LiveJob[], due: StreamJob[], visionJobs: LiveJob[]) {
   drewAt = performance.now();
 
-  const drawn = await stage.draw(poses, [...tiles, ...due]);
+  const drawn = await stage.draw(poses, [...tiles, ...visionJobs, ...due]);
   const tilesDrawn = tiles.filter((job) => drawn.includes(job));
 
   if (drawn.length) gl.finish();
 
+  for (const job of drawn) visionSources.set(job.key, job.target.canvas);
+
+  for (const key of new Set(drawn.map((job) => job.key))) void vision.send(key, drewAt).catch(() => undefined);
+
   if (tilesDrawn.length) postTiles(tilesDrawn);
 
   for (const job of due) if (drawn.includes(job)) postStream(job);
+}
+
+function dirtyVisionJobs(tiles: LiveJob[], keys: string[]): LiveJob[] {
+  return [...visionTargets]
+    .filter(([key]) => keys.includes(key))
+    .filter(([key]) => !tiles.some((tile) => tile.key === key))
+    .map(([key, target]) => ({ key, target }));
+}
+
+function setVisionTargets() {
+  visionPaces = visionCameraPaces(assignments, viewKeys, performance.now());
+
+  const keys = new Set(assignments.map((a) => a.camera).filter((key) => viewKeys.has(key)));
+
+  for (const key of visionTargets.keys()) if (!keys.has(key)) visionTargets.delete(key);
+
+  for (const key of keys) {
+    if (visionTargets.has(key)) continue;
+
+    const made = target([320, 240]);
+
+    if (made) visionTargets.set(key, made);
+  }
 }
 
 async function draw() {
@@ -98,12 +144,22 @@ async function draw() {
   drawing = true;
 
   const tiles: LiveJob[] = dirty ? [...targets].map(([key, target]) => ({ key, target })) : [];
-  const due = dueStreams(performance.now());
+  const now = performance.now();
+  const due = dueStreams(now);
+  const visionDue = dueIds([...visionPaces], now);
+  const visionKeys = dirty ? [...visionTargets.keys()] : visionDue;
+  const visionJobs = dirtyVisionJobs(tiles, visionKeys);
+
+  for (const key of visionDue) {
+    const pace = visionPaces.get(key);
+
+    if (pace) visionPaces.set(key, afterDraw(pace, now));
+  }
 
   dirty = false;
 
   try {
-    if (tiles.length || due.length) await render(tiles, due);
+    if (tiles.length || due.length || visionJobs.length) await render(tiles, due, visionJobs);
   } finally {
     drawing = false;
     plan();
@@ -132,6 +188,13 @@ function setTargets(sizes: Record<string, [number, number]>) {
 }
 
 const handlers: { [K in FeedRequest['type']]: (msg: Extract<FeedRequest, { type: K }>) => unknown } = {
+  'vision-port': ({ port, timeOrigin }) => vision.connect(port, timeOrigin),
+  vision: (message) => {
+    assignments = message.assignments;
+    vision.configure(assignments);
+    setVisionTargets();
+    schedule();
+  },
   scene: async ({ parts, world, meshes, imported }) => {
     if (await stage.setScene(parts, world, meshes, imported)) schedule();
   },
@@ -144,7 +207,9 @@ const handlers: { [K in FeedRequest['type']]: (msg: Extract<FeedRequest, { type:
   },
   views: ({ views, sizes }) => {
     stage.setViews(views);
+    viewKeys = new Set(views.map((view) => view.key));
     setTargets(sizes);
+    setVisionTargets();
     schedule();
   },
   port: ({ port }) => {

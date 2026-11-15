@@ -144,6 +144,8 @@ function checkInfer(c: Checker, step: Record_, path: string) {
   c.field(isText(step.model, 64), `${path}.model`, 'Name the model to run.');
   c.field(isText(step.input, 64), `${path}.input`, 'Name what the model looks at.');
 
+  c.field(step.label === undefined || isText(step.label, 64), `${path}.label`, 'Name the object to find.');
+
   const output = step.output;
   const valid = isRecord(output) && typeof output.type === 'string' && DATA_TYPES.has(output.type);
 
@@ -244,6 +246,8 @@ function checkWatcher(c: Checker, w: unknown, path: string) {
   c.field(isText(w.model, 64), `${path}.model`, 'Name the model the watcher runs.');
   c.field(isNumber(w.rateHz), `${path}.rateHz`, 'Set how often the watcher runs.');
   c.field(isNumber(w.maxAgeMs) && w.maxAgeMs > 0, `${path}.maxAgeMs`, 'Set how long its answer stays true.');
+
+  c.field(w.label === undefined || isText(w.label, 64), `${path}.label`, 'Name the object to find.');
 
   const publishes = w.publishes;
   const typed = isRecord(publishes) && typeof publishes.type === 'string' && DATA_TYPES.has(publishes.type);

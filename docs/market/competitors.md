@@ -90,6 +90,18 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 - **Worse than Basecase:** it visualizes and manages data a robot already recorded ([pricing](https://foxglove.dev/pricing)). Basecase makes the robot and its data ([Cases](../guide/cases.md)). Basecase also opens the same MCAP files and ROS 1 bags, with ROS 1, ROS 2, Protobuf, JSON and FlatBuffers channels, keeps every field of every topic as a signal, and plays them through Log, Diagnostics, Message and States panels and XY plots on one timeline beside the robot's own design, its joints replayed on it ([Cases](../guide/cases.md#imported-tries)). Its Map layer fuses an imported run's laser scans, point clouds or depth images into a height-colored 5 cm voxel map, with optional scan matching, and also maps simulated LiDAR runs. Make World turns an imported run’s recorded evidence into a saved Case world with 0.1 m occupied surfaces and up to 64 exact convex collision pieces. It retains observed free space and leaves unseen regions unobserved. Planar scans label their authored floor and obstacle height as estimates ([Scan maps](../guide/cases.md#scan-maps)). FlatBuffers channels use embedded reflection schemas, retain exact 64-bit integers and share the same Message, States and plot cards. Basecase reads no live ROS streams.
 - **Basecase should:** integrate through LeRobot: `lerobot-dataset-viz --display-mode foxglove` serves a v3 dataset's episode to Foxglove over WebSocket, fetching only the frames on screen ([LeRobotDataset v3](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)). Basecase's datasets are v2.1 ([Cases](../guide/cases.md)), so writing v3 ([integrations](integrations.md#lerobot)) is what puts a Case's tries in Foxglove.
 
+## Vision
+
+### Roboflow
+
+- **Link:** https://roboflow.com
+- **Checked:** 2026-11-14
+- **Basecase today:** imports Roboflow project and version links as COCO image datasets through the desktop account key ([Imported image datasets](../guide/cases.md#imported-image-datasets)). Local camera detections feed Case signals and Routines ([Cameras](../guide/cameras.md)).
+- **Better than Basecase:** Inference runs detection, classification and segmentation on camera streams, with tracking, counting and composable Workflows. It hosts fine-tuned and foundation models, monitors predictions and connects results to external systems ([Inference](https://github.com/roboflow/inference)). Basecase imports labeled image datasets and renders training labels ([Cases](../guide/cases.md#training-images)), but does not train custom detectors ([Routines](../guide/routines.md#ml-nodes)).
+- **Plans:** Free includes 10 monthly credits, private projects and unlimited admin seats. Core starts at $39 per month, billed monthly, for 20 total monthly credits. Enterprise has custom pricing. Self-hosted inference is included on every plan, while hosted inference, training and AI labeling consume credits ([pricing](https://roboflow.com/pricing)).
+- **Worse than Basecase:** its quickstart installs an inference server and connects cameras to it ([Inference quickstart](https://github.com/roboflow/inference#-quickstart)). Basecase already holds the robot's camera mounts, lenses and Case world, and renders those camera views inside the simulation ([Cameras](../guide/cameras.md)).
+- **Basecase should:** extend the local detection runtime ([Cameras](../guide/cameras.md)) with held-out real frames and trained models evaluated against the same Case and Routine contracts.
+
 ## Operate
 
 ### Viam

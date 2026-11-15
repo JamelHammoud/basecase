@@ -1,12 +1,21 @@
 import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import { workerClient } from '../utils/workerRpc';
-import type { CameraFrameRequest, CameraStageJob } from './cameraStage';
+import * as defaultVision from './visionSession';
+import type { CameraVision } from './scopedVision';
+import type { VisionAssignment } from './visionFrames';
+import type { CameraFrameRequest, CameraFrameOutput, CameraStageJob } from './cameraStage';
 import type { CameraTrainingFrame, CameraTrainingRequest } from './trainingTypes';
 
 type ViewHandlers = {
+  vision: (input: {
+    port: MessagePort;
+    assignments: VisionAssignment[];
+    timeOrigin: number;
+  }) => Promise<{ result: boolean }>;
+  close: (input: null) => Promise<{ result: boolean }>;
   load: (job: CameraStageJob) => Promise<{ result: boolean }>;
-  frame: (request: CameraFrameRequest) => Promise<{ result: Record<string, ImageBitmap> }>;
+  frame: (request: CameraFrameRequest) => Promise<{ result: CameraFrameOutput }>;
   training: (request: CameraTrainingRequest) => Promise<{ result: CameraTrainingFrame }>;
 };
 
@@ -14,24 +23,55 @@ const localHandlers = async (): Promise<ViewHandlers> => {
   const stage = await import('./cameraStage');
 
   return {
+    vision: async ({ port }) => {
+      port.close();
+
+      return { result: false };
+    },
+    close: async () => ({ result: true }),
     load: async (job) => ({ result: await stage.loadCameraStage(job) }),
-    frame: async (request) => ({ result: await stage.renderCameraFrame(request) }),
+    frame: async (request) => ({ result: { bitmaps: await stage.renderCameraFrame(request), vision: {} } }),
     training: async (request) => ({ result: await stage.renderTrainingFrame(request) }),
   };
 };
 
 export interface CameraFeed {
   load: (job: Omit<CameraStageJob, 'meshes'>) => Promise<void>;
-  frame: (request: CameraFrameRequest) => Promise<Record<string, ImageBitmap>>;
+  frame: (request: CameraFrameRequest) => Promise<CameraFrameOutput>;
   training: (request: CameraTrainingRequest) => Promise<CameraTrainingFrame>;
   dispose: () => void;
 }
 
-export function cameraFeed(): CameraFeed {
+export function cameraFeed(
+  vision: Pick<CameraVision, 'connectVisionFrames' | 'ensureVisionCamera' | 'visionAssignments'> = defaultVision,
+): CameraFeed {
+  const { connectVisionFrames, ensureVisionCamera, visionAssignments } = vision;
   const client = workerClient<ViewHandlers>(
     () => new Worker(new URL('./views.worker.ts', import.meta.url), { type: 'module' }),
     localHandlers,
   );
+
+  let connected = false;
+  let connecting: Promise<void> | null = null;
+  let closed = false;
+  let disconnectVision: (() => void) | null = null;
+
+  const connect = async (keys: string[]) => {
+    await Promise.all(keys.map((key) => ensureVisionCamera(key).catch(() => undefined)));
+
+    const { port, disconnect } = await connectVisionFrames();
+
+    if (closed) {
+      disconnect();
+      port.close();
+
+      throw new Error('The camera capture closed before inference finished.');
+    }
+
+    disconnectVision = disconnect;
+    await client.call('vision', { port, assignments: visionAssignments(), timeOrigin: performance.timeOrigin }, [port]);
+    connected = true;
+  };
 
   return {
     load: async (job) => {
@@ -44,8 +84,25 @@ export function cameraFeed(): CameraFeed {
         meshes: await sourcedMeshFiles(all),
       });
     },
-    frame: (request) => client.call('frame', request, request.poses ? [request.poses.buffer] : []),
+    frame: async (request) => {
+      if (typeof Worker !== 'undefined' && !connected) {
+        connecting ??= connect(request.keys).finally(() => {
+          connecting = null;
+        });
+        await connecting;
+      }
+
+      return client.call('frame', request, request.poses ? [request.poses.buffer] : []);
+    },
     training: (request) => client.call('training', request, request.poses ? [request.poses.buffer] : []),
-    dispose: () => client.dispose(),
+    dispose: () => {
+      closed = true;
+      disconnectVision?.();
+      disconnectVision = null;
+      void client.call('close', null).then(
+        () => client.dispose(),
+        () => client.dispose(),
+      );
+    },
   };
 }

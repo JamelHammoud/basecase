@@ -23,6 +23,7 @@ covers:
   - src/cameras/operator/operatorCamera.ts
   - src/cameras/operator/poseFollow.ts
   - src/sim/drivePose.ts
+  - src/sim/inputRegistry.ts
   - src/components/cameras/OperatorTile.tsx
 ---
 

@@ -24,6 +24,7 @@ covers:
   - src/cameras/operator/cameraSource.ts
   - src/midi/
   - src/voice/
+  - src/sim/inputRegistry.ts
   - src/sim/inputSources.ts
   - src/sim/inputEvents.ts
 hub_run_a_case_order: 20

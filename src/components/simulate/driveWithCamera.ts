@@ -1,4 +1,4 @@
-import { CAMERA_INPUTS } from '../../sim/inputSources';
+import { CAMERA_INPUTS } from '../../sim/inputRegistry';
 import type { SimDrive } from '../../sim/useDrive';
 
 export const DRIVE_WITH_CAMERA = 'Drive with Camera';

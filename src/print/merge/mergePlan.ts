@@ -3,6 +3,7 @@ import type { AssemblyGeometry } from '../../assembly/assemblyGeometry';
 import { planRemoval, type RemovalPlan } from '../../assembly/removalOrder';
 import type { Placed } from '../../three/analysis/collide';
 import { pairsWithin } from '../../three/analysis/gaps';
+import { combinations } from '../../utils/combinations';
 import { connectedGroups, isConnected, joinedPairs, joiningHardware, type Pair } from './mergeJoins';
 import { guideSteps, stepsSaved } from './mergeGuide';
 import { orderProblem } from './mergeOrder';
@@ -68,20 +69,9 @@ function problemOf(p: Planner, members: string[]): LeftOutReason | null {
   return problem;
 }
 
-function* subsets(members: string[], size: number, from = 0, picked: string[] = []): Generator<string[]> {
-  if (picked.length === size) {
-    yield picked;
-
-    return;
-  }
-
-  for (let i = from; i <= members.length - (size - picked.length); i++)
-    yield* subsets(members, size, i + 1, [...picked, members[i]]);
-}
-
 function largestPassing(p: Planner, members: string[]): string[] | null {
   for (let size = members.length - 1; size >= 2; size--) {
-    for (const subset of subsets(members, size)) {
+    for (const subset of combinations(members, size)) {
       if (p.tried.size >= MAX_TRIES) return null;
 
       if (isConnected(subset, p.pairs) && !problemOf(p, subset)) return subset;

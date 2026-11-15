@@ -1,5 +1,6 @@
-import { fourBarPose, placed, type LinkageSolution, type Vec2 } from '../utils/linkage';
+import { fourBarPose, type LinkageSolution, type PlacedFourBar, type Vec2 } from '../utils/linkage';
 import { couplerCurve } from '../utils/linkage';
+import { placementFor } from '../utils/linkageKinematics';
 
 export interface LinkageFrame {
   bars: Vec2[];
@@ -7,20 +8,26 @@ export interface LinkageFrame {
   point: Vec2;
 }
 
-export function linkageFrame(solution: LinkageSolution, theta: number): LinkageFrame | null {
-  const l = solution.linkage;
+function frameAt(l: PlacedFourBar, theta: number, place: ReturnType<typeof placementFor>): LinkageFrame | null {
   const pose = fourBarPose(l, theta);
 
   if (!pose) return null;
 
-  const [a, b, c, d, p] = [[0, 0] as Vec2, pose.b, pose.c, [l.ground, 0] as Vec2, pose.p].map((v) => placed(l, v));
+  const [a, b, c, d, p] = [[0, 0] as Vec2, pose.b, pose.c, [l.ground, 0] as Vec2, pose.p].map(place);
 
   return { bars: [a, b, c, d, a], plate: [b, c, p, b], point: p };
 }
 
+export function linkageFrame(solution: LinkageSolution, theta: number): LinkageFrame | null {
+  return frameAt(solution.linkage, theta, placementFor(solution.linkage));
+}
+
 export function linkageFrames(solution: LinkageSolution, steps: number): LinkageFrame[] {
   const [from, to] = solution.crank;
-  const there = Array.from({ length: steps + 1 }, (_, i) => linkageFrame(solution, from + ((to - from) * i) / steps));
+  const place = placementFor(solution.linkage);
+  const there = Array.from({ length: steps + 1 }, (_, i) =>
+    frameAt(solution.linkage, from + ((to - from) * i) / steps, place),
+  );
   const frames = there.filter((f): f is LinkageFrame => !!f);
 
   return [...frames, ...frames.slice(1, -1).reverse()];

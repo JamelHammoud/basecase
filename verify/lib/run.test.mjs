@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { fail, pass } from './gate.mjs';
+import { describe, expect, it, vi } from 'vitest';
+import motorKit from '../gates/s3a-motor-kit.mjs';
+import { fail, pass, ROOT } from './gate.mjs';
 import {
   canaryOutcome,
   currentManifest,
@@ -71,6 +72,26 @@ describe('gatekeeper', () => {
   it('holds check counts at their floor', () => {
     expect(ratchetProblems({ g: 2 }, { g: 3 })).toEqual(['g: 2 checks, needs at least 3']);
     expect(ratchetProblems({ g: 3 }, { g: 3 })).toEqual([]);
+  });
+
+  it.each(['src/skills/arenaWorld.ts', 'src/sim/controlDelay.ts'])('freezes Arena latency in %s', (file) => {
+    const frozen = motorKit.checks[0];
+    const read = fs.readFileSync.bind(fs);
+    const changed = path.join(ROOT, file);
+
+    expect(frozen.run().ok).toBe(true);
+
+    const reads = vi.spyOn(fs, 'readFileSync').mockImplementation((source, options) => {
+      const content = read(source, options);
+
+      return source === changed ? `${content}\n` : content;
+    });
+
+    try {
+      expect(frozen.run()).toMatchObject({ ok: false, detail: expect.stringContaining(file) });
+    } finally {
+      reads.mockRestore();
+    }
   });
 
   it('pins every verify file and the forge tests that hold gate bars, but not results', () => {

@@ -28,7 +28,8 @@ function stateLines(row: SkillRow): string[] {
   const { state } = row;
   const tag = row.record?.coach;
 
-  if (state.kind === 'ready') return tag ? [state.arena, coachedLine(tag)] : [state.arena];
+  if (state.kind === 'ready')
+    return [state.refused, state.arena, tag && coachedLine(tag)].filter((line) => typeof line === 'string');
 
   if (state.kind === 'untrained') return state.refused ? [state.refused] : [];
 

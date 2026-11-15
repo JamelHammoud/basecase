@@ -9,13 +9,15 @@ import { runCounted, runFolder, type ForgeRunner, type ForgeTally, type SkillSav
 import { kitEnvironment, LEGGED_ENTRIES, trainedEntry, type KitEntry, type TrainedEntry } from './kitEnvironment';
 import { arenaPasses, slowerSpeedEvidence } from './kitAcceptance';
 import { kitJob, type KitStart } from './kitJob';
-import { kitRobot } from './kitModel';
+import { kitRobot, rootHeight } from './kitModel';
 import { kitSchedule, type KitStage } from './kitSchedule';
 import { firstPassingTry, type Judgement } from './kitTries';
-import { validationScore } from './kitValidation';
+import { validationReport, type ValidationReport } from './kitValidation';
+import { transitionEvidence, type KitContext, type KitSkill, type KitTransitionEvidence } from './kitTransitions';
 import { worstEvidence } from './skillRecords';
 import { collapsedStart } from './kitStart';
 import { proveSkill } from './prove';
+import { loadKitLibrary } from '../routines/kitLibrary';
 
 export type { ForgeJob, ForgeOutcome, ForgeRunner, SkillSave } from './forgeRunner';
 export type { KitEntry } from './kitEnvironment';
@@ -25,16 +27,19 @@ export interface KitCost {
   wallS: number;
   steps: number;
   forgeRuns: number;
+  validationS?: number;
+  validationRuns?: number;
 }
 
 export type KitOutcome =
-  | { kind: 'skill'; skill: Skill; environment: Environment; cost: KitCost }
+  | { kind: 'skill'; skill: KitSkill; environment: Environment; cost: KitCost }
   | {
       kind: 'refused';
       reason: string;
       relaxation: { change: LadderChange; message: string } | null;
       cost: KitCost;
       evidence?: ArenaEvidence | null;
+      validation?: KitTransitionEvidence;
     };
 
 export interface KitWarm {
@@ -42,7 +47,7 @@ export interface KitWarm {
   policy: PolicySpec;
 }
 
-export interface KitInput {
+export interface KitInput extends KitContext {
   mj: MainModule;
   design: string;
   model: SimModel;
@@ -78,9 +83,16 @@ export function kitEntries(model: SimModel): TrainedEntry[] {
 class Clock {
   private started = performance.now();
   readonly tally: ForgeTally = { steps: 0, forgeRuns: 0 };
+  validationS = 0;
+  validationRuns = 0;
 
   cost(): KitCost {
-    return { wallS: (performance.now() - this.started) / 1000, ...this.tally };
+    return {
+      wallS: (performance.now() - this.started) / 1000,
+      ...this.tally,
+      validationS: this.validationS,
+      validationRuns: this.validationRuns,
+    };
   }
 }
 
@@ -97,6 +109,35 @@ interface Attempt {
   start: KitStart | null;
   clock: Clock;
   best: { evidence: ArenaEvidence | null; score: number };
+  reports: WeakMap<PolicySpec, ValidationReport>;
+  validation: KitTransitionEvidence | null;
+}
+
+async function validate(run: Attempt, policy: PolicySpec): Promise<ValidationReport> {
+  const known = run.reports.get(policy);
+
+  if (known) return known;
+
+  const report = await validationReport({ ...run.input, entry: run.entry, environment: run.environment, policy });
+
+  run.reports.set(policy, report);
+  run.clock.validationS += report.wallS;
+  run.clock.validationRuns += 1;
+
+  return report;
+}
+
+function failedStart(run: Attempt, report: ValidationReport) {
+  const sample = report.transitions.starts.samples[0];
+
+  if (!sample) return;
+
+  const ids = report.transitions.starts.joints;
+
+  run.start = {
+    joints: Object.fromEntries(run.input.model.joints.map((j) => [j.name, sample.joints[ids.indexOf(j.id)]])),
+    liftM: sample.height - rootHeight(run.input.model),
+  };
 }
 
 function noteEvidence(run: Attempt, evidence: readonly ArenaEvidence[], score: number) {
@@ -105,6 +146,19 @@ function noteEvidence(run: Attempt, evidence: readonly ArenaEvidence[], score: n
 
 async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>> {
   const { input, entry, environment, clock } = run;
+  const report =
+    entry === 'velocity-tracking' || entry === 'settle-to-neutral'
+      ? await validate(run, policy)
+      : run.reports.get(policy);
+
+  run.validation = report?.transitions.checks.length ? transitionEvidence(report.transitions) : null;
+
+  if (report && !report.transitions.passed) {
+    failedStart(run, report);
+
+    return { skill: null, score: report.score };
+  }
+
   const controller = { kind: 'policy' as const, policy, robot: kitRobot(input.model).key };
   const slower = await slowerSpeedEvidence({ ...input, entry, environment, policy });
 
@@ -116,7 +170,7 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
 
     noteEvidence(run, tried, score);
 
-    return { skill: null, score };
+    return { skill: null, score: (report?.score ?? 0) + score / 1000 };
   }
 
   const proof = await proveSkill({
@@ -124,6 +178,7 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
     name: kitSkillName(entry),
     environment,
     controller,
+    kitValidation: run.validation ?? undefined,
     origin: () => {
       const { wallS, steps } = clock.cost();
 
@@ -136,7 +191,7 @@ async function judge(run: Attempt, policy: PolicySpec): Promise<Judgement<Skill>
 
   noteEvidence(run, tried, score);
 
-  return { skill: proof.skill, score };
+  return { skill: proof.skill, score: (report?.score ?? 0) + score / 1000 };
 }
 
 async function train(run: Attempt, stage: KitStage, from: { seed: number; folder: string | null }) {
@@ -169,21 +224,41 @@ export async function trainKitEntry(input: KitInput): Promise<KitOutcome> {
 
   const environment = kitEnvironment(input.model, entry, { reverse: input.reverse });
   const start = entry === 'get-up' ? collapsedStart(input.mj, input.model) : null;
-  const run: Attempt = { input, entry, environment, start, clock, best: { evidence: null, score: -Infinity } };
+  const starts = entry === 'velocity-tracking' || entry === 'settle-to-neutral';
+  const skills = [...(starts ? await loadKitLibrary() : []), ...(input.skills ?? [])];
+  const run: Attempt = {
+    input: { ...input, skills },
+    entry,
+    environment,
+    start,
+    clock,
+    best: { evidence: null, score: -Infinity },
+    reports: new WeakMap(),
+    validation: null,
+  };
   const skill = await firstPassingTry({
     tries: kitSchedule(input.model, entry),
     firstSeed: input.seed ?? freshSeed(),
     train: (stage, from) => train(run, stage, from),
-    validate: (policy: PolicySpec) => validationScore({ ...input, entry, environment, policy }),
+    validate: async (policy: PolicySpec) => (await validate(run, policy)).score,
     judge: (policy: PolicySpec) => judge(run, policy),
     aborted: () => !!input.signal?.aborted,
   });
 
   if (skill) return { kind: 'skill', skill, environment, cost: clock.cost() };
 
-  const reason = `No ${kitSkillName(entry)} policy passed Arena within the Kit’s training budget.`;
+  const validation = run.validation?.passed === false ? run.validation : undefined;
+  const reason =
+    validation?.reason ?? `No ${kitSkillName(entry)} policy passed Arena within the Kit’s training budget.`;
 
-  return { kind: 'refused', reason, relaxation: null, cost: clock.cost(), evidence: run.best.evidence };
+  return {
+    kind: 'refused',
+    reason,
+    relaxation: null,
+    cost: clock.cost(),
+    evidence: validation ? null : run.best.evidence,
+    ...(validation ? { validation } : {}),
+  };
 }
 
 export interface KitRow {

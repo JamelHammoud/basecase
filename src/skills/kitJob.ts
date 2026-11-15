@@ -58,9 +58,7 @@ const GPU_ENVS = 1024;
 
 const GPU_LEARNER = Object.freeze({ backend: 'metal', gpuEnvs: GPU_ENVS, squash: 'tanh', logStdMin: LOG_STD_MIN });
 
-function entryFields(model: SimModel, entry: TrainedEntry, options: { start: KitStart | null; reverse: boolean }) {
-  const { start, reverse } = options;
-
+function entryFields(model: SimModel, entry: TrainedEntry, reverse: boolean) {
   if (entry === 'velocity-tracking')
     return { task: 'walk', resetNoise: 0.1, commands: commandRanges(model, reverse), ...GPU_LEARNER, ...ROBUST };
 
@@ -73,7 +71,6 @@ function entryFields(model: SimModel, entry: TrainedEntry, options: { start: Kit
       pushes: false,
       episodeS: 6,
       ...ROBUST,
-      ...(start ? { rootOffsetLift: start.liftM } : {}),
     };
 
   if (entry === 'settle-to-neutral') return { task: 'stand', resetNoise: 0.3, episodeS: 6, ...ROBUST };
@@ -87,17 +84,19 @@ function startJoints(model: SimModel, start: KitStart | null) {
   return model.joints.map((j) => start?.joints[j.name] ?? unit(j, model.initial.values[j.id] ?? 0));
 }
 
+function rootOffset(model: SimModel, start: KitStart | null) {
+  const root = model.initial.roots?.[kitRobot(model).key]?.position ?? [0, 0, 0];
+
+  return [root[0] / 1000, -root[2] / 1000, root[1] / 1000 + (start?.liftM ?? 0)];
+}
+
 export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOptions) {
   const robot = kitRobot(model);
   const sim = model.robots[0];
   const byId = new Map(model.joints.map((j) => [j.id, j]));
   const start = options.start ?? null;
   const pose = startJoints(model, start);
-  const root = model.initial.roots?.[robot.key]?.position ?? [0, 0, 0];
-  const { rootOffsetLift, ...fields } = {
-    rootOffsetLift: 0,
-    ...entryFields(model, entry, { start, reverse: !!options.reverse }),
-  };
+  const fields = entryFields(model, entry, !!options.reverse);
 
   return {
     name: `Motor Kit: ${entry}`,
@@ -111,7 +110,7 @@ export function kitJob(model: SimModel, entry: TrainedEntry, options: KitJobOpti
     defaultPose: robot.joints.map((id) => unit(byId.get(id)!, model.initial.values[id] ?? 0)),
     ctrlDefault: pose,
     initialJoints: Object.fromEntries(model.joints.map((j, i) => [j.name, pose[i]])),
-    rootOffset: [root[0] / 1000, -root[2] / 1000, root[1] / 1000 + rootOffsetLift],
+    rootOffset: rootOffset(model, start),
     actionScale: KIT_ACTION_SCALE,
     controlDt: 0.02,
     seed: options.seed,

@@ -88,6 +88,24 @@ describe('the skills list', () => {
     expect(refusedLine(worstEvidence([top, standstill])!)).toBe('Refused in Arena: 9 of 32 tries');
   });
 
+  it('keeps the last passing Walk available while its row names the rejected candidate’s transition', () => {
+    const record = kitRecord(model, 'velocity-tracking');
+    const line = 'settle to walk didn’t walk 0.08 m forward in 8 of 8 tries in simulation.';
+    const rows = skillRows({
+      model,
+      design: DESIGN,
+      records: [record],
+      jobs: [],
+      refusals: { 'kit:velocity-tracking': { line, model: refusalModel(model) } },
+    });
+    const walk = rows.find((row) => row.kit === 'velocity-tracking')!;
+
+    expect(walk.record).toBe(record);
+    expect(readyVelocity(rows)).toBe(record);
+    expect(walk.state).toEqual({ kind: 'ready', arena: arenaLine(record.evidence!), refused: line });
+    expect(readyWalkRecord({ model, design: DESIGN, records: [record] })).toBe(record);
+  });
+
   it('drops a refusal once the design it was refused on changes', () => {
     const quad = fixtureRobot('quad-servo');
     const heavier = modelOf(editParts(quad, (p) => ({ ...p, massG: (p.massG ?? 50) * 1.5 })));

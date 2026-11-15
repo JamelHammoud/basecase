@@ -169,4 +169,21 @@ describe('Kit tries', () => {
     expect(runFolder({ ...outcome('runs/003/policy.json'), run: 'policy-abc' })).toBe('policy-abc');
     expect(runFolder({ ...outcome('runs/003/policy.json'), run: 'policy-abc', ok: false })).toBeNull();
   });
+
+  it.each(['velocity-tracking', 'settle-to-neutral'] as const)(
+    'keeps the failed stance height and joints in a %s continuation',
+    (entry) => {
+      const model = fixtureModel('quad-servo');
+      const robot = model.robots[0].key;
+      const moved: typeof model = {
+        ...model,
+        initial: { ...model.initial, roots: { [robot]: { position: [100, 200, 300] } } },
+      };
+      const joints = Object.fromEntries(model.joints.map((j) => [j.name, 0.2]));
+      const job = kitJob(moved, entry, { minutes: 1, seed: 1, start: { joints, liftM: -0.04 } });
+
+      expect(job.rootOffset).toEqual([0.1, -0.3, 0.16]);
+      expect(job.initialJoints).toEqual(joints);
+    },
+  );
 });

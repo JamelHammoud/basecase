@@ -9,15 +9,18 @@ import type { Environment, Range } from './environment';
 import { sha256Hex } from './hash';
 import { KIT_BARS, kitCommand, kitSpeedContract, type TrainedEntry } from './kitEnvironment';
 import { kitBackSpeed, kitRobot, kitTopSpeed, type V3 } from './kitModel';
+import { kitTransitionReport, transitionScore, type KitContext, type KitTransitionReport } from './kitTransitions';
 
-const DRAWS = 12;
 const HOLD_DRAWS = 60;
 const TURN_RATE = 0.5;
 const TURN_SHARE = 0.175;
 const TURN_WEIGHT = 0.1;
 const MARGIN_WEIGHT = 0.01;
+const SPEED_DRAWS = 6;
+const MOVING_TURN_DRAWS = 2;
+const START_WEIGHT = 32;
 
-export interface ValidationInput {
+export interface ValidationInput extends KitContext {
   mj: MainModule;
   model: SimModel;
   entry: TrainedEntry;
@@ -69,9 +72,13 @@ function speedChecks(model: SimModel, reverse: boolean): Check[] {
   const speeds = [top, top / 2, 0, ...back].map((s): Check => ({
     command: [s, 0, 0],
     contract: kitSpeedContract(model, s),
-    draws: DRAWS,
+    draws: SPEED_DRAWS,
   }));
-  const turns = [TURN_RATE, -TURN_RATE].map((w): Check => ({ command: [top / 2, 0, w], contract: null, draws: DRAWS }));
+  const turns = [TURN_RATE, -TURN_RATE].map((w): Check => ({
+    command: [top / 2, 0, w],
+    contract: null,
+    draws: MOVING_TURN_DRAWS,
+  }));
 
   return [...speeds, ...turns];
 }
@@ -175,6 +182,8 @@ export interface CheckResult {
 export interface ValidationReport {
   checks: CheckResult[];
   score: number;
+  transitions: KitTransitionReport;
+  wallS: number;
 }
 
 function summary(command: V3, trials: Trial[]): CheckResult {
@@ -199,6 +208,7 @@ export function scoreChecks(checks: CheckResult[]): number {
 }
 
 export async function validationReport(input: ValidationInput): Promise<ValidationReport> {
+  const started = performance.now();
   const salt = input.salt ?? sha256Hex(String(crypto.getRandomValues(new Uint32Array(4)).join('-')));
   const worlds: [ArenaWorld, ArenaWorld] = [
     new ArenaWorld(input.mj, input.model),
@@ -219,7 +229,10 @@ export async function validationReport(input: ValidationInput): Promise<Validati
     worlds.forEach((w) => w.dispose());
   }
 
-  return { checks, score: scoreChecks(checks) };
+  const transitions = kitTransitionReport(input);
+  const startScore = transitions.checks.length ? START_WEIGHT * transitionScore(transitions) : 0;
+
+  return { checks, transitions, score: startScore + scoreChecks(checks), wallS: (performance.now() - started) / 1000 };
 }
 
 export const validationScore = async (input: ValidationInput) => (await validationReport(input)).score;

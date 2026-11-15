@@ -18,6 +18,7 @@ import {
   LookIcon,
   RotateLeftIcon,
   SelectAllIcon,
+  ShapeIcon,
   SparklesIcon,
   SwapIcon,
   SubtractIcon,
@@ -34,6 +35,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
+import { canLighten } from './lighten';
 import { canRepair } from './useRepair';
 
 export interface PartActionInputs {
@@ -180,6 +182,15 @@ export function onePartActions({ core, actions }: Omit<PartActionInputs, 'ui'>, 
   const setFlag = (patch: Partial<ScenePart>) => actions.edits.patchPart(part.id, patch);
 
   return {
+    lighten: canLighten(part)
+      ? {
+          id: 'lighten',
+          label: 'Lighten',
+          icon: ShapeIcon,
+          keywords: 'weight mass topology printed',
+          run: () => actions.lighten.open(part.id),
+        }
+      : null,
     repair: canRepair(part)
       ? {
           id: 'repair',

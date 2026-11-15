@@ -50,13 +50,22 @@ function remapLayers(layers: PolicyLayer[], options: { map: number[]; columns: n
   });
 }
 
-export function mappedPolicy(policy: PolicySpec, map: number[], target: PolicyTarget): PolicySpec {
+export function policyMapProblem(policy: PolicySpec): string | null {
   const n = policy.joints.length;
 
-  if (policy.eyes?.length || policy.clock) throw new Error('This policy reads a camera or a clock, so it can’t move.');
+  if (policy.eyes?.length || policy.clock) return 'This policy reads a camera or a clock, so it can’t move.';
 
   if (policy.obsMean.length !== obsSize(n) || policy.layers.at(-1)?.out !== n)
-    throw new Error('This policy’s network doesn’t match its joints.');
+    return 'This policy’s network doesn’t match its joints.';
+
+  return null;
+}
+
+export function mappedPolicy(policy: PolicySpec, map: number[], target: PolicyTarget): PolicySpec {
+  const n = policy.joints.length;
+  const problem = policyMapProblem(policy);
+
+  if (problem) throw new Error(problem);
 
   if (map.length !== target.joints.length || map.some((s) => !Number.isInteger(s) || s < 0 || s >= n))
     throw new Error('The joint map doesn’t fit this policy.');

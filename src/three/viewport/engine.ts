@@ -14,12 +14,12 @@ import {
   printMeshesIn,
   printReportsIn,
   partStlsIn,
-  strengthIn,
   sweepsIn,
   threeMfIn,
   stlIn,
 } from '../analysis/analysisPool';
 import { snapshotShapes } from '../analysis/sceneShapes';
+import { strengthHandle } from './strengthHandle';
 import { componentMeshesReady } from '../componentMeshes';
 import { exportUsdz } from '../usdz/usdzExport';
 import { SkeletonOverlay } from './skeletonOverlay';
@@ -376,7 +376,7 @@ export class ViewportEngine {
       jointAxes: (ids) => jointAxesIn(restShapes(ids), ids),
       meshesReady: () => componentMeshesReady(this.props.parts.flatMap((p) => p.componentId ?? [])),
       sweepClashes: (sweeps) => sweepsIn(restSolids(false), sweeps),
-      strength: (jobs) => strengthIn(restShapes([...new Set(jobs.map((j) => j.part))]), jobs),
+      ...strengthHandle(restShapes),
       pickAt: (x, y) => measure.pickAt(ctx, x, y),
       dragPart: (id, to, free) => this.gizmo.dragTo(id, to, free),
       previewSnap: (part, free) => this.gizmo.snap.preview(part, free),

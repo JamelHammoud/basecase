@@ -26,6 +26,8 @@ import type { JointAxes } from '../../joints/jointCandidates';
 import type { JointAxisQuery } from '../analysis/jointAxis';
 import type { CheckDot } from '../../utils/engineeringTypes';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
+import type { LightenResult } from '../../strength/lighten';
+import type { LightenTask } from '../analysis/lightenFrame';
 import type { Netlist, WiringScene } from '../../wiring/netlist';
 import type {
   CameraPreset,
@@ -226,6 +228,7 @@ export interface Viewport3DHandle {
   meshesReady: () => Promise<string[]>;
   sweepClashes: (sweeps: SweepSpec[]) => Promise<ClashHit[][]>;
   strength: (jobs: StrengthJob[]) => Promise<Array<StrengthReading | null>>;
+  lightenPart: (task: LightenTask) => Promise<LightenResult>;
   frameAll: () => void;
   animateSpawn: (ids: string[]) => void;
   setPose: (deltas: Map<string, THREE.Matrix4> | null, worldDeltas?: Map<string, THREE.Matrix4> | null) => void;

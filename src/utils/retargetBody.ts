@@ -95,13 +95,23 @@ export function restBody(rest: Human, robot: RobotLandmarks): RestBody {
   };
 }
 
-const sameKeys = (a: Human, b: Human) => a.size === b.size && [...a.keys()].every((k) => b.has(k));
+function sameKeys(a: Human, b: Human): boolean {
+  if (a.size !== b.size) return false;
+
+  for (const k of a.keys()) {
+    if (!b.has(k)) return false;
+  }
+
+  return true;
+}
 
 const hasSides = (h: Human) =>
   (h.has('leftHip') && h.has('rightHip')) || (h.has('leftShoulder') && h.has('rightShoulder'));
 
 function span(h: Human): number {
-  const box = new THREE.Box3().setFromPoints([...h.values()]);
+  const box = new THREE.Box3();
+
+  for (const p of h.values()) box.expandByPoint(p);
 
   return box.getSize(new THREE.Vector3()).length();
 }
@@ -120,15 +130,25 @@ function mean(window: Human[]): Human {
   return out;
 }
 
-function steady(window: Human[]): boolean {
+function withinTolerance(h: Human, avg: Human, tol: number): boolean {
+  for (const [k, p] of h) {
+    const close = p.distanceTo(avg.get(k)!) <= tol;
+
+    if (!close) return false;
+  }
+
+  return true;
+}
+
+function steadyMean(window: Human[]): Human | null {
   const last = window[window.length - 1];
 
-  if (!hasSides(last) || !window.every((h) => sameKeys(h, last))) return false;
+  if (!hasSides(last) || !window.every((h) => sameKeys(h, last))) return null;
 
   const avg = mean(window);
   const tol = STEADY * span(avg);
 
-  return window.every((h) => [...h].every(([k, p]) => p.distanceTo(avg.get(k)!) <= tol));
+  return window.every((h) => withinTolerance(h, avg, tol)) ? avg : null;
 }
 
 export function calibrator(frames: number): (h: Human) => Human | null {
@@ -139,6 +159,6 @@ export function calibrator(frames: number): (h: Human) => Human | null {
 
     if (window.length > frames) window.shift();
 
-    return window.length === frames && steady(window) ? mean(window) : null;
+    return window.length === frames ? steadyMean(window) : null;
   };
 }

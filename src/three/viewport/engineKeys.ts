@@ -44,6 +44,7 @@ export const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'jointAxes',
   'sweepClashes',
   'strength',
+  'lightenPart',
   'pickAt',
   'focusSelected',
   'measureFrom',

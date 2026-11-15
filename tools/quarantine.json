@@ -1,5 +1,21 @@
 [
   {
+    "file": "src/vision/inferenceWorker.test.ts",
+    "test": "",
+    "issue": 1035,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43701002471 exceeded the unchanged 10000 ms beforeAll budget at line 109 while opening the compiled inference worker fixture. The test never ran. Linux passed at the same commit in 4.2 s. The file was introduced by 1ee6c8055, and the log does not identify whether bundling, Chrome launch or navigation stalled. The whole file is quarantined because its setup precedes individual-test quarantine hooks."
+  },
+  {
+    "file": "e2e/trainingImages.e2e.test.ts",
+    "test": "makes a labelled block image from the palette and downloads its COCO and YOLO dataset",
+    "issue": 1033,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43701002471 exceeded the unchanged 60000 ms test budget on both Windows attempts without identifying a failing stage. Each attempt opens a fresh app. The same test passed on Linux at that commit in 25.4 s and on Windows in runs 43698588307 and 43696182210 in 43.5 s and 38.5 s. The startup, generation or export stage responsible is not established."
+  },
+  {
     "file": "e2e/operateNetwork.e2e.test.ts",
     "test": "pairs once, climbs the daemon ladder to Test and stops on a lost client",
     "issue": 1024,

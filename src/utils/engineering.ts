@@ -146,6 +146,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
   const env = { volts: servoSupplyVolts(ctx), crouch: crouchModel(ctx) };
   const loads = ctx.joints.filter((j) => j.type === 'revolute').map((j) => jointLoad(ctx, j, env));
   const wiring = input.wiring ?? wiringNetlist({ parts, project });
+  const stability = stabilityOf(ctx);
   const rows: CheckRow[] = [
     weightRow(ctx.all, masses, bodies),
     ...(ctx.joints.length ? [] : [{ check: 'Servo torque', status: 'not run' as const, detail: 'No joints' }]),
@@ -164,7 +165,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...rangeChangeRows(ctx),
     ...powerRows(ctx),
     ...wiringRows(wiring, joints),
-    ...stabilityRows(ctx),
+    ...stabilityRows(stability),
     ...heatRows(ctx),
     ...strengthRows(ctx, loads),
     budgetRow(ctx),
@@ -177,7 +178,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     massG: ctx.all.grams,
     com: ctx.all.com,
     masses,
-    stability: stabilityOf(ctx),
+    stability,
     wiring,
   };
 }

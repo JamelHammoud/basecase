@@ -79,9 +79,7 @@ export function stabilityOf(ctx: CheckContext): Stability | undefined {
   return all.sort((x, y) => x.marginMm - y.marginMm)[0];
 }
 
-export function stabilityRows(ctx: CheckContext): CheckRow[] {
-  const s = stabilityOf(ctx);
-
+export function stabilityRows(s: Stability | undefined): CheckRow[] {
   return s ? [stabilityRow(s)] : [];
 }
 

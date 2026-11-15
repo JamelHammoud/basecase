@@ -16,14 +16,6 @@
     "reason": "Run 43693830979 failed on both Windows attempts, first with no map points after opening the imported corridor try and then without the Imported 1 try confirmation. The Linux test passed in the same run. The import or playback worker bottleneck is not established."
   },
   {
-    "file": "e2e/buildCheck.e2e.test.ts",
-    "test": "runs the open Case on another tab’s robot and marks the one that passes more often",
-    "issue": 996,
-    "until": "2026-11-28",
-    "platform": "linux",
-    "reason": "Run 43687018679 reported both Linux attempts failing in 24 s before later shard cancellation, which omitted the final assertion trace. The failing comparison stage is not established."
-  },
-  {
     "file": "e2e/vision.e2e.test.ts",
     "test": "publishes rendered camera detections, boxes and signals in the web studio",
     "issue": 992,

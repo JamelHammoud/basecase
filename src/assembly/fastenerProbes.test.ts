@@ -4,6 +4,7 @@ import { place, type Placed } from '../three/analysis/collide';
 import { solidFromPositions } from '../three/analysis/shapeSolid';
 import type { FastenerInput, V3 } from './assemblyTypes';
 import { traceFasteners } from './fastenerChain';
+import type { SleeveSpec } from './fastenerSpec';
 
 function box(id: string, size: V3, at: V3, transform: THREE.Matrix4): Placed {
   const geometry = new THREE.BoxGeometry(...size).toNonIndexed();
@@ -107,5 +108,158 @@ describe('fastener probe workspace', () => {
     }
 
     expect(clones).toBe(2);
+  });
+});
+
+function sleeve(id: string, y0: number, y1: number, kind: SleeveSpec['kind'] = 'nut'): SleeveSpec {
+  return { id, kind, d: 3, y0, y1, outerR: 2 };
+}
+
+function withSleeves(specs: SleeveSpec[]) {
+  const scene = fixture(10);
+  const placed = box('sleeve', [4, 24, 4], [0, 0, 0], new THREE.Matrix4());
+
+  scene.input.specs.push(...specs);
+  scene.placed.push(...specs.map(({ id }) => ({ ...placed, id })));
+
+  for (const { id } of specs) scene.input.roles[id] = 'hardware';
+
+  return scene;
+}
+
+describe('fastener evidence selection', () => {
+  it('keeps the first greatest receiver, excludes washers and reads edited overlap limits', () => {
+    const first = sleeve('first', 1, 7);
+    const tied = sleeve('tied', 2, 8, 'insert');
+    const scene = withSleeves([
+      sleeve('washer', 0, 10, 'washer'),
+      sleeve('before-tip', -30, 1),
+      first,
+      tied,
+      sleeve('past-head', 9, 25),
+    ]);
+    const result = traceFasteners(scene.placed, scene.input);
+    const saved = structuredClone(result);
+
+    expect(result.screws[0].endsIn).toEqual({ kind: 'nut', id: 'first' });
+    expect(result.screws[0].engagementMm).toBe(6);
+    expect(result.sleeves.find(({ id }) => id === 'first')?.screw).toBe('screw');
+    expect(result.sleeves.find(({ id }) => id === 'tied')?.screw).toBeNull();
+
+    scene.input.specs.reverse();
+
+    expect(traceFasteners(scene.placed, scene.input).screws[0].endsIn).toEqual({ kind: 'insert', id: 'tied' });
+
+    first.y1 = 8;
+
+    expect(traceFasteners(scene.placed, scene.input).screws[0].endsIn).toEqual({ kind: 'nut', id: 'first' });
+    expect(result).toEqual(saved);
+
+    const cutoff = sleeve('cutoff', 0, 0.2);
+    const boundary = withSleeves([cutoff, sleeve('washer', 0, 10, 'washer')]);
+
+    expect(traceFasteners(boundary.placed, boundary.input).screws[0].endsIn).toEqual({ kind: 'printed', id: 'host' });
+
+    cutoff.y1 += Number.EPSILON;
+
+    expect(traceFasteners(boundary.placed, boundary.input).screws[0].endsIn).toEqual({ kind: 'nut', id: 'cutoff' });
+  });
+
+  it.each([
+    new THREE.Matrix4(),
+    new THREE.Matrix4().makeRotationZ(0.7).setPosition(23, -14, 37),
+    new THREE.Matrix4().makeScale(-1, 1, 1).setPosition(-21, 17, 3),
+  ])('keeps the first sampled host on equal uncut runs through placement and role edits', (transform) => {
+    const scene = fixture(10, transform);
+
+    scene.placed = [
+      scene.placed[1],
+      box('upper', [8, 4, 8], [0, 6, 0], transform),
+      box('lower', [8, 4, 8], [0, 3, 0], transform),
+    ];
+    scene.input.roles = { screw: 'hardware', upper: 'printed', lower: 'printed' };
+
+    const result = traceFasteners(scene.placed, scene.input);
+
+    expect(result.screws[0].problems).toContainEqual({ code: 'uncut', part: 'lower', mm: 4 });
+
+    scene.placed[1] = box('upper', [8, 6, 8], [0, 6, 0], transform);
+
+    expect(traceFasteners(scene.placed, scene.input).screws[0].problems).toContainEqual({
+      code: 'uncut',
+      part: 'upper',
+      mm: 6,
+    });
+
+    scene.input.roles.upper = 'component';
+
+    expect(traceFasteners(scene.placed, scene.input).screws[0].problems).toContainEqual({
+      code: 'uncut',
+      part: 'lower',
+      mm: 4,
+    });
+    expect(result.screws[0].problems).toContainEqual({ code: 'uncut', part: 'lower', mm: 4 });
+  });
+
+  it.each(['insert', 'nut', 'washer'] as const)(
+    'keeps the strongest %s host in source order at the contact cutoff',
+    (kind) => {
+      const identity = new THREE.Matrix4();
+      const input: FastenerInput = {
+        specs: [sleeve('sleeve', 3, 5, kind)],
+        roles: { sleeve: 'hardware', partial: 'printed', first: 'printed', tied: 'printed', sparse: 'printed' },
+      };
+      const placed = [
+        box('sleeve', [4, 10, 4], [0, 0, 0], identity),
+        box('partial', [12, 4, 12], [6.55, 4, 0], identity),
+        box('first', [12, 4, 12], [0, 4, 0], identity),
+        box('tied', [12, 4, 12], [0, 4, 0], identity),
+      ];
+      const expected = (host: string | null) => ({
+        id: 'sleeve',
+        kind,
+        host: kind === 'washer' ? null : host,
+        screw: null,
+      });
+      const result = traceFasteners(placed, input);
+
+      expect(result.sleeves).toEqual([expected('first')]);
+      expect(traceFasteners([...placed].reverse(), input).sleeves).toEqual([expected('tied')]);
+      expect(traceFasteners(placed.slice(0, 2), input).sleeves).toEqual([expected('partial')]);
+      expect(traceFasteners([placed[0], box('sparse', [12, 4, 12], [6.55, 4, 5.45], identity)], input).sleeves).toEqual(
+        [expected(null)],
+      );
+      expect(traceFasteners([placed[0]], input).sleeves).toEqual([expected(null)]);
+      expect(result.sleeves).toEqual([expected('first')]);
+    },
+  );
+
+  it.each([300, 600])('calculates each receiver overlap once among %i sleeves', (count) => {
+    const specs = Array.from({ length: count }, (_, i) => sleeve(`nut-${i}`, 0, 1 + (((i * 197) % count) / count) * 7));
+    const scene = withSleeves(specs);
+
+    scene.placed.shift();
+    delete scene.input.roles.host;
+
+    const original = Math.min;
+    let overlaps = 0;
+    const spy = vi.spyOn(Math, 'min').mockImplementation((...values: number[]) => {
+      if (values.length === 2 && values[1] === 10 && values[0] > 0 && values[0] < 9) overlaps++;
+
+      return original(...values);
+    });
+    let result: ReturnType<typeof traceFasteners>;
+
+    try {
+      result = traceFasteners(scene.placed, scene.input);
+    } finally {
+      spy.mockRestore();
+    }
+
+    expect(result.screws[0].endsIn).toEqual({
+      kind: 'nut',
+      id: specs.find(({ y1 }) => y1 === 1 + ((count - 1) / count) * 7)!.id,
+    });
+    expect(overlaps).toBe(count + 1);
   });
 });

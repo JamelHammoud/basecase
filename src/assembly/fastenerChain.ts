@@ -64,9 +64,21 @@ function sleeveSpan(ctx: Pick<ScrewCtx, 'tip' | 'u' | 'spec'>, sleeve: PlacedSle
 const overlap = (ctx: ScrewCtx, s: Span) => Math.min(s.b, ctx.underT) - Math.max(s.a, 0);
 
 function receiverOf(ctx: ScrewCtx): Span | null {
-  const receivers = ctx.spans.filter((s) => s.sleeve.spec.kind !== 'washer' && overlap(ctx, s) > 0.2);
+  let receiver: Span | null = null;
+  let greatestOverlap = 0.2;
 
-  return receivers.sort((x, y) => overlap(ctx, y) - overlap(ctx, x))[0] ?? null;
+  for (const span of ctx.spans) {
+    if (span.sleeve.spec.kind === 'washer') continue;
+
+    const mm = overlap(ctx, span);
+
+    if (mm > greatestOverlap) {
+      receiver = span;
+      greatestOverlap = mm;
+    }
+  }
+
+  return receiver;
 }
 
 function biteRun(ctx: ScrewCtx, host: Placed, from: number): number {
@@ -111,7 +123,11 @@ function uncutHole(ctx: ScrewCtx): ChainProblem | null {
     }
   }
 
-  const worst = [...runs].sort((x, y) => y[1] - x[1])[0];
+  let worst: [string, number] | undefined;
+
+  for (const run of runs) {
+    if (!worst || run[1] > worst[1]) worst = run;
+  }
 
   return worst && worst[1] >= 1 ? { code: 'uncut', part: worst[0], mm: worst[1] } : null;
 }
@@ -270,11 +286,21 @@ function sleeveHost(sleeve: PlacedSleeve, solids: Placed[]): SleeveHost {
 
   const centre = frame.at((spec.y0 + spec.y1) / 2);
   const ring = ringAround(centre, frame.axis, spec.outerR + 0.4);
-  const near = solids.filter((o) => o.box.distanceToPoint(centre) < spec.outerR + 2);
-  const scored = near
-    .map((o) => ({ id: o.id, n: ring.filter((q) => isNear(o, q, 0.5)).length }))
-    .sort((x, y) => y.n - x.n);
-  const host = scored[0]?.n >= 3 ? scored[0].id : null;
+  let host: string | null = null;
+  let mostTouches = 2;
+
+  for (const solid of solids) {
+    const near = solid.box.distanceToPoint(centre) < spec.outerR + 2;
+
+    if (!near) continue;
+
+    const touches = ring.reduce((n, q) => n + Number(isNear(solid, q, 0.5)), 0);
+
+    if (touches > mostTouches) {
+      host = solid.id;
+      mostTouches = touches;
+    }
+  }
 
   return { id: spec.id, kind: spec.kind, host: spec.kind === 'washer' ? null : host, screw: null };
 }

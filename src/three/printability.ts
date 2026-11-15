@@ -67,16 +67,58 @@ function supportUnder(bvh: MeshBVH, centroid: THREE.Vector3, down: THREE.Vector3
   return hit && hit.distance < h ? hit.distance : h;
 }
 
-function orientationCost(tris: Float32Array, bvh: MeshBVH, up: THREE.Vector3) {
-  const cos = Math.cos(THREE.MathUtils.degToRad(PRINT_RULES.overhangDeg));
-  const supportCos = Math.cos(THREE.MathUtils.degToRad(PRINT_RULES.supportDeg));
-  const minH = lowestAlong(tris, up);
+interface OrientationCost {
+  up: THREE.Vector3;
+  down: THREE.Vector3;
+  minH: number;
+  overhang: number;
+  support: number;
+  contact: number;
+}
+
+interface CostTriangle {
+  normal: THREE.Vector3;
+  centroid: THREE.Vector3;
+  area: number;
+}
+
+function addTriangleCost(
+  cost: OrientationCost,
+  triangle: CostTriangle,
+  bvh: MeshBVH,
+  limits: { cos: number; supportCos: number },
+) {
+  const { normal, centroid, area } = triangle;
+  const facing = normal.dot(cost.down);
+
+  if (facing <= limits.cos) return;
+
+  const h = centroid.dot(cost.up) - cost.minH;
+
+  if (h < 0.3) {
+    cost.contact += facing > 0.99 ? area : 0;
+
+    return;
+  }
+
+  cost.overhang += area;
+
+  if (facing > limits.supportCos) cost.support += area * facing * supportUnder(bvh, centroid, cost.down, h);
+}
+
+function orientationCosts(tris: Float32Array, bvh: MeshBVH, downs: Vec3[]) {
+  const limits = {
+    cos: Math.cos(THREE.MathUtils.degToRad(PRINT_RULES.overhangDeg)),
+    supportCos: Math.cos(THREE.MathUtils.degToRad(PRINT_RULES.supportDeg)),
+  };
+  const costs: OrientationCost[] = downs.map((down) => {
+    const up = new THREE.Vector3(...down).negate().normalize();
+
+    return { up, down: up.clone().negate(), minH: lowestAlong(tris, up), overhang: 0, support: 0, contact: 0 };
+  });
   const [a, b, c, n, centroid] = [0, 0, 0, 0, 0].map(() => new THREE.Vector3());
   const ab = new THREE.Vector3();
-  const down = up.clone().negate();
-  let overhang = 0;
-  let support = 0;
-  let contact = 0;
+  const triangle: CostTriangle = { normal: n, centroid, area: 0 };
 
   for (let i = 0; i < tris.length; i += 9) {
     a.fromArray(tris, i);
@@ -88,25 +130,14 @@ function orientationCost(tris: Float32Array, bvh: MeshBVH, up: THREE.Vector3) {
 
     if (area2 < 1e-9) continue;
 
-    const facing = n.divideScalar(area2).dot(down);
+    n.divideScalar(area2);
+    centroid.copy(a).add(b).add(c).divideScalar(3);
+    triangle.area = area2 / 2;
 
-    if (facing <= cos) continue;
-
-    const area = area2 / 2;
-    const h = centroid.copy(a).add(b).add(c).divideScalar(3).dot(up) - minH;
-
-    if (h < 0.3) {
-      contact += facing > 0.99 ? area : 0;
-
-      continue;
-    }
-
-    overhang += area;
-
-    if (facing > supportCos) support += area * facing * supportUnder(bvh, centroid, down, h);
+    for (const cost of costs) addTriangleCost(cost, triangle, bvh, limits);
   }
 
-  return { overhang, support, contact };
+  return costs;
 }
 
 function poseBox(tris: Float32Array, q: THREE.Quaternion) {
@@ -123,10 +154,10 @@ function poseBox(tris: Float32Array, q: THREE.Quaternion) {
   return { min, size: max.clone().sub(min) };
 }
 
-function poseFor(tris: Float32Array, bvh: MeshBVH, down: Vec3, axis?: BuildAxis): PrintPose {
+function poseFor(tris: Float32Array, down: Vec3, cost: OrientationCost, axis?: BuildAxis): PrintPose {
   const q = poseRotation(down);
   const { min, size } = poseBox(tris, q);
-  const { overhang, support, contact } = orientationCost(tris, bvh, new THREE.Vector3(...down).negate().normalize());
+  const { overhang, support, contact } = cost;
 
   return {
     down,
@@ -298,12 +329,19 @@ export function bvhOf(tris: Float32Array): MeshBVH {
 export function checkPrintability(tris: Float32Array, bvh: MeshBVH = bvhOf(tris)): PrintShape | null {
   if (tris.length < 9) return null;
 
-  const axes = (Object.keys(AXES) as BuildAxis[]).map((key) => poseFor(tris, bvh, AXES[key], key));
-  const faces = faceDowns(tris).map((down) => poseFor(tris, bvh, down));
+  const candidates: { down: Vec3; axis?: BuildAxis }[] = [
+    ...(Object.keys(AXES) as BuildAxis[]).map((axis) => ({ down: AXES[axis], axis })),
+    ...faceDowns(tris).map((down) => ({ down })),
+  ];
+  const costs = orientationCosts(
+    tris,
+    bvh,
+    candidates.map(({ down }) => down),
+  );
   const walls = wallThickness(tris, bvh);
 
   return {
-    poses: [...axes, ...faces],
+    poses: candidates.map(({ down, axis }, index) => poseFor(tris, down, costs[index], axis)),
     minWallMm: walls.min,
     thinShare: walls.thinShare,
     thinAreaMm2: walls.thinAreaMm2,
@@ -311,7 +349,15 @@ export function checkPrintability(tris: Float32Array, bvh: MeshBVH = bvhOf(tris)
 }
 
 export function extraPose(tris: Float32Array, bvh: MeshBVH, down: Vec3): PrintPose {
-  return { ...poseFor(tris, bvh, down), requested: true };
+  return extraPoses(tris, bvh, [down])[0];
+}
+
+export function extraPoses(tris: Float32Array, bvh: MeshBVH, downs: Vec3[]): PrintPose[] {
+  if (!downs.length) return [];
+
+  const costs = orientationCosts(tris, bvh, downs);
+
+  return downs.map((down, index) => ({ ...poseFor(tris, down, costs[index]), requested: true }));
 }
 
 export const sameDirection = (a: Vec3, b: Vec3, cosLimit = Math.cos(THREE.MathUtils.degToRad(1))): boolean => {

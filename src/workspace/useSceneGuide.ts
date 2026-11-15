@@ -24,7 +24,7 @@ export function useSceneGuide({ sceneName, docs, showToast, viewportRef }: Scene
     showToast,
     viewportRef,
   });
-  const buildAlong = useBuildAlong({ guide, projectRef, viewportRef });
+  const buildAlong = useBuildAlong({ guide, partsRef, projectRef, viewportRef });
 
   return { guide, buildAlong };
 }

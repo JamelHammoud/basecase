@@ -105,10 +105,32 @@ const checkedPorts = (a: unknown): CadPort[] =>
 
 const volumeOf = (stats: unknown) => (isLoose(stats) && finite(stats.volume) ? { volume: stats.volume } : {});
 
-export function checkedRender(raw: unknown): RenderedCad {
+function requirementsProblem(audit: unknown): string | undefined {
+  if (
+    !isLoose(audit) ||
+    audit.error ||
+    audit.skipped ||
+    !Array.isArray(audit.checks) ||
+    audit.checks.length > 128 ||
+    audit.checks.some((check) => !isLoose(check) || typeof check.pass !== 'boolean')
+  )
+    return 'The CAD requirements couldn’t be measured.';
+
+  const broken = audit.checks.filter((check) => isLoose(check) && check.pass === false);
+
+  return broken.length
+    ? broken.map((check) => `${String(check.name)} needs ${String(check.want)}, got ${String(check.got)}`).join('. ')
+    : undefined;
+}
+
+export function checkedRender(raw: unknown, requireAudit = false): RenderedCad {
   if (!isLoose(raw)) return failed(undefined);
 
   if (raw.ok !== true) return failed(raw.error);
+
+  const problem = requireAudit ? requirementsProblem(raw.audit) : undefined;
+
+  if (problem) return failed(problem);
 
   const { positions, indices } = raw;
 

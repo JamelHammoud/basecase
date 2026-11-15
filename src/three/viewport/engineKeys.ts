@@ -21,6 +21,7 @@ export const NEEDS_WHOLE_SCENE: Array<keyof Viewport3DHandle> = [
   'captureViews',
   'interference',
   'fastenerChains',
+  'wiring',
   'assembly',
   'posedInterference',
   'posedFloor',

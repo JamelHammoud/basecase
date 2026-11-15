@@ -1,3 +1,4 @@
+import { withValidStudy } from '../study/record';
 import type { Skill } from '../skills/artifacts';
 import { readSkillBundle } from '../skills/bundle';
 import type { ProjectSettings, SavedSceneRecord, SceneAnnotation, ScenePart } from '../types/robotics';
@@ -62,7 +63,21 @@ function localProject(project: ProjectSettings | undefined): ProjectSettings | u
   delete rest.skills;
   delete rest.buildGuide;
 
-  return rest;
+  const portable = withValidStudy(rest);
+  const study = portable.study;
+
+  if (!study) return portable;
+
+  return {
+    ...portable,
+    study: {
+      ...study,
+      base: {
+        parts: study.base.parts.map(cleanPart),
+        project: localProject(study.base.project)!,
+      },
+    },
+  };
 }
 
 function cleanPart(part: ScenePart): ScenePart {

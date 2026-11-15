@@ -122,7 +122,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `run_case` | Runs a Case 20 times and reports how often it passed, why it failed, and each failing seed's number and first failure frame |
 | `read_try` | Reads one try from its recording: its signals over a time window, when each failure first tripped, a picture of the canvas at one moment, and its whole-run scan map's bounds and point count |
 | `compare_case` | Runs a Case on this robot and another open tab's, and says which passes more often |
-| `explore_case` | Runs a Case on each catalog version of the robot's servos and supply voltage |
+| `study_design` | Compares combinations of servos, voltage, batteries, foot sizes and model dimensions, with Case runs when a Case is open |
 | `search_tries` | Searches the tries from every scene with the same words and facts as the Library's search, or by motion |
 | `label_tries` | Reads tries' filmstrips, segments and quality flags, and writes an instruction for each try and segment, and tags |
 | `make_dataset` | Gathers tries from any scene into a dataset, by search or by id, and opens it |
@@ -154,7 +154,6 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `lighten_part` | Removes material from one printed part using its measured Strength loads while preserving mounting regions, then reports the actual retained mass share |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
 | `size_arm` | Sizes and places an arm from the points it must reach and the grams it carries |
-| `sweep_design` | Tries a value on copies, without changing the scene |
 
 For `set_build`, `budget_hours` sets the time budget in hours when you give one. Zero clears it, and leaving it out keeps the current budget. [Set a time budget](/help/set-a-time-budget) shows the field and the Time check.
 

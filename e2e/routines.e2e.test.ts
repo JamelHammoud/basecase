@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { Routine } from '../src/routines/schema';
+import type { Routine, SkillContract } from '../src/routines/schema';
+import { FIXTURE_SKILLS } from '../src/routines/fixtureSkills';
+import { loadKitLibrary } from '../src/routines/kitLibrary';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import type { Skill } from '../src/skills/artifacts';
 import { modelOf } from '../src/skills/fixtureModels';
@@ -12,12 +14,13 @@ let app: App;
 interface RoutineState {
   routine: Routine | null;
   compiled: { ok: boolean; errors?: Array<{ code: string; path?: string }> } | null;
+  run: { live: boolean } | null;
   skills: Array<{ id: string; hash: string }>;
 }
 
 interface Studio {
   load: (record: unknown) => void;
-  stubHandoffs: (stub: { skills: Skill[]; falls: number }) => void;
+  stubHandoffs: (stub: { skills: Skill[]; falls: number; kit?: readonly SkillContract[] }) => void;
   plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   routineState: () => RoutineState;
 }
@@ -32,6 +35,20 @@ const mainSteps = async () => ((await routineState()).routine?.base.onTimeout ??
 const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
 const inFlow = (selector: string) => app.page.locator(visible(`[data-testid="routine-flow"] ${selector}`)).first();
+
+function failedKitPair(kit: readonly SkillContract[], pair: { from: string; to: string; reason: string }) {
+  return kit.map((skill) =>
+    skill.id === pair.from
+      ? {
+          ...skill,
+          transitions: {
+            ...skill.transitions,
+            [pair.to]: { ...skill.transitions[pair.to], failures: 8, reason: pair.reason },
+          },
+        }
+      : skill,
+  );
+}
 
 async function loadRobot(id: string) {
   const robot = fixtureRobots().find((r) => r.id === id)!;
@@ -119,6 +136,71 @@ describe('Hand-offs', () => {
   const refusedAt = async (node: string) =>
     ((await routineState()).compiled?.errors ?? []).some((e) => e.code === 'unproven-transition' && e.path === node);
   const waveHash = async () => (await routineState()).skills.find((s) => s.id === 'wave')?.hash;
+
+  it('keeps Settle then Turn then Walk unavailable until the candidate passes its hand-offs', async () => {
+    const { page } = app;
+    const library = await loadKitLibrary();
+    const candidate = library.find((skill) => skill.name === 'Velocity tracking')!;
+    const kit = FIXTURE_SKILLS.map((skill) => ({
+      ...skill,
+      transitions: Object.fromEntries(
+        Object.entries(skill.transitions).map(([to, proof]) => [to, { ...proof, failures: 0 }]),
+      ),
+    }));
+    const failed = failedKitPair(kit, {
+      from: 'settle',
+      to: 'turn-away',
+      reason: 'settle to turn-away didn’t turn left 0.3 rad in place in 8 of 8 tries in simulation.',
+    });
+
+    expect(candidate.evidence?.passed).toBe(true);
+    await loadRobot('quad-servo');
+    await page.evaluate((stub) => (window as unknown as { __studio: Studio }).__studio.stubHandoffs(stub), {
+      skills: [candidate],
+      falls: 0,
+      kit: failed,
+    });
+    await openPlayTab(page, 'Routines');
+    await page.locator(visible('button'), { hasText: 'New Routine' }).first().click();
+    await inFlow('[data-insert]').click();
+    await page.getByRole('menuitem', { name: 'Turn', exact: true }).click();
+    await inFlow('button[aria-label="Add step"]:not([data-insert])').click();
+    await page.getByRole('menuitem', { name: 'Drive', exact: true }).click();
+    await expect.poll(mainSteps).toEqual(['turn', 'drive']);
+    await expect.poll(() => refusedAt('turn')).toBe(true);
+    expect(await inFlow('button:has-text("Run")').count()).toBe(0);
+    expect(await inFlow('[data-flow-node="turn"]').textContent()).toContain('turn left 0.3 rad in place');
+
+    const failedStop = failedKitPair(kit, {
+      from: 'walk',
+      to: 'settle',
+      reason: 'walk to settle didn’t stop within 0.02 m in 8 of 8 tries in simulation.',
+    });
+
+    await page.evaluate((stub) => (window as unknown as { __studio: Studio }).__studio.stubHandoffs(stub), {
+      skills: [candidate],
+      falls: 0,
+      kit: failedStop,
+    });
+    await expect.poll(() => refusedAt('drive')).toBe(true);
+    expect(await inFlow('button:has-text("Run")').count()).toBe(0);
+    expect(await inFlow('[data-flow-node="drive"]').textContent()).toContain('stop within 0.02 m');
+
+    const passing = structuredClone(candidate);
+
+    if (passing.controller.kind !== 'policy') throw new Error('Missing fixture policy');
+
+    passing.controller.policy.trainedSteps += 1;
+    await page.evaluate((stub) => (window as unknown as { __studio: Studio }).__studio.stubHandoffs(stub), {
+      skills: [passing],
+      falls: 0,
+      kit,
+    });
+    await expect.poll(async () => (await routineState()).compiled?.ok).toBe(true);
+    await inFlow('button:has-text("Run")').click();
+    await expect.poll(async () => (await routineState()).run?.live).toBe(true);
+    expect(app.errors).toEqual([]);
+  });
 
   it('proves Walk then Wave, and trains the hand-off when it falls', async () => {
     const { page } = app;

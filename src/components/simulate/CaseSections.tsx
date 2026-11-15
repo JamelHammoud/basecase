@@ -16,7 +16,7 @@ import {
 import type { CaseCheck } from '../../readiness/caseChecks';
 import type { DriveClass } from '../../sim/driveKeys';
 import type { Cases } from '../../workspace/useCases';
-import type { CaseExplore } from '../../workspace/useCaseExplore';
+import type { Study } from '../../workspace/useStudy';
 import { CheckIcon } from '../build/CheckIcon';
 import { runClock } from '../../utils/duration';
 
@@ -25,19 +25,19 @@ interface CaseSectionProps {
   check: CaseCheck | null;
   onOpenCheck: () => void;
   onRun: () => void;
-  explore: CaseExplore;
+  study: Study;
 }
 
-const ExploreButton: React.FC<{ explore: CaseExplore }> = ({ explore }) => {
-  if (explore.running)
-    return <IconButton icon={<StopIcon className="w-4 h-4" />} title="Stop" size="xs" onClick={explore.stop} />;
+const StudyButton: React.FC<{ study: Study }> = ({ study }) => {
+  if (study.running)
+    return <IconButton icon={<StopIcon className="w-4 h-4" />} title="Stop Study" size="xs" onClick={study.stop} />;
 
-  return explore.available ? (
-    <IconButton icon={<SwapIcon className="w-4 h-4" />} title="Explore" size="xs" onClick={explore.start} />
+  return study.available ? (
+    <IconButton icon={<SwapIcon className="w-4 h-4" />} title="Study" size="xs" onClick={study.show} />
   ) : null;
 };
 
-export const CaseSection: React.FC<CaseSectionProps> = ({ cases, check, onOpenCheck, onRun, explore }) => {
+export const CaseSection: React.FC<CaseSectionProps> = ({ cases, check, onOpenCheck, onRun, study }) => {
   const kase = cases.active!;
 
   return (
@@ -55,7 +55,7 @@ export const CaseSection: React.FC<CaseSectionProps> = ({ cases, check, onOpenCh
               onClick={onOpenCheck}
             />
           )}
-          <ExploreButton explore={explore} />
+          <StudyButton study={study} />
           <IconButton icon={<ExpandIcon className="w-4 h-4" />} title="Run Case" size="xs" onClick={onRun} />
           <IconButton
             icon={<CloseIcon className="w-4 h-4" />}

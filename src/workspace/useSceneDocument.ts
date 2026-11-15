@@ -59,6 +59,12 @@ function useProjectCommits(commitProject: CommitProject, projectRef: RefObject<P
   return {
     commitDesign: (parts: ScenePart[], tether: Tether | undefined) =>
       commitProject({ tether: projectRef.current.tether }, (p) => ({ ...p, tether }), parts),
+    commitStudy: (parts: ScenePart[], project: ProjectSettings) =>
+      commitProject(
+        { tether: projectRef.current.tether },
+        (p) => ({ ...p, joints: project.joints, tether: project.tether }),
+        parts,
+      ),
     commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton | undefined) =>
       commitProject({ skeleton: projectRef.current.skeleton }, (p) => ({ ...p, skeleton }), parts),
     commitConsole: (caseId: string, console: CaseConsole | undefined) =>

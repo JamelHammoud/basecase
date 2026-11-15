@@ -14,13 +14,25 @@ const PIGTAILS: Partial<Record<ConnectorType, string>> = {
 
 export function wiringSupplies(netlist: Netlist): Map<string, number> {
   const counts = new Map<string, number>();
-  const add = (supply: string | undefined) => {
+  const add = (supply: string | null | undefined) => {
     if (supply) counts.set(`supply:${supply}`, (counts.get(`supply:${supply}`) ?? 0) + 1);
   };
 
-  for (const net of netlist.buses.flatMap((b) => b.nets)) add(BUS_CABLES[net.to.connector]);
+  for (const net of netlist.buses.flatMap((b) => b.nets)) {
+    const legacy = net.from.connector === net.to.connector ? BUS_CABLES[net.to.connector] : undefined;
 
-  for (const net of netlist.power.nets) [net.from, net.to].forEach((end) => add(PIGTAILS[end.connector]));
+    add(net.route ? net.route.cableSupplyId : legacy);
+  }
+
+  for (const net of netlist.power.nets) {
+    if (net.route?.cableSupplyId) {
+      add(net.route.cableSupplyId);
+
+      continue;
+    }
+
+    [net.from, net.to].forEach((end) => add(PIGTAILS[end.connector]));
+  }
 
   return counts;
 }

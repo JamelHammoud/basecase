@@ -119,6 +119,7 @@ describe('proving any hand-off', { timeout: 120_000 }, () => {
     const kitProof = (from: string, to: string) => ({
       seeds: 8,
       falls: 0,
+      failures: 0,
       modelHash: kit.modelHash,
       skills: pairStamp(scene, { from, to }),
     });
@@ -130,7 +131,10 @@ describe('proving any hand-off', { timeout: 120_000 }, () => {
 
     expect(kit.skills.map((s) => [s.id, s.transitions])).toEqual([
       ['walk', { settle: kitProof('walk', 'settle') }],
-      ['settle', { walk: kitProof('settle', 'walk'), 'turn-away': kitProof('settle', 'turn-away') }],
+      [
+        'settle',
+        { walk: kitProof('settle', 'walk'), 'turn-away': expect.objectContaining({ seeds: 8, falls: 0, failures: 8 }) },
+      ],
       ['turn-away', { walk: kitProof('turn-away', 'walk'), settle: kitProof('turn-away', 'settle') }],
       ['look-at', {}],
     ]);

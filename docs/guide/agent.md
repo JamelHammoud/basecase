@@ -190,3 +190,5 @@ Silhouette and proportion scores (what the bench measures today) matter less tha
   - Agent choice (Claude / Codex / Gemini / Offline) and its command live in Settings ▸ Agent (“Agent Settings” in ⌘K). The composer's label names the active agent (`agentKinds.ts`); the canvas cursor always reads “Agent”; tool calls from every agent are normalized to `mcp__server__tool` (`toolIdentity.ts`: Claude Code's `_meta`, Codex's `{ server, tool, arguments }`, Gemini's generated call ids), so steps read the same.
   - The send button becomes Stop while running.
 - Agent replies that link out open in the system browser (Electron `setWindowOpenHandler`).
+
+Camera shots from `simulate` and `operate` receive the active Case's captured-world asset and placement. They use the same worker scene and lenses as the live cameras and dataset videos, including a splat or the mesh fallback (§8l).

@@ -17,6 +17,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'calibrate',
   'calibrationReplay',
   'calibrations',
+  'cameraFrame',
   'cameraStreams',
   'capture',
   'caseConsole',

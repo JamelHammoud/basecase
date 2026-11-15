@@ -73,11 +73,29 @@ export function legs(series: number[], amplitude: number): number {
   return count;
 }
 
+function sliceIndex(at: number, length: number): number {
+  const index = Math.trunc(at) || 0;
+
+  return index < 0 ? Math.max(length + index, 0) : Math.min(index, length);
+}
+
 export const smoothed = (series: number[], reach = 2) =>
   series.map((_, i) => {
-    const near = series.slice(Math.max(0, i - reach), i + reach + 1).filter(Number.isFinite);
+    const start = sliceIndex(Math.max(0, i - reach), series.length);
+    const end = sliceIndex(i + reach + 1, series.length);
+    let sum = 0;
+    let count = 0;
 
-    return near.length ? near.reduce((sum, v) => sum + v, 0) / near.length : Number.NaN;
+    for (let j = start; j < end; j++) {
+      const value = series[j];
+
+      if (!Number.isFinite(value)) continue;
+
+      sum += value;
+      count++;
+    }
+
+    return count ? sum / count : Number.NaN;
   });
 
 const since = (w: GestureFrame[], seconds: number) => {

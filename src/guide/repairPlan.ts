@@ -2,6 +2,7 @@ import type { AssemblyGeometry } from '../assembly/assemblyGeometry';
 import { AXES } from '../assembly/moveBlockers';
 import type { RemovalPlan, RemovalStep } from '../assembly/removalOrder';
 import { teardownTo } from '../assembly/serviceDepth';
+import { indexFasteners, type FastenerIndex } from '../assembly/fastenerIndex';
 import { add, boxCenter, boxDiagonal, scale } from './guideMath';
 import { prepareRepairInserts } from './repairInserts';
 import { repairCallout, repairTools } from './repairItems';
@@ -19,11 +20,13 @@ interface Context {
   boxes: Record<string, Box>;
   target: string;
   removed: Set<string>;
+  fasteners: FastenerIndex;
 }
 
 function directionOf(ctx: Context, step: RemovalStep): V3 {
   const g = ctx.geometry;
-  const chain = g.chains.screws.find((screw) => step.ids.includes(screw.id));
+  const chains = step.ids.flatMap((id) => ctx.fasteners.byId.get(id) ?? []);
+  const chain = chains.sort((a, b) => ctx.fasteners.order.get(a)! - ctx.fasteners.order.get(b)!)[0];
 
   if (step.kind === 'screw' && chain) return chain.axis;
 
@@ -152,7 +155,14 @@ export function buildRepairPlan(
 
   if (!selected || [...selected].some((id) => !plan.partIds.includes(id))) return null;
 
-  const ctx: Context = { plan, geometry, boxes, target: targetId, removed: new Set() };
+  const ctx: Context = {
+    plan,
+    geometry,
+    boxes,
+    target: targetId,
+    removed: new Set(),
+    fasteners: indexFasteners(geometry.chains.screws),
+  };
   const actions = removal.steps.filter((step) => step.ids.some((id) => selected.has(id)));
   const removals = actions.map((step) => {
     const result = removalStep(ctx, step);

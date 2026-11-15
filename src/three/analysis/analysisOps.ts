@@ -16,10 +16,12 @@ import { assemblyGeometry, type AssemblyGeometryInput } from '../../assembly/ass
 import { jointAxesOf, jointAxisOf, type JointAxisQuery } from './jointAxis';
 import { payloadMap, type ArmModel } from '../../utils/payload';
 import type { StrengthJob } from '../../strength/types';
-import { strengthOf } from './strengthPart';
+import { candidateDowns, strengthOf } from './strengthPart';
 import { planMerges } from '../../print/merge/mergePlan';
 import { plateFiles, type ThreeMfResult, type ThreeMfTask } from './plateFiles';
 import { sceneStl } from './sceneStl';
+import { lightenPart, type LightenResult } from '../../strength/lighten';
+import { lightenInFrame, type LightenTask } from './lightenFrame';
 
 export type { PlateFilesInput, ThreeMfFileSpec, ThreeMfResult } from './plateFiles';
 
@@ -44,6 +46,7 @@ export type AnalysisTask =
   | ({ kind: 'interference'; instances: Instance[]; riders?: OutputRiders } & CollideOptions)
   | { kind: 'sweeps'; instances: Instance[]; sweeps: SweepSpec[] }
   | { kind: 'strength'; instances: Instance[]; jobs: StrengthJob[] }
+  | ({ kind: 'lighten'; instances: Instance[] } & LightenTask)
   | { kind: 'print'; instances: Instance[]; faces?: Record<string, Array<[number, number, number]>> }
   | { kind: 'measure' | 'meshes' | 'visibility' | 'floor' | 'stl'; instances: Instance[] }
   | { kind: 'gaps'; instances: Instance[]; pairs: PairIds[]; withinMm: number }
@@ -95,7 +98,7 @@ const placeAll = (instances: Instance[]) =>
 const byId = <T>(instances: Instance[], value: (i: Instance) => T) =>
   Object.fromEntries(instances.map((i) => [i.id, value(i)]));
 
-function run(task: Exclude<AnalysisTask, { kind: 'strength' }>) {
+function run(task: Exclude<AnalysisTask, { kind: 'strength' | 'lighten' }>) {
   switch (task.kind) {
     case 'interference': {
       const { instances, riders, ...options } = task;
@@ -178,6 +181,23 @@ function strengthJobs(task: Extract<AnalysisTask, { kind: 'strength' }>) {
   });
 }
 
+function lightenJob(task: Extract<AnalysisTask, { kind: 'lighten' }>) {
+  if (typeof document !== 'undefined') throw new Error('Reload the app before lightening a part.');
+
+  const instance = task.instances.find((i) => i.id === task.part);
+
+  if (!instance) throw new Error(MISSING_SHAPE);
+
+  const solid = solidOf(instance.key);
+  const local = lightenInFrame(instance.matrix, task);
+
+  return lightenPart({
+    positions: solid.positions,
+    ...local,
+    jobs: local.jobs.map((job) => ({ ...job, down: candidateDowns(solid, job.down).chosen })),
+  });
+}
+
 function stlFiles(task: Extract<AnalysisTask, { kind: 'partStls' }>) {
   const keyOf = new Map(task.instances.map((i) => [i.id, i.key]));
 
@@ -197,6 +217,8 @@ const transferOf = (kind: AnalysisTask['kind'], result: unknown): Transferable[]
   if (kind === 'fitCoupons') return (result as FitCoupon[]).map((c) => c.positions.buffer as ArrayBuffer);
 
   if (kind === 'strength') return fieldBuffers(result);
+
+  if (kind === 'lighten') return [(result as LightenResult).positions.buffer as ArrayBuffer];
 
   if (kind === 'stl') return [(result as Uint8Array).buffer as ArrayBuffer];
 
@@ -222,7 +244,7 @@ export const analysisHandlers = {
     newGeometries.forEach((g) => geometries.set(g.id, g));
     shapes.forEach((s) => specs.set(s.key, s));
 
-    const result = await (task.kind === 'strength' ? strengthJobs(task) : run(task));
+    const result = await runAnalysis(task);
 
     return reply(result, transferOf(task.kind, result));
   },
@@ -242,3 +264,9 @@ export const analysisHandlers = {
   },
   payloadMaps: (arms: ArmModel[]) => reply(arms.map((arm) => payloadMap(arm))),
 };
+
+function runAnalysis(task: AnalysisTask) {
+  if (task.kind === 'strength') return strengthJobs(task);
+
+  return task.kind === 'lighten' ? lightenJob(task) : run(task);
+}

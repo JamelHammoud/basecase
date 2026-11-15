@@ -7,6 +7,7 @@ import { useFileImport } from './useFileImport';
 import { useFixedCameras } from './useFixedCameras';
 import { useHandJoints } from './useHandJoints';
 import { useLibraryActions } from './useLibraryActions';
+import { useLighten } from './useLighten';
 import { useMirror } from './useMirror';
 import { useOnshapeUpdate } from './useOnshapeUpdate';
 import { usePartCreation } from './usePartCreation';
@@ -26,6 +27,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
   const edits = usePartEdits(core);
   const ops = useSelectionOps(core);
   const mirror = useMirror(core);
+  const lighten = useLighten(core);
   const tuning = useCadTune(core);
   const library = useLibraryActions(core);
   const exports = useExportActions(core);
@@ -55,6 +57,7 @@ export function useWorkspaceActions(core: WorkspaceCore) {
     edits,
     ops,
     mirror,
+    lighten,
     tuning,
     library,
     exports,

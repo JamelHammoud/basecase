@@ -16,6 +16,7 @@ import {
 import { checkAssembly, mergeParts } from './cad-mcp/assemblyTools.mjs';
 import { compare } from './cad-mcp/compareTool.mjs';
 import { craftReview } from './cad-mcp/craftReview.mjs';
+import { lightenPart } from './cad-mcp/lightenPart.mjs';
 import { fitView } from './cad-mcp/fitViewTool.mjs';
 import { photoScale } from './cad-mcp/photoScaleTool.mjs';
 import { scoreFit } from './cad-mcp/scoreFitTool.mjs';
@@ -158,6 +159,7 @@ const TOOLS = [
   setBuild,
   buildGuide,
   repairPart,
+  lightenPart,
   setStatus,
   getGuide,
   getReadiness,

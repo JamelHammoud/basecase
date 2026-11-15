@@ -30,8 +30,25 @@ const LIP_DEPTH_MM = 3;
 const LIP_SHARE = 0.1;
 const LIP_MIN_HITS = 2;
 
-function hitDistance(target: Placed, from: THREE.Vector3, dir: THREE.Vector3, travel: number): number | null {
-  if (insideSolid(target, from.clone().addScaledVector(dir, 0.3))) return null;
+interface MoveProbe {
+  dir: THREE.Vector3;
+  travel: number;
+  point: THREE.Vector3;
+  offsets?: THREE.Vector3[];
+}
+
+interface MoveSweep {
+  part: Placed;
+  mine: THREE.Vector3[];
+  swept: THREE.Box3;
+  forward: MoveProbe;
+  backward: MoveProbe;
+}
+
+function hitDistance(target: Placed, from: THREE.Vector3, { dir, travel }: MoveProbe): number | null {
+  ray.origin.copy(from).addScaledVector(dir, 0.3);
+
+  if (insideSolid(target, ray.origin)) return null;
 
   ray.origin.copy(from).addScaledVector(dir, START_MM).applyMatrix4(target.inverse);
   ray.direction.copy(dirLocal.copy(dir).transformDirection(target.inverse));
@@ -51,12 +68,14 @@ function grazeOffsets(dir: THREE.Vector3): THREE.Vector3[] {
   return [side, side.clone().negate(), other, other.clone().negate()];
 }
 
-function solidHit(target: Placed, from: THREE.Vector3, dir: THREE.Vector3, travel: number): number | null {
-  const hit = hitDistance(target, from, dir, travel);
+function solidHit(target: Placed, from: THREE.Vector3, probe: MoveProbe): number | null {
+  const hit = hitDistance(target, from, probe);
 
   if (hit === null) return null;
 
-  const held = grazeOffsets(dir).every((o) => hitDistance(target, from.clone().add(o), dir, travel) !== null);
+  probe.offsets ??= grazeOffsets(probe.dir);
+
+  const held = probe.offsets.every((o) => hitDistance(target, probe.point.copy(from).add(o), probe) !== null);
 
   return held ? hit : null;
 }
@@ -86,30 +105,37 @@ function shootAll(from: THREE.Vector3[], shoot: (o: THREE.Vector3) => number | n
   return hits ? 'lip' : 'none';
 }
 
-function blockOf(query: MoveQuery, q: Placed, mine: THREE.Vector3[], swept: THREE.Box3): Block {
-  const { part, dir, travel } = query;
-  const forward = shootAll(mine, (o) => (q.box.distanceToPoint(o) <= travel ? solidHit(q, o, dir, travel) : null));
+function blockOf(sweep: MoveSweep, q: Placed): Block {
+  const { part, mine, swept, forward, backward } = sweep;
+  const front = shootAll(mine, (o) => (q.box.distanceToPoint(o) <= forward.travel ? solidHit(q, o, forward) : null));
 
-  if (forward === 'solid') return 'solid';
+  if (front === 'solid') return 'solid';
 
-  const back = dir.clone().negate();
   const theirs = samplesOf(q);
-  const backward = shootAll(theirs, (o) => (swept.containsPoint(o) ? solidHit(part, o, back, travel) : null));
+  const back = shootAll(theirs, (o) => (swept.containsPoint(o) ? solidHit(part, o, backward) : null));
 
-  if (backward === 'solid') return 'solid';
+  if (back === 'solid') return 'solid';
 
-  return forward === 'lip' || backward === 'lip' ? 'lip' : 'none';
+  return front === 'lip' || back === 'lip' ? 'lip' : 'none';
 }
 
 export function blocksAlong(query: MoveQuery): { solid: string[]; lips: string[] } {
   const swept = sweptBox(query.part, query.dir, query.travel);
   const mine = samplesOf(query.part);
+  const point = new THREE.Vector3();
+  const sweep: MoveSweep = {
+    part: query.part,
+    mine,
+    swept,
+    forward: { dir: query.dir, travel: query.travel, point },
+    backward: { dir: new THREE.Vector3().copy(query.dir).negate(), travel: query.travel, point },
+  };
   const out = { solid: [] as string[], lips: [] as string[] };
 
   for (const q of query.candidates) {
     if (q.id === query.part.id || !q.box.intersectsBox(swept)) continue;
 
-    const block = blockOf(query, q, mine, swept);
+    const block = blockOf(sweep, q);
 
     if (block === 'solid') out.solid.push(q.id);
 

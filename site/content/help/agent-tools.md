@@ -111,6 +111,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | Tool | What it does |
 |---|---|
 | `simulate` | Runs the scene in MuJoCo |
+| `fit_body` | Fits link masses, terminal payloads and floor friction from the latest Operate run, using the active servo fits. Keeps a body version only when held-out error falls by at least 25%, otherwise reports Can’t tell |
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |

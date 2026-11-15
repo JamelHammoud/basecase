@@ -26,6 +26,7 @@ import { useSceneReadiness } from './useReadiness';
 import { useSketchSession } from './useSketchSession';
 import { useRobotSync } from './useRobotSync';
 import { useRepair } from './useRepair';
+import { useLatestRef } from '../utils/useLatestRef';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -127,6 +128,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
 
   const dataLayers = useWorkspaceDataLayers({ simTraining, parts, viewportRef, tool, studio, showToast });
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
+  const viewRef = useLatestRef({ active, tab: tool.leftTab, sidebarOpen: studio.isLeftOpen && !caseRun.open });
   const { triesView, datasets } = useTriesWork(simTraining, showToast);
 
   const { travel } = docs;
@@ -174,6 +176,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     marks,
     measure,
     tool,
+    operateVisible: () => viewRef.current.active && viewRef.current.sidebarOpen && viewRef.current.tab === 'operate',
     posing,
     onRobot,
     posable,

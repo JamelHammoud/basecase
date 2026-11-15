@@ -1,5 +1,6 @@
 import type { AssemblyGeometry } from './assemblyGeometry';
 import { AXES } from './moveBlockers';
+import { clampingScrews, indexFasteners, type FastenerIndex } from './fastenerIndex';
 import type { RemovalPlan, RemovalStep } from './removalOrder';
 
 type Closure = Set<number>;
@@ -11,6 +12,7 @@ interface Search {
   tracked: Set<string>;
   target: string;
   memo: Map<number, Closure[]>;
+  fasteners: FastenerIndex;
 }
 
 const subset = (a: Closure, b: Closure) => [...a].every((id) => b.has(id));
@@ -34,7 +36,7 @@ function prerequisites(s: Search, step: RemovalStep): string[][] {
   const g = s.geometry;
   const majors = step.ids.filter((id) => g.moves[id]);
   const inside = new Set(step.ids);
-  const screws = g.chains.screws.filter((c) => c.stack.some((id) => majors.includes(id)));
+  const screws = clampingScrews(s.fasteners, majors);
   const pins = screws.filter((c) => !inside.has(c.id)).map((c) => c.id);
 
   if (step.kind === 'screw') return (g.drivers[step.ids[0]] ?? []).map((option) => option.blockers);
@@ -109,7 +111,10 @@ export function minimumTeardown(g: AssemblyGeometry, plan: RemovalPlan, target: 
     ...g.chains.screws.map((c) => c.id),
     ...g.chains.sleeves.map((sleeve) => sleeve.id),
   ]);
-  const choices = closures({ geometry: g, plan, owner, tracked, target, memo: new Map() }, index);
+  const choices = closures(
+    { geometry: g, plan, owner, tracked, target, memo: new Map(), fasteners: indexFasteners(g.chains.screws) },
+    index,
+  );
   const count = (choice: Closure) => [...choice].reduce((total, i) => total + plan.steps[i].ids.length, 0);
   const best = choices.reduce<Closure | null>(
     (before, next) => (!before || count(next) < count(before) ? next : before),

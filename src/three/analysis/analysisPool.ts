@@ -26,6 +26,7 @@ import type { JointAxisQuery } from './jointAxis';
 import type { ArmModel, PayloadMap } from '../../utils/payload';
 import type { StrengthJob, StrengthReading } from '../../strength/types';
 import { errorMessage } from '../../utils/errorMessage';
+import { workerIndices } from '../../../electron/workerIndices.mjs';
 
 interface Client {
   rpc: WorkerClient<typeof analysisHandlers>;
@@ -169,19 +170,19 @@ export async function sweepsIn(scene: SceneShapes, sweeps: SweepSpec[]): Promise
   if (!sweeps.length) return [];
 
   const workers = pool().slice(0, sweeps.length);
-  const chunks = workers.map((_, w) => sweeps.map((s, i) => ({ s, i })).filter(({ i }) => i % workers.length === w));
+  const chunks = workerIndices(sweeps.length, workers.length);
   const results = await Promise.all(
     chunks.map((chunk, w) =>
       analyze<SweepHit[][]>(workers[w], scene, {
         kind: 'sweeps',
         instances: scene.instances,
-        sweeps: chunk.map((c) => c.s),
+        sweeps: chunk.map((i) => sweeps[i]),
       }),
     ),
   );
   const out: SweepHit[][] = new Array(sweeps.length);
 
-  chunks.forEach((chunk, w) => chunk.forEach((c, k) => (out[c.i] = results[w][k])));
+  chunks.forEach((chunk, w) => chunk.forEach((i, k) => (out[i] = results[w][k])));
 
   return out;
 }
@@ -204,19 +205,19 @@ export async function strengthIn(scene: SceneShapes, jobs: StrengthJob[]): Promi
   if (!jobs.length) return [];
 
   const workers = pool().slice(0, jobs.length);
-  const chunks = workers.map((_, w) => jobs.map((job, i) => ({ job, i })).filter(({ i }) => i % workers.length === w));
+  const chunks = workerIndices(jobs.length, workers.length);
   const results = await Promise.all(
     chunks.map((chunk, w) =>
       analyze<Array<StrengthReading | null>>(workers[w], scene, {
         kind: 'strength',
         instances: scene.instances,
-        jobs: chunk.map((c) => c.job),
+        jobs: chunk.map((i) => jobs[i]),
       }),
     ),
   );
   const out: Array<StrengthReading | null> = new Array(jobs.length).fill(null);
 
-  chunks.forEach((chunk, w) => chunk.forEach((c, k) => (out[c.i] = results[w][k])));
+  chunks.forEach((chunk, w) => chunk.forEach((i, k) => (out[i] = results[w][k])));
 
   return out;
 }

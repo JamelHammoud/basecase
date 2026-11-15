@@ -1,3 +1,4 @@
+import type { RobotRun } from '../robot/runBuffer';
 import type { SourcedItem } from '../data/sourcedItems';
 import type {
   AcpStatusInfo,
@@ -342,7 +343,13 @@ const shellBridge = {
   },
 };
 
+const robotBridge = {
+  robotReadRun: (unit?: string): Promise<RobotRun | null> =>
+    electron()?.robotReadRun?.(unit) ?? post('/robot-read-run', { arg: unit }),
+};
+
 export const platformBridge = {
+  ...robotBridge,
   ...acpBridge,
   ...libraryBridge,
   ...trainingBridge,

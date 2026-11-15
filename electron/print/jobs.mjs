@@ -5,6 +5,7 @@ import { safeFileId } from '../backend/constants.mjs';
 import { flattenPresets, readSliced, runSlicer } from './slice.mjs';
 import { SLICERS, slicerFor, slicerOrder } from './slicers.mjs';
 import { plural } from '../plural.mjs';
+import { prepareProject } from './projectFile.mjs';
 
 export const fileStem = (name) =>
   String(name ?? 'robot')
@@ -67,7 +68,7 @@ export function writeJob(root, payload) {
   const dir = jobDir(root, payload.jobId);
   const stem = fileStem(payload.name);
   const groups = (payload.groups ?? []).map((g) => {
-    const base = `${stem}-${fileStem(g.material)}`;
+    const base = payload.project ? `${stem}-project` : `${stem}-${fileStem(g.material)}`;
     const layout = path.join(dir, `${base}-layout.3mf`);
 
     fs.writeFileSync(layout, Buffer.from(g.bytes));
@@ -80,6 +81,7 @@ export function writeJob(root, payload) {
     stem,
     printer: payload.printer,
     infillPct: payload.infillPct,
+    project: payload.project === true,
     labels: typeof payload.labels === 'string' ? payload.labels : '',
     groups,
   };
@@ -113,17 +115,19 @@ function settingsFor(job, group, { dir, slicer }) {
   });
 }
 
-export async function openJob({ dir, job }, { material, slicer: wanted }) {
+export async function openJob({ dir, job }, { material, slicer: wanted }, open = openFile) {
   const group = job.groups.find((g) => g.material === material) ?? job.groups[0];
 
   if (!group) throw new Error('No printed parts to open.');
 
   const slicer = slicerFor(job.printer, { wanted });
 
-  if (!slicer || !job.printer?.machine) {
-    await openFile(group.layout);
+  if (job.project && slicer) await prepareProject(group.layout, slicer, job.printer);
 
-    return { opened: 'default', file: group.layout };
+  if (job.project || !slicer || !job.printer?.machine) {
+    await open(group.layout, job.project ? slicer : null);
+
+    return { opened: job.project && slicer ? slicer.name : 'default', file: group.layout };
   }
 
   const project = `${group.base}.3mf`;
@@ -136,7 +140,7 @@ export async function openJob({ dir, job }, { material, slicer: wanted }) {
     output: project,
     slice: false,
   });
-  await openFile(path.join(dir, project), slicer);
+  await open(path.join(dir, project), slicer);
 
   return { opened: slicer.name, file: path.join(dir, project) };
 }

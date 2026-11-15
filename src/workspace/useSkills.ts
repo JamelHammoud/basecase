@@ -140,6 +140,7 @@ function useSceneModel(input: SkillsInput, { runtime, platform, watch }: ModelWa
     parts,
     project.joints,
     project.servoCalibrations,
+    project.bodyCalibrations,
     project.animations,
     buildModel,
     runtime,

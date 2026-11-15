@@ -1,4 +1,5 @@
 import type { AssemblyGeometry } from '../assembly/assemblyGeometry';
+import type { FastenerIndex } from '../assembly/fastenerIndex';
 import { add, boxCenter, boxDiagonal, normalize, scale } from './guideMath';
 import { repairCallout, repairTools } from './repairItems';
 import type { Box, GuidePlan, GuideStep } from './guideTypes';
@@ -8,13 +9,14 @@ interface Preparation {
   geometry: AssemblyGeometry;
   boxes: Record<string, Box>;
   target: string;
+  fasteners: FastenerIndex;
 }
 
 function insertMotion(input: Preparation, id: string) {
   const source = input.plan.steps.find((step) => step.kind === 'inserts' && step.partIds.includes(id));
   const sourceMove = source?.moves.find((move) => move.partId === id);
   const sleeve = input.geometry.chains.sleeves.find((entry) => entry.id === id)!;
-  const screw = input.geometry.chains.screws.find((chain) => chain.id === sleeve.screw);
+  const screw = sleeve.screw ? input.fasteners.byId.get(sleeve.screw) : undefined;
   const direction = screw?.axis ?? sourceMove?.offset;
   const box = input.boxes[id];
 

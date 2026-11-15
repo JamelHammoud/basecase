@@ -1,3 +1,4 @@
+import type { RobotRun } from '../../robot/runBuffer';
 import type { SourcedItem } from '../../data/sourcedItems';
 import type { PairReply, PhoneEvent, PhoneState } from '../../phone/phoneTypes';
 import type { RobotPolicyRef } from '../../robot/robotPolicy';
@@ -269,6 +270,7 @@ declare global {
       robotPolicy?: (refs: RobotPolicyRef[], unit?: string) => Promise<ConnectReply>;
       robotCalibrate?: (joints: RobotMount[], unit?: string) => Promise<ConnectReply>;
       robotState?: (unit?: string) => Promise<RobotLinkState>;
+      robotReadRun?: (unit?: string) => Promise<RobotRun | null>;
       robotRecord?: (sample: RobotSample, unit?: string) => Promise<ConnectReply>;
       robotUnits?: () => Promise<RobotUnitState[]>;
       robotRollBack?: (unit: string) => Promise<ConnectReply>;

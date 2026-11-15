@@ -1,3 +1,5 @@
+import { kitchenView } from '../datasets/worldRenderFixture';
+import { hashWorldAsset, registerWorldAsset } from '../cases/worldAssets';
 import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { buildCase, builderRobot } from '../cases/caseBuilder';
@@ -79,6 +81,27 @@ describe('a dataset made from a Case’s passed tries', () => {
       slots: [{ id: 'robot', robot: model.robots[0].key }],
       source: { app: 'basecase', case: kase.id, case_name: kase.name, model_hash: modelHash },
     });
+
+    const captured = await kitchenView();
+    const hash = await hashWorldAsset({ world: captured.asset.world, pieces: [...captured.asset.pieces] });
+
+    registerWorldAsset(hash, { world: captured.asset.world, pieces: [...captured.asset.pieces] });
+
+    const inKitchen = {
+      ...kase,
+      world: { ...kase.world, imported: { hash, position: [100, 0, -200] as [number, number, number] } },
+    };
+    const placed = await prepareDataset({
+      scene,
+      kase: inKitchen,
+      name: dataset.name,
+      task: dataset.task,
+      records: [tries[0]],
+      load,
+      labels: () => Promise.resolve(new Map()),
+    });
+
+    expect(placed?.job.imported).toEqual({ hash, position: [100, 0, -200], asset: captured.asset });
   }, 30000);
 });
 

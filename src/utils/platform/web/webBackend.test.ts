@@ -25,6 +25,13 @@ describe('web demo backend', () => {
     expect(slice.json.error).toBe('Download Basecase to slice and print.');
   });
 
+  it('returns no robot recording in the browser demo', async () => {
+    expect(await body('/robot-read-run', { method: 'POST', body: '{"arg":"arm-b"}' })).toEqual({
+      status: 200,
+      json: null,
+    });
+  });
+
   it('summarizes scenes like the desktop library', () => {
     const record = {
       id: 'arm',

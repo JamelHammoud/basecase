@@ -1,13 +1,14 @@
 import { bedDown, labelMeshes, type Unlabeled } from '../../print/labels/partLabels';
 import type { LabelTarget } from '../../print/labels/labelPick';
-import { weld, writeThreeMf, type MeshData } from '../../print/threeMf';
+import { weld, writeThreeMf, type MeshData, type ThreeMfProject } from '../../print/threeMf';
 import type { Placed } from './collide';
 import type { ShapeSolid } from './shapeSolid';
 
 export interface ThreeMfFileSpec {
   key: string;
   plates: Array<{ number: number; name: string }>;
-  items: Array<{ id: string; name: string; matrix: number[]; plate: number }>;
+  items: Array<{ id: string; name: string; matrix: number[]; plate: number; filament?: number }>;
+  project?: ThreeMfProject;
 }
 
 export interface ThreeMfTask {
@@ -54,12 +55,19 @@ export async function plateFiles(task: ThreeMfTask, ctx: PlateContext): Promise<
   const files = Object.fromEntries(
     task.files.map((file) => {
       const usable = file.items.filter((it) => keyOf.has(it.id));
-      const objects = usable.map((it, i) => ({ id: i + 1, name: it.name, mesh: meshOf(it.id) }));
+      const objects = usable.map((it, i) => ({ id: i + 1, name: it.name, mesh: meshOf(it.id), filament: it.filament }));
       const items = usable.map((it, i) => ({ objectId: i + 1, matrix: it.matrix, plate: it.plate }));
 
       return [
         file.key,
-        writeThreeMf({ layout: 'grid', plateSize: task.plateSize, plates: file.plates, objects, items }),
+        writeThreeMf({
+          layout: 'grid',
+          plateSize: task.plateSize,
+          plates: file.plates,
+          objects,
+          items,
+          project: file.project,
+        }),
       ];
     }),
   );

@@ -1,3 +1,4 @@
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import { Vector3 } from 'three';
 import { jitteredWorld, worldRandom } from '../cases/caseRandom';
 import { worldItem, type Case, type WorldObject } from '../cases/schema';
@@ -15,6 +16,7 @@ export interface TrainingImagesJob {
   rig?: Rig;
   world?: ScenePart[];
   model: SimModel | null;
+  imported?: ImportedWorldView | null;
   views: CameraView[];
   kase: Case;
   sceneId: string;
@@ -116,6 +118,7 @@ export function trainingPlan(job: TrainingImagesJob): TrainingPlan {
 
   return {
     parts,
+    ...(job.imported ? { imported: job.imported } : {}),
     world: objectsOf(job.kase).map((o) => job.world?.find((p) => p.id === o.id) ?? worldItem(o)),
     views: selectedViews(job),
     model: job.model,

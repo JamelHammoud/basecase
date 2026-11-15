@@ -115,15 +115,8 @@ export class LensRenderer {
   render(scene: THREE.Scene, shot: LensShot, viewport?: Viewport, raw = false): void {
     const full = this.renderer.getSize(new THREE.Vector2());
     const size = viewport ?? { width: full.x, height: full.y };
-    const aspect = size.width / Math.max(1, size.height);
 
-    this.camera.position.set(...shot.position);
-    this.camera.up.set(...shot.up);
-    this.camera.lookAt(...shot.target);
-    this.camera.aspect = aspect;
-    this.camera.fov = verticalDeg(shot.lens, aspect);
-    this.camera.updateProjectionMatrix();
-    this.camera.updateMatrixWorld();
+    this.place(shot, size);
 
     if (shot.lens.model === 'fisheye') this.renderFaces(scene, shot.lens.fovDeg, size.width, raw);
 
@@ -135,6 +128,22 @@ export class LensRenderer {
     else this.renderer.render(this.quadScene, this.quadCamera);
 
     this.renderer.setScissorTest(false);
+  }
+
+  place(shot: LensShot, viewport?: Viewport): THREE.PerspectiveCamera {
+    const full = this.renderer.getSize(new THREE.Vector2());
+    const size = viewport ?? { width: full.x, height: full.y };
+    const aspect = size.width / Math.max(1, size.height);
+
+    this.camera.position.set(...shot.position);
+    this.camera.up.set(...shot.up);
+    this.camera.lookAt(...shot.target);
+    this.camera.aspect = aspect;
+    this.camera.fov = verticalDeg(shot.lens, aspect);
+    this.camera.updateProjectionMatrix();
+    this.camera.updateMatrixWorld();
+
+    return this.camera;
   }
 
   warm(scene: THREE.Scene): Promise<unknown> {

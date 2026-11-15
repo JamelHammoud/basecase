@@ -82,6 +82,8 @@ For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylind
 | Budget | The estimated cost of the parts left to buy against your budget | Over budget. Amber above 90%. Not run until you set a budget |
 | Time | Printing across your saved printers, estimated assembly and servo setup against your budget in hours | “Build time exceeds your budget.” Amber above 90%. A note without a budget |
 
+An active [body fit](/help/fit-a-robots-body-from-a-recorded-run) adjusts the weights and centers of mass used by **Weight** and **Servo torque**. Keeping or rolling back a fit refreshes Checks. Old walk and fall measurements stop counting until they match the active body again. **Peak torque** and **Falls** need new simulation measurements on the changed body.
+
 To enter hours and read the breakdown, [Set a time budget](/help/set-a-time-budget).
 
 Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.

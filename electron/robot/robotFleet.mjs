@@ -3,6 +3,7 @@ import { discoverRobots } from './networkDiscovery.mjs';
 import { NetworkRobotLink } from './networkRobotLink.mjs';
 import { disconnectedState, NOT_CONNECTED, RobotLink, UNDOCUMENTED } from './robotLink.mjs';
 import { checkedPolicyRefs } from './robotPolicy.mjs';
+import { readRecordedRun } from './recordedRun.mjs';
 import { DEFAULT_UNIT, MAX_UNITS, unitOf, versionOf } from './units.mjs';
 
 const FLEET_FULL = { ok: false, message: `Disconnect a robot first: a fleet runs at most ${MAX_UNITS}.` };
@@ -31,6 +32,7 @@ export class RobotFleet {
     this.credentials = new NetworkCredentials(options.networkStoreDir);
     this.candidates = [];
     this.fleet = new Map();
+    this.recordings = new Map();
   }
 
   entryOf(unit) {
@@ -40,9 +42,19 @@ export class RobotFleet {
   }
 
   onEvent(unit, link, event) {
-    if (isEnded(event) && this.fleet.get(unit)?.link === link) this.fleet.delete(unit);
+    if (isEnded(event) && this.fleet.get(unit)?.link === link) {
+      this.rememberRecording(unit, link.lastRecording);
+      this.fleet.delete(unit);
+    }
 
     this.emit({ ...event, unit });
+  }
+
+  rememberRecording(unit, recording) {
+    this.recordings.delete(unit);
+    this.recordings.set(unit, recording);
+
+    if (this.recordings.size > MAX_UNITS) this.recordings.delete(this.recordings.keys().next().value);
   }
 
   connect(spec, unit) {
@@ -113,6 +125,14 @@ export class RobotFleet {
 
   calibrate(joints, unit) {
     return this.withEntry(unit, (entry) => entry.link.calibrate(joints));
+  }
+
+  readRun(unit) {
+    const name = unitOf(unit);
+
+    if (!name) return null;
+
+    return this.fleet.get(name)?.link.readRun() ?? readRecordedRun(this.options.tries, this.recordings.get(name));
   }
 
   record(sample, unit) {

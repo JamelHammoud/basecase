@@ -3,7 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ImportedMeshWorld } from '../../cases/worldImportTypes';
 import { ImportedWorldLayer, type ImportedWorldView } from './importedWorld';
 
-const sparkCalls = vi.hoisted(() => ({ renderers: [] as unknown[], meshes: [] as unknown[], disposals: 0 }));
+const sparkCalls = vi.hoisted(() => ({
+  renderers: [] as unknown[],
+  meshes: [] as unknown[],
+  disposals: 0,
+  update: vi.fn(),
+}));
 
 vi.mock('@sparkjsdev/spark', async () => {
   const THREE = await import('three');
@@ -16,6 +21,8 @@ vi.mock('@sparkjsdev/spark', async () => {
         sparkCalls.renderers.push(options);
       }
       dispose() {}
+      update = sparkCalls.update;
+      renderSize = new THREE.Vector2();
     },
     SplatMesh: class extends THREE.Object3D {
       initialized = Promise.resolve(this);
@@ -50,7 +57,7 @@ function world(): ImportedMeshWorld {
 
 const view = (source = world()): ImportedWorldView => ({
   hash: 'kitchen',
-  asset: { world: source, pieces: [{}, {}] },
+  asset: { world: source, pieces: [source.mesh, source.mesh] },
   position: [200, 0, -100],
 });
 
@@ -72,7 +79,49 @@ afterEach(() => {
   sparkCalls.meshes.length = 0;
   sparkCalls.renderers.length = 0;
   sparkCalls.disposals = 0;
+  sparkCalls.update.mockReset();
   vi.unstubAllGlobals();
+});
+
+it('awaits the Spark sort for a worker capture without starting automatic updates', async () => {
+  const scene = new THREE.Scene();
+  const renderer = { getDrawingBufferSize: (target: THREE.Vector2) => target.set(640, 480) } as THREE.WebGLRenderer;
+  const layer = new ImportedWorldLayer(scene, renderer, () => {}, true);
+  const source = world();
+  const camera = new THREE.PerspectiveCamera();
+  let sorted = false;
+  let finish = () => {};
+
+  source.splat = { name: 'Kitchen.ply', format: 'ply', bytes: new Uint8Array([1]), count: 1 };
+  sparkCalls.update.mockReturnValue(
+    new Promise<void>((resolve) => {
+      finish = resolve;
+    }),
+  );
+  layers.push(layer);
+  await layer.set(view(source));
+
+  const prepared = layer.prepare(scene, camera).then(() => {
+    sorted = true;
+  });
+
+  await Promise.resolve();
+  expect(sorted).toBe(false);
+  finish();
+  await prepared;
+  expect(sorted).toBe(true);
+  expect(sparkCalls.update).toHaveBeenCalledWith({ scene, camera });
+  expect(sparkCalls.renderers[0]).toMatchObject({ autoUpdate: false, minSortIntervalMs: 0 });
+  await layer.prepare(scene, camera);
+  expect(sparkCalls.update).toHaveBeenCalledTimes(1);
+  camera.position.x = 10;
+  await layer.prepare(scene, camera);
+  expect(sparkCalls.update).toHaveBeenCalledTimes(2);
+  await layer.set({ ...view(source), position: [300, 0, 0] });
+  await layer.prepare(scene, camera);
+  expect(sparkCalls.update).toHaveBeenCalledTimes(3);
+  await layer.prepare(scene, camera, { width: 320, height: 240 });
+  expect(sparkCalls.update).toHaveBeenCalledTimes(4);
 });
 
 describe('ImportedWorldLayer', () => {

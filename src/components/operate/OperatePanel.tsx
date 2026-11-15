@@ -15,6 +15,7 @@ import { RobotLadder } from './RobotLadder';
 import { RobotMessages } from './RobotMessages';
 import { ServoSetupSection } from './ServoSetupSection';
 import { Button } from '../../design-system';
+import { BodyCalibration, type BodyCalibrationProps } from './BodyCalibration';
 
 export interface OperatePanelProps {
   joints: RobotJoint[];
@@ -24,6 +25,7 @@ export interface OperatePanelProps {
   onSetUpServos: () => void;
   onAddRobotComputer?: () => void;
   onReplay?: (messageId: number) => void;
+  bodyCalibration?: BodyCalibrationProps;
 }
 
 function useJointCalibrate(robot: RobotState, joints: RobotJoint[], calibration: CalibrationProps) {
@@ -45,6 +47,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
   onSetUpServos,
   onAddRobotComputer,
   onReplay,
+  bodyCalibration,
 }) => {
   const robot = useRobot();
   const connected = robot.link === 'connected';
@@ -73,6 +76,7 @@ export const OperatePanel: React.FC<OperatePanelProps> = ({
       <RobotMessages messages={robot.messages} onReplay={onReplay} />
       {connected && <RobotLadder robot={robot} />}
       <RobotCalibration robot={robot} joints={joints} onCalibrate={calibration.onCalibrate} />
+      {bodyCalibration && <BodyCalibration {...bodyCalibration} />}
       <RobotJoints
         rows={rows}
         live={connected}

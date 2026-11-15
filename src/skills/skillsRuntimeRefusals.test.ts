@@ -5,6 +5,7 @@ import { quadSit } from './moveFixtures';
 import { refusalModel, type SkillRefusal } from './skillRows';
 import type { SkillRunner } from './skillsClient';
 import { SkillsRuntime } from './skillsRuntime';
+import type { KitTransitionEvidence } from './kitTransitions';
 
 const model = fixtureModel('quad-servo');
 const NO_UV = 'Training needs uv. Install it with: curl -LsSf https://astral.sh/uv/install.sh | sh';
@@ -52,6 +53,35 @@ describe('a Kit or move run that ends without a skill', () => {
     await runtime.settled();
 
     expect(refusals.at(-1)?.[1]?.line).toBe(NO_PASS);
+  });
+
+  it('shows a failed transition instead of an earlier training-stage error', async () => {
+    const validation: KitTransitionEvidence = {
+      binding: { physics: 'physics', actuators: 'actuators', controllers: 'controllers' },
+      checks: [{ from: 'settle', to: 'walk', seeds: 8, falls: 0, failures: 8 }],
+      passed: false,
+      reason: 'settle to walk didn’t walk 0.08 m forward in 8 of 8 tries in simulation.',
+    };
+    const runner = (async (_job, ports) => {
+      await ports.forge({ name: 'Walk', xml: '', job: {} });
+
+      return {
+        type: 'kit',
+        outcome: {
+          kind: 'refused',
+          reason: validation.reason,
+          validation,
+          relaxation: null,
+          cost: { wallS: 1, steps: 0, forgeRuns: 1 },
+        },
+      };
+    }) as SkillRunner;
+    const { runtime, refusals } = refusing(runner, { ok: false, policy: null, events: [], stderr: NO_UV });
+
+    runtime.trainKit(model, 'velocity-tracking');
+    await runtime.settled();
+
+    expect(refusals.at(-1)?.[1]?.line).toBe(validation.reason);
   });
 
   it('shows the worker’s error on the row when the job throws', async () => {

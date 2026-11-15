@@ -13,6 +13,7 @@ export const handoffKey = (h: Handoff) => `${h.from}->${h.to}`;
 export const notOnBody = (pair: Handoff) => `${pair.to} doesn’t run on this robot.`;
 
 export interface HandoffKit {
+  modelHash: string;
   skills: readonly SkillContract[];
   policies: StampScene['skills'];
   drive: StampScene['drive'];
@@ -22,7 +23,10 @@ export function withHandoffs(kit: HandoffKit, proofs: HandoffProofs | undefined)
   const scene = { skills: kit.policies, drive: kit.drive };
   const entries = Object.entries(proofs ?? {})
     .map(([key, proof]) => ({ pair: key.split('->'), proof }))
-    .filter(({ pair: [from, to], proof }) => to !== undefined && proof.skills === pairStamp(scene, { from, to }));
+    .filter(
+      ({ pair: [from, to], proof }) =>
+        to !== undefined && proof.modelHash === kit.modelHash && proof.skills === pairStamp(scene, { from, to }),
+    );
 
   if (!entries.length) return [...kit.skills];
 

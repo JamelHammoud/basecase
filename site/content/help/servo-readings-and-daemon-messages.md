@@ -75,7 +75,7 @@ Under **Emulated servos**, each joint has one row with its name and bus ID. IDs 
 
 ## Messages from the daemon
 
-The newest six messages show under the servo count. A new connection clears them.
+Operate shows the newest six messages. A new connection clears them.
 
 When the daemon refuses a rung:
 

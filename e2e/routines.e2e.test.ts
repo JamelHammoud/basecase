@@ -1,9 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { newRoutine } from '../src/routines/edit';
+import { driveStep, skillStep } from '../src/routines/stepFactory';
 import type { Routine, SkillContract } from '../src/routines/schema';
 import { FIXTURE_SKILLS } from '../src/routines/fixtureSkills';
 import { loadKitLibrary } from '../src/routines/kitLibrary';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import type { Skill } from '../src/skills/artifacts';
+import { modelOf } from '../src/skills/fixtureModels';
+import { fixtureMoveSkill, quadWave } from '../src/skills/moveFixtures';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { openApp, openPlayTab, partCount, type App } from './harness';
 
@@ -13,11 +17,13 @@ interface RoutineState {
   routine: Routine | null;
   compiled: { ok: boolean; errors?: Array<{ code: string; path?: string }> } | null;
   run: { live: boolean } | null;
+  skills: Array<{ id: string; hash: string }>;
 }
 
 interface Studio {
   load: (record: unknown) => void;
   stubHandoffs: (stub: { skills: Skill[]; falls: number; kit?: readonly SkillContract[] }) => void;
+  plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   routineState: () => RoutineState;
 }
 
@@ -46,13 +52,13 @@ function failedKitPair(kit: readonly SkillContract[], pair: { from: string; to: 
   );
 }
 
-async function loadRobot(id: string) {
+async function loadRobot(id: string, routines: Routine[] = []) {
   const robot = fixtureRobots().find((r) => r.id === id)!;
 
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
     name: robot.id,
     parts: robot.parts,
-    project: { ...DEFAULT_PROJECT, joints: robot.joints },
+    project: { ...DEFAULT_PROJECT, joints: robot.joints, routines },
   });
   await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
 }
@@ -132,6 +138,8 @@ describe('Hand-offs', () => {
   const refusedAt = async (node: string) =>
     ((await routineState()).compiled?.errors ?? []).some((e) => e.code === 'unproven-transition' && e.path === node);
 
+  const waveHash = async () => (await routineState()).skills.find((s) => s.id === 'wave')?.hash;
+
   it('keeps Settle then Turn then Walk unavailable until the candidate passes its hand-offs', async () => {
     const { page } = app;
     const library = await loadKitLibrary();
@@ -196,4 +204,38 @@ describe('Hand-offs', () => {
     await expect.poll(async () => (await routineState()).run?.live).toBe(true);
     expect(app.errors).toEqual([]);
   });
+
+  it('proves Walk then Wave, and trains the hand-off when it falls', async () => {
+    const { page } = app;
+    const quad = fixtureRobots().find((r) => r.id === 'quad-servo')!;
+    const wave = fixtureMoveSkill({ model: modelOf(quad), animation: quadWave() });
+    const routine = newRoutine({ id: 'handoff', name: 'Hand-off', mover: 'legs' });
+
+    routine.base.onTimeout = [driveStep('drive'), skillStep('wave', 'wave')];
+    await page.evaluate((stub) => (window as unknown as { __studio: Studio }).__studio.stubHandoffs(stub), {
+      skills: [wave],
+      falls: 0,
+      kit: FIXTURE_SKILLS,
+    });
+    await loadRobot('quad-servo', [routine]);
+    await openPlayTab(page, 'Routines');
+    await expect.poll(mainSteps).toEqual(['drive', 'wave']);
+    await expect.poll(() => refusedAt('wave'), { timeout: 60000 }).toBe(true);
+
+    await inFlow('[data-flow-node="wave"] button:has-text("Prove")').click();
+    await expect.poll(async () => (await routineState()).compiled?.ok, { timeout: 60000 }).toBe(true);
+
+    const before = await waveHash();
+
+    await studio((s) => s.plantHandoff('walk', 'wave', 3));
+    await expect.poll(() => refusedAt('wave'), { timeout: 60000 }).toBe(true);
+    await expect
+      .poll(() => inFlow('[data-flow-node="wave"]').textContent())
+      .toContain('walk to wave fell in 3 of 8 tries in simulation.');
+    await inFlow('[data-flow-node="wave"] button:has-text("Train Hand-off")').click();
+    await expect.poll(async () => (await routineState()).compiled?.ok, { timeout: 60000 }).toBe(true);
+    expect(before).toBeTruthy();
+    expect(await waveHash()).not.toBe(before);
+    expect(app.errors).toEqual([]);
+  }, 180000);
 });

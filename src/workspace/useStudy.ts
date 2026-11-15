@@ -36,8 +36,10 @@ function studyDefaults(request: StudyRequest, kase: Case | null) {
   };
 }
 
-function studyKnobs(configured: StudyKnob[] | null, project: ProjectSettings, parts: ScenePart[]) {
-  const knobs = configured ?? project.study?.knobs ?? defaultStudyKnobs(parts, project);
+export function studyKnobs(configured: StudyKnob[] | null, project: ProjectSettings, parts: ScenePart[]) {
+  const saved = project.study?.knobs ?? [];
+  const savedIds = new Set(saved.map((knob) => knob.id));
+  const knobs = configured ?? [...saved, ...defaultStudyKnobs(parts, project).filter((knob) => !savedIds.has(knob.id))];
 
   return IS_WEB_DEMO ? knobs.filter((knob) => knob.kind !== 'dimension') : knobs;
 }
@@ -72,6 +74,7 @@ export function useStudy({ kase, parts, project, source, sim, showToast, onShow 
     const turn = ++runId.current;
 
     flushSync(previewing.reset);
+    setConfigured(knobs);
     setOpen(true);
     onShow();
     setRunning(true);

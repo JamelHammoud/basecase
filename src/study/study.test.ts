@@ -82,6 +82,24 @@ describe('study scenes', () => {
     expect(base.parts[0].dimensions.width).toBe(10);
   });
 
+  it('scales explicit foot targets without relying on their names or changing another foot', async () => {
+    const parts = [box('pad', [0, 2, 0], [10, 4, 20], 0), box('foot', [50, 2, 0], [10, 4, 20], 0)];
+    const base = {
+      ...scene,
+      parts,
+      measures: fixtureMeasures(parts),
+      triangles: Object.fromEntries(parts.map((part) => [part.id, fixtureTriangles(parts)(part.id)!])),
+    };
+    const chosen = await studyScene(base, [{ id: 'sole', kind: 'foot', parts: ['pad'], values: [{ width: 2 }] }], [0]);
+
+    expect(chosen.parts[0].name).toBe(parts[0].name);
+    expect(chosen.parts[0].dimensions.width).toBe(20);
+    expect(chosen.measures.pad?.volumeMm3).toBeCloseTo(base.measures.pad.volumeMm3 * 2);
+    expect(chosen.triangles.pad).not.toEqual(base.triangles.pad);
+    expect(chosen.parts[1]).toBe(parts[1]);
+    expect(parts[0].dimensions.width).toBe(10);
+  });
+
   it('keeps installed battery voltage fixed and composes battery and voltage choices in either order', async () => {
     const battery = {
       ...box('pack', [0, 20, 0], [30, 20, 60], 100),

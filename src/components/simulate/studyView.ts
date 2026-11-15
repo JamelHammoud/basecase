@@ -1,5 +1,9 @@
 import type { V3 } from '../../utils/kinematics';
 import type { StudyKnob, StudyRow } from '../../study/types';
+import { percent } from '../../../electron/percent.mjs';
+import { angle } from '../../utils/angle';
+import { duration } from '../../utils/duration';
+import { weight } from '../../utils/weight';
 
 export const STUDY_METRICS = [
   { value: 'cost', label: 'Cost' },
@@ -11,6 +15,18 @@ export const STUDY_METRICS = [
 ] as const;
 
 export type StudyMetric = (typeof STUDY_METRICS)[number]['value'];
+
+export function metricText(value: number, metric: StudyMetric, money: (value: number) => string): string {
+  if (metric === 'cost') return money(value);
+
+  if (metric === 'mass') return weight(value);
+
+  if (metric === 'torque') return percent(value);
+
+  if (metric === 'tip') return angle(value);
+
+  return metric === 'runtime' ? duration(value * 60) : String(value);
+}
 
 export function metricValue(row: StudyRow, metric: StudyMetric): number | undefined {
   if (row.error) return undefined;

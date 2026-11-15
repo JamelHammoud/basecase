@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import type { StudyKnob } from '../../study/types';
-import { editKnobValues, knobValuesText, toggleCompared } from './studyView';
+import { editKnobValues, knobValuesText, metricText, toggleCompared } from './studyView';
 
 describe('Study configuration', () => {
+  it('names plot measurements with the shared unit formatters', () => {
+    const money = (value: number) => `$${value.toFixed(2)}`;
+
+    expect(metricText(1.2, 'cost', money)).toBe('$1.20');
+    expect(metricText(0.02, 'mass', money)).toBe('0.02 g');
+    expect(metricText(1200, 'mass', money)).toBe('1.20 kg');
+    expect(metricText(0.996, 'torque', money)).toBe('99.6%');
+    expect(metricText(0.02, 'tip', money)).toBe('0.02°');
+    expect(metricText(1.5, 'runtime', money)).toBe('1 min 30 s');
+    expect(metricText(8, 'passes', money)).toBe('8');
+  });
   it('reads multiple numeric values without accepting a partial or empty value', () => {
     const knob: StudyKnob = { id: 'volts', kind: 'voltage', values: [6, 7.4] };
 

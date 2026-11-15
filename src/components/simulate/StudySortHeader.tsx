@@ -12,10 +12,12 @@ export function StudySortHeader({
   sorting,
   descending,
   onSort,
+  caseRuns,
 }: {
   sorting: StudySort;
   descending: boolean;
   onSort: (key: StudySort) => void;
+  caseRuns: boolean;
 }) {
   const Arrow = descending ? ChevronDownIcon : ChevronUpIcon;
 
@@ -24,7 +26,7 @@ export function StudySortHeader({
       <span />
       {HEADERS.map(({ key, label }) => (
         <Button key={key} size="xs" variant="ghost" aria-pressed={sorting === key} onClick={() => onSort(key)}>
-          {label}
+          {key === 'passes' && caseRuns ? 'Case passes' : label}
           {sorting === key && <Arrow className="w-3 h-3" />}
         </Button>
       ))}

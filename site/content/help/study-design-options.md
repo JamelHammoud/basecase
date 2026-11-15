@@ -67,7 +67,7 @@ For another servo model, choose **Add Servo**.
 
 **Foot length** and **Foot width** use scales such as `1, 1.25, 1.5`. A scale of 1 keeps the current size. Agent-made OpenSCAD parts offer the same named dimensions as the Inspector. You must use the desktop app to study named dimensions.
 
-Each design keeps its check results, including failures. A design that couldn’t be measured stays in the table as **Failed**, with **Apply** disabled. Cost uses the bill of materials, including parts you own. Weight and runtime use the same calculations as Checks. Click **Checks**, **Cost** or **Weight** above the table to sort the designs.
+Each design keeps its check results, including failures. A design that couldn’t be measured stays in the table as **Failed**, with **Apply** disabled. Cost uses the bill of materials, including parts you own. Weight and runtime use the same calculations as Checks. Above the table, click **Checks**, **Cost** or **Weight** to sort the designs. With a Case, **Case passes** replaces **Checks**.
 
 With a Case, each design gets 8 seeded runs with small changes in friction, weight, servo strength and delay. The same seeds run on every design. A Study tries up to 64 combinations. Larger spaces use a repeatable sample.
 

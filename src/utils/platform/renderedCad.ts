@@ -106,7 +106,14 @@ const checkedPorts = (a: unknown): CadPort[] =>
 const volumeOf = (stats: unknown) => (isLoose(stats) && finite(stats.volume) ? { volume: stats.volume } : {});
 
 function requirementsProblem(audit: unknown): string | undefined {
-  if (!isLoose(audit) || audit.error || audit.skipped || !Array.isArray(audit.checks) || audit.checks.length > 128)
+  if (
+    !isLoose(audit) ||
+    audit.error ||
+    audit.skipped ||
+    !Array.isArray(audit.checks) ||
+    audit.checks.length > 128 ||
+    audit.checks.some((check) => !isLoose(check) || typeof check.pass !== 'boolean')
+  )
     return 'The CAD requirements couldn’t be measured.';
 
   const broken = audit.checks.filter((check) => isLoose(check) && check.pass === false);

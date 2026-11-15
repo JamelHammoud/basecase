@@ -1,6 +1,7 @@
 import { FieldRow, Select, Tooltip } from '../../design-system';
 import type { StudyRow } from '../../study/types';
-import { metricValue, STUDY_METRICS, type StudyMetric } from './studyView';
+import { useMoney } from '../../utils/useMoney';
+import { metricText, metricValue, STUDY_METRICS, type StudyMetric } from './studyView';
 
 interface StudyPlotProps {
   rows: StudyRow[];
@@ -22,6 +23,7 @@ const normalized = (value: number, values: number[]) => {
 };
 
 export function StudyPlot({ rows, axes, onAxis, compared, frontier, onPreview, onPick }: StudyPlotProps) {
+  const money = useMoney();
   const points = rows.flatMap((row) => {
     const x = metricValue(row, axes[0]);
     const y = metricValue(row, axes[1]);
@@ -53,33 +55,46 @@ export function StudyPlot({ rows, axes, onAxis, compared, frontier, onPreview, o
           const pareto = frontier.includes(row.key);
 
           return (
-            <Tooltip key={row.key} label={`${row.label}, ${x.toFixed(2)}, ${y.toFixed(2)}`}>
-              <button
-                type="button"
-                aria-label={row.label}
-                aria-pressed={compared.includes(row.key)}
-                data-testid="study-point"
-                data-pareto={pareto}
-                className={`absolute w-4 h-4 -translate-x-1/2 translate-y-1/2 rounded-full cursor-default ${compared.includes(row.key) ? 'ring-2 ring-white' : ''}`}
-                style={{
-                  left: `calc(20px + (100% - 40px) * ${normalized(
-                    x,
-                    points.map((p) => p.x),
-                  )})`,
-                  bottom: `calc(20px + (100% - 40px) * ${normalized(
-                    y,
-                    points.map((p) => p.y),
-                  )})`,
-                  backgroundColor: `rgba(13, 153, 255, ${shade})`,
-                  border: pareto ? '2px solid white' : undefined,
-                }}
-                onMouseEnter={() => onPreview(row)}
-                onMouseLeave={() => onPreview(null)}
-                onFocus={() => onPreview(row)}
-                onBlur={() => onPreview(null)}
-                onClick={(e) => onPick(row, e.shiftKey)}
-              />
-            </Tooltip>
+            <div
+              key={row.key}
+              className="absolute -translate-x-1/2 translate-y-1/2"
+              style={{
+                left: `calc(20px + (100% - 40px) * ${normalized(
+                  x,
+                  points.map((p) => p.x),
+                )})`,
+                bottom: `calc(20px + (100% - 40px) * ${normalized(
+                  y,
+                  points.map((p) => p.y),
+                )})`,
+              }}
+            >
+              <Tooltip
+                label={`${row.label}, ${metricText(x, axes[0], money.format)}, ${metricText(y, axes[1], money.format)}`}
+              >
+                <button
+                  type="button"
+                  aria-label={row.label}
+                  aria-pressed={compared.includes(row.key)}
+                  data-testid="study-point"
+                  data-pareto={pareto}
+                  className="w-[28px] h-[28px] grid place-items-center rounded-full cursor-default"
+                  onMouseEnter={() => onPreview(row)}
+                  onMouseLeave={() => onPreview(null)}
+                  onFocus={() => onPreview(row)}
+                  onBlur={() => onPreview(null)}
+                  onClick={(e) => onPick(row, e.shiftKey)}
+                >
+                  <span
+                    className={`w-4 h-4 rounded-full ${compared.includes(row.key) ? 'ring-2 ring-white' : ''}`}
+                    style={{
+                      backgroundColor: `rgba(13, 153, 255, ${shade})`,
+                      border: pareto ? '2px solid white' : undefined,
+                    }}
+                  />
+                </button>
+              </Tooltip>
+            </div>
           );
         })}
       </div>

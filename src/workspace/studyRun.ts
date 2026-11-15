@@ -1,6 +1,7 @@
 import { printBridge } from '../print/printBridge';
 import { resolvePrinter } from '../data/printers';
 import { comparable } from '../cases/caseCompare';
+import { supplyVolts } from '../cases/exploreDesigns';
 import type { Case } from '../cases/schema';
 import { compileStudyDimension } from '../study/dimensions';
 import { prepareStudyMeshes } from '../study/meshFiles';
@@ -93,7 +94,16 @@ async function executeInSession({
   const base = await prepareStudyMeshes(snapshot, knobs);
   const purchases = knownPurchases() ?? (await platformBridge.listPurchases());
   const runs = kase
-    ? (scene: StudyScene) => exploreVerdict({ ...scene, partTriangles: (id) => scene.triangles[id] ?? null }, kase, 8)
+    ? (scene: StudyScene) =>
+        exploreVerdict(
+          {
+            ...scene,
+            servoVolts: supplyVolts(scene.parts, scene.project),
+            partTriangles: (id) => scene.triangles[id] ?? null,
+          },
+          kase,
+          8,
+        )
     : undefined;
   const posedFloor = snapshot.posedFloor;
   const grade: StudySession['grade'] = async (scene, options) => {

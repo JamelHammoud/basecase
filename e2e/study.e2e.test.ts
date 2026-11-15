@@ -54,6 +54,16 @@ describe('Study', () => {
       )
       .toBe(true);
 
+    const point = page.getByTestId('study-point').first();
+    const bounds = await point.boundingBox();
+
+    expect(bounds?.width).toBeGreaterThanOrEqual(28);
+    expect(bounds?.height).toBeGreaterThanOrEqual(28);
+    await point.focus();
+    await point.press('Enter');
+    expect(await point.getAttribute('aria-pressed')).toBe('true');
+    await rows.first().click();
+
     for (let index = 0; index < 5; index++) await rows.nth(index).click({ modifiers: ['Shift'] });
 
     expect(await page.locator('[data-testid="study-compare"] [data-testid="study-row"]').count()).toBe(4);

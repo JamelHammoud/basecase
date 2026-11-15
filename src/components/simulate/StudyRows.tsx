@@ -52,6 +52,7 @@ export function StudyRows({ study }: { study: Study }) {
         </div>
       )}
       <StudySortHeader
+        caseRuns={rows.some((row) => !!row.runs)}
         sorting={sorting.key}
         descending={sorting.descending}
         onSort={(key) => setSorting((s) => ({ key, descending: s.key === key ? !s.descending : key === 'passes' }))}

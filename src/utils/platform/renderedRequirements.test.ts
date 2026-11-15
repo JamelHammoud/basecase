@@ -21,6 +21,8 @@ describe('compiled snapshot requirements', () => {
   it('refuses an unaudited result when requirements were requested', () => {
     expect(checkedRender({ ...rendered, audit: { skipped: 'too many triangles' } }, true).ok).toBe(false);
     expect(checkedRender({ ...rendered, audit: undefined }, true).ok).toBe(false);
+    expect(checkedRender({ ...rendered, audit: { ...rendered.audit, checks: [{ pass: null }] } }, true).ok).toBe(false);
+    expect(checkedRender({ ...rendered, audit: { ...rendered.audit, checks: [null] } }, true).ok).toBe(false);
   });
 
   it('accepts measured requirements without making an ordinary render require an audit', () => {

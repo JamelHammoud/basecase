@@ -2,7 +2,7 @@ import loadMujoco, { type MainModule } from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { buildCase, builderRobot } from '../cases/caseBuilder';
 import { CaseCheckSession, type WireRobot } from '../cases/caseCheckJob';
-import { summarizeRuns } from '../cases/caseRuns';
+import { summarizeRuns, type CaseRuns } from '../cases/caseRuns';
 import { EXPLORE_RUNS, type ExploreRobot } from '../cases/explore';
 import { exploreSpace, type Design } from '../cases/exploreDesigns';
 import type { Case } from '../cases/schema';
@@ -181,49 +181,71 @@ describe('Study parity with the previous design tools', () => {
     expect(base).toEqual(before);
   });
 
-  it('matches prior Explore servo and voltage rows through the seeded rover Case pipeline', async () => {
-    const mj = await loadMujoco();
-    const base = sceneOf(withServos('rover-diff', { componentId: 'feetech-sts3215', variant: 'c044' }));
-    const knobs: StudyKnob[] = [
-      {
-        id: 'servos',
-        kind: 'servo',
-        joints: base.project.joints!.map((joint) => joint.id),
-        values: ['component:feetech-sts3215|c044', 'component:feetech-sts3215|c046'],
-      },
-      { id: 'supply', kind: 'voltage', values: [6, 7.4] },
-    ];
-    const kase = makeCase(base);
-    const space = exploreSpace(base.parts, base.project)!;
-    const rows = await runStudy(base, { knobs, runs: (scene) => seededRuns(mj, kase, wireScene(scene)) });
-    const designs: Design[] = rows.map((row) => ({
-      variants: space.groups.map(() => (row.selection[0] === 0 ? 'c044' : 'c046')),
-      volts: knobs[1].values[row.selection[1]] as number,
-    }));
-    const previous = await referenceExploreCase(
-      {
-        ...base,
-        partTriangles: (id) => base.triangles[id] ?? null,
-      },
-      {
-        purchases: {},
-        designs,
-        runs: (robot: ExploreRobot) =>
-          seededRuns(mj, kase, wireScene({ ...base, parts: robot.parts, project: robot.project }, robot.servoVolts)),
-      },
-    );
+  it.each([6, 7.4])(
+    'matches prior Explore servo rows at %s V through the seeded rover Case pipeline',
+    async (voltage) => {
+      const mj = await loadMujoco();
+      const base = sceneOf(withServos('rover-diff', { componentId: 'feetech-sts3215', variant: 'c044' }));
+      const knobs: StudyKnob[] = [
+        {
+          id: 'servos',
+          kind: 'servo',
+          joints: base.project.joints!.map((joint) => joint.id),
+          values: ['component:feetech-sts3215|c044', 'component:feetech-sts3215|c046'],
+        },
+        { id: 'supply', kind: 'voltage', values: [voltage] },
+      ];
+      const kase = makeCase(base);
+      const space = exploreSpace(base.parts, base.project)!;
+      const readings: Array<{ input: WireRobot; result: CaseRuns }> = [];
+      const rows = await runStudy(base, {
+        knobs,
+        runs: async (scene) => {
+          const input = wireScene(scene);
+          const result = await seededRuns(mj, kase, input);
 
-    expect(rows).toHaveLength(4);
+          readings.push({ input, result });
 
-    for (const [index, row] of rows.entries()) {
-      expect(row.error).toBeUndefined();
-      expect(row.runs).toMatchObject({ runs: EXPLORE_RUNS, refusal: null });
-      expect(row.runs?.outcomes.map((outcome) => outcome.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-      expect(row.runs).toEqual(previous[index].runs);
-      expect(row.costUsd).toBe(previous[index].costUsd);
-      expect(row.massG).toBe(previous[index].massG);
-    }
+          return result;
+        },
+      });
+      const designs: Design[] = rows.map((row) => ({
+        variants: space.groups.map(() => (row.selection[0] === 0 ? 'c044' : 'c046')),
+        volts: knobs[1].values[row.selection[1]] as number,
+      }));
+      let compared = 0;
+      const previous = await referenceExploreCase(
+        {
+          ...base,
+          partTriangles: (id) => base.triangles[id] ?? null,
+        },
+        {
+          purchases: {},
+          designs,
+          runs: async (robot: ExploreRobot) => {
+            const reading = readings[compared++];
 
-    expect(rows[0].runs?.passes).toBeGreaterThan(0);
-  });
+            expect(wireScene({ ...base, parts: robot.parts, project: robot.project }, robot.servoVolts)).toEqual(
+              reading.input,
+            );
+
+            return reading.result;
+          },
+        },
+      );
+
+      expect(rows).toHaveLength(2);
+
+      for (const [index, row] of rows.entries()) {
+        expect(row.error).toBeUndefined();
+        expect(row.runs).toMatchObject({ runs: EXPLORE_RUNS, refusal: null });
+        expect(row.runs?.outcomes.map((outcome) => outcome.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+        expect(row.runs).toEqual(previous[index].runs);
+        expect(row.costUsd).toBe(previous[index].costUsd);
+        expect(row.massG).toBe(previous[index].massG);
+      }
+
+      if (voltage === 6) expect(rows[0].runs?.passes).toBeGreaterThan(0);
+    },
+  );
 });

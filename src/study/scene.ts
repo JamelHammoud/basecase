@@ -1,6 +1,6 @@
 import { supplyVolts } from '../cases/exploreDesigns';
 import { COMPONENT_BY_ID, componentSize } from '../data/components';
-import { isBattery, isFoot, sweepVariants, editMeasures, editTriangles } from '../utils/designSweep';
+import { isBattery, isFoot, sweepVariants, editMeasures, editTriangles, type Variant } from '../utils/designSweep';
 import { findPowerSources, sceneTether, suggestedTether } from '../utils/powerSources';
 import type { ScenePart } from '../types/robotics';
 import type { StudyKnob, StudyScene, StudySceneOptions, StudySelection } from './types';
@@ -40,12 +40,35 @@ function batterySwap(scene: StudyScene, knob: Extract<StudyKnob, { kind: 'batter
   return { ...scene, parts: scene.parts.map(swap) };
 }
 
-function sweepParameter(knob: Extract<StudyKnob, { kind: 'servo' | 'battery_offset' | 'foot' }>, index: number) {
-  if (knob.kind === 'servo') return { kind: 'servo' as const, joints: knob.joints, values: [knob.values[index]] };
+function selectedVariant(
+  parts: ScenePart[],
+  knob: Extract<StudyKnob, { kind: 'battery_offset' | 'foot' }>,
+  index: number,
+): Variant {
+  if (knob.kind === 'battery_offset') {
+    const move = knob.values[index];
 
-  if (knob.kind === 'battery_offset') return { kind: 'battery' as const, values: [knob.values[index]] };
+    return {
+      label: '',
+      parts: parts.map((part) => ({
+        ...part,
+        position: part.position.map((v, i) => v + move[i]) as ScenePart['position'],
+      })),
+      edits: new Map(parts.map((part) => [part.id, { move }])),
+    };
+  }
 
-  return { kind: 'foot' as const, values: [knob.values[index]] };
+  const { length = 1, width = 1 } = knob.values[index];
+  const scale: ScenePart['position'] = [width, 1, length];
+
+  return {
+    label: '',
+    parts: parts.map((part) => ({
+      ...part,
+      dimensions: { ...part.dimensions, width: part.dimensions.width * width, depth: part.dimensions.depth * length },
+    })),
+    edits: new Map(parts.map((part) => [part.id, { scale }])),
+  };
 }
 
 function suppliedScene(scene: StudyScene, volts: number): StudyScene {
@@ -64,8 +87,14 @@ function applyKnob(scene: StudyScene, knob: StudyKnob, index: number): StudyScen
   if (knob.kind === 'voltage') return suppliedScene(scene, knob.values[index]);
 
   const parts = knob.kind === 'servo' ? scene.parts : selectedParts(scene, knob);
-  const parameter = sweepParameter(knob, index);
-  const variants = sweepVariants(parts, scene.project.joints ?? [], parameter);
+  const variants =
+    knob.kind === 'servo'
+      ? sweepVariants(parts, scene.project.joints ?? [], {
+          kind: 'servo',
+          joints: knob.joints,
+          values: [knob.values[index]],
+        })
+      : [selectedVariant(parts, knob, index)];
 
   if (typeof variants === 'string') throw new Error(variants);
 

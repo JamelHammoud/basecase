@@ -4,7 +4,7 @@ import type { RobotAnimation } from '../types/robotics';
 import type { ArenaEvidence, Skill } from './artifacts';
 import { lastError, type ForgeRunner } from './forgeRunner';
 import type { TrainedEntry } from './kitEnvironment';
-import type { KitWarm } from './motorKit';
+import type { KitOutcome, KitWarm } from './motorKit';
 import { errorMessage } from '../utils/errorMessage';
 import type { BackgroundTask } from './kitPlan';
 import type { RaceOutcome } from './race';
@@ -77,6 +77,10 @@ export class SkillsRuntime {
 
   loadSkill(hash: string) {
     return this.deps.loadSkill(hash);
+  }
+
+  setKitContext(context: NonNullable<RuntimeDeps['kitContext']>) {
+    this.deps.kitContext = context;
   }
 
   startJob(row: JobRow, work: (ports: SkillPorts) => Promise<void>): string | null {
@@ -320,8 +324,12 @@ export class SkillsRuntime {
     ports: { forge: ForgeRunner; signal: AbortSignal; warm?: KitWarm },
   ) {
     const { warm, ...rest } = ports;
+    const context = this.deps.kitContext ? await this.deps.kitContext(model) : {};
+
+    if (ports.signal.aborted) return;
+
     const reply = await this.deps.runner(
-      { type: 'kit', model, design: designOf(model), entry, ...(warm ? { warm } : {}) },
+      { type: 'kit', model, design: designOf(model), entry, ...context, ...(warm ? { warm } : {}) },
       { ...this.ports(), ...rest },
     );
     const { outcome } = reply;
@@ -330,9 +338,13 @@ export class SkillsRuntime {
 
     if (outcome.kind === 'skill') return this.keep(target, skillRecord(outcome.skill, { kit: entry }));
 
-    const line = outcome.evidence ? refusedLine(outcome.evidence) : (this.forgeErrors.get(target) ?? outcome.reason);
+    const line = outcome.validation ? outcome.reason : this.refusalLine(target, outcome);
 
     this.refuse(target, model, { line, signal: ports.signal });
+  }
+
+  private refusalLine(target: SkillTarget, outcome: Extract<KitOutcome, { kind: 'refused' }>) {
+    return outcome.evidence ? refusedLine(outcome.evidence) : (this.forgeErrors.get(target) ?? outcome.reason);
   }
 
   private async moveWork(

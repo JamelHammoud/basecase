@@ -22,7 +22,7 @@ export interface SkillJob {
 
 export type SkillState =
   | { kind: 'training'; share: number | null; message: string; background: boolean; snapshot: SnapshotRef | null }
-  | { kind: 'ready'; arena: string }
+  | { kind: 'ready'; arena: string; refused?: string }
   | { kind: 'recheck' }
   | { kind: 'untrained'; refused?: string };
 
@@ -93,7 +93,7 @@ function stateOf(found: ReturnType<typeof best> | null, job: SkillJob | undefine
 
   const evidence = readyEvidence(found);
 
-  if (evidence) return { kind: 'ready', arena: arenaLine(evidence) };
+  if (evidence) return { kind: 'ready', arena: arenaLine(evidence), ...(refused ? { refused } : {}) };
 
   if (found?.freshness === 'rerun-arena') return { kind: 'recheck' };
 

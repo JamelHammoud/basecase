@@ -1,5 +1,7 @@
 import type { Skill, SkillController } from '../skills/artifacts';
 import { hashOf } from '../skills/hash';
+import { modelHashes } from '../skills/artifacts';
+import type { SimModel } from '../sim/mjcfTypes';
 import type { DriveSetup } from '../sim/drive';
 import { KIT_SKILL_NAMES } from './physicsBody';
 import type { Handoff } from './schema';
@@ -14,15 +16,14 @@ const KIT_NAMES = new Set<string>(Object.values(KIT_SKILL_NAMES));
 const VELOCITY_SKILLS = new Set(['walk', 'turn-away']);
 const stamps = new WeakMap<SkillController, string>();
 
+export const physicsStamp = (model: SimModel) => hashOf(modelHashes(model));
+
 export function controllerStamp(controller: SkillController): string {
   const known = stamps.get(controller);
 
   if (known) return known;
 
-  const stamp =
-    controller.kind === 'policy'
-      ? hashOf({ ...controller.policy, layers: controller.policy.layers.map((l) => [l.in, l.out, l.b]) })
-      : hashOf(controller);
+  const stamp = hashOf(controller);
 
   stamps.set(controller, stamp);
 
@@ -30,7 +31,7 @@ export function controllerStamp(controller: SkillController): string {
 }
 
 const named = (skills: readonly Skill[], names: string[]) =>
-  names.map((name) => skills.find((s) => s.name === name)).find((s) => s !== undefined);
+  names.map((name) => skills.findLast((s) => s.name === name)).find((s) => s !== undefined);
 
 function runningSkill(skills: readonly Skill[], id: string): Skill | undefined {
   if (VELOCITY_SKILLS.has(id)) return named(skills, [KIT_SKILL_NAMES.velocity]);
@@ -43,7 +44,7 @@ function runningSkill(skills: readonly Skill[], id: string): Skill | undefined {
 export function skillStamp(scene: StampScene, id: string): string {
   const skill = runningSkill(scene.skills, id);
 
-  return skill ? controllerStamp(skill.controller) : `drive:${scene.drive?.kind ?? 'none'}`;
+  return skill ? controllerStamp(skill.controller) : hashOf(scene.drive ?? null);
 }
 
 export const pairStamp = (scene: StampScene, pair: Handoff) =>

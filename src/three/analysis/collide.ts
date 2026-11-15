@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Coplanar, Interference } from '../interference';
+import { collisionPairs, type SkipPair } from './collisionPairs';
 import { crossingsOf } from './crossing';
 import { samplesOf, type ShapeSolid } from './shapeSolid';
 
@@ -17,14 +18,6 @@ export interface CollideOptions {
   focus?: string[];
   straddle?: string[];
   coplanar?: boolean;
-}
-
-function pairFilter(options: CollideOptions) {
-  const focus = options.focus?.length ? new Set(options.focus) : null;
-  const straddle = options.straddle ? new Set(options.straddle) : null;
-
-  return (A: Placed, B: Placed) =>
-    (!focus || focus.has(A.id) || focus.has(B.id)) && (!straddle || straddle.has(A.id) !== straddle.has(B.id));
 }
 
 const RAY_DIRS = [
@@ -184,38 +177,11 @@ function overlap(A: Placed, B: Placed, options: CollideOptions): Interference | 
   };
 }
 
-function nearFocus(placed: Placed[], focusSet: Set<string>) {
-  const grown = (p: Placed) => p.box.clone().expandByScalar(0.5);
-  const focused = placed.filter((p) => focusSet.has(p.id)).map(grown);
-
-  return placed.filter((p) => focusSet.has(p.id) || focused.some((b) => b.intersectsBox(grown(p))));
-}
-
-type SkipPair = (a: string, b: string) => boolean;
-
-function candidatePairs(solids: Placed[], options: CollideOptions, skip?: SkipPair): Array<[Placed, Placed]> {
-  const filter = pairFilter(options);
-  const wanted = (A: Placed, B: Placed) => filter(A, B) && !skip?.(A.id, B.id);
-  const pairs: Array<[Placed, Placed]> = [];
-
-  for (let i = 0; i < solids.length; i++) {
-    const grown = solids[i].box.clone().expandByScalar(0.1);
-
-    for (let j = i + 1; j < solids.length; j++) {
-      if (wanted(solids[i], solids[j]) && grown.intersectsBox(solids[j].box)) pairs.push([solids[i], solids[j]]);
-    }
-  }
-
-  return pairs;
-}
-
 export function collide(placed: Placed[], options: CollideOptions, skip?: SkipPair) {
-  const focusSet = options.focus?.length ? new Set(options.focus) : null;
-  const solids = focusSet ? nearFocus(placed, focusSet) : placed;
   const interferences: Interference[] = [];
   const coplanar: Coplanar[] = [];
 
-  for (const [A, B] of candidatePairs(solids, options, skip)) {
+  for (const [A, B] of collisionPairs(placed, options, skip)) {
     const face = options.coplanar === false ? null : sharedFace(A, B);
     const hit = overlap(A, B, options);
 

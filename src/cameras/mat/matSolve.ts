@@ -1,5 +1,5 @@
 import type { FloorPoint } from './tag36h11';
-import { apply, fitHomography, invert, type Mat3, type PointPair, type Pt } from './homography';
+import { apply, fitHomography, invert, type Mat3, type Pt } from './homography';
 
 export type V3 = [number, number, number];
 
@@ -78,21 +78,35 @@ export function focalOf(h: Mat3): number | null {
   return Number.isFinite(focal) && focal >= MIN_FOCAL && focal <= MAX_FOCAL ? focal : null;
 }
 
-function tagScale(tag: TrackTag, seen: SeenTag, toFloor: Mat3, frame: FrameSize): number {
-  const floor = seen.corners.map((c) => apply(toFloor, toLens(frame, c)));
+interface MatMatch {
+  tag: TrackTag;
+  lens: Pt[];
+}
+
+function tagScale(tag: TrackTag, floor: Pt[]): number {
   const sides = floor.map((p, i) => Math.hypot(p[0] - floor[(i + 1) % 4][0], p[1] - floor[(i + 1) % 4][1]));
 
   return sides.reduce((s, v) => s + v, 0) / 4 / tag.size;
 }
 
-function residualMm(pairs: PointPair[], toFloor: Mat3): number {
-  const sum = pairs.reduce((s, p) => {
-    const [x, z] = apply(toFloor, p.to);
+function matMetrics(matched: MatMatch[], toFloor: Mat3) {
+  let sum = 0;
+  let count = 0;
+  const scales = matched.map(({ tag, lens }) => {
+    const floor = lens.map((p) => apply(toFloor, p));
 
-    return s + (x - p.from[0]) ** 2 + (z - p.from[1]) ** 2;
-  }, 0);
+    for (const [i, corner] of tag.corners.entries()) {
+      const [x, z] = floor[i];
 
-  return Math.sqrt(sum / pairs.length);
+      sum += (x - corner[0]) ** 2;
+      sum += (z - corner[1]) ** 2;
+      count++;
+    }
+
+    return tagScale(tag, floor);
+  });
+
+  return { scale: median(scales), residualMm: Math.sqrt(sum / count) };
 }
 
 export function viewMat(seen: SeenTag[], mat: TrackMat, frame: FrameSize): MatView | null {
@@ -100,14 +114,12 @@ export function viewMat(seen: SeenTag[], mat: TrackMat, frame: FrameSize): MatVi
   const matched = seen.flatMap((s) => {
     const tag = byId.get(s.id);
 
-    return tag ? [{ tag, seen: s }] : [];
+    return tag ? [{ tag, lens: s.corners.map((c) => toLens(frame, c)) }] : [];
   });
 
   if (matched.length < MIN_MAT_TAGS) return null;
 
-  const pairs = matched.flatMap(({ tag, seen: s }) =>
-    tag.corners.map((corner, i) => ({ from: corner, to: toLens(frame, s.corners[i]) })),
-  );
+  const pairs = matched.flatMap(({ tag, lens }) => tag.corners.map((corner, i) => ({ from: corner, to: lens[i] })));
   const homography = fitHomography(pairs);
   const toFloor = homography && invert(homography);
 
@@ -116,8 +128,7 @@ export function viewMat(seen: SeenTag[], mat: TrackMat, frame: FrameSize): MatVi
   return {
     homography,
     tags: matched.length,
-    scale: median(matched.map((m) => tagScale(m.tag, m.seen, toFloor, frame))),
-    residualMm: residualMm(pairs, toFloor),
+    ...matMetrics(matched, toFloor),
     focal: focalOf(homography),
   };
 }

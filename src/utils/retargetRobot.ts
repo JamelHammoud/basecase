@@ -17,6 +17,7 @@ export interface RobotLandmarks extends RobotRef {
   rp: Landmarks;
   torsoJoints: string[];
   neckJoints: string[];
+  carriers: Map<Keypoint, Carrier>;
 }
 
 export interface Carrier {
@@ -120,7 +121,20 @@ export function robotLandmarks(robot: RobotRef): RobotLandmarks {
 
   setHeadLandmark(robot, rp, neckJoints);
 
-  return { ...robot, rp, torsoJoints, neckJoints };
+  const landmarks = { ...robot, rp, torsoJoints, neckJoints, carriers: new Map<Keypoint, Carrier>() };
+  const firstPart = new Map<string, string>();
+
+  for (const [part, joint] of rig.ownerOf) {
+    if (!firstPart.has(joint)) firstPart.set(joint, part);
+  }
+
+  for (const key of KEYPOINTS) {
+    const carrier = carrierOf(landmarks, key, firstPart);
+
+    if (carrier) landmarks.carriers.set(key, carrier);
+  }
+
+  return landmarks;
 }
 
 function carrierJointId(robot: RobotLandmarks, k: Keypoint): string | undefined {
@@ -141,13 +155,13 @@ function carrierJointId(robot: RobotLandmarks, k: Keypoint): string | undefined 
   return jointId ? (rig.parentOf.get(jointId) ?? undefined) : undefined;
 }
 
-export function carrierOf(robot: RobotLandmarks, k: Keypoint): Carrier | null {
+function carrierOf(robot: RobotLandmarks, k: Keypoint, firstPart: Map<string, string>): Carrier | null {
   const p = robot.rp.get(k);
 
   if (!p) return null;
 
   const jointId = carrierJointId(robot, k);
-  const partId = jointId ? linkParts(robot.rig, jointId)[0] : undefined;
+  const partId = jointId ? firstPart.get(jointId) : undefined;
 
   return partId ? { partId, point: [p.x, p.y, p.z] } : null;
 }

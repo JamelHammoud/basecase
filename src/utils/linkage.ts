@@ -4,7 +4,7 @@ import {
   closure,
   couplerCurve,
   couplerOffset,
-  couplerPoint,
+  couplerSampler,
   distanceToCurve,
   grashofClass,
   minTransmission,
@@ -147,8 +147,9 @@ function scored(l: PlacedFourBar & { thetas: number[] }, targets: Vec2[]): Linka
   const to = l.thetas[l.thetas.length - 1];
   const samples = Math.max(8, Math.ceil((Math.abs(to - from) / 360) * CURVE_SAMPLES));
   const curve = couplerCurve(l, from, to, samples);
+  const sample = couplerSampler(l);
   const errors = targets.map((t, i) => {
-    const at = couplerPoint(l, l.thetas[i]);
+    const at = sample(l.thetas[i]);
     const direct = at ? Math.hypot(at[0] - t[0], at[1] - t[1]) : Infinity;
 
     return Math.min(direct, distanceToCurve(t, curve));

@@ -59,12 +59,33 @@ export function fourBarPose(l: FourBar, thetaDeg: number): FourBarPose | null {
   return closed && { ...closed, p: couplerOffset(closed.b, closed.c, l.point, l.coupler) };
 }
 
-export function placed(l: Pick<PlacedFourBar, 'origin' | 'angle'>, [x, y]: Vec2): Vec2 {
+function placeAt([ox, oy]: Vec2, [x, y]: Vec2, cos: number, sin: number): Vec2 {
+  return [ox + x * cos - y * sin, oy + x * sin + y * cos];
+}
+
+export function placementFor(l: Pick<PlacedFourBar, 'origin' | 'angle'>): (point: Vec2) => Vec2 {
   const a = toRadians(l.angle);
   const cos = Math.cos(a);
   const sin = Math.sin(a);
+  const origin = l.origin;
 
-  return [l.origin[0] + x * cos - y * sin, l.origin[1] + x * sin + y * cos];
+  return (point) => placeAt(origin, point, cos, sin);
+}
+
+export function placed(l: Pick<PlacedFourBar, 'origin' | 'angle'>, point: Vec2): Vec2 {
+  const a = toRadians(l.angle);
+
+  return placeAt(l.origin, point, Math.cos(a), Math.sin(a));
+}
+
+export function couplerSampler(l: PlacedFourBar): (thetaDeg: number) => Vec2 | null {
+  const place = placementFor(l);
+
+  return (thetaDeg) => {
+    const pose = fourBarPose(l, thetaDeg);
+
+    return pose && place(pose.p);
+  };
 }
 
 export function couplerPoint(l: PlacedFourBar, thetaDeg: number): Vec2 | null {
@@ -115,9 +136,10 @@ export function minTransmission(l: FourBar): number {
 
 export function couplerCurve(l: PlacedFourBar, from: number, to: number, samples: number): Vec2[] {
   const out: Vec2[] = [];
+  const sample = couplerSampler(l);
 
   for (let i = 0; i <= samples; i++) {
-    const p = couplerPoint(l, from + ((to - from) * i) / samples);
+    const p = sample(from + ((to - from) * i) / samples);
 
     if (p) out.push(p);
   }

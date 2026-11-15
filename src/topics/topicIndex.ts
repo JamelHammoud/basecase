@@ -46,14 +46,19 @@ const longestList = (topic: RecordedTopic, path: string) => {
 
 export class TopicIndex {
   readonly topics: RecordedTopic[];
-  readonly #byName: Map<string, RecordedTopic>;
+  readonly #byName = new Map<string, RecordedTopic>();
   readonly #series = new Map<string, Timed<number>>();
   readonly #labels = new Map<string, Timed<string>>();
   readonly #ids = new Map<string, string[]>();
 
   constructor(log: TopicLog) {
     this.topics = log.topics;
-    this.#byName = new Map(log.topics.map((t) => [t.topic, t]));
+
+    for (const topic of log.topics) {
+      const name = topic.topic;
+
+      if (!this.#byName.has(name)) this.#byName.set(name, topic);
+    }
   }
 
   topic(ref: string): RecordedTopic | null {
@@ -66,15 +71,14 @@ export class TopicIndex {
     if (!isTopicSignal(id)) return null;
 
     const rest = id.slice(TOPIC_SPACE.length + 1);
-    let found: RecordedTopic | null = null;
 
-    for (const topic of this.topics) {
-      const fits = rest === topic.topic || rest.startsWith(`${topic.topic}.`);
+    for (let end = rest.length; end >= 0; end = end === 0 ? -1 : rest.lastIndexOf('.', end - 1)) {
+      const topic = this.#byName.get(rest.slice(0, end));
 
-      if (fits && (!found || topic.topic.length > found.topic.length)) found = topic;
+      if (topic) return { topic, path: rest.slice(end + 1) };
     }
 
-    return found && { topic: found, path: rest.slice(found.topic.length + 1) };
+    return null;
   }
 
   #column(id: string): Column | null {

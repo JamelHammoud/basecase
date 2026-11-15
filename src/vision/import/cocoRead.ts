@@ -54,6 +54,7 @@ async function readCocoManifest(
   files: ImageSourceFiles,
   path: string,
   classes: ImageClass[],
+  remaining: number,
 ): Promise<TrainingFrame[]> {
   const metadata = await sourceJson(files, path);
   const categories = categoriesOf(metadata.categories);
@@ -65,10 +66,11 @@ async function readCocoManifest(
   const groups = annotationGroups(metadata.annotations);
   const root = directory(path);
   const parent = directory(root.replace(/\/$/, ''));
+  const imageFolder = /(?:^|\/)instances_([^/]+)\.json$/i.exec(path)?.[1];
   const frames: TrainingFrame[] = [];
   const seen = new Set<string>();
 
-  for (const value of list(metadata.images, IMAGE_LIMITS.frames)) {
+  for (const value of list(metadata.images, remaining)) {
     const image = record(value);
     const imageId = String(image.id);
 
@@ -76,7 +78,14 @@ async function readCocoManifest(
 
     seen.add(imageId);
 
-    const file = imagePath(files, image.file_name, [root, '', parent, `${root}images/`, `${parent}images/`]);
+    const file = imagePath(files, image.file_name, [
+      root,
+      '',
+      parent,
+      `${root}images/`,
+      `${parent}images/`,
+      ...(imageFolder ? [`${parent}${imageFolder}/`] : []),
+    ]);
     const decoded = await decodeSourceImage(await sourceBytes(files, file, IMAGE_LIMITS.image), files);
 
     if (number(image.width) !== decoded.width || number(image.height) !== decoded.height) refuseImage();
@@ -98,7 +107,8 @@ async function readCocoManifest(
       id: 'pending',
       camera: 'image',
       seed: 0,
-      split: splitOf(path) ?? splitOf(file),
+      split:
+        splitOf((imageFolder ?? '').replace(/(train|val|test)(?=\d{4}$)/i, '$1.')) ?? splitOf(path) ?? splitOf(file),
       annotations,
       depth: new Float32Array(decoded.width * decoded.height),
     });
@@ -114,7 +124,7 @@ export async function readCoco(files: ImageSourceFiles): Promise<Pick<FrameSet, 
   const frames: TrainingFrame[] = [];
 
   for (const path of [...files.keys()].filter(cocoManifest).sort())
-    frames.push(...(await readCocoManifest(files, path, classes)));
+    frames.push(...(await readCocoManifest(files, path, classes, IMAGE_LIMITS.frames - frames.length)));
 
   return { classes, frames };
 }

@@ -1,4 +1,5 @@
 import { decodeMask, maskBox, maskPolygons } from './imageMasks';
+import { MB } from '../../electron/fileSize.mjs';
 import { sha256 } from '../cases/tries';
 import { depthBytes } from './imageBytes';
 
@@ -167,7 +168,7 @@ export function validateTrainingFrame(value: unknown, classes: ImageClass[]): as
   if (
     !(frame.jpeg instanceof Uint8Array) ||
     frame.jpeg.length < 4 ||
-    frame.jpeg.length > 64_000_000 ||
+    frame.jpeg.length > 64 * MB ||
     !(frame.depth instanceof Float32Array) ||
     frame.depth.length !== frame.width * frame.height
   )

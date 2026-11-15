@@ -1,4 +1,5 @@
 import type { SourceFile, SourceFolder } from '../../datasets/import/types';
+import { MB } from '../../../electron/fileSize.mjs';
 import { DataImportError } from '../../datasets/import/types';
 import { isRecord } from '../../datasets/import/lerobotSource';
 import type { TrainingFrame } from '../frameSet';
@@ -9,11 +10,11 @@ export const IMAGE_LIMITS = {
   frames: 10_000,
   annotations: 10_000,
   points: 100_000,
-  metadata: 16_000_000,
-  image: 64_000_000,
+  metadata: 16 * MB,
+  image: 64 * MB,
   pixels: 16_777_216,
   totalPixels: 64_000_000,
-  totalBytes: 600_000_000,
+  totalBytes: 600 * MB,
 };
 export const refuseImage = (): never => {
   throw new DataImportError('Check the image dataset format.');

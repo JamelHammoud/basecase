@@ -32,10 +32,11 @@ export class RoboflowAccount {
     set(kind: string, value: unknown): void;
   };
   endpoint: () => string;
-  outbound: typeof fetch;
+  outbound?: typeof fetch;
   account(): RoboflowAccountState;
   setKey(key: unknown): Promise<RoboflowAccountState>;
-  response(url: URL): Promise<Response>;
+  response(url: URL, redirect?: RequestRedirect): Promise<Response>;
+  archive(link: unknown): Promise<Uint8Array>;
   json(requestPath: string, key: string): Promise<unknown>;
   importProject(link: unknown): Promise<RoboflowArchive>;
 }

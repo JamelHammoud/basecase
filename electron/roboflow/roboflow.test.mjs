@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { startFakeRoboflow } from '../../e2e/fakeRoboflow.ts';
+import { MB } from '../fileSize.mjs';
 import { RoboflowAccount, roboflowEndpoint, NO_KEY } from './index.mjs';
 import { projectOfLink, isRoboflowLink } from '../../src/roboflow/roboflowLink.ts';
 import { roboflowPostRoutes } from './routes.mjs';
@@ -106,6 +107,33 @@ describe('Roboflow account and downloads', () => {
     expect(fake.requests.map((request) => request.path)).toContain('/workspace/project/2/coco');
   });
 
+  it('chooses the highest matching version from the API’s top-level version list', async () => {
+    const outbound = vi.fn();
+    const rf = account('https://api.roboflow.com', outbound);
+
+    rf.keys.set('roboflow', KEY);
+    outbound.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          project: { id: 'workspace/project' },
+          versions: [
+            { id: 'workspace/project/2' },
+            { id: 'other/project/99' },
+            { id: 'workspace/project/10' },
+            { id: 'workspace/project/3' },
+          ],
+        }),
+      ),
+    );
+    outbound.mockResolvedValueOnce(new Response('{"export":{"link":"https://api.roboflow.com/archive.zip"}}'));
+    outbound.mockResolvedValueOnce(new Response(new Uint8Array([80, 75, 3, 4])));
+
+    expect((await rf.importProject('https://app.roboflow.com/workspace/project')).name).toBe('project-v10.zip');
+    expect(outbound.mock.calls[1][0].pathname).toBe('/workspace/project/10/coco');
+  });
+});
+
+describe('Roboflow archive downloads', () => {
   it('refuses hostile links before making a request', async () => {
     const outbound = vi.fn();
     const rf = account('https://api.roboflow.com', outbound);
@@ -163,9 +191,72 @@ describe('Roboflow account and downloads', () => {
     const [url, init] = outbound.mock.calls.at(-1);
 
     expect(url.href).toBe('https://app.roboflow.com/ds/token?key=export-token');
-    expect(init.redirect).toBe('error');
+    expect(init.redirect).toBe('manual');
     expect(JSON.stringify(init)).not.toContain(KEY);
     expect(url.href).not.toContain(KEY);
+  });
+
+  it('follows a Roboflow archive redirect to its signed export bucket without the saved key', async () => {
+    const outbound = vi.fn();
+    const rf = account('https://api.roboflow.com', outbound);
+    const signed =
+      'https://storage.googleapis.com/roboflow-platform-regional-exports/workspace/project/2/coco.zip?X-Goog-Signature=signed';
+
+    rf.keys.set('roboflow', KEY);
+    outbound.mockResolvedValueOnce(
+      new Response('{"export":{"link":"https://app.roboflow.com/ds/token?key=export-token"}}'),
+    );
+    outbound.mockResolvedValueOnce(new Response('', { status: 302, headers: { location: signed } }));
+    outbound.mockResolvedValueOnce(new Response(new Uint8Array([80, 75, 3, 4])));
+
+    expect([...(await rf.importProject(LINK)).data]).toEqual([80, 75, 3, 4]);
+
+    const [url, init] = outbound.mock.calls.at(-1);
+
+    expect(url.href).toBe(signed);
+    expect(init.redirect).toBe('manual');
+    expect(JSON.stringify(outbound.mock.calls.slice(1))).not.toContain(KEY);
+  });
+
+  it.each([
+    'https://attacker.example/archive.zip',
+    'http://127.0.0.1/archive.zip',
+    'http://storage.googleapis.com/roboflow-platform-regional-exports/a/b/1/coco.zip',
+    'https://storage.googleapis.com/another-bucket/archive.zip',
+    'https://storage.googleapis.com/roboflow-platform-regional-exports/../private/archive.zip',
+    'https://user@storage.googleapis.com/roboflow-platform-regional-exports/a/b/1/coco.zip',
+  ])('refuses an archive redirect to %s before reaching it', async (location) => {
+    const outbound = vi.fn();
+    const rf = account('https://api.roboflow.com', outbound);
+
+    rf.keys.set('roboflow', KEY);
+    outbound.mockResolvedValueOnce(new Response('{"export":{"link":"https://app.roboflow.com/ds/token"}}'));
+    outbound.mockResolvedValueOnce(new Response('', { status: 302, headers: { location } }));
+    await expect(rf.importProject(LINK)).rejects.toThrow(/Roboflow download/);
+    expect(outbound).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops archive redirect loops', async () => {
+    const outbound = vi.fn();
+    const rf = account('https://api.roboflow.com', outbound);
+
+    rf.keys.set('roboflow', KEY);
+    outbound.mockResolvedValueOnce(new Response('{"export":{"link":"https://app.roboflow.com/ds/token"}}'));
+    outbound.mockImplementation(async () => new Response('', { status: 302, headers: { location: '/ds/token' } }));
+    await expect(rf.importProject(LINK)).rejects.toThrow(/Roboflow download/);
+    expect(outbound).toHaveBeenCalledTimes(5);
+  });
+});
+
+describe('Roboflow archive failures', () => {
+  it('keeps an expired archive link from blaming the saved account key', async () => {
+    const outbound = vi.fn();
+    const rf = account('https://api.roboflow.com', outbound);
+
+    rf.keys.set('roboflow', KEY);
+    outbound.mockResolvedValueOnce(new Response('{"export":{"link":"https://app.roboflow.com/ds/token"}}'));
+    outbound.mockResolvedValueOnce(new Response('', { status: 403 }));
+    await expect(rf.importProject(LINK)).rejects.toThrow('Roboflow couldn’t export the dataset.');
   });
 
   it('stops a streamed archive at the cap before buffering its oversized chunk', async () => {
@@ -173,7 +264,7 @@ describe('Roboflow account and downloads', () => {
     const rf = account('https://api.roboflow.com', outbound);
     const body = new ReadableStream({
       start(controller) {
-        controller.enqueue({ byteLength: 600000001 });
+        controller.enqueue({ byteLength: 600 * MB + 1 });
         controller.close();
       },
     });
@@ -181,7 +272,7 @@ describe('Roboflow account and downloads', () => {
     rf.keys.set('roboflow', KEY);
     outbound.mockResolvedValueOnce(new Response('{"export":{"link":"https://api.roboflow.com/archive.zip"}}'));
     outbound.mockResolvedValueOnce(new Response(body));
-    await expect(rf.importProject(LINK)).rejects.toThrow(/larger/);
+    await expect(rf.importProject(LINK)).rejects.toThrow('The Roboflow dataset is larger than 600 MB');
   });
 
   it('caps response headers and streamed archives and hides provider errors', async () => {
@@ -192,9 +283,9 @@ describe('Roboflow account and downloads', () => {
     outbound.mockResolvedValueOnce(new Response('secret', { status: 500 }));
     await expect(rf.importProject(LINK)).rejects.toThrow('Roboflow');
     outbound.mockResolvedValueOnce(new Response('{}', { headers: { 'Content-Length': '2000000' } }));
-    await expect(rf.importProject(LINK)).rejects.toThrow(/larger/);
+    await expect(rf.importProject(LINK)).rejects.toThrow('The Roboflow reply is larger than 1 MB');
     outbound.mockResolvedValueOnce(new Response('{"export":{"link":"https://api.roboflow.com/archive.zip"}}'));
-    outbound.mockResolvedValueOnce(new Response('', { headers: { 'Content-Length': '600000001' } }));
-    await expect(rf.importProject(LINK)).rejects.toThrow(/larger/);
+    outbound.mockResolvedValueOnce(new Response('', { headers: { 'Content-Length': String(600 * MB + 1) } }));
+    await expect(rf.importProject(LINK)).rejects.toThrow('The Roboflow dataset is larger than 600 MB');
   });
 });

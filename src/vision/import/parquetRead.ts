@@ -1,4 +1,5 @@
 import { parquetMetadata, parquetReadObjects, parquetSchema } from 'hyparquet';
+import { MB } from '../../../electron/fileSize.mjs';
 import type { FrameSet, ImageClass, TrainingFrame } from '../frameSet';
 import { decodeSourceImage } from './imageDecode';
 import { annotationPixels, sourcePixels, sourcePoints } from './sourceGeometry';
@@ -37,6 +38,10 @@ function objectsOf(value: unknown): Record<string, unknown>[] {
 
   if (boxes.length !== categories.length) refuseImage();
 
+  for (const key of ['segmentation', 'keypoints']) {
+    if (columns[key] !== undefined && list(columns[key]).length !== boxes.length) refuseImage();
+  }
+
   return boxes.map((bbox, i) => ({
     bbox,
     category: categories[i],
@@ -49,6 +54,8 @@ function stringCategory(label: string, classes: ImageClass[]): ImageClass {
   const existing = classes.find((category) => category.name === label);
 
   if (existing) return existing;
+
+  if (classes.length >= 1000) return refuseImage();
 
   const category = { id: classes.length, name: label };
 
@@ -68,6 +75,8 @@ function objectCategory(value: unknown, classes: ImageClass[]): ImageClass {
 
   if (existing) return existing;
 
+  if (classes.length >= 1000) return refuseImage();
+
   const category = { id, name: `class-${id}` };
 
   classes.push(category);
@@ -80,7 +89,7 @@ async function parquetFrames(
   path: string,
   classes: ImageClass[],
 ): Promise<TrainingFrame[] | null> {
-  const bytes = await sourceBytes(files, path, 256_000_000);
+  const bytes = await sourceBytes(files, path, 256 * MB);
   const buffer = Uint8Array.from(bytes).buffer;
 
   checkParquetFooter(buffer);

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { AgentKeys } from '../backend/agentKeys.mjs';
-import { readCapped } from '../publicFetch.mjs';
+import { MB } from '../fileSize.mjs';
+import { publicFetch, readCapped } from '../publicFetch.mjs';
 import { projectOfLink } from './link.mjs';
 
 export const NO_KEY = 'Add a Roboflow API key in Settings ▸ Accounts.';
@@ -9,8 +10,10 @@ const KEY_REFUSED = 'Roboflow didn’t accept the API key in Settings ▸ Accoun
 const BAD_DOWNLOAD = 'Roboflow download must stay on its own host.';
 const LOOPBACK = new Set(['127.0.0.1', 'localhost', '[::1]']);
 const API_ORIGIN = 'https://api.roboflow.com';
-const JSON_LIMIT = 1e6;
-const ZIP_LIMIT = 600e6;
+const JSON_LIMIT = MB;
+const ZIP_LIMIT = 600 * MB;
+const REDIRECT_CODES = new Set([301, 302, 303, 307, 308]);
+const REDIRECTS_MAX = 3;
 
 export function roboflowEndpoint(override = process.env.BASECASE_ROBOFLOW_URL) {
   if (!override) return API_ORIGIN;
@@ -22,20 +25,25 @@ export function roboflowEndpoint(override = process.env.BASECASE_ROBOFLOW_URL) {
   throw new Error('BASECASE_ROBOFLOW_URL must use a loopback address.');
 }
 
-function archiveUrl(link, origin) {
+function archiveUrl(link, origin, redirected = false) {
   if (typeof link !== 'string' || link.includes('\\')) throw new Error(BAD_DOWNLOAD);
 
   const url = new URL(link);
   const appArchive = url.origin === 'https://app.roboflow.com' && /^\/ds\/[A-Za-z0-9_-]+\/?$/.test(url.pathname);
+  const storageArchive =
+    redirected &&
+    url.origin === 'https://storage.googleapis.com' &&
+    /^\/roboflow-platform-regional-exports\/[A-Za-z0-9/_-]+\.zip$/.test(url.pathname);
 
-  if (url.username || url.password || url.hash || (url.origin !== origin && !appArchive)) throw new Error(BAD_DOWNLOAD);
+  if (url.username || url.password || url.hash || (url.origin !== origin && !appArchive && !storageArchive))
+    throw new Error(BAD_DOWNLOAD);
 
   return url;
 }
 
 function latestVersion(payload, source) {
   const prefix = `${source.workspace}/${source.project}/`;
-  const versions = payload?.project?.versions;
+  const versions = payload?.versions;
 
   if (!Array.isArray(versions) || versions.length > 10000)
     throw new Error('Choose a generated Roboflow dataset version.');
@@ -51,7 +59,7 @@ function latestVersion(payload, source) {
 }
 
 export class RoboflowAccount {
-  constructor({ libraryDir, secrets, endpoint = () => roboflowEndpoint(), outbound = fetch }) {
+  constructor({ libraryDir, secrets, endpoint = () => roboflowEndpoint(), outbound }) {
     this.keys = new AgentKeys({ dir: path.join(libraryDir, 'agent-config'), secrets, file: 'roboflow-keys.json' });
     this.endpoint = endpoint;
     this.outbound = outbound;
@@ -75,20 +83,44 @@ export class RoboflowAccount {
     return this.account();
   }
 
-  async response(url) {
+  async response(url, redirect = 'error') {
     let res;
 
     try {
-      res = await this.outbound(url, { redirect: 'error', signal: AbortSignal.timeout(120000) });
+      const outbound = this.outbound ?? (url.origin === 'https://storage.googleapis.com' ? publicFetch : fetch);
+
+      res = await outbound(url, { redirect, signal: AbortSignal.timeout(120000) });
     } catch {
-      throw new Error('Roboflow could not be reached. Import the dataset again.');
+      throw new Error('Roboflow couldn’t be reached. Import the dataset again.');
     }
 
-    if (res.status === 401 || res.status === 403) throw new Error(KEY_REFUSED);
+    if (redirect === 'error' && (res.status === 401 || res.status === 403)) throw new Error(KEY_REFUSED);
 
-    if (!res.ok) throw new Error('Roboflow could not export the dataset. Import the dataset again.');
+    if (!res.ok && !(redirect === 'manual' && REDIRECT_CODES.has(res.status)))
+      throw new Error('Roboflow couldn’t export the dataset. Import the dataset again.');
 
     return res;
+  }
+
+  async archive(link) {
+    const origin = this.endpoint();
+    let url = archiveUrl(link, origin);
+
+    for (let hop = 0; hop <= REDIRECTS_MAX; hop += 1) {
+      const res = await this.response(url, 'manual');
+
+      if (!REDIRECT_CODES.has(res.status)) return readCapped(res, ZIP_LIMIT, 'The Roboflow dataset');
+
+      const location = res.headers.get('location');
+
+      await res.body?.cancel();
+
+      if (!location) throw new Error(BAD_DOWNLOAD);
+
+      url = archiveUrl(new URL(location, url).href, origin, true);
+    }
+
+    throw new Error(BAD_DOWNLOAD);
   }
 
   async json(requestPath, key) {
@@ -119,9 +151,7 @@ export class RoboflowAccount {
     if (reply?.ready === false)
       throw new Error('Roboflow is preparing the export. Import the dataset again when it finishes.');
 
-    const url = archiveUrl(reply?.export?.link, this.endpoint());
-    const res = await this.response(url);
-    const data = new Uint8Array(await readCapped(res, ZIP_LIMIT, 'The Roboflow dataset'));
+    const data = new Uint8Array(await this.archive(reply?.export?.link));
 
     return { name: `${source.project}-v${version}.zip`, data };
   }

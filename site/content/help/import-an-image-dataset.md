@@ -74,11 +74,13 @@ Hugging Face imports require the desktop app. Basecase reads image datasets stor
 
 ## Limits
 
-Images must be JPEG or PNG, with no side longer than 8,192 pixels and no more than 16,777,216 pixels per image. An import can contain up to 10,000 images and 20,000 files, with each image up to 64 MB. Annotation files can be up to 16 MB. All source files together must fit within 600 MB, and decoded images together must fit within 64 million pixels.
+Images must be JPEG or PNG, with no side longer than 8,192 pixels and no more than 16,777,216 pixels per image. An import can contain up to 10,000 images and 20,000 files, with each image up to 64 MB. Annotation files can be up to 16 MB, and a Parquet shard can be up to 256 MB. All source files together must fit within 600 MB, and decoded images together must fit within 64 million pixels.
 
 A Hugging Face download can contain up to 2,000 files and 1 GB in total, and image imports still have the 600 MB source-file limit. To bypass the Hub's file-count limit, download the dataset and import its folder.
 
 COCO imports keep boxes, polygons, run-length masks and named keypoints. YOLO imports keep detection boxes, segmentation polygons and pose keypoints. Pascal VOC imports keep boxes. Boxes and polygons become masks sampled at pixel centers, so their saved outlines follow image pixels. JPEG bytes stay as they are, while PNG images are converted to JPEG.
+
+In YOLO YAML, each split must name one directory, image or image-list text file. Lists of directories aren’t supported.
 
 A published Basecase dataset can contain images and recorded tries together. Import keeps both when the tries fit the robot in the open scene.
 

@@ -1,28 +1,24 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { zipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { expect, inject, it } from 'vitest';
 import { startFakeRoboflow } from './fakeRoboflow';
 import { openApp, shown, type App } from './harness';
 import { cocoImportFiles } from './imageImportFixture';
 
-type Studio = {
-  pickFiles: (files: Array<{ name: string; base64: string }>) => void;
-  roboflowKey: (key: string) => Promise<unknown>;
-};
+async function importCocoFolder(app: App, root: string) {
+  for (const [name, bytes] of Object.entries(cocoImportFiles())) {
+    const file = join(root, name);
 
-async function importCocoFolder(app: App) {
-  const files = Object.entries(cocoImportFiles()).map(([name, bytes]) => ({
-    name,
-    base64: Buffer.from(bytes).toString('base64'),
-  }));
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, bytes);
+  }
 
-  await app.page.evaluate((picked) => (window as unknown as { __studio: Studio }).__studio.pickFiles(picked), files);
   await app.page.keyboard.press('ControlOrMeta+k');
-  await app.page.keyboard.type('Import');
-  await app.page
-    .locator(shown('button[data-idx]'))
-    .filter({ hasText: 'Import' })
-    .filter({ hasNotText: 'Robot' })
-    .click();
+  await app.page.keyboard.type('Import Robot');
+  await app.page.keyboard.press('Enter');
+  await app.page.locator('input[webkitdirectory]').setInputFiles(join(root, 'coco-mugs'));
 }
 
 async function importRoboflowLink(app: App) {
@@ -48,9 +44,10 @@ it('imports a COCO folder and a Roboflow version into Library with their image a
     archive: zipSync(cocoImportFiles('roboflow-mugs', ['cup', 'plate'])),
   });
   const app = await openApp({}, [], { roboflowUrl: fake.url });
+  const root = mkdtempSync(join(tmpdir(), 'image-import-'));
 
   try {
-    await importCocoFolder(app);
+    await importCocoFolder(app, root);
     await showLibrary(app);
 
     const coco = datasets(app).getByRole('button').filter({ hasText: 'coco-mugs' });
@@ -67,7 +64,9 @@ it('imports a COCO folder and a Roboflow version into Library with their image a
     await key.waitFor();
     expect(await key.evaluate((input) => input === document.activeElement)).toBe(true);
     expect(fake.requests).toEqual([]);
-    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.roboflowKey('roboflow_e2e_key'));
+    await key.fill('roboflow_e2e_key');
+    await key.press('Enter');
+    await expect.poll(() => key.inputValue()).toBe('');
     await app.page.keyboard.press('Escape');
     await importRoboflowLink(app);
     await showLibrary(app);
@@ -83,5 +82,6 @@ it('imports a COCO folder and a Roboflow version into Library with their image a
   } finally {
     await app.close();
     await fake.close();
+    rmSync(root, { recursive: true, force: true });
   }
 });

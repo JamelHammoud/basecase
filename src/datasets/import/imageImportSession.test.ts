@@ -25,6 +25,28 @@ const fixture = (): FrameSet => ({
 });
 
 describe('preparing imported image identities', () => {
+  it('keeps shared source bytes available while frames transfer out of the worker', async () => {
+    const session = new ImageImportSession();
+    const set = fixture();
+
+    set.frames[1] = { ...set.frames[0], id: 'held-out', split: 'test' };
+    session.load(set);
+
+    const prepared = await session.prepare({ caseId: null, sceneId: null, objects: [] });
+    const received = prepared.manifest.frames.map(() => {
+      const frame = session.take();
+
+      return structuredClone(frame, { transfer: [frame.jpeg.buffer, frame.depth.buffer] });
+    });
+
+    expect(received.map((frame) => [...frame.jpeg])).toEqual([
+      [255, 216, 255, 217],
+      [255, 216, 255, 217],
+    ]);
+    expect(received.map((frame) => [...frame.depth])).toEqual([[0], [0]]);
+    expect(await frameSetHash({ ...prepared.manifest, frames: received })).toBe(prepared.hash);
+  });
+
   it('deduplicates content without mutating source frames and keeps hashes consistent', async () => {
     const session = new ImageImportSession();
     const set = fixture();

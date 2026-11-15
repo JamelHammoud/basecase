@@ -28,7 +28,7 @@ export const RoboflowAccount: React.FC<{ focus?: SettingsFocus }> = ({ focus }) 
   };
 
   return (
-    <SettingsGroup title="Roboflow">
+    <SettingsGroup>
       <SecretField
         label="Roboflow API key"
         saved={saved}

@@ -14,6 +14,22 @@ export interface ImageImportSummary {
   classes: ImageClass[];
 }
 
+function transferableFrames(frames: FrameSet['frames']): FrameSet['frames'] {
+  const buffers = new Set<ArrayBufferLike>();
+
+  return frames.map((frame) => {
+    const jpeg = buffers.has(frame.jpeg.buffer) ? frame.jpeg.slice() : frame.jpeg;
+
+    buffers.add(jpeg.buffer);
+
+    const depth = buffers.has(frame.depth.buffer) ? frame.depth.slice() : frame.depth;
+
+    buffers.add(depth.buffer);
+
+    return { ...frame, jpeg, depth };
+  });
+}
+
 export class ImageImportSession {
   private set: FrameSet | null = null;
   private next = 0;
@@ -46,7 +62,7 @@ export class ImageImportSession {
       frames.set(id, { ...frame, id });
     }
 
-    set.frames = [...frames.values()];
+    set.frames = transferableFrames([...frames.values()]);
 
     const hash = await frameSetHash(set);
 

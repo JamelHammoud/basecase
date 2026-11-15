@@ -35,6 +35,7 @@ const lerobotDataset = () => ({
   'README.md': text('# Push T'),
   'videos/observation.images.top/chunk-000/file-000.mp4': binary(4000, 4),
   'meta/notes.txt': text('x'),
+  'train.txt': text('images/block.jpg\n'),
   'data/chunk-000/file-000.csv': text('a,b'),
 });
 
@@ -98,6 +99,10 @@ describe('downloading a dataset', () => {
         'train/images/mask.png': binary(10, 3),
         'train/labels/block.txt': text('0 0.5 0.5 1 1'),
         'coco/depth/block.f32': binary(16, 4),
+        ...(format === 'yolo' && {
+          'train.txt': text('train/images/block.jpg\ntrain/images/cup.jpeg\n'),
+          'splits/validation.txt': text('train/images/mask.png\n'),
+        }),
       };
 
       hub.seed('tester/images', {
@@ -164,7 +169,11 @@ describe('downloading a dataset', () => {
 
   it('returns no files for a repo without a supported dataset layout', async () => {
     hub = await startFakeHub({ token: TOKEN });
-    hub.seed('someone/arm-urdf', { 'robot.urdf': text('<robot/>'), 'data/x.csv': text('x') });
+    hub.seed('someone/arm-urdf', {
+      'robot.urdf': text('<robot/>'),
+      'data/x.csv': text('x'),
+      'train.txt': text('images/block.jpg\n'),
+    });
 
     const got = await account().datasetFiles({ owner: 'someone', repo: 'arm-urdf' });
 

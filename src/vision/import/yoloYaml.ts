@@ -1,4 +1,4 @@
-import { list, name, refuseImage, safeImagePath } from './sourceFiles';
+import { list, name, refuseImage } from './sourceFiles';
 
 function scalar(text: string): string {
   const trimmed = text.trim();
@@ -96,7 +96,7 @@ function pathsOf(entries: Map<string, string>): Record<string, string> {
       .replace(/^\.\//, '')
       .replace(/\/$/, '');
 
-    if (value && value !== '.') paths[key] = safeImagePath(value);
+    if (value && (value !== '.' || key !== 'path')) paths[key] = value;
   }
 
   return paths;

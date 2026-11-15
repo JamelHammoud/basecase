@@ -38,7 +38,7 @@ export async function startFakeRoboflow(options: FakeRoboflowOptions) {
     const link = options.exportLink ?? `http://127.0.0.1:${address.port}/archive.zip`;
     const body = url.pathname.endsWith('/coco')
       ? { export: { link } }
-      : { workspace: 'workspace', project: { versions: [{ id: 'workspace/project/2' }] } };
+      : { workspace: 'workspace', versions: [{ id: 'workspace/project/2' }] };
 
     res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify(body));
   });

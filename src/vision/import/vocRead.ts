@@ -89,16 +89,21 @@ async function vocSplits(files: ImageSourceFiles): Promise<Map<string, TrainingF
   const splits = new Map<string, TrainingFrame['split']>();
 
   for (const path of files.keys()) {
-    if (!/(^|\/)ImageSets\/Main\/(train|val|test)\.txt$/i.test(path)) continue;
+    const match = /(^|\/)ImageSets\/Main\/(train|val|test)\.txt$/i.exec(path);
+
+    if (!match) continue;
 
     const entries = (await sourceText(files, path)).split(/\s+/).filter(Boolean);
+    const split = splitOf(match[2]);
 
     if (entries.length > IMAGE_LIMITS.frames) refuseImage();
 
     for (const entry of entries) {
-      if (splits.has(entry) && splits.get(entry) !== splitOf(path)) refuseImage();
+      const key = `${path.replace(/ImageSets\/Main\/(train|val|test)\.txt$/i, '')}${entry}`;
 
-      splits.set(entry, splitOf(path));
+      if (splits.has(key) && splits.get(key) !== split) refuseImage();
+
+      splits.set(key, split);
     }
   }
 
@@ -134,6 +139,8 @@ export async function readVoc(files: ImageSourceFiles): Promise<Pick<FrameSet, '
       const label = xmlText(child(object, 'name'));
       const category = classes.find((entry) => entry.name === label) ?? { id: classes.length, name: label };
 
+      if (classes.length >= 1000 && !classes.includes(category)) refuseImage();
+
       if (!classes.includes(category)) classes.push(category);
 
       const bounds = child(object, 'bndbox');
@@ -151,7 +158,7 @@ export async function readVoc(files: ImageSourceFiles): Promise<Pick<FrameSet, '
       id: 'pending',
       seed: 0,
       camera: 'image',
-      split: splits.get(key) ?? splitOf(path),
+      split: splits.get(`${root}${key}`) ?? splitOf(path),
       annotations,
       depth: new Float32Array(decoded.width * decoded.height),
     });

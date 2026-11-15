@@ -10,23 +10,21 @@ export interface CellBox {
   max: number[];
 }
 
-function rowPresent(cells: Set<string>, min: number[], max: number[], axis: number): boolean {
-  const low = [...min];
-  const high = [...max];
+function faceKey(axis: number, fixed: number, u: number, v: number): string {
+  if (axis === 0) return `${fixed},${u},${v}`;
 
-  low[axis] = max[axis] + 1;
-  high[axis] = low[axis];
-
-  return rowCells(low, high).every((cell) => cells.has(cellKey(cell)));
+  return axis === 1 ? `${u},${fixed},${v}` : `${u},${v},${fixed}`;
 }
 
-function rowCells(min: number[], max: number[]): number[][] {
-  const cells: number[][] = [];
+function rowPresent(cells: Set<string>, min: number[], max: number[], axis: number): boolean {
+  const first = axis === 0 ? 1 : 0;
+  const second = axis === 2 ? 1 : 2;
+  const fixed = max[axis] + 1;
 
-  for (let z = min[2]; z <= max[2]; z++)
-    for (let y = min[1]; y <= max[1]; y++) for (let x = min[0]; x <= max[0]; x++) cells.push([x, y, z]);
+  for (let v = min[second]; v <= max[second]; v++)
+    for (let u = min[first]; u <= max[first]; u++) if (!cells.has(faceKey(axis, fixed, u, v))) return false;
 
-  return cells;
+  return true;
 }
 
 function takeBox(cells: Set<string>, min: number[]): CellBox {
@@ -35,7 +33,7 @@ function takeBox(cells: Set<string>, min: number[]): CellBox {
   for (let axis = 0; axis < 3; axis++) while (rowPresent(cells, min, max, axis)) max[axis]++;
 
   for (let z = min[2]; z <= max[2]; z++)
-    for (let y = min[1]; y <= max[1]; y++) for (let x = min[0]; x <= max[0]; x++) cells.delete(cellKey([x, y, z]));
+    for (let y = min[1]; y <= max[1]; y++) for (let x = min[0]; x <= max[0]; x++) cells.delete(`${x},${y},${z}`);
 
   return { min, max };
 }

@@ -116,9 +116,13 @@ interface Reading {
 }
 
 function readings(sensors: Sensor[]): Reading[] {
+  const order = new Map<Sensor, number>();
+
+  sensors.forEach((sensor, i) => order.set(sensor, i));
+
   const all = sensors.flatMap((sensor) => Array.from(sensor.topic.t, (at, i) => ({ at, sensor, i })));
 
-  return all.sort((a, b) => a.at - b.at || sensors.indexOf(a.sensor) - sensors.indexOf(b.sensor) || a.i - b.i);
+  return all.sort((a, b) => a.at - b.at || order.get(a.sensor)! - order.get(b.sensor)! || a.i - b.i);
 }
 
 export interface BuiltMap {

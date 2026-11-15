@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { ShapeSolid } from './shapeSolid';
+import { prepareLineDistance } from './lineDistance';
 
 export interface RotorSplit {
   stator: ShapeSolid;
@@ -66,17 +67,20 @@ interface Body {
   reach: number;
 }
 
-function measureBodies(solid: ShapeSolid, bodies: Uint32Array, line: THREE.Line3): Map<number, Body> {
+function measureBodies(
+  solid: ShapeSolid,
+  bodies: Uint32Array,
+  distance: (point: THREE.Vector3) => number,
+): Map<number, Body> {
   const out = new Map<number, Body>();
   const p = new THREE.Vector3();
-  const foot = new THREE.Vector3();
 
   for (let v = 0; v < solid.positions.length / 3; v++) {
     const body = out.get(bodies[Math.floor(v / 3)]) ?? { box: new THREE.Box3(), reach: 0 };
 
     p.fromArray(solid.positions, v * 3);
     body.box.expandByPoint(p);
-    body.reach = Math.max(body.reach, line.closestPointToPoint(p, false, foot).distanceTo(p));
+    body.reach = Math.max(body.reach, distance(p));
     out.set(bodies[Math.floor(v / 3)], body);
   }
 
@@ -85,11 +89,11 @@ function measureBodies(solid: ShapeSolid, bodies: Uint32Array, line: THREE.Line3
 
 function rotorBodies(solid: ShapeSolid, line: THREE.Line3): Set<number> {
   const bodies = triangleBodies(solid.positions);
-  const measured = measureBodies(solid, bodies, line);
+  const distance = prepareLineDistance(line);
+  const measured = measureBodies(solid, bodies, distance);
   const reach = Math.max(...[...measured.values()].map((b) => b.reach));
   const center = new THREE.Vector3();
-  const foot = new THREE.Vector3();
-  const onAxis = (b: Body) => line.closestPointToPoint(b.box.getCenter(center), false, foot).distanceTo(center);
+  const onAxis = (b: Body) => distance(b.box.getCenter(center));
 
   return new Set(
     [...measured].filter(([, b]) => onAxis(b) <= ON_AXIS_MM && b.reach <= MAX_ROTOR_REACH * reach).map(([id]) => id),

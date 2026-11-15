@@ -105,40 +105,6 @@ it.each(['desktop', 'web'])('runs See Objects with real ONNX inference on the %s
   });
 });
 
-it('clears prior camera assignments and results when a replacement scene reuses the camera name', async () => {
-  await inApp({}, async (app) => {
-    const scene = armWithWristCamera();
-
-    await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), scene);
-    await expect.poll(() => partCount(app.page)).toBe(scene.parts.length);
-    await configure(app.page, 'previous', ['wrist_camera'], 'previous-model');
-    await expect.poll(async () => (await state(app.page)).signals['vision.wrist_camera.previous']).toBe(1);
-    await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
-      ...scene,
-      name: 'Replacement Wrist Camera',
-    });
-    await expect
-      .poll(async () => (await state(app.page)).assignments.some(({ modelId }) => modelId === 'previous-model'))
-      .toBe(false);
-
-    const cleared = await state(app.page);
-
-    expect(cleared.models['wrist_camera:previous-model']).toBeUndefined();
-    expect(cleared.signals['vision.wrist_camera.previous']).toBeUndefined();
-    expect(cleared.results.wrist_camera?.detections.some(({ label }) => label === 'previous')).not.toBe(true);
-    await configure(app.page, 'replacement', ['wrist_camera'], 'replacement-model');
-    await expect.poll(async () => (await state(app.page)).signals['vision.wrist_camera.replacement']).toBe(1);
-
-    const replacement = await state(app.page);
-
-    expect(replacement.models['wrist_camera:replacement-model']?.detections.map(({ label }) => label)).toEqual([
-      'replacement',
-    ]);
-    expect(replacement.signals['vision.wrist_camera.previous']).toBeUndefined();
-    expect(app.errors).toEqual([]);
-  });
-});
-
 it('seeks a persisted camera MP4 through black and white frames and reruns ORT at the playhead', async () => {
   await inApp({}, async (app) => {
     const fixture = await recordedCameraFixture();

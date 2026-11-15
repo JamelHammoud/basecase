@@ -65,7 +65,9 @@ export const valueY = (value: number, range: Range, box: TraceBox) =>
 export const sampleAt = (fraction: number, count: number) =>
   Math.max(0, Math.min(count - 1, Math.round(fraction * (count - 1))));
 
-function bucketPoints(values: ArrayLike<number>, from: number, to: number): Array<[number, number]> {
+type AppendPoint = (index: number, value: number) => void;
+
+function appendBucket(values: ArrayLike<number>, from: number, to: number, append: AppendPoint) {
   let low = -1;
   let high = -1;
 
@@ -77,35 +79,48 @@ function bucketPoints(values: ArrayLike<number>, from: number, to: number): Arra
     if (high < 0 || values[i] > values[high]) high = i;
   }
 
-  if (low < 0) return [[from, Number.NaN]];
+  if (low < 0) {
+    append(from, Number.NaN);
 
-  return [...new Set([Math.min(low, high), Math.max(low, high)])].map((i) => [i, values[i]]);
+    return;
+  }
+
+  const first = Math.min(low, high);
+  const last = Math.max(low, high);
+
+  append(first, values[first]);
+
+  if (last !== first) append(last, values[last]);
 }
 
-function samplePoints(values: ArrayLike<number>, columns: number): Array<[number, number]> {
-  if (values.length <= columns * 2) return Array.from(values, (v, i) => [i, v]);
+function appendSamples(values: ArrayLike<number>, columns: number, append: AppendPoint) {
+  if (values.length <= columns * 2) {
+    for (let i = 0; i < values.length; i++) append(i, values[i]);
+
+    return;
+  }
 
   const per = values.length / columns;
 
-  return Array.from({ length: columns }, (_, c) =>
-    bucketPoints(values, Math.floor(c * per), Math.floor((c + 1) * per)),
-  ).flat();
+  for (let c = 0; c < Math.floor(columns); c++) {
+    appendBucket(values, Math.floor(c * per), Math.floor((c + 1) * per), append);
+  }
 }
 
 function pathOf(values: ArrayLike<number>, range: Range, box: TraceBox): string {
   const parts: string[] = [];
   let pen = 'M';
 
-  for (const [i, v] of samplePoints(values, box.width)) {
+  appendSamples(values, box.width, (i, v) => {
     if (!Number.isFinite(v)) {
       pen = 'M';
 
-      continue;
+      return;
     }
 
     parts.push(`${pen}${sampleX(i, values.length, box).toFixed(1)} ${valueY(v, range, box).toFixed(1)}`);
     pen = 'L';
-  }
+  });
 
   return parts.join('');
 }

@@ -1,10 +1,62 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureModel } from '../skills/fixtureModels';
 import { clockSkill, quadWave } from '../skills/moveFixtures';
+import { compileRoutine } from './compile';
+import { newRoutine } from './edit';
+import { FIXTURE_MODEL_HASH, FIXTURE_SKILLS } from './fixtureSkills';
+import { withHandoffs } from './handoffs';
 import { routineBody } from './physicsBody';
 import { controllerStamp, pairStamp, physicsStamp } from './skillStamps';
+import { skillStep } from './stepFactory';
 
 describe('Motor Kit controller and physics bindings', () => {
+  it.each(['Wave', 'Velocity tracking', 'Settle to neutral'])(
+    'refuses a stored hand-off after retraining %s',
+    (name) => {
+      const wave = clockSkill(fixtureModel('quad-servo'), quadWave());
+      const policies = [
+        wave,
+        { ...structuredClone(wave), name: 'Velocity tracking' },
+        { ...structuredClone(wave), name: 'Settle to neutral' },
+      ];
+      const pair = { from: 'walk', to: 'wave' };
+      const proof = {
+        seeds: 8,
+        falls: 0,
+        modelHash: FIXTURE_MODEL_HASH,
+        skills: pairStamp({ skills: policies }, pair),
+      };
+      const routine = newRoutine({ id: 'handoff', name: 'Hand-off', mover: 'legs' });
+
+      routine.base.onTimeout = [skillStep('walk', 'walk', ['body']), skillStep('wave', 'wave', ['body'])];
+
+      const compile = (current: typeof policies, stored = proof) =>
+        compileRoutine(routine, {
+          modelHash: FIXTURE_MODEL_HASH,
+          skills: withHandoffs(
+            { skills: FIXTURE_SKILLS, policies: current, modelHash: FIXTURE_MODEL_HASH, drive: null },
+            { 'walk->wave': stored },
+          ),
+        });
+      const changed = structuredClone(policies);
+      const controller = changed.find((skill) => skill.name === name)!.controller;
+
+      if (controller.kind !== 'policy') throw new Error('Missing fixture policy');
+
+      controller.policy.trainedSteps += 1;
+      expect(changed.filter((skill) => skill.name !== name)).toEqual(policies.filter((skill) => skill.name !== name));
+      expect(compile(structuredClone(policies)).ok).toBe(true);
+
+      const result = compile(changed);
+
+      expect(result.ok).toBe(false);
+      expect(
+        result.errors?.filter((error) => error.code === 'unproven-transition').map((error) => error.handoff),
+      ).toEqual([{ ...pair, falls: null }]);
+      expect(compile(changed, { ...proof, skills: pairStamp({ skills: changed }, pair) }).ok).toBe(true);
+    },
+  );
+
   it('invalidates a proof for a weight-only change with identical biases and training metadata', () => {
     const model = fixtureModel('quad-servo');
     const skill = clockSkill(model, quadWave());

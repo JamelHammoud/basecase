@@ -143,8 +143,9 @@ function bodyMembers(rig: Rig) {
   for (const joint of rig.joints) {
     const parent = rig.parentOf.get(joint.id);
 
-    if (parent) appendMember(children, parent, joint.id);
-    else appendMember(roots, rig.robotOf.get(joint.id), joint.id);
+    if (typeof parent === 'string') appendMember(children, parent, joint.id);
+
+    if (!parent) appendMember(roots, rig.robotOf.get(joint.id), joint.id);
   }
 
   return { children, roots, parts };

@@ -165,6 +165,18 @@ describe('rig body membership', () => {
     expect(repeated[1].parts).not.toContain('one-visit');
   });
 
+  it.each(['', 'root'])('preserves exact parent matching for root id %j', (id) => {
+    const parts = Array.from({ length: 3 }, (_, i) => box(`p${i}`, [i, 0, 0], [1, 1, 1], 1));
+    const joints = [
+      joint({ id, link: ['p0', 'p1'], origin: [0, 0, 0], axis: [1, 0, 0], effortNm: 1 }),
+      joint({ id: 'tip', link: ['p1', 'p2'], origin: [1, 0, 0], axis: [1, 0, 0], effortNm: 1 }),
+    ];
+    const rig = buildRig(joints, parts);
+
+    expect(rig.parentOf.get('tip')).toBe(id);
+    expect(rigBodies(rig)).toEqual(scannedBodies(rig));
+  });
+
   it.each([300, 600])('reads topology and ownership once for %i joints', (count) => {
     const rig = flatRig(count);
     const previous = countedLayout(rig, scannedBodies);

@@ -1,5 +1,21 @@
 [
   {
+    "file": "e2e/inputs.e2e.test.ts",
+    "test": "hears a recorded “sit” in a Case whose logic listens for it",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43710741335 left Drive off for the unchanged 60000 ms poll at line 142 on both Windows attempts, before voice events were asserted. Linux passed at the same commit in 10026 ms. The preceding Windows run 43708315996 passed in 8026 ms with no intervening changes to the test, simulation, workspace startup, voice code, dependencies or e2e configuration. Attempts share one beforeAll app. The Case startup, simulation worker or voice initialization stage responsible is not established. Track this additional startup failure in the existing Windows worker-start issue #995."
+  },
+  {
+    "file": "e2e/webTrain.e2e.test.ts",
+    "test": "trains from the web studio, keeps the scene and skill across reload, and plays it with Try",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43710741335 kept status loading and the hold controller after Try at line 112 on both Windows attempts. Training, saved skill validation and reload completed before that assertion. Linux passed at the same commit in 19849 ms. The preceding Windows run 43708315996 passed in 16443 ms with no intervening changes to the walkthrough, simulation, workspace startup, web storage, dependencies or e2e configuration. Each attempt opens a fresh browser. The worker loading or policy startup stage responsible is not established. Track this additional startup failure in the existing Windows worker-start issue #995."
+  },
+  {
     "file": "src/vision/tryFrameVideo.test.ts",
     "test": "",
     "issue": 1069,

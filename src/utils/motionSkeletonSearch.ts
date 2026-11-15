@@ -6,6 +6,7 @@ import { forwardKinematics } from './kinematicsMotion';
 import { solveIK } from './kinematicsIk';
 import type { MotionAxis, MotionChain } from './motionSkeletonSource';
 import { skeletonLink, skeletonRig } from './skeletonRig';
+import { combinations } from './combinations';
 
 export interface FittedChain {
   joints: SkeletonJoint[];
@@ -56,21 +57,9 @@ function solveChain(chain: MotionChain, axes: MotionAxis[], tolerance: number): 
   return { joints, values, error };
 }
 
-function* subsets<T>(items: T[], count: number, start = 0, prefix: T[] = []): Generator<T[]> {
-  if (!count) {
-    yield prefix;
-
-    return;
-  }
-
-  for (let index = start; index <= items.length - count; index++) {
-    yield* subsets(items, count - 1, index + 1, [...prefix, items[index]]);
-  }
-}
-
 export function fitMotionChain(chain: MotionChain, tolerance: number): FittedChain | undefined {
   for (let count = 0; count <= chain.axes.length; count++) {
-    for (const axes of subsets(chain.axes, count)) {
+    for (const axes of combinations(chain.axes, count)) {
       const fit = solveChain(chain, axes, tolerance);
 
       if (fit) return fit;

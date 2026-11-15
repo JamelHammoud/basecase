@@ -2,6 +2,7 @@ import { actuatorOf, COMPONENT_BY_ID, type ActuatorSpec } from '../data/componen
 import { servoLayout } from '../robot/sceneRobot';
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { suitsVolts } from '../utils/actuatorRules';
+import { combinations } from '../utils/combinations';
 import { servoParts, servoSupplyVolts } from '../utils/engineeringPower';
 import { prettyJointName } from '../utils/kinematics';
 import { findPowerSources, sceneTether, suggestedTether } from '../utils/powerSources';
@@ -113,16 +114,6 @@ const suits = (space: ExploreSpace, d: Design) =>
   d.variants.every((v, i) => suitsVolts(specOf(space.groups[i], v), d.volts)) &&
   space.others.every((a) => suitsVolts(a, d.volts));
 
-function* subsets(n: number, k: number, from = 0): Generator<number[]> {
-  if (k === 0) {
-    yield [];
-
-    return;
-  }
-
-  for (let i = from; i <= n - k; i++) for (const rest of subsets(n, k - 1, i + 1)) yield [i, ...rest];
-}
-
 function* swaps(space: ExploreSpace, picked: number[], at = 0): Generator<string[]> {
   if (at === picked.length) {
     yield [...space.current.variants];
@@ -153,8 +144,10 @@ function* allVariants(space: ExploreSpace): Generator<string[]> {
   yield space.current.variants;
   yield* uniform(space);
 
+  const indices = space.groups.map((_, index) => index);
+
   for (let k = 1; k <= space.groups.length; k++)
-    for (const picked of subsets(space.groups.length, k)) yield* swaps(space, picked);
+    for (const picked of combinations(indices, k)) yield* swaps(space, picked);
 }
 
 function* candidates(space: ExploreSpace): Generator<Design> {

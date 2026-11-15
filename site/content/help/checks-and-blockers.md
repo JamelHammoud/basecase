@@ -1,7 +1,6 @@
 ---
 title: Checks and blockers
 date: 2026-11-13
-updated: 2026-11-14
 collection: engineer
 type: concept
 order: 2
@@ -28,6 +27,7 @@ covers:
   - src/components/build/ChecksSection.tsx
   - src/components/build/IgnoredChecks.tsx
   - src/components/settings/BuildPane.tsx
+hub_sort: order
 ---
 
 The Checks in the Build tab decide whether a design is ready to build. The verdict comes only from what they measure in the scene.
@@ -39,10 +39,6 @@ Checks start on their own about 1.5 seconds after your last change. While they r
 Basecase does the heavy measuring in the background, so you can keep working while it runs. On a robot with 225 parts, you get the verdict about 5 seconds after an edit.
 
 Each problem is a **blocker** or a **note**. One blocker is enough to keep a design from being ready. A note turns its check amber to tell you something about the build, like the order the screws go in, but leaves the verdict as it is.
-
-Time is a note until you [set a time budget](/help/set-a-time-budget). It becomes a blocker when estimated printing, assembly and servo setup exceed those hours. Above 90% of the budget, it stays a note.
-
-![The Time check failing with a one-hour budget on Weekend rover](/help/set-a-time-budget/over-budget.png)
 
 A check that stops on an error or runs out of time counts as a blocker. While any check is unfinished, the header won't show an old “Ready to build”.
 
@@ -64,12 +60,8 @@ Because the decision was yours, an ignored problem stays ignored when the parts 
 
 Checks measure the design as you modeled it. A strap or zip tie you'll add by hand isn't in the model, so its row is a note that you check yourself.
 
-For an Onshape import, **Fixed Mates** notes name motions held fixed. A cylindrical mate keeps its hinge, but its slide stays fixed. These notes don't block Ready to build.
-
-![The Assembly check with the imported cylindrical axle slide held fixed](/help/import-an-onshape-assembly/cylindrical-slide.png)
-
 Range of motion samples each joint every 15°, so a clash narrower than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits until the agent tips the robot over. Prices stay estimates until you add the prices you see or a print service quotes the printed parts.
 
-Time uses planning estimates for assembly and servo setup even after slicing. It excludes delivery, failed prints and print service lead times.
+{{help-hub}}
 
 [Build tab checks](/help/build-checks) lists every check and what makes it fail.

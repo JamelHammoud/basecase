@@ -13,6 +13,9 @@ covers:
   - src/utils/motionSkeleton.ts
   - src/motion/motionServos.ts
   - src/motion/motionBuild.ts
+hub_the_design_agent_order: 120
+hub_the_design_agent: |
+  Give the agent a BVH motion clip, the robot's height and a path tolerance in mm. It fits the skeleton before designing the body, places a catalog servo per joint and opens Edit Skeleton. The clip can be an attachment or a public URL. This creates the skeleton and servos, without body parts or physics playback. See [Design a robot from a motion clip](/help/design-a-robot-from-motion).
 ---
 
 Turn a BVH motion clip into a scaled skeleton with a catalog servo picked for each joint.

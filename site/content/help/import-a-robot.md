@@ -1,7 +1,6 @@
 ---
 title: Import a robot
 date: 2026-11-12
-updated: 2026-11-14
 collection: design
 type: task
 order: 16

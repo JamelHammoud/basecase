@@ -1,7 +1,6 @@
 ---
 title: Simulation in Basecase
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: concept
 order: 1

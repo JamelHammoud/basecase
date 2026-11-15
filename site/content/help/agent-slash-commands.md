@@ -1,7 +1,6 @@
 ---
 title: Agent slash commands
 date: 2026-11-13
-updated: 2026-11-14
 collection: agent
 type: reference
 order: 1

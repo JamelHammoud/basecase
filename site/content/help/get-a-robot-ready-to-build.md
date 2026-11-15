@@ -1,7 +1,6 @@
 ---
 title: Get a robot ready to build
 date: 2026-11-12
-updated: 2026-11-14
 collection: build-and-print
 type: task
 order: 1

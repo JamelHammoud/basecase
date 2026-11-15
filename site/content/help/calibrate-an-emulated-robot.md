@@ -1,7 +1,6 @@
 ---
 title: Calibrate an emulated robot
 date: 2026-11-12
-updated: 2026-11-14
 collection: operate
 type: task
 order: 2

@@ -28,6 +28,9 @@ covers:
   - src/workspace/stressCommands.tsx
   - src/workspace/agentStressRequests.ts
   - electron/cad-mcp/skillTools.mjs
+hub_the_design_agent_order: 20
+hub_the_design_agent: |
+  - Ask whether a ready skill holds up on a slicker floor or while carrying a load. It answers with the values where the skill starts to fail.
 ---
 
 Find the friction, weight, servo strength or servo delay where a ready skill starts to fail, then retrain it on those values.

@@ -1,7 +1,6 @@
 ---
 title: A check blocks Ready to build
 date: 2026-11-13
-updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 1
@@ -29,6 +28,7 @@ covers:
   - src/utils/engineeringFalls.ts
   - src/wiring/wiringChecks.ts
   - src/components/settings/BuildPane.tsx
+hub_sort: order
 ---
 
 The Checks header shows Ready to build only when no check holds a blocker. Until then, it shows how many problems are left to fix. If your design isn't passing, find the case below that matches what you see.
@@ -55,46 +55,7 @@ A check stopped because it hit its time limit or ran into an error. Basecase cou
 
 You're done when the message no longer appears in **Assembly**.
 
-## Budget is red
-
-The estimated total is over your budget. Basecase counts lines marked ≈ at their list price. If you choose **Made by a Service**, Basecase counts printed parts at their Slant 3D quotes.
-
-1. Open **Budget** in Checks to see the total next to your budget.
-2. List prices can be higher than what you pay. To save the prices you pay, use **Add Price** in **Bill of materials**.
-3. Click a line's quantity, then type how many you already own in **On hand**. Parts you own cost nothing.
-4. Swap out expensive parts, or raise the budget in the field next to the total.
-
-Budget turns amber above 90% of the budget, and red when the total goes over it. For the full steps, see [Price the parts and set a budget](/help/price-the-parts-and-set-a-budget).
-
-## Time is red
-
-Estimated printing, assembly and servo setup exceed your budget in hours.
-
-1. In **Checks**, open **Time** to read the three contributions.
-2. Click **Fix** to ask the agent to reduce printing or assembly time.
-
-![The Time check failing with a one-hour budget on Weekend rover](/help/set-a-time-budget/over-budget.png)
-
-If you have more time available, change **Time** under **Bill of materials** and press [[↩]]. The row passes at 90% of the budget or below, turns amber above 90% and red above 100%. Entering 0 clears the budget and leaves the estimate as a note. [Set a time budget](/help/set-a-time-budget) explains what the estimate includes.
-
-## “This servo could strip its gears when the robot falls.”
-
-In a fall, this leg joint needs more than 5 times its servo's rated torque, or more than the peak listed in the servo's datasheet. The item names the joint and the direction of its worst fall.
-
-1. To watch the fall, click **Replay in Sim** on the joint.
-2. Ask the agent for a stronger servo at that joint, or for a lower stance.
-3. Ask the agent to verify the design with falls again.
-
-You're done when **Falls** in Checks no longer shows a red mark.
-
-## Servo bus is red
-
-Your build has at least one bus adapter, but none of them takes these servos' connector. For example, you'll see this if you use DYNAMIXEL X servos with a Waveshare Bus Servo Adapter (A).
-
-1. Open **Servo bus** in Checks. It names the adapter you need to add, for example **Add a JST EH 3-pin bus adapter for 2 servos.**
-2. Open **Parts** and place that adapter in the robot. For JST EH 3-pin, use the **ROBOTIS U2D2** or **ROBOTIS OpenRB-150**. For 5264 3-pin, use the **Waveshare Bus Servo Adapter (A)**.
-
-You're done when **Servo bus** no longer appears in the list.
+{{help-hub}}
 
 ## You know a blocker is wrong
 

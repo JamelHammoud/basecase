@@ -1,7 +1,6 @@
 ---
 title: A part is too big to print or has thin walls
 date: 2026-11-13
-updated: 2026-11-13
 collection: troubleshooting
 type: troubleshooting
 order: 3

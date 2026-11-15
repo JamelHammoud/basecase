@@ -1,7 +1,6 @@
 ---
 title: Run any command from the keyboard
 date: 2026-11-13
-updated: 2026-11-14
 collection: get-started
 type: task
 order: 3

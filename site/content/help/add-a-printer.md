@@ -1,7 +1,6 @@
 ---
 title: Add a printer
 date: 2026-11-13
-updated: 2026-11-13
 collection: build-and-print
 type: task
 order: 4

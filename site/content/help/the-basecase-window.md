@@ -1,7 +1,6 @@
 ---
 title: The Basecase window
 date: 2026-11-13
-updated: 2026-11-14
 collection: get-started
 type: concept
 order: 3

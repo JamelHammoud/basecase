@@ -1,7 +1,6 @@
 ---
 title: Updates don't arrive or won't install
 date: 2026-11-13
-updated: 2026-11-13
 collection: troubleshooting
 type: troubleshooting
 order: 10

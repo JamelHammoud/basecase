@@ -1,7 +1,6 @@
 ---
 title: Draw a part from a sketch or SVG
 date: 2026-11-13
-updated: 2026-11-14
 collection: design
 type: task
 order: 6

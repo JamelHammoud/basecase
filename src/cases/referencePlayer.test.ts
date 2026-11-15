@@ -8,7 +8,7 @@ import { fixtureRobots } from '../sim/fixtures/robots';
 import { buildMjcf } from '../sim/mjcf';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { buildRig } from '../utils/kinematics';
-import { livePlayer } from './referencePlayer';
+import { livePlayer, ReferencePlayer } from './referencePlayer';
 import { robotFacts } from './robotFit';
 import { scaledToReach } from './scale';
 import { worldItem } from './schema';
@@ -17,6 +17,26 @@ import { caseRobot, presetCase } from './testing';
 const FRAME_S = 1 / 60;
 
 describe('the live reference', () => {
+  it('plays equal-time commands in authored order once, without changing the authored timeline', () => {
+    const timeline = [
+      { at: 1, joints: { elbow: 20 } },
+      { at: 0, joints: { elbow: 10 } },
+      { at: 1, joints: { elbow: 30 } },
+    ];
+    const original = structuredClone(timeline);
+    const sent: DriveCommand[] = [];
+    const player = new ReferencePlayer(timeline, null, (command) => sent.push(command));
+    const poses = new Float64Array();
+
+    player.tick(0, poses);
+    player.tick(0.5, poses);
+    expect(sent.map((c) => c.joints)).toEqual([{ elbow: 10 }]);
+    player.tick(2, poses);
+    player.tick(3, poses);
+    expect(sent.map((c) => c.joints)).toEqual([{ elbow: 10 }, { elbow: 20 }, { elbow: 30 }]);
+    expect(timeline).toEqual(original);
+  });
+
   it('drives the rover onto its flag from screen frames, sending only changed commands', async () => {
     const mj = await loadMujoco();
     const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;

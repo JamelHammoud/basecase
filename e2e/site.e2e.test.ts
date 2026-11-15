@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
@@ -160,6 +161,22 @@ describe('basecase.so', () => {
     expect(await page.locator('nav[aria-label="Breadcrumb"] a').last().getAttribute('href')).toBe(collectionPath);
     expect(await page.locator('article ol > li').count()).toBeGreaterThan(0);
     expect(await fontWeight(page, 'article h1')).toBe('600');
+    expect(errors).toEqual([]);
+    await page.close();
+  });
+
+  it('opens feature facts from the help hub with its git date', async () => {
+    const { page, errors } = await open('/help/the-design-agent');
+    const date = execFileSync('git', ['log', '-1', '--format=%cs', '--', 'site/content/help/the-design-agent.md'], {
+      encoding: 'utf8',
+    }).trim();
+
+    expect(await page.locator('article time').getAttribute('dateTime')).toBe(date);
+    expect(await page.locator('article').innerText()).toContain('Ask which servo to buy.');
+    expect(await page.locator('article').innerText()).not.toContain('{{help-hub}}');
+    await page.locator('article a[href="/help/make-training-images"]').click();
+    await page.waitForURL(`${base}/help/make-training-images`);
+    expect(await page.locator('h1').innerText()).toBe('Make training images from a Case');
     expect(errors).toEqual([]);
     await page.close();
   });

@@ -1,7 +1,6 @@
 ---
 title: Pose and simulate your first robot
 date: 2026-11-13
-updated: 2026-11-13
 collection: get-started
 type: task
 order: 2

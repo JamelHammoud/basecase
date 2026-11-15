@@ -1,7 +1,6 @@
 ---
 title: Replay a robot fault in the simulation
 date: 2026-11-13
-updated: 2026-11-14
 collection: operate
 type: task
 order: 4

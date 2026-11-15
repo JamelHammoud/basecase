@@ -7,6 +7,7 @@ import {
   slicePlates,
   getBom,
   recordOnHand,
+  repairPart,
   setBuild,
   simulate,
   trainingStatus,
@@ -54,6 +55,7 @@ import { NO_WEB, withToolCall } from './cad-mcp/shared.mjs';
 import { findObjects, insertObject } from './cad-mcp/simreadyTools.mjs';
 import { operate, setWorld, startDrive } from './cad-mcp/worldTools.mjs';
 import { rollBack, rollOut } from './cad-mcp/fleetTools.mjs';
+import { fitBody } from './cad-mcp/bodyTools.mjs';
 import { compareCase, createCase, readTry, runCase } from './cad-mcp/caseTools.mjs';
 import { deleteCaseCode, readCaseCode, writeCaseCode } from './cad-mcp/caseCodeTools.mjs';
 import { makeDataset } from './cad-mcp/datasetTools.mjs';
@@ -143,6 +145,7 @@ const TOOLS = [
   stressSkill,
   rollOut,
   rollBack,
+  fitBody,
   searchTries,
   labelTries,
   trainingStatus,
@@ -156,6 +159,7 @@ const TOOLS = [
   slicePlates,
   setBuild,
   buildGuide,
+  repairPart,
   setStatus,
   getGuide,
   getReadiness,

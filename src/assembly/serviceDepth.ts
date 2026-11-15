@@ -2,6 +2,8 @@ import { COMPONENT_BY_ID, type ComponentGroup } from '../data/components';
 import { SUPPLY_BY_ID } from '../data/supplies';
 import type { ScenePart } from '../types/robotics';
 import type { AssemblyGeometry } from './assemblyGeometry';
+import { minimumTeardown } from './minimumTeardown';
+import { indexFasteners, type FastenerIndex } from './fastenerIndex';
 import type { RemovalPlan } from './removalOrder';
 
 export type ServiceClass = 'battery' | 'electronics' | 'servo';
@@ -41,15 +43,7 @@ interface Search {
   g: AssemblyGeometry;
   memo: Map<string, Set<string> | null>;
   visiting: Set<string>;
-  pins: Map<string, string[]>;
-}
-
-function pinsOf(g: AssemblyGeometry): Map<string, string[]> {
-  const out = new Map<string, string[]>();
-
-  for (const c of g.chains.screws) for (const id of c.stack) out.set(id, [...(out.get(id) ?? []), c.id]);
-
-  return out;
+  fasteners: FastenerIndex;
 }
 
 function mergeAll(s: Search, out: Set<string>, ids: string[]): boolean {
@@ -101,7 +95,8 @@ function need(s: Search, id: string): Set<string> | null {
 
   const out = new Set([id]);
   const ways = waysOut(s, id).sort((a, b) => a.length - b.length);
-  const ok = mergeAll(s, out, s.pins.get(id) ?? []) && firstWay(s, out, ways);
+  const pins = s.fasteners.byPart.get(id)?.map((chain) => chain.id) ?? [];
+  const ok = mergeAll(s, out, pins) && firstWay(s, out, ways);
 
   s.visiting.delete(id);
   s.memo.set(id, ok ? out : null);
@@ -115,7 +110,9 @@ function nearestBlockers(g: AssemblyGeometry, id: string): string[] {
   return [...(m.exit ?? m.local)].sort((a, b) => a.length - b.length)[0]?.filter((x) => g.moves[x]) ?? [];
 }
 
-function teardownTo(plan: RemovalPlan, id: string): Set<string> | null {
+export function teardownTo(plan: RemovalPlan, id: string, geometry?: AssemblyGeometry): Set<string> | null {
+  if (geometry) return minimumTeardown(geometry, plan, id);
+
   if (plan.stuckParts.includes(id)) return null;
 
   const before = new Set<string>();
@@ -135,7 +132,7 @@ export function serviceDepths(
   toolOf: (id: string) => string,
   plan: RemovalPlan,
 ): ServiceResult[] {
-  const search: Search = { g, memo: new Map(), visiting: new Set(), pins: pinsOf(g) };
+  const search: Search = { g, memo: new Map(), visiting: new Set(), fasteners: indexFasteners(g.chains.screws) };
 
   return parts.flatMap((p) => {
     const cls = serviceClass(p);

@@ -1,7 +1,6 @@
 ---
 title: Checks in the Build tab
 date: 2026-11-13
-updated: 2026-11-14
 collection: build-and-print
 type: reference
 order: 1
@@ -82,6 +81,8 @@ For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylind
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load. Amber under 2 times |
 | Budget | The estimated cost of the parts left to buy against your budget | Over budget. Amber above 90%. Not run until you set a budget |
 | Time | Printing across your saved printers, estimated assembly and servo setup against your budget in hours | “Build time exceeds your budget.” Amber above 90%. A note without a budget |
+
+An active [body fit](/help/fit-a-robots-body-from-a-recorded-run) adjusts the weights and centers of mass used by **Weight** and **Servo torque**. Keeping or rolling back a fit refreshes Checks. Old walk and fall measurements stop counting until they match the active body again. **Peak torque** and **Falls** need new simulation measurements on the changed body.
 
 To enter hours and read the breakdown, [Set a time budget](/help/set-a-time-budget).
 

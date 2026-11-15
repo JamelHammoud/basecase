@@ -155,3 +155,16 @@ describe('followUpPrompt', () => {
     expect(prompt).toContain('Build #12');
   });
 });
+
+describe('feature-owned hub metadata', () => {
+  it('keeps covers readable before or after multiline hub text', () => {
+    const fields = [
+      'hub_the_design_agent: |\n  Ask for a part.\n\n  The catalog records its price.',
+      'covers:\n  - src/workspace/useParts.ts\n  - src/parts/',
+    ];
+    const source = (values) => `---\n${values.join('\n')}\n---\n\nAdd a part.`;
+
+    expect(coversOf(source(fields))).toEqual(['src/workspace/useParts.ts', 'src/parts/']);
+    expect(coversOf(source(fields.toReversed()))).toEqual(['src/workspace/useParts.ts', 'src/parts/']);
+  });
+});

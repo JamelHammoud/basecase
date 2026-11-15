@@ -1,7 +1,6 @@
 ---
 title: Retrain an out-of-date policy
 date: 2026-11-12
-updated: 2026-11-13
 collection: simulate-and-train
 type: task
 order: 8
@@ -23,7 +22,7 @@ covers:
 
 If you change the robot a policy learned on, train the policy again so it runs on the robot you have now.
 
-1. Open the Simulate tab and scroll to Train. A policy shows Out of date if you've changed its robot since it last trained: a resized link, a different mass or servo, or a new servo calibration from Operate.
+1. Open the Simulate tab and scroll to Train. A policy shows Out of date after a resized link, a different mass or servo, or a new servo or body calibration.
 2. Right-click the policy, then choose Retrain. Basecase trains it again with the same task, speed, and training time, and the policy keeps its name.
 3. While the policy trains, its row shows the trainer's message, how much of the training time it has used, and a stop button. Meanwhile, the robot on the canvas runs the newest snapshot of the policy.
 

@@ -1,7 +1,6 @@
 ---
 title: LeRobot dataset contents
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: reference
 order: 1
@@ -89,6 +88,8 @@ Frames are 25 a second: every second frame of the try's 50 Hz recording. Joints 
 | One per camera part | The camera's lens, moving with the part it's on. Named from the part, such as `wrist_camera` for Wrist Camera |
 
 Camera parts are the ones under **Cameras** and **Depth Cameras** in Parts. A fisheye lens records as a fisheye. Every video is 640 × 480, encoded as H.264, or VP9 or AV1 where H.264 isn't available, with a key frame each second.
+
+In a [captured world](/help/import-a-world), every camera video shows the Case's splat, or its mesh when there is no splat. The world keeps the same placement as in the Case.
 
 ## Versions
 

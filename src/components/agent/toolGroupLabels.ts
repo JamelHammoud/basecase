@@ -66,6 +66,7 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   stress_skill: ['Stress testing skills # times', 'Stress tested skills # times'],
   roll_out: ['Rolling out # skills', 'Rolled out # skills'],
   roll_back: ['Rolling back # robots', 'Rolled back # robots'],
+  fit_body: ['Fitting # bodies', 'Fitted # bodies'],
   training_status: ['Checking training # times', 'Checked training # times'],
   list_evidence: ['Listing attached files # times', 'Listed attached files # times'],
   read_evidence: ['Studying attached files in # steps', 'Studied attached files in # steps'],

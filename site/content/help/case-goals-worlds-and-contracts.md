@@ -1,7 +1,6 @@
 ---
 title: Case goals, worlds and contracts
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: reference
 order: 2

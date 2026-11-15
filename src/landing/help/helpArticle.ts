@@ -21,7 +21,7 @@ export interface HelpArticle extends Entry {
 const FIELDS = new Set([
   'title',
   'date',
-  'updated',
+  'hub_sort',
   'collection',
   'type',
   'covers',
@@ -33,7 +33,6 @@ const FIELDS = new Set([
   'draft',
 ]);
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const LAST_ORDER = 1000;
 
 type Data = Record<string, FrontMatterValue>;
@@ -41,7 +40,7 @@ type Data = Record<string, FrontMatterValue>;
 const list = (value: FrontMatterValue | undefined) => (Array.isArray(value) ? value : []);
 
 function checkFields(data: Data, path: string) {
-  const unknown = Object.keys(data).find((key) => !FIELDS.has(key));
+  const unknown = Object.keys(data).find((key) => !FIELDS.has(key) && !/^hub_[a-z0-9_]+$/.test(key));
 
   if (unknown) throw new Error(`${path}: "${unknown}:" isn't a help field; use ${[...FIELDS].join(', ')}`);
 }
@@ -63,16 +62,6 @@ function typeOf(data: Data, path: string): ArticleType {
   return type;
 }
 
-function updatedOf(data: Data, entry: Entry, path: string): string {
-  const updated = data.updated ?? entry.date;
-
-  if (typeof updated !== 'string' || !DATE.test(updated)) throw new Error(`${path}: write "updated:" as YYYY-MM-DD`);
-
-  if (updated < entry.date) throw new Error(`${path}: "updated:" comes before "date:"`);
-
-  return updated;
-}
-
 function orderOf(data: Data, path: string): number {
   if (data.order === undefined) return LAST_ORDER;
 
@@ -91,7 +80,7 @@ function relatedOf(data: Data, slug: string, path: string): string[] {
   return related;
 }
 
-export function readHelpArticle(entry: Entry, data: Data, path: string): HelpArticle {
+export function readHelpArticle(entry: Entry, data: Data, path: string, committed?: string): HelpArticle {
   checkFields(data, path);
 
   if (data.popular !== undefined && typeof data.popular !== 'boolean') {
@@ -102,7 +91,7 @@ export function readHelpArticle(entry: Entry, data: Data, path: string): HelpArt
     ...entry,
     collection: collectionOf(data, path),
     type: typeOf(data, path),
-    updated: updatedOf(data, entry, path),
+    updated: committed ?? entry.date,
     related: relatedOf(data, entry.slug, path),
     keywords: list(data.keywords),
     popular: data.popular === true,

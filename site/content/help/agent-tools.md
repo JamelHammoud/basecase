@@ -1,7 +1,6 @@
 ---
 title: Agent tools
 date: 2026-11-13
-updated: 2026-11-14
 collection: agent
 type: reference
 order: 2
@@ -112,6 +111,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | Tool | What it does |
 |---|---|
 | `simulate` | Runs the scene in MuJoCo |
+| `fit_body` | Fits link masses, terminal payloads and floor friction from the latest Operate run, using the active servo fits. Keeps a body version only when held-out error falls by at least 25%, otherwise reports Can’t tell |
 | `set_world` | Places objects that exist only in the simulation |
 | `start_drive` | Drives the robot in the simulation |
 | `operate` | Steps the simulation and returns the robot's camera views |
@@ -149,6 +149,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `merge_parts` | Merges printed parts that `check_assembly` lists into one, when you ask |
 | `set_build` | Sets extras, money and time budgets, filament and the power supply for a robot with no battery |
 | `build_guide` | Writes the printable assembly guide |
+| `repair_part` | Opens a part's teardown, replacement and reassembly in Build Along, or says why it can't find a repair path |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
 | `size_arm` | Sizes and places an arm from the points it must reach and the grams it carries |
 

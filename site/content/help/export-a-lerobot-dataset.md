@@ -1,7 +1,6 @@
 ---
 title: Export a LeRobot dataset
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 5
@@ -51,7 +50,7 @@ If none of the tries fit, the toast says "Export and training take only passed t
 
 ## What's in the zip
 
-Each selected recording range becomes one episode, recorded at 25 frames a second. An episode holds the joint positions, the joint targets, and a 640 × 480 video from each camera. A try's segments go in as subtasks, each with its instruction or label. A segment selection includes only its selected frames and overlapping subtasks. There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Camera views you add to the scene aren't part of the dataset.
+Each selected recording range becomes one episode, recorded at 25 frames a second. An episode holds the joint positions, the joint targets, and a 640 × 480 video from each camera. A try's segments go in as subtasks, each with its instruction or label. A segment selection includes only its selected frames and overlapping subtasks. There's always a **scene** camera at the front three-quarters, plus one camera for each camera part on the robot. Camera views you add to the scene aren't part of the dataset. A captured world's splat or mesh appears in every camera video, at the same placement as the Case.
 
 The export keeps the version's training, validation and test assignments. Segments, variations and camera frames from one source stay together. Missing saved content stops the export with an error.
 

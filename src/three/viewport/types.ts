@@ -100,6 +100,7 @@ export interface BuildStepView {
   moves: Array<{ partId: string; offset: Vec3 }>;
   arrows: Array<{ from: Vec3; to: Vec3 }>;
   labels: Array<{ partId: string; text: string }>;
+  removing?: boolean;
 }
 
 export interface ViewportProps {

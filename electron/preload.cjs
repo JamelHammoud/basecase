@@ -117,6 +117,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   robotPolicy: (refs, unit) => ipcRenderer.invoke('robot:policy', refs, unit),
   robotCalibrate: (joints, unit) => ipcRenderer.invoke('robot:calibration', joints, unit),
   robotState: (unit) => ipcRenderer.invoke('robot:state', unit),
+  robotReadRun: (unit) => ipcRenderer.invoke('robot:read-run', unit),
   robotRecord: (sample, unit) => ipcRenderer.invoke('robot:record', sample, unit),
   robotUnits: () => ipcRenderer.invoke('robot:units'),
   robotRollBack: (unit) => ipcRenderer.invoke('robot:rollback', unit),

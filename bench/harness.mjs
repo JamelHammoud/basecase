@@ -148,15 +148,21 @@ const PREFLIGHT = [
   'process.exit(0);',
 ].join('\n');
 
-export async function preflightKernel(app) {
+export async function preflightKernel(app, ctx = {}) {
   const check = spawn(process.execPath, ['--input-type=module', '-e', PREFLIGHT], {
     cwd: app,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+
+  ctx.check = check;
+
   let outText = '';
 
   check.stdout.on('data', (d) => (outText += d));
-  await new Promise((r) => check.on('close', r));
+  await new Promise((resolve, reject) => {
+    check.once('close', resolve);
+    check.once('error', reject);
+  });
 
   try {
     const [a, b, msg] = JSON.parse(outText);
@@ -171,12 +177,15 @@ export async function preflightKernel(app) {
   }
 }
 
-async function startVite({ app, port, env, base }) {
+async function startVite({ app, port, env, base }, ctx) {
   const vite = spawn(process.execPath, viteArgs(app, port), {
     cwd: app,
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, ...env, BASECASE_NODE_KERNEL: '1', BASECASE_VITE_CACHE: viteCacheOf(app) },
   });
+
+  ctx.vite = vite;
+
   let exited = false;
   let out = '';
 
@@ -212,71 +221,113 @@ function subscribeEvents(base, onEvent) {
   return sse;
 }
 
-function stopper({ vite, app, givenApp }) {
-  return () => {
-    try {
-      vite?.kill();
-    } catch {}
+function stopChild(child) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
 
-    try {
-      if (!givenApp) fs.rmSync(app, { recursive: true, force: true });
-    } catch {}
+  return new Promise((resolve) => {
+    child.once('exit', resolve);
+    child.kill();
+  });
+}
+
+function stopper(ctx) {
+  let closing;
+
+  return () => {
+    closing ??= (async () => {
+      ctx.sse?.destroy();
+      await Promise.allSettled([stopChild(ctx.check), stopChild(ctx.vite), ctx.browser?.close()]);
+
+      if (!ctx.givenApp) fs.rmSync(ctx.app, { recursive: true, force: true });
+    })();
+
+    return closing;
   };
 }
 
-export async function openStudio({ label, port, env = {}, givenApp, source, log = console.log, agent = true }) {
-  const app = givenApp ? path.resolve(givenApp) : snapshotApp(label, source);
-  const base = `http://127.0.0.1:${port}`;
-  const ctx = { app, givenApp };
-  const cleanup = stopper(ctx);
-
-  process.on('exit', cleanup);
-  process.once('SIGINT', () => process.exit(130));
-  process.once('SIGTERM', () => process.exit(143));
-
-  if (!(await preflightKernel(app))) {
-    cleanup();
-
-    throw new Error('CAD kernel preflight failed');
-  }
-
-  ctx.vite = await startVite({ app, port, env, base });
-  log('dev server up');
-
-  if (!givenApp) await postJson(`${base}/api/bridge/save-scene`, { id: 'scene-bench', name: 'Bench', parts: [] });
-
+async function openBrowser(ctx, signal) {
   const browser = await chromium.launch({
     channel: 'chrome',
     headless: true,
     args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'],
   });
+
+  ctx.browser = browser;
+
+  if (signal?.aborted) await browser.close();
+
+  signal?.throwIfAborted();
+
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
-  page.on('pageerror', (e) => log('page error', e.message));
-  page.on('crash', () => log('PAGE CRASHED (out of memory?) — the model is lost'));
-  await page.goto(base, { waitUntil: 'commit' });
-  await waitFor(() => page.evaluate(() => !!window.__studio), 180000, 'app');
+  return { browser, page };
+}
 
-  const onEvent = { current: null };
-  const sse = subscribeEvents(base, onEvent);
+export async function openStudio({ label, port, env = {}, givenApp, source, log = console.log, agent = true, signal }) {
+  signal?.throwIfAborted();
 
-  if (agent) {
-    await waitFor(
-      async () => (await (await fetch(`${base}/api/bridge/acp-status`)).json()).connected,
-      90000,
-      'agent connection',
-    );
-    log('agent connected');
+  const app = givenApp ? path.resolve(givenApp) : snapshotApp(label, source);
+  const base = `http://127.0.0.1:${port}`;
+  const ctx = { app, givenApp };
+  const cleanup = stopper(ctx);
+
+  signal?.throwIfAborted();
+  signal?.addEventListener('abort', cleanup, { once: true });
+  process.on('exit', cleanup);
+  process.once('SIGINT', () => process.exit(130));
+  process.once('SIGTERM', () => process.exit(143));
+
+  try {
+    if (!(await preflightKernel(app, ctx))) {
+      cleanup();
+
+      throw new Error('CAD kernel preflight failed');
+    }
+
+    signal?.throwIfAborted();
+    await startVite({ app, port, env, base }, ctx);
+    log('dev server up');
+
+    if (!givenApp) await postJson(`${base}/api/bridge/save-scene`, { id: 'scene-bench', name: 'Bench', parts: [] });
+
+    const { browser, page } = await openBrowser(ctx, signal);
+
+    page.on('pageerror', (e) => log('page error', e.message));
+    page.on('crash', () => log('PAGE CRASHED (out of memory?) — the model is lost'));
+    await page.goto(base, { waitUntil: 'commit' });
+    await waitFor(() => page.evaluate(() => !!window.__studio), 180000, 'app');
+
+    const onEvent = { current: null };
+    const sse = subscribeEvents(base, onEvent);
+
+    ctx.sse = sse;
+
+    if (agent) {
+      await waitFor(
+        async () => (await (await fetch(`${base}/api/bridge/acp-status`)).json()).connected,
+        90000,
+        'agent connection',
+      );
+      log('agent connected');
+    }
+
+    const call = (kind, payload = {}) => postJson(`${base}/api/bridge/agent-call`, { kind, payload });
+    const close = async () => {
+      await cleanup();
+      process.removeListener('exit', cleanup);
+      signal?.removeEventListener('abort', cleanup);
+    };
+
+    signal?.throwIfAborted();
+
+    return { app, base, page, browser, onEvent, call, close, post: (route, body) => postJson(`${base}${route}`, body) };
+  } catch (error) {
+    await cleanup();
+    process.removeListener('exit', cleanup);
+    signal?.removeEventListener('abort', cleanup);
+
+    throw error;
   }
-
-  const call = (kind, payload = {}) => postJson(`${base}/api/bridge/agent-call`, { kind, payload });
-  const close = async () => {
-    sse.destroy();
-    await browser.close();
-    cleanup();
-  };
-
-  return { app, base, page, browser, onEvent, call, close, post: (route, body) => postJson(`${base}${route}`, body) };
 }
 
 export function writeShot(file, shot) {

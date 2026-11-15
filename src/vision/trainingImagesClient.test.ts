@@ -1,9 +1,11 @@
+import { meshWorldAsset } from '../cases/worldAssets.fixtures';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TrainingImagesJob } from './trainingPlan';
 import type { TrainingFrame } from './frameSet';
 
 const state = vi.hoisted(() => ({
   calls: [] as string[],
+  loaded: null as unknown,
   frames: [] as unknown[],
   errorAt: -1,
   next: 0,
@@ -16,7 +18,9 @@ const state = vi.hoisted(() => ({
 
 vi.mock('../utils/workerRpc', () => ({
   workerClient: () => ({
-    call: async (op: string) => {
+    call: async (op: string, payload: unknown) => {
+      if (op === 'load') state.loaded = payload;
+
       state.calls.push(op);
 
       if (op === 'load')
@@ -91,7 +95,10 @@ describe('streamed training image persistence', () => {
       expect(saved.jpeg).toBeInstanceOf(Uint8Array);
     });
 
-    const made = await makeTrainingImages(job, progress);
+    const imported = { hash: '0'.repeat(64), asset: meshWorldAsset(), position: [0, 0, 0] as [number, number, number] };
+    const made = await makeTrainingImages({ ...job, imported }, progress);
+
+    expect((state.loaded as TrainingImagesJob).imported).toBe(imported);
 
     expect(state.saveFrame).toHaveBeenCalledTimes(20);
     expect(state.finalize).toHaveBeenCalledOnce();

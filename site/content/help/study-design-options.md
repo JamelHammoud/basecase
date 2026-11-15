@@ -29,6 +29,9 @@ covers:
   - src/components/simulate/StudyRows.tsx
   - src/components/simulate/StudyPlot.tsx
   - src/workspace/caseCommands.tsx
+hub_the_design_agent_order: 100
+hub_the_design_agent: |
+  - Ask it to compare design choices. It runs [Study](/help/study-design-options) on combinations of servos, power supplies and part sizes, with Checks, cost, mass and optional Case passes.
 ---
 
 Compare combinations of servos, power supplies and part sizes, then apply one design with its cost, weight and checks beside it.

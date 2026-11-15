@@ -1,9 +1,13 @@
+import type { RobotRun } from '../../src/robot/runBuffer';
+
 export const MIN_SECONDS: number;
 export const MOVED_RAD: number;
 export const MAX_INPUT_VALUES: number;
 export const POLICY_RUNG: string;
 
 export interface RecorderSink {
+  read?(id: string): string | null;
+
   append(id: string, text: string): void;
 
   keep(manifest: Record<string, unknown>): void;
@@ -13,6 +17,7 @@ export interface RecorderSink {
 
 export interface RecordedClose {
   id: string;
+  joints: string[] | null;
   reason: 'rung' | 'disconnect' | 'fault';
   manifest: Record<string, unknown> | null;
 }
@@ -31,6 +36,7 @@ export function newOperateId(): string;
 export class OperateRecorder {
   constructor(options: RecorderOptions);
   setContext(ask: unknown): boolean;
+  readRun(): RobotRun | null;
   setPolicy(hash: string | null): void;
   event(event: Record<string, unknown> & { event: string }): void;
   intent(joints: number[]): void;

@@ -3,6 +3,7 @@ import type { CadBody, OpenedCad } from '../utils/platform/types';
 import { platformBridge } from '../utils/platformBridge';
 import { PRINTED_TAG } from './partFactories';
 import type { Vec3 } from './types';
+import { centerSizeRange } from '../utils/centerSizeRange';
 
 const SMALLEST_MM = 0.01;
 
@@ -31,10 +32,15 @@ function bodyMeshes({ bodies, data }: OpenedCad) {
 }
 
 function footprint(bodies: CadBody[]) {
-  const lo = [0, 1, 2].map((k) => Math.min(...bodies.map((b) => b.center[k] - b.size[k] / 2)));
-  const hi = [0, 1, 2].map((k) => Math.max(...bodies.map((b) => b.center[k] + b.size[k] / 2)));
+  const bounds = [0, 1, 2].map((axis) =>
+    centerSizeRange(
+      bodies,
+      (b) => b.center[axis],
+      (b) => b.size[axis],
+    ),
+  );
 
-  return { mid: lo.map((v, k) => (v + hi[k]) / 2), floor: lo[1] };
+  return { mid: bounds.map(({ min, max }) => (min + max) / 2), floor: bounds[1].min };
 }
 
 export function cadParts(opened: OpenedCad, { name, file, at, newId }: CadPlacement): ScenePart[] {

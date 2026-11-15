@@ -1,6 +1,6 @@
 import { componentPorts } from '../data/componentPorts';
 import { COMPONENT_BY_ID, componentWeightG } from '../data/components';
-import { linkLength } from '../agent/skeleton';
+import { SkeletonTree } from '../utils/skeletonTree';
 import type { RobotSkeleton } from '../types/skeleton';
 import { actuatorOptions } from '../utils/actuatorCatalog';
 import { jointVerdict, sizeActuators, type Family } from '../utils/actuatorSizing';
@@ -29,10 +29,11 @@ export const motionServoOptions = () =>
   });
 
 function estimatedSkeleton(skeleton: RobotSkeleton): RobotSkeleton {
+  const tree = new SkeletonTree(skeleton);
   const lightest = motionServoOptions().sort((a, b) => gramsOf(a.key) - gramsOf(b.key))[0];
   const joints = skeleton.joints.map((joint) => ({
     ...joint,
-    linkMassG: joint.linkMassG ?? 15 + 0.35 * linkLength(skeleton, joint),
+    linkMassG: joint.linkMassG ?? 15 + 0.35 * tree.linkLength(joint),
     actuator: joint.actuator ?? lightest?.key ?? 'component:feetech-sts3215|c001',
   }));
   const massG = BASE_G + joints.reduce((sum, joint) => sum + joint.linkMassG + gramsOf(joint.actuator), 0);

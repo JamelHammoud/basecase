@@ -15,7 +15,7 @@ import { SimEngine, type Controller } from './engine';
 import type { FaultKind } from './faults';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
-import { applyDueCommands, runFor, type RunRequest, type RunResult } from './simRun';
+import { commandTimeline, runFor, type RunRequest, type RunResult } from './simRun';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
@@ -96,7 +96,7 @@ let liveCase: LiveCase | null = null;
 let watching: LiveWatch | null = null;
 let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
-let script: { start: number; commands: Array<{ at: number; command: DriveCommand }> } | null = null;
+let script: { start: number; commands: ReturnType<typeof commandTimeline> } | null = null;
 let scanShown = -1;
 const poseGate = new PoseGate();
 const livePhysics = new LivePhysics();
@@ -155,7 +155,7 @@ function loop() {
 
   const t0 = performance.now();
 
-  if (script) applyDueCommands(engine, script.commands, engine.data.time - script.start);
+  if (script) script.commands.advance(engine.data.time - script.start);
 
   if (live) advanceRoutine(live, wall * speed);
   else if (liveCase) liveCase.advance(wall * speed);
@@ -346,7 +346,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux, joints });
   },
   script: (msg) => {
-    script = engine ? { start: engine.data.time, commands: [...msg.commands].sort((a, b) => a.at - b.at) } : null;
+    script = engine ? { start: engine.data.time, commands: commandTimeline(engine, msg.commands) } : null;
   },
   respawn: (msg) => {
     engine?.respawn(msg.robot);

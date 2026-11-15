@@ -40,5 +40,6 @@ export const SIM_RULES: ToolRule[] = [
   plainRule(['stress_skill'], CrosshairIcon, ['Stress testing a skill', 'Stress tested a skill']),
   plainRule(['roll_out'], RunIcon, ['Rolling out a skill', 'Rolled out a skill']),
   plainRule(['roll_back'], UndoIcon, ['Rolling back a robot', 'Rolled back a robot']),
+  plainRule(['fit_body'], CheckIcon, ['Fitting body', 'Fitted body']),
   plainRule(['training_status'], TrainIcon, ['Checking training', 'Checked training']),
 ];

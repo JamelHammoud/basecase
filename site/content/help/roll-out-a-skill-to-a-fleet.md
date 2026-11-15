@@ -28,6 +28,9 @@ covers:
   - src/workspace/operateCommands.tsx
   - src/robot/robotStore.ts
   - electron/robot/robotFleet.mjs
+hub_the_design_agent_order: 90
+hub_the_design_agent: |
+  - Ask it to roll a ready skill out to named emulated robots, with canaries first. It proves each unit's twin before sending the policy.
 ---
 
 Send a skill to several emulated robots, after Arena proves it on each robot's calibrated twin.

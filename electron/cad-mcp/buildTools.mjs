@@ -258,3 +258,24 @@ export const buildGuide = {
     }
   },
 };
+
+export const repairPart = {
+  name: 'repair_part',
+  config: {
+    title: 'Repair part',
+    description:
+      'Opens a repair guide for one scene part, with the shortest verified teardown to reach it, replacement, and reassembly. Uses the same flow as Repair in the part menu. Returns the reason when a removal path cannot be found. Call it when the user asks to repair or replace a broken part.',
+    inputSchema: { id: z.string().trim().min(1).max(200).describe('The broken scene part’s id from get_scene') },
+  },
+  handler: async ({ id }) => {
+    try {
+      await settledWrites();
+
+      const res = await bridge('repair_part', { id }, 300000);
+
+      return text(res?.text || 'Couldn’t open the repair guide.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};

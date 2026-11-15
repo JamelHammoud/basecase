@@ -1,10 +1,11 @@
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { MeshFiles } from '../three/componentMeshes';
 import type { ScenePart } from '../types/robotics';
 import type { CameraView } from './views';
 
 export type FeedRequest =
-  | { type: 'scene'; parts: ScenePart[]; world: ScenePart[]; meshes: MeshFiles }
+  | { type: 'scene'; parts: ScenePart[]; world: ScenePart[]; meshes: MeshFiles; imported?: ImportedWorldView | null }
   | { type: 'model'; model: SimModel | null }
   | { type: 'views'; views: CameraView[]; sizes: Record<string, [number, number]> }
   | { type: 'port'; port: MessagePort }

@@ -1,7 +1,6 @@
 ---
 title: Make a Case
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 3
@@ -27,6 +26,9 @@ covers:
   - src/workspace/useCaseBuilder.ts
   - src/workspace/agentCaseRequests.ts
   - electron/cad-agent-prompt.mjs
+hub_the_design_agent_order: 140
+hub_the_design_agent: |
+  Say what you want to do with a robot, such as play a game on a gamepad, and the agent builds a Case for it. The Case opens running, as in [Run a Case](/help/run-a-case). In a [scanned room](/help/import-a-scanned-room), the agent aims the Case at a door or a piece of furniture you name, such as under the table.
 ---
 
 You can make a Case for the robot in your scene. Choose a goal and a world, set the distances and time limit, and Basecase opens the Case ready to try.

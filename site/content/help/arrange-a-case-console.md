@@ -20,6 +20,21 @@ covers:
   - src/workspace/useConsoleEditing.ts
   - src/components/caseRun/
   - src/workspace/caseCommands.tsx
+hub_run_a_case_order: 10
+hub_run_a_case: |
+  A Case can have its own layout, called its console. Basecase saves the console with the Case in your `.basecase` file. To get a console, describe the Case you want to the agent, and it writes the console for you. You can also edit the console in that file yourself, or arrange the cards while the Case runs. See [Arrange a Case's console](/help/arrange-a-case-console). A Case you make with New Case or from a template has no console until you change its layout.
+
+  A console lists:
+
+  - The inputs that drive the Case
+  - The cards on each side of the canvas, and their widths
+  - The contents of each card
+
+  A card can hold a camera, a big number such as a timer or a score, a table of joints, or a button such as Reset. It can show the tries, the failures, some text, or a map of the world from above. A plot draws signals over time, or one signal against another. A states card draws a signal, such as a mode, as colored spans. A try imported from a ROS recording can also show its log, its diagnostics and the newest message on a topic.
+
+  For example, a game Case can put its time and score on the left, and Try It, Reset and the tries on the right. The time counts down as you play. Between tries, Reset puts the robot, the blocks and the score back where they started.
+
+  ![A block game console during a try: Time counting down and Score on the left, the arm in the middle, Try It, Reset and the running try on the right](/help/run-a-case/console.png)
 ---
 
 You can move, resize, add, rename and delete the panels around a running Case.

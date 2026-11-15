@@ -26,6 +26,9 @@ covers:
   - src/components/layers/dataLayerMenu.ts
   - src/dataLayers/mapWorld.ts
   - src/workspace/useMapWorld.ts
+hub_the_design_agent_order: 50
+hub_the_design_agent: |
+  - Ask what happened in a try. It reads the try's recording and answers with times and values. For a try with scans, it also reads the [map's](/help/map-a-robot-run) bounds and point count.
 ---
 
 Keep a robot run's scans together on the canvas, or turn an imported recording into a saved world for simulation.

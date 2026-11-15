@@ -1,7 +1,6 @@
 ---
 title: Print a robot's parts
 date: 2026-11-13
-updated: 2026-11-13
 collection: build-and-print
 type: task
 order: 5
@@ -31,6 +30,8 @@ covers:
   - src/workspace/PlateCanvas.tsx
   - src/workspace/usePrinting.ts
   - src/workspace/usePrintJob.ts
+  - src/print/projectJob.ts
+  - src/print/threeMf.ts
   - electron/print/
 ---
 
@@ -59,6 +60,18 @@ If you use Bambu Studio, the plate opens in Bambu Studio and you start the print
 
 You can also open Print mode from **File** ▸ **Print**, from **Print** in the Build tab, or from [[⌘K]]. To slice every plate at once, choose **Slice Plates** in [[⌘K]]. A toast shows the progress and includes **Stop**.
 
+## Open the plates in Bambu Studio
+
+1. In Print mode, under the plate's details, click **Open in Bambu Studio**.
+
+![PLA and TPU plates with Open in Bambu Studio in the plate's details](/help/print-a-robots-parts/bambu-project.png)
+
+If your robot has a PLA body and TPU tires, both materials open together in one unsliced project. Every plate keeps its parts' filament assignments, orientation, position and copies. Parts left off the current plates stay out of the project.
+
+When your saved printer reports loaded AMS slots, matching materials follow slot order and use those colors. Other materials follow in plate order with gray filament colors. The project includes your selected printer, quality and infill settings.
+
+Basecase slices each material separately before sending a plate.
+
 ## On the plate
 
 - To move a part, drag it. To lay it on a face, press [[F]]. To turn it 90°, press [[R]].
@@ -72,6 +85,8 @@ You can also open Print mode from **File** ▸ **Print**, from **Print** in the 
 
 After a print, a switch under **Printer** (such as Skip 3 printed parts) leaves the parts you already printed off the plates. The switch is on by default. For example, if you edit one bracket after a print, the next plate holds only that bracket.
 
+When you [repair a part](/help/repair-a-part), it stops counting as printed even if its shape hasn't changed. At the replacement step, **Print** opens a plate with one copy of that part. This plate has no **Copies**, **Don't print**, skip-printed switch or **Merge** section. The part's placement and **Don't label** choice last only while the repair plate is open.
+
 If you have two or more printers that report their state, each idle printer gets **Start Next**. See [Print plates on several printers](/help/print-plates-on-several-printers).
 
-To go back to the scene, press [[Esc]] or click **Done**. Next, [make a build guide](/help/make-a-build-guide) for putting the parts together.
+To close Print mode, press [[Esc]] or click **Done**. A repair plate returns to the same Build Along step. Otherwise, you return to the scene, where you can [make a build guide](/help/make-a-build-guide) for putting the parts together.

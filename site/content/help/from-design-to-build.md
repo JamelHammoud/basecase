@@ -1,7 +1,6 @@
 ---
 title: The path from design to build
 date: 2026-11-13
-updated: 2026-11-14
 collection: build-and-print
 type: concept
 order: 1
@@ -64,9 +63,11 @@ Prices you check in a store are exact. The others are list prices, and Basecase 
 
 Print mode lays out the printed parts on plates in the order the build guide needs them, slices them in Bambu Studio or OrcaSlicer, and then sends each plate to one of your printers. If you don't have a printer, see [Price printed parts from a print service](/help/price-printed-parts-from-a-print-service). If the robot still goes together, Print mode also offers to print parts that are bolted together on one link as a single part.
 
-For flat structural parts, [Cut parts from sheet](/help/cut-parts-from-sheet) exports DXF outlines for aluminum, carbon fiber or acrylic. Checks and simulation use the sheet's solid volume and material density for weight and torque. Shop limits, sheet prices, bends and press-in hardware aren't checked.
+For flat structural parts, [Cut parts from sheet](/help/cut-parts-from-sheet) exports DXF outlines for aluminum, carbon fiber or acrylic. Checks and simulation start with the sheet's solid volume and material density for weight and torque. An active [body fit](/help/fit-a-robots-body-from-a-recorded-run) adjusts those weights and adds the fitted payload. Shop limits, sheet prices, bends and press-in hardware aren't checked.
 
 The build guide is a PDF of assembly steps. Basecase checks that the parts can go together in that order. The guide names each printed part with a letter, and Print mode cuts that letter into a hidden face of the part.
+
+For a broken part, [Repair a part](/help/repair-a-part) plays the measured teardown, replacement and reassembly in Build Along. A printed replacement gets a one-part plate, even if its shape hasn't changed. Repair needs a measured removal path and proven reassembly order.
 
 To fit a weekend build into the hours available, [set a time budget](/help/set-a-time-budget) beside the money budget. The Time check adds printing, estimated assembly and servo setup. It fails over budget, warns above 90%, and remains a note without a budget.
 

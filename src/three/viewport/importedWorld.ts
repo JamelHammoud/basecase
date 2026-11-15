@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import type { SplatMesh, SparkRenderer } from '@sparkjsdev/spark';
+import type { WorldHull } from '../../cases/worldDecomposition';
 import type { ImportedMeshWorld } from '../../cases/worldImportTypes';
 import { createWorldMesh } from './worldMesh';
 
 export interface ImportedWorldView {
   hash: string;
-  asset: { world: ImportedMeshWorld; pieces: readonly unknown[] };
+  asset: { world: ImportedMeshWorld; pieces: readonly WorldHull[] };
   position: [number, number, number];
 }
 
@@ -28,6 +29,8 @@ export class ImportedWorldLayer {
 
   private loaded = false;
 
+  private prepared: number[] | null = null;
+
   private spark: SparkRenderer | null = null;
 
   private splat: SplatMesh | null = null;
@@ -38,8 +41,11 @@ export class ImportedWorldLayer {
 
   private readonly redraw: () => void;
 
-  constructor(parent: THREE.Object3D, renderer: THREE.WebGLRenderer, redraw: () => void) {
+  private readonly manual: boolean;
+
+  constructor(parent: THREE.Object3D, renderer: THREE.WebGLRenderer, redraw: () => void, manual = false) {
     this.renderer = renderer;
+    this.manual = manual;
     this.redraw = redraw;
     this.group.name = 'imported-world';
     parent.add(this.group);
@@ -80,6 +86,35 @@ export class ImportedWorldLayer {
     this.redraw();
   }
 
+  async prepare(scene: THREE.Scene, camera: THREE.Camera, viewport?: { width: number; height: number }): Promise<void> {
+    const spark = this.spark;
+
+    if (!this.manual || !spark) return;
+
+    const size = viewport
+      ? new THREE.Vector2(viewport.width, viewport.height)
+      : this.renderer.getDrawingBufferSize(new THREE.Vector2());
+    const generation = this.generation;
+
+    camera.updateWorldMatrix(true, false);
+    this.group.updateWorldMatrix(true, false);
+
+    const values = [
+      ...camera.matrixWorld.elements,
+      ...camera.projectionMatrix.elements,
+      ...this.group.matrixWorld.elements,
+      size.x,
+      size.y,
+    ];
+
+    if (this.prepared?.every((value, index) => value === values[index])) return;
+
+    spark.renderSize.copy(size);
+    await spark.update({ scene, camera });
+
+    if (generation === this.generation) this.prepared = values;
+  }
+
   state(): ImportedWorldState {
     return {
       hash: this.view?.hash ?? null,
@@ -110,6 +145,7 @@ export class ImportedWorldLayer {
   private clear(): void {
     this.generation++;
     this.loaded = false;
+    this.prepared = null;
     this.releaseMesh?.();
     this.releaseMesh = null;
 
@@ -143,7 +179,12 @@ export class ImportedWorldLayer {
 
     if (generation !== this.generation || !world.splat) return;
 
-    const spark = new SparkRenderer({ renderer: this.renderer, onDirty: this.redraw, enableLod: false });
+    const spark = new SparkRenderer({
+      renderer: this.renderer,
+      onDirty: this.redraw,
+      enableLod: false,
+      ...(this.manual ? { autoUpdate: false, minSortIntervalMs: 0 } : {}),
+    });
 
     this.spark = spark;
 

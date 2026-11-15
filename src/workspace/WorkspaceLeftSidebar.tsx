@@ -12,6 +12,7 @@ import type { WorkspaceCore } from './useWorkspaceCore';
 import type { WorkspaceUi } from './useWorkspaceUi';
 import { showPartsSection } from './showView';
 import { addRobotComputer } from './robotComputer';
+import { bodyRobot, fitBodyFromUi, rollBackBodyCalibration } from './bodyActions';
 
 interface WorkspaceLeftSidebarProps {
   core: WorkspaceCore;
@@ -26,6 +27,7 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
   const { panelWidths } = studio;
   const showRobots = () => showPartsSection(core, 'Robots');
   const unitCalibrations = unitHistories(core.project, useFleet().selected);
+  const body = bodyRobot(core);
   const libraryProps = {
     customModels: studio.customModels,
     onInsertModel: creation.placeCustomModel,
@@ -75,6 +77,15 @@ export function WorkspaceLeftSidebar({ core, actions, ui, onPartContextMenu }: W
       operate={{
         joints: core.project.joints ?? [],
         parts,
+        bodyCalibration:
+          body && !IS_WEB_DEMO
+            ? {
+                robot: body,
+                history: core.project.bodyCalibrations?.[body],
+                onFit: () => fitBodyFromUi(core),
+                onRollBack: () => rollBackBodyCalibration(core.docs.updateProjectNow, body),
+              }
+            : undefined,
         onShowRobots: showRobots,
         calibration: {
           calibrations: unitCalibrations,

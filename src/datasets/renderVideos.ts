@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { CapturedWorld } from '../cameras/capturedWorld';
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import {
   BufferTarget,
   getFirstEncodableVideoCodec,
@@ -44,6 +46,8 @@ export interface RenderStage {
   parts: Posed[];
   world: Posed[];
   probe: OffscreenCanvasRenderingContext2D;
+  captured: CapturedWorld;
+  ground: THREE.Mesh;
 }
 
 export interface EpisodeVideos {
@@ -72,8 +76,10 @@ export async function createRenderStage(
   parts: ScenePart[],
   world: ScenePart[],
   meshes?: MeshFiles,
-  [width, height]: [number, number] = [FRAME_WIDTH, FRAME_HEIGHT],
+  options: { size?: [number, number]; imported?: ImportedWorldView | null } = {},
 ) {
+  const [width, height] = options.size ?? [FRAME_WIDTH, FRAME_HEIGHT];
+
   provideMeshFiles(meshes);
   await loadPartMeshes([...parts, ...world]);
 
@@ -91,21 +97,40 @@ export async function createRenderStage(
     renderer,
     scene,
     lens: new LensRenderer(renderer),
+    captured: new CapturedWorld(scene, renderer),
+    ground: floor(),
     parts: parts.map(posed),
-    world: world.map(posed),
+    world: world.filter((part) => !options.imported || part.visible !== false).map(posed),
     probe: new OffscreenCanvas(STATS_W, STATS_H).getContext('2d', { willReadFrequently: true })!,
   };
 
   renderer.setClearColor(BACKGROUND, 1);
-  scene.add(floor(), ...stage.parts.map((p) => p.group), ...stage.world.map((p) => p.group));
+  stage.ground.visible = !options.imported;
+  scene.add(stage.ground, ...stage.parts.map((p) => p.group), ...stage.world.map((p) => p.group));
+
+  try {
+    await stage.captured.set(options.imported ?? null);
+  } catch (error) {
+    disposeRenderStage(stage);
+
+    throw error;
+  }
 
   return stage;
 }
 
 export function disposeRenderStage(stage: RenderStage) {
   [...stage.parts, ...stage.world].forEach((p) => releasePartGroup(p.group));
+  stage.captured.dispose();
+  stage.ground.geometry.dispose();
+
+  const materials = Array.isArray(stage.ground.material) ? stage.ground.material : [stage.ground.material];
+
+  materials.forEach((material) => material.dispose());
+  stage.scene.environment?.dispose();
   stage.lens.dispose();
   stage.renderer.dispose();
+  stage.renderer.forceContextLoss();
 }
 
 const scratch = new THREE.Matrix4();
@@ -124,13 +149,16 @@ export function applyDeltas(items: Posed[], deltas: Map<string, THREE.Matrix4>) 
   }
 }
 
-export function renderView(
+export async function renderView(
   stage: RenderStage,
   camera: DatasetCamera,
   delta: THREE.Matrix4 | undefined,
   viewport?: Viewport,
 ) {
-  stage.lens.render(stage.scene, { ...placeCamera(camera, delta), lens: camera.lens }, viewport);
+  const shot = { ...placeCamera(camera, delta), lens: camera.lens };
+
+  await stage.captured.prepare(stage.scene, stage.lens, shot, viewport);
+  stage.lens.render(stage.scene, shot, viewport);
 }
 
 class ChannelStats {
@@ -186,12 +214,12 @@ export async function videoCodec(): Promise<VideoCodec> {
 
 export const codecName = (codec: VideoCodec) => CODEC_NAMES[codec] ?? codec;
 
-function cameraTrack(camera: DatasetCamera, codec: VideoCodec) {
+function cameraTrack(camera: DatasetCamera, codec: VideoCodec, fps: number) {
   const target = new BufferTarget();
   const output = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target });
   const source = new VideoSampleSource({ codec, quality: QUALITY_HIGH, keyFrameInterval: 1 });
 
-  output.addVideoTrack(source, { frameRate: DATASET_FPS });
+  output.addVideoTrack(source, { frameRate: fps });
 
   return { camera, target, output, source, stats: new ChannelStats() };
 }
@@ -202,10 +230,12 @@ export interface EpisodeRender {
   frames: number[];
   cameras: DatasetCamera[];
   codec: VideoCodec;
+  fps?: number;
 }
 
 export async function renderEpisode(stage: RenderStage, job: EpisodeRender): Promise<EpisodeVideos> {
-  const tracks = job.cameras.map((c) => cameraTrack(c, job.codec));
+  const fps = job.fps ?? DATASET_FPS;
+  const tracks = job.cameras.map((c) => cameraTrack(c, job.codec, fps));
   const canvas = stage.renderer.domElement as unknown as OffscreenCanvas;
 
   await Promise.all(tracks.map((t) => t.output.start()));
@@ -218,11 +248,11 @@ export async function renderEpisode(stage: RenderStage, job: EpisodeRender): Pro
     applyDeltas(stage.world, worldDeltas(job.model, poses));
 
     for (const track of tracks) {
-      renderView(stage, track.camera, track.camera.part ? deltas.get(track.camera.part) : undefined);
+      await renderView(stage, track.camera, track.camera.part ? deltas.get(track.camera.part) : undefined);
 
       if (row % STATS_EVERY === 0) track.stats.add(stage.probe, canvas);
 
-      const sample = new VideoSample(canvas, { timestamp: row / DATASET_FPS, duration: 1 / DATASET_FPS });
+      const sample = new VideoSample(canvas, { timestamp: row / fps, duration: 1 / fps });
 
       await track.source.add(sample);
       sample.close();

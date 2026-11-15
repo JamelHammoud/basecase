@@ -1,6 +1,7 @@
 import type { AssemblyGeometry } from './assemblyGeometry';
 import type { FastenerChain } from './assemblyTypes';
 import type { DriverTool } from './driverAccess';
+import { clampingScrews, indexFasteners, type FastenerIndex } from './fastenerIndex';
 import { AXES } from './moveBlockers';
 
 export type ScrewVerdict =
@@ -29,6 +30,7 @@ interface State {
   hosted: Map<string, string[]>;
   steps: RemovalStep[];
   tools: Map<string, DriverTool>;
+  fasteners: FastenerIndex;
 }
 
 const live = (s: State, ids: Iterable<string>) => [...ids].filter((id) => s.tracked.has(id) && s.present.has(id));
@@ -63,7 +65,7 @@ function removeScrews(s: State): boolean {
   return progress;
 }
 
-const pinned = (s: State, id: string) => chainsOf(s).some((c) => s.present.has(c.id) && c.stack.includes(id));
+const pinned = (s: State, id: string) => s.fasteners.byPart.get(id)?.some((c) => s.present.has(c.id)) ?? false;
 
 function removeParts(s: State): boolean {
   let progress = false;
@@ -106,7 +108,7 @@ function crossesUnit(s: State, unit: Set<string>, c: FastenerChain) {
 
 function unitFree(s: State, unit: Set<string>): boolean {
   const insideUnit = (b: string) => {
-    const chain = chainsOf(s).find((c) => c.id === b);
+    const chain = s.fasteners.byId.get(b);
 
     return unit.has(b) || (!!chain && chain.stack.every((h) => unit.has(h) || !s.present.has(h)));
   };
@@ -118,7 +120,7 @@ function removeUnit(s: State): boolean {
   for (const members of candidateUnits(s)) {
     const unit = new Set(members);
 
-    if (chainsOf(s).some((c) => crossesUnit(s, unit, c)) || !unitFree(s, unit)) continue;
+    if (clampingScrews(s.fasteners, members).some((c) => crossesUnit(s, unit, c)) || !unitFree(s, unit)) continue;
 
     const screws = chainsOf(s)
       .filter((c) => s.present.has(c.id) && c.stack.every((h) => unit.has(h) || !s.present.has(h)))
@@ -168,7 +170,16 @@ export function planRemoval(g: AssemblyGeometry, groups: Record<string, string |
     ...g.chains.screws.map((c) => c.id),
     ...g.chains.sleeves.map((x) => x.id),
   ]);
-  const s: State = { g, groups, present: new Set(tracked), tracked, hosted: hostedMap(g), steps: [], tools: new Map() };
+  const s: State = {
+    g,
+    groups,
+    present: new Set(tracked),
+    tracked,
+    hosted: hostedMap(g),
+    steps: [],
+    tools: new Map(),
+    fasteners: indexFasteners(g.chains.screws),
+  };
   let progress = true;
 
   while (progress) {

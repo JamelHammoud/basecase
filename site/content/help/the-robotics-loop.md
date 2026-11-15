@@ -1,7 +1,6 @@
 ---
 title: The robotics loop
 date: 2026-11-13
-updated: 2026-11-14
 collection: get-started
 type: concept
 order: 1
@@ -41,7 +40,9 @@ MuJoCo is the physics engine that robotics labs use to test robots before they b
 
 If something fails in Engineer, Simulate or Train, you go back to Design. For example, if a knee servo has to hold more than 60% of its stall torque while the robot stands on one leg, the **Servo torque** check fails in the **Build** tab. To fix it, go back to Design and choose a stronger servo.
 
-Calibration sends data the other way, from a running robot back into the simulation. Basecase finds each joint's zero and direction from a camera. Then it fits each servo's model from an 18-second bench run, so the simulation moves the way the servo does. You then train the robot on that calibrated simulation.
+Calibration sends data the other way, from a running robot back into the simulation. Basecase finds each joint's zero and direction from a camera. Then it fits each servo's model from an 18-second bench run, so the simulation moves the way the servo does.
+
+A [body fit](/help/fit-a-robots-body-from-a-recorded-run) uses a recorded Operate run to fit link masses, terminal payloads and floor friction. It updates Checks and the model used for training. Policies trained on the previous body show **Out of date**.
 
 You can also [try a Case](/help/try-a-case-on-your-real-robot) with a real wheeled or legged robot, on a floor mat printed with the Case. Basecase watches the run through a camera and judges it by the same contract as in simulation.
 

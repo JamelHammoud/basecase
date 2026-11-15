@@ -1,7 +1,6 @@
 ---
 title: Comment and mark up the scene
 date: 2026-11-13
-updated: 2026-11-13
 collection: design
 type: task
 order: 10

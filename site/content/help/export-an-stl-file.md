@@ -1,7 +1,6 @@
 ---
 title: Export an STL file
 date: 2026-11-13
-updated: 2026-11-13
 collection: files-and-sharing
 type: task
 order: 7

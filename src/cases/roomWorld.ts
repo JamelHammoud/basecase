@@ -1,7 +1,7 @@
 import type { V3 } from '../utils/kinematics';
 import { routeClearance, type BuilderRobot, type GoalKind } from './caseGoals';
 import type { CaseWorld } from './caseWorlds';
-import { occupied } from './groundRoute';
+import { groundObstacles } from './groundObstacles';
 import type { Room, RoomStart } from './roomPlan';
 import { clearOfStart, startBox } from './roomJitter';
 import { largest } from './roomWalls';
@@ -45,10 +45,10 @@ const solidOf = (room: Room) => room.objects.filter((o) => o.behavior !== 'marke
 const within = (p: V3, { min, max }: Bounds) => p[0] >= min[0] && p[0] <= max[0] && p[2] >= min[1] && p[2] <= max[1];
 
 export function openSpot(room: Room, clearanceMm: number): V3 {
-  const solid = solidOf(room);
+  const obstacles = groundObstacles(solidOf(room), clearanceMm);
   const spots = floorSpots(boundsOf(room.objects), clearanceMm);
 
-  return spots.find((p) => !occupied(p, solid, clearanceMm)) ?? spots[0];
+  return spots.find((p) => !obstacles.occupied(p)) ?? spots[0];
 }
 
 export function tappedStart(room: Room, clearanceMm: number): RoomStart | undefined {
@@ -56,7 +56,7 @@ export function tappedStart(room: Room, clearanceMm: number): RoomStart | undefi
 
   if (!start || !within(start.at, boundsOf(room.objects))) return undefined;
 
-  return occupied(start.at, solidOf(room), clearanceMm) ? undefined : start;
+  return groundObstacles(solidOf(room), clearanceMm).occupied(start.at) ? undefined : start;
 }
 
 const quarterTurns = (heading: number) => (((Math.round(heading / QUARTER) % 4) + 4) % 4) as 0 | 1 | 2 | 3;

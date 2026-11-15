@@ -318,7 +318,6 @@ const FOUND = [
 ];
 
 interface BuildStudio extends Studio {
-  markPlatePrinted: (plate: number) => void;
   readySteps: () => boolean[];
 }
 
@@ -401,7 +400,8 @@ describe('printing in build order on every printer', () => {
     expect(new Set(sends.map((s) => s.printerId)).size).toBe(2);
     expect(await readySteps()).not.toContain(true);
 
-    await app.page.evaluate(() => (window as unknown as { __studio: BuildStudio }).__studio.markPlatePrinted(1));
+    expect(await app.page.locator(visible('h3'), { hasText: /^Plate 1$/ }).count()).toBe(1);
+    await app.page.getByRole('button', { name: 'Mark Printed', exact: true }).click();
     await expect.poll(async () => (await readySteps())[0]).toBe(true);
     expect((await readySteps()).slice(1)).not.toContain(true);
 

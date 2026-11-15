@@ -1,7 +1,36 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { levenbergMarquardt, solveLinear } from './leastSquares';
 
 describe('least squares', () => {
+  it('pivots a dense system without copying tails or changing its inputs', () => {
+    const n = 16;
+    const solution = Array.from({ length: n }, (_, i) => i - 4);
+    const matrix = Array.from({ length: n }, (_, r) =>
+      Array.from({ length: n }, (_, c) => (r === c ? n : ((r + c) % 5) - 2)),
+    ).reverse();
+    const rhs = matrix.map((row) => row.reduce((sum, v, c) => sum + v * solution[c], 0));
+
+    matrix.forEach(Object.freeze);
+    Object.freeze(matrix);
+    Object.freeze(rhs);
+
+    const slice = vi.spyOn(Array.prototype, 'slice');
+    let result: number[] | null;
+    let copies: number;
+
+    try {
+      result = solveLinear(matrix, rhs);
+      copies = slice.mock.calls.length;
+    } finally {
+      slice.mockRestore();
+    }
+
+    expect(result).toEqual(solution.map((v) => expect.closeTo(v, 10)));
+    expect(copies).toBe(0);
+    expect(solveLinear([], [])).toEqual([]);
+    expect(solveLinear([[1e-301]], [1])).toBeNull();
+  });
+
   it('solves a small linear system and refuses a singular one', () => {
     expect(
       solveLinear(

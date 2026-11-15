@@ -122,15 +122,15 @@ function crossingDepth(A: Placed, B: Placed) {
   return deepest;
 }
 
-function triangleNormal(solid: ShapeSolid, face: number, out: THREE.Vector3) {
+function triangleNormal(solid: ShapeSolid, face: number, out: THREE.Vector3, triangle: THREE.Triangle) {
   const { index } = solid.bvh.geometry;
-  const corner = (k: number) => {
-    const at = face * 3 + k;
+  const at = face * 3;
 
-    return new THREE.Vector3().fromArray(solid.positions, (index ? index.getX(at) : at) * 3);
-  };
+  triangle.a.fromArray(solid.positions, (index ? index.getX(at) : at) * 3);
+  triangle.b.fromArray(solid.positions, (index ? index.getX(at + 1) : at + 1) * 3);
+  triangle.c.fromArray(solid.positions, (index ? index.getX(at + 2) : at + 2) * 3);
 
-  return new THREE.Triangle(corner(0), corner(1), corner(2)).getNormal(out);
+  return triangle.getNormal(out);
 }
 
 function coplanarArea(from: Placed, onto: Placed) {
@@ -138,6 +138,7 @@ function coplanarArea(from: Placed, onto: Placed) {
   const near = onto.solid.box.clone().expandByScalar(0.1);
   const hit = { point: new THREE.Vector3(), distance: 0, faceIndex: 0 };
   const { centers, normals, areas } = from.solid.faces;
+  const triangle = new THREE.Triangle();
   const c = new THREE.Vector3(),
     n = new THREE.Vector3(),
     m = new THREE.Vector3();
@@ -154,7 +155,7 @@ function coplanarArea(from: Placed, onto: Placed) {
 
     n.fromArray(normals, i * 3).transformDirection(toOnto);
 
-    if (triangleNormal(onto.solid, h.faceIndex, m).dot(n) > 0.95) area += areas[i];
+    if (triangleNormal(onto.solid, h.faceIndex, m, triangle).dot(n) > 0.95) area += areas[i];
   }
 
   return area;

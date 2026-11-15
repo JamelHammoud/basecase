@@ -158,16 +158,29 @@ export function peakStatus(p: JointPeak, stallNm: number): PeakStatus {
 
 const round = (v: number, step: number) => Math.round(v / step) * step;
 
+const windowStart = (length: number, from: number) =>
+  Math.min(length, Math.max(0, from < 0 ? length + from : from || 0));
+
 export function jointSamples(series: TorqueSeries, index: number, settleS: number): Array<[number, number]> {
   const from = Math.ceil(settleS / series.windowS);
-  const torque = series.demand?.[index].slice(from) ?? [];
-  const speed = series.speed?.[index].slice(from) ?? [];
+  const torque = series.demand?.[index];
+  const speed = series.speed?.[index];
+  const samples: Array<[number, number]> = [];
 
-  return torque.flatMap((nm, i): Array<[number, number]> =>
-    i % SAMPLE_EVERY === 0 && Number.isFinite(speed[i])
-      ? [[round(speed[i] * RPM_PER_RAD_S, 0.1), round(nm, 0.001)]]
-      : [],
-  );
+  if (!torque || !speed) return samples;
+
+  const torqueStart = windowStart(torque.length, from);
+  const speedStart = windowStart(speed.length, from);
+
+  for (let i = torqueStart; i < torque.length; i += SAMPLE_EVERY) {
+    if (!(i in torque)) continue;
+
+    const radS = speed[speedStart + i - torqueStart];
+
+    if (Number.isFinite(radS)) samples.push([round(radS * RPM_PER_RAD_S, 0.1), round(torque[i], 0.001)]);
+  }
+
+  return samples;
 }
 
 export function servoCurve(act: ActuatorSpec, volts?: number, servos = 1): ServoCurve | undefined {
@@ -184,7 +197,10 @@ export const isMotoring = ([rpm, nm]: [number, number]) => rpm * nm > 0;
 export function outsideEnvelope(samples: Array<[number, number]>, curve: ServoCurve): number {
   if (!samples.length) return 0;
 
-  const outside = samples.filter((s) => isMotoring(s) && Math.abs(s[1]) > curveTorque(curve, s[0]));
+  const outside = samples.reduce(
+    (count, s) => count + Number(isMotoring(s) && Math.abs(s[1]) > curveTorque(curve, s[0])),
+    0,
+  );
 
-  return outside.length / samples.length;
+  return outside / samples.length;
 }

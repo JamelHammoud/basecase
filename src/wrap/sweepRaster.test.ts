@@ -44,8 +44,12 @@ function intervals(motion: Motion, cell: number, [p, , s]: V3): Array<[number, n
       ];
 }
 
-function fixture(motion: Motion, cell: number, samples = points) {
-  const soup = Float32Array.from(samples.flatMap((p) => [...p, ...p, ...p]));
+function fixture(
+  motion: Motion,
+  cell: number,
+  samples = points,
+  soup = Float32Array.from(samples.flatMap((p) => [...p, ...p, ...p])),
+) {
   const original = soup.slice();
   const raster = new SweepRaster(motion, cell);
 
@@ -88,7 +92,54 @@ function checkQueries(raster: SweepRaster, expected: (p: V3) => boolean): void {
   for (const query of queries) expect(raster.hits(...query)).toBe(expected(query));
 }
 
+function surfaceSamples(soup: Float32Array, cell: number): V3[] {
+  const samples: V3[] = [];
+
+  for (let t = 0; t + 8 < soup.length; t += 9) {
+    const vertices = [0, 3, 6].map((offset) => Array.from(soup.subarray(t + offset, t + offset + 3)) as V3);
+    const edge = Math.max(...vertices.map((p, i) => Math.hypot(...sub(p, vertices[(i + 1) % 3]))));
+    const n = Math.max(1, Math.ceil(edge / (cell * 0.75)));
+
+    for (let i = 0; i <= n; i++) {
+      for (let j = 0; j <= n - i; j++) {
+        samples.push(
+          [0, 1, 2].map(
+            (k) =>
+              vertices[0][k] +
+              (vertices[1][k] - vertices[0][k]) * (i / n) +
+              (vertices[2][k] - vertices[0][k]) * (j / n),
+          ) as V3,
+        );
+      }
+    }
+  }
+
+  return samples;
+}
+
 describe('continuous shell sweep queries', () => {
+  it.each(['revolute', 'prismatic'] as const)(
+    'samples triangle interiors for %s sweeps without changing sources',
+    (kind) => {
+      const motion: Motion = { kind, origin: [1.25, -2.5, 0.75], axis: [1, -2, 3], range: [-0.7, 1.2] };
+      const source = Float32Array.from(points.slice(0, 9).flat());
+      const soup = source.subarray(3, source.length - 6);
+
+      for (const cell of [0.4, 1, 2.5]) {
+        const samples = surfaceSamples(soup, cell);
+        const { raster, expected, original } = fixture(motion, cell, samples, soup);
+
+        checkQueries(raster, expected);
+
+        for (let i = 0; i < samples.length; i += Math.max(1, Math.floor(samples.length / 40))) {
+          expect(raster.hits(...samples[i])).toBe(expected(samples[i]));
+        }
+
+        expect(soup).toEqual(original);
+      }
+    },
+  );
+
   it.each(['revolute', 'prismatic'] as const)(
     'matches direct sample scans for %s motions and edited ranges',
     (kind) => {

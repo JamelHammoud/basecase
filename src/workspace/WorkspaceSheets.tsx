@@ -105,7 +105,13 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
       </ErrorBoundary>
       <MatchJointsHost active={active} data={data} />
       <ErrorBoundary region="Install Skill" resetKey={installing} onClose={skillHub.closeInstall}>
-        <InstallSkillSheet open={installing} onClose={skillHub.closeInstall} onInstall={skillHub.install} />
+        <InstallSkillSheet
+          open={installing}
+          onClose={skillHub.closeInstall}
+          onInstall={skillHub.install}
+          candidates={skillHub.candidates}
+          finding={skillHub.finding}
+        />
       </ErrorBoundary>
       <PlaceOnMapHost active={active} earth={actions.earth} />
       {arm.targets && (

@@ -72,6 +72,7 @@ export function modelCard({ skill, environment, schema, robotName }: ModelCardIn
     'tags:',
     '  - robotics',
     '  - basecase',
+    '  - basecase-skill',
     '---',
     '',
     `# ${skill.name} for ${robotName}`,

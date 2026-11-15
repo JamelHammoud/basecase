@@ -12,6 +12,7 @@ export const HUB_CALLS = {
   'hub:sign-in': (hub, token) => hub.signIn(token),
   'hub:publish': (hub, payload) => hub.publish(withBytes(payload)),
   'hub:skill-files': (hub, payload) => hub.skillFiles(payload),
+  'hub:find-skills': (hub) => hub.findSkills(),
   'hub:dataset-files': (hub, payload) => hub.datasetFiles(payload),
 };
 

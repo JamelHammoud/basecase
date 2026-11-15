@@ -6,6 +6,7 @@ import { downloadDataset } from './datasetRepo.mjs';
 import { HUB_ENDPOINT, HubClient } from './hubClient.mjs';
 import { checkedName, checkedTag, publishRepo } from './publishRepo.mjs';
 import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from './skillRepo.mjs';
+import { SkillSearch } from './skillSearch.mjs';
 
 const TOKEN = 'huggingface';
 const NAME = 'huggingface-name';
@@ -55,6 +56,7 @@ export class HubAccount {
     this.keys = new AgentKeys({ dir: path.join(libraryDir, 'agent-config'), secrets, file: 'hub-keys.json' });
     this.endpoint = endpoint;
     this.outbound = outbound;
+    this.skillSearch = new SkillSearch();
   }
 
   client(token, again, kind) {
@@ -114,6 +116,10 @@ export class HubAccount {
     }
 
     return { repo: id, files };
+  }
+
+  findSkills() {
+    return this.skillSearch.find(this.client(this.keys.get(TOKEN) ?? undefined, 'Install again', 'model'));
   }
 
   async datasetFiles({ owner, repo, rev } = {}) {

@@ -17,6 +17,7 @@ import { negative } from '../../electron/minus.mjs';
 import { percent } from '../../electron/percent.mjs';
 import { coachLines, coachRequest } from './agentCoachRequests';
 import { stressRequest } from './agentStressRequests';
+import { findSkillsRequest } from './agentFindSkills';
 
 export interface SkillToolContext {
   skills: { runtime: SkillsRuntime; buildModel: () => Promise<SimModel> };
@@ -228,6 +229,7 @@ async function listRequest(_payload: Payload, ctx: SkillToolContext) {
 }
 
 export const SKILL_HANDLERS = {
+  skill_find: findSkillsRequest,
   skill_draft: draftRequest,
   skill_train: trainRequest,
   skill_list: listRequest,

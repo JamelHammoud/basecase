@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ContextMenu, ContextMenuEntry, deleteEntry, ShareIcon, useScrollFade } from '../design-system';
+import { ContextMenu, ContextMenuEntry, deleteEntry, DownloadIcon, ShareIcon, useScrollFade } from '../design-system';
 import type { PolicyRecord, RobotAnimation, ScenePart } from '../types/robotics';
 import { withVelocity } from '../sim/driveAccess';
 import type { Simulation } from '../sim/useSimulation';
@@ -45,6 +45,7 @@ interface SimulatePanelProps {
   sceneName: string;
   onToast: (message: string) => void;
   onPublishSkill: ((row: SkillRow) => void) | null;
+  onInstallSkill: (() => void) | null;
   fleet: RollOutMenu;
 }
 
@@ -93,6 +94,9 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
         }),
         ...coachMenuItems(row, { coach: skills.coach, coaches: !!props.onCoach }),
         ...publishEntries(row, props.onPublishSkill),
+        ...(props.onInstallSkill
+          ? [{ label: 'Install Skill', icon: <DownloadIcon />, onSelect: props.onInstallSkill }]
+          : []),
         ...rollOutMenuItems(row, props.fleet),
       ];
 

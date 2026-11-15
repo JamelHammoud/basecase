@@ -2,6 +2,7 @@ import { fork } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { workerIndices } from '../../workerIndices.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const LIBRARIES = [
@@ -110,7 +111,7 @@ function runChild(codes) {
 }
 
 export async function scadPortsParallel(codes, workers = 4) {
-  const chunks = Array.from({ length: workers }, (_, w) => codes.map((_, i) => i).filter((i) => i % workers === w));
+  const chunks = workerIndices(codes.length, workers);
   const results = await Promise.all(chunks.map((idx) => runChild(idx.map((i) => codes[i]))));
   const ports = new Array(codes.length);
 

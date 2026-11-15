@@ -90,7 +90,7 @@ export class CaseCheckPool {
   }
 
   private withWorld(job: CaseCheckJob): CaseCheckJob {
-    if (job.type !== 'runs' && job.type !== 'replay') return job;
+    if (job.type !== 'runs' && job.type !== 'replay' && job.type !== 'record') return job;
 
     if (!job.kase.world?.imported || job.worldColliders) return job;
 

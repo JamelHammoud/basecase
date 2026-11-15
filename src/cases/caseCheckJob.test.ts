@@ -2,10 +2,12 @@ import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { fixtureMeasures } from '../sim/fixtures/parts';
 import { fixtureRobots } from '../sim/fixtures/robots';
-import { CaseCheckSession, type WireRobot } from './caseCheckJob';
+import { CaseCheckSession, replyTransfer, type WireRobot } from './caseCheckJob';
 import { caseWorkerCount } from './caseChecksClient';
 import { seedBatches } from './caseRuns';
 import { caseRobot, presetCase } from './testing';
+import { SimEngine } from '../sim/engine';
+import { recordedEfforts } from '../sim/recordedFrames';
 
 const SIM_MS = 30_000;
 
@@ -82,6 +84,41 @@ describe('the Case checks worker job', () => {
     },
     SIM_MS,
   );
+
+  it('transfers compact paths for a batch and records just the requested seed', async () => {
+    const mj = await loadMujoco();
+    const robot = wire('rover-diff');
+    const fixture = fixtureRobots().find((r) => r.id === 'rover-diff')!;
+    const kase = presetCase(fixture, 'reach-the-flag');
+    const session = new CaseCheckSession();
+    const job = { kase, modelHash: 'rover', walk: null };
+    const batch = await session.run(mj, { ...job, type: 'runs', robot, seeds: [4], stop: null });
+    const replay = await session.run(mj, { ...job, type: 'record', seed: 4 });
+
+    if (batch.type !== 'runs' || !('outcomes' in batch.result) || replay.type !== 'record')
+      throw new Error('No seeded replay came back.');
+
+    expect(batch.result.outcomes[0].path.length).toBeGreaterThan(3);
+    expect(replyTransfer(batch)).toEqual([batch.result.outcomes[0].path.buffer]);
+    expect(replay.replay.passed).toBe(batch.result.outcomes[0].passed);
+    expect(replay.replay.recording.frames).toBeGreaterThan(3);
+    expect(replyTransfer(replay)).toContain(replay.replay.recording.qpos.buffer);
+    expect(replyTransfer(replay)).toContain(replay.replay.efforts.peaks[0].buffer);
+
+    const nominal = new SimEngine(mj, replay.replay.model);
+
+    try {
+      const nominalEfforts = recordedEfforts(mj, nominal, replay.replay.recording);
+      const peak = (values: Float32Array) => values.reduce((max, value) => Math.max(max, Math.abs(value)), 0);
+
+      expect(replay.replay.efforts.peaks.map(peak)).not.toEqual(nominalEfforts.peaks.map(peak));
+      expect(replay.replay.efforts.peaks.every((values, i) => peak(values) <= peak(nominalEfforts.peaks[i]))).toBe(
+        true,
+      );
+    } finally {
+      nominal.dispose();
+    }
+  });
 
   it('splits 20 seeds evenly across the workers', () => {
     expect(seedBatches(20, 4)).toEqual([

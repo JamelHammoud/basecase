@@ -1,3 +1,4 @@
+import { useSimController } from './useSimController';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { Viewport3DHandle } from '../components/Viewport3D';
@@ -28,7 +29,7 @@ import { newSimWorker, useSimWorker, type CameraLink, type SimFrameMessage } fro
 import type { Sought } from './useRecordingLink';
 import { NO_GUESTS, withGuests, type SimGuests } from './simGuests';
 import type { AmpModel } from '../utils/servoAmps';
-import { errorMessage } from '../utils/errorMessage';
+import { useSimStart } from './useSimStart';
 import type { FallPlan, FallRun } from './fallRuns';
 
 export interface SimFrame {
@@ -56,7 +57,7 @@ export interface Simulation {
   modelNow: () => SimModel | null;
   speed: number;
   controller: Controller;
-  start: () => Promise<void>;
+  start: (model?: SimModel) => Promise<void>;
   play: () => void;
   pause: () => void;
   reset: () => void;
@@ -75,10 +76,11 @@ export interface Simulation {
   drive: SimDrive;
   record: () => void;
   stopRecording: () => Promise<Recording | null>;
-  scrub: (r: Recording | null) => Promise<RecordedEfforts | null>;
+  scrub: (r: Recording | null, efforts?: RecordedEfforts) => Promise<RecordedEfforts | null>;
   seek: (frame: number) => void;
   sought: () => Sought | null;
-  worldParts: ScenePart[];
+  worldParts: WorldItem[];
+  worldNow: () => { items: WorldItem[]; guests: SimGuests };
   guestParts: ScenePart[];
   subscribePoses: (listen: (poses: Float64Array, frame: SimFrameMessage) => void) => () => void;
   connectCameras: (link: CameraLink | null) => void;
@@ -240,7 +242,14 @@ function useSceneModel({ parts, project, rig, pose, viewportRef, restDeltas }: I
     setGuests(cast);
   };
 
-  return { inputs, buildModel, worldParts, guestParts: guests.parts, setWorldItems };
+  return {
+    inputs,
+    buildModel,
+    worldParts,
+    guestParts: guests.parts,
+    setWorldItems,
+    worldNow: () => ({ items: worldRef.current, guests: guestsRef.current }),
+  };
 }
 
 function useStopOnEdit({
@@ -265,94 +274,23 @@ function useStopOnEdit({
   }, [parts, joints, modelRef, stop]);
 }
 
-function useController(send: (msg: SimRequest) => void) {
-  const [controller, setControllerState] = useState<Controller>({ kind: 'hold' });
-  const setController = useCallback(
-    (c: Controller) => {
-      setControllerState(c);
-      send({ type: 'controller', controller: c });
-    },
-    [send],
-  );
-
-  return [controller, setController] as const;
-}
-
-interface SimStartInputs {
-  sw: ReturnType<typeof useSimWorker>;
-  buildModel: (options?: SceneModelOptions) => Promise<SimModel>;
-  modelRef: React.RefObject<SimModel | null>;
-  setModel: (m: SimModel) => void;
-  controller: Controller;
-  speed: number;
-}
-
-function useSimStart({ sw, buildModel, modelRef, setModel, controller, speed }: SimStartInputs) {
-  const { setError, setStatus, worker, load, setPlaying } = sw;
-  const pinned = useRef<string | null>(null);
-
-  const startModel = useCallback(async () => {
-    setError(null);
-    setStatus('loading');
-
-    let m: SimModel;
-
-    try {
-      m = await buildModel({ pin: pinned.current });
-    } catch (e) {
-      setError(errorMessage(e));
-      setStatus('error');
-
-      return;
-    }
-
-    modelRef.current = m;
-    setModel(m);
-
-    const w = worker();
-    const loaded = await load(w, m, controller);
-
-    if (!loaded) return;
-
-    w.postMessage({ type: 'speed', value: speed } satisfies SimRequest);
-    w.postMessage({ type: 'play' } satisfies SimRequest);
-    setPlaying(true);
-  }, [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying, modelRef, setModel]);
-
-  const start = useCallback(() => {
-    pinned.current = null;
-
-    return startModel();
-  }, [startModel]);
-
-  const startPinned = useCallback(
-    (pin: string | null) => {
-      pinned.current = pin;
-
-      return startModel();
-    },
-    [startModel],
-  );
-
-  return { start, startPinned, pinned: () => (modelRef.current ? pinned.current : null) };
-}
-
 export function useSimulation(props: Inputs): Simulation {
   const { parts, project, rig, pose, viewportRef } = props;
   const [model, setModel] = useState<SimModel | null>(null);
   const [speed, setSpeedState] = useState(1);
   const modelRef = useRef<SimModel | null>(null);
-  const { inputs, buildModel, worldParts, guestParts, setWorldItems } = useSceneModel(props);
+  const { inputs, buildModel, worldParts, guestParts, setWorldItems, worldNow } = useSceneModel(props);
   const runSeq = useRef(0);
   const sw = useSimWorker(viewportRef, modelRef);
   const { status, setStatus, playing, setPlaying, stats, setStats, error, send, frameHookRef } = sw;
-  const [controller, setController] = useController(send);
+  const [controller, setController] = useSimController(send);
   const touch = useSimTouches(modelRef, send);
   const watching = useWatch(send, sw.watched);
 
-  const { start, startPinned, pinned } = useSimStart({ sw, buildModel, modelRef, setModel, controller, speed });
+  const { start, startPinned, cancel, pinned } = useSimStart({ sw, buildModel, modelRef, setModel, controller, speed });
 
   const stop = useCallback(() => {
+    cancel();
     send({ type: 'dispose' });
     modelRef.current = null;
     setModel(null);
@@ -360,7 +298,7 @@ export function useSimulation(props: Inputs): Simulation {
     setPlaying(false);
     setStats(null);
     viewportRef.current?.setPose(inputs.current.restDeltas);
-  }, [viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
+  }, [cancel, viewportRef, send, setModel, setStatus, setPlaying, setStats, inputs]);
 
   useStopOnEdit({ parts, joints: project.joints, modelRef, stop });
 
@@ -419,14 +357,15 @@ export function useSimulation(props: Inputs): Simulation {
     drive,
     record: () => send({ type: 'record', on: true }),
     stopRecording: sw.stopRecording,
-    scrub: (r) => {
+    scrub: (r, efforts) => {
       setPlaying(false);
 
-      return sw.scrub(r);
+      return sw.scrub(r, efforts);
     },
     seek: sw.seek,
     sought: sw.sought,
     worldParts: withLooks(worldParts, sw.worldLooks),
+    worldNow,
     guestParts,
     subscribePoses: sw.subscribePoses,
     connectCameras: sw.connectCameras,

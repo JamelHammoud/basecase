@@ -53,6 +53,7 @@ export interface CaseResult {
   case: Case;
   logic?: CaseLogicResult;
   recording?: Recording;
+  finalQpos: Float64Array;
 }
 
 interface ProbeBase {
@@ -171,6 +172,8 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
 
     changeWorld(changes, events, t);
 
+    engine.refreshKinematics();
+
     const poses = engine.poses();
     const driving = logic?.driving ?? true;
 
@@ -252,6 +255,7 @@ function refused(authored: Case, refusal: string, model: SimModel): CaseResult {
     refusal,
     model,
     frames: [],
+    finalQpos: new Float64Array(),
     objectIds: [],
     case: authored,
   };
@@ -379,6 +383,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
       margin: verdict.margin,
       failed: verdict.failed,
       trace,
+      finalQpos: Float64Array.from(engine.data.qpos),
       model,
       frames,
       objectIds: kase.world.objects.map((o) => o.id),

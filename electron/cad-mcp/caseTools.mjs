@@ -137,7 +137,9 @@ export const runCase = {
     try {
       const res = await bridge('run_case', args, 300000);
 
-      return res?.ok === false ? text(res) : imageReply(res, 'The Case ran.');
+      if (res?.ok === false) return text(res);
+
+      return { ...imageReply(res, 'The Case ran.'), ...(res?.data ? { structuredContent: res.data } : {}) };
     } catch (err) {
       return fail(err);
     }

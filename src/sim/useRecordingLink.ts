@@ -34,7 +34,7 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
   }, []);
 
   const scrub = useCallback(
-    (recording: Recording | null) =>
+    (recording: Recording | null, efforts?: RecordedEfforts) =>
       new Promise<RecordedEfforts | null>((resolve) => {
         const w = workerRef.current;
 
@@ -49,7 +49,7 @@ export function useRecordingLink(workerRef: React.RefObject<Worker | null>) {
         }
 
         waiter.current = resolve;
-        w.postMessage({ type: 'scrub', recording } satisfies SimRequest);
+        w.postMessage({ type: 'scrub', recording, efforts } satisfies SimRequest);
       }),
     [workerRef],
   );

@@ -1,7 +1,7 @@
 import { assemblyModel } from './assembly.mjs';
+import { assemblyLimits } from './assemblyLimits.mjs';
 import { isId } from './link.mjs';
 import { MB } from '../fileSize.mjs';
-import { mateLimits } from './mates.mjs';
 import { occurrencesOf, partKey, uniqueParts } from './occurrences.mjs';
 import { partMesh } from './partMesh.mjs';
 
@@ -114,10 +114,11 @@ export async function fetchAssembly({ client, doc, convertStep, say = () => {}, 
     client.json(`${API}/documents/${doc.did}`).catch(() => null),
   ]);
   const occurrences = occurrencesOf(definition);
+  const limits = await assemblyLimits(client, features, occurrences.assemblies);
   const job = { client, doc, convertStep, say, sleep };
   const { meshes, masses, files } = await partData(job, [...uniqueParts(occurrences.parts).values()]);
   const name = String(document?.name ?? 'Onshape robot').slice(0, 120);
-  const model = assemblyModel({ name, occurrences, limits: mateLimits(features), masses, meshes });
+  const model = assemblyModel({ name, occurrences, limits, masses, meshes });
 
   return { model, files };
 }

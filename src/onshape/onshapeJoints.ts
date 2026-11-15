@@ -36,10 +36,38 @@ function freeJointId(base: string, taken: Set<string>): string {
 }
 
 function jointIds(b: Omit<JointBuild, 'jointIdOf'>, mine: RobotJoint[]): Map<string, string> {
-  const byMate = new Map(mine.map((j) => [j.onshape!.mate, j.id]));
   const taken = new Set(b.joints.map((j) => j.id));
+  const remaining = new Set(mine);
+  const matches = new Map<string, RobotJoint>();
 
-  return new Map(b.fresh.map((f) => [f.id, byMate.get(f.onshape?.mate ?? '') ?? freeJointId(f.id, taken)] as const));
+  for (const f of b.fresh) {
+    const matched = matchingJoint(f, [...remaining], b.sceneIdOf);
+
+    if (!matched) continue;
+
+    matches.set(f.id, matched);
+    remaining.delete(matched);
+  }
+
+  return new Map(
+    b.fresh.map((f) => {
+      const exact = [...remaining].filter((j) => j.onshape!.mate === f.onshape?.mate);
+      const matched = matches.get(f.id) ?? (exact.length === 1 ? exact[0] : undefined);
+
+      if (matched) remaining.delete(matched);
+
+      return [f.id, matched?.id ?? freeJointId(f.id, taken)] as const;
+    }),
+  );
+}
+
+function matchingJoint(fresh: RobotJoint, mine: RobotJoint[], sceneIdOf: Map<string, string>): RobotJoint | undefined {
+  const mate = fresh.onshape?.mate ?? '';
+  const exact = mine.filter((j) => j.onshape!.mate === mate);
+  const candidates = exact.length ? exact : mine.filter((j) => j.onshape!.mate === mate.split('/').at(-1));
+  const children = new Set(fresh.child.map((id) => sceneIdOf.get(id)));
+
+  return candidates.find((j) => j.child.some((id) => children.has(id)));
 }
 
 function ends(b: JointBuild, freshIds: string[], oldIds: string[] = []): string[] {
@@ -80,7 +108,7 @@ export function updatedJoints(input: JointUpdateInput): { joints: RobotJoint[]; 
   const mine = input.joints.filter(mineIn(oldIds));
   const base = { ...input, oldIds, partIds: new Set(input.parts.map((p) => p.id)) };
   const b: JointBuild = { ...base, jointIdOf: jointIds(base, mine) };
-  const freshMates = new Set(input.fresh.map((f) => f.onshape?.mate));
+  const matchedIds = new Set(b.jointIdOf.values());
   const byId = new Map(input.joints.map((j) => [j.id, j]));
   const out = new Map<string, RobotJoint>();
   let changes = 0;
@@ -94,7 +122,7 @@ export function updatedJoints(input: JointUpdateInput): { joints: RobotJoint[]; 
     changes += same ? 0 : 1;
   }
 
-  for (const j of mine.filter((j) => !freshMates.has(j.onshape!.mate) && !j.onshape!.gone)) {
+  for (const j of mine.filter((j) => !matchedIds.has(j.id) && !j.onshape!.gone)) {
     out.set(j.id, { ...j, onshape: { mate: j.onshape!.mate, gone: true } });
     changes++;
   }

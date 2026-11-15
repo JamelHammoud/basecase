@@ -4,11 +4,10 @@ import type { ImportedRobot } from '../utils/robotImport';
 import type { ConvertedModel } from '../utils/robotImport/simready';
 
 const OCCURRENCE = /^[A-Za-z0-9_-]{1,64}(?:\/[A-Za-z0-9_-]{1,64}){0,8}$/;
-const MATE = /^[A-Za-z0-9_-]{1,64}$/;
 
 export const isOccurrence = (value: unknown) => typeof value === 'string' && OCCURRENCE.test(value);
 
-export const isMateId = (value: unknown) => typeof value === 'string' && MATE.test(value);
+export const isMateId = isOccurrence;
 
 function partWithIds(p: ScenePart, occurrences: Map<string, string[]>, source: OnshapeSource): ScenePart {
   const ids = p.robotLink ? (occurrences.get(p.robotLink.link) ?? []).filter(isOccurrence) : [];

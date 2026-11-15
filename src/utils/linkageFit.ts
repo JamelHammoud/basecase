@@ -1,3 +1,4 @@
+import { prepareNormalStep } from './linkageFitNormal';
 import { closure, couplerOffset, type FourBar, type Vec2 } from './linkageKinematics';
 
 export interface FitBounds {
@@ -130,85 +131,19 @@ function jacobian(x: Float64Array, r0: number[], problem: FitProblem): Float64Ar
   return columns;
 }
 
-const dot = (a: Float64Array, b: ArrayLike<number>) => {
-  let s = 0;
-
-  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
-
-  return s;
-};
-
-function eliminate(m: Float64Array, n: number, col: number): boolean {
-  const width = n + 1;
-  let pivot = col;
-
-  for (let row = col + 1; row < n; row++)
-    if (Math.abs(m[row * width + col]) > Math.abs(m[pivot * width + col])) pivot = row;
-
-  if (Math.abs(m[pivot * width + col]) < 1e-300) return false;
-
-  for (let k = 0; k < width && pivot !== col; k++) {
-    const t = m[col * width + k];
-
-    m[col * width + k] = m[pivot * width + k];
-    m[pivot * width + k] = t;
-  }
-
-  for (let row = col + 1; row < n; row++) {
-    const f = m[row * width + col] / m[col * width + col];
-
-    for (let k = col; k < width; k++) m[row * width + k] -= f * m[col * width + k];
-  }
-
-  return true;
-}
-
-function solveLinear(m: Float64Array, n: number): Float64Array | null {
-  const width = n + 1;
-
-  for (let col = 0; col < n; col++) if (!eliminate(m, n, col)) return null;
-
-  const out = new Float64Array(n);
-
-  for (let row = n - 1; row >= 0; row--) {
-    let s = m[row * width + n];
-
-    for (let k = row + 1; k < n; k++) s -= m[row * width + k] * out[k];
-
-    out[row] = s / m[row * width + row];
-  }
-
-  return out;
-}
-
-function normalEquations(columns: Float64Array[], r: number[], lambda: number): Float64Array {
-  const n = columns.length;
-  const width = n + 1;
-  const m = new Float64Array(n * width);
-
-  for (let i = 0; i < n; i++) {
-    for (let j = i; j < n; j++) {
-      const v = dot(columns[i], columns[j]);
-
-      m[i * width + j] = v;
-      m[j * width + i] = v;
-    }
-
-    m[i * width + i] += lambda * (m[i * width + i] + 1e-9);
-    m[i * width + n] = -dot(columns[i], r);
-  }
-
-  return m;
-}
-
 interface Trial {
   x: Float64Array;
   r: number[];
   cost: number;
 }
 
-function trialStep(state: Trial, lambda: number, problem: FitProblem, columns: Float64Array[]): Trial | null {
-  const step = solveLinear(normalEquations(columns, state.r, lambda), columns.length);
+function trialStep(
+  state: Trial,
+  lambda: number,
+  problem: FitProblem,
+  normal: ReturnType<typeof prepareNormalStep>,
+): Trial | null {
+  const step = normal(lambda);
 
   if (!step) return null;
 
@@ -231,12 +166,15 @@ export function levenbergMarquardt(
   const first = residuals(start, problem);
   let state: Trial = { x: Float64Array.from(start), r: first, cost: sumSquares(first) };
   let columns = jacobian(state.x, state.r, problem);
+  let normal: ReturnType<typeof prepareNormalStep> | null = null;
   let lambda = 1e-3;
 
   for (let iteration = 0; iteration < MAX_ITERATIONS && state.cost > TOLERANCE && lambda < 1e10; iteration++) {
     if (budget && iteration === budget.checkAt && state.cost > budget.worstCost) break;
 
-    const trial = trialStep(state, lambda, problem, columns);
+    normal ??= prepareNormalStep(columns, state.r);
+
+    const trial = trialStep(state, lambda, problem, normal);
 
     if (!trial || trial.cost >= state.cost || Number.isNaN(trial.cost)) {
       lambda *= 4;
@@ -248,6 +186,7 @@ export function levenbergMarquardt(
 
     state = trial;
     columns = jacobian(state.x, state.r, problem);
+    normal = null;
     lambda = Math.max(lambda / 3, 1e-9);
 
     if (gain < MIN_GAIN) break;

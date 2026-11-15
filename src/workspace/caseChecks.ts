@@ -286,6 +286,7 @@ export interface CaseVerdict {
   cached: boolean;
   modelHash: string;
   film: (seed: number) => Promise<FilmShot | null>;
+  record: (seed: number) => Promise<import('../cases/seedReplay').SeedReplay>;
 }
 
 export async function caseVerdict(
@@ -308,7 +309,13 @@ export async function caseVerdict(
     return (await caseCheckPool.run(0, job, { robot })).film;
   };
 
-  return { runs: judged, cached, modelHash: reading.modelHash, film };
+  const record = async (seed: number) => {
+    const job = { type: 'record' as const, kase, modelHash: reading.modelHash, seed, walk: reading.walk, ...control };
+
+    return (await caseCheckPool.run(0, job, { robot })).replay;
+  };
+
+  return { runs: judged, cached, modelHash: reading.modelHash, film, record };
 }
 
 export async function exploreVerdict(input: CaseRobotInput, kase: Case, runs: number): Promise<CaseRuns> {

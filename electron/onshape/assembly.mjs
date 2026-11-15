@@ -120,6 +120,8 @@ function mateJoint(b, mate, parentGroup) {
     return fixedJoint(mate.name, parent, child);
   }
 
+  if (mate.type === 'CYLINDRICAL') b.fixedMates.push({ name: `${mate.name} slide`, link: child });
+
   const frame = jointFrame({ type: mate.type, frames, childIsSecond, limit });
 
   return {

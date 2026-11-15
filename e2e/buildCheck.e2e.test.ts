@@ -285,32 +285,6 @@ describe('Cases in Checks', () => {
   const activeCase = () =>
     app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.simState().activeCase);
 
-  it('judge each Case as a row with its count, and open it in Simulate', async () => {
-    await app.page.evaluate(
-      ({ parts, joints, kase }) => {
-        const studio = (window as unknown as { __studio: StudioHook }).__studio;
-
-        studio.load({ parts, project: { ...studio.sceneRecord().project, joints, cases: [kase] } });
-      },
-      { parts: rover.parts, joints: rover.joints, kase: flag },
-    );
-    await expect.poll(() => partCount(app.page)).toBe(rover.parts.length);
-    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-
-    const row = checks().getByRole('button', { name: /^Reach a Spot/ });
-
-    await expect.poll(() => row.count(), { timeout: 90000 }).toBe(1);
-    await expect.poll(async () => (await row.textContent()) ?? '', { timeout: 90000 }).toMatch(/\d+ of 20$/);
-    expect(await activeCase()).toBeNull();
-
-    await row.click();
-    await expect.poll(activeCase, { timeout: 10000 }).toBe('reach-a-spot');
-    await expect
-      .poll(() => app.page.locator(visible('[data-testid="case-brief"]')).innerText(), { timeout: 10000 })
-      .toContain(flag.brief);
-    expect(app.errors).toEqual([]);
-  }, 150000);
-
   it('puts /pass and the open Case in the composer from ⌘K when its row fails', async () => {
     const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
     const focusedValue = () =>

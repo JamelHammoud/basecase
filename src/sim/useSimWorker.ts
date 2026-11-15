@@ -14,7 +14,7 @@ import type { SimStatus } from './useSimulation';
 import { useRecordingLink } from './useRecordingLink';
 import type { WorldLooks } from '../cases/worldSet';
 import { useVisionScope } from '../cameras/visionScope';
-import { createModelLoadLink } from './modelLoad';
+import { SimLoads } from './simLoads';
 
 interface LatestFrame {
   at: number;
@@ -56,7 +56,7 @@ export function useSimWorker(
   const poseListeners = usePoseListeners();
   const { attach: attachCameras, connect: connectCameras } = useCameraLink(workerRef);
   const routines = useRoutineLink(workerRef, modelRef);
-  const [loading] = useState(createModelLoadLink);
+  const [loading] = useState(() => new SimLoads());
   const recordingLink = useRecordingLink(workerRef);
   const recordingReply = recordingLink.reply;
 
@@ -66,8 +66,11 @@ export function useSimWorker(
     (ev: MessageEvent<SimResponse>) => {
       const msg = ev.data;
 
+      if (loading.stale(msg)) return;
+
       if (msg.type === 'ready') {
-        noteReady(loading.ready(msg.loadId), setStatus);
+        setStatus('ready');
+        loading.ready();
 
         return;
       }
@@ -176,10 +179,6 @@ export function useSimWorker(
     subscribePoses: poseListeners.subscribe,
     connectCameras,
   };
-}
-
-function noteReady(loaded: boolean, setStatus: (status: SimStatus) => void) {
-  if (loaded) setStatus('ready');
 }
 
 function useVisionLink(workerRef: React.RefObject<Worker | null>) {

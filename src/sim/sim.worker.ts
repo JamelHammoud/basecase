@@ -41,7 +41,7 @@ export type SimRequest =
   | { type: 'respawn'; robot?: string }
   | { type: 'fault'; joint: string; kind: FaultKind | null }
   | { type: 'record'; on: boolean }
-  | { type: 'scrub'; recording: Recording | null }
+  | { type: 'scrub'; recording: Recording | null; efforts?: RecordedEfforts }
   | { type: 'seek'; frame: number }
   | { type: 'grab'; phase: 'start'; body: number; point: [number, number, number] }
   | { type: 'grab'; phase: 'move'; point: [number, number, number]; turn: [number, number, number, number] | null }
@@ -62,7 +62,7 @@ export type SimRequest =
 export type SimResponse =
   | ({ type: 'routine' } & LiveUpdate)
   | { type: 'ready'; nq: number; nu: number; nbody: number; loadId?: number }
-  | { type: 'error'; message: string; id?: number }
+  | { type: 'error'; message: string; id?: number; loadId?: number }
   | { type: 'recorded'; recording: Recording | null }
   | { type: 'scrubbed'; efforts: RecordedEfforts | null }
   | { type: 'sought'; frame: number; qpos: Float64Array }
@@ -287,7 +287,7 @@ async function scrub(msg: Msg<'scrub'>) {
   halt();
   scrubbed = engine && msg.recording && fitsRecording(engine, msg.recording) ? msg.recording : null;
 
-  const efforts = engine && scrubbed ? recordedEfforts(mj, engine, scrubbed) : null;
+  const efforts = engine && scrubbed ? (msg.efforts ?? recordedEfforts(mj, engine, scrubbed)) : null;
 
   post({ type: 'scrubbed', efforts }, effortsTransfer(efforts));
 }
@@ -420,6 +420,11 @@ ctx.onmessage = async (ev: MessageEvent<SimRequest>) => {
   try {
     await (handlers[msg.type] as (m: SimRequest) => void | Promise<void>)(msg);
   } catch (e) {
-    post({ type: 'error', message: errorText(e), id: msg.type === 'run' || msg.type === 'falls' ? msg.id : undefined });
+    post({
+      type: 'error',
+      message: errorText(e),
+      id: msg.type === 'run' || msg.type === 'falls' ? msg.id : undefined,
+      loadId: msg.type === 'load' ? msg.loadId : undefined,
+    });
   }
 };

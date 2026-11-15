@@ -21,7 +21,7 @@ export function useSimStart({ sw, buildModel, modelRef, setModel, controller, sp
   const pinned = useRef<string | null>(null);
   const [gate] = useState(createStartupGate);
   const startModel = useCallback(
-    async (current: () => boolean = () => true) => {
+    async (current: () => boolean = () => true, given?: SimModel) => {
       if (!current()) return false;
 
       const token = gate.begin();
@@ -33,6 +33,7 @@ export function useSimStart({ sw, buildModel, modelRef, setModel, controller, sp
 
       try {
         const ready = await prepareStartup({
+          model: given,
           build: () => buildModel({ pin: pinned.current }),
           prepared: (model) => {
             modelRef.current = model;
@@ -92,9 +93,14 @@ export function useSimStart({ sw, buildModel, modelRef, setModel, controller, sp
     },
     [startModel],
   );
-  const start = async () => {
-    await startGuarded();
-  };
+  const start = useCallback(
+    async (given?: SimModel) => {
+      pinned.current = null;
+
+      await startModel(undefined, given);
+    },
+    [startModel],
+  );
   const startPinned = useCallback(
     async (pin: string | null, current?: () => boolean) => {
       pinned.current = pin;

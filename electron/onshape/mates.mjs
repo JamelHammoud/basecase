@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { pathKey } from './occurrences.mjs';
 
-export const JOINT_TYPES = { REVOLUTE: 'revolute', SLIDER: 'prismatic' };
+export const JOINT_TYPES = { REVOLUTE: 'revolute', CYLINDRICAL: 'revolute', SLIDER: 'prismatic' };
 
 const MAX_NAME = 120;
 const ANGLE_UNITS = { deg: Math.PI / 180, degree: Math.PI / 180, rad: 1, radian: 1 };
@@ -17,6 +17,7 @@ const LENGTH_UNITS = {
 };
 const LIMIT_PARAMETERS = {
   REVOLUTE: ['limitAxialZMin', 'limitAxialZMax', ANGLE_UNITS],
+  CYLINDRICAL: ['limitAxialZMin', 'limitAxialZMax', ANGLE_UNITS],
   SLIDER: ['limitZMin', 'limitZMax', LENGTH_UNITS],
 };
 
@@ -42,7 +43,7 @@ function mateOf({ feature, prefix }) {
   if (ends.length !== 2 || ends.some((e) => !e)) return null;
 
   return {
-    id: String(feature.id ?? ''),
+    id: pathKey([...prefix, String(feature.id ?? '')]),
     name: String(data.name ?? 'Mate').slice(0, MAX_NAME),
     type: String(data.mateType ?? ''),
     ends,
@@ -131,7 +132,7 @@ function nearest(value, target) {
 export function jointFrame({ type, frames, childIsSecond, limit }) {
   const [a, b] = frames;
   const raw = mateValue(type, a, b);
-  const now = type === 'REVOLUTE' && limit ? nearest(raw, (limit[0] + limit[1]) / 2) : raw;
+  const now = JOINT_TYPES[type] === 'revolute' && limit ? nearest(raw, (limit[0] + limit[1]) / 2) : raw;
   const world = new THREE.Matrix4().extractRotation(a).setPosition(position(a));
 
   return {

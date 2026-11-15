@@ -20,6 +20,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'caseConsole',
   'caseMat',
   'caseRunState',
+  'caseTrails',
   'checkDots',
   'clear',
   'codeReports',

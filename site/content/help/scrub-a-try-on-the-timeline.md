@@ -35,7 +35,7 @@ You can step through a Case try one frame at a time. For each joint, you can see
    - The top plot shows the joint's position in blue over its target in gray.
    - The bottom plot shows its effort in N·m (or N for a sliding joint). The dashed line is the servo's limit.
 
-   Red lines mark where the Case's failure checks tripped. The timeline opens at the first one. Above the joints, a lane splits the try into labeled segments such as reach and idle.
+   Red lines mark where the Case's failure checks tripped. The timeline opens at the first one, with its failure name beside the playback controls. Above the joints, a lane splits the try into labeled segments such as reach and idle.
 4. Move the playhead with your keyboard. The robot on the canvas follows it.
    - To move one frame (1/50 s), press [[→]] or [[←]].
    - To move one second, hold [[⇧]] and press [[→]] or [[←]].
@@ -52,6 +52,8 @@ You can step through a Case try one frame at a time. For each joint, you can see
 When the timeline opens, Basecase recalculates effort from the recording, so its peaks match Peak torque in Results.
 
 If the try has saved camera videos, the camera cards show those videos at the playhead. Detection runs on that frame even while playback is paused. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see) for the boxes and their limits.
+
+To open a failed run from the Case's 20 seeded Checks runs, see [Replay a failing seed](/help/replay-a-failing-seed).
 
 To split, merge, rename or tag segments, see [Label a try](/help/label-a-try).
 

@@ -20,12 +20,13 @@ export function createStartupGate() {
 }
 
 export async function prepareStartup<T>(input: {
+  model?: T;
   build: () => Promise<T>;
   prepared: (model: T) => void;
   load: (model: T) => Promise<boolean>;
   current: () => boolean;
 }): Promise<boolean> {
-  const model = await input.build();
+  const model = input.model ?? (await input.build());
 
   if (!input.current()) return false;
 

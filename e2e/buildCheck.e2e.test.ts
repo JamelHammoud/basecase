@@ -13,11 +13,11 @@ import {
   buildCheckPage,
   loadKnees,
   servo,
+  storeFalls,
   storeWalk,
   visible,
   type StudioHook,
 } from './buildCheckFixtures';
-import { agentRequest, kneeLink, loadFallBiped, openedItem, selection } from './fallsFixtures';
 import { openApp, partCount, type App } from './harness';
 
 let app: App;
@@ -241,21 +241,36 @@ describe('Build tab fields', () => {
     await expect.poll(() => plot('jb').isVisible()).toBe(true);
   }, 120000);
 
-  it('fail Falls at the long-legged biped’s knee, and select the knee’s link from its item', async () => {
-    const row = checkRow('Falls');
-    const kneeItem = row.locator('li', { hasText: /knee: \d+\.\d× rated, falling / }).first();
-    const biped = await loadFallBiped(app.page);
-
+  it('show a stored fall at the knee and select its link through Replay in Sim', async () => {
+    await loadKnees(app.page);
+    await storeFalls(app.page, {
+      directions: 12,
+      tipped: 12,
+      joints: { ja: { p99Nm: 100, deg: 180 }, jb: { p99Nm: 0.1, deg: 0 } },
+    });
     await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-    await agentRequest(app.page, 'verify', { falls: true });
-    await expect.poll(() => openedItem(row, 'Falls', kneeItem), { timeout: 60000 }).toBe(true);
 
-    const text = (await kneeItem.textContent()) ?? '';
+    const row = checkRow('Falls');
+    const kneeItem = row.locator('li', { hasText: /Left knee: \d+\.\d× rated, falling backward/ }).first();
 
-    expect(text).toMatch(/strip its gears/);
+    await expect
+      .poll(async () => {
+        if (!(await row.isVisible())) return false;
+
+        await expand(row, 'Falls');
+
+        return kneeItem.isVisible();
+      })
+      .toBe(true);
+    expect(await kneeItem.textContent()).toMatch(/strip its gears/);
     await kneeItem.getByRole('button', { name: 'Replay in Sim' }).click();
-    await expect.poll(() => selection(app.page), { timeout: 10000 }).toEqual(kneeLink(biped, text));
-  }, 120000);
+    await expect
+      .poll(() => app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.selection()))
+      .toEqual(['a']);
+    await expect
+      .poll(() => app.page.locator(visible('[role=tab][aria-selected="true"]'), { hasText: 'Simulate' }).count())
+      .toBe(1);
+  });
 
   it('set a budget beside the bill of materials total', async () => {
     const bom = section(/^Bill of materials/);

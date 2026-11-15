@@ -9,6 +9,8 @@ export const RUNGS: ReadonlyArray<{ name: Exclude<RungName, 'preset'>; params: r
 
 export const LADDER = Object.freeze({ passGain: 0.25, minGain: 0.05 });
 
+export const BODY_RUNG = Object.freeze({ name: 'body', passGain: LADDER.passGain });
+
 export interface RungResult extends RungFit {
   rung: RungName;
   checkErrors: number[];

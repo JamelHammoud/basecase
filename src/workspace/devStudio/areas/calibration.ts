@@ -3,6 +3,7 @@ import { unitHistories, withCalibration } from '../../../reality/projectCalibrat
 import type { ServoCalibration } from '../../../reality/types';
 import { selectedUnit } from '../../../robot/robotStore';
 import type { Studio } from '../types';
+import { fitBodyFor, setBodyRun } from '../../bodyActions';
 
 export default function calibrationStudio(studio: Studio) {
   const project = () => studio().core.docs.projectRef.current;
@@ -17,5 +18,21 @@ export default function calibrationStudio(studio: Studio) {
     calibrate,
     calibrationReplay: (jointId: string) => replayErrors(histories()[jointId]),
     calibrations: histories,
+    setBodyRun,
+    bodyCalibrations: () => project().bodyCalibrations ?? {},
+    bodyChecks: async () => {
+      const checked = await studio().core.readiness.checkNow();
+
+      return (
+        checked && {
+          fingerprint: checked.fingerprint,
+          checkedAt: checked.checkedAt,
+          torque: checked.rows.find((row) => row.check === 'Servo torque'),
+        }
+      );
+    },
+    fitBody: (robot?: string) => fitBodyFor(studio().core, robot),
+    bodyModel: (withoutBody = true) =>
+      studio().core.simTraining.sim.buildModel({ withoutBody, calibrations: histories() }),
   };
 }

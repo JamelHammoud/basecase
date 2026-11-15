@@ -1,5 +1,6 @@
 import type { EarthOrigin } from '../earth/earthOrigin';
 import type { CalibrationHistory } from '../reality/history';
+import type { BodyHistory } from '../reality/bodyTypes';
 import type { InterfacePlan } from './interfaces';
 import type { RobotSkeleton } from './skeleton';
 
@@ -28,4 +29,5 @@ export interface ProjectRecords {
   earth?: EarthOrigin;
   servoCalibrations?: Record<string, CalibrationHistory>;
   unitCalibrations?: Record<string, Record<string, CalibrationHistory>>;
+  bodyCalibrations?: Record<string, BodyHistory>;
 }

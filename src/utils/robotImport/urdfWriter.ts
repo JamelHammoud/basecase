@@ -5,7 +5,7 @@ import type { SimBody, SimJoint, SimModel } from '../../sim/mjcfTypes';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
 import type { PartMass } from '../engineeringTypes';
 import type { V3 } from '../kinematics';
-import { linkInertial, placedParts, type LinkInertial, type PlacedPart } from './urdfLinks';
+import { linkInertial, placedParts, type LinkInertial, type LinkPayload, type PlacedPart } from './urdfLinks';
 
 export interface UrdfInput {
   name: string;
@@ -13,6 +13,7 @@ export interface UrdfInput {
   joints: RobotJoint[];
   parts: ScenePart[];
   masses: PartMass[];
+  payloads?: Record<string, LinkPayload>;
   triangles: (id: string) => Float32Array | null;
   meshUri?: (path: string) => string;
   tail?: string[];
@@ -39,6 +40,7 @@ export const WORLD_LINK = 'world';
 const BASE_LINK = 'base_link';
 
 const origin = (xyz: V3) => `<origin xyz="${vec(xyz)}" rpy="0 0 0"/>`;
+const inertiaValue = (value: number) => value.toPrecision(9);
 
 function colorName(st: WriteState, hex: string): string {
   const clean = /^#[0-9a-f]{6}$/i.test(hex) ? hex.slice(1).toLowerCase() : '888888';
@@ -72,7 +74,7 @@ function inertialXml({ kg, com, inertia: I }: LinkInertial): string[] {
     '    <inertial>',
     `      ${origin(com)}`,
     `      <mass value="${f(kg)}"/>`,
-    `      <inertia ixx="${f(I.ixx)}" ixy="${f(I.ixy)}" ixz="${f(I.ixz)}" iyy="${f(I.iyy)}" iyz="${f(I.iyz)}" izz="${f(I.izz)}"/>`,
+    `      <inertia ixx="${inertiaValue(I.ixx)}" ixy="${inertiaValue(I.ixy)}" ixz="${inertiaValue(I.ixz)}" iyy="${inertiaValue(I.iyy)}" iyz="${inertiaValue(I.iyz)}" izz="${inertiaValue(I.izz)}"/>`,
     '    </inertial>',
   ];
 }
@@ -97,7 +99,7 @@ function linkXml(st: WriteState, body: SimBody) {
 
   st.links.push(
     `  <link name="${esc(body.name)}">`,
-    ...inertialXml(linkInertial(placed)),
+    ...inertialXml(linkInertial(placed, st.input.payloads?.[body.name])),
     ...placed.flatMap((p) => geometryXml(st, p)),
     '  </link>',
   );

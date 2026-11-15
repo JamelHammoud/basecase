@@ -68,6 +68,7 @@ function getRoutes(backend) {
 
 function postRoutes(backend) {
   return [
+    ['/robot-read-run', () => null],
     ['/acp-connect', (p) => backend.connectAcpAgent(p.agentCommand)],
     ['/acp-authenticate', (p) => backend.authenticateAcpAgent(p.methodId)],
     ['/acp-api-key', (p) => backend.setAgentApiKey(p.key)],

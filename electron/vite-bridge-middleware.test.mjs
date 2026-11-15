@@ -178,6 +178,15 @@ describe('vite bridge middleware', () => {
     expect((await request(events, { method: 'GET', url: '/', headers: { host: 'evil.example' } })).status).toBe(403);
   });
 
+  it('answers the latest-run reader without a robot and guards it from hostile origins', async () => {
+    const ask = { method: 'POST', url: '/robot-read-run', body: '{"arg":"arm-b"}' };
+
+    expect((await request(bridge, ask)).result).toBeNull();
+    expect(
+      (await request(bridge, { ...ask, headers: { host: 'localhost:5173', origin: 'https://evil.example' } })).status,
+    ).toBe(403);
+  });
+
   it('serves the app and local tools', async () => {
     const app = { host: 'localhost:5173', origin: 'http://localhost:5173', 'sec-fetch-site': 'same-origin' };
 

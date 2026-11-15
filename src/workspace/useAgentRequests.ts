@@ -23,6 +23,7 @@ import { errorMessage } from '../utils/errorMessage';
 import { useLatestRef } from '../utils/useLatestRef';
 import type { TryReadSources } from './agentTryRequests';
 import type { TryTimeline } from './useTryTimeline';
+import { fitBodyFor } from './bodyActions';
 
 type Payload = Record<string, unknown>;
 
@@ -131,6 +132,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
       fixedCameras: projectRef.current.cameras ?? [],
       velocity: simTraining.skills.velocity,
       calibrationErrors: () => calibrationErrorsText(projectRef.current, unit),
+      fitBody: (robot) => fitBodyFor(core, robot),
       fleet: simTraining.fleet.tools,
       setAction,
     });

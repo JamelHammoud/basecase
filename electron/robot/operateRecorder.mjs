@@ -1,4 +1,5 @@
 import { rungOf } from './ladder.mjs';
+import { readRecordedRun } from './recordedRun.mjs';
 
 export const MIN_SECONDS = 2;
 export const MOVED_RAD = 0.01;
@@ -90,7 +91,19 @@ export class OperateRecorder {
 
     if (context) this.context = context;
 
+    if (context && this.session && !this.session.joints) this.session.joints = [...context.joints];
+
     return !!context;
+  }
+
+  readRun() {
+    const session = this.session;
+
+    if (!session?.joints) return null;
+
+    this.flush(session);
+
+    return readRecordedRun(this.sink, session);
   }
 
   setPolicy(hash) {
@@ -110,6 +123,7 @@ export class OperateRecorder {
 
     this.session = {
       id: this.newId(),
+      joints: this.context ? [...this.context.joints] : null,
       t0: now,
       startedAt: new Date(now).toISOString(),
       lines: [],
@@ -280,6 +294,6 @@ export class OperateRecorder {
     if (manifest) this.sink.keep(manifest);
     else this.sink.drop(session.id);
 
-    this.onClosed({ id: session.id, reason, manifest });
+    this.onClosed({ id: session.id, reason, manifest, joints: session.joints });
   }
 }

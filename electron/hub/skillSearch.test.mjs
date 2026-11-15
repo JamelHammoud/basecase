@@ -9,7 +9,7 @@ import { readyStand } from '../../src/skills/hubSkillFixtures.ts';
 import { kitEnvironment } from '../../src/skills/kitEnvironment.ts';
 import { HubAccount } from './index.mjs';
 import { gitBlob } from './gitBlob.mjs';
-import { SKILL_FILE_BYTES } from './skillRepo.mjs';
+import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from './skillRepo.mjs';
 
 let hub;
 let dir;
@@ -49,10 +49,17 @@ describe('finding published skills through the Hub', () => {
     hub.seed('tester/tampered', { ...files(), 'policy.json': new TextEncoder().encode('{}') }, 'model');
 
     const client = account();
-    const first = await client.findSkills();
+    const [first, simultaneous] = await Promise.all([client.findSkills(), client.findSkills()]);
     const resolves = () => hub.requests.filter((r) => r.path.includes('/resolve/'));
 
+    expect(simultaneous).toEqual(first);
     expect(first.map((r) => r.repo)).toEqual(['tester/legacy', 'tester/tagged']);
+    expect(client.skillSearch.cachedBytes).toBe(
+      first.reduce(
+        (sum, result) => sum + Object.values(result.files).reduce((n, text) => n + Buffer.byteLength(text), 0),
+        0,
+      ),
+    );
     expect(resolves().every((r) => /\/(robot|skill)\.json$/.test(r.path))).toBe(true);
     expect(first.every((r) => /^[a-f0-9]{40}$/.test(r.revision))).toBe(true);
 
@@ -70,6 +77,20 @@ describe('finding published skills through the Hub', () => {
 
     expect(await account().findSkills()).toEqual([]);
     expect(hub.requests.every((r) => r.path === '/api/models')).toBe(true);
+  });
+
+  it('drops incomplete packages before downloading candidate files', async () => {
+    hub = await startFakeHub({ token: 'test' });
+
+    for (const missing of SKILL_DOWNLOADS) {
+      const incomplete = files();
+
+      delete incomplete[missing];
+      hub.seed(`tester/missing-${missing}`, incomplete, 'model');
+    }
+
+    expect(await account().findSkills()).toEqual([]);
+    expect(hub.requests.some((r) => r.path.includes('/resolve/'))).toBe(false);
   });
 
   it('drops oversized robot.json and returns an empty list when offline', async () => {

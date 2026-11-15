@@ -2,6 +2,7 @@ import { hubBridge } from '../hub/hubBridge';
 import type { SimModel } from '../sim/mjcfTypes';
 import { workerClient } from '../utils/workerRpc';
 import { robotSchema } from './robotSchema';
+import { kitRobot } from './kitModel';
 import type { RankedSkill } from './skillRank';
 import type { SKILL_RANK_HANDLERS } from './skillRankJob';
 
@@ -12,7 +13,8 @@ const ranking = workerClient<typeof SKILL_RANK_HANDLERS>(
 
 export async function findSkills(model: SimModel, query = ''): Promise<RankedSkill[]> {
   try {
-    const target = robotSchema(model);
+    const robot = kitRobot(model);
+    const target = robotSchema(model, { robot: robot.key, joints: robot.joints });
     const candidates = await hubBridge.findSkills();
     const ranked = await ranking.call('rank', { candidates, target });
     const words = query.trim().toLowerCase().split(/\s+/);

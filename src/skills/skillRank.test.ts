@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureModel } from './fixtureModels';
-import { publishedSkillFiles } from './hubSkill';
+import { installPlan, publishedSkillFiles, readPublishedSkill } from './hubSkill';
 import { readyStand } from './hubSkillFixtures';
 import { hashOf } from './hash';
 import { kitEnvironment } from './kitEnvironment';
@@ -39,22 +39,21 @@ describe('published skills ranked for a robot', () => {
     expect(rankSkills([...candidates].reverse(), target)).toEqual(ranked);
   });
 
-  it('puts SO-101 reach before a six-joint arm and uses Arena passes after anchor distance', () => {
+  it('puts matching limb lengths and nearer anchors first, then uses Arena passes', () => {
     const source = candidate('quad-servo');
     const schema = (depth: number, x = 0): RobotSchema => ({
       format: 'basecase-robot-schema',
       version: 1,
-      bodyClass: 'fixed',
-      floating: false,
+      bodyClass: 'legged',
+      floating: true,
       limbs: [[x, 0]],
       joints: Array.from({ length: depth }, (_, i) => ({ id: `j${i}`, limb: 0, depth: i + 1 })),
     });
-    const arm = (repo: string, depth: number, x = 0) => {
+    const limbCandidate = (repo: string, depth: number, x = 0) => {
       const skill = JSON.parse(source.files['skill.json']);
       const joints = schema(depth).joints.map((j) => j.id);
       const n = 12 + 3 * depth;
 
-      skill.name = 'Reach';
       skill.action.joints = joints;
       skill.binding.action = hashOf(skill.action);
       skill.controller.policy = {
@@ -72,11 +71,11 @@ describe('published skills ranked for a robot', () => {
         files: { 'robot.json': JSON.stringify(schema(depth, x)), 'skill.json': JSON.stringify(skill) },
       };
     };
-    const so101 = arm('tester/so-101-reach', 5);
-    const offset = arm('tester/offset-reach', 5, 1);
-    const six = arm('tester/6-dof-reach', 6);
+    const five = limbCandidate('tester/five-joint-stand', 5);
+    const offset = limbCandidate('tester/offset-stand', 5, 1);
+    const six = limbCandidate('tester/six-joint-stand', 6);
 
-    expect(rankSkills([six, offset, so101], schema(5)).map((r) => r.repo)).toEqual([so101.repo, offset.repo, six.repo]);
+    expect(rankSkills([six, offset, five], schema(5)).map((r) => r.repo)).toEqual([five.repo, offset.repo, six.repo]);
 
     const lower = candidate('quad-servo', 'lower');
     const skill = JSON.parse(lower.files['skill.json']);
@@ -108,5 +107,48 @@ describe('published skills ranked for a robot', () => {
     ];
 
     expect(rankSkills(bad, robotSchema(fixtureModel('hexapod')))).toEqual([]);
+  });
+
+  it('refuses unsupported skills and clock policies with the same reason as installation', () => {
+    const model = fixtureModel('quad-servo');
+    const environment = kitEnvironment(model, 'stand');
+    const original = readyStand(model, 'quad');
+    const clock = structuredClone(original);
+
+    if (clock.controller.kind !== 'policy') throw new Error('The fixture needs a policy.');
+
+    const policy = clock.controller.policy;
+    const width = policy.obsMean.length + 2;
+
+    policy.clock = { frames: 2, loop: true };
+    policy.obsMean = new Array(width).fill(0);
+    policy.obsStd = new Array(width).fill(1);
+    policy.layers = [
+      {
+        in: width,
+        out: policy.joints.length,
+        w: new Array(width * policy.joints.length).fill(0),
+        b: policy.joints.map(() => 0),
+      },
+    ];
+
+    const taught = { ...original, origin: undefined };
+    const renamed = { ...original, name: 'Reach' };
+
+    for (const skill of [taught, renamed, clock]) {
+      const files = Object.fromEntries(
+        Object.entries(publishedSkillFiles({ skill, environment, model })).map(([path, bytes]) => [
+          path,
+          new TextDecoder().decode(bytes),
+        ]),
+      );
+      const [ranked] = rankSkills([{ repo: 'tester/skill', revision: 'a'.repeat(40), files }], robotSchema(model));
+
+      expect(ranked.fit.ok).toBe(false);
+
+      if (ranked.fit.ok) throw new Error('The unsupported skill was offered for install.');
+
+      expect(() => installPlan(readPublishedSkill(files), model)).toThrow(ranked.fit.problem);
+    }
   });
 });

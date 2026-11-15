@@ -43,4 +43,36 @@ describe('find_skills payload', () => {
       await SKILL_HANDLERS.skill_find({}, { skills: { buildModel: async () => fixtureModel('quad-servo') } }),
     ).toEqual({ skills: [] });
   });
+
+  it('ranks the same actuated joints the installer uses when the robot also has a passive joint', async () => {
+    const model = fixtureModel('quad-servo');
+    const files = publishedSkillFiles({
+      skill: readyStand(model, 'quad'),
+      environment: kitEnvironment(model, 'stand'),
+      model,
+    });
+    const candidate = {
+      repo: 'tester/stand',
+      revision: 'a'.repeat(40),
+      files: Object.fromEntries(Object.entries(files).map(([path, bytes]) => [path, new TextDecoder().decode(bytes)])),
+    };
+
+    model.robots[0].joints.push('passive');
+    model.joints.push({ ...model.joints[0], id: 'passive', actuator: -1 });
+    model.bodies.push({
+      name: 'passive-link',
+      parts: [],
+      origin: [0, 0, 0],
+      robot: model.robots[0].key,
+      joint: 'passive',
+    });
+    vi.spyOn(hubBridge, 'findSkills').mockResolvedValue([candidate]);
+
+    expect(await SKILL_HANDLERS.skill_find({}, { skills: { buildModel: async () => model } })).toEqual({
+      skills: rankSkills([candidate], robotSchema(fixtureModel('quad-servo'))),
+    });
+    expect((await SKILL_HANDLERS.skill_find({}, { skills: { buildModel: async () => model } })).skills[0].fit.ok).toBe(
+      true,
+    );
+  });
 });

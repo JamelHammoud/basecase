@@ -33,26 +33,27 @@ hub_the_design_agent: |
   - Ask it to find published skills for the open robot. It ranks them as Install Skill does and gives a reason for each skill whose joints don't fit.
 ---
 
-You can start your robot from a skill that someone else has published. Basecase trains the skill on your robot, then checks it in Arena before it counts as ready.
+Start your robot from a published skill that Basecase retrains on your robot and checks in Arena.
 
 Install Skill works in the desktop app, on legged robots. It takes Motor Kit skills: Stand, Walk, Get up and Settle. You don't need to sign in to Hugging Face to install a public skill.
 
-1. Open your robot, then open the **Simulate** tab.
-2. Press [[⌘K]] and choose **Install Skill**.
+1. In Basecase, open your robot.
+2. In your robot's scene, open the **Simulate** tab.
+3. In the command palette ([[⌘K]]), choose **Install Skill**.
 
 ![Install Skill in the command palette](/help/install-a-skill-from-hugging-face/command.png)
 
-3. Beside the skill you want, click **Install**.
+4. In the published skills list, click **Install** beside the skill you want.
 
 ![Install Skill with published Stand skills ranked for the open quad and a refused biped skill](/help/install-a-skill-from-hugging-face/ranked.png)
 
-4. Wait for the skill's row under **Train** to finish training. When the skill is ready, its row shows the result from Arena.
+5. Under **Train**, wait for the skill's row to finish training and show its Arena result.
 
 ![The hexapod's Stand row ready after installing](/help/install-a-skill-from-hugging-face/installed.png)
 
-You can also right-click a row under **Train** and choose **Install Skill**. To install from a link, paste it into the field and press [[↩]].
+You can also right-click a row under **Train** and choose **Install Skill**. In **Install Skill**, you can paste a repo link into the field and press [[↩]] instead.
 
-The list puts skills whose joints fit first, then compares limb positions, then the source's Arena passes. A skill that doesn't fit appears last with its reason. A repo whose files don't check is left out. With no network, the list is empty and you can still enter a link.
+The list puts skills whose joints fit first, then compares limb positions, then the source's Arena passes. A skill that doesn't fit appears last with its reason. Repos whose policy or Arena evidence doesn't match `skill.json` are left out. If the Hub can't be reached, the list is empty and you can still enter a link.
 
 If a file doesn't match `skill.json`, the install stops and a toast shows the name of the file. Legs with a different number of joints don't fit, and the toast says how many joints each one has.
 

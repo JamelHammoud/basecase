@@ -5,7 +5,8 @@ import { clopperPearsonLower } from './arenaStats';
 import { isSkill } from './bundle';
 import { hashOf } from './hash';
 import { isRunnablePolicy } from './policyCheck';
-import { isRobotSchema, jointMap, type JointMap, type RobotSchema } from './robotSchema';
+import { isRobotSchema, type JointMap, type RobotSchema } from './robotSchema';
+import { skillFit } from './skillFit';
 
 export type SkillCandidate = HubSkillCandidate;
 
@@ -79,7 +80,7 @@ function ranked(candidate: SkillCandidate, target: RobotSchema): RankedSkill | n
 
     if (!isRobotSchema(schema) || !validSkill(skill, schema)) return null;
 
-    const fit = jointMap(schema, target);
+    const fit = skillFit(skill, schema, target);
 
     return {
       repo: candidate.repo,

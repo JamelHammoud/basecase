@@ -57,7 +57,6 @@ export const InstallSkillSheet: React.FC<{
             <Button
               variant="secondary"
               size="sm"
-              title="Install"
               disabled={!candidate.fit.ok}
               onClick={() => {
                 onInstall(`https://huggingface.co/${candidate.repo}/tree/${candidate.revision}`);

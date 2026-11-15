@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readCapped } from '../publicFetch.mjs';
 import { checkedName } from './publishRepo.mjs';
 import { gitBlob } from './gitBlob.mjs';
-import { SKILL_FILE_BYTES } from './skillRepo.mjs';
+import { SKILL_DOWNLOADS, SKILL_FILE_BYTES } from './skillRepo.mjs';
 
 const SEARCH_BYTES = 2 * 1024 * 1024;
 const CANDIDATES_MAX = 100;
@@ -50,7 +50,17 @@ async function readCandidate(client, id) {
   const info = await boundedJson(await client.api(`/api/models/${id}/revision/main?blobs=true`));
   const revision = info.sha;
 
-  if (!COMMIT.test(revision)) throw new Error('The skill has no commit.');
+  if (typeof revision !== 'string' || !COMMIT.test(revision)) throw new Error('The skill has no commit.');
+
+  if (
+    !SKILL_DOWNLOADS.every((path) =>
+      info.siblings?.some(
+        (file) =>
+          file.rfilename === path && Number.isSafeInteger(file.size) && file.size > 0 && file.size <= SKILL_FILE_BYTES,
+      ),
+    )
+  )
+    throw new Error('The skill repo is missing a file or has a file that is too large.');
 
   return { info, revision };
 }
@@ -85,6 +95,7 @@ export class SkillSearch {
   remember(key, result) {
     const bytes = result ? candidateBytes(result) : 0;
 
+    this.cachedBytes -= this.cache.get(key)?.bytes ?? 0;
     this.cache.set(key, { result, bytes });
     this.cachedBytes += bytes;
 

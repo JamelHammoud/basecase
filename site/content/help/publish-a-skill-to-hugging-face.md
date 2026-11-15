@@ -29,15 +29,15 @@ covers:
 
 You can publish a ready skill to the Hugging Face Hub as a model repo, so another robot can install it.
 
-**Note:** Publishing works in the desktop app. The repo is always public, and you can only publish a skill that passed Arena.
+Publishing works in the desktop app. The repo is always public, and you can only publish a skill that passed Arena.
 
-1. Sign in to Hugging Face under **Accounts** ([[⌘,]]) with a token that has write access. For the steps, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
+1. In **Accounts** ([[⌘,]]), sign in to Hugging Face with a token that has write access. For the steps, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
 2. In the **Simulate** tab, find the ready skill under **Train**. A ready row shows its Arena result, such as "32 of 32 tries".
-3. Right-click the row, then choose **Publish to Hugging Face**.
+3. In the ready skill's right-click menu, choose **Publish to Hugging Face**.
 
 ![The Stand row's right-click menu with Publish to Hugging Face and Install Skill](/help/publish-a-skill-to-hugging-face/menu.png)
 
-4. When the toast says "Published to" followed by the repo's name, click **Open** to see the repo on the Hub.
+4. In the "Published to" toast, click **Open** to see the repo on the Hub.
 
 ![The toast after publishing, with Open](/help/publish-a-skill-to-hugging-face/published.png)
 
@@ -50,6 +50,6 @@ Publishing creates the repo on your account and names it after the robot and the
 - The joint layout that Install Skill maps from
 - A model card tagged `basecase-skill`
 
-The tag lets Install Skill find your published skill and rank it for the open robot. Older Basecase repos without this tag are checked for `skill.json` too.
+The tag lets Install Skill find your published skill and rank it for the open robot. It also checks older repos tagged `basecase` for `skill.json`.
 
 To put the skill on another robot, see [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).

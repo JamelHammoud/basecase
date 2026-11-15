@@ -14,7 +14,7 @@ import type { ShowToast } from './types';
 import type { PlateFiles, WrittenPlates } from './usePlateWriter';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
-import { currentSlices } from '../print/slices';
+import { currentSlices, sliceLookup } from '../print/slices';
 
 interface PrintJobOptions {
   jobId: string;
@@ -175,7 +175,7 @@ export function usePrintJob(options: PrintJobOptions) {
   };
 
   const slices = currentSlices(slice, options.labels);
-  const freshSlice = (plate: Plate) => slices?.find((p) => p.number === plate.number && p.hash === plate.hash);
+  const freshSlice = sliceLookup(slices);
 
   return {
     jobId,

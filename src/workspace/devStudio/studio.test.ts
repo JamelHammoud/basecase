@@ -53,8 +53,6 @@ const NAMES_BEFORE_THE_SPLIT = [
   'keepStoredTries',
   'labelNotes',
   'lastDownload',
-  'lightenChecks',
-  'lightenState',
   'load',
   'mapMatching',
   'mapWorldState',

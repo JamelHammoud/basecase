@@ -60,6 +60,34 @@ const asset: WorldAsset = {
 const imported = { hash, asset };
 
 describe('imported worlds in Cases', () => {
+  it('prefers a recorded sensor origin on clear supported floor and falls back when it is blocked', () => {
+    const captured: WorldAsset = {
+      ...asset,
+      world: {
+        ...asset.world,
+        reconstruction: {
+          version: 1,
+          sourceTry: 'scan',
+          frame: 'map',
+          matching: true,
+          resolutionM: 0.1,
+          method: 'occupied-voxels',
+          unknown: 'unobserved',
+          occupied: [],
+          free: [],
+          origins: [[1, 0, 0]],
+          estimates: { floor: true, obstacleHeightM: 1 },
+        },
+      },
+    };
+
+    expect(openWorldSpot(captured, robot)).toEqual([1000, 0, 0]);
+
+    const blocked: WorldAsset = { ...captured, pieces: [...captured.pieces, box([800, 0, -200], [1200, 1000, 200])] };
+
+    expect(openWorldSpot(blocked, robot)).toEqual([0, 0, 0]);
+  });
+
   it('places a rover on clear floor beneath a tabletop without discarding its legs', () => {
     expect(openWorldSpot(asset, robot)).toEqual([0, 0, 0]);
     expect(importedScenery(imported, robot)).toHaveLength(1);

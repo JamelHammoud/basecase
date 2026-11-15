@@ -24,9 +24,11 @@ covers:
   - src/dataLayers/simMap.ts
   - src/workspace/useMapLayer.ts
   - src/components/layers/dataLayerMenu.ts
+  - src/dataLayers/mapWorld.ts
+  - src/workspace/useMapWorld.ts
 ---
 
-Combine a run's laser scans, point clouds or depth images into one height-colored map on the canvas.
+Keep a robot run's scans together on the canvas, or turn an imported recording into a saved world for simulation.
 
 Start with an [imported ROS recording](/help/play-a-ros-recordings-topics-in-the-console) containing scans or a [recorded simulated LiDAR try](/help/replay-a-robots-lidar-scan). A moving sensor needs recorded TF transforms or odometry to place its readings along the run. Its mounting frame must connect to the robot's base. A separate sensor TF subtree isn’t enough to place its readings. Depth images must include matching `CameraInfo` messages and optical-frame TF transforms.
 
@@ -46,6 +48,21 @@ Start with an [imported ROS recording](/help/play-a-ros-recordings-topics-in-the
 
 Scan matching starts on for imported readings. It uses overlapping surfaces to adjust their placement from the recorded poses. Poor starting poses, moving objects or repeated surfaces can still leave drift. Simulated LiDAR hits use their recorded world positions and bypass matching.
 
-The map keeps one average point in each 5 cm cube, up to 1,000,000 points. To hide it, hold your pointer over **Map** and click **Hide**. Maps stay out of captures and camera views. They can’t become collision geometry or a Case world.
+The map keeps one average point in each 5 cm cube, up to 1,000,000 points. To hide it, hold your pointer over **Map** and click **Hide**. Maps stay out of captures and camera views. Imported ROS maps can also become Case worlds. Simulated scan maps remain overlays.
+
+8. In **Layers**, right-click **Map**.
+9. Choose **Make World**.
+
+![The Map menu with Make World above Scan Matching](/help/map-a-robot-run/make-world.png)
+
+![New Case with Map selected and its estimated floor and obstacle height identified](/help/map-a-robot-run/new-case.png)
+
+10. In **New Case**, click **Make Case**.
+
+![The saved Map Case world after the source try closes](/help/map-a-robot-run/case-world.png)
+
+The world records the source try and scan-matching choice when you choose **Make World**. You can close the try and reopen the saved scene without losing the Case's world.
+
+Reconstruction uses 10 cm cells and refuses a world needing more than 64 collision pieces. It leaves unobserved regions open. A planar laser scan uses an estimated floor under observed free space and an estimated 1 m obstacle height. Depth and point-cloud recordings keep their observed surfaces, including floor patches and steps.
 
 For the individual scan at the playhead, see [Replay a robot's LiDAR scan](/help/replay-a-robots-lidar-scan).

@@ -47,6 +47,8 @@ const NAMES_BEFORE_THE_SPLIT = [
   'lastDownload',
   'load',
   'mapMatching',
+  'mapWorldState',
+  'mapWorldVerdict',
   'markPlatePrinted',
   'matTrack',
   'mates',

@@ -16,6 +16,8 @@ export interface SensorSweep {
   frame: string;
   points: Float32Array;
   optical?: boolean;
+  planar?: boolean;
+  rays?: boolean;
 }
 
 type Edge = TfTree['edges'] extends ReadonlyMap<string, infer E> ? E : never;
@@ -65,7 +67,14 @@ export class MapSession {
 
   private readonly retainHistory: boolean;
 
-  constructor(options: MapOptions = {}, retainHistory = false) {
+  private readonly observe?: (sweep: SensorSweep & { pose: THREE.Matrix4 }) => void;
+
+  constructor(
+    options: MapOptions = {},
+    retainHistory = false,
+    observe?: (sweep: SensorSweep & { pose: THREE.Matrix4 }) => void,
+  ) {
+    this.observe = observe;
     this.map = new ScanMap(options);
     this.retainHistory = retainHistory;
   }
@@ -104,7 +113,9 @@ export class MapSession {
     else if (schema === 'sensor_msgs/PointCloud2') this.sweepOf(message as PointCloud2, cloudSweep, at);
   }
 
-  sweep({ at, frame, points, optical = false }: SensorSweep): boolean {
+  sweep(sweep: SensorSweep): boolean {
+    const { at, frame, points, optical = false } = sweep;
+
     if (!points.length) return false;
 
     const place = this.placement(frame, at, optical);
@@ -115,7 +126,10 @@ export class MapSession {
 
     if (place.root !== this.fixed) return false;
 
-    this.placed.push({ at, frame, pose: this.map.add({ points, pose: place.pose }) });
+    const pose = this.map.add({ points, pose: place.pose });
+
+    this.placed.push({ at, frame, pose });
+    this.observe?.({ ...sweep, pose });
 
     if (!this.retainHistory && this.placed.length > MAP_PLACED_SWEEPS) this.placed.shift();
 

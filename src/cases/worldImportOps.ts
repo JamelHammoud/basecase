@@ -1,3 +1,4 @@
+import { refuse } from './validate';
 import { reply } from '../utils/workerRpc';
 import { hashWorldAsset, worldAssetJson } from './worldAssetHash';
 import { decomposeWorld, type WorldHull } from './worldDecomposition';
@@ -32,7 +33,25 @@ async function importWorld(request: WorldImportRequest) {
 
   if (world.kind === 'room') return reply<PreparedWorld>(world);
 
-  const pieces = await decomposeWorld(world.mesh);
+  return prepareMeshWorld(world);
+}
+
+export async function prepareMeshWorld(world: ImportedMeshWorld, exactPieces?: WorldHull[]) {
+  const pieces = exactPieces ?? (await decomposeWorld(world.mesh));
+
+  if (
+    !pieces.length ||
+    pieces.length > 64 ||
+    pieces.some(
+      (piece) =>
+        piece.positions.length < 12 ||
+        piece.positions.length > 96 * 3 ||
+        !piece.positions.every((value) => Number.isFinite(value) && Math.abs(value) <= 500_000) ||
+        !piece.indices.every((value) => value < piece.positions.length / 3),
+    )
+  )
+    refuse('World mesh', 'exceeds its collision limits');
+
   const asset = { world, pieces };
   const hash = await hashWorldAsset(asset);
   const serializedJson = worldAssetJson(asset);

@@ -1,3 +1,4 @@
+import { readWorldProvenance } from './worldProvenance';
 import { base64ToBytes } from '../utils/base64';
 import { asBoolean, asNumber, asRecord, asString, listOf, oneOf, optional, refuse, vector } from './validate';
 import type { WorldAsset } from './worldAssets';
@@ -206,6 +207,7 @@ export function readWorldAsset(value: unknown, budget: Budget = { bytes: 0, data
     world: {
       kind: 'mesh',
       name: asString(world.name, 'World name'),
+      ...(world.reconstruction === undefined ? {} : { reconstruction: readWorldProvenance(world.reconstruction) }),
       mesh: readMesh(world.mesh, budget),
       transform: readTransform(world.transform),
       splat: readSplat(world.splat, budget),

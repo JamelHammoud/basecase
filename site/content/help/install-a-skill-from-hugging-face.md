@@ -30,7 +30,7 @@ covers:
   - electron/hub/
 hub_the_design_agent_order: 15
 hub_the_design_agent: |
-  - Ask it to find published skills for the open robot. It ranks them as Install Skill does and gives a reason for each skill whose joints don't fit.
+  - Ask it to find published skills for the open robot. It ranks them as Install Skill does and gives a reason for each skill it can't install.
 ---
 
 Start your robot from a published skill that Basecase retrains on your robot and checks in Arena.
@@ -53,7 +53,7 @@ Install Skill works in the desktop app, on legged robots. It takes Motor Kit ski
 
 You can also right-click a row under **Train** and choose **Install Skill**. In **Install Skill**, you can paste a repo link into the field and press [[↩]] instead.
 
-The list puts skills whose joints fit first, then compares limb positions, then the source's Arena passes. A skill that doesn't fit appears last with its reason. Repos whose policy or Arena evidence doesn't match `skill.json` are left out. If the Hub can't be reached, the list is empty and you can still enter a link.
+The list puts skills Basecase can install first, then compares limb positions, then the source's Arena passes. Skills it can't install appear last with their reason. Repos whose policy or Arena evidence doesn't match `skill.json` are left out. If the Hub can't be reached, the list is empty and you can still enter a link.
 
 If a file doesn't match `skill.json`, the install stops and a toast shows the name of the file. Legs with a different number of joints don't fit, and the toast says how many joints each one has.
 

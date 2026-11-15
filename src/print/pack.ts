@@ -1,4 +1,5 @@
 import { overlaps, type Bed, type Rect } from './bed';
+import { packSpot } from './packSpot';
 
 export interface PackItem {
   id: string;
@@ -56,26 +57,7 @@ function newPlate(bed: Bed, gap: number): PlateSpace {
   return space;
 }
 
-function bestSpot(space: PlateSpace, w: number, d: number) {
-  let best: { rect: Rect; score: number } | null = null;
-
-  for (const f of space.free) {
-    if (w > f.w + EPS || d > f.d + EPS) continue;
-
-    const score = Math.min(f.w - w, f.d - d) * 1e6 + f.y * 1e3 + f.x;
-
-    if (!best || score < best.score) best = { rect: { x: f.x, y: f.y, w, d }, score };
-  }
-
-  return best;
-}
-
 function placeLoose(spaces: PlateSpace[], item: PackItem, gap: number, bed: Bed): Placement {
-  const options = [
-    { w: item.w + gap, d: item.d + gap, yaw: 0 },
-    { w: item.d + gap, d: item.w + gap, yaw: 90 },
-  ];
-
   for (let plate = Math.max(0, (item.startPlate ?? 1) - 1); ; plate++) {
     for (let p = 0; p < plate; p++) spaces[p] ??= newPlate(bed, gap);
 
@@ -83,20 +65,17 @@ function placeLoose(spaces: PlateSpace[], item: PackItem, gap: number, bed: Bed)
 
     spaces[plate] ??= newPlate(bed, gap);
 
-    const found = options
-      .map((o) => ({ o, spot: bestSpot(spaces[plate], o.w, o.d) }))
-      .filter((c) => c.spot)
-      .sort((a, b) => a.spot!.score - b.spot!.score)[0];
+    const found = packSpot(spaces[plate].free, item.w + gap, item.d + gap);
 
     if (!found && fresh) return { plate: plate + 1, x: 0, y: 0, w: item.w, d: item.d, yaw: 0 };
 
     if (!found) continue;
 
-    occupy(spaces[plate], found.spot!.rect);
+    occupy(spaces[plate], found.rect);
 
-    const { x, y } = found.spot!.rect;
+    const { x, y, w, d } = found.rect;
 
-    return { plate: plate + 1, x, y, w: found.o.w - gap, d: found.o.d - gap, yaw: found.o.yaw };
+    return { plate: plate + 1, x, y, w: w - gap, d: d - gap, yaw: found.yaw };
   }
 }
 

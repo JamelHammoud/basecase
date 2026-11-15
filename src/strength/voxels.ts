@@ -45,45 +45,54 @@ type Grid = { origin: V3; h: Cell; n: Cell };
 const centerOf = (grid: Grid, axis: 1 | 2, index: number) =>
   grid.origin[axis] + (index + 0.5 + (axis === 1 ? JITTER_Y : JITTER_Z)) * grid.h[axis];
 
-function centersCovered(grid: Grid, axis: 1 | 2, values: number[]): [number, number] {
+function centerIndex(grid: Grid, axis: 1 | 2, value: number): number {
   const jitter = axis === 1 ? JITTER_Y : JITTER_Z;
-  const at = (v: number) => (v - grid.origin[axis]) / grid.h[axis] - 0.5 - jitter;
 
-  return [
-    Math.max(0, Math.ceil(at(Math.min(...values)))),
-    Math.min(grid.n[axis] - 1, Math.floor(at(Math.max(...values)))),
-  ];
+  return (value - grid.origin[axis]) / grid.h[axis] - 0.5 - jitter;
 }
 
-function triangleHits(rows: Row[], tri: number[], grid: Grid) {
-  const [ax, ay, az, bx, by, bz, qx, qy, qz] = tri;
-  const det = (by - ay) * (qz - az) - (qy - ay) * (bz - az);
+function triangleHits(rows: Row[], tris: ArrayLike<number>, offset: number, grid: Grid) {
+  const ax = tris[offset];
+  const ay = tris[offset + 1];
+  const az = tris[offset + 2];
+  const bx = tris[offset + 3];
+  const by = tris[offset + 4];
+  const bz = tris[offset + 5];
+  const qx = tris[offset + 6];
+  const qy = tris[offset + 7];
+  const qz = tris[offset + 8];
+  const abx = bx - ax;
+  const aby = by - ay;
+  const abz = bz - az;
+  const aqx = qx - ax;
+  const aqy = qy - ay;
+  const aqz = qz - az;
+  const det = aby * aqz - aqy * abz;
 
   if (Math.abs(det) < 1e-12) return;
 
-  const [j0, j1] = centersCovered(grid, 1, [ay, by, qy]);
-  const [k0, k1] = centersCovered(grid, 2, [az, bz, qz]);
+  const j0 = Math.max(0, Math.ceil(centerIndex(grid, 1, Math.min(ay, by, qy))));
+  const j1 = Math.min(grid.n[1] - 1, Math.floor(centerIndex(grid, 1, Math.max(ay, by, qy))));
+  const k0 = Math.max(0, Math.ceil(centerIndex(grid, 2, Math.min(az, bz, qz))));
+  const k1 = Math.min(grid.n[2] - 1, Math.floor(centerIndex(grid, 2, Math.max(az, bz, qz))));
 
-  for (let k = k0; k <= k1; k++)
+  for (let k = k0; k <= k1; k++) {
+    const pz = centerOf(grid, 2, k) - az;
+
     for (let j = j0; j <= j1; j++) {
       const py = centerOf(grid, 1, j) - ay;
-      const pz = centerOf(grid, 2, k) - az;
-      const u = (py * (qz - az) - (qy - ay) * pz) / det;
-      const v = ((by - ay) * pz - py * (bz - az)) / det;
+      const u = (py * aqz - aqy * pz) / det;
+      const v = (aby * pz - py * abz) / det;
 
-      if (u >= 0 && v >= 0 && u + v <= 1) rows[k * grid.n[1] + j].hits.push(ax + u * (bx - ax) + v * (qx - ax));
+      if (u >= 0 && v >= 0 && u + v <= 1) rows[k * grid.n[1] + j].hits.push(ax + u * abx + v * aqx);
     }
+  }
 }
 
 function rowHits(tris: ArrayLike<number>, grid: Grid): Row[] {
   const rows: Row[] = Array.from({ length: grid.n[1] * grid.n[2] }, () => ({ hits: [] }));
 
-  for (let t = 0; t < tris.length; t += 9)
-    triangleHits(
-      rows,
-      Array.from({ length: 9 }, (_, i) => tris[t + i]),
-      grid,
-    );
+  for (let t = 0; t < tris.length; t += 9) triangleHits(rows, tris, t, grid);
 
   return rows;
 }

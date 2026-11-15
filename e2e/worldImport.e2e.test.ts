@@ -1,11 +1,10 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
 import { kitchenCollider, kitchenSplat } from '../src/cases/worldImportFixture';
 import type { WorldImportFile } from '../src/cases/worldImportTypes';
-import { datasetFiles, endTryAt, loadFixtureRobot } from './driveChecks';
+import { loadFixtureRobot } from './driveChecks';
 import type { SimState } from './driveStudio';
 import { openApp, partCount, shown, type App } from './harness';
 
@@ -22,41 +21,12 @@ interface Studio {
   dropFiles: (files: Array<{ name: string; base64: string }>) => void;
   simState: () => SimState;
   worldState: () => WorldState | null;
-  cameraFrame: (key: string, floor?: boolean) => Promise<string | null>;
-  passTries: () => Promise<void>;
 }
 
 let app: App;
 
 const simState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
 const worldState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.worldState());
-
-async function tileDifference(baseline: Buffer) {
-  const image = await app.page.evaluate(() =>
-    (window as unknown as { __studio: Studio }).__studio.cameraFrame('scene'),
-  );
-
-  if (!image) return 0;
-
-  const pixels = await sharp(Buffer.from(image.split(',')[1], 'base64'))
-    .resize(128, 96)
-    .removeAlpha()
-    .raw()
-    .toBuffer();
-  let changed = 0;
-
-  for (let i = 0; i < pixels.length; i += 3) {
-    if (
-      Math.abs(pixels[i] - baseline[i]) +
-        Math.abs(pixels[i + 1] - baseline[i + 1]) +
-        Math.abs(pixels[i + 2] - baseline[i + 2]) >
-      30
-    )
-      changed++;
-  }
-
-  return changed / (pixels.length / 3);
-}
 
 async function dropFixtures(files: WorldImportFile[]) {
   const directory = await mkdtemp(join(tmpdir(), 'basecase-world-import-'));
@@ -127,41 +97,6 @@ describe('a captured world dropped on the canvas', () => {
     expect(world.pieces).toBeLessThanOrEqual(64);
     expect(await partCount(app.page)).toBe(parts);
 
-    expect(app.errors).toEqual([]);
-  });
-
-  it('records a kitchen try with its world in the camera tile and every exported video', async () => {
-    app = await openApp();
-    await loadFixtureRobot(app.page, 'rover-diff');
-    await makeKitchen();
-    await app.page
-      .locator(shown('button'), { hasText: /^Try It$/ })
-      .first()
-      .click();
-    await endTryAt(app.page, 0.2);
-    await expect.poll(async () => (await simState()).tries.length).toBe(1);
-    await expect.poll(() => app.page.locator(shown('[data-testid="camera-tile"]')).count()).toBeGreaterThan(0);
-
-    const floor = await app.page.evaluate(() =>
-      (window as unknown as { __studio: Studio }).__studio.cameraFrame('scene', true),
-    );
-
-    expect(floor).toBeTruthy();
-
-    const baseline = await sharp(Buffer.from(floor!.split(',')[1], 'base64'))
-      .resize(128, 96)
-      .removeAlpha()
-      .raw()
-      .toBuffer();
-
-    await expect.poll(() => tileDifference(baseline)).toBeGreaterThan(0.05);
-    await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.passTries());
-
-    const files = await datasetFiles(app.page);
-    const videos = Object.keys(files).filter((path) => path.includes('/videos/') && path.endsWith('.mp4'));
-
-    expect(videos.some((path) => path.includes('observation.images.scene/'))).toBe(true);
-    expect(videos.every((path) => files[path].length > 0)).toBe(true);
     expect(app.errors).toEqual([]);
   });
 

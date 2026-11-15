@@ -67,9 +67,13 @@ function onePartCommands(inputs: CommandInputs): Command[] {
 
   const one = onePartActions(inputs, part);
 
-  return [...(isRotated(part) ? [one.resetRotation] : []), ...(one.quote ? [one.quote] : []), one.lock, one.hide].map(
-    (action) => paletteCommand(action, 'Selection'),
-  );
+  return [
+    ...(isRotated(part) ? [one.resetRotation] : []),
+    ...(one.quote ? [one.quote] : []),
+    ...(one.repair ? [one.repair] : []),
+    one.lock,
+    one.hide,
+  ].map((action) => paletteCommand(action, 'Selection'));
 }
 
 function arrangeCommands(inputs: CommandInputs): Command[] {

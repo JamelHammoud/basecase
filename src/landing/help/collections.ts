@@ -29,7 +29,7 @@ export const HELP_COLLECTIONS: CollectionInfo[] = [
   {
     slug: 'build-and-print',
     title: 'Build and print',
-    description: 'Clear the Checks, price the parts, and slice and send plates to your printer.',
+    description: 'Clear the Checks, price the parts, print the plates, and repair broken parts.',
   },
   {
     slug: 'operate',

@@ -241,25 +241,29 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
           ))}
         </div>
       )}
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[13px] text-white/60">Copies</span>
-        <div className="w-[112px]">
-          <NumberInput
-            value={part.print?.copies ?? 1}
-            min={1}
-            max={20}
-            step={1}
-            precision={0}
-            aria-label="Copies"
-            onChange={(v, live) => !live && set({ copies: v > 1 ? v : undefined })}
+      {!printing.repairId && (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[13px] text-white/60">Copies</span>
+            <div className="w-[112px]">
+              <NumberInput
+                value={part.print?.copies ?? 1}
+                min={1}
+                max={20}
+                step={1}
+                precision={0}
+                aria-label="Copies"
+                onChange={(v, live) => !live && set({ copies: v > 1 ? v : undefined })}
+              />
+            </div>
+          </div>
+          <SwitchRow
+            label="Don’t print"
+            checked={!!part.print?.skip}
+            onChange={(skip) => set({ skip: skip || undefined })}
           />
-        </div>
-      </div>
-      <SwitchRow
-        label="Don’t print"
-        checked={!!part.print?.skip}
-        onChange={(skip) => set({ skip: skip || undefined })}
-      />
+        </>
+      )}
       {labels && (
         <SwitchRow
           label="Don’t label"
@@ -308,7 +312,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
   const { ref, style } = useScrollFade();
   const plates = printing.report?.plan.plates ?? [];
   const plate = plates.find((p) => p.number === printing.mode?.plate) ?? plates[0];
-  const selected = parts.find((p) => p.id === printing.mode?.selected);
+  const selected = printing.repairPart ?? parts.find((p) => p.id === printing.mode?.selected);
   const sending = usePlateSend(printing);
 
   return (
@@ -331,7 +335,7 @@ export const PrintPanel: React.FC<PrintPanelProps> = (props) => {
               onChange={(labelParts) => props.onChangeProject({ labelParts })}
             />
           )}
-          {printing.printedCount > 0 && !printing.fitTest && (
+          {printing.printedCount > 0 && !printing.fitTest && !printing.repairId && (
             <SwitchRow
               label={`Skip ${plural(printing.printedCount, 'printed part')}`}
               checked={printing.skipPrinted}

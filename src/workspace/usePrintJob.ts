@@ -3,6 +3,8 @@ import type { PrinterSetup } from '../data/printers';
 import { bedOf } from '../print/bed';
 import { plateOnBed } from '../print/fleet';
 import { jobSpec } from '../print/job';
+import { projectJobSpec } from '../print/projectJob';
+import { reportsStatus } from './usePrintStatus';
 import type { Plate } from '../print/plan';
 import { printBridge, type JobPayload, type SliceRecord } from '../print/printBridge';
 import type { PrintMaterial, ProjectSettings } from '../types/robotics';
@@ -25,12 +27,19 @@ interface PrintJobOptions {
   showToast: ShowToast;
 }
 
-async function buildPayload(options: PrintJobOptions, material?: PrintMaterial): Promise<JobPayload> {
+async function buildPayload(options: PrintJobOptions, open?: { material?: PrintMaterial }): Promise<JobPayload> {
   const { report, printer, project, jobId, sceneName } = options;
 
   if (!report?.plan.plates.length) throw new Error('No plates to print. Add printed parts first.');
 
-  const spec = jobSpec(report.plan, printer, project);
+  const multiMaterial = open && new Set(report.plan.plates.map((p) => p.material)).size > 1;
+  const status =
+    multiMaterial && printer.mine && reportsStatus(printer.mine)
+      ? await printBridge.printerStatus(printer.mine.id).catch(() => null)
+      : null;
+  const spec = multiMaterial
+    ? projectJobSpec(report.plan, printer, project, status?.trays)
+    : jobSpec(report.plan, printer, project);
 
   if (!spec.printer)
     throw new Error(`${printer.label} has no slicer profile. Export the 3MF and set it up in your slicer.`);
@@ -42,7 +51,8 @@ async function buildPayload(options: PrintJobOptions, material?: PrintMaterial):
     name: sceneName,
     infillPct: project.infillPct,
     printer: spec.printer,
-    material,
+    material: open?.material,
+    project: spec.project,
     labels,
     groups: spec.groups.map((g) => ({ ...g, bytes: files[g.material] })),
   };
@@ -154,7 +164,7 @@ export function usePrintJob(options: PrintJobOptions) {
     showToast('Preparing the project…', { tone: 'progress' });
 
     try {
-      const opened = await printBridge.open(await buildPayload(options, material));
+      const opened = await printBridge.open(await buildPayload(options, { material }));
 
       showToast(
         opened.opened === 'default' ? `Opened ${options.sceneName}` : `Opened ${options.sceneName} in ${opened.opened}`,

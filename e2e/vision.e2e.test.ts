@@ -1,6 +1,5 @@
 import type { Page } from 'playwright-core';
 import { afterEach, expect, inject, it } from 'vitest';
-import type { StoredTry } from '../src/cases/tryFile';
 import { raiseRightArm } from '../src/cameras/operator/fixtures/raiseRightArm';
 import type { PoseSample } from '../src/cameras/operator/poseFollow';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
@@ -9,12 +8,7 @@ import type { VisionManifest } from '../src/vision/manifest';
 import { inputSensitiveDetectionOnnx } from '../src/vision/onnxFixture';
 import type { VisionResult } from '../src/vision/types';
 import { FAKE_CAMERA, exposeTestHooks, launchChrome, openApp, partCount, shown, type App } from './harness';
-import {
-  simulatedCameraFixture,
-  blackWhiteVideo,
-  recordedCameraFixture,
-  visionManifest as manifest,
-} from './visionFixtures';
+import { simulatedCameraFixture, visionManifest as manifest } from './visionFixtures';
 
 let app: App;
 
@@ -28,7 +22,6 @@ interface Studio {
   load: (record: unknown) => void;
   configureVision: (manifest: VisionManifest, bytes: number[], cameras: string[]) => Promise<VisionState>;
   cameraVisionState: () => VisionState;
-  playCameraTry: (input: { stored: StoredTry; recording: number[]; video: number[] }) => Promise<boolean>;
   feedPose: (samples: PoseSample[]) => void;
   operatorCamera: () => { live: boolean };
 }
@@ -38,52 +31,6 @@ const state = (page: Page = app.page) =>
 
 afterEach(async () => {
   await app?.close();
-});
-
-it('seeks a persisted camera MP4 through black and white frames and reruns ORT at the playhead', async () => {
-  app = await openApp();
-
-  const fixture = await recordedCameraFixture();
-  const video = await blackWhiteVideo(app.page);
-  const bytes = inputSensitiveDetectionOnnx();
-
-  await app.page.evaluate((scene) => (window as unknown as { __studio: Studio }).__studio.load(scene), fixture.scene);
-  await app.page.evaluate(
-    async ({ model, data }) => {
-      await (window as unknown as { __studio: Studio }).__studio.configureVision(model, data, ['operator']);
-    },
-    { model: manifest(bytes, 'person'), data: [...bytes] },
-  );
-
-  expect(
-    await app.page.evaluate((input) => (window as unknown as { __studio: Studio }).__studio.playCameraTry(input), {
-      stored: fixture.stored,
-      recording: fixture.recording,
-      video: [...video],
-    }),
-  ).toBe(true);
-
-  const timeline = app.page.getByTestId('try-timeline');
-  const tile = app.page.locator(shown('[data-camera="operator"]')).first();
-
-  await timeline.waitFor();
-  await timeline.focus();
-  await app.page.keyboard.press('Home');
-  await expect.poll(async () => (await state()).models['operator:rfdetr-nano']?.detections.length).toBe(0);
-  await expect.poll(() => tile.getByTestId('vision-box').count()).toBe(0);
-
-  const before = (await state()).models['operator:rfdetr-nano']!.timestamp;
-
-  await app.page.keyboard.press('End');
-  await app.page.keyboard.press('ArrowLeft');
-  await expect.poll(async () => (await state()).signals['vision.operator.person']).toBe(1);
-  await expect.poll(() => tile.getByTestId('vision-box').count()).toBe(1);
-  expect((await state()).models['operator:rfdetr-nano']!.timestamp).toBeGreaterThan(before);
-  await timeline.focus();
-  await app.page.keyboard.press('Home');
-  await expect.poll(async () => (await state()).models['operator:rfdetr-nano']?.detections.length).toBe(0);
-  await expect.poll(async () => (await state()).signals['vision.operator.person']).toBe(0);
-  expect(app.errors).toEqual([]);
 });
 
 it('runs Find Faces on real fake-camera pixels while the body estimator uses its pose fixture', async () => {

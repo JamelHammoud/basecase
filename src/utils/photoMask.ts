@@ -37,21 +37,38 @@ function centrality(box: MaskBox, mask: Mask): number {
 }
 
 export function pickSubject(instances: Mask[]): { mask: Mask; kept: number } | null {
-  const scored = instances
-    .map((mask) => ({ mask, box: maskBounds(mask), area: maskArea(mask) }))
-    .filter((s) => s.area > 0)
-    .map((s) => ({ ...s, score: s.area * centrality(s.box, s.mask) }))
-    .sort((a, b) => b.score - a.score);
+  const scored: Array<{ mask: Mask; box: MaskBox; score: number }> = [];
+  let main: (typeof scored)[number] | undefined;
 
-  if (!scored.length) return null;
+  for (const mask of instances) {
+    const area = maskArea(mask);
 
-  const [main] = scored;
-  const parts = scored.filter((s) => s === main || overlapShare(main.box, s.box) > 0.5);
+    if (!area) continue;
+
+    const box = maskBounds(mask);
+    const subject = { mask, box, score: area * centrality(box, mask) };
+
+    scored.push(subject);
+
+    if (!main || subject.score > main.score) main = subject;
+  }
+
+  if (!main) return null;
+
   const data = new Uint8Array(main.mask.data.length);
+  let kept = 0;
 
-  for (const { mask } of parts) for (let i = 0; i < data.length; i++) data[i] |= mask.data[i];
+  for (const subject of scored) {
+    const overlaps = subject === main || overlapShare(main.box, subject.box) > 0.5;
 
-  return { mask: { data, width: main.mask.width, height: main.mask.height }, kept: parts.length };
+    if (!overlaps) continue;
+
+    kept++;
+
+    for (let i = 0; i < data.length; i++) data[i] |= subject.mask.data[i];
+  }
+
+  return { mask: { data, width: main.mask.width, height: main.mask.height }, kept };
 }
 
 export interface EdgeContact {

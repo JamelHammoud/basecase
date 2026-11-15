@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Mask } from './silhouetteProfile';
-import { fitTarget } from './targetFit';
+import { cornerRadii, fitTarget } from './targetFit';
 
 function roundedRect({ w, h, r, scale }: { w: number; h: number; r: number; scale: number }): Mask {
   const width = Math.round((w + 40) * scale);
@@ -22,6 +22,30 @@ function roundedRect({ w, h, r, scale }: { w: number; h: number; r: number; scal
 }
 
 describe('target outlines', () => {
+  it('counts each empty corner pixel once when estimating its radius', () => {
+    const cells = Uint8Array.from({ length: 400 }, (_, i) => {
+      const x = i % 20;
+      const y = Math.floor(i / 20);
+
+      return (x >= 8 && x <= 11) || (y >= 8 && y <= 11) ? 1 : 0;
+    });
+    const pop = vi.spyOn(Array.prototype, 'pop');
+    let radii: ReturnType<typeof cornerRadii>;
+    let pops: number;
+
+    try {
+      radii = cornerRadii(cells, 20, 1);
+      pops = pop.mock.calls.length;
+    } finally {
+      pop.mockRestore();
+    }
+
+    const radius = Math.sqrt(64 / (1 - Math.PI / 4));
+
+    expect(radii).toEqual({ top: radius, bottom: radius });
+    expect(pops).toBe(256);
+  });
+
   it('measures how far a boxy head is from a rounder sketch', () => {
     const sketch = roundedRect({ w: 187, h: 176, r: 80, scale: 2 });
     const model = roundedRect({ w: 160, h: 176, r: 20, scale: 1.5 });

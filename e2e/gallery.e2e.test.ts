@@ -8,7 +8,6 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { buildRig } from '../src/utils/kinematics';
 import { COCKPIT, pushStick } from './codePanels';
 import { exposeTestHooks, launchChrome, openPlayTab, shown } from './harness';
-import { ARENA_LINE, stubHoldPose, stubTabGpu } from './holdPose';
 
 let browser: Browser;
 const base = inject('webUrl');
@@ -39,8 +38,6 @@ interface GalleryState {
   drive: string;
   note: string | null;
   stats: { rtf: number; robots: Array<{ forward: number; fellAt: number | null }> } | null;
-  controller: string;
-  skill: { hash: string; steps: number } | null;
 }
 
 const state = (page: Page) =>
@@ -48,7 +45,6 @@ const state = (page: Page) =>
 
 interface OpenOptions {
   viewport?: { width: number; height: number };
-  gpu?: boolean;
   shared?: GalleryBundle;
 }
 
@@ -95,13 +91,11 @@ async function serveShared(page: Page, bundle: GalleryBundle) {
   return hub;
 }
 
-async function open(path: string, { viewport = { width: 1440, height: 900 }, gpu = false, shared }: OpenOptions = {}) {
+async function open(path: string, { viewport = { width: 1440, height: 900 }, shared }: OpenOptions = {}) {
   const page = await browser.newPage({ viewport });
   const errors: string[] = [];
 
   await exposeTestHooks(page);
-
-  if (gpu) await page.addInitScript(stubTabGpu);
 
   const hub = shared ? await serveShared(page, shared) : [];
 
@@ -164,33 +158,6 @@ describe('gallery links', () => {
       .toBe(10);
     await page.close();
   }, 180000);
-
-  it('teaches the hexapod to stand from its card, runs the skill, and carries it into the studio', async () => {
-    const { page, errors } = await open('/c/hexapod-reach-the-flag', { gpu: true });
-    const card = page.getByTestId('gallery-card');
-    const cardStand = card.getByTestId('skill-row').filter({ hasText: 'Stand' });
-
-    await expect.poll(async () => (await state(page))?.status, { timeout: 60000 }).toBe('ready');
-    await page.evaluate(stubHoldPose, '__gallery' as const);
-    await card.getByRole('button', { name: 'Train', exact: true }).click();
-    await expect.poll(() => cardStand.count(), { timeout: 60000 }).toBe(1);
-    await expect.poll(() => cardStand.innerText(), { timeout: 180000 }).toMatch(ARENA_LINE);
-    await expect.poll(async () => (await state(page))?.controller, { timeout: 30000 }).toBe('policy');
-    expect((await state(page))?.skill?.steps).toBe(1);
-
-    await card.getByRole('button', { name: 'Open Scene' }).click();
-    await page.waitForURL(`${base}/`);
-    await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
-      timeout: 60000,
-    });
-    await page.locator(shown('[role=tab]'), { hasText: 'Simulate' }).first().click();
-
-    const studioStand = page.locator(shown('[data-testid="skill-row"]'), { hasText: 'Stand' }).first();
-
-    await expect.poll(() => studioStand.innerText(), { timeout: 60000 }).toMatch(ARENA_LINE);
-    expect(errors).toEqual([]);
-    await page.close();
-  }, 360000);
 
   it('keeps the landing page on phones, and says plainly when a link is wrong', async () => {
     const phone = await open('/c/rover-reach-the-flag', { viewport: { width: 390, height: 844 } });

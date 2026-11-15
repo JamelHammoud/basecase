@@ -150,7 +150,7 @@ afterEach(async () => {
 });
 
 describe('a captured world dropped on the canvas', () => {
-  it('imports a kitchen, saves a try, shows its world in the live camera and exports Scene videos', async () => {
+  it('opens New Case with its splat and separate colliders without adding scene parts', async () => {
     app = await openApp();
     await loadFixtureRobot(app.page, 'rover-diff');
 
@@ -167,8 +167,15 @@ describe('a captured world dropped on the canvas', () => {
     expect(world.pieces).toBeLessThanOrEqual(64);
     expect(await partCount(app.page)).toBe(parts);
 
-    await recordKitchenTry();
     await expectKitchenCamera();
+    expect(app.errors).toEqual([]);
+  });
+
+  it('records a kitchen try and exports Scene videos in both LeRobot layouts', async () => {
+    app = await openApp();
+    await loadFixtureRobot(app.page, 'rover-diff');
+    await makeKitchen();
+    await recordKitchenTry();
     await expectKitchenDataset();
     expect(app.errors).toEqual([]);
   });

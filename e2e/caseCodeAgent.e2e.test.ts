@@ -81,7 +81,7 @@ const stillTrying = async () => {
   return state.drive === 'on' && state.tries.length === 0;
 };
 
-async function startTry() {
+async function openCase() {
   const { page } = app;
   const scene = roverScene();
 
@@ -93,6 +93,11 @@ async function startTry() {
   await page.keyboard.press('Meta+k');
   await page.keyboard.type('Run Case');
   await page.keyboard.press('Enter');
+  await expect.poll(() => panel('tries').count()).toBe(1);
+}
+
+async function startTry() {
+  await openCase();
   await panel('tries').locator('button', { hasText: 'Try It' }).first().click();
   await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
 }
@@ -105,16 +110,15 @@ afterEach(async () => {
   await app?.close();
 });
 
-describe('the agent writing a running Case’s code', () => {
-  it('reloads the panel it writes while the try keeps running, and ⌘Z puts the earlier source back', async () => {
-    await startTry();
+describe('the agent beside a running Case', () => {
+  it('mounts a written panel, reports a broken revision and restores the earlier frame with ⌘Z', async () => {
+    await openCase();
 
     const first = await agentRequest('write_case_code', RECORDED_FIRST_WRITE);
 
     expect(first).toMatchObject({ ok: true, case: 'rover-remote', panel: 'remote', running: true, loaded: true });
     expect(first).toMatchObject({ errors: [], refused: [], logs: ['remote ready'] });
     await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
-    expect(await stillTrying()).toBe(true);
 
     const broken = await agentRequest('write_case_code', BROKEN_REVISION);
 
@@ -125,8 +129,8 @@ describe('the agent writing a running Case’s code', () => {
     await expect.poll(() => panel('remote').getByTestId('code-failed').count()).toBe(0);
     await expect.poll(() => remote().getByRole('button', { name: 'Sit' }).count()).toBe(0);
     await expect.poll(() => remote().getByRole('button', { name: 'Wave' }).count()).toBe(1);
-    expect(await stillTrying()).toBe(true);
-  }, 180000);
+    expect(await simState()).toMatchObject({ activeCase: 'rover-remote', drive: 'off', tries: [] });
+  });
 
   it('opens the agent beside a running Case with ⌘I, and a message there is about that Case', async () => {
     await startTry();

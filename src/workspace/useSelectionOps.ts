@@ -22,7 +22,7 @@ export function booleanDone(op: BooleanOp, base: ScenePart, tools: ScenePart[]):
 const DUPLICATE_STEP = 15;
 
 export function duplicateParts(parts: ScenePart[], scene: ScenePart[]): ScenePart[] {
-  const groupNames = scene.flatMap((p) => (p.group ? [p.group.name] : []));
+  const groupNames = new Set(scene.flatMap((p) => (p.group ? [p.group.name] : [])));
   const groupMap = new Map<string, { id: string; name: string }>();
   const copyGroup = (group: ScenePart['group']) => {
     if (!group) return group;

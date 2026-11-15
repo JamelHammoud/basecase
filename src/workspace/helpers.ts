@@ -11,12 +11,13 @@ export const normalizeProject = (p: ProjectSettings): ProjectSettings => {
 export const projectFromSeed = (project?: ProjectSettings): ProjectSettings =>
   normalizeProject({ ...DEFAULT_PROJECT, ...project });
 
-export function copyName(name: string, taken: string[]): string {
+export function copyName(name: string, taken: string[] | Set<string>): string {
+  const names = taken instanceof Set ? taken : new Set(taken);
   const stem = `${name.replace(/ copy( \d+)?$/i, '')} copy`;
   let n = 1;
   let next = stem;
 
-  while (taken.includes(next)) next = `${stem} ${++n}`;
+  while (names.has(next)) next = `${stem} ${++n}`;
 
   return next;
 }

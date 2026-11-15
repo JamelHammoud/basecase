@@ -159,7 +159,7 @@ const libraryBridge = {
 
     const { data } = await get<{ data: string | null }>(`/sourced-mesh${query('id', id)}`);
 
-    return data ? Uint8Array.from(atob(data), (c) => c.charCodeAt(0)).buffer : null;
+    return data ? base64ToBytes(data).buffer : null;
   },
   importMakerCad: (payload: unknown): Promise<{ item: SourcedItem; members: string[]; mismatch: string | null }> =>
     electron()?.importMakerCad(payload) ?? post('/sourced-import-cad', payload),

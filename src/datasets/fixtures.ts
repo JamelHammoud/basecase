@@ -1,13 +1,12 @@
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, Mp4OutputFormat, Output } from 'mediabunny';
 import { columnStats, DATASET_FPS, type DatasetSegment, type EpisodeData } from './episodes';
 import type { DatasetEpisode, DatasetSpec } from './lerobotRows';
+import { base64ToBytes } from '../utils/base64';
 
 export const FIXTURE_WIDTH = 64;
 export const FIXTURE_HEIGHT = 48;
 
-const fromBase64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
-
-export const AVC_DESCRIPTION = fromBase64('AULACv/hABZnQsAK3EewEQAAAwABAAADADIPEieAAQAFaM4PLIA=');
+export const AVC_DESCRIPTION = base64ToBytes('AULACv/hABZnQsAK3EewEQAAAwABAAADADIPEieAAQAFaM4PLIA=');
 
 const KEY_FRAMES = ['AAAAHWWIhAS8RigACeHHAAETKOAAIfcnJyddddddddeA', 'AAAAHWWIggF/EYoAAtvxwABG4jgACLbJycnXXXXXXXXg'];
 
@@ -32,7 +31,7 @@ export async function fixtureClip({ frames, description = AVC_DESCRIPTION }: Cli
   await output.start();
 
   for (let i = 0; i < frames; i++) {
-    const packet = new EncodedPacket(fromBase64(KEY_FRAMES[i % 2]), 'key', i / DATASET_FPS, 1 / DATASET_FPS);
+    const packet = new EncodedPacket(base64ToBytes(KEY_FRAMES[i % 2]), 'key', i / DATASET_FPS, 1 / DATASET_FPS);
 
     await source.add(packet, i === 0 ? { decoderConfig } : undefined);
   }

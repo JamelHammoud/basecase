@@ -15,39 +15,75 @@ const NORMAL_A = new THREE.Vector3();
 const NORMAL_B = new THREE.Vector3();
 const LINE = new THREE.Vector3();
 
-type Corners = [THREE.Vector3, THREE.Vector3, THREE.Vector3];
+class TriangleCut {
+  readonly corners: THREE.Vector3[] = [];
+  readonly sides = [0, 0, 0];
+  readonly projections = [0, 0, 0];
+  from = 0;
+  to = 0;
+  firstEdge = -1;
 
-const cornersOf = (t: ExtendedTriangle): Corners => [t.a, t.b, t.c];
+  set(triangle: ExtendedTriangle, origin: THREE.Vector3, normal: THREE.Vector3): boolean {
+    const { corners, sides } = this;
 
-function planeSides(corners: Corners, origin: THREE.Vector3, normal: THREE.Vector3): [number, number, number] {
-  return corners.map(
-    (v) => normal.x * (v.x - origin.x) + normal.y * (v.y - origin.y) + normal.z * (v.z - origin.z),
-  ) as [number, number, number];
-}
+    corners[0] = triangle.a;
+    corners[1] = triangle.b;
+    corners[2] = triangle.c;
 
-const straddles = (sides: number[]) => Math.min(...sides) < -PLANE_EPS && Math.max(...sides) > PLANE_EPS;
+    for (let i = 0; i < 3; i++) {
+      const v = corners[i];
 
-function spanAlong(corners: Corners, sides: number[], line: THREE.Vector3): [number, number] {
-  const ts: number[] = [];
+      sides[i] = normal.x * (v.x - origin.x) + normal.y * (v.y - origin.y) + normal.z * (v.z - origin.z);
+    }
 
-  for (let i = 0; i < 3; i++) {
-    const j = (i + 1) % 3;
-    const opposite = sides[i] * sides[j] < 0;
-
-    if (!opposite) continue;
-
-    const at = sides[i] / (sides[i] - sides[j]);
-
-    ts.push(corners[i].dot(line) + (corners[j].dot(line) - corners[i].dot(line)) * at);
+    return Math.min(sides[0], sides[1], sides[2]) < -PLANE_EPS && Math.max(sides[0], sides[1], sides[2]) > PLANE_EPS;
   }
 
-  return ts.length < 2 ? [0, 0] : [Math.min(...ts), Math.max(...ts)];
+  span(line: THREE.Vector3): void {
+    const { corners, sides, projections } = this;
+
+    for (let i = 0; i < 3; i++) projections[i] = corners[i].dot(line);
+
+    this.from = Infinity;
+    this.to = -Infinity;
+    this.firstEdge = -1;
+
+    let count = 0;
+
+    for (let i = 0; i < 3; i++) {
+      const j = (i + 1) % 3;
+      const opposite = sides[i] * sides[j] < 0;
+
+      if (!opposite) continue;
+
+      const at = sides[i] / (sides[i] - sides[j]);
+      const t = projections[i] + (projections[j] - projections[i]) * at;
+
+      this.from = Math.min(this.from, t);
+      this.to = Math.max(this.to, t);
+
+      if (count === 0) this.firstEdge = i;
+
+      count++;
+    }
+
+    if (count < 2) this.from = this.to = 0;
+  }
+
+  point(): THREE.Vector3 {
+    const i = this.firstEdge;
+    const j = (i + 1) % 3;
+    const at = this.sides[i] / (this.sides[i] - this.sides[j]);
+
+    return this.corners[i].clone().lerp(this.corners[j], at);
+  }
 }
 
-function crossingOf(a: ExtendedTriangle, b: ExtendedTriangle): Crossing | null {
-  const ca = cornersOf(a);
-  const cb = cornersOf(b);
-
+function crossingOf(
+  a: ExtendedTriangle,
+  b: ExtendedTriangle,
+  cuts: { a: TriangleCut; b: TriangleCut },
+): Crossing | null {
   a.getNormal(NORMAL_A);
   b.getNormal(NORMAL_B);
   LINE.crossVectors(NORMAL_A, NORMAL_B);
@@ -56,22 +92,17 @@ function crossingOf(a: ExtendedTriangle, b: ExtendedTriangle): Crossing | null {
 
   LINE.normalize();
 
-  const sidesA = planeSides(ca, b.a, NORMAL_B);
-  const sidesB = planeSides(cb, a.a, NORMAL_A);
+  if (!cuts.a.set(a, b.a, NORMAL_B) || !cuts.b.set(b, a.a, NORMAL_A)) return null;
 
-  if (!straddles(sidesA) || !straddles(sidesB)) return null;
+  cuts.a.span(LINE);
+  cuts.b.span(LINE);
 
-  const [a0, a1] = spanAlong(ca, sidesA, LINE);
-  const [b0, b1] = spanAlong(cb, sidesB, LINE);
-  const from = Math.max(a0, b0);
-  const to = Math.min(a1, b1);
+  const from = Math.max(cuts.a.from, cuts.b.from);
+  const to = Math.min(cuts.a.to, cuts.b.to);
 
   if (to - from <= SEGMENT_EPS) return null;
 
-  const onA = sidesA.findIndex((s, i) => s * sidesA[(i + 1) % 3] < 0);
-  const next = ca[(onA + 1) % 3];
-  const at = sidesA[onA] / (sidesA[onA] - sidesA[(onA + 1) % 3]);
-  const onPlane = ca[onA].clone().lerp(next, at);
+  const onPlane = cuts.a.point();
   const along = (from + to) / 2 - onPlane.dot(LINE);
 
   return {
@@ -85,10 +116,11 @@ const MAX_GATHERED = 2048;
 export function crossingsOf(A: Placed, B: Placed, keep: number): Crossing[] {
   const found: Crossing[] = [];
   const bToA = A.inverse.clone().multiply(B.matrix);
+  const cuts = { a: new TriangleCut(), b: new TriangleCut() };
 
   A.solid.bvh.bvhcast(B.solid.bvh, bToA, {
     intersectsTriangles: (t1: ExtendedTriangle, t2: ExtendedTriangle) => {
-      const crossing = crossingOf(t1, t2);
+      const crossing = crossingOf(t1, t2, cuts);
 
       if (crossing) found.push(crossing);
 

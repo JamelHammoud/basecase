@@ -64,7 +64,7 @@ export function plainPunctuation(text) {
 const frontMatter = (text) => (text.startsWith('---') ? text.slice(0, text.indexOf('\n---', 3) + 4) : '');
 
 const MARKERS = [
-  /Closes #\d+/g,
+  /(?:Closes|Rebuilds) #\d+/g,
   /^copy: .*$/gm,
   /^(?:Request|Idea|Arc|Kind): .*$/gm,
   /Depends on\*{0,2}[^\n]*/g,

@@ -5,6 +5,7 @@ import { checkedRun } from './preflight.mjs';
 import { publish } from './pull.mjs';
 import { markRebuilt } from './pullState.mjs';
 import { run } from './sh.mjs';
+import { stepsOf } from './stepLinks.mjs';
 import { close, openBranch } from './worktree.mjs';
 
 const SCHEMA = {
@@ -17,14 +18,15 @@ const SCHEMA = {
   required: [...CHANGE_SCHEMA.required, 'abandon', 'verdict'],
 };
 
-const stepOf = (pull) => Number(/Closes #(\d+)/.exec(pull.body)?.[1]) || null;
+export const rebuildChange = (pull, change) => ({
+  ...change,
+  links: [`Rebuilds #${pull.number}.`, ...stepsOf(pull).map((step) => `Closes #${step}.`)],
+});
 
 function retire(pull, { verdict, stuck }, log) {
   closePull(pull.number, `Closed after it ${stuck}. ${verdict}`);
 
-  const step = stepOf(pull);
-
-  if (step) {
+  for (const step of stepsOf(pull)) {
     appendToIssue(step, `**An earlier attempt (#${pull.number}) was closed:** ${verdict}`);
     editIssueLabels(step, { add: ['loop:next'], remove: ['loop:building'] });
     commentOnIssue(step, `#${pull.number} was closed and this step is back in the queue, with the reason added above.`);
@@ -76,11 +78,7 @@ export function rebuild(pull, { comments, stuck, log }) {
 
     closePull(pull.number, `Rebuilding this from main after it ${stuck}. ${out.verdict}`);
 
-    const step = stepOf(pull);
-    const url = publish(
-      { ...out, links: [`Rebuilds #${pull.number}.`, ...(step ? [`Closes #${step}.`] : [])] },
-      worktree,
-    );
+    const url = publish(rebuildChange(pull, out), worktree);
 
     if (url) commentOnPull(pull.number, `Rebuilt as ${url}.`);
 

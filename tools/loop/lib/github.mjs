@@ -1,3 +1,4 @@
+import { stepLabels } from './stepLinks.mjs';
 import { cached } from './cache.mjs';
 import { failureDigest, jobsOf, withTimeouts } from './failedLog.mjs';
 import { LOOP_MARK, withMark } from './mark.mjs';
@@ -99,7 +100,7 @@ export const commentOnPull = (number, body) =>
 export const mergePull = (number, method = 'squash') =>
   run('gh', ['pr', 'merge', String(number), `--${method}`, '-R', repo()], { allowFail: true });
 
-const MISSING_LABEL = /'(loop:[a-z-]+)' not found/;
+const MISSING_LABEL = /'(loop:[a-z0-9:-]+)' not found/;
 
 export const missingLabel = (stderr) => MISSING_LABEL.exec(stderr)?.[1] ?? null;
 
@@ -118,7 +119,19 @@ function ghCreating(args, { input, tries = 4 }) {
 
 export const createPull = ({ branch, title, body, label }) =>
   ghCreating(
-    ['pr', 'create', '--base', 'main', '--head', branch, '--title', title, '--body-file', '-', '--label', label],
+    [
+      'pr',
+      'create',
+      '--base',
+      'main',
+      '--head',
+      branch,
+      '--title',
+      title,
+      '--body-file',
+      '-',
+      ...[label, ...stepLabels({ body, headRefName: branch })].flatMap((name) => ['--label', name]),
+    ],
     {
       input: body,
     },
@@ -309,10 +322,18 @@ export function editPullLabels(number, change) {
 }
 
 export const editPull = (number, { title, body }) =>
-  run('gh', ['pr', 'edit', String(number), ...(title ? ['--title', title] : []), '--body-file', '-'], {
-    input: body,
-    allowFail: true,
-  });
+  ghCreating(
+    [
+      'pr',
+      'edit',
+      String(number),
+      ...(title ? ['--title', title] : []),
+      '--body-file',
+      '-',
+      ...stepLabels({ body }).flatMap((name) => ['--add-label', name]),
+    ],
+    { input: body },
+  );
 
 export const pullComments = (number) =>
   json('gh', [

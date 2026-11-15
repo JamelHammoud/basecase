@@ -1,5 +1,6 @@
 import type { AnalyzedImageFeatures } from './imageTo3DAnalyzer';
 import { borderPixels, floodPixels } from './pixelFlood';
+import { simplifyPolygon } from './simplifyPolygon';
 
 type Point = [number, number];
 
@@ -9,42 +10,6 @@ function rgbToHex(r: number, g: number, b: number): string {
   const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
 
   return '#' + [clamp(r), clamp(g), clamp(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
-}
-
-function pointLineDistance(p: Point, a: Point, b: Point): number {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const lenSq = dx * dx + dy * dy;
-
-  if (lenSq === 0) return Math.hypot(p[0] - a[0], p[1] - a[1]);
-
-  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / lenSq));
-
-  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
-}
-
-function simplifyPolygon(points: Point[], epsilon: number): Point[] {
-  if (points.length <= 4) return points;
-
-  let dmax = 0;
-  let index = 0;
-  const end = points.length - 1;
-
-  for (let i = 1; i < end; i++) {
-    const dist = pointLineDistance(points[i], points[0], points[end]);
-
-    if (dist > dmax) {
-      index = i;
-      dmax = dist;
-    }
-  }
-
-  if (dmax <= epsilon) return [points[0], points[end]];
-
-  const rec1 = simplifyPolygon(points.slice(0, index + 1), epsilon);
-  const rec2 = simplifyPolygon(points.slice(index), epsilon);
-
-  return rec1.slice(0, rec1.length - 1).concat(rec2);
 }
 
 interface ForegroundScan {

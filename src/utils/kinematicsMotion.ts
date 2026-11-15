@@ -40,7 +40,7 @@ export function jointMotion(j: RobotJoint, value: number, out = new THREE.Matrix
   _q.setFromAxisAngle(_v, THREE.MathUtils.degToRad(value));
   out.makeRotationFromQuaternion(_q);
 
-  const r = _o.clone().applyQuaternion(_q);
+  const r = _v.copy(_o).applyQuaternion(_q);
 
   out.setPosition(_o.x - r.x, _o.y - r.y, _o.z - r.z);
 

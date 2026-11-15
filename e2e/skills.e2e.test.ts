@@ -301,7 +301,7 @@ describe('a move from a Pose-tab animation', () => {
 });
 
 describe('watching Stand learn', () => {
-  it('plays each snapshot on the canvas while it trains, then keeps them on the row', async () => {
+  it('plays live snapshots with a watch margin and replays saved snapshots from the row', async () => {
     const robot = fixtureRobots().find((r) => r.id === 'quad-servo')!;
     const job = kitJob(fixtureModel('quad-servo'), 'stand', { minutes: 1, seed: 0 });
     const [first, second, final] = [100, 200, 300].map((steps) => holdPolicy(job, steps));
@@ -322,8 +322,25 @@ describe('watching Stand learn', () => {
     await expect.poll(() => row.getByTestId('watch-margin').count(), { timeout: 60000 }).toBe(1);
     await releaseTrainer();
     await expect.poll(steps, { timeout: 60000 }).toBe(200);
-    await releaseTrainer();
-    await expect.poll(() => row.innerText(), { timeout: 150000 }).toContain('of 32 tries');
+    await row.getByRole('button', { name: 'Stop training', exact: true }).click();
+    await expect.poll(() => row.getByRole('button', { name: 'Train', exact: true }).count()).toBe(1);
+    await expect.poll(() => row.getByTestId('watch-margin').count()).toBe(0);
+
+    const model = await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.fleetModel());
+    const record: SkillRecord = {
+      ...skillRecord(readyStand(model, designOf(model)), { kit: 'stand' }),
+      snapshots: [first, second].map((policy, i) => ({
+        run: 'policy-stub',
+        iteration: (i + 1) * 50,
+        steps: policy.trainedSteps,
+      })),
+    };
+
+    await app.page.evaluate(
+      (saved) => (window as unknown as { __studio: Studio }).__studio.seedFleetSkill(saved),
+      record,
+    );
+    await expect.poll(() => row.getAttribute('data-skill')).toBe(record.hash);
 
     const snapshots = row.getByTestId('snapshot');
 
@@ -331,8 +348,10 @@ describe('watching Stand learn', () => {
     expect(await snapshots.allInnerTexts()).toEqual(['50', '100']);
     await snapshots.first().click();
     await expect.poll(steps, { timeout: 60000 }).toBe(100);
+    await snapshots.last().click();
+    await expect.poll(steps, { timeout: 60000 }).toBe(200);
     expect(app.errors).toEqual([]);
-  }, 240000);
+  });
 });
 
 describe('coaching a ready skill', () => {

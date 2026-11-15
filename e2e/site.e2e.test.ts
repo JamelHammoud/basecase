@@ -172,7 +172,9 @@ describe('basecase.so', () => {
     }).trim();
 
     expect(await page.locator('article time').getAttribute('dateTime')).toBe(date);
-    expect(await page.locator('article').innerText()).toContain('Ask which servo to buy.');
+    expect(await page.locator('article').innerText()).toContain(
+      'Ask it to compare design choices. It runs Study on combinations of servos, power supplies and part sizes, with Checks, cost, mass and optional Case passes.',
+    );
     expect(await page.locator('article').innerText()).not.toContain('{{help-hub}}');
     await page.locator('article a[href="/help/make-training-images"]').click();
     await page.waitForURL(`${base}/help/make-training-images`);

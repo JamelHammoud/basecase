@@ -250,17 +250,34 @@ export const entityPoints = (e: SketchEntity) => {
 
 const usedPoints = (entities: SketchEntity[]) => new Set(entities.flatMap(entityPoints));
 
-export function removeItems(sketch: Sketch, ids: string[]): Sketch {
-  const isRef = (id: string) => {
-    const e = entityOf(sketch, id);
+function removableIds(entities: SketchEntity[], ids: string[]): Set<string> {
+  const gone = new Set(ids);
+  const unchecked = new Set(gone);
 
-    return e?.kind === 'line' && !!e.ref;
-  };
-  const gone = new Set(ids.filter((id) => !isRef(id)));
+  if (unchecked.size === 0) return gone;
+
+  for (const entity of entities) {
+    if (!unchecked.delete(entity.id)) continue;
+
+    if (entity.kind === 'line' && entity.ref) gone.delete(entity.id);
+
+    if (unchecked.size === 0) break;
+  }
+
+  return gone;
+}
+
+export function removeItems(sketch: Sketch, ids: string[]): Sketch {
+  const gone = removableIds(sketch.entities, ids);
   const entities = sketch.entities.filter((e) => !gone.has(e.id));
   const used = usedPoints(entities);
-  const points = sketch.points.filter((p) => p.fixed || used.has(p.id));
-  const dropped = new Set([...gone, ...sketch.points.filter((p) => !points.includes(p)).map((p) => p.id)]);
+  const points: SketchPoint[] = [];
+  const dropped = new Set(gone);
+
+  for (const point of sketch.points) {
+    if (point.fixed || used.has(point.id)) points.push(point);
+    else dropped.add(point.id);
+  }
 
   return {
     points,

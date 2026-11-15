@@ -77,7 +77,7 @@ describe('a scanned room', () => {
   it('refuses a broken room file with a toast', async () => {
     await dropFile('Broken.json', '{"walls": [{"dimensions": [NaN, 2, 0]}]}');
     await expect
-      .poll(() => app.page.getByRole('status').filter({ hasText: 'Couldn’t import Broken.json.' }).count())
+      .poll(() => app.page.getByRole('status').filter({ hasText: 'A room file must be JSON' }).count())
       .toBeGreaterThan(0);
   });
 

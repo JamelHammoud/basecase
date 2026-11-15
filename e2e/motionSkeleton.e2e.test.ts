@@ -39,11 +39,11 @@ describe('Design From Motion', () => {
       project: DEFAULT_PROJECT,
     });
     await expect.poll(async () => (await record()).parts.length).toBe(0);
-    await app.page.keyboard.press('Meta+k');
-    await app.page.keyboard.type('Design From Motion');
 
     const chooser = app.page.waitForEvent('filechooser');
 
+    await app.page.keyboard.press('Meta+k');
+    await app.page.keyboard.type('Design From Motion');
     await app.page.keyboard.press('Enter');
     await (await chooser).setFiles({ name: 'Broken.bvh', mimeType: 'text/plain', buffer: Buffer.from('broken') });
 

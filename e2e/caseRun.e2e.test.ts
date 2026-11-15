@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ARC_CONSOLES } from '../src/cases/console/fixtures/arcConsoles';
 import { presetCase } from '../src/cases/caseBuilder';
 import { buildRig } from '../src/utils/kinematics';
@@ -11,6 +11,7 @@ let app: App;
 
 interface SimState {
   drive: string;
+  playing: boolean;
   activeCase: string | null;
   caseSeconds: number | null;
   tries: Array<{ passed: boolean; seconds: number }>;
@@ -78,12 +79,12 @@ function armWithCamera() {
   };
 }
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
   await app.page.addScriptTag({ content: FAKE_DAEMON_SCRIPT });
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
@@ -132,6 +133,7 @@ describe('Run Case', () => {
 
     await inPanel('tries', 'Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    expect((await simState()).playing).toBe(true);
     await inPanel('tries', 'Stop Try').click();
     await expect.poll(async () => (await simState()).tries.length, { timeout: 30000 }).toBe(1);
 
@@ -196,6 +198,7 @@ describe('Run Case', () => {
 
     await inPanel('go', 'Try It').click();
     await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    expect((await simState()).playing).toBe(true);
     await expect.poll(() => inPanel('reset', 'Reset').isDisabled()).toBe(true);
     await expect
       .poll(async () => Number.parseFloat((await clock.textContent()) ?? '60'), { timeout: 30000 })

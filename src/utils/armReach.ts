@@ -90,10 +90,16 @@ function elbowSolutions({ cx, cw, phi }: WristCentre, l2: number, l3: number): P
 
   if (Math.abs(cos) > 1) return null;
 
+  const bend = Math.acos(cos) / DEG;
+
+  if (bend > LIMITS.elbow_pitch) return null;
+
+  const toward = Math.atan2(cw, cx);
+  const offset = Math.atan2(l3 * Math.sin(bend * DEG), l2 + l3 * Math.cos(bend * DEG));
+
   for (const sign of [1, -1]) {
-    const elbow = (sign * Math.acos(cos)) / DEG;
-    const shoulder =
-      (Math.atan2(cw, cx) - Math.atan2(l3 * Math.sin(elbow * DEG), l2 + l3 * Math.cos(elbow * DEG))) / DEG;
+    const elbow = sign * bend;
+    const shoulder = (toward - sign * offset) / DEG;
     const wrist = wrapDeg(phi - shoulder - elbow);
     const fits =
       Math.abs(elbow) <= LIMITS.elbow_pitch &&

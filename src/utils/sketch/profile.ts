@@ -74,7 +74,7 @@ function edgePoints(edge: Edge, from: string, point: (id: string) => Vec2): Vec2
   return ordered.slice(0, -1);
 }
 
-function walkLoop(start: Edge, byPoint: Map<string, Edge[]>, used: Set<string>, point: (id: string) => Vec2) {
+function walkLoop(start: Edge, next: (id: string) => Edge | undefined, used: Set<string>, point: (id: string) => Vec2) {
   const out: Vec2[] = [];
   const origin = start.a;
   let edge: Edge | undefined = start;
@@ -87,7 +87,7 @@ function walkLoop(start: Edge, byPoint: Map<string, Edge[]>, used: Set<string>, 
 
     if (at === origin) return out;
 
-    edge = (byPoint.get(at) ?? []).find((e) => !used.has(e.id));
+    edge = next(at);
   }
 
   return null;
@@ -95,19 +95,37 @@ function walkLoop(start: Edge, byPoint: Map<string, Edge[]>, used: Set<string>, 
 
 function edgeLoops(sketch: Sketch, point: (id: string) => Vec2): Vec2[][] {
   const edges = sketch.entities.filter((e): e is Edge => (e.kind === 'line' && !e.ref) || e.kind === 'arc');
-  const byPoint = new Map<string, Edge[]>();
+  const byPoint = new Map<string, { edges: Edge[]; next: number }>();
 
   for (const e of edges) {
-    for (const id of [e.a, e.b]) byPoint.set(id, [...(byPoint.get(id) ?? []), e]);
+    for (const id of [e.a, e.b]) {
+      const incident = byPoint.get(id) ?? { edges: [], next: 0 };
+
+      incident.edges.push(e);
+      byPoint.set(id, incident);
+    }
   }
 
   const used = new Set<string>();
   const loops: Vec2[][] = [];
+  const next = (id: string) => {
+    const incident = byPoint.get(id);
+
+    if (!incident) return undefined;
+
+    while (incident.next < incident.edges.length) {
+      const edge = incident.edges[incident.next++];
+
+      if (!used.has(edge.id)) return edge;
+    }
+
+    return undefined;
+  };
 
   for (const e of edges) {
     if (used.has(e.id)) continue;
 
-    const loop = walkLoop(e, byPoint, used, point);
+    const loop = walkLoop(e, next, used, point);
 
     if (loop && loop.length >= 3) loops.push(loop);
   }

@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { build } from 'vite';
+import { build, normalizePath } from 'vite';
 import { chromium } from 'playwright-core';
 
 interface WorkerHost extends Window {
@@ -14,9 +14,9 @@ export interface OffscreenTestWorker {
   close: () => Promise<void>;
 }
 
-async function workerCode(modulePath: string, exported: string): Promise<string> {
+export async function workerCode(modulePath: string, exported: string): Promise<string> {
   const entry = 'offscreen-worker-test';
-  const module = `import { ${exported} as run } from ${JSON.stringify(modulePath)}; self.onmessage = async ({data: {id, payload}}) => { try { self.postMessage({id, result: await run(payload)}); } catch (e) { self.postMessage({id, error: String(e.stack || e) }); } };`;
+  const module = `import { ${exported} as run } from ${JSON.stringify(normalizePath(modulePath))}; self.onmessage = async ({data: {id, payload}}) => { try { self.postMessage({id, result: await run(payload)}); } catch (e) { self.postMessage({id, error: String(e.stack || e) }); } };`;
   const built = await build({
     configFile: false,
     logLevel: 'silent',
@@ -24,14 +24,14 @@ async function workerCode(modulePath: string, exported: string): Promise<string>
     plugins: [
       {
         name: entry,
-        resolveId: (id) => (id === entry || id.endsWith(`/${entry}`) ? `\0${entry}` : null),
+        resolveId: (id) => (id === entry ? `\0${entry}` : null),
         load: (id) => (id === `\0${entry}` ? module : null),
       },
     ],
     build: {
       write: false,
       minify: false,
-      rolldownOptions: { output: { codeSplitting: false } },
+      rolldownOptions: { input: entry, output: { codeSplitting: false } },
       lib: { entry, formats: ['es'] },
     },
   });

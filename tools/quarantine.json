@@ -1,5 +1,114 @@
 [
   {
+    "file": "e2e/buildCheck.e2e.test.ts",
+    "test": "runs the open Case on another tab’s robot and marks the one that passes more often",
+    "issue": 996,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 43687018679 reported both Linux attempts failing in 24 s before later shard cancellation, which omitted the final assertion trace. The failing comparison stage is not established."
+  },
+  {
+    "file": "e2e/vision.e2e.test.ts",
+    "test": "publishes rendered camera detections, boxes and signals in the web studio",
+    "issue": 992,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 left the rendered camera block signal at 0 instead of 1 after configureVision on both Linux and Windows attempts. Recorded and operator camera tests passed. The cause is not established."
+  },
+  {
+    "file": "e2e/dataImport.e2e.test.ts",
+    "test": "imports a LeRobot zip, an MCAP file through Match Joints and a Hub link, and opens one on the timeline",
+    "issue": 993,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 reached imported playback but recorded HTTP 500 from hub-model-file on Linux. Subsequent attempts reused imported tries and produced duplicate tiles. The first model-file failure is not established.",
+    "platform": "linux"
+  },
+  {
+    "file": "e2e/dataImport.e2e.test.ts",
+    "test": "opens an MCAP with every topic and shows its log and IMU plot in the console",
+    "issue": 993,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 reached imported playback but recorded HTTP 500 from hub-model-file on Linux. Subsequent attempts reused imported tries and produced duplicate tiles. The first model-file failure is not established.",
+    "platform": "linux"
+  },
+  {
+    "file": "e2e/dataImport.e2e.test.ts",
+    "test": "imports FlatBuffers through Import and reads its nested message, plot and states from Library",
+    "issue": 995,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 exceeded 180 s on both Windows attempts during FlatBuffers import and playback. The failing stage is not established.",
+    "platform": "win32"
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "drive a rover in the browser, at real time, under the web demo",
+    "issue": 995,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 reported both Windows attempts failing at about 121 s before shard cancellation. The browser startup bottleneck is not established.",
+    "platform": "win32"
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "opens the scene in the studio from Open Scene",
+    "issue": 995,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 reported both Windows attempts failing at about 121 s before shard cancellation. The browser startup bottleneck is not established.",
+    "platform": "win32"
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "runs a shared Case’s code panels, drives from its joystick, and carries them into the studio",
+    "issue": 995,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 reported both Windows attempts failing at about 121 s before shard cancellation. The browser startup bottleneck is not established.",
+    "platform": "win32"
+  },
+  {
+    "file": "e2e/gallery.e2e.test.ts",
+    "test": "keeps a shared code panel away from the page’s IndexedDB, its cookies and the Hub",
+    "issue": 995,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 reported both Windows attempts failing at about 121 s before shard cancellation. The browser startup bottleneck is not established.",
+    "platform": "win32"
+  },
+  {
+    "file": "e2e/study.e2e.test.ts",
+    "test": "grades a two by three quadruped study from commands and applies its complete design in one undo step",
+    "issue": 995,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 reported both Windows attempts failing before shard cancellation. The Study startup bottleneck is not established.",
+    "platform": "win32"
+  },
+  {
+    "file": "e2e/operateCalibration.e2e.test.ts",
+    "test": "replays a measured joint, confirms rollback and offers calibration from Checks",
+    "issue": 987,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43687018679 exceeded the unchanged 15 s test budget on both Windows attempts without identifying a failing step. The cause is not established."
+  },
+  {
+    "file": "e2e/caseTrails.e2e.test.ts",
+    "test": "opens all 20 seeded trails from Checks and replays a failed seed at its first trip",
+    "issue": 988,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43687018679 failed both Windows attempts while waiting for the seeded Check row text at line 46. The same test passed on Linux at that commit in 12.2 s. The cause is not established."
+  },
+  {
+    "file": "src/datasets/worldRender.test.ts",
+    "test": "",
+    "issue": 985,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 timed out in the 15 s render-worker setup on Linux. The same hook passed in the first targeted macOS check and timed out under later local load even with one test worker. The setup bottleneck is not established."
+  },
+  {
+    "file": "e2e/consoleArrange.e2e.test.ts",
+    "test": "moves, resizes, adds and deletes panels during a try, and the Case reopens that way",
+    "issue": 981,
+    "until": "2026-11-28",
+    "reason": "Run 43687018679 left Drive off for 60 s on Linux in both attempts and on Windows after a separate failed panel drag. The unchanged test and drag hook passed on Windows in run 43642970706, where the test took 9.2 s. The cause is not established."
+  },
+  {
     "file": "e2e/caseCode.e2e.test.ts",
     "test": "drives the rover from a code joystick, shows its speed in a HUD overlay, and leaves on Esc pressed inside",
     "issue": 842,

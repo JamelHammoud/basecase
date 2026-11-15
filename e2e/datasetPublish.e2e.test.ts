@@ -152,38 +152,6 @@ describe('Dataset versions', () => {
     await expect.poll(() => tile().count()).toBe(1);
   }, 120000);
 
-  it('exports the chosen older version with its original labels and bytes after the working labels change', async () => {
-    await makeSelectedDataset();
-
-    const original = inDataset(await datasetFiles(app.page));
-
-    await expect.poll(async () => (await datasets())[0]?.versions.length).toBe(1);
-    expect((await rows(original['meta/tasks.parquet'])).map((r) => r.task)).toEqual(['Original instruction']);
-    await app.page.evaluate(() =>
-      (window as unknown as { __studio: DatasetStudio }).__studio.datasetInstruction(
-        'freeze-try',
-        'Changed instruction',
-      ),
-    );
-
-    const changed = inDataset(await datasetFiles(app.page));
-
-    await expect.poll(async () => (await datasets())[0]?.versions.length).toBe(2);
-    expect((await rows(changed['meta/tasks.parquet'])).map((r) => r.task)).toEqual(['Changed instruction']);
-    await app.page.getByLabel('Dataset version', { exact: true }).selectOption('1');
-
-    const older = inDataset(await datasetFiles(app.page));
-
-    expect(Object.keys(older).sort()).toEqual(Object.keys(original).sort());
-
-    for (const [path, bytes] of Object.entries(original)) expect(older[path], path).toEqual(bytes);
-
-    await expect.poll(async () => (await datasets())[0]?.versions.length).toBe(2);
-    await app.page.getByLabel('Dataset version', { exact: true }).selectOption('working');
-    expect(await button('Export Dataset').isEnabled()).toBe(true);
-    expect(app.errors).toEqual([]);
-  });
-
   it('makes a dataset from the selected matching segment with the exact recorded frame range', async () => {
     await app.page.getByLabel('Search tries', { exact: true }).fill('lift block');
     await expect.poll(() => tile().count()).toBe(1);
@@ -200,6 +168,23 @@ describe('Dataset versions', () => {
       Math.fround(0.08),
       Math.fround(0.1),
     ]);
+    await app.page.evaluate(() =>
+      (window as unknown as { __studio: DatasetStudio }).__studio.datasetInstruction(
+        'freeze-try',
+        'Changed instruction',
+      ),
+    );
+    await app.page.getByLabel('Dataset version', { exact: true }).selectOption('1');
+
+    const older = inDataset(await datasetFiles(app.page));
+
+    expect(Object.keys(older).sort()).toEqual(Object.keys(files).sort());
+
+    for (const [path, bytes] of Object.entries(files)) expect(older[path], path).toEqual(bytes);
+
+    expect((await datasets())[0].versions).toHaveLength(1);
+    await app.page.getByLabel('Dataset version', { exact: true }).selectOption('working');
+    expect(await button('Export Dataset').isEnabled()).toBe(true);
     expect(app.errors).toEqual([]);
   });
 

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { r3, toCad } from '../agent/agentFrame';
 import type { SkeletonJoint, SkeletonLimb, ZUpVec } from '../types/skeleton';
 import type { Mocap, MocapRotation } from './mocapBones';
+import type { MotionFrames } from './motionSkeletonValidation';
 
 export interface MotionAxis {
   joint: SkeletonJoint;
@@ -147,15 +148,12 @@ function axisEntries(options: {
   return result;
 }
 
-export function motionChains(motion: Mocap, options: { scale: number; limbs?: string[] }): MotionChain[] {
-  const times = Array.from({ length: motion.frames }, (_, frame) => frame * motion.frameTime);
-  const frames = times.map((time) => {
-    const points = motion.sample(time);
-    const root = pointOf(points, motion.root);
-
-    return new Map([...points].map(([name, point]) => [name, point.clone().sub(root)]));
-  });
-  const rotations = times.map((time) => motion.rotations!(time));
+export function motionChains(
+  motion: Mocap,
+  samples: MotionFrames,
+  options: { scale: number; limbs?: string[] },
+): MotionChain[] {
+  const { positions: frames, rotations } = samples;
 
   return motionLeaves(motion, options.limbs).map((leaf) => ({
     name: motion.endSites?.parentOf.get(leaf) ?? leaf,

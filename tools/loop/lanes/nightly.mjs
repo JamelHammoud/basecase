@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { isPaused } from '../lib/github.mjs';
+import { nightlyHarness } from '../lib/harnessNightly.mjs';
 import { nextVersion, releaseDue, rerunSuite, suiteDue } from '../lib/nightly.mjs';
 import { json, run } from '../lib/sh.mjs';
 import { store } from '../lib/store.mjs';
@@ -9,7 +10,7 @@ import { store } from '../lib/store.mjs';
 export const schedule = {
   slots: 1,
   everySeconds: 900,
-  does: "Starts the full suite when GitHub's schedule skips it, reruns a failed suite once fixes land, and releases once a day, as Jamel, right after the suite passes on a commit it hasn't tried",
+  does: "Starts the full suite when GitHub's schedule skips it, reruns a failed suite once fixes land, and releases once a day, as Jamel, right after the suite passes on a commit it hasn't tried, then measures one CAD harness proposal on an idle Mac",
 };
 
 const runs = (workflow, extra = []) =>
@@ -131,7 +132,7 @@ function publish(pending, log) {
 
     log(`the ${pending.version} build failed (${results}), so the next suite pass tries again`);
 
-    return true;
+    return { settled: true, release: null };
   }
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-release-'));
@@ -155,16 +156,22 @@ function publish(pending, log) {
       ...files,
     ];
 
-    log(run('gh', args, { allowFail: true }).ok ? `published ${tag}` : `couldn't publish ${tag}`);
+    const published = run('gh', args, { allowFail: true }).ok;
+
+    log(published ? `published ${tag}` : `couldn't publish ${tag}`);
+
+    return { settled: true, release: published ? tag : null };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
-
-  return true;
 }
 
 function settle(state, log) {
-  if (publish(state.pending, log)) releases.save('state', { ...state, pending: null });
+  const result = publish(state.pending, log);
+
+  if (result?.settled) releases.save('state', { ...state, pending: null });
+
+  return result?.release ?? null;
 }
 
 function release(log, now) {
@@ -197,5 +204,8 @@ export default function nightly({ log }) {
   const now = Date.now();
 
   suite(log, now);
-  release(log, now);
+
+  const published = release(log, now);
+
+  nightlyHarness({ log, release: published });
 }

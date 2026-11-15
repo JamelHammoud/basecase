@@ -57,7 +57,10 @@ const STOPS = {
   winner: 'stopped early: the 99% interval excluded zero',
   equivalent: 'stopped early: the 99% interval sat inside the margin',
   budget: 'stopped at the budget',
-  served: 'stopped: a different model answered',
+  served: 'stopped: the answering model could not be verified',
+  deadline: 'stopped at the wall deadline',
+  slots: 'stopped because every available slot was retired',
+  error: 'stopped after a harness error',
   rounds: 'ran every round',
 };
 
@@ -84,17 +87,22 @@ function spendLine(stats) {
   return `Spent ${money(spent)}${reused.length ? `; reused ${reused.join(' and ')} from earlier runs on the same harness` : ''}.`;
 }
 
-export function compareMarkdown({ stats, models, labels, effort, plan, git }) {
+export function compareMarkdown({ stats, models, labels, effort, plan, git, error }) {
   const [a, b] = labels;
   const ci = stats.ci ? `${signed(stats.ci[0])} to ${signed(stats.ci[1])}` : '—';
+  const incomplete = ['deadline', 'slots', 'error', 'served', 'budget'].includes(plan.stop);
+  const conclusion = incomplete
+    ? 'Comparison incomplete. The partial results do not establish a winner.'
+    : verdict(stats, labels, { margin: plan.margin });
 
   return [
     `# ${a} vs ${b}`,
     '',
     setupLine({ git, effort, plan }),
     `${askedLine(models, plan)} ${spendLine(stats)}`,
+    ...(error ? ['', `Harness error: ${error}`] : []),
     '',
-    `**${verdict(stats, labels, { margin: plan.margin })}**`,
+    `**${conclusion}**`,
     '',
     `Gap in pass rate (${a} − ${b}): ${signed(stats.meanDiff)}, 95% interval ${ci}. ${a} better on ${stats.wins} tasks, ${b} on ${stats.losses}, tied on ${stats.ties} (sign test p = ${cell(stats.signP)}).`,
     '',

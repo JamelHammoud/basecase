@@ -26,14 +26,14 @@ export const linkModules = (dir) => {
   if (fs.existsSync(target)) fs.symlinkSync(target, path.join(dir, 'node_modules'));
 };
 
-export function openBranch(lane, slug) {
-  git(['fetch', '-q', 'origin', 'main']);
+export function openBranch(lane, slug, { timeout } = {}) {
+  git(['fetch', '-q', 'origin', 'main'], { timeout });
 
   const branch = `loop/${lane}/${safeSlug(slug)}-${stamp()}`;
   const dir = path.join(WORKTREES, branch.replaceAll('/', '-'));
 
   clearPath(dir);
-  git(['worktree', 'add', '-q', '-b', branch, dir, 'origin/main']);
+  git(['worktree', 'add', '-q', '-b', branch, dir, 'origin/main'], { timeout });
   linkModules(dir);
 
   return { dir, branch };

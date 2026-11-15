@@ -64,7 +64,7 @@ export function readIndex(runsDir) {
     try {
       const e = JSON.parse(line);
 
-      latest.set([e.run, e.task, e.seed ?? '', e.model ?? ''].join('\u0000'), e);
+      latest.set([e.run, e.task, e.seed ?? '', e.model ?? '', e.harness ?? ''].join('\u0000'), e);
     } catch {}
   }
 

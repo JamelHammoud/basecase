@@ -50,6 +50,20 @@ describe('CAD import', () => {
     expect(part.group).toBeUndefined();
   });
 
+  it('places a full 1,000-body file using its outer bounds before rounding its parts', () => {
+    const bodies = Array.from({ length: 1000 }, (_, i) => ({
+      name: `Body ${i}`,
+      center: [i * 10 - 5000, i % 2 ? -3.125 : 7, -20] as [number, number, number],
+      size: [4.5, 2.25, 6] as [number, number, number],
+    }));
+    const parts = cadParts(opened(bodies), { name: 'array', file: 'array.step', at: [5, 12, -7], newId });
+
+    expect(parts).toHaveLength(1000);
+    expect(parts[0].position).toEqual([-4990, 23.25, -7]);
+    expect(parts[999].position).toEqual([5000, 13.13, -7]);
+    expect(parts[0].group).toEqual(parts[999].group);
+  });
+
   it('takes STEP and IGES through the mesh import on desktop', () => {
     for (const name of ['a.step', 'b.STP', 'c.iges', 'd.igs']) {
       expect(importKindOf(name, { cad: true }), name).toBe('parts');

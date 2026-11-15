@@ -24,7 +24,7 @@ function directionToLocal(inverse: THREE.Matrix4, v: V3): V3 {
   return d.toArray() as V3;
 }
 
-function candidateDowns(solid: ShapeSolid, down?: V3): { chosen: V3; downs: V3[] } {
+export function candidateDowns(solid: ShapeSolid, down?: V3): { chosen: V3; downs: V3[] } {
   const poses = printReportOf(solid, down ? [down] : []).check?.poses ?? [];
   const usual = poses.filter((p) => !p.requested);
   const picked = down

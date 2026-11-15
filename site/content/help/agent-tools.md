@@ -151,10 +151,13 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `set_build` | Sets extras, money and time budgets, filament and the power supply for a robot with no battery |
 | `build_guide` | Writes the printable assembly guide |
 | `repair_part` | Opens a part's teardown, replacement and reassembly in Build Along, or says why it can't find a repair path |
+| `lighten_part` | Removes material from one printed part using its measured Strength loads while preserving mounting regions, then reports the actual retained mass share |
 | `size_actuators` | Picks the cheapest servos that pass the torque checks |
 | `size_arm` | Sizes and places an arm from the points it must reach and the grams it carries |
 | `sweep_design` | Tries a value on copies, without changing the scene |
 
 For `set_build`, `budget_hours` sets the time budget in hours when you give one. Zero clears it, and leaving it out keeps the current budget. [Set a time budget](/help/set-a-time-budget) shows the field and the Time check.
+
+For `lighten_part`, `target_share` is the fraction of original estimated printed mass to keep, starting at 0.5. Optional `min_wall_mm` sets the minimum wall thickness, at least 1 mm. The part needs a measured Strength load path. Mounting regions and the wall setting can keep the result above the target. It uses the same action as [Lighten a printed part](/help/lighten-a-printed-part), with one undo step.
 
 With Claude Code, the agent can also start part designers, which are smaller agents that each model one subassembly. Every agent can also search the web, and Claude Code and Gemini CLI keep a to-do list.

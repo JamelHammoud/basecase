@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { simDeltas, worldDeltas } from '../sim/mjcfFrames';
+import { simDelta, worldDelta } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { V3 } from '../utils/kinematics';
 import type { EndEffector } from './robotFit';
@@ -22,7 +22,7 @@ export interface ProbeReader {
 }
 
 function handAt(effector: EndEffector | null, model: SimModel, poses: Float64Array): THREE.Vector3 {
-  const delta = effector && simDeltas(model, poses).get(effector.part);
+  const delta = effector && simDelta(model, poses, effector.part);
 
   return new THREE.Vector3(...(effector?.point ?? [0, 0, 0])).applyMatrix4(delta ?? new THREE.Matrix4());
 }
@@ -31,7 +31,7 @@ export function endPoint(end: ProbeEnd, world: ProbeWorld, poses: Float64Array):
   if (end === 'end-effector') return handAt(world.effector, world.model, poses);
 
   if (end === 'base') {
-    const delta = world.basePart ? simDeltas(world.model, poses).get(world.basePart) : null;
+    const delta = world.basePart ? simDelta(world.model, poses, world.basePart) : null;
 
     return new THREE.Vector3(...world.basePoint).applyMatrix4(delta ?? new THREE.Matrix4());
   }
@@ -44,7 +44,7 @@ export function endPoint(end: ProbeEnd, world: ProbeWorld, poses: Float64Array):
 
   if (!rest) throw new Error(`This Case probes ${end.object}, which its world doesn’t hold.`);
 
-  const delta = worldDeltas(world.model, poses).get(end.object);
+  const delta = worldDelta(world.model, poses, end.object);
 
   return new THREE.Vector3(...rest).applyMatrix4(delta ?? new THREE.Matrix4());
 }

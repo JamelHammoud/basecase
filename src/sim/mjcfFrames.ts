@@ -13,31 +13,39 @@ export function quatFromMj(wxyz: ArrayLike<number>, out = new THREE.Quaternion()
 }
 export const quatToMj = (q: THREE.Quaternion): [number, number, number, number] => [q.w, q.x, -q.z, q.y];
 
+interface PoseFrame {
+  q: THREE.Quaternion;
+  m: THREE.Matrix4;
+}
+
+function bodyDelta(origin: V3, poses: Float64Array, index: number, { q, m }: PoseFrame): THREE.Matrix4 {
+  const o = index * 7;
+  const p = fromMj(poses[o], poses[o + 1], poses[o + 2]);
+
+  quatFromMj(poses.subarray(o + 3, o + 7), q);
+  m.makeRotationFromQuaternion(q);
+
+  const r = new THREE.Vector3(...origin).applyQuaternion(q);
+
+  return m.setPosition(p[0] - r.x, p[1] - r.y, p[2] - r.z);
+}
+
 function bodyDeltas(
   model: SimModel,
   poses: Float64Array,
   idsOf: (b: SimModel['bodies'][number]) => string[] | undefined,
 ): Map<string, THREE.Matrix4> {
   const out = new Map<string, THREE.Matrix4>();
-  const q = new THREE.Quaternion();
-  const m = new THREE.Matrix4();
+  const frame = { q: new THREE.Quaternion(), m: new THREE.Matrix4() };
 
   model.bodies.forEach((b, i) => {
     const ids = idsOf(b);
 
     if (!ids?.length) return;
 
-    const o = i * 7;
-    const p = fromMj(poses[o], poses[o + 1], poses[o + 2]);
+    bodyDelta(b.origin, poses, i, frame);
 
-    quatFromMj(poses.subarray(o + 3, o + 7), q);
-    m.makeRotationFromQuaternion(q);
-
-    const r = new THREE.Vector3(...b.origin).applyQuaternion(q);
-
-    m.setPosition(p[0] - r.x, p[1] - r.y, p[2] - r.z);
-
-    for (const id of ids) out.set(id, m.clone());
+    for (const id of ids) out.set(id, frame.m.clone());
   });
 
   return out;
@@ -46,3 +54,17 @@ function bodyDeltas(
 export const simDeltas = (model: SimModel, poses: Float64Array) => bodyDeltas(model, poses, (b) => b.parts);
 
 export const worldDeltas = (model: SimModel, poses: Float64Array) => bodyDeltas(model, poses, (b) => b.world);
+
+function singleDelta(model: SimModel, poses: Float64Array, query: { kind: 'parts' | 'world'; id: string }) {
+  const index = model.bodies.findLastIndex((body) => body[query.kind]?.includes(query.id));
+
+  if (index < 0) return undefined;
+
+  return bodyDelta(model.bodies[index].origin, poses, index, { q: new THREE.Quaternion(), m: new THREE.Matrix4() });
+}
+
+export const simDelta = (model: SimModel, poses: Float64Array, id: string) =>
+  singleDelta(model, poses, { kind: 'parts', id });
+
+export const worldDelta = (model: SimModel, poses: Float64Array, id: string) =>
+  singleDelta(model, poses, { kind: 'world', id });

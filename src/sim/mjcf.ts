@@ -26,7 +26,7 @@ import { applyBodyFits } from '../reality/bodyModel';
 import { bodyFitForCalibration, bodyPayloads } from '../reality/bodyLayout';
 import { activeBodyCalibration } from '../reality/history';
 
-export { fromMj, quatFromMj, quatToMj, simDeltas, toMj, worldDeltas } from './mjcfFrames';
+export { fromMj, quatFromMj, quatToMj, simDelta, simDeltas, toMj, worldDelta, worldDeltas } from './mjcfFrames';
 export { SIM_MODEL_VERSION } from './mjcfTypes';
 export type { MjcfInput, SimBody, SimDrive, SimJoint, SimModel, SimRobot, WorldItem } from './mjcfTypes';
 

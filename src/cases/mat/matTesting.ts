@@ -4,7 +4,7 @@ import { renderMatFrame, type MatCamera } from '../../cameras/mat/matFrames';
 import type { BaseFix, V3 } from '../../cameras/mat/matSolve';
 import { createMatTracker, trackMat, type MatSample } from '../../cameras/mat/matTracker';
 import { loadTagDetector, type TagDetector } from '../../cameras/mat/tagDetector';
-import { simDeltas } from '../../sim/mjcfFrames';
+import { simDelta } from '../../sim/mjcfFrames';
 import type { SimModel } from '../../sim/mjcfTypes';
 import { framePoses, type Recording } from '../../sim/recorder';
 import type { Rig } from '../../utils/kinematics';
@@ -62,7 +62,7 @@ export function simTagFixes(recording: Recording, scene: SimScene, base: BaseTag
   return (t: number): BaseFix => {
     const frame = Math.min(recording.frames - 1, Math.round(t / recording.dt));
 
-    return tagFix(base, simDeltas(scene.model, framePoses(recording, frame)).get(part)!);
+    return tagFix(base, simDelta(scene.model, framePoses(recording, frame), part)!);
   };
 }
 

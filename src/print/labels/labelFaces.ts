@@ -17,6 +17,11 @@ export interface FlatFace {
 const NORMAL_STEPS = 400;
 const OFFSET_STEPS = 50;
 
+interface PlaneBucket {
+  tris: number[];
+  area: number;
+}
+
 const dot = (a: V3, b: V3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
 const cross = (a: V3, b: V3): V3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -37,8 +42,8 @@ function triangleNormal(mesh: MeshData, t: number): { normal: V3; area: number }
   return { normal: length ? scaled(n, 1 / length) : [0, 0, 0], area: length / 2 };
 }
 
-function planeBuckets(mesh: MeshData): Map<string, number[]> {
-  const buckets = new Map<string, number[]>();
+function planeBuckets(mesh: MeshData): Map<string, PlaneBucket> {
+  const buckets = new Map<string, PlaneBucket>();
 
   for (let t = 0; t < mesh.indices.length / 3; t++) {
     const { normal, area } = triangleNormal(mesh, t);
@@ -47,10 +52,16 @@ function planeBuckets(mesh: MeshData): Map<string, number[]> {
 
     const offset = dot(normal, vertex(mesh, mesh.indices[t * 3]));
     const key = [...normal.map((x) => Math.round(x * NORMAL_STEPS)), Math.round(offset * OFFSET_STEPS)].join(',');
-    const list = buckets.get(key);
+    const bucket = buckets.get(key);
 
-    if (list) list.push(t);
-    else buckets.set(key, [t]);
+    if (!bucket) {
+      buckets.set(key, { tris: [t], area });
+
+      continue;
+    }
+
+    bucket.tris.push(t);
+    bucket.area += area;
   }
 
   return buckets;
@@ -157,10 +168,8 @@ const faceOrder = (a: FlatFace, b: FlatFace) =>
 export function flatFaces(mesh: MeshData, minArea: number): FlatFace[] {
   const faces: FlatFace[] = [];
 
-  for (const tris of planeBuckets(mesh).values()) {
-    const total = tris.reduce((s, t) => s + triangleNormal(mesh, t).area, 0);
-
-    if (total < minArea) continue;
+  for (const { tris, area } of planeBuckets(mesh).values()) {
+    if (area < minArea) continue;
 
     for (const group of components(mesh, tris)) {
       const face = faceOf(mesh, group);

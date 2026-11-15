@@ -46,7 +46,8 @@ function worldViewFor(core: WorkspaceCore) {
 }
 
 function shownPartsFor(core: WorkspaceCore) {
-  const parts = core.studio.showReferenceImages ? core.parts : core.parts.filter((p) => p.kind !== 'image_plane');
+  const sceneParts = core.study.previewScene?.parts ?? core.parts;
+  const parts = core.studio.showReferenceImages ? sceneParts : sceneParts.filter((p) => p.kind !== 'image_plane');
 
   return [...parts, ...drilledOperands(core.parts, core.selectedIds)];
 }

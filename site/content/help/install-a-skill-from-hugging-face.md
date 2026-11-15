@@ -57,6 +57,8 @@ The list puts skills Basecase can install first, then compares limb positions, t
 
 If a file doesn't match `skill.json`, the install stops and a toast shows the name of the file. Legs with a different number of joints don't fit, and the toast says how many joints each one has.
 
-The author's Arena evidence doesn't carry over, so your installed skill needs its own. If Arena refuses the skill, Basecase doesn't save anything, and the row shows "Refused in Arena" with its worst count.
+The author's Arena evidence doesn't carry over, so your installed skill needs its own. Installed Walk and Settle candidates also face the same required starts and stops as locally trained candidates.
+
+If Arena refuses the candidate, its row shows "Refused in Arena" with its worst count. A failed start or stop names the switch and movement that failed. Basecase keeps the previous passing skill available, with the refusal above its Arena result. Without a previous skill, the row offers **Train** again.
 
 To learn what Arena checks, see [Arena](/help/arena).

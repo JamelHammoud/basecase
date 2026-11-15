@@ -9,7 +9,7 @@ const MEASURING = new Set([
   'repair_part',
   'lighten_part',
   'verify',
-  'sweep_design',
+  'study_design',
   'define_joints',
   'find_joint_axes',
   'simulate',

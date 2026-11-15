@@ -20,7 +20,17 @@ export function draftChanged(saved: SceneDraft, next: SceneDraft): boolean {
 
   if (!sameItems(saved.parts, next.parts) || !sameItems(saved.annotations, next.annotations)) return true;
 
-  return saved.project !== next.project && JSON.stringify(saved.project) !== JSON.stringify(next.project);
+  if (saved.project === next.project) return false;
+
+  if (saved.project.study !== next.project.study) return true;
+
+  const savedSettings = { ...saved.project };
+  const nextSettings = { ...next.project };
+
+  delete savedSettings.study;
+  delete nextSettings.study;
+
+  return JSON.stringify(savedSettings) !== JSON.stringify(nextSettings);
 }
 
 export const draftPayload = (draft: SceneDraft) => ({

@@ -28,6 +28,8 @@ covers:
   - src/components/simulate/TrainSection.tsx
   - src/components/simulate/ControlSection.tsx
   - src/skills/motorKit.ts
+  - src/skills/kitTransitions.ts
+  - src/skills/kitValidation.ts
   - src/skills/skillRows.ts
   - src/workspace/useSkills.ts
   - src/skills/skillsPlatform.ts
@@ -64,7 +66,9 @@ To stop, click **Stop training** (■) on the row. For more on the snapshots, se
 
 You can also train **Walk** with **Teach It to Move**, under **Control**.
 
-If a skill fails Arena, Basecase discards it. The row shows how close it came, such as "Refused in Arena: 20 of 32 tries", and offers **Train** so you can try again.
+If a skill fails Arena or a required start or stop, Basecase keeps the previous passing skill. An Arena refusal shows its count, such as "Refused in Arena: 20 of 32 tries". A failed start or stop names the movement that failed. An earlier passing skill stays ready, with the refusal on its row. Without one, the row offers **Train** so you can try again.
+
+Walk also has to start from Settle, turn left and right in place, and start again after a turn. A refused row names the switch and movement that failed. Basecase uses the failed stance in its next training stage, within the same training budget. The switch checks are shown in [Build a Routine](/help/build-a-routine).
 
 Only one skill trains at a time. If you click **Train** on another, a message names the one that's training. When training can't start, its row says why, such as "Training needs uv".
 

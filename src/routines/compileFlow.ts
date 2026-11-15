@@ -1,6 +1,7 @@
 import type { CompileContext } from './compileContext';
 import { leaves, positiveLeaves } from './compileConditions';
-import type { Condition, Resource, SayStep, Step, TransitionProof } from './schema';
+import type { Condition, Resource, SayStep, Step } from './schema';
+import type { KitTransitionProof } from './kitBehavior';
 import { forEachStep, isGuarded } from './schema';
 
 const MIN_PROOF_SEEDS = 8;
@@ -74,7 +75,7 @@ export class FlowChecker {
     return hubs;
   }
 
-  private proof(from: string, to: string): TransitionProof | null {
+  private proof(from: string, to: string): KitTransitionProof | null {
     const proof = this.ctx.skills.get(from)?.transitions[to];
     const hash = this.ctx.options.modelHash;
 
@@ -82,13 +83,17 @@ export class FlowChecker {
   }
 
   proven(from: string, to: string): boolean {
-    if (from === to || this.stopVia(from) === to) return true;
+    if (from === to) return true;
 
     const listed = this.ctx.options.provenTransitions;
 
     if (listed) return listed.includes(`${from}->${to}`);
 
-    return this.proof(from, to)?.falls === 0;
+    const proof = this.proof(from, to);
+
+    if (proof) return proof.falls === 0 && (proof.failures ?? 0) === 0;
+
+    return this.stopVia(from) === to && !this.ctx.skills.get(from)?.transitions[to];
   }
 
   private edge(from: string, to: string, node: string) {
@@ -101,9 +106,11 @@ export class FlowChecker {
     if (this.proven(from, to)) return;
 
     const proof = this.ctx.options.provenTransitions ? null : this.proof(from, to);
-    const message = proof
-      ? `${from} to ${to} fell in ${proof.falls} of ${proof.seeds} tries in simulation.`
-      : `${from} to ${to} isn’t proven in simulation. Prove it, or stop first.`;
+    const message =
+      proof?.reason ??
+      (proof
+        ? `${from} to ${to} fell in ${proof.falls} of ${proof.seeds} tries in simulation.`
+        : `${from} to ${to} isn’t proven in simulation. Prove it, or stop first.`);
 
     this.ctx.fail('unproven-transition', message, node, { from, to, falls: proof?.falls ?? null });
   }
@@ -114,6 +121,10 @@ export class FlowChecker {
       defined: new Set(),
       guards: new Set(),
       holders: Object.fromEntries(TRACKED.map((r) => [r, stopFirst ? this.hubs(r) : new Set<string>()])),
+    });
+
+    forEachStep([base, ...this.ctx.routine.reactions.flatMap((r) => r.steps)], (step) => {
+      if (step.kind === 'do') this.edge(step.skill, this.stopVia(step.skill), this.ctx.nodeOf(step));
     });
 
     for (const r of this.ctx.routine.reactions) {

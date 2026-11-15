@@ -3,6 +3,7 @@ import { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { SkillState } from '../skills/environment';
 import type { RobotPoseState } from '../types/robotics';
+import type { Motion } from './schema';
 import { applyControl, type BodyControl, BodyProbe, type BodyPose, controlFor, type RoutineBody } from './physicsBody';
 
 export const PROOF_SEEDS = 8;
@@ -18,6 +19,7 @@ export interface Sampled {
   start: BodyPose;
   late: BodyPose;
   end: BodyPose;
+  driftM?: number;
 }
 
 export type SwitchAt = (seed: number) => number;
@@ -25,6 +27,13 @@ export type SwitchAt = (seed: number) => number;
 export interface PairRun {
   falls: number;
   sampled: Sampled[];
+  starts: SkillState[];
+  simulatedS: number;
+}
+
+export interface PairMoves {
+  fromMove?: Motion;
+  toMove?: Motion;
 }
 
 type Skills = { body: string | null; head: string | null };
@@ -42,6 +51,8 @@ export function seeded(seed: number) {
 export const atKitPhase: SwitchAt = () => FROM_S;
 
 export const atRandomPhase: SwitchAt = (seed) => FROM_S + seeded((seed ^ PHASE_SALT) >>> 0)() * PHASE_SPAN_S;
+
+export const atHandoffPhase = (from: string): SwitchAt => (from === 'settle' ? atKitPhase : atRandomPhase);
 
 function perturbed(model: SimModel, seed: number): RobotPoseState {
   const random = seeded(seed);
@@ -68,38 +79,63 @@ export class Prover {
     return this.body.neck;
   }
 
-  private apply(skills: Skills, previous: BodyControl | null) {
-    const next = controlFor(this.body, skills);
+  private apply(skills: Skills, previous: BodyControl | null, move?: Motion) {
+    const next = controlFor(this.body, skills, move);
 
     applyControl(this.engine, next, previous);
     this.control = next;
   }
 
-  private start(skills: Skills, seed: number) {
-    this.apply(skills, null);
+  private start(skills: Skills, seed: number, move?: Motion) {
+    const moving = skills.body === 'walk' || skills.body === 'turn-away';
+
+    this.apply(moving ? { body: 'settle', head: null } : skills, null, moving ? undefined : move);
     this.engine.reset(perturbed(this.body.model, seed));
+
+    if (!moving) return;
+
+    this.engine.step(FROM_S);
+    this.apply(skills, this.control, move);
   }
 
-  private switchTo(skills: Skills): Sampled {
+  private switchTo(skills: Skills, move?: Motion): Sampled {
     const start = this.probe.pose();
 
-    this.apply(skills, this.control);
-    this.engine.step(TO_S - STILL_S);
+    this.apply(skills, this.control, move);
 
-    const late = this.probe.pose();
+    const late = this.advance(TO_S - STILL_S, start, start.yaw);
+    const end = this.advance(STILL_S, start, late.pose.yaw);
 
-    this.engine.step(STILL_S);
-
-    return { start, late, end: this.probe.pose() };
+    return { start, late: late.pose, end: end.pose, driftM: Math.max(late.driftM, end.driftM) };
   }
 
-  run(from: string, to: string, switchAt: SwitchAt): PairRun {
-    const run: PairRun = { falls: 0, sampled: [] };
+  private advance(seconds: number, start: BodyPose, yaw: number) {
+    let pose = this.probe.pose();
+    let driftM = 0;
+
+    for (let tick = 0; tick < Math.round(seconds / 0.02); tick++) {
+      this.engine.step(0.02);
+
+      const next = this.probe.pose();
+      const delta = next.yaw - pose.yaw;
+
+      yaw += Math.atan2(Math.sin(delta), Math.cos(delta));
+      driftM = Math.max(driftM, Math.hypot(next.base[0] - start.base[0], next.base[1] - start.base[1]));
+      pose = next;
+    }
+
+    return { pose: { ...pose, yaw }, driftM };
+  }
+
+  run(from: string, to: string, switchAt: SwitchAt, moves: PairMoves = {}): PairRun {
+    const run: PairRun = { falls: 0, sampled: [], starts: [], simulatedS: 0 };
 
     for (let seed = 1; seed <= PROOF_SEEDS; seed++) {
-      this.start({ body: from, head: null }, seed);
+      this.start({ body: from, head: null }, seed, moves.fromMove);
       this.engine.step(switchAt(seed));
-      run.sampled.push(this.switchTo({ body: to, head: null }));
+      run.starts.push(this.probe.state());
+      run.sampled.push(this.switchTo({ body: to, head: null }, moves.toMove));
+      run.simulatedS += this.engine.data.time;
 
       if (this.probe.fellAt() !== null) run.falls += 1;
     }

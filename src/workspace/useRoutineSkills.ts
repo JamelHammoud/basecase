@@ -31,7 +31,7 @@ interface RoutineSkillsInput {
   setProject: (update: (p: ProjectSettings) => ProjectSettings) => void;
 }
 
-const ownRow = (row: SkillRow) => !row.kit && row.state.kind === 'ready' && !!row.record;
+const ownRow = (row: SkillRow) => row.state.kind === 'ready' && !!row.record;
 
 export function useRoutineSkills({ rows, load, project, setProject }: RoutineSkillsInput): SceneRoutineSkills {
   'use memo';

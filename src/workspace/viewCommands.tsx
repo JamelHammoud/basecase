@@ -125,7 +125,7 @@ function panelCommands({ core, ui }: CommandInputs): Command[] {
       run: () => showLeftTab(core, v.tab),
     })),
     ...showTriesCommands(core),
-    ...(core.posing.hasRig
+    ...(core.posing.hasRig || core.study.available
       ? [
           {
             id: 'show-simulate',

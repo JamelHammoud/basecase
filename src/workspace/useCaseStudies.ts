@@ -1,12 +1,14 @@
 import { useCaseCompare } from './useCaseCompare';
-import { useCaseExplore } from './useCaseExplore';
+import { useStudy } from './useStudy';
 
 type CompareOptions = Parameters<typeof useCaseCompare>[0];
 
-type ExploreOptions = Parameters<typeof useCaseExplore>[0];
+type StudyOptions = Parameters<typeof useStudy>[0];
 
 type CaseStudiesOptions = Omit<CompareOptions, 'source'> &
-  Pick<ExploreOptions, 'parts' | 'project'> & { source: CompareOptions['source'] & ExploreOptions['source'] };
+  Pick<StudyOptions, 'parts' | 'project' | 'sim' | 'onShow'> & {
+    source: CompareOptions['source'] & StudyOptions['source'];
+  };
 
 export function useCaseStudies({
   inFront,
@@ -17,9 +19,11 @@ export function useCaseStudies({
   parts,
   project,
   showToast,
+  sim,
+  onShow,
 }: CaseStudiesOptions) {
   const caseCompare = useCaseCompare({ inFront, kase, fingerprint, studio, source, showToast });
-  const caseExplore = useCaseExplore({ kase, parts, project, source, showToast });
+  const study = useStudy({ kase, parts, project, source, sim, showToast, onShow });
 
-  return { caseCompare, caseExplore };
+  return { caseCompare, study };
 }

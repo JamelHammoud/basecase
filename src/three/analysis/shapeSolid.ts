@@ -51,25 +51,25 @@ const MIN_FACE_AREA = 0.5;
 const FACE_PIECE_MM2 = 25;
 const MAX_FACE_SPLITS = 12;
 
-function pieceCenters({ a, b, c }: THREE.Triangle, n: number): THREE.Vector3[] {
-  const at = (u: number, v: number, w: number) =>
-    new THREE.Vector3()
+function pieceCenters({ a, b, c }: THREE.Triangle, n: number, out: number[], center: THREE.Vector3): void {
+  const at = (u: number, v: number, w: number) => {
+    center
+      .set(0, 0, 0)
       .addScaledVector(a, u / n)
       .addScaledVector(b, v / n)
       .addScaledVector(c, w / n);
-  const out: THREE.Vector3[] = [];
+    out.push(center.x, center.y, center.z);
+  };
 
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n - i; j++) {
       const k = n - 1 - i - j;
 
-      out.push(at(i + 1 / 3, j + 1 / 3, k + 1 / 3));
+      at(i + 1 / 3, j + 1 / 3, k + 1 / 3);
 
-      if (k > 0) out.push(at(i + 2 / 3, j + 2 / 3, k - 1 / 3));
+      if (k > 0) at(i + 2 / 3, j + 2 / 3, k - 1 / 3);
     }
   }
-
-  return out;
 }
 
 function faceData(positions: Float32Array): Faces {
@@ -81,7 +81,8 @@ function faceData(positions: Float32Array): Faces {
   const a = new THREE.Vector3(),
     b = new THREE.Vector3(),
     c = new THREE.Vector3(),
-    n = new THREE.Vector3();
+    n = new THREE.Vector3(),
+    center = new THREE.Vector3();
   const tri = new THREE.Triangle(a, b, c);
 
   for (let t = 0; t + 2 < count; t += 3 * step) {
@@ -93,13 +94,17 @@ function faceData(positions: Float32Array): Faces {
 
     if (area < MIN_FACE_AREA) continue;
 
-    const normal = tri.getNormal(n).toArray();
-    const splits = Math.min(MAX_FACE_SPLITS, Math.ceil(Math.sqrt(area / FACE_PIECE_MM2)));
+    tri.getNormal(n);
 
-    for (const center of pieceCenters(tri, splits)) {
-      centers.push(center.x, center.y, center.z);
-      normals.push(...normal);
-      areas.push((area * step) / (splits * splits));
+    const splits = Math.min(MAX_FACE_SPLITS, Math.ceil(Math.sqrt(area / FACE_PIECE_MM2)));
+    const start = centers.length;
+    const weight = (area * step) / (splits * splits);
+
+    pieceCenters(tri, splits, centers, center);
+
+    for (let i = start; i < centers.length; i += 3) {
+      normals.push(n.x, n.y, n.z);
+      areas.push(weight);
     }
   }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { pointLookup, type PointLookup } from '../../utils/sketch/lookup';
 import { arcPoints, sketchLoops } from '../../utils/sketch/profile';
 import type { Sketch, SketchEntity, Vec2 } from '../../utils/sketch/types';
 import { gridLines, gridStep, toSvg, type SketchView } from './sketchView';
@@ -32,15 +33,7 @@ export const SketchGrid: React.FC<{ view: SketchView }> = ({ view }) => {
   );
 };
 
-const at = (sketch: Sketch) => {
-  const map = new Map(sketch.points.map((p) => [p.id, [p.x, p.y] as Vec2]));
-
-  return (id: string) => map.get(id) ?? ([0, 0] as Vec2);
-};
-
-function entityPath(sketch: Sketch, e: SketchEntity) {
-  const p = at(sketch);
-
+function entityPath(p: PointLookup, e: SketchEntity) {
   if (e.kind === 'line') return path([p(e.a), p(e.b)]);
 
   if (e.kind === 'arc') return path(arcPoints(p(e.c), p(e.a), p(e.b)));
@@ -62,6 +55,7 @@ export const SketchEntities: React.FC<{ sketch: Sketch; selected: string[]; view
   view,
 }) => {
   const loops = sketchLoops(sketch);
+  const at = pointLookup(sketch);
   const radius = view.span * 0.008;
 
   return (
@@ -72,7 +66,7 @@ export const SketchEntities: React.FC<{ sketch: Sketch; selected: string[]; view
       {sketch.entities.map((e) => (
         <path
           key={e.id}
-          d={entityPath(sketch, e)}
+          d={entityPath(at, e)}
           fill="none"
           stroke={entityStroke(e, selected.includes(e.id))}
           strokeWidth={selected.includes(e.id) ? 2.5 : 2}

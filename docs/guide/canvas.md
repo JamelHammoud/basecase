@@ -4,9 +4,13 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 12. 3D Canvas
 
+Coplanar collision face sampling (`three/analysis/shapeSolid.ts`) writes subdivided centers through one reusable vector into each shape’s cached buffers. Those buffers hold centers, normals and area weights. Sampling retains its barycentric order, minimum area, stride and subdivision cap (§0f).
+
 Imported Case visuals (`three/viewport/importedWorld.ts`) attach to `stage.worldRoot` alongside the world PartLayer. Embedded mesh textures use the imported sampler settings. Spark receives splat bytes directly and schedules redraws through `onDirty` after worker loading or sorting completes. Moving the same world retains its buffers. Closing or replacing it disposes textures, splats and the renderer, and rejects stale asynchronous loads. Collision pieces stay hidden.
 
 The imported world visual layer (`three/viewport/importedWorld.ts`) also serves camera and dataset workers. Its manual mode disables Spark automatic updates and exposes an awaited `prepare(scene, camera)` for deterministic captures. Canvas rendering keeps automatic updates and on-demand redraw callbacks.
+
+Coplanar contact scans (`three/analysis/collide.ts`) reuse one triangle and its three corner vectors per directional scan. Each nearby sample reloads all corners through the current BVH index before calculating its normal. Interference checks and Study grading share this path. Joint sweeps disable coplanar checks. The workspace ends with the scan, preserving independent calls and current geometry.
 
 - Background `#1b1b1b` (the canvas card) with a soft CSS vignette.
 - **Sheet thickness** (§8b): axis-aligned profiles resize through the part's dimensions. Tilted profiles store a normal stretch in `sheetTransform`, applied to each child matrix when its group is built. Source meshes stay shared and unchanged. Selection bounds and hand placement include the affine matrix and its translation. Sculpt converts the transformed triangles into its vertex data and clears the matrix on commit, so it is applied once. The geometry worker measures newly requested primitive sheet parts and resized sheet geometry through the same mesh builder. The analysis worker, STL and simulation read those transformed meshes, and `shapeKey` includes the matrix so geometry-dependent results refresh when thickness changes.

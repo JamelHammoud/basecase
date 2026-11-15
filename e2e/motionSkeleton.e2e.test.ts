@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
 import { waveBvh } from '../src/utils/motionSkeleton.fixtures';
 import { humanoid, walkBvh } from '../src/utils/mocap.fixtures';
@@ -9,6 +9,7 @@ interface StudioHook {
   sceneRecord: () => { parts: ScenePart[]; project: ProjectSettings };
   dropFiles: (files: Array<{ name: string; base64: string }>) => void;
   bomLines: () => Array<{ key: string; qty: number }>;
+  posing: () => { hasRig: boolean };
 }
 
 type Studio = {
@@ -24,11 +25,11 @@ let app: App;
 
 const record = () => app.page.evaluate(() => (window as unknown as Studio).__studio.sceneRecord());
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
@@ -102,6 +103,7 @@ describe('Design From Motion', () => {
       project: { ...DEFAULT_PROJECT, joints },
     });
     await expect.poll(async () => (await record()).parts.length).toBe(parts.length);
+    await expect.poll(() => app.page.evaluate(() => (window as unknown as Studio).__studio.posing().hasRig)).toBe(true);
     await app.page.evaluate(
       (files) => (window as unknown as Studio).__studio.dropFiles(files),
       [{ name: 'Walk.bvh', base64: Buffer.from(walkBvh()).toString('base64') }],

@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { generateGuide, type CheckedOrder, type GeneratedGuide, type GuideProgress } from '../guide/generateGuide';
+import {
+  generateGuide,
+  generateGuidePlan,
+  type CheckedOrder,
+  type GeneratedGuide,
+  type GuideProgress,
+} from '../guide/generateGuide';
 import { guideFingerprint } from '../guide/guideFingerprint';
 import { isBuilt } from '../guide/guidePlan';
 import type { GuidePlan } from '../guide/guideTypes';
@@ -10,6 +16,7 @@ import type { ShowToast } from './types';
 import { provenOrderOf } from '../assembly/provenOrder';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { errorMessage } from '../utils/errorMessage';
+import type { AssemblyGeometry } from '../assembly/assemblyGeometry';
 
 interface BuildGuideOptions {
   sceneName: string;
@@ -55,6 +62,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
   const runRef = useRef<Promise<GeneratedGuide | null> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const planRef = useRef<{ fingerprint: string; plan: GuidePlan } | null>(null);
+  const repairPlanRef = useRef<{ fingerprint: string; plan: GuidePlan } | null>(null);
   const record = project.buildGuide;
   const fingerprint = guideFingerprint(sceneName, parts, project);
   const stale = !!record && (record.fingerprint !== fingerprint || !!record.orderTimedOut);
@@ -154,6 +162,29 @@ export function useBuildGuide(options: BuildGuideOptions) {
     return (await generate({ quiet: true }))?.plan ?? null;
   };
 
+  const repairPlan = async (geometry: AssemblyGeometry): Promise<GuidePlan | null> => {
+    if (geometry.timedOut) return null;
+
+    const currentFingerprint = guideFingerprint(sceneName, partsRef.current, projectRef.current);
+
+    if (planRef.current?.fingerprint === currentFingerprint) return planRef.current.plan;
+
+    if (repairPlanRef.current?.fingerprint === currentFingerprint) return repairPlanRef.current.plan;
+
+    const plan = await generateGuidePlan({
+      title: sceneName,
+      parts: partsRef.current,
+      project: projectRef.current,
+      geometry,
+    });
+
+    if (currentFingerprint !== guideFingerprint(sceneName, partsRef.current, projectRef.current)) return null;
+
+    repairPlanRef.current = { fingerprint: currentFingerprint, plan };
+
+    return plan;
+  };
+
   return {
     record,
     fingerprint,
@@ -165,6 +196,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
     generate,
     cancel,
     currentPlan,
+    repairPlan,
     open,
     openPdf,
     closeViewer,

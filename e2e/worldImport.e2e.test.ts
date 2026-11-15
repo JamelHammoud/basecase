@@ -23,7 +23,7 @@ interface Studio {
   simState: () => SimState;
   worldState: () => WorldState | null;
   cameraFrame: (key: string, floor?: boolean) => Promise<string | null>;
-  passTries: () => void;
+  passTries: () => Promise<void>;
 }
 
 let app: App;

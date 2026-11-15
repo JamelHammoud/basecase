@@ -46,7 +46,10 @@ export function useRepair(options: RepairOptions) {
         await awaitPartModels('repair_part', viewport);
 
         const geometry = await viewport.assembly({ serviceable: [id], budgetMs: 20000 });
-        const guidePlan = await guide.currentPlan();
+
+        if (parts !== partsRef.current || joints !== projectRef.current.joints) return null;
+
+        const guidePlan = await guide.repairPlan(geometry);
 
         if (!guidePlan || parts !== partsRef.current || joints !== projectRef.current.joints) return null;
 

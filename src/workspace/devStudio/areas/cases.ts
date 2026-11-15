@@ -1,7 +1,7 @@
 import { codePanelsOf } from '../../../cases/console/codeEdits';
 import { codePanelKey, codeReport } from '../../../cases/console/codeReports';
 import { parseCase } from '../../../cases/schema';
-import { loadRecording } from '../../../cases/tryStore';
+import { editTries, loadRecording } from '../../../cases/tryStore';
 import type { Studio } from '../types';
 
 export default function casesStudio(studio: Studio) {
@@ -22,11 +22,19 @@ export default function casesStudio(studio: Studio) {
       );
     },
     referenceTry: () => cases().attempt.reference(),
-    passTries: () =>
-      studio().core.docs.setProject((p) => ({
+    passTries: async () => {
+      const { docs } = studio().core;
+      const ids = (docs.projectRef.current.tries ?? []).map((record) => record.id);
+
+      await editTries(ids, (stored) => ({
+        ...stored,
+        outcome: { verdict: 'passed', margin: stored.outcome.margin, by: 'person' },
+      }));
+      docs.setProject((p) => ({
         ...p,
-        tries: (p.tries ?? []).map((t) => ({ ...t, passed: true })),
-      })),
+        tries: (p.tries ?? []).map((t) => (ids.includes(t.id) ? { ...t, passed: true } : t)),
+      }));
+    },
     multiplyRuns: (runs: number) => cases().multiply.setRuns(runs),
     tryWorld: async () => {
       const newest = studio().core.docs.projectRef.current.tries?.at(-1);

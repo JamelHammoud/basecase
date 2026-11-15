@@ -4,7 +4,12 @@ import { worldGeometry } from '../../three/interference';
 import { boxContacts } from '../guideScene';
 import type { Box, GuideScene, V3 } from '../guideTypes';
 import type { GuideCache } from './guideCache';
-import type { GuideRenderer } from './guideRenderer';
+
+export interface GuideObjects {
+  ids: () => string[];
+  group: (id: string) => THREE.Group | undefined;
+  showAll: () => void;
+}
 
 const CANDIDATE_GAP_MM = 1;
 const CONTACT_MM = 1.5;
@@ -23,7 +28,7 @@ const toBox = (b: THREE.Box3): Box => ({ min: b.min.toArray() as V3, max: b.max.
 
 const yieldToMain = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
-function solidOf(cache: Map<string, Solid | null>, renderer: GuideRenderer, id: string): Solid | null {
+function solidOf(cache: Map<string, Solid | null>, renderer: GuideObjects, id: string): Solid | null {
   if (cache.has(id)) return cache.get(id)!;
 
   const group = renderer.group(id);
@@ -58,7 +63,7 @@ function touches(a: Solid, b: Solid, box: THREE.Box3): boolean {
 }
 
 function touching(
-  input: { cache: GuideCache; solids: Map<string, Solid | null>; renderer: GuideRenderer },
+  input: { cache: GuideCache; solids: Map<string, Solid | null>; renderer: GuideObjects },
   pair: {
     a: string;
     b: string;
@@ -77,7 +82,7 @@ function touching(
 }
 
 export async function measureGuideScene(
-  renderer: GuideRenderer,
+  renderer: GuideObjects,
   options: { cache: GuideCache; isCancelled: () => boolean },
 ): Promise<Pick<GuideScene, 'boxes' | 'contacts' | 'axes'>> {
   const { cache, isCancelled } = options;

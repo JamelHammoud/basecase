@@ -16,7 +16,7 @@ interface SimState {
 type Studio = {
   simState: () => SimState;
   load: (r: unknown) => void;
-  passTries: () => void;
+  passTries: () => Promise<void>;
   stubTrainer: (policy: unknown) => void;
   datasets: () => Array<{ name: string; query: string | null; members: string[]; versions: unknown[] }>;
 };

@@ -24,14 +24,6 @@
     "reason": "On Windows in run 43637620265, both attempts left 6 servos to buy at about $120 after entering 6 on hand. Linux passed at the same commit, and the previous two Windows runs passed with unchanged input and purchase code. The save failure's cause is not established."
   },
   {
-    "file": "e2e/webTrain.e2e.test.ts",
-    "test": "trains Stand on the tab engine, passes Arena, and keeps it through a reload",
-    "issue": 794,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Passes on Linux in about 70 s. On Windows the web studio trains and checks Stand so slowly that the Arena check is still running after the 180 s wait, in three of the last five nightly runs."
-  },
-  {
     "file": "e2e/firstLaunch.e2e.test.ts",
     "test": "opens on the rover driving to its flag",
     "issue": 794,

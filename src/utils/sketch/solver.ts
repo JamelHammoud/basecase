@@ -1,6 +1,6 @@
 import { rank, solveSquare, type Matrix } from './linalg';
 import { allResiduals, type Geometry } from './residuals';
-import type { Sketch, SketchCircle, SketchEntity, Vec2 } from './types';
+import type { Sketch, SketchArc, SketchCircle, SketchEntity, Vec2 } from './types';
 
 export interface Drag {
   point: string;
@@ -20,9 +20,30 @@ interface Layout {
   start: number[];
   weights: number[];
   fixed: Map<string, Vec2>;
+  entities: Map<string, SketchEntity>;
+  arcs: SketchArc[];
 }
 
 const round = (v: number) => Math.round(v * 1e9) / 1e9 + 0;
+
+function entityLayout(sketch: Sketch, variables: Pick<Layout, 'index' | 'start' | 'weights'>) {
+  const entities = new Map<string, SketchEntity>();
+  const arcs: SketchArc[] = [];
+
+  for (const e of sketch.entities) {
+    entities.set(e.id, e);
+
+    if (e.kind === 'arc') arcs.push(e);
+
+    if (e.kind !== 'circle') continue;
+
+    variables.index.set(e.id, variables.start.length);
+    variables.start.push(e.r);
+    variables.weights.push(1);
+  }
+
+  return { entities, arcs };
+}
 
 function layout(sketch: Sketch, drag?: Drag): Layout {
   const index = new Map<string, number>();
@@ -44,20 +65,12 @@ function layout(sketch: Sketch, drag?: Drag): Layout {
     weights.push(dragged ? DRAG_WEIGHT : 1, dragged ? DRAG_WEIGHT : 1);
   }
 
-  for (const e of sketch.entities) {
-    if (e.kind !== 'circle') continue;
+  const { entities, arcs } = entityLayout(sketch, { index, start, weights });
 
-    index.set(e.id, start.length);
-    start.push(e.r);
-    weights.push(1);
-  }
-
-  return { index, start, weights, fixed };
+  return { index, start, weights, fixed, entities, arcs };
 }
 
-function geometryAt(sketch: Sketch, lay: Layout, x: number[]): Geometry {
-  const entities = new Map<string, SketchEntity>(sketch.entities.map((e) => [e.id, e]));
-
+function geometryAt(lay: Layout, x: number[]): Geometry {
   return {
     point: (id) => {
       const i = lay.index.get(id);
@@ -69,11 +82,12 @@ function geometryAt(sketch: Sketch, lay: Layout, x: number[]): Geometry {
 
       return i === undefined ? circle.r : x[i];
     },
-    entity: (id) => entities.get(id),
+    entity: (id) => lay.entities.get(id),
   };
 }
 
-const residualsAt = (sketch: Sketch, lay: Layout, x: number[]) => allResiduals(geometryAt(sketch, lay, x), sketch);
+const residualsAt = (sketch: Sketch, lay: Layout, x: number[]) =>
+  allResiduals(geometryAt(lay, x), lay.arcs, sketch.constraints);
 
 const sumSquares = (r: number[]) => r.reduce((s, v) => s + v * v, 0);
 

@@ -8,6 +8,7 @@ import type { HexMesh } from './mesh';
 import type { V3 } from './types';
 import type { VoxelGrid } from './voxels';
 import { sampleDensityGrid, targetDensityGrid } from './lightenGrid';
+import { largestPiece } from './lightenPieces';
 
 function fieldBounds(grid: VoxelGrid) {
   return {
@@ -72,22 +73,22 @@ export function lightenShape(options: {
 
     allocated.push(...pieces);
 
-    const connected = pieces.sort((a, b) => b.volume() - a.volume())[0];
+    const connected = largestPiece(pieces);
 
     if (!connected) throw new Error('The lightened part has no material.');
 
-    const missing = frozen.subtract(connected);
+    const missing = frozen.subtract(connected.solid);
 
     allocated.push(missing);
 
-    if (missing.volume() > original.volume() * 1e-6)
+    if (missing.volume() > originalVolumeMm3 * 1e-6)
       throw new Error('The lightened part disconnects a mounting surface.');
 
-    const volumeMm3 = connected.volume();
-    const grams = filamentGrams({ volumeMm3, areaMm2: connected.surfaceArea() }, material, infillPct);
+    const { volumeMm3 } = connected;
+    const grams = filamentGrams({ volumeMm3, areaMm2: connected.solid.surfaceArea() }, material, infillPct);
 
     return {
-      positions: soupOfMesh(meshOfSolid(connected)),
+      positions: soupOfMesh(meshOfSolid(connected.solid)),
       originalVolumeMm3,
       volumeMm3,
       volumeShare: volumeMm3 / originalVolumeMm3,

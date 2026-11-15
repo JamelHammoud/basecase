@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 import { hubBridge } from '../hub/hubBridge';
+import { findSkills } from '../skills/findSkills';
+import type { RankedSkill } from '../skills/skillRank';
 import { installPlan, publishedSkillFiles, readPublishedSkill, skillLink, skillRepoName } from '../skills/hubSkill';
 import { KIT_LABELS, type SkillRow } from '../skills/skillRows';
 import { errorMessage } from '../utils/errorMessage';
@@ -18,6 +20,8 @@ export interface SkillHub {
   publishable: SkillRow[];
   canInstall: boolean;
   installOpen: boolean;
+  candidates: RankedSkill[];
+  finding: boolean;
   openInstall: () => void;
   closeInstall: () => void;
   publish: (row: SkillRow) => void;
@@ -68,8 +72,37 @@ function useOnce() {
 
 export function useSkillHub({ skills, showToast, openAccounts }: SkillHubOptions): SkillHub {
   const [installOpen, setInstallOpen] = useState(false);
+  const [candidates, setCandidates] = useState<RankedSkill[]>([]);
+  const [finding, setFinding] = useState(false);
+  const search = useRef(0);
   const publishing = useOnce();
   const installing = useOnce();
+
+  const openInstall = async () => {
+    const request = ++search.current;
+
+    setInstallOpen(true);
+    setCandidates([]);
+    setFinding(true);
+
+    try {
+      const found = await findSkills(await skills.buildModel());
+
+      if (request !== search.current) return;
+
+      setCandidates(found);
+    } catch {
+      if (request === search.current) setCandidates([]);
+    } finally {
+      if (request === search.current) setFinding(false);
+    }
+  };
+
+  const closeInstall = () => {
+    search.current++;
+    setInstallOpen(false);
+    setFinding(false);
+  };
 
   const publish = async (row: SkillRow) => {
     if (!(await hubBridge.signedIn())) return openAccounts();
@@ -101,8 +134,10 @@ export function useSkillHub({ skills, showToast, openAccounts }: SkillHubOptions
     publishable: skills.rows.filter(canPublish),
     canInstall: !IS_WEB_DEMO && skills.available && !skills.busy,
     installOpen,
-    openInstall: () => setInstallOpen(true),
-    closeInstall: () => setInstallOpen(false),
+    candidates,
+    finding,
+    openInstall: () => void openInstall(),
+    closeInstall,
     publish: (row) => {
       if (canPublish(row)) void publishing(() => publish(row));
     },

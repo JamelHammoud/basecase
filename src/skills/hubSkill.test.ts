@@ -1,11 +1,13 @@
 import loadMujoco from '@mujoco/mujoco';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { act, type PolicySpec } from '../sim/policy';
 import type { SimModel } from '../sim/mjcfTypes';
+import * as arena from './arena';
 import { modelHashes, skillHash, type Skill } from './artifacts';
 import { fixtureModel } from './fixtureModels';
 import { installPlan, publishedSkillFiles, readPublishedSkill, skillLink, skillRepoName } from './hubSkill';
 import { readyStand, stubForge } from './hubSkillFixtures';
+import { hashOf } from './hash';
 import { kitEnvironment } from './kitEnvironment';
 import { trainKitEntry } from './motorKit';
 import { mappedPolicy } from './policyMap';
@@ -77,6 +79,7 @@ describe('publishing a skill', () => {
     expect(card).toContain('position-offset on 12 joints, scale 0.5, every 0.02 s:');
     expect(card).toContain('| held-out | 32 of 32 |');
     expect(card).toContain('**Install Skill**');
+    expect(card).toContain('  - basecase-skill');
   });
 
   it('refuses a skill that never passed Arena', () => {
@@ -184,30 +187,76 @@ describe('mapping a skill onto another robot', () => {
 });
 
 describe('installing a published skill', () => {
-  it('installs quad-servo’s Stand on the hexapod and back, each proved on its own robot', async () => {
-    const onHexapod = await install(published(stand, quad), hexapod, 'hexapod');
-    const warmed = onHexapod.jobs[0].job.warmPolicy as PolicySpec;
+  it.each([
+    { source: 'quad-servo', target: 'hexapod', joints: 18 },
+    { source: 'hexapod', target: 'quad-servo', joints: 12 },
+  ])('maps a published Stand from $source to $target for training', ({ source, target, joints }) => {
+    const sourceModel = fixtureModel(source);
+    const targetModel = fixtureModel(target);
+    const skill = readyStand(sourceModel, source);
+    const plan = installPlan(readPublishedSkill(published(skill, sourceModel)), targetModel);
 
-    expect(onHexapod.plan.entry).toBe('stand');
-    expect(warmed.joints).toHaveLength(18);
-    expect(warmed.layers[0].in).toBe(12 + 3 * 18);
-    expect(onHexapod.outcome.kind).toBe('skill');
+    expect(plan.entry).toBe('stand');
+    expect(plan.warm.from).toBe(skillHash(skill));
+    expect(plan.warm.policy.joints).toEqual(kitEnvironment(targetModel, 'stand').action.joints);
+    expect(plan.warm.policy.joints).toHaveLength(joints);
+    expect(plan.warm.policy.layers[0].in).toBe(12 + 3 * joints);
+    expect(plan.warm.policy.layers.at(-1)?.out).toBe(joints);
+  });
 
-    const hexStand = onHexapod.outcome.kind === 'skill' ? onHexapod.outcome.skill : null;
+  it('trains, saves and republishes an installed Stand back to its source with Arena stubbed', async () => {
+    const hexEvidence = {
+      ...readyStand(hexapod, 'hexapod').evidence!,
+      saltCommitment: hashOf('installed-hexapod'),
+    };
+    const quadEvidence = { ...stand.evidence!, saltCommitment: hashOf('installed-quad') };
+    const judge = vi.spyOn(arena, 'runArena').mockResolvedValueOnce(hexEvidence).mockResolvedValueOnce(quadEvidence);
 
-    expect(hexStand?.warmStartFrom).toBe(skillHash(stand));
-    expect(hexStand?.evidence?.passed).toBe(true);
-    expect(hexStand?.evidence?.binding.physics).toBe(modelHashes(hexapod).physics);
-    expect(hexStand?.evidence).not.toEqual(stand.evidence);
-    expect(onHexapod.saved).toEqual([`library/skills/${skillHash(hexStand!)}/skill.json`]);
+    try {
+      const onHexapod = await install(published(stand, quad), hexapod, 'hexapod');
 
-    const back = await install(published(hexStand!, hexapod), quad, 'quad-servo');
-    const quadStand = back.outcome.kind === 'skill' ? back.outcome.skill : null;
+      expect(onHexapod.jobs[0].job.warmPolicy).toEqual(onHexapod.plan.warm.policy);
+      expect(onHexapod.outcome.kind).toBe('skill');
 
-    expect(quadStand?.evidence?.passed).toBe(true);
-    expect(quadStand?.warmStartFrom).toBe(skillHash(hexStand!));
-    expect(quadStand?.evidence?.binding.physics).toBe(modelHashes(quad).physics);
-  }, 120000);
+      if (onHexapod.outcome.kind !== 'skill') throw new Error('Stand installation failed.');
+
+      const hexStand = onHexapod.outcome.skill;
+
+      expect(hexStand.warmStartFrom).toBe(skillHash(stand));
+      expect(hexStand.evidence).toEqual(hexEvidence);
+      expect(hexStand.evidence?.passed).toBe(true);
+      expect(hexStand.evidence?.binding.physics).toBe(modelHashes(hexapod).physics);
+      expect(hexStand.evidence).not.toEqual(stand.evidence);
+      expect(onHexapod.saved).toEqual([`library/skills/${skillHash(hexStand)}/skill.json`]);
+      expect(judge).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ model: hexapod, environment: kitEnvironment(hexapod, 'stand') }),
+      );
+
+      const back = await install(published(hexStand, hexapod), quad, 'quad-servo');
+
+      expect(back.jobs[0].job.warmPolicy).toEqual(back.plan.warm.policy);
+      expect(back.outcome.kind).toBe('skill');
+
+      if (back.outcome.kind !== 'skill') throw new Error('Stand return installation failed.');
+
+      const quadStand = back.outcome.skill;
+
+      expect(quadStand.warmStartFrom).toBe(skillHash(hexStand));
+      expect(quadStand.evidence).toEqual(quadEvidence);
+      expect(quadStand.evidence?.passed).toBe(true);
+      expect(quadStand.evidence?.binding.physics).toBe(modelHashes(quad).physics);
+      expect(quadStand.evidence).not.toEqual(hexStand.evidence);
+      expect(back.saved).toEqual([`library/skills/${skillHash(quadStand)}/skill.json`]);
+      expect(judge).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ model: quad, environment: kitEnvironment(quad, 'stand') }),
+      );
+      expect(judge).toHaveBeenCalledTimes(2);
+    } finally {
+      judge.mockRestore();
+    }
+  });
 
   it('saves nothing when Arena refuses the result, and says how many tries passed', async () => {
     const refused = await install(published(stand, quad), hexapod, 'hexapod', 20);

@@ -184,6 +184,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     shared.selectAll,
     shared.saveToLibrary,
     ...(one.quote ? [menuEntry(one.quote)] : []),
+    ...(one.lighten ? [menuEntry(one.lighten)] : []),
     ...(one.repair ? [menuEntry(one.repair)] : []),
     ...leaderMenuItems(actions, part.id),
     ...armItems(inputs),

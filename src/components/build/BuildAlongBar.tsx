@@ -11,22 +11,22 @@ import {
 } from '../../design-system';
 import type { BuildAlong } from '../../workspace/useBuildAlong';
 import { useBuildAlongKeys } from '../../workspace/useBuildAlongKeys';
-
-const chip = 'glass rounded-full h-[28px] px-3.5 flex items-center text-[13px] text-white/90 tabular-nums whitespace-nowrap';
+import { BuildAlongItems } from './BuildAlongItems';
 
 interface BuildAlongBarProps {
   buildAlong: BuildAlong;
   active: boolean;
   ready: boolean[];
+  onPrint: (id: string) => void;
 }
 
-export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready }) => {
+export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active, ready, onPrint }) => {
   const { step, index, count, opening, progress } = buildAlong;
-  const partsReady = !!step && ready[index];
+  const partsReady = !!step && step.repairPhase !== 'remove' && ready[index];
 
   useBuildAlongKeys(buildAlong, active && buildAlong.active);
 
-  if (!buildAlong.active) return null;
+  if (!buildAlong.active || !active) return null;
 
   return (
     <div className="absolute inset-x-0 top-3 z-20 flex flex-col items-center gap-2 px-6 pointer-events-none">
@@ -68,20 +68,17 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
             />
           </>
         )}
+        {step?.printPartId && (
+          <Button size="sm" variant="ghost" onClick={() => onPrint(step.printPartId!)}>
+            Print
+          </Button>
+        )}
         <IslandDivider />
         <Button size="sm" variant="ghost" onClick={buildAlong.close} title="Done" shortcut="Esc" tooltipSide="bottom">
           Done
         </Button>
       </FloatingIsland>
-      {!!step?.callout.length && (
-        <ul className="flex flex-wrap justify-center gap-2 max-w-[720px]">
-          {step.callout.map((c) => (
-            <li key={`${c.qty}|${c.name}`} className={chip}>
-              {c.qty} × {c.name}
-            </li>
-          ))}
-        </ul>
-      )}
+      <BuildAlongItems step={step} />
     </div>
   );
 };

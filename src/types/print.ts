@@ -18,7 +18,7 @@ export interface PrintRecord {
   parts: Array<{ id: string; key: string }>;
   printer: string;
   sentAt: string;
-  state: 'sent' | 'printing' | 'printed' | 'failed' | 'cancelled';
+  state: 'sent' | 'printing' | 'printed' | 'failed' | 'cancelled' | 'reprint';
   note?: string;
 }
 

@@ -30,6 +30,8 @@ export interface ImageAnnotation {
   mask: ImageMask;
   polygons: number[][];
   keypoints: ImageKeypoint[];
+  review?: 'suggested' | 'accepted';
+  source?: 'manual' | 'model' | 'track' | 'agent';
 }
 
 export interface TrainingFrame {
@@ -42,7 +44,8 @@ export interface TrainingFrame {
   annotations: ImageAnnotation[];
   depth: Float32Array;
   split?: 'train' | 'validation' | 'test';
-  source?: 'import';
+  source?: 'import' | 'try';
+  origin?: { tryId: string; frame: number; seconds: number };
 }
 
 export interface FrameSet {
@@ -118,6 +121,8 @@ function validateAnnotation(value: unknown, frame: TrainingFrame, classes: Image
 
   if (
     !category ||
+    (annotation.review !== undefined && !['suggested', 'accepted'].includes(annotation.review)) ||
+    (annotation.source !== undefined && !['manual', 'model', 'track', 'agent'].includes(annotation.source)) ||
     !same(annotation.mask.size, [frame.height, frame.width]) ||
     !annotation.keypoints.every((p) => validPoint(p, frame, category.keypoints ?? [])) ||
     !unique(annotation.keypoints.map((p) => p.name))
@@ -150,10 +155,17 @@ function frameFields(value: unknown): boolean {
     uint(value.seed) &&
     text(value.camera) &&
     frameDimensions(value) &&
-    (value.source === undefined || value.source === 'import') &&
+    (value.source === undefined || value.source === 'import' || value.source === 'try') &&
+    validOrigin(value.origin) &&
     (value.split === undefined ||
       (typeof value.split === 'string' && ['train', 'validation', 'test'].includes(value.split)))
   );
+}
+
+function validOrigin(value: unknown): boolean {
+  if (value === undefined) return true;
+
+  return object(value) && id(value.tryId) && uint(value.frame) && finite(value.seconds) && value.seconds >= 0;
 }
 
 export function validateTrainingFrameHeader(value: unknown): asserts value is Omit<TrainingFrame, 'jpeg' | 'depth'> {
@@ -254,6 +266,8 @@ export async function frameHash(frame: Omit<TrainingFrame, 'id'> | TrainingFrame
     mask: { size: annotation.mask.size, counts: annotation.mask.counts },
     polygons: annotation.polygons,
     keypoints: annotation.keypoints.map((p) => ({ name: p.name, x: p.x, y: p.y, visible: p.visible })),
+    ...(annotation.review ? { review: annotation.review } : {}),
+    ...(annotation.source ? { source: annotation.source } : {}),
   }));
 
   return sha256(
@@ -267,6 +281,9 @@ export async function frameHash(frame: Omit<TrainingFrame, 'id'> | TrainingFrame
       depth: await byteHash(depthBytes(frame.depth)),
       ...(frame.split ? { split: frame.split } : {}),
       ...(frame.source ? { source: frame.source } : {}),
+      ...(frame.origin
+        ? { origin: { tryId: frame.origin.tryId, frame: frame.origin.frame, seconds: frame.origin.seconds } }
+        : {}),
     }),
   );
 }

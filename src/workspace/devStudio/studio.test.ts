@@ -49,6 +49,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'fitBody',
   'fleet',
   'fleetModel',
+  'frameLabels',
   'guide',
   'importRobot',
   'inputEvents',

@@ -17,6 +17,7 @@ import type { WorkspaceActions } from './useWorkspaceActions';
 import type { TrainingImages } from './useTrainingImages';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import type { PoseActions } from './usePoseActions';
+import { FrameLabelsHost } from './FrameLabelsHost';
 
 interface WorkspaceSheetsProps {
   active: boolean;
@@ -152,6 +153,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
       )}
       <MotionDesignHost active={active} pose={pose} />
       <TrainingImagesHost active={active} images={core.simTraining.cases.images} />
+      <FrameLabelsHost active={active} labels={core.frameLabels} />
       <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input
         ref={motionInputRef}

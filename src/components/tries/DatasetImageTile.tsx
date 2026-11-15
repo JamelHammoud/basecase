@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { PreviewImage } from '../../design-system';
+import { Button, PreviewImage } from '../../design-system';
 import { loadFrameJpeg } from '../../vision/frameSetStore';
 import { useSeen } from './useSeen';
 import { frozenImageJpeg, type FrozenImageSample } from '../../datasets/snapshotImages';
@@ -8,9 +8,10 @@ interface DatasetImageTileProps {
   setId: string;
   frameId: string;
   frozen?: FrozenImageSample;
+  onOpen?: () => void;
 }
 
-export const DatasetImageTile: React.FC<DatasetImageTileProps> = ({ setId, frameId, frozen }) => {
+export const DatasetImageTile: React.FC<DatasetImageTileProps> = ({ setId, frameId, frozen, onOpen }) => {
   const tile = useRef<HTMLDivElement | null>(null);
   const seen = useSeen(tile);
   const [image, setImage] = useState<{ key: string; url: string } | null>(null);
@@ -50,6 +51,11 @@ export const DatasetImageTile: React.FC<DatasetImageTileProps> = ({ setId, frame
       <div className="aspect-[4/3] rounded-[6px] bg-white/[0.04] overflow-hidden">
         <PreviewImage src={image?.key === key ? image.url : undefined} lazy />
       </div>
+      {onOpen && (
+        <Button variant="ghost" size="sm" onClick={onOpen}>
+          Label Objects
+        </Button>
+      )}
     </div>
   );
 };

@@ -16,11 +16,12 @@ interface TryTimelineProps {
   rig: Rig;
   closable: boolean;
   onSelectParts: (ids: string[]) => void;
+  onAddFrames: () => void;
 }
 
 const ic = 'w-4 h-4';
 
-export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closable, onSelectParts }) => {
+export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closable, onSelectParts, onAddFrames }) => {
   const root = useRef<HTMLDivElement | null>(null);
   const focus = () => root.current?.focus({ preventScroll: true });
   const onUndoKey = useSegmentUndo({ root, labels: timeline.labels, open: timeline.open });
@@ -106,6 +107,9 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closabl
             onClick={timeline.close}
           />
         )}
+        <Button variant="ghost" size="xs" onClick={onAddFrames}>
+          Add Frames
+        </Button>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { env } from 'onnxruntime-web/webgpu';
-import wasmUrl from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm?url';
-import moduleUrl from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.mjs?url';
+import wasmUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.wasm?url';
+import moduleUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.mjs?url';
 import { modelBytes } from './modelCache';
 import { validateVisionManifest } from './manifest';
 import { VisionEngine } from './engine';

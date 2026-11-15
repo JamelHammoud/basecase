@@ -29,6 +29,7 @@ export const showNewCase = (core: WorkspaceCore) => {
 };
 
 export const STAYS_IN_RUN = new Set([
+  'add-frames',
   'drive-start',
   'drive-stop',
   'drive-respawn',

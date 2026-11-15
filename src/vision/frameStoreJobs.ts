@@ -6,6 +6,7 @@ import {
   validateTrainingFrameHeader,
   validateFrameSetHeader,
   validateFrameSplits,
+  frameSetHash,
   type FrameSet,
   type ImageClass,
   type TrainingFrame,
@@ -19,6 +20,7 @@ import {
 } from './frameSetStoreTypes';
 
 export const frameStoreJobs = {
+  hash: async (set: FrameSet) => reply(await frameSetHash(set)),
   manifest: (set: FrameSet) => {
     validateFrameSet(set);
 

@@ -41,6 +41,7 @@ import { keyFor } from '../app/shortcuts';
 import { fileCommands } from './fileCommands';
 import { simCommands } from './simCommands';
 import type { AgentSession } from './useAgentSession';
+import { frameLabelCommands } from './frameLabelCommands';
 
 export interface CommandInputs {
   core: WorkspaceCore;
@@ -320,6 +321,7 @@ export const sceneCommands = (inputs: CommandInputs): Command[] => [
   ...leaderCommands(inputs),
   ...onshapeCommands(inputs),
   ...caseCommands(inputs),
+  ...frameLabelCommands(inputs.core),
   ...skillCommands(inputs),
   ...slashPaletteCommands(inputs),
   ...routineCommands(inputs),

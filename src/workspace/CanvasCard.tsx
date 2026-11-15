@@ -82,6 +82,11 @@ function CanvasBottomBar({ core, actions, ui, active }: CanvasCardProps) {
           rig={core.posing.rig}
           closable={!core.caseRun.doneClosesTimeline}
           onSelectParts={core.setSelectedIds}
+          onAddFrames={() => {
+            const timeline = core.simTraining.cases.timeline;
+
+            if (timeline.record) core.frameLabels.start([timeline.record.id], timeline.frame);
+          }}
         />
       )}
       {tool.marking && !core.printing.mode && <MarkBar marks={marks} onDone={() => tool.toggleMarking(false)} />}
@@ -140,6 +145,7 @@ export function CanvasCard(props: CanvasCardProps) {
           timelineOpen={core.simTraining.cases.timeline.open}
           sceneId={core.scene.sceneId}
           scene={{ model: core.simTraining.sim.model, parts: core.parts, world: core.simTraining.sim.worldParts }}
+          onOpenFrames={core.frameLabels.open}
         />
       )}
       <div

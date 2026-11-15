@@ -1,6 +1,7 @@
 import type { ProjectSettings, RobotJoint, ScenePart } from '../types/robotics';
 import { anchorJoint } from '../utils/kinematics';
 import type { FoundAxis } from './axisFinder';
+import { mergeJoints } from './merge';
 
 export type JointDraft = Omit<RobotJoint, 'frame'>;
 
@@ -40,9 +41,11 @@ export function withJoints(
   made: RobotJoint[],
   replace = false,
 ): ProjectSettings & { joints: RobotJoint[] } {
-  const keep = replace ? [] : (project.joints ?? []).filter((j) => !made.some((m) => m.id === j.id));
-
-  return { ...project, joints: [...keep, ...made], firstRanges: withFirstRanges(project.firstRanges, made) };
+  return {
+    ...project,
+    joints: mergeJoints(project.joints ?? [], made, replace),
+    firstRanges: withFirstRanges(project.firstRanges, made),
+  };
 }
 
 function freeId(type: HandJointType, joints: RobotJoint[]) {

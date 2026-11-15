@@ -94,7 +94,7 @@ describe('Made by a Service', () => {
     await expect.poll(() => settings.locator(visible('h3')).first().textContent()).toBe('Accounts');
     expect(await madeBy()).toBeNull();
 
-    const key = settings.getByLabel('API key');
+    const key = settings.getByLabel('API key', { exact: true });
 
     await key.fill(KEY);
     await key.press('Enter');

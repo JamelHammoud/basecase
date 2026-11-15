@@ -10,9 +10,9 @@ The Linux trace recorded `hub-model-file` requesting `PierreMarieCurie/rf-detr-o
 
 Each attempt now opens and closes its own app and temporary Library. Before loading the robot, it loads the existing tiny ONNX fixture under the default detector id through `configureVision`, with no camera assignments. Playback then uses its ordinary Scene camera and detector setup without requesting a model file. The fake Hub and real dataset routes remain in use.
 
-Assertions retain the two ZIP episodes, Match Joints, MCAP deduplication, Hub import, exact source counts, three timeline lanes, both nested FlatBuffers seek values, the unsigned 64-bit value, state spans, log warning and all 151 samples on each IMU axis. The all-topic MCAP test also requires exactly one try tile. All three tests require zero model-file requests and zero app errors. No timeout, retry setting or platform condition changes.
+Assertions retain the two ZIP episodes, Match Joints, MCAP deduplication, Hub import, exact source counts, three timeline lanes, both nested FlatBuffers seek values, the unsigned 64-bit value, state spans, log warning and all 151 samples on each IMU axis. The all-topic MCAP test also requires exactly one try tile. All three tests require zero model-file requests and zero app errors. No timeout or retry setting changes.
 
-This checkout already had no #993 entries in `tools/quarantine.json`, so no quarantine entry was removed. The two affected tests run on Linux. Their existing Windows condition remains.
+The two Linux quarantine entries for #993 are removed from `tools/quarantine.json`, so the affected tests run in normal CI. Their existing Windows condition and the separate Windows FlatBuffers quarantine for #995 remain.
 
 ## Linux measurements
 

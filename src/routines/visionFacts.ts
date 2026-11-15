@@ -2,7 +2,7 @@ import type { VisionResult } from '../vision/types';
 import type { Plan, PlanOp, PlanWatcher } from './planTypes';
 import type { FactValue } from './traceDecode';
 import { findNode } from './nodes';
-import { ROUTINE_VISION_MODELS, visionFact } from './vision';
+import { routineVisionModel, visionFact } from './vision';
 
 export interface VisionReading extends FactValue {
   at: number;
@@ -51,7 +51,7 @@ export class RoutineVisionFacts {
 
     const frames = [...this.latest.values()].filter(
       (frame) =>
-        frame.result.modelId === ROUTINE_VISION_MODELS[model] &&
+        frame.result.modelId === routineVisionModel(this.plan, model, frame.result.camera) &&
         frame.at >= 0 &&
         frame.at <= now &&
         now - frame.at <= fact.maxAgeMs,

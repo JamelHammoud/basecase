@@ -36,6 +36,8 @@ You tried to use something only the desktop app can do. The rest of the message 
 | “Download Basecase to use the agent.” | Claude Code, Codex and Gemini run on your computer |
 | “Download Basecase to slice and print.” | Slicing, sending plates and testing printers |
 | “Download Basecase to train policies.” | Training a robot to walk or do a skill |
+| “Download Basecase to train vision models.” | Fitting a model to labeled images |
+| “Download Basecase to save training runs.” | Saving vision training results |
 | “Download Basecase to insert SimReady models.” | Inserting SimReady models |
 | “Download Basecase to connect a robot.” | Connecting emulated robots locally or on a Linux robot computer |
 | “Download Basecase to connect Roboflow.” | Saving a Roboflow API key |

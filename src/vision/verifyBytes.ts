@@ -1,6 +1,6 @@
-import type { VisionModelFile } from './manifest';
+import type { VisionArtifact } from './manifest';
 
-export async function verifyModelBytes(bytes: Uint8Array, model: VisionModelFile) {
+export async function verifyModelBytes(bytes: Uint8Array, model: VisionArtifact) {
   if (bytes.byteLength !== model.bytes) throw new Error('The model size does not match the manifest.');
 
   const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new Uint8Array(bytes).buffer));

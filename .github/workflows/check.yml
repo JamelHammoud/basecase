@@ -21,6 +21,7 @@ jobs:
       ros: ${{ steps.filter.outputs.ros }}
       ios: ${{ steps.filter.outputs.ios }}
       lerobot: ${{ steps.filter.outputs.lerobot }}
+      vision: ${{ steps.filter.outputs.vision }}
       daemon: ${{ steps.filter.outputs.daemon }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -28,12 +29,12 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Decide whether the packaged app, the ROS package, the iPhone app and LeRobot datasets need checking
+      - name: Decide whether the packaged app, the ROS package, the iPhone app, LeRobot datasets and image trainer need checking
         id: filter
         env:
           EVENT: ${{ github.event_name }}
         run: |
-          if [ "$EVENT" != pull_request ]; then printf 'app=true\nros=true\nios=true\nlerobot=true\ndaemon=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "$EVENT" != pull_request ]; then printf 'app=true\nros=true\nios=true\nlerobot=true\nvision=true\ndaemon=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           files=$(git diff --name-only HEAD^1 HEAD)
           pattern='^(electron/|forge/|hw/|build/|tools/forge/|tools/native/|e2e/app/|\.github/workflows/|package\.json$|package-lock\.json$|vitest\.app\.config\.ts$)'
           if grep -qE "$pattern" <<< "$files"; then echo "app=true"; else echo "app=false"; fi >> "$GITHUB_OUTPUT"
@@ -43,6 +44,8 @@ jobs:
           if grep -qE "$ios" <<< "$files"; then echo "ios=true"; else echo "ios=false"; fi >> "$GITHUB_OUTPUT"
           lerobot='^(src/datasets/|tools/lerobot/|\.github/workflows/check\.yml$|package-lock\.json$)'
           if grep -qE "$lerobot" <<< "$files"; then echo "lerobot=true"; else echo "lerobot=false"; fi >> "$GITHUB_OUTPUT"
+          vision='^(electron/visionTrainer/|electron/visionTraining/|electron/backend/vision|src/vision/training/|src/vision/training[^/]*|src/datasets/snapshotImages|\.github/workflows/check\.yml$)'
+          if grep -qE "$vision" <<< "$files"; then echo "vision=true"; else echo "vision=false"; fi >> "$GITHUB_OUTPUT"
           daemon='^(hw/|verify/hw/|\.github/workflows/(check|release)\.yml$)'
           if grep -qE "$daemon" <<< "$files"; then echo "daemon=true"; else echo "daemon=false"; fi >> "$GITHUB_OUTPUT"
 
@@ -317,6 +320,32 @@ jobs:
       - name: Load an exported dataset with LeRobot at v3.0 and its v2.1 copy as GR00T reads it
         run: node tools/lerobot/check.mjs
 
+  vision:
+    needs: changes
+    if: needs.changes.outputs.vision == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      PYTORCH_ENABLE_MPS_FALLBACK: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
+        with:
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: electron/visionTrainer/uv.lock
+      - name: Train all four image tasks offline and verify ONNX parity and checkpoint resume
+        env:
+          UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/vision-trainer-env
+          YOLO_CONFIG_DIR: ${{ runner.temp }}
+        run: uv run --project electron/visionTrainer --frozen --exact python electron/visionTrainer/integration_test.py
+
   ios:
     needs: changes
     if: needs.changes.outputs.ios == 'true'
@@ -365,7 +394,7 @@ jobs:
 
   check:
     if: always()
-    needs: [changes, unit, e2e, e2e-changed, e2e-windows, app, ros, ios, lerobot, daemon-arm64, credit, copy]
+    needs: [changes, unit, e2e, e2e-changed, e2e-windows, app, ros, ios, lerobot, vision, daemon-arm64, credit, copy]
     runs-on: ubuntu-latest
     steps:
       - name: Pass only when every job that had to run passed
@@ -383,6 +412,8 @@ jobs:
           IOS_NEEDED: ${{ needs.changes.outputs.ios }}
           LEROBOT: ${{ needs.lerobot.result }}
           LEROBOT_NEEDED: ${{ needs.changes.outputs.lerobot }}
+          VISION: ${{ needs.vision.result }}
+          VISION_NEEDED: ${{ needs.changes.outputs.vision }}
           DAEMON: ${{ needs.daemon-arm64.result }}
           DAEMON_NEEDED: ${{ needs.changes.outputs.daemon }}
           WINDOWS_E2E: ${{ needs.e2e-windows.result }}
@@ -412,6 +443,9 @@ jobs:
           want_lerobot=success
           [ "$LEROBOT_NEEDED" = true ] || want_lerobot=skipped
           [ "$LEROBOT" = "$want_lerobot" ] || exit 1
+          want_vision=success
+          [ "$VISION_NEEDED" = true ] || want_vision=skipped
+          [ "$VISION" = "$want_vision" ] || exit 1
           want_daemon=success
           [ "$DAEMON_NEEDED" = true ] || want_daemon=skipped
           [ "$DAEMON" = "$want_daemon" ] || exit 1

@@ -8,6 +8,8 @@ vi.mock('./backend-service.mjs', () => ({
     constructor() {
       return new Proxy(this, {
         get: (target, name) => {
+          if (name === 'visionTraining') return { dispose: async () => {} };
+
           if (name === 'requestRenderer')
             return async (...args) => (calls.push([name, ...args]), args[0] === 'none' ? null : { ok: 1 });
 
@@ -136,6 +138,12 @@ describe('vite bridge middleware', () => {
     expect(await request(bridge, { method: 'POST', url: '/save-scene', body: '{bad' })).toMatchObject({ status: 500 });
     expect(await post('/train-stop', {})).toEqual({ result: { error: 'boom' }, status: 500, calls: [] });
     expect((await request(bridge, { method: 'PUT', url: '/scenes' })).result).toBe('next');
+  });
+
+  it('caps training requests before parsing or dispatch', async () => {
+    expect(
+      await request(bridge, { method: 'POST', url: '/vision-training-start', body: 'x'.repeat(24 * 1024 * 1024 + 1) }),
+    ).toEqual({ result: { error: 'The training request is too large' }, status: 413, calls: [] });
   });
 
   it('streams events and starts the agent once', () => {

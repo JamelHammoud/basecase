@@ -1,3 +1,4 @@
+import { loadDatasetContent } from '../datasets/datasetStore/content';
 import type { VisionManifest } from './manifest';
 import { validateVisionManifest } from './manifest';
 import { hubBridge } from '../hub/hubBridge';
@@ -60,8 +61,14 @@ async function untilStopped<T>(operation: Promise<T>, ending: Promise<Error>) {
 }
 
 async function loadPayload(manifest: VisionManifest, supplied?: Uint8Array) {
-  const bytes = supplied ? new Uint8Array(supplied) : undefined;
-  const source = !bytes && !IS_WEB_DEMO ? (await hubBridge.modelFile(manifest.model)).url : undefined;
+  const model = manifest.model;
+  const local = 'source' in model;
+  const stored = !supplied && local ? await loadDatasetContent(model.sha256) : undefined;
+
+  if (local && !supplied && !stored) throw new Error('The retained model file is missing.');
+
+  const bytes = supplied ? new Uint8Array(supplied) : (stored ?? undefined);
+  const source = !bytes && !IS_WEB_DEMO && !('source' in model) ? (await hubBridge.modelFile(model)).url : undefined;
 
   if (!bytes && !IS_WEB_DEMO && typeof source !== 'string')
     throw new Error('The model cache address must stay inside Basecase.');
@@ -168,6 +175,17 @@ export function createVisionRuntime() {
     },
     infer(modelId: string, frame: ImageBitmap | VisionPixels, options: VisionFrameOptions = {}) {
       return request<VisionResult>({ type: 'infer', modelId, frame, options }, 'data' in frame ? [] : [frame]);
+    },
+    inferEncoded(modelId: string, jpeg: Uint8Array, options: VisionFrameOptions = {}) {
+      if (!(jpeg instanceof Uint8Array) || jpeg.byteLength < 1 || jpeg.byteLength > 64 * 1024 * 1024)
+        return Promise.reject(new Error('Choose an image under 64 MB.'));
+
+      const bytes = new Uint8Array(jpeg);
+
+      return request<{ result: VisionResult; inferenceMs: number }>(
+        { type: 'infer-encoded', modelId, jpeg: bytes, options },
+        [bytes.buffer],
+      );
     },
     attach,
     connect: attach,

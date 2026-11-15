@@ -83,6 +83,8 @@ In a [captured world](/help/import-a-world), your camera tiles and the agent's c
 
 Camera tiles draw boxes around detected objects, with their class and score. The first use downloads the model, then keeps a checked local copy. The agent receives detections with each camera read.
 
+You can also [train a vision model](/help/train-a-vision-model) on your own labeled images in the desktop app. Apply a retained model to a camera's **See Objects** or **See Person** node from the dataset's results. **See Person** requires a model with a person class. Rendered views and recorded videos use that camera's assigned model from local storage.
+
 ![A wrist camera with a fixture detector's block box and score](/help/watch-what-the-robots-cameras-see/detections.png)
 
 Boxes also appear on live camera tiles and recorded camera videos at the playhead. Captures and exported camera images contain the camera image alone.

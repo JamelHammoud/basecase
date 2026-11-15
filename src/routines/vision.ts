@@ -19,17 +19,28 @@ export interface VisionFactRequest {
   label?: string;
 }
 
+export function routineVisionModel(plan: Plan, node: string, camera?: string) {
+  return (
+    plan.visionModels?.find((binding) => binding.node === node && binding.camera === camera)?.modelId ??
+    ROUTINE_VISION_MODELS[node] ??
+    node
+  );
+}
+
 export function routineVisionModels(plan: Plan): string[] {
-  const models = [
-    ...plan.watchers.map((w) => w.model),
-    ...plan.ops.flatMap((op) => (op.kind === 'infer' && op.model ? [op.model] : [])),
-  ];
+  const nodes = [...plan.watchers, ...plan.ops.filter((op) => op.kind === 'infer')];
 
   return [
     ...new Set(
-      models.flatMap((model) =>
-        findNode(model)?.inputs.includes('image') ? [ROUTINE_VISION_MODELS[model] ?? model] : [],
-      ),
+      nodes.flatMap((node) => {
+        const model = node.model ?? '';
+
+        if (!findNode(model)?.inputs.includes('image')) return [];
+
+        const bound = plan.visionModels?.filter((binding) => binding.node === model);
+
+        return bound?.length ? bound.map((binding) => binding.modelId) : [ROUTINE_VISION_MODELS[model] ?? model];
+      }),
     ),
   ];
 }
@@ -61,7 +72,9 @@ export function visionFact(result: VisionResult, request: VisionFactRequest): Fa
   }
 
   const label = request.label ?? (request.model === 'person-detection' ? 'person' : undefined);
-  const detections = result.detections.filter((detection) => label === undefined || detection.label === label);
+  const classification = result.classes?.[0];
+  const observations = classification && classification.score >= 0.5 ? [classification] : result.detections;
+  const detections = observations.filter((detection) => label === undefined || detection.label === label);
 
   return { num: request.type === 'boolean' ? Number(detections.length > 0) : detections.length, name: null };
 }
@@ -72,7 +85,10 @@ export function routineVisionErrors(plan: Plan, unavailable: readonly string[]):
   return nodes.flatMap((node) => {
     const model = node.model ?? '';
 
-    if (!unavailable.includes(ROUTINE_VISION_MODELS[model] ?? model)) return [];
+    const models =
+      plan.visionModels?.filter((binding) => binding.node === model).map((binding) => binding.modelId) ?? [];
+
+    if (![ROUTINE_VISION_MODELS[model] ?? model, ...models].some((id) => unavailable.includes(id))) return [];
 
     const path = 'id' in node ? node.id : node.node;
     const label = findNode(model)?.label ?? model;

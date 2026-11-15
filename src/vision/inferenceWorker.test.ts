@@ -47,10 +47,7 @@ function manifestOf(bytes: Uint8Array): VisionManifest {
     classes: ['cup'],
     input: { width: 2, height: 2, layout: 'nchw', mean: [0, 0, 0], std: [1, 1, 1] },
     model: {
-      owner: 'test',
-      repo: 'tiny',
-      revision: 'a'.repeat(40),
-      file: 'model.onnx',
+      source: 'local',
       bytes: bytes.length,
       sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
     },
@@ -146,7 +143,28 @@ it('runs pixel-sensitive detection in the compiled production inference worker',
           frame: { ...frame, data: new Uint8ClampedArray(16).fill(255) },
         });
 
-        return { gpu, dark, light };
+        const canvas = new OffscreenCanvas(2, 2);
+        const context = canvas.getContext('2d')!;
+
+        context.fillStyle = 'white';
+        context.fillRect(0, 0, 2, 2);
+
+        const jpeg = new Uint8Array(await (await canvas.convertToBlob({ type: 'image/jpeg' })).arrayBuffer());
+        const encoded = await request<{ result: VisionResult; inferenceMs: number }>({
+          type: 'infer-encoded',
+          modelId: model.id,
+          jpeg,
+          options: { camera: 'wrist', timestamp: 42 },
+        });
+        let refusedCorrupt = false;
+
+        try {
+          await request({ type: 'infer-encoded', modelId: model.id, jpeg: new Uint8Array([1, 2, 3]) });
+        } catch {
+          refusedCorrupt = true;
+        }
+
+        return { gpu, dark, light, encoded, refusedCorrupt };
       } finally {
         worker.terminate();
       }
@@ -157,5 +175,10 @@ it('runs pixel-sensitive detection in the compiled production inference worker',
   expect(results.dark.detections).toEqual([]);
   expect(results.light.detections).toHaveLength(1);
   expect(results.light.detections[0].label).toBe('cup');
+  expect(results.encoded.result.detections).toEqual(results.light.detections);
+  expect(results.encoded.result.camera).toBe('wrist');
+  expect(results.encoded.result.timestamp).toBe(42);
+  expect(results.encoded.inferenceMs).toBeGreaterThanOrEqual(0);
+  expect(results.refusedCorrupt).toBe(true);
   expect(results.light.backend).toBe(results.gpu ? 'webgpu' : 'wasm');
 });

@@ -5,6 +5,8 @@ import { hitKey } from '../cases/trySearch/hitSelection';
 import { searchTries } from '../cases/trySearch/trySearchClient';
 import { addMembers, newDataset, withMembers, type Dataset, type DatasetSample } from '../datasets/datasetFile';
 import { deleteDatasets, saveDataset } from '../datasets/datasetStore';
+import { imageCount } from '../datasets/datasetView';
+import { useVisionTraining, type VisionTraining } from '../vision/training/useVisionTraining';
 import { confirmAction } from '../design-system/confirmStore';
 import { errorMessage } from '../utils/errorMessage';
 import { plural } from '../../electron/plural.mjs';
@@ -31,6 +33,7 @@ interface DatasetsOptions {
   view: TriesView;
   cases: Cases;
   showToast: ShowToast;
+  vision: VisionTraining;
 }
 
 function commonCase(members: TrySummary[], cases: Cases): Case | null {
@@ -114,7 +117,7 @@ async function built(input: MakeDatasetInput, all: TrySummary[], cases: Cases): 
   return { dataset, leftOut };
 }
 
-export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions) {
+export function useWorkspaceDatasets({ view, cases, showToast, vision }: DatasetsOptions) {
   const failed = (e: unknown) => showToast(errorMessage(e), { tone: 'error' });
   const caseFor = (dataset: Dataset) => cases.cases.find((c) => c.id === dataset.caseId) ?? null;
 
@@ -144,6 +147,8 @@ export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions
 
     if (act === 'publish') return cases.dataset.publishDataset(dataset);
 
+    if (imageCount(dataset) > 0) return vision.train(dataset);
+
     if (kase) cases.fromTries.train(dataset, kase);
     else onNoCase();
   };
@@ -164,6 +169,8 @@ export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions
   }, [activeId]);
 
   const withCase = (dataset: Dataset, act: Act, onNoCase: () => void) => {
+    if (act === 'train' && imageCount(dataset) > 0) return perform(dataset, act, onNoCase);
+
     const kase = caseFor(dataset);
 
     if (!kase || cases.active?.id === kase.id) return perform(dataset, act, onNoCase);
@@ -174,6 +181,7 @@ export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions
 
   return {
     list: view.datasets,
+    vision,
     make,
     open,
     makeFromView: (ids?: string[]) => {
@@ -217,7 +225,8 @@ export type Datasets = ReturnType<typeof useWorkspaceDatasets>;
 export function useTriesWork(simTraining: SimTraining, showToast: ShowToast) {
   const { cases, triesPlaces } = simTraining;
   const triesView = useTriesView({ places: triesPlaces, timeline: cases.timeline, showToast });
-  const datasets = useWorkspaceDatasets({ view: triesView, cases, showToast });
+  const vision = useVisionTraining({ datasetId: triesView.dataset?.id ?? null, showToast });
+  const datasets = useWorkspaceDatasets({ view: triesView, cases, showToast, vision });
 
   return { triesView, datasets };
 }

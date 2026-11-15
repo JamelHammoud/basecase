@@ -3,6 +3,7 @@ import type { VisionScope } from './visionScope';
 
 export function liveSceneVision(scope: VisionScope) {
   return {
+    scene: scope.scene,
     availableVisionCameras: () => [
       ...scope.simulated.availableVisionCameras(),
       ...scope.operator.availableVisionCameras(),

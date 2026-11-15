@@ -2,6 +2,7 @@ import path from 'node:path';
 import { SceneLibrary } from './library/sceneLibrary.mjs';
 import { TryStore } from './library/tryStore.mjs';
 import { DatasetStore } from './library/datasetStore.mjs';
+import { VisionTrainingStore } from './visionTraining/store.mjs';
 import { RoboflowAccount } from './roboflow/index.mjs';
 import { EarthTiles } from './earth/index.mjs';
 import { HubAccount } from './hub/index.mjs';
@@ -427,6 +428,12 @@ export class BasecaseBackendService {
     this.datasetStore ??= new DatasetStore({ dir: path.join(this.libraryDir, 'datasets') });
 
     return this.datasetStore;
+  }
+
+  get visionTraining() {
+    this.visionTrainingStore ??= new VisionTrainingStore({ libraryDir: this.libraryDir });
+
+    return this.visionTrainingStore;
   }
 
   listScenes() {

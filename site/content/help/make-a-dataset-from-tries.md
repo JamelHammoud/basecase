@@ -79,9 +79,10 @@ In **Working Dataset**, click **Label Objects** under an image to edit its objec
 
 - **Export Dataset** saves a LeRobot zip for tries, with COCO and YOLO folders for any images. See [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
 - **Publish to Hugging Face** puts the dataset on the Hub. See [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
-- **Train from Tries** appears once five of its tries have passed. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+- **Train from Tries** appears in a dataset without images once five of its tries have passed. See [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+- **Train** fits a vision model when the dataset has images, including datasets that also hold tries. See [Train a vision model](/help/train-a-vision-model).
 
-**Note:** Publish to Hugging Face and Train from Tries are available in the desktop app.
+**Note:** Publishing and both kinds of training are available in the desktop app.
 
 Failed tries stay in the dataset, while export, publishing and training leave them out. A try without a verdict, such as an [imported try](/help/import-robot-data-as-tries), counts as a demonstration. To exclude one, mark it failed in [Label a try](/help/label-a-try).
 
@@ -132,7 +133,7 @@ Versions saved before frozen samples were supported can’t restore historical l
 
 ## Tries that export leaves out
 
-Saving a new version leaves out tries recorded on a different robot model. Those tries move to the end of the working dataset. Exporting a saved version uses its saved robot and scene. Training requires the current robot to match that version.
+Saving a new version leaves out tries recorded on a different robot model. Those tries move to the end of the working dataset. Exporting a saved version uses its saved robot and scene. Policy training requires the current robot to match that version.
 
 - A try from this Case recorded before the robot last changed shows under "These tries are from an earlier design. Try It again to record new ones."
 - A try on another robot, from another Case or scene, shows under "These tries are from another Case or scene."

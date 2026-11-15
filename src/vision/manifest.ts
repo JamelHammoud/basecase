@@ -10,6 +10,14 @@ export interface VisionModelFile {
   bytes: number;
 }
 
+export interface LocalVisionModelFile {
+  source: 'local';
+  sha256: string;
+  bytes: number;
+}
+
+export type VisionArtifact = VisionModelFile | LocalVisionModelFile;
+
 export interface VisionManifest {
   version: 1;
   id: string;
@@ -26,7 +34,7 @@ export interface VisionManifest {
     resize?: 'stretch' | 'letterbox' | 'aspect';
     scale?: number;
   };
-  model: VisionModelFile;
+  model: VisionArtifact;
 }
 
 export const VISION_MODEL_BYTES = 256 * 1024 * 1024;
@@ -55,7 +63,7 @@ function modelNames(v: Partial<VisionModelFile> | null): v is VisionModelFile {
 export function validateVisionModelFile(value: unknown): VisionModelFile {
   const v = value as Partial<VisionModelFile> | null;
 
-  if (!modelNames(v)) throw new Error('Choose a Hugging Face model repo.');
+  if (!modelNames(v) || 'source' in v) throw new Error('Choose a Hugging Face model repo.');
 
   if (!/^[a-f0-9]{40}$/.test(v.revision ?? '')) throw new Error('The model needs a pinned commit.');
 
@@ -67,6 +75,23 @@ export function validateVisionModelFile(value: unknown): VisionModelFile {
   if (!modelPath(v.file)) throw new Error('Choose an ONNX file inside the model repo.');
 
   return { owner: v.owner, repo: v.repo, revision: v.revision, file: v.file, sha256: v.sha256, bytes: v.bytes };
+}
+
+export function validateVisionArtifact(value: unknown): VisionArtifact {
+  const v = value as Partial<LocalVisionModelFile> | null;
+
+  if (!v || !('source' in v)) return validateVisionModelFile(value);
+
+  if (v.source !== 'local' || Object.keys(v).some((key) => !['source', 'sha256', 'bytes'].includes(key)))
+    throw new Error('Choose a retained local model.');
+
+  if (typeof v.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(v.sha256))
+    throw new Error('The model needs a SHA256 hash.');
+
+  if (!Number.isInteger(v.bytes) || !v.bytes || v.bytes < 1 || v.bytes > VISION_MODEL_BYTES)
+    throw new Error('The model exceeds the download limit.');
+
+  return { source: 'local', sha256: v.sha256, bytes: v.bytes };
 }
 
 function checkedInput(input: VisionManifest['input'] | undefined): asserts input is VisionManifest['input'] {
@@ -94,7 +119,7 @@ function checkInputOptions(input: VisionManifest['input']) {
 }
 
 function checkedClasses(classes: unknown): asserts classes is string[] {
-  if (!Array.isArray(classes) || classes.length > 10000 || classes.some((c) => typeof c !== 'string' || c.length > 100))
+  if (!Array.isArray(classes) || classes.length > 10000 || classes.some((c) => typeof c !== 'string' || c.length > 200))
     throw new Error('The model needs a bounded class list.');
 }
 
@@ -132,6 +157,6 @@ export function validateVisionManifest(value: unknown): VisionManifest {
     ...v,
     input: { ...input, mean: [...input.mean], std: [...input.std] },
     classes: [...v.classes],
-    model: validateVisionModelFile(v.model),
+    model: validateVisionArtifact(v.model),
   } as VisionManifest;
 }

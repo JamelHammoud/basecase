@@ -257,6 +257,7 @@ declare global {
       printCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       hubCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       triesCall?: (channel: string, payload?: unknown) => Promise<unknown>;
+      visionTrainingCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       datasetsCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       onshapeCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       roboflowCall?: (channel: string, payload?: unknown) => Promise<unknown>;

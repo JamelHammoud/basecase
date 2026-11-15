@@ -4,8 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { visionModel } from './catalogue';
 import { createVisionRuntime } from './runtime';
 
-const bridge = vi.hoisted(() => ({ modelFile: vi.fn(), messages: [] as unknown[] }));
+const bridge = vi.hoisted(() => ({ modelFile: vi.fn(), content: vi.fn(), messages: [] as unknown[] }));
 
+vi.mock('../datasets/datasetStore/content', () => ({ loadDatasetContent: bridge.content }));
 vi.mock('../hub/hubBridge', () => ({ hubBridge: bridge }));
 vi.mock('../utils/platform/webDemo', () => ({ IS_WEB_DEMO: false }));
 
@@ -37,6 +38,29 @@ afterEach(() => {
 });
 
 describe('desktop vision download boundary', () => {
+  it('loads retained local content without entering the Hub download path', async () => {
+    vi.stubGlobal('Worker', RuntimeWorker);
+
+    const bytes = tinyDetectionOnnx();
+    const manifest = {
+      ...visionModel('yolo11n')!,
+      model: { source: 'local' as const, sha256: 'a'.repeat(64), bytes: bytes.length },
+    };
+
+    bridge.content.mockResolvedValueOnce(bytes);
+
+    const runtime = createVisionRuntime();
+
+    await runtime.load(manifest);
+    expect(bridge.content).toHaveBeenCalledWith(manifest.model.sha256);
+    expect(bridge.modelFile).not.toHaveBeenCalled();
+    expect(bridge.messages).toEqual([expect.objectContaining({ type: 'load', bytes, source: undefined })]);
+    bridge.content.mockResolvedValueOnce(null);
+    await expect(runtime.load(manifest)).rejects.toThrow('missing');
+    expect(bridge.modelFile).not.toHaveBeenCalled();
+    runtime.close();
+  });
+
   it('refuses a missing cache URL without falling back to an unguarded worker download', async () => {
     vi.stubGlobal('Worker', RuntimeWorker);
     bridge.modelFile.mockResolvedValue({});
@@ -158,6 +182,23 @@ describe('fatal vision worker failure', () => {
 });
 
 describe('vision producer ownership', () => {
+  it('copies encoded image input for transfer and refuses excessive image allocations', async () => {
+    vi.stubGlobal('Worker', RuntimeWorker);
+
+    const runtime = createVisionRuntime();
+    const jpeg = new Uint8Array([255, 216, 255]);
+
+    await runtime.inferEncoded('local-cups', jpeg, { camera: 'wrist' });
+
+    const message = bridge.messages.at(-1) as { jpeg: Uint8Array };
+
+    expect(message).toMatchObject({ type: 'infer-encoded', modelId: 'local-cups', jpeg, options: { camera: 'wrist' } });
+    expect(message.jpeg).not.toBe(jpeg);
+    await expect(runtime.inferEncoded('local-cups', new Uint8Array(0))).rejects.toThrow('64 MB');
+    expect(bridge.messages).toHaveLength(1);
+    runtime.close();
+  });
+
   it('disconnects a producer through the runtime after its source worker has stopped', () => {
     vi.stubGlobal('Worker', RuntimeWorker);
 

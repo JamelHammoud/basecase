@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, DownloadIcon, MetaLine, RefreshIcon, Select, ShareIcon, TrainIcon } from '../../design-system';
+import { Button, DownloadIcon, MetaLine, RefreshIcon, Select, ShareIcon } from '../../design-system';
 import type { TrySummary } from '../../cases/tryFile';
 import type { Dataset } from '../../datasets/datasetFile';
 import { classCount, imageCount, totalSeconds } from '../../datasets/datasetView';
@@ -8,6 +8,10 @@ import type { TriesResult } from '../../workspace/useTriesTraining';
 import { PendingRow } from '../simulate/PendingRow';
 import { TriesResultRow } from './TriesResultRow';
 import { plural } from '../../../electron/plural.mjs';
+import { VisionTrainingResults } from './VisionTrainingResults';
+import type { VisionTrainingView } from './visionTrainingView';
+import { DatasetVisionFields } from './DatasetVisionFields';
+import { DatasetTrainButton } from './DatasetTrainButton';
 
 export interface DatasetActions {
   exporting: boolean;
@@ -16,6 +20,7 @@ export interface DatasetActions {
   trainBusy: boolean;
   training: boolean;
   result: TriesResult | null;
+  vision?: VisionTrainingView;
   exportDataset: () => void;
   publishDataset: () => void;
   train: () => void;
@@ -58,6 +63,7 @@ export const DatasetPane: React.FC<DatasetPaneProps> = ({ dataset, members, acti
         }
       />
     )}
+    {actions.vision && <DatasetVisionFields vision={actions.vision} />}
     <div className="flex flex-wrap gap-1.5">
       {dataset.query && !dataset.selectedVersion && (
         <Button size="sm" icon={<RefreshIcon className="w-4 h-4" />} onClick={actions.update}>
@@ -82,13 +88,21 @@ export const DatasetPane: React.FC<DatasetPaneProps> = ({ dataset, members, acti
           Publish to Hugging Face
         </Button>
       )}
-      {actions.canTrain && (
-        <Button size="sm" disabled={actions.trainBusy} icon={<TrainIcon className="w-4 h-4" />} onClick={actions.train}>
-          Train from Tries
-        </Button>
-      )}
+      <DatasetTrainButton actions={actions} />
     </div>
     {actions.training && <PendingRow />}
     {actions.result && <TriesResultRow result={actions.result} />}
+    {actions.vision?.running && actions.vision.progress && (
+      <p className="text-[12px] text-white/60" role="status">
+        {actions.vision.progress}
+      </p>
+    )}
+    {actions.vision && (
+      <VisionTrainingResults
+        attempts={actions.vision.attempts}
+        targets={actions.vision.targets}
+        onApply={actions.vision.apply}
+      />
+    )}
   </div>
 );

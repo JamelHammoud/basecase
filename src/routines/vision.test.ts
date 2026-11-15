@@ -18,6 +18,26 @@ const result: VisionResult = {
 };
 
 describe('Routine vision facts', () => {
+  it('reduces a confident top classification to a labelled observation without boxes', () => {
+    const classified = {
+      ...result,
+      detections: [],
+      classes: [
+        { label: 'cup', score: 0.9 },
+        { label: 'person', score: 0.1 },
+      ],
+    };
+
+    expect(visionFact(classified, { model: 'object-detection', type: 'boolean', label: 'cup' }).num).toBe(1);
+    expect(visionFact(classified, { model: 'person-detection', type: 'boolean' }).num).toBe(0);
+    expect(
+      visionFact(
+        { ...classified, classes: [{ label: 'cup', score: 0.4 }] },
+        { model: 'object-detection', type: 'boolean' },
+      ).num,
+    ).toBe(0);
+  });
+
   it('uses detections for object, person and face facts without inventing a result', () => {
     expect(visionFact(result, { model: 'person-detection', type: 'boolean' })).toEqual({ num: 1, name: null });
     expect(visionFact(result, { model: 'object-detection', type: 'detections' })).toEqual({ num: 2, name: null });

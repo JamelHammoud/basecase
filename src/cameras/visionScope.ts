@@ -22,3 +22,7 @@ export function useVisionScope() {
 
   return scope;
 }
+
+export function visionScopeForScene(scope: VisionScope, scene: string): VisionScope {
+  return scope.scene === scene ? scope : createVisionScope(scene);
+}

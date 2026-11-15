@@ -84,4 +84,4 @@ In YOLO YAML, each split must name one directory, image or image-list text file.
 
 A published Basecase dataset can contain images and recorded tries together. Import keeps both when the tries fit the robot in the open scene.
 
-To share the imported dataset, follow [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).
+To fit a model to the imported labels, follow [Train a vision model](/help/train-a-vision-model). To share the dataset, follow [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).

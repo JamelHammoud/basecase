@@ -16,6 +16,7 @@ export async function runRenderedRoutine(
   scenario: Scenario,
   input: {
     sim: Simulation;
+    sceneId?: string;
     scene: { parts: ScenePart[]; cameras: FixedCamera[]; imported?: ImportedWorldView | null };
     setRun: (next: (run: RoutineRun | null) => RoutineRun) => void;
     current: () => boolean;
@@ -27,7 +28,7 @@ export async function runRenderedRoutine(
   const prepared = await prepareRoutineVision(
     plan,
     views.map((view) => view.key),
-    { rendered: true },
+    { rendered: true, scene: input.sceneId },
   );
 
   if (!input.current()) {

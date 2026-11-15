@@ -1,11 +1,16 @@
+import { restoreRetainedCameraModels } from '../vision/training/models';
+import { registerVisionModelSource } from '../vision/training/modelBindings';
 import type { VisionAssignment } from './visionFrames';
 import type { VisionResult, VisionSource } from '../vision/types';
 import * as session from './visionSession';
 
 export function scopedVision(source: VisionSource) {
+  registerVisionModelSource(source);
+
   const prefix = `${source.id}/`;
   const key = (camera: string) => `${prefix}${camera}`;
   const decoded = new WeakMap<VisionResult, VisionResult>();
+  const preparing = new Map<string, Promise<void>>();
   const result = (value: VisionResult | null) => {
     if (!value) return null;
 
@@ -51,8 +56,36 @@ export function scopedVision(source: VisionSource) {
         .filter((a) => a.camera.startsWith(prefix))
         .map((a) => ({ ...a, camera: a.camera.slice(prefix.length), source })),
     visionNeedsFrames: (cameras: string[]) => session.visionNeedsFrames(cameras.map(key)),
-    registerVisionCameras: (owner: object, cameras: string[]) => session.registerVisionCameras(owner, cameras.map(key)),
-    ensureVisionCamera: (camera: string) => session.ensureVisionCamera(key(camera)),
+    registerVisionCameras: (owner: object, cameras: string[]) => {
+      let active = true;
+      const release = session.registerVisionCameras(owner, cameras.map(key));
+
+      const restoration = restoreRetainedCameraModels(source, cameras, () => active);
+
+      for (const camera of cameras) preparing.set(camera, restoration);
+
+      void restoration.catch((error: unknown) => {
+        if (!active) return;
+
+        for (const camera of cameras)
+          session.setCameraVisionError(key(camera), error instanceof Error ? error.message : String(error));
+      });
+
+      return () => {
+        active = false;
+
+        for (const camera of cameras) if (preparing.get(camera) === restoration) preparing.delete(camera);
+
+        release();
+      };
+    },
+    ensureVisionCamera: async (camera: string) => {
+      await preparing.get(camera);
+
+      if (!availableVisionCameras().includes(camera)) return;
+
+      await session.ensureVisionCamera(key(camera));
+    },
     configureVisionCamera: (camera: string, options: Parameters<typeof session.configureVisionCamera>[1]) =>
       session.configureVisionCamera(key(camera), options),
     acquireVisionCamera: (camera: string, options: Parameters<typeof session.acquireVisionCamera>[1]) =>

@@ -109,6 +109,7 @@ export function useRoutineRuns({ pending, sim, sceneRef, setRun, scope }: RunsIn
     if (scenario.tier === 'L2')
       return runRenderedRoutine(found.compiled.plan, scenario, {
         sim,
+        sceneId: cameraVision.scene,
         scene: sceneRef.current,
         setRun,
         current: () => headless.current(ticket),

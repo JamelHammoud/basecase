@@ -94,6 +94,7 @@ export interface PlanBase {
 }
 
 export interface Plan {
+  visionModels?: Array<{ camera: string; node: string; modelId: string }>;
   schema: 1;
   routine: { id: string; name: string; sentence?: string };
   requires: Capability[];

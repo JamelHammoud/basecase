@@ -14,6 +14,37 @@ beforeEach(() => {
 const setup = () => import('./visionSession');
 
 describe('camera inference ownership', () => {
+  it('replaces the default baseline while preserving a running Routine and other nodes', async () => {
+    const session = await setup();
+    const close = session.registerVisionCameras({}, ['wrist']);
+
+    await session.ensureVisionCamera('wrist');
+    await session.configureVisionCamera('wrist', { modelId: 'yolo11n', continuous: false });
+
+    const release = await session.acquireVisionCamera('wrist', {
+      modelId: 'rfdetr-nano',
+      fps: 9,
+      current: () => true,
+    });
+
+    await session.configureVisionCamera('wrist', { modelId: 'yunet', replaceModelId: 'rfdetr-nano' });
+    expect(session.visionAssignments()).toContainEqual({
+      camera: 'wrist',
+      modelId: 'rfdetr-nano',
+      fps: 9,
+      continuous: true,
+    });
+    release();
+    await session.ensureVisionCamera('wrist');
+    expect(
+      session
+        .visionAssignments()
+        .map((assignment) => assignment.modelId)
+        .sort(),
+    ).toEqual(['yolo11n', 'yunet']);
+    close();
+  });
+
   it('releases overlapping requests in either order while preserving the baseline', async () => {
     const session = await setup();
 

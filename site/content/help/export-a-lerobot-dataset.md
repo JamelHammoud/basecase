@@ -58,4 +58,4 @@ The zip holds two copies of the dataset. The top folder is LeRobot v3.0, which L
 
 If the dataset also holds rendered or imported training images, the zip includes `coco/` and `yolo/` alongside the LeRobot files. An image-only dataset exports those two folders without LeRobot episodes. A mixed dataset with no fitting tries still exports its images. See [Make training images from a Case](/help/make-training-images) or [Import an image dataset](/help/import-an-image-dataset).
 
-To put the dataset on the Hugging Face Hub instead of in a zip, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face). To train on the same tries inside Basecase, see [Train a policy from your tries](/help/train-a-policy-from-your-tries).
+To put the dataset on the Hugging Face Hub instead of in a zip, see [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face). To train a policy inside Basecase, use a dataset without images and follow [Train a policy from your tries](/help/train-a-policy-from-your-tries).

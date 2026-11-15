@@ -29,8 +29,8 @@ const shape = (dims: number[]) => join(...dims.map((dim) => message(1, number(1,
 const valueInfo = (name: string, dims: number[]) =>
   join(string(1, name), message(2, message(1, join(number(1, 1), message(2, shape(dims))))));
 
-export function tinyDetectionOnnx() {
-  const values = new Float32Array([0.1, 0.2, 0.3, 0.4, 0.9, 0]);
+export function tinyDetectionOnnx(rows = [0.1, 0.2, 0.3, 0.4, 0.9, 0]) {
+  const values = new Float32Array(rows);
   const tensor = join(
     number(1, 1),
     number(1, 1),

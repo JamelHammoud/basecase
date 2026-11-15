@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { finding, has, parseJson, root, run } from './run.mjs';
 
-const PROJECTS = ['electron/trainer', 'electron/simready'];
+const PROJECTS = ['electron/trainer', 'electron/simready', 'electron/visionTrainer'];
 
 function auditProject(project) {
   const cwd = path.join(root, project);

@@ -13,6 +13,7 @@ import {
   buildCheckPage,
   loadKnees,
   servo,
+  storeFalls,
   storeWalk,
   visible,
   type StudioHook,
@@ -239,6 +240,37 @@ describe('Build tab fields', () => {
     await row.getByRole('button', { name: /^Right knee/ }).click();
     await expect.poll(() => plot('jb').isVisible()).toBe(true);
   }, 120000);
+
+  it('show a stored fall at the knee and select its link through Replay in Sim', async () => {
+    await loadKnees(app.page);
+    await storeFalls(app.page, {
+      directions: 12,
+      tipped: 12,
+      joints: { ja: { p99Nm: 100, deg: 180 }, jb: { p99Nm: 0.1, deg: 0 } },
+    });
+    await app.page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const row = checkRow('Falls');
+    const kneeItem = row.locator('li', { hasText: /Left knee: \d+\.\d× rated, falling backward/ }).first();
+
+    await expect
+      .poll(async () => {
+        if (!(await row.isVisible())) return false;
+
+        await expand(row, 'Falls');
+
+        return kneeItem.isVisible();
+      })
+      .toBe(true);
+    expect(await kneeItem.textContent()).toMatch(/strip its gears/);
+    await kneeItem.getByRole('button', { name: 'Replay in Sim' }).click();
+    await expect
+      .poll(() => app.page.evaluate(() => (window as unknown as { __studio: StudioHook }).__studio.selection()))
+      .toEqual(['a']);
+    await expect
+      .poll(() => app.page.locator(visible('[role=tab][aria-selected="true"]'), { hasText: 'Simulate' }).count())
+      .toBe(1);
+  });
 
   it('set a budget beside the bill of materials total', async () => {
     const bom = section(/^Bill of materials/);

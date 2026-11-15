@@ -2,8 +2,8 @@ import { expect } from 'vitest';
 import type { Locator, Page } from 'playwright-core';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
-import type { WalkSim } from '../src/utils/engineeringTypes';
-import { walkKey } from '../src/workspace/storedWalk';
+import type { FallSim, WalkSim } from '../src/utils/engineeringTypes';
+import { storedFalls, walkKey } from '../src/workspace/storedWalk';
 
 export interface StudioHook {
   load: (record: { parts: unknown[]; project: unknown }) => void;
@@ -132,5 +132,14 @@ export async function storeWalk(page: Page, walk: WalkSim) {
   await studioLoad(page, {
     parts: scene.parts,
     project: { ...scene.project, walk: { ...walk, key: walkKey(scene.parts, scene.project) } },
+  });
+}
+
+export async function storeFalls(page: Page, falls: FallSim) {
+  const scene = await sceneRecord(page);
+
+  await studioLoad(page, {
+    parts: scene.parts,
+    project: { ...scene.project, falls: storedFalls(falls, scene.parts, scene.project) },
   });
 }

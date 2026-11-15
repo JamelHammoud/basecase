@@ -6,6 +6,8 @@ Joint-axis candidates group joins with `electron/cad-kernel/pairKey.mjs`, calcul
 
 ## 8c. Joints, Poses and Motion
 
+`utils/kinematicsMembers.ts` groups a rig's owned parts by joint in ownership insertion order. MJCF body generation and the Weight and engineering-check body traversal share this helper. Each call owns new groups, so embedded-part adoption and later ownership edits are read from the current rig.
+
 Robot mesh loading and Onshape part exports use the shared `electron/eachLimited.mjs` cursor without copying or shifting pending queues. Mesh loading keeps six active tasks at most, and Onshape keeps four. Onshape filenames retain each part’s original index when exports complete out of order. Robot mesh failures remain notes, while an Onshape export failure rejects the import.
 
 A robot is posable once its degrees of freedom are declared. Posing never edits parts: the modeled pose is the design, and a pose only changes what the canvas shows.

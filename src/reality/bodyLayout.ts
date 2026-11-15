@@ -4,6 +4,7 @@ import type { ScenePart } from '../types/robotics';
 import { isMovable, partMatrix, type Rig, type V3 } from '../utils/kinematics';
 import { safeId } from '../sim/mjcfText';
 import { toMj } from '../sim/mjcfFrames';
+import { ownedPartsByJoint } from '../utils/kinematicsMembers';
 import type { BodyCalibration, BodyFit } from './bodyTypes';
 
 export const bodyKey = (body: SimBody) => (body.joint ? `joint:${body.joint}` : `root:${body.robot}`);
@@ -91,6 +92,7 @@ export function bodyPayloads(bodies: SimBody[], parts: ScenePart[]): Record<stri
 
 export function rigBodies(rig: Rig): SimBody[] {
   const bodies: SimBody[] = [];
+  const { children, roots, parts } = bodyMembers(rig);
   let movable = 0;
   const visit = (robot: string, parent: string, joint: string) => {
     const j = rig.byId.get(joint)!;
@@ -104,10 +106,10 @@ export function rigBodies(rig: Rig): SimBody[] {
       robot,
       parent,
       joint,
-      parts: [...rig.ownerOf].filter(([, id]) => id === joint).map(([id]) => id),
+      parts: [...(parts.get(joint) ?? [])],
     });
 
-    for (const child of rig.joints.filter((c) => rig.parentOf.get(c.id) === joint)) visit(robot, name, child.id);
+    for (const child of children.get(joint) ?? []) visit(robot, name, child);
   };
 
   for (const [index, robot] of rig.robots.entries()) {
@@ -120,9 +122,30 @@ export function rigBodies(rig: Rig): SimBody[] {
       parts: [...robot.parts].filter((id) => !rig.ownerOf.has(id)),
     });
 
-    for (const j of rig.joints.filter((j) => rig.robotOf.get(j.id) === robot.key && !rig.parentOf.get(j.id)))
-      visit(robot.key, root, j.id);
+    for (const joint of roots.get(robot.key) ?? []) visit(robot.key, root, joint);
   }
 
   return bodies;
+}
+
+function appendMember(groups: Map<string | undefined, string[]>, key: string | undefined, id: string) {
+  const members = groups.get(key) ?? [];
+
+  members.push(id);
+  groups.set(key, members);
+}
+
+function bodyMembers(rig: Rig) {
+  const children = new Map<string | undefined, string[]>();
+  const roots = new Map<string | undefined, string[]>();
+  const parts = ownedPartsByJoint(rig.ownerOf);
+
+  for (const joint of rig.joints) {
+    const parent = rig.parentOf.get(joint.id);
+
+    if (parent) appendMember(children, parent, joint.id);
+    else appendMember(roots, rig.robotOf.get(joint.id), joint.id);
+  }
+
+  return { children, roots, parts };
 }

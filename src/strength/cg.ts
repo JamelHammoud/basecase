@@ -82,14 +82,21 @@ function blockJacobi(m: BlockMatrix): Float64Array {
   return inv;
 }
 
-function precondition(inv: Float64Array, r: Float64Array, z: Float64Array): void {
+function precondition(inv: Float64Array, r: Float64Array, z: Float64Array): number {
+  let product = 0;
+
   for (let i = 0; i < r.length; i += 3) {
     const v = i * 3;
 
     z[i] = inv[v] * r[i] + inv[v + 1] * r[i + 1] + inv[v + 2] * r[i + 2];
     z[i + 1] = inv[v + 3] * r[i] + inv[v + 4] * r[i + 1] + inv[v + 5] * r[i + 2];
     z[i + 2] = inv[v + 6] * r[i] + inv[v + 7] * r[i + 1] + inv[v + 8] * r[i + 2];
+    product += r[i] * z[i];
+    product += r[i + 1] * z[i + 1];
+    product += r[i + 2] * z[i + 2];
   }
+
+  return product;
 }
 
 const dot = (a: Float64Array, b: Float64Array) => {
@@ -121,12 +128,11 @@ export function conjugateGradient(
   const r = f.map((v, i) => (sys.fixed[i] ? 0 : v));
   const z = new Float64Array(size);
 
-  precondition(inv, r, z);
+  let rz = precondition(inv, r, z);
 
   const p = Float64Array.from(z);
   const q = new Float64Array(size);
   const norm0 = Math.sqrt(dot(r, r)) || 1;
-  let rz = dot(r, z);
   let iterations = 0;
   let residual = 1;
 
@@ -134,22 +140,22 @@ export function conjugateGradient(
     multiplyBlocks(m, p, q);
 
     const alpha = rz / (dot(p, q) || 1e-30);
+    let norm2 = 0;
 
     for (let i = 0; i < size; i++) {
       u[i] += alpha * p[i];
       r[i] -= alpha * q[i];
+      norm2 += r[i] * r[i];
     }
 
-    precondition(inv, r, z);
-
-    const next = dot(r, z);
+    const next = precondition(inv, r, z);
     const beta = next / (rz || 1e-30);
 
     for (let i = 0; i < size; i++) p[i] = z[i] + beta * p[i];
 
     rz = next;
     iterations++;
-    residual = Math.sqrt(dot(r, r)) / norm0;
+    residual = Math.sqrt(norm2) / norm0;
   }
 
   return { u, iterations, residual };

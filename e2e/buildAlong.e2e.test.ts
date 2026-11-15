@@ -91,8 +91,7 @@ const openBuildAlong = async () => {
   await expect.poll(stepShown, { timeout: 180000 }).toBe('1');
 };
 
-beforeEach(async () => {
-  app = await openApp();
+const loadArm = async () => {
   await app.page.evaluate(
     ({ parts, joints, prints }) => {
       const s = (window as unknown as { __studio: BuildAlongStudio }).__studio;
@@ -119,6 +118,10 @@ beforeEach(async () => {
     },
   );
   await vi.waitFor(async () => expect(await shownParts()).toHaveLength(parts.length), { timeout: 30000 });
+};
+
+beforeEach(async () => {
+  app = await openApp();
 }, 120000);
 
 afterEach(async () => {
@@ -127,6 +130,8 @@ afterEach(async () => {
 
 describe('Build Along', () => {
   it('filters the viewport by step, renders servo labels and restores the scene on exit', async () => {
+    await loadArm();
+
     const before = await sceneParts();
 
     await openBuildAlong();

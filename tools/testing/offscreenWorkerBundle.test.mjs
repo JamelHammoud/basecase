@@ -22,8 +22,9 @@ it('bundles an absolute module path into a standalone worker that returns result
     runInNewContext(code, { self: worker });
     await worker.onmessage({ data: { id: 1, payload: { width: 4, height: 3 } } });
     await worker.onmessage({ data: { id: 2, payload: { fail: true } } });
-    expect(replies[0]).toEqual({ id: 1, result: 12 });
-    expect(replies[1]).toEqual({ id: 2, error: expect.stringContaining('Render failed') });
+    expect(replies[0]).toEqual({ ready: true });
+    expect(replies[1]).toEqual({ id: 1, result: 12 });
+    expect(replies[2]).toEqual({ id: 2, error: expect.stringContaining('Render failed') });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

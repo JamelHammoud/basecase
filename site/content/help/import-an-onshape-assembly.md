@@ -1,7 +1,6 @@
 ---
 title: Import an Onshape assembly as a robot
 date: 2026-11-12
-updated: 2026-11-14
 collection: design
 type: task
 order: 17
@@ -23,6 +22,11 @@ covers:
   - electron/onshape/
   - src/readiness/buildChecks.ts
   - src/workspace/useOnshapeUpdate.ts
+hub_checks_and_blockers_order: 20
+hub_checks_and_blockers: |
+  For an Onshape import, **Fixed Mates** notes name motions held fixed. A cylindrical mate keeps its hinge, but its slide stays fixed. These notes don't block Ready to build.
+
+  ![The Assembly check with the imported cylindrical axle slide held fixed](/help/import-an-onshape-assembly/cylindrical-slide.png)
 ---
 
 Bring a robot you modeled in Onshape into Basecase with revolute and cylindrical mates as hinges and slider mates as slides.

@@ -1,7 +1,6 @@
 ---
 title: Choose the agent
 date: 2026-11-12
-updated: 2026-11-13
 collection: agent
 type: task
 order: 1

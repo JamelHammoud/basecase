@@ -10,6 +10,9 @@ covers:
   - src/vision/frameSet.ts
   - src/vision/cocoExport.ts
   - src/vision/yoloExport.ts
+hub_the_design_agent_order: 80
+hub_the_design_agent: |
+  - Ask it to make training images from a Case. You can name the cameras, classes, image count and seed. It opens the saved dataset, as in [Make training images from a Case](/help/make-training-images).
 ---
 
 Render labeled camera images from your robot's Case, then export them for model training.

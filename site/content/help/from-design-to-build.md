@@ -1,7 +1,6 @@
 ---
 title: The path from design to build
 date: 2026-11-13
-updated: 2026-11-14
 collection: build-and-print
 type: concept
 order: 1

@@ -1,7 +1,6 @@
 ---
 title: Point the agent at a part
 date: 2026-11-13
-updated: 2026-11-14
 collection: agent
 type: task
 order: 6

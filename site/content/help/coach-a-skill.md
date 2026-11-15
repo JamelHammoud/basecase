@@ -1,7 +1,6 @@
 ---
 title: Coach how a ready skill moves
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 keywords:
@@ -24,6 +23,9 @@ covers:
   - src/workspace/coachCommands.tsx
   - src/workspace/agentCoachRequests.ts
   - electron/cad-mcp/skillTools.mjs
+hub_the_design_agent_order: 10
+hub_the_design_agent: |
+  - Ask it to change how a ready Motor Kit skill moves. It keeps the change if Arena passes it and drops it if not.
 ---
 
 Coaching changes how a passing Motor Kit skill moves, for example lifting its feet or landing softly. Arena still judges the skill the same way.

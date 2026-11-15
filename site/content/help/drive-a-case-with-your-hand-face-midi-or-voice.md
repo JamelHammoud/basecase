@@ -1,7 +1,6 @@
 ---
 title: Drive a Case with your hand, face, MIDI or voice
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 keywords:
@@ -27,6 +26,9 @@ covers:
   - src/voice/
   - src/sim/inputSources.ts
   - src/sim/inputEvents.ts
+hub_run_a_case_order: 20
+hub_run_a_case: |
+  If a console lists `camera` among its inputs, **Try It** opens your computer's camera, and you drive a humanoid or an arm with your arms. See [Drive a robot with your camera](/help/drive-a-robot-with-your-camera). The Case's logic receives the gestures you make, and the Case can set a button to press when you make one. See [Teach a robot a gesture](/help/teach-a-robot-a-gesture). A console can list `hand`, `face`, `midi` and `voice` as well. To learn more, see [Drive a Case with your hand, face, MIDI or voice](/help/drive-a-case-with-your-hand-face-midi-or-voice).
 ---
 
 You can control a running Case with your hand, your face, a MIDI keyboard or your voice. Move your hand and an arm follows it like a puppet, or keep a camera head pointed at your face. MIDI notes and spoken words reach the Case's logic as events.

@@ -1,7 +1,6 @@
 ---
 title: Choose a model and effort
 date: 2026-11-13
-updated: 2026-11-13
 collection: agent
 type: task
 order: 2

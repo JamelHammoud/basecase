@@ -30,7 +30,7 @@ const BODY = [
 ].join('\n');
 
 const FIXTURES: Record<string, string> = {
-  '/site/content/help/import-a-mesh.md': `---\ntitle: Import a mesh\ndate: 2026-11-01\nupdated: 2026-11-10\ncollection: design\ntype: task\ncovers:\n  - src/workspace/meshImport.ts\n---\n\n${BODY}\n`,
+  '/site/content/help/import-a-mesh.md': `---\ntitle: Import a mesh\ndate: 2026-11-01\ncollection: design\ntype: task\ncovers:\n  - src/workspace/meshImport.ts\n---\n\n${BODY}\n`,
   '/site/content/help/what-a-mesh-is.md':
     '---\ntitle: What a mesh is\ndate: 2026-11-01\ncollection: design\ntype: concept\n---\n\n1. Triangles.\n2. Normals.\n',
   '/site/content/changelog/2026-11-01-entry.md': '---\ntitle: Entry\ndate: 2026-11-01\n---\n\nIt changed.\n',
@@ -65,7 +65,7 @@ describe('help pages', () => {
     expect(article).toMatch(/href="\/help\/design"[^>]*>Design<\/a>/);
     expect(article).not.toContain('How-to');
     expect(files.get('help/what-a-mesh-is.html')).toContain('<span>Concept</span>');
-    expect(article).toContain('<time dateTime="2026-11-10">November 10, 2026</time>');
+    expect(article).toContain('<time dateTime="2026-11-01">November 1, 2026</time>');
     expect(article).toContain('On this page');
     expect(article).toContain('href="#choose-a-file"');
     expect(article).toContain('id="choose-a-file"');

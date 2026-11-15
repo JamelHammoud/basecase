@@ -1,5 +1,6 @@
 import { readHelpArticle, type HelpArticle } from '../help/helpArticle';
 import { buildHelpCenter, checkHelpSources, type HelpCenter } from '../help/helpCenter';
+import { expandHelpHubs } from './helpHubs';
 import { parseFrontMatter, type FrontMatterValue } from './frontMatter';
 import type { ContentKind } from './sections';
 import { typeset, typesetMarkdown } from './typeset';
@@ -54,7 +55,7 @@ function required(data: Record<string, FrontMatterValue>, key: string, path: str
   return value;
 }
 
-function entryFrom(path: string, source: string): Draft {
+function entryFrom(path: string, source: string, committed?: string): Draft {
   const match = CONTENT_PATH.exec(path);
 
   if (!match) throw new Error(`${path}: put content in site/content/blog, help or changelog`);
@@ -83,7 +84,7 @@ function entryFrom(path: string, source: string): Draft {
     image: text(data.image),
   };
 
-  const help = entry.kind === 'help' ? readHelpArticle(entry, data, path) : undefined;
+  const help = entry.kind === 'help' ? readHelpArticle(entry, data, path, committed) : undefined;
 
   return { entry, draft: data.draft === true, help, path };
 }
@@ -94,9 +95,16 @@ export const isoDay = (now: Date) => now.toISOString().slice(0, 10);
 
 const helpSources = (drafts: Draft[]) => drafts.flatMap(({ help, path }) => (help ? [{ article: help, path }] : []));
 
-export function readContent(files: Record<string, string>, now: Date): SiteContent {
+export function readContent(
+  files: Record<string, string>,
+  now: Date,
+  committed: Record<string, string> = {},
+): SiteContent {
   const today = isoDay(now);
-  const drafts = Object.entries(files).map(([path, source]) => entryFrom(path, source));
+  const expanded = expandHelpHubs(files, now);
+  const drafts = Object.entries(expanded).map(([path, source]) =>
+    entryFrom(path, source, committed[path] ?? committed[path.replace(/^.*?site\/content\//, 'site/content/')]),
+  );
   const published = drafts.filter(({ entry, draft }) => !draft && entry.date <= today);
   const ofKind = (kind: ContentKind) => published.map(({ entry }) => entry).filter((entry) => entry.kind === kind);
 

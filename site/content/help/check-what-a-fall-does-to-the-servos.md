@@ -21,6 +21,17 @@ covers:
   - src/agent/agentFalls.ts
   - src/sim/fallRuns.ts
   - src/workspace/fallReplay.ts
+hub_troubleshoot_build_check_blocks_ready_to_build_order: 30
+hub_troubleshoot_build_check_blocks_ready_to_build: |
+  ## “This servo could strip its gears when the robot falls.”
+
+  In a fall, this leg joint needs more than 5 times its servo's rated torque, or more than the peak listed in the servo's datasheet. The item names the joint and the direction of its worst fall.
+
+  1. To watch the fall, click **Replay in Sim** on the joint.
+  2. Ask the agent for a stronger servo at that joint, or for a lower stance.
+  3. Ask the agent to verify the design with falls again.
+
+  You're done when **Falls** in Checks no longer shows a red mark.
 ---
 
 You can tip a legged robot over in the simulation from 12 directions and see which servos a fall would push past the limit of their gears. The test holds the robot in the pose you modeled.

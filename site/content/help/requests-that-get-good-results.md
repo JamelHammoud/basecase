@@ -1,7 +1,6 @@
 ---
 title: Requests that get good results
 date: 2026-11-13
-updated: 2026-11-14
 collection: agent
 type: concept
 order: 2

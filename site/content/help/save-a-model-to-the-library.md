@@ -1,7 +1,6 @@
 ---
 title: Save a model to the Library
 date: 2026-11-12
-updated: 2026-11-14
 collection: files-and-sharing
 type: task
 order: 5

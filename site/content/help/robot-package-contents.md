@@ -1,7 +1,6 @@
 ---
 title: Robot package contents
 date: 2026-11-13
-updated: 2026-11-13
 collection: build-and-print
 type: reference
 order: 2

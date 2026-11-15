@@ -45,6 +45,28 @@ describe('blocksOf', () => {
 });
 
 describe('lintSite', () => {
+  it('rejects a hand-written help update date with the article path', () => {
+    expect(() =>
+      lint({
+        'site/content/help/dated.md': page('title: Open a scene\ndate: 2026-11-01\nupdated: 2026-11-02', 'Open it.'),
+      }),
+    ).toThrow('site/content/help/dated.md: remove "updated:"');
+  });
+
+  it('checks feature-owned hub text through the same prose rules as the hub body', () => {
+    const problems = lint({
+      'site/content/help/hub.md': page('title: Agent tools\ndate: 2026-11-01\nhub_sort: order', '{{help-hub}}'),
+      'site/content/help/feature.md': page(
+        'title: Add a part\ndate: 2026-11-01\nhub_hub: |\n  A seamless export.',
+        'Add it.',
+      ),
+    });
+
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('site/content/help/hub.md:');
+    expect(problems[0]).toContain('“seamless” is on the banned list');
+  });
+
   it('passes a page that follows §3f', () => {
     const entry = page(
       'title: Import meshes\ndate: 2026-11-12\nimage: /changelog/import-meshes/cover.png',

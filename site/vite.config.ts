@@ -4,6 +4,7 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { completeHelpHistory, helpCommitDates } from '../tools/site/gitDates.mjs';
 import { defineConfig, runnerImport, type Plugin } from 'vite';
 
 const siteDir = path.dirname(fileURLToPath(import.meta.url));
@@ -30,7 +31,10 @@ const siteAssetsPlugin = (): Plugin => ({
 
 interface Prerender {
   renderSite: () => string;
-  renderSitePages: (assets: { stylesheets: string[]; helpScript?: string }) => { fileName: string; source: string }[];
+  renderSitePages: (
+    assets: { stylesheets: string[]; helpScript?: string },
+    committed: Record<string, string>,
+  ) => { fileName: string; source: string }[];
 }
 
 const loadPrerender = async () => {
@@ -74,11 +78,22 @@ const sitePagesPlugin = (): Plugin => {
           .filter((fileName) => fileName.endsWith('.css'))
           .map((fileName) => `/${fileName}`);
         const { renderSitePages } = await loadPrerender();
+        const helpDir = path.join(repoDir, 'site/content/help');
+        const helpFiles = readdirSync(helpDir)
+          .filter((file) => file.endsWith('.md'))
+          .map((file) => `site/content/help/${file}`);
 
-        for (const { fileName, source } of renderSitePages({
-          stylesheets,
-          helpScript: `/${this.getFileName(helpSearch)}`,
-        })) {
+        completeHelpHistory(repoDir);
+
+        const dates = await helpCommitDates(repoDir, helpFiles);
+
+        for (const { fileName, source } of renderSitePages(
+          {
+            stylesheets,
+            helpScript: `/${this.getFileName(helpSearch)}`,
+          },
+          dates,
+        )) {
           this.emitFile({ type: 'asset', fileName, source });
         }
       },

@@ -22,6 +22,9 @@ covers:
   - src/utils/armReach.ts
   - src/utils/armServos.ts
   - src/arm/armBuild.ts
+hub_the_design_agent_order: 110
+hub_the_design_agent: |
+  Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges printed parts bolted together on one link into a single print.
 ---
 
 Mark the points an arm's tool must reach and enter the grams it carries. You get exact link lengths and a servo picked for each joint.

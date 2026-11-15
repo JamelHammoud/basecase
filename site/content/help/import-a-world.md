@@ -1,7 +1,6 @@
 ---
 title: Import a captured world
 date: 2026-11-14
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 covers:

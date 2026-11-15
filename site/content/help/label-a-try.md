@@ -25,6 +25,12 @@ covers:
   - src/workspace/tagTries.ts
   - src/cases/tryLabels.ts
   - src/datasets/segments.ts
+hub_the_design_agent_order: 70
+hub_the_design_agent: |
+  - Ask it to label tries. It watches each try's filmstrip and writes the task in plain words for the try and each segment.
+hub_open_a_try_from_any_scene_order: 20
+hub_open_a_try_from_any_scene: |
+  To tag tries or mark an imported try passed or failed, right-click it. See [Label a try](/help/label-a-try).
 ---
 
 You can split a try into labeled steps, such as reach, grasp and lift, and tag a try and mark it passed or failed. When you make a dataset from your tries, it can teach each step in words.

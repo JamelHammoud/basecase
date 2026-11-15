@@ -24,11 +24,13 @@ export const GESTURE_FEATURES = GESTURE_POINTS.length * 3;
 export interface GestureFrame {
   t: number;
   p: Float64Array;
+  head: { pitch: number; yaw: number };
 }
 
 const HEAD: ReadonlySet<GesturePoint> = new Set(['nose', 'leftEar', 'rightEar']);
 const SLOT = new Map(GESTURE_POINTS.map((name, i) => [name, i * 3]));
 const MIN_SHOULDERS_M = 0.05;
+const R2D = 180 / Math.PI;
 
 const sub = (a: V3, b: V3): V3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 
@@ -42,10 +44,20 @@ const norm = (a: V3): V3 => {
   return [a[0] / n, a[1] / n, a[2] / n];
 };
 
-export function point(frame: GestureFrame, name: GesturePoint): V3 {
+export function point(frame: Pick<GestureFrame, 'p'>, name: GesturePoint): V3 {
   const i = SLOT.get(name)!;
 
   return [frame.p[i], frame.p[i + 1], frame.p[i + 2]];
+}
+
+function headAngles(frame: Pick<GestureFrame, 'p'>): GestureFrame['head'] {
+  const nose = point(frame, 'nose');
+  const l = point(frame, 'leftEar');
+  const r = point(frame, 'rightEar');
+  const ears: V3 = [(l[0] + r[0]) / 2, (l[1] + r[1]) / 2, (l[2] + r[2]) / 2];
+  const forward = nose[2] - ears[2];
+
+  return { pitch: Math.atan2(ears[1] - nose[1], forward) * R2D, yaw: Math.atan2(nose[0] - ears[0], forward) * R2D };
 }
 
 export function gestureFrame(world: PoseLandmark[], t: number): GestureFrame | null {
@@ -77,5 +89,5 @@ export function gestureFrame(world: PoseLandmark[], t: number): GestureFrame | n
     p.set([dot(d, x) / width, dot(d, y) / width, dot(d, z) / width], k * 3);
   });
 
-  return { t, p };
+  return { t, p, head: headAngles({ p }) };
 }

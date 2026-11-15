@@ -33,7 +33,6 @@ interface Arm {
 }
 
 const SIDES: readonly Side[] = ['left', 'right'];
-const R2D = 180 / Math.PI;
 
 const arm = (f: GestureFrame, side: Side): Arm => ({
   shoulder: [side === 'left' ? 0.5 : -0.5, 0, 0],
@@ -184,22 +183,11 @@ function clapping(w: GestureFrame[]) {
   return Math.min(...recent) < 0.35 && Math.max(...before) > 0.8;
 }
 
-function headAngles(f: GestureFrame) {
-  const nose = point(f, 'nose');
-  const l = point(f, 'leftEar');
-  const r = point(f, 'rightEar');
-  const ears: V3 = [(l[0] + r[0]) / 2, (l[1] + r[1]) / 2, (l[2] + r[2]) / 2];
-  const forward = nose[2] - ears[2];
-
-  return { pitch: Math.atan2(ears[1] - nose[1], forward) * R2D, yaw: Math.atan2(nose[0] - ears[0], forward) * R2D };
-}
-
 function shaking(w: GestureFrame[], along: 'pitch' | 'yaw') {
   if (!covers(w, 0.8)) return false;
 
-  const angles = w.map(headAngles);
-  const turn = smoothed(angles.map((a) => a[along]));
-  const across = smoothed(angles.map((a) => a[along === 'pitch' ? 'yaw' : 'pitch']));
+  const turn = smoothed(w.map((f) => f.head[along]));
+  const across = smoothed(w.map((f) => f.head[along === 'pitch' ? 'yaw' : 'pitch']));
 
   return along === 'pitch' ? legs(turn, 10) >= 2 && span(across) < 12 : legs(turn, 15) >= 3 && span(across) < 12;
 }

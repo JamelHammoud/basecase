@@ -1,5 +1,29 @@
 [
   {
+    "file": "e2e/operateNetwork.e2e.test.ts",
+    "test": "pairs once, climbs the daemon ladder to Test and stops on a lost client",
+    "issue": 1024,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43698588307 measured 187235 us from client_disconnected to client_lost against the 150000 us limit at line 184, then failed to connect in Look at line 161 on retry. Run 43696182210 repeated both failures with a 244140 us interval. Linux passed at the latest commit in 4.5 s. The timing cause is not established, and retries share the daemon and authenticated session state."
+  },
+  {
+    "file": "e2e/bodyFit.e2e.test.ts",
+    "test": "fits recorded twin motion, reruns Checks and rolls back through confirmation",
+    "issue": 1025,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43698588307 never observed active body version 1 at line 70 on the first Windows attempt, then returned the unchanged Checks fingerprint at line 76 on retry. Linux passed at that commit in 3.7 s, and Windows passed in run 43696182210 in 6.7 s. The worker, project update or readiness stage responsible is not established."
+  },
+  {
+    "file": "e2e/caseStartup.e2e.test.ts",
+    "test": "finishes a reference startup through workspace renders and records its try",
+    "issue": 1026,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43698588307 could not find Stop Try at line 44 on the first Windows attempt, then could not click it at line 50 after the clock advanced on retry. Each attempt opens a fresh app. Linux passed at that commit in 8.5 s, and Windows passed in run 43696182210 in 11.0 s. The recording phase or browser timing cause is not established."
+  },
+  {
     "file": "e2e/worldImport.e2e.test.ts",
     "test": "records a kitchen try with its world in the camera tile and every exported video",
     "issue": 995,

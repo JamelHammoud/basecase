@@ -158,12 +158,13 @@ const cornersOf = (index: MeshIndex, tris: number[]) => [
 
 interface Fit {
   cylinder: Cylinder;
-  residual: (v: number) => number;
+  residuals: Map<number, number>;
 }
 
 function fitOnce(index: MeshIndex, tris: number[], axis: V3): Fit | null {
   const basis = planeBasis(axis);
-  const vertices = cornersOf(index, tris).map((v) => index.vertex(v));
+  const ids = cornersOf(index, tris);
+  const vertices = ids.map((v) => index.vertex(v));
   const circle = fitCircle(vertices.map((p) => [dot(p, basis[0]), dot(p, basis[1])]));
 
   if (!circle) return null;
@@ -192,7 +193,7 @@ function fitOnce(index: MeshIndex, tris: number[], axis: V3): Fit | null {
       spanDeg: angularSpanDeg(index, tris, basis),
       convex: outward > 0,
     },
-    residual: (v) => Math.abs(Math.hypot(...radialOf(index.vertex(v))) - circle.r),
+    residuals: new Map(ids.map((v, i) => [v, Math.abs(Math.hypot(...radialOf(vertices[i])) - circle.r)])),
   };
 }
 
@@ -203,12 +204,14 @@ function centroid(index: MeshIndex, t: number): V3 {
 }
 
 const triangleResidual = (index: MeshIndex, fit: Fit, t: number) =>
-  Math.max(...[0, 1, 2].map((k) => fit.residual(index.corners[t * 3 + k])));
+  Math.max(...[0, 1, 2].map((k) => fit.residuals.get(index.corners[t * 3 + k])!));
 
-function rms(index: MeshIndex, fit: Fit, tris: number[]) {
-  const vertices = cornersOf(index, tris);
+function rms(residuals: Map<number, number>) {
+  let sum = 0;
 
-  return Math.sqrt(vertices.reduce((s, v) => s + fit.residual(v) ** 2, 0) / vertices.length);
+  for (const residual of residuals.values()) sum += residual ** 2;
+
+  return Math.sqrt(sum / residuals.size);
 }
 
 function cylinderAxis(index: MeshIndex, tris: number[]): V3 | null {
@@ -230,7 +233,7 @@ export function fitCylinder(index: MeshIndex, region: number[], minSpanDeg: numb
 
     const limit = residualLimit(fit.cylinder.radius);
 
-    if (rms(index, fit, tris) <= limit) return fit.cylinder.spanDeg >= minSpanDeg ? fit.cylinder : null;
+    if (rms(fit.residuals) <= limit) return fit.cylinder.spanDeg >= minSpanDeg ? fit.cylinder : null;
 
     const kept = tris.filter((t) => triangleResidual(index, fit, t) <= limit);
 

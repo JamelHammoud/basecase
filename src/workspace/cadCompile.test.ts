@@ -85,6 +85,31 @@ describe('compiledPart', () => {
 });
 
 describe('compiledDoc', () => {
+  it('shares compiled arrays across history and leaves unrelated compile results untouched', () => {
+    const part = placeholder('a', [0, 0, 0]);
+    const parts = [part];
+    const state = { parts, pose: undefined, joints: undefined, marks: undefined, skeleton: undefined };
+    const doc = {
+      parts,
+      past: Array.from({ length: 25 }, () => ({ ...state })),
+      future: Array.from({ length: 25 }, () => ({ ...state })),
+      base: parts,
+    };
+    const rendered = box();
+
+    expect(compiledDoc(doc, 'openscad\ncube(2);', rendered)).toBe(doc);
+
+    const next = compiledDoc(doc, `openscad\n${CODE}`, rendered);
+
+    expect(next.parts[0].cad?.pending).toBeUndefined();
+    expect(next.base).toBe(next.parts);
+
+    for (const snapshot of [...next.past, ...next.future]) expect(snapshot.parts).toBe(next.parts);
+
+    expect(part.cad?.pending).toBe(true);
+    expect(compiledDoc(next, `openscad\n${CODE}`, rendered)).toBe(next);
+  });
+
   it('patches the pending parts with that code in the doc and its history, and nothing else', () => {
     const a = placeholder('a', [0, 0, 0]);
     const other = placeholder('b', [0, 0, 0], 'cube(1);');

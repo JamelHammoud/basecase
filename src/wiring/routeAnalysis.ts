@@ -6,12 +6,14 @@ import { selectCableStock } from './cableStock';
 import type { CableRoute, Net, NetEnd, Netlist, WiringRouteSpec, WiringScene } from './connectors';
 import { wiringNetlist } from './netlist';
 import { routePath, routeTopology, type RouteEndpoint, type RouteObstacle } from './routeGeometry';
-import type { RoutePoint } from './routeCollision';
-import { relativeMotionBound, poseTransforms, routeMotion, routePoses, type RouteMotion } from './routeMotion';
+import type { RelativeBound, RoutePoint } from './routeCollision';
+import { relativeMotionBound } from './routeBound';
+import { poseTransforms, routeMotion, routePoses, type RouteMotion } from './routeMotion';
 
 interface RouteContext {
   scene: WiringScene;
   motion: RouteMotion;
+  bound: RelativeBound;
   obstacles: RouteObstacle[];
   mounts: Map<string, THREE.Matrix4>;
 }
@@ -85,8 +87,7 @@ function sampleRoute(input: RoutingInput, values: Record<string, number>) {
 
     if (cached !== undefined) return cached;
 
-    const value = relativeMotionBound(
-      ctx.motion,
+    const value = ctx.bound(
       {
         ...point,
         position: transformed(point.position, inverses.get(point.obstacleId ?? '') ?? fallbackInverse),
@@ -198,9 +199,11 @@ function stockReason(status: ReturnType<typeof selectCableStock>['status']): str
 }
 
 export function routeNetlist(scene: WiringScene, netlist: Netlist, obstacles: RouteObstacle[]): Netlist {
+  const motion = routeMotion(scene);
   const ctx: RouteContext = {
     scene,
-    motion: routeMotion(scene),
+    motion,
+    bound: relativeMotionBound(motion),
     obstacles,
     mounts: new Map(scene.parts.map((p) => [p.id, partMatrix(p)])),
   };

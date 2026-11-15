@@ -18,6 +18,7 @@ export async function fakeNetworkRobot({ spec = ARM, greeting = {}, challenge = 
     let seq = 0;
     let incoming = 0;
     let partial = '';
+    let mode = 'look';
     const send = (event) => {
       const body = JSON.stringify(event);
       const mac = createHmac('sha256', Buffer.from(TEST_KEY, 'hex'))
@@ -30,6 +31,13 @@ export async function fakeNetworkRobot({ spec = ARM, greeting = {}, challenge = 
       return envelope;
     };
     const session = { socket, send, raw: (event) => socket.write(`${JSON.stringify(event)}\n`) };
+    const status = () =>
+      send({
+        event: 'status',
+        mode,
+        run: 'idle',
+        joints: normalized.ids.map((id) => ({ id, position: 2048 })),
+      });
 
     sockets.add(socket);
     sessions.push(session);
@@ -53,12 +61,7 @@ export async function fakeNetworkRobot({ spec = ARM, greeting = {}, challenge = 
           lost_message: 'Lost contact with the robot.',
           ...greeting,
         });
-        send({
-          event: 'status',
-          mode: 'look',
-          run: 'idle',
-          joints: normalized.ids.map((id) => ({ id, position: 2048 })),
-        });
+        status();
 
         return;
       }
@@ -70,7 +73,12 @@ export async function fakeNetworkRobot({ spec = ARM, greeting = {}, challenge = 
 
       commands.push(body);
 
-      if (body.cmd === 'enter') send({ event: 'mode', mode: body.mode });
+      if (body.cmd === 'enter') {
+        mode = body.mode;
+        send({ event: 'mode', mode });
+      }
+
+      if (body.cmd === 'heartbeat' || body.cmd === 'intent') status();
     };
 
     socket.setEncoding('utf8');

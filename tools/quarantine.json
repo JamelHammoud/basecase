@@ -88,14 +88,6 @@
     "reason": "Run 43710741335 kept status loading and the hold controller after Try at line 112 on both Windows attempts. Training, saved skill validation and reload completed before that assertion. Linux passed at the same commit in 19849 ms. The preceding Windows run 43708315996 passed in 16443 ms with no intervening changes to the walkthrough, simulation, workspace startup, web storage, dependencies or e2e configuration. Each attempt opens a fresh browser. The worker loading or policy startup stage responsible is not established. Track this additional startup failure in the existing Windows worker-start issue #995."
   },
   {
-    "file": "e2e/caseRun.e2e.test.ts",
-    "test": "runs a Case without a console in the default layout: cameras, brief, servos and tries, then Esc returns",
-    "issue": 1026,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 43708315996 exhausted the unchanged 30000 ms click budget finding Stop Try at line 137 on both Windows attempts after observing Drive on and playing true. Each attempt opens a fresh app. Linux passed at the same commit in 22.8 s, and the preceding Windows run 43705870784 passed in 107.0 s with unchanged walkthrough, Case startup and recording code. The Case phase, automatic completion or browser command stage responsible is not established."
-  },
-  {
     "file": "e2e/labelFrames.e2e.test.ts",
     "test": "extracts pose labels from a reference pick try, draws a box and undoes it",
     "issue": 1049,

@@ -39,7 +39,7 @@ Each printed part tries the 6 ways its axes can point up, plus up to 6 large fla
 - **Time** comes from the volume of plastic laid down.
 - **Filament** is counted in grams per material, then rounded up to whole spools with 15% to spare. With **Made by a Service** chosen, the bill of materials lists each part's quote instead.
 
-A thin area of 100 mm² or more is a panel that would print with holes, and it blocks Ready to build. A smaller one is usually a thin edge from a cut, which the slicer drops, so it's only a note.
+Thin walls block Ready to build when they cover at least 100 mm² or 10% of the part's surface. Below both limits, the thin area is usually an edge from a cut, which the slicer drops, so it's only a note.
 
 ## From estimate to slice
 

@@ -15,10 +15,10 @@ export default function datasetsStudio(studio: Studio) {
       return zip && base64Files(unzipSync(zip));
     },
     datasets: () => studio().core.triesView.datasets,
-    seedDatasetTry: async (id: string) => {
+    seedDatasetTry: async (id: string, variant = 0) => {
       const { sim, cases } = studio().core.simTraining;
 
-      return seedDatasetTry(await sim.buildModel(), cases.sceneId, id);
+      return seedDatasetTry(await sim.buildModel(), cases.sceneId, id, variant);
     },
     datasetInstruction: (id: string, instruction: string) =>
       editTries([id], (stored) => ({

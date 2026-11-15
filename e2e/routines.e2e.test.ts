@@ -1,4 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { newRoutine } from '../src/routines/edit';
+import { driveStep, skillStep } from '../src/routines/stepFactory';
 import type { Routine, SkillContract } from '../src/routines/schema';
 import { FIXTURE_SKILLS } from '../src/routines/fixtureSkills';
 import { loadKitLibrary } from '../src/routines/kitLibrary';
@@ -50,13 +52,13 @@ function failedKitPair(kit: readonly SkillContract[], pair: { from: string; to: 
   );
 }
 
-async function loadRobot(id: string) {
+async function loadRobot(id: string, routines: Routine[] = []) {
   const robot = fixtureRobots().find((r) => r.id === id)!;
 
   await app.page.evaluate((record) => (window as unknown as { __studio: Studio }).__studio.load(record), {
     name: robot.id,
     parts: robot.parts,
-    project: { ...DEFAULT_PROJECT, joints: robot.joints },
+    project: { ...DEFAULT_PROJECT, joints: robot.joints, routines },
   });
   await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
 }
@@ -135,6 +137,7 @@ describe('Routines by hand', () => {
 describe('Hand-offs', () => {
   const refusedAt = async (node: string) =>
     ((await routineState()).compiled?.errors ?? []).some((e) => e.code === 'unproven-transition' && e.path === node);
+
   const waveHash = async () => (await routineState()).skills.find((s) => s.id === 'wave')?.hash;
 
   it('keeps Settle then Turn then Walk unavailable until the candidate passes its hand-offs', async () => {
@@ -206,19 +209,16 @@ describe('Hand-offs', () => {
     const { page } = app;
     const quad = fixtureRobots().find((r) => r.id === 'quad-servo')!;
     const wave = fixtureMoveSkill({ model: modelOf(quad), animation: quadWave() });
+    const routine = newRoutine({ id: 'handoff', name: 'Hand-off', mover: 'legs' });
 
-    await loadRobot('quad-servo');
-    await app.page.evaluate(
-      (skill) => (window as unknown as { __studio: Studio }).__studio.stubHandoffs({ skills: [skill], falls: 0 }),
-      wave,
-    );
+    routine.base.onTimeout = [driveStep('drive'), skillStep('wave', 'wave')];
+    await page.evaluate((stub) => (window as unknown as { __studio: Studio }).__studio.stubHandoffs(stub), {
+      skills: [wave],
+      falls: 0,
+      kit: FIXTURE_SKILLS,
+    });
+    await loadRobot('quad-servo', [routine]);
     await openPlayTab(page, 'Routines');
-    await page.locator(visible('button'), { hasText: 'New Routine' }).first().click();
-    await inFlow('[data-insert]').click();
-    await page.getByRole('menuitem', { name: 'Drive' }).click();
-    await expect.poll(mainSteps).toEqual(['drive']);
-    await inFlow('button[aria-label="Add step"]:not([data-insert])').click();
-    await page.getByRole('menuitem', { name: 'Wave' }).click();
     await expect.poll(mainSteps).toEqual(['drive', 'wave']);
     await expect.poll(() => refusedAt('wave'), { timeout: 60000 }).toBe(true);
 

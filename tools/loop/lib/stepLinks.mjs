@@ -20,7 +20,9 @@ export function keepStepLinks(body, pull) {
   const links = [...linkLines(pull.body), ...stepsOf(pull).map((step) => `Closes #${step}.`)];
   const key = (link) => link.replace(/\.$/, '');
   const present = new Set(linkLines(body).map(key));
-  const missing = [...new Set(links)].filter((link) => !present.has(key(link)));
+  const missing = [...new Map(links.map((link) => [key(link), link])).values()].filter(
+    (link) => !present.has(key(link)),
+  );
 
   return missing.length === 0 ? body : `${body.trimEnd()}\n\n${missing.join('\n')}`;
 }

@@ -104,17 +104,19 @@ const MISSING_LABEL = /'(loop:[a-z0-9:-]+)' not found/;
 
 export const missingLabel = (stderr) => MISSING_LABEL.exec(stderr)?.[1] ?? null;
 
-function ghCreating(args, { input, tries = 4 }) {
+function ghCreating(args, { input, createdLabels = new Set() }) {
   const result = run('gh', args, { input, allowFail: true });
   const label = result.ok ? null : missingLabel(result.err);
 
   if (result.ok) return result.out;
 
-  if (!label || tries <= 1) throw new Error(`gh ${args.slice(0, 2).join(' ')} failed: ${result.err.slice(-2000)}`);
+  if (!label || !args.includes(label) || createdLabels.has(label)) {
+    throw new Error(`gh ${args.slice(0, 2).join(' ')} failed: ${result.err.slice(-2000)}`);
+  }
 
   run('gh', ['label', 'create', label, '--color', '6e7781', '--force']);
 
-  return ghCreating(args, { input, tries: tries - 1 });
+  return ghCreating(args, { input, createdLabels: new Set([...createdLabels, label]) });
 }
 
 export const createPull = ({ branch, title, body, label }) =>

@@ -99,7 +99,11 @@ export function keepsMarkers(before, after, kind) {
 
   if (strip(frontMatter(before)) !== strip(frontMatter(after))) return false;
 
-  return MARKERS.every((pattern) => [...before.matchAll(pattern)].every(([found]) => after.includes(found)));
+  return MARKERS.every((pattern) => {
+    const preserved = new Set(after.match(pattern) ?? []);
+
+    return [...before.matchAll(pattern)].every(([found]) => preserved.has(found));
+  });
 }
 
 function claude(system, prompt, run) {

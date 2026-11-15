@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { pullBody, revisedBody } from './pull.mjs';
 import { rebuildChange } from './rebuild.mjs';
-import { stepsOf } from './stepLinks.mjs';
+import { keepStepLinks, stepsOf } from './stepLinks.mjs';
 import { laneStats } from './laneStats.mjs';
 import { keepsMarkers } from '../../voice/voice.mjs';
 import { kindOf } from './evidence.mjs';
@@ -18,6 +18,12 @@ const change = {
 const options = { branch: 'loop/build/605-1-import', slug: 'example/basecase' };
 
 describe('step identity through body rewrites', () => {
+  it('restores a closing link once when the original omitted its period', () => {
+    const original = { body: 'Closes #605', labels: [{ name: 'loop:step:605' }] };
+
+    expect(keepStepLinks('Summary', original)).toBe('Summary\n\nCloses #605.');
+  });
+
   it('revises every template then rebuilds with its step and provenance intact', () => {
     for (const kind of [
       'feature',
@@ -54,6 +60,11 @@ describe('step identity through body rewrites', () => {
 
   it('rejects a voice rewrite that drops a rebuild link', () => {
     expect(keepsMarkers('Closes #605.\nRebuilds #698.', 'Closes #605.', 'pull')).toBe(false);
+  });
+
+  it.each(['Closes', 'Rebuilds'])('rejects a voice rewrite that changes the number in %s', (verb) => {
+    expect(keepsMarkers(`${verb} #698.`, `${verb} #6980.`, 'pull')).toBe(false);
+    expect(keepsMarkers(`${verb} #698.`, `${verb} #6980.\n${verb} #698.`, 'pull')).toBe(true);
   });
 
   it('counts time from the step for a rebuilt merge whose prose has no closing line', () => {

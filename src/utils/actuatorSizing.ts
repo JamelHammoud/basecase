@@ -18,6 +18,7 @@ import {
   stanceVerdict,
   suitsVolts,
   type LoadVerdict,
+  type Rating,
 } from './actuatorRules';
 
 const ITERATIONS = 3;
@@ -274,27 +275,45 @@ export interface LoadCut {
   grams: number;
 }
 
+function bindingReduction(p: JointPick, rating: Rating, speed: number) {
+  const acceleration = p.loads.accelerationNm ?? accelerationTorque(p.joint);
+  const holdNm = p.loads.holdNm + acceleration;
+  const stanceNm = p.loads.stanceNm === undefined ? 0 : p.loads.stanceNm + acceleration;
+  const holdLimit = Math.min(HOLD_LIMITS.pass * rating.stallNm, rating.ratedNm);
+  const stanceLimit = Math.min(
+    STANCE_LIMITS.pass * rating.stallNm,
+    (HEAT_LIMITS.pass * rating.ratedNm) / RMS_OF_STANCE,
+  );
+  const holdShare = holdNm ? holdLimit / holdNm : Infinity;
+  const stanceShare = stanceNm ? stanceLimit / stanceNm : Infinity;
+  const motionNm = p.loads.motionNm ?? Math.max(holdNm, stanceNm);
+  const motionShare =
+    speed && rating.rpm && motionNm
+      ? (curveTorque({ ...rating, rpm: rating.rpm }, speed) * (1 - 1e-9)) / motionNm
+      : Infinity;
+  const stance = motionShare < Math.min(holdShare, stanceShare) ? stanceNm > holdNm : stanceShare < holdShare;
+
+  return {
+    kind: stance ? ('stance' as const) : ('hold' as const),
+    loadNm: stance ? stanceNm : holdNm,
+    shareKept: Math.min(1, holdShare, stanceShare, motionShare),
+  };
+}
+
 export function loadCut(p: JointPick, volts: number, totalG: number): LoadCut | undefined {
   if (!p.strongest) return undefined;
 
   const rating = ratingFor(p.joint, p.strongest.option.act, volts);
-  const { stallNm, ratedNm } = rating;
-  const stance = p.strongest.kind === 'stance';
   const speed = Math.abs(p.joint.peakSpeedDegS ?? 0) / 6;
 
   if (speed && (!rating.rpm || speed >= rating.rpm)) return undefined;
 
-  const loadNm = (stance ? p.loads.stanceNm! : p.loads.holdNm) + (p.loads.accelerationNm ?? 0);
-  const staticAllowed = stance
-    ? Math.min(STANCE_LIMITS.pass * stallNm, (HEAT_LIMITS.pass * ratedNm) / RMS_OF_STANCE)
-    : Math.min(HOLD_LIMITS.pass * stallNm, ratedNm);
-  const allowed =
-    speed && rating.rpm ? Math.min(staticAllowed, curveTorque({ ...rating, rpm: rating.rpm }, speed)) : staticAllowed;
-  const shareKept = Math.min(1, allowed / loadNm);
+  const { kind, loadNm, shareKept } = bindingReduction(p, rating, speed);
+  const stance = kind === 'stance';
   const lever = stance ? p.joint.leverMm : undefined;
 
   return {
-    kind: p.strongest.kind,
+    kind,
     loadNm,
     shareKept,
     leverMm: lever ? Math.abs(lever) * (1 - shareKept) : undefined,

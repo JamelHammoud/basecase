@@ -29,10 +29,11 @@ export const motionServoOptions = () =>
   });
 
 function estimatedSkeleton(skeleton: RobotSkeleton): RobotSkeleton {
+  const lightest = motionServoOptions().sort((a, b) => gramsOf(a.key) - gramsOf(b.key))[0];
   const joints = skeleton.joints.map((joint) => ({
     ...joint,
     linkMassG: joint.linkMassG ?? 15 + 0.35 * linkLength(skeleton, joint),
-    actuator: joint.actuator ?? 'component:feetech-sts3215|c001',
+    actuator: joint.actuator ?? lightest?.key ?? 'component:feetech-sts3215|c001',
   }));
   const massG = BASE_G + joints.reduce((sum, joint) => sum + joint.linkMassG + gramsOf(joint.actuator), 0);
 

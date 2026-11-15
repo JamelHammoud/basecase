@@ -17,11 +17,17 @@ async function attachedMotion(file, folder) {
 
   if (!stat.isFile()) throw new Error('Choose a BVH file.');
 
-  return readCapped(
-    { headers: new Headers({ 'content-length': String(stat.size) }), body: fs.createReadStream(full) },
-    MAX_MOTION_BYTES,
-    'The BVH file',
-  );
+  const body = fs.createReadStream(full);
+
+  try {
+    return await readCapped(
+      { headers: new Headers({ 'content-length': String(stat.size) }), body },
+      MAX_MOTION_BYTES,
+      'The BVH file',
+    );
+  } finally {
+    body.destroy();
+  }
 }
 
 export async function motionSkeletonSource({ file, url }, { folder = EVIDENCE_DIR, fetch = publicFetch } = {}) {

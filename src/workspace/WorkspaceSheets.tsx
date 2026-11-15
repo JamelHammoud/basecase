@@ -53,14 +53,20 @@ function TrainingImagesHost({ active, images }: { active: boolean; images: Train
   );
 }
 
-function MotionDesignHost({ pose }: { pose: PoseActions }) {
+function MotionDesignHost({ active, pose }: { active: boolean; pose: PoseActions }) {
   const { design } = pose;
 
   if (!design.source) return null;
 
   return (
     <ErrorBoundary key={design.source.name} region="Design From Motion" onClose={design.close}>
-      <MotionDesignSheet busy={design.busy} problem={design.problem} onClose={design.close} onDesign={design.design} />
+      <MotionDesignSheet
+        open={active}
+        busy={design.busy}
+        problem={design.problem}
+        onClose={design.close}
+        onDesign={design.design}
+      />
     </ErrorBoundary>
   );
 }
@@ -124,7 +130,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           />
         </ErrorBoundary>
       )}
-      <MotionDesignHost pose={pose} />
+      <MotionDesignHost active={active} pose={pose} />
       <TrainingImagesHost active={active} images={core.simTraining.cases.images} />
       <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input

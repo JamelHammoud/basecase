@@ -3,7 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { buildSkeleton } from '../agent/skeleton';
 import { forwardKinematics } from './kinematicsMotion';
 import { parseBvh } from './mocap';
-import { panTiltBvh, planarBvh, quadrupedBvh, sharedTorsoBvh, waveBvh } from './motionSkeleton.fixtures';
+import {
+  obliqueAxisBvh,
+  panTiltBvh,
+  planarBvh,
+  quadrupedBvh,
+  sharedTorsoBvh,
+  waveBvh,
+  wrappedHingeBvh,
+} from './motionSkeleton.fixtures';
 import { motionSkeleton, type MotionSkeletonFit } from './motionSkeleton';
 import { motionScale } from './motionSkeletonSource';
 import { skeletonRig } from './skeletonRig';
@@ -157,13 +165,17 @@ describe('motionSkeleton source validation', () => {
 
   it('keeps selected human limb aliases and refuses unmatched limb names', () => {
     const motion = parseBvh(waveBvh());
-    const result = motionSkeleton({ motion, heightMm: 300, toleranceMm: 1, limbs: ['rightArm'] });
 
-    expect(result).not.toHaveProperty('problem');
+    for (const endpoint of ['rightArm', 'RightHand']) {
+      const result = motionSkeleton({ motion, heightMm: 300, toleranceMm: 1, limbs: [endpoint] });
 
-    if ('problem' in result) throw new Error(result.problem);
+      expect(result).not.toHaveProperty('problem');
 
-    expect(Object.keys(result.errors)).toEqual(['RightHand']);
+      if ('problem' in result) throw new Error(result.problem);
+
+      expect(Object.keys(result.errors)).toEqual(['RightHand']);
+    }
+
     expect(motionSkeleton({ motion, heightMm: 300, toleranceMm: 1, limbs: ['Tail'] })).toHaveProperty('problem');
   });
 
@@ -177,10 +189,33 @@ describe('motionSkeleton source validation', () => {
     expect(Object.values(result.errors).every((error) => error <= 0.1)).toBe(true);
   });
 
+  it('selects numbered endpoints independently', () => {
+    const text = quadrupedBvh().replaceAll('FrontLeftFoot', 'Foot1').replaceAll('FrontRightFoot', 'Foot10');
+    const result = motionSkeleton({ motion: parseBvh(text), heightMm: 200, toleranceMm: 0.1, limbs: ['Foot1'] });
+
+    expect(result).not.toHaveProperty('problem');
+
+    if ('problem' in result) throw new Error(result.problem);
+
+    expect(Object.keys(result.errors)).toEqual(['Foot1']);
+  });
+
   it('refuses a valid rigid clip when its persisted axes cannot meet the path tolerance', () => {
     const result = motionSkeleton({ motion: parseBvh(panTiltBvh(true)), heightMm: 100, toleranceMm: 1e-12 });
 
     expect(result).toMatchObject({ limb: 'Head', problem: expect.stringMatching(/path/) });
+  });
+
+  it('fits oblique axes in the same form that the skeleton handler persists', () => {
+    const result = fit(obliqueAxisBvh(), 300, 0.4);
+    const built = buildSkeleton({ joints: result.skeleton.joints });
+
+    expect(built.problems).toEqual([]);
+    expect(built.skeleton.joints.map((joint) => joint.axis)).toEqual(result.skeleton.joints.map((joint) => joint.axis));
+    expect(motionSkeleton({ motion: parseBvh(obliqueAxisBvh()), heightMm: 300, toleranceMm: 0.3 })).toMatchObject({
+      limb: 'Arm',
+      problem: expect.stringMatching(/path/),
+    });
   });
 
   it('returns the same skeleton and trajectory for the same clip', () => {
@@ -195,5 +230,16 @@ describe('motionSkeleton source validation', () => {
       expect(fast.dynamics[index].peakSpeedDegS).toBeCloseTo(joint.peakSpeedDegS * 2, 4);
       expect(fast.dynamics[index].peakAccelerationDegS2).toBeCloseTo(joint.peakAccelerationDegS2 * 4, 4);
     });
+  });
+
+  it('keeps the trajectory and actuator dynamics continuous across an angle wrap', () => {
+    const result = fit(wrappedHingeBvh(), 100, 0.1);
+    const joint = result.skeleton.joints[0];
+
+    expect(result.skeleton.joints).toHaveLength(1);
+    expect(result.trajectory.map((frame) => frame.values[joint.id])).toEqual([0, 5, 10, 15, 20]);
+    expect(joint.range).toEqual([-2, 22]);
+    expect(result.dynamics[0].peakSpeedDegS).toBe(50);
+    expect(result.dynamics[0].peakAccelerationDegS2).toBe(0);
   });
 });

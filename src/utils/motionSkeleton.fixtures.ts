@@ -112,3 +112,28 @@ export function sharedTorsoBvh(): string {
 
   return bvh({ name: 'Torso', offset: [0, 0, 0], axes: ['Yrotation'], children }, rows);
 }
+
+export function obliqueAxisBvh(): string {
+  const orientation = [10.698184177142734, 13.434452896972, 103.03173990503484];
+  const arm: Bone = { name: 'Arm', offset: [0, 0, 0], axes: ['Yrotation'], end: [100, 100, 0] };
+  const root: Bone = {
+    name: 'Base',
+    offset: [0, 0, 0],
+    axes: ['Xrotation', 'Yrotation', 'Zrotation'],
+    children: [arm],
+  };
+
+  return bvh(
+    root,
+    [0, 60, -60].map((angle) => [0, 0, 0, ...orientation, angle]),
+  );
+}
+
+export function wrappedHingeBvh(): string {
+  const root: Bone = { name: 'Base', offset: [0, 0, 0], axes: ['Zrotation'], end: [100, 0, 0] };
+
+  return bvh(
+    root,
+    [170, 175, 180, -175, -170].map((angle) => [0, 0, 0, angle]),
+  );
+}

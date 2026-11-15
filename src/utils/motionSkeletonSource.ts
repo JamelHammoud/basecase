@@ -18,7 +18,20 @@ export interface MotionChain {
 const AXES = { X: new THREE.Vector3(1, 0, 0), Y: new THREE.Vector3(0, 1, 0), Z: new THREE.Vector3(0, 0, 1) };
 const tuple = (v: THREE.Vector3): ZUpVec =>
   toCad([v.x, v.y, v.z]).map((value) => (Object.is(value, -0) ? 0 : value)) as ZUpVec;
-const axisTuple = (v: THREE.Vector3): ZUpVec => tuple(v.normalize()).map((value) => r3(value) + 0) as ZUpVec;
+
+function axisTuple(v: THREE.Vector3): ZUpVec {
+  let axis = tuple(v.normalize());
+
+  for (;;) {
+    const length = Math.hypot(...axis);
+    const rounded = axis.map((value) => r3(value / length) + 0) as ZUpVec;
+
+    if (rounded.every((value, index) => value === axis[index])) return rounded;
+
+    axis = rounded;
+  }
+}
+
 const pointOf = (points: Map<string, THREE.Vector3>, name: string) =>
   points.get(name) ?? new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN);
 const limbOf = (name: string): SkeletonLimb => {
@@ -46,21 +59,22 @@ function ancestors(motion: Mocap, leaf: string): string[] {
 function includeLimb(name: string, limbs?: string[]): boolean {
   if (!limbs?.length) return true;
 
-  const compact = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
+  const compact = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
   const value = compact(name);
   const limb = limbOf(name);
 
   return limbs.some(
     (item) =>
-      value.includes(compact(item)) ||
-      (compact(item).includes(limb) && value.includes(compact(item).replace(limb, ''))),
+      value === compact(item) || (compact(item).includes(limb) && value.includes(compact(item).replace(limb, ''))),
   );
 }
 
 export function motionLeaves(motion: Mocap, limbs?: string[]): string[] {
   const parents = new Set(motion.parentOf.values());
 
-  return motion.bones.filter((bone) => !parents.has(bone) && includeLimb(bone, limbs));
+  return motion.bones.filter(
+    (bone) => !parents.has(bone) && includeLimb(motion.endSites?.parentOf.get(bone) ?? bone, limbs),
+  );
 }
 
 export function motionScale(motion: Mocap, heightMm: number): number {
@@ -73,6 +87,21 @@ export function motionScale(motion: Mocap, heightMm: number): number {
   const height = spans[1] > 1e-9 ? spans[1] : Math.max(...spans);
 
   return heightMm / height;
+}
+
+function continuousAngles(angles: number[]): number[] {
+  let previous = angles[0];
+  let value = 0;
+
+  return angles.map((angle) => {
+    const difference = angle - previous;
+    const delta = THREE.MathUtils.euclideanModulo(difference + 180, 360) - 180;
+
+    value += delta === -180 && difference > 0 ? 180 : delta;
+    previous = angle;
+
+    return value;
+  });
 }
 
 function axisEntries(options: {
@@ -92,7 +121,7 @@ function axisEntries(options: {
 
     channels.forEach((channel, index) => {
       const axis = AXES[channel.axis].clone().applyQuaternion(orientation);
-      const degrees = rotations.map((frame) => (frame.get(bone)?.[index]?.degrees ?? Number.NaN) - channel.degrees);
+      const degrees = continuousAngles(rotations.map((frame) => frame.get(bone)?.[index]?.degrees ?? Number.NaN));
       const span = Math.max(...degrees) - Math.min(...degrees);
 
       orientation.multiply(

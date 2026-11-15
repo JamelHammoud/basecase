@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises';
+import nodeFs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MAX_MOTION_BYTES, motionSkeletonSource } from './motionSkeletonSource.mjs';
 
 const folders = [];
@@ -19,6 +20,7 @@ async function fixture() {
 }
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await Promise.all(folders.splice(0).map((folder) => fs.rm(folder, { recursive: true, force: true })));
 });
 
@@ -43,7 +45,11 @@ describe('motion skeleton BVH source', () => {
 
     await handle.truncate(MAX_MOTION_BYTES + 1);
     await handle.close();
+
+    const stream = vi.spyOn(nodeFs, 'createReadStream');
+
     await expect(motionSkeletonSource({ file: 'large.bvh' }, { folder })).rejects.toThrow('larger');
+    expect(stream.mock.results[0].value.destroyed).toBe(true);
     await expect(
       motionSkeletonSource(
         { url: 'https://example.com/wave.bvh' },

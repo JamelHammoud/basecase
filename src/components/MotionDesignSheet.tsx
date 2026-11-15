@@ -2,18 +2,19 @@ import { useState } from 'react';
 import { FieldRow, JointsIcon, Modal, NumberInput } from '../design-system';
 
 interface MotionDesignSheetProps {
+  open: boolean;
   busy: boolean;
   problem: string | null;
   onClose: () => void;
   onDesign: (heightMm: number) => void;
 }
 
-export function MotionDesignSheet({ busy, problem, onClose, onDesign }: MotionDesignSheetProps) {
+export function MotionDesignSheet({ open, busy, problem, onClose, onDesign }: MotionDesignSheetProps) {
   const [heightMm, setHeightMm] = useState(300);
 
   return (
     <Modal
-      isOpen
+      isOpen={open}
       onClose={onClose}
       title="Design From Motion"
       icon={<JointsIcon className="w-4 h-4" />}

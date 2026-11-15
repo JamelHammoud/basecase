@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { actuatorOptions, powerOptions } from './actuatorCatalog';
 import { ratingAt } from './actuatorRules';
-import { jointVerdict, sizeActuators, type SizingJoint } from './actuatorSizing';
+import { jointVerdict, loadCut, sizeActuators, type SizingJoint } from './actuatorSizing';
 
 const options = actuatorOptions().filter((o) => o.key.startsWith('component:feetech-sts3215|'));
 const catalogPower = powerOptions();
@@ -79,6 +79,29 @@ describe('motion actuator sizing', () => {
     const moving = { ...shoulder, holdNm: 0.25, peakAccelerationDegS2: 1000, inertiaKgM2: 0.02 };
 
     expect(jointVerdict(moving, moving, act, 6).status).not.toBe('pass');
+  });
+
+  it('reduces the binding motion load even when holding determines the heat warning', () => {
+    const option = options.find((o) => o.key.endsWith('|c001'))!;
+    const rating = ratingAt(option.act, 6);
+    const moving = {
+      ...shoulder,
+      holdNm: rating.ratedNm * 1.04,
+      stanceNm: rating.stallNm * 0.35,
+      peakSpeedDegS: rating.rpm! * 6 * 0.7,
+    };
+    const verdict = jointVerdict(moving, moving, option.act, 6);
+    const strongest = { ...verdict, option };
+    const cut = loadCut({ joint: moving, loads: moving, strongest }, 6, 600)!;
+    const reduced = {
+      holdNm: moving.holdNm * cut.shareKept,
+      stanceNm: moving.stanceNm * cut.shareKept,
+    };
+
+    expect(verdict).toMatchObject({ status: 'fail', kind: 'hold' });
+    expect(cut.shareKept).toBeCloseTo(0.3 / 0.35);
+    expect(cut.kind).toBe('stance');
+    expect(jointVerdict(moving, reduced, option.act, 6).status).toBe('pass');
   });
 
   it('adds replacement actuator inertia at its descendant path radius', () => {

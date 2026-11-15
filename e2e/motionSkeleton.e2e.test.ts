@@ -11,7 +11,14 @@ interface StudioHook {
   bomLines: () => Array<{ key: string; qty: number }>;
 }
 
-type Studio = { __studio: StudioHook };
+type Studio = {
+  __studio: StudioHook;
+  __studioTabs: {
+    list: () => { activeId: string };
+    open: () => void;
+    select: (id: string) => void;
+  };
+};
 
 let app: App;
 
@@ -107,6 +114,38 @@ describe('Design From Motion', () => {
     await sheet.getByRole('button', { name: 'Cancel', exact: true }).click();
     expect((await record()).project.skeleton).toBeUndefined();
     expect((await record()).parts).toHaveLength(parts.length);
+    expect(app.errors).toEqual([]);
+  });
+
+  it('keeps the design sheet and its entered height in its own scene tab', async () => {
+    await app.page.evaluate((scene) => (window as unknown as Studio).__studio.load(scene), {
+      parts: [],
+      project: DEFAULT_PROJECT,
+    });
+    await expect.poll(async () => (await record()).parts.length).toBe(0);
+    await app.page.evaluate(
+      (files) => (window as unknown as Studio).__studio.dropFiles(files),
+      [{ name: 'Wave.bvh', base64: Buffer.from(waveBvh()).toString('base64') }],
+    );
+
+    const sheet = app.page.locator(shown('[role="dialog"][aria-label="Design From Motion"]'));
+    const activeTab = () => app.page.evaluate(() => (window as unknown as Studio).__studioTabs.list().activeId);
+
+    await expect.poll(() => sheet.count()).toBe(1);
+    await sheet.getByLabel('Height').fill('350');
+    await sheet.getByLabel('Height').press('Tab');
+
+    const original = await activeTab();
+
+    await app.page.evaluate(() => (window as unknown as Studio).__studioTabs.open());
+    await expect.poll(activeTab).not.toBe(original);
+    await expect.poll(() => sheet.count()).toBe(0);
+    expect((await record()).project.skeleton).toBeUndefined();
+    await app.page.evaluate((id) => (window as unknown as Studio).__studioTabs.select(id), original);
+    await expect.poll(activeTab).toBe(original);
+    await expect.poll(() => sheet.count()).toBe(1);
+    expect(await sheet.getByLabel('Height').inputValue()).toBe('350');
+    await sheet.getByRole('button', { name: 'Cancel', exact: true }).click();
     expect(app.errors).toEqual([]);
   });
 });

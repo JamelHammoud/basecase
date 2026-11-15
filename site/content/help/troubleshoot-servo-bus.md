@@ -48,13 +48,15 @@ You're done when **Servo bus** no longer appears in the list.
 
 ![Cable reach expanded with a route needing more than the available 180 mm cable](/help/troubleshoot-servo-bus/cable-reach.png)
 
-The check measures the connections already in your build's wiring list through the declared joint ranges. It allows for connector exits, bends and slack. A missing port position, unbounded joint range, blocked route or unknown cable length stays a blocker.
+The check measures servo bus connections and power connections with two scene endpoints through the declared joint ranges. It allows for connector exits, bends and slack. A missing port position, unbounded joint range, blocked route or unknown cable length stays a blocker.
+
+Virtual fuse, switch and supply connections stay on the wiring list but are excluded from **Cable reach**. They have no physical placement to measure.
 
 Routes go around boxes enclosing the parts, so a hole or narrow passage can still appear blocked. A route that changes sides around a solid, coupled linkages and joint ranges that exceed the routing calculation's limit remain unresolved.
 
 ## Cable length is unknown
 
-Matching connectors alone can’t pass the reach check. The cable must have a recorded length and source. The catalog includes the 180 mm **ROBOTIS Robot Cable-X3P** and Waveshare 5264 servo cables in 300 mm and 900 mm lengths. Power connections without compatible cable stock remain unresolved.
+Matching connectors alone can’t pass the reach check. The cable must have a recorded length and source. The catalog includes the 180 mm **ROBOTIS Robot Cable-X3P** and Waveshare 5264 servo cables in 300 mm and 900 mm lengths. Measured power connections without compatible cable stock remain unresolved.
 
 When a known cable is too short, the bill of materials keeps that cable and **Cable reach** stays red. Adding a longer cable as a purchase extra doesn’t give it connector or length data for this check.
 

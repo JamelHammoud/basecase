@@ -54,3 +54,66 @@ it('gives raw Build Along joints and engineering joints with fastener followers 
   expect(followed[0].child).toContain('insert-1');
   expect(await wiringIn(shapes, sceneOf(parts, followed))).toEqual(await wiringIn(shapes, raw));
 });
+
+it('loads and refreshes scene-carried connector geometry in the analysis worker', async () => {
+  const adapter = { ...component('sourced-adapter', 'robotis-u2d2'), componentId: 'wiring-sourced-adapter' };
+  const servo = { ...component('servo', 'dynamixel-xl330-m288'), position: [70, 0, 0] as PortVec };
+  const scene = sceneOf([adapter, servo], [], {
+    sourced: [
+      {
+        id: adapter.componentId,
+        kind: 'part',
+        name: 'Sourced bus adapter',
+        maker: 'Fixture maker',
+        mpn: 'BUS-1',
+        spec: 'JST EH bus adapter',
+        url: 'https://maker.example/bus-1',
+        sources: [{ claim: 'Connector geometry', url: 'https://maker.example/bus-1.step' }],
+        addedAt: '2026-11-14',
+        link: { status: 'confirmed', checkedAt: '2026-11-14' },
+        mesh: {
+          size: [40, 20, 20],
+          triangles: 12,
+          source: 'manufacturer',
+          cadUrl: 'https://maker.example/bus-1.step',
+          license: 'Maker terms',
+          ports: [
+            {
+              name: 'bus-out',
+              kind: 'connector',
+              role: 'bus-out',
+              connector: 'jst-eh-3',
+              position: [20, 0, 0],
+              axis: [1, 0, 0],
+            },
+          ],
+        },
+      },
+    ],
+  });
+  const netlist = await wiringIn(snapshotShapes([]), scene);
+
+  expect(netlist.unmatched).toEqual([]);
+  expect(netlist.buses[0]).toMatchObject({
+    adapter: adapter.id,
+    nets: [{ from: { id: adapter.id }, route: { status: 'pass' } }],
+  });
+
+  const record = scene.project.sourced![0];
+  const changed = {
+    ...scene,
+    project: {
+      ...scene.project,
+      sourced: [
+        {
+          ...record,
+          mesh: { ...record.mesh!, ports: [{ ...record.mesh!.ports[0], position: [0, 0, 0] as PortVec }] },
+        },
+      ],
+    },
+  };
+  const refreshed = await wiringIn(snapshotShapes([]), changed);
+
+  expect(refreshed.buses[0].nets[0].from.port?.position).toEqual([0, 0, 0]);
+  expect(refreshed.buses[0].nets[0].route?.requiredMm).toBeGreaterThan(netlist.buses[0].nets[0].route!.requiredMm!);
+});

@@ -5,7 +5,6 @@ import { sweepSamples } from '../utils/engineeringJoints';
 import { buildRig, forwardKinematics, partMotion, type Rig } from '../utils/kinematics';
 import { resolveJoints } from '../utils/kinematics';
 import type { WiringScene } from './connectors';
-import type { RouteObstacle } from './routeGeometry';
 
 export const MAX_ROUTE_POSES = 4096;
 
@@ -23,7 +22,7 @@ function samplesOf(joint: RobotJoint): number[] {
   if (
     !range ||
     range.length !== 2 ||
-    !range.every(Number.isFinite) ||
+    !range.every((value) => Number.isFinite(value) && Math.abs(value) <= Number.MAX_SAFE_INTEGER) ||
     Math.abs(range[1] - range[0]) / 15 > MAX_ROUTE_POSES
   )
     return [];
@@ -78,13 +77,23 @@ export function* routePoses(motion: RouteMotion): Generator<Record<string, numbe
 
 const distance = (a: PortVec, b: PortVec) => new THREE.Vector3(...a).distanceTo(new THREE.Vector3(...b));
 
-export function motionBound(motion: RouteMotion, partId: string, point: PortVec): number {
-  const owner = motion.rig.ownerOf.get(partId);
-  const chain = owner ? [...(motion.rig.chain.get(owner) ?? [])].map((id) => motion.rig.byId.get(id)!) : [];
+function chainOf(motion: RouteMotion, partId: string | undefined): RobotJoint[] {
+  const owner = partId && motion.rig.ownerOf.get(partId);
+
+  return owner ? [...(motion.rig.chain.get(owner) ?? [])].map((id) => motion.rig.byId.get(id)!) : [];
+}
+
+function chainBound(input: {
+  chain: RobotJoint[];
+  point: PortVec;
+  halves?: Map<string, number>;
+  extra?: number;
+}): number {
+  const { chain, point, halves, extra = 0 } = input;
   let bound = 0;
 
   for (const [i, j] of chain.entries()) {
-    const half = motion.halves.get(j.id) ?? 0;
+    const half = halves ? (halves.get(j.id) ?? 0) : Math.max(...(j.range ?? [0]).map(Math.abs));
     const translations = chain
       .slice(0, i)
       .reduce(
@@ -93,7 +102,7 @@ export function motionBound(motion: RouteMotion, partId: string, point: PortVec)
           (k.type === 'prismatic' ? Math.max(...(k.range ?? [0]).map(Math.abs)) : 2 * distance(k.origin, j.origin)),
         0,
       );
-    const radius = distance(point, j.origin) + translations;
+    const radius = distance(point, j.origin) + translations + extra;
 
     bound +=
       j.type === 'prismatic' ? half : 2 * radius * Math.sin(Math.min(Math.PI, THREE.MathUtils.degToRad(half)) / 2);
@@ -102,24 +111,28 @@ export function motionBound(motion: RouteMotion, partId: string, point: PortVec)
   return bound;
 }
 
+export function relativeMotionBound(
+  motion: RouteMotion,
+  point: { position: PortVec; obstacleId?: string },
+  obstacleId: string | undefined,
+): number {
+  const pointChain = chainOf(motion, point.obstacleId);
+  const obstacleChain = chainOf(motion, obstacleId);
+  const shared = new Set(pointChain.filter((j) => obstacleChain.includes(j)));
+  const movingPoint = pointChain.filter((j) => !shared.has(j));
+  const movingObstacle = obstacleChain.filter((j) => !shared.has(j));
+  const extra = chainBound({ chain: movingPoint, point: point.position });
+
+  return (
+    chainBound({ chain: movingPoint, point: point.position, halves: motion.halves }) +
+    chainBound({ chain: movingObstacle.reverse(), point: point.position, halves: motion.halves, extra })
+  );
+}
+
 export function poseTransforms(motion: RouteMotion, values: Record<string, number>): Map<string, THREE.Matrix4> {
   if (!Object.keys(values).length) return new Map(motion.rig.parts.map((p) => [p.id, new THREE.Matrix4()]));
 
   const posed = forwardKinematics(motion.rig, { values });
 
   return new Map(motion.rig.parts.map((p) => [p.id, partMotion(motion.rig, posed, p.id) ?? new THREE.Matrix4()]));
-}
-
-export function obstacleCorners(box: RouteObstacle): PortVec[] {
-  return [box.min[0], box.max[0]].flatMap((x) =>
-    [box.min[1], box.max[1]].flatMap((y) => [box.min[2], box.max[2]].map((z): PortVec => [x, y, z])),
-  );
-}
-
-export function posedObstacle(box: RouteObstacle, transform: THREE.Matrix4, padding: number): RouteObstacle {
-  const bounds = new THREE.Box3()
-    .setFromPoints(obstacleCorners(box).map((v) => new THREE.Vector3(...v).applyMatrix4(transform)))
-    .expandByScalar(padding);
-
-  return { id: box.id, min: bounds.min.toArray() as PortVec, max: bounds.max.toArray() as PortVec };
 }

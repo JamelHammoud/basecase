@@ -5,16 +5,9 @@ import { partMatrix } from '../utils/kinematics';
 import { selectCableStock } from './cableStock';
 import type { CableRoute, Net, NetEnd, Netlist, WiringRouteSpec, WiringScene } from './connectors';
 import { wiringNetlist } from './netlist';
-import { routePolyline, routeTopology, type RouteEndpoint, type RouteObstacle } from './routeGeometry';
-import {
-  motionBound,
-  obstacleCorners,
-  posedObstacle,
-  poseTransforms,
-  routeMotion,
-  routePoses,
-  type RouteMotion,
-} from './routeMotion';
+import { routePath, routeTopology, type RouteEndpoint, type RouteObstacle } from './routeGeometry';
+import type { RoutePoint } from './routeCollision';
+import { relativeMotionBound, poseTransforms, routeMotion, routePoses, type RouteMotion } from './routeMotion';
 
 interface RouteContext {
   scene: WiringScene;
@@ -64,12 +57,6 @@ const pathLength = (points: PortVec[]) =>
     .reduce((length, p, i) => length + new THREE.Vector3(...p).distanceTo(new THREE.Vector3(...points[i])), 0);
 const transformed = (point: PortVec, matrix: THREE.Matrix4): PortVec =>
   new THREE.Vector3(...point).applyMatrix4(matrix).toArray() as PortVec;
-const exitOf = (end: RouteEndpoint): PortVec =>
-  new THREE.Vector3(...end.position).addScaledVector(new THREE.Vector3(...end.axis), 8).toArray() as PortVec;
-
-function pointBound(ctx: RouteContext, end: RouteEndpoint, id: string): number {
-  return Math.max(motionBound(ctx.motion, id, end.position), motionBound(ctx.motion, id, exitOf(end)));
-}
 
 interface RoutingInput {
   ctx: RouteContext;
@@ -81,33 +68,57 @@ interface RoutingInput {
 
 function sampleRoute(input: RoutingInput, values: Record<string, number>) {
   const { ctx, net, from, to, anchors } = input;
-  const transforms = poseTransforms(ctx.motion, values);
+  const worldTransforms = poseTransforms(ctx.motion, values);
+  const reference = worldTransforms.get(net.from.id!)!.clone().invert();
+  const transforms = new Map([...worldTransforms].map(([id, matrix]) => [id, reference.clone().multiply(matrix)]));
   const transformEnd = (end: RouteEndpoint, id: string): RouteEndpoint => ({
     ...end,
     position: transformed(end.position, transforms.get(id)!),
     axis: new THREE.Vector3(...end.axis).transformDirection(transforms.get(id)!).toArray() as PortVec,
   });
-  const bound = Math.max(
-    pointBound(ctx, from, net.from.id!),
-    pointBound(ctx, to, net.to.id!),
-    ...anchors.map((a) => motionBound(ctx.motion, a.partId, a.position)),
-  );
-  const obstacles = ctx.obstacles.map((box) => {
-    const obstacleBound = Math.max(...obstacleCorners(box).map((p) => motionBound(ctx.motion, box.id, p)));
+  const inverses = new Map([...transforms].map(([id, matrix]) => [id, matrix.clone().invert()]));
+  const boundCache = new WeakMap<RoutePoint, Map<string | undefined, number>>();
+  const fallbackInverse = reference.clone().invert();
+  const bound = (point: RoutePoint, obstacleId: string | undefined) => {
+    const byObstacle = boundCache.get(point) ?? new Map<string | undefined, number>();
+    const cached = byObstacle.get(obstacleId);
 
-    return posedObstacle(box, transforms.get(box.id) ?? new THREE.Matrix4(), obstacleBound + bound);
-  });
-  const points = routePolyline({
+    if (cached !== undefined) return cached;
+
+    const value = relativeMotionBound(
+      ctx.motion,
+      {
+        ...point,
+        position: transformed(point.position, inverses.get(point.obstacleId ?? '') ?? fallbackInverse),
+      },
+      obstacleId,
+    );
+
+    byObstacle.set(obstacleId, value);
+    boundCache.set(point, byObstacle);
+
+    return value;
+  };
+  const obstacles = ctx.obstacles.map((box) => ({
+    ...box,
+    transform: transforms.get(box.id) ?? reference,
+    inverse: inverses.get(box.id) ?? fallbackInverse,
+  }));
+  const path = routePath({
     from: transformEnd(from, net.from.id!),
     to: transformEnd(to, net.to.id!),
     obstacles,
     anchors: anchors.map((a) => transformed(a.position, transforms.get(a.partId)!)),
+    anchorIds: anchors.map((a) => a.partId),
+    bound,
   });
 
-  if (!points) return null;
+  if (!path) return null;
 
+  const points = path.map((point) => point.position);
   const bends = Math.max(0, points.length - 2);
-  const requiredMm = Math.ceil((pathLength(points) + 2 * bound * (anchors.length + 1) + bends * 3) * 1.15);
+  const allowance = path.slice(1).reduce((sum, point, i) => sum + bound(point, path[i].obstacleId), 0);
+  const requiredMm = Math.ceil(Math.round((pathLength(points) + allowance + bends * 3) * 1.15 * 1e9) / 1e9);
 
   return { points, requiredMm, topology: routeTopology(points, obstacles) };
 }
@@ -198,7 +209,7 @@ export function routeNetlist(scene: WiringScene, netlist: Netlist, obstacles: Ro
   return {
     ...netlist,
     buses: netlist.buses.map((bus) => ({ ...bus, nets: bus.nets.map(routed) })),
-    power: { ...netlist.power, nets: netlist.power.nets.map(routed) },
+    power: { ...netlist.power, nets: netlist.power.nets.map((net) => (net.from.id && net.to.id ? routed(net) : net)) },
   };
 }
 

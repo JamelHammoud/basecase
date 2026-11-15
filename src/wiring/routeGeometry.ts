@@ -1,15 +1,22 @@
 import type { PortVec } from '../types/ports';
+import {
+  clearSegment,
+  corners,
+  crossesBox,
+  distance,
+  EPSILON,
+  expanded,
+  finite,
+  validBox,
+  type RelativeBound,
+  type RoutePoint,
+  type RouteObstacle,
+} from './routeCollision';
 
-export interface RouteObstacle {
-  id: string;
-  min: PortVec;
-  max: PortVec;
-}
+export type { RouteObstacle } from './routeCollision';
 
-export interface RouteEndpoint {
-  position: PortVec;
+export interface RouteEndpoint extends RoutePoint {
   axis: PortVec;
-  obstacleId?: string;
 }
 
 interface RouteInput {
@@ -17,28 +24,12 @@ interface RouteInput {
   to: RouteEndpoint;
   obstacles: RouteObstacle[];
   anchors?: PortVec[];
+  anchorIds?: string[];
+  bound?: RelativeBound;
 }
 
-const CLEARANCE_MM = 3;
 const EXIT_MM = 8;
-const EPSILON = 1e-9;
-const AXES = [0, 1, 2] as const;
-const finite = (point: PortVec) => point.length === 3 && point.every(Number.isFinite);
-const distance = (a: PortVec, b: PortVec) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-const inside = (point: PortVec, box: RouteObstacle) =>
-  AXES.every((axis) => point[axis] > box.min[axis] + EPSILON && point[axis] < box.max[axis] - EPSILON);
-
-function expanded(obstacle: RouteObstacle): RouteObstacle {
-  return {
-    id: obstacle.id,
-    min: obstacle.min.map((v) => v - CLEARANCE_MM) as PortVec,
-    max: obstacle.max.map((v) => v + CLEARANCE_MM) as PortVec,
-  };
-}
-
-function validBox(box: RouteObstacle): boolean {
-  return finite(box.min) && finite(box.max) && AXES.every((axis) => box.min[axis] <= box.max[axis]);
-}
+const noMotion: RelativeBound = () => 0;
 
 function exit(endpoint: RouteEndpoint): PortVec | null {
   const magnitude = Math.hypot(...endpoint.axis);
@@ -48,60 +39,29 @@ function exit(endpoint: RouteEndpoint): PortVec | null {
   return endpoint.position.map((v, axis) => v + (endpoint.axis[axis] * EXIT_MM) / magnitude) as PortVec;
 }
 
-function crossesBox(start: PortVec, end: PortVec, box: RouteObstacle): boolean {
-  let enter = 0;
-  let leave = 1;
-
-  for (const axis of AXES) {
-    const direction = end[axis] - start[axis];
-    const minimum = box.min[axis] + EPSILON;
-    const maximum = box.max[axis] - EPSILON;
-
-    if (Math.abs(direction) < EPSILON && (start[axis] <= minimum || start[axis] >= maximum)) {
-      return false;
-    }
-
-    if (Math.abs(direction) < EPSILON) continue;
-
-    const first = (minimum - start[axis]) / direction;
-    const last = (maximum - start[axis]) / direction;
-
-    enter = Math.max(enter, Math.min(first, last));
-    leave = Math.min(leave, Math.max(first, last));
-
-    if (leave <= enter) return false;
-  }
-
-  return leave > enter;
-}
-
-const clearSegment = (start: PortVec, end: PortVec, obstacles: RouteObstacle[]) =>
-  obstacles.every((box) => !crossesBox(start, end, box));
-
-function clearExit(endpoint: RouteEndpoint, outside: PortVec, boxes: RouteObstacle[]): boolean {
-  return boxes.every((box) => box.id === endpoint.obstacleId || !crossesBox(endpoint.position, outside, box));
-}
-
-function corners(box: RouteObstacle): PortVec[] {
-  return Array.from({ length: 8 }, (_, bits) => [
-    bits & 1 ? box.max[0] : box.min[0],
-    bits & 2 ? box.max[1] : box.min[1],
-    bits & 4 ? box.max[2] : box.min[2],
-  ]);
+function clearExit(
+  endpoint: RouteEndpoint,
+  outside: RoutePoint,
+  boxes: RouteObstacle[],
+  bound: RelativeBound,
+): boolean {
+  return boxes.every((box) => box.id === endpoint.obstacleId || !crossesBox(endpoint, outside, box, bound));
 }
 
 function comparePoints(a: PortVec, b: PortVec): number {
   return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
 }
 
-function routeCorners(obstacles: RouteObstacle[]): PortVec[] {
-  const candidates = obstacles.flatMap(corners).sort(comparePoints);
-  const unique = new Map<string, PortVec>();
+function routeCorners(obstacles: RouteObstacle[], bound: RelativeBound): RoutePoint[] {
+  const candidates = obstacles
+    .flatMap((box) => corners(box).map((position) => ({ position, obstacleId: box.id })))
+    .sort((a, b) => comparePoints(a.position, b.position) || a.obstacleId.localeCompare(b.obstacleId));
+  const unique = new Map<string, RoutePoint>();
 
   for (const point of candidates) {
-    if (obstacles.some((box) => inside(point, box))) continue;
+    if (obstacles.some((box) => crossesBox(point, point, box, bound))) continue;
 
-    unique.set(point.join(','), point);
+    unique.set(point.position.join(','), point);
   }
 
   return [...unique.values()];
@@ -121,20 +81,28 @@ function closestUnvisited(distances: number[], visited: Uint8Array): number {
   return closest;
 }
 
-function restorePath(points: PortVec[], previous: Int32Array): PortVec[] {
-  const path: PortVec[] = [];
+function restorePath(points: RoutePoint[], previous: Int32Array): RoutePoint[] {
+  const path: RoutePoint[] = [];
   let index = 1;
 
   while (index >= 0) {
-    path.push([...points[index]]);
+    path.push(points[index]);
     index = previous[index];
   }
 
   return path.reverse();
 }
 
-function shortestPath(start: PortVec, end: PortVec, obstacles: RouteObstacle[], vertices: PortVec[]): PortVec[] | null {
-  if (clearSegment(start, end, obstacles)) return [[...start], [...end]];
+function shortestPath(input: {
+  start: RoutePoint;
+  end: RoutePoint;
+  obstacles: RouteObstacle[];
+  vertices: RoutePoint[];
+  bound: RelativeBound;
+}): RoutePoint[] | null {
+  const { start, end, obstacles, vertices, bound } = input;
+
+  if (clearSegment(start, end, obstacles, bound)) return [start, end];
 
   const points = [start, end, ...vertices];
   const distances = points.map(() => Infinity);
@@ -155,9 +123,10 @@ function shortestPath(start: PortVec, end: PortVec, obstacles: RouteObstacle[], 
     for (let next = 0; next < points.length; next++) {
       if (visited[next]) continue;
 
-      const candidate = distances[current] + distance(points[current], points[next]);
+      const candidate = distances[current] + distance(points[current].position, points[next].position);
 
-      if (candidate >= distances[next] - EPSILON || !clearSegment(points[current], points[next], obstacles)) continue;
+      if (candidate >= distances[next] - EPSILON || !clearSegment(points[current], points[next], obstacles, bound))
+        continue;
 
       distances[next] = candidate;
       previous[next] = current;
@@ -167,33 +136,46 @@ function shortestPath(start: PortVec, end: PortVec, obstacles: RouteObstacle[], 
   return null;
 }
 
-export function routePolyline({ from, to, obstacles, anchors = [] }: RouteInput): PortVec[] | null {
+export function routePath({
+  from,
+  to,
+  obstacles,
+  anchors = [],
+  anchorIds = [],
+  bound = noMotion,
+}: RouteInput): RoutePoint[] | null {
   const start = exit(from);
   const end = exit(to);
 
   if (!start || !end || !obstacles.every(validBox) || !anchors.every(finite)) return null;
 
   const boxes = obstacles.map(expanded);
-  const stops = [start, ...anchors, end];
+  const startPoint = { position: start, obstacleId: from.obstacleId };
+  const endPoint = { position: end, obstacleId: to.obstacleId };
+  const stops = [startPoint, ...anchors.map((position, i) => ({ position, obstacleId: anchorIds[i] })), endPoint];
 
-  if (stops.some((point) => boxes.some((box) => inside(point, box)))) return null;
+  if (stops.some((point) => boxes.some((box) => crossesBox(point, point, box, bound)))) return null;
 
-  if (!clearExit(from, start, boxes) || !clearExit(to, end, boxes)) return null;
+  if (!clearExit(from, startPoint, boxes, bound) || !clearExit(to, endPoint, boxes, bound)) return null;
 
-  const vertices = routeCorners(boxes);
-  const result: PortVec[] = [[...from.position], [...start]];
+  const vertices = routeCorners(boxes, bound);
+  const result: RoutePoint[] = [from, startPoint];
 
   for (let index = 1; index < stops.length; index++) {
-    const segment = shortestPath(stops[index - 1], stops[index], boxes, vertices);
+    const segment = shortestPath({ start: stops[index - 1], end: stops[index], obstacles: boxes, vertices, bound });
 
     if (!segment) return null;
 
     result.push(...segment.slice(1));
   }
 
-  result.push([...to.position]);
+  result.push(to);
 
   return result;
+}
+
+export function routePolyline(input: RouteInput): PortVec[] | null {
+  return routePath(input)?.map((point) => [...point.position]) ?? null;
 }
 
 export function routeTopology(points: PortVec[], obstacles: RouteObstacle[]): string[] {

@@ -76,7 +76,7 @@ For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylind
 | Supply current | The power supply's amps against the servos' draw | Shown in place of Current and runtime when there's no battery |
 | Regulator input | The battery against each regulator's input range | A battery outside the regulator's range |
 | Servo bus | Each servo's connector against the bus adapters in the build | A servo no adapter plugs into. Shown only when it fails |
-| Cable reach | Cable routes through the declared joint ranges, including coupled motion | A blocked or unresolved route, missing port geometry, or no compatible cable with enough recorded length |
+| Cable reach | Servo bus routes and power connections with two scene endpoints through the declared joint ranges | A blocked or unresolved route, missing port geometry, or no compatible cable with enough recorded length |
 | Standing stability | The center of mass over the feet | “The robot would tip over standing still.” |
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load. Amber under 2 times |
@@ -86,6 +86,8 @@ For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylind
 An active [body fit](/help/fit-a-robots-body-from-a-recorded-run) adjusts the weights and centers of mass used by **Weight** and **Servo torque**. Keeping or rolling back a fit refreshes Checks. Old walk and fall measurements stop counting until they match the active body again. **Peak torque** and **Falls** need new simulation measurements on the changed body.
 
 To enter hours and read the breakdown, [Set a time budget](/help/set-a-time-budget).
+
+Virtual fuse, switch and supply connections have no physical placement and are excluded from **Cable reach**. They remain on the wiring list.
 
 Open **Cable reach** to read each failing connection's endpoints, required length and available cable length. A limiting joint position appears beside the connection. Click the finding's part names to select its endpoints. [Troubleshoot wiring checks](/help/troubleshoot-servo-bus) explains the routing limits.
 

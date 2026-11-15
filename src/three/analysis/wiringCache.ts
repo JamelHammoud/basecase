@@ -6,8 +6,8 @@ export function wiringCache() {
   const scenes = new WeakMap<ScenePart[], Map<string, Promise<Netlist>>>();
 
   return (instances: Instance[], scene: WiringScene, run: () => Promise<Netlist>): Promise<Netlist> => {
-    const { joints, wiring, extras, tether } = scene.project;
-    const key = JSON.stringify([instances, joints, wiring, extras, tether]);
+    const { joints, wiring, extras, tether, sourced } = scene.project;
+    const key = JSON.stringify([instances, joints, wiring, extras, tether, sourced]);
     const entries = scenes.get(scene.parts) ?? new Map<string, Promise<Netlist>>();
     const kept = entries.get(key);
 

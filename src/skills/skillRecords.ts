@@ -134,8 +134,28 @@ type Variant = ArenaEvidence['variants'][number];
 
 const passShare = (variant: Variant) => variant.passes / variant.trials;
 
+function lowestByShare<T>(values: readonly T[], share: (value: T) => number): T | undefined {
+  if (values.length < 2) return values[0];
+
+  let worst: T | undefined;
+  let lowest = Infinity;
+
+  for (const value of values) {
+    const current = share(value);
+
+    if (Number.isNaN(current)) return [...values].sort((a, b) => share(a) - share(b))[0];
+
+    if (worst === undefined || current < lowest) {
+      worst = value;
+      lowest = current;
+    }
+  }
+
+  return worst;
+}
+
 export const worstVariant = (evidence: ArenaEvidence): Variant | undefined =>
-  [...evidence.variants].sort((a, b) => passShare(a) - passShare(b))[0];
+  lowestByShare(evidence.variants, passShare);
 
 const worstShare = (evidence: ArenaEvidence) => {
   const worst = worstVariant(evidence);
@@ -144,7 +164,7 @@ const worstShare = (evidence: ArenaEvidence) => {
 };
 
 export const worstEvidence = (evidence: readonly ArenaEvidence[]): ArenaEvidence | undefined =>
-  [...evidence].sort((a, b) => worstShare(a) - worstShare(b))[0];
+  lowestByShare(evidence, worstShare);
 
 const triesLine = (variant: Variant) => `${variant.passes} of ${plural(variant.trials, 'try', 'tries')}`;
 

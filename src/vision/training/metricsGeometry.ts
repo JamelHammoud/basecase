@@ -3,7 +3,7 @@ import { decodeMask } from '../imageMasks';
 import type { VisionDetection } from '../types';
 import { nearestMaskColumns } from '../maskSampling';
 
-export function boxOverlap(a: number[], b: number[]): number {
+function boxOverlap(a: number[], b: number[]): number {
   const intersection =
     Math.max(0, Math.min(a[0] + a[2], b[0] + b[2]) - Math.max(a[0], b[0])) *
     Math.max(0, Math.min(a[1] + a[3], b[1] + b[3]) - Math.max(a[1], b[1]));
@@ -12,16 +12,7 @@ export function boxOverlap(a: number[], b: number[]): number {
   return union > 0 ? intersection / union : 0;
 }
 
-export function annotationBox(annotation: ImageAnnotation, frame: TrainingFrame): number[] {
-  return annotation.box.map((v, i) => v / (i % 2 === 0 ? frame.width : frame.height));
-}
-
-export function maskOverlap(annotation: ImageAnnotation, detection: VisionDetection, frame: TrainingFrame): number {
-  const mask = detection.mask;
-
-  if (!mask) return 0;
-
-  const truth = decodeMask(annotation.mask);
+function maskOverlap(truth: Uint8Array, mask: NonNullable<VisionDetection['mask']>, frame: TrainingFrame): number {
   const columns = nearestMaskColumns(mask.width, frame.width);
   let intersection = 0;
   let union = 0;
@@ -39,4 +30,22 @@ export function maskOverlap(annotation: ImageAnnotation, detection: VisionDetect
   }
 
   return union > 0 ? intersection / union : 0;
+}
+
+export function annotationOverlap(annotation: ImageAnnotation, frame: TrainingFrame, segment: boolean) {
+  if (!segment) {
+    const box = annotation.box.map((v, i) => v / (i % 2 === 0 ? frame.width : frame.height));
+
+    return (detection: VisionDetection) => boxOverlap(box, detection.box);
+  }
+
+  let truth: Uint8Array | null = null;
+
+  return (detection: VisionDetection) => {
+    if (!detection.mask) return 0;
+
+    truth ??= decodeMask(annotation.mask);
+
+    return maskOverlap(truth, detection.mask, frame);
+  };
 }

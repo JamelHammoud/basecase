@@ -1,6 +1,3 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
 import { kitchenCollider, kitchenSplat } from '../src/cases/worldImportFixture';
@@ -77,25 +74,12 @@ async function expectKitchenCamera() {
 }
 
 async function dropFixtures(files: WorldImportFile[]) {
-  const directory = await mkdtemp(join(tmpdir(), 'basecase-world-import-'));
+  const dropped = files.map(({ name, bytes }) => ({ name, base64: Buffer.from(bytes).toString('base64') }));
 
-  try {
-    const dropped = [];
-
-    for (const file of files) {
-      const path = join(directory, file.name);
-
-      await writeFile(path, file.bytes);
-      dropped.push({ name: file.name, base64: (await readFile(path)).toString('base64') });
-    }
-
-    await app.page.evaluate(
-      (payload) => (window as unknown as { __studio: Studio }).__studio.dropFiles(payload),
-      dropped,
-    );
-  } finally {
-    await rm(directory, { recursive: true, force: true });
-  }
+  await app.page.evaluate(
+    (payload) => (window as unknown as { __studio: Studio }).__studio.dropFiles(payload),
+    dropped,
+  );
 }
 
 async function makeKitchen(files = [kitchenCollider(), kitchenSplat()]) {
@@ -105,19 +89,7 @@ async function makeKitchen(files = [kitchenCollider(), kitchenSplat()]) {
 
   await expect.poll(() => card.count()).toBe(1);
   expect(await card.locator('[role=radio][aria-checked=true]', { hasText: 'Kitchen' }).count()).toBe(1);
-  await card.locator('[role=radio]', { hasText: 'Reach a Spot' }).click();
-
-  for (const [label, value] of [
-    ['Distance', '1200'],
-    ['Radius', '150'],
-    ['Time', '12'],
-  ]) {
-    const input = card.locator('label', { hasText: label }).locator('input');
-
-    await input.fill(value);
-    await input.press('Enter');
-  }
-
+  expect(await card.locator('[role=radio][aria-checked=true]', { hasText: 'Reach a Spot' }).count()).toBe(1);
   await card.locator('button', { hasText: 'Make Case' }).click();
   await expect.poll(async () => (await simState()).activeCase).toBe('reach-a-spot-in-kitchen');
   await expect.poll(async () => (await worldState())?.loaded).toBe(true);
@@ -163,7 +135,6 @@ describe('a captured world dropped on the canvas', () => {
 
   it('refuses a splat dropped without a collider by naming the missing collider', async () => {
     app = await openApp();
-    await loadFixtureRobot(app.page, 'rover-diff');
     await dropFixtures([kitchenSplat()]);
 
     await expect

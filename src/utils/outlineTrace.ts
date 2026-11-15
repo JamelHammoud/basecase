@@ -1,4 +1,5 @@
-import { maskBounds, type Mask, type MaskBox } from './silhouetteProfile';
+import type { Mask } from './silhouetteProfile';
+import { maskRows } from './maskRows';
 
 export interface Region {
   x0: number;
@@ -21,33 +22,6 @@ export function cropMask(mask: Mask, region?: Region): Mask {
       data[y * mask.width + x] = mask.data[y * mask.width + x];
 
   return { ...mask, data };
-}
-
-interface Span {
-  y: number;
-  left: number;
-  right: number;
-}
-
-function rowSpans(mask: Mask, box: MaskBox): Span[] {
-  const spans: Span[] = [];
-
-  for (let y = box.y0; y <= box.y1; y++) {
-    let left = -1,
-      right = -1;
-
-    for (let x = box.x0; x <= box.x1; x++) {
-      if (!mask.data[y * mask.width + x]) continue;
-
-      if (left < 0) left = x;
-
-      right = x + 1;
-    }
-
-    if (left >= 0) spans.push({ y, left, right });
-  }
-
-  return spans;
 }
 
 type Point = [number, number];
@@ -91,11 +65,10 @@ export interface Traced {
 const r1 = (v: number) => Math.round(v * 10) / 10;
 
 export function traceOutline(mask: Mask, { mmPerPx, n = 20, z0 = 0 }: { mmPerPx: number; n?: number; z0?: number }) {
-  const box = maskBounds(mask);
+  const { box, rows: spans } = maskRows(mask);
 
   if (box.x1 < 0) return null;
 
-  const spans = rowSpans(mask, box);
   const cx = (box.x0 + box.x1 + 1) / 2;
   const toMm = (x: number, y: number): Point => [(x - cx) * mmPerPx, z0 + (box.y1 + 1 - y) * mmPerPx];
   const ring: Point[] = [

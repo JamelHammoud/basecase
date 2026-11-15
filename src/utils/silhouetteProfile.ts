@@ -1,3 +1,5 @@
+import { maskRows, rowBandWidths } from './maskRows';
+
 export interface Profile {
   bands: number[];
   aspect: number;
@@ -43,41 +45,14 @@ export function maskArea(mask: Mask): number {
   return n;
 }
 
-function rowWidth(mask: Uint8Array, row: number, x0: number, x1: number): number {
-  let l = -1,
-    r = -1;
-
-  for (let x = x0; x <= x1; x++) {
-    if (!mask[row + x]) continue;
-
-    if (l < 0) l = x;
-
-    r = x;
-  }
-
-  return l >= 0 ? r - l + 1 : 0;
-}
-
 const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
 export function bandWidths(mask: Mask, bands = 10): { widths: number[]; box: MaskBox } | null {
-  const box = maskBounds(mask);
+  const { box, rows } = maskRows(mask);
 
   if (box.x1 < 0) return null;
 
-  const H = box.y1 - box.y0 + 1;
-  const widths: number[] = [];
-
-  for (let b = 0; b < bands; b++) {
-    let widest = 0;
-
-    for (let y = box.y0 + Math.floor((b * H) / bands); y < box.y0 + Math.floor(((b + 1) * H) / bands); y++)
-      widest = Math.max(widest, rowWidth(mask.data, y * mask.width, box.x0, box.x1));
-
-    widths.push(widest);
-  }
-
-  return { widths, box };
+  return { widths: rowBandWidths(rows, box, bands), box };
 }
 
 export function maskProfileOf(mask: Mask, bands = 10): Profile | null {

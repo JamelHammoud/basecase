@@ -48,9 +48,33 @@ function floodBackground(border: number[], w: number, h: number, isSubject: (i: 
   return mask;
 }
 
+function borderMedian(data: Uint8ClampedArray, border: number[]): number[] {
+  const histograms = Array.from({ length: 3 }, () => new Uint32Array(256));
+
+  for (const pixel of border) {
+    const offset = pixel * 4;
+
+    for (let channel = 0; channel < 3; channel++) histograms[channel][data[offset + channel]]++;
+  }
+
+  const middle = border.length >> 1;
+
+  return histograms.map((counts) => {
+    let cumulative = 0;
+
+    for (let value = 0; value < counts.length; value++) {
+      cumulative += counts[value];
+
+      if (cumulative > middle) return value;
+    }
+
+    return Number.NaN;
+  });
+}
+
 export function floodMaskOf({ data, width: w, height: h }: ImageData): { mask?: Mask; reason?: string } {
   const border = borderPixels(w, h);
-  const med = [0, 1, 2].map((k) => border.map((i) => data[i * 4 + k]).sort((a, b) => a - b)[border.length >> 1]);
+  const med = borderMedian(data, border);
   const dist = (i: number) => Math.hypot(data[i * 4] - med[0], data[i * 4 + 1] - med[1], data[i * 4 + 2] - med[2]);
   const spread = border.reduce((s, i) => s + dist(i), 0) / border.length;
 

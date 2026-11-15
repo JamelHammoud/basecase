@@ -1,5 +1,6 @@
 import { TrainingImagesSheet } from '../components/cases/TrainingImagesSheet';
 import { ArmSizingSheet } from '../components/ArmSizingSheet';
+import { MotionDesignSheet } from '../components/MotionDesignSheet';
 import { GuideViewer } from '../components/build/guideViewer/GuideViewer';
 import { ImportRobotSheet } from '../components/ImportRobotSheet';
 import { InstallSkillSheet } from '../components/InstallSkillSheet';
@@ -14,6 +15,7 @@ import type { EarthPlace } from './useEarthPlace';
 import type { WorkspaceActions } from './useWorkspaceActions';
 import type { TrainingImages } from './useTrainingImages';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import type { PoseActions } from './usePoseActions';
 
 interface WorkspaceSheetsProps {
   active: boolean;
@@ -47,6 +49,24 @@ function TrainingImagesHost({ active, images }: { active: boolean; images: Train
   return (
     <ErrorBoundary region="Training images" onClose={images.close}>
       <TrainingImagesSheet images={images} />
+    </ErrorBoundary>
+  );
+}
+
+function MotionDesignHost({ active, pose }: { active: boolean; pose: PoseActions }) {
+  const { design } = pose;
+
+  if (!design.source) return null;
+
+  return (
+    <ErrorBoundary key={design.source.name} region="Design From Motion" onClose={design.close}>
+      <MotionDesignSheet
+        open={active}
+        busy={design.busy}
+        problem={design.problem}
+        onClose={design.close}
+        onDesign={design.design}
+      />
     </ErrorBoundary>
   );
 }
@@ -110,6 +130,7 @@ export function WorkspaceSheets({ active, core, actions }: WorkspaceSheetsProps)
           />
         </ErrorBoundary>
       )}
+      <MotionDesignHost active={active} pose={pose} />
       <TrainingImagesHost active={active} images={core.simTraining.cases.images} />
       <TeachGestureHost active={active} cases={core.simTraining.cases} project={core.project} />
       <input

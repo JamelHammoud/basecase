@@ -2,8 +2,16 @@ import type { Command } from '../components/CommandPalette';
 import { PoseIcon } from '../design-system';
 import type { CommandInputs } from './sceneCommands';
 
-export function skeletonCommands({ core }: CommandInputs): Command[] {
+export function skeletonCommands({ core, actions }: CommandInputs): Command[] {
   return [
+    {
+      id: 'design-from-motion',
+      group: 'Pose',
+      label: 'Design From Motion',
+      icon: <PoseIcon />,
+      keywords: 'bvh mocap motion capture skeleton bones joints servo height',
+      run: actions.pose.designFromMotion,
+    },
     {
       id: 'edit-skeleton',
       group: 'Pose',

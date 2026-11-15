@@ -81,6 +81,7 @@ export interface RequestContext {
   commitConsole: (caseId: string, console: CaseConsole | undefined) => void;
   insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
   commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton) => void;
+  openSkeleton?: () => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;

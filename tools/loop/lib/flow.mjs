@@ -1,6 +1,6 @@
 export const LIMITS = {
   openWaiting: 12,
-  maxOpenHours: 1,
+  maxOpenHours: 24,
   queuedRuns: 20,
   mainRedHours: 12,
   noMergeHours: 2,
@@ -16,6 +16,8 @@ export const LANE_SHARE = { refine: 3 };
 const hoursSince = (iso, now) => (iso ? (now - Date.parse(iso)) / 3_600_000 : null);
 
 const free = () => false;
+const checking = (pull) =>
+  pull.statusCheckRollup?.some((check) => ['QUEUED', 'IN_PROGRESS', 'PENDING'].includes(check.status ?? check.state));
 
 export function expired({ pulls, inBatch, now = Date.now(), busy = free }) {
   const limitMs = LIMITS.maxOpenHours * 3_600_000;
@@ -26,14 +28,15 @@ export function expired({ pulls, inBatch, now = Date.now(), busy = free }) {
       !pull.headRefName.startsWith('loop/repair/') &&
       !inBatch.includes(pull.number) &&
       !busy(pull) &&
-      now - Date.parse(pull.createdAt) > limitMs,
+      !checking(pull) &&
+      now - Date.parse(pull.updatedAt ?? pull.createdAt) > limitMs,
   );
 }
 
 export function idle({ pulls, now = Date.now(), busy = free }) {
   const since = now - LIMITS.idlePullMinutes * 60_000;
 
-  return pulls.filter((pull) => Date.parse(pull.updatedAt) < since && !busy(pull));
+  return pulls.filter((pull) => Date.parse(pull.updatedAt) < since && !busy(pull) && !checking(pull));
 }
 
 export const laneOf = (branch) => /^loop\/([^/]+)\//.exec(branch)?.[1] ?? null;

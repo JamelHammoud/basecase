@@ -165,10 +165,10 @@ describe('pull requests open too long', () => {
   const at = Date.parse('2026-11-13T16:00:00Z');
   const pull = (number, headRefName, createdAt) => ({ number, headRefName, createdAt });
 
-  it('expires work open over an hour, except batches, repairs and pull requests riding in a batch', () => {
+  it('expires inactive work after a day, except batches, repairs and pull requests riding in a batch', () => {
     const pulls = [
-      pull(1, 'loop/refine/a', '2026-11-13T09:00:00Z'),
-      pull(2, 'loop/refine/b', '2026-11-13T14:00:00Z'),
+      pull(1, 'loop/refine/a', '2026-11-11T09:00:00Z'),
+      pull(2, 'loop/refine/b', '2026-11-12T14:00:00Z'),
       pull(3, 'loop/batch/x', '2026-11-13T08:00:00Z'),
       pull(4, 'loop/repair/y', '2026-11-13T08:00:00Z'),
       pull(5, 'loop/build/z', '2026-11-13T08:00:00Z'),
@@ -179,8 +179,8 @@ describe('pull requests open too long', () => {
 
   it('spares a pull request a lane holds, such as one under micro-evals, from closing and from the idle count', () => {
     const pulls = [
-      { ...pull(1, 'loop/build/a', '2026-11-13T09:00:00Z'), updatedAt: '2026-11-13T15:00:00Z' },
-      { ...pull(2, 'loop/build/b', '2026-11-13T09:00:00Z'), updatedAt: '2026-11-13T15:00:00Z' },
+      { ...pull(1, 'loop/build/a', '2026-11-11T09:00:00Z'), updatedAt: '2026-11-12T15:00:00Z' },
+      { ...pull(2, 'loop/build/b', '2026-11-11T09:00:00Z'), updatedAt: '2026-11-12T15:00:00Z' },
       { ...pull(3, 'loop/build/c', '2026-11-13T15:00:00Z'), updatedAt: '2026-11-13T15:50:00Z' },
     ];
     const busy = (p) => p.number === 2;
@@ -188,5 +188,13 @@ describe('pull requests open too long', () => {
     expect(expired({ pulls, inBatch: [], now: at, busy }).map((p) => p.number)).toEqual([1]);
     expect(idle({ pulls, now: at, busy }).map((p) => p.number)).toEqual([1]);
     expect(idle({ pulls, now: at }).map((p) => p.number)).toEqual([1, 2]);
+  });
+
+  it('preserves old work with recent progress or pending CI instead of rebuilding it', () => {
+    const old = pull(1, 'loop/build/feature', '2026-11-10T09:00:00Z');
+    const progressing = { ...old, updatedAt: '2026-11-13T15:50:00Z' };
+    const checking = { ...old, statusCheckRollup: [{ status: 'IN_PROGRESS' }] };
+
+    expect(expired({ pulls: [progressing, checking], inBatch: [], now: at })).toEqual([]);
   });
 });

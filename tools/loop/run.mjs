@@ -5,25 +5,13 @@ import { spawn } from 'node:child_process';
 import { backpressure, PRODUCERS } from './lib/flow.mjs';
 import { flowCounts } from './lib/flowCounts.mjs';
 import { laneNames, laneModule } from './lib/lanes.mjs';
-import { claim } from './lib/claim.mjs';
 import { commentOnIssue, createIssue, issues } from './lib/github.mjs';
 import { firstLine, isBad, LOAD_CHECK, markBad } from './lib/homeGuard.mjs';
 import { HOME_CHECKOUT, HOME_REF, LOCKS, LOGS, LOOP_DIR } from './lib/paths.mjs';
 import { run } from './lib/sh.mjs';
 import { quietRequested } from '../../verify/lib/quiet.mjs';
 import { capacityHold, measure as measureCapacity } from './lib/capacity.mjs';
-import { CODEX_EFFORT, CODEX_MODEL } from './lib/codex.mjs';
-import {
-  codexPause,
-  isActive,
-  markAnnounced,
-  pause,
-  probe,
-  probeDue,
-  resume,
-  startPause,
-  UsageLimit,
-} from './lib/usage.mjs';
+import { UsageLimit } from './lib/usage.mjs';
 
 const LANES = laneNames();
 const [lane, slot = '1'] = process.argv.slice(2);
@@ -34,6 +22,8 @@ if (!LANES.includes(lane)) {
 }
 
 const id = `${lane}-${slot}`;
+
+process.env.BASECASE_LOOP_LANE = lane;
 
 fs.mkdirSync(LOCKS, { recursive: true });
 fs.mkdirSync(LOGS, { recursive: true });
@@ -168,68 +158,18 @@ function tellDirection(text) {
   if (direction) commentOnIssue(direction.number, text);
 }
 
-function claudeIsBack() {
-  const release = probeDue() ? claim('usage-probe') : null;
-
-  if (!release) return false;
-
-  try {
-    const limit = probe();
-
-    if (limit) {
-      startPause(limit.until);
-
-      return false;
-    }
-
-    resume();
-
-    return true;
-  } finally {
-    release();
-  }
-}
-
-function agentsMayRun() {
-  const claude = pause();
-
-  if (!claude) return true;
-
-  if (claudeIsBack()) {
-    log('Claude is back; agent lanes run on Claude again');
-    tellDirection('Claude is back, so the agent lanes run on Claude again.');
-
-    return true;
-  }
-
-  return !(isActive(claude) && isActive(codexPause()));
-}
-
-function announceCodex() {
-  const claude = pause();
-
-  if (!claude || claude.announced) return;
-
-  markAnnounced();
-  log(
-    `Claude hit its usage limit; agent lanes run on Codex (${CODEX_MODEL}, ${CODEX_EFFORT}) until ${localTime(claude.until)}`,
-  );
-  tellDirection(
-    `Claude hit its usage limit, so the agent lanes run on Codex (${CODEX_MODEL}, ${CODEX_EFFORT} effort) until ${localTime(claude.until)}, when Claude's limit resets. A manual reset is picked up within 15 minutes.`,
-  );
-}
-
 function announcePause(error) {
-  log(`Claude and Codex are both at their usage limits; agent lanes paused until ${localTime(error.until)}`);
+  log(`Codex and protected Claude overflow are unavailable until ${localTime(error.until)}`);
 
   if (error.started)
     tellDirection(
-      `Claude and Codex both hit their usage limits, so the agent lanes are paused until ${localTime(error.until)}. Merging and tidying keep running. They resume on their own, or within 15 minutes of a manual reset; \`node tools/loop/usage.mjs resume\` restarts them at once.`,
+      `Codex and protected Claude overflow are unavailable until ${localTime(error.until)}. Merging and tidying keep running. They retry when capacity is available; \`node tools/loop/usage.mjs resume\` restarts them at once.`,
     );
 }
 
 const KEEPS_RUNNING_FOR_GATES = new Set([
   'merge',
+  'delivery',
   'nightly',
   'health',
   'tidy',
@@ -252,7 +192,7 @@ async function runOnce() {
     (PRODUCERS.has(lane) ? backpressure(flowCounts(), lane) : null);
 
   if (held) log(`waiting: ${held}`);
-  else if (!schedule.agent || agentsMayRun()) await runLane({ log, slot });
+  else await runLane({ log, slot });
 }
 
 const runsFromHome = path.resolve(import.meta.dirname, '..', '..') === path.resolve(HOME_CHECKOUT);
@@ -280,8 +220,6 @@ try {
     process.exitCode = 1;
   }
 }
-
-announceCodex();
 
 const minutes = Math.round((Date.now() - startedAt) / 60_000);
 

@@ -1,20 +1,14 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { BRIEFS } from './paths.mjs';
-import { run } from './sh.mjs';
 import { runCodex } from './codex.mjs';
-import {
-  codexPause,
-  isActive,
-  limitIn,
-  pause,
-  resume,
-  resumeCodex,
-  startCodexPause,
-  startPause,
-  UsageLimit,
-} from './usage.mjs';
+import { runClaude, withoutGithub } from './claude.mjs';
+import { policyFor, primaryAvailable, primaryReserve } from './agentPolicy.mjs';
+import { quotaSnapshot, reserveOverflow } from './quota.mjs';
+import { recordSession } from './sessionJournal.mjs';
+import { codexPause, isActive, pause, resumeCodex, startCodexPause, startPause, UsageLimit } from './usage.mjs';
+
+export { sandboxArgs } from './claude.mjs';
 
 const TELLING = new Set(['build', 'refine', 'revise', 'rebuild']);
 
@@ -25,104 +19,126 @@ export const brief = (name) =>
     ...(TELLING.has(name) ? [fs.readFileSync(path.join(BRIEFS, 'telling.md'), 'utf8')] : []),
   ].join('\n\n');
 
-const lastResult = (out) => {
-  const events = JSON.parse(out);
-  const list = Array.isArray(events) ? events : [events];
+function measured(provider, options, execute) {
+  const quotaBefore = quotaSnapshot(provider);
+  const startedAt = Date.now();
+  const pending = {
+    provider,
+    name: options.name,
+    task: options.task ?? path.basename(options.cwd),
+    startedAt,
+    state: 'running',
+    pid: process.pid,
+  };
+  const id = recordSession(pending);
+  const result = execute(options);
+  const finishedAt = Date.now();
+  const quotaAfter = quotaSnapshot(provider);
+  const journalId = recordSession({
+    ...pending,
+    id,
+    state: 'completed',
+    lane: process.env.BASECASE_LOOP_LANE ?? options.name,
+    provider,
+    name: options.name,
+    model: provider === 'codex' ? options.policy.model : options.policy.claudeModel,
+    effort: provider === 'codex' ? options.policy.effort : options.policy.claudeEffort,
+    startedAt,
+    finishedAt,
+    durationMs: finishedAt - startedAt,
+    ok: result.ok,
+    continued: Boolean(options.continuation),
+    session: result.session,
+    usage: result.usage,
+    previousUsage: result.previousUsage,
+    limited: Boolean(result.limited),
+    formatRetried: Boolean(result.formatRetried),
+    task: options.task ?? path.basename(options.cwd),
+    quotaBefore,
+    quotaAfter,
+    result: result.output
+      ? {
+          changed: result.output.changed,
+          kind: result.output.kind,
+          title: result.output.title,
+          checked: result.output.checked,
+          notes: result.output.notes,
+        }
+      : null,
+    error: result.error?.slice(0, 1000),
+  });
 
-  return list.filter((event) => event?.type === 'result').at(-1) ?? null;
+  return { ...result, provider, journalId };
+}
+
+const nextAvailability = () => {
+  const times = [codexPause()?.until, pause()?.until].filter((at) => at > Date.now());
+
+  return times.length ? Math.min(...times) : Date.now() + 15 * 60_000;
 };
 
-export const sandboxArgs = ({ tools, allow }) => [
-  '--restricted',
-  '--strict-mcp-config',
-  '--tools',
-  tools.join(','),
-  '--permission-mode',
-  'dontAsk',
-  '--allowedTools',
-  allow.join(','),
-];
+function overflow(options, primary) {
+  if (isActive(pause())) throw new UsageLimit(nextAvailability());
 
-const permissionArgs = (sandbox) => (sandbox ? sandboxArgs(sandbox) : ['--dangerously-skip-permissions']);
+  const release = reserveOverflow();
 
-const withoutGithub = (fn) => {
-  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-nogh-'));
+  if (!release) throw new UsageLimit(nextAvailability());
 
   try {
-    return fn({ GH_TOKEN: '', GITHUB_TOKEN: '', GH_ENTERPRISE_TOKEN: '', GH_CONFIG_DIR: empty });
+    const result = measured('claude', { ...options, continuation: null }, runClaude);
+
+    if (result.limited) {
+      startPause(result.limited.until);
+
+      throw new UsageLimit(nextAvailability());
+    }
+
+    return { ...result, overflow: true, primaryJournalId: primary?.journalId };
   } finally {
-    fs.rmSync(empty, { recursive: true, force: true });
+    release();
   }
-};
+}
 
-function runClaude({ cwd, name, prompt, schema, hours, sandbox }) {
-  const args = [
-    '-p',
+export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox, continuation, system, task }) {
+  const policy = policyFor(name);
+  const options = {
+    cwd,
+    name,
     prompt,
-    '--append-system-prompt',
-    brief(name),
-    ...permissionArgs(sandbox),
-    '--output-format',
-    'json',
-    '--json-schema',
-    JSON.stringify(schema),
-    '--no-session-persistence',
-  ];
-  const launch = (env) =>
-    run(process.env.CLAUDE_BIN || 'claude', args, { cwd, env, timeout: hours * 60 * 60 * 1000, allowFail: true });
-  const { out, err } = sandbox ? withoutGithub(launch) : launch();
-  const limited = limitIn({ out, err });
+    schema,
+    hours,
+    sandbox,
+    continuation,
+    policy,
+    task,
+    brief: system ?? brief(name),
+  };
 
-  if (limited) return { ok: false, limited };
+  if (policy.provider === 'claude') return measured('claude', options, runClaude);
 
-  try {
-    const result = lastResult(out);
-    const usable = result && !result.is_error && result.structured_output;
+  const quota = quotaSnapshot('codex');
+  const reserve = primaryReserve(quota);
 
-    return usable ? { ok: true, output: result.structured_output } : { ok: false, error: result?.result || err };
-  } catch (error) {
-    return { ok: false, error: `${error.message}: ${(err || out).slice(-1000)}` };
+  if (reserve) {
+    startCodexPause(reserve.reset);
+
+    return overflow(options);
   }
-}
 
-const bothLimited = (codexUntil) => new UsageLimit(Math.min(pause()?.until ?? codexUntil, codexUntil));
+  if (isActive(codexPause()) && !primaryAvailable(quota)) return overflow(options);
 
-function viaCodex(options) {
-  const held = codexPause();
+  if (codexPause() && primaryAvailable(quota)) resumeCodex();
 
-  if (isActive(held)) throw bothLimited(held.until);
-
-  const launch = (env) => runCodex({ ...options, brief: brief(options.name), env });
-  const result = options.sandbox ? withoutGithub(launch) : launch();
+  const launch = (env) => runCodex({ ...options, env });
+  const result = measured('codex', options, () => (sandbox ? withoutGithub(launch) : launch()));
 
   if (result.limited) {
-    const error = bothLimited(result.limited.until);
+    startCodexPause(result.limited.until);
 
-    error.started = startCodexPause(result.limited.until);
-
-    throw error;
+    return overflow(options, result);
   }
 
-  if (held) resumeCodex();
-
-  return result;
-}
-
-export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox }) {
-  const options = { cwd, name, prompt, schema, hours, sandbox };
-  const held = pause();
-
-  if (isActive(held)) return viaCodex(options);
-
-  const result = runClaude(options);
-
-  if (result.limited) {
-    startPause(result.limited.until);
-
-    return viaCodex(options);
-  }
-
-  if (held) resume();
+  if (codexPause()) resumeCodex();
 
   return result;
 }

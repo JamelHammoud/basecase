@@ -12,7 +12,7 @@ export const schedule = {
   slots: 1,
   everySeconds: 600,
   labels: ['loop:health'],
-  does: 'Closes pull requests open over three hours, nudges any untouched for 30 minutes, watches main, the merge queue and CI, and keeps one Loop health issue open while any of them stalls',
+  does: 'Retires work inactive for a day, preserves active work and pending checks, nudges idle revisions, and watches main, the merge queue and CI',
 };
 
 const TITLE = 'Loop health';
@@ -105,10 +105,10 @@ function expire(log) {
   const pulls = openPulls({ fresh: true });
   const inBatch = pulls.filter(isBatch).flatMap((batch) => membersOf(batch.body));
 
-  for (const pull of expired({ pulls, inBatch })) {
+  for (const pull of expired({ pulls, inBatch, busy })) {
     closePull(
       pull.number,
-      `Open over an hour without landing, so it closes. Its step goes back to the builders and is rebuilt from current main, which costs less than keeping it up to date.`,
+      `No activity for ${LIMITS.maxOpenHours} hours, no active lane and no pending checks, so it closes. Its step returns to the builders with its existing history.`,
     );
     log(`#${pull.number}: open over ${LIMITS.maxOpenHours} h; closed`);
   }

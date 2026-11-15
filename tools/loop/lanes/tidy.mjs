@@ -5,6 +5,8 @@ import { heldLocks } from '../lib/locks.mjs';
 import { HOME_CHECKOUT, HOME_REF, WORKTREES } from '../lib/paths.mjs';
 import { run } from '../lib/sh.mjs';
 import { isLoopBranch, parseRefs, parseWorktrees, staleBranches, staleWorktrees } from '../lib/stale.mjs';
+import { pendingDeliveries } from '../lib/deliveryState.mjs';
+import { activeRecoveries } from '../lib/workRecovery.mjs';
 
 export const schedule = {
   slots: 1,
@@ -25,7 +27,17 @@ function deleteRemoteBranches(log, now) {
   git(['fetch', '-q', '--prune', 'origin', '+refs/heads/loop/*:refs/remotes/origin/loop/*']);
 
   const branches = parseRefs(git(['for-each-ref', REF_FORMAT, 'refs/remotes/origin/loop']).out);
-  const stale = staleBranches({ branches, keep: [...openHeads(), HOME_REF], now, maxAgeMs: ORPHAN_BRANCH_MS });
+  const stale = staleBranches({
+    branches,
+    keep: [
+      ...openHeads(),
+      HOME_REF,
+      ...pendingDeliveries().map((entry) => entry.branch),
+      ...activeRecoveries().map((entry) => entry.branch),
+    ],
+    now,
+    maxAgeMs: ORPHAN_BRANCH_MS,
+  });
 
   for (const name of stale) {
     const { ok, err } = git(['push', '-q', 'origin', '--delete', name], { allowFail: true });
@@ -36,6 +48,8 @@ function deleteRemoteBranches(log, now) {
 
 function removeWorktrees(log, now) {
   const listed = worktrees()
+    .filter((worktree) => !pendingDeliveries().some((entry) => entry.dir === worktree.dir))
+    .filter((worktree) => !activeRecoveries().some((entry) => entry.dir === worktree.dir))
     .filter((w) => fs.existsSync(w.dir))
     .map((w) => ({ ...w, createdAt: fs.statSync(w.dir).birthtimeMs || fs.statSync(w.dir).ctimeMs }));
   const stale = staleWorktrees({ worktrees: listed, root: WORKTREES, held: heldLocks(), now });

@@ -5,7 +5,6 @@ import { CHANGE_SCHEMA } from '../lib/agent.mjs';
 import { claim } from '../lib/claim.mjs';
 import {
   checkRunFor,
-  editPull,
   editPullLabels,
   failedLog,
   isLoopComment,
@@ -23,6 +22,8 @@ import { entryFor, markLooked, recordAttempt } from '../lib/pullState.mjs';
 import { run } from '../lib/sh.mjs';
 import { voiceNewPages, voiced } from '../lib/voiceHook.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
+import { saveDelivery } from '../lib/deliveryState.mjs';
+import { deliver } from '../lib/deliver.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
 import { keepStepLinks } from '../lib/stepLinks.mjs';
 
@@ -111,7 +112,6 @@ function publishRevision(pull, { dir, output }) {
   git(['add', '-A'], dir);
   git(['commit', '-q', '-F', '-'], dir, { input: output.commitMessage });
   run('node', [path.join(HOME_CHECKOUT, 'tools', 'check-credit.mjs'), 'origin/main..HEAD'], { cwd: dir });
-  git(['push', '-q', 'origin', `HEAD:${pull.headRefName}`], dir);
 
   const kind = kindOf(pull.title);
   const landed = landedIn('origin/main...HEAD', dir);
@@ -121,10 +121,18 @@ function publishRevision(pull, { dir, output }) {
   const line =
     touched.length === 0 ? output.revision : `${output.revision} Protected paths: ${protectedList(touched)}.`;
 
-  editPull(pull.number, {
+  const entry = saveDelivery({
+    dir,
+    branch: pull.headRefName,
+    number: pull.number,
+    sha: git(['rev-parse', 'HEAD'], dir).out.trim(),
+    createdAt: Date.now(),
+    attempts: 0,
     title: kind ? pullTitle({ kind, title: output.title }) : pull.title,
     body: voiced(keepStepLinks(`${restated}${heading}\n- ${line}`, pull), 'pull'),
   });
+
+  deliver(entry);
 }
 
 function revisePull(pull, { reason, comments, jamelAt }, log) {

@@ -55,11 +55,13 @@ function workerFixture() {
 export async function stubWebTrainWorker(page: Page) {
   const trained: string[] = [];
 
-  await page
-    .context()
-    .route(/\/skills\.worker[.-].*(?:\?|$)/, (route) =>
-      route.fulfill({ contentType: 'text/javascript', body: `(${workerFixture.toString()})()` }),
-    );
+  await page.context().route(/\/skills\.worker[.-].*(?:\?|$)/, (route) =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      headers: { 'Cross-Origin-Embedder-Policy': 'credentialless' },
+      body: `(${workerFixture.toString()})()`,
+    }),
+  );
   await page.context().route('**/__web-train', async (route) => {
     const { job, outcome } = route.request().postDataJSON() as { job: KitJob; outcome?: ForgeOutcome };
 

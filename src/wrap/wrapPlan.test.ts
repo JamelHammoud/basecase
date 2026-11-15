@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { RobotJoint, ScenePart } from '../types/robotics';
+import { DEFAULT_PROJECT, type RobotJoint, type ScenePart } from '../types/robotics';
 import { isPrinted } from '../utils/bom';
 import { buildRig, forwardKinematics, partMotion, type V3 } from '../utils/kinematics';
+import { docFromParts, pushHistory, trackedOf, travelProject } from '../workspace/docHistory';
 import { agentWrapTarget, applyWrap, wrapPlan, wrapTarget } from './wrapPlan';
 import { BASE_LINK, type WrapShell } from './wrapTypes';
 
@@ -92,8 +93,7 @@ describe('wrapPlan', () => {
 });
 
 describe('applyWrap', () => {
-  const wrapped = () => {
-    const { parts, joints } = scene();
+  const wrapped = ({ parts, joints } = scene()) => {
     const target = wrapTarget(parts, joints, ['owl', 'base'])!;
     const shells = [shellAt(BASE_LINK, 5), shellAt('shoulder', 40), shellAt('elbow', 90)];
 
@@ -130,5 +130,26 @@ describe('applyWrap', () => {
     expect(motion(fore)).toEqual(motion('fore'));
     expect(motion(fore)).not.toEqual(motion(upper));
     expect(motion(base)).toEqual(motion('base'));
+  });
+
+  it('restores the mesh, shells and joint attachments in one undo and redo', () => {
+    const before = scene();
+    const original = { ...DEFAULT_PROJECT, joints: before.joints };
+    const edit = wrapped(before);
+    const project = { ...original, joints: edit.joints };
+    const doc = pushHistory(docFromParts(before.parts), edit.parts, trackedOf(original));
+    const undone = travelProject(doc, project, { direction: 'undo' })!;
+
+    expect(undone.doc.parts).toEqual(before.parts);
+    expect(undone.project.joints).toEqual(before.joints);
+    expect(undone.doc.past).toHaveLength(0);
+    expect(undone.doc.parts.find((p) => p.id === 'owl')?.visible).toBe(true);
+
+    const redone = travelProject(undone.doc, undone.project, { direction: 'redo' })!;
+
+    expect(redone.doc.parts).toEqual(edit.parts);
+    expect(redone.project.joints).toEqual(edit.joints);
+    expect(redone.doc.past).toHaveLength(1);
+    expect(redone.doc.parts.find((p) => p.id === 'owl')?.visible).toBe(false);
   });
 });

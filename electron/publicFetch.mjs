@@ -70,9 +70,12 @@ export async function publicFetch(url, init = {}) {
     const res = await fetch(current, { ...init, redirect: 'manual' });
     const location = res.headers.get('location');
 
-    if (!REDIRECT_CODES.has(res.status) || !location) return res;
+    if (!REDIRECT_CODES.has(res.status) || !location || init.redirect === 'manual') return res;
 
     await res.body?.cancel();
+
+    if (init.redirect === 'error') throw new Error('Redirects aren’t allowed.');
+
     current = new URL(location, current).href;
   }
 

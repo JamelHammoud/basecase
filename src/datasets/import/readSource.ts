@@ -5,6 +5,8 @@ import { MCAP_TOO_LARGE } from './mcapRead';
 import { readMcap } from './recordingFiles';
 import { readRosbag2 } from './rosbag2';
 import { sourceKind } from './sourceKind';
+import { readImageSource } from '../../vision/import/readImageSource';
+import type { FrameSet } from '../../vision/frameSet';
 import { DataImportError, IMPORT_LIMITS, type SourceData, type SourceFile, type SourceFolder } from './types';
 
 export interface PickedFile {
@@ -19,6 +21,12 @@ export type ImportSource =
 
 export interface ReadSource {
   data: SourceData;
+  images?: FrameSet;
+  hash: string;
+}
+
+export interface ReadImages {
+  images: FrameSet;
   hash: string;
 }
 
@@ -99,7 +107,7 @@ export function sourceTransfer(source: ImportSource): Transferable[] {
   return [...new Set(buffers)].filter((buffer): buffer is ArrayBuffer => buffer instanceof ArrayBuffer);
 }
 
-export async function readSource(source: ImportSource): Promise<ReadSource | null> {
+export async function readImportSource(source: ImportSource): Promise<ReadSource | ReadImages | null> {
   const files = await sourceFiles(source);
   const kind = sourceKind(files.map((f) => f.path));
 
@@ -111,7 +119,23 @@ export async function readSource(source: ImportSource): Promise<ReadSource | nul
     rosbag2: () => readRosbag2(hashed.folder),
     mcap: () => readMcapFiles(hashed.folder.files),
   };
-  const data = await readers[kind]();
 
-  return data && { data, hash: await hashed.hash() };
+  if (!(kind in readers)) {
+    const images = await readImageSource(hashed.folder);
+
+    return images && { images, hash: await hashed.hash() };
+  }
+
+  const data = await readers[kind as keyof typeof readers]();
+  const images = await readImageSource(hashed.folder);
+
+  if (data) return { data, ...(images ? { images } : {}), hash: await hashed.hash() };
+
+  return images && { images, hash: await hashed.hash() };
+}
+
+export async function readSource(source: ImportSource): Promise<ReadSource | null> {
+  const found = await readImportSource(source);
+
+  return found && 'data' in found ? found : null;
 }

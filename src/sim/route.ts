@@ -1,5 +1,6 @@
 import type { WheelSetup } from './drive';
 import type { PolicySpec } from './policy';
+import { timeIndex } from '../utils/timeIndex';
 
 export type V3 = [number, number, number];
 
@@ -48,11 +49,11 @@ const REVERSE_ANGLE = (2 * Math.PI) / 3;
 const HOLD_HEADING = 0.5;
 
 export function routeAt(keys: RouteKey[], t: number): { at: Planar; velocity: Planar } {
-  const next = keys.findIndex((k) => k.t > t);
+  const next = timeIndex(keys, t, 'after');
   const still = { forward: 0, left: 0 };
   const planar = (k: RouteKey | undefined) => ({ forward: k?.forward ?? 0, left: k?.left ?? 0 });
 
-  if (next < 0) return { at: planar(keys.at(-1)), velocity: still };
+  if (next === keys.length) return { at: planar(keys.at(-1)), velocity: still };
 
   if (next === 0) return { at: planar(keys[0]), velocity: still };
 

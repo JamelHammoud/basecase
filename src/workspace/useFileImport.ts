@@ -7,6 +7,7 @@ import type { PartCreation } from './usePartCreation';
 import type { PoseActions } from './usePoseActions';
 import type { Vec3 } from './types';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import { sourceKind } from '../datasets/import/sourceKind';
 
 const OPTIONS = { cad: !IS_WEB_DEMO };
 const IMAGE_STEP = 16;
@@ -38,6 +39,13 @@ export function useFileImport(core: WorkspaceCore, { creation, pose, data }: Fil
   const openSvg = async (file: File) => tool.openCreator('svg', { name: file.name, text: await file.text() });
 
   const importFiles = ({ files, at, folders = [] }: FileImport) => {
+    const paths = [
+      ...files.map((file) => file.name),
+      ...folders.flatMap((folder) => folder.files.map((file) => file.path)),
+    ];
+
+    if (sourceKind(paths)) return openRobot(files, at ?? undefined, folders);
+
     const robotFiles: File[] = [];
 
     routeImports(

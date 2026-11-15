@@ -5,6 +5,7 @@ import { quatToMj, simDeltas, toMj } from '../../sim/mjcfFrames';
 import type { SimModel } from '../../sim/mjcfTypes';
 import { framePoses, RECORD_HZ, type Recording } from '../../sim/recorder';
 import type { Rig } from '../../utils/kinematics';
+import { timeIndex } from '../../utils/timeIndex';
 import type { BaseTag } from './matLayout';
 
 export interface RealSample {
@@ -28,9 +29,9 @@ export const MAX_GAP_SECONDS = 0.15;
 const turn = (from: number, to: number) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 
 function seenAround(seen: Array<{ t: number; base: BaseFix }>, t: number): BaseFix | null {
-  const after = seen.findIndex((s) => s.t >= t);
+  const after = timeIndex(seen, t);
 
-  if (after < 0) return null;
+  if (after === seen.length) return null;
 
   const next = seen[after];
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowseRow, SectionHeader } from '../../design-system';
 import type { Dataset } from '../../datasets/datasetFile';
 import { plural } from '../../../electron/plural.mjs';
-import { imageCount } from '../../datasets/datasetView';
+import { classCount, imageCount } from '../../datasets/datasetView';
 
 interface DatasetsSectionProps {
   datasets: Dataset[];
@@ -15,9 +15,14 @@ const memberCount = (dataset: Dataset) => {
 
   if (!images) return plural(dataset.members.length, 'try', 'tries');
 
-  if (!dataset.members.length) return plural(images, 'image');
+  const classes = classCount(dataset);
+  const imageCounts = [plural(images, 'image'), classes !== null && plural(classes, 'class', 'classes')]
+    .filter(Boolean)
+    .join(', ');
 
-  return `${plural(dataset.members.length, 'try', 'tries')}, ${plural(images, 'image')}`;
+  if (!dataset.members.length) return imageCounts;
+
+  return `${plural(dataset.members.length, 'try', 'tries')}, ${imageCounts}`;
 };
 
 export const DatasetsSection: React.FC<DatasetsSectionProps> = ({ datasets, onOpen, onMenu }) =>

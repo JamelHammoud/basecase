@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { eachLimited } from '../../../electron/eachLimited.mjs';
 import type { RobotJoint, ScenePart } from '../../types/robotics';
 import { prettyJointName } from '../kinematics';
 import { applyPublishedMass, buildLinkParts, linkGeometries, type MeshFiles } from './linkParts';
@@ -41,22 +42,16 @@ async function loadMeshFiles(model: Model, resolver: Resolver, say: Say, notes: 
   const unique = [...new Set(meshRefs.map((g) => g.file))];
   let done = 0;
 
-  const queue = [...unique];
-  const worker = async () => {
-    for (let f = queue.shift(); f !== undefined; f = queue.shift()) {
-      const file = f;
-      const got = await resolver.read(file).catch(() => null);
-      const geo = got ? await parseMeshFile(got.data, got.path).catch(() => null) : null;
+  await eachLimited(unique, 6, async (file) => {
+    const got = await resolver.read(file).catch(() => null);
+    const geo = got ? await parseMeshFile(got.data, got.path).catch(() => null) : null;
 
-      if (!geo) notes.push(`Couldn’t read ${file.split('/').pop()}`);
+    if (!geo) notes.push(`Couldn’t read ${file.split('/').pop()}`);
 
-      files.set(file, geo);
-      done++;
-      say(`Loading meshes ${done}/${unique.length}…`);
-    }
-  };
-
-  await Promise.all(Array.from({ length: Math.min(6, unique.length) }, worker));
+    files.set(file, geo);
+    done++;
+    say(`Loading meshes ${done}/${unique.length}…`);
+  });
 
   return files;
 }

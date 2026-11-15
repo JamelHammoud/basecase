@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 8c. Joints, Poses and Motion
 
+Robot mesh loading and Onshape part exports use the shared `electron/eachLimited.mjs` cursor without copying or shifting pending queues. Mesh loading keeps six active tasks at most, and Onshape keeps four. Onshape filenames retain each part’s original index when exports complete out of order. Robot mesh failures remain notes, while an Onshape export failure rejects the import.
+
 A robot is posable once its degrees of freedom are declared. Posing never edits parts: the modeled pose is the design, and a pose only changes what the canvas shows.
 
 - **Data** (`types/robotics.ts`, saved with the scene in `ProjectSettings`): `joints` (`RobotJoint`: revolute in degrees or prismatic in mm, parent and child parts, `parentJoint` when links between joints have no geometry, origin and axis, range, limb), `pose` (the pose on the canvas: values by joint id plus an optional whole-body `root` offset), `poses` (saved) and `animations` (`RobotAnimation`: keyframes with every animated joint, smooth or linear, loop).

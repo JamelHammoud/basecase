@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 8e. SimReady objects and robots
 
+File downloads use the shared `eachLimited` cursor with six active tasks at most, without a copied pending queue. Cached files still count toward completed-file and byte progress. `electron/simready/assets.test.mjs` checks the concurrency limit, cache reuse, downloaded bytes, progress and listing refusals before downloads.
+
 NVIDIA's [SimReady Central](https://huggingface.co/spaces/nvidia/simready-central) indexes about 3,600 OpenUSD assets that makers host in their own Hugging Face datasets: props (NVIDIA's ~2,500, ForgeCAD, Palatial, LG, Vertiv) and robots and grippers (Franka, UR, FANUC, Comau, Standard Bots, Robotiq, OnRobot, AgiBot, Menlo). Most NVIDIA props and the makers' arms and grippers carry a MuJoCo physics variant: masses, convex colliders, physics materials, joints with limits, actuator force ranges.
 
 - **Nothing is bulk-downloaded.** The renderer searches the Space's public API directly (`src/simready/search.ts`: `POST /search`, hybrid text + SigLIP2 vector query, `filter_url_regexp` by maker namespace for the `objects`, `robots` and `all` shelves, 40 per page by `offset`; thumbnails from `/images`). CORS echoes any origin. Parts (§5) uses two: an object category's view searches `objects` live, and Parts' own search asks `all` only when Enter is pressed, listing the results in a SimReady section after the local matches; the agent's tools pick `objects` or `robots`. `useSimReadySearch` fetches only once the debounced query has caught up with the typed one, so no request goes out for a stale query. If the Space is down, the views say “Couldn’t reach SimReady Central.” with Search Again.

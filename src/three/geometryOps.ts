@@ -124,17 +124,22 @@ export async function linkMesh({ soup, target }: LinkMeshJob): Promise<LinkMesh>
 export function linkSoup(pieces: SoupPiece[]): LinkSoup {
   const soup = new Float32Array(pieces.reduce((sum, p) => sum + p.positions.length, 0));
   const matrix = new THREE.Matrix4();
-  const attribute = new THREE.BufferAttribute(soup, 3);
+  const point = new THREE.Vector3();
+  const box = new THREE.Box3();
   let offset = 0;
 
   for (const piece of pieces) {
-    const part = new THREE.BufferAttribute(piece.positions, 3).applyMatrix4(matrix.fromArray(piece.matrix));
+    matrix.fromArray(piece.matrix);
 
-    soup.set(part.array as Float32Array, offset);
+    for (let i = 0; i < piece.positions.length; i += 3) {
+      point.fromArray(piece.positions, i).applyMatrix4(matrix);
+      point.set(Math.fround(point.x), Math.fround(point.y), Math.fround(point.z));
+      point.toArray(soup, offset + i);
+      box.expandByPoint(point);
+    }
+
     offset += piece.positions.length;
   }
-
-  const box = new THREE.Box3().setFromBufferAttribute(attribute);
 
   return { soup, min: box.min.toArray(), max: box.max.toArray() };
 }

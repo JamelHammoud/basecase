@@ -25,8 +25,8 @@ export class MeshIndex {
     this.areas = new Float64Array(this.triangles);
     this.vertices = this.weld();
     this.faceNormals();
+    this.curved = new Uint8Array(this.triangles);
     this.neighbours = this.adjacency();
-    this.curved = this.curvature();
   }
 
   normal(t: number): V3 {
@@ -138,21 +138,29 @@ export class MeshIndex {
       }
     }
 
-    for (const list of edges.values()) {
-      for (const t of list) out[t].push(...list.filter((u) => u !== t));
-    }
+    for (const list of edges.values()) this.linkNeighbours(list, out);
 
     return out;
   }
 
-  private curvature(): Uint8Array {
-    const out = new Uint8Array(this.triangles);
+  private linkNeighbours(list: number[], out: number[][]): void {
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i];
+        const b = list[j];
 
-    for (let t = 0; t < this.triangles; t++) {
-      out[t] = this.neighbours[t].some((u) => this.smooth(t, u) && this.cosBetween(t, u) < CREASE_COS) ? 1 : 0;
+        if (a === b) continue;
+
+        out[a].push(b);
+        out[b].push(a);
+
+        if (this.curved[a] && this.curved[b]) continue;
+
+        const cosine = this.cosBetween(a, b);
+
+        if (cosine > SMOOTH_COS && cosine < CREASE_COS) this.curved[a] = this.curved[b] = 1;
+      }
     }
-
-    return out;
   }
 }
 

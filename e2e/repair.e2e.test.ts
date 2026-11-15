@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { shapeKey } from '../src/print/shapeKey';
 import { DEFAULT_PROJECT, type ScenePart } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
@@ -73,7 +73,7 @@ async function expectRepairPlan() {
 beforeEach(async () => {
   app = await openApp();
   await app.page.evaluate((scene) => (window as unknown as { __studio: Studio }).__studio.load(scene), record);
-  await expect.poll(() => partCount(app.page)).toBe(parts.length);
+  await vi.waitFor(async () => expect(await partCount(app.page)).toBe(parts.length));
   await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).first().click();
 });
 
@@ -98,9 +98,14 @@ describe('Repair', () => {
     expect(
       await app.page
         .locator(shown('span'))
-        .filter({ hasText: /^Don't print$/ })
+        .filter({ hasText: /^Don’t print$/ })
         .count(),
     ).toBe(0);
+    await app.page.keyboard.press('Escape');
+    await expect.poll(async () => (await plates()).open).toBe(false);
+    await expect.poll(() => toolbar().getAttribute('data-step')).toBe(String(swap + 1));
+    await app.page.keyboard.press('ArrowRight');
+    await expect.poll(() => toolbar().getAttribute('data-step')).toBe(String(swap + 2));
     expect(app.errors).toEqual([]);
   }, 15000);
 

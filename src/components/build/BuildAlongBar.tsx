@@ -69,7 +69,7 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
           </>
         )}
         {step?.printPartId && (
-          <Button size="sm" variant="ghost" onClick={() => onPrint(step.printPartId!)}>
+          <Button size="sm" variant="ghost" onClick={() => onPrint(step.printPartId!)} title="Print" tooltipSide="bottom">
             Print
           </Button>
         )}

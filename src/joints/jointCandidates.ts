@@ -1,6 +1,7 @@
 import { canonicalAxis, coaxialPair, lineTolerance, roundFaces, slideTravel, type Pairing } from './axisFinder';
 import type { Cylinder } from './cylinderFit';
 import { dot, scale, sub, type MeshIndex, type V3 } from './meshIndex';
+import { orientJointGraph } from './jointGraph';
 
 export interface Body {
   id: string;
@@ -158,53 +159,6 @@ function rootFirst(bodies: Body[]) {
   });
 }
 
-type Edge = readonly [string, string];
-
-interface Walk {
-  edges: Edge[];
-  joins: Join[];
-  seen: Set<string>;
-  order: Join[];
-}
-
-function step(walk: Walk, at: string): string[] {
-  const out: string[] = [];
-
-  for (const [a, b] of walk.edges) {
-    const next = a === at ? b : a;
-
-    if ((a !== at && b !== at) || walk.seen.has(next)) continue;
-
-    const join = walk.joins.find((j) => pairKey(j) === [a, b].sort().join('\n'));
-
-    walk.seen.add(next);
-    out.push(next);
-
-    if (join) walk.order.push({ ...join, a: at, b: next });
-  }
-
-  return out;
-}
-
-function oriented(bodies: Body[], joins: Join[], fastened: Array<[string, string]>): Join[] {
-  const walk: Walk = {
-    edges: [...joins.map((j): Edge => [j.a, j.b]), ...fastened],
-    joins,
-    seen: new Set<string>(),
-    order: [],
-  };
-
-  for (const root of rootFirst(bodies).filter((id) => walk.edges.some((e) => e.includes(id)))) {
-    if (walk.seen.has(root)) continue;
-
-    walk.seen.add(root);
-
-    for (let queue = [root]; queue.length;) queue = queue.flatMap((at) => step(walk, at));
-  }
-
-  return walk.order;
-}
-
 function loneFaces(bodies: Body[], links: Link[]): LoneFace[] {
   const used = new Set<Cylinder>(links.flatMap((l) => [l.pairing.shaft, l.pairing.bore]));
 
@@ -221,7 +175,7 @@ export function jointCandidates(bodies: Body[]): JointAxes {
   const links = linksOf(bodies);
   const { kept, fastened } = sortedJoins(clusters(links).flatMap(joinsOf));
   const index = new Map(bodies.map((b) => [b.id, b.index]));
-  const candidates = oriented(bodies, kept, fastened).map((j): JointCandidate => {
+  const candidates = orientJointGraph(rootFirst(bodies), kept, fastened).map((j): JointCandidate => {
     const axis = canonicalAxis(j.pairing.axis);
     const line = { origin: j.pairing.origin, axis };
 

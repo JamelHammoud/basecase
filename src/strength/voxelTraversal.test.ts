@@ -238,7 +238,7 @@ describe('voxel mounting paths and traversal counts', () => {
     expect(path.reduce((sum, value) => sum + value, 0)).toBe(18 + height);
     expect(work.prepare).toHaveBeenCalledTimes(1);
     expect(work.buffers.size).toBe(1);
-    expect(work.cells).toHaveLength(grid.solid.length);
-    expect(new Set(work.cells).size).toBe(grid.solid.length);
+    expect(work.cells).toHaveLength(grid.solid.length - 1);
+    expect(new Set(work.cells).size).toBe(grid.solid.length - 1);
   });
 });

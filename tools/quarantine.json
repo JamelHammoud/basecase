@@ -168,8 +168,7 @@
     "test": "opens the saved scene instead after a relaunch",
     "issue": 795,
     "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "On Windows the untouched first-launch rover was written when New Scene opened beside it, so the test read the rover's 4 parts instead of the cube. Passes on Linux."
+    "reason": "Run 43728033376 also failed on Linux: the first attempt observed zero save-scene writes within the unchanged 10000 ms poll, and the retry observed two scene ids instead of one. The preceding green Linux run 43715791435 passed the relaunch test in 10588 ms. Issue #795 already tracks Windows saving the untouched rover and retaining both scene ids on retry. Attempts share one beforeAll app and its post history. The initial missing save and the unexpected rover draft change are not established. Trace draft changes, save scheduling and serialization from page load, isolate attempts and measure both platforms before restoring this walkthrough."
   },
   {
     "file": "e2e/caseLogic.e2e.test.ts",

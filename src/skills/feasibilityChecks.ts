@@ -24,7 +24,7 @@ import {
   supportMargin,
   type PointLoad,
 } from './feasibilityStance';
-import { seededRandom } from '../utils/seededRandom';
+import { bestReachSamples } from './feasibilityReachSamples';
 import { HOLD_LIMIT, holdTorque } from '../utils/holdingTorque';
 import { percent } from '../../electron/percent.mjs';
 import { torque as torqueText } from '../utils/torque';
@@ -61,8 +61,6 @@ export interface GripRequirement {
 }
 
 const D2R = Math.PI / 180;
-const SAMPLES = 2048;
-const REFINED = 6;
 const GRIP_CLEARANCE_MM = 2;
 const CROUCH_SLOP = 0.002;
 
@@ -232,32 +230,6 @@ function reachBound(kin: Kin, joints: JointInfo[], tip: { body: number; local: V
   return points.slice(1).reduce((s, p, i) => s + norm(sub(p, points[i])), 0) + travel;
 }
 
-function randomPose(kin: Kin, joints: JointInfo[], random: () => number) {
-  for (const j of joints) {
-    const [lo, hi] = j.range ?? [-Math.PI, Math.PI];
-
-    kin.data.qpos[j.qpos] = lo + (hi - lo) * random();
-  }
-
-  refresh(kin);
-}
-
-function bestSamples(kin: Kin, options: { joints: JointInfo[]; tip: { body: number; local: V3 }; target: V3 }) {
-  const { joints, tip, target } = options;
-  const random = seededRandom('5eedc0de5eedc0de5eedc0de5eedc0de');
-  const samples: Array<{ gap: number; q: number[] }> = [];
-
-  for (let i = 0; i < SAMPLES; i++) {
-    randomPose(kin, joints, random);
-    samples.push({
-      gap: norm(sub(target, bodyPoint(kin, tip.body, tip.local))),
-      q: joints.map((j) => kin.data.qpos[j.qpos]),
-    });
-  }
-
-  return samples.sort((a, b) => a.gap - b.gap).slice(0, REFINED);
-}
-
 export function reachCheck(kin: Kin, reach: ReachRequirement): FeasibilityCheck {
   const tip = tipOf(kin, reach.tipJoint);
   const joints = chainOf(kin, tip.body);
@@ -276,7 +248,7 @@ export function reachCheck(kin: Kin, reach: ReachRequirement): FeasibilityCheck 
     };
 
   const gap = Math.min(
-    ...bestSamples(kin, { joints, tip, target }).map((s) => {
+    ...bestReachSamples(kin, { joints, tip, target }).map((s) => {
       joints.forEach((j, i) => (kin.data.qpos[j.qpos] = s.q[i]));
       refresh(kin);
 

@@ -11,8 +11,10 @@ import { errorMessage } from '../utils/errorMessage';
 import type { ShowToast } from './types';
 import type { TryTimeline } from './useTryTimeline';
 import type { TryHit } from '../cases/trySearch/types';
+import { distinctTries } from '../cases/trySearch/hitSelection';
 import { likeQuery, useTrySearch } from './useTrySearch';
 import { markTries } from './tagTries';
+import { datasetVersionMembers, selectedDataset } from './datasetVersionView';
 
 export interface TryGroup {
   robot: string;
@@ -61,7 +63,7 @@ export const goingTries = (all: TrySummary[], ids: string[]) => {
   return all.filter((t) => going(t.id, t.source === 'generated' ? t.sourceTry : null)).map((t) => t.id);
 };
 
-export const hitOrder = (hits: TryHit[]) => hits.map((h) => h.tryId);
+export const hitOrder = (hits: TryHit[]) => distinctTries(hits).map((h) => h.tryId);
 
 export interface TriesPlace {
   open: boolean;
@@ -85,11 +87,7 @@ interface TriesViewOptions {
   showToast: ShowToast;
 }
 
-const datasetGroups = (dataset: Dataset, all: TrySummary[]) => {
-  const byId = new Map(all.map((t) => [t.id, t]));
-
-  return tryGroups(dataset.members.flatMap((id) => byId.get(id) ?? []));
-};
+const datasetGroups = (dataset: Dataset, all: TrySummary[]) => tryGroups(datasetVersionMembers(dataset, all));
 
 const groupOrder = (groups: TryGroup[]) => groups.flatMap((g) => g.tries.map((t) => t.id));
 
@@ -98,7 +96,12 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
   const datasets = useDatasets() ?? [];
   const { place, setPlace } = places;
   const { open, robot } = place;
-  const dataset = (place.dataset && datasets.find((d) => d.id === place.dataset)) || null;
+  const workingDataset = (place.dataset && datasets.find((d) => d.id === place.dataset)) || null;
+  const [version, setVersion] = useState<{ dataset: string; n: number } | null>(null);
+  const dataset = selectedDataset(
+    workingDataset,
+    version?.dataset === workingDataset?.id ? (version?.n ?? null) : null,
+  );
   const [query, setQuery] = useState('');
   const [pick, setPick] = useState<{ selected: string[]; anchor: string | null }>({ selected: [], anchor: null });
   const hits = useTrySearch(query);
@@ -108,6 +111,8 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
   const selected = pick.selected.filter((id) => order.includes(id));
 
   const show = (id: string) => {
+    if (dataset?.selectedVersion) return;
+
     const summary = all.find((t) => t.id === id);
 
     if (summary?.recording && summary.source !== 'real') void timeline.show(summaryRecord(summary)).catch(() => {});
@@ -117,11 +122,14 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
     if (timeline.open) timeline.close();
 
     setPlace(CLOSED);
+    setVersion(null);
     setQuery('');
     setPick({ selected: [], anchor: null });
   };
 
   const remove = (ids: string[]) => {
+    if (dataset?.selectedVersion) return;
+
     const going = goingTries(all, ids);
 
     if (!going.length) return;
@@ -153,12 +161,19 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
     setQuery,
     dataset,
     datasets,
+    selectVersion: (n: number | null) => {
+      if (timeline.open) timeline.close();
+
+      setPick({ selected: [], anchor: null });
+      setVersion(workingDataset && n !== null ? { dataset: workingDataset.id, n } : null);
+    },
     openFor: (name: string | null) => {
       setPick({ selected: [], anchor: null });
       setQuery('');
       setPlace({ open: true, robot: name, dataset: null });
     },
     openDataset: (id: string) => {
+      setVersion(null);
       setPick({ selected: [], anchor: null });
       setQuery('');
       setPlace({ open: true, robot: null, dataset: id });
@@ -181,7 +196,8 @@ export function useTriesView({ places, timeline, showToast }: TriesViewOptions) 
     remove: (id?: string) => remove(id && !selected.includes(id) ? [id] : selected),
     targets,
     fail,
-    markable: (id: string) => targets(id).every((t) => all.some((s) => s.id === t && canMark(s))),
+    markable: (id: string) =>
+      !dataset?.selectedVersion && targets(id).every((t) => all.some((s) => s.id === t && canMark(s))),
     mark: (id: string, verdict: 'passed' | 'failed') => void markTries(targets(id), verdict).catch(fail),
   };
 }

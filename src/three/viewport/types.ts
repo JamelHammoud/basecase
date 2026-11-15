@@ -1,3 +1,4 @@
+import type { CaseTrails } from './caseTrails';
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { ImportedWorldState, ImportedWorldView } from './importedWorld';
 import type { GhostState } from './ghostLayer';
@@ -246,6 +247,8 @@ export interface Viewport3DHandle {
   cancelMeasure: () => boolean;
   shownPartIds: () => string[];
   checkDotCount: () => number;
+  setCaseTrails: CaseTrails['set'];
+  caseTrailState: CaseTrails['state'];
 }
 
 export const MIN_DIST = 25;

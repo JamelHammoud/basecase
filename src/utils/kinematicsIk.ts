@@ -141,14 +141,15 @@ function trialValues(pb: IkProblem, state: IkState, delta: number[]): JointValue
 }
 
 function tryStep(pb: IkProblem, state: IkState, JtJ: Float64Array[], g: Float64Array): StepResult {
-  const A = JtJ.map((row, a) => {
-    const r = Float64Array.from(row);
+  const augmented = JtJ.map((row, a) => {
+    const r = Array.from(row);
 
     r[a] += state.lambda * (1 + row[a]) + pb.mu * pb.stiff[a];
+    r.push(g[a]);
 
     return r;
   });
-  const delta = solveLinear(A, g);
+  const delta = solveLinear(augmented);
 
   if (!delta) {
     state.lambda *= 4;
@@ -245,15 +246,8 @@ function eliminateBelow(M: number[][], c: number, n: number) {
   }
 }
 
-function solveLinear(A: Float64Array[], b: Float64Array): number[] | null {
-  const n = b.length;
-  const M = A.map((row, i) => {
-    const r = Array.from(row);
-
-    r.push(b[i]);
-
-    return r;
-  });
+function solveLinear(M: number[][]): number[] | null {
+  const n = M.length;
 
   for (let c = 0; c < n; c++) {
     const p = pivotRow(M, c, n);

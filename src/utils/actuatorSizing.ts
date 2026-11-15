@@ -1,4 +1,5 @@
 import type { ActuatorBus, ActuatorSpec } from '../data/components';
+import { curveTorque } from './peakTorque';
 import {
   BUS_ADAPTERS,
   actuatorOptions,
@@ -17,6 +18,7 @@ import {
   stanceVerdict,
   suitsVolts,
   type LoadVerdict,
+  type Rating,
 } from './actuatorRules';
 
 const ITERATIONS = 3;
@@ -32,6 +34,10 @@ export interface SizingJoint {
   servos: number;
   currentG: number;
   riders: string[];
+  peakSpeedDegS?: number;
+  peakAccelerationDegS2?: number;
+  inertiaKgM2?: number;
+  riderRadiusMm?: Record<string, number>;
 }
 
 export interface SizingInput {
@@ -54,11 +60,14 @@ export interface Fit {
   kind: 'stance' | 'hold';
   stallShare: number;
   heatShare: number;
+  speedShare?: number;
 }
 
 export interface JointLoads {
   stanceNm?: number;
   holdNm: number;
+  accelerationNm?: number;
+  motionNm?: number;
 }
 
 export interface JointPick {
@@ -110,16 +119,30 @@ export function ratingFor(j: Pick<SizingJoint, 'servos'>, act: ActuatorSpec, vol
 
 export interface JointVerdict extends LoadVerdict {
   kind: 'stance' | 'hold';
+  speedShare?: number;
 }
+
+const accelerationTorque = (j: SizingJoint, inertia = j.inertiaKgM2 ?? 0) =>
+  (inertia * Math.abs(j.peakAccelerationDegS2 ?? 0) * Math.PI) / 180;
 
 export function jointVerdict(j: SizingJoint, loads: JointLoads, act: ActuatorSpec, volts?: number): JointVerdict {
   const rating = ratingFor(j, act, volts);
-  const hold = { kind: 'hold' as const, ...holdVerdict(loads.holdNm, rating) };
+  const acceleration = loads.accelerationNm ?? accelerationTorque(j);
+  const hold = { kind: 'hold' as const, ...holdVerdict(loads.holdNm + acceleration, rating) };
   const stance =
-    loads.stanceNm === undefined ? hold : { kind: 'stance' as const, ...stanceVerdict(loads.stanceNm, rating) };
+    loads.stanceNm === undefined
+      ? hold
+      : { kind: 'stance' as const, ...stanceVerdict(loads.stanceNm + acceleration, rating) };
   const holdWorse = RANK[hold.status] - RANK[stance.status] || hold.stallShare - stance.stallShare;
+  const worst = holdWorse > 0 ? hold : stance;
+  const speed = Math.abs(j.peakSpeedDegS ?? 0) / 6;
 
-  return holdWorse > 0 ? hold : stance;
+  if (!speed) return worst;
+
+  const motionNm = loads.motionNm ?? Math.max(loads.holdNm, loads.stanceNm ?? 0) + acceleration;
+  const speedShare = rating.rpm ? speed / rating.rpm + motionNm / rating.stallNm : Infinity;
+
+  return { ...worst, status: speedShare >= 1 ? 'fail' : worst.status, speedShare };
 }
 
 function fitOf(j: SizingJoint, loads: JointLoads, option: ActuatorOption, volts: number): Fit & { ok: boolean } {
@@ -130,6 +153,7 @@ function fitOf(j: SizingJoint, loads: JointLoads, option: ActuatorOption, volts:
     kind: worst.kind,
     stallShare: worst.stallShare,
     heatShare: worst.heatShare,
+    ...(worst.speedShare === undefined ? {} : { speedShare: worst.speedShare }),
     ok: worst.status === 'pass',
   };
 }
@@ -139,7 +163,8 @@ function pickFor(j: SizingJoint, loads: JointLoads, options: ActuatorOption[], v
   const passing = fits.filter((f) => f.ok);
   const pick = passing[0];
   const up = pick && passing.find((f) => f.option.act.stallNm > pick.option.act.stallNm * UP_MARGIN);
-  const strongest = [...fits].sort((a, b) => a.stallShare - b.stallShare)[0];
+  const margin = (f: Fit) => Math.max(f.stallShare, f.speedShare ?? 0);
+  const strongest = [...fits].sort((a, b) => margin(a) - margin(b) || a.stallShare - b.stallShare)[0];
 
   return { joint: j, loads, pick, up, strongest };
 }
@@ -161,6 +186,19 @@ function deltaG(j: SizingJoint, p: JointPick | undefined): number {
 
 const safeScale = (scale: number) => (Number.isFinite(scale) && scale > 0 ? scale : 1);
 
+function scaledInertia(j: SizingJoint, delta: Map<string, number>, limb: number): number {
+  const inertia = j.inertiaKgM2 ?? 0;
+
+  if (!j.riderRadiusMm) return inertia * limb;
+
+  const added = j.riders.reduce(
+    (sum, id) => sum + (Math.max(0, delta.get(id) ?? 0) / 1000) * ((j.riderRadiusMm?.[id] ?? 0) / 1000) ** 2,
+    0,
+  );
+
+  return inertia + added;
+}
+
 function scaledLoads(input: SizingInput, picks: Map<string, JointPick>): Map<string, JointLoads> {
   const delta = new Map(input.joints.map((j) => [j.id, deltaG(j, picks.get(j.id))]));
   const totalDelta = [...delta.values()].reduce((s, d) => s + d, 0);
@@ -171,7 +209,16 @@ function scaledLoads(input: SizingInput, picks: Map<string, JointPick>): Map<str
     const riders = j.riders.reduce((s, id) => s + (delta.get(id) ?? 0), 0);
     const limb = safeScale((j.massG + riders) / j.massG);
 
-    out.set(j.id, { stanceNm: j.stanceNm === undefined ? undefined : j.stanceNm * whole, holdNm: j.holdNm * limb });
+    const holdNm = j.holdNm * limb;
+    const stanceNm = j.stanceNm === undefined ? undefined : j.stanceNm * whole;
+    const hasMotion = j.peakSpeedDegS !== undefined || j.peakAccelerationDegS2 !== undefined;
+    const accelerationNm = accelerationTorque(j, scaledInertia(j, delta, limb));
+
+    out.set(j.id, {
+      stanceNm,
+      holdNm,
+      ...(hasMotion ? { accelerationNm, motionNm: Math.max(holdNm, stanceNm ?? 0) + accelerationNm } : {}),
+    });
   }
 
   return out;
@@ -228,20 +275,45 @@ export interface LoadCut {
   grams: number;
 }
 
+function bindingReduction(p: JointPick, rating: Rating, speed: number) {
+  const acceleration = p.loads.accelerationNm ?? accelerationTorque(p.joint);
+  const holdNm = p.loads.holdNm + acceleration;
+  const stanceNm = p.loads.stanceNm === undefined ? 0 : p.loads.stanceNm + acceleration;
+  const holdLimit = Math.min(HOLD_LIMITS.pass * rating.stallNm, rating.ratedNm);
+  const stanceLimit = Math.min(
+    STANCE_LIMITS.pass * rating.stallNm,
+    (HEAT_LIMITS.pass * rating.ratedNm) / RMS_OF_STANCE,
+  );
+  const holdShare = holdNm ? holdLimit / holdNm : Infinity;
+  const stanceShare = stanceNm ? stanceLimit / stanceNm : Infinity;
+  const motionNm = p.loads.motionNm ?? Math.max(holdNm, stanceNm);
+  const motionShare =
+    speed && rating.rpm && motionNm
+      ? (curveTorque({ ...rating, rpm: rating.rpm }, speed) * (1 - 1e-9)) / motionNm
+      : Infinity;
+  const stance = motionShare < Math.min(holdShare, stanceShare) ? stanceNm > holdNm : stanceShare < holdShare;
+
+  return {
+    kind: stance ? ('stance' as const) : ('hold' as const),
+    loadNm: stance ? stanceNm : holdNm,
+    shareKept: Math.min(1, holdShare, stanceShare, motionShare),
+  };
+}
+
 export function loadCut(p: JointPick, volts: number, totalG: number): LoadCut | undefined {
   if (!p.strongest) return undefined;
 
-  const { stallNm, ratedNm } = ratingFor(p.joint, p.strongest.option.act, volts);
-  const stance = p.strongest.kind === 'stance';
-  const loadNm = stance ? p.loads.stanceNm! : p.loads.holdNm;
-  const allowed = stance
-    ? Math.min(STANCE_LIMITS.pass * stallNm, (HEAT_LIMITS.pass * ratedNm) / RMS_OF_STANCE)
-    : Math.min(HOLD_LIMITS.pass * stallNm, ratedNm);
-  const shareKept = Math.min(1, allowed / loadNm);
+  const rating = ratingFor(p.joint, p.strongest.option.act, volts);
+  const speed = Math.abs(p.joint.peakSpeedDegS ?? 0) / 6;
+
+  if (speed && (!rating.rpm || speed >= rating.rpm)) return undefined;
+
+  const { kind, loadNm, shareKept } = bindingReduction(p, rating, speed);
+  const stance = kind === 'stance';
   const lever = stance ? p.joint.leverMm : undefined;
 
   return {
-    kind: p.strongest.kind,
+    kind,
     loadNm,
     shareKept,
     leverMm: lever ? Math.abs(lever) * (1 - shareKept) : undefined,

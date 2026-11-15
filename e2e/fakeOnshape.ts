@@ -57,7 +57,12 @@ const instance = (b: Box) => ({
 
 const Y_AXIS_CS = (origin: Vec) => ({ origin, xAxis: [1, 0, 0], yAxis: [0, 0, -1], zAxis: [0, 1, 0] });
 
-const mateFeature = (id: string, name: string, mateType: string, ends: Array<{ path: string[]; origin: Vec }>) => ({
+export const mateFeature = (
+  id: string,
+  name: string,
+  mateType: string,
+  ends: Array<{ path: string[]; origin: Vec }>,
+) => ({
   id,
   featureType: 'mate',
   suppressed: false,
@@ -68,7 +73,7 @@ const mateFeature = (id: string, name: string, mateType: string, ends: Array<{ p
   },
 });
 
-const limitFeature = (featureId: string, mateType: string, [lo, hi]: [string, string]) => {
+export const limitFeature = (featureId: string, mateType: string, [lo, hi]: [string, string]) => {
   const [loId, hiId] = mateType === 'SLIDER' ? ['limitZMin', 'limitZMax'] : ['limitAxialZMin', 'limitAxialZMax'];
 
   return {
@@ -123,6 +128,26 @@ const ARM_DEFAULTS: Required<ArmOptions> = {
   elbow: true,
 };
 
+export interface AssemblyInstance {
+  id: string;
+  type: string;
+  name: string;
+  documentId: string;
+  elementId: string;
+  documentMicroversion: string;
+  configuration: string;
+  suppressed: boolean;
+}
+
+export interface SubAssembly {
+  documentId: string;
+  elementId: string;
+  documentMicroversion: string;
+  configuration: string;
+  instances: AssemblyInstance[];
+  features: ReturnType<typeof mateFeature>[];
+}
+
 export function fakeArm(options: ArmOptions = {}) {
   const o = { ...ARM_DEFAULTS, ...options };
   const base: Box = { id: 'IBase', partId: 'JHD', name: 'Base', size: [60, 60, 40], at: [0, 0, 0], massKg: 0.5 };
@@ -142,13 +167,14 @@ export function fakeArm(options: ArmOptions = {}) {
     boxes,
     definition: {
       rootAssembly: {
-        instances: boxes.map(instance),
+        instances: boxes.map(instance) as AssemblyInstance[],
         occurrences: boxes.map((b) => ({ path: [b.id], transform: rowMajor(b), fixed: b === base, hidden: false })),
         features: armMates(o),
       },
-      subAssemblies: [],
+      subAssemblies: [] as SubAssembly[],
     },
     features: { features: o.limits && o.elbow ? [limitFeature('Melbow', o.mate, o.limits)] : [] },
+    subFeatures: {} as Record<string, { features: ReturnType<typeof limitFeature>[] }>,
   };
 }
 
@@ -185,6 +211,10 @@ const ROUTES: Array<[RegExp, Route]> = [
   [/^\/api\/v10\/users\/sessioninfo$/, () => json({ name: 'Test Account' })],
   [/^\/api\/v10\/documents\/[0-9a-f]{24}$/, () => json({ name: 'Desk Arm' })],
   [/^\/api\/v10\/assemblies\/d\/\w+\/w\/\w+\/e\/\w+\/features$/, (_u, arm) => json(arm.features)],
+  [
+    /^\/api\/v10\/assemblies\/d\/\w+\/m\/\w+\/e\/\w+\/features$/,
+    (u, arm) => (arm.subFeatures[u.pathname + u.search] ? json(arm.subFeatures[u.pathname + u.search]) : json({}, 404)),
+  ],
   [/^\/api\/v10\/assemblies\/d\/\w+\/w\/\w+\/e\/\w+$/, (_u, arm) => json(arm.definition)],
   [/\/partid\/(\w+)\/massproperties$/, (u, arm) => json(massReply(arm, /partid\/(\w+)\//.exec(u.pathname)![1]))],
   [

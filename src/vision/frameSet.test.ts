@@ -263,3 +263,24 @@ describe('image dataset export', () => {
     expect(() => importYolo(changed)).toThrow();
   });
 });
+
+describe('imported image provenance', () => {
+  it('includes imported provenance in image identity while preserving unmarked hashes', async () => {
+    const set = fixture();
+    const frame = set.frames[0];
+    const hash = await frameHash(frame);
+    const setHash = await frameSetHash(set);
+
+    expect(await frameHash({ ...frame, source: undefined })).toBe(hash);
+    frame.source = 'import';
+    expect(() => validateFrameSet(set)).not.toThrow();
+    expect(await frameHash(frame)).not.toBe(hash);
+    expect(await frameSetHash(set)).not.toBe(setHash);
+  });
+
+  it.each(['generated', 'file', null, 7])('refuses unsupported image provenance %s', (source) => {
+    const set = fixture();
+
+    expect(() => validateFrameSet({ ...set, frames: [{ ...set.frames[0], source }] })).toThrow('image dataset format');
+  });
+});

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { TrySummary } from '../../cases/tryFile';
 import type { TryHit } from '../../cases/trySearch/types';
+import { distinctTries } from '../../cases/trySearch/hitSelection';
 import { NoMatches } from '../../design-system';
 import type { PickKeys } from '../../workspace/useTriesView';
 import { TryTile, type TileScene } from './TryTile';
@@ -19,7 +20,7 @@ interface TryResultsProps {
 }
 
 export const TryResults: React.FC<TryResultsProps> = ({ query, hits, summaries, selected, sceneId, scene, ...on }) => {
-  const shown = (hits ?? []).flatMap((hit) => summaries.get(hit.tryId) ?? []);
+  const shown = distinctTries(hits ?? []).flatMap((hit) => summaries.get(hit.tryId) ?? []);
 
   if (hits && !shown.length) return <NoMatches query={query} />;
 

@@ -3,6 +3,9 @@ import path from 'node:path';
 import { MeshoptSimplifier } from 'meshoptimizer';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeAccount, fakeArm, fakeOnshapeFetch, KEYS, ONSHAPE_LINK, signedIn } from '../../e2e/fakeOnshape.ts';
+import { fakeLegs } from '../../e2e/fakeOnshapeLegs.ts';
+import { assemblyRobot } from '../../src/onshape/assemblyRobot.ts';
+import { fetchOnshapeUpdate } from '../../src/onshape/onshapeTarget.ts';
 import { fixedMateFindings } from '../../src/readiness/buildChecks.ts';
 import { withFixedMates } from '../../src/onshape/fixedMates.ts';
 import { importRobot } from '../../src/utils/robotImport/importRobot.ts';
@@ -67,7 +70,7 @@ describe('mates to joints', () => {
   });
 
   it('keeps a mate it can’t map as a fixed joint and one Checks row naming it', async () => {
-    const { model, robot, parts } = await sceneOf({ mate: 'CYLINDRICAL' });
+    const { model, robot, parts } = await sceneOf({ mate: 'BALL' });
 
     expect(robot.joints).toEqual([]);
     expect(model.joints.map((j) => j.type)).toEqual(['fixed']);
@@ -86,6 +89,23 @@ describe('mates to joints', () => {
     expect(model.fixedMates).toEqual([]);
     expect(fixedMateFindings(parts)).toEqual([]);
   });
+
+  it.each([null, ['-90 deg', '45 deg']])(
+    'turns a cylindrical axle into a hinge with rotation limits %j',
+    async (limits) => {
+      const { model, robot, parts } = await sceneOf({ mate: 'CYLINDRICAL', limits });
+
+      expect(model.joints[0].type).toBe('revolute');
+      expect(robot.joints[0]).toMatchObject({ name: 'Elbow', type: 'revolute' });
+      expect(rounded(robot.joints[0].axis)).toEqual([1, 0, 0]);
+      expect(model.joints[0].limit?.map((v) => Math.round((v * 180) / Math.PI)) ?? null).toEqual(
+        limits ? [-90, 45] : null,
+      );
+      expect(model.fixedMates).toEqual([{ name: 'Elbow slide', link: 'Arm' }]);
+      expect(fixedMateFindings(parts)[0].text).toContain('Elbow slide');
+      expect(parts.flatMap((p) => p.robotLink?.fixedMates ?? [])).not.toContain('Elbow');
+    },
+  );
 
   it('weighs parts that have a material and leaves the rest unweighed', async () => {
     const { robot } = await sceneOf();
@@ -108,6 +128,121 @@ describe('mates to joints', () => {
   });
 });
 
+async function legRobot(arm, seen = []) {
+  const account = await signedIn(arm, seen);
+  const imported = await account.importAssembly({ link: ONSHAPE_LINK });
+
+  return { ...imported, robot: await assemblyRobot(ONSHAPE_LINK, imported) };
+}
+
+describe('subassembly limits', () => {
+  it('ranges four knees from one features request and preserves distinct occurrence identities', async () => {
+    const seen = [];
+    const { robot } = await legRobot(fakeLegs(), seen);
+    const knees = robot.joints.filter((j) => j.name === 'Knee');
+
+    expect(knees).toHaveLength(4);
+    expect(knees.map((j) => rounded(j.range))).toEqual(Array.from({ length: 4 }, () => [-60, 80]));
+    expect(new Set(knees.map((j) => j.onshape?.mate)).size).toBe(4);
+    expect(seen.filter((s) => /\/m\/.*\/features/.test(s.url))).toHaveLength(1);
+    expect(seen.every((s) => s.url.startsWith('https://cad.onshape.com/api/'))).toBe(true);
+    expect(rounded(robot.joints.find((j) => j.onshape?.mate === 'Melbow').range)).toEqual([-10, 10]);
+  });
+
+  it('reads limits two subassemblies deep and sends the configuration as query data', async () => {
+    const seen = [];
+    const { robot } = await legRobot(fakeLegs({ count: 1, nested: true, configuration: 'size=small&x=/foo' }), seen);
+
+    expect(rounded(robot.joints.find((j) => j.name === 'Knee').range)).toEqual([-60, 80]);
+    expect(seen.filter((s) => /\/m\/.*\/features/.test(s.url))).toHaveLength(2);
+    expect(
+      seen
+        .filter((s) => /\/m\/.*\/features/.test(s.url))
+        .every((s) => new URL(s.url).searchParams.get('configuration') === 'size=small&x=/foo'),
+    ).toBe(true);
+  });
+
+  it('keeps a subassembly mate with no limits unlimited', async () => {
+    const { model } = await legRobot(fakeLegs({ limits: false }));
+
+    expect(model.joints.filter((j) => j.name === 'Knee').map((j) => j.limit)).toEqual([null, null, null, null]);
+  });
+
+  it('adds a subassembly mate without reusing the root joint with the same feature id', async () => {
+    const arm = fakeLegs({ count: 1 });
+
+    arm.definition.subAssemblies[0].features = [];
+
+    const { robot: before } = await legRobot(arm);
+    const { robot: fresh } = await legRobot(fakeLegs({ count: 1 }));
+    const plan = await fetchOnshapeUpdate({
+      groupId: before.parts[0].group.id,
+      current: () => before,
+      load: async () => fresh,
+    });
+
+    expect(plan.joints).toHaveLength(2);
+    expect(new Set(plan.joints.map((j) => j.id)).size).toBe(2);
+    expect(plan.joints.find((j) => j.name === 'Hip').id).toBe(before.joints[0].id);
+    expect(plan.joints.find((j) => j.name === 'Knee').onshape.mate).toBe('ILeg0/Melbow');
+  });
+
+  it.each([false, true])(
+    'updates new limits in place with legacy ids %s and gives stable joints on reimport',
+    async (legacy) => {
+      const { robot: before } = await legRobot(fakeLegs({ limits: false }));
+      const { robot: fresh } = await legRobot(fakeLegs());
+      const joints = before.joints.map((j) =>
+        legacy ? { ...j, onshape: { mate: j.onshape.mate.split('/').at(-1) } } : j,
+      );
+      const current = { parts: before.parts, joints };
+      const plan = await fetchOnshapeUpdate({
+        groupId: before.parts[0].group.id,
+        current: () => current,
+        load: async () => fresh,
+      });
+
+      expect(plan.joints.map((j) => j.id)).toEqual(before.joints.map((j) => j.id));
+      expect(plan.joints.filter((j) => j.name === 'Knee').map((j) => rounded(j.range))).toEqual(
+        Array.from({ length: 4 }, () => [-60, 80]),
+      );
+      expect(new Set(plan.joints.filter((j) => j.name === 'Knee').map((j) => j.child[0])).size).toBe(4);
+      expect(plan.joints).toHaveLength(before.joints.length);
+      expect(plan.joints.every((j) => !j.onshape.gone)).toBe(true);
+
+      const again = await legRobot(fakeLegs());
+
+      expect(again.model.joints).toEqual((await legRobot(fakeLegs())).model.joints);
+      expect(again.robot.joints.map((j) => j.id)).toEqual(fresh.joints.map((j) => j.id));
+    },
+  );
+
+  it('keeps a legacy knee and its servo when a root hinge gains the same bare mate id', async () => {
+    const arm = fakeLegs({ count: 1 });
+
+    arm.definition.rootAssembly.features[0].featureData.mateType = 'BALL';
+
+    const { robot: before } = await legRobot(arm);
+    const { robot: fresh } = await legRobot(fakeLegs({ count: 1 }));
+    const knee = { ...before.joints[0], onshape: { mate: 'Melbow' }, actuators: ['knee-servo'] };
+    const current = { parts: before.parts, joints: [knee] };
+    const plan = await fetchOnshapeUpdate({
+      groupId: before.parts[0].group.id,
+      current: () => current,
+      load: async () => fresh,
+    });
+
+    expect(plan.joints).toHaveLength(2);
+    expect(plan.joints.find((j) => j.name === 'Knee')).toMatchObject({
+      id: knee.id,
+      actuators: ['knee-servo'],
+      onshape: { mate: 'ILeg0/Melbow' },
+    });
+    expect(plan.joints.find((j) => j.name === 'Hip').actuators).toBeUndefined();
+    expect(plan.joints.find((j) => j.name === 'Hip').id).not.toBe(knee.id);
+  });
+});
+
 describe('Onshape account', () => {
   it('seals the keys on disk and only tells the page which are saved', async () => {
     const account = await signedIn(fakeArm());
@@ -124,6 +259,35 @@ describe('Onshape account', () => {
 });
 
 describe('exploits', () => {
+  it.each(['documentId', 'documentMicroversion', 'elementId'])(
+    'refuses a crafted subassembly %s before fetching its features or parts',
+    async (field) => {
+      const arm = fakeLegs();
+      const instance = arm.definition.rootAssembly.instances[1];
+      const sub = arm.definition.subAssemblies[0];
+      const seen = [];
+
+      instance[field] = '../../users/sessioninfo';
+      sub[field] = instance[field];
+
+      const account = await signedIn(arm, seen);
+
+      await expect(account.importAssembly({ link: ONSHAPE_LINK })).rejects.toThrow('Onshape sent a malformed');
+      expect(seen.filter((s) => /\/m\/|\/translations|massproperties/.test(s.url))).toEqual([]);
+    },
+  );
+
+  it('refuses a crafted element id on the subassembly definition alone', async () => {
+    const arm = fakeLegs();
+    const seen = [];
+
+    arm.definition.subAssemblies[0].elementId = '../../users/sessioninfo';
+
+    const account = await signedIn(arm, seen);
+
+    await expect(account.importAssembly({ link: ONSHAPE_LINK })).rejects.toThrow('Onshape sent a malformed assembly.');
+    expect(seen.filter((s) => /\/m\/|\/translations|massproperties/.test(s.url))).toEqual([]);
+  });
   it.each([
     'https://cad.onshape.com.evil.example/documents/d0c0000000000000000000d1/w/ee0000000000000000000001/e/a55e00000000000000000e01',
     'https://evil.example/documents/d0c0000000000000000000d1/w/ee0000000000000000000001/e/a55e00000000000000000e01',

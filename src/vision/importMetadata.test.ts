@@ -27,6 +27,21 @@ const fixture = (): FrameSet => ({
 });
 
 describe('imported image metadata', () => {
+  it('includes canonical split maps in set identity independently of key order', async () => {
+    const set = fixture();
+    const original = await frameSetHash(set);
+
+    set.splits = { 'frame-0': 'test', 'frame-1': 'train', 'frame-2': 'validation' };
+
+    const assigned = await frameSetHash(set);
+
+    expect(assigned).not.toBe(original);
+    expect(await frameSetHash({ ...set, splits: { ...set.splits, 'frame-0': 'train' } })).not.toBe(assigned);
+    expect(
+      await frameSetHash({ ...set, splits: { 'frame-2': 'validation', 'frame-1': 'train', 'frame-0': 'test' } }),
+    ).toBe(assigned);
+  });
+
   it('keeps source splits through hashing and export rather than randomizing them', async () => {
     const set = fixture();
 

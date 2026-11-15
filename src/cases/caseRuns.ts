@@ -1,6 +1,8 @@
 import type { MainModule } from '@mujoco/mujoco';
 import { caseRunner, type CaseRobot, type RunOptions } from './runCase';
 import type { Case } from './schema';
+import { runPath } from './runPath';
+import { tripFrames, type Trip } from './tripFrames';
 
 export const CASE_RUNS = 20;
 
@@ -11,6 +13,8 @@ export interface RunOutcome {
   passed: boolean;
   margin: number;
   failed: string[];
+  path: Float32Array;
+  firstTrip: Trip | null;
 }
 
 export interface FailureCount {
@@ -20,6 +24,7 @@ export interface FailureCount {
 
 export interface CaseRuns {
   runs: number;
+  outcomes: RunOutcome[];
   passes: number;
   medianMargin: number;
   worstMargin: number;
@@ -64,6 +69,7 @@ const worstOf = (outcomes: RunOutcome[]) =>
 
 export const noRuns = (refusal: string, misfit = false): CaseRuns => ({
   runs: 0,
+  outcomes: [],
   passes: 0,
   medianMargin: -1,
   worstMargin: -1,
@@ -98,9 +104,17 @@ export async function runSeeds(
   const outcomes: RunOutcome[] = [];
 
   for (const seed of options.seeds) {
-    const { passed, margin, failed } = await runner.run(seed);
+    const result = await runner.run(seed);
+    const { passed, margin, failed } = result;
+    const trips = passed ? [] : await tripFrames(result.case.task.contract, result.trace);
+    const firstTrip = passed
+      ? null
+      : (trips.sort((a, b) => a.frame - b.frame)[0] ?? {
+          label: MISSED,
+          frame: Math.max(0, result.frames.length - 1),
+        });
 
-    outcomes.push({ seed, passed, margin, failed });
+    outcomes.push({ seed, passed, margin, failed, path: runPath(result, robot), firstTrip });
   }
 
   return { outcomes };
@@ -118,6 +132,7 @@ export function summarizeRuns(batches: SeedRuns[]): CaseRuns {
 
   return {
     runs: outcomes.length,
+    outcomes,
     passes: outcomes.length - missed.length,
     medianMargin: median(margins),
     worstMargin: margins.length ? Math.min(...margins) : -1,

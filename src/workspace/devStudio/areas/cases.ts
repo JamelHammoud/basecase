@@ -8,6 +8,7 @@ export default function casesStudio(studio: Studio) {
   const cases = () => studio().core.simTraining.cases;
 
   return {
+    caseTrails: () => studio().core.viewportRef.current?.caseTrailState() ?? [],
     addCase: (raw: unknown) => cases().add(parseCase(raw)).id,
     runCase: (id: string) => {
       cases().open(id);

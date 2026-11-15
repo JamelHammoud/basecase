@@ -5,7 +5,7 @@ import { crouchTorque, MIN_CROUCH_DEG } from './actuatorRules';
 import { cross, dot, G, norm, type V3 } from './engineeringMath';
 import { swingTorque } from './engineeringTorque';
 import { prettyJointName } from './jointNames';
-import { childrenOf, linkEnds, linkLength } from '../agent/skeleton';
+import { SkeletonTree } from './skeletonTree';
 
 export const LIMB_SHARE = 0.45;
 
@@ -15,6 +15,7 @@ interface PointMass {
   g: number;
   at: ZUpVec;
   joint: string;
+  radiusMm: number;
 }
 
 const toScene = ([x, y, z]: ZUpVec): V3 => [x, z, -y];
@@ -26,8 +27,8 @@ function actuatorGrams(j: SkeletonJoint): number {
   return componentWeightG(j.actuator.split('|')[0].replace(/^component:/, '')) ?? 0;
 }
 
-function linkCentre(skeleton: RobotSkeleton, j: SkeletonJoint): ZUpVec {
-  const ends = linkEnds(skeleton, j);
+function linkCentre(tree: SkeletonTree, j: SkeletonJoint): ZUpVec {
+  const ends = tree.linkEnds(j);
 
   if (!ends.length) return j.origin;
 
@@ -39,34 +40,47 @@ function linkCentre(skeleton: RobotSkeleton, j: SkeletonJoint): ZUpVec {
   ) as ZUpVec;
 }
 
-function pointMasses(skeleton: RobotSkeleton, totalG: number): PointMass[] {
+function pointMasses(skeleton: RobotSkeleton, totalG: number, tree: SkeletonTree): PointMass[] {
   const joints = skeleton.joints;
   const actuators = joints.reduce((s, j) => s + actuatorGrams(j), 0);
   const fixed = joints.reduce((s, j) => s + (j.linkMassG ?? 0), 0);
   const free = joints.filter((j) => !j.linkMassG);
-  const freeLength = free.reduce((s, j) => s + linkLength(skeleton, j), 0);
+  const freeLength = free.reduce((s, j) => s + tree.linkLength(j), 0);
   const spread = Math.max(0, totalG - actuators - fixed) * LIMB_SHARE;
-  const linkG = (j: SkeletonJoint) => j.linkMassG ?? (freeLength ? (spread * linkLength(skeleton, j)) / freeLength : 0);
+  const linkG = (j: SkeletonJoint) => j.linkMassG ?? (freeLength ? (spread * tree.linkLength(j)) / freeLength : 0);
 
   return joints.flatMap((j) => [
-    { g: linkG(j), at: linkCentre(skeleton, j), joint: j.id },
-    { g: actuatorGrams(j), at: j.origin, joint: j.id },
-    { g: j.payloadG ?? 0, at: j.tip ?? j.origin, joint: j.id },
+    { g: linkG(j), at: linkCentre(tree, j), joint: j.id, radiusMm: tree.linkLength(j) },
+    { g: actuatorGrams(j), at: j.origin, joint: j.id, radiusMm: 0 },
+    {
+      g: j.payloadG ?? 0,
+      at: j.tip ?? j.origin,
+      joint: j.id,
+      radiusMm: Math.hypot(...diff(j.tip ?? j.origin, j.origin)),
+    },
   ]);
 }
 
-function descendants(skeleton: RobotSkeleton, id: string): string[] {
-  const out: string[] = [];
-  const queue = [id];
+function inertiaBound(tree: SkeletonTree, joint: SkeletonJoint, masses: PointMass[]) {
+  const radii = new Map([[joint.id, 0]]);
+  const queue = [joint];
 
-  while (queue.length) {
-    const next = childrenOf(skeleton, queue.shift()!).map((c) => c.id);
+  for (let i = 0; i < queue.length; i++) {
+    const parent = queue[i];
 
-    out.push(...next);
-    queue.push(...next);
+    for (const child of tree.childrenOf(parent.id)) {
+      radii.set(child.id, radii.get(parent.id)! + Math.hypot(...diff(child.origin, parent.origin)));
+      queue.push(child);
+    }
   }
 
-  return out;
+  const inertiaKgM2 = masses.reduce((sum, mass) => {
+    const radius = radii.get(mass.joint);
+
+    return radius === undefined ? sum : sum + (mass.g / 1000) * ((radius + mass.radiusMm) / 1000) ** 2;
+  }, 0);
+
+  return { inertiaKgM2, riderRadiusMm: Object.fromEntries(radii) };
 }
 
 function distal(masses: PointMass[], ids: Set<string>) {
@@ -77,13 +91,13 @@ function distal(masses: PointMass[], ids: Set<string>) {
   return { g, com };
 }
 
-function legChain(skeleton: RobotSkeleton, j: SkeletonJoint): SkeletonJoint[] {
-  const byId = new Map(skeleton.joints.map((k) => [k.id, k]));
+function legChain(tree: SkeletonTree, j: SkeletonJoint): SkeletonJoint[] {
+  const byId = tree.byId;
   const below = [j];
   let at = j;
 
-  while (childrenOf(skeleton, at.id).length === 1 && childrenOf(skeleton, at.id)[0].limb === 'leg') {
-    at = childrenOf(skeleton, at.id)[0];
+  while (tree.childrenOf(at.id).length === 1 && tree.childrenOf(at.id)[0].limb === 'leg') {
+    at = tree.childrenOf(at.id)[0];
     below.push(at);
   }
 
@@ -131,8 +145,8 @@ interface LegContext {
   share: number;
 }
 
-function stance(skeleton: RobotSkeleton, j: SkeletonJoint, leg: LegContext, swing: { g: number; com: ZUpVec }) {
-  const chain = legChain(skeleton, j);
+function stance(tree: SkeletonTree, j: SkeletonJoint, leg: LegContext, swing: { g: number; com: ZUpVec }) {
+  const chain = legChain(tree, j);
   const a = toScene(norm(j.axis));
   const grf: V3 = [0, leg.weightN * leg.share, 0];
   const tGrf = dot(cross(toScene(diff(footOf(chain), j.origin)), grf), a);
@@ -144,8 +158,8 @@ function stance(skeleton: RobotSkeleton, j: SkeletonJoint, leg: LegContext, swin
   return { stanceNm: Math.max(modeled, crouch), leverMm: lever };
 }
 
-const legCount = (skeleton: RobotSkeleton) =>
-  skeleton.joints.filter((j) => j.limb === 'leg' && !childrenOf(skeleton, j.id).some((c) => c.limb === 'leg')).length;
+const legCount = (skeleton: RobotSkeleton, tree: SkeletonTree) =>
+  skeleton.joints.filter((j) => j.limb === 'leg' && !tree.childrenOf(j.id).some((c) => c.limb === 'leg')).length;
 
 export function skeletonSizing(skeleton: RobotSkeleton): SizingInput | string {
   const totalG = skeleton.massG;
@@ -154,13 +168,14 @@ export function skeletonSizing(skeleton: RobotSkeleton): SizingInput | string {
 
   if (!skeleton.joints.length) return 'The skeleton has no joints.';
 
-  const masses = pointMasses(skeleton, totalG);
-  const leg: LegContext = { weightN: (totalG / 1000) * G, share: legCount(skeleton) >= 3 ? 0.5 : 1 };
+  const tree = new SkeletonTree(skeleton);
+  const masses = pointMasses(skeleton, totalG, tree);
+  const leg: LegContext = { weightN: (totalG / 1000) * G, share: legCount(skeleton, tree) >= 3 ? 0.5 : 1 };
   const joints = skeleton.joints.map((j): SizingJoint => {
-    const riders = descendants(skeleton, j.id);
+    const riders = tree.subtreeOf(j.id).slice(1);
     const swing = distal(masses, new Set([j.id, ...riders]));
     const holdNm = swingTorque(toScene(diff(swing.com, j.origin)), toScene(norm(j.axis)), swing.g, j.range);
-    const standing = j.limb === 'leg' ? stance(skeleton, j, leg, swing) : undefined;
+    const standing = j.limb === 'leg' ? stance(tree, j, leg, swing) : undefined;
 
     return {
       id: j.id,
@@ -171,7 +186,8 @@ export function skeletonSizing(skeleton: RobotSkeleton): SizingInput | string {
       leverMm: standing?.leverMm,
       servos: 1,
       currentG: actuatorGrams(j),
-      riders: riders.filter((id) => skeleton.joints.some((k) => k.id === id)),
+      riders,
+      ...inertiaBound(tree, j, masses),
     };
   });
 

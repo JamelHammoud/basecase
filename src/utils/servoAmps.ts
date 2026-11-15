@@ -52,23 +52,60 @@ export function walkAmpModels(loads: JointLoad[], parts: ScenePart[]): Record<st
   );
 }
 
-const mean = (values: number[]) => (values.length ? values.reduce((s, v) => s + v, 0) / values.length : 0);
+interface MeasuredAmps {
+  id: string;
+  amps: number[];
+  from: number;
+  sumA: number;
+  peakA: number;
+}
+
+function addAmps(joint: MeasuredAmps, amps: number) {
+  joint.sumA += amps;
+  joint.peakA = Math.max(joint.peakA, amps);
+}
+
+function jointPower(joint: MeasuredAmps, windows: number) {
+  for (let w = joint.from + windows; w < joint.amps.length; w++) addAmps(joint, joint.amps[w]);
+
+  return [joint.id, { avgA: joint.sumA / (joint.amps.length - joint.from), peakA: joint.peakA }];
+}
 
 export function walkPower(series: TorqueSeries, jointIds: string[], span: Pick<PeakSpan, 'settleS'>): WalkPower {
   const from = Math.ceil(span.settleS / series.windowS);
   const measured = jointIds.flatMap((id, i) => {
-    const amps = series.amps?.[i]?.slice(from) ?? [];
+    const amps = series.amps?.[i];
 
-    return amps.length ? [{ id, amps }] : [];
+    if (!amps) return [];
+
+    const start = from < 0 ? Math.max(amps.length + from, 0) : Math.min(from || 0, amps.length);
+
+    return start < amps.length ? [{ id, amps, from: start, sumA: 0, peakA: Number.NEGATIVE_INFINITY }] : [];
   });
-  const windows = Math.min(...measured.map((j) => j.amps.length));
-  const bus = Number.isFinite(windows)
-    ? Array.from({ length: windows }, (_, w) => measured.reduce((s, j) => s + j.amps[w], 0))
-    : [];
+
+  if (!measured.length) return { avgA: 0, peakA: 0, joints: {} };
+
+  const windows = measured.reduce((n, j) => Math.min(n, j.amps.length - j.from), Number.POSITIVE_INFINITY);
+  let sumA = 0;
+  let peakA = Number.NEGATIVE_INFINITY;
+
+  for (let w = 0; w < windows; w++) {
+    let busA = 0;
+
+    for (const joint of measured) {
+      const amps = joint.amps[joint.from + w];
+
+      addAmps(joint, amps);
+      busA += amps;
+    }
+
+    sumA += busA;
+    peakA = Math.max(peakA, busA);
+  }
 
   return {
-    avgA: mean(bus),
-    peakA: bus.length ? Math.max(...bus) : 0,
-    joints: Object.fromEntries(measured.map((j) => [j.id, { avgA: mean(j.amps), peakA: Math.max(...j.amps) }])),
+    avgA: sumA / windows,
+    peakA,
+    joints: Object.fromEntries(measured.map((joint) => jointPower(joint, windows))),
   };
 }

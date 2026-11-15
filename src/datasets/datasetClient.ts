@@ -7,15 +7,18 @@ import type { DatasetFiles, DatasetJob } from './buildDataset';
 type DatasetHandlers = {
   zip: (job: DatasetJob) => Promise<{ result: Uint8Array }>;
   files: (job: DatasetJob) => Promise<{ result: DatasetFiles }>;
+  archive: (bytes: Uint8Array) => Promise<{ result: DatasetFiles }>;
 };
 
 const localHandlers = async (): Promise<DatasetHandlers> => {
   const { buildDataset } = await import('./buildDataset');
   const { zipFolder } = await import('../utils/zipFolder');
+  const { datasetArchiveFiles } = await import('./archiveFiles');
 
   return {
     zip: async (job) => ({ result: zipFolder(job.name, await buildDataset(job)) }),
     files: async (job) => ({ result: await buildDataset(job) }),
+    archive: async (bytes) => ({ result: datasetArchiveFiles(bytes) }),
   };
 };
 
@@ -26,7 +29,7 @@ const client = workerClient<DatasetHandlers>(
 
 export type DatasetSpec = Omit<DatasetJob, 'meshes'>;
 
-async function build<K extends keyof DatasetHandlers>(output: K, job: DatasetSpec) {
+async function build<K extends 'zip' | 'files'>(output: K, job: DatasetSpec) {
   const all = [...job.parts, ...job.world];
   const packed = {
     ...job,
@@ -35,13 +38,12 @@ async function build<K extends keyof DatasetHandlers>(output: K, job: DatasetSpe
     meshes: await sourcedMeshFiles(all),
   };
 
-  return client.call(
-    output,
-    packed,
-    job.episodes.flatMap((e) => recordingTransfer(e.recording)),
-  );
+  return client.call(output, packed, [...new Set(job.episodes.flatMap((e) => recordingTransfer(e.recording)))]);
 }
 
 export const exportDatasetZip = (job: DatasetSpec): Promise<Uint8Array> => build('zip', job);
 
 export const exportDatasetFiles = (job: DatasetSpec): Promise<DatasetFiles> => build('files', job);
+
+export const exportDatasetArchiveFiles = (bytes: Uint8Array): Promise<DatasetFiles> =>
+  client.call('archive', bytes, bytes.buffer instanceof ArrayBuffer ? [bytes.buffer] : []);

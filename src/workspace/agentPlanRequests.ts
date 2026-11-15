@@ -5,6 +5,8 @@ import { buildSkeleton, skeletonText, type SkeletonPayload } from '../agent/skel
 import { framedFollowOps, resolveFrames, withSkeleton, zUpFrame } from '../agent/skeletonFrames';
 import { chainsNow } from './agentAssemblyRequests';
 import type { RequestContext } from './agentRequestHandlers';
+import { skeletonFromMotionRequest } from '../agent/agentMotionSkeleton';
+import { designMotionInWorker } from '../motion/motionSkeletonClient';
 
 type Payload = Record<string, unknown>;
 
@@ -63,6 +65,17 @@ export async function checkInterfacesRequest(payload: Payload, ctx: RequestConte
 
 export const PLAN_HANDLERS = {
   define_skeleton: defineSkeleton,
+  skeleton_from_motion: (payload: Payload, ctx: RequestContext) => {
+    ctx.setAction('Fitting the skeleton to motion');
+
+    return skeletonFromMotionRequest(payload, {
+      solve: designMotionInWorker,
+      parts: ctx.parts,
+      skeleton: () => ctx.project().skeleton,
+      place: ctx.commitSkeleton,
+      open: () => ctx.openSkeleton?.(),
+    });
+  },
   set_interfaces: setInterfaces,
   check_interfaces: checkInterfacesRequest,
 };

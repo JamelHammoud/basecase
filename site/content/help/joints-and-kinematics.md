@@ -55,12 +55,16 @@ Each joint has these fields:
 Joints come with a robot, a hand, or a design from the agent. You can also add them yourself:
 
 - [Import a robot](/help/import-a-robot) brings in every joint from its URDF or MJCF file, including the axis, limits, and torque limit.
+- [Import an Onshape assembly as a robot](/help/import-an-onshape-assembly) brings in revolute and cylindrical mates as hinges, and slider mates as slides. Joints keep the mate's limits, including those inside repeated or nested subassemblies. A cylindrical mate's slide stays fixed.
 - **Parts** ▸ **Hands** lists posable hands whose makers publish their joints, such as LEAP, ORCA, and Allegro.
 - The agent declares joints when it designs a robot. It also adds or changes joints when you ask it to.
+- [Design a robot from a motion clip](/help/design-a-robot-from-motion) fits a skeleton and picks a catalog servo for each joint before you design the body.
 - [Design a linkage from a path](/help/design-a-linkage-from-a-path) adds a four-bar linkage with a crank joint driven by a servo.
 - [Join two parts with a hinge or slider](/help/join-two-parts-with-a-hinge) adds a joint between two parts you select.
 
 As soon as the scene has a joint, the **Simulate** tab appears in the right panel.
+
+A skeleton holds the planned joint layout before parts are connected. Design From Motion opens it in Edit Skeleton, with torque margins beside its joints. It doesn't create the connected joints needed for simulation or animation playback.
 
 ## How parts follow their joints
 
@@ -86,4 +90,4 @@ Walk cycles and poses from the agent set targets for hands and feet instead of a
 
 ## Several robots in one scene
 
-Basecase finds each robot in the scene separately, with its own joints, weight, and feet. The Pose tab, walk cycles, and Import BVH work only on the selected robot.
+Basecase finds each robot in the scene separately, with its own joints, weight, and feet. The Pose tab, walk cycles, and BVH animation import work only on the selected robot. Without robot joints, importing a BVH opens Design From Motion instead.

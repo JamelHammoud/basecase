@@ -1,7 +1,7 @@
 ---
 title: Get a robot ready to build
 date: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-14
 collection: build-and-print
 type: task
 order: 1
@@ -49,7 +49,7 @@ Clear every problem the Build tab finds before you print the parts, buy them, an
 7. Open **Supply current** and type the power supply's amps in **A**.
 8. Open **Current and runtime** to see how long the battery lasts, such as **about 2 h 08 min**. After the agent runs the trained walk policy in the simulator, the section shows the average and peak amps from that walk, and the joint that draws the most. Until then, and after you change the design, the runtime shows **(estimate)**.
 9. If the robot is an arm fixed in place, click **Payload** to see how much its hand holds at full reach and close in. While **Payload** is open, the canvas shows a dot everywhere the hand reaches. Bluer dots mean the hand lifts more there.
-10. If the scene has Cases, **Checks** lists each one under its own name, with how many of its 20 runs passed. To open a Case in Simulate, click it.
+10. If the scene has Cases, click a Case's row in **Checks** to open it in Simulate with its 20 paths on the canvas.
 11. Wait for the header to read **Ready to build**. Basecase runs the checks again after every change.
 
 ![The Build tab with every check passed and a $150 budget beside the total](/help/get-a-robot-ready-to-build/build-tab.png)
@@ -88,7 +88,9 @@ Cases never count toward Ready to build. To ignore one, right-click the note und
 
 ![Checks with Reach a Spot at 0 of 20 and Missed under it, on a rover with weak wheel motors](/help/get-a-robot-ready-to-build/case-row-failing.png)
 
-![Reach a Spot open in Simulate after clicking its row, with a green check beside its name](/help/get-a-robot-ready-to-build/case-in-simulate.png)
+![Reach a Spot open in Simulate after clicking its row, with its 20 seeded paths on the canvas](/help/replay-a-failing-seed/trails.png)
+
+Green paths passed, and red paths failed. Click a red path to inspect that seed's first failure on the joint timeline. For the steps, see [Replay a failing seed](/help/replay-a-failing-seed).
 
 In Simulate, the icon beside the Case's name shows the status of its row. To go back to the row, click the icon.
 

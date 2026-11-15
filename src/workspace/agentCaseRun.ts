@@ -117,6 +117,7 @@ export async function runCase(payload: Payload, ctx: RunCaseContext) {
     passes,
     status: caseStatus(verdict.runs),
     medianMargin,
+    failedSeeds: verdict.runs.outcomes.filter((o) => !o.passed).map(({ seed, firstTrip }) => ({ seed, firstTrip })),
     failures: failures.slice(0, NAMED_FAILURES),
     refusal,
     cached: verdict.cached,

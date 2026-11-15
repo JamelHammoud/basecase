@@ -1,21 +1,18 @@
 import { useRef, useState } from 'react';
 import type { Case } from '../cases/schema';
 import type { TryRecord } from '../cases/tries';
-import { exportDatasetFiles, exportDatasetZip } from '../datasets/datasetClient';
+import { exportDatasetZip } from '../datasets/datasetClient';
 import type { Dataset } from '../datasets/datasetFile';
 import { hubBridge } from '../hub/hubBridge';
 import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
-import { downloadBytes } from '../utils/downloadBytes';
 import type { Rig } from '../utils/kinematics';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
-import { openLink } from '../utils/openLink';
 import { errorMessage } from '../utils/errorMessage';
-import { plural } from '../../electron/plural.mjs';
-import { datasetLeftOut, prepareDataset, repoName, type PreparedDataset } from './datasetJob';
+import { prepareDataset, type DatasetScene } from './datasetJob';
 import { useDatasetRecords, type DatasetRecords } from './useDatasetRecords';
-import type { ShowToast, ToastOptions } from './types';
-import { deliverImageDataset, imageDatasetDownload } from './deliverImageDataset';
+import type { ShowToast } from './types';
+import { datasetDownload, deliverDataset, type DatasetDelivery } from './deliverImageDataset';
 
 interface DatasetExportOptions {
   sim: Simulation;
@@ -39,97 +36,74 @@ export interface DatasetExport {
 }
 
 export const EARLIER_TRIES = 'These tries are from an earlier design. Try It again to record new ones.';
-
 export const OTHER_TRIES = 'These tries are from another Case or scene.';
-
 export const FITTING_TRIES =
   'Export and training take only passed tries of this Case as it is now. Try It to record more.';
-
-interface Made {
-  dataset: Dataset;
-  prepared: PreparedDataset;
-}
 
 interface Delivery {
   busy: string;
   failed: string;
-  deliver: (made: Made, records: DatasetRecords) => Promise<{ message: string; options?: ToastOptions }>;
+  publish: boolean;
 }
 
-const EXPORT: Delivery = {
-  busy: 'Exporting dataset…',
-  failed: 'Couldn’t export the dataset.',
-  deliver: async ({ dataset, prepared }, records) => {
-    await records.freeze(dataset, prepared.modelHash);
-    downloadBytes(await exportDatasetZip(prepared.job), `${prepared.name}.zip`, 'application/zip');
+const EXPORT: Delivery = { busy: 'Exporting dataset…', failed: 'Couldn’t export the dataset.', publish: false };
+const PUBLISH: Delivery = { busy: 'Publishing dataset…', failed: 'Couldn’t publish the dataset.', publish: true };
 
-    return { message: `Exported ${plural(prepared.used, 'try', 'tries')} as a dataset${datasetLeftOut(prepared)}` };
-  },
-};
-
-const PUBLISH: Delivery = {
-  busy: 'Publishing dataset…',
-  failed: 'Couldn’t publish the dataset.',
-  deliver: async ({ dataset, prepared }, records) => {
-    const version = await records.freeze(dataset, prepared.modelHash);
-    const files = await exportDatasetFiles(prepared.job);
-    const name = await repoName(dataset.name, dataset.id);
-    const published = await hubBridge.publish({ name, files, tag: `dataset-v${version.n}` });
-
-    return {
-      message: `Published to ${published.repo}${datasetLeftOut(prepared)}`,
-      options: { action: { label: 'Open', onClick: () => openLink(published.url) } },
-    };
-  },
-};
+const exportable = ({ version, prepared }: DatasetDelivery) =>
+  !!version.archive || !!prepared || !!version.snapshot?.images.length;
 
 export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
   const { sim, rig, parts, cases, active, showToast, openAccounts } = options;
   const [exporting, setExporting] = useState(false);
   const busy = useRef(false);
   const records = useDatasetRecords(options.sceneTries);
+  const caseOf = (dataset: Dataset) => cases.find((kase) => kase.id === dataset.caseId) ?? null;
+  const sceneFor = async (kase: Case | null): Promise<DatasetScene> => ({
+    model: sim.model ?? (await sim.buildModel()),
+    robotName: rig.robots[0]?.name ?? 'robot',
+    parts,
+    world: sim.worldParts,
+    guests: sim.guestParts,
+    kase,
+  });
 
-  const prepare = async (kase: Case | null, from: { name: string; task: string; records: TryRecord[] }) =>
-    prepareDataset({
-      scene: {
-        model: sim.model ?? (await sim.buildModel()),
-        robotName: rig.robots[0]?.name ?? 'robot',
-        parts,
-        world: sim.worldParts,
-        guests: sim.guestParts,
-      },
-      kase,
-      ...from,
+  const prepareFor = async (dataset: Dataset): Promise<DatasetDelivery> => {
+    const selected = dataset.selectedVersion !== undefined;
+    const scene = !selected && dataset.members.length ? await sceneFor(caseOf(dataset)) : undefined;
+    const version = selected ? await records.resolve(dataset) : await records.resolve(dataset, scene?.model, scene);
+
+    if (version.archive || !version.snapshot?.samples.length) return { version };
+
+    const frozenScene = await records.scene(version);
+
+    if (!frozenScene) throw new Error('The dataset is missing its saved scene.');
+
+    const prepared = await prepareDataset({
+      scene: frozenScene,
+      kase: frozenScene.kase === undefined ? caseOf(dataset) : frozenScene.kase,
+      name: version.snapshot.dataset?.name ?? dataset.name,
+      task: version.snapshot.task,
+      records: [],
+      snapshot: version.snapshot,
     });
 
-  const caseOf = (dataset: Dataset) => cases.find((c) => c.id === dataset.caseId) ?? null;
-  const prepareFor = (dataset: Dataset) =>
-    prepare(caseOf(dataset), { name: dataset.name, task: dataset.task, records: records.of(dataset) });
+    return { version, prepared: prepared ?? undefined };
+  };
 
   const run = async (dataset: Dataset, delivery: Delivery) => {
     setExporting(true);
     showToast(delivery.busy, { tone: 'progress' });
 
     try {
-      if (dataset.imageMembers?.length && !dataset.members.length) {
-        const done = await deliverImageDataset(dataset, records, delivery === PUBLISH);
+      const made = await prepareFor(dataset);
 
-        showToast(done.message, done.options);
-
-        return;
-      }
-
-      const prepared = await prepareFor(dataset);
-
-      if (!prepared && !dataset.imageMembers?.length) {
+      if (!exportable(made)) {
         showToast(FITTING_TRIES, { tone: 'error' });
 
         return;
       }
 
-      const done = dataset.imageMembers?.length
-        ? await deliverImageDataset(dataset, records, delivery === PUBLISH, prepared ?? undefined)
-        : await delivery.deliver({ dataset, prepared: prepared! }, records);
+      const done = await deliverDataset(dataset, records, delivery.publish, made);
 
       showToast(done.message, done.options);
     } catch (err) {
@@ -164,21 +138,22 @@ export function useDatasetExport(options: DatasetExportOptions): DatasetExport {
       if (!IS_WEB_DEMO) void once(() => publish(dataset));
     },
     zip: async (all) => {
-      const kase = active && { name: active.name, task: active.brief.trim() || active.name, records: all };
-      const made = kase && (await prepare(active, kase));
+      if (!active) return null;
+
+      const made = await prepareDataset({
+        scene: await sceneFor(active),
+        kase: active,
+        name: active.name,
+        task: active.brief.trim() || active.name,
+        records: all,
+      });
 
       return made ? exportDatasetZip(made.job) : null;
     },
     zipDataset: async (dataset) => {
-      if (dataset.imageMembers?.length && !dataset.members.length) return imageDatasetDownload(dataset, records);
-
       const made = await prepareFor(dataset);
 
-      if (dataset.imageMembers?.length) return imageDatasetDownload(dataset, records, made ?? undefined);
-
-      if (made) await records.freeze(dataset, made.modelHash);
-
-      return made ? exportDatasetZip(made.job) : null;
+      return exportable(made) ? datasetDownload(dataset, records, made) : null;
     },
     records,
   };

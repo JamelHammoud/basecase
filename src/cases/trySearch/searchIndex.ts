@@ -1,7 +1,9 @@
 import type { StoredTry } from '../tryFile';
 import { indexedTryOf } from './indexedTry';
+import { hitKey, hitRange, hitsByTry } from './hitSelection';
 import { hasFacts } from './queryParser';
-import { stem, wordWeight } from './searchTerms';
+import { stem } from './searchTerms';
+import { wordMatches } from './wordMatches';
 import { signatureDistance } from './motion';
 import { factFilter } from './tryFilter';
 import {
@@ -16,7 +18,7 @@ import {
 
 const FORMAT = 'basecase-try-index';
 
-export const INDEX_VERSION = 2;
+export const INDEX_VERSION = 3;
 
 interface Saved {
   format: string;
@@ -24,7 +26,8 @@ interface Saved {
   tries: IndexedTry[];
 }
 
-const hitOf = (e: IndexedTry, score: number, match: HitMatch): TryHit => ({
+const hitOf = (e: IndexedTry, score: number, match: HitMatch, range: { from?: number; to?: number } = {}): TryHit => ({
+  ...range,
   tryId: e.id,
   label: e.label,
   robot: e.robot,
@@ -48,18 +51,28 @@ const isSaved = (value: unknown): value is Saved =>
   Array.isArray((value as Saved).tries);
 
 const isEntry = (e: IndexedTry) =>
-  typeof e?.id === 'string' && Array.isArray(e.terms) && Array.isArray(e.named) && typeof e.startedAt === 'string';
+  typeof e?.id === 'string' &&
+  Array.isArray(e.terms) &&
+  Array.isArray(e.segments) &&
+  Array.isArray(e.named) &&
+  typeof e.startedAt === 'string';
 
 function merged(first: TryHit[], second: TryHit[], limit: number): TryHit[] {
   const best = new Map<string, TryHit>();
 
   for (const hit of [...first, ...second]) {
-    const held = best.get(hit.tryId);
+    const key = hitKey(hit);
+    const held = best.get(key);
 
-    if (!held || hit.score > held.score) best.set(hit.tryId, hit);
+    if (!held || hit.score > held.score) best.set(key, hit);
   }
 
-  return [...best.values()].sort(byScore).slice(0, limit);
+  const ranged = new Set([...best.values()].filter((hit) => hit.from !== undefined).map((hit) => hit.tryId));
+
+  return [...best.values()]
+    .filter((hit) => hit.from !== undefined || !ranged.has(hit.tryId))
+    .sort(byScore)
+    .slice(0, limit);
 }
 
 export class TrySearchIndex {
@@ -142,24 +155,27 @@ export class TrySearchIndex {
     const stems = words.map(stem);
     const found = new Array<number>(stems.length).fill(0);
     const ok = factFilter(filters);
-    const matched: Array<{ entry: IndexedTry; weights: number[] }> = [];
+    const matched: Array<{ entry: IndexedTry; weights: number[]; range: { from?: number; to?: number } }> = [];
 
     for (const entry of this.tries.values()) {
-      const weights = stems.map((word, i) => wordWeight(entry.terms, word, i === stems.length - 1));
+      const result = wordMatches(entry, stems);
 
-      weights.forEach((w, i) => (found[i] += w > 0 ? 1 : 0));
+      result.found.forEach((present, i) => (found[i] += present ? 1 : 0));
 
-      if (weights.every((w) => w > 0) && ok(entry)) matched.push({ entry, weights });
+      if (!ok(entry)) continue;
+
+      for (const candidate of result.matches) matched.push({ entry, ...candidate });
     }
 
     const rarity = found.map((count) => Math.log(1 + this.tries.size / Math.max(1, count)));
 
     return matched
-      .map(({ entry, weights }) =>
+      .map(({ entry, weights, range }) =>
         hitOf(
           entry,
           weights.reduce((sum, w, i) => sum + w * rarity[i], 0),
           'words',
+          range,
         ),
       )
       .sort(byScore);
@@ -180,15 +196,18 @@ export class TrySearchIndex {
 
     if (!target || !signature) return [];
 
-    const allowed = words.length ? new Set(this.wordHits(words, { ...filters, like: null }).map((h) => h.tryId)) : null;
+    const allowed = words.length ? this.wordHits(words, { ...filters, like: null }) : null;
+    const rangesById = hitsByTry(allowed ?? []);
     const ok = factFilter(filters);
     const hits: TryHit[] = [];
 
     for (const e of this.tries.values()) {
       if (!e.signature || e === target || e.motionKey !== target.motionKey || !ok(e)) continue;
 
-      if (!allowed || allowed.has(e.id))
-        hits.push(hitOf(e, 1 - signatureDistance(e.signature, signature, SIGNATURE_SCALE) / 2, 'motion'));
+      const score = 1 - signatureDistance(e.signature, signature, SIGNATURE_SCALE) / 2;
+      const ranges: Array<{ from?: number; to?: number }> = allowed ? (rangesById.get(e.id) ?? []) : [{}];
+
+      for (const range of ranges) hits.push(hitOf(e, score, 'motion', hitRange(range)));
     }
 
     return hits.sort(byScore).slice(0, limit);

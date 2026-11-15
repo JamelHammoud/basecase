@@ -1,10 +1,10 @@
 ---
 title: Import Onshape assemblies as robots
 date: 2026-11-12
-image: /changelog/import-onshape-assemblies/pose.png
+image: /changelog/import-onshape-assemblies/subassembly-pose.png
 ---
 
-You can now import an Onshape assembly as a robot. Paste the assembly's link into Import Robot, and its revolute and slider mates come in as joints.
+You can now import an Onshape assembly as a robot. Paste the assembly's link into Import Robot, and its revolute, cylindrical and slider mates come in as joints.
 
 This needs the desktop app.
 
@@ -24,7 +24,7 @@ A joint turns or slides along its mate connector's Z axis, within the mate's lim
 
 ## What Moves
 
-Only revolute and slider mates move. Cylindrical, ball, pin slot and planar mates are held fixed, and the Build tab's Checks list each one under Fixed Mates, on the part it holds.
+Revolute, cylindrical and slider mates move, including mates inside subassemblies with their limits. A leg used four times gets four knees with the same range. Cylindrical mates turn as hinges, with their slide held fixed. The Build tab's Checks lists each dropped slide under Fixed Mates, alongside ball, pin slot and planar mates held fixed.
 
 A mate that closes a loop, like the last pin of a four-bar linkage, is left out. Each part hangs off exactly one joint.
 

@@ -74,6 +74,8 @@ To fit a weekend build into the hours available, [set a time budget](/help/set-a
 
 ## What the checks can't promise
 
+An imported Onshape robot can be ready to build with motions held fixed. Cylindrical mates keep their hinges, with their slides listed under **Fixed Mates** as notes. [Import an Onshape assembly as a robot](/help/import-an-onshape-assembly) explains which mates move and how to bring in changes.
+
 Print times and filament amounts are estimates until Print mode slices the plates. Basecase tests range of motion every 15°, so it can miss a clash narrower than that. Peak torque needs a trained walking policy and stays Not run without one. Falls stays Not run until the agent tips the robot over in the simulation.
 
 Time keeps assembly and servo setup as estimates after slicing. It excludes delivery, failed prints and print service lead times.

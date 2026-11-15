@@ -21,7 +21,8 @@ export function caseStatus(runs: Pick<CaseRuns, 'runs' | 'passes' | 'refusal'>):
   return share >= WARN_SHARE ? 'warn' : 'fail';
 }
 
-const failureText = (label: string) => (label === MISSED ? 'Missed' : label.charAt(0).toUpperCase() + label.slice(1));
+export const failureText = (label: string) =>
+  label === MISSED ? 'Missed' : label.charAt(0).toUpperCase() + label.slice(1);
 
 export function caseRow(kase: { id: string; name: string }, runs: CaseRuns): CheckRow {
   const status = caseStatus(runs);

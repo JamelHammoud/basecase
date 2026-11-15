@@ -57,6 +57,20 @@ function recording(frames: number): Recording {
 }
 
 describe('a try’s manifest', () => {
+  it('round-trips an explicit split and refuses other split values', () => {
+    const stored = storedTryOf(record(), context);
+
+    for (const split of ['train', 'validation', 'test']) {
+      expect(readStoredTry(JSON.parse(JSON.stringify({ ...stored, split })))).toEqual({ ...stored, split });
+    }
+
+    for (const split of ['val', 'testing', '', null, 0, [], {}]) {
+      expect(readStoredTry({ ...stored, split })).toBeNull();
+    }
+
+    expect(readStoredTry(stored)).not.toHaveProperty('split');
+  });
+
   it('round-trips through try.json', () => {
     const stored = storedTryOf(record(), context);
     const read = readStoredTry(JSON.parse(JSON.stringify(stored)));

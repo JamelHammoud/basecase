@@ -1,4 +1,5 @@
 import { postRoutesOf, registerCalls } from '../callRoutes.mjs';
+import { datasetContentBytes } from './datasetContent.mjs';
 
 const bytes = (value) => {
   if (typeof value !== 'string') return value;
@@ -9,6 +10,8 @@ const bytes = (value) => {
 };
 
 export const DATASET_CALLS = {
+  'datasets:content-save': (store, value) => store.saveContent(datasetContentBytes(value)),
+  'datasets:content-load': (store, hash) => store.content(hash),
   'datasets:list': (store) => store.list(),
   'datasets:save': (store, dataset) => store.save(dataset),
   'datasets:delete': (store, ids) => store.delete(ids),
@@ -24,6 +27,7 @@ export const DATASET_CALLS = {
 export const registerDatasetHandlers = (ipcMain, store) => registerCalls(ipcMain, DATASET_CALLS, store);
 
 export const datasetPostRoutes = (store) => postRoutesOf(DATASET_CALLS, store, {
+  'datasets:content-load': (value) => value && ({ data: Buffer.from(value).toString('base64') }),
   'datasets:images-jpeg': (jpeg) => jpeg && ({ data: Buffer.from(jpeg).toString('base64') }),
   'datasets:images-frame': (frame) => frame && ({ jpeg: Buffer.from(frame.jpeg).toString('base64'), depth: Buffer.from(frame.depth).toString('base64') }),
 });

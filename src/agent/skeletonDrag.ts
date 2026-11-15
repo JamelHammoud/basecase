@@ -2,7 +2,8 @@ import type { ScenePart } from '../types/robotics';
 import type { RobotSkeleton, SkeletonJoint, ZUpVec } from '../types/skeleton';
 import { r3 } from './agentFrame';
 import { applySpec } from './agentScene';
-import { childrenOf, mirrorPoint, pairAxis } from './skeleton';
+import { mirrorPoint, pairAxis } from './skeleton';
+import { SkeletonTree } from '../utils/skeletonTree';
 import { framedFollowOps } from './skeletonFrames';
 
 export interface JointDrag {
@@ -19,15 +20,6 @@ export interface DraggedSkeleton {
 
 const plus = (a: ZUpVec, b: ZUpVec): ZUpVec => [a[0] + b[0], a[1] + b[1], a[2] + b[2]].map(r3) as ZUpVec;
 
-export function subtreeOf(skeleton: RobotSkeleton, id: string): string[] {
-  const out = [id];
-
-  for (let i = 0; i < out.length; i++)
-    out.push(...childrenOf(skeleton, out[i]).flatMap((c) => (out.includes(c.id) ? [] : [c.id])));
-
-  return out;
-}
-
 function twinOf(skeleton: RobotSkeleton, id: string) {
   const pair = skeleton.pairs.find((p) => p.includes(id));
 
@@ -36,7 +28,8 @@ function twinOf(skeleton: RobotSkeleton, id: string) {
 
 function movedJoints(skeleton: RobotSkeleton, { id, delta, alone }: JointDrag): Map<string, ZUpVec> {
   const moved = new Map<string, ZUpVec>();
-  const reach = (from: string) => (alone ? [from] : subtreeOf(skeleton, from));
+  const tree = new SkeletonTree(skeleton);
+  const reach = (from: string) => (alone ? [from] : tree.subtreeOf(from));
   const twin = twinOf(skeleton, id);
 
   reach(id).forEach((j) => moved.set(j, delta));

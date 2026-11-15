@@ -3,15 +3,26 @@ import { BVHLoader } from 'three/examples/jsm/loaders/BVHLoader.js';
 import type { RobotAnimation, RobotJoint } from '../types/robotics';
 import { isMovable, type Rig } from './kinematics';
 import type { Mocap } from './mocapBones';
+import { bvhRotations } from './mocapChannels';
 
 export { autoMapBones, autoMapRobot, KEYPOINT_LABELS, KEYPOINTS, type Keypoint, type Mocap } from './mocapBones';
 export { retarget, type RetargetOptions, type RetargetResult } from './mocapRetarget';
 
 export function parseBvh(text: string, name = 'Motion'): Mocap {
+  const header = text
+    .trimStart()
+    .split(/[\r\n]/, 1)[0]
+    .trim();
+
+  if (header !== 'HIERARCHY') throw new Error('The BVH file must start with HIERARCHY.');
+
   const loader = new BVHLoader();
   const { skeleton, clip } = loader.parse(text);
   const bones = skeleton.bones.filter((b) => b.name !== 'ENDSITE');
   const root = skeleton.bones[0];
+  const ends = skeleton.bones
+    .filter((bone) => bone.name === 'ENDSITE')
+    .map((bone, index) => ({ bone, id: `${bone.parent?.name ?? 'Bone'}_EndSite_${index}` }));
   const parentOf = new Map<string, string | null>();
 
   for (const b of bones) parentOf.set(b.name, b.parent && (b.parent as THREE.Bone).isBone ? b.parent.name : null);
@@ -21,10 +32,20 @@ export function parseBvh(text: string, name = 'Motion'): Mocap {
 
     return new Map(bones.map((b) => [b.name, new THREE.Vector3().setFromMatrixPosition(b.matrixWorld)]));
   };
+  const collectEnds = () => {
+    root.updateMatrixWorld(true);
+
+    return new Map(ends.map(({ bone, id }) => [id, new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld)]));
+  };
   const rest = collect();
+  const restEnds = collectEnds();
   const mixer = new THREE.AnimationMixer(root);
 
-  mixer.clipAction(clip).play();
+  const action = mixer.clipAction(clip);
+
+  action.setLoop(THREE.LoopOnce, 1);
+  action.clampWhenFinished = true;
+  action.play();
 
   const frameTime = (() => {
     const m = /Frame Time:\s*([\d.eE+-]+)/.exec(text);
@@ -33,13 +54,29 @@ export function parseBvh(text: string, name = 'Motion'): Mocap {
   })();
   const frames = Number(/Frames:\s*(\d+)/.exec(text)?.[1] ?? 0);
   const setTime = (t: number) => {
-    mixer.setTime(Math.min(Math.max(t, 0), clip.duration));
+    action.paused = false;
+    action.enabled = true;
+
+    const frame = Math.round(t / frameTime);
+    const sourceTime = t === frame * frameTime ? (clip.tracks[0]?.times[frame] ?? t) : t;
+
+    mixer.setTime(Math.min(Math.max(sourceTime, 0), clip.duration));
     root.updateMatrixWorld(true);
   };
 
   return {
     name,
     frameTime,
+    rotations: bvhRotations(text, frameTime),
+    endSites: {
+      rest: restEnds,
+      parentOf: new Map(ends.map(({ bone, id }) => [id, bone.parent!.name])),
+      sample: (t) => {
+        setTime(t);
+
+        return collectEnds();
+      },
+    },
     frames,
     duration: clip.duration,
     bones: bones.map((b) => b.name),

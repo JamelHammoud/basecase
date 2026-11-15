@@ -63,7 +63,7 @@ Stance weight sharing and the prompt solver's `anythingIk.ts` use `utils/matrixS
 `checkFeasibility(mj, model, task)` runs only checks that a model can settle, each marked `exact`, `estimate` or `sampled`, with plain messages:
 
 - **Holding torque** from `mj_inverse` (constraints off, zero velocity and acceleration) plus foot and payload loads by virtual work. Stand checks the start pose and a crouch 15% lower (feet held by IK), with the weight shared over the feet by a minimum-norm force and moment balance. A joint fails above 0.60 of its torque, the Stance limit in the Build checks (§8b).
-- **Support polygon:** the center of mass over the hull of the feet's soles, margin in mm.
+- **Support polygon:** the center of mass over the hull of the feet's soles, margin in mm. Support polygons use `utils/convexHull.ts`, shared with Build checks and projected outlines. No contacts or a single contact retain a margin of negative infinity. Two contacts retain the negative distance to their segment.
 - **Workspace:** fails exactly past the summed link lengths, else samples 2048 poses and refines the best six with damped least squares.
 - **Gripper opening:** prismatic travel, or `2 × finger × sin(span / 2)` for hinged fingers, against the object plus 2 mm.
 - **Relaxation ladder:** servos ×2, ranges +20° at each end, links +20%, in that order; the first that makes every check pass is reported, otherwise it says none does. `must-fail-weak-quad` comes back as too weak to stand, with servos ×2 as the fix.

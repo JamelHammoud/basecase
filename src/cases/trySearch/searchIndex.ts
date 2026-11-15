@@ -6,6 +6,7 @@ import { stem } from './searchTerms';
 import { wordMatches } from './wordMatches';
 import { signatureDistance } from './motion';
 import { factFilter } from './tryFilter';
+import { newestFirst, rankedHits } from './rankedHits';
 import {
   SIGNATURE_SCALE,
   type HitMatch,
@@ -39,10 +40,6 @@ const hitOf = (e: IndexedTry, score: number, match: HitMatch, range: { from?: nu
   startedAt: e.startedAt,
 });
 
-const newestFirst = (a: TryHit, b: TryHit) => b.startedAt.localeCompare(a.startedAt);
-
-const byScore = (a: TryHit, b: TryHit) => b.score - a.score || newestFirst(a, b);
-
 const isSaved = (value: unknown): value is Saved =>
   typeof value === 'object' &&
   value !== null &&
@@ -69,10 +66,10 @@ function merged(first: TryHit[], second: TryHit[], limit: number): TryHit[] {
 
   const ranged = new Set([...best.values()].filter((hit) => hit.from !== undefined).map((hit) => hit.tryId));
 
-  return [...best.values()]
-    .filter((hit) => hit.from !== undefined || !ranged.has(hit.tryId))
-    .sort(byScore)
-    .slice(0, limit);
+  return rankedHits(
+    [...best.values()].filter((hit) => hit.from !== undefined || !ranged.has(hit.tryId)),
+    limit,
+  );
 }
 
 export class TrySearchIndex {
@@ -146,12 +143,12 @@ export class TrySearchIndex {
   private searchOne({ words, filters }: ParsedQuery, limit: number): TryHit[] {
     if (filters.like) return this.like(words, filters, limit);
 
-    if (words.length) return this.wordHits(words, filters).slice(0, limit);
+    if (words.length) return this.wordHits(words, filters, limit);
 
-    return hasFacts(filters) ? this.factHits(filters).slice(0, limit) : [];
+    return hasFacts(filters) ? this.factHits(filters, limit) : [];
   }
 
-  private wordHits(words: string[], filters: QueryFilters): TryHit[] {
+  private wordHits(words: string[], filters: QueryFilters, limit = Infinity): TryHit[] {
     const stems = words.map(stem);
     const found = new Array<number>(stems.length).fill(0);
     const ok = factFilter(filters);
@@ -169,25 +166,27 @@ export class TrySearchIndex {
 
     const rarity = found.map((count) => Math.log(1 + this.tries.size / Math.max(1, count)));
 
-    return matched
-      .map(({ entry, weights, range }) =>
+    return rankedHits(
+      matched.map(({ entry, weights, range }) =>
         hitOf(
           entry,
           weights.reduce((sum, w, i) => sum + w * rarity[i], 0),
           'words',
           range,
         ),
-      )
-      .sort(byScore);
+      ),
+      limit,
+    );
   }
 
-  private factHits(filters: QueryFilters): TryHit[] {
+  private factHits(filters: QueryFilters, limit: number): TryHit[] {
     const ok = factFilter(filters);
 
-    return [...this.tries.values()]
-      .filter(ok)
-      .map((e) => hitOf(e, 0, 'facts'))
-      .sort(newestFirst);
+    return rankedHits(
+      [...this.tries.values()].filter(ok).map((e) => hitOf(e, 0, 'facts')),
+      limit,
+      newestFirst,
+    );
   }
 
   private like(words: string[], filters: QueryFilters, limit: number): TryHit[] {
@@ -210,6 +209,6 @@ export class TrySearchIndex {
       for (const range of ranges) hits.push(hitOf(e, score, 'motion', hitRange(range)));
     }
 
-    return hits.sort(byScore).slice(0, limit);
+    return rankedHits(hits, limit);
   }
 }

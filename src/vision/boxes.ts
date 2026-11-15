@@ -26,11 +26,20 @@ export function suppress(detections: VisionDetection[], threshold = 0.45) {
     .filter((d) => Number.isFinite(d.score) && d.box.every(Number.isFinite))
     .sort((a, b) => b.score - a.score);
   const kept: VisionDetection[] = [];
+  const byLabel = new Map<string, VisionDetection[]>();
 
   for (const item of sorted) {
     if (kept.length >= 300) break;
 
-    if (!kept.some((other) => other.label === item.label && overlap(other, item) > threshold)) kept.push(item);
+    const label = item.label;
+    const peers = byLabel.get(label);
+
+    if (peers?.some((other) => overlap(other, item) > threshold)) continue;
+
+    kept.push(item);
+
+    if (peers) peers.push(item);
+    else byLabel.set(label, [item]);
   }
 
   return kept;

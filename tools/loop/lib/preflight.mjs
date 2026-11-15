@@ -159,11 +159,7 @@ export const followUpPrompt = ({ prompt, output, problems }) =>
 
 const shouldCheck = (result) => result.ok && result.output.changed && !result.output.abandon;
 
-export function checkedRun({ kind, log, ...session }) {
-  const first = runAgent(session);
-
-  if (!shouldCheck(first)) return first;
-
+function checkedChange(first, { kind, log, session }) {
   const problems = preflight(session.cwd, { kind: kind ?? first.output.kind, copy: first.output.copy });
 
   if (problems.length === 0) return first;
@@ -181,11 +177,25 @@ export function checkedRun({ kind, log, ...session }) {
   if (!second.ok)
     log(`preflight follow-up failed; preserving work for recovery: ${String(second.error).slice(0, 300)}`);
 
-  if (!second.ok) return second;
+  if (!second.ok) return second.session ? second : { ...second, session: first.session };
 
   const remaining = preflight(session.cwd, { kind: kind ?? second.output.kind, copy: second.output.copy });
 
   if (remaining.length > 0) log(`preflight: ${remaining.length} findings remain for independent review`);
 
   return second;
+}
+
+export function checkedRun({ kind, log, ...session }) {
+  const first = runAgent(session);
+
+  if (!shouldCheck(first)) return first;
+
+  try {
+    return checkedChange(first, { kind, log, session });
+  } catch (error) {
+    if (first.session) error.session ??= first.session;
+
+    throw error;
+  }
 }

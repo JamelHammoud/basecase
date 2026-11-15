@@ -6,7 +6,7 @@ export const PRIORITY = 'loop:priority';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LOOKBACK_MS = 30 * DAY_MS;
-const METADATA = /^(Request|Idea|Arc|Kind):/;
+const METADATA = /^(Request|Idea|Arc|Kind|Requires|Inputs):/;
 const REQUEST = /^Request: #(\d+)/m;
 
 export const ACTIONS = ['keep', 'rewrite', 'close', 'fold'];

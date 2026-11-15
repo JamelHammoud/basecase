@@ -74,9 +74,39 @@ describe('durable delivery', () => {
     const create = vi.fn();
     const execute = vi.fn(() => ({ out: 'different-head' }));
 
+    saveDelivery(entry);
     expect(() => deliver(entry, { execute, create, readJson: () => [] })).toThrow('changed since verification');
     expect(create).not.toHaveBeenCalled();
     expect(execute).toHaveBeenCalledOnce();
+  });
+
+  it('does not restore a completed delivery from another callers stale snapshot', () => {
+    const readJson = vi.fn(() => {
+      throw new Error('worktree already removed');
+    });
+
+    saveDelivery(entry);
+    completeDelivery(entry.branch);
+
+    expect(deliver(entry, { readJson })).toBeNull();
+    expect(readJson).not.toHaveBeenCalled();
+    expect(hasPendingDelivery(entry.branch)).toBe(false);
+  });
+
+  it('loads the current revision under its lock instead of publishing stale metadata', () => {
+    const revision = { ...entry, number: 42, title: 'Feature: Updated title', sha: 'new-head' };
+    const edit = vi.fn();
+
+    saveDelivery(revision);
+
+    expect(
+      deliver(entry, {
+        execute: () => ({ out: revision.sha }),
+        readJson: () => ({ url: 'https://example.com/pull/42', state: 'OPEN' }),
+        edit,
+      }),
+    ).toBe('https://example.com/pull/42');
+    expect(edit).toHaveBeenCalledWith(42, { title: revision.title, body: revision.body });
   });
 
   it('retries revision metadata after its push without rerunning the author or writer', () => {

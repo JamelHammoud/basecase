@@ -1,6 +1,6 @@
 import { claim } from './claim.mjs';
 import { createPull, editPull } from './github.mjs';
-import { completeDelivery, saveDelivery } from './deliveryState.mjs';
+import { completeDelivery, deliveryFor, saveDelivery } from './deliveryState.mjs';
 import { fingerprint } from './sessionJournal.mjs';
 import { json, run } from './sh.mjs';
 
@@ -29,13 +29,19 @@ function send(entry, existing, services) {
   return existing?.url;
 }
 
-export function deliver(entry, dependencies = {}) {
+export function deliver(saved, dependencies = {}) {
   const services = { ...defaults(), ...dependencies };
-  const release = claim(`delivery-${fingerprint(entry.branch)}`);
+  const release = claim(`delivery-${fingerprint(saved.branch)}`);
 
   if (!release) return null;
 
+  let entry;
+
   try {
+    entry = deliveryFor(saved.branch);
+
+    if (!entry) return null;
+
     const existing = existingPull(entry, services.readJson);
 
     if (existing?.url && (!entry.number || existing.state !== 'OPEN')) {
@@ -52,6 +58,8 @@ export function deliver(entry, dependencies = {}) {
 
     return url;
   } catch (error) {
+    if (!entry) throw error;
+
     saveDelivery({
       ...entry,
       attempts: (entry.attempts ?? 0) + 1,

@@ -17,7 +17,7 @@ const hoursSince = (iso, now) => (iso ? (now - Date.parse(iso)) / 3_600_000 : nu
 
 const free = () => false;
 const checking = (pull) =>
-  pull.statusCheckRollup?.some((check) => ['QUEUED', 'IN_PROGRESS', 'PENDING'].includes(check.status ?? check.state));
+  pull.statusCheckRollup?.some((check) => (check.status ? check.status !== 'COMPLETED' : check.state === 'PENDING'));
 
 export function expired({ pulls, inBatch, now = Date.now(), busy = free }) {
   const limitMs = LIMITS.maxOpenHours * 3_600_000;

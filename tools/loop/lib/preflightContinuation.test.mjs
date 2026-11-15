@@ -50,4 +50,21 @@ describe('preflight continuation', () => {
 
     expect(checkedRun(task)).toBe(failed);
   });
+
+  it('retains the original session when a correction fails before returning its session', () => {
+    model.mockReturnValueOnce(first).mockReturnValueOnce({ ok: false, error: 'worker unavailable' });
+
+    expect(checkedRun(task)).toMatchObject({ ok: false, session, error: 'worker unavailable' });
+  });
+
+  it('keeps the original session on a thrown correction error', () => {
+    const failure = new Error('provider unavailable');
+
+    model.mockReturnValueOnce(first).mockImplementationOnce(() => {
+      throw failure;
+    });
+
+    expect(() => checkedRun(task)).toThrow(failure);
+    expect(failure.session).toEqual(session);
+  });
 });

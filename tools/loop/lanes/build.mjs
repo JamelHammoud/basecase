@@ -101,6 +101,16 @@ function recoveryContext(step, inputSignature, recovery) {
   return refreshRecovery(recovery);
 }
 
+function retainFailedSession(step, inputSignature, worktree, session) {
+  if (!session) return;
+
+  saveRecovery(step.number, {
+    worktree,
+    inputSignature: recoverySignature(step, inputSignature),
+    session,
+  });
+}
+
 function buildStep(step, { log, slot }) {
   editIssueLabels(step.number, { add: [BUILDING], remove: [NEXT, 'loop:blocked'] });
 
@@ -132,12 +142,7 @@ function buildStep(step, { log, slot }) {
 
     const failedSession = result.session ?? recovery?.session;
 
-    if (!result.ok && failedSession)
-      saveRecovery(step.number, {
-        worktree,
-        inputSignature: recoverySignature(step, inputSignature),
-        session: failedSession,
-      });
+    if (!result.ok) retainFailedSession(step, inputSignature, worktree, failedSession);
 
     if (result.ok) clearRecovery(step.number);
 
@@ -166,6 +171,7 @@ function buildStep(step, { log, slot }) {
 
     if (url) log(`#${step.number}: opened ${url}`);
   } catch (error) {
+    retainFailedSession(step, inputSignature, worktree, error.session);
     giveBack();
 
     throw error;

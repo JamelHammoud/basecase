@@ -49,6 +49,9 @@ describe('provider policy', () => {
     expect(primaryAvailable(snapshot(90), now)).toBe(false);
     expect(primaryAvailable({ at: now, windows: [] }, now)).toBe(false);
     expect(
+      primaryAvailable({ ...snapshot(5), windows: [...snapshot(5).windows, { minutes: 10080, used: 90, reset }] }, now),
+    ).toBe(false);
+    expect(
       primaryAvailable({ ...snapshot(5), windows: [...snapshot(5).windows, { minutes: 300, used: 100 }] }, now),
     ).toBe(false);
   });

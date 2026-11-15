@@ -197,4 +197,18 @@ describe('pull requests open too long', () => {
 
     expect(expired({ pulls: [progressing, checking], inBatch: [], now: at })).toEqual([]);
   });
+
+  it.each(['QUEUED', 'IN_PROGRESS', 'PENDING', 'REQUESTED', 'WAITING'])(
+    'preserves work while a check is %s',
+    (status) => {
+      const pending = {
+        ...pull(1, 'loop/build/feature', '2026-11-10T09:00:00Z'),
+        updatedAt: '2026-11-10T09:00:00Z',
+        statusCheckRollup: [{ status }],
+      };
+
+      expect(expired({ pulls: [pending], inBatch: [], now: at })).toEqual([]);
+      expect(idle({ pulls: [pending], now: at })).toEqual([]);
+    },
+  );
 });

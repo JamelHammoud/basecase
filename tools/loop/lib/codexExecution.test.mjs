@@ -32,6 +32,14 @@ function options(extra = {}) {
 }
 
 describe('Codex execution', () => {
+  it('refuses scoped tool access instead of substituting a workspace shell sandbox', () => {
+    const execute = vi.fn();
+    const result = runCodex(options({ sandbox: { tools: ['Read'], allow: ['Read'] } }), execute);
+
+    expect(result).toEqual({ ok: false, error: 'Codex exec cannot enforce scoped tool allowlists' });
+    expect(execute).not.toHaveBeenCalled();
+  });
+
   it('repairs only a malformed answer using the same thread and accounts for both turns', () => {
     const calls = [];
     const execute = (_command, args, settings) => {
@@ -163,5 +171,21 @@ describe('Codex execution', () => {
     expect(args).toContain('web_search="disabled"');
     expect(args.join(' ')).toContain('--disable shell_tool --disable unified_exec --disable code_mode_host');
     expect(args).toContain('read-only');
+  });
+});
+
+describe('Codex limit recovery', () => {
+  it('does not repeat a completed task after recovering from a provider limit', () => {
+    const out = [
+      { type: 'error', message: 'usage limit reached' },
+      { type: 'turn.completed', usage: { input_tokens: 10, output_tokens: 5 } },
+    ]
+      .map((event) => JSON.stringify(event))
+      .join('\n');
+
+    expect(codexLimit({ out, err: 'Recovered from usage limit reached' })).toBeNull();
+    expect(
+      codexLimit({ out: `${out}\n${JSON.stringify({ type: 'turn.failed', error: 'usage limit reached' })}` }),
+    ).not.toBeNull();
   });
 });

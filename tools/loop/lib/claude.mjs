@@ -4,6 +4,20 @@ import path from 'node:path';
 import { run } from './sh.mjs';
 import { limitIn } from './usage.mjs';
 
+export const claudeSubscriptionEnv = (env = {}) => ({
+  ...env,
+  ANTHROPIC_API_KEY: '',
+  ANTHROPIC_AUTH_TOKEN: '',
+  CLAUDE_CODE_USE_BEDROCK: '',
+  CLAUDE_CODE_USE_VERTEX: '',
+  CLAUDE_CODE_USE_FOUNDRY: '',
+  CLAUDE_CODE_USE_ANTHROPIC_AWS: '',
+  CLAUDE_CODE_USE_ANTHROPIC_GOOGLE_CLOUD: '',
+  CLAUDE_CODE_USE_MANTLE: '',
+});
+
+export const CLAUDE_SUBSCRIPTION_SETTINGS = { apiKeyHelper: '' };
+
 export const sandboxArgs = ({ tools, allow }) => [
   '--restricted',
   '--strict-mcp-config',
@@ -35,6 +49,8 @@ export function runClaude({ cwd, name, brief, prompt, schema, hours, sandbox, po
     policy.claudeModel,
     '--effort',
     policy.claudeEffort,
+    '--settings',
+    JSON.stringify(CLAUDE_SUBSCRIPTION_SETTINGS),
     ...(name === 'voice' ? ['--safe-mode'] : []),
     ...(sandbox ? sandboxArgs(sandbox) : ['--dangerously-skip-permissions']),
     '--output-format',
@@ -46,7 +62,7 @@ export function runClaude({ cwd, name, brief, prompt, schema, hours, sandbox, po
   const launch = (env) =>
     execute(process.env.CLAUDE_BIN || 'claude', args, {
       cwd,
-      env: { ...env, ANTHROPIC_API_KEY: '' },
+      env: claudeSubscriptionEnv(env),
       timeout: hours * 60 * 60 * 1000,
       allowFail: true,
     });

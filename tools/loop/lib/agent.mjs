@@ -115,7 +115,7 @@ export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox, contin
     brief: system ?? brief(name),
   };
 
-  if (policy.provider === 'claude') return overflow(options);
+  if (policy.provider === 'claude' || sandbox?.tools.length > 0) return overflow(options);
 
   const quota = quotaSnapshot('codex');
   const reserve = primaryReserve(quota);
@@ -140,8 +140,6 @@ export function runAgent({ cwd, name, prompt, schema, hours = 6, sandbox, contin
 
     return overflow(options, result);
   }
-
-  if (codexPause()) resumeCodex();
 
   return result;
 }

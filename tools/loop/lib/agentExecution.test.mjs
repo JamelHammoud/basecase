@@ -34,6 +34,7 @@ vi.mock('./usage.mjs', () => ({
 }));
 
 const { runAgent } = await import('./agent.mjs');
+const { resumeCodex } = await import('./usage.mjs');
 const task = { cwd: '.', name: 'build', system: 'Implement the requested change.', prompt: 'Build it.', schema: {} };
 
 afterEach(() => {
@@ -60,6 +61,17 @@ describe('agent routing', () => {
     expect(runAgent(task).ok).toBe(false);
     expect(mocks.reserve).not.toHaveBeenCalled();
     expect(mocks.claude).not.toHaveBeenCalled();
+  });
+
+  it('preserves a newer primary rejection recorded while another session was running', () => {
+    mocks.codex.mockImplementationOnce(() => {
+      mocks.codexHeld = { until: Date.now() + 60_000, observedAt: Date.now() };
+
+      return { ok: true, output: { changed: true } };
+    });
+
+    expect(runAgent(task)).toMatchObject({ ok: true, provider: 'codex' });
+    expect(resumeCodex).not.toHaveBeenCalled();
   });
 
   it('uses protected overflow only for a real limit and releases its reservation', () => {
@@ -109,6 +121,27 @@ describe('agent routing', () => {
     mocks.reserve.mockReturnValue(null);
 
     expect(() => runAgent(task)).toThrow('limited');
+    expect(mocks.codex).not.toHaveBeenCalled();
+    expect(mocks.claude).not.toHaveBeenCalled();
+  });
+
+  it('keeps scoped research on the runner that enforces its tool allowlist', () => {
+    const release = vi.fn();
+    const sandbox = { tools: ['Read', 'WebSearch'], allow: ['Read', 'WebSearch'] };
+
+    mocks.reserve.mockReturnValue(release);
+    mocks.claude.mockReturnValue({ ok: true, output: { changed: false } });
+
+    expect(runAgent({ ...task, sandbox })).toMatchObject({ provider: 'claude', overflow: true });
+    expect(mocks.codex).not.toHaveBeenCalled();
+    expect(mocks.claude.mock.calls[0][0].sandbox).toEqual(sandbox);
+    expect(release).toHaveBeenCalledOnce();
+  });
+
+  it('never widens research permissions when protected capacity is unavailable', () => {
+    mocks.reserve.mockReturnValue(null);
+
+    expect(() => runAgent({ ...task, sandbox: { tools: ['Read'], allow: ['Read'] } })).toThrow('limited');
     expect(mocks.codex).not.toHaveBeenCalled();
     expect(mocks.claude).not.toHaveBeenCalled();
   });

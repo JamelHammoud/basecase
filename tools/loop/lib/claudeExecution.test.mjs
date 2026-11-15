@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runClaude } from './claude.mjs';
+import { claudeSubscriptionEnv, runClaude } from './claude.mjs';
 
 const options = {
   cwd: '.',
@@ -12,6 +12,28 @@ const options = {
 const answer = JSON.stringify({ type: 'result', structured_output: { changed: true } });
 
 describe('Claude execution', () => {
+  it('uses the subscription environment even when API auth or a paid provider was selected', () => {
+    const overridden = {
+      ANTHROPIC_API_KEY: 'api-key',
+      ANTHROPIC_AUTH_TOKEN: 'api-token',
+      CLAUDE_CODE_USE_BEDROCK: '1',
+      CLAUDE_CODE_USE_VERTEX: '1',
+      CLAUDE_CODE_USE_FOUNDRY: '1',
+      CLAUDE_CODE_USE_ANTHROPIC_AWS: '1',
+      CLAUDE_CODE_USE_ANTHROPIC_GOOGLE_CLOUD: '1',
+      CLAUDE_CODE_USE_MANTLE: '1',
+    };
+
+    expect(Object.values(claudeSubscriptionEnv(overridden))).toEqual(Array(8).fill(''));
+
+    runClaude(options, (_command, args, settings) => {
+      expect(settings.env).toEqual(claudeSubscriptionEnv());
+      expect(JSON.parse(args[args.indexOf('--settings') + 1])).toEqual({ apiKeyHelper: '' });
+
+      return { ok: true, out: answer, err: '' };
+    });
+  });
+
   it('rejects unsuccessful processes even if stdout contains a successful answer', () => {
     const result = runClaude(options, () => ({ ok: false, out: answer, err: 'process timed out' }));
 

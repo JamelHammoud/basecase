@@ -52,6 +52,10 @@ export function fromStrict(value, schema) {
 
 export function codexLimit({ out = '', err = '' }, now = Date.now()) {
   const events = jsonLines(out);
+  const finalTurn = events.findLast((event) => event.type === 'turn.completed' || event.type === 'turn.failed');
+
+  if (finalTurn?.type === 'turn.completed') return null;
+
   const errors = events.filter((event) => event.type === 'error' || event.type === 'turn.failed');
   const message = events.length ? errors.map((event) => JSON.stringify(event)).join('\n') : out;
 
@@ -161,6 +165,9 @@ function executeCodex(options, files, execute) {
 }
 
 export function runCodex(options, execute = run) {
+  if (options.sandbox?.tools.length > 0)
+    return { ok: false, error: 'Codex exec cannot enforce scoped tool allowlists' };
+
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-codex-'));
   const schemaFile = path.join(dir, 'schema.json');
   const outFile = path.join(dir, 'answer.json');

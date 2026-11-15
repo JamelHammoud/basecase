@@ -50,6 +50,8 @@ describe('quota query subscription environment', () => {
   it('clears API-key overrides when reading Claude plan usage', async () => {
     process.argv = ['node', 'quota-query.mjs', 'claude'];
     vi.stubEnv('ANTHROPIC_API_KEY', 'override');
+    vi.stubEnv('ANTHROPIC_AUTH_TOKEN', 'token-override');
+    vi.stubEnv('CLAUDE_CODE_USE_BEDROCK', '1');
     vi.spyOn(process.stdout, 'write').mockReturnValue(true);
     mocks.query.mockReturnValue({
       usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET: async () => ({
@@ -65,6 +67,9 @@ describe('quota query subscription environment', () => {
     await import('../quota-query.mjs');
 
     expect(mocks.query.mock.calls[0][0].options.env.ANTHROPIC_API_KEY).toBe('');
+    expect(mocks.query.mock.calls[0][0].options.env.ANTHROPIC_AUTH_TOKEN).toBe('');
+    expect(mocks.query.mock.calls[0][0].options.env.CLAUDE_CODE_USE_BEDROCK).toBe('');
+    expect(mocks.query.mock.calls[0][0].options.settings).toEqual({ apiKeyHelper: '' });
     expect(process.stdout.write).toHaveBeenCalledWith(expect.stringContaining('"used":20'));
   });
 });

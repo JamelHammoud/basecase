@@ -28,6 +28,7 @@ export const primaryReserve = (snapshot, now = Date.now()) =>
 export const primaryAvailable = (snapshot, now = Date.now()) =>
   snapshot?.at >= now - 60_000 &&
   snapshot.windows.some((window) => window.minutes === 10080 && window.used < 90 && window.reset > now) &&
+  !primaryReserve(snapshot, now) &&
   snapshot.windows.every((window) => window.used < 100);
 
 export const weeklyForecast = ({ used, reset, now = Date.now() }) => {

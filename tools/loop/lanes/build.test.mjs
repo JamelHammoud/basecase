@@ -41,6 +41,7 @@ vi.mock('../lib/workRecovery.mjs', async (importOriginal) => ({
 
 const { default: build } = await import('./build.mjs');
 const { recoveryFor, saveRecovery } = await import('../lib/workRecovery.mjs');
+const { recordDecline } = await import('../lib/stepState.mjs');
 
 const queuedStep = (number) => ({
   number,
@@ -93,6 +94,58 @@ describe('builder recovery attempts', () => {
       continuation: session,
       prompt: expect.stringContaining('Refreshed main inputs.'),
     });
+    expect(calls.openBranch).not.toHaveBeenCalled();
+  });
+
+  it('preserves a session from a thrown preflight correction failure', () => {
+    const worktree = { dir: directory, branch: 'loop/build/44-feature' };
+    const session = { provider: 'codex', id: 'preflight-thread' };
+    const failure = Object.assign(new Error('provider unavailable'), { session });
+
+    calls.steps = [queuedStep(44)];
+    calls.openBranch.mockReturnValue(worktree);
+    calls.checkedRun.mockImplementationOnce(() => {
+      throw failure;
+    });
+
+    expect(() => build({ log: vi.fn(), slot: 1 })).toThrow(failure);
+    expect(recoveryFor(44)).toMatchObject({ session, ...worktree });
+    expect(calls.release).toHaveBeenCalledOnce();
+    expect(calls.steps[0].labels).toEqual([{ name: 'loop:next' }]);
+  });
+});
+
+describe('builder task readiness', () => {
+  it('keeps current declared dependencies blocking after declined inputs change', () => {
+    const step = { ...queuedStep(45), body: `${queuedStep(45).body}\nDepends on #46.` };
+    const dependency = {
+      ...queuedStep(46),
+      body: 'Requires: physical-robot\nInputs: `src/cameras/`',
+      labels: [{ name: 'loop:blocked' }],
+    };
+
+    calls.steps = [step, dependency];
+    calls.signature = 'changed-source';
+    recordDecline(45, { now: Date.now(), waitFor: [], inputSignature: 'old-source' });
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.checkedRun).not.toHaveBeenCalled();
+    expect(calls.openBranch).not.toHaveBeenCalled();
+
+    calls.steps = [step];
+    calls.openBranch.mockReturnValue({ dir: directory, branch: 'loop/build/45-feature' });
+    calls.checkedRun.mockReturnValue({ ok: true, output: { changed: false, notes: 'Needs a source change.' } });
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.checkedRun).toHaveBeenCalledOnce();
+  });
+
+  it('blocks a legacy task requiring unavailable hardware before opening a worktree', () => {
+    calls.steps = [{ ...queuedStep(47), body: 'Requires: physical-robot\nInputs: `src/cameras/`' }];
+    build({ log: vi.fn(), slot: 1 });
+
+    expect(calls.steps[0].labels).toEqual([{ name: 'loop:blocked' }]);
+    expect(calls.checkedRun).not.toHaveBeenCalled();
     expect(calls.openBranch).not.toHaveBeenCalled();
   });
 });

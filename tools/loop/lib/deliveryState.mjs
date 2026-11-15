@@ -20,6 +20,12 @@ export function saveDelivery(entry) {
 
 export const completeDelivery = (branch) => fs.rmSync(fileFor(branch), { force: true });
 
+export function deliveryFor(branch) {
+  const file = fileFor(branch);
+
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+}
+
 export function pendingDeliveries() {
   if (!fs.existsSync(directory())) return [];
 

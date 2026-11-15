@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { claudeWindows } from './lib/quotaWindows.mjs';
 import { codexHome } from './lib/codexHome.mjs';
+import { claudeSubscriptionEnv, CLAUDE_SUBSCRIPTION_SETTINGS } from './lib/claude.mjs';
 
 async function codex() {
   const child = spawn(process.env.CODEX_BIN || 'codex', ['app-server'], {
@@ -72,7 +73,8 @@ async function claude() {
       tools: [],
       maxTurns: 1,
       pathToClaudeCodeExecutable: process.env.CLAUDE_BIN || 'claude',
-      env: { ...process.env, ANTHROPIC_API_KEY: '' },
+      env: claudeSubscriptionEnv(process.env),
+      settings: CLAUDE_SUBSCRIPTION_SETTINGS,
     },
   });
 

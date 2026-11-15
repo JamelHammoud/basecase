@@ -74,7 +74,6 @@ function endSession() {
   session = null;
   frames?.stop();
   worker.postMessage({ type: 'close' } satisfies TagsRequest);
-  worker.terminate();
 
   if (stream) stopCameraStream(stream);
 }

@@ -4,7 +4,7 @@ import type { Picture } from './runners';
 export interface FrameQueue {
   take: (picture: Picture) => void;
   pump: (frames: ReadableStream<VideoFrame>) => Promise<void>;
-  stop: () => void;
+  stop: () => Promise<void>;
 }
 
 export interface FrameQueueOptions {
@@ -17,6 +17,7 @@ export function createFrameQueue({ wanted, detect, fail }: FrameQueueOptions): F
   let latest: { picture: Picture; seenAt: number } | null = null;
   let reader: ReadableStreamDefaultReader<VideoFrame> | null = null;
   let scheduled = false;
+  let stopped = false;
 
   const dropLatest = () => {
     latest?.picture.close();
@@ -44,7 +45,7 @@ export function createFrameQueue({ wanted, detect, fail }: FrameQueueOptions): F
   const take = (picture: Picture) => {
     const seenAt = wallClock();
 
-    if (!wanted()) return picture.close();
+    if (stopped || !wanted()) return picture.close();
 
     dropLatest();
     latest = { picture, seenAt };
@@ -60,17 +61,24 @@ export function createFrameQueue({ wanted, detect, fail }: FrameQueueOptions): F
     pump: async (frames) => {
       reader = frames.getReader();
 
-      for (;;) {
-        const { value, done } = await reader.read();
+      const current = reader;
 
-        if (done) return;
+      try {
+        for (;;) {
+          const { value, done } = await current.read();
 
-        take(value);
+          if (done) return;
+
+          take(value);
+        }
+      } finally {
+        current.releaseLock();
       }
     },
-    stop: () => {
+    stop: async () => {
+      stopped = true;
       dropLatest();
-      void reader?.cancel().catch(() => undefined);
+      await reader?.cancel().catch(() => undefined);
     },
   };
 }

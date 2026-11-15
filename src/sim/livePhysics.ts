@@ -1,4 +1,5 @@
-import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
+import type { MainModule } from '@mujoco/mujoco';
+import { ControlDelay } from './controlDelay';
 import type { SimEngine } from './engine';
 
 export interface SimPhysics {
@@ -27,32 +28,18 @@ const ratio = (now: ArrayLike<number>, base: ArrayLike<number>, from = 0) => {
 };
 
 export class LivePhysics {
-  private delay = { steps: 0, history: [] as Float64Array[] };
+  private delay = new ControlDelay();
   private engine: SimEngine | null = null;
   private baseline: Record<Field, Float64Array> | null = null;
   private active = false;
 
   module(mj: MainModule): MainModule {
-    const { delay } = this;
-    const step = (model: MjModel, data: MjData) => {
-      if (delay.steps > 0) {
-        delay.history.push(Float64Array.from(data.ctrl));
-
-        const late = delay.history.length > delay.steps ? delay.history.shift()! : delay.history[0];
-
-        data.ctrl.set(late);
-      }
-
-      mj.mj_step(model, data);
-    };
-
-    return Object.create(mj, { mj_step: { value: step } }) as MainModule;
+    return this.delay.module(mj);
   }
 
   attach(engine: SimEngine) {
     this.engine = engine;
-    this.delay.steps = 0;
-    this.delay.history = [];
+    this.delay.reset();
     this.active = false;
     this.baseline = Object.fromEntries(
       FIELDS.map((field) => [field, Float64Array.from(engine.model[field] as ArrayLike<number>)]),
@@ -66,8 +53,7 @@ export class LivePhysics {
 
     for (const field of FIELDS) (engine.model[field] as Float64Array).set(baseline[field]);
 
-    this.delay.steps = physics ? Math.round(physics.latencyMs / 1000 / engine.dt) : 0;
-    this.delay.history = [];
+    this.delay.reset(physics ? Math.round(physics.latencyMs / 1000 / engine.dt) : 0);
     this.active = !!physics;
 
     if (physics) this.scale(physics);

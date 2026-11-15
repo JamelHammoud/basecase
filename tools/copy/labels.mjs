@@ -1,5 +1,6 @@
 import { SLOT } from './extract.mjs';
 import { glossaryWord } from './glossary.mjs';
+import { editDistance } from '../../electron/editDistance.mjs';
 
 const FENCE = /^\s*(```|~~~)/;
 const VERBS = [
@@ -149,24 +150,6 @@ export const hasLabel = (index, text) =>
 
 export const hasKey = (index, cap) => !isCombination(cap) || index.keys.has(chordId(cap)) || index.exceptions.has(cap);
 
-function distance(a, b) {
-  let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
-
-  for (let i = 1; i <= a.length; i += 1) {
-    const row = [i];
-
-    for (let j = 1; j <= b.length; j += 1) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-
-      row.push(Math.min(previous[j] + 1, row[j - 1] + 1, previous[j - 1] + cost));
-    }
-
-    previous = row;
-  }
-
-  return previous[b.length];
-}
-
 function glossaryLabel(index, text) {
   const word = glossaryWord(text);
   const space = text.indexOf(' ');
@@ -184,7 +167,7 @@ function rank(text) {
   return (name) => ({
     name,
     apart: [...wordsOf(name)].some((word) => words.has(word)) ? 0 : 1,
-    cost: distance(lower, name.toLowerCase()),
+    cost: editDistance(lower, name.toLowerCase()),
   });
 }
 

@@ -1,6 +1,7 @@
 import { isCover } from '../guide/guideOrder';
 import type { ScenePart } from '../types/robotics';
-import type { AssemblyGeometry, PartMoves } from './assemblyGeometry';
+import type { AssemblyGeometry } from './assemblyGeometry';
+import { fewestBlockers, hookedBy, leastBlockedSplit } from './blockerChoice';
 import type { SplitPlane } from './splitTest';
 import { RANK } from './chainLines';
 import type { RemovalPlan } from './removalOrder';
@@ -32,11 +33,7 @@ function stuckPartLine(plan: RemovalPlan, g: AssemblyGeometry): ReportLine[] {
   if (!plan.stuckParts.length) return [];
 
   const left = new Set(plan.stuckParts);
-  const inTheWay = plan.stuckParts.flatMap((id) => {
-    const ways = [...g.moves[id].local].sort((a, b) => a.length - b.length);
-
-    return ways[0].filter((x) => left.has(x));
-  });
+  const inTheWay = plan.stuckParts.flatMap((id) => fewestBlockers(g.moves[id].local).filter((x) => left.has(x)));
 
   return [
     {
@@ -132,7 +129,7 @@ export function splitLines(
   contents: (id: string) => string[],
 ): ReportLine[] {
   return Object.entries(splits).map(([id, planes]) => {
-    const best = [...planes].sort((a, b) => a.blockers.flat().length - b.blockers.flat().length)[0];
+    const best = leastBlockedSplit(planes);
     const inside = listIds(contents(id), 3);
     const part = byId.get(id);
     const text =
@@ -142,13 +139,6 @@ export function splitLines(
 
     return { rank: RANK.split, code: 'split', text, ids: [id] };
   });
-}
-
-function hookedBy(m: PartMoves): string[] {
-  const order = m.local.map((b, i) => ({ solid: b.length, lips: m.lips[i] })).sort((a, b) => a.solid - b.solid);
-  const fewest = order.filter((o) => o.solid === order[0].solid);
-
-  return [...fewest].sort((a, b) => a.lips.length - b.lips.length)[0]?.lips ?? [];
 }
 
 export function lipLines(g: AssemblyGeometry): ReportLine[] {

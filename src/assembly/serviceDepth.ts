@@ -5,6 +5,7 @@ import type { AssemblyGeometry } from './assemblyGeometry';
 import { minimumTeardown } from './minimumTeardown';
 import { indexFasteners, type FastenerIndex } from './fastenerIndex';
 import type { RemovalPlan } from './removalOrder';
+import { fewestBlockers } from './blockerChoice';
 
 export type ServiceClass = 'battery' | 'electronics' | 'servo';
 
@@ -107,7 +108,7 @@ function need(s: Search, id: string): Set<string> | null {
 function nearestBlockers(g: AssemblyGeometry, id: string): string[] {
   const m = g.moves[id];
 
-  return [...(m.exit ?? m.local)].sort((a, b) => a.length - b.length)[0]?.filter((x) => g.moves[x]) ?? [];
+  return fewestBlockers(m.exit ?? m.local).filter((x) => g.moves[x]);
 }
 
 export function teardownTo(plan: RemovalPlan, id: string, geometry?: AssemblyGeometry): Set<string> | null {

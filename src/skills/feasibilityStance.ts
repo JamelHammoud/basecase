@@ -1,3 +1,4 @@
+import { pivotRow } from '../utils/matrixScans';
 import {
   bodyCorners,
   bodyPoint,
@@ -81,7 +82,7 @@ function solveSmall(a: number[][], b: number[]): number[] {
   const m = a.map((row, i) => [...row, b[i]]);
 
   for (let c = 0; c < n; c++) {
-    const pivot = m.slice(c).reduce((best, row, i) => (Math.abs(row[c]) > Math.abs(m[best][c]) ? c + i : best), c);
+    const pivot = pivotRow(m, c);
 
     [m[c], m[pivot]] = [m[pivot], m[c]];
 

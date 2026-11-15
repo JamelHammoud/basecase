@@ -58,6 +58,8 @@ The independent verifier, on the WASM `SimEngine`. `runArena({ mj, model, contra
 
 ### Feasibility, Tier 1 (`feasibility.ts`)
 
+`openKin` prepares body membership and leaf lists once per compiled model through `feasibilityBodies.ts`. Subtree intervals answer robot and joint ancestry queries without walking parents. Foot discovery, mass and center-of-mass calculations, joint chains, link scaling and payload loads share this topology. Poses and masses are still read from the current model and data. Each relaxation opens a new model and index.
+
 Stance weight sharing and the prompt solver's `anythingIk.ts` use `utils/matrixScans.ts` for pivot selection. IK also accumulates back-substitution terms through it. Both scan dense rows without copying tails, preserving arithmetic order and their existing zero-pivot behavior. `denseSolves.test.ts` checks offset force balance, empty and single-foot support, and planted targets on three- and six-joint MuJoCo arms with no tail copies.
 
 `checkFeasibility(mj, model, task)` runs only checks that a model can settle, each marked `exact`, `estimate` or `sampled`, with plain messages:

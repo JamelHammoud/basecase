@@ -4,7 +4,6 @@ import {
   bodyCorners,
   bodyPoint,
   chainOf,
-  isUnder,
   reachPoint,
   refresh,
   toLocal,
@@ -31,23 +30,12 @@ export interface PointLoad {
   force: number;
 }
 
-function robotBodies(kin: Kin): number[] {
-  const out: number[] = [];
-
-  for (let b = kin.root; b < kin.model.nbody; b++) if (isUnder(kin, b)) out.push(b);
-
-  return out;
-}
-
-const isLeaf = (kin: Kin, body: number) =>
-  !robotBodies(kin).some((b) => b !== body && kin.model.body_parentid[b] === body);
-
 export function robotMassKg(kin: Kin): number {
-  return robotBodies(kin).reduce((s, b) => s + kin.model.body_mass[b], 0);
+  return kin.bodies.members.reduce((s, b) => s + kin.model.body_mass[b], 0);
 }
 
 export function centerOfMass(kin: Kin): V3 {
-  const bodies = robotBodies(kin);
+  const bodies = kin.bodies.members;
   const mass = robotMassKg(kin);
   const c: V3 = [0, 0, 0];
 
@@ -62,7 +50,7 @@ function lowest(points: V3[]): number {
 }
 
 export function findFeet(kin: Kin): Foot[] {
-  const leaves = robotBodies(kin).filter((b) => b !== kin.root && isLeaf(kin, b));
+  const leaves = kin.bodies.leaves;
   const corners = new Map(leaves.map((b) => [b, bodyCorners(kin, b)]));
   const ground = Math.min(...leaves.map((b) => lowest(corners.get(b)!)));
 

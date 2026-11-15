@@ -1,3 +1,4 @@
+import { componentRoot } from '../componentRoot';
 import type { MeshData } from '../threeMf';
 
 export type V3 = [number, number, number];
@@ -57,15 +58,7 @@ function planeBuckets(mesh: MeshData): Map<string, number[]> {
 
 function components(mesh: MeshData, tris: number[]): number[][] {
   const parent = new Map<number, number>();
-  const find = (x: number): number => {
-    let root = x;
-
-    while (parent.has(root) && parent.get(root) !== root) root = parent.get(root)!;
-
-    parent.set(x, root);
-
-    return root;
-  };
+  const find = (x: number) => componentRoot(parent, x);
   const union = (a: number, b: number) => {
     const [ra, rb] = [find(a), find(b)];
 
@@ -81,8 +74,10 @@ function components(mesh: MeshData, tris: number[]): number[][] {
 
   for (const t of tris) {
     const root = find(mesh.indices[t * 3]);
+    const group = groups.get(root) ?? [];
 
-    groups.set(root, [...(groups.get(root) ?? []), t]);
+    group.push(t);
+    groups.set(root, group);
   }
 
   return [...groups.values()];

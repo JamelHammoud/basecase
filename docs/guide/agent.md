@@ -2,6 +2,8 @@
 
 Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every change follows and the index of these files; section numbers (§) are shared across them.
 
+Port-kind matching and replicad edge identity share `electron/cad-kernel/pairKey.mjs` with collision baselines (§0f). The helper preserves lexical ordering and existing separators without sorting temporary endpoint pairs. CAD edge keys retain their rounded midpoint to distinguish curved edges with the same endpoints.
+
 
 ## Priorities
 

@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 8d. Simulate & Train (MuJoCo)
 
+Contact-replay capture fixtures use `electron/cad-kernel/pairKey.mjs` for unordered body names, preserving their null separator and lexical order without sorting each contact pair (§0f). The final contact list remains sorted.
+
 Drive input declarations and defaults live in `src/sim/inputRegistry.ts`. The Case parser reads them without importing live input handlers. `inputSources.ts` registers those handlers and declares additional source ids through the same registry. `inputSources.test.ts` checks declaration parity, Case validation and an additional source reaching the drive.
 
 Each simulation worker subscribes only to its workspace’s simulated and operator camera inference. Recorded playback results stay in that workspace’s playback console and never reach live Routine facts. `subscribeLiveSceneVision` supplies this boundary and `src/cameras/sceneVision.test.ts` checks opposing detections in two scenes.

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { pairKey } from '../../../electron/cad-kernel/pairKey.mjs';
 import type { SketchPlane, Vec3 } from './placement';
 import type { Sketch, Vec2 } from './types';
 
@@ -86,7 +87,7 @@ function boundary(triangles: Vec2[][]): Array<[Vec2, Vec2]> {
     for (let k = 0; k < 3; k++) {
       const p = tri[k];
       const q = tri[(k + 1) % 3];
-      const key = [keyOf(p), keyOf(q)].sort().join('|');
+      const key = pairKey(keyOf(p), keyOf(q));
       const seen = count.get(key);
 
       if (seen) seen.n += 1;

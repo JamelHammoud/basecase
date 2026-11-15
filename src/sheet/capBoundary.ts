@@ -1,4 +1,5 @@
 import { pointKey, type Edge } from './profileLoops';
+import { pairKey } from '../../electron/cad-kernel/pairKey.mjs';
 
 type Point = Edge[number];
 
@@ -16,7 +17,7 @@ export class CapBoundary {
   }
 
   private addEdge(a: Point, b: Point, ka: string, kb: string): void {
-    const key = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+    const key = pairKey(ka, kb);
     const found = this.counts.get(key);
 
     if (found) {

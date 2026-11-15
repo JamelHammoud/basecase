@@ -25,6 +25,8 @@ A Case is a world with one to four robot slots, controls and goals that any comp
 
 A Case's task contract is the one contract of §8i, judged by the Rust crate through `src/skills/contract.ts`; `src/cases` keeps no evaluator of its own. `src/cases/contract.ts` only reads it as bounded plain JSON (version 1, depth 64, 4096 nodes, finite numbers, at most 16 failures) and scales it with the world (every atom's value and scale, except atoms that read an `angle`). `runCase` (`src/cases/runCase.ts`) runs a Case headless in Node or a worker: it checks every slot's fit (`options.partners` fill the slots after the first), scales the world, builds one model with every slot's robot, drives each slot (`teamDrive`: one `TeamSetup` whose members are the slots' own drives, and a command's `slot` picks the member) and judges the trace with `evaluateContract`; `options.limp` leaves named slots limp (their actuators get no force); `CaseResult` carries that `trace` and the `failed` labels, and a contract the crate refuses makes `runCase` reject. `scoreTry` judges a recorded try the same way.
 
+Reference playback, headless rollouts, fit-check commands and recorded reference fixtures consume fixed schedules through `utils/timelineCursor.ts`. Rollouts use a separate cursor for world events and apply them after reference commands each tick. Each cursor copies and stably sorts its source once, preserves equal-time order and visits each event once without shifting the remaining entries. Its due boundary keeps the existing 1 ns tolerance.
+
 ### Seeded runs
 
 A clean run in a perfect world says little about the real robot, so Checks judges every Case across randomized runs (§8b).

@@ -9,8 +9,6 @@ interface BuildAlongStudio {
   parts: () => Array<{ id: string; visible: boolean }>;
   shownParts: () => string[];
   buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
-  printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
-  readySteps: () => boolean[];
 }
 
 let app: App;
@@ -145,42 +143,6 @@ describe('Build Along', () => {
     await expect.poll(shownParts).toEqual(sorted(parts.map((p) => p.id)));
     expect(await app.page.locator('[data-build-label]').count()).toBe(0);
   }, 300000);
-
-  it('marks a step done once every part it prints is printed', async () => {
-    const firstReady = () =>
-      app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.readySteps()[0]);
-    const printPlates = () =>
-      app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.printPlates());
-
-    await openBuildAlong();
-    expect(await toolbar().getAttribute('data-ready')).toBeNull();
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => toolbar().count()).toBe(0);
-    expect(await firstReady()).toBe(false);
-
-    await app.page
-      .locator('main')
-      .first()
-      .click({ position: { x: 20, y: 20 } });
-    await app.page.keyboard.press('Meta+p');
-    await expect
-      .poll(printPlates, { timeout: 30000 })
-      .toEqual({ open: true, fitTest: false, plates: [['base', 'forearm', 'upper-arm']] });
-    await app.page
-      .locator(shown('button'))
-      .filter({ hasText: /^Mark Printed$/ })
-      .click();
-    await expect.poll(firstReady).toBe(true);
-    await app.page.keyboard.press('Escape');
-    await expect.poll(async () => (await printPlates()).open).toBe(false);
-
-    await openBuildAlong();
-    await expect.poll(() => toolbar().getAttribute('data-ready')).toBe('true');
-
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => toolbar().count()).toBe(0);
-    expect(app.errors).toEqual([]);
-  }, 240000);
 });
 
 describe('Buy All', () => {

@@ -1,5 +1,5 @@
 import type { SceneAnnotation, ScenePart } from '../../types/robotics';
-import { annotationWorldPosition } from '../../utils/aiHandoff';
+import { annotationAttachments } from '../../utils/annotationAttachments';
 import type { Viewport3DHandle } from '../Viewport3D';
 
 export const CARD_WIDTH = 320;
@@ -24,7 +24,7 @@ function cardOffset(anchor: ScreenPoint, layer: { width: number; height: number 
 
 function pinTargets({ shown, parts, draft }: LayoutState) {
   const keys: string[] = shown.map((a) => a.id);
-  const points = shown.map((a) => annotationWorldPosition(a, parts));
+  const points = annotationAttachments(shown, parts).map((a) => a.position);
 
   if (draft) {
     keys.push(DRAFT_KEY);

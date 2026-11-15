@@ -6,14 +6,18 @@ import { detectFeet } from '../utils/usePosing';
 import { robotPartIds } from './selection';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { errorMessage } from '../utils/errorMessage';
+import { useMotionDesign } from './useMotionDesign';
 
 const LEG_JOINT = /hip|knee|ankle|leg|haa|kfe/i;
 
-export function usePoseActions({ posing, parts, project, setSelectedIds, tool, showToast }: WorkspaceCore) {
+export function usePoseActions(core: WorkspaceCore) {
+  const { posing, parts, project, setSelectedIds, tool, showToast } = core;
   const { setMode } = tool;
   const { addAnimation, play } = posing;
   const motionInputRef = useRef<HTMLInputElement | null>(null);
   const [motion, setMotion] = useState<Mocap | null>(null);
+  const design = useMotionDesign(core);
+  const designInputRef = useRef(false);
   const robotRig = posing.robot?.rig ?? null;
   const canWalk = !!robotRig && robotRig.joints.some((j) => j.limb === 'leg' || LEG_JOINT.test(j.name));
 
@@ -59,23 +63,42 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
     play(made.id, 0);
   };
 
-  const importMotion = () => motionInputRef.current?.click();
+  const importMotion = () => {
+    designInputRef.current = false;
+    motionInputRef.current?.click();
+  };
+
+  const designFromMotion = () => {
+    designInputRef.current = true;
+    motionInputRef.current?.click();
+  };
 
   const readMotionFile = async (file: File | undefined) => {
     if (!file) return;
 
+    const designing = designInputRef.current || !posing.hasRig;
+
+    designInputRef.current = false;
+
     const text = await file.text();
+    const name = file.name.replace(/\.bvh$/i, '');
+
+    if (designing) {
+      design.open({ text, name });
+
+      return;
+    }
 
     try {
-      setMotion(parseBvh(text, file.name.replace(/\.bvh$/i, '')));
+      setMotion(parseBvh(text, name));
     } catch (err) {
       showToast(`Couldn’t read ${file.name}. ${errorMessage(err)}`, { tone: 'error' });
     }
   };
 
   const importMotionFile = (file: File) => {
-    if (posing.hasRig) void readMotionFile(file);
-    else showToast('Add joints to retarget motion onto');
+    designInputRef.current = false;
+    void readMotionFile(file);
   };
 
   const createAnimation = (anim: RobotAnimation, summary: string) => {
@@ -95,6 +118,8 @@ export function usePoseActions({ posing, parts, project, setSelectedIds, tool, s
     walkCycle,
     motionInputRef,
     motion,
+    design,
+    designFromMotion,
     closeMotion: () => setMotion(null),
     importMotion,
     readMotionFile,

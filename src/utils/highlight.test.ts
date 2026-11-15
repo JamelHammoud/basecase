@@ -68,4 +68,21 @@ describe('highlight', () => {
   it('leaves unknown languages plain', () => {
     expect(highlight('if x', 'text')).toEqual([{ kind: 'plain', text: 'if x' }]);
   });
+
+  it.each<[string, string[]]>([
+    ['include \t\r\n <robot.scad>', ['<robot.scad>']],
+    ['use \n\t<robot.scad>\n cube(1);', ['<robot.scad>']],
+    ['include path \t <robot.scad>', []],
+    ['include () \t <robot.scad>', []],
+    ['include /* note */ \t <robot.scad>', []],
+    ['include "other" \t <robot.scad>', ['"other"']],
+    ['include 12 \t <robot.scad>', []],
+    ['include \t<one.scad> \n <two.scad>', ['<one.scad>']],
+  ])('keeps the preceding meaningful token when scanning %s', (code, strings) => {
+    expect(
+      highlight(code, 'openscad')
+        .filter((token) => token.kind === 'string')
+        .map((token) => token.text),
+    ).toEqual(strings);
+  });
 });

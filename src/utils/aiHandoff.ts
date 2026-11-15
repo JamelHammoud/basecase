@@ -1,16 +1,7 @@
 import { ProjectSummaryForAI, SceneAnnotation, ScenePart } from '../types/robotics';
 import { hardwareName } from '../data/hardware';
 import { COMPONENT_BY_ID } from '../data/components';
-
-export function annotationWorldPosition(a: SceneAnnotation, parts: ScenePart[]): [number, number, number] {
-  const part = a.partId ? parts.find((p) => p.id === a.partId) : undefined;
-
-  if (part && a.offset) {
-    return [part.position[0] + a.offset[0], part.position[1] + a.offset[1], part.position[2] + a.offset[2]];
-  }
-
-  return a.position;
-}
+import { annotationAttachments, type AnnotationAttachment } from './annotationAttachments';
 
 interface BoxBounds {
   min: [number, number, number];
@@ -97,7 +88,7 @@ function buildSpec(
   projectName: string,
   globalDesignGoal: string,
   parts: ScenePart[],
-  annotations: SceneAnnotation[],
+  annotations: AnnotationAttachment[],
 ): ProjectSummaryForAI {
   const visibleParts = parts.filter((p) => p.visible && p.kind !== 'image_plane');
 
@@ -127,16 +118,12 @@ function buildSpec(
       aiNote: p.note,
     })),
     spatialRelationships: inferSpatialRelationships(visibleParts),
-    annotations: annotations.map((a) => {
-      const [x, y, z] = annotationWorldPosition(a, parts);
-
-      return {
-        id: a.id,
-        positionMm: { x: Math.round(x), y: Math.round(y), z: Math.round(z) },
-        attachedPart: parts.find((p) => p.id === a.partId)?.name,
-        comments: a.comments.map((c) => c.text),
-      };
-    }),
+    annotations: annotations.map(({ annotation: a, part, position: [x, y, z] }) => ({
+      id: a.id,
+      positionMm: { x: Math.round(x), y: Math.round(y), z: Math.round(z) },
+      attachedPart: part?.name,
+      comments: a.comments.map((c) => c.text),
+    })),
   };
 }
 
@@ -242,18 +229,13 @@ function cadSourceLines(parts: ScenePart[]): string[] {
   ];
 }
 
-function annotationLines(openNotes: SceneAnnotation[], parts: ScenePart[]): string[] {
+function annotationLines(openNotes: AnnotationAttachment[]): string[] {
   if (openNotes.length === 0) return [`- None.`];
 
-  return openNotes.flatMap((a, idx) => {
-    const [x, y, z] = annotationWorldPosition(a, parts);
-    const part = parts.find((p) => p.id === a.partId);
-
-    return [
-      `${idx + 1}. At \`(${Math.round(x)}, ${Math.round(y)}, ${Math.round(z)}) mm\`${part ? ` on **${part.name}**` : ''}: ${a.comments[0].text}`,
-      ...a.comments.slice(1).map((reply) => `   - ${reply.text}`),
-    ];
-  });
+  return openNotes.flatMap(({ annotation: a, part, position: [x, y, z] }, idx) => [
+    `${idx + 1}. At \`(${Math.round(x)}, ${Math.round(y)}, ${Math.round(z)}) mm\`${part ? ` on **${part.name}**` : ''}: ${a.comments[0].text}`,
+    ...a.comments.slice(1).map((reply) => `   - ${reply.text}`),
+  ]);
 }
 
 export function buildAIHandoffPayload(
@@ -263,9 +245,10 @@ export function buildAIHandoffPayload(
   annotations: SceneAnnotation[] = [],
 ): { spec: ProjectSummaryForAI; markdown: string } {
   const openNotes = annotations.filter((a) => !a.resolved && a.comments.length > 0);
+  const attachments = annotationAttachments(openNotes, parts);
   const referenceImages = parts.filter((p) => p.visible && p.kind === 'image_plane');
   const visibleParts = parts.filter((p) => p.visible && p.kind !== 'image_plane');
-  const spec = buildSpec(projectName, globalDesignGoal, parts, openNotes);
+  const spec = buildSpec(projectName, globalDesignGoal, parts, attachments);
   const { boundingBoxMm, spatialRelationships } = spec;
 
   const mdLines: string[] = [
@@ -297,7 +280,7 @@ export function buildAIHandoffPayload(
     ``,
     `## 4. Annotations (Pinned in 3D)`,
     ``,
-    ...annotationLines(openNotes, parts),
+    ...annotationLines(attachments),
     ``,
     `## 5. Instructions for AI Engineer`,
     `- **Custom 3D Printed Parts:** Combine overlapping/mating \`3D Printed PLA/PETG\` solids, add fillets/chamfers, and subtract all \`CUTOUT\` parts and COTS mounting clearances (e.g. +0.25mm tolerance around servos/motors/bearings).`,

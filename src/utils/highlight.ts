@@ -138,14 +138,6 @@ function nextToken(scan: Scan, previous: Token | undefined): Token {
   return { kind: 'plain', text: code[at] };
 }
 
-function lastMeaningful(tokens: Token[]): Token | undefined {
-  for (let i = tokens.length - 1; i >= 0; i--) {
-    if (tokens[i].text.trim()) return tokens[i];
-  }
-
-  return undefined;
-}
-
 function pushMerged(tokens: Token[], token: Token): void {
   const last = tokens[tokens.length - 1];
 
@@ -157,12 +149,16 @@ export function highlight(code: string, language?: string): Token[] {
   const family = familyOf(language);
   const grammar = GRAMMARS[family];
   const tokens: Token[] = [];
+  let previous: Token | undefined;
   let at = 0;
 
   while (at < code.length) {
-    const token = nextToken({ code, at, grammar, family }, lastMeaningful(tokens));
+    const token = nextToken({ code, at, grammar, family }, previous);
 
     pushMerged(tokens, token);
+
+    if (token.text.trim()) previous = tokens[tokens.length - 1];
+
     at += token.text.length;
   }
 

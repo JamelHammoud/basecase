@@ -14,6 +14,7 @@ import { boxCenter } from './guideMath';
 import { approximateScene } from './guideScene';
 import { repairInWorker } from './repairClient';
 import { buildRepairPlan } from './repairPlan';
+import { repairRecord } from './repairFixture';
 
 async function fixture(parts: ScenePart[], target: string, joints: RobotJoint[] = []) {
   const geometry = await assemblyIn(snapshotShapes(objectsOf(parts)), {
@@ -29,6 +30,19 @@ async function fixture(parts: ScenePart[], target: string, joints: RobotJoint[] 
 }
 
 describe('repair guide', () => {
+  it('proves removal, one replacement and reassembly for the browser fixture', async () => {
+    const f = await fixture(repairRecord.parts, 'bracket');
+    const repair = await repairInWorker({ ...f, target: 'bracket', groups: {} });
+
+    expect(f.geometry.timedOut).toBe(false);
+    expect(repair?.repair).toEqual({ partId: 'bracket', printed: true });
+    expect(repair?.steps.map((step) => step.repairPhase)).toEqual(['remove', 'swap', 'reassemble']);
+    expect(repair?.steps.filter((step) => step.repairPhase === 'swap').map((step) => step.partIds)).toEqual([
+      ['bracket'],
+    ]);
+    expect(new Set(buildAlongSteps(repair!, []).at(-1)!.shown)).toEqual(new Set(f.plan.partIds));
+  });
+
   it('removes only the target and its fasteners, preserves item letters and restores the full scene', async () => {
     const parts = bracket({ cover: true });
     const f = await fixture(parts, 'plate');

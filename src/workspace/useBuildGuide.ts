@@ -39,6 +39,13 @@ const ESTIMATE_AFTER_MS = 3000;
 
 const clock = () => performance.now();
 
+function pendingPlan() {
+  let resolve!: (plan: GuidePlan | null) => void;
+  const promise = new Promise<GuidePlan | null>((done) => (resolve = done));
+
+  return { promise, resolve };
+}
+
 function withEstimate(progress: GuideProgress, startedAt: number): GuideRunProgress {
   const elapsed = clock() - startedAt;
 
@@ -55,6 +62,7 @@ export function useBuildGuide(options: BuildGuideOptions) {
   const runRef = useRef<Promise<GeneratedGuide | null> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const planRef = useRef<{ fingerprint: string; plan: GuidePlan } | null>(null);
+  const planRunRef = useRef<ReturnType<typeof pendingPlan> | null>(null);
   const record = project.buildGuide;
   const fingerprint = guideFingerprint(sceneName, parts, project);
   const stale = !!record && (record.fingerprint !== fingerprint || !!record.orderTimedOut);
@@ -113,8 +121,11 @@ export function useBuildGuide(options: BuildGuideOptions) {
 
     const abort = new AbortController();
     const startedAt = clock();
+    const pending = pendingPlan();
+    const fingerprint = guideFingerprint(sceneName, partsRef.current, projectRef.current);
 
     abortRef.current = abort;
+    planRunRef.current = pending;
     setProgress({ share: 0, label: 'Measuring parts' });
 
     const started = generateGuide({
@@ -123,6 +134,10 @@ export function useBuildGuide(options: BuildGuideOptions) {
       project: projectRef.current,
       onProgress: (p) => setProgress(withEstimate(p, startedAt)),
       onCover: setCover,
+      onPlan: (plan) => {
+        planRef.current = { fingerprint, plan };
+        pending.resolve(plan);
+      },
       signal: abort.signal,
       order: () => buildOrder(viewportRef.current, partsRef.current),
     })
@@ -133,6 +148,8 @@ export function useBuildGuide(options: BuildGuideOptions) {
         return null;
       })
       .finally(() => {
+        pending.resolve(null);
+        planRunRef.current = null;
         runRef.current = null;
         abortRef.current = null;
         setProgress(null);
@@ -146,12 +163,18 @@ export function useBuildGuide(options: BuildGuideOptions) {
 
   const cancel = () => abortRef.current?.abort();
 
-  const currentPlan = async (): Promise<GuidePlan | null> => {
+  const currentPlan = async ({ beforePdf = false } = {}): Promise<GuidePlan | null> => {
     const known = planRef.current;
 
-    if (known?.fingerprint === guideFingerprint(sceneName, partsRef.current, projectRef.current)) return known.plan;
+    if (
+      known?.fingerprint === guideFingerprint(sceneName, partsRef.current, projectRef.current) &&
+      (beforePdf || !runRef.current)
+    )
+      return known.plan;
 
-    return (await generate({ quiet: true }))?.plan ?? null;
+    const generated = generate({ quiet: true });
+
+    return (beforePdf && planRunRef.current?.promise) || generated.then((result) => result?.plan ?? null);
   };
 
   return {

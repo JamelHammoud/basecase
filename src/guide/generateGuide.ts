@@ -21,6 +21,7 @@ export interface GenerateGuideInput {
   project: ProjectSettings;
   onProgress?: (p: GuideProgress) => void;
   onCover?: (dataUrl: string) => void;
+  onPlan?: (plan: GuidePlan) => void;
   signal?: AbortSignal;
   order?: () => Promise<CheckedOrder | null>;
 }
@@ -82,6 +83,8 @@ function render(job: GuideJob, input: GenerateGuideInput): Promise<RenderedGuide
     if (data.type === 'progress') input.onProgress?.(data.progress);
 
     if (data.type === 'cover') input.onCover?.(data.dataUrl);
+
+    if (data.type === 'plan' && !input.signal?.aborted) input.onPlan?.(data.plan);
   };
   input.signal?.addEventListener('abort', cancel, { once: true });
 

@@ -30,6 +30,7 @@ export interface GuideJob {
 export interface GuideJobEvents {
   onProgress: (p: GuideProgress) => void;
   onCover: (dataUrl: string) => void;
+  onPlan?: (plan: GuidePlan) => void;
   isCancelled: () => boolean;
 }
 
@@ -120,6 +121,7 @@ async function renderWith(renderer: GuideRenderer, job: GuideJob, events: GuideJ
     project.material,
   );
 
+  events.onPlan?.(plan);
   events.onProgress({ share: MEASURE_SHARE, label: 'Drawing steps' });
 
   const drawings = await drawGuide(

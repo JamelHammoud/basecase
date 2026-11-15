@@ -47,6 +47,7 @@ describe('opening a repair', () => {
     expect(result.text).toContain('Repair plate');
     expect(markForReprint).toHaveBeenCalledExactlyOnceWith('plate');
     expect(options.buildAlong.openPlan).toHaveBeenCalledOnce();
+    expect(options.guide.currentPlan).toHaveBeenCalledExactlyOnceWith({ beforePdf: true });
   });
 
   it('explains an unproven teardown without changing the tracker', async () => {

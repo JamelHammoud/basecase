@@ -61,7 +61,7 @@ The map keeps one average point in each 5 cm cube, up to 1,000,000 points. To hi
 
 ![The saved Map Case world after the source try closes](/help/map-a-robot-run/case-world.png)
 
-The world keeps the selected try and scan-matching choice at the time you choose Make World. You can close the try and reopen the saved scene without losing the Case's world.
+The world records the source try and scan-matching choice when you choose **Make World**. You can close the try and reopen the saved scene without losing the Case's world.
 
 Reconstruction uses 10 cm cells and refuses a world needing more than 64 collision pieces. It leaves unobserved regions open. A planar laser scan uses an estimated floor under observed free space and an estimated 1 m obstacle height. Depth and point-cloud recordings keep their observed surfaces, including floor patches and steps.
 

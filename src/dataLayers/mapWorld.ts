@@ -3,7 +3,9 @@ import type { WorldAsset } from '../cases/worldAssets';
 import { decodeTopicLog } from '../topics/topicFile';
 import { schemaKey } from '../topics/schemas';
 import { TopicIndex } from '../topics/topicIndex';
+import type { RecordedTopic } from '../topics/topicLog';
 import { topicMap } from './mapFeed';
+import { isDepth } from './mapSweeps';
 import { boxHull, boxesMesh, mergeCells, type CellBox } from './mapWorldBoxes';
 import { cellKey, MapWorldCells, RECONSTRUCTION_M } from './mapWorldCells';
 
@@ -13,6 +15,26 @@ export interface MapWorldRequest {
   name: string;
   matching: boolean;
   maxPieces?: number;
+}
+
+const MAPPING_SCHEMAS = new Set([
+  'sensor_msgs/LaserScan',
+  'sensor_msgs/PointCloud2',
+  'sensor_msgs/CameraInfo',
+  'tf2_msgs/TFMessage',
+  'nav_msgs/Odometry',
+]);
+
+function clippedMappingTopic(topic: RecordedTopic): boolean {
+  if (!topic.clipped) return false;
+
+  const schema = schemaKey(topic.schema);
+
+  if (schema !== 'sensor_msgs/Image') return MAPPING_SCHEMAS.has(schema);
+
+  const encodings = topic.labels.get('encoding');
+
+  return !encodings?.length || encodings.some((encoding) => !encoding || isDepth({ encoding }));
 }
 
 function planarPieces(cells: MapWorldCells, limit: number) {
@@ -58,17 +80,7 @@ export async function reconstructMapWorld(request: MapWorldRequest): Promise<Wor
 
   if (!log) return refuse('Scan reconstruction', 'needs recorded scan topics');
 
-  const mappingSchemas = new Set([
-    'sensor_msgs/LaserScan',
-    'sensor_msgs/PointCloud2',
-    'sensor_msgs/Image',
-    'sensor_msgs/CameraInfo',
-    'tf2_msgs/TFMessage',
-    'nav_msgs/Odometry',
-  ]);
-
-  if (log.topics.some((topic) => topic.clipped && mappingSchemas.has(schemaKey(topic.schema))))
-    return refuse('Scan reconstruction', 'needs unclipped recorded topics');
+  if (log.topics.some(clippedMappingTopic)) return refuse('Scan reconstruction', 'needs unclipped recorded topics');
 
   const cells = new MapWorldCells();
   const built = topicMap(new TopicIndex(log), { match: matching }, cells.add);

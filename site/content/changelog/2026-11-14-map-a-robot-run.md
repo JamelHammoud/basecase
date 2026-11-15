@@ -12,7 +12,7 @@ Laser scans, point clouds and depth images feed the map, with recorded transform
 
 The Map row’s Make World action now turns an imported ROS run into a saved simulation world and opens New Case with it selected. A rover can drive through the recorded corridor again, with collision walls around it. Closing the try keeps the Case world.
 
-![New Case with Map selected and the planar scan’s estimates identified](/help/map-a-robot-run/new-case.png)
+![New Case with Map selected and the planar scan’s estimates identified](/changelog/map-a-robot-run/new-case.png)
 
 Worlds use 10 cm cells and at most 64 exact convex pieces. Unknown regions stay open. Planar scans use an estimated floor and 1 m obstacle height. Simulated scan maps remain overlays, and maps stay out of captures and camera views.
 

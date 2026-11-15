@@ -66,6 +66,7 @@ const EXPECTED_NAMES = [
   'mates',
   'meshByColor',
   'multiplyRuns',
+  'openBuildAlong',
   'operatorCamera',
   'partTriangles',
   'parts',

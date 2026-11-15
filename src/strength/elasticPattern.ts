@@ -7,9 +7,15 @@ export interface BlockMatrix {
 const MAX_NEIGHBOURS = 27;
 
 function addNeighbour(near: Int32Array, size: Int32Array, i: number, j: number): void {
-  const row = near.subarray(i * MAX_NEIGHBOURS, i * MAX_NEIGHBOURS + size[i]);
+  const start = i * MAX_NEIGHBOURS;
+  const end = start + size[i];
 
-  if (!row.includes(j)) near[i * MAX_NEIGHBOURS + size[i]++] = j;
+  for (let k = start; k < end; k++) {
+    if (near[k] === j) return;
+  }
+
+  near[end] = j;
+  size[i]++;
 }
 
 function pattern(nodes: Int32Array, count: number): { rowStart: Int32Array; cols: Int32Array } {

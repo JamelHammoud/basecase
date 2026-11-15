@@ -61,10 +61,18 @@ export function bodyMassProperties(
   const parents = new Set(bodies.map((body) => body.parent));
   const adjusted = new Map(masses.map((mass) => [mass.id, mass]));
   const payloads: Record<string, { carrier: string; grams: number; centroid: PartMass['centroid'] }> = {};
+  const fits = new Map<string, BodyFit | undefined>();
 
   for (const body of bodies) {
-    const calibration = activeBodyCalibration(project.bodyCalibrations?.[body.robot ?? '']);
-    const fit = calibration ? bodyFitForCalibration(calibration, bodies, body.robot ?? '') : undefined;
+    const robot = body.robot ?? '';
+
+    if (!fits.has(robot)) {
+      const calibration = activeBodyCalibration(project.bodyCalibrations?.[robot]);
+
+      fits.set(robot, calibration ? bodyFitForCalibration(calibration, bodies, robot) : undefined);
+    }
+
+    const fit = fits.get(robot);
 
     if (!fit) continue;
 

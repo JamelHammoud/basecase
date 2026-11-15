@@ -27,6 +27,7 @@ interface Span {
 interface ScrewCtx {
   spec: ScrewSpec;
   tip: THREE.Vector3;
+  point: THREE.Vector3;
   u: THREE.Vector3;
   underT: number;
   topT: number;
@@ -38,7 +39,7 @@ interface ScrewCtx {
 }
 
 const STEP_MM = 0.25;
-const at = (ctx: ScrewCtx, t: number) => ctx.tip.clone().addScaledVector(ctx.u, t);
+const at = (ctx: ScrewCtx, t: number) => ctx.point.copy(ctx.tip).addScaledVector(ctx.u, t);
 const bites = (o: Placed, p: THREE.Vector3, d: number) => isNear(o, p, d * 0.5);
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
@@ -78,7 +79,8 @@ function biteRun(ctx: ScrewCtx, host: Placed, from: number): number {
 
 function threadHost(ctx: ScrewCtx): Placed | null {
   for (const t of [0.4, 0.9]) {
-    const host = ctx.solids.find((o) => bites(o, at(ctx, t), ctx.spec.d));
+    const p = at(ctx, t);
+    const host = ctx.solids.find((o) => bites(o, p, ctx.spec.d));
 
     if (host) return host;
   }
@@ -338,6 +340,7 @@ function screwContext(spec: ScrewSpec, placed: Placed, scene: Scene): ScrewCtx {
 
   return {
     ...base,
+    point: new THREE.Vector3(),
     underT: spec.underY - spec.tipY,
     topT: spec.topY - spec.tipY,
     solids: scene.solids.filter((o) => o.box.intersectsBox(reach)),

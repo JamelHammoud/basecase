@@ -39,21 +39,4 @@ describe('visible captions as control names', () => {
     await settings.waitFor({ state: 'hidden' });
     expect(app.errors).toEqual([]);
   });
-
-  it('keeps the print settings and selected part names', async () => {
-    await app.page.keyboard.press('a');
-    await app.page.getByRole('button', { name: /^Cube/ }).first().click();
-    await app.page.keyboard.press('Meta+p');
-    await app.page.getByTestId('print-printer').waitFor({ state: 'visible' });
-
-    for (const name of ['Printer', 'Quality', 'Material'])
-      expect(await app.page.getByRole('combobox', { name, exact: true }).count()).toBe(1);
-
-    expect(await app.page.getByRole('textbox', { name: 'Infill', exact: true }).count()).toBe(1);
-    await app.page.getByRole('button', { name: /^Parts/ }).click();
-    await app.page.getByRole('button', { name: /^Cube/ }).filter({ visible: true }).click();
-    expect(await app.page.getByRole('textbox', { name: 'Copies', exact: true }).count()).toBe(1);
-    await app.page.keyboard.press('Escape');
-    expect(app.errors).toEqual([]);
-  });
 });

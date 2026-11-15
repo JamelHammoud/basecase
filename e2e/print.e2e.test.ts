@@ -137,6 +137,17 @@ describe('print layout', () => {
     );
     expect(await app.page.getByRole('button', { name: /^Send Plate/ }).count()).toBe(0);
 
+    for (const name of ['Printer', 'Quality', 'Material'])
+      expect(await app.page.getByRole('combobox', { name, exact: true }).count()).toBe(1);
+
+    expect(await app.page.getByRole('textbox', { name: 'Infill', exact: true }).count()).toBe(1);
+
+    const parts = app.page.locator(visible('section'), { hasText: /^Parts/ }).first();
+
+    await parts.getByRole('button', { name: /^Parts/ }).click();
+    await parts.getByRole('listitem').getByRole('button').click();
+    expect(await app.page.getByRole('textbox', { name: 'Copies', exact: true }).count()).toBe(1);
+
     await app.page.locator(visible('button'), { hasText: /^Add Printer$/ }).click();
     await expect
       .poll(() => app.page.locator(visible('[role=dialog][aria-label=Settings] h3')).textContent())
@@ -149,6 +160,7 @@ describe('print layout', () => {
 
     await app.page.getByRole('button', { name: 'Done' }).click();
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(0);
+    expect(app.errors).toEqual([]);
   });
 
   it('opens the plates with ⌘P, shows the Print panel, and closes with Esc', async () => {

@@ -1,18 +1,8 @@
 import { COMPONENT_BY_ID, componentVariant } from '../data/components';
 import type { MeshMeasure } from '../three/meshMeasure';
-import type { Purchases } from '../types/robotics';
-import { robotTotals } from './caseCompare';
 import { volts } from '../utils/electric';
 import type { CaseRuns } from './caseRuns';
-import {
-  designKey,
-  designScene,
-  exploreDesigns,
-  exploreSpace,
-  type Design,
-  type DesignScene,
-  type ExploreSpace,
-} from './exploreDesigns';
+import type { Design, DesignScene, ExploreSpace } from './exploreDesigns';
 
 export {
   designKey,
@@ -52,14 +42,6 @@ export interface ExploredDesign {
   massG: number;
 }
 
-export interface ExploreOptions {
-  runs: (robot: ExploreRobot) => Promise<CaseRuns>;
-  purchases: Purchases;
-  designs?: Design[];
-  stopped?: () => boolean;
-  onDesign?: (row: ExploredDesign) => void;
-}
-
 function variantOf(componentId: string, id: string) {
   const c = COMPONENT_BY_ID[componentId];
   const v = c && componentVariant(c, id);
@@ -97,34 +79,4 @@ export function designLabel(space: ExploreSpace, design: Design): string {
   const supply = design.volts === space.current.volts ? [] : [volts(design.volts)];
 
   return [...servos, ...supply].join('; ');
-}
-
-export async function exploreCase(base: ExploreBase, options: ExploreOptions): Promise<ExploredDesign[]> {
-  const space = exploreSpace(base.parts, base.project);
-
-  if (!space) return [];
-
-  const rows: ExploredDesign[] = [];
-
-  for (const design of options.designs ?? exploreDesigns(space)) {
-    if (options.stopped?.()) break;
-
-    const scene = designScene(base, space, design);
-    const runs = await options.runs({ ...base, ...scene, servoVolts: design.volts });
-
-    if (options.stopped?.()) break;
-
-    const row: ExploredDesign = {
-      key: designKey(design),
-      design,
-      changes: designChanges(space, design),
-      runs,
-      ...robotTotals({ ...scene, measures: base.measures }, options.purchases),
-    };
-
-    rows.push(row);
-    options.onDesign?.(row);
-  }
-
-  return rows;
 }

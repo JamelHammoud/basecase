@@ -16,6 +16,7 @@ import {
   RulerIcon,
   ShapeIcon,
   SubtractIcon,
+  SwapIcon,
   UngroupIcon,
 } from '../design-system';
 import { faultSubmenu } from '../components/simulate/faultMenu';
@@ -54,6 +55,9 @@ function renameItems(inputs: ContextInputs): ContextMenuEntry[] {
 
   return rename ? [menuEntry(rename)] : [];
 }
+
+const studyItems = (study: WorkspaceCore['study']): ContextMenuEntry[] =>
+  study.available ? [{ label: 'Study', icon: <SwapIcon />, onSelect: study.show }] : [];
 
 function sharedEntries(inputs: ContextInputs) {
   const { core, actions } = inputs;
@@ -127,6 +131,7 @@ function multiItems(inputs: ContextInputs): ContextMenuEntry[] {
     { divider: true },
     ...handJointMenuItems(actions.joints),
     ...armItems(inputs),
+    ...studyItems(core.study),
     shared.align,
     shared.drop,
     shared.center,
@@ -188,6 +193,7 @@ function partItems(inputs: ContextInputs, part: ScenePart, commentHere: ContextM
     ...(one.repair ? [menuEntry(one.repair)] : []),
     ...leaderMenuItems(actions, part.id),
     ...armItems(inputs),
+    ...studyItems(inputs.core.study),
     ...commentHere,
     { divider: true },
     shared.align,
@@ -258,6 +264,7 @@ function canvasItems(inputs: ContextInputs, menu: CanvasMenuState, commentHere: 
     },
     { divider: true },
     shared.selectAll,
+    ...studyItems(core.study),
     { divider: true },
     ...CAMERA_VIEWS.map((v) => ({
       label: `${v.label} View`,

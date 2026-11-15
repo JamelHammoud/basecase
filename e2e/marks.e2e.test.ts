@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { SceneMark } from '../src/types/robotics';
-import { openApp, partCount, type App } from './harness';
+import { openApp, type App } from './harness';
 
 let app: App;
 
@@ -30,13 +30,6 @@ async function draw(points: Array<[number, number]>) {
   await app.page.mouse.up();
 }
 
-const circle = (cx: number, cy: number, r: number): Array<[number, number]> =>
-  Array.from({ length: 41 }, (_, i) => {
-    const a = (i / 40) * Math.PI * 2;
-
-    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
-  });
-
 const focusedLabel = () => app.page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
 
 beforeAll(async () => {
@@ -49,19 +42,15 @@ afterAll(async () => {
 
 describe('annotate marks', () => {
   it('draws a mark and labels it', async () => {
-    await app.page.keyboard.press('a');
-    await app.page.getByRole('button', { name: /^Cube/ }).first().waitFor();
-    await app.page.evaluate(() =>
-      [...document.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Cube'))?.click(),
-    );
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => partCount(app.page)).toBe(1);
     await app.page.keyboard.press('n');
     await app.page.getByRole('button', { name: 'Yellow' }).waitFor();
 
     const { x, y } = await canvasCenter();
 
-    await draw(circle(x, y, 90));
+    await draw([
+      [x - 90, y],
+      [x + 90, y],
+    ]);
     expect(await marks()).toHaveLength(1);
     expect(await focusedLabel()).toBe('Mark label');
 

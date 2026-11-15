@@ -195,6 +195,7 @@ export function useCases(options: CasesOptions) {
     ...options,
     joints: project.joints ?? [],
     active,
+    scope: project.cases?.find((kase) => kase.id === activeId) ?? null,
     onTry,
     onRefuse: (message) => showToast(message),
   });

@@ -257,13 +257,29 @@ function connectedMembers(
   return collectMembers(uf);
 }
 
+function orderedMemberJoints(members: Map<string, Members>, ordered: RobotJoint[]) {
+  const groups = new Map<Members, RobotJoint[]>();
+  const byJoint = new Map<string, RobotJoint[]>();
+
+  for (const m of members.values()) {
+    const joints: RobotJoint[] = [];
+
+    groups.set(m, joints);
+
+    for (const id of m.joints) byJoint.set(id, joints);
+  }
+
+  for (const j of ordered) byJoint.get(j.id)!.push(j);
+
+  return groups;
+}
+
 function robotGroup(
   m: Members,
-  ordered: RobotJoint[],
+  ids: RobotJoint[],
   parentOf: Map<string, string | null>,
   byPart: Map<string, ScenePart>,
 ) {
-  const ids = ordered.filter((j) => m.joints.includes(j.id));
   const base = ids.filter((j) => !parentOf.get(j.id));
   const pivotOf = base.length ? base : ids;
   const key = [...pivotOf.map((j) => j.id)].sort()[0];
@@ -300,10 +316,10 @@ function robotGroups(
   const robotOf = new Map<string, string>();
   const robots: RobotGroup[] = [];
 
-  for (const m of members.values()) {
-    if (!m.joints.length) continue;
+  for (const [m, joints] of orderedMemberJoints(members, ordered)) {
+    if (!joints.length) continue;
 
-    const group = robotGroup(m, ordered, parentOf, byPart);
+    const group = robotGroup(m, joints, parentOf, byPart);
 
     robots.push(group);
     group.joints.forEach((id) => robotOf.set(id, group.key));

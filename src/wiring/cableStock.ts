@@ -19,6 +19,14 @@ const lengthOf = (supply: SupplyInfo): number | null => {
   return cable?.source && Number.isFinite(cable.lengthMm) && cable.lengthMm! > 0 ? cable.lengthMm! : null;
 };
 
+function selectedStock(supply: SupplyInfo | undefined, lengthMm: number | null, fits: boolean): CableSelection {
+  if (!supply) return { cableSupplyId: null, lengthMm: null, status: 'unsupported' };
+
+  if (lengthMm === null) return { cableSupplyId: supply.id, lengthMm, status: 'unknown-length' };
+
+  return { cableSupplyId: supply.id, lengthMm, status: fits ? 'fits' : 'too-short' };
+}
+
 export function selectCableStock(
   from: ConnectorType,
   to: ConnectorType,
@@ -28,16 +36,31 @@ export function selectCableStock(
   if (!Number.isFinite(requiredMm) || requiredMm < 0)
     throw new RangeError('Cable length must be finite and nonnegative');
 
-  const compatible = stock.filter((supply) => hasEnds(supply, from, to));
-  const known = compatible.filter((supply) => lengthOf(supply) !== null).sort((a, b) => lengthOf(a)! - lengthOf(b)!);
-  const fit = known.find((supply) => lengthOf(supply)! >= requiredMm);
-  const supply = fit ?? known.at(-1) ?? compatible[0];
+  let compatible: SupplyInfo | undefined;
+  let fit: SupplyInfo | undefined;
+  let longest: SupplyInfo | undefined;
+  let fitLength = Infinity;
+  let longestLength = 0;
 
-  if (!supply) return { cableSupplyId: null, lengthMm: null, status: 'unsupported' };
+  for (const supply of stock) {
+    if (!hasEnds(supply, from, to)) continue;
 
-  const lengthMm = lengthOf(supply);
+    compatible ??= supply;
 
-  if (lengthMm === null) return { cableSupplyId: supply.id, lengthMm, status: 'unknown-length' };
+    const lengthMm = lengthOf(supply);
 
-  return { cableSupplyId: supply.id, lengthMm, status: fit ? 'fits' : 'too-short' };
+    if (lengthMm === null) continue;
+
+    if (lengthMm >= longestLength) {
+      longest = supply;
+      longestLength = lengthMm;
+    }
+
+    if (lengthMm >= requiredMm && lengthMm < fitLength) {
+      fit = supply;
+      fitLength = lengthMm;
+    }
+  }
+
+  return selectedStock(fit ?? longest ?? compatible, (fit ? fitLength : longestLength) || null, !!fit);
 }

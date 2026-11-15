@@ -1,3 +1,4 @@
+import type { CameraVision } from './scopedVision';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
 import { runClock } from '../utils/duration';
@@ -13,6 +14,7 @@ export interface ShotFrame {
 }
 
 export interface CameraShotInput {
+  vision?: CameraVision;
   parts: ScenePart[];
   world: ScenePart[];
   model: SimModel | null;
@@ -61,7 +63,7 @@ export async function cameraShots(input: CameraShotInput): Promise<CameraShots> 
 
   if (!views.length) return { shots: [], missing, available };
 
-  const feed = cameraFeed();
+  const feed = cameraFeed(input.vision);
   const keys = views.map((v) => v.key);
   const timed = input.frames.length > 1 || input.frames.some((f) => f.poses);
   const shots: CameraShot[] = [];

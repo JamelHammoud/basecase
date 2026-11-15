@@ -71,7 +71,13 @@ export function createShotVision(copy: (camera: string, source: ImageBitmap) => 
 
         frame = copy(sourceKey, source);
 
-        port.postMessage({ type: 'frame', camera, modelId, frame, timestamp: performance.now() }, [frame]);
+        const identity = assignments.find(
+          (assignment) => assignment.camera === sourceKey && assignment.modelId === modelId,
+        )?.source;
+
+        port.postMessage({ type: 'frame', source: identity, camera, modelId, frame, timestamp: performance.now() }, [
+          frame,
+        ]);
       } catch (error) {
         frame?.close();
         refuse(key, errorMessage(error));

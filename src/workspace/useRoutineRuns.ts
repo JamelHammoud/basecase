@@ -1,5 +1,6 @@
 import { useEffect, type RefObject } from 'react';
-import { availableVisionCameras } from '../cameras/visionSession';
+import { useVisionScope } from '../cameras/visionScope';
+import { liveSceneVision } from '../cameras/sceneVision';
 import { cameraViews, stripParts } from '../cameras/views';
 import type { FixedCamera } from '../cameras/fixed';
 import { sourcedMeshFiles } from '../three/componentMeshes';
@@ -35,6 +36,7 @@ interface RunsInput {
 }
 
 export function useRoutineRuns({ pending, sim, sceneRef, setRun, scope }: RunsInput) {
+  const cameraVision = liveSceneVision(useVisionScope());
   const lease = useStartupLease(scope, sim.subscribeStop);
   const headless = useStartupLease(scope, sim.subscribeStop);
 
@@ -53,7 +55,8 @@ export function useRoutineRuns({ pending, sim, sceneRef, setRun, scope }: RunsIn
 
     if (!found?.compiled.ok) return { started: false, message: NOT_COMPILED, errors: found?.compiled.errors };
 
-    const vision = await prepareRoutineVision(found.compiled.plan, availableVisionCameras(), {
+    const vision = await prepareRoutineVision(found.compiled.plan, cameraVision.availableVisionCameras(), {
+      vision: cameraVision,
       current: () => lease.current(ticket),
     });
 

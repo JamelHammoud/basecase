@@ -86,6 +86,7 @@ export class VisionEngine {
       return {
         modelId: loaded.manifest.id,
         backend: loaded.backend,
+        source: options.source,
         camera: options.camera,
         timestamp: options.timestamp ?? performance.now(),
         width: pixels.width,

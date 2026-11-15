@@ -1,8 +1,13 @@
 import React, { useSyncExternalStore } from 'react';
-import { cameraVision, cameraVisionError, onCameraVision } from '../../cameras/visionSession';
+import type { CameraVision } from '../../cameras/scopedVision';
 import { DetectionBoxes } from './DetectionBoxes';
 
-export const DetectionOverlay: React.FC<{ camera: string; mirrorText?: boolean }> = ({ camera, mirrorText }) => {
+export const DetectionOverlay: React.FC<{ camera: string; mirrorText?: boolean; vision: CameraVision }> = ({
+  camera,
+  mirrorText,
+  vision,
+}) => {
+  const { cameraVision, cameraVisionError, onCameraVision } = vision;
   const result = useSyncExternalStore(
     onCameraVision,
     () => cameraVision(camera),

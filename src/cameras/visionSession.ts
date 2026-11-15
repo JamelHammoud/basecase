@@ -18,8 +18,8 @@ const manifests = new Map<string, VisionManifest>();
 const signalCache = new Map<string, { version: number; values: Record<string, number> }>();
 let signalVersion = 0;
 const loaded = new Map<string, Promise<void>>();
-const listeners = new Set<() => void>();
-const configurations = new Set<() => void>();
+const listeners = new Set<(camera?: string) => void>();
+const configurations = new Set<(camera?: string) => void>();
 const knownSignals = new Set<string>();
 const resultListeners = new Set<(result: VisionResult) => void>();
 const requested = new Set<string>();
@@ -27,9 +27,9 @@ const cameraEpochs = new Map<string, number>();
 const cameraSources = new Map<object, string[]>();
 let watching = false;
 
-const changed = () => {
+const changed = (camera?: string) => {
   signalVersion++;
-  listeners.forEach((listen) => listen());
+  listeners.forEach((listen) => listen(camera));
 };
 const identity = (camera: string, modelId: string) => `${camera}:${modelId}`;
 const privateCamera = (camera: string) => camera.startsWith('routine-l2:') || camera.startsWith('camera-shot:');
@@ -42,14 +42,14 @@ function watch() {
   visionRuntime().onError((error) => {
     if (!error.camera) return failVisionSession(error.error);
 
-    if (
-      privateCamera(error.camera) ||
-      (error.timestamp !== undefined && error.timestamp < (minimum.get(error.camera) ?? -Infinity))
-    )
-      return;
+    if (privateCamera(error.camera)) return;
 
-    errors.set(error.camera, error.error);
-    clearVisionCamera(error.camera);
+    const camera = error.source ? `${error.source.id}/${error.camera}` : error.camera;
+
+    if (error.timestamp !== undefined && error.timestamp < (minimum.get(camera) ?? -Infinity)) return;
+
+    errors.set(camera, error.error);
+    clearVisionCamera(camera);
   });
 }
 
@@ -67,7 +67,11 @@ function failVisionSession(message: string) {
   changed();
 }
 
-export function publishCameraVision(result: VisionResult) {
+export function publishCameraVision(incoming: VisionResult) {
+  if (!incoming.camera || privateCamera(incoming.camera)) return;
+
+  const result = incoming.source ? { ...incoming, camera: `${incoming.source.id}/${incoming.camera}` } : incoming;
+
   if (
     !result.camera ||
     result.camera.startsWith('routine-l2:') ||
@@ -93,10 +97,10 @@ export function publishCameraVision(result: VisionResult) {
 
   errors.delete(result.camera);
   resultListeners.forEach((listen) => listen(result));
-  changed();
+  changed(result.camera);
 }
 
-export function onCameraVision(listener: () => void): () => void {
+export function onCameraVision(listener: (camera?: string) => void): () => void {
   listeners.add(listener);
 
   return () => {
@@ -104,7 +108,7 @@ export function onCameraVision(listener: () => void): () => void {
   };
 }
 
-export function onVisionAssignments(listener: () => void): () => void {
+export function onVisionAssignments(listener: (camera?: string) => void): () => void {
   configurations.add(listener);
 
   return () => {
@@ -147,9 +151,8 @@ export function registerVisionCameras(owner: object, cameras: string[]) {
 
       errors.delete(camera);
       invalidateVisionCamera(camera);
+      configurations.forEach((listen) => listen(camera));
     }
-
-    configurations.forEach((listen) => listen());
   };
 }
 
@@ -175,7 +178,7 @@ function clearVisionCamera(camera: string) {
 
   for (const [id, result] of results) if (result.camera === camera) results.delete(id);
 
-  changed();
+  changed(camera);
 }
 
 export function loadVisionManifest(manifest: VisionManifest, bytes?: Uint8Array): Promise<void> {
@@ -225,8 +228,8 @@ function commitCameraAssignment(camera: string, modelId: string) {
     if (label) knownSignals.add(`vision.${camera}.${visionSignalClass(label)}`);
 
   errors.delete(camera);
-  configurations.forEach((listen) => listen());
-  changed();
+  configurations.forEach((listen) => listen(camera));
+  changed(camera);
 }
 
 async function prepareCameraModel(camera: string, modelId: string, current: () => boolean) {
@@ -240,7 +243,7 @@ async function prepareCameraModel(camera: string, modelId: string, current: () =
   } catch (error) {
     if (active()) {
       errors.set(camera, errorMessage(error));
-      changed();
+      changed(camera);
     }
 
     throw error;

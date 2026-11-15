@@ -349,6 +349,8 @@ A **dataset** is a named, versioned set of tries from any scene, Case or source,
 
 ### Running a Case
 
+Camera detections and live console signals belong to the Case’s workspace and camera source. Recorded consoles select recorded results for video-backed tiles and simulated results for other tiles in that workspace. Each workspace owns its playback decoder, seek boundary and error state.
+
 **Run Case** (the expand button in the Case's header in Simulate, and ⌘K, with a Case open) runs the open Case in the whole window, laid out by its console. It has no name of its own: what a Case shows when it runs is part of the Case. It's a mode of the scene's workspace like Print (§8f), not a second scene: `useCaseRun` (`src/workspace/`) holds it, and `CaseRunProvider` gives both sides of the canvas one signal bus and one camera feed.
 
 **The console** (`src/cases/console/format.ts`) is four parts:

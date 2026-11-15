@@ -15,6 +15,8 @@ Silhouette and proportion scores (what the bench measures today) matter less tha
 
 ## 9. Agent (Claude Code over ACP) and Agent Panel
 
+Agent camera captures use the requesting workspace’s simulated-camera assignments and carry its source identity through inference. Each shot keeps its private request identity, so its result cannot satisfy a live tile or Routine subscription.
+
 ### Architecture
 
 `make_images` creates labelled training frames from an existing Case, resolved by name or ID. Its optional `count`, `cameras`, `classes` and `seed` use the same `useTrainingImages` and worker path as Make Training Images in Results. Count defaults to 20 and seed to 1. It returns `frame_set`, `dataset` and `class_counts`, counting visible annotated instances by class. The Case's scene geometry, named points, color classes and mount tolerance determine the labels and variation. The `create_case` schema bounds camera tolerance at the Case reader's 500 mm and 45 degrees. The format and exports live in `src/vision/frameSet.ts`, `cocoExport.ts` and `yoloExport.ts`, documented in [Cases](cases.md#training-images).

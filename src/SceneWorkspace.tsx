@@ -1,4 +1,5 @@
-import { memo } from 'react';
+import { createVisionScope, VisionScopeContext } from './cameras/visionScope';
+import { memo, useState } from 'react';
 import { CanvasCard } from './workspace/CanvasCard';
 import { CanvasContextMenu } from './workspace/CanvasContextMenu';
 import { CaseRunAreas, CaseRunProvider } from './workspace/CaseRunProvider';
@@ -73,7 +74,17 @@ function SceneWorkspaceImpl(props: SceneWorkspaceProps) {
   );
 }
 
+function ScopedWorkspace(props: SceneWorkspaceProps) {
+  const [scope] = useState(() => createVisionScope(props.workspaceId));
+
+  return (
+    <VisionScopeContext value={scope}>
+      <SceneWorkspaceImpl {...props} />
+    </VisionScopeContext>
+  );
+}
+
 export const SceneWorkspace = memo(
-  SceneWorkspaceImpl,
+  ScopedWorkspace,
   (prev, next) => !prev.active && !next.active && prev.workspaceId === next.workspaceId && prev.seed === next.seed,
 );

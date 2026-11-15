@@ -8,16 +8,8 @@ import type { TaughtGesture } from '../gestures/gestureRecognizer';
 import type { FaceFollow, FaceSample } from './faceFollow';
 import type { HandFollow, HandSample } from './handFollow';
 import { createLatencyLog, type LatencyStats } from './latencyLog';
-import {
-  connectVisionFrames,
-  ensureVisionCamera,
-  invalidateVisionCamera,
-  onVisionAssignments,
-  publishCameraVision,
-  registerVisionCameras,
-  setCameraVisionError,
-  visionAssignments,
-} from '../visionSession';
+import * as defaultVision from '../visionSession';
+import { scopedVision, type CameraVision } from '../scopedVision';
 import { poseVisionResult } from './poseVision';
 import { frameSource, type FrameSource } from './operatorFrames';
 import type { PoseFollow, PoseSample } from './poseFollow';
@@ -60,6 +52,7 @@ interface Session {
   frames: FrameSource;
   stream: MediaStream;
   stopVision: () => void;
+  vision: Pick<CameraVision, 'publishCameraVision'>;
 }
 
 interface Fresh<T> {
@@ -132,7 +125,7 @@ const entry = <T>(follow: T | null, seenAt: number): Fresh<T> | undefined =>
 function keep(event: FollowEvent) {
   if (event.type === 'pose') {
     fresh.body = entry(event.follow, event.seenAt);
-    publishCameraVision(poseVisionResult(event.image, event.seenAt - performance.timeOrigin));
+    session?.vision.publishCameraVision(poseVisionResult(event.image, event.seenAt - performance.timeOrigin));
 
     return setPoints(event.image);
   }
@@ -177,15 +170,23 @@ function start(stream: MediaStream): Session {
   const [track] = stream.getVideoTracks();
   const worker = new Worker(new URL('./pose.worker.ts', import.meta.url), { type: 'module' });
 
-  worker.onmessage = (ev: MessageEvent<PoseEvent>) => receive(ev.data);
-  worker.onerror = (ev) => fail(ev.message || 'The pose worker stopped.');
+  worker.onmessage = (ev: MessageEvent<PoseEvent>) => {
+    if (session?.worker === worker) receive(ev.data);
+  };
+  worker.onerror = (ev) => {
+    if (session?.worker === worker) fail(ev.message || 'The pose worker stopped.');
+  };
 
   const frames = frameSource(stream, worker);
   const open: PoseRequest = { type: 'open', frames: frames.frames };
 
   worker.postMessage(open, frames.frames ? [frames.frames] : []);
   worker.postMessage({ type: 'gestures', taught } satisfies PoseRequest);
-  session = { worker, frames, stream, stopVision: connectOperatorVision(worker) };
+
+  const source = [...members.values()][0]?.robot.visionSource;
+  const vision = source ? scopedVision(source) : defaultVision;
+
+  session = { worker, frames, stream, vision, stopVision: connectOperatorVision(worker, vision) };
   lastTrack = track ?? null;
   latency.clear();
   set({ open: true, stream, label: track?.label || null, estimator: null, error: null });
@@ -236,7 +237,28 @@ function endSession() {
   set(CLOSED);
 }
 
-function connectOperatorVision(worker: Worker): () => void {
+function connectOperatorVision(
+  worker: Worker,
+  vision: Pick<
+    CameraVision,
+    | 'connectVisionFrames'
+    | 'ensureVisionCamera'
+    | 'onVisionAssignments'
+    | 'registerVisionCameras'
+    | 'invalidateVisionCamera'
+    | 'setCameraVisionError'
+    | 'visionAssignments'
+  >,
+): () => void {
+  const {
+    connectVisionFrames,
+    ensureVisionCamera,
+    onVisionAssignments,
+    registerVisionCameras,
+    invalidateVisionCamera,
+    setCameraVisionError,
+    visionAssignments,
+  } = vision;
   let closed = false;
   const configure = () =>
     worker.postMessage({ type: 'vision-assignments', assignments: visionAssignments() } satisfies PoseRequest);
@@ -294,6 +316,9 @@ export function leaveOperatorCamera(kind: LandmarkKind) {
 }
 
 export async function joinOperatorCamera(kind: LandmarkKind, robot: InputRobot): Promise<string | null> {
+  if ([...members.values()].some((member) => member.robot.visionSource?.id !== robot.visionSource?.id))
+    closeOperatorCamera();
+
   leaveOperatorCamera(kind);
 
   const member: Member = { robot, joined: false, ready: false, settle: null };

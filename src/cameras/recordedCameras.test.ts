@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StoredTry } from '../cases/tryFile';
 import type { RecordedCameraEvent } from './recordedProtocol';
-import { closeRecordedCameras, openRecordedCameras, recordedCameraError, seekRecordedCameras } from './recordedCameras';
+import {
+  createRecordedCameras,
+  closeRecordedCameras,
+  openRecordedCameras,
+  recordedCameraError,
+  seekRecordedCameras,
+} from './recordedCameras';
 
 const session = vi.hoisted(() => ({ error: vi.fn() }));
 
@@ -55,4 +61,34 @@ describe('recorded camera error ordering', () => {
     expect(recordedCameraError('front')).toBe('Decode failed.');
     expect(session.error).toHaveBeenCalledExactlyOnceWith('front', 'Decode failed.', second);
   });
+});
+
+it('keeps two scenes’ playback workers, seeks and close operations independent', () => {
+  const a = createRecordedCameras();
+  const b = createRecordedCameras();
+  const manifest = { videos: [{ camera: 'front', from: 0, to: 10 }] } as StoredTry;
+
+  a.openRecordedCameras(manifest);
+
+  const workerA = CameraWorker.instances.at(-1)!;
+
+  b.openRecordedCameras(manifest);
+
+  const workerB = CameraWorker.instances.at(-1)!;
+  const timeA = a.seekRecordedCameras(1);
+  const timeB = b.seekRecordedCameras(2);
+
+  expect(workerA.terminate).not.toHaveBeenCalled();
+  expect(workerA.postMessage).toHaveBeenLastCalledWith({ type: 'seek', seconds: 1, timestamp: timeA }, []);
+  expect(workerB.postMessage).toHaveBeenLastCalledWith({ type: 'seek', seconds: 2, timestamp: timeB }, []);
+  workerA.onmessage?.({
+    data: { type: 'error', camera: 'front', message: 'Decode failed.', timestamp: timeA },
+  } as MessageEvent<RecordedCameraEvent>);
+  expect(a.recordedCameraError('front')).toBe('Decode failed.');
+  expect(b.recordedCameraError('front')).toBeNull();
+  a.closeRecordedCameras();
+  expect(workerA.terminate).toHaveBeenCalledOnce();
+  expect(workerB.terminate).not.toHaveBeenCalled();
+  expect(b.recordedCameraViews()).toHaveLength(1);
+  b.closeRecordedCameras();
 });

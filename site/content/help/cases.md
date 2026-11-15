@@ -49,6 +49,8 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 
 Each Case comes with a reference route that passes it, so you know a pass is possible. To see each goal and how the contract judges it, read [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).
 
+A Case's logic and console can read camera detections, including object counts, scores and boxes. Detections belong to that scene and camera source, so a cup seen in another tab can't trigger this Case. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
 ## One Case, many robots
 
 You write a Case once, then run it on any robot that fits its slot. For an arm, Basecase measures how far the arm reaches from its shoulder and scales the whole world to match. Write Touch the Dots on one arm, and the next arm can reach the same dots.

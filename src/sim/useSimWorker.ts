@@ -1,3 +1,4 @@
+import { subscribeLiveSceneVision } from '../cameras/sceneVision';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { offerSimTargets } from '../robot/intentMirror';
@@ -12,7 +13,7 @@ import type { SimRequest, SimResponse } from './sim.worker';
 import type { SimStatus } from './useSimulation';
 import { useRecordingLink } from './useRecordingLink';
 import type { WorldLooks } from '../cases/worldSet';
-import { subscribeVisionResult } from '../cameras/visionSession';
+import { useVisionScope } from '../cameras/visionScope';
 import { createModelLoadLink } from './modelLoad';
 
 interface LatestFrame {
@@ -182,15 +183,17 @@ function noteReady(loaded: boolean, setStatus: (status: SimStatus) => void) {
 }
 
 function useVisionLink(workerRef: React.RefObject<Worker | null>) {
-  useEffect(
-    () =>
-      subscribeVisionResult((result) => {
-        const ageMs = Math.max(0, performance.now() - result.timestamp);
+  const scope = useVisionScope();
 
-        workerRef.current?.postMessage({ type: 'vision', result, ageMs } satisfies SimRequest);
-      }),
-    [workerRef],
-  );
+  useEffect(() => {
+    const forward = (result: import('../vision/types').VisionResult) => {
+      const ageMs = Math.max(0, performance.now() - result.timestamp);
+
+      workerRef.current?.postMessage({ type: 'vision', result, ageMs } satisfies SimRequest);
+    };
+
+    return subscribeLiveSceneVision(scope, forward);
+  }, [workerRef, scope]);
 }
 
 function useRoutineLink(workerRef: React.RefObject<Worker | null>, modelRef: React.RefObject<SimModel | null>) {

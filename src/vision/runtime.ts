@@ -5,6 +5,7 @@ import { IS_WEB_DEMO } from '../utils/platform/webDemo';
 import type { VisionFrameOptions, VisionPixels, VisionResult } from './types';
 
 export interface VisionRuntimeError {
+  source?: import('./types').VisionSource;
   camera?: string;
   modelId?: string;
   timestamp?: number;

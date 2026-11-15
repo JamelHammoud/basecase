@@ -5,7 +5,8 @@ import type { ScenePart } from '../types/robotics';
 import type { FeedEvent, FeedRequest } from './feedProtocol';
 import { LARGE_SIZE, TILE_SIZE } from './liveStage';
 import type { CameraView } from './views';
-import { connectVisionFrames, onVisionAssignments, visionAssignments } from './visionSession';
+import * as defaultVision from './visionSession';
+import type { CameraVision } from './scopedVision';
 
 export type Canvases = Map<string, HTMLCanvasElement>;
 
@@ -74,7 +75,12 @@ export class LiveFeed {
     world: [],
   };
 
-  constructor(canvases: Canvases, onFrames: (frames: number) => void) {
+  constructor(
+    canvases: Canvases,
+    onFrames: (frames: number) => void,
+    vision: Pick<CameraVision, 'connectVisionFrames' | 'onVisionAssignments' | 'visionAssignments'> = defaultVision,
+  ) {
+    const { connectVisionFrames, onVisionAssignments, visionAssignments } = vision;
     const receive = feedReceiver(canvases, this.streams, onFrames);
 
     this.worker.onmessage = ({ data }: MessageEvent<FeedEvent>) => receive(data);

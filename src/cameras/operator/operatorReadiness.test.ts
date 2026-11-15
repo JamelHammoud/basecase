@@ -67,3 +67,57 @@ describe('operator body pose readiness', () => {
     expect(operatorPoseReady()).toBe(false);
   });
 });
+
+it('moves the operator session to its owning scene and discards the previous worker’s events', async () => {
+  const workers: Array<{
+    onmessage: ((event: MessageEvent<PoseEvent>) => void) | null;
+    postMessage: ReturnType<typeof vi.fn>;
+    terminate: ReturnType<typeof vi.fn>;
+  }> = [];
+
+  class FakeWorker {
+    onmessage: ((event: MessageEvent<PoseEvent>) => void) | null = null;
+    postMessage = vi.fn();
+    terminate = vi.fn();
+
+    constructor() {
+      workers.push(this);
+    }
+  }
+
+  const track = { stop: vi.fn() };
+  const stream = { getTracks: () => [track], getVideoTracks: () => [track] };
+  const robot = (scene: string): InputRobot => ({
+    kind: 'tip',
+    start: [0, 0, 0],
+    reachMm: 100,
+    visionSource: { scene, kind: 'operator', id: scene },
+  });
+
+  vi.stubGlobal('Worker', FakeWorker);
+  vi.stubGlobal('navigator', { mediaDevices: { getUserMedia: async () => stream } });
+
+  const body = joinOperatorCamera('body', robot('kitchen'));
+
+  await vi.waitFor(() =>
+    expect(workers[0]?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'join' })),
+  );
+  workers[0].onmessage?.({ data: { type: 'ready', kind: 'body', delegate: 'CPU' } } as MessageEvent<PoseEvent>);
+  expect(await body).toBeNull();
+
+  const hand = joinOperatorCamera('hand', robot('workshop'));
+
+  await vi.waitFor(() =>
+    expect(workers[1]?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'join' })),
+  );
+  expect(workers[0].terminate).toHaveBeenCalledOnce();
+  expect(operatorPoseReady()).toBe(false);
+  workers[0].onmessage?.({ data: { type: 'ready', kind: 'body', delegate: 'CPU' } } as MessageEvent<PoseEvent>);
+  workers[0].onmessage?.({
+    data: { type: 'pose', follow: null, image: [[0.5, 0.5, true]], seenAt: performance.timeOrigin + performance.now() },
+  } as MessageEvent<PoseEvent>);
+  expect(operatorPoints()).toBeNull();
+  expect(operatorPoseReady()).toBe(false);
+  workers[1].onmessage?.({ data: { type: 'ready', kind: 'hand', delegate: 'CPU' } } as MessageEvent<PoseEvent>);
+  expect(await hand).toBeNull();
+});

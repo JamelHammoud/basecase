@@ -9,9 +9,11 @@ describe('vision camera frame producer', () => {
     const capture = vi.fn(async () => bitmap());
     const sender = visionFrameSender(capture);
 
+    const source = { scene: 'kitchen', kind: 'simulated' as const, id: 'kitchen-feed' };
+
     sender.connect(port);
     sender.configure([
-      { camera: 'scene', modelId: 'objects', fps: 5 },
+      { camera: 'scene', modelId: 'objects', fps: 5, source },
       { camera: 'wrist', modelId: 'objects', fps: 5 },
     ]);
     await sender.send('scene', 0);
@@ -25,7 +27,7 @@ describe('vision camera frame producer', () => {
     expect(capture.mock.calls).toHaveLength(3);
     expect(port.postMessage).toHaveBeenCalledTimes(3);
     expect(port.postMessage).toHaveBeenLastCalledWith(
-      expect.objectContaining({ type: 'frame', modelId: 'objects', camera: 'scene', timestamp: 200 }),
+      expect.objectContaining({ type: 'frame', modelId: 'objects', camera: 'scene', timestamp: 200, source }),
       [expect.anything()],
     );
   });

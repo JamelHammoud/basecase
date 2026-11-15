@@ -5,7 +5,7 @@ import type { ScenePart } from '../types/robotics';
 import { LiveFeed, type Canvases, type FeedStream } from './liveFeed';
 import { streamFps, streamSize } from './streamPace';
 import type { CameraView } from './views';
-import { ensureVisionCamera, onVisionAssignments, registerVisionCameras, visionNeedsFrames } from './visionSession';
+import { useVisionScope } from './visionScope';
 
 export interface CameraFeedInput {
   active: boolean;
@@ -24,6 +24,8 @@ export interface CameraFeed {
 }
 
 export function useCameraFeed(input: CameraFeedInput): CameraFeed {
+  const { simulated } = useVisionScope();
+  const { ensureVisionCamera, onVisionAssignments, registerVisionCameras, visionNeedsFrames } = simulated;
   const canvases = useRef<Canvases>(new Map());
   const streams = useRef(new Set<FeedStream>());
   const feedRef = useRef<LiveFeed | null>(null);
@@ -43,18 +45,18 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
     const release = registerVisionCameras(canvases, keys);
 
     return release;
-  }, [cameraKeys]);
+  }, [cameraKeys, registerVisionCameras]);
 
   useEffect(() => {
     if (!active) return;
 
     for (const key of cameraKeys.split('\n').filter(Boolean)) void ensureVisionCamera(key).catch(() => undefined);
-  }, [active, cameraKeys]);
+  }, [active, cameraKeys, ensureVisionCamera]);
 
   useEffect(() => {
     if (!active) return;
 
-    const feed = new LiveFeed(canvases.current, (frames) => onFrames(frames));
+    const feed = new LiveFeed(canvases.current, (frames) => onFrames(frames), simulated);
 
     feedRef.current = feed;
     connectCameras(() => feed.link());
@@ -66,7 +68,7 @@ export function useCameraFeed(input: CameraFeedInput): CameraFeed {
       feed.dispose();
       feedRef.current = null;
     };
-  }, [active, connectCameras]);
+  }, [active, connectCameras, simulated]);
 
   useEffect(() => {
     if (active) void feedRef.current?.scene(parts, world);

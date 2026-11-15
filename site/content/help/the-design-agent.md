@@ -49,6 +49,8 @@ The agent can pose and animate the robot, run it in the simulation, write and ru
 - Ask it to roll a ready skill out to named emulated robots, with canaries first. It proves each unit's twin before sending the policy.
 - Ask which servo to buy. It runs the Case on each catalog version and answers with passes, cost and mass.
 
+With `/operate`, the agent also receives each available camera detection's class, score and box after a step. The camera reads belong to the scene it is operating. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
 Tell the agent where an arm must reach and what it carries, and it sizes the arm's links and servos first. For a leg or finger, give it the path to trace, and it fits a four-bar linkage to that path. If you ask for fewer parts, the agent merges printed parts bolted together on one link into a single print.
 
 Ask it to make a flat chest plate aluminum, carbon fiber or acrylic, and it assigns a sheet material and snaps the geometry to stock thickness. Checks and simulation use that material's density. To export the cutting outlines, see [Cut parts from sheet](/help/cut-parts-from-sheet).

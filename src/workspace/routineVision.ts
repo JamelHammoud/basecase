@@ -18,7 +18,11 @@ const rateFor = (plan: Plan, modelId: string) => {
 export async function prepareRoutineVision(
   plan: Plan,
   cameras: string[],
-  options: { rendered?: boolean; current?: () => boolean } = {},
+  options: {
+    rendered?: boolean;
+    current?: () => boolean;
+    vision?: { acquireVisionCamera: typeof acquireVisionCamera };
+  } = {},
 ): Promise<PreparedRoutineVision> {
   const models = routineVisionModels(plan);
 
@@ -44,7 +48,7 @@ export async function prepareRoutineVision(
   await Promise.all(
     jobs.map(async ({ camera, modelId }) => {
       try {
-        const release = await acquireVisionCamera(camera, {
+        const release = await (options.vision?.acquireVisionCamera ?? acquireVisionCamera)(camera, {
           modelId,
           fps: rateFor(plan, modelId),
           current: options.current ?? (() => true),

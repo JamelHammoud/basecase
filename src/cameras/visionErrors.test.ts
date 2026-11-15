@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { VisionResult } from '../vision/types';
+import type { VisionResult, VisionSource } from '../vision/types';
 
 interface VisionFailure {
+  source?: VisionSource;
   camera?: string;
   modelId?: string;
   timestamp?: number;
@@ -98,4 +99,25 @@ describe('vision worker errors', () => {
     expect(session.cameraVision('wrist')?.timestamp).toBe(100);
     expect(session.cameraVisionError('wrist')).toBeNull();
   });
+});
+
+it('routes inference failures to their source and rejects a pre-seek failure only for that source', async () => {
+  const { scopedVision } = await import('./scopedVision');
+  const a = scopedVision({ scene: 'kitchen', kind: 'recorded', id: 'recorded-kitchen' });
+  const b = scopedVision({ scene: 'workshop', kind: 'simulated', id: 'simulated-workshop' });
+
+  await a.configureVisionCamera('wrist', { modelId: 'yolo11n' });
+  await b.configureVisionCamera('wrist', { modelId: 'yolo11n' });
+  a.publishCameraVision(seen(100));
+  b.publishCameraVision(seen(100));
+  a.invalidateVisionCamera('wrist', 200);
+  runtime.error({ camera: 'wrist', source: a.source, timestamp: 199, error: 'Obsolete frame.' });
+  expect(a.cameraVisionError('wrist')).toBeNull();
+  expect(b.cameraVision('wrist')?.detections).toHaveLength(1);
+  runtime.error({ camera: 'wrist', source: a.source, timestamp: 200, error: 'Current frame.' });
+  expect(a.cameraVisionError('wrist')).toBe('Current frame.');
+  expect(b.cameraVisionError('wrist')).toBeNull();
+  expect(b.cameraVision('wrist')?.detections).toHaveLength(1);
+  a.publishCameraVision(seen(200));
+  expect(a.cameraVision('wrist')?.timestamp).toBe(200);
 });

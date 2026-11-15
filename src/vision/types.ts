@@ -1,3 +1,9 @@
+export interface VisionSource {
+  scene: string;
+  kind: 'simulated' | 'recorded' | 'operator';
+  id: string;
+}
+
 export interface VisionPixels {
   data: Uint8ClampedArray;
   width: number;
@@ -15,6 +21,7 @@ export interface VisionDetection {
 export interface VisionResult {
   backend?: 'webgpu' | 'wasm';
   modelId: string;
+  source?: VisionSource;
   camera?: string;
   timestamp: number;
   width: number;
@@ -25,6 +32,7 @@ export interface VisionResult {
 }
 
 export interface VisionFrameOptions {
+  source?: VisionSource;
   camera?: string;
   timestamp?: number;
 }

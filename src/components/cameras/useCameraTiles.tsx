@@ -3,7 +3,7 @@ import { enlargeCameraView, useCameraViewsState } from '../../cameras/cameraView
 import { useCameraFeed } from '../../cameras/useCameraFeed';
 import { cameraViews, stripParts, type CameraView } from '../../cameras/views';
 import { cameraStream, type CameraStream } from '../../cameras/cameraStream';
-import { recordedCanvasRef, streamRecordedCamera, useRecordedCameraViews } from '../../cameras/recordedCameras';
+import { useVisionScope } from '../../cameras/visionScope';
 import { ContextMenu, type ContextMenuEntry } from '../../design-system';
 import type { Simulation } from '../../sim/useSimulation';
 import type { ScenePart } from '../../types/robotics';
@@ -31,6 +31,8 @@ const shownWorld = (world: ScenePart[]) =>
   world.some((p) => p.visible === false) ? world.filter((p) => p.visible !== false) : world;
 
 export function useCameraTiles(input: CameraTilesInput): CameraTiles {
+  const scope = useVisionScope();
+  const { recordedCanvasRef, streamRecordedCamera, useRecordedCameraViews } = scope.playback;
   const { parts, sim, cameras, patchPart, active, onFrames } = input;
   const { enlarged } = useCameraViewsState();
   const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuEntry[] } | null>(null);
@@ -68,6 +70,7 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
     views,
     tile: (view) => ({
       view,
+      vision: recordedKeys.has(view.key) ? scope.recorded : scope.simulated,
       large: enlarged === view.key,
       renaming: renaming === view.key,
       onRename: (name) => rename(view, name),

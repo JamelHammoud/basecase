@@ -6,7 +6,7 @@ import { timelineLanes } from '../cases/timelineLanes';
 import { trySignals, type TryRecord, type TryScoring } from '../cases/tries';
 import { tripFrames, type Trip } from '../cases/tripFrames';
 import { loadManifests, loadRecording } from '../cases/tryStore';
-import { closeRecordedCameras, openRecordedCameras, seekRecordedCameras } from '../cameras/recordedCameras';
+import { useVisionScope } from '../cameras/visionScope';
 import type { RecordedEfforts } from '../sim/recordedFrames';
 import type { Recording } from '../sim/recorder';
 import type { Simulation } from '../sim/useSimulation';
@@ -85,6 +85,7 @@ const openedView = (opened: Opened | null) => ({
 });
 
 export function useTryTimeline(options: TimelineOptions) {
+  const { closeRecordedCameras, openRecordedCameras, seekRecordedCameras } = useVisionScope().playback;
   const { sim } = options;
   const [opened, setOpened] = useState<Opened | null>(null);
   const opening = useRef(0);
@@ -105,9 +106,9 @@ export function useTryTimeline(options: TimelineOptions) {
 
   useEffect(() => {
     if (opened) seekRecordedCameras(playback.frame * opened.recording.dt, !playback.playing);
-  }, [opened, playback.frame, playback.playing]);
+  }, [opened, playback.frame, playback.playing, seekRecordedCameras]);
 
-  useEffect(() => () => closeRecordedCameras(), []);
+  useEffect(() => () => closeRecordedCameras(), [closeRecordedCameras]);
 
   const show = async (record: TryRecord, at?: number) => {
     const ticket = ++opening.current;

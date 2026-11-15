@@ -1,4 +1,7 @@
+import type { VisionSource } from '../vision/types';
+
 export interface VisionAssignment {
+  source?: VisionSource;
   camera: string;
   modelId: string;
   fps: number;

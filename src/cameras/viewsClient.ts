@@ -1,7 +1,8 @@
 import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import { workerClient } from '../utils/workerRpc';
-import { connectVisionFrames, ensureVisionCamera, visionAssignments } from './visionSession';
+import * as defaultVision from './visionSession';
+import type { CameraVision } from './scopedVision';
 import type { VisionAssignment } from './visionFrames';
 import type { CameraFrameRequest, CameraFrameOutput, CameraStageJob } from './cameraStage';
 import type { CameraTrainingFrame, CameraTrainingRequest } from './trainingTypes';
@@ -41,7 +42,10 @@ export interface CameraFeed {
   dispose: () => void;
 }
 
-export function cameraFeed(): CameraFeed {
+export function cameraFeed(
+  vision: Pick<CameraVision, 'connectVisionFrames' | 'ensureVisionCamera' | 'visionAssignments'> = defaultVision,
+): CameraFeed {
+  const { connectVisionFrames, ensureVisionCamera, visionAssignments } = vision;
   const client = workerClient<ViewHandlers>(
     () => new Worker(new URL('./views.worker.ts', import.meta.url), { type: 'module' }),
     localHandlers,

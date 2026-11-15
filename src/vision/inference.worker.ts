@@ -6,7 +6,7 @@ import { validateVisionManifest } from './manifest';
 import { VisionEngine } from './engine';
 import { LatestFrameQueue } from './frameQueue';
 import { visionMetadata } from './metadata';
-import type { VisionPixels } from './types';
+import type { VisionPixels, VisionSource } from './types';
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 const engine = new VisionEngine();
@@ -20,6 +20,7 @@ env.wasm.numThreads = 1;
 interface FrameJob {
   frame: ImageBitmap | VideoFrame;
   modelId: string;
+  source?: VisionSource;
   camera?: string;
   timestamp?: number;
   port: MessagePort;
@@ -51,6 +52,7 @@ const queue = new LatestFrameQueue<FrameJob>(
 
       scope.postMessage({
         type: 'error',
+        source: job.source,
         camera: job.camera,
         modelId: job.modelId,
         timestamp: job.timestamp,
@@ -58,6 +60,7 @@ const queue = new LatestFrameQueue<FrameJob>(
       });
       job.port.postMessage({
         type: 'error',
+        source: job.source,
         camera: job.camera,
         modelId: job.modelId,
         timestamp: job.timestamp,
@@ -69,6 +72,7 @@ const queue = new LatestFrameQueue<FrameJob>(
     job.port.postMessage({
       type: 'dropped',
       dropped: true,
+      source: job.source,
       camera: job.camera,
       modelId: job.modelId,
       timestamp: job.timestamp,

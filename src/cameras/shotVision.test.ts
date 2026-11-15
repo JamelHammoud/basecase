@@ -8,9 +8,11 @@ function setup() {
   const copy = vi.fn(() => ({ close: vi.fn() }) as unknown as ImageBitmap);
   const client = createShotVision(copy);
 
-  client.connect(port, [{ camera: 'wrist', modelId: 'objects', fps: 5 }]);
+  const source = { scene: 'kitchen', kind: 'simulated' as const, id: 'kitchen-feed' };
 
-  return { port, image, client };
+  client.connect(port, [{ camera: 'wrist', modelId: 'objects', fps: 5, source }]);
+
+  return { port, image, client, source };
 }
 
 const result = (camera: string, modelId = 'objects'): VisionResult => ({
@@ -24,7 +26,7 @@ const result = (camera: string, modelId = 'objects'): VisionResult => ({
 
 describe('exact camera shot inference', () => {
   it('ignores a newer live result and another model until the originating shot result arrives', async () => {
-    const { port, image, client } = setup();
+    const { port, image, client, source } = setup();
     let settled = false;
     const pending = client.infer('wrist', image).then((value) => {
       settled = true;
@@ -40,6 +42,7 @@ describe('exact camera shot inference', () => {
     await Promise.resolve();
     expect(settled).toBe(false);
     expect(message.camera).toMatch(/^camera-shot:/);
+    expect(message).toMatchObject({ source });
     port.onmessage?.call(port, { data: { type: 'result', result: result(message.camera) } } as MessageEvent);
 
     expect((await pending).detections[0].label).toBe('cup');

@@ -1,3 +1,4 @@
+import { useVisionScope } from '../cameras/visionScope';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { RobotPoseState, ScenePart } from '../types/robotics';
@@ -238,6 +239,7 @@ async function grantedModel(
 }
 
 export function useDrive(inputs: DriveInputs): SimDrive {
+  const { operator } = useVisionScope();
   const { status: simStatus, send, viewportRef, modelRef, frameHookRef, stats, robotKey } = inputs;
   const [driveStatus, setDriveStatus] = useState<DriveStatus>('off');
   const [cls, setCls] = useState<DriveClass | null>(null);
@@ -307,7 +309,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
 
       session.current = ids;
 
-      const refusal = await openInputs(ids, robot);
+      const refusal = await openInputs(ids, robot ? { ...robot, visionSource: operator.source } : null);
 
       if (session.current !== ids) return false;
 
@@ -316,7 +318,7 @@ export function useDrive(inputs: DriveInputs): SimDrive {
 
       return !refusal;
     },
-    [session, viewportRef],
+    [session, viewportRef, operator],
   );
 
   const start = useCallback(

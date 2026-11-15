@@ -47,6 +47,8 @@ You can open any try you've recorded from any scene, then step through it on the
 
 Or open Tries from the command menu. Press [[⌘K]], then choose **Show Tries**.
 
+Saved camera videos play at the timeline's playhead. Detection runs on those frames even while paused, and its results stay with this scene's playback. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
 The search at the top of the Library also finds tries, by words or by facts such as failed or last week. See [Search tries](/help/search-tries). To gather the tries a search finds into a dataset, press [[⌘K]] and choose **Make Dataset**. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 
 To tag tries or mark an imported try passed or failed, right-click it. See [Label a try](/help/label-a-try).

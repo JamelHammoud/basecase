@@ -36,10 +36,13 @@ describe('vision inference pipeline', () => {
 
     const black = { width: 2, height: 2, data: new Uint8ClampedArray(16) };
     const white = { ...black, data: new Uint8ClampedArray(16).fill(255) };
-    const darkResult = await engine.infer('tiny-detection', black);
+    const source = { scene: 'kitchen', kind: 'simulated' as const, id: 'kitchen-camera-feed' };
+    const darkResult = await engine.infer('tiny-detection', black, { source, camera: 'wrist' });
     const lightResult = await engine.infer('tiny-detection', white);
     const repeated = await engine.infer('tiny-detection', white);
 
+    expect(darkResult.source).toEqual(source);
+    expect(darkResult.camera).toBe('wrist');
     expect(darkResult.detections).toEqual([]);
     expect(lightResult.detections).toHaveLength(1);
     expect(lightResult.detections[0].score).toBeCloseTo(1);

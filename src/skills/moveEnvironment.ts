@@ -52,7 +52,11 @@ const neutral = (model: SimModel, reference: MoveReference) => reference.joints.
 
 export function moveActionScale(model: SimModel, reference: MoveReference): number {
   const home = neutral(model, reference);
-  const reach = Math.max(...reference.frames.flatMap((f) => home.map((h, j) => Math.abs(f[j] - h))));
+  let reach = -Infinity;
+
+  for (const frame of reference.frames) {
+    for (let j = 0; j < home.length; j++) reach = Math.max(reach, Math.abs(frame[j] - home[j]));
+  }
 
   return Math.min(MOVE_BARS.maxScale, Math.max(KIT_ACTION_SCALE, reach * MOVE_BARS.scaleMargin));
 }
@@ -88,7 +92,10 @@ function moveSignals(model: SimModel, reference: MoveReference): Record<string, 
 }
 
 function fell(reference: MoveReference): NamedFailure {
-  const tilt = Math.max(...reference.frames.map((f) => f[reference.joints.length + 1]));
+  let tilt = -Infinity;
+
+  for (const frame of reference.frames) tilt = Math.max(tilt, frame[reference.joints.length + 1]);
+
   const state: State = {
     any: [
       atom(signal('tilt'), '>', Math.max(MOVE_BARS.fellTiltRad, tilt + 0.5), 0.1),

@@ -22,6 +22,6 @@ You can teach a legged robot to perform one of its animations, such as a sit, a 
 
 If a move fails Arena, Basecase discards it. Its row says why, and you can click Train again. Only one skill trains at a time. If you click Train on another row while one trains, a message names the one to stop first.
 
-A move that doesn't loop holds its last pose for 2 s, and a looping move is judged over two rounds. If you edit the animation, its row goes back to Train. Robots fixed to the ground don't get these rows, so their animations play as they are.
+A move that doesn't loop holds its last pose for at least 2 s. A looping move is judged over two periods, bounded to 4–12 s. If one period exceeds 12 s, Arena judges that whole period. If you edit the animation, its row goes back to Train. Robots fixed to the ground don't get these rows, so their animations play as they are.
 
 You can also use a ready move as a step in a Routine. In the desktop app, right-click the move and choose **Publish to Hugging Face**. See [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face). To switch into the move from Walk, you first need a proof. See [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills).

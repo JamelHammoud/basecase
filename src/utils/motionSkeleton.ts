@@ -6,6 +6,7 @@ import { motionChains, motionLeaves, motionScale } from './motionSkeletonSource'
 import { sampleMotionFrames } from './motionSkeletonValidation';
 import { shareMotionJoints } from './motionSkeletonShared';
 import { motionWithEndSites } from './motionSkeletonEnds';
+import { motionJointDynamics, motionJointSpan } from './motionSkeletonStats';
 
 export interface MotionSkeletonRequest {
   motion: Mocap;
@@ -28,27 +29,6 @@ export interface MotionSkeletonFit {
 }
 
 export type MotionSkeletonResult = MotionSkeletonFit | { problem: string; limb?: string };
-
-function jointSpan(joint: SkeletonJoint, values: JointValues[]): SkeletonJoint {
-  const angles = values.map((frame) => frame[joint.id] ?? 0);
-  const low = Math.min(...angles);
-  const high = Math.max(...angles);
-  const margin = (high - low) * 0.1;
-
-  return { ...joint, range: [low - margin, high + margin] };
-}
-
-function dynamicsFor(joint: SkeletonJoint, values: JointValues[], frameTime: number): MotionJointDynamics {
-  const angles = values.map((frame) => frame[joint.id] ?? 0);
-  const speeds = angles.slice(1).map((angle, index) => (angle - angles[index]) / frameTime);
-  const accelerations = speeds.slice(1).map((speed, index) => (speed - speeds[index]) / frameTime);
-
-  return {
-    id: joint.id,
-    peakSpeedDegS: Math.max(0, ...speeds.map(Math.abs)),
-    peakAccelerationDegS2: Math.max(0, ...accelerations.map(Math.abs)),
-  };
-}
 
 function requestProblem(request: MotionSkeletonRequest): string | undefined {
   const { motion, heightMm, toleranceMm } = request;
@@ -100,7 +80,7 @@ export function motionSkeleton(request: MotionSkeletonRequest): MotionSkeletonRe
 
     if (!fit) return { problem: `The ${chain.name} path can’t fit within ${toleranceMm} mm.`, limb: chain.name };
 
-    joints.push(...fit.joints.map((joint) => jointSpan(joint, fit.values)));
+    joints.push(...fit.joints.map((joint) => motionJointSpan(joint, fit.values)));
     fit.values.forEach((values, frame) => Object.assign(trajectory[frame].values, values));
     errors[chain.name] = fit.error;
   }
@@ -112,13 +92,7 @@ export function motionSkeleton(request: MotionSkeletonRequest): MotionSkeletonRe
   return {
     skeleton: { frame: 'z-up', joints: shared, pairs: [] },
     trajectory,
-    dynamics: shared.map((joint) =>
-      dynamicsFor(
-        joint,
-        trajectory.map((frame) => frame.values),
-        motion.frameTime,
-      ),
-    ),
+    dynamics: shared.map((joint) => motionJointDynamics(joint.id, trajectory, motion.frameTime)),
     errors,
   };
 }

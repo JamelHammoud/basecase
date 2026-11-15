@@ -3,7 +3,7 @@ import { EmptyState } from '../design-system';
 import { fetchGalleryBundle } from './fetchBundle';
 import type { GalleryBundle } from './galleryBundle';
 import type { GalleryConsoleView } from './GalleryConsole';
-import { GalleryStage } from './GalleryStage';
+import { GalleryScene } from './GalleryScene';
 
 type Loaded =
   | { kind: 'loading' }
@@ -39,7 +39,8 @@ export const GalleryApp: React.FC<{ source: string }> = ({ source }) => {
     };
   }, [source]);
 
-  if (loaded.kind === 'ready') return <GalleryStage bundle={loaded.bundle} Console={loaded.Console} />;
+  if (loaded.kind === 'ready')
+    return <GalleryScene key={loaded.bundle.slug} bundle={loaded.bundle} Console={loaded.Console} />;
 
   return (
     <div className="fixed inset-0 bg-[#1b1b1b] flex items-center justify-center">

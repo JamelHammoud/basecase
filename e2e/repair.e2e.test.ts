@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { shapeKey } from '../src/print/shapeKey';
 import { DEFAULT_PROJECT, type PrintRecord, type ScenePart } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
@@ -74,7 +74,6 @@ async function expectRepairPlan() {
 beforeEach(async () => {
   app = await openApp();
   await app.page.evaluate((scene) => (window as unknown as { __studio: Studio }).__studio.load(scene), record);
-  await vi.waitFor(async () => expect(await partCount(app.page)).toBe(parts.length));
   await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).first().click();
 });
 
@@ -85,6 +84,7 @@ afterEach(async () => {
 describe('Repair', () => {
   it('opens teardown from the part menu and prints one replacement at the swap step', async () => {
     await bracketRow().click({ button: 'right' });
+    expect(await partCount(app.page)).toBe(parts.length);
     await app.page.getByRole('menuitem', { name: 'Repair', exact: true }).click();
 
     const steps = await expectRepairPlan();
@@ -123,6 +123,7 @@ describe('Repair', () => {
 
   it('opens the same repair walkthrough from the selected part’s command', async () => {
     await bracketRow().click();
+    expect(await partCount(app.page)).toBe(parts.length);
     await app.page.keyboard.press('Meta+k');
     await app.page.getByLabel('Search commands').fill('Repair');
     await app.page.keyboard.press('Enter');

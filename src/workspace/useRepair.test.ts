@@ -30,7 +30,7 @@ async function setup() {
     partsRef: { current: parts },
     projectRef: { current: { joints: [] } },
     viewportRef: { current: { meshesReady: async () => [], assembly: async () => geometry } },
-    guide: { currentPlan: vi.fn(async () => plan) },
+    guide: { repairPlan: vi.fn(async () => plan) },
     buildAlong: { openPlan: vi.fn(async (source: () => Promise<GuidePlan | null>) => source()) },
     printing: { markForReprint },
   } as unknown as Options;
@@ -40,13 +40,14 @@ async function setup() {
 
 describe('opening a repair', () => {
   it('opens the measured plan and marks only its printed target for replacement', async () => {
-    const { options, markForReprint } = await setup();
+    const { options, markForReprint, geometry } = await setup();
     const result = await useRepair(options).open('plate');
 
     expect(result.plan?.repair).toEqual({ partId: 'plate', printed: true });
     expect(result.text).toContain('Repair plate');
     expect(markForReprint).toHaveBeenCalledExactlyOnceWith('plate');
     expect(options.buildAlong.openPlan).toHaveBeenCalledOnce();
+    expect(options.guide.repairPlan).toHaveBeenCalledExactlyOnceWith(geometry);
   });
 
   it('explains an unproven teardown without changing the tracker', async () => {
@@ -62,12 +63,12 @@ describe('opening a repair', () => {
 
   it('discards a plan if the scene changes while its guide is being read', async () => {
     const { options, markForReprint } = await setup();
-    const currentPlan = options.guide.currentPlan;
+    const repairPlan = options.guide.repairPlan;
 
-    options.guide.currentPlan = async () => {
+    options.guide.repairPlan = async (geometry) => {
       options.partsRef.current = [...options.partsRef.current];
 
-      return currentPlan();
+      return repairPlan(geometry);
     };
 
     expect((await useRepair(options).open('plate')).plan).toBeUndefined();

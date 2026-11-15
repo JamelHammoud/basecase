@@ -10,6 +10,7 @@ import { stepPartsOf } from './guideSteps';
 import type { GuidePortMessage } from './guidePort';
 import type { GuidePlan } from './guideTypes';
 import type { GuideJob, GuideProgress, RenderedGuide } from './renderGuide';
+import type { PlanGuideJob } from './planGuide';
 
 export type { GuideProgress } from './renderGuide';
 
@@ -34,18 +35,31 @@ export interface GeneratedGuide {
 
 type RenderPayload = { job: GuideJob; port: MessagePort };
 
-type GuideHandlers = { render: (payload: RenderPayload) => Promise<Reply<RenderedGuide | null>> };
+type GuideHandlers = {
+  render: (payload: RenderPayload) => Promise<Reply<RenderedGuide | null>>;
+  plan: (job: PlanGuideJob) => Promise<Reply<GuidePlan>>;
+};
 
 const localHandlers = async (): Promise<GuideHandlers> => {
   const { renderGuideOnPort } = await import('./guidePort');
+  const { planGuide } = await import('./planGuide');
 
-  return { render: async ({ job, port }) => ({ result: await renderGuideOnPort(job, port) }) };
+  return {
+    render: async ({ job, port }) => ({ result: await renderGuideOnPort(job, port) }),
+    plan: async (job) => ({ result: await planGuide(job) }),
+  };
 };
 
 const client = workerClient<GuideHandlers>(
   () => new Worker(new URL('./guide.worker.ts', import.meta.url), { type: 'module' }),
   localHandlers,
 );
+
+export async function generateGuidePlan(input: Omit<PlanGuideJob, 'meshes'>): Promise<GuidePlan> {
+  const parts = input.parts.filter(isBuilt);
+
+  return client.call('plan', { ...input, parts: packParts(parts), meshes: await sourcedMeshFiles(parts) });
+}
 
 const identities = new WeakMap<ScenePart, string>();
 let nextIdentity = 1;

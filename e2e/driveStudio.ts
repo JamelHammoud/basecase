@@ -18,7 +18,7 @@ export interface SimState {
 export type Studio = {
   simState: () => SimState;
   load: (r: unknown) => void;
-  passTries: () => void;
+  passTries: () => Promise<void>;
   referenceTry: () => Promise<void>;
   multiplyRuns: (runs: number) => void;
   drive: (c: DriveCommand) => void;

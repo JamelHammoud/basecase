@@ -1,5 +1,21 @@
 [
   {
+    "file": "e2e/worldImport.e2e.test.ts",
+    "test": "records a kitchen try with its world in the camera tile and every exported video",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43693830979 finished the short kitchen recording but saved no try on either Windows attempt at line 142. The second poll also stopped responding. The recording, scoring or persistence stage responsible is not established."
+  },
+  {
+    "file": "e2e/scanMap.e2e.test.ts",
+    "test": "makes a saved corridor world through Layers and New Case and passes a seeded reference try",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43693830979 failed on both Windows attempts, first with no map points after opening the imported corridor try and then without the Imported 1 try confirmation. The Linux test passed in the same run. The import or playback worker bottleneck is not established."
+  },
+  {
     "file": "e2e/buildCheck.e2e.test.ts",
     "test": "runs the open Case on another tab’s robot and marks the one that passes more often",
     "issue": 996,
@@ -20,38 +36,6 @@
     "issue": 995,
     "until": "2026-11-28",
     "reason": "Run 43687018679 exceeded 180 s on both Windows attempts during FlatBuffers import and playback. The failing stage is not established.",
-    "platform": "win32"
-  },
-  {
-    "file": "e2e/gallery.e2e.test.ts",
-    "test": "drive a rover in the browser, at real time, under the web demo",
-    "issue": 995,
-    "until": "2026-11-28",
-    "reason": "Run 43687018679 reported both Windows attempts failing at about 121 s before shard cancellation. The browser startup bottleneck is not established.",
-    "platform": "win32"
-  },
-  {
-    "file": "e2e/gallery.e2e.test.ts",
-    "test": "opens the scene in the studio from Open Scene",
-    "issue": 995,
-    "until": "2026-11-28",
-    "reason": "Run 43687018679 reported both Windows attempts failing at about 121 s before shard cancellation. The browser startup bottleneck is not established.",
-    "platform": "win32"
-  },
-  {
-    "file": "e2e/gallery.e2e.test.ts",
-    "test": "runs a shared Case’s code panels, drives from its joystick, and carries them into the studio",
-    "issue": 995,
-    "until": "2026-11-28",
-    "reason": "Run 43687018679 reported both Windows attempts failing at about 121 s before shard cancellation. The browser startup bottleneck is not established.",
-    "platform": "win32"
-  },
-  {
-    "file": "e2e/gallery.e2e.test.ts",
-    "test": "keeps a shared code panel away from the page’s IndexedDB, its cookies and the Hub",
-    "issue": 995,
-    "until": "2026-11-28",
-    "reason": "Run 43687018679 reported both Windows attempts failing at about 121 s before shard cancellation. The browser startup bottleneck is not established.",
     "platform": "win32"
   },
   {

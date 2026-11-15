@@ -3,7 +3,7 @@ import type { RobotSkeleton, SkeletonJoint } from '../types/skeleton';
 import type { Mocap } from './mocapBones';
 import { fitMotionChain } from './motionSkeletonSearch';
 import { motionChains, motionLeaves, motionScale } from './motionSkeletonSource';
-import { motionDataProblem } from './motionSkeletonValidation';
+import { sampleMotionFrames } from './motionSkeletonValidation';
 import { shareMotionJoints } from './motionSkeletonShared';
 import { motionWithEndSites } from './motionSkeletonEnds';
 
@@ -79,15 +79,15 @@ export function motionSkeleton(request: MotionSkeletonRequest): MotionSkeletonRe
   if (problem) return { problem };
 
   const { motion, toleranceMm } = input;
-  const dataProblem = motionDataProblem(motion);
+  const samples = sampleMotionFrames(motion);
 
-  if (dataProblem) return dataProblem;
+  if ('problem' in samples) return samples;
 
   const leaves = motionLeaves(motion, request.limbs);
 
   if (!leaves.length) return { problem: 'No motion chains match the selected limbs.' };
 
-  const chains = motionChains(motion, { scale: motionScale(motion, request.heightMm), limbs: request.limbs });
+  const chains = motionChains(motion, samples, { scale: motionScale(motion, request.heightMm), limbs: request.limbs });
   const trajectory = Array.from({ length: motion.frames }, (_, frame) => ({
     t: frame * motion.frameTime,
     values: {} as JointValues,

@@ -1,6 +1,8 @@
 import { replayErrors } from '../../../reality/jointReplay';
+import { keepBenchLogs } from '../../../reality/benchLogStore';
 import { unitHistories, withCalibration } from '../../../reality/projectCalibrations';
-import type { ServoCalibration } from '../../../reality/types';
+import { servoPartOf } from '../../../reality/servoPart';
+import type { ServoCalibration, ServoLog } from '../../../reality/types';
 import { selectedUnit } from '../../../robot/robotStore';
 import type { Studio } from '../types';
 import { fitBodyFor, setBodyRun } from '../../bodyActions';
@@ -8,10 +10,11 @@ import { fitBodyFor, setBodyRun } from '../../bodyActions';
 export default function calibrationStudio(studio: Studio) {
   const project = () => studio().core.docs.projectRef.current;
   const histories = () => unitHistories(project(), selectedUnit());
-  const calibrate = (jointId: string, calibration: ServoCalibration) => {
+  const calibrate = (jointId: string, calibration: ServoCalibration, logs?: ServoLog[]) => {
     const unit = selectedUnit();
+    const recorded = logs ? { ...calibration, logId: keepBenchLogs(servoPartOf(calibration), logs) } : calibration;
 
-    studio().core.docs.setProject((p) => withCalibration(p, jointId, calibration, unit));
+    studio().core.docs.setProject((p) => withCalibration(p, jointId, recorded, unit));
   };
 
   return {

@@ -72,21 +72,32 @@ function resizeAxis(frame: VisionPixels, size: number, horizontal: boolean): Vis
   const coefficients = kernels(horizontal ? frame.width : frame.height, size);
   const data = new Uint8ClampedArray(width * height * 4);
 
-  for (let index = 0; index < data.length; index++) {
-    const channel = index % 4;
+  for (let index = 0; index < data.length; index += 4) {
     const x = Math.floor(index / 4) % width;
     const y = Math.floor(index / (4 * width));
     const kernel = coefficients[horizontal ? x : y];
-    let sum = PRECISION / 2;
+    let red = PRECISION / 2;
+    let green = PRECISION / 2;
+    let blue = PRECISION / 2;
+    let alpha = PRECISION / 2;
 
     for (let offset = 0; offset < kernel.weights.length; offset++) {
       const sourceX = horizontal ? kernel.start + offset : x;
       const sourceY = horizontal ? y : kernel.start + offset;
 
-      sum += frame.data[(sourceY * frame.width + sourceX) * 4 + channel] * kernel.weights[offset];
+      const source = (sourceY * frame.width + sourceX) * 4;
+      const weight = kernel.weights[offset];
+
+      red += frame.data[source] * weight;
+      green += frame.data[source + 1] * weight;
+      blue += frame.data[source + 2] * weight;
+      alpha += frame.data[source + 3] * weight;
     }
 
-    data[index] = Math.max(0, Math.min(255, Math.floor(sum / PRECISION)));
+    data[index] = Math.max(0, Math.min(255, Math.floor(red / PRECISION)));
+    data[index + 1] = Math.max(0, Math.min(255, Math.floor(green / PRECISION)));
+    data[index + 2] = Math.max(0, Math.min(255, Math.floor(blue / PRECISION)));
+    data[index + 3] = Math.max(0, Math.min(255, Math.floor(alpha / PRECISION)));
   }
 
   return { width, height, data };

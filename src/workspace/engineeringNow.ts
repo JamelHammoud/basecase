@@ -61,7 +61,7 @@ export interface EngineeringNowInput {
 const sweepKey = (spec: SweepSpec) =>
   JSON.stringify([spec.moving, spec.origin, spec.axis, spec.anglesDeg, spec.actuators ?? []]);
 
-async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs) {
+async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs, withSweep: boolean) {
   const sweeps = new Map<string, SweepSpec>();
   const jobs = new Map<string, StrengthJob>();
   const arms = new Map<string, ArmModel>();
@@ -69,7 +69,7 @@ async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs)
   runEngineering({
     ...input,
     sweep: (spec) => {
-      sweeps.set(sweepKey(spec), spec);
+      if (withSweep) sweeps.set(sweepKey(spec), spec);
 
       return [];
     },
@@ -85,10 +85,11 @@ async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs)
     },
   });
 
-  const [clashes, readings, maps] = await Promise.all([
+  const [clashes, readings, maps, wiring] = await Promise.all([
     viewport.sweepClashes([...sweeps.values()]),
     viewport.strength([...jobs.values()]),
     payloadMapsIn([...arms.values()]),
+    viewport.wiring({ parts: input.parts, project: input.project }),
   ]);
   const clashOf = new Map([...sweeps.keys()].map((k, i) => [k, clashes[i] ?? []]));
   const readingOf = new Map([...jobs.keys()].map((k, i) => [k, readings[i] ?? null]));
@@ -98,7 +99,8 @@ async function withWorkers(viewport: Viewport3DHandle, input: EngineeringInputs)
 
   return runEngineering({
     ...input,
-    sweep: (spec) => clashOf.get(sweepKey(spec)) ?? [],
+    wiring,
+    sweep: withSweep ? (spec) => clashOf.get(sweepKey(spec)) ?? [] : undefined,
     strength: (asked) => asked.map((job) => readingOf.get(job.key) ?? null),
     payload: (arm) => mapByArm.get(JSON.stringify(arm)) ?? null,
   });
@@ -158,5 +160,5 @@ export async function runEngineeringNow(options: EngineeringNowInput) {
     printDowns,
   };
 
-  return withSweep && viewport ? withWorkers(viewport, input) : runEngineering(input);
+  return viewport ? withWorkers(viewport, input, withSweep) : runEngineering(input);
 }

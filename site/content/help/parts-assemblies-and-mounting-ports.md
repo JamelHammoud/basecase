@@ -82,7 +82,7 @@ For example, the Feetech STS3215 servo has:
 - An idler horn on the underside, with the same hole pattern
 - Four M2 holes on the top of the case and four on the bottom
 
-Bus servos, servo adapters, batteries and regulators also have connector ports where a cable plugs in. Each connector port has a type, such as 5264 or XT60. Connectors never mate. The bill of materials uses them to count cables.
+Bus servos, servo adapters, batteries and regulators also have connector ports where a cable plugs in. Each connector port has a type, such as 5264 or XT60, a position and a direction. Connectors never mate. Cable reach follows these ports through joint motion to measure routes and select stock lengths for the bill of materials.
 
 Hardware has ports too, and parts the agent models declare their own ports in their code.
 
@@ -107,3 +107,4 @@ Checks also read ports to find problems:
 - A screw that threads into a component more than 1 mm from every hole is a blocker.
 - A screw that goes deeper than its hole is a blocker.
 - Servo alignment reads each servo's output to make sure it sits on its joint's axis.
+- Cable reach needs each endpoint's connector geometry and a clear route with enough cable through the declared joint ranges.

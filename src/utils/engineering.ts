@@ -53,6 +53,7 @@ export const ENGINEERING_CHECKS = [
   'Current and runtime',
   'Standing stability',
   'Heat near servos',
+  'Cable reach',
   STRENGTH_CHECK,
   'Budget',
   'Time',
@@ -144,7 +145,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
   const floating = bodies.filter((b) => hasNoFeet(ctx, b));
   const env = { volts: servoSupplyVolts(ctx), crouch: crouchModel(ctx) };
   const loads = ctx.joints.filter((j) => j.type === 'revolute').map((j) => jointLoad(ctx, j, env));
-  const wiring = wiringNetlist({ parts, project });
+  const wiring = input.wiring ?? wiringNetlist({ parts, project });
   const rows: CheckRow[] = [
     weightRow(ctx.all, masses, bodies),
     ...(ctx.joints.length ? [] : [{ check: 'Servo torque', status: 'not run' as const, detail: 'No joints' }]),
@@ -162,7 +163,7 @@ export function runEngineering(input: EngineeringInputs): EngineeringReport {
     ...rangeOfMotionRows(ctx),
     ...rangeChangeRows(ctx),
     ...powerRows(ctx),
-    ...wiringRows(wiring),
+    ...wiringRows(wiring, joints),
     ...stabilityRows(ctx),
     ...heatRows(ctx),
     ...strengthRows(ctx, loads),

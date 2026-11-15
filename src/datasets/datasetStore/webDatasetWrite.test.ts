@@ -213,7 +213,11 @@ describe('atomic browser dataset writes', () => {
     });
     expect(state.stored.get(first.id)?.versions[0].archive).toBe('a'.repeat(64));
     expect(state.closed).toBe(3);
-    await writeWebDataset({ ...first, name: 'Renamed' });
+    expect(await writeWebDataset({ ...first, name: 'Renamed' })).toEqual({
+      ...first,
+      name: 'Renamed',
+      versions: [{ ...first.versions[0], archive: 'a'.repeat(64) }],
+    });
     expect(state.stored.get(first.id)?.name).toBe('Renamed');
   });
 

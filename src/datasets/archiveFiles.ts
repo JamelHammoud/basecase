@@ -19,7 +19,8 @@ export function datasetArchiveFiles(bytes: Uint8Array): Record<string, Uint8Arra
         safeEntryPath(entry.name) !== entry.name ||
         !entry.name.includes('/') ||
         (root && folder !== root) ||
-        paths.has(entry.name)
+        paths.has(entry.name) ||
+        (entry.compression === 0 && entry.size !== entry.originalSize)
       )
         throw new Error('The dataset export is damaged.');
 

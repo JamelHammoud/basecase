@@ -40,7 +40,11 @@ vi.mock('./webDatasetWrite', () => ({
       state.stores.set('basecase-datasets', stored);
     }
 
-    stored.set(dataset.id, structuredClone(mergeDatasetVersions(dataset, stored.get(dataset.id))));
+    const merged = mergeDatasetVersions(dataset, stored.get(dataset.id));
+
+    stored.set(dataset.id, structuredClone(merged));
+
+    return merged;
   },
 }));
 
@@ -102,5 +106,16 @@ describe('browser immutable dataset versions', () => {
     expect(await loadDatasets()).toEqual([{ ...original, members: ['try-b'] }]);
     await saveDataset({ ...dataset(), name: 'Renamed' });
     expect((await loadDatasets())[0].versions).toEqual(original.versions);
+  });
+
+  it('publishes versions merged by the backend after another window saves them', async () => {
+    const { loadDatasets, saveDataset } = await import('./index');
+    const { webDatasets } = await import('./webDatasets');
+    const original = frozen();
+
+    await saveDataset(dataset());
+    await webDatasets.save(original);
+    await saveDataset({ ...dataset(), name: 'Renamed' });
+    expect(await loadDatasets()).toEqual([{ ...original, name: 'Renamed' }]);
   });
 });

@@ -73,6 +73,8 @@ Training freezes the working dataset's samples, labels, exclusions and split ass
 
 Training needs at least one training sample and one validation sample from those frozen assignments. Multiplying one source doesn't create an independent validation source.
 
+Each selected range needs at least two frames after sampling at 25 frames per second. Shorter ranges stop training with an error.
+
 To train an earlier saved version, choose it in **Dataset version**, then click **Train from Tries**. Its saved robot model must match the current robot. Missing recordings stop training with an error. Versions without saved samples can't restore historical labels, so choose **Working Dataset** to freeze the current samples instead.
 
 Some tries hold joint positions but no speeds. Imported tries are like this, and so are tries recorded before Train from Tries arrived. On a robot with a fixed base, Basecase works out each joint's speed from how far it moved since the previous frame, 25 times a second. A robot whose base moves, like a rover or a walker, needs tries that include speeds.

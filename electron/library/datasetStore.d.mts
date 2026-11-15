@@ -8,6 +8,6 @@ export class DatasetStore {
   saveContent(bytes: Uint8Array): string;
   content(hash: string): Uint8Array | null;
   list(): Array<Record<string, unknown>>;
-  save(dataset: unknown): { ok: true };
+  save(dataset: unknown): { ok: true; dataset: Record<string, unknown> };
   delete(ids: string[]): { deleted: string[] };
 }

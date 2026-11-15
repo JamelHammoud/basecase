@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { summaryOf, type StoredTry } from '../cases/tryFile';
 import { newDataset } from '../datasets/datasetFile';
-import { datasetVersionMembers, selectedDataset } from './datasetVersionView';
+import { datasetVersionGroups, datasetVersionMembers, selectedDataset } from './datasetVersionView';
 
 const stored: StoredTry = {
   version: 1,
@@ -91,5 +91,32 @@ describe('dataset version view', () => {
     });
     expect(datasetVersionMembers(frozen, [])).toEqual(members);
     expect(datasetVersionMembers(dataset(), [live])).toEqual([]);
+  });
+
+  it('groups a saved version against its saved robot, scene and Case after the live design changes', () => {
+    const working = dataset();
+    const snapshot = working.versions[0].snapshot;
+
+    Object.assign(snapshot, {
+      dataset: { id: working.id, name: 'Original', sceneId: 'scene-a', caseId: null, seed: 1, createdAt: 'then' },
+    });
+
+    const selected = selectedDataset(working, 1)!;
+    const [member] = datasetVersionMembers(selected, []);
+    const earlier = { ...member, id: 'earlier', modelHash: 'other-model' };
+    const elsewhere = { ...earlier, id: 'elsewhere', sceneId: 'another-scene' };
+    const here = { modelHash: 'edited-model', sceneId: 'live-scene', caseId: 'live-case' };
+    const members = [member, earlier, elsewhere];
+
+    expect(datasetVersionGroups(selected, members, here)).toEqual({
+      fitting: [member],
+      earlier: [earlier],
+      elsewhere: [elsewhere],
+    });
+    expect(datasetVersionGroups(working, members, here)).toEqual({
+      fitting: [],
+      earlier: [],
+      elsewhere: members,
+    });
   });
 });

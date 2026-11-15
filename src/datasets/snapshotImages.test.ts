@@ -117,6 +117,7 @@ describe('frozen image samples', () => {
     const { set, member, save } = await frozenFixture();
 
     set.splits = { left: 'validation', right: 'test' };
+    member.hash = await frameSetHash(set);
 
     const samples = await freezeImages([member], async () => set, save);
 
@@ -237,18 +238,26 @@ describe('frozen image samples', () => {
       ),
     ).rejects.toThrow('changed');
   });
+});
 
-  it('rejects oversized ZIP declarations before allocating the expanded frame', async () => {
-    const { samples } = await frozenFixture();
-    const bytes = zipSync({ large: new Uint8Array(0) });
-    const directory = bytes.findIndex(
-      (byte, i) => byte === 0x50 && bytes[i + 1] === 0x4b && bytes[i + 2] === 1 && bytes[i + 3] === 2,
-    );
+describe('frozen image archive bounds', () => {
+  it.each([
+    [192_000_001, 6, 'size limit'],
+    [0, 0, 'changed'],
+  ] as const)(
+    'rejects unsafe ZIP size declarations before allocating the expanded frame: %s',
+    async (size, level, error) => {
+      const { samples } = await frozenFixture();
+      const bytes = zipSync({ large: new Uint8Array([1]) }, { level });
+      const directory = bytes.findIndex(
+        (byte, i) => byte === 0x50 && bytes[i + 1] === 0x4b && bytes[i + 2] === 1 && bytes[i + 3] === 2,
+      );
 
-    expect(directory).toBeGreaterThan(0);
-    new DataView(bytes.buffer).setUint32(directory + 24, 192_000_001, true);
-    await expect(unpackImageSnapshot(samples[0], bytes)).rejects.toThrow('size limit');
-  });
+      expect(directory).toBeGreaterThan(0);
+      new DataView(bytes.buffer).setUint32(directory + 24, size, true);
+      await expect(unpackImageSnapshot(samples[0], bytes)).rejects.toThrow(error);
+    },
+  );
 });
 
 describe('imported image snapshots', () => {

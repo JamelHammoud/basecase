@@ -9,6 +9,7 @@ import {
   verifiedDatasetContent,
 } from '../contentHash';
 import { datasetContentFromBase64 } from './contentBytes';
+import { readDataset } from '../datasetFile';
 
 const call = <T>(channel: string, payload?: unknown) =>
   channelCall<T>(electron()?.datasetsCall, channel, payload, (value) =>
@@ -42,7 +43,12 @@ export const desktopDatasets: DatasetBackend = {
     return Array.isArray(listed) ? listed : [];
   },
   save: async (dataset) => {
-    await call('datasets:save', dataset);
+    const reply = await call<{ dataset?: unknown }>('datasets:save', dataset);
+    const saved = readDataset(reply?.dataset);
+
+    if (!saved || saved.id !== dataset.id) throw new Error('The saved dataset is damaged.');
+
+    return saved;
   },
   delete: async (ids) => {
     await call('datasets:delete', ids);

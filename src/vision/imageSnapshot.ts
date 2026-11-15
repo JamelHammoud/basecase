@@ -50,6 +50,9 @@ export async function unpackImageSnapshot(sample: FrozenImageSample, bytes: Uint
 
       if (size > 192_000_000 || count > 3) throw new Error('The frozen image content exceeds its size limit.');
 
+      if (entry.compression === 0 && entry.size !== entry.originalSize)
+        throw new Error('The frozen image content changed.');
+
       return true;
     },
   });

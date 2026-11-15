@@ -101,7 +101,7 @@ export class DatasetStore {
     fs.mkdirSync(this.dir, { recursive: true });
     writeAtomic(file, json);
 
-    return { ok: true };
+    return { ok: true, dataset: merged };
   }
 
   delete(ids) {

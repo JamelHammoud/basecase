@@ -127,6 +127,25 @@ beforeEach(() => {
 });
 
 describe('dataset records lifecycle', () => {
+  it('counts selected ranges consistently before and after freezing', async () => {
+    const { dataset, stored } = await fixture();
+
+    dataset.samples = [
+      { tryId: stored.id, from: 0, to: 3 },
+      { tryId: stored.id, from: 3, to: 6 },
+    ];
+
+    const api = records();
+    const working = api.of(dataset);
+    const frozen = await api.resolve(dataset, model, context);
+    const selected = selectedDataset(persisted(dataset.id), frozen.n)!;
+
+    expect(working.map((record) => record.id)).toEqual(['try-a', 'try-a']);
+    expect(working.filter((record) => record.passed)).toHaveLength(2);
+    expect(api.of(selected).map((record) => record.id)).toEqual(working.map((record) => record.id));
+    expect(api.of({ ...dataset, samples: undefined })).toHaveLength(1);
+  });
+
   it('resolves and freezes exact labels, versioning instruction and boundary edits from a stale dataset', async () => {
     const { dataset, stored } = await fixture();
     const api = records();

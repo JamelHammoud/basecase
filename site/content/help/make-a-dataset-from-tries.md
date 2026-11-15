@@ -108,10 +108,14 @@ Export, publishing and training save the working dataset as a version. Each vers
 
 Changing an instruction, label boundary, tag, quality flag or recording creates a new version. Changing the robot, task, selected samples or image references also creates a version. Unchanged content keeps its version.
 
+![Pick and place with Working Dataset selected in Dataset version](/help/make-a-dataset-from-tries/working-version.png)
+
 To export an earlier version:
 
 1. In **Dataset version** above the tries, choose **Version 1** or another saved version.
 2. Click **Export Dataset**.
+
+![Pick and place with Version 1 selected above its saved try](/help/make-a-dataset-from-tries/saved-version.png)
 
 The export uses that version's saved samples and labels. Repeating an export of that version returns the same saved zip bytes. Publishing Version 2 tags the Hub dataset `dataset-v2`.
 

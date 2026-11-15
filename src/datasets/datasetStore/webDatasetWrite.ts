@@ -16,7 +16,7 @@ function openDatasetDatabase(): Promise<IDBDatabase> {
   });
 }
 
-function updateDataset(db: IDBDatabase, incoming: Dataset): Promise<void> {
+function updateDataset(db: IDBDatabase, incoming: Dataset): Promise<Dataset> {
   return new Promise((resolve, reject) => {
     let transaction: IDBTransaction;
 
@@ -30,6 +30,7 @@ function updateDataset(db: IDBDatabase, incoming: Dataset): Promise<void> {
     }
 
     let failure: unknown;
+    let saved: Dataset;
     const fail = (error: unknown) => {
       failure = error;
 
@@ -43,7 +44,7 @@ function updateDataset(db: IDBDatabase, incoming: Dataset): Promise<void> {
 
     transaction.oncomplete = () => {
       db.close();
-      resolve();
+      resolve(saved);
     };
     transaction.onerror = () => {
       failure ??= transaction.error;
@@ -62,6 +63,7 @@ function updateDataset(db: IDBDatabase, incoming: Dataset): Promise<void> {
           const merged = mergeDatasetVersions(incoming, request.result);
 
           store.put(merged, incoming.id);
+          saved = merged;
         } catch (error) {
           fail(error);
         }
@@ -72,12 +74,12 @@ function updateDataset(db: IDBDatabase, incoming: Dataset): Promise<void> {
   });
 }
 
-export async function writeWebDataset(dataset: Dataset): Promise<void> {
+export async function writeWebDataset(dataset: Dataset): Promise<Dataset> {
   const incoming = readDataset(structuredClone(dataset));
 
   if (!incoming) throw new Error('The dataset file is damaged.');
 
   const db = await openDatasetDatabase();
 
-  await updateDataset(db, incoming);
+  return updateDataset(db, incoming);
 }

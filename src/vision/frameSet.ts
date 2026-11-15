@@ -219,13 +219,7 @@ export function validateFrameSetHeader(value: unknown): asserts value is Omit<Fr
     refuse();
 }
 
-export function validateFrameSet(value: unknown): asserts value is FrameSet {
-  validateFrameSetHeader(value);
-
-  const set = value as FrameSet;
-
-  if (!Array.isArray(set.frames) || set.frames.length > 100_000 || !unique(set.frames.map((f) => f?.id))) refuse();
-
+export function validateFrameSplits(set: Pick<FrameSet, 'splits'> & { frames: { id: string }[] }): void {
   if (
     set.splits !== undefined &&
     (!object(set.splits) ||
@@ -233,7 +227,16 @@ export function validateFrameSet(value: unknown): asserts value is FrameSet {
       !set.frames.every((frame) => ['train', 'validation', 'test'].includes(set.splits?.[frame.id] ?? '')))
   )
     refuse();
+}
 
+export function validateFrameSet(value: unknown): asserts value is FrameSet {
+  validateFrameSetHeader(value);
+
+  const set = value as FrameSet;
+
+  if (!Array.isArray(set.frames) || set.frames.length > 100_000 || !unique(set.frames.map((f) => f?.id))) refuse();
+
+  validateFrameSplits(set);
   set.frames.forEach((f) => validateTrainingFrame(f, set.classes));
 }
 
@@ -285,6 +288,7 @@ export async function frameSetManifestHash(set: Omit<FrameSet, 'frames'>, frames
         ...(category.objectId ? { objectId: category.objectId } : {}),
       })),
       frames,
+      ...(set.splits ? { splits: Object.entries(set.splits).sort(([a], [b]) => (a < b ? -1 : 1)) } : {}),
     }),
   );
 }

@@ -226,4 +226,17 @@ describe('training a saved dataset version', () => {
     );
     expect(state.learn).not.toHaveBeenCalled();
   });
+
+  it('refuses a short saved range before sending an empty episode to the trainer', async () => {
+    const input = await fixture();
+    const sample = input.snapshot.samples[0];
+
+    sample.to = sample.from + 2;
+    input.dataset.versions[0].hash = await snapshotHash(input.snapshot);
+    trainer(input).train(input.dataset, input.kase);
+    await vi.waitFor(() =>
+      expect(state.showToast).toHaveBeenCalledWith('These saved samples don’t fit this robot.', { tone: 'error' }),
+    );
+    expect(state.learn).not.toHaveBeenCalled();
+  });
 });

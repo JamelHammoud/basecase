@@ -83,7 +83,7 @@ async function readFrame(manifest: FrameSetManifest, frameId: string): Promise<T
 
   const loaded = { ...frame, ...(await jobs.call('unpack', bytes)) };
 
-  await jobs.call('validate', { ...manifest, frames: [loaded] });
+  await jobs.call('validateFrame', { frame: loaded, classes: manifest.classes });
 
   return loaded;
 }

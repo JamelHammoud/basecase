@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DatasetStore } from '../../../electron/library/datasetStore.mjs';
 import { datasetPostRoutes } from '../../../electron/library/datasetRoutes.mjs';
 import { datasetContentFromBase64 } from './contentBytes';
+import { freezeVersion, newDataset } from '../datasetFile';
 
 const transport = vi.hoisted(() => ({
   invoke: undefined as undefined | ((channel: string, payload?: unknown) => Promise<unknown>),
@@ -20,11 +21,14 @@ const { desktopDatasets } = await import('./desktopDatasets');
 const HASH = 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad';
 const bytes = () => new TextEncoder().encode('abc');
 let dir: string;
+let store: DatasetStore;
 
 beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'desktop-content-'));
 
-  const routes = datasetPostRoutes(new DatasetStore({ dir }));
+  store = new DatasetStore({ dir });
+
+  const routes = datasetPostRoutes(store);
 
   transport.invoke = undefined;
   transport.post.mockReset().mockImplementation(async (url: string, body: { arg?: unknown }) => {
@@ -66,5 +70,23 @@ describe('desktop dataset content transport', () => {
     }
 
     expect(datasetContentFromBase64('')).toEqual(new Uint8Array());
+  });
+
+  it('returns the committed version history merged by the main process', async () => {
+    const dataset = newDataset({ id: 'dataset', name: 'Blocks', task: 'Pick', members: [], at: 'now' });
+    const frozen = freezeVersion(dataset, 'first', 'now').dataset;
+
+    await desktopDatasets.save(dataset);
+    store.save(frozen);
+    expect(await desktopDatasets.save({ ...dataset, name: 'Renamed' })).toEqual({ ...frozen, name: 'Renamed' });
+  });
+
+  it('refuses a malformed saved record or a reply naming another dataset', async () => {
+    const dataset = newDataset({ id: 'dataset', name: 'Blocks', task: 'Pick', members: [], at: 'now' });
+
+    transport.post.mockResolvedValue({ ok: true });
+    await expect(desktopDatasets.save(dataset)).rejects.toThrow('damaged');
+    transport.post.mockResolvedValue({ ok: true, dataset: { ...dataset, id: 'another' } });
+    await expect(desktopDatasets.save(dataset)).rejects.toThrow('damaged');
   });
 });

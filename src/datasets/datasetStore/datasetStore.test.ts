@@ -11,6 +11,8 @@ vi.mock('./desktopDatasets', () => ({
     list: async () => backend.stored,
     save: async (dataset) => {
       backend.stored.push(dataset);
+
+      return dataset;
     },
     delete: async (ids) => {
       backend.deleted.push(...ids);

@@ -1,6 +1,6 @@
 import { summaryOf, type TrySummary } from '../cases/tryFile';
 import type { Dataset } from '../datasets/datasetFile';
-import { membersOf } from '../datasets/datasetView';
+import { memberGroups, membersOf, type OpenModel } from '../datasets/datasetView';
 
 export function selectedDataset(dataset: Dataset | null, n: number | null): Dataset | null {
   const version = dataset?.versions.find((v) => v.n === n);
@@ -35,4 +35,18 @@ export function datasetVersionMembers(dataset: Dataset, all: TrySummary[]): TryS
   }
 
   return [...summaries.values()];
+}
+
+export function datasetVersionGroups(dataset: Dataset | null, members: TrySummary[], here: OpenModel) {
+  const snapshot = dataset?.versions.find((version) => version.n === dataset.selectedVersion)?.snapshot;
+
+  if (!dataset || !snapshot) return memberGroups(members, here);
+
+  const reference = snapshot.dataset ?? dataset;
+
+  return memberGroups(members, {
+    modelHash: snapshot.modelHash,
+    sceneId: reference.sceneId,
+    caseId: reference.caseId,
+  });
 }

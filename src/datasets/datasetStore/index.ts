@@ -75,8 +75,9 @@ export async function saveDataset(dataset: Dataset): Promise<void> {
       datasets.find((stored) => stored.id === incoming.id),
     );
 
-    await backend.save(merged);
-    await update((current) => [...current.filter((stored) => stored.id !== merged.id), merged]);
+    const saved = await backend.save(merged);
+
+    await update((current) => [...current.filter((stored) => stored.id !== saved.id), saved]);
   });
 }
 

@@ -86,10 +86,12 @@ export function useDatasetRecords(sceneTries: TryRecord[]): DatasetRecords {
       const scene = new Map(sceneTries.map((t) => [t.id, t]));
       const stored = new Map(summaries.map((t) => [t.id, t]));
 
-      return dataset.members.flatMap((id) => {
-        const summary = stored.get(id);
+      const samples = dataset.samples ?? dataset.members.map((tryId) => ({ tryId }));
 
-        return scene.get(id) ?? (summary ? [memberRecord(summary)] : []);
+      return samples.flatMap(({ tryId }) => {
+        const summary = stored.get(tryId);
+
+        return scene.get(tryId) ?? (summary ? [memberRecord(summary)] : []);
       });
     },
     freeze,

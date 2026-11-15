@@ -35,7 +35,7 @@ afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 describe('DatasetStore', () => {
   it('keeps each dataset as <id>.json and lists them back', () => {
     expect(store.list()).toEqual([]);
-    expect(store.save(dataset('set-1'))).toEqual({ ok: true });
+    expect(store.save(dataset('set-1'))).toEqual({ ok: true, dataset: dataset('set-1') });
     store.save(dataset('set-2', { name: 'Reach' }));
     store.save(dataset('set-1', { members: ['try-3'] }));
 

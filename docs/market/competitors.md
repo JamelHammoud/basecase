@@ -18,7 +18,7 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 - **Checked:** 2026-11-15
 - **Better than Basecase:** combines CAD, CAM, CAE and PCB tools, with configurations, a bill of materials, automated drawings and cloud simulation in the paid product ([comparison](https://www.autodesk.com/products/fusion-360/personal)).
 - **Worse than Basecase:** personal use is restricted to non-commercial projects and individuals generating less than $1,000 annually, with limited CAM, drawings and import/export formats ([comparison](https://www.autodesk.com/products/fusion-360/personal)). Basecase connects a robot's design to motion training and print plates ([Simulate](../guide/simulate.md), [Printing](../guide/printing.md)).
-- **Basecase should:** integrate through STEP and exported robot packages already accepted by Import Robot ([integration](integrations.md#fusion), [Joints and motion](../guide/joints-and-motion.md)). The fetched comparison does not enumerate personal-use export formats, so it does not establish whether a particular format is included.
+- **Basecase should:** integrate through the existing readers: Import takes STEP files, and Import Robot takes exported robot packages ([Inspector](../guide/inspector-and-selection.md), [integration](integrations.md#fusion), [Joints and motion](../guide/joints-and-motion.md)). The fetched comparison does not enumerate personal-use export formats, so it does not establish whether a particular format is included.
 
 ### Shapr3D
 

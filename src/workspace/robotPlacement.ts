@@ -1,23 +1,33 @@
 import type { RobotJoint, ScenePart } from '../types/robotics';
 import { anchorJoint, uniqueJointIds } from '../utils/kinematics';
 import { partBounds } from '../utils/selection';
+import { centerSizeRange } from '../utils/centerSizeRange';
 import type { Vec3 } from './types';
 
 const AXES = [0, 1, 2] as const;
 const ARTICULATED_GAP = 40;
 const ROBOT_GAP = 100;
 
-const sizeOf = (p: ScenePart) => [p.dimensions.width, p.dimensions.height, p.dimensions.depth];
+const DIMENSIONS = ['width', 'height', 'depth'] as const;
+
+const axisRange = (parts: ScenePart[], axis: 0 | 1 | 2) =>
+  centerSizeRange(
+    parts,
+    (p) => p.position[axis],
+    (p) => p.dimensions[DIMENSIONS[axis]],
+  );
 
 const placedOthers = (scene: ScenePart[]) => scene.filter((p) => p.visible && p.kind !== 'image_plane');
 
-const sceneRight = (others: ScenePart[]) => Math.max(...others.map((p) => partBounds(p).max[0]));
+const sceneRight = (others: ScenePart[]) =>
+  others.reduce((right, p) => Math.max(right, partBounds(p).max[0]), -Infinity);
 
 export const shiftVec = (v: Vec3, d: Vec3): Vec3 => [v[0] + d[0], v[1] + d[1], v[2] + d[2]];
 
 export function articulatedShift(parts: ScenePart[], at: Vec3 | undefined, scene: ScenePart[]): Vec3 {
-  const lo = AXES.map((i) => Math.min(...parts.map((p) => p.position[i] - sizeOf(p)[i] / 2)));
-  const hi = AXES.map((i) => Math.max(...parts.map((p) => p.position[i] + sizeOf(p)[i] / 2)));
+  const bounds = AXES.map((axis) => axisRange(parts, axis));
+  const lo = bounds.map((b) => b.min);
+  const hi = bounds.map((b) => b.max);
 
   if (at) return [at[0] - (lo[0] + hi[0]) / 2, at[1] - lo[1], at[2] - (lo[2] + hi[2]) / 2];
 
@@ -28,21 +38,19 @@ export function articulatedShift(parts: ScenePart[], at: Vec3 | undefined, scene
   return [Math.ceil(sceneRight(others) - lo[0] + ARTICULATED_GAP), 0, 0];
 }
 
-const midOf = (values: number[]) => (Math.min(...values) + Math.max(...values)) / 2;
-
 export function importOffset(parts: ScenePart[], at: Vec3 | undefined, scene: ScenePart[]): Vec3 {
   if (at) {
-    const xs = parts.flatMap((p) => [p.position[0] - p.dimensions.width / 2, p.position[0] + p.dimensions.width / 2]);
-    const zs = parts.flatMap((p) => [p.position[2] - p.dimensions.depth / 2, p.position[2] + p.dimensions.depth / 2]);
+    const x = axisRange(parts, 0);
+    const z = axisRange(parts, 2);
 
-    return [at[0] - midOf(xs), at[1], at[2] - midOf(zs)];
+    return [at[0] - (x.min + x.max) / 2, at[1], at[2] - (z.min + z.max) / 2];
   }
 
   const others = placedOthers(scene);
 
   if (!others.length) return [0, 0, 0];
 
-  const minX = Math.min(...parts.map((p) => p.position[0] - p.dimensions.width / 2));
+  const { min: minX } = axisRange(parts, 0);
 
   return [Math.ceil(sceneRight(others) - minX + ROBOT_GAP), 0, 0];
 }
@@ -70,7 +78,7 @@ export function palmOf(parts: ScenePart[], joints: RobotJoint[]) {
 }
 
 export function robotHeightMm(parts: ScenePart[]) {
-  const ys = parts.flatMap((p) => [p.position[1] - p.dimensions.height / 2, p.position[1] + p.dimensions.height / 2]);
+  const { min, max } = axisRange(parts, 1);
 
-  return Math.round(Math.max(...ys) - Math.min(...ys));
+  return Math.round(max - min);
 }

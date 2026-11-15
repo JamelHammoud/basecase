@@ -21,6 +21,7 @@ covers:
   - src/readiness/wording.ts
   - src/readiness/findings.ts
   - src/utils/engineering.ts
+  - src/utils/engineeringWeight.ts
   - src/utils/engineeringPower.ts
   - src/utils/engineeringBudget.ts
   - src/utils/engineeringTime.ts

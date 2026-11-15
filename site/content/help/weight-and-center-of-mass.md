@@ -26,6 +26,7 @@ covers:
   - src/utils/engineeringBody.ts
   - src/utils/engineeringStability.ts
   - src/utils/engineering.ts
+  - src/utils/engineeringWeight.ts
   - src/data/supplies.ts
 ---
 

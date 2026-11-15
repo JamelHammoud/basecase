@@ -215,6 +215,24 @@ describe('Operate servo setup', () => {
   );
 });
 
+describe('Operate zero and direction', () => {
+  it('starts camera calibration from the command palette', async () => {
+    const { page } = app;
+    const calibration = page.locator(visible('[data-testid="robot-calibration"]')).first();
+
+    await loadRecord(ARM);
+    await climbToTest();
+    await expect.poll(() => button('Calibrate Servos').isEnabled()).toBe(true);
+    await page.keyboard.press('ControlOrMeta+k');
+    await page.getByLabel('Search commands').fill('Calibrate Servos');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => calibration.getAttribute('data-calibrating')).toBe('capturing');
+    await button(/^Disconnect$/).click();
+    await expect.poll(() => button('Connect Emulated Robot').isEnabled()).toBe(true);
+    expect(app.errors).toEqual([]);
+  }, 15000);
+});
+
 describe('Operate policy', () => {
   const mode = () => app.page.locator(visible('[data-testid="robot-mode"]')).first().getAttribute('data-mode');
   const sentPolicy = () => app.page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.policy);

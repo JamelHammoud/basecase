@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { roundWheelRover } from '../sim/fixtures/robots';
 import type { RobotJoint } from '../types/robotics';
 import { jointGroups, jointRowLabels, prettyJointName } from './jointNames';
-import { buildRig } from './kinematicsRig';
+import { buildRig, type Rig } from './kinematicsRig';
 
 const named = (name: string, limb?: RobotJoint['limb']): RobotJoint => ({
   id: name,
@@ -16,6 +16,77 @@ const named = (name: string, limb?: RobotJoint['limb']): RobotJoint => ({
 });
 
 const labelsOf = (joints: RobotJoint[], group: string) => [...jointRowLabels(joints, group).values()];
+
+describe('jointGroups', () => {
+  it('keeps section order, source order, explicit limbs and movable joints', () => {
+    const joints = [
+      named('right_knee'),
+      named('left_elbow'),
+      named('wheel'),
+      { ...named('fixed_neck'), type: 'fixed' as const },
+      { ...named('right_ankle'), type: 'prismatic' as const },
+      named('neck_pan'),
+      named('left_hip'),
+      named('spine'),
+      named('right_shoulder'),
+      named('arm'),
+      named('knee'),
+      named('left_grip', 'leg'),
+    ];
+    const before = structuredClone(joints);
+    const rig: Rig = { ...buildRig([], []), joints };
+    const grouped = jointGroups(rig);
+
+    expect(grouped.map((g) => [g.label, g.joints.map((j) => j.id)])).toEqual([
+      ['Head', ['neck_pan']],
+      ['Torso', ['spine']],
+      ['Left arm', ['left_elbow']],
+      ['Right arm', ['right_shoulder']],
+      ['Arms', ['arm']],
+      ['Left leg', ['left_hip', 'left_grip']],
+      ['Right leg', ['right_knee', 'right_ankle']],
+      ['Legs', ['knee']],
+      ['Other', ['wheel']],
+    ]);
+    expect(grouped.flatMap((g) => g.joints).every((j) => joints.includes(j))).toBe(true);
+    expect(joints).toEqual(before);
+    expect(jointGroups(buildRig([], []))).toEqual([]);
+
+    joints[1].name = 'right_elbow';
+
+    const edited = jointGroups(rig);
+
+    expect(edited.some((g) => g.label === 'Left arm')).toBe(false);
+    expect(edited.find((g) => g.label === 'Right arm')!.joints.map((j) => j.id)).toEqual([
+      'left_elbow',
+      'right_shoulder',
+    ]);
+
+    edited.find((g) => g.label === 'Right leg')!.joints.pop();
+
+    expect(grouped.find((g) => g.label === 'Right leg')!.joints).toHaveLength(2);
+    expect(joints).toHaveLength(12);
+  });
+
+  it.each([300, 600])('allocates one member array for %i joints in a section', (count) => {
+    const joints = Array.from({ length: count }, (_, i) => named(`left_elbow_${i}`));
+    const rig: Rig = { ...buildRig([], []), joints };
+    const writes = vi.spyOn(Map.prototype, 'set');
+    let grouped: ReturnType<typeof jointGroups>;
+    let memberArrays: unknown[];
+
+    try {
+      grouped = jointGroups(rig);
+      memberArrays = writes.mock.calls.filter(([key]) => key === 'Left arm').map(([, members]) => members);
+    } finally {
+      writes.mockRestore();
+    }
+
+    expect(new Set(memberArrays).size).toBe(1);
+    expect(grouped).toEqual([{ label: 'Left arm', joints }]);
+    expect(grouped[0].joints).not.toBe(joints);
+  });
+});
 
 describe('jointRowLabels', () => {
   it('names the first-launch rover’s wheels as Results does', () => {

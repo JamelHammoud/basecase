@@ -1,20 +1,16 @@
 import * as THREE from 'three';
 import { solidFromPositions, type ShapeSolid } from '../three/analysis/shapeSolid';
 import { CellMask } from './cellMask';
+import { insideBefore, type WindingRow } from './windingRow';
 
 export type V3 = [number, number, number];
 
 const RAY_NUDGE = 1.3e-4;
 
-interface Row {
-  at: Float64Array;
-  turn: Int8Array;
-}
-
 export class SolidField {
   readonly box: THREE.Box3;
   private readonly solid: ShapeSolid;
-  private readonly rows = new Map<number, Map<number, Row>>();
+  private readonly rows = new Map<number, Map<number, WindingRow>>();
   private readonly at = new THREE.Vector3();
   private readonly ray = new THREE.Ray(new THREE.Vector3(), new THREE.Vector3(1, 0, 0));
   private mask: CellMask | null = null;
@@ -29,12 +25,7 @@ export class SolidField {
 
     if (x < min.x || x > max.x || y < min.y || y > max.y || z < min.z || z > max.z) return false;
 
-    const row = this.row(y, z);
-    let winding = 0;
-
-    for (let i = 0; i < row.at.length && row.at[i] < x; i++) winding += row.turn[i];
-
-    return winding !== 0;
+    return insideBefore(this.row(y, z), x);
   }
 
   depth(p: V3, cap: number): number {
@@ -53,7 +44,7 @@ export class SolidField {
     this.solid.dispose();
   }
 
-  private row(y: number, z: number): Row {
+  private row(y: number, z: number): WindingRow {
     const plane = this.rows.get(y) ?? this.rows.set(y, new Map()).get(y)!;
     const known = plane.get(z);
 
@@ -65,9 +56,17 @@ export class SolidField {
       .raycast(this.ray, THREE.DoubleSide)
       .filter((h) => h.face)
       .sort((a, b) => a.point.x - b.point.x);
+    const inside = new Uint8Array(hits.length + 1);
+    let winding = 0;
+
+    for (let i = 0; i < hits.length; i++) {
+      winding += hits[i].face!.normal.x < 0 ? 1 : -1;
+      inside[i + 1] = winding !== 0 ? 1 : 0;
+    }
+
     const row = {
       at: Float64Array.from(hits, (h) => h.point.x),
-      turn: Int8Array.from(hits, (h) => (h.face!.normal.x < 0 ? 1 : -1)),
+      inside,
     };
 
     plane.set(z, row);

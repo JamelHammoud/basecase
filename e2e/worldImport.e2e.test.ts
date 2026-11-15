@@ -1,6 +1,7 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
 import { kitchenCollider, kitchenSplat } from '../src/cases/worldImportFixture';
 import type { WorldImportFile } from '../src/cases/worldImportTypes';
@@ -21,12 +22,60 @@ interface Studio {
   dropFiles: (files: Array<{ name: string; base64: string }>) => void;
   simState: () => SimState;
   worldState: () => WorldState | null;
+  cameraFrame: (key: string, floor?: boolean) => Promise<string | null>;
 }
 
 let app: App;
 
 const simState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.simState());
 const worldState = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.worldState());
+
+const framePixels = (image: string) =>
+  sharp(Buffer.from(image.split(',')[1], 'base64'))
+    .resize(128, 96)
+    .ensureAlpha()
+    .raw()
+    .toBuffer();
+
+async function tileDifference(baseline: Buffer) {
+  const image = await app.page.evaluate(() =>
+    (window as unknown as { __studio: Studio }).__studio.cameraFrame('scene'),
+  );
+
+  if (!image) return 0;
+
+  const pixels = await framePixels(image);
+  let changed = 0;
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    const difference =
+      Math.abs(pixels[i] - baseline[i]) +
+      Math.abs(pixels[i + 1] - baseline[i + 1]) +
+      Math.abs(pixels[i + 2] - baseline[i + 2]);
+
+    if (pixels[i + 3] === 255 && difference > 30) changed++;
+  }
+
+  return changed / (pixels.length / 4);
+}
+
+async function expectKitchenCamera() {
+  await app.page.keyboard.press('Meta+k');
+  await app.page.keyboard.type('Run Case');
+  await app.page.keyboard.press('Enter');
+  await expect.poll(() => app.page.locator(shown('[data-testid="camera-tile"][data-camera="scene"]')).count()).toBe(1);
+
+  const floor = await app.page.evaluate(() =>
+    (window as unknown as { __studio: Studio }).__studio.cameraFrame('scene', true),
+  );
+
+  expect(floor).toBeTruthy();
+
+  const baseline = await framePixels(floor!);
+
+  await expect.poll(() => tileDifference(baseline)).toBeGreaterThan(0.05);
+  expect((await simState()).tries).toHaveLength(0);
+}
 
 async function dropFixtures(files: WorldImportFile[]) {
   const directory = await mkdtemp(join(tmpdir(), 'basecase-world-import-'));
@@ -80,7 +129,7 @@ afterEach(async () => {
 });
 
 describe('a captured world dropped on the canvas', () => {
-  it('opens New Case with its splat and separate colliders without adding scene parts', async () => {
+  it('opens an imported Case with splats and colliders and shows its world in the live camera', async () => {
     app = await openApp();
     await loadFixtureRobot(app.page, 'rover-diff');
 
@@ -97,6 +146,7 @@ describe('a captured world dropped on the canvas', () => {
     expect(world.pieces).toBeLessThanOrEqual(64);
     expect(await partCount(app.page)).toBe(parts);
 
+    await expectKitchenCamera();
     expect(app.errors).toEqual([]);
   });
 

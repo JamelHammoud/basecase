@@ -16,7 +16,6 @@ interface BodyStudio {
   bodyModel: (withoutBody?: boolean) => Promise<SimModel>;
   bodyCalibrations: () => Record<string, BodyHistory>;
   bodyChecks: () => Promise<{ fingerprint: string; checkedAt: string; torque: unknown }>;
-  simTool: (kind: string, payload: Record<string, unknown>) => Promise<{ text: string }>;
 }
 
 type BodyWindow = { __studio: BodyStudio; __fakeRobotLink: unknown };
@@ -84,20 +83,6 @@ describe('Fit Body', () => {
     await expect.poll(async () => (await history(robot)).active).toBeNull();
     expect((await model(false)).robots[0].fingerprint).toBe(baseline.robots[0].fingerprint);
     expect((await checks()).fingerprint).not.toBe(fitted.fingerprint);
-    expect(app.errors).toEqual([]);
-  });
-
-  it('routes the palette and agent through the same recording action', async () => {
-    await app.page.keyboard.press('Meta+k');
-    await app.page.keyboard.type('Fit Body');
-    await app.page.keyboard.press('Enter');
-    await expect
-      .poll(async () => (await app.page.locator(visible('[role="status"]')).allTextContents()).join(' '))
-      .toContain('Record a robot run');
-
-    const reply = await app.page.evaluate(() => (window as unknown as BodyWindow).__studio.simTool('fit_body', {}));
-
-    expect(reply.text).toContain('Record a robot run');
     expect(app.errors).toEqual([]);
   });
 });

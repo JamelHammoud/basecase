@@ -5,7 +5,7 @@ import { labelGeometry } from './labelEdits';
 import { bilinearMaskPixels, nearestMaskColumns } from './maskSampling';
 import { prelabelFrameLabels } from './prelabelsGeometry';
 import { segmentationMask } from './segmentationMath';
-import { maskOverlap } from './training/metricsGeometry';
+import { annotationOverlap } from './training/metricsGeometry';
 import type { VisionDetection } from './types';
 
 interface Size {
@@ -125,7 +125,7 @@ function checkNearest(index: number) {
     union += Number(Boolean(truth[i] || pixels[i]));
   }
 
-  expect(maskOverlap(annotation, detection, frame)).toBe(union ? intersection / union : 0);
+  expect(annotationOverlap(annotation, frame, true)(detection)).toBe(union ? intersection / union : 0);
   expect(mask.values).toEqual(Uint8Array.from(data, (value) => (value > 0 ? 255 : 0)));
 }
 

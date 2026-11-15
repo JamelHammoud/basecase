@@ -1,4 +1,5 @@
 import { maskBounds, type Mask, type MaskBox } from './silhouetteProfile';
+import { maskRows, rowBandWidths } from './maskRows';
 
 export interface ScaledMask {
   mask: Mask;
@@ -108,37 +109,6 @@ function bestShift(grid: { width: number; height: number; cellMm: number }, targ
   return { iou: best.iou, cells };
 }
 
-function rowSpan(cells: Uint8Array, width: number, y: number): number {
-  let l = -1,
-    r = -1;
-
-  for (let x = 0; x < width; x++) {
-    if (!cells[y * width + x]) continue;
-
-    if (l < 0) l = x;
-
-    r = x;
-  }
-
-  return l < 0 ? 0 : r - l + 1;
-}
-
-function bandWidthsMm(grid: Grid, cells: Uint8Array, rows: { y0: number; y1: number }): number[] {
-  const H = rows.y1 - rows.y0 + 1;
-  const out: number[] = [];
-
-  for (let b = 0; b < 10; b++) {
-    let widest = 0;
-
-    for (let y = rows.y0 + Math.floor((b * H) / 10); y < rows.y0 + Math.floor(((b + 1) * H) / 10); y++)
-      widest = Math.max(widest, rowSpan(cells, grid.width, y));
-
-    out.push(widest * grid.cellMm);
-  }
-
-  return out;
-}
-
 function isEdge(cells: Uint8Array, width: number, i: number): boolean {
   if (!cells[i]) return false;
 
@@ -243,6 +213,10 @@ const CORNER_FACTOR = 1 - Math.PI / 4;
 export function cornerRadii(cells: Uint8Array, width: number, cellMm: number) {
   const box = maskBounds({ data: cells, width, height: cells.length / width });
 
+  return radiiInBox({ cells, width, cellMm, box });
+}
+
+function radiiInBox({ cells, width, cellMm, box }: { cells: Uint8Array; width: number; cellMm: number; box: MaskBox }) {
   if (box.x1 < 0) return { top: 0, bottom: 0 };
 
   const { w, h } = sizeOf(box);
@@ -282,9 +256,10 @@ export function fitTarget({ target, model, targetMmPerPx }: FitRequest): TargetF
   const modelCells = rasterize(base, { mask: model.mask, box: mBox, mmPerPx: model.mmPerPx });
   const shifted = bestShift(base, { mask: target, box: tBox, mmPerPx: tScale }, modelCells);
   const grid: Grid = { ...base, target: shifted.cells, model: modelCells };
-  const rows = maskBounds({ data: grid.target, width: grid.width, height: grid.height });
-  const targetBands = bandWidthsMm(grid, grid.target, rows);
-  const modelBands = bandWidthsMm(grid, grid.model, rows);
+  const targetRows = maskRows({ data: grid.target, width: grid.width, height: grid.height });
+  const modelRows = maskRows({ data: grid.model, width: grid.width, height: grid.height });
+  const targetBands = rowBandWidths(targetRows.rows, targetRows.box);
+  const modelBands = rowBandWidths(modelRows.rows, targetRows.box);
   const gap = edgeGap(grid);
 
   return {
@@ -292,12 +267,16 @@ export function fitTarget({ target, model, targetMmPerPx }: FitRequest): TargetF
     scaledToHeight: !targetMmPerPx,
     targetSize,
     modelSize,
-    bands: targetBands.map((targetMm, band) => ({ band, targetMm, modelMm: modelBands[band] })),
+    bands: targetBands.map((span, band) => ({
+      band,
+      targetMm: span * cellMm,
+      modelMm: modelBands[band] * cellMm,
+    })),
     gapMeanMm: gap.mean,
     gapMaxMm: gap.max,
     corners: {
-      target: cornerRadii(grid.target, grid.width, cellMm),
-      model: cornerRadii(grid.model, grid.width, cellMm),
+      target: radiiInBox({ cells: grid.target, width: grid.width, cellMm, box: targetRows.box }),
+      model: radiiInBox({ cells: grid.model, width: grid.width, cellMm, box: modelRows.box }),
     },
     grid,
   };

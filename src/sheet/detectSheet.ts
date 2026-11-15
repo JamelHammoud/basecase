@@ -1,6 +1,7 @@
 import { Vector3 } from 'three';
 import type { SheetProfile } from '../types/sheet';
-import { boundaryEdges, canonicalLoop, inside, loopsOf, type Edge } from './profileLoops';
+import { canonicalLoop, inside, loopsOf } from './profileLoops';
+import { CapBoundary } from './capBoundary';
 
 const TOLERANCE_MM = 0.002;
 const ANGLE_TOLERANCE = 0.003;
@@ -96,8 +97,8 @@ function parallelSides(faces: Face[], normal: Vector3, bounds: ReturnType<typeof
 
 function capEdges(faces: Face[], normal: Vector3, bounds: ReturnType<typeof projectedBounds>) {
   const { project } = frame(normal);
-  const bottom: Edge[] = [];
-  const top: Edge[] = [];
+  const bottom = new CapBoundary();
+  const top = new CapBoundary();
 
   for (let i = 0; i < faces.length; i++) {
     const face = faces[i];
@@ -107,16 +108,13 @@ function capEdges(faces: Face[], normal: Vector3, bounds: ReturnType<typeof proj
     if (!onBottom && !onTop) continue;
 
     const [a, b, c] = face.vertices.map(project);
-    const ab: Edge = [a, b];
-    const bc: Edge = [b, c];
-    const ca: Edge = [c, a];
 
-    if (onBottom) bottom.push(ab, bc, ca);
+    if (onBottom) bottom.add(a, b, c);
 
-    if (onTop) top.push(ab, bc, ca);
+    if (onTop) top.add(a, b, c);
   }
 
-  return { bottom: boundaryEdges(bottom), top: boundaryEdges(top) };
+  return { bottom: bottom.edges(), top: top.edges() };
 }
 
 function profileAlong(faces: Face[], normal: Vector3): SheetProfile | undefined {

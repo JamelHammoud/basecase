@@ -1,6 +1,7 @@
 import { eyeSize } from '../sim/eyes';
 import type { SimJoint, SimModel } from '../sim/mjcfTypes';
 import type { Recording } from '../sim/recorder';
+import { jointIndices } from './jointIndices';
 
 export const DATASET_FPS = 25;
 
@@ -99,7 +100,7 @@ function scanRows(recording: Recording, frames: number[]): Float32Array | undefi
 
 export function episodeData(recording: Recording, model: SimModel, task: string, slots?: DatasetSlot[]): EpisodeData {
   const { joints } = datasetJoints(model, slots);
-  const index = joints.map((j) => model.joints.indexOf(j));
+  const index = jointIndices(model.joints, joints);
   const address = recording.jointQpos ?? new Int32Array();
   const frames = sampledFrames(recording);
   const width = joints.length;

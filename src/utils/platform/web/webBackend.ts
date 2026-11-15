@@ -121,6 +121,9 @@ const ROUTES: Record<string, Route> = {
   'print-last-slice': () => null,
   'robot-discover': () => [],
   'print-printer-status': () => null,
+  'roboflow-account': () => ({ saved: false }),
+  'roboflow-set-key': () => ({ error: 'Download Basecase to connect Roboflow.' }),
+  'roboflow-import': () => ({ error: 'Download Basecase to import from Roboflow.' }),
 };
 
 const DESKTOP_ONLY: Array<[string, string]> = [

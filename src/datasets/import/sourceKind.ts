@@ -1,3 +1,5 @@
+import { imageSourceKind, type ImageSourceKind } from '../../vision/import/imageSourceKind';
+
 export const INFO_FILE = 'meta/info.json';
 export const BAG_METADATA_FILE = 'metadata.yaml';
 
@@ -27,10 +29,10 @@ export function isRosbag2Folder(paths: string[]): string | null {
   return prefixes.reduce((best, prefix) => (depthOf(prefix) < depthOf(best) ? prefix : best));
 }
 
-export function sourceKind(paths: string[]): 'lerobot' | 'rosbag2' | 'mcap' | null {
+export function sourceKind(paths: string[]): 'lerobot' | 'rosbag2' | 'mcap' | ImageSourceKind | null {
   if (isLeRobotFolder(paths) !== null) return 'lerobot';
 
   if (isRosbag2Folder(paths) !== null) return 'rosbag2';
 
-  return paths.length && paths.every(isRecordingName) ? 'mcap' : null;
+  return paths.length && paths.every(isRecordingName) ? 'mcap' : imageSourceKind(paths);
 }

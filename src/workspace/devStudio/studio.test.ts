@@ -73,6 +73,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'recordingPanels',
   'referenceTry',
   'releaseTrainer',
+  'roboflowKey',
   'robotCalibration',
   'robotGhost',
   'robotPackage',

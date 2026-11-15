@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Button, ChoiceGrid, Modal, TextInput, FolderImportIcon } from '../design-system';
-import { isOnshapeLink } from '../onshape/onshapeLink';
+import { canImportLink } from '../workspace/importLink';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
-import { isRobotLink, pickedFiles } from '../utils/robotImport';
+import { pickedFiles } from '../utils/robotImport';
 import type { RobotChoice, RobotSource } from '../workspace/useRobotInsert';
 
 type ImportSource = Exclude<RobotSource, { kind: 'simready' }>;
@@ -33,9 +33,7 @@ export const ImportRobotSheet: React.FC<{
   const [picked, setPicked] = useState<string | undefined>(undefined);
   const folderRef = useRef<HTMLInputElement | null>(null);
   const link = /^https?:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`;
-  const ready = choice
-    ? !!picked && choice.choices.includes(picked)
-    : isRobotLink(link) || (!IS_WEB_DEMO && isOnshapeLink(link));
+  const ready = choice ? !!picked && choice.choices.includes(picked) : canImportLink(link, !IS_WEB_DEMO);
 
   const submit = () => {
     if (!ready) return;

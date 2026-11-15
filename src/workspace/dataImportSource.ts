@@ -8,6 +8,12 @@ const isZip = (path: string) => /\.zip$/i.test(path);
 
 const zipNames = (blob: Blob) => zipEntryNames(blob).catch(() => []);
 
+const commonFolder = (files: LocalFile[]) => {
+  const roots = new Set(files.map((file) => (file.path.includes('/') ? file.path.split('/')[0] : '')));
+
+  return roots.size === 1 ? [...roots][0] : '';
+};
+
 async function zipSource(name: string, file: LocalFile): Promise<ImportSource | null> {
   const kind = sourceKind(await zipNames(file.blob));
 
@@ -17,7 +23,7 @@ async function zipSource(name: string, file: LocalFile): Promise<ImportSource | 
 export async function dataSourceOf(source: RobotSource): Promise<ImportSource | null> {
   if (source.kind !== 'files' || !source.files.length) return null;
 
-  const name = source.name ?? source.files[0].path;
+  const name = commonFolder(source.files) || source.name || source.files[0].path;
   const [only] = source.files;
 
   if (source.files.length === 1 && isZip(only.path)) return zipSource(name, only);

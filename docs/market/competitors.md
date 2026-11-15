@@ -74,6 +74,14 @@ Tools a Basecase user could pick instead. Entry format and rules: [README](READM
 
 ## Robot data
 
+### Roboflow
+
+- **Link:** https://docs.roboflow.com/
+- **Checked:** 2026-11-14
+- **Better than Basecase:** Roboflow manages computer vision datasets, annotation and model training, and exports versioned datasets through its web app, SDK, REST API or CLI in COCO, YOLO, Pascal VOC and other formats ([dataset exports](https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data)).
+- **Worse than Basecase:** its exported dataset versions are training snapshots with compressed images ([export behavior](https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data#export-behavior)). Basecase also makes labeled training images from a robot's own Case, with camera metadata and radial depth, then keeps imported and generated images in the same versioned datasets ([Cases](../guide/cases.md#training-images)).
+- **Basecase should:** integrate, as it does: Import Robot reads a project or version link through Roboflow's COCO export, with the API key in Settings ▸ Accounts. Local COCO, YOLO and Pascal VOC exports also import into Library with image and class counts ([Cases](../guide/cases.md#imported-image-datasets)).
+
 ### Foxglove
 
 - **Link:** https://foxglove.dev

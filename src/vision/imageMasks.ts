@@ -54,7 +54,25 @@ export function decodeMask(mask: ImageMask): Uint8Array {
   let offset = 0;
 
   mask.counts.forEach((count, run) => {
-    for (let i = offset; i < offset + count; i++) pixels[(i % height) * width + Math.floor(i / height)] = run % 2;
+    if (run % 2 === 0) {
+      offset += count;
+
+      return;
+    }
+
+    let row = offset % height;
+    let pixel = row * width + Math.floor(offset / height);
+
+    for (let i = 0; i < count; i++) {
+      pixels[pixel] = 1;
+      row++;
+      pixel += width;
+
+      if (row === height) {
+        row = 0;
+        pixel -= length - 1;
+      }
+    }
 
     offset += count;
   });

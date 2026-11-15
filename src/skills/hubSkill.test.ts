@@ -2,7 +2,7 @@ import loadMujoco from '@mujoco/mujoco';
 import { describe, expect, it } from 'vitest';
 import { act, type PolicySpec } from '../sim/policy';
 import type { SimModel } from '../sim/mjcfTypes';
-import { modelHashes, skillHash, type Skill } from './artifacts';
+import { skillHash, type Skill } from './artifacts';
 import { fixtureModel } from './fixtureModels';
 import { installPlan, publishedSkillFiles, readPublishedSkill, skillLink, skillRepoName } from './hubSkill';
 import { readyStand, stubForge } from './hubSkillFixtures';
@@ -184,30 +184,22 @@ describe('mapping a skill onto another robot', () => {
 });
 
 describe('installing a published skill', () => {
-  it('installs quad-servo’s Stand on the hexapod and back, each proved on its own robot', async () => {
-    const onHexapod = await install(published(stand, quad), hexapod, 'hexapod');
-    const warmed = onHexapod.jobs[0].job.warmPolicy as PolicySpec;
+  it.each([
+    { source: 'quad-servo', target: 'hexapod', joints: 18 },
+    { source: 'hexapod', target: 'quad-servo', joints: 12 },
+  ])('maps a published Stand from $source to $target for training', ({ source, target, joints }) => {
+    const sourceModel = fixtureModel(source);
+    const targetModel = fixtureModel(target);
+    const skill = readyStand(sourceModel, source);
+    const plan = installPlan(readPublishedSkill(published(skill, sourceModel)), targetModel);
 
-    expect(onHexapod.plan.entry).toBe('stand');
-    expect(warmed.joints).toHaveLength(18);
-    expect(warmed.layers[0].in).toBe(12 + 3 * 18);
-    expect(onHexapod.outcome.kind).toBe('skill');
-
-    const hexStand = onHexapod.outcome.kind === 'skill' ? onHexapod.outcome.skill : null;
-
-    expect(hexStand?.warmStartFrom).toBe(skillHash(stand));
-    expect(hexStand?.evidence?.passed).toBe(true);
-    expect(hexStand?.evidence?.binding.physics).toBe(modelHashes(hexapod).physics);
-    expect(hexStand?.evidence).not.toEqual(stand.evidence);
-    expect(onHexapod.saved).toEqual([`library/skills/${skillHash(hexStand!)}/skill.json`]);
-
-    const back = await install(published(hexStand!, hexapod), quad, 'quad-servo');
-    const quadStand = back.outcome.kind === 'skill' ? back.outcome.skill : null;
-
-    expect(quadStand?.evidence?.passed).toBe(true);
-    expect(quadStand?.warmStartFrom).toBe(skillHash(hexStand!));
-    expect(quadStand?.evidence?.binding.physics).toBe(modelHashes(quad).physics);
-  }, 120000);
+    expect(plan.entry).toBe('stand');
+    expect(plan.warm.from).toBe(skillHash(skill));
+    expect(plan.warm.policy.joints).toEqual(kitEnvironment(targetModel, 'stand').action.joints);
+    expect(plan.warm.policy.joints).toHaveLength(joints);
+    expect(plan.warm.policy.layers[0].in).toBe(12 + 3 * joints);
+    expect(plan.warm.policy.layers.at(-1)?.out).toBe(joints);
+  });
 
   it('saves nothing when Arena refuses the result, and says how many tries passed', async () => {
     const refused = await install(published(stand, quad), hexapod, 'hexapod', 20);

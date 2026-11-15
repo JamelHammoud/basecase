@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { worldDeltas } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
-import type { Case, ScoreRule, WorldObject } from './schema';
+import type { Case, WorldObject } from './schema';
 
 export type FactValue = boolean | number | string;
 export type CaseFacts = Record<string, FactValue>;
@@ -39,16 +39,6 @@ function inside(spot: Spot, item: WorldObject, at: THREE.Vector3): boolean {
   return Math.abs(local.x) <= w / 2 && Math.abs(local.z) <= d / 2 && local.y <= h / 2 + above && local.y >= -h / 2;
 }
 
-function score(rule: ScoreRule | undefined, inSpot: Map<string, string>, startedIn: Map<string, string>) {
-  if (!rule) return undefined;
-
-  const ids = [...startedIn.keys()];
-
-  if (rule.counts === 'in') return ids.filter((id) => inSpot.get(id) === rule.spot).length;
-
-  return ids.filter((id) => startedIn.get(id) === rule.spot && inSpot.get(id) !== rule.spot).length;
-}
-
 export interface CaseFactReader {
   read(poses: Float64Array, seconds: number, torque?: number): CaseFacts;
 }
@@ -67,7 +57,9 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
       const deltas = worldDeltas(model, poses);
       const placed = spots.map((s) => movedSpot(s, deltas.get(s.id)));
       const facts: CaseFacts = { elapsed: seconds, timer: Math.max(0, kase.task.seconds - seconds) };
-      const inSpot = new Map<string, string>();
+      const counts = new Map<string, number>();
+      const rule = kase.task.score;
+      let departed = 0;
 
       for (const o of movers) {
         const delta = deltas.get(o.id) ?? new THREE.Matrix4();
@@ -75,7 +67,10 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
         const up = UP.clone().transformDirection(delta);
         const spot = spotOf(o, at, placed);
 
-        inSpot.set(o.id, spot);
+        counts.set(spot, (counts.get(spot) ?? 0) + 1);
+
+        if (rule?.counts === 'out' && startedIn.get(o.id) === rule.spot && spot !== rule.spot) departed++;
+
         Object.assign(facts, {
           [`${o.id}-x`]: at.x,
           [`${o.id}-y`]: at.y,
@@ -86,11 +81,9 @@ export function caseFactReader(kase: Case, model: SimModel): CaseFactReader {
         });
       }
 
-      for (const s of spots) facts[countFact(s.id)] = movers.filter((o) => inSpot.get(o.id) === s.id).length;
+      for (const s of spots) facts[countFact(s.id)] = counts.get(s.id) ?? 0;
 
-      const points = score(kase.task.score, inSpot, startedIn);
-
-      if (points !== undefined) facts.score = points;
+      if (rule) facts.score = rule.counts === 'in' ? (counts.get(rule.spot) ?? 0) : departed;
 
       if (torque !== undefined) facts.torque = torque;
 

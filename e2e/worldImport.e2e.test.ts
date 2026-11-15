@@ -6,12 +6,15 @@ import { kitchenCollider, kitchenSplat } from '../src/cases/worldImportFixture';
 import type { WorldImportFile } from '../src/cases/worldImportTypes';
 import { endTryAt, inDataset, loadFixtureRobot, passedDatasetFiles } from './driveChecks';
 import type { SimState } from './driveStudio';
-import { openApp, shown, type App } from './harness';
+import { openApp, partCount, shown, type App } from './harness';
 
 interface WorldState {
+  hash: string | null;
   splat: boolean;
   meshes: number;
+  pieces: number;
   loaded: boolean;
+  renderedSplats: number;
 }
 
 interface Studio {
@@ -102,7 +105,19 @@ describe('a captured world dropped on the canvas', () => {
   it('records a kitchen try and exports Scene videos in both LeRobot layouts', async () => {
     app = await openApp();
     await loadFixtureRobot(app.page, 'rover-diff');
+
+    const parts = await partCount(app.page);
+
     await makeKitchen();
+    await expect.poll(async () => (await worldState())?.renderedSplats ?? 0).toBeGreaterThan(0);
+
+    const world = (await worldState())!;
+
+    expect(world.hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(world.splat).toBe(true);
+    expect(world.pieces).toBeGreaterThanOrEqual(2);
+    expect(world.pieces).toBeLessThanOrEqual(64);
+    expect(await partCount(app.page)).toBe(parts);
     await recordKitchenTry();
     await expectKitchenDataset();
     expect(app.errors).toEqual([]);

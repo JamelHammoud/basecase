@@ -38,13 +38,17 @@ export function resolveJoints(joints: RobotJoint[], parts: ScenePart[]): RobotJo
   if (!joints.some((j) => j.frame)) return joints;
 
   const byId = new Map(parts.map((p) => [p.id, p]));
+  const mounts = new Map<string, THREE.Matrix4>();
 
   return joints.map((j) => {
     const part = j.frame && byId.get(j.frame.part);
 
     if (!part) return j;
 
-    const m = partMatrix(part);
+    const m = mounts.get(part.id) ?? partMatrix(part);
+
+    mounts.set(part.id, m);
+
     const o = new THREE.Vector3(...j.frame!.origin).applyMatrix4(m);
     const a = new THREE.Vector3(...j.frame!.axis).transformDirection(m);
 

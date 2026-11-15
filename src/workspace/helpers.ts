@@ -13,10 +13,11 @@ export const projectFromSeed = (project?: ProjectSettings): ProjectSettings =>
 
 export function copyName(name: string, taken: string[]): string {
   const stem = `${name.replace(/ copy( \d+)?$/i, '')} copy`;
+  const names = new Set(taken);
   let n = 1;
   let next = stem;
 
-  while (taken.includes(next)) next = `${stem} ${++n}`;
+  while (names.has(next)) next = `${stem} ${++n}`;
 
   return next;
 }

@@ -146,6 +146,17 @@ export const listSkills = {
   handler: () => ask('skill_list', {}, 30000),
 };
 
+export const findSkills = {
+  name: 'find_skills',
+  config: {
+    title: 'Find skills',
+    description:
+      'Find published Hub skills for the open robot, ranked as in Install Skill by joint compatibility, limb anchor distance and source Arena passes. Refused candidates include their reason. Optional query filters skill names and repos. Desktop only. Installing still trains on this robot and keeps only an Arena pass.',
+    inputSchema: { query: z.string().max(120).optional() },
+  },
+  handler: (args) => ask('skill_find', args, 60000),
+};
+
 export const coachSkill = {
   name: 'coach_skill',
   config: {

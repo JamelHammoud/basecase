@@ -38,7 +38,7 @@ Find the friction, weight, servo strength or servo delay where a ready skill sta
 1. Open the **Simulate** tab and find the ready skill under **Train**.
 2. Right-click its row, then choose **Stress**.
 
-![The right-click menu of a ready Stand row with Stress at the top](/help/stress-a-skill/menu.png)
+![The right-click menu of a ready Stand row with Stress and Install Skill](/help/stress-a-skill/menu.png)
 
 3. Wait while the row reads Stressing with a percentage. It takes about 20 seconds for Stand. To stop early, click **Stop training** (■) on the row.
 
@@ -51,7 +51,7 @@ Find the friction, weight, servo strength or servo delay where a ready skill sta
 5. Click a finding to watch that run in the simulation.
 6. To retrain a Motor Kit skill on what failed, right-click its row and choose **Train on These**.
 
-![The right-click menu of the stressed Stand row with Stress and Train on These](/help/stress-a-skill/train.png)
+![The right-click menu of the stressed Stand row with Train on These and Install Skill](/help/stress-a-skill/train.png)
 
 The new skill replaces the old one only if Arena passes it on the wider ranges. Otherwise, the old skill stays and the row shows how many tries passed, for example Refused in Arena: 28 of 32 tries. When the new skill is kept, its findings go away, and you can stress it again.
 

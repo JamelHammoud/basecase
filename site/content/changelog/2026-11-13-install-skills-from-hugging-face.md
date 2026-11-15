@@ -1,14 +1,16 @@
 ---
 title: Install skills from Hugging Face
 date: 2026-11-13
-image: /changelog/install-skills-from-hugging-face/cover.png
+image: /changelog/install-skills-from-hugging-face/ranked.png
 ---
 
-You can now publish a ready skill to Hugging Face and install it on another robot, where Arena proves it again.
+You can now find published skills ranked for your robot and install one from the list, where Arena proves it again.
 
-To publish, right-click a ready skill and choose Publish to Hugging Face, under Train. To install, open Install Skill from ⌘K and give it the repo's link.
+To publish, right-click a ready skill and choose Publish to Hugging Face, under Train. Install Skill opens from ⌘K or a Train row's right-click menu. Its list sits under the repo link field, with Install beside each fitting skill.
 
 Both work in the desktop app. Install Skill takes Motor Kit skills on legged robots.
+
+Skills whose joints fit come first. Limb positions determine the next order, followed by the source's Arena passes. Refused skills appear last with their reason. Repos with mismatched files stay out of the list, and a disconnected Hub leaves the link field usable.
 
 A policy on the Hub is trained for one robot, with nothing to show it works on yours. Until now, a hexapod's Stand started from zero, even when a quad with the same legs could already stand.
 

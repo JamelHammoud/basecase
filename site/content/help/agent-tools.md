@@ -132,6 +132,7 @@ The tools come from one MCP server named `robotics_cad` inside Basecase. MCP is 
 | `train_skill` | Trains a skill in the background |
 | `training_status` | Reports training progress |
 | `list_skills` | Lists the robot's skills |
+| `find_skills` | Finds published Hub skills ranked for the open robot, with refusal reasons for skills whose joints don't fit (web, desktop only) |
 | `coach_skill` | Changes how a ready Motor Kit skill moves, and keeps the change only if Arena still passes it |
 | `stress_skill` | Finds the friction, link mass, servo strength or servo delay where a ready skill starts to fail |
 | `roll_out` | Rolls a ready skill out to your connected robots, canaries first, holding back any robot whose twin fails in Arena |

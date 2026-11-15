@@ -35,7 +35,7 @@ You can publish a ready skill to the Hugging Face Hub as a model repo, so anothe
 2. In the **Simulate** tab, find the ready skill under **Train**. A ready row shows its Arena result, such as "32 of 32 tries".
 3. Right-click the row, then choose **Publish to Hugging Face**.
 
-![The Stand row's right-click menu with Stress, Coach and Publish to Hugging Face](/help/publish-a-skill-to-hugging-face/menu.png)
+![The Stand row's right-click menu with Publish to Hugging Face and Install Skill](/help/publish-a-skill-to-hugging-face/menu.png)
 
 4. When the toast says "Published to" followed by the repo's name, click **Open** to see the repo on the Hub.
 
@@ -48,6 +48,8 @@ Publishing creates the repo on your account and names it after the robot and the
 - The policy, as JSON and ONNX
 - The policy's Arena evidence
 - The joint layout that Install Skill maps from
-- A model card
+- A model card tagged `basecase-skill`
+
+The tag lets Install Skill find your published skill and rank it for the open robot. Older Basecase repos without this tag are checked for `skill.json` too.
 
 To put the skill on another robot, see [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face).

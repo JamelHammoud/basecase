@@ -77,6 +77,7 @@ describe('publishing a skill', () => {
     expect(card).toContain('position-offset on 12 joints, scale 0.5, every 0.02 s:');
     expect(card).toContain('| held-out | 32 of 32 |');
     expect(card).toContain('**Install Skill**');
+    expect(card).toContain('  - basecase-skill');
   });
 
   it('refuses a skill that never passed Arena', () => {

@@ -5,29 +5,9 @@ import type { V3 } from './types';
 import { cellIndex } from './voxels';
 import { gridMass, type LightenMassTarget } from './lightenMass';
 import { interfacePaths } from './lightenPaths';
+import { fineGrid, type FineGrid } from './lightenFineGrid';
 
-export interface FineGrid {
-  origin: V3;
-  n: V3;
-  h: V3;
-  solid: Uint8Array;
-}
-
-function fineGrid(mesh: HexMesh, ranked: number[], count: number, paths: Uint8Array): FineGrid {
-  const { grid } = mesh;
-  const n = grid.n.map((value) => value * 2) as V3;
-  const h = grid.h.map((value) => value / 2) as V3;
-  const solid = new Uint8Array(n[0] * n[1] * n[2]);
-  const kept = new Set(ranked.slice(0, count).map((e) => mesh.cells[e]));
-
-  for (let k = 0; k < n[2]; k++)
-    for (let j = 0; j < n[1]; j++)
-      for (let i = 0; i < n[0]; i++)
-        solid[cellIndex({ n }, i, j, k)] =
-          kept.has(cellIndex(grid, i >> 1, j >> 1, k >> 1)) || paths[cellIndex(grid, i >> 1, j >> 1, k >> 1)] ? 1 : 0;
-
-  return { origin: grid.origin, n, h, solid };
-}
+export type { FineGrid } from './lightenFineGrid';
 
 function ballOffsets(h: V3, radius: number): V3[] {
   const reach = h.map((value) => Math.ceil(radius / value));

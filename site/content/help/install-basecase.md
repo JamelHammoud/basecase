@@ -1,7 +1,6 @@
 ---
 title: Install Basecase on a Mac or Windows PC
 date: 2026-11-13
-updated: 2026-11-13
 collection: get-started
 type: task
 order: 1

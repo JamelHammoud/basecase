@@ -1,3 +1,4 @@
+import { expandHelpHubs } from '../../src/landing/pages/helpHubs.ts';
 import { parseFrontMatter } from '../../src/landing/pages/frontMatter.ts';
 import { blocksOf } from './blocks.mjs';
 import {
@@ -53,7 +54,10 @@ function siteOf(pages, { exists, labels }) {
 }
 
 export function lintSite({ files, exists, labels = null }) {
-  const pages = files.map(pageOf).filter(Boolean);
+  const expanded = expandHelpHubs(Object.fromEntries(files.map(({ path, source }) => [path, source])), new Date());
+  const pages = Object.entries(expanded)
+    .map(([path, source]) => pageOf({ path, source }))
+    .filter(Boolean);
   const site = siteOf(pages, { exists, labels });
 
   return pages.flatMap((page) =>

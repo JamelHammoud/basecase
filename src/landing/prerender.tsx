@@ -8,4 +8,5 @@ import { readContent } from './pages/siteContent';
 
 export const renderSite = () => renderToStaticMarkup(<Landing browserApp={WEB_APP_URL} sections={SECTIONS} />);
 
-export const renderSitePages = (assets: SiteAssets) => renderPages(readContent(CONTENT_FILES, new Date()), assets);
+export const renderSitePages = (assets: SiteAssets, committed: Record<string, string> = {}) =>
+  renderPages(readContent(CONTENT_FILES, new Date(), committed), assets);

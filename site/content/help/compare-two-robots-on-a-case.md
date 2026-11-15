@@ -1,7 +1,6 @@
 ---
 title: Compare two robots on a Case
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 12
@@ -24,6 +23,9 @@ covers:
   - src/components/simulate/CompareRows.tsx
   - src/components/cases/CasesPanel.tsx
   - src/workspace/caseCommands.tsx
+hub_the_design_agent_order: 40
+hub_the_design_agent: |
+  - With a Case and two open scenes, it tells you which robot passes more often.
 ---
 
 You can run one Case on two versions of a robot, each in its own tab, to see which one passes more often, what each one costs and what each one weighs.

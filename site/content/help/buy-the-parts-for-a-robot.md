@@ -1,7 +1,6 @@
 ---
 title: Buy the parts for a robot
 date: 2026-11-13
-updated: 2026-11-13
 collection: build-and-print
 type: task
 order: 3

@@ -65,7 +65,9 @@ describe('help collections', () => {
 
   it('defaults updated to the date', () => {
     expect(center.articles[0].updated).toBe('2026-11-01');
-    expect(help({ a: task('A', 'design', 'updated: 2026-11-05') }).articles[0].updated).toBe('2026-11-05');
+    expect(() => help({ a: task('A', 'design', 'updated: 2026-11-05') })).toThrow(
+      '/site/content/help/a.md: remove "updated:"',
+    );
   });
 });
 
@@ -78,8 +80,8 @@ describe('help front matter', () => {
     expect(failure({ a: article('title: A\ncollection: design') })).toThrow(/a\.md: set "type:"/);
     expect(failure({ a: article('title: A\ncollection: design\ntype: tutorial') })).toThrow(/a\.md: set "type:"/);
     expect(failure({ a: task('A', 'design', 'colection: design') })).toThrow(/a\.md: "colection:" isn't a help field/);
-    expect(failure({ a: task('A', 'design', 'updated: soon') })).toThrow(/a\.md: write "updated:"/);
-    expect(failure({ a: task('A', 'design', 'updated: 2026-10-01') })).toThrow(/a\.md: "updated:" comes before/);
+    expect(failure({ a: task('A', 'design', 'updated: soon') })).toThrow(/a\.md: remove "updated:"/);
+    expect(failure({ a: task('A', 'design', 'updated: 2026-10-01') })).toThrow(/a\.md: remove "updated:"/);
     expect(failure({ a: task('A', 'design', 'order: first') })).toThrow(/a\.md: write "order:"/);
     expect(failure({ a: task('A', 'design', 'popular: often') })).toThrow(/a\.md: write "popular:"/);
   });

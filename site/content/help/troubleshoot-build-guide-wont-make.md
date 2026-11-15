@@ -1,7 +1,6 @@
 ---
 title: Build guide won't make or open
 date: 2026-11-13
-updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 6

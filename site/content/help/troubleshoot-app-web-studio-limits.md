@@ -1,7 +1,6 @@
 ---
 title: Web studio asks you to download Basecase
 date: 2026-11-13
-updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 11

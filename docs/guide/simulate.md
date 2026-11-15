@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 8d. Simulate & Train (MuJoCo)
 
+MJCF body generation groups owned part ids once through `utils/kinematicsMembers.ts`, after `adoptEmbeddedParts` finishes. Every joint body reads only its group's ids and applies the existing solid-part filter. Child lists append into their existing arrays. Body order, names, geometry order and fixed-joint numbering stay unchanged. Weight and engineering checks share the owned-part grouping through `reality/bodyLayout.ts` (§8k). `mjcfMembers.test.ts` compares complete models with scan-based membership across fixture robots and edited visibility, roles, fixed joints, source order and embedded-part placement.
+
 Contact-replay capture fixtures use `electron/cad-kernel/pairKey.mjs` for unordered body names, preserving their null separator and lexical order without sorting each contact pair (§0f). The final contact list remains sorted.
 
 Drive input declarations and defaults live in `src/sim/inputRegistry.ts`. The Case parser reads them without importing live input handlers. `inputSources.ts` registers those handlers and declares additional source ids through the same registry. `inputSources.test.ts` checks declaration parity, Case validation and an additional source reaching the drive.

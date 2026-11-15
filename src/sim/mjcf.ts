@@ -3,6 +3,7 @@ import type { MeshMeasure } from '../three/meshMeasure';
 import type { RobotJoint, RobotPoseState, ScenePart } from '../types/robotics';
 import { partMasses } from '../utils/engineering';
 import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
+import { ownedPartsByJoint } from '../utils/kinematicsMembers';
 import { effortOf } from './mjcfEffort';
 import { robotFingerprint } from './mjcfFingerprint';
 import { robotContactExclusions, robotContactMasks } from './mjcfContacts';
@@ -37,6 +38,7 @@ interface BuildState {
   byId: Map<string, ScenePart>;
   masses: Map<string, PartMass>;
   contactMasks: Map<string, string>;
+  partsByJoint: Map<string, string[]>;
   assets: string[];
   bodies: SimBody[];
   simJoints: SimJoint[];
@@ -228,9 +230,7 @@ function movableJointXml(rb: RobotBuild, j: RobotJoint, name: string): string {
 }
 
 function jointParts(st: BuildState, jointId: string): string[] {
-  return [...st.input.rig.ownerOf]
-    .filter(([pid, owner]) => owner === jointId && solidPart(st, pid))
-    .map(([pid]) => pid);
+  return (st.partsByJoint.get(jointId) ?? []).filter((id) => solidPart(st, id));
 }
 
 function emitJoint(rb: RobotBuild, j: RobotJoint, parent: BodySpec['parent'], indent: string): string[] {
@@ -253,7 +253,10 @@ function childrenByParent(rig: Rig, joints: RobotJoint[]): Map<string, RobotJoin
   for (const j of joints) {
     const parent = rig.parentOf.get(j.id) ?? '';
 
-    children.set(parent, [...(children.get(parent) ?? []), j]);
+    const members = children.get(parent) ?? [];
+
+    members.push(j);
+    children.set(parent, members);
   }
 
   return children;
@@ -383,6 +386,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
     masses: new Map(partMasses(parts, project, input.measures).map((m) => [m.id, m])),
     assets: [],
     contactMasks: robotContactMasks(rig.robots),
+    partsByJoint: ownedPartsByJoint(rig.ownerOf),
     bodies: [],
     simJoints: [],
     robots: [],

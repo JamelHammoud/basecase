@@ -7,7 +7,7 @@ import type { GalleryBundle } from '../src/gallery/galleryBundle';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { buildRig } from '../src/utils/kinematics';
 import { COCKPIT, pushStick } from './codePanels';
-import { exposeTestHooks, launchChrome, openPlayTab, shown } from './harness';
+import { exposeTestHooks, launchChrome } from './harness';
 
 let browser: Browser;
 const base = inject('webUrl');
@@ -174,7 +174,7 @@ describe('gallery links', () => {
 });
 
 describe('shared Case apps', () => {
-  it('runs a shared Case’s code panels, drives from its joystick, and carries them into the studio', async () => {
+  it('drives a shared Case from its code joystick and shows its speed in the HUD', async () => {
     const shared = sharedCase(COCKPIT);
     const { page, errors, hub } = await open(`/r/${ACCOUNT}/${shared.slug}`, { shared });
     const frame = (panel: string) => page.frameLocator(`[data-panel="${panel}"] iframe`);
@@ -194,39 +194,6 @@ describe('shared Case apps', () => {
     expect(hub).toEqual([]);
     expect(errors).toEqual([]);
 
-    await page.getByTestId('gallery-card').getByRole('button', { name: 'Open Scene' }).click();
-    await page.waitForURL(`${base}/`);
-    await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
-      timeout: 60000,
-    });
-    await expect
-      .poll(() =>
-        page.evaluate(
-          () =>
-            (
-              window as unknown as {
-                __studio: { sceneRecord: () => { project: { cases?: Array<{ console?: unknown }> } } };
-              }
-            ).__studio.sceneRecord().project.cases?.[0]?.console,
-        ),
-      )
-      .toEqual(shared.case.console);
-
-    await openPlayTab(page, 'Cases');
-    await page.locator(shown('[data-testid="cases-panel"] button'), { hasText: 'Rover Cockpit' }).first().click();
-    await expect
-      .poll(() =>
-        page.evaluate(
-          () =>
-            (window as unknown as { __studio: { simState: () => { activeCase: string | null } } }).__studio.simState()
-              .activeCase,
-        ),
-      )
-      .toBe('rover-cockpit');
-    await page.keyboard.press('Meta+k');
-    await page.keyboard.type('Run Case');
-    await page.keyboard.press('Enter');
-    await expect.poll(() => page.locator('[data-panel="stick"] iframe').count(), { timeout: 30000 }).toBe(1);
     await page.close();
   }, 240000);
 

@@ -397,10 +397,25 @@ export function parseCase(input: unknown): Case {
   return kase;
 }
 
+const storedCases = new WeakMap<object, Case>();
+
+function readStoredCase(input: unknown): Case {
+  const source = asRecord(input, 'A Case file');
+  const cached = storedCases.get(source);
+
+  if (cached) return cached;
+
+  const kase = parseCase(source);
+
+  storedCases.set(source, kase);
+
+  return kase;
+}
+
 export function readCases(raw: unknown[] | undefined): Case[] {
   return (raw ?? []).flatMap((c) => {
     try {
-      return [parseCase(c)];
+      return [readStoredCase(c)];
     } catch {
       return [];
     }

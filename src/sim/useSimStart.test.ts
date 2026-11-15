@@ -64,6 +64,37 @@ describe('simulation starts superseded by world changes', () => {
     expect(sw.load).not.toHaveBeenCalled();
   });
 
+  it('refuses a Case replaced while building its model', async () => {
+    const { start, sw, buildModel, postMessage } = starter();
+    let current = true;
+
+    buildModel.mockImplementation(async () => {
+      current = false;
+
+      return model;
+    });
+
+    await expect(start.startGuarded(() => current)).resolves.toBe(false);
+    expect(sw.load).not.toHaveBeenCalled();
+    expect(postMessage).not.toHaveBeenCalled();
+  });
+
+  it('refuses a Case replaced while its worker loads the model', async () => {
+    const { start, sw, postMessage } = starter();
+    let current = true;
+
+    sw.load.mockImplementation(async () => {
+      current = false;
+
+      return true;
+    });
+
+    await expect(start.startGuarded(() => current)).resolves.toBe(false);
+    expect(sw.load).toHaveBeenCalledOnce();
+    expect(postMessage).not.toHaveBeenCalled();
+    expect(sw.setPlaying).not.toHaveBeenCalled();
+  });
+
   it('does not load a model whose build completed after Stop', async () => {
     const { start, sw, setModel } = starter();
     const pending = start.start();

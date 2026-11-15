@@ -1,3 +1,5 @@
+import { pivotRow, solvedTail } from '../utils/matrixScans';
+
 export interface LeastSquaresProblem {
   residual: (x: number[]) => Float64Array;
   x0: number[];
@@ -21,9 +23,7 @@ export function solveLinear(matrix: number[][], rhs: number[]): number[] | null 
   const a = matrix.map((row, i) => [...row, rhs[i]]);
 
   for (let col = 0; col < n; col++) {
-    const pivot = a
-      .slice(col)
-      .reduce((best, row, k) => (Math.abs(row[col]) > Math.abs(a[best][col]) ? col + k : best), col);
+    const pivot = pivotRow(a, col);
 
     if (Math.abs(a[pivot][col]) < 1e-300) return null;
 
@@ -39,7 +39,7 @@ export function solveLinear(matrix: number[][], rhs: number[]): number[] | null 
   const x = new Array<number>(n).fill(0);
 
   for (let row = n - 1; row >= 0; row--) {
-    const tail = a[row].slice(row + 1, n).reduce((s, v, k) => s + v * x[row + 1 + k], 0);
+    const tail = solvedTail(a[row], x, row + 1);
 
     x[row] = (a[row][n] - tail) / a[row][row];
   }

@@ -3,6 +3,7 @@ import { SUPPLY_BY_ID } from '../data/supplies';
 import type { ScenePart } from '../types/robotics';
 import type { AssemblyGeometry } from './assemblyGeometry';
 import { minimumTeardown } from './minimumTeardown';
+import { indexFasteners, type FastenerIndex } from './fastenerIndex';
 import type { RemovalPlan } from './removalOrder';
 
 export type ServiceClass = 'battery' | 'electronics' | 'servo';
@@ -42,15 +43,7 @@ interface Search {
   g: AssemblyGeometry;
   memo: Map<string, Set<string> | null>;
   visiting: Set<string>;
-  pins: Map<string, string[]>;
-}
-
-function pinsOf(g: AssemblyGeometry): Map<string, string[]> {
-  const out = new Map<string, string[]>();
-
-  for (const c of g.chains.screws) for (const id of c.stack) out.set(id, [...(out.get(id) ?? []), c.id]);
-
-  return out;
+  fasteners: FastenerIndex;
 }
 
 function mergeAll(s: Search, out: Set<string>, ids: string[]): boolean {
@@ -102,7 +95,8 @@ function need(s: Search, id: string): Set<string> | null {
 
   const out = new Set([id]);
   const ways = waysOut(s, id).sort((a, b) => a.length - b.length);
-  const ok = mergeAll(s, out, s.pins.get(id) ?? []) && firstWay(s, out, ways);
+  const pins = s.fasteners.byPart.get(id)?.map((chain) => chain.id) ?? [];
+  const ok = mergeAll(s, out, pins) && firstWay(s, out, ways);
 
   s.visiting.delete(id);
   s.memo.set(id, ok ? out : null);
@@ -138,7 +132,7 @@ export function serviceDepths(
   toolOf: (id: string) => string,
   plan: RemovalPlan,
 ): ServiceResult[] {
-  const search: Search = { g, memo: new Map(), visiting: new Set(), pins: pinsOf(g) };
+  const search: Search = { g, memo: new Map(), visiting: new Set(), fasteners: indexFasteners(g.chains.screws) };
 
   return parts.flatMap((p) => {
     const cls = serviceClass(p);

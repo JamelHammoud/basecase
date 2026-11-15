@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Placed } from '../three/analysis/collide';
+import { isInside, type Placed } from '../three/analysis/collide';
 
 const RAY_DIRS = [
   new THREE.Vector3(1, 0.013, 0.007),
@@ -8,7 +8,6 @@ const RAY_DIRS = [
 ].map((v) => v.normalize());
 
 const local = new THREE.Vector3();
-const ray = new THREE.Ray();
 const hit = { point: new THREE.Vector3(), distance: 0, faceIndex: 0 };
 
 export function insideSolid(p: Placed, world: THREE.Vector3): boolean {
@@ -18,15 +17,7 @@ export function insideSolid(p: Placed, world: THREE.Vector3): boolean {
 
   if (!p.solid.box.containsPoint(local)) return false;
 
-  let votes = 0;
-
-  for (const dir of RAY_DIRS) {
-    ray.set(local, dir);
-
-    if (p.solid.bvh.raycast(ray, THREE.DoubleSide).filter((h) => h.distance > 1e-4).length % 2 === 1) votes++;
-  }
-
-  return votes >= 2;
+  return isInside(p.solid, local, RAY_DIRS);
 }
 
 export function distanceTo(p: Placed, world: THREE.Vector3, max: number): number {

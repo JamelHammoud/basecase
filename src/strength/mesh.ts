@@ -1,6 +1,7 @@
 import type { Cell } from './hexElement';
 import type { V3 } from './material';
 import { cellIndex, neighbours, type VoxelGrid } from './voxels';
+import { screwRegion } from './screwRegion';
 
 export interface ScrewLine {
   from: V3;
@@ -59,27 +60,14 @@ export function hexMesh(grid: VoxelGrid, keep: (cell: number) => boolean = () =>
   };
 }
 
-export function nearLine(p: V3, line: ScrewLine, slack: number): boolean {
-  const d = [0, 1, 2].map((k) => line.to[k] - line.from[k]);
-  const len2 = d[0] ** 2 + d[1] ** 2 + d[2] ** 2 || 1;
-  const rel = [0, 1, 2].map((k) => p[k] - line.from[k]);
-  const t = (rel[0] * d[0] + rel[1] * d[1] + rel[2] * d[2]) / len2;
-  const len = Math.sqrt(len2);
-
-  if (t * len < -slack || (t - 1) * len > slack) return false;
-
-  const off = Math.hypot(rel[0] - t * d[0], rel[1] - t * d[1], rel[2] - t * d[2]);
-
-  return off <= line.radius;
-}
-
 export function nodesNear(mesh: HexMesh, lines: ScrewLine[], slack: number): Uint8Array {
   const out = new Uint8Array(mesh.positions.length / 3);
+  const regions = lines.map((line) => screwRegion(line, slack));
 
   for (let n = 0; n < out.length; n++) {
     const p: V3 = [mesh.positions[n * 3], mesh.positions[n * 3 + 1], mesh.positions[n * 3 + 2]];
 
-    out[n] = lines.some((line) => nearLine(p, line, slack)) ? 1 : 0;
+    out[n] = regions.some((contains) => contains(p)) ? 1 : 0;
   }
 
   return out;

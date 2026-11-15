@@ -1,4 +1,5 @@
 import { conjugateGradient, type ElasticSystem } from './cg';
+import { elasticPattern } from './elasticPattern';
 import { tangentialForces, unit } from './loads';
 import { hexElement, type HexElement } from './hexElement';
 import {
@@ -106,7 +107,7 @@ export function solveDisplacement(model: StrengthModel, grid: VoxelGrid): Solved
   const element = hexElement(grid.h, stiffnessFor(model.material, model.normal));
   const scale = Float64Array.from(mesh.cells, (c) => solidShare(depth[c], meanH, model.fill));
   const system: ElasticSystem = {
-    nodes: mesh.nodes,
+    pattern: elasticPattern(mesh.nodes, mesh.positions.length / 3),
     scale,
     stiffness: element.stiffness,
     fixed: new Uint8Array(loaded.length * 3).map((_, i) => loaded[(i / 3) | 0]),

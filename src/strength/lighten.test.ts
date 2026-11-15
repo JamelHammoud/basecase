@@ -1,11 +1,12 @@
 import * as THREE from 'three';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import * as elastic from './elasticPattern';
 import { lightenPart, type LightenInput } from './lighten';
 import type { StrengthJob, V3 } from './types';
 import { loadManifold, solidOfMesh } from '../wrap/manifold';
 import { weld } from '../print/threeMf';
 import { optimizeDensity } from './lightenOptimize';
-import { frozenAt, frozenRegions } from './lightenFrozen';
+import { frozenQuery, frozenRegions } from './lightenFrozen';
 import { voxelizeAt } from './voxels';
 import { bvhOf } from '../three/printability';
 import { validateLighten } from './lightenValidate';
@@ -76,7 +77,12 @@ describe('lightening a loaded printed bracket', () => {
     const single = optimizeDensity(grid, input, frozenRegions(input));
     const other: StrengthJob = { ...input.jobs[0], key: 'crosswise', load: { ...input.jobs[0].load, axis: [0, 1, 0] } };
     const both = { ...input, jobs: [...input.jobs, other] };
+    const preparation = vi.spyOn(elastic, 'elasticPattern');
     const combined = optimizeDensity(grid, both, frozenRegions(both));
+
+    expect(preparation).toHaveBeenCalledTimes(1);
+    preparation.mockRestore();
+
     const normalized = combined.compliance.reduce(
       (sum, value, index) => sum + value / combined.baselineCompliance[index],
       0,
@@ -92,7 +98,7 @@ describe('lightening a loaded printed bracket', () => {
     const input = fixture();
     const result = await lightenPart(input);
     const bvh = bvhOf(result.positions);
-    const regions = frozenRegions(input);
+    const isFrozen = frozenQuery(frozenRegions(input), 0.1);
     const a = new THREE.Vector3();
     const b = new THREE.Vector3();
     const c = new THREE.Vector3();
@@ -118,7 +124,7 @@ describe('lightening a loaded printed bracket', () => {
         .addScaledVector(n, -0.001);
       ray.direction.copy(n).negate();
 
-      if (frozenAt(regions, ray.origin.toArray() as V3, 0.1)) continue;
+      if (isFrozen(ray.origin.toArray() as V3)) continue;
 
       const hit = bvh.raycastFirst(ray, THREE.DoubleSide);
 

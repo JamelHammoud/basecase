@@ -1,69 +1,10 @@
+import { assembleElastic, blockAt, type BlockMatrix, type ElasticPattern } from './elasticPattern';
+
 export interface ElasticSystem {
-  nodes: Int32Array;
+  pattern: ElasticPattern;
   scale: Float64Array;
   stiffness: Float64Array;
   fixed: Uint8Array;
-}
-
-interface BlockMatrix {
-  rowStart: Int32Array;
-  cols: Int32Array;
-  values: Float64Array;
-}
-
-const DOFS = 24;
-const MAX_NEIGHBOURS = 27;
-
-function addNeighbour(near: Int32Array, size: Int32Array, i: number, j: number): void {
-  const row = near.subarray(i * MAX_NEIGHBOURS, i * MAX_NEIGHBOURS + size[i]);
-
-  if (!row.includes(j)) near[i * MAX_NEIGHBOURS + size[i]++] = j;
-}
-
-function pattern(nodes: Int32Array, count: number): { rowStart: Int32Array; cols: Int32Array } {
-  const near = new Int32Array(count * MAX_NEIGHBOURS);
-  const size = new Int32Array(count);
-
-  for (let e = 0; e < nodes.length; e += 8)
-    for (let a = 0; a < 8; a++) for (let b = 0; b < 8; b++) addNeighbour(near, size, nodes[e + a], nodes[e + b]);
-
-  const rowStart = new Int32Array(count + 1);
-
-  for (let i = 0; i < count; i++) rowStart[i + 1] = rowStart[i] + size[i];
-
-  const cols = new Int32Array(rowStart[count]);
-
-  for (let i = 0; i < count; i++)
-    cols.set(near.subarray(i * MAX_NEIGHBOURS, i * MAX_NEIGHBOURS + size[i]).sort(), rowStart[i]);
-
-  return { rowStart, cols };
-}
-
-function blockAt(m: Pick<BlockMatrix, 'rowStart' | 'cols'>, i: number, j: number): number {
-  for (let k = m.rowStart[i]; k < m.rowStart[i + 1]; k++) if (m.cols[k] === j) return k;
-
-  return -1;
-}
-
-function assemble(sys: ElasticSystem, count: number): BlockMatrix {
-  const shape = pattern(sys.nodes, count);
-  const values = new Float64Array(shape.cols.length * 9);
-  const slots = new Int32Array(64);
-
-  for (let e = 0; e < sys.scale.length; e++) {
-    const own = sys.nodes.subarray(e * 8, e * 8 + 8);
-
-    for (let a = 0; a < 8; a++) for (let b = 0; b < 8; b++) slots[a * 8 + b] = blockAt(shape, own[a], own[b]);
-
-    for (let r = 0; r < DOFS; r++) {
-      const s = sys.scale[e];
-
-      for (let c = 0; c < DOFS; c++)
-        values[slots[((r / 3) | 0) * 8 + ((c / 3) | 0)] * 9 + (r % 3) * 3 + (c % 3)] += s * sys.stiffness[r * DOFS + c];
-    }
-  }
-
-  return { ...shape, values };
 }
 
 function pinBlock(m: BlockMatrix, fixed: Uint8Array, at: { i: number; k: number }): void {
@@ -171,7 +112,7 @@ export function conjugateGradient(
   opts: { tolerance: number; maxIterations: number },
 ): CgResult {
   const size = f.length;
-  const m = assemble(sys, size / 3);
+  const m = assembleElastic(sys.pattern, sys.scale, sys.stiffness);
 
   pin(m, sys.fixed);
 

@@ -1,4 +1,4 @@
-import { frozenAt } from './lightenFrozen';
+import { frozenQuery } from './lightenFrozen';
 import type { LightenFrozen } from './lightenTypes';
 import { cellCenter, type HexMesh } from './mesh';
 import { neighbours } from './voxels';
@@ -57,9 +57,8 @@ class CostQueue {
 
 export function interfacePaths(mesh: HexMesh, density: Float64Array, regions: LightenFrozen): Uint8Array {
   const { grid } = mesh;
-  const frozen = Uint8Array.from(grid.solid, (value, cell) =>
-    value && frozenAt(regions, cellCenter(grid, cell)) ? 1 : 0,
-  );
+  const isFrozen = frozenQuery(regions);
+  const frozen = Uint8Array.from(grid.solid, (value, cell) => (value && isFrozen(cellCenter(grid, cell)) ? 1 : 0));
   const root = frozen.indexOf(1);
   const paths = new Uint8Array(grid.solid.length);
 

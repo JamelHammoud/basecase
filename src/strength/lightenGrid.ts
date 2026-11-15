@@ -1,4 +1,4 @@
-import { frozenAt } from './lightenFrozen';
+import { frozenQuery } from './lightenFrozen';
 import type { LightenFrozen } from './lightenTypes';
 import { cellCenter, type HexMesh } from './mesh';
 import type { V3 } from './types';
@@ -107,7 +107,8 @@ export function targetDensityGrid(options: {
   const paths = interfacePaths(mesh, density, regions);
   const template = fineGrid(mesh, ranked, ranked.length, paths);
   const offsets = ballOffsets(template.h, minWallMm / 2 + Math.max(...template.h) / 2);
-  const frozen = template.solid.map((_, cell) => (frozenAt(regions, cellCenter(template, cell)) ? 1 : 0));
+  const isFrozen = frozenQuery(regions);
+  const frozen = template.solid.map((_, cell) => (isFrozen(cellCenter(template, cell)) ? 1 : 0));
   const original = template.solid;
   let low = 0;
   let high = ranked.length;

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RobotJoint } from '../src/types/robotics';
+import type { ProjectSettings, RobotJoint, ScenePart } from '../src/types/robotics';
+import { shapeKey } from '../src/print/shapeKey';
 import { component, sceneOf } from '../src/wiring/fixtures';
 import type { Net } from '../src/wiring/netlist';
 import { buildCheckPage, studioLoad } from './buildCheckFixtures';
@@ -7,7 +8,7 @@ import { openApp, shown, type App } from './harness';
 
 interface BuildAlongStudio {
   load: (record: { name: string; parts: unknown[]; project: unknown }) => void;
-  sceneRecord: () => { project: Record<string, unknown> };
+  sceneRecord: () => { project: ProjectSettings };
   parts: () => Array<{ id: string; visible: boolean }>;
   shownParts: () => string[];
   buildAlongSteps: () => Array<{
@@ -17,13 +18,11 @@ interface BuildAlongStudio {
   }>;
   buildAlongRoutes: () => Net[];
   selection: () => string[];
-  printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
-  readySteps: () => boolean[];
 }
 
 let app: App;
 
-const part = (id: string, y: number, height: number, extra: Record<string, unknown> = {}) => ({
+const part = (id: string, y: number, height: number, extra: Partial<ScenePart> = {}): ScenePart => ({
   id,
   name: id,
   kind: 'box',
@@ -101,12 +100,29 @@ const openBuildAlong = async () => {
 beforeEach(async () => {
   app = await openApp();
   await app.page.evaluate(
-    ({ parts, joints }) => {
+    ({ parts, joints, prints }) => {
       const s = (window as unknown as { __studio: BuildAlongStudio }).__studio;
 
-      s.load({ name: 'Arm', parts, project: { ...s.sceneRecord().project, joints } });
+      s.load({ name: 'Arm', parts, project: { ...s.sceneRecord().project, joints, prints } });
     },
-    { parts, joints },
+    {
+      parts,
+      joints,
+      prints: [
+        {
+          id: 'arm-print',
+          plate: 1,
+          material: 'PLA',
+          hash: 'arm-plate',
+          parts: parts
+            .filter((p) => ['upper-arm', 'forearm'].includes(p.id))
+            .map((p) => ({ id: p.id, key: shapeKey(p) })),
+          printer: 'default',
+          sentAt: '2026-11-14T00:00:00.000Z',
+          state: 'printed',
+        },
+      ],
+    },
   );
   await vi.waitFor(async () => expect(await shownParts()).toHaveLength(parts.length), { timeout: 30000 });
 }, 120000);
@@ -203,6 +219,33 @@ describe('Build Along', () => {
     await expect
       .poll(() => app.page.locator(shown('[data-build-label]')).allTextContents())
       .toEqual(steps[servoStep].servos.map((servo) => `${servo.joint}, ID ${servo.id}`));
+
+    const stepParts = await app.page.evaluate(
+      () =>
+        (window as unknown as { __studio: BuildAlongStudio }).__studio.sceneRecord().project.buildGuide?.stepParts
+          ?.ids ?? [],
+    );
+    const unreadyStep = stepParts.findIndex((ids) => ids.includes('base'));
+    const readyStep = stepParts.findIndex(
+      (ids) => !ids.includes('base') && ids.some((id) => ['upper-arm', 'forearm'].includes(id)),
+    );
+    let currentStep = servoStep;
+
+    expect(stepParts).toHaveLength(steps.length);
+    expect(unreadyStep).toBeGreaterThanOrEqual(0);
+    expect(readyStep).toBeGreaterThanOrEqual(0);
+
+    for (const target of [{ index: unreadyStep }, { index: readyStep, ready: 'true' }]) {
+      const key = target.index < currentStep ? 'ArrowLeft' : 'ArrowRight';
+
+      for (let remaining = Math.abs(target.index - currentStep); remaining > 0; remaining--)
+        await app.page.keyboard.press(key);
+
+      await expect.poll(stepShown).toBe(String(target.index + 1));
+      await expect.poll(() => toolbar().getAttribute('data-ready')).toBe(target.ready ?? null);
+      currentStep = target.index;
+    }
+
     await toolbar().getByRole('button', { name: /^Done/ }).click();
     await expect.poll(() => toolbar().count()).toBe(0);
     expect(await sceneParts()).toEqual(before);
@@ -210,42 +253,6 @@ describe('Build Along', () => {
     await expect.poll(() => app.page.locator('[data-build-label]').count()).toBe(0);
     expect(app.errors).toEqual([]);
   });
-
-  it('marks a step done once every part it prints is printed', async () => {
-    const firstReady = () =>
-      app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.readySteps()[0]);
-    const printPlates = () =>
-      app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.printPlates());
-
-    await openBuildAlong();
-    expect(await toolbar().getAttribute('data-ready')).toBeNull();
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => toolbar().count()).toBe(0);
-    expect(await firstReady()).toBe(false);
-
-    await app.page
-      .locator('main')
-      .first()
-      .click({ position: { x: 20, y: 20 } });
-    await app.page.keyboard.press('Meta+p');
-    await expect
-      .poll(printPlates, { timeout: 30000 })
-      .toEqual({ open: true, fitTest: false, plates: [['base', 'forearm', 'upper-arm']] });
-    await app.page
-      .locator(shown('button'))
-      .filter({ hasText: /^Mark Printed$/ })
-      .click();
-    await expect.poll(firstReady).toBe(true);
-    await app.page.keyboard.press('Escape');
-    await expect.poll(async () => (await printPlates()).open).toBe(false);
-
-    await openBuildAlong();
-    await expect.poll(() => toolbar().getAttribute('data-ready')).toBe('true');
-
-    await app.page.keyboard.press('Escape');
-    await expect.poll(() => toolbar().count()).toBe(0);
-    expect(app.errors).toEqual([]);
-  }, 240000);
 });
 
 describe('Buy All', () => {

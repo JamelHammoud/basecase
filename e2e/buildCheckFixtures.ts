@@ -1,4 +1,3 @@
-import { expect } from 'vitest';
 import type { Locator, Page } from 'playwright-core';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../src/types/robotics';
@@ -103,27 +102,6 @@ export function buildCheckPage(page: () => Page) {
     headerText: async () => (await checks().locator('header').first().textContent()) ?? '',
     buildTabDot: () => page().locator(visible('[role=tab]'), { hasText: 'Build' }).first().getByRole('img'),
   };
-}
-
-export async function bomRow(
-  page: Page,
-  scene: { parts: unknown[]; project: Pick<ProjectSettings, 'joints'> },
-  name: string,
-) {
-  await studioLoad(page, {
-    parts: scene.parts,
-    project: { ...(await sceneRecord(page)).project, joints: scene.project.joints },
-  });
-  await page.locator(visible('[role=tab]'), { hasText: 'Build' }).first().click();
-
-  const bom = page.locator(visible('section'), { hasText: /^Bill of materials/ }).first();
-  const supplies = bom.getByRole('button', { name: /^Supplies/ }).first();
-
-  await expect.poll(() => supplies.isVisible(), { timeout: 45000 }).toBe(true);
-
-  if ((await supplies.getAttribute('aria-expanded')) === 'false') await supplies.click();
-
-  return bom.locator('li ul > li').filter({ hasText: name });
 }
 
 export async function storeWalk(page: Page, walk: WalkSim) {

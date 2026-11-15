@@ -25,7 +25,7 @@ covers:
   - src/workspace/useOnshapeUpdate.ts
 ---
 
-You can bring a robot you modeled in Onshape into Basecase. Its revolute, cylindrical and slider mates come in as joints you can pose.
+Bring a robot you modeled in Onshape into Basecase with revolute and cylindrical mates as hinges and slider mates as slides.
 
 1. In Onshape's developer portal, create an API key that can read your documents, then copy its access key and secret key.
 2. Press [[⌘,]] to open Settings, then choose **Accounts**.

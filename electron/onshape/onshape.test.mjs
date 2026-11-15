@@ -216,6 +216,31 @@ describe('subassembly limits', () => {
       expect(again.robot.joints.map((j) => j.id)).toEqual(fresh.joints.map((j) => j.id));
     },
   );
+
+  it('keeps a legacy knee and its servo when a root hinge gains the same bare mate id', async () => {
+    const arm = fakeLegs({ count: 1 });
+
+    arm.definition.rootAssembly.features[0].featureData.mateType = 'BALL';
+
+    const { robot: before } = await legRobot(arm);
+    const { robot: fresh } = await legRobot(fakeLegs({ count: 1 }));
+    const knee = { ...before.joints[0], onshape: { mate: 'Melbow' }, actuators: ['knee-servo'] };
+    const current = { parts: before.parts, joints: [knee] };
+    const plan = await fetchOnshapeUpdate({
+      groupId: before.parts[0].group.id,
+      current: () => current,
+      load: async () => fresh,
+    });
+
+    expect(plan.joints).toHaveLength(2);
+    expect(plan.joints.find((j) => j.name === 'Knee')).toMatchObject({
+      id: knee.id,
+      actuators: ['knee-servo'],
+      onshape: { mate: 'ILeg0/Melbow' },
+    });
+    expect(plan.joints.find((j) => j.name === 'Hip').actuators).toBeUndefined();
+    expect(plan.joints.find((j) => j.name === 'Hip').id).not.toBe(knee.id);
+  });
 });
 
 describe('Onshape account', () => {

@@ -38,10 +38,21 @@ function freeJointId(base: string, taken: Set<string>): string {
 function jointIds(b: Omit<JointBuild, 'jointIdOf'>, mine: RobotJoint[]): Map<string, string> {
   const taken = new Set(b.joints.map((j) => j.id));
   const remaining = new Set(mine);
+  const matches = new Map<string, RobotJoint>();
+
+  for (const f of b.fresh) {
+    const matched = matchingJoint(f, [...remaining], b.sceneIdOf);
+
+    if (!matched) continue;
+
+    matches.set(f.id, matched);
+    remaining.delete(matched);
+  }
 
   return new Map(
     b.fresh.map((f) => {
-      const matched = matchingJoint(f, [...remaining], b.sceneIdOf);
+      const exact = [...remaining].filter((j) => j.onshape!.mate === f.onshape?.mate);
+      const matched = matches.get(f.id) ?? (exact.length === 1 ? exact[0] : undefined);
 
       if (matched) remaining.delete(matched);
 
@@ -55,11 +66,8 @@ function matchingJoint(fresh: RobotJoint, mine: RobotJoint[], sceneIdOf: Map<str
   const exact = mine.filter((j) => j.onshape!.mate === mate);
   const candidates = exact.length ? exact : mine.filter((j) => j.onshape!.mate === mate.split('/').at(-1));
   const children = new Set(fresh.child.map((id) => sceneIdOf.get(id)));
-  const matched = candidates.find((j) => j.child.some((id) => children.has(id)));
 
-  if (matched) return matched;
-
-  return exact.length === 1 ? exact[0] : undefined;
+  return candidates.find((j) => j.child.some((id) => children.has(id)));
 }
 
 function ends(b: JointBuild, freshIds: string[], oldIds: string[] = []): string[] {

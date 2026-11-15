@@ -56,6 +56,9 @@ export function referencePeriodS(reference: MoveReference): number {
 
 export function lowestHeight(reference: MoveReference): number {
   const at = reference.joints.length;
+  let height = Infinity;
 
-  return Math.min(...reference.frames.map((f) => f[at]));
+  for (const frame of reference.frames) height = Math.min(height, frame[at]);
+
+  return height;
 }

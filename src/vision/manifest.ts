@@ -119,7 +119,7 @@ function checkInputOptions(input: VisionManifest['input']) {
 }
 
 function checkedClasses(classes: unknown): asserts classes is string[] {
-  if (!Array.isArray(classes) || classes.length > 10000 || classes.some((c) => typeof c !== 'string' || c.length > 100))
+  if (!Array.isArray(classes) || classes.length > 10000 || classes.some((c) => typeof c !== 'string' || c.length > 200))
     throw new Error('The model needs a bounded class list.');
 }
 

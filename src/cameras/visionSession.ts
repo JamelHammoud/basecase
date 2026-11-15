@@ -255,7 +255,7 @@ async function prepareCameraModel(camera: string, modelId: string, current: () =
 
 export async function configureVisionCamera(
   camera: string,
-  options: { modelId: string; fps?: number; continuous?: boolean },
+  options: { modelId: string; fps?: number; continuous?: boolean; replaceModelId?: string },
 ) {
   const current = await prepareCameraModel(camera, options.modelId, () => true);
 
@@ -267,6 +267,16 @@ export async function configureVisionCamera(
     fps: Math.min(30, Math.max(1, options.fps ?? 5)),
     continuous: options.continuous !== false,
   });
+
+  if (
+    options.replaceModelId &&
+    options.replaceModelId !== options.modelId &&
+    baselines.delete(identity(camera, options.replaceModelId))
+  ) {
+    commitCameraAssignment(camera, options.replaceModelId);
+    invalidateVisionCamera(camera);
+  }
+
   commitCameraAssignment(camera, options.modelId);
 }
 

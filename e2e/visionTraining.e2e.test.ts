@@ -52,8 +52,8 @@ describe('vision training from a dataset', () => {
       page.evaluate(() => (window as unknown as { __studio: TrainingStudio }).__studio.visionBackendState());
 
     await pane.waitFor();
-    await pane.getByRole('textbox', { name: 'Inference limit', exact: true }).fill('60000');
-    await pane.getByRole('textbox', { name: 'Inference limit', exact: true }).press('Tab');
+    await pane.getByRole('textbox', { name: 'Latency limit', exact: true }).fill('60000');
+    await pane.getByRole('textbox', { name: 'Latency limit', exact: true }).press('Tab');
     await pane.getByRole('button', { name: 'Train', exact: true }).click();
     await expect.poll(async () => (await state()).runs.length).toBe(1);
 

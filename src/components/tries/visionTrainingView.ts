@@ -18,7 +18,7 @@ export interface VisionAttemptView {
   reason: string;
   metrics: { name: string; value: string }[];
   failures: { className: string; missed: number; falsePositives: number }[];
-  inferenceMs: number;
+  inferenceMs: number | null;
   bytes: number;
 }
 

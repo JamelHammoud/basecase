@@ -40,7 +40,7 @@ export function visionAttemptView(run: TrainingRun): VisionAttemptView {
       missed: entry.falseNegative,
       falsePositives: entry.falsePositive,
     })),
-    inferenceMs: report.metrics.inference.p95Ms,
+    inferenceMs: report.metrics.inference.samples ? report.metrics.inference.p95Ms : null,
     bytes: report.metrics.inference.modelBytes,
   };
 }

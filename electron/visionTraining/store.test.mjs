@@ -167,6 +167,19 @@ describe('vision training protected files', () => {
     expect(launch).toHaveBeenCalledTimes(1);
   });
 
+  it('releases the trainer slot when saving the staged job fails', async () => {
+    const dir = path.join(root, 'vision-training', 'jobs', 'run-1');
+
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, 'spec.json'), 'conflicting saved spec');
+    await expect(store.start(payload())).rejects.toThrow('immutable');
+    expect(await store.status('run-1')).toMatchObject({ state: 'failed', error: expect.stringContaining('immutable') });
+    expect(launch).not.toHaveBeenCalled();
+    await store.start({ ...payload(), id: 'run-2' });
+    await vi.waitFor(() => expect(launch).toHaveBeenCalledOnce());
+    expect(await store.status('run-2')).toMatchObject({ state: 'running' });
+  });
+
   it('requests checkpointed shutdown for the running child', async () => {
     await store.start(payload());
     await vi.waitFor(() => expect(launch).toHaveBeenCalledOnce());

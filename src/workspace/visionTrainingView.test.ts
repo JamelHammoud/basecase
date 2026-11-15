@@ -1,9 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import { visionTrainingRun } from '../../e2e/visionTrainingFixture';
-import { datasetVisionView } from './visionTrainingView';
+import { datasetVisionView, visionAttemptView } from './visionTrainingView';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 describe('retained model destinations', () => {
+  it('distinguishes missing inference measurements from a measured zero', () => {
+    const run = visionTrainingRun();
+
+    run.report.metrics.inference.p95Ms = 0;
+    expect(visionAttemptView(run).inferenceMs).toBe(0);
+    run.report.metrics.inference.samples = 0;
+    expect(visionAttemptView(run).inferenceMs).toBeNull();
+  });
+
   it('keeps the person destinations of an older model after retaining a different task', () => {
     const person = visionTrainingRun();
     const segment = visionTrainingRun();

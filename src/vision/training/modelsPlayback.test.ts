@@ -149,6 +149,42 @@ it('sends decoded recorded frames to the retained model without publishing them 
   release();
 });
 
+it('stops restoring the remaining node bindings when its camera closes during a load', async () => {
+  const scene = 'closed-kitchen';
+  const camera = 'wrist';
+
+  for (const [index, node] of ['object-detection', 'person-detection'].entries()) {
+    const saved = { ...manifest, id: `restored-${index}`, classes: ['person'] };
+
+    state.saved.set(node, { scene, camera, node, modelId: saved.id, manifest: saved, type: 'vision-binding' });
+  }
+
+  let finish: () => void = () => undefined;
+  let began: () => void = () => undefined;
+  const started = new Promise<void>((resolve) => {
+    began = resolve;
+  });
+
+  state.load.mockImplementationOnce(async () => {
+    await new Promise<void>((resolve) => {
+      finish = resolve;
+      began();
+    });
+  });
+
+  const { createVisionScope } = await import('../../cameras/visionScope');
+  const scope = createVisionScope(scene);
+  const close = scope.recorded.registerVisionCameras({}, [camera]);
+  const ready = scope.recorded.ensureVisionCamera(camera);
+
+  await started;
+  close();
+  finish();
+  await ready;
+  expect(state.load).toHaveBeenCalledOnce();
+  expect(scope.recorded.visionAssignments()).toEqual([]);
+});
+
 it.each([false, true])(
   'waits for retained model startup before default fallback, closed: %s',
   async (closeBeforeReady) => {

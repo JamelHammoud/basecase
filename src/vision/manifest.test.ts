@@ -39,6 +39,13 @@ describe('vision manifest', () => {
     }
   });
 
+  it('preserves the full supported dataset class name length', () => {
+    const classes = ['a'.repeat(200)];
+
+    expect(validateVisionManifest({ ...testManifest(), classes }).classes).toEqual(classes);
+    expect(() => validateVisionManifest({ ...testManifest(), classes: ['a'.repeat(201)] })).toThrow();
+  });
+
   it('refuses traversal, mutable revisions, malformed hashes and excessive allocations', () => {
     const base = testManifest();
     const attacks = [

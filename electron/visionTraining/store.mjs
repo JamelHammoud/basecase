@@ -85,33 +85,28 @@ export class VisionTrainingStore {
 
     this.active.set(id, record);
 
-    await directory(path.join(dir, 'images'));
-    await this.stageJob({ id, refs, record });
-
-    await immutableFile(bindingFile, binding);
-    await immutableFile(path.join(dir, 'spec.json'), Buffer.from(json));
-
-    await this.prepareRuntime({ dir, job, existing, resume });
-
-    this.checkAvailable(id);
-
-    const task = this.run(dir, record);
-
-    this.pending.add(task);
-    task.finally(() => this.pending.delete(task));
-
-    return { ...record.status };
-  }
-
-  async stageJob({ id, refs, record }) {
     try {
+      await directory(path.join(dir, 'images'));
       await this.stage(
         { libraryDir: this.libraryDir, id, images: [...refs.values()] },
         { signal: record.controller.signal },
       );
+      await immutableFile(bindingFile, binding);
+      await immutableFile(path.join(dir, 'spec.json'), Buffer.from(json));
+
+      await this.prepareRuntime({ dir, job, existing, resume });
+
+      this.checkAvailable(id);
+
+      const task = this.run(dir, record);
+
+      this.pending.add(task);
+      task.finally(() => this.pending.delete(task));
+
+      return { ...record.status };
     } catch (error) {
       record.status.state = record.stop ? 'stopped' : 'failed';
-      record.status.error = error instanceof Error ? error.message : 'Couldn’t stage training images';
+      record.status.error = error instanceof Error ? error.message : 'Couldn’t prepare training. Start training again.';
 
       throw error;
     }

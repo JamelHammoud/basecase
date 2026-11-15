@@ -66,6 +66,29 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('the web database', () => {
+  it('restricts a prefix listing before IndexedDB reads or clones unrelated values', async () => {
+    const { idbAll } = await import('./idb');
+    const listed = request();
+    const range = { lower: 'vision-binding:', upper: 'vision-binding:\uffff' };
+    const bound = vi.fn(() => range);
+    const getAll = vi.fn(() => {
+      queueMicrotask(() => listed.onsuccess?.());
+
+      return listed;
+    });
+
+    vi.stubGlobal('IDBKeyRange', { bound });
+    listed.result = [{ type: 'vision-binding' }];
+
+    const read = idbAll('trained', 'vision-binding:');
+
+    opens[0].result = { ...fakeDb(), transaction: () => ({ objectStore: () => ({ getAll }) }) };
+    opens[0].onsuccess?.();
+    await expect(read).resolves.toEqual(listed.result);
+    expect(bound).toHaveBeenCalledExactlyOnceWith(range.lower, range.upper);
+    expect(getAll).toHaveBeenCalledExactlyOnceWith(range);
+  });
+
   it('fails a blocked upgrade instead of waiting for the older tab forever', async () => {
     const { idbGet } = await import('./idb');
     const read = idbGet('settings', 'purchases');

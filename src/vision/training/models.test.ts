@@ -3,6 +3,7 @@ import { testManifest } from '../manifest.test';
 import type { VisionManifest } from '../manifest';
 import { applyRetainedVisionModel, registerRetainedVisionModel, retainedVisionTargets } from './models';
 import { boundVisionModel, registerVisionModelSource } from './modelBindings';
+import { idbAll } from '../../utils/platform/web/idb';
 
 const state = vi.hoisted(() => ({
   load: vi.fn(async () => undefined),
@@ -19,7 +20,7 @@ vi.mock('../../cameras/visionSession', () => ({
   loadVisionManifest: state.load,
 }));
 vi.mock('../../utils/platform/web/idb', () => ({
-  idbAll: async () => [...state.saved.values()],
+  idbAll: vi.fn(async () => [...state.saved.values()]),
   idbPut: async (_store: string, key: string, value: unknown) => state.saved.set(key, value),
 }));
 
@@ -48,6 +49,7 @@ describe('retained model application', () => {
     state.saved.set('prior-session', { ...target, modelId: manifest.id, type: 'vision-binding' });
     expect(boundVisionModel(target.node, target.camera, target.scene)).toBeUndefined();
     await registerRetainedVisionModel(manifest);
+    expect(idbAll).toHaveBeenLastCalledWith('trained', 'vision-binding:');
     expect(boundVisionModel(target.node, target.camera, target.scene)).toBe(manifest.id);
   });
 
@@ -63,6 +65,7 @@ describe('retained model application', () => {
     expect(restarted.boundVisionModel(target.node, target.camera, target.scene)).toBeUndefined();
     expect(restarted.retainedVisionModel(manifest.id)).toBeUndefined();
     await restarted.restoreVisionBindings(target.scene);
+    expect(idbAll).toHaveBeenLastCalledWith('trained', `vision-binding:[${JSON.stringify(target.scene)},`);
     expect(restarted.boundVisionModel(target.node, target.camera, target.scene)).toBe(manifest.id);
     expect(restarted.retainedVisionModel(manifest.id)).toEqual(manifest);
   });
@@ -105,8 +108,11 @@ describe('retained model application', () => {
     state.cameras.push('source/wrist');
     await applyRetainedVisionModel(first, target);
     await applyRetainedVisionModel(second, target);
-    expect(state.stop).toHaveBeenCalledExactlyOnceWith('source/wrist', first.id);
-    expect(state.configure).toHaveBeenLastCalledWith('source/wrist', { modelId: second.id });
+    expect(state.configure).toHaveBeenNthCalledWith(1, 'source/wrist', {
+      modelId: first.id,
+      replaceModelId: 'rfdetr-nano',
+    });
+    expect(state.configure).toHaveBeenLastCalledWith('source/wrist', { modelId: second.id, replaceModelId: first.id });
   });
 
   it('applies all four image tasks and refuses a person node without its class', async () => {

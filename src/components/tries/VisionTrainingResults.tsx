@@ -38,7 +38,9 @@ export function VisionTrainingResults({ attempts, targets, onApply }: VisionTrai
               </div>
             ))}
             <dt className="text-white/60">Inference</dt>
-            <dd className="text-white/90">{attempt.inferenceMs.toFixed(1)} ms</dd>
+            <dd className="text-white/90">
+              {attempt.inferenceMs === null ? 'Unmeasured' : `${attempt.inferenceMs.toFixed(1)} ms`}
+            </dd>
             <dt className="text-white/60">Model size</dt>
             <dd className="text-white/90">{fileSize(attempt.bytes)}</dd>
           </dl>

@@ -47,7 +47,7 @@ function mergeClasses(sets: FrameSet[]) {
 
   for (const category of sets.flatMap((set) => set.classes)) {
     const existing = byName.get(category.name);
-    const keypoints = [...new Set([...(existing?.keypoints ?? []), ...(category.keypoints ?? [])])];
+    const keypoints = [...new Set([...(existing?.keypoints ?? []), ...(category.keypoints ?? [])])].sort();
 
     byName.set(category.name, {
       id: existing?.id ?? byName.size,
@@ -56,7 +56,7 @@ function mergeClasses(sets: FrameSet[]) {
     });
   }
 
-  return [...byName.values()];
+  return [...byName.keys()].sort().map((name, id) => ({ ...byName.get(name)!, id }));
 }
 
 function trainingSets(sets: FrameSet[], classes: ImageClass[], samples: FrozenImageSample[]) {

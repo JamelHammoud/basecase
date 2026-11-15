@@ -43,6 +43,19 @@ describe('vision training comparison', () => {
     ).toBe('');
   });
 
+  it('shows an unmeasured inference cost without inventing a zero duration', () => {
+    const html = renderToStaticMarkup(
+      createElement(VisionTrainingResults, {
+        attempts: [{ ...attempt, inferenceMs: null }],
+        targets: [],
+        onApply: () => {},
+      }),
+    );
+
+    expect(html).toContain('Unmeasured');
+    expect(html).not.toContain('0.0 ms');
+  });
+
   it('keeps older retained versions selectable with their own compatible destinations', () => {
     const html = renderToStaticMarkup(
       createElement(VisionTrainingResults, {

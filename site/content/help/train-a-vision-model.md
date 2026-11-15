@@ -51,6 +51,6 @@ Basecase keeps a candidate only when it beats the incumbent on the same held-out
 
 ![A checkpoint after a candidate scored below its incumbent, beside the previously retained model](/help/train-a-vision-model/checkpoint.png)
 
-The test split stays out of fitting and validation. Each attempt remains in the dataset's results, so repeated comparisons remain visible. Inference time is the measured 95th percentile, including preprocessing and result decoding. Model loading and JPEG decoding happen before this measurement.
+The test split stays out of fitting and validation. Each attempt remains in the dataset's results, so repeated comparisons remain visible. Inference time is the measured 95th percentile, including preprocessing and result decoding. Model loading and JPEG decoding happen before this measurement. Runs without real test images show inference time as **Unmeasured**.
 
 To add generated views to your training data, follow [Make training images from a Case](/help/make-training-images).

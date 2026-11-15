@@ -50,7 +50,7 @@ export async function registerRetainedVisionModel(value: VisionManifest) {
 
   models.set(manifest.id, manifest);
 
-  for (const saved of await idbAll<StoredBinding>('trained')) {
+  for (const saved of await idbAll<StoredBinding>('trained', 'vision-binding:')) {
     if (!saved || saved.type !== 'vision-binding' || saved.modelId !== manifest.id) continue;
 
     const target = checkedVisionTarget(saved);
@@ -75,7 +75,7 @@ export function boundVisionModel(node: string, camera: string, scene?: string) {
 }
 
 export async function restoreVisionBindings(scene: string) {
-  for (const saved of await idbAll<StoredBinding>('trained')) {
+  for (const saved of await idbAll<StoredBinding>('trained', `vision-binding:[${JSON.stringify(scene)},`)) {
     if (!saved || saved.type !== 'vision-binding' || saved.scene !== scene || !saved.manifest) continue;
 
     const target = checkedVisionTarget(saved);

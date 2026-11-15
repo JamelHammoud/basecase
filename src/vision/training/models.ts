@@ -1,10 +1,6 @@
-import {
-  availableVisionCameras,
-  configureVisionCamera,
-  loadVisionManifest,
-  stopVisionCamera,
-} from '../../cameras/visionSession';
+import { availableVisionCameras, configureVisionCamera, loadVisionManifest } from '../../cameras/visionSession';
 import type { VisionKind, VisionManifest } from '../manifest';
+import { ROUTINE_VISION_MODELS } from '../../routines/vision';
 import {
   checkedVisionTarget,
   boundVisionModel,
@@ -61,7 +57,7 @@ export async function applyRetainedVisionModel(
 
   if (!current()) return false;
 
-  const previous = boundVisionModel(target.node, target.camera, target.scene);
+  const previous = boundVisionModel(target.node, target.camera, target.scene) ?? ROUTINE_VISION_MODELS[target.node];
 
   await saveVisionBinding({ ...target, modelId: manifest.id });
 
@@ -77,9 +73,11 @@ export async function applyRetainedVisionModel(
     (binding) => binding.camera === target.camera && binding.modelId === previous,
   );
 
-  if (previous && previous !== manifest.id && !shared) cameras.forEach((camera) => stopVisionCamera(camera, previous));
-
-  await Promise.all(cameras.map((camera) => configureVisionCamera(camera, { modelId: manifest.id })));
+  await Promise.all(
+    cameras.map((camera) =>
+      configureVisionCamera(camera, { modelId: manifest.id, replaceModelId: shared ? undefined : previous }),
+    ),
+  );
 
   return true;
 }
@@ -94,8 +92,14 @@ export async function restoreRetainedCameraModels(
   if (!current()) return;
 
   for (const binding of restored) {
+    if (!current()) return;
+
     if (!cameras.includes(binding.camera)) continue;
 
-    await configureVisionCamera(`${source.id}/${binding.camera}`, { modelId: binding.modelId, continuous: false });
+    await configureVisionCamera(`${source.id}/${binding.camera}`, {
+      modelId: binding.modelId,
+      continuous: false,
+      replaceModelId: ROUTINE_VISION_MODELS[binding.node],
+    });
   }
 }

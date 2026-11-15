@@ -13,7 +13,7 @@ export function DatasetVisionFields({ vision }: { vision: VisionTrainingView }) 
       />
       <FieldRow label="Latency limit">
         <NumberInput
-          aria-label="Inference limit"
+          aria-label="Latency limit"
           value={vision.maxInferenceMs}
           min={1}
           max={60000}
@@ -24,7 +24,7 @@ export function DatasetVisionFields({ vision }: { vision: VisionTrainingView }) 
       </FieldRow>
       <FieldRow label="Size limit">
         <NumberInput
-          aria-label="Model size limit"
+          aria-label="Size limit"
           value={vision.maxModelBytes / 1048576}
           min={1}
           max={256}

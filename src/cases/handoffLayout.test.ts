@@ -63,6 +63,24 @@ describe('physical handoff geometry', () => {
     expect(robot.facts.gripper?.depthMm).toBe(13);
   });
 
+  it('refuses a hand that can reach the block but cannot turn its jaws downward', () => {
+    const arm = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
+    const joints = arm.joints.map((joint, index) =>
+      joint.id.startsWith('arm')
+        ? {
+            ...joint,
+            type: 'prismatic' as const,
+            axis: (index % 2 ? [0, 0, 1] : [0, 1, 0]) as [number, number, number],
+            range: [-500, 500] as [number, number],
+          }
+        : joint,
+    );
+    const robot = builderRobot(buildRig(joints, arm.parts), arm.parts);
+
+    expect(robot.facts.gripper).not.toBeNull();
+    expect(buildCase({ goal: 'handoff', world: 'floor' }, { ...robot, partner: paired() }).ok).toBe(false);
+  });
+
   it('refuses a gripper whose approach and closing axes cannot form separate grasp regions', () => {
     const robot = paired();
     const partner = {

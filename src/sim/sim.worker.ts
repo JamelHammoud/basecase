@@ -2,7 +2,7 @@
 import { type MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from './loadMujoco';
 import type { DriveCommand } from './driveTypes';
-import { Recorder, recordingTransfer, type Recording } from './recorder';
+import { frameContacts, Recorder, recordingTransfer, type Recording } from './recorder';
 import {
   effortsTransfer,
   fitsRecording,
@@ -103,7 +103,7 @@ const poseGate = new PoseGate();
 const livePhysics = new LivePhysics();
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
-const frame = (force = false) => {
+const frame = (force = false, recordedContacts?: Int32Array) => {
   if (!engine) return;
 
   const poses = engine.poses();
@@ -123,7 +123,7 @@ const frame = (force = false) => {
   scanShown = scanner?.version ?? -1;
 
   const physics = livePhysics.applied();
-  const contacts = engine.contactPairs();
+  const contacts = recordedContacts ?? engine.contactPairs();
 
   post(
     {
@@ -305,7 +305,7 @@ function seek(msg: Msg<'seek'>) {
 
   world?.replay(scrubbed.world ?? [], frameAt * scrubbed.dt);
   postLooks();
-  frame();
+  frame(false, frameContacts(scrubbed, frameAt).slice());
   post({ type: 'sought', frame: frameAt, qpos }, [qpos.buffer]);
 }
 

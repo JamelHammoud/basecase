@@ -33,7 +33,7 @@ Both arms must have grippers and be open in separate scene tabs.
 
 The second arm faces the first. The block has room for each gripper to hold a separate end, and its width fits both jaw openings. Each arm keeps the size and weight of the robot in its tab. If you edit the second arm there, the next try uses the change.
 
-6. In the Simulate tab, click **Try It**.
+6. In the **Simulate** tab, click **Try It**.
 
 Drive the first arm with [[W A S D]], [[Q]] and [[E]], and hold [[Space]] to grip the near end of the block. Lift the block to the transfer height and hold it for the second arm.
 

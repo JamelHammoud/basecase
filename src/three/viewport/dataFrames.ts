@@ -88,25 +88,23 @@ function edgeMatrix(edge: Edge, at: number, out: THREE.Matrix4): THREE.Matrix4 {
   return out.compose(position, rotation, unit);
 }
 
-function chainToRoot(tree: TfTree, frame: string, at: number) {
-  const chain: Array<{ frame: string; toFrame: THREE.Matrix4 }> = [];
+function framePath(tree: TfTree, frame: string, at: number, links?: FrameAnchors['links']) {
   const toFrame = new THREE.Matrix4();
   const step = new THREE.Matrix4();
   let current = frame;
 
-  chain.push({ frame, toFrame: toFrame.clone() });
-
   for (let hops = 0; hops <= tree.edges.size; hops++) {
+    if (links?.has(current)) break;
+
     const edge = tree.edges.get(current);
 
     if (!edge) break;
 
     toFrame.premultiply(edgeMatrix(edge, at, step));
     current = edge.parent;
-    chain.push({ frame: current, toFrame: toFrame.clone() });
   }
 
-  return chain;
+  return { frame: current, toFrame };
 }
 
 const rootOf = (tree: TfTree, frame: string) => {
@@ -152,26 +150,20 @@ export function resolveFrame(tree: TfTree, frame: string, at: number, anchors: F
 
   if (!knowsFrame(tree, frame, anchors)) return null;
 
-  const chain = chainToRoot(tree, frame, at);
-  const framed = chain[chain.length - 1].toFrame;
+  const path = framePath(tree, frame, at, anchors.links);
+  const anchor = anchors.links.get(path.frame);
 
-  for (const step of chain) {
-    const anchor = anchors.links.get(step.frame);
+  if (anchor) return anchor.clone().multiply(path.toFrame);
 
-    if (anchor) return anchor.clone().multiply(step.toFrame);
-  }
-
-  const root = chain[chain.length - 1].frame;
-  const linked = sameTreeLink(tree, root, anchors.links);
+  const linked = sameTreeLink(tree, path.frame, anchors.links);
 
   if (linked) {
-    const linkChain = chainToRoot(tree, linked, at);
-    const rootToLink = linkChain[linkChain.length - 1].toFrame;
+    const rootToLink = framePath(tree, linked, at).toFrame;
 
-    return anchors.links.get(linked)!.clone().multiply(rootToLink.clone().invert()).multiply(framed);
+    return anchors.links.get(linked)!.clone().multiply(rootToLink.invert()).multiply(path.toFrame);
   }
 
-  return anchors.base ? anchors.base.clone().multiply(framed) : null;
+  return anchors.base ? anchors.base.clone().multiply(path.toFrame) : null;
 }
 
 export function linkAnchor(p: ArrayLike<number>, wxyz: ArrayLike<number>): THREE.Matrix4 {

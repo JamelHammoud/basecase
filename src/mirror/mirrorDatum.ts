@@ -81,10 +81,14 @@ export function mirrorDatum(ports: Port[], localMirror: V3): MirrorDatum {
 
     return { axis, offset, score: symmetryScore(groups, axis, offset), align: Math.abs(localMirror[axis]) };
   });
-  const best = Math.min(...candidates.map((c) => c.score));
-  const [pick] = candidates.filter((c) => c.score <= best + TIE_MM).sort((a, b) => b.align - a.align);
+  const best = Math.min(candidates[0].score, candidates[1].score, candidates[2].score);
+  let pick: (typeof candidates)[number] | undefined;
 
-  return { axis: pick.axis, offset: pick.offset };
+  for (const candidate of candidates) {
+    if (candidate.score <= best + TIE_MM && (!pick || candidate.align > pick.align)) pick = candidate;
+  }
+
+  return { axis: pick!.axis, offset: pick!.offset };
 }
 
 export function localMirrorAxis(rotation: V3, k: MirrorAxis): V3 {

@@ -194,20 +194,33 @@ function emptyFromCorner(
   reach: number,
 ) {
   const seen = new Set<number>();
-  const stack = [[corner.x, corner.y]];
+  const stack: number[][] = [];
+  let pixels = 0;
+  const offer = (x: number, y: number) => {
+    const inside = Math.abs(x - corner.x) < reach && Math.abs(y - corner.y) < reach;
+
+    if (!inside) return;
+
+    const i = y * width + x;
+
+    if (seen.has(i)) return;
+
+    seen.add(i);
+
+    if (!cells[i]) stack.push([x, y]);
+  };
+
+  offer(corner.x, corner.y);
 
   while (stack.length) {
     const [x, y] = stack.pop()!;
-    const i = y * width + x;
-    const inside = Math.abs(x - corner.x) < reach && Math.abs(y - corner.y) < reach;
 
-    if (!inside || seen.has(i) || cells[i]) continue;
-
-    seen.add(i);
-    stack.push([x + corner.sx, y], [x, y + corner.sy]);
+    pixels++;
+    offer(x + corner.sx, y);
+    offer(x, y + corner.sy);
   }
 
-  return seen.size;
+  return pixels;
 }
 
 const CORNER_FACTOR = 1 - Math.PI / 4;

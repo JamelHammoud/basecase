@@ -70,13 +70,14 @@ export function useTryMultiply(options: MultiplyOptions): TryMultiply {
     if (!recording?.commands) return null;
 
     const staged = stageCase(kase, { rig, parts }, partners());
+    const context = stagedEffectors(staged, { rig, parts });
 
     return {
       kase: staged.kase,
       model,
       recording,
-      rig: rigForWorker(rig),
-      ...stagedEffectors(staged, { rig, parts }),
+      ...context,
+      rig: rigForWorker(context.rig),
     };
   };
 

@@ -45,9 +45,11 @@ export interface Recording {
   world?: WorldEvent[];
   inputs?: RecordedInput[];
   topics?: Uint8Array;
+  contacts?: Int32Array;
+  contactOffsets?: Int32Array;
 }
 
-class Growing<T extends Float32Array | Float64Array> {
+class Growing<T extends Float32Array | Float64Array | Int32Array> {
   private data: T;
 
   private used = 0;
@@ -78,6 +80,7 @@ class Growing<T extends Float32Array | Float64Array> {
 
 const f32 = (n: number) => new Float32Array(n);
 const f64 = (n: number) => new Float64Array(n);
+const i32 = (n: number) => new Int32Array(n);
 
 export class Recorder {
   private readonly engine: SimEngine;
@@ -114,6 +117,9 @@ export class Recorder {
   private readonly world: WorldEvent[] = [];
   private readonly inputs: RecordedInput[] = [];
   private readonly controller: Controller | null;
+  private readonly contacts = new Growing(i32, 512);
+  private readonly contactOffsets = new Growing(i32, 512);
+  private contactCount = 0;
 
   constructor(engine: SimEngine, controller: Controller | null = null, world: WorldMoves | null = null) {
     const { model } = engine;
@@ -182,6 +188,12 @@ export class Recorder {
     this.qvel.push(data.qvel);
     this.poses.push(this.engine.poses());
     this.torque.push([torqueShare(this.engine)]);
+    this.contactOffsets.push([this.contactCount]);
+
+    const contacts = this.engine.contactPairs();
+
+    this.contacts.push(contacts);
+    this.contactCount += contacts.length;
 
     if (this.scan && this.engine.scanner) {
       this.engine.scanner.tick();
@@ -211,6 +223,8 @@ export class Recorder {
       jointQpos: this.jointQpos,
       jointDof: this.jointDof,
       root: this.root,
+      contacts: this.contacts.done(),
+      contactOffsets: Int32Array.from([...this.contactOffsets.done(), this.contactCount]),
       ...(this.scan && this.engine.scanner
         ? { scan: this.scan.done(), scanWidth: this.engine.scanner.values.length }
         : {}),
@@ -223,13 +237,32 @@ export class Recorder {
 }
 
 export const recordingTransfer = (r: Recording): Transferable[] =>
-  [r.t, r.ctrl, r.qpos, r.qvel, r.poses, r.torque, r.jointQpos, r.jointDof, r.scan, r.topics].flatMap((a) =>
-    a ? [a.buffer] : [],
-  );
+  [
+    r.t,
+    r.ctrl,
+    r.qpos,
+    r.qvel,
+    r.poses,
+    r.torque,
+    r.jointQpos,
+    r.jointDof,
+    r.scan,
+    r.topics,
+    r.contacts,
+    r.contactOffsets,
+  ].flatMap((a) => (a ? [a.buffer] : []));
 
 export function framePoses(r: Recording, frame: number): Float64Array {
   const size = r.nbody * 7;
   const at = Math.max(0, Math.min(r.frames - 1, frame)) * size;
 
   return Float64Array.from(r.poses.subarray(at, at + size));
+}
+
+export function frameContacts(r: Recording, frame: number): Int32Array {
+  if (!r.contacts || !r.contactOffsets) return new Int32Array();
+
+  const at = Math.max(0, Math.min(r.frames - 1, frame));
+
+  return r.contacts.subarray(r.contactOffsets[at], r.contactOffsets[at + 1]);
 }

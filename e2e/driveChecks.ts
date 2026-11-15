@@ -104,23 +104,6 @@ export async function expectCaseCheckOpensRow(page: Page, name: string) {
   expect(await page.locator(shown('[id^="case-check-"]')).innerText()).toContain(name);
 }
 
-export function expectGenerated(zipped: Record<string, Buffer>, kept: number) {
-  const files = inDataset(zipped);
-  const at = (path: string) => JSON.parse(files[path].toString());
-  const episodes = at('meta/basecase.json').episodes as Array<{ seed: number; source: string | null }>;
-  const generated = episodes.filter((e) => e.source !== null);
-  const videos = Object.keys(files).filter((p) => p.endsWith('.mp4'));
-
-  expect(at('meta/info.json').total_episodes).toBe(1 + kept);
-  expect(at('v2.1/meta/info.json').total_episodes).toBe(1 + kept);
-  expect(generated).toHaveLength(kept);
-  expect(new Set(generated.map((e) => e.seed)).size).toBe(kept);
-  expect(videos.filter((p) => p.startsWith('v2.1/'))).toHaveLength(1 + kept);
-  expect(videos.filter((p) => !p.startsWith('v2.1/'))).toEqual([
-    'videos/observation.images.scene/chunk-000/file-000.mp4',
-  ]);
-}
-
 export function touchingPolicy(): PolicySpec {
   const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
   const rig = buildRig(arm.joints, arm.parts);

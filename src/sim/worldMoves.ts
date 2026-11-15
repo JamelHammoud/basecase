@@ -88,7 +88,7 @@ export class WorldMoves {
 
     if (change.color !== undefined) this.paint(mover, change.color);
 
-    this.mj.mj_kinematics(this.engine.model, this.engine.data);
+    if (change.pose || change.visible !== undefined) this.mj.mj_forward(this.engine.model, this.engine.data);
 
     return null;
   }
@@ -124,7 +124,7 @@ export class WorldMoves {
     if (Object.keys(this.shown).length) this.version++;
 
     this.shown = {};
-    this.mj.mj_kinematics(model, data);
+    this.mj.mj_forward(model, data);
   }
 
   replay(events: readonly WorldEvent[], until: number) {

@@ -23,6 +23,8 @@ export function sampleRecording(recording: Recording, sample: Pick<FrozenTrySamp
   const end = recording.t[to - 1] + recording.dt;
   const timed = <T extends { at: number }>(items: T[] | undefined) =>
     items?.filter((item) => item.at < end).map((item) => ({ ...item, at: Math.max(0, item.at - start) }));
+  const contacts = recording.contacts && recording.contactOffsets;
+  const contactStart = contacts?.[from] ?? 0;
 
   return {
     ...recording,
@@ -32,6 +34,12 @@ export function sampleRecording(recording: Recording, sample: Pick<FrozenTrySamp
     qpos: recording.qpos.slice(from * recording.nq, to * recording.nq),
     qvel: recording.qvel.slice(from * recording.nv, to * recording.nv),
     poses: recording.poses.slice(from * recording.nbody * 7, to * recording.nbody * 7),
+    ...(contacts
+      ? {
+          contacts: recording.contacts!.slice(contactStart, contacts[to]),
+          contactOffsets: contacts.slice(from, to + 1).map((offset) => offset - contactStart),
+        }
+      : {}),
     ...(recording.scan ? { scan: recording.scan.slice(from * recording.scanWidth!, to * recording.scanWidth!) } : {}),
     ...(recording.torque ? { torque: recording.torque.slice(from, to) } : {}),
     faults: recording.faults

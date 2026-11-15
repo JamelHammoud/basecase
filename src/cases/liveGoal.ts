@@ -7,7 +7,7 @@ const DT = 1 / RECORD_HZ;
 const MAX_SAMPLES = 600 * RECORD_HZ;
 
 export interface LiveGoal {
-  add: (time: number, poses: Float64Array) => void;
+  add: (time: number, poses: Float64Array, contacts?: ArrayLike<number>) => void;
   probes: () => Record<string, number>;
   judge: () => Promise<ContractResult | null>;
 }
@@ -30,11 +30,11 @@ export function liveGoal(reader: ProbeReader, judge: GoalJudge): LiveGoal {
     );
 
   return {
-    add(time, poses) {
+    add(time, poses, contacts) {
       start ??= time;
 
       while (samples * DT <= time - start + 1e-9 && samples < MAX_SAMPLES) {
-        reader.sample(poses, signals);
+        reader.sample(poses, signals, contacts);
         samples++;
       }
     },

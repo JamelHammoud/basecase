@@ -94,7 +94,6 @@ export async function referenceTry(mj: MainModule, kase: Case, robot: FixtureRob
     kase: staged.kase,
     model,
     recording,
-    rig,
     ...stagedEffectors(staged, { rig, parts: robot.parts }),
   };
   const verdict = await scoreTry(source);

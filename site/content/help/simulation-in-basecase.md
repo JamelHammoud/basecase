@@ -39,6 +39,8 @@ You don't write a model file. Each time you start a simulation, Basecase writes 
 
 An [imported world](/help/import-a-world) collides as up to 64 separate convex pieces, keeping gaps such as doorways and the space under a table. Its collider supplies the floor too, so holes stay open. The world's visible mesh or splat is separate from those hidden colliders.
 
+Separate robots collide with each other, the floor, scenery and loose objects. In [Hand Off to a Spot](/help/put-two-robots-in-one-case), the grippers hold and pass the block through physical contact.
+
 If the robot misbehaves in the simulation, fix the design. Basecase writes your changes into the model on your next run.
 
 ## Servos, measured or estimated
@@ -80,6 +82,8 @@ A run doesn't change your parts. The canvas shows the simulated pose until you e
 - **Routines** run step by step on the live simulation.
 - **Falls**, in the Build tab, tips a legged robot over from 12 directions to find the servos a fall would strip.
 - **The emulated robot** follows the simulation once it reaches Test.
+
+Cases and Routines can react to detections from this scene's simulated or live cameras. Recorded-video detections stay in playback and don't drive a live Routine. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
 
 ## Limits
 

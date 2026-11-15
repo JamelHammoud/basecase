@@ -21,6 +21,8 @@ const ARRAYS = {
   jointDof: 'i32',
   scan: 'f32',
   topics: 'u8',
+  contacts: 'i32',
+  contactOffsets: 'i32',
 } as const satisfies Record<string, ArrayKind>;
 
 type ArrayKey = keyof typeof ARRAYS;
@@ -151,6 +153,7 @@ function expectedLength(key: ArrayKey, h: Header): number | null {
     poses: h.frames * h.nbody * 7,
     torque: h.frames,
     scan: h.frames * (h.scanWidth ?? 0),
+    contactOffsets: h.frames + 1,
   };
 
   return lengths[key] ?? null;
@@ -212,6 +215,20 @@ const readInputs = (v: unknown): RecordedInput[] | undefined => {
   return kept.length ? kept : undefined;
 };
 
+function contactsFit(arrays: Partial<Record<ArrayKey, Typed>>, header: Header): boolean {
+  const { contacts, contactOffsets } = arrays;
+
+  if (!contacts && !contactOffsets) return true;
+
+  if (!(contacts instanceof Int32Array) || !(contactOffsets instanceof Int32Array)) return false;
+
+  if (contacts.length % 2 || contactOffsets[0] !== 0 || contactOffsets.at(-1) !== contacts.length) return false;
+
+  if (contacts.some((body) => body < 0 || body >= header.nbody)) return false;
+
+  return contactOffsets.every((offset, i) => offset % 2 === 0 && (i === 0 || offset >= contactOffsets[i - 1]));
+}
+
 export function decodeRecording(bytes: Uint8Array): Recording | null {
   const header = readHeader(bytes);
 
@@ -219,11 +236,13 @@ export function decodeRecording(bytes: Uint8Array): Recording | null {
 
   const arrays = sliceArrays(bytes, header);
 
-  if (!arrays) return null;
+  if (!arrays || !contactsFit(arrays, header)) return null;
 
   const rest: Record<string, unknown> = { ...header };
 
   delete rest.arrays;
+  delete rest.contacts;
+  delete rest.contactOffsets;
 
   const inputs = readInputs(rest.inputs);
 

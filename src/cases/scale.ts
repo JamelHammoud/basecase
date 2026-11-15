@@ -42,6 +42,8 @@ export function scaledToReach(kase: Case, reachMm: number, anchor: V3): Case {
   };
   const unitless = caseSignalNames(kase);
 
+  for (const probe of kase.task.probes) if (probe.kind) unitless.add(probe.signal);
+
   const object = (o: WorldObject): WorldObject => ({
     ...o,
     position: place(o.position),

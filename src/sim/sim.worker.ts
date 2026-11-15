@@ -2,7 +2,7 @@
 import { type MainModule } from '@mujoco/mujoco';
 import { loadMujoco } from './loadMujoco';
 import type { DriveCommand } from './driveTypes';
-import { Recorder, recordingTransfer, type Recording } from './recorder';
+import { frameContacts, Recorder, recordingTransfer, type Recording } from './recorder';
 import {
   effortsTransfer,
   fitsRecording,
@@ -26,6 +26,7 @@ import { WorldMoves } from './worldMoves';
 import type { WorldChange, WorldLooks } from '../cases/worldSet';
 import { runFalls, type FallPlan, type FallRun } from './fallRuns';
 import { LivePhysics, type SimPhysics } from './livePhysics';
+import type { VisionResult } from '../vision/types';
 
 export type SimRequest =
   | { type: 'load'; model: SimModel; controller?: Controller; loadId?: number }
@@ -48,6 +49,7 @@ export type SimRequest =
   | ({ type: 'run' } & RunRequest)
   | ({ type: 'falls'; id: number } & FallPlan)
   | ({ type: 'routine' } & LiveRoutineInput)
+  | { type: 'vision'; result: VisionResult; ageMs: number }
   | ({ type: 'case' } & LiveCaseInput)
   | { type: 'caseEnd' }
   | { type: 'watch'; watch: WatchInput | null }
@@ -70,6 +72,7 @@ export type SimResponse =
       type: 'frame';
       poses: Float64Array;
       joints: Float64Array;
+      contacts?: Int32Array;
       stats: ReturnType<SimEngine['stats']>;
       playing: boolean;
       facts?: CaseFacts;
@@ -82,6 +85,7 @@ export type SimResponse =
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 let mj: MainModule | null = null;
 let engine: SimEngine | null = null;
+let loadGeneration = 0;
 let world: WorldMoves | null = null;
 let looksShown = -1;
 let playing = false;
@@ -102,7 +106,7 @@ const poseGate = new PoseGate();
 const livePhysics = new LivePhysics();
 
 const post = (msg: SimResponse, transfer: Transferable[] = []) => ctx.postMessage(msg, transfer);
-const frame = (force = false) => {
+const frame = (force = false, recordedContacts?: Int32Array) => {
   if (!engine) return;
 
   const poses = engine.poses();
@@ -122,12 +126,22 @@ const frame = (force = false) => {
   scanShown = scanner?.version ?? -1;
 
   const physics = livePhysics.applied();
+  const contacts = recordedContacts ?? engine.contactPairs();
 
-  post({ type: 'frame', poses, joints, stats: engine.stats(rtf), playing, facts, physics, ...(scan ? { scan } : {}) }, [
-    poses.buffer,
-    joints.buffer,
-    ...(scan ? [scan.values.buffer, scan.points.buffer] : []),
-  ]);
+  post(
+    {
+      type: 'frame',
+      poses,
+      joints,
+      contacts,
+      stats: engine.stats(rtf),
+      playing,
+      facts,
+      physics,
+      ...(scan ? { scan } : {}),
+    },
+    [poses.buffer, joints.buffer, contacts.buffer, ...(scan ? [scan.values.buffer, scan.points.buffer] : [])],
+  );
 };
 
 function postLooks() {
@@ -225,7 +239,12 @@ async function watch(msg: Msg<'watch'>) {
 }
 
 async function load(msg: Msg<'load'>) {
+  const generation = ++loadGeneration;
+
   mj ??= await loadMujoco();
+
+  if (generation !== loadGeneration) return;
+
   engine?.dispose();
   engine = null;
   live = null;
@@ -294,7 +313,7 @@ function seek(msg: Msg<'seek'>) {
 
   world?.replay(scrubbed.world ?? [], frameAt * scrubbed.dt);
   postLooks();
-  frame();
+  frame(false, frameContacts(scrubbed, frameAt).slice());
   post({ type: 'sought', frame: frameAt, qpos }, [qpos.buffer]);
 }
 
@@ -367,6 +386,10 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     post({ type: 'fell', id: msg.id, runs: runFalls(mj, engine, msg) });
   },
   routine: startRoutine,
+  vision: (msg) => {
+    live?.acceptVision(msg.result, msg.ageMs);
+    liveCase?.acceptVision(msg.result, msg.ageMs);
+  },
   case: startCase,
   caseEnd: () => {
     liveCase = null;
@@ -388,6 +411,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     frame(true);
   },
   dispose: () => {
+    loadGeneration++;
     playing = false;
     live = null;
     watching = null;

@@ -150,7 +150,7 @@ exports[`buildMjcf > turns a two-joint legged robot and a loose part into MJCF 2
       "root": "root_0",
     },
   ],
-  "version": 1,
+  "version": 2,
   "xml": undefined,
 }
 `;

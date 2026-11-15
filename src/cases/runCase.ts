@@ -23,7 +23,16 @@ import { probeReader } from './probes';
 import { castRobot, castSlots, guestsOf, type CaseRobot, type CastSlot } from './caseCast';
 import { driveFor, slotIndexOf, teamDrive, toCommand } from './caseDrives';
 import { robotFacts, type EndEffector, type RobotFacts } from './robotFit';
-import { bodyFor, factSampler, logicPlan, startLogic, type LogicOptions, type Signals } from './runCaseLogic';
+import {
+  bodyFor,
+  castGrippers,
+  factSampler,
+  hookRecorder,
+  logicPlan,
+  startLogic,
+  type LogicOptions,
+  type Signals,
+} from './runCaseLogic';
 import { scaledToReach } from './scale';
 import { reseededGround } from './terrain';
 import { caseSlots, type Case, type ReferenceCommand } from './schema';
@@ -130,7 +139,7 @@ interface Rollout {
   kase: Case;
   steer: GroundSteer | null;
   send: (c: DriveCommand) => void;
-  sample: (poses: Float64Array, t: number, torque?: number) => CaseFacts;
+  sample: (poses: Float64Array, t: number, torque?: number, contacts?: ArrayLike<number>) => CaseFacts;
   logic: CaseLogicRun | null;
   judge: () => Promise<CaseFacts>;
   changes: { world: WorldMoves; events: WorldEvent[]; record: (e: WorldEvent) => void };
@@ -177,7 +186,7 @@ async function roll(rollout: Rollout): Promise<CaseFrame[]> {
 
     if (driving && steer?.steering) send(steer.command(poses));
 
-    const facts = sample(poses, t, torqueShare(engine));
+    const facts = sample(poses, t, torqueShare(engine), engine.contactPairs());
 
     logic?.advance(t * 1000, facts);
 
@@ -344,6 +353,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
     basePart: probeBase.part,
     basePoint: probeBase.point,
     objectAt,
+    grippers: castGrippers(fit.cast),
   });
   const steer = steerFor({ fit, model, objectAt });
   const controller = runController(fit, kase, options);
@@ -353,7 +363,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
     randomization: options.randomization,
     jointNoiseDeg: options.jointNoiseDeg,
   });
-  const recorder = options.record ? new Recorder(engine) : null;
+  const recorder = options.record ? new Recorder(engine, controller) : null;
   const changes = {
     world: new WorldMoves(mj, engine),
     events: options.world ?? [],
@@ -363,7 +373,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
   const limp = new Set(fit.cast.flatMap((c) => (c.key && options.limp?.includes(c.id) ? [c.key] : [])));
 
   limpen(engine, model, limp);
-  engine.stepHook = recorder?.hook ?? null;
+  hookRecorder(engine, recorder);
 
   const handBack = () => engine.setController(controller);
 

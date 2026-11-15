@@ -45,12 +45,18 @@ export function corners(box: RouteObstacle): PortVec[] {
   );
 }
 
-function overlapInterval(value: number, slope: number): [number, number] {
-  if (Math.abs(slope) < EPSILON) return value > EPSILON ? [0, 1] : [1, 0];
+function overlapInterval(interval: [number, number], value: number, slope: number): void {
+  if (Math.abs(slope) < EPSILON) {
+    interval[0] = Math.max(interval[0], value > EPSILON ? 0 : 1);
+    interval[1] = Math.min(interval[1], value > EPSILON ? 1 : 0);
+
+    return;
+  }
 
   const crossing = (EPSILON - value) / slope;
 
-  return slope > 0 ? [crossing, 1] : [0, crossing];
+  interval[0] = Math.max(interval[0], slope > 0 ? crossing : 0);
+  interval[1] = Math.min(interval[1], slope > 0 ? 1 : crossing);
 }
 
 export function crossesBox(start: RoutePoint, end: RoutePoint, box: RouteObstacle, bound: RelativeBound): boolean {
@@ -58,21 +64,18 @@ export function crossesBox(start: RoutePoint, end: RoutePoint, box: RouteObstacl
   const b = transformed(end.position, box.inverse);
   const r0 = bound(start, box.id);
   const r1 = bound(end, box.id);
-  let enter = 0;
-  let leave = 1;
+  const interval: [number, number] = [0, 1];
 
   for (const axis of AXES) {
     const direction = b[axis] - a[axis];
-    const lower = overlapInterval(a[axis] + r0 - box.min[axis], direction + r1 - r0);
-    const upper = overlapInterval(box.max[axis] - a[axis] + r0, -direction + r1 - r0);
 
-    enter = Math.max(enter, lower[0], upper[0]);
-    leave = Math.min(leave, lower[1], upper[1]);
+    overlapInterval(interval, a[axis] + r0 - box.min[axis], direction + r1 - r0);
+    overlapInterval(interval, box.max[axis] - a[axis] + r0, -direction + r1 - r0);
 
-    if (leave <= enter) return false;
+    if (interval[1] <= interval[0]) return false;
   }
 
-  return leave > enter;
+  return interval[1] > interval[0];
 }
 
 export const clearSegment = (start: RoutePoint, end: RoutePoint, boxes: RouteObstacle[], bound: RelativeBound) =>

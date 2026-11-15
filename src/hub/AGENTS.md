@@ -1,6 +1,6 @@
 # src/hub/
 
-The Hugging Face Hub from the page: the signed-in flag, Publish and Install Skill's downloads. The token and every Hub request stay in the main process (`electron/hub/`). Before editing here, read:
+The Hugging Face Hub from the page: the signed-in flag, Publish and Install Skill's downloads. The token and desktop Hub requests stay in the main process (`electron/hub/`). Public vision models in the web build download anonymously in the inference worker (`src/vision/`). Before editing here, read:
 
 - [Cases](../../docs/guide/cases.md) (§8h, Publishing)
 - [Skills](../../docs/guide/skills.md) (§8i, Publishing and installing)

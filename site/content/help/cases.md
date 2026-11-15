@@ -35,7 +35,7 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 
 ## What a Case holds
 
-- **A slot.** The kind of robot the Case needs: an arm, wheels or legs.
+- **Slots.** The kinds of robots the Case needs: an arm, wheels or legs. Hand Off to a Spot needs two arms with grippers, opened in separate scene tabs.
 - **A world.** The objects around the robot. Objects can be solid or pushable, and markers show a spot without getting in the robot's way. During a run, the Case's code can move, light or hide any object tagged movable.
   The world can include the ground. As you make the Case, you can add [rough ground, a step or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope), sized to the robot's legs or wheels.
   You can also [import a captured world](/help/import-a-world) from a collider mesh, with an optional splat for its appearance.
@@ -48,6 +48,8 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 
 Each Case comes with a reference route that passes it, so you know a pass is possible. To see each goal and how the contract judges it, read [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).
 
+A Case's logic and console can read camera detections, including object counts, scores and boxes. Detections belong to that scene and camera source, so a cup seen in another tab can't trigger this Case. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
 ## One Case, many robots
 
 You write a Case once, then run it on any robot that fits its slot. For an arm, Basecase measures how far the arm reaches from its shoulder and scales the whole world to match. Write Touch the Dots on one arm, and the next arm can reach the same dots.
@@ -56,7 +58,7 @@ Imported rooms and captured worlds keep their true size for every robot.
 
 ## Tries
 
-To take a try, drive the robot through the Case. Basecase records the try 50 times a second, along with each change the Case's code makes to the world. Then it scores the recording against the contract as **Passed** or **Missed**. Results lists your tries worst first, each with four frames and a replay.
+To take a try, drive the robot through the Case. Basecase records the try 50 times a second, along with each change the Case's code makes to the world. It also records loose objects' motion and physical contacts, so a Hand Off try keeps the evidence of which gripper held the block. Then it scores the recording against the contract as **Passed** or **Missed**. Results lists your tries worst first, each with four frames and a replay.
 
 You can also run a wheeled or legged robot through a Case in the real world, on the Case printed as a floor mat. A camera tracks the robot, and Basecase judges the run with the same contract. To set it up, see [Try a Case on your real robot](/help/try-a-case-on-your-real-robot).
 

@@ -2,6 +2,7 @@ import type { V3 } from '../utils/kinematics';
 import { DOT_MOVE_SECONDS, type BuilderRobot, type GoalKind, type GoalValues } from './caseGoals';
 import type { WorldKind } from './caseWorlds';
 import { pickDefaults } from './pickGoal';
+import { handoffDefaults } from './handoffGoal';
 import { terrainDefaults } from './terrain';
 
 const DOT_SPARE_SECONDS = 0.5;
@@ -71,7 +72,7 @@ export function goalDefaults(
     walk: { distanceMm: 500 },
     touch: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: touchSeconds(chosen.dots ?? 1) },
     pick: pickDefaults(robot),
-    handoff: { ...touchSpot(robot), radiusMm: Math.round(touchRadius(reach)), seconds: 7 },
+    handoff: handoffDefaults(robot),
   };
 
   const values = { ...base, ...byKind[kind] };

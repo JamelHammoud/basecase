@@ -9,7 +9,7 @@ import { fixtureMeasures, fixtureTriangles } from './fixtures/parts';
 import { fixtureRobots } from './fixtures/robots';
 import { buildMjcf } from './mjcf';
 import { worldDeltas } from './mjcfFrames';
-import { Recorder } from './recorder';
+import { frameContacts, Recorder } from './recorder';
 import { WorldMoves } from './worldMoves';
 
 const arm = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
@@ -173,5 +173,40 @@ describe('movable world objects', () => {
     expect(recording.world?.[1].id).toBe('gate');
     expect(recording.world?.[1].at).toBeCloseTo(0.5, 2);
     engine.dispose();
+  });
+});
+
+describe('world edit contact evidence', () => {
+  it.each(['dynamic', 'static'] as const)('refreshes live and recorded contacts after %s world edits', (behavior) => {
+    const position: V3 = [30, 20, 200];
+    const { engine, moves, model } = open([
+      object('other', { behavior: 'dynamic', position: [0, 20, 200], size: [40, 40, 40], massG: 200 }),
+      object('crate', { behavior, position, size: [40, 40, 40], massG: 200, movable: true }),
+    ]);
+    const crate = model.bodies.findIndex((body) => body.world?.includes('crate'));
+    const other = model.bodies.findIndex((body) => body.world?.includes('other'));
+    const touching = (pairs: Int32Array) => pairs.some((body, i) => body === crate && pairs[i ^ 1] === other);
+    const expectEvidence = (expected: boolean) => {
+      expect(touching(engine.contactPairs())).toBe(expected);
+      expect(touching(frameContacts(new Recorder(engine).finish(), 0))).toBe(expected);
+    };
+
+    try {
+      expectEvidence(true);
+      expect(moves.apply({ id: 'crate', pose: { position: [1000, 1000, 1000] } })).toBeNull();
+      expectEvidence(false);
+      expect(moves.apply({ id: 'crate', pose: { position } })).toBeNull();
+      expectEvidence(true);
+      expect(moves.apply({ id: 'crate', visible: false })).toBeNull();
+      expectEvidence(false);
+      expect(moves.apply({ id: 'crate', visible: true })).toBeNull();
+      expectEvidence(true);
+      expect(moves.apply({ id: 'crate', visible: false })).toBeNull();
+      moves.reset();
+      expectEvidence(true);
+      expect(engine.data.time).toBe(0);
+    } finally {
+      engine.dispose();
+    }
   });
 });

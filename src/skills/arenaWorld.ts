@@ -1,4 +1,5 @@
-import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
+import type { MainModule } from '@mujoco/mujoco';
+import { ControlDelay } from '../sim/controlDelay';
 import { SimEngine, type Controller } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotPoseState } from '../types/robotics';
@@ -62,27 +63,6 @@ export function withTimestep(model: SimModel, factor: number): SimModel {
   return { ...model, xml };
 }
 
-interface Delay {
-  steps: number;
-  history: Float64Array[];
-}
-
-function delayedModule(mj: MainModule, delay: Delay): MainModule {
-  const step = (model: MjModel, data: MjData) => {
-    if (delay.steps > 0) {
-      delay.history.push(Float64Array.from(data.ctrl));
-
-      const late = delay.history.length > delay.steps ? delay.history.shift()! : delay.history[0];
-
-      data.ctrl.set(late);
-    }
-
-    mj.mj_step(model, data);
-  };
-
-  return Object.create(mj, { mj_step: { value: step } }) as MainModule;
-}
-
 const SNAPSHOT = [
   'geom_friction',
   'body_mass',
@@ -107,13 +87,13 @@ const DIVERGENCE = ['mjWARN_BADQPOS', 'mjWARN_BADQVEL', 'mjWARN_BADQACC'] as con
 export class ArenaWorld {
   readonly engine: SimEngine;
   private mj: MainModule;
-  private delay: Delay = { steps: 0, history: [] };
+  private delay = new ControlDelay();
   private baseline: Record<(typeof SNAPSHOT)[number], Float64Array>;
   private slots: Map<string, ServoSlot>;
 
   constructor(mj: MainModule, model: SimModel) {
     this.mj = mj;
-    this.engine = new SimEngine(delayedModule(mj, this.delay), model);
+    this.engine = new SimEngine(this.delay.module(mj), model);
     this.engine.model.opt.disableflags |= mj.mjtDisableBit.mjDSBL_AUTORESET.value;
     this.baseline = Object.fromEntries(
       SNAPSHOT.map((field) => [field, Float64Array.from(this.engine.model[field] as ArrayLike<number>)]),
@@ -211,8 +191,7 @@ export class ArenaWorld {
     this.restore();
     this.scale(instance);
     mj.mj_setConst(engine.model, engine.data);
-    this.delay.steps = Math.round(instance.latencyMs / 1000 / engine.dt);
-    this.delay.history = [];
+    this.delay.reset(Math.round(instance.latencyMs / 1000 / engine.dt));
     engine.setController(controller);
     engine.reset(this.startPose(start, instance, robot));
     this.turn(robot, instance.yawDeg);

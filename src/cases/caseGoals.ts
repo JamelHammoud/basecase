@@ -1,4 +1,4 @@
-import type { V3 } from '../utils/kinematics';
+import type { Rig, V3 } from '../utils/kinematics';
 import type { Contract } from './contract';
 import type { Formula as ContractFormula, State as ContractState } from '../skills/contract';
 import type { RobotFacts } from './robotFit';
@@ -32,6 +32,7 @@ const GOAL_PARAMS: Record<ParamKey, GoalParam> = {
 };
 
 export interface BuilderRobot {
+  rig?: Rig;
   facts: RobotFacts;
   pivot: V3;
   forward: V3;

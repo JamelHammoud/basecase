@@ -1,4 +1,5 @@
 import { bytesToBase64 } from '../utils/base64';
+import type { VisionModelFile } from '../vision/manifest';
 import { channelCall } from '../utils/platform/channelCall';
 import { electron } from '../utils/platform/transport';
 
@@ -68,6 +69,7 @@ export const hubBridge = {
   signIn: async (token: string) => asAccount(await call('hub:sign-in', token)),
   publish: (payload: HubPublish) => call<HubPublished>('hub:publish', payload),
   skillFiles: (ref: HubRepoRef) => call<HubSkillFiles>('hub:skill-files', ref),
+  modelFile: (ref: VisionModelFile) => call<{ url: string }>('hub:model-file', ref),
   findSkills: () => call<HubSkillCandidate[]>('hub:find-skills'),
   datasetFiles: (ref: HubRepoRef) => call<HubDatasetFiles>('hub:dataset-files', ref),
 };

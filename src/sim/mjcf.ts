@@ -5,6 +5,7 @@ import { partMasses } from '../utils/engineering';
 import { clampJoint, isMovable, partMatrix, robotPose, type Rig, type V3 } from '../utils/kinematics';
 import { effortOf } from './mjcfEffort';
 import { robotFingerprint } from './mjcfFingerprint';
+import { robotContactExclusions, robotContactMasks } from './mjcfContacts';
 import { quatToMj, toMj } from './mjcfFrames';
 import { cachedHull } from './mjcfHull';
 import { fittedActuatorXml, fittedJointAttrs, fittedServo } from './mjcfServo';
@@ -35,6 +36,7 @@ interface BuildState {
   input: MjcfInput;
   byId: Map<string, ScenePart>;
   masses: Map<string, PartMass>;
+  contactMasks: Map<string, string>;
   assets: string[];
   bodies: SimBody[];
   simJoints: SimJoint[];
@@ -86,8 +88,7 @@ const DEFAULT_TIMESTEP = 0.002;
 
 type GeomRole = 'robot' | 'object' | 'scenery';
 
-const CONTACT: Record<GeomRole, string> = {
-  robot: 'contype="1" conaffinity="0"',
+const CONTACT = {
   object: 'contype="1" conaffinity="1"',
   scenery: 'contype="0" conaffinity="1"',
 };
@@ -98,7 +99,7 @@ function geomAttrs(st: BuildState, p: ScenePart, role: GeomRole): string {
   const friction =
     role === 'object' && p.physics?.friction ? ` priority="1" friction="${f(p.physics.friction)} 0.02 0.002"` : '';
 
-  return `${CONTACT[role]}${massAttr}${friction}`;
+  return `${role === 'robot' ? st.contactMasks.get(p.id)! : CONTACT[role]}${massAttr}${friction}`;
 }
 
 function geomFor(st: BuildState, p: ScenePart, origin: V3, role: GeomRole): string | null {
@@ -366,7 +367,7 @@ ${st.assets.join('\n')}
 ${worldFloor(st.input)}
 ${st.worldXml.join('\n')}
   </worldbody>
-  <actuator>
+${robotContactExclusions(st.input.rig.robots, st.bodies)}  <actuator>
 ${st.actuatorXml.join('\n')}
   </actuator>
 </mujoco>
@@ -381,6 +382,7 @@ export function buildMjcf(given: MjcfInput): SimModel {
     byId: new Map(parts.map((p) => [p.id, p])),
     masses: new Map(partMasses(parts, project, input.measures).map((m) => [m.id, m])),
     assets: [],
+    contactMasks: robotContactMasks(rig.robots),
     bodies: [],
     simJoints: [],
     robots: [],

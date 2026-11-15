@@ -6,7 +6,7 @@ import type { Rig, V3 } from '../utils/kinematics';
 import type { Eye } from './eyes';
 import type { RobotMorphology } from './morphology';
 
-export const SIM_MODEL_VERSION = 1;
+export const SIM_MODEL_VERSION = 2;
 
 export type SimDrive = 'position' | 'velocity';
 

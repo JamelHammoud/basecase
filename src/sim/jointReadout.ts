@@ -1,4 +1,4 @@
-import type { MjData } from '@mujoco/mujoco';
+import type { MjData, MjModel } from '@mujoco/mujoco';
 import type { SimModel } from './mjcfTypes';
 
 export function readJointStates(sim: SimModel, data: MjData, jointQpos: number[], out: Float64Array): Float64Array {
@@ -17,3 +17,19 @@ export function readJointStates(sim: SimModel, data: MjData, jointQpos: number[]
 
 export const readJointAngles = (data: MjData, jointQpos: number[]) =>
   Float64Array.from(jointQpos, (address) => data.qpos[address]);
+
+export function readHoldValues(
+  sim: SimModel,
+  model: MjModel,
+  data: MjData,
+  addresses: { qpos: number[]; dof: number[] },
+) {
+  return Object.fromEntries(
+    sim.joints.map((j, i) => {
+      const kp = j.actuator >= 0 ? model.actuator_gainprm[j.actuator * 10] : 0;
+      const bias = kp > 0 ? data.qfrc_bias[addresses.dof[i]] / kp : 0;
+
+      return [j.id, (data.qpos[addresses.qpos[i]] + bias) / (j.type === 'revolute' ? Math.PI / 180 : 0.001)];
+    }),
+  );
+}

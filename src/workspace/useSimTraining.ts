@@ -9,6 +9,7 @@ import { platformBridge } from '../utils/platformBridge';
 import type { PolicyRecord } from '../types/robotics';
 import type { Posing } from '../utils/usePosing';
 import type { ShowToast, StudioShared } from './types';
+import { caseWorldView } from '../cases/worldView';
 import { useCases } from './useCases';
 import { useTriesPlace } from './useTriesView';
 import { useRoutines } from './useRoutines';
@@ -129,6 +130,7 @@ export function useSimTraining(options: SimTrainingOptions) {
   });
   const skillHub = useSkillHub({ skills, showToast, openAccounts: () => studio.openSettings('accounts') });
   const routines = useRoutines({
+    imported: caseWorldView(cases.active),
     parts,
     project,
     projectRef,

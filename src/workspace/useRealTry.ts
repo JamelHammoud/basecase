@@ -77,7 +77,6 @@ async function realTryRecord(
     kase: staged.kase,
     model,
     recording,
-    rig,
     ...stagedEffectors(staged, { rig, parts }),
   });
   const id = newTryId();

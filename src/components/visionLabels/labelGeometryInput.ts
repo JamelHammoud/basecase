@@ -22,7 +22,7 @@ export function labelGeometryInput(shape: LabelDrawingShape, context: LabelDrawi
     ...geometry,
     width: context.frame.width,
     height: context.frame.height,
-    classId: context.classId,
+    classId: previous?.classId ?? context.classId,
     instance: previous?.instance ?? crypto.randomUUID(),
     keypoints: previous?.keypoints,
   };

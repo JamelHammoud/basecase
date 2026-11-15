@@ -23,6 +23,8 @@ export interface TryVideoDecoder {
   close: () => void;
 }
 
+const topicTimes = new WeakMap<RecordedTopic, Float32Array>();
+
 export function compressedImageTopics(source: TryFrameSource): RecordedTopic[] {
   return (recordingTopics(source.recording)?.topics ?? []).filter(
     (topic) => schemaKey(topic.schema) === 'sensor_msgs/CompressedImage' && topic.blobs.has('data'),
@@ -30,7 +32,11 @@ export function compressedImageTopics(source: TryFrameSource): RecordedTopic[] {
 }
 
 export async function topicFrame(topic: RecordedTopic, seconds: number): Promise<TryFrameImage> {
-  const index = lastAtOrBefore(topic.t, seconds);
+  const times = topicTimes.get(topic) ?? Float32Array.from(topic.t);
+
+  topicTimes.set(topic, times);
+
+  const index = lastAtOrBefore(times, Math.fround(seconds));
   const data = topic.blobs.get('data');
 
   if (index < 0 || !data || data.at[index] === data.at[index + 1])
@@ -41,6 +47,14 @@ export async function topicFrame(topic: RecordedTopic, seconds: number): Promise
   const image = await decodeSourceImage(bytes, new Map());
 
   return { ...image, jpeg: Uint8Array.from(image.jpeg) };
+}
+
+function videoFrameTime(stored: StoredTry, video: TryVideo, seconds: number) {
+  const from = stored.source === 'operate' ? video.from : 0;
+  const to = stored.source === 'operate' ? video.to : video.to - video.from;
+  const boundary = [from, to].find((value) => Math.fround(value) === Math.fround(seconds));
+
+  return recordedVideoTime(video, stored.source, boundary ?? seconds);
 }
 
 async function videoSource(stored: StoredTry, video: TryVideo) {
@@ -65,7 +79,7 @@ export async function openTryVideo(stored: StoredTry, video: TryVideo): Promise<
 
     return {
       frame: async (seconds) => {
-        const time = recordedVideoTime(video, stored.source, seconds);
+        const time = videoFrameTime(stored, video, seconds);
 
         if (time === null) throw new Error('Choose a time within the camera video.');
 
@@ -80,7 +94,7 @@ export async function openTryVideo(stored: StoredTry, video: TryVideo): Promise<
 
           if (!context) throw new Error('Couldn’t read the camera image.');
 
-          context.drawImage(sample.toCanvasImageSource(), 0, 0);
+          sample.draw(context, 0, 0, width, height);
 
           return { jpeg: await trainingJpeg(canvas, 0), width: canvas.width, height: canvas.height };
         } finally {

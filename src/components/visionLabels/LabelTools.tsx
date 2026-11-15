@@ -20,7 +20,13 @@ const tools: { tool: LabelTool; title: string; shortcut: string; icon: React.Rea
   { tool: 'segment', title: 'Segment object', shortcut: 'S', icon: <BrushIcon /> },
 ];
 
-export default function LabelTools({ editor, segmentation }: { editor: LabelEditor; segmentation: boolean }) {
+interface Props {
+  editor: LabelEditor;
+  segmentation: boolean;
+  onToolChange: (tool: LabelTool) => void;
+}
+
+export default function LabelTools({ editor, segmentation, onToolChange }: Props) {
   return (
     <div className="flex items-center gap-1">
       {tools
@@ -33,7 +39,7 @@ export default function LabelTools({ editor, segmentation }: { editor: LabelEdit
             icon={<span className="w-4 h-4">{entry.icon}</span>}
             isActive={entry.tool === editor.tool}
             disabled={editor.busy || (entry.tool !== 'select' && !editor.category)}
-            onClick={() => editor.setTool(entry.tool)}
+            onClick={() => onToolChange(entry.tool)}
           />
         ))}
       <span className="w-3" />

@@ -18,6 +18,10 @@ export type { FrameLabelEditorProps, SegmentLabelRequest, TrackLabelRequest } fr
 export default function FrameLabelEditor(props: FrameLabelEditorProps) {
   const editor = useLabelEditor(props);
   const drawing = useLabelDrawing(editor);
+  const chooseTool = (tool: typeof editor.tool) => {
+    drawing.reset();
+    editor.setTool(tool);
+  };
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape' && !drawing.points.length) return;
 
@@ -25,6 +29,8 @@ export default function FrameLabelEditor(props: FrameLabelEditorProps) {
 
     if ((event.target as HTMLElement).closest('input, textarea, select, [contenteditable="true"]') || editor.busy)
       return;
+
+    if (event.key === 'Enter' && (event.target as HTMLElement).closest('button')) return;
 
     if (event.key === 'Escape') {
       drawing.reset();
@@ -62,15 +68,14 @@ export default function FrameLabelEditor(props: FrameLabelEditorProps) {
 
     if (action === 'segment' && !props.onSegment) return;
 
-    drawing.reset();
-    editor.setTool(action as typeof editor.tool);
+    chooseTool(action as typeof editor.tool);
   };
 
   return (
     <Modal isOpen onClose={props.onClose} title="Frame labels" maxWidth="max-w-[1280px]">
       <div onKeyDown={onKeyDown} className="flex flex-col gap-3 h-[65vh]">
         <div className="flex items-center justify-between gap-3">
-          <LabelTools editor={editor} segmentation={Boolean(props.onSegment)} />
+          <LabelTools editor={editor} segmentation={Boolean(props.onSegment)} onToolChange={chooseTool} />
           <div className="flex items-center gap-2 text-[13px] text-white/60 tabular-nums">
             {editor.busy && <Spinner className="w-4 h-4" />}
             <IconButton

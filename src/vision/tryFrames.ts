@@ -44,7 +44,7 @@ function worldAppearance(source: TryFrameSource, scene: TryFrameScene, seconds: 
   const objects: Record<string, TrainingObjectVariation> = Object.create(null);
 
   for (const event of source.recording?.world ?? []) {
-    if (event.at > seconds + 1e-9) continue;
+    if (Math.fround(event.at) > seconds) continue;
 
     const named = scene.kase?.world.objects.find((object) => object.id === event.id);
     const name = named?.colors?.find((color) => color.color.toLowerCase() === event.color?.toLowerCase())?.name ?? '';

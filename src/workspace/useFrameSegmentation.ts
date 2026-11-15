@@ -40,11 +40,15 @@ export function useFrameSegmentation() {
     const values = [...previous, { x: point[0], y: point[1], label: 1 as const }];
     const labelId = instance ?? `label-${crypto.randomUUID()}`;
 
-    points.current = { key: `${frame.id}:${labelId}`, values };
-
     const mask = await session.segment(await bitmapOf(frame), values);
 
-    return visibleMask(mask) ? maskFrameLabel(frame, mask, { instance: labelId, classId }) : null;
+    if (!visibleMask(mask)) return null;
+
+    const annotation = await maskFrameLabel(frame, mask, { instance: labelId, classId });
+
+    points.current = { key: `${frame.id}:${labelId}`, values };
+
+    return annotation;
   };
 
   const track = async ({ set, frameId, instance }: TrackLabelRequest) => {

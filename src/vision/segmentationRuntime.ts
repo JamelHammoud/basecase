@@ -82,6 +82,14 @@ export function createSegmentationRuntime() {
     });
   }
 
+  function requestFrame(type: 'segment' | 'next', frame: Frame, points?: SegmentationPoint[]) {
+    return request<ImageMask>({ type, frame, points }, 'data' in frame ? [] : [frame]).catch((error) => {
+      if (!('data' in frame)) frame.close();
+
+      throw error;
+    });
+  }
+
   return {
     load(): Promise<void> {
       if (closed) return Promise.reject(new Error('The segmentation runtime is closed.'));
@@ -99,9 +107,8 @@ export function createSegmentationRuntime() {
 
       return loading;
     },
-    segment: (frame: Frame, points: SegmentationPoint[]) =>
-      request<ImageMask>({ type: 'segment', frame, points }, 'data' in frame ? [] : [frame]),
-    next: (frame: Frame) => request<ImageMask>({ type: 'next', frame }, 'data' in frame ? [] : [frame]),
+    segment: (frame: Frame, points: SegmentationPoint[]) => requestFrame('segment', frame, points),
+    next: (frame: Frame) => requestFrame('next', frame),
     reset: () => request<void>({ type: 'reset' }),
     close: () => stop(new Error('The segmentation runtime is closed.')),
   };

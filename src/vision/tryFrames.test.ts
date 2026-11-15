@@ -153,3 +153,41 @@ describe('frames from saved tries', () => {
     await expect(session.load({ ...job, cameras: ['missing'] })).rejects.toThrow();
   });
 });
+
+describe('recorded camera timestamps', () => {
+  it('aligns topic images and world events with the recording clock without applying later changes', async () => {
+    const collector = new TopicCollector();
+    const currentJpeg = Uint8Array.from(jpeg);
+
+    currentJpeg[14] = 1;
+    collector.add('/front/compressed', 'sensor_msgs/CompressedImage', 690_000_000n, { data: jpeg });
+    collector.add('/front/compressed', 'sensor_msgs/CompressedImage', 700_000_000n, { data: currentJpeg });
+    collector.add('/front/compressed', 'sensor_msgs/CompressedImage', 710_000_000n, { data: jpeg });
+
+    const recorded: Recording = {
+      ...recording,
+      t: new Float32Array([0, 0.7, 0.8]),
+      topics: encodeTopicLog(collector.finish(0n)),
+      world: [
+        { at: 0.7, id: 'block', color: '#ff0000' },
+        { at: 0.71, id: 'block', color: '#0000ff', visible: false },
+      ],
+    };
+    const stored = await importedStored(model, recorded);
+    const render = vi.fn(async (_request: CameraTrainingRequest) => raw);
+    const session = new TryFramesSession({ load: async () => true, render });
+
+    await session.load({
+      name: 'Aligned frames',
+      tries: [{ stored, recording: recorded }],
+      selection: { kind: 'frame', frame: 1 },
+      cameras: ['/front/compressed', 'scene'],
+      scene: { model, parts: robot.parts, world: [], views: cameraViews(robot.parts, []) },
+    });
+    expect.soft((await session.next()).jpeg).toEqual(currentJpeg);
+    await session.next();
+    expect(render.mock.calls[0][0].randomization).toEqual({
+      objects: { block: { colors: [{ name: '', color: '#ff0000' }] } },
+    });
+  });
+});

@@ -6,7 +6,7 @@ import { extractTryFrames } from '../vision/tryFramesClient';
 import type { TryFrameProgress, TryFrameScene, TryFrameSelection, TryFrameSource } from '../vision/tryFramesTypes';
 import { errorMessage } from '../utils/errorMessage';
 import { frameSourceCameras, loadFrameLabelSources } from './frameLabelSources';
-import { saveLabelFrames } from './frameLabelStorage';
+import { saveLabelEdits, saveLabelFrames } from './frameLabelStorage';
 import type { ShowToast } from './types';
 import { FrameLabelRequests } from './frameLabelRequests';
 
@@ -134,12 +134,20 @@ export function useFrameLabels({ sceneFor, showDataset, showToast }: FrameLabels
         })
         .catch(failed);
     },
-    change: (set: FrameSet) => {
+    change: (set: FrameSet, previous: FrameSet) => {
       requests.current.invalidate();
+
+      const valid = requests.current.capture();
+
       setEditing((current) => (current?.set.id === set.id ? { ...current, set } : current));
       queue.current = queue.current
         .then(async () => {
-          await saveLabelFrames(set);
+          const saved = await saveLabelEdits(previous, set);
+
+          if (valid() && saved !== set)
+            setEditing((current) =>
+              current?.set.id === set.id ? { ...current, set: saved, revision: (current.revision ?? 0) + 1 } : current,
+            );
         })
         .catch(failed);
     },

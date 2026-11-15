@@ -20,10 +20,11 @@ describe('label drawing intent', () => {
     expect(input.keypoints).toBeUndefined();
   });
 
-  it('keeps identity and keypoints when a handle explicitly edits the label', () => {
-    const input = labelGeometryInput({ box: [1, 1, 4, 3], replace: true }, { frame, classId: 1, label });
+  it('keeps identity, class and keypoints when a handle edits a label after adding another class', () => {
+    const input = labelGeometryInput({ box: [1, 1, 4, 3], replace: true }, { frame, classId: 2, label });
 
     expect(input.instance).toBe(label.instance);
+    expect(input.classId).toBe(label.classId);
     expect(input.keypoints).toBe(label.keypoints);
   });
 });

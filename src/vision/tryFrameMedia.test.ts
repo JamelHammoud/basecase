@@ -52,14 +52,14 @@ function prepareCanvas() {
         this.width = width;
         this.height = height;
       }
-      getContext = () => ({ drawImage: mocks.draw });
+      getContext = () => ({ drawImage: vi.fn() });
       convertToBlob = async () => new Blob([jpeg], { type: 'image/jpeg' });
     },
   );
   mocks.sample.mockResolvedValue({
     displayWidth: 4,
     displayHeight: 4,
-    toCanvasImageSource: () => ({}),
+    draw: mocks.draw,
     close: mocks.close,
   });
 }
@@ -82,6 +82,7 @@ describe('recorded image extraction', () => {
 
     expect(await decoder.frame(time)).toEqual({ jpeg, width: 4, height: 4 });
     expect(mocks.sample).toHaveBeenCalledWith(expected);
+    expect(mocks.draw).toHaveBeenCalledWith(expect.any(Object), 0, 0, 4, 4);
     expect(mocks.url).toHaveBeenCalledWith(`https://app.basecase.so/api/tries/video/${manifest.id}/front`);
     expect(mocks.close).toHaveBeenCalledOnce();
     decoder.close();
@@ -100,6 +101,25 @@ describe('recorded image extraction', () => {
     mocks.decode.mockResolvedValue(false);
     await expect(openTryVideo(manifest, video)).rejects.toThrow('decode');
     expect(mocks.dispose).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    ['operate', 0.7, 1.1, 0],
+    ['operate', 1.1, 1.1, 0.4],
+    ['import', 0.6, 1.3, 1.3],
+  ] as const)('aligns %s clip boundaries with Float32 recording time %s', async (source, seconds, to, expected) => {
+    prepareCanvas();
+
+    const manifest = await stored(source);
+    const clip = { ...video, from: 0.7, to };
+    const decoder = await openTryVideo(manifest, clip);
+
+    try {
+      await decoder.frame(Math.fround(seconds));
+      expect(mocks.sample).toHaveBeenCalledWith(expect.closeTo(expected, 6));
+    } finally {
+      decoder.close();
+    }
   });
 
   it('transfers a topic JPEG without detaching retained images for later selections', async () => {

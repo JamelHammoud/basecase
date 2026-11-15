@@ -4,7 +4,10 @@ import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
 import type { FrameSet } from '../src/vision/frameSet';
+import type { VisionManifest } from '../src/vision/manifest';
+import { inputSensitiveDetectionOnnx } from '../src/vision/onnxFixture';
 import { openApp, partCount, shown, type App } from './harness';
+import { visionManifest } from './visionFixtures';
 
 interface LabelStudio {
   load: (record: unknown) => void;
@@ -12,6 +15,7 @@ interface LabelStudio {
   referenceTry: () => Promise<void>;
   simState: () => { playing: boolean; tries: unknown[] };
   frameLabels: () => { set: FrameSet | null };
+  configureVision: (manifest: VisionManifest, bytes: number[], cameras: string[]) => Promise<unknown>;
 }
 
 type LabelWindow = { __studio: LabelStudio };
@@ -20,6 +24,13 @@ let app: App;
 
 beforeAll(async () => {
   app = await openApp();
+
+  const bytes = inputSensitiveDetectionOnnx();
+
+  await app.page.evaluate(
+    ({ manifest, data }) => (window as unknown as LabelWindow).__studio.configureVision(manifest, data, []),
+    { manifest: visionManifest(bytes), data: [...bytes] },
+  );
 }, 120000);
 afterAll(async () => {
   await app?.close();
@@ -94,6 +105,7 @@ describe('Frame labels', () => {
     await expect.poll(async () => (await read())?.frames[0].annotations.length).toBe(before.length + 1);
     await page.keyboard.press(process.platform === 'darwin' ? 'Meta+z' : 'Control+z');
     await expect.poll(async () => (await read())?.frames[0].annotations).toEqual(before);
+    expect(app.requests.filter((url) => url.includes('/api/bridge/hub-model-file'))).toEqual([]);
     expect(app.errors).toEqual([]);
   });
 });

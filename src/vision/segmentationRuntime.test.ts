@@ -92,4 +92,31 @@ describe('segmentation worker ownership', () => {
     await expect(runtime.reset()).rejects.toThrow(/closed/);
     expect(worker.terminate).toHaveBeenCalledOnce();
   });
+
+  it('closes bitmaps refused before transfer when busy, closed or unable to post', async () => {
+    vi.stubGlobal('Worker', TestWorker);
+
+    const runtime = createSegmentationRuntime();
+    const worker = workers[0];
+    const bitmap = () => ({ width: 1, height: 1, close: vi.fn() }) as unknown as ImageBitmap;
+    const busy = bitmap();
+    const closed = bitmap();
+    const unposted = bitmap();
+
+    vi.spyOn(worker, 'postMessage').mockImplementationOnce(() => {
+      throw new Error('Transfer stopped');
+    });
+    await expect(runtime.next(unposted)).rejects.toThrow('Transfer stopped');
+    expect(unposted.close).toHaveBeenCalledOnce();
+    worker.reply = false;
+
+    const pending = runtime.next({ width: 1, height: 1, data: new Uint8ClampedArray(4) });
+
+    await expect(runtime.next(busy)).rejects.toThrow(/current segmentation/);
+    expect(busy.close).toHaveBeenCalledOnce();
+    runtime.close();
+    await expect(pending).rejects.toThrow(/closed/);
+    await expect(runtime.segment(closed, [{ x: 0, y: 0, label: 1 }])).rejects.toThrow(/closed/);
+    expect(closed.close).toHaveBeenCalledOnce();
+  });
 });

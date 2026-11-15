@@ -33,6 +33,9 @@ Turn a try’s camera images into a labeled dataset with boxes, polygons, masks 
 ![The Add frames sheet with frame selection and camera choices](/help/label-objects-in-camera-frames/frames.png)
 
 5. Click **Add Frames**.
+
+If **Classes** is empty, click **Add class**, enter a name and click **Add Class** before drawing.
+
 6. Under **Classes**, select the object’s class.
 7. Click **Draw box**.
 8. On the image, drag a rectangle around the object.
@@ -65,6 +68,6 @@ With a class selected, choose **Segment object** and click the object. SAM 2 sma
 
 Select a label and choose **Track Forward** to carry it into the next 30 frames from that try and camera. Each predicted label stays unreviewed. Correct it or choose **Accept Label** before using it as reviewed data.
 
-**See Objects** fills the set with detector suggestions while keeping manual and accepted labels. **Accept Labels** accepts the current frame’s suggestions together. The agent’s labels also stay unreviewed.
+**See Objects** fills the set with detector suggestions while keeping manual and accepted labels. To accept the current frame’s suggestions together, choose **Select label**, click empty space in the image and click **Accept Labels**. The agent’s labels also stay unreviewed.
 
 Open the saved dataset in **Library** and click **Label Objects** under an image to edit it again. If a saved version is selected, choose **Working Dataset** in **Dataset version** first. [Export Dataset](/help/export-a-lerobot-dataset) includes the image labels as COCO and YOLO packages.

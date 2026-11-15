@@ -5,17 +5,24 @@ import { loadDatasets, saveDataset } from '../datasets/datasetStore';
 import type { FrameBytes, FrameSetBackend, FrameSetManifest } from '../vision/frameSetStoreTypes';
 import { LABEL_FRAME_HANDLERS } from './agentLabelFrames';
 import { loadFrameSet, saveFrameSet } from '../vision/frameSetStore';
+import { saveLabelEdits } from './frameLabelStorage';
+import { addLabelClass, deleteLabel, labelGeometry, putLabel, renameLabelClass } from '../vision/labelEdits';
 
 const stored = vi.hoisted(() => ({
   manifests: new Map<string, FrameSetManifest>(),
   frames: new Map<string, FrameBytes>(),
+  frameReads: 0,
 }));
 
 vi.mock('../vision/desktopFrameSets', () => ({
   desktopFrameSets: {
     list: async () => [],
     manifest: async (id) => structuredClone(stored.manifests.get(id) ?? null),
-    frame: async (id, frame) => structuredClone(stored.frames.get(`${id}:${frame}`) ?? null),
+    frame: async (id, frame) => {
+      stored.frameReads++;
+
+      return structuredClone(stored.frames.get(`${id}:${frame}`) ?? null);
+    },
     jpeg: async (id, frame) => stored.frames.get(`${id}:${frame}`)?.jpeg ?? null,
     saveFrame: async (id, frame, bytes) => {
       stored.frames.set(`${id}:${frame}`, structuredClone(bytes));
@@ -63,7 +70,107 @@ beforeEach(async () => {
   vi.mocked(loadDatasets).mockResolvedValue([]);
   stored.manifests.clear();
   stored.frames.clear();
+  stored.frameReads = 0;
   await saveFrameSet(fixture());
+});
+
+describe('label_frames concurrent edits', () => {
+  it('keeps the editor history when saving without external changes', async () => {
+    const previous = fixture();
+    const first = labelGeometry({ width: 3, height: 2, instance: 'first', classId: 1, box: [0, 0, 1, 1] });
+    const second = { ...first, instance: 'second' };
+    const initial = putLabel(putLabel(previous, 'frame-1', first), 'frame-1', second);
+
+    await saveFrameSet(initial);
+
+    const next = putLabel(initial, 'frame-1', { ...first, review: 'suggested' });
+
+    expect(await saveLabelEdits(initial, next)).toBe(next);
+    expect(stored.frameReads).toBe(0);
+  });
+
+  it('merges stale local edits and undo with agent labels on the same frame', async () => {
+    const previous = fixture();
+    const manual = labelGeometry({ width: 3, height: 2, instance: 'manual', classId: 1, box: [1, 0, 2, 2] });
+    const local = putLabel(renameLabelClass(previous, 1, 'Mug'), 'frame-1', manual);
+
+    await LABEL_FRAME_HANDLERS.label_frames(
+      { frame_set: 'set-1', labels: [{ frame: 'frame-1', annotations: [label] }] },
+      ctx,
+    );
+
+    const merged = await saveLabelEdits(previous, local);
+
+    expect(merged.classes[0].name).toBe('Mug');
+    expect(merged.frames[0].annotations.map((annotation) => annotation.instance)).toEqual(['manual', 'cup']);
+
+    const undone = await saveLabelEdits(local, previous);
+
+    expect(undone.classes[0].name).toBe('Cup');
+    expect(undone.frames[0].annotations.map((annotation) => annotation.instance)).toEqual(['cup']);
+    expect(await loadFrameSet('set-1')).toEqual(undone);
+  });
+
+  it('keeps external classes while applying local deletion and gives local edits precedence', async () => {
+    const previous = putLabel(
+      fixture(),
+      'frame-1',
+      labelGeometry({ ...label, box: [0, 0, 2, 2], width: 3, height: 2 }),
+    );
+    const external = addLabelClass(previous, 'Bottle');
+    const changed = { ...previous.frames[0].annotations[0], review: 'suggested' as const, source: 'agent' as const };
+
+    await saveFrameSet(putLabel(external, 'frame-1', changed));
+
+    const renamed = await saveLabelEdits(previous, renameLabelClass(previous, 1, 'Mug'));
+
+    expect(renamed.classes.map((category) => category.name)).toEqual(['Mug', 'Bottle']);
+    expect(renamed.frames[0].annotations[0]).toEqual(changed);
+
+    const deleted = await saveLabelEdits(previous, deleteLabel(previous, 'frame-1', 'cup'));
+
+    expect(deleted.frames[0].annotations).toEqual([]);
+    expect(deleted.classes.map((category) => category.name)).toEqual(['Mug', 'Bottle']);
+  });
+
+  it('preserves edits to separate frames from concurrent agent calls', async () => {
+    const initial = fixture();
+
+    initial.frames.push({ ...initial.frames[0], id: 'frame-2' });
+    await saveFrameSet(initial);
+
+    const replies = await Promise.all(
+      ['frame-1', 'frame-2'].map((frame) =>
+        LABEL_FRAME_HANDLERS.label_frames({ frame_set: initial.id, labels: [{ frame, annotations: [label] }] }, ctx),
+      ),
+    );
+
+    expect(replies.every((reply) => reply.ok)).toBe(true);
+    expect((await loadFrameSet(initial.id))!.frames.map((frame) => frame.annotations)).toEqual([
+      [expect.objectContaining({ instance: 'cup' })],
+      [expect.objectContaining({ instance: 'cup' })],
+    ]);
+  });
+
+  it('preserves new class keypoints when a stale local edit renames that class', async () => {
+    const previous = fixture();
+
+    await LABEL_FRAME_HANDLERS.label_frames(
+      {
+        frame_set: previous.id,
+        classes: [{ ...previous.classes[0], keypoints: ['handle', 'rim'] }],
+        labels: [
+          { frame: 'frame-1', annotations: [{ ...label, keypoints: [{ name: 'rim', x: 1, y: 1, visible: true }] }] },
+        ],
+      },
+      ctx,
+    );
+
+    const renamed = await saveLabelEdits(previous, renameLabelClass(previous, 1, 'Mug'));
+
+    expect(renamed.classes[0]).toMatchObject({ name: 'Mug', keypoints: ['handle', 'rim'] });
+    expect(renamed.frames[0].annotations[0].keypoints[0].name).toBe('rim');
+  });
 });
 
 describe('label_frames stored pipeline', () => {

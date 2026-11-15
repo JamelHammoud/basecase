@@ -1,9 +1,76 @@
 import { loadDatasets, saveDataset } from '../datasets/datasetStore';
 import { newDataset } from '../datasets/datasetFile';
+import { datasetWrites } from '../datasets/datasetStore/datasetWrites';
 import type { FrameSet } from '../vision/frameSet';
-import { hashFrameSet, saveFrameSet } from '../vision/frameSetStore';
+import { hashFrameSet, loadFrameSet, loadFrameSetManifest, saveFrameSet } from '../vision/frameSetStore';
+import { mergeFrameLabels } from '../vision/labelEditsClient';
 
-export async function saveLabelFrames(set: FrameSet) {
+const write = datasetWrites();
+const labelState = (set: FrameSet) => ({
+  classes: set.classes,
+  frames: set.frames.map(({ id, annotations }) => ({ id, annotations })),
+});
+
+export const saveLabelFrames = (set: FrameSet) => write('frame-labels', () => persistLabels(set));
+
+export const saveLabelEdits = (previous: FrameSet, next: FrameSet) =>
+  editLabelFrames(
+    next.id,
+    async (stored) => {
+      const merged = await mergeFrameLabels({
+        previous: labelState(previous),
+        next: labelState(next),
+        stored: labelState(stored),
+      });
+      const set = {
+        ...stored,
+        classes: merged.classes,
+        frames: stored.frames.map((frame, index) => ({ ...frame, annotations: merged.frames[index].annotations })),
+      };
+
+      return { set, result: merged.same ? next : set };
+    },
+    next,
+  );
+
+async function latestLabels(id: string, images?: FrameSet): Promise<FrameSet | null> {
+  if (!images) return loadFrameSet(id);
+
+  const manifest = await loadFrameSetManifest(id);
+
+  if (!manifest) return null;
+
+  const buffers = new Map(images.frames.map((frame) => [frame.id, frame]));
+  const frames = manifest.frames.map((frame) => {
+    const image = buffers.get(frame.id);
+
+    if (!image) throw new Error('The dataset is missing an image.');
+
+    return { ...frame, jpeg: image.jpeg, depth: image.depth };
+  });
+
+  return { ...manifest, frames };
+}
+
+export function editLabelFrames<T>(
+  id: string,
+  edit: (set: FrameSet) => Promise<{ set: FrameSet; result: T }>,
+  images?: FrameSet,
+): Promise<T> {
+  return write('frame-labels', async () => {
+    const original = await latestLabels(id, images);
+
+    if (!original) throw new Error('Choose a saved image dataset.');
+
+    const { set, result } = await edit(original);
+
+    await persistLabels(set);
+
+    return result;
+  });
+}
+
+async function persistLabels(set: FrameSet) {
   await saveFrameSet(set);
 
   const hash = await hashFrameSet(set);

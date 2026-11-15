@@ -160,4 +160,19 @@ describe('label_frames', () => {
     vi.mocked(loadFrameJpeg).mockResolvedValue(null);
     expect(await LABEL_FRAME_HANDLERS.label_frames({ frame_set: 'frames-1' }, ctx)).toMatchObject({ ok: false });
   });
+
+  it.each([null, new Uint8Array(16 * 1024 * 1024 + 1)])(
+    'leaves labels unchanged when the image reply cannot be returned',
+    async (jpeg) => {
+      vi.mocked(loadFrameJpeg).mockResolvedValue(jpeg);
+
+      expect(
+        await LABEL_FRAME_HANDLERS.label_frames(
+          { frame_set: 'frames-1', classes: [{ id: 1, name: 'Mug', keypoints: ['handle'] }] },
+          ctx,
+        ),
+      ).toMatchObject({ ok: false });
+      expect(saveFrameSet).not.toHaveBeenCalled();
+    },
+  );
 });

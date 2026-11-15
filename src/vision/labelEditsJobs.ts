@@ -2,6 +2,7 @@ import { reply } from '../utils/workerRpc';
 import { labelGeometry, type LabelGeometry } from './labelEdits';
 import { decodeMask } from './imageMasks';
 import type { ImageMask } from './frameSet';
+import { mergeFrameLabelChanges } from './labelMerge';
 
 function maskPoint(mask: ImageMask): [number, number] {
   const pixels = decodeMask(mask);
@@ -13,6 +14,7 @@ function maskPoint(mask: ImageMask): [number, number] {
 }
 
 export const labelEditsJobs = {
+  merge: (input: Parameters<typeof mergeFrameLabelChanges>[0]) => reply(mergeFrameLabelChanges(input)),
   geometry: (input: LabelGeometry) => reply(labelGeometry(input)),
   maskGeometry: (input: Omit<LabelGeometry, 'pixels'> & { mask: ImageMask }) =>
     reply(labelGeometry({ ...input, pixels: decodeMask(input.mask) })),

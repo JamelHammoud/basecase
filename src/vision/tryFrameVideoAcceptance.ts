@@ -2,7 +2,7 @@ import { BufferTarget, CanvasSource, getFirstEncodableVideoCodec, Mp4OutputForma
 import type { StoredTry } from '../cases/tryFile';
 import { openTryVideo, type TryFrameImage } from './tryFrameMedia';
 
-async function fixtureVideo(): Promise<Uint8Array> {
+async function fixtureVideo(rotation: 0 | 90 = 0): Promise<Uint8Array> {
   const codec = await getFirstEncodableVideoCodec(['vp9'], { width: 64, height: 48 });
 
   if (!codec) throw new Error('The browser has no video encoder for the frame extraction fixture.');
@@ -17,12 +17,18 @@ async function fixtureVideo(): Promise<Uint8Array> {
   const source = new CanvasSource(canvas, { codec, bitrate: 100000 });
   const levels = [0, 32, 96, 160, 224, 255];
 
-  output.addVideoTrack(source, { frameRate: 2 });
+  output.addVideoTrack(source, { frameRate: 2, rotation });
   await output.start();
 
   for (const [index, value] of levels.entries()) {
     context.fillStyle = `rgb(${value}, ${value}, ${value})`;
     context.fillRect(0, 0, 64, 48);
+
+    if (rotation) {
+      context.fillStyle = `rgb(${255 - value}, ${255 - value}, ${255 - value})`;
+      context.fillRect(32, 0, 32, 48);
+    }
+
     await source.add(index / 2, 0.5, { keyFrame: true });
   }
 
@@ -65,15 +71,30 @@ async function measuredFrame(frame: TryFrameImage) {
     context.drawImage(bitmap, 0, 0);
 
     const pixel = context.getImageData(32, 24, 1, 1).data;
+    const top = context.getImageData(frame.width / 2, frame.height / 4, 1, 1).data[0];
+    const bottom = context.getImageData(frame.width / 2, (frame.height * 3) / 4, 1, 1).data[0];
 
     return {
       mean: (pixel[0] + pixel[1] + pixel[2]) / 3,
       width: frame.width,
       height: frame.height,
       jpegBytes: frame.jpeg.length,
+      ends: [top, bottom],
     };
   } finally {
     bitmap.close();
+  }
+}
+
+async function rotatedFrame(): Promise<TryFrameImage> {
+  const stored = { ...storedVideo('import'), id: 'rotated-video' };
+  const video = { camera: 'front', path: 'front.mp4', from: 0, to: 3 };
+  const decoder = await openTryVideo(stored, video);
+
+  try {
+    return await decoder.frame(0);
+  } finally {
+    decoder.close();
   }
 }
 
@@ -93,6 +114,7 @@ async function decodedSource(source: 'import' | 'operate'): Promise<TryFrameImag
 
 export async function tryFrameVideoAcceptance() {
   const video = await fixtureVideo();
+  const rotated = await fixtureVideo(90);
   const requests: string[] = [];
   const originalFetch = globalThis.fetch;
   const endpoint = new URL('/api/tries/video/', location.href).href;
@@ -104,8 +126,10 @@ export async function tryFrameVideoAcceptance() {
 
     requests.push(url);
 
-    return new Response(Uint8Array.from(video), {
-      headers: { 'content-type': 'video/mp4', 'content-length': String(video.length) },
+    const bytes = url.includes('/rotated-video/') ? rotated : video;
+
+    return new Response(Uint8Array.from(bytes), {
+      headers: { 'content-type': 'video/mp4', 'content-length': String(bytes.length) },
     });
   };
 
@@ -114,7 +138,11 @@ export async function tryFrameVideoAcceptance() {
 
     for (const source of ['import', 'operate'] as const) frames.push(...(await decodedSource(source)));
 
-    return { frames: await Promise.all(frames.map(measuredFrame)), requests };
+    return {
+      frames: await Promise.all(frames.map(measuredFrame)),
+      rotated: await measuredFrame(await rotatedFrame()),
+      requests,
+    };
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -1,10 +1,10 @@
 import { bytesToBase64 } from '../utils/base64';
 import { errorMessage } from '../utils/errorMessage';
 import { validateFrameSetHeader, type FrameSet, type ImageAnnotation } from '../vision/frameSet';
-import { loadFrameJpeg, loadFrameSet, loadFrameSetManifest } from '../vision/frameSetStore';
+import { loadFrameJpeg, loadFrameSetManifest } from '../vision/frameSetStore';
 import type { FrameSetManifest } from '../vision/frameSetStoreTypes';
 import { makeLabelGeometry } from '../vision/labelEditsClient';
-import { saveLabelFrames } from './frameLabelStorage';
+import { editLabelFrames } from './frameLabelStorage';
 import { labelFramesInput, type LabelFramesInput } from './agentLabelFramesInput';
 
 interface LabelContext {
@@ -21,11 +21,12 @@ interface LabelReply {
   images?: Array<{ view: string; dataUrl: string }>;
 }
 
-async function updateLabels(input: LabelFramesInput): Promise<FrameSet> {
-  const original = await loadFrameSet(input.frameSet);
+function notifyLabels(id: string) {
+  if (typeof window !== 'undefined')
+    window.dispatchEvent(new CustomEvent('frame-set-labels-updated', { detail: { id } }));
+}
 
-  if (!original) throw new Error('Choose a saved image dataset.');
-
+async function updateLabels(original: FrameSet, input: LabelFramesInput): Promise<FrameSet> {
   const set = { ...original, classes: input.classes ?? original.classes, frames: [...original.frames] };
 
   validateFrameSetHeader(set);
@@ -54,11 +55,6 @@ async function updateLabels(input: LabelFramesInput): Promise<FrameSet> {
 
     set.frames[index] = { ...frame, annotations };
   }
-
-  await saveLabelFrames(set);
-
-  if (typeof window !== 'undefined')
-    window.dispatchEvent(new CustomEvent('frame-set-labels-updated', { detail: { id: set.id } }));
 
   return set;
 }
@@ -114,7 +110,20 @@ async function labelFrames(payload: Record<string, unknown>, ctx: LabelContext):
 
     ctx.setAction('Labeling frames');
 
-    const set = input.labels || input.classes ? await updateLabels(input) : await loadFrameSetManifest(input.frameSet);
+    if (input.labels || input.classes) {
+      const reply = await editLabelFrames(input.frameSet, async (original) => {
+        const set = await updateLabels(original, input);
+        const result = await frameReply(set, input);
+
+        return { set, result };
+      });
+
+      notifyLabels(input.frameSet);
+
+      return reply;
+    }
+
+    const set = await loadFrameSetManifest(input.frameSet);
 
     if (!set) throw new Error('Choose a saved image dataset.');
 

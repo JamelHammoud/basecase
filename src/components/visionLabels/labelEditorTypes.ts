@@ -15,7 +15,7 @@ export interface TrackLabelRequest {
 
 export interface FrameLabelEditorProps {
   set: FrameSet;
-  onChange: (set: FrameSet) => void;
+  onChange: (set: FrameSet, previous: FrameSet) => void;
   onClose: () => void;
   initialFrameId?: string;
   onSegment?: (request: SegmentLabelRequest) => Promise<ImageAnnotation | null>;

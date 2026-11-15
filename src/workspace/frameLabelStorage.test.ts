@@ -34,6 +34,35 @@ const set: FrameSet = {
 beforeEach(() => vi.clearAllMocks());
 
 describe('saving frame labels', () => {
+  it('finishes one frame set before saving another that can share its dataset', async () => {
+    let release: () => void = () => {};
+    let started: () => void = () => {};
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const entered = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+
+    mocks.datasets.mockResolvedValue([]);
+    mocks.frames.mockImplementationOnce(async () => {
+      started();
+      await blocked;
+    });
+
+    const first = saveLabelFrames(set);
+
+    await entered;
+
+    const second = saveLabelFrames({ ...set, id: 'other' });
+
+    await Promise.resolve();
+    expect(mocks.frames).toHaveBeenCalledTimes(1);
+    release();
+    await Promise.all([first, second]);
+    expect(mocks.frames).toHaveBeenCalledTimes(2);
+  });
+
   it('updates the working member hash while retaining its selected frames and frozen versions', async () => {
     const dataset = newDataset({
       id: 'dataset',

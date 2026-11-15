@@ -29,7 +29,16 @@ it('decodes real JPEG pixels from imported and Operate videos using their stored
     expect.closeTo(96, -1),
   ]);
   expect(result.frames.every((frame) => frame.width === 64 && frame.height === 48 && frame.jpegBytes > 100)).toBe(true);
+  expect(result.rotated).toMatchObject({
+    width: 48,
+    height: 64,
+    ends: [expect.closeTo(0, -1), expect.closeTo(255, -1)],
+  });
   expect(new Set(result.requests.map((url) => new URL(url).pathname))).toEqual(
-    new Set(['/api/tries/video/import-video/front', '/api/tries/video/operate-video/front']),
+    new Set([
+      '/api/tries/video/import-video/front',
+      '/api/tries/video/operate-video/front',
+      '/api/tries/video/rotated-video/front',
+    ]),
   );
 });

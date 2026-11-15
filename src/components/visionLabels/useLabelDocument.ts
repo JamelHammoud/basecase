@@ -28,11 +28,16 @@ export function useLabelDocument(props: FrameLabelEditorProps) {
   const label = frame?.annotations.find((annotation) => annotation.instance === selected);
   const category = set.classes.find((entry) => entry.id === selectedClassId) ?? set.classes[0];
   const classId = category?.id ?? -1;
-  const publish = (next: typeof history) => {
+  const update = (operation: () => typeof history) => {
+    const previous = document.current();
+    const next = operation();
+
     setHistory(next);
-    props.onChange(next.present);
+    props.onChange(next.present, previous);
+
+    return next;
   };
-  const edit = (operation: LabelEdit) => publish(document.edit(operation));
+  const edit = (operation: LabelEdit) => update(() => document.edit(operation));
   const select = (annotation: ImageAnnotation) => {
     setSelected(annotation.instance);
     setClassId(annotation.classId);
@@ -56,9 +61,8 @@ export function useLabelDocument(props: FrameLabelEditorProps) {
     if (frame) edit((current) => acceptLabels(current, frame.id, selected ?? undefined));
   };
   const addClass = (name: string) => {
-    const next = document.edit((current) => addLabelClass(current, name));
+    const next = edit((current) => addLabelClass(current, name));
 
-    publish(next);
     setClassId(next.present.classes.at(-1)!.id);
   };
   const chooseClass = (id: number) => {
@@ -86,8 +90,8 @@ export function useLabelDocument(props: FrameLabelEditorProps) {
     currentSet: document.current,
     remove,
     accept,
-    undo: () => publish(document.undo()),
-    redo: () => publish(document.redo()),
+    undo: () => update(document.undo),
+    redo: () => update(document.redo),
     canUndo: history.past.length > 0,
     canRedo: history.future.length > 0,
     renameClass: (name: string) => edit((current) => renameLabelClass(current, classId, name)),

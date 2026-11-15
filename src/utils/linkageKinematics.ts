@@ -32,6 +32,11 @@ export const toDegrees = (rad: number) => rad / DEG;
 
 export function closure(l: Links, theta: number): { b: Vec2; c: Vec2 } | null {
   const b: Vec2 = [l.crank * Math.cos(theta), l.crank * Math.sin(theta)];
+
+  return closeCrank(l, b);
+}
+
+export function closeCrank(l: Links, b: Vec2): { b: Vec2; c: Vec2 } | null {
   const vx = l.ground - b[0];
   const vy = -b[1];
   const e = Math.hypot(vx, vy);

@@ -1,5 +1,5 @@
 import { prepareNormalStep } from './linkageFitNormal';
-import { closure, couplerOffset, type FourBar, type Vec2 } from './linkageKinematics';
+import { closeCrank, couplerOffset, type FourBar, type Vec2 } from './linkageKinematics';
 
 export interface FitBounds {
   minLink: number;
@@ -65,11 +65,11 @@ export function encode(l: FitLinkage, direction: 1 | -1): Float64Array {
 const over = (v: number) => Math.max(0, v);
 
 function clampedClosure(l: FourBar, theta: number): { p: Vec2; miss: number } {
-  const exact = closure(l, theta);
+  const b: Vec2 = [l.crank * Math.cos(theta), l.crank * Math.sin(theta)];
+  const exact = closeCrank(l, b);
 
   if (exact) return { p: couplerOffset(exact.b, exact.c, l.point, l.coupler), miss: 0 };
 
-  const b: Vec2 = [l.crank * Math.cos(theta), l.crank * Math.sin(theta)];
   const e = Math.hypot(l.ground - b[0], b[1]);
   const miss = over(e - l.coupler - l.rocker) + over(Math.abs(l.coupler - l.rocker) - e);
   const phi = Math.atan2(-b[1], l.ground - b[0]);

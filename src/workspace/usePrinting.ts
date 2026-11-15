@@ -3,7 +3,8 @@ import { resolvePrinter, type MyPrinter, type PrinterSetup } from '../data/print
 import { turnedPrint, type Plate } from '../print/plan';
 import {
   markForReprint,
-  plateStatus,
+  plateStatusLookup,
+  type PlateStatusLookup,
   printRecordFor,
   readySteps,
   splitPrinted,
@@ -54,16 +55,16 @@ function cleanPrint(print: PartPrint): PartPrint | undefined {
 }
 
 interface MarkerContext {
-  records: PrintRecord[];
+  plateStatus: PlateStatusLookup;
   setRecords: (update: (prev: PrintRecord[]) => PrintRecord[]) => void;
   parts: ScenePart[];
   printer: PrinterSetup;
 }
 
 const plateMarker =
-  ({ records, setRecords, parts, printer }: MarkerContext) =>
+  ({ plateStatus, setRecords, parts, printer }: MarkerContext) =>
   (plate: Plate, state: PrintRecord['state']) => {
-    const existing = plateStatus(plate, records).record;
+    const existing = plateStatus(plate).record;
 
     if (existing) return setRecords((prev) => updateRecord(prev, existing.id, { state }));
 
@@ -123,6 +124,7 @@ export function usePrinting(options: PrintingOptions) {
     labels: fit.active ? '' : plates.key,
   });
   const records = project.prints ?? [];
+  const plateStatus = plateStatusLookup(records);
   const setRecords = (update: (prev: PrintRecord[]) => PrintRecord[]) =>
     setProject((p) => ({ ...p, prints: update(p.prints ?? []) }));
 
@@ -146,6 +148,7 @@ export function usePrinting(options: PrintingOptions) {
     parts,
     plates: shown?.plan.plates ?? [],
     records,
+    plateStatus,
     setRecords,
     job,
     recording: !fit.active,
@@ -153,7 +156,7 @@ export function usePrinting(options: PrintingOptions) {
     showToast,
   });
 
-  const markPlate = plateMarker({ records, setRecords, parts, printer });
+  const markPlate = plateMarker({ plateStatus, setRecords, parts, printer });
 
   return {
     ...printingMode,
@@ -169,6 +172,7 @@ export function usePrinting(options: PrintingOptions) {
     fleet: fit.active ? [] : fleet.fleet,
     nextFor: fleet.nextFor,
     records,
+    plateStatus,
     markForReprint: (id: string) => setRecords((prev) => markForReprint(prev, id)),
     fitTest: fit.parts && { parts: fit.parts },
     canFitTest: fit.available,

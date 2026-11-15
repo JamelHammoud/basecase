@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { JointValues, RobotJoint, RootOffset } from '../types/robotics';
-import { clampJoint, forwardKinematics, posedAxis, type PosedRig } from './kinematicsMotion';
+import { prepareIkJacobian } from './kinematicsJacobian';
+import { clampJoint, forwardKinematics, type PosedRig } from './kinematicsMotion';
 import { isMovable, type Rig, type V3 } from './kinematicsRig';
 
 export interface IkTarget {
@@ -39,6 +40,7 @@ interface IkProblem {
   stiff: number[];
   mu: number;
   opts: IkOptions;
+  jacobian?: ReturnType<typeof prepareIkJacobian>;
 }
 
 interface IkState {
@@ -51,7 +53,6 @@ interface IkState {
 
 type StepResult = 'improved' | 'converged' | 'worse';
 
-const DEG = Math.PI / 180;
 const MAX_STEP = 15;
 const TORSO = /waist|torso|spine|trunk|chest/i;
 
@@ -84,22 +85,6 @@ function costOf(pb: IkProblem, c: Residual[], v: JointValues): number {
   }, 0);
 
   return c.reduce((s, e, i) => s + (pb.targets[i].weight ?? 1) * e.r.lengthSq(), 0) + pb.mu * prefer;
-}
-
-function jacobianColumns(pb: IkProblem, state: IkState): THREE.Vector3[][] {
-  const axes = pb.vars.map((j) => posedAxis(pb.rig, state.posed, j));
-
-  return pb.targets.map((_, i) => {
-    const owner = pb.owners[i];
-
-    return pb.vars.map((j, a) => {
-      if (!owner || !pb.rig.chain.get(owner)?.has(j.id)) return new THREE.Vector3();
-
-      if (j.type === 'prismatic') return axes[a].axis.clone();
-
-      return axes[a].axis.clone().cross(state.cur[i].p.clone().sub(axes[a].origin)).multiplyScalar(DEG);
-    });
-  });
 }
 
 function normalEquations(pb: IkProblem, state: IkState, cols: THREE.Vector3[][]) {
@@ -184,7 +169,9 @@ function tryStep(pb: IkProblem, state: IkState, JtJ: Float64Array[], g: Float64A
 function iterate(pb: IkProblem, state: IkState, tol: number): boolean {
   if (Math.max(...state.cur.map((e) => e.r.length())) < tol) return false;
 
-  const { JtJ, g } = normalEquations(pb, state, jacobianColumns(pb, state));
+  pb.jacobian ??= prepareIkJacobian(pb.rig, pb.vars, pb.owners);
+
+  const { JtJ, g } = normalEquations(pb, state, pb.jacobian(state.posed, state.cur));
 
   for (let tries = 0; tries < 6; tries++) {
     const step = tryStep(pb, state, JtJ, g);

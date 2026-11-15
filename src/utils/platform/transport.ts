@@ -4,7 +4,7 @@ import { IS_WEB_DEMO } from './webDemo';
 
 const BRIDGE = '/api/bridge';
 
-export const electron = (): ElectronApi | undefined => window.electronAPI;
+export const electron = (): ElectronApi | undefined => (typeof window === 'undefined' ? undefined : window.electronAPI);
 
 const send = (path: string, init?: RequestInit): Promise<Response> =>
   IS_WEB_DEMO ? webRequest(path, init) : fetch(`${BRIDGE}${path}`, init);

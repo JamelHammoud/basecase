@@ -225,8 +225,16 @@ const hungriestNote = (draw: Draw) => (draw.hungriest ? ` ${jointAmps(draw.hungr
 
 const estimated = (draw: Draw) => (draw.hungriest ? '' : ' (estimate)');
 
+const runtimeMinutes = (source: PowerSource, draw: Draw) => ((0.8 * source.battery.capacityAh) / draw.avg) * 60;
+
+export function batteryRuntimeMinutes(ctx: CheckContext): number | undefined {
+  const source = servoSource(ctx);
+
+  return source && !source.tetherA ? runtimeMinutes(source, currentDraw(ctx, source)) : undefined;
+}
+
 function batteryDetail(source: PowerSource, draw: Draw): string {
-  const runtime = ((0.8 * source.battery.capacityAh) / draw.avg) * 60;
+  const runtime = runtimeMinutes(source, draw);
 
   return `${drawText(draw)} from the pack${estimated(draw)}; ${source.name} gives about ${duration(runtime * 60, 'min')}. Fuse the pack near ${Math.ceil(draw.peak * 1.4)} A.${hungriestNote(draw)}`;
 }

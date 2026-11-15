@@ -18,7 +18,8 @@ import { CaseSection, TrySection } from './simulate/CaseSections';
 import { ControlSection, useChooseController, type WalkTeaching } from './simulate/ControlSection';
 import { ResultsSection } from './simulate/ResultsSection';
 import type { CaseCompare } from '../workspace/useCaseCompare';
-import type { CaseExplore } from '../workspace/useCaseExplore';
+import type { Study } from '../workspace/useStudy';
+import { StudySection } from './simulate/StudySection';
 import { SimControls } from './simulate/SimControls';
 import { TrainSection, type CoachSend } from './simulate/TrainSection';
 import { coachMenuItems, rollOutMenuItems, stressMenuItems, type RollOutMenu } from './simulate/skillMenu';
@@ -41,7 +42,7 @@ interface SimulatePanelProps {
   onCoach: CoachSend | null;
   onRunCase: () => void;
   compare: CaseCompare;
-  explore: CaseExplore;
+  study: Study;
   sceneName: string;
   onToast: (message: string) => void;
   onPublishSkill: ((row: SkillRow) => void) | null;
@@ -139,7 +140,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
             check={props.caseCheck}
             onOpenCheck={props.onOpenCaseCheck}
             onRun={props.onRunCase}
-            explore={props.explore}
+            study={props.study}
           />
         )}
         {kase && (
@@ -149,6 +150,7 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
             cls={sim.drive.cls}
           />
         )}
+        <StudySection study={props.study} />
         <ControlSection {...control} choose={choose} showDrive={!kase} walk={walk} onToast={props.onToast} />
         <TrainSection
           skills={skills}
@@ -168,7 +170,6 @@ export const SimulatePanel: React.FC<SimulatePanelProps> = (props) => {
           parts={parts}
           world={sim.worldParts}
           compare={props.compare}
-          explore={{ rows: props.explore, sceneName: props.sceneName }}
           run={
             on && sim.stats && sim.model
               ? { stats: sim.stats, model: sim.model, rig, onSelectParts, onFault: sim.setFault }

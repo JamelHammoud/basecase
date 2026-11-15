@@ -1,3 +1,4 @@
+import { withValidStudy } from '../study/record';
 import { DEFAULT_PROJECT, type ProjectSettings, type ScenePart } from '../types/robotics';
 import { uniqueJointIds } from '../utils/kinematics';
 import { plural } from '../../electron/plural.mjs';
@@ -9,7 +10,7 @@ export const normalizeProject = (p: ProjectSettings): ProjectSettings => {
 };
 
 export const projectFromSeed = (project?: ProjectSettings): ProjectSettings =>
-  normalizeProject({ ...DEFAULT_PROJECT, ...project });
+  normalizeProject(withValidStudy({ ...DEFAULT_PROJECT, ...project }));
 
 export function copyName(name: string, taken: string[]): string {
   const stem = `${name.replace(/ copy( \d+)?$/i, '')} copy`;

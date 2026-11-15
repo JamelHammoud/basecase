@@ -40,6 +40,30 @@ function starter() {
 }
 
 describe('simulation starts superseded by world changes', () => {
+  it('notifies Stop subscribers and refuses a guarded startup after cancellation', async () => {
+    const { start, sw, postMessage } = starter();
+    const stopped = vi.fn();
+    const detach = start.subscribeStop(stopped);
+    const pending = start.startGuarded(() => true);
+
+    start.cancel();
+    await expect(pending).resolves.toBe(false);
+    expect(stopped).toHaveBeenCalledOnce();
+    expect(sw.load).not.toHaveBeenCalled();
+    expect(postMessage).not.toHaveBeenCalled();
+    detach();
+    start.cancel();
+    expect(stopped).toHaveBeenCalledOnce();
+  });
+
+  it('refuses an obsolete external guard without building or loading', async () => {
+    const { start, sw, buildModel } = starter();
+
+    await expect(start.startGuarded(() => false)).resolves.toBe(false);
+    expect(buildModel).not.toHaveBeenCalled();
+    expect(sw.load).not.toHaveBeenCalled();
+  });
+
   it('does not load a model whose build completed after Stop', async () => {
     const { start, sw, setModel } = starter();
     const pending = start.start();

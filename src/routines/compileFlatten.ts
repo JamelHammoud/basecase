@@ -99,7 +99,12 @@ class Flattener {
       case 'say':
         return this.say(step);
       case 'infer':
-        return { fact: this.fact(this.ctx.nodeOf(step)), model: step.model, input: step.input };
+        return {
+          fact: this.fact(this.ctx.nodeOf(step)),
+          model: step.model,
+          input: step.input,
+          ...(step.label ? { label: step.label } : {}),
+        };
       case 'ask':
         return {
           fact: this.fact(this.ctx.nodeOf(step)),
@@ -167,6 +172,7 @@ export function flatten(ctx: CompileContext, flow: FlowChecker): Plan {
   const watchers = routine.watchers.map((w) => ({
     id: w.id,
     model: w.model,
+    ...(w.label ? { label: w.label } : {}),
     rateHz: w.rateHz,
     maxAgeMs: w.maxAgeMs,
     fact: f.fact(w.id),

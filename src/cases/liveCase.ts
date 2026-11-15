@@ -1,3 +1,4 @@
+import type { VisionResult } from '../vision/types';
 import type { Controller, SimEngine } from '../sim/engine';
 import { torqueShare } from '../sim/torqueShare';
 import { NO_BODY, routineBody } from '../routines/physicsBody';
@@ -56,11 +57,15 @@ export class LiveCase {
   }
 
   get facts(): CaseFacts {
-    return this.latest;
+    return { ...this.latest, ...this.logic?.cameraFacts() };
   }
 
   get driving(): boolean {
     return this.logic?.driving ?? true;
+  }
+
+  acceptVision(result: VisionResult, ageMs = 0) {
+    this.logic?.acceptVision(result, ageMs);
   }
 
   input(name: string, value: CaseFacts[string]) {
@@ -73,7 +78,7 @@ export class LiveCase {
     while (this.owed >= STEP_S - 1e-9) {
       const read = this.reader.read(this.engine.poses(), this.t, torqueShare(this.engine));
 
-      sampleSignals(read, this.names, this.signals);
+      sampleSignals({ ...read, ...this.logic?.cameraFacts() }, this.names, this.signals);
       this.logic?.advance(this.t * 1000, read);
       this.latest = { ...this.latest, ...read };
       this.engine.step(STEP_S);

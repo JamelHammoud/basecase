@@ -1,3 +1,5 @@
+import type { VisionResult } from '../vision/types';
+import { RoutineVisionFacts } from './visionFacts';
 import type { MainModule } from '@mujoco/mujoco';
 import { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
@@ -41,6 +43,7 @@ export interface PhysicsRunInput {
   joints: RobotJoint[];
   kit: RoutineKit;
   engine?: SimEngine;
+  vision?: boolean;
 }
 
 const SAMPLE_EVERY_MS = 50;
@@ -85,6 +88,9 @@ export class PhysicsRun {
 
   private constructor(input: PhysicsRunInput, rig: ScenarioRig, body: RoutineBody) {
     this.rig = rig;
+
+    if (input.vision) rig.host.vision = new RoutineVisionFacts(input.plan);
+
     this.body = body;
     this.ownsEngine = !input.engine;
     this.engine = input.engine ?? new SimEngine(input.mj, input.model);
@@ -103,6 +109,10 @@ export class PhysicsRun {
     if (!body) throw new Error(NO_BODY);
 
     return new PhysicsRun(input, await startScenario(input.plan, input.scenario), body);
+  }
+
+  setVision(result: VisionResult, ageMs = 0) {
+    this.rig.host.vision?.accept(result, this.t - Math.max(0, ageMs));
   }
 
   private drive(skills: Skills) {

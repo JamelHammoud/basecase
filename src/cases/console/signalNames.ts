@@ -8,7 +8,18 @@ export const JOINT_FIELDS = ['target', 'position', 'effort'] as const;
 export const ROBOT_FIELDS = ['height', 'tilt', 'speed', 'travelled', 'x', 'z'] as const;
 export const INPUT_AXES = ['forward', 'left', 'turn', 'lift', 'grip'] as const;
 export const GOAL_FIELDS = ['passed', 'margin', 'failed'] as const;
-export const NAMESPACES = ['time', 'joint', 'robot', 'probe', 'input', 'goal', 'camera', 'gesture', 'topic'] as const;
+export const NAMESPACES = [
+  'time',
+  'joint',
+  'robot',
+  'probe',
+  'input',
+  'goal',
+  'camera',
+  'gesture',
+  'topic',
+  'vision',
+] as const;
 export const OPERATOR_INPUTS = ['camera', 'hand', 'face'];
 
 export type JointField = (typeof JOINT_FIELDS)[number];
@@ -60,6 +71,10 @@ const SHAPERS: Record<string, Shaper> = {
 
     return key ? 'camera' : 'must be camera.<name or *>';
   },
+  vision: ([camera, label, field]) =>
+    camera && label && (!field || ['score', 'x', 'y', 'width', 'height'].includes(field))
+      ? 'number'
+      : 'must be vision.<camera>.<class> with an optional box field',
   topic: ([name]) => (name ? 'topic' : TOPIC_REFUSAL),
 };
 

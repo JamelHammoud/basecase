@@ -3,9 +3,12 @@ import type { SimModel } from '../sim/mjcfTypes';
 import { sourcedMeshFiles } from '../three/componentMeshes';
 import { packParts } from '../three/packedMesh';
 import type { ScenePart } from '../types/robotics';
+import { errorMessage } from '../utils/errorMessage';
 import type { FeedEvent, FeedRequest } from './feedProtocol';
 import { LARGE_SIZE, TILE_SIZE } from './liveStage';
 import type { CameraView } from './views';
+import * as defaultVision from './visionSession';
+import type { CameraVision } from './scopedVision';
 
 export type Canvases = Map<string, HTMLCanvasElement>;
 
@@ -63,6 +66,14 @@ export class LiveFeed {
 
   private streamId = 0;
 
+  private stopped = false;
+
+  private readonly stopVision: () => void;
+
+  private disconnectVision: (() => void) | null = null;
+
+  private viewKeys: string[] = [];
+
   private sceneTicket = 0;
 
   private sent: {
@@ -76,10 +87,40 @@ export class LiveFeed {
     world: [],
   };
 
-  constructor(canvases: Canvases, onFrames: (frames: number) => void) {
+  constructor(
+    canvases: Canvases,
+    onFrames: (frames: number) => void,
+    vision: Pick<
+      CameraVision,
+      'connectVisionFrames' | 'onVisionAssignments' | 'visionAssignments' | 'setCameraVisionError'
+    > = defaultVision,
+  ) {
+    const { connectVisionFrames, onVisionAssignments, visionAssignments, setCameraVisionError } = vision;
     const receive = feedReceiver(canvases, this.streams, onFrames);
 
     this.worker.onmessage = ({ data }: MessageEvent<FeedEvent>) => receive(data);
+    this.stopVision = onVisionAssignments(() => this.post({ type: 'vision', assignments: visionAssignments() }));
+    void connectVisionFrames()
+      .then(({ port, disconnect }) => {
+        if (this.stopped) {
+          disconnect();
+          port.close();
+
+          return;
+        }
+
+        this.disconnectVision = disconnect;
+        this.post({ type: 'vision-port', port, timeOrigin: performance.timeOrigin }, [port]);
+        this.post({ type: 'vision', assignments: visionAssignments() });
+      })
+      .catch((error: unknown) => {
+        if (this.stopped) return;
+
+        this.disconnectVision?.();
+        this.disconnectVision = null;
+
+        for (const key of this.viewKeys) setCameraVisionError(key, errorMessage(error));
+      });
   }
 
   link(): MessagePort {
@@ -117,6 +158,8 @@ export class LiveFeed {
   }
 
   views(views: CameraView[], tiles: { enlarged: string | null } | null): void {
+    this.viewKeys = views.map((view) => view.key);
+
     const sizes = tiles
       ? Object.fromEntries(views.map((v) => [v.key, v.key === tiles.enlarged ? LARGE_SIZE : TILE_SIZE]))
       : {};
@@ -147,6 +190,10 @@ export class LiveFeed {
   }
 
   dispose(): void {
+    this.stopped = true;
+    this.stopVision();
+    this.disconnectVision?.();
+    this.disconnectVision = null;
     this.worker.terminate();
     this.streams.clear();
     this.ids.clear();

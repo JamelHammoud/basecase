@@ -15,7 +15,6 @@ export const TRY_CALLS = {
   'tries:update': (store, payload) => store.update({ manifest: payload?.manifest }),
   'tries:recording': (store, id) => store.recording(id),
   'tries:session': (store, id) => store.session(id),
-  'tries:keep-video': (store, payload) => store.saveVideo({ id: payload?.id, bytes: fromBase64(payload?.bytes) }),
   'tries:strip': (store, id) => store.strip(id),
   'tries:keep-strip': (store, payload) => store.saveStrip({ id: payload?.id, bytes: fromBase64(payload?.bytes) }),
   'tries:delete': (store, ids) => store.delete(ids),

@@ -19,6 +19,7 @@ export interface LiveMoment {
   goal: SignalSample['goal'];
   cameras: string[];
   gestures?: Record<string, number>;
+  vision?: Record<string, number>;
 }
 
 export const liveJoints = (model: SimModel, joints: ArrayLike<number>): SignalSample['joints'] =>
@@ -50,5 +51,6 @@ export function liveSample(m: LiveMoment): SignalSample {
     goal: m.goal,
     cameras: m.cameras,
     gestures: m.gestures,
+    vision: m.vision,
   };
 }

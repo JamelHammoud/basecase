@@ -84,4 +84,8 @@ If a step needs a part the robot doesn't have, a button above the flow adds one,
 
 A run lasts as long as the Routine's worst case: each step's time limit plus 3 seconds, up to 60 seconds.
 
-Perception models don't run in Basecase. In the simulation, senses give stand-in answers instead of looking at the scene, and **Ask** takes its first answer.
+**See Objects**, **See Person**, **Find Faces** and **Obstacle Ahead** read camera images when the Routine runs. Models download on first use and run locally. A failed download names the step that needs it.
+
+**Body Pose** reads the body landmarker already running through **Drive with Camera**. It needs that camera input open. **Ask** takes its first answer, and face recognition remains outside this camera runtime.
+
+**Obstacle Ahead** compares relative depth within the image. It doesn’t measure distance in meters. The CPU fallback can take seconds, and watchers ignore images older than their freshness limit.

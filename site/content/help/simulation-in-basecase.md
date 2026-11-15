@@ -81,6 +81,8 @@ A run doesn't change your parts. The canvas shows the simulated pose until you e
 - **Falls**, in the Build tab, tips a legged robot over from 12 directions to find the servos a fall would strip.
 - **The emulated robot** follows the simulation once it reaches Test.
 
+Cases and Routines can react to detections from this scene's simulated or live cameras. Recorded-video detections stay in playback and don't drive a live Routine. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
+
 ## Limits
 
 Parts of the same robot don't collide with each other in the simulation, so one leg can pass through another. The model also leaves out the STS3215's speed limit, current limits, supply sag and backlash.

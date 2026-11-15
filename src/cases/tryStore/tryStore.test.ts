@@ -4,7 +4,12 @@ import { storedTryOf, type StoredTry, type TrySummary } from '../tryFile';
 import type { TryRecord } from '../tries';
 import type { TryBackend } from './types';
 
-const backend = vi.hoisted(() => ({ failList: true, saved: [] as string[], stored: [] as StoredTry[] }));
+const backend = vi.hoisted(() => ({
+  failList: true,
+  saved: [] as string[],
+  stored: [] as StoredTry[],
+  videos: [] as Array<{ id: string; camera?: string; bytes: Uint8Array }>,
+}));
 
 vi.mock('./desktopTries', () => ({
   desktopTries: {
@@ -16,6 +21,9 @@ vi.mock('./desktopTries', () => ({
     save: async (stored) => {
       backend.saved.push(stored.id);
       backend.stored.push(stored);
+    },
+    saveVideos: async (videos) => {
+      backend.videos.push(...videos);
     },
     update: async (stored) => {
       if (!backend.saved.includes(stored.id)) return false;
@@ -112,5 +120,15 @@ describe('the search index’s view of the store', () => {
       { kept: ['try-moved'], deleted: [] },
       { kept: [], deleted: ['try-moved'] },
     ]);
+  });
+});
+
+describe('imported camera clips', () => {
+  it('saves every clip through the same store after keeping its manifest', async () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+
+    await keepTries([{ ...kept('try-camera'), videos: [{ camera: 'front', bytes }] }]);
+    expect(backend.saved).toContain('try-camera');
+    expect(backend.videos).toContainEqual({ id: 'try-camera', camera: 'front', bytes });
   });
 });

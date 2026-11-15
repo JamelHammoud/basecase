@@ -5,6 +5,7 @@ import { textWidth } from './labelFont';
 import { flatFaces, type FlatFace, type V3 } from './labelFaces';
 import { fitLabel, insideFace, labelBox, LABEL_MM, type LabelSpot } from './labelFit';
 import { labelPoint } from './labelGlyph';
+import { randomPoints } from './labelSamples';
 
 export interface LabelTarget {
   id: string;
@@ -22,7 +23,6 @@ export const CONTACT_MM = 1.5;
 const CANDIDATES = 16;
 const FACING_BED = 0.7;
 const DIRECTIONS = 96;
-const RANDOM_SAMPLES = 40;
 const EDGE_SAMPLES = 40;
 const LIFT_MM = 0.05;
 const MIN_BACKING_MM = LABEL_MM.depth + 0.8;
@@ -34,46 +34,6 @@ const SPHERE = Array.from({ length: DIRECTIONS }, (_, i) => {
 
   return new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r);
 });
-
-function seeded(seed: number) {
-  let s = seed >>> 0;
-
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-
-    return s / 4294967296;
-  };
-}
-
-function randomPoints(face: FlatFace): Array<[number, number]> {
-  const t = face.tris;
-  const areas: number[] = [];
-  let sum = 0;
-
-  for (let i = 0; i < t.length; i += 6) {
-    sum += Math.abs((t[i + 2] - t[i]) * (t[i + 5] - t[i + 1]) - (t[i + 4] - t[i]) * (t[i + 3] - t[i + 1])) / 2;
-    areas.push(sum);
-  }
-
-  const random = seeded(7);
-
-  return Array.from({ length: RANDOM_SAMPLES }, () => {
-    const target = random() * sum;
-    const i =
-      Math.max(
-        0,
-        areas.findIndex((a) => a >= target),
-      ) * 6;
-    let [u, v] = [random(), random()];
-
-    if (u + v > 1) [u, v] = [1 - u, 1 - v];
-
-    return [
-      t[i] + (t[i + 2] - t[i]) * u + (t[i + 4] - t[i]) * v,
-      t[i + 1] + (t[i + 3] - t[i + 1]) * u + (t[i + 5] - t[i + 1]) * v,
-    ];
-  });
-}
 
 function edgePoints(face: FlatFace): Array<[number, number]> {
   const count = face.edges.length / 4;
@@ -161,7 +121,7 @@ function clears(scene: Placed[], owner: Placed, pick: LabelPick, text: string): 
 
   const toWorld = (p: [number, number]) => new THREE.Vector3(...labelPoint(face, p, 0)).applyMatrix4(owner.matrix);
   const others = scene.filter((o) => o !== owner);
-  const samples = [...inLabel, ...randomPoints(face)].map(toWorld);
+  const samples = [...inLabel, ...randomPoints(face.tris)].map(toWorld);
   const surface = [...samples, ...edgePoints(face).map(toWorld)];
 
   if (touchesOther(others, surface)) return false;

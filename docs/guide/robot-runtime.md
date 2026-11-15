@@ -237,6 +237,8 @@ Stage 5b is judged by `s5b-daemon-app` (§0k); its tests in `verify/hw/` are the
 
 ### Calibration (Stage 6)
 
+The least-squares linear solver uses `utils/matrixScans.ts` to select pivots and accumulate back-substitution terms without copying matrix tails. It preserves the first row on equal pivot magnitudes, the arithmetic order and the `1e-300` singular threshold. `leastSquares.test.ts` checks a row-swapped dense system, unchanged inputs and singular refusal with no tail copies.
+
 `src/reality/` fits a servo's model from logs and feeds it to the sim. It's judged by `s6-hidden-twin` against a hidden twin (§0k). No real servo has been logged with it.
 
 - **Bench and logs:** a servo turning a pendulum (`benchInput`: the catalog servo and a 20 mm bob of the payload's mass at its arm), logged at 100 Hz with the servo's part id and variant, goal, position, load, volts, temperature and payload (`ServoLog` in `types.ts`).

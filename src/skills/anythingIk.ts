@@ -1,5 +1,6 @@
 import type { MainModule } from '@mujoco/mujoco';
 import type { SimEngine } from '../sim/engine';
+import { pivotRow, solvedTail } from '../utils/matrixScans';
 
 export interface IkJoint {
   qpos: number;
@@ -27,7 +28,7 @@ function solveLinear(a: number[][], b: number[]): number[] {
   const m = a.map((row, i) => [...row, b[i]]);
 
   for (let c = 0; c < n; c++) {
-    const pivot = m.slice(c).reduce((best, row, i) => (Math.abs(row[c]) > Math.abs(m[best][c]) ? c + i : best), c);
+    const pivot = pivotRow(m, c);
 
     [m[c], m[pivot]] = [m[pivot], m[c]];
 
@@ -41,7 +42,7 @@ function solveLinear(a: number[][], b: number[]): number[] {
   const x = new Array<number>(n).fill(0);
 
   for (let r = n - 1; r >= 0; r--) {
-    const s = m[r].slice(r + 1, n).reduce((acc, v, j) => acc + v * x[r + 1 + j], 0);
+    const s = solvedTail(m[r], x, r + 1);
 
     x[r] = (m[r][n] - s) / (m[r][r] || 1e-12);
   }

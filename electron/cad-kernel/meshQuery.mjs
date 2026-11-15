@@ -111,9 +111,10 @@ export class MeshQuery {
   }
 
   inside(point) {
-    const votes = PROBE_DIRECTIONS.filter((d) => this.crossings(point, d) % 2 === 1).length;
+    const first = this.crossings(point, PROBE_DIRECTIONS[0]) % 2 === 1;
+    const second = this.crossings(point, PROBE_DIRECTIONS[1]) % 2 === 1;
 
-    return votes >= 2;
+    return first === second ? first : this.crossings(point, PROBE_DIRECTIONS[2]) % 2 === 1;
   }
 
   closest(point) {

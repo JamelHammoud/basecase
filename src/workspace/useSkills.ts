@@ -36,8 +36,11 @@ import { trainHandoff, useRoutineSkills, type HandoffJob } from './useRoutineSki
 import { useSkillCoach } from './useSkillCoach';
 import { useSkillStress } from './useSkillStress';
 import { trainingProblem } from './trainingProblem';
+import { scriptedDrive } from '../routines/physicsDrive';
+import { KIT_SKILL_NAMES } from '../routines/physicsBody';
 
 const BUILD_DEBOUNCE_MS = 1500;
+const KIT_CONTEXT_NAMES = new Set<string>(Object.values(KIT_SKILL_NAMES));
 
 interface SkillsInput {
   workspaceId: string;
@@ -48,7 +51,7 @@ interface SkillsInput {
   parts: ScenePart[];
 }
 
-function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId' | 'setProject'>) {
+function useRuntime({ workspaceId, setProject, project, parts }: SkillsInput) {
   const [jobs, setJobs] = useState<SkillJob[]>([]);
   const [refusals, setRefusals] = useState<SkillRefusals>({});
   const [stress, setStress] = useState<StressReports>({});
@@ -67,6 +70,28 @@ function useRuntime({ workspaceId, setProject }: Pick<SkillsInput, 'workspaceId'
         onStress: (target, report) => setStress((r) => ({ ...r, [target]: report ?? undefined })),
       }),
   );
+
+  useLayoutEffect(() => {
+    runtime.setKitContext(async (model) => {
+      const rows = skillRows({
+        model,
+        design: designOf(model),
+        records: project.skills ?? [],
+        jobs: [],
+        animations: project.animations ?? [],
+      });
+      const own = await Promise.all(
+        rows
+          .filter((row) => row.state.kind === 'ready' && row.record && KIT_CONTEXT_NAMES.has(row.record.name))
+          .map((row) => platform.loadSkill(row.record!.hash)),
+      );
+
+      return {
+        skills: own.filter((skill) => skill !== null),
+        drive: scriptedDrive(model, project.joints ?? [], parts),
+      };
+    });
+  }, [runtime, platform, project, parts]);
 
   useEffect(() => () => runtime.dispose(), [runtime]);
 

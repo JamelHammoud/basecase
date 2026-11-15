@@ -14,7 +14,7 @@ export function usePoseScope({ posing, docs, panels }: PoseScopeOptions) {
   const skeleton = useSkeletonEdit(docs);
   const posable = onRobot || skeleton.editing || !!docs.project.skeleton;
 
-  usePanelSync({ ...panels, posable, hasRig: posing.hasRig });
+  usePanelSync({ ...panels, posable, hasRig: posing.hasRig || docs.parts.length > 0 });
 
   return { onRobot, skeleton, posable };
 }

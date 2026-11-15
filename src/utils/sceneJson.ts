@@ -2,38 +2,77 @@ import type { ScenePart } from '../types/robotics';
 import { timeSlicer } from './yieldToMain';
 import type { ProjectSettings } from '../types/robotics';
 import { sceneWorldAssets, worldAssetJson } from '../cases/worldAssets';
+import type { StudyRecord, StudyRow, StudyKnob } from '../study/types';
 
 const partJson = new WeakMap<ScenePart, string>();
+const studyBaseJson = new WeakMap<StudyRecord['base'], Promise<string>>();
+const studyRowJson = new WeakMap<StudyRow, string>();
+const studyKnobJson = new WeakMap<StudyKnob[], string>();
 
-function jsonOf(part: ScenePart): string {
-  const cached = partJson.get(part);
+function cachedJson<T extends object>(value: T, cache: WeakMap<T, string>): string {
+  const saved = cache.get(value);
 
-  if (cached !== undefined) return cached;
+  if (saved !== undefined) return saved;
 
-  const json = JSON.stringify(part);
+  const json = JSON.stringify(value);
 
-  partJson.set(part, json);
+  cache.set(value, json);
 
   return json;
 }
 
-export async function sceneJson(payload: { parts: ScenePart[] } & Record<string, unknown>): Promise<string> {
-  const { parts, ...rest } = payload;
+async function partsJson(parts: ScenePart[]): Promise<string> {
   const breathe = timeSlicer();
   const items: string[] = [];
 
   for (const part of parts) {
     await breathe();
-    items.push(jsonOf(part));
+    items.push(cachedJson(part, partJson));
   }
 
-  const assets = sceneWorldAssets(rest.project as ProjectSettings | undefined);
+  return `[${items.join(',')}]`;
+}
+
+function studyBaselineJson(base: StudyRecord['base']): Promise<string> {
+  const saved = studyBaseJson.get(base);
+
+  if (saved) return saved;
+
+  const pending = partsJson(base.parts).then((parts) => `{"parts":${parts},"project":${JSON.stringify(base.project)}}`);
+
+  studyBaseJson.set(base, pending);
+
+  return pending;
+}
+
+async function projectJson(project: ProjectSettings): Promise<string> {
+  const { study, ...settings } = project;
+
+  if (!study) return JSON.stringify(project);
+
+  const { base, knobs, rows, current, ...results } = study;
+  const baseline = await studyBaselineJson(base);
+  const details = JSON.stringify(results);
+  const head = JSON.stringify(settings);
+
+  const outcomes = rows.map((row) => cachedJson(row, studyRowJson)).join(',');
+  const studyJson = `${details.slice(0, -1)},"knobs":${cachedJson(knobs, studyKnobJson)},"current":${cachedJson(current, studyRowJson)},"rows":[${outcomes}],"base":${baseline}}`;
+  const fields = [head.slice(1, -1), `"study":${studyJson}`].filter(Boolean).join(',');
+
+  return `{${fields}}`;
+}
+
+export async function sceneJson(payload: { parts: ScenePart[] } & Record<string, unknown>): Promise<string> {
+  const { parts, project, ...rest } = payload;
+  const items = await partsJson(parts);
+  const settings = project ? `"project":${await projectJson(project as ProjectSettings)}` : '';
+  const assets = sceneWorldAssets(project as ProjectSettings | undefined);
   const assetEntries = Object.entries(assets).map(
     ([hash, asset]) => `${JSON.stringify(hash)}:${worldAssetJson(asset)}`,
   );
   const head = JSON.stringify(rest);
-  const separator = head === '{}' ? '' : ',';
+  const fields = [head.slice(1, -1), settings, `"parts":${items}`].filter(Boolean).join(',');
   const assetsJson = assetEntries.length ? `,"worldAssets":{${assetEntries.join(',')}}` : '';
 
-  return `${head.slice(0, -1)}${separator}"parts":[${items.join(',')}]${assetsJson}}`;
+  return `{${fields}${assetsJson}}`;
 }

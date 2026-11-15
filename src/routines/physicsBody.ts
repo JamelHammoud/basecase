@@ -57,7 +57,7 @@ function fits(model: SimModel, policy: PolicySpec): boolean {
 
 function policyNamed(model: SimModel, skills: readonly Skill[], names: string[]): PolicySpec | null {
   for (const name of names) {
-    const found = skills.find(
+    const found = skills.findLast(
       (s) => s.name === name && s.controller.kind === 'policy' && fits(model, s.controller.policy),
     );
 

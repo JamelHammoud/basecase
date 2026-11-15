@@ -27,7 +27,7 @@ hub_the_design_agent: |
   - For a Routine, it proves each switch between skills and names any that fell.
 ---
 
-Check that your robot can switch from one skill straight into another, such as from Walk into a Wave, without falling.
+Check that your robot can switch between skills, such as from Walk into a Wave, and meet the movement needed after the switch.
 
 A Routine switches between two skills only after that switch has run in the simulation. Until then, the Routine refuses the step after the switch.
 
@@ -37,7 +37,15 @@ A Routine switches between two skills only after that switch has run in the simu
 
 ![The Wave step after Walk, with Prove and Stop First](/help/prove-a-hand-off-between-skills/refused.png)
 
-Basecase runs the switch 8 times on your robot. Each try uses a slightly different start and begins at a different moment in the first skill. If none of the tries fall, the step turns ready and the Routine can run. If the second skill can't run on your robot, a message tells you so.
+Basecase runs the switch 8 times on your robot, with slightly different starts. Moving skills switch at sampled moments. For Kit switches from Settle, the robot settles for 1.5 seconds first. Kit turns get 8 tries in each direction. If the second skill can't run on your robot, a message tells you so.
+
+Each try must avoid falling. Kit switches also have to meet their movement requirement within 2 seconds:
+
+- Walk travels at least 0.08 m in the commanded direction.
+- Turn rotates at least 0.3 rad in the requested direction, with no more than 0.02 m of drift.
+- Settle travels no more than 0.02 m during the last 0.5 seconds.
+
+When every required switch passes, the Routine can run. A passing skill's Arena result doesn't prove a switch into it. A failed switch names the movement that failed on its step, even when the robot stayed upright. The other skills and switches keep their own results.
 
 ## When it falls
 
@@ -54,6 +62,6 @@ To avoid the switch instead, click **Stop First**. The robot settles before the 
 
 ## Limits
 
-A proof applies to the robot and the two skills as they are now. If you change a mass, size or joint, or retrain either skill, the switch becomes unproven again. **Train Hand-off** retrains only moves, not skills taught from a sentence, and it needs the desktop app. Only one skill can train at a time. If another skill is training, a message names it.
+A proof applies to the robot and the two controllers as they are now. Changing physics, a servo, the drive setup or either policy invalidates the affected proof. Retraining either skill also invalidates it. **Train Hand-off** retrains only moves, not skills taught from a sentence, and it needs the desktop app. Only one skill can train at a time. If another skill is training, a message names it.
 
 Case logic appears in the same Routines tab, so its steps get **Prove** too. When the agent builds a Routine or Case logic, it proves each switch itself and tells you about any that fell.

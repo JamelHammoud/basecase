@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RobotJoint } from '../src/types/robotics';
+import { component, sceneOf } from '../src/wiring/fixtures';
+import type { Net } from '../src/wiring/netlist';
+import { buildCheckPage, studioLoad } from './buildCheckFixtures';
 import { openApp, shown, type App } from './harness';
 
 interface BuildAlongStudio {
@@ -7,7 +10,13 @@ interface BuildAlongStudio {
   sceneRecord: () => { project: Record<string, unknown> };
   parts: () => Array<{ id: string; visible: boolean }>;
   shownParts: () => string[];
-  buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ joint: string; id: number }> }>;
+  buildAlongSteps: () => Array<{
+    shown: string[];
+    servos: Array<{ partId: string; joint: string; id: number }>;
+    routes: Net[];
+  }>;
+  buildAlongRoutes: () => Net[];
+  selection: () => string[];
   printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
   readySteps: () => boolean[];
 }
@@ -107,6 +116,68 @@ afterEach(async () => {
 });
 
 describe('Build Along', () => {
+  it('shows Cable reach and the incoming cable once when servo ID 3 is installed', async () => {
+    const names = ['Shoulder', 'Elbow', 'Wrist'];
+    const positions = [0, 75, 400];
+    const servos = positions.map((x, i) => ({
+      ...component(`xl${i + 1}`, 'dynamixel-xl330-m288'),
+      name: `${names[i]} servo`,
+      position: [x, 40, 0] as [number, number, number],
+    }));
+    const adapter = { ...component('adapter', 'robotis-u2d2'), position: [-60, 40, 0] as [number, number, number] };
+    const joints = names.map((name, i) =>
+      joint(`joint${i}`, name, {
+        parent: i ? [`xl${i}`] : ['adapter'],
+        child: [`xl${i + 1}`],
+        actuators: [`xl${i + 1}`],
+        range: [0, 0],
+      }),
+    );
+    const routes = () =>
+      app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.buildAlongRoutes());
+    const check = buildCheckPage(() => app.page);
+
+    await studioLoad(app.page, sceneOf([adapter, ...servos], joints));
+    await app.page.locator(shown('[role=tab]'), { hasText: 'Build' }).first().click();
+
+    const cableReach = check.checkRow('Cable reach');
+
+    await expect.poll(() => cableReach.getAttribute('data-status')).toBe('fail');
+    await check.expand(cableReach, 'Cable reach');
+    await expect.poll(() => cableReach.textContent()).toMatch(/180 mm cable/);
+    await cableReach.getByRole('button', { name: 'Wrist servo', exact: true }).click();
+    expect(
+      await app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.selection()),
+    ).toEqual(['xl3']);
+    await openBuildAlong();
+
+    const steps = await planSteps();
+    const target = steps.findIndex((step) => step.servos.some((servo) => servo.id === 3));
+    const incoming = (net: Net) => net.from.id === 'xl2' && net.to.id === 'xl3';
+
+    expect(target).toBeGreaterThanOrEqual(0);
+    expect(steps.flatMap((step) => step.routes).filter(incoming)).toHaveLength(1);
+
+    for (let index = 0; index < target; index++) await app.page.keyboard.press('ArrowRight');
+
+    await expect.poll(stepShown).toBe(String(target + 1));
+    await expect.poll(routes).toEqual(steps[target].routes);
+
+    const hop = (await routes()).find(incoming)!;
+
+    expect(hop.from.name).toBe('Elbow, ID 2');
+    expect(hop.to.name).toBe('Wrist, ID 3');
+    expect(hop.route).toMatchObject({ cableSupplyId: 'robot-cable-x3p', lengthMm: 180, status: 'fail' });
+    expect(hop.route!.requiredMm).toBeGreaterThan(300);
+    expect(hop.route!.points.length).toBeGreaterThan(1);
+    expect(await app.page.locator('[data-build-route]').allTextContents()).toContain(
+      'Elbow, ID 2 to Wrist, ID 3ROBOTIS Robot Cable-X3P180 mm',
+    );
+    await app.page.keyboard.press('Escape');
+    await expect.poll(routes).toEqual([]);
+    expect(app.errors).toEqual([]);
+  });
+
   it('filters the viewport by step, renders servo labels and restores the scene on exit', async () => {
     const before = await sceneParts();
 

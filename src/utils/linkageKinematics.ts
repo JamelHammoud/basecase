@@ -147,21 +147,42 @@ export function couplerCurve(l: PlacedFourBar, from: number, to: number, samples
   return out;
 }
 
-function segmentDistance(p: Vec2, a: Vec2, b: Vec2): number {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const len = dx * dx + dy * dy;
-  const t = len ? Math.min(1, Math.max(0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len)) : 0;
-
-  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+interface CurveSegment {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  lengthSquared: number;
 }
 
-export function distanceToCurve(p: Vec2, curve: Vec2[]): number {
-  if (curve.length === 1) return Math.hypot(p[0] - curve[0][0], p[1] - curve[0][1]);
+function segmentDistance(p: Vec2, { x, y, dx, dy, lengthSquared }: CurveSegment): number {
+  const t = lengthSquared ? Math.min(1, Math.max(0, ((p[0] - x) * dx + (p[1] - y) * dy) / lengthSquared)) : 0;
 
-  let best = Infinity;
+  return Math.hypot(p[0] - x - t * dx, p[1] - y - t * dy);
+}
 
-  for (let i = 1; i < curve.length; i++) best = Math.min(best, segmentDistance(p, curve[i - 1], curve[i]));
+export function curveDistance(curve: Vec2[]): (point: Vec2) => number {
+  if (curve.length === 1) {
+    const [x, y] = curve[0];
 
-  return best;
+    return (p) => Math.hypot(p[0] - x, p[1] - y);
+  }
+
+  const segments: CurveSegment[] = [];
+
+  for (let i = 1; i < curve.length; i++) {
+    const [x, y] = curve[i - 1];
+    const dx = curve[i][0] - x;
+    const dy = curve[i][1] - y;
+
+    segments.push({ x, y, dx, dy, lengthSquared: dx * dx + dy * dy });
+  }
+
+  return (p) => {
+    let best = Infinity;
+
+    for (const segment of segments) best = Math.min(best, segmentDistance(p, segment));
+
+    return best;
+  };
 }

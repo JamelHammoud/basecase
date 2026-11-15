@@ -60,12 +60,26 @@ export function polygonPixels(polygons: unknown, width: number, height: number):
 function fillPolygon(pixels: Uint8Array, ring: number[], width: number, height: number): void {
   if (ring.some((v) => Math.abs(v) > 1_000_000)) refuseImage();
 
-  for (let y = 0; y < height; y++) {
-    const intersections: number[] = [];
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  for (let i = 1; i < ring.length; i += 2) {
+    minY = Math.min(minY, ring[i]);
+    maxY = Math.max(maxY, ring[i]);
+  }
+
+  const end = Math.min(height, Math.ceil(maxY));
+  const intersections: number[] = [];
+
+  for (let y = Math.max(0, Math.floor(minY)); y < end; y++) {
+    intersections.length = 0;
 
     for (let i = 0; i < ring.length; i += 2) {
       const next = (i + 2) % ring.length;
-      const [ax, ay, bx, by] = [ring[i], ring[i + 1], ring[next], ring[next + 1]];
+      const ax = ring[i];
+      const ay = ring[i + 1];
+      const bx = ring[next];
+      const by = ring[next + 1];
 
       if (ay > y + 0.5 === by > y + 0.5) continue;
 

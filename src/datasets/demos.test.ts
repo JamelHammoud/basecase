@@ -9,7 +9,7 @@ import { fixtureRobots } from '../sim/fixtures/robots';
 import { obsSize } from '../sim/policy';
 import { trainingJob } from '../sim/trainingJob';
 import { buildRig } from '../utils/kinematics';
-import { canTrain, DEMO_CONTROL_DT, demoActionScale, demoEpisode } from './demos';
+import { canTrain, DEMO_CONTROL_DT, demoActionScale, demoEpisode, type DemoSpec } from './demos';
 import { DATASET_FPS, episodeData, robotJoints } from './episodes';
 import { usableTries } from './usableTries';
 
@@ -43,6 +43,19 @@ const tryRecord = (id: string, modelHash: string): TryRecord => ({
 });
 
 describe('demonstration rows from a try', () => {
+  it('refuses ranges with no next-action row after resampling', async () => {
+    const { recording, model } = await scriptedTry(1);
+    const short = { ...recording, frames: 2 };
+    const spec: DemoSpec = { defaultPose: model.robots[0].joints.map(() => 0), actionScale: 1, command: [0, 0, 0] };
+
+    expect(episodeData(short, model, '').frames).toEqual([0]);
+    expect(demoEpisode(short, model, spec).actions).toEqual([]);
+    expect(canTrain(short, model)).toBe(false);
+    expect(canTrain({ ...short, dt: 0.04 }, model)).toBe(true);
+    expect(canTrain({ ...short, frames: 3 }, model)).toBe(true);
+    expect(demoEpisode({ ...short, frames: 3 }, model, spec).actions).toHaveLength(1);
+  }, 30000);
+
   it('match episodeData: joint offsets and velocities in, the next row’s targets out', async () => {
     const { kase, recording, model } = await scriptedTry(1);
     const job = trainingJob(model, model.robots[0].key, { task: 'stand', minutes: 1, command: [0, 0, 0] }, 'demo');

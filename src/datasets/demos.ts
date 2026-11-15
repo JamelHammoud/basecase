@@ -1,7 +1,7 @@
 import type { SimModel } from '../sim/mjcfTypes';
 import { obsSize, observe, type ObsSource, type PolicySpec } from '../sim/policy';
 import type { Recording } from '../sim/recorder';
-import { canExport, DATASET_FPS, episodeData, robotJoints } from './episodes';
+import { canExport, DATASET_FPS, datasetStride, episodeData, robotJoints } from './episodes';
 
 export const DEMO_CONTROL_DT = 1 / DATASET_FPS;
 
@@ -22,7 +22,9 @@ const fixedBase = (recording: Recording, model: SimModel) =>
   !model.robots[0]?.floating && (!recording.root || recording.root[0] < 0);
 
 export const canTrain = (recording: Recording, model: SimModel): boolean =>
-  canExport(recording, model) && (differenced(recording, model) ? fixedBase(recording, model) : !!recording.root);
+  canExport(recording, model) &&
+  recording.frames > datasetStride(recording.dt) &&
+  (differenced(recording, model) ? fixedBase(recording, model) : !!recording.root);
 
 function obsSource(recording: Recording, model: SimModel): ObsSource {
   const index = robotJoints(model).map((j) => model.joints.indexOf(j));

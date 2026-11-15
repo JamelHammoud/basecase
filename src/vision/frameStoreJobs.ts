@@ -5,6 +5,7 @@ import {
   validateTrainingFrame,
   validateTrainingFrameHeader,
   validateFrameSetHeader,
+  validateFrameSplits,
   type FrameSet,
   type ImageClass,
   type TrainingFrame,
@@ -50,6 +51,11 @@ export const frameStoreJobs = {
 
     return reply(true);
   },
+  validateFrame: ({ frame, classes }: { frame: TrainingFrame; classes: ImageClass[] }) => {
+    validateTrainingFrame(frame, classes);
+
+    return reply(true);
+  },
 };
 
 function checkedFrameManifest(manifest: FrameSetManifest) {
@@ -70,4 +76,6 @@ function checkedFrameManifest(manifest: FrameSetManifest) {
 
     ids.add(frame.id);
   }
+
+  validateFrameSplits(manifest);
 }

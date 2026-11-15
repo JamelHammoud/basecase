@@ -77,6 +77,10 @@ An amber warning mark beside the segments flags any of these:
 
 Point at the mark to see when it happened.
 
+A try with any quality flag stays out of dataset exports and training. Saved dataset versions keep the flags and exclusion reasons from when they were frozen.
+
 ## Use your labels in a dataset
+
+If a saved version is selected, choose **Working Dataset** in **Dataset version** before editing a try. Saved versions keep their original labels and don't open tries for editing. Label changes take effect the next time you export, publish or train the working dataset.
 
 The agent can write an instruction for each try and each segment from its filmstrip. [Export Dataset](/help/export-a-lerobot-dataset) writes the segments as LeRobot subtasks and as GR00T annotations.

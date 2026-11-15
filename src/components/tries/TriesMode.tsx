@@ -88,6 +88,9 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, mode, timeli
   const showMenu = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (mode.dataset?.selectedVersion) return;
+
     setMenu({
       x: e.clientX,
       y: e.clientY,

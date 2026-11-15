@@ -117,6 +117,14 @@ async function refusal(files: Files, options?: FolderOptions) {
 }
 
 describe('reading LeRobot v2.x datasets', () => {
+  it('keeps explicit episode splits and leaves undeclared episodes unassigned', async () => {
+    const files = patchInfo(kochFiles(), (info) => (info.splits = { validation: '1:2' }));
+    const data = await read(folderOf(files).folder);
+
+    expect(data.episodes.map((e) => e.split)).toEqual([undefined, 'validation']);
+    expect(data.episodes[0]).not.toHaveProperty('split');
+  });
+
   it('reads a Koch-style v2.1 folder with object-form joint names', async () => {
     const data = await read(folderOf(kochFiles()).folder);
     const [first, second] = data.episodes;
@@ -170,6 +178,31 @@ describe('reading LeRobot v2.x datasets', () => {
 });
 
 describe('reading LeRobot v3.0 datasets', () => {
+  it('keeps range and episode-list splits, normalizing val to validation', async () => {
+    const files = patchInfo(v3Files(so101Spec()), (info) => {
+      info.splits = { train: '0:1', val: [1], test: [2] };
+    });
+    const data = await read(folderOf(files).folder);
+
+    expect(data.episodes.map((e) => e.split)).toEqual(['train', 'validation', 'test']);
+  });
+
+  it('leaves datasets without declared splits unassigned', async () => {
+    const files = patchInfo(v3Files(so101Spec()), (info) => delete info.splits);
+    const data = await read(folderOf(files).folder);
+
+    expect(data.episodes.every((e) => !Object.hasOwn(e, 'split'))).toBe(true);
+  });
+
+  it('joins repeated validation assignments and leaves unrelated split names alone', async () => {
+    const files = patchInfo(v3Files(so101Spec()), (info) => {
+      info.splits = { val: '0:2', validation: [0, 1, 1], test: '2:3', evaluation: '0:3' };
+    });
+    const data = await read(folderOf(files).folder);
+
+    expect(data.episodes.map((e) => e.split)).toEqual(['validation', 'validation', 'test']);
+  });
+
   it('splits one data file into its SO-101 episodes with each one’s span of the shared videos', async () => {
     const { folder, reads } = folderOf(v3Files(so101Spec()));
     const data = await read(folder);
@@ -219,6 +252,35 @@ describe('reading LeRobot v3.0 datasets', () => {
 });
 
 describe('refusing LeRobot datasets that can’t be trusted', () => {
+  it.each([
+    { train: '0:2', test: '1:3' },
+    { train: [0, 1], validation: [1, 2] },
+    { train: '1:0' },
+    { train: '0:Infinity' },
+    { train: '0:99999999999999999999' },
+    { test: [-1] },
+    { validation: [0.5] },
+    { train: [0, '1'] },
+    { train: new Array(IMPORT_LIMITS.episodes + 1).fill(0) },
+    null,
+    [],
+  ])('refuses malformed or conflicting split metadata before opening data', async (splits) => {
+    const files = patchInfo(v3Files(so101Spec()), (info) => (info.splits = splits));
+    const { folder, reads } = folderOf(files);
+
+    await expect(readLeRobot(folder)).rejects.toBeInstanceOf(DataImportError);
+    expect(reads.some((p) => p.startsWith('data/'))).toBe(false);
+  });
+
+  it('reads a large split range without expanding its indices', async () => {
+    const files = patchInfo(v3Files(so101Spec()), (info) => {
+      info.splits = { train: '0:9007199254740991' };
+    });
+    const data = await read(folderOf(files).folder);
+
+    expect(data.episodes.map((e) => e.split)).toEqual(['train', 'train', 'train']);
+  });
+
   it('refuses a parquet with NaN states', async () => {
     const s = spec({ names: KOCH, lengths: [5], cameras: [] });
 

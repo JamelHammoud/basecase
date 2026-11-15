@@ -3,13 +3,14 @@ import { filmImage } from '../cases/filmImage';
 import type { Case } from '../cases/schema';
 import type { Dataset } from '../datasets/datasetFile';
 import { canTrain } from '../datasets/demos';
-import { splitOf } from '../datasets/datasetSplit';
-import { usableTries } from '../datasets/usableTries';
+import { restoreSamples } from '../datasets/datasetSnapshot';
+import { sha256 } from '../cases/tries';
 import type { Simulation } from '../sim/useSimulation';
 import type { SkillsRuntime } from '../skills/skillsRuntime';
 import type { TriesOutcome } from '../skills/triesRun';
 import { TRIES_JOINT_NOISE_DEG, TRIES_RUNS, TRIES_TO_TRAIN, triesJob } from '../skills/triesTraining';
 import { IS_WEB_DEMO } from '../utils/platform/webDemo';
+import { errorMessage } from '../utils/errorMessage';
 import { caseVerdict, type CaseRobotInput, type CaseVerdict } from './caseChecks';
 import type { ShowToast } from './types';
 import { FITTING_TRIES } from './useDatasetExport';
@@ -71,26 +72,51 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
   const start = async (dataset: Dataset, kase: Case) => {
     const robot = await caseRobot();
     const model = await sim.buildModel();
-    const passed = records.of(dataset).filter((t) => t.passed);
-    const { usable, modelHash } = await usableTries(passed, model, { accepts: canTrain });
 
-    if (!robot || usable.length < TRIES_TO_TRAIN) {
+    if (!robot) {
+      setTraining(null);
+
+      return;
+    }
+
+    const version = await records.resolve(dataset, model, {
+      model,
+      kase,
+      robotName: model.robots[0]?.name ?? 'robot',
+      parts: robot.parts,
+      world: sim.worldParts,
+      guests: sim.guestParts,
+    });
+    const snapshot = version.snapshot!;
+    const usable = await restoreSamples(snapshot);
+
+    if (
+      snapshot.modelHash !== (await sha256(model.xml)) ||
+      usable.some(({ recording }) => !canTrain(recording, model))
+    ) {
+      throw new Error('These saved samples don’t fit this robot.');
+    }
+
+    if (usable.length < TRIES_TO_TRAIN) {
       setTraining(null);
       showToast(FITTING_TRIES, { tone: 'error' });
 
       return;
     }
 
-    await records.freeze(dataset, modelHash);
-
-    const byId = new Map(usable.map((u) => [u.record.id, u.recording]));
-    const ordered = splitOf([...byId.keys()], dataset.seed).order.map((id) => byId.get(id)!);
+    const order = { train: 0, validation: 1, test: 2 };
+    const ordered = usable.sort((a, b) => order[a.sample.split] - order[b.sample.split]);
     let verdict: CaseVerdict | null = null;
     const control = { jointNoiseDeg: TRIES_JOINT_NOISE_DEG };
     const refused = runtime.learnFromTries({
       model,
       kase,
-      job: triesJob(model, kase, ordered),
+      job: triesJob(
+        model,
+        kase,
+        ordered.map((entry) => entry.recording),
+        ordered.map((entry) => entry.sample.split),
+      ),
       judge: async (policy) => {
         verdict = await caseVerdict(robot, kase, TRIES_RUNS, { ...control, policy });
 
@@ -112,7 +138,10 @@ export function useTriesTraining(options: TriesTrainingOptions): TriesTraining {
 
       setTraining(dataset.id);
       setResult(null);
-      start(dataset, kase).catch(() => setTraining(null));
+      start(dataset, kase).catch((error: unknown) => {
+        setTraining(null);
+        showToast(errorMessage(error), { tone: 'error' });
+      });
     },
   };
 }

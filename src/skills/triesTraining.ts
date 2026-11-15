@@ -30,7 +30,25 @@ export const TRIES_JOINT_NOISE_DEG = 5;
 export const TRIES_MINUTES = 10;
 export const TRIES_STATE_NOISE = 1;
 
-export function triesJob(model: SimModel, kase: Case, recordings: Recording[]): ForgeJob {
+export type TriesSplit = 'train' | 'validation' | 'test';
+
+function trainingRecordings(recordings: Recording[], splits?: TriesSplit[]): Recording[] {
+  if (!splits) return recordings;
+
+  if (splits.length !== recordings.length) throw new Error('Assign a split to every recording.');
+
+  if (recordings.some((_, index) => !['train', 'validation', 'test'].includes(splits[index])))
+    throw new Error('Each recording split must be train, validation or test.');
+
+  if (!splits.includes('train')) throw new Error('Training needs a train recording.');
+
+  if (!splits.includes('validation')) throw new Error('Training needs a validation recording.');
+
+  return recordings.filter((_, index) => splits[index] === 'train');
+}
+
+export function triesJob(model: SimModel, kase: Case, recordings: Recording[], splits?: TriesSplit[]): ForgeJob {
+  const train = trainingRecordings(recordings, splits);
   const command = caseCommand(kase);
   const base = trainingJob(
     model,
@@ -38,9 +56,12 @@ export function triesJob(model: SimModel, kase: Case, recordings: Recording[]): 
     { task: 'stand', minutes: TRIES_MINUTES, command },
     kase.name,
   );
-  const actionScale = demoActionScale(recordings, model, base.defaultPose);
+  const actionScale = demoActionScale(train, model, base.defaultPose);
   const spec = { defaultPose: base.defaultPose, actionScale, command };
-  const episodes = recordings.map((r) => demoEpisode(r, model, spec));
+  const episodes = recordings.map((r, index) => ({
+    ...demoEpisode(r, model, spec),
+    ...(splits ? { split: splits[index] } : {}),
+  }));
 
   return {
     name: kase.name,

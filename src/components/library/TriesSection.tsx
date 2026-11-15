@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowseRow, SectionHeader } from '../../design-system';
 import type { TryHit } from '../../cases/trySearch/types';
+import { distinctTries } from '../../cases/trySearch/hitSelection';
 import type { TryGroup } from '../../workspace/useTriesView';
 import { plural } from '../../../electron/plural.mjs';
 
@@ -30,7 +31,7 @@ export const TriesSection: React.FC<{ groups: TryGroup[]; onOpen: (robot: string
 export const TryHitsSection: React.FC<{ hits: TryHit[]; onOpen: (hit: TryHit) => void }> = ({ hits, onOpen }) =>
   hits.length > 0 && (
     <TriesShell testId="library-try-hits">
-      {hits.slice(0, SHOWN_HITS).map((hit) => (
+      {distinctTries(hits).slice(0, SHOWN_HITS).map((hit) => (
         <BrowseRow key={hit.tryId} title={hit.label} meta={hit.robot} onOpen={() => onOpen(hit)} />
       ))}
     </TriesShell>

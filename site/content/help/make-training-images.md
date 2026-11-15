@@ -31,6 +31,8 @@ The dataset opens when rendering finishes. You can make up to 1,000 images per r
 
 The ZIP contains COCO and Ultralytics YOLO packages with train, validation and test splits. COCO includes boxes, masks and keypoints. YOLO text labels contain boxes. Both packages keep full labels and depth in their Basecase files.
 
+Exporting saves the image bytes, annotations and split assignments in a dataset version. Camera views from the same source run stay in one split. To export those saved images after editing the working dataset, choose the version in **Dataset version** before exporting.
+
 The Case supplies object pose variation, named points and declared color classes. The picker repeats seed 1. The same Case, camera settings and rendering environment reproduce the same image and label bytes.
 
 You can also open **Make Training Images** in a Case's **Results**. To publish a saved version, follow [Publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face).

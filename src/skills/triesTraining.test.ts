@@ -106,6 +106,29 @@ async function learn(passes: number) {
 }
 
 describe('training from tries', () => {
+  it('keeps frozen episode splits and derives action scale from training recordings', async () => {
+    const { kase, model, recording } = await scripted();
+    const wider = { ...recording, ctrl: recording.ctrl.map((value) => value * 100) };
+    const job = triesJob(model, kase, [recording, wider, recording], ['validation', 'test', 'train']);
+    const trainScale = triesJob(model, kase, [recording, recording]).job.actionScale;
+    const demos = job.job.demos as { episodes: Array<{ split?: string }> };
+
+    expect(demos.episodes.map((episode) => episode.split)).toEqual(['validation', 'test', 'train']);
+    expect(triesJob(model, kase, [wider, wider]).job.actionScale).toBeGreaterThan(Number(trainScale));
+    expect(job.job.actionScale).toBe(trainScale);
+    expect(triesJob(model, kase, [recording, recording]).job.demos).not.toHaveProperty('episodes.0.split');
+  }, 30000);
+
+  it('refuses incomplete, unknown and unusable split assignments', async () => {
+    const { kase, model, recording } = await scripted();
+    const recordings = [recording, recording];
+
+    expect(() => triesJob(model, kase, recordings, ['train'])).toThrow('every recording');
+    expect(() => triesJob(model, kase, recordings, ['train', 'test'])).toThrow('validation');
+    expect(() => triesJob(model, kase, recordings, ['validation', 'test'])).toThrow('train');
+    expect(() => triesJob(model, kase, recordings, JSON.parse('["train", "other"]'))).toThrow('split');
+  }, 30000);
+
   it('sends Forge a behaviour cloning job with one demonstration per try', async () => {
     const { job, model } = await learn(32);
     const demos = job.job.demos as { episodes: Array<{ obs: number[][]; actions: number[][] }> };

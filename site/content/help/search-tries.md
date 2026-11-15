@@ -41,9 +41,11 @@ You can search the tries in all your scenes at once: by words, by details such a
 
 After you open a try, click **Close** or press [[Esc]] to go back to the results. You can also search from the field at the top of Tries.
 
-Tries shows the best 200 matches, and the Library shows the first 20.
+Search keeps the best 200 matches, which can include several segments of one try. Tries shows each matching try once, and the Library shows up to 20 distinct tries.
 
 Your words must all match a try's Case, task, robot, source, input, tags, segment labels or instructions, or the file or repo an [imported try](/help/import-robot-data-as-tries) came from. Some words narrow the list instead. Passed, failed and unjudged pick an outcome. A source or input such as real or leader-arm, or a robot's name, picks where a try came from. Dates such as today or last week, lengths such as over 30 s, and faulted narrow it further.
+
+Words matching a segment's label, instruction or tags keep that segment's frame range. All words must fit the same segment together with the try's details. A dataset made from those results includes only the matching ranges. For example, a grasp segment match leaves out the reach and release frames. Whole-try matches keep the full recording. See [Make a dataset from tries](/help/make-a-dataset-from-tries).
 
 More Like This compares the path of the part that moves farthest and the speeds of the joints. It skips robots of another kind or with a different number of joints, so an arm's grasp won't match a hexapod's walk.
 

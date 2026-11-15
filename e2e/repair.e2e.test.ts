@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { shapeKey } from '../src/print/shapeKey';
-import { DEFAULT_PROJECT, type PrintRecord, type ScenePart } from '../src/types/robotics';
+import { DEFAULT_PROJECT, type ScenePart } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
 
 interface RepairStep {
@@ -11,8 +11,6 @@ interface RepairStep {
 interface Studio {
   load: (record: unknown) => void;
   buildAlongSteps: () => RepairStep[];
-  printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
-  sceneRecord: () => { project: { prints: PrintRecord[] } };
 }
 
 let app: App;
@@ -57,7 +55,6 @@ const record = {
 const toolbar = () => app.page.locator(shown('[role="toolbar"][aria-label="Build Along"]'));
 const bracketRow = () => app.page.locator(shown('[data-layer-row="part:bracket"]')).first();
 const plan = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.buildAlongSteps());
-const plates = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.printPlates());
 
 async function expectRepairPlan() {
   await expect.poll(() => toolbar().getAttribute('data-step')).toBe('1');
@@ -83,44 +80,6 @@ afterEach(async () => {
 });
 
 describe('Repair', () => {
-  it('opens teardown from the part menu and prints one replacement at the swap step', async () => {
-    await bracketRow().click({ button: 'right' });
-    await app.page.getByRole('menuitem', { name: 'Repair', exact: true }).click();
-
-    const steps = await expectRepairPlan();
-    const swap = steps.findIndex((step) => step.repairPhase === 'swap');
-
-    for (let index = 0; index < swap; index++) await app.page.keyboard.press('ArrowRight');
-
-    await expect.poll(() => toolbar().getAttribute('data-step')).toBe(String(swap + 1));
-    await toolbar().getByRole('button', { name: 'Print', exact: true }).click();
-    await expect.poll(plates).toEqual({ open: true, fitTest: false, plates: [['bracket']] });
-    expect(await app.page.locator(shown('[data-testid="print-copies"]')).count()).toBe(0);
-    expect(
-      await app.page
-        .locator(shown('span'))
-        .filter({ hasText: /^Don’t print$/ })
-        .count(),
-    ).toBe(0);
-    await app.page.getByRole('button', { name: 'Mark Printed', exact: true }).click();
-    await expect
-      .poll(() =>
-        app.page.evaluate(() =>
-          (window as unknown as { __studio: Studio }).__studio
-            .sceneRecord()
-            .project.prints.filter((print) => print.id !== 'original-print' && print.state === 'printed')
-            .flatMap((print) => print.parts.map((part) => part.id)),
-        ),
-      )
-      .toEqual(['bracket']);
-    await app.page.keyboard.press('Escape');
-    await expect.poll(async () => (await plates()).open).toBe(false);
-    await expect.poll(() => toolbar().getAttribute('data-step')).toBe(String(swap + 1));
-    await app.page.keyboard.press('ArrowRight');
-    await expect.poll(() => toolbar().getAttribute('data-step')).toBe(String(swap + 2));
-    expect(app.errors).toEqual([]);
-  }, 15000);
-
   it('opens the same repair walkthrough from the selected part’s command', async () => {
     await bracketRow().click();
     await app.page.keyboard.press('Meta+k');

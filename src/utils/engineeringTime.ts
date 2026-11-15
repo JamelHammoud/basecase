@@ -3,6 +3,7 @@ import { isFastener, isInsert } from '../guide/guideItems';
 import { isBuilt } from '../guide/guidePlan';
 import { guideStepParts } from '../guide/guideSteps';
 import type { SlicedPlate } from '../print/printBridge';
+import { sliceLookup } from '../print/slices';
 import { servoLayout } from '../robot/sceneRobot';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
 import type { CheckRow } from './engineeringTypes';
@@ -44,10 +45,9 @@ export function assemblyTimes(parts: ScenePart[], project: ProjectSettings, step
 export function buildTime(input: TimeInput) {
   const { parts, project, print, slices = [] } = input;
   const printers = Math.max(1, Math.floor(input.printerCount ?? 1));
+  const slicedPlate = sliceLookup(slices, (s) => Number.isFinite(s.seconds) && s.seconds >= 0);
   const plates = (print?.plan.plates ?? []).map((plate) => {
-    const sliced = slices.find(
-      (s) => s.hash === plate.hash && s.number === plate.number && Number.isFinite(s.seconds) && s.seconds >= 0,
-    );
+    const sliced = slicedPlate(plate);
 
     return {
       number: plate.number,

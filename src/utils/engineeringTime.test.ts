@@ -80,6 +80,27 @@ describe('build time budget', () => {
     expect(buildTime({ ...input(), print, slices: [{ ...slices[0], hash: 'stale' }] })).toEqual(estimate);
   });
 
+  it('keeps the first valid duration for duplicate slices and reads revised results afresh', () => {
+    const print = report();
+    const plate = print.plan.plates[0];
+    const base = { ...input(), print };
+    const matching = { number: plate.number, hash: plate.hash };
+    const slices = [NaN, Infinity, -1, 0, 3600].map((seconds) => ({ ...matching, seconds }));
+    const zero = buildTime({ ...base, slices: [{ ...matching, seconds: 0 }] });
+
+    expect(buildTime({ ...base, slices })).toEqual(zero);
+
+    slices[3] = { ...matching, seconds: 1800 };
+
+    const revised = buildTime({ ...base, slices });
+
+    expect(revised.printHours).toBeCloseTo(zero.printHours + 0.5);
+    expect(revised.hours).toBeCloseTo(zero.hours + 0.5);
+    expect(revised.assemblyMinutes).toBe(zero.assemblyMinutes);
+    expect(revised.setupMinutes).toBe(zero.setupMinutes);
+    expect(buildTime({ ...base, slices: slices.slice(0, 3) })).toEqual(buildTime(base));
+  });
+
   it('adds assembly minutes for fasteners and inserts', () => {
     const base = rover.parts[0];
     const fastener = (id: string, type: 'socket_head' | 'heat_insert'): ScenePart => ({

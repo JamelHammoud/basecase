@@ -81,11 +81,9 @@ export default function sceneStudio(studio: Studio) {
       return found && { position: found.position, rotation: found.rotation };
     },
     dropFiles: (files: DroppedFile[]) =>
-      studio().routeFiles(files.map((f) => new File([new Uint8Array(base64ToBytes(f.base64))], f.name))),
+      studio().routeFiles(files.map((f) => new File([base64ToBytes(f.base64)], f.name))),
     pickFiles: (files: DroppedFile[]) =>
-      pickNextFiles(
-        files.map(({ name, base64 }) => new File([Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))], name)),
-      ),
+      pickNextFiles(files.map(({ name, base64 }) => new File([base64ToBytes(base64)], name))),
     lastDownload: () => lastDownloadFile(),
   };
 }

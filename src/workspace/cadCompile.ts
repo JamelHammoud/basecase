@@ -2,7 +2,8 @@ import { add, r3, rotate, sub, type V3 } from '../agent/agentFrame';
 import { cadMeshToScene, mirroredPorts } from '../agent/cadMesh';
 import type { ScenePart } from '../types/robotics';
 import type { CadLanguage, RenderedCad } from '../utils/platform/types';
-import type { DocState, Snapshot } from './types';
+import { patchEveryState } from './docHistory';
+import type { DocState } from './types';
 
 type PartCad = NonNullable<ScenePart['cad']>;
 
@@ -74,13 +75,6 @@ export function pendingCompiles(parts: ScenePart[], skip: ReadonlySet<string>, l
 export function compiledDoc(d: DocState, key: string, rendered: CompiledCad): DocState {
   const patch = (ps: ScenePart[]) =>
     ps.some((p) => isPendingWith(p, key)) ? ps.map((p) => (isPendingWith(p, key) ? compiledPart(p, rendered) : p)) : ps;
-  const snap = (sn: Snapshot) => ({ ...sn, parts: patch(sn.parts) });
 
-  return {
-    ...d,
-    parts: patch(d.parts),
-    past: d.past.map(snap),
-    future: d.future.map(snap),
-    base: d.base ? patch(d.base) : d.base,
-  };
+  return patchEveryState(d, patch);
 }

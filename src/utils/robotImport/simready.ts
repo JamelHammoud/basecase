@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { displayRgb, type Model, type ModelJoint, type ModelLink, type Visual } from './model';
 import type { Resolver } from './sources';
+import { base64ToBytes } from '../base64';
 
 export interface ConvertedVisual {
   mesh: string;
@@ -108,19 +109,10 @@ export function parseConverted(m: ConvertedModel): Model {
   };
 }
 
-function bytesOf(base64: string): ArrayBuffer {
-  const bin = atob(base64);
-  const out = new Uint8Array(bin.length);
-
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-
-  return out.buffer;
-}
-
 export type ConvertedFiles = Record<string, string | Uint8Array>;
 
 function bufferOf(file: string | Uint8Array): ArrayBuffer {
-  if (typeof file === 'string') return bytesOf(file);
+  if (typeof file === 'string') return base64ToBytes(file).buffer;
 
   return file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength) as ArrayBuffer;
 }

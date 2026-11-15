@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { ScenePart } from '../types/robotics';
 import { platformBridge } from '../utils/platformBridge';
+import { base64ToBytes } from '../utils/base64';
 
 export interface VisualPiece {
   geometry: THREE.BufferGeometry;
@@ -24,7 +25,7 @@ const toBuffer = (file: string | Uint8Array): ArrayBuffer => {
   if (typeof file !== 'string')
     return file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength) as ArrayBuffer;
 
-  return Uint8Array.from(atob(file), (c) => c.charCodeAt(0)).buffer;
+  return base64ToBytes(file).buffer;
 };
 
 async function visualBytes(key: string, url: string): Promise<ArrayBuffer | null> {

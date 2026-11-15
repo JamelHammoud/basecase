@@ -20,7 +20,7 @@ export const DetectionOverlay: React.FC<{ camera: string; mirrorText?: boolean }
       {error && (
         <span
           role="status"
-          className={`pointer-events-none absolute left-1.5 right-1.5 bottom-1.5 rounded-md bg-black/80 px-1.5 text-[12px] leading-6 text-white ${mirrorText ? '-scale-x-100' : ''}`}
+          className={`pointer-events-none absolute left-1.5 right-1.5 bottom-1.5 rounded-md bg-black/80 px-1.5 text-[12px] leading-6 text-red-400 ${mirrorText ? '-scale-x-100' : ''}`}
         >
           {error}
         </span>

@@ -26,7 +26,7 @@ export const DetectionBoxes: React.FC<{ result: VisionResult | null; mirrorText?
         }}
       >
         <span
-          className={`absolute left-0 top-0 max-w-full truncate rounded-br bg-black/80 px-1.5 text-[12px] leading-6 text-white ${mirrorText ? '-scale-x-100' : ''}`}
+          className={`absolute left-0 top-0 max-w-full truncate rounded-br bg-black/80 px-1.5 text-[12px] leading-6 text-white/90 ${mirrorText ? '-scale-x-100' : ''}`}
         >
           {detection.label} {Math.round(detection.score * 100)}%
         </span>

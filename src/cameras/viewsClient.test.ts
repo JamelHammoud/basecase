@@ -9,6 +9,7 @@ const stage = vi.hoisted(() => ({
   infer: vi.fn(),
   connect: vi.fn(),
   close: vi.fn(),
+  ensure: vi.fn(async () => undefined),
   port: { close: vi.fn() },
 }));
 
@@ -21,7 +22,7 @@ vi.mock('./visionFrames', () => ({ visionBitmapCopier: () => vi.fn() }));
 vi.mock('./shotVision', () => ({ createShotVision: () => stage }));
 vi.mock('./visionSession', () => ({
   connectVisionFrames: async () => stage.port,
-  ensureVisionCamera: async () => undefined,
+  ensureVisionCamera: stage.ensure,
   visionAssignments: () => [{ camera: 'scene', modelId: 'objects', fps: 5 }],
 }));
 vi.mock('../three/componentMeshes', () => ({ sourcedMeshFiles: async () => ({}) }));
@@ -84,6 +85,18 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('shared camera capture worker', () => {
+  it('captures training labels without downloading or connecting an inference model', async () => {
+    const feed = cameraFeed();
+
+    await feed.load({ parts: [], world: [], model: null, views: [] });
+    expect(await feed.training(request)).toEqual(labelled);
+    expect(stage.ensure).not.toHaveBeenCalled();
+    expect(stage.connect).not.toHaveBeenCalled();
+    expect(stage.infer).not.toHaveBeenCalled();
+    feed.dispose();
+    await Promise.resolve();
+  });
+
   it('returns inferred shots and labelled training frames through the same client and releases vision', async () => {
     const feed = cameraFeed();
 

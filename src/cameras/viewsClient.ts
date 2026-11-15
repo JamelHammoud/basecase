@@ -53,8 +53,16 @@ export function cameraFeed(): CameraFeed {
     load: async (job) => {
       const all = [...job.parts, ...job.world];
 
+      await client.call('load', {
+        ...job,
+        parts: packParts(job.parts),
+        world: packParts(job.world),
+        meshes: await sourcedMeshFiles(all),
+      });
+    },
+    frame: async (request) => {
       if (typeof Worker !== 'undefined' && !connected) {
-        await Promise.all(job.views.map((view) => ensureVisionCamera(view.key).catch(() => undefined)));
+        await Promise.all(request.keys.map((key) => ensureVisionCamera(key).catch(() => undefined)));
 
         const port = await connectVisionFrames();
 
@@ -64,14 +72,8 @@ export function cameraFeed(): CameraFeed {
         connected = true;
       }
 
-      await client.call('load', {
-        ...job,
-        parts: packParts(job.parts),
-        world: packParts(job.world),
-        meshes: await sourcedMeshFiles(all),
-      });
+      return client.call('frame', request, request.poses ? [request.poses.buffer] : []);
     },
-    frame: (request) => client.call('frame', request, request.poses ? [request.poses.buffer] : []),
     training: (request) => client.call('training', request, request.poses ? [request.poses.buffer] : []),
     dispose: () => {
       void client.call('close', null).then(

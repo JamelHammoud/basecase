@@ -17,7 +17,7 @@ export interface RecordedSeek {
 interface FramePumpOptions<T> {
   decode: (seconds: number) => Promise<T | null>;
   emit: (frame: T, seek: RecordedSeek) => void;
-  fail: (error: unknown) => void;
+  fail: (error: unknown, seek: RecordedSeek) => void;
   fps: number;
 }
 
@@ -50,7 +50,7 @@ export function createRecordedFramePump<T extends { close: () => void }>(options
       if (frame && (closed || latest !== seek)) frame.close();
       else if (frame) options.emit(frame, seek);
     } catch (error) {
-      if (!closed) options.fail(error);
+      if (!closed && latest === seek) options.fail(error, seek);
     } finally {
       if (latest === seek) latest = null;
 

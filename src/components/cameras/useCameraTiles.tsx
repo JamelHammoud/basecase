@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { enlargeCameraView, useCameraViewsState } from '../../cameras/cameraViewsStore';
 import { useCameraFeed } from '../../cameras/useCameraFeed';
-import { cameraViews, findView, stripParts, type CameraView } from '../../cameras/views';
+import { cameraViews, stripParts, type CameraView } from '../../cameras/views';
 import { cameraStream, type CameraStream } from '../../cameras/cameraStream';
 import { recordedCanvasRef, streamRecordedCamera, useRecordedCameraViews } from '../../cameras/recordedCameras';
 import { ContextMenu, type ContextMenuEntry } from '../../design-system';
@@ -80,12 +80,16 @@ export function useCameraTiles(input: CameraTilesInput): CameraTiles {
       },
     }),
     menu: menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />,
-    stream: (camera, ask, onFrame) => {
-      const view = findView(recorded, camera);
-
-      if (view) return streamRecordedCamera(view.key, ask, onFrame);
-
-      return cameraStream({ views: simulated, feed: feed.stream })(camera, ask, onFrame);
-    },
+    stream: cameraStream({
+      views,
+      feed: (stream) =>
+        recordedKeys.has(stream.key)
+          ? streamRecordedCamera(
+              stream.key,
+              { width: stream.size[0], height: stream.size[1], fps: stream.fps },
+              stream.onFrame,
+            )
+          : feed.stream(stream),
+    }),
   };
 }

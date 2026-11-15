@@ -88,4 +88,14 @@ describe('vision worker errors', () => {
     expect(session.cameraVisionError('camera-shot:request:wrist')).toBeNull();
     expect(session.cameraVisionError('routine-l2:request:wrist')).toBeNull();
   });
+
+  it('preserves a recorded seek boundary when a decode failure arrives late', async () => {
+    const session = await import('./visionSession');
+
+    session.invalidateVisionCamera('wrist', 100);
+    session.setCameraVisionError('wrist', 'Decode failed.', 100);
+    session.publishCameraVision(seen(100));
+    expect(session.cameraVision('wrist')?.timestamp).toBe(100);
+    expect(session.cameraVisionError('wrist')).toBeNull();
+  });
 });

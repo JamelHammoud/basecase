@@ -155,9 +155,9 @@ export function registerVisionCameras(owner: object, cameras: string[]) {
 
 export const availableVisionCameras = () => [...new Set([...cameraSources.values()].flat())];
 
-export function setCameraVisionError(camera: string, message: string) {
+export function setCameraVisionError(camera: string, message: string, timestamp?: number) {
   errors.set(camera, message);
-  invalidateVisionCamera(camera);
+  invalidateVisionCamera(camera, timestamp);
 }
 
 export const cameraVisionError = (camera: string) => errors.get(camera) ?? null;

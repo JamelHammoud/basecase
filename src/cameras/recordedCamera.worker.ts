@@ -25,7 +25,8 @@ let opened: StoredTry | null = null;
 let closed = false;
 
 const post = (event: RecordedCameraEvent, transfer: Transferable[] = []) => scope.postMessage(event, transfer);
-const fail = (camera: string, error: unknown) => post({ type: 'error', camera, message: errorMessage(error) });
+const fail = (camera: string, error: unknown, timestamp?: number) =>
+  post({ type: 'error', camera, message: errorMessage(error), timestamp });
 const vision = visionFrameSender(async () => {
   throw new Error('The camera frame is missing.');
 });
@@ -144,8 +145,8 @@ async function openVideo(stored: StoredTry, video: TryVideo) {
         return time === null ? null : sink.getSample(time);
       },
       emit: (sample, seek) =>
-        void emit(video.camera, sample, seek).catch((error: unknown) => fail(video.camera, error)),
-      fail: (error) => fail(video.camera, error),
+        void emit(video.camera, sample, seek).catch((error: unknown) => fail(video.camera, error, seek.timestamp)),
+      fail: (error, seek) => fail(video.camera, error, seek.timestamp),
     });
 
     decoders.set(video.camera, { input, pump });

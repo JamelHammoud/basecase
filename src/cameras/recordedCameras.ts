@@ -47,6 +47,8 @@ function show(camera: string, bitmap: ImageBitmap) {
 function receive(event: RecordedCameraEvent) {
   if (event.type !== 'error' && event.timestamp < minimum) return event.bitmap.close();
 
+  if (event.type === 'error' && event.timestamp !== undefined && event.timestamp < minimum) return;
+
   if (event.type === 'stream') {
     const stream = streams.get(event.id);
 
@@ -55,7 +57,7 @@ function receive(event: RecordedCameraEvent) {
 
   if (event.type === 'error') {
     errors.set(event.camera, event.message);
-    setCameraVisionError(event.camera, event.message);
+    setCameraVisionError(event.camera, event.message, event.timestamp);
     changed();
 
     return;

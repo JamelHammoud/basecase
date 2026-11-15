@@ -61,4 +61,31 @@ describe('recorded camera frames', () => {
     expect(frame.close).toHaveBeenCalledOnce();
     expect(emit).not.toHaveBeenCalled();
   });
+
+  it('ignores a decode failure from an older seek and identifies a current failure', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+
+    let reject: (error: Error) => void = (error) => {
+      throw error;
+    };
+    const error = new Error('Decode failed');
+    const fail = vi.fn();
+    const pump = createRecordedFramePump({
+      decode: () => new Promise<{ close: () => void }>((_resolve, refuse) => (reject = refuse)),
+      emit: vi.fn(),
+      fps: 10,
+      fail,
+    });
+
+    pump.seek(1, 100);
+    await vi.advanceTimersByTimeAsync(0);
+    pump.seek(2, 101);
+    reject(error);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(fail).not.toHaveBeenCalled();
+    reject(error);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fail).toHaveBeenCalledExactlyOnceWith(error, { seconds: 2, timestamp: 101 });
+    pump.close();
+  });
 });

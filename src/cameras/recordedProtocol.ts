@@ -14,7 +14,7 @@ export type RecordedCameraRequest =
 export type RecordedCameraEvent =
   | { type: 'frame'; camera: string; bitmap: ImageBitmap; timestamp: number }
   | { type: 'stream'; id: number; bitmap: ImageBitmap; timestamp: number }
-  | { type: 'error'; camera: string; message: string };
+  | { type: 'error'; camera: string; message: string; timestamp?: number };
 
 export const recordedVideoUrl = (id: string, camera: string) =>
   `/api/tries/video/${encodeURIComponent(id)}/${encodeURIComponent(camera)}`;

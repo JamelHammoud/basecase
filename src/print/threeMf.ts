@@ -9,6 +9,7 @@ export interface ThreeMfObject {
   id: number;
   name: string;
   mesh: MeshData;
+  filament?: number;
 }
 
 export interface ThreeMfItem {
@@ -24,6 +25,7 @@ export interface ThreeMfInput {
   layout: 'grid' | 'flat';
   plateSize: [number, number];
   application?: string;
+  project?: ThreeMfProject;
 }
 
 const PLATE_GAP = 1 / 5;
@@ -115,7 +117,7 @@ function modelXml(input: ThreeMfInput): string {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"${''}>
-<metadata name="Application">${escapeXml(input.application ?? 'Basecase')}</metadata>
+<metadata name="Application">${escapeXml(input.project ? 'BambuStudio-02.00.00.00' : (input.application ?? 'Basecase'))}</metadata>
 <resources>
 ${objects}
 </resources>
@@ -147,5 +149,55 @@ export function writeThreeMf(input: ThreeMfInput): Uint8Array {
     '3D/3dmodel.model': strToU8(modelXml(input)),
   };
 
-  return zipSync(files, { level: 6 });
+  if (input.project) {
+    files['Metadata/model_settings.config'] = strToU8(modelSettings(input));
+    files['Metadata/project_settings.config'] = strToU8(projectSettings(input.project));
+  }
+
+  return zipSync(files, { level: 6, ...(input.project ? { mtime: new Date(1980, 0, 1) } : {}) });
+}
+
+export interface ThreeMfProject {
+  filaments: Array<{ type: string; color: string; preset: string }>;
+  settings: Record<string, string | string[]>;
+}
+
+const metadata = (key: string, value: string | number) =>
+  `<metadata key="${key}" value="${escapeXml(String(value))}"/>`;
+
+function modelSettings(input: ThreeMfInput): string {
+  const objects = input.objects.map(
+    (o) => `<object id="${o.id}">${metadata('name', o.name)}${metadata('extruder', o.filament ?? 1)}</object>`,
+  );
+  const instanceCounts = new Map<number, number>();
+  const instances = input.items.map((it) => {
+    const index = instanceCounts.get(it.objectId) ?? 0;
+
+    instanceCounts.set(it.objectId, index + 1);
+
+    return { ...it, index };
+  });
+  const plates = input.plates.map((p) => {
+    const items = instances
+      .filter((it) => it.plate === p.number)
+      .map(
+        (it) =>
+          `<model_instance>${metadata('object_id', it.objectId)}${metadata('instance_id', it.index)}${metadata('identify_id', it.objectId)}</model_instance>`,
+      );
+
+    return `<plate>${metadata('plater_id', p.number)}${metadata('plater_name', p.name)}${metadata('locked', 'false')}${items.join('')}</plate>`;
+  });
+
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<config>${objects.join('')}${plates.join('')}</config>\n`;
+}
+
+function projectSettings(project: ThreeMfProject): string {
+  return JSON.stringify({
+    ...project.settings,
+    filament_type: project.filaments.map((f) => f.type),
+    filament_colour: project.filaments.map((f) => f.color),
+    filament_settings_id: project.filaments.map((f) => f.preset),
+    filament_is_support: project.filaments.map(() => '0'),
+    filament_diameter: project.filaments.map(() => '1.75'),
+  });
 }

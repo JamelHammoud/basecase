@@ -5,6 +5,7 @@ import type { JobGroup, JobPrinter } from './printBridge';
 import type { Plate, PrintPlan } from './plan';
 
 export interface JobSpec {
+  project?: boolean;
   files: ThreeMfFileSpec[];
   plateSize: [number, number];
   groups: Array<Omit<JobGroup, 'bytes'>>;
@@ -39,7 +40,7 @@ const plateSizeOf = (setup: PrinterSetup): [number, number] => {
   return [Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)];
 };
 
-const itemName = (name: string, copy: number) => (copy ? `${name} (${copy + 1})` : name);
+export const itemName = (name: string, copy: number) => (copy ? `${name} (${copy + 1})` : name);
 
 function fileFor(material: PrintMaterial, plates: Plate[]): ThreeMfFileSpec {
   return {

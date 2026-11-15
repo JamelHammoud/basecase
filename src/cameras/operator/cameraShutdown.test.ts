@@ -7,7 +7,9 @@ vi.mock('./liveVision', () => ({
   createOperatorVision: () => ({ wanted: () => true, take: vi.fn(), close: vi.fn() }),
 }));
 vi.mock('../mat/matTracker', () => ({ trackMat: vi.fn(), createMatTracker: vi.fn() }));
-vi.mock('../mat/tagDetector', () => ({ loadTagDetector: () => new Promise(() => {}) }));
+vi.mock('../mat/tagDetector', () => ({
+  loadTagDetector: async () => ({ detect: vi.fn(), dispose: vi.fn() }),
+}));
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -24,8 +26,11 @@ describe('camera worker shutdown', () => {
     });
     const cancelled = vi.fn(() => cancellation);
     const frame = { close: vi.fn() } as unknown as VideoFrame;
+    let enqueueFrame = () => {};
     const frames = new ReadableStream<VideoFrame>({
-      start: (controller) => controller.enqueue(frame),
+      start: (controller) => {
+        enqueueFrame = () => controller.enqueue(frame);
+      },
       cancel: cancelled,
     });
     const scope = {
@@ -43,6 +48,10 @@ describe('camera worker shutdown', () => {
 
     send({ type: 'open', mat: {} as CaseMat, frames });
     await Promise.resolve();
+    scope.postMessage.mockClear();
+    enqueueFrame();
+    await Promise.resolve();
+    expect(frame.close).not.toHaveBeenCalled();
     send({ type: 'close' });
     expect(frame.close).toHaveBeenCalledOnce();
     expect(cancelled).toHaveBeenCalledOnce();

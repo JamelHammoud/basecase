@@ -49,6 +49,7 @@ describe('Design From Motion', () => {
     expect((await record()).parts).toEqual([]);
     await sheet.getByRole('button', { name: 'Cancel', exact: true }).click();
     await expect.poll(() => sheet.count()).toBe(0);
+    expect(app.errors).toEqual([]);
   });
 
   it('turns a dropped wave into an editable skeleton with servos and undoes the whole design', async () => {

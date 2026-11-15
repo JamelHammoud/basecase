@@ -9,6 +9,13 @@ export { autoMapBones, autoMapRobot, KEYPOINT_LABELS, KEYPOINTS, type Keypoint, 
 export { retarget, type RetargetOptions, type RetargetResult } from './mocapRetarget';
 
 export function parseBvh(text: string, name = 'Motion'): Mocap {
+  const header = text
+    .trimStart()
+    .split(/[\r\n]/, 1)[0]
+    .trim();
+
+  if (header !== 'HIERARCHY') throw new Error('The BVH file must start with HIERARCHY.');
+
   const loader = new BVHLoader();
   const { skeleton, clip } = loader.parse(text);
   const bones = skeleton.bones.filter((b) => b.name !== 'ENDSITE');

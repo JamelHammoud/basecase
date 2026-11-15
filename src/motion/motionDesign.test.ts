@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { waveBvh } from '../utils/motionSkeleton.fixtures';
 import { actuatorSpec, skeletonMargins } from '../utils/skeletonMargins';
 import { ratingAt } from '../utils/actuatorRules';
@@ -64,7 +64,19 @@ describe('design from a motion clip', () => {
     }
   });
 
-  it('refuses unreadable motion without producing a skeleton', () => {
-    expect(designMotion({ ...request, text: 'motion' })).toHaveProperty('problem');
-  });
+  it.each(['', 'motion', 'HIERARCHY_EXTRA'])(
+    'refuses unreadable motion %j without console errors or a skeleton',
+    (text) => {
+      const errors = vi.spyOn(console, 'error');
+
+      try {
+        expect(designMotion({ ...request, text })).toEqual({
+          problem: 'Couldn’t read the BVH: The BVH file must start with HIERARCHY.',
+        });
+        expect(errors).not.toHaveBeenCalled();
+      } finally {
+        errors.mockRestore();
+      }
+    },
+  );
 });

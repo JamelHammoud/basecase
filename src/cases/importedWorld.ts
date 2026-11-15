@@ -2,7 +2,7 @@ import { Quaternion, Vector3 } from 'three';
 import type { V3 } from '../utils/kinematics';
 import { routeClearance, type BuilderRobot, type GoalKind } from './caseGoals';
 import type { CaseWorld } from './caseWorlds';
-import { occupied } from './groundRoute';
+import { groundObstacles } from './groundObstacles';
 import type { WorldObject } from './schema';
 import type { WorldAsset } from './worldAssets';
 import { FLOOR_TOLERANCE_MM, floorSupport, hullBounds, terrainPieces, type SurfaceBounds } from './worldSurfaces';
@@ -85,6 +85,7 @@ function planning(asset: WorldAsset, robot: BuilderRobot): WorldPlanning {
   const objects = planningObjects(asset, robot, terrainPieces(asset.pieces));
   const supported = floorSupport(asset.pieces);
   const clearance = routeClearance(robot);
+  const obstacles = groundObstacles(blocked, clearance);
   const bounds = asset.world.mesh.bounds;
   const within = (p: V3) =>
     p[0] >= bounds.min[0] + clearance &&
@@ -101,7 +102,7 @@ function planning(asset: WorldAsset, robot: BuilderRobot): WorldPlanning {
       [halfX, -halfZ],
       [halfX, halfZ],
     ].every(([x, z]) => supported([p[0] + x, 0, p[2] + z]));
-  const clear = (p: V3) => within(p) && !occupied(p, blocked, clearance) && onFloor(p);
+  const clear = (p: V3) => within(p) && !obstacles.occupied(p) && onFloor(p);
   const centre: V3 = [(bounds.min[0] + bounds.max[0]) / 2, 0, (bounds.min[2] + bounds.max[2]) / 2];
   const spot = [...recordedStarts(asset), centre].find(clear) ?? candidates(bounds, clearance).find(clear) ?? null;
   const result = { spot, objects };

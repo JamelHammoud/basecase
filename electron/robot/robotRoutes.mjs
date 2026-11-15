@@ -10,6 +10,7 @@ export const ROBOT_CALLS = {
   'robot:policy': (fleet, refs, unit) => fleet.policy(refs, unit),
   'robot:calibration': (fleet, joints, unit) => fleet.calibrate(joints, unit),
   'robot:state': (fleet, unit) => fleet.state(unit),
+  'robot:read-run': (fleet, unit) => fleet.readRun(unit),
   'robot:record': (fleet, sample, unit) => fleet.record(sample, unit),
   'robot:units': (fleet) => fleet.units(),
   'robot:rollback': (fleet, unit) => fleet.rollBack(unit),

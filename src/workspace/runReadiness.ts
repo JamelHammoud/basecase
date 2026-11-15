@@ -30,7 +30,7 @@ import { printReportOf } from '../utils/printReport';
 import { caseFindings } from '../readiness/caseChecks';
 import { caseCheckRows, nextCaseTurn } from './caseChecks';
 import { runEngineeringNow } from './engineeringNow';
-import { freshFalls, freshWalk } from './storedWalk';
+import { bodyPhysicsKey, freshFalls, freshWalk } from './storedWalk';
 
 const BUDGET_MS = 30000;
 
@@ -85,6 +85,7 @@ export const projectFingerprint = (
     falls: jsonHash(project.falls),
     firstRanges: project.firstRanges,
     calibrations: activeVersions(project.servoCalibrations),
+    bodyCalibrations: bodyPhysicsKey(project),
     goneMates: goneMateIds(project.joints),
     printer: [printer.model.id, printer.nozzle, printer.model.bed, printer.model.height, printer.model.keepOut],
     purchases: jsonHash(world.purchases ?? {}),

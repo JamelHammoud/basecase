@@ -18,6 +18,7 @@ import { emulatedHorn, statusWithLinkAngles } from './emulatedHorns.mjs';
 import { threadPipe, workerPipe } from './daemonPipe.mjs';
 import { measuredRadians } from './intentPacer.mjs';
 import { OperateRecorder } from './operateRecorder.mjs';
+import { readRecordedRun } from './recordedRun.mjs';
 import { checkedPolicyRefs } from './robotPolicy.mjs';
 import { UNITS_FILE, unitsJson } from './servoUnits.mjs';
 
@@ -142,6 +143,7 @@ export class RobotLink {
     this.policyRefs = [];
     this.activePolicy = null;
     this.session = null;
+    this.lastRecording = null;
   }
 
   state() {
@@ -180,7 +182,10 @@ export class RobotLink {
       sink: this.tries,
       radians: (status) => statusRadians(status, session),
       clock: this.clock,
-      onClosed: (closed) => this.emit({ event: 'recorded', ...closed }),
+      onClosed: ({ joints, ...closed }) => {
+        this.lastRecording = closed.manifest && joints ? { id: closed.id, joints } : null;
+        this.emit({ event: 'recorded', ...closed });
+      },
     });
 
     recorder.setPolicy(hashOf(policy));
@@ -280,6 +285,10 @@ export class RobotLink {
     session.pipe.hold(joints);
 
     if (motorsRun(session.mode) && session.status?.run === 'running') session.recorder?.intent(joints);
+  }
+
+  readRun() {
+    return this.session?.recorder?.readRun() ?? readRecordedRun(this.tries, this.lastRecording);
   }
 
   record(ask) {

@@ -64,7 +64,7 @@ Prices you check in a store are exact. The others are list prices, and Basecase 
 
 Print mode lays out the printed parts on plates in the order the build guide needs them, slices them in Bambu Studio or OrcaSlicer, and then sends each plate to one of your printers. If you don't have a printer, see [Price printed parts from a print service](/help/price-printed-parts-from-a-print-service). If the robot still goes together, Print mode also offers to print parts that are bolted together on one link as a single part.
 
-For flat structural parts, [Cut parts from sheet](/help/cut-parts-from-sheet) exports DXF outlines for aluminum, carbon fiber or acrylic. Checks and simulation use the sheet's solid volume and material density for weight and torque. Shop limits, sheet prices, bends and press-in hardware aren't checked.
+For flat structural parts, [Cut parts from sheet](/help/cut-parts-from-sheet) exports DXF outlines for aluminum, carbon fiber or acrylic. Checks and simulation start with the sheet's solid volume and material density for weight and torque. An active [body fit](/help/fit-a-robots-body-from-a-recorded-run) adjusts those weights and adds the fitted payload. Shop limits, sheet prices, bends and press-in hardware aren't checked.
 
 The build guide is a PDF of assembly steps. Basecase checks that the parts can go together in that order. The guide names each printed part with a letter, and Print mode cuts that letter into a hidden face of the part.
 

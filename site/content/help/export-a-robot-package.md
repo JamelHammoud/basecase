@@ -1,7 +1,7 @@
 ---
 title: Export a robot package
 date: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-14
 collection: build-and-print
 type: task
 order: 8
@@ -56,7 +56,7 @@ RViz opens with the robot, and the Joint State Publisher window has a slider per
 ## What reads it
 
 - **MuJoCo** loads `robot.xml` as it is. It's the model the Simulate tab runs, and needs no other file.
-- **ROS 2** builds the folder with `colcon build`. The URDF is in `urdf/` and finds its meshes by `package://` path.
+- **ROS 2** builds the folder with `colcon build`. The URDF is in `urdf/` and finds its meshes by `package://` path. Its link weights and centers of mass include the active body fit, as Checks does.
 - `joint_map.json` uses the same keys as the calibration file Basecase's robot daemon reads, with servo ids, zeros, directions, limits and calibration.
 
 The package isn't a LeRobot dataset, and the policies are in Basecase's own JSON format. To give LeRobot data it can load, [publish a dataset to Hugging Face](/help/publish-a-dataset-to-hugging-face) from a Case. Joint names match across the package and those datasets.

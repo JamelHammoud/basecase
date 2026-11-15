@@ -1,4 +1,5 @@
 import type { ServoFit } from '../data/components';
+import type { BodyFit } from '../reality/bodyTypes';
 import type { MeshMeasure } from '../three/meshMeasure';
 import type { ProjectSettings, RobotPoseState, ScenePart } from '../types/robotics';
 import type { Rig, V3 } from '../utils/kinematics';
@@ -61,6 +62,7 @@ export interface SimModel {
   massKg: Record<string, number>;
   scans?: Eye[];
   servoSpreads?: ServoSpread[];
+  bodyPayloads?: Record<string, V3>;
 }
 
 export interface ServoSpread {
@@ -84,6 +86,7 @@ export interface MjcfInput {
   servoFits?: Record<string, JointServoFit>;
   servoVolts?: number;
   servoSpreads?: ServoSpread[];
+  bodyFits?: Record<string, BodyFit>;
 }
 
 export interface JointServoFit {

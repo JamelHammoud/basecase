@@ -19,3 +19,28 @@ describe('platformBridge.exportStep on desktop', () => {
     expect(exportStep).toHaveBeenCalledOnce();
   });
 });
+
+describe('platformBridge.robotReadRun', () => {
+  it('passes the captured unit to desktop IPC', async () => {
+    const robotReadRun = vi.fn(async () => null);
+
+    vi.stubGlobal('window', { electronAPI: { robotReadRun } });
+
+    await expect(platformBridge.robotReadRun('arm-b')).resolves.toBeNull();
+    expect(robotReadRun).toHaveBeenCalledWith('arm-b');
+  });
+
+  it('passes the same unit to the HTTP reader', async () => {
+    const fetch = vi.fn(async () => new Response('null', { status: 200 }));
+
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('fetch', fetch);
+
+    await expect(platformBridge.robotReadRun('arm-b')).resolves.toBeNull();
+    expect(fetch).toHaveBeenCalledWith('/api/bridge/robot-read-run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ arg: 'arm-b' }),
+    });
+  });
+});

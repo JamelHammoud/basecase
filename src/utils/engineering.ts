@@ -21,6 +21,7 @@ import { FALLS, fallsRow } from './engineeringFalls';
 import { payloadRows } from './engineeringPayload';
 import { STRENGTH_CHECK, strengthRows } from './engineeringStrength';
 import type { CheckContext, CheckRow, EngineeringInputs, EngineeringReport, PartMass } from './engineeringTypes';
+import { bodyMasses } from '../reality/bodyMasses';
 
 export { STRENGTH_CHECK };
 export { rotateEuler } from './engineeringMath';
@@ -112,7 +113,7 @@ function withNoFeetNote(row: CheckRow, floating: RobotBody[]): CheckRow {
 
 export function robotWeight(input: Pick<EngineeringInputs, 'parts' | 'project' | 'measures'>) {
   const { parts, project, measures } = input;
-  const masses = partMasses(parts, project, measures);
+  const masses = bodyMasses(partMasses(parts, project, measures), parts, project, measures);
   const byId = new Map(masses.map((m) => [m.id, m]));
   const bodies = robotBodies({ parts, joints: project.joints ?? [], measures, byId });
   const all = massOf(

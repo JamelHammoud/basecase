@@ -15,6 +15,8 @@ export class TryStore {
 }
 
 export interface SessionSink {
+  read(id: string): string | null;
+
   append(id: string, text: string): void;
 
   keep(manifest: Record<string, unknown>): void;

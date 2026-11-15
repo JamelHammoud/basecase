@@ -8,6 +8,7 @@ import type { SimModel } from '../mjcfTypes';
 import { jointMap } from './jointMap';
 import { jsonBytes, policyFiles, type PackagedPolicy } from './policyFiles';
 import { packageUri, ros2Control, rosPackageFiles, rosPackageName, ROS_URDF } from './rosPackage';
+import { bodyMassesForBodies } from '../../reality/bodyMasses';
 
 export interface RobotPackageJob {
   name: string;
@@ -33,7 +34,7 @@ export function robotPackageFiles(job: RobotPackageJob): Record<string, Uint8Arr
     model,
     joints: project.joints ?? [],
     parts,
-    masses: partMasses(parts, project, job.measures),
+    masses: bodyMassesForBodies(partMasses(parts, project, job.measures), parts, project, model.bodies),
     triangles: (id) => job.triangles[id] ?? null,
     meshUri: packageUri(name),
     tail: ros2Control(map, new Set(model.joints.map((j) => j.name))),

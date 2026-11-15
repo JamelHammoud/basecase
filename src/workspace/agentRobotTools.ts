@@ -144,6 +144,7 @@ export async function runPoseTool(kind: string, payload: Payload, ctx: PoseToolC
 export interface SimToolContext extends SimContext, DriveToolContext, FleetToolContext {
   setAction: (action: string) => void;
   calibrationErrors?: () => Promise<string>;
+  fitBody?: (robot?: string) => Promise<string>;
 }
 
 export const SIM_TOOL_KINDS = [
@@ -152,6 +153,7 @@ export const SIM_TOOL_KINDS = [
   'set_world',
   'start_drive',
   'operate',
+  'fit_body',
   ...FLEET_TOOL_KINDS,
 ];
 
@@ -166,6 +168,16 @@ async function operateTool(ctx: SimToolContext, payload: Payload): Promise<PoseR
 }
 
 export async function runSimTool(kind: string, payload: Payload, ctx: SimToolContext): Promise<PoseReply> {
+  if (kind === 'fit_body') {
+    ctx.setAction('Fitting body');
+
+    return {
+      text:
+        (await ctx.fitBody?.(typeof payload.robot === 'string' ? payload.robot : undefined)) ??
+        'Open a robot scene before fitting its body.',
+    };
+  }
+
   if (kind === 'set_world') return setWorldRequest(ctx, payload);
 
   if (FLEET_TOOL_KINDS.includes(kind)) return runFleetTool(kind, payload, ctx);

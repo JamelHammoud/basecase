@@ -45,7 +45,7 @@ Click a row to select the unit. The header, Ladder, servo readings, messages and
 
 ![Operate with three units, each in Test, and the selected unit's controls below](/help/roll-out-a-skill-to-a-fleet/connected.png)
 
-Hover a unit's row to find **Roll Back** when it has a previous policy. This restores the policy version. A joint's **Roll Back** instead restores its calibration.
+Hover a unit's row to find **Roll Back** when it has a previous policy. This restores the policy version. A joint's **Roll Back** instead restores its servo calibration. **Roll Back** beside **Body v1**, or a later body version, restores the [body fit](/help/fit-a-robots-body-from-a-recorded-run).
 
 ## The header
 

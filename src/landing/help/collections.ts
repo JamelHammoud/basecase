@@ -34,7 +34,8 @@ export const HELP_COLLECTIONS: CollectionInfo[] = [
   {
     slug: 'operate',
     title: 'Operate',
-    description: 'Connect an emulated robot, climb the safety ladder and calibrate its servos.',
+    description:
+      'Connect an emulated robot, climb the safety ladder, calibrate servos and fit its body from a recorded run.',
   },
   {
     slug: 'agent',

@@ -96,12 +96,12 @@ export function bodyRobot(core: WorkspaceCore, wanted?: string): string | null {
   return matched[0]?.key ?? (robots.length === 1 ? robots[0].key : null);
 }
 
-export async function fitBodyFor(core: WorkspaceCore, wanted?: string): Promise<string> {
+async function fitBodyAttempt(core: WorkspaceCore, wanted?: string) {
   const robot = bodyRobot(core, wanted);
 
-  if (!robot) return 'Choose a robot with joints before fitting its body.';
+  if (!robot) return { text: 'Choose a robot with joints before fitting its body.', recorded: false };
 
-  if (bodyFitPending(robot)) return 'Body fitting is running.';
+  if (bodyFitPending(robot)) return { text: 'Body fitting is running.', recorded: false };
 
   const unit = selectedUnit();
   const worker = bodyClient();
@@ -115,7 +115,7 @@ export async function fitBodyFor(core: WorkspaceCore, wanted?: string): Promise<
 
     const run = given ?? (await platformBridge.robotReadRun(unit));
 
-    if (!run) return 'Record a robot run in Operate before fitting its body.';
+    if (!run) return { text: 'Record a robot run in Operate before fitting its body.', recorded: false };
 
     const snapshot = () =>
       JSON.stringify({
@@ -142,13 +142,24 @@ export async function fitBodyFor(core: WorkspaceCore, wanted?: string): Promise<
       return result;
     };
 
-    return await fitRecordedBody({ model, run, robot, fit, updateProject: core.docs.updateProjectNow });
+    const text = await fitRecordedBody({ model, run, robot, fit, updateProject: core.docs.updateProjectNow });
+
+    return { text, recorded: true };
   } finally {
     worker.dispose();
     fitting(robot, false);
   }
 }
 
+export async function fitBodyFor(core: WorkspaceCore, wanted?: string): Promise<string> {
+  return (await fitBodyAttempt(core, wanted)).text;
+}
+
 export function fitBodyFromUi(core: WorkspaceCore) {
-  void fitBodyFor(core).then(core.showToast, (error: unknown) => core.showToast(errorMessage(error)));
+  return fitBodyAttempt(core).then(
+    ({ text, recorded }) => {
+      if (!recorded || !core.operateVisible()) core.showToast(text);
+    },
+    (error: unknown) => core.showToast(errorMessage(error)),
+  );
 }

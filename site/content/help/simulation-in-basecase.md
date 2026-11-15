@@ -58,7 +58,11 @@ When you calibrate a connected robot, Basecase replaces the model of each Feetec
 
 You can also [fit a robot's body from a recorded run](/help/fit-a-robots-body-from-a-recorded-run). The fit adjusts link masses and terminal payloads on top of the active servo calibrations. For a robot that floats free, it also fits floor friction.
 
-A kept body version changes simulation, Checks and training together. The newest active body version supplies the scene's floor friction, shared by every robot. Rolling back restores the previous body model.
+Basecase fits the first half of the run and keeps the result only when median error on the held-out half falls by at least 25%. **Can’t tell** leaves the active model in place.
+
+A kept body version changes simulation, Checks and training together. Policies trained on the previous model show **Out of date**. **Weight** and **Servo torque** refresh in Checks. **Peak torque** and **Falls** need new simulation measurements before their results count on the changed body.
+
+The newest active body version supplies the scene's floor friction, shared by every robot. Rolling back restores the previous body model and its fingerprint, so a policy trained on that model is current again.
 
 ## What a run tells you
 

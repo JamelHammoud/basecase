@@ -8,7 +8,9 @@ import type { SimModel } from '../mjcfTypes';
 import { jointMap } from './jointMap';
 import { jsonBytes, policyFiles, type PackagedPolicy } from './policyFiles';
 import { packageUri, ros2Control, rosPackageFiles, rosPackageName, ROS_URDF } from './rosPackage';
-import { bodyMassesForBodies } from '../../reality/bodyMasses';
+import { bodyMassProperties } from '../../reality/bodyMasses';
+import { toMj } from '../mjcfFrames';
+import type { V3 } from '../../utils/kinematics';
 
 export interface RobotPackageJob {
   name: string;
@@ -29,12 +31,37 @@ export function robotPackageFiles(job: RobotPackageJob): Record<string, Uint8Arr
   const { model, project, parts, robot } = job;
   const name = rosPackageName(robot);
   const map = jointMap({ model, project, parts, name: robot });
+  const { scaled, payloads } = bodyMassProperties(
+    partMasses(parts, project, job.measures),
+    parts,
+    project,
+    model.bodies,
+  );
+  const payloadInertials = Object.fromEntries(
+    model.bodies.flatMap((body) => {
+      const payload = payloads[body.name];
+
+      return payload
+        ? [
+            [
+              body.name,
+              {
+                kg: payload.grams / 1000,
+                com: toMj(payload.centroid.map((v, axis) => v - body.origin[axis]) as V3),
+                radius: 0.001,
+              },
+            ],
+          ]
+        : [];
+    }),
+  );
   const { urdf, meshes, root } = writeUrdf({
     name: robot,
     model,
     joints: project.joints ?? [],
     parts,
-    masses: bodyMassesForBodies(partMasses(parts, project, job.measures), parts, project, model.bodies),
+    masses: scaled,
+    payloads: payloadInertials,
     triangles: (id) => job.triangles[id] ?? null,
     meshUri: packageUri(name),
     tail: ros2Control(map, new Set(model.joints.map((j) => j.name))),

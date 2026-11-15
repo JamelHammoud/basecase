@@ -1,11 +1,18 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_PROJECT, type ProjectSettings } from '../types/robotics';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { RobotRun } from '../robot/runBuffer';
 import type { BodyCalibration } from '../reality/bodyTypes';
 import { bodyClient } from '../reality/bodyClient';
 import { platformBridge } from '../utils/platformBridge';
-import { bodyEvidenceText, fitBodyFor, fitRecordedBody, rollBackBodyCalibration, setBodyRun } from './bodyActions';
+import {
+  bodyEvidenceText,
+  fitBodyFor,
+  fitBodyFromUi,
+  fitRecordedBody,
+  rollBackBodyCalibration,
+  setBodyRun,
+} from './bodyActions';
 import type { WorkspaceCore } from './useWorkspaceCore';
 
 vi.mock('../reality/bodyClient', () => ({ bodyClient: vi.fn() }));
@@ -21,6 +28,11 @@ const result: BodyCalibration = {
 };
 const model = { robots: [{ key: 'arm' }] } as SimModel;
 const run = { joints: ['shoulder'], statuses: [], intents: [] } as unknown as RobotRun;
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  setBodyRun(null);
+});
 
 function context() {
   let project: ProjectSettings = { ...DEFAULT_PROJECT };
@@ -39,6 +51,34 @@ function context() {
 }
 
 describe('body fitting actions', () => {
+  it('keeps recorded results in Operate without a duplicate toast and reports a missing recording', async () => {
+    const ctx = context();
+    const operateVisible = vi.fn(() => true);
+    const core = {
+      docs: {
+        partsRef: { current: [] },
+        projectRef: { current: ctx.project() },
+        updateProjectNow: ctx.input.updateProject,
+      },
+      posing: { rig: { robots: [{ key: 'arm' }], robotOf: new Map() } },
+      simTraining: { sim: { buildModel: vi.fn(async () => model) } },
+      showToast: vi.fn(),
+      operateVisible,
+    } as unknown as WorkspaceCore;
+
+    vi.mocked(bodyClient).mockReturnValue({ fit: ctx.fit, dispose: vi.fn() });
+    setBodyRun(run);
+    await fitBodyFromUi(core);
+    expect(ctx.project().bodyCalibrations?.arm.active).toBe(1);
+    expect(core.showToast).not.toHaveBeenCalled();
+    await fitBodyFromUi(core);
+    expect(core.showToast).toHaveBeenCalledWith('Record a robot run in Operate before fitting its body.');
+    operateVisible.mockReturnValue(false);
+    setBodyRun(run);
+    await fitBodyFromUi(core);
+    expect(core.showToast).toHaveBeenLastCalledWith(bodyEvidenceText(result));
+  });
+
   it('shows linear errors in millimetres and mixed errors as dimensionless improvement', () => {
     expect(bodyEvidenceText({ ...result, evidence: { ...result.evidence, units: 'm' } })).toBe(
       '120.00 mm with the preset, 40.00 mm with the fit.',

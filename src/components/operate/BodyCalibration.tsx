@@ -1,5 +1,5 @@
 import React, { useSyncExternalStore } from 'react';
-import { Button, confirmAction } from '../../design-system';
+import { Button, confirmAction, Spinner } from '../../design-system';
 import type { BodyHistory } from '../../reality/bodyTypes';
 import { bodyEvidenceText, bodyFitPending, subscribeBodyFit } from '../../workspace/bodyActions';
 
@@ -22,7 +22,7 @@ export const BodyCalibration: React.FC<BodyCalibrationProps> = ({ robot, history
 
   return (
     <div className="mb-3 flex flex-col gap-2" data-testid="body-calibration" data-fitting={pending}>
-      <Button variant="secondary" fullWidth disabled={pending} onClick={onFit}>
+      <Button variant="secondary" fullWidth disabled={pending} icon={pending ? <Spinner /> : undefined} onClick={onFit}>
         {pending ? 'Fitting body…' : 'Fit Body'}
       </Button>
       {latest && <p className="px-1 text-[12px] text-white/50">{bodyEvidenceText(latest)}</p>}

@@ -17,6 +17,24 @@ import { robotPackageFiles } from '../sim/robotPackage/buildRobotPackage';
 import { parseXml } from '../utils/robotImport/robotImport.fixtures';
 import { parseUrdf } from '../utils/robotImport/urdf';
 import { rigBodies } from './bodyLayout';
+import { Matrix3, Matrix4, Quaternion } from 'three';
+
+function exportedInertia(text: string, name: string) {
+  const xml = parseXml(text);
+  const link = Array.from(xml.documentElement.children).find((entry) => entry.getAttribute('name') === name)!;
+  const inertial = Array.from(link.children).find((entry) => entry.tagName === 'inertial')!;
+
+  return Array.from(inertial.children).find((entry) => entry.tagName === 'inertia')!;
+}
+
+function compiledInertia(engine: SimEngine, body: number) {
+  const [w, x, y, z] = engine.model.body_iquat.subarray(body * 4, body * 4 + 4);
+  const [a, b, c] = engine.model.body_inertia.subarray(body * 3, body * 3 + 3);
+  const rotation = new Matrix3().setFromMatrix4(new Matrix4().makeRotationFromQuaternion(new Quaternion(x, y, z, w)));
+  const diagonal = new Matrix3().set(a, 0, 0, 0, b, 0, 0, 0, c);
+
+  return rotation.clone().multiply(diagonal).multiply(rotation.transpose()).elements;
+}
 
 const robot = fixtureRobots().find((r) => r.id === 'arm-3dof')!;
 const input = {
@@ -138,7 +156,8 @@ describe('body fit physics', () => {
     const project = { ...job.project, bodyCalibrations: { [key]: history } };
     const measured = buildMjcf({ ...input, project });
     const files = robotPackageFiles({ ...job, model: measured, project });
-    const urdf = parseUrdf(parseXml(new TextDecoder().decode(files['urdf/robot.urdf'])));
+    const text = new TextDecoder().decode(files['urdf/robot.urdf']);
+    const urdf = parseUrdf(parseXml(text));
     const total = [...urdf.links.values()].reduce((sum, link) => sum + (link.mass ?? 0), 0);
     const engine = new SimEngine(mj, measured);
 
@@ -147,8 +166,20 @@ describe('body fit physics', () => {
 
       const body = measured.bodies.findIndex((body) => body.name === leaf.name) + 1;
       const center = urdf.links.get(leaf.name)!.com!;
+      const inertia = exportedInertia(text, leaf.name);
+      const expected = compiledInertia(engine, body);
 
       center.toArray().forEach((value, axis) => expect(value).toBeCloseTo(engine.model.body_ipos[body * 3 + axis], 6));
+
+      for (const [attribute, index] of [
+        ['ixx', 0],
+        ['iyy', 4],
+        ['izz', 8],
+        ['ixy', 3],
+        ['ixz', 6],
+        ['iyz', 7],
+      ] as const)
+        expect(Number(inertia.getAttribute(attribute))).toBeCloseTo(expected[index], 10);
     } finally {
       engine.dispose();
     }

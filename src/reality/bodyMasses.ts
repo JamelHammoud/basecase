@@ -40,8 +40,27 @@ export function bodyMassesForBodies(
   project: ProjectSettings,
   bodies: SimBody[],
 ): PartMass[] {
+  const { scaled, payloads } = bodyMassProperties(masses, parts, project, bodies);
+  const adjusted = new Map(scaled.map((mass) => [mass.id, mass]));
+
+  for (const payload of Object.values(payloads)) {
+    const carrier = adjusted.get(payload.carrier);
+
+    if (carrier) adjusted.set(carrier.id, mergePayload(carrier, payload.grams, payload.centroid));
+  }
+
+  return [...adjusted.values()];
+}
+
+export function bodyMassProperties(
+  masses: PartMass[],
+  parts: ScenePart[],
+  project: ProjectSettings,
+  bodies: SimBody[],
+) {
   const parents = new Set(bodies.map((body) => body.parent));
   const adjusted = new Map(masses.map((mass) => [mass.id, mass]));
+  const payloads: Record<string, { carrier: string; grams: number; centroid: PartMass['centroid'] }> = {};
 
   for (const body of bodies) {
     const calibration = activeBodyCalibration(project.bodyCalibrations?.[body.robot ?? '']);
@@ -62,8 +81,8 @@ export function bodyMassesForBodies(
     const carrier = members[0];
 
     if (carrier && payload > 0)
-      adjusted.set(carrier, mergePayload(adjusted.get(carrier)!, payload, bodyPayloadPosition(body, parts)));
+      payloads[body.name] = { carrier, grams: payload, centroid: bodyPayloadPosition(body, parts) };
   }
 
-  return [...adjusted.values()];
+  return { scaled: [...adjusted.values()], payloads };
 }

@@ -34,7 +34,7 @@ The Checks in the Build tab decide whether a design is ready to build. The verdi
 
 ## Where the verdict comes from
 
-Checks start on their own about 1.5 seconds after your last change, including keeping or rolling back a [body fit](/help/fit-a-robots-body-from-a-recorded-run). While they run, the header reads **Checking…**, then switches to **Ready to build** or the number of problems left to fix.
+Checks start on their own about 1.5 seconds after your last change. While they run, the header reads **Checking…**, then switches to **Ready to build** or the number of problems left to fix.
 
 Basecase does the heavy measuring in the background, so you can keep working while it runs. On a robot with 225 parts, you get the verdict about 5 seconds after an edit.
 

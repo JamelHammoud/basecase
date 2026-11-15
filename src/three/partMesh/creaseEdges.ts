@@ -8,7 +8,18 @@ const pointKey = (x: number, y: number, z: number) =>
 const edgeKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
 function gatherFaceNormals(positions: number[], indices: number[], normals: Map<string, THREE.Vector3[]>) {
-  const vertexKey = (i: number) => pointKey(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+  const vertexKeys = new Map<number, string>();
+  const vertexKey = (i: number) => {
+    const hit = vertexKeys.get(i);
+
+    if (hit !== undefined) return hit;
+
+    const key = pointKey(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+
+    vertexKeys.set(i, key);
+
+    return key;
+  };
   const a = new THREE.Vector3();
   const b = new THREE.Vector3();
   const c = new THREE.Vector3();

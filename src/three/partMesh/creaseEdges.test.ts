@@ -15,6 +15,27 @@ function folded(degrees: number) {
   return [0, 0, 0, 10, 0, 0, 0, 10, 0, 0, -10 * Math.cos(angle), 10 * Math.sin(angle)];
 }
 
+function grid(size: number) {
+  const positions: number[] = [];
+  const indices: number[] = [];
+
+  for (let y = 0; y <= size; y++) {
+    for (let x = 0; x <= size; x++) positions.push(x, y, 0);
+  }
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const a = y * (size + 1) + x;
+      const b = a + 1;
+      const c = a + size + 1;
+
+      indices.push(a, b, c, b, c + 1, c);
+    }
+  }
+
+  return { positions, indices };
+}
+
 afterEach(() => vi.restoreAllMocks());
 
 describe('CAD crease edges', () => {
@@ -119,5 +140,36 @@ describe('CAD crease edges', () => {
     expect(Array.from(worker.result)).toEqual(expected);
     expect(Array.from(lines.geometry.getAttribute('position').array)).toEqual(expected);
     releasePartGroup(group);
+  });
+
+  it('reads changed positions afresh on each call', () => {
+    const positions = folded(0);
+
+    expect(creaseEdgesOnly(edge, positions, indices)).toEqual([]);
+    positions[0] = 2;
+    expect(creaseEdgesOnly(edge, positions, indices)).toEqual(edge);
+  });
+
+  it.each([16, 32])('reuses vertex keys across an indexed grid with %s cells per side', (size) => {
+    const { positions, indices: faces } = grid(size);
+    let reads = 0;
+    const counted = positions.map((value, index) => {
+      Object.defineProperty(positions, index, {
+        get: () => {
+          reads++;
+
+          return value;
+        },
+      });
+
+      return value;
+    });
+    const requested = [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0];
+    const normals = vi.spyOn(THREE.Triangle.prototype, 'getNormal');
+
+    expect(creaseEdgesOnly(requested, positions, faces)).toEqual(requested.slice(0, 6));
+    expect(reads).toBe(positions.length + 18);
+    expect(normals).toHaveBeenCalledTimes(2);
+    expect(positions).toEqual(counted);
   });
 });

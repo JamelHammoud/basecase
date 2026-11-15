@@ -40,13 +40,29 @@ interface TwinInputs {
   measures: Record<string, MeshMeasure | undefined>;
 }
 
-function clashCount(clashes: TwinInputs['clashes'], id: string) {
-  return clashes.filter((c) => c.a === id || c.b === id).length;
+function clashCounts(clashes: TwinInputs['clashes'], pairs: Array<[ScenePart, ScenePart]>) {
+  const counts = new Map<string, number>();
+
+  for (const [left, right] of pairs) {
+    counts.set(left.id, 0);
+    counts.set(right.id, 0);
+  }
+
+  for (const { a, b } of clashes) {
+    const countA = counts.get(a);
+    const countB = counts.get(b);
+
+    if (countA !== undefined) counts.set(a, countA + 1);
+
+    if (b !== a && countB !== undefined) counts.set(b, countB + 1);
+  }
+
+  return counts;
 }
 
-function pairDifferences([l, r]: [ScenePart, ScenePart], input: TwinInputs): string[] {
+function pairDifferences([l, r]: [ScenePart, ScenePart], input: TwinInputs, counts: Map<string, number>): string[] {
   const out: string[] = [];
-  const [cl, cr] = [clashCount(input.clashes, l.id), clashCount(input.clashes, r.id)];
+  const [cl, cr] = [counts.get(l.id) ?? 0, counts.get(r.id) ?? 0];
   const [ml, mr] = [input.measures[l.id], input.measures[r.id]];
 
   if (differs(cl, cr)) out.push(`clashes ${cl} vs ${cr}`);
@@ -66,9 +82,14 @@ function pairDifferences([l, r]: [ScenePart, ScenePart], input: TwinInputs): str
 
 export function twinDifferences(input: TwinInputs): string[] {
   const solids = input.parts.filter((p) => p.kind !== 'hardware' && p.role === 'solid' && p.visible);
+  const pairs = twinPairs(solids);
 
-  return twinPairs(solids).flatMap((pair) => {
-    const diffs = pairDifferences(pair, input);
+  if (!pairs.length) return [];
+
+  const counts = clashCounts(input.clashes, pairs);
+
+  return pairs.flatMap((pair) => {
+    const diffs = pairDifferences(pair, input, counts);
 
     return diffs.length
       ? [

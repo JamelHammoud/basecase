@@ -3,7 +3,10 @@ import { openOffscreenWorker } from './offscreenWorker.ts';
 
 const state = vi.hoisted(() => ({ launch: vi.fn(), servers: [] }));
 
-vi.mock('vite', () => ({ build: async () => ({ output: [{ type: 'chunk', code: '' }] }) }));
+vi.mock('vite', async (original) => ({
+  ...(await original()),
+  build: async () => ({ output: [{ type: 'chunk', code: '' }] }),
+}));
 vi.mock('playwright-core', () => ({ chromium: { launch: state.launch } }));
 vi.mock('node:http', async (original) => {
   const http = await original();

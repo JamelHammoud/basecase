@@ -26,6 +26,7 @@ interface TryOptions {
   parts: ScenePart[];
   joints: RobotJoint[];
   active: Case | null;
+  scope: Case | null;
   partners: () => SlotRobot[];
   onTry: (record: TryRecord, recording: Recording, input: string | null) => Promise<void>;
   onRefuse: (message: string) => void;
@@ -73,7 +74,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const [startedAt, setStartedAt] = useState(0);
   const finishing = useRef(false);
   const scripted = useRef(false);
-  const lease = useStartupLease(active, sim.subscribeStop, () =>
+  const lease = useStartupLease(options.scope, sim.subscribeStop, () =>
     setPhase((value) => (value === 'starting' ? 'idle' : value)),
   );
   const vision = useCaseVision(lease);

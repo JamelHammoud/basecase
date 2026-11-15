@@ -31,14 +31,6 @@
     "platform": "linux"
   },
   {
-    "file": "e2e/motionSkeleton.e2e.test.ts",
-    "test": "opens the BVH picker from the command and keeps a malformed clip out of the scene",
-    "issue": 994,
-    "until": "2026-11-28",
-    "reason": "Run 43687018679 failed both Linux attempts waiting for a filechooser after the Design From Motion command. The dropped-wave test continued. The cause is not established.",
-    "platform": "linux"
-  },
-  {
     "file": "e2e/dataImport.e2e.test.ts",
     "test": "imports FlatBuffers through Import and reads its nested message, plot and states from Library",
     "issue": 995,

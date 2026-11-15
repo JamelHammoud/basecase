@@ -1,5 +1,13 @@
 [
   {
+    "file": "src/vision/tryFrameVideo.test.ts",
+    "test": "",
+    "issue": 1069,
+    "until": "2026-11-28",
+    "platform": "linux",
+    "reason": "Run 43710741335 exceeded the unchanged 15000 ms beforeAll limit while awaiting openOffscreenWorker(), before video decoding ran. The preceding Linux run 43708315996 passed in 3248 ms with unchanged test, acceptance fixture, offscreen helper, video extraction code, dependencies and test configuration. The log does not identify whether bundling, Chrome launch, page creation or navigation stalled. The whole file is listed because setup precedes individual-test quarantine hooks."
+  },
+  {
     "file": "e2e/caseRun.e2e.test.ts",
     "test": "runs a Case without a console in the default layout: cameras, brief, servos and tries, then Esc returns",
     "issue": 1026,

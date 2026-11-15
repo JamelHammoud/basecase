@@ -95,6 +95,8 @@ Gray dots are moments the joint was braking, which the line doesn't limit. The d
 
 Each Case in the scene also gets a row, named after it. It runs the Case 20 times with randomized physics and passes at 18. A Case that misses more adds a note, never a blocker. A robot that can't run the Case fails its row with the reason, such as an arm on a Case that needs driven wheels, or a fall on hold. [Try a Case](/help/try-a-case) lists each reason.
 
+Click a Case's row to draw its 20 paths on the canvas. Click a red path to open that seed at its first failure, as in [Replay a failing seed](/help/replay-a-failing-seed).
+
 ## Problems every check can show
 
 | Message | What it means |

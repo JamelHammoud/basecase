@@ -1,6 +1,7 @@
 ---
 title: Make a Case pass with the agent
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 12
@@ -30,7 +31,7 @@ Before you start, make sure the scene has a Case and that its row in **Checks** 
 
    ![The Checks list with the Reach a Spot row red at 0 of 20 and Missed under it](/help/make-a-case-pass-with-the-agent/checks.png)
 
-2. Click the row. The Case opens in the **Simulate** tab.
+2. Click the row. The Case opens in the **Simulate** tab with its 20 seeded paths on the canvas.
 3. Press [[⌘K]], type **Make It Pass**, then press [[↩]].
 
    ![The command palette with Make It Pass under Agent](/help/make-a-case-pass-with-the-agent/command.png)
@@ -43,7 +44,7 @@ Before you start, make sure the scene has a Case and that its row in **Checks** 
 
 The agent runs the Case the same way Checks does: 20 runs, each with different friction, mass, servo strength and delay. In a scanned room, each run also moves the furniture a little. If **Train from Tries** kept a skill for the Case, every run uses that skill, as it does in Checks.
 
-The agent reads which rule failed in most runs and looks at the start, middle and end of the worst run. It then changes the design, for example a servo, a link length, a wheel or foot size, or the gripper, and runs the Case again.
+The agent reads the common failures, each failing seed's number and first failure frame, and the worst run's start, middle and end. It then changes the design, for example a servo, a link length, a wheel or foot size, or the gripper, and runs the Case again.
 
 If neither the robot nor the Case has changed since Checks ran it, the agent gets that result right away. The agent never edits the Case to make it pass. If it can't make the Case pass, it tells you why.
 

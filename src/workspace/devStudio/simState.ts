@@ -42,6 +42,7 @@ function timelineState(timeline: TryTimeline, sim: Simulation, rig: Rig) {
   const sought = sim.sought();
 
   return {
+    seed: timeline.record?.manifest.seed ?? 0,
     frame: timeline.frame,
     frames: timeline.frames,
     dt: timeline.dt,

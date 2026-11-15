@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { errorMessage } from '../../utils/errorMessage';
 import { AgentFrames } from './agentFrames';
 import { CameraGlyphs } from './cameraGlyphs';
+import { CaseTrails } from './caseTrails';
 import { CheckDots } from './checkDots';
 import type { ViewportContext } from './viewportContext';
 import { GhostLayer } from './ghostLayer';
@@ -21,6 +22,8 @@ type OverlayHandle = Pick<
   | 'setGhost'
   | 'ghostState'
   | 'checkDotCount'
+  | 'setCaseTrails'
+  | 'caseTrailState'
   | 'earthState'
   | 'importedWorldState'
 >;
@@ -51,6 +54,8 @@ export class StageOverlays {
 
   private readonly matTrack: MatTrack;
 
+  private readonly caseTrails: CaseTrails;
+
   private readonly checkDots: CheckDots;
 
   private readonly earth: EarthLayer;
@@ -65,6 +70,7 @@ export class StageOverlays {
     this.dataLayers = new DataLayers(overlays);
     this.frameLabel = new FrameLabel(ctx, labels.frame, () => this.dataLayers.frames());
     this.matTrack = new MatTrack(overlays);
+    this.caseTrails = new CaseTrails(ctx);
     this.checkDots = new CheckDots(overlays);
     this.checkDots.sync(props.checkDots);
     this.ghost = new GhostLayer(ctx, labels.ghost);
@@ -114,6 +120,8 @@ export class StageOverlays {
       setGhost: (ghost) => this.ghost.set(ghost),
       ghostState: () => this.ghost.state(),
       checkDotCount: () => this.checkDots.count,
+      setCaseTrails: (runs, replay) => this.caseTrails.set(runs, replay),
+      caseTrailState: () => this.caseTrails.state(),
       earthState: () => this.earth.state(),
       importedWorldState: () => this.importedWorld.state(),
     };
@@ -125,6 +133,7 @@ export class StageOverlays {
     this.frameLabel.dispose();
     this.matTrack.dispose();
     this.checkDots.dispose();
+    this.caseTrails.dispose();
     this.ghost.dispose();
     this.agentFrames.dispose();
     this.earth.dispose();

@@ -45,6 +45,8 @@ function answer(modelHash: string, outcome: (seed: number) => { passed: boolean;
 
     if (job.type === 'replay') return { type: 'replay', film } as never;
 
+    if (job.type !== 'runs') throw new Error(job.type);
+
     return { type: 'runs', result: { outcomes: job.seeds.map((seed) => ({ seed, ...outcome(seed) })) } } as never;
   });
 }
@@ -71,11 +73,19 @@ describe('run_case', () => {
   });
 
   it('names the failures most runs share and asks for a design change when it fails', async () => {
-    answer('failing', (seed) => ({ passed: seed > 15, margin: seed > 15 ? 0.1 : -seed / 10, failed: ['fell'] }));
+    answer('failing', (seed) => ({
+      passed: seed > 15,
+      margin: seed > 15 ? 0.1 : -seed / 10,
+      failed: ['fell'],
+      firstTrip: { label: 'fell', frame: seed * 5 },
+    }));
 
     const reply = await runCase({ runs: 20 }, scene('rover-four', presetOn('rover-four', 'reach-the-flag')));
 
     expect(reply).toMatchObject({ data: { passes: 5, status: 'fail', failures: [{ label: 'fell', runs: 15 }] } });
+    expect('data' in reply && reply.data?.failedSeeds).toEqual(
+      Array.from({ length: 15 }, (_, i) => ({ seed: i + 1, firstTrip: { label: 'fell', frame: (i + 1) * 5 } })),
+    );
     expect('text' in reply && reply.text).toContain('Failed most: fell (15 of 20 runs).');
     expect('text' in reply && reply.text).toContain('It needs 18 of 20.');
     expect(jobsOf('replay')[0][1]).toMatchObject({ seed: 15 });

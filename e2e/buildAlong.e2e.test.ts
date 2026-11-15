@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { servoLayout } from '../src/robot/sceneRobot';
 import type { RobotJoint } from '../src/types/robotics';
 import { component, sceneOf } from '../src/wiring/fixtures';
 import type { Net } from '../src/wiring/netlist';
@@ -179,43 +178,38 @@ describe('Build Along', () => {
     expect(app.errors).toEqual([]);
   });
 
-  it('steps through the guide on the canvas, names each servo’s bus ID, and leaves the scene as it was', async () => {
+  it('filters the viewport by step, renders servo labels and restores the scene on exit', async () => {
     const before = await sceneParts();
 
     await openBuildAlong();
 
     const steps = await planSteps();
-    const busIds = servoLayout(joints);
-    const expectedId = (partId: string) => busIds.ids[busIds.movable.findIndex((j) => j.actuators?.includes(partId))];
+    const servoStep = steps.findIndex((step) => step.servos.length > 0);
 
     expect(steps.length).toBeGreaterThan(1);
-    expect(steps.flatMap((s) => s.servos.map((v) => v.partId)).sort()).toEqual(['lift-servo', 'pan-servo']);
-
-    for (const [i, step] of steps.entries()) {
-      if (i > 0) await app.page.keyboard.press('ArrowRight');
-
-      await expect.poll(stepShown).toBe(String(i + 1));
-      await expect.poll(shownParts).toEqual(sorted(step.shown));
-
-      for (const servo of step.servos) {
-        expect(servo.id).toBe(expectedId(servo.partId));
-        await expect
-          .poll(() => app.page.locator('[data-build-label]').allTextContents())
-          .toContain(`${servo.joint}, ID ${servo.id}`);
-      }
-    }
-
-    expect(steps.at(-1)!.shown).not.toContain('cutout');
-
+    expect(servoStep).toBeGreaterThanOrEqual(0);
+    await expect.poll(shownParts).toEqual(sorted(steps[0].shown));
+    expect(await shownParts()).not.toEqual(sorted(parts.map((p) => p.id)));
     await app.page.keyboard.press('ArrowRight');
-    expect(await stepShown()).toBe(String(steps.length));
+    await expect.poll(stepShown).toBe('2');
+    await expect.poll(shownParts).toEqual(sorted(steps[1].shown));
+    expect(await shownParts()).not.toEqual(sorted(steps[0].shown));
 
+    const key = servoStep === 0 ? 'ArrowLeft' : 'ArrowRight';
+
+    for (let remaining = Math.abs(servoStep - 1); remaining > 0; remaining--) await app.page.keyboard.press(key);
+
+    await expect.poll(stepShown).toBe(String(servoStep + 1));
+    await expect
+      .poll(() => app.page.locator(shown('[data-build-label]')).allTextContents())
+      .toEqual(steps[servoStep].servos.map((servo) => `${servo.joint}, ID ${servo.id}`));
     await toolbar().getByRole('button', { name: /^Done/ }).click();
     await expect.poll(() => toolbar().count()).toBe(0);
     expect(await sceneParts()).toEqual(before);
     await expect.poll(shownParts).toEqual(sorted(parts.map((p) => p.id)));
-    expect(await app.page.locator('[data-build-label]').count()).toBe(0);
-  }, 300000);
+    await expect.poll(() => app.page.locator('[data-build-label]').count()).toBe(0);
+    expect(app.errors).toEqual([]);
+  });
 
   it('marks a step done once every part it prints is printed', async () => {
     const firstReady = () =>

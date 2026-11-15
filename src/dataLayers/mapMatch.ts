@@ -26,32 +26,27 @@ const scratch = new Float64Array(3);
 
 const OFFSETS = Array.from({ length: 27 }, (_, i) => [(i % 3) - 1, (Math.floor(i / 3) % 3) - 1, Math.floor(i / 9) - 1]);
 
-function around(voxels: Voxels, q: ArrayLike<number>): number[] {
+function around(voxels: Voxels, q: ArrayLike<number>, found: Int32Array): number {
   const cx = voxels.cell(q[0]);
   const cy = voxels.cell(q[1]);
   const cz = voxels.cell(q[2]);
-  const found: number[] = [];
+
+  let count = 0;
 
   for (const [dx, dy, dz] of OFFSETS) {
     const n = voxels.at(cx + dx, cy + dy, cz + dz);
 
-    if (n >= 0) found.push(n);
+    if (n >= 0) found[count++] = n;
   }
 
-  return found;
+  return count;
 }
 
-function neighbours(voxels: Voxels, v: number): number[] {
-  voxels.centroid(v, scratch);
-
-  return around(voxels, scratch);
-}
-
-function covariance(voxels: Voxels, cells: number[]) {
+function covariance(voxels: Voxels, cells: Int32Array, count: number) {
   const mean = [0, 0, 0];
   const m = [0, 0, 0, 0, 0, 0];
 
-  for (let i = 0; i < cells.length; i++) {
+  for (let i = 0; i < count; i++) {
     voxels.centroid(cells[i], scratch);
 
     const x = scratch[0] - mean[0];
@@ -93,12 +88,19 @@ function horizontalStructure(anchor: Structure['anchor'], m: number[]): Structur
   return { anchor, normals: [0, 0, 1, -Math.sin(angle), Math.cos(angle), 0] };
 }
 
-export function structureAt(voxels: Voxels, v: number, flat: boolean): Structure {
-  const cells = neighbours(voxels, v);
+export function structureAt(
+  voxels: Voxels,
+  v: number,
+  flat: boolean,
+  cells: Int32Array = new Int32Array(OFFSETS.length),
+): Structure {
+  voxels.centroid(v, scratch);
 
-  if (cells.length < MIN_CELLS) return NO_STRUCTURE;
+  const count = around(voxels, scratch, cells);
 
-  const { mean, m } = covariance(voxels, cells);
+  if (count < MIN_CELLS) return NO_STRUCTURE;
+
+  const { mean, m } = covariance(voxels, cells, count);
   const horizontal = flat ? horizontalStructure(mean, m) : null;
 
   if (horizontal) return horizontal;
@@ -113,11 +115,17 @@ export function structureAt(voxels: Voxels, v: number, flat: boolean): Structure
   return { anchor: mean, normals: rows.flatMap((n) => [n.x, n.y, n.z]) };
 }
 
-function nearest(voxels: Voxels, q: ArrayLike<number>, reach: number): number {
+function nearest(pass: Pass, q: ArrayLike<number>): number {
+  const { voxels, cells } = pass;
+  const reach = pass.system.reach;
   let best = -1;
   let bestD = reach * reach;
 
-  for (const v of around(voxels, q)) {
+  const count = around(voxels, q, cells);
+
+  for (let i = 0; i < count; i++) {
+    const v = cells[i];
+
     voxels.centroid(v, scratch);
 
     const d = (scratch[0] - q[0]) ** 2 + (scratch[1] - q[1]) ** 2 + (scratch[2] - q[2]) ** 2;
@@ -135,6 +143,9 @@ interface System {
   h: Float64Array;
   g: Float64Array;
   rows: number;
+  point: Float64Array;
+  reach: number;
+  jacobian: number[];
 }
 
 interface Pass {
@@ -143,10 +154,28 @@ interface Pass {
   step: number;
   known: Map<number, Structure>;
   flat: boolean;
+  cells: Int32Array;
+  system: System;
 }
 
-function addRow(system: System, q: ArrayLike<number>, n: ArrayLike<number>, r: number) {
-  const j = [q[1] * n[2] - q[2] * n[1], q[2] * n[0] - q[0] * n[2], q[0] * n[1] - q[1] * n[0], n[0], n[1], n[2]];
+function addRow(system: System, q: ArrayLike<number>, s: Structure, k: number) {
+  const nx = s.normals[k];
+  const ny = s.normals[k + 1];
+  const nz = s.normals[k + 2];
+  const r = nx * (q[0] - s.anchor[0]) + ny * (q[1] - s.anchor[1]) + nz * (q[2] - s.anchor[2]);
+
+  const withinReach = Math.abs(r) <= system.reach;
+
+  if (!withinReach) return;
+
+  const j = system.jacobian;
+
+  j[0] = q[1] * nz - q[2] * ny;
+  j[1] = q[2] * nx - q[0] * nz;
+  j[2] = q[0] * ny - q[1] * nx;
+  j[3] = nx;
+  j[4] = ny;
+  j[5] = nz;
 
   for (let a = 0; a < 6; a++) {
     system.g[a] += j[a] * r;
@@ -158,30 +187,29 @@ function addRow(system: System, q: ArrayLike<number>, n: ArrayLike<number>, r: n
 }
 
 function addPoint(pass: Pass, system: System, q: Float64Array) {
-  const reach = pass.voxels.size * REACH_VOXELS;
-  const v = nearest(pass.voxels, q, reach);
+  const v = nearest(pass, q);
 
   if (v < 0) return;
 
   let s = pass.known.get(v);
 
   if (!s) {
-    s = structureAt(pass.voxels, v, pass.flat);
+    s = structureAt(pass.voxels, v, pass.flat, pass.cells);
     pass.known.set(v, s);
   }
 
-  for (let k = 0; k < s.normals.length; k += 3) {
-    const n = s.normals.slice(k, k + 3);
-    const r = n[0] * (q[0] - s.anchor[0]) + n[1] * (q[1] - s.anchor[1]) + n[2] * (q[2] - s.anchor[2]);
-
-    if (Math.abs(r) <= reach) addRow(system, q, n, r);
-  }
+  for (let k = 0; k < s.normals.length; k += 3) addRow(system, q, s, k);
 }
 
 function linearize(pass: Pass, pose: THREE.Matrix4): System {
   const e = pose.elements;
-  const system: System = { h: new Float64Array(36), g: new Float64Array(6), rows: 0 };
-  const q = new Float64Array(3);
+  const system = pass.system;
+  const q = system.point;
+
+  system.h.fill(0);
+  system.g.fill(0);
+  system.rows = 0;
+
   const { local, step } = pass;
 
   for (let i = 0; i < local.length; i += step * 3) {
@@ -213,6 +241,15 @@ export function matchSweep(voxels: Voxels, local: Float32Array, guess: THREE.Mat
     local,
     step: Math.max(1, flat ? Math.ceil(count / FLAT_MATCH_POINTS) : Math.floor(count / MATCH_POINTS)),
     known: new Map(),
+    cells: new Int32Array(OFFSETS.length),
+    system: {
+      h: new Float64Array(36),
+      g: new Float64Array(6),
+      rows: 0,
+      point: new Float64Array(3),
+      reach: voxels.size * REACH_VOXELS,
+      jacobian: [0, 0, 0, 0, 0, 0],
+    },
   };
   let pose = guess.clone();
   const inverse = guess.clone().invert();

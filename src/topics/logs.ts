@@ -34,24 +34,36 @@ export function logTopics(index: TopicIndex, refs?: readonly string[]): Recorded
   return refs?.length ? all.filter((t) => refs.includes(topicRef(t.topic))) : all;
 }
 
-function topicEntries(topic: RecordedTopic, until: number): LogEntry[] {
+interface EntryFilter {
+  until: number;
+  least: number;
+  words: string[];
+}
+
+function appendEntries(topic: RecordedTopic, filter: EntryFilter, entries: LogEntry[]) {
   const levels = LEVELS_BY_SCHEMA[schemaKey(topic.schema)] ?? {};
-  const level = topic.numbers.get('level');
+  const values = topic.numbers.get('level');
   const text = topic.labels.get('msg') ?? topic.labels.get('message');
   const name = topic.labels.get('name');
-  const entries: LogEntry[] = [];
 
-  for (let i = 0; i < topic.t.length && topic.t[i] <= until; i++) {
+  for (let i = 0; i < topic.t.length && topic.t[i] <= filter.until; i++) {
+    const level = levels[values?.[i] ?? Number.NaN] ?? 'info';
+
+    if (levelRank(level) < filter.least) continue;
+
+    const node = name?.[i] ?? '';
+    const message = text?.[i] ?? '';
+
+    if (!matchesSearch(node, message, filter.words)) continue;
+
     entries.push({
       at: topic.t[i],
-      level: levels[level?.[i] ?? Number.NaN] ?? 'info',
-      name: name?.[i] ?? '',
-      text: text?.[i] ?? '',
+      level,
+      name: node,
+      text: message,
       topic: topic.topic,
     });
   }
-
-  return entries;
 }
 
 export interface LogQuery {
@@ -61,19 +73,23 @@ export interface LogQuery {
   search?: string;
 }
 
-const matchesSearch = (entry: LogEntry, words: string[]) => {
-  const haystack = `${entry.name} ${entry.text}`.toLowerCase();
+const matchesSearch = (name: string, text: string, words: string[]) => {
+  if (!words.length) return true;
+
+  const haystack = `${name} ${text}`.toLowerCase();
 
   return words.every((w) => haystack.includes(w));
 };
 
 export function logEntries(index: TopicIndex, query: LogQuery = {}): LogEntry[] {
-  const until = query.until ?? Infinity;
-  const least = levelRank(query.level ?? 'debug');
-  const words = (query.search ?? '').toLowerCase().split(/\s+/u).filter(Boolean);
+  const filter: EntryFilter = {
+    until: query.until ?? Infinity,
+    least: levelRank(query.level ?? 'debug'),
+    words: (query.search ?? '').toLowerCase().split(/\s+/u).filter(Boolean),
+  };
+  const entries: LogEntry[] = [];
 
-  return logTopics(index, query.topics)
-    .flatMap((t) => topicEntries(t, until))
-    .filter((e) => levelRank(e.level) >= least && matchesSearch(e, words))
-    .sort((a, b) => a.at - b.at);
+  for (const topic of logTopics(index, query.topics)) appendEntries(topic, filter, entries);
+
+  return entries.sort((a, b) => a.at - b.at);
 }

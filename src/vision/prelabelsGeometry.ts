@@ -2,6 +2,7 @@ import type { ImageAnnotation, ImageClass, TrainingFrame } from './frameSet';
 import { labelGeometry } from './labelEdits';
 import { boxPixels } from './import/sourceGeometry';
 import type { VisionDetection, VisionResult } from './types';
+import { nearestMaskColumns } from './maskSampling';
 
 export interface PrelabelFrameInput {
   frame: Pick<TrainingFrame, 'width' | 'height' | 'annotations'>;
@@ -30,14 +31,13 @@ function detectionPixels(detection: VisionDetection, width: number, height: numb
     throw new Error('The model returned an unsupported mask.');
 
   const pixels = new Uint8Array(width * height);
+  const columns = nearestMaskColumns(mask.width, width);
 
   for (let y = 0; y < height; y++) {
     const sourceY = Math.min(mask.height - 1, Math.floor(((y + 0.5) * mask.height) / height));
 
     for (let x = 0; x < width; x++) {
-      const sourceX = Math.min(mask.width - 1, Math.floor(((x + 0.5) * mask.width) / width));
-
-      pixels[y * width + x] = mask.values[sourceY * mask.width + sourceX] ? 1 : 0;
+      pixels[y * width + x] = mask.values[sourceY * mask.width + columns[x]] ? 1 : 0;
     }
   }
 

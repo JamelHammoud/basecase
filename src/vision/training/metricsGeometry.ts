@@ -1,6 +1,7 @@
 import type { ImageAnnotation, TrainingFrame } from '../frameSet';
 import { decodeMask } from '../imageMasks';
 import type { VisionDetection } from '../types';
+import { nearestMaskColumns } from '../maskSampling';
 
 export function boxOverlap(a: number[], b: number[]): number {
   const intersection =
@@ -21,6 +22,7 @@ export function maskOverlap(annotation: ImageAnnotation, detection: VisionDetect
   if (!mask) return 0;
 
   const truth = decodeMask(annotation.mask);
+  const columns = nearestMaskColumns(mask.width, frame.width);
   let intersection = 0;
   let union = 0;
 
@@ -28,9 +30,8 @@ export function maskOverlap(annotation: ImageAnnotation, detection: VisionDetect
     const py = Math.min(mask.height - 1, Math.floor(((y + 0.5) * mask.height) / frame.height));
 
     for (let x = 0; x < frame.width; x++) {
-      const px = Math.min(mask.width - 1, Math.floor(((x + 0.5) * mask.width) / frame.width));
       const expected = truth[y * frame.width + x] !== 0;
-      const actual = mask.values[py * mask.width + px] !== 0;
+      const actual = mask.values[py * mask.width + columns[x]] !== 0;
 
       intersection += Number(expected && actual);
       union += Number(expected || actual);

@@ -1,3 +1,5 @@
+import { Triangle, Vector3 } from 'three';
+
 export type V3 = [number, number, number];
 
 const WELD_MM = 1e-3;
@@ -46,13 +48,21 @@ export class MeshIndex {
   }
 
   nearestTriangle(point: V3): number {
+    const triangle = new Triangle();
+    const at = new Vector3(...point);
+    const closest = new Vector3();
     let best = -1;
     let bestDistance = Infinity;
 
     for (let t = 0; t < this.triangles; t++) {
       if (this.areas[t] < MIN_AREA) continue;
 
-      const d = this.distanceToTriangle(t, point);
+      triangle.a.fromArray(this.vertices, this.corners[t * 3] * 3);
+      triangle.b.fromArray(this.vertices, this.corners[t * 3 + 1] * 3);
+      triangle.c.fromArray(this.vertices, this.corners[t * 3 + 2] * 3);
+      triangle.closestPointToPoint(at, closest);
+
+      const d = at.distanceTo(closest);
 
       if (d < bestDistance) {
         bestDistance = d;
@@ -61,12 +71,6 @@ export class MeshIndex {
     }
 
     return best;
-  }
-
-  private distanceToTriangle(t: number, p: V3): number {
-    const [a, b, c] = [0, 1, 2].map((k) => this.vertex(this.corners[t * 3 + k]));
-
-    return Math.sqrt(squaredDistance(p, closestOnTriangle(p, a, b, c)));
   }
 
   private weld(): Float64Array {
@@ -162,51 +166,3 @@ export const cross = (a: V3, b: V3): V3 => [
   a[0] * b[1] - a[1] * b[0],
 ];
 export const unit = (a: V3): V3 => scale(a, 1 / (Math.hypot(...a) || 1));
-
-const squaredDistance = (a: V3, b: V3) => dot(sub(a, b), sub(a, b));
-
-function closestOnTriangle(p: V3, a: V3, b: V3, c: V3): V3 {
-  const ab = sub(b, a);
-  const ac = sub(c, a);
-  const ap = sub(p, a);
-  const d1 = dot(ab, ap);
-  const d2 = dot(ac, ap);
-
-  if (d1 <= 0 && d2 <= 0) return a;
-
-  const bp = sub(p, b);
-  const d3 = dot(ab, bp);
-  const d4 = dot(ac, bp);
-
-  if (d3 >= 0 && d4 <= d3) return b;
-
-  const cp = sub(p, c);
-  const d5 = dot(ab, cp);
-  const d6 = dot(ac, cp);
-
-  if (d6 >= 0 && d5 <= d6) return c;
-
-  return closestInside({ a, ab, ac }, [d1, d2, d3, d4, d5, d6], { b, c });
-}
-
-function closestInside(
-  { a, ab, ac }: { a: V3; ab: V3; ac: V3 },
-  [d1, d2, d3, d4, d5, d6]: number[],
-  { b, c }: { b: V3; c: V3 },
-): V3 {
-  const vc = d1 * d4 - d3 * d2;
-
-  if (vc <= 0 && d1 >= 0 && d3 <= 0) return add(a, scale(ab, d1 / (d1 - d3)));
-
-  const vb = d5 * d2 - d1 * d6;
-
-  if (vb <= 0 && d2 >= 0 && d6 <= 0) return add(a, scale(ac, d2 / (d2 - d6)));
-
-  const va = d3 * d6 - d5 * d4;
-
-  if (va <= 0 && d4 - d3 >= 0 && d5 - d6 >= 0) return add(b, scale(sub(c, b), (d4 - d3) / (d4 - d3 + (d5 - d6))));
-
-  const denom = 1 / (va + vb + vc);
-
-  return add(a, add(scale(ab, vb * denom), scale(ac, vc * denom)));
-}

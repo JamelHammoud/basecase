@@ -1,31 +1,17 @@
 ---
 title: Install skills from Hugging Face
 date: 2026-11-13
-image: /changelog/install-skills-from-hugging-face/cover.png
+image: /changelog/install-skills-from-hugging-face/ranked.png
 ---
 
-You can now publish a ready skill to Hugging Face and install it on another robot, where Arena proves it again.
+You can now find published skills ranked for your robot in Install Skill, then train one on your robot and check it in Arena. This works in the desktop app.
 
-To publish, right-click a ready skill and choose Publish to Hugging Face, under Train. To install, open Install Skill from ⌘K and give it the repo's link.
+A hexapod's Stand used to start from zero even when a quad with the same legs could already stand. Now it can start from the quad's policy, with each leg taking the nearest leg that has as many joints.
 
-Both work in the desktop app. Install Skill takes Motor Kit skills on legged robots.
+Skills Basecase can install come first in the list, followed by the closest limb positions and the most Arena passes on the source robot. Skills it can't install appear last with their reason. You can still install from a repo link.
 
-A policy on the Hub is trained for one robot, with nothing to show it works on yours. Until now, a hexapod's Stand started from zero, even when a quad with the same legs could already stand.
+The Motor Kit trains from the installed policy, and Arena runs 96 tries for Stand on your robot. The new skill keeps its own evidence and the hash of the skill it started from. A ready skill can also be published to Hugging Face for another robot to use.
 
-## From a Quad to a Hexapod
-
-Install Skill maps the quad's policy onto the hexapod's legs. Each leg takes the nearest leg with as many joints, so the hexapod's middle pair copies the front pair.
-
-The Motor Kit then trains from that policy, and Arena runs its 96 tries on the hexapod. The new skill keeps the hexapod's own evidence and the hash of the skill it started from.
-
-## What Gets Checked
-
-Install Skill checks every downloaded file against `skill.json` before anything trains. It refuses a repo whose legs have a different number of joints.
-
-Taught skills and moves don't install.
-
-## What's in the Repo
-
-The repo carries the skill, the policy as ONNX, and a model card with the observation, the action and the body class.
+Install Skill takes Motor Kit skills on legged robots. Taught skills and moves don't install.
 
 Read [Install a skill from Hugging Face](/help/install-a-skill-from-hugging-face) and [Publish a skill to Hugging Face](/help/publish-a-skill-to-hugging-face) in the help center for the steps.

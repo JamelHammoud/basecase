@@ -250,6 +250,7 @@ export function RightTabPanels({ core, actions, agent }: RightTabPanelsProps) {
           sceneName={core.scene.sceneName}
           onToast={core.showToast}
           onPublishSkill={simTraining.skillHub.publishable.length ? simTraining.skillHub.publish : null}
+          onInstallSkill={simTraining.skillHub.canInstall ? simTraining.skillHub.openInstall : null}
           fleet={simTraining.fleet}
         />
       </TabActivity>

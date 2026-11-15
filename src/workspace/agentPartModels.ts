@@ -7,6 +7,7 @@ const MEASURING = new Set([
   'assembly',
   'merge',
   'repair_part',
+  'lighten_part',
   'verify',
   'study_design',
   'define_joints',

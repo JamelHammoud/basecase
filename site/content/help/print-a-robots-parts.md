@@ -58,11 +58,19 @@ If you haven't saved a printer, the plate's button reads **Add Printer**. Clicki
 
 If you use Bambu Studio, the plate opens in Bambu Studio and you start the print there. Bambu Connect works the same way.
 
-To continue in the slicer, click **Open in Bambu Studio**. With more than one material, every plate opens in one unsliced project, with each part’s filament assigned. Parts keep their orientation, position and copies. Parts left off the current plates stay out of the project.
-
-When your saved printer reports loaded AMS slots, matching materials follow slot order and use those colors. Other materials follow in plate order with gray filament colors. A single-material design opens as before. Slicing and sending from Basecase still run per material.
-
 You can also open Print mode from **File** ▸ **Print**, from **Print** in the Build tab, or from [[⌘K]]. To slice every plate at once, choose **Slice Plates** in [[⌘K]]. A toast shows the progress and includes **Stop**.
+
+## Open the plates in Bambu Studio
+
+1. In Print mode, under the plate's details, click **Open in Bambu Studio**.
+
+![PLA and TPU plates with Open in Bambu Studio in the plate's details](/help/print-a-robots-parts/bambu-project.png)
+
+If your robot has a PLA body and TPU tires, both materials open together in one unsliced project. Every plate keeps its parts' filament assignments, orientation, position and copies. Parts left off the current plates stay out of the project.
+
+When your saved printer reports loaded AMS slots, matching materials follow slot order and use those colors. Other materials follow in plate order with gray filament colors. The project includes your selected printer, quality and infill settings.
+
+Basecase slices each material separately before sending a plate.
 
 ## On the plate
 

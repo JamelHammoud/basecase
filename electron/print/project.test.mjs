@@ -11,11 +11,16 @@ import { threeMfIn } from '../../src/three/analysis/analysisPool';
 import { DEFAULT_PROJECT } from '../../src/types/robotics';
 import { openJob, writeJob } from './jobs.mjs';
 import { findSlicerApp } from './slicers.mjs';
+import { prepareProject } from './projectFile.mjs';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'basecase-project-'));
 
 const projectPayload = async () => {
-  const spec = projectJobSpec(roverPlan(), projectPrinter, DEFAULT_PROJECT);
+  const spec = projectJobSpec(roverPlan(), projectPrinter, {
+    ...DEFAULT_PROJECT,
+    printProcess: '0.12mm Fine @BBL X1C',
+    infillPct: 31,
+  });
   const { files } = await threeMfIn(roverShapes(), spec);
 
   return {
@@ -36,7 +41,12 @@ it('writes and opens the project directly without running the CLI', async () => 
   const result = await openJob(written, {}, async (file) => opened.push(file));
 
   expect(opened).toEqual([result.file]);
-  expect(fs.readFileSync(result.file)).toEqual(Buffer.from(payload.groups[0].bytes));
+
+  const original = unzipSync(payload.groups[0].bytes);
+  const actual = unzipSync(fs.readFileSync(result.file));
+
+  expect(actual['3D/3dmodel.model']).toEqual(original['3D/3dmodel.model']);
+  expect(actual['Metadata/model_settings.config']).toEqual(original['Metadata/model_settings.config']);
   expect(
     JSON.parse(strFromU8(unzipSync(fs.readFileSync(result.file))['Metadata/project_settings.config'])).filament_type,
   ).toEqual(['PLA', 'TPU']);
@@ -48,6 +58,7 @@ describe.skipIf(!bambu)('Bambu Studio project compatibility', () => {
   it('loads the unsliced multi-material archive without error', async () => {
     const written = writeJob(root, await projectPayload());
 
+    await prepareProject(written.job.groups[0].layout, bambu, written.job.printer);
     await promisify(execFile)(
       bambu.binary,
       [
@@ -70,6 +81,11 @@ describe.skipIf(!bambu)('Bambu Studio project compatibility', () => {
 
     expect(settings.filament_type).toEqual(['PLA', 'TPU']);
     expect(settings.filament_colour).toEqual(['#EEEEEE', '#EEEEEE']);
+    expect(settings.layer_height).toBe('0.12');
+    expect(settings.sparse_infill_density).toBe('31%');
+    expect(settings.nozzle_temperature).toHaveLength(2);
+    expect(settings.nozzle_temperature.map(Number)).toEqual([220, 240]);
+    expect(settings.machine_start_gcode).toContain('M');
     expect(config).toMatch(/key="name" value="Rover body"[^]*?key="extruder" value="1"/);
     expect(config.match(/key="extruder" value="2"/g)).toHaveLength(4);
     expect(config.match(/<plate>/g)).toHaveLength(2);

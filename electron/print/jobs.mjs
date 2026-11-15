@@ -5,6 +5,7 @@ import { safeFileId } from '../backend/constants.mjs';
 import { flattenPresets, readSliced, runSlicer } from './slice.mjs';
 import { SLICERS, slicerFor, slicerOrder } from './slicers.mjs';
 import { plural } from '../plural.mjs';
+import { prepareProject } from './projectFile.mjs';
 
 export const fileStem = (name) =>
   String(name ?? 'robot')
@@ -120,6 +121,8 @@ export async function openJob({ dir, job }, { material, slicer: wanted }, open =
   if (!group) throw new Error('No printed parts to open.');
 
   const slicer = slicerFor(job.printer, { wanted });
+
+  if (job.project && slicer) await prepareProject(group.layout, slicer, job.printer);
 
   if (job.project || !slicer || !job.printer?.machine) {
     await open(group.layout, job.project ? slicer : null);

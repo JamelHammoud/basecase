@@ -5,12 +5,27 @@ import { groupFor, MIRROR_AXIS_INDEX } from './agentFrame';
 
 type MirrorAxis = 'x' | 'y' | 'z';
 
-function twinId(parts: ScenePart[], src: ScenePart, axis: MirrorAxis, rename: Record<string, string>): string {
+function mirrorIndex(parts: ScenePart[], axis: MirrorAxis) {
+  const sources = new Map<string, ScenePart>();
+  const twins = new Map<string, string>();
+
+  for (const part of parts) {
+    if (!sources.has(part.id)) sources.set(part.id, part);
+
+    const link = part.mirrorOf;
+
+    if (link?.axis === axis && !twins.has(link.id)) twins.set(link.id, part.id);
+  }
+
+  return { sources, twins };
+}
+
+function twinId(twins: Map<string, string>, src: ScenePart, axis: MirrorAxis, rename: Record<string, string>): string {
   if (rename[src.id]) return rename[src.id];
 
-  const twin = parts.find((p) => p.mirrorOf?.id === src.id && p.mirrorOf.axis === axis);
+  const twin = twins.get(src.id);
 
-  if (twin) return twin.id;
+  if (twin !== undefined) return twin;
 
   const swapped = swapWords(src.id, SIDE_WORDS[axis]);
 
@@ -32,15 +47,18 @@ export function mirrorParts(
   axis: MirrorAxis,
   rename: Record<string, string>,
 ): ScenePart[] {
+  if (!ids.length) return [];
+
   const plane = { axis: MIRROR_AXIS_INDEX[axis], offset: 0 };
   const used = new Set<string>(ids);
+  const { sources, twins } = mirrorIndex(parts, axis);
 
   return ids.flatMap((id) => {
-    const src = parts.find((p) => p.id === id);
+    const src = sources.get(id);
 
     if (!src) return [];
 
-    let newId = twinId(parts, src, axis, rename);
+    let newId = twinId(twins, src, axis, rename);
 
     while (used.has(newId)) newId = `${newId}-mirror`;
 

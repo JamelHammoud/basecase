@@ -59,11 +59,18 @@ function overlapInterval(interval: [number, number], value: number, slope: numbe
   interval[1] = Math.min(interval[1], slope > 0 ? 1 : crossing);
 }
 
-export function crossesBox(start: RoutePoint, end: RoutePoint, box: RouteObstacle, bound: RelativeBound): boolean {
-  const a = transformed(start.position, box.inverse);
-  const b = transformed(end.position, box.inverse);
-  const r0 = bound(start, box.id);
-  const r1 = bound(end, box.id);
+interface ClearancePoint {
+  position: PortVec;
+  radius: number;
+}
+
+const clearancePoint = (point: RoutePoint, box: RouteObstacle, bound: RelativeBound): ClearancePoint => ({
+  position: transformed(point.position, box.inverse),
+  radius: bound(point, box.id),
+});
+
+function crossesPrepared(a: PortVec, b: PortVec, box: RouteObstacle, radii: [number, number]): boolean {
+  const [r0, r1] = radii;
   const interval: [number, number] = [0, 1];
 
   for (const axis of AXES) {
@@ -77,6 +84,44 @@ export function crossesBox(start: RoutePoint, end: RoutePoint, box: RouteObstacl
 
   return interval[1] > interval[0];
 }
+
+export function crossesBox(start: RoutePoint, end: RoutePoint, box: RouteObstacle, bound: RelativeBound): boolean {
+  const a = transformed(start.position, box.inverse);
+  const b = transformed(end.position, box.inverse);
+  const r0 = bound(start, box.id);
+  const r1 = bound(end, box.id);
+
+  return crossesPrepared(a, b, box, [r0, r1]);
+}
+
+export function routeClearance(bound: RelativeBound) {
+  const points = new WeakMap<RoutePoint, Map<RouteObstacle, ClearancePoint>>();
+  const prepared = (point: RoutePoint, box: RouteObstacle): ClearancePoint => {
+    const byObstacle = points.get(point) ?? new Map<RouteObstacle, ClearancePoint>();
+    const cached = byObstacle.get(box);
+
+    if (cached) return cached;
+
+    const value = clearancePoint(point, box, bound);
+
+    byObstacle.set(box, value);
+    points.set(point, byObstacle);
+
+    return value;
+  };
+  const crosses = (start: RoutePoint, end: RoutePoint, box: RouteObstacle) => {
+    const a = prepared(start, box);
+    const b = prepared(end, box);
+
+    return crossesPrepared(a.position, b.position, box, [a.radius, b.radius]);
+  };
+  const clear = (start: RoutePoint, end: RoutePoint, boxes: RouteObstacle[]) =>
+    boxes.every((box) => !crosses(start, end, box));
+
+  return { crosses, clear };
+}
+
+export type RouteClearance = ReturnType<typeof routeClearance>;
 
 export const clearSegment = (start: RoutePoint, end: RoutePoint, boxes: RouteObstacle[], bound: RelativeBound) =>
   boxes.every((box) => !crossesBox(start, end, box, bound));

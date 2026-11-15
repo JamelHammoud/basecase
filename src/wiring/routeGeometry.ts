@@ -2,8 +2,10 @@ import type { PortVec } from '../types/ports';
 import {
   AXES,
   clearSegment,
-  corners,
   crossesBox,
+  corners,
+  routeClearance,
+  type RouteClearance,
   distance,
   EPSILON,
   expanded,
@@ -79,14 +81,14 @@ function comparePoints(a: PortVec, b: PortVec): number {
   return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
 }
 
-function routeCorners(obstacles: RouteObstacle[], bound: RelativeBound): RoutePoint[] {
+function routeCorners(obstacles: RouteObstacle[], clearance: RouteClearance): RoutePoint[] {
   const candidates = obstacles
     .flatMap((box) => corners(box).map((position) => ({ position, obstacleId: box.id })))
     .sort((a, b) => comparePoints(a.position, b.position) || a.obstacleId.localeCompare(b.obstacleId));
   const unique = new Map<string, RoutePoint>();
 
   for (const point of candidates) {
-    if (obstacles.some((box) => crossesBox(point, point, box, bound))) continue;
+    if (obstacles.some((box) => clearance.crosses(point, point, box))) continue;
 
     unique.set(point.position.join(','), point);
   }
@@ -126,11 +128,13 @@ function shortestPath(input: {
   obstacles: RouteObstacle[];
   vertices: () => RoutePoint[];
   bound: RelativeBound;
+  clearance: () => RouteClearance;
 }): RoutePoint[] | null {
-  const { start, end, obstacles, vertices, bound } = input;
+  const { start, end, obstacles, vertices, bound, clearance } = input;
 
   if (clearSegment(start, end, obstacles, bound)) return [start, end];
 
+  const query = clearance();
   const points = [start, end, ...vertices()];
   const distances = points.map(() => Infinity);
   const previous = new Int32Array(points.length).fill(-1);
@@ -152,8 +156,7 @@ function shortestPath(input: {
 
       const candidate = distances[current] + distance(points[current].position, points[next].position);
 
-      if (candidate >= distances[next] - EPSILON || !clearSegment(points[current], points[next], obstacles, bound))
-        continue;
+      if (candidate >= distances[next] - EPSILON || !query.clear(points[current], points[next], obstacles)) continue;
 
       distances[next] = candidate;
       previous[next] = current;
@@ -188,11 +191,20 @@ export function routePath({
   if (!clearExit(from, startPoint, boxes, bound) || !clearExit(to, endPoint, boxes, bound)) return null;
 
   let routeVertices: RoutePoint[] | undefined;
-  const vertices = () => (routeVertices ??= routeCorners(boxes, bound));
+  let query: RouteClearance | undefined;
+  const clearance = () => (query ??= routeClearance(bound));
+  const vertices = () => (routeVertices ??= routeCorners(boxes, clearance()));
   const result: RoutePoint[] = [from, startPoint];
 
   for (let index = 1; index < stops.length; index++) {
-    const segment = shortestPath({ start: stops[index - 1], end: stops[index], obstacles: boxes, vertices, bound });
+    const segment = shortestPath({
+      start: stops[index - 1],
+      end: stops[index],
+      obstacles: boxes,
+      vertices,
+      bound,
+      clearance,
+    });
 
     if (!segment) return null;
 

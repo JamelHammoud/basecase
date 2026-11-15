@@ -42,6 +42,7 @@ function sceneRecord(id: string, payload: ScenePayload, previous?: SavedSceneSum
     parts,
     annotations: payload.annotations || [],
     project: payload.project,
+    worldAssets: payload.worldAssets,
   };
 }
 

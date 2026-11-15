@@ -1,4 +1,5 @@
 import type { CaseCheckJob, CaseCheckReply, WireRobot } from './caseCheckJob';
+import { importedWorldItems } from './importedWorldItems';
 
 const MAX_WORKERS = 4;
 const IDLE_MS = 30000;
@@ -73,7 +74,7 @@ export class CaseCheckPool {
     return new Promise((resolve, reject) => {
       const queued: Queued = {
         id: ++this.calls,
-        job,
+        job: this.withWorld(job),
         tag: options.tag ?? '',
         group: options.group ?? '',
         robot: options.robot,
@@ -86,6 +87,14 @@ export class CaseCheckPool {
 
       this.next(at);
     });
+  }
+
+  private withWorld(job: CaseCheckJob): CaseCheckJob {
+    if (job.type !== 'runs' && job.type !== 'replay') return job;
+
+    if (!job.kase.world?.imported || job.worldColliders) return job;
+
+    return { ...job, worldColliders: importedWorldItems(job.kase.world.imported) };
   }
 
   keepOnly(tags: ReadonlySet<string>, group = '') {

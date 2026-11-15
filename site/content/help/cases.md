@@ -39,6 +39,7 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 - **A slot.** The kind of robot the Case needs: an arm, wheels or legs.
 - **A world.** The objects around the robot. Objects can be solid or pushable, and markers show a spot without getting in the robot's way. During a run, the Case's code can move, light or hide any object tagged movable.
   The world can include the ground. As you make the Case, you can add [rough ground, a step or a slope](/help/test-a-robot-on-rough-ground-steps-or-a-slope), sized to the robot's legs or wheels.
+  You can also [import a captured world](/help/import-a-world) from a collider mesh, with an optional splat for its appearance.
 - **Controls.** The commands you steer with during a try, such as Move and Turn, or Move and Raise and Lower for an arm.
 - **A contract.** The rules for a try: what it takes to pass, and what fails it, such as a fall.
 - **A time limit.** How long a try can last.
@@ -51,6 +52,8 @@ Each Case comes with a reference route that passes it, so you know a pass is pos
 ## One Case, many robots
 
 You write a Case once, then run it on any robot that fits its slot. For an arm, Basecase measures how far the arm reaches from its shoulder and scales the whole world to match. Write Touch the Dots on one arm, and the next arm can reach the same dots.
+
+Imported rooms and captured worlds keep their true size for every robot.
 
 ## Tries
 

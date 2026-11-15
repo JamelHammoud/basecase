@@ -1,4 +1,5 @@
-import { bundleScene, parseGalleryBundle, type GalleryBundle } from '../gallery/galleryBundle';
+import { bundleScene, type GalleryBundle } from '../gallery/galleryBundle';
+import { fetchGalleryBundle } from '../gallery/fetchBundle';
 import type { WorkspaceSeed } from '../workspace/types';
 import { newSceneId } from '../utils/sceneIds';
 
@@ -20,9 +21,7 @@ export function seedFromBundle(bundle: GalleryBundle): WorkspaceSeed {
 
 export async function firstRobotSeed(): Promise<WorkspaceSeed | null> {
   try {
-    const response = await fetch(`/gallery/${FIRST_ROBOT}.json`);
-
-    return response.ok ? seedFromBundle(parseGalleryBundle(await response.json())) : null;
+    return seedFromBundle(await fetchGalleryBundle(`/gallery/${FIRST_ROBOT}.json`));
   } catch {
     return null;
   }

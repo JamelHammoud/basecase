@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CaseCheckJob, CaseCheckReply, WireRobot } from './caseCheckJob';
 import { CaseCheckPool, type WorkerLike } from './caseChecksClient';
 import type { Case } from './schema';
+import { registerWorldAsset } from './worldAssets';
+import type { WorldAsset } from './worldAssets';
 
 class FakeWorker implements WorkerLike {
   onmessage: WorkerLike['onmessage'] = null;
@@ -122,5 +124,37 @@ describe('the Case checks pool', () => {
     expect(workers[2].posted[0].job).toMatchObject({ robot });
     workers[2].answer({ error: 'no model' });
     await expect(c).rejects.toThrow('no model');
+  });
+
+  it('sends the current world hulls on every job while reusing the same robot', async () => {
+    const { pool: p, workers } = pool();
+    const positions = new Float32Array([0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0, 10]);
+    const hash = 'c'.repeat(64);
+    const asset = {
+      world: { name: 'Room', splat: { bytes: new Uint8Array(1024) } },
+      pieces: [{ positions, indices: new Uint32Array([0, 1, 2]) }],
+    } as WorldAsset;
+
+    registerWorldAsset(hash, asset);
+
+    const inWorld = (position: [number, number, number]) => ({
+      ...runs([1]),
+      kase: { ...kase, world: { objects: [], imported: { hash, position } } } as Case,
+    });
+    const first = p.run(0, inWorld([0, 0, 0]), { robot: () => robot });
+
+    expect(workers[0].posted[0].job).toMatchObject({
+      worldColliders: [{ convexVertices: positions, position: [0, 0, 0], visible: false, behavior: 'static' }],
+    });
+    expect(JSON.stringify(workers[0].posted[0])).not.toContain('splat');
+    workers[0].answer(ran);
+    await first;
+
+    const second = p.run(0, inWorld([1000, 0, 0]), { robot: () => robot });
+
+    expect(workers[0].posted[1].job).not.toHaveProperty('robot');
+    expect(workers[0].posted[1].job).toMatchObject({ worldColliders: [{ position: [1000, 0, 0] }] });
+    workers[0].answer(ran);
+    await second;
   });
 });

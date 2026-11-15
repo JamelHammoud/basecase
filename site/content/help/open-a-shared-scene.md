@@ -1,7 +1,7 @@
 ---
 title: Open a shared scene
 date: 2026-11-12
-updated: 2026-11-13
+updated: 2026-11-14
 collection: files-and-sharing
 type: task
 order: 4
@@ -27,6 +27,8 @@ You can open a `.basecase` file someone sent you as a scene of your own. The sce
 3. Select the `.basecase` file.
 
 The scene opens in a new tab. If the front tab is a blank scene you haven't touched, the scene opens there instead. Basecase saves it to your **Scenes** menu as a new scene, so opening the same file twice gives you two copies.
+
+Imported worlds come with the scene, including their colliders, textures and optional splats. You don't need the original capture files.
 
 You can also choose **File** ▸ **Open Scene File**, or drop the file on the canvas. Double-clicking a `.basecase` file in Finder or File Explorer doesn't open it in Basecase.
 

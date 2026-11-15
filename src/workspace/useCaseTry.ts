@@ -1,7 +1,8 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { castOf, stageCase, stagedEffectors, type StagedCase } from '../cases/caseCast';
 import { driveFor, slotIndexOf, toCommand } from '../cases/caseDrives';
-import { worldItem, type Case } from '../cases/schema';
+import type { Case } from '../cases/schema';
+import { caseWorldItems } from '../cases/importedWorldItems';
 import type { SlotRobot } from '../cases/slots';
 import { scoreTry, tryManifest, type TryRecord } from '../cases/tries';
 import type { RobotDrive } from '../sim/drive';
@@ -157,8 +158,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
 
     if (logic.refusal) onRefuse(logic.refusal);
 
-    if (!logic.refusal && staged.slots.length > 1)
-      sim.setWorld(staged.kase.world.objects.map(worldItem), staged.joined);
+    if (!logic.refusal && staged.slots.length > 1) sim.setWorld(caseWorldItems(staged.kase), staged.joined);
 
     if (logic.refusal || !(await sim.drive.start(teamFor(staged, { rig, parts }, all)))) {
       refuseDrive(!logic.refusal && sim.drive.refusal(), onRefuse);

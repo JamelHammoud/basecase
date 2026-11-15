@@ -112,9 +112,13 @@ async function createCase(payload: Payload, ctx: CaseContext) {
 
   ctx.setAction('Making a Case');
 
+  const defaultWorld = targets ? 'room' : 'floor';
+  const chosenWorld = text(payload.world_hash) ? 'imported' : defaultWorld;
+
   const spec: CaseSpec = {
     goal: String(payload.goal) as GoalKind,
-    world: (text(payload.world) ?? (targets ? 'room' : 'floor')) as WorldKind,
+    world: (text(payload.world) ?? chosenWorld) as WorldKind,
+    worldHash: text(payload.world_hash),
     values: { ...caseValues(payload), ...(targets && payload.goal === 'path' ? { stops: targets.length } : {}) },
     ...(targets ? { targets } : {}),
     name: text(payload.name),

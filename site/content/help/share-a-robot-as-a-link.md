@@ -1,7 +1,7 @@
 ---
 title: Share a robot as a link
 date: 2026-11-13
-updated: 2026-11-13
+updated: 2026-11-14
 collection: files-and-sharing
 type: task
 covers:
@@ -31,4 +31,6 @@ If the Case has its own console, the page shows it the way **Run Case** does in 
 
 ![A shared rover Case in the browser: speed and tilt over the robot, and Stop Driving, Open Scene and a joystick on the right](/help/share-a-robot-as-a-link/app.png)
 
-Sharing saves the robot as one file in a public dataset repo on your Hugging Face account. The file holds the robot's parts and joints, the open Case with its console and code, and the newest trained policy or skill that passed, if there is one. A `README.md` next to the file tags the repo `basecase-case`. Sharing the same Case from the same scene again updates the same link. You can't share a robot whose file would be over 8 MB.
+Sharing saves the robot as one file in a public dataset repo on your Hugging Face account. The file holds the robot's parts and joints, the open Case with its console and code, and the newest trained policy or skill that passed, if there is one. An imported world comes with it, including its collider mesh, textures and optional splat.
+
+A `README.md` next to the file tags the repo `basecase-case`. Sharing the same Case from the same scene again updates the same link. You can't share a robot whose file would be over 8 MB, including its world.

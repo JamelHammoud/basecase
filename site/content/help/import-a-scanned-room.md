@@ -1,6 +1,7 @@
 ---
 title: Import a scanned room as a Case world
 date: 2026-11-13
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 covers:
@@ -79,4 +80,4 @@ Walls and doors stay fixed. Furniture never moves into a wall or onto the robot'
 
 ## If the import fails
 
-If Basecase can't read the file as a room, it shows a toast saying it couldn't import it and changes nothing.
+If Basecase can't read the file as a room, it shows a toast with the reason and changes nothing.

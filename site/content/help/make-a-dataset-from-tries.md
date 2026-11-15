@@ -61,7 +61,7 @@ To make a dataset from only some of the tries, hold [[⌘]] or [[⇧]] as you se
 
 ## The dataset
 
-Above its tries, the dataset shows their total running time and its newest version. If it also holds images, it shows their count and an **Images** section.
+Above its tries, the dataset shows their total running time and its newest version. If it also holds images, it shows their image and class counts and an **Images** section. Datasets saved before class counts were added show only the image count.
 
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 
@@ -75,7 +75,7 @@ Missed tries stay in the dataset, but export, publishing and training leave them
 
 Each try keeps its segments and tags, and export writes the segments as subtasks. To step through one try, see [Open a try from any scene](/help/open-a-try-from-any-scene).
 
-The Library lists each dataset under **Datasets** with its number of tries, images or both. Click one to open it.
+The Library lists each dataset under **Datasets** with its number of tries, images or both, and the class count when saved with the images. Click one to open it.
 
 ![Two datasets named Touch a Point under Datasets in the Library](/help/make-a-dataset-from-tries/library.png)
 

@@ -26,6 +26,7 @@ import { registerTryHandlers } from './library/tryRoutes.mjs';
 import { sessionSink } from './library/tryStore.mjs';
 import { registerDatasetHandlers } from './library/datasetRoutes.mjs';
 import { registerOnshapeHandlers } from './onshape/routes.mjs';
+import { registerRoboflowHandlers } from './roboflow/routes.mjs';
 import { registerEarthHandlers } from './earth/routes.mjs';
 import { registerPrintHandlers } from './print/routes.mjs';
 import { RobotFleet } from './robot/robotFleet.mjs';
@@ -257,6 +258,7 @@ registerTryHandlers(ipcMain, backend.tries);
 registerDatasetHandlers(ipcMain, backend.datasets);
 registerOnshapeHandlers(ipcMain, backend.onshape);
 registerEarthHandlers(ipcMain, backend.earth);
+registerRoboflowHandlers(ipcMain, backend.roboflow);
 registerShareHandlers(ipcMain);
 
 const robotBinary = daemonBinary({ resources: process.resourcesPath, fromSource, repo: workspaceRoot });

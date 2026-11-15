@@ -6,7 +6,7 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 Several scenes stay open at once, each with its own parts, undo history, selection, comments and agent conversation.
 
-- **Studies** (§8b) save their captured baseline, knob values, seed, Checks and graded rows in `project.study`. Background scene tabs stay mounted, so their Study workers keep running when another tab is in front. The saved baseline is serialized once across incremental result saves, using the same immutable part cache as the scene. Portable scene files carry the Study too.
+- **Studies** (§8b) save their captured baseline, knob values, seed, Checks and graded rows in `project.study`. Background scene tabs stay mounted, so their Study workers keep running when another tab is in front. The saved baseline is serialized once across incremental result saves, using the same immutable part cache as the scene. Portable scene files carry the Study too. Export and import remove machine-local print, quote, policy, try, skill and build-guide records from its captured baseline as well as the live project.
 
 - **Architecture:** `App.tsx` is the tab host; each tab is a `SceneWorkspace` (`src/SceneWorkspace.tsx`).
   - Every tab stays mounted (background tabs mount shortly after launch, §0f), so a background agent keeps building and can render its review shots. Background tabs are `invisible` + `inert`, and their `Viewport3D` is `paused` (no render loop; captures still render on demand). Closing a tab frees its WebGL context (`forceContextLoss`).

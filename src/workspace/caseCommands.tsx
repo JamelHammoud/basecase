@@ -209,7 +209,7 @@ export function caseCommands({ core }: CommandInputs): Command[] {
         ]
       : [];
 
-  if (!posing.hasRig) return images;
+  if (!posing.hasRig) return [...images, ...studyCommands(core)];
 
   const drive: Command = sim.drive.active
     ? {

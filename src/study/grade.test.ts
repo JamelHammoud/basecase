@@ -20,6 +20,13 @@ describe('detached Study Checks', () => {
 
     expect(row.checks.some((check) => check.status === 'fail')).toBe(true);
     expect(row.checks.find((check) => check.check === 'Fit')?.status).toBe('fail');
+    expect(row.checks.find((check) => check.check === 'Fit')).toMatchObject({
+      detail: expect.stringContaining('overlap'),
+      agentText: expect.stringContaining('first'),
+      items: expect.arrayContaining([
+        expect.objectContaining({ ids: ['first', 'second'], status: 'fail', text: expect.stringContaining('overlap') }),
+      ]),
+    });
     expect(row.massG).toBe(200);
   });
 

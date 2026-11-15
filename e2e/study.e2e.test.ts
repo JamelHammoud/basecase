@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { studyQuad } from '../src/sim/fixtures/studyQuad';
+import { box } from '../src/sim/fixtures/parts';
 import type { StudyKnob, StudyRecord } from '../src/study/types';
 import type { ProjectSettings, ScenePart } from '../src/types/robotics';
 import { openApp, partCount, shown, type App } from './harness';
@@ -16,6 +17,43 @@ let app: App | undefined;
 afterEach(async () => app?.close());
 
 describe('Study', () => {
+  it('opens and runs from commands on a scene without joints', async () => {
+    app = await openApp();
+
+    const { page } = app;
+    const foot = { ...box('foot', [0, 4, 0], [30, 8, 45], 0), name: 'Foot', massG: undefined };
+
+    await page.evaluate((part) => {
+      const hook = (window as unknown as { __studio: StudioHook }).__studio;
+
+      hook.load({ name: 'Foot options', parts: [part], project: { ...hook.sceneRecord().project, joints: [] } });
+    }, foot);
+    await expect.poll(() => partCount(page)).toBe(1);
+    await page.keyboard.press('Meta+k');
+    await page.getByLabel('Search commands').fill('Study');
+    await page
+      .locator(shown('button[data-idx]'))
+      .filter({ hasText: /^Study$/ })
+      .click();
+    await page.getByRole('switch', { name: 'Foot width', exact: true }).click();
+    await page.getByRole('textbox', { name: 'Foot length values', exact: true }).fill('1, 1.25');
+    await page.getByRole('button', { name: 'Run Study', exact: true }).click();
+
+    const rows = page.getByRole('table', { name: 'Study designs' }).getByTestId('study-row');
+
+    await expect.poll(() => rows.count()).toBe(2);
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const state = (window as unknown as { __studio: StudioHook }).__studio.studyState();
+
+          return !state.running && state.record?.rows.every((row) => !row.error && row.checks.length > 0);
+        }),
+      )
+      .toBe(true);
+    expect(app.errors).toEqual([]);
+  });
+
   it('grades a two by three quadruped study from commands and applies its complete design in one undo step', async () => {
     app = await openApp();
 

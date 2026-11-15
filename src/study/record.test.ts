@@ -2,8 +2,12 @@ import { noRuns, type CaseRuns } from '../cases/caseRuns';
 import { describe, expect, it } from 'vitest';
 import { servoArm } from '../sim/fixtures/servoArm';
 import { fixtureMeasures, fixtureTriangles } from '../sim/fixtures/parts';
+import { meshWorldAsset } from '../cases/worldAssets.fixtures';
+import { getWorldAsset, hashWorldAsset, registerWorldAsset } from '../cases/worldAssets';
+import { touchTheDots } from '../cases/testing';
 import { DEFAULT_PROJECT } from '../types/robotics';
 import { decodeSceneFile, encodeSceneFile, sharedScene } from '../utils/sceneFile';
+import { sceneJson } from '../utils/sceneJson';
 import { projectFromSeed } from '../workspace/helpers';
 import { gradeStudy, runStudy, studyFingerprint } from './study';
 import { readStudyRecord, validateStudyKnobs } from './record';
@@ -61,6 +65,73 @@ function sceneFile(study: unknown) {
 }
 
 describe('saved Study records', () => {
+  it('carries a baseline Case world after that Case leaves the live scene', async () => {
+    const study = await record();
+    const asset = meshWorldAsset();
+    const hash = await hashWorldAsset(asset);
+    const kase = touchTheDots(arm);
+    const captured = {
+      ...kase,
+      world: { ...kase.world, imported: { hash, position: [0, 0, 0] as [number, number, number] } },
+    };
+    const saved = { ...study, base: { ...study.base, project: { ...study.base.project, cases: [captured] } } };
+    const project = { ...base.project, cases: [], study: saved };
+
+    registerWorldAsset(hash, asset);
+
+    const autosaved = JSON.parse(await sceneJson({ parts: arm.parts, project }));
+    const shared = sharedScene({ name: 'Arm', globalGoal: '', parts: arm.parts, project });
+    const restored = await decodeSceneFile(await encodeSceneFile(shared));
+
+    expect(Object.keys(autosaved.worldAssets)).toEqual([hash]);
+    expect(Object.keys(shared.worldAssets ?? {})).toEqual([hash]);
+    expect(restored.project?.cases).toEqual([]);
+    expect(restored.project?.study?.base.project.cases?.[0].world.imported?.hash).toBe(hash);
+    expect(getWorldAsset(hash)?.world.mesh.positions).toEqual(asset.world.mesh.positions);
+
+    const missing = { ...shared, worldAssets: {} };
+
+    await expect(decodeSceneFile(await encodeSceneFile(missing))).rejects.toThrow('missing');
+  });
+
+  it('keeps local records out of exported and imported Study baselines without changing the saved Study', async () => {
+    const study = await record();
+    const project = {
+      ...base.project,
+      prints: [],
+      quotes: [],
+      madeBy: 'service' as const,
+      policies: [],
+      tries: [],
+      triesStored: true,
+      skills: [],
+      buildGuide: { id: 'local-guide', pages: 1, steps: 1, generatedAt: '', fingerprint: '' },
+    };
+    const saved = { ...study, base: { ...study.base, project } };
+    const shared = sharedScene({
+      name: 'Arm',
+      globalGoal: '',
+      parts: arm.parts,
+      project: { ...project, study: saved },
+    });
+    const imported = await decodeSceneFile(sceneFile(saved));
+    const roundTripped = await decodeSceneFile(await encodeSceneFile(shared));
+    const localKeys = ['prints', 'quotes', 'madeBy', 'policies', 'tries', 'triesStored', 'skills', 'buildGuide'];
+
+    for (const scene of [shared, imported, roundTripped]) {
+      expect(scene.project?.study?.rows).toEqual(study.rows);
+      expect(scene.project?.study?.base.project.joints).toEqual(base.project.joints);
+
+      for (const key of localKeys) {
+        expect(scene.project).not.toHaveProperty(key);
+        expect(scene.project?.study?.base.project).not.toHaveProperty(key);
+      }
+    }
+
+    expect(saved.base.project).toBe(project);
+    expect(saved.base.project.buildGuide.id).toBe('local-guide');
+  });
+
   it('round trips the engine result, original scene and baseline without recursive project data', async () => {
     const study = await record();
     const project = { ...base.project, study };

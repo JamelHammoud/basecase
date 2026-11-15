@@ -63,7 +63,21 @@ function localProject(project: ProjectSettings | undefined): ProjectSettings | u
   delete rest.skills;
   delete rest.buildGuide;
 
-  return withValidStudy(rest);
+  const portable = withValidStudy(rest);
+  const study = portable.study;
+
+  if (!study) return portable;
+
+  return {
+    ...portable,
+    study: {
+      ...study,
+      base: {
+        parts: study.base.parts.map(cleanPart),
+        project: localProject(study.base.project)!,
+      },
+    },
+  };
 }
 
 function cleanPart(part: ScenePart): ScenePart {

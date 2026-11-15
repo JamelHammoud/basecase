@@ -12,9 +12,11 @@ import {
   unprintableFindings,
 } from '../readiness/buildChecks';
 import { assemblyFindings, bomFindings, engineeringFindings, fitFindings, printFindings } from '../readiness/findings';
-import { readinessOf } from '../readiness/readiness';
+import { ownedBy, readinessOf } from '../readiness/readiness';
+import type { Readiness } from '../readiness/types';
 import { printReportOf } from '../three/analysis/shapeReports';
 import type { SweepSpec } from '../three/analysis/sweep';
+import type { CheckRow } from '../utils/engineeringTypes';
 import { strengthOf } from '../three/analysis/strengthPart';
 import { buildBom, isPrinted } from '../utils/bom';
 import { designedFits } from '../utils/designedFits';
@@ -49,6 +51,27 @@ export function gradeStudyDetached(scene: StudyScene, options: StudyGradeOptions
   } finally {
     grader.dispose();
   }
+}
+
+function studyChecks(readiness: Readiness): CheckRow[] {
+  return readiness.checks.map(({ name, ...check }) => {
+    const findings = readiness.findings.filter(ownedBy({ name, caseId: check.caseId }));
+    const items = findings.map((finding) => ({
+      text: finding.detail ?? finding.text,
+      ids: finding.ids,
+      status: finding.level === 'blocker' ? ('fail' as const) : ('warn' as const),
+      fix: finding.fix,
+      joint: finding.joint,
+    }));
+
+    return {
+      ...check,
+      check: name,
+      detail: check.detail || items.map((item) => item.text).join('\n'),
+      agentText: findings.map((finding) => finding.agentText).join('\n'),
+      items,
+    };
+  });
 }
 
 function gradeWithCache(scene: StudyScene, options: StudyGradeOptions, cache: StudyGradeCache): StudyRow {
@@ -116,7 +139,7 @@ function gradeWithCache(scene: StudyScene, options: StudyGradeOptions, cache: St
   ];
   const readiness = readinessOf(findings, { parts: scene.parts, fingerprint: '', rows: report.rows });
   const row = gradeStudyReport({ ...scene, measures }, options, report);
-  const checks = readiness.checks.map(({ name, ...check }) => ({ ...check, check: name }));
+  const checks = studyChecks(readiness);
 
   if (geometry.timedOut)
     checks.push({ check: 'Checks', status: 'fail', detail: 'The assembly checks reached their time limit.', ids: [] });

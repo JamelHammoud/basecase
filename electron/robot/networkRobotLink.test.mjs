@@ -113,9 +113,21 @@ describe('network robot link', () => {
     expect(robot.commands.filter((command) => command.cmd === 'put_artefact').map((command) => command.name)).toEqual([
       'calibration.json',
     ]);
+
+    const calibration = robot.commands.find((command) => command.name === 'calibration.json');
+
+    expect(JSON.parse(Buffer.from(calibration.data, 'base64').toString())).toMatchObject({
+      joints: [
+        { id: 1, zero_counts: 1000, direction: -1 },
+        { id: 2, zero_counts: 2048, direction: 1 },
+      ],
+    });
     expect(link.policy([{ kind: 'policy', id: 'policy-test' }])).toEqual({ ok: true });
     await vi.waitFor(() => expect(robot.commands.some((command) => command.name === 'policy.onnx')).toBe(true));
-    expect(Buffer.from(robot.commands.find((command) => command.name === 'policy.onnx').data, 'base64')).toEqual(bytes);
+
+    const policy = Buffer.from(robot.commands.find((command) => command.name === 'policy.onnx').data, 'base64');
+
+    expect(policy.equals(bytes)).toBe(true);
     expect(link.policy([])).toEqual({ ok: true });
     await vi.waitFor(() =>
       expect(robot.commands.some((command) => command.name === 'policy.onnx' && command.data === null)).toBe(true),

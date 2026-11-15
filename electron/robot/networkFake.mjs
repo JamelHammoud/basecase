@@ -30,6 +30,7 @@ export async function fakeNetworkRobot({ spec = ARM, greeting = {}, challenge = 
 
       return envelope;
     };
+    const session = { socket, send, raw: (event) => socket.write(`${JSON.stringify(event)}\n`) };
     const status = () =>
       send({
         event: 'status',
@@ -37,7 +38,6 @@ export async function fakeNetworkRobot({ spec = ARM, greeting = {}, challenge = 
         run: 'idle',
         joints: normalized.ids.map((id) => ({ id, position: 2048 })),
       });
-    const session = { socket, send, raw: (event) => socket.write(`${JSON.stringify(event)}\n`) };
 
     sockets.add(socket);
     sessions.push(session);

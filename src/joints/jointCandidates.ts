@@ -3,6 +3,7 @@ import { axisClusters, collinear, type AxisLink } from './axisClusters';
 import type { Cylinder } from './cylinderFit';
 import type { MeshIndex, V3 } from './meshIndex';
 import { orientJointGraph } from './jointGraph';
+import { pairKey } from '../../electron/cad-kernel/pairKey.mjs';
 
 export interface Body {
   id: string;
@@ -89,12 +90,14 @@ function joinsOf(cluster: AxisLink[]): Join[] {
   );
 }
 
-const pairKey = (j: Join) => [j.a, j.b].sort().join('\n');
-
 function sortedJoins(joins: Join[]) {
   const byPair = new Map<string, Join[]>();
 
-  for (const j of joins) byPair.set(pairKey(j), [...(byPair.get(pairKey(j)) ?? []), j]);
+  for (const j of joins) {
+    const key = pairKey(j.a, j.b, '\n');
+
+    byPair.set(key, [...(byPair.get(key) ?? []), j]);
+  }
 
   const kept: Join[] = [];
   const fastened: Array<[string, string]> = [];

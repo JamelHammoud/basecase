@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 
-export const DEEPER_THAN_REST_MM = 2;
+export { pairKey } from '../../electron/cad-kernel/pairKey.mjs';
 
-export const pairKey = (a: string, b: string) => [a, b].sort().join('|');
+export const DEEPER_THAN_REST_MM = 2;
 
 export interface Interference {
   a: string;

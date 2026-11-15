@@ -2,6 +2,8 @@
 
 Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every change follows and the index of these files; section numbers (§) are shared across them.
 
+Sketch face outlines use `electron/cad-kernel/pairKey.mjs` for undirected projected edges (§0f). Lexical endpoint order and the pipe separator stay unchanged, without sorting a temporary pair for each triangle edge.
+
 ## 7. Inspector (Figma UI3 style)
 
 - Sections are separated by full-width hairline dividers, never boxed cards. Section titles are sentence case and 13px semibold.

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { convexHullOf, MeshQuery, nearHull } from './meshQuery.mjs';
 import { weldMesh } from './topology.mjs';
+import { pairKey } from './pairKey.mjs';
 
 const PLANE_AXIS = { XY: 2, XZ: 1, YZ: 0 };
 const PROBE_MM = 0.2;
@@ -14,7 +15,7 @@ export function edgeKey(edge) {
   const pts = [edge.startPoint, edge.endPoint].map((p) => [p.x, p.y, p.z].map((v) => Math.round(v * 50)).join(','));
   const mid = edge.pointAt(0.5);
 
-  return `${pts.sort().join('|')}|${[mid.x, mid.y, mid.z].map((v) => Math.round(v * 50)).join(',')}`;
+  return `${pairKey(pts[0], pts[1])}|${[mid.x, mid.y, mid.z].map((v) => Math.round(v * 50)).join(',')}`;
 }
 
 const keysOf = (shapeOrKeys) =>

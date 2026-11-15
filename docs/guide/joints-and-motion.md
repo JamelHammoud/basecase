@@ -2,6 +2,8 @@
 
 Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every change follows and the index of these files; section numbers (§) are shared across them.
 
+Joint-axis candidates group joins with `electron/cad-kernel/pairKey.mjs`, calculating the newline-separated lexical key once per join without sorting endpoint arrays (§0f). Candidate order, confidence and fastened-pair rules stay unchanged.
+
 ## 8c. Joints, Poses and Motion
 
 Robot mesh loading and Onshape part exports use the shared `electron/eachLimited.mjs` cursor without copying or shifting pending queues. Mesh loading keeps six active tasks at most, and Onshape keeps four. Onshape filenames retain each part’s original index when exports complete out of order. Robot mesh failures remain notes, while an Onshape export failure rejects the import.

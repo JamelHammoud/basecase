@@ -1,5 +1,6 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { SimModel } from '../mjcfTypes';
+import { pairKey } from '../../../electron/cad-kernel/pairKey.mjs';
 
 export interface PhysicsSample {
   step: number;
@@ -43,7 +44,7 @@ function contactBodies(mj: MainModule, model: MjModel, data: MjData): string[] {
       const contact = list.get(i)!;
 
       if (contact.dist <= 0 && contact.efc_address >= 0)
-        pairs.add([bodyName(contact.geom1), bodyName(contact.geom2)].sort().join('\u0000'));
+        pairs.add(pairKey(bodyName(contact.geom1), bodyName(contact.geom2), '\u0000'));
 
       contact.delete();
     }

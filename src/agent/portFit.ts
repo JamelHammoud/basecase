@@ -1,5 +1,6 @@
 import type { MateType, Port, PortKind } from '../types/ports';
 import { plural } from '../../electron/plural.mjs';
+import { pairKey } from '../../electron/cad-kernel/pairKey.mjs';
 
 const BORE_TIGHT_MM = 0.3;
 const BORE_SLACK_MM = 1.5;
@@ -18,8 +19,6 @@ const PAIRS: Record<string, MateType> = {
 
 const ROUND: PortKind[] = ['output', 'boss'];
 const HOLES: PortKind[] = ['screw', 'bore'];
-
-const pairKey = (a: Port, b: Port) => [a.kind, b.kind].sort().join('+');
 
 function circleProblem(a: Port, b: Port): string | null {
   if (a.count !== b.count) return `${plural(a.count ?? 0, 'hole')} against ${b.count}`;
@@ -61,7 +60,7 @@ export function fitProblem(a: Port, b: Port): string | null {
 }
 
 export function mateTypeFor(a: Port, b: Port): MateType | null {
-  const type = PAIRS[pairKey(a, b)];
+  const type = PAIRS[pairKey(a.kind, b.kind, '+')];
 
   return type && !fitProblem(a, b) ? type : null;
 }

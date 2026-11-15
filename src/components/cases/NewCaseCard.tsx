@@ -74,7 +74,7 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
           columns={worlds.length > MAX_WORLD_COLUMNS ? 2 : worlds.length}
           value={world}
           onChange={pickWorld}
-          options={worlds.map((w) => ({ value: w.kind, label: w.name, title: w.trueSize ? w.name : undefined }))}
+          options={worlds.map((w) => ({ value: w.kind, label: w.name }))}
         />
       )}
       {world === 'imported' && builder.imported?.asset.world.reconstruction?.estimates.floor && (
@@ -106,18 +106,10 @@ export function NewCaseCard({ builder, onCreated }: NewCaseCardProps) {
         {preview.ok ? preview.kase.brief : preview.problem}
       </p>
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="sm" title="Cancel" shortcut="Esc" onClick={builder.cancel}>
+        <Button variant="ghost" size="sm" shortcut="Esc" onClick={builder.cancel}>
           Cancel
         </Button>
-        <Button
-          autoFocus
-          variant="primary"
-          size="sm"
-          title="Make Case"
-          shortcut="↩"
-          disabled={!preview.ok}
-          onClick={create}
-        >
+        <Button autoFocus variant="primary" size="sm" shortcut="↩" disabled={!preview.ok} onClick={create}>
           Make Case
         </Button>
       </div>

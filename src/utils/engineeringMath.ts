@@ -49,30 +49,7 @@ export function boxCorners(min: V3, max: V3): V3[] {
   return out;
 }
 
-const crossZ = (o: P2, a: P2, b: P2) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-
-function halfHull(pts: P2[]): P2[] {
-  const out: P2[] = [];
-
-  for (const p of pts) {
-    while (out.length >= 2 && crossZ(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
-
-    out.push(p);
-  }
-
-  return out;
-}
-
-export function convexHull(points: P2[]): P2[] {
-  const pts = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-
-  if (pts.length < 3) return pts;
-
-  const lower = halfHull(pts);
-  const upper = halfHull([...pts].reverse());
-
-  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
-}
+export { convexHull } from './convexHull';
 
 export function polygonMargin(poly: P2[], p: P2): number {
   if (poly.length < 3) return -Infinity;

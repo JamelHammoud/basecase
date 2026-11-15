@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 6. Bottom Toolbar
 
+Named buttons show only their key caps in tooltips. Measure and Annotate keep Esc on Done, without repeating its name.
+
 - **Toolbar (`ViewportToolbar`):**
   - Tools: Move V · Rotate E · Scale R · Comment M. Sculpt C appears between Scale and Comment only when Settings ▸ Canvas ▸ Tools ▸ Sculpt is on (off by default).
   - Then a divider, then **Shapes ▾** (A): a 4-column grid of basic-shape thumbnails (Plate, Cube, Shaft, Tube, Wedge, Sphere, Cone, Pyramid, Hex Prism, Capsule, Dome, Ring), then Sketch, Measure, Annotate and Import SVG.

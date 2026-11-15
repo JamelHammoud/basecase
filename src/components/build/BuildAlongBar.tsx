@@ -69,12 +69,12 @@ export const BuildAlongBar: React.FC<BuildAlongBarProps> = ({ buildAlong, active
           </>
         )}
         {step?.printPartId && (
-          <Button size="sm" variant="ghost" onClick={() => onPrint(step.printPartId!)} title="Print" tooltipSide="bottom">
+          <Button size="sm" variant="ghost" onClick={() => onPrint(step.printPartId!)}>
             Print
           </Button>
         )}
         <IslandDivider />
-        <Button size="sm" variant="ghost" onClick={buildAlong.close} title="Done" shortcut="Esc" tooltipSide="bottom">
+        <Button size="sm" variant="ghost" onClick={buildAlong.close} shortcut="Esc" tooltipSide="bottom">
           Done
         </Button>
       </FloatingIsland>

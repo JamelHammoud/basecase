@@ -7,7 +7,7 @@ import { Kbd } from './Kbd';
 export type TooltipSide = 'top' | 'bottom' | 'left' | 'right';
 
 export interface TooltipProps {
-  label: React.ReactNode;
+  label?: React.ReactNode;
   shortcut?: string;
   side?: TooltipSide;
   children: React.ReactElement;
@@ -135,7 +135,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
               top: coords?.y ?? -9999,
             }}
           >
-            <span>{label}</span>
+            {label && <span>{label}</span>}
             {shortcut && <Kbd>{shortcut}</Kbd>}
           </div>,
           document.body,

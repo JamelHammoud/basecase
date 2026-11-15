@@ -1,4 +1,5 @@
 import { assemblyModel } from './assembly.mjs';
+import { eachLimited } from '../eachLimited.mjs';
 import { assemblyLimits } from './assemblyLimits.mjs';
 import { isId } from './link.mjs';
 import { MB } from '../fileSize.mjs';
@@ -69,15 +70,6 @@ async function massOf(client, { instance }) {
   return weighed(reply?.bodies?.[partId] ?? reply?.bodies?.['-all-']);
 }
 
-async function pool(items, run) {
-  const queue = [...items.entries()];
-  const worker = async () => {
-    for (let next = queue.shift(); next; next = queue.shift()) await run(next[1], next[0]);
-  };
-
-  await Promise.all(Array.from({ length: Math.min(WORKERS, items.length) }, worker));
-}
-
 async function partData(job, unique) {
   const meshes = new Map();
   const masses = new Map();
@@ -85,7 +77,7 @@ async function partData(job, unique) {
   const budget = Math.max(MIN_PART_TRIANGLES, Math.floor(TRIANGLE_BUDGET / unique.length));
   let done = 0;
 
-  await pool(unique, async (part, i) => {
+  await eachLimited(unique, WORKERS, async (part, i) => {
     const key = partKey(part.instance);
     const [step, mass] = await Promise.all([exportStep(job, part), massOf(job.client, part)]);
     const mesh = partMesh(await job.convertStep(step), budget);

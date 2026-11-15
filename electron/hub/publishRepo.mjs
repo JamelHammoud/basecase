@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { eachLimited } from '../eachLimited.mjs';
 import { HUB_ENDPOINT, repoRoot } from './hubClient.mjs';
 
 const NAME = /^(?!.*(?:--|\.\.))[A-Za-z0-9](?:[A-Za-z0-9._-]{0,94}[A-Za-z0-9])?$/;
@@ -101,16 +102,6 @@ function revisions(entries) {
 
 const chunks = (list, size) =>
   Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, (i + 1) * size));
-
-async function eachLimited(list, limit, run) {
-  let next = 0;
-
-  const worker = async () => {
-    while (next < list.length) await run(list[next++]);
-  };
-
-  await Promise.all(Array.from({ length: Math.min(limit, list.length) }, worker));
-}
 
 async function uploadMultipart(client, file, upload) {
   const header = upload.header ?? {};

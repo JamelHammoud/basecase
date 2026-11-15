@@ -1,4 +1,5 @@
 import { textWidth } from './labelFont';
+import { boundaryClearance, type LabelBox } from './labelBoundary';
 import type { FlatFace } from './labelFaces';
 
 export interface LabelSpot {
@@ -17,38 +18,6 @@ export const strokeOf = (height: number) => Math.min(1.4, Math.max(0.8, height *
 
 const padOf = (height: number) => strokeOf(height) + LABEL_MM.wall;
 
-interface Box {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-}
-
-function clipAxis(range: { t0: number; t1: number }, p: number, q: number): boolean {
-  if (p === 0) return q >= 0;
-
-  const r = q / p;
-
-  if (p < 0) range.t0 = Math.max(range.t0, r);
-  else range.t1 = Math.min(range.t1, r);
-
-  return range.t0 <= range.t1;
-}
-
-function segmentHitsBox(edges: Float32Array, i: number, box: Box): boolean {
-  const [x0, y0, x1, y1] = [edges[i], edges[i + 1], edges[i + 2], edges[i + 3]];
-  const range = { t0: 0, t1: 1 };
-  const dx = x1 - x0;
-  const dy = y1 - y0;
-
-  return (
-    clipAxis(range, -dx, x0 - box.minX) &&
-    clipAxis(range, dx, box.maxX - x0) &&
-    clipAxis(range, -dy, y0 - box.minY) &&
-    clipAxis(range, dy, box.maxY - y0)
-  );
-}
-
 function inTriangle(tris: Float32Array, i: number, [x, y]: [number, number]): boolean {
   const [ax, ay, bx, by, cx, cy] = [tris[i], tris[i + 1], tris[i + 2], tris[i + 3], tris[i + 4], tris[i + 5]];
   const d1 = (x - bx) * (ay - by) - (ax - bx) * (y - by);
@@ -66,13 +35,7 @@ export function insideFace(face: FlatFace, point: [number, number]): boolean {
   return false;
 }
 
-function boxClear(face: FlatFace, box: Box): boolean {
-  for (let i = 0; i < face.edges.length; i += 4) if (segmentHitsBox(face.edges, i, box)) return false;
-
-  return true;
-}
-
-export function labelBox(spot: Pick<LabelSpot, 'at' | 'height' | 'turned'>, width: number): Box {
+export function labelBox(spot: Pick<LabelSpot, 'at' | 'height' | 'turned'>, width: number): LabelBox {
   const pad = padOf(spot.height);
   const along = (width * spot.height) / 2 + pad;
   const across = spot.height / 2 + pad;
@@ -81,8 +44,12 @@ export function labelBox(spot: Pick<LabelSpot, 'at' | 'height' | 'turned'>, widt
   return { minX: spot.at[0] - hx, maxX: spot.at[0] + hx, minY: spot.at[1] - hy, maxY: spot.at[1] + hy };
 }
 
-function tallest(face: FlatFace, spot: { at: [number, number]; turned: boolean }, width: number): number {
-  const fits = (height: number) => boxClear(face, labelBox({ ...spot, height }, width));
+function tallest(
+  clear: (box: LabelBox) => boolean,
+  spot: { at: [number, number]; turned: boolean },
+  width: number,
+): number {
+  const fits = (height: number) => clear(labelBox({ ...spot, height }, width));
 
   if (fits(LABEL_MM.maxHeight)) return LABEL_MM.maxHeight;
 
@@ -119,11 +86,12 @@ function candidateCenters(face: FlatFace): Array<[number, number]> {
 
 export function fitLabel(face: FlatFace, text: string): LabelSpot | null {
   const width = textWidth(text);
+  const clear = boundaryClearance(face.edges);
   let best: LabelSpot | null = null;
 
   for (const at of candidateCenters(face)) {
     for (const turned of [false, true]) {
-      const height = tallest(face, { at, turned }, width);
+      const height = tallest(clear, { at, turned }, width);
 
       if (height > (best?.height ?? 0) + 1e-6) best = { at, turned, height, stroke: strokeOf(height) };
     }

@@ -15,14 +15,16 @@ export const unknownCamera = (camera: string, keys: string[]) =>
   `${camera} isn’t a camera here. Cameras: ${keys.join(', ')}`;
 
 export function cameraStream({ views, feed }: CameraStreamSources): CameraStream {
+  const available = views.filter((view) => view.key !== 'operator');
+
   return (camera, ask, onFrame) => {
-    const view = findView(views, camera);
+    const view = findView(available, camera);
 
     if (view) return feed({ key: view.key, size: [ask.width, ask.height], fps: ask.fps, onFrame });
 
     return unknownCamera(
       camera.trim(),
-      views.map((v) => v.key),
+      available.map((v) => v.key),
     );
   };
 }

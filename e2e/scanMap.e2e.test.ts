@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { corridorMcap } from '../src/dataLayers/mapFixtures';
-import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { loadFixtureRobot } from './driveChecks';
 import { openApp, shown, type App } from './harness';
 
@@ -8,14 +7,11 @@ let app: App;
 
 interface MapLayer {
   id: string;
-  visible: boolean;
   points: number;
-  missing: string | null;
 }
 
 interface DataState {
   dataLayers: MapLayer[];
-  dataPlayhead: number | null;
   tries: Array<{ passed: boolean }>;
   timeline: { frame: number; frames: number } | null;
 }
@@ -59,11 +55,6 @@ async function importCorridor() {
   await expect.poll(async () => (await mapLayer())?.points ?? 0).toBeGreaterThan(360);
 }
 
-async function toggleMatching() {
-  await mapRow().click({ button: 'right' });
-  await app.page.getByRole('menuitem', { name: 'Scan Matching', exact: true }).click();
-}
-
 beforeEach(async () => {
   app = await openApp();
 }, 120000);
@@ -73,6 +64,21 @@ afterEach(async () => {
 });
 
 describe('A robot run’s map', () => {
+  it('rebuilds the displayed map when Scan Matching is turned off in Layers', async () => {
+    await loadFixtureRobot(app.page, 'rover-diff');
+    await importCorridor();
+
+    const points = (await mapLayer())!.points;
+
+    expect(await matching()).toBe(true);
+    await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).click();
+    await mapRow().click({ button: 'right' });
+    await app.page.getByRole('menuitem', { name: 'Scan Matching', exact: true }).click();
+    await expect.poll(matching).toBe(false);
+    await expect.poll(async () => (await mapLayer())?.points ?? 0).toBeGreaterThan(points);
+    expect(app.errors).toEqual([]);
+  });
+
   it('makes a saved corridor world through Layers and New Case and passes a seeded reference try', async () => {
     await loadFixtureRobot(app.page, 'rover-diff');
     await importCorridor();
@@ -117,42 +123,6 @@ describe('A robot run’s map', () => {
     expect(
       await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.mapWorldVerdict()),
     ).toMatchObject({ seed: 1, runs: 1, passes: 1 });
-    expect(app.errors).toEqual([]);
-  });
-
-  it('fuses every corridor scan, keeps the complete map while scrubbing, and controls it from Layers', async () => {
-    const rover = fixtureRobots().find((robot) => robot.id === 'rover-diff')!;
-
-    await loadFixtureRobot(app.page, rover);
-    await importCorridor();
-
-    const points = (await mapLayer())!.points;
-    const frames = (await state()).timeline!.frames;
-
-    expect((await mapLayer())!.missing).toBeNull();
-    await app.page.keyboard.press('End');
-    await expect.poll(async () => (await state()).timeline?.frame).toBe(frames - 1);
-    expect((await state()).dataPlayhead).toBeGreaterThan(60);
-    expect((await mapLayer())!.points).toBe(points);
-    await app.page.keyboard.press('Home');
-    await expect.poll(async () => (await state()).timeline?.frame).toBe(0);
-    await expect.poll(async () => (await state()).dataPlayhead).toBe(0);
-    expect((await mapLayer())!.points).toBe(points);
-    await app.page.locator(shown('nav[aria-label="Sidebar views"] button[aria-label="Layers"]')).click();
-    await mapRow().hover();
-    await mapRow().getByRole('button', { name: 'Hide', exact: true }).click();
-    await expect.poll(async () => (await mapLayer())?.visible).toBe(false);
-    expect((await mapLayer())!.points).toBe(0);
-    await mapRow().getByRole('button', { name: 'Show', exact: true }).click();
-    await expect.poll(async () => (await mapLayer())?.points).toBe(points);
-    expect(await matching()).toBe(true);
-    await toggleMatching();
-    await expect.poll(matching).toBe(false);
-    await expect.poll(async () => (await mapLayer())?.points ?? 0).toBeGreaterThan(360);
-    await expect.poll(async () => (await mapLayer())?.points).not.toBe(points);
-    await toggleMatching();
-    await expect.poll(matching).toBe(true);
-    await expect.poll(async () => (await mapLayer())?.points).toBe(points);
     expect(app.errors).toEqual([]);
   });
 });

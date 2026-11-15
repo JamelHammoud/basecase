@@ -1,3 +1,4 @@
+import type { TryVideoUpload } from './videoUploadTypes';
 import type { Recording } from '../../sim/recorder';
 import type { StoredTry, TrySummary } from '../tryFile';
 
@@ -15,7 +16,8 @@ export interface TryBackend {
   saveIndex: (bytes: Uint8Array) => Promise<void>;
   session: (id: string) => Promise<string | null>;
   saveSession: (stored: StoredTry, session: string) => Promise<void>;
-  saveVideo: (id: string, bytes: Uint8Array) => Promise<void>;
+  saveVideos: (videos: TryVideoUpload[]) => Promise<void>;
+  saveVideo: (id: string, bytes: Uint8Array, camera?: string) => Promise<void>;
 }
 
 export const TRIES_LABEL = 'tries';

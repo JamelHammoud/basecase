@@ -12,6 +12,7 @@ export const HUB_CALLS = {
   'hub:sign-in': (hub, token) => hub.signIn(token),
   'hub:publish': (hub, payload) => hub.publish(withBytes(payload)),
   'hub:skill-files': (hub, payload) => hub.skillFiles(payload),
+  'hub:model-file': (hub, payload) => hub.modelFile(payload),
   'hub:find-skills': (hub) => hub.findSkills(),
   'hub:dataset-files': (hub, payload) => hub.datasetFiles(payload),
 };
@@ -25,4 +26,7 @@ const base64Files = (reply) => ({
   ),
 });
 
-export const hubPostRoutes = (hub) => postRoutesOf(HUB_CALLS, hub, { 'hub:dataset-files': base64Files });
+export const hubPostRoutes = (hub) =>
+  postRoutesOf(HUB_CALLS, hub, {
+    'hub:dataset-files': base64Files,
+  });

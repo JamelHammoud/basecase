@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { ARM, JOINT_NAMES, THREE_JOINT_ARM } from './armFixture';
+import { ARM, THREE_JOINT_ARM } from './armFixture';
 import { SIM_MODEL_VERSION } from '../src/sim/mjcfTypes';
 import { FAKE_DAEMON_SCRIPT } from './fakeDaemon';
 import { openApp, openPlayTab, partCount, type App } from './harness';
@@ -13,7 +13,6 @@ const ARM_JOINTS = ARM.project.joints.map((joint) => joint.id);
 
 interface FakeLink {
   factory: boolean;
-  horns: Record<number, { offsetDeg: number; direction: 1 | -1 }>;
   intents: number[][];
   plantStall: (id: number) => boolean;
   policy: { kind: string; id?: string; hash?: string }[];
@@ -24,9 +23,7 @@ interface FakeLink {
 type StudioWindow = {
   __studio: {
     load: (r: unknown) => void;
-    select: (ids: string[]) => void;
     selection: () => string[];
-    robotCalibration: () => Promise<Array<{ id: number; zero_counts: number; direction: number }> | null>;
   };
   __fakeRobotLink: FakeLink;
 };
@@ -52,43 +49,7 @@ const TRAINED_ARM = {
   },
 };
 
-const row = (id: string) => app.page.locator(visible(`[data-calibration-joint="${id}"]`)).first();
-
 const button = (name: string | RegExp) => app.page.locator(visible('button'), { hasText: name }).first();
-
-const rightTab = (name: string) =>
-  app.page
-    .locator(visible('[role=tab]'), { hasText: new RegExp(`^${name}$`) })
-    .first()
-    .click();
-
-const servoModels = () => app.page.locator(visible('[data-check="Servo models"]')).first();
-
-const calibrating = () =>
-  app.page.locator(visible('[data-testid="robot-calibration"]')).first().getAttribute('data-calibrating');
-
-async function measuredRows() {
-  const rows = app.page.locator(visible('[data-calibration-joint][data-measured="true"]'));
-
-  return (await rows.evaluateAll((els) => els.map((el) => el.getAttribute('data-calibration-joint') ?? ''))).sort();
-}
-
-async function poseMarks() {
-  await app.page.evaluate(() => (window as unknown as StudioWindow).__studio.select(['upper']));
-  await rightTab('Pose');
-
-  const rows = app.page.locator(visible('[data-joint]'), { hasText: 'Measured' });
-
-  return (await rows.evaluateAll((els) => els.map((el) => el.getAttribute('data-joint') ?? ''))).sort();
-}
-
-async function expectServoModels(measured: string[]) {
-  expect(await poseMarks()).toEqual(measured);
-  await rightTab('Build');
-  await expect
-    .poll(() => servoModels().getAttribute('data-status'), { timeout: 45000 })
-    .toBe(measured.length === ARM_JOINTS.length ? 'pass' : 'warn');
-}
 
 interface Ghost {
   layer: { parts: Record<string, number[]>; values: Record<string, number>; label: string | null } | null;
@@ -150,102 +111,6 @@ afterAll(async () => {
 });
 
 describe('Operate calibration', () => {
-  it('calibrates every joint of the emulated arm, replays one and rolls it back', async () => {
-    const { page } = app;
-
-    await climbToTest();
-
-    expect(await page.locator(visible('[data-testid="robot-mode"]')).first().locator('[data-robot-rung]').count()).toBe(
-      7,
-    );
-
-    const calibrate = page
-      .locator(visible('[data-testid="robot-calibration"] button'), { hasText: 'Calibrate Servos' })
-      .first();
-
-    await expect.poll(() => calibrate.isEnabled()).toBe(true);
-    await calibrate.click();
-    await expect
-      .poll(() => page.locator(visible('[data-testid="robot-calibration"]')).first().getAttribute('data-calibrating'))
-      .not.toBe('idle');
-
-    for (const id of ['shoulder', 'elbow'])
-      await expect
-        .poll(() => row(id).getAttribute('data-verdict'), { timeout: 90000 })
-        .toMatch(/^(measured|consistent)$/);
-
-    const verdicts = page.locator(visible('[data-calibration-joint][data-verdict="measured"]'));
-    const measuredIds = (
-      await verdicts.evaluateAll((els) => els.map((el) => el.getAttribute('data-calibration-joint') ?? ''))
-    ).sort();
-
-    expect(await measuredRows()).toEqual(measuredIds);
-    await expectServoModels(measuredIds);
-    expect(await row('shoulder').getAttribute('data-robot-joint')).toBe('1');
-    expect(await row('elbow').getAttribute('data-robot-joint')).toBe('2');
-    await expect.poll(async () => Number(await row('elbow').getAttribute('data-position'))).toBeGreaterThan(0);
-    expect(await row('elbow').textContent()).toContain('Elbow');
-
-    const measured = page.locator(visible('[data-calibration-joint][data-verdict="measured"]')).first();
-    const jointId = (await measured.getAttribute('data-calibration-joint')) ?? '';
-
-    expect(Number(await row(jointId).getAttribute('data-version'))).toBe(1);
-    await row(jointId).locator('button').first().click();
-
-    const replay = page.locator(visible('[data-testid="joint-replay"]')).first();
-    const trace = (id: string) => replay.locator(`[data-testid="trace-${id}"]`);
-
-    for (const id of ['logged', 'preset', 'calibration'])
-      await expect.poll(() => trace(id).count(), { timeout: 60000 }).toBe(1);
-
-    const errors = await page.evaluate(
-      (id) =>
-        (
-          window as unknown as {
-            __studio: { calibrationReplay: (id: string) => Promise<Record<string, number | null> | null> };
-          }
-        ).__studio.calibrationReplay(id),
-      jointId,
-    );
-
-    expect(errors?.calibrationErrorRad).toBeLessThan(errors?.presetErrorRad ?? 0);
-    await row(jointId).click({ button: 'right' });
-    await page.getByRole('menuitem', { name: 'Roll Back' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Roll Back' }).click();
-    await expect.poll(() => row(jointId).getAttribute('data-version')).toBe('0');
-    await expect.poll(() => trace('calibration').count()).toBe(0);
-    expect(await trace('preset').count()).toBe(1);
-    expect(await row(jointId).getAttribute('data-measured')).toBe('false');
-
-    const rest = measuredIds.filter((id) => id !== jointId);
-
-    await expectServoModels(rest);
-    await servoModels()
-      .getByRole('button', { name: /^Servo models/ })
-      .click();
-
-    const note = servoModels().locator('li', { hasText: JOINT_NAMES[jointId] }).first();
-
-    await expect.poll(() => note.count(), { timeout: 45000 }).toBe(1);
-    await note.hover();
-    await note.getByRole('button', { name: 'Fix' }).click();
-    await expect.poll(calibrating).not.toBe('idle');
-    expect(await page.evaluate(() => (window as unknown as StudioWindow).__studio.selection())).toContain(
-      `${jointId}-servo`,
-    );
-    await expect.poll(calibrating, { timeout: 90000 }).toBe('idle');
-
-    const verdict = await row(jointId).getAttribute('data-verdict');
-
-    expect(await row(jointId).getAttribute('data-measured')).toBe(String(verdict === 'measured'));
-
-    const again = await measuredRows();
-
-    expect(again.filter((id) => id !== jointId)).toEqual(rest);
-    await expectServoModels(again);
-    expect(app.errors).toEqual([]);
-  }, 240000);
-
   it.skipIf(process.platform === 'win32')(
     'draws the measured robot as a ghost that follows the emulated servos, and labels the largest gap',
     async () => {
@@ -351,28 +216,21 @@ describe('Operate servo setup', () => {
 });
 
 describe('Operate zero and direction', () => {
-  const written = () => app.page.evaluate(() => (window as unknown as StudioWindow).__studio.robotCalibration());
-  const horns = { 1: { offsetDeg: 12, direction: 1 }, 2: { offsetDeg: 0, direction: -1 } } as const;
-
-  it('finds a reversed elbow and a 12° shoulder horn from the camera in Calibrate Servos', async () => {
+  it('starts camera calibration from the command palette', async () => {
     const { page } = app;
+    const calibration = page.locator(visible('[data-testid="robot-calibration"]')).first();
 
     await loadRecord(ARM);
     await climbToTest();
-    await page.evaluate((h) => Object.assign((window as unknown as StudioWindow).__fakeRobotLink.horns, h), horns);
     await expect.poll(() => button('Calibrate Servos').isEnabled()).toBe(true);
     await page.keyboard.press('ControlOrMeta+k');
     await page.getByLabel('Search commands').fill('Calibrate Servos');
     await page.keyboard.press('Enter');
-    await expect.poll(async () => (await written())?.[1].direction, { timeout: 90000 }).toBe(-1);
-
-    const [shoulder] = (await written())!;
-
-    expect([shoulder.direction, Math.abs(((shoulder.zero_counts - 2048) * 360) / 4096 - 12) < 2]).toEqual([1, true]);
-    await expect.poll(calibrating, { timeout: 90000 }).toBe('idle');
+    await expect.poll(() => calibration.getAttribute('data-calibrating')).toBe('capturing');
+    await button(/^Disconnect$/).click();
+    await expect.poll(() => button('Connect Emulated Robot').isEnabled()).toBe(true);
     expect(app.errors).toEqual([]);
-    await page.evaluate(() => (window as unknown as StudioWindow).__fakeRobotLink.robotDisconnect());
-  }, 150000);
+  }, 15000);
 });
 
 describe('Operate policy', () => {

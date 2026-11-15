@@ -63,9 +63,11 @@ A dataset with image annotations adds labeled images to the Library. If it also 
 - **LeRobot** datasets in v2.0, v2.1 and v3.0. Each try takes the name of its episode's task, and a v3 file with many episodes gives you one try per episode. Training, validation and test assignments in `meta/info.json` stay with their episodes when you export or train a dataset.
 - **ROS 1 and ROS 2** recordings, as `.mcap` files, ROS 1 `.bag` files, or a rosbag2 folder whose `metadata.yaml` lists MCAP storage. A rosbag2 folder becomes one try, and so do several files you pick together, on one timeline. Joint positions from `sensor_msgs/JointState` are resampled to 50 frames per second. MCAP topics encoded as ROS 1, ROS 2, Protobuf, JSON or FlatBuffers come in too (see [Play a ROS recording's topics in the console](/help/play-a-ros-recordings-topics-in-the-console)). FlatBuffers topics must carry an embedded binary reflection schema.
 - **Units** in radians, degrees or raw Feetech servo counts. Basecase tells them apart by the range of the values.
-- **Videos** for each camera. A try keeps each camera's file and the time span of its episode, without copying or re-encoding the video. Basecase doesn't decode camera images inside an MCAP file.
+- **Videos** for each camera whose file is included in the import. Basecase saves a local copy and keeps each episode's time span without re-encoding. Basecase doesn't decode camera images inside an MCAP file.
 
 Joints are matched by name, so an ALOHA's left and right arms land on two robots in the scene. Any match you make in the Match Joints sheet carries over to the next time you import the same data. If you import the same data twice onto the same robot in the same scene, the second import adds no tries. It can attach a split assignment to a try that had none. Conflicting assignments for an existing try stop the import with an error.
+
+Saved camera videos follow the timeline's playhead. Their tiles show detections from that image, as in [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
 
 If no joint matches and the dataset names a robot that isn't in your scene, such as an SO-101 or a Unitree G1, you see a message with **Import Robot**. Add the robot to your scene, then repeat the import.
 

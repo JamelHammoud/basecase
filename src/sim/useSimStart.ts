@@ -1,16 +1,17 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { Controller } from './engine';
 import type { SimModel } from './mjcfTypes';
 import type { SimRequest } from './sim.worker';
 import type { useSimWorker } from './useSimWorker';
 import type { SceneModelOptions } from './useSimulation';
 import { errorMessage } from '../utils/errorMessage';
+import { createStartupGate } from './startup';
 
 interface SimStartInputs {
   sw: ReturnType<typeof useSimWorker>;
   buildModel: (options?: SceneModelOptions) => Promise<SimModel>;
   modelRef: React.RefObject<SimModel | null>;
-  setModel: (m: SimModel) => void;
+  setModel: (model: SimModel | null) => void;
   controller: Controller;
   speed: number;
 }
@@ -18,66 +19,89 @@ interface SimStartInputs {
 export function useSimStart({ sw, buildModel, modelRef, setModel, controller, speed }: SimStartInputs) {
   const { setError, setStatus, worker, load, cancelLoad, setPlaying } = sw;
   const pinned = useRef<string | null>(null);
-  const generation = useRef(0);
+  const [gate] = useState(createStartupGate);
   const cancel = useCallback(() => {
-    generation.current++;
+    gate.cancel();
     cancelLoad();
-  }, [cancelLoad]);
-
+  }, [gate, cancelLoad]);
   const startModel = useCallback(
-    async (given?: SimModel) => {
-      const ticket = ++generation.current;
+    async (given?: SimModel, current: () => boolean = () => true) => {
+      if (!current()) return false;
+
+      const token = gate.begin();
+      const active = () => gate.current(token) && current();
 
       setError(null);
       setStatus('loading');
 
-      let m: SimModel;
-
       try {
-        m = given ?? (await buildModel({ pin: pinned.current }));
-      } catch (e) {
-        if (ticket !== generation.current) return;
+        const model = given ?? (await buildModel({ pin: pinned.current }));
 
-        setError(errorMessage(e));
+        if (!active()) return false;
+
+        modelRef.current = model;
+        setModel(model);
+
+        const target = worker();
+        const loaded = await load(target, model, controller);
+
+        if (!active()) return false;
+
+        if (!loaded) {
+          modelRef.current = null;
+          setModel(null);
+
+          return false;
+        }
+
+        target.postMessage({ type: 'speed', value: speed } satisfies SimRequest);
+        target.postMessage({ type: 'play' } satisfies SimRequest);
+        setPlaying(true);
+
+        return true;
+      } catch (error) {
+        if (!active()) return false;
+
+        modelRef.current = null;
+        setModel(null);
+        setError(errorMessage(error));
         setStatus('error');
 
-        return;
+        return false;
       }
-
-      if (ticket !== generation.current) return;
-
-      modelRef.current = m;
-      setModel(m);
-
-      const w = worker();
-      const loaded = await load(w, m, controller);
-
-      if (!loaded || ticket !== generation.current) return;
-
-      w.postMessage({ type: 'speed', value: speed } satisfies SimRequest);
-      w.postMessage({ type: 'play' } satisfies SimRequest);
-      setPlaying(true);
     },
-    [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying, modelRef, setModel],
+    [buildModel, worker, load, controller, speed, setError, setStatus, setPlaying, modelRef, setModel, gate],
   );
-
   const start = useCallback(
-    (given?: SimModel) => {
+    async (given?: SimModel) => {
+      pinned.current = null;
+      await startModel(given);
+    },
+    [startModel],
+  );
+  const startGuarded = useCallback(
+    (current: () => boolean) => {
       pinned.current = null;
 
-      return startModel(given);
+      return startModel(undefined, current);
     },
     [startModel],
   );
-
   const startPinned = useCallback(
-    (pin: string | null) => {
+    async (pin: string | null, current?: () => boolean) => {
       pinned.current = pin;
-
-      return startModel();
+      await startModel(undefined, current);
     },
     [startModel],
   );
 
-  return { start, startPinned, cancel, pinned: () => (modelRef.current ? pinned.current : null) };
+  return {
+    start,
+    startGuarded,
+    startPinned,
+    cancel,
+    cancelStart: cancel,
+    subscribeStop: gate.subscribeStop,
+    pinned: () => (modelRef.current ? pinned.current : null),
+  };
 }

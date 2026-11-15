@@ -3,6 +3,7 @@ import type { SimModel } from '../sim/mjcfTypes';
 import type { MeshFiles } from '../three/componentMeshes';
 import type { ScenePart } from '../types/robotics';
 import { LiveStage } from './liveStage';
+import type { ShotVisionResult } from './shotVision';
 import type { CameraView } from './views';
 import type { CameraTrainingFrame, CameraTrainingRequest } from './trainingTypes';
 
@@ -20,6 +21,12 @@ export interface CameraStageJob {
 export interface CameraFrameRequest {
   poses: Float64Array | null;
   keys: string[];
+  timestamp?: number;
+}
+
+export interface CameraFrameOutput {
+  bitmaps: Record<string, ImageBitmap>;
+  vision: Record<string, ShotVisionResult>;
 }
 
 let stage: LiveStage | null = null;

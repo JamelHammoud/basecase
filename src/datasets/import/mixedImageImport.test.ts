@@ -63,6 +63,13 @@ describe('mixed image and try imports', () => {
       images: imageSet(),
     });
     expect((await readSource(mixedSource()))?.data.episodes).toHaveLength(1);
+
+    const clip = new Uint8Array([0, 1, 2, 3]);
+    const source = mixedSource();
+    const withVideo = await readSource({ ...source, files: { ...source.files, 'videos/front.mp4': clip } });
+
+    expect(withVideo?.images).toEqual(imageSet());
+    expect(await withVideo?.files.find((file) => file.path === 'videos/front.mp4')?.read()).toEqual(clip);
   });
 
   it('summarizes and prepares images without discarding recording metadata', async () => {

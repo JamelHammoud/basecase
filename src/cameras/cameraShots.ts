@@ -1,8 +1,10 @@
 import type { ImportedWorldView } from '../three/viewport/importedWorld';
+import type { CameraVision } from './scopedVision';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
 import { runClock } from '../utils/duration';
 import { encodeBitmap } from '../utils/imageEncode';
+import type { VisionDetection } from '../vision/types';
 import type { FixedCamera } from './fixed';
 import { cameraViews, findView, type CameraView } from './views';
 import { cameraFeed } from './viewsClient';
@@ -13,6 +15,7 @@ export interface ShotFrame {
 }
 
 export interface CameraShotInput {
+  vision?: CameraVision;
   parts: ScenePart[];
   imported?: ImportedWorldView | null;
   world: ScenePart[];
@@ -25,6 +28,8 @@ export interface CameraShotInput {
 export interface CameraShot {
   view: string;
   dataUrl: string;
+  detections?: VisionDetection[];
+  visionError?: string;
 }
 
 export interface CameraShots {
@@ -60,7 +65,7 @@ export async function cameraShots(input: CameraShotInput): Promise<CameraShots> 
 
   if (!views.length) return { shots: [], missing, available };
 
-  const feed = cameraFeed();
+  const feed = cameraFeed(input.vision);
   const keys = views.map((v) => v.key);
   const timed = input.frames.length > 1 || input.frames.some((f) => f.poses);
   const shots: CameraShot[] = [];
@@ -69,15 +74,20 @@ export async function cameraShots(input: CameraShotInput): Promise<CameraShots> 
     await feed.load({ parts: solid, world: input.world, imported: input.imported, model: input.model, views });
 
     for (const frame of input.frames) {
-      const bitmaps = await feed.frame({ poses: frame.poses?.slice() ?? null, keys });
+      const timestamp = performance.now();
+      const { bitmaps, vision } = await feed.frame({ poses: frame.poses?.slice() ?? null, keys, timestamp });
       const taken = views.filter((v) => bitmaps[v.key]);
 
       shots.push(
         ...(await Promise.all(
-          taken.map(async (v) => ({
-            view: shotLabel(v, timed ? frame.t : null),
-            dataUrl: await encode(bitmaps[v.key]),
-          })),
+          taken.map(async (v) => {
+            return {
+              view: shotLabel(v, timed ? frame.t : null),
+              dataUrl: await encode(bitmaps[v.key]),
+              detections: vision[v.key]?.detections,
+              visionError: vision[v.key]?.error,
+            };
+          }),
         )),
       );
     }

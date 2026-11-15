@@ -1,5 +1,4 @@
 import type { Eye } from '../sim/eyes';
-import { fromMj } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
 import { rotate } from '../sim/quat';
 import type { Recording } from '../sim/recorder';
@@ -72,22 +71,36 @@ export function scanHits(source: ScanSource, values: ArrayLike<number>, poses: A
   const { eye, body, offset } = source;
   const o = body * 7;
   const q = [poses[o + 3], poses[o + 4], poses[o + 5], poses[o + 6]];
-  const lens = rotate(q, eye.pos);
-  const origin = [poses[o] + lens[0], poses[o + 1] + lens[1], poses[o + 2] + lens[2]];
-  const out: number[] = [];
+  const d = rotate(q, eye.pos);
+  const x = poses[o] + d[0];
+  const y = poses[o + 1] + d[1];
+  const z = poses[o + 2] + d[2];
+  const rays = eye.cols * eye.rows;
+  let hits = 0;
 
-  for (let ray = 0; ray < eye.cols * eye.rows; ray++) {
+  for (let ray = 0; ray < rays; ray++) {
+    const v = values[offset + ray];
+
+    if (!(v >= 1 || Number.isNaN(v))) hits++;
+  }
+
+  const out = new Float32Array(hits * 3);
+  let at = 0;
+
+  for (let ray = 0; ray < rays; ray++) {
     const v = values[offset + ray];
 
     if (v >= 1 || Number.isNaN(v)) continue;
 
-    const d = rotate(q, [eye.dirs[ray * 3], eye.dirs[ray * 3 + 1], eye.dirs[ray * 3 + 2]]);
     const reach = v * eye.rangeM;
 
-    out.push(...fromMj(origin[0] + d[0] * reach, origin[1] + d[1] * reach, origin[2] + d[2] * reach));
+    rotate(q, eye.dirs, d, ray * 3);
+    out[at++] = (x + d[0] * reach) * 1000;
+    out[at++] = (z + d[2] * reach) * 1000;
+    out[at++] = -(y + d[1] * reach) * 1000;
   }
 
-  return Float32Array.from(out);
+  return out;
 }
 
 function scanFrames(r: Recording, source: ScanSource): number[] {

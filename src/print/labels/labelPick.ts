@@ -161,13 +161,14 @@ function clears(scene: Placed[], owner: Placed, pick: LabelPick, text: string): 
 
   const toWorld = (p: [number, number]) => new THREE.Vector3(...labelPoint(face, p, 0)).applyMatrix4(owner.matrix);
   const others = scene.filter((o) => o !== owner);
-  const surface = [...inLabel, ...randomPoints(face), ...edgePoints(face)].map(toWorld);
+  const samples = [...inLabel, ...randomPoints(face)].map(toWorld);
+  const surface = [...samples, ...edgePoints(face).map(toWorld)];
 
   if (touchesOther(others, surface)) return false;
 
   const normal = new THREE.Vector3(...face.normal).transformDirection(owner.matrix);
 
-  return !seenFromOutside(scene, [...inLabel, ...randomPoints(face)].map(toWorld), normal);
+  return !seenFromOutside(scene, samples, normal);
 }
 
 export function pickLabel(scene: Placed[], target: LabelTarget, mesh: MeshData): LabelPick | null {

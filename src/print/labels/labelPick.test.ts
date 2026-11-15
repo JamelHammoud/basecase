@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import * as labelGlyph from './labelGlyph';
 import { manifoldCsg } from '../../booleans/manifoldCsg';
 import { place, type Placed } from '../../three/analysis/collide';
 import { solidFromPositions } from '../../three/analysis/shapeSolid';
@@ -61,6 +62,30 @@ describe('the face a printed part’s letter goes on', () => {
     expect(pick.face.offset).toBeCloseTo(4, 3);
     expect(flatFaces(meshOf(tray), 0)[0].area).toBeGreaterThan(pick.face.area);
   });
+
+  it.each(['A', 'MW'])(
+    'transforms each hidden-face sample once for %s across contact and visibility checks',
+    (text) => {
+      const point = vi.spyOn(labelGlyph, 'labelPoint');
+
+      try {
+        const pick = pickLabel(scene, { id: 'tray', text, down: DOWN }, meshOf(tray))!;
+        const calls = point.mock.calls.filter(([face]) => face === pick.face);
+        const backing = calls.filter(([, , offset]) => offset < 0);
+        const surface = calls.filter(([, , offset]) => offset >= 0);
+        const edgeCount = pick.face.edges.length / 4;
+
+        expect(pick.face.normal.map(Math.round)).toEqual([0, 1, 0]);
+        expect(pick.face.offset).toBeCloseTo(4, 3);
+        expect(backing.length).toBeGreaterThan(0);
+        expect(surface).toHaveLength(backing.length + 40 + edgeCount);
+        expect(new Set(surface.map(([, at]) => at.join(','))).size).toBe(surface.length);
+        expect(surface.slice(0, backing.length).map(([, at]) => at)).toEqual(backing.map(([, at]) => at));
+      } finally {
+        point.mockRestore();
+      }
+    },
+  );
 
   it('chooses a face with no contact with another part', () => {
     const pick = pickLabel(scene, { id: 'tray', text: 'A', down: DOWN }, meshOf(tray))!;

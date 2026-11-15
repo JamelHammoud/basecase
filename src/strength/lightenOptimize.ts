@@ -1,4 +1,5 @@
 import { conjugateGradient } from './cg';
+import { elasticPattern, type ElasticPattern } from './elasticPattern';
 import { densityFilter, filteredSensitivity, optimalityUpdate } from './lightenFilter';
 import { frozenAt } from './lightenFrozen';
 import type { LightenFrozen, LightenInput } from './lightenTypes';
@@ -14,12 +15,13 @@ const VOID_STIFFNESS = 0.001;
 const OPTIMIZATION_STEPS = 14;
 
 interface LoadCase {
+  pattern: ElasticPattern;
   stiffness: Float64Array;
   fixed: Uint8Array;
   forces: Float64Array;
 }
 
-function loadCase(mesh: HexMesh, job: StrengthJob): LoadCase {
+function loadCase(mesh: HexMesh, job: StrengthJob, pattern: ElasticPattern): LoadCase {
   const material = LAYERED[job.material];
 
   if (!material) throw new Error('Choose a supported printed material.');
@@ -34,7 +36,7 @@ function loadCase(mesh: HexMesh, job: StrengthJob): LoadCase {
   if (!held.includes(1) || !loaded.includes(1) || !forces.some((value) => value !== 0))
     throw new Error('The loads and supports must touch the printed part.');
 
-  return { stiffness, fixed, forces };
+  return { pattern, stiffness, fixed, forces };
 }
 
 export function elementEnergy(mesh: HexMesh, stiffness: Float64Array, u: Float64Array): Float64Array {
@@ -63,7 +65,7 @@ export function elementEnergy(mesh: HexMesh, stiffness: Float64Array, u: Float64
 function evaluate(mesh: HexMesh, density: Float64Array, load: LoadCase) {
   const scale = density.map((value) => VOID_STIFFNESS + (1 - VOID_STIFFNESS) * value ** SIMP_POWER);
   const solved = conjugateGradient(
-    { nodes: mesh.nodes, scale, stiffness: load.stiffness, fixed: load.fixed },
+    { pattern: load.pattern, scale, stiffness: load.stiffness, fixed: load.fixed },
     load.forces,
     { tolerance: 0.002, maxIterations: 1800 },
   );
@@ -92,7 +94,8 @@ export function optimizeDensity(
     throw new Error('The mounting surfaces need more than the target volume.');
 
   const filter = densityFilter(mesh, Math.max(input.minWallMm * 1.5, 2.25));
-  const loads = input.jobs.map((job) => loadCase(mesh, job));
+  const pattern = elasticPattern(mesh.nodes, mesh.positions.length / 3);
+  const loads = input.jobs.map((job) => loadCase(mesh, job, pattern));
   const initialDensity = (budget - fixedCount) / (mesh.cells.length - fixedCount);
   const baseline: number[] = [];
   let density: Float64Array = Float64Array.from(frozen, (value) => (value ? 1 : initialDensity));

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import * as elastic from './elasticPattern';
 import { lightenPart, type LightenInput } from './lighten';
 import type { StrengthJob, V3 } from './types';
 import { loadManifold, solidOfMesh } from '../wrap/manifold';
@@ -76,7 +77,12 @@ describe('lightening a loaded printed bracket', () => {
     const single = optimizeDensity(grid, input, frozenRegions(input));
     const other: StrengthJob = { ...input.jobs[0], key: 'crosswise', load: { ...input.jobs[0].load, axis: [0, 1, 0] } };
     const both = { ...input, jobs: [...input.jobs, other] };
+    const preparation = vi.spyOn(elastic, 'elasticPattern');
     const combined = optimizeDensity(grid, both, frozenRegions(both));
+
+    expect(preparation).toHaveBeenCalledTimes(1);
+    preparation.mockRestore();
+
     const normalized = combined.compliance.reduce(
       (sum, value, index) => sum + value / combined.baselineCompliance[index],
       0,

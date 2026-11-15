@@ -6,7 +6,14 @@ import { amps } from './electric';
 import { jointLabel } from './engineeringFormat';
 import { plural } from '../../electron/plural.mjs';
 import type { CheckContext, CheckRow } from './engineeringTypes';
-import { PowerSource, drivesJoint, findPowerSources, sceneRegulators, tetherSource } from './powerSources';
+import {
+  PowerSource,
+  SceneRegulator,
+  drivesJoint,
+  findPowerSources,
+  sceneRegulators,
+  tetherSource,
+} from './powerSources';
 import { IDLE_A, STALL_A } from './servoAmps';
 
 const CONVERTER_EFFICIENCY = 0.9;
@@ -29,37 +36,62 @@ const isOver = (b: BatterySpec, a: ActuatorSpec) => b.fullV > a.volts[1] + 1e-6;
 const isUnder = (b: BatterySpec, a: ActuatorSpec) => b.fullV < a.volts[0] - 1e-6;
 const sagsUnder = (b: BatterySpec, a: ActuatorSpec) => b.nominalV < a.volts[0] - 1e-6;
 
-function servoRail(ctx: PowerScene, acts: ActuatorSpec[], source: PowerSource) {
-  const fits = sceneRegulators(ctx.parts).filter(
-    ({ regulator: r }) =>
-      acts.every((a) => r.vout >= a.volts[0] && r.vout <= a.volts[1]) &&
-      source.battery.fullV <= r.vinMax &&
-      source.battery.nominalV >= r.vinMin,
+const acceptsSource = ({ regulator: r }: SceneRegulator, source: PowerSource) =>
+  source.battery.fullV <= r.vinMax && source.battery.nominalV >= r.vinMin;
+
+const compatibleRegulators = (ctx: PowerScene, acts: ActuatorSpec[]) =>
+  sceneRegulators(ctx.parts).filter(({ regulator: r }) =>
+    acts.every((a) => r.vout >= a.volts[0] && r.vout <= a.volts[1]),
   );
 
-  return fits.sort((x, y) => y.regulator.vout - x.regulator.vout || y.regulator.ioutA - x.regulator.ioutA)[0];
+function servoRail(regulators: SceneRegulator[], source: PowerSource) {
+  let best: SceneRegulator | undefined;
+
+  for (const rail of regulators) {
+    if (!acceptsSource(rail, source)) continue;
+
+    const order = best ? best.regulator.vout - rail.regulator.vout || best.regulator.ioutA - rail.regulator.ioutA : -1;
+
+    if (order < 0) best = rail;
+  }
+
+  return best;
 }
 
 function railOf(ctx: PowerScene, source: PowerSource) {
   const acts = actuatorsIn(ctx);
   const outOfRange = acts.some((a) => isOver(source.battery, a) || isUnder(source.battery, a));
 
-  return outOfRange ? servoRail(ctx, acts, source) : undefined;
+  return outOfRange ? servoRail(compatibleRegulators(ctx, acts), source) : undefined;
 }
 
-function sourceRank(ctx: PowerScene, source: PowerSource): number {
-  const acts = actuatorsIn(ctx);
-
+function sourceRank(acts: ActuatorSpec[], source: PowerSource, regulators: () => SceneRegulator[]): number {
   if (acts.every((a) => !isOver(source.battery, a) && !isUnder(source.battery, a))) return 0;
 
-  return servoRail(ctx, acts, source) ? 1 : 2;
+  return regulators().some((rail) => acceptsSource(rail, source)) ? 1 : 2;
 }
 
 export function servoSource(ctx: PowerScene): PowerSource | undefined {
-  const ranked = findPowerSources(ctx).map((source) => ({ source, rank: sourceRank(ctx, source) }));
-  const best = ranked.sort((x, y) => x.rank - y.rank || x.source.name.localeCompare(y.source.name))[0]?.source;
+  const sources = findPowerSources(ctx);
 
-  return best ?? tetherSource(ctx);
+  if (!sources.length) return tetherSource(ctx);
+
+  const acts = actuatorsIn(ctx);
+  let compatible: SceneRegulator[] | undefined;
+  const regulators = () => (compatible ??= compatibleRegulators(ctx, acts));
+  let best: PowerSource | undefined;
+  let bestRank = Infinity;
+
+  for (const source of sources) {
+    const rank = sourceRank(acts, source, regulators);
+
+    if (!best || rank < bestRank || (rank === bestRank && source.name.localeCompare(best.name) < 0)) {
+      best = source;
+      bestRank = rank;
+    }
+  }
+
+  return best;
 }
 
 export function servoRegulator(ctx: PowerScene) {

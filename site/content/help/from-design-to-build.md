@@ -22,6 +22,7 @@ covers:
   - src/utils/bom.ts
   - src/utils/bomNeeds.ts
   - src/utils/engineering.ts
+  - src/utils/engineeringWeight.ts
   - src/print/
   - src/guide/
 ---

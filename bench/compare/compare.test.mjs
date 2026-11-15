@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { indexEntry } from '../archive.mjs';
 import { appTimeouts } from '../metrics.mjs';
-import { mainServedModel, resolveModel, servedMismatch, sharedEffort } from './models.mjs';
+import { mainServedModel, resolveModel, runModelProblem, servedMismatch, sharedEffort } from './models.mjs';
 import { canStart, historicalRunCost, roundJobs, settled } from './plan.mjs';
 import { cachedRuns, runFromCache } from './cache.mjs';
 import { runOnSlots } from '../slots.mjs';
@@ -56,6 +56,17 @@ describe('model choice', () => {
     expect(sharedEffort(both)).toBe('high');
     expect(sharedEffort(both, 'low')).toBe('low');
     expect(() => sharedEffort(both, 'max')).toThrow('Shared levels: low, medium, high.');
+  });
+
+  it('requires an answering model on every attempt and rejects a later model substitution', () => {
+    const model = resolveModel('claude-fable-5-2', AVAILABLE);
+
+    expect(runModelProblem({ servedBy: null, status: 'pass' }, model)).toContain('No answering model');
+    expect(runModelProblem({ servedBy: 'claude-fable-5-2' }, model)).toBeNull();
+    expect(runModelProblem({ servedBy: 'claude-fable-5-1' }, model)).toBe(
+      'Asked for claude-fable-5-2 but claude-fable-5-1 answered.',
+    );
+    expect(runModelProblem({ servedBy: null }, resolveModel('fable', AVAILABLE))).toContain('No answering model');
   });
 });
 
@@ -169,6 +180,37 @@ describe('paired statistics', () => {
     expect(md).toContain('# fable vs opus');
     expect(md).toContain('1 of 3 rounds over 6 tasks, 8 at a time, stopped early');
     expect(md).toContain('| fable | fable-id | 0.667 |');
+  });
+
+  it('keeps a partial round from claiming a winner when a budget or slot ends the run', () => {
+    const stats = compareStats(results(6, 0), ['fable', 'opus']);
+
+    for (const stop of ['deadline', 'slots', 'error', 'served', 'budget']) {
+      const md = compareMarkdown({
+        stats,
+        models: [resolveModel('fable', AVAILABLE), resolveModel('opus', AVAILABLE)],
+        labels: ['fable', 'opus'],
+        plan: { rounds: 1, maxRounds: 3, tasks: 6, parallel: 8, stop, margin: 0.1 },
+      });
+
+      expect(md).toContain('Comparison incomplete.');
+      expect(md).not.toContain('fable passes more tasks than opus.');
+    }
+  });
+
+  it('preserves the actual startup failure in the report', () => {
+    const md = compareMarkdown({
+      stats: compareStats([], ['tree', 'main']),
+      models: [
+        { arg: 'opus', id: 'opus' },
+        { arg: 'opus', id: 'opus' },
+      ],
+      labels: ['tree', 'main'],
+      plan: { rounds: 0, maxRounds: 3, tasks: 6, parallel: 8, stop: 'error' },
+      error: 'CAD kernel preflight failed',
+    });
+
+    expect(md).toContain('CAD kernel preflight failed');
   });
 });
 

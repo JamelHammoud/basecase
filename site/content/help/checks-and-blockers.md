@@ -64,6 +64,10 @@ Because the decision was yours, an ignored problem stays ignored when the parts 
 
 Checks measure the design as you modeled it. A strap or zip tie you'll add by hand isn't in the model, so its row is a note that you check yourself.
 
+For an Onshape import, **Fixed Mates** notes name motions held fixed. A cylindrical mate keeps its hinge, but its slide stays fixed. These notes don't block Ready to build.
+
+![The Assembly check with the imported cylindrical axle slide held fixed](/help/import-an-onshape-assembly/cylindrical-slide.png)
+
 Range of motion samples each joint every 15°, so a clash narrower than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits until the agent tips the robot over. Prices stay estimates until you add the prices you see or a print service quotes the printed parts.
 
 Time uses planning estimates for assembly and servo setup even after slicing. It excludes delivery, failed prints and print service lead times.

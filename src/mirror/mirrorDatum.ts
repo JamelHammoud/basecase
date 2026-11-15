@@ -13,6 +13,26 @@ export interface MirrorDatum {
 const AXIS_WEIGHT = 10;
 const TIE_MM = 0.5;
 
+interface PortGroup {
+  port: Port;
+  matches: Port[];
+}
+
+function groupedPorts(ports: Port[]): PortGroup[] {
+  const kinds = new Map<Port['kind'], Map<Port['thread'], Port[]>>();
+
+  return ports.map((port) => {
+    const threads = kinds.get(port.kind) ?? new Map<Port['thread'], Port[]>();
+    const matches = threads.get(port.thread) ?? [];
+
+    kinds.set(port.kind, threads);
+    threads.set(port.thread, matches);
+    matches.push(port);
+
+    return { port, matches };
+  });
+}
+
 function flipPort(p: Port, j: MirrorAxis, c: number): Port {
   const position: V3 = [...p.position];
   const axis: V3 = [...p.axis];
@@ -26,9 +46,11 @@ function flipPort(p: Port, j: MirrorAxis, c: number): Port {
 const dist = (a: V3, b: V3) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
 function mismatch(p: Port, ports: Port[]): number {
-  const same = ports.filter((q) => q.kind === p.kind && q.thread === p.thread);
+  let best = Infinity;
 
-  return Math.min(Infinity, ...same.map((q) => dist(p.position, q.position) + AXIS_WEIGHT * dist(p.axis, q.axis)));
+  for (const q of ports) best = Math.min(best, dist(p.position, q.position) + AXIS_WEIGHT * dist(p.axis, q.axis));
+
+  return best;
 }
 
 function planeOffset(ports: Port[], j: MirrorAxis): number {
@@ -43,17 +65,21 @@ function planeOffset(ports: Port[], j: MirrorAxis): number {
   return (Math.min(...values) + Math.max(...values)) / 2;
 }
 
-function symmetryScore(ports: Port[], j: MirrorAxis, c: number): number {
-  const asymmetry = ports.reduce((s, p) => s + Math.min(100, mismatch(flipPort(p, j, c), ports)), 0);
+function symmetryScore(groups: PortGroup[], j: MirrorAxis, c: number): number {
+  const asymmetry = groups.reduce(
+    (s, { port, matches }) => s + Math.min(100, mismatch(flipPort(port, j, c), matches)),
+    0,
+  );
 
   return asymmetry + Math.abs(2 * c);
 }
 
 export function mirrorDatum(ports: Port[], localMirror: V3): MirrorDatum {
+  const groups = groupedPorts(ports);
   const candidates = ([0, 1, 2] as MirrorAxis[]).map((axis) => {
     const offset = planeOffset(ports, axis);
 
-    return { axis, offset, score: symmetryScore(ports, axis, offset), align: Math.abs(localMirror[axis]) };
+    return { axis, offset, score: symmetryScore(groups, axis, offset), align: Math.abs(localMirror[axis]) };
   });
   const best = Math.min(...candidates.map((c) => c.score));
   const [pick] = candidates.filter((c) => c.score <= best + TIE_MM).sort((a, b) => b.align - a.align);

@@ -303,6 +303,13 @@ export function fitTarget({ target, model, targetMmPerPx }: FitRequest): TargetF
   };
 }
 
+const OVERLAY_COLORS = [
+  [24, 24, 24, 255],
+  [13, 153, 255, 255],
+  [235, 64, 52, 255],
+  [150, 150, 150, 255],
+] as const;
+
 export function overlayPixels(grid: Grid, scale = 3): ImageData {
   const W = grid.width * scale,
     H = grid.height * scale;
@@ -314,18 +321,10 @@ export function overlayPixels(grid: Grid, scale = 3): ImageData {
       const t = grid.target[i],
         m = grid.model[i];
       const o = (y * W + x) * 4;
-      const rgb = overlayColor(t, m);
+      const color = OVERLAY_COLORS[(t ? 2 : 0) + (m ? 1 : 0)];
 
-      pixels.set([rgb[0], rgb[1], rgb[2], 255], o);
+      pixels.set(color, o);
     }
 
   return new ImageData(pixels, W, H);
-}
-
-function overlayColor(target: number, model: number): [number, number, number] {
-  if (target && model) return [150, 150, 150];
-
-  if (target) return [235, 64, 52];
-
-  return model ? [13, 153, 255] : [24, 24, 24];
 }

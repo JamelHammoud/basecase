@@ -1,3 +1,5 @@
+import { pivotRow } from '../matrixScans';
+
 export type Matrix = number[][];
 
 const swapRows = (m: Matrix, i: number, j: number) => {
@@ -5,16 +7,6 @@ const swapRows = (m: Matrix, i: number, j: number) => {
 
   m[i] = m[j];
   m[j] = t;
-};
-
-const pivotRow = (m: Matrix, col: number, from: number) => {
-  let best = from;
-
-  for (let r = from + 1; r < m.length; r++) {
-    if (Math.abs(m[r][col]) > Math.abs(m[best][col])) best = r;
-  }
-
-  return best;
 };
 
 const eliminateBelow = (m: Matrix, row: number, col: number, rhs?: number[]) => {

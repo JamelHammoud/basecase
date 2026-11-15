@@ -221,6 +221,8 @@ export function routePolyline(input: RouteInput): PortVec[] | null {
 }
 
 export function routeTopology(points: PortVec[], obstacles: RouteObstacle[]): string[] {
+  if (points.length <= 4) return [];
+
   const vertices = obstacles.flatMap((box) =>
     corners(expanded(box)).map((position, bits) => ({ position, label: `${box.id}:${bits}` })),
   );

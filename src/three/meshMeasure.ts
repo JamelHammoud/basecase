@@ -79,29 +79,17 @@ export interface MeshMeasure {
   base?: Array<[number, number]>;
 }
 
-function bounds(t: Float32Array) {
+function triangleSums(t: Float32Array) {
   const min: [number, number, number] = [Infinity, Infinity, Infinity];
   const max: [number, number, number] = [-Infinity, -Infinity, -Infinity];
-
-  for (let i = 0; i < t.length; i++) {
-    const axis = i % 3;
-    const x = t[i];
-
-    min[axis] = Math.min(min[axis], x);
-    max[axis] = Math.max(max[axis], x);
-  }
-
-  return { min, max };
-}
-
-function signedSums(t: Float32Array) {
+  const complete = t.length - (t.length % 9);
   let volume = 0;
   let area = 0;
   let gx = 0;
   let gy = 0;
   let gz = 0;
 
-  for (let i = 0; i < t.length; i += 9) {
+  for (let i = 0; i < complete; i += 9) {
     const ax = t[i];
     const ay = t[i + 1];
     const az = t[i + 2];
@@ -119,6 +107,12 @@ function signedSums(t: Float32Array) {
     const wy = cy - ay;
     const wz = cz - az;
 
+    min[0] = Math.min(min[0], ax, bx, cx);
+    min[1] = Math.min(min[1], ay, by, cy);
+    min[2] = Math.min(min[2], az, bz, cz);
+    max[0] = Math.max(max[0], ax, bx, cx);
+    max[1] = Math.max(max[1], ay, by, cy);
+    max[2] = Math.max(max[2], az, bz, cz);
     volume += tv;
     gx += (tv * (ax + bx + cx)) / 4;
     gy += (tv * (ay + by + cy)) / 4;
@@ -126,12 +120,25 @@ function signedSums(t: Float32Array) {
     area += Math.hypot(uy * wz - uz * wy, uz * wx - ux * wz, ux * wy - uy * wx) / 2;
   }
 
-  return { volume, area, moment: [gx, gy, gz] };
+  for (let i = complete; i < t.length; i++) {
+    const axis = i % 3;
+    const value = t[i];
+
+    min[axis] = Math.min(min[axis], value);
+    max[axis] = Math.max(max[axis], value);
+  }
+
+  return {
+    min,
+    max,
+    volume: complete === t.length ? volume : NaN,
+    area: complete === t.length ? area : NaN,
+    moment: [gx, gy, gz],
+  };
 }
 
 export function measureTriangles(t: Float32Array): MeshMeasure {
-  const { min, max } = bounds(t);
-  const { volume, area, moment } = signedSums(t);
+  const { min, max, volume, area, moment } = triangleSums(t);
   const centroid = (Math.abs(volume) > 1e-6 ? moment.map((g) => g / volume) : min.map((v, a) => (v + max[a]) / 2)) as [
     number,
     number,

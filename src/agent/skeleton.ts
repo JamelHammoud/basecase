@@ -6,6 +6,7 @@ import { swapWords } from '../mirror/mirrorNames';
 import { plural } from '../../electron/plural.mjs';
 import { weight } from '../utils/weight';
 import { SkeletonTree } from '../utils/skeletonTree';
+import { mergeJoints } from '../joints/merge';
 
 export interface SkeletonJointInput {
   id: string;
@@ -142,17 +143,26 @@ function pairProblems(skeleton: RobotSkeleton): string[] {
 
 function mergedJoints(payload: SkeletonPayload, previous?: RobotSkeleton): SkeletonJoint[] {
   const made = payload.joints.map(jointOf);
-  const kept = payload.replace ? [] : (previous?.joints ?? []).filter((j) => !made.some((m) => m.id === j.id));
 
-  return [...kept, ...made];
+  return mergeJoints(previous?.joints ?? [], made, payload.replace);
 }
 
 function changes(previous: RobotSkeleton | undefined, joints: SkeletonJoint[]) {
   const moved = new Map<string, ZUpVec>();
   const turned: string[] = [];
 
+  if (!joints.length) return { moved, turned };
+
+  const byId = new Map<string, SkeletonJoint>();
+
+  for (const joint of previous?.joints ?? []) {
+    const id = joint.id;
+
+    if (!byId.has(id)) byId.set(id, joint);
+  }
+
   for (const j of joints) {
-    const was = previous?.joints.find((p) => p.id === j.id);
+    const was = byId.get(j.id);
 
     if (was && len(diff(j.origin, was.origin)) > 1e-3) moved.set(j.id, diff(j.origin, was.origin));
 

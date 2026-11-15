@@ -1,6 +1,7 @@
 ---
 title: Import a captured world
 date: 2026-11-14
+updated: 2026-11-14
 collection: simulate-and-train
 type: task
 covers:
@@ -47,3 +48,5 @@ The dropped files can total up to 64 MB, with up to 200,000 collider triangles a
 The imported appearance is shown on the main canvas. Camera tiles and dataset videos don't include that appearance.
 
 For a RoomPlan JSON capture, follow [Import a scanned room as a Case world](/help/import-a-scanned-room). Continue with [Try a Case](/help/try-a-case) to record another run.
+
+For scans in an imported ROS recording, use **Make World** from the **Map** row's menu in **Layers**. It opens **New Case** with the reconstructed world selected. A planar scan's floor and 1 m obstacle height are estimates, labeled under **World**. Follow [Map a robot run](/help/map-a-robot-run) for the steps and limits.

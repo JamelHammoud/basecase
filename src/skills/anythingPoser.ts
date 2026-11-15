@@ -1,6 +1,7 @@
 import type { MainModule } from '@mujoco/mujoco';
 import { SimEngine } from '../sim/engine';
 import type { SimModel } from '../sim/mjcfTypes';
+import { timeIndex } from '../utils/timeIndex';
 import { signalReaders } from './arenaSignals';
 import type { Trace } from './contract';
 import type { SignalSource } from './environment';
@@ -192,9 +193,9 @@ export class Poser {
   }
 
   frameAt(states: KeyState[], t: number): number[] {
-    const next = states.findIndex((s) => s.t >= t);
+    const next = timeIndex(states, t);
 
-    if (next <= 0) {
+    if (next === 0 || next === states.length) {
       const s = states[next === 0 ? 0 : states.length - 1];
 
       return this.withBase(s.joints, s.base);

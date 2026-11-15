@@ -258,6 +258,7 @@ declare global {
       triesCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       datasetsCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       onshapeCall?: (channel: string, payload?: unknown) => Promise<unknown>;
+      roboflowCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       earthCall?: (channel: string, payload?: unknown) => Promise<unknown>;
       robotConnect?: (spec: ConnectSpec, unit?: string) => Promise<ConnectReply>;
       robotDiscover?: () => Promise<NetworkRobot[]>;

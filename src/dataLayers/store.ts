@@ -12,6 +12,7 @@ export interface DataLayerRow {
   fields: string[];
   missing: string | null;
   matching?: boolean;
+  makeWorld?: () => void;
 }
 
 export interface DataLayerInput {
@@ -69,6 +70,13 @@ export class DataLayerStore {
 
   private matchScans = true;
 
+  private worldMaker: (() => void) | undefined;
+
+  setWorldMaker(make: (() => void) | undefined): void {
+    this.worldMaker = make;
+    this.listChanged();
+  }
+
   matching = (): boolean => this.matchScans;
 
   subscribe = (listen: () => void) => {
@@ -101,6 +109,7 @@ export class DataLayerStore {
       fields: fieldsOf(t),
       missing: this.missing.get(t.id) ?? null,
       matching: t.schema === 'scene/Map' ? this.matchScans : undefined,
+      makeWorld: t.schema === 'scene/Map' ? this.worldMaker : undefined,
     }));
 
     return this.listed;

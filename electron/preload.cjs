@@ -100,6 +100,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     String(channel).startsWith('onshape:')
       ? ipcRenderer.invoke(channel, payload)
       : Promise.reject(new Error('Unknown Onshape call')),
+  roboflowCall: (channel, payload) =>
+    String(channel).startsWith('roboflow:')
+      ? ipcRenderer.invoke(channel, payload)
+      : Promise.reject(new Error('Unknown Roboflow call')),
   earthCall: (channel, payload) =>
     String(channel).startsWith('earth:')
       ? ipcRenderer.invoke(channel, payload)

@@ -80,6 +80,8 @@ If a xacro package also has a plain `.urdf`, Basecase uses that file. Otherwise,
 
 Links must use https. A zip link can download up to 200 MB, and a zip can unpack up to 600 MB and 20,000 files. A link with no robot description gets a single toast that names the link.
 
-A Hugging Face dataset link, or a folder or zip that holds a LeRobot dataset or a ROS 2 recording, adds tries to the robot in the scene instead. See [Import robot data as tries](/help/import-robot-data-as-tries).
+A Hugging Face LeRobot dataset link, or a folder or zip that holds a LeRobot dataset or a ROS 2 recording, adds tries to the robot in the scene instead. See [Import robot data as tries](/help/import-robot-data-as-tries).
+
+A Roboflow or Hugging Face image dataset link, or a COCO, YOLO or Pascal VOC folder or zip, adds labeled images to the Library. Roboflow and Hugging Face dataset links require the desktop app. See [Import an image dataset](/help/import-an-image-dataset).
 
 To learn how the joints work after you import a robot, see [Joints and kinematics](/help/joints-and-kinematics).

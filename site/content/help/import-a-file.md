@@ -71,11 +71,12 @@ If you pick an SVG, the Import SVG panel opens with your drawing loaded. Set the
 
 Other files come in like this:
 
-- A URDF, MJCF or zip file (such as an exported Robot Package) comes in as a robot with its joints.
+- A URDF, MJCF or robot zip (such as an exported Robot Package) comes in as a robot with its joints.
 - A BVH motion file opens the retarget sheet for the selected robot.
 - An image comes in as a reference image.
 - A `.basecase` file opens in a new tab.
 - A `.mcap` or `.bag` recording, or a zip that holds a LeRobot dataset, comes in as tries on the robot in the scene. See [Import robot data as tries](/help/import-robot-data-as-tries).
+- A COCO, YOLO or Pascal VOC dataset folder or zip adds labeled images to the Library. See [Import an image dataset](/help/import-an-image-dataset).
 
 You can also choose **File** ▸ **Import**, or press [[⌘K]]. Dropping GLB, glTF or OBJ files on the canvas opens them as [Case worlds](/help/import-a-world). A dropped SPZ or PLY splat needs a collider mesh in the same drop. To bring these meshes in as parts, use **Import** instead.
 

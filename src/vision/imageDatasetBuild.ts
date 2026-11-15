@@ -3,6 +3,25 @@ import { exportCoco } from './cocoExport';
 import { frameHash, frameSetHash, type FrameSet, type ImageClass, type TrainingFrame } from './frameSet';
 import { exportYolo } from './yoloExport';
 
+const imageDatasetCard = new TextEncoder().encode(
+  [
+    '---',
+    'tags:',
+    '  - basecase-image-dataset',
+    'task_categories:',
+    '  - object-detection',
+    '  - image-segmentation',
+    '---',
+    '# Basecase image dataset',
+    '',
+    'Training images and labels in [COCO](coco/) and [YOLO](yolo/) format.',
+    '',
+    'Each layout includes `basecase/frames.json` for Basecase labels and image splits.',
+    'Depth files use little-endian float32 radial distances in millimeters.',
+    '',
+  ].join('\n'),
+);
+
 function mergedClasses(sets: FrameSet[]): ImageClass[] {
   const categories = new Map<string, ImageClass>();
 
@@ -14,6 +33,7 @@ function mergedClasses(sets: FrameSet[]): ImageClass[] {
       categories.set(category.name, {
         id: existing?.id ?? categories.size,
         name: category.name,
+        ...(category.objectId ? { objectId: category.objectId } : {}),
         ...(keypoints.length ? { keypoints } : {}),
       });
     }
@@ -77,5 +97,9 @@ export async function buildImageDataset(dataset: Dataset, sets: FrameSet[]) {
   const prefix = (folder: string, files: Record<string, Uint8Array>) =>
     Object.fromEntries(Object.entries(files).map(([path, bytes]) => [`${folder}/${path}`, bytes]));
 
-  return { ...prefix('coco', exportCoco(set)), ...prefix('yolo', exportYolo(set)) };
+  return {
+    ...prefix('coco', exportCoco(set)),
+    ...prefix('yolo', exportYolo(set)),
+    'README.md': imageDatasetCard.slice(),
+  };
 }

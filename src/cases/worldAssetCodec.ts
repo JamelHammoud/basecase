@@ -20,6 +20,7 @@ export function serializeWorldAsset({ world, pieces }: WorldAsset) {
     world: {
       kind: world.kind,
       name: world.name,
+      ...(world.reconstruction ? { reconstruction: world.reconstruction } : {}),
       transform: {
         scale: world.transform.scale,
         quaternion: world.transform.quaternion,

@@ -8,6 +8,9 @@ import type { Simulation } from '../sim/useSimulation';
 import type { ScenePart } from '../types/robotics';
 import { recordingTopics } from '../topics/recordingTopics';
 import { isTopicLayer, topicTracks } from '../topics/topicTracks';
+import { useSyncExternalStore } from 'react';
+import { useMapWorld } from './useMapWorld';
+import type { CaseBuilder } from './useCaseBuilder';
 import { useMapLayer } from './useMapLayer';
 import type { TryTimeline } from './useTryTimeline';
 
@@ -15,6 +18,7 @@ interface DataLayerOptions {
   sim: Simulation;
   timeline: TryTimeline;
   parts: ScenePart[];
+  world: { builder: CaseBuilder; showCases: () => void; failed: (message: string) => void };
   viewportRef: React.RefObject<Viewport3DHandle | null>;
 }
 
@@ -100,7 +104,7 @@ function useRecordedTopics(store: DataLayerStore, timeline: TryTimeline) {
   }, [store, topics]);
 }
 
-export function useDataLayers({ sim, timeline, parts, viewportRef }: DataLayerOptions): DataLayerStore {
+export function useDataLayers({ sim, timeline, parts, viewportRef, world }: DataLayerOptions): DataLayerStore {
   const [store] = useState(() => new DataLayerStore());
   const scene = { model: sim.model, parts };
   const loaded = sim.status !== 'off' && !!sim.model;
@@ -110,6 +114,10 @@ export function useDataLayers({ sim, timeline, parts, viewportRef }: DataLayerOp
   useRecordedScans(store, timeline, scene);
   useRecordedTopics(store, timeline);
   useMapLayer(store, sim, timeline, parts);
+
+  const matching = useSyncExternalStore(store.subscribe, store.matching);
+
+  useMapWorld(store, { timeline, matching, ...world });
 
   useEffect(() => {
     if (loaded) return;

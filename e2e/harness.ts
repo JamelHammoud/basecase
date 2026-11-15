@@ -7,6 +7,8 @@ import { datasetPostRoutes } from '../electron/library/datasetRoutes.mjs';
 import { DatasetStore } from '../electron/library/datasetStore.mjs';
 import { tryPostRoutes } from '../electron/library/tryRoutes.mjs';
 import { TryStore } from '../electron/library/tryStore.mjs';
+import { RoboflowAccount } from '../electron/roboflow/index.mjs';
+import { roboflowPostRoutes } from '../electron/roboflow/routes.mjs';
 import { TEST_HOOKS_FLAG } from '../src/utils/platform/testHooksFlag';
 
 const EFFORT_LEVELS = [
@@ -64,6 +66,7 @@ interface Backend {
   lists: Record<string, unknown>;
   live: string[];
   libraryDir: string;
+  roboflowUrl?: string;
 }
 
 type Reply = (body: unknown) => unknown;
@@ -94,10 +97,11 @@ function purchasesReply(saved: SavedPurchases, body: { key?: string; record?: un
   return saved;
 }
 
-async function stubBackend(page: Page, { posts, lists, live, libraryDir }: Backend): Promise<void> {
+async function stubBackend(page: Page, { posts, lists, live, libraryDir, roboflowUrl }: Backend): Promise<void> {
   const purchases: SavedPurchases = { ...((lists.purchases as SavedPurchases | undefined) ?? {}) };
   const replies: Record<string, Reply> = {
     ...libraryReplies(libraryDir),
+    ...(roboflowUrl && repliesOf(roboflowPostRoutes(new RoboflowAccount({ libraryDir, endpoint: () => roboflowUrl })))),
     purchases: () => purchases,
     'purchase-save': (body) => purchasesReply(purchases, body as { key?: string; record?: unknown }),
   };
@@ -134,7 +138,7 @@ export const launchChrome = (args = SOFTWARE_GL) => chromium.launch({ channel: '
 export async function openApp(
   lists: Record<string, unknown> = {},
   live: string[] = [],
-  options: { args?: string[] } = {},
+  options: { args?: string[]; roboflowUrl?: string } = {},
 ): Promise<App> {
   const started = Date.now();
   const browser: Browser = await launchChrome([...SOFTWARE_GL, ...(options.args ?? [])]);
@@ -154,7 +158,7 @@ export async function openApp(
     errors.push(where ? `${m.text()} (${where})` : m.text());
   });
   await exposeTestHooks(page);
-  await stubBackend(page, { posts, lists, live, libraryDir });
+  await stubBackend(page, { posts, lists, live, libraryDir, roboflowUrl: options.roboflowUrl });
   await page.goto(inject('appUrl'));
   await page.waitForFunction(() => Boolean((window as unknown as { __studio?: unknown }).__studio), null, {
     timeout: 60000,

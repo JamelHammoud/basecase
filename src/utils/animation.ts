@@ -10,14 +10,22 @@ import type {
 import { goalTargets, roundTo, type IkGoal, type PointOf } from './animationGoals';
 import { clampJoint, isMovable, preBend, solveIK, type IkTarget, type Rig, type V3 } from './kinematics';
 import { lengthLabel } from './size';
+import { timeIndex } from './timeIndex';
 
 export { goalParts, goalTargets, type BuiltAnimation, type IkGoal, type PointOf } from './animationGoals';
 export { buildGait, defaultPhases, type GaitSpec } from './gait';
 
 const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
-const catmullRom = ([p0, p1, p2, p3]: number[], u: number) =>
-  0.5 * (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
-const blend = (v: number[], u: number, smooth: boolean) => (smooth ? catmullRom(v, u) : lerp(v[1], v[2], u));
+
+type Blend = (p0: number, p1: number, p2: number, p3: number) => number;
+
+const blendAt =
+  (u: number, smooth: boolean): Blend =>
+  (p0, p1, p2, p3) =>
+    smooth
+      ? 0.5 *
+        (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u)
+      : lerp(p1, p2, u);
 
 const D2R = Math.PI / 180;
 const quatOf = (r?: V3) =>
@@ -25,17 +33,18 @@ const quatOf = (r?: V3) =>
     new THREE.Euler((r?.[0] ?? 0) * D2R, (r?.[1] ?? 0) * D2R, (r?.[2] ?? 0) * D2R, 'XYZ'),
   );
 
-function blendRoot(ks: Array<RootOffset | undefined>, u: number, smooth: boolean): RootOffset | undefined {
-  if (ks.every((k) => !k)) return undefined;
+function blendRoot(ks: AnimationKeyframe[], blend: Blend, u: number): RootOffset | undefined {
+  if (ks.every((k) => !k.root)) return undefined;
 
   const position = [0, 1, 2].map((i) =>
     blend(
-      ks.map((k) => k?.position?.[i] ?? 0),
-      u,
-      smooth,
+      ks[0].root?.position?.[i] ?? 0,
+      ks[1].root?.position?.[i] ?? 0,
+      ks[2].root?.position?.[i] ?? 0,
+      ks[3].root?.position?.[i] ?? 0,
     ),
   ) as V3;
-  const q = quatOf(ks[1]?.rotation).slerp(quatOf(ks[2]?.rotation), u);
+  const q = quatOf(ks[1].root?.rotation).slerp(quatOf(ks[2].root?.rotation), u);
   const e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
 
   return { position, rotation: [e.x / D2R, e.y / D2R, e.z / D2R] };
@@ -67,9 +76,7 @@ function spanAt(anim: RobotAnimation, t: number): Span {
       wraps,
     };
 
-  let i = ks.findIndex((k, idx) => idx < ks.length - 1 && time >= k.t && time < ks[idx + 1].t);
-
-  if (i < 0) i = time < ks[0].t ? 0 : ks.length - 2;
+  const i = Math.min(Math.max(timeIndex(ks, time, 'after') - 1, 0), ks.length - 2);
 
   return { i, a: ks[i], b: ks[i + 1], span: ks[i + 1].t - ks[i].t, time, wraps };
 }
@@ -85,25 +92,22 @@ export function sampleAnimation(anim: RobotAnimation, t: number): RobotPoseState
   const u = span > 0 ? Math.min(Math.max((time - a.t) / span, 0), 1) : 0;
   const n = ks.length;
   const at = (k: number) => (anim.loop ? ks[((k % n) + n) % n] : ks[Math.min(Math.max(k, 0), n - 1)]);
-  const smooth = anim.interpolation === 'smooth';
+  const blend = blendAt(u, anim.interpolation === 'smooth');
   const around = [at(i - 1), a, b, at(wraps ? 1 : i + 2)];
   const values: JointValues = {};
 
   for (const id of Object.keys(a.values)) {
     values[id] = blend(
-      around.map((k) => k.values[id] ?? a.values[id]),
-      u,
-      smooth,
+      around[0].values[id] ?? a.values[id],
+      a.values[id],
+      b.values[id] ?? a.values[id],
+      around[3].values[id] ?? a.values[id],
     );
   }
 
   return {
     values,
-    root: blendRoot(
-      around.map((k) => k.root),
-      u,
-      smooth,
-    ),
+    root: blendRoot(around, blend, u),
   };
 }
 

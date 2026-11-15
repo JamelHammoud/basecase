@@ -12,6 +12,7 @@ declare module 'vitest' {
     hubPort: number;
     servicePort: number;
     tilesPort: number;
+    roboflowPort: number;
   }
 }
 
@@ -128,6 +129,11 @@ export default async function setup(project: TestProject) {
 
   process.env.BASECASE_PRINT_SERVICE_URL = `http://127.0.0.1:${servicePort}`;
   project.provide('servicePort', servicePort);
+
+  const roboflowPort = await freePort();
+
+  process.env.BASECASE_ROBOFLOW_URL = `http://127.0.0.1:${roboflowPort}`;
+  project.provide('roboflowPort', roboflowPort);
 
   const tilesPort = await freePort();
 

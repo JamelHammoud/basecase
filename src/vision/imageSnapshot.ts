@@ -5,10 +5,13 @@ import { imagePackage, readImagePackage } from './imagePackage';
 import type { ImageMembers } from '../datasets/datasetFile';
 import { sourceRun } from '../datasets/snapshotSplits';
 
-const sourceOf = async (set: FrameSet, frame: TrainingFrame) =>
-  frame.source === 'import'
-    ? `image:${await frameHash({ ...frame, split: undefined })}`
-    : sourceRun(set.sceneId, set.caseId, frame.seed);
+async function sourceOf(set: FrameSet, frame: TrainingFrame) {
+  if (frame.origin) return `try:${frame.origin.tryId}`;
+
+  if (frame.source === 'import') return `image:${await frameHash({ ...frame, split: undefined })}`;
+
+  return sourceRun(set.sceneId, set.caseId, frame.seed);
+}
 
 export async function packImageSnapshots(set: FrameSet, member: ImageMembers) {
   if (set.id !== member.frameSetId || (await frameSetHash(set)) !== member.hash)

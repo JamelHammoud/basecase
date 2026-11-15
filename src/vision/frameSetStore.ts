@@ -19,6 +19,8 @@ const jobs = workerClient<typeof frameStoreJobs>(
   async () => (await import('./frameStoreJobs')).frameStoreJobs,
 );
 
+export const hashFrameSet = (set: FrameSet) => jobs.call('hash', set);
+
 export async function saveFrameSet(set: FrameSet): Promise<void> {
   const manifest = await jobs.call('manifest', set);
 

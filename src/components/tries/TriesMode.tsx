@@ -29,6 +29,7 @@ interface TriesModeProps {
   timelineOpen: boolean;
   sceneId: string;
   scene: TileScene;
+  onOpenFrames: (setId: string, frameId?: string) => void;
 }
 
 interface TileGridProps {
@@ -67,7 +68,15 @@ const Apart: React.FC<ApartProps> = ({ tries, testId, note, ...grid }) =>
 
 const idsOf = (tries: TrySummary[]) => tries.map((t) => t.id);
 
-export const TriesMode: React.FC<TriesModeProps> = ({ active, view, mode, timelineOpen, sceneId, scene }) => {
+export const TriesMode: React.FC<TriesModeProps> = ({
+  active,
+  view,
+  mode,
+  timelineOpen,
+  sceneId,
+  scene,
+  onOpenFrames,
+}) => {
   const [menu, setMenu] = useState<Menu | null>(null);
   const { ref: fadeRef, style: fadeStyle } = useScrollFade();
   const body = useRef<HTMLDivElement | null>(null);
@@ -154,7 +163,12 @@ export const TriesMode: React.FC<TriesModeProps> = ({ active, view, mode, timeli
       )}
       <div ref={fadeRef} className="flex-1 min-h-0 overflow-y-auto" style={fadeStyle}>
         <div ref={body} className="px-[12px] pb-6 flex flex-col gap-4">
-          {mode.dataset && <DatasetImages dataset={mode.dataset} />}
+          {mode.dataset && (
+            <DatasetImages
+              dataset={mode.dataset}
+              onOpen={mode.dataset.selectedVersion === undefined ? onOpenFrames : undefined}
+            />
+          )}
           {view.searching ? (
             <TryResults
               query={view.query}

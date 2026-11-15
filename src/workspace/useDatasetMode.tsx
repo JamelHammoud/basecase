@@ -81,6 +81,7 @@ function tileMenu(core: WorkspaceCore, id: string): ContextMenuEntry[] {
 
   return [
     ...like,
+    { label: 'Add Frames', icon: <PlusIcon />, onSelect: () => core.frameLabels.start(ids) },
     { label: 'Make Dataset', icon: <SpreadsheetIcon />, onSelect: () => datasets.makeFromView(ids) },
     ...addTo,
     deleteEntry(() => view.remove(id), '⌫'),

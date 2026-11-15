@@ -61,6 +61,7 @@ import { compareCase, createCase, readTry, runCase } from './cad-mcp/caseTools.m
 import { deleteCaseCode, readCaseCode, writeCaseCode } from './cad-mcp/caseCodeTools.mjs';
 import { makeDataset } from './cad-mcp/datasetTools.mjs';
 import { makeImages } from './cad-mcp/imageTools.mjs';
+import { labelFrames } from './cad-mcp/labelFrameTools.mjs';
 import { coachSkill, draftSkill, findSkills, listSkills, stressSkill, trainSkill } from './cad-mcp/skillTools.mjs';
 import { labelTries, searchTries } from './cad-mcp/tryTools.mjs';
 import { editRoutine, makeRoutine, readRoutine, runRoutine, testRoutine } from './cad-mcp/routineTools.mjs';
@@ -131,6 +132,7 @@ const TOOLS = [
   compareCase,
   makeDataset,
   makeImages,
+  labelFrames,
   writeCaseCode,
   readCaseCode,
   deleteCaseCode,

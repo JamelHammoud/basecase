@@ -27,6 +27,7 @@ import { useRobotSync } from './useRobotSync';
 import { useRepair } from './useRepair';
 import { useLatestRef } from '../utils/useLatestRef';
 import { useWorkspaceTools } from './useWorkspaceTools';
+import { useWorkspaceFrameLabels } from './useWorkspaceFrameLabels';
 
 function useSceneMeta(seed?: WorkspaceSeed) {
   const [sceneId, setSceneId] = useState<string>(() => seed?.sceneId ?? newSceneId());
@@ -128,6 +129,16 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
   const caseRun = useCaseRun({ viewportRef, selectedIds, setSelectedIds, simTraining });
   const viewRef = useLatestRef({ active, tab: tool.leftTab, sidebarOpen: studio.isLeftOpen && !caseRun.open });
   const { triesView, datasets } = useTriesWork(simTraining, showToast);
+  const frameLabels = useWorkspaceFrameLabels({
+    scene,
+    docs,
+    posing,
+    simTraining,
+    studio,
+    workspaceId,
+    triesView,
+    showToast,
+  });
 
   const { restorePose } = posing;
   const undo = () => docs.travel({ direction: 'undo', codeOnly: caseRun.open }, restorePose);
@@ -161,6 +172,7 @@ export function useWorkspaceCore({ workspaceId, active, seed, studio }: SceneWor
     printing,
     triesView,
     datasets,
+    frameLabels,
     viewportRef,
     scene,
     docs,

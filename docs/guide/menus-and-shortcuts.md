@@ -4,6 +4,8 @@ Part of the Basecase guide. [AGENTS.md](../../AGENTS.md) holds the rules every c
 
 ## 11. Menus, Palette & Shortcuts
 
+- **Frame labels** (§8l): Left and Right move between camera frames and discard an unfinished drawing. V selects a label, B draws a box, P draws a polygon, K places a named keypoint and S segments an object when segmentation is available. Enter finishes a polygon. A accepts the selected suggestion, or all suggestions in the frame when none is selected. Delete asks before deleting the selected label. ⌘Z and ⇧⌘Z undo and redo frame-label edits, including class names, keypoints, suggestions, acceptance and tracking. Shortcuts leave text fields alone. Escape cancels a polygon in progress, then closes the sheet. Selecting a label and switching to Box or Polygon exposes its corner or vertex handles.
+
 - **Cut Files** in Export and ⌘K writes a zip containing one DXF per sheet solid, in millimeters. It is available in desktop and web scenes with sheet parts. Detection and zip creation run in workers, and `downloadBytes` handles the file. A saved sheet whose geometry no longer qualifies stops export and names the part.
 
 - **Right-click (`ContextMenu` primitive):**

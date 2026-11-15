@@ -51,6 +51,7 @@ export const GROUP_LABELS: Record<string, [ing: string, ed: string]> = {
   read_try: ['Reading # tries', 'Read # tries'],
   search_tries: ['Searching tries # times', 'Searched tries # times'],
   label_tries: ['Labeling tries # times', 'Labeled tries # times'],
+  label_frames: ['Labeling frames # times', 'Labeled frames # times'],
   make_images: ['Making # image sets', 'Made # image sets'],
   make_dataset: ['Making # datasets', 'Made # datasets'],
   start_drive: ['Driving # times', 'Drove # times'],

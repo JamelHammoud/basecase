@@ -73,6 +73,8 @@ To gather only selected tries, hold [[⌘]] or [[⇧]] as you select them. Right
 
 Above its tries, the dataset shows their total running time. After saving a version, use **Dataset version** to choose **Working Dataset** or a saved version. If it also holds images, it shows their image and class counts and an **Images** section. Datasets saved before class counts were added show only the image count.
 
+In **Working Dataset**, click **Label Objects** under an image to edit its object labels. See [Label objects in camera frames](/help/label-objects-in-camera-frames). Saved versions keep their image labels and don't open the label editor.
+
 ![Touch a Point open as a dataset, with its total time, Export Dataset, Publish to Hugging Face and Train from Tries](/help/make-a-dataset-from-tries/dataset.png)
 
 - **Export Dataset** saves a LeRobot zip for tries, with COCO and YOLO folders for any images. See [Export a LeRobot dataset](/help/export-a-lerobot-dataset).
@@ -109,7 +111,7 @@ To add tries to another dataset, right-click a try, choose **Add to Dataset** an
 
 Export, publishing and training save the working dataset as a version. Each version keeps its selected frames, recordings, labels, tags, quality flags, images, image annotations and split assignments.
 
-Changing an instruction, label boundary, tag, quality flag or recording creates a new version. Changing the robot, task, selected samples or image references also creates a version. Unchanged content keeps its version.
+Changing an instruction, label boundary, tag, quality flag or recording creates a new version. Changing the robot, task, selected samples, image references or image annotations also creates a version. Unchanged content keeps its version.
 
 ![Pick and place with Working Dataset selected in Dataset version](/help/make-a-dataset-from-tries/working-version.png)
 

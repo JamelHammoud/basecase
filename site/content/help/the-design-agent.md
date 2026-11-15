@@ -58,7 +58,7 @@ If an edit adds a blocker, the agent follows up on its own, up to twice per mess
 
 ## What you keep control of
 
-Each change the agent makes is one undo step. To take changes back, see [Undo what the agent changed](/help/undo-agent-changes).
+Each scene change the agent makes is one undo step. To take scene changes back, see [Undo what the agent changed](/help/undo-agent-changes).
 
 While the agent works, you can steer it, queue your next request, or stop it. Your edits come first, and the agent never blocks you from changing a part.
 

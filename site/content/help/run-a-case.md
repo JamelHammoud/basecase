@@ -65,6 +65,6 @@ You can run a Case in the whole window, with the layout the Case asks for. The r
 
 7. Click **Done** or press [[Esc]] to go back. The first [[Esc]] stops driving. Your parts, selection and camera stay as you left them.
 
-You can also go back by picking a view in the rail, or by running any [[⌘K]] command except driving, trying, **Add Panel**, **Multiply** and the dataset commands.
+You can also go back by picking a view in the rail, or by running any [[⌘K]] command except driving, trying, **Add Panel**, **Add Frames**, **Multiply** and the dataset commands.
 
 {{help-hub}}

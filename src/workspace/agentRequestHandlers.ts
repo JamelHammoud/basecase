@@ -50,6 +50,7 @@ import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
 import { CASE_HANDLERS } from './agentCaseRequests';
 import { DATASET_HANDLERS } from './agentDatasetRequests';
 import { IMAGE_HANDLERS } from './agentImageRequests';
+import { LABEL_FRAME_HANDLERS } from './agentLabelFrames';
 import { REPAIR_HANDLERS, type RepairContext } from './agentRepairRequests';
 import { LIGHTEN_HANDLERS, type LightenContext } from './agentLightenRequests';
 import type { Datasets } from './useDatasets';
@@ -391,6 +392,7 @@ const HANDLERS: Record<string, Handler> = {
   ...TRY_HANDLERS,
   ...DATASET_HANDLERS,
   ...IMAGE_HANDLERS,
+  ...LABEL_FRAME_HANDLERS,
   ...REPAIR_HANDLERS,
   ...LIGHTEN_HANDLERS,
   ...SKILL_HANDLERS,

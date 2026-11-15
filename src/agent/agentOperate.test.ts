@@ -68,6 +68,19 @@ describe('operate', () => {
     expect(shoot.mock.calls[0][0].imported).toBe(imported);
   });
 
+  it('returns camera detections with their normalized boxes alongside the images', async () => {
+    const detections = [{ label: 'cup', score: 0.9, box: [0.1, 0.2, 0.3, 0.4] }];
+    const shoot = vi.fn(async () => ({
+      shots: [{ view: 'Wrist Camera', dataUrl: '', detections }],
+      missing: [],
+      available: ['Wrist Camera'],
+    }));
+    const reply = await operateRequest(context(fakeSim(true), shoot), {});
+
+    expect(reply.text).toContain('Detections:');
+    expect(reply.text).toContain(JSON.stringify(detections));
+  });
+
   it('ends with the bench replay errors per joint when a servo was calibrated', async () => {
     const shoot = vi.fn(async () => ({ shots: [], missing: [], available: ['Scene'] }));
     const errors = 'Bench log replayed in the sim, median error per joint: Elbow 1.20° with the preset.';

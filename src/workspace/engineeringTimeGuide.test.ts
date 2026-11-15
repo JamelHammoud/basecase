@@ -8,6 +8,7 @@ import { buildTime } from '../utils/engineeringTime';
 import { platformBridge } from '../utils/platformBridge';
 import { reportFromShapes } from '../utils/printReport';
 import { engineeringInputs, runEngineeringNow } from './engineeringNow';
+import { wiringNetlist } from '../wiring/netlist';
 
 it('uses saved assembly steps after assigning fasteners to moving links', async () => {
   const rover = fixtureRobots().find((r) => r.id === 'rover-diff')!;
@@ -44,6 +45,9 @@ it('uses saved assembly steps after assigning fasteners to moving links', async 
     }),
     measureParts: async () => ({}),
     meshGaps: async () => [],
+    sweepClashes: async () => [],
+    strength: async () => [],
+    wiring: async () => wiringNetlist({ parts, project: settings }),
   } as unknown as Viewport3DHandle;
   const purchases = vi.spyOn(platformBridge, 'listPurchases').mockResolvedValue({});
 

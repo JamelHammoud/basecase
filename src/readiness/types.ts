@@ -1,4 +1,5 @@
 import type { CheckRow, FindingFix, JointEnvelope } from '../utils/engineeringTypes';
+import type { Netlist } from '../wiring/netlist';
 
 export type { FindingFix } from '../utils/engineeringTypes';
 
@@ -75,4 +76,5 @@ export interface Readiness {
   rows: CheckRow[];
   fingerprint: string;
   checkedAt: string;
+  wiring?: Netlist;
 }

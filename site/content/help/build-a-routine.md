@@ -24,6 +24,8 @@ covers:
   - src/components/routines/RoutineNode.tsx
   - src/routines/stepMenu.ts
   - src/routines/routineRun.ts
+  - src/routines/kitBehavior.ts
+  - src/routines/physicsKit.ts
   - src/workspace/useRoutines.ts
   - src/workspace/routineCommands.tsx
 ---
@@ -68,6 +70,12 @@ To add a step at a certain point in the flow, click the + on any line. To move a
 
 **Drive**, **Turn** and **Stop** use the robot's **Walk** and **Settle** skills when it has them. Without them, a robot with four or more legs, or with wheels, uses the built-in gait from Drive, while a robot with two legs needs a trained **Walk**. An arm can't drive or turn.
 
+Each switch has its own proof. A Walk that passed Arena can still fail to turn from Settle, so that Turn step stays unavailable. Its message names the movement that failed, and **Run** appears once every required switch passes. Changing either skill or the robot's physics makes the affected proof out of date.
+
+A failed stop also keeps **Run** unavailable, including a stop before a reaction or after a step times out. The step that needs to stop shows the failed movement.
+
+![The Turn step refused after Settle because the policy didn’t turn 0.3 radians in place](/help/build-a-routine/start-turn-refused.png)
+
 If a step switches straight from one skill into another, such as Walk into a Wave, it runs once you prove the switch. See [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills).
 
 If a step needs a part the robot doesn't have, a button above the flow adds one, such as **Add Camera** or **Add Speaker**.
@@ -76,4 +84,8 @@ If a step needs a part the robot doesn't have, a button above the flow adds one,
 
 A run lasts as long as the Routine's worst case: each step's time limit plus 3 seconds, up to 60 seconds.
 
-Perception models don't run in Basecase. In the simulation, senses give stand-in answers instead of looking at the scene, and **Ask** takes its first answer.
+**See Objects**, **See Person**, **Find Faces** and **Obstacle Ahead** read camera images when the Routine runs. Models download on first use and run locally. A failed download names the step that needs it.
+
+**Body Pose** reads the body landmarker already running through **Drive with Camera**. It needs that camera input open. **Ask** takes its first answer, and face recognition remains outside this camera runtime.
+
+**Obstacle Ahead** compares relative depth within the image. It doesn’t measure distance in meters. The CPU fallback can take seconds, and watchers ignore images older than their freshness limit.

@@ -19,6 +19,7 @@ export interface LiveMoment {
   goal: SignalSample['goal'];
   cameras: string[];
   gestures?: Record<string, number>;
+  vision?: Record<string, number>;
   contacts?: ArrayLike<number>;
 }
 
@@ -51,5 +52,6 @@ export function liveSample(m: LiveMoment): SignalSample {
     goal: m.goal,
     cameras: m.cameras,
     gestures: m.gestures,
+    vision: m.vision,
   };
 }

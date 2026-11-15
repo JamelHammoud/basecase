@@ -5,6 +5,7 @@ import { ORDER, VirtualClock } from './scenarioClock';
 import { ScenarioHost } from './scenarioHost';
 import { activeFault, CONTROL_PERIOD_MS, COORDINATOR_PERIOD_MS } from './scenarioMocks';
 import type { Scenario, ScenarioResult } from './scenarioTypes';
+import type { VisionScenarioInput } from './visionScenario';
 import { TraceDecoder } from './traceDecode';
 
 export type * from './scenarioTypes';
@@ -127,7 +128,21 @@ export function scenarioResult(rig: ScenarioRig, extraFailures: string[] = []): 
   };
 }
 
-export async function runScenario(plan: Plan, scenario: Scenario): Promise<ScenarioResult> {
+export async function runScenario(
+  plan: Plan,
+  scenario: Scenario,
+  vision?: VisionScenarioInput,
+): Promise<ScenarioResult> {
+  if (scenario.tier === 'L1') throw new Error('L1 needs a physics scenario runner.');
+
+  if (scenario.tier === 'L2' && !vision) throw new Error('L2 needs rendered camera frames and a vision runtime.');
+
+  if (scenario.tier === 'L2' && vision) {
+    const { runVisionScenario } = await import('./visionScenario');
+
+    return runVisionScenario(plan, scenario, vision);
+  }
+
   const rig = await startScenario(plan, scenario);
 
   rig.clock.runUntil(scenario.seconds * 1000);

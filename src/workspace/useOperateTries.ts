@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { readStoredTry, type StoredTry } from '../cases/tryFile';
 import { sha256 } from '../cases/tries';
-import { keepTries, loadSession, noteStoredTry, saveTryVideo } from '../cases/tryStore';
+import { keepTries, loadSession, noteStoredTry } from '../cases/tryStore';
 import { useOperatorCamera } from '../cameras/operator/operatorCamera';
 import { openDataImport } from '../datasets/import/dataImportClient';
 import { connectedFrom } from '../robot/calibrationSession';
@@ -56,9 +56,13 @@ async function replayed(sim: Simulation, stored: StoredTry, video: VideoSegment 
   try {
     const recording = await job.replay({ model, episode, plan: operatePlan(stored.robot.joints, episode) });
 
-    if (video) await saveTryVideo(stored.id, video.bytes);
-
-    await keepTries([{ stored: operateStored(stored, recording, video), recording }]);
+    await keepTries([
+      {
+        stored: operateStored(stored, recording, video),
+        recording,
+        ...(video ? { videos: [{ camera: 'operator', bytes: video.bytes }] } : {}),
+      },
+    ]);
   } finally {
     job.close();
   }

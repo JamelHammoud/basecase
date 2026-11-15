@@ -52,4 +52,22 @@ describe('cameraStream', () => {
     );
     expect(asked).toEqual([]);
   });
+
+  it('keeps recorded operator video private while streaming recorded robot cameras', () => {
+    const feed = vi.fn(() => () => undefined);
+    const stream = cameraStream({
+      views: [...views, { key: 'operator', label: 'Computer Camera', recorded: true } as CameraView],
+      feed,
+    });
+
+    for (const camera of ['operator', ' Operator ', 'Computer Camera']) {
+      expect(stream(camera, ask, () => undefined)).toBe(
+        `${camera.trim()} isn’t a camera here. Cameras: scene, gripper_cam`,
+      );
+    }
+
+    expect(feed).not.toHaveBeenCalled();
+    expect(typeof stream('gripper_cam', ask, () => undefined)).toBe('function');
+    expect(feed).toHaveBeenCalledOnce();
+  });
 });

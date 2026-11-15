@@ -1,0 +1,13 @@
+import type { StudyKnob } from '../../../study/types';
+import type { Studio } from '../types';
+
+export default function studyStudio(studio: Studio) {
+  return {
+    configureStudy: (knobs: StudyKnob[]) => studio().core.study.configure(knobs),
+    studyState: () => {
+      const study = studio().core.study;
+
+      return { record: study.shown, preview: study.previewKey, running: study.running };
+    },
+  };
+}

@@ -14,6 +14,7 @@ import {
 } from './artifacts';
 import type { Environment } from './environment';
 import type { SkillSave } from './forgeRunner';
+import type { KitTransitionEvidence } from './kitTransitions';
 
 export interface ProveInput {
   mj: MainModule;
@@ -25,6 +26,7 @@ export interface ProveInput {
   save: SkillSave;
   origin?: () => SkillOrigin;
   warmStartFrom?: string;
+  kitValidation?: KitTransitionEvidence;
 }
 
 export interface Proof {
@@ -41,7 +43,10 @@ export async function proveSkill(input: ProveInput): Promise<Proof> {
 
   if (!evidence.passed) return { skill: null, evidence };
 
-  const proven = withEvidence(draft, evidence, environment);
+  const proven = {
+    ...withEvidence(draft, evidence, environment),
+    ...(input.kitValidation ? { kitValidation: input.kitValidation } : {}),
+  };
   const skill: Skill = input.origin ? { ...proven, origin: input.origin() } : proven;
 
   await input.save(skillFiles(skillHash(skill)).skill, JSON.stringify(skill));

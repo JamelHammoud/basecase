@@ -30,7 +30,13 @@ describe('compileRoutine', () => {
       }
     });
     expect(plan.hash).toBe(planHash(plan));
-    expect(plan.transitions).toEqual(['settle->turn-away', 'settle->walk', 'turn-away->walk']);
+    expect(plan.transitions).toEqual([
+      'settle->turn-away',
+      'settle->walk',
+      'turn-away->settle',
+      'turn-away->walk',
+      'walk->settle',
+    ]);
   });
 
   it('gives the same hash for the same Routine, and a new one for any change', () => {

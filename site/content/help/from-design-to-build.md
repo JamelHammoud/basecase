@@ -54,10 +54,12 @@ Flat parts assigned a sheet material appear under **Sheet**, grouped by material
 The list also includes things the build needs that the model doesn't show:
 
 - A battery adds a switch, fuse, wire and charger.
-- Bus servos add one cable for each hop of their bus, of the type they plug into.
+- Bus servos add one cable for each measured hop, grouped by the selected product and length.
 - Each battery plug or barrel jack on the power path adds a pigtail.
 
 Prices you check in a store are exact. The others are list prices, and Basecase marks them with ≈. Parts you own cost nothing.
+
+**Cable reach** checks these same connections through joint motion. A blocked route, missing port geometry or insufficient cable length stops Ready to build. [Servo bus or Cable reach is red](/help/troubleshoot-servo-bus) explains the findings. [Build Along](/help/build-along) shows each connection when both endpoints are installed.
 
 ## How it gets made
 

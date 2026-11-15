@@ -31,7 +31,7 @@ covers:
 
 A Case tests whether your robot can do a task. Each try ends in a pass or a miss, and Basecase judges it the same way on any robot that fits.
 
-Watching a robot stand in the simulation won't tell you whether it can reach a shelf or push a box. A Case holds every try to the same rules, so results from different runs mean the same thing. Use one to [compare two designs](/help/compare-two-robots-on-a-case), [explore servo versions](/help/explore-servo-versions-on-a-case), or check one design before and after a change.
+Watching a robot stand in the simulation won't tell you whether it can reach a shelf or push a box. A Case holds every try to the same rules, so results from different runs mean the same thing. Use one to [compare two designs](/help/compare-two-robots-on-a-case), [study design choices](/help/study-design-options), or check one design before and after a change.
 
 ## What a Case holds
 
@@ -47,6 +47,8 @@ Watching a robot stand in the simulation won't tell you whether it can reach a s
 - **Image variation**, if declared: named object points, color classes, camera mount tolerance and distractors for rendered training images.
 
 Each Case comes with a reference route that passes it, so you know a pass is possible. To see each goal and how the contract judges it, read [Case goals, worlds and contracts](/help/case-goals-worlds-and-contracts).
+
+A Case's logic and console can read camera detections, including object counts, scores and boxes. Detections belong to that scene and camera source, so a cup seen in another tab can't trigger this Case. See [Watch what the robot's cameras see](/help/watch-what-the-robots-cameras-see).
 
 ## One Case, many robots
 

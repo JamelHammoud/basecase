@@ -15,6 +15,8 @@ import { errorMessage } from '../utils/errorMessage';
 import type { Rig } from '../utils/kinematics';
 import { caseLogicPlan } from './caseLogicPlan';
 import type { RoutineSkills } from './routineCheck';
+import { useCaseVision } from './useCaseVision';
+import { useStartupLease } from './useStartupLease';
 
 export type TryPhase = 'idle' | 'starting' | 'running' | 'scoring';
 
@@ -71,6 +73,10 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const [startedAt, setStartedAt] = useState(0);
   const finishing = useRef(false);
   const scripted = useRef(false);
+  const lease = useStartupLease(active, sim.subscribeStop, () =>
+    setPhase((value) => (value === 'starting' ? 'idle' : value)),
+  );
+  const vision = useCaseVision(lease);
   const time = sim.stats?.time ?? 0;
   const elapsed = phase === 'running' ? Math.max(0, time - startedAt) : 0;
 
@@ -104,6 +110,7 @@ export function useCaseTry(options: TryOptions): CaseTry {
     const model = sim.model;
     const recording = await sim.stopRecording();
 
+    vision.release();
     sim.runCase(null);
     setPhase('scoring');
 
@@ -115,6 +122,8 @@ export function useCaseTry(options: TryOptions): CaseTry {
   };
 
   const finish = async () => {
+    lease.cancel();
+
     if (finishing.current) return;
 
     finishing.current = true;
@@ -149,18 +158,39 @@ export function useCaseTry(options: TryOptions): CaseTry {
   const begin = async (all: boolean) => {
     if (!active || phase !== 'idle') return;
 
-    setPhase('starting');
-
     const staged = stageCase(active, { rig, parts }, partners());
     const kase = staged.kase;
+    const ticket = lease.claimAfter(() => {
+      if (staged.slots.length > 1) sim.setWorld(caseWorldItems(kase), staged.joined);
+    });
+
+    setPhase('starting');
+
     const logic = await caseLogicPlan(kase, { parts, joints, buildModel: sim.buildModel, skills: options.skills });
 
-    if (logic.refusal) onRefuse(logic.refusal);
+    if (!lease.current(ticket)) return;
 
-    if (!logic.refusal && staged.slots.length > 1) sim.setWorld(caseWorldItems(staged.kase), staged.joined);
+    const refusal = logic.refusal ?? (await vision.prepare(logic.plan, ticket));
 
-    if (logic.refusal || !(await sim.drive.start(teamFor(staged, { rig, parts }, all)))) {
-      refuseDrive(!logic.refusal && sim.drive.refusal(), onRefuse);
+    if (!lease.current(ticket)) return;
+
+    if (refusal) {
+      vision.release();
+      onRefuse(refusal);
+      setPhase('idle');
+
+      return;
+    }
+
+    const started = await sim.drive.start(teamFor(staged, { rig, parts }, all), {
+      current: () => lease.current(ticket),
+    });
+
+    if (!lease.current(ticket)) return;
+
+    if (!started) {
+      vision.release();
+      refuseDrive(sim.drive.refusal(), onRefuse);
       setPhase('idle');
 
       return;

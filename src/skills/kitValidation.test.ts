@@ -95,7 +95,7 @@ describe('Kit validation', () => {
     expect((await evaluateContract(backward, walked(-0.25))).passed).toBe(false);
   });
 
-  it('checks Stand against its own contract, with as many draws as all the walking checks together', () => {
+  it('keeps sixty Stand draws while replacing repeated speed draws with start coverage', () => {
     const model = fixtureModel('biped-servo');
     const environment = kitEnvironment(model, 'stand');
     const walking = validationChecks({
@@ -105,8 +105,9 @@ describe('Kit validation', () => {
     });
 
     expect(validationChecks({ model, entry: 'stand', environment })).toEqual([
-      { command: [0, 0, 0], contract: environment.contract, draws: walking.reduce((sum, c) => sum + c.draws, 0) },
+      { command: [0, 0, 0], contract: environment.contract, draws: 60 },
     ]);
+    expect(walking.reduce((sum, c) => sum + c.draws, 0)).toBe(22);
   });
 
   it('scores a robot that only stands near zero, since Arena needs every speed', async () => {

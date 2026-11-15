@@ -146,6 +146,7 @@ export function useAgentRequests(options: AgentRequestOptions) {
       parts: partsRef.current,
       fixedCameras: projectRef.current.cameras ?? [],
       imported: caseWorldView(simTraining.cases.active),
+      cameraVision: core.vision.simulated,
       velocity: simTraining.skills.velocity,
       calibrationErrors: () => calibrationErrorsText(projectRef.current, unit),
       fitBody: (robot) => fitBodyFor(core, robot),
@@ -176,8 +177,6 @@ export function useAgentRequests(options: AgentRequestOptions) {
 
     return result;
   };
-
-  const authorOf = (event: AgentRequestEvent) => authorFor(event, actors, cursors);
 
   const contextFor = (author: Author): RequestContext => ({
     parts: () => partsRef.current,
@@ -214,7 +213,7 @@ export function useAgentRequests(options: AgentRequestOptions) {
     routines: core.simTraining.routines,
     cases: core.simTraining.cases,
     caseCompare: core.caseCompare,
-    caseExplore: core.caseExplore,
+    study: core.study,
     caseRun: core.caseRun,
     datasets: core.datasets,
     skills: core.simTraining.skills,
@@ -238,14 +237,14 @@ export function useAgentRequests(options: AgentRequestOptions) {
       platformBridge.respondToAgent({ requestId: event.requestId, result, error });
 
     try {
-      await respond(await runRequest(event, authorOf(event)));
+      await respond(await runRequest(event, authorFor(event, actors, cursors)));
     } catch (err) {
       await respond(undefined, errorMessage(err));
     }
   };
 
   const request = (kind: string, payload: Payload) =>
-    runRequest({ kind, payload }, authorOf({ requestId: kind, kind, payload }));
+    runRequest({ kind, payload }, authorFor({ requestId: kind, kind, payload }, actors, cursors));
 
   return { handleAgentRequest, request, poseTool, simTool };
 }

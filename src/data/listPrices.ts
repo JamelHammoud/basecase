@@ -406,6 +406,27 @@ export const LIST_PRICES: Record<string, ListPrice> = {
     url: 'https://www.adafruit.com/product/4210',
     seen: '2026-10-17',
   },
+  'supply:robot-cable-x3p': {
+    usd: 21.85,
+    per: 10,
+    store: 'ROBOTIS America',
+    url: 'https://robotis.us/products/robot-cable-x3p-180mm-10pcs',
+    seen: '2026-11-14',
+  },
+  'supply:waveshare-servo-cable-5264-300': {
+    usd: 1.99,
+    per: 6,
+    store: 'Waveshare (34171)',
+    url: 'https://www.waveshare.com/sr-cable-5264-3pin.htm?sku=34171',
+    seen: '2026-11-14',
+  },
+  'supply:waveshare-servo-cable-5264-900': {
+    usd: 3.99,
+    per: 6,
+    store: 'Waveshare (34172)',
+    url: 'https://www.waveshare.com/sr-cable-5264-3pin.htm?sku=34172',
+    seen: '2026-11-14',
+  },
   'supply:buck-5v-5a': {
     usd: 32.95,
     per: 1,

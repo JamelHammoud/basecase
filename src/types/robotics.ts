@@ -226,6 +226,7 @@ export interface ProjectSettings extends ProjectRecords, PrintService, ProjectBu
   sourced?: SourcedItem[];
   readiness?: ReadinessDecisions;
   joints?: RobotJoint[];
+  wiring?: import('../wiring/connectors').WiringRouteSpec[];
   firstRanges?: Record<string, [number, number]>;
   pose?: RobotPoseState;
   poses?: RobotPose[];

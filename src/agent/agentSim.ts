@@ -1,4 +1,5 @@
 import type { ImportedWorldView } from '../three/viewport/importedWorld';
+import type { CameraVision } from '../cameras/scopedVision';
 import type * as THREE from 'three';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import type { Controller } from '../sim/engine';
@@ -30,6 +31,7 @@ export interface SimulatePayload {
 }
 
 export interface SimContext {
+  cameraVision?: CameraVision;
   sim: Simulation;
   training: Training;
   rig: Rig;
@@ -209,6 +211,7 @@ async function cameraReply(ctx: SimContext, run: SimRun, names: string[] | undef
   if (!names?.length) return { shots: [], note: '' };
 
   const seen = await cameraShots({
+    vision: ctx.cameraVision,
     parts: ctx.parts,
     world: ctx.sim.worldParts,
     imported: ctx.imported,

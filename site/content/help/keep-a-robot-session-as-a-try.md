@@ -46,7 +46,7 @@ Climbing the **Ladder** keeps the same session going. Dropping to a lower rung e
 
 A session keeps the angles the robot measured and the commands Basecase sent. It also keeps the simulation's angles at the same moments and the raw values of the input that drove it. Those are a gamepad's sticks and buttons, a phone's tilt, or the body points your computer's camera found. A ROS 2 robot or a Unitree G1 adds each joint's speed and effort. A session that ran a trained policy keeps which policy it was.
 
-When your computer's camera is on, the selected unit's session also keeps its video. The video stays on your computer, in the try's folder.
+When your computer's camera is on, the selected unit's session also keeps its video. The video stays on your computer with the try.
 
 An amber warning mark on the tile flags a problem in the recording, such as missing frames. On the timeline, point at the same mark beside the segments to see what happened and when.
 

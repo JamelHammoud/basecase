@@ -82,12 +82,13 @@ function cutOf(wall: RoomSurface, hole: RoomSurface, toFloor: boolean): Cut {
   return { from: u - half, to: u + half, bottom: toFloor ? -Infinity : hole.center[1] - hole.size[1] / 2, top };
 }
 
-function solidSpans(full: Span, holes: Span[]): Span[] {
-  const sorted = [...holes].sort((a, b) => a[0] - b[0]);
+function solidSpans(full: Span, cuts: Cut[], mid: number): Span[] {
   const spans: Span[] = [];
   let from = full[0];
 
-  for (const [bottom, top] of sorted) {
+  for (const { from: left, to: right, bottom, top } of cuts) {
+    if (!(left <= mid && right >= mid)) continue;
+
     if (bottom > from) spans.push([from, Math.min(bottom, full[1])]);
 
     from = Math.max(from, top);
@@ -105,15 +106,15 @@ function wallPieces(wall: RoomSurface, cuts: Cut[], index: number): WorldObject[
     .filter((u) => u >= -half && u <= half)
     .sort((a, b) => a - b);
   const axis = axisOf(wall.yaw);
+  const orderedCuts = [...cuts].sort((a, b) => a.bottom - b.bottom);
 
   return edges.slice(1).flatMap((to, i) => {
     const from = edges[i];
     const mid = (from + to) / 2;
-    const holes = cuts.filter((c) => c.from <= mid && c.to >= mid).map((c): Span => [c.bottom, c.top]);
 
     if (to - from < MIN_PIECE_MM) return [];
 
-    return solidSpans(height, holes).map(([bottom, top], j) => ({
+    return solidSpans(height, orderedCuts, mid).map(([bottom, top], j) => ({
       id: `wall-${index}-${i}-${j}`,
       name: 'Wall',
       kind: 'box' as const,

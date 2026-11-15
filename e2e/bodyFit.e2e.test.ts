@@ -45,7 +45,7 @@ beforeAll(async () => {
     .locator(visible('button'), { hasText: /^Connect Emulated Robot$/ })
     .first()
     .click();
-  await expect.poll(() => app.page.locator(visible('button'), { hasText: /^Disconnect$/ }).count()).toBe(1);
+  await app.page.locator(visible('button'), { hasText: /^Disconnect$/ }).waitFor({ timeout: 10000 });
 }, 120000);
 
 afterAll(async () => {

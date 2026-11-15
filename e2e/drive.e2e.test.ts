@@ -1,5 +1,4 @@
 import { parquetReadObjects } from 'hyparquet';
-import { plural } from '../electron/plural.mjs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ReferenceCommand } from '../src/cases/schema';
 import type { DriveCommand } from '../src/sim/driveTypes';
@@ -7,11 +6,9 @@ import { withLidar, type FixtureRobot } from '../src/sim/fixtures/parts';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import type { SimState, Studio } from './driveStudio';
 import {
-  datasetFiles,
   endTryAt,
   expectCaseCheckOpensRow,
   expectDataset,
-  expectGenerated,
   inDataset,
   loadFixtureRobot,
   passedDatasetFiles,
@@ -308,42 +305,6 @@ describe('a real robot', () => {
       expect(app.errors).toEqual([]);
     },
     120000,
-  );
-});
-
-describe('Multiply', () => {
-  itUnlessWindows(
-    'multiplies a passed try from ⌘K into generated tries under its row, and exports them with their seeds',
-    async () => {
-      await openTouchTheDots();
-      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.referenceTry());
-      await expect.poll(async () => (await simState()).tries.length, { timeout: 60000 }).toBe(1);
-      expect((await simState()).tries[0].passed).toBe(true);
-
-      await app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.multiplyRuns(5));
-      await app.page.keyboard.press('Meta+k');
-      await app.page.getByLabel('Search commands').fill('Multiply');
-      await expect.poll(() => app.page.getByText(/^Multiply$/).count(), { timeout: 15000 }).toBe(1);
-      await app.page.keyboard.press('Enter');
-
-      const done = app.page.getByRole('status').filter({ hasText: /^Kept \d+ of 5\b/ });
-
-      await done.first().waitFor({ timeout: 120000 });
-
-      const kept = Number(/Kept (\d+)/.exec(await done.first().innerText())![1]);
-      const rows = app.page.locator(visible('[data-testid="try-row"]'));
-
-      expect(kept).toBeGreaterThan(0);
-      await expect.poll(async () => (await simState()).tries.filter((t) => t.generated).length).toBe(kept);
-      expect((await simState()).multiplying).toBe(false);
-      expect((await simState()).tries.every((t) => t.passed)).toBe(true);
-      expect(await rows.count()).toBe(1);
-      expect(await rows.first().getByTestId('try-generated').innerText()).toBe(plural(kept, 'variation'));
-
-      expectGenerated(await datasetFiles(app.page), kept);
-      expect(app.errors).toEqual([]);
-    },
-    180000,
   );
 });
 

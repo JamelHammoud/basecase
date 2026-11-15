@@ -12,7 +12,6 @@ export interface SimState {
   effector: number[] | null;
   scanPoints: number;
   tries: Array<{ passed: boolean; margin: number; generated: boolean; real: boolean }>;
-  multiplying: boolean;
 }
 
 export type Studio = {
@@ -20,7 +19,6 @@ export type Studio = {
   load: (r: unknown) => void;
   passTries: () => void;
   referenceTry: () => Promise<void>;
-  multiplyRuns: (runs: number) => void;
   drive: (c: DriveCommand) => void;
   worldAt: () => Record<string, number[]>;
   lastDownload: () => { name: string; base64: string } | null;

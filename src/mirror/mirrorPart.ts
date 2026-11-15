@@ -27,8 +27,13 @@ export function symmetricAxis(axes: MirrorAxis[], rotation: V3, k: MirrorAxis): 
   if (axes.includes(k)) return k;
 
   const local = localMirrorAxis(rotation, k);
+  let best = axes[0];
 
-  return [...axes].sort((a, b) => Math.abs(local[b]) - Math.abs(local[a]))[0];
+  for (const axis of axes) {
+    if (Math.abs(local[axis]) > Math.abs(local[best])) best = axis;
+  }
+
+  return best;
 }
 
 export function mirroredRotation(rotation: V3, k: MirrorAxis, f: MirrorAxis = k): V3 {

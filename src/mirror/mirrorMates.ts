@@ -20,12 +20,21 @@ export function matchingPort({ source, name, onto, plane }: PortMatch): string |
   if (!port) return undefined;
 
   const want = reflectPoint(worldPort(source, port).position, plane);
-  const best = portsOf(onto)
-    .filter((q) => q.kind === port.kind)
-    .map((q) => ({ name: q.name, off: gap(worldPort(onto, q).position, want) }))
-    .sort((a, b) => a.off - b.off)[0];
+  let best: string | undefined;
+  let nearest = Infinity;
 
-  return best && best.off <= PORT_TOLERANCE_MM ? best.name : undefined;
+  for (const candidate of portsOf(onto)) {
+    if (candidate.kind !== port.kind) continue;
+
+    const off = gap(worldPort(onto, candidate).position, want);
+
+    if (off < nearest) {
+      best = candidate.name;
+      nearest = off;
+    }
+  }
+
+  return nearest <= PORT_TOLERANCE_MM ? best : undefined;
 }
 
 export interface MateScene {

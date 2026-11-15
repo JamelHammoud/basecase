@@ -5,6 +5,7 @@ import { replayBody, type BodyReplayInput } from './bodyReplay';
 import type { BodyCalibration, BodyFit } from './bodyTypes';
 import { bodyErrorUnits, bodyRunWindow, excitedBodyJoints } from './bodyRun';
 import { bodyKey } from './bodyLayout';
+import { prepareBodyResiduals, type BodyResidual } from './bodyResiduals';
 import { loadedMujoco } from './calibrate';
 import { BODY_RUNG } from './ladder';
 import { levenbergMarquardt } from './leastSquares';
@@ -93,22 +94,7 @@ function usable({ model, robot, run }: BodyFitRequest): boolean {
   );
 }
 
-function residuals(
-  predicted: number[][],
-  run: RobotRun,
-  selection: { half: 'fit' | 'check'; joints: number[] },
-): number[] {
-  const { half, joints } = selection;
-  const midpoint = (run.statuses[0].at + run.statuses.at(-1)!.at) / 2;
-
-  return run.statuses.flatMap((s, i) => {
-    const selected = half === 'fit' ? s.at < midpoint : s.at >= midpoint;
-
-    return selected && i > 0 ? joints.map((j) => predicted[i][j] - s.positions[j]!) : [];
-  });
-}
-
-const error = (r: number[]) => median(r.map(Math.abs));
+const error = (r: Float64Array) => median(Array.from(r, Math.abs));
 
 function believable(run: RobotRun, fittedError: number, joints: number[]): boolean {
   const spreads = joints.map((j) => {
@@ -121,7 +107,7 @@ function believable(run: RobotRun, fittedError: number, joints: number[]): boole
   return fittedError < median(spreads) * 0.35;
 }
 
-function fitRun(ctx: BodyReplayInput, params: Parameter[], joints: number[]) {
+function fitRun(ctx: BodyReplayInput, params: Parameter[], residual: BodyResidual) {
   const cache = new Map<string, number[][]>();
   const predict = (values: number[]) => {
     const key = values.join(',');
@@ -135,20 +121,20 @@ function fitRun(ctx: BodyReplayInput, params: Parameter[], joints: number[]) {
 
     return result;
   };
-  const x0 = frictionStart(params, (values) => residuals(predict(values), ctx.run, { half: 'fit', joints }));
+  const x0 = frictionStart(params, (values) => residual(predict(values)));
   const solved = levenbergMarquardt({
     x0,
     lower: params.map((p) => p.lower),
     upper: params.map((p) => p.upper),
     step: 0.01,
     maxIterations: 16,
-    residual: (values) => Float64Array.from(residuals(predict(values), ctx.run, { half: 'fit', joints })),
+    residual: (values) => residual(predict(values)),
   });
 
   return { fit: unpack(params, solved.x), predicted: predict(solved.x) };
 }
 
-function frictionStart(params: Parameter[], residual: (values: number[]) => number[]): number[] {
+function frictionStart(params: Parameter[], residual: (values: number[]) => Float64Array): number[] {
   const index = params.findIndex((p) => p.kind === 'floorFrictionScale');
   const initial = params.map(() => 0);
 
@@ -186,13 +172,14 @@ export async function fitBody(asked: BodyFitRequest): Promise<BodyCalibration> {
   if (!joints.length) return result;
 
   const units = bodyErrorUnits(request.model, request.run, joints);
+  const residuals = prepareBodyResiduals(request.run, joints);
   const ctx = { ...request, mj: request.mj ?? (await loadedMujoco()) };
-  const presetErrorRad = error(residuals(replayBody(ctx, emptyFit()), request.run, { half: 'check', joints }));
+  const presetErrorRad = error(residuals.check(replayBody(ctx, emptyFit())));
 
   if (presetErrorRad < 1e-6) return { ...result, evidence: { ...result.evidence, presetErrorRad, units } };
 
-  const fitted = fitRun(ctx, parameters(request.model, request.robot), joints);
-  const fittedErrorRad = error(residuals(fitted.predicted, request.run, { half: 'check', joints }));
+  const fitted = fitRun(ctx, parameters(request.model, request.robot), residuals.fit);
+  const fittedErrorRad = error(residuals.check(fitted.predicted));
   const gain = 1 - fittedErrorRad / presetErrorRad;
   const kept = Number.isFinite(gain) && gain >= BODY_RUNG.passGain && believable(request.run, fittedErrorRad, joints);
 

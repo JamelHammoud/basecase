@@ -1,4 +1,5 @@
 import { explode } from './guideExplode';
+import { fastenerSteps } from './guideFastenerSteps';
 import { isFastener, isInsert, isMajor, itemKeyOf } from './guideItems';
 import { fastenerHomes, insertHosts, isUnproven, orderMajors, type FastenerHome, type PlanContext } from './guideOrder';
 import { MAIN_MODULE, type GuideModule, type GuideStep } from './guideTypes';
@@ -79,20 +80,16 @@ interface ModuleRun {
 function moduleSteps({ ctx, module, parts, homes, outside }: ModuleRun): GuideStep[] {
   const steps: GuideStep[] = [];
   const placed: string[] = [];
-  const placedMajors = new Set<string>();
-  let pending = parts.fasteners;
+  const majors = orderMajors(ctx, parts.majors, outside);
+  const fasteners = fastenerSteps(majors, parts.fasteners, homes.fasteners);
 
-  for (const major of orderMajors(ctx, parts.majors, outside)) {
+  for (const [index, major] of majors.entries()) {
     const inserts = parts.inserts.get(major) ?? [];
 
     if (inserts.length) steps.push(draftStep('inserts', module.id, inserts, [major]));
 
-    placedMajors.add(major);
-
-    const ready = pending.filter((f) => homes.fasteners.get(f)!.gate.every((g) => placedMajors.has(g)));
+    const ready = fasteners.ready[index];
     const prev = steps.at(-1);
-
-    pending = pending.filter((f) => !ready.includes(f));
 
     if (!inserts.length && canMerge(ctx, prev, major, ready) && !!prev.unproven === isUnproven(ctx, [major]))
       prev.partIds.push(major, ...ready);
@@ -101,7 +98,7 @@ function moduleSteps({ ctx, module, parts, homes, outside }: ModuleRun): GuideSt
     placed.push(major, ...inserts, ...ready);
   }
 
-  if (pending.length) steps.push(draftStep('build', module.id, pending, [...placed]));
+  if (fasteners.pending.length) steps.push(draftStep('build', module.id, fasteners.pending, [...placed]));
 
   return steps;
 }

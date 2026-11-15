@@ -79,6 +79,7 @@ const NAMES_BEFORE_THE_SPLIT = [
   'printState',
   'project',
   'projectPoints',
+  'publishedSkills',
   'rangeClashes',
   'readySteps',
   'recordingPanels',

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { detectSheet } from '../../sheet/detectSheet';
 import { measureTriangles, type MeshMeasure } from '../meshMeasure';
-import { checkPrintability, extraPose, type PrintPose, type PrintShape, type Vec3 } from '../printability';
+import { checkPrintability, extraPoses, type PrintPose, type PrintShape, type Vec3 } from '../printability';
 import type { ShapeSolid } from './shapeSolid';
 import { convexHull } from '../../utils/engineeringMath';
 
@@ -12,7 +12,7 @@ export interface ShapeReport {
 
 const localMeasures = new WeakMap<ShapeSolid, MeshMeasure>();
 const printChecks = new WeakMap<ShapeSolid, PrintShape | null>();
-const extraPoses = new WeakMap<ShapeSolid, Map<string, PrintPose>>();
+const extraPoseCache = new WeakMap<ShapeSolid, Map<string, PrintPose>>();
 
 function localMeasure(solid: ShapeSolid): MeshMeasure {
   const cached = localMeasures.get(solid);
@@ -27,18 +27,26 @@ function localMeasure(solid: ShapeSolid): MeshMeasure {
 }
 
 function posesFor(solid: ShapeSolid, downs: Vec3[]): PrintPose[] {
-  const cache = extraPoses.get(solid) ?? new Map<string, PrintPose>();
+  const cache = extraPoseCache.get(solid) ?? new Map<string, PrintPose>();
+  const missing = new Map<string, Vec3>();
 
-  extraPoses.set(solid, cache);
+  extraPoseCache.set(solid, cache);
 
-  return downs.map((down) => {
+  const keys = downs.map((down) => {
     const key = down.map((x) => x.toFixed(5)).join(',');
-    const pose = cache.get(key) ?? extraPose(solid.positions, solid.bvh, down);
 
-    cache.set(key, pose);
+    if (!cache.has(key) && !missing.has(key)) missing.set(key, down);
 
-    return pose;
+    return key;
   });
+
+  if (missing.size) {
+    const poses = extraPoses(solid.positions, solid.bvh, [...missing.values()]);
+
+    [...missing.keys()].forEach((key, index) => cache.set(key, poses[index]));
+  }
+
+  return keys.map((key) => cache.get(key)!);
 }
 
 export function printReportOf(solid: ShapeSolid, downs: Vec3[] = []): ShapeReport {

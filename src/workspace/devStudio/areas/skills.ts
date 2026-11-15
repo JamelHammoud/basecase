@@ -14,5 +14,6 @@ export default function skillsStudio(studio: Studio) {
     releaseTrainer: () => studio().releaseTrainerRef.current(),
     stressBudget: (budget: number) => studio().core.simTraining.skills.stress.setBudget(budget),
     stubTabEngine,
+    publishedSkills: () => studio().core.simTraining.skillHub.candidates,
   };
 }

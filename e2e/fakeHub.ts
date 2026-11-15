@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { findModels, skillSiblings } from './fakeHubSkills';
 
 export interface CommitLine {
   key: string;
@@ -38,7 +39,7 @@ export interface FakeHub {
   url: string;
   repos: Map<string, FakeRepo>;
   requests: FakeHubRequest[];
-  seed: (id: string, files: Record<string, Uint8Array>) => void;
+  seed: (id: string, files: Record<string, Uint8Array>, kind?: 'dataset' | 'model') => void;
   close: () => Promise<void>;
 }
 
@@ -110,6 +111,12 @@ class FakeHubServer {
   routes(): Route[] {
     return [
       { method: 'GET', pattern: /^\/api\/whoami-v2$/, handle: (c) => this.whoami(c), auth: true },
+      {
+        method: 'GET',
+        pattern: /^\/api\/models$/,
+        handle: (c) => send(c.res, 200, findModels(this.repos, new URL(c.req.url!, this.url))),
+        auth: 'if-sent',
+      },
       { method: 'POST', pattern: /^\/api\/repos\/create$/, handle: (c) => this.create(c), auth: true },
       {
         method: 'GET',
@@ -182,10 +189,17 @@ class FakeHubServer {
     return !route.auth || auth === bearer;
   }
 
-  seed(id: string, files: Record<string, Uint8Array>) {
+  seed(id: string, files: Record<string, Uint8Array>, kind: 'dataset' | 'model' = 'dataset') {
     const map = new Map(Object.entries(files).map(([path, bytes]) => [path, asBuffer(bytes)]));
+    const old = this.repos.get(id);
 
-    this.repos.set(id, { kind: 'dataset', files: map, tags: new Map(), commits: [[]], revisions: [new Map(map)] });
+    this.repos.set(id, {
+      kind,
+      files: map,
+      tags: new Map(),
+      commits: [...(old?.commits ?? []), []],
+      revisions: [...(old?.revisions ?? []), new Map(map)],
+    });
   }
 
   private commitAt(id: string, repo: FakeRepo, rev: string) {
@@ -215,9 +229,13 @@ class FakeHubServer {
     const repo = this.repoOf(ctx);
     const count = repo && this.commitAt(id, repo, decodeURIComponent(ctx.match[4]));
 
-    if (count === undefined) return send(ctx.res, 404, { error: 'Revision not found' });
+    if (!repo || count === undefined) return send(ctx.res, 404, { error: 'Revision not found' });
 
-    send(ctx.res, 200, { id, sha: commitSha(id, count) });
+    send(ctx.res, 200, {
+      id,
+      sha: commitSha(id, count),
+      siblings: skillSiblings(this.filesAt(id, repo, decodeURIComponent(ctx.match[4]))!),
+    });
   }
 
   private tree(ctx: Ctx) {
@@ -421,7 +439,7 @@ export async function startFakeHub(options: FakeHubOptions): Promise<FakeHub> {
     url: hub.url,
     repos: hub.repos,
     requests: hub.requests,
-    seed: (id, files) => hub.seed(id, files),
+    seed: (id, files, kind) => hub.seed(id, files, kind),
     close: () =>
       new Promise<void>((resolve) => {
         server.closeAllConnections();

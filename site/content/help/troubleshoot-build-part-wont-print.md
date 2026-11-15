@@ -44,14 +44,14 @@ You'll know it worked when the part sits on a plate and **Printing** in Checks n
 
 ## “This part has a wall too thin to print, so it would come out with holes.”
 
-A wall on this part is under 0.84 mm thick over an area of 100 mm² or more.
+A wall on this part is under 0.84 mm thick. The thin area covers at least 100 mm² or 10% of the part's surface.
 
 1. Click the part name under the problem to select it.
 2. Thicken the wall to at least 0.84 mm, or click **Fix** to have the agent do it.
 
 ## “A thin edge here may not print cleanly. It’s usually fine.”
 
-This is a note. The part has a small sliver under 0.84 mm thick, usually left by a cut that grazes a face. The slicer drops the sliver, so the part prints without it.
+This is a note. The part has a sliver under 0.84 mm thick, usually left by a cut that grazes a face. It covers less than 100 mm² and 10% of the part's surface. The slicer drops the sliver, so the part prints without it.
 
 ## “This part needs a lot of support material to print.”
 

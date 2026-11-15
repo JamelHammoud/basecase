@@ -2,47 +2,33 @@ import { createHash } from 'node:crypto';
 import loadMujoco from '@mujoco/mujoco';
 import type { Page } from 'playwright-core';
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, Mp4OutputFormat, Output } from 'mediabunny';
-import { buildCase, builderRobot } from '../src/cases/caseBuilder';
 import { encodeRecording } from '../src/cases/recordingFile';
 import type { StoredTry } from '../src/cases/tryFile';
 import { SimEngine } from '../src/sim/engine';
 import { Recorder } from '../src/sim/recorder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { modelOf } from '../src/skills/fixtureModels';
-import { DEFAULT_PROJECT, type ScenePart } from '../src/types/robotics';
-import { buildRig } from '../src/utils/kinematics';
+import { DEFAULT_PROJECT } from '../src/types/robotics';
+import { box } from '../src/sim/fixtures/parts';
 import type { VisionManifest } from '../src/vision/manifest';
 
-export function wristCamera(): ScenePart {
+export function simulatedCameraFixture() {
   return {
-    id: 'wrist-camera',
-    name: 'Wrist Camera',
-    kind: 'component',
-    category: 'perception',
-    role: 'solid',
-    componentId: 'raspberry-pi-camera-3',
-    position: [0, 240, 20],
-    rotation: [0, 0, 0],
-    dimensions: { width: 25, height: 12, depth: 24 },
-    color: '#333333',
-    note: '',
-    visible: true,
-    locked: false,
+    name: 'Vision Target',
+    parts: [{ ...box('target', [0, 250, 0], [500, 500, 20], 100), color: '#ffffff' }],
+    project: {
+      ...DEFAULT_PROJECT,
+      cameras: [
+        {
+          id: 'target-camera',
+          name: 'Target Camera',
+          position: [0, 250, 300] as [number, number, number],
+          target: [0, 250, 0] as [number, number, number],
+          lens: { model: 'pinhole' as const, hfovDeg: 60 },
+        },
+      ],
+    },
   };
-}
-
-export function armWithWristCamera() {
-  const robot = fixtureRobots().find((candidate) => candidate.id === 'arm-6dof')!;
-  const camera = wristCamera();
-  const parts = [...robot.parts, camera];
-  const joints = robot.joints.map((joint) =>
-    joint.id === 'arm5' ? { ...joint, child: [...joint.child, camera.id] } : joint,
-  );
-  const built = buildCase({ goal: 'pick', world: 'floor' }, builderRobot(buildRig(joints, parts), parts));
-
-  if (!built.ok) throw new Error(built.problem);
-
-  return { name: 'Vision Pick Up a Block', parts, project: { ...DEFAULT_PROJECT, joints, cases: [built.kase] } };
 }
 
 export const visionManifest = (bytes: Uint8Array, label = 'cup', id = 'rfdetr-nano'): VisionManifest => ({

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { BaseFix } from '../../cameras/mat/matSolve';
 import type { FloorPoint } from '../../cameras/mat/tag36h11';
-import { quatToMj, simDeltas, toMj } from '../../sim/mjcfFrames';
+import { quatToMj, simDelta, toMj } from '../../sim/mjcfFrames';
 import type { SimModel } from '../../sim/mjcfTypes';
 import { framePoses, RECORD_HZ, type Recording } from '../../sim/recorder';
 import type { Rig } from '../../utils/kinematics';
@@ -128,7 +128,7 @@ export function basePathOf(recording: Recording, scene: { model: SimModel; rig: 
   const pivot = new THREE.Vector3(...(robot?.pivot ?? [0, 0, 0]));
 
   return Array.from({ length: recording.frames }, (_, i) => {
-    const delta = part ? simDeltas(scene.model, framePoses(recording, i)).get(part) : undefined;
+    const delta = part ? simDelta(scene.model, framePoses(recording, i), part) : undefined;
     const at = delta ? pivot.clone().applyMatrix4(delta) : null;
 
     return at && Number.isFinite(at.x) && Number.isFinite(at.z) ? [at.x, at.z] : null;

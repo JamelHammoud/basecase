@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { SimEngine } from '../../../sim/engine';
 import { fixtureMeasures, fixtureTriangles, type FixtureRobot } from '../../../sim/fixtures/parts';
 import { buildMjcf } from '../../../sim/mjcf';
-import { worldDeltas } from '../../../sim/mjcfFrames';
+import { worldDelta } from '../../../sim/mjcfFrames';
 import { Recorder, type Recording } from '../../../sim/recorder';
 import { WorldMoves } from '../../../sim/worldMoves';
 import { DEFAULT_PROJECT } from '../../../types/robotics';
@@ -138,7 +138,7 @@ export async function openCodeRun(mj: MainModule, input: CodeRunInput): Promise<
     time: () => t,
     objectAt: (id) => {
       const rest = staged.kase.world.objects.find((o) => o.id === id)!.position;
-      const delta = worldDeltas(model, engine.poses()).get(id) ?? new THREE.Matrix4();
+      const delta = worldDelta(model, engine.poses(), id) ?? new THREE.Matrix4();
 
       return new THREE.Vector3(...rest).applyMatrix4(delta).toArray();
     },

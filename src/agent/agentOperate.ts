@@ -6,7 +6,7 @@ import type { FixedCamera } from '../cameras/fixed';
 import { robotFacts } from '../cases/robotFit';
 import { angle } from '../utils/angle';
 import { isCameraPart } from '../routines/capabilities';
-import { simDeltas } from '../sim/mjcfFrames';
+import { simDelta } from '../sim/mjcfFrames';
 import type { DriveCommand } from '../sim/driveTypes';
 import { scanSummary } from '../sim/scanSummary';
 import type { Simulation } from '../sim/useSimulation';
@@ -92,7 +92,7 @@ function stateLine(ctx: OperateContext, poses: Float64Array | null): string {
 
   const facts = robotFacts(ctx.rig, ctx.parts);
   const model = ctx.sim.model;
-  const tip = facts.endEffector && model && poses && simDeltas(model, poses).get(facts.endEffector.part);
+  const tip = facts.endEffector && model && poses && simDelta(model, poses, facts.endEffector.part);
 
   if (tip) {
     const p = new THREE.Vector3(...facts.endEffector!.point).applyMatrix4(tip);

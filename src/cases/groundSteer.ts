@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { DriveCommand } from '../sim/driveTypes';
-import { simDeltas, worldDeltas } from '../sim/mjcfFrames';
+import { simDelta, worldDelta } from '../sim/mjcfFrames';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { V3 } from '../utils/kinematics';
 
@@ -92,7 +92,7 @@ export class GroundSteer {
 
   private pose(poses: Float64Array): Pose {
     const { model, part, forward } = this.base;
-    const delta = simDeltas(model, poses).get(part) ?? new THREE.Matrix4();
+    const delta = simDelta(model, poses, part) ?? new THREE.Matrix4();
 
     return {
       at: point(this.base.point).applyMatrix4(delta),
@@ -101,7 +101,7 @@ export class GroundSteer {
   }
 
   private objectNow(id: string, poses: Float64Array): THREE.Vector3 {
-    const delta = worldDeltas(this.base.model, poses).get(id);
+    const delta = worldDelta(this.base.model, poses, id);
 
     return point(this.base.objectAt.get(id) ?? [0, 0, 0]).applyMatrix4(delta ?? new THREE.Matrix4());
   }

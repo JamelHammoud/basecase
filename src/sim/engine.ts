@@ -8,7 +8,7 @@ import { PoseDrive, type PoseSetup } from './drivePose';
 import { GrabForce } from './grabForce';
 import { PushForce, type PushTiming } from './pushForce';
 import type { SimModel } from './mjcf';
-import { simDeltas } from './mjcfFrames';
+import { simDelta } from './mjcfFrames';
 import type { SimStats } from './engineStats';
 import { eyeCaster, type EyeCaster } from './eyes';
 import { ActuatorFaults, type FaultKind } from './faults';
@@ -440,7 +440,7 @@ export class SimEngine {
   }
 
   private handAt({ part, point }: DriveHand): [number, number, number] {
-    const delta = simDeltas(this.sim, this.poses()).get(part);
+    const delta = simDelta(this.sim, this.poses(), part);
     const at = new THREE.Vector3(...point).applyMatrix4(delta ?? new THREE.Matrix4());
 
     return [at.x, at.y, at.z];

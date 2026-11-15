@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { simDeltas, worldDeltas } from '../sim/mjcfFrames';
+import { simDelta, worldDeltas } from '../sim/mjcfFrames';
 import { framePoses, type Recording } from '../sim/recorder';
 import { SEGMENT_RULES, type SegmentInput, type SegmentObject } from './segmentTypes';
 
@@ -22,10 +22,10 @@ function samplePaths(input: SegmentInput & { model: NonNullable<SegmentInput['mo
 
   for (let f = 0; f < r.frames; f++) {
     const poses = framePoses(r, f);
-    const parts = simDeltas(model, poses);
+    const handDelta = simDelta(model, poses, hand.part);
     const world = worldDeltas(model, poses);
 
-    point.set(...hand.point).applyMatrix4(parts.get(hand.part) ?? new THREE.Matrix4());
+    point.set(...hand.point).applyMatrix4(handDelta ?? new THREE.Matrix4());
     point.toArray(handPath, f * 3);
     objects.forEach((o, i) => {
       point.set(...o.position).applyMatrix4(world.get(o.id) ?? new THREE.Matrix4());

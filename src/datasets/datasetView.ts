@@ -5,6 +5,10 @@ import type { Dataset } from './datasetFile';
 export const totalSeconds = (members: TrySummary[]) => members.reduce((sum, t) => sum + t.seconds, 0);
 export const imageCount = (dataset: Pick<Dataset, 'imageMembers'>) =>
   (dataset.imageMembers ?? []).reduce((count, member) => count + member.frameIds.length, 0);
+export const classCount = (dataset: Pick<Dataset, 'imageMembers'>) =>
+  dataset.imageMembers?.some((member) => member.classes === undefined)
+    ? null
+    : new Set((dataset.imageMembers ?? []).flatMap((member) => member.classes ?? [])).size;
 
 export function membersOf(dataset: Dataset, tries: TrySummary[]): TrySummary[] {
   const byId = new Map(tries.map((t) => [t.id, t]));
@@ -20,7 +24,7 @@ export interface MemberGroups {
 
 export interface OpenModel {
   modelHash: string | null;
-  sceneId: string;
+  sceneId: string | null;
   caseId: string | null;
 }
 

@@ -16,25 +16,41 @@ export interface TraceBox {
 
 export type Range = [number, number];
 
-function rangeOf(values: number[]): Range {
-  if (!values.length) return [-1, 1];
+function extendRange(range: Range, values: ArrayLike<number>) {
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i];
 
-  const low = values.reduce((a, b) => Math.min(a, b));
-  const high = values.reduce((a, b) => Math.max(a, b));
+    if (!Number.isFinite(value)) continue;
+
+    range[0] = Math.min(range[0], value);
+    range[1] = Math.max(range[1], value);
+  }
+}
+
+function rangeOf(traces: Trace[], field: 'values' | 'x', extra: number[]): Range {
+  const range: Range = [Infinity, -Infinity];
+
+  for (const trace of traces) {
+    const values = trace[field];
+
+    if (values) extendRange(range, values);
+  }
+
+  extendRange(range, extra);
+
+  if (range[0] === Infinity) return [-1, 1];
+
+  const [low, high] = range;
   const pad = high > low ? 0 : Math.max(Math.abs(high), 1) * 0.1;
 
   return [low - pad, high + pad];
 }
 
-const finite = (values: number[]) => values.filter((v) => Number.isFinite(v));
-
-export const traceRange = (traces: Trace[], extra: number[] = []): Range =>
-  rangeOf(finite([...traces.flatMap((t) => Array.from(t.values)), ...extra]));
+export const traceRange = (traces: Trace[], extra: number[] = []): Range => rangeOf(traces, 'values', extra);
 
 export const hasX = (traces: Trace[]) => traces.some((t) => t.x);
 
-export const xRange = (traces: Trace[], extra: number[] = []): Range =>
-  rangeOf(finite([...traces.flatMap((t) => (t.x ? Array.from(t.x) : [])), ...extra]));
+export const xRange = (traces: Trace[], extra: number[] = []): Range => rangeOf(traces, 'x', extra);
 
 export const valueX = (value: number, range: Range, box: TraceBox) =>
   ((value - range[0]) / (range[1] - range[0])) * box.width;

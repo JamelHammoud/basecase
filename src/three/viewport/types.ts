@@ -1,3 +1,4 @@
+import type { CaseTrails } from './caseTrails';
 import type { CameraSpec, SilhouetteShot } from './fitCapture';
 import type { ImportedWorldState, ImportedWorldView } from './importedWorld';
 import type { GhostState } from './ghostLayer';
@@ -99,6 +100,7 @@ export interface BuildStepView {
   moves: Array<{ partId: string; offset: Vec3 }>;
   arrows: Array<{ from: Vec3; to: Vec3 }>;
   labels: Array<{ partId: string; text: string }>;
+  removing?: boolean;
 }
 
 export interface ViewportProps {
@@ -245,6 +247,8 @@ export interface Viewport3DHandle {
   cancelMeasure: () => boolean;
   shownPartIds: () => string[];
   checkDotCount: () => number;
+  setCaseTrails: CaseTrails['set'];
+  caseTrailState: CaseTrails['state'];
 }
 
 export const MIN_DIST = 25;

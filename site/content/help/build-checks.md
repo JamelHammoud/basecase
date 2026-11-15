@@ -1,7 +1,6 @@
 ---
 title: Checks in the Build tab
 date: 2026-11-13
-updated: 2026-11-13
 collection: build-and-print
 type: reference
 order: 1
@@ -24,6 +23,7 @@ covers:
   - src/utils/engineering.ts
   - src/utils/engineeringPower.ts
   - src/utils/engineeringBudget.ts
+  - src/utils/engineeringTime.ts
   - src/components/build/ChecksSection.tsx
   - src/utils/engineeringSimModel.ts
   - src/utils/engineeringStrength.ts
@@ -49,6 +49,10 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Printing | Each printed part against your printer | Parts too big for the plate, walls too thin to print, and parts meant to be clear |
 | Real parts | Where every part comes from | Placeholders, parts with nothing saying where to get them, and parts whose link and numbers aren't checked |
 | Repairs | How much comes apart to replace a part | “Replacing these means taking a lot apart.” as a note |
+
+For an Onshape robot, **Assembly** also lists **Fixed Mates** as notes. A cylindrical mate keeps its hinge, and the note names only its held slide, such as “Axle slide imports as fixed.” Other unsupported mates stay fixed. These notes don't block Ready to build.
+
+![The Assembly check with the imported cylindrical axle slide held fixed](/help/import-an-onshape-assembly/cylindrical-slide.png)
 
 ## Engineering checks
 
@@ -76,6 +80,9 @@ Checks list the worst first: red, then amber, then green, then gray for Not run.
 | Heat near servos | PLA parts within 1 mm of a servo | A note: PLA softens from servo heat |
 | Strength | Each printed part between a servo and the next joint | Under 1.3 times its load. Amber under 2 times |
 | Budget | The estimated cost of the parts left to buy against your budget | Over budget. Amber above 90%. Not run until you set a budget |
+| Time | Printing across your saved printers, estimated assembly and servo setup against your budget in hours | “Build time exceeds your budget.” Amber above 90%. A note without a budget |
+
+To enter hours and read the breakdown, [Set a time budget](/help/set-a-time-budget).
 
 Open **Peak torque** to plot each joint's walk against its servo's torque–speed line. A joint with a warning shows its plot under the warning. Click any other joint to open its plot.
 
@@ -86,6 +93,8 @@ A servo can't give full torque and full speed at once, so the blue line falls fr
 Gray dots are moments the joint was braking, which the line doesn't limit. The dashed line is the servo's rated torque. The gray line is the next stronger servo in the catalog for the same bus and voltage, named under the plot.
 
 Each Case in the scene also gets a row, named after it. It runs the Case 20 times with randomized physics and passes at 18. A Case that misses more adds a note, never a blocker. A robot that can't run the Case fails its row with the reason, such as an arm on a Case that needs driven wheels, or a fall on hold. [Try a Case](/help/try-a-case) lists each reason.
+
+Click a Case's row to draw its 20 paths on the canvas. Click a red path to open that seed at its first failure, as in [Replay a failing seed](/help/replay-a-failing-seed).
 
 ## Problems every check can show
 

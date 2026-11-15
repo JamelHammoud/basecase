@@ -2,10 +2,14 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { knownPurchases, usePurchases } from '../components/build/usePurchases';
 import type { Viewport3DHandle } from '../components/Viewport3D';
 import { loadSourced } from '../data/loadSourced';
+import type { Printing } from './usePrinting';
+import type { SceneDocument } from './useSceneDocument';
+import type { SceneWorkspaceProps } from './types';
 import type { PrinterSetup } from '../data/printers';
 import { failedReadiness, readinessDelta, withDecisions } from '../readiness/readiness';
 import type { Readiness } from '../readiness/types';
 import type { ProjectSettings, ScenePart } from '../types/robotics';
+import type { TimeInput } from '../utils/engineeringTime';
 import type { CheckDot } from '../utils/engineeringTypes';
 import { currentMoney } from '../utils/currencyStore';
 import { useMoney } from '../utils/useMoney';
@@ -14,7 +18,7 @@ import { projectFingerprint, runReadiness } from './runReadiness';
 
 const CHECK_AFTER_MS = 1500;
 
-interface ReadinessOptions {
+interface ReadinessOptions extends Pick<TimeInput, 'printerCount' | 'slices'> {
   parts: ScenePart[];
   project: ProjectSettings;
   printer: PrinterSetup;
@@ -43,6 +47,8 @@ export function useReadiness({
   partsRef,
   projectRef,
   viewportRef,
+  printerCount,
+  slices,
 }: ReadinessOptions): ReadinessHandle {
   'use memo';
 
@@ -55,7 +61,7 @@ export function useReadiness({
   const [runs] = useState(newestRuns);
   const money = useMoney();
   const [purchases] = usePurchases();
-  const fingerprint = projectFingerprint(parts, project, printer.model.id, { purchases, money });
+  const fingerprint = projectFingerprint(parts, project, printer, { purchases, money, printerCount, slices });
 
   useEffect(() => {
     void loadSourced();
@@ -66,9 +72,11 @@ export function useReadiness({
 
   const checkNow = (): Promise<Readiness | null> => {
     const viewport = viewportRef.current;
-    const now = projectFingerprint(partsRef.current, projectRef.current, printer.model.id, {
+    const now = projectFingerprint(partsRef.current, projectRef.current, printer, {
       purchases: knownPurchases(),
       money: currentMoney(),
+      printerCount,
+      slices,
     });
 
     if (!viewport) return Promise.resolve(null);
@@ -94,6 +102,8 @@ export function useReadiness({
       project: projectRef.current,
       printer,
       fingerprint: now,
+      printerCount,
+      slices,
     })
       .then(keepIfNewest)
       .catch((error: unknown) =>
@@ -139,4 +149,22 @@ export function useReadiness({
     dots: (dotsCheck && measured?.rows.find((r) => r.check === dotsCheck)?.dots) || null,
     showDots: setDotsCheck,
   };
+}
+
+export function useSceneReadiness(
+  docs: SceneDocument,
+  printing: Printing,
+  studio: Pick<SceneWorkspaceProps['studio'], 'printers'>,
+  viewportRef: { current: Viewport3DHandle | null },
+) {
+  return useReadiness({
+    parts: docs.parts,
+    project: docs.project,
+    printer: printing.printer,
+    printerCount: studio.printers.printers.length,
+    slices: printing.job.slices,
+    partsRef: docs.partsRef,
+    projectRef: docs.projectRef,
+    viewportRef,
+  });
 }

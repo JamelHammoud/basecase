@@ -1,7 +1,6 @@
 ---
 title: Union, Subtract or Intersect shows an error
 date: 2026-11-13
-updated: 2026-11-13
 collection: troubleshooting
 type: troubleshooting
 order: 2

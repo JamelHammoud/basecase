@@ -2,6 +2,7 @@ import { plural } from '../../../electron/plural.mjs';
 import { episodePlans, type EpisodePlan } from './lerobotEpisodes';
 import { ACTION_KEY, lerobotInfo, readInfo, STATE_KEY, type LeRobotInfo } from './lerobotMeta';
 import { filesUnder, mismatched, readParquet, refuse, toNumber, type DatasetFiles, type Row } from './lerobotSource';
+import { episodeSplit } from './lerobotSplits';
 import { isLeRobotFolder } from './sourceKind';
 import { finiteOrRefuse, IMPORT_LIMITS, type SourceData, type SourceEpisode, type SourceFolder } from './types';
 
@@ -91,6 +92,7 @@ function timesOf({ rows, path }: Columns, index: number): Float64Array {
 function episodeOf(file: DataFile, plan: EpisodePlan, info: LeRobotInfo, shared: boolean): SourceEpisode {
   const columns = { rows: rowsOf(file, plan, shared), path: file.path };
   const width = info.names.length;
+  const split = episodeSplit(info.splits, plan.index);
 
   return {
     index: plan.index,
@@ -99,6 +101,7 @@ function episodeOf(file: DataFile, plan: EpisodePlan, info: LeRobotInfo, shared:
     state: matrixOf(columns, STATE_KEY, width),
     action: info.withAction ? matrixOf(columns, ACTION_KEY, width) : null,
     videos: plan.videos,
+    ...(split ? { split } : {}),
   };
 }
 

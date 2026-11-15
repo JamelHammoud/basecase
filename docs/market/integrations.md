@@ -8,10 +8,10 @@ Imports, exports and services Basecase connects to, and how far each goes. Entry
 
 - **Link:** https://onshape-public.github.io/docs/api-adv/translation/
 - **Checked:** 2026-11-13
-- **Basecase today:** Import Robot takes an Onshape assembly tab's link in the desktop app, with API keys from Settings. It reads the assembly's mates, exports each distinct part as STEP and converts it, fuses fastened parts into one link, and makes revolute mates hinges and sliders slides with their limits. Limits come from the root assembly's features only, so a mate inside a subassembly imports with no range; cylindrical, ball, planar and other mates become fixed joints, listed in Checks as Fixed Mates ([Joints and motion](../guide/joints-and-motion.md)).
+- **Basecase today:** Import Robot takes an Onshape assembly tab's link in the desktop app, with API keys from Settings. It reads the assembly's mates, exports each distinct part as STEP and converts it, fuses fastened parts into one link, and makes revolute and cylindrical mates hinges and sliders slides with their limits. Limits come from root and subassembly features at each subassembly's document microversion, scoped to occurrence paths and fetched once for repeated instances. Cylindrical slides are held fixed and listed in Checks as Fixed Mates, alongside ball, planar and other unsupported mates ([Joints and motion](../guide/joints-and-motion.md)).
 - **Better than Basecase:** Onshape "exports natively to the Unified Robot Description Format (URDF)": one call to the assembly's `/translations` endpoint with `"formatName": "URDF"` and `"urdfMeshFormat": "GLTF"`, and a `configuration` in the same call exports a configured assembly ([forum, March 2026](https://forum.onshape.com/discussion/30410/improvements-to-onshape-march-13-2026)). Release 1.215 added frames, tool center points and mate limits to that export ([1.215](https://www.onshape.com/en/resource-center/what-is-new/mate-connectors-explicit-lights-render-studio-advanced-urdf-mate-limit-support-robotics-applications)). onshape-to-robot exports URDF, SDF or MuJoCo from mate connectors named `dof_…`, with revolute and cylindrical mates as revolute joints, `inv` flipping the axis, `frame_…` written as a MuJoCo site and `closing_…` closing a kinematic loop ([design](https://onshape-to-robot.readthedocs.io/en/latest/design.html)).
 - **Worse than Basecase:** Onshape's public translation docs don't list URDF yet, every call is authenticated ([translation](https://onshape-public.github.io/docs/api-adv/translation/)), and the forum names no documentation or mate-to-joint mapping for the export ([forum](https://forum.onshape.com/discussion/30410/improvements-to-onshape-march-13-2026)). onshape-to-robot is a command line tool that only exports a robot once the designer renames mate connectors ([design](https://onshape-to-robot.readthedocs.io/en/latest/design.html)). Basecase needs no renaming: it reads the mates as they are ([Joints and motion](../guide/joints-and-motion.md)).
-- **Basecase should:** integrate further. Ask Onshape for its own URDF of the same assembly beside the mate reader, and take its frames and tool center points as named points on the robot and its limits for mates inside subassemblies, which the current import leaves without a range ([Joints and motion](../guide/joints-and-motion.md)).
+- **Basecase should:** integrate further. Ask Onshape for its own URDF of the same assembly beside the mate reader, and take its frames and tool center points as named points on the robot. The mate reader already reads subassembly limits ([Joints and motion](../guide/joints-and-motion.md)).
 
 ### Fusion
 
@@ -32,6 +32,17 @@ Imports, exports and services Basecase connects to, and how far each goes. Entry
 - **Better than Basecase:** A v3 dataset can also be stored as LanceDB tables, and `lerobot-dataset-viz` opens an episode in Rerun or, with `--display-mode foxglove`, in Foxglove ([LeRobotDataset v3](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)).
 - **Worse than Basecase:** v2.1 datasets need converting first, with `python -m lerobot.scripts.convert_dataset_v21_to_v30` ([LeRobotDataset v3](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)). Basecase's datasets keep only the tries the Case's contract passed ([Cases](../guide/cases.md)).
 - **Basecase should:** let a person play a Case's tries in Foxglove ([Foxglove](competitors.md#foxglove)).
+
+## Image datasets
+
+### Roboflow
+
+- **Link:** https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data
+- **Checked:** 2026-11-14
+- **Basecase today:** Import Robot accepts Roboflow project and dataset version links on desktop, using the API key saved in Settings ▸ Accounts. It downloads a COCO export and stores the images, classes, annotations and source splits as a dataset. Import also reads local COCO, YOLO and Pascal VOC folders and zips ([Cases](../guide/cases.md#imported-image-datasets), [help](../../site/content/help/import-an-image-dataset.md)).
+- **Better than Basecase:** Roboflow exports a chosen dataset version in many annotation formats through the web app, Python SDK, REST API and CLI. Its source-image export preserves original image bytes, while training-version exports compress images ([dataset exports](https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data)).
+- **Worse than Basecase:** Roboflow's export is a snapshot built for training ([export behavior](https://docs.roboflow.com/datasets/versions/dataset-versions/exporting-data#export-behavior)). Basecase can combine those imported frames with labeled images generated from a Case, then export COCO and YOLO together or publish them to Hugging Face under a frozen dataset version ([Cases](../guide/cases.md#datasets)).
+- **Basecase should:** keep the source version and split assignments when importing, and let the same versioned dataset hold real images and generated Case views, as the current image-member format does ([Cases](../guide/cases.md#imported-image-datasets)).
 
 ## Supplier carts
 

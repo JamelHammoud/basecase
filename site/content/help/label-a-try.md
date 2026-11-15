@@ -25,6 +25,12 @@ covers:
   - src/workspace/tagTries.ts
   - src/cases/tryLabels.ts
   - src/datasets/segments.ts
+hub_the_design_agent_order: 70
+hub_the_design_agent: |
+  - Ask it to label tries. It watches each try's filmstrip and writes the task in plain words for the try and each segment.
+hub_open_a_try_from_any_scene_order: 20
+hub_open_a_try_from_any_scene: |
+  To tag tries or mark an imported try passed or failed, right-click it. See [Label a try](/help/label-a-try).
 ---
 
 You can split a try into labeled steps, such as reach, grasp and lift, and tag a try and mark it passed or failed. When you make a dataset from your tries, it can teach each step in words.
@@ -77,6 +83,10 @@ An amber warning mark beside the segments flags any of these:
 
 Point at the mark to see when it happened.
 
+A try with any quality flag stays out of dataset exports and training. Saved dataset versions keep the flags and exclusion reasons from when they were frozen.
+
 ## Use your labels in a dataset
+
+If a saved version is selected, choose **Working Dataset** in **Dataset version** before editing a try. Saved versions keep their original labels and don't open tries for editing. Label changes take effect the next time you export, publish or train the working dataset.
 
 The agent can write an instruction for each try and each segment from its filmstrip. [Export Dataset](/help/export-a-lerobot-dataset) writes the segments as LeRobot subtasks and as GR00T annotations.

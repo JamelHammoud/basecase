@@ -1,7 +1,6 @@
 ---
 title: Measure a part
 date: 2026-11-12
-updated: 2026-11-13
 collection: design
 type: task
 order: 9

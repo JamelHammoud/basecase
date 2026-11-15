@@ -4,6 +4,7 @@ import { allKeysFor, keyFor } from '../../app/shortcuts';
 import { speedText } from '../../workspace/timelinePlayback';
 import { linkParts, prettyJointName, type Rig } from '../../utils/kinematics';
 import type { TryTimeline as Timeline } from '../../workspace/useTryTimeline';
+import { failureText } from '../../readiness/caseChecks';
 import { runClock } from '../../utils/duration';
 import { SegmentLane } from './SegmentLane';
 import { TimelineLane } from './TimelineLane';
@@ -68,6 +69,7 @@ export const TryTimeline: React.FC<TryTimelineProps> = ({ timeline, rig, closabl
         ))}
       </div>
       <div className="flex items-center gap-2">
+        {timeline.trips[0] && <span className="text-[13px] text-red-400">{failureText(timeline.trips[0].label)}</span>}
         <IconButton
           icon={timeline.playing ? <PauseIcon className={ic} /> : <RunIcon className={ic} />}
           title={timeline.playing ? 'Pause' : 'Play'}

@@ -7,6 +7,7 @@ import type { SourcedItem } from '../data/sourcedItems';
 import type { ReadinessDecisions } from '../readiness/types';
 import type { HardwareSpec } from '../data/hardware';
 import type { CadExtras, PartRelations } from './cadAudit';
+import type { ProjectBudgets } from './projectBudgets';
 import type { ProjectRecords } from './projectRecords';
 import type { StoredFalls, StoredWalk } from '../utils/engineeringTypes';
 import type { BooleanFields } from './booleans';
@@ -213,15 +214,13 @@ export interface RobotJoint {
 
 export type { BuildGuideRecord, ProjectRecords } from './projectRecords';
 
-export interface ProjectSettings extends ProjectRecords, PrintService {
+export interface ProjectSettings extends ProjectRecords, PrintService, ProjectBudgets {
   printer: string;
   material: PrintMaterial;
   infillPct: number;
   printProcess?: string;
   labelParts?: boolean;
   prints?: PrintRecord[];
-  budgetUsd?: number;
-  budgetEntered?: EnteredPrice;
   tether?: Tether;
   extras?: Array<{ key: string; qty: number; note?: string }>;
   sourced?: SourcedItem[];

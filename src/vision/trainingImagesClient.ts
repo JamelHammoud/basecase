@@ -71,7 +71,14 @@ async function keepDataset(frameSet: FrameSetManifest, hash: string): Promise<Da
       members: [],
       at: frameSet.createdAt,
     }),
-    imageMembers: [{ frameSetId: frameSet.id, frameIds: frameSet.frames.map((f) => f.id), hash }],
+    imageMembers: [
+      {
+        frameSetId: frameSet.id,
+        frameIds: frameSet.frames.map((f) => f.id),
+        hash,
+        classes: frameSet.classes.map((c) => c.name),
+      },
+    ],
   };
 
   await saveDataset(dataset);

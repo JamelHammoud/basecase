@@ -50,6 +50,7 @@ import { CASE_CODE_HANDLERS } from './agentCaseCodeRequests';
 import { CASE_HANDLERS } from './agentCaseRequests';
 import { DATASET_HANDLERS } from './agentDatasetRequests';
 import { IMAGE_HANDLERS } from './agentImageRequests';
+import { REPAIR_HANDLERS, type RepairContext } from './agentRepairRequests';
 import type { Datasets } from './useDatasets';
 import type { CaseCompare } from './useCaseCompare';
 import type { CaseExplore } from './useCaseExplore';
@@ -71,7 +72,7 @@ import { plural } from '../../electron/plural.mjs';
 
 type Payload = Record<string, unknown>;
 
-export interface RequestContext {
+export interface RequestContext extends RepairContext {
   parts: () => ScenePart[];
   project: () => ProjectSettings;
   printer: () => PrinterSetup;
@@ -81,6 +82,7 @@ export interface RequestContext {
   commitConsole: (caseId: string, console: CaseConsole | undefined) => void;
   insertParts: (parts: ScenePart[], joints: RobotJoint[]) => void;
   commitSkeleton: (parts: ScenePart[], skeleton: RobotSkeleton) => void;
+  openSkeleton?: () => void;
   setAction: (action: string) => void;
   setCursor: (target: Vec3) => void;
   poseTool: (kind: string, payload: Payload) => Promise<PoseReply>;
@@ -389,6 +391,7 @@ const HANDLERS: Record<string, Handler> = {
   ...TRY_HANDLERS,
   ...DATASET_HANDLERS,
   ...IMAGE_HANDLERS,
+  ...REPAIR_HANDLERS,
   ...SKILL_HANDLERS,
   ...Object.fromEntries(
     POSE_TOOL_KINDS.map((kind): [string, Handler] => [

@@ -1,7 +1,6 @@
 ---
 title: Design a robot with the agent
 date: 2026-11-13
-updated: 2026-11-13
 collection: agent
 type: task
 order: 3

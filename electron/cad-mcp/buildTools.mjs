@@ -206,6 +206,12 @@ export const setBuild = {
         .max(1e9)
         .optional()
         .describe("In the user's currency, the one get_bom and find_parts show prices in"),
+      budget_hours: z
+        .number()
+        .min(0)
+        .max(1e6)
+        .optional()
+        .describe('Build time budget in hours. Only set when the user gives one. Zero clears it.'),
       material: z.enum(['PLA', 'PETG', 'ABS', 'ASA']).optional(),
       tether: z
         .object({ volts: z.number().min(0).max(100), amps: z.number().min(0).max(200) })
@@ -213,9 +219,9 @@ export const setBuild = {
         .describe('The supply the robot runs from on a cable: its output voltage and rated current'),
     },
   },
-  handler: async ({ extras, budget, material, tether }) => {
+  handler: async ({ extras, budget, budget_hours, material, tether }) => {
     try {
-      const res = await bridge('set_build', { extras, budget, material, tether });
+      const res = await bridge('set_build', { extras, budget, budget_hours, material, tether });
       const unknown = res?.unknown?.length
         ? ` Unknown keys (not added): ${res.unknown.join(', ')}. Use keys from find_parts.`
         : '';
@@ -247,6 +253,27 @@ export const buildGuide = {
       const res = await bridge('build_guide', {}, 300000);
 
       return text(res?.text || 'No guide made: the scene has no parts to build.');
+    } catch (err) {
+      return fail(err);
+    }
+  },
+};
+
+export const repairPart = {
+  name: 'repair_part',
+  config: {
+    title: 'Repair part',
+    description:
+      'Opens a repair guide for one scene part, with the shortest verified teardown to reach it, replacement, and reassembly. Uses the same flow as Repair in the part menu. Returns the reason when a removal path cannot be found. Call it when the user asks to repair or replace a broken part.',
+    inputSchema: { id: z.string().trim().min(1).max(200).describe('The broken scene part’s id from get_scene') },
+  },
+  handler: async ({ id }) => {
+    try {
+      await settledWrites();
+
+      const res = await bridge('repair_part', { id }, 300000);
+
+      return text(res?.text || 'Couldn’t open the repair guide.');
     } catch (err) {
       return fail(err);
     }

@@ -31,6 +31,7 @@ import { caseWorldItems } from './importedWorldItems';
 import { slotRefusals } from './slots';
 import { WorldMoves } from '../sim/worldMoves';
 import type { WorldEvent } from './worldSet';
+import { TimelineCursor } from '../utils/timelineCursor';
 
 export type { CaseRobot } from './caseCast';
 
@@ -53,6 +54,7 @@ export interface CaseResult {
   case: Case;
   logic?: CaseLogicResult;
   recording?: Recording;
+  finalQpos: Float64Array;
 }
 
 interface ProbeBase {
@@ -145,31 +147,30 @@ function follow({ engine, steer, send }: Rollout, c: ReferenceCommand, slot: num
   send(toCommand(c));
 }
 
-function changeWorld(changes: Rollout['changes'], events: WorldEvent[], t: number) {
-  while (events.length && events[0].at <= t + 1e-9) {
-    const e = events.shift()!;
-
-    if (!changes.world.apply(e)) changes.record(e);
-  }
-}
-
 async function roll(rollout: Rollout): Promise<CaseFrame[]> {
   const { engine, kase, steer, send, sample, logic, judge, changes } = rollout;
-  const timeline = [...kase.reference.timeline].sort((a, b) => a.at - b.at);
-  const events = [...changes.events].sort((a, b) => a.at - b.at);
+  const timeline = new TimelineCursor(
+    kase.reference.timeline,
+    (c) => c.at,
+    (c) => follow(rollout, c, slotIndexOf(kase, c)),
+  );
+  const events = new TimelineCursor(
+    changes.events,
+    (e) => e.at,
+    (e) => {
+      if (!changes.world.apply(e)) changes.record(e);
+    },
+  );
   const frames: CaseFrame[] = [];
   const ticks = Math.round(kase.task.seconds / RECORD_DT);
 
   for (let tick = 0; tick < ticks; tick++) {
     const t = tick * RECORD_DT;
 
-    while (timeline.length && timeline[0].at <= t + 1e-9) {
-      const c = timeline.shift()!;
+    timeline.advance(t);
+    events.advance(t);
 
-      follow(rollout, c, slotIndexOf(kase, c));
-    }
-
-    changeWorld(changes, events, t);
+    engine.refreshKinematics();
 
     const poses = engine.poses();
     const driving = logic?.driving ?? true;
@@ -252,6 +253,7 @@ function refused(authored: Case, refusal: string, model: SimModel): CaseResult {
     refusal,
     model,
     frames: [],
+    finalQpos: new Float64Array(),
     objectIds: [],
     case: authored,
   };
@@ -379,6 +381,7 @@ async function rollFitted(mj: MainModule, fit: Fitted, options: RunOptions): Pro
       margin: verdict.margin,
       failed: verdict.failed,
       trace,
+      finalQpos: Float64Array.from(engine.data.qpos),
       model,
       frames,
       objectIds: kase.world.objects.map((o) => o.id),

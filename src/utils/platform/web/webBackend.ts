@@ -7,6 +7,9 @@ import { deleteScene, getScene, listScenes, saveScene, saveScenePreview } from '
 import { getSkill, saveSkill } from './webSkills';
 import { errorMessage } from '../../errorMessage';
 import { newestModelFirst } from '../../modelList';
+import { webDatasets } from '../../../datasets/datasetStore/webDatasets';
+import { datasetContentFromBase64 } from '../../../datasets/datasetStore/contentBytes';
+import { bytesToBase64 } from '../../base64';
 
 type Body = Record<string, unknown>;
 
@@ -79,6 +82,12 @@ const uploadedImage = (body: Body) => ({
 });
 
 const ROUTES: Record<string, Route> = {
+  'datasets-content-save': (body) => webDatasets.saveContent(datasetContentFromBase64(body.arg)),
+  'datasets-content-load': async (body) => {
+    const bytes = await webDatasets.content(body.arg as string);
+
+    return bytes && { data: bytesToBase64(bytes) };
+  },
   'acp-status': () => WEB_AGENT_STATUS,
   'sourced-parts': () => [],
   'sourced-mesh': () => ({ data: null }),
@@ -121,6 +130,9 @@ const ROUTES: Record<string, Route> = {
   'print-last-slice': () => null,
   'robot-discover': () => [],
   'print-printer-status': () => null,
+  'roboflow-account': () => ({ saved: false }),
+  'roboflow-set-key': () => ({ error: 'Download Basecase to connect Roboflow.' }),
+  'roboflow-import': () => ({ error: 'Download Basecase to import from Roboflow.' }),
 };
 
 const DESKTOP_ONLY: Array<[string, string]> = [

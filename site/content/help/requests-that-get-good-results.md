@@ -1,7 +1,6 @@
 ---
 title: Requests that get good results
 date: 2026-11-13
-updated: 2026-11-14
 collection: agent
 type: concept
 order: 2
@@ -41,6 +40,7 @@ A number or a part name changes the design more than an adjective does. Compare 
 - **Parts you already own.** Name the servos, boards and screws you have. After you [count the parts you already own](/help/count-the-parts-you-already-own), the agent picks those parts first.
 - **A budget**, if you have one.
 - **Reach and load, for an arm.** List the points it must reach in mm and the grams it carries. [Size an arm from the points it must reach](/help/size-an-arm-to-its-targets) shows the result.
+- **Motion to copy.** Attach a BVH clip or give its public URL, the robot's height and the allowed path error in mm. The agent fits the skeleton and picks servos before designing the body, as in [Design a robot from a motion clip](/help/design-a-robot-from-motion).
 
 ## Change one thing at a time
 

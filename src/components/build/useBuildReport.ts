@@ -19,6 +19,7 @@ export interface BuildReportInput {
   printShapes: PrintShapes;
   enabled?: boolean;
   printParts?: ScenePart[];
+  printScope?: string;
 }
 
 async function measureParts(input: BuildReportInput) {
@@ -33,8 +34,8 @@ async function measureParts(input: BuildReportInput) {
 
 export function useBuildReport(input: BuildReportInput) {
   const [measures, setMeasures] = useState<Record<string, MeshMeasure>>({});
-  const [print, setPrint] = useState<PrintReport | null>(null);
-  const { parts, project, printer, measure, printShapes, enabled = true, printParts = parts } = input;
+  const [result, setResult] = useState<{ scope: string; report: PrintReport } | null>(null);
+  const { parts, project, printer, measure, printShapes, enabled = true, printParts = parts, printScope = '' } = input;
 
   useEffect(() => {
     if (!enabled) return;
@@ -50,14 +51,14 @@ export function useBuildReport(input: BuildReportInput) {
 
       const report = await printReportOf(printParts, { project, printer, scene: parts }, printShapes);
 
-      if (!stopped) setPrint(report);
+      if (!stopped) setResult({ scope: printScope, report });
     }, SETTLE_MS);
 
     return () => {
       stopped = true;
       window.clearTimeout(timer);
     };
-  }, [parts, printParts, project, printer, measure, printShapes, enabled]);
+  }, [parts, printParts, project, printer, measure, printShapes, enabled, printScope]);
 
-  return { measures, print };
+  return { measures, print: result?.scope === printScope ? result.report : null };
 }

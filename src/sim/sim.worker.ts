@@ -15,7 +15,7 @@ import { SimEngine, type Controller } from './engine';
 import type { FaultKind } from './faults';
 import type { SimModel } from './mjcf';
 import type { RobotPoseState } from '../types/robotics';
-import { applyDueCommands, runFor, type RunRequest, type RunResult } from './simRun';
+import { commandTimeline, runFor, type RunRequest, type RunResult } from './simRun';
 import { LiveRoutine, type LiveRoutineInput, type LiveUpdate } from '../routines/routineLive';
 import { LiveCase, type LiveCaseInput } from '../cases/liveCase';
 import type { CaseFacts, FactValue } from '../cases/caseFacts';
@@ -28,7 +28,7 @@ import { runFalls, type FallPlan, type FallRun } from './fallRuns';
 import { LivePhysics, type SimPhysics } from './livePhysics';
 
 export type SimRequest =
-  | { type: 'load'; model: SimModel; controller?: Controller }
+  | { type: 'load'; model: SimModel; controller?: Controller; loadId?: number }
   | { type: 'play' }
   | { type: 'pause' }
   | { type: 'reset'; initial?: RobotPoseState }
@@ -40,7 +40,7 @@ export type SimRequest =
   | { type: 'respawn'; robot?: string }
   | { type: 'fault'; joint: string; kind: FaultKind | null }
   | { type: 'record'; on: boolean }
-  | { type: 'scrub'; recording: Recording | null }
+  | { type: 'scrub'; recording: Recording | null; efforts?: RecordedEfforts }
   | { type: 'seek'; frame: number }
   | { type: 'grab'; phase: 'start'; body: number; point: [number, number, number] }
   | { type: 'grab'; phase: 'move'; point: [number, number, number]; turn: [number, number, number, number] | null }
@@ -59,8 +59,8 @@ export type SimRequest =
 
 export type SimResponse =
   | ({ type: 'routine' } & LiveUpdate)
-  | { type: 'ready'; nq: number; nu: number; nbody: number }
-  | { type: 'error'; message: string; id?: number }
+  | { type: 'ready'; nq: number; nu: number; nbody: number; loadId?: number }
+  | { type: 'error'; message: string; id?: number; loadId?: number }
   | { type: 'recorded'; recording: Recording | null }
   | { type: 'scrubbed'; efforts: RecordedEfforts | null }
   | { type: 'sought'; frame: number; qpos: Float64Array }
@@ -96,7 +96,7 @@ let liveCase: LiveCase | null = null;
 let watching: LiveWatch | null = null;
 let driveController: Controller = { kind: 'hold' };
 let cameraPort: MessagePort | null = null;
-let script: { start: number; commands: Array<{ at: number; command: DriveCommand }> } | null = null;
+let script: { start: number; commands: ReturnType<typeof commandTimeline> } | null = null;
 let scanShown = -1;
 const poseGate = new PoseGate();
 const livePhysics = new LivePhysics();
@@ -155,7 +155,7 @@ function loop() {
 
   const t0 = performance.now();
 
-  if (script) applyDueCommands(engine, script.commands, engine.data.time - script.start);
+  if (script) script.commands.advance(engine.data.time - script.start);
 
   if (live) advanceRoutine(live, wall * speed);
   else if (liveCase) liveCase.advance(wall * speed);
@@ -246,7 +246,7 @@ async function load(msg: Msg<'load'>) {
 
   const m = engine.model;
 
-  post({ type: 'ready', nq: m.nq, nu: m.nu, nbody: m.nbody });
+  post({ type: 'ready', nq: m.nq, nu: m.nu, nbody: m.nbody, loadId: msg.loadId });
   frame();
 }
 
@@ -279,7 +279,7 @@ async function scrub(msg: Msg<'scrub'>) {
   halt();
   scrubbed = engine && msg.recording && fitsRecording(engine, msg.recording) ? msg.recording : null;
 
-  const efforts = engine && scrubbed ? recordedEfforts(mj, engine, scrubbed) : null;
+  const efforts = engine && scrubbed ? (msg.efforts ?? recordedEfforts(mj, engine, scrubbed)) : null;
 
   post({ type: 'scrubbed', efforts }, effortsTransfer(efforts));
 }
@@ -346,7 +346,7 @@ const handlers: { [K in SimRequest['type']]: (msg: Msg<K>) => void | Promise<voi
     if (slot || !liveCase || liveCase.driving) engine?.command({ slot, v, target, aux, joints });
   },
   script: (msg) => {
-    script = engine ? { start: engine.data.time, commands: [...msg.commands].sort((a, b) => a.at - b.at) } : null;
+    script = engine ? { start: engine.data.time, commands: commandTimeline(engine, msg.commands) } : null;
   },
   respawn: (msg) => {
     engine?.respawn(msg.robot);
@@ -407,6 +407,11 @@ ctx.onmessage = async (ev: MessageEvent<SimRequest>) => {
   try {
     await (handlers[msg.type] as (m: SimRequest) => void | Promise<void>)(msg);
   } catch (e) {
-    post({ type: 'error', message: errorText(e), id: msg.type === 'run' || msg.type === 'falls' ? msg.id : undefined });
+    post({
+      type: 'error',
+      message: errorText(e),
+      id: msg.type === 'run' || msg.type === 'falls' ? msg.id : undefined,
+      loadId: msg.type === 'load' ? msg.loadId : undefined,
+    });
   }
 };

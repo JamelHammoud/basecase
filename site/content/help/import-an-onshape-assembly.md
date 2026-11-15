@@ -1,7 +1,6 @@
 ---
 title: Import an Onshape assembly as a robot
 date: 2026-11-12
-updated: 2026-11-13
 collection: design
 type: task
 order: 17
@@ -23,9 +22,14 @@ covers:
   - electron/onshape/
   - src/readiness/buildChecks.ts
   - src/workspace/useOnshapeUpdate.ts
+hub_checks_and_blockers_order: 20
+hub_checks_and_blockers: |
+  For an Onshape import, **Fixed Mates** notes name motions held fixed. A cylindrical mate keeps its hinge, but its slide stays fixed. These notes don't block Ready to build.
+
+  ![The Assembly check with the imported cylindrical axle slide held fixed](/help/import-an-onshape-assembly/cylindrical-slide.png)
 ---
 
-You can bring a robot you modeled in Onshape into Basecase. Its revolute and slider mates come in as joints you can pose.
+Bring a robot you modeled in Onshape into Basecase with revolute and cylindrical mates as hinges and slider mates as slides.
 
 1. In Onshape's developer portal, create an API key that can read your documents, then copy its access key and secret key.
 2. Press [[⌘,]] to open Settings, then choose **Accounts**.
@@ -43,8 +47,8 @@ If you haven't saved the keys, or Onshape refuses them, a message appears that n
 Here's how the assembly comes in:
 
 - Each part becomes its own mesh. Parts that a fastened mate or a mate group holds together arrive as one part.
-- Revolute mates become hinges and slider mates become slides. Each joint takes its range from the mate's limits, and 0 is the position the assembly was in when you imported it.
-- A revolute or slider mate inside a subassembly also becomes a joint, but without its limits.
+- Revolute and cylindrical mates become hinges and slider mates become slides. Each joint takes its range from the mate's limits, and 0 is the position the assembly was in when you imported it.
+- Mates inside subassemblies keep their limits too, including repeated legs and nested fingers.
 - The part you fixed in Onshape becomes the robot's base.
 - If a part has a material in Onshape, its mass comes in too.
 
@@ -52,7 +56,11 @@ Here's how the assembly comes in:
 
 ![The Pose tab turning the imported Elbow hinge](/help/import-an-onshape-assembly/pose.png)
 
-Basecase holds any other mate fixed, such as a cylindrical, ball or pin slot mate. In the Build tab, Checks lists each one under Fixed Mates, on the part it holds, so you can add the joint by hand. Each part attaches through a single joint, so Basecase leaves out a mate that closes a loop, like the last pin of a four-bar linkage.
+![The Pose tab with Hip, Knee and Axle joints imported from a leg subassembly](/help/import-an-onshape-assembly/subassembly-pose.png)
+
+A cylindrical mate turns as a hinge, with its slide held fixed. Checks lists the slide under Fixed Mates. Basecase holds any other mate fixed, such as a ball or pin slot mate. In the Build tab, Checks lists each one under Fixed Mates, on the part it holds, so you can add the joint by hand. Each part attaches through a single joint, so Basecase leaves out a mate that closes a loop, like the last pin of a four-bar linkage.
+
+![The Assembly check with the imported cylindrical axle slide held fixed](/help/import-an-onshape-assembly/cylindrical-slide.png)
 
 If you change the assembly in Onshape, you can bring in the changes without importing it again:
 
@@ -60,7 +68,7 @@ If you change the assembly in Onshape, you can bring in the changes without impo
 
 ![The right-click menu of the Desk Arm group with Update from Onshape](/help/import-an-onshape-assembly/update.png)
 
-Basecase replaces the parts you changed in Onshape where they sit, and removes the ones you deleted there. New parts and mates arrive as parts and joints. These stay as they were: the servo on each joint, colors, parts you added (like screws or cameras), poses and calibrations. A message tells you how many changes came in. To undo the whole update, press [[⌘Z]].
+Basecase replaces the parts you changed in Onshape where they sit, and removes the ones you deleted there. New parts and mates arrive as parts and joints. Updated mate limits reach each joint, including mates inside subassemblies. These stay as they were: the servo on each joint, colors, parts you added (like screws or cameras), poses and calibrations. A message tells you how many changes came in. To undo the whole update, press [[⌘Z]].
 
 ![The arm after the update, longer and with a new Wrist part, and the message 3 changes from Onshape](/help/import-an-onshape-assembly/updated.png)
 

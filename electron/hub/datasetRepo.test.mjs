@@ -35,6 +35,7 @@ const lerobotDataset = () => ({
   'README.md': text('# Push T'),
   'videos/observation.images.top/chunk-000/file-000.mp4': binary(4000, 4),
   'meta/notes.txt': text('x'),
+  'train.txt': text('images/block.jpg\n'),
   'data/chunk-000/file-000.csv': text('a,b'),
 });
 
@@ -79,6 +80,45 @@ afterEach(async () => {
 });
 
 describe('downloading a dataset', () => {
+  it.each(['coco', 'yolo', 'basecase', 'voc', 'parquet'])(
+    'downloads %s image layouts without LeRobot metadata',
+    async (format) => {
+      hub = await startFakeHub({ token: TOKEN });
+
+      const manifests = {
+        coco: 'train/_annotations.coco.json',
+        yolo: 'data.yaml',
+        basecase: 'coco/basecase/frames.json',
+        voc: 'Annotations/block.xml',
+        parquet: 'train-00000-of-00001.parquet',
+      };
+      const files = {
+        [manifests[format]]: text('{}'),
+        'train/images/block.jpg': binary(10, 1),
+        'train/images/cup.jpeg': binary(10, 2),
+        'train/images/mask.png': binary(10, 3),
+        'train/labels/block.txt': text('0 0.5 0.5 1 1'),
+        'coco/depth/block.f32': binary(16, 4),
+        ...(format === 'yolo' && {
+          'train.txt': text('train/images/block.jpg\ntrain/images/cup.jpeg\n'),
+          'splits/validation.txt': text('train/images/mask.png\n'),
+        }),
+      };
+
+      hub.seed('tester/images', {
+        ...files,
+        'README.md': text('card'),
+        'run.py': text('code'),
+        'model.pt': binary(8, 5),
+      });
+
+      const got = await account().datasetFiles({ owner: 'tester', repo: 'images' });
+
+      expect(decoded(got.files)).toEqual(decoded(files));
+      expect(hub.requests.some((request) => /README|run\.py|model\.pt/.test(request.path))).toBe(false);
+    },
+  );
+
   it('reads only the meta and data files at the revision’s commit, without a token when signed out', async () => {
     hub = await startFakeHub({ token: TOKEN });
     hub.seed('lerobot/push-t', lerobotDataset());
@@ -127,9 +167,13 @@ describe('downloading a dataset', () => {
     expect(hub.requests.filter((r) => r.path.includes('/tree/'))).toHaveLength(4);
   });
 
-  it('returns no files for a repo without meta/info.json', async () => {
+  it('returns no files for a repo without a supported dataset layout', async () => {
     hub = await startFakeHub({ token: TOKEN });
-    hub.seed('someone/arm-urdf', { 'robot.urdf': text('<robot/>'), 'data/x.parquet': binary(10, 1) });
+    hub.seed('someone/arm-urdf', {
+      'robot.urdf': text('<robot/>'),
+      'data/x.csv': text('x'),
+      'train.txt': text('images/block.jpg\n'),
+    });
 
     const got = await account().datasetFiles({ owner: 'someone', repo: 'arm-urdf' });
 
@@ -147,6 +191,7 @@ describe('downloading a dataset', () => {
     await expect(account().datasetFiles({ owner: 'lerobot', repo: 'huge' })).rejects.toThrow(
       'data/chunk-000/file-001.parquet is larger than 256 MB',
     );
+    expect(hub.requests.some((request) => request.path.includes('/resolve/'))).toBe(false);
   });
 
   it('refuses a dataset over 1 GB or 2,000 files before downloading any of it', async () => {
@@ -203,6 +248,9 @@ describe('dataset download exploits', () => {
       '/meta/absolute.json': text({}),
       'data//double.parquet': binary(10, 2),
       'data/%2e%2e/encoded.parquet': binary(10, 3),
+      'images/../escape.jpg': binary(10, 4),
+      'labels/%2e%2e/escape.txt': text('0 0 0 1 1'),
+      'coco/depth/..\\escape.f32': binary(16, 5),
     });
 
     const got = await account().datasetFiles({ owner: 'lerobot', repo: 'push-t' });

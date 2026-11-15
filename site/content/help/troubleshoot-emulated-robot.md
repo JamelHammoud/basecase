@@ -1,7 +1,6 @@
 ---
 title: Emulated robot refuses a rung or stops
 date: 2026-11-13
-updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 2

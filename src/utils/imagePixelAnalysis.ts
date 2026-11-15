@@ -1,4 +1,5 @@
 import type { AnalyzedImageFeatures } from './imageTo3DAnalyzer';
+import { borderPixels, floodPixels } from './pixelFlood';
 
 type Point = [number, number];
 
@@ -160,30 +161,8 @@ function radialOutline(scan: ForegroundScan, f: Frame): Point[] {
 
 function markOutside(mask: Uint8Array, grid: number): Uint8Array {
   const visited = new Uint8Array(grid * grid);
-  const queue: number[] = [];
 
-  for (let x = 0; x < grid; x++) queue.push(x, (grid - 1) * grid + x);
-
-  for (let y = 0; y < grid; y++) queue.push(y * grid, y * grid + (grid - 1));
-
-  while (queue.length > 0) {
-    const idx = queue.pop()!;
-
-    if (visited[idx] || mask[idx] === 1) continue;
-
-    visited[idx] = 1;
-
-    const x = idx % grid;
-    const y = Math.floor(idx / grid);
-
-    if (x > 0) queue.push(idx - 1);
-
-    if (x < grid - 1) queue.push(idx + 1);
-
-    if (y > 0) queue.push(idx - grid);
-
-    if (y < grid - 1) queue.push(idx + grid);
-  }
+  floodPixels({ width: grid, height: grid, starts: borderPixels(grid, grid), visited, blocked: (i) => mask[i] === 1 });
 
   return visited;
 }
@@ -192,23 +171,19 @@ function floodHole(start: number, mask: Uint8Array, visited: Uint8Array, grid: n
   let pixels = 0;
   let xSum = 0,
     ySum = 0;
-  const queue = [start];
-  const open = (n: number) => n >= 0 && n < grid * grid && !visited[n] && mask[n] === 0;
 
-  visited[start] = 1;
-
-  while (queue.length > 0) {
-    const curr = queue.pop()!;
-
-    pixels++;
-    xSum += curr % grid;
-    ySum += Math.floor(curr / grid);
-
-    for (const n of [curr - 1, curr + 1, curr - grid, curr + grid].filter(open)) {
-      visited[n] = 1;
-      queue.push(n);
-    }
-  }
+  floodPixels({
+    width: grid,
+    height: grid,
+    starts: [start],
+    visited,
+    blocked: (i) => mask[i] === 1,
+    visit: (curr) => {
+      pixels++;
+      xSum += curr % grid;
+      ySum += Math.floor(curr / grid);
+    },
+  });
 
   return { pixels, xSum, ySum };
 }

@@ -24,6 +24,7 @@ import { run } from '../lib/sh.mjs';
 import { voiceNewPages, voiced } from '../lib/voiceHook.mjs';
 import { clearPath, close, linkModules } from '../lib/worktree.mjs';
 import { rebuild } from '../lib/rebuild.mjs';
+import { keepStepLinks } from '../lib/stepLinks.mjs';
 
 export const schedule = {
   agent: true,
@@ -122,7 +123,7 @@ function publishRevision(pull, { dir, output }) {
 
   editPull(pull.number, {
     title: kind ? pullTitle({ kind, title: output.title }) : pull.title,
-    body: voiced(`${restated}${heading}\n- ${line}`, 'pull'),
+    body: voiced(keepStepLinks(`${restated}${heading}\n- ${line}`, pull), 'pull'),
   });
 }
 

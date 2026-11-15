@@ -1,4 +1,4 @@
-function singular(term: string): string {
+export function singular(term: string): string {
   if (term.length <= 3 || term.endsWith('ss') || term.endsWith('us')) return term;
 
   if (term.endsWith('ies')) return `${term.slice(0, -3)}y`;

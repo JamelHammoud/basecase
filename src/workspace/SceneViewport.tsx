@@ -66,7 +66,6 @@ function cameraStripFor(core: WorkspaceCore, actions: WorkspaceActions) {
 export function SceneViewport({ active, core, actions, agent }: SceneViewportProps) {
   const {
     viewportRef,
-    scene,
     studio,
     parts,
     project,
@@ -86,7 +85,7 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
     <>
       <Viewport3D
         ref={viewportRef}
-        sceneKey={scene.sceneId}
+        sceneKey={core.scene.sceneId}
         parts={shownPartsFor(core)}
         selectedPartIds={canvasSelection(core.caseRun, selectedIds)}
         transformMode={tool.transformMode}
@@ -149,8 +148,9 @@ export function SceneViewport({ active, core, actions, agent }: SceneViewportPro
       <DriveOverlay sim={sim} />
       <BuildAlongBar
         buildAlong={core.buildAlong}
-        active={active}
+        active={active && !core.printing.mode}
         ready={core.printing.readySteps(core.buildAlong.stepParts)}
+        onPrint={core.printing.openRepairPlate}
       />
       {!core.caseRun.open && cameraStripFor(core, actions)}
       <AnnotationLayer

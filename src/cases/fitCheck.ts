@@ -13,6 +13,7 @@ import type { ScenePart } from '../types/robotics';
 import { runClock } from '../utils/duration';
 import { errorMessage } from '../utils/errorMessage';
 import type { Rig } from '../utils/kinematics';
+import { commandTimeline } from '../sim/simRun';
 
 interface FitRun {
   model: SimModel;
@@ -38,13 +39,13 @@ const STEP = 0.02;
 
 function run(mj: MainModule, { model, controller, seconds, commands = [] }: FitRun): SimStats {
   const engine = new SimEngine(mj, model);
-  const due = [...commands];
+  const due = commandTimeline(engine, commands);
 
   try {
     engine.setController(controller);
 
     for (let t = 0; t < seconds; t += STEP) {
-      while (due.length && due[0].at <= t + 1e-9) engine.command(due.shift()!.command);
+      due.advance(t);
 
       engine.step(STEP);
     }

@@ -1,7 +1,6 @@
 ---
 title: A robot won't import from a link or folder
 date: 2026-11-13
-updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 9
@@ -65,6 +64,8 @@ If some meshes load and others don't, Basecase still imports the robot, and a to
 | “Choose a URDF or MJCF file.” | The file is XML, but it has no robot description in it. |
 | “Nothing to show: the description has no meshes or shapes.” | The description has joints, but no geometry to draw. |
 
-Basecase imports a Hugging Face dataset link as tries, and does the same with a folder or zip that holds a LeRobot dataset or a ROS 2 recording. If one of those fails, the message names the dataset's file and what's wrong with it. See [Import robot data as tries](/help/import-robot-data-as-tries).
+Basecase imports a Hugging Face LeRobot dataset link as tries, and does the same with a folder or zip that holds a LeRobot dataset or a ROS 2 recording. If one of those fails, the message names the dataset's file and what's wrong with it. See [Import robot data as tries](/help/import-robot-data-as-tries).
+
+Roboflow and Hugging Face image dataset links add labeled images to the Library instead of a robot. Roboflow links require the desktop app and a key in **Settings** ▸ **Accounts**. See [Import an image dataset](/help/import-an-image-dataset).
 
 To import a robot that works, follow [Import a robot](/help/import-a-robot).

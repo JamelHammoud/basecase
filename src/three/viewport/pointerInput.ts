@@ -136,7 +136,7 @@ export class PointerInput {
 
     const { markMode, buildStep } = this.ctx.props();
 
-    if (this.gizmo.dragging() || e.button !== 0 || this.moved(e) || markMode || buildStep) {
+    if (e.defaultPrevented || this.gizmo.dragging() || e.button !== 0 || this.moved(e) || markMode || buildStep) {
       return;
     }
 

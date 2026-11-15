@@ -184,6 +184,10 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     commitConsole,
     insertParts: partInserter(docs),
     commitSkeleton,
+    openSkeleton: () => {
+      core.skeleton.setEditing(true);
+      core.tool.setMode('pose');
+    },
     setAction: author.setAction,
     setCursor: author.setCursor,
     poseTool: (kind, payload) => poseTool(kind, payload, author.setAction),
@@ -192,6 +196,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     applyOps: (ops) => applyOps(ops, author),
     edits: (owner) => actors.editsFor(author.actor, owner),
     buildGuide: core.guide.generate,
+    repairPart: core.repair.open,
     routines: core.simTraining.routines,
     cases: core.simTraining.cases,
     caseCompare: core.caseCompare,

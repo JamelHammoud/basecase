@@ -31,6 +31,16 @@ const isPart = (i) =>
   String(i.configuration ?? '').length <= MAX_CONFIGURATION &&
   (i.documentVersion === undefined || isId(i.documentVersion));
 
+function checkedAssembly(instance) {
+  const valid =
+    [instance.documentId, instance.documentMicroversion, instance.elementId].every(isId) &&
+    String(instance.configuration ?? '').length <= MAX_CONFIGURATION;
+
+  if (!valid) throw new Error('Onshape sent a malformed assembly.');
+
+  return instance;
+}
+
 const cleanName = (name, fallback) => String(name ?? '').slice(0, MAX_NAME) || fallback;
 
 function walk(def, assembly, at) {
@@ -43,9 +53,12 @@ function walk(def, assembly, at) {
 
     if (isPart(inst)) at.parts.set(pathKey(path), { path, name: cleanName(inst.name, 'Part'), instance: inst });
 
-    const sub = inst.type === 'Assembly' ? def.subAssemblies?.find((s) => sameElement(s, inst)) : undefined;
+    const assemblyInstance = inst.type === 'Assembly' ? checkedAssembly(inst) : null;
+    const sub = assemblyInstance ? def.subAssemblies?.find((s) => sameElement(s, assemblyInstance)) : undefined;
 
     if (!sub) continue;
+
+    at.assemblies.push({ instance: assemblyInstance, prefix: path });
 
     for (const feature of sub.features ?? []) at.features.push({ feature, prefix: path });
 
@@ -55,11 +68,18 @@ function walk(def, assembly, at) {
 
 const isTransform = (t) => Array.isArray(t) && t.length === 16 && t.every(Number.isFinite);
 
+function checkedRoot(def) {
+  for (const assembly of def?.subAssemblies ?? []) checkedAssembly(assembly);
+
+  return def?.rootAssembly ?? {};
+}
+
 export function occurrencesOf(def) {
-  const root = def?.rootAssembly ?? {};
+  const root = checkedRoot(def);
   const at = {
     prefix: [],
     parts: new Map(),
+    assemblies: [],
     features: (root.features ?? []).map((feature) => ({ feature, prefix: [] })),
   };
 
@@ -82,7 +102,7 @@ export function occurrencesOf(def) {
 
   if (new Set([...placed.values()].map((p) => partKey(p.instance))).size > MAX_PARTS) throw new Error(TOO_MANY_PARTS);
 
-  return { parts: placed, features: at.features, fixed };
+  return { parts: placed, features: at.features, assemblies: at.assemblies, fixed };
 }
 
 export function uniqueParts(parts) {

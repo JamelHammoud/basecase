@@ -1,7 +1,6 @@
 ---
 title: Checks and blockers
 date: 2026-11-13
-updated: 2026-11-14
 collection: engineer
 type: concept
 order: 2
@@ -28,11 +27,10 @@ covers:
   - src/components/build/ChecksSection.tsx
   - src/components/build/IgnoredChecks.tsx
   - src/components/settings/BuildPane.tsx
+hub_sort: order
 ---
 
 The Checks in the Build tab decide whether a design is ready to build. The verdict comes only from what they measure in the scene.
-
-![The Checks list for a single cube, every check green and Ready to build in the header](/help/get-a-robot-ready-to-build/build-tab.png)
 
 ## Where the verdict comes from
 
@@ -63,5 +61,7 @@ Because the decision was yours, an ignored problem stays ignored when the parts 
 Checks measure the design as you modeled it. A strap or zip tie you'll add by hand isn't in the model, so its row is a note that you check yourself.
 
 Range of motion samples each joint every 15°, so a clash narrower than one step can fall between samples. Peak torque waits for a trained walk policy, and Falls waits until the agent tips the robot over. Prices stay estimates until you add the prices you see or a print service quotes the printed parts.
+
+{{help-hub}}
 
 [Build tab checks](/help/build-checks) lists every check and what makes it fail.

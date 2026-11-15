@@ -1,7 +1,6 @@
 ---
 title: Run a trained skill on the emulated robot
 date: 2026-11-13
-updated: 2026-11-14
 collection: operate
 type: task
 order: 3

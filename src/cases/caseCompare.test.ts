@@ -35,6 +35,7 @@ const flag = presetCase(rover, 'reach-the-flag');
 
 const runs = (passes: number): CaseRuns => ({
   runs: 20,
+  outcomes: [],
   passes,
   medianMargin: 0,
   worstMargin: 0,

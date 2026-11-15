@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FrameSet } from './frameSet';
 import type { FrameBytes, FrameSetBackend, FrameSetManifest } from './frameSetStoreTypes';
 
@@ -59,7 +59,21 @@ const fixture = (): FrameSet => ({
   })),
 });
 
+beforeEach(() => {
+  stored.manifests.clear();
+  stored.frames.clear();
+  stored.reads.length = 0;
+});
+
 describe('the frame set library', () => {
+  it('loads canonical image sets with assignments for every stored frame', async () => {
+    const set = { ...fixture(), splits: { f1: 'train' as const, f2: 'validation' as const } };
+
+    await saveFrameSet(set);
+    expect(await loadTrainingFrame(set.id, 'f2')).toEqual(set.frames[1]);
+    expect(await loadFrameSet(set.id)).toEqual(set);
+  });
+
   it('keeps blobs out of the list and loads only the requested frame', async () => {
     const set = fixture();
 
@@ -102,6 +116,18 @@ describe('the frame set library', () => {
     expect((await listFrameSets()).some((set) => set.id === 'bad')).toBe(false);
     expect(stored.reads).toHaveLength(before);
   });
+
+  it.each([{ f1: 'train' }, { f1: 'train', f2: 'other' }, { f1: 'train', f2: 'test', extra: 'train' }])(
+    'rejects a damaged split map before loading image bytes: %j',
+    async (splits) => {
+      const set = fixture();
+
+      await saveFrameSet(set);
+      stored.manifests.set(set.id, { ...stored.manifests.get(set.id)!, splits } as FrameSetManifest);
+      expect(await loadFrameSet(set.id)).toBeNull();
+      expect(stored.reads).toEqual([]);
+    },
+  );
 
   it.each([
     { width: 8193 },

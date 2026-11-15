@@ -1,7 +1,6 @@
 ---
 title: Web studio asks you to download Basecase
 date: 2026-11-13
-updated: 2026-11-14
 collection: troubleshooting
 type: troubleshooting
 order: 11
@@ -39,6 +38,8 @@ You tried to use something only the desktop app can do. The rest of the message 
 | “Download Basecase to train policies.” | Training a robot to walk or do a skill |
 | “Download Basecase to insert SimReady models.” | Inserting SimReady models |
 | “Download Basecase to connect a robot.” | Connecting emulated robots locally or on a Linux robot computer |
+| “Download Basecase to connect Roboflow.” | Saving a Roboflow API key |
+| “Download Basecase to import from Roboflow.” | Downloading a Roboflow project or dataset version |
 | “Download Basecase to use this.” | Anything else that runs on your computer, such as importing a maker's CAD |
 
 1. Click **Download for Mac** or **Download for Windows** in the banner above the studio, or in the **Agent** tab.
@@ -49,7 +50,7 @@ In the web studio, the **Agent** tab reads “Build with the agent in the deskto
 
 ## Your scenes are gone from the web studio
 
-The web studio stores your scenes, Library models, prices and the parts you own in your browser, not online. Clearing the site's data deletes them, and they don't show up in another browser or on another computer.
+The web studio stores your scenes, Library models, tries, dataset versions, prices and the parts you own in your browser, not online. Clearing the site's data deletes them, including frozen dataset recordings, images and exports. They don't show up in another browser or on another computer.
 
 1. Before you clear browser data, open each scene and click **Export** in the title bar.
 2. Choose **Scene** to download a `.basecase` file.

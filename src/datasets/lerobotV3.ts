@@ -21,6 +21,7 @@ import {
 } from './lerobotRows';
 import { aggregateStats } from './lerobotStats';
 import { languageColumns } from './segmentRows';
+import { lerobotSplits } from './lerobotSplits';
 
 export const V3_VERSION = 'v3.0';
 
@@ -222,7 +223,7 @@ function info(spec: DatasetSpec, limits: FileLimits) {
     data_files_size_in_mb: limits.dataMb,
     video_files_size_in_mb: limits.videoMb,
     fps: DATASET_FPS,
-    splits: { train: `0:${spec.episodes.length}` },
+    splits: lerobotSplits(spec.episodes),
     data_path: `data/${FILE_PATTERN}.parquet`,
     video_path: `videos/{video_key}/${FILE_PATTERN}.mp4`,
     features: withFps,

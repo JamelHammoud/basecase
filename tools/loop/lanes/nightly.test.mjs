@@ -3,7 +3,10 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as github from '../lib/github.mjs';
 import * as sh from '../lib/sh.mjs';
+import { nightlyHarness } from '../lib/harnessNightly.mjs';
 import nightly from './nightly.mjs';
+
+vi.mock('../lib/harnessNightly.mjs', () => ({ nightlyHarness: vi.fn() }));
 
 const releaseState = vi.hoisted(() => ({ pending: null, save: vi.fn() }));
 
@@ -30,6 +33,7 @@ beforeEach(() => {
   head = 'bbb';
   releaseState.pending = null;
   releaseState.save.mockClear();
+  nightlyHarness.mockClear();
   vi.spyOn(github, 'isPaused').mockReturnValue(false);
   vi.spyOn(sh, 'json').mockImplementation((_cmd, args) => {
     if (args[0] === 'pr') return repairs;
@@ -88,6 +92,19 @@ describe('nightly daemon releases', () => {
 
     expect(assets.sort()).toEqual(Object.values(RELEASE_ARTIFACTS).flat().sort());
     expect(args).toContain('bbb');
+    expect(nightlyHarness).toHaveBeenCalledWith(expect.objectContaining({ release: 'v0.2.1' }));
+  });
+
+  it('does not queue an experiment when creating the release fails', () => {
+    pendingRelease();
+
+    const implementation = sh.run.getMockImplementation();
+
+    sh.run.mockImplementation((command, args) =>
+      args[0] === 'release' ? { ok: false, out: '', err: 'publication failed' } : implementation(command, args),
+    );
+    nightly({ log: vi.fn() });
+    expect(nightlyHarness).toHaveBeenCalledWith(expect.objectContaining({ release: null }));
   });
 
   it.each(['daemon-linux-arm64', 'daemon-linux-x64'])('refuses publication when %s fails', (job) => {
@@ -95,6 +112,7 @@ describe('nightly daemon releases', () => {
     nightly({ log: vi.fn() });
     expect(sh.run.mock.calls.some(([, args]) => args[0] === 'release' || args[1] === 'download')).toBe(false);
     expect(releaseState.save).toHaveBeenCalledWith('state', { tried: [], pending: null });
+    expect(nightlyHarness).toHaveBeenCalledWith(expect.objectContaining({ release: null }));
   });
 });
 

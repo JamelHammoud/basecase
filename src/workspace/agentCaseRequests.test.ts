@@ -285,6 +285,7 @@ describe('compare_case', () => {
   const kase = made.ok ? made.kase : null!;
   const runs = (passes: number): CaseRuns => ({
     runs: 20,
+    outcomes: [],
     passes,
     medianMargin: 0.1234,
     worstMargin: 0.05,
@@ -351,6 +352,7 @@ describe('explore_case', () => {
   const weaker: Design = { variants: ['c046', 'c044', 'c044'], volts: space.current.volts };
   const runs = (passes: number, worstMargin: number): CaseRuns => ({
     runs: 8,
+    outcomes: [],
     passes,
     medianMargin: 0,
     worstMargin,

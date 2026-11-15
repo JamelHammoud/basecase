@@ -1,7 +1,6 @@
 ---
 title: Import a captured world
 date: 2026-11-14
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 covers:
@@ -23,6 +22,9 @@ keywords:
   - Scaniverse
   - Luma
   - Gaussian splat
+hub_the_design_agent_order: 145
+hub_the_design_agent: |
+  In a [captured world](/help/import-a-world), the agent's simulation camera shots show the Case's splat or mesh. It sees the same place as the live camera tiles when it [drives the robot](/help/watch-what-the-robots-cameras-see#let-the-agent-look).
 ---
 
 Bring a captured or generated place into a Case so your robot can drive through it at true size.

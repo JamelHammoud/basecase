@@ -1,8 +1,9 @@
 import { useEffect, useEffectEvent, useRef } from 'react';
 import type { Case } from '../cases/schema';
 import type { TrySummary } from '../cases/tryFile';
+import { hitKey } from '../cases/trySearch/hitSelection';
 import { searchTries } from '../cases/trySearch/trySearchClient';
-import { addMembers, newDataset, withMembers, type Dataset } from '../datasets/datasetFile';
+import { addMembers, newDataset, withMembers, type Dataset, type DatasetSample } from '../datasets/datasetFile';
 import { deleteDatasets, saveDataset } from '../datasets/datasetStore';
 import { confirmAction } from '../design-system/confirmStore';
 import { errorMessage } from '../utils/errorMessage';
@@ -15,6 +16,7 @@ import { useTriesView, type TriesView } from './useTriesView';
 
 export interface MakeDatasetInput {
   ids?: string[];
+  samples?: DatasetSample[];
   query?: string;
   name?: string;
   task?: string;
@@ -45,21 +47,37 @@ function commonCase(members: TrySummary[], cases: Cases): Case | null {
 
 const DATASET_TRIES = 100_000;
 
-const searchedIds = async (query: string) => (await searchTries(query, DATASET_TRIES)).map((hit) => hit.tryId);
+const sampleOf = ({ tryId, from, to }: DatasetSample): DatasetSample =>
+  from === undefined ? { tryId } : { tryId, from, to };
 
-async function membersFor(input: MakeDatasetInput, all: TrySummary[]) {
+const searchedSamples = async (query: string) => (await searchTries(query, DATASET_TRIES)).map(sampleOf);
+
+export async function datasetMembers(input: MakeDatasetInput, all: TrySummary[]) {
   const byId = new Map(all.map((t) => [t.id, t]));
   const query = input.query?.trim();
-  const ids = query ? await searchedIds(query) : [...new Set(input.ids ?? [])];
+  const samples = query
+    ? await searchedSamples(query)
+    : (input.samples ?? (input.ids ?? []).map((tryId) => ({ tryId })));
+  const unique = [...new Map(samples.map((sample) => [hitKey(sample), sample])).values()];
+  const ids = [...new Set(unique.map((sample) => sample.tryId))];
   const members = ids.flatMap((id) => byId.get(id) ?? []);
 
-  return { members, leftOut: query ? 0 : ids.length - members.length };
+  return {
+    members,
+    samples: unique.filter((sample) => byId.has(sample.tryId)),
+    leftOut: query ? 0 : ids.length - members.length,
+  };
 }
 
-type ShownTries = Pick<TriesView, 'selected' | 'order' | 'query' | 'searching'>;
+type ShownTries = Pick<TriesView, 'selected' | 'order' | 'query' | 'searching'> & {
+  hits: DatasetSample[] | null;
+};
 
 export function viewInput(view: ShownTries, ids?: string[]): MakeDatasetInput {
   const chosen = ids ?? (view.selected.length ? view.selected : null);
+
+  if (chosen && view.searching)
+    return { ids: chosen, samples: (view.hits ?? []).filter((hit) => chosen.includes(hit.tryId)).map(sampleOf) };
 
   if (chosen) return { ids: chosen };
 
@@ -75,7 +93,7 @@ const nameOf = (input: MakeDatasetInput, kase: Case | null, first: TrySummary) =
   input.name?.trim() || kase?.name || input.query?.trim() || first.caseName || first.robot;
 
 async function built(input: MakeDatasetInput, all: TrySummary[], cases: Cases): Promise<MadeDataset> {
-  const { members, leftOut } = await membersFor(input, all);
+  const { members, samples, leftOut } = await datasetMembers(input, all);
 
   if (!members.length) return { problem: input.query ? `No tries match ${input.query}.` : 'No tries have these ids.' };
 
@@ -89,6 +107,7 @@ async function built(input: MakeDatasetInput, all: TrySummary[], cases: Cases): 
     caseId: kase?.id ?? null,
     query: input.query ?? null,
     members: members.map((m) => m.id),
+    samples,
     at: new Date().toISOString(),
   });
 
@@ -164,7 +183,7 @@ export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions
       );
     },
     add: (dataset: Dataset, ids: string[]) => {
-      const next = addMembers(dataset, ids);
+      const next = addMembers(dataset, ids, viewInput(view, ids).samples);
       const added = next.members.length - dataset.members.length;
 
       saveDataset(next).then(() => showToast(`Added ${plural(added, 'try', 'tries')} to ${dataset.name}`), failed);
@@ -172,8 +191,10 @@ export function useWorkspaceDatasets({ view, cases, showToast }: DatasetsOptions
     update: (dataset: Dataset) => {
       if (!dataset.query) return;
 
-      searchedIds(dataset.query)
-        .then((ids) => saveDataset(withMembers(dataset, ids)))
+      searchedSamples(dataset.query)
+        .then((samples) =>
+          saveDataset(withMembers(dataset, [...new Set(samples.map((sample) => sample.tryId))], samples)),
+        )
         .catch(failed);
     },
     remove: (dataset: Dataset) =>

@@ -64,7 +64,7 @@ export function plainPunctuation(text) {
 const frontMatter = (text) => (text.startsWith('---') ? text.slice(0, text.indexOf('\n---', 3) + 4) : '');
 
 const MARKERS = [
-  /Closes #\d+/g,
+  /(?:Closes|Rebuilds) #\d+/g,
   /^copy: .*$/gm,
   /^(?:Request|Idea|Arc|Kind): .*$/gm,
   /Depends on\*{0,2}[^\n]*/g,
@@ -99,7 +99,11 @@ export function keepsMarkers(before, after, kind) {
 
   if (strip(frontMatter(before)) !== strip(frontMatter(after))) return false;
 
-  return MARKERS.every((pattern) => [...before.matchAll(pattern)].every(([found]) => after.includes(found)));
+  return MARKERS.every((pattern) => {
+    const preserved = new Set(after.match(pattern) ?? []);
+
+    return [...before.matchAll(pattern)].every(([found]) => preserved.has(found));
+  });
 }
 
 function claude(system, prompt, run) {

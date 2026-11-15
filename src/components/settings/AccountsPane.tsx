@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { hubBridge, type HubAccountState } from '../../hub/hubBridge';
 import { onshapeBridge, type OnshapeAccountState, type OnshapeKey } from '../../onshape/onshapeBridge';
 import { SettingsGroup as Group } from '../SettingsRows';
+import { RoboflowAccount } from './RoboflowAccount';
 import { SecretField } from './SecretField';
 import { PrintServiceAccount } from './PrintServiceAccount';
 import { errorMessage } from '../../utils/errorMessage';
@@ -108,6 +109,7 @@ export const AccountsPane: React.FC<{ focus?: SettingsFocus }> = ({ focus }) => 
           onSecret={saveMapKey}
         />
       </Group>
+      <RoboflowAccount focus={focus} />
       <PrintServiceAccount />
     </>
   );

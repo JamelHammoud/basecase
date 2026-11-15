@@ -1,7 +1,6 @@
 ---
 title: Drive a robot with your camera
 date: 2026-11-13
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 keywords:

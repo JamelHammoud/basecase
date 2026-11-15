@@ -241,6 +241,7 @@ const REVIEW_RULES: ToolRule[] = [
 
 const ROBOT_RULES: ToolRule[] = [
   plainRule(['define_skeleton'], JointsIcon, ['Laying out the skeleton', 'Laid out the skeleton']),
+  plainRule(['skeleton_from_motion'], JointsIcon, ['Fitting a skeleton to motion', 'Fitted a skeleton to motion']),
   {
     keys: ['robot_skeleton'],
     icon: JointsIcon,

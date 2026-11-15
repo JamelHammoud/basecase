@@ -44,6 +44,11 @@ export const KEYPOINT_LABELS: Record<Keypoint, string> = {
   rightToe: 'Right toe',
 };
 
+export interface MocapRotation {
+  axis: 'X' | 'Y' | 'Z';
+  degrees: number;
+}
+
 export interface Mocap {
   name: string;
   frameTime: number;
@@ -52,6 +57,12 @@ export interface Mocap {
   bones: string[];
   sample: (t: number) => Map<string, THREE.Vector3>;
   rootQuaternion: (t: number) => THREE.Quaternion;
+  rotations?: (t: number) => Map<string, MocapRotation[]>;
+  endSites?: {
+    rest: Map<string, THREE.Vector3>;
+    parentOf: Map<string, string>;
+    sample: (t: number) => Map<string, THREE.Vector3>;
+  };
   rest: Map<string, THREE.Vector3>;
   root: string;
   parentOf: Map<string, string | null>;

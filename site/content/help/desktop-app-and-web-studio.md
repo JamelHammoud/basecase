@@ -1,7 +1,6 @@
 ---
 title: The desktop app and the web studio
 date: 2026-11-13
-updated: 2026-11-13
 collection: get-started
 type: concept
 order: 2
@@ -30,9 +29,9 @@ You can model, pose and simulate in your browser at app.basecase.so without down
 
 The [web studio](https://app.basecase.so) is the same studio as the desktop app, running in a browser tab. You can place parts, import meshes and robots, pose joints, run the simulation and export files.
 
-The web studio saves your scenes and Library models in your browser's storage, on that computer only. It doesn't save chats.
+The web studio saves your scenes, Library models, tries and dataset versions in your browser's storage, on that computer only. Dataset versions keep frozen recordings, images, labels and split assignments for export. It doesn't save chats.
 
-**Note:** If you clear site data for app.basecase.so, your browser deletes your scenes and Library models.
+**Note:** If you clear site data for app.basecase.so, your browser deletes your scenes, Library models, tries and datasets, including saved version content.
 
 ## What needs the desktop app
 
@@ -47,6 +46,7 @@ Some features work only in the desktop app. In the web studio, you see this inst
 | **Play** ▸ **Operate** | Not shown |
 | STEP and IGES import | Meshes only: STL, 3MF, OBJ, PLY, FBX, GLB, glTF and DAE |
 | Publishing a dataset to Hugging Face | Export only |
+| Roboflow imports | Download the dataset and import its folder or zip |
 | **Place on Map** | Not shown |
 
 In the web studio, Settings doesn't have the **Agent**, **Printers** or **Accounts** panes. There's no menu bar either. Press [[⌘K]] to run any command you'd find in the menus.

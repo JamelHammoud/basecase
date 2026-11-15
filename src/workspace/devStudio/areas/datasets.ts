@@ -1,4 +1,6 @@
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
+import { editTries } from '../../../cases/tryStore';
+import { seedDatasetTry } from '../datasetFixture';
 import { base64Files } from '../base64Files';
 import type { Studio } from '../types';
 
@@ -13,5 +15,15 @@ export default function datasetsStudio(studio: Studio) {
       return zip && base64Files(unzipSync(zip));
     },
     datasets: () => studio().core.triesView.datasets,
+    seedDatasetTry: async (id: string) => {
+      const { sim, cases } = studio().core.simTraining;
+
+      return seedDatasetTry(await sim.buildModel(), cases.sceneId, id);
+    },
+    datasetInstruction: (id: string, instruction: string) =>
+      editTries([id], (stored) => ({
+        ...stored,
+        labels: { segments: [], by: 'person', tags: [], flags: [], ...stored.labels, instruction },
+      })),
   };
 }

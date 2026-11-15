@@ -1,7 +1,6 @@
 ---
 title: Play a ROS recording's topics in the console
 date: 2026-11-14
-updated: 2026-11-14
 collection: simulate-and-train
 type: task
 order: 17

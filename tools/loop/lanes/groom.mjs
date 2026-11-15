@@ -1,6 +1,7 @@
+import { sweepMergedSteps } from '../lib/stepClosure.mjs';
 import { runAgent } from '../lib/agent.mjs';
 import { claim, held } from '../lib/claim.mjs';
-import { closeIssue, commentOnIssue, hasLabel, issues, setIssueBody } from '../lib/github.mjs';
+import { closeIssue, commentOnIssue, hasLabel, issues, setIssueBody, pullComments, repo } from '../lib/github.mjs';
 import {
   applyGroom,
   BUILDING,
@@ -12,7 +13,7 @@ import {
 } from '../lib/groom.mjs';
 import { OWNER_LOGIN } from '../lib/paths.mjs';
 import { json } from '../lib/sh.mjs';
-import { stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
+import { recoverStepPulls, stepPullIndex, stepStatus } from '../lib/stepPulls.mjs';
 import { store } from '../lib/store.mjs';
 import { close, openBranch } from '../lib/worktree.mjs';
 
@@ -104,8 +105,8 @@ export function groomPrompt({ batch, waiting, merged, entryOf }) {
   ].join('\n\n');
 }
 
-function waitingSteps(index) {
-  return issues(NEXT).filter(
+function waitingSteps(steps, index) {
+  return steps.filter(
     (step) =>
       !hasLabel(step, BUILDING) && step.author?.login === OWNER_LOGIN && stepStatus(index, step.number) === 'none',
   );
@@ -153,8 +154,23 @@ export function groomQueue({ log, dry = false }) {
     return [];
   }
 
+  const steps = [...new Map([...issues(NEXT), ...issues(BUILDING)].map((step) => [step.number, step])).values()].filter(
+    (step) => step.author?.login === OWNER_LOGIN,
+  );
+
+  recoverStepPulls(index, {
+    steps,
+    commentsOf: pullComments,
+    slug: repo(),
+    pullOf: (number) => json('gh', ['pr', 'view', String(number), '--json', 'number,state,headRefName,body,labels']),
+  });
+
+  const swept = sweepMergedSteps(steps, index, { log, dry });
   const now = Date.now();
-  const waiting = waitingSteps(index);
+  const waiting = waitingSteps(
+    steps.filter((step) => !swept.has(step.number)),
+    index,
+  );
   const free = waiting.filter((step) => !held(`step-${step.number}`));
   const merged = mergedPullsSince(mergedWindowStart(free, groomed.get, now));
   const due = dueSteps(free, { entryOf: groomed.get, merged });

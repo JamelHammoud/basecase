@@ -6,9 +6,13 @@ const backend = vi.hoisted(() => ({ stored: [] as unknown[], deleted: [] as stri
 
 vi.mock('./desktopDatasets', () => ({
   desktopDatasets: {
+    saveContent: async () => '',
+    content: async () => null,
     list: async () => backend.stored,
     save: async (dataset) => {
       backend.stored.push(dataset);
+
+      return dataset;
     },
     delete: async (ids) => {
       backend.deleted.push(...ids);

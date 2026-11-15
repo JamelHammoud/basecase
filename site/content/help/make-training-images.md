@@ -10,6 +10,9 @@ covers:
   - src/vision/frameSet.ts
   - src/vision/cocoExport.ts
   - src/vision/yoloExport.ts
+hub_the_design_agent_order: 80
+hub_the_design_agent: |
+  - Ask it to make training images from a Case. You can name the cameras, classes, image count and seed. It opens the saved dataset, as in [Make training images from a Case](/help/make-training-images).
 ---
 
 Render labeled camera images from your robot's Case, then export them for model training.
@@ -30,6 +33,8 @@ The dataset opens when rendering finishes. You can make up to 1,000 images per r
 ![The saved Case dataset showing its rendered images](/help/make-training-images/dataset.png)
 
 The ZIP contains COCO and Ultralytics YOLO packages with train, validation and test splits. COCO includes boxes, masks and keypoints. YOLO text labels contain boxes. Both packages keep full labels and depth in their Basecase files.
+
+Exporting saves the image bytes, annotations and split assignments in a dataset version. Camera views from the same source run stay in one split. To export those saved images after editing the working dataset, choose the version in **Dataset version** before exporting.
 
 The Case supplies object pose variation, named points and declared color classes. The picker repeats seed 1. The same Case, camera settings and rendering environment reproduce the same image and label bytes.
 

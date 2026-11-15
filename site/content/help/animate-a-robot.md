@@ -1,7 +1,6 @@
 ---
 title: Animate a robot with a walk cycle or motion capture
 date: 2026-11-13
-updated: 2026-11-13
 collection: engineer
 type: task
 order: 2
@@ -45,6 +44,8 @@ You can also choose **New Walk Cycle** in [[⌘K]].
 **Note:** A walk cycle needs leg joints. If the robot doesn't have any, **+** offers only **Import BVH**.
 
 ## Copy motion from a BVH file
+
+The robot must have joints. Without them, importing a BVH opens **Design From Motion** to [design a robot from a motion clip](/help/design-a-robot-from-motion).
 
 1. In the **Pose** tab, click **+** beside **Animations** and choose **Import BVH**. If the robot has no legs, there's no menu, and you go straight to choosing a file.
 2. Pick a `.bvh` file.

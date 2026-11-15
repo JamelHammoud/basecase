@@ -62,33 +62,38 @@ function matchDetections(ranked: RankedDetection[], rows: EvaluatedFrame[], clas
   });
 }
 
-function keypointCounts(
-  annotation: ImageAnnotation,
-  detection: VisionDetection | undefined,
-  task: TrainingTask,
-  frame: TrainingFrame,
-) {
+function keypointScorer(task: TrainingTask) {
   const names = [...new Set(task.classes.flatMap((category) => category.keypoints ?? []))];
-  const tolerance = (task.keypointTolerance ?? 0.1) * Math.hypot(annotation.box[2], annotation.box[3]);
-  let visible = 0;
-  let correct = 0;
+  const indices = new Map(names.map((name, index) => [name, index]));
+  const tolerance = task.keypointTolerance ?? 0.1;
 
-  for (const point of annotation.keypoints) {
-    if (!point.visible) continue;
+  return (annotation: ImageAnnotation, detection: VisionDetection | undefined, frame: TrainingFrame) => {
+    const distance = tolerance * Math.hypot(annotation.box[2], annotation.box[3]);
+    let visible = 0;
+    let correct = 0;
 
-    const predicted = detection?.keypoints?.[names.indexOf(point.name)];
+    for (const point of annotation.keypoints) {
+      if (!point.visible) continue;
 
-    visible++;
-    correct += Number(
-      !!predicted &&
-        Math.hypot(predicted[0] * frame.width - point.x, predicted[1] * frame.height - point.y) <= tolerance,
-    );
-  }
+      const predicted = detection?.keypoints?.[indices.get(point.name) ?? -1];
 
-  return { visible, correct };
+      visible++;
+      correct += Number(
+        !!predicted &&
+          Math.hypot(predicted[0] * frame.width - point.x, predicted[1] * frame.height - point.y) <= distance,
+      );
+    }
+
+    return { visible, correct };
+  };
 }
 
-function classKeypoints(rows: EvaluatedFrame[], matches: MatchedDetection[], task: TrainingTask, classId: number) {
+function classKeypoints(
+  rows: EvaluatedFrame[],
+  matches: MatchedDetection[],
+  score: ReturnType<typeof keypointScorer>,
+  classId: number,
+) {
   const predictions = new Map(
     matches.filter((match) => match.match >= 0).map((item) => [`${item.row}:${item.match}`, item.detection]),
   );
@@ -96,7 +101,7 @@ function classKeypoints(rows: EvaluatedFrame[], matches: MatchedDetection[], tas
     frame.annotations.flatMap((annotation, index) => {
       if (annotation.classId !== classId) return [];
 
-      return [keypointCounts(annotation, predictions.get(`${row}:${index}`), task, frame)];
+      return [score(annotation, predictions.get(`${row}:${index}`), frame)];
     }),
   );
 
@@ -107,6 +112,8 @@ function classKeypoints(rows: EvaluatedFrame[], matches: MatchedDetection[], tas
 }
 
 export function objectMetrics(rows: EvaluatedFrame[], task: TrainingTask): ClassEvaluation[] {
+  const scoreKeypoints = task.kind === 'keypoints' ? keypointScorer(task) : null;
+
   return task.classes.map((category) => {
     const support = rows.reduce(
       (sum, { frame }) => sum + frame.annotations.filter((annotation) => annotation.classId === category.id).length,
@@ -117,7 +124,7 @@ export function objectMetrics(rows: EvaluatedFrame[], task: TrainingTask): Class
     const truePositive = matches.filter((item) => item.match >= 0).length;
     const falsePositive = ranked.length - truePositive;
     const falseNegative = support - truePositive;
-    const keypoints = task.kind === 'keypoints' ? classKeypoints(rows, matches, task, category.id) : undefined;
+    const keypoints = scoreKeypoints ? classKeypoints(rows, matches, scoreKeypoints, category.id) : undefined;
     const failureRate = classFailureRate(
       { support, falsePositive, falseNegative, keypoints },
       category.keypoints?.length ?? 0,

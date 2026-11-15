@@ -1,5 +1,7 @@
 # Case comparison under Linux load
 
+This records the fixture investigation before the browser walkthrough was removed in [#1086](https://github.com/JamelHammoud/basecase/issues/1086). Current comparison coverage is listed in [Running and testing](../guide/running-and-testing.md).
+
 ## Scope
 
 [Issue #996](https://github.com/JamelHammoud/basecase/issues/996) tracks the comparison failure in [Linux job 132729516961](https://github.com/JamelHammoud/basecase/actions/runs/43687018679/job/132729516961). The job reported both attempts failing in 24.0 seconds, then was cancelled before its final assertion trace. That log does not establish which assertion failed.

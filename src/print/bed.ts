@@ -1,5 +1,6 @@
 import { sizeLabel } from '../utils/size';
 import type { Point2, PrinterModel } from '../data/printers';
+import { bedProjection, bedSeparated } from './bedProjection';
 
 export interface Rect {
   x: number;
@@ -137,29 +138,25 @@ const rectPoly = (r: Rect): Poly => [
   [r.x, r.y + r.d],
 ];
 
-function axesOf(poly: Poly): Point2[] {
-  return poly.map((p, i) => {
-    const q = poly[(i + 1) % poly.length];
+function diagonalFit(w: number, d: number, bed: Bed): BedFit | null {
+  let keepOut: ReturnType<typeof bedProjection>[] | undefined;
 
-    return [q[1] - p[1], p[0] - q[0]] as Point2;
-  });
-}
+  for (let deg = 5; deg < 90; deg += 5) {
+    const poly = rotatedRect(w, d, deg, [bed.width / 2, bed.depth / 2]);
+    const inside = poly.every(([x, y]) => x >= -EPS && y >= -EPS && x <= bed.width + EPS && y <= bed.depth + EPS);
 
-function separated(a: Poly, b: Poly): boolean {
-  return [...axesOf(a), ...axesOf(b)].some(([ax, ay]) => {
-    const project = (poly: Poly) => poly.map(([x, y]) => x * ax + y * ay);
-    const pa = project(a);
-    const pb = project(b);
+    if (!inside) continue;
 
-    return Math.max(...pa) <= Math.min(...pb) + EPS || Math.max(...pb) <= Math.min(...pa) + EPS;
-  });
-}
+    keepOut ??= bed.keepOut.map((rect) => bedProjection(rectPoly(rect)));
 
-function diagonalFits(w: number, d: number, deg: number, bed: Bed): boolean {
-  const poly = rotatedRect(w, d, deg, [bed.width / 2, bed.depth / 2]);
-  const inside = poly.every(([x, y]) => x >= -EPS && y >= -EPS && x <= bed.width + EPS && y <= bed.depth + EPS);
+    if (!keepOut.length) return { yaw: deg, spot: null };
 
-  return inside && bed.keepOut.every((k) => separated(poly, rectPoly(k)));
+    const projection = bedProjection(poly);
+
+    if (keepOut.every((obstacle) => bedSeparated(projection, obstacle))) return { yaw: deg, spot: null };
+  }
+
+  return null;
 }
 
 export interface BedFit {
@@ -178,9 +175,7 @@ export function fitOnBed(w: number, d: number, h: number, bed: Bed): BedFit | nu
 
   if (turned) return { yaw: 90, spot: turned };
 
-  for (let deg = 5; deg < 90; deg += 5) if (diagonalFits(w, d, deg, bed)) return { yaw: deg, spot: null };
-
-  return null;
+  return diagonalFit(w, d, bed);
 }
 
 export const bedSizeText = (bed: Bed): string => sizeLabel([bed.width, bed.depth, bed.height]);

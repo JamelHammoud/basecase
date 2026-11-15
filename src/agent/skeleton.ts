@@ -5,6 +5,7 @@ import { lengthLabel } from '../utils/size';
 import { swapWords } from '../mirror/mirrorNames';
 import { plural } from '../../electron/plural.mjs';
 import { weight } from '../utils/weight';
+import { SkeletonTree } from '../utils/skeletonTree';
 
 export interface SkeletonJointInput {
   id: string;
@@ -178,21 +179,9 @@ export function buildSkeleton(payload: SkeletonPayload, previous?: RobotSkeleton
   };
 }
 
-export function childrenOf(skeleton: RobotSkeleton, id: string): SkeletonJoint[] {
-  return skeleton.joints.filter((j) => j.parent === id);
-}
-
-export function linkEnds(skeleton: RobotSkeleton, j: SkeletonJoint): ZUpVec[] {
-  return [...childrenOf(skeleton, j.id).map((c) => c.origin), ...(j.tip ? [j.tip] : [])];
-}
-
-export function linkLength(skeleton: RobotSkeleton, j: SkeletonJoint): number {
-  return Math.max(0, ...linkEnds(skeleton, j).map((e) => len(diff(e, j.origin))));
-}
-
-function jointLine(skeleton: RobotSkeleton, j: SkeletonJoint): string {
-  const link = linkLength(skeleton, j);
-  const to = childrenOf(skeleton, j.id).map((c) => c.id);
+function jointLine(tree: SkeletonTree, j: SkeletonJoint): string {
+  const link = tree.linkLength(j);
+  const to = tree.childrenOf(j.id).map((c) => c.id);
   const bits = [
     `- ${j.id}${j.limb ? ` (${j.limb})` : ''}: at ${fmt(j.origin)} axis ${fmt(j.axis)}`,
     link ? `link ${r1(link)} mm${to.length ? ` to ${to.join(', ')}` : ' to its tip'}` : '',
@@ -205,11 +194,12 @@ function jointLine(skeleton: RobotSkeleton, j: SkeletonJoint): string {
 
 export function skeletonText(build: SkeletonBuild): string {
   const { skeleton, problems } = build;
+  const tree = new SkeletonTree(skeleton);
   const pairs = skeleton.pairs.map((p) => `${p[0]} / ${p[1]}`);
 
   return [
     `Skeleton: ${plural(skeleton.joints.length, 'joint')}${skeleton.massG ? `, ${weight(skeleton.massG)} estimated` : ''}.`,
-    ...skeleton.joints.map((j) => jointLine(skeleton, j)),
+    ...skeleton.joints.map((j) => jointLine(tree, j)),
     pairs.length ? `Symmetric pairs: ${pairs.join(', ')}.` : '',
     problems.length ? `Problems:\n- ${problems.join('\n- ')}` : '',
     build.turned.length

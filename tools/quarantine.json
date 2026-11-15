@@ -71,7 +71,7 @@
   },
   {
     "file": "e2e/worldImport.e2e.test.ts",
-    "test": "records a kitchen try with its world in the camera tile and every exported video",
+    "test": "records a kitchen try and exports Scene videos in both LeRobot layouts",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",

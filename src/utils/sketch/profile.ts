@@ -126,11 +126,25 @@ export function sketchLoops(sketch: Sketch): Vec2[][] {
 }
 
 export function sketchProfile(sketch: Sketch): Profile | null {
-  const loops = sketchLoops(sketch).filter((l) => Math.abs(loopArea(l)) > 1e-6);
+  const loops: Vec2[][] = [];
+  let outer: Vec2[] | undefined;
+  let outerArea = 0;
 
-  if (loops.length === 0) return null;
+  for (const loop of sketchLoops(sketch)) {
+    const area = Math.abs(loopArea(loop));
 
-  const outer = loops.reduce((best, l) => (Math.abs(loopArea(l)) > Math.abs(loopArea(best)) ? l : best));
+    if (area <= 1e-6 || Number.isNaN(area)) continue;
+
+    loops.push(loop);
+
+    if (area > outerArea) {
+      outer = loop;
+      outerArea = area;
+    }
+  }
+
+  if (!outer) return null;
+
   const holes = loops.filter((l) => l !== outer && insideLoop(l[0], outer));
 
   return { outer, holes };

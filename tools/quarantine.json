@@ -87,13 +87,6 @@
     "platform": "win32"
   },
   {
-    "file": "electron/robot/networkRobotLink.test.mjs",
-    "test": "transfers calibration and policies through the authenticated daemon interface",
-    "issue": 990,
-    "until": "2026-11-28",
-    "reason": "Run 43687018679 failed on Linux and the repair’s related check failed on macOS while waiting for policy removal. Direct probes against the same heartbeat-responsive peer transferred and removed the 300 KB policy. The cause under unit load is not established."
-  },
-  {
     "file": "e2e/operateCalibration.e2e.test.ts",
     "test": "replays a measured joint, confirms rollback and offers calibration from Checks",
     "issue": 987,

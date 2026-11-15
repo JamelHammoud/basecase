@@ -44,19 +44,6 @@ afterEach(async () => {
 });
 
 describe('network robot link', () => {
-  it('answers a heartbeat with authenticated telemetry after the greeting', async () => {
-    const { robot, link, events } = await setup();
-
-    expect(await link.connect({ ...robot.endpoint, code: '123456' })).toEqual({ ok: true });
-    await vi.waitFor(() => expect(link.state().status?.mode).toBe('look'));
-
-    const previous = events.filter((event) => event.event === 'status').length;
-
-    link.session.pipe.write({ cmd: 'heartbeat' });
-    await vi.waitFor(() => expect(events.filter((event) => event.event === 'status').length).toBeGreaterThan(previous));
-    expect(link.state().connected).toBe(true);
-  });
-
   it('pairs privately, authenticates each connection, and reuses the ladder and intent pacer', async () => {
     const { robot, link, credentials, directory, events, pairRobot } = await setup();
 

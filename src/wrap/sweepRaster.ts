@@ -35,6 +35,14 @@ const anyIn = (row: Float64Array, from: number, to: number) => {
   return at < row.length && row[at] <= to;
 };
 
+function anySpan(row: Float64Array, spans: Float64Array, count: number): boolean {
+  for (let at = 0; at < count; at += 2) {
+    if (anyIn(row, spans[at], spans[at + 1])) return true;
+  }
+
+  return false;
+}
+
 const wrapAngle = (a: number) => a - TWO_PI * Math.floor((a + Math.PI) / TWO_PI);
 
 export class SweepRaster {
@@ -53,6 +61,7 @@ export class SweepRaster {
     sMax: -Infinity,
   };
   private readonly coord: [number, number, number] = [0, 0, 0];
+  private readonly intervals = new Float64Array(4);
 
   private readonly cell: number;
 
@@ -86,13 +95,14 @@ export class SweepRaster {
 
     const ip = Math.floor(p / this.cell);
     const iq = Math.floor(q / this.cell);
-    const spans = this.spans(p, s);
+    const count = this.spans(p, s);
+    const spans = this.intervals;
 
     for (let dp = -1; dp <= 1; dp++) {
       for (let dq = -1; dq <= 1; dq++) {
         const row = this.rows.get(keyOf(ip + dp, iq + dq));
 
-        if (row && spans.some(([from, to]) => anyIn(row, from, to))) return true;
+        if (row && anySpan(row, spans, count)) return true;
       }
     }
 
@@ -149,30 +159,50 @@ export class SweepRaster {
     return [0, 1, 2].map((k) => origin[k] + p * this.u[k] + q * this.w[k] + s * this.axis[k]) as V3;
   }
 
-  private spans(p: number, s: number): Array<[number, number]> {
+  private spans(p: number, s: number): number {
     const [lo, hi] = this.motion.range;
+    const spans = this.intervals;
 
-    if (this.motion.kind === 'prismatic') return [[s - hi - this.cell, s - lo + this.cell]];
+    if (this.motion.kind === 'prismatic') {
+      spans[0] = s - hi - this.cell;
+      spans[1] = s - lo + this.cell;
+
+      return 2;
+    }
 
     const slack = this.cell / Math.max(p, this.cell);
     const width = hi - lo + 2 * slack;
 
-    if (width >= TWO_PI) return [[-Infinity, Infinity]];
+    if (width >= TWO_PI) {
+      spans[0] = -Infinity;
+      spans[1] = Infinity;
+
+      return 2;
+    }
 
     const from = wrapAngle(s - hi - slack);
     const to = from + width;
 
-    return to <= Math.PI
-      ? [[from, to]]
-      : [
-          [from, Math.PI],
-          [-Math.PI, to - TWO_PI],
-        ];
+    spans[0] = from;
+
+    if (to <= Math.PI) {
+      spans[1] = to;
+
+      return 2;
+    }
+
+    spans[1] = Math.PI;
+    spans[2] = -Math.PI;
+    spans[3] = to - TWO_PI;
+
+    return 4;
   }
 
   private coords(x: number, y: number, z: number): [number, number, number] {
     const { origin } = this.motion;
-    const [dx, dy, dz] = [x - origin[0], y - origin[1], z - origin[2]];
+    const dx = x - origin[0];
+    const dy = y - origin[1];
+    const dz = z - origin[2];
     const along = dx * this.axis[0] + dy * this.axis[1] + dz * this.axis[2];
     const a = dx * this.u[0] + dy * this.u[1] + dz * this.u[2];
     const b = dx * this.w[0] + dy * this.w[1] + dz * this.w[2];

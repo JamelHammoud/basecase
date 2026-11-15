@@ -55,8 +55,11 @@ describe('operator body pose readiness', () => {
     expect(await body).toBeNull();
     expect(operatorPoseReady()).toBe(true);
     expect(operatorPoints()).toBeNull();
-    workers[0].terminate.mockImplementation(() => expect(vision.disconnect).toHaveBeenCalledOnce());
     closeOperatorCamera();
+    expect(vision.disconnect).toHaveBeenCalledOnce();
+    expect(workers[0].postMessage).toHaveBeenLastCalledWith({ type: 'close' });
+    expect(workers[0].terminate).not.toHaveBeenCalled();
+    expect(track.stop).toHaveBeenCalledOnce();
     expect(operatorPoseReady()).toBe(false);
 
     const hand = joinOperatorCamera('hand', {} as InputRobot);
@@ -113,7 +116,8 @@ it('moves the operator session to its owning scene and discards the previous wor
   await vi.waitFor(() =>
     expect(workers[1]?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'join' })),
   );
-  expect(workers[0].terminate).toHaveBeenCalledOnce();
+  expect(workers[0].postMessage).toHaveBeenLastCalledWith({ type: 'close' });
+  expect(workers[0].terminate).not.toHaveBeenCalled();
   expect(operatorPoseReady()).toBe(false);
   workers[0].onmessage?.({ data: { type: 'ready', kind: 'body', delegate: 'CPU' } } as MessageEvent<PoseEvent>);
   workers[0].onmessage?.({

@@ -17,6 +17,7 @@ class FakeWorker {
   onmessage: ((ev: { data: TagsEvent }) => void) | null = null;
   onerror: ((ev: { message: string }) => void) | null = null;
   terminated = false;
+  closed = false;
 
   constructor() {
     workers.push(this);
@@ -24,6 +25,8 @@ class FakeWorker {
 
   postMessage(request: TagsRequest) {
     if (request.type === 'open') queueMicrotask(() => this.onmessage?.({ data: { type: 'ready' } }));
+
+    if (request.type === 'close') this.closed = true;
   }
 
   terminate() {
@@ -73,12 +76,14 @@ describe('mat tracking sessions', () => {
     expect(mine).toEqual([0.5, 0.6]);
     expect(theirs).toEqual([]);
     expect(worker?.terminated).toBe(false);
+    expect(worker?.closed).toBe(false);
 
     closeMatTracking(owner);
     stopMine();
     stopTheirs();
 
-    expect(worker?.terminated).toBe(true);
+    expect(worker?.closed).toBe(true);
+    expect(worker?.terminated).toBe(false);
     expect(matTrackingSnapshot()).toMatchObject({ owner: 0, open: false });
   });
 

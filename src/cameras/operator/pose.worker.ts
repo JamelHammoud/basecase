@@ -148,12 +148,12 @@ function feed(request: FeedRequest) {
   step();
 }
 
-function close() {
+async function close() {
   closed = true;
   [...lanes.keys()].forEach((kind) => leave({ kind }));
-  frames.stop();
   vision.close();
   gestures.stop();
+  await frames.stop();
   scope.close();
 }
 

@@ -1,7 +1,23 @@
 [
   {
+    "file": "e2e/trainFromTries.e2e.test.ts",
+    "test": "starts the dataset job from its button and command, freezes it once and recovers when training stops",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43721538732 observed zero train-start requests after clicking Train from Tries on both Windows attempts. Linux passed the same commit in 12995 ms. The focused walkthrough was introduced by b2b1c63c3 after the last green run. The failing preparation stage is not established. Trace model preparation, frozen sample restoration and trainer dispatch under the existing Windows worker-start issue #995."
+  },
+  {
     "file": "e2e/inputs.e2e.test.ts",
-    "test": "hears a recorded “sit” in a Case whose logic listens for it",
+    "test": "fires one wave event for a wave held 3 s",
+    "issue": 995,
+    "until": "2026-11-28",
+    "platform": "win32",
+    "reason": "Run 43721538732 left operatorCamera().feeding true at the unchanged 10000 ms poll on the second Windows attempt. The first attempt reached the gesture assertion and failed on a retained VideoFrame warning. The preceding Windows run 43715791435 passed the unchanged input tests. Worker cleanup now drains frames before closing, but the separate feed completion stall is not established. Trace feed delivery and completion under the existing Windows worker-start issue #995."
+  },
+  {
+    "file": "e2e/inputs.e2e.test.ts",
+    "test": "hears a recorded \u201csit\u201d in a Case whose logic listens for it",
     "issue": 995,
     "until": "2026-11-28",
     "platform": "win32",

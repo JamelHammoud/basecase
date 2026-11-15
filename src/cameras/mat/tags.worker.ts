@@ -183,16 +183,16 @@ function open(msg: Extract<TagsRequest, { type: 'open' }>) {
   loadTagDetector().then(ready, fail);
 }
 
-function close() {
+async function close() {
   closed = true;
 
   if (feedTimer !== null) clearTimeout(feedTimer);
 
   latest?.picture.close();
   latest = null;
-  void reader?.cancel().catch(() => undefined);
   detector?.dispose();
   detector = null;
+  await reader?.cancel().catch(() => undefined);
   scope.close();
 }
 

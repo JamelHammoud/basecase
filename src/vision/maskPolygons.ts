@@ -11,17 +11,35 @@ function edgesOf(pixels: Uint8Array, width: number, height: number): Edge[] {
     const x = i % width;
     const y = Math.floor(i / width);
     const p = y * stride + x;
-    const sides: Array<[boolean, number, number, number]> = [
-      [!occupied(x, y - 1), p, p + 1, 0],
-      [!occupied(x + 1, y), p + 1, p + stride + 1, 1],
-      [!occupied(x, y + 1), p + stride + 1, p + stride, 2],
-      [!occupied(x - 1, y), p + stride, p, 3],
-    ];
 
-    sides.filter(([keep]) => keep).forEach(([, from, to, direction]) => edges.push({ from, to, direction }));
+    if (!occupied(x, y - 1)) edges.push({ from: p, to: p + 1, direction: 0 });
+
+    if (!occupied(x + 1, y)) edges.push({ from: p + 1, to: p + stride + 1, direction: 1 });
+
+    if (!occupied(x, y + 1)) edges.push({ from: p + stride + 1, to: p + stride, direction: 2 });
+
+    if (!occupied(x - 1, y)) edges.push({ from: p + stride, to: p, direction: 3 });
   });
 
   return edges;
+}
+
+function nextEdge(edge: Edge, outgoing: Map<number, Edge[]>, remaining: Set<Edge>): Edge | undefined {
+  let next: Edge | undefined;
+  let best = 4;
+
+  for (const candidate of outgoing.get(edge.to) ?? []) {
+    if (!remaining.has(candidate)) continue;
+
+    const priority = (candidate.direction - edge.direction + 3) % 4;
+
+    if (priority >= best) continue;
+
+    next = candidate;
+    best = priority;
+  }
+
+  return next;
 }
 
 function traceRing(start: Edge, outgoing: Map<number, Edge[]>, remaining: Set<Edge>): Edge[] {
@@ -32,11 +50,9 @@ function traceRing(start: Edge, outgoing: Map<number, Edge[]>, remaining: Set<Ed
     ring.push(edge);
     remaining.delete(edge);
 
-    const choices = (outgoing.get(edge.to) ?? []).filter((candidate) => remaining.has(candidate));
-    const priority = (candidate: Edge) => (candidate.direction - edge.direction + 3) % 4;
-    const next = choices.sort((a, b) => priority(a) - priority(b))[0];
-
     if (edge.to === start.from) break;
+
+    const next = nextEdge(edge, outgoing, remaining);
 
     if (!next) throw new Error('Check the mask boundary.');
 
@@ -47,11 +63,17 @@ function traceRing(start: Edge, outgoing: Map<number, Edge[]>, remaining: Set<Ed
 }
 
 function coordinates(ring: Edge[], stride: number): number[] {
-  return ring.flatMap((edge, i) => {
-    if (edge.direction === ring[(i + ring.length - 1) % ring.length].direction) return [];
+  const points: number[] = [];
 
-    return [edge.from % stride, Math.floor(edge.from / stride)];
-  });
+  for (let i = 0; i < ring.length; i++) {
+    const edge = ring[i];
+
+    if (edge.direction === ring[(i + ring.length - 1) % ring.length].direction) continue;
+
+    points.push(edge.from % stride, Math.floor(edge.from / stride));
+  }
+
+  return points;
 }
 
 export function traceMaskPolygons(pixels: Uint8Array, width: number, height: number): number[][] {
@@ -59,7 +81,12 @@ export function traceMaskPolygons(pixels: Uint8Array, width: number, height: num
   const remaining = new Set(edges);
   const outgoing = new Map<number, Edge[]>();
 
-  edges.forEach((edge) => outgoing.set(edge.from, [...(outgoing.get(edge.from) ?? []), edge]));
+  for (const edge of edges) {
+    const list = outgoing.get(edge.from);
+
+    if (list) list.push(edge);
+    else outgoing.set(edge.from, [edge]);
+  }
 
   const polygons: number[][] = [];
 

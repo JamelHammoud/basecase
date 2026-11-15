@@ -1,6 +1,7 @@
 import type { FrameSet, ImageClass, TrainingFrame } from '../frameSet';
 import { decodeSourceImage } from './imageDecode';
 import { annotationPixels, boxPixels } from './sourceGeometry';
+import { sourceClasses } from './sourceClasses';
 import {
   directory,
   imagePath,
@@ -112,6 +113,7 @@ async function vocSplits(files: ImageSourceFiles): Promise<Map<string, TrainingF
 
 export async function readVoc(files: ImageSourceFiles): Promise<Pick<FrameSet, 'classes' | 'frames'>> {
   const classes: ImageClass[] = [];
+  const categoryIndex = sourceClasses(classes);
   const frames: TrainingFrame[] = [];
   const splits = await vocSplits(files);
   const paths = [...files.keys()].filter((path) => /(^|\/)Annotations\/[^/]+\.xml$/i.test(path)).sort();
@@ -137,12 +139,7 @@ export async function readVoc(files: ImageSourceFiles): Promise<Pick<FrameSet, '
 
     const annotations = objects.map((object, i) => {
       const label = xmlText(child(object, 'name'));
-      const category = classes.find((entry) => entry.name === label) ?? { id: classes.length, name: label };
-
-      if (classes.length >= 1000 && !classes.includes(category)) refuseImage();
-
-      if (!classes.includes(category)) classes.push(category);
-
+      const category = categoryIndex.named(label);
       const bounds = child(object, 'bndbox');
       const [xmin, ymin, xmax, ymax] = ['xmin', 'ymin', 'xmax', 'ymax'].map((key) =>
         number(Number(xmlText(child(bounds, key)))),

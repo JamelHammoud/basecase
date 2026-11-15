@@ -1,6 +1,7 @@
 import type { FrameSet, ImageClass, TrainingFrame } from '../frameSet';
 import { decodeSourceImage } from './imageDecode';
 import { annotationPixels, sourcePixels, sourcePoints } from './sourceGeometry';
+import { sourceClasses } from './sourceClasses';
 import {
   directory,
   imagePath,
@@ -63,6 +64,7 @@ async function readCocoManifest(
 
   if (!classes.length) classes.push(...categories);
 
+  const categoryIndex = sourceClasses(categories);
   const groups = annotationGroups(metadata.annotations);
   const root = directory(path);
   const parent = directory(root.replace(/\/$/, ''));
@@ -91,7 +93,7 @@ async function readCocoManifest(
     if (number(image.width) !== decoded.width || number(image.height) !== decoded.height) refuseImage();
 
     const annotations = (groups.get(imageId) ?? []).map((annotation, i) => {
-      const category = categories.find((c) => c.id === number(annotation.category_id)) ?? refuseImage();
+      const category = categoryIndex.get(number(annotation.category_id)) ?? refuseImage();
 
       return annotationPixels({
         ...decoded,

@@ -3,13 +3,12 @@ import { MB } from '../../../electron/fileSize.mjs';
 import type { FrameSet, ImageClass, TrainingFrame } from '../frameSet';
 import { decodeSourceImage } from './imageDecode';
 import { annotationPixels, sourcePixels, sourcePoints } from './sourceGeometry';
+import { sourceClasses } from './sourceClasses';
 import { checkParquetFooter, embeddedParquetClasses, externalParquetClasses } from './parquetClasses';
 import {
   imagePath,
   IMAGE_LIMITS,
   list,
-  name,
-  number,
   record,
   refuseImage,
   sourceBytes,
@@ -50,40 +49,6 @@ function objectsOf(value: unknown): Record<string, unknown>[] {
   }));
 }
 
-function stringCategory(label: string, classes: ImageClass[]): ImageClass {
-  const existing = classes.find((category) => category.name === label);
-
-  if (existing) return existing;
-
-  if (classes.length >= 1000) return refuseImage();
-
-  const category = { id: classes.length, name: label };
-
-  classes.push(category);
-
-  return category;
-}
-
-function objectCategory(value: unknown, classes: ImageClass[]): ImageClass {
-  if (typeof value === 'string') return stringCategory(name(value), classes);
-
-  const id = number(value);
-
-  if (!Number.isInteger(id) || id < 0 || id > 0xffffffff) refuseImage();
-
-  const existing = classes.find((category) => category.id === id);
-
-  if (existing) return existing;
-
-  if (classes.length >= 1000) return refuseImage();
-
-  const category = { id, name: `class-${id}` };
-
-  classes.push(category);
-
-  return category;
-}
-
 async function parquetFrames(
   files: ImageSourceFiles,
   path: string,
@@ -103,13 +68,14 @@ async function parquetFrames(
 
   if (metadata.num_rows < 0 || metadata.num_rows > IMAGE_LIMITS.frames) refuseImage();
 
+  const categoryIndex = sourceClasses(classes);
   const rows = await parquetReadObjects({ file: buffer, metadata, columns: ['image', 'objects'], utf8: false });
   const frames: TrainingFrame[] = [];
 
   for (const row of rows) {
     const decoded = await rowImage(row.image, files);
     const annotations = objectsOf(row.objects).map((object, i) => {
-      const category = objectCategory(object.category ?? object.label, classes);
+      const category = categoryIndex.inferred(object.category ?? object.label);
 
       return annotationPixels({
         ...decoded,

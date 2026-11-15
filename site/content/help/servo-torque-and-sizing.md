@@ -94,3 +94,5 @@ A fall hits a leg servo harder than walking does. **Falls** tips the robot over 
 To hand the problem to the agent, click **Fix** on a failing line.
 
 For an arm, [Size an arm from the points it must reach](/help/size-an-arm-to-its-targets) picks each joint's servo against these limits, with the payload at the wrist. Once the arm has joints, Servo torque grades it.
+
+When you [design a robot from a motion clip](/help/design-a-robot-from-motion), the same picker also checks each joint's peak speed and acceleration. It adds the torque needed to accelerate the estimated load, then checks the servo's torque-speed line at the chosen supply voltage. It treats peak speed, acceleration and gravity load as happening together, so the estimate is conservative. These picks use estimated link masses and don't prove the robot can perform the clip under physics.

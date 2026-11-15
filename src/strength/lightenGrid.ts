@@ -53,19 +53,24 @@ function openedGrid(options: {
 }
 
 export function sampleDensityGrid(grid: FineGrid, p: V3): number {
-  const f = p.map((value, axis) => (value - grid.origin[axis]) / grid.h[axis] - 0.5);
-  const base = f.map(Math.floor);
+  const x = (p[0] - grid.origin[0]) / grid.h[0] - 0.5;
+  const y = (p[1] - grid.origin[1]) / grid.h[1] - 0.5;
+  const z = (p[2] - grid.origin[2]) / grid.h[2] - 0.5;
+  const i = Math.floor(x);
+  const j = Math.floor(y);
+  const k = Math.floor(z);
+  const tx = x - i;
+  const ty = y - j;
+  const tz = z - k;
   let sum = 0;
 
   for (let corner = 0; corner < 8; corner++) {
-    const ijk = base.map((value, axis) => value + ((corner >> axis) & 1));
-    const weight = f.reduce((product, value, axis) => {
-      const fraction = value - base[axis];
-
-      return product * (((corner >> axis) & 1) === 1 ? fraction : 1 - fraction);
-    }, 1);
-    const inside = ijk.every((value, axis) => value >= 0 && value < grid.n[axis]);
-    const value = inside ? grid.solid[cellIndex(grid, ijk[0], ijk[1], ijk[2])] : 0;
+    const a = i + (corner & 1);
+    const b = j + ((corner >> 1) & 1);
+    const c = k + ((corner >> 2) & 1);
+    const weight = (corner & 1 ? tx : 1 - tx) * (corner & 2 ? ty : 1 - ty) * (corner & 4 ? tz : 1 - tz);
+    const inside = a >= 0 && a < grid.n[0] && b >= 0 && b < grid.n[1] && c >= 0 && c < grid.n[2];
+    const value = inside ? grid.solid[cellIndex(grid, a, b, c)] : 0;
 
     sum += weight * (value * 2 - 1);
   }

@@ -32,7 +32,7 @@ describe('measure toolbar', () => {
     await app.page.mouse.click(floor.x, floor.y);
     await expect.poll(numberFields).toBeGreaterThan(fieldsBefore);
 
-    await app.page.getByRole('button', { name: 'Done', exact: true }).click();
+    await app.page.getByTestId('measure-done').filter({ visible: true }).click();
     await expect.poll(() => visible('Ruler')).toBe(0);
     expect(await visible('Shapes')).toBe(1);
   });

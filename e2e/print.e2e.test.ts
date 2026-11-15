@@ -126,11 +126,11 @@ describe('print layout', () => {
     const printing = app.page.locator(visible('section'), { hasText: /^Printing/ }).first();
 
     await expect.poll(() => printing.textContent(), { timeout: 20000 }).toMatch(/^Printing1 plate≈ .*minPrint$/);
-    expect(await app.page.locator(visible('select[aria-label="Printer"]')).count()).toBe(0);
+    expect(await app.page.locator(visible('select[data-testid="print-printer"]')).count()).toBe(0);
 
     await printing.getByRole('button', { name: 'Print', exact: true }).click();
     await expect.poll(() => app.page.locator(visible('h2'), { hasText: /^Print$/ }).count()).toBe(1);
-    expect(await app.page.locator(visible('select[aria-label="Printer"]')).count()).toBe(1);
+    expect(await app.page.locator(visible('select[data-testid="print-printer"]')).count()).toBe(1);
     expect(await app.page.locator(visible('h3'), { hasText: /^Plate 1$/ }).count()).toBe(1);
     expect(await app.page.locator(visible('button[aria-expanded="false"]'), { hasText: /^Parts/ }).textContent()).toBe(
       'Parts1',
@@ -272,7 +272,7 @@ describe('a Prusa printer', () => {
 
     await settings.getByRole('navigation').getByRole('button', { name: 'Printers' }).click();
     await settings.getByRole('button', { name: 'Add Printer' }).click();
-    await settings.locator('select[aria-label="Model"]').selectOption({ label: 'Prusa CORE One' });
+    await settings.locator('select[data-testid="printer-model"]').selectOption({ label: 'Prusa CORE One' });
     await expect.poll(() => settings.getByText('Prusa CORE One, 0.4 mm nozzle, Export only').count()).toBe(1);
     await app.page.keyboard.press('Escape');
     await expect.poll(() => settings.count()).toBe(0);

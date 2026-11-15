@@ -164,7 +164,7 @@ export function useAgentSession({ core, seed, active, robots, wrap, lighten, pla
     uploadImage,
     busy: !!working,
     acpStatus: { ...studio.acpStatus, sessionId: current.acpSessionId },
-    activity: working ? lead?.action || working.status || 'Working' : '',
+    activity: working ? lead?.action || working.status : '',
   };
 }
 

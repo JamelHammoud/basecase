@@ -38,7 +38,6 @@ export function StudyPlot({ rows, axes, onAxis, compared, frontier, onPreview, o
       {(['Horizontal', 'Vertical', 'Color'] as const).map((label, i) => (
         <FieldRow key={label} label={label}>
           <Select
-            aria-label={label}
             value={axes[i]}
             options={STUDY_METRICS.map((m) => ({ ...m }))}
             onChange={(e) => onAxis(i, e.target.value as StudyMetric)}

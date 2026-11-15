@@ -99,7 +99,7 @@ The full message is "The app stopped talking to the robot, so the robot is holdi
 
 ## "Lost contact with the robot"
 
-If the robot daemon closes or its network connection drops, Operate shows **Daemon lost** with the daemon's lost-contact message. For Feetech, it reads "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."
+If the robot daemon closes or its network connection drops, Operate shows its lost-contact message. For Feetech, it reads "Lost contact with the robot. Feetech servos keep holding their last position, so switch off their power."
 
 On a robot computer, the daemon keeps running and starts its stop plan after 100 ms without a heartbeat. An arm holds, and a legged robot moves toward its standing pose. That motion can take longer than the watchdog delay.
 

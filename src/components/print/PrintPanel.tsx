@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Button, MetaLine, ModeHeader, NumberInput, Section, Switch, useScrollFade } from '../../design-system';
 import { slicerOrder } from '../../data/printers';
 import { sameMachine } from '../../print/fleet';
@@ -202,6 +202,7 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
   plates,
   labels,
 }) => {
+  const labelId = useId();
   const plate = plates.find((p) => p.items.some((it) => it.id === part.id));
   const sameMaterial = plates.filter((p) => p.material === plate?.material);
   const set = (patch: Parameters<Printing['setPartPrint']>[1]) => printing.setPartPrint([part.id], patch);
@@ -212,13 +213,12 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
         <Button
           size="sm"
           variant={printing.mode?.face ? 'primary' : 'secondary'}
-          title="Lay on face"
           shortcut="F"
           onClick={() => printing.setFaceMode(!printing.mode?.face)}
         >
           Lay on Face
         </Button>
-        <Button size="sm" variant="secondary" title="Turn 90°" shortcut="R" onClick={() => printing.turnPart(part.id)}>
+        <Button size="sm" variant="secondary" shortcut="R" onClick={() => printing.turnPart(part.id)}>
           Turn 90°
         </Button>
         {part.print?.down && (
@@ -244,7 +244,9 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
       {!printing.repairId && (
         <>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[13px] text-white/60">Copies</span>
+            <span id={labelId} className="text-[13px] text-white/60">
+              Copies
+            </span>
             <div className="w-[112px]">
               <NumberInput
                 value={part.print?.copies ?? 1}
@@ -252,7 +254,8 @@ const PartControls: React.FC<{ printing: Printing; part: ScenePart; plates: Plat
                 max={20}
                 step={1}
                 precision={0}
-                aria-label="Copies"
+                aria-labelledby={labelId}
+                data-testid="print-copies"
                 onChange={(v, live) => !live && set({ copies: v > 1 ? v : undefined })}
               />
             </div>

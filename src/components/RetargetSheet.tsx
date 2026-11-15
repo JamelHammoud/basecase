@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { FileImportIcon, Modal, Select, Switch } from '../design-system';
 import type { RobotAnimation } from '../types/robotics';
 import { duration } from '../utils/duration';
@@ -74,6 +74,7 @@ export const RetargetSheet: React.FC<{
   onClose: () => void;
   onCreate: (anim: RobotAnimation, summary: string) => void;
 }> = ({ motion, rig, pointOf, onClose, onCreate }) => {
+  const frameRateId = useId();
   const autoBones = useMemo(() => autoMapBones(motion), [motion]);
   const autoJoints = useMemo(() => autoMapRobot(rig), [rig]);
   const [bones, setBones] = useState<KeypointMap>({});
@@ -131,9 +132,12 @@ export const RetargetSheet: React.FC<{
         <div className="grid grid-cols-2 gap-x-6 gap-y-1">
           <Switch label="In place" checked={inPlace} onChange={setInPlace} />
           <div className="col-span-2 grid grid-cols-[110px_1fr] items-center gap-3 pt-1">
-            <span className="text-[13px] text-white/60">Frame rate</span>
+            <span id={frameRateId} className="text-[13px] text-white/60">
+              Frame rate
+            </span>
             <Select
-              aria-label="Frame rate"
+              aria-labelledby={frameRateId}
+              data-testid="retarget-frame-rate"
               options={[
                 { value: '24', label: '24 fps' },
                 { value: '30', label: '30 fps' },

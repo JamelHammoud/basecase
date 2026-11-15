@@ -16,6 +16,8 @@ export interface NumberInputProps {
   disabled?: boolean;
   title?: string;
   'aria-label'?: string;
+  'aria-labelledby'?: string;
+  'data-testid'?: string;
 }
 
 type ScrubHandlers = ReturnType<typeof useNumberScrub>['handlers'];
@@ -59,6 +61,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   disabled = false,
   title,
   'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
+  'data-testid': testId,
 }) => {
   const [draft, setDraft] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -136,6 +140,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         spellCheck={false}
         disabled={disabled}
         aria-label={accessibleName({ ariaLabel, title, label })}
+        aria-labelledby={ariaLabelledBy}
+        data-testid={testId}
         value={draft ?? format(value)}
         onFocus={(e) => {
           setDraft(format(value));

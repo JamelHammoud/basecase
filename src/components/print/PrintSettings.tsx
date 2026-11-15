@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { NumberInput, Select } from '../../design-system';
 import type { PrinterSetup } from '../../data/printers';
 import type { SavedPrinter } from '../../print/printBridge';
@@ -24,9 +24,11 @@ interface PrintSettingsProps {
   onChooseService: () => void;
 }
 
-const Row: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+const Row: React.FC<{ label: string; labelId: string; children: React.ReactNode }> = ({ label, labelId, children }) => (
   <div className="flex items-center gap-3">
-    <span className="w-[64px] shrink-0 text-[13px] text-white/60">{label}</span>
+    <span id={labelId} className="w-[64px] shrink-0 text-[13px] text-white/60">
+      {label}
+    </span>
     <div className="flex-1 min-w-0">{children}</div>
   </div>
 );
@@ -66,39 +68,41 @@ export const PrintSettings: React.FC<PrintSettingsProps> = ({
   onAddPrinter,
   onChooseService,
 }) => {
+  const labelId = useId();
   const presets = printer.model.presets;
   const processes = presets?.processes ?? [];
   const process = processes.some((p) => p.name === project.printProcess) ? project.printProcess : presets?.process;
 
   return (
     <>
-      <Row label="Printer">
+      <Row label="Printer" labelId={`${labelId}-printer`}>
         <Select
           value={project.madeBy === 'service' ? SERVICE : printer.id}
           options={printerOptions(printer, printers)}
-          aria-label="Printer"
+          data-testid="print-printer"
+          aria-labelledby={`${labelId}-printer`}
           onChange={(e) => choosePrinter(e.target.value, { onAddPrinter, onChooseService, onChangeProject })}
         />
       </Row>
       {processes.length > 0 && process && (
-        <Row label="Quality">
+        <Row label="Quality" labelId={`${labelId}-quality`}>
           <Select
             value={process}
             options={processes.map((p) => ({ value: p.name, label: qualityLabel(p.name) }))}
-            aria-label="Quality"
+            aria-labelledby={`${labelId}-quality`}
             onChange={(e) => onChangeProject({ printProcess: e.target.value })}
           />
         </Row>
       )}
-      <Row label="Material">
+      <Row label="Material" labelId={`${labelId}-material`}>
         <Select
           value={project.material}
           options={MATERIALS}
-          aria-label="Material"
+          aria-labelledby={`${labelId}-material`}
           onChange={(e) => onChangeProject({ material: e.target.value as PrintMaterial })}
         />
       </Row>
-      <Row label="Infill">
+      <Row label="Infill" labelId={`${labelId}-infill`}>
         <NumberInput
           value={project.infillPct}
           min={5}
@@ -106,7 +110,7 @@ export const PrintSettings: React.FC<PrintSettingsProps> = ({
           step={5}
           precision={0}
           unit="%"
-          aria-label="Infill"
+          aria-labelledby={`${labelId}-infill`}
           onChange={(v, live) => !live && onChangeProject({ infillPct: v })}
         />
       </Row>

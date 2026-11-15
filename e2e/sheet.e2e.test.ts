@@ -55,7 +55,7 @@ it('cuts an aluminum plate from sheet, exports its profile and undoes the conver
     .first()
     .click();
 
-  const manufacturing = app.page.locator(visible('select[aria-label="Manufacturing"]'));
+  const manufacturing = app.page.getByTestId('manufacturing-method').filter({ visible: true });
 
   await expect.poll(() => manufacturing.count()).toBe(1);
   await manufacturing.selectOption({ label: 'Cut from Sheet' });
@@ -108,7 +108,7 @@ it('returns a reshaped sheet to printing with one undo restoring the sheet', asy
     studio.select([plate.id]);
   }, PLATE);
 
-  const manufacturing = app.page.locator(visible('select[aria-label="Manufacturing"]'));
+  const manufacturing = app.page.getByTestId('manufacturing-method').filter({ visible: true });
 
   await expect.poll(() => manufacturing.count()).toBe(1);
   await manufacturing.selectOption('sheet');
@@ -143,7 +143,7 @@ it('returns an unsuitable legacy CNC part to printing from Manufacturing', async
     studio.select([part.id]);
   }, pocket);
 
-  const manufacturing = app.page.locator(visible('select[aria-label="Manufacturing"]'));
+  const manufacturing = app.page.getByTestId('manufacturing-method').filter({ visible: true });
 
   await expect.poll(() => manufacturing.count()).toBe(1);
   expect(await manufacturing.inputValue()).toBe('sheet');

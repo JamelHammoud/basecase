@@ -56,7 +56,6 @@ export function RobotComputerForm({ install }: { install: InstallComputer }) {
           <label key={field.name} className="flex flex-col gap-1.5 text-[13px] text-white/50">
             {field.label}
             <TextInput
-              aria-label={field.label}
               value={fields[field.name]}
               placeholder={field.placeholder}
               disabled={busy}

@@ -3,7 +3,6 @@ import type { HardwareSpec } from '../data/hardware';
 import type { PartPlacement, PartTransformUpdate } from '../three/viewport/types';
 import type { PartRole, ScenePart, SculptMeshData } from '../types/robotics';
 import { alignParts, distributeParts, type AlignMode, type Axis } from '../utils/selection';
-import { plural } from '../../electron/plural.mjs';
 import { newId } from './helpers';
 import { dropToFloor, moveSelectionTo, rotateQuarterTurn, stackedPosition, withHardware } from './partTransforms';
 import type { CommitParts, Vec3 } from './types';
@@ -27,7 +26,7 @@ const followingMates =
   (updater, live) =>
     commit((prev) => followHandEdit(prev, updater(prev)), live);
 
-function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: WorkspaceCore) {
+function useGroupEdits({ docs, parts, selectedIds, selection }: WorkspaceCore) {
   'use memo';
 
   const commitParts = followingMates(docs.commitParts);
@@ -45,7 +44,6 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
         () => ({ group: next }),
       ),
     );
-    showToast(`Grouped ${plural(ids.size, 'part')}`);
   };
 
   const ungroup = () => {
@@ -61,10 +59,6 @@ function useGroupEdits({ docs, parts, selectedIds, selection, showToast }: Works
         () => ({ group: undefined }),
       ),
     );
-
-    const [only] = groups.values();
-
-    showToast(`Ungrouped ${groups.size === 1 ? only : plural(groups.size, 'group')}`);
   };
 
   const renameGroup = (groupId: string, name: string) =>

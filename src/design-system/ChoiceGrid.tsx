@@ -10,6 +10,8 @@ export interface ChoiceOption<T extends string> {
   title?: string;
 }
 
+type ChoiceName = { label: string; 'aria-labelledby'?: string } | { label?: never; 'aria-labelledby': string };
+
 export function ChoiceGrid<T extends string>({
   options,
   value,
@@ -17,6 +19,7 @@ export function ChoiceGrid<T extends string>({
   columns,
   stacked = false,
   label,
+  'aria-labelledby': labelledBy,
   className = '',
 }: {
   options: ChoiceOption<T>[];
@@ -24,13 +27,13 @@ export function ChoiceGrid<T extends string>({
   onChange: (value: T) => void;
   columns: number;
   stacked?: boolean;
-  label: string;
   className?: string;
-}) {
+} & ChoiceName) {
   return (
     <div
       role="radiogroup"
       aria-label={label}
+      aria-labelledby={labelledBy}
       className={`grid select-none ${CHOICE_TRACK} ${className}`}
       style={{
         gridTemplateColumns: choiceGridTemplate({

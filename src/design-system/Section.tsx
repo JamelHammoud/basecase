@@ -4,6 +4,7 @@ import { IconButton } from './IconButton';
 
 export interface SectionProps {
   title: string;
+  titleId?: string;
   summary?: React.ReactNode;
   actions?: React.ReactNode;
   children: React.ReactNode;
@@ -14,19 +15,22 @@ export interface SectionProps {
   className?: string;
 }
 
-const ToggleTitle: React.FC<{ title: string; summary: React.ReactNode; open: boolean; onToggle: () => void }> = ({
-  title,
-  summary,
-  open,
-  onToggle,
-}) => (
+const ToggleTitle: React.FC<{
+  title: string;
+  titleId?: string;
+  summary: React.ReactNode;
+  open: boolean;
+  onToggle: () => void;
+}> = ({ title, titleId, summary, open, onToggle }) => (
   <button
     type="button"
     onClick={onToggle}
     className="flex-1 min-w-0 h-[32px] flex items-center justify-between gap-3 text-left text-[13px] font-semibold text-white/90 select-none cursor-default"
     aria-expanded={open}
   >
-    <span className="min-w-0 truncate">{title}</span>
+    <span id={titleId} className="min-w-0 truncate">
+      {title}
+    </span>
     {!open && summary && (
       <span className="shrink-0 text-[12.5px] font-normal text-white/50 tabular-nums">{summary}</span>
     )}
@@ -35,6 +39,7 @@ const ToggleTitle: React.FC<{ title: string; summary: React.ReactNode; open: boo
 
 export const Section: React.FC<SectionProps> = ({
   title,
+  titleId,
   summary,
   actions,
   children,
@@ -60,9 +65,17 @@ export const Section: React.FC<SectionProps> = ({
     <section className={`px-[12px] [--pad-x:12px] py-4 border-b border-white/[0.06] last:border-b-0 ${className}`}>
       <header className={`flex items-center justify-between h-[32px] ${showBody ? '-mt-[7px] mb-[3px]' : '-my-[7px]'}`}>
         {collapsible ? (
-          <ToggleTitle title={title} summary={summary} open={isOpen} onToggle={() => setOpen((v) => !v)} />
+          <ToggleTitle
+            title={title}
+            titleId={titleId}
+            summary={summary}
+            open={isOpen}
+            onToggle={() => setOpen((v) => !v)}
+          />
         ) : (
-          <h3 className="min-w-0 truncate text-[13px] font-semibold text-white/90 select-none">{title}</h3>
+          <h3 id={titleId} className="min-w-0 truncate text-[13px] font-semibold text-white/90 select-none">
+            {title}
+          </h3>
         )}
         {(actions || collapsible) && (
           <div className="flex items-center gap-0.5 -mr-1">

@@ -88,15 +88,7 @@ export function MarkBar({ marks, onDone }: MarkBarProps) {
         </>
       )}
       <IslandDivider />
-      <Button
-        size="sm"
-        variant="ghost"
-        className="rounded-full"
-        onClick={onDone}
-        title="Done"
-        shortcut="Esc"
-        tooltipSide="top"
-      >
+      <Button size="sm" variant="ghost" className="rounded-full" onClick={onDone} shortcut="Esc" tooltipSide="top">
         Done
       </Button>
     </FloatingIsland>

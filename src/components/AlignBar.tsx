@@ -55,15 +55,16 @@ export const StripGroup: React.FC<{ children: React.ReactNode }> = ({ children }
 
 export const StripButton: React.FC<{
   title?: string;
+  'aria-label'?: string;
   shortcut?: string;
   onClick: () => void;
   className?: string;
   children: React.ReactNode;
-}> = ({ title, shortcut, onClick, className = '', children }) => {
+}> = ({ title, 'aria-label': ariaLabel, shortcut, onClick, className = '', children }) => {
   const button = (
     <button
       type="button"
-      aria-label={title}
+      aria-label={ariaLabel ?? title}
       onClick={onClick}
       className={`flex-1 min-w-0 h-[32px] rounded-md flex items-center justify-center gap-1.5 text-[13px] text-white/60 hover:text-white hover:bg-white/[0.08] active:scale-[0.96] cursor-default transition-[background-color,color,transform] duration-150 ${className}`}
     >

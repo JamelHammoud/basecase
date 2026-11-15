@@ -96,7 +96,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
   const runningIds = new Set(running.map((c) => c.id));
   const saved = chats.filter((c) => !runningIds.has(c.id));
 
-  const groups = [...(running.length ? [{ label: 'Running', items: running }] : []), ...groupByDate(saved, new Date())];
+  const groups = [...(running.length ? [{ label: '', items: running }] : []), ...groupByDate(saved, new Date())];
 
   return (
     <div
@@ -106,7 +106,9 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
     >
       {groups.map((g, i) => (
         <section key={g.label} className={i > 0 ? 'mt-2' : ''}>
-          <h3 className="px-[10px] pt-[6px] pb-[4px] text-[12px] font-medium text-white/50 select-none">{g.label}</h3>
+          {g.label && (
+            <h3 className="px-[10px] pt-[6px] pb-[4px] text-[12px] font-medium text-white/50 select-none">{g.label}</h3>
+          )}
           {g.items.map((c) => (
             <ChatRow
               key={c.id}

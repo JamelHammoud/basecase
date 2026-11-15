@@ -10,7 +10,7 @@ export const ModeHeader: React.FC<{ title: string; onDone: () => void; actions?:
     <h2 className="min-w-0 truncate text-[15px] font-semibold text-white/90">{title}</h2>
     <div className="flex items-center gap-2">
       {actions}
-      <Button variant="primary" size="sm" title="Done" shortcut="Esc" onClick={onDone}>
+      <Button variant="primary" size="sm" shortcut="Esc" onClick={onDone}>
         Done
       </Button>
     </div>

@@ -6,7 +6,7 @@ import { plural } from '../../../electron/plural.mjs';
 import { PREVIEW_WIDTH, TabPreviewSpot } from './useTabPreview';
 
 function caption(tab: SceneTabInfo) {
-  if (tab.busy) return tab.activity || 'Working';
+  if (tab.busy) return tab.activity;
 
   return plural(tab.partCount, 'part');
 }

@@ -30,7 +30,7 @@ Group parts that belong together, such as a leg or a servo bracket, so they sele
 2. Press [[⌘G]].
 3. To name the group, click its title at the top of the Inspector, type a name, then press [[↩]].
 
-A toast shows how many parts you grouped. The group is called “Group 1” until you rename it. You can also find **Group** in the Inspector and in the right-click menu.
+The group is called “Group 1” until you rename it. You can also find **Group** in the Inspector and in the right-click menu.
 
 ## Work inside a group
 

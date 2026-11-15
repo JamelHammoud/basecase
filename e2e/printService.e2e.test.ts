@@ -51,7 +51,7 @@ describe('Made by a Service', () => {
   let service: FakeSlant;
 
   const bomLines = () => app.page.evaluate(() => (window as unknown as { __studio: Studio }).__studio.bomLines());
-  const printer = () => app.page.locator(visible('select[aria-label="Printer"]'));
+  const printer = () => app.page.locator(visible('select[data-testid="print-printer"]'));
   const openPrintMode = async () => {
     if (await printer().count()) return;
 

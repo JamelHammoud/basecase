@@ -111,6 +111,9 @@ describe('Design From Motion', () => {
 
     await expect.poll(() => sheet.count()).toBe(1);
     expect(await app.page.locator(shown('[role="dialog"][aria-label="Design From Motion"]')).count()).toBe(0);
+    expect(await sheet.getByRole('combobox', { name: 'Frame rate', exact: true }).count()).toBe(1);
+    await sheet.getByTestId('retarget-frame-rate').selectOption('60');
+    expect(await sheet.getByTestId('retarget-frame-rate').inputValue()).toBe('60');
     await sheet.getByRole('button', { name: 'Cancel', exact: true }).click();
     expect((await record()).project.skeleton).toBeUndefined();
     expect((await record()).parts).toHaveLength(parts.length);

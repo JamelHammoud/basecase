@@ -34,7 +34,7 @@ When a servo faults, you can turn the 20 seconds before the fault into a Case. R
 2. In **Simulate**, click **Drive**.
 3. Move the arm. The robot follows the simulation.
 4. When a fault stops a motor, click that robot's named row in **Operate**.
-5. Find its message under **Stopped by a fault**.
+5. Find its fault message under the servo count.
 6. Under the message, click **Replay in Sim**.
 
    ![Operate showing a stall on servo 2, with Replay in Sim under the message](/help/replay-a-robot-fault-in-the-simulation/fault.png)

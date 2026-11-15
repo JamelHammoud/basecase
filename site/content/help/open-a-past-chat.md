@@ -30,7 +30,7 @@ You can go back to an earlier conversation with the agent, or start a new one wh
 2. Click **Agent** again to open **History**.
 3. Click the chat you want to open.
 
-History groups your chats by when you last used them. Chats that are working appear under **Running**. Each chat takes its name from its first message.
+History groups your chats by when you last used them. Chats that are working appear first, with a spinner. Each chat takes its name from its first message.
 
 To delete a chat, hover over it in **History**, then click **Delete**. Basecase asks you to confirm first. You can't undo a delete.
 

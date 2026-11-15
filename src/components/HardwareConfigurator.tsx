@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   DRIVES,
   FINISHES,
@@ -45,6 +45,10 @@ export const HardwareConfigurator: React.FC<{
   spec: HardwareSpec;
   onChange: OnChange;
 }> = ({ spec, onChange }) => {
+  const typeTitleId = useId();
+  const driveTitleId = useId();
+  const sizeTitleId = useId();
+  const finishTitleId = useId();
   const info = HARDWARE_BY_TYPE[spec.type];
   const family = familyOf(spec.type);
   const drives = driveOptions(spec.type);
@@ -60,10 +64,10 @@ export const HardwareConfigurator: React.FC<{
   return (
     <>
       {family.types.length > 1 && (
-        <Section title={family.typeLabel ?? 'Type'}>
+        <Section title={family.typeLabel ?? 'Type'} titleId={typeTitleId}>
           <div
             role="radiogroup"
-            aria-label={family.typeLabel ?? 'Type'}
+            aria-labelledby={typeTitleId}
             className={`grid gap-x-[8px] gap-y-[10px] ${family.types.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}
           >
             {family.types.map((t) => (
@@ -83,10 +87,11 @@ export const HardwareConfigurator: React.FC<{
       {drives.length > 1 && (
         <Section
           title="Drive"
+          titleId={driveTitleId}
           actions={recess && <span className="mr-1 text-[12.5px] text-white/50 tabular">{recessLabel(recess)}</span>}
         >
           <ChoiceGrid
-            label="Drive"
+            aria-labelledby={driveTitleId}
             stacked
             columns={drives.length}
             value={drive}
@@ -100,9 +105,9 @@ export const HardwareConfigurator: React.FC<{
         </Section>
       )}
 
-      <Section title="Size">
+      <Section title="Size" titleId={sizeTitleId}>
         <ChoiceGrid
-          label="Size"
+          aria-labelledby={sizeTitleId}
           columns={sizes.columns}
           value={spec.size}
           onChange={(size) => set({ size })}
@@ -113,9 +118,9 @@ export const HardwareConfigurator: React.FC<{
       {lengthControl(spec, set)}
 
       {info.finishes.length > 1 && (
-        <Section title="Finish">
+        <Section title="Finish" titleId={finishTitleId}>
           <ChoiceGrid
-            label="Finish"
+            aria-labelledby={finishTitleId}
             columns={Math.min(3, info.finishes.length)}
             value={hardwareFinish(spec)}
             onChange={(finish) => set({ finish })}

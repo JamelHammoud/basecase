@@ -94,7 +94,7 @@ describe('Repair', () => {
     await expect.poll(() => toolbar().getAttribute('data-step')).toBe(String(swap + 1));
     await toolbar().getByRole('button', { name: 'Print', exact: true }).click();
     await expect.poll(plates).toEqual({ open: true, fitTest: false, plates: [['bracket']] });
-    expect(await app.page.locator(shown('[aria-label="Copies"]')).count()).toBe(0);
+    expect(await app.page.locator(shown('[data-testid="print-copies"]')).count()).toBe(0);
     expect(
       await app.page
         .locator(shown('span'))

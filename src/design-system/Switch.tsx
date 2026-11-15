@@ -5,6 +5,7 @@ export interface SwitchProps {
   onChange: (checked: boolean) => void;
   label?: React.ReactNode;
   'aria-label'?: string;
+  'aria-labelledby'?: string;
   className?: string;
   disabled?: boolean;
 }
@@ -14,6 +15,7 @@ export const Switch: React.FC<SwitchProps> = ({
   onChange,
   label,
   'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
   className = '',
   disabled = false,
 }) => (
@@ -28,6 +30,7 @@ export const Switch: React.FC<SwitchProps> = ({
       role="switch"
       aria-checked={checked}
       aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className="w-[30px] h-[28px] shrink-0 flex items-center rounded-full cursor-default"

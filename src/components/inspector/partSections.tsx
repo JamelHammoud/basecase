@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import type { ScenePart } from '../../types/robotics';
 import type { ComponentInfo } from '../../data/components';
 import { ComponentLinks, DetailBlock, ModelOrigin, SpecRows } from '../PartDetails';
@@ -108,6 +108,7 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean; sheetP
   isImage,
   sheetProfile,
 }) => {
+  const wallThicknessId = useId();
   const sheet = part.sheet ?? (sheetProfile && sheetOf(part, sheetProfile));
   const disabled = (axis: number) => !!sheet && (!sheetProfile || Math.abs(sheetProfile.normal[axis]) > 0.0001);
   const setDim = (key: DimensionKey, v: number, live?: Phase) =>
@@ -148,10 +149,12 @@ export const SizeSection: React.FC<PartSectionProps & { isImage: boolean; sheetP
       </div>
       {part.dimensions.thickness !== undefined && (
         <div className="grid grid-cols-3 gap-1.5 items-center">
-          <span className="col-span-2 text-[13px] text-white/50">Wall thickness</span>
+          <span id={wallThicknessId} className="col-span-2 text-[13px] text-white/50">
+            Wall thickness
+          </span>
           <NumberInput
             label="T"
-            aria-label="Wall thickness"
+            aria-labelledby={wallThicknessId}
             value={part.dimensions.thickness}
             min={1}
             max={50}

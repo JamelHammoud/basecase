@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Select, Switch } from '../../design-system';
 import { CURRENCY_CODES, createMoney } from '../../utils/currency';
 import { setCurrency } from '../../utils/currencyStore';
@@ -20,12 +20,13 @@ const CURRENCIES = CURRENCY_CODES.map((code) => {
 }).sort((a, b) => a.label.localeCompare(b.label));
 
 const PricesGroup: React.FC = () => {
+  const labelId = useId();
   const money = useMoney();
 
   return (
     <Group title="Prices">
       <Row
-        label="Currency"
+        label={<span id={labelId}>Currency</span>}
         hint={
           money.code === 'USD'
             ? undefined
@@ -37,7 +38,7 @@ const PricesGroup: React.FC = () => {
             value={money.code}
             onChange={(e) => setCurrency(e.target.value)}
             options={CURRENCIES}
-            aria-label="Currency"
+            aria-labelledby={labelId}
           />
         </div>
       </Row>
@@ -45,22 +46,32 @@ const PricesGroup: React.FC = () => {
   );
 };
 
-export const BuildPane: React.FC<{ prefs: BuildPrefs }> = ({ prefs }) => (
-  <>
-    <Group title="Checks">
-      <Row label="Have the agent fix new blockers" hint="Up to 2 follow-ups per message">
-        <Switch
-          aria-label="Have the agent fix new blockers"
-          checked={prefs.autoFixBlockers}
-          onChange={prefs.setAutoFixBlockers}
-        />
-      </Row>
-    </Group>
-    <PricesGroup />
-    <Group title="Build guide">
-      <Row label="Update automatically" hint="15 s after the scene changes, once the agent is done">
-        <Switch aria-label="Update automatically" checked={prefs.autoGuide} onChange={prefs.setAutoGuide} />
-      </Row>
-    </Group>
-  </>
-);
+export const BuildPane: React.FC<{ prefs: BuildPrefs }> = ({ prefs }) => {
+  const labelId = useId();
+
+  return (
+    <>
+      <Group title="Checks">
+        <Row
+          label={<span id={`${labelId}-fix`}>Have the agent fix new blockers</span>}
+          hint="Up to 2 follow-ups per message"
+        >
+          <Switch
+            aria-labelledby={`${labelId}-fix`}
+            checked={prefs.autoFixBlockers}
+            onChange={prefs.setAutoFixBlockers}
+          />
+        </Row>
+      </Group>
+      <PricesGroup />
+      <Group title="Build guide">
+        <Row
+          label={<span id={`${labelId}-guide`}>Update automatically</span>}
+          hint="15 s after the scene changes, once the agent is done"
+        >
+          <Switch aria-labelledby={`${labelId}-guide`} checked={prefs.autoGuide} onChange={prefs.setAutoGuide} />
+        </Row>
+      </Group>
+    </>
+  );
+};

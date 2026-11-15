@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Button, NumberInput, Select, TextInput } from '../../design-system';
 import {
   CONNECTION_LABELS,
@@ -91,7 +91,7 @@ const ConnectionTest: React.FC<{ id: string }> = ({ id }) => {
 
   return (
     <Row
-      label="Connection"
+      label={null}
       hint={result && <span className={result.ok ? 'text-white/60' : 'text-red-400'}>{result.message}</span>}
     >
       <Button size="sm" variant="secondary" onClick={() => void run()} disabled={testing}>
@@ -102,25 +102,27 @@ const ConnectionTest: React.FC<{ id: string }> = ({ id }) => {
 };
 
 const ModelRows: React.FC<Omit<PrinterEditorProps, 'onSecret'>> = ({ printer, onChange }) => {
+  const labelId = useId();
   const model = printer.custom ? null : printerModel(printer.modelId);
 
   return (
     <>
-      <Row label="Name">
+      <Row label={<span id={`${labelId}-name`}>Name</span>}>
         <div className="w-[200px]">
           <TextInput
             value={printer.nickname}
             onChange={(e) => onChange({ ...printer, nickname: e.target.value })}
-            aria-label="Name"
+            aria-labelledby={`${labelId}-name`}
           />
         </div>
       </Row>
-      <Row label="Model">
+      <Row label={<span id={`${labelId}-model`}>Model</span>}>
         <div className="w-[240px]">
           <Select
             value={printer.custom ? CUSTOM : printer.modelId}
             options={MODEL_OPTIONS}
-            aria-label="Model"
+            data-testid="printer-model"
+            aria-labelledby={`${labelId}-model`}
             onChange={(e) =>
               e.target.value === CUSTOM
                 ? onChange({ ...printer, custom: printer.custom ?? { width: 220, depth: 220, height: 250 } })
@@ -131,12 +133,12 @@ const ModelRows: React.FC<Omit<PrinterEditorProps, 'onSecret'>> = ({ printer, on
       </Row>
       {printer.custom && <CustomBed printer={printer} onChange={onChange} />}
       {model && model.nozzles.length > 1 && (
-        <Row label="Nozzle">
+        <Row label={<span id={`${labelId}-nozzle`}>Nozzle</span>}>
           <div className="w-[112px]">
             <Select
               value={String(printer.nozzle)}
               options={model.nozzles.map((n) => ({ value: String(n), label: `${n} mm` }))}
-              aria-label="Nozzle"
+              aria-labelledby={`${labelId}-nozzle`}
               onChange={(e) => onChange({ ...printer, nozzle: Number(e.target.value) })}
             />
           </div>
@@ -166,6 +168,7 @@ const TextRow: React.FC<{
 );
 
 const ConnectionRows: React.FC<PrinterEditorProps> = ({ printer, onChange, onSecret }) => {
+  const labelId = useId();
   const kind = printer.connection?.kind;
   const kinds = kindsFor(printer.modelId);
   const setConnection = (next: Partial<NonNullable<MyPrinter['connection']>> | null) =>
@@ -177,7 +180,7 @@ const ConnectionRows: React.FC<PrinterEditorProps> = ({ printer, onChange, onSec
 
   return (
     <>
-      <Row label="Send prints with" hint={kind && HINTS[kind]}>
+      <Row label={<span id={labelId}>Send prints with</span>} hint={kind && HINTS[kind]}>
         <div className="w-[240px]">
           <Select
             value={kind ?? NONE}
@@ -185,7 +188,7 @@ const ConnectionRows: React.FC<PrinterEditorProps> = ({ printer, onChange, onSec
               { value: NONE, label: 'Export only' },
               ...kinds.map((k) => ({ value: k, label: CONNECTION_LABELS[k] })),
             ]}
-            aria-label="Send prints with"
+            aria-labelledby={labelId}
             onChange={(e) => setConnection(e.target.value === NONE ? null : { kind: e.target.value as ConnectionKind })}
           />
         </div>

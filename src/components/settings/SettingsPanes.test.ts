@@ -31,15 +31,36 @@ const panes: Record<string, ReactElement> = {
 
 const CONTROL = /<(?:select|input)\b[^>]*>|<[a-z]+\b[^>]*role="(?:tablist|switch)"[^>]*>/g;
 
-const unnamedControls = (html: string) =>
-  [...html.matchAll(CONTROL)].map((m) => m[0]).filter((tag) => !/aria-label="[^"]+"/.test(tag));
+const referencedNames = (html: string, ids: string) => {
+  const captions = new Map(
+    [...html.matchAll(/<([a-z][a-z0-9]*)\b[^>]*\bid="([^"]+)"[^>]*>([^<]*)<\/\1>/g)].map((m) => [m[2], m[3]]),
+  );
+  const names = ids.split(/\s+/).map((id) => captions.get(id));
+
+  return names.every((name) => name?.trim()) ? names.join(' ') : '';
+};
+
+const controlNames = (html: string) =>
+  [...html.matchAll(CONTROL)].map(([tag]) => {
+    const ids = /aria-labelledby="([^"]+)"/.exec(tag)?.[1];
+
+    if (ids) return referencedNames(html, ids);
+
+    return /aria-label="([^"]+)"/.exec(tag)?.[1] ?? '';
+  });
 
 describe('Settings panes', () => {
+  it('rejects missing or empty caption references', () => {
+    const html = '<span id="empty"></span><input aria-labelledby="missing"><input aria-labelledby="empty">';
+
+    expect(controlNames(html)).toEqual(['', '']);
+  });
+
   it.each(Object.keys(panes))('names every control in %s after its row', (name) => {
     const html = renderToStaticMarkup(panes[name]);
 
     expect(html).toMatch(CONTROL);
-    expect(unnamedControls(html)).toEqual([]);
+    expect(controlNames(html)).not.toContain('');
   });
 
   it('names the controls with the row labels a person reads', () => {
@@ -47,7 +68,18 @@ describe('Settings panes', () => {
       .map((pane) => renderToStaticMarkup(pane))
       .join('');
 
-    for (const label of ['Currency', 'Move mm', 'Rotate', 'Units', 'Run with', 'Command'])
-      expect(html).toContain(`aria-label="${label}"`);
+    const names = controlNames(html);
+
+    for (const label of [
+      'Currency',
+      'Move mm',
+      'Rotate',
+      'Units',
+      'Run with',
+      'Command',
+      'Have the agent fix new blockers',
+      'Update automatically',
+    ])
+      expect(names).toContain(label);
   });
 });

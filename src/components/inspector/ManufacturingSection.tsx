@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { FieldRow, Section, Select } from '../../design-system';
 import type { PartSheet, SheetProfile } from '../../types/sheet';
 import { applySheet, SHEET_MATERIALS, sheetOf } from '../../sheet/materials';
@@ -13,6 +14,7 @@ const METHODS = [
 const MATERIAL_OPTIONS = Object.entries(SHEET_MATERIALS).map(([value, { label }]) => ({ value, label }));
 
 export function ManufacturingSection({ part, onUpdate, profile }: ManufacturingProps) {
+  const titleId = useId();
   const sheet = sheetOf(part, profile ?? undefined);
 
   if ((!profile && !sheet) || part.role !== 'solid') return null;
@@ -30,9 +32,10 @@ export function ManufacturingSection({ part, onUpdate, profile }: ManufacturingP
     : [];
 
   return (
-    <Section title="Manufacturing">
+    <Section title="Manufacturing" titleId={titleId}>
       <Select
-        aria-label="Manufacturing"
+        aria-labelledby={titleId}
+        data-testid="manufacturing-method"
         options={METHODS}
         value={sheet ? 'sheet' : 'printed'}
         onChange={(event) => changeMethod(event.target.value)}

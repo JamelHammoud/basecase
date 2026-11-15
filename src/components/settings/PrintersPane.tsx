@@ -106,7 +106,7 @@ const SlicersGroup: React.FC<{ state: PrintersState }> = ({ state }) => {
         <Row key={s.kind} label={s.name} hint={s.version ? `Version ${s.version}` : undefined} />
       ))}
       {slicers.length === 0 && (
-        <Row label="No slicer installed" hint="Basecase slices with Bambu Studio or OrcaSlicer">
+        <Row label={null} hint="Basecase slices with Bambu Studio or OrcaSlicer">
           {download && (
             <Button size="sm" variant="secondary" onClick={() => void printBridge.openLink(download)}>
               Get Bambu Studio
@@ -166,7 +166,7 @@ export const PrintersPane: React.FC<{ state: PrintersState }> = ({ state }) => {
             )}
           </React.Fragment>
         ))}
-        <Row label={list.length ? null : 'No printers'}>
+        <Row label={null}>
           <div className="flex gap-[8px]">
             <Button
               size="sm"

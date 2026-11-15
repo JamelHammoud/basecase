@@ -2,7 +2,8 @@ import { Vector3 } from 'three';
 import { expect, it } from 'vitest';
 import { joint } from '../sim/fixtures/parts';
 import { component, sceneOf } from './fixtures';
-import { poseTransforms, relativeMotionBound, routeMotion } from './routeMotion';
+import { poseTransforms, routeMotion } from './routeMotion';
+import { relativeMotionBound } from './routeBound';
 
 it.each(['revolute', 'prismatic'] as const)(
   'bounds relative motion between nested moving links and a separate %s obstacle',
@@ -40,7 +41,8 @@ it.each(['revolute', 'prismatic'] as const)(
     };
     const motion = routeMotion(sceneOf(parts, [shoulder, wrist, branch]));
     const point = { position: [120, 20, 15] as [number, number, number], obstacleId: 'tip' };
-    const bound = relativeMotionBound(motion, point, 'obstacle');
+    const bounds = relativeMotionBound(motion);
+    const bound = bounds(point, 'obstacle');
     const sample = { shoulder: 15, wrist: -15, branch: 15 };
     const relativePoint = (values: Record<string, number>) => {
       const transforms = poseTransforms(motion, values);
@@ -65,6 +67,6 @@ it.each(['revolute', 'prismatic'] as const)(
       }
     }
 
-    expect(relativeMotionBound(motion, point, 'tip')).toBe(0);
+    expect(bounds(point, 'tip')).toBe(0);
   },
 );

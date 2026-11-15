@@ -48,4 +48,9 @@ export function skillStamp(scene: StampScene, id: string): string {
 }
 
 export const pairStamp = (scene: StampScene, pair: Handoff) =>
-  `${skillStamp(scene, pair.from)}>${skillStamp(scene, pair.to)}`;
+  hashOf({
+    from: skillStamp(scene, pair.from),
+    to: skillStamp(scene, pair.to),
+    start: VELOCITY_SKILLS.has(pair.from) ? skillStamp(scene, 'settle') : null,
+    drive: scene.drive ?? null,
+  });

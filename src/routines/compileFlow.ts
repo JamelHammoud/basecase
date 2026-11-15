@@ -93,7 +93,7 @@ export class FlowChecker {
 
     if (proof) return proof.falls === 0 && (proof.failures ?? 0) === 0;
 
-    return this.stopVia(from) === to;
+    return this.stopVia(from) === to && !this.ctx.skills.get(from)?.transitions[to];
   }
 
   private edge(from: string, to: string, node: string) {
@@ -121,6 +121,10 @@ export class FlowChecker {
       defined: new Set(),
       guards: new Set(),
       holders: Object.fromEntries(TRACKED.map((r) => [r, stopFirst ? this.hubs(r) : new Set<string>()])),
+    });
+
+    forEachStep([base, ...this.ctx.routine.reactions.flatMap((r) => r.steps)], (step) => {
+      if (step.kind === 'do') this.edge(step.skill, this.stopVia(step.skill), this.ctx.nodeOf(step));
     });
 
     for (const r of this.ctx.routine.reactions) {

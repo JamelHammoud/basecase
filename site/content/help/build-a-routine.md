@@ -72,6 +72,8 @@ To add a step at a certain point in the flow, click the + on any line. To move a
 
 Each switch has its own proof. A Walk that passed Arena can still fail to turn from Settle, so that Turn step stays unavailable. Its message names the movement that failed, and **Run** appears once every required switch passes. Changing either skill or the robot's physics makes the affected proof out of date.
 
+A failed stop also keeps **Run** unavailable, including a stop before a reaction or after a step times out. The step that needs to stop shows the failed movement.
+
 ![The Turn step refused after Settle because the policy didn’t turn 0.3 radians in place](/help/build-a-routine/start-turn-refused.png)
 
 If a step switches straight from one skill into another, such as Walk into a Wave, it runs once you prove the switch. See [Prove a hand-off between skills](/help/prove-a-hand-off-between-skills).

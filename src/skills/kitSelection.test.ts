@@ -6,6 +6,7 @@ import { trainKitEntry } from './motorKit';
 import { validationReport } from './kitValidation';
 import { proveSkill } from './prove';
 import { slowerSpeedEvidence } from './kitAcceptance';
+import { rootHeight } from './kitModel';
 import type { PolicySpec } from '../sim/policy';
 import type { ForgeJob, ForgeOutcome } from './forgeRunner';
 import type { ArenaEvidence } from './artifacts';
@@ -148,6 +149,7 @@ describe('Motor Kit candidate selection and continuation', () => {
     expect(Object.values((jobs[2].job as { initialJoints: Record<string, number> }).initialJoints)).toEqual(
       model.joints.map(() => 0.2),
     );
+    expect((jobs[2].job as { rootOffset: number[] }).rootOffset[2]).toBeCloseTo(0.12 - rootHeight(model));
     expect(proveSkill).not.toHaveBeenCalled();
     expect(save).not.toHaveBeenCalled();
     expect(source.controller).toEqual(clockSkill(model, quadWave()).controller);

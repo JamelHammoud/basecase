@@ -36,6 +36,20 @@ const visible = (selector: string) => `${selector}:not([inert] *):visible`;
 
 const inFlow = (selector: string) => app.page.locator(visible(`[data-testid="routine-flow"] ${selector}`)).first();
 
+function failedKitPair(kit: readonly SkillContract[], pair: { from: string; to: string; reason: string }) {
+  return kit.map((skill) =>
+    skill.id === pair.from
+      ? {
+          ...skill,
+          transitions: {
+            ...skill.transitions,
+            [pair.to]: { ...skill.transitions[pair.to], failures: 8, reason: pair.reason },
+          },
+        }
+      : skill,
+  );
+}
+
 async function loadRobot(id: string) {
   const robot = fixtureRobots().find((r) => r.id === id)!;
 
@@ -133,21 +147,11 @@ describe('Hand-offs', () => {
         Object.entries(skill.transitions).map(([to, proof]) => [to, { ...proof, failures: 0 }]),
       ),
     }));
-    const failed = kit.map((skill) =>
-      skill.id === 'settle'
-        ? {
-            ...skill,
-            transitions: {
-              ...skill.transitions,
-              'turn-away': {
-                ...skill.transitions['turn-away'],
-                failures: 8,
-                reason: 'settle to turn-away didn’t turn left 0.3 rad in place in 8 of 8 tries in simulation.',
-              },
-            },
-          }
-        : skill,
-    );
+    const failed = failedKitPair(kit, {
+      from: 'settle',
+      to: 'turn-away',
+      reason: 'settle to turn-away didn’t turn left 0.3 rad in place in 8 of 8 tries in simulation.',
+    });
 
     expect(candidate.evidence?.passed).toBe(true);
     await loadRobot('quad-servo');
@@ -166,6 +170,21 @@ describe('Hand-offs', () => {
     await expect.poll(() => refusedAt('turn')).toBe(true);
     expect(await inFlow('button:has-text("Run")').count()).toBe(0);
     expect(await inFlow('[data-flow-node="turn"]').textContent()).toContain('turn left 0.3 rad in place');
+
+    const failedStop = failedKitPair(kit, {
+      from: 'walk',
+      to: 'settle',
+      reason: 'walk to settle didn’t stop within 0.02 m in 8 of 8 tries in simulation.',
+    });
+
+    await page.evaluate((stub) => (window as unknown as { __studio: Studio }).__studio.stubHandoffs(stub), {
+      skills: [candidate],
+      falls: 0,
+      kit: failedStop,
+    });
+    await expect.poll(() => refusedAt('drive')).toBe(true);
+    expect(await inFlow('button:has-text("Run")').count()).toBe(0);
+    expect(await inFlow('[data-flow-node="drive"]').textContent()).toContain('stop within 0.02 m');
 
     const passing = structuredClone(candidate);
 

@@ -9,6 +9,7 @@ import type { SkillJob, SkillRefusal, SkillTarget } from './skillRows';
 import type { StressReport } from './skillsStress';
 import type { SnapshotRef, Snapshots } from './snapshots';
 import type { ForgeProgress } from './trainerForge';
+import type { KitContext } from './kitTransitions';
 
 export interface ForgeFactoryOptions {
   background: boolean;
@@ -29,6 +30,7 @@ export interface RuntimeDeps {
   onRefused?: (target: SkillTarget, refusal: SkillRefusal | null) => void;
   onStress?: (target: SkillTarget, report: StressReport | null) => void;
   snapshots?: Snapshots;
+  kitContext?: (model: SimModel) => Promise<KitContext>;
 }
 
 export interface KitInstall {

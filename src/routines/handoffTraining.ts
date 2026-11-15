@@ -42,6 +42,8 @@ export async function trainHandoff(input: HandoffTrainInput): Promise<HandoffRes
 
   if (!proof) return { skill: null, proof: null, reason: notOnBody(pair) };
 
+  if ((proof.failures ?? 0) > 0) return { skill: null, proof: null, reason: proof.reason! };
+
   if (proof.falls > 0)
     return {
       skill: null,

@@ -119,23 +119,11 @@ export function solveDisplacement(model: StrengthModel, grid: VoxelGrid): Solved
   return { mesh, element, u, pinned: loaded.map((v, n) => v | held[n]), share, iterations };
 }
 
-function averageAtNodes(mesh: HexMesh, corners: Float64Array): Float64Array {
-  const count = mesh.positions.length / 3;
-  const sum = new Float64Array(count * 6);
-  const seen = new Float64Array(count);
-
-  mesh.nodes.forEach((n, slot) => {
-    seen[n]++;
-
-    for (let r = 0; r < 6; r++) sum[n * 6 + r] += corners[slot * 6 + r];
-  });
-
-  return sum.map((v, i) => v / seen[(i / 6) | 0]);
-}
-
 export function sampleStresses(solved: Solved, stiffness: Float64Array): Float64Array {
   const { mesh, element, u } = solved;
-  const out = new Float64Array(mesh.cells.length * 8 * 6);
+  const count = mesh.positions.length / 3;
+  const out = new Float64Array(count * 6);
+  const seen = new Float64Array(count);
   const ue = new Float64Array(24);
   const eps = new Float64Array(6);
 
@@ -151,19 +139,24 @@ export function sampleStresses(solved: Solved, stiffness: Float64Array): Float64
         eps[r] = s;
       }
 
-      const at = (e * 8 + g) * 6;
+      const node = mesh.nodes[e * 8 + g];
+      const at = node * 6;
+
+      seen[node]++;
 
       for (let r = 0; r < 6; r++) {
         let s = 0;
 
         for (let k = 0; k < 6; k++) s += stiffness[r * 6 + k] * eps[k];
 
-        out[at + r] = s * solved.share[e];
+        out[at + r] += s * solved.share[e];
       }
     });
   }
 
-  return averageAtNodes(mesh, out);
+  for (let i = 0; i < out.length; i++) out[i] /= seen[(i / 6) | 0];
+
+  return out;
 }
 
 const PIN_RINGS = 2;

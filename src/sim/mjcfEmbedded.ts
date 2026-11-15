@@ -81,12 +81,21 @@ export const isSolidPart = (p: ScenePart) => p.visible && p.role === 'solid' && 
 
 const looseFixed = (p: ScenePart, rig: Rig) => !rig.bodyParts.has(p.id) && !p.physics?.dynamic && isSolidPart(p);
 
-export function adoptEmbeddedParts(rig: Rig, parts: ScenePart[], triangles: Triangles): Rig {
+export function adoptEmbeddedParts(
+  rig: Rig,
+  parts: ScenePart[],
+  triangles: Triangles,
+  measuredBounds?: Record<string, Box | undefined>,
+): Rig {
   const candidates = parts.filter((p) => looseFixed(p, rig));
 
   if (!candidates.length || !rig.robots.length) return rig;
 
-  const scene: Scene = { rig, byId: new Map(parts.map((p) => [p.id, p])), bounds: (p) => placedBounds(p, triangles) };
+  const scene: Scene = {
+    rig,
+    byId: new Map(parts.map((p) => [p.id, p])),
+    bounds: (p) => measuredBounds?.[p.id] ?? placedBounds(p, triangles),
+  };
   const hosted = candidates.flatMap((p) => {
     const host = hostOf(p, scene);
 

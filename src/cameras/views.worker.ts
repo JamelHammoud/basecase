@@ -16,8 +16,8 @@ serve({
 
     return reply(frame, [frame.jpeg.buffer, frame.instanceIds.buffer, frame.depth.buffer]);
   },
-  frame: (request: CameraFrameRequest) => {
-    const frames = renderCameraFrame(request);
+  frame: async (request: CameraFrameRequest) => {
+    const frames = await renderCameraFrame(request);
 
     return reply(frames, Object.values(frames));
   },

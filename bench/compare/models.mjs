@@ -54,6 +54,13 @@ export function servedMismatch(resolved, served) {
   return `Asked for ${resolved.arg} but ${served} answered.`;
 }
 
+export function runModelProblem(run, resolved) {
+  if (!run.servedBy)
+    return `No answering model was reported for ${resolved.arg}. The provider may have refused the prompt.`;
+
+  return servedMismatch(resolved, run.servedBy);
+}
+
 export function sharedEffort(models, wanted) {
   const levelsOf = (m) => (m.effortLevels ?? []).map((l) => l.id);
   const shared = models.map(levelsOf).reduce((acc, ids) => acc.filter((id) => ids.includes(id)));

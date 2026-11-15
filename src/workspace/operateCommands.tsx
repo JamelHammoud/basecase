@@ -13,6 +13,7 @@ import type { CommandInputs } from './sceneCommands';
 import { showLeftTab } from './showView';
 import type { WorkspaceCore } from './useWorkspaceCore';
 import { addRobotComputer } from './robotComputer';
+import { bodyRobot, fitBodyFromUi } from './bodyActions';
 
 const showOperateOf = (core: WorkspaceCore) => () => showLeftTab(core, 'operate');
 
@@ -174,6 +175,21 @@ export function operateCommands(inputs: CommandInputs): Command[] {
         ]
       : []),
     ...setUpServosCommands(inputs, showOperate),
+    ...(bodyRobot(core)
+      ? [
+          {
+            id: 'fit-body',
+            group: 'Operate',
+            label: 'Fit Body',
+            icon: <OperateIcon />,
+            keywords: 'calibration mass payload friction robot sim twin',
+            run: () => {
+              showOperate();
+              fitBodyFromUi(core);
+            },
+          },
+        ]
+      : []),
     ...replayCommands(core),
     ...rollOutCommands(core, showOperate),
     ...rollBackCommands(core, showOperate),

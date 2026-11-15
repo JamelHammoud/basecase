@@ -1,5 +1,37 @@
 import { presetServo } from './servoEstimate';
 import type { CalibrationVerdict, JointMount, ServoCalibration, ServoPart } from './types';
+import type { BodyCalibration, BodyHistory } from './bodyTypes';
+
+export type { BodyHistory } from './bodyTypes';
+
+export function activeBodyCalibration(history: BodyHistory | undefined): BodyCalibration | null {
+  return history?.versions.find((c) => c.version === history.active && c.verdict === 'measured') ?? null;
+}
+
+export function recordBodyCalibration(
+  history: BodyHistory,
+  calibration: BodyCalibration,
+  now = new Date(),
+): BodyHistory {
+  const version = (history.versions.at(-1)?.version ?? 0) + 1;
+
+  return {
+    versions: [...history.versions, { ...calibration, version, recordedAt: now.toISOString() }],
+    active: calibration.verdict === 'measured' ? version : history.active,
+  };
+}
+
+function previousHistory<
+  History extends { versions: Array<{ version: number; verdict: string }>; active: number | null },
+>(history: History): History {
+  const earlier = history.versions.filter(
+    (c) => c.verdict === 'measured' && history.active !== null && c.version < history.active,
+  );
+
+  return { ...history, active: earlier.at(-1)?.version ?? null };
+}
+
+export const rollBackBody = previousHistory<BodyHistory>;
 
 export interface CalibrationHistory {
   versions: ServoCalibration[];
@@ -24,11 +56,7 @@ export function activeCalibration(history: CalibrationHistory): ServoCalibration
 }
 
 export function rollBack(history: CalibrationHistory): CalibrationHistory {
-  const earlier = history.versions.filter(
-    (c) => c.verdict === 'measured' && history.active !== null && c.version < history.active,
-  );
-
-  return { ...history, active: earlier.at(-1)?.version ?? null };
+  return previousHistory(history);
 }
 
 export function activeCalibrations(histories: Record<string, CalibrationHistory> | undefined) {

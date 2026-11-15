@@ -1,3 +1,4 @@
+import type { ImportedWorldView } from '../three/viewport/importedWorld';
 import type { SimModel } from '../sim/mjcfTypes';
 import type { ScenePart } from '../types/robotics';
 import { runClock } from '../utils/duration';
@@ -13,6 +14,7 @@ export interface ShotFrame {
 
 export interface CameraShotInput {
   parts: ScenePart[];
+  imported?: ImportedWorldView | null;
   world: ScenePart[];
   model: SimModel | null;
   fixed: FixedCamera[];
@@ -64,7 +66,7 @@ export async function cameraShots(input: CameraShotInput): Promise<CameraShots> 
   const shots: CameraShot[] = [];
 
   try {
-    await feed.load({ parts: solid, world: input.world, model: input.model, views });
+    await feed.load({ parts: solid, world: input.world, imported: input.imported, model: input.model, views });
 
     for (const frame of input.frames) {
       const bitmaps = await feed.frame({ poses: frame.poses?.slice() ?? null, keys });

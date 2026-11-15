@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createEventHandler } from '../run-events.mjs';
 import { answerText, appTimeouts, readEvents, runMetrics } from '../metrics.mjs';
 import { archiveRun } from '../archive.mjs';
-import { mainServedModel, servedModels } from '../compare/models.mjs';
+import { mainServedModel, runModelProblem, servedModels } from '../compare/models.mjs';
 import { gradeTask, startFacts } from './grade.mjs';
 import { loadFixtureInApp } from './materialize.mjs';
 import { readJson } from './scenes.mjs';
@@ -48,7 +48,7 @@ export function modelFields(result, { model, effort }) {
   };
 }
 
-export async function runMicroOnce({ slot, task, seed, out, model, effort, harness }) {
+export async function runMicroOnce({ slot, task, seed, out, model, effort, harness, verifyModel }) {
   const dir = path.join(out.dir, task.id, `seed-${seed}`);
 
   fs.mkdirSync(dir, { recursive: true });
@@ -61,6 +61,10 @@ export async function runMicroOnce({ slot, task, seed, out, model, effort, harne
   const facts = await startFacts(task, { call: slot.call });
 
   const { result, seconds } = await promptAgent({ slot, task, dir, model, effort });
+  const problem = verifyModel && runModelProblem(modelFields(result, { model, effort }), verifyModel);
+
+  if (problem) throw Object.assign(new Error(problem), { code: 'served' });
+
   const records = readEvents(path.join(dir, 'events.jsonl'));
   const answer = answerText(records);
   const after = await slot.api('sceneRecord');

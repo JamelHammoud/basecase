@@ -45,6 +45,8 @@ To see the robot's total weight and how high its center of mass sits above the f
 | Off-the-shelf part or stand-in | Its volume at 1.2 g/cm³, an estimate |
 | Supply | Its listed weight, or its volume at 1.5 g/cm³ if it has none |
 
+These are the starting weights. An active [body fit](/help/fit-a-robots-body-from-a-recorded-run) scales each fitted link's weight and adds its terminal payload. Weight, center of mass and Servo torque then use the adjusted values. Rolling back the body fit restores the previous values.
+
 Printed parts start as PLA at 15% infill. You can change both in Print mode. Cutouts, guides and reference images don't add any weight.
 
 The Weight check never fails. If any part's weight is an estimate, the check shows a warning with how many parts are estimated and what they weigh, so you know how far to trust the total.

@@ -1,3 +1,4 @@
+import { caseWorldView } from '../cases/worldView';
 import React, { createContext, use, useEffect, useEffectEvent } from 'react';
 import { consoleScope } from '../cases/console/format';
 import { frameAtTime } from '../cases/console/recordedSignals';
@@ -57,6 +58,12 @@ interface ProviderProps {
   children: React.ReactNode;
 }
 
+function cameraWorld(core: WorkspaceCore) {
+  const { caseRun, simTraining } = core;
+
+  return caseWorldView(caseRun.playback ? simTraining.cases.timeline.scene?.kase : caseRun.kase);
+}
+
 export function CaseRunProvider({ core, actions, children }: ProviderProps) {
   const { caseRun, simTraining, posing, parts } = core;
   const { sim, cases } = simTraining;
@@ -64,6 +71,7 @@ export function CaseRunProvider({ core, actions, children }: ProviderProps) {
   const { timeline } = cases;
   const wantsCameras = caseConsole.panels.some((p) => p.kind === 'camera');
   const cameras = useCameraTiles({
+    imported: cameraWorld(core),
     parts,
     sim,
     cameras: actions.cameras,

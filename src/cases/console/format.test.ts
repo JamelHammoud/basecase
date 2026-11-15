@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureRobots } from '../../sim/fixtures/robots';
-import { hasInputSource } from '../../sim/inputSources';
+import { hasInputSource } from '../../sim/inputRegistry';
 import { parseCase, touchTheDots } from '../testing';
 import { ARC_CONSOLES } from './fixtures/arcConsoles';
 import { consoleLayout, DEFAULT_CONSOLE } from './layout';

@@ -1,4 +1,4 @@
-import { STUDIO_INPUTS } from '../../sim/inputSources';
+import { STUDIO_INPUTS } from '../../sim/inputRegistry';
 import type { CanvasOverlay, CaseConsole } from './format';
 import { panelShows, type PanelOf, type PanelSpec, type PanelSurface } from './panelKinds';
 

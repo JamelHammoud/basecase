@@ -1,5 +1,6 @@
 import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 import type { SimModel, SimRobot } from '../sim/mjcfTypes';
+import { feasibilityBodies, type FeasibilityBodies } from './feasibilityBodies';
 
 export type V3 = [number, number, number];
 
@@ -27,6 +28,7 @@ export interface Kin {
   sim: SimModel;
   robot: SimRobot;
   root: number;
+  bodies: FeasibilityBodies;
   joints: JointInfo[];
 }
 
@@ -41,8 +43,8 @@ export const norm = (a: V3) => Math.hypot(a[0], a[1], a[2]);
 function scaleLinks(kin: Kin, factor: number) {
   const { model } = kin;
 
-  for (let b = kin.root + 1; b < model.nbody; b++) {
-    if (!isUnder(kin, b)) continue;
+  for (const b of kin.bodies.members) {
+    if (b === kin.root) continue;
 
     for (let k = 0; k < 3; k++) {
       model.body_pos[b * 3 + k] *= factor;
@@ -51,20 +53,12 @@ function scaleLinks(kin: Kin, factor: number) {
   }
 
   for (let g = 0; g < model.ngeom; g++) {
-    if (model.geom_bodyid[g] <= kin.root || !isUnder(kin, model.geom_bodyid[g])) continue;
+    if (model.geom_bodyid[g] <= kin.root || !kin.bodies.contains(model.geom_bodyid[g])) continue;
 
     for (let k = 0; k < 3; k++) model.geom_pos[g * 3 + k] *= factor;
 
     for (let k = 0; k < 6; k++) model.geom_aabb[g * 6 + k] *= factor;
   }
-}
-
-export function isUnder(kin: Pick<Kin, 'model' | 'root'>, body: number): boolean {
-  let b = body;
-
-  while (b > 0 && b !== kin.root) b = kin.model.body_parentid[b];
-
-  return b === kin.root;
 }
 
 function jointInfo(kin: Omit<Kin, 'joints'>, relax: Relaxation): JointInfo[] {
@@ -100,7 +94,8 @@ export function openKin(mj: MainModule, sim: SimModel, options: { robot?: string
   const model = mj.MjModel.from_xml_string(sim.xml);
   const data = new mj.MjData(model);
   const root = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY.value, robot.root);
-  const partial = { mj, model, data, sim, robot, root };
+  const bodies = feasibilityBodies(model.body_parentid, root);
+  const partial = { mj, model, data, sim, robot, root, bodies };
   const kin = { ...partial, joints: jointInfo(partial, options.relax) };
 
   scaleLinks(kin, options.relax.linkScale);
@@ -175,11 +170,7 @@ export function bodyCorners(kin: Kin, body: number): V3[] {
 }
 
 export function chainOf(kin: Kin, body: number): JointInfo[] {
-  const bodies = new Set<number>();
-
-  for (let b = body; b > 0 && b !== kin.root; b = kin.model.body_parentid[b]) bodies.add(b);
-
-  return kin.joints.filter((j) => bodies.has(j.body));
+  return kin.joints.filter((j) => j.body > 0 && j.body !== kin.root && kin.bodies.contains(body, j.body));
 }
 
 export function pointJacobian(kin: Kin, options: { body: number; local: V3; joints: JointInfo[] }): V3[] {

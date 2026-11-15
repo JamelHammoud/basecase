@@ -1,4 +1,4 @@
-import { hasInputSource, NAMED_INPUTS } from '../../sim/inputSources';
+import { hasInputSource, NAMED_INPUTS } from '../../sim/inputRegistry';
 import { gestureNames, type CaseGesture } from '../gestures';
 import { asId, asNumber, asRecord, asString, listOf, oneOf, optional, refuse, type Reader } from '../validate';
 import { PANEL_KIND_NAMES, readPanelConfig, type PanelSpec } from './panelKinds';

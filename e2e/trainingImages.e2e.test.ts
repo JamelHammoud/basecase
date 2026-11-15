@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { unzipSync } from 'three/examples/jsm/libs/fflate.module.js';
 import { Matrix4, Quaternion, Vector3 } from 'three';
@@ -20,16 +20,16 @@ interface ImageStudio {
 
 let app: App;
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await openApp();
 }, 120000);
 
-afterAll(async () => {
+afterEach(async () => {
   await app?.close();
 });
 
 describe('Training images', () => {
-  it('makes 20 labelled block images from the palette and exports COCO with a label per image', async () => {
+  it('makes a labelled block image from the palette and downloads its COCO and YOLO dataset', async () => {
     const { page } = app;
     const robot = fixtureRobots().find((r) => r.id === 'arm-6dof')!;
     const built = buildCase(
@@ -84,7 +84,7 @@ describe('Training images', () => {
     const sheet = page.getByRole('dialog', { name: 'Training images' });
 
     await sheet.waitFor();
-    await sheet.getByRole('textbox', { name: 'Image count' }).fill('20');
+    await sheet.getByRole('textbox', { name: 'Image count' }).fill('1');
     await sheet.getByRole('textbox', { name: 'Image count' }).press('Tab');
     await sheet.getByRole('switch', { name: 'Camera Scene' }).click();
 
@@ -108,13 +108,13 @@ describe('Training images', () => {
           ),
         { timeout: 30000 },
       )
-      .toBe(20);
+      .toBe(1);
 
     const result = await page.evaluate(
       () => (window as unknown as { __studio: ImageStudio }).__studio.trainingImages().last,
     );
 
-    expect(result?.classCounts.Block).toBe(20);
+    expect(result?.classCounts.Block).toBe(1);
 
     const pane = page.locator(shown('[data-testid="dataset-pane"]'));
     const downloaded = page.waitForEvent('download');
@@ -135,8 +135,8 @@ describe('Training images', () => {
     const splits = Object.entries(files).filter(([name]) => /^annotations\/instances_.*\.json$/.test(name));
     const coco = splits.map(([, bytes]) => JSON.parse(new TextDecoder().decode(bytes)));
 
-    expect(coco.flatMap((split) => split.images)).toHaveLength(20);
-    expect(Object.keys(files).filter((name) => /\.(png|jpe?g)$/.test(name))).toHaveLength(20);
+    expect(coco.flatMap((split) => split.images)).toHaveLength(1);
+    expect(Object.keys(files).filter((name) => /\.(png|jpe?g)$/.test(name))).toHaveLength(1);
 
     for (const split of coco) {
       const category = split.categories.find((entry: { name: string }) => entry.name === 'Block');

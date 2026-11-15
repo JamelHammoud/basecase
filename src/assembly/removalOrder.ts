@@ -3,6 +3,7 @@ import type { FastenerChain } from './assemblyTypes';
 import type { DriverTool } from './driverAccess';
 import { clampingScrews, indexFasteners, type FastenerIndex } from './fastenerIndex';
 import { AXES } from './moveBlockers';
+import { mutualRemovalUnits } from './removalUnits';
 
 export type ScrewVerdict =
   | { verdict: 'pass' }
@@ -31,6 +32,7 @@ interface State {
   steps: RemovalStep[];
   tools: Map<string, DriverTool>;
   fasteners: FastenerIndex;
+  pairs?: string[][];
 }
 
 const live = (s: State, ids: Iterable<string>) => [...ids].filter((id) => s.tracked.has(id) && s.present.has(id));
@@ -93,9 +95,10 @@ function candidateUnits(s: State): string[][] {
   }
 
   const out = [...units.values()].filter((u) => u.length > 1);
-  const blocks = (a: string, b: string) => s.g.moves[a].local.some((set) => set.includes(b));
 
-  for (const a of present) for (const b of present) if (a < b && blocks(a, b) && blocks(b, a)) out.push([a, b]);
+  s.pairs ??= mutualRemovalUnits(s.g.moves, present);
+
+  for (const pair of s.pairs) if (pair.every((id) => s.present.has(id))) out.push(pair);
 
   return out.sort((x, y) => x.length - y.length);
 }

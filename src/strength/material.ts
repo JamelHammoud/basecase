@@ -126,15 +126,17 @@ function bondMatrix(q: Mat3): number[][] {
   );
 }
 
-const bilinear = (bond: number[][], local: number[][], r: number, c: number) =>
-  bond[r].reduce((sum, brk, k) => sum + brk * local[k].reduce((acc, v, l) => acc + v * bond[c][l], 0), 0);
-
 export function stiffnessFor(m: LayeredMaterial, normal: V3): Float64Array {
   const local = localStiffness(m);
   const bond = bondMatrix(layerFrame(normal));
   const out = new Float64Array(36);
+  const column = new Float64Array(6);
 
-  for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) out[r * 6 + c] = bilinear(bond, local, r, c);
+  for (let c = 0; c < 6; c++) {
+    for (let k = 0; k < 6; k++) column[k] = local[k].reduce((sum, value, l) => sum + value * bond[c][l], 0);
+
+    for (let r = 0; r < 6; r++) out[r * 6 + c] = bond[r].reduce((sum, value, k) => sum + value * column[k], 0);
+  }
 
   return out;
 }

@@ -48,15 +48,25 @@ function comparison({ worktree, base, name, split, milliseconds }) {
   });
   const dir = path.join(RUNS, `${name}-${split}`);
 
-  if (!result.ok)
+  const reportFile = path.join(dir, 'report.md');
+  const resultsFile = path.join(dir, 'results.json');
+
+  if (!result.ok && !(fs.existsSync(resultsFile) && fs.existsSync(reportFile)))
     throw Object.assign(new Error(`Comparison failed: ${(result.err || result.out).slice(-2000)}`), {
       code: Date.now() - started >= milliseconds ? 'budget' : 'comparison',
     });
 
+  const saved = JSON.parse(fs.readFileSync(resultsFile, 'utf8'));
+
+  if (!result.ok) {
+    saved.plan = { ...saved.plan, stop: Date.now() - started >= milliseconds ? 'deadline' : 'error' };
+    saved.error ||= result.err || 'Comparison process failed.';
+  }
+
   return {
-    ...JSON.parse(fs.readFileSync(path.join(dir, 'results.json'), 'utf8')),
+    ...saved,
     run: `${name}-${split}`,
-    report: `Report: state/harness/runs/${name}-${split}/report.md\n\n${fs.readFileSync(path.join(dir, 'report.md'), 'utf8')}`,
+    report: `Report: state/harness/runs/${name}-${split}/report.md\n\n${fs.readFileSync(reportFile, 'utf8')}`,
   };
 }
 

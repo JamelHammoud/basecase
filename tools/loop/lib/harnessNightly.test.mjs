@@ -1,5 +1,7 @@
+import fs from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { runExperiment } from './harness.mjs';
+import { run } from './sh.mjs';
 import { nightlyHarness } from './harnessNightly.mjs';
 
 const f = vi.hoisted(() => ({
@@ -34,7 +36,7 @@ vi.mock('./harnessEvidence.mjs', () => ({ weekCandidates: () => [], chooseCandid
 vi.mock('../../../bench/experiments.mjs', () => ({ readExperiments: () => [] }));
 vi.mock('./worktree.mjs', () => ({ openBranch: f.open, close: f.close }));
 vi.mock('./sh.mjs', () => ({
-  run: (_command, args) => ({ out: args.includes('--input-type=module') ? '[]' : 'main-sha', ok: true }),
+  run: vi.fn((_command, args) => ({ out: args.includes('--input-type=module') ? '[]' : 'main-sha', ok: true })),
 }));
 vi.mock('./harness.mjs', async (original) => ({
   ...(await original()),
@@ -42,6 +44,7 @@ vi.mock('./harness.mjs', async (original) => ({
 }));
 
 beforeEach(() => {
+  vi.restoreAllMocks();
   vi.clearAllMocks();
   f.state = { entries: [], releases: [], days: [], pending: null };
   f.locks = ['nightly-1'];
@@ -94,5 +97,25 @@ describe('nightly harness scheduling', () => {
     nightlyHarness({ log: vi.fn(), release: 'v0.2.1' });
     nightlyHarness({ log: vi.fn(), release: 'v0.2.2' });
     expect(runExperiment).toHaveBeenCalledOnce();
+  });
+});
+
+it.each(['error', 'winner'])('keeps the report and rejects a failed process with a saved %s result', (stop) => {
+  nightlyHarness({ log: vi.fn(), release: 'v0.2.1' });
+
+  const { deps } = runExperiment.mock.calls[0][0];
+  const result = { plan: { stop }, results: [], error: 'Kernel preflight failed' };
+
+  run.mockReturnValueOnce({ ok: false, err: 'exit 1' });
+  vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+  vi.spyOn(fs, 'readFileSync').mockImplementation((file) =>
+    file.endsWith('results.json') ? JSON.stringify(result) : '# Partial report',
+  );
+
+  expect(deps.compare({ split: 'tune', milliseconds: 1000 })).toMatchObject({
+    ...result,
+    plan: { stop: 'error' },
+    run: expect.stringContaining('-tune'),
+    report: expect.stringContaining('# Partial report'),
   });
 });

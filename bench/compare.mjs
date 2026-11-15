@@ -137,10 +137,13 @@ const perApp = Number(argOption(args, 'per-app', 1));
 
 async function openPools() {
   if (!against) {
-    const pool = await bounded(() => openSlotPool({ label: 'compare', port, parallel: opts.parallel, perApp, log }), {
-      deadline,
-      late: (pool) => pool.close(),
-    });
+    const pool = await bounded(
+      (signal) => openSlotPool({ label: 'compare', port, parallel: opts.parallel, perApp, log, signal }),
+      {
+        deadline,
+        late: (pool) => pool.close(),
+      },
+    );
 
     pools.push(pool);
 
@@ -157,7 +160,7 @@ async function openPools() {
 
     const label = `compare-${dirOf(arm.label)}`;
     const pool = await bounded(
-      () => openSlotPool({ label, port, parallel: sizes[i], perApp, source: arm.source, log }),
+      (signal) => openSlotPool({ label, port, parallel: sizes[i], perApp, source: arm.source, log, signal }),
       { deadline, late: (pool) => pool.close() },
     );
 
@@ -240,6 +243,7 @@ async function liveRun({ task, seed, label }, slot, signal) {
       model: model.id,
       effort,
       harness: arm.harness,
+      verifyModel: model,
     });
 
     signal.throwIfAborted();

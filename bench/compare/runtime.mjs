@@ -131,6 +131,11 @@ async function runJob(job, slot, options) {
 
     if (result.timedOut) retire(slot);
 
+    if (err.code === 'served') {
+      state.stop = 'served';
+      state.detail = err.message;
+    }
+
     if (err.code === 'deadline' || Date.now() >= deadline) state.stop = 'deadline';
 
     record(result);

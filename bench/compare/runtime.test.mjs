@@ -170,3 +170,22 @@ describe('retired comparison slots', () => {
     expect(record.mock.calls.find(([result]) => result.task === 'hung')[0].status).toBe('fail');
   });
 });
+
+it('stops both arms and preserves the reason when a provider refusal arrives before grading', async () => {
+  const state = { stop: null };
+  const run = vi.fn().mockRejectedValue(Object.assign(new Error('No answering model'), { code: 'served' }));
+  const record = vi.fn();
+
+  await runBoundedJobs({
+    slots: [{}],
+    jobs: [{ task: { id: 'A' } }, { task: { id: 'B' } }],
+    run,
+    record,
+    state,
+    deadline: Date.now() + 1000,
+    taskSeconds: 120,
+  });
+  expect(run).toHaveBeenCalledOnce();
+  expect(state).toMatchObject({ stop: 'served', detail: 'No answering model' });
+  expect(record).toHaveBeenCalledWith(expect.objectContaining({ status: 'error' }));
+});

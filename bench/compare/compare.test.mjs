@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { indexEntry } from '../archive.mjs';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { appendIndex, readIndex, indexEntry } from '../archive.mjs';
 import { appTimeouts } from '../metrics.mjs';
 import { mainServedModel, resolveModel, runModelProblem, servedMismatch, sharedEffort } from './models.mjs';
 import { canStart, historicalRunCost, roundJobs, settled } from './plan.mjs';
@@ -288,4 +291,30 @@ describe('harness health', () => {
 
     expect(appTimeouts(records)).toBe(2);
   });
+});
+
+it('retains both harness arms in the baseline index when the candidate finishes last', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'compare-baseline-'));
+  const row = {
+    run: 'comparison',
+    task: 'A1',
+    seed: 1,
+    model: 'opus',
+    kind: 'micro',
+    grade: 'pass',
+    servedBy: 'opus',
+    at: '2026-11-14',
+  };
+
+  try {
+    appendIndex(dir, { ...row, harness: 'baseline' });
+    appendIndex(dir, { ...row, harness: 'candidate' });
+
+    const entries = readIndex(dir);
+
+    expect(entries).toHaveLength(2);
+    expect(cachedRuns(entries, { harness: 'baseline', served: 'opus' }).get('A1')).toHaveLength(1);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { runMicroOnce } from '../micro/once.mjs';
 import { readIndex } from '../archive.mjs';
 import { guardedOutput } from './runtime.mjs';
@@ -48,6 +48,34 @@ it('does not archive a late passing grade from a timed-out comparison task', asy
     expect(readIndex(dir)).toEqual([]);
     expect(fs.existsSync(path.join(dir, 'late', 'seed-1', 'summary.json'))).toBe(false);
   } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+it('rejects provider refusals before grading or archiving', async () => {
+  vi.useFakeTimers();
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'compare-refused-'));
+  const grade = vi.fn();
+  const scene = { parts: [], project: {} };
+  const slot = { post: async () => ({}), api: async () => scene, onEvent: { current: null }, studio: { page: {} } };
+
+  try {
+    const work = runMicroOnce({
+      task: { id: 'refused', startScene: async () => scene, grade },
+      slot,
+      seed: 1,
+      out: { dir, runsDir: dir, runName: 'refused', git: {} },
+      verifyModel: { arg: 'claude-opus-5-5', expectServed: 'claude-opus-5-5' },
+    });
+    const check = expect(work).rejects.toMatchObject({ code: 'served' });
+
+    await vi.runAllTimersAsync();
+    await check;
+    expect(grade).not.toHaveBeenCalled();
+    expect(readIndex(dir)).toEqual([]);
+  } finally {
+    vi.useRealTimers();
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });

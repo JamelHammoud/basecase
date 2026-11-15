@@ -56,5 +56,15 @@ export function moveTube(reference: MoveReference, options: { horizonS: number; 
 }
 
 export function outsideTube(tube: TubeWindow[], values: number[]): number {
-  return Math.max(...tube.flatMap((w) => w.bands.map(([lo, hi], j) => Math.max(lo - values[j], values[j] - hi))));
+  let distance = -Infinity;
+
+  for (const window of tube) {
+    for (let j = 0; j < window.bands.length; j++) {
+      const [lo, hi] = window.bands[j];
+
+      distance = Math.max(distance, Math.max(lo - values[j], values[j] - hi));
+    }
+  }
+
+  return distance;
 }

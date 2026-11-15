@@ -63,6 +63,11 @@ interface Score {
   volume: number;
 }
 
+interface PlacementScore extends Score {
+  center: V3;
+  distance: number;
+}
+
 const better = (a: Score, b: Score) => a.linked - b.linked || a.near - b.near || a.low - b.low || a.volume - b.volume;
 
 const NEAR_STEP_MM = 5;
@@ -70,17 +75,77 @@ const NEAR_STEP_MM = 5;
 const biggest = (ctx: PlanContext, ids: string[]) =>
   ids.reduce((a, b) => (boxVolume(boxOfPart(ctx, b)) > boxVolume(boxOfPart(ctx, a)) ? b : a));
 
-function pickNext(ctx: PlanContext, candidates: string[], anchor: Set<string> | null): string {
-  if (!anchor) return biggest(ctx, candidates);
+function placementScores(ctx: PlanContext, majors: string[]) {
+  const scores = new Map<string, PlacementScore>();
+  const touchingIds = new Map<string, string[]>();
 
-  const scoreOf = (id: string): Score => ({
-    linked: touching(ctx, id).filter((o) => anchor.has(o)).length,
-    near: -Math.round(Math.min(...[...anchor].map((o) => distance(ctx, id, o))) / NEAR_STEP_MM),
-    low: -boxOfPart(ctx, id).min[1],
-    volume: boxVolume(boxOfPart(ctx, id)),
-  });
+  for (const id of majors) {
+    const box = boxOfPart(ctx, id);
 
-  return candidates.reduce((best, id) => (better(scoreOf(id), scoreOf(best)) > 0 ? id : best));
+    scores.set(id, {
+      linked: 0,
+      near: -Infinity,
+      low: -box.min[1],
+      volume: boxVolume(box),
+      center: boxCenter(box),
+      distance: Infinity,
+    });
+
+    for (const other of touching(ctx, id)) {
+      const linked = touchingIds.get(other) ?? [];
+
+      linked.push(id);
+      touchingIds.set(other, linked);
+    }
+  }
+
+  const add = (anchor: string) => {
+    const center = boxCenter(boxOfPart(ctx, anchor));
+
+    for (const score of scores.values()) {
+      const gap = Math.min(
+        score.distance,
+        Math.hypot(score.center[0] - center[0], score.center[1] - center[1], score.center[2] - center[2]),
+      );
+
+      score.distance = gap;
+      score.near = -Math.round(gap / NEAR_STEP_MM);
+    }
+
+    for (const id of touchingIds.get(anchor) ?? []) {
+      const score = scores.get(id);
+
+      if (score) score.linked += 1;
+    }
+  };
+  const place = (id: string) => {
+    scores.delete(id);
+    add(id);
+  };
+
+  return { scores, place };
+}
+
+function pickNext(candidates: string[], scores: Map<string, Score>): string {
+  return candidates.reduce((best, id) => (better(scores.get(id)!, scores.get(best)!) > 0 ? id : best));
+}
+
+function firstMajor(ctx: PlanContext, candidates: string[], outside: Set<string>): string {
+  if (!outside.size || candidates.length === 1) return biggest(ctx, candidates);
+
+  const scores = new Map(
+    candidates.map((id) => [
+      id,
+      {
+        linked: touching(ctx, id).filter((other) => outside.has(other)).length,
+        near: -Math.round(Math.min(...[...outside].map((other) => distance(ctx, id, other))) / NEAR_STEP_MM),
+        low: -boxOfPart(ctx, id).min[1],
+        volume: boxVolume(boxOfPart(ctx, id)),
+      },
+    ]),
+  );
+
+  return pickNext(candidates, scores);
 }
 
 function candidatesOf(ctx: PlanContext, open: string[], ready: string[]): string[] {
@@ -105,18 +170,22 @@ export const isUnproven = (ctx: PlanContext, ids: string[]) =>
   !!ctx.order && ids.some((id) => ctx.order!.unproven.has(id));
 
 function heuristicOrder(ctx: PlanContext, majors: string[], outside: Set<string>): string[] {
+  if (majors.length < 2) return [...majors];
+
   const enclosed = enclosedBy(ctx, majors);
   const placed = new Set<string>();
   const order: string[] = [];
+  const scoring = placementScores(ctx, majors);
 
   while (order.length < majors.length) {
     const open = majors.filter((m) => !placed.has(m));
     const ready = open.filter((m) => enclosed.get(m)!.every((inner) => placed.has(inner)));
-    const firstAnchor = outside.size ? outside : null;
-    const next = pickNext(ctx, candidatesOf(ctx, open, ready), order.length ? placed : firstAnchor);
+    const candidates = candidatesOf(ctx, open, ready);
+    const next = order.length ? pickNext(candidates, scoring.scores) : firstMajor(ctx, candidates, outside);
 
     placed.add(next);
     order.push(next);
+    scoring.place(next);
   }
 
   return order;

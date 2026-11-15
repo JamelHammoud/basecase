@@ -1,3 +1,4 @@
+import { convexHull } from '../utils/convexHull';
 import { pivotRow } from '../utils/matrixScans';
 import {
   bodyCorners,
@@ -124,24 +125,6 @@ export function crouch(kin: Kin, feet: Foot[]): number {
   );
 }
 
-function convexHull(points: [number, number][]): [number, number][] {
-  const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const cross = (o: number[], a: number[], b: number[]) =>
-    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-  const half = (list: [number, number][]) =>
-    list.reduce<[number, number][]>((h, p) => {
-      while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop();
-
-      h.push(p);
-
-      return h;
-    }, []);
-  const lower = half(sorted);
-  const upper = half([...sorted].reverse());
-
-  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
-}
-
 function segmentDistance(p: [number, number], a: [number, number], b: [number, number]): number {
   const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
   const length = dx * dx + dy * dy;
@@ -151,6 +134,8 @@ function segmentDistance(p: [number, number], a: [number, number], b: [number, n
 }
 
 export function supportMargin(sole: V3[], com: V3): number {
+  if (sole.length < 2) return -Infinity;
+
   const hull = convexHull(sole.map((p) => [p[0], p[1]]));
   const p: [number, number] = [com[0], com[1]];
   const edges = hull.map((a, i) => [a, hull[(i + 1) % hull.length]] as const);

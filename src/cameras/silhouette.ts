@@ -1,3 +1,4 @@
+import { convexHull } from '../utils/convexHull';
 import * as THREE from 'three';
 import type { DatasetCamera } from '../datasets/cameras';
 import type { RobotJoint, ScenePart } from '../types/robotics';
@@ -69,25 +70,6 @@ function cameraMatrix(view: DatasetCamera): THREE.Matrix4 {
   const look = new THREE.Matrix4().lookAt(eye, new THREE.Vector3(...view.target), new THREE.Vector3(...view.up));
 
   return look.setPosition(eye).invert();
-}
-
-function convexHull(points: [number, number][]): [number, number][] {
-  const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const cross = (o: number[], a: number[], b: number[]) =>
-    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-  const half = (list: [number, number][]) => {
-    const out: [number, number][] = [];
-
-    for (const p of list) {
-      while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
-
-      out.push(p);
-    }
-
-    return out.slice(0, -1);
-  };
-
-  return [...half(sorted), ...half([...sorted].reverse())];
 }
 
 function rowSpan(hull: [number, number][], y: number): [number, number] | null {

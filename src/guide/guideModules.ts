@@ -100,15 +100,49 @@ function foldSmallModules(drafts: Draft[], moduleOf: Map<string, string>, byId: 
   return drafts.filter((d) => d.id === MAIN_MODULE || d.partIds.length);
 }
 
-function boxOf(ids: string[], boxes: Record<string, Box>): Box {
-  return unionBox(ids.flatMap((id) => (boxes[id] ? [boxes[id]] : [])));
+function moduleGeometry(boxes: Record<string, Box>) {
+  const bounds = new Map<string[], Box>();
+  const layouts = new Map<string[], string>();
+  const boundsOf = (ids: string[]): Box => {
+    const known = bounds.get(ids);
+
+    if (known) return known;
+
+    const box = unionBox(ids.flatMap((id) => (boxes[id] ? [boxes[id]] : [])));
+
+    bounds.set(ids, box);
+
+    return box;
+  };
+  const layoutOf = (ids: string[]): string => {
+    const known = layouts.get(ids);
+
+    if (known !== undefined) return known;
+
+    const box = boundsOf(ids);
+    const c = boxCenter(box);
+    const layout = ids
+      .map((id) => boxCenter(boxes[id] ?? box).map((v, i) => Math.round((v - c[i]) / 2)))
+      .map((v) => v.join(','))
+      .sort()
+      .join(';');
+
+    layouts.set(ids, layout);
+
+    return layout;
+  };
+
+  return { boundsOf, layoutOf };
 }
 
-function orderModules(drafts: Draft[], boxes: Record<string, Box>): Draft[] {
+function orderModules(drafts: Draft[], geometry: ReturnType<typeof moduleGeometry>): Draft[] {
   const children = (id: string) =>
     drafts
       .filter((d) => d.parent === id)
-      .sort((a, b) => boxOf(a.partIds, boxes).min[1] - boxOf(b.partIds, boxes).min[1] || a.name.localeCompare(b.name));
+      .sort(
+        (a, b) =>
+          geometry.boundsOf(a.partIds).min[1] - geometry.boundsOf(b.partIds).min[1] || a.name.localeCompare(b.name),
+      );
   const out: Draft[] = [];
   const visit = (d: Draft) => {
     out.push(d);
@@ -137,18 +171,11 @@ const signature = (ids: string[], byId: Map<string, ScenePart>) =>
     .sort()
     .join(';');
 
-function relativeLayout(ids: string[], boxes: Record<string, Box>): string {
-  const box = boxOf(ids, boxes);
-  const c = boxCenter(box);
-
-  return ids
-    .map((id) => boxCenter(boxes[id] ?? box).map((v, i) => Math.round((v - c[i]) / 2)))
-    .map((v) => v.join(','))
-    .sort()
-    .join(';');
-}
-
-function markRepeats(modules: GuideModule[], byId: Map<string, ScenePart>, boxes: Record<string, Box>) {
+function markRepeats(
+  modules: GuideModule[],
+  byId: Map<string, ScenePart>,
+  geometry: ReturnType<typeof moduleGeometry>,
+) {
   const firstBySignature = new Map<string, GuideModule>();
 
   for (const m of modules) {
@@ -164,7 +191,7 @@ function markRepeats(modules: GuideModule[], byId: Map<string, ScenePart>, boxes
     }
 
     m.repeatOf = first.id;
-    m.mirrored = relativeLayout(m.partIds, boxes) !== relativeLayout(first.partIds, boxes);
+    m.mirrored = geometry.layoutOf(m.partIds) !== geometry.layoutOf(first.partIds);
 
     if (!m.mirrored) first.copies += 1;
   }
@@ -174,7 +201,8 @@ export function buildModules(scene: GuideScene, parts: ScenePart[]): GuideModule
   const byId = new Map(parts.map((p) => [p.id, p]));
   const joints = scene.joints.filter((j) => [...j.parent, ...j.child].some((id) => byId.has(id)));
   const { drafts, moduleOf } = joints.length ? jointModules(joints, parts) : groupModules(parts);
-  const kept = orderModules(foldSmallModules(drafts, moduleOf, byId), scene.boxes);
+  const geometry = moduleGeometry(scene.boxes);
+  const kept = orderModules(foldSmallModules(drafts, moduleOf, byId), geometry);
   const modules: GuideModule[] = kept.map((d) => ({
     id: d.id,
     name: d.name,
@@ -183,7 +211,7 @@ export function buildModules(scene: GuideScene, parts: ScenePart[]): GuideModule
     copies: 1,
   }));
 
-  markRepeats(modules, byId, scene.boxes);
+  markRepeats(modules, byId, geometry);
 
   return modules;
 }

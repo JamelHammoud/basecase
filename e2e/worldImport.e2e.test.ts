@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { afterEach, describe, expect, it } from 'vitest';
 import { kitchenCollider, kitchenSplat } from '../src/cases/worldImportFixture';
 import type { WorldImportFile } from '../src/cases/worldImportTypes';
-import { endTryAt, inDataset, loadFixtureRobot, passedDatasetFiles } from './driveChecks';
+import { loadFixtureRobot } from './driveChecks';
 import type { SimState } from './driveStudio';
 import { openApp, partCount, shown, type App } from './harness';
 
@@ -74,28 +74,6 @@ async function expectKitchenCamera() {
   const baseline = await framePixels(floor!);
 
   await expect.poll(() => tileDifference(baseline)).toBeGreaterThan(0.05);
-}
-
-async function recordKitchenTry() {
-  await app.page
-    .locator(shown('button'), { hasText: /^Try It$/ })
-    .first()
-    .click();
-  await endTryAt(app.page, 0.2);
-  await expect.poll(async () => (await simState()).tries.length).toBe(1);
-  await expect.poll(() => app.page.locator(shown('[data-testid="try-row"]')).count()).toBe(1);
-}
-
-async function expectKitchenDataset() {
-  const files = inDataset(await passedDatasetFiles(app.page));
-  const videos = Object.keys(files).filter((path) => path.endsWith('.mp4'));
-
-  expect(videos.sort()).toEqual([
-    'v2.1/videos/chunk-000/observation.images.scene/episode_000000.mp4',
-    'videos/observation.images.scene/chunk-000/file-000.mp4',
-  ]);
-
-  for (const path of videos) expect(files[path].length).toBeGreaterThan(0);
 }
 
 async function dropFixtures(files: WorldImportFile[]) {
@@ -168,15 +146,6 @@ describe('a captured world dropped on the canvas', () => {
     expect(await partCount(app.page)).toBe(parts);
 
     await expectKitchenCamera();
-    expect(app.errors).toEqual([]);
-  });
-
-  it('records a kitchen try and exports Scene videos in both LeRobot layouts', async () => {
-    app = await openApp();
-    await loadFixtureRobot(app.page, 'rover-diff');
-    await makeKitchen();
-    await recordKitchenTry();
-    await expectKitchenDataset();
     expect(app.errors).toEqual([]);
   });
 

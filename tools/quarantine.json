@@ -135,14 +135,6 @@
     "reason": "Run 43698588307 could not find Stop Try at line 44 on the first Windows attempt, then could not click it at line 50 after the clock advanced on retry. Each attempt opens a fresh app. Linux passed at that commit in 8.5 s, and Windows passed in run 43696182210 in 11.0 s. The recording phase or browser timing cause is not established."
   },
   {
-    "file": "e2e/worldImport.e2e.test.ts",
-    "test": "records a kitchen try and exports Scene videos in both LeRobot layouts",
-    "issue": 995,
-    "until": "2026-11-28",
-    "platform": "win32",
-    "reason": "Run 43693830979 finished the short kitchen recording but saved no try on either Windows attempt at line 142. The second poll also stopped responding. The recording, scoring or persistence stage responsible is not established."
-  },
-  {
     "file": "e2e/scanMap.e2e.test.ts",
     "test": "makes a saved corridor world through Layers and New Case and passes a seeded reference try",
     "issue": 995,

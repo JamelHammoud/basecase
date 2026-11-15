@@ -44,10 +44,18 @@ function floorPlane(mesh: WorldMesh) {
 
     if (normal.y < Math.SQRT1_2) continue;
 
-    const key = [...normal.toArray().map((v) => Math.round(v * 1000)), Math.round(normal.dot(a) * 1000)].join(',');
+    const key = `${Math.round(normal.x * 1000)},${Math.round(normal.y * 1000)},${Math.round(normal.z * 1000)},${Math.round(normal.dot(a) * 1000)}`;
     const plane = planes.get(key);
 
-    planes.set(key, { normal: normal.clone(), point: a.clone(), area: area + (plane?.area ?? 0) });
+    if (!plane) {
+      planes.set(key, { normal: normal.clone(), point: a.clone(), area });
+
+      continue;
+    }
+
+    plane.normal.copy(normal);
+    plane.point.copy(a);
+    plane.area = area + plane.area;
   }
 
   return (

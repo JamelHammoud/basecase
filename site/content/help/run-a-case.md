@@ -26,6 +26,7 @@ covers:
   - src/cases/console/
   - src/cases/worldSet.ts
   - src/sim/worldMoves.ts
+  - src/sim/inputRegistry.ts
   - src/sim/inputSources.ts
   - src/workspace/useCaseRun.ts
   - src/workspace/useConsoleSignals.ts

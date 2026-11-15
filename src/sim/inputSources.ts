@@ -7,23 +7,21 @@ import { voiceInputSource } from '../voice/voiceSource';
 import { commandFromPad, isIdle } from './driveKeys';
 import type { DriveCommand } from './driveTypes';
 import type { InputMoment, InputRobot, InputSource } from './inputTypes';
+import { registerInputName } from './inputRegistry';
 
 export type { InputMoment, InputRobot, InputSource, PointTable } from './inputTypes';
 
-export const NAMED_INPUTS = ['camera', 'phone', 'midi', 'leader-arm', 'voice', 'policy', 'script'] as const;
-export const STUDIO_INPUTS = ['phone', 'gamepad', 'keys'];
-export const CAMERA_INPUTS = ['camera', ...STUDIO_INPUTS];
+export { CAMERA_INPUTS, hasInputSource, NAMED_INPUTS, STUDIO_INPUTS } from './inputRegistry';
 
 const IDLE: DriveCommand = { v: [0, 0, 0] };
 const sources = new Map<string, InputSource>();
 
 export const registerInputSource = (source: InputSource) => {
   sources.set(source.id, source);
+  registerInputName(source.id);
 };
 
 export const inputSourceIds = () => [...sources.keys()];
-
-export const hasInputSource = (id: string) => sources.has(id);
 
 export async function openInputs(ids: readonly string[], robot: InputRobot | null): Promise<string | null> {
   const opened: InputSource[] = [];

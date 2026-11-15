@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { seededRandom } from './seededRandom';
 import { fitTarget, overlayPixels, type Grid } from './targetFit';
@@ -42,6 +43,14 @@ function gridOf(width: number, height: number): Grid {
   const mask = () => Uint8Array.from({ length: width * height }, () => Math.floor(random() * 4));
 
   return { width, height, cellMm: 0.5, target: mask(), model: mask() };
+}
+
+function expectPreviousOverlay(grid: Grid, scale = 3) {
+  const actual = overlayPixels(grid, scale);
+  const expected = previousOverlay(grid, scale);
+
+  expect([actual.width, actual.height]).toEqual([expected.width, expected.height]);
+  expect(Buffer.from(actual.data).equals(Buffer.from(expected.data))).toBe(true);
 }
 
 beforeEach(() => {
@@ -111,8 +120,8 @@ describe('comparison overlay pixels', () => {
     const fit = fitTarget({ target, model: { mask: model, mmPerPx: 1 }, targetMmPerPx: 1 })!;
     const detail = fitDetail(target, model, { iou: 0, roll: 6, scale: 0.8, dx: 1, dy: -1 });
 
-    expect(overlayPixels(fit.grid)).toEqual(previousOverlay(fit.grid, 3));
-    expect(overlayPixels(detail.grid, 1)).toEqual(previousOverlay(detail.grid, 1));
+    expectPreviousOverlay(fit.grid);
+    expectPreviousOverlay(detail.grid, 1);
   });
 
   it.each([

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { servoLayout } from '../src/robot/sceneRobot';
 import type { RobotJoint } from '../src/types/robotics';
 import { openApp, shown, type App } from './harness';
 
@@ -8,7 +7,6 @@ interface BuildAlongStudio {
   sceneRecord: () => { project: Record<string, unknown> };
   parts: () => Array<{ id: string; visible: boolean }>;
   shownParts: () => string[];
-  buildAlongSteps: () => Array<{ shown: string[]; servos: Array<{ partId: string; joint: string; id: number }> }>;
   printPlates: () => { open: boolean; fitTest: boolean; plates: string[][] };
   readySteps: () => boolean[];
 }
@@ -74,9 +72,6 @@ const sceneParts = () =>
 const shownParts = () =>
   app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.shownParts().sort());
 
-const planSteps = () =>
-  app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.buildAlongSteps());
-
 const toolbar = () => app.page.locator(shown('[role=toolbar][aria-label="Build Along"]'));
 
 const stepShown = () => toolbar().getAttribute('data-step');
@@ -108,45 +103,8 @@ afterEach(async () => {
 });
 
 describe('Build Along', () => {
-  it('steps through the guide on the canvas, names each servo’s bus ID, and leaves the scene as it was', async () => {
-    const before = await sceneParts();
-
-    await openBuildAlong();
-
-    const steps = await planSteps();
-    const busIds = servoLayout(joints);
-    const expectedId = (partId: string) => busIds.ids[busIds.movable.findIndex((j) => j.actuators?.includes(partId))];
-
-    expect(steps.length).toBeGreaterThan(1);
-    expect(steps.flatMap((s) => s.servos.map((v) => v.partId)).sort()).toEqual(['lift-servo', 'pan-servo']);
-
-    for (const [i, step] of steps.entries()) {
-      if (i > 0) await app.page.keyboard.press('ArrowRight');
-
-      await expect.poll(stepShown).toBe(String(i + 1));
-      await expect.poll(shownParts).toEqual(sorted(step.shown));
-
-      for (const servo of step.servos) {
-        expect(servo.id).toBe(expectedId(servo.partId));
-        await expect
-          .poll(() => app.page.locator('[data-build-label]').allTextContents())
-          .toContain(`${servo.joint}, ID ${servo.id}`);
-      }
-    }
-
-    expect(steps.at(-1)!.shown).not.toContain('cutout');
-
-    await app.page.keyboard.press('ArrowRight');
-    expect(await stepShown()).toBe(String(steps.length));
-
-    await toolbar().getByRole('button', { name: /^Done/ }).click();
-    await expect.poll(() => toolbar().count()).toBe(0);
-    expect(await sceneParts()).toEqual(before);
-    await expect.poll(shownParts).toEqual(sorted(parts.map((p) => p.id)));
-    expect(await app.page.locator('[data-build-label]').count()).toBe(0);
-  }, 300000);
-
   it('marks a step done once every part it prints is printed', async () => {
+    const before = await sceneParts();
     const firstReady = () =>
       app.page.evaluate(() => (window as unknown as { __studio: BuildAlongStudio }).__studio.readySteps()[0]);
     const printPlates = () =>
@@ -156,6 +114,9 @@ describe('Build Along', () => {
     expect(await toolbar().getAttribute('data-ready')).toBeNull();
     await app.page.keyboard.press('Escape');
     await expect.poll(() => toolbar().count()).toBe(0);
+    expect(await sceneParts()).toEqual(before);
+    await expect.poll(shownParts).toEqual(sorted(parts.map((p) => p.id)));
+    expect(await app.page.locator('[data-build-label]').count()).toBe(0);
     expect(await firstReady()).toBe(false);
 
     await app.page

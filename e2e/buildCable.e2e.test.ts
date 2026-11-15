@@ -9,6 +9,8 @@ interface CableStudio {
   openBuildAlong: (plan: GuidePlan) => Promise<unknown>;
   buildAlongRoutes: () => Net[];
   selection: () => string[];
+  parts: () => Array<{ id: string; visible: boolean }>;
+  shownParts: () => string[];
 }
 
 const arm = servoJoints({ prefix: 'xl', componentId: 'dynamixel-xl330-m288', count: 2, limb: 'arm' });
@@ -51,6 +53,11 @@ let app: App;
 const routes = () =>
   app.page.evaluate(() => (window as unknown as { __studio: CableStudio }).__studio.buildAlongRoutes());
 
+const sceneParts = () => app.page.evaluate(() => (window as unknown as { __studio: CableStudio }).__studio.parts());
+
+const shownParts = () =>
+  app.page.evaluate(() => (window as unknown as { __studio: CableStudio }).__studio.shownParts().sort());
+
 beforeEach(async () => {
   app = await openApp();
   await studioLoad(app.page, sceneOf(parts, joints));
@@ -64,6 +71,7 @@ it('selects a Cable reach endpoint and shows incoming routes only during their B
   const check = buildCheckPage(() => app.page);
   const toolbar = app.page.locator(shown('[role=toolbar][aria-label="Build Along"]'));
   const incoming = app.page.locator('[data-build-route]', { hasText: 'Elbow, ID 1 to Wrist, ID 2' });
+  const labels = app.page.locator(shown('[data-build-label]'));
 
   await app.page.locator(shown('[role=tab]'), { hasText: 'Build' }).first().click();
 
@@ -75,14 +83,21 @@ it('selects a Cable reach endpoint and shows incoming routes only during their B
   await expect
     .poll(() => app.page.evaluate(() => (window as unknown as { __studio: CableStudio }).__studio.selection()))
     .toEqual(['xl2']);
+
+  const before = await sceneParts();
+
   await app.page.evaluate(
     (plan) => (window as unknown as { __studio: CableStudio }).__studio.openBuildAlong(plan),
     plan,
   );
   await expect.poll(() => toolbar.getAttribute('data-step')).toBe('1');
+  await expect.poll(shownParts).toEqual(['adapter', 'xl1']);
+  await expect.poll(() => labels.allTextContents()).toEqual(['Elbow, ID 1']);
   expect(await incoming.count()).toBe(0);
   await toolbar.getByRole('button', { name: /^Next step/ }).click();
   await expect.poll(() => toolbar.getAttribute('data-step')).toBe('2');
+  await expect.poll(shownParts).toEqual(['adapter', 'xl1', 'xl2']);
+  await expect.poll(() => labels.allTextContents()).toEqual(['Wrist, ID 2']);
   await expect
     .poll(() => incoming.allTextContents())
     .toEqual(['Elbow, ID 1 to Wrist, ID 2ROBOTIS Robot Cable-X3P180 mm']);
@@ -91,9 +106,17 @@ it('selects a Cable reach endpoint and shows incoming routes only during their B
   await expect.poll(() => incoming.count()).toBe(0);
   await toolbar.getByRole('button', { name: /^Next step/ }).click();
   await expect.poll(() => incoming.count()).toBe(1);
+  await toolbar.getByRole('button', { name: /^Previous step/ }).click();
+  await expect.poll(shownParts).toEqual(['adapter', 'xl1']);
   await app.page.keyboard.press('Escape');
   await expect.poll(() => app.page.locator('[data-build-route]').count()).toBe(0);
   await expect.poll(routes).toEqual([]);
   await expect.poll(() => toolbar.count()).toBe(0);
+  await expect.poll(shownParts).toEqual(['adapter', 'xl1', 'xl2']);
+  expect(await sceneParts()).toEqual(before);
+  expect(await app.page.locator('[data-build-label]').count()).toBe(0);
+  expect(await app.page.evaluate(() => (window as unknown as { __studio: CableStudio }).__studio.selection())).toEqual([
+    'xl2',
+  ]);
   expect(app.errors).toEqual([]);
 });

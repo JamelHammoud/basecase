@@ -14,24 +14,48 @@ const AGAINST_MM = SERVO_TOUCH_MM;
 const WRAPS_MM = 10;
 
 const boxesNear = (m: MeshMeasure, n: MeshMeasure) =>
-  [0, 1, 2].every((k) => m.min[k] <= n.max[k] + AGAINST_MM && n.min[k] <= m.max[k] + AGAINST_MM);
+  m.min[0] <= n.max[0] + AGAINST_MM &&
+  n.min[0] <= m.max[0] + AGAINST_MM &&
+  m.min[1] <= n.max[1] + AGAINST_MM &&
+  n.min[1] <= m.max[1] + AGAINST_MM &&
+  m.min[2] <= n.max[2] + AGAINST_MM &&
+  n.min[2] <= m.max[2] + AGAINST_MM;
 
 export function servoTouchPairs(
   parts: ScenePart[],
   measures: Record<string, MeshMeasure | undefined>,
 ): Array<[string, string]> {
-  const servos = servoParts(parts).filter((s) => measures[s.id]);
+  const servos = servoParts(parts).flatMap((s) => {
+    const measure = measures[s.id];
 
-  return parts.filter(isPrinted).flatMap((p) => {
+    return measure ? [{ id: s.id, measure }] : [];
+  });
+  const pairs: Array<[string, string]> = [];
+
+  for (const p of parts) {
+    if (!isPrinted(p)) continue;
+
     const m = measures[p.id];
 
-    return m ? servos.filter((s) => boxesNear(m, measures[s.id]!)).map((s): [string, string] => [p.id, s.id]) : [];
-  });
+    if (!m) continue;
+
+    for (const s of servos) {
+      if (boxesNear(m, s.measure)) pairs.push([p.id, s.id]);
+    }
+  }
+
+  return pairs;
 }
 
 function sitsAgainst(m: MeshMeasure, n: MeshMeasure): boolean {
   const overlaps = boxesNear(m, n);
-  const standsClear = [0, 1, 2].every((k) => n.min[k] - m.min[k] > WRAPS_MM && m.max[k] - n.max[k] > WRAPS_MM);
+  const standsClear =
+    n.min[0] - m.min[0] > WRAPS_MM &&
+    m.max[0] - n.max[0] > WRAPS_MM &&
+    n.min[1] - m.min[1] > WRAPS_MM &&
+    m.max[1] - n.max[1] > WRAPS_MM &&
+    n.min[2] - m.min[2] > WRAPS_MM &&
+    m.max[2] - n.max[2] > WRAPS_MM;
 
   return overlaps && !standsClear;
 }

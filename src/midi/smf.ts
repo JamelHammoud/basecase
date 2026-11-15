@@ -116,16 +116,14 @@ function readEvent(state: TrackState) {
   return true;
 }
 
-function readTrack(cursor: Cursor): TrackItem[] {
-  const state: TrackState = { cursor, tick: 0, running: 0, items: [] };
+function readTrack(cursor: Cursor, items: TrackItem[]) {
+  const state: TrackState = { cursor, tick: 0, running: 0, items };
 
   while (cursor.at < cursor.bytes.length) {
     state.tick += variable(cursor);
 
     if (!readEvent(state)) break;
   }
-
-  return state.items;
 }
 
 function clock(division: number): (ticks: number, tempo: number) => number {
@@ -146,7 +144,7 @@ function timed(items: TrackItem[], division: number): MidiEvent[] {
   let tick = 0;
   let tempo = DEFAULT_TEMPO;
 
-  for (const item of [...items].sort((a, b) => a.tick - b.tick)) {
+  for (const item of items.sort((a, b) => a.tick - b.tick)) {
     seconds += span(item.tick - tick, tempo);
     tick = item.tick;
 
@@ -171,12 +169,12 @@ export function parseMidiFile(bytes: Uint8Array): MidiEvent[] {
 
   if (format > 2 || division === 0) throw new Error('Not a MIDI file');
 
-  let items: TrackItem[] = [];
+  const items: TrackItem[] = [];
 
   while (cursor.at + CHUNK_HEADER <= bytes.length) {
     const { id, body } = chunk(cursor);
 
-    if (id === 'MTrk') items = items.concat(readTrack(body));
+    if (id === 'MTrk') readTrack(body, items);
   }
 
   return timed(items, division);

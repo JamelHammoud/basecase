@@ -80,15 +80,67 @@ describe('image dataset delivery', () => {
     ).toEqual([0, 1]);
   });
 
-  it('writes both training formats from the selected dataset members', async () => {
+  it('exports all 20 labelled images once in each training format with a label per image', async () => {
     const set = fixture();
+    const annotation = annotationFromInstances({
+      instanceIds: new Uint32Array([1]),
+      width: 1,
+      height: 1,
+      instance: 'block',
+      instanceId: 1,
+      classId: 4,
+    })!;
+
+    set.classes = [{ id: 4, name: 'Block' }];
+    set.frames = Array.from({ length: 20 }, (_, seed) => ({
+      ...set.frames[0],
+      id: `frame-${seed}`,
+      seed,
+      annotations: [structuredClone(annotation)],
+    }));
+
     const files = await imageDatasetFiles(await datasetOf(set), async () => set);
     const names = Object.keys(files);
+    const coco = names
+      .filter((name) => /^coco\/annotations\/instances_.*\.json$/.test(name))
+      .map((name) => JSON.parse(new TextDecoder().decode(files[name])));
 
     expect(names).toContain('coco/annotations/instances_train.json');
     expect(names).toContain('yolo/data.yaml');
-    expect(names.filter((name) => name.endsWith('.jpg'))).toHaveLength(2);
-    expect(names.filter((name) => name.endsWith('.f32'))).toHaveLength(2);
+    expect(coco).toHaveLength(3);
+    expect(coco.flatMap((split) => split.images)).toHaveLength(20);
+    expect(names.filter((name) => name.startsWith('coco/images/') && name.endsWith('.jpg'))).toHaveLength(20);
+    expect(names.filter((name) => name.startsWith('yolo/images/') && name.endsWith('.jpg'))).toHaveLength(20);
+    expect(names.filter((name) => name.startsWith('yolo/labels/') && name.endsWith('.txt'))).toHaveLength(20);
+    expect(names.filter((name) => name.endsWith('.f32'))).toHaveLength(40);
+
+    for (const split of coco) {
+      const category = split.categories.find((entry: { name: string }) => entry.name === 'Block');
+      const labels = split.annotations.filter((entry: { category_id: number }) => entry.category_id === category.id);
+
+      expect(labels).toHaveLength(split.images.length);
+      expect(labels.map((entry: { image_id: number }) => entry.image_id).sort()).toEqual(
+        split.images.map((entry: { id: number }) => entry.id).sort(),
+      );
+      expect(labels.map((entry: { bbox: number[] }) => entry.bbox)).toEqual(
+        Array.from({ length: split.images.length }, () => [0, 0, 1, 1]),
+      );
+    }
+
+    const images: { file_name: string }[] = coco.flatMap((split) => split.images);
+
+    expect(names.filter((name) => name.startsWith('coco/images/')).sort()).toEqual(
+      images.map((image) => `coco/${image.file_name}`).sort(),
+    );
+    expect(names.filter((name) => name.startsWith('yolo/images/')).sort()).toEqual(
+      images.map((image) => `yolo/${image.file_name}`).sort(),
+    );
+
+    for (const image of images) {
+      const label = image.file_name.replace(/^images\//, 'yolo/labels/').replace(/\.jpg$/, '.txt');
+
+      expect(new TextDecoder().decode(files[label])).toBe('0 0.5 0.5 1 1\n');
+    }
   });
 
   it('keeps try export files alongside images for a mixed dataset', async () => {

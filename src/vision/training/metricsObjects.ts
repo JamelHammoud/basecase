@@ -1,7 +1,7 @@
 import type { ImageAnnotation, TrainingFrame } from '../frameSet';
 import type { VisionDetection, VisionResult } from '../types';
 import type { ClassEvaluation, TrainingTask } from './types';
-import { annotationBox, boxOverlap, maskOverlap } from './metricsGeometry';
+import { annotationOverlap } from './metricsGeometry';
 import { classFailureRate } from './metricsFailures';
 import { averagePrecision } from './metricsPrecision';
 
@@ -23,21 +23,25 @@ interface MatchedDetection extends RankedDetection {
 const thresholds = Array.from({ length: 10 }, (_, i) => (50 + 5 * i) / 100);
 const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length);
 
+function frameDetections({ frame, result }: EvaluatedFrame, row: number, task: TrainingTask, name: string) {
+  const ranked: RankedDetection[] = result.detections
+    .filter((detection) => detection.label === name)
+    .map((detection) => ({ detection, row, overlaps: new Array<number>(frame.annotations.length) }));
+
+  if (!ranked.length) return ranked;
+
+  for (let index = 0; index < frame.annotations.length; index++) {
+    const overlap = annotationOverlap(frame.annotations[index], frame, task.kind === 'segment');
+
+    for (const item of ranked) item.overlaps[index] = overlap(item.detection);
+  }
+
+  return ranked;
+}
+
 function rankedDetections(rows: EvaluatedFrame[], task: TrainingTask, name: string): RankedDetection[] {
   return rows
-    .flatMap(({ frame, result }, row) =>
-      result.detections
-        .filter((detection) => detection.label === name)
-        .map((detection) => ({
-          detection,
-          row,
-          overlaps: frame.annotations.map((annotation) => {
-            if (task.kind === 'segment') return maskOverlap(annotation, detection, frame);
-
-            return boxOverlap(annotationBox(annotation, frame), detection.box);
-          }),
-        })),
-    )
+    .flatMap((frame, row) => frameDetections(frame, row, task, name))
     .sort((a, b) => b.detection.score - a.detection.score);
 }
 

@@ -244,6 +244,8 @@ The samples are the voice. To change how something sounds, change its samples, n
 - **Dates come from git.** Keep `date` as the publication day and never add `updated`. The site reads each article’s last commit day and falls back to `date` for an article without history.
 - **Feature summaries belong to the feature article.** A hub has `hub_sort: order` (or `title`) and exactly one `{{help-hub}}` block. In the feature article’s frontmatter, add `hub_<hub_slug_with_underscores>: |` followed by its indented Markdown, and an optional `hub_<hub_slug_with_underscores>_order: 10` for numeric ordering. Order sorting uses the number, defaulting to 1000, then article title and slug. Title sorting ignores the number. Only published articles contribute. Keep general instructions in the hub and put feature facts, links and any supporting screenshots in that feature’s field. Add or change the feature file without editing the hub. The same expansion feeds HTML, search and copy checks.
 
+Help-label suggestions and CAD part suggestions share `electron/editDistance.mjs`. It compares UTF-16 code units with one reusable row sized to the shorter string. Label ranking keeps shared-word priority, stable distance ties and glossary preference. The shared helper's tests compare complete suggestions with full-matrix distances.
+
 **Before → after** (`2026-11-12-calibrate-servos.md`):
 
 | Before | After |

@@ -5,6 +5,7 @@ import { presetCase } from '../src/cases/caseBuilder';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import { DEFAULT_PROJECT } from '../src/types/robotics';
 import { buildRig } from '../src/utils/kinematics';
+import { COCKPIT } from './codePanels';
 import { openApp, openPlayTab, partCount, shown, type App } from './harness';
 
 let app: App;
@@ -203,6 +204,32 @@ afterEach(async () => {
 });
 
 describe('Case code panels', () => {
+  it('passes pointer input through the HUD and stops driving before closing Run Case on Escape inside a code frame', async () => {
+    const { page } = app;
+
+    await openCase(COCKPIT);
+
+    const hud = await page.locator('[data-testid="case-run-overlay"][data-panel="hud"]').boundingBox();
+    const under = await page.evaluate(
+      ([x, y]) => document.elementFromPoint(x, y)?.tagName,
+      [hud!.x + hud!.width / 2, hud!.y + hud!.height / 2],
+    );
+
+    expect(under).toBe('CANVAS');
+
+    await frameOf('stick')
+      .locator('canvas')
+      .click({ position: { x: 100, y: 100 } });
+    await expect.poll(async () => (await simState()).drive, { timeout: 60000 }).toBe('on');
+    await frameOf('stick').locator('body').press('Escape');
+    await expect.poll(async () => (await simState()).drive).toBe('off');
+    expect(await areaCount()).toBe(1);
+
+    await frameOf('stick').locator('body').press('Escape');
+    await expect.poll(areaCount).toBe(0);
+    expect(app.errors).toEqual([]);
+  });
+
   it('keeps a code panel off the network, the parent and storage', async () => {
     const { page } = app;
     const hits: string[] = [];

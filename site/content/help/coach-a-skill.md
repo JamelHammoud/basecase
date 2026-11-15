@@ -35,7 +35,7 @@ In the desktop app, you can coach Stand, Walk, Get up and Settle once they're re
 1. Open the **Simulate** tab and find the ready skill under **Train**.
 2. Right-click its row, then choose **Coach**.
 
-![The right-click menu of a ready Stand row with Stress, Coach and Publish to Hugging Face](/help/coach-a-skill/menu.png)
+![The right-click menu of a ready Stand row with Coach and Install Skill](/help/coach-a-skill/menu.png)
 
 3. In the field, which now shows the skill's name, type how you want the skill to move, then press [[↩]]. The **Agent** tab opens with what you typed.
 
@@ -45,7 +45,7 @@ In the desktop app, you can coach Stand, Walk, Get up and Settle once they're re
 5. Open the **Simulate** tab again. The row shows its Arena result and the measurement before and after, for example 130 → 119 mm. **Try** plays the version the skill kept.
 6. To play the old skill and then the new one on the canvas, right-click the row and choose **Compare**.
 
-![A coached Stand row with its base height before and after, and its menu with Coach, Compare and Undo Coach](/help/coach-a-skill/coached.png)
+![A coached Stand row with its base height before and after, and its menu with Compare, Undo Coach and Install Skill](/help/coach-a-skill/coached.png)
 
 The agent changes only the skill's reward, and Forge trains from the skill as it is. It names one of five measurements: foot clearance, contact impulse, joint jerk, base height or speed.
 

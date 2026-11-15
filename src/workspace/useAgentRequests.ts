@@ -19,6 +19,7 @@ import type { LaneControls } from './useLaneControls';
 import type { RobotInsert } from './useRobotInsert';
 import type { WrapRobot } from './useWrapRobot';
 import type { WorkspaceCore } from './useWorkspaceCore';
+import type { WorkspaceActions } from './useWorkspaceActions';
 import type { SceneDocument } from './useSceneDocument';
 import { errorMessage } from '../utils/errorMessage';
 import { useLatestRef } from '../utils/useLatestRef';
@@ -38,6 +39,7 @@ interface AgentRequestOptions {
   cursors: AgentCursors;
   robots: RobotInsert;
   wrap: WrapRobot;
+  lighten: WorkspaceActions['lighten'];
 }
 
 interface Author {
@@ -96,7 +98,19 @@ const tryReadOf = (
   partners: simTraining.cases.partners,
 });
 
-export function useAgentRequests({ core, lanes, controls, actors, cursors, robots, wrap }: AgentRequestOptions) {
+function guardPart(author: Author, partId: string, actors: ActorIndex, isBusy: AgentLanes['isBusy']) {
+  const holder = actors.holderOf(partId, author.actor, isBusy);
+
+  if (holder) return conflictText(partId, holder, actors);
+
+  actors.claim(partId, author.actor);
+  author.claim(partId);
+
+  return null;
+}
+
+export function useAgentRequests(options: AgentRequestOptions) {
+  const { core, lanes, controls, actors, cursors, robots, wrap, lighten } = options;
   const { docs, viewportRef, posing, simTraining, selectedIds } = core;
   const { partsRef, projectRef, setProjectNow, updateProjectNow, commitParts, commitConsole, commitSkeleton } = docs;
   const queueRef = useRef<Promise<void>>(Promise.resolve());
@@ -141,17 +155,6 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     });
   };
 
-  const guard = (author: Author, partId: string) => {
-    const holder = actors.holderOf(partId, author.actor, lanes.isBusy);
-
-    if (holder) return conflictText(partId, holder, actors);
-
-    actors.claim(partId, author.actor);
-    author.claim(partId);
-
-    return null;
-  };
-
   const applyOps = (ops: AgentOp[], author: Author) => {
     const result = queueRef.current.then(() =>
       applyAgentOps(ops, {
@@ -161,7 +164,7 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
         setCursor: author.setCursor,
         setAction: author.setAction,
         isFollowing: () => controls.isFollowing(author.laneId),
-        guard: (partId) => guard(author, partId),
+        guard: (partId) => guardPart(author, partId, actors, lanes.isBusy),
         touch: (partId) =>
           controls.recordEdit(author.laneId, partId, partsRef.current.find((p) => p.id === partId) ?? null),
       }),
@@ -198,6 +201,15 @@ export function useAgentRequests({ core, lanes, controls, actors, cursors, robot
     edits: (owner) => actors.editsFor(author.actor, owner),
     buildGuide: core.guide.generate,
     repairPart: core.repair.open,
+    lightenPart: async (id, settings) => {
+      const refused = guardPart(author, id, actors, lanes.isBusy);
+
+      if (refused) return { text: refused };
+
+      controls.recordEdit(author.laneId, id, partsRef.current.find((part) => part.id === id) ?? null);
+
+      return lighten.apply(id, settings);
+    },
     routines: core.simTraining.routines,
     cases: core.simTraining.cases,
     caseCompare: core.caseCompare,

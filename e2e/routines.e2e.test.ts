@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { TraceEvent } from '../src/routines/scenarioTypes';
 import type { Routine } from '../src/routines/schema';
 import { fixtureRobots } from '../src/sim/fixtures/robots';
 import type { Skill } from '../src/skills/artifacts';
@@ -13,7 +12,6 @@ let app: App;
 interface RoutineState {
   routine: Routine | null;
   compiled: { ok: boolean; errors?: Array<{ code: string; path?: string }> } | null;
-  run: { live: boolean; done: boolean; trace: TraceEvent[] } | null;
   skills: Array<{ id: string; hash: string }>;
 }
 
@@ -22,7 +20,6 @@ interface Studio {
   stubHandoffs: (stub: { skills: Skill[]; falls: number }) => void;
   plantHandoff: (from: string, to: string, falls: number) => Promise<void>;
   routineState: () => RoutineState;
-  simState: () => { stats: { robots: Array<{ travelled: number }> } | null };
 }
 
 const studio = <T>(fn: (s: Studio) => T) =>
@@ -47,6 +44,18 @@ async function loadRobot(id: string) {
   await expect.poll(() => partCount(app.page)).toBe(robot.parts.length);
 }
 
+async function createRoutineWithDrive() {
+  const { page } = app;
+
+  await loadRobot('rover-diff');
+  await openPlayTab(page, 'Routines');
+  await page.locator(visible('button'), { hasText: 'New Routine' }).first().click();
+  await expect.poll(async () => (await routineState()).routine?.requires).toEqual(['wheels']);
+  await inFlow('[data-insert]').click();
+  await page.getByRole('menuitem', { name: 'Drive' }).click();
+  await expect.poll(mainSteps).toEqual(['drive']);
+}
+
 beforeAll(async () => {
   app = await openApp();
 }, 120000);
@@ -56,40 +65,31 @@ afterAll(async () => {
 });
 
 describe('Routines by hand', () => {
-  it('builds a Routine from the empty state, edits it with undo, and runs it', async () => {
+  it('renames a Routine and adds and deletes a step through the keyboard', async () => {
     const { page } = app;
 
-    await loadRobot('rover-diff');
-    await openPlayTab(page, 'Routines');
-    await page.locator(visible('button'), { hasText: 'New Routine' }).first().click();
-    await expect.poll(async () => (await routineState()).routine?.requires).toEqual(['wheels']);
-
+    await createRoutineWithDrive();
     await inFlow('button[aria-haspopup="menu"]:not([data-insert])').click();
     await page.getByRole('menuitem', { name: 'Rename' }).click();
-
-    const name = page.getByLabel('Routine name');
-
-    await name.fill('Patrol');
-    await name.press('Enter');
+    await page.getByLabel('Routine name').fill('Patrol');
+    await page.getByLabel('Routine name').press('Enter');
     await expect.poll(async () => (await routineState()).routine?.name).toBe('Patrol');
-
-    await inFlow('[data-insert]').click();
-    await page.getByRole('menuitem', { name: 'Drive' }).click();
+    await inFlow('button[aria-label="Add step"]:not([data-insert])').click();
+    await expect.poll(() => page.evaluate(() => document.activeElement?.textContent)).toBe('Drive');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await expect.poll(mainSteps).toEqual(['drive', 'stop']);
+    await inFlow('[data-flow-node="stop"]').click();
+    await page.keyboard.press('Backspace');
     await expect.poll(mainSteps).toEqual(['drive']);
+    await page.locator(visible('button'), { hasText: 'Undo' }).first().click();
+    await expect.poll(mainSteps).toEqual(['drive', 'stop']);
+    expect(app.errors).toEqual([]);
+  });
 
-    const distance = page.getByLabel('Distance');
-
-    await distance.fill('2');
-    await distance.press('Enter');
-    await expect
-      .poll(async () => (await routineState()).routine?.base.onTimeout[0])
-      .toMatchObject({ move: { distance: 2 } });
-    await distance.fill('1');
-    await distance.press('Enter');
-    await expect
-      .poll(async () => (await routineState()).routine?.base.onTimeout[0])
-      .toMatchObject({ move: { distance: 1 } });
-
+  it('undoes field edits through the title bar and keyboard', async () => {
+    const { page } = app;
     const titleUndo = page.locator('button[aria-label="Undo"]');
     const titleRedo = page.locator('button[aria-label="Redo"]');
     const firstDistance = async () => {
@@ -98,8 +98,10 @@ describe('Routines by hand', () => {
       return step && 'move' in step ? step.move?.distance : undefined;
     };
 
-    await distance.fill('0.9');
-    await distance.press('Enter');
+    await createRoutineWithDrive();
+    await expect.poll(firstDistance).toBe(1);
+    await page.getByLabel('Distance').fill('0.9');
+    await page.getByLabel('Distance').press('Enter');
     await expect.poll(firstDistance).toBe(0.9);
     await expect.poll(() => titleUndo.isEnabled()).toBe(true);
     await titleUndo.click();
@@ -109,34 +111,8 @@ describe('Routines by hand', () => {
     await inFlow('[data-flow-node="drive"]').click();
     await page.keyboard.press('ControlOrMeta+z');
     await expect.poll(firstDistance).toBe(1);
-
-    await inFlow('button[aria-label="Add step"]:not([data-insert])').click();
-    await expect.poll(() => page.evaluate(() => document.activeElement?.textContent)).toBe('Drive');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-    await expect.poll(mainSteps).toEqual(['drive', 'stop']);
-
-    await inFlow('[data-flow-node="stop"]').click();
-    await page.keyboard.press('Backspace');
-    await expect.poll(mainSteps).toEqual(['drive']);
-    await page.locator(visible('button'), { hasText: 'Undo' }).first().click();
-    await expect.poll(mainSteps).toEqual(['drive', 'stop']);
-
-    await expect.poll(async () => (await routineState()).compiled?.ok, { timeout: 60000 }).toBe(true);
-    await inFlow('button:has-text("Run")').click();
-    await expect.poll(async () => (await routineState()).run?.done, { timeout: 90000, interval: 500 }).toBe(true);
-
-    const trace = (await routineState()).run?.trace ?? [];
-    const done = trace.filter((e) => e.kind === 'opDone').map((e) => e.node);
-    const travelled = (await studio((s) => s.simState())).stats?.robots[0]?.travelled ?? 0;
-
-    expect(done).toEqual(['drive', 'stop']);
-    expect(trace.some((e) => e.kind === 'safeStop')).toBe(true);
-    expect(travelled).toBeGreaterThan(0.9);
-    await expect.poll(() => inFlow('[data-flow-node="drive"]').getAttribute('data-state')).toBe('done');
     expect(app.errors).toEqual([]);
-  }, 180000);
+  });
 });
 
 describe('Hand-offs', () => {

@@ -6,14 +6,15 @@ import { contractHash, skillHash, type Skill } from './artifacts';
 import { isSkill } from './bundle';
 import { environmentHash, type Environment } from './environment';
 import { hashOf } from './hash';
-import { LEGGED_ENTRIES, type TrainedEntry } from './kitEnvironment';
+import type { TrainedEntry } from './kitEnvironment';
 import { kitJob } from './kitJob';
 import { kitRobot } from './kitModel';
 import { modelCard } from './modelCard';
-import { kitEntries, kitSkillName, type KitWarm } from './motorKit';
+import type { KitWarm } from './motorKit';
 import { isRunnablePolicy } from './policyCheck';
 import { mappedPolicy } from './policyMap';
-import { isRobotSchema, jointMap, robotSchema, type RobotSchema } from './robotSchema';
+import { isRobotSchema, robotSchema, type RobotSchema } from './robotSchema';
+import { kitEntryOf, skillFit } from './skillFit';
 
 export interface PublishInput {
   skill: Skill;
@@ -146,23 +147,16 @@ export function readPublishedSkill(files: Record<string, unknown>): PublishedSki
   return { skill, environment: read['environment.json'] as Environment, schema: schema as RobotSchema };
 }
 
-function kitEntryOf(skill: Skill): TrainedEntry {
-  const entry = LEGGED_ENTRIES.find((e) => kitSkillName(e) === skill.name);
-
-  if (!entry || skill.origin?.method !== 'motor-kit')
-    throw new Error('Install Skill takes Motor Kit skills: Stand, Walk, Get up and Settle.');
-
-  return entry;
-}
-
 export function installPlan(published: PublishedSkill, model: SimModel): InstallPlan {
   const entry = kitEntryOf(published.skill);
   const robot = kitRobot(model);
-  const mapped = jointMap(published.schema, robotSchema(model, { robot: robot.key, joints: robot.joints }));
+  const mapped = skillFit(
+    published.skill,
+    published.schema,
+    robotSchema(model, { robot: robot.key, joints: robot.joints }),
+  );
 
   if (!mapped.ok) throw new Error(mapped.problem);
-
-  if (!kitEntries(model).includes(entry)) throw new Error('The Motor Kit trains robots that walk on legs.');
 
   const job = kitJob(model, entry, { minutes: 1, seed: 1 });
   const policy = mappedPolicy(published.skill.controller.policy, mapped.map, {

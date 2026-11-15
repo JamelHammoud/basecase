@@ -77,27 +77,28 @@ function strainMatrices(p: Cell, h: Cell) {
   return { bc, bi };
 }
 
-function addProduct(
-  out: Float64Array,
-  m: { left: Float64Array; lc: number; right: Float64Array; rc: number },
-  c: Float64Array,
-  w: number,
-) {
-  const { left, lc, right, rc } = m;
-  const cb = new Float64Array(6 * rc);
+function weightedStrain(out: Float64Array, b: Float64Array, c: Float64Array, w: number) {
+  const cols = b.length / 6;
+
+  out.fill(0);
 
   for (let r = 0; r < 6; r++)
     for (let k = 0; k < 6; k++) {
       const ck = c[r * 6 + k] * w;
 
-      for (let j = 0; j < rc; j++) cb[r * rc + j] += ck * right[k * rc + j];
+      for (let j = 0; j < cols; j++) out[r * cols + j] += ck * b[k * cols + j];
     }
+}
+
+function addProduct(out: Float64Array, left: Float64Array, weightedRight: Float64Array) {
+  const lc = left.length / 6;
+  const rc = weightedRight.length / 6;
 
   for (let i = 0; i < lc; i++)
     for (let r = 0; r < 6; r++) {
       const lri = left[r * lc + i];
 
-      for (let j = 0; j < rc; j++) out[i * rc + j] += lri * cb[r * rc + j];
+      for (let j = 0; j < rc; j++) out[i * rc + j] += lri * weightedRight[r * rc + j];
     }
 }
 
@@ -135,12 +136,17 @@ export function hexElement(h: Cell, c: Float64Array): HexElement {
   const kcc = new Float64Array(COMPATIBLE * COMPATIBLE);
   const kic = new Float64Array(BUBBLES * COMPATIBLE);
   const kii = new Float64Array(BUBBLES * BUBBLES);
-  const mats = SAMPLE_POINTS.map((p) => strainMatrices(p, h));
+  const weightedCompatible = new Float64Array(6 * COMPATIBLE);
+  const weightedBubbles = new Float64Array(6 * BUBBLES);
 
-  for (const { bc, bi } of mats) {
-    addProduct(kcc, { left: bc, lc: COMPATIBLE, right: bc, rc: COMPATIBLE }, c, w);
-    addProduct(kic, { left: bi, lc: BUBBLES, right: bc, rc: COMPATIBLE }, c, w);
-    addProduct(kii, { left: bi, lc: BUBBLES, right: bi, rc: BUBBLES }, c, w);
+  for (const p of SAMPLE_POINTS) {
+    const { bc, bi } = strainMatrices(p, h);
+
+    weightedStrain(weightedCompatible, bc, c, w);
+    weightedStrain(weightedBubbles, bi, c, w);
+    addProduct(kcc, bc, weightedCompatible);
+    addProduct(kic, bi, weightedCompatible);
+    addProduct(kii, bi, weightedBubbles);
   }
 
   const condense = solveSymmetric(kii, BUBBLES, kic, COMPATIBLE).map((v) => -v);

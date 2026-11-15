@@ -5,6 +5,7 @@ import { box } from '../sim/fixtures/parts';
 import type { LightenResult } from '../strength/lighten';
 import { DEFAULT_PROJECT, type ScenePart } from '../types/robotics';
 import { isPrinted } from '../utils/bom';
+import { docFromParts, pushHistory, trackedOf, travelProject } from './docHistory';
 import { applyLighten, canLighten, lightenedPart } from './lighten';
 import * as loads from './lightenLoads';
 
@@ -46,14 +47,14 @@ function printedPart(): ScenePart {
 
 function setup() {
   const source = printedPart();
-  let parts = [source];
+  let doc = docFromParts([source]);
   let project = DEFAULT_PROJECT;
   const commitParts = vi.fn((update: (current: ScenePart[]) => ScenePart[]) => {
-    parts = update(parts);
+    doc = pushHistory(doc, update(doc.parts), trackedOf(project));
   });
   const viewport = { lightenPart: vi.fn(async () => result) };
   const context = {
-    parts: () => parts,
+    parts: () => doc.parts,
     project: () => project,
     viewport: () => viewport,
     commitParts,
@@ -64,8 +65,15 @@ function setup() {
     viewport,
     context,
     commitParts,
-    parts: () => parts,
-    replace: (next: ScenePart[]) => (parts = next),
+    parts: () => doc.parts,
+    history: () => doc,
+    travel: (direction: 'undo' | 'redo') => {
+      const moved = travelProject(doc, project, { direction })!;
+
+      doc = moved.doc;
+      project = moved.project;
+    },
+    replace: (next: ScenePart[]) => (doc = { ...doc, parts: next }),
     replaceProject: (next: typeof project) => (project = next),
   };
 }
@@ -85,7 +93,7 @@ describe('Lighten scene edit', () => {
     expect(shapeKey(changed)).not.toBe(shapeKey(part));
   });
 
-  it('commits one edit after the worker succeeds', async () => {
+  it('commits one edit after the worker succeeds and restores it with undo and redo', async () => {
     vi.spyOn(loads, 'lightenLoads').mockResolvedValueOnce({ jobs: [], frozen: { lines: [], boxes: [] } });
 
     const state = setup();
@@ -97,6 +105,18 @@ describe('Lighten scene edit', () => {
     expect(reply.text).toBe('Lightened bracket to 50% of its original mass.');
     expect(state.commitParts).toHaveBeenCalledOnce();
     expect(state.parts()[0].id).toBe(state.source.id);
+    expect(state.parts()[0].kind).toBe('sculpt_mesh');
+    expect(state.parts()[0].sculptMesh?.positions.length).toBeGreaterThan(0);
+    expect(state.history().past).toHaveLength(1);
+
+    const changed = state.parts();
+
+    state.travel('undo');
+    expect(state.parts()).toEqual([state.source]);
+    expect(state.parts()[0]).toBe(state.source);
+    expect(state.history().past).toHaveLength(0);
+    state.travel('redo');
+    expect(state.parts()).toBe(changed);
     expect(state.viewport.lightenPart).toHaveBeenCalledWith(
       expect.objectContaining({ targetShare: 0.5, minWallMm: 1.5 }),
     );
